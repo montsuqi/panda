@@ -249,6 +249,7 @@ dbgmsg(">CallBefore");
 	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),
 		   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
 		   SIZE_STATUS);
+	node->w.n = 0;
 dbgmsg("<CallBefore");
 }
 
@@ -309,7 +310,6 @@ dbgmsg(">CallAfter");
 		sindex = i + 1;
 	}
 
-	node->w.n = 0;
 	if		(  ( PutType = (byte)(int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
 		PutType = SCREEN_CURRENT_WINDOW;
 	}

@@ -189,9 +189,6 @@ dbgmsg(">GetAPS_Control");
 	  case	APS_CTRLDATA:
 		flag = RecvChar(fp);				ON_IO_ERROR(fp,badio);
 		RecvString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
-#if	0
-		RecvString(fp,hdr->term);			ON_IO_ERROR(fp,badio);
-#endif
 		RecvString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		RecvString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
 		hdr->puttype = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);

@@ -257,7 +257,9 @@ dbgmsg(">WriteTerminal");
 		SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
-		//		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
+#if	1
+		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
+#endif
 		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
 		for	( i = 0 ; i < data->w.n ; i ++ ) {
 			SendInt(fp,data->w.control[i].PutType);			ON_IO_ERROR(fp,badio);

@@ -351,10 +351,6 @@ dbgmsg(">PutWFC");
 	SendChar(fp,flag);						ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.user")));
 	ON_IO_ERROR(fp,badio);
-#if	0
-	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.term")));
-	ON_IO_ERROR(fp,badio);
-#endif
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.window")));
 	ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));
@@ -381,11 +377,6 @@ dbgmsg(">PutWFC");
 			break;
 		  case	APS_MCPDATA:
 			dbgmsg("MCPDATA");
-#if	0
-			SetValueString(GetItemLongName(e,"dc.window"),node->window,NULL);
-			SetValueString(GetItemLongName(e,"dc.widget"),node->widget,NULL);
-			SetValueString(GetItemLongName(e,"dc.event"),node->event,NULL);
-#endif
 			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->mcprec->value),FALSE);
 			NativePackValue(NULL,LBS_Body(buff),node->mcprec->value);
 			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);

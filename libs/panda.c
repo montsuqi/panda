@@ -82,7 +82,9 @@ RecvPanda(
 dbgmsg(">RecvPanda");
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
+#if	0
 			type = ctl.control[i].PutType;
+#endif
 			switch	(type) {
 			  case	SCREEN_CHANGE_WINDOW:
 				(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);

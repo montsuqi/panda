@@ -137,7 +137,9 @@ dbgmsg(">RecvTermServerHeader");
 		RecvString(fp,user);
 		RecvString(fp,window);
 		RecvString(fp,widget);
-		//*type = TO_INT(RecvChar(fp));
+#if	1
+		*type = TO_INT(RecvChar(fp));
+#endif
 		ctl->n = RecvInt(fp);
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
 			ctl->control[i].PutType = (byte)RecvInt(fp);
