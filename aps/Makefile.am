@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = aps dbstub dbredirector dbs
+sbin_PROGRAMS = aps dbstub dbredirector dbs
 lib_LTLIBRARIES = libpandadb.la MCPSUB.la
 
 MCPSUB_la_LDFLAGS	=	\

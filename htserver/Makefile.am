@@ -1,6 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = htserver mon
+bin_PROGRAMS = mon
+sbin_PROGRAMS = htserver
 
 htserver_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lpthread	\

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = clserver
+sbin_PROGRAMS = clserver
 
 clserver_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl $(XML2_LIBS)	\

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = wfc
+sbin_PROGRAMS = wfc
 
 INCLUDES 			= \
 	-I$(top_srcdir)	\

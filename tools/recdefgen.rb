@@ -1,10 +1,9 @@
+#!/usr/bin/env ruby
 require "xmlparser"
 require "kconv"
 include Kconv
 require "uconv"
 include Uconv
-
-# require	"OutBuff"
 
 $button_enable = false     
 if ARGV[0] == "-b" 
@@ -66,6 +65,7 @@ end
 class	Widget
 	def	initialize
 		@child = Array.new;
+		@child_name = "";
 		@chars = 0;
 		@klass = "";
 		@name = "";
@@ -77,12 +77,19 @@ class	Widget
 		@column_width = Array.new;
 		@align = "left";
 		@signal = Array.new;
+		@group = "";
 	end
 	def	child
 		@child
 	end
 	def	child= (val)
 		@child = val;
+	end
+	def	child_name
+		@child_name
+	end
+	def	child_name= (val)
+		@child_name = val;
 	end
 	def	klass= (val)
 		@klass = val;
@@ -146,6 +153,9 @@ class	Widget
 	end
 	def	format= (val)
 		@format = val;
+	end
+	def	group= (val)
+		@group = val;
 	end
 
 	def	_windowName
@@ -341,61 +351,6 @@ class	Widget
 	def	panda
 		self._panda(0);
 	end
-	def	_html
-		vname = @name;
-		case	@klass
-		  when	"top-level"
-			for	c in @child
-				c._html;
-			end
-		  when	"GtkWindow"
-			for	c in @child
-				c._html;
-			end
-		  when	"GtkVBox"
-			printf("<TABLE>\n");
-			for	c in @child
-				printf("<TR>\n");
-				c._html;
-				printf("</TR>\n");
-			end
-			printf("</TABLE>\n");
-		  when	"GtkHBox"
-			printf("<TABLE><TR>\n");
-			for	c in @child
-				c._html;
-			end
-			printf("</TR></TABLE>\n");
-		  when	"GtkEntry"
-			printf("<TD><input type=\"text\" name=\"%s\" size=%d value=\"$%s\" maxlength=%d></TD>\n",vname, @chars, vname, @chars);
-		  when	"GtkButton"
-			data = "";
-			for	s in @signal
-				if	(  s.name     ==  "clicked"     )	&&
-					(  s.handler  ==  "send_event"  )
-					data = s.data;
-				end
-			end
-			printf("<TD><input type=\"submit\" name=\"%s.%s\" value=\"%s\"></TD>\n",vname, data, @label);
-		  when	"GtkLabel"
-			printf("<TD align=\"%s\">%s", @align, @label);
-		  else
-			for	c in @child
-				c._html;
-			end
-		end
-	end
-	def	html
-		myname = File.basename($<.filename,".glade");
-		title = self._title;
-		printf("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\">\n<HTML>\n<HEAD>\n");
-		printf("<TITLE>%s</TITLE>\n</HEAD>\n",title);
-		printf("<BODY TEXT=\"#202020\" BGCOLOR=\"#C0C0C0\" LINK=\"#00FFFF\" VLINK=\"#00BBBB\">\n");
-		printf("<form method=\"post\" action=\"glhtml\">\n",myname);
-		printf("<input type=\"hidden\" name=\"ID\" value=\"$_sesid\">\n");
-		self._html;
-		printf("</form>\n</BODY>\n</HTML>\n");
-	end
 end
 
 if ((xml = $<.gets).nil?); exit 1; end
@@ -485,11 +440,14 @@ begin
 				widget.width = Integer(data);
 			  when	/\/widget\/height/i
 				widget.height = Integer(data);
-
 			  when	/\/widget\/columns/i
 				widget.columns = Integer(data);
 			  when	/\/widget\/format/i
 				widget.format = data;
+			  when	/\/widget\/group/i
+				widget.group = data;
+			  when	/\/widget\/child_name/i
+				widget.child_name = data;
 			  when	/\/widget\/column_width/i
 				widget.column_width = data.split(",");
 
@@ -528,6 +486,5 @@ rescue XMLParserError
 	exit 1
 end
 
-#widget.html;
 widget.panda;
 exit 0

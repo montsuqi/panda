@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = pgserver
+sbin_PROGRAMS = pgserver
 
 pgserver_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl	\

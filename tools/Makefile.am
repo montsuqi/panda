@@ -1,6 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = copygen dbgen user checkdir monitor
+bin_PROGRAMS = copygen dbgen checkdir
+sbin_PROGRAMS = user monitor
+bin_SCRIPTS = recdefgen.rb
 #bin_PROGRAMS = copygen structgen dbgen user checkdir monitor
 
 LDADD 		=	\
@@ -36,8 +38,6 @@ monitor_SOURCES	=	\
 	monitor.c
 
 install-exec-hook:
-	cd	$(bindir)
-	$(LN_S) -f user gluseradd
-	$(LN_S) -f user gluserdel
-	$(LN_S) -f user glusermod
-	$(LN_S) -f user glauth
+	$(LN_S) -f user $(bindir)/gluseradd
+	$(LN_S) -f user $(bindir)/gluserdel
+	$(LN_S) -f user $(bindir)/glusermod

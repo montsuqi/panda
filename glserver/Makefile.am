@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = glserver glauth
+sbin_PROGRAMS = glserver glauth
 
 glserver_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl	\
