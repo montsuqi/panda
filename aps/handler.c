@@ -298,6 +298,7 @@ dbgmsg(">CallAfter");
 	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
 		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,0)),
 			   ValueStringPointer(mcp_dcwindow));
+		ValueIsNonNil(GetArrayItem(mcp_swindow,0));
 		sindex = 1;
 	}
 	if		(  PutType  ==  SCREEN_BACK_WINDOW  ) {
@@ -305,6 +306,7 @@ dbgmsg(">CallAfter");
 		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
 			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 1)),
 			   SIZE_NAME);
+		ValueIsNonNil(GetItemLongName(mcp,"dc.window"));
 		PutType = SCREEN_CHANGE_WINDOW;
 	}
 
@@ -314,6 +316,7 @@ dbgmsg(">CallAfter");
 		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
 			   ValueStringPointer(
 				   GetArrayItem(mcp_swindow,sindex - 1)));
+		ValueIsNonNil(GetItemLongName(mcp,"dc.fromwin"));
 		for	( i = 0 ; i < sindex ; i ++ ) {
 			if		(  strcmp(ValueStringPointer(
 								  GetArrayItem(mcp_swindow,i)),
@@ -326,6 +329,7 @@ dbgmsg(">CallAfter");
 			winfrom = 0;
 			strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,i)),
 				   ValueStringPointer(mcp_dcwindow));
+			ValueIsNonNil(GetArrayItem(mcp_swindow,i));
 		}
 		winend  = sindex;
 		sindex = i + 1;
@@ -349,7 +353,7 @@ dbgmsg(">CallAfter");
 		break;
 	}
 	SetValueInteger(mcp_pputtype,(int)PutType);
-	ValueInteger(mcp_sindex) = sindex;
+	SetValueInteger(mcp_sindex,sindex);
 #ifdef	DEBUG
 	dbgprintf("mcp_sindex = %d",sindex);
 	dbgprintf("mcp->dc.window = [%s]",ValueStringPointer(mcp_dcwindow));

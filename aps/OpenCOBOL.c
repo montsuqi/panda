@@ -73,6 +73,7 @@ PutApplication(
 	char	*p;
 
 dbgmsg(">PutApplication");
+DumpValueStruct(node->mcprec->value);
 	OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
 	OpenCOBOL_PackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
 	OpenCOBOL_PackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
