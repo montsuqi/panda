@@ -1558,6 +1558,7 @@ dbgmsg(">_DBACCESS");
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		if		(  ( ix = (int)g_hash_table_lookup(path->opHash,name) )  ==  0  ) {
+			ctrl->rc = MCP_BAD_FUNC;
 			rc = FALSE;
 		} else {
 			src = path->ops[ix-1]->proc;
