@@ -1,3 +1,10 @@
+panda (1:1.0.7p3-0+0.orca.1) unstable; urgency=low
+
+  * dblib/Postgres.c (GetTable, GetValue): Fix memory leak.
+  * datalib/value.c (NumericToFixed): Fix memory leak.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu, 28 Nov 2002 15:52:16 +0900
+
 panda (1:1.0.7p2-0+0.orca.1) unstable; urgency=low
 
   * aps/Shell.c: What until children exit.
