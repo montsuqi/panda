@@ -676,6 +676,8 @@ rec_new(RecordStruct *rec)
     static VALUE rec_get_field(VALUE self);
     static VALUE rec_set_field(VALUE self, VALUE obj);
 
+    if (rec == NULL || rec->value == NULL)
+        return Qnil;
     obj = Data_Make_Struct(cRecordStruct, record_struct_data,
                            rec_mark, free, data);
     data->value = recval_new(rec->value, 0);
