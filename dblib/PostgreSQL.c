@@ -248,7 +248,7 @@ ParArray(
 				SetValueOid(item,dbg,id);
 				break;
 			  case	GL_TYPE_BOOL:
-				SetValueBool(item,*p);
+				SetValueBool(item,*p == 't');
 				p ++;
 				break;
 			  case	GL_TYPE_BYTE:
@@ -346,7 +346,7 @@ dbgmsg(">GetTable");
 				ValueIsNil(val);
 			}
 		} else {
-			SetValueBool(val,*(char *)PQgetvalue(res,0,fnum));
+			SetValueBool(val,*(char *)PQgetvalue(res,0,fnum) == 't');
 		}
 		break;
 	  case	GL_TYPE_BYTE:
@@ -671,7 +671,7 @@ dbgmsg(">GetValue");
 			SetValueOid(val,dbg,(Oid)atol((char *)PQgetvalue(res,tnum,fnum)));
 			break;
 		  case	GL_TYPE_BOOL:
-			SetValueBool(val,*(char *)PQgetvalue(res,tnum,fnum));
+			SetValueBool(val,*(char *)PQgetvalue(res,tnum,fnum) == 't');
 			break;
 		  case	GL_TYPE_BYTE:
 		  case	GL_TYPE_CHAR:
