@@ -405,6 +405,7 @@ ExpandFile(
 	time_t	ps_mtime
 		,	tmp_mtime;
 	const	char	*type;
+	FILE	*fpf;
 
 ENTER_FUNC;
 	strcpy(fname,cname);
@@ -427,6 +428,10 @@ ENTER_FUNC;
 					tmp_mtime = sb.st_mtime;
 				} else {
 					tmp_mtime = 0;
+					if	(  ( fpf = Fopen(fname,"w") )  !=  NULL  ) {
+						fchmod(fileno(fpf), 0600);
+						fclose(fpf);	
+					}
 				}
 				if		(  ps_mtime  >  tmp_mtime  ) {
 					if		(  fFeturePDF ) {
@@ -582,7 +587,6 @@ ENTER_FUNC;
 			if		(  fExpand  ) {
 				GL_RecvLBS(fp,Buff,fNetwork);
 				if		(  ( fpf = Fopen(BlobCacheFileName(value),"w") )  !=  NULL  ) {
-					fchmod(fileno(fpf), 0600);
 					fwrite(LBS_Body(Buff),LBS_Size(Buff),1,fpf);
 					fclose(fpf);	
 				}
