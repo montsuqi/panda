@@ -407,8 +407,9 @@ GL_SendValue(
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
 			GL_SendString(fp,ValueRecordName(value,i),fNetwork);
 			if		(  fFetureOld  ) {
-				if		(	(  stricmp(ValueRecordName(value,i),"row")     ==  0  )
-						||	(  stricmp(ValueRecordName(value,i),"column")  ==  0  ) )	{
+				if		(	(  stricmp(ValueRecordName(value,i),"row")      ==  0  )
+						||	(  stricmp(ValueRecordName(value,i),"rowattr")  ==  0  )
+						||	(  stricmp(ValueRecordName(value,i),"column")   ==  0  ) )	{
 				} else {
 					GL_SendValue(fp,ValueRecordItem(value,i),coding,fExpand,fNetwork);
 				}
