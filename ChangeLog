@@ -1,3 +1,9 @@
+2003-09-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c (GetTable): intの時の処理を正しく直した
+
+	* tools/checkdir.c (DumpPath): pathのダンプ機能追加
+
 2003-09-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/PostgreSQL.c: null値対応

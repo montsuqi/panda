@@ -180,8 +180,9 @@ dbgmsg(">ParSQL");
 						LBS_EmitChar(sql,',');
 					}
 					GetSymbol;
+				} else {
+					LBS_EmitSpace(sql);
 				}
-				LBS_EmitSpace(sql);
 				fAster = FALSE;
 			} else
 			if		(  DB_Token  ==  '*'  ) {
@@ -222,6 +223,7 @@ dbgmsg(">ParSQL");
 			break;
 		}
 	}
+	LBS_EmitEnd(sql);
 	LBS_EmitFix(sql);
 dbgmsg("<ParSQL");
 	return	(sql);

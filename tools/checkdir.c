@@ -80,21 +80,87 @@ dbgmsg(">DumpKey");
 dbgmsg("<DumpKey");
 }
 
+#include	"SQLparser.h"
+static	void
+_DumpOps(
+	LargeByteString	*sql)
+{
+	int		c;
+	int		n;
+	Bool	fIntoAster;
+	ValueStruct	*val;
+
+	RewindLBS(sql);
+	printf("\t\t\t\tlength = %d\n",LBS_Size(sql));
+	fIntoAster = FALSE;
+	while	(  ( c = LBS_FetchByte(sql) )  >=  0  ) {
+		if		(  c  < 0x80  ) {
+			printf("%04d ",LBS_GetPos(sql)-1);
+			do {
+				printf("%c",c);
+			}	while	(	(  ( c = LBS_FetchByte(sql) )  >=  0  )
+						&&	(  c  <  0x80  ) );
+			printf("\n");
+		}
+		printf("%04d ",LBS_GetPos(sql)-1);
+		switch	(c) {
+		  case	SQL_OP_INTO:
+			n = LBS_FetchInt(sql);
+			printf("INTO\t%d",n);
+			if		(  n  >  0  ) {
+				fIntoAster = FALSE;
+			} else {
+				fIntoAster = TRUE;
+			}
+			break;
+		  case	SQL_OP_STO:
+			if		(  !fIntoAster  ) {
+				printf("STO\t%p",
+					   (ValueStruct *)LBS_FetchPointer(sql));
+			} else {
+				printf("STO\t*");
+			}
+			break;
+		  case	SQL_OP_REF:
+			printf("REF\t%p",
+				   (ValueStruct *)LBS_FetchPointer(sql));
+			break;
+		  case	SQL_OP_VCHAR:
+			printf("VCHAR");fflush(stdout);
+			break;
+		  case	SQL_OP_EOL:
+			printf("EOL");fflush(stdout);
+			break;
+		  default:
+			dbgprintf("[%X]",c);
+			break;
+		}
+		printf("\n");
+	}
+}
+
 static	void
 DumpOps(
 	char	*name,
-	LargeByteString	*sql,
-	void	*dummy)
+	int		ops,
+	PathStruct	*path)
 {
-	printf("\t\t\top = [%s]\n",name);
-}
+	LargeByteString	*sql;
 
+	printf("\t\t\top = [%s]\n",name);
+	if		(  ( sql = path->ops[ops-1] )  !=  NULL  ) {
+		_DumpOps(sql);
+	} else {
+		printf("default operation.\n");
+	}
+	printf("\t\t\t-----\n");
+}
 static	void
 DumpPath(
 	PathStruct	*path)
 {
 	printf("\t\tname     = [%s]\n",path->name);
-	g_hash_table_foreach(path->opHash,(GHFunc)DumpOps,NULL);
+	g_hash_table_foreach(path->opHash,(GHFunc)DumpOps,path);
 }
 
 static	void

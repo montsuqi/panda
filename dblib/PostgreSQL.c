@@ -259,7 +259,7 @@ dbgmsg(">GetTable");
 		dbgmsg("int");
 		fnum = PQfnumber(res,ItemName());
 		if		(  fnum  >=  0  ) {
-			SetValueInteger(val,*(int *)PQgetvalue(res,0,fnum));
+			SetValueInteger(val,atoi((char *)PQgetvalue(res,0,fnum)));
 		}
 		break;
 	  case	GL_TYPE_BOOL:
@@ -618,6 +618,7 @@ dbgmsg(">ExecPGSQL");
 	items = 0;
 	tuple = NULL;
 	fIntoAster = FALSE;
+dbgprintf("length = %d\n",LBS_Size(src));
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
 		if		(  c  < 0x7F  ) {
 			p += sprintf(p,"%c",c);
@@ -715,6 +716,7 @@ dbgmsg(">ExecPGSQL");
 				}
 				break;
 			  default:
+				dbgprintf("[%X]\n",c);
 				break;
 			}
 		}

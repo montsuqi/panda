@@ -77,10 +77,9 @@ ENTER_FUNC;
 	GetSymbol; 
 	if		(	(  D_Token  ==  T_SYMBOL  )
 			||	(  D_Token  ==  T_SCONST  ) ) {
-		if		(  g_hash_table_lookup(Handler,D_ComSymbol)  ==  NULL  ) {
+		if		(  ( handler = (MessageHandler *)g_hash_table_lookup(Handler,D_ComSymbol) )
+				   ==  NULL  ) {
 			handler = NewMessageHandler(D_ComSymbol,NULL);
-		} else {
-			Error("handler name duplicate");
 		}
 		if		(  GetSymbol  ==  '{'  ) {
 			while	(  GetSymbol  !=  '}'  ) {

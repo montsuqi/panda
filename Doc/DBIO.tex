@@ -24,6 +24,7 @@
 \item	現在のところデータは文字列にエンコードされる通信方法のみが実装
 	されている
 \item	全ての伝送される文字列はURL encodeによりエンコードされる
+\item	NULL値は文字0x01によって表現される。この文字もURL encodeの対象となる
 \end{itemize}
 
 \subsection{セションの流れ}
