@@ -66,6 +66,7 @@
 #undef	USE_PTY
 #undef	USE_IPv6
 #undef	USE_SSL
+#undef	USE_MSGD
 #undef	OKI
 #undef	HAVE_DOTCOBOL
 #undef	HAVE_OPENCOBOL

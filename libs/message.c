@@ -24,10 +24,9 @@ copies.
 #define	TRACE
 */
 
-/*
-*/
-#define		USE_MSGD
-
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 #include	<stdio.h>
 #include	<sys/time.h>
 #include	<time.h>
@@ -38,9 +37,9 @@ copies.
 #include	<string.h>
 #include	<stdarg.h>
 #include	<stdlib.h>
-#include	"const.h"
-#ifdef	USE_MSGD
 #include	"libmondai.h"
+#ifdef	USE_MSGD
+#include	"const.h"
 #include	"tcp.h"
 #include	"net.h"
 #endif

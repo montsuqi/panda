@@ -265,6 +265,17 @@ AC_ARG_WITH(oki,
 )		
 
 dnl ***************************************************************************
+dnl use msgd for message output
+dnl ***************************************************************************
+
+AC_ARG_WITH(msgd,
+	[  --with-msgd	use msgd],
+	if test x$withval = xyes; then
+		AC_DEFINE(USE_MSGD)
+	fi
+)		
+
+dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the glib modules.
 dnl ***************************************************************************
 

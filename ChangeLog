@@ -1,3 +1,7 @@
+2003-06-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: msgdを使うかどうかの選択
+
 2003-06-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/message.c (InitMessage): msgdに出力する機能
