@@ -86,10 +86,10 @@ ENTER_FUNC;
         script_name = "mon.cgi";
     }
 	HTCLexInit();
+	JslibInit();
 	TagsInit(script_name);
 	Codeset = "utf-8";
 	_GetValue = func;
 LEAVE_FUNC;
 }
-
 

@@ -1233,7 +1233,7 @@ SyncObject(
 	OsekiSession	*state)
 {
 ENTER_FUNC;
-	xfree(ent->buff);
+	CloseEntry(state,ent,*obj);
 	xfree(ent);
 LEAVE_FUNC;
 }
@@ -1289,7 +1289,6 @@ FreeObject(
 	OsekiSession	*state)
 {
 ENTER_FUNC;
-	xfree(ent->buff);
 	xfree(ent);
 LEAVE_FUNC;
 }

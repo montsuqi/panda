@@ -27,6 +27,13 @@ typedef	struct _Tag	{
 	GHashTable	*args;
 }	Tag;
 
+typedef	struct _Js	{
+	char	*name;
+	char	*body;
+	Bool	fUse;
+	Bool	fFile;
+}	Js;
+
 typedef	struct {
 	char	*name;
 	Bool	fPara;
@@ -42,11 +49,15 @@ typedef	struct {
 #endif
 
 GLOBAL	GHashTable	*Tags;
+GLOBAL	GHashTable	*Jslib;
 
 #undef	GLOBAL
 
 extern	void	TagsInit(char *);
 extern	void	EmitCode(HTCInfo *htc, byte code);
 extern	void	ExpandAttributeString(HTCInfo *htc, char *para);
+
+extern	void	JslibInit(void);
+extern	void	InvokeJs(char *name);
 
 #endif

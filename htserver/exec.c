@@ -435,6 +435,47 @@ EmitWithEscape(LargeByteString *lbs, char *str)
 	}
 }
 
+static	void
+OutputJs(
+	LargeByteString	*html)
+{
+	void	_OutJs(
+		char	*name,
+		Js		*js)
+	{
+		if		(	(  js->fUse   )
+				&&	(  !js->fFile  ) ) {
+			LBS_EmitString(html,js->body);
+		}
+	}
+	void	_OutJsFile(
+		char	*name,
+		Js		*js)
+	{
+		char	buff[SIZE_BUFF];
+
+		if		(	(  js->fUse   )
+				&&	(  js->fFile  ) ) {
+			sprintf(buff,
+					"\n<script language=\"javascript\" "
+					"type=\"text/javascript\" "
+					"src=\"%s\"></script>\n",
+					js->body);
+			LBS_EmitString(html,buff);
+		}
+	}
+
+ 	g_hash_table_foreach(Jslib,(GHFunc)_OutJsFile,NULL);
+	LBS_EmitString(html,
+				   "\n<script language=\"javascript\" "
+				   "type=\"text/javascript\">\n"
+				   "<!--\n");
+ 	g_hash_table_foreach(Jslib,(GHFunc)_OutJs,NULL);
+	LBS_EmitString(html,
+				   "\n-->\n"
+				   "</script>\n");
+}
+
 extern	void
 ExecCode(
 	LargeByteString	*html,
@@ -615,6 +656,10 @@ ENTER_FUNC;
 				TOP(2).body.ival = TOP(2).body.ival - TOP(1).body.ival;
 				(void)Pop;
 				break;
+			  case	OPC_SCMP:
+				TOP(2).body.ival = strcmp(TOP(2).body.str,TOP(1).body.str);
+				(void)Pop;
+				break;
 			  case OPC_LOCURI:
 			    {
                     int len;
@@ -682,6 +727,9 @@ ENTER_FUNC;
 				  yy = Pop.body.ival;
 				  ExecCalendar(html,yy,mm,dd,year,month,day);
 			  }
+				break;
+			  case	OPC_FLJS:
+				OutputJs(html);
 				break;
 			  default:
 				fprintf(stderr,"invalid opcode\n");
@@ -779,4 +827,3 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(event);
 }
-

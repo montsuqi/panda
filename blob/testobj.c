@@ -81,7 +81,6 @@ main(
 			buff[j] = (j+i)%64+32;
 		}
 		printf("buff = [%s]\n",buff);
-		//obj[i] = InitiateObject(ses,buff,strlen(buff)+1);
 		obj[i] = InitiateObject(ses,buff,SIZE_LONGNAME+1);
 	}
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {

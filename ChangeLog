@@ -1,3 +1,15 @@
+2004-10-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c (_Button): stateの処理を正しくした
+
+	* tools/htcgen.xsl: メニューバー対応
+
+	* htserver/exec.c (ExecCode): 文字列比較命令、Javascript出力命令
+
+2004-10-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/htctest.c: HTCをチェックするユーティリティ
+
 2004-10-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* blob/storage.c: tree allocation

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = mon
+bin_PROGRAMS = mon htctest
 sbin_PROGRAMS = htserver
 
 htserver_LDFLAGS	=	-export-dynamic
@@ -14,6 +14,14 @@ htserver_LDADD 		=					\
 	$(top_builddir)/libs/libpandacom.la
 
 mon_LDADD 		=						\
+	-lm									\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)						\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
+
+htctest_LDADD 	=						\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
@@ -52,3 +60,18 @@ mon_SOURCES	=	\
 mon_DEPENDENCIES	=				\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la
+
+htctest_SOURCES	=	\
+	cgi.c		cgi.h		\
+	multipart.c	multipart.h	\
+	HTClex.c	HTClex.h	\
+	HTCparser.c	HTCparser.h	\
+	tags.c		tags.h		\
+	exec.c		exec.h		\
+	htc.c		htc.h		\
+	htctest.c	htctest.h
+
+htctest_DEPENDENCIES	=				\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
+

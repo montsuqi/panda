@@ -50,6 +50,9 @@ copies.
 #define	OPC_TOINT		0x1A
 #define	OPC_SUB			0x1B
 #define	OPC_SPY			0x1C
+#define	OPC_SCMP		0x1D
+
+#define	OPC_FLJS		0x7F
 
 #undef	GLOBAL
 #ifdef	MAIN
