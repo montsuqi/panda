@@ -20,12 +20,10 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_INC_DIALOGS_H
-#define	_INC_DIALOGS_H
+#ifndef	_INC_FILEENTRY_H
+#define	_INC_FILEENTRY_H
 
-GtkWidget* message_dialog( const char *message, gboolean message_type);
-#ifdef USE_GNOME
-GtkWidget* question_dialog(	const char *message);
+#ifdef	USE_GNOME
+extern void browse_clicked(GnomeFileEntry *fentry, gpointer data);
 #endif
-
 #endif

@@ -40,11 +40,9 @@ message_dialog(
 #ifdef USE_GNOME
 	GtkWidget *dialog, *button;
 	if (message_type){
-		dialog = gnome_message_box_new (message, GNOME_MESSAGE_BOX_GENERIC,
-										GNOME_STOCK_BUTTON_OK, NULL);
+		dialog = gnome_ok_dialog(message);
 	} else {
-		dialog = gnome_message_box_new (message, GNOME_MESSAGE_BOX_ERROR,
-										GNOME_STOCK_BUTTON_OK, NULL);
+		dialog = gnome_error_dialog(message);
 	}
 	button = GNOME_DIALOG (dialog)->buttons->data;
 	gtk_widget_grab_focus (button);
@@ -75,3 +73,27 @@ message_dialog(
 #endif
 	return (dialog);
 }
+
+#ifdef USE_GNOME
+static void
+question_clicked(GtkWidget *widget, int button,gpointer data)
+{
+	gnome_dialog_close(GNOME_DIALOG(widget));
+}
+
+GtkWidget*
+question_dialog(
+	const char *message)
+{
+	GtkWidget *dialog, *button;
+	dialog = gnome_message_box_new (message, GNOME_MESSAGE_BOX_QUESTION,
+										GNOME_STOCK_BUTTON_OK, 
+									    GNOME_STOCK_BUTTON_NO, NULL);
+	gtk_signal_connect (GTK_OBJECT (dialog), "clicked",
+						GTK_SIGNAL_FUNC (question_clicked), NULL);
+
+	button = GNOME_DIALOG (dialog)->buttons->data;
+	gtk_widget_grab_focus (button);
+	return (dialog);
+}
+#endif

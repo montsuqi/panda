@@ -9,9 +9,10 @@ glclient_SOURCES =				\
 	protocol.c	protocol.h		\
 	callbacks.c	callbacks.h		\
 	widgetOPS.c	widgetOPS.h		\
-	styleLex.c styleLex.h			\
-	styleParser.c styleParser.h		\
-	dialogs.c dialogs.h
+	styleLex.c	styleLex.h		\
+	styleParser.c	styleParser.h		\
+	dialogs.c	dialogs.h		\
+	fileEntry.c	fileEntry.h
 
 glclient_DEPENDENCIES =				\
 	$(top_builddir)/libs/libpandamisc.la	\
@@ -40,11 +41,19 @@ glclient_LDADD =				\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandagl.la
 
-noinst_PROGRAMS = testdialogs
+noinst_PROGRAMS = testdialogs testfileentry
 
-test: testdialogs
+test: testdialogs testfileentry
 
 testdialogs_LDADD =\
 	$(GTK_LIBS) \
 	$(GLADE_LIBS) \
 	dialogs.o
+
+testfileentry_LDADD =\
+	$(GTK_LIBS) \
+	$(GLADE_LIBS) \
+	$(MONDAI_LIBS) \
+	dialogs.o \
+	fileEntry.o
+

@@ -55,7 +55,7 @@ copies.
 #include	"protocol.h"
 #include	"widgetOPS.h"
 #include	"action.h"
-#include	"dialogs.h"
+#include	"fileEntry.h"
 #include	"debug.h"
 
 static	GHashTable		*ValueTable = NULL;
@@ -387,41 +387,19 @@ LEAVE_FUNC;
 	return	(TRUE);
 }
 
-static Bool
-SaveFile(
-	char *name,
-    LargeByteString *binary)
-{
-    FILE *file;
-    gboolean rc = FALSE;
-
-ENTER_FUNC;
-	if	((file = fopen(name,"wb")) != NULL) {
-		fchmod(fileno(file), 0600);
-		fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
-		fclose(file);
-		rc = TRUE;
-	}
-LEAVE_FUNC;
-	return (rc);
-}
-
 static	Bool
 RecvFileEntry(
 	GtkWidget	*widget,
 	NETFILE	*fp)
 {
 	char	name[SIZE_BUFF]
-	,		buf[SIZE_BUFF]
-	,		*filename
 	,		*longname;
 	int		nitem
 	,		i;
-	GtkWidget	*dialog, *subWidget;
-    LargeByteString *binary;
+	GtkWidget	*window, *subWidget;
+    LargeByteString *binary = NULL;
 
 ENTER_FUNC;
-	longname = WidgetName + strlen(WidgetName);
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -429,25 +407,26 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"objectdata")  ) {
 				binary = NewLBS();
 				RecvBinaryData(fp, binary);
-				filename = (char *)gnome_file_entry_get_full_path(GNOME_FILE_ENTRY(widget), FALSE);
-				if ( (LBS_Size(binary) > 0) && (filename)) {
-					if (SaveFile(filename, binary)) {
-						snprintf(buf, sizeof(buf), "%s 書き込み終了", filename);
-						dialog = message_dialog(buf, TRUE);
-					} else {
-						snprintf(buf, sizeof(buf), "%s ファイルに書き込めませんでした\n %s", filename, strerror(errno));
-						Warning(buf);
-						dialog = message_dialog(buf, FALSE);
-					}
-					gtk_window_set_transient_for (GTK_WINDOW (dialog),
-						GTK_WINDOW (gtk_widget_get_toplevel(widget)));
-					gtk_widget_show (dialog);
-				}
-				FreeLBS(binary);
 			} else {
+				longname = WidgetName + strlen(WidgetName);
 				sprintf(longname,".%s",name);
-				subWidget = gnome_file_entry_gtk_entry(GNOME_FILE_ENTRY(widget));
+				subWidget = gnome_file_entry_gtk_entry(
+						                    GNOME_FILE_ENTRY(widget));
 				RecvEntry(subWidget,fp);
+			}
+		}
+		if ( binary ) {
+			if ( LBS_Size(binary) > 0 ) {
+				gtk_object_set_data(GTK_OBJECT(widget), "recvobject", binary);
+				window = gtk_widget_get_toplevel(widget);
+				gtk_signal_connect_after(GTK_OBJECT(widget),
+										 "browse_clicked",
+										 GTK_SIGNAL_FUNC(browse_clicked),
+										 window);
+				gtk_signal_emit_by_name (GTK_OBJECT (widget),
+										 "browse_clicked");
+			} else {
+				FreeLBS(binary);
 			}
 		}
 	}

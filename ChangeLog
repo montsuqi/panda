@@ -1,3 +1,12 @@
+2005-02-24  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/fileEntry.[ch]: GnomeFileEntry の動作を変更追加。
+	  既にファイルがあった場合の確認追加
+	* glclient/widgetOPS.c (RecvFileEntry): ファイルが送られてきたら
+	  FileSelectionダイアログを開くように変更
+	* glclient/dialogs.c (question_dialog): Yes/No の確認ダイアログ
+	  の追加(GNOME ライブラリが必要)
+
 2005-02-21  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/OpenCOBOL.c aps/aps_main.c aps/handler.c glserver/glcomm.c
