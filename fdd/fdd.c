@@ -173,7 +173,7 @@ Process(
 	ac = fdd_system(name, command, tempname, filename);
 	unlink(tempname);
 	if ( ac == -1){
-			SendChar(fpComm,-1);
+			SendChar(fpComm,127);
 	} else {
 			SendChar(fpComm,WEXITSTATUS(ac));
 	}
