@@ -929,6 +929,7 @@ ImportFile(
 	char	vname[SIZE_LONGNAME];
 
 ENTER_FUNC;
+ dbgprintf("file = [%s]\n",name);
 	if		(  ( fd = open(name,O_RDONLY ) )  >=  0  ) {
 		fstat(fd,&sb);
 		if		(  S_ISREG(sb.st_mode)  ) {
