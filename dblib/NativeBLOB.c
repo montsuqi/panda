@@ -410,6 +410,7 @@ ENTER_FUNC;
 				&&	(  ( f   = GetItemLongName(rec->value,"file") )    !=  NULL  ) ) {
 			if		(  RequestImportBLOB((NETFILE*)dbg->conn,APS_BLOB,
 										 ValueObject(obj),ValueToString(f,NULL))  ) {
+                ValueIsNonNil(obj);
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;

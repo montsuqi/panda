@@ -1,3 +1,7 @@
+2004-08-04  Kouji TAKAO  <kouji@netlab.jp>
+
+	* dblib/NativeBLOB.c (_ImportBLOB): "object"の更新もれによるバグを修正
+
 2004-08-03  Kouji TAKAO  <kouji@netlab.jp>
 
 	* wfc/wfc.c (ExecuteServer): pselect(2)の引数のバグを修正
