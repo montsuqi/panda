@@ -29,11 +29,13 @@ copies.
 #define	FETURE_I18N		(byte)0x0002
 #define	FETURE_EXPAND	(byte)0x0004
 #define	FETURE_BLOB		(byte)0x0008
+#define	FETURE_OLD		(byte)0x0020
 
 #define	fFetureCore		((TermFeture & FETURE_CORE) != 0)
 #define	fFetureBlob		((TermFeture & FETURE_BLOB) != 0)
 #define	fFetureExpand	((TermFeture & FETURE_EXPAND) != 0)
 #define	fFetureI18N		((TermFeture & FETURE_I18N) != 0)
+#define	fFetureOld		((TermFeture & FETURE_OLD) != 0)
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -1,3 +1,8 @@
+2004-02-19  Noboru Saitou  <noboru@netlab.jp>
+
+	* glserver/glcomm.c: glclient Ver 1.1.1への対応(glclient for Win32用)
+	  (backport from HEAD)
+	
 2004-02-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/wfc.c, wfc/mqthread.c, wfc/termthread.c, tools/monitor.c:

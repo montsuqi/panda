@@ -67,6 +67,21 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
+#define	GL_OLDTYPE_INT			(PacketDataType)0x10
+#define	GL_OLDTYPE_BOOL			(PacketDataType)0x11
+#define	GL_OLDTYPE_FLOAT		(PacketDataType)0x20
+#define	GL_OLDTYPE_CHAR			(PacketDataType)0x30
+#define	GL_OLDTYPE_TEXT			(PacketDataType)0x31
+#define	GL_OLDTYPE_VARCHAR		(PacketDataType)0x32
+#define	GL_OLDTYPE_BYTE			(PacketDataType)0x40
+#define	GL_OLDTYPE_NUMBER		(PacketDataType)0x50
+#define	GL_OLDTYPE_DBCODE		(PacketDataType)0x60
+#define	GL_OLDTYPE_ARRAY		(PacketDataType)0x90
+#define	GL_OLDTYPE_RECORD		(PacketDataType)0xA0
+
+static	PacketDataType	ToOldType[256];
+static	PacketDataType	ToNewType[256];
+
 static	LargeByteString	*Buff;
 
 static	void
@@ -220,6 +235,31 @@ dbgmsg(">CheckScreens");
 dbgmsg("<CheckScreens");
 }
 
+static	void
+GL_SendDataType(
+	NETFILE	*fp,
+	PacketClass	c)
+{
+	if		(  fFetureOld  ) {
+		c = ToOldType[c];
+	}
+	SendDataType(fp,c);
+}
+
+extern	PacketDataType
+GL_RecvDataType(
+	NETFILE	*fp)
+{
+	PacketClass	c;
+
+	c = RecvDataType(fp);
+	if		(  fFetureOld  ) {
+		c = ToNewType[c];
+	}
+	return	(c);
+}
+
+
 /*
  *	This function sends value with valiable name.
  */
@@ -232,7 +272,7 @@ SendValue(
 	int		i;
 
 	ValueIsNotUpdate(value);
-	SendDataType(fp,ValueType(value));
+	GL_SendDataType(fp,ValueType(value));
 	switch	(ValueType(value)) {
 	  case	GL_TYPE_INT:
 		SendInt(fp,ValueInteger(value));
@@ -273,8 +313,21 @@ SendValue(
 	  case	GL_TYPE_RECORD:
 		SendInt(fp,ValueRecordSize(value));
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			SendString(fp,ValueRecordName(value,i));
-			SendValue(fp,ValueRecordItem(value,i),coding);
+			if		(  fFetureOld  ) {
+				if		(	(  stricmp(ValueRecordName(value,i),"row")      ==  0  )
+						||	(  stricmp(ValueRecordName(value,i),"column")   ==  0  ) )	{
+					SendString(fp,ValueRecordName(value,i));
+				} else
+				if		(  stricmp(ValueRecordName(value,i),"rowattr")  ==  0  ) {
+					SendString(fp,"row");
+				} else {
+					SendString(fp,ValueRecordName(value,i));
+					SendValue(fp,ValueRecordItem(value,i),coding);
+				}
+			} else {
+				SendString(fp,ValueRecordName(value,i));
+				SendValue(fp,ValueRecordItem(value,i),coding);
+			}
 		}
 		break;
 	  default:
@@ -405,7 +458,7 @@ dbgmsg(">RecvScreenData");
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
 					ValueIsUpdate(value);
-					type = RecvDataType(fpComm);	ON_IO_ERROR(fpComm,badio);
+					type = GL_RecvDataType(fpComm);	ON_IO_ERROR(fpComm,badio);
 					switch	(type)	{
 					  case	GL_TYPE_CHAR:
 					  case	GL_TYPE_VARCHAR:
@@ -503,9 +556,13 @@ CheckFeture(
 		,	*n;
 
 	TermFeture = FETURE_NULL;
-	if		(	(  strlcmp(ver,"1.2")    ==  0  )
+	if		(	(  strlcmp(ver,"1.2")    ==  0  ) ) {
+		TermFeture |= FETURE_CORE;
+	} else
+	if		(	(  strlcmp(ver,"1.1.1")  ==  0  ) 
 			||	(  strlcmp(ver,"1.1.2")  ==  0  ) ) {
 		TermFeture |= FETURE_CORE;
+		TermFeture |= FETURE_OLD;
 	} else
 	if		(  !strlicmp(ver,"symbolic")  ) {
 		TermFeture = FETURE_CORE;
@@ -531,10 +588,13 @@ CheckFeture(
 			}
 		}
 	}
+#if 1
 	printf("core   = %s\n",fFetureCore ? "YES" : "NO");
 	printf("i18n   = %s\n",fFetureI18N ? "YES" : "NO");
 	printf("expand = %s\n",fFetureExpand ? "YES" : "NO");
 	printf("blob   = %s\n",fFetureBlob ? "YES" : "NO");
+	printf("old    = %s\n",fFetureOld ? "YES" : "NO");
+#endif
 }
 
 static	void
@@ -706,6 +766,45 @@ dbgmsg("<InitData");
 }
 
 extern	void
+InitGL_Comm(void)
+{
+	int		i;
+
+	Buff = NewLBS();
+#define	TO_OLDTYPE(t)	ToOldType[GL_TYPE_##t] = GL_OLDTYPE_##t
+#define	TO_NEWTYPE(t)	ToNewType[GL_OLDTYPE_##t] = GL_TYPE_##t
+
+	for	( i = 0 ; i < 256 ; i ++ ) {
+		ToOldType[i] = GL_TYPE_NULL;
+		ToNewType[i] = GL_TYPE_NULL;
+	}
+
+	TO_OLDTYPE(INT);
+	TO_OLDTYPE(BOOL);
+	TO_OLDTYPE(FLOAT);
+	TO_OLDTYPE(CHAR);
+	TO_OLDTYPE(TEXT);
+	TO_OLDTYPE(VARCHAR);
+	TO_OLDTYPE(BYTE);
+	TO_OLDTYPE(NUMBER);
+	TO_OLDTYPE(DBCODE);
+	TO_OLDTYPE(ARRAY);
+	TO_OLDTYPE(RECORD);
+
+	TO_NEWTYPE(INT);
+	TO_NEWTYPE(BOOL);
+	TO_NEWTYPE(FLOAT);
+	TO_NEWTYPE(CHAR);
+	TO_NEWTYPE(TEXT);
+	TO_NEWTYPE(VARCHAR);
+	TO_NEWTYPE(BYTE);
+	TO_NEWTYPE(NUMBER);
+	TO_NEWTYPE(DBCODE);
+	TO_NEWTYPE(ARRAY);
+	TO_NEWTYPE(RECORD);
+}
+
+extern	void
 InitSystem(
 	int		argc,
 	char	**argv)
@@ -713,6 +812,7 @@ InitSystem(
 dbgmsg(">InitSystem");
 	InitNET();
 	InitData();
+	InitGL_Comm();
 	ApplicationsInit(argc,argv);
 	Buff = NewLBS();
 dbgmsg("<InitSystem");
