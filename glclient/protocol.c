@@ -61,6 +61,7 @@ copies.
 #include	"callbacks.h"
 #include	"widgetOPS.h"
 #include	"dialogs.h"
+#include	"dialogs.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -1003,6 +1004,7 @@ RecvFixedData(
 		ret = FALSE;
 		exit_dialog("invalid data conversion");
 		break;
+		exit_dialog("invalid data conversion");
 	}
 	return	(ret);
 }

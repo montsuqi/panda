@@ -55,6 +55,7 @@ copies.
 static char *timeout_event;
 static gint timeout_hander_id = 0;
 static GSList *event_list;
+static GSList *event_list;
 
 extern	gboolean
 select_all(
@@ -121,6 +122,17 @@ press_filter(
 	}
 	return	(rc);
 }
+static gint
+key_press_event (GtkWidget *widget, GdkEventKey *event)
+{
+	event_list = g_slist_append(event_list, event);
+	if ((event->keyval >= 0x20) && (event->keyval <= 0xFF)){
+		printf("%c\n", event->keyval);
+	}
+	
+	return TRUE;
+}
+
 
 static gint
 key_press_event (GtkWidget *widget, GdkEventKey *event)
@@ -322,9 +334,10 @@ entry_next_focus(
 	char		*next)
 {	
 	GtkWidget	*nextWidget;
-	GtkWidget	*window;
+	GtkWidget	*window, *event_widget;
 	char		*wname;
 	XML_Node	*node;
+
 
 	window = gtk_widget_get_toplevel(GTK_WIDGET(entry));
 	wname = gtk_widget_get_name(window);
@@ -350,6 +363,7 @@ entry_changed(
 	UpdateWidget((GtkWidget *)entry,NULL);
 }
 
+		/* show busy cursor */
 extern	void
 text_changed(
 	GtkWidget	*entry,
@@ -370,7 +384,13 @@ extern	void
 selection_changed(
 	GtkWidget	*entry,
 	gpointer	user_data)
+				event_widget = gtk_event_box_new ();
+				gtk_signal_connect (GTK_OBJECT (event_widget), 
+									"key_press_event",
+									(GtkSignalFunc) key_press_event, NULL);
+				gtk_grab_add(event_widget);
 {
+				gtk_grab_remove(event_widget);
 	UpdateWidget((GtkWidget *)entry,user_data);
 }
 
@@ -378,6 +398,7 @@ extern	void
 click_column(
 	GtkWidget	*button,
 	gpointer	user_data)
+	
 {
 	UpdateWidget((GtkWidget *)button,user_data);
 }
