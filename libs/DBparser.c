@@ -214,6 +214,7 @@ DB_Parse(
 	,		pcount;
 	PathStruct		**path;
 	LargeByteString	**ops;
+	char	buff[SIZE_LONGNAME+1];
 
 dbgmsg(">DB_Parse");
 	ret = DD_Parse();
@@ -229,18 +230,16 @@ dbgmsg(">DB_Parse");
 		  case	T_USE:
 			switch	(GetName) {
 			  case	T_SYMBOL:
-				if		(  GetName  ==  T_SYMBOL  ) {
-					char	buff[SIZE_LONGNAME+1];
-					sprintf(buff,"%s.db",ComSymbol);
-					use = DB_Parser(name);
-					EnterUse(ret,use->name,use);
+				sprintf(buff,"%s.db",ComSymbol);
+				use = ParseRecordFile(buff);
+				if		(  use  ==  NULL  ) {
+					Error("define not found");
 				} else {
-					Error("invalid token in use statement");
+					EnterUse(ret,use->name,use);
 				}
-				break;
-			  case	'{':
-				use = DB_Parse(name);
-				EnterUse(ret,use->name,use);
+				if		(  GetSymbol  !=  ';'  ) {
+					Error("use statement error");
+				}
 				break;
 			  default:
 				Error("use invalid symbol");
@@ -325,6 +324,62 @@ dbgmsg("<DB_Parse");
 }
 
 
+static	void
+ResolveAlias(
+	RecordStruct	*root,
+	ValueStruct		*val)
+{
+	char		*name;
+	int			i;
+	char		*p;
+	RecordStruct	*use;
+	ValueStruct		*item;
+
+ENTER_FUNC;
+	if		(  val  !=  NULL  ) {
+		switch	(val->type) {
+		  case	GL_TYPE_ARRAY:
+			for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
+				ResolveAlias(root,ValueArrayItem(val,i));
+			}
+			break;
+		  case	GL_TYPE_RECORD:
+			for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
+				item = ValueRecordItem(val,i);
+				if		(  ValueType(item)  ==  GL_TYPE_ALIAS  ) {
+					name = ValueAliasName(item);
+					if		(  ( p = strchr(name,'.') )  !=  NULL  ) {
+						*p = 0;
+						if		(  ( use = g_hash_table_lookup(root->opt.db->use,name) )
+								   !=  NULL  ) {
+							ValueRecordItem(val,i) = GetItemLongName(use->value,p+1);
+							xfree(name);
+							xfree(item);
+							ValueAttribute(ValueRecordItem(val,i)) |= GL_ATTR_ALIAS;
+						} else {
+							printf("alias table not found [%s]\n",name);
+						}
+					}
+				} else {
+					ResolveAlias(root,item);
+				}
+			}
+			break;
+		  case	GL_TYPE_ALIAS:
+			break;
+		  case	GL_TYPE_BYTE:
+		  case	GL_TYPE_CHAR:
+		  case	GL_TYPE_VARCHAR:
+		  case	GL_TYPE_DBCODE:
+		  case	GL_TYPE_TEXT:
+		  case	GL_TYPE_NUMBER:
+		  default:
+			break;
+		}
+	}
+LEAVE_FUNC;
+}	
+
 extern	RecordStruct	*
 DB_Parser(
 	char	*name)
@@ -337,6 +392,7 @@ ENTER_FUNC;
 		if		(  PushLexInfo(name,RecordDir,Reserved)  !=  NULL  ) {
 			ret = DB_Parse(name);
 			DropLexInfo();
+			ResolveAlias(ret,ret->value);
 		} else {
 			ret = NULL;
 		}

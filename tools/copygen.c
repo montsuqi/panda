@@ -42,6 +42,7 @@ copies.
 #include	"const.h"
 #include	"enum.h"
 #include	"wfc.h"
+#include	"DBparser.h"
 #include	"directory.h"
 #include	"driver.h"
 #include	"dirs.h"
@@ -284,6 +285,7 @@ _COBOL(
 		}
 		level --;
 		break;
+	  case	GL_TYPE_ALIAS:
 	  default:
 		break;
 	}
@@ -319,12 +321,13 @@ static	void
 MakeFromRecord(
 	char	*name)
 {
-	ValueStruct	*value;
+	RecordStruct	*rec;
 
 dbgmsg(">MakeFromRecord");
 	level = 1;
 	DD_ParserInit();
-	if		(  ( value = DD_ParseValue(name) )  !=  NULL  ) {
+	DB_ParserInit();
+	if		(  ( rec = DB_Parser(name) )  !=  NULL  ) {
 		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
 			PutString(ValueName);
@@ -333,9 +336,9 @@ dbgmsg(">MakeFromRecord");
 		}
 		if		(  fFiller  ) {
 			printf(".\n");
-			SIZE(Conv,value);
+			SIZE(Conv,rec->value);
 		} else {
-			COBOL(Conv,value);
+			COBOL(Conv,rec->value);
 		}
 		printf(".\n");
 	}

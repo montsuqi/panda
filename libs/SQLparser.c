@@ -75,6 +75,9 @@ ParSQL(
 	int		into;
 	int		n;
 	Bool	fInsert;
+	char		*name;
+	char		*p;
+	RecordStruct	*use;
 
 dbgmsg(">ParSQL");
 	sql = NewLBS();
@@ -175,6 +178,21 @@ dbgmsg(">ParSQL");
 						break;
 					}
 				}	while	(  ComToken  ==  T_SYMBOL  );
+				if		(  ValueType(val)  ==  GL_TYPE_ALIAS  ) {
+					name = ValueAliasName(val);
+					if		(  *name  !=  '.'  ) {
+						if		(  ( p = strchr(name,'.') )  !=  NULL  ) {
+							*p = 0;
+							if		(  ( use = g_hash_table_lookup(rec->opt.db->use,name) )
+									   !=  NULL  ) {
+								val = GetItemLongName(use->value,p+1);
+							} else {
+								printf("alias table not found [%s]\n",name);
+							}
+							*p = '.';
+						}
+					}
+				}
 				LBS_EmitPointer(sql,(void *)val);
 				if		(  ComToken  ==  ','  ) {
 					if		(  !fInto  ) {

@@ -68,7 +68,7 @@ ParseRecordFile(
 	RecordStruct	*ret;
 	ValueStruct		*value;
 
-dbgmsg(">Parse");
+ENTER_FUNC;
 	if		(  ( value = DD_ParseValue(name) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
@@ -77,7 +77,7 @@ dbgmsg(">Parse");
 	} else {
 		ret = NULL;
 	}
-dbgmsg("<Parse");
+LEAVE_FUNC;
 	return	(ret);
 }
 

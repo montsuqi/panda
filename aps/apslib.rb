@@ -130,7 +130,7 @@ class PandaTable < PandaDB
 	str  = "dbctrl.rc=0&";
 	str += "dbctrl.rname=" + @name;
 	@db.fpDBW.printf("%s\n",str);
-$stderr.printf(">>%s\n",str);
+#$stderr.printf(">>%s\n",str);
 	@db.fpDBW.flush;
 	@line = @db.fpDBR.gets.chop;
 	unPack;
@@ -142,10 +142,10 @@ $stderr.printf(">>%s\n",str);
 	str += "dbctrl.pname=" + pname + "&";
 	str += pack;
 	@db.fpDBW.printf("%s\n",str);
-$stderr.printf(">>%s\n",str);
+#$stderr.printf(">>%s\n",str);
 	@db.fpDBW.flush;
 	@line = @db.fpDBR.gets.chop;
-$stderr.printf("<<%s\n",@line);
+#$stderr.printf("<<%s\n",@line);
 	unPack;
   end
 end
@@ -188,3 +188,11 @@ class PandaDC < PandaCore
   WidgetInSensitive = 4;
 end
 
+class PandaBatch < PandaCore
+  def initialize
+	@db = PandaDB.new;
+  end
+  def run
+	start(@db);
+  end
+end

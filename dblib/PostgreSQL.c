@@ -254,7 +254,7 @@ GetTable(
 dbgmsg(">GetTable");
 	if		(  val  ==  NULL  )	return;
 
-	switch	(val->type) {
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
 		dbgmsg("int");
 		fnum = PQfnumber(res,ItemName());
@@ -311,6 +311,9 @@ dbgmsg(">GetTable");
 		}
 		dbgmsg("<record");
 		level --;
+		break;
+	  case	GL_TYPE_ALIAS:
+		printf("invalid data type\n");
 		break;
 	  default:
 		break;

@@ -216,7 +216,7 @@ static	TokenTable	tokentable[] = {
 	{	"COMMITTED",	T_SQL	},
 	{	"SERIALIZABLE",	T_SQL	},
 	{	"TYPE_P",		T_SQL 	},
-	/*	Postvres	*/
+	/*	Postgres	*/
 	{	"ABORT_TRANS",	T_SQL	},
 	{	"ACCESS",		T_SQL	},
 	{	"AFTER",		T_SQL	},
