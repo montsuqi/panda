@@ -445,7 +445,7 @@ dbgmsg(">RecvText");
 				RecvStringData(fp,buff);
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
-				switch	(RecvDataType(fp)) {
+				switch	(DataType = RecvDataType(fp)) {
 				  case	GL_TYPE_INT:
 					sprintf(buff,"%d",RecvInt(fp));
 					break;

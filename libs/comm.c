@@ -110,6 +110,7 @@ RecvDataType(
 	PacketClass	c;
 
 	c = ngetc(fp);
+	DataType = c;
 #ifdef	DEBUG
 	printf("RecvDataType = %X\n",c);
 #endif
