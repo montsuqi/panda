@@ -329,6 +329,14 @@ td {
         <xsl:value-of select="./name"/>
         <xsl:text>.value</xsl:text>
       </xsl:attribute>
+      <xsl:if test="./signal[name='activate']">
+        <xsl:attribute name="onchange">
+          <xsl:text>?</xsl:text>
+          <xsl:value-of select="./signal[name = 'activate']/data"/>
+          <xsl:text>:</xsl:text>
+          <xsl:value-of select="./name"/>
+        </xsl:attribute>
+      </xsl:if>
       <xsl:choose>
         <xsl:when test="./width">
           <xsl:attribute name="size">

@@ -847,6 +847,7 @@ ENTER_FUNC;
 	JavaScriptEvent(htc, tag, "onkeydown");
 	JavaScriptEvent(htc, tag, "onkeypress");
 	JavaScriptEvent(htc, tag, "onkeyup");
+	JavaScriptEvent(htc, tag, "onmouseover");
 	JavaScriptEvent(htc, tag, "onmousedown");
 	JavaScriptEvent(htc, tag, "onmousemove");
 	JavaScriptEvent(htc, tag, "onmouseout");

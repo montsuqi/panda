@@ -1117,6 +1117,7 @@ _EXEC(
 				   ==  PGRES_BAD_RESPONSE    )
 			||	(  status  ==  PGRES_FATAL_ERROR     )
 			||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
+		fprintf(stderr,"%s",PQerrorMessage(PGCONN(dbg)));
 		dbgmsg("NG");
 		rc = MCP_BAD_OTHER;
 		_PQclear(res);

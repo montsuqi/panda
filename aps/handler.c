@@ -633,7 +633,7 @@ MakeCTRLbyName(
 	ctrl->pno = 0;
 	ctrl->blocks = 0;
 
-	value = NULL;
+	*value = NULL;
 	if		(	(  rname  !=  NULL  )
 			&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 		ctrl->rno = rno - 1;
