@@ -57,8 +57,12 @@ SetValueOid(
 	DBG_Struct	*dbg,
 	Oid			id)
 {
+	/*	This code depends on sizeof(Oid).	*/
+	ValueObjectID(value).el[0] = (unsigned int)id;
+#if	0
 	memclear(&ValueObjectID(value),sizeof(ValueObjectID(value)));
 	memcpy(&ValueObjectID(value),&id,sizeof(Oid));
+#endif
 	if		(  dbg  !=  NULL  ) {
 		ValueObjectSource(value) = dbg->id;
 	}

@@ -461,9 +461,8 @@ dbgmsg(">GetScreenData");
 	SendLong(fp,0);					/*	get all data	*/
 	fCancel = FALSE;
 	while	(  ( c = RecvPacketClass(fp) )  ==  GL_WindowName  ) {
-dbgmsg("**");
 		RecvString(fp,window);
-dbgprintf("[%s]\n",window);
+		dbgprintf("[%s]\n",window);
 		switch( type = RecvInt(fpComm) ) {
 		  case	SCREEN_END_SESSION:
 			ExitSystem();
