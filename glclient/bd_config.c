@@ -159,7 +159,11 @@ bd_config_section_get_bool (BDConfigSection *self, gchar *name)
   BDConfigValue *value;
   
   value = g_hash_table_lookup (self->values, name);
-  return bd_config_value_to_bool (value);
+  if (value){
+    return bd_config_value_to_bool (value);
+  } else {
+    return FALSE;
+  }
 }
 
 gchar *
@@ -168,7 +172,11 @@ bd_config_section_get_string (BDConfigSection *self, gchar *name)
   BDConfigValue *value;
   
   value = (BDConfigValue *) g_hash_table_lookup (self->values, name);
-  return bd_config_value_to_string (value);
+  if (value){
+    return bd_config_value_to_string (value);
+  } else {
+    return "";
+  }
 }
 
 gboolean

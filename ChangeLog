@@ -1,3 +1,7 @@
+2005-03-10  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/bootdialog.c: 起動ダイアログに SSLの項目追加
+
 2005-03-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* pgserver/server.c (MainLoop): 文字encodingの設定コマンド

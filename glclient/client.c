@@ -204,7 +204,14 @@ show_boot_dialog ()
     fMlog = prop.mlog;
     User = prop.user;
     Pass = prop.password;
-    
+#ifdef	USE_SSL
+	fSsl = prop.ssl;
+	KeyFile = prop.key;
+	CertFile = prop.cert;
+	fVerify = TRUE;
+	CA_Path = prop.CApath;
+	CA_File = prop.CAfile;
+#endif
     return TRUE;
 }
 

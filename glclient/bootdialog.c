@@ -74,6 +74,13 @@ struct _EditDialog {
   GtkWidget *gtkrc;
   GtkWidget *user;
   GtkWidget *password;
+#ifdef	USE_SSL
+  GtkWidget *ssl;
+  GtkWidget *key;
+  GtkWidget *cert;
+  GtkWidget *CApath;
+  GtkWidget *CAfile;
+#endif
 
   BDConfig *config;
   gchar *hostname;
@@ -124,6 +131,18 @@ edit_dialog_set_value (EditDialog * self)
                       bd_config_section_get_string (section, "user"));
   gtk_entry_set_text (GTK_ENTRY (self->password),
                       bd_config_section_get_string (section, "password"));
+#ifdef	USE_SSL
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->ssl),
+                                bd_config_section_get_bool (section, "ssl"));
+  gtk_entry_set_text (GTK_ENTRY (self->CApath),
+                      bd_config_section_get_string (section, "CApath"));
+  gtk_entry_set_text (GTK_ENTRY (self->CAfile),
+                      bd_config_section_get_string (section, "CAfile"));
+  gtk_entry_set_text (GTK_ENTRY (self->key),
+                      bd_config_section_get_string (section, "key"));
+  gtk_entry_set_text (GTK_ENTRY (self->cert),
+                      bd_config_section_get_string (section, "cert"));
+#endif
 }
 
 static void
@@ -134,7 +153,9 @@ edit_dialog_value_to_config (EditDialog * self)
   gint i;
   gchar *password;
   gboolean savepassword;
-
+#ifdef	USE_SSL
+  gboolean ssl;
+#endif
   section = NULL;
   if (self->hostname != NULL)
     {
@@ -189,6 +210,19 @@ edit_dialog_value_to_config (EditDialog * self)
     savepassword = TRUE;
   bd_config_section_set_string (section, "password", password);
   bd_config_section_set_bool (section, "savepassword", savepassword);
+#ifdef	USE_SSL
+  bd_config_section_set_bool
+    (section, "ssl",
+     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
+  bd_config_section_set_string (section, "CApath",
+                                gtk_entry_get_text (GTK_ENTRY (self->CApath)));
+  bd_config_section_set_string (section, "CAfile",
+                                gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
+  bd_config_section_set_string (section, "key",
+                                gtk_entry_get_text (GTK_ENTRY (self->key)));
+  bd_config_section_set_string (section, "cert",
+                                gtk_entry_get_text (GTK_ENTRY (self->cert)));
+#endif
 }
 
 static gboolean
@@ -319,10 +353,10 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   self->host = entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 100, 0);
+  gtk_widget_set_usize (entry, 110, 0);
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   self->port = entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 50, 0);
+  gtk_widget_set_usize (entry, 40, 0);
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   ypos++;
 
@@ -404,6 +438,48 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
+
+#ifdef USE_SSL
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  self->ssl = check = gtk_check_button_new_with_label ("SSL");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("CA証明書へのパス");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->CApath = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+  label = gtk_label_new ("CA証明書ファイル");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->CAfile = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+  label = gtk_label_new ("鍵ファイル名(pem)");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->key = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+  label = gtk_label_new ("証明書ファイル名(pem)");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->cert = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+#endif
 
   return self;
 }
@@ -770,7 +846,13 @@ boot_dialog_create_conf (BDConfig *config)
       bd_config_section_append_value (section, "user", "");
       bd_config_section_append_value (section, "password", "");
       bd_config_section_append_value (section, "savepassword", "false");
-      
+#ifdef	USE_SSL
+      bd_config_section_append_value (section, "ssl", "false");
+      bd_config_section_append_value (section, "CApath", "");
+      bd_config_section_append_value (section, "CAfile", "");
+      bd_config_section_append_value (section, "key", "");
+      bd_config_section_append_value (section, "cert", "");
+#endif      
       is_create = TRUE;
     }
 
@@ -837,7 +919,15 @@ struct _BootDialog
   GtkWidget *style;
   GtkWidget *gtkrc;
   GtkWidget *mlog;
-
+#ifdef	USE_SSL
+  GtkWidget *ssl;
+  GtkWidget *ssllabel;
+  GtkWidget *sslcontainer;
+  GtkWidget *CApath;
+  GtkWidget *CAfile;
+  GtkWidget *key;
+  GtkWidget *cert;
+#endif
   gboolean is_connect;
 };
 
@@ -871,7 +961,7 @@ static void
 boot_dialog_set_value (BootDialog *self, BDConfig *config)
 {
   BDConfigSection *section;
-
+  
   g_return_if_fail (bd_config_exist_section (config, "glclient"));
   g_return_if_fail (bd_config_exist_section (config, "global"));
 
@@ -909,6 +999,22 @@ boot_dialog_set_value (BootDialog *self, BDConfig *config)
   gtk_entry_set_text (GTK_ENTRY (self->password), password_->str);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->savepassword),
                                 bd_config_section_get_bool (section, "savepassword"));
+#ifdef	USE_SSL
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->ssl),
+                                bd_config_section_get_bool (section, "ssl"));
+  gtk_widget_set_sensitive(self->ssllabel, 
+                                bd_config_section_get_bool (section, "ssl"));
+  gtk_widget_set_sensitive(self->sslcontainer, 
+                                bd_config_section_get_bool (section, "ssl"));
+  gtk_entry_set_text (GTK_ENTRY (self->CApath),
+                      bd_config_section_get_string (section, "CApath"));
+  gtk_entry_set_text (GTK_ENTRY (self->CAfile),
+                      bd_config_section_get_string (section, "CAfile"));
+  gtk_entry_set_text (GTK_ENTRY (self->key),
+                      bd_config_section_get_string (section, "key"));
+  gtk_entry_set_text (GTK_ENTRY (self->cert),
+                      bd_config_section_get_string (section, "cert"));
+#endif
 }
 
 static void
@@ -956,6 +1062,18 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
       gtk_entry_set_text (GTK_ENTRY (self->password), "");
       bd_config_section_set_string (section, "password", "");
     }
+#ifdef	USE_SSL
+  bd_config_section_set_bool (section, "ssl", 
+               gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (self->ssl)));
+  bd_config_section_set_string (section, "CApath",
+                                gtk_entry_get_text (GTK_ENTRY (self->CApath)));
+  bd_config_section_set_string (section, "CAfile",
+                                gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
+  bd_config_section_set_string (section, "key",
+                                gtk_entry_get_text (GTK_ENTRY (self->key)));
+  bd_config_section_set_string (section, "cert",
+                                gtk_entry_get_text (GTK_ENTRY (self->cert)));
+#endif
 }
 
 static void
@@ -1013,7 +1131,18 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean forc
   bd_config_section_set_string (global, "password", password);
   bd_config_section_set_bool (global, "savepassword",
                               bd_config_section_get_bool (section, "savepassword"));
-
+#ifdef	USE_SSL
+  bd_config_section_set_bool (global, "ssl",
+                            bd_config_section_get_bool (section, "ssl"));
+  bd_config_section_set_string (global, "CApath",
+                            bd_config_section_get_string (section, "CApath"));
+  bd_config_section_set_string (global, "CAfile",
+                            bd_config_section_get_string (section, "CAfile"));
+  bd_config_section_set_string (global, "key",
+                            bd_config_section_get_string (section, "key"));
+  bd_config_section_set_string (global, "cert",
+                            bd_config_section_get_string (section, "cert"));
+#endif
   boot_dialog_set_value (self, config);
 }
 
@@ -1108,6 +1237,18 @@ boot_dialog_on_delete_event (GtkWidget *widget, GdkEvent *event, BootDialog *sel
   return TRUE;
 }
 
+#ifdef	USE_SSL
+static void
+boot_dialog_on_ssl_toggle (GtkWidget *widget, BootDialog *self)
+{
+  gboolean sensitive;
+
+  sensitive = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl));
+  gtk_widget_set_sensitive(self->ssllabel, sensitive);
+  gtk_widget_set_sensitive(self->sslcontainer, sensitive);
+}
+#endif
+
 static BootDialog *
 boot_dialog_new ()
 {
@@ -1169,11 +1310,11 @@ boot_dialog_new ()
   gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 100, 0);
+  gtk_widget_set_usize (entry, 110, 0);
   self->host = entry;
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 50, 0);
+  gtk_widget_set_usize (entry, 40, 0);
   self->port = entry;
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   ypos++;
@@ -1187,6 +1328,18 @@ boot_dialog_new ()
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
+
+#ifdef	USE_SSL
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label ("SSLを使う");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->ssl = check;
+  gtk_signal_connect (GTK_OBJECT (check), "clicked",
+                      GTK_SIGNAL_FUNC (boot_dialog_on_ssl_toggle), self);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+#endif
 
   label = gtk_label_new ("プロトコル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
@@ -1235,6 +1388,59 @@ boot_dialog_new ()
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
+
+#ifdef	USE_SSL
+  /* SSL options */
+  table = gtk_table_new (2, 1, FALSE);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+  label = gtk_label_new ("SSL");
+  self->sslcontainer = table;
+  self->ssllabel = label;
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), table, label);
+
+  ypos = 0;
+
+  label = gtk_label_new ("CA証明書へのパス");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  entry = gtk_entry_new ();
+  self->CApath = entry;
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("CA証明書ファイル");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  entry = gtk_entry_new ();
+  self->CAfile = entry;
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("鍵ファイル名(pem)");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  entry = gtk_entry_new ();
+  self->key = entry;
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("証明書ファイル名(pem)");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  entry = gtk_entry_new ();
+  self->cert = entry;
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+#endif
 
   /* Advanced options */
   table = gtk_table_new (2, 1, FALSE);
@@ -1378,6 +1584,13 @@ boot_property_config_to_property (BootProperty *self)
   self->mlog = bd_config_section_get_bool (section, "mlog");
   self->user = bd_config_section_get_string (section, "user");
   self->password = password_->str;
+#ifdef	USE_SSL
+  self->ssl = bd_config_section_get_bool (section, "ssl");
+  self->CApath = bd_config_section_get_string (section, "CApath");
+  self->CAfile = bd_config_section_get_string (section, "CAfile");
+  self->key = bd_config_section_get_string (section, "key");
+  self->cert = bd_config_section_get_string (section, "cert");
+#endif
 }
 
 void
@@ -1396,6 +1609,13 @@ boot_property_inspect (BootProperty * self, FILE *fp)
   fprintf (fp, "mlog        : %s\n", self->mlog ? "TRUE" : "FALSE");
   fprintf (fp, "user        : %s\n", self->user);
   fprintf (fp, "password    : %s\n", self->password);
+#ifdef	USE_SSL
+  fprintf (fp, "ssl         : %s\n", self->ssl ? "TRUE" : "FALSE");
+  fprintf (fp, "CApath      : %s\n", self->CApath);
+  fprintf (fp, "CAfile      : %s\n", self->CAfile);
+  fprintf (fp, "key         : %s\n", self->key);
+  fprintf (fp, "cert        : %s\n", self->cert);
+#endif
 }
 
 /*************************************************************
