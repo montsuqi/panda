@@ -54,6 +54,7 @@ copies.
 
 static char *timeout_event;
 static gint timeout_hander_id = 0;
+static GSList *event_list;
 
 extern	gboolean
 select_all(
@@ -121,6 +122,17 @@ press_filter(
 	return	(rc);
 }
 
+static gint
+key_press_event (GtkWidget *widget, GdkEventKey *event)
+{
+	event_list = g_slist_append(event_list, event);
+	if ((event->keyval >= 0x20) && (event->keyval <= 0xFF)){
+		printf("%c\n", event->keyval);
+	}
+	
+	return TRUE;
+}
+
 struct changed_hander {
 	GtkObject       *object;
 	GtkSignalFunc	func;
@@ -167,9 +179,10 @@ send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	GtkWidget	*window;
+	GtkWidget	*window, *event_widget;
 	GdkWindow	*pane;
 	GdkWindowAttr	attr;
+
 	static int	ignore_event = FALSE;
 	char	wname[SIZE_LONGNAME];
 
@@ -187,7 +200,6 @@ ENTER_FUNC;
 			gtk_timeout_remove(timeout_hander_id);
 			timeout_hander_id = 0;
 		}
-		/* show busy cursor */
 		window = gtk_widget_get_toplevel(widget);
 #if	1	/*	This logic is escape code for GTK bug.	*/
 		strcpy(wname,glade_get_widget_long_name(widget));
@@ -195,6 +207,7 @@ ENTER_FUNC;
 #else
 		strcpy(wname,gtk_widget_get_name(window));
 #endif
+		/* show busy cursor */
 		pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
 		gdk_window_show (pane);
 		gdk_flush ();
@@ -215,7 +228,13 @@ ENTER_FUNC;
 		if		(  GetScreenData(fpComm)  ) {
 			ignore_event = TRUE;
 			while	(  gtk_events_pending()  ) {
+				event_widget = gtk_event_box_new ();
+				gtk_signal_connect (GTK_OBJECT (event_widget), 
+									"key_press_event",
+									(GtkSignalFunc) key_press_event, NULL);
+				gtk_grab_add(event_widget);
 				gtk_main_iteration();
+				gtk_grab_remove(event_widget);
 			}
 			ignore_event = FALSE;
 		}
@@ -223,6 +242,7 @@ ENTER_FUNC;
 		/* clear busy cursor */
 		gdk_window_destroy (pane);
 	}
+	
 LEAVE_FUNC;
 }
 

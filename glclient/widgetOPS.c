@@ -91,6 +91,12 @@ FreeStringList(
 	g_list_free(list);
 }
 
+static gchar *
+NewTempname(void)
+{
+	return g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
+}
+
 static	void
 RegistValue(
 	GtkWidget	*widget,
@@ -253,9 +259,14 @@ CreateTempfile(
     int fildes;
     FILE *file;
 
-	fildes = mkstemp(tmpname);
+	if ((fildes = mkstemp(tmpname)) == -1) {
+		Error("Couldn't make tempfile %s",tmpname );
+			
+	}
 	fchmod(fildes, 0600);
-	file = fdopen(fildes, "wb");
+	if ((file = fdopen(fildes, "wb")) == NULL ) {
+		exit_dialog("Couldn't open tempfile %s",tmpname);
+	}
 	return file;
 }
 
@@ -269,7 +280,7 @@ LoadPS(
     gchar *tmpname;
 
 ENTER_FUNC;		
-	tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
+	tmpname = NewTempname();
 	file = CreateTempfile(tmpname);
 	fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
 	fclose(file);
@@ -335,7 +346,7 @@ ENTER_FUNC;
 	if ( LBS_Size(binary) <= 0) {
 		gtk_widget_hide(widget); 
 	} else {
-		tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
+		tmpname = NewTempname();
 		file = CreateTempfile(tmpname);
 		fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
 		fclose(file);
