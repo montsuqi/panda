@@ -22,9 +22,16 @@ copies.
 #ifndef	_INC_BLOB_H
 #define	_INC_BLOB_H
 
-extern	void	InitBLOB(char *space);
-extern	void	FinishBLOB(void);
-extern	Bool	NewBLOB(MonObjectType *obj, int mode);
+typedef	struct {
+	char	*space;
+	size_t	oid;
+	pthread_mutex_t	mutex;
+	pthread_cond_t	cond;
+}	BLOB_Node;
+
+extern	BLOB_Node	*InitBLOB(char *space);
+extern	void		FinishBLOB(BLOB_Node *blob);
+extern	Bool	NewBLOB(BLOB_Node *blob,MonObjectType *obj, int mode);
 extern	Bool	OpenBLOB(MonObjectType *obj, int mode);
 extern	Bool	CloseBLOB(MonObjectType *obj);
 extern	size_t	WriteBLOB(MonObjectType *obj, byte *buff, size_t size);

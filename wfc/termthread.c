@@ -176,6 +176,7 @@ dbgmsg("<InitSession");
 	return	(data);
 }
 
+#if	0
 static	void
 ProcessBLOB(
 	NETFILE		*fp,
@@ -189,7 +190,7 @@ ProcessBLOB(
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_CREATE:
 		mode = RecvInt(fp);
-		if		(  NewBLOB(&obj,mode)  ) {
+		if		(  WfcNewBLOB(&obj,mode)  ) {
 			SendPacketClass(fp,WFC_OK);
 			SendObject(fp,&obj);
 		} else {
@@ -199,7 +200,7 @@ ProcessBLOB(
 	  case	BLOB_OPEN:
 		mode = RecvInt(fp);
 		RecvObject(fp,&obj);
-		if		(  OpenBLOB(&obj,mode)  ) {
+		if		(  WfcOpenBLOB(&obj,mode)  ) {
 			SendPacketClass(fp,WFC_OK);
 		} else {
 			SendPacketClass(fp,WFC_NOT);
@@ -210,7 +211,7 @@ ProcessBLOB(
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
 			buff = xmalloc(size);
 			Recv(fp,buff,size);
-			size = WriteBLOB(&obj,buff,size);
+			size = WfcWriteBLOB(&obj,buff,size);
 			xfree(buff);
 		}
 		SendLength(fp,size);
@@ -219,7 +220,7 @@ ProcessBLOB(
 		RecvObject(fp,&obj);
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
 			buff = xmalloc(size);
-			size = ReadBLOB(&obj,buff,size);
+			size = WfcReadBLOB(&obj,buff,size);
 			Send(fp,buff,size);
 			xfree(buff);
 		}
@@ -227,7 +228,7 @@ ProcessBLOB(
 		break;
 	  case	BLOB_CLOSE:
 		RecvObject(fp,&obj);
-		if		(  CloseBLOB(&obj)  ) {
+		if		(  WfcCloseBLOB(&obj)  ) {
 			SendPacketClass(fp,WFC_OK);
 		} else {
 			SendPacketClass(fp,WFC_NOT);
@@ -238,6 +239,7 @@ ProcessBLOB(
 	}
 }
 
+#endif
 
 static	LD_Node	*
 ReadTerminal(
@@ -278,10 +280,12 @@ dbgmsg(">ReadTerminal");
 				}
 			}
 			break;
+#if	0
 		  case	WFC_BLOB:
 			dbgmsg("recv LARGE");
 			ProcessBLOB(fp,data);
 			break;
+#endif
 		  case	WFC_PING:
 			dbgmsg("recv PING");
 			SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
@@ -359,10 +363,12 @@ dbgmsg(">WriteTerminal");
 					SendPacketClass(fp,WFC_NOT);				ON_IO_ERROR(fp,badio);
 				}
 				break;
+#if	0
 			  case	WFC_BLOB:
 				dbgmsg("recv LARGE");
 				ProcessBLOB(fp,data);
 				break;
+#endif
 			  case	WFC_OK:
 				dbgmsg("OK");
 				fExit = TRUE;

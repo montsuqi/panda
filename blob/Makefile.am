@@ -1,4 +1,5 @@
-lib_LTLIBRARIES = libpandablob.la
+lib_LTLIBRARIES =	libpandablob.la
+noinst_PROGRAMS	=	testblob
 
 libpandablob_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
@@ -25,3 +26,16 @@ libpandablob_la_DEPENDENCIES	=		\
 	$(top_srcdir)/libs/libpanda.la		\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/libs/libpandacom.la
+
+libpandablob_la_SOURCES	=			\
+	blob.c			blob.h
+
+testblob_LDADD	= 	\
+	-lm									\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
+	$(top_srcdir)/libs/libpandacom.la	\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/blob/libpandablob.la

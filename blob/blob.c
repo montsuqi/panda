@@ -48,13 +48,22 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-static	char	*BLOB_Space;
+#define	LockBLOB(blob)		pthread_mutex_lock(&(blob)->mutex)
+#define	UnLockBLOB(blob)	pthread_mutex_unlock(&(blob)->mutex)
+#define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
+#define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
 extern	Bool
 NewBLOB(
+	BLOB_Node		*blob,
 	MonObjectType	*obj,
 	int				mode)
 {
+	LockBLOB(blob);
+	obj->id.el[0] = blob->oid;
+	blob->oid ++;
+	UnLockBLOB(blob);
+	ReleaseBLOB(blob);
 }
 
 extern	Bool
@@ -86,13 +95,15 @@ ReadBLOB(
 {
 }
 
-extern	void
+extern	BLOB_Node	*
 InitBLOB(
 	char	*space)
 {
 	FILE	*fp;
 	char	name[SIZE_LONGNAME+1];
 	char	buff[SIZE_BUFF];
+	BLOB_Node	*blob;
+	size_t	oid;
 
 	sprintf(name,"%s/pid",space);
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
@@ -111,14 +122,45 @@ InitBLOB(
 		fprintf(stderr,"can not make lock file(directory not writable?)\n");
 		exit(1);
 	}
-	BLOB_Space = StrDup(space);
+	sprintf(name,"%s/oid",space);
+	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
+		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
+			oid = atoi(buff);
+		} else {
+			oid = 0;
+		}
+		fclose(fp);
+	} else {
+		oid = 0;
+	}
+
+	blob = New(BLOB_Node);
+	blob->space = StrDup(space);
+	blob->oid = oid;
+	pthread_mutex_init(&blob->mutex,NULL);
+	pthread_cond_init(&blob->cond,NULL);
+
+	return	(blob);
 }
 
 extern	void
-FinishBLOB(void)
+FinishBLOB(
+	BLOB_Node	*blob)
 {
+	FILE	*fp;
 	char	name[SIZE_LONGNAME+1];
 
-	sprintf(name,"%s/pid",BLOB_Space);
+	sprintf(name,"%s/pid",blob->space);
 	unlink(name);
+
+	sprintf(name,"%s/oid",blob->space);
+	if		(  ( fp = fopen(name,"w") )  !=  NULL  ) {
+		fprintf(fp,"%d\n",blob->oid);
+		fclose(fp);
+	}
+
+	xfree(blob->space);
+	pthread_mutex_destroy(&blob->mutex);
+	pthread_cond_destroy(&blob->cond);
+	xfree(blob);
 }

@@ -266,7 +266,7 @@ AC_ARG_WITH(ruby,
           RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["LIBRUBYARG"]].gsub(/-L\./, "-L" + Config::CONFIG[["libdir"]]) + " " + Config::CONFIG[["LIBS"]]'`
           RUBY_EXT_LIBS="$RUBY_LIBS"
         else
-          RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]] + "/" + Config::CONFIG[["LIBRUBYARG"]] + " " + Config::CONFIG[["LIBS"]]'`
+          RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["libdir"]] + "/" + Config::CONFIG[["LIBRUBY_A"]] + " " + Config::CONFIG[["LIBS"]]'`
           RUBY_EXT_LIBS=`$RUBY -r rbconfig -e 'Config::CONFIG[["LIBS"]]'`
         fi
         rubylibdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["rubylibdir"]]'`
