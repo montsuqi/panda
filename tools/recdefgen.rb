@@ -36,7 +36,7 @@ class	Stack
 	end
 end
 
-class	Signal
+class	Ssignal
 	def	initizlize
 		@handler = "";
 		@name = "";
@@ -418,7 +418,7 @@ begin
 				widget = Widget.new;
 				tree.push(widget);
 			  when	/signal/i
-				signal = Signal.new;
+				signal = Ssignal.new;
 			  else
 				;
 			end

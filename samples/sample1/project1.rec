@@ -108,6 +108,16 @@ project1	{
 					select	bool[20];
 				};
 			};
+			table1	{
+				calendar1	{
+					year	int;
+					month	int;
+					day	int;
+				};
+				progressbar1	{
+					value	int;
+				};
+			};
 		};
 	};
 };

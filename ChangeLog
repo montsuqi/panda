@@ -1,5 +1,7 @@
 2003-12-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* monpls_demo/demo.c: 日レセに必要なウィジェット全部に対応
+
 	* auth/glauth.c (ExecuteServer): forkするようにした(異常クライアン
 	トに対してrobustにするため)
 

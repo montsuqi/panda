@@ -9,6 +9,7 @@
   <pixmaps_directory>pixmaps</pixmaps_directory>
   <language>C</language>
   <gnome_support>True</gnome_support>
+  <gtkpanda_support>False</gtkpanda_support>
   <gettext_support>True</gettext_support>
   <output_main_file>False</output_main_file>
 </project>
@@ -56,6 +57,7 @@
 	<last_modification_time>Fri, 05 Jan 2001 06:35:20 GMT</last_modification_time>
       </signal>
       <label>glterm</label>
+      <relief>GTK_RELIEF_NORMAL</relief>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
@@ -136,8 +138,8 @@
       <spacing>0</spacing>
       <child>
 	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
+	<expand>False</expand>
+	<fill>False</fill>
       </child>
 
       <widget>
@@ -153,6 +155,7 @@
 	  <last_modification_time>Tue, 06 Jun 2000 15:51:11 GMT</last_modification_time>
 	</signal>
 	<label>左</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -171,6 +174,7 @@
 	  <last_modification_time>Tue, 06 Jun 2000 15:51:00 GMT</last_modification_time>
 	</signal>
 	<label>右</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -189,6 +193,7 @@
 	  <last_modification_time>Tue, 06 Jun 2000 15:50:49 GMT</last_modification_time>
 	</signal>
 	<label>実行</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -207,6 +212,7 @@
 	  <last_modification_time>Thu, 29 Jun 2000 16:56:03 GMT</last_modification_time>
 	</signal>
 	<label>開く</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -225,6 +231,7 @@
 	  <last_modification_time>Sun, 02 Jul 2000 17:10:01 GMT</last_modification_time>
 	</signal>
 	<label>閉じる</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -243,6 +250,7 @@
 	  <last_modification_time>Wed, 03 Jan 2001 19:25:24 GMT</last_modification_time>
 	</signal>
 	<label>Calendar</label>
+	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>False</expand>
@@ -299,8 +307,8 @@
       <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
       <child>
 	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
+	<expand>False</expand>
+	<fill>False</fill>
       </child>
 
       <widget>
@@ -375,6 +383,7 @@
 	<last_modification_time>Mon, 06 Nov 2000 17:52:32 GMT</last_modification_time>
       </signal>
       <label></label>
+      <relief>GTK_RELIEF_NORMAL</relief>
       <active>False</active>
       <child>
 	<padding>0</padding>
@@ -456,12 +465,12 @@
       <class>GtkHBox</class>
       <name>hbox6</name>
       <height>24</height>
-      <homogeneous>False</homogeneous>
+      <homogeneous>True</homogeneous>
       <spacing>0</spacing>
       <child>
 	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
+	<expand>False</expand>
+	<fill>False</fill>
       </child>
 
       <widget>
@@ -537,8 +546,8 @@
       <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
       <child>
 	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
+	<expand>False</expand>
+	<fill>False</fill>
       </child>
 
       <widget>
@@ -749,6 +758,213 @@
 	<child_name>Notebook:tab</child_name>
 	<name>label8</name>
 	<label>5</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+      </widget>
+
+      <widget>
+	<class>GtkTable</class>
+	<name>table1</name>
+	<rows>3</rows>
+	<columns>3</columns>
+	<homogeneous>False</homogeneous>
+	<row_spacing>0</row_spacing>
+	<column_spacing>0</column_spacing>
+
+	<widget>
+	  <class>GtkFixed</class>
+	  <name>fixed1</name>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>True</yexpand>
+	    <xshrink>True</xshrink>
+	    <yshrink>True</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>True</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkCalendar</class>
+	  <name>calendar1</name>
+	  <can_focus>True</can_focus>
+	  <show_heading>True</show_heading>
+	  <show_day_names>True</show_day_names>
+	  <no_month_change>False</no_month_change>
+	  <show_week_numbers>False</show_week_numbers>
+	  <week_start_monday>False</week_start_monday>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>True</yexpand>
+	    <xshrink>True</xshrink>
+	    <yshrink>True</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>True</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GnomeCalculator</class>
+	  <name>calculator1</name>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>True</yexpand>
+	    <xshrink>True</xshrink>
+	    <yshrink>True</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>True</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkFrame</class>
+	  <name>frame1</name>
+	  <border_width>3</border_width>
+	  <label>らべる</label>
+	  <label_xalign>0</label_xalign>
+	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>0</top_attach>
+	    <bottom_attach>1</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>True</xexpand>
+	    <yexpand>True</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>True</yfill>
+	  </child>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkFrame</class>
+	  <name>frame2</name>
+	  <border_width>3</border_width>
+	  <label>らべる</label>
+	  <label_xalign>0</label_xalign>
+	  <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
+	  <child>
+	    <left_attach>2</left_attach>
+	    <right_attach>3</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>True</yfill>
+	  </child>
+
+	  <widget>
+	    <class>Placeholder</class>
+	  </widget>
+	</widget>
+
+	<widget>
+	  <class>GtkHSeparator</class>
+	  <name>hseparator1</name>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>1</top_attach>
+	    <bottom_attach>2</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>True</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkVSeparator</class>
+	  <name>vseparator1</name>
+	  <child>
+	    <left_attach>0</left_attach>
+	    <right_attach>1</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>True</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>True</yfill>
+	  </child>
+	</widget>
+
+	<widget>
+	  <class>GtkProgressBar</class>
+	  <name>progressbar1</name>
+	  <value>0</value>
+	  <lower>0</lower>
+	  <upper>100</upper>
+	  <bar_style>GTK_PROGRESS_CONTINUOUS</bar_style>
+	  <orientation>GTK_PROGRESS_LEFT_TO_RIGHT</orientation>
+	  <activity_mode>False</activity_mode>
+	  <show_text>False</show_text>
+	  <format>%P %%</format>
+	  <text_xalign>0.5</text_xalign>
+	  <text_yalign>0.5</text_yalign>
+	  <child>
+	    <left_attach>1</left_attach>
+	    <right_attach>2</right_attach>
+	    <top_attach>2</top_attach>
+	    <bottom_attach>3</bottom_attach>
+	    <xpad>0</xpad>
+	    <ypad>0</ypad>
+	    <xexpand>False</xexpand>
+	    <yexpand>False</yexpand>
+	    <xshrink>False</xshrink>
+	    <yshrink>False</yshrink>
+	    <xfill>True</xfill>
+	    <yfill>False</yfill>
+	  </child>
+	</widget>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<child_name>Notebook:tab</child_name>
+	<name>label16</name>
+	<label>6</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
 	<xalign>0.5</xalign>

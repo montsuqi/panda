@@ -23,6 +23,7 @@ copies.
 #define	DEBUG
 #define	TRACE
 */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -51,12 +52,9 @@ dbgmsg(">demoLink");
 	count = 0; 
 	printf("arg = [%s]\n",arg);
 	(void)SetWindowName("project1");
-dbgmsg("*");
-	if		(  ( e = GetWindowValue("project3.vbox1.swin1.text1.value") )  !=  NULL  ) {
-		SetValueString(GetWindowValue("project1.vbox1.entry1.value"),ValueStringPointer(e),SOURCE_LOCALE);
-	} else {
-		SetValueString(GetWindowValue("project1.vbox1.entry1.value"),"漢字を入れてみた",SOURCE_LOCALE);
-	}
+
+	SetValueString(GetWindowValue("project1.vbox1.entry1.value"),"漢字を入れてみた",SOURCE_LOCALE);
+
 //	SetValueInteger(GetWindowValue("project1.vbox1.entry1.state"),WIDGET_STATE_INSENSITIVE);
 
 	SetValueInteger(GetWindowValue("project1.vbox1.entry2.value"),-12345);
@@ -114,6 +112,8 @@ dbgmsg("*");
 	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value2"),"070-6163-7932",NULL);
 	SetValueInteger(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.count"),1);
 
+	SetValueInteger(GetWindowValue("project1.vbox1.notebook1.table1.progressbar1.value"),10);
+
 dbgmsg("*");
 
 	w = PutWindowByName("project1",SCREEN_NEW_WINDOW);
@@ -139,6 +139,7 @@ demoMain(
 
 dbgmsg(">demoMain");
 	printf("arg = [%s]\n",arg);
+
 	printf("window = [%s]\n",ThisWindow);
 	printf("widget = [%s]\n",ThisWidget);
 	printf("event  = [%s]\n",ThisEvent);
@@ -256,7 +257,8 @@ dbgmsg(">demoMain");
 				ValueStringPointer(e2));
 		SetValueString(GetItemLongName(win->rec->value,"vbox1.entry3.value"),buff,NULL);
 		SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkleft"),FALSE);
-
+		SetValueInteger(GetWindowValue("project1.vbox1.notebook1.table1.progressbar1.value"),
+						ValueToInteger(GetWindowValue("project1.vbox1.notebook1.table1.progressbar1.value"))-10);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	} else
 	if		(  !strcmp(ThisEvent,"Right")  ) {
@@ -268,6 +270,8 @@ dbgmsg(">demoMain");
 				ValueStringPointer(e1));
 		SetValueString(GetItemLongName(win->rec->value,"vbox1.entry3.value"),buff,NULL);
 		SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkright"),FALSE);
+		SetValueInteger(GetWindowValue("project1.vbox1.notebook1.table1.progressbar1.value"),
+						ValueToInteger(GetWindowValue("project1.vbox1.notebook1.table1.progressbar1.value"))+10);
 
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	} else {
