@@ -244,6 +244,21 @@ dbgmsg("<SendEntry");
 	return	(TRUE);
 }
 
+static FILE *
+CreateTempfile(
+	gchar *tmpname)
+{
+    mode_t _umask;
+    mode_t mode;
+    int fildes;
+    FILE *file;
+
+	fildes = mkstemp(tmpname);
+	fchmod(fildes, 0600);
+	file = fdopen(fildes, "wb");
+	return file;
+}
+
 #ifdef	USE_PANDA
 static	Bool
 RecvPS(
@@ -328,6 +343,58 @@ SendPS(
 {
 dbgmsg(">SendPS");
 dbgmsg("<SendPS");
+	return	(TRUE);
+}
+#endif
+
+#ifdef USE_GNOME
+static	Bool
+RecvPixmap(
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+	char	name[SIZE_BUFF];
+	int		nitem
+	,		i;
+    LargeByteString *binary;
+    FILE *file;
+    gchar *tmpname;
+	GtkRequisition requisition;
+	GdkImlibImage *im;
+	gint width, height;
+	gdouble scale, xscale, yscale;
+
+dbgmsg(">RecvPixmap");
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp,name);
+			binary = NewLBS();
+			RecvBinaryData(fp, binary);
+			tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
+			file = CreateTempfile(tmpname);
+			fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
+			fclose(file);
+			gtk_widget_size_request(widget, &requisition);
+			if ( requisition.width && requisition.height) {
+					width = requisition.width;
+					height = requisition.height;
+					im = gdk_imlib_load_image ((char *)tmpname);
+					xscale = (gdouble)width / im->rgb_width;
+					yscale = (gdouble)height / im->rgb_height;
+					scale = MIN(xscale, yscale);
+					width = im->rgb_width * scale;
+					height = im->rgb_height * scale;
+					gnome_pixmap_load_imlib_at_size(GNOME_PIXMAP(widget), im, width, height);
+			} else {
+					gnome_pixmap_load_file(GNOME_PIXMAP(widget), tmpname);
+			}
+			unlink(tmpname);  
+			g_free(tmpname);
+			FreeLBS(binary);
+		}
+	}
+dbgmsg("<RecvPixmap");
 	return	(TRUE);
 }
 #endif
@@ -1583,4 +1650,7 @@ InitWidgetOperations(void)
 
 	AddClass(GTK_TYPE_FRAME,RecvFrame,NULL);
 	AddClass(GTK_TYPE_OPTION_MENU,RecvOption,SendOption);
+#ifdef USE_GNOME
+	AddClass(GNOME_TYPE_PIXMAP,RecvPixmap,NULL);
+#endif
 }
