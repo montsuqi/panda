@@ -1,3 +1,7 @@
+2003-01-30  Noboru Saitou  <noborus@netlab.jp>
+	* tools/recdefgen.rb add support GtkFrame and GtkProgressBar.
+                             fix GtkLabel in column list.
+
 2002-11-22  Keisuke Nishida  <knishida@netlab.jp>
 
 	* dblib/Postgres.c (GetTable, GetValue): Fix memory leak.

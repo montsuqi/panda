@@ -186,8 +186,12 @@ class	Widget
 	end
 	def	isData
 		case	@klass
-		  when	"GtkLabel", "GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkPandaCList"
+		  when	"GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkCList", "GtkPandaCList"
 			ret = TRUE;
+		  when  "GtkLabel"
+		        if @label == ""
+			  ret = TRUE;
+			end
 		  else
 			if	@child
 				for	c in @child
@@ -208,7 +212,7 @@ class	Widget
 			for	c in @child
 				c._panda(ind);
 			end
-		  when	"GtkVBox", "GtkHBox", "GtkFixed", "GtkScrolledWindow", "GtkWindow", "GtkViewport", "GtkNotebook"
+		  when	"GtkVBox", "GtkHBox", "GtkFixed", "GtkScrolledWindow", "GtkWindow", "GtkViewport", "GtkNotebook", "GtkFrame"
 			if	self.isData
 				putTab(ind);
 				printf("%s\t{\n",vname);
@@ -333,6 +337,13 @@ class	Widget
 				putTab(ind); 
 				printf("};\n"); 
 			end 
+		  when  "GtkProgressBar" 
+			putTab(ind); 
+			printf("%s\t{\n",vname); 
+			putTab(ind+1); 
+			printf("value\tint;\n"); 
+			putTab(ind); 
+			printf("};\n"); 
 		  when	"GtkCalendar"
 			putTab(ind);
 			printf("%s\t{\n",vname);
