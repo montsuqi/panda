@@ -320,7 +320,6 @@ GetTable(
 	ValueStruct	*tmp;
 	int		fnum;
 	Numeric	nv;
-	Fixed	fix;
 	char	*str;
 	Oid		id;
 
@@ -375,13 +374,8 @@ dbgmsg(">GetTable");
 		} else {
 			nv = NumericInput((char *)PQgetvalue(res,0,fnum),
 						  ValueFixedLength(val),ValueFixedSlen(val));
-#if	1
 			str = NumericOutput(nv);
-			SetValueString(val,str,dbg->coding);
-#else
-			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
-			strcpy(ValueFixedBody(val),str);
-#endif
+			SetValueString(val,str,NULL);
 			xfree(str);
 			NumericFree(nv);
 		}
@@ -456,7 +450,7 @@ UpdateValue(
 
 	if		(  val  ==  NULL  )	return	(p);
 	if		(  IS_VALUE_NIL(val)  ) {
-		p += sprintf(p,"%s%s is null",ItemName(),PutDim());
+		p += sprintf(p,"%s%s = null ",ItemName(),PutDim());
 	} else
 	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
@@ -468,7 +462,7 @@ UpdateValue(
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_TEXT:
 	  case	GL_TYPE_OBJECT:
-		p += sprintf(p,"%s%s = %s",ItemName(),PutDim(),ValueToSQL(dbg,val));
+		p += sprintf(p,"%s%s = %s ",ItemName(),PutDim(),ValueToSQL(dbg,val));
 		break;
 	  case	GL_TYPE_ARRAY:
 		fComm = FALSE;

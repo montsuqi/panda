@@ -1,3 +1,8 @@
+2004-06-23  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c (GetTable): ↓で作ったバグの修正
+  	  (backport from HEAD)
+
 2004-06-16  Noboru Saitou  <noborus@netlab.jp>
  
  	* dblib/PostgreSQL.c (GetTable): dbsでnilになるbug fix
