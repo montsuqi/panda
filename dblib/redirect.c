@@ -114,17 +114,21 @@ CheckDB_Redirect(
 {
 	Bool	rc;
 
-	SendPacketClass(dbg->fpLog,RED_PING);
-	if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
-		Warning("log server down?");
-		if		(  !fNoCheck  ) {
-			exit(1);
+	if		(  dbg->redirectData  !=  NULL  ) {
+		SendPacketClass(dbg->fpLog,RED_PING);
+		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
+			Warning("log server down?");
+			if		(  !fNoCheck  ) {
+				exit(1);
+			}
+			CloseNet(dbg->fpLog);
+			dbg->fpLog = NULL;
+			FreeLBS(dbg->redirectData);
+			dbg->redirectData = NULL;
+			rc = FALSE;
+		} else {
+			rc = TRUE;
 		}
-		CloseNet(dbg->fpLog);
-		dbg->fpLog = NULL;
-		FreeLBS(dbg->redirectData);
-		dbg->redirectData = NULL;
-		rc = FALSE;
 	} else {
 		rc = TRUE;
 	}
