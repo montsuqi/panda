@@ -47,8 +47,8 @@ NewLBS(void)
 
 	lbs = New(LargeByteString);
 	lbs->ptr = 0;
-	lbs->size = SIZE_GLOWN;
-	lbs->body = xmalloc(lbs->size);
+	lbs->size = 0;
+	lbs->body = NULL;
 
 	return	(lbs);
 }
@@ -78,7 +78,9 @@ LBS_RequireSize(
 		if		(  fKeep  ) {
 			memcpy(body,lbs->body,lbs->size);
 		}
-		xfree(lbs->body);
+		if		(  lbs->body  !=  NULL  ) {
+			xfree(lbs->body);
+		}
 		lbs->body = body;
 		lbs->size = size;
 	}
@@ -150,7 +152,9 @@ LBS_EmitStart(
 	LargeByteString	*lbs)
 {
 	lbs->ptr = 0;
-	memclear(lbs->body,lbs->size);
+	if		(  lbs->size  >  0  ) {
+		memclear(lbs->body,lbs->size);
+	}
 }
 
 extern	void
@@ -163,8 +167,10 @@ LBS_Emit(
 	if		(  lbs->ptr  ==  lbs->size  ) {
 		lbs->size += SIZE_GLOWN;
 		body = (byte *)xmalloc(lbs->size);
-		memcpy(body,lbs->body,lbs->ptr);
-		xfree(lbs->body);
+		if		(  lbs->body  !=  NULL  ) {
+			memcpy(body,lbs->body,lbs->ptr);
+			xfree(lbs->body);
+		}
 		lbs->body = body;
 	}
 	lbs->body[lbs->ptr] = code;
