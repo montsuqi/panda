@@ -1,5 +1,0 @@
-spa	{
-#include	"mcpspa.rec"
-	common	char(10);
-};
-

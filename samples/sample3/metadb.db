@@ -1,7 +1,0 @@
-metadb	{
-	name	char(64);
-};
-
-primary	{
-	name;
-};
