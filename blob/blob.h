@@ -23,8 +23,8 @@ copies.
 #define	_INC_BLOB_H
 #include	"net.h"
 
-#define	BLOB_VERSION	2
-//#define	BLOB_VERSION	1
+//#define	BLOB_VERSION	2
+#define	BLOB_VERSION	1
 
 #define	SIZE_BLOB_HEADER	4
 
