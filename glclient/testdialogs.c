@@ -10,6 +10,7 @@
 
 #include "dialogs.h"
 
+int 
 main(int argc, char *argv[])
 {
 	GtkWidget *dialog1, *dialog2;

@@ -413,7 +413,6 @@ RecvFileEntry(
 {
 	char	name[SIZE_BUFF]
 	,		buf[SIZE_BUFF]
-	,		*longname
 	,		*filename;
 	int		nitem
 	,		i;
