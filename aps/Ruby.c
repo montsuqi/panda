@@ -408,6 +408,44 @@ set_value(ValueStruct *value, VALUE obj)
     }
 }
 
+static int
+value_equal(ValueStruct *val, VALUE obj)
+{
+    if (val == NULL)
+        return 0;
+    if (IS_VALUE_NIL(val))
+        return NIL_P(obj);
+    switch (ValueType(val)) {
+    case GL_TYPE_BOOL:
+        if (ValueBool(val)) {
+            return obj == Qtrue;
+        }
+        else {
+            return obj == Qfalse;
+        }
+    case GL_TYPE_INT:
+        return ValueInteger(val) == NUM2INT(obj);
+    case GL_TYPE_FLOAT:
+        return ValueFloat(val) == NUM2DBL(obj);
+    case GL_TYPE_NUMBER:
+    {
+        VALUE bd = bigdecimal_new(val);
+        return RTEST(rb_funcall(bd, rb_intern("=="), 1, obj));
+    }
+    case GL_TYPE_CHAR:
+    case GL_TYPE_VARCHAR:
+    case GL_TYPE_DBCODE:
+    case GL_TYPE_TEXT:
+        return strcmp(ValueToString(val, codeset), StringValuePtr(obj)) == 0;
+    case GL_TYPE_BYTE:
+    case GL_TYPE_BINARY:
+        return memcmp(ValueByte(val), StringValuePtr(obj),
+                      ValueByteLength(val)) == 0;
+    default:
+        return 0;
+    }
+}
+
 #define CACHEABLE(val) (ValueType(val) == GL_TYPE_ARRAY || \
                         ValueType(val) == GL_TYPE_RECORD)
 
@@ -437,7 +475,9 @@ aryval_new(ValueStruct *val, int need_free)
 
     obj = Data_Make_Struct(cArrayValue, value_struct_data,
                            value_struct_mark,
-                           need_free ? value_struct_free : free,
+                           need_free ?
+                           (RUBY_DATA_FUNC) value_struct_free :
+                           (RUBY_DATA_FUNC) free,
                            data);
     data->value = val;
     data->cache = rb_ary_new2(ValueArraySize(val));
@@ -490,6 +530,21 @@ aryval_aset(VALUE self, VALUE index, VALUE obj)
 }
 
 static VALUE
+aryval_index(VALUE self, VALUE obj)
+{
+    value_struct_data *data;
+    ValueStruct *val;
+    int i;
+
+    Data_Get_Struct(self, value_struct_data, data);
+    for (i = 0; i < ValueArraySize(data->value); i++) {
+        if (value_equal(ValueArrayItem(data->value, i), obj))
+            return INT2NUM(i);
+    }
+    return Qnil;
+}
+
+static VALUE
 recval_new(ValueStruct *val, int need_free)
 {
     VALUE obj;
@@ -501,7 +556,9 @@ recval_new(ValueStruct *val, int need_free)
 
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
                            value_struct_mark,
-                           need_free ? value_struct_free : free,
+                           need_free ?
+                           (RUBY_DATA_FUNC) value_struct_free :
+                           (RUBY_DATA_FUNC) free,
                            data);
     data->value = val;
     data->cache = rb_hash_new();
@@ -1251,6 +1308,7 @@ init()
     rb_define_method(cArrayValue, "size", aryval_length, 0);
     rb_define_method(cArrayValue, "[]", aryval_aref, 1);
     rb_define_method(cArrayValue, "[]=", aryval_aset, 2);
+    rb_define_method(cArrayValue, "index", aryval_index, 1);
     cRecordValue = rb_define_class_under(mPanda, "RecordValue", rb_cObject);
     rb_define_method(cRecordValue, "length", recval_length, 0);
     rb_define_method(cRecordValue, "size", recval_length, 0);
