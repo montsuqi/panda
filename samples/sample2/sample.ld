@@ -19,14 +19,14 @@ handler	"Ruby"	{
 #bind	""			"dotCOBOL"	"SAMPLE1";
 #bind	"list"		"dotCOBOL"	"SAMPLE1";
 
-bind	""			"OpenCOBOL"	"SAMPLE1";
-bind	"list"		"OpenCOBOL"	"SAMPLE1";
+#bind	""			"OpenCOBOL"	"SAMPLE1";
+#bind	"list"		"OpenCOBOL"	"SAMPLE1";
 
 #bind	""			"RubyExec"		"SAMPLE1";
 #bind	"list"		"RubyExec"		"SAMPLE1";
 
-#bind	""			"Ruby"		"Sample1";
-#bind	"list"		"Ruby"		"Sample1";
+bind	""			"Ruby"		"Sample1";
+bind	"list"		"Ruby"		"Sample1";
 
 arraysize	20;
 textsize	200;

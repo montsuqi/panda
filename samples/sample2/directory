@@ -6,7 +6,6 @@ base	"~/MONTSUQI/panda/samples";
 #	"=" will be expanded to base or BASE_DIR
 ddir	"=/sample2";
 record	"=/sample2";
-blob	"=/sample2";
 
 #linksize	1024;
 linkage		link;

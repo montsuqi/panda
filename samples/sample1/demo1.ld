@@ -16,10 +16,10 @@ handler	"Ruby"	{
 #bind	"project2"	"dotCOBOL"	"TPDEMO1";
 #bind	"project5"	"dotCOBOL"	"TPDEMO3";
 
-#bind	""			"Ruby"		"TPDEMO1";
-#bind	"project1"	"Ruby"		"TPDEMO1";
-bind	""			"OpenCOBOL"	"TPDEMO1";
-bind	"project1"	"OpenCOBOL"	"TPDEMO1";
+bind	""			"Ruby"		"TPDEMO1";
+bind	"project1"	"Ruby"		"TPDEMO1";
+#bind	""			"OpenCOBOL"	"TPDEMO1";
+#bind	"project1"	"OpenCOBOL"	"TPDEMO1";
 
 bind	"project2"	"OpenCOBOL"	"TPDEMO1";
 bind	"project5"	"OpenCOBOL"	"TPDEMO3";

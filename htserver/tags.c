@@ -666,6 +666,9 @@ _Button(
 	char	buf[SIZE_BUFF];
 
 ENTER_FUNC;
+#ifdef	USE_IE5
+	val = WIDGET_STATE_NORMAL;
+#else
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
 		if		(  ( ival = GetHostValue(state,FALSE) )  !=  NULL  ) {
 			val = atoi(ival);
@@ -675,6 +678,7 @@ ENTER_FUNC;
 	} else {
 		val = WIDGET_STATE_NORMAL;
 	}
+#endif
 	if		(  val  ==  WIDGET_STATE_NORMAL  ) {
 		event = GetArg(tag, "event", 0);
 		onclick = GetArg(tag,"onclick",0);

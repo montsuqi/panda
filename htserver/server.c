@@ -201,52 +201,56 @@ RecvScreenData(
 	int			i;
 	ValueStruct	*v;
 
+ENTER_FUNC;
     lbs = NewLBS();
     while (RecvStringDelim(fp, SIZE_BUFF, buff) && *buff != '\0') {
         DecodeName(&wname, &vname, buff);
         LBS_EmitStart(lbs);
         RecvLBS(fp, lbs);
         if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
-            value = GetItemLongName(win->rec->value, vname);
-            ValueIsUpdate(value);
-            switch (ValueType(value)) {
-              case GL_TYPE_ARRAY:
-				for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-					v = GetArrayItem(value, i);
-					SetValueBool(v, FALSE);
-				}
-                {
-                    char *p = LBS_Body(lbs), *pend = p + LBS_Size(lbs);
-
-                    while (p < pend) {
-                        i = atoi(p);
-                        if		(  ( v = GetArrayItem(value, i) )  !=  NULL  ) {
-							SetValueBool(v, TRUE);
+			if		(  ( value = GetItemLongName(win->rec->value, vname) )  ==  NULL  ) {
+				fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
+			} else {				
+				ValueIsUpdate(value);
+				switch (ValueType(value)) {
+				  case GL_TYPE_ARRAY:
+					for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+						v = GetArrayItem(value, i);
+						SetValueBool(v, FALSE);
+					}
+					{
+						char *p = LBS_Body(lbs), *pend = p + LBS_Size(lbs);
+						while (p < pend) {
+							i = atoi(p);
+							if		(  ( v = GetArrayItem(value, i) )  !=  NULL  ) {
+								SetValueBool(v, TRUE);
+							}
+							while (isdigit(*p))
+								p++;
+							if (*p == ',')
+								p++;
 						}
-                        while (isdigit(*p))
-                            p++;
-                        if (*p == ',')
-                            p++;
-                    }
-                }
-                break;
-              case GL_TYPE_BYTE:
-              case GL_TYPE_BINARY:
-                SetValueBinary(value, LBS_Body(lbs), LBS_Size(lbs));
-                break;
-              default:
-                LBS_EmitEnd(lbs);
-                SetValueString(value, LBS_Body(lbs), "utf8");
-                break;
-            }
+					}
+					break;
+				  case GL_TYPE_BYTE:
+				  case GL_TYPE_BINARY:
+					SetValueBinary(value, LBS_Body(lbs), LBS_Size(lbs));
+					break;
+				  default:
+					LBS_EmitEnd(lbs);
+					SetValueString(value, LBS_Body(lbs), "utf8");
+					break;
+				}
 #ifdef	DEBUG
-            printf("--\n");
-            DumpValueStruct(value);
-            printf("--\n");
+				printf("--\n");
+				DumpValueStruct(value);
+				printf("--\n");
 #endif
+			}
         }
     }
     FreeLBS(lbs);
+LEAVE_FUNC;
 }
 
 static int
