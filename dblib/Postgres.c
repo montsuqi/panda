@@ -36,20 +36,16 @@ copies.
 
 #include	<libpq-fe.h>
 
+#include	"const.h"
 #include	"types.h"
-#include	"misc.h"
+#include	"enum.h"
 #include	"SQLparser.h"
 #include	"value.h"
-#include	"cobolvalue.h"
-#include	"const.h"
-#include	"enum.h"
-#include	"wfc.h"
 #include	"dbgroup.h"
 #include	"Postgres.h"
 #include	"redirect.h"
+#include	"misc.h"
 #include	"debug.h"
-
-#include	"directory.h"
 
 static	int		level;
 static	char	*rname[SIZE_RNAME];
@@ -81,10 +77,7 @@ ValueToSQL(
 		sprintf(buff,"%c%s%c",del,str,del);
 		break;
 	  case	GL_TYPE_DBCODE:
-		p = ValueString(val);
-		strcpy(str,p);
-		StringCobol2C(str,strlen(p)+1);
-		strcpy(buff,str);
+		strcpy(buff,ValueString(val));
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(ValueFixed(val));

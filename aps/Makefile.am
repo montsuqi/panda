@@ -1,14 +1,10 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = aps dbstub dbredirector dbs
-lib_LTLIBRARIES = libpandadb.la MCPSUB.la
+lib_LTLIBRARIES = MCPSUB.la
 
 MCPSUB_la_LDFLAGS	=	\
 	-module 					\
-	-version-info $(LTVERSION)	\
-	-export-dynamic
-
-libpandadb_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
 	-export-dynamic
 
@@ -17,14 +13,16 @@ aps_LDADD 		=	\
 	-L/usr/lib -lglib -lm -ldl -lpthread	\
 	$(FIXED_LIBS)		\
 	-L$(top_srcdir)/libs -lpanda -li18n $(OPENCOBOL_LIBS)	\
-	MCPSUB.la libpandadb.la
+	-L$(top_srcdir)/dblib -lpandadb	\
+	MCPSUB.la
 
 dbstub_LDADD 		=	\
 	$(LANG_OBJECTS)		\
 	-L/usr/lib -lglib -lm -ldl -lpthread \
 	$(FIXED_LIBS)		\
 	-L$(top_srcdir)/libs -lpanda $(OPENCOBOL_LIBS)	\
-	MCPSUB.la libpandadb.la
+	-L$(top_srcdir)/dblib -lpandadb	\
+	MCPSUB.la
 
 dbredirector_LDADD 		=	\
 	-L/usr/lib -lglib -lm -ldl -lpthread	\
@@ -32,23 +30,21 @@ dbredirector_LDADD 		=	\
 	$(POSTGRES_LIBS) \
 	$(OPENCOBOL_LIBS)	\
 	-L$(top_srcdir)/libs -lpanda -li18n	\
-	libpandadb.la
+	-L$(top_srcdir)/dblib -lpandadb
 
 dbs_LDADD 		=	\
 	-L/usr/lib -lglib -lm -ldl -lpthread	\
 	$(FIXED_LIBS)		\
 	-L$(top_srcdir)/libs -lpanda	\
-	libpandadb.la
+	-L$(top_srcdir)/dblib -lpandadb
 
 MCPSUB_la_LIBADD	=
-
-libpandadb_la_LIBADD	=	\
-	$(POSTGRES_LIBS)
 
 INCLUDES 			= \
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
+	-I$(top_srcdir)/dblib	\
 	$(POSTGRES_CFLAGS)	\
 	$(OPENCOBOL_CFLAGS)	\
 	$(GNOME_INCLUDEDIR)
@@ -77,30 +73,25 @@ dbstub_SOURCES	=	\
 
 dbstub_DEPENDENCIES	=	\
 	MCPSUB.la			\
-	libpandadb.la
+	../dblib/libpandadb.la
 
 dbs_SOURCES	=	\
 	dbs_main.c
 
 dbs_DEPENDENCIES	=	\
-	libpandadb.la
+	../dblib/libpandadb.la
 
 dbredirector_SOURCES	=	\
 	dbredirector.c
 
-dbredirector_DEPENDENCIES	=
-
-libpandadb_la_SOURCES	=	\
-	Postgres.c	Postgres.h	\
-	Shell.c		Shell.h		\
-	dbgroup.c				\
-	redirect.c	redirect.h	\
-	cobolvalue.c	cobolvalue.h
+dbredirector_DEPENDENCIES	=	\
+	../dblib/libpandadb.la
 
 MCPSUB_la_SOURCES	=	\
 	MCPSUB.c			\
 	dotCOBOL.c	dotCOBOL.h	\
-	OpenCOBOL.c	OpenCOBOL.h
+	OpenCOBOL.c	OpenCOBOL.h	\
+	cobolvalue.c	cobolvalue.h
 
 BUILT_SOURCES = defaults.h
 

@@ -1,3 +1,7 @@
+2002-09-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/ のうちデータベース絡みの部分を dblib/に移した
+
 2002-09-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* pgserver/monlib.rb : ポート番号変更

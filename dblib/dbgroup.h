@@ -19,21 +19,38 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_INC_LOG_H
-#define	_INC_LOG_H
+#ifndef	_DBGROUP_H
+#define	_DBGROUP_H
 
-#ifndef	PacketClass
-#define	PacketClass		unsigned char
+#include	"value.h"
+
+typedef	struct {
+	char	*name;
+	DB_FUNC	func;
+}	DB_OPS;
+
+extern	void	EnterDB_Function(char *name, DB_OPS *ops, char *commentStart, char *commentEnd);
+extern	void	InitDBG(void);
+extern	void	SetUpDBG(void);
+extern	void	ExecDBG_Operation(DBG_Struct *dbg, char *name);
+extern	void	ExecDBOP(DBG_Struct *dbg, char *sql);
+extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec);
+extern	int		ExecDB_Function(char *name, char *tname, RecordStruct *rec);
+
+#undef	GLOBAL
+#ifdef	MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
 #endif
 
-#define	RED_PING		(PacketClass)0x01
-#define	RED_DATA		(PacketClass)0x02
-#define	RED_NOT			(PacketClass)0xF0
-#define	RED_PONG		(PacketClass)0xF1
-#define	RED_OK			(PacketClass)0xFE
-#define	RED_END			(PacketClass)0xFF
+GLOBAL	RecordStruct	**ThisDB;
 
-extern	void	OpenDB_RedirectPort(DBG_Struct *dbg);
-extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
-extern	void	PutDB_Redirect(DBG_Struct *dbg, char *data);
+GLOBAL	char		*DB_Host;
+GLOBAL	char		*DB_Port;
+GLOBAL	char		*DB_Name;
+GLOBAL	char		*DB_User;
+GLOBAL	char		*DB_Pass;
+
+
 #endif

@@ -151,9 +151,6 @@ dbgmsg(">UnPackValueCobol");
 			p += value->body.CharData.len;
 			break;
 		  case	GL_TYPE_CHAR:
-			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
 		  case	GL_TYPE_TEXT:
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:

@@ -308,12 +308,13 @@ LIBS="$old_LIBS"
 
 AC_OUTPUT(Makefile
 	  Doc/Makefile
-	  aps/Makefile
+	  libs/Makefile
+	  dblib/Makefile
 	  cobol/Makefile
 	  glclient/Makefile
 	  glserver/Makefile
 	  htserver/Makefile
-	  libs/Makefile
+	  aps/Makefile
 	  pgserver/Makefile
 	  tools/Makefile
 	  wfc/Makefile)

@@ -40,11 +40,10 @@ copies.
 #include	"types.h"
 #include	"value.h"
 #include	"misc.h"
+#include	"directory.h"
 #include	"dbgroup.h"
-#include	"Postgres.h"
 #include	"debug.h"
 
-#include	"directory.h"
 
 static	GHashTable	*DBMS_Table;
 
