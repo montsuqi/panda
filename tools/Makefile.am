@@ -58,7 +58,8 @@ INCLUDES 			= 		\
 	$(GLIB_CFLAGS)			\
 	$(SSL_CFLAGS)			\
 	$(FIXED_CFLAGS)			\
-	$(MONDAI_CFLAGS)
+	$(MONDAI_CFLAGS)		\
+	-DSERVER_DIR=\"$(sbindir)\"
 
 monitor_DEPENDENCIES	=				\
 	$(top_srcdir)/defaults.h			\

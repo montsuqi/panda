@@ -1,3 +1,7 @@
+2003-11-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/client.c (SetDefault): デフォルトがv2 offに
+
 2003-11-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/monitor.c (StopSystem): SIGHUPでaps再起動、SIGUSR1で停止

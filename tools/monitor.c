@@ -454,7 +454,7 @@ StopSystem(void)
 {
 	fRestart = FALSE;
 	signal(SIGCHLD,(void *)WaitStop);
-	KillAllProcess((PTYPE_APS | PTYPE_RED | PTYPE_WFC ),SIGKILL);
+	KillAllProcess((PTYPE_APS | PTYPE_RED | PTYPE_WFC),SIGKILL);
 }
 
 static	void
@@ -509,9 +509,9 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	ApsPath = "/usr/local/sbin/aps";
-	WfcPath = "/usr/local/sbin/wfc";
-	RedirectorPath = "/usr/local/sbin/dbredirector";
+	ApsPath = SERVER_DIR "/aps";
+	WfcPath = SERVER_DIR "/wfc";
+	RedirectorPath = SERVER_DIR "/dbredirector";
 
 	Directory = "./directory";
 	LDDir = NULL;

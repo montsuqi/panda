@@ -20,10 +20,9 @@ copies.
 */
 
 /*
-#define	MAIN
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -229,33 +228,3 @@ DBD_ParserInit(void)
 
 	DBD_Table = NewNameHash();
 }
-
-#ifdef	MAIN
-char	*RecordDir;
-#include	"DDparser.h"
-extern	int
-main(
-	int		argc,
-	char	**argv)
-{
-	DBD_Struct	*ret;
-	int			i;
-
-	ThisScreen = NewScreenData();
-	RecordDir = "../record";
-
-	DB_ParserInit();
-	DBD_ParserInit();
-	ret = DBD_Parser("../lddef/demo.db");
-
-	printf("name = [%s]\n",ret->name);
-	printf("cmd  = [%s]\n",ret->cmd);
-	printf("spa  = [%d]\n",ret->spasize);
-	for	( i = 0 ; i < ret->cWindow ; i ++ ) {
-		printf("-----\n");
-		DumpValueStruct(ret->data[i]);
-	}
-		
-	return	(0);
-}
-#endif

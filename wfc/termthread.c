@@ -96,12 +96,12 @@ dbgmsg(">FinishSession");
 		strcpy(name,data->name);
 		g_hash_table_remove(TermHash,data->name);
 		xfree(data->name);
-	}
-	FreeLBS(data->mcpdata);
-	FreeLBS(data->spadata);
-	FreeLBS(data->linkdata);
-	for	( i = 0 ; i < data->cWindow ; i ++ ) {
-		FreeLBS(data->scrdata[i]);
+		FreeLBS(data->mcpdata);
+		FreeLBS(data->spadata);
+		FreeLBS(data->linkdata);
+		for	( i = 0 ; i < data->cWindow ; i ++ ) {
+			FreeLBS(data->scrdata[i]);
+		}
 	}
 	xfree(data);
 dbgmsg("<FinishSession");

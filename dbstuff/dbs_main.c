@@ -325,6 +325,36 @@ do_String(
 		WriteClientString(fpComm,fType,&ctrl);
 		ret = TRUE;
 	} else
+	if		(  strncmp(input,"Schema: ",8)  ==  0  ) {
+		dbgmsg("schema");
+		p = input + 8;
+		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+			*q = 0;
+			DecodeStringURL(rname,p);
+			p = q + 1;
+			DecodeStringURL(pname,p);
+			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
+				ctrl.rno = rno - 1;
+				rec = ThisDB[ctrl.rno];
+				if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+															pname) )  !=  0  ) {
+					ctrl.pno = pno - 1;
+				} else {
+					rec = NULL;
+				}
+			} else {
+				rec = NULL;
+			}
+		} else {
+			rec = NULL;
+		}
+		if		(  rec  !=  NULL  ) {
+			WriteClientString(fpComm,fType,&ctrl);
+			ret = TRUE;
+		} else {
+			ret = FALSE;
+		}
+	} else
 	if		(  strncmp(input,"End",3)  ==  0  ) {
 		dbgmsg("end");
 		ret = FALSE;

@@ -135,7 +135,7 @@ SetDefault(void)
 	User = getenv("USER");
 	Pass = "";
 	Protocol1 = TRUE;
-	Protocol2 = TRUE;
+	Protocol2 = FALSE;
 #ifdef	USE_SSL
 	fSsl = FALSE;
 	KeyFile = NULL;
