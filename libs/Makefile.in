@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -77,6 +77,9 @@ GENCAT = @GENCAT@
 GLADE_CFLAGS = @GLADE_CFLAGS@
 GLADE_CONFIG = @GLADE_CONFIG@
 GLADE_LIBS = @GLADE_LIBS@
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_CONFIG = @GLIB_CONFIG@
+GLIB_LIBS = @GLIB_LIBS@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
 GNOMEGNORBA_LIBS = @GNOMEGNORBA_LIBS@
@@ -130,6 +133,9 @@ STRIP = @STRIP@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+XML2_CFLAGS = @XML2_CFLAGS@
+XML2_CONFIG = @XML2_CONFIG@
+XML2_LIBS = @XML2_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
 XML_CONFIG = @XML_CONFIG@
 XML_LIBS = @XML_LIBS@
@@ -168,7 +174,7 @@ libpandas_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBS
 libpandat_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h			LDparser.c	LDparser.h		LDlex.c		LDlex.h			DIparser.c	DIparser.h		DIlex.c		DIlex.h			BDparser.c	BDparser.h		BDlex.c		BDlex.h			directory.c	directory.h		driver.c	driver.h		tcp.c		tcp.h			pty.c		pty.h			auth.c		auth.h			authstub.c	authstub.h		front.c	front.h				wfcio.c		wfcio.h			enum.h
 
 
-libi18n_a_SOURCES =  	i18n_res.c i18n_rec.h		i18n_codeset.c	i18n_codeset.h		i18n_code.c	i18n_code.h		i18n_ctype.c		i18n_strings.c	i18n_struct.h	i18n_const.h
+libi18n_a_SOURCES =  	i18n_res.c i18n_res.h		i18n_codeset.c	i18n_codeset.h		i18n_code.c	i18n_code.h		i18n_ctype.c		i18n_strings.c	i18n_struct.h	i18n_const.h
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h

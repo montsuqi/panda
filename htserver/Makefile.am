@@ -18,12 +18,12 @@ INCLUDES 			= \
 
 htserver_SOURCES	=	\
 	htserver.c	htserver.h	\
-	server.c	server.h	\
+	server.c	\
 	trid.c		trid.h
 
 mon_SOURCES	=	\
 	HTClex.c	HTClex.h	\
-	HTCparser.c	HTCparse.h	\
+	HTCparser.c	HTCparser.h	\
 	tags.c		tags.h	\
 	exec.c		exec.h	\
 	mon.c		mon.h

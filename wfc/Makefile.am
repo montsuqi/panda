@@ -14,7 +14,7 @@ wfc_LDADD 		=	\
 	-L$(top_srcdir)/libs -lpanda -li18n
 
 wfc_SOURCES	=	\
-	wfc.c			wfc.h			\
+	wfc.c			\
 	mqthread.c		mqthread.h		\
 	corethread.c	corethread.h	\
 	termthread.c	termthread.h

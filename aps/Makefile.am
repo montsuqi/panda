@@ -71,7 +71,7 @@ dbredirector_SOURCES	=	\
 	dbredirector.c	\
 	dbgroup.c	\
 	cobolvalue.c	cobolvalue.h	\
-	dotCOBOL.c	dotCOBL.h	\
+	dotCOBOL.c	dotCOBOL.h	\
 	OpenCOBOL.c	OpenCOBOL.h	\
 	Postgres.c	Postgres.h	\
 	Shell.c		Shell.h		\
@@ -82,7 +82,7 @@ dbredirector_DEPENDENCIES	=
 
 MCPSUB_la_SOURCES	=	\
 	MCPSUB.c				\
-	dotCOBOL.c	dotCOBL.h	\
+	dotCOBOL.c	dotCOBOL.h	\
 	OpenCOBOL.c	OpenCOBOL.h	\
 	Postgres.c	Postgres.h	\
 	Shell.c		Shell.h		\

@@ -18,7 +18,7 @@ INCLUDES 			= \
 
 glserver_SOURCES	=	\
 	glserver.c	glserver.h	\
-	server.c	server.h
+	server.c	
 
 glauth_SOURCES	=	\
 	glauth.c

@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4-p4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4 from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -77,6 +77,9 @@ GENCAT = @GENCAT@
 GLADE_CFLAGS = @GLADE_CFLAGS@
 GLADE_CONFIG = @GLADE_CONFIG@
 GLADE_LIBS = @GLADE_LIBS@
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_CONFIG = @GLIB_CONFIG@
+GLIB_LIBS = @GLIB_LIBS@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
 GNOMEGNORBA_LIBS = @GNOMEGNORBA_LIBS@
@@ -130,6 +133,9 @@ STRIP = @STRIP@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+XML2_CFLAGS = @XML2_CFLAGS@
+XML2_CONFIG = @XML2_CONFIG@
+XML2_LIBS = @XML2_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
 XML_CONFIG = @XML_CONFIG@
 XML_LIBS = @XML_LIBS@
@@ -176,12 +182,12 @@ dbstub_SOURCES =  	dbstub_main.c		dbgroup.c		redirect.c	redirect.h		defaults.h		
 dbstub_DEPENDENCIES =  	MCPSUB.la
 
 
-dbredirector_SOURCES =  	dbredirector.c		dbgroup.c		cobolvalue.c	cobolvalue.h		dotCOBOL.c	dotCOBL.h		OpenCOBOL.c	OpenCOBOL.h		Postgres.c	Postgres.h		Shell.c		Shell.h			handler.c	handler.h		redirect.c	redirect.h
+dbredirector_SOURCES =  	dbredirector.c		dbgroup.c		cobolvalue.c	cobolvalue.h		dotCOBOL.c	dotCOBOL.h		OpenCOBOL.c	OpenCOBOL.h		Postgres.c	Postgres.h		Shell.c		Shell.h			handler.c	handler.h		redirect.c	redirect.h
 
 
 dbredirector_DEPENDENCIES = 
 
-MCPSUB_la_SOURCES =  	MCPSUB.c					dotCOBOL.c	dotCOBL.h		OpenCOBOL.c	OpenCOBOL.h		Postgres.c	Postgres.h		Shell.c		Shell.h			dbgroup.c					handler.c	handler.h		redirect.c	redirect.h		cobolvalue.c	cobolvalue.h
+MCPSUB_la_SOURCES =  	MCPSUB.c					dotCOBOL.c	dotCOBOL.h		OpenCOBOL.c	OpenCOBOL.h		Postgres.c	Postgres.h		Shell.c		Shell.h			dbgroup.c					handler.c	handler.h		redirect.c	redirect.h		cobolvalue.c	cobolvalue.h
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h

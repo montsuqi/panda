@@ -112,7 +112,7 @@ libpandat_a_SOURCES	=		\
 	enum.h
 
 libi18n_a_SOURCES	=		\
-	i18n_res.c i18n_rec.h	\
+	i18n_res.c i18n_res.h	\
 	i18n_codeset.c	i18n_codeset.h	\
 	i18n_code.c	i18n_code.h	\
 	i18n_ctype.c	\
