@@ -152,8 +152,9 @@ ENTER_FUNC;
 	} else {
 		port = ParPortName(WfcPortNumber);
 	}
-	if		(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
-		Error("WFC not ready");
+	while	(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
+		fprintf(stderr,"WFC connection retry\n");
+		sleep(1);
 	}
 	fpWFC = SocketToNet(fhWFC);
 	SendStringDelim(fpWFC,ThisLD->name);
