@@ -69,7 +69,7 @@ dbgmsg(">InitSystem");
 	pthread_sigmask(SIG_BLOCK,&hupset,NULL);
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,name,"");
+	SetUpDirectory(Directory,name,"","");
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		fprintf(stderr,"LD \"%s\" not found.\n",name);
 		exit(1);

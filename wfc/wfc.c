@@ -318,7 +318,7 @@ InitSystem(void)
 {
 dbgmsg(">InitSystem");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,"");
+	SetUpDirectory(Directory,NULL,"","");
 	ReadyAPS();
 	SetupMessageQueue();
 	InitTerm();

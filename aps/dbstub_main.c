@@ -66,7 +66,7 @@ InitData(
 {
 dbgmsg(">InitData");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,"",name);
+	SetUpDirectory(Directory,"",name,"");
 dbgmsg("<InitData");
 }
 
