@@ -117,7 +117,11 @@ dbgmsg(">DoInclude");
 	back->cLine = BD_cLine;
 	ftop = back;
 	fclose(BD_File);
-	strcpy(buff,BD_Dir);
+	if		(  BD_Dir  !=  NULL  ) {
+		strcpy(buff,BD_Dir);
+	} else {
+		strcpy(buff,".");
+	}
 	p = buff;
 	do {
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {

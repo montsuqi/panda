@@ -236,7 +236,9 @@ ToString(
 	ValueStruct	*val)
 {
 	static	char	buff[SIZE_BUFF];
-	char	*p;
+	char	*p
+	,		*q;
+	int		i;
 
 	switch	(val->type) {
 	  case	GL_TYPE_CHAR:
@@ -247,12 +249,20 @@ ToString(
 		break;
 	  case	GL_TYPE_NUMBER:
 		p = ValueFixed(val)->sval;
+		q = buff;
 		if		(  *p  >=  0x70  ) {
-			buff[0] = '-';
+			*q ++ = '-';
 			*p ^= 0x40;
-			strcpy(buff+1,p);
-		} else {
-			strcpy(buff,p);
+		}
+		strcpy(q,p);
+		if		(  ValueFixed(val)->slen  >  0  ) {
+			p = buff + strlen(buff);
+			*(p + 1) = 0;
+			q = p - 1;
+			for	( i = 0 ; i < ValueFixed(val)->slen ; i ++ ) {
+				*p -- = *q --;
+			}
+			*p = '.';
 		}
 		break;
 	  case	GL_TYPE_INT:
@@ -270,18 +280,55 @@ ToString(
 	return	(buff);
 }
 
+static	void
+FixedRescale(
+	Fixed	*to,
+	Fixed	*fr)
+{
+	char	*p
+	,		*q;
+	size_t	len;
+	Bool	fMinus;
+
+	if		(  ( *fr->sval & 0x40 )  ==  0x40  ) {
+		fMinus = TRUE;
+	} else {
+		fMinus = FALSE;
+	}
+	memset(to->sval,'0',to->flen);
+	to->sval[to->flen] = 0;
+	p = fr->sval + ( fr->flen - fr->slen );
+	q = to->sval + ( to->flen - to->slen );
+	len = ( fr->slen > to->slen ) ? to->slen : fr->slen;
+	for	( ; len > 0 ; len -- ) {
+		*q ++ = ( *p & 0x3F );
+		p ++;
+	}
+	p = fr->sval + ( fr->flen - fr->slen ) - 1;
+	q = to->sval + ( to->flen - to->slen ) - 1;
+	len = ( ( fr->flen - fr->slen ) > ( to->flen - to->slen ) )
+		? ( to->flen - to->slen ) : ( fr->flen - fr->slen );
+	for	( ; len > 0 ; len -- ) {
+		*q -- = ( *p & 0x3F );
+		p --;
+	}
+	if		(  fMinus  ) {
+		*to->sval |= 0x40;
+	}
+}
+
 extern	Bool
 SetValueString(
 	ValueStruct	*val,
 	char		*str)
 {
 	Bool	rc
-	,		fMinus;
+	,		fMinus
+	,		fPoint;
 	size_t	len;
-	char	*p
-	,		*q;
-	int		i;
+	char	*p;
 	char	buff[SIZE_NAME];
+	Fixed	from;
 
 	if		(  val  ==  NULL  ) {
 		fprintf(stderr,"no ValueStruct\n");
@@ -299,33 +346,32 @@ SetValueString(
 		break;
 	  case	GL_TYPE_NUMBER:
 		p = buff;
+		from.flen = 0;
+		from.slen = 0;
+		from.sval = buff;
+		fPoint = FALSE;
 		fMinus = FALSE;
 		while	(  *str  !=  0  ) {
+			if		(  fPoint  ) {
+				from.slen ++;
+			}
 			if		(  *str  ==  '-'  ) {
 				fMinus = TRUE;
 			} else
-			if	(	(  isdigit(*str)  )
-				||	(  *str  ==  '.'  ) ) {
+			if	(  isdigit(*str)  ) {
 				*p ++ = *str;
+				from.flen ++;
+			} else
+			if		(  *str  ==  '.'  ) {
+				fPoint = TRUE;
 			}
 			str ++;
 		}
 		*p = 0;
-		memclear(val->body.FixedData.sval,val->body.FixedData.flen);
-		p = val->body.FixedData.sval + val->body.FixedData.flen;
-		*p -- = 0;
-		len =  strlen(buff);
-		q = buff + len - 1;
-		for	( i = 0 ; i < val->body.FixedData.flen ; i ++ , p --, q -- ) {
-			if		(  i  <  len  ) {
-				*p = *q;
-			} else {
-				*p = '0';
-			}
-		}
 		if		(  fMinus  ) {
-			*val->body.FixedData.sval |= 0x40;
+			*buff |= 0x40;
 		}
+		FixedRescale(&val->body.FixedData,&from);
 		rc = TRUE;
 		break;
 	  case	GL_TYPE_TEXT:
@@ -522,32 +568,6 @@ SetValueFloat(
 		rc = FALSE;	  
 	}
 	return	(rc);
-}
-
-static	void
-FixedRescale(
-	Fixed	*to,
-	Fixed	*fr)
-{
-	char	*p
-	,		*q;
-	size_t	len;
-
-	memset(to->sval,'0',to->flen);
-	to->sval[to->flen] = 0;
-	p = fr->sval + ( fr->flen - fr->slen );
-	q = to->sval + ( to->flen - to->slen );
-	len = ( fr->slen > to->slen ) ? to->slen : fr->slen;
-	for	( ; len > 0 ; len -- ) {
-		*q ++ = *p ++;
-	}
-	p = fr->sval + ( fr->flen - fr->slen ) - 1;
-	q = to->sval + ( to->flen - to->slen ) - 1;
-	len = ( ( fr->flen - fr->slen ) > ( to->flen - to->slen ) )
-		? ( to->flen - to->slen ) : ( fr->flen - fr->slen );
-	for	( ; len > 0 ; len -- ) {
-		*q -- = *p --;
-	}
 }
 
 extern	int

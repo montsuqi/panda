@@ -124,7 +124,11 @@ dbgmsg(">DoInclude");
 	back->cLine = LD_cLine;
 	ftop = back;
 	fclose(LD_File);
-	strcpy(buff,LD_Dir);
+	if		(  LD_Dir  !=  NULL  ) {
+		strcpy(buff,LD_Dir);
+	} else {
+		strcpy(buff,".");
+	}
 	p = buff;
 	do {
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {

@@ -127,7 +127,11 @@ dbgmsg(">DoInclude");
 	back = New(INCFILE);
 	back->next = ftop;
 	back->fn =  DI_FileName;
-	sprintf(name,"%s/%s",DirectoryDir,fn);
+	if		(  DirectoryDir  !=  NULL  ) {
+		sprintf(name,"%s/%s",DirectoryDir,fn);
+	} else {
+		sprintf(name,"%s",fn);
+	}
 	fgetpos(DI_File,&back->pos);
 	back->cLine = DI_cLine;
 	ftop = back;

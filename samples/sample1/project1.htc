@@ -8,17 +8,59 @@
 </head>
 <BODY TEXT="#000000" BGCOLOR="#F0F0C0" LINK="#0000FF" VLINK="#0000BB">
 <h1>htserverのテスト</h1>
+<p>
+このページはsamples/sample1に対応したものです。バックエンドで動いてい
+るプログラムは2つのLDを持ちます。この画面ともう一つの画面は、異なるLD
+になっています。
+</p>
 <form>
-<fixed name="project1.vbox1.entry1.value">
-<button event="Quit:Button" face="編集"><BR>
-<entry name="project1.vbox1.entry2.value" size=40><BR>
-<entry name="project1.vbox1.entry3.value" size=40><BR>
+<p>
+ここに表示されているものは、linkareaに取られているデータです。そのため、
+もう一つの画面に遷移しても消えません。
+</p>
+fixed1: <fixed name="project1.vbox1.entry1.value">
+<p>
+<button event="Quit:Button" face="編集">押してもう一つの画面に遷移する
+と、上の項目は編集することが出来ます。
+</p>
+<p>
+この下の項目は、glclientでは数値の項目となり、本当は右詰めで処理される
+べきものです。HTMLでは右詰めが出来ません。
+</p>
+entry2: <entry name="project1.vbox1.entry2.value" size=40>
+<p>
+この下の項目は、その下のボタンで処理された結果が入ります。
+</p>
+entry3: <entry name="project1.vbox1.entry3.value" size=40>
+<p>
 <button event="Left:Button" face=" 左 ">
-<button event="Right:Button" face=" 右 ">
-<button event="PutData:Button" face="実行"><BR>
-<combo count="project1.vbox1.combo1.count" name="project1.vbox1.combo1.name.value"
-		item="project1.vbox1.combo1.item">
-<input type="hidden" name="project1.vbox1.togglebutton1.value" value="TRUE">
+を押すと一番上の文字列が左に、二番目の数値(の内部表現文字列)が右に入り
+ます。<button event="Right:Button" face=" 右 ">を押すとその逆です。
+</p>
+<p>
+<button event="PutData:Button" face="実行">
+を押した場合は、
+</p>
+<p>
+「<togglebutton name="project1.vbox1.togglebutton1.value"
+label="project1.vbox1.togglebutton1.label">」
+がどうなっているかによって動作が変わります。チェックが入っていない場合
+は、
+</p>
+<RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioleft.value" label=" 左 ">
+<RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioright.value" label=" 右 ">
+<RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radionone.value" label="なし">
+<p>
+の状態に従います。「左」が選択されていれば、
+<button event="Left:Button" face=" 左 ">
+と同じ動作をします。同じように「右」が選択されていれば、
+<button event="Right:Button" face=" 右 ">と同じ動作になります。
+「なし」の場合は、*が出るだけです。
+</p>
+<p>
+「<togglebutton name="project1.vbox1.togglebutton1.value" label="project1.vbox1.togglebutton1.label">」
+にチェックが入っている場合は、この下のテーブルが増えて行きます。
+</p>
 <TABLE BORDER>
 <TR>
 <TH>count
@@ -31,6 +73,36 @@
 		<TD><fixed name="project1.vbox1.swin1.clist1.item[#i].value1">
 		<TD><fixed name="project1.vbox1.swin1.clist1.item[#i].value2">
 		<TD><fixed name="project1.vbox1.swin1.clist1.item[#i].value3">
+	</TR>
+</COUNT>
+</TABLE>
+<p>
+このテーブルはspaareaに取られているため、
+<button event="Quit:Button" face="編集">押してもう一つの画面に遷移する
+と、消えてしまいます。これは仕様であって、プログラムがおかしいわけでは
+ありません。
+</p>
+<p>
+この下のチェックボックスにチェックを入れると、選んだものが、entry3の文
+字列を作る時に加えられます。複数選べば複数加えられます。
+</p>
+<CHECKBUTTON name="project1.vbox1.hbox5.checkleft.value" label=" 左 ">
+<CHECKBUTTON name="project1.vbox1.hbox5.checkright.value" label=" 右 ">
+<CHECKBUTTON name="project1.vbox1.hbox5.checknone.value" label="なし"><BR>
+
+<combo count="project1.vbox1.combo1.count" name="project1.vbox1.combo1.name.value"
+		item="project1.vbox1.combo1.item"><BR>
+<p>
+この下の表のチェックボックスにチェックを入れて
+<button event="PutData:Button" face="実行">
+を押すと、チェックされた項目が「よい子」に変わります。
+</p>
+<TABLE BORDER>
+<TR>
+<COUNT var="i" to="project1.vbox1.swin2.vp1.list1.count">
+	<TR>
+		<TD><togglebutton name="project1.vbox1.swin2.vp1.list1.select[#i]"
+	label="project1.vbox1.swin2.vp1.list1.item[#i]">
 	</TR>
 </COUNT>
 </TABLE>

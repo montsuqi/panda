@@ -47,6 +47,7 @@ typedef	union	_VarType	{
 	size_t		size
 	,			pos;
 	int			ival;
+	Bool		bval;
 	char		*str;
 	union	_VarType	*ptr;
 }	VarType;
@@ -148,7 +149,8 @@ ParseName(
 
 static	char	*
 HTGetValue(
-	char		*name)
+	char		*name,
+	Bool		fClear)
 {
 	char	buff[SIZE_BUFF];
 	char	*value;
@@ -157,7 +159,7 @@ HTGetValue(
 		value = "";
 	} else
 	if		(  ( value = g_hash_table_lookup(Values,name) )  ==  NULL  ) {
-		sprintf(buff,"%s\n",name);
+		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
 		HT_SendString(buff);
 		HT_RecvString(SIZE_BUFF,buff);
 		g_hash_table_insert(Values,StrDup(name),StrDup(buff));
@@ -194,7 +196,7 @@ dbgmsg(">ExecCode");
 			  case	OPC_REF:
 				dbgmsg("OPC_REF");
 				name = LBS_FetchPointer(htc->code);
-				value = HTGetValue(name);
+				value = HTGetValue(name,FALSE);
 				LBS_EmitString(html,value);
 				break;
 			  case	OPC_VAR:
@@ -218,20 +220,29 @@ dbgmsg(">ExecCode");
 			  case	OPC_HSNAME:
 				dbgmsg("OPC_HSNAME");
 				vval = Pop;
-				value = HTGetValue(vval.str);
+				value = HTGetValue(vval.str,FALSE);
 				LBS_EmitString(html,value);
 				break;
 			  case	OPC_HINAME:
 				dbgmsg("OPC_HINAME");
 				vval = Pop;
-				vval.ival = atoi(HTGetValue(vval.str));
+				vval.ival = atoi(HTGetValue(vval.str,FALSE));
 				Push(vval);
 				break;
 			  case	OPC_HIVAR:
 				dbgmsg("OPC_HIVAR");
 				name = LBS_FetchPointer(htc->code);
-				vval.ival = atoi(HTGetValue(name));
+				vval.ival = atoi(HTGetValue(name,FALSE));
 				Push(vval);
+				break;
+			  case	OPC_HBES:
+				dbgmsg("OPC_HBES");
+				vval = Pop;
+				value = HTGetValue(vval.str,TRUE);
+				str = LBS_FetchPointer(htc->code);
+				if		(  stricmp(value,"TRUE")  ==  0 ) {
+					LBS_EmitString(html,str);
+				}
 				break;
 			  case	OPC_REFSTR:
 				dbgmsg("OPC_REFSTR");
@@ -286,6 +297,7 @@ dbgmsg(">ExecCode");
 			LBS_EmitChar(html,c);
 		}
 	}
+	LBS_EmitEnd(html);
 dbgmsg("<ExecCode");
 	return	(html);
 }

@@ -63,9 +63,6 @@ GetArg(
 	char	*ret;
 
 dbgmsg(">GetArg");
-#ifdef	DEBUG
-	printf("arg = [%s]\n",name);
-#endif
 	if		(  ( type = g_hash_table_lookup(tag->args,name) )  !=  NULL  ) {
 		if		(  type->fPara  ) {
 			if		(  i  <  type->nPara  ) {
@@ -81,9 +78,9 @@ dbgmsg(">GetArg");
 	}
 #ifdef	DEBUG
 	if		(  ret  ==  NULL  ) {
-		printf("NULL\n");
+		printf("%s = NULL\n",name);
 	} else {
-		printf("[%s]\n",ret);
+		printf("%s = [%s]\n",name,ret);
 	}
 #endif
 dbgmsg("<GetArg");
@@ -314,6 +311,7 @@ dbgmsg(">_eHtml");
 	if		(  !fDump  ) {
 		LBS_EmitString(htc->code,"</html>");
 	}
+	LBS_EmitEnd(htc->code);
 dbgmsg("<_eHtml");
 }
 
@@ -399,7 +397,8 @@ _Button(
 	Tag		*tag)
 {
 	char	*face
-	,		*event;
+	,		*event
+	,		*size;
 
 dbgmsg(">_Button");
 	if		(  ( face = GetArg(tag,"face",0) )  ==  NULL  ) {
@@ -411,8 +410,94 @@ dbgmsg(">_Button");
 	g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
 	LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
 	LBS_EmitString(htc->code,face);
-	LBS_EmitString(htc->code,"\">");
+	LBS_EmitString(htc->code,"\"");
+	if		(  ( size = GetArg(tag,"size",0) )  ==  NULL  ) {
+		LBS_EmitString(htc->code,">");
+	} else {
+		LBS_EmitString(htc->code," size=");
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(size));
+		EmitCode(htc,OPC_REFSTR);
+		LBS_EmitString(htc->code,">");
+	}
 dbgmsg("<_Button");
+}
+
+static	void
+_ToggleButton(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*size;
+
+dbgmsg(">_ToggleButton");
+	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_REFSTR);
+	LBS_EmitString(htc->code,"\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_HBES);
+	LBS_EmitPointer(htc->code," checked ");
+	LBS_EmitString(htc->code,"value=\"TRUE\">");
+
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"label",0)));
+	EmitCode(htc,OPC_HSNAME);
+dbgmsg("<_ToggleButton");
+}
+
+static	void
+_CheckButton(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+dbgmsg(">_CheckButton");
+	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_REFSTR);
+	LBS_EmitString(htc->code,"\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_HBES);
+	LBS_EmitPointer(htc->code," checked ");
+	LBS_EmitString(htc->code,"value=\"TRUE\">");
+	LBS_EmitString(htc->code,GetArg(tag,"label",0));
+dbgmsg("<_CheckButton");
+}
+
+static	void
+_RadioButton(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*group
+	,		*name;
+
+dbgmsg(">_RadioButton");
+	group = GetArg(tag,"group",0); 
+	name = GetArg(tag,"name",0); 
+	LBS_EmitString(htc->code,"<input type=\"radio\" name=\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(group));
+	EmitCode(htc,OPC_REFSTR);
+	LBS_EmitString(htc->code,"\"");
+
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_HBES);
+	LBS_EmitPointer(htc->code," checked ");
+
+	LBS_EmitString(htc->code,"value=\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(name));
+	EmitCode(htc,OPC_REFSTR);
+	LBS_EmitString(htc->code,"\">");
+	LBS_EmitString(htc->code,GetArg(tag,"label",0));
+	g_hash_table_insert(htc->Radio,StrDup(group),(void*)1);
+dbgmsg("<_RadioButton");
 }
 
 extern	void
@@ -451,10 +536,6 @@ dbgmsg(">TagsInit");
 	pAStack = 0; 
 	Tags = NewNameiHash();
 
-	tag = NewTag("BUTTON",_Button);
-	AddArg(tag,"event",TRUE);
-	AddArg(tag,"face",TRUE);
-
 	tag = NewTag("ENTRY",_Entry);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
@@ -481,6 +562,24 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"rows",TRUE);
 	AddArg(tag,"cols",TRUE);
+
+	tag = NewTag("BUTTON",_Button);
+	AddArg(tag,"event",TRUE);
+	AddArg(tag,"face",TRUE);
+	AddArg(tag,"size",TRUE);
+
+	tag = NewTag("TOGGLEBUTTON",_ToggleButton);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"label",TRUE);
+
+	tag = NewTag("CHECKBUTTON",_CheckButton);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"label",TRUE);
+
+	tag = NewTag("RADIOBUTTON",_RadioButton);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"group",TRUE);
+	AddArg(tag,"label",TRUE);
 
 	tag = NewTag("FORM",_Form);
 	tag = NewTag("HEAD",_Head);

@@ -1,3 +1,15 @@
+2002-03-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDlex.c (DoInclude): LD_DirがNULLの時の処理
+
+2002-03-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/value.c (FixedRescale): 負数の処理を正しくした
+
+2002-03-04  Go Kida <kida@netlab.jp>
+
+	* htserver/server.c: include sys/uio.h
+
 2002-03-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.0 release ＼(^o^)／

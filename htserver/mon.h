@@ -24,6 +24,7 @@ copies.
 typedef	struct {
 	LargeByteString	*code;
 	GHashTable	*Trans;
+	GHashTable	*Radio;
 }	HTCInfo;
 
 #undef	GLOBAL

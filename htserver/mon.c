@@ -354,11 +354,20 @@ SendEvent(
 	char	*name;
 	void	SendValue(
 		char		*name,
-		char		*value,
-		void		*dummy)
+		char		*value)
 		{
 			sprintf(buff,"%s: %s\n",name,value);
 			HT_SendString(buff);
+		}
+	void	GetRadio(
+		char	*name)
+		{
+			char	*rname;
+
+			if		(  ( rname = g_hash_table_lookup(Values,name) )  !=  NULL  ) {
+				g_hash_table_remove(Values,name);
+				g_hash_table_insert(Values,rname,"TRUE");
+			}
 		}
 
 	if		(  ( name = g_hash_table_lookup(Values,"_name") )  !=  NULL  ) {
@@ -368,6 +377,11 @@ SendEvent(
 		}
 	} else {
 		event = "";
+		htc = NULL;
+	}
+
+	if		(  htc  !=  NULL  ) {
+		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
 	}
 
 	sprintf(buff,"%s\n",event);

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -39,6 +39,7 @@ copies.
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<sys/stat.h>
+#include	<sys/uio.h>
 #include	<unistd.h>
 #include	<glib.h>
 
@@ -201,7 +202,6 @@ SendWindowName(
 			  case	SCREEN_CURRENT_WINDOW:
 			  case	SCREEN_NEW_WINDOW:
 			  case	SCREEN_CHANGE_WINDOW:
-				//SendInt(fpComm,win->PutType);
 				HT_SendString(fd,"Window: ");
 				HT_SendString(fd,wname);
 				HT_SendString(fd,"\n");
@@ -228,16 +228,24 @@ WriteClient(
 	,		wname[SIZE_BUFF+1];
 	WindowData	*win;
 	ValueStruct	*value;
+	char	*p;
 
 dbgmsg(">WriteClient");
 	SendWindowName(fd,scr);
 	do {
 		HT_RecvString(fd,SIZE_BUFF,buff);
+		if		(  ( p = strchr(buff,' ') )  !=  NULL  ) {
+			*p = 0;
+		}
 		if		(  *buff  !=  0  ) {
 			DecodeName(wname,vname,buff);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->Value,vname);
 				HT_SendString(fd,ToString(value));
+				if		(	(  p  !=  NULL            )
+						&&	(  !stricmp(p+1,"clear")  ) ) {
+					InitializeValue(value);
+				}
 			}
 			HT_SendString(fd,"\n");
 		}
@@ -325,21 +333,21 @@ dbgmsg(">SesServer");
 			HT_SendString(fd,"\n");
 			HT_RecvString(fd,SIZE_BUFF,buff);
 			if		(  *buff  ==  0  )	{
-				close(fd);
 				break;
-			}
-			if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
-				*p = 0;
-				strcpy(scr->event,buff);
-				strcpy(scr->widget,p+1);
 			} else {
-				strcpy(scr->widget,"");
-				strcpy(scr->event,buff);
-			}
-			RecvScreenData(fd,scr);
-			ApplicationsCall(APL_SESSION_GET,scr);
-			while	(  scr->status  ==  APL_SESSION_LINK  ) {
-				ApplicationsCall(scr->status,scr);
+				if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
+					*p = 0;
+					strcpy(scr->event,buff);
+					strcpy(scr->widget,p+1);
+				} else {
+					strcpy(scr->widget,"");
+					strcpy(scr->event,buff);
+				}
+				RecvScreenData(fd,scr);
+				ApplicationsCall(APL_SESSION_GET,scr);
+				while	(  scr->status  ==  APL_SESSION_LINK  ) {
+					ApplicationsCall(scr->status,scr);
+				}
 			}
 			if		(  scr->status  !=  APL_SESSION_NULL  ) {
 				WriteClient(fd,scr);
@@ -356,29 +364,14 @@ ChildProcess(
 	int		fd,
 	int		sock,
 	int		sesid,
-	char	*arg)
+	char	*user,
+	char	*cmd)
 {
-	char	*user
-	,		*cmd;
-	char	*p;
 	Bool	fOk;
 	ScreenData	*scr;
 	char	trid[SIZE_SESID+1];
 
 dbgmsg(">ChildProcess");
-	if		(  *arg  ==  0  ) {
-		user = "";
-		cmd = "";
-	} else 
-	if		(  ( p = strchr(arg,'\t') )  !=  NULL  ) {
-		*p = 0;
-		cmd = arg;
-		p ++;
-		user = p;
-	} else {
-		cmd = arg;
-		user = "";
-	}
 	
 	scr = InitSession();
 	strcpy(scr->cmd,cmd);
@@ -391,10 +384,9 @@ dbgmsg(">ChildProcess");
 	ApplicationsCall(APL_SESSION_LINK,scr);
 	if		(  scr->status  ==  APL_SESSION_NULL  ) {
 		HT_SendString(fd,"900 invalid program\n");
-		g_warning("reject client(program name error)");
+		printf("reject client(program name error)\n");
 		fOk = FALSE;
 	} else {
-		g_warning("go!!");
 		fOk = TRUE;
 	}
 	if		(  fOk  ) {
@@ -413,6 +405,25 @@ dbgmsg("<ChildProcess");
 }
 
 static	void
+PutLog(
+	char	*user,
+	char	*cmd,
+	int		sesno)
+{
+	time_t		nowtime;
+	struct	tm	*Now;
+
+	time(&nowtime);
+	Now = localtime(&nowtime);
+	Now->tm_year += 1900;
+	printf("%04d/%02d/%02d %02d:%02d:%02d %08d %s %s\n",
+		   Now->tm_year,Now->tm_mon,Now->tm_mday,
+		   Now->tm_hour,Now->tm_min,Now->tm_sec,
+		   sesno,user,cmd);
+	
+}
+
+static	void
 NewSession(
 	int		fd,
 	char	*arg)
@@ -420,15 +431,32 @@ NewSession(
 	HTC_Node	*htc;
 	int		pid;
 	int		socks[2];
+	char	*user
+	,		*cmd;
+	char	*p;
 
 dbgmsg(">NewSession");
 	if		(  socketpair(PF_UNIX, SOCK_STREAM, 0, socks)  !=  0  ) {
 		fprintf(stderr,"make unix domain socket fail.\n");
 		exit(1);
 	}
+	if		(  *arg  ==  0  ) {
+		user = "";
+		cmd = "";
+	} else 
+	if		(  ( p = strchr(arg,'\t') )  !=  NULL  ) {
+		*p = 0;
+		cmd = arg;
+		p ++;
+		user = p;
+	} else {
+		cmd = arg;
+		user = "";
+	}
+	PutLog(user,cmd,cSession);
 	if		(  ( pid = fork() )  ==  0  ) {
 		close(socks[0]);
-		ChildProcess(fd,socks[1],cSession,arg);
+		ChildProcess(fd,socks[1],cSession,user,cmd);
 		exit(0);
 	} else {
 		close(socks[1]);
@@ -479,7 +507,6 @@ dbgmsg(">ExecuteServer");
 		} else
 		if		(  strncmp(buff,"Session:",8)  ==  0  ) {
 			DecodeTRID(&ses,&count,buff+9);
-			printf("[%d:%d]\n",ses,count);
 			if		(  (  htc = g_int_hash_table_lookup(SesHash,ses) )  !=  NULL  ) {
 				htc->count = count;
 				vec.iov_base = htc;

@@ -35,6 +35,7 @@ copies.
 #define	OPC_REFSTR	0x0B
 #define	OPC_HINAME	0x0C
 #define	OPC_BREAK	0x0D
+#define	OPC_HBES	0x0E
 
 #undef	GLOBAL
 #ifdef	MAIN
