@@ -258,14 +258,22 @@ dbgmsg(">GetTable");
 	  case	GL_TYPE_INT:
 		dbgmsg("int");
 		fnum = PQfnumber(res,ItemName());
-		if		(  fnum  >=  0  ) {
+		if		(  fnum  <  0  ) {
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
+		} else {
 			SetValueInteger(val,atoi((char *)PQgetvalue(res,0,fnum)));
 		}
 		break;
 	  case	GL_TYPE_BOOL:
 		dbgmsg("bool");
 		fnum = PQfnumber(res,ItemName());
-		if		(  fnum  >=  0  ) {
+		if		(  fnum  <  0  ) {
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
+		} else {
 			SetValueBool(val,*(char *)PQgetvalue(res,0,fnum));
 		}
 		break;
@@ -277,7 +285,9 @@ dbgmsg(">GetTable");
 		dbgmsg("char");
 		fnum = PQfnumber(res,ItemName());
 		if		(  fnum  <  0  ) {
-			SetValueString(val,NULL);
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
 		} else {
 			SetValueString(val,(char *)PQgetvalue(res,0,fnum));
 		}
@@ -285,7 +295,11 @@ dbgmsg(">GetTable");
 	  case	GL_TYPE_NUMBER:
 		dbgmsg("number");
 		fnum = PQfnumber(res,ItemName());
-		if		(  fnum  >=  0  ) {
+		if		(  fnum  <  0  ) {
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
+		} else {
 			nv = NumericInput((char *)PQgetvalue(res,0,fnum),
 						  val->body.FixedData.flen,val->body.FixedData.slen);
 			str = NumericToFixed(nv,val->body.FixedData.flen,val->body.FixedData.slen);
@@ -297,7 +311,11 @@ dbgmsg(">GetTable");
 	  case	GL_TYPE_ARRAY:
 		dbgmsg("array");
 		fnum = PQfnumber(res,ItemName());
-		if		(  fnum  >=  0  ) {
+		if		(  fnum  <  0  ) {
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
+		} else {
 			ParArray(PQgetvalue(res,0,fnum),val);
 		}
 		break;
@@ -552,10 +570,10 @@ GetValue(
 
 dbgmsg(">GetValue");
 	if		(  PQgetisnull(res,tnum,fnum)  ==  1  ) { 	/*	null	*/
-		ValueAttribute(val) |= GL_ATTR_NIL;
+		ValueIsNil(val);
 	} else {
-		ValueAttribute(val) &= ~GL_ATTR_NIL;
-		switch	(val->type) {
+		ValueIsNonNil(val);
+		switch	(ValueType(val)) {
 		  case	GL_TYPE_INT:
 			SetValueInteger(val,atoi((char *)PQgetvalue(res,tnum,fnum)));
 			break;
