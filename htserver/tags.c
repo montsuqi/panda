@@ -629,8 +629,10 @@ _Button(
 		,	*onclick;
 
 dbgmsg(">_Button");
-	if ((event = GetArg(tag, "event", 0)) == NULL) {
-        HTC_Error("`event' attribute is required for <%s>\n", tag->name);
+	event = GetArg(tag, "event", 0);
+	onclick = GetArg(tag,"onclick",0);
+	if ((event == NULL) &&(onclick == NULL )) {
+        HTC_Error("`event' or `on' attribute is required for <%s>\n", tag->name);
         return;
 	}
 	if ((face = GetArg(tag, "face", 0)) == NULL) {
@@ -638,7 +640,9 @@ dbgmsg(">_Button");
 	}
     if (htc->DefaultEvent == NULL)
         htc->DefaultEvent = event;
-	g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
+	if (event != NULL) {
+		g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
+	}
 	LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
 	LBS_EmitString(htc->code,face);
 	LBS_EmitString(htc->code,"\"");
@@ -648,8 +652,8 @@ dbgmsg(">_Button");
 		LBS_EmitPointer(htc->code,StrDup(size));
 		EmitCode(htc,OPC_REFSTR);
 	}
-	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,"onclick=\"");
+	if		(  onclick  !=  NULL  ) {
+		LBS_EmitString(htc->code," onclick=\"");
 		LBS_EmitString(htc->code,onclick);
 		LBS_EmitString(htc->code,"\"");
 	}
