@@ -36,7 +36,8 @@ copies.
 #include	<unistd.h>
 #include	<glib.h>
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
+#include	"struct.h"
 #include	"misc.h"
 #include	"const.h"
 #include	"enum.h"
@@ -318,29 +319,27 @@ static	void
 MakeFromRecord(
 	char	*name)
 {
-	RecordStruct	*rec;
+	ValueStruct	*value;
 
-	if		(  fScreen  ) {
-		level = 3;
-	} else {
-		level = 1;
-	}
+dbgmsg(">MakeFromRecord");
+	level = 1;
 	DD_ParserInit();
-	if		(  ( rec = DD_ParserDataDefines(name) )  !=  NULL  ) {
+	if		(  ( value = DD_ParseValue(name) )  !=  NULL  ) {
 		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
-			PutString(rec->name);
+			PutString(ValueName);
 		} else {
 			PutString(RecName);
 		}
 		if		(  fFiller  ) {
 			printf(".\n");
-			SIZE(Conv,rec->value);
+			SIZE(Conv,value);
 		} else {
-			COBOL(Conv,rec->value);
+			COBOL(Conv,value);
 		}
 		printf(".\n");
 	}
+dbgmsg("<MakeFromRecord");
 }
 
 static	void
@@ -609,7 +608,7 @@ static	void
 MakeDBREC(
 	char	*name)
 {
-	RecordStruct	*rec;
+	ValueStruct	*val;
 	size_t	msize
 	,		size;
 	int		i;
@@ -654,11 +653,11 @@ dbgmsg(">MakeDBREC");
 		size = SizeValue(Conv,dbrec[i]->value);
 		msize = ( msize > size ) ? msize : size;
 	}
-	if		(  ( rec = DD_ParserDataDefines(name) )  !=  NULL  ) {
+	if		(  ( val = DD_ParseValue(name) )  !=  NULL  ) {
 		level = 1;
 		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
-			rname = rec->name;
+			rname = ValueName;
 		} else {
 			rname = RecName;
 		}
@@ -666,10 +665,10 @@ dbgmsg(">MakeDBREC");
 		Prefix = "";
 		PutName(rname);
 		Prefix = _prefix;
-		COBOL(Conv,rec->value);
+		COBOL(Conv,val);
 		printf(".\n");
 
-		size = SizeValue(Conv,rec->value);
+		size = SizeValue(Conv,val);
 		if		(  msize  !=  size  ) {
 			PutLevel(2,TRUE);
 			PutName("filler");

@@ -25,6 +25,7 @@ copies.
 #include	"const.h"
 #include	"enum.h"
 #include	"libmondai.h"
+#include	"struct.h"
 #include	"glterm.h"
 
 typedef	struct {

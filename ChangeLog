@@ -1,5 +1,7 @@
 2003-09-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* tools/dbgen.c (main): DBのあたりの変更に対応
+
 	* dblib/PostgreSQL.c (GetTable): intの時の処理を正しく直した
 
 	* tools/checkdir.c (DumpPath): pathのダンプ機能追加

@@ -51,6 +51,15 @@ static	Bool	fDBG;
 static	char	*Directory;
 
 static	void
+PutTab(
+	int		n)
+{
+	for	( ; n > 0 ; n -- ) {
+		printf("\t");
+	}
+}
+
+static	void
 DumpKey(
 	KeyStruct	*pkey)
 {
@@ -60,7 +69,8 @@ DumpKey(
 dbgmsg(">DumpKey");
 	if		(  pkey  !=  NULL  ) {
 		item = pkey->item;
-		printf("\t\tpkey = ");
+		PutTab(2);
+		printf("pkey = ");
 		while	(  *item  !=  NULL  ) {
 			pk = *item;
 			while	(  *pk  !=  NULL  ) {
@@ -179,15 +189,6 @@ dbgmsg(">DumpDB");
 		}
 	}
 dbgmsg("<DumpDB");
-}
-
-static	void
-PutTab(
-	int		n)
-{
-	for	( ; n > 0 ; n -- ) {
-		printf("\t");
-	}
 }
 
 static	int		nTab;

@@ -22,6 +22,7 @@ copies.
 #ifndef	_INC_DB_PARSER_H
 #define	_INC_DB_PARSER_H
 #include	<glib.h>
+#include	"struct.h"
 
 extern	void			 DB_ParserInit(void);
 extern	RecordStruct	*DB_Parser(char *name);

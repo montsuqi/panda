@@ -37,6 +37,7 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"libmondai.h"
+#include	"DBparser.h"
 #include	"dirs.h"
 #include	"misc.h"
 #include	"const.h"
@@ -281,28 +282,6 @@ PutItemNames(
 	}
 }
 
-static	void
-MakeInsert(
-	RecordStruct	*rec)
-{
-	level = 0;
-	alevel = 0;
-
-	printf("#! /bin/sh\n");
-	printf("psql PIM > %s.dump << __EOF__\n",rec->name);
-	printf("\\copy %s to stdout using delimiters ','\n",rec->name);
-	printf("__EOF__\n");
-	printf("sed < %s.dump -e \"{\n",rec->name);
-	printf("s/\\N//g\n");
-	printf("s/,/','/g\n");
-	printf("s/^/insert into %s (",rec->name);
-	PutItemNames(rec->value);
-	printf(") values ('/\n");
-	printf("s/$/');/\n");
-	printf("}\"\n");
-
-}
-
 static	ARG_TABLE	option[] = {
 	{	"create",	BOOLEAN,	TRUE,	(void*)&fCreate,
 		"create table¤òºî¤ë"							},
@@ -342,14 +321,10 @@ main(
 
 	if		(  fl  !=  NULL  ) {
 		DD_ParserInit();
+		DB_ParserInit();
 		if		(  fCreate  ) {
-			if		(  ( rec = DD_ParserDataDefines(fl->name) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name) )  !=  NULL  ) {
 				MakeCreate(rec);
-			}
-		} else
-		if		(  fInsert  ) {
-			if		(  ( rec = DD_ParserDataDefines(fl->name) )  !=  NULL  ) {
-				MakeInsert(rec);
 			}
 		}
 	}

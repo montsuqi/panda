@@ -40,6 +40,8 @@ copies.
 #include	"misc.h"
 #include	"const.h"
 #include	"libmondai.h"
+#include	"struct.h"
+#include	"DDparser.h"
 #include	"enum.h"
 #include	"load.h"
 #define		_HANDLER

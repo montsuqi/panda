@@ -22,7 +22,8 @@ copies.
 #ifndef	_INC_SQL_PARSER_H
 #define	_INC_SQL_PARSER_H
 
-#include	"value.h"
+#include	"libmondai.h"
+#include	"struct.h"
 
 #define	SQL_OP_EOS		0
 #define	SQL_OP_MSB		LBS_QUOTE_MSB

@@ -32,6 +32,7 @@ enum_LDADD	= 	\
 libpanda_la_SOURCES	=		\
 	Dlex.c		Dlex.h		\
 	mhandler.c	mhandler.h	\
+	DDparser.c	DDparser.h	\
 	BDparser.c	BDparser.h	\
 	LDparser.c	LDparser.h	\
 	DBDparser.c	DBDparser.h	\
@@ -47,6 +48,7 @@ libpanda_la_SOURCES	=		\
 
 libpandas_la_SOURCES	=		\
 	applications.c applications.h	\
+	DDparser.c	DDparser.h			\
 	driver.c	driver.h	enum.h	\
 	front.c		front.h				\
 	authstub.c	authstub.h			\
