@@ -1375,16 +1375,7 @@ ENTER_FUNC;
 				ctrl->rc = MCP_BAD_OTHER;
 			} else {
 				ctrl->rc = MCP_OK;
-				if		(  ( n = PQntuples(res) )  >  0  ) {
-					dbgmsg("OK");
-					level = 0;
-					alevel = 0;
-					GetTable(dbg,res,args);
-					ctrl->rc = MCP_OK;
-				} else {
-					dbgmsg("EOF");
-					ctrl->rc = MCP_EOF;
-				}
+				dbgmsg("OK");
 			}
 			_PQclear(res);
 		}
