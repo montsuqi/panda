@@ -55,8 +55,6 @@ static	size_t	pAStack;
 
 static char *enctype_urlencoded = "application/x-www-form-urlencoded";
 static char *enctype_multipart = "multipart/form-data";
-static size_t enctype_pos;
-static int form_no = -1;
 
 static	char	*
 GetArg(
@@ -157,7 +155,7 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
                  "document.forms[%d].elements[0].name='_event';"
                  "document.forms[%d].elements[0].value='%s';"
                  "document.forms[%d].submit();\"",
-                 event, form_no, form_no, value, form_no);
+                 event, htc->FormNo, htc->FormNo, value, htc->FormNo);
         LBS_EmitString(htc->code, buf);
     }
 }
@@ -313,7 +311,7 @@ _Form(
 	char	*name;
 
 dbgmsg(">_Form");
-	form_no++;
+	htc->FormNo++;
 	LBS_EmitString(htc->code,"<form action=\"mon.cgi\" method=\"");
 	if		(  fGet  ) {
 		LBS_EmitString(htc->code,"get");
@@ -323,7 +321,7 @@ dbgmsg(">_Form");
 	LBS_EmitString(htc->code,"\"");
     LBS_EmitString(htc->code, " enctype=\"");
     EmitCode(htc, OPC_SCONST);
-    enctype_pos = LBS_GetPos(htc->code);
+    htc->EnctypePos = LBS_GetPos(htc->code);
     LBS_EmitPointer(htc->code, enctype_urlencoded);
     EmitCode(htc, OPC_REFSTR);
     LBS_EmitString(htc->code, "\"");
@@ -335,7 +333,7 @@ dbgmsg(">_Form");
 	}
 	LBS_EmitString(htc->code,">\n");
 
-    /* document.forms[form_no].elements[0] for JavaScript */
+    /* document.forms[htc->FormNo].elements[0] for JavaScript */
 	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_\" value=\"\">");
 
 	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_name\" value=\"");
@@ -659,9 +657,9 @@ dbgmsg(">_FileSelection");
         g_hash_table_insert(htc->FileSelection,
                             StrDup(name), StrDup(filename));
 
-        if (enctype_pos != 0) {
+        if (htc->EnctypePos != 0) {
             size_t pos = LBS_GetPos(htc->code);
-            LBS_SetPos(htc->code, enctype_pos);
+            LBS_SetPos(htc->code, htc->EnctypePos);
             LBS_EmitPointer(htc->code, enctype_multipart);
             LBS_SetPos(htc->code, pos);
         }
