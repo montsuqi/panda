@@ -42,6 +42,17 @@ AC_PROG_MAKE_SET
 
 AM_PROG_LIBTOOL
 
+dnl ***************************************************************************
+dnl Checks for GNOME
+dnl ***************************************************************************
+have_gnome=false
+GNOME_INIT_HOOK([
+	have_gnome=true
+	AC_DEFINE(ENABLE_GNOME)
+])
+
+GNOME_COMPILE_WARNINGS
+
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the PostgreSQL 
 dnl *************************************************************************** 
@@ -251,8 +262,13 @@ AC_PATH_PROG(GLADE_PANDA_CONFIG,libglade-panda-config,no)
 if test x$GLADE_PANDA_CONFIG = xno; then
   AC_MSG_ERROR(Couldn't find libglade-panda-config)
 fi
-GLADE_LIBS=`libglade-panda-config --libs`
-GLADE_CFLAGS=`libglade-panda-config --cflags`
+if test "x$have_gnome" = "xtrue"; then
+  GLADE_LIBS=`libglade-panda-config --libs gnome`
+  GLADE_CFLAGS=`libglade-panda-config --cflags gnome`
+else
+  GLADE_LIBS=`libglade-panda-config --libs`
+  GLADE_CFLAGS=`libglade-panda-config --cflags`
+fi
 AC_SUBST(GLADE_LIBS)
 AC_SUBST(GLADE_CFLAGS)
 
@@ -286,15 +302,6 @@ LIBS="$XML_LIBS $LIBS"
 AC_CHECK_FUNC(xmlSAXUserParseFile,,
 AC_MSG_ERROR([*** libxml >= 1.7.2 is required to compile libglade]))
 LIBS="$old_LIBS"
-
-have_gnome=false
-GNOME_INIT_HOOK([
-	have_gnome=true
-	AC_DEFINE(ENABLE_GNOME)
-])
-AM_CONDITIONAL(GNOME_SUPPORT, $have_gnome)
-
-GNOME_COMPILE_WARNINGS
 
 AC_OUTPUT(Makefile
 	  Doc/Makefile

@@ -1,11 +1,3 @@
-if GNOME_SUPPORT
-THE_FLAGS = $(GNOME_INCLUDEDIR)
-THE_LIBS  = -lglade-panda-gnome $(GNOME_LIBDIR) $(GNOMEUI_LIBS)
-else
-THE_FLAGS = $(GTK_CFLAGS)
-THE_LIBS  = $(GTK_LIBS)
-endif
-
 INCLUDES	=		\
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
@@ -18,7 +10,7 @@ INCLUDES	=		\
 bin_PROGRAMS = glclient
 
 glclient_LDADD	= 	\
-	$(THE_LIBS) $(GLADE_LIBS) $(PANDA_LIBS)	\
+	$(GLADE_LIBS) $(PANDA_LIBS)	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm	-lpthread \
 	-L$(top_srcdir)/libs -lpandac
 

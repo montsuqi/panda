@@ -1,15 +1,7 @@
-if GNOME_SUPPORT
-THE_FLAGS = $(GNOME_INCLUDEDIR)
-THE_LIBS  = -lglade-panda-gnome $(GNOME_LIBDIR) $(GNOMEUI_LIBS)
-else
-THE_FLAGS = $(GTK_CFLAGS)
-THE_LIBS  = $(GTK_LIBS)
-endif
-
 lib_LTLIBRARIES = libpanda.la
 
 enum_LDADD	= 	\
-	$(THE_LIBS) $(GLADE_LIBS)	$(PANDA_LIBS)	\
+	$(GLADE_LIBS)	$(PANDA_LIBS)	\
 	-L/usr/lib -lglib -lm
 noinst_PROGRAMS	=	enum
 
