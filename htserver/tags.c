@@ -195,8 +195,10 @@ ExpandAttributeString(
 static void
 JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
 {
-    char *value;
+    char 	*value
+		,	*p;
     char buf[SIZE_BUFF];
+	size_t	len;
 
     if ((value = GetArg(tag, event, 0)) == NULL)
         return;
@@ -208,11 +210,58 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
 		snprintf(buf, SIZE_BUFF,
 				 "=\""
 				 "send_event(%d,'%s');\"",htc->FormNo,value+1);
+		LBS_EmitString(htc->code, buf);
 	} else {
-		snprintf(buf, SIZE_BUFF,
-				 "=\"%s\"",value);
+		LBS_EmitString(htc->code, "=\"");
+		while	(  *value  !=  0  ) {
+			switch	(*value) {
+			  case	'$':
+				value ++;
+				/*	path through	*/
+			  case	'#':
+				p = buf;
+				len = 0;
+				while	(	(  isalpha(*value) )
+						||	(  isdigit(*value) )
+						||	(  *value  ==  '#' )
+						||	(  *value  ==  '$' )
+						||	(  *value  ==  '.' )
+						||	(  *value  ==  '_' )
+						||	(  *value  ==  '-' )
+						||	(  *value  ==  ':' ) ) {
+					*p = *value;
+					if		(  len  <  SIZE_BUFF  ) {
+						p ++;
+						len ++;
+					}
+					value ++;
+					if		(  *value  ==  0  )	break;
+				}
+				*p = 0;
+				if		(	(  buf[0]  ==  '$'  )
+						||	(  buf[0]  ==  '#'  ) ) {
+					EmitCode(htc,OPC_NAME);
+					LBS_EmitPointer(htc->code,StrDup(buf));
+					EmitCode(htc,OPC_REFSTR);
+				} else {
+					EmitCode(htc,OPC_NAME);
+					LBS_EmitPointer(htc->code,StrDup(buf));
+					EmitCode(htc,OPC_EHSNAME);
+				}
+				break;
+			  case	'\\':
+				value ++;
+				LBS_EmitChar(htc->code,*value);
+				value ++;
+				break;
+			  default:
+				LBS_EmitChar(htc->code,*value);
+				value ++;
+				break;
+			}
+		}
+		LBS_EmitChar(htc->code,'"');
 	}
-	LBS_EmitString(htc->code, buf);
 }
 
 static void
@@ -374,14 +423,21 @@ ENTER_FUNC;
 		if		(  value  !=  NULL  ) {
 			LBS_EmitString(htc->code,value);
 		} else {
-			EmitCode(htc,OPC_NAME);
-			LBS_EmitPointer(htc->code,StrDup(name));
-			EmitCode(htc,OPC_HSNAME);
-			if		(	(  type  !=  NULL  )
-					&&	(  !stricmp(type,"html")  ) ) {
-				EmitCode(htc,OPC_EMITHTML);
+			if		(	(  name[0]  ==  '$'  )
+					||	(  name[0]  ==  '#'  ) ) {
+				EmitCode(htc,OPC_NAME);
+				LBS_EmitPointer(htc->code,StrDup(name));
+				EmitCode(htc,OPC_REFSTR);
 			} else {
-				EmitCode(htc,OPC_EMITSTR);
+				EmitCode(htc,OPC_NAME);
+				LBS_EmitPointer(htc->code,StrDup(name));
+				EmitCode(htc,OPC_HSNAME);
+				if		(	(  type  !=  NULL  )
+						&&	(  !stricmp(type,"html")  ) ) {
+					EmitCode(htc,OPC_EMITHTML);
+				} else {
+					EmitCode(htc,OPC_EMITSTR);
+				}
 			}
 		}
 		if		(  link  !=  NULL  ) {
@@ -852,6 +908,51 @@ ENTER_FUNC;
 	JavaScriptEvent(htc, tag, "onmousemove");
 	JavaScriptEvent(htc, tag, "onmouseout");
 	JavaScriptEvent(htc, tag, "onmousesetup");
+	Style(htc,tag);
+	LBS_EmitString(htc->code,">");
+	pos = LBS_GetPos(htc->code);
+	LBS_SetPos(htc->code,arg);
+	LBS_EmitInt(htc->code,pos);
+	LBS_SetPos(htc->code,pos);
+LEAVE_FUNC;
+}
+
+static	void
+_A(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*state;
+	int		arg
+		,	pos;
+
+ENTER_FUNC;
+	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(state));
+		EmitCode(htc,OPC_HINAME);
+	} else {
+		EmitCode(htc,OPC_ICONST);
+		LBS_EmitInt(htc->code,0);
+	}
+	EmitCode(htc,OPC_ICONST);
+	LBS_EmitInt(htc->code,0);
+	EmitCode(htc,OPC_SUB);
+	EmitCode(htc,OPC_JNZNP);
+	arg = LBS_GetPos(htc->code);
+	LBS_EmitInt(htc->code,0);
+	LBS_EmitString(htc->code,"<a");
+	JavaScriptEvent(htc, tag, "onclick");
+	JavaScriptEvent(htc, tag, "onchange");
+	JavaScriptEvent(htc, tag, "onkeydown");
+	JavaScriptEvent(htc, tag, "onkeypress");
+	JavaScriptEvent(htc, tag, "onkeyup");
+	JavaScriptEvent(htc, tag, "onmouseover");
+	JavaScriptEvent(htc, tag, "onmousedown");
+	JavaScriptEvent(htc, tag, "onmousemove");
+	JavaScriptEvent(htc, tag, "onmouseout");
+	JavaScriptEvent(htc, tag, "onmousesetup");
+	JavaScriptEvent(htc, tag, "href");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	pos = LBS_GetPos(htc->code);
@@ -1639,6 +1740,22 @@ ENTER_FUNC;
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"style",TRUE);
 	//	tag = NewTag("/SPAN",NULL);
+
+	tag = NewTag("A",_A);
+	AddArg(tag,"onclick",TRUE);
+	AddArg(tag,"onchange",TRUE);
+	AddArg(tag,"onkeydown",TRUE);
+	AddArg(tag,"onkeypress",TRUE);
+	AddArg(tag,"onkeyup",TRUE);
+	AddArg(tag,"onmousedown",TRUE);
+	AddArg(tag,"onmousemove",TRUE);
+	AddArg(tag,"onmouseout",TRUE);
+	AddArg(tag,"onmouseover",TRUE);
+	AddArg(tag,"onmousesetup",TRUE);
+	AddArg(tag,"href",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 
 	tag = NewTag("COUNT",_Count);
 	AddArg(tag,"var",TRUE);

@@ -20,9 +20,9 @@ copies.
 */
 
 /*
-*/
 #define DEBUG
 #define TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -469,8 +469,10 @@ value_struct_mark(value_struct_data *data)
 static void
 value_struct_free(value_struct_data *data)
 {
-    FreeValueStruct(data->value);
-    free(data);
+ENTER_FUNC;
+	FreeValueStruct(data->value);
+	free(data);
+LEAVE_FUNC;
 }
 
 static VALUE

@@ -1,3 +1,7 @@
+2004-12-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c (JavaScriptEvent): 変数の参照を可能にした, aタグも処理するようにした
+
 2004-10-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/PostgreSQL.c (_DBCLOSECURSOR): cursor closeのdefault
