@@ -41,6 +41,7 @@ copies.
 #include	"SQLparser.h"
 #include	"libmondai.h"
 #include	"dbgroup.h"
+#include	"term.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -119,58 +120,6 @@ dbgmsg(">_DBSELECT");
 		ctrl->rc = MCP_OK;
 	}
 dbgmsg("<_DBSELECT");
-}
-
-static	char	*
-TermToHost(
-	char	*term)
-{
-	struct	sockaddr_in		in;
-	struct	sockaddr_in6	in6;
-	char	*p;
-	int		i;
-	char	buff[NI_MAXHOST+2];
-	static	char	host[NI_MAXHOST];
-	char	port[NI_MAXSERV];
-
-ENTER_FUNC;
-	p = term;
-	switch	(*p) {
-	  case	'4':
-		p ++;
-		in.sin_port = HexToInt(p,4);
-		p = strchr(p,':') + 1;
-		in.sin_addr.s_addr = HexToInt(p,8);
-		in.sin_family = AF_INET;
-		getnameinfo((struct sockaddr *)&in,sizeof(in),host,NI_MAXHOST,port,NI_MAXSERV,0);
-		break;
-	  case	'6':
-		p ++;
-		in6.sin6_port = HexToInt(p,4);
-		p = strchr(p,':') + 1;
-		for	( i = 0 ; i < 4 ; i ++ ) {
-			in6.sin6_addr.s6_addr32[i] = HexToInt(p,8);
-			p += 8;
-		}
-		p ++;
-		in6.sin6_scope_id = HexToInt(p,8);
-		in6.sin6_family = AF_INET6;
-		getnameinfo((struct sockaddr *)&in6,sizeof(in6),buff,NI_MAXHOST,port,NI_MAXSERV,0);
-		if		(  strchr(buff,':')  !=  NULL  ) {
-			sprintf(host,"[%s]",buff);
-		} else {
-			strcpy(host,buff);
-		}
-		break;
-	  case	'U':	/*	UNIX domain	*/
-		strcpy(host,"localhost");
-		break;
-	  default:
-		*host = 0;
-		break;
-	}
-LEAVE_FUNC;
-	return	(host);
 }
 
 static	int

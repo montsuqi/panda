@@ -42,27 +42,29 @@ testnet_DEPENDENCIES	=		\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la
 
-libpanda_la_SOURCES	=		\
-	Dlex.h					\
-	mhandler.c	mhandler.h	\
-	DDparser.c	DDparser.h	\
-	BDparser.c	BDparser.h	\
-	LDparser.c	LDparser.h	\
-	DBDparser.c	DBDparser.h	\
-	DIparser.c	DIparser.h	\
-	DBparser.c	DBparser.h	\
-	SQLlex.c	SQLlex.h	\
-	SQLparser.c	SQLparser.h	\
-	blobreq.c	blobreq.h	\
-	directory.c	directory.h	\
-	load.c		load.h		\
-	blobcom.h			\
+libpanda_la_SOURCES	=				\
+	Dlex.h							\
+	mhandler.c	mhandler.h			\
+	DDparser.c	DDparser.h			\
+	BDparser.c	BDparser.h			\
+	LDparser.c	LDparser.h			\
+	DBDparser.c	DBDparser.h			\
+	DIparser.c	DIparser.h			\
+	DBparser.c	DBparser.h			\
+	SQLlex.c	SQLlex.h			\
+	SQLparser.c	SQLparser.h			\
+	term.c		term.h				\
+	blobreq.c	blobreq.h			\
+	directory.c	directory.h			\
+	load.c		load.h				\
+	blobcom.h						\
 	debug.h
 
-libpandas_la_SOURCES	=		\
+libpandas_la_SOURCES	=			\
 	applications.c applications.h	\
 	DDparser.c	DDparser.h			\
 	driver.c	driver.h	enum.h	\
+	term.c		term.h				\
 	front.c		front.h				\
 	comm.c		comm.h				\
 	comms.c		comms.h				\

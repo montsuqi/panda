@@ -1,3 +1,7 @@
+2005-02-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/term.c (TermToHost): dblib/System.cから移動して新設
+
 2005-02-16  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/dialogs.[ch]: (message_dialog) メッセージダイアログ追加

@@ -18,23 +18,10 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
-#ifndef	_INC_FRONT_H
-#define	_INC_FRONT_H
-#include	"driver.h"
+#ifndef	_INC_TERM_H
+#define	_INC_TERM_H
 
-#undef	GLOBAL
-#if	defined(MAIN) || defined(_PANDA)
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
-
-GLOBAL	char	*CacheDir;
-
-#undef	GLOBAL
-
-extern	ScreenData	*InitSession(void);
-extern	char		*BlobCacheFileName(ValueStruct *value);
-extern	void		BlobCacheCleanUp(void);
+extern	char		*TermName(int sock);
+extern	char		*TermToHost(char *term);
 
 #endif
