@@ -25,6 +25,8 @@ copies.
 #define	BLOB_V1_HEADER		"PNB1"
 #if	BLOB_VERSION == 1
 
+#define	ObjectType			size_t
+
 #define	BLOB_OPEN_CLOSE		0x00
 #define	BLOB_OPEN_CREATE	0x01
 #define	BLOB_OPEN_READ		0x02

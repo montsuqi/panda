@@ -54,8 +54,10 @@ copies.
 #define	OB_NUMBER	20
 
 #define	TEST_PACK
+#if	BLOB_VERSION == 2
 #define	TEST_LINER
 #define	TEST_TREE
+#endif
 
 //#define	TEST_INIT
 //#define	TEST_CREAT
