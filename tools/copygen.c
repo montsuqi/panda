@@ -883,6 +883,7 @@ dbgmsg("<MakeDBPATH");
 static	void
 MakeMCP(void)
 {
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,"","","");
 
@@ -893,6 +894,7 @@ MakeMCP(void)
 	level = 1;
 	COBOL(Conv,ThisEnv->mcprec->value);
 	printf(".\n");
+LEAVE_FUNC;
 }
 
 static	ARG_TABLE	option[] = {
@@ -939,7 +941,7 @@ static	ARG_TABLE	option[] = {
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"レコードのあるディレクトリ"					},
 	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
-		"定義格納ディレクトリ"	 					},
+		"定義格納ディレクトリ"	 						},
 	{	"ld",		STRING,		TRUE,	(void*)&LD_Name,
 		"LD名"						 					},
 	{	"bd",		STRING,		TRUE,	(void*)&BD_Name,

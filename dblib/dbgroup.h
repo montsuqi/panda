@@ -26,8 +26,10 @@ copies.
 #include	"net.h"
 #include	"dblib.h"
 
-extern	DB_Func		*NewDB_Func(void);
-extern	DB_Func	*EnterDB_Function(char *name, DB_OPS *ops, char *commentStart, char *commentEnd);
+extern	DB_Func	*NewDB_Func(void);
+extern	DB_Func	*EnterDB_Function(char *name, DB_OPS *ops,
+								  char *commentStart, char *commentEnd);
+
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -131,7 +131,7 @@ FileThread(
 
 dbgmsg(">FileThread");
 	if		(  ThisDBG->dbname  !=  NULL  ) {
-		ExecDBG_Operation(ThisDBG,"DBOPEN");
+		OpenDB(ThisDBG);
 	}
 	if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
 		Error("log file can not open");
@@ -143,9 +143,9 @@ dbgmsg(">FileThread");
 		LBS_EmitEnd(data);
 		p = LBS_ToString(data);
 		if		(  ThisDBG->dbname  !=  NULL  )	{
-			ExecDBG_Operation(ThisDBG,"DBSTART");
+			TransactionStart(ThisDBG);
 			ExecDBOP(ThisDBG,p);
-			ExecDBG_Operation(ThisDBG,"DBCOMMIT");
+			TransactionEnd(ThisDBG);
 		}
 		time(&nowtime);
 		Now = localtime(&nowtime);

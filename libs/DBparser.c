@@ -165,6 +165,32 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+static	SQL_Operation	*
+NewOperation(
+	char	*name)
+{
+	SQL_Operation	*op;
+
+	op = New(SQL_Operation);
+	op->name = StrDup(name);
+	op->proc = NULL;
+	op->args = NULL;
+	return	(op);
+}
+
+static	void
+InsertBuildIn(
+	PathStruct	*ret,
+	char		*name,
+	int			func)
+{
+	SQL_Operation	*op;
+
+	op = NewOperation(name);
+	ret->ops[func] = op;
+	g_hash_table_insert(ret->opHash,op->name,(gpointer)(func+1));
+}
+
 static	PathStruct	*
 InitPathStruct(void)
 {
@@ -174,16 +200,11 @@ ENTER_FUNC;
 	ret = New(PathStruct);
 	ret->opHash = NewNameHash();
 	ret->ops = (SQL_Operation **)xmalloc(sizeof(SQL_Operation *) * 5);
-	ret->ops[DBOP_SELECT] = NULL;
-	ret->ops[DBOP_FETCH ] = NULL;
-	ret->ops[DBOP_UPDATE] = NULL;
-	ret->ops[DBOP_INSERT] = NULL;
-	ret->ops[DBOP_DELETE] = NULL;
-	g_hash_table_insert(ret->opHash,"DBSELECT",(gpointer)(DBOP_SELECT+1));
-	g_hash_table_insert(ret->opHash,"DBFETCH",(gpointer)(DBOP_FETCH+1));
-	g_hash_table_insert(ret->opHash,"DBUPDATE",(gpointer)(DBOP_UPDATE+1));
-	g_hash_table_insert(ret->opHash,"DBINSERT",(gpointer)(DBOP_INSERT+1));
-	g_hash_table_insert(ret->opHash,"DBDELETE",(gpointer)(DBOP_DELETE+1));
+	InsertBuildIn(ret,"DBSELECT",DBOP_SELECT);
+	InsertBuildIn(ret,"DBFETCH",DBOP_FETCH);
+	InsertBuildIn(ret,"DBUPDATE",DBOP_UPDATE);
+	InsertBuildIn(ret,"DBINSERT",DBOP_INSERT);
+	InsertBuildIn(ret,"DBDELETE",DBOP_DELETE);
 	ret->ocount = 5;
 	ret->args = NULL;
 LEAVE_FUNC;
@@ -199,19 +220,6 @@ EnterUse(
 	if		(  g_hash_table_lookup(root->opt.db->use,name)  ==  NULL  ) {
 		g_hash_table_insert(root->opt.db->use,name,rec);
 	}
-}
-
-static	SQL_Operation	*
-NewOperation(
-	char	*name)
-{
-	SQL_Operation	*op;
-
-	op = New(SQL_Operation);
-	op->name = StrDup(name);
-	op->proc = NULL;
-	op->args = NULL;
-	return	(op);
 }
 
 static	void

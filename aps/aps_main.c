@@ -84,9 +84,7 @@ dbgmsg(">InitSystem");
 	ThisBD = NULL;
 	ThisDBD = NULL;
 
-dbgmsg("*");
 	InitiateHandler();
-dbgmsg("*");
 	ThisDB = ThisLD->db;
 	DB_Table = ThisLD->DB_Table;
 	TextSize = ThisLD->textsize;
@@ -94,9 +92,7 @@ dbgmsg("*");
 		dbgprintf("[%s]",ThisLD->window[i]->rec->name);
 		InitializeValue(ThisLD->window[i]->rec->value);
 	}
-dbgmsg("*");
 	ReadyDC();
-dbgmsg("*");
 	if		(  ThisLD->cDB  >  0  ) {
 		ReadyOnlineDB();
 	}
@@ -196,12 +192,12 @@ ENTER_FUNC;
 															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
 			if		(  bind->module  ==  NULL  )	break;
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
-			ExecDBG_Operation(NULL,"DBSTART");
+			TransactionStart(NULL);
 			ExecuteProcess(node);
 			if		(  Sleep  >  0  ) {
 				sleep(Sleep);
 			}
-			ExecDBG_Operation(NULL,"DBCOMMIT");
+			TransactionEnd(NULL);
 			PutWFC(fpWFC,node);
 		} else {
 			MessagePrintf("window [%s] not found.\n",

@@ -1,3 +1,7 @@
+2003-12-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c (ExecDBG_Operation): staticにした(必要がなくなった)
+
 2003-12-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/Dlex.h (T_CODING): ディレクティブの名称を直した(現在のとこ

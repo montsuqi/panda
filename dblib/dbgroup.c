@@ -201,14 +201,6 @@ dbgmsg("<ExecFunction");
 }
 
 extern	void
-ExecDBG_Operation(
-	DBG_Struct	*dbg,
-	char		*name)
-{
-	ExecFunction(dbg,NULL,name);
-}
-
-extern	void
 ExecDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
@@ -248,4 +240,40 @@ dbgmsg(">ExecDB_Process");
 		}
 	}
 dbgmsg("<ExecDB_Process");
+}
+
+static	void
+ExecDBG_Operation(
+	DBG_Struct	*dbg,
+	char		*name)
+{
+	ExecFunction(dbg,NULL,name);
+}
+
+extern	void
+TransactionStart(
+	DBG_Struct *dbg)
+{
+	ExecDBG_Operation(dbg,"DBSTART");
+}
+
+extern	void
+TransactionEnd(
+	DBG_Struct *dbg)
+{
+	ExecDBG_Operation(dbg,"DBCOMMIT");
+}
+
+extern	void
+OpenDB(
+	DBG_Struct *dbg)
+{
+	ExecDBG_Operation(dbg,"DBOPEN");
+}
+
+extern	void
+CloseDB(
+	DBG_Struct *dbg)
+{
+	ExecDBG_Operation(dbg,"DBDISCONNECT");
 }

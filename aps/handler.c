@@ -222,7 +222,7 @@ ReadyOnlineDB(void)
 {
 ENTER_FUNC;
 	InitDB_Process();
-	ExecDBG_Operation(NULL,"DBOPEN");
+	OpenDB(NULL);
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyOnlineDB,NULL);
 LEAVE_FUNC;
 }
@@ -483,7 +483,7 @@ _StopOnlineDB(
 extern	void
 StopOnlineDB(void)
 {
-	ExecDBG_Operation(NULL,"DBDISCONNECT");
+	CloseDB(NULL);
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_StopOnlineDB,NULL);
 }
 

@@ -45,6 +45,7 @@ extern	void
 InitDirectory(void)
 {
 dbgmsg(">InitDirectory");
+	InitPool();
 	DD_ParserInit();
 	DB_ParserInit();
 	LD_ParserInit();
