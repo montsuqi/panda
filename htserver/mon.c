@@ -143,7 +143,6 @@ SendValueDelim(
 	char		*name,
 	CGIValue	*value)
 {
-    char	*s;
     size_t len;
 
 ENTER_FUNC;
@@ -152,10 +151,9 @@ ENTER_FUNC;
 			&&	(  value->body  !=  NULL  ) ) {
 		HT_SendString(name);
 		HT_SendString("\n");
-		s = ConvUTF8(value->body,Codeset);
-		len = strlen(s);
+		len = strlen(value->body);
 		SendLength(fpServ, len);
-		Send(fpServ, s, len);
+		Send(fpServ, value->body, len);
 		dbgprintf(" %s]\n",value->body);
 	} else {
 		dbgmsg(" ]");
