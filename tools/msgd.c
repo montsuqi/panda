@@ -172,7 +172,7 @@ dbgmsg(">ExecuteServer");
 			ConnectLog(_fhLog);
 		}
 	}
-	Destroy(port);
+	DestroyPort(port);
 dbgmsg("<ExecuteServer");
 }
 
