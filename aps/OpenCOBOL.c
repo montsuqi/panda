@@ -77,7 +77,7 @@ dbgmsg(">PutApplication");
 	OpenCOBOL_PackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
 	OpenCOBOL_PackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = OpenCOBOL_PackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
+		p += OpenCOBOL_PackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
 	}
 dbgmsg("<PutApplication");
 }
@@ -94,7 +94,7 @@ dbgmsg(">GetApplication");
 	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
 	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
+		p += OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
 	}
 dbgmsg("<GetApplication");
 }

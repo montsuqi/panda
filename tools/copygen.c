@@ -190,6 +190,9 @@ _COBOL(
 	  case	GL_TYPE_INT:
 		PutString("PIC S9(9)   BINARY");
 		break;
+	  case	GL_TYPE_FLOAT:
+		PutString("PIC X(8)");
+		break;
 	  case	GL_TYPE_BOOL:
 		PutString("PIC X");
 		break;

@@ -1,3 +1,9 @@
+2003-12-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/SQLparser.h : byte codeの仕様を一部変更
+
+	* aps/OpenCOBOL.c (GetApplication): Pack/UnPackの仕様変更に追従
+
 2003-12-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/Shell.c (ExecShell): 1トランザクション内で複数起動が出来る
