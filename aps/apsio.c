@@ -349,8 +349,12 @@ dbgmsg(">PutWFC");
 	e = node->mcprec->value;
 	SendPacketClass(fp,APS_CTRLDATA);		ON_IO_ERROR(fp,badio);
 	SendChar(fp,flag);						ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.user")));
+	ON_IO_ERROR(fp,badio);
+#if	0
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.term")));
 	ON_IO_ERROR(fp,badio);
+#endif
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.window")));
 	ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));

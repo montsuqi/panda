@@ -70,6 +70,7 @@ dbgmsg("<SendPanda");
 
 static	void
 RecvPanda(
+	char	*user,
 	char	*window,
 	char	*widget)
 {
@@ -79,7 +80,7 @@ RecvPanda(
 	CloseWindows	cls;
 
 dbgmsg(">RecvPanda");
-	if		(  RecvTermServerHeader(fpPanda,window,widget,&type,&cls)  ) {
+	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&cls)  ) {
 		for	( i = 0 ; i < cls.n ; i ++ ) {
 			PutWindowByName(cls.close[i].window,SCREEN_CLOSE_WINDOW);
 		}
@@ -102,6 +103,7 @@ dbgmsg(">RecvPanda");
 		PutWindow(win,type);
 		strcpy(ThisWindow,window);
 		strcpy(ThisWidget,widget);
+		strcpy(ThisUser,user);
 	} else {
 		MessagePrintf("invalid window [%s]\n",window);
 		exit(1);
@@ -113,12 +115,13 @@ extern	void
 pandaLink(
 	char		*arg)
 {
-	char	window[SIZE_NAME+1]
+	char	user[SIZE_NAME+1]	
+	,		window[SIZE_NAME+1]
 	,		widget[SIZE_NAME+1];
 
 dbgmsg(">pandaLink");
 	OpenPanda(arg);
-	RecvPanda(window,widget);
+	RecvPanda(user,window,widget);
 dbgmsg("<pandaLink");
 }
 
@@ -126,12 +129,13 @@ extern	void
 pandaMain(
 	char		*arg)
 {
-	char	window[SIZE_NAME+1]
+	char	user[SIZE_NAME+1]	
+	,		window[SIZE_NAME+1]
 	,		widget[SIZE_NAME+1];
 
 dbgmsg(">pandaMain");
 	if		(  SendPanda()  ) {
-		RecvPanda(window,widget);
+		RecvPanda(user,window,widget);
 	} else {
 		CloseNet(fpPanda);
 		exit(0);

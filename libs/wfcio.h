@@ -51,7 +51,7 @@ copies.
 extern	NETFILE	*ConnectTermServer(char *url, char *term, char *user, Bool fKeep, char *arg);
 extern	Bool	SendTermServer(NETFILE *fp, char *window, char *widget, char *event,
 							   ValueStruct *value);
-extern	Bool	RecvTermServerHeader(NETFILE *fp, char *window, char *widget,
+extern	Bool	RecvTermServerHeader(NETFILE *fp, char *user, char *window, char *widget,
 									 int *type, CloseWindows *cls);
 extern	void	RecvTermServerData(NETFILE *fp, WindowData *win);
 

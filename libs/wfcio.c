@@ -119,6 +119,7 @@ dbgmsg("<SendTermServer");
 extern	Bool
 RecvTermServerHeader(
 	NETFILE	*fp,
+	char	*user,
 	char	*window,
 	char	*widget,
 	int		*type,
@@ -133,6 +134,7 @@ dbgmsg(">RecvTermServerHeader");
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_DATA:
 		dbgmsg("recv DATA");
+		RecvString(fp,user);
 		RecvString(fp,window);
 		RecvString(fp,widget);
 		*type = TO_INT(RecvChar(fp));

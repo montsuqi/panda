@@ -78,7 +78,6 @@ FinishSession(
 {
 	char	msg[128];
 dbgmsg(">FinishSession");
-	ReleasePool(NULL);
 	sprintf(msg,"[%s] session end",scr->user);
 	MessageLog(msg);
 dbgmsg("<FinishSession");

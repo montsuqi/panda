@@ -73,9 +73,7 @@ dbgmsg(">InitSystem");
 	sigaddset(&hupset,SIGHUP);
 	pthread_sigmask(SIG_BLOCK,&hupset,NULL);
 	InitDirectory();
-dbgmsg("*");
 	SetUpDirectory(Directory,name,"","");
-dbgmsg("*");
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		dbgprintf("LD \"%s\" not found.",name);
 		exit(1);
@@ -327,7 +325,6 @@ main(
 		InitMessage(id,NULL);
 		InitNET();
 		InitSystem(fl->name);
-dbgmsg("-\n---\n");
 		ExecuteServer();
 		StopProcess(0);
 		rc = 0;

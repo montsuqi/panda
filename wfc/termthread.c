@@ -251,6 +251,7 @@ dbgmsg(">WriteTerminal");
 		SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
 		dbgmsg("send DATA");
 		hdr = data->hdr;
+		SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
 		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);

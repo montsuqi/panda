@@ -277,6 +277,7 @@ _DumpHandler(
 	if		(  ( handler->fInit & INIT_LOAD )  ==  0  ) {
 		handler->fInit |= INIT_LOAD;
 		printf("\thandler\t\"%s\"\t{\n",handler->name);
+		printf("\t\tmodule    \"%s\";\n",(char *)bind->module);
 		printf("\t\tclass     \"%s\";\n",(char *)handler->klass);
 		printf("\t\tselialize \"%s\";\n",(char *)handler->serialize);
 		printf("\t\tlocale    \"%s\";\n",ConvCodeset(handler->conv));
@@ -312,15 +313,14 @@ dbgmsg(">DumpLD");
 
 	g_hash_table_foreach(ld->whash,(GHFunc)_DumpHandler,NULL);
 
-	printf("\tSPA = [%s]\n",ld->sparec->name);
+	printf("\t%s\t",ld->sparec->name);
 	nTab = 1;
 	DumpItems(ld->sparec->value);
 	printf(";\n");
 	for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-		printf("\tbind\t\"%s\"\t\"%s\"\t\"%s\";\n",
-			   ld->window[i]->name,
-			   ld->window[i]->handler->name,
-			   ld->window[i]->module);
+		printf("\t%s\t",ld->window[i]->name);
+		DumpItems(ld->window[i]->rec->value);
+		printf(";\n");
 	}
 	printf("\tcDB       = %d\n",ld->cDB);
 	for	( i = 1 ; i < ld->cDB ; i ++ ) {
