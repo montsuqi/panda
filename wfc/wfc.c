@@ -123,6 +123,7 @@ dbgmsg(">ExecuteServer");
 	fShutdown = FALSE;
 	do {
 		timeout.tv_sec = 1;
+		timeout.tv_usec = 0;
 		FD_ZERO(&ready);
 		FD_SET(_fhTerm,&ready);
 		FD_SET(_fhAps,&ready);

@@ -1,5 +1,7 @@
 2004-08-03  Kouji TAKAO  <kouji@netlab.jp>
 
+	* wfc/wfc.c (ExecuteServer): pselect(2)の引数のバグを修正
+
 	* aps/Ruby.c: コンパイルワーニングの除去
 
 2004-08-02  Masami Ogoshi  <ogochan@nurs.or.jp>
