@@ -1,3 +1,7 @@
+2002-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Doc/glclient.tex: 間違い修正
+
 2002-09-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/monitor.c: プロセス操作時の待機時間を設定可能にした
