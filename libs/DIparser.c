@@ -273,7 +273,7 @@ ENTER_FUNC;
 					}
 					ld->ports = tports;
 					for	( i = 0 ; i < n ; i ++ ) {
-						ld->ports[ld->nports] = ParPort(buff,NULL);
+						ld->ports[ld->nports] = ParPort(buff,PORT_WFC);
 						ld->nports ++;
 					}
 					if		(  ComToken  ==  ','  ) {

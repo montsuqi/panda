@@ -67,7 +67,7 @@ NewIP_Port(
 	port->type = PORT_IP;
 	if		(	(  host   ==  NULL  )
 			||	(  *host  ==  0     ) ) {
-		port->adrs.a_ip.host = NULL;
+		port->adrs.a_ip.host = StrDup("localhost");
 	} else {
 		port->adrs.a_ip.host = StrDup(host);
 	}

@@ -273,7 +273,7 @@ dbgmsg(">_StartAps");
 			argc = 0;
 			argv[argc ++] = ApsPath;
 			argv[argc ++] = "-wfcport";
-			argv[argc ++] = StrDup(StringPort(ThisEnv->WfcApsPort));
+			argv[argc ++] = StrDup(StringPortName(ThisEnv->WfcApsPort));
 			if		(  Directory  !=  NULL  ) {
 				argv[argc ++] = "-dir";
 				argv[argc ++] = Directory;
