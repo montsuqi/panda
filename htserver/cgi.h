@@ -59,6 +59,7 @@ extern	void	DumpValues(LargeByteString *html, GHashTable *args);
 extern	void	Dump(void);
 extern	LargeByteString	*Expired(void);
 extern	char	*SaveValue(char *name, char *value, Bool fSave);
+extern	char	*SaveArgValue(char *name, char *value, Bool fSave);
 extern	char	*LoadValue(char *name);
 extern	void	RemoveValue(char *name);
 extern	void	SetSave(char *name, Bool fSave);

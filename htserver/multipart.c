@@ -306,7 +306,7 @@ ENTER_FUNC;
     if (boundary_type == BOUNDARY_NONE)
         return -1;
     if (filename == NULL) {
-        SaveValue(name, value,FALSE);
+        SaveArgValue(name, value, FALSE);
     }
     else {
         MultipartFile *file = New(MultipartFile);
@@ -418,3 +418,10 @@ main(int argc, char **argv)
     return 0;
 }
 #endif
+
+/*
+ * Local variables:
+ * indent-tabs-mode: nil
+ * tab-width: 4
+ * End:
+ */

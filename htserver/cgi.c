@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -80,6 +80,24 @@ ENTER_FUNC;
 	ret = val->body;
 LEAVE_FUNC;
 	return	(ret);
+}
+
+char *
+SaveArgValue(char *name, char *value, Bool fSave)
+{
+    char *val, *str;
+
+    if ((val = LoadValue(name)) != NULL) {
+        char *str, *ret;
+
+        str = (char *) xmalloc(strlen(val) + strlen(value) + 2);
+        sprintf(str, "%s,%s", val, value);
+        ret = SaveValue(name, str, fSave);
+        xfree(str);
+        return ret;
+    } else {
+        return SaveValue(name, value, fSave);
+    }
 }
 
 extern	void
@@ -444,15 +462,7 @@ ENTER_FUNC;
 	if		(  env  !=  NULL  ) {
 		StartScanEnv(env);
 		while	(  ScanEnv(name,value)  ) {
-			dbgprintf("var name = [%s]\n",name);
-			if		(  ( val = LoadValue(name) )  !=  NULL  ) {
-				str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
-				sprintf(str,"%s,%s",val,value);
-				SaveValue(name, str,FALSE);
-				xfree(str);
-			} else {
-				SaveValue(name, value,FALSE);
-			}
+            SaveArgValue(name, value, FALSE);
 		}
 	}
 	if		(  CommandLine  ==  NULL  ) {
@@ -463,15 +473,7 @@ ENTER_FUNC;
 			}
 		} else {
 			while	(  ScanPost(name,value)  ) {
-				dbgprintf("var name = [%s]\n",name);
-				if		(  ( val = LoadValue(name) )  !=  NULL  ) {
-					str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
-					sprintf(str,"%s,%s",val,value);
-					SaveValue(name, str,FALSE);
-					xfree(str);
-				} else {
-					SaveValue(name, value,FALSE);
-				}
+                SaveArgValue(name, value, FALSE);
 			}
 		}
 		if		(  fCookie  ) {
@@ -975,3 +977,10 @@ InitCGI(void)
 {
 	GetArgs();
 }
+
+/*
+ * Local variables:
+ * indent-tabs-mode: nil
+ * tab-width: 4
+ * End:
+ */
