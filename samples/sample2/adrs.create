@@ -1,11 +1,11 @@
 create	table	adrs	(
-	name	char(40),
-	tel	char(13),
-	mail_home	char(64),
-	mail_office	char(64),
+	name	varchar(40),
+	tel	varchar(13),
+	mail_home	varchar(64),
+	mail_office	varchar(64),
 	toll	numeric(5,1),
 	weight	numeric(5,1),
-	address	char(80)[3],
+	address	varchar(80)[3],
 	info	varchar(2000),
 	primary	key(
 		name

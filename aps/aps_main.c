@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -197,7 +197,9 @@ dbgmsg(">ExecuteDC");
 			if		(  Sleep  >  0  ) {
 				sleep(Sleep);
 			}
+dbgmsg("-");
 			ExecDB_Function("DBCOMMIT",NULL,NULL);
+dbgmsg("--");
 			PutWFC(fpWFC,node);
 		} else {
 			MessagePrintf("window [%s] not found.\n",

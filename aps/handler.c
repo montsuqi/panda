@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -199,6 +199,7 @@ ReadyDB(void)
 dbgmsg(">ReadyDB");
 	InitDB_Process();
 	g_hash_table_foreach(HandlerTable,(GHFunc)_ReadyDB,NULL);
+	ExecDB_Function("DBOPEN",NULL,NULL);
 dbgmsg("<ReadyDB");
 }
 
@@ -424,6 +425,7 @@ _StopDB(
 extern	void
 StopDB(void)
 {
+	ExecDB_Function("DBDISCONNECT",NULL,NULL);
 	g_hash_table_foreach(HandlerTable,(GHFunc)_StopDB,NULL);
 }
 

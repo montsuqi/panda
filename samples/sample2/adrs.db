@@ -1,13 +1,13 @@
 adrs	{
-	name	char(40);
-	tel		char(13);
+	name	varchar(40);
+	tel		varchar(13);
 	mail	{
-		home	char(64);
-		office	char(64);
+		home	varchar(64);
+		office	varchar(64);
 	};
 	toll	number(5,1);
 	weight	number(5,1);
-	address	char(80)[3];
+	address	varchar(80)[3];
 	info	varchar(2000);
 };
 

@@ -1,3 +1,7 @@
+2003-08-30  OGOSHI  <ogochan@nurs.or.jp>
+
+	* aps/apslib.rb, aps/Exec.c: データベースアクセスを可能にした
+
 2003-08-19  OGOSHI  <ogochan@nurs.or.jp>
 
 	* aps/apsio.c (CheckCache): 間違い修正

@@ -1,3 +1,4 @@
-spa	{
+samplespa	{
+	dummy	varchar(2);
 };
 

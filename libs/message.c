@@ -241,6 +241,7 @@ InitMessage(
 		}
 	}
 	if		(  fpLog  ==  NULL  ) {
+		Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
 		fpLog = FileToNet(STDOUT_FILENO);
 	}
 #else

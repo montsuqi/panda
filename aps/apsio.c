@@ -247,12 +247,12 @@ dbgmsg(">GetWFC");
 				RecvString(fp,hdr.widget);			ON_IO_ERROR(fp,badio);
 				RecvString(fp,hdr.event);			ON_IO_ERROR(fp,badio);
 #ifdef	DEBUG
-				printf("status = [%c]\n",hdr.status);
-				printf("term   = [%s]\n",hdr.term);
-				printf("user   = [%s]\n",hdr.user);
-				printf("window = [%s]\n",hdr.window);
-				printf("widget = [%s]\n",hdr.widget);
-				printf("event  = [%s]\n",hdr.event);
+				dbgprintf("status = [%c]\n",hdr.status);
+				dbgprintf("term   = [%s]\n",hdr.term);
+				dbgprintf("user   = [%s]\n",hdr.user);
+				dbgprintf("window = [%s]\n",hdr.window);
+				dbgprintf("widget = [%s]\n",hdr.widget);
+				dbgprintf("event  = [%s]\n",hdr.event);
 #endif
 				fSuc = TRUE;
 				break;
@@ -350,6 +350,13 @@ dbgmsg(">PutWFC");
 	ON_IO_ERROR(fp,badio);
 	fEnd = FALSE; 
 	while	(  !fEnd  ) {
+		dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
+		dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
+		dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
+		for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
+			dbgprintf("scr[%s]  = %d\n",node->scrrec[i]->name,
+					  NativeSizeValue(NULL,node->scrrec[i]->value));
+		}
 		switch	(c = RecvPacketClass(fp)) {
 		  case	APS_CLSWIN:
 			dbgmsg("CLSWIN");
@@ -396,7 +403,10 @@ dbgmsg(">PutWFC");
 		  default:
 			dbgmsg("default");
 			SendPacketClass(fp,APS_NOT);			ON_IO_ERROR(fp,badio);
+			fEnd = TRUE;
+			break;
 		  badio:
+			dbgmsg("badio");
 			fEnd = TRUE;
 			break;
 		}

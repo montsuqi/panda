@@ -196,7 +196,7 @@ dbgmsg(">GetAPS_Control");
 		break;
 	  default:
 	  badio:
-		dbgmsg("aps die ?");
+		MessageLog("aps die ?");
 		flag = 0;
 		break;
 	}
@@ -333,15 +333,15 @@ ENTER_FUNC;
 	}
 	if		(  data  !=  NULL  ) {
 		if		(  data->apsid  ==  -1  ) {
-			dbgprintf("virgin data\n");
+			dbgmsg("virgin data");
 		}
 		if		(  data->apsid  ==  ld->aps[ix].id  ) {
-			dbgprintf("same aps selected\n");
+			dbgmsg("same aps selected");
 		}
 		data = WithdrawQueue(que);
 	}
 	if		(  data  ==  NULL  ){
-		dbgprintf("null\n");
+		dbgmsg("null");
 		ReleaseQueue(que);
 	}
 	CloseQueue(que);

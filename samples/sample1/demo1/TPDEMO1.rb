@@ -2,9 +2,10 @@
 
 require "apslib"
 
-class Main < APS
+class Main < PandaDC
   def start(aps)
-	f = open("log","w");
+	$stderr.printf("start TPDEMO1.rb\n");
+	f = open("aps.log","w");
 	aps.dump(f);
 	f.close;
 
@@ -90,7 +91,7 @@ class Main < APS
 	putWindow("project2","entry2","CLOSE");
   end
   def do_Quit(aps)
-	f = open("log","a");
+	f = open("aps.log","a");
 	f.printf("Quit\n");
 	aps.dump(f);
 	f.close;

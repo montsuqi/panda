@@ -59,12 +59,15 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-static	pthread_t	_DB_Thread;
 static	CONVOPT		*ExecConv;
 static	char		*ExecPath;
+static	NETFILE		*fpDBR
+		,			*fpDBW;
+static	RecordStruct	*recDBCTRL;
 
-static	NETFILE	*fpAPR
-		,		*fpAPW;
+static	pthread_t		_DB_Thread;
+static	pthread_cond_t	condDB;
+static	pthread_mutex_t	lockDB;
 
 static	LargeByteString	*iobuff;
 
@@ -74,10 +77,115 @@ DumpNode(
 {
 #ifdef	DEBUG
 dbgmsg(">DumpNode");
+ printf("node = %p\n",node); 
+//	DumpValueStruct(node->mcprec->value); 
 dbgmsg("<DumpNode");
 #endif
 }
 
+static	CONVOPT			*DbConv;
+static	LargeByteString	*dbbuff;
+static	void
+ExecuteDB_Server(
+	void	*para)
+{
+	RecordStruct	*rec;
+	size_t			size;
+	char			buff[SIZE_ARG];
+	int				rno
+	,				pno;
+	DBCOMM_CTRL		ctrl;
+	char			*rname
+	,				*pname;
+
+dbgmsg(">ExecuteDB_Server");
+	while	(TRUE) {
+		dbgmsg("read");
+		LBS_EmitStart(dbbuff);
+		RecvLargeString(fpDBR,dbbuff);		ON_IO_ERROR(fpDBR,badio);
+		ConvSetRecName(DbConv,recDBCTRL->name);
+		InitializeValue(recDBCTRL->value);
+		CGI_UnPackValue(DbConv,LBS_Body(dbbuff),recDBCTRL->value);
+		rname = ValueString(GetItemLongName(recDBCTRL->value,"rname"));
+		if		(	(  rname  !=  NULL  ) 
+				&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
+			ctrl.rno = rno - 1;
+			rec = ThisDB[ctrl.rno]; 
+			pname = ValueString(GetItemLongName(recDBCTRL->value,"pname"));
+			if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+														pname) )  !=  0  ) {
+				ctrl.pno = pno - 1;
+			} else {
+				ctrl.pno = 0;
+			}
+			ConvSetRecName(DbConv,rec->name);
+			InitializeValue(rec->value);
+			CGI_UnPackValue(DbConv,LBS_Body(dbbuff), rec->value);
+		} else {
+			rec = NULL;
+		}
+		strcpy(ctrl.func,ValueString(GetItemLongName(recDBCTRL->value,"func")));
+		ExecDB_Process(&ctrl,rec);
+		dbgmsg("write");
+		sprintf(buff,"%s.rc=%d",recDBCTRL->name,ctrl.rc);
+		Send(fpDBW,buff,strlen(buff));	ON_IO_ERROR(fpDBW,badio);
+		if		(  rec  !=  NULL  ) {
+			Send(fpDBW,"&",1);				ON_IO_ERROR(fpDBW,badio);
+			LBS_EmitStart(dbbuff);
+			ConvSetRecName(DbConv,rec->name);
+			size = CGI_SizeValue(DbConv,rec->value);
+			LBS_ReserveSize(dbbuff,size,FALSE);
+			CGI_PackValue(DbConv,LBS_Body(dbbuff), rec->value);
+			LBS_EmitEnd(dbbuff);
+			SendLargeString(fpDBW,dbbuff);	ON_IO_ERROR(fpDBW,badio);
+		}
+		Send(fpDBW,"\n",1);				ON_IO_ERROR(fpDBW,badio);
+	}
+  badio:
+dbgmsg("<ExecuteDB_Server");
+}
+
+static	RecordStruct	*
+BuildDBCTRL(void)
+{
+	RecordStruct	*rec;
+	FILE			*fp;
+
+	if		(  ( fp = tmpfile() )  ==  NULL  ) {
+		fprintf(stderr,"tempfile can not make.\n");
+		exit(1);
+	}
+	fprintf(fp,	"dbctrl	{");
+	fprintf(fp,		"rc int;");
+	fprintf(fp,		"func	varchar(%d);",SIZE_FUNC);
+	fprintf(fp,		"rname	varchar(%d);",SIZE_NAME);
+	fprintf(fp,		"pname	varchar(%d);",SIZE_NAME);
+	fprintf(fp,	"};");
+	rewind(fp);
+	rec = DD_Parse(fp,"");
+	fclose(fp);
+
+	return	(rec);
+}
+
+static	void
+StartDB(void)
+{
+dbgmsg(">StartDB");
+	pthread_create(&_DB_Thread,NULL,(void *(*)(void *))ExecuteDB_Server,NULL);
+dbgmsg("<StartDB");
+}
+
+static	void
+CancelDB(void)
+{
+dbgmsg(">CancelDB");
+	if		(  pthread_kill(_DB_Thread,0)  ==  0  ) {
+		pthread_cancel(_DB_Thread);
+		pthread_join(_DB_Thread,NULL);
+	}
+dbgmsg("<CancelDB");
+}
 
 static	void
 PutApplication(
@@ -146,11 +254,13 @@ dbgmsg(">GetApplication");
 	LBS_EmitStart(iobuff);
 	RecvLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 
+	//dbgprintf("[%s]\n",LBS_Body(iobuff));
 	ConvSetRecName(ExecConv,node->mcprec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->mcprec->value);
 
 	ConvSetRecName(ExecConv,node->linkrec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->linkrec->value);
+
 	ConvSetRecName(ExecConv,node->sparec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->sparec->value);
 
@@ -174,53 +284,85 @@ SignalHandler(
 	longjmp(SubError,1);
 }
 
+#define	DBIN_FILENO		3
+#define	DBOUT_FILENO	4
+
 static	Bool
 _ExecuteProcess(
 	ProcessNode	*node)
 {
 	char	*module;
 	int		pid;
-	int		ofiledes[2]
-	,		ifiledes[2];
+	int		pAPR[2]
+	,		pAPW[2]
+	,		pDBR[2]
+	,		pDBW[2];
 	char	buff[SIZE_LONGNAME+1];
 	Bool	rc;
+	NETFILE	*fpAPR
+	,		*fpAPW;
+
 
 dbgmsg(">ExecuteProcess");
 	signal(SIGPIPE, SignalHandler);
 	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
 	sprintf(buff,"%s/%s",ExecPath,module);
-	if		(  pipe(ofiledes)  !=  0  ) {
+	if		(  pipe(pAPR)  !=  0  ) {
 		perror("pipe");
 		exit(1);
 	}
-	if		(  pipe(ifiledes)  !=  0  ) {
+	if		(  pipe(pAPW)  !=  0  ) {
+		perror("pipe");
+		exit(1);
+	}
+	if		(  pipe(pDBR)  !=  0  ) {
+		perror("pipe");
+		exit(1);
+	}
+	if		(  pipe(pDBW)  !=  0  ) {
 		perror("pipe");
 		exit(1);
 	}
 	if		(  setjmp(SubError)  ==  0  ) {
 		if		(  ( pid = fork() )  ==  0  ) {
-			dup2(ifiledes[0],STDIN_FILENO);
-			dup2(ofiledes[1],STDOUT_FILENO);
-			close(ifiledes[0]);
-			close(ifiledes[1]);
-			close(ofiledes[0]);
-			close(ofiledes[1]);
+			dup2(pAPW[0],STDIN_FILENO);
+			dup2(pAPR[1],STDOUT_FILENO);
+			close(pAPW[0]);
+			close(pAPW[1]);
+			close(pAPR[0]);
+			close(pAPR[1]);
+			dup2(pDBW[0],DBIN_FILENO);
+			dup2(pDBR[1],DBOUT_FILENO);
+			close(pDBW[0]);
+			close(pDBW[1]);
+			close(pDBR[0]);
+			close(pDBR[1]);
 			execl(buff,buff,NULL);
 		} else {
-			fpAPR = FileToNet(ofiledes[0]);
-			close(ofiledes[1]);
-			fpAPW = FileToNet(ifiledes[1]);
-			close(ifiledes[0]);
+			fpAPR = FileToNet(pAPR[0]);
+			close(pAPR[1]);
+			fpAPW = FileToNet(pAPW[1]);
+			close(pAPW[0]);
+			fpDBR = FileToNet(pDBR[0]);
+			close(pDBR[1]);
+			fpDBW = FileToNet(pDBW[1]);
+			close(pDBW[0]);
+			StartDB();
 		}
 		PutApplication(fpAPW,node);
 		GetApplication(fpAPR,node);
+		(void)wait(&pid);
+		CancelDB();
+		signal(SIGPIPE, SIG_DFL);
+		CloseNet(fpAPW);
+		CloseNet(fpAPR);
+		CloseNet(fpDBW);
+		CloseNet(fpDBR);
+		fpDBR = NULL;
 		rc = TRUE;
 	} else {
 		rc = FALSE;
 	}
-	signal(SIGPIPE, SIG_DFL);
-	CloseNet(fpAPW);
-	CloseNet(fpAPR);
 dbgmsg("<ExecuteProcess");
 	return	(rc); 
 }
@@ -228,10 +370,6 @@ dbgmsg("<ExecuteProcess");
 static	void
 _StopDB(void)
 {
-	if		(  pthread_kill(_DB_Thread,0)  ==  0  ) {
-		pthread_cancel(_DB_Thread);
-		pthread_join(_DB_Thread,NULL);
-	}
 }
 
 static	void
@@ -253,9 +391,7 @@ dbgmsg(">ReadyApplication");
 	} else {
 		ExecPath = LibPath;
 	}
-
 	ExecConv = NewConvOpt();
-	ConvSetSize(ExecConv,ThisLD->textsize,ThisLD->arraysize);
 	iobuff = NewLBS();
 dbgmsg("<ReadyApplication");
 }
@@ -269,28 +405,15 @@ _CleanUpDB(void)
 static	void
 _CleanUpDC(void)
 {
-	CloseNet(fpAPW);
-	CloseNet(fpAPR);
-}
-
-static	void
-ExecuteDB_Server(
-	void	*para)
-{
-dbgmsg(">ExecuteDB_Server");
-dbgmsg("<ExecuteDB_Server");
-}
-
-static	void
-StartDB(void)
-{
-	pthread_create(&_DB_Thread,NULL,(void *(*)(void *))ExecuteDB_Server,NULL);
 }
 
 static	void
 _ReadyDB(void)
 {
-	StartDB();
+	ExecDB_Function("DBOPEN",NULL,NULL);
+	recDBCTRL = BuildDBCTRL();
+	DbConv = NewConvOpt();
+	dbbuff = NewLBS();
 }
 
 static	int
@@ -299,32 +422,56 @@ _StartBatch(
 	char	*param)
 {
 	int		pid;
-	int		filedes[2];
+	int		pDBR[2]
+	,		pDBW[2];
+	char	line[SIZE_BUFF]
+	,		**cmd;
+	int		rc;
 
 dbgmsg(">StartBatch");
+	signal(SIGPIPE, SignalHandler);
 	if		(  LibPath  ==  NULL  ) { 
 		ExecPath = getenv("APS_EXEC_PATH");
 	} else {
 		ExecPath = LibPath;
 	}
-
-	if		(  pipe(filedes)  !=  0  ) {
+	if		(  pipe(pDBR)  !=  0  ) {
 		perror("pipe");
 		exit(1);
 	}
-	ExecConv = NewConvOpt();
-	ConvSetSize(ExecConv,ThisBD->textsize,ThisBD->arraysize);
-	if		(  ( pid = fork() )  ==  0  ) {
-		dup2(filedes[0],STDIN_FILENO);
-		dup2(filedes[1],STDOUT_FILENO);
-		dup2(filedes[1],STDERR_FILENO);
-		close(filedes[0]);
-		close(filedes[1]);
-		execl(name,name,NULL);
+	if		(  pipe(pDBW)  !=  0  ) {
+		perror("pipe");
+		exit(1);
 	}
-	(void)wait(&pid);
+	sprintf(line,"%s/%s %s",ExecPath, name, param);
+	cmd = ParCommandLine(line);
+
+	if		(  setjmp(SubError)  ==  0  ) {
+		if		(  ( pid = fork() )  ==  0  ) {
+			dup2(pDBW[0],DBIN_FILENO);
+			dup2(pDBR[1],DBOUT_FILENO);
+			close(pDBW[0]);
+			close(pDBW[1]);
+			close(pDBR[0]);
+			close(pDBR[1]);
+			execv(cmd[0],cmd);
+		} else {
+			fpDBR = FileToNet(pDBR[0]);
+			close(pDBR[1]);
+			fpDBW = FileToNet(pDBW[1]);
+			close(pDBW[0]);
+			pthread_cond_signal(&condDB);
+			(void)wait(&pid);
+			CloseNet(fpDBW);
+			CloseNet(fpDBR);
+			fpDBR = NULL;
+		}
+		rc = TRUE;
+	} else {
+		rc = FALSE;
+	}
 dbgmsg("<StartBatch");
-	return	(0); 
+	return	(rc);
 }
 
 static	MessageHandler	Handler = {

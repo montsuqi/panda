@@ -209,15 +209,15 @@ _StopDC(void)
 static	void
 _StopDB(void)
 {
-dbgmsg(">StopDB");
-	ExecDB_Function("DBDISCONNECT",NULL,NULL);
-dbgmsg("<StopDB");
+dbgmsg(">_StopDB");
+dbgmsg("<_StopDB");
 }
 
 static	void
 _ReadyDB(void)
 {
-	ExecDB_Function("DBOPEN",NULL,NULL);
+dbgmsg(">_ReadyDB");
+dbgmsg("<_ReadyDB");
 }
 
 static	int
@@ -251,6 +251,7 @@ dbgmsg(">_StartBatch");
 		arg[ThisBD->textsize] = 0;
 		StringC2Cobol(arg,ThisBD->textsize);
 		rc = apl(arg);
+dbgmsg("ret");
 	} else {
 		fprintf(stderr,"%s\n%s is not found.\n",cob_resolve_error(),name);
 		rc = -1;

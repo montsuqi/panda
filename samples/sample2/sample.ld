@@ -5,8 +5,11 @@ name	sample;
 #bind	""			"dotCOBOL"	"SAMPLE1";
 #bind	"list"		"dotCOBOL"	"SAMPLE1";
 
-bind	""			"OpenCOBOL"	"SAMPLE1";
-bind	"list"		"OpenCOBOL"	"SAMPLE1";
+#bind	""			"OpenCOBOL"	"SAMPLE1";
+#bind	"list"		"OpenCOBOL"	"SAMPLE1";
+
+bind	""			"Exec"		"SAMPLE1.rb";
+bind	"list"		"Exec"		"SAMPLE1.rb";
 
 arraysize	20;
 textsize	200;
