@@ -22,7 +22,6 @@ copies.
 /*
 #define	DEBUG
 #define	TRACE
-#define	MAIN
 */
 
 #ifdef HAVE_CONFIG_H
@@ -70,30 +69,54 @@ TraceAlias(
 	char		*p;
 	RecordStruct	*use;
 
-	if		(  ValueType(val)  ==  GL_TYPE_ALIAS  ) {
-		name = ValueAliasName(val);
-		if		(  *name  !=  '.'  ) {
-			if		(  ( p = strchr(name,'.') )  !=  NULL  ) {
-				*p = 0;
-				if		(  ( use = g_hash_table_lookup(rec->opt.db->use,name) )
-						   !=  NULL  ) {
-					val = GetItemLongName(use->value,p+1);
-				} else {
-					printf("alias table not found [%s]\n",name);
+ENTER_FUNC;
+	if		(  val  !=  NULL  ) {
+		if		(  ValueType(val)  ==  GL_TYPE_ALIAS  ) {
+			name = ValueAliasName(val);
+			if		(  *name  !=  '.'  ) {
+				if		(  ( p = strchr(name,'.') )  !=  NULL  ) {
+					*p = 0;
+					if		(  ( use = g_hash_table_lookup(rec->opt.db->use,name) )
+							   !=  NULL  ) {
+						val = GetItemLongName(use->value,p+1);
+					} else {
+						printf("alias table not found [%s]\n",name);
+					}
+					*p = '.';
 				}
-				*p = '.';
 			}
 		}
 	}
+LEAVE_FUNC;
+	return	(val);
+}
+
+static	ValueStruct	*
+TraceArray(
+	ValueStruct	*val,
+	int			n)
+{
+ENTER_FUNC;
+	if		(  val  !=  NULL  ) {
+		if		(  ValueType(val)  ==  GL_TYPE_ARRAY  ) {
+			val = GetArrayItem(val,n);
+		}
+	}
+LEAVE_FUNC;
 	return	(val);
 }
 
 extern	LargeByteString	*
 ParSQL(
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*argp,
+	ValueStruct		*argf)
 {
 	LargeByteString	*sql;
-	ValueStruct		*val;
+	ValueStruct		*valr
+		,			*valp
+		,			*valf
+		,			*val;
 	Bool	fInto
 	,		fAster;
 	size_t	mark
@@ -102,7 +125,7 @@ ParSQL(
 	int		n;
 	Bool	fInsert;
 
-dbgmsg(">ParSQL");
+ENTER_FUNC;
 	sql = NewLBS();
 	GetSymbol;
 	fInto = FALSE;
@@ -176,35 +199,38 @@ dbgmsg(">ParSQL");
 				LBS_Emit(sql,SQL_OP_REF);
 			}
 			if		(  GetName  ==  T_SYMBOL  ) {
-				val = rec->value;
+				valr = rec->value;
+				valp = argp;
+				valf = argf;
 				do {
-					val = GetRecordItem(TraceAlias(rec,val),ComSymbol);
-					if		(  val  ==  NULL  ) {
-						printf("[%s]\n",ComSymbol);
-						Error("item name missing");
-					}
+					valr = GetRecordItem(TraceAlias(rec,valr),ComSymbol);
+					valp = GetRecordItem(TraceAlias(rec,valp),ComSymbol);
+					valf = GetRecordItem(TraceAlias(rec,valf),ComSymbol);
 					switch	(GetSymbol) {
 					  case	'.':
 						GetName;
 						break;
 					  case	'[':
-						if		(  ValueType(val)  ==  GL_TYPE_ARRAY  ) {
-							if		(  GetSymbol  ==  T_SYMBOL  ) {
-								n = atoi(ComSymbol) - 1;
-								val = GetArrayItem(val,n);
-								if		(  GetSymbol  !=  ']'  ) {
-									Error("] missing");
-								}
+						if		(  GetSymbol  ==  T_SYMBOL  ) {
+							n = atoi(ComSymbol) - 1;
+							if		(  GetSymbol  !=  ']'  ) {
+								Error("] missing");
 							}
-						} else {
-							Error("not array");
 						}
 						GetSymbol;
+						valr = TraceArray(valr,n);
+						valp = TraceArray(valp,n);
+						valf = TraceArray(valf,n);
 						break;
 					  default:
 						break;
 					}
 				}	while	(  ComToken  ==  T_SYMBOL  );
+				val = (  valp  !=  NULL  ) ? valp : valr;
+				val = (  valf  !=  NULL  ) ? valf : val;
+				if		(  val  ==  NULL  ) {
+					Error("invalid value(item name missing)");
+				}
 				LBS_EmitPointer(sql,(void *)TraceAlias(rec,val));
 				if		(  ComToken  ==  ','  ) {
 					if		(  !fInto  ) {
@@ -258,7 +284,7 @@ dbgmsg(">ParSQL");
 	}
 	LBS_EmitEnd(sql);
 	LBS_EmitFix(sql);
-dbgmsg("<ParSQL");
+LEAVE_FUNC;
 	return	(sql);
 }
 
@@ -268,105 +294,3 @@ SQL_ParserInit(void)
 	SQL_LexInit();
 }
 
-#ifdef	MAIN
-#include	"dirs.h"
-static	void
-DumpPKey(
-	KeyStruct	*pkey)
-{
-	char	***pka
-	,		**pk;
-
-	printf("*** dump pkey ***\n");
-	pka = pkey->item;
-	while	(  *pka  !=  NULL  ) {
-		pk = *pka;
-		while	(  *pk  !=  NULL  ) {
-			printf("[%s]",*pk);
-			pk ++;
-		}
-		printf("\n");
-		pka ++;
-	}
-	
-}
-
-static	void
-DumpSQL(
-	char	*name,
-	int		ix,
-	PathStruct	*path)
-{
-	int		c;
-	ValueStruct	*val;
-	LargeByteString	*sql;
-
-	printf("*** dump SQL ***\n");
-	printf("command name = [%s]\n",name);
-	sql = path->ops[ix-1];
-	if		(  sql  !=  NULL  ) {
-		while	(  ( c = FetchByte(sql) )  >=  0  ) {
-			if		(  c  !=  SQL_OP_ESC  ) {
-				printf("%c",c);
-			} else {
-				c = FetchByte(sql);
-				switch	(c) {
-				  case	SQL_OP_INTO:
-					printf("$into\n");
-					val = (ValueStruct *)FetchPointer(sql);
-					DumpValueStruct(val);
-					break;
-				  case	SQL_OP_REF:
-					printf("$ref\n");
-					val = (ValueStruct *)FetchPointer(sql);
-					DumpValueStruct(val);
-					break;
-				  case	SQL_OP_EOL:
-					printf(";\n");
-					break;
-				  default:
-					break;
-				}
-			}
-		}
-	}
-}
-
-static	void
-DumpPath(
-	PathStruct	*path)
-{
-	printf("*** dump path ***\n");
-	printf("path name = [%s]\n",path->name);
-	g_hash_table_foreach(path->opHash,(GHFunc)DumpSQL,path);
-}
-
-static	void
-DumpDB_Struct(
-	DB_Struct	*db)
-{
-	int		i;
-
-	DumpPKey(db->pkey);
-	for	( i = 0 ; i < db->pcount ; i ++ ) {
-		DumpPath(db->path[i]);
-	}
-}
-
-extern	int
-main(
-	int		argc,
-	char	**argv)
-{
-	RecordStruct	*ret;
-
-	DB_ParserInit();
-	ret = DB_ParserDataDefines(argv[1]);
-
-	printf("*** dump ***\n");
-	DumpValueStruct(ret->rec);
-	DumpDB_Struct(ret->opt.db);
-
-	return	(0);
-}
-#endif

@@ -52,6 +52,7 @@ typedef	struct {
 	GHashTable		*opHash;
 	int				ocount;
 	SQL_Operation	**ops;
+	ValueStruct		*args;
 }	PathStruct;
 
 

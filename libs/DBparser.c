@@ -185,6 +185,7 @@ ENTER_FUNC;
 	g_hash_table_insert(ret->opHash,"DBINSERT",(gpointer)(DBOP_INSERT+1));
 	g_hash_table_insert(ret->opHash,"DBDELETE",(gpointer)(DBOP_DELETE+1));
 	ret->ocount = 5;
+	ret->args = NULL;
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -219,7 +220,8 @@ ParPath(
 {
 	int		ix
 	,		pcount;
-	PathStruct		**path;
+	PathStruct		**paths
+		,			*path;
 	SQL_Operation	**ops
 	,				*op;
 	ValueStruct		*value;
@@ -227,35 +229,55 @@ ParPath(
 
 ENTER_FUNC;
 	pcount = rec->opt.db->pcount;
-	path = (PathStruct **)xmalloc(sizeof(PathStruct *) * (pcount + 1));
+	paths = (PathStruct **)xmalloc(sizeof(PathStruct *) * (pcount + 1));
 	if		(  pcount  >  0  ) {
-		memcpy(path,rec->opt.db->path,(sizeof(PathStruct *) * pcount));
+		memcpy(paths,rec->opt.db->path,(sizeof(PathStruct *) * pcount));
 		xfree(rec->opt.db->path);
 	}
-	path[pcount] = InitPathStruct();
-	path[pcount]->name = StrDup(ComSymbol);
-	g_hash_table_insert(rec->opt.db->paths,path[pcount]->name,(void *)(pcount+1));
+	path = InitPathStruct();
+	paths[pcount] = path;
+	path->name = StrDup(ComSymbol);
+	g_hash_table_insert(rec->opt.db->paths,path->name,(void *)(pcount+1));
 	rec->opt.db->pcount ++;
-	rec->opt.db->path = path;
-	if		(  GetSymbol  !=  '{'  ) {
+	rec->opt.db->path = paths;
+	if		(  GetSymbol  ==  '('  ) {
+		path->args = NewValue(GL_TYPE_RECORD);
+		GetName;
+		while	(  ComToken  ==  T_SYMBOL  ) {
+			strcpy(name,ComSymbol);
+			value = ParValueDefine();
+			if		(  ComToken  ==  ','  ) {
+				GetName;
+			}
+			SetValueAttribute(value,GL_ATTR_NULL);
+			ValueAddRecordItem(path->args,name,value);
+		}
+		if		(  ComToken  ==  ')'  ) {
+			GetSymbol;
+		} else {
+			Error(") missing");
+		}
+		SetReserved(Reserved);
+	}
+	if		(  ComToken  !=  '{'  ) {
 		Error("{ missing");
 	}
 	while	(  GetName  ==  T_SYMBOL  ) {
 		if		(  ( ix = (int)g_hash_table_lookup(
-						 path[pcount]->opHash,ComSymbol) )  ==  0  ) {
-			ix = path[pcount]->ocount;
+						 path->opHash,ComSymbol) )  ==  0  ) {
+			ix = path->ocount;
 			ops = (SQL_Operation **)xmalloc(sizeof(SQL_Operation *) * ( ix + 1 ));
-			memcpy(ops,path[pcount]->ops,(sizeof(SQL_Operation *) * ix));
-			xfree(path[pcount]->ops);
-			path[pcount]->ops = ops;
+			memcpy(ops,path->ops,(sizeof(SQL_Operation *) * ix));
+			xfree(path->ops);
+			path->ops = ops;
 			op = NewOperation(ComSymbol);
-			g_hash_table_insert(path[pcount]->opHash, op->name, (gpointer)(ix + 1));
-			path[pcount]->ops[ix] = op;
-			path[pcount]->ocount ++;
+			g_hash_table_insert(path->opHash, op->name, (gpointer)(ix + 1));
+			path->ops[ix] = op;
+			path->ocount ++;
 		} else {
 			ix --;
 			op = NewOperation(ComSymbol);
-			path[pcount]->ops[ix] = op;
+			path->ops[ix] = op;
 		}
 		if		(  GetSymbol  ==  '('  ) {
 			op->args = NewValue(GL_TYPE_RECORD);
@@ -278,7 +300,7 @@ ENTER_FUNC;
 		}
 		if		(  ComToken  == '{'  ) {
 			if		(  op->proc  ==  NULL  ) {
-				op->proc = ParSQL(rec);
+				op->proc = ParSQL(rec,path->args,op->args);
 				if		(  GetSymbol  !=  ';'  ) {
 					Error("; missing");
 				}

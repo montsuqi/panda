@@ -35,7 +35,7 @@ copies.
 #define	SQL_OP_EOL		0x05
 #define	SQL_OP_VCHAR	0x06
 
-extern	LargeByteString	*ParSQL(RecordStruct *rec);
+extern	LargeByteString	*ParSQL(RecordStruct *rec, ValueStruct *argp, ValueStruct *argf);
 extern	void			SQL_ParserInit(void);
 
 #endif

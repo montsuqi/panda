@@ -246,6 +246,11 @@ DumpPath(
 	PathStruct	*path)
 {
 	printf("\t\tname     = [%s]\n",path->name);
+	if		(  path->args  !=  NULL  ) {
+		printf("** args\n\t\t");
+		DumpItems(2,path->args);
+		printf("\n");
+	}
 	g_hash_table_foreach(path->opHash,(GHFunc)DumpOps,path);
 }
 
