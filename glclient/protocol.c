@@ -124,6 +124,13 @@ PopScreenStack(void)
 #define	SendChar(fp,c)	nputc((c),(fp))
 #define	RecvChar(fp)	ngetc(fp)
 
+static void
+GL_Error(void)
+{
+	MessageLog("Connection lost\n");
+	exit(1);
+}
+
 extern	void
 GL_SendPacketClass(
 	NETFILE	*fp,
@@ -162,6 +169,9 @@ GL_SendInt(
 
 	*(int *)buff = SEND32(data);
 	Send(fp,buff,sizeof(int));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 
 extern	int
@@ -171,6 +181,9 @@ GL_RecvInt(
 	byte	buff[sizeof(int)];
 
 	Recv(fp,buff,sizeof(int));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	return	(RECV32(*(int *)buff));
 }
 
@@ -181,6 +194,9 @@ GL_RecvLong(
 	byte	buff[sizeof(int)];
 
 	Recv(fp,buff,sizeof(int));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	return	(RECV32(*(long *)buff));
 }
 
@@ -193,6 +209,9 @@ GL_SendLong(
 
 	*(long *)buff = SEND32(data);
 	Send(fp,buff,sizeof(long));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 
 static	void
@@ -204,6 +223,9 @@ GL_SendLength(
 
 	*(size_t *)buff = SEND32(data);
 	Send(fp,buff,sizeof(size_t));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 
 static	size_t
@@ -213,6 +235,9 @@ GL_RecvLength(
 	byte	buff[sizeof(int)];
 
 	Recv(fp,buff,sizeof(size_t));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	return	(RECV32(*(size_t *)buff));
 }
 #if	0
@@ -235,6 +260,9 @@ GL_SendUInt(
 
 	*(unsigned int *)buff = SEND32(data);
 	Send(fp,buff,sizeof(unsigned int));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 #endif
 static	void
@@ -247,6 +275,9 @@ GL_RecvString(
 ENTER_FUNC;
 	size = GL_RecvLength(fp);
 	Recv(fp,str,size);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	str[size] = 0;
 LEAVE_FUNC;
 }
@@ -261,6 +292,9 @@ GL_RecvName(
 ENTER_FUNC;
 	size = GL_RecvLength(fp);
 	Recv(fp,name,size);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	name[size] = 0;
 LEAVE_FUNC;
 }
@@ -279,8 +313,14 @@ ENTER_FUNC;
 		size = 0;
 	}
 	GL_SendLength(fp,size);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	if		(  size  >  0  ) {
 		Send(fp,str,size);
+		if		(  !CheckNetFile(fp)  ) {
+			GL_Error();
+		}
 	}
 LEAVE_FUNC;
 }
@@ -301,6 +341,9 @@ ENTER_FUNC;
 	GL_SendLength(fp,size);
 	if		(  size  >  0  ) {
 		Send(fp,name,size);
+		if		(  !CheckNetFile(fp)  ) {
+			GL_Error();
+		}
 	}
 LEAVE_FUNC;
 }
@@ -319,6 +362,9 @@ GL_SendObject(
 	MonObjectType	obj)
 {
 	GL_SendUInt(fp,(unsigned int)obj);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 
 static	MonObjectType
@@ -361,6 +407,9 @@ GL_RecvFloat(
 	double	data;
 
 	Recv(fp,&data,sizeof(data));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	return	(data);
 }
 
@@ -370,6 +419,9 @@ GL_SendFloat(
 	double	data)
 {
 	Send(fp,&data,sizeof(data));
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 
 static	Bool
@@ -379,6 +431,9 @@ GL_RecvBool(
 	char	buf[1];
 
 	Recv(fp,buf,1);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	return	((buf[0] == 'T' ) ? TRUE : FALSE);
 }
 
@@ -391,6 +446,9 @@ GL_SendBool(
 
 	buf[0] = data ? 'T' : 'F';
 	Send(fp,buf,1);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 
 static	void
@@ -404,6 +462,9 @@ GL_RecvLBS(
 	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
 		Recv(fp,LBS_Body(lbs),size);
+		if		(  !CheckNetFile(fp)  ) {
+			GL_Error();
+		}
 	}
 }
 
@@ -415,6 +476,9 @@ GL_SendLBS(
 	GL_SendLength(fp,LBS_Size(lbs));
 	if		(  LBS_Size(lbs)  >  0  ) {
 		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
+		if		(  !CheckNetFile(fp)  ) {
+			GL_Error();
+		}
 	}
 }
 
@@ -786,6 +850,9 @@ GL_SendVersionString(
 	SendChar(fp,0);
 	SendChar(fp,0);
 	Send(fp,version,size);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 
 extern	Bool
