@@ -285,8 +285,6 @@ PutItemNames(
 static	ARG_TABLE	option[] = {
 	{	"create",	BOOLEAN,	TRUE,	(void*)&fCreate,
 		"create tableを作る"							},
-	{	"insert",	BOOLEAN,	TRUE,	(void*)&fInsert,
-		"insert用スクリプトを作る"						},
 
 	{	"textsize",	INTEGER,	TRUE,	(void*)&TextSize,
 		"textの最大長"									},

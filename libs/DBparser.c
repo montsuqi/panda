@@ -189,7 +189,6 @@ DB_Parse(
 
 dbgmsg(">DB_Parse");
 	ret = DD_Parse(fp,name);
-
 	if		(  !stricmp(strrchr(name,'.'),".db")  ) {
 		ret->type = RECORD_DB;
 		ret->opt.db = InitDB_Struct();
@@ -200,7 +199,6 @@ dbgmsg(">DB_Parse");
 	DB_FileName = StrDup(name);
 	DB_cLine = 1;
 	DB_File = fp;
-
 	while	(  	GetSymbol  !=  T_EOF  ) {
 		switch	(DB_Token) {
 		  case	T_PRIMARY:
