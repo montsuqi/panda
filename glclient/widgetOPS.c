@@ -248,8 +248,6 @@ static FILE *
 CreateTempfile(
 	gchar *tmpname)
 {
-    mode_t _umask;
-    mode_t mode;
     int fildes;
     FILE *file;
 
@@ -260,6 +258,25 @@ CreateTempfile(
 }
 
 #ifdef	USE_PANDA
+static void
+LoadPS(
+	GtkWidget	*widget,
+    LargeByteString *binary)
+{
+    FILE *file;
+    gchar *tmpname;
+
+ENTER_FUNC;		
+	tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
+	file = CreateTempfile(tmpname);
+	fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
+	fclose(file);
+	gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
+	unlink(tmpname);
+	g_free(tmpname);
+LEAVE_FUNC;
+}
+
 static	Bool
 RecvPS(
 	GtkWidget	*widget,
@@ -269,30 +286,19 @@ RecvPS(
 	int		nitem
 	,		i;
     LargeByteString *binary;
-    FILE *file;
-    gchar *tmpname;
-    mode_t _umask;
-    mode_t mode;
-    int fildes;
 
-dbgmsg(">RecvPS");
+ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp,name);
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
-			tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
-			file = CreateTempfile(tmpname);
-			fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
-			fclose(file);
-			gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
-			unlink(tmpname);
-			g_free(tmpname);
+			LoadPS(widget, binary);
 			FreeLBS(binary);
 		}
 	}
-dbgmsg("<RecvPS");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -310,6 +316,49 @@ dbgmsg("<SendPS");
 #endif
 
 #ifdef USE_GNOME
+static void
+LoadPixmap(
+	GtkWidget	*widget,
+    LargeByteString *binary)
+{
+    FILE *file;
+    gchar *tmpname;
+	GtkRequisition requisition;
+	GdkImlibImage *im;
+	gint width, height;
+	gdouble scale, xscale, yscale;
+
+ENTER_FUNC;
+	if ( LBS_Size(binary) <= 0) {
+		gtk_widget_hide(widget); 
+	} else {
+		tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
+		file = CreateTempfile(tmpname);
+		fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
+		fclose(file);
+		gtk_widget_size_request(widget, &requisition);
+		if ( requisition.width && requisition.height ) {
+			width = requisition.width;
+			height = requisition.height;
+			im = gdk_imlib_load_image ((char *)tmpname);
+			if ( im ) {
+				xscale = (gdouble)width / im->rgb_width;
+				yscale = (gdouble)height / im->rgb_height;
+				scale = MIN(xscale, yscale);
+				width = im->rgb_width * scale;
+				height = im->rgb_height * scale;
+				gnome_pixmap_load_imlib_at_size(GNOME_PIXMAP(widget), im, width, height);
+			}
+		} else {
+			gnome_pixmap_load_file(GNOME_PIXMAP(widget), tmpname);
+		}
+		unlink(tmpname);  
+		g_free(tmpname);
+		gtk_widget_show(widget); 
+	}
+LEAVE_FUNC;
+}
+
 static	Bool
 RecvPixmap(
 	GtkWidget	*widget,
@@ -319,49 +368,19 @@ RecvPixmap(
 	int		nitem
 	,		i;
     LargeByteString *binary;
-    FILE *file;
-    gchar *tmpname;
-	GtkRequisition requisition;
-	GdkImlibImage *im;
-	gint width, height;
-	gdouble scale, xscale, yscale;
 
-dbgmsg(">RecvPixmap");
+ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp,name);
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
-			if ( LBS_Size(binary) <= 0) {
-				gtk_widget_hide(widget); 
-				break;
-			}
-			tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
-			file = CreateTempfile(tmpname);
-			fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
-			fclose(file);
-			gtk_widget_size_request(widget, &requisition);
-			if ( requisition.width && requisition.height) {
-				width = requisition.width;
-				height = requisition.height;
-				im = gdk_imlib_load_image ((char *)tmpname);
-				xscale = (gdouble)width / im->rgb_width;
-				yscale = (gdouble)height / im->rgb_height;
-				scale = MIN(xscale, yscale);
-				width = im->rgb_width * scale;
-				height = im->rgb_height * scale;
-				gnome_pixmap_load_imlib_at_size(GNOME_PIXMAP(widget), im, width, height);
-			} else {
-				gnome_pixmap_load_file(GNOME_PIXMAP(widget), tmpname);
-			}
-			unlink(tmpname);  
-			g_free(tmpname);
+			LoadPixmap(widget, binary); 
 			FreeLBS(binary);
-			gtk_widget_show(widget); 
 		}
 	}
-dbgmsg("<RecvPixmap");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 #endif
