@@ -243,7 +243,11 @@ dbgmsg(">ExecShell");
 				break;
 			  case	SQL_OP_EOL:
 			  case	0:
+#if	1
+				LBS_EmitChar(dbg->conn,';');
+#else
 				LBS_EmitChar(dbg->conn,0xFF);
+#endif
 				break;
 			  default:
 				break;
