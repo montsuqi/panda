@@ -1292,6 +1292,63 @@ database_aref(VALUE self, VALUE name)
     return obj;
 }
 
+static VALUE
+database_exec(VALUE self, VALUE funcname)
+{
+    table_data *data;
+    char *func;
+    DBCOMM_CTRL ctrl;
+    PathStruct *path;
+    int no;
+    size_t size;
+    ValueStruct *value;
+    static VALUE table_path(VALUE self, VALUE name);
+
+    Data_Get_Struct(self, table_data, data);
+    func = StringValuePtr(funcname);
+
+    ctrl.rno = data->no;
+    ctrl.pno = 0;
+    ctrl.blocks = 0;
+
+    strcpy(ctrl.func, func);
+    ExecDB_Process(&ctrl, NULL, NULL);
+    if (ctrl.rc != MCP_OK) {
+        rb_raise(eDatabaseError, "database error (ctrl.rc=%d)", ctrl.rc);
+    }
+    return Qnil;
+}
+
+static VALUE
+database_open(VALUE self)
+{
+    return database_exec(self, rb_str_new2("DBOPEN"));
+}
+
+static VALUE
+database_close(VALUE self)
+{
+    return database_exec(self, rb_str_new2("DBCLOSE"));
+}
+
+static VALUE
+database_start(VALUE self)
+{
+    return database_exec(self, rb_str_new2("DBSTART"));
+}
+
+static VALUE
+database_commit(VALUE self)
+{
+    return database_exec(self, rb_str_new2("DBCOMMIT"));
+}
+
+static VALUE
+database_disconnect(VALUE self)
+{
+    return database_exec(self, rb_str_new2("DBDISCONNECT"));
+}
+
 static void
 init()
 {
@@ -1356,6 +1413,12 @@ init()
     rb_define_method(cTable, "path", table_path, 1);
     cDatabase = rb_define_class_under(mPanda, "Database", rb_cObject);
     rb_define_method(cDatabase, "[]", database_aref, 1);
+    rb_define_method(cDatabase, "exec", database_exec, 1);
+    rb_define_method(cDatabase, "open", database_open, 0);
+    rb_define_method(cDatabase, "close", database_close, 0);
+    rb_define_method(cDatabase, "start", database_start, 0);
+    rb_define_method(cDatabase, "commit", database_commit, 0);
+    rb_define_method(cDatabase, "disconnect", database_disconnect, 0);
     eDatabaseError = rb_define_class_under(mPanda, "DatabaseError",
                                            rb_eStandardError);
 
@@ -1496,19 +1559,19 @@ execute_batch(MessageHandler *handler, char *name, char *param)
     int state;
 
     init();
-    app_class = load_application_class(handler->loadpath, name);
+    app_class = load_application(handler->loadpath, name);
     if (NIL_P(app_class)) {
         fprintf(stderr, "%s is not found.", module);
-        return FALSE;
+        return -1;
     }
 
     app = rb_protect_funcall(app_class, rb_intern("new"), &state, 0);
     if (state && error_handle(state))
-        return FALSE;
+        return -1;
     rc = rb_protect_funcall(app, rb_intern("start"), &state,
-                            1, rb_str_new2(param));
+                            2, rb_str_new2(param), database_new(DB_Table, ThisDB));
     if (state && error_handle(state))
-        return FALSE;
+        return -1;
     return NUM2INT(rc);
 }
 
