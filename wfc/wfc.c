@@ -31,8 +31,6 @@ copies.
 #define	TRACE
 */
 
-#define	_WFC
-
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -56,6 +54,7 @@ copies.
 #include	"net.h"
 #include	"comm.h"
 #include	"dirs.h"
+#include	"wfcdata.h"
 #include	"wfc.h"
 #include	"mqthread.h"
 #include	"corethread.h"
@@ -66,7 +65,6 @@ copies.
 #include	"debug.h"
 
 #include	"socket.h"
-#include	"pty.h"
 #include	"queue.h"
 
 #include	"directory.h"
@@ -75,6 +73,7 @@ static	char	*ApsPortNumber;
 static	char	*PortNumber;
 static	int		Back;
 static	char	*Directory;
+static	char	*BLOB_Space;
 
 #ifdef	DEBUG
 extern	void
@@ -135,7 +134,7 @@ dbgmsg(">InitSystem");
 		PortNumber = ThisEnv->TermPort->port;
 	}
 	InitNET();
-	//	InitBLOB();
+	InitBLOB(BLOB_Space);
 	InitMessageQueue();
 	ReadyAPS();
 	SetupMessageQueue();
@@ -170,6 +169,9 @@ static	ARG_TABLE	option[] = {
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
 		"トランザクションを再試行する時の上限数"		},
 
+	{	"blob",		STRING,		TRUE,	(void*)&BLOB_Space,
+		"BLOB領域"					 					},
+
 	{	NULL,		0,			TRUE,	NULL		 	}
 };
 
@@ -184,6 +186,7 @@ SetDefault(void)
 	D_Dir = NULL;
 	Directory = "./directory";
 	MaxRetry = 0;
+	BLOB_Space = ".";
 }
 
 extern	int

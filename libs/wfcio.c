@@ -35,7 +35,7 @@ copies.
 
 #include	"libmondai.h"
 #include	"comm.h"
-#include	"wfc.h"
+#include	"wfcdata.h"
 #include	"wfcio.h"
 #include	"debug.h"
 #include	"socket.h"

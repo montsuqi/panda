@@ -40,7 +40,7 @@ copies.
 #include	"struct.h"
 #include	"const.h"
 #include	"enum.h"
-#include	"wfc.h"
+#include	"wfcdata.h"
 #include	"DBparser.h"
 #include	"directory.h"
 #include	"driver.h"

@@ -47,8 +47,9 @@ copies.
 #include	"comm.h"
 #include	"queue.h"
 #include	"directory.h"
-#include	"wfc.h"
+#include	"wfcdata.h"
 #include	"wfcio.h"
+#include	"wfc.h"
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"blob.h"
@@ -180,10 +181,10 @@ ProcessBLOB(
 	NETFILE		*fp,
 	SessionData	*data)
 {
-#if	0
 	MonObjectType	obj;
 	int				mode;
 	size_t			size;
+	byte			*buff;
 
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_CREATE:
@@ -192,7 +193,7 @@ ProcessBLOB(
 			SendPacketClass(fp,WFC_OK);
 			SendObject(fp,&obj);
 		} else {
-			SendPacketClass(fp,WFC_NG);
+			SendPacketClass(fp,WFC_NOT);
 		}
 		break;
 	  case	BLOB_OPEN:
@@ -201,7 +202,7 @@ ProcessBLOB(
 		if		(  OpenBLOB(&obj,mode)  ) {
 			SendPacketClass(fp,WFC_OK);
 		} else {
-			SendPacketClass(fp,WFC_NG);
+			SendPacketClass(fp,WFC_NOT);
 		}
 		break;
 	  case	BLOB_WRITE:
@@ -229,13 +230,12 @@ ProcessBLOB(
 		if		(  CloseBLOB(&obj)  ) {
 			SendPacketClass(fp,WFC_OK);
 		} else {
-			SendPacketClass(fp,WFC_NG);
+			SendPacketClass(fp,WFC_NOT);
 		}
 		break;
 	  default:
 		break;
 	}
-#endif
 }
 
 

@@ -22,11 +22,18 @@ copies.
 #ifndef	_INC_BLOB_H
 #define	_INC_BLOB_H
 
-extern	void	InitBLOB(void);
+extern	void	InitBLOB(char *space);
 extern	Bool	NewBLOB(MonObjectType *obj, int mode);
 extern	Bool	OpenBLOB(MonObjectType *obj, int mode);
 extern	Bool	CloseBLOB(MonObjectType *obj);
 extern	size_t	WriteBLOB(MonObjectType *obj, byte *buff, size_t size);
 extern	size_t	ReadBLOB(MonObjectType *obj, byte *buff, size_t size);
+
+#undef	GLOBAL
+#ifdef	MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
 
 #endif

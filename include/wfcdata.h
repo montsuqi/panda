@@ -19,8 +19,8 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_INC_WFC_H
-#define	_INC_WFC_H
+#ifndef	_INC_WFCDATA_H
+#define	_INC_WFCDATA_H
 #include	"queue.h"
 #include	"struct.h"
 #include	"net.h"

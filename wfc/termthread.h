@@ -22,7 +22,7 @@ copies.
 #ifndef	_INC_TERMTHREAD_H
 #define	_INC_TERMTHREAD_H
 
-#include	"wfc.h"
+#include	"wfcdata.h"
 
 extern	void		TermEnqueue(TermNode *term, SessionData *data);
 extern	pthread_t	ConnectTerm(int _fhTerm);

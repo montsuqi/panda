@@ -50,7 +50,7 @@ copies.
 #include	"dblib.h"
 #include	"dbgroup.h"
 #include	"handler.h"
-#include	"wfc.h"
+#include	"wfcdata.h"
 #include	"apsio.h"
 #include	"aps_main.h"
 #include	"option.h"

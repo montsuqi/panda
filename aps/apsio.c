@@ -40,7 +40,7 @@ copies.
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
-#include	"wfc.h"
+#include	"wfcdata.h"
 #include	"handler.h"
 #include	"apsio.h"
 #include	"debug.h"

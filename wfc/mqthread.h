@@ -22,7 +22,7 @@ copies.
 #ifndef	_INC_APSTHREAD_H
 #define	_INC_APSTHREAD_H
 
-#include	"wfc.h"
+#include	"wfcdata.h"
 
 extern	void	MessageEnqueue(MQ_Node *aps, SessionData *data);
 extern	void	ReadyAPS(void);

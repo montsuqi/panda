@@ -44,7 +44,6 @@ copies.
 #include	"comm.h"
 #include	"queue.h"
 #include	"directory.h"
-#include	"wfc.h"
 #include	"blob.h"
 #include	"message.h"
 #include	"debug.h"
@@ -86,6 +85,7 @@ ReadBLOB(
 }
 
 extern	void
-InitBLOB(void)
+InitBLOB(
+	char	*space)
 {
 }

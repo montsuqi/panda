@@ -24,7 +24,7 @@ copies.
 #include	"const.h"
 #include	"enum.h"
 #include	"driver.h"
-#include	"wfc.h"
+#include	"wfcdata.h"
 #include	"net.h"
 
 #ifndef	PacketClass

@@ -22,7 +22,7 @@ copies.
 #ifndef	_INC_CORETHREAD_H
 #define	_INC_CORETHREAD_H
 
-#include	"wfc.h"
+#include	"wfcdata.h"
 
 extern	void	CoreEnqueue(SessionData *data);
 extern	void	StartCoreThread(void);

@@ -41,6 +41,7 @@ copies.
 
 #include	"libmondai.h"
 #include	"queue.h"
+#include	"wfcdata.h"
 #include	"wfc.h"
 #include	"mqthread.h"
 #include	"debug.h"
