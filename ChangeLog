@@ -1,3 +1,7 @@
+2002-09-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c: プロセス操作時の待機時間を設定可能にした
+
 2002-09-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.1.0 release
