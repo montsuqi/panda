@@ -549,16 +549,18 @@ LEAVE_FUNC;
 
 static	void
 RecvValueSkip(
-	NETFILE	*fp)
+	NETFILE			*fp,
+	PacketDataType	type)
 {
-	PacketDataType	type;
 	char			name[SIZE_BUFF];
 	char			buff[SIZE_BUFF];
 	int				count
 	,				i;
 
 ENTER_FUNC;
-	type = GL_RecvDataType(fp);
+	if		(  type  ==  GL_TYPE_NULL  ) {
+		type = GL_RecvDataType(fp);
+	}
 	switch	(type) {
 	  case	GL_TYPE_INT:
 		(void)GL_RecvInt(fp);
@@ -583,18 +585,17 @@ ENTER_FUNC;
 	  case	GL_TYPE_ARRAY:
 		count = GL_RecvInt(fp);
 		for	(  i = 0 ; i < count ; i ++ ) {
-			RecvValueSkip(fp);
+			RecvValueSkip(fp,GL_TYPE_NULL);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
 		count = GL_RecvInt(fp);
 		for	(  i = 0 ; i < count ; i ++ ) {
 			GL_RecvString(fp,name);
-			RecvValueSkip(fp);
+			RecvValueSkip(fp,GL_TYPE_NULL);
 		}
 		break;
 	  default:
-dbgmsg("*");
 		break;
 	}
 LEAVE_FUNC;
@@ -630,7 +631,7 @@ ENTER_FUNC;
 				if		(  !Protocol2  ) {
 					fTrace = FALSE;	/*	fatal error	*/
 					fDone = TRUE;
-					RecvValueSkip(fp);
+					RecvValueSkip(fp,GL_TYPE_NULL);
 				}
 			}
 		}
@@ -653,7 +654,7 @@ ENTER_FUNC;
 		}
 	} else {
 		fTrace = FALSE;	/*	fatal error	*/
-		RecvValueSkip(fp);
+		RecvValueSkip(fp,GL_TYPE_NULL);
 	}
 	if		(  fTrace  ) {
 		type = GL_RecvDataType(fp);
@@ -675,7 +676,7 @@ ENTER_FUNC;
 			}
 			break;
 		  default:
-			RecvValueSkip(fp);
+			RecvValueSkip(fp,type);
 			break;
 		}
 	}

@@ -1,6 +1,7 @@
 TODOとアイディア
 
 □エラー
+
 	glclientがwidgetのデータの揃いが悪いと異常終了するらしい(PandaCList等)
 
 	headでポインタの踏み外しがあるようだ
@@ -8,29 +9,38 @@ TODOとアイディア
 	ipv4アドレスのエンコードが同一になってしまう[middle:04214]
 		--with-ipv6の時にIPv4で接続すると、アドレスが同じになる(本来はlibcが射影アドレスを間違えているバグ)
 
- - htcgen2で自動作成されるCListについて
-	 WebクライアントでCListの部分が1列しか表示されない。
+	htcgen2で自動作成されるCListについて
+		WebクライアントでCListの部分が1列しか表示されない。
 
 □テスト中
-	gladeファイルの修正について
-    	recファイルで宣言しているウィジェットを削除すると画面が表示されなくなる。
 
 	MCP-PUTTYPE"BACK"の動作について
 		LDをまたがるとひとつ前の画面に戻らない場合がある。
 
+	gladeファイルの修正について
+    	recファイルで宣言しているウィジェットを削除すると画面が表示されなくなる。
+
 □ラージオブジェクトの実装について
+
 	  ラージオブジェクトは、panda内ではMonObjectで扱うが、PLserver内で
 	binaryに変換する。将来的にはPLclientでのオンデマンド転送も可能にす
 	るが、Ver 1.x系では実現しない。
 
 □native XML database
+
 	HAKAMA層でnative XML databaseを実現する
 
+□full text search
+
+	HAKAMA層でfull text searchを実現する
+
 □libmonpic内の処理の改良(未実装)
+
 	  現在、peerの生死判定は上位プロトコルでPING-PONGすることによって
 	行っている。これをlibmonpicの中で行うようにする。
 
 □改良
+
 	UNIX domain socketの消去
 	ValueStructの改良(NameTree)
 	メッセージログを整備する
@@ -39,6 +49,7 @@ TODOとアイディア
 	BLOBをもっとマシなものにする
 
 □拡張
+
 	DBを実効ユーザ毎に開けるようにする
 	障害時の自動復旧
 	他データベースエンジン対応
@@ -50,6 +61,7 @@ TODOとアイディア
 	dbredirectorにファイルからの入力機能を持たせる
 
 □作業中
+
 	いわゆるラージデータの処理
 	webインターフェイス(siomanで対応中)
 	多プログラム言語対応
@@ -57,6 +69,7 @@ TODOとアイディア
 	glade -> HTC変換の改良
 
 □完了
+
 	glade, libgladeのfork -> MONSHA
 	termnameの長さを見直す(現状36byte)[middle:04214]
 		現状では、複数のプレゼンテーションサーバを使うと、重複する危険性がある
@@ -82,6 +95,7 @@ TODOとアイディア
 
 
 □放置
+
 	インチキ証明書対応
 	必要度の低いthreadを減らす
 	termthreadを非スレッド化する
