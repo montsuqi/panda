@@ -667,6 +667,49 @@ dbgmsg(">_Calendar");
 dbgmsg("<_Calendar");
 }
 
+static void
+_Link(HTCInfo *htc, Tag *tag)
+{
+	char *event;
+	char *name;
+	char *value;
+dbgmsg(">_Link");
+	if ((event = GetArg(tag, "event", 0)) != NULL) {
+		LBS_EmitString(htc->code, "<a");
+		Style(htc,tag);
+
+		LBS_EmitString(htc->code, " href=\"mon.cgi?_name=");
+		EmitGetValue(htc,"_name");
+		LBS_EmitString(htc->code, "&amp;_event=");
+		EmitCode(htc, OPC_NAME);
+		LBS_EmitPointer(htc->code, StrDup(event));
+		EmitCode(htc, OPC_REFSTR);
+		if (!fCookie) {
+			LBS_EmitString(htc->code, "&amp;_sesid=");
+			EmitGetValue(htc,"_sesid");
+		}
+		if ((name = GetArg(tag, "name", 0)) != NULL &&
+                    (value = GetArg(tag, "value", 0)) != NULL) {
+			LBS_EmitString(htc->code,"&amp;");
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(name));
+			EmitCode(htc,OPC_REFSTR);
+			LBS_EmitString(htc->code,"=");
+                        EmitAttributeValue(htc,value,TRUE); 
+		}
+		LBS_EmitString(htc->code,"\">");
+	}
+dbgmsg("<_Link");
+}
+
+static void
+_eLink(HTCInfo *htc, Tag *tag)
+{
+dbgmsg(">_eLink");
+	LBS_EmitString(htc->code, "</a>");
+dbgmsg("<_eLink");
+}
+
 static	void
 _Htc(
 	HTCInfo	*htc,
@@ -783,6 +826,14 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"year",TRUE);
 	AddArg(tag,"month",TRUE);
 	AddArg(tag,"day",TRUE);
+
+	tag = NewTag("LINK",_Link);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"value",TRUE);
+	AddArg(tag,"event",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+	tag = NewTag("/LINK",_eLink);
 
 	tag = NewTag("HTC",_Htc);
 	AddArg(tag,"coding",TRUE);

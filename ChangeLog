@@ -1,3 +1,7 @@
+2003-12-25  Shugo Maeda  <shugo@netlab.jp>
+
+	* htserver/tags.c: <LINK>のサポート
+
 2003-12-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libmondaiが国際化されていない時の動作を直した
