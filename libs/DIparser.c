@@ -844,7 +844,6 @@ ParDI(
 ENTER_FUNC;
 	ThisEnv = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
-dbgmsg("*");
 		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
@@ -1023,7 +1022,6 @@ dbgmsg("*");
 				gname = NULL;
 				Error("syntax error dbgroup directive");
 			}
-printf("gname = [%s]\n",gname);
 			ParDBGROUP(gname);
 			break;
 		  default:
@@ -1034,11 +1032,8 @@ printf("gname = [%s]\n",gname);
 		if		(  GetSymbol  !=  ';'  ) {
 			Error("; missing");
 		}
-dbgmsg("*");
 	}
-dbgmsg("*");
 	ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
-dbgmsg("*");
 	AssignDBG();
 LEAVE_FUNC;
 	return	(ThisEnv);
