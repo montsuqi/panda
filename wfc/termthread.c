@@ -142,16 +142,16 @@ dbgmsg(">InitSession");
 		data->ld = ld;
 		data->mcpdata = NewLBS();
 		InitializeValue(ThisEnv->mcprec);
-		LBS_ReserveSize(data->mcpdata,NativeSizeValue(ThisEnv->mcprec,0,0),FALSE);
-		NativePackValue(data->mcpdata->body,ThisEnv->mcprec,0);
+		LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec),FALSE);
+		NativePackValue(NULL,data->mcpdata->body,ThisEnv->mcprec);
 		data->spadata = NewLBS();
 		InitializeValue(ld->info->sparec);
-		LBS_ReserveSize(data->spadata,NativeSizeValue(ld->info->sparec,0,0),FALSE);
-		NativePackValue(data->spadata->body,ld->info->sparec,0);
+		LBS_ReserveSize(data->spadata,NativeSizeValue(NULL,ld->info->sparec),FALSE);
+		NativePackValue(NULL,data->spadata->body,ld->info->sparec);
 		data->linkdata = NewLBS();
 		InitializeValue(ThisEnv->linkrec);
-		LBS_ReserveSize(data->linkdata,NativeSizeValue(ThisEnv->linkrec,0,0),FALSE);
-		NativePackValue(data->linkdata->body,ThisEnv->linkrec,0);
+		LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec),FALSE);
+		NativePackValue(NULL,data->linkdata->body,ThisEnv->linkrec);
 		data->cWindow = ld->info->cWindow;
 		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 													* data->cWindow);
@@ -159,8 +159,8 @@ dbgmsg(">InitSession");
 			data->scrdata[i] = NewLBS();
 			InitializeValue(data->ld->info->window[i]->value);
 			LBS_ReserveSize(data->scrdata[i],
-							NativeSizeValue(ld->info->window[i]->value,0,0),FALSE);
-			NativePackValue(data->scrdata[i]->body,ld->info->window[i]->value,0);
+							NativeSizeValue(NULL,ld->info->window[i]->value),FALSE);
+			NativePackValue(NULL,data->scrdata[i]->body,ld->info->window[i]->value);
 		}
 		data->name = StrDup(data->hdr->term);
 		g_hash_table_insert(TermHash,data->name,data);

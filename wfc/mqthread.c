@@ -275,8 +275,8 @@ ChangeLD(
 	LBS_Clear(data->spadata);
 
 	InitializeValue(data->ld->info->sparec);
-	LBS_ReserveSize(data->spadata,NativeSizeValue(data->ld->info->sparec,0,0),FALSE);
-	NativePackValue(data->spadata->body,data->ld->info->sparec,0);
+	LBS_ReserveSize(data->spadata,NativeSizeValue(NULL,data->ld->info->sparec),FALSE);
+	NativePackValue(NULL,data->spadata->body,data->ld->info->sparec);
 
 	for	( i = 0 ; i < data->cWindow ; i ++ ) {
 		FreeLBS(data->scrdata[i]);
@@ -289,8 +289,8 @@ ChangeLD(
 		data->scrdata[i] = NewLBS();
 		InitializeValue(data->ld->info->window[i]->value);
 		LBS_ReserveSize(data->scrdata[i],
-						NativeSizeValue(data->ld->info->window[i]->value,0,0),FALSE);
-		NativePackValue(data->scrdata[i]->body,data->ld->info->window[i]->value,0);
+						NativeSizeValue(NULL,data->ld->info->window[i]->value),FALSE);
+		NativePackValue(NULL,data->scrdata[i]->body,data->ld->info->window[i]->value);
 	}
 	data->apsid = -1;
 }

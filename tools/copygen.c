@@ -71,12 +71,14 @@ static	char	*BD_Name;
 static	char	*Directory;
 static	char	*Lang;
 
+static	CONVOPT	*Conv;
+
 static	int		level;
 static	int		Col;
 static	int		is_return = FALSE;
 static	char	namebuff[SIZE_BUFF];
 
-static	void	_COBOL(ValueStruct *val, size_t arraysize, size_t textsize);
+static	void	_COBOL(CONVOPT *conv, ValueStruct *val);
 
 static	void
 PutLevel(
@@ -171,9 +173,8 @@ static	int		PrevCount;
 static	char	*PrevSuffix[] = { "X","Y","Z" };
 static	void
 _COBOL(
-	ValueStruct	*val,
-	size_t		arraysize,
-	size_t		textsize)
+	CONVOPT		*conv,
+	ValueStruct	*val)
 {
 	int		i
 	,		n;
@@ -209,21 +210,21 @@ _COBOL(
 		PutString(buff);
 		break;
 	  case	GL_TYPE_TEXT:
-		sprintf(buff,"PIC X(%d)",textsize);
+		sprintf(buff,"PIC X(%d)",conv->textsize);
 		PutString(buff);
 		break;
 	  case	GL_TYPE_ARRAY:
 		tmp = val->body.ArrayData.item[0];
 		n = val->body.ArrayData.count;
 		if		(  n  ==  0  ) {
-			n = arraysize;
+			n = conv->arraysize;
 		}
 		switch	(tmp->type) {
 		  case	GL_TYPE_RECORD:
 			sprintf(buff,"OCCURS  %d TIMES",n);
 			PutTab(8);
 			PutString(buff);
-			_COBOL(tmp,arraysize,textsize);
+			_COBOL(conv,tmp);
 			break;
 		  case	GL_TYPE_ARRAY:
 			sprintf(buff,"OCCURS  %d TIMES",n);
@@ -233,10 +234,10 @@ _COBOL(
 			sprintf(buff,"%s-%s",PrevName,PrevSuffix[PrevCount]);
 			ValueAddRecordItem(dummy,buff,tmp);
 			PrevCount ++;
-			_COBOL(dummy,arraysize,textsize);
+			_COBOL(conv,dummy);
 			break;
 		  default:
-			_COBOL(tmp,arraysize,textsize);
+			_COBOL(conv,tmp);
 			sprintf(buff,"OCCURS  %d TIMES",n);
 			PutTab(8);
 			PutString(buff);
@@ -277,7 +278,7 @@ _COBOL(
 			if		(  tmp->type  !=  GL_TYPE_RECORD  ) {
 				PutTab(4);
 			}
-			_COBOL(tmp,arraysize,textsize);
+			_COBOL(conv,tmp);
 			*name = 0;
 		}
 		level --;
@@ -289,19 +290,17 @@ _COBOL(
 
 static	void
 COBOL(
-	ValueStruct	*val,
-	size_t		arraysize,
-	size_t		textsize)
+	CONVOPT		*conv,
+	ValueStruct	*val)
 {
 	*namebuff = 0;
-	_COBOL(val,arraysize,textsize);
+	_COBOL(conv,val);
 }
 
 static	void
 SIZE(
-	ValueStruct	*val,
-	size_t		arraysize,
-	size_t		textsize)
+	CONVOPT		*conv,
+	ValueStruct	*val)
 {
 	char	buff[SIZE_BUFF+1];
 
@@ -310,7 +309,7 @@ SIZE(
 	PutLevel(level,TRUE);
 	PutName("filler");
 	PutTab(8);
-	sprintf(buff,"PIC X(%d)",SizeValue(val,arraysize,textsize));
+	sprintf(buff,"PIC X(%d)",SizeValue(conv,val));
 	PutString(buff);
 	level --;
 }
@@ -336,9 +335,9 @@ MakeFromRecord(
 		}
 		if		(  fFiller  ) {
 			printf(".\n");
-			SIZE(rec->rec,ArraySize,TextSize);
+			SIZE(Conv,rec->rec);
 		} else {
-			COBOL(rec->rec,ArraySize,TextSize);
+			COBOL(Conv,rec->rec);
 		}
 		printf(".\n");
 	}
@@ -373,14 +372,16 @@ dbgmsg(">MakeLD");
 	PutString(buff);
 	printf(".\n");
 
+	ConvSetSize(Conv,ld->textsize,ld->arraysize);
+
 	base = 2;
 	if		(	(  fLDR     )
 			||	(  fLDW     ) ) {
-		size =	SizeValue(ThisEnv->mcprec,ld->arraysize,ld->textsize)
+		size =	SizeValue(Conv,ThisEnv->mcprec);
 			+	ThisEnv->linksize
-			+	SizeValue(ld->sparec,ld->arraysize,ld->textsize);
+			+	SizeValue(Conv,ld->sparec);
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-			size += SizeValue(ld->window[i]->value,ld->arraysize,ld->textsize);
+			size += SizeValue(Conv,ld->window[i]->value);
 		}
 		num = ( size / SIZE_BLOCK ) + 1;
 
@@ -408,7 +409,7 @@ dbgmsg(">MakeLD");
 		num = 0;
 	}
 	if		(  fMCP  ) {
-		if		(  ( mcpsize = SizeValue(ThisEnv->mcprec,ld->arraysize,ld->textsize) )
+		if		(  ( mcpsize = SizeValue(Conv,ThisEnv->mcprec) )
 				   >  0  ) {
 			PutLevel(base,TRUE);
 			PutName("mcpdata");
@@ -416,18 +417,18 @@ dbgmsg(">MakeLD");
 			if		(	(  fFiller  )
 					||	(  fLDW     ) ) {
 				printf(".\n");
-				SIZE(ThisEnv->mcprec,ld->arraysize,ld->textsize);
+				SIZE(Conv,ThisEnv->mcprec);
 			} else {
 				_prefix = Prefix;
 				Prefix = "ldr-mcp-";
-				COBOL(ThisEnv->mcprec,ld->arraysize,ld->textsize);
+				COBOL(Conv,ThisEnv->mcprec);
 				Prefix = _prefix;
 			}
 			printf(".\n");
 		}
 	}
 	if		(  fSPA  ) {
-		if		(  ( spasize = SizeValue(ld->sparec,ld->arraysize,ld->textsize) )
+		if		(  ( spasize = SizeValue(Conv,ld->sparec) )
 				   >  0  ) {
 			PutLevel(base,TRUE);
 			PutName("spadata");
@@ -441,11 +442,11 @@ dbgmsg(">MakeLD");
 				if		(	(  fFiller  )
 						||	(  fLDW     ) ) {
 					printf(".\n");
-					SIZE(ld->sparec,ld->arraysize,ld->textsize);
+					SIZE(Conv,ld->sparec);
 				} else {
 					_prefix = Prefix;
 					Prefix = "spa-";
-					COBOL(ld->sparec,ld->arraysize,ld->textsize);
+					COBOL(Conv,ld->sparec);
 					Prefix = _prefix;
 				}
 				printf(".\n");
@@ -453,7 +454,7 @@ dbgmsg(">MakeLD");
 		}
 	}
 	if		(  fLinkage  ) {
-		if		(  SizeValue(ThisEnv->linkrec,ld->arraysize,ld->textsize)  >  0  ) {
+		if		(  SizeValue(Conv,ThisEnv->linkrec)  >  0  ) {
 			PutLevel(base,TRUE);
 			PutName("linkdata");
 			level = base;
@@ -467,7 +468,7 @@ dbgmsg(">MakeLD");
 			} else {
 				_prefix = Prefix;
 				Prefix = "lnk-";
-				COBOL(ThisEnv->linkrec,ld->arraysize,ld->textsize);
+				COBOL(Conv,ThisEnv->linkrec);
 				Prefix = _prefix;
 			}
 			printf(".\n");
@@ -480,7 +481,7 @@ dbgmsg(">MakeLD");
 		printf(".\n");
 		_prefix = Prefix;
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-			if		(  SizeValue(ld->window[i]->value,ld->arraysize,ld->textsize)  >  0  ) {
+			if		(  SizeValue(Conv,ld->window[i]->value)  >  0  ) {
 				Prefix = _prefix;
 				PutLevel(base+1,TRUE);
 				sprintf(buff,"%s",ld->window[i]->name);
@@ -494,9 +495,9 @@ dbgmsg(">MakeLD");
 						||	(  fLDR     )
 						||	(  fLDW     ) ) {
 					printf(".\n");
-					SIZE(ld->window[i]->value,ld->arraysize,ld->textsize);
+					SIZE(Conv,ld->window[i]->value);
 				} else {
-					COBOL(ld->window[i]->value,ld->arraysize,ld->textsize);
+					COBOL(Conv,ld->window[i]->value);
 				}
 				printf(".\n");
 				if		(  fWindowPrefix  ) {
@@ -527,6 +528,8 @@ MakeLinkage(void)
 		Error("LD not found.\n");
 	}
 
+	ConvSetSize(Conv,ld->textsize,ld->arraysize);
+
 	_prefix = Prefix;
 	Prefix = "";
 	PutLevel(1,TRUE);
@@ -544,9 +547,7 @@ MakeLinkage(void)
 	PutName("linkdata-redefine");
 	Prefix = _prefix;
 	level = 3;
-	COBOL(ThisEnv->linkrec,
-		  ld->arraysize,
-		  ld->textsize);
+	COBOL(Conv,ThisEnv->linkrec);
 	printf(".\n");
 }
 
@@ -587,12 +588,14 @@ MakeDB(void)
 		exit(1);
 	}
 
+	ConvSetSize(Conv,textsize,arraysize);
+
 	PutLevel(1,TRUE);
 	PutName("dbarea");
 	printf(".\n");
 	msize = 0;
 	for	( i = 1 ; i < cDB ; i ++ ) {
-		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
+		size = SizeValue(Conv,dbrec[i]->rec);
 		msize = ( msize > size ) ? msize : size;
 	}
 
@@ -643,9 +646,12 @@ dbgmsg(">MakeDBREC");
 		Error("LD or BD not specified");
 		exit(1);
 	}
+
+	ConvSetSize(Conv,textsize,arraysize);
+
 	msize = 64;
 	for	( i = 1 ; i < cDB ; i ++ ) {
-		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
+		size = SizeValue(Conv,dbrec[i]->rec);
 		msize = ( msize > size ) ? msize : size;
 	}
 	if		(  ( rec = DD_ParserDataDefines(name) )  !=  NULL  ) {
@@ -660,10 +666,10 @@ dbgmsg(">MakeDBREC");
 		Prefix = "";
 		PutName(rname);
 		Prefix = _prefix;
-		COBOL(rec->rec,arraysize,textsize);
+		COBOL(Conv,rec->rec);
 		printf(".\n");
 
-		size = SizeValue(rec->rec,arraysize,textsize);
+		size = SizeValue(Conv,rec->rec);
 		if		(  msize  !=  size  ) {
 			PutLevel(2,TRUE);
 			PutName("filler");
@@ -712,9 +718,11 @@ MakeDBCOMM(void)
 		exit(1);
 	}
 
+	ConvSetSize(Conv,textsize,arraysize);
+
 	msize = 0;
 	for	( i = 1 ; i < cDB ; i ++ ) {
-		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
+		size = SizeValue(Conv,dbrec[i]->rec);
 		msize = ( msize > size ) ? msize : size;
 	}
 
@@ -833,13 +841,14 @@ dbgmsg(">MakeDBPATH");
 		exit(1);
 	}
 
+	ConvSetSize(Conv,textsize,arraysize);
 
 	PutLevel(1,TRUE);
 	PutName("dbpath");
 	printf(".\n");
 	for	( i = 1 ; i < cDB ; i ++ ) {
 		db = dbrec[i]->opt.db;
-		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
+		size = SizeValue(Conv,dbrec[i]->rec);
 		blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 		
 		for	( j = 0 ; j < db->pcount ; j ++ ) {
@@ -878,7 +887,7 @@ MakeMCP(void)
 	PutName("mcparea");
 	Prefix = "mcp_";
 	level = 1;
-	COBOL(ThisEnv->mcprec,0,0);
+	COBOL(Conv,ThisEnv->mcprec);
 	printf(".\n");
 }
 
@@ -978,7 +987,9 @@ main(
 	SetDefault();
 	fl = GetOption(option,argc,argv);
 	InitMessage("copygen",NULL);
-	SetLanguage(Lang);
+	ConvSetLanguage(Lang);
+	Conv = NewConvOpt();
+	ConvSetSize(Conv,TextSize,ArraySize);
 	if		(  fl  !=  NULL  ) {
 		name = fl->name;
 		ext = GetExt(name);

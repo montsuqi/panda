@@ -242,7 +242,7 @@ AC_ARG_WITH(ssl,
 			fi
 		fi
 	fi 
-	AM_CONDITIONAL(SSL, test x$ssldir != x) 
+#	AM_CONDITIONAL(SSL, test x$ssldir != x) 
 	AC_SUBST(SSL_LIBS) 
 	AC_SUBST(SSL_CFLAGS) 
 ])		

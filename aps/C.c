@@ -322,7 +322,7 @@ dbgmsg(">MCP_ExecFunction");
 		rec = NULL;
 	}
 	if		(  rec  !=  NULL  ) {
-		size = NativeSizeValue(rec->rec,0,0);
+		size = NativeSizeValue(NULL,rec->rec);
 		ctrl.blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 		CopyValue(rec->rec,data);
 	}
