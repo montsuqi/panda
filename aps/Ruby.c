@@ -73,6 +73,8 @@ static VALUE cArrayValue;
 static VALUE cRecordValue;
 static VALUE cRecordStruct;
 static VALUE cProcessNode;
+static VALUE cTable;
+static VALUE cPath;
 
 #define TAG_RETURN	0x1
 #define TAG_BREAK	0x2
@@ -293,6 +295,9 @@ error_handle(int ex)
     return status;
 }
 
+static VALUE aryval_new(ValueStruct *val);
+static VALUE recval_new(ValueStruct *val);
+
 static VALUE
 get_value(ValueStruct *val)
 {
@@ -319,9 +324,9 @@ get_value(ValueStruct *val)
             return rb_str_new(ValueByte(val), ValueByteLength(val));
         }
     case GL_TYPE_ARRAY:
-        return Data_Wrap_Struct(cArrayValue, NULL, NULL, val);
+        return aryval_new(val);
     case GL_TYPE_RECORD:
-        return Data_Wrap_Struct(cRecordValue, NULL, NULL, val);
+        return recval_new(val);
     default:
         rb_raise(rb_eArgError, "unsupported ValueStruct type");
         break;
@@ -367,24 +372,55 @@ set_value(ValueStruct *value, VALUE obj)
     }
 }
 
-static VALUE
-aryval_length(VALUE self)
-{
+typedef struct _value_struct_data {
     ValueStruct *value;
+    VALUE cache;
+} value_struct_data;
 
-    Data_Get_Struct(self, ValueStruct, value);
-    return INT2NUM(ValueArraySize(value));
+static void
+value_struct_mark(value_struct_data *data)
+{
+    rb_gc_mark(data->cache);
 }
 
 static VALUE
-aryval_aget(VALUE self, VALUE index)
+aryval_new(ValueStruct *val)
 {
-    ValueStruct *value;
-    int i = NUM2INT(index);
+    VALUE obj;
+    value_struct_data *data;
 
-    Data_Get_Struct(self, ValueStruct, value);
-    if (i >= 0 && i < ValueArraySize(value)) {
-        return get_value(ValueArrayItem(value, i));
+    obj = Data_Make_Struct(cArrayValue, value_struct_data,
+                           value_struct_mark, free, data);
+    data->value = val;
+    data->cache = rb_ary_new2(ValueArraySize(val));
+    return obj;
+}
+
+static VALUE
+aryval_length(VALUE self)
+{
+    value_struct_data *data;
+
+    Data_Get_Struct(self, value_struct_data, data);
+    return INT2NUM(ValueArraySize(data->value));
+}
+
+static VALUE
+aryval_aref(VALUE self, VALUE index)
+{
+    value_struct_data *data;
+    int i = NUM2INT(index);
+    VALUE obj;
+
+    Data_Get_Struct(self, value_struct_data, data);
+    if (i >= 0 && i < ValueArraySize(data->value)) {
+        if (i < RARRAY(data->cache)->len &&
+            !NIL_P(RARRAY(data->cache)->ptr[i]))
+            return RARRAY(data->cache)->ptr[i];
+        
+        obj = get_value(ValueArrayItem(data->value, i));
+        rb_ary_store(data->cache, i, obj);
+        return obj;
 	}
     else {
 		return Qnil;
@@ -394,12 +430,12 @@ aryval_aget(VALUE self, VALUE index)
 static VALUE
 aryval_aset(VALUE self, VALUE index, VALUE obj)
 {
-    ValueStruct *value;
+    value_struct_data *data;
     int i = NUM2INT(index);
 
-    Data_Get_Struct(self, ValueStruct, value);
-    if (i >= 0 && i < ValueArraySize(value)) {
-        set_value(ValueArrayItem(value, i), obj);
+    Data_Get_Struct(self, value_struct_data, data);
+    if (i >= 0 && i < ValueArraySize(data->value)) {
+        set_value(ValueArrayItem(data->value, i), obj);
 	}
     else {
 		rb_raise(rb_eIndexError, "index out of range: %d", i);
@@ -408,84 +444,116 @@ aryval_aset(VALUE self, VALUE index, VALUE obj)
 }
 
 static VALUE
-recval_length(VALUE self)
+recval_new(ValueStruct *val)
 {
-    ValueStruct *value;
+    VALUE obj;
+    value_struct_data *data;
 
-    Data_Get_Struct(self, ValueStruct, value);
-    return INT2NUM(ValueRecordSize(value));
+    obj = Data_Make_Struct(cRecordValue, value_struct_data,
+                           value_struct_mark, free, data);
+    data->value = val;
+    data->cache = rb_hash_new();
+    return obj;
 }
 
 static VALUE
-recval_aget(VALUE self, VALUE name)
+recval_length(VALUE self)
 {
-    ValueStruct *value, *val;
+    value_struct_data *data;
 
-    Data_Get_Struct(self, ValueStruct, value);
-    val = GetRecordItem(value, StringValuePtr(name));
-    return get_value(val);
+    Data_Get_Struct(self, value_struct_data, data);
+    return INT2NUM(ValueRecordSize(data->value));
+}
+
+static VALUE
+recval_aref(VALUE self, VALUE name)
+{
+    VALUE obj;
+    value_struct_data *data;
+    ValueStruct *val;
+
+    Data_Get_Struct(self, value_struct_data, data);
+
+    if (!NIL_P(obj = rb_hash_aref(data->cache, name)))
+        return obj;
+
+    val = GetRecordItem(data->value, StringValuePtr(name));
+    obj = get_value(val);
+    rb_hash_aset(data->cache, name, obj);
+    return obj;
 }
 
 static VALUE
 recval_aset(VALUE self, VALUE name, VALUE obj)
 {
-    ValueStruct *value, *val;
+    value_struct_data *data;
+    ValueStruct *val;
 
-    Data_Get_Struct(self, ValueStruct, value);
-    val = GetRecordItem(value, StringValuePtr(name));
+    Data_Get_Struct(self, value_struct_data, data);
+    val = GetRecordItem(data->value, StringValuePtr(name));
     if (val == NULL)
         rb_raise(rb_eArgError, "no such field: %s", StringValuePtr(name));
     set_value(val, obj);
     return obj;
+}
+
+typedef struct _record_struct_data {
+    RecordStruct *rec;
+    VALUE value;
+} record_struct_data;
+
+static void
+rec_mark(record_struct_data *data)
+{
+    rb_gc_mark(data->value);
 }
 
 static VALUE
 rec_new(RecordStruct *rec)
 {
-    return Data_Wrap_Struct(cRecordStruct, NULL, NULL, rec);
+    VALUE obj;
+    record_struct_data *data;
+
+    obj = Data_Make_Struct(cRecordStruct, record_struct_data,
+                           rec_mark, free, data);
+    data->value = recval_new(rec->value);
+    return obj;
 }
 
 static VALUE
 rec_name(VALUE self)
 {
-    RecordStruct *rec;
+    record_struct_data *data;
 
-    Data_Get_Struct(self, RecordStruct, rec);
-    return rb_str_new2(rec->name);
+    Data_Get_Struct(self, record_struct_data, data);
+    return rb_str_new2(data->rec->name);
 }
 
 static VALUE
 rec_length(VALUE self)
 {
-    RecordStruct *rec;
+    record_struct_data *data;
 
-    Data_Get_Struct(self, RecordStruct, rec);
-    return INT2NUM(ValueRecordSize(rec->value));
+    Data_Get_Struct(self, record_struct_data, data);
+    return recval_length(data->value);
 }
 
 static VALUE
-rec_aget(VALUE self, VALUE name)
+rec_aref(VALUE self, VALUE name)
 {
-    RecordStruct *rec;
-    ValueStruct *val;
+    record_struct_data *data;
 
-    Data_Get_Struct(self, RecordStruct, rec);
-    val = GetRecordItem(rec->value, StringValuePtr(name));
-    return get_value(val);
+    Data_Get_Struct(self, record_struct_data, data);
+    return recval_aref(data->value, name);
 }
 
 static VALUE
 rec_aset(VALUE self, VALUE name, VALUE obj)
 {
-    RecordStruct *rec;
-    ValueStruct *val;
+    record_struct_data *data;
 
-    Data_Get_Struct(self, RecordStruct, rec);
-    val = GetRecordItem(rec->value, StringValuePtr(name));
-    if (val == NULL)
-        rb_raise(rb_eArgError, "no such field: %s", StringValuePtr(name));
-    set_value(val, obj);
-    return obj;
+    Data_Get_Struct(self, record_struct_data, data);
+    return recval_aset(data->value, name, obj);
 }
 
 typedef struct _procnode_data {
@@ -514,7 +582,7 @@ procnode_new(ProcessNode *node)
     int i;
 
     obj = Data_Make_Struct(cProcessNode, procnode_data,
-                           procnode_mark, NULL, data);
+                           procnode_mark, free, data);
     data->node = node;
     data->mcp = rec_new(node->mcprec);
     data->link = rec_new(node->linkrec);
@@ -529,6 +597,24 @@ procnode_new(ProcessNode *node)
         }
     }
     return obj;
+}
+
+static VALUE
+procnode_term(VALUE self)
+{
+    procnode_data *data;
+
+    Data_Get_Struct(self, procnode_data, data);
+    return rb_str_new2(data->node->term);
+}
+
+static VALUE
+procnode_user(VALUE self)
+{
+    procnode_data *data;
+
+    Data_Get_Struct(self, procnode_data, data);
+    return rb_str_new2(data->node->user);
 }
 
 static VALUE
@@ -581,19 +667,21 @@ init()
     cArrayValue = rb_define_class_under(mPanda, "ArrayValue", rb_cObject);
     rb_define_method(cArrayValue, "length", aryval_length, 0);
     rb_define_method(cArrayValue, "size", aryval_length, 0);
-    rb_define_method(cArrayValue, "[]", aryval_aget, 1);
+    rb_define_method(cArrayValue, "[]", aryval_aref, 1);
     rb_define_method(cArrayValue, "[]=", aryval_aset, 2);
     cRecordValue = rb_define_class_under(mPanda, "RecordValue", rb_cObject);
     rb_define_method(cRecordValue, "length", recval_length, 0);
     rb_define_method(cRecordValue, "size", recval_length, 0);
-    rb_define_method(cRecordValue, "[]", recval_aget, 1);
+    rb_define_method(cRecordValue, "[]", recval_aref, 1);
     rb_define_method(cRecordValue, "[]=", recval_aset, 2);
     cRecordStruct = rb_define_class_under(mPanda, "RecordStruct", rb_cObject);
     rb_define_method(cRecordStruct, "length", rec_length, 0);
     rb_define_method(cRecordStruct, "size", rec_length, 0);
-    rb_define_method(cRecordStruct, "[]", rec_aget, 1);
+    rb_define_method(cRecordStruct, "[]", rec_aref, 1);
     rb_define_method(cRecordStruct, "[]=", rec_aset, 2);
     cProcessNode = rb_define_class_under(mPanda, "ProcessNode", rb_cObject);
+    rb_define_method(cProcessNode, "term", procnode_term, 0);
+    rb_define_method(cProcessNode, "user", procnode_user, 0);
     rb_define_method(cProcessNode, "mcp", procnode_mcp, 0);
     rb_define_method(cProcessNode, "link", procnode_link, 0);
     rb_define_method(cProcessNode, "spa", procnode_spa, 0);
