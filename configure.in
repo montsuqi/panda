@@ -118,7 +118,7 @@ dnl Add all the cflags & libs needed for the PostgreSQL
 dnl *************************************************************************** 
  
 AC_ARG_WITH(postgres, 
-[--with-postgres=<directory>     use postgres backend in <directory>],[
+[  --with-postgres=<directory>     use postgres backend in <directory>],[
 if test $withval != yes 
 then 
   dir=$withval 
@@ -178,7 +178,7 @@ dnl for the dotCOBOL
 dnl *************************************************************************** 
  
 AC_ARG_WITH(dotcobol, 
-[--with-dotcobol=<directory>     use dotCOBOL in <directory>],[
+[  --with-dotcobol=<directory>     use dotCOBOL in <directory>],[
 	if test $withval != yes 
 	then 
 	  dir=$withval 
@@ -213,7 +213,7 @@ dnl for the OpenCOBOL
 dnl *************************************************************************** 
  
 AC_ARG_WITH(opencobol, 
-[--with-opencobol     use OpenCOBOL],[
+[  --with-opencobol     use OpenCOBOL],[
 	AC_MSG_CHECKING(for OpenCOBOL)
 	cob_exists=yes
 	cob-config --version > /dev/null 2> /dev/null || cob_exists=no
@@ -263,7 +263,7 @@ dnl SSL
 dnl ***************************************************************************
 
 AC_ARG_WITH(ssl,
-	[--with-ssl=<directory>     use SSL in <directory>],[
+	[  --with-ssl=<directory>     use SSL in <directory>],[
 	if test x$withval = xyes; then
 		AC_MSG_CHECKING(for OpenSSL files) 
 		ssldir="" 
@@ -361,9 +361,12 @@ dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the libfixed modules.
 dnl ***************************************************************************
 
-AC_PATH_PROG(libfixed_config, libfixed-config)
-FIXED_CFLAGS=`$libfixed_config --cflags 2>/dev/null`
-FIXED_LIBS=`$libfixed_config --libs 2>/dev/null`
+AC_PATH_PROG(LIBFIXED_CONFIG, libfixed-config,no)
+if test x$LIBFIXED_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find libfixed-config)
+fi 
+FIXED_CFLAGS=`libfixed-config --cflags 2>/dev/null`
+FIXED_LIBS=`libfixed-config --libs 2>/dev/null`
 AC_SUBST(FIXED_LIBS)
 AC_SUBST(FIXED_CFLAGS)
 
@@ -371,9 +374,12 @@ dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the libmondai modules.
 dnl ***************************************************************************
 
-AC_PATH_PROG(libmondai_config, libmondai-config)
-MONDAI_CFLAGS=`$libmondai_config --cflags 2>/dev/null`
-MONDAI_LIBS=`$libmondai_config --libs 2>/dev/null`
+AC_PATH_PROG(LIBMONDAI_CONFIG, libmondai-config,no)
+if test x$LIBMONDAI_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find libmondai-config)
+fi 
+MONDAI_CFLAGS=`libmondai-config --cflags 2>/dev/null`
+MONDAI_LIBS=`libmondai-config --libs 2>/dev/null`
 AC_SUBST(MONDAI_LIBS)
 AC_SUBST(MONDAI_CFLAGS)
 
