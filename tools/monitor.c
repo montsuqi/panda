@@ -550,6 +550,9 @@ main(
 	signal(SIGUSR1,(void *)StopSystem);
 	signal(SIGHUP,(void *)StopApss);
 
+	if		(  !fRedirect  ) {
+		fNoCheck = TRUE;
+	}
 	InitSystem();
 	StartPrograms();
 	ProcessMonitor();
