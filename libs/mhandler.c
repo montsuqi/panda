@@ -41,6 +41,7 @@ copies.
 #include	"struct.h"
 #include	"mhandler.h"
 #include	"Dlex.h"
+#include	"directory.h"
 #include	"debug.h"
 
 static	GHashTable	*Handler;
@@ -113,7 +114,8 @@ ENTER_FUNC;
 					break;
 				  case	T_LOADPATH:
 					if		(  GetName   ==  T_SCONST  ) {
-						handler->loadpath = StrDup(ComSymbol);
+						handler->loadpath =
+                            StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 					} else {
 						Error("load path must be string.");
 					}
