@@ -7,8 +7,6 @@ SUBDIRS		= intl m4 libs dblib blob include 	\
 	glserver @GLCLIENT@ htserver pgserver	\
 	wfc aps  cobol Doc po
 
-CFLAGS		=	-O2 -Wall -Wunused
-
 BUILT_SOURCES = defaults.h
 
 release:

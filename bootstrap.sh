@@ -4,4 +4,4 @@ echo "Running libtoolize..."
 libtoolize --automake --force --copy
 
 echo "Running gettextize..."
-gettextize --force --copy --intl
+gettextize --force --copy --intl --no-changelog
