@@ -173,6 +173,24 @@ SendUInt(
 	Send(fp,&data,sizeof(data));
 }
 
+extern	uint64_t
+RecvUInt64(
+	NETFILE	*fp)
+{
+	uint64_t	data;
+
+	Recv(fp,&data,sizeof(data));
+	return	(data);
+}
+
+extern	void
+SendUInt64(
+	NETFILE	*fp,
+	uint64_t	data)
+{
+	Send(fp,&data,sizeof(data));
+}
+
 extern	int
 RecvChar(
 	NETFILE	*fp)
@@ -223,27 +241,18 @@ SendBool(
 extern	void
 SendObject(
 	NETFILE	*fp,
-	MonObjectType	*obj)
+	MonObjectType	obj)
 {
 	int		i;
 
-	SendInt(fp,obj->source);
-	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
-		SendUInt(fp,obj->id.el[i]);
-	}
+	SendUInt64(fp,obj);
 }
 
-extern	void
+extern	MonObjectType
 RecvObject(
-	NETFILE	*fp,
-	MonObjectType	*obj)
+	NETFILE	*fp)
 {
-	int		i;
-
-	obj->source = RecvInt(fp);
-	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
-		obj->id.el[i] = RecvUInt(fp);
-	}
+	return	((MonObjectType)RecvUInt64(fp));
 }
 
 extern	void

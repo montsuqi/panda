@@ -40,6 +40,7 @@ copies.
 #include	"libmondai.h"
 #include	"wfcdata.h"
 #include	"dbgroup.h"
+#include	"blobreq.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -159,8 +160,7 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( e = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
-			if		(  RequestNewBLOB((NETFILE*)dbg->conn,APS_BLOB,BLOB_OPEN_WRITE,
-									  ValueObject(e))  ) {
+			if		(  ( ValueObject(e) = RequestNewBLOB((NETFILE*)dbg->conn,APS_BLOB,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
 				RequestCloseBLOB((NETFILE*)dbg->conn,APS_BLOB,ValueObject(e));
 				rc = MCP_OK;
 			} else {
@@ -409,8 +409,8 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(rec->value,"file") )    !=  NULL  ) ) {
-			if		(  RequestImportBLOB((NETFILE*)dbg->conn,APS_BLOB,
-										 ValueObject(obj),ValueToString(f,NULL))  ) {
+			if		(  ( ValueObject(obj) = RequestImportBLOB((NETFILE*)dbg->conn,APS_BLOB,
+															  ValueToString(f,NULL)) )  !=  GL_OBJ_NULL  ) {
                 ValueIsNonNil(obj);
 				rc = MCP_OK;
 			} else {
@@ -476,7 +476,39 @@ ENTER_FUNC;
 	} else {
 		if		(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
 			if		(  RequestCheckBLOB((NETFILE*)dbg->conn,APS_BLOB,
-									   ValueObject(obj),ValueToString(f,NULL))  ) {
+										ValueObject(obj))  ) {
+				rc = MCP_OK;
+			} else {
+				rc = MCP_EOF;
+			}
+		} else {
+			rc = MCP_BAD_ARG;
+		}
+	}
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = rc;
+	}
+LEAVE_FUNC;
+}
+
+static	void
+_DestroyBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	int			rc;
+	ValueStruct	*obj
+		,		*f;
+
+ENTER_FUNC;
+	if		(  rec->type  !=  RECORD_DB  ) {
+		rc = MCP_BAD_ARG;
+	} else {
+		if		(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
+			if		(  RequestDestroyBLOB((NETFILE*)dbg->conn,APS_BLOB,
+									   ValueObject(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
@@ -532,6 +564,7 @@ static	DB_OPS	Operations[] = {
 	{	"BLOBIMPORT",	_ImportBLOB	},
 	{	"BLOBSAVE",		_SaveBLOB	},
 	{	"BLOBCHECK",	_CheckBLOB	},
+	{	"BLOBDESTROY",	_DestroyBLOB},
 
 	{	NULL,			NULL }
 };

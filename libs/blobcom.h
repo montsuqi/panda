@@ -36,15 +36,16 @@ extern	void	PassiveBLOB(NETFILE *fp, BLOB_Space *Blob);
 #endif
 
 #define	BLOB_CREATE			(PacketClass)0x01
-#define	BLOB_OPEN			(PacketClass)0x02
+#define	BLOB_DESTROY		(PacketClass)0x02
 #define	BLOB_IMPORT			(PacketClass)0x03
 #define	BLOB_EXPORT			(PacketClass)0x04
-#define	BLOB_READ			(PacketClass)0x05
-#define	BLOB_WRITE			(PacketClass)0x06
-#define	BLOB_CLOSE			(PacketClass)0x07
-#define	BLOB_SEEK			(PacketClass)0x08
-#define	BLOB_SAVE			(PacketClass)0x09
-#define	BLOB_CHECK			(PacketClass)0x0A
+#define	BLOB_SAVE			(PacketClass)0x05
+#define	BLOB_CHECK			(PacketClass)0x06
+#define	BLOB_OPEN			(PacketClass)0x07
+#define	BLOB_READ			(PacketClass)0x08
+#define	BLOB_WRITE			(PacketClass)0x09
+#define	BLOB_CLOSE			(PacketClass)0x0A
+#define	BLOB_SEEK			(PacketClass)0x0B
 
 #define	BLOB_OK				(PacketClass)0xFE
 #define	BLOB_NOT			(PacketClass)0xF0

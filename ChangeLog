@@ -1,3 +1,7 @@
+2004-08-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/blob.c: MonObjectTypeをlonglongにした
+
 2004-08-04  Kouji TAKAO  <kouji@netlab.jp>
 
 	* aps/Ruby.c: object型対応

@@ -274,29 +274,21 @@ LEAVE_FUNC;
 static	void
 GL_SendObject(
 	NETFILE	*fp,
-	MonObjectType	*obj,
+	MonObjectType	obj,
 	Bool	fNetwork)
 {
-	int		i;
+	unsigned int	iobj;
 
-	GL_SendInt(fp,obj->source,fNetwork);
-	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
-		GL_SendUInt(fp,obj->id.el[i],fNetwork);
-	}
+	iobj = (unsigned int)obj;
+	GL_SendUInt(fp,iobj,fNetwork);
 }
 
-static	void
+static	MonObjectType
 GL_RecvObject(
 	NETFILE	*fp,
-	MonObjectType	*obj,
 	Bool	fNetwork)
 {
-	int		i;
-
-	obj->source = GL_RecvInt(fp,fNetwork);
-	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
-		obj->id.el[i] = GL_RecvUInt(fp,fNetwork);
-	}
+	return	((MonObjectType)GL_RecvUInt(fp,fNetwork));
 }
 
 extern	Fixed	*
@@ -538,7 +530,7 @@ ENTER_FUNC;
 					fclose(fpf);	
 				}
 			} else {
-				GL_RecvObject(fp,ValueObject(value),fNetwork);
+				ValueObject(value) = GL_RecvObject(fp,fNetwork);
 			}
 		}
 		break;

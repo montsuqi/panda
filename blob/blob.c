@@ -71,7 +71,7 @@ OpenEntry(
 
 ENTER_FUNC;
 	p  = filename;
-	p += snprintf(p,SIZE_NAME+1,"%d",ObjectID(ent->oid));
+	p += snprintf(p,SIZE_NAME+1,"%lld",ent->oid);
 	snprintf(longname,SIZE_LONGNAME+1,"%s/%s",ent->blob->space,filename);
 
 	if		(  ( ent->mode & BLOB_OPEN_WRITE )  !=  0  ) {
@@ -111,12 +111,11 @@ DestroyEntry(
 	BLOB_Entry	*ent)
 {
 ENTER_FUNC;
-	if		(  ent->oid  !=  NULL  ) {
+	if		(  ent->oid  !=  GL_OBJ_NULL  ) {
 		LockBLOB(ent->blob);
-		g_hash_table_remove(ent->blob->table,(gpointer)ent->oid);
+		g_hash_table_remove(ent->blob->table,(gpointer)&ent->oid);
 		UnLockBLOB(ent->blob);
 		ReleaseBLOB(ent->blob);
-		xfree(ent->oid);
 	}
 	if		(  ent->fp  !=  NULL  ) {
 		CloseNet(ent->fp);
@@ -125,31 +124,29 @@ LEAVE_FUNC;
 	xfree(ent);
 }	
 
-extern	Bool
+extern	MonObjectType
 NewBLOB(
 	BLOB_Space		*blob,
-	MonObjectType	*obj,
 	int				mode)
 {
 	char	name[SIZE_LONGNAME+1];
 	FILE	*fp;
 	BLOB_Entry	*ent;
-	Bool	ret;
+	MonObjectType	obj;
 
 ENTER_FUNC;
 	LockBLOB(blob);
-	ObjectID(obj) = blob->oid;
+	obj = blob->oid;
 	blob->oid ++;
 	snprintf(name,SIZE_LONGNAME+1,"%s/oid",blob->space);
 	if		(  ( fp = fopen(name,"w") )  !=  NULL  ) {
-		fprintf(fp,"%d\n",blob->oid);
+		fprintf(fp,"%lld\n",blob->oid);
 		fclose(fp);
 	}
 
 	ent = New(BLOB_Entry);
-	ent->oid = New(MonObjectType);
-	memcpy(ent->oid,obj,sizeof(MonObjectType));
-	g_hash_table_insert(blob->table,(gpointer)ent->oid,ent);
+	ent->oid = obj;
+	g_hash_table_insert(blob->table,(gpointer)&ent->oid,ent);
 	UnLockBLOB(blob);
 	ReleaseBLOB(blob);
 	ent->blob = blob;
@@ -158,27 +155,19 @@ ENTER_FUNC;
 	OpenEntry(ent);
 	if		(  ent->fp  ==  NULL  ) {
 		DestroyEntry(ent);
-		ret = FALSE;
-	} else {
-		ret = TRUE;
+		obj = GL_OBJ_NULL;
 	}
 LEAVE_FUNC;
-	return	(ret);
+	return	(obj);
 }
 
 static	guint
 IdHash(
 	MonObjectType	*key)
 {
-	int		i;
 	guint	ret;
 
-	ret = 0;
-	if		(  key  !=  NULL  ) {
-		for	( i = 0 ; i < (SIZE_OID/sizeof(unsigned int)) ; i ++ ) {
-			ret += key->id.el[i];
-		}
-	}
+	ret = (guint)*key;
 	return	(ret);
 }
 
@@ -192,10 +181,7 @@ IdCompare(
 
 	if		(	(  o1  !=  NULL  )
 			&&	(  o2  !=  NULL  ) ) {
-		check = 0;
-		for	( i = 0 ; i < (SIZE_OID/sizeof(unsigned int)) ; i ++ ) {
-			check += o1->id.el[i] - o2->id.el[i];
-		}
+		check = *o1 - *o2;
 	} else {
 		check = 1;
 	}
@@ -210,7 +196,7 @@ InitBLOB(
 	char	name[SIZE_LONGNAME+1];
 	char	buff[SIZE_BUFF];
 	BLOB_Space	*blob;
-	size_t	oid;
+	MonObjectType	oid;
 
 ENTER_FUNC;
 	snprintf(name,SIZE_LONGNAME+1,"%s/pid",space);
@@ -236,7 +222,7 @@ ENTER_FUNC;
 	snprintf(name,SIZE_LONGNAME+1,"%s/oid",space);
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
-			oid = atoi(buff);
+			oid = atoll(buff);
 		} else {
 			oid = 1;
 		}
@@ -277,7 +263,7 @@ LEAVE_FUNC;
 extern	ssize_t
 OpenBLOB(
 	BLOB_Space		*blob,
-	MonObjectType	*obj,
+	MonObjectType	obj,
 	int				mode)
 {
 	BLOB_Entry	*ent;
@@ -285,14 +271,13 @@ OpenBLOB(
 
 ENTER_FUNC;
 	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
-		ret = NewBLOB(blob,obj,mode) ? 0 : -1;
+		ret = ( obj = NewBLOB(blob,mode) ) != GL_OBJ_NULL  ? 0 : -1;
 	} else {
-		if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  ==  NULL  ) {
+		if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  ==  NULL  ) {
 			LockBLOB(blob);
 			ent = New(BLOB_Entry);
-			ent->oid = New(MonObjectType);
-			memcpy(ent->oid,obj,sizeof(MonObjectType));
-			g_hash_table_insert(blob->table,(gpointer)ent->oid,ent);
+			ent->oid = obj;
+			g_hash_table_insert(blob->table,(gpointer)&ent->oid,ent);
 			UnLockBLOB(blob);
 			ReleaseBLOB(blob);
 			ent->blob = blob;
@@ -311,13 +296,13 @@ LEAVE_FUNC;
 extern	Bool
 CloseBLOB(
 	BLOB_Space		*blob,
-	MonObjectType	*obj)
+	MonObjectType	obj)
 {
 	BLOB_Entry	*ent;
 	Bool		ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  !=  NULL  ) {
+	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			CloseNet(ent->fp);
 		}
@@ -330,10 +315,21 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+extern	Bool
+DestroyBLOB(
+	BLOB_Space		*blob,
+	MonObjectType	obj)
+{
+ENTER_FUNC;
+	/*	not supported	*/
+LEAVE_FUNC;
+	return	(FALSE);
+}
+
 extern	int
 WriteBLOB(
 	BLOB_Space		*blob,
-	MonObjectType	*obj,
+	MonObjectType	obj,
 	byte			*buff,
 	size_t			size)
 {
@@ -341,7 +337,7 @@ WriteBLOB(
 	int			ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  !=  NULL  ) {
+	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			ret = Send(ent->fp,buff,size);
 		} else {
@@ -355,7 +351,7 @@ LEAVE_FUNC;
 extern	int
 ReadBLOB(
 	BLOB_Space		*blob,
-	MonObjectType	*obj,
+	MonObjectType	obj,
 	byte			*buff,
 	size_t			size)
 {
@@ -363,7 +359,7 @@ ReadBLOB(
 	int			ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  !=  NULL  ) {
+	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			ret = Recv(ent->fp,buff,size);
 		} else {

@@ -63,19 +63,16 @@ SetValueOid(
 	DBG_Struct	*dbg,
 	Oid			id)
 {
-	ValueObjectID(value).el[0] = (unsigned int)id;
-	if		(  dbg  !=  NULL  ) {
-		ValueObjectSource(value) = dbg->id;
-	}
+	ValueObject(value) = (uint64_t)id;
 }
 
 static	Oid
 ValueOid(
-	MonObjectType	*obj)
+	MonObjectType	obj)
 {
 	Oid	id;
 
-	id = obj->id.el[0];
+	id = (Oid)obj;
 	return	(id);
 }
 /**/

@@ -315,27 +315,18 @@ GL_SendDataType(
 static	void
 GL_SendObject(
 	NETFILE	*fp,
-	MonObjectType	*obj)
+	MonObjectType	obj)
 {
 	int		i;
 
-	GL_SendInt(fp,obj->source);
-	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
-		GL_SendUInt(fp,obj->id.el[i]);
-	}
+	GL_SendUInt(fp,(unsigned int)obj);
 }
 
-static	void
+static	MonObjectType
 GL_RecvObject(
-	NETFILE	*fp,
-	MonObjectType	*obj)
+	NETFILE	*fp)
 {
-	int		i;
-
-	obj->source = GL_RecvInt(fp);
-	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
-		obj->id.el[i] = GL_RecvUInt(fp);
-	}
+	return	((MonObjectType)GL_RecvUInt(fp));
 }
 
 static	void

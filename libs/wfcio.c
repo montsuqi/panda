@@ -37,7 +37,7 @@ copies.
 #include	"comm.h"
 #include	"wfcdata.h"
 #include	"wfcio.h"
-#include	"blobcom.h"
+#include	"blobreq.h"
 #include	"front.h"
 #include	"debug.h"
 #include	"socket.h"
@@ -114,7 +114,7 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_OBJECT:
 		if		(  IS_OBJECT_NULL(ValueObject(value))  ) {
-			RequestImportBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
+			ValueObject(value) = RequestImportBLOB(fp,WFC_BLOB,BlobCacheFileName(value));
 		} else {
 			RequestSaveBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
 		}
@@ -262,7 +262,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_OBJECT:
 		ValueIsNonNil(value);
 		if		(  IS_OBJECT_NULL(ValueObject(value))  ) {
-			RequestNewBLOB(fp,WFC_BLOB,BLOB_OPEN_WRITE,ValueObject(value));
+			ValueObject(value) = RequestNewBLOB(fp,WFC_BLOB,BLOB_OPEN_WRITE);
 			RequestCloseBLOB(fp,WFC_BLOB,ValueObject(value));
 		} else {
 			RequestExportBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));

@@ -22,11 +22,11 @@ ld	{
 	blog;
 };
 
-#blob	{
-#	space	"=/blog";
-#	port	"/tmp/blog.blob";
-#	auth	"=/password";
-#};
+blob	{
+	space	"=/blog";
+	port	"/tmp/blog.blob";
+	auth	"=/password";
+};
 
 db_group	"blog_body"	{
 	type		"NativeBLOB";

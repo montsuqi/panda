@@ -63,29 +63,29 @@ main(
 	sleep(1);
 	blob = InitBLOB(BLOB_FILE);
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
-		NewBLOB(blob,&obj[i],BLOB_OPEN_WRITE);
+		obj[i] = NewBLOB(blob,BLOB_OPEN_WRITE);
 	}
 
 	for	( i = 0 ; i < 10 ; i ++ ) {
 		sprintf(buff,"%d\n%d\n",i,i);
-		WriteBLOB(blob,&obj[i],buff,strlen(buff));
+		WriteBLOB(blob,obj[i],buff,strlen(buff));
 	}
 
 	for	( i = 0 ; i < 10 ; i ++ ) {
-		CloseBLOB(blob,&obj[i]);
+		CloseBLOB(blob,obj[i]);
 	}
 
 	for	( i = 0 ; i < 10 ; i ++ ) {
-		OpenBLOB(blob,&obj[i],BLOB_OPEN_WRITE|BLOB_OPEN_APPEND);
+		OpenBLOB(blob,obj[i],BLOB_OPEN_WRITE|BLOB_OPEN_APPEND);
 	}
 
 	for	( i = 0 ; i < 10 ; i += 2 ) {
 		sprintf(buff,"add %d\n",i);
-		WriteBLOB(blob,&obj[i],buff,strlen(buff));
+		WriteBLOB(blob,obj[i],buff,strlen(buff));
 	}
 
 	for	( i = 0 ; i < 10 ; i ++ ) {
-		CloseBLOB(blob,&obj[i]);
+		CloseBLOB(blob,obj[i]);
 	}
 
 	FinishBLOB(blob);

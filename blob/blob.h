@@ -25,13 +25,13 @@ copies.
 typedef	struct {
 	int		mode;
 	NETFILE	*fp;
-	MonObjectType	*oid;
+	MonObjectType	oid;
 	struct	_BLOB_Space	*blob;
 }	BLOB_Entry;
 
 typedef	struct _BLOB_Space	{
 	char	*space;
-	size_t	oid;
+	MonObjectType	oid;
 	GHashTable	*table;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
@@ -39,11 +39,12 @@ typedef	struct _BLOB_Space	{
 
 extern	BLOB_Space	*InitBLOB(char *space);
 extern	void		FinishBLOB(BLOB_Space *blob);
-extern	Bool	NewBLOB(BLOB_Space *blob,MonObjectType *obj, int mode);
-extern	Bool	OpenBLOB(BLOB_Space *blob, MonObjectType *obj, int mode);
-extern	Bool	CloseBLOB(BLOB_Space *blob, MonObjectType *obj);
-extern	int		WriteBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t size);
-extern	int		ReadBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t size);
+extern	MonObjectType	NewBLOB(BLOB_Space *blob, int mode);
+extern	Bool	OpenBLOB(BLOB_Space *blob, MonObjectType obj, int mode);
+extern	Bool	DestroyBLOB(BLOB_Space *blob, MonObjectType obj);
+extern	Bool	CloseBLOB(BLOB_Space *blob, MonObjectType obj);
+extern	int		WriteBLOB(BLOB_Space *blob, MonObjectType obj, byte *buff, size_t size);
+extern	int		ReadBLOB(BLOB_Space *blob, MonObjectType obj, byte *buff, size_t size);
 
 #undef	GLOBAL
 #ifdef	MAIN

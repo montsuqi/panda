@@ -25,18 +25,20 @@ copies.
 #include	"libmondai.h"
 #include	"net.h"
 #include	"blob.h"
+#include	"blobcom.h"
 
-extern	Bool	RequestNewBLOB(NETFILE *fp, PacketClass flag, int mode, MonObjectType *obj);
-extern	Bool	RequestOpenBLOB(NETFILE *fp, PacketClass flag, int mode, MonObjectType *obj);
-extern	size_t	RequestWriteBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj,
+extern	MonObjectType	RequestNewBLOB(NETFILE *fp, PacketClass flag, int mode);
+extern	Bool	RequestOpenBLOB(NETFILE *fp, PacketClass flag, int mode, MonObjectType obj);
+extern	Bool	RequestCloseBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
+extern	size_t	RequestWriteBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj,
 								 byte *buff, size_t size);
-extern	size_t	RequestReadBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj,
+extern	size_t	RequestReadBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj,
 								byte *buff, size_t size);
-extern	Bool	RequestCloseBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj);
-extern	Bool	RequestExportBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj, char *fname);
-extern	Bool	RequestImportBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj, char *fname);
-extern	Bool	RequestSaveBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj, char *fname);
-extern	Bool	RequestCheckBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj);
+extern	Bool	RequestExportBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *fname);
+extern	MonObjectType	RequestImportBLOB(NETFILE *fp, PacketClass flag, char *fname);
+extern	Bool	RequestSaveBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *fname);
+extern	Bool	RequestCheckBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
+extern	Bool	RequestDestroyBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
 
 
 #undef	GLOBAL
@@ -45,18 +47,5 @@ extern	Bool	RequestCheckBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj);
 #else
 #define	GLOBAL		extern
 #endif
-
-#define	BLOB_CREATE			(PacketClass)0x01
-#define	BLOB_OPEN			(PacketClass)0x02
-#define	BLOB_IMPORT			(PacketClass)0x03
-#define	BLOB_EXPORT			(PacketClass)0x04
-#define	BLOB_READ			(PacketClass)0x05
-#define	BLOB_WRITE			(PacketClass)0x06
-#define	BLOB_CLOSE			(PacketClass)0x07
-#define	BLOB_SEEK			(PacketClass)0x08
-
-#define	BLOB_OK				(PacketClass)0xFE
-#define	BLOB_NOT			(PacketClass)0xF0
-#define	BLOB_END			(PacketClass)0xFF
 
 #endif
