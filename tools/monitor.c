@@ -50,8 +50,7 @@ static	char	*Directory;
 static	char	*ApsPath;
 static	char	*WfcPath;
 static	char	*RedirectorPath;
-static	char	*LDDir;
-static	char	*BDDir;
+static	char	*DDir;
 static	char	*RecDir;
 static	char	*MyHost;
 static	char	*Log;
@@ -171,13 +170,9 @@ dbgmsg(">StartRedirector");
 		argv[argc ++] = "-dir";
 		argv[argc ++] = Directory;
 	}
-	if		(  LDDir  !=  NULL  ) {
-		argv[argc ++] = "-lddir";
-		argv[argc ++] = LDDir;
-	}
-	if		(  BDDir  !=  NULL  ) {
-		argv[argc ++] = "-bddir";
-		argv[argc ++] = BDDir;
+	if		(  DDir  !=  NULL  ) {
+		argv[argc ++] = "-ddir";
+		argv[argc ++] = DDir;
 	}
 	if		(  RecDir  !=  NULL  ) {
 		argv[argc ++] = "-record";
@@ -279,9 +274,9 @@ dbgmsg(">_StartAps");
 				argv[argc ++] = "-dir";
 				argv[argc ++] = Directory;
 			}
-			if		(  LDDir  !=  NULL  ) {
-				argv[argc ++] = "-lddir";
-				argv[argc ++] = LDDir;
+			if		(  DDir  !=  NULL  ) {
+				argv[argc ++] = "-ddir";
+				argv[argc ++] = DDir;
 			}
 			if		(  RecDir  !=  NULL  ) {
 				argv[argc ++] = "-record";
@@ -353,9 +348,9 @@ dbgmsg(">StartWfc");
 			argv[argc ++] = "-dir";
 			argv[argc ++] = Directory;
 		}
-		if		(  LDDir  !=  NULL  ) {
-			argv[argc ++] = "-lddir";
-			argv[argc ++] = LDDir;
+		if		(  DDir  !=  NULL  ) {
+			argv[argc ++] = "-ddir";
+			argv[argc ++] = DDir;
 		}
 		if		(  RecDir  !=  NULL  ) {
 			argv[argc ++] = "-record";
@@ -517,10 +512,8 @@ static	ARG_TABLE	option[] = {
 		"ディレクトリファイル"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecDir,
 		"レコードのあるディレクトリ"					},
-	{	"lddir",	STRING,		TRUE,	(void*)&LDDir,
+	{	"ddir",		STRING,		TRUE,	(void*)&DDir,
 		"LD定義格納ディレクトリ"	 					},
-	{	"bddir",	STRING,		TRUE,	(void*)&BDDir,
-		"BD定義格納ディレクトリ"	 					},
 
 	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
 		"dbredirectorを起動する"	 					},
@@ -561,7 +554,7 @@ SetDefault(void)
 	RedirectorPath = SERVER_DIR "/dbredirector";
 
 	Directory = "./directory";
-	LDDir = NULL;
+	DDir = NULL;
 	RecDir = NULL;
 	Log = NULL;
 	interval = 0;
