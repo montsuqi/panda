@@ -1249,6 +1249,15 @@ dbgmsg(">_Htc");
 dbgmsg("<_Htc");
 }	
 
+static	void
+_eHtc(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+ENTER_FUNC;
+LEAVE_FUNC;
+}	
+
 static	Tag		*
 NewTag(
 	char	*name,
@@ -1421,6 +1430,7 @@ dbgmsg(">TagsInit");
 
 	tag = NewTag("HTC",_Htc);
 	AddArg(tag,"coding",TRUE);
+	tag = NewTag("/HTC",_eHtc);
 
 	tag = NewTag("FORM",_Form);
 	AddArg(tag,"name",TRUE);
