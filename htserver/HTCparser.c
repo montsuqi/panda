@@ -268,7 +268,7 @@ dbgmsg(">HTCParserInit");
     }
 	HTCLexInit();
 	TagsInit(script_name);
-	Codeset = "euc-jp";
+	Codeset = "utf-8";
 dbgmsg("<HTCParserInit");
 }
 
