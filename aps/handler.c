@@ -337,7 +337,10 @@ dbgmsg(">ExecuteProcess");
 	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
 	if		(  ((MessageHandler *)bind->handler)->ExecuteProcess  !=  NULL  ) {
 		CallBefore(node);
-		while	(  !((MessageHandler *)bind->handler)->ExecuteProcess(node)  );
+		if		(  !((MessageHandler *)bind->handler)->ExecuteProcess(node)  ) {
+			MessageLog("application process illegular execution");
+			exit(0);
+		}
 		CallAfter(node);
 	}
 dbgmsg("<ExecuteProcess");

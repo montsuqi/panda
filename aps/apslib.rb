@@ -4,25 +4,26 @@
 
 class APS
   def decode(string)
-	if string.nil?
-	  string = "";
-	end
 	if  string
 	  string.tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2})+)/n) do
 		[$1.delete('%')].pack('H*')
 	  end
+	else
+	  ""
 	end
   end
   def encode(val)
-	if val.class == String
-	  string = val;
-	else
-	  string = val.to_s;
-	end
-	if  string
+	if  val
+	  if val.class == String
+		string = val;
+	  else
+		string = val.to_s;
+	  end
 	  string.gsub(/([^ a-zA-Z0-9_.-]+)/n) do
 		'%' + $1.unpack('H2' * $1.size).join('%').upcase
 	  end.tr(' ', '+')
+	else
+	  ""
 	end
   end
   def initialize

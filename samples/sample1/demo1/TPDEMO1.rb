@@ -9,10 +9,9 @@ class Main < APS
 	f.close;
 
 	if aps["demolink.linktext"] == ""
-	  aps["project1.vbox1.entry1.value"] = "漢字を入れてみた。";
-	else
-	  aps["project1.vbox1.entry1.value"] = aps["demolink.linktext"];
+	  aps["demolink.linktext"] = "漢字を入れてみた。";
 	end
+	aps["project1.vbox1.entry1.value"] = aps["demolink.linktext"];
 
 	aps["project1.vbox1.entry1.style"] = "green";
 
@@ -106,16 +105,17 @@ class Main < APS
 	aps.dump(f);
 	f.close;
 
+	aps["project1.vbox1.entry1.value"] = aps["demolink.linktext"];
+
 	if aps["project1.vbox1.togglebutton1.value"] == "TRUE"
-#	  aps["project1.vbox1.swin1.clist1.item[#{aps["spa.count"]}].value1"] =
-#		aps["project1.vbox1.entry1.value"];
-#	  aps[format("project1.vbox1.swin1.clist1.item[%d].value2",aps["spa.count"])] =
-#		aps["project1.vbox1.entry2.value"];
-#	  aps[format("project1.vbox1.swin1.clist1.item[%d].value3",aps["spa.count"])] =
-#		aps["project1.vbox1.entry3.value"];
+	  aps["project1.vbox1.swin1.clist1.item[#{aps["spa.count"]}].value1"] =
+		aps["project1.vbox1.entry1.value"];
+	  aps[format("project1.vbox1.swin1.clist1.item[%d].value2",aps["spa.count"])] =
+		aps["project1.vbox1.entry2.value"];
+	  aps[format("project1.vbox1.swin1.clist1.item[%d].value3",aps["spa.count"])] =
+		aps["project1.vbox1.entry3.value"];
 	  aps["spa.count"] = (aps["spa.count"].to_i + 1).to_s;
-$stderr.printf("[%s]\n",aps["spa.count"]);
-#	  aps["project1.vbox1.swin1.clist1.count"] = aps["spa.count"];
+	  aps["project1.vbox1.swin1.clist1.count"] = aps["spa.count"];
 	  aps["project1.vbox1.togglebutton1.label"] = "選んだ";
 	else
 	  aps["project1.vbox1.togglebutton1.label"] = "選んでない";
