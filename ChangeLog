@@ -1,5 +1,9 @@
 2004-07-14  Kouji TAKAO  <kouji@netlab.jp>
 
+	* glclient/bootdialog.c: サーバプリセット作成機能を追加
+	* glclient/bd_config.c (bd_config_section_set_string): 操作対象の
+	エントリが存在しなければ作成するように変更
+
 	* glclient/bootdialog.c: サーバプリセット一覧表示機能を追加
 
 2004-07-13  Kouji TAKAO  <kouji@netlab.jp>

@@ -183,8 +183,9 @@ bd_config_section_set_string (BDConfigSection *self, gchar *name, gchar *str)
   BDConfigValue *value;
   
   if ((value = (BDConfigValue *) g_hash_table_lookup (self->values, name)) == NULL)
-    return FALSE;
-  bd_config_value_replace (value, str);
+    bd_config_section_append_value (self, name, str);
+  else
+    bd_config_value_replace (value, str);
   
   return TRUE;
 }

@@ -25,14 +25,405 @@ copies.
 #endif
 
 #include <stdio.h>
+#include <errno.h> /* errno */
+#include <ctype.h> /* isblank */
 #include <glib.h>
 #include <gtk/gtk.h>
-#include <errno.h> /* errno */
 
 #include "port.h"
 #include "const.h"
 #include "bd_config.h"
 #include "bootdialog.h"
+
+static mode_t permissions = 0600;
+
+gboolean
+validate_isblank (gchar *str)
+{
+  gint i;
+  
+  if (str == NULL || str[0] == '\0')
+    return TRUE;
+  for (i = strlen(str) - 1; i >= 0; i--)
+    {
+      if (!isblank(str[i]))
+        return FALSE;
+    }
+  return TRUE;
+}
+
+/*********************************************************************
+ * EditDialog
+ ********************************************************************/
+typedef struct _EditDialog EditDialog;
+struct _EditDialog {
+  GtkWidget *dialog;
+  GtkWidget *description;
+  GtkWidget *host;
+  GtkWidget *port;
+  GtkWidget *application;
+  GtkWidget *protocol_v1;
+  GtkWidget *protocol_v2;
+  GtkWidget *mlog;
+  GtkWidget *cache;
+  GtkWidget *style;
+  GtkWidget *gtkrc;
+  GtkWidget *user;
+  GtkWidget *password;
+
+  BDConfig *config;
+  gchar *hostname;
+  gboolean is_update;
+};
+
+static void
+edit_dialog_set_value (EditDialog * self)
+{
+  BDConfigSection *section;
+
+  if (self->hostname == NULL)
+    return;
+
+  g_return_if_fail (bd_config_exist_section (self->config, self->hostname));
+
+  section = bd_config_get_section (self->config, self->hostname);
+  
+  gtk_entry_set_text (GTK_ENTRY (self->description),
+                      bd_config_section_get_string (section, "description"));
+  gtk_entry_set_text (GTK_ENTRY (self->host),
+                      bd_config_section_get_string (section, "host"));
+  gtk_entry_set_text (GTK_ENTRY (self->port),
+                      bd_config_section_get_string (section, "port"));
+  gtk_entry_set_text (GTK_ENTRY (self->application),
+                      bd_config_section_get_string (section, "application"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1),
+                                bd_config_section_get_bool (section, "protocol_v1"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2),
+                                bd_config_section_get_bool (section, "protocol_v2"));
+  gtk_entry_set_text (GTK_ENTRY (self->cache),
+                      bd_config_section_get_string (section, "cache"));
+  gtk_entry_set_text (GTK_ENTRY (self->style),
+                      bd_config_section_get_string (section, "style"));
+  gtk_entry_set_text (GTK_ENTRY (self->gtkrc),
+                      bd_config_section_get_string (section, "gtkrc"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
+                                bd_config_section_get_bool (section, "mlog"));
+  gtk_entry_set_text (GTK_ENTRY (self->user),
+                      bd_config_section_get_string (section, "user"));
+  gtk_entry_set_text (GTK_ENTRY (self->password),
+                      bd_config_section_get_string (section, "password"));
+}
+
+static void
+edit_dialog_value_to_config (EditDialog * self)
+{
+  BDConfigSection *section;
+  GString *hostname;
+  gint i;
+  gchar *password;
+  gboolean savepassword;
+
+  section = NULL;
+  if (self->hostname != NULL)
+    {
+      g_return_if_fail (bd_config_exist_section (self->config, self->hostname));
+      section = bd_config_get_section (self->config, self->hostname);
+    }
+  else
+    {
+      hostname = g_string_new (NULL);
+      for (i = 1; i < 1000; i++)
+        {
+          g_string_sprintf (hostname, "host%03d", i);
+          if (!bd_config_exist_section (self->config, hostname->str))
+            {
+              section = bd_config_append_section (self->config, hostname->str);
+              break;
+            }
+        }
+      g_string_free (hostname, TRUE);
+    }
+  g_return_if_fail (section != NULL);
+
+  bd_config_section_set_string (section, "description",
+                                gtk_entry_get_text (GTK_ENTRY (self->description)));
+  bd_config_section_set_string (section, "host",
+                                gtk_entry_get_text (GTK_ENTRY (self->host)));
+  bd_config_section_set_string (section, "port",
+                                gtk_entry_get_text (GTK_ENTRY (self->port)));
+  bd_config_section_set_string (section, "application",
+                                gtk_entry_get_text (GTK_ENTRY (self->application)));
+  bd_config_section_set_bool
+    (section, "protocol_v1",
+     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v1)));
+  bd_config_section_set_bool
+    (section, "protocol_v2",
+     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
+  bd_config_section_set_string (section, "cache",
+                                gtk_entry_get_text (GTK_ENTRY (self->cache)));
+  bd_config_section_set_string (section, "style",
+                                gtk_entry_get_text (GTK_ENTRY (self->style)));
+  bd_config_section_set_string (section, "gtkrc",
+                                gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
+  bd_config_section_set_bool
+    (section, "mlog",
+     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
+  bd_config_section_set_string (section, "user",
+                                gtk_entry_get_text (GTK_ENTRY (self->user)));
+  password = gtk_entry_get_text (GTK_ENTRY (self->password));
+  if (validate_isblank (password))
+    savepassword = FALSE;
+  else
+    savepassword = TRUE;
+  bd_config_section_set_string (section, "password", password);
+  bd_config_section_set_bool (section, "savepassword", savepassword);
+}
+
+static gboolean
+edit_dialog_validate (EditDialog * self)
+{
+  gchar *desc;
+  gchar *hostname;
+  gchar *str;
+  GList *p;
+  
+  desc = gtk_entry_get_text (GTK_ENTRY (self->description));
+  if (validate_isblank (desc))
+    {
+      fprintf (stderr, "warning: Description is blank\n");
+      return FALSE;
+    }
+  for (p = bd_config_get_sections (self->config); p != NULL; p = g_list_next (p))
+    {
+      hostname = (gchar *) p->data;
+      if (strcmp (hostname, "glclient") == 0 || strcmp (hostname, "global") == 0)
+        continue;
+      str = bd_config_get_string (self->config, hostname, "description");
+      if (strcmp (str, desc) == 0)
+        {
+          fprintf (stderr, "warning: already used description\n");
+          return FALSE;
+        }
+    }
+  return TRUE;
+}
+
+static gboolean
+edit_dialog_on_delete_event (GtkWidget * widget, EditDialog * self)
+{
+  (void *) widget; /* Note: escape compile warning */
+  self->is_update = FALSE;
+  gtk_main_quit ();
+  return TRUE;
+}
+
+static void
+edit_dialog_on_ok (GtkWidget * widget, EditDialog * self)
+{
+  (void *) widget; /* Note: escape compile warning */
+  if (!edit_dialog_validate (self))
+    return;
+  edit_dialog_value_to_config (self);
+  self->is_update = TRUE;
+  gtk_main_quit ();
+}
+
+static void
+edit_dialog_on_cancel (GtkWidget * widget, EditDialog * self)
+{
+  (void *) widget; /* Note: escape compile warning */
+  self->is_update = FALSE;
+  gtk_main_quit ();
+}
+
+static EditDialog *
+edit_dialog_new (BDConfig * config, gchar * hostname)
+{
+  EditDialog *self;
+  gchar *title;
+  GtkWidget *dialog;
+  GtkWidget *button;
+  GtkWidget *table;
+  GtkWidget *hbox;
+  GtkWidget *label;
+  GtkWidget *entry;
+  GtkWidget *alignment;
+  GtkWidget *check;
+  gint i;
+  gint ypos;
+
+  self = g_new0 (EditDialog, 1);
+
+  self->hostname = hostname;
+  self->config = config;
+  self->is_update = FALSE;
+
+  self->dialog = dialog = gtk_dialog_new ();
+  if (self->hostname == NULL)
+    title = "New";
+  else
+    title = "Edit";
+  gtk_window_set_title (GTK_WINDOW (dialog), title);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_wmclass (GTK_WINDOW (dialog), "edit", "glclient");
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
+  gtk_signal_connect (GTK_OBJECT (dialog), "delete_event",
+                      GTK_SIGNAL_FUNC (edit_dialog_on_delete_event), self);
+
+  /* buttons */
+  button = gtk_button_new_with_label ("Ok");
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+                      GTK_SIGNAL_FUNC (edit_dialog_on_ok), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default (button);
+  button = gtk_button_new_with_label ("Cancel");
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+                      GTK_SIGNAL_FUNC (edit_dialog_on_cancel), self);
+
+  /* contents */
+  table = gtk_table_new (2, 1, FALSE);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), table, TRUE, TRUE, 0);
+
+  ypos = 0;
+
+  label = gtk_label_new ("Description");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->description = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("Host(Port)");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  hbox = gtk_hbox_new (FALSE, 5);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  self->host = entry = gtk_entry_new ();
+  gtk_widget_set_usize (entry, 100, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  self->port = entry = gtk_entry_new ();
+  gtk_widget_set_usize (entry, 50, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  ypos++;
+
+  label = gtk_label_new ("Application");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->application = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("Protocol");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  hbox = gtk_hbox_new (TRUE, 5);
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  self->protocol_v1 = check = gtk_check_button_new_with_label ("v1");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  gtk_box_pack_start (GTK_BOX (hbox), alignment, TRUE, TRUE, 0);
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  self->protocol_v2 = check = gtk_check_button_new_with_label ("v2");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  gtk_box_pack_start (GTK_BOX (hbox), alignment, TRUE, TRUE, 0);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+  
+  label = gtk_label_new ("Cache");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->cache = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("Style");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->style = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("Gtkrc");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->gtkrc = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  self->mlog = check = gtk_check_button_new_with_label ("Logging");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("User");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->user = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("Password");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->password = entry = gtk_entry_new ();
+  gtk_entry_set_visibility (GTK_ENTRY (entry), FALSE);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  return self;
+}
+
+static void
+edit_dialog_free (EditDialog * self)
+{
+  g_free (self);
+}
+
+static gboolean
+edit_dialog_run (BDConfig * config, gchar * hostname)
+{
+  EditDialog *self;
+  gboolean is_update;
+
+  self = edit_dialog_new (config, hostname);
+  edit_dialog_set_value (self);
+  
+  gtk_widget_show_all (self->dialog);
+  gtk_widget_grab_focus (self->dialog);
+  gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
+  gtk_main ();
+  gtk_window_set_modal (GTK_WINDOW (self->dialog), FALSE);
+  gtk_widget_destroy (self->dialog);
+
+  is_update = self->is_update;
+  
+  edit_dialog_free (self);
+
+  return is_update;
+}
 
 /*********************************************************************
  * ServerDialog
@@ -103,7 +494,12 @@ server_dialog_on_delete_event (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
 {
-  
+  if (edit_dialog_run (self->config, NULL))
+    {
+      server_dialog_server_list_update (self);
+      bd_config_save (self->config, NULL, permissions);
+    }
+  gdk_window_raise (self->dialog->window);
 }
 
 static void
@@ -152,7 +548,6 @@ server_dialog_new (BDConfig * config)
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (server_dialog_on_new), self);
-  gtk_widget_set_sensitive (button, FALSE);
   self->edit = button = gtk_button_new_with_label ("Edit");
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
@@ -217,7 +612,6 @@ server_dialog_run (BDConfig *config)
   return is_changed;
 }
 
-
 /*********************************************************************
  * BootDialog
  ********************************************************************/
@@ -225,7 +619,6 @@ server_dialog_run (BDConfig *config)
 static BDConfig *config_ = NULL;
 static gboolean is_boot_dialog_init = FALSE;
 static GString *password_;
-static mode_t permissions = 0600;
 static gchar *custom_label = "カスタム";
 
 static void
@@ -351,6 +744,7 @@ boot_dialog_on_config (GtkWidget * widget, BootDialog * self)
 {
   (void *) widget; /* Note: escape compile warning */
   server_dialog_run (config_);
+  gdk_window_raise (self->dialog->window);
 }
 
 static gboolean
