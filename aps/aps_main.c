@@ -275,6 +275,7 @@ SetDefault(void)
 	BD_Dir = NULL;
 	Directory = "./directory";
 	LibPath = NULL;
+	MaxTran = -1;
 
 	DB_User = NULL;
 	DB_Pass = NULL;
