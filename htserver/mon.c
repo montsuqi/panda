@@ -327,19 +327,13 @@ ENTER_FUNC;
 			ic = ibuff;
 			do {
 				ch = LBS_FetchChar(lbs);
-				if		(  ( ch & 0x80 )  ==  0  ) {
-					*obuff = ch;
-					sob = SIZE_CHARS - 1;
-					break;
-				} else {
-					*ic ++ = ch;
-					count ++;
-					istr = ibuff;
-					sib = count;
-					oc = obuff;
-					sob = SIZE_CHARS;
-					if		(  iconv(cd,&istr,&sib,&oc,&sob)  ==  0  )	break;
-				}
+				*ic ++ = ch;
+				count ++;
+				istr = ibuff;
+				sib = count;
+				oc = obuff;
+				sob = SIZE_CHARS;
+				if		(  iconv(cd,&istr,&sib,&oc,&sob)  ==  0  )	break;
 			}	while	(	(  ch     !=  0           )
 						&&	(  count  <   SIZE_CHARS  ) );
 			for	( oc = obuff ; sob < SIZE_CHARS ; oc ++ , sob ++ ) {
