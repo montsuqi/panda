@@ -438,7 +438,8 @@ dbgmsg(">ExecCode");
 			  case	OPC_HIVAR:
 				dbgmsg("OPC_HIVAR");
 				name = LBS_FetchPointer(htc->code);
-				vval.ival = atoi(HTGetValue(name,FALSE));
+                str = ParseName(name);
+                vval.ival = atoi(HTGetValue(StrDup(str),FALSE));
 				Push(vval);
 				break;
 			  case	OPC_HBES:
