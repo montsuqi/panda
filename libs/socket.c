@@ -38,6 +38,7 @@ Boston, MA  02111-1307, USA.
 #include	<string.h>
 #include	<unistd.h>
 #include	<fcntl.h>
+#include	<errno.h>
 
 #include    <sys/types.h>
 #include    <sys/socket.h>
@@ -155,6 +156,7 @@ ENTER_FUNC;
 	strcpy(addr.sun_path,name);
 	alen = sizeof(addr.sun_family) + strlen(addr.sun_path);
 	if		(  bind(sock,(struct sockaddr *)&addr,alen)  <  0  )	{
+		MessagePrintf("%s: %s", strerror(errno), name);
 		close(sock);
 		Error("UNIX Domain Bind");
 	} else {

@@ -44,10 +44,13 @@ AC_PROG_MAKE_SET
 
 # Specify a configuration file
 AC_HEADER_STDC
-AC_CHECK_HEADERS(crypt.h)
+AC_CHECK_HEADERS([crypt.h errno.h])
 AC_CHECK_LIB(dl,dlopen)
 AC_CHECK_LIB(pthread,pthread_create)
 AC_CHECK_LIB(crypt,crypt)
+
+# Checks for library functions.
+AC_CHECK_FUNCS([strerror])
 
 dnl ***************************************************************************
 dnl Gnome Support (use --disable-gnome to disable).
