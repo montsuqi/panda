@@ -41,6 +41,10 @@ copies.
 #else
 #    include <gtk/gtk.h>
 #endif
+#ifdef	USE_PANDA
+#include	<gtkpanda/gtkpanda.h>
+#endif
+
 #include	"types.h"
 #include	"misc.h"
 #include	"glterm.h"
@@ -168,7 +172,6 @@ dbgmsg(">ShowWindow");
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CURRENT_WINDOW:
 			gtk_widget_show_all(GTK_WIDGET(node->window));
-			ResetTimer(node->xml);
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
 			gtk_widget_hide_all(GTK_WIDGET(node->window));
@@ -384,6 +387,24 @@ GrabFocus(GtkWidget *widget)
 	gtk_idle_add(_GrabFocus, widget);
 }
 
+static	void
+_ResetTimer(
+	    GtkWidget	*widget,
+	    gpointer	data)
+{
+	if (GTK_IS_CONTAINER (widget))
+		gtk_container_forall (GTK_CONTAINER (widget), _ResetTimer, NULL);
+	else if (GTK_IS_PANDA_TIMER (widget))
+		gtk_panda_timer_reset (GTK_PANDA_TIMER (widget));
+}
+
+extern	void
+ResetTimer(
+	GtkWindow	*window)
+{
+	gtk_container_forall (GTK_CONTAINER (window), _ResetTimer, NULL);
+}
+
 extern	Bool
 GetScreenData(
 	FILE		*fp)
@@ -453,6 +474,10 @@ dbgmsg(">GetScreenData");
 			GrabFocus(widget);
 		}
 		c = RecvPacketClass(fp);
+	}
+	/* reset GtkPandaTimer if exists */
+	if		(  ( node = g_hash_table_lookup(WindowTable,window) )  !=  NULL  ) {
+		ResetTimer(node->window);
 	}
 	fInRecv = FALSE;
 dbgmsg("<GetScreenData");
