@@ -791,6 +791,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"coding",TRUE);
 
 	tag = NewTag("FORM",_Form);
+	AddArg(tag,"name",TRUE);
 	tag = NewTag("HEAD",_Head);
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);
