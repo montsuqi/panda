@@ -12,6 +12,7 @@ INCLUDES 			= \
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)	\
+	$(FIXED_CFLAGS)		\
 	$(GNOME_INCLUDEDIR)
 
 libpandadb_la_SOURCES	=	\

@@ -14,7 +14,8 @@ INCLUDES 			= \
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)	\
-	$(GNOME_INCLUDEDIR)
+	$(GNOME_INCLUDEDIR) \
+	$(FIXED_CFLAGS)
 
 glserver_SOURCES	=	\
 	glserver.c	glserver.h	\

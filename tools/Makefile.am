@@ -18,7 +18,8 @@ INCLUDES 			= \
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	$(GNOME_INCLUDEDIR)
+	$(GNOME_INCLUDEDIR) \
+	$(FIXED_CFLAGS)
 
 copygen_SOURCES	=	\
 	copygen.c

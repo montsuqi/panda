@@ -47,6 +47,7 @@ INCLUDES 			= \
 	-I$(top_srcdir)/dblib	\
 	$(POSTGRES_CFLAGS)	\
 	$(OPENCOBOL_CFLAGS)	\
+	$(FIXED_CFLAGS)		\
 	$(GNOME_INCLUDEDIR)
 
 
