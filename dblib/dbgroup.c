@@ -188,6 +188,7 @@ dbgmsg(">ExecFunction");
 				||	(  dbg->dbt  !=  NULL  ) ) { 
 			if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
 					   !=  NULL  ) {
+printf("%s[%s]\n",dbg->name,name);
 				(*func)(dbg,&ctrl);
 			} else {
 				printf("function not found [%s]\n",name);
@@ -204,7 +205,15 @@ ExecDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
 {
-	dbg->func->primitive->exec(dbg,sql);
+	dbg->func->primitive->exec(dbg,sql,TRUE);
+}
+
+extern	void
+ExecRedirectDBOP(
+	DBG_Struct	*dbg,
+	char		*sql)
+{
+	dbg->func->primitive->exec(dbg,sql,FALSE);
 }
 
 extern	void
@@ -277,7 +286,7 @@ extern	void
 OpenRedirectDB(
 	DBG_Struct *dbg)
 {
-	ExecFunction(dbg,"OPEN",TRUE);
+	ExecFunction(dbg,"DBOPEN",TRUE);
 }
 
 extern	void
