@@ -595,7 +595,7 @@ recval_aref(VALUE self, VALUE name)
     if (!NIL_P(obj = rb_hash_aref(data->cache, name)))
         return obj;
 
-    val = GetRecordItem(data->value, StringValuePtr(name));
+    val = GetItemLongName(data->value, StringValuePtr(name));
     if (val == NULL)
         rb_raise(rb_eArgError, "no such field: %s", StringValuePtr(name));
     obj = get_value(val);
