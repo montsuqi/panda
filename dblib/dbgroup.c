@@ -195,8 +195,6 @@ dbgmsg(">ExecFunction");
 			printf("function not found [%s]\n",name);
 			ctrl.rc = MCP_BAD_FUNC;
 		}
-	} else {
-		ctrl.rc = MCP_BAD_OTHER;
 	}
 dbgmsg("<ExecFunction");
 	return	(ctrl.rc); 
