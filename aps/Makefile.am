@@ -34,6 +34,7 @@ INCLUDES 			= \
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
+	-I$(top_srcdir)/blob	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
 	$(RUBY_CFLAGS)		\

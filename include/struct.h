@@ -111,9 +111,6 @@ typedef	struct _DBG_Struct	{
 
 typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 
-#define	BLOB_OPEN_READ		0x01
-#define	BLOB_OPEN_WRITE		0x02
-
 typedef struct	{
 	int		(*exec)(DBG_Struct *, char *, Bool);
 	Bool	(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);

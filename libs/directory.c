@@ -70,6 +70,7 @@ dbgmsg(">_AssignDBG");
 		gname = (char *)db[i]->opt.db->dbg;
 		if		(  ( dbg = (DBG_Struct *)g_hash_table_lookup(DBG_Table,gname) )
 				   ==  NULL  ) {
+			fprintf(stderr,"[%s]\n",gname);
 			Error("DB group not found");
 		}
 		if		(  dbg->dbt  ==  NULL  ) {

@@ -53,46 +53,77 @@ copies.
 #define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
 #define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
+static	void
+OpenEntry(
+	BLOB_Entry	*ent)
+{
+	ent->fp = NULL;
+}
+
 extern	Bool
 NewBLOB(
 	BLOB_Node		*blob,
 	MonObjectType	*obj,
 	int				mode)
 {
+	char	name[SIZE_LONGNAME+1];
+	FILE	*fp;
+	BLOB_Entry	*ent;
+
+ENTER_FUNC;
 	LockBLOB(blob);
-	obj->id.el[0] = blob->oid;
+	ObjectID(obj) = blob->oid;
 	blob->oid ++;
+	sprintf(name,"%s/oid",blob->space);
+	if		(  ( fp = fopen(name,"w") )  !=  NULL  ) {
+		fprintf(fp,"%d\n",blob->oid);
+		fclose(fp);
+	}
+	ent = New(BLOB_Entry);
+	ent->oid = New(MonObjectType);
+	memcpy(ent->oid,obj,sizeof(MonObjectType));
+	g_hash_table_insert(blob->table,(gconstpointer)ent->oid,ent);
 	UnLockBLOB(blob);
 	ReleaseBLOB(blob);
+	ent->mode = mode;
+	OpenEntry(ent);
+LEAVE_FUNC;
 }
 
-extern	Bool
-OpenBLOB(
-	MonObjectType	*obj,
-	int				mode)
+static	guint
+IdHash(
+	MonObjectType	*key)
 {
+	int		i;
+	guint	ret;
+
+	ret = 0;
+	if		(  key  !=  NULL  ) {
+		for	( i = 0 ; i < (SIZE_OID/sizeof(unsigned int)) ; i ++ ) {
+			ret += key->id.el[i];
+		}
+	}
+	return	(ret);
 }
 
-extern	Bool
-CloseBLOB(
-	MonObjectType	*obj)
+static	gint
+IdCompare(
+	MonObjectType	*o1,
+	MonObjectType	*o2)
 {
-}
+	int		i;
+	guint	check;
 
-extern	size_t
-WriteBLOB(
-	MonObjectType	*obj,
-	byte			*buff,
-	size_t			size)
-{
-}
-
-extern	size_t
-ReadBLOB(
-	MonObjectType	*obj,
-	byte			*buff,
-	size_t			size)
-{
+	if		(	(  o1  !=  NULL  )
+			&&	(  o2  !=  NULL  ) ) {
+		check = 0;
+		for	( i = 0 ; i < (SIZE_OID/sizeof(unsigned int)) ; i ++ ) {
+			check += o1->id.el[i] - o2->id.el[i];
+		}
+	} else {
+		check = 1;
+	}
+	return	(check == 0);
 }
 
 extern	BLOB_Node	*
@@ -137,6 +168,7 @@ InitBLOB(
 	blob = New(BLOB_Node);
 	blob->space = StrDup(space);
 	blob->oid = oid;
+	blob->table = g_hash_table_new((GHashFunc)IdHash,(GCompareFunc)IdCompare);
 	pthread_mutex_init(&blob->mutex,NULL);
 	pthread_cond_init(&blob->cond,NULL);
 
@@ -153,14 +185,42 @@ FinishBLOB(
 	sprintf(name,"%s/pid",blob->space);
 	unlink(name);
 
-	sprintf(name,"%s/oid",blob->space);
-	if		(  ( fp = fopen(name,"w") )  !=  NULL  ) {
-		fprintf(fp,"%d\n",blob->oid);
-		fclose(fp);
-	}
-
 	xfree(blob->space);
 	pthread_mutex_destroy(&blob->mutex);
 	pthread_cond_destroy(&blob->cond);
 	xfree(blob);
 }
+
+extern	Bool
+OpenBLOB(
+	BLOB_Node		*blob,
+	MonObjectType	*obj,
+	int				mode)
+{
+}
+
+extern	Bool
+CloseBLOB(
+	BLOB_Node		*blob,
+	MonObjectType	*obj)
+{
+}
+
+extern	size_t
+WriteBLOB(
+	BLOB_Node		*blob,
+	MonObjectType	*obj,
+	byte			*buff,
+	size_t			size)
+{
+}
+
+extern	size_t
+ReadBLOB(
+	BLOB_Node		*blob,
+	MonObjectType	*obj,
+	byte			*buff,
+	size_t			size)
+{
+}
+

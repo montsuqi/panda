@@ -19,6 +19,7 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
+	-I$(top_srcdir)/blob	\
 	$(GTK_CFLAGS)			\
 	$(GLIB_CFLAGS)			\
 	$(FIXED_CFLAGS)			\

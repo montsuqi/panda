@@ -1559,7 +1559,7 @@ dbgmsg("<_DBACCESS");
 }
 
 static	int
-OpenBLOB(
+_OpenBLOB(
 	DBG_Struct		*dbg,
 	MonObjectType	*obj,
 	int				mode)
@@ -1597,7 +1597,7 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
-	OpenBLOB,
+	_OpenBLOB,
 	NULL,
 	NULL,
 	NULL

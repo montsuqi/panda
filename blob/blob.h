@@ -23,8 +23,15 @@ copies.
 #define	_INC_BLOB_H
 
 typedef	struct {
+	int		mode;
+	FILE	*fp;
+	MonObjectType	*oid;
+}	BLOB_Entry;
+
+typedef	struct {
 	char	*space;
 	size_t	oid;
+	GHashTable	*table;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
 }	BLOB_Node;
@@ -32,10 +39,10 @@ typedef	struct {
 extern	BLOB_Node	*InitBLOB(char *space);
 extern	void		FinishBLOB(BLOB_Node *blob);
 extern	Bool	NewBLOB(BLOB_Node *blob,MonObjectType *obj, int mode);
-extern	Bool	OpenBLOB(MonObjectType *obj, int mode);
-extern	Bool	CloseBLOB(MonObjectType *obj);
-extern	size_t	WriteBLOB(MonObjectType *obj, byte *buff, size_t size);
-extern	size_t	ReadBLOB(MonObjectType *obj, byte *buff, size_t size);
+extern	Bool	OpenBLOB(BLOB_Node *blob, MonObjectType *obj, int mode);
+extern	Bool	CloseBLOB(BLOB_Node *blob, MonObjectType *obj);
+extern	size_t	WriteBLOB(BLOB_Node *blob, MonObjectType *obj, byte *buff, size_t size);
+extern	size_t	ReadBLOB(BLOB_Node *blob, MonObjectType *obj, byte *buff, size_t size);
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -43,5 +50,8 @@ extern	size_t	ReadBLOB(MonObjectType *obj, byte *buff, size_t size);
 #else
 #define	GLOBAL		extern
 #endif
+
+#define	BLOB_OPEN_READ		0x01
+#define	BLOB_OPEN_WRITE		0x02
 
 #endif

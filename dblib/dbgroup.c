@@ -173,6 +173,7 @@ dbgmsg(">ExecFunction");
 	if		(  dbg  !=  NULL  ) {
 		printf("name  = [%s]\n",dbg->name);
 	}
+	printf("fAll = [%s]\n",fAll?"TRUE":"FALSE");
 #endif
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {

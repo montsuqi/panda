@@ -24,6 +24,7 @@ copies.
 #include	"struct.h"
 #include	<net.h>
 #include	<libmondai.h>
+#include	"blob.h"
 
 extern	void	InitDB_Process(void);
 extern	void	ExecDBOP(DBG_Struct *dbg, char *sql);
