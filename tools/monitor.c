@@ -463,6 +463,7 @@ StopSystem(void)
 	fRestart = FALSE;
 	signal(SIGCHLD,(void *)WaitStop);
 	KillAllProcess((PTYPE_APS | PTYPE_RED | PTYPE_WFC),SIGKILL);
+	exit(0);
 }
 
 static	void

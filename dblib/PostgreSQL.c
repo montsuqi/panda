@@ -640,6 +640,7 @@ dbgmsg(">_PQexec");
 	res = PQexec(PGCONN(dbg),sql);
 	if		(  fRed  ) {
 		PutDB_Redirect(dbg,sql);
+		PutDB_Redirect(dbg,";");
 	}
 dbgmsg("<_PQexec");
 	return	(res);
@@ -925,8 +926,8 @@ dbgmsg(">_DBOPEN");
 		fprintf(stderr,"%s.\n",PQerrorMessage(conn));
 		exit(1);
 	}
-	dbg->conn = (void *)conn;
 	OpenDB_RedirectPort(dbg);
+	dbg->conn = (void *)conn;
 	dbg->fConnect = TRUE;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;

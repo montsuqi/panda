@@ -90,9 +90,6 @@ typedef	struct _DBG_Struct	{
 	char		*name;					/*	group name			*/
 	char		*type;					/*	DBMS type name		*/
 	struct	_DB_Func		*func;
-	NETFILE		*fpLog;
-	LargeByteString	*redirectData;
-	char		*file;
 	GHashTable	*dbt;
 	int			priority;				/*	commit priority		*/
 	char		*coding;				/*	DB backend coding	*/
@@ -107,6 +104,9 @@ typedef	struct _DBG_Struct	{
 	/*	DB redirect variable	*/
 	Port		*redirectPort;
 	struct	_DBG_Struct	*redirect;
+	NETFILE		*fpLog;
+	LargeByteString	*redirectData;
+	char		*file;
 }	DBG_Struct;
 
 typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);

@@ -149,15 +149,13 @@ dbgmsg(">FileThread");
 		LBS_EmitEnd(data);
 		p = LBS_Body(data);
 		if		(  *p  !=  0  ) {
-			if		(  ThisDBG->dbname  !=  NULL  )	{
+			if		(  ThisDBG->fConnect  )	{
 				TransactionRedirectStart(ThisDBG);
 				ExecRedirectDBOP(ThisDBG,p);
 				TransactionRedirectEnd(ThisDBG);
 			}
 			BeginDB_Redirect(ThisDBG);
-			if		(  ThisDBG->redirectData  !=  NULL  ) {
-				LBS_EmitString(ThisDBG->redirectData,p);
-			}
+			PutDB_Redirect(ThisDBG,p);
 			CommitDB_Redirect(ThisDBG);
 			if		(  fp  !=  NULL  ) {
 				time(&nowtime);

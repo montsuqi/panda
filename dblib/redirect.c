@@ -74,6 +74,7 @@ dbgmsg(">OpenDB_RedirectPort");
 			dbg->redirectData = NewLBS();
 		}
 	}
+	dbg->fConnect = FALSE;
 dbgmsg("<OpenDB_RedirectPort");
 }
 
@@ -99,7 +100,6 @@ PutDB_Redirect(
 dbgmsg(">PutDB_Redirect");
 	if		(  dbg->redirectData  !=  NULL  ) {
 		LBS_EmitString(dbg->redirectData,data);
-		LBS_EmitString(dbg->redirectData,";"); 
 	}
 dbgmsg("<PutDB_Redirect");
 }
