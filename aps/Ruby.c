@@ -1296,41 +1296,23 @@ init()
 }
 
 static VALUE
-get_source_filename(char *class_name)
+get_source_filename(char *class_name, char *path)
 {
-    char *p = class_name;
-    VALUE filename = rb_str_new("", 0);
-    int upper_flag = 1;
-    char buf[1];
+    VALUE basename, filename;
+    int i;
 
-    if (!isupper(*p)) {
+    if (!isupper(*class_name)) {
         return Qnil;
     }
 
-    buf[0] = tolower(*p);
-    rb_str_cat(filename, buf, 1);
-    p++;
-
-    while (*p != '\0') {
-        if (isupper(*p)) {
-            if (upper_flag) {
-                if (islower(*(p + 1))) {
-                    rb_str_cat(filename, "-", 1);
-                }
-            }
-            else {
-                rb_str_cat(filename, "-", 1);
-                upper_flag = 1;
-            }
-            buf[0] = tolower(*p);
-            rb_str_cat(filename, buf, 1);
-        }
-        else {
-            rb_str_cat(filename, p, 1);
-            upper_flag = 0;
-        }
-        p++;
+    basename = rb_str_new2(class_name);
+    for (i = 0; i < RSTRING(basename)->len; i++) {
+        if (isupper(RSTRING(basename)->ptr[i]))
+            RSTRING(basename)->ptr[i] = tolower(RSTRING(basename)->ptr[i]);
     }
+    filename = rb_str_new2(path);
+    rb_str_cat(filename, "/", 1);
+    rb_str_concat(filename, basename); 
     rb_str_cat(filename, ".rb", 3);
     return filename;
 }
@@ -1346,7 +1328,7 @@ load_application(char *path, char *name)
     class_name = rb_str_new2(name);
     app_class = rb_hash_aref(application_classes, class_name);
     if (NIL_P(app_class)) {
-        filename = get_source_filename(name);
+        filename = get_source_filename(name, path);
         if (NIL_P(filename)) {
             fprintf(stderr, "invalid module name: %s\n", name);
             return Qnil;
