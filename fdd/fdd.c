@@ -100,8 +100,7 @@ Process(
 {
 	Bool	fOK;
 	char	buff[SIZE_BUFF+1]
-		,	name[SIZE_LONGNAME+1]
-		,	line[SIZE_LONGNAME*3+1];
+		,	name[SIZE_LONGNAME+1];
 	char	*filename
 		,	*tempname
 		,	*command;
