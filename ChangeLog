@@ -1,3 +1,7 @@
+2003-04-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* src/LBSfunc.c (LBS_RequireSize): fix memory leak
+
 2003-04-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* aps/aps_main.c, tools/monitor.c: apsの寿命を設定するパラメータ付加(MaxTran)
