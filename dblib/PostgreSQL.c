@@ -66,14 +66,12 @@ ValueToSQL(
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_TEXT:
-		p = ValueString(val);
-		strcpy(str,p);
 		if		(  fInArray  ) {
 			del = '"';
 		} else {
 			del = '\'';
 		}
-		sprintf(buff,"%c%s%c",del,str,del);
+		sprintf(buff,"%c%s%c",del,ValueToString(val),del);
 		break;
 	  case	GL_TYPE_DBCODE:
 		strcpy(buff,ValueString(val));
@@ -84,13 +82,13 @@ ValueToSQL(
 		NumericFree(nv);
 		break;
 	  case	GL_TYPE_INT:
-		sprintf(buff,"%d",ValueInteger(val));
+		sprintf(buff,"%d",ValueToInteger(val));
 		break;
 	  case	GL_TYPE_FLOAT:
-		sprintf(buff,"%g",ValueFloat(val));
+		sprintf(buff,"%g",ValueToFloat(val));
 		break;
 	  case	GL_TYPE_BOOL:
-		sprintf(buff,"'%s'",ValueBool(val) ? "t" : "f");
+		sprintf(buff,"'%s'",ValueToBool(val) ? "t" : "f");
 		break;
 	  default:
 		*buff = 0;
@@ -658,10 +656,10 @@ dbgmsg(">ExecPGSQL");
 								level = 0;
 								alevel = 0;
 								GetTable(res,rec->value);
-								ctrl->rc = MCP_OK;
+								ctrl->rc += MCP_OK;
 							} else {
 								dbgmsg("EOF");
-								ctrl->rc = MCP_EOF;
+								ctrl->rc += MCP_EOF;
 							}
 						} else
 						if		(	(  items  ==  0     )
@@ -674,10 +672,10 @@ dbgmsg(">ExecPGSQL");
 							for	( i = 0 ; i < items ; i ++ ) {
 								GetValue(res,i,tuple[i]);
 							}
-							ctrl->rc = MCP_OK;
+							ctrl->rc += MCP_OK;
 						} else {
 							dbgmsg("EOF");
-							ctrl->rc = MCP_EOF;
+							ctrl->rc += MCP_EOF;
 						}
 						if		(  tuple  !=  NULL  ) {
 							xfree(tuple);
@@ -688,13 +686,13 @@ dbgmsg(">ExecPGSQL");
 					  case	PGRES_COPY_OUT:
 					  case	PGRES_COPY_IN:
 						dbgmsg("OK");
-						ctrl->rc = MCP_OK;
+						ctrl->rc += MCP_OK;
 						break;
 					  case	PGRES_EMPTY_QUERY:
 					  case	PGRES_NONFATAL_ERROR:
 					  default:
 						dbgmsg("NONFATAL");
-						ctrl->rc = MCP_NONFATAL;
+						ctrl->rc =+ MCP_NONFATAL;
 						break;
 					}
 					_PQclear(res);
@@ -883,6 +881,7 @@ dbgmsg(">_DBSELECT");
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
+		ctrl->rc = MCP_OK;
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_SELECT];
@@ -914,6 +913,7 @@ dbgmsg(">_DBFETCH");
 		dbg = db->dbg;
 		src = path->ops[DBOP_FETCH];
 		if		(  src  !=  NULL  ) {
+			ctrl->rc = MCP_OK;
 			ExecPGSQL(ctrl,rec,src);
 		} else {
 			p = sql;
@@ -968,6 +968,7 @@ dbgmsg(">_DBUPDATE");
 		dbg = db->dbg;
 		src = path->ops[DBOP_UPDATE];
 		if		(  src  !=  NULL  ) {
+			ctrl->rc = MCP_OK;
 			ExecPGSQL(ctrl,rec,src);
 		} else {
 			p = sql;
@@ -1036,6 +1037,7 @@ dbgmsg(">_DBDELETE");
 		dbg = db->dbg;
 		src = path->ops[DBOP_DELETE];
 		if		(  src  !=  NULL  ) {
+			ctrl->rc = MCP_OK;
 			ExecPGSQL(ctrl,rec,src);
 		} else {
 			p = sql;
@@ -1096,6 +1098,7 @@ dbgmsg(">_DBINSERT");
 		dbg = db->dbg;
 		src = path->ops[DBOP_INSERT];
 		if		(  src  !=  NULL  ) {
+			ctrl->rc = MCP_OK;
 			ExecPGSQL(ctrl,rec,src);
 		} else {
 			p = sql;
@@ -1151,6 +1154,7 @@ dbgmsg(">_DBACCESS");
 		} else {
 			src = path->ops[ix-1];
 			if		(  src  !=  NULL  ) {
+				ctrl->rc = MCP_OK;
 				ExecPGSQL(ctrl,rec,src);
 				rc = TRUE;
 			} else {

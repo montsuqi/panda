@@ -3,7 +3,7 @@
 require "apslib"
 
 class Main < PandaDC
-  def start(aps)
+  def start(aps,db)
 	i = 0;
 	while ( i < 20 )
 	  aps["list.fixed1.clist1.item[#{i}].value1"] = "";
@@ -17,8 +17,7 @@ class Main < PandaDC
 	aps["samplespa.dummy"] = "";
 	putWindow("list","key","NEW");
   end
-  def do_Search(aps)
-	db = PandaDB.new;
+  def do_Search(aps,db)
 	adrs = PandaTable.new(db,"adrs");
 	adrs["mail.home"] = aps["list.fixed1.key.value"];
 	adrs.execFunction("DBSELECT","mail");

@@ -1,3 +1,8 @@
+2003-08-31  OGOSHI  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c (ExecPGSQL): 復帰コードの扱いの変更(致命的で
+	ない復帰コードは積算するようにした
+
 2003-08-30  OGOSHI  <ogochan@nurs.or.jp>
 
 	* aps/apslib.rb, aps/Exec.c: データベースアクセスを可能にした
