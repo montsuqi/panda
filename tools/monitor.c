@@ -81,6 +81,8 @@ typedef	struct {
 	char	**argv;
 }	Process;
 
+static	void	StopSystem(void);
+
 #ifdef	DEBUG
 static	void
 DumpCommand(
@@ -413,6 +415,7 @@ _KillProcess(
 	KILLALL		*kills)
 {
 	if		(  ( kills->type & proc->type )  !=  0  ) {
+		dbgprintf("kill -%d %d\n",kills->sig,pid);
 		kill(pid,kills->sig);
 	}
 }
@@ -446,14 +449,13 @@ ProcessMonitor(void)
 			DumpCommand(proc->argv);
 #endif
 			if		(  proc->type  ==  PTYPE_WFC  ) {
-				fRestart = FALSE;
-				exit(0);
+				StopSystem();
 			}
 			if		(  fRestart  ) {
 				if		(  proc->type  !=  PTYPE_WFC  ) {
 					if		(	(  WIFEXITED(status)  )
 							&&	(  WEXITSTATUS(status)  <  2  )	) {
-						exit(0);
+						StopSystem();
 					} else {
 						g_int_hash_table_remove(ProcessTable,pid);
 						StartProcess(proc);
@@ -489,8 +491,10 @@ static	void
 StopSystem(void)
 {
 	fRestart = FALSE;
-	//	signal(SIGCHLD,(void *)WaitStop);
-	KillAllProcess((PTYPE_APS | PTYPE_RED | PTYPE_WFC),SIGKILL);
+	signal(SIGCHLD,(void *)WaitStop);
+	KillAllProcess((PTYPE_APS | PTYPE_RED ),SIGKILL);
+	KillAllProcess(PTYPE_WFC,SIGUSR1);
+	exit(0);
 }
 
 static	void

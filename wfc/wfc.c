@@ -80,6 +80,7 @@ static	char	*BLOB_Space;
 static	Port	*ApsPort;
 static	Port	*WfcPort;
 static	Port	*ControlPort;
+static	BLOB_Node	*Blob;
 
 #ifdef	DEBUG
 extern	void
@@ -161,7 +162,7 @@ dbgmsg(">InitSystem");
 		ControlPort = ParPortName(ControlPortNumber);
 	}
 	InitNET();
-	InitBLOB(BLOB_Space);
+	Blob = InitBLOB(BLOB_Space);
 	InitMessageQueue();
 	ReadyAPS();
 	SetupMessageQueue();
@@ -174,7 +175,13 @@ dbgmsg("<InitSystem");
 static	void
 CleanUp(void)
 {
-	FinishBLOB();
+	FinishBLOB(Blob);
+}
+
+static	void
+StopSystem(void)
+{
+	fShutdown = TRUE;
 }
 
 static	ARG_TABLE	option[] = {
@@ -228,6 +235,7 @@ main(
 	int			rc;
 
 	(void)signal(SIGPIPE, SIG_IGN);
+	signal(SIGUSR1,(void *)StopSystem);
 
 	SetDefault();
 	GetOption(option,argc,argv);

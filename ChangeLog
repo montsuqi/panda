@@ -1,3 +1,9 @@
+2004-03-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/wfc.c (StopSystem): SIGUSR1で正常終了
+
+	* tools/monitor.c (StopSystem): SIGUSR1でwfcを正常終了
+
 2004-02-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/dbgroup.c: リダイレクト専用関数
