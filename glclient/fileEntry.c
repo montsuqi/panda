@@ -32,6 +32,7 @@ copies.
 #include	<string.h>
 #include	<sys/types.h>
 #include	<sys/stat.h>
+#include	<fcntl.h>
 #include	<unistd.h>
 #ifdef USE_GNOME
 #    include <gnome.h>
@@ -84,23 +85,30 @@ SaveFile(
 {
 	GtkWidget *dialog;
 	gboolean rc;
-    FILE *file;
+    int		fd;
 	char	buf[SIZE_BUFF];
 
-	if	((file = fopen(filename,"wb")) != NULL) {
-		fchmod(fileno(file), 0600);
-		fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
-		fclose(file);
-		rc = TRUE;
+	fd = open(filename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	if (fd > 0) {
+		if ( write(fd, LBS_Body(binary), LBS_Size(binary) ) > 0){
+			close(fd);
+			rc = TRUE;
+		} else {
+			rc = FALSE;
+		}
+	} else {
+		rc = FALSE;
+	}
+	if (rc){
 		snprintf(buf, sizeof(buf), "%s 書き込み終了", filename);
 		dialog = message_dialog(buf, rc);
 		gtk_widget_destroy (GTK_WIDGET (gtk_widget_get_toplevel(widget)));
 	} else {
-		rc = FALSE;
-		snprintf(buf, sizeof(buf), "%s ファイルに書き込めませんでした\n %s", filename, strerror(errno));
+		snprintf(buf, sizeof(buf), "%s ファイルに書き込めませんでした\n %s", 
+				 filename, strerror(errno));
 		dialog = message_dialog(buf, rc);
 		gtk_window_set_transient_for (GTK_WINDOW (dialog),
-							GTK_WINDOW (gtk_widget_get_toplevel(widget)));
+							  GTK_WINDOW (gtk_widget_get_toplevel(widget)));
 	}
 	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
 	gtk_widget_show (dialog);

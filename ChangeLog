@@ -1,3 +1,8 @@
+2005-03-02  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/fileEntry.c (SaveFile): fopenではなくopenで開くように変更
+	  既にファイルがあった場合はパーミッションはそのままにした
+	
 2005-03-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/SQLparser.c (ParSQL): 構造がある場合に勝手なmanglingをやめ
