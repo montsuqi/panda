@@ -1,3 +1,7 @@
+2003-11-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dbstuff/dbs_main.c : スキーマ問い合わせコマンド追加
+
 2003-11-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glclient/client.c (SetDefault): デフォルトがv2 offに

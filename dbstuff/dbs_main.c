@@ -266,6 +266,86 @@ dbgmsg(">WriteClientString");
 dbgmsg("<WriteClientString");
 }
 
+static	void
+DumpItems(
+	NETFILE		*fp,
+	ValueStruct	*value)
+{
+	char	buff[SIZE_LONGNAME];
+	int		i;
+
+	if		(  value  ==  NULL  )	return;
+	switch	(ValueType(value)) {
+	  case	GL_TYPE_INT:
+		sprintf(buff,"int");
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_BOOL:
+		sprintf(buff,"bool");
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_BYTE:
+		sprintf(buff,"byte");
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_CHAR:
+		sprintf(buff,"char(%d)",ValueStringLength(value));
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_VARCHAR:
+		sprintf(buff,"varchar(%d)",ValueStringLength(value));
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_DBCODE:
+		sprintf(buff,"dbcode(%d)",ValueStringLength(value));
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_NUMBER:
+		if		(  ValueFixedSlen(value)  ==  0  ) {
+			sprintf(buff,"number(%d)",ValueFixedLength(value));
+		} else {
+			sprintf(buff,"number(%d,%d)",
+					ValueFixedLength(value),
+					ValueFixedSlen(value));
+		}
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_TEXT:
+		sprintf(buff,"text");
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_ARRAY:
+		DumpItems(fp,ValueArrayItem(value,0));
+		sprintf(buff,"[%d]",ValueArraySize(value));
+		SendStringDelim(fp,buff);
+		break;
+	  case	GL_TYPE_RECORD:
+		SendStringDelim(fp,"{");
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			sprintf(buff,"%s ",ValueRecordName(value,i));
+			SendStringDelim(fp,buff);
+			DumpItems(fp,ValueRecordItem(value,i));
+			SendStringDelim(fp,";");
+		}
+		SendStringDelim(fp,"}");
+		break;
+	  default:
+		break;
+	}
+}
+
+static	void
+WriteClientStructure(
+	NETFILE			*fpComm,
+	RecordStruct	*rec)
+{
+ENTER_FUNC;
+	SendStringDelim(fpComm,rec->name);
+	DumpItems(fpComm,rec->value);
+	SendStringDelim(fpComm,";\n");
+LEAVE_FUNC;
+}
+
 static	Bool
 do_String(
 	NETFILE	*fpComm,
@@ -337,9 +417,7 @@ do_String(
 				ctrl.rno = rno - 1;
 				rec = ThisDB[ctrl.rno];
 				if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
-															pname) )  !=  0  ) {
-					ctrl.pno = pno - 1;
-				} else {
+															pname) )  ==  0  ) {
 					rec = NULL;
 				}
 			} else {
@@ -349,7 +427,7 @@ do_String(
 			rec = NULL;
 		}
 		if		(  rec  !=  NULL  ) {
-			WriteClientString(fpComm,fType,&ctrl);
+			WriteClientStructure(fpComm,rec);
 			ret = TRUE;
 		} else {
 			ret = FALSE;

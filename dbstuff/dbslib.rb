@@ -56,15 +56,19 @@ class	DB_Server
 	  @s.printf("\n");
 	  rc;
 	end
+	def	getSchema(rname,pname)
+	  @s.printf("Schema: %s:%s\n",rname,pname);
+	  @s.gets.chomp;
+	end
 	def	getValues(rec,name)
 	  @s.printf("%s\n",name);
 	  @s.flush;
 	  while  is = @s.gets
 		is.chomp!
-printf("is = [%s]\n",is);
+#printf("is = [%s]\n",is);
 		break if  is  ==  "";
 		dat = is.split(/: /);
-		var = data[0].split(/;/);
+		var = dat[0].split(/;/);
 		rec[var[0]] = decode(dat[1]);
 	  end
 	  @s.printf("\n");

@@ -11,6 +11,8 @@ printf("rc = %d\n",rc);
 rc = server.dbops("DBSTART");
 printf("rc = %d\n",rc);
 
+printf("[%s]\n",server.getSchema("adrs","mail"));
+
 adrs.each{ | name, value | printf("%s: %s\n",name,value) };
 
 rc = server.recordops("DBSELECT","adrs","mail",adrs);

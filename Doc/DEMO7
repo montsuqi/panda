@@ -32,11 +32,11 @@
 (3) データベースサーバを起動する
 
 	$ cd ./sample/sample2
-	$ ../../aps/dbs -db ORCA sample
+	$ ../../dbstuff/dbs -db ORCA sample
 
 (4) テストプログラムを起動する
 
-	$ ruby ../../aps/testdbs.rb
+	$ ruby ../../dbstuff/testdbs.rb
 
 2. 環境の説明
 
