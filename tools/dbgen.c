@@ -143,6 +143,11 @@ TableBody(
 		printf("text");
 		PutDim();
 		break;
+	  case	GL_TYPE_BINARY:
+		PutItemName();
+		printf("bytea");
+		PutDim();
+		break;
 	  case	GL_TYPE_OBJECT:
 		PutItemName();
 		printf("oid");
