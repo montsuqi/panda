@@ -25,8 +25,11 @@ copies.
 #endif
 
 #include <stdio.h>
+#include <string.h> /* strlen */
 #include <errno.h> /* errno */
 #include <ctype.h> /* isblank */
+#include <sys/stat.h> /* mkdir */
+#include <sys/types.h> /* mkdir */
 #include <glib.h>
 #include <gtk/gtk.h>
 
@@ -41,12 +44,13 @@ gboolean
 validate_isblank (gchar *str)
 {
   gint i;
-  
+  extern int isblank(int c);
+
   if (str == NULL || str[0] == '\0')
     return TRUE;
-  for (i = strlen(str) - 1; i >= 0; i--)
+  for (i = strlen (str) - 1; i >= 0; i--)
     {
-      if (!isblank(str[i]))
+      if (!isblank (str[i]))
         return FALSE;
     }
   return TRUE;
@@ -214,7 +218,6 @@ edit_dialog_validate (EditDialog * self)
 static gboolean
 edit_dialog_on_delete_event (GtkWidget * widget, EditDialog * self)
 {
-  (void *) widget; /* Note: escape compile warning */
   self->is_update = FALSE;
   gtk_main_quit ();
   return TRUE;
@@ -223,7 +226,6 @@ edit_dialog_on_delete_event (GtkWidget * widget, EditDialog * self)
 static void
 edit_dialog_on_ok (GtkWidget * widget, EditDialog * self)
 {
-  (void *) widget; /* Note: escape compile warning */
   if (!edit_dialog_validate (self))
     return;
   edit_dialog_value_to_config (self);
@@ -234,7 +236,6 @@ edit_dialog_on_ok (GtkWidget * widget, EditDialog * self)
 static void
 edit_dialog_on_cancel (GtkWidget * widget, EditDialog * self)
 {
-  (void *) widget; /* Note: escape compile warning */
   self->is_update = FALSE;
   gtk_main_quit ();
 }
@@ -252,7 +253,6 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   GtkWidget *entry;
   GtkWidget *alignment;
   GtkWidget *check;
-  gint i;
   gint ypos;
 
   self = g_new0 (EditDialog, 1);
@@ -272,7 +272,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
   gtk_signal_connect (GTK_OBJECT (dialog), "delete_event",
                       GTK_SIGNAL_FUNC (edit_dialog_on_delete_event), self);
-
+  
   /* buttons */
   button = gtk_button_new_with_label ("Ok");
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
@@ -416,7 +416,7 @@ edit_dialog_run (BDConfig * config, gchar * hostname)
   edit_dialog_set_value (self);
   
   gtk_widget_show_all (self->dialog);
-  gtk_widget_grab_focus (self->dialog);
+  gtk_widget_grab_focus (self->description);
   gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
   gtk_main ();
   gtk_window_set_modal (GTK_WINDOW (self->dialog), FALSE);
@@ -441,7 +441,7 @@ struct _ServerDialog {
   GtkWidget *delete;
 
   BDConfig *config;
-  gint is_changed;
+  gint is_update;
 };
 
 static struct {
@@ -510,6 +510,7 @@ server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
       gtk_clist_select_row (GTK_CLIST (self->server_list), row, 0);
       if (!gtk_clist_row_is_visible (GTK_CLIST (self->server_list), row))
         gtk_clist_moveto (GTK_CLIST (self->server_list), row, 0, 0.5, 0);
+      self->is_update = TRUE;
     }
   gdk_window_raise (self->dialog->window);
 }
@@ -540,6 +541,7 @@ server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
       gtk_clist_select_row (GTK_CLIST (self->server_list), row, 0);
       if (!gtk_clist_row_is_visible (GTK_CLIST (self->server_list), row))
         gtk_clist_moveto (GTK_CLIST (self->server_list), row, 0, 0.5, 0);
+      self->is_update = TRUE;
     }
   gdk_window_raise (self->dialog->window);
 }
@@ -574,6 +576,7 @@ server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
       gtk_clist_select_row (GTK_CLIST (self->server_list), row, 0);
       if (!gtk_clist_row_is_visible (GTK_CLIST (self->server_list), row))
         gtk_clist_moveto (GTK_CLIST (self->server_list), row, 0, 0.5, 0);
+      self->is_update = TRUE;
     }
 }
 
@@ -599,6 +602,20 @@ server_dialog_on_unselect_row (GtkWidget * widget, gint row, gint column,
   gtk_widget_set_sensitive (self->delete, FALSE);
 }
 
+static void
+server_dialog_on_row_move (GtkWidget * widget, gint from, gint to,
+                           ServerDialog * self)
+{
+  gchar *hostname;
+  
+  hostname = gtk_clist_get_row_data (GTK_CLIST (self->server_list), from);
+  if (bd_config_move_section (self->config, hostname, to + 2)) /* 2 = glclient, global */
+    {
+      bd_config_save (self->config, NULL, permissions);
+      self->is_update = TRUE;
+    }
+}
+
 static ServerDialog *
 server_dialog_new (BDConfig * config)
 {
@@ -613,6 +630,7 @@ server_dialog_new (BDConfig * config)
   self = g_new0 (ServerDialog, 1);
   
   self->config = config;
+  self->is_update = FALSE;
 
   self->dialog = dialog = gtk_dialog_new ();
   gtk_window_set_title (GTK_WINDOW (dialog), "Server Config");
@@ -659,12 +677,16 @@ server_dialog_new (BDConfig * config)
   self->server_list = clist = gtk_clist_new_with_titles (server_dialog_titles_count,
                                                          titles);
   gtk_clist_column_titles_show (GTK_CLIST (clist));
+  gtk_clist_set_reorderable (GTK_CLIST (clist), TRUE);
   gtk_container_add (GTK_CONTAINER (scroll), clist);
   gtk_signal_connect (GTK_OBJECT (clist), "select_row",
                       GTK_SIGNAL_FUNC (server_dialog_on_select_row),
                       self);
   gtk_signal_connect (GTK_OBJECT (clist), "unselect_row",
                       GTK_SIGNAL_FUNC (server_dialog_on_unselect_row),
+                      self);
+  gtk_signal_connect (GTK_OBJECT (clist), "row_move",
+                      GTK_SIGNAL_FUNC (server_dialog_on_row_move),
                       self);
 
   server_dialog_server_list_update (self);
@@ -682,7 +704,7 @@ static gboolean
 server_dialog_run (BDConfig *config)
 {
   ServerDialog *self;
-  gboolean is_changed;
+  gboolean is_update;
 
   self = server_dialog_new (config);
   
@@ -693,11 +715,11 @@ server_dialog_run (BDConfig *config)
   gtk_window_set_modal (GTK_WINDOW (self->dialog), FALSE);
   gtk_widget_destroy (self->dialog);
 
-  is_changed = self->is_changed;
+  is_update = self->is_update;
   
   server_dialog_free (self);
 
-  return is_changed;
+  return is_update;
 }
 
 /*********************************************************************
@@ -810,39 +832,6 @@ struct _BootDialog
 
   gboolean is_connect;
 };
-
-static void
-boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
-{
-  self->is_connect = TRUE;
-  gtk_widget_hide (self->dialog);
-  gtk_main_quit ();
-}
-
-static void
-boot_dialog_on_close (GtkWidget *close, BootDialog *self)
-{
-  self->is_connect = FALSE;
-  gtk_widget_hide (self->dialog);
-  gtk_main_quit ();
-}
-
-static void
-boot_dialog_on_config (GtkWidget * widget, BootDialog * self)
-{
-  (void *) widget; /* Note: escape compile warning */
-  server_dialog_run (config_);
-  gdk_window_raise (self->dialog->window);
-}
-
-static gboolean
-boot_dialog_on_delete_event (GtkWidget *widget, GdkEvent *event, BootDialog *self)
-{
-  self->is_connect = FALSE;
-  gtk_widget_hide (self->dialog);
-  gtk_main_quit ();
-  return TRUE;
-}
 
 static void
 boot_dialog_servers_set_hostname (BootDialog *self, gchar *hostname)
@@ -962,17 +951,19 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
 }
 
 static void
-boot_dialog_change_hostname (BootDialog * self, BDConfig * config)
+boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean force)
 {
   BDConfigSection *global, *section;
   gchar *hostname;
+  gchar *password;
 
   g_return_if_fail (bd_config_exist_section (config, "global"));
 
   hostname = boot_dialog_servers_get_hostname (self);
   
   global = bd_config_get_section (config, "global");
-  if (strcmp (hostname, bd_config_section_get_string (global, "hostname")) == 0)
+  if (!force
+      && strcmp (hostname, bd_config_section_get_string (global, "hostname")) == 0)
     return;
   if (strcmp (hostname, custom_label) == 0)
     {
@@ -1009,8 +1000,9 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config)
                               bd_config_section_get_bool (section, "mlog"));
   bd_config_section_set_string (global, "user",
                                 bd_config_section_get_string (section, "user"));
-  bd_config_section_set_string (global, "password",
-                                bd_config_section_get_string (section, "password"));
+  password = bd_config_section_get_string (section, "password");
+  password_ = g_string_assign (password_, password);
+  bd_config_section_set_string (global, "password", password);
   bd_config_section_set_bool (global, "savepassword",
                               bd_config_section_get_bool (section, "savepassword"));
 
@@ -1020,8 +1012,7 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config)
 static void
 boot_dialog_servers_on_selection_done (GtkWidget * widget, BootDialog * self)
 {
-  (void *) widget; /* Note: escape compile warning */
-  boot_dialog_change_hostname (self, config_);
+  boot_dialog_change_hostname (self, config_, FALSE);
 }
 
 static void
@@ -1070,6 +1061,43 @@ boot_dialog_servers_update (BootDialog *self, BDConfig *config)
   
   hostname = bd_config_get_string (config, "global", "hostname");
   boot_dialog_servers_set_hostname (self, hostname);
+}
+
+static void
+boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
+{
+  self->is_connect = TRUE;
+  gtk_widget_hide (self->dialog);
+  gtk_main_quit ();
+}
+
+static void
+boot_dialog_on_close (GtkWidget *close, BootDialog *self)
+{
+  self->is_connect = FALSE;
+  gtk_widget_hide (self->dialog);
+  gtk_main_quit ();
+}
+
+static void
+boot_dialog_on_config (GtkWidget * widget, BootDialog * self)
+{
+  if (server_dialog_run (config_))
+    {
+      boot_dialog_change_hostname (self, config_, TRUE);
+      boot_dialog_servers_update (self, config_);
+      bd_config_save (config_, NULL, permissions);
+    }
+  gdk_window_raise (self->dialog->window);
+}
+
+static gboolean
+boot_dialog_on_delete_event (GtkWidget *widget, GdkEvent *event, BootDialog *self)
+{
+  self->is_connect = FALSE;
+  gtk_widget_hide (self->dialog);
+  gtk_main_quit ();
+  return TRUE;
 }
 
 static BootDialog *

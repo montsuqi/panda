@@ -1,3 +1,8 @@
+2004-07-15  Kouji TAKAO  <kouji@netlab.jp>
+
+	* glclient/bootdialog.c: サーバプリセット移動機能を追加
+	* glclient/bd_config.c (bd_config_move_section): セクション移動関数を追加
+
 2004-07-14  Kouji TAKAO  <kouji@netlab.jp>
 
 	* glclient/bootdialog.c: サーバプリセット削除機能を追加
