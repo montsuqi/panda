@@ -27,9 +27,6 @@ libpandablob_la_DEPENDENCIES	=		\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/libs/libpandacom.la
 
-libpandablob_la_SOURCES	=			\
-	blob.c			blob.h
-
 testblob_LDADD	= 	\
 	-lm									\
 	$(GLIB_LIBS)						\

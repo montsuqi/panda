@@ -540,6 +540,10 @@ MakeLinkage(void)
 
 	ConvSetSize(Conv,ld->textsize,ld->arraysize);
 
+	if (ThisEnv->linksize <= 0) {
+		Error("linkarea not found.\n");
+	}
+
 	_prefix = Prefix;
 	Prefix = "";
 	PutLevel(1,TRUE);
