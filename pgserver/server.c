@@ -215,6 +215,7 @@ RecvScreenData(
 			}
 		}
 	}	while	(  *buff  !=  0  );
+	PG_SendString(fpComm,"Event: OK\n");
 }
 
 static	void
@@ -277,7 +278,7 @@ dbgmsg(">MainLoop");
 		*(q = strchr(p,' ')) = 0;
 		pass = p;
 		strcpy(scr->cmd,q+1);
-printf("[%s][%s][%s][%s]\n",ver,scr->user,pass,scr->cmd);
+		//printf("[%s][%s][%s][%s]\n",ver,scr->user,pass,scr->cmd);
 		if		(  strcmp(ver,VERSION)  ) {
 			PG_SendString(fpComm,"Error: version\n");
 			g_warning("reject client(invalid version)");

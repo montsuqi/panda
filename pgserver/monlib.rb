@@ -12,7 +12,6 @@ class	PG_Server
 	  @s = TCPSocket.new(@host,@port);
 	  @s.printf("Start: %s %s %s %s\n",VER,user,pass,prog);
 	  msg = @s.gets.chomp;
-	  printf("return [%s]\n",msg);
 	  if  (  msg  ==  /^Error: (.*?)/  )
 		printf("error: %s\n",$1);
 		@s.close
@@ -25,15 +24,27 @@ class	PG_Server
 		@s.printf("%s\n",name);
 		@s.gets.chomp;
 	end
+	def event_data
+	  @values.each{ | name, value | @s.printf("%s: %s\n",name,value) };
+	  @s.printf("\n");
+	  msg = @s.gets.chomp;
+	  if  (  msg  ==  /^Event: (.*?)/  )
+		if  (  $1  !=  "OK"  )
+		  printf("error: %s\n",$1);
+		  @s.close
+		end
+	  else
+		printf("error: connection lost ?\n");
+		@s.close
+	  end
+	end
 	def	event(event)
-		@s.printf("Event: %s\n",event);
-		@values.each{ | name, value | @s.printf("%s: %s\n",name,value) };
-		@s.printf("\n");
+	  @s.printf("Event: %s\n",event);
+	  event_data;
 	end
 	def	event2(event,widget)
-		@s.printf("Event: %s:%s\n",event,widget);
-		@values.each{ | name, value | @s.printf("%s: %s\n",name,value) };
-		@s.printf("\n");
+	  @s.printf("Event: %s:%s\n",event,widget);
+	  event_data;
 	end
 	def	getValue(name)
 		@s.printf("%s\n",name);
