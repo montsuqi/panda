@@ -137,9 +137,10 @@ typedef	struct {
 typedef	struct {
 	size_t	n;
 	struct {
+		byte	PutType;
 		char	window[SIZE_NAME];
-	}	close[15];
-}	CloseWindows;
+	}	control[15];
+}	WindowControl;
 
 typedef	struct _ProcessNode	{
 	char		term[SIZE_TERM+1]
@@ -155,7 +156,7 @@ typedef	struct _ProcessNode	{
 	size_t		cWindow;
 	GHashTable	*whash;
 	size_t		textsize;
-	CloseWindows	w;
+	WindowControl	w;
 }	ProcessNode;
 
 typedef	struct	{

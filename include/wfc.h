@@ -36,7 +36,7 @@ copies.
 #define	APS_LINKDATA	(PacketClass)0x04
 #define	APS_SPADATA		(PacketClass)0x08
 #define	APS_SCRDATA		(PacketClass)0x10
-#define	APS_CLSWIN		(PacketClass)0x20
+#define	APS_WINCTRL		(PacketClass)0x20
 #define	APS_CTRLDATA	(PacketClass)0x40
 
 #define	APS_NOT			(PacketClass)0xF0
@@ -90,7 +90,7 @@ typedef	struct {
 	int			apsid;
 	Bool		fKeep;
 	LD_Node		*ld;
-	CloseWindows	w;
+	WindowControl	w;
 	size_t			cWindow;
 	MessageHeader	*hdr;
 	LargeByteString	*mcpdata;

@@ -123,7 +123,7 @@ RecvTermServerHeader(
 	char	*window,
 	char	*widget,
 	int		*type,
-	CloseWindows	*cls)
+	WindowControl	*ctl)
 {
 	Bool	rc;
 	PacketClass	c;
@@ -137,10 +137,11 @@ dbgmsg(">RecvTermServerHeader");
 		RecvString(fp,user);
 		RecvString(fp,window);
 		RecvString(fp,widget);
-		*type = TO_INT(RecvChar(fp));
-		cls->n = RecvInt(fp);
-		for	( i = 0 ; i < cls->n ; i ++ ) {
-			RecvString(fp,cls->close[i].window);
+		//*type = TO_INT(RecvChar(fp));
+		ctl->n = RecvInt(fp);
+		for	( i = 0 ; i < ctl->n ; i ++ ) {
+			ctl->control[i].PutType = (byte)RecvInt(fp);
+			RecvString(fp,ctl->control[i].window);
 		}
 		rc = TRUE;
 		break;

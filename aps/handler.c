@@ -62,6 +62,7 @@ static	char	*STATUS[4] = {
 static	char	*APS_HandlerLoadPath;
 
 static	GHashTable	*HandlerClassTable;
+static	GHashTable	*TypeHash;
 
 static	MessageHandlerClass	*
 EnterHandlerClass(
@@ -142,6 +143,16 @@ dbgmsg(">InitiateHandler");
 	InitHandler();
 	dbgprintf("LD = [%s]",ThisLD->name);
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_OnlineInit,NULL);
+
+	TypeHash = NewNameiHash();
+	g_hash_table_insert(TypeHash,"CURRENT",(gpointer)SCREEN_CURRENT_WINDOW);
+	g_hash_table_insert(TypeHash,"NEW",(gpointer)SCREEN_NEW_WINDOW);
+	g_hash_table_insert(TypeHash,"CLOSE",(gpointer)SCREEN_CLOSE_WINDOW);
+	g_hash_table_insert(TypeHash,"CHANGE",(gpointer)SCREEN_CHANGE_WINDOW);
+	g_hash_table_insert(TypeHash,"JOIN",(gpointer)SCREEN_JOIN_WINDOW);
+	g_hash_table_insert(TypeHash,"FORK",(gpointer)SCREEN_FORK_WINDOW);
+	g_hash_table_insert(TypeHash,"EXIT",(gpointer)SCREEN_END_SESSION);
+	g_hash_table_insert(TypeHash,"BACK",(gpointer)SCREEN_BACK_WINDOW);
 dbgmsg("<InitiateHandler");
 }
 
@@ -242,12 +253,23 @@ dbgmsg("<CallBefore");
 }
 
 static	void
+SetPutType(
+	ProcessNode	*node,
+	char		*wname,
+	byte		type)
+{	
+	strcpy(node->w.control[node->w.n].window,wname);
+	node->w.control[node->w.n].PutType = type;
+	node->w.n ++;
+}
+static	void
 CallAfter(
 	ProcessNode	*node)
 {
 	int		i
-	,		winfrom
-	,		winend;
+		,	winend
+		,	sindex;
+	byte	PutType;
 
 	ValueStruct	*mcp_swindow;
 	ValueStruct	*mcp_sindex;
@@ -263,91 +285,65 @@ dbgmsg(">CallAfter");
 	mcp_puttype = GetItemLongName(mcp,"dc.puttype");
 	mcp_pputtype = GetItemLongName(mcp,"private.pputtype");
 	mcp_dcwindow = GetItemLongName(mcp,"dc.window");
-	if		(	(  *ValueStringPointer(mcp_puttype)   ==  0  )
-			||	(  !strcmp(ValueStringPointer(mcp_puttype),"NULL")  ) ) {
-		SetValueInteger(mcp_pputtype,SCREEN_NULL);
-	} else
-	if		(  !strcmp(ValueStringPointer(mcp_puttype),"CURRENT")  ) {
-		SetValueInteger(mcp_pputtype,SCREEN_CURRENT_WINDOW);
-	} else
-	if		(  !strcmp(ValueStringPointer(mcp_puttype),"NEW")  ) {
-		SetValueInteger(mcp_pputtype,SCREEN_NEW_WINDOW);
-	} else
-	if		(  !strcmp(ValueStringPointer(mcp_puttype),"CLOSE")  ) {
-		SetValueInteger(mcp_pputtype,SCREEN_CLOSE_WINDOW);
-	} else
-	if		(  !strcmp(ValueStringPointer(mcp_puttype),"CHANGE")  ) {
-		SetValueInteger(mcp_pputtype,SCREEN_CHANGE_WINDOW);
-	} else
-	if		(  !strcmp(ValueStringPointer(mcp_puttype),"BACK")  ) {
-		SetValueInteger(mcp_sindex,ValueInteger(mcp_sindex)-1);
-		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
-			   ValueStringPointer(GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex))),
-			   SIZE_NAME);
-		SetValueInteger(mcp_pputtype,SCREEN_CHANGE_WINDOW);
-	} else
-	if		(  !strcmp(ValueStringPointer(mcp_puttype),"JOIN")  ) {
-		SetValueInteger(mcp_pputtype,SCREEN_JOIN_WINDOW);
-	} else
-	if		(  !strcmp(ValueStringPointer(mcp_puttype),"FORK")  ) {
-		SetValueInteger(mcp_pputtype,SCREEN_FORK_WINDOW);
-	} else
-	if		(  !strcmp(ValueStringPointer(mcp_puttype),"EXIT")  ) {
-		SetValueInteger(mcp_pputtype,SCREEN_END_SESSION);
-	} else {
-		SetValueInteger(mcp_pputtype,SCREEN_CURRENT_WINDOW);
-	}
-	node->w.n = 0;
-	if		(  ValueInteger(mcp_sindex)  ==  0  ) {
+
+	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
 		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,0)),
 			   ValueStringPointer(mcp_dcwindow));
-		ValueInteger(mcp_sindex) = 1;
-	} else {
-#ifdef	DEBUG
-		dbgprintf("mcp_sindex = %d",ValueInteger(mcp_sindex));
-		dbgprintf("mcp->dc.window = [%s]",ValueStringPointer(mcp_dcwindow));
-		dbgmsg("**** window stack dump *****************");
-		for	( i = 0 ; i < ValueInteger(mcp_sindex) ; i ++ ) {
-			dbgprintf("[%d:%s]",i,(ValueStringPointer(
-									  GetArrayItem(mcp_swindow,i))));
-		}
-		dbgmsg("----------------------------------------");
-#endif
-		if		(  strcmp(ValueStringPointer(
-							  GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex) - 1)),
-						  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
-			strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
-				   ValueStringPointer(
-					   GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex) - 1)));
-			for	( i = 0 ; i < ValueInteger(mcp_sindex) ; i ++ ) {
-				if		(  strcmp(ValueStringPointer(
-									  GetArrayItem(mcp_swindow,i)),
-								  ValueStringPointer(mcp_dcwindow))  ==  0  )
-					break;
-			}
+		sindex = 1;
+	}
+	if		(  strcmp(ValueStringPointer(
+						  GetArrayItem(mcp_swindow,sindex - 1)),
+					  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
+		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
+			   ValueStringPointer(
+				   GetArrayItem(mcp_swindow,sindex - 1)));
+		for	( i = 0 ; i < sindex ; i ++ ) {
 			if		(  strcmp(ValueStringPointer(
 								  GetArrayItem(mcp_swindow,i)),
-							  ValueStringPointer(mcp_dcwindow))  ==  0  ) {
-				winfrom = i + 1;
-				winend  = ValueInteger(mcp_sindex);
-				ValueInteger(mcp_sindex) = i + 1;
-			} else {
-				winfrom = 0;
-				winend  = ValueInteger(mcp_sindex);
-				ValueInteger(mcp_sindex) = i + 1;
-				strcpy(ValueStringPointer(
-						   GetArrayItem(mcp_swindow,i)),
-					   ValueStringPointer(mcp_dcwindow));
-			}
-			if		(  *ValueStringPointer(mcp_pputtype)  ==  SCREEN_JOIN_WINDOW + '0'  ) {
-				for	( i = winfrom ; i < winend ; i ++  ) {
-					strcpy(node->w.close[node->w.n].window,
-						   ValueStringPointer(GetArrayItem(mcp_swindow,i)));
-					node->w.n ++;
-				}
-			}
+							  ValueStringPointer(mcp_dcwindow))  ==  0  )
+				break;
 		}
+		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,i)),
+			   ValueStringPointer(mcp_dcwindow));
+		winend  = sindex;
+		sindex = i + 1;
 	}
+
+	node->w.n = 0;
+	if		(  ( PutType = (byte)(int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
+		PutType = SCREEN_CURRENT_WINDOW;
+	}
+	switch	(PutType) {
+	  case	SCREEN_JOIN_WINDOW:
+		for	( i = sindex ; i < winend ; i ++  ) {
+			SetPutType(node,
+					   ValueStringPointer(GetArrayItem(mcp_swindow,i)),
+					   SCREEN_CLOSE_WINDOW);
+		}
+		SetPutType(node,ValueStringPointer(mcp_dcwindow),SCREEN_CURRENT_WINDOW);
+		break;
+	  case	SCREEN_BACK_WINDOW:
+		sindex --;
+		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
+			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex)),
+			   SIZE_NAME);
+		PutType = SCREEN_CHANGE_WINDOW;
+		/*	through	*/
+	  default:
+		SetPutType(node,ValueStringPointer(mcp_dcwindow),PutType);
+		break;
+	}
+	SetValueInteger(mcp_pputtype,(int)PutType);
+	ValueInteger(mcp_sindex) = sindex;
+
+	dbgprintf("mcp_sindex = %d",sindex);
+	dbgprintf("mcp->dc.window = [%s]",ValueStringPointer(mcp_dcwindow));
+	dbgmsg("**** window stack dump *****************");
+	for	( i = 0 ; i < sindex ; i ++ ) {
+		dbgprintf("[%d:%s]",i,(ValueStringPointer(
+								   GetArrayItem(mcp_swindow,i))));
+	}
+	dbgmsg("----------------------------------------");
 dbgmsg("<CallAfter");
 }
 

@@ -257,10 +257,11 @@ dbgmsg(">WriteTerminal");
 		SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
-		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
+		//		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
 		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
 		for	( i = 0 ; i < data->w.n ; i ++ ) {
-			SendString(fp,data->w.close[i].window);		ON_IO_ERROR(fp,badio);
+			SendInt(fp,data->w.control[i].PutType);			ON_IO_ERROR(fp,badio);
+			SendString(fp,data->w.control[i].window);		ON_IO_ERROR(fp,badio);
 		}
 		data->w.n = 0;
 		bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,data->hdr->window);

@@ -221,11 +221,13 @@ dbgmsg(">GetAPS_Value");
 dbgmsg("send");
 		SendPacketClass(fpLD,c);		ON_IO_ERROR(fpLD,badio);
 		switch	(c) {
-		  case	APS_CLSWIN:
-			dbgmsg("CLSWIN");
+		  case	APS_WINCTRL:
+			dbgmsg("WINCTRL");
 			nclose = RecvInt(fpLD);		ON_IO_ERROR(fpLD,badio);
 			for	( i = 0 ; i < nclose ; i ++ ) {
-				RecvString(fpLD,data->w.close[data->w.n].window);
+				data->w.control[data->w.n].PutType = (byte)RecvInt(fpLD);
+				ON_IO_ERROR(fpLD,badio);
+				RecvString(fpLD,data->w.control[data->w.n].window);
 				ON_IO_ERROR(fpLD,badio);
 				data->w.n ++;
 			}
@@ -384,8 +386,6 @@ dbgmsg(">MessageThread");
 									   !=  0  ) ) {
 						fp = ld->aps[ix].fp;
 					}
-				} else {
-					puttype = 0;
 				}
 				if		(  fp  ==  NULL  ) {
 					ClearAPS_Node(&ld->aps[ix]);
@@ -395,7 +395,6 @@ dbgmsg(">MessageThread");
 					sched_yield();
 				}
 			} else {
-				puttype = 0;
 				flag = 0;
 				ld = NULL;
 				sched_yield();
@@ -404,7 +403,7 @@ dbgmsg(">MessageThread");
 		memcpy(data->hdr,&hdr,sizeof(MessageHeader));
 		if		(  ( newld = g_hash_table_lookup(WindowHash,hdr.window) )
 				   !=  NULL  ) {
-			GetAPS_Value(fp,data,APS_CLSWIN,flag);
+			GetAPS_Value(fp,data,APS_WINCTRL,flag);
 			GetAPS_Value(fp,data,APS_MCPDATA,flag);
 			GetAPS_Value(fp,data,APS_LINKDATA,flag);
 			if		(  newld  ==  ld  ) {
@@ -418,11 +417,7 @@ dbgmsg(">MessageThread");
 					data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 					CoreEnqueue(data);
 					break;
-				  case	SCREEN_NULL:
 				  case	SCREEN_CURRENT_WINDOW:
-					if		(  puttype  ==  TO_CHAR(SCREEN_NULL)  ) {
-						puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
-					}
 					data->hdr->puttype = puttype;
 					TermEnqueue(data->term,data);
 					break;

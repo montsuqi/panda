@@ -229,7 +229,7 @@ SendWindow(
 dbgmsg(">SendWindow");
 
 	rc = FALSE; 
-	if		(  win->PutType  !=  SCREEN_NULL  ) {
+	//	if		(  win->PutType  !=  SCREEN_NULL  ) {
 		SendPacketClass(fpComm,GL_WindowName);	ON_IO_ERROR(fpComm,badio);
 		SendString(fpComm,wname);				ON_IO_ERROR(fpComm,badio);
 dbgprintf("wname = [%s]\n",wname);
@@ -250,7 +250,7 @@ dbgprintf("wname = [%s]\n",wname);
 			break;
 		}
 		win->PutType = SCREEN_NULL;
-	}
+		//	}
 	rc = TRUE;
   badio:
 	if		(  !rc  )	longjmp(envSendWindow,1);

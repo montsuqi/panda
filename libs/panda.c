@@ -77,30 +77,27 @@ RecvPanda(
 	int		type;
 	WindowData	*win;
 	int		i;
-	CloseWindows	cls;
+	WindowControl	ctl;
 
 dbgmsg(">RecvPanda");
-	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&cls)  ) {
-		for	( i = 0 ; i < cls.n ; i ++ ) {
-			PutWindowByName(cls.close[i].window,SCREEN_CLOSE_WINDOW);
+	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
+		for	( i = 0 ; i < ctl.n ; i ++ ) {
+			type = ctl.control[i].PutType;
+			switch	(type) {
+			  case	SCREEN_CHANGE_WINDOW:
+				(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
+				type = SCREEN_NEW_WINDOW;
+				break;
+			  default:
+				break;
+			}
+			PutWindowByName(ctl.control[i].window,type);
 		}
 		win = SetWindowName(window);
 		RecvTermServerData(fpPanda,win);
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
-		switch	(type) {
-		  case	SCREEN_CHANGE_WINDOW:
-			(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
-			type = SCREEN_NEW_WINDOW;
-			break;
-		  case	SCREEN_JOIN_WINDOW:
-			type = SCREEN_CURRENT_WINDOW;
-			break;
-		  default:
-			break;
-		}
-		PutWindow(win,type);
 		strcpy(ThisWindow,window);
 		strcpy(ThisWidget,widget);
 		strcpy(ThisUser,user);

@@ -35,6 +35,7 @@ copies.
 #define	SCREEN_JOIN_WINDOW			(byte)0x05
 #define	SCREEN_FORK_WINDOW			(byte)0x06
 #define	SCREEN_END_SESSION			(byte)0x07
+#define	SCREEN_BACK_WINDOW			(byte)0x08
 
 #define	GL_Null			(PacketClass)0x00
 #define	GL_Connect		(PacketClass)0x01

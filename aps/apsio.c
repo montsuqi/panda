@@ -339,7 +339,7 @@ PutWFC(
 
 dbgmsg(">PutWFC");
 	flag = APS_MCPDATA | APS_SCRDATA;
-	flag |= ( node->w.n > 0 ) ? APS_CLSWIN : 0;
+	flag |= ( node->w.n > 0 ) ? APS_WINCTRL : 0;
 	if		(  nCache  >  0  ) {
 		flag |= SaveCache(node);
 	} else {
@@ -371,19 +371,21 @@ dbgmsg(">PutWFC");
 					  NativeSizeValue(NULL,node->scrrec[i]->value));
 		}
 		switch	(c = RecvPacketClass(fp)) {
-		  case	APS_CLSWIN:
-			dbgmsg("CLSWIN");
+		  case	APS_WINCTRL:
+			dbgmsg("WINCTRL");
 			SendInt(fp,node->w.n);					ON_IO_ERROR(fp,badio);
 			for	( i = 0 ; i < node->w.n ; i ++ ) {
-				SendString(fp,node->w.close[i].window);
+				SendInt(fp,node->w.control[i].PutType);
+				SendString(fp,node->w.control[i].window);
 			}
 			break;
 		  case	APS_MCPDATA:
 			dbgmsg("MCPDATA");
-			//SetValueString(GetItemLongName(e,"dc.window"),node->window,NULL);
-			//SetValueString(GetItemLongName(e,"dc.widget"),node->widget,NULL);
-			//SetValueString(GetItemLongName(e,"dc.event"),node->event,NULL);
-
+#if	0
+			SetValueString(GetItemLongName(e,"dc.window"),node->window,NULL);
+			SetValueString(GetItemLongName(e,"dc.widget"),node->widget,NULL);
+			SetValueString(GetItemLongName(e,"dc.event"),node->event,NULL);
+#endif
 			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->mcprec->value),FALSE);
 			NativePackValue(NULL,LBS_Body(buff),node->mcprec->value);
 			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
