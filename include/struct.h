@@ -93,8 +93,6 @@ typedef	struct _DBG_Struct	{
 	GHashTable	*dbt;
 	int			priority;				/*	commit priority			*/
 	char		*coding;				/*	DB backend coding		*/
-	/*	BLOB		*/
-	GHashTable	*loPool;				/*	BLOB cache file pool	*/
 	/*	DB depend	*/
 	Port		*port;
 	char		*dbname;
@@ -116,10 +114,6 @@ typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct
 typedef struct	{
 	int		(*exec)(DBG_Struct *, char *, Bool);
 	Bool	(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
-	int		(*OpenBLOB)(DBG_Struct *, MonObjectType *, int);
-	int		(*CloseBLOB)(DBG_Struct *, int);
-	int		(*ReadBLOB)(DBG_Struct *, int, byte *, size_t);
-	int		(*WriteBLOB)(DBG_Struct *, int, byte *, size_t);
 }	DB_Primitives;
 
 typedef	struct _DB_Func	{

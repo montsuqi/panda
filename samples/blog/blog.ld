@@ -16,6 +16,9 @@ data	{
 	};
 };
 
-db	"blog"	{
+db	"blog_meta"	{
 	blog_entry;
+};
+db	"blog_body"	{
+	blog_body;
 };

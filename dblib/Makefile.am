@@ -27,7 +27,8 @@ libpandadb_la_SOURCES	=	\
 DB_OBJECTS			=		\
 	PostgreSQL.la			\
 	Shell.la				\
-	System.la
+	System.la				\
+	NativeBLOB.la
 
 PostgreSQL_la_LDFLAGS	=	-module -export-dynamic
 PostgreSQL_la_SOURCES	=	PostgreSQL.c
@@ -41,3 +42,6 @@ Shell_la_SOURCES		=	Shell.c
 
 System_la_LDFLAGS		=	-module -export-dynamic
 System_la_SOURCES		=	System.c
+
+NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
+NativeBLOB_la_SOURCES	=	NativeBLOB.c

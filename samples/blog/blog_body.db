@@ -1,0 +1,4 @@
+blog_body	{
+	object	object;
+	file	varchar(100);
+};

@@ -42,6 +42,7 @@ copies.
 
 static	GHashTable	*StatusTable;
 static	ValueStruct	*DB_BlogEntry;
+static	ValueStruct	*DB_BlogBody;
 
 static	void
 do_LINK(
@@ -65,6 +66,7 @@ do_OK(
 {
 	RecordStruct	*entry;
 	time_t	nowtime;
+	int		rc;
 
 ENTER_FUNC;
 	time(&nowtime);
@@ -82,6 +84,15 @@ ENTER_FUNC;
 	CopyValue(GetItemLongName(DB_BlogEntry,"entry"),
 			  GetItemLongName(entry->value,"body.value"));
 	(void)MCP_ExecFunction(node,"blog_entry","main","DBINSERT",DB_BlogEntry);
+
+	CopyValue(GetItemLongName(DB_BlogBody,"object"),
+			  GetItemLongName(DB_BlogEntry,"entry"));
+	SetValueString(GetItemLongName(DB_BlogBody,"file"),"./export",NULL);
+
+	rc = MCP_ExecFunction(node,"blog_body","","BLOBEXPORT",DB_BlogBody);
+	printf("rc = [%d]\n",rc);
+
+
 	MCP_PutWindow(node,"entry",MCP_PUT_CURRENT);
 LEAVE_FUNC;
 }
@@ -140,5 +151,6 @@ ENTER_FUNC;
 	MCP_RegistHandler(StatusTable,"PUTG","Quit",do_Quit);
 
 	DB_BlogEntry = MCP_GetDB_Define("blog_entry");
+	DB_BlogBody = MCP_GetDB_Define("blog_body");
 LEAVE_FUNC;
 }

@@ -46,12 +46,6 @@ copies.
 #include	"blobreq.h"
 #include	"debug.h"
 
-typedef	struct {
-	MonObjectType	obj;
-	char	*fname;
-	Bool	fImport;
-}	BLOBDir;
-
 static	GHashTable	*DBMS_Table;
 static	char		*MONDB_LoadPath;
 
@@ -122,49 +116,6 @@ TempName(
 		ret = NULL;
 	}
 	return	(ret);
-}
-
-extern	char	*
-FindBlobPool(
-	DBG_Struct	*dbg,
-	ValueStruct	*value)
-{
-	char	*name
-		,	*fname;
-	char	buff[SIZE_NAME+1];
-	BLOBDir	*bd;
-
-ENTER_FUNC;
-	if		(  ( bd = (BLOBDir *)g_hash_table_lookup(dbg->loPool,ValueObject(value)) )
-			   ==  NULL  ) {
-		sprintf(buff,"/tmp/%s.XXXXXX",ValueToString(value,NULL));
-		fname = TempName(buff,SIZE_NAME+1);
-		if		(	(  IS_OBJECT_NULL(ValueObject(value))  )
-				||	(  !RequestCheckBLOB(fpBlob,APS_BLOB,ValueObject(value))  ) ) {
-			RequestNewBLOB(fpBlob,APS_BLOB,BLOB_OPEN_WRITE,ValueObject(value));
-			RequestCloseBLOB(fpBlob,APS_BLOB,ValueObject(value));
-			fclose(fopen(fname,"w"));
-			chmod(fname,0666);
-			bd = New(BLOBDir);
-			bd->obj = *ValueObject(value);
-			fname = StrDup(fname);
-			bd->fname = fname;
-			bd->fImport = TRUE;
-			g_hash_table_insert(dbg->loPool,&bd->obj,bd);
-		} else
-		if		(  RequestExportBLOB(fpBlob,APS_BLOB,ValueObject(value),fname)  ) {
-			bd = New(BLOBDir);
-			bd->obj = *ValueObject(value);
-			fname = StrDup(fname);
-			bd->fname = fname;
-			bd->fImport = FALSE;
-			g_hash_table_insert(dbg->loPool,&bd->obj,bd);
-		} else {
-			fname = NULL;
-		}
-	}
-LEAVE_FUNC;
-	return	(fname);
 }
 
 static	void
@@ -323,28 +274,6 @@ ExecDBG_Operation(
 	ExecFunction(dbg,name,FALSE);
 }
 
-static	guint
-ObjHash(
-	MonObjectType	*obj)
-{
-	guint	ret;
-	int		i;
-
-	ret = obj->source;
-	for	( i = 0 ; i < SIZE_OID / sizeof(unsigned int) ; i ++ ) {
-		ret += obj->id.el[i];
-	}
-	return	(ret);
-}
-
-static	gint
-ObjCompare(
-	MonObjectType	*s1,
-	MonObjectType	*s2)
-{
-	return	(!memcmp(s1,s2,sizeof(MonObjectType)));
-}
-
 extern	void
 TransactionStart(
 	DBG_Struct *dbg)
@@ -355,26 +284,10 @@ ENTER_FUNC;
 	NewPool("Transaction");
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-			ThisEnv->DBG[i]->loPool = g_hash_table_new((GHashFunc)ObjHash,
-													   (GCompareFunc)ObjCompare);
 		}
 	}
 	ExecDBG_Operation(dbg,"DBSTART");
 LEAVE_FUNC;
-}
-
-static	void
-_ReleaseBLOB(
-	char		*name,
-	BLOBDir		*bd,
-	DBG_Struct *dbg)
-{
-	if		(  bd->fImport  ) {
-		RequestSaveBLOB(fpBlob,APS_BLOB,&bd->obj,bd->fname);
-	}
-	//	unlink(bd->fname);
-	xfree(bd->fname);
-	xfree(bd);
 }
 
 extern	void
@@ -388,11 +301,6 @@ ENTER_FUNC;
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			if		(  dbg->loPool  !=  NULL  ) {
-				g_hash_table_foreach(dbg->loPool,(GHFunc)_ReleaseBLOB,dbg);
-				g_hash_table_destroy(dbg->loPool);
-				dbg->loPool = NULL;
-			}
 		}
 	}
 	ReleasePoolByName("Transaction");

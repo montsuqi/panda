@@ -365,16 +365,8 @@ ValueToSQL(
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_OBJECT:
-		if		(  ValueObjectSource(val)  ==  0  ) {
-			if		(  ( name = FindBlobPool(dbg,val) )  !=  NULL  ) {
-				sprintf(buff,"'%s'",name);
-			} else {
-				buff[0] = 0;
-			}
-		} else {
-			id = ValueOid(ValueObject(val));
-			sprintf(buff,"%u",id);
-		}
+		id = ValueOid(ValueObject(val));
+		sprintf(buff,"%u",id);
 		LBS_EmitString(lbs,buff);
 		break;
 	  default:
@@ -1203,7 +1195,6 @@ dbgmsg(">_DBOPEN");
 	OpenDB_RedirectPort(dbg);
 	dbg->conn = (void *)conn;
 	dbg->fConnect = TRUE;
-	dbg->loPool = NULL;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -1593,26 +1584,6 @@ dbgmsg("<_DBACCESS");
 	return	(rc);
 }
 
-static	int
-_OpenBLOB(
-	DBG_Struct		*dbg,
-	MonObjectType	*obj,
-	int				mode)
-{
-	int		pgmode;
-	int		res;
-
-	pgmode = 0;
-	if		(  ( mode & BLOB_OPEN_READ )  !=  0  ) {
-		pgmode |= INV_READ;
-	}
-	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
-		pgmode |= INV_WRITE;
-	}
-	res = lo_open(PGCONN(dbg),ValueOid(obj),pgmode);
-	return	(res);
-}
-
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
 	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
@@ -1632,10 +1603,6 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
-	_OpenBLOB,
-	NULL,
-	NULL,
-	NULL
 };
 
 extern	DB_Func	*

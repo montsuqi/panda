@@ -30,7 +30,7 @@ path	main	{
 				:date.month,
 				:date.day,
 				:title,
-				lo_import(:entry)
+				:entry
 			)
 		;
 	};

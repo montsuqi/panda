@@ -30,8 +30,6 @@ extern	DB_Func	*NewDB_Func(void);
 extern	DB_Func	*EnterDB_Function(char *name, DB_OPS *ops, DB_Primitives *primitive,
 								  char *commentStart, char *commentEnd);
 
-extern	char	*FindBlobPool(DBG_Struct *dbg, ValueStruct *value);
-
 extern	void	OpenRedirectDB(DBG_Struct *dbg);
 extern	void	ExecRedirectDBOP(DBG_Struct *dbg, char *sql);
 extern	void	TransactionRedirectStart(DBG_Struct *dbg);

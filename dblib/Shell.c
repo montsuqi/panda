@@ -335,11 +335,7 @@ static	DB_OPS	Operations[] = {
 
 static	DB_Primitives	Core = {
 	_EXEC,
-	_DBACCESS,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+	_DBACCESS
 };
 
 static	void

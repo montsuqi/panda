@@ -107,6 +107,27 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
+extern	Bool
+RequestCloseBLOB(
+	NETFILE	*fp,
+	PacketClass		flag,
+	MonObjectType	*obj)
+{
+	Bool	rc;
+	
+ENTER_FUNC;
+	rc = FALSE;
+	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
+	RequestBLOB(fp,BLOB_CLOSE);			ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+		rc = TRUE;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(rc);
+}
+
 extern	size_t
 RequestWriteBLOB(
 	NETFILE	*fp,
@@ -155,27 +176,6 @@ ENTER_FUNC;
   badio:
 LEAVE_FUNC;
 	return	(red);
-}
-
-extern	Bool
-RequestCloseBLOB(
-	NETFILE	*fp,
-	PacketClass		flag,
-	MonObjectType	*obj)
-{
-	Bool	rc;
-	
-ENTER_FUNC;
-	rc = FALSE;
-	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
-	RequestBLOB(fp,BLOB_CLOSE);			ON_IO_ERROR(fp,badio);
-	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
-		rc = TRUE;
-	}
-  badio:
-LEAVE_FUNC;
-	return	(rc);
 }
 
 extern	Bool
