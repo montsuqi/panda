@@ -250,7 +250,8 @@ typedef	struct {
 	char		*BaseDir
 	,			*D_Dir
 	,			*RecordDir;
-	Port		*WfcApsPort;
+	Port		*WfcApsPort
+	,			*TermPort;
 	size_t		cLD
 	,			cBD
 	,			cDBD

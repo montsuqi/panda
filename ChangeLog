@@ -1,3 +1,7 @@
+2004-02-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c : wfcの待機ポートをdirectoryに記述できるようにした
+
 2004-02-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/redirect.c (OpenDB_RedirectPort): dbredirectorに接続しない

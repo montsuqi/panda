@@ -79,6 +79,7 @@ copies.
 #define	T_WFC			(T_YYBASE +23)
 #define	T_EXIT			(T_YYBASE +24)
 #define	T_LOCALE		(T_YYBASE +25)
+#define	T_TERMPORT		(T_YYBASE +26)
 
 #undef	Error
 #define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
@@ -118,6 +119,7 @@ static	TokenTable	tokentable[] = {
 	{	"wfc"				,T_WFC		},
 	{	"exit"				,T_EXIT		},
 	{	"locale"			,T_LOCALE	},
+	{	"termport"			,T_TERMPORT	},
 	{	""					,0			}
 };
 
@@ -138,6 +140,22 @@ dbgmsg(">ParWFC");
 				break;
 			  case	T_SCONST:
 				ThisEnv->WfcApsPort = ParPort(ComSymbol,PORT_WFC_APS);
+				break;
+			  default:
+				Error("invalid port number");
+				break;
+			}
+			GetSymbol;
+			break;
+		  case	T_TERMPORT:
+			switch	(GetSymbol) {
+			  case	T_ICONST:
+				ThisEnv->TermPort = New(Port);
+				ThisEnv->TermPort->host = "localhost";
+				ThisEnv->TermPort->port = IntStrDup(ComInt);
+				break;
+			  case	T_SCONST:
+				ThisEnv->TermPort = ParPort(ComSymbol,PORT_WFC);
 				break;
 			  default:
 				Error("invalid port number");
@@ -688,6 +706,7 @@ dbgmsg(">ParDI");
 				ThisEnv->D_Dir = D_Dir;
 				ThisEnv->RecordDir = RecordDir;
 				ThisEnv->WfcApsPort = ParPort("localhost",PORT_WFC_APS);
+				ThisEnv->TermPort = ParPort("localhost",PORT_WFC);
 				ThisEnv->cLD = 0;
 				ThisEnv->cBD = 0;
 				ThisEnv->cDBD = 0;

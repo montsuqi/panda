@@ -130,6 +130,9 @@ dbgmsg(">InitSystem");
 	if		(  ApsPortNumber  ==  NULL  ) {
 		ApsPortNumber = ThisEnv->WfcApsPort->port;
 	}
+	if		(  PortNumber  ==  NULL  ) {
+		PortNumber = ThisEnv->TermPort->port;
+	}
 	InitNET();
 	InitMessageQueue();
 	ReadyAPS();
@@ -167,7 +170,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	PortNumber = IntStrDup(PORT_WFC);
+	PortNumber = NULL;
 	ApsPortNumber = NULL;
 	Back = 5;
 	BaseDir = NULL;

@@ -317,12 +317,14 @@ dbgmsg(">StartWfc");
 		}
 		proc = New(Process);
 		proc->type = PTYPE_WFC;
-		argv = (char **)xmalloc(sizeof(char *) * 14);
+		argv = (char **)xmalloc(sizeof(char *) * 16);
 		proc->argv = argv;
 		argc = 0;
 		argv[argc ++] = WfcPath;
 		argv[argc ++] = "-back";
 		argv[argc ++] = IntStrDup(back+1);
+		argv[argc ++] = "-port";
+		argv[argc ++] = ThisEnv->TermPort->port;
 		argv[argc ++] = "-apsport";
 		argv[argc ++] = ThisEnv->WfcApsPort->port;
 

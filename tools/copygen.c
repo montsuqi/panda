@@ -205,6 +205,10 @@ _COBOL(
 		sprintf(buff,"PIC X(%d)",ValueStringLength(val));
 		PutString(buff);
 		break;
+	  case	GL_TYPE_OBJECT:
+		sprintf(buff,"PIC X(%d)",sizeof(int)+SIZE_OID);
+		PutString(buff);
+		break;
 	  case	GL_TYPE_NUMBER:
 		if		(  ValueFixedSlen(val)  ==  0  ) {
 			sprintf(buff,"PIC S9(%d)",ValueFixedLength(val));
