@@ -550,7 +550,7 @@ main(
 	signal(SIGUSR1,(void *)StopSystem);
 	signal(SIGHUP,(void *)StopApss);
 
-	if		(  !fRedirect  ) {
+	if		(  !fRedirector  ) {
 		fNoCheck = TRUE;
 	}
 	InitSystem();
