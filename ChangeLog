@@ -1,3 +1,8 @@
+2004-05-26  Kouji SHIMIZU  <shimizu@netlab.jp>
+
+	* glclient/client.c (main): Gtkのスタイルファイルの読み込み機能を
+	追加。コマンドラインオプション`-gtkrc'で指定する。
+
 2004-05-24  Kouji SHIMIZU  <shimizu@netlab.jp>
 
 	* tools/recgen.rb (Widget::_panda): GtkPandaCListのプロパティにrow(int)を追加

@@ -70,6 +70,7 @@ copies.
 static	char	*PortNumber;
 static	char	*Cache;
 static	char	*Style;
+static	char	*Gtkrc;
 
 static	void
 InitData(void)
@@ -96,6 +97,8 @@ static	ARG_TABLE	option[] = {
 		"キャッシュディレクトリ名"						},
 	{	"style",	STRING,		TRUE,	(void*)&Style,
 		"スタイルファイル名"							},
+	{	"gtkrc",	STRING,		TRUE,	(void*)&Gtkrc,
+		"Gtkスタイルファイル名"							},
 	{	"user",		STRING,		TRUE,	(void*)&User,
 		"ユーザ名"										},
 	{	"pass",		STRING,		TRUE,	(void*)&Pass,
@@ -130,6 +133,7 @@ SetDefault(void)
 	CurrentApplication = "demo";
 	Cache = "cache";
 	Style = "";
+	Gtkrc = "";
 	User = getenv("USER");
 	Pass = "";
 	Protocol1 = TRUE;
@@ -216,6 +220,10 @@ main(
 	if		(  *Style  !=  0  ) {
 		StyleParser(Style);
 	}
+
+    if (*Gtkrc != '\0') {
+        gtk_rc_parse(Gtkrc);
+    }
 
 	InitNET();
 	port = ParPort(PortNumber,PORT_GLTERM);
