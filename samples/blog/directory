@@ -22,16 +22,22 @@ ld	{
 	blog;
 };
 
+bd	{
+	blog;
+};
+
 blob	{
 	space	"=/blog";
 	port	"/tmp/blog.blob";
-	auth	"=/password";
+	auth	"=/blog/passwd";
 };
 
 db_group	"blog_body"	{
 	type		"NativeBLOB";
 #	port		"localhost";
 #	name		"blog";
+	user		"ogochan";
+	password	"ogochan";
 };
 
 db_group	"blog_meta"	{

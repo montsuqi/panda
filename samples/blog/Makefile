@@ -12,7 +12,7 @@ LINKREC		=	$(TOP)/link.rec
 DBGEN = $(TOOLDIR)/dbgen -record $(TOP)
 COPYGEN = $(TOOLDIR)/copygen -dir $(DIRECTORY) -ddir $(TOP) -record $(TOP)
 
-TARGET		=	entry.so
+TARGET		=	entry.so btest.so
 SOURCES		=	entry.c
 LDNAME		=	blog
 DBFILES		=	blog_entry.db
