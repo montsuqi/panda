@@ -1566,6 +1566,7 @@ dbgmsg(">_DBACCESS");
 				ExecPGSQL(dbg,ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
+				ctrl->rc = MCP_BAD_OTHER;
 				rc = FALSE;
 			}
 		}
