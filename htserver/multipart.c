@@ -39,6 +39,7 @@ copies.
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
+#include	"cgi.h"
 #include	"multipart.h"
 #include	"debug.h"
 
@@ -145,7 +146,7 @@ ParseValue(char **s)
 static char *
 ParseParameter(char **s, char *name)
 {
-    char *p = *s, *value;
+    char *p = *s;
     int len = strlen(name);
 
     if (strncmp(p, name, len) == 0 &&
@@ -295,7 +296,6 @@ ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
 {
     char *name, *filename, *value;
     int value_len;
-    char buf[SIZE_BUFF];
     int boundary_type;
 
 ENTER_FUNC;
@@ -327,7 +327,6 @@ ParseMultipart(FILE *fp, char *boundary,
 {
     char buf[SIZE_BUFF];
 	int  rc;
-    char *p;
     char delimiter[STR_LITERAL_LENGTH("--") +
                    MAX_BOUNDARY_SIZE +
                    STR_LITERAL_LENGTH("\r\n") +

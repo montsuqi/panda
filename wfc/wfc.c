@@ -40,6 +40,7 @@ copies.
 #include	<signal.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
+#include    <sys/select.h>
 #include	<fcntl.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
@@ -60,6 +61,7 @@ copies.
 #include	"corethread.h"
 #include	"termthread.h"
 #include	"controlthread.h"
+#include	"blobthread.h"
 #include	"blob.h"
 #include	"option.h"
 #include	"message.h"
@@ -75,7 +77,6 @@ static	char	*PortNumber;
 static	char	*ControlPortNumber;
 static	int		Back;
 static	char	*Directory;
-static	char	*BLOB_Dir;
 
 static	Port	*ApsPort;
 static	Port	*WfcPort;

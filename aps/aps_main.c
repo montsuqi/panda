@@ -46,6 +46,7 @@ copies.
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"directory.h"
 #include	"dblib.h"
 #include	"dbgroup.h"
@@ -138,8 +139,7 @@ dbgmsg("<FinishSession");
 static	void
 ExecuteServer(void)
 {
-	int		fhWFC
-	,		_fh;
+	int		fhWFC;
 	Port	*port;
 	NETFILE		*fpWFC;
 	ProcessNode	*node;
@@ -156,7 +156,8 @@ ENTER_FUNC;
 		Error("WFC not ready");
 	}
 	fpWFC = SocketToNet(fhWFC);
-	SendString(fpWFC,ThisLD->name);
+	SendStringDelim(fpWFC,ThisLD->name);
+	SendStringDelim(fpWFC,"\n");
 	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
 		Error("invalid LD name");
 	}

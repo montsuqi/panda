@@ -113,6 +113,21 @@ LEAVE_FUNC;
 }
 
 extern	void
+RecvnString(
+	NETFILE	*fp,
+	size_t  size,
+	char	*str)
+{
+	size_t  lsize;
+ENTER_FUNC;
+    lsize = RecvLength(fp);
+    size = ( size < lsize ? size : lsize );
+	Recv(fp,str,size);
+	str[size] = 0;
+LEAVE_FUNC;
+}
+
+extern	void
 SendLBS(
 	NETFILE	*fp,
 	LargeByteString	*lbs)
@@ -243,8 +258,6 @@ SendObject(
 	NETFILE	*fp,
 	MonObjectType	obj)
 {
-	int		i;
-
 	SendUInt64(fp,obj);
 }
 

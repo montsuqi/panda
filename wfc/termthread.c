@@ -45,6 +45,7 @@ copies.
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"queue.h"
 #include	"directory.h"
 #include	"wfcdata.h"
@@ -128,13 +129,13 @@ dbgmsg(">InitSession");
 		data->fKeep = FALSE;
 	}
 	ON_IO_ERROR(fp,badio);
-	RecvString(fp,data->hdr->term);		ON_IO_ERROR(fp,badio);
-	RecvString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
+	RecvStringDelim(fp,SIZE_NAME,data->hdr->term);		ON_IO_ERROR(fp,badio);
+	RecvStringDelim(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
 	sprintf(msg,"[%s:%s] session start",data->hdr->term,data->hdr->user);
 	MessageLog(msg);
 	dbgprintf("term = [%s]",data->hdr->term);
 	dbgprintf("user = [%s]",data->hdr->user);
-	RecvString(fp,buff);	/*	LD name	*/		ON_IO_ERROR(fp,badio);
+	RecvStringDelim(fp,SIZE_NAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
 	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )
 			   !=  NULL  ) {
 		data->ld = ld;
@@ -184,7 +185,6 @@ ReadTerminal(
 {
 	LD_Node	*ld;
 	WindowBind	*bind;
-	int			ix;
 	Bool		fExit;
 
 ENTER_FUNC;
@@ -194,9 +194,9 @@ ENTER_FUNC;
 		switch	(RecvPacketClass(fp)) {
 		  case	WFC_DATA:
 			dbgmsg("recv DATA");
-			RecvString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
-			RecvString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
-			RecvString(fp,data->hdr->event);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,data->hdr->event);	ON_IO_ERROR(fp,badio);
 			dbgprintf("window = [%s]",data->hdr->window);
 			dbgprintf("widget = [%s]",data->hdr->widget);
 			dbgprintf("event  = [%s]",data->hdr->event);
@@ -253,7 +253,6 @@ SendTerminal(
 	int			i;
 	Bool		rc;
 	WindowBind	*bind;
-	int			ix;
 	Bool		fExit;
 	char		wname[SIZE_LONGNAME+1];
 
@@ -286,7 +285,7 @@ ENTER_FUNC;
 				break;
 			  case	WFC_DATA:
 				dbgmsg("DATA");
-				RecvString(fp,wname);				ON_IO_ERROR(fp,badio);
+				RecvnString(fp,SIZE_NAME,wname);				ON_IO_ERROR(fp,badio);
 				bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,wname);
 				if		(	(  bind      !=  NULL  )
 						&&	(  bind->ix  >=  0     ) )	{

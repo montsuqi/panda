@@ -44,6 +44,7 @@ copies.
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
+#include	"auth.h"
 #include	"comm.h"
 #include	"dirs.h"
 #include	"socket.h"

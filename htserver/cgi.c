@@ -36,6 +36,7 @@ copies.
 #include	<errno.h>
 #include	<iconv.h>
 #include	<dirent.h>
+#include	<time.h>
 
 #include	<sys/mman.h>
 #include	<sys/stat.h>
@@ -85,7 +86,7 @@ LEAVE_FUNC;
 char *
 SaveArgValue(char *name, char *value, Bool fSave)
 {
-    char *val, *str;
+    char    *val;
 
     if ((val = LoadValue(name)) != NULL) {
         char *str, *ret;
@@ -136,7 +137,6 @@ RemoveValue(
 	char		*name)
 {
 	CGIValue	*val;
-	char		*value;
 
     if		(  ( val = g_hash_table_lookup(Values, name) )  !=  NULL  )	{
 		g_hash_table_remove(Values,name);
@@ -242,7 +242,7 @@ dbgprintf("size = %d\n",strlen(str));
 	return	(cbuff);
 }
 
-extern	char	*
+extern  void
 LBS_EmitUTF8(
 	LargeByteString	*lbs,
 	char			*str,
@@ -303,8 +303,6 @@ static	void
 StartScanEnv(
 	char	*env)
 {
-	int		c;
-
 	ScanArgValue = env;
 
 #if	0
@@ -604,11 +602,8 @@ extern	Bool
 PutSessionValues(void)
 {
 	char	fname[SIZE_LONGNAME+1];
-	char	name[SIZE_BUFF];
-	byte	value[SIZE_BUFF];
 	Bool	ret;
 	FILE	*fp;
-	char	*p;
 	char	*sesid;
 
 ENTER_FUNC;
@@ -688,7 +683,7 @@ ENTER_FUNC;
 		}
 		iconv_close(cd);
 	} else {
-		fprintf(output,"%s\n",LBS_Body(lbs));
+		fprintf(output,"%s\n",(char *)LBS_Body(lbs));
 	}
 LEAVE_FUNC;
 }
@@ -697,9 +692,7 @@ extern	void
 PutHTML(
 	LargeByteString	*html)
 {
-	char	*sesid
-		,	*server;
-	int		c;
+	char	*sesid;
 
 ENTER_FUNC;
 	printf("Content-Type: text/html; charset=%s\r\n", Codeset);

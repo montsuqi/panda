@@ -45,6 +45,7 @@ copies.
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"queue.h"
 #include	"directory.h"
 #include	"wfcdata.h"
@@ -64,7 +65,7 @@ InitSession(
 	char	name[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-	RecvString(fp,name);
+	RecvStringDelim(fp,SIZE_LONGNAME,name);
 	if		(  strcmp(name,ThisEnv->name)  ==  0  ) {
 		SendPacketClass(fp,WFCCONTROL_OK);
 		ret = TRUE;

@@ -1050,9 +1050,9 @@ DI_Parser(
 	Bool    parse_ld)
 {
 	struct	stat	stbuf;
-	DI_Struct	*ret;PushLexInfo
+	DI_Struct		*ret;
 
-dbgmsg(">DI_Parser");
+ENTER_FUNC;
 	DirectoryDir = dirname(StrDup(name));
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  PushLexInfo(name,DirectoryDir,Reserved)  !=  NULL  ) {
@@ -1065,7 +1065,7 @@ dbgmsg(">DI_Parser");
         fprintf(stderr, "DI file not found\n");
         exit(1);
 	}
-dbgmsg("<DI_Parser");
+LEAVE_FUNC;
 	return	(ret);
 }
 

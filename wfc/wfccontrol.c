@@ -43,6 +43,7 @@ copies.
 #include	"value.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"dirs.h"
 #include	"wfcdata.h"
 #include	"controlthread.h"
@@ -64,7 +65,7 @@ Auth(
 {
 	Bool	ret;
 
-	SendString(fp,ThisEnv->name);
+	SendStringDelim(fp,ThisEnv->name);
 printf("name = [%s]\n",ThisEnv->name);
 	switch	(RecvPacketClass(fp)) {
 	  case	WFCCONTROL_OK:

@@ -42,6 +42,7 @@ copies.
 #include	"libmondai.h"
 #include	"socket.h"
 #include	"net.h"
+#include	"comm.h"
 #include	"comms.h"
 #include	"HTCparser.h"
 #include	"cgi.h"
@@ -245,8 +246,6 @@ PutFile(ValueStruct *file)
 {
     char *ctype_field;
     char *filename_field;
-    char *user_agent;
-    char *p;
 
     if ((ctype_field = LoadValue("_contenttype")) != NULL) {
         char *ctype = GetHostValue(ctype_field, FALSE);
@@ -303,10 +302,6 @@ static	void
 SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 {
     char *filename;
-    char buff[SIZE_BUFF * 3 + 1];
-    char *p, *pend;
-    int len = 0;
-    int x = 0;
 	CGIValue	cgivalue;
 
     filename = (char *) g_hash_table_lookup(htc->FileSelection, name);
@@ -363,7 +358,6 @@ Session(void)
 {
 	char	*user
 	,		*sesid
-	,		*button
 	,		*name
 	,		*file;
 	char	buff[SIZE_BUFF];
@@ -444,7 +438,6 @@ LEAVE_FUNC;
 static	void
 DumpV(void)
 {
-	char	buff[SIZE_BUFF];
 	void
 	DumpVs(
 			char		*name,

@@ -235,9 +235,8 @@ extern	void
 InitSystem(
 	char	*name)
 {
-	DBG_Struct	*Orig;
 
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	InitNET();
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);

@@ -223,7 +223,6 @@ SendWindow(
 	NETFILE		*fpComm)
 {
 	Bool	rc;
-	int		puttype;
 dbgmsg(">SendWindow");
 
 	rc = FALSE; 

@@ -82,7 +82,6 @@ EscapeString(LargeByteString *lbs, char *s)
 {
 	unsigned char *sp;
 	unsigned char *dp;
-	size_t i;
 	size_t len;
     size_t old_size;
 
@@ -126,7 +125,6 @@ EscapeStringInArray(LargeByteString *lbs, char *s)
 {
 	unsigned char *sp;
 	unsigned char *dp;
-	size_t i;
 	size_t len;
     size_t old_size;
 
@@ -304,13 +302,8 @@ ValueToSQL(
 	ValueStruct	*val)
 {
 	static	char	buff[SIZE_BUFF];
-	char	str[SIZE_BUFF+1];
 	Numeric	nv;
-	char	del
-	,		*p
-	,		*s;
 	Oid		id;
-	char	*name;
 
 	if		(  IS_VALUE_NIL(val)  ) {
 		LBS_EmitString(lbs,"null");
@@ -371,7 +364,7 @@ ValueToSQL(
 	}
 }
 
-static	char	*
+static	void
 KeyValue(
 	DBG_Struct	*dbg,
 	LargeByteString	*lbs,
@@ -380,14 +373,14 @@ KeyValue(
 {
 	ValueStruct	*val;
 
-dbgmsg(">KeyValue");
+ENTER_FUNC;
 	val = args;
 	while	(  *pk  !=  NULL  ) {
 		val = GetRecordItem(args,*pk);
 		pk ++;
 	}
-dbgmsg("<KeyValue");
 	ValueToSQL(dbg,lbs,val);
+LEAVE_FUNC;
 }
 
 static	char	*

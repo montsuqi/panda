@@ -56,7 +56,7 @@ extern	void	InitCGI(void);
 extern	char	*ConvUTF8(unsigned char *istr, char *code);
 extern	char	*ConvLocal(char *istr);
 
-extern	char	*LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
+extern	void	LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
 extern	void	GetArgs(void);
 extern	void	PutHTML(LargeByteString *html);
 extern	void	DumpValues(LargeByteString *html, GHashTable *args);

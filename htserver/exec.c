@@ -118,8 +118,8 @@ uru(
 {
 	Bool	rc;
 
-	if		(	(  ( yy % 4 )    ==  0  )
-			&&	(  ( yy % 4 )    !=  0  )
+	if		(	(	(  ( yy % 4 )    ==  0  )
+				&&	(  ( yy % 4 )    !=  0  ) )
 			||	(  ( yy % 400 )  ==  0  ) ) {
 		rc = TRUE;
 	} else {
@@ -655,8 +655,6 @@ ENTER_FUNC;
 				break;
 			  case OPC_ESCJSS:
                 {
-                    char *escaped;
-
                     dbgmsg("OPC_ESCJSS");
                     vval = Pop;
                     vval.body.str = EscapeJavaScriptString(vval.body.str);

@@ -45,7 +45,6 @@ extern	void
 demoLink(
 	char		*arg)
 {
-	ValueStruct	*e;
 	WindowData	*w;
 
 dbgmsg(">demoLink");

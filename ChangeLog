@@ -1,3 +1,12 @@
+2004-08-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfcの初期化シーケンスの時にはSendStringDelim/RecvStringDelimを使
+	うようにした
+
+	* blob/blob_v1.c: 領域管理情報を変更した
+
+	* blob/blob.c: BLOBのバージョンに配慮するようにした
+
 2004-08-10  Kouji TAKAO  <kouji@netlab.jp>
 
 	* configure.in (--with-ruby): Ruby-1.8を/usrや/usr/local以外にイン

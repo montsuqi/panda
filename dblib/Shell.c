@@ -150,7 +150,6 @@ _DBCOMMIT(
 	int			rc;
 	char		*p
 	,			*q;
-	int			c;
 
 dbgmsg(">_DBCOMMIT");
 	CheckDB_Redirect(dbg);

@@ -36,6 +36,7 @@ copies.
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
+#include	<math.h>
 #include    <sys/types.h>
 #include	<sys/stat.h>
 #include    <unistd.h>
@@ -214,7 +215,7 @@ GL_RecvLength(
 	Recv(fp,buff,sizeof(size_t));
 	return	(RECV32(*(size_t *)buff));
 }
-
+#if	0
 static	unsigned	int
 GL_RecvUInt(
 	NETFILE	*fp)
@@ -235,7 +236,7 @@ GL_SendUInt(
 	*(unsigned int *)buff = SEND32(data);
 	Send(fp,buff,sizeof(unsigned int));
 }
-
+#endif
 static	void
 GL_RecvString(
 	NETFILE	*fp,
@@ -311,14 +312,12 @@ GL_SendDataType(
 {
 	nputc(c,fp);
 }
-
+#if	0
 static	void
 GL_SendObject(
 	NETFILE	*fp,
 	MonObjectType	obj)
 {
-	int		i;
-
 	GL_SendUInt(fp,(unsigned int)obj);
 }
 
@@ -328,7 +327,7 @@ GL_RecvObject(
 {
 	return	((MonObjectType)GL_RecvUInt(fp));
 }
-
+#endif
 static	void
 GL_SendFixed(
 	NETFILE	*fp,
@@ -556,7 +555,6 @@ RecvValueSkip(
 	char			buff[SIZE_BUFF];
 	int				count
 	,				i;
-	Fixed	*xval;
 
 	type = GL_RecvDataType(fp);
 	switch	(type) {

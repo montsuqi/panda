@@ -42,6 +42,8 @@ copies.
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"blobreq.h"
+#include	"comm.h"
+#include	"comms.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -59,11 +61,6 @@ _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-	char	*host;
-	char	*port
-	,		*user
-	,		*dbname
-	,		*pass;
 	int		fh
 		,	rc;
 
@@ -75,8 +72,10 @@ dbgmsg(">_DBOPEN");
 		if		(	(  dbg->port  !=  NULL  )
 				&&	(  ( fh = ConnectSocket(dbg->port,SOCK_STREAM) )  >=  0  ) ) {
 			fpBlob = SocketToNet(fh);
-			SendString(fpBlob,dbg->user);
-			SendString(fpBlob,dbg->pass);
+			SendStringDelim(fpBlob,dbg->user);
+			SendStringDelim(fpBlob,"\n");
+			SendStringDelim(fpBlob,dbg->pass);
+			SendStringDelim(fpBlob,"\n");
 			if		(  RecvPacketClass(fpBlob)  !=  APS_OK  ) {
 				CloseNet(fpBlob);
 				fpBlob = NULL;
@@ -284,7 +283,7 @@ ENTER_FUNC;
 		}
 		if		(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
 			if		(  value  !=  NULL  ) {
-				NativePackVaule(NULL,value,v);
+				NativePackValue(NULL,value,v);
 				if		(  RequestWriteBLOB((NETFILE*)dbg->conn,APS_BLOB,
 											ValueObject(obj),value,size)  ==  size  ) {
 					rc = MCP_OK;
@@ -343,7 +342,7 @@ ENTER_FUNC;
 			if		(  value  !=  NULL  ) {
 				if		(  RequestReadBLOB((NETFILE*)dbg->conn,APS_BLOB,
 											ValueObject(obj),value,size)  ==  size  ) {
-					NativeUnPackVaule(NULL,value,v);
+					NativeUnPackValue(NULL,value,v);
 					rc = MCP_OK;
 				} else {
 					rc = MCP_BAD_OTHER;
@@ -472,8 +471,7 @@ _CheckBLOB(
 	ValueStruct		*args)
 {
 	int			rc;
-	ValueStruct	*obj
-		,		*f;
+	ValueStruct	*obj;
 
 ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
@@ -504,8 +502,7 @@ _DestroyBLOB(
 	ValueStruct		*args)
 {
 	int			rc;
-	ValueStruct	*obj
-		,		*f;
+	ValueStruct	*obj;
 
 ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
@@ -536,10 +533,6 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	DB_Struct	*db;
-	PathStruct	*path;
-	LargeByteString	*src;
-	int		ix;
 	Bool	rc;
 
 ENTER_FUNC;

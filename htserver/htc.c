@@ -39,6 +39,7 @@ copies.
 #include	"types.h"
 #include	"libmondai.h"
 #include	"cgi.h"
+#include	"HTClex.h"
 #include	"htc.h"
 #include	"debug.h"
 
@@ -51,7 +52,6 @@ GetHostValue(
 {
 	char	*value;
     ValueStruct *val;
-    char	*s;
 
 ENTER_FUNC;
 dbgprintf("name = [%s]\n",name);

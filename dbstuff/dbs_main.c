@@ -200,9 +200,7 @@ RecvData(
 	,		rname[SIZE_BUFF+1]
 	,		str[SIZE_BUFF+1];
 	char	*p;
-	int		rno;
 	ValueStruct		*value;
-	RecordStruct	*rec;
 
 	do {
 		RecvStringDelim(fpComm,SIZE_BUFF,buff);
@@ -231,10 +229,8 @@ WriteClientString(
 	,		vname[SIZE_BUFF+1];
 	char	buff[SIZE_BUFF+1];
 	ValueStruct	*value;
-	RecordStruct	*rec;
 	char	*p;
 	Bool	fName;
-	int		rno;
 
 dbgmsg(">WriteClientString");
 	SendStringDelim(fpComm,"Exec: ");

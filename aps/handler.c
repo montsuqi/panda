@@ -35,6 +35,7 @@ copies.
 #include	<string.h>
 #include	<dlfcn.h>
 #include	<glib.h>
+#include	<unistd.h>
 
 #include	"defaults.h"
 #include	"types.h"

@@ -391,7 +391,7 @@ _Combo(
 	Tag		*tag)
 {
 	char	name[SIZE_ARG];
-	char	*size, *onchange;
+	char	*size;
 	size_t	pos;
 
 dbgmsg(">_Combo");
@@ -656,7 +656,6 @@ _Button(
 {
 	char	*face
 	,		*event
-	,		*size
 		,	*onclick;
 	char	buf[SIZE_BUFF];
 
@@ -874,7 +873,7 @@ static void
 _List(HTCInfo *htc, Tag *tag)
 {
 	char	buf[SIZE_ARG];
-	char	*name, *label, *count, *size, *multiple, *onchange, *value;
+	char	*name, *label, *count, *size, *multiple, *value;
 	size_t	pos;
 
 dbgmsg(">_List");
@@ -1034,8 +1033,7 @@ _Select(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	buf[SIZE_ARG];
-	char	*name, *size, *multiple, *onchange;
+	char	*name, *size, *multiple;
 
 ENTER_FUNC;
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
@@ -1406,71 +1404,6 @@ dbgmsg(">_Calendar");
 dbgmsg("<_Calendar");
 }
 
-static	void
-_Td(
-	HTCInfo	*htc,
-	Tag	*tag)
-{
-        char	*rowspan
-	  ,		*colspan
-	  ,		*bgcolor
-	  ,		*align
-	  ,		*height
-	  ,		*width;
-dbgmsg(">_Td");
-        LBS_EmitString(htc->code, "<td");
-	if ((rowspan = GetArg(tag, "rowspan", 0)) != NULL) {
-	  LBS_EmitString(htc->code, " rowspan=\"");
-	  EmitCode(htc, OPC_NAME);
-	  LBS_EmitPointer(htc->code, StrDup(rowspan));
-	  EmitCode(htc, OPC_HSNAME);
-	  EmitCode(htc, OPC_EMITSTR);
-	  LBS_EmitString(htc->code, "\"");
-	}
-	if ((colspan = GetArg(tag, "colspan", 0)) != NULL) {
-	  LBS_EmitString(htc->code, " colspan=\"");
-	  EmitCode(htc, OPC_NAME);
-	  LBS_EmitPointer(htc->code, StrDup(colspan));
-	  EmitCode(htc, OPC_HSNAME);
-	  EmitCode(htc, OPC_EMITSTR);
-	  LBS_EmitString(htc->code, "\"");
-	}
-	if ((bgcolor = GetArg(tag, "bgcolor", 0)) != NULL) {
-	  LBS_EmitString(htc->code, " bgcolor=\"");
-	  EmitCode(htc, OPC_NAME);
-	  LBS_EmitPointer(htc->code, StrDup(bgcolor));
-	  EmitCode(htc, OPC_HSNAME);
-	  EmitCode(htc, OPC_EMITSTR);
-	  LBS_EmitString(htc->code, "\"");
-	}
-	if ((align = GetArg(tag, "align", 0)) != NULL) {
-	  LBS_EmitString(htc->code, " align=\"");
-	  EmitCode(htc, OPC_NAME);
-	  LBS_EmitPointer(htc->code, StrDup(align));
-	  EmitCode(htc, OPC_HSNAME);
-	  EmitCode(htc, OPC_EMITSTR);
-	  LBS_EmitString(htc->code, "\"");
-	}
-	if ((height = GetArg(tag, "height", 0)) != NULL) {
-	  LBS_EmitString(htc->code, " height=\"");
-	  EmitCode(htc, OPC_NAME);
-	  LBS_EmitPointer(htc->code, StrDup(height));
-	  EmitCode(htc, OPC_HSNAME);
-	  EmitCode(htc, OPC_EMITSTR);
-	  LBS_EmitString(htc->code, "\"");
-	}
-	if ((width = GetArg(tag, "width", 0)) != NULL) {
-	  LBS_EmitString(htc->code, " width=\"");
-	  EmitCode(htc, OPC_NAME);
-	  LBS_EmitPointer(htc->code, StrDup(width));
-	  EmitCode(htc, OPC_HSNAME);
-	  EmitCode(htc, OPC_EMITSTR);
-	  LBS_EmitString(htc->code, "\"");
-	}
-	Style(htc,tag);
-        LBS_EmitString(htc->code,">");
-dbgmsg("<_Td");
-}
 
 static	void
 _Htc(

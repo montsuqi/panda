@@ -41,6 +41,7 @@ copies.
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"queue.h"
 #include	"wfcdata.h"
 #include	"wfc.h"
@@ -49,6 +50,7 @@ copies.
 #include	"corethread.h"
 #include	"directory.h"
 #include	"blob.h"
+#include	"blobserv.h"
 #include	"driver.h"
 #include	"debug.h"
 
@@ -193,9 +195,9 @@ ENTER_FUNC;
 		switch	( c = RecvPacketClass(fp) ) { 
 		  case	APS_CTRLDATA:
 			flag = RecvChar(fp);				ON_IO_ERROR(fp,badio);
-			RecvString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
-			RecvString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
-			RecvString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,hdr->user);			ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,hdr->window);			ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,hdr->widget);			ON_IO_ERROR(fp,badio);
 			hdr->puttype = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
 			done = TRUE;
 			break;
@@ -235,7 +237,7 @@ dbgmsg("send");
 			for	( i = 0 ; i < n ; i ++ ) {
 				data->w.control[data->w.n].PutType = (byte)RecvInt(fpLD);
 				ON_IO_ERROR(fpLD,badio);
-				RecvString(fpLD,data->w.control[data->w.n].window);
+				RecvnString(fpLD,SIZE_NAME,data->w.control[data->w.n].window);
 				ON_IO_ERROR(fpLD,badio);
 				data->w.n ++;
 			}
@@ -566,9 +568,7 @@ ReadyAPS(void)
 {
 	int		i
 	,		j;
-	int		fh;
 	LD_Struct	*info;
-	NETFILE	*fp;
 	LD_Node	*ld;
 
 ENTER_FUNC;
@@ -618,7 +618,7 @@ dbgmsg(">ConnectAps");
 		Error("INET Domain Accept");
 	}
 	fp = SocketToNet(fhAps);
-	RecvString(fp,buff);
+	RecvStringDelim(fp,SIZE_BUFF,buff);
 #ifdef	DEBUG
 	printf("connect %s\n",buff);
 #endif

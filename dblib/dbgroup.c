@@ -101,23 +101,6 @@ dbgmsg(">InitDBG");
 dbgmsg("<InitDBG");
 }
 
-static	char	*
-TempName(
-	char	*buff,
-	size_t	size)
-{
-	int		fd;
-	char	*ret;
-
-	if		(  ( fd = mkstemp(buff) )  >  0  ) {
-		ret = buff;
-		close(fd);
-	} else {
-		ret = NULL;
-	}
-	return	(ret);
-}
-
 static	void
 SetUpDBG(void)
 {
@@ -226,8 +209,6 @@ ExecRedirectDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
 {
-	char	*p;
-
 	dbg->func->primitive->exec(dbg,sql,FALSE);
 }
 

@@ -66,6 +66,7 @@ libpandas_la_SOURCES	=		\
 	driver.c	driver.h	enum.h	\
 	front.c		front.h				\
 	comm.c		comm.h				\
+	comms.c		comms.h				\
 	auth.c		auth.h				\
 	authstub.c	authstub.h			\
 	load.c		load.h

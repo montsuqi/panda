@@ -47,6 +47,7 @@ copies.
 #include	"libmondai.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"directory.h"
 #include	"handler.h"
 #include	"defaults.h"
@@ -94,7 +95,6 @@ ExecuteDB_Server(
 	PathStruct		*path;
 	DB_Operation	*op;
 	size_t			size;
-	char			buff[SIZE_ARG];
 	int				rno
 		,			pno
 		,			ono;
@@ -408,21 +408,6 @@ dbgmsg("<StopDC");
 
 static	void
 _ReadyDC(
-	MessageHandler	*handler)
-{
-ENTER_FUNC;
-LEAVE_FUNC;
-}
-
-static	void
-_CleanUpDB(
-	MessageHandler	*handler)
-{
-	_StopDB(handler);
-}
-
-static	void
-_CleanUpDC(
 	MessageHandler	*handler)
 {
 ENTER_FUNC;

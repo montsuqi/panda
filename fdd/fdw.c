@@ -47,6 +47,7 @@ copies.
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
+#include	"comm.h"
 #include	"comms.h"
 #include	"socket.h"
 #include	"fdd.h"
@@ -81,7 +82,6 @@ ExecuteClient(
 		,	ac;
 	size_t	size
 	,		left;
-	char	*fn;
 
 #ifdef	USE_SSL
 	SSL_CTX	*ctx;
@@ -110,7 +110,7 @@ ExecuteClient(
 			SendStringDelim(net,buff);
 			sprintf(buff,"Filename: %s\n",(( remotename != NULL ) ? remotename : localname));
 			SendStringDelim(net,buff);
-			sprintf(buff,"Size: %d\n",stbuf.st_size);
+			sprintf(buff,"Size: %d\n",(int)stbuf.st_size);
 			SendStringDelim(net,buff);
 
 			SendStringDelim(net,"\n");

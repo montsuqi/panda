@@ -144,7 +144,6 @@ WriteClient(
 	char	buff[SIZE_BUFF+1];
 	char	*vname
 	,		*wname;
-	char	*str;
 	WindowData	*win;
 	ValueStruct	*value;
 	char	*p;
@@ -196,7 +195,6 @@ RecvScreenData(
 {
     char buff[SIZE_BUFF + 1];
 	char *vname, *wname;
-	char *p;
 	WindowData	*win;
 	ValueStruct	*value;
     LargeByteString *lbs;
@@ -256,7 +254,6 @@ RecvMessage(int sock, int *fd, void *data, size_t datalen)
 {
     struct msghdr msg;
     struct iovec vec[2];
-    char buf[1];
     int len;
 
     struct {
@@ -298,7 +295,6 @@ SesServer(
 	HTC_Node	htc;
 	fd_set		ready;
 	struct	timeval	timeout;
-    int len;
 
 dbgmsg(">SesServer");
 	do {
@@ -456,7 +452,6 @@ SendMessage(int sock, int fd, void *data, size_t datalen)
 {
     struct msghdr msg;
     struct iovec vec[1];
-    char buf[1];
 
     struct {
 	struct cmsghdr hdr;

@@ -309,13 +309,6 @@ static void
 MakeInsert(
 	RecordStruct	*rec)
 {
-
-	char	***item
-	,		**pk;
-	KeyStruct	*key;
-
-	Bool	fComm;
-
 	if		(  ( ValueAttribute(rec->value) & GL_ATTR_VIRTUAL )  ==  0  ) {
 		printf("insert into %s (\n",rec->name);
     }

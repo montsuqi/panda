@@ -124,8 +124,6 @@ DumpItems(
 	int			n,
 	ValueStruct	*value)
 {
-	int		i;
-
 	nTab = n;
 	_DumpItems(value);
 }
@@ -169,7 +167,6 @@ _DumpOps(
 	int		c;
 	int		n;
 	Bool	fIntoAster;
-	ValueStruct	*val;
 
 	RewindLBS(sql);
 	printf("\t\t\t\tlength = %d\n",LBS_Size(sql));

@@ -50,6 +50,7 @@ copies.
 #include	"types.h"
 #include	"libmondai.h"
 #include	"comms.h"
+#include	"comm.h"
 #include	"socket.h"
 #include	"fdd.h"
 #include	"option.h"
@@ -294,7 +295,6 @@ main(
 	char	**argv)
 {
 	FILE_LIST	*fl;
-	char		*name;
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);

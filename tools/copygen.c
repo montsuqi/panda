@@ -669,10 +669,8 @@ MakeDBREC(
 	BD_Struct	*bd;
 	RecordStruct	**dbrec
 		,			*rec;
-	DB_Struct		*db;
 	PathStruct		*path;
 	DB_Operation	*op;
-	ValueStruct		*value;
 	GHashTable		*dbtable;
 	size_t			arraysize
 	,				textsize;

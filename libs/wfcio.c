@@ -35,6 +35,7 @@ copies.
 
 #include	"libmondai.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"wfcdata.h"
 #include	"wfcio.h"
 #include	"blobreq.h"
@@ -66,9 +67,12 @@ dbgmsg(">ConnectTermServer");
 	} else {
 		SendPacketClass(fp,WFC_FALSE);
 	}		
-	SendString(fp,term);
-	SendString(fp,user);
-	SendString(fp,arg);
+	SendStringDelim(fp,term);
+	SendStringDelim(fp,"\n");
+	SendStringDelim(fp,user);
+	SendStringDelim(fp,"\n");
+	SendStringDelim(fp,arg);
+	SendStringDelim(fp,"\n");
 	buff = NewLBS();
 dbgmsg("<ConnectTermServer");
 	return	(fp); 
@@ -80,7 +84,6 @@ _ForwardBLOB(
 	ValueStruct	*value)
 {
 	int		i;
-	FILE	*fpBLOB;
 
 ENTER_FUNC;
 	if		(  value  ==  NULL  )	return;
@@ -227,7 +230,6 @@ _FeedBLOB(
 	ValueStruct	*value)
 {
 	int		i;
-	FILE	*fpBLOB;
 
 ENTER_FUNC;
 	if		(  value  ==  NULL  )	return;

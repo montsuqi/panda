@@ -45,9 +45,12 @@ copies.
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"directory.h"
 #include	"wfcdata.h"
 #include	"wfc.h"
+#include	"auth.h"
+#include	"authstub.h"
 #include	"blobthread.h"
 #include	"blobcom.h"
 #include	"message.h"
@@ -63,8 +66,8 @@ InitSession(
 	Bool	rc;
 
 ENTER_FUNC;
-	RecvString(fp,user);		ON_IO_ERROR(fp,badio);
-	RecvString(fp,pass);		ON_IO_ERROR(fp,badio);
+	RecvStringDelim(fp,SIZE_NAME,user);		ON_IO_ERROR(fp,badio);
+	RecvStringDelim(fp,SIZE_NAME,pass);		ON_IO_ERROR(fp,badio);
 	dbgprintf("user = [%s]\n",user);
 	dbgprintf("pass = [%s]\n",pass);
 	rc = FALSE;

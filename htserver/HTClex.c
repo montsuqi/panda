@@ -270,9 +270,9 @@ dbgmsg("<ReadyDirective");
 extern	int
 HTCLex(
 	Bool	fSymbol)
-{	int		c
-		,	c2
-	,		len;
+{
+	int		c;
+	size_t	len;
 	int		token;
 	char	*s;
 

@@ -155,9 +155,6 @@ static	void
 _ReadyDC(
 	MessageHandler	*handler)
 {
-	WindowBind	*bind;
-	int		i;
-
 ENTER_FUNC;
 	ApplicationTable = InitLoader(); 
 LEAVE_FUNC;

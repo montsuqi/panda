@@ -250,8 +250,7 @@ RecvPS(
 	GtkWidget	*widget,
 	NETFILE	*fp)
 {
-	char	buff[SIZE_BUFF]
-	,		name[SIZE_BUFF];
+	char	name[SIZE_BUFF];
 	int		nitem
 	,		i;
     LargeByteString *binary;
