@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- $Id: build.xml,v 1.1 2002-09-19 04:35:39 ozawa Exp $ -->
+<project name="panda-java" default="compile" basedir=".">
+
+  <!-- properties -->
+
+  <property name="clean.verbose" value="yes"/>
+  <property name="compile.verbose" value="no"/>
+
+  <property name="src.dir" value="src"/>
+
+  <property name="build.dir" value="build"/>
+  <property name="build.doc.dir" value="${build.dir}/doc"/>
+  <property name="build.api.dir" value="${build.doc.dir}/api"/>
+
+  <property name="report.dir" value="report"/>
+  <property name="report.test.dir" value="${report.dir}/test"/>
+
+  <property name="dist.dir" value="dist"/>
+
+  <!-- targets -->
+
+  <target name="prepare"
+          description="Sets the timestamp and creates directories">
+    <tstamp/>
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.doc.dir}"/>
+    <mkdir dir="${build.api.dir}"/>
+
+    <mkdir dir="${report.dir}"/>
+    <mkdir dir="${report.test.dir}"/>
+
+    <mkdir dir="${dist.dir}"/>
+  </target> 
+
+  <target name="compile" depends="prepare"
+    description="Compiles the class files.">
+    <javac srcdir="${src.dir}" destdir="${build.dir}" source="1.3"
+           verbose="${compile.verbose}"
+           includes="**/*.java"/>
+  </target>
+
+  <target name="jars" depends="compile"
+          description="Deploy jars">
+    <echo message="does nothing yet."/>
+  </target>
+
+  <target name="test" depends="prepare,jars,testclean"
+          description="Runs the unit tests and generates HTML report.">
+    <junit fork="on" printsummary="on">
+      <classpath>
+        <pathelement path="${build.dir}"/>
+      </classpath>
+      <formatter type="xml"/>
+      <batchtest todir="${report.test.dir}">
+        <fileset dir="${src.dir}">
+          <include name="**/*.java"/>
+          <exclude name="**/*Test.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+    <junitreport todir="${report.dir}">
+      <fileset dir="${report.test.dir}" includes="TEST-*.xml"/>
+      <report format="frames" todir="${report.dir}"/>
+    </junitreport>
+  </target>
+
+  <target name="testclean"
+          description="Cleans test reports.">
+    <delete verbose="${clean.verbose}">
+      <fileset dir="${report.dir}"/>
+    </delete>
+  </target>
+
+  <target name="buildclean"
+          description="Cleans all built files.">
+    <delete verbose="${clean.verbose}">
+      <fileset dir="${build.dir}"/>
+    </delete>
+  </target>
+
+  <target name="clean"
+          description="Cleans temporary files and outputs.">
+    <delete verbose="${clean.verbose}">
+      <fileset dir="." defaultexcludes="no" includes="**/*~,**/.#*#"/>
+    </delete>
+  </target>
+
+  <target name="veryclean" depends="clean,buildclean,testclean"
+    description="Cleans all generated files.">
+    <delete dir="${build.dir}" verbose="${clean.verbose}"/>
+    <delete dir="${report.dir}" verbose="${clean.verbose}"/>
+    <delete dir="${dist.dir}" verbose="${clean.verbose}"/>
+  </target>
+
+</project>
+

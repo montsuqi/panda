@@ -1,4 +1,4 @@
-package org.montsuqi;
+package org.montsuqi.servers;
 
 import java.net.*;
 import java.util.*;

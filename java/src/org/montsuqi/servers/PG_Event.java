@@ -1,4 +1,4 @@
-package org.montsuqi;
+package org.montsuqi.servers;
 
 public class PG_Event {
 
