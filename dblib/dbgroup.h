@@ -29,7 +29,7 @@ copies.
 extern	DB_Func	*NewDB_Func(void);
 extern	DB_Func	*EnterDB_Function(char *name, DB_OPS *ops, DB_Primitives *primitive,
 								  char *commentStart, char *commentEnd);
-
+extern	void	OpenRedirectDB(DBG_Struct *dbg);
 
 #undef	GLOBAL
 #ifdef	MAIN

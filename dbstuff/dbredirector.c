@@ -131,7 +131,7 @@ FileThread(
 
 dbgmsg(">FileThread");
 	if		(  ThisDBG->dbname  !=  NULL  ) {
-		OpenDB(ThisDBG);
+		OpenRedirectDB(ThisDBG);
 	} else {
 		OpenDB_RedirectPort(ThisDBG);
 	}

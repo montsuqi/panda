@@ -181,7 +181,7 @@ dbgmsg(">ExecFunction");
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl.rc += ExecFunction(dbg,name,FALSE);
+			ctrl.rc += ExecFunction(dbg,name,fAll);
 		}
 	} else {
 		if		(	(  fAll  )
@@ -277,7 +277,7 @@ extern	void
 OpenRedirectDB(
 	DBG_Struct *dbg)
 {
-	ExecDBG_Operation(dbg,"DBOPEN");
+	ExecFunction(dbg,"DBOPEN",TRUE);
 }
 
 extern	void
