@@ -275,7 +275,6 @@ main(
 	char	**argv)
 {
 	FILE_LIST	*fl;
-	int		rc;
 
 	bannar();
 	SetDefault();
@@ -302,14 +301,15 @@ main(
 	glade_init();
 #endif
 
-    if (fDialog && !show_boot_dialog ())
-        return 0;
-
 	InitNET();
-
-    do {
-        start_client ();
-    } while (show_boot_dialog ());
     
-	return	(rc);
+    if (!fDialog) {
+        start_client ();
+    }
+    else {
+        while (show_boot_dialog ())
+            start_client ();
+    }
+    
+	return 0;
 }

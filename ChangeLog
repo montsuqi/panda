@@ -1,5 +1,8 @@
 2004-07-09  Kouji TAKAO  <kouji@netlab.jp>
 
+	* glclient/client.c (main): -dialogを指定されたときだけ繰り返しセッ
+	ションを接続できるように修正
+
 	glclientを全てのウィンドウを閉じたときに再度ダイアログを表示できる
 	ように修正
 	
