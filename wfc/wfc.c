@@ -60,7 +60,6 @@ copies.
 #include	"mqthread.h"
 #include	"corethread.h"
 #include	"termthread.h"
-#include	"blob.h"
 #include	"option.h"
 #include	"message.h"
 #include	"debug.h"

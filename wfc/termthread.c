@@ -51,7 +51,6 @@ copies.
 #include	"wfcio.h"
 #include	"termthread.h"
 #include	"corethread.h"
-#include	"blob.h"
 #include	"driver.h"
 #include	"message.h"
 #include	"debug.h"
