@@ -313,7 +313,8 @@ dbgmsg(">HTCLex");
 		}	while	(	(  isalpha(c) )
 					 ||	(  isdigit(c) )
 					 ||	(  c  ==  '.' )
-					 ||	(  c  ==  '_' ) );
+					 ||	(  c  ==  '_' )
+					 ||	(  c  ==  ':' ) );
 		*s = 0;
 		HTCUnGetChar(c);
 		if		(  fSymbol  ) {

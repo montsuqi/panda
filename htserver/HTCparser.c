@@ -164,7 +164,20 @@ ParTag(
 dbgmsg(">ParTag");
 	if		(  GetSymbol  ==  T_SYMBOL  ) {
 dbgprintf("tag = [%s]\n",HTC_ComSymbol);
-		if		(  ( tag = g_hash_table_lookup(Tags,HTC_ComSymbol) )  !=  NULL  ) {
+		tag = g_hash_table_lookup(Tags, HTC_ComSymbol);
+
+        if (tag == NULL) {
+            if (strnicmp(HTC_ComSymbol, "/HTC:", 5) == 0) {
+                char buf[SIZE_SYMBOL + 1];
+                buf[0] = '/';
+                strcpy(buf + 1, HTC_ComSymbol + 5);
+                tag = g_hash_table_lookup(Tags, buf);
+            }
+            else if (strnicmp(HTC_ComSymbol, "HTC:", 4) == 0) {
+                tag = g_hash_table_lookup(Tags, HTC_ComSymbol + 4);
+            }
+        }
+		if		(  tag  !=  NULL  ) {
 			ParMacroTag(htc,tag);
 			tag->emit(htc,tag);
 		} else {
