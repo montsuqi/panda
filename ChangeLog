@@ -1,3 +1,9 @@
+2005-02-21  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/debug.h
+	* libs/message.c:
+	* libs/message.h: debug 関連のメッセージレベルの変更
+
 2005-02-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/term.c (TermToHost): dblib/System.cから移動して新設
