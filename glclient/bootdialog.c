@@ -35,6 +35,190 @@ copies.
 #include "bootdialog.h"
 
 /*********************************************************************
+ * ServerDialog
+ ********************************************************************/
+
+typedef struct _ServerDialog ServerDialog;
+struct _ServerDialog {
+  GtkWidget *dialog;
+  GtkWidget *server_list;
+  GtkWidget *edit;
+  GtkWidget *delete;
+
+  BDConfig *config;
+  gint is_changed;
+};
+
+static struct {
+  gchar *title;
+  gchar *value_name;
+} server_dialog_titles[] = {
+  { "Description", "description" },
+  { "Host",        "host" },
+  { "Port",        "port" },
+  { "Application", "application"},
+  { "User",        "user" },
+};
+static gint server_dialog_titles_count
+= sizeof (server_dialog_titles) / sizeof (server_dialog_titles[0]);
+
+static void
+server_dialog_server_list_update (ServerDialog * self)
+{
+  gchar *text_list[server_dialog_titles_count + 1];
+  GList *p;
+  gchar *hostname;
+  BDConfigSection *section;
+  gint i;
+  
+  g_return_if_fail (self != NULL);
+
+  gtk_clist_freeze (GTK_CLIST (self->server_list));
+  gtk_clist_clear (GTK_CLIST (self->server_list));
+
+  text_list[server_dialog_titles_count] = NULL;
+  for (p = bd_config_get_sections (self->config); p != NULL; p = g_list_next (p))
+    {
+      hostname = (gchar *) p->data;
+      if (strcmp (hostname, "glclient") == 0 || strcmp (hostname, "global") == 0)
+        continue;
+      section = bd_config_get_section (self->config, hostname);
+      for (i = 0; i < server_dialog_titles_count; i++)
+        text_list[i]
+          = bd_config_section_get_string (section, server_dialog_titles[i].value_name);
+      gtk_clist_append (GTK_CLIST (self->server_list), text_list);
+    }
+  gtk_clist_columns_autosize (GTK_CLIST (self->server_list));
+  
+  gtk_clist_thaw (GTK_CLIST (self->server_list));
+}                                  
+
+static gboolean
+server_dialog_on_delete_event (GtkWidget * widget, ServerDialog * self)
+{
+  gtk_main_quit ();
+  return TRUE;
+}
+
+static void
+server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
+{
+  
+}
+
+static void
+server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
+{
+  
+}
+
+static void
+server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
+{
+  
+}
+
+static void
+server_dialog_on_close (GtkWidget * widget, ServerDialog * self)
+{
+  gtk_main_quit ();
+}
+
+static ServerDialog *
+server_dialog_new (BDConfig * config)
+{
+  ServerDialog *self;
+  gchar *titles[server_dialog_titles_count];
+  GtkWidget *dialog;
+  GtkWidget *button;
+  GtkWidget *scroll;
+  GtkWidget *clist;
+  gint i;
+
+  self = g_new0 (ServerDialog, 1);
+  
+  self->config = config;
+
+  self->dialog = dialog = gtk_dialog_new ();
+  gtk_window_set_title (GTK_WINDOW (dialog), "Server Config");
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+  gtk_window_set_wmclass (GTK_WINDOW (dialog), "config", "glclient");
+  gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
+  gtk_signal_connect (GTK_OBJECT (dialog), "delete_event",
+                      GTK_SIGNAL_FUNC (server_dialog_on_delete_event), self);
+
+  /* buttons */
+  button = gtk_button_new_with_label ("New");
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+                      GTK_SIGNAL_FUNC (server_dialog_on_new), self);
+  gtk_widget_set_sensitive (button, FALSE);
+  self->edit = button = gtk_button_new_with_label ("Edit");
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+                      GTK_SIGNAL_FUNC (server_dialog_on_edit), self);
+  gtk_widget_set_sensitive (button, FALSE);
+  self->delete = button = gtk_button_new_with_label ("Delete");
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+                      GTK_SIGNAL_FUNC (server_dialog_on_delete), self);
+  gtk_widget_set_sensitive (button, FALSE);
+  button = gtk_button_new_with_label ("Close");
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+                      GTK_SIGNAL_FUNC (server_dialog_on_close), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default (button);
+
+  /* contents */
+  scroll = gtk_scrolled_window_new (NULL, NULL);
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll),
+                                  GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+  gtk_widget_set_usize (scroll, 450, 200);
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), scroll, TRUE, TRUE, 5);
+
+  for (i = 0; i < server_dialog_titles_count; i++)
+    titles[i] = server_dialog_titles[i].title;
+  self->server_list = clist = gtk_clist_new_with_titles (server_dialog_titles_count,
+                                                         titles);
+  gtk_clist_column_titles_show (GTK_CLIST (clist));
+  gtk_container_add (GTK_CONTAINER (scroll), clist);
+
+  server_dialog_server_list_update (self);
+    
+  return self;
+}
+
+static void
+server_dialog_free (ServerDialog * self)
+{
+  g_free (self);
+}
+
+static gboolean
+server_dialog_run (BDConfig *config)
+{
+  ServerDialog *self;
+  gboolean is_changed;
+
+  self = server_dialog_new (config);
+  
+  gtk_widget_show_all (self->dialog);
+  gtk_widget_grab_focus (self->dialog);
+  gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
+  gtk_main ();
+  gtk_window_set_modal (GTK_WINDOW (self->dialog), FALSE);
+  gtk_widget_destroy (self->dialog);
+
+  is_changed = self->is_changed;
+  
+  server_dialog_free (self);
+
+  return is_changed;
+}
+
+
+/*********************************************************************
  * BootDialog
  ********************************************************************/
 
@@ -160,6 +344,13 @@ boot_dialog_on_close (GtkWidget *close, BootDialog *self)
   self->is_connect = FALSE;
   gtk_widget_hide (self->dialog);
   gtk_main_quit ();
+}
+
+static void
+boot_dialog_on_config (GtkWidget * widget, BootDialog * self)
+{
+  (void *) widget; /* Note: escape compile warning */
+  server_dialog_run (config_);
 }
 
 static gboolean
@@ -358,9 +549,8 @@ boot_dialog_servers_update (BootDialog *self, BDConfig *config)
   GtkWidget *menu;
   GtkWidget *menuitem;
   gchar *hostname;
-  gint i;
-  BDConfigSection *section;
   gchar *desc;
+  gint i;
 
   server_list = NULL;
   for (p = bd_config_get_sections (config); p != NULL; p = g_list_next (p))
@@ -396,8 +586,7 @@ boot_dialog_servers_update (BootDialog *self, BDConfig *config)
     }
   g_list_free (server_list);
   
-  section = bd_config_get_section (config, "global");
-  hostname = bd_config_section_get_string (section, "hostname");
+  hostname = bd_config_get_string (config, "global", "hostname");
   boot_dialog_servers_set_hostname (self, hostname);
 }
 
@@ -405,7 +594,7 @@ static BootDialog *
 boot_dialog_new ()
 {
   BootDialog *self;
-  GtkWidget *dialog, *vbox, *welcome, *notebook, *table, *action_area, *connect, *close;
+  GtkWidget *dialog, *vbox, *welcome, *notebook, *table, *action_area, *button;
   GtkWidget *label, *entry, *hbox, *check, *alignment, *omenu;
   gint ypos;
 
@@ -578,15 +767,22 @@ boot_dialog_new ()
 
   action_area = GTK_DIALOG (dialog)->action_area;
 
-  connect = gtk_button_new_with_label ("connect");
-  gtk_box_pack_start (GTK_BOX (action_area), connect, TRUE, TRUE, 5);
-  gtk_signal_connect (GTK_OBJECT (connect), "clicked",
+  button = gtk_button_new_with_label ("connect");
+  gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (boot_dialog_on_connect), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_grab_default (button);
 
-  close = gtk_button_new_with_label ("close");
-  gtk_box_pack_start (GTK_BOX (action_area), close, TRUE, TRUE, 5);
-  gtk_signal_connect (GTK_OBJECT (close), "clicked",
+  button = gtk_button_new_with_label ("close");
+  gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (boot_dialog_on_close), self);
+  
+  button = gtk_button_new_with_label ("config");
+  gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
+  gtk_signal_connect (GTK_OBJECT (button), "clicked",
+                      GTK_SIGNAL_FUNC (boot_dialog_on_config), self);
 
   boot_dialog_set_value (self, config_);
     

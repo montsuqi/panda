@@ -1,3 +1,7 @@
+2004-07-14  Kouji TAKAO  <kouji@netlab.jp>
+
+	* glclient/bootdialog.c: サーバプリセット一覧表示機能を追加
+
 2004-07-13  Kouji TAKAO  <kouji@netlab.jp>
 
 	サーバプリセット選択GUIを追加
