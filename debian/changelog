@@ -1,3 +1,9 @@
+panda (1:1.0.7-0+0.orca.1) unstable; urgency=low
+
+  * New upstram release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 20 Aug 2002 17:55:21 +0900
+
 panda (1:1.0.6-0+0.orca.1) unstable; urgency=low
 
   * New upstream release.
