@@ -39,6 +39,7 @@ copies.
 #include	<sys/mman.h>
 #include	<sys/stat.h>
 #include	<fcntl.h>
+#include	<errno.h>
 #include	<libxslt/xslt.h>
 #include	<libxslt/xsltInternals.h>
 #include	<libxslt/transform.h>
