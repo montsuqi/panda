@@ -33,12 +33,6 @@ typedef	struct {
 	SendHandler	sfunc;
 }	HandlerNode;
 
-typedef	struct {
-	char	*window
-	,		*widget
-	,		*name;
-}	EventNode;
-
 extern	void		InitProtocol(void);
 extern	void		CheckScreens(FILE *fp, Bool);
 extern	XML_Node	*ShowWindow(char *wname, int type);
@@ -46,12 +40,12 @@ extern	Bool		SendConnect(FILE *fpComm, char *apl);
 extern	Bool		RecvWidgetData(GtkWidget *widget, FILE *fp);
 extern	Bool		SendWidgetData(char *name, GtkWidget *widget, FILE *fp);
 extern	void		RecvValue(FILE *fp, char *longname);
-extern	void		RegisterChangedHander(GtkObject *object, GtkSignalFunc func, gpointer data);
 extern	Bool		GetScreenData(FILE *fpComm);
+extern  void		SendWindowData(void);
 extern	void		SendEvent(FILE *fpComm, char *window, char *widget, char *event);
 extern	void		AddClass(GtkType type, RecvHandler rfunc, SendHandler sfunc);
+extern	void		ResetTimer(GtkWindow *window);
 
-extern	void		StartProtocolThread(void);
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -59,8 +53,5 @@ extern	void		StartProtocolThread(void);
 #else
 #define	GLOBAL		extern
 #endif
-
-GLOBAL	Queue	*ProtocolQueue;
-GLOBAL	Queue	*ProtocolDone;
 
 #endif
