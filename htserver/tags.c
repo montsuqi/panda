@@ -476,18 +476,12 @@ dbgmsg(">_Text");
 	EmitCode(htc,OPC_REFSTR);
 	LBS_EmitString(htc->code,"\"");
 	if		(  ( cols = GetArg(tag,"cols",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," cols=\"");
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(cols));
-		EmitCode(htc,OPC_EHSNAME);
-		LBS_EmitString(htc->code,"\"");
+		LBS_EmitString(htc->code," cols=");
+		EmitAttributeValue(htc,cols,TRUE,FALSE,FALSE);
 	}
 	if		(  ( rows = GetArg(tag,"rows",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," rows=\"");
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(rows));
-		EmitCode(htc,OPC_EHSNAME);
-		LBS_EmitString(htc->code,"\"");
+		LBS_EmitString(htc->code," rows=");
+		EmitAttributeValue(htc,rows,TRUE,FALSE,FALSE);
 	}
     JavaScriptEvent(htc, tag, "onchange");
     JavaScriptKeyEvent(htc, tag, "onkeydown");
