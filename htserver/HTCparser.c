@@ -53,10 +53,8 @@ static	Bool	fError;
 #define	GetName		(HTC_Token = HTCLex(TRUE))
 #define	GetChar		(HTC_Token = HTCGetChar())
 
-#undef	Error
-
-static	void
-Error(char *msg, ...)
+void
+HTC_Error(char *msg, ...)
 {
     va_list args;
 
@@ -137,22 +135,22 @@ ENTER_FUNC;
 								||	(  HTC_Token  ==  T_SCONST  ) ) {
 							AddPara(type,HTC_ComSymbol);
 						} else {
-							Error("invalid type argument");
+							HTC_Error("invalid type argument");
 						}
 					} else {
-						Error("= missing");
+						HTC_Error("= missing");
 					}
 				} else {
 					type->Para = (void *)1;
 				}
 			} else {
-				Error("unknown attribute for <%s>: %s",
+				HTC_Error("unknown attribute for <%s>: %s",
                       tag->name, HTC_ComSymbol);
                 if (  GetSymbol  ==  '='  )
                     GetSymbol;
 			}
 		} else {
-			Error("invalid tag: <%s>", tag->name);
+			HTC_Error("invalid tag: <%s>", tag->name);
 		}
 	}
 LEAVE_FUNC;
