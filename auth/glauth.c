@@ -103,6 +103,7 @@ dbgmsg(">ExecuteServer");
 			fp = SocketToNet(fd);
 			Session(fp);
 			CloseNet(fp);
+			exit(1);
 		}
 	}
 dbgmsg("<ExecuteServer");
@@ -127,6 +128,16 @@ InitSystem(void)
 {
 	InitPasswd(0);
 	InitData();
+}
+
+static	void
+OnChildExit(
+	int		ec)
+{
+dbgmsg(">OnChildExit");
+	while( waitpid(-1, NULL, WNOHANG) > 0 );
+	(void)signal(SIGCHLD, (void *)OnChildExit);
+dbgmsg("<OnChildExit");
 }
 
 static	ARG_TABLE	option[] = {
@@ -160,7 +171,8 @@ main(
 #ifdef	DEBUG
 #endif
 	InitNET();
-	signal(SIGHUP,InitPasswd);
+	(void)signal(SIGHUP, InitPasswd);
+	(void)signal(SIGCHLD, (void *)OnChildExit);
 
 	InitSystem();
 	ExecuteServer();
