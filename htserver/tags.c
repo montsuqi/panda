@@ -116,21 +116,16 @@ EmitAttributeValue(
 		LBS_EmitString(htc->code,"\"");
 	}
 	switch	(*str) {
-	  case	'$':
-		EmitCode(htc,OPC_VAR);
-		LBS_EmitPointer(htc->code,StrDup(str+1));
-		EmitCode(htc,OPC_REFSTR);
-		break;
-	  case	'#':
-		EmitCode(htc,OPC_VAR);
-		LBS_EmitPointer(htc->code,StrDup(str+1));
-		EmitCode(htc,OPC_REFINT);
-		break;
-	  default:
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(str));
-		EmitCode(htc,OPC_HSNAME);
-		break;
+        case '$':
+            EmitCode(htc,OPC_NAME);
+            LBS_EmitPointer(htc->code,StrDup(str+1));
+            EmitCode(htc,OPC_HSNAME);
+            break;
+        default:
+            EmitCode(htc,OPC_NAME);
+            LBS_EmitPointer(htc->code,StrDup(str));
+            EmitCode(htc,OPC_REFSTR);
+            break;
 	}
 	if		(  fQuote  ) {
 		LBS_EmitString(htc->code,"\"");
@@ -214,7 +209,9 @@ dbgmsg(">_Fixed");
 		LBS_EmitString(htc->code,"<span");
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">");
-		EmitAttributeValue(htc,name,FALSE);
+        EmitCode(htc,OPC_NAME);
+        LBS_EmitPointer(htc->code,StrDup(name));
+        EmitCode(htc,OPC_HSNAME);
 		LBS_EmitString(htc->code,"</span>");
 	}
 dbgmsg("<_Fixed");
@@ -711,6 +708,27 @@ dbgmsg("<_eLink");
 }
 
 static	void
+_Panel(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*name;
+dbgmsg(">_Panel");
+	LBS_EmitString(htc->code,"<div");
+    Style(htc,tag);
+    LBS_EmitString(htc->code,">");
+dbgmsg("<_Panel");
+}
+
+static void
+_ePanel(HTCInfo *htc, Tag *tag)
+{
+dbgmsg(">_ePanel");
+	LBS_EmitString(htc->code, "</div>");
+dbgmsg("<_ePanel");
+}
+
+static	void
 _Htc(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -834,6 +852,11 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	tag = NewTag("/LINK",_eLink);
+
+	tag = NewTag("PANEL", _Panel);
+	AddArg(tag, "id", TRUE);
+	AddArg(tag, "class", TRUE);
+	tag = NewTag("/PANEL", _ePanel);
 
 	tag = NewTag("HTC",_Htc);
 	AddArg(tag,"coding",TRUE);
