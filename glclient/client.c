@@ -206,11 +206,18 @@ show_boot_dialog ()
     Pass = prop.password;
 #ifdef	USE_SSL
 	fSsl = prop.ssl;
-	KeyFile = prop.key;
-	CertFile = prop.cert;
-	fVerify = TRUE;
-	CA_Path = prop.CApath;
-	CA_File = prop.CAfile;
+	if ( strlen(prop.key) != 0 ){
+		KeyFile = prop.key;
+	}
+	if ( strlen(prop.cert) != 0 ){
+		CertFile = prop.cert;
+	}
+	if ( strlen(prop.CApath) != 0 ){
+		CA_Path = prop.CApath;
+	}
+	if ( strlen(prop.CAfile) != 0 ){	
+		CA_File = prop.CAfile;
+	}
 #endif
     return TRUE;
 }
