@@ -15,8 +15,8 @@
 
 <widget>
   <class>GtkWindow</class>
-  <name>blob</name>
-  <title>window1</title>
+  <name>entry</name>
+  <title>entry</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
@@ -77,6 +77,115 @@
     </widget>
 
     <widget>
+      <class>GtkHBox</class>
+      <name>hbox3</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
+      <child>
+	<padding>0</padding>
+	<expand>True</expand>
+	<fill>True</fill>
+      </child>
+
+      <widget>
+	<class>Placeholder</class>
+      </widget>
+
+      <widget>
+	<class>GtkNumberEntry</class>
+	<name>date.year</name>
+	<width>50</width>
+	<can_focus>True</can_focus>
+	<editable>True</editable>
+	<format>9999</format>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>label1</name>
+	<label>Ç¯</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkNumberEntry</class>
+	<name>date.month</name>
+	<width>25</width>
+	<can_focus>True</can_focus>
+	<editable>True</editable>
+	<format>Z9</format>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>label2</name>
+	<label>·î</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkNumberEntry</class>
+	<name>date.day</name>
+	<width>25</width>
+	<can_focus>True</can_focus>
+	<editable>True</editable>
+	<format>Z9</format>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+
+      <widget>
+	<class>GtkLabel</class>
+	<name>label3</name>
+	<label>Æü</label>
+	<justify>GTK_JUSTIFY_CENTER</justify>
+	<wrap>False</wrap>
+	<xalign>0.5</xalign>
+	<yalign>0.5</yalign>
+	<xpad>0</xpad>
+	<ypad>0</ypad>
+	<child>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>False</fill>
+	</child>
+      </widget>
+    </widget>
+
+    <widget>
       <class>GtkScrolledWindow</class>
       <name>scrolledwindow1</name>
       <width>250</width>
@@ -93,14 +202,14 @@
 
       <widget>
 	<class>GtkPandaText</class>
-	<name>text</name>
+	<name>body</name>
 	<can_focus>True</can_focus>
 	<signal>
 	  <name>changed</name>
-	  <handler>changed</handler>
-	  <last_modification_time>Fri, 23 Jul 2004 14:29:54 GMT</last_modification_time>
+	  <handler>text_changed</handler>
+	  <last_modification_time>Fri, 30 Jul 2004 09:20:00 GMT</last_modification_time>
 	</signal>
-	<editable>False</editable>
+	<editable>True</editable>
 	<text></text>
 	<xim_enabled>True</xim_enabled>
       </widget>

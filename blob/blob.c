@@ -78,7 +78,7 @@ ENTER_FUNC;
 		if		(  ( ent->mode & BLOB_OPEN_CREATE )  !=  0  ) {
 			flag = O_CREAT;
 		} else {
-			flag = (  ( ent->mode & BLOB_OPEN_APPEND )  !=  0  )  ? O_APPEND : 0;
+			flag = (  ( ent->mode & BLOB_OPEN_APPEND )  !=  0  )  ? O_APPEND : O_TRUNC;
 		}
 		if		(  ( ent->mode & BLOB_OPEN_READ )  !=  0  ) {
 			flag |= O_RDWR;
@@ -238,11 +238,11 @@ ENTER_FUNC;
 		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
 			oid = atoi(buff);
 		} else {
-			oid = 0;
+			oid = 1;
 		}
 		fclose(fp);
 	} else {
-		oid = 0;
+		oid = 1;
 	}
 
 	blob = New(BLOB_Space);
@@ -285,7 +285,7 @@ OpenBLOB(
 
 ENTER_FUNC;
 	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
-		ret = NewBLOB(blob,obj,mode);
+		ret = NewBLOB(blob,obj,mode) ? 0 : -1;
 	} else {
 		if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  ==  NULL  ) {
 			LockBLOB(blob);

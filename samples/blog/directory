@@ -1,0 +1,30 @@
+name	blog;
+
+base	"~/MONTSUQI/panda/samples";
+
+ddir	"=/blog";
+record	"=/blog";
+blob	"=/blog";
+
+linkage		link;
+
+multiplex_level	no;
+
+control {
+	port	"/tmp/blog.control";
+};
+
+wfc	{
+	port		"/tmp/blog.wfc";
+	termport	"/tmp/blog.term";
+};
+
+ld	{
+	blog;
+};
+
+db_group	"blog"	{
+	type		"PostgreSQL";
+	port		"localhost";
+	name		"blog";
+};

@@ -1,0 +1,3 @@
+samplespa	{
+	dummy	varchar(2);
+};

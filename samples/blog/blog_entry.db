@@ -1,0 +1,37 @@
+blog_entry	{
+	id		int;
+	date	{
+		year	number(4);
+		month	number(2);
+		day		number(2);
+	};
+	title	varchar(100);
+	entry	object;
+};
+
+primary	{
+	id;
+};
+
+path	main	{
+	operation	DBINSERT	{
+		INSERT	INTO	blog_entry
+			(
+				id,
+				date.year,
+				date.month,
+				date.day,
+				title,
+				entry
+			)
+			VALUES	(
+				:id,
+				:date.year,
+				:date.month,
+				:date.day,
+				:title,
+				lo_import(:entry)
+			)
+		;
+	};
+};

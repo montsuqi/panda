@@ -516,10 +516,12 @@ ENTER_FUNC;
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
+		dbgmsg("strings");
 		GL_RecvString(fp,str,fNetwork);ON_IO_ERROR(fp,badio);
 		SetValueString(value,str,coding);	ON_IO_ERROR(fp,badio);
 		break;
 	  case	GL_TYPE_NUMBER:
+		dbgmsg("NUMBER");
 		xval = GL_RecvFixed(fp,fFetureNetwork);
 		ON_IO_ERROR(fp,badio);
 		SetValueFixed(value,xval);
@@ -527,6 +529,7 @@ ENTER_FUNC;
 		xfree(xval);
 		break;
 	  case	GL_TYPE_OBJECT:
+		dbgmsg("OBJECT");
 		if		(  fBlob  ) {
 			if		(  fExpand  ) {
 				GL_RecvLBS(fp,Buff,fNetwork);
@@ -540,16 +543,19 @@ ENTER_FUNC;
 		}
 		break;
 	  case	GL_TYPE_INT:
+		dbgmsg("INT");
 		ival = GL_RecvInt(fp,fFetureNetwork);
 		ON_IO_ERROR(fp,badio);
 		SetValueInteger(value,ival);
 		break;
 	  case	GL_TYPE_FLOAT:
+		dbgmsg("FLOAT");
 		fval = GL_RecvFloat(fp,fFetureNetwork);
 		ON_IO_ERROR(fp,badio);
 		SetValueFloat(value,fval);
 		break;
 	  case	GL_TYPE_BOOL:
+		dbgmsg("BOOL");
 		bval = GL_RecvBool(fp,fFetureNetwork);
 		ON_IO_ERROR(fp,badio);
 		SetValueBool(value,bval);

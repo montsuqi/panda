@@ -1,8 +1,0 @@
-blob	{
-	title	{
-		value	varchar(0);
-	};
-	text	{
-		value	varchar(0);
-	};
-};

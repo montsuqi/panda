@@ -197,7 +197,7 @@ ENTER_FUNC;
 	RequestBLOB(fp,BLOB_EXPORT);		ON_IO_ERROR(fp,badio);
 	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
-		if		(  ( fpf = fopen(fname,"w") )  !=  NULL  ) {
+		if		(  ( fpf = Fopen(fname,"w") )  !=  NULL  ) {
 			left = RecvLength(fp);
 			while	(  left  >  0  ) {
 				size = (  left  >  SIZE_BUFF  ) ? SIZE_BUFF : left;
@@ -206,6 +206,7 @@ ENTER_FUNC;
 				left -= size;
 			}
 			fclose(fpf);
+			chmod(fname,0644);
 			rc = TRUE;
 		}
 	}
@@ -248,6 +249,73 @@ ENTER_FUNC;
 		} else {
 			SendLength(fp,0);
 		}
+		rc = TRUE;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	Bool
+RequestSaveBLOB(
+	NETFILE	*fp,
+	PacketClass		flag,
+	MonObjectType	*obj,
+	char			*fname)
+{
+	Bool	rc;
+	char	buff[SIZE_BUFF];
+	FILE	*fpf;
+	struct	stat	sb;
+	size_t	size
+		,	left;
+
+ENTER_FUNC;
+	rc = FALSE;
+	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
+	RequestBLOB(fp,BLOB_SAVE);			ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+		if		(  ( fpf = fopen(fname,"r") )  !=  NULL  ) {
+			fstat(fileno(fpf),&sb);
+			left = sb.st_size;
+			SendLength(fp,left);
+			while	(  left  >  0  ) {
+				size = (  left  >  SIZE_BUFF  ) ? SIZE_BUFF : left;
+				fread(buff,size,1,fpf);
+				Send(fp,buff,size);			ON_IO_ERROR(fp,badio);
+				left -= size;
+			}
+			fclose(fpf);
+		} else {
+			SendLength(fp,0);
+		}
+		rc = TRUE;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	Bool
+RequestCheckBLOB(
+	NETFILE	*fp,
+	PacketClass		flag,
+	MonObjectType	*obj)
+{
+	Bool	rc;
+	char	buff[SIZE_BUFF];
+	FILE	*fpf;
+	struct	stat	sb;
+	size_t	size
+		,	left;
+
+ENTER_FUNC;
+	rc = FALSE;
+	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
+	RequestBLOB(fp,BLOB_CHECK);			ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
 		rc = TRUE;
 	}
   badio:

@@ -441,15 +441,16 @@ SendText(
 	ValueAttribute	*v;
 	char	iname[SIZE_BUFF];
 
-dbgmsg(">SendText");
+ENTER_FUNC;
 	p = gtk_editable_get_chars(GTK_EDITABLE(widget),0,-1); 
 	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
+printf("iname = [%s]\n",iname);
 	GL_SendName(fp,iname);
 	SendStringData(fp,v->type,(char *)p);
 	g_free(p);
-dbgmsg("<SendText");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -465,7 +466,7 @@ RecvText(
 	int		state;
 	MonObjectType	obj;
 
-dbgmsg(">RecvText");
+ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -489,7 +490,7 @@ dbgmsg(">RecvText");
 			}
 		}
 	}
-dbgmsg("<RecvText");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 

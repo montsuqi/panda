@@ -74,6 +74,66 @@ dbgmsg("<ConnectTermServer");
 	return	(fp); 
 }
 
+static	void
+_ForwardBLOB(
+	NETFILE		*fp,
+	ValueStruct	*value)
+{
+	int		i;
+	FILE	*fpBLOB;
+
+ENTER_FUNC;
+	if		(  value  ==  NULL  )	return;
+	if		(  IS_VALUE_NIL(value)  )	return;
+	switch	(ValueType(value)) {
+	  case	GL_TYPE_ARRAY:
+		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+			_ForwardBLOB(fp,ValueArrayItem(value,i));
+		}
+		break;
+	  case	GL_TYPE_VALUES:
+		for	( i = 0 ; i < ValueValuesSize(value) ; i ++ ) {
+			_ForwardBLOB(fp,ValueValuesItem(value,i));
+		}
+		break;
+	  case	GL_TYPE_RECORD:
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			_ForwardBLOB(fp,ValueRecordItem(value,i));
+		}
+		break;
+	  case	GL_TYPE_INT:
+	  case	GL_TYPE_FLOAT:
+	  case	GL_TYPE_BOOL:
+	  case	GL_TYPE_BYTE:
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_NUMBER:
+		break;
+	  case	GL_TYPE_OBJECT:
+		if		(  IS_OBJECT_NULL(ValueObject(value))  ) {
+			RequestImportBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
+		} else {
+			RequestSaveBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
+		}
+		break;
+	  case	GL_TYPE_ALIAS:
+	  default:
+		break;
+	}
+LEAVE_FUNC;
+}
+
+static	void
+ForwardBLOB(
+	NETFILE		*fp,
+	ValueStruct	*value)
+{
+	_ForwardBLOB(fp,value);
+}
+
 extern	Bool
 SendTermServer(
 	NETFILE	*fp,
@@ -101,6 +161,7 @@ dbgmsg(">SendTermServer");
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
 			dbgmsg("recv OK");
 			SendLBS(fp,buff);
+			ForwardBLOB(fp,value);
 			SendPacketClass(fp,WFC_OK);
 			rc = TRUE;
 		} else {
@@ -200,22 +261,11 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_OBJECT:
 		ValueIsNonNil(value);
-		SendPacketClass(fp,WFC_BLOB);
-		SendPacketClass(fp,BLOB_EXPORT);
-		SendObject(fp,ValueObject(value));
-		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
-			RecvLBS(fp,buff);
-			if		(  ( fpBLOB = Fopen(BlobCacheFileName(value),"w") )  !=  NULL  ) {
-				fwrite(LBS_Body(buff),LBS_Size(buff),1,fpBLOB);
-				fclose(fpBLOB);
-			}
+		if		(  IS_OBJECT_NULL(ValueObject(value))  ) {
+			RequestNewBLOB(fp,WFC_BLOB,BLOB_OPEN_WRITE,ValueObject(value));
+			RequestCloseBLOB(fp,WFC_BLOB,ValueObject(value));
 		} else {
-			SendPacketClass(fp,WFC_BLOB);
-			SendPacketClass(fp,BLOB_IMPORT);
-			if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
-				RecvObject(fp,ValueObject(value));
-				SendLength(fp,0);
-			}
+			RequestExportBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
 		}
 		break;
 	  case	GL_TYPE_ALIAS:

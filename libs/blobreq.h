@@ -35,6 +35,9 @@ extern	size_t	RequestReadBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj,
 extern	Bool	RequestCloseBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj);
 extern	Bool	RequestExportBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj, char *fname);
 extern	Bool	RequestImportBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj, char *fname);
+extern	Bool	RequestSaveBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj, char *fname);
+extern	Bool	RequestCheckBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj);
+
 
 #undef	GLOBAL
 #ifdef	MAIN

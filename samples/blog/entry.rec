@@ -1,0 +1,20 @@
+entry	{
+	title	{
+		value	varchar(0);
+	};
+	date	{
+		year	{
+			value	number(4);
+		};
+		month	{
+			value	number(2);
+		};
+		day	{
+			value	number(2);
+		};
+	};
+	body	{
+		value	object;
+#		value	varchar(0);
+	};
+};

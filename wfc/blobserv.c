@@ -63,6 +63,7 @@ ENTER_FUNC;
 		mode = RecvInt(fp);
 		if		(  NewBLOB(blob,&obj,mode)  ) {
 			SendPacketClass(fp,BLOB_OK);
+			ObjectSource(&obj) = 0;
 			SendObject(fp,&obj);
 		} else {
 			SendPacketClass(fp,BLOB_NOT);
@@ -135,6 +136,35 @@ ENTER_FUNC;
 			}
 			CloseBLOB(blob,&obj);
 			xfree(buff);
+		} else {
+			SendPacketClass(fp,BLOB_NOT);
+		}
+		break;
+	  case	BLOB_SAVE:
+		dbgmsg("BLOB_SAVE");
+		RecvObject(fp,&obj);
+		if		(  OpenBLOB(blob,&obj,BLOB_OPEN_WRITE)  >=  0  ) {
+			SendPacketClass(fp,BLOB_OK);
+			ssize = RecvLength(fp);
+			buff = xmalloc((  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize);
+			while	(  ssize  >  0  ) {
+				size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
+				Recv(fp,buff,size);
+				WriteBLOB(blob,&obj,buff,size);
+				ssize -= size;
+			}
+			CloseBLOB(blob,&obj);
+			xfree(buff);
+		} else {
+			SendPacketClass(fp,BLOB_NOT);
+		}
+		break;
+	  case	BLOB_CHECK:
+		dbgmsg("BLOB_CHECK");
+		RecvObject(fp,&obj);
+		if		(  OpenBLOB(blob,&obj,BLOB_OPEN_READ)  >=  0  ) {
+			SendPacketClass(fp,BLOB_OK);
+			CloseBLOB(blob,&obj);
 		} else {
 			SendPacketClass(fp,BLOB_NOT);
 		}
