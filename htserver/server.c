@@ -212,14 +212,45 @@ RecvScreenData(
 	}	while	(  *buff  !=  0  );
 }
 
+static int
+RecvMessage(int sock, int *fd, void *data, size_t datalen)
+{
+    struct msghdr msg;
+    struct iovec vec[2];
+    char buf[1];
+    int len;
+
+    struct {
+        struct cmsghdr hdr;
+        int fd;
+    } cmsg;
+
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+
+    vec[0].iov_base = data;
+    vec[0].iov_len = datalen;
+    msg.msg_iov = vec;
+    msg.msg_iovlen = 1;
+
+    msg.msg_control = (caddr_t)&cmsg;
+    msg.msg_controllen = sizeof(struct cmsghdr) + sizeof(int);
+    msg.msg_flags = 0;
+    cmsg.hdr.cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
+    cmsg.hdr.cmsg_level = SOL_SOCKET;
+    cmsg.hdr.cmsg_type = SCM_RIGHTS;
+    cmsg.fd = -1;
+
+    len = recvmsg(sock, &msg, 0);
+    *fd = cmsg.fd;
+    return len;
+}
+
 static	void
 SesServer(
 	ScreenData	*scr,
 	int		sock)
 {
-	struct	msghdr	msg;
-	struct	cmsghdr	*cmsg;
-	struct	iovec	vec;
 	int		fd;
 	NETFILE	*fp;
 	char	buff[SIZE_BUFF+1];
@@ -228,18 +259,9 @@ SesServer(
 	HTC_Node	htc;
 	fd_set		ready;
 	struct	timeval	timeout;
+    int len;
 
 dbgmsg(">SesServer");
-	msg.msg_name = NULL;
-	msg.msg_namelen = 0;
-	vec.iov_base = &htc;
-	vec.iov_len = sizeof(HTC_Node);
-	msg.msg_iov = &vec;
-	msg.msg_iovlen = 1;
-	cmsg = (struct cmsghdr *)xmalloc(sizeof(struct cmsghdr) + sizeof(int));
-	cmsg->cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
-	msg.msg_control = cmsg;
-	msg.msg_controllen = cmsg->cmsg_len;
 	fp = NewNet();
 	do {
 		FD_ZERO(&ready);
@@ -248,10 +270,11 @@ dbgmsg(">SesServer");
 		timeout.tv_usec = 0;
 		select(sock+1,&ready,NULL,NULL,&timeout);
 		if		(  FD_ISSET(sock,&ready)  ) {
-			recvmsg(sock,&msg,0);
+            if (RecvMessage(sock, &fd, &htc, sizeof(HTC_Node)) == -1) {
+                Error("recvmsg(2) failed");
+                exit(1);
+            }
 			dbgmsg("session");
-			memcpy(&fd,CMSG_DATA(cmsg),sizeof(int));
-			memcpy(&htc,vec.iov_base,sizeof(HTC_Node));
 			NetSetFD(fp,fd);
 			htc.count += 1;
 			EncodeTRID(trid,htc.ses,htc.count);
@@ -390,6 +413,37 @@ dbgmsg(">NewSession");
 dbgmsg("<NewSession");
 }
 
+static int
+SendMessage(int sock, int fd, void *data, size_t datalen)
+{
+    struct msghdr msg;
+    struct iovec vec[1];
+    char buf[1];
+
+    struct {
+	struct cmsghdr hdr;
+	int fd;
+    } cmsg;
+
+    msg.msg_name = NULL;
+    msg.msg_namelen = 0;
+
+    vec[0].iov_base = data;
+    vec[0].iov_len = datalen;
+    msg.msg_iov = vec;
+    msg.msg_iovlen = 1;
+
+    msg.msg_control = (caddr_t)&cmsg;
+    msg.msg_controllen = sizeof(struct cmsghdr) + sizeof(int);
+    msg.msg_flags = 0;
+    cmsg.hdr.cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
+    cmsg.hdr.cmsg_level = SOL_SOCKET;
+    cmsg.hdr.cmsg_type = SCM_RIGHTS;
+    cmsg.fd = fd;
+
+    return sendmsg(sock, &msg, 0);
+}
+
 extern	void
 ExecuteServer(void)
 {
@@ -400,20 +454,10 @@ ExecuteServer(void)
 	int			ses
 	,			count;
 	HTC_Node	*htc;
-	struct	msghdr	msg;
-	struct	cmsghdr	*cmsg;
-	struct	iovec	vec;
 
 dbgmsg(">ExecuteServer");
 	signal(SIGCHLD,SIG_IGN);
 	signal(SIGPIPE,SIG_IGN);
-
-	msg.msg_name = NULL;
-	msg.msg_namelen = 0;
-	cmsg = (struct cmsghdr *)xmalloc(sizeof(struct cmsghdr) + sizeof(int));
-	cmsg->cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
-	cmsg->cmsg_level = SOL_SOCKET;
-	cmsg->cmsg_type = SCM_RIGHTS;
 
 	_fd = InitServerPort(PortNumber,Back);
 	while	(TRUE)	{
@@ -430,14 +474,7 @@ dbgmsg(">ExecuteServer");
 			DecodeTRID(&ses,&count,buff+9);
 			if		(  (  htc = g_int_hash_table_lookup(SesHash,ses) )  !=  NULL  ) {
 				htc->count = count;
-				vec.iov_base = htc;
-				vec.iov_len = sizeof(HTC_Node);
-				memcpy(CMSG_DATA(cmsg),&fd,sizeof(int));
-				msg.msg_iov = &vec;
-				msg.msg_iovlen = 1;
-				msg.msg_control = cmsg;
-				msg.msg_controllen = cmsg->cmsg_len;
-				if		(  sendmsg(htc->sock,&msg,0)  <  0  ) {
+				if		(  SendMessage(htc->sock,fd,htc,sizeof(HTC_Node))  <  0  ) {
 					EncodeTRID(buff,0,0);
 					SendStringDelim(fp,buff);
 					SendStringDelim(fp,"\n");

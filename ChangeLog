@@ -1,3 +1,8 @@
+2003-12-17  Shugo Maeda  <shugo@netlab.jp>
+
+	* htserver/server.c: 環境によって、sendmsg(2)/recvmsg(2)が上手く動
+	かない問題の修正
+
 2003-12-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* monpls_demo/demo.c: 日レセに必要なウィジェット全部に対応
