@@ -301,10 +301,10 @@ ENTER_FUNC;
 				oc = obuff;
 				sob = SIZE_CHARS;
 				if		(  iconv(cd,&istr,&sib,&oc,&sob)  ==  0  )	break;
-				if		(  errno  !=  E2BIG  )	break;
-			}	while	(  ch  !=  0  );
+			}	while	(	(  ch     !=  0           )
+						&&	(  count  <   SIZE_CHARS  ) );
 			for	( oc = obuff ; sob < SIZE_CHARS ; oc ++ , sob ++ ) {
-				fprintf(output,"%c",*oc);
+				fputc((int)*oc,output);
 			}
 		}
 		iconv_close(cd);
