@@ -1,3 +1,7 @@
+2004-02-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* fdd/fdd.c (fdd_system): system()の安全性確保
+
 2004-02-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glserver/server.c (CheckScreen): スクリーンチェックの間違いを直

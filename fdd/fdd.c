@@ -33,6 +33,8 @@ copies.
 #include	<stdlib.h>
 #include	<string.h>
 #include    <sys/types.h>
+#include    <sys/wait.h>
+#include    <errno.h>
 #include    <sys/socket.h>
 //#include    <sys/select.h>
 #include	<sys/stat.h>
@@ -59,6 +61,38 @@ static	char	*PortNumber;
 static	int		Back;
 static	char	*WorkDir;
 static	char	*ExecDir;
+
+static	int 
+fdd_system(
+	char	*name, 
+	char	*command, 
+	char	*tempname, 
+	char	*filename)
+{
+	int		pid;
+	int		status;
+
+	if		(  command  !=  NULL  ) {
+		if		(  ( pid = fork() )  <  0  )	{
+			status = -1;
+		} else
+		if		(  pid  ==  0  )	{	/*	child	*/
+			execl(name, command, tempname, filename, NULL);
+			_exit(127); /* execl error */
+		} else
+		if		(  pid   >  0  )	{	/*	parent	*/
+			while(waitpid(pid, &status, 0) <0){
+				if (errno != EINTR){
+					status =  -1;
+					break;
+				}
+			}
+		}
+	} else {
+		status = -1;
+	}
+	return (status);
+}
 
 static	void
 Process(
@@ -138,8 +172,7 @@ Process(
 		p = q + 1;
 	}	while	(  q  !=  NULL  );
 
-	sprintf(line,"%s %s %s",name,tempname,filename);
-	ac = system(line);
+	ac = fdd_system(name, command, tempname, filename);
 	unlink(tempname);
 	SendChar(fpComm,ac);
   badio:;
