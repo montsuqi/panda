@@ -298,7 +298,7 @@ ENTER_FUNC;
 	if		(  OsekiReadData(ses,OsekiResult(ses),NULL,NULL)  ==  0  ) {
 		p = LBS_Body(OsekiBuff(ses));
 		for	( i = 0 ; i < items ; i ++ ) {
-			p += NativeUnPackValue(NULL,p,tuple[i]);
+			p += SQL_UnPackValue(NULL,p,tuple[i]);
 		}
 	}
 LEAVE_FUNC;
@@ -457,7 +457,7 @@ ENTER_FUNC;
 	dbname = ( DB_Name != NULL ) ? DB_Name : dbg->dbname;
 	pass = ( DB_Pass != NULL ) ? DB_Pass : dbg->pass;
 
-	ses = ConnectOseki(host,port,user,pass,NULL);
+	ses = ConnectOseki(host,port,user,pass,"SQL");
 	if		(  ses  ==  NULL  ) {
 		fprintf(stderr,"Connection to database failed.\n");
 		exit(1);
@@ -497,7 +497,7 @@ _DBSTART(
 
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
-	rc = _SendCommand(dbg,"START;",FALSE);
+	rc = OsekiStart(OS_CONN(dbg));
 	if		(  rc  !=  0  ) {
 		dbgmsg("NG");
 		rc = MCP_BAD_OTHER;
@@ -520,7 +520,7 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	rc = _SendCommand(dbg,"COMMIT;",FALSE);
+	rc = OsekiCommit(OS_CONN(dbg));
 	if		(  rc  !=  0  ) {
 		dbgmsg("NG");
 		rc = MCP_BAD_OTHER;
@@ -596,7 +596,7 @@ ENTER_FUNC;
 				if		(  OsekiIsData(ses)  ) {
 					dbgmsg("OK");
 					if		(  OsekiReadData(ses,OsekiResult(ses),NULL,NULL)  ==  0  ) {
-						NativeUnPackValue(NULL,LBS_Body(OsekiBuff(ses)),args);
+						SQL_UnPackValue(NULL,LBS_Body(OsekiBuff(ses)),args);
 						ctrl->rc = MCP_OK;
 					} else {
 						ctrl->rc = MCP_EOF;
@@ -658,11 +658,7 @@ _DBUPDATE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	LargeByteString	*sql;
 	DB_Struct	*db;
-	char	***item
-	,		**pk;
-	int			res;
 	PathStruct	*path;
 	LargeByteString	*src;
 
@@ -677,45 +673,7 @@ ENTER_FUNC;
 			ctrl->rc = MCP_OK;
 			ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
-            sql = NewLBS();
-            LBS_EmitString(sql,"UPDATE ");
-            LBS_EmitString(sql,rec->name);
-            LBS_EmitString(sql,"\tSET ");
-			level = 0;
-			alevel = 0;
-			UpdateValue(dbg,sql,args);
-
-			LBS_EmitString(sql,"WHERE\t");
-			item = db->pkey->item;
-			while	(  *item  !=  NULL  ) {
-                LBS_EmitString(sql,rec->name);
-                LBS_EmitChar(sql,'.');
-				pk = *item;
-				while	(  *pk  !=  NULL  ) {
-                    LBS_EmitString(sql,*pk);
-					pk ++;
-					if		(  *pk  !=  NULL  ) {
-                        LBS_EmitChar(sql,'.');
-					}
-				}
-                LBS_EmitString(sql," = ");
-                KeyValue(dbg,sql,args,*item);
-                LBS_EmitChar(sql,' ');
-				item ++;
-				if		(  *item  !=  NULL  ) {
-                    LBS_EmitString(sql,"and\t");
-				}
-			}
-            LBS_EmitEnd(sql);
-			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
-			if		(  res  !=  0  ) {
-				dbgmsg("NG");
-				ctrl->rc = MCP_BAD_OTHER;
-			} else {
-				dbgmsg("OK");
-				ctrl->rc = MCP_OK;
-			}
-            FreeLBS(sql);
+			ctrl->rc = MCP_BAD_OTHER;
 		}
 	}
 LEAVE_FUNC;
@@ -748,9 +706,9 @@ ENTER_FUNC;
 			ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
             sql = NewLBS();
-			LBS_EmitString(sql,"delete\tfrom\t");
+			LBS_EmitString(sql,"DELETE\tFROM\t");
             LBS_EmitString(sql,rec->name);
-            LBS_EmitString(sql," where\t");
+            LBS_EmitString(sql," WHERE\t");
 			item = db->pkey->item;
 			while	(  *item  !=  NULL  ) {
 				pk = *item;
@@ -768,9 +726,10 @@ ENTER_FUNC;
                 LBS_EmitChar(sql,' ');
 				item ++;
 				if		(  *item  !=  NULL  ) {
-                    LBS_EmitString(sql,"and\t");
+                    LBS_EmitString(sql,"AND\t");
 				}
 			}
+			LBS_EmitChar(sql,';');
             LBS_EmitEnd(sql);
 			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
 			if		(  res  !=  0  ) {
@@ -811,7 +770,7 @@ ENTER_FUNC;
 			ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
             sql = NewLBS();
-			LBS_EmitString(sql,"insert\tinto\t");
+			LBS_EmitString(sql,"INSERT\tINTO\t");
 			LBS_EmitString(sql,rec->name);
 			LBS_EmitString(sql," (");
 
@@ -820,7 +779,8 @@ ENTER_FUNC;
 			InsertNames(sql,args);
 			LBS_EmitString(sql,") VALUES\t(");
 			InsertValues(dbg,sql,args);
-			LBS_EmitString(sql,") ");
+			LBS_EmitString(sql,")");
+			LBS_EmitChar(sql,';');
             LBS_EmitEnd(sql);
 			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
 			if		(  res  !=  0  ) {
