@@ -544,7 +544,7 @@ GetValue(
 dbgmsg(">GetValue");
 	switch	(val->type) {
 	  case	GL_TYPE_INT:
-		SetValueInteger(val,*(int *)PQgetvalue(res,0,fnum));
+		SetValueInteger(val,atoi((char *)PQgetvalue(res,0,fnum)));
 		break;
 	  case	GL_TYPE_BOOL:
 		SetValueBool(val,*(char *)PQgetvalue(res,0,fnum));

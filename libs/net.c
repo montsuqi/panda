@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -389,4 +389,19 @@ dbgmsg(">InitServerPort");
 	}
 dbgmsg("<InitServerPort");
 	return	(fh);
+}
+
+extern	Bool
+_CheckNetFile(
+	NETFILE	*fp)
+{
+	Bool	ret;
+
+	if		(  fp->fOK  ) {
+		ret = TRUE;
+	} else {
+		dbgmsg("bad net file");
+		ret = FALSE;
+	}
+	return	(ret);
 }

@@ -118,16 +118,19 @@ ParLD_Elements(void)
 	strcpy(buff,ThisEnv->LD_Dir);
 	p = buff;
 	do {
+dbgmsg("-4");
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
 		sprintf(name,"%s/%s.ld",p,DI_ComSymbol);
+dbgmsg("-3");
 		if		(  (  ld = LD_Parser(name) )  !=  NULL  ) {
 			if		(  g_hash_table_lookup(ThisEnv->LD_Table,DI_ComSymbol)
 					   !=  NULL  ) {
 				Error("same ld appier");
 			}
 			tmp = (LD_Struct **)xmalloc(sizeof(LD_Struct *) * ( ThisEnv->cLD + 1));
+dbgmsg("-2");
 			if		(  ThisEnv->cLD  >  0  ) {
 				memcpy(tmp,ThisEnv->ld,sizeof(LD_Struct *) * ThisEnv->cLD);
 				xfree(ThisEnv->ld);
@@ -135,19 +138,19 @@ ParLD_Elements(void)
 			ThisEnv->ld = tmp;
 			ThisEnv->ld[ThisEnv->cLD] = ld;
 			ThisEnv->cLD ++;
+dbgmsg("-1");
 			g_hash_table_insert(ThisEnv->LD_Table, StrDup(DI_ComSymbol),ld);
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				ld->nports = 0;
+dbgmsg("0");
 				while	(  DI_Token  ==  T_SCONST  ) {
 					strcpy(buff,DI_ComSymbol);
 					n = 0;
 					switch	(GetSymbol) {
 					  case	',':
-						dbgmsg(",");
 						n = 1;
 						break;
 					  case	'*':
-						dbgmsg("*");
 						if		(  GetSymbol  ==  T_ICONST  ) {
 							n = DI_ComInt;
 							GetSymbol;
@@ -156,42 +159,49 @@ ParLD_Elements(void)
 						}
 						break;
 					  case	';':
-						dbgmsg(";");
 						n = 1;
 						break;
 					  default:
 						Error("invalid operator");
 						break;
 					}
+dbgmsg("1");
 					tports = (Port **)xmalloc(sizeof(Port *) * ( ld->nports + n));
 					if		(  ld->nports  >  0  ) {
 						memcpy(tports,ld->ports,sizeof(Port *) * ld->nports);
 						xfree(ld->ports);
 					}
+dbgmsg("2");
 					ld->ports = tports;
 					for	( i = 0 ; i < n ; i ++ ) {
 						ld->ports[ld->nports] = ParPort(buff,PORT_APS_BASE);
 						ld->nports ++;
 					}
+dbgmsg("3");
 					if		(  DI_Token  ==  ','  ) {
 						GetSymbol;
 					}
 				}
 			} else
 			if		(  DI_Token  ==  T_ICONST  ) {
+dbgmsg("4");
 				ld->nports = DI_ComInt;
 				ld->ports = (Port **)xmalloc(sizeof(Port *) * ld->nports);
 				for	( i = 0 ; i < ld->nports ; i ++ ) {
 					ld->ports[i] = NULL;
 				}
+dbgmsg("5");
 				GetSymbol;
 			} else {
+dbgmsg("6");
 				ld->ports = (Port **)xmalloc(sizeof(Port *));
 				ld->ports[0] = ParPort("localhost",PORT_APS_BASE);
 				ld->nports = 1;
+dbgmsg("7");
 			}
 		}
 		p = q + 1;
+dbgmsg("8");
 	}	while	(	(  q   !=  NULL  )
 				&&	(  ld  ==  NULL  ) );
 	if		(  ld  ==  NULL  ) {

@@ -94,16 +94,17 @@ GetWindow(
 	char		*wname;
 
 dbgmsg(">GetWindow");
-#ifdef	TRACE
-	printf("GetWindow(%s)\n",name);
-#endif
+	dbgprintf("GetWindow(%s)",name);
 	if		(  name  !=  NULL  ) {
 		if		(  ( value = 
 					 (ValueStruct *)g_hash_table_lookup(Windows,name) )
 				   ==  NULL  ) {
+dbgmsg("*");
 			wname = StrDup(name);
 			value = ReadRecordDefine(name);
+dbgmsg("**");
 			g_hash_table_insert(Windows,wname,value);
+dbgmsg("***");
 		}
 	} else {
 		value = NULL;
@@ -394,6 +395,7 @@ LD_Parser(
 	struct	stat	stbuf;
 
 dbgmsg(">LD_Parser");
+dbgmsg(name); 
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 			fError = FALSE;

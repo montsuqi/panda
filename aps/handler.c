@@ -257,6 +257,9 @@ dbgmsg(">CallAfter");
 	if		(  !strcmp(ValueString(mcp_puttype),"JOIN")  ) {
 		*ValueString(mcp_pputtype) = SCREEN_JOIN_WINDOW + '0';
 	} else
+	if		(  !strcmp(ValueString(mcp_puttype),"FORK")  ) {
+		*ValueString(mcp_pputtype) = SCREEN_FORK_WINDOW + '0';
+	} else
 	if		(  !strcmp(ValueString(mcp_puttype),"EXIT")  ) {
 		*ValueString(mcp_pputtype) = SCREEN_END_SESSION + '0';
 	} else {

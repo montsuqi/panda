@@ -33,7 +33,8 @@ copies.
 #define	MCP_PUT_CHANGE		4
 #define	MCP_PUT_BACK		5
 #define	MCP_PUT_JOIN		6
-#define	MCP_PUT_EXIT		7
+#define	MCP_PUT_FORK		7
+#define	MCP_PUT_EXIT		8
 
 #ifndef	CloseWindows
 typedef	struct {

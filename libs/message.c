@@ -27,6 +27,7 @@ copies.
 #include	<sys/time.h>
 #include	<time.h>
 #include	<unistd.h>
+#include	<stdarg.h>
 #include	"message.h"
 
 extern	void
@@ -36,6 +37,22 @@ MessageDebug(
 	char	*msg)
 {
 	_Message(MESSAGE_DEBUG,file,line,msg);
+}
+
+extern	void
+MessagePrintf(
+	char	*file,
+	int		line,
+	char	*format,
+	...)
+{
+	char	buff[1024];
+	va_list	va;
+
+	va_start(va,format);
+	vsprintf(buff,format,va);
+	va_end(va);
+	_Message(MESSAGE_DEBUG,file,line,buff);
 }
 
 static	void

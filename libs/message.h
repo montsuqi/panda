@@ -29,6 +29,7 @@ copies.
 #define	MESSAGE_LOG			4
 
 extern	void	MessageDebug(char *file, int line, char *msg);
+extern	void	MessagePrintf(char *file, int line, char *fotmat, ...);
 extern	void	_Message(int level, char *file, int line, char *msg);
 extern	void	InitMessage();
 

@@ -54,6 +54,8 @@ extern	SSL_CTX	*MakeCTX(char *key, char *cert, char *cafile, char *capath, Bool 
 extern	NETFILE	*OpenPort(char *url, int port);
 extern	int		InitServerPort(char *port, int back);
 
-#define	ON_IO_ERROR(fp,label)	if (!(fp)->fOK) goto label
+extern	Bool	_CheckNetFile(NETFILE *fp);
+
+#define	ON_IO_ERROR(fp,label)	if (!_CheckNetFile(fp)) goto label
 
 #endif

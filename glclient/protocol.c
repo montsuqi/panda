@@ -111,6 +111,7 @@ RecvFile(
 	char		buff[SIZE_BUFF];
 	Bool		ret;
 
+dbgmsg(">RecvFile");
 	SendPacketClass(fpC,GL_GetScreen);
 	SendString(fpC,name);
 	if		(  RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
@@ -134,6 +135,7 @@ RecvFile(
 		g_warning("invalid protocol sequence");
 		ret = FALSE;
 	}
+dbgmsg("<RecvFile");
 	return	(ret);
 }
 
@@ -215,9 +217,10 @@ CheckScreens(
 	time_t		stmtime
 	,			stctime;
 	off_t		stsize;
+	PacketClass	klass;
 
 dbgmsg(">CheckScreens");
-	while		(  RecvPacketClass(fp)  ==  GL_QueryScreen  ) {
+	while		(  ( klass = RecvPacketClass(fp) )  ==  GL_QueryScreen  ) {
 		RecvString(fp,sname);
 		stsize = (off_t)RecvLong(fp);
 		stmtime = (time_t)RecvLong(fp);
@@ -343,9 +346,7 @@ RecvValue(
 	Bool			fDone;
 
 dbgmsg(">RecvValue");
-#ifdef	TRACE
-	printf("WidgetName = [%s]",WidgetName);
-#endif
+	dbgprintf("WidgetName = [%s]",WidgetName);
 	if		(  ThisXML  !=  NULL  ) {
 		fDone = FALSE;
 		fTrace = TRUE;
@@ -386,9 +387,6 @@ dbgmsg(">RecvValue");
 		RecvValueSkip(fp);
 	}
 	if		(  fTrace  ) {
-#ifdef	TRACE
-		printf("-\n");
-#endif
 		type = RecvDataType(fp);
 		switch	(type) {
 		  case	GL_TYPE_RECORD:
@@ -411,10 +409,6 @@ dbgmsg(">RecvValue");
 			RecvValueSkip(fp);
 			break;
 		}
-#ifdef	TRACE
-	} else {
-		printf("+\n");
-#endif
 	}
 dbgmsg("<RecvValue");
 }
@@ -468,7 +462,6 @@ dbgmsg(">GetScreenData");
 	SendPacketClass(fp,GL_GetData);
 	SendLong(fp,0);					/*	get all data	*/
 	fCancel = FALSE;
-dbgmsg("*");
 	while	(  ( c = RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		RecvString(fp,window);
 		switch( type = RecvInt(fpComm) ) {
@@ -509,7 +502,6 @@ dbgmsg("*");
 			/*	fatal error	*/
 		}
 	}
-dbgmsg("**");
 	if		(  c  ==  GL_FocusName  ) {
 		RecvString(fp,window);
 		RecvString(fp,widgetName);
@@ -522,7 +514,6 @@ dbgmsg("**");
 		c = RecvPacketClass(fp);
 	}
 	/* reset GtkPandaTimer if exists */
-dbgmsg("***");
 	if		(  ( node = g_hash_table_lookup(WindowTable,window) )  !=  NULL  ) {
 		ResetTimer(node->window);
 	}

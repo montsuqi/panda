@@ -128,6 +128,7 @@ dbgmsg(">CheckCache");
 		ret = FALSE;
 		break;
 	  default:
+		printf("kass = [%d]\n",klass);
 	  badio:
 		dbgmsg("error");
 		ret = FALSE;
@@ -150,6 +151,7 @@ SendFile(
 	FILE	*fp;
 	Bool	rc;
 
+dbgmsg(">SendFile");
 	stat(fname,&stbuf);
 	if		(  CheckCache(fpComm,
 						  wname,
@@ -179,6 +181,7 @@ SendFile(
 	} else {
 		rc = TRUE;
 	}
+dbgmsg("<SendFile");
 	return	(rc);
 }
 
@@ -413,6 +416,9 @@ SendScreen(
 dbgmsg(">SendScreen");
 	CheckScreens(fpComm,scr);
 	ret = SendScreenData(fpComm,scr);
+	if		(  !ret  ) {
+		printf("SendScreenData invalid\n");
+	}
 dbgmsg("<SendScreen");
 	return	(ret);
 }

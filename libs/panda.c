@@ -19,9 +19,9 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #define	_PANDA
@@ -82,6 +82,7 @@ RecvPanda(
 
 dbgmsg(">RecvPanda");
 	if		(  RecvTermServerHeader(fpPanda,window,widget,&type,&cls)  ) {
+printf("cls.n = %d\n",cls.n);
 		for	( i = 0 ; i < cls.n ; i ++ ) {
 			PutWindowByName(cls.close[i].window,SCREEN_CLOSE_WINDOW);
 		}

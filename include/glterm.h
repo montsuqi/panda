@@ -33,7 +33,8 @@ copies.
 #define	SCREEN_CLOSE_WINDOW			3
 #define	SCREEN_CHANGE_WINDOW		4
 #define	SCREEN_JOIN_WINDOW			5
-#define	SCREEN_END_SESSION			6
+#define	SCREEN_FORK_WINDOW			6
+#define	SCREEN_END_SESSION			7
 
 #define	GL_Null			(PacketClass)0x00
 #define	GL_Connect		(PacketClass)0x01

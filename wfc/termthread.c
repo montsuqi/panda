@@ -192,7 +192,7 @@ dbgmsg(">ReadTerminal");
 	ld = NULL; 
 	switch	(RecvPacketClass(fp)) {
 	  case	WFC_DATA:
-		dbgmsg("DATA");
+		dbgmsg("recv DATA");
 		RecvString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
 		RecvString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
 		RecvString(fp,data->hdr->event);	ON_IO_ERROR(fp,badio);
@@ -207,6 +207,7 @@ dbgmsg(">ReadTerminal");
 			ix = (int)g_hash_table_lookup(ld->info->whash,data->hdr->window);
 			if		(  ix  >  0  ) {
 				SendPacketClass(fp,APS_OK);			ON_IO_ERROR(fp,badio);
+				dbgmsg("send OK");
 				RecvLBS(fp,data->scrdata[ix-1]);	ON_IO_ERROR(fp,badio);
 				data->hdr->rc = TO_CHAR(0);
 				data->hdr->status = TO_CHAR(APL_SESSION_GET);
@@ -215,12 +216,14 @@ dbgmsg(">ReadTerminal");
 		}
 		break;
 	  case	WFC_PING:
-		dbgmsg("PING");
+		dbgmsg("recv PING");
 		SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
+		dbgmsg("send PONG");
 		goto	top;
 		break;
 	  default:
-		dbgmsg("default");
+		ON_IO_ERROR(fp,badio);
+		dbgmsg("recv default");
 		break;
 	}
   badio:
@@ -244,29 +247,32 @@ WriteTerminal(
 dbgmsg(">WriteTerminal");
 	rc = FALSE;
 	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
+	dbgmsg("send PING");
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
-		dbgmsg("PONG");
+		dbgmsg("recv PONG");
 		ON_IO_ERROR(fp,badio);
 		SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
+		dbgmsg("send DATA");
 		hdr = data->hdr;
 		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
 		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
 		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
 		for	( i = 0 ; i < data->w.n ; i ++ ) {
+printf("send [%s]\n",data->w.close[i].window);
 			SendString(fp,data->w.close[i].window);		ON_IO_ERROR(fp,badio);
 		}
+printf("data->w.n = %d\n",data->w.n);
 		data->w.n = 0;
 		ix = (int)g_hash_table_lookup(data->ld->info->whash,data->hdr->window);
 		if		(  ix  >  0  ) {
 			SendLBS(fp,data->scrdata[ix-1]);			ON_IO_ERROR(fp,badio);
-			if		(  data->fKeep  ) {
-				rc = TRUE;
-			}
+dbgmsg("SendLBS");
+			rc = TRUE;
 		}
 	} else {
 	  badio:
-		dbgmsg("FALSE");
+		dbgmsg("recv FALSE");
 	}
 dbgmsg("<WriteTerminal");
 	return	(rc); 

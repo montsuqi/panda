@@ -94,12 +94,16 @@ dbgmsg(">SendTermServer");
 	LBS_ReserveSize(buff,size,FALSE);
 	NativePackValue(buff->body,value,0);
 	SendPacketClass(fp,WFC_PING);
+	dbgmsg("send PING");
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
+		dbgmsg("recv PONG");
 		SendPacketClass(fp,WFC_DATA);
+		dbgmsg("send DATA");
 		SendString(fp,window);
 		SendString(fp,widget);
 		SendString(fp,event);
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+			dbgmsg("recv OK");
 			SendLBS(fp,buff);
 			rc = TRUE;
 		} else {
@@ -129,7 +133,7 @@ dbgmsg(">RecvTermServerHeader");
   top: 
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_DATA:
-		dbgmsg("DATA");
+		dbgmsg("recv DATA");
 		RecvString(fp,window);
 		RecvString(fp,widget);
 		*type = TO_INT(RecvChar(fp));
@@ -140,13 +144,15 @@ dbgmsg(">RecvTermServerHeader");
 		rc = TRUE;
 		break;
 	  case	WFC_PING:
-		dbgmsg("PING");
+		dbgmsg("recv PING");
 		SendPacketClass(fp,WFC_PONG);
+		dbgmsg("send PONG");
 		goto	top;
 		break;
 	  default:
-		dbgmsg("default");
+		dbgmsg("recv default");
 		SendPacketClass(fp,WFC_NOT);
+		dbgmsg("send NOT");
 		rc = FALSE;
 		break;
 	}

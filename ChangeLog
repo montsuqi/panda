@@ -1,3 +1,11 @@
+2003-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c (GetValue): bug fix(integerの時の値獲得がおか
+	しかった)
+
+	* include/glterm.h (SCREEN_FORK_WINDOW): 新規ウィンドウを出して処
+	理を分枝させる機能(ポップアップではなく、他に処理を移すため)
+
 2003-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/mqthread.c (MessageThread): MCP_PUT_NEWの処理に誤りがあった

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -198,6 +198,7 @@ static	char	*ptype[] = {
 	"CHANGE",
 	"BACK",
 	"JOIN",
+	"FORK",
 	"EXIT"
 };
 
@@ -297,6 +298,11 @@ MCP_ExecFunction(
 	size_t		size;
 
 dbgmsg(">MCP_ExecFunction");
+#ifdef	DEBUG
+ printf("D:rname = [%s]\n",rname); 
+ printf("D:pname = [%s]\n",pname); 
+ printf("D:func  = [%s]\n",func); 
+#endif
 	ctrl.rno = 0;
 	ctrl.pno = 0;
 	ctrl.blocks = 0;
