@@ -82,6 +82,8 @@ static	Port	*WfcPort;
 static	Port	*ControlPort;
 static	BLOB_Node	*Blob;
 
+static	sigset_t SigMask;
+
 #ifdef	DEBUG
 extern	void
 DumpNode(
@@ -105,6 +107,7 @@ ExecuteServer(void)
 		,	_fhControl;
 	fd_set	ready;
 	int		maxfd;
+    int		ret;
 	struct	timeval	timeout;
 
 dbgmsg(">ExecuteServer");
@@ -125,7 +128,13 @@ dbgmsg(">ExecuteServer");
 		FD_SET(_fhTerm,&ready);
 		FD_SET(_fhAps,&ready);
 		FD_SET(_fhControl,&ready);
-		select(maxfd+1,&ready,NULL,NULL,&timeout);
+		ret = pselect(maxfd+1,&ready,NULL,NULL,&timeout,&SigMask);
+        if (ret == -1) {
+            if (errno == EINTR)
+                continue;
+            perror("select");
+            exit(1);
+        }
 		if		(  FD_ISSET(_fhTerm,&ready)  ) {		/*	term connect	*/
 			ConnectTerm(_fhTerm);
 		}
@@ -233,6 +242,11 @@ main(
 	char	**argv)
 {
 	int			rc;
+    sigset_t sigmask;
+
+    sigemptyset(&sigmask);
+    sigaddset(&sigmask, SIGUSR1);
+    sigprocmask(SIG_BLOCK, &sigmask, &SigMask);
 
 	(void)signal(SIGPIPE, SIG_IGN);
 	signal(SIGUSR1,(void *)StopSystem);
