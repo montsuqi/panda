@@ -53,7 +53,7 @@ OpenDB_RedirectPort(
 
 dbgmsg(">OpenDB_RedirectPort");
 	if		(	(  fNoRedirect  )
-			||	(  dbg->redirectPort  ==  NULL  ) ) {
+			||	(  dbg->redirect  ==  NULL  ) ) {
 		dbg->fpLog = NULL;
 		dbg->redirectData = NULL;
 	} else {
