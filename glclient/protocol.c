@@ -168,7 +168,8 @@ GL_SendInt(
 	byte	buff[sizeof(int)];
 
 	*(int *)buff = SEND32(data);
-	if ( Send(fp,buff,sizeof(int)) < 0 ){
+	Send(fp,buff,sizeof(int));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 }
@@ -179,7 +180,8 @@ GL_RecvInt(
 {
 	byte	buff[sizeof(int)];
 
-	if ( Recv(fp,buff,sizeof(int)) < 0 ){
+	Recv(fp,buff,sizeof(int));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 	return	(RECV32(*(int *)buff));
@@ -191,7 +193,8 @@ GL_RecvLong(
 {
 	byte	buff[sizeof(int)];
 
-	if ( Recv(fp,buff,sizeof(int)) < 0 ){
+	Recv(fp,buff,sizeof(int));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 	return	(RECV32(*(long *)buff));
@@ -205,7 +208,8 @@ GL_SendLong(
 	byte	buff[sizeof(int)];
 
 	*(long *)buff = SEND32(data);
-	if ( Send(fp,buff,sizeof(long)) < 0 ){
+	Send(fp,buff,sizeof(long));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 }
@@ -218,7 +222,8 @@ GL_SendLength(
 	byte	buff[sizeof(int)];
 
 	*(size_t *)buff = SEND32(data);
-	if ( Send(fp,buff,sizeof(size_t)) < 0 ){
+	Send(fp,buff,sizeof(size_t));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 }
@@ -229,7 +234,8 @@ GL_RecvLength(
 {
 	byte	buff[sizeof(int)];
 
-	if (Recv(fp,buff,sizeof(size_t)) < 0 ){
+	Recv(fp,buff,sizeof(size_t));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 	return	(RECV32(*(size_t *)buff));
@@ -241,9 +247,7 @@ GL_RecvUInt(
 {
 	byte	buff[sizeof(int)];
 
-	if ( Recv(fp,buff,sizeof(unsigned int)) < 0 ) {
-		GL_Error();
-	}
+	Recv(fp,buff,sizeof(unsigned int));
 	return	(RECV32(*(unsigned int *)buff));
 }
 
@@ -255,7 +259,8 @@ GL_SendUInt(
 	byte	buff[sizeof(int)];
 
 	*(unsigned int *)buff = SEND32(data);
-	if ( Send(fp,buff,sizeof(unsigned int)) < 0 ) {
+	Send(fp,buff,sizeof(unsigned int));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 }
@@ -269,7 +274,8 @@ GL_RecvString(
 
 ENTER_FUNC;
 	size = GL_RecvLength(fp);
-	if ( Recv(fp,str,size) < 0 ) {
+	Recv(fp,str,size);
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 	str[size] = 0;
@@ -285,7 +291,8 @@ GL_RecvName(
 
 ENTER_FUNC;
 	size = GL_RecvLength(fp);
-	if (Recv(fp,name,size) < 0 ) {
+	Recv(fp,name,size);
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 	name[size] = 0;
@@ -306,8 +313,12 @@ ENTER_FUNC;
 		size = 0;
 	}
 	GL_SendLength(fp,size);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 	if		(  size  >  0  ) {
-		if ( Send(fp,str,size) < 0 ){
+		Send(fp,str,size);
+		if		(  !CheckNetFile(fp)  ) {
 			GL_Error();
 		}
 	}
@@ -329,7 +340,8 @@ ENTER_FUNC;
 	}
 	GL_SendLength(fp,size);
 	if		(  size  >  0  ) {
-		if ( Send(fp,name,size) < 0 ){
+		Send(fp,name,size);
+		if		(  !CheckNetFile(fp)  ) {
 			GL_Error();
 		}
 	}
@@ -350,6 +362,9 @@ GL_SendObject(
 	MonObjectType	obj)
 {
 	GL_SendUInt(fp,(unsigned int)obj);
+	if		(  !CheckNetFile(fp)  ) {
+		GL_Error();
+	}
 }
 
 static	MonObjectType
@@ -391,7 +406,8 @@ GL_RecvFloat(
 {
 	double	data;
 
-	if ( Recv(fp,&data,sizeof(data)) < 0 ){
+	Recv(fp,&data,sizeof(data));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 	return	(data);
@@ -402,7 +418,8 @@ GL_SendFloat(
 	NETFILE	*fp,
 	double	data)
 {
-	if ( Send(fp,&data,sizeof(data)) < 0 ){
+	Send(fp,&data,sizeof(data));
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 }
@@ -413,7 +430,8 @@ GL_RecvBool(
 {
 	char	buf[1];
 
-	if ( Recv(fp,buf,1) < 0 ){
+	Recv(fp,buf,1);
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 	return	((buf[0] == 'T' ) ? TRUE : FALSE);
@@ -427,7 +445,8 @@ GL_SendBool(
 	char	buf[1];
 
 	buf[0] = data ? 'T' : 'F';
-	if ( Send(fp,buf,1) < 0 ) {
+	Send(fp,buf,1);
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 }
@@ -442,7 +461,8 @@ GL_RecvLBS(
 	size = GL_RecvLength(fp);
 	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
-		if ( Recv(fp,LBS_Body(lbs),size) < 0 ){
+		Recv(fp,LBS_Body(lbs),size);
+		if		(  !CheckNetFile(fp)  ) {
 			GL_Error();
 		}
 	}
@@ -455,7 +475,8 @@ GL_SendLBS(
 {
 	GL_SendLength(fp,LBS_Size(lbs));
 	if		(  LBS_Size(lbs)  >  0  ) {
-		if (Send(fp,LBS_Body(lbs),LBS_Size(lbs)) < 0 ){
+		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
+		if		(  !CheckNetFile(fp)  ) {
 			GL_Error();
 		}
 	}
@@ -828,7 +849,8 @@ GL_SendVersionString(
 	SendChar(fp,0);
 	SendChar(fp,0);
 	SendChar(fp,0);
-	if (Send(fp,version,size) < 0 ) {
+	Send(fp,version,size);
+	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
 }
