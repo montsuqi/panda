@@ -398,6 +398,9 @@ CheckFeture(
 				if		(  !strlicmp(p,"ps")  ) {
 					TermFeture |= FETURE_PS;
 				}
+				if		(  !strlicmp(p,"pdf")  ) {
+					TermFeture |= FETURE_PDF;
+				}
 				p = n;
 			}
 		}
@@ -410,6 +413,7 @@ CheckFeture(
 	printf("network   = %s\n",fFetureNetwork ? "YES" : "NO");
 	printf("ps        = %s\n",fFeturePS ? "YES" : "NO");
 	printf("old       = %s\n",fFetureOld ? "YES" : "NO");
+	printf("pdf       = %s\n",fFeturePDF ? "YES" : "NO");
 #endif
 }
 
