@@ -77,11 +77,11 @@ class PandaCore
 	}
   end
   def []=(name,value)
-	if @values[name]
+#	if @values[name]
 	  @values[name] = value;
-	else
-	  $stderr.printf("[%s] undefined APS variable\n",name);
-	end
+#	else
+#	  $stderr.printf("[%s] undefined APS variable\n",name);
+#	end
   end
   def [](name)
 	if @values[name]
@@ -109,9 +109,10 @@ class PandaDB < PandaCore
 	str  = "dbctrl.rc=0&";
 	str += "dbctrl.func=" + func;
 	@fpDBW.printf("%s\n",str);
-#$stderr.printf("%s\n",str);
+$stderr.printf("<<%s\n",str);
 	@fpDBW.flush;
 	@line = @fpDBR.gets.chomp;
+$stderr.printf(">>%s\n",@line);
 	unPack;
   end
   def fpDBR
@@ -130,10 +131,11 @@ class PandaTable < PandaDB
 	str  = "dbctrl.rc=0&";
 	str += "dbctrl.rname=" + @name;
 	@db.fpDBW.printf("%s\n",str);
-#$stderr.printf(">>%s\n",str);
+#$stderr.printf("<<%s\n",str);
 	@db.fpDBW.flush;
 	@line = @db.fpDBR.gets.chop;
-	unPack;
+#$stderr.printf(">>%s\n",@line);
+#	unPack;
   end
   def execFunction(func, pname = "")
 	str  = "dbctrl.rc=0&";
@@ -142,10 +144,10 @@ class PandaTable < PandaDB
 	str += "dbctrl.pname=" + pname + "&";
 	str += pack;
 	@db.fpDBW.printf("%s\n",str);
-#$stderr.printf(">>%s\n",str);
+$stderr.printf(">>%s\n",str);
 	@db.fpDBW.flush;
 	line = @db.fpDBR.gets;
-#$stderr.printf("<<%s",line);$stderr.flush;
+$stderr.printf("<<%s",line);$stderr.flush;
 	@line = line.chop;
 	unPack;
   end

@@ -50,11 +50,13 @@ copies.
 #include	"debug.h"
 
 static	Bool	fNoConv;
+static	Bool	fNoFiller;
 static	Bool	fFiller;
 static	Bool	fSPA;
 static	Bool	fLinkage;
 static	Bool	fScreen;
 static	Bool	fWindowPrefix;
+static	Bool	fRecordPrefix;
 static	Bool	fLDW;
 static	Bool	fLDR;
 static	Bool	fDB;
@@ -617,9 +619,14 @@ PutDBREC(
 {
 	size_t	size;
 	char	*_prefix;
+	char	prefix[SIZE_LONGNAME+1];
 
 	level = 1;
 	PutLevel(level,TRUE);
+	if		(  fRecordPrefix  ) {
+		sprintf(prefix,"%s-",rname);
+		Prefix = prefix;
+	}
 	_prefix = Prefix;
 	Prefix = "";
 	PutName(rname);
@@ -627,12 +634,14 @@ PutDBREC(
 	COBOL(Conv,value);
 	printf(".\n");
 
-	size = SizeValue(Conv,value);
-	if		(  msize  !=  size  ) {
-		PutLevel(2,TRUE);
-		PutName("filler");
-		PutTab(12);
-		printf("PIC X(%d).\n",msize - size);
+	if		(  !fNoFiller  ) {
+		size = SizeValue(Conv,value);
+		if		(  msize  !=  size  ) {
+			PutLevel(2,TRUE);
+			PutName("filler");
+			PutTab(12);
+			printf("PIC X(%d).\n",msize - size);
+		}
 	}
 }
 
@@ -645,7 +654,7 @@ MakeDBREC(
 	int		i
 		,	j
 		,	k;
-	char	*rname;
+	char	rname[SIZE_LONGNAME+1];
 	LD_Struct	*ld;
 	BD_Struct	*bd;
 	RecordStruct	**dbrec
@@ -712,15 +721,36 @@ dbgmsg(">MakeDBREC");
 	if		( ( p = strchr(name,'.') )  !=  NULL  ) {
 		*p = 0;
 	}
-	if		(  ( rno = (int)g_hash_table_lookup(dbtable,rname) )  !=  0  ) {
+	if		(  ( rno = (int)g_hash_table_lookup(dbtable,name) )  !=  0  ) {
 		rec = dbrec[rno-1];
-		value = rec->value;
 		if		(  *RecName  ==  0  ) {
-			rname = rec->name;
+			strcpy(rname,rec->name);
 		} else {
-			rname = RecName;
+			strcpy(rname,RecName);
 		}
-		PutDBREC(value,rname,msize);
+		PutDBREC(rec->value,rname,msize);
+		for	( j = 0 ; j < rec->opt.db->pcount ; j ++ ) {
+			path = rec->opt.db->path[j];
+			if		(  path->args  !=  NULL  ) {
+				if		(  *RecName  ==  0  ) {
+					sprintf(rname,"%s-%s",rec->name,path->name);
+				} else {
+					sprintf(rname,"%s-%s",RecName,path->name);
+				}
+				PutDBREC(path->args,rname,msize);
+			}
+			for	( k = 0 ; k < path->ocount ; k ++ ) {
+				op = path->ops[k];
+				if		(  op->args  !=  NULL  ) {
+					if		(  *RecName  ==  0  ) {
+						sprintf(rname,"%s-%s-%s",rec->name,path->name,op->name);
+					} else {
+						sprintf(rname,"%s-%s-%s",RecName,path->name,op->name);
+					}
+					PutDBREC(op->args,rname,msize);
+				}
+			}
+		}
 	}
 dbgmsg("<MakeDBREC");
 }
@@ -969,6 +999,8 @@ static	ARG_TABLE	option[] = {
 		"項目名の前に付加する文字列"					},
 	{	"wprefix",	BOOLEAN,	TRUE,	(void*)&fWindowPrefix,
 		"画面レコードの項目の前にウィンドウ名を付加する"},
+	{	"rprefix",	BOOLEAN,	TRUE,	(void*)&fRecordPrefix,
+		"データベースレコードの項目の前にレコード名を付加する"},
 	{	"name",		STRING,		TRUE,	(void*)&RecName,
 		"レコードの名前"								},
 	{	"filler",	BOOLEAN,	TRUE,	(void*)&fFiller,
@@ -977,6 +1009,8 @@ static	ARG_TABLE	option[] = {
 		"階層構造を名前に反映する"						},
 	{	"noconv",	BOOLEAN,	TRUE,	(void*)&fNoConv,
 		"項目名を大文字に加工しない"					},
+	{	"nofiller",	BOOLEAN,	TRUE,	(void*)&fNoFiller,
+		"レコード長調整のFILLERを入れない"				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"ディレクトリファイル"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
@@ -994,6 +1028,7 @@ static	void
 SetDefault(void)
 {
 	fNoConv = FALSE;
+	fNoFiller = FALSE;
 	fFiller = FALSE;
 	fSPA = FALSE;
 	fLinkage = FALSE;
@@ -1013,6 +1048,7 @@ SetDefault(void)
 	fLDW = FALSE;
 	fLDR = FALSE;
 	fWindowPrefix = FALSE;
+	fRecordPrefix = FALSE;
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";

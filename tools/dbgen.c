@@ -143,6 +143,11 @@ TableBody(
 		printf("text");
 		PutDim();
 		break;
+	  case	GL_TYPE_OBJECT:
+		PutItemName();
+		printf("oid");
+		PutDim();
+		break;
 	  case	GL_TYPE_ARRAY:
 		tmp = ValueArrayItem(val,0);
 		Dim[alevel] = ValueArraySize(val);

@@ -115,6 +115,8 @@ dbgmsg(">ExecuteDB_Server");
 		conv->UnPackValue(handler->conv,LBS_Body(dbbuff),recDBCTRL->value);
 		rname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"rname"));
 		value = NULL;
+		path = NULL;
+		rec = NULL;
 		if		(	(  rname  !=  NULL  ) 
 				&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 			ctrl.rno = rno - 1;
@@ -129,18 +131,20 @@ dbgmsg(">ExecuteDB_Server");
 			} else {
 				ctrl.pno = 0;
 			}
-		} else {
-			rec = NULL;
 		}
 		func = ValueStringPointer(GetItemLongName(recDBCTRL->value,"func"));
 		if		(  *func  !=  0  ) {
-			if		( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) {
-				op = path->ops[ono-1];
-				value = ( op->args != NULL ) ? op->args : value;
+			if		(  path  !=  NULL  ) {
+				if		( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) {
+					op = path->ops[ono-1];
+					value = ( op->args != NULL ) ? op->args : value;
+				}
 			}
-			ConvSetRecName(handler->conv,rec->name);
-			InitializeValue(value);
-			conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
+			if		(  value  !=  NULL  ) {
+				ConvSetRecName(handler->conv,rec->name);
+				InitializeValue(value);
+				conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
+			}
 			strcpy(ctrl.func,func);
 			ExecDB_Process(&ctrl,rec,value);
 		} else {
@@ -155,7 +159,7 @@ dbgmsg(">ExecuteDB_Server");
 		conv->PackValue(handler->conv,LBS_Body(dbbuff), recDBCTRL->value);
 		LBS_EmitEnd(dbbuff);
 		SendLargeString(fpDBW,dbbuff);			ON_IO_ERROR(fpDBW,badio);
-		if		(  rec  !=  NULL  ) {
+		if		(  value  !=  NULL  ) {
 			Send(fpDBW,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fpDBW,badio);
 			LBS_EmitStart(dbbuff);
 			ConvSetRecName(handler->conv,rec->name);

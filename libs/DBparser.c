@@ -50,12 +50,16 @@ static	GHashTable	*Reserved;
 #define	T_PRIMARY		(T_YYBASE +1)
 #define	T_PATH			(T_YYBASE +2)
 #define	T_USE			(T_YYBASE +3)
+#define	T_OPERATION		(T_YYBASE +4)
+#define	T_PROCEDURE		(T_YYBASE +5)
 
 static	TokenTable	tokentable[] = {
-	{	"primary"	,T_PRIMARY	},
-	{	"path"		,T_PATH		},
-	{	"use"		,T_USE		},
-	{	""			,0			}
+	{	"primary"	,T_PRIMARY		},
+	{	"path"		,T_PATH			},
+	{	"use"		,T_USE			},
+	{	"operation"	,T_OPERATION	},
+	{	"procedure"	,T_PROCEDURE	},
+	{	""			,0				}
 };
 
 static	void
@@ -81,7 +85,8 @@ DB_ParserInit(void)
 
 
 static	char	***
-ParKeyItem(void)
+ParKeyItem(
+	ValueStruct	*root)
 {
 	char	**name
 	,		**p;
@@ -89,6 +94,8 @@ ParKeyItem(void)
 	,		rcount;
 	char	***ret
 	,		***r;
+	char	*elm;
+	ValueStruct	*value;
 
 dbgmsg(">ParKeyItem");
 	ret = NULL;
@@ -96,6 +103,7 @@ dbgmsg(">ParKeyItem");
 	while	(  GetName  ==  T_SYMBOL  ) {
 		name = NULL;
 		count = 0;
+		value = root;
 		do {
 			p = (char **)xmalloc(sizeof(char *) * ( count + 2 ));
 			if		(  name  !=  NULL  ) {
@@ -103,7 +111,13 @@ dbgmsg(">ParKeyItem");
 				xfree(name);
 			}
 			name = p;
-			name[count] = StrDup(ComSymbol);
+			elm = StrDup(ComSymbol);
+			if		(  value  !=  NULL  ) {
+				if		(  ( value = GetRecordItem(value,elm) )  ==  NULL  ) {
+					printf("%s:%d:not in record item [%s]\n",CURR->fn,CURR->cLine,elm);
+				}
+			}
+			name[count] = elm;
 			name[count+1] = NULL;
 			count ++;
 			GetSymbol;
@@ -134,18 +148,19 @@ dbgmsg("<ParKeyItem");
 	return	(ret);
 }
 
-static	DB_Struct	*
+static	void
 ParKey(
-	DB_Struct	*db)
+	RecordStruct	*rec)
 {
+	DB_Struct	*db;
 	KeyStruct	*skey;
 
 dbgmsg("<ParKey");
+	db = rec->opt.db;
 	skey = New(KeyStruct);
-	skey->item = ParKeyItem();
+	skey->item = ParKeyItem(rec->value);
 	db->pkey = skey;
 dbgmsg("<ParKey");
-	return	(db);
 }
 
 static	DB_Struct	*
@@ -223,6 +238,67 @@ EnterUse(
 }
 
 static	void
+ParOperation(
+	RecordStruct	*rec,
+	PathStruct		*path)
+{
+	int		ix;
+	SQL_Operation	**ops
+	,				*op;
+	ValueStruct		*value;
+	char			name[SIZE_SYMBOL+1];
+
+ENTER_FUNC;
+	if		(  ( ix = (int)g_hash_table_lookup(path->opHash,ComSymbol) )  ==  0  ) {
+		ix = path->ocount;
+		ops = (SQL_Operation **)xmalloc(sizeof(SQL_Operation *) * ( ix + 1 ));
+		memcpy(ops,path->ops,(sizeof(SQL_Operation *) * ix));
+		xfree(path->ops);
+		path->ops = ops;
+		op = NewOperation(ComSymbol);
+		g_hash_table_insert(path->opHash, op->name, (gpointer)(ix + 1));
+		path->ops[ix] = op;
+		path->ocount ++;
+	} else {
+		ix --;
+		op = NewOperation(ComSymbol);
+		path->ops[ix] = op;
+	}
+	if		(  GetSymbol  ==  '('  ) {
+		op->args = NewValue(GL_TYPE_RECORD);
+		GetName;
+		while	(  ComToken  ==  T_SYMBOL  ) {
+			strcpy(name,ComSymbol);
+			value = ParValueDefine();
+			if		(  ComToken  ==  ','  ) {
+				GetName;
+			}
+			SetValueAttribute(value,GL_ATTR_NULL);
+			ValueAddRecordItem(op->args,name,value);
+		}
+		if		(  ComToken  ==  ')'  ) {
+			GetSymbol;
+		} else {
+			Error(") missing");
+		}
+		SetReserved(Reserved); 
+	}
+	if		(  ComToken  == '{'  ) {
+		if		(  op->proc  ==  NULL  ) {
+			op->proc = ParSQL(rec,path->args,op->args);
+			if		(  GetSymbol  !=  ';'  ) {
+				Error("; missing");
+			}
+		} else {
+			Error("function duplicate");
+		}
+	} else {
+		Error("{ missing");
+	}
+LEAVE_FUNC;
+}
+
+static	void
 ParPath(
 	RecordStruct	*rec)
 {
@@ -230,8 +306,6 @@ ParPath(
 	,		pcount;
 	PathStruct		**paths
 		,			*path;
-	SQL_Operation	**ops
-	,				*op;
 	ValueStruct		*value;
 	char			name[SIZE_SYMBOL+1];
 
@@ -270,61 +344,26 @@ ENTER_FUNC;
 	if		(  ComToken  !=  '{'  ) {
 		Error("{ missing");
 	}
-	while	(  GetName  ==  T_SYMBOL  ) {
-		if		(  ( ix = (int)g_hash_table_lookup(
-						 path->opHash,ComSymbol) )  ==  0  ) {
-			ix = path->ocount;
-			ops = (SQL_Operation **)xmalloc(sizeof(SQL_Operation *) * ( ix + 1 ));
-			memcpy(ops,path->ops,(sizeof(SQL_Operation *) * ix));
-			xfree(path->ops);
-			path->ops = ops;
-			op = NewOperation(ComSymbol);
-			g_hash_table_insert(path->opHash, op->name, (gpointer)(ix + 1));
-			path->ops[ix] = op;
-			path->ocount ++;
-		} else {
-			ix --;
-			op = NewOperation(ComSymbol);
-			path->ops[ix] = op;
-		}
-		if		(  GetSymbol  ==  '('  ) {
-			op->args = NewValue(GL_TYPE_RECORD);
-			GetName;
-			while	(  ComToken  ==  T_SYMBOL  ) {
-				strcpy(name,ComSymbol);
-				value = ParValueDefine();
-				if		(  ComToken  ==  ','  ) {
-					GetName;
-				}
-				SetValueAttribute(value,GL_ATTR_NULL);
-				ValueAddRecordItem(op->args,name,value);
+	while	(  GetSymbol  !=  '}'  ) {
+		switch	(ComToken) {
+		  case	T_PROCEDURE:
+			Error("not implemented");
+			break;
+		  case	T_OPERATION:
+			if		(  GetName  !=  T_SYMBOL  ) {
+				Error("invalid operation name");
 			}
-			if		(  ComToken  ==  ')'  ) {
-				GetSymbol;
-			} else {
-				Error(") missing");
-			}
-			SetReserved(Reserved); 
-		}
-		if		(  ComToken  == '{'  ) {
-			if		(  op->proc  ==  NULL  ) {
-				op->proc = ParSQL(rec,path->args,op->args);
-				if		(  GetSymbol  !=  ';'  ) {
-					Error("; missing");
-				}
-			} else {
-				Error("function duplicate");
-			}
-		} else {
-			Error("{ missing");
+			/*	path thrue	*/
+		  case	T_SYMBOL:
+			ParOperation(rec,path);
+			break;
+		  default:
+			Error("invalid token");
+			break;
 		}
 	}
-	if		(  ComToken  ==  '}'  ) {
-		if		(  GetSymbol  !=  ';'  ) {
-			Error("; missing");
-		}
-	} else {
-		Error("} missing");
+	if		(  GetSymbol  !=  ';'  ) {
+		Error("; missing");
 	}
 LEAVE_FUNC;
 }
@@ -368,13 +407,12 @@ ENTER_FUNC;
 			}
 			break;
 		  case	T_PRIMARY:
-			dbgmsg("primary");
 			if		(  ret->type  ==  RECORD_NULL  ) {
 				ret->type = RECORD_DB;
 				ret->opt.db = InitDB_Struct();
 			}
 			if		(  GetSymbol  == '{'  ) {
-				ret->opt.db = ParKey(ret->opt.db);
+				ParKey(ret);
 				if		(  GetSymbol  !=  ';'  ) {
 					Error("; missing");
 				}
@@ -383,7 +421,6 @@ ENTER_FUNC;
 			}
 			break;
 		  case	T_PATH:
-			dbgmsg("path");
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("path name invalid");
 			} else {
