@@ -33,7 +33,6 @@ copies.
 #include	<string.h>
 #include	"types.h"
 #include	"const.h"
-#include	"tcp.h"
 #include	"net.h"
 #include	"libmondai.h"
 #include	"applications.h"

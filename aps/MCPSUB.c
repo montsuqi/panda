@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -41,6 +41,7 @@ copies.
 #include	"libmondai.h"
 #include	"dblib.h"
 #include	"handler.h"
+#include	"OpenCOBOL.h"
 #include	"directory.h"
 #include	"debug.h"
 
@@ -67,7 +68,7 @@ MCPSUB(
 
 dbgmsg(">MCPSUB");
 	mcp = ThisEnv->mcprec; 
-	OpenCOBOL_UnPackValue(mcpdata,mcp,TextSize);
+	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,mcpdata,mcp);
 	mcp_func = ValueString(GetItemLongName(mcp,"func"));
 
 	if		(  !strcmp(mcp_func,"PUTWINDOW")  ) {
@@ -97,15 +98,15 @@ dbgmsg(">MCPSUB");
 			rec = NULL;
 		} else {
 			rec = ThisDB[ctrl.rno];
-			OpenCOBOL_UnPackValue(data, rec->rec,TextSize);
+			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, rec->rec);
 		}
 		ExecDB_Process(&ctrl,rec);
 		if		(  rec  !=  NULL  ) {
-			OpenCOBOL_PackValue(data, rec->rec,TextSize);
+			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, rec->rec);
 		}
 		MakeMCP(mcp,&ctrl);
 	}
-	OpenCOBOL_PackValue(mcpdata,mcp,TextSize);
+	OpenCOBOL_PackValue(OpenCOBOL_Conv, mcpdata,mcp);
 dbgmsg("<MCPSUB");
 }
 

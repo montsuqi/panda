@@ -38,12 +38,12 @@ copies.
 
 #include	"libmondai.h"
 #include	"directory.h"
+#include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"wfc.h"
 #include	"handler.h"
 #include	"apsio.h"
-#include	"tcp.h"
 #include	"debug.h"
 
 typedef	struct _SessionCache	{

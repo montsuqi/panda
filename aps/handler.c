@@ -72,13 +72,13 @@ EnterHandler(
 
 dbgmsg(">EnterHandler");
 	if		(  ( handler = g_hash_table_lookup(HandlerTable,name) )  ==  NULL  ) {
-		printf("%s handler invoke\n", name);
+		MessagePrintf("%s handler invoke.", name);
 		sprintf(filename,"%s.so",name);
 		handler = NULL;
 		if		(  ( dlhandle = LoadFile(APS_HandlerLoadPath,filename) )  !=  NULL  ) {
 			if		(  ( finit = (void *)dlsym(dlhandle,name) )
 					   ==  NULL  )	{
-				fprintf(stderr,"[%s] is invalid.\n",name);
+				MessagePrintf("[%s] is invalid.",name);
 			} else {
 				handler = (*finit)();
 				if		(  g_hash_table_lookup(HandlerTable,name)  ==  NULL  ) {
@@ -122,8 +122,8 @@ dbgmsg(">InitiateHandler");
 		if		(  handler  ==  NULL  ) {
 			if		(  ( handler = EnterHandler((char *)ThisLD->window[i]->handler) )
 					   ==  NULL  ) {
-				printf("[%s] is invalid handler.\n",
-					   (char *)ThisLD->window[i]->handler);
+				MessagePrintf("[%s] is invalid handler.\n",
+							  (char *)ThisLD->window[i]->handler);
 			} else {
 				handler->fUse = TRUE;
 				ThisLD->window[i]->handler = handler;

@@ -48,7 +48,7 @@ copies.
 #include	"libmondai.h"
 #include	"comm.h"
 #include	"dirs.h"
-#include	"tcp.h"
+#include	"socket.h"
 #include	"option.h"
 #include	"debug.h"
 

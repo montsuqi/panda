@@ -65,7 +65,7 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-#include	"tcp.h"
+#include	"socket.h"
 #include	"pty.h"
 #include	"queue.h"
 

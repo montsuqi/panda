@@ -39,7 +39,7 @@ copies.
 #include	"wfc.h"
 #include	"wfcio.h"
 #include	"debug.h"
-#include	"tcp.h"
+#include	"socket.h"
 
 static	LargeByteString	*buff;
 

@@ -62,6 +62,7 @@ dbgmsg(">LoadFile");
 		}
 		sprintf(filename,"%s/%s",p,name);
 		if		(  stat(filename, &st)  ==  0  ) {
+			MessagePrintf("load [%s]",filename);
 			if		(  ( ret = dlopen(filename,RTLD_GLOBAL | RTLD_LAZY) )  ==  NULL  ) {
 				perror("LoadFile");
 			}

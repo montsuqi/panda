@@ -43,7 +43,7 @@ copies.
 #include	"defaults.h"
 #include	"types.h"
 #include	"misc.h"
-#include	"tcp.h"
+#include	"socket.h"
 #include	"libmondai.h"
 #include	"glterm.h"
 #include	"load.h"

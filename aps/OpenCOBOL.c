@@ -55,6 +55,8 @@ copies.
 #include	"queue.h"
 #include	"driver.h"
 #include	"libcob.h"
+#define		_OPENCOBOL
+#include	"OpenCOBOL.h"
 #include	"debug.h"
 
 static	void	*McpData;
@@ -98,11 +100,11 @@ PutApplication(
 	char	*p;
 
 dbgmsg(">PutApplication");
-	OpenCOBOL_PackValue(McpData,node->mcprec,ThisLD->textsize);
-	OpenCOBOL_PackValue(LinkData,node->linkrec,ThisLD->textsize);
-	OpenCOBOL_PackValue(SpaData,node->sparec,ThisLD->textsize);
+	OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,node->mcprec);
+	OpenCOBOL_PackValue(OpenCOBOL_Conv,LinkData,node->linkrec);
+	OpenCOBOL_PackValue(OpenCOBOL_Conv,SpaData,node->sparec);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = OpenCOBOL_PackValue(p,node->scrrec[i],ThisLD->textsize);
+		p = OpenCOBOL_PackValue(OpenCOBOL_Conv,p,node->scrrec[i]);
 	}
 dbgmsg("<PutApplication");
 }
@@ -115,11 +117,11 @@ GetApplication(
 	int		i;
 
 dbgmsg(">GetApplication");
-	OpenCOBOL_UnPackValue(McpData,node->mcprec,ThisLD->textsize);
-	OpenCOBOL_UnPackValue(LinkData,node->linkrec,ThisLD->textsize);
-	OpenCOBOL_UnPackValue(SpaData,node->sparec,ThisLD->textsize);
+	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,McpData,node->mcprec);
+	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,LinkData,node->linkrec);
+	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,SpaData,node->sparec);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = OpenCOBOL_UnPackValue(p,node->scrrec[i],ThisLD->textsize);
+		p = OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]);
 	}
 
 dbgmsg("<GetApplication");
@@ -161,15 +163,18 @@ dbgmsg(">ReadyDC");
 	}
 	cob_init(0,NULL);
 	cob_set_library_path(path);
+	OpenCOBOL_Conv = NewConvOpt();
+	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
 
-	McpData = xmalloc(OpenCOBOL_SizeValue(ThisEnv->mcprec,ThisLD->arraysize,ThisLD->textsize));
-	LinkData = xmalloc(OpenCOBOL_SizeValue(ThisEnv->linkrec,ThisLD->arraysize,ThisLD->textsize));
-	SpaData = xmalloc(OpenCOBOL_SizeValue(ThisLD->sparec,ThisLD->arraysize,ThisLD->textsize));
+	McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec));
+	LinkData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->linkrec));
+	SpaData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->sparec));
 	scrsize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		scrsize += OpenCOBOL_SizeValue(ThisLD->window[i]->value,ThisLD->arraysize,ThisLD->textsize);
+		scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->window[i]->value);
 	}
 	ScrData = xmalloc(scrsize);
+
 #if	0
 	{
 		WindowBind	*bind;
@@ -226,6 +231,10 @@ dbgmsg(">_StartBatch");
 	}
 	cob_init(0,NULL);
 	cob_set_library_path(path);
+
+	OpenCOBOL_Conv = NewConvOpt();
+	ConvSetSize(OpenCOBOL_Conv,ThisBD->textsize,ThisBD->arraysize);
+
 #ifdef	DEBUG
 	printf("starting [%s][%s]\n",name,param);
 #endif

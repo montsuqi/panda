@@ -43,7 +43,7 @@ copies.
 #include	"const.h"
 #include	"enum.h"
 #include	"dirs.h"
-#include	"tcp.h"
+#include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"directory.h"

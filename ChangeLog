@@ -1,3 +1,7 @@
+2003-07-27  OGOSHI  <ogochan@nurs.or.jp>
+
+	* libs/socket.c: tcp.cから名前変更(TCP以外の接続するかも知れんからね)
+
 2003-06-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* configure.in: msgdを使うかどうかの選択

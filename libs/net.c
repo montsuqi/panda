@@ -44,7 +44,7 @@ copies.
 
 #include	"types.h"
 #include	"misc.h"
-#include	"tcp.h"
+#include	"socket.h"
 #include	"net.h"
 #include	<libmondai.h>
 #include	"debug.h"

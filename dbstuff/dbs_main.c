@@ -44,7 +44,7 @@ copies.
 #include	"const.h"
 #include	"enum.h"
 #include	"dirs.h"
-#include	"tcp.h"
+#include	"net.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"authstub.h"

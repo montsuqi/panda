@@ -43,9 +43,9 @@ copies.
 #include	"misc.h"
 
 #include	"libmondai.h"
+#include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
-#include	"tcp.h"
 #include	"queue.h"
 #include	"directory.h"
 #include	"wfc.h"

@@ -40,7 +40,7 @@ copies.
 #include	"libmondai.h"
 #ifdef	USE_MSGD
 #include	"const.h"
-#include	"tcp.h"
+#include	"socket.h"
 #include	"net.h"
 #endif
 #include	"message.h"
@@ -72,7 +72,7 @@ MessageDebug(
 }
 
 extern	void
-MessagePrintf(
+_MessagePrintf(
 	char	*file,
 	int		line,
 	char	*format,

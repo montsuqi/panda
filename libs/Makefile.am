@@ -55,14 +55,15 @@ libpandas_la_DEPENDENCIES	=		\
 #libpandacominclude_HEADERS =	\
 #	comm.h			\
 #	comms.h			\
-#	tcp.h			\
+#	socket.h		\
 #	pty.h			\
 #	queue.h
+
 libpandacom_la_SOURCES	=		\
 	net.c			net.h			\
 	comm.c			comm.h			\
 	comms.c			comms.h			\
-	tcp.c			tcp.h			\
+	socket.c		socket.h		\
 	pty.c			pty.h			\
 	queue.c			queue.h
 

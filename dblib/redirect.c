@@ -39,7 +39,6 @@ copies.
 #include	"types.h"
 #include	"libmondai.h"
 #include	"misc.h"
-#include	"tcp.h"
 #include	"net.h"
 #include	"dbgroup.h"
 #include	"redirect.h"

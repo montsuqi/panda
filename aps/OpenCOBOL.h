@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 1989-2003 Ogochan.
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -18,33 +18,18 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
-
-#ifndef	_INC_MESSAGE_H
-#define	_INC_MESSAGE_H
-
-#define	MESSAGE_MESSAGE		0
-#define	MESSAGE_DEBUG		1
-#define	MESSAGE_WARN		2
-#define	MESSAGE_ERROR		3
-#define	MESSAGE_LOG			4
-#define	MESSAGE_PRINT		5
-
-#define	MessageLog(msg)				_Message(MESSAGE_LOG,__FILE__,__LINE__,(msg))
-#define	MessagePrintf(fmt, ...)		_MessagePrintf(__FILE__,__LINE__,(fmt), __VA_ARGS__)
-
-extern	void	MessageDebug(char *file, int line, char *msg);
-extern	void	_MessagePrintf(char *file, int line, char *format, ...);
-extern	void	_Message(int level, char *file, int line, char *msg);
-extern	void	InitMessage(char *id,char *fn);
+#ifndef	_INC_OPENCOBOL_HANDLER_H
+#define	_INC_OPENCOBOL_HANDLER_H
+#include	"libmondai.h"
 
 #undef	GLOBAL
-#ifdef	MAIN
+#ifdef	_OPENCOBOL
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern
 #endif
 
+GLOBAL	CONVOPT	*OpenCOBOL_Conv;
 
 #undef	GLOBAL
-
 #endif

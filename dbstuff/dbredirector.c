@@ -51,7 +51,7 @@ copies.
 #include	"dblib.h"
 #include	"directory.h"
 #include	"queue.h"
-#include	"tcp.h"
+#include	"socket.h"
 #include	"option.h"
 #include	"message.h"
 #include	"debug.h"
