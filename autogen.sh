@@ -6,7 +6,7 @@ AUTOMAKE=`which automake-1.4 2> /dev/null || echo automake`
 AUTOCONF=`which autoconf-2.13 2> /dev/null || echo autoconf`
 
 echo "Running $ACLOCAL..."
-$ACLOCAL -I .
+$ACLOCAL -I m4
 
 echo "Running $AUTOHEADER..."
 $AUTOHEADER
