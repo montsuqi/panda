@@ -1,3 +1,7 @@
+2002-10-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.1.2 release
+
 2002-10-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glclient/protocol.c (CheckScreens): ctimeもチェックもするようにした
