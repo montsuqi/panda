@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -19,12 +19,14 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_INC_WFC_H
-#define	_INC_WFC_H
-#include	"queue.h"
-#include	"struct.h"
+#ifndef	_INC_BLOBCOM_H
+#define	_INC_BLOBCOM_H
+
+#include	"libmondai.h"
 #include	"net.h"
 #include	"blob.h"
+
+extern	void	PassiveBLOB(NETFILE *fp, BLOB_Space *Blob);
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -33,11 +35,17 @@ copies.
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	GHashTable	*WindowHash;
-GLOBAL	GHashTable	*APS_Hash;
-GLOBAL	GHashTable	*MQ_Hash;
-GLOBAL	Bool		fShutdown;
-GLOBAL	int			MaxRetry;
-GLOBAL	BLOB_Space	*Blob;
+#define	BLOB_CREATE			(PacketClass)0x01
+#define	BLOB_OPEN			(PacketClass)0x02
+#define	BLOB_IMPORT			(PacketClass)0x03
+#define	BLOB_EXPORT			(PacketClass)0x04
+#define	BLOB_READ			(PacketClass)0x05
+#define	BLOB_WRITE			(PacketClass)0x06
+#define	BLOB_CLOSE			(PacketClass)0x07
+#define	BLOB_SEEK			(PacketClass)0x08
+
+#define	BLOB_OK				(PacketClass)0xFE
+#define	BLOB_NOT			(PacketClass)0xF0
+#define	BLOB_END			(PacketClass)0xFF
 
 #endif

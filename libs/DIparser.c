@@ -67,21 +67,19 @@ copies.
 #define	T_FILE			(T_YYBASE +11)
 #define	T_REDIRECT		(T_YYBASE +12)
 #define	T_REDIRECTPORT	(T_YYBASE +13)
-#define	T_LDDIR			(T_YYBASE +14)
-#define	T_BDDIR			(T_YYBASE +15)
 #define	T_RECDIR		(T_YYBASE +16)
 #define	T_BASEDIR		(T_YYBASE +17)
 #define	T_PRIORITY		(T_YYBASE +18)
 #define	T_LINKAGE		(T_YYBASE +19)
 #define	T_STACKSIZE		(T_YYBASE +20)
 #define	T_DB			(T_YYBASE +21)
-#define	T_DBDDIR		(T_YYBASE +22)
 #define	T_WFC			(T_YYBASE +23)
 #define	T_EXIT			(T_YYBASE +24)
 #define	T_ENCODING		(T_YYBASE +25)
 #define	T_TERMPORT		(T_YYBASE +26)
 #define	T_CONTROL		(T_YYBASE +27)
 #define	T_DDIR			(T_YYBASE +28)
+#define	T_BLOBDIR		(T_YYBASE +29)
 
 #undef	Error
 #define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
@@ -110,10 +108,7 @@ static	TokenTable	tokentable[] = {
 	{	"file"				,T_FILE		},
 	{	"redirect"			,T_REDIRECT	},
 	{	"redirect_port"		,T_REDIRECTPORT	},
-	{	"lddir"				,T_LDDIR	},
-	{	"bddir"				,T_BDDIR	},
 	{	"ddir"				,T_DDIR		},
-	{	"dbddir"			,T_DBDDIR	},
 	{	"record"			,T_RECDIR	},
 	{	"base"				,T_BASEDIR	},
 	{	"priority"			,T_PRIORITY	},
@@ -125,6 +120,7 @@ static	TokenTable	tokentable[] = {
 	{	"encoding"			,T_ENCODING	},
 	{	"termport"			,T_TERMPORT	},
 	{	"control"			,T_CONTROL	},
+	{	"blob"				,T_BLOBDIR	},
 	{	""					,0			}
 };
 
@@ -754,6 +750,7 @@ dbgmsg(">ParDI");
 				ThisEnv->BaseDir = BaseDir;
 				ThisEnv->D_Dir = D_Dir;
 				ThisEnv->RecordDir = RecordDir;
+				ThisEnv->BlobDir = NULL;
 				ThisEnv->WfcApsPort = ParPort("localhost",PORT_WFC_APS);
 				ThisEnv->TermPort = ParPort("localhost",PORT_WFC);
 				ThisEnv->ControlPort = ParPort(CONTROL_PORT,PORT_WFC_CONTROL);
@@ -812,50 +809,6 @@ dbgmsg(">ParDI");
 				Error("base directory invalid");
 			}
 			break;
-#if	0
-		  case	T_LDDIR:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				if		(  ThisEnv->D_Dir  ==  NULL  ) {
-					if		(  !strcmp(ComSymbol,".")  ) {
-						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
-					} else {
-						ThisEnv->D_Dir = StrDup(ExpandPath(ComSymbol
-															,ThisEnv->BaseDir));
-					}
-				}
-			} else {
-				Error("LD directory invalid");
-			}
-			break;
-		  case	T_BDDIR:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				if		(  ThisEnv->D_Dir  ==  NULL  ) {
-					if		(  !strcmp(ComSymbol,".")  ) {
-						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
-					} else {
-						ThisEnv->D_Dir = StrDup(ExpandPath(ComSymbol
-															,ThisEnv->BaseDir));
-					}
-				}
-			} else {
-				Error("BD directory invalid");
-			}
-			break;
-		  case	T_DBDDIR:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				if		(  ThisEnv->D_Dir  ==  NULL  ) {
-					if		(  !strcmp(ComSymbol,".")  ) {
-						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
-					} else {
-						ThisEnv->D_Dir = StrDup(ExpandPath(ComSymbol
-															,ThisEnv->BaseDir));
-					}
-				}
-			} else {
-				Error("DBD directory invalid");
-			}
-			break;
-#endif
 		  case	T_RECDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->RecordDir  ==  NULL  ) {
@@ -883,6 +836,20 @@ dbgmsg(">ParDI");
 				}
 			} else {
 				Error("DDIR directory invalid");
+			}
+			break;
+		  case	T_BLOBDIR:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->BlobDir  ==  NULL  ) {
+					if		(  !strcmp(ComSymbol,".")  ) {
+						ThisEnv->BlobDir = StrDup(ThisEnv->BaseDir);
+					} else {
+						ThisEnv->BlobDir = StrDup(ExpandPath(ComSymbol
+															 ,ThisEnv->BaseDir));
+					}
+				}
+			} else {
+				Error("BLOB directory invalid");
 			}
 			break;
 		  case	T_MULTI:

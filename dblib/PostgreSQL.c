@@ -362,8 +362,11 @@ ValueToSQL(
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_OBJECT:
-		id = ValueOid(ValueObject(val));
-		sprintf(buff,"%u",id);
+		if		(  ValueObjectSource(val)  ==  0  ) {
+		} else {
+			id = ValueOid(ValueObject(val));
+			sprintf(buff,"%u",id);
+		}
 		LBS_EmitString(lbs,buff);
 		break;
 	  default:

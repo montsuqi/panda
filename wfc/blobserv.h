@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -19,12 +19,14 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_INC_WFC_H
-#define	_INC_WFC_H
-#include	"queue.h"
-#include	"struct.h"
+#ifndef	_INC_BLOBSERV_H
+#define	_INC_BLOBSERV_H
+
+#include	"libmondai.h"
 #include	"net.h"
 #include	"blob.h"
+
+extern	void	PassiveBLOB(NETFILE *fp, BLOB_Space *Blob);
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -32,12 +34,5 @@ copies.
 #else
 #define	GLOBAL		extern
 #endif
-
-GLOBAL	GHashTable	*WindowHash;
-GLOBAL	GHashTable	*APS_Hash;
-GLOBAL	GHashTable	*MQ_Hash;
-GLOBAL	Bool		fShutdown;
-GLOBAL	int			MaxRetry;
-GLOBAL	BLOB_Space	*Blob;
 
 #endif

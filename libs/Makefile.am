@@ -52,6 +52,7 @@ libpanda_la_SOURCES	=		\
 	SQLparser.c	SQLparser.h	\
 	directory.c	directory.h	\
 	wfcio.c		wfcio.h		\
+	blobreq.c	blobreq.h	\
 	load.c		load.h
 
 libpandas_la_SOURCES	=		\

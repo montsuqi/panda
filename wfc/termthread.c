@@ -53,6 +53,7 @@ copies.
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"blob.h"
+#include	"blobcom.h"
 #include	"driver.h"
 #include	"message.h"
 #include	"debug.h"
@@ -176,71 +177,6 @@ dbgmsg("<InitSession");
 	return	(data);
 }
 
-#if	0
-static	void
-ProcessBLOB(
-	NETFILE		*fp,
-	SessionData	*data)
-{
-	MonObjectType	obj;
-	int				mode;
-	size_t			size;
-	byte			*buff;
-
-	switch	(RecvPacketClass(fp)) {
-	  case	BLOB_CREATE:
-		mode = RecvInt(fp);
-		if		(  WfcNewBLOB(&obj,mode)  ) {
-			SendPacketClass(fp,WFC_OK);
-			SendObject(fp,&obj);
-		} else {
-			SendPacketClass(fp,WFC_NOT);
-		}
-		break;
-	  case	BLOB_OPEN:
-		mode = RecvInt(fp);
-		RecvObject(fp,&obj);
-		if		(  WfcOpenBLOB(&obj,mode)  ) {
-			SendPacketClass(fp,WFC_OK);
-		} else {
-			SendPacketClass(fp,WFC_NOT);
-		}
-		break;
-	  case	BLOB_WRITE:
-		RecvObject(fp,&obj);
-		if		(  ( size = RecvLength(fp) )  >  0  ) {
-			buff = xmalloc(size);
-			Recv(fp,buff,size);
-			size = WfcWriteBLOB(&obj,buff,size);
-			xfree(buff);
-		}
-		SendLength(fp,size);
-		break;
-	  case	BLOB_READ:
-		RecvObject(fp,&obj);
-		if		(  ( size = RecvLength(fp) )  >  0  ) {
-			buff = xmalloc(size);
-			size = WfcReadBLOB(&obj,buff,size);
-			Send(fp,buff,size);
-			xfree(buff);
-		}
-		SendLength(fp,size);
-		break;
-	  case	BLOB_CLOSE:
-		RecvObject(fp,&obj);
-		if		(  WfcCloseBLOB(&obj)  ) {
-			SendPacketClass(fp,WFC_OK);
-		} else {
-			SendPacketClass(fp,WFC_NOT);
-		}
-		break;
-	  default:
-		break;
-	}
-}
-
-#endif
-
 static	LD_Node	*
 ReadTerminal(
 	NETFILE		*fp,
@@ -280,12 +216,10 @@ dbgmsg(">ReadTerminal");
 				}
 			}
 			break;
-#if	0
 		  case	WFC_BLOB:
 			dbgmsg("recv LARGE");
-			ProcessBLOB(fp,data);
+			PassiveBLOB(fp,Blob);
 			break;
-#endif
 		  case	WFC_PING:
 			dbgmsg("recv PING");
 			SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);

@@ -48,6 +48,7 @@ copies.
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"directory.h"
+#include	"blob.h"
 #include	"driver.h"
 #include	"debug.h"
 
@@ -193,6 +194,8 @@ dbgmsg(">GetAPS_Control");
 		RecvString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		RecvString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
 		hdr->puttype = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
+		break;
+	  case	APS_BLOB:
 		break;
 	  default:
 	  badio:

@@ -246,7 +246,8 @@ typedef	struct {
 	char		*name;
 	char		*BaseDir
 	,			*D_Dir
-	,			*RecordDir;
+	,			*RecordDir
+	,			*BlobDir;
 	Port		*WfcApsPort
 	,			*TermPort
 	,			*ControlPort;

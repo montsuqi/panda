@@ -45,15 +45,6 @@ copies.
 #define	WFC_OK			(PacketClass)0xFE
 #define	WFC_END			(PacketClass)0xFF
 
-#define	BLOB_CREATE		(PacketClass)0x01
-#define	BLOB_OPEN		(PacketClass)0x02
-#define	BLOB_IMPORT		(PacketClass)0x03
-#define	BLOB_EXPORT		(PacketClass)0x04
-#define	BLOB_READ		(PacketClass)0x05
-#define	BLOB_WRITE		(PacketClass)0x06
-#define	BLOB_CLOSE		(PacketClass)0x07
-#define	BLOB_SEEK		(PacketClass)0x08
-
 #undef	GLOBAL
 #if	defined(MAIN) || defined(_PANDA)
 #define	GLOBAL		/*	*/

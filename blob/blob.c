@@ -56,7 +56,7 @@ copies.
 #define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
 #define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
-static	void
+static	size_t
 OpenEntry(
 	BLOB_Entry	*ent)
 {
@@ -66,6 +66,8 @@ OpenEntry(
 	int		i;
 	int		flag;
 	int		fd;
+	struct	stat	sb;
+	size_t	size;
 
 ENTER_FUNC;
 	p  = filename;
@@ -91,18 +93,17 @@ ENTER_FUNC;
 		fd = open(longname,flag,0600);
 	} else {
 		fd = open(longname,flag);
-#if	0
-		if		(  ( ent->mode & BLOB_OPEN_APPEND )  !=  0  ) {
-			lseek(fd,0,SEEK_END);
-		}
-#endif
 	}
 	if		(  fd  >=  0  ) {
+		fstat(fd,&sb);
 		ent->fp = FileToNet(fd);
+		size = sb.st_size;
 	} else {
 		ent->fp = NULL;
+		size = 0;
 	}
 LEAVE_FUNC;
+	return	(size);
 }
 
 static	void
@@ -273,14 +274,14 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	Bool
+extern	ssize_t
 OpenBLOB(
 	BLOB_Space		*blob,
 	MonObjectType	*obj,
 	int				mode)
 {
 	BLOB_Entry	*ent;
-	Bool		ret;
+	ssize_t		ret;
 
 ENTER_FUNC;
 	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
@@ -297,12 +298,10 @@ ENTER_FUNC;
 			ent->blob = blob;
 		}
 		ent->mode = mode;
-		OpenEntry(ent);
+		ret = OpenEntry(ent);
 		if		(  ent->fp  ==  NULL  ) {
 			DestroyEntry(ent);
-			ret = FALSE;
-		} else {
-			ret = TRUE;
+			ret = -1;
 		}
 	}
 LEAVE_FUNC;

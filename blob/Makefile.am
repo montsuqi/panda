@@ -18,7 +18,7 @@ INCLUDES 			=		\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
-libpandablob_la_SOURCES	=	\
+libpandablob_la_SOURCES	=		\
 	blob.c			blob.h
 
 libpandablob_la_DEPENDENCIES	=		\

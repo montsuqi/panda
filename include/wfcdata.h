@@ -38,6 +38,7 @@ copies.
 #define	APS_SCRDATA		(PacketClass)0x10
 #define	APS_WINCTRL		(PacketClass)0x20
 #define	APS_CTRLDATA	(PacketClass)0x40
+#define	APS_BLOB		(PacketClass)0x80
 
 #define	APS_NOT			(PacketClass)0xF0
 #define	APS_PONG		(PacketClass)0xF1

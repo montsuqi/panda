@@ -37,7 +37,9 @@ wfc_SOURCES	=							\
 	mqthread.c		mqthread.h			\
 	corethread.c	corethread.h		\
 	controlthread.c	controlthread.h		\
+	blobserv.c		blobserv.h			\
 	termthread.c	termthread.h
+
 wfccontrol_SOURCES	=					\
 	wfccontrol.c						\
 	controlthread.h
