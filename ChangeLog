@@ -1,4 +1,14 @@
+2004-01-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/struct.h: 名称変更(SQL_Operation -> DB_Operation)
+
+	* glserver/glserver.c: -ignoreを除く(バージョンチェックの方法を変
+	えたために不要になった)
+
 2004-01-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/server.c (CheckFeture): クライアントのバージョンチェッ
+	ク方法を変えた
 
 	* dblib/System.c: 新しいDBハンドラ(システム変数を読む)
 

@@ -663,7 +663,7 @@ MakeDBREC(
 		,			*rec;
 	DB_Struct		*db;
 	PathStruct		*path;
-	SQL_Operation	*op;
+	DB_Operation	*op;
 	ValueStruct		*value;
 	GHashTable		*dbtable;
 	size_t			arraysize

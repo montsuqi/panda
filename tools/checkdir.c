@@ -226,7 +226,7 @@ DumpOps(
 	int		ops,
 	PathStruct	*path)
 {
-	SQL_Operation	*op;
+	DB_Operation	*op;
 
 	printf("\t\t\top = [%s]\n",name);
 	if		(  ( op = path->ops[ops-1] )  !=  NULL  ) {

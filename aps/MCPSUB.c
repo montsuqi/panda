@@ -64,7 +64,7 @@ MCPSUB(
 	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
 	PathStruct		*path;
-	SQL_Operation	*op;
+	DB_Operation	*op;
 	ValueStruct		*mcp
 		,			*value;
 	char			*mcp_func;

@@ -361,7 +361,7 @@ MCP_ExecFunction(
 	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
 	PathStruct		*path;
-	SQL_Operation	*op;
+	DB_Operation	*op;
 	ValueStruct		*value;
 	int			rno
 		,		pno
@@ -427,7 +427,7 @@ MCP_GetDB_Define(
 		,			ono;
 	RecordStruct	*rec;
 	PathStruct		*path;
-	SQL_Operation	*op;
+	DB_Operation	*op;
 	ValueStruct		*val
 		,			*ret;
 	char			*p

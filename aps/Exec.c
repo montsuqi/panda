@@ -92,7 +92,7 @@ ExecuteDB_Server(
 	RecordStruct	*rec;
 	ValueStruct		*value;
 	PathStruct		*path;
-	SQL_Operation	*op;
+	DB_Operation	*op;
 	size_t			size;
 	char			buff[SIZE_ARG];
 	int				rno

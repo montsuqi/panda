@@ -355,7 +355,7 @@ do_String(
 	ValueStruct		*value;
 	RecordStruct	*rec;
 	PathStruct		*path;
-	SQL_Operation	*op;
+	DB_Operation	*op;
 	char			func[SIZE_FUNC+1]
 		,			rname[SIZE_RNAME+1]
 		,			pname[SIZE_PNAME+1];
@@ -548,6 +548,9 @@ static	ARG_TABLE	option[] = {
 
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		"認証サーバ"			 						},
+
+	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
+		"dbredirectorの起動をチェックしない"			},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };

@@ -227,7 +227,7 @@ static	void
 SendValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
-	char		*locale)
+	char		*coding)
 {
 	int		i;
 
@@ -250,7 +250,7 @@ SendValue(
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		SendString(fp,ValueToString(value,locale));
+		SendString(fp,ValueToString(value,coding));
 		break;
 	  case	GL_TYPE_FLOAT:
 		SendFloat(fp,ValueFloat(value));
@@ -258,17 +258,19 @@ SendValue(
 	  case	GL_TYPE_NUMBER:
 		SendFixed(fp,&ValueFixed(value));
 		break;
+	  case	GL_TYPE_OBJECT:
+		break;
 	  case	GL_TYPE_ARRAY:
 		SendInt(fp,ValueArraySize(value));
 		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			SendValue(fp,ValueArrayItem(value,i),locale);
+			SendValue(fp,ValueArrayItem(value,i),coding);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
 		SendInt(fp,ValueRecordSize(value));
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
 			SendString(fp,ValueRecordName(value,i));
-			SendValue(fp,ValueRecordItem(value,i),locale);
+			SendValue(fp,ValueRecordItem(value,i),coding);
 		}
 		break;
 	  default:
@@ -299,7 +301,11 @@ dbgmsg(">SendWindow");
 		  case	SCREEN_CHANGE_WINDOW:
 			if		(  win->rec->value  !=  NULL  ) {
 				SendPacketClass(fpComm,GL_ScreenData);		ON_IO_ERROR(fpComm,badio);
-				SendValue(fpComm,win->rec->value,"euc-jp");	ON_IO_ERROR(fpComm,badio);
+				if		(  fFetureI18N  ) {
+					SendValue(fpComm,win->rec->value,NULL);		ON_IO_ERROR(fpComm,badio);
+				} else {
+					SendValue(fpComm,win->rec->value,"euc-jp");	ON_IO_ERROR(fpComm,badio);
+				}
 			} else {
 				SendPacketClass(fpComm,GL_NOT);			ON_IO_ERROR(fpComm,badio);
 			}
@@ -481,12 +487,48 @@ ThisAuth(
 #endif
 
 static	void
+CheckFeture(
+	char	*ver)
+{
+	char	*p
+		,	*q
+		,	*n;
+
+	TermFeture = FETURE_NULL;
+	if		(	(  strlcmp(ver,"1.2")    ==  0  )
+			||	(  strlcmp(ver,"1.1.2")  ==  0  ) ) {
+		TermFeture |= FETURE_CORE;
+	} else
+	if		(  !strlicmp(ver,"symbolic")  ) {
+		TermFeture = FETURE_CORE;
+		if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
+			p ++;
+			while	(  *p  !=  0  ) {
+				if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+					*q = 0;
+					n = q + 1;
+				} else {
+					n = p + strlen(p);
+				}
+				if		(  !strlicmp(p,"blob")  ) {
+					TermFeture |= FETURE_BLOB;
+				}
+				if		(  !strlicmp(p,"i18n")  ) {
+					TermFeture |= FETURE_I18N;
+				}
+				p = n;
+			}
+		}
+	}
+}
+
+static	void
 Connect(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	char	pass[SIZE_PASS+1];
-	char	ver[SIZE_NAME+1];
+	char	ver[SIZE_BUFF];
 	char	msg[SIZE_BUFF];
 
 	RecvString(fpComm,ver);			ON_IO_ERROR(fpComm,badio);
@@ -495,10 +537,10 @@ Connect(
 	RecvString(fpComm,scr->cmd);	ON_IO_ERROR(fpComm,badio);
 	sprintf(msg,"[%s@%s] session start",scr->user,scr->term);
 	MessageLog(msg);
-	if		(  fIgnoreVersion  ) {
-		strcpy(ver,VERSION);
-	}
-	if		(  strcmp(ver,VERSION)  ) {
+
+	CheckFeture(ver);
+
+	if		(  TermFeture  ==  FETURE_NULL  ) {
 		SendPacketClass(fpComm,GL_E_VERSION);	ON_IO_ERROR(fpComm,badio);
 		g_warning("reject client(invalid version)");
 	} else

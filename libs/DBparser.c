@@ -180,13 +180,13 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-static	SQL_Operation	*
+static	DB_Operation	*
 NewOperation(
 	char	*name)
 {
-	SQL_Operation	*op;
+	DB_Operation	*op;
 
-	op = New(SQL_Operation);
+	op = New(DB_Operation);
 	op->name = StrDup(name);
 	op->proc = NULL;
 	op->args = NULL;
@@ -199,7 +199,7 @@ InsertBuildIn(
 	char		*name,
 	int			func)
 {
-	SQL_Operation	*op;
+	DB_Operation	*op;
 
 	op = NewOperation(name);
 	ret->ops[func] = op;
@@ -214,7 +214,7 @@ InitPathStruct(void)
 ENTER_FUNC;
 	ret = New(PathStruct);
 	ret->opHash = NewNameHash();
-	ret->ops = (SQL_Operation **)xmalloc(sizeof(SQL_Operation *) * 5);
+	ret->ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * 5);
 	InsertBuildIn(ret,"DBSELECT",DBOP_SELECT);
 	InsertBuildIn(ret,"DBFETCH",DBOP_FETCH);
 	InsertBuildIn(ret,"DBUPDATE",DBOP_UPDATE);
@@ -243,7 +243,7 @@ ParOperation(
 	PathStruct		*path)
 {
 	int		ix;
-	SQL_Operation	**ops
+	DB_Operation	**ops
 	,				*op;
 	ValueStruct		*value;
 	char			name[SIZE_SYMBOL+1];
@@ -251,8 +251,8 @@ ParOperation(
 ENTER_FUNC;
 	if		(  ( ix = (int)g_hash_table_lookup(path->opHash,ComSymbol) )  ==  0  ) {
 		ix = path->ocount;
-		ops = (SQL_Operation **)xmalloc(sizeof(SQL_Operation *) * ( ix + 1 ));
-		memcpy(ops,path->ops,(sizeof(SQL_Operation *) * ix));
+		ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * ( ix + 1 ));
+		memcpy(ops,path->ops,(sizeof(DB_Operation *) * ix));
 		xfree(path->ops);
 		path->ops = ops;
 		op = NewOperation(ComSymbol);

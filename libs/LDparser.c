@@ -184,37 +184,35 @@ dbgmsg(">ParDB");
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
-//			if		(  stricmp(ComSymbol,"metadb")  ) {
-				strcpy(buff,RecordDir);
-				p = buff;
-				do {
-					if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-						*q = 0;
-					}
-					sprintf(name,"%s/%s.db",p,ComSymbol);
-					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
-						if		(  g_hash_table_lookup(ld->DB_Table,ComSymbol)  ==  NULL  ) {
-							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
-							memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
-							xfree(ld->db);
-							if		(  db->opt.db->dbg  ==  NULL  ) {
-								db->opt.db->dbg = (DBG_Struct *)StrDup(gname);
-							}
-							ld->db = rtmp;
-							ld->db[ld->cDB] = db;
-							ld->cDB ++;
-							g_hash_table_insert(ld->DB_Table,StrDup(ComSymbol),(void *)ld->cDB);
-						} else {
-							Error("same db appier");
-						}
-					}
-					p = q + 1;
-				}	while	(	(  q   !=  NULL  )
-							&&	(  db  ==  NULL  ) );
-				if		(  db  ==  NULL  ) {
-					Error("db not found");
+			strcpy(buff,RecordDir);
+			p = buff;
+			do {
+				if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+					*q = 0;
 				}
-//			}
+				sprintf(name,"%s/%s.db",p,ComSymbol);
+				if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
+					if		(  g_hash_table_lookup(ld->DB_Table,ComSymbol)  ==  NULL  ) {
+						rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
+						memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
+						xfree(ld->db);
+						if		(  db->opt.db->dbg  ==  NULL  ) {
+							db->opt.db->dbg = (DBG_Struct *)StrDup(gname);
+						}
+						ld->db = rtmp;
+						ld->db[ld->cDB] = db;
+						ld->cDB ++;
+						g_hash_table_insert(ld->DB_Table,StrDup(ComSymbol),(void *)ld->cDB);
+					} else {
+						Error("same db appier");
+					}
+				}
+				p = q + 1;
+			}	while	(	(  q   !=  NULL  )
+						&&	(  db  ==  NULL  ) );
+			if		(  db  ==  NULL  ) {
+				Error("db not found");
+			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
 			Error("DB ; missing");

@@ -24,6 +24,14 @@ copies.
 #define	_SERVER_H
 #include	"port.h"
 
+#define	FETURE_NULL		(byte)0x0000
+#define	FETURE_CORE		(byte)0x0001
+#define	FETURE_I18N		(byte)0x0002
+#define	FETURE_BLOB		(byte)0x0004
+
+#define	fFetureBlob		((TermFeture & FETURE_BLOB) != 0)
+#define	fFetureI18N		((TermFeture & FETURE_I18N) != 0)
+
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -31,7 +39,6 @@ copies.
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	Bool	fIgnoreVersion;
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
 #ifdef	USE_SSL
@@ -43,6 +50,7 @@ GLOBAL	char	*CA_Path;
 GLOBAL	char	*CA_File;
 #endif
 GLOBAL	URL		Auth;
+GLOBAL	byte	TermFeture;
 
 extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);

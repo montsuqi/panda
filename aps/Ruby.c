@@ -1036,7 +1036,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
                 }
                 no = (int) g_hash_table_lookup(path->opHash, func);
                 if (no != 0) {
-                    SQL_Operation *operation = path->ops[no - 1];
+                    DB_Operation *operation = path->ops[no - 1];
                     if (operation != NULL && operation->args != NULL) {
                         value = operation->args;
                         result = path_op_args(result, rb_str_new2(func));
