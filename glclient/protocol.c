@@ -441,7 +441,7 @@ ENTER_FUNC;
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		fp = Fopen(fname,"w");
-		fchmod(fileno(fp),0600);
+		fchmod(fileno(fp), 0600);
 		left = (size_t)GL_RecvLong(fpC);
 		do {
 			if		(  left  >  SIZE_BUFF  ) {
@@ -797,6 +797,9 @@ SendConnect(
 	PacketClass	pc;
 
 ENTER_FUNC;
+	if		(  fMlog  ) {
+		MessageLog("connection start\n");
+	}
 	GL_SendPacketClass(fp,GL_Connect);
 	GL_SendVersionString(fp);
 	GL_SendString(fp,User);

@@ -168,7 +168,7 @@ extern	void
 ExitSystem(void)
 {
 	GL_SendPacketClass(fpComm,GL_END);
-	if		(  fMlog  ) {
+	if	(  fMlog  ) {
 		MessageLog("connection end\n");
 	}
 }
@@ -226,10 +226,6 @@ start_client ()
 		StyleParser(Style);
 	}
 
-	if		(  fMlog  ) {
-		MessageLog("connection start\n");
-	}
-
     if (*Gtkrc != '\0') {
         gtk_rc_parse(Gtkrc);
     }
@@ -261,11 +257,9 @@ start_client ()
 	if (SendConnect(fpComm,CurrentApplication)) {
 		CheckScreens(fpComm,TRUE);
 		(void)GetScreenData(fpComm);
-		gtk_main();
+		gtk_main();  
 		ExitSystem();
 	}
-    
-    TermProtocol ();
     CloseNet (fpComm);
 #ifdef	USE_SSL
     if (ctx != NULL)
@@ -311,13 +305,13 @@ main(
 #endif
 
 	InitNET();
-    
+
     if (!fDialog) {
         start_client ();
     }
     else {
-        while (show_boot_dialog ())
-            start_client ();
+		if ( show_boot_dialog () )
+			start_client();
     }
     
 	return 0;
