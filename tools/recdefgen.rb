@@ -239,6 +239,10 @@ class	Widget
 			putTab(ind+1);
 			printf("count\tint;\n");
 			putTab(ind+1);
+			if @klass == "GtkPandaCList"
+				printf("row\tint;\n");
+				putTab(ind+1);
+			end
 			printf("item\t{\n");
 			i = 0;
 			for	c in @child

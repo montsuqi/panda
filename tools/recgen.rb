@@ -191,6 +191,9 @@ class	Widget
 			end
 		  when	"GtkCList", "GtkPandaCList"
 			@@record = @@record.append(sprintf("%s.count",@name),"int");
+            if @klass == "GtkPandaCList"
+              @@record = @@record.append(sprintf("%s.row",@name),"int");
+            end
 			for	c in @child
 				c._panda;
 			end

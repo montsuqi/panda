@@ -1,3 +1,8 @@
+2004-05-24  Kouji SHIMIZU  <shimizu@netlab.jp>
+
+	* tools/recgen.rb (Widget::_panda): GtkPandaCListのプロパティにrow(int)を追加
+	* tools/recdefgen.rb (Widget::_panda): 
+
 2004-05-23  Kouji SHIMIZU  <shimizu@netlab.jp>
 
 	* tools/recgen.rb (Element::out, Element::_append): Widgetのプロパ
@@ -17,8 +22,10 @@
 
 	* libs/LDparser.c (ParWindow, ParLD): エラーメッセージの更新
 
-	* libs/debug.h (ErrorPrintf): New macro function, 書式指定エラーメッセージ出力とexit
-	* libs/message.c (_MessageLevelPrintf): New function, レベル付き書式指定メッセージ出力
+	* libs/debug.h (ErrorPrintf): New macro function, 書式指定エラーメッ
+	セージ出力とexit
+	* libs/message.c (_MessageLevelPrintf): New function, レベル付き書
+	式指定メッセージ出力
 
 	* libs/LDparser.c (ParWindow): LD_TableにWindow名ではなくLD名を登
 	録していたバグを修正。
