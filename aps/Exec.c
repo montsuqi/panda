@@ -96,7 +96,8 @@ ExecuteDB_Server(
 	,				pno;
 	DBCOMM_CTRL		ctrl;
 	char			*rname
-	,				*pname;
+	,				*pname
+	,				*func;
 
 dbgmsg(">ExecuteDB_Server");
 	while	(TRUE) {
@@ -124,8 +125,13 @@ dbgmsg(">ExecuteDB_Server");
 		} else {
 			rec = NULL;
 		}
-		strcpy(ctrl.func,ValueString(GetItemLongName(recDBCTRL->value,"func")));
-		ExecDB_Process(&ctrl,rec);
+		func = ValueString(GetItemLongName(recDBCTRL->value,"func"));
+		if		(  *func  !=  0  ) {
+			strcpy(ctrl.func,ValueString(GetItemLongName(recDBCTRL->value,"func")));
+			ExecDB_Process(&ctrl,rec);
+		} else {
+			ctrl.rc = 0;
+		}
 		dbgmsg("write");
 		sprintf(buff,"%s.rc=%d",recDBCTRL->name,ctrl.rc);
 		Send(fpDBW,buff,strlen(buff));	ON_IO_ERROR(fpDBW,badio);
@@ -410,7 +416,6 @@ _CleanUpDC(void)
 static	void
 _ReadyDB(void)
 {
-	ExecDB_Function("DBOPEN",NULL,NULL);
 	recDBCTRL = BuildDBCTRL();
 	DbConv = NewConvOpt();
 	dbbuff = NewLBS();
@@ -474,7 +479,7 @@ dbgmsg("<StartBatch");
 	return	(rc);
 }
 
-static	MessageHandler	Handler = {
+static	MessageHandlerClass	Handler = {
 	"Exec",
 	FALSE,
 	_ExecuteProcess,
@@ -487,7 +492,7 @@ static	MessageHandler	Handler = {
 	NULL
 };
 
-extern	MessageHandler	*
+extern	MessageHandlerClass	*
 Exec(void)
 {
 	return	(&Handler);

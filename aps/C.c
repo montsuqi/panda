@@ -66,7 +66,7 @@ static	void	_ReadyDB(void);
 static	void	_StopDB(void);
 static	int		_StartBatch(char *name, char *param);
 
-static	MessageHandler	Handler = {
+static	MessageHandlerClass	Handler = {
 	"C",
 	FALSE,
 	_ExecuteProcess,
@@ -79,7 +79,7 @@ static	MessageHandler	Handler = {
 	NULL
 };
 
-extern	MessageHandler	*
+extern	MessageHandlerClass	*
 C(void)
 {
 dbgmsg(">C");
@@ -161,14 +161,12 @@ static	void
 _StopDB(void)
 {
 dbgmsg(">StopDB");
-	ExecDB_Function("DBDISCONNECT",NULL,NULL);
 dbgmsg("<StopDB");
 }
 
 static	void
 _ReadyDB(void)
 {
-	ExecDB_Function("DBOPEN",NULL,NULL);
 }
 
 static	int

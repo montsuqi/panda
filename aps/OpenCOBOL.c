@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -71,7 +71,7 @@ static	void	_ReadyDB(void);
 static	void	_StopDB(void);
 static	int		_StartBatch(char *name, char *param);
 
-static	MessageHandler	Handler = {
+static	MessageHandlerClass	Handler = {
 	"OpenCOBOL",
 	FALSE,
 	_ExecuteProcess,
@@ -84,7 +84,7 @@ static	MessageHandler	Handler = {
 	NULL
 };
 
-extern	MessageHandler	*
+extern	MessageHandlerClass	*
 OpenCOBOL(void)
 {
 dbgmsg(">OpenCOBOL");

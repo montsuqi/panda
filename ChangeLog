@@ -1,3 +1,7 @@
+2003-09-03  OGOSHI  <ogochan@nurs.or.jp>
+
+	* aps/handler.h: 型名変更(MessageHandler -> MessageHandlerClass)
+
 2003-08-31  OGOSHI  <ogochan@nurs.or.jp>
 
 	* dblib/PostgreSQL.c (ExecPGSQL): 復帰コードの扱いの変更(致命的で

@@ -115,6 +115,13 @@ class PandaTable < PandaDB
 	@name = name;
 	@db = db;
 	@values = Hash.new;
+	str  = "dbctrl.rc=0&";
+	str += "dbctrl.rname=" + @name;
+	@db.fpDBW.printf("%s\n",str);
+$stderr.printf(">>%s\n",str);
+	@db.fpDBW.flush;
+	@line = @db.fpDBR.gets.chop;
+	unPack;
   end
   def execFunction(func, pname = "")
 	str  = "dbctrl.rc=0&";
@@ -162,5 +169,10 @@ class PandaDC < PandaCore
 	@values["mcparea.dc.status"] = "PUTG";
 	@values["mcparea.rc"] = 0;
   end
+  WidgetNormal = 0;
+  WidgetActive = 1;
+  WidgetPreLight = 2;
+  WidgetSelected = 3
+  WidgetInSensitive = 4;
 end
 

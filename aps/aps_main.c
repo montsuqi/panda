@@ -197,9 +197,7 @@ dbgmsg(">ExecuteDC");
 			if		(  Sleep  >  0  ) {
 				sleep(Sleep);
 			}
-dbgmsg("-");
 			ExecDB_Function("DBCOMMIT",NULL,NULL);
-dbgmsg("--");
 			PutWFC(fpWFC,node);
 		} else {
 			MessagePrintf("window [%s] not found.\n",
@@ -226,6 +224,7 @@ StopProcess(
 	int		ec)
 {
 dbgmsg(">StopProcess");
+	ExecDB_Function("DBDISCONNECT",NULL,NULL);
 	StopDC();
 	CleanUp();
 dbgmsg("<StopProcess");

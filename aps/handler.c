@@ -61,13 +61,13 @@ static	char	*STATUS[4] = {
 static	char	*APS_HandlerLoadPath;
 
 static	GHashTable	*HandlerTable;
-static	MessageHandler	*
+static	MessageHandlerClass	*
 EnterHandler(
 	char	*name)
 {
 	void			*dlhandle;
-	MessageHandler	*handler;
-	MessageHandler	*(*finit)(void);
+	MessageHandlerClass	*handler;
+	MessageHandlerClass	*(*finit)(void);
 	char			filename[SIZE_BUFF];
 
 dbgmsg(">EnterHandler");
@@ -111,7 +111,7 @@ _InitiateHandler(
 	WindowBind	*bind,
 	void		*dummy)
 {
-	MessageHandler	*handler;
+	MessageHandlerClass	*handler;
 
 	handler = g_hash_table_lookup(HandlerTable,
 								  (char *)bind->handler);
@@ -146,7 +146,7 @@ _Use(
 	BatchBind	*bind,
 	void	*dummy)
 {
-	MessageHandler	*handler;
+	MessageHandlerClass	*handler;
 
 	handler = EnterHandler(bind->handler);
 	handler->fUse = TRUE;
@@ -164,7 +164,7 @@ dbgmsg("<InitiateBatchHandler");
 static	void
 _ReadyDC(
 	char	*name,
-	MessageHandler	*handler,
+	MessageHandlerClass	*handler,
 	void	*dummy)
 {
 	if		(  handler->fUse  ) {
@@ -183,7 +183,7 @@ ReadyDC(void)
 static	void
 _ReadyDB(
 	char	*name,
-	MessageHandler	*handler,
+	MessageHandlerClass	*handler,
 	void	*dummy)
 {
 	if		(  handler->fUse  ) {
@@ -198,8 +198,8 @@ ReadyDB(void)
 {
 dbgmsg(">ReadyDB");
 	InitDB_Process();
-	g_hash_table_foreach(HandlerTable,(GHFunc)_ReadyDB,NULL);
 	ExecDB_Function("DBOPEN",NULL,NULL);
+	g_hash_table_foreach(HandlerTable,(GHFunc)_ReadyDB,NULL);
 dbgmsg("<ReadyDB");
 }
 
@@ -336,9 +336,9 @@ ExecuteProcess(
 dbgmsg(">ExecuteProcess");
 	window = ValueString(GetItemLongName(node->mcprec->value,"dc.window"));
 	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
-	if		(  ((MessageHandler *)bind->handler)->ExecuteProcess  !=  NULL  ) {
+	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteProcess  !=  NULL  ) {
 		CallBefore(node);
-		if		(  !((MessageHandler *)bind->handler)->ExecuteProcess(node)  ) {
+		if		(  !((MessageHandlerClass *)bind->handler)->ExecuteProcess(node)  ) {
 			MessageLog("application process illegular execution");
 			exit(0);
 		}
@@ -350,7 +350,7 @@ dbgmsg("<ExecuteProcess");
 static	void
 _StopDC(
 	char	*name,
-	MessageHandler	*handler,
+	MessageHandlerClass	*handler,
 	void	*dummy)
 {
 	if		(  handler->fUse  ) {
@@ -369,7 +369,7 @@ StopDC(void)
 static	void
 _CleanUp(
 	char	*name,
-	MessageHandler	*handler,
+	MessageHandlerClass	*handler,
 	void	*dummy)
 {
 	if		(  handler->fUse  ) {
@@ -393,7 +393,7 @@ CleanUp(void)
 static	void
 _CleanUpDB(
 	char	*name,
-	MessageHandler	*handler,
+	MessageHandlerClass	*handler,
 	void	*dummy)
 {
 	if		(  handler->fUse  ) {
@@ -412,7 +412,7 @@ CleanUpDB(void)
 static	void
 _StopDB(
 	char	*name,
-	MessageHandler	*handler,
+	MessageHandlerClass	*handler,
 	void	*dummy)
 {
 	if		(  handler->fUse  ) {
@@ -434,7 +434,7 @@ StartBatch(
 	char	*name,
 	char	*para)
 {
-	MessageHandler	*handler;
+	MessageHandlerClass	*handler;
 	BatchBind		*bind;
 	int		rc;
 

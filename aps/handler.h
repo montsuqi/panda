@@ -41,7 +41,7 @@ typedef	struct {
 	void	(*ReadyDB)(void);
 	void	(*StopDB)(void);
 	void	(*CleanUpDB)(void);
-}	MessageHandler;
+}	MessageHandlerClass;
 
 extern	void	InitiateHandler(void);
 extern	void	InitiateBatchHandler(void);

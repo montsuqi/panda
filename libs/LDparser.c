@@ -216,7 +216,7 @@ dbgmsg(">ParDATA");
 		while	(  GetSymbol  !=  '}'  ) {
 			switch	(LD_Token) {
 			  case	T_SPA:
-				GetSymbol;
+				GetName;
 				if		(  LD_Token   ==  T_SYMBOL  ) {
 					if		(  ( ld->sparec = ReadRecordDefine(LD_ComSymbol) )
 							   ==  NULL  ) {

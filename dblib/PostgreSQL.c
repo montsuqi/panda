@@ -644,7 +644,7 @@ dbgmsg(">ExecPGSQL");
 						||	(  status  ==  PGRES_FATAL_ERROR     )
 						||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
 					dbgmsg("NG");
-					ctrl->rc = MCP_BAD_OTHER;
+					ctrl->rc = - status;
 					_PQclear(res);
 					break;
 				} else {

@@ -74,9 +74,9 @@ dbgmsg(">DumpKey");
 			if		(  *item  !=  NULL  ) {
 				printf(",");
 			}
-			printf("\n");
 		}
 	}
+	printf("\n");
 dbgmsg("<DumpKey");
 }
 
@@ -116,12 +116,85 @@ dbgmsg("<DumpDB");
 }
 
 static	void
+PutTab(
+	int		n)
+{
+	for	( ; n > 0 ; n -- ) {
+		printf("\t");
+	}
+}
+
+static	int		nTab;
+static	void
+DumpItems(
+	ValueStruct	*value)
+{
+	int		i;
+
+	if		(  value  ==  NULL  )	return;
+	switch	(ValueType(value)) {
+	  case	GL_TYPE_INT:
+		printf("int");
+		break;
+	  case	GL_TYPE_BOOL:
+		printf("bool");
+		break;
+	  case	GL_TYPE_BYTE:
+		printf("byte");
+		break;
+	  case	GL_TYPE_CHAR:
+		printf("char(%d)",ValueStringLength(value));
+		break;
+	  case	GL_TYPE_VARCHAR:
+		printf("varchar(%d)",ValueStringLength(value));
+		break;
+	  case	GL_TYPE_DBCODE:
+		printf("dbcode(%d)",ValueStringLength(value));
+		break;
+	  case	GL_TYPE_NUMBER:
+		if		(  ValueFixedSlen(value)  ==  0  ) {
+			printf("number(%d)",ValueFixedLength(value));
+		} else {
+			printf("number(%d,%d)",
+				   ValueFixedLength(value),
+				   ValueFixedSlen(value));
+		}
+		break;
+	  case	GL_TYPE_TEXT:
+		printf("text");
+		break;
+	  case	GL_TYPE_ARRAY:
+		DumpItems(ValueArrayItem(value,0));
+		printf("[%d]",ValueArraySize(value));
+		break;
+	  case	GL_TYPE_RECORD:
+		printf("{\n");
+		nTab ++;
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			PutTab(nTab);
+			printf("%s\t",ValueRecordName(value,i));
+			DumpItems(ValueRecordItem(value,i));
+			printf(";\n");
+		}
+		nTab --;
+		PutTab(nTab);
+		printf("}");
+		break;
+	  default:
+		break;
+	}
+}
+
+static	void
 DumpRecord(
 	RecordStruct	*db)
 {
 dbgmsg(">DumpRecord");
-	printf("\tname = [%s]\n",db->name);
 	DumpDB(db->opt.db);
+	nTab = 2;
+	printf("\t\t%s\t",db->name);
+	DumpItems(db->value);
+	printf(";\n");
 dbgmsg("<DumpRecord");
 }
 
