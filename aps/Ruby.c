@@ -66,6 +66,7 @@ copies.
 
 static VALUE application_classes;
 static char	*load_path;
+static char *codeset;
 
 static VALUE mPanda;
 static VALUE cArrayValue;
@@ -308,6 +309,7 @@ get_value(ValueStruct *val)
     case GL_TYPE_VARCHAR:
     case GL_TYPE_DBCODE:
     case GL_TYPE_TEXT:
+        return rb_str_new2(ValueToString(val, codeset));
     case GL_TYPE_BYTE:
     case GL_TYPE_BINARY:
         if (ValueByte(val) == NULL) {
@@ -331,6 +333,10 @@ static void
 set_value(ValueStruct *value, VALUE obj)
 {
     switch (TYPE(obj)) {
+    case T_TRUE:
+    case T_FALSE:
+        SetValueBool(value, RTEST(obj) ? TRUE : FALSE);
+        break;
     case T_FIXNUM:
         SetValueInteger(value, FIX2INT(obj));
         break;
@@ -341,7 +347,18 @@ set_value(ValueStruct *value, VALUE obj)
         SetValueFloat(value, RFLOAT(obj)->value);
         break;
     case T_STRING:
-        SetValueBinary(value, RSTRING(obj)->ptr, RSTRING(obj)->len);
+        switch (ValueType(value)) {
+        case GL_TYPE_BYTE:
+        case GL_TYPE_BINARY:
+            SetValueBinary(value, RSTRING(obj)->ptr, RSTRING(obj)->len);
+            break;
+        default:
+            SetValueStringWithLength(value,
+                                     RSTRING(obj)->ptr,
+                                     RSTRING(obj)->len,
+                                     codeset);
+            break;
+        }
         break;
     default:
         rb_raise(rb_eArgError, "unsupported type: %d",
@@ -356,7 +373,7 @@ aryval_length(VALUE self)
     ValueStruct *value;
 
     Data_Get_Struct(self, ValueStruct, value);
-    return ValueArraySize(value);
+    return INT2NUM(ValueArraySize(value));
 }
 
 static VALUE
@@ -396,7 +413,7 @@ recval_length(VALUE self)
     ValueStruct *value;
 
     Data_Get_Struct(self, ValueStruct, value);
-    return ValueRecordSize(value);
+    return INT2NUM(ValueRecordSize(value));
 }
 
 static VALUE
@@ -443,7 +460,7 @@ rec_length(VALUE self)
     RecordStruct *rec;
 
     Data_Get_Struct(self, RecordStruct, rec);
-    return ValueRecordSize(rec->value);
+    return INT2NUM(ValueRecordSize(rec->value));
 }
 
 static VALUE
@@ -590,6 +607,7 @@ init()
     else {
 		load_path = LibPath;
 	}
+    codeset = "utf-8";
 }
 
 static VALUE
@@ -633,6 +651,7 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
 	Bool	rc;
     int state;
 
+    codeset = ConvCodeset(handler->conv);
     module_longname = GetItemLongName(node->mcprec->value, "dc.module");
     module = ValueStringPointer(module_longname);
     app_class = load_application(handler->loadpath, module);
