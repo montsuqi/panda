@@ -40,6 +40,7 @@ copies.
 #include	"libmondai.h"
 #include	"htc.h"
 #include	"cgi.h"
+#include	"multipart.h"
 #include	"exec.h"
 #include	"debug.h"
 
@@ -720,9 +721,22 @@ ParseInput(
 			val->body = StrDup(u8);
 		}
 	}
+	void	FileNameToUTF8(
+		char	*name,
+		MultipartFile	*file)
+	{
+		char	*u8;
+
+		if		(  file->filename  !=  NULL  ) {
+			u8 = ConvUTF8(file->filename,Codeset);
+			xfree(file->filename);
+			file->filename = StrDup(u8);
+		}
+	}
 	
 ENTER_FUNC;
  	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);
+ 	g_hash_table_foreach(Files,(GHFunc)FileNameToUTF8,NULL);
 	if		(	(  ( button = LoadValue("_event") )  ==  NULL  )
 			||	(  *button  ==  0  ) ) {
 		if (htc->DefaultEvent == NULL) {
