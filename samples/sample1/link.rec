@@ -1,4 +1,4 @@
 demolink	{
-	linktext	char(200);
+	linktext	varchar(200);
 };
 

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -69,6 +69,7 @@ SendLargeString(
 	size_t	size;
 	char	*str;
 
+dbgmsg(">SendLargeString");
 	str = LBS_Body(lbs);
 	if		(   str  !=  NULL  ) { 
 		size = strlen(str);
@@ -78,6 +79,7 @@ SendLargeString(
 	if		(  size  >  0  ) {
 		Send(fp,str,size);
 	}
+dbgmsg("<SendLargeString");
 }
 
 extern	Bool
@@ -113,6 +115,7 @@ RecvLargeString(
 	Bool	rc;
 	int		c;
 
+dbgmsg(">RecvLargeString");
 	while	(	(  ( c = RecvChar(fp) )  >=  0     )
 			&&	(  c                     !=  '\n'  ) )	{
 		LBS_EmitChar(lbs,c);
@@ -123,6 +126,7 @@ RecvLargeString(
 	} else {
 		rc = FALSE;
 	}
+dbgmsg("<RecvLargeString");
 	return	(rc);
 }
 
