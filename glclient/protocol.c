@@ -457,7 +457,7 @@ GL_RecvLBS(
 	LargeByteString	*lbs)
 {
 	size_t	size;
-
+ENTER_FUNC;
 	size = GL_RecvLength(fp);
 	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
@@ -465,7 +465,10 @@ GL_RecvLBS(
 		if		(  !CheckNetFile(fp)  ) {
 			GL_Error();
 		}
+	} else {
+		dbgmsg("Recv LBS 0 size.");
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -1323,6 +1326,7 @@ LEAVE_FUNC;
 extern void
 RecvBinaryData(NETFILE *fp, LargeByteString *binary)
 {
+ENTER_FUNC;
     DataType = GL_RecvDataType(fp);
     switch (DataType) {
     case  GL_TYPE_CHAR:
@@ -1338,4 +1342,5 @@ RecvBinaryData(NETFILE *fp, LargeByteString *binary)
         Warning("unsupported data type: %d\n", DataType);
         break;
     }
+LEAVE_FUNC;
 }

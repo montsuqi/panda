@@ -413,13 +413,15 @@ RecvFileEntry(
 {
 	char	name[SIZE_BUFF]
 	,		buf[SIZE_BUFF]
-	,		*filename;
+	,		*filename
+	,		*longname;
 	int		nitem
 	,		i;
 	GtkWidget	*dialog, *subWidget;
     LargeByteString *binary;
 
 ENTER_FUNC;
+	longname = WidgetName + strlen(WidgetName);
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -429,7 +431,7 @@ ENTER_FUNC;
 				RecvBinaryData(fp, binary);
 				filename = (char *)gnome_file_entry_get_full_path(GNOME_FILE_ENTRY(widget), FALSE);
 				if ( (LBS_Size(binary) > 0) && (filename)) {
-					if (SaveFile(filename, binary) == TRUE) {
+					if (SaveFile(filename, binary)) {
 						snprintf(buf, sizeof(buf), "%s 書き込み終了", filename);
 						dialog = message_dialog(buf, TRUE);
 					} else {
@@ -443,6 +445,7 @@ ENTER_FUNC;
 				}
 				FreeLBS(binary);
 			} else {
+				sprintf(longname,".%s",name);
 				subWidget = gnome_file_entry_gtk_entry(GNOME_FILE_ENTRY(widget));
 				RecvEntry(subWidget,fp);
 			}
