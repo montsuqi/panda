@@ -162,7 +162,7 @@ BindMessageHandlerCommon(
 			   !=  NULL  ) {
 		*handler = h;
 	} else {
-		Error("invalid handler name");
+		Error("invalid handler name: %s", (*handler)->name);
 	}
 }
 
