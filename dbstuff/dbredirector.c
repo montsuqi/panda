@@ -141,6 +141,7 @@ dbgmsg(">FileThread");
 	while	(TRUE)	{
 		data = (LargeByteString *)DeQueue(FileQueue);
 		dbgmsg("de queue");
+		LBS_EmitEnd(data);
 		p = LBS_ToString(data);
 		if		(  ThisDBG->dbname  !=  NULL  )	{
 			ExecDBG_Operation(ThisDBG,"DBSTART");
