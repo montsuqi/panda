@@ -107,7 +107,7 @@ ENTER_FUNC;
 					break;
 				  case	T_LOCALE:
 					if		(  GetName   ==  T_SCONST  ) {
-						handler->conv->locale = StrDup(ComSymbol);
+						handler->conv->coding = StrDup(ComSymbol);
 					} else {
 						Error("locale name must be string.");
 					}
@@ -172,17 +172,17 @@ EnterDefaultHandler(void)
 #ifdef	HAVE_OPENCOBOL
 	handler = NewMessageHandler("OpenCOBOL","OpenCOBOL");
 	handler->serialize = (ConvFuncs *)"OpenCOBOL";
-	handler->conv->locale = "euc-jp";
+	handler->conv->coding = "euc-jp";
 	handler->start = "";
 #endif
 	handler = NewMessageHandler("C","C");
 	handler->serialize = NULL;
-	handler->conv->locale = NULL;
+	handler->conv->coding = NULL;
 	handler->start = "";
 
 	handler = NewMessageHandler("Exec","Exec");
 	handler->serialize = (ConvFuncs *)"CGI";
-	handler->conv->locale = "euc-jp";
+	handler->conv->coding = "euc-jp";
 	handler->start = "%m";
 }
 
