@@ -61,13 +61,12 @@ copies.
 #include	"applications.h"
 #include	"driver.h"
 #include	"glserver.h"
+#include	"glcomm.h"
 #include	"front.h"
 #include	"dirs.h"
 #include	"DDparser.h"
 #include	"message.h"
 #include	"debug.h"
-
-static	LargeByteString	*Buff;
 
 static	void
 FinishSession(
@@ -91,12 +90,13 @@ CheckCache(
 	int		klass;
 
 dbgmsg(">CheckCache");
-	SendPacketClass(fpComm,GL_QueryScreen);	ON_IO_ERROR(fpComm,badio);
-	SendString(fpComm,name);				ON_IO_ERROR(fpComm,badio);
-	SendLong(fpComm,(long)stsize);			ON_IO_ERROR(fpComm,badio);
-	SendLong(fpComm,(long)stmtime);			ON_IO_ERROR(fpComm,badio);
-	SendLong(fpComm,(long)stctime);			ON_IO_ERROR(fpComm,badio);
-	switch	(  klass = RecvPacketClass(fpComm)  ) {
+	GL_SendPacketClass(fpComm,GL_QueryScreen,fFetureNetwork);
+	ON_IO_ERROR(fpComm,badio);
+	GL_SendString(fpComm,name,fFetureNetwork);			ON_IO_ERROR(fpComm,badio);
+	GL_SendLong(fpComm,(long)stsize,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_SendLong(fpComm,(long)stmtime,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_SendLong(fpComm,(long)stctime,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+	switch	(  klass = GL_RecvPacketClass(fpComm,fFetureNetwork)  ) {
 	  case	GL_GetScreen:
 		dbgmsg("GetScreen");
 		ret = TRUE;
@@ -135,10 +135,12 @@ dbgmsg(">SendFile");
 						  wname,
 						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
 		rc = FALSE;
-		RecvString(fpComm,wname);	/*	dummy	*/
+		GL_RecvString(fpComm,wname,fFetureNetwork);	/*	dummy	*/
 		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
-			SendPacketClass(fpComm,GL_ScreenDefine);	ON_IO_ERROR(fpComm,badio);
-			SendLong(fpComm,(long)stbuf.st_size);		ON_IO_ERROR(fpComm,badio);
+			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+			GL_SendLong(fpComm,(long)stbuf.st_size,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
 			left = stbuf.st_size;
 			do {
 				if		(  left  >  SIZE_BUFF  ) {
@@ -216,70 +218,8 @@ dbgmsg(">CheckScreens");
 	if		(  setjmp(envCheckScreen)  ==  0  ) {
 		g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
 	}
-	SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(fpComm,GL_END,fFetureNetwork);
 dbgmsg("<CheckScreens");
-}
-
-/*
- *	This function sends value with valiable name.
- */
-static	void
-SendValue(
-	NETFILE		*fp,
-	ValueStruct	*value,
-	char		*coding)
-{
-	int		i;
-
-	ValueIsNotUpdate(value);
-	SendDataType(fp,ValueType(value));
-	switch	(ValueType(value)) {
-	  case	GL_TYPE_INT:
-		SendInt(fp,ValueInteger(value));
-		break;
-	  case	GL_TYPE_BOOL:
-		SendBool(fp,ValueBool(value));
-		break;
-	  case	GL_TYPE_BINARY:
-	  case	GL_TYPE_BYTE:
-		LBS_ReserveSize(Buff,ValueByteLength(value),FALSE);
-		memcpy(LBS_Body(Buff),ValueByte(value),ValueByteLength(value));
-		SendLBS(fp,Buff);
-		break;
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		SendString(fp,ValueToString(value,coding));
-		break;
-	  case	GL_TYPE_FLOAT:
-		SendFloat(fp,ValueFloat(value));
-		break;
-	  case	GL_TYPE_NUMBER:
-		SendFixed(fp,&ValueFixed(value));
-		break;
-	  case	GL_TYPE_OBJECT:
-		if		(  fFetureExpand  ) {
-		} else {
-			SendObject(fp,ValueObject(value));
-		}
-		break;
-	  case	GL_TYPE_ARRAY:
-		SendInt(fp,ValueArraySize(value));
-		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			SendValue(fp,ValueArrayItem(value,i),coding);
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		SendInt(fp,ValueRecordSize(value));
-		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			SendString(fp,ValueRecordName(value,i));
-			SendValue(fp,ValueRecordItem(value,i),coding);
-		}
-		break;
-	  default:
-		break;
-	}
 }
 
 static	jmp_buf	envSendWindow;
@@ -295,27 +235,35 @@ dbgmsg(">SendWindow");
 
 	rc = FALSE; 
 	if		(  win->PutType  !=  SCREEN_NULL  ) {
-		SendPacketClass(fpComm,GL_WindowName);	ON_IO_ERROR(fpComm,badio);
-		SendString(fpComm,wname);				ON_IO_ERROR(fpComm,badio);
+		GL_SendPacketClass(fpComm,GL_WindowName,fFetureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,wname,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
 		dbgprintf("wname = [%s]\n",wname);
-		SendInt(fpComm,win->PutType);			ON_IO_ERROR(fpComm,badio);
+		GL_SendInt(fpComm,win->PutType,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 		switch	(win->PutType) {
 		  case	SCREEN_CURRENT_WINDOW:
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
 			if		(  win->rec->value  !=  NULL  ) {
-				SendPacketClass(fpComm,GL_ScreenData);		ON_IO_ERROR(fpComm,badio);
+				GL_SendPacketClass(fpComm,GL_ScreenData,fFetureNetwork);
+				ON_IO_ERROR(fpComm,badio);
 				if		(  fFetureI18N  ) {
-					SendValue(fpComm,win->rec->value,NULL);		ON_IO_ERROR(fpComm,badio);
+					GL_SendValue(fpComm,win->rec->value,NULL,
+								 fFetureExpand,fFetureNetwork);
+					ON_IO_ERROR(fpComm,badio);
 				} else {
-					SendValue(fpComm,win->rec->value,"euc-jp");	ON_IO_ERROR(fpComm,badio);
+					GL_SendValue(fpComm,win->rec->value,"euc-jp",
+								 fFetureExpand,fFetureNetwork);
+					ON_IO_ERROR(fpComm,badio);
 				}
 			} else {
-				SendPacketClass(fpComm,GL_NOT);			ON_IO_ERROR(fpComm,badio);
+				GL_SendPacketClass(fpComm,GL_NOT,fFetureNetwork);
+				ON_IO_ERROR(fpComm,badio);
 			}
 			break;
 		  default:
-			SendPacketClass(fpComm,GL_NOT);				ON_IO_ERROR(fpComm,badio);
+			GL_SendPacketClass(fpComm,GL_NOT,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
 			break;
 		}
 		win->PutType = SCREEN_NULL;
@@ -341,11 +289,12 @@ dbgmsg(">SendScreenAll");
 	}
 	if		(	(  *scr->window  !=  0  )
 			&&	(  *scr->widget  !=  0  ) ) {
-		SendPacketClass(fpComm,GL_FocusName);	ON_IO_ERROR(fpComm,badio);
-		SendString(fpComm,scr->window);			ON_IO_ERROR(fpComm,badio);
-		SendString(fpComm,scr->widget);			ON_IO_ERROR(fpComm,badio);
+		GL_SendPacketClass(fpComm,GL_FocusName,fFetureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,scr->window,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,scr->widget,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 	}
-	SendPacketClass(fpComm,GL_END);			ON_IO_ERROR(fpComm,badio);
+	GL_SendPacketClass(fpComm,GL_END,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
 	rc = TRUE;
   badio:
 dbgmsg("<SendScreenAll");
@@ -360,8 +309,8 @@ SendScreenData(
 	Bool	rc;
 
 dbgmsg(">SendScreenData");
-	if		(  RecvPacketClass(fpComm)  ==  GL_GetData  ) {
-		if		(  RecvInt(fpComm)  ==  0  ) {	/*	get all data	*/
+	if		(  GL_RecvPacketClass(fpComm,fFetureNetwork)  ==  GL_GetData  ) {
+		if		(  GL_RecvInt(fpComm,fFetureNetwork)  ==  0  ) {	/*	get all data	*/
 			dbgmsg("get all data");
 			rc = SendScreenAll(fpComm,scr);
 		} else {
@@ -395,45 +344,51 @@ RecvScreenData(
 
 dbgmsg(">RecvScreenData");
 	rc = FALSE;
-	while	(  RecvPacketClass(fpComm)  ==  GL_WindowName  ) {
+	while	(  GL_RecvPacketClass(fpComm,fFetureNetwork)  ==  GL_WindowName  ) {
 		ON_IO_ERROR(fpComm,badio);
-		RecvString(fpComm,wname);	ON_IO_ERROR(fpComm,badio);
+		GL_RecvString(fpComm,wname,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-			while	(  ( c = RecvPacketClass(fpComm) )  ==  GL_ScreenData  ) {
+			while	(  ( c = GL_RecvPacketClass(fpComm,fFetureNetwork) )
+					   ==  GL_ScreenData  ) {
 				ON_IO_ERROR(fpComm,badio);
-				RecvString(fpComm,name);		ON_IO_ERROR(fpComm,badio);
+				GL_RecvString(fpComm,name,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
 					ValueIsUpdate(value);
-					type = RecvDataType(fpComm);	ON_IO_ERROR(fpComm,badio);
+					type = GL_RecvDataType(fpComm,fFetureNetwork);
+					ON_IO_ERROR(fpComm,badio);
 					switch	(type)	{
 					  case	GL_TYPE_CHAR:
 					  case	GL_TYPE_VARCHAR:
 					  case	GL_TYPE_DBCODE:
 					  case	GL_TYPE_TEXT:
-						RecvString(fpComm,str);		ON_IO_ERROR(fpComm,badio);
+						GL_RecvString(fpComm,str,fFetureNetwork);ON_IO_ERROR(fpComm,badio);
 						if		(  fFetureI18N  ) {
-							SetValueString(value,str,NULL);		ON_IO_ERROR(fpComm,badio);
+							SetValueString(value,str,NULL);	ON_IO_ERROR(fpComm,badio);
 						} else {
-							SetValueString(value,str,"euc-jp");	ON_IO_ERROR(fpComm,badio);
+							SetValueString(value,str,"euc-jp");ON_IO_ERROR(fpComm,badio);
 						}
 						break;
 					  case	GL_TYPE_NUMBER:
-						xval = RecvFixed(fpComm);	ON_IO_ERROR(fpComm,badio);
+						xval = GL_RecvFixed(fpComm,fFetureNetwork);
+						ON_IO_ERROR(fpComm,badio);
 						SetValueFixed(value,xval);
 						xfree(xval->sval);
 						xfree(xval);
 						break;
 					  case	GL_TYPE_INT:
-						ival = RecvInt(fpComm);		ON_IO_ERROR(fpComm,badio);
+						ival = GL_RecvInt(fpComm,fFetureNetwork);
+						ON_IO_ERROR(fpComm,badio);
 						SetValueInteger(value,ival);
 						break;
 					  case	GL_TYPE_FLOAT:
-						fval = RecvFloat(fpComm);	ON_IO_ERROR(fpComm,badio);
+						fval = GL_RecvFloat(fpComm,fFetureNetwork);
+						ON_IO_ERROR(fpComm,badio);
 						SetValueFloat(value,fval);
 						break;
 					  case	GL_TYPE_BOOL:
-						bval = RecvBool(fpComm);	ON_IO_ERROR(fpComm,badio);
+						bval = GL_RecvBool(fpComm,fFetureNetwork);
+						ON_IO_ERROR(fpComm,badio);
 						SetValueBool(value,bval);
 						break;
 					  default:
@@ -527,14 +482,18 @@ CheckFeture(
 				if		(  !strlicmp(p,"i18n")  ) {
 					TermFeture |= FETURE_I18N;
 				}
+				if		(  !strlicmp(p,"no")  ) {
+					TermFeture |= FETURE_NETWORK;
+				}
 				p = n;
 			}
 		}
 	}
-	printf("core   = %s\n",fFetureCore ? "YES" : "NO");
-	printf("i18n   = %s\n",fFetureI18N ? "YES" : "NO");
-	printf("expand = %s\n",fFetureExpand ? "YES" : "NO");
-	printf("blob   = %s\n",fFetureBlob ? "YES" : "NO");
+	printf("core    = %s\n",fFetureCore ? "YES" : "NO");
+	printf("i18n    = %s\n",fFetureI18N ? "YES" : "NO");
+	printf("expand  = %s\n",fFetureExpand ? "YES" : "NO");
+	printf("blob    = %s\n",fFetureBlob ? "YES" : "NO");
+	printf("network = %s\n",fFetureNetwork ? "YES" : "NO");
 }
 
 static	void
@@ -546,31 +505,35 @@ Connect(
 	char	ver[SIZE_BUFF];
 	char	msg[SIZE_BUFF];
 
-	RecvString(fpComm,ver);			ON_IO_ERROR(fpComm,badio);
-	RecvString(fpComm,scr->user);	ON_IO_ERROR(fpComm,badio);
-	RecvString(fpComm,pass);		ON_IO_ERROR(fpComm,badio);
-	RecvString(fpComm,scr->cmd);	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm,ver,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm,scr->user,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm,pass,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm,scr->cmd,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 	sprintf(msg,"[%s@%s] session start",scr->user,scr->term);
 	MessageLog(msg);
 
 	CheckFeture(ver);
 
 	if		(  TermFeture  ==  FETURE_NULL  ) {
-		SendPacketClass(fpComm,GL_E_VERSION);	ON_IO_ERROR(fpComm,badio);
+		GL_SendPacketClass(fpComm,GL_E_VERSION,fFetureNetwork);
+		ON_IO_ERROR(fpComm,badio);
 		g_warning("reject client(invalid version)");
 	} else
 	if		(  ThisAuth(scr->user,pass,scr->other)  ) {
 		scr->Windows = NULL;
 		ApplicationsCall(APL_SESSION_LINK,scr);
 		if		(  scr->status  ==  APL_SESSION_NULL  ) {
-			SendPacketClass(fpComm,GL_E_APPL);	ON_IO_ERROR(fpComm,badio);
+			GL_SendPacketClass(fpComm,GL_E_APPL,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
 		} else {
-			SendPacketClass(fpComm,GL_OK);		ON_IO_ERROR(fpComm,badio);
+			GL_SendPacketClass(fpComm,GL_OK,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
 			CheckScreens(fpComm,scr);
 		}
 	} else {
 		g_warning("reject client(authentication error)");
-		SendPacketClass(fpComm,GL_E_AUTH);		ON_IO_ERROR(fpComm,badio);
+		GL_SendPacketClass(fpComm,GL_E_AUTH,fFetureNetwork);
+		ON_IO_ERROR(fpComm,badio);
 	}
   badio:;
 }
@@ -585,7 +548,7 @@ MainLoop(
 	PacketClass	klass;
 
 dbgmsg(">MainLoop");
-	klass = RecvPacketClass(fpComm); ON_IO_ERROR(fpComm,badio);
+	klass = GL_RecvPacketClass(fpComm,fFetureNetwork); ON_IO_ERROR(fpComm,badio);
 	dbgprintf("class = %d",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
@@ -593,12 +556,16 @@ dbgmsg(">MainLoop");
 			Connect(fpComm,scr);				ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Name:
-			RecvString(fpComm,scr->term);		ON_IO_ERROR(fpComm,badio);
+			GL_RecvString(fpComm,scr->term,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Event:
-			RecvString(fpComm,scr->window);		ON_IO_ERROR(fpComm,badio);
-			RecvString(fpComm,scr->widget);		ON_IO_ERROR(fpComm,badio);
-			RecvString(fpComm,scr->event);		ON_IO_ERROR(fpComm,badio);
+			GL_RecvString(fpComm,scr->window,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+			GL_RecvString(fpComm,scr->widget,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+			GL_RecvString(fpComm,scr->event,fFetureNetwork);
+			ON_IO_ERROR(fpComm,badio);
 			dbgprintf("window = [%s]\n",scr->window);
 			dbgprintf("event  = [%s]\n",scr->event);
 			RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
@@ -713,7 +680,7 @@ InitSystem(
 dbgmsg(">InitSystem");
 	InitNET();
 	InitData();
+	InitGL_Comm();
 	ApplicationsInit(argc,argv);
-	Buff = NewLBS();
 dbgmsg("<InitSystem");
 }

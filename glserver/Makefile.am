@@ -25,6 +25,7 @@ INCLUDES 			= 		\
 	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
-glserver_SOURCES	=	\
+glserver_SOURCES	=		\
 	glserver.c	glserver.h	\
-	server.c	
+	glcomm.c				\
+	server.c
