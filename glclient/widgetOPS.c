@@ -186,6 +186,44 @@ dbgmsg("<SendEntry");
 
 #ifdef	USE_PANDA
 static	Bool
+RecvPS(
+	GtkWidget	*widget,
+	FILE	*fp)
+{
+	char	buff[SIZE_BUFF]
+	,		name[SIZE_NAME+1];
+	int		nitem
+	,		i;
+
+dbgmsg(">RecvPS");
+	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			RecvString(fp,name);
+			RecvStringData(fp,buff);
+			RegistValue(name,NULL);
+			gtk_panda_ps_load(GTK_PANDA_PS(widget),buff);
+		}
+	}
+dbgmsg("<RecvPS");
+	return	(TRUE);
+}
+
+
+static	Bool
+SendPS(
+	char	*name,
+	GtkWidget	*widget,
+	FILE	*fp)
+{
+dbgmsg(">SendPS");
+dbgmsg("<SendPS");
+	return	(TRUE);
+}
+#endif
+
+#ifdef	USE_PANDA
+static	Bool
 RecvNumberEntry(
 	GtkWidget	*widget,
 	FILE	*fp)
@@ -520,7 +558,6 @@ dbgmsg(">RecvPandaCombo");
 	nitem = RecvInt(fp);
 	count = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		printf("%s\n", name);
 		RecvString(fp,name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
@@ -1197,18 +1234,12 @@ InitWidgetOperations(void)
 
 	AddClass(GTK_TYPE_ENTRY,RecvEntry,SendEntry);
 #ifdef	USE_PANDA
-#ifdef	GTK_TYPE_NUMBER_ENTRY
 	AddClass(GTK_TYPE_NUMBER_ENTRY,RecvNumberEntry,SendNumberEntry);
-#endif
-#ifdef	GTK_PANDA_TYPE_COMBO
 	AddClass(GTK_PANDA_TYPE_COMBO,RecvPandaCombo,NULL);
-#endif
-#ifdef	GTK_PANDA_TYPE_CLIST
 	AddClass(GTK_PANDA_TYPE_CLIST,RecvPandaCList,SendPandaCList);
-#endif
-#ifdef	GTK_PANDA_TYPE_ENTRY
 	AddClass(GTK_PANDA_TYPE_ENTRY,RecvEntry,SendEntry);
-#endif
+	AddClass(GTK_PANDA_TYPE_TEXT,RecvText,SendText);
+	AddClass(GTK_PANDA_TYPE_PS,RecvPS,SendPS);
 #endif
 	AddClass(GTK_TYPE_TEXT,RecvText,SendText);
 	AddClass(GTK_TYPE_LABEL,RecvLabel,NULL);
