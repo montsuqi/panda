@@ -441,6 +441,13 @@ ScanPost(
 	return	(rc);
 }
 
+extern  void
+CGI_InitValues(void)
+{
+	Values = NewNameHash();
+    Files = NewNameHash();
+}
+
 extern	void
 GetArgs(void)
 {
@@ -454,8 +461,6 @@ GetArgs(void)
 		,	*p;
 
 ENTER_FUNC;
-	Values = NewNameHash();
-    Files = NewNameHash();
 	if		(  ( env  =  CommandLine )  ==  NULL  ) {
 		env = getenv("QUERY_STRING");
 	}
@@ -976,6 +981,7 @@ LEAVE_FUNC;
 extern	void
 InitCGI(void)
 {
+    CGI_InitValues();
 	GetArgs();
 }
 

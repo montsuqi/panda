@@ -49,6 +49,9 @@ GLOBAL	char		*SesDir;
 GLOBAL	char		*CommandLine;
 #undef	GLOBAL
 
+extern  void	CGI_InitValues(void);
+extern	void	InitCGI(void);
+
 extern	char	*ConvUTF8(unsigned char *istr, char *code);
 extern	char	*ConvLocal(char *istr);
 
