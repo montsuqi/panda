@@ -47,8 +47,9 @@ SetWindowName(
 	char		*name)
 {
 	WindowData	*entry;
+	char		buff[SIZE_LONGNAME+1];
 
-dbgmsg(">SetWindowName");
+ENTER_FUNC;
 #ifdef	TRACE
 	printf("SetWindowName(%s)\n",name);
 #endif
@@ -62,13 +63,14 @@ dbgmsg(">SetWindowName");
 			entry = New(WindowData);
 			entry->PutType = SCREEN_NULL;
 			entry->fNew = FALSE;
-			entry->rec = ReadRecordDefine(name);
+			sprintf(buff,"%s.rec",name);
+			entry->rec = ReadRecordDefine(buff);
 			g_hash_table_insert(ThisScreen->Windows,entry->rec->name,entry);
 		}
 	} else {
 		entry = NULL;
 	}
-dbgmsg("<SetWindowName");
+LEAVE_FUNC;
 	return	(entry);
 }
 
@@ -79,13 +81,13 @@ GetWindowRecord(
 	WindowData	*win;
 	RecordStruct	*rec;
 
-dbgmsg(">GetWindowRecord");
+ENTER_FUNC;
 	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,wname) )  !=  NULL  ) {
 		rec = win->rec;
 	} else {
 		rec = NULL;
 	}
-dbgmsg("<GetWindowRecord");
+LEAVE_FUNC;
 	return	(rec); 
 }
 
@@ -96,7 +98,7 @@ PutWindow(
 {
 	Bool		rc;
 
-dbgmsg(">PutWindow");
+ENTER_FUNC;
 	if		(  win  !=  NULL  ) {
 		win->PutType = type;
 		win->fNew = TRUE;
@@ -105,7 +107,7 @@ dbgmsg(">PutWindow");
 	} else {
 		rc = FALSE;
 	}
-dbgmsg("<PutWindow");
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -171,7 +173,7 @@ NewScreenData(void)
 {
 	ScreenData	*scr;
 
-dbgmsg(">NewScreenData");
+ENTER_FUNC;
 	scr = New(ScreenData);
 	memclear(scr->window,SIZE_NAME+1);
 	memclear(scr->widget,SIZE_NAME+1);
@@ -181,6 +183,6 @@ dbgmsg(">NewScreenData");
 	memclear(scr->user,SIZE_USER+1);
 	memclear(scr->other,SIZE_OTHER+1);
 	scr->Windows = NULL;
-dbgmsg("<NewScreenData");
+LEAVE_FUNC;
 	return	(scr); 
 }

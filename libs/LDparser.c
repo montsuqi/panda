@@ -100,21 +100,23 @@ GetWindow(
 {
 	RecordStruct	*rec;
 	char		*wname;
+	char		buff[SIZE_LONGNAME+1];
 
-dbgmsg(">GetWindow");
+ENTER_FUNC;
 	dbgprintf("GetWindow(%s)",name);
 	if		(  name  !=  NULL  ) {
 		if		(  ( rec = 
 					 (RecordStruct *)g_hash_table_lookup(Windows,name) )
 				   ==  NULL  ) {
 			wname = StrDup(name);
-			rec = ReadRecordDefine(name);
+			sprintf(buff,"%s.rec",name);
+			rec = ReadRecordDefine(buff);
 			g_hash_table_insert(Windows,wname,rec);
 		}
 	} else {
 		rec = NULL;
 	}
-dbgmsg("<GetWindow");
+LEAVE_FUNC;
 	return	(rec);
 }
 
@@ -126,7 +128,7 @@ ParWindow(
 	WindowBind	**wnb;
 	char		wname[SIZE_NAME+1];
 
-dbgmsg(">ParWindow");
+ENTER_FUNC;
 	if		(  GetSymbol  !=  '{'  ) { 
 		Error("syntax error");
 	} else {
@@ -162,7 +164,7 @@ dbgmsg(">ParWindow");
 			}
 		}
 	}
-dbgmsg("<ParWindow");
+LEAVE_FUNC;
 }
 
 static	void
@@ -177,7 +179,7 @@ ParDB(
 	char		*p
 	,			*q;
 
-dbgmsg(">ParDB");
+ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
@@ -216,21 +218,24 @@ dbgmsg(">ParDB");
 		}
 	}
 	xfree(gname);
-dbgmsg("<ParDB");
+LEAVE_FUNC;
 }
 
 static	void
 ParDATA(
 	LD_Struct	*ld)
 {
-dbgmsg(">ParDATA");
+	char	buff[SIZE_LONGNAME+1];
+
+ENTER_FUNC;
 	if		(  GetSymbol  ==  '{'  ) {
 		while	(  GetSymbol  !=  '}'  ) {
 			switch	(ComToken) {
 			  case	T_SPA:
 				GetName;
 				if		(  ComToken   ==  T_SYMBOL  ) {
-					if		(  ( ld->sparec = ReadRecordDefine(ComSymbol) )
+					sprintf(buff,"%s.rec",ComSymbol);
+					if		(  ( ld->sparec = ReadRecordDefine(buff) )
 							   ==  NULL  ) {
 						Error("spa record not found");
 					}
@@ -252,7 +257,7 @@ dbgmsg(">ParDATA");
 	} else {
 		Error("DATA syntax error");
 	}
-dbgmsg("<ParDATA");
+LEAVE_FUNC;
 }
 
 static	void
@@ -261,7 +266,7 @@ ParBIND(
 {
 	WindowBind	*bind;
 
-dbgmsg(">ParBIND");
+ENTER_FUNC;
 	if		(	(  GetSymbol  ==  T_SCONST  )
 			||	(  ComToken    ==  T_SYMBOL  ) ) {
 		if		(  ( bind = g_hash_table_lookup(ret->whash,ComSymbol) )  ==  NULL  ) {
@@ -283,7 +288,7 @@ dbgmsg(">ParBIND");
 	} else {
 		Error("window name error");
 	}
-dbgmsg("<ParBIND");
+LEAVE_FUNC;
 }
 
 static	LD_Struct	*
@@ -292,7 +297,7 @@ ParLD(void)
 	LD_Struct	*ret;
 	char		*gname;
 
-dbgmsg(">ParLD");
+ENTER_FUNC;
     ret = New(LD_Struct);
     ret->name = NULL;
     ret->group = "";
@@ -388,7 +393,7 @@ dbgmsg(">ParLD");
     if (ret->name == NULL) {
         Error("name directive is required");
     }
-dbgmsg("<ParLD");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -415,7 +420,7 @@ LD_Parser(
 	LD_Struct	*ret;
 	struct	stat	stbuf;
 
-dbgmsg(">LD_Parser");
+ENTER_FUNC;
 dbgmsg(name); 
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  PushLexInfo(name,D_Dir,Reserved)  !=  NULL  ) {
@@ -430,7 +435,7 @@ dbgmsg(name);
 	} else {
 		ret = NULL;
 	}
-dbgmsg("<LD_Parser");
+LEAVE_FUNC;
 	return	(ret);
 }
 
