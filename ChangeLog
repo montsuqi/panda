@@ -1,3 +1,8 @@
+2004-09-27  Noboru Saitou  <noborus@netlab.jp>
+
+	* glserver/glcomm.c 印刷プレビューにPDFサポートの追加
+	* glserver/pstopng PS->PNG変換スクリプトを追加
+
 2004-09-03  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/protocol.c: Send/Recv をチェックするようにした
