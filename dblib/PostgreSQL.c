@@ -79,23 +79,6 @@ ValueOid(
 /**/
 
 static	void
-EncodeString(
-	LargeByteString	*lbs,
-	char	del,
-	char	*s)
-{
-    size_t old_size, src_len, buf_len, len;
-    
-    src_len = strlen(s);
-    buf_len = src_len * 2 + 1;
-    old_size = LBS_Size(lbs);
-    LBS_ReserveSize(lbs, old_size + buf_len, TRUE);
-    LBS_SetPos(lbs, old_size);
-    len = PQescapeString(LBS_Ptr(lbs), s, src_len);
-    LBS_Seek(lbs, len, SEEK_CUR);
-}
-
-static	void
 EscapeString(LargeByteString *lbs, char *s)
 {
 	unsigned char *sp;
