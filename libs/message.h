@@ -30,7 +30,9 @@ copies.
 #define	MESSAGE_PRINT		5
 
 #define	MessageLog(msg)				_Message(MESSAGE_LOG,__FILE__,__LINE__,(msg))
-#define	MessagePrintf(fmt, ...)		_MessagePrintf(__FILE__,__LINE__,(fmt), __VA_ARGS__)
+#define	MessagePrintf(fmt, ...)		_MessageLevelPrintf(MESSAGE_PRINT, __FILE__,__LINE__,(fmt), __VA_ARGS__)
+#define	MessageLogPrintf(fmt, ...)	_MessageLevelPrintf(MESSAGE_LOG, __FILE__,__LINE__,(fmt), __VA_ARGS__)
+#define	MessageDebugPrintf(fmt, ...)		_MessageLevelPintf(MESSAGE_DEBUG __FILE__,__LINE__,(fmt), __VA_ARGS__)
 
 extern	void	MessageDebug(char *file, int line, char *msg);
 extern	void	_MessagePrintf(char *file, int line, char *format, ...);

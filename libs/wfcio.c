@@ -61,18 +61,23 @@ ENTER_FUNC;
 	port = ParPort(url,PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
-	fp = SocketToNet(fd);
-	if		(  fKeep  ) {
-		SendPacketClass(fp,WFC_TRUE);
+	if ( fd > 0 ){
+		fp = SocketToNet(fd);
+		if		(  fKeep  ) {
+			SendPacketClass(fp,WFC_TRUE);
+		} else {
+			SendPacketClass(fp,WFC_FALSE);
+		}		
+		SendStringDelim(fp,term);
+		SendStringDelim(fp,"\n");
+		SendStringDelim(fp,user);
+		SendStringDelim(fp,"\n");
+		SendStringDelim(fp,arg);
+		SendStringDelim(fp,"\n");
 	} else {
-		SendPacketClass(fp,WFC_FALSE);
-	}		
-	SendStringDelim(fp,term);
-	SendStringDelim(fp,"\n");
-	SendStringDelim(fp,user);
-	SendStringDelim(fp,"\n");
-	SendStringDelim(fp,arg);
-	SendStringDelim(fp,"\n");
+		Warning("can not connect wfc server");
+		fp = NULL;
+	}
 	buff = NewLBS();
 LEAVE_FUNC;
 	return	(fp); 

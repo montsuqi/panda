@@ -181,7 +181,6 @@ ConnectIP_Socket(
 			,			hints
 			,			*head;
 	struct	sockaddr_in	*name;
-	int		one;
 
 ENTER_FUNC;
 #ifdef	DEBUG

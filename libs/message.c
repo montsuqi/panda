@@ -73,22 +73,6 @@ MessageDebug(
 }
 
 extern	void
-_MessagePrintf(
-	char	*file,
-	int		line,
-	char	*format,
-	...)
-{
-	char	buff[SIZE_BUFF];
-	va_list	va;
-
-	va_start(va,format);
-	vsprintf(buff,format,va);
-	va_end(va);
-	_Message(MESSAGE_PRINT,file,line,buff);
-}
-
-extern	void
 _MessageLevelPrintf(
 	int 	level,
 	char	*file,

@@ -52,7 +52,7 @@ LoadFile(
 	void	*ret;
 	struct	stat	st;
 
-dbgmsg(">LoadFile");
+ENTER_FUNC;
 	strcpy(buff,path);
 	p = buff;
 	ret = NULL;
@@ -69,6 +69,6 @@ dbgmsg(">LoadFile");
 		p = q + 1;
 	}	while	(	(  q    !=  NULL  )
 				&&	(  ret  ==  NULL  ) );
-dbgmsg("<LoadFile");
+LEAVE_FUNC;
 	return	(ret);
 }

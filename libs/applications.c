@@ -92,7 +92,7 @@ dbgmsg(">ApplicationLoad");
 	if		(  ( func = (ApplicationStruct *)g_hash_table_lookup(ApplicationTable,name) )
 			   ==  NULL  ) {
 		sprintf(filename,"%s.so",name);
-printf("MONPS_LoadPath = [%s]\n",MONPS_LoadPath);
+		dbgprintf("MONPS_LoadPath = [%s]\n",MONPS_LoadPath);
 		if		(  ( handle = LoadFile(MONPS_LoadPath,filename) )  !=  NULL  ) {
 			sprintf(funcname,"%sInit",name);
 			if		(  ( f_init = (APL_INIT)dlsym(handle,funcname) )  !=  NULL  ) {
@@ -103,8 +103,6 @@ printf("MONPS_LoadPath = [%s]\n",MONPS_LoadPath);
 			sprintf(funcname,"%sMain",name);
 			f_main = dlsym(handle,funcname);
 			func = ApplicationsRegist(name,f_link,f_main);
-		} else {
-			fprintf(stderr,"[%s] not found.\n",name);
 		}
 	}
 dbgmsg("<ApplicationLoad");
@@ -137,7 +135,7 @@ dbgmsg(">ApplicationsCall");
 	while	(  *p && isspace(*p)  )	p ++;
 	apl = ApplicationLoad(name);
 	if		(  apl  ==  NULL  ) {
-		fprintf(stderr,"application not found [%s]\n",ThisScreen->cmd);
+		Warning("application not found [%s]\n",ThisScreen->cmd);
 		scr->status = APL_SESSION_NULL;
 	} else {
 		switch	(sts) {
@@ -148,7 +146,7 @@ dbgmsg(">ApplicationsCall");
 			apl->main(p);
 			break;
 		  default:
-			fprintf(stderr,"invalid status [%s] %d\n",name,sts);
+			Warning("invalid status [%s] %d\n",name,sts);
 			break;
 		}
 	}
