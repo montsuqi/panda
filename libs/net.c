@@ -409,6 +409,7 @@ InitNET(void)
 	SSL_load_error_strings(); 
 	SSL_library_init(); 
 #endif
+	InitComm();
 }
 
 extern	NETFILE	*

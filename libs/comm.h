@@ -32,7 +32,6 @@ extern	PacketDataType	RecvPacketDataType(NETFILE *fp);
 extern	void			SendLength(NETFILE *fp, size_t size);
 extern	size_t			RecvLength(NETFILE *fp);
 extern	void			SendString(NETFILE *fp, char *str);
-extern	void			SendFixedString(NETFILE *fp, char *str, size_t size);
 extern	void			SendLBS(NETFILE *fp, LargeByteString *lbs);
 extern	void			RecvLBS(NETFILE *fp, LargeByteString *lbs);
 extern	void			RecvStringBody(NETFILE *fp, char *str, size_t size);
@@ -61,8 +60,7 @@ extern	void			SendFixedData(NETFILE *fp, PacketDataType type, Fixed *xval);
 extern	Bool			RecvFixedData(NETFILE *fp, Fixed **xval);
 
 extern	void			SendValue(NETFILE *fp, ValueStruct *value, char *locale);
-extern	void			SendValueBody(NETFILE *fp, ValueStruct *value);
-extern	void			RecvValueBody(NETFILE *fp, ValueStruct *value);
+extern	void			InitComm(void);
 
 #undef	GLOBAL
 #ifdef	_COMM

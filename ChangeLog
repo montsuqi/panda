@@ -1,3 +1,7 @@
+2004-01-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/comm.c (SendValueBody, RecvValueBody, SendFixedString): 不要なので削除した
+
 2004-01-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* fdd/ : ファイル操作をリモートで行うプログラム追加

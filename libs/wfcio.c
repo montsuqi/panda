@@ -91,7 +91,7 @@ SendTermServer(
 dbgmsg(">SendTermServer");
 	size = NativeSizeValue(NULL,value);
 	LBS_ReserveSize(buff,size,FALSE);
-	NativePackValue(NULL,buff->body,value);
+	NativePackValue(NULL,LBS_Body(buff),value);
 	SendPacketClass(fp,WFC_PING);
 	dbgmsg("send PING");
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {

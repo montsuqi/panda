@@ -42,6 +42,8 @@ copies.
 #include	"comm.h"
 #include	"debug.h"
 
+static	LargeByteString	*Buff;
+
 static	int
 nputc(
 	int		c,
@@ -178,23 +180,6 @@ dbgmsg("<SendString");
 }
 
 extern	void
-SendFixedString(
-	NETFILE	*fp,
-	char	*str,
-	size_t	size)
-{
-dbgmsg(">SendFixedString");
-#ifdef	DEBUG
-	printf("[%s]\n",str);
-#endif
-	SendLength(fp,size);
-	if		(  size  >  0  ) {
-		Send(fp,str,size);
-	}
-dbgmsg("<SendFixedString");
-}
-
-extern	void
 SendLBS(
 	NETFILE	*fp,
 	LargeByteString	*lbs)
@@ -216,7 +201,6 @@ RecvLBS(
 	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
 		Recv(fp,LBS_Body(lbs),size);
-		LBS_SetPos(lbs,size-1);
 	}
 }	
 
@@ -689,120 +673,9 @@ dbgmsg("<RecvFloatData");
 }
 
 extern	void
-SendValueBody(
-	NETFILE		*fp,
-	ValueStruct	*value)
+InitComm(void)
 {
-	int		i;
-
-	if		(  value  ==  NULL  )	return;
-	SendDataType(fp,ValueType(value));
-	switch	(ValueType(value)) {
-	  case	GL_TYPE_INT:
-		SendInt(fp,ValueInteger(value));
-		break;
-	  case	GL_TYPE_FLOAT:
-		SendFloat(fp,ValueFloat(value));
-		break;
-	  case	GL_TYPE_BOOL:
-		SendBool(fp,ValueBool(value));
-		break;
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-		SendFixedString(fp,ValueToString(value,NULL),ValueStringLength(value));
-		break;
-	  case	GL_TYPE_NUMBER:
-		SendFixed(fp,&ValueFixed(value));
-		break;
-	  case	GL_TYPE_TEXT:
-		SendString(fp,ValueToString(value,NULL));
-		break;
-	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			SendValueBody(fp,ValueArrayItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			SendValueBody(fp,ValueRecordItem(value,i));
-		}
-		break;
-	  default:
-		break;
-	}
-}
-
-extern	void
-RecvValueBody(
-	NETFILE		*fp,
-	ValueStruct	*value)
-{
-	int		i;
-	PacketDataType	type;
-	size_t	size;
-	char	*recvBuffer;
-	size_t	asize;
-
-	if		(  value  ==  NULL  )	return;
-	asize = 1;
-	recvBuffer = (char *)xmalloc(asize);
-	type = RecvDataType(fp);
-	if		(  type  !=  ValueType(value)  ) {
-		fprintf(stderr,"fatal type miss match\n");
-		exit(1);
-	}
-	switch	(type) {
-	  case	GL_TYPE_INT:
-		ValueInteger(value) = RecvInt(fp);
-		break;
-	  case	GL_TYPE_FLOAT:
-		ValueFloat(value) = RecvFloat(fp);
-		break;
-	  case	GL_TYPE_BOOL:
-		ValueBool(value) = RecvBool(fp);
-		break;
-	  case	GL_TYPE_TEXT:
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-		size = RecvLength(fp);
-		if		(  ( size + 1)  >  asize  ) {
-			xfree(recvBuffer);
-			asize = size + 1;
-			recvBuffer = (char *)xmalloc(asize);
-		}
-		memclear(recvBuffer,asize);
-		RecvStringBody(fp,recvBuffer,size);
-		SetValueString(value,recvBuffer,NULL);
-		break;
-	  case	GL_TYPE_NUMBER:
-		size = RecvLength(fp);
-		if		(  size  >  ValueFixedLength(value)  ) {
-			xfree(ValueFixedBody(value));
-			ValueFixedBody(value) = (char *)xmalloc(size+1);
-			ValueFixedLength(value) = size;
-		}
-		memclear(ValueFixedBody(value),ValueFixedLength(value)+1);
-		ValueFixedSlen(value) = RecvLength(fp);
-		RecvString(fp,ValueFixedBody(value));
-		break;
-	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			RecvValueBody(fp,ValueArrayItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			RecvValueBody(fp,ValueRecordItem(value,i));
-		}
-		break;
-	  default:
-		break;
-	}
-	xfree(recvBuffer);
+	Buff = NewLBS();
 }
 
 /*
@@ -824,6 +697,12 @@ SendValue(
 		break;
 	  case	GL_TYPE_BOOL:
 		SendBool(fp,ValueBool(value));
+		break;
+	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_BYTE:
+		LBS_ReserveSize(Buff,ValueByteLength(value));
+		memcpy(LBS_Body(Buff),ValueByte(value),ValueByteLength(value));
+		SendLBS(fp,Buff);
 		break;
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
