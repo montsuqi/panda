@@ -81,6 +81,7 @@ copies.
 #define	T_LOCALE		(T_YYBASE +25)
 #define	T_TERMPORT		(T_YYBASE +26)
 #define	T_CONTROL		(T_YYBASE +27)
+#define	T_DDIR			(T_YYBASE +28)
 
 #undef	Error
 #define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
@@ -111,6 +112,7 @@ static	TokenTable	tokentable[] = {
 	{	"redirect_port"		,T_REDIRECTPORT	},
 	{	"lddir"				,T_LDDIR	},
 	{	"bddir"				,T_BDDIR	},
+	{	"ddir"				,T_DDIR		},
 	{	"dbddir"			,T_DBDDIR	},
 	{	"record"			,T_RECDIR	},
 	{	"base"				,T_BASEDIR	},
@@ -809,6 +811,7 @@ dbgmsg(">ParDI");
 				Error("base directory invalid");
 			}
 			break;
+#if	0
 		  case	T_LDDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->D_Dir  ==  NULL  ) {
@@ -851,6 +854,7 @@ dbgmsg(">ParDI");
 				Error("DBD directory invalid");
 			}
 			break;
+#endif
 		  case	T_RECDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->RecordDir  ==  NULL  ) {
@@ -864,6 +868,20 @@ dbgmsg(">ParDI");
 				}
 			} else {
 				Error("recored directory invalid");
+			}
+			break;
+		  case	T_DDIR:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->D_Dir  ==  NULL  ) {
+					if		(  !strcmp(ComSymbol,".")  ) {
+						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
+					} else {
+						ThisEnv->D_Dir = StrDup(ExpandPath(ComSymbol
+															,ThisEnv->BaseDir));
+					}
+				}
+			} else {
+				Error("DDIR directory invalid");
 			}
 			break;
 		  case	T_MULTI:

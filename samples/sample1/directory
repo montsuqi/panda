@@ -4,8 +4,7 @@ name	demo;
 base	"~/MONTSUQI/panda/samples";
 
 #	"=" will be expanded to base
-lddir	"=/sample1";
-bddir	"=/sample1";
+ddir	"=/sample1";
 record	"=/sample1";
 
 #multiplex_level	no;

@@ -24,12 +24,26 @@
 
 	*	directory
 
-		wfcを 制御する接続のために control という宣言子を作った。
+		・wfcを 制御する接続のために control という宣言子を作った。
+
+		・lddir, bddir, dbddirを廃止してddirのみにした
 
 	*	wfccontrol
 
 		wfcを 制御するために wfccontrol というコマンドを作った。これを
 		使うことより、 panda を正常終了させることができる。
+
+	*	dbredirectorのための記述の仕様変更をした
+
+		・リダイレクトをするDB groupには、db_group定義中にredirectを記
+		  述するが、この後に書くものは「リダイレクト先のdb_group名」で
+		  ある。
+
+		・リダクレクト先のdb_grpupにはredirect_portを記述する。これは
+		  dbredirectorが待機しているポートである。
+
+		・リダイレクト先に'name'を書くとリダイレクト先はDBエンジンであ
+		  り、'file'を書くとリダイレクト先はファイルになる。
 
 1.1.2 -> 1.2.1
 
@@ -51,7 +65,8 @@
 
 		panda全体での型を示すフラグの値が変更となった。具体的には、
 		glserver <-> glclient間の通信に非互換が発生しているので、1.1.2
-		以前に対応したthird partyの client が動作しなくなる
+		以前に対応したthird partyの client が動作しなくなる(Ver 1.2.2
+		で再度対応)
 
 	*	データの順序の変更
 
