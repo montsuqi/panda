@@ -119,7 +119,7 @@ dbgmsg(">ExecuteServer");
 		_fhControl = InitServerPort(ControlPort,Back);
 		maxfd = maxfd < _fhControl ? _fhControl : maxfd;
 	} else {
-		_fhControl = 0;
+		_fhControl = -1;
 	}
 	if		(	(  ThisEnv->blob        !=  NULL  )
 			&&	(  ThisEnv->blob->port  !=  NULL  )
@@ -127,7 +127,7 @@ dbgmsg(">ExecuteServer");
 		_fhBlob = InitServerPort(ThisEnv->blob->port,Back);
 		maxfd = maxfd < _fhBlob ? _fhBlob : maxfd;
 	} else {
-		_fhBlob = 0;
+		_fhBlob = -1;
 	}
 	fShutdown = FALSE;
 	do {
@@ -136,8 +136,12 @@ dbgmsg(">ExecuteServer");
 		FD_ZERO(&ready);
 		FD_SET(_fhTerm,&ready);
 		FD_SET(_fhAps,&ready);
-		FD_SET(_fhControl,&ready);
-		FD_SET(_fhBlob,&ready);
+		if		(  _fhControl  >=  0  ) {
+			FD_SET(_fhControl,&ready);
+		}
+		if		(  _fhBlob  >=  0  ) {
+			FD_SET(_fhBlob,&ready);
+		}
 		ret = pselect(maxfd+1,&ready,NULL,NULL,&timeout,&SigMask);
         if (ret == -1) {
             if (errno == EINTR)
@@ -184,8 +188,11 @@ ENTER_FUNC;
 		ControlPort = ParPortName(ControlPortNumber);
 	}
 	InitNET();
-	if		(  ThisEnv->blob  !=  NULL  ) {
+	if		(	(  ThisEnv->blob       !=  NULL  )
+			&&	(  ThisEnv->blob->dir  !=  NULL  ) ) {
 		Blob = InitBLOB(ThisEnv->blob->dir);
+	} else {
+		Blob = NULL;
 	}
 	InitMessageQueue();
 	ReadyAPS();

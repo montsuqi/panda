@@ -67,13 +67,14 @@ _DBOPEN(
 
 dbgmsg(">_DBOPEN");
 	if		(  fpBlob  ==  NULL  ) {
-		fh = ConnectSocket(dbg->port,SOCK_STREAM);
-		fpBlob = SocketToNet(fh);
-		SendString(fpBlob,dbg->user);
-		SendString(fpBlob,dbg->pass);
-		if		(  RecvPacketClass(fpBlob)  !=  APS_OK  ) {
-			CloseNet(fpBlob);
-			fpBlob = NULL;
+		if		(  ( fh = ConnectSocket(dbg->port,SOCK_STREAM) )  >=  0  ) {
+			fpBlob = SocketToNet(fh);
+			SendString(fpBlob,dbg->user);
+			SendString(fpBlob,dbg->pass);
+			if		(  RecvPacketClass(fpBlob)  !=  APS_OK  ) {
+				CloseNet(fpBlob);
+				fpBlob = NULL;
+			}
 		}
 	}
 	if		(  fpBlob  !=  NULL  ) {
