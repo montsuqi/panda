@@ -25,6 +25,7 @@ copies.
 #define	SIZE_SQL		65538
 
 #include	"libmondai.h"
+#include	"Lex.h"
 #include	"struct.h"
 
 #define	SQL_OP_ESC		0x00
@@ -35,7 +36,8 @@ copies.
 #define	SQL_OP_EOL		0x05
 #define	SQL_OP_VCHAR	0x06
 
-extern	LargeByteString	*ParSQL(RecordStruct *rec, ValueStruct *argp, ValueStruct *argf);
+extern	LargeByteString	*ParSQL(CURFILE *in,RecordStruct *rec, ValueStruct *argp,
+								ValueStruct *argf);
 extern	void			SQL_ParserInit(void);
 
 #endif

@@ -778,8 +778,7 @@ _Button(
 	Tag		*tag)
 {
 	char	*face
-		,	*event
-		,	*onclick;
+		,	*event;
 	char	buf[SIZE_BUFF];
 	char	*state;
 	int		arg
@@ -800,7 +799,8 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_JNZNP);
 	arg = LBS_GetPos(htc->code);
 	LBS_EmitInt(htc->code,0);
-	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
+
+	if		(  GetArg(tag,"onclick",0)  !=  NULL  ) {
 		fButton = TRUE;
 		LBS_EmitString(htc->code,"<button");
         JavaScriptEvent(htc, tag, "onclick");
@@ -856,6 +856,7 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,">");
 #endif
 	}
+
 	pos = LBS_GetPos(htc->code);
 	LBS_SetPos(htc->code,arg);
 	LBS_EmitInt(htc->code,pos);
@@ -967,8 +968,7 @@ _ToggleButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*label
-		,	*onclick;
+	char	*label;
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
@@ -981,11 +981,7 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code,"checked ");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
-	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,"onclick=\"");
-		LBS_EmitString(htc->code,onclick);
-		LBS_EmitString(htc->code,"\"");
-	}
+	JavaScriptEvent(htc, tag, "onclick");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
@@ -1001,8 +997,7 @@ _CheckButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*label
-		,	*onclick;
+	char	*label;
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
@@ -1015,11 +1010,7 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code,"checked");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
-	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,"onclick=\"");
-		LBS_EmitString(htc->code,onclick);
-		LBS_EmitString(htc->code,"\"");
-	}
+	JavaScriptEvent(htc, tag, "onclick");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
@@ -1041,8 +1032,7 @@ _RadioButton(
 {
 	char	*group
 		,	*name
-		,	*label
-		,	*onclick;
+		,	*label;
 
 ENTER_FUNC;
 	group = GetArg(tag,"group",0); 
@@ -1063,11 +1053,7 @@ ENTER_FUNC;
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_REFSTR);
 	LBS_EmitString(htc->code,"\"");
-	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,"onclick=\"");
-		LBS_EmitString(htc->code,onclick);
-		LBS_EmitString(htc->code,"\"");
-	}
+	JavaScriptEvent(htc, tag, "onclick");
 
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");

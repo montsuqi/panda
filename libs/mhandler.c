@@ -69,7 +69,8 @@ NewMessageHandler(
 }
 
 extern	void
-ParHANDLER(void)
+ParHANDLER(
+	CURFILE	*in)
 {
 	MessageHandler	*handler;
 
@@ -136,7 +137,7 @@ ENTER_FUNC;
 					break;
 				  default:
 					Error("%s:%d:handler parameter(s): %s",
-                          CURR->fn, CURR->cLine, ComSymbol);
+                          in->fn, in->cLine, ComSymbol);
 					break;
 				}
 				if		(  GetSymbol  !=  ';'  ) {

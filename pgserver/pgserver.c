@@ -39,7 +39,7 @@ copies.
 #include	"const.h"
 #include	"pgserver.h"
 #include	"dirs.h"
-#include	"DDparser.h"
+#include	"RecParser.h"
 #include	"option.h"
 #include	"front.h"
 #include	"message.h"

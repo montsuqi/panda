@@ -34,6 +34,7 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"DDparser.h"
 #include	"LDparser.h"
 #include	"DIparser.h"

@@ -109,6 +109,7 @@ ENTER_FUNC;
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
+		dbgprintf("user =     [%s]",user);
 #ifndef	NEW_SEQUENCE
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:

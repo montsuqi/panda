@@ -1,3 +1,7 @@
+2004-12-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c: ボタン系のonclickを正しく直した
+
 2004-12-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/tags.c (JavaScriptEvent): 変数の参照を可能にした, aタグも処理するようにした

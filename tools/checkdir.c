@@ -37,6 +37,7 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"directory.h"
 #include	"dirs.h"
 #include	"option.h"

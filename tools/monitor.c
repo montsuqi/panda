@@ -388,7 +388,7 @@ dbgmsg("<StartServers");
 static	void
 StartPrograms(void)
 {
-dbgmsg(">StartPrograms");
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 
@@ -396,7 +396,7 @@ dbgmsg(">StartPrograms");
 #ifdef	DEBUG
 	DumpProcess();
 #endif
-dbgmsg("<StartPrograms");
+LEAVE_FUNC;
 }
 
 typedef	struct {

@@ -41,6 +41,7 @@ copies.
 #include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"enum.h"
 #include	"dirs.h"
 #include	"socket.h"

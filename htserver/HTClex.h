@@ -26,9 +26,12 @@ copies.
 #define	YYBASE			256
 #define	T_EOF			(YYBASE +1)
 #define	T_SYMBOL		(YYBASE +2)
-#define	T_SCONST		(YYBASE +4)
-#define	T_COMMENT		(YYBASE +5)
-#define	T_COMMENTE		(YYBASE +6)
+#define	T_SCONST		(YYBASE +3)
+#define	T_ICONST		(YYBASE +4)
+#define	T_YYBASE		(YYBASE+4)
+
+#define	T_COMMENT		(T_YYBASE +1)
+#define	T_COMMENTE		(T_YYBASE +2)
 
 #undef	GLOBAL
 #ifdef	_HTC_PARSER

@@ -35,7 +35,8 @@ copies.
 #include	<glib.h>
 #include	<sys/stat.h>	/*	for stbuf	*/
 #include	"types.h"
-#include	"libmondai.h"
+#include	<libmondai.h>
+#include	<RecParser.h>
 #include	"struct.h"
 #include	"monstring.h"
 #include	"DDparser.h"
@@ -43,16 +44,17 @@ copies.
 
 
 extern	RecordStruct	*
-DD_Parse(void)
+DD_Parse(
+	CURFILE	*in)
 {
 	RecordStruct	*ret;
 	ValueStruct		*value;
 
 ENTER_FUNC;
-	if		(  ( value = DD_ParseMain() )  !=  NULL  ) {
+	if		(  ( value = DD_ParseMain(in) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
-		ret->name = StrDup(ValueName);
+		ret->name = StrDup(in->ValueName);
 		ret->type = RECORD_NULL;
 	} else {
 		ret = NULL;
@@ -67,9 +69,10 @@ ParseRecordFile(
 {
 	RecordStruct	*ret;
 	ValueStruct		*value;
+	char			*ValueName;
 
 ENTER_FUNC;
-	if		(  ( value = DD_ParseValue(name) )  !=  NULL  ) {
+	if		(  ( value = DD_ParseValue(name,&ValueName) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
 		ret->name = StrDup(ValueName);
@@ -87,9 +90,10 @@ ParseRecordMem(
 {
 	RecordStruct	*ret;
 	ValueStruct		*value;
+	char			*ValueName;
 
 ENTER_FUNC;
-	if		(  ( value = DD_ParseValueMem(mem) )  !=  NULL  ) {
+	if		(  ( value = DD_ParseValueMem(mem,&ValueName) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
 		ret->name = StrDup(ValueName);

@@ -37,6 +37,7 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"DBparser.h"
 #include	"dirs.h"
 #include	"const.h"
@@ -442,11 +443,11 @@ main(
 		DD_ParserInit();
 		DB_ParserInit();
 		if		(  fCreate  ) {
-			if		(  ( rec = DB_Parser(fl->name) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
 		} else if		( fInsert ) {
-            if		(  ( rec = DB_Parser(fl->name) )  !=  NULL  ) {
+            if		(  ( rec = DB_Parser(fl->name,NULL) )  !=  NULL  ) {
                 MakeInsert(rec);
             }
         }

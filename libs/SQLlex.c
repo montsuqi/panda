@@ -23,6 +23,7 @@ copies.
 #define	DEBUG
 #define	TRACE
 */
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -39,22 +40,25 @@ copies.
 #include	"debug.h"
 
 #define	UnGetChar(in,c)	(in)->body[-- (in)->pos] =(c)
+#define	GetPos(in)			&(in)->body[(in)->pos]
 
-#if	0
-#define	GetChar(in)		(in)->body[(in)->pos ++]
-#else
 static	int
 GetChar(
 	CURFILE	*in)
 {
 	int		c;
 
+	if		(  in->body  ==  NULL  ) {
+		fprintf(stderr,"nulpo!\n");
+	}
+	if		(  in->pos  ==  in->size  ) {
+		c = EOF;
+	} else
 	if		(  ( c = in->body[in->pos ++] )  ==  0  ) {
 		c = EOF;
 	}
 	return	(c);
 }
-#endif
 
 static	TokenTable	tokentable[] = {
 	/*	SQL92	*/
@@ -358,96 +362,96 @@ CheckReserved(
 
 extern	int
 SQL_Lex(
+	CURFILE	*in,
 	Bool	fName)
-{	int		c
-	,		len;
-	int		token;
-	char	*s;
+{
+	int		c;
+	char	*p
+		,	*q;
 
-dbgmsg(">SQL_Lex");
+ENTER_FUNC;
   retry: 
-	while	(  isspace( c = GetChar(CURR) ) ) {
+	while	(  isspace( c = GetChar(in) ) ) {
 		if		(  c  ==  '\n'  ) {
 			c = ' ';
-			CURR->cLine ++;
+			in->cLine ++;
 		}
 	}
 	if		(  c  ==  '#'  ) {
-		while	(  ( c = GetChar(CURR) )  !=  '\n'  );
-		CURR->cLine ++;
+		while	(  ( c = GetChar(in) )  !=  '\n'  );
+		in->cLine ++;
 		goto	retry;
 	}
-	if		(  c  ==  '"'  ) {
-		s = CURR->Symbol;
-		len = 0;
-		while	(  ( c = GetChar(CURR) )  !=  '"'  ) {
+	if		(  in->Symbol  !=  NULL  ) {
+		xfree(in->Symbol);
+		in->Symbol = NULL;
+	}
+	switch	(c) {
+	  case	'"':
+		p = GetPos(in);
+		while	(  ( c = GetChar(in) )  !=  '"'  ) {
 			if		(  c  ==  '\\'  ) {
-				c = GetChar(CURR);
-			}
-			*s = c;
-			if		(  len  <  SIZE_SYMBOL  ) {
-				s ++;
-				len ++;
+				GetChar(in);
 			}
 		}
-		*s = 0;
-		token = T_SCONST;
-	} else
-	if		(  c  ==  '\''  ) {
-		s = CURR->Symbol;
-		len = 0;
-		while	(  ( c = GetChar(CURR) )  !=  '\''  ) {
+		q = GetPos(in)-1;
+		in->Symbol = (char *)xmalloc(q-p+1);
+		memcpy(in->Symbol,p,q-p);
+		in->Symbol[q-p] = 0;
+		in->Token = T_SCONST;
+		break;
+	  case	'\'':
+		p = GetPos(in);
+		while	(  ( c = GetChar(in) )  !=  '\''  ) {
 			if		(  c  ==  '\\'  ) {
-				c = GetChar(CURR);
-			}
-			*s = c;
-			if		(  len  <  SIZE_SYMBOL  ) {
-				s ++;
-				len ++;
+				GetChar(in);
 			}
 		}
-		*s = 0;
-		token = T_SCONST;
-	} else
-	if		(	(  isalpha(c)  )
-			||	(  isdigit(c) ) )	{
-		s = CURR->Symbol;
-		len = 0;
-		do {
-			*s = c;
-			if		(  len  <  SIZE_SYMBOL  ) {
-				s ++;
-				len ++;
+		q = GetPos(in)-1;
+		in->Symbol = (char *)xmalloc(q-p+1);
+		memcpy(in->Symbol,p,q-p);
+		in->Symbol[q-p] = 0;
+		in->Token = T_SCONST;
+		break;
+	  default:
+		if		(	(  isalpha(c)  )
+				||	(  isdigit(c) ) )	{
+			p = GetPos(in)-1;
+			do {
+				c = GetChar(in);
+			}	while	(	(  isalpha(c)  )
+						||	(  isdigit(c)  )
+						||	(  c  ==  '_'  ) );
+			UnGetChar(in,c);
+			q = GetPos(in);
+			in->Symbol = (char *)xmalloc(q-p+1);
+			memcpy(in->Symbol,p,q-p);
+			in->Symbol[q-p] = 0;
+			if		(  fName  ) {
+				in->Token = T_SYMBOL;
+			} else {
+				in->Token = CheckReserved(in->Symbol);
 			}
-			c = GetChar(CURR);
-		}	while	(	(  isalpha(c)  )
-					||	(  isdigit(c)  )
-					||	(  c  ==  '_'  ) );
-		*s = 0;
-		UnGetChar(CURR,c);
-		if		(  fName  ) {
-			token = T_SYMBOL;
 		} else {
-			token = CheckReserved(CURR->Symbol);
+			switch	(c) {
+			  case	EOF:
+				in->Token = T_EOF;
+				break;
+			  default:
+				in->Token = c;
+				break;
+			}
 		}
-	} else {
-		switch	(c) {
-		  case	EOF:
-			token = T_EOF;
-			break;
-		  default:
-			token = c;
-			break;
-		}
+		break;
 	}
 #ifdef	TRACE
-	if		(  token  >  0x7F  ) {
-		printf("DB_Token = [%X][%s]\n",token,CURR->Symbol);
+	if		(  in->Token  >  0x7F  ) {
+		printf("DB_Token = [%X][%s]\n",in->Token,in->Symbol);
 	} else {
-		printf("DB_Token = [%c]\n",token);
+		printf("DB_Token = [%c]\n",in->Token);
 	}
 #endif
-dbgmsg("<SQL_Lex");
-	return	(token);
+LEAVE_FUNC;
+	return	(in->Token);
 }
 

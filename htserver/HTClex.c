@@ -41,14 +41,6 @@ copies.
 
 #define	SIZE_CHARS		16
 
-typedef	struct	INCFILE_S	{
-	struct	INCFILE_S	*next;
-	fpos_t				pos;
-	int					cLine;
-	char				*fn;
-}	INCFILE;
-static	INCFILE		*ftop;
-
 static	struct	{
 	char	*str;
 	int		token;
@@ -167,106 +159,6 @@ UnGetCharFile(
 						}	\
 					}
 
-static	void
-DoInclude(
-	char	*fn)
-{
-	INCFILE	*back;
-	char	name[SIZE_BUFF];
-	char	buff[SIZE_BUFF];
-	char	*p
-	,		*q;
-
-dbgmsg(">DoInclude");
-	back = New(INCFILE);
-	back->next = ftop;
-	back->fn =  HTC_FileName;
-	fgetpos(HTC_File,&back->pos);
-	back->cLine = HTC_cLine;
-	ftop = back;
-	fclose(HTC_File);
-	strcpy(buff,".");	/*	*/
-	p = buff;
-	do {
-		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-			*q = 0;
-		}
-		sprintf(name,"%s/%s",p,fn);
-		if		(  ( HTC_File = fopen(name,"r") )  !=  NULL  )	break;
-		p = q + 1;
-	}	while	(  q  !=  NULL  );
-	if		(  HTC_File  ==  NULL  ) {
-		Error("include not found");
-	}
-	HTC_cLine = 1;
-	HTC_FileName = StrDup(name);
-dbgmsg("<DoInclude");
-}
-
-static	void
-ExitInclude(void)
-{
-	INCFILE	*back;
-
-dbgmsg(">ExitInclude");
-	fclose(HTC_File);
-	back = ftop;
-	HTC_File = fopen(back->fn,"r");
-	xfree(HTC_FileName);
-	HTC_FileName = back->fn;
-	fsetpos(HTC_File,&back->pos);
-	HTC_cLine = back->cLine;
-	ftop = back->next;
-	xfree(back);
-dbgmsg("<ExitInclude");
-}
-
-static	void
-ReadyDirective(void)
-{
-	char	buff[SIZE_BUFF];
-	char	fn[SIZE_BUFF];
-	char	*s;
-	int		c;
-
-dbgmsg(">ReadyDirective");
-	SKIP_SPACE;
-	s = buff;
-	do {
-		*s = c;
-		s ++;
-	}	while	(  !isspace( c = _HTCGetChar() )  );
-	*s = 0;
-	if		(  !stricmp(buff,"include")  ) {
-		SKIP_SPACE;
-		s = fn;
-		switch	(c) {
-		  case	'"':
-			while	(  ( c = _HTCGetChar() )  !=  '"'  ) {
-				*s ++ = c;
-			}
-			*s = 0;
-			break;
-		  case	'<':
-			while	(  ( c = _HTCGetChar() )  !=  '>'  ) {
-				*s ++ = c;
-			}
-			*s = 0;
-			break;
-		  default:
-			*s = 0;
-			break;
-		}
-		if		(  *fn  !=  0  ) {
-			DoInclude(fn);
-		}
-	} else {
-		_HTCUnGetChar(c);
-		while	(  ( c = _HTCGetChar() )  !=  '\n'  );
-	}
-dbgmsg("<ReadyDirective");
-}
-
 extern	int
 HTCLex(
 	Bool	fSymbol)
@@ -280,7 +172,7 @@ dbgmsg(">HTCLex");
   retry:
 	SKIP_SPACE; 
 	if		(  c  ==  '#'  ) {
-		ReadyDirective();
+		while	(  ( c = _HTCGetChar() )  !=  '\n'  );
 		goto	retry;
 	}
 	if		(  c  ==  '"'  ) {
@@ -352,12 +244,7 @@ dbgmsg(">HTCLex");
 	} else {
 		switch	(c) {
 		  case	EOF:
-			if		(  ftop  ==  NULL  )	{
-				token = T_EOF;
-			} else {
-				ExitInclude();
-				goto	retry;
-			}
+			token = T_EOF;
 			break;
 		  default:
 			token = c;

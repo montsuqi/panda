@@ -51,7 +51,8 @@ copies.
 
 #include	"types.h"
 
-#include	"value.h"
+#include	"libmondai.h"
+#include	"RecParser.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"dirs.h"

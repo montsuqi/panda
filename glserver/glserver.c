@@ -45,7 +45,7 @@ copies.
 #include	"const.h"
 #include	"glserver.h"
 #include	"dirs.h"
-#include	"DDparser.h"
+#include	"RecParser.h"
 #include	"front.h"
 #include	"option.h"
 #include	"message.h"

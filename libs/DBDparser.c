@@ -77,6 +77,7 @@ static	GHashTable	*Reserved;
 
 static	void
 ParDBDB(
+	CURFILE		*in,
 	DBD_Struct	*dbd,
 	char		*gname)
 {
@@ -99,7 +100,7 @@ dbgmsg(">ParDBDB");
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,ComSymbol);
-					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
+					if		(  (  db = DB_Parser(name,NULL) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(dbd->DBD_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( dbd->cDB + 1));
 							memcpy(rtmp,dbd->db,sizeof(RecordStruct *) * dbd->cDB);
@@ -132,7 +133,8 @@ dbgmsg("<ParDBDB");
 }
 
 static	DBD_Struct	*
-ParDB(void)
+ParDB(
+	CURFILE	*in)
 {
 	DBD_Struct	*ret;
 	char		*gname;
@@ -182,7 +184,7 @@ dbgmsg(">ParDB");
 				gname = NULL;
 				Error("syntax error 4");
 			}
-			ParDBDB(ret,gname);
+			ParDBDB(in,ret,gname);
 			break;
 		  default:
 			Error("syntax error 3");
@@ -202,12 +204,15 @@ DBD_Parser(
 {
 	DBD_Struct	*ret;
 	struct	stat	stbuf;
+	CURFILE		*in
+		,		root;
 
 dbgmsg(">DBD_Parser");
+	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  PushLexInfo(name,D_Dir,Reserved)  !=  NULL  ) {
-			ret = ParDB();
-			DropLexInfo();
+		if		(  ( in = PushLexInfo(&root,name,D_Dir,Reserved) )  !=  NULL  ) {
+			ret = ParDB(in);
+			DropLexInfo(&in);
 		} else {
 			Error("DBD file not found");
 			ret = NULL;

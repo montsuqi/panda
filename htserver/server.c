@@ -57,7 +57,7 @@ copies.
 #include	"driver.h"
 #include	"htserver.h"
 #include	"dirs.h"
-#include	"DDparser.h"
+#include	"RecParser.h"
 #include	"trid.h"
 #include	"front.h"
 #include	"debug.h"
@@ -332,6 +332,10 @@ dbgprintf("buff = [%s]\n",buff);
 					strcpy(scr->event,buff);
 				}
 				RecvScreenData(fp,scr);
+#ifdef	DEBUG
+	printf("user = [%s]\n",scr->user);
+	printf("cmd  = [%s]\n",scr->cmd);
+#endif
 				ApplicationsCall(APL_SESSION_GET,scr);
 				while	(  scr->status  ==  APL_SESSION_LINK  ) {
 					ApplicationsCall(scr->status,scr);

@@ -1352,7 +1352,6 @@ _DBCLOSECURSOR(
 	DB_Struct	*db;
 	PathStruct	*path;
 	PGresult	*res;
-	int			n;
 	LargeByteString	*src;
 
 ENTER_FUNC;

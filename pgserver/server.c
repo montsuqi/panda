@@ -50,7 +50,7 @@ copies.
 #include	"pgserver.h"
 #include	"front.h"
 #include	"dirs.h"
-#include	"DDparser.h"
+#include	"RecParser.h"
 #include	"debug.h"
 
 static	void

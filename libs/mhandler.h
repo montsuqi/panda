@@ -23,8 +23,9 @@ copies.
 #define	_INC_MHANDLER_H
 #include	<glib.h>
 #include	"struct.h"
+#include	"Lex.h"
 
-extern	void	ParHANDLER(void);
+extern	void	ParHANDLER(CURFILE *in);
 extern	void	BindMessageHandlerCommon(MessageHandler **handler);
 extern	void	MessageHandlerInit(void);
 

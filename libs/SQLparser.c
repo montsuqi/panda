@@ -44,18 +44,18 @@ copies.
 #define	MarkCode(lbs)		((lbs)->ptr)
 #define	SeekCode(lbs,pos)	((lbs)->ptr = (pos))
 
-#define SQL_Error(...)                                  \
-do {                                                    \
-    CURR->fError = TRUE;                                \
-    fprintf(stderr, "%s:%d:", CURR->fn, CURR->cLine);   \
-    fprintf(stderr, __VA_ARGS__);                       \
-    fprintf(stderr, "\n");                              \
-    exit(1);                                            \
+#define SQL_Error(...)                              \
+do {                                                \
+    in->fError = TRUE;                              \
+    fprintf(stderr, "%s:%d:", in->fn, in->cLine);   \
+    fprintf(stderr, __VA_ARGS__);                   \
+    fprintf(stderr, "\n");                          \
+    exit(1);                                        \
 } while (0)
 #undef	GetSymbol
-#define	GetSymbol	(ComToken = SQL_Lex(FALSE))
+#define	GetSymbol	(ComToken = SQL_Lex(in,FALSE))
 #undef	GetName
-#define	GetName		(ComToken = SQL_Lex(TRUE))
+#define	GetName		(ComToken = SQL_Lex(in,TRUE))
 
 static	ValueStruct	*
 TraceAlias(
@@ -105,6 +105,7 @@ LEAVE_FUNC;
 
 extern	LargeByteString	*
 ParSQL(
+	CURFILE			*in,
 	RecordStruct	*rec,
 	ValueStruct		*argp,
 	ValueStruct		*argf)

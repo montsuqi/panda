@@ -23,7 +23,6 @@ copies.
 #define	_INC_DIRECTORY_H
 #include	<glib.h>
 
-#include	"DDparser.h"
 #include	"LDparser.h"
 #include	"DIparser.h"
 #include	"wfcio.h"

@@ -19,7 +19,6 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-
 /*
 #define	DEBUG
 #define	TRACE
@@ -42,7 +41,8 @@ copies.
 #include	"types.h"
 #include	"const.h"
 #include	"dirs.h"
-#include	"libmondai.h"
+#include	<libmondai.h>
+#include	<RecParser.h>
 #include	"DDparser.h"
 #include	"Lex.h"
 #include	"LDparser.h"
@@ -84,7 +84,7 @@ copies.
 #define	T_SPACE			(T_YYBASE +31)
 
 #undef	Error
-#define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
+#define	Error(msg)		{in->fError=TRUE;_Error((msg),in->fn,in->cLine);}
 
 static	void
 _Error(
@@ -131,7 +131,8 @@ static	TokenTable	tokentable[] = {
 static	GHashTable	*Reserved;
 
 static	void
-ParWFC(void)
+ParWFC(
+	CURFILE	*in)
 {
 ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
@@ -176,7 +177,8 @@ LEAVE_FUNC;
 }
 
 static	void
-ParCONTROL(void)
+ParCONTROL(
+	CURFILE	*in)
 {
 ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
@@ -211,7 +213,8 @@ LEAVE_FUNC;
 }
 
 extern	LD_Struct	*
-LD_DummyParser(void)
+LD_DummyParser(
+	CURFILE	*in)
 {
 	LD_Struct	*ret;
     ret = New(LD_Struct);
@@ -220,7 +223,8 @@ LD_DummyParser(void)
 }
 
 static	BLOB_Struct	*
-ParBLOB(void)
+ParBLOB(
+	CURFILE	*in)
 {
 	BLOB_Struct	*blob;
 	URL			*auth;
@@ -302,6 +306,7 @@ LEAVE_FUNC;
 
 static	void
 ParLD_Elements(
+	CURFILE	*in,
 	Bool    parse_ld)
 {
 	char		buff[SIZE_BUFF];
@@ -325,7 +330,7 @@ ENTER_FUNC;
 		if ( parse_ld ) {
 			ld = LD_Parser(name); 
 		} else {
-			ld = LD_DummyParser(); 
+			ld = LD_DummyParser(in);
 		}
 		if		(  ld !=  NULL  ) {
 			if		(  g_hash_table_lookup(ThisEnv->LD_Table,ComSymbol)
@@ -403,7 +408,8 @@ LEAVE_FUNC;
 }
 
 static	void
-SkipLD(void)
+SkipLD(
+	CURFILE	*in)
 {
 ENTER_FUNC;
 	while	(  ComToken  !=  ';'  ) {
@@ -439,6 +445,7 @@ LEAVE_FUNC;
 
 static	void
 ParLD(
+	CURFILE	*in,
 	char	*dname,
 	Bool    parse_ld)
 {
@@ -450,16 +457,16 @@ ENTER_FUNC;
 			if		(  ThisEnv->D_Dir  ==  NULL  ) {
 				if		(	(  GetSymbol  ==  T_SCONST  )
 						||	(  ComToken   ==  T_ICONST  ) ) {
-					SkipLD();
+					SkipLD(in);
 				}
 			} else {
 				if		(	(  dname  ==  NULL  )
 						||	(  !strcmp(ComSymbol,dname)  ) ) {
-					ParLD_Elements(parse_ld);
+					ParLD_Elements(in,parse_ld);
 				} else {
 					if		(	(  GetSymbol  ==  T_SCONST  )
 							||	(  ComToken   ==  T_ICONST  ) ) {
-						SkipLD();
+						SkipLD(in);
 					}
 				}
 			}
@@ -474,6 +481,7 @@ LEAVE_FUNC;
 
 static	void
 ParBD(
+	CURFILE	*in,
 	char	*dname,
 	Bool    parse_ld)
 {
@@ -539,6 +547,7 @@ LEAVE_FUNC;
 
 static	void
 ParDBD(
+	CURFILE	*in,
 	char	*dname)
 {
 	char		name[SIZE_BUFF];
@@ -612,12 +621,14 @@ ENTER_FUNC;
 	ThisEnv->DBG = dbga;
 	ThisEnv->DBG[ThisEnv->cDBG] = dbg;
 	ThisEnv->cDBG ++;
+	dbgprintf("dbg = [%s]\n",dbg->name);
 	g_hash_table_insert(ThisEnv->DBG_Table,dbg->name,dbg);
 LEAVE_FUNC;
 }
 
 static	void
 ParDBGROUP(
+	CURFILE	*in,
 	char	*name)
 {
 	DBG_Struct	*dbg;
@@ -741,6 +752,7 @@ LEAVE_FUNC;
 
 static	void
 _AssignDBG(
+	CURFILE	*in,
 	char	*name,
 	DBG_Struct	*dbg,
 	void	*dummy)
@@ -768,7 +780,8 @@ DBGcomp(
 }
 
 static	void
-AssignDBG(void)
+AssignDBG(
+	CURFILE	*in)
 {
 	int		i;
 	DBG_Struct	*dbg;
@@ -779,7 +792,7 @@ ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		dbgprintf("%d DB group name = [%s]\n",dbg->priority,dbg->name);
-		_AssignDBG(dbg->name,dbg,NULL);
+		_AssignDBG(in,dbg->name,dbg,NULL);
 	}
 LEAVE_FUNC;
 }
@@ -833,6 +846,7 @@ BuildMcpArea(
 
 static	DI_Struct	*
 ParDI(
+	CURFILE	*in,
 	char	*ld,
 	char	*bd,
 	char	*db,
@@ -969,42 +983,42 @@ ENTER_FUNC;
 			break;
 		  case	T_BLOB:
 			if		(  GetSymbol  ==  '{'  ) {
-				ThisEnv->blob = ParBLOB();
+				ThisEnv->blob = ParBLOB(in);
 			} else {
 				Error("syntax error in blob directive");
 			}
 			break;
 		  case	T_CONTROL:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParCONTROL();
+				ParCONTROL(in);
 			} else {
 				Error("syntax error in control directive");
 			}
 			break;
 		  case	T_WFC:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParWFC();
+				ParWFC(in);
 			} else {
 				Error("syntax error in wfc directive");
 			}
 			break;
 		  case	T_LD:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParLD(ld, parse_ld);
+				ParLD(in,ld, parse_ld);
 			} else {
 				Error("syntax error in ld directive");
 			}
 			break;
 		  case	T_BD:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParBD(bd, parse_ld);
+				ParBD(in,bd, parse_ld);
 			} else {
 				Error("syntax error in bd directive");
 			}
 			break;
 		  case	T_DB:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParDBD(db);
+				ParDBD(in,db);
 			} else {
 				Error("syntax error in db directive");
 			}
@@ -1022,7 +1036,7 @@ ENTER_FUNC;
 				gname = NULL;
 				Error("syntax error dbgroup directive");
 			}
-			ParDBGROUP(gname);
+			ParDBGROUP(in,gname);
 			break;
 		  default:
 			printf("[%X][%s]\n",ComToken,ComSymbol);
@@ -1033,8 +1047,10 @@ ENTER_FUNC;
 			Error("; missing");
 		}
 	}
+dbgmsg("*");
 	ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
-	AssignDBG();
+dbgmsg("*");
+	AssignDBG(in);
 LEAVE_FUNC;
 	return	(ThisEnv);
 }
@@ -1049,13 +1065,16 @@ DI_Parser(
 {
 	struct	stat	stbuf;
 	DI_Struct		*ret;
+	CURFILE		*in
+		,		root;
 
 ENTER_FUNC;
+	root.next = NULL;
 	DirectoryDir = dirname(StrDup(name));
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  PushLexInfo(name,DirectoryDir,Reserved)  !=  NULL  ) {
-			ret = ParDI(ld,bd,db,parse_ld);
-			DropLexInfo();
+		if		(  ( in = PushLexInfo(&root,name,DirectoryDir,Reserved) )  !=  NULL  ) {
+			ret = ParDI(in,ld,bd,db,parse_ld);
+			DropLexInfo(&in);
 		} else {
 			ret = NULL;
 		}

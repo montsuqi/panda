@@ -122,6 +122,7 @@ LEAVE_FUNC;
 
 static	void
 ParWindow(
+	CURFILE		*in,
 	LD_Struct	*ld)
 {
 	WindowBind	*bind;
@@ -169,6 +170,7 @@ LEAVE_FUNC;
 
 static	void
 ParDB(
+	CURFILE		*in,
 	LD_Struct	*ld,
 	char		*gname)
 {
@@ -190,7 +192,7 @@ ENTER_FUNC;
 					*q = 0;
 				}
 				sprintf(name,"%s/%s.db",p,ComSymbol);
-				if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
+				if		(  (  db = DB_Parser(name,NULL) )  !=  NULL  ) {
 					if		(  g_hash_table_lookup(ld->DB_Table,ComSymbol)  ==  NULL  ) {
 						rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
 						memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
@@ -223,6 +225,7 @@ LEAVE_FUNC;
 
 static	void
 ParDATA(
+	CURFILE		*in,
 	LD_Struct	*ld)
 {
 	char	buff[SIZE_LONGNAME+1];
@@ -244,7 +247,7 @@ ENTER_FUNC;
 				}
 				break;
 			  case	T_WINDOW:
-				ParWindow(ld);
+				ParWindow(in,ld);
 				break;
 			  default:
 				Error("syntax error 1");
@@ -262,6 +265,7 @@ LEAVE_FUNC;
 
 static	void
 ParBIND(
+	CURFILE		*in,
 	LD_Struct	*ret)
 {
 	WindowBind	*bind;
@@ -292,7 +296,8 @@ LEAVE_FUNC;
 }
 
 static	LD_Struct	*
-ParLD(void)
+ParLD(
+	CURFILE	*in)
 {
 	LD_Struct	*ret;
 	char		*gname;
@@ -360,13 +365,13 @@ ENTER_FUNC;
 				gname = NULL;
 				Error("DB error");
 			}
-			ParDB(ret,gname);
+			ParDB(in,ret,gname);
 			break;
 		  case	T_DATA:
             if (ret->name == NULL) {
                 Error("name directive is required");
             }
-			ParDATA(ret);
+			ParDATA(in,ret);
 			break;
 		  case	T_HOME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
@@ -376,10 +381,10 @@ ENTER_FUNC;
 			}
 			break;
 		  case	T_BIND:
-			ParBIND(ret);
+			ParBIND(in,ret);
 			break;
 		  case	T_HANDLER:
-			ParHANDLER();
+			ParHANDLER(in);
 			break;
 		  default:
 			printf("[%s]\n",ComSymbol);
@@ -387,7 +392,7 @@ ENTER_FUNC;
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("%s:%d: missing ;(semicolon).", InfoRoot.curr->fn, InfoRoot.curr->cLine);
+			Error("%s:%d: missing ;(semicolon).", in->fn, in->cLine);
 		}
 	}
     if (ret->name == NULL) {
@@ -419,13 +424,16 @@ LD_Parser(
 {
 	LD_Struct	*ret;
 	struct	stat	stbuf;
+	CURFILE		*in
+		,		root;
 
 ENTER_FUNC;
 dbgmsg(name); 
+	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  PushLexInfo(name,D_Dir,Reserved)  !=  NULL  ) {
-			ret = ParLD();
-			DropLexInfo();
+		if		(  ( in = PushLexInfo(&root,name,D_Dir,Reserved) )  !=  NULL  ) {
+			ret = ParLD(in);
+			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {
 			printf("[%s]\n",name);

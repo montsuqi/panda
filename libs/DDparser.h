@@ -21,8 +21,9 @@ copies.
 #ifndef	_DD_PARSER_H
 #define	_DD_PARSER_H
 #include	"struct.h"
+#include	"Lex.h"
 
-extern	RecordStruct	*DD_Parse(void);
+extern	RecordStruct	*DD_Parse(CURFILE *in);
 extern	RecordStruct	*ParseRecordFile(char *name);
 extern	RecordStruct	*ParseRecordMem(char *mem);
 extern	RecordStruct	*ReadRecordDefine(char *name);

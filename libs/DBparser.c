@@ -38,6 +38,7 @@ copies.
 #include	<sys/stat.h>	/*	for stbuf	*/
 #include	"types.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"Lex.h"
 #include	"DBparser.h"
 #include	"DDparser.h"
@@ -71,7 +72,7 @@ _Error(
 }
 
 #undef	Error
-#define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
+#define	Error(msg)		{in->fError=TRUE;_Error((msg),in->fn,in->cLine);}
 
 extern	void
 DB_ParserInit(void)
@@ -85,6 +86,7 @@ DB_ParserInit(void)
 
 static	char	***
 ParKeyItem(
+	CURFILE		*in,
 	ValueStruct	*root)
 {
 	char	**name
@@ -113,7 +115,7 @@ ENTER_FUNC;
 			elm = StrDup(ComSymbol);
 			if		(  value  !=  NULL  ) {
 				if		(  ( value = GetRecordItem(value,elm) )  ==  NULL  ) {
-					printf("%s:%d:not in record item [%s]\n",CURR->fn,CURR->cLine,elm);
+					printf("%s:%d:not in record item [%s]\n",in->fn,in->cLine,elm);
 				}
 			}
 			name[count] = elm;
@@ -149,6 +151,7 @@ LEAVE_FUNC;
 
 static	void
 ParKey(
+	CURFILE			*in,
 	RecordStruct	*rec)
 {
 	DB_Struct	*db;
@@ -157,7 +160,7 @@ ParKey(
 ENTER_FUNC;
 	db = rec->opt.db;
 	skey = New(KeyStruct);
-	skey->item = ParKeyItem(rec->value);
+	skey->item = ParKeyItem(in,rec->value);
 	db->pkey = skey;
 LEAVE_FUNC;
 }
@@ -239,6 +242,7 @@ EnterUse(
 
 static	void
 ParOperation(
+	CURFILE			*in,
 	RecordStruct	*rec,
 	PathStruct		*path)
 {
@@ -269,7 +273,7 @@ ENTER_FUNC;
 		GetName;
 		while	(  ComToken  ==  T_SYMBOL  ) {
 			strcpy(name,ComSymbol);
-			value = ParValueDefine();
+			value = ParValueDefine(in);
 			if		(  ComToken  ==  ','  ) {
 				GetName;
 			}
@@ -281,11 +285,11 @@ ENTER_FUNC;
 		} else {
 			Error(") missing");
 		}
-		SetReserved(Reserved); 
+		SetReserved(in,Reserved); 
 	}
 	if		(  ComToken  == '{'  ) {
 		if		(  op->proc  ==  NULL  ) {
-			op->proc = ParSQL(rec,path->args,op->args);
+			op->proc = ParSQL(in,rec,path->args,op->args);
 			if		(  GetSymbol  !=  ';'  ) {
 				Error("; missing");
 			}
@@ -300,6 +304,7 @@ LEAVE_FUNC;
 
 static	void
 ParPath(
+	CURFILE			*in,
 	RecordStruct	*rec)
 {
 	int		pcount;
@@ -326,7 +331,7 @@ ENTER_FUNC;
 		GetName;
 		while	(  ComToken  ==  T_SYMBOL  ) {
 			strcpy(name,ComSymbol);
-			value = ParValueDefine();
+			value = ParValueDefine(in);
 			if		(  ComToken  ==  ','  ) {
 				GetName;
 			}
@@ -338,7 +343,7 @@ ENTER_FUNC;
 		} else {
 			Error(") missing");
 		}
-		SetReserved(Reserved);
+		SetReserved(in,Reserved);
 	}
 	if		(  ComToken  !=  '{'  ) {
 		Error("{ missing");
@@ -354,7 +359,7 @@ ENTER_FUNC;
 			}
 			/*	path thrue	*/
 		  case	T_SYMBOL:
-			ParOperation(rec,path);
+			ParOperation(in,rec,path);
 			break;
 		  default:
 			Error("invalid token");
@@ -369,6 +374,7 @@ LEAVE_FUNC;
 
 static	RecordStruct	*
 DB_Parse(
+	CURFILE	*in,
 	char	*name)
 {
 	RecordStruct	*ret
@@ -377,7 +383,7 @@ DB_Parse(
 	PathStruct		*path;
 
 ENTER_FUNC;
-	ret = DD_Parse();
+	ret = DD_Parse(in);
 	if		(  ret  ==  NULL  ) {
 		exit(1);
     }
@@ -387,7 +393,7 @@ ENTER_FUNC;
 	} else {
 		ret->type = RECORD_NULL;
 	}
-	SetReserved(Reserved); 
+	SetReserved(in,Reserved); 
 	while	(  	GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
 		  case	T_USE:
@@ -415,7 +421,7 @@ ENTER_FUNC;
 				ret->opt.db = InitDB_Struct();
 			}
 			if		(  GetSymbol  == '{'  ) {
-				ParKey(ret);
+				ParKey(in,ret);
 				if		(  GetSymbol  !=  ';'  ) {
 					Error("; missing");
 				}
@@ -427,7 +433,7 @@ ENTER_FUNC;
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("path name invalid");
 			} else {
-				ParPath(ret);
+				ParPath(in,ret);
 			}
 			break;
 		  default:
@@ -509,16 +515,23 @@ LEAVE_FUNC;
 
 extern	RecordStruct	*
 DB_Parser(
-	char	*name)
+	char	*name,
+	char	**ValueName)
 {
 	struct	stat	stbuf;
 	RecordStruct	*ret;
+	CURFILE		*in
+		,		root;
 
 ENTER_FUNC;
+	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  PushLexInfo(name,RecordDir,Reserved)  !=  NULL  ) {
-			ret = DB_Parse(name);
-			DropLexInfo();
+		if		(  ( in = PushLexInfo(&root,name,RecordDir,Reserved) )  !=  NULL  ) {
+			ret = DB_Parse(in,name);
+			if		(  ValueName  !=  NULL  ) {
+				*ValueName = StrDup(in->ValueName);
+			}
+			DropLexInfo(&in);
 			ResolveAlias(ret,ret->value);
 		} else {
 			ret = NULL;

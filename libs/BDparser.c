@@ -82,6 +82,7 @@ static	GHashTable	*Reserved;
 
 static	void
 ParDB(
+	CURFILE		*in,
 	BD_Struct	*bd,
 	char		*gname)
 {
@@ -104,7 +105,7 @@ dbgmsg(">ParDB");
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,ComSymbol);
-					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
+					if		(  (  db = DB_Parser(name,NULL) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(bd->DB_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( bd->cDB + 1));
 							memcpy(rtmp,bd->db,sizeof(RecordStruct *) * bd->cDB);
@@ -133,16 +134,17 @@ dbgmsg(">ParDB");
 		}
 	}
 	xfree(gname);
-dbgmsg("<ParDB");
+LEAVE_FUNC;
 }
 
 static	void
 ParBIND(
+	CURFILE		*in,
 	BD_Struct	*ret)
 {
 	BatchBind	*bind;
 
-dbgmsg(">ParBIND");
+ENTER_FUNC;
 	if		(	(  GetSymbol  ==  T_SCONST  )
 			||	(  ComToken   ==  T_SYMBOL  ) ) {
 		if		(  ( bind = g_hash_table_lookup(ret->BatchTable,ComSymbol) )  ==  NULL  ) {
@@ -159,16 +161,17 @@ dbgmsg(">ParBIND");
 	} else {
 		Error("module name error");
 	}
-dbgmsg("<ParBIND");
+LEAVE_FUNC;
 }
 
 static	BD_Struct	*
-ParBD(void)
+ParBD(
+	CURFILE	*in)
 {
 	BD_Struct	*ret;
 	char		*gname;
 
-dbgmsg(">ParBD");
+ENTER_FUNC;
 	ret = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
@@ -214,13 +217,13 @@ dbgmsg(">ParBD");
 				gname = NULL;
 				Error("syntax error 4");
 			}
-			ParDB(ret,gname);
+			ParDB(in,ret,gname);
 			break;
 		  case	T_BIND:
-			ParBIND(ret);
+			ParBIND(in,ret);
 			break;
 		  case	T_HANDLER:
-			ParHANDLER();
+			ParHANDLER(in);
 			break;
 		  default:
 			Error("syntax error 3");
@@ -256,12 +259,15 @@ BD_Parser(
 {
 	BD_Struct	*ret;
 	struct	stat	stbuf;
+	CURFILE		*in
+		,		root;
 
-dbgmsg(">BD_Parser");
+ENTER_FUNC;
+	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  PushLexInfo(name,D_Dir,Reserved)  !=  NULL  ) {
-			ret = ParBD();
-			DropLexInfo();
+		if		(  ( in = PushLexInfo(&root,name,D_Dir,Reserved) )  !=  NULL  ) {
+			ret = ParBD(in);
+			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {
 			Error("BD file not found");
@@ -270,7 +276,7 @@ dbgmsg(">BD_Parser");
 	} else {
 		ret = NULL;
 	}
-dbgmsg("<BD_Parser");
+LEAVE_FUNC;
 	return	(ret);
 }
 

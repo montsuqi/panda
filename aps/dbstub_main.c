@@ -46,6 +46,7 @@ copies.
 #include	"enum.h"
 #include	"dblib.h"
 #include	"dbgroup.h"
+#include	"RecParser.h"
 #include	"directory.h"
 #include	"handler.h"
 #include	"option.h"

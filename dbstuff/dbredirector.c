@@ -45,6 +45,7 @@ copies.
 
 #include	"types.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"comm.h"
 #include	"dirs.h"
 #include	"redirect.h"

@@ -37,6 +37,7 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"struct.h"
 #include	"const.h"
 #include	"enum.h"
@@ -330,12 +331,13 @@ MakeFromRecord(
 	char	*name)
 {
 	RecordStruct	*rec;
+	char			*ValueName;
 
 dbgmsg(">MakeFromRecord");
 	level = 1;
 	DD_ParserInit();
 	DB_ParserInit();
-	if		(  ( rec = DB_Parser(name) )  !=  NULL  ) {
+	if		(  ( rec = DB_Parser(name,&ValueName) )  !=  NULL  ) {
 		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
 			PutString(ValueName);
