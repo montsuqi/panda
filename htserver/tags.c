@@ -200,6 +200,8 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
     char buf[SIZE_BUFF];
 	size_t	len;
 
+	if		(  !fJavaScript  )
+		return;
     if ((value = GetArg(tag, event, 0)) == NULL)
         return;
 
@@ -271,6 +273,7 @@ JavaScriptKeyEvent(HTCInfo *htc, Tag *tag, char *event)
     char buf[SIZE_BUFF];
     char *key, *p;
 
+	if		(  !fJavaScript  )	return;
     if ((value = GetArg(tag, event, 0)) == NULL)
         return;
     p = value;
@@ -627,11 +630,13 @@ ENTER_FUNC;
 	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
 			||	(  !stricmp(type,"text")                      ) ) {
 	} else {
-		InvokeJs("html_edit");
-		InvokeJs("html_setting");
-		LBS_EmitString(htc->code," mce_editable=\"true\"");
-		if		(  !stricmp(type,"xml")  ) {
-			SetFilter(GetArg(tag,"name",0),StrDup,NULL);
+		if		(  fJavaScript  ) {
+			InvokeJs("html_edit");
+			InvokeJs("html_setting");
+			LBS_EmitString(htc->code," mce_editable=\"true\"");
+			if		(  !stricmp(type,"xml")  ) {
+				SetFilter(GetArg(tag,"name",0),StrDup,NULL);
+			}
 		}
 	}
 #endif
@@ -714,6 +719,7 @@ _Count(
 	char	*from
 	,		*to
 	,		*step;
+	size_t	pos;
 
 ENTER_FUNC;
 	EmitCode(htc,OPC_VAR);
@@ -759,7 +765,9 @@ ENTER_FUNC;
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,1);
 	}													/*	1	step	*/
-	Push(LBS_GetPos(htc->code));
+	pos = LBS_GetPos(htc->code);
+	dbgprintf("pos = %d\n",pos);
+	Push(pos);
 	EmitCode(htc,OPC_BREAK);
 	LBS_EmitInt(htc->code,0);
 LEAVE_FUNC;
@@ -775,6 +783,8 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_LEND);
 	LBS_EmitInt(htc->code,Pop);
 	pos = LBS_GetPos(htc->code);
+	dbgprintf("pos = %d\n",pos);
+	dbgprintf("TOP = %d\n",TOP(0));
 	LBS_SetPos(htc->code,TOP(0));
 	EmitCode(htc,OPC_BREAK);
 	LBS_EmitInt(htc->code,pos);
@@ -789,11 +799,12 @@ _Button(
 	Tag		*tag)
 {
 	char	*face
-		,	*event;
+		,	*event
+		,	*size;
 	char	buf[SIZE_BUFF];
 	char	*state;
 	int		arg
-		,	pos;
+		,	pos
 
 ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
@@ -850,22 +861,34 @@ ENTER_FUNC;
 			LBS_EmitPointer(htc->code,StrDup(size));
 			EmitCode(htc,OPC_REFSTR);
 		}
-		Style(htc,tag);
-		LBS_EmitString(htc->code,">");
 #else
-		LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
-		LBS_EmitString(htc->code,face);
-		LBS_EmitString(htc->code,"\"");
-		LBS_EmitChar(htc->code, ' ');
-		InvokeJs("send_event");
-		LBS_EmitString(htc->code, "onclick");
-		snprintf(buf, SIZE_BUFF,
-				 "=\""
-				 "send_event(%d,'%s');\"",htc->FormNo,event);
-		LBS_EmitString(htc->code, buf);
+		if		(  fJavaScript  ) {
+			LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
+			LBS_EmitString(htc->code,face);
+			LBS_EmitString(htc->code,"\"");
+			LBS_EmitChar(htc->code, ' ');
+			InvokeJs("send_event");
+			LBS_EmitString(htc->code, "onclick");
+			snprintf(buf, SIZE_BUFF,
+					 "=\""
+					 "send_event(%d,'%s');\"",htc->FormNo,event);
+			LBS_EmitString(htc->code, buf);
+		} else {
+			g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
+			LBS_EmitString(htc->code,
+						   "<input type=\"submit\" name=\"_event\" value=\"");
+			LBS_EmitString(htc->code,face);
+			LBS_EmitString(htc->code,"\"");
+			if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+				LBS_EmitString(htc->code," size=");
+				EmitCode(htc,OPC_NAME);
+				LBS_EmitPointer(htc->code,StrDup(size));
+				EmitCode(htc,OPC_REFSTR);
+			}
+		}
+#endif
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">");
-#endif
 	}
 
 	pos = LBS_GetPos(htc->code);
@@ -1283,12 +1306,15 @@ ENTER_FUNC;
         }
 		if		(	(  ( type = GetArg(tag,"type",0) )  !=  NULL  )
 				&&	(  !stricmp(type,"menu")                      ) ) {
-			InvokeJs("send_event");
-			LBS_EmitString(htc->code, "onchange");
-			snprintf(buf, SIZE_BUFF,
-					 "=\""
-					 "send_event(%d,this.options[this.selectedIndex].value);\"",htc->FormNo);
-			LBS_EmitString(htc->code, buf);
+			if		(  fJavaScript  ) {
+				InvokeJs("send_event");
+				LBS_EmitString(htc->code, "onchange");
+				snprintf(buf, SIZE_BUFF,
+						 "=\""
+						 "send_event(%d,this.options[this.selectedIndex].value);\"",
+						 htc->FormNo);
+				LBS_EmitString(htc->code, buf);
+			}
 		} else {
 			JavaScriptEvent(htc, tag, "onchange");
 		}
@@ -1395,7 +1421,7 @@ ENTER_FUNC;
 
 		LBS_EmitString(htc->code, " href=\"");
 
-		if (fJavaScriptLink && htc->FormNo >= 0 &&
+		if (fJavaScriptLink && fJavaScript && htc->FormNo >= 0 &&
             (file = GetArg(tag, "file", 0)) == NULL) {
             LBS_EmitString(htc->code, "javascript:");
             snprintf(buf, SIZE_BUFF,
@@ -2026,6 +2052,7 @@ InvokeJs(
 {
 	Js		*js;
 
+	if		(  !fJavaScript  )	return;
 	if		(  ( js = g_hash_table_lookup(Jslib,name) )  !=  NULL  ) {
 		js->fUse = TRUE;
 	}
@@ -2035,6 +2062,7 @@ extern	void
 JslibInit(void)
 {
 ENTER_FUNC;
+	if		(  !fJavaScript  )	return;
 	Jslib = NewNameiHash();
 #ifdef	USE_MCE
 	NewJs("html_edit","./jscripts/tiny_mce/tiny_mce.js",TRUE);
@@ -2048,15 +2076,19 @@ ENTER_FUNC;
 		  ,FALSE);
 #endif
 	NewJs("send_event",
+		  "sent_event = 0;\n"
 		  "function send_event(no,event){\n"
 #ifdef	USE_MCE
 		  "  if (typeof(tinyMCE) != \"undefined\") {\n"
 		  "    tinyMCE.triggerSave();\n"
 		  "  }\n"
 #endif
-		  "  document.forms[no].elements[0].name='_event';\n"
-		  "  document.forms[no].elements[0].value=event;\n"
-		  "  document.forms[no].submit();\n"
+		  "  if  (sent_event == 0) {\n"
+		  "    sent_event = 1;\n"
+		  "    document.forms[no].elements[0].name='_event';\n"
+		  "    document.forms[no].elements[0].value=event;\n"
+		  "    document.forms[no].submit();\n"
+		  "  }\n"
 		  "}\n",FALSE);
 		  
 LEAVE_FUNC;

@@ -975,7 +975,8 @@ ExecPGSQL(
 	,		items
 	,		ntuples;
 	ExecStatusType	status;
-	Bool	fIntoAster;
+	Bool	fIntoAster
+		,	fDot;
 	char	buff[SIZE_LONGNAME+1]
 		,	*p
 		,	*q;
@@ -1003,25 +1004,20 @@ ENTER_FUNC;
 					*p ++ = c;
 				}
 				*p = 0;
-				if		(  ( q = strchr(buff,'.') )  !=  NULL  ) {
-					*q ++ = 0;
-					LBS_EmitString(sql,buff);
-#if	1
-					LBS_EmitChar(sql,'.');
-#else
-					if		(  IS_VALUE_VIRTUAL(rec->value)  ) {
+				fDot = FALSE;
+				p = buff;
+				while	(  ( q = strchr(p,'.') )  !=  NULL  ) {
+					*q = 0;
+					LBS_EmitString(sql,p);
+					p = q + 1;
+					if		(  !fDot  ) {
 						LBS_EmitChar(sql,'.');
-					} else
-					if		(  strcmp(buff,rec->name)  ==  0  ) {
-						LBS_EmitChar(sql,'.');
+						fDot = TRUE;
 					} else {
 						LBS_EmitChar(sql,'_');
 					}
-#endif
-					LBS_EmitString(sql,q);
-				} else {
-					LBS_EmitString(sql,buff);
 				}
+				LBS_EmitString(sql,p);
 				LBS_EmitSpace(sql);
 				break;
 			  case	SQL_OP_INTO:

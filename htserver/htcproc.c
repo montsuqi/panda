@@ -168,7 +168,7 @@ main(
 	int		i;
 
 	SetDefault();
-	InitMessage("htcbatch",NULL);
+	InitMessage("htcproc",NULL);
 	fl = GetOption(option,argc,argv);
 #if	0
 				   "\tLang can accept\n"

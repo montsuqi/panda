@@ -525,15 +525,17 @@ OutputJs(
 		}
 	}
 
- 	g_hash_table_foreach(Jslib,(GHFunc)_OutJsFile,NULL);
-	LBS_EmitString(html,
-				   "\n<script language=\"javascript\" "
-				   "type=\"text/javascript\">\n"
-				   "<!--\n");
- 	g_hash_table_foreach(Jslib,(GHFunc)_OutJs,NULL);
-	LBS_EmitString(html,
-				   "\n-->\n"
-				   "</script>\n");
+	if		(  Jslib  !=  NULL  ) {
+		g_hash_table_foreach(Jslib,(GHFunc)_OutJsFile,NULL);
+		LBS_EmitString(html,
+					   "\n<script language=\"javascript\" "
+					   "type=\"text/javascript\">\n"
+					   "<!--\n");
+		g_hash_table_foreach(Jslib,(GHFunc)_OutJs,NULL);
+		LBS_EmitString(html,
+					   "\n-->\n"
+					   "</script>\n");
+	}
 }
 
 extern	void
@@ -923,7 +925,15 @@ ENTER_FUNC;
 			event = button;
 		}
 #else
-		event = button;
+		if		(  fJavaScript  ) {
+			event = button;
+		} else {
+			dbgprintf("button = [%s]\n",button);
+			event = g_hash_table_lookup(htc->Trans,button);
+			if (event == NULL) {
+				event = button;
+			}
+		}
 #endif
 		dbgprintf("event  = [%s]\n",event);
 	}

@@ -1,3 +1,9 @@
+2005-03-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/mon.c: Javascriptを使わない動作を一部可能にした
+
+	* htserver/HTCparser.c (CopyTag): 値を持たない属性の動くを正しくした
+
 2005-03-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/comms.c (SendValueString): bug fix i18n

@@ -64,7 +64,6 @@ static	char	*Command;
 static	LargeByteString	*lbs;
 static	Bool		fComm;
 
-//char		*RecordDir;	/*	dummy	*/
 static	ARG_TABLE	option[] = {
 	{	"server",	STRING,		TRUE,	(void*)&ServerPort,
 		"サーバポート"	 								},
@@ -80,6 +79,8 @@ static	ARG_TABLE	option[] = {
 		"セション変数をcookieで行う"					},
 	{	"jslink",	BOOLEAN,	TRUE,	(void*)&fJavaScriptLink,
 		"<htc:hyperlink>によるリンクをJavaScriptで行う"	},
+	{	"js",		BOOLEAN,	TRUE,	(void*)&fJavaScript,
+		"JavaScriptを使ったHTML生成を行う"	},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -94,6 +95,7 @@ SetDefault(void)
 	fGet = FALSE;
 	fComm = FALSE;
 	fCookie = FALSE;
+	fJavaScript = TRUE;
 	CommandLine = NULL;
 }
 
@@ -496,8 +498,8 @@ main(
 {
 	SetDefault();
 	(void)GetOption(option,argc,argv);
-	InitMessage("mon","@localhost");
-	//InitMessage("mon",NULL);
+	//InitMessage("mon","@localhost");
+	InitMessage("mon",NULL);
 
 	InitNET();
     lbs = NewLBS();

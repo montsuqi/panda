@@ -80,7 +80,8 @@ CopyTag(
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<");
 	LBS_EmitString(htc->code,HTC_ComSymbol);
-	while	(  GetName  !=  '>'  ) {
+	GetName;
+	while	(  HTC_Token  !=  '>'  ) {
 		LBS_EmitChar(htc->code,' ');
 		switch	(HTC_Token)	{
 		  case	T_SYMBOL:
@@ -99,13 +100,16 @@ ENTER_FUNC;
 					LBS_EmitChar(htc->code,HTC_Token);
 					break;
 				}
+				GetName;
 			}
 			break;
 		  case	T_SCONST:
 			para = HTC_ComSymbol;
 			ExpandAttributeString(htc,para);
+			GetName;
 			break;
 		  default:
+			GetName;
 			break;
 		}
 	}
@@ -393,7 +397,9 @@ DestroyHTC(
 		}
 
 ENTER_FUNC;
-	g_hash_table_foreach(htc->Trans,(GHFunc)Clear,NULL);
+	if		(  htc->Trans  !=  NULL  ) {
+		g_hash_table_foreach(htc->Trans,(GHFunc)Clear,NULL);
+	}
 	FreeLBS(htc->code);
 	xfree(htc);
 LEAVE_FUNC;

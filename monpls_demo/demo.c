@@ -62,20 +62,18 @@ dbgmsg(">demoLink");
 	SetValueString(GetWindowValue("project1.vbox1.entry3.style"),"blue",NULL);
 
 	SetValueString(GetWindowValue("project1.vbox1.combo1.item[0]"),"おごちゃん",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[1]"),"じゅんちゃ",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[2]"),"えりさ",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[3]"),"ques",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.item[1]"),"えりさ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.item[2]"),"ques",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.combo1.name.value"),"えりさ",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project1.vbox1.combo1.count"),4);
 	SetValueString(GetWindowValue("project1.vbox1.combo1.name.style"),"blue",NULL);
 
 	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[0]"),"おごちゃん",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[1]"),"じゅんちゃ",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[2]"),"えりさ",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[3]"),"ques",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[4]"),"void_No2",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[5]"),"Mul6",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[6]"),"末広",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[1]"),"えりさ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[2]"),"ques",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[3]"),"void_No2",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[4]"),"Mul6",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[5]"),"末広",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project1.vbox1.swin2.vp1.list1.count"),7);
 	SetValueInteger(GetWindowValue("project1.vbox1.swin2.vp1.list1.from"),5);
 	SetValueBool(GetWindowValue("project1.vbox1.swin2.vp1.list1.select[1]"),TRUE);
