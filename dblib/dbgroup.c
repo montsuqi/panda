@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -164,7 +164,8 @@ typedef	void	(*DB_FUNC2)(DBG_Struct *, DBCOMM_CTRL *);
 static	int
 ExecFunction(
 	DBG_Struct	*dbg,
-	char		*name)
+	char		*name,
+	Bool		fAll)
 {
 	DBCOMM_CTRL	ctrl;
 	DB_FUNC2	func;
@@ -180,16 +181,18 @@ dbgmsg(">ExecFunction");
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl.rc += ExecFunction(dbg,name);
+			ctrl.rc += ExecFunction(dbg,name,FALSE);
 		}
 	} else {
-		//	if		(  dbg->dbt  !=  NULL  ) { 
-		if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
-				   !=  NULL  ) {
-			(*func)(dbg,&ctrl);
-		} else {
-			printf("function not found [%s]\n",name);
-			ctrl.rc = MCP_BAD_FUNC;
+		if		(	(  fAll  )
+				||	(  dbg->dbt  !=  NULL  ) ) { 
+			if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
+					   !=  NULL  ) {
+				(*func)(dbg,&ctrl);
+			} else {
+				printf("function not found [%s]\n",name);
+				ctrl.rc = MCP_BAD_FUNC;
+			}
 		}
 	}
 dbgmsg("<ExecFunction");
@@ -222,7 +225,7 @@ dbgmsg(">ExecDB_Process");
 		ctrl->rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl->rc += ExecFunction(dbg,ctrl->func);
+			ctrl->rc += ExecFunction(dbg,ctrl->func,FALSE);
 		}
 	} else {
 		dbg = rec->opt.db->dbg;
@@ -244,7 +247,7 @@ ExecDBG_Operation(
 	DBG_Struct	*dbg,
 	char		*name)
 {
-	ExecFunction(dbg,name);
+	ExecFunction(dbg,name,FALSE);
 }
 
 extern	void
@@ -265,6 +268,13 @@ TransactionEnd(
 
 extern	void
 OpenDB(
+	DBG_Struct *dbg)
+{
+	ExecDBG_Operation(dbg,"DBOPEN");
+}
+
+extern	void
+OpenRedirectDB(
 	DBG_Struct *dbg)
 {
 	ExecDBG_Operation(dbg,"DBOPEN");
