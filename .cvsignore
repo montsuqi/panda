@@ -9,3 +9,5 @@ stamp-h.in
 defaults.h
 ltmain.sh
 panda-config
+autom4te.cache
+stamp-h1
