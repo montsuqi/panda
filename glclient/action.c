@@ -197,3 +197,15 @@ DestroyWindow(
 	}
 }
 
+static void
+destroy_window_one(char *wname, XML_Node *node, gpointer user_data)
+{
+    gtk_widget_destroy(GTK_WIDGET(node->window));
+    node->window = NULL;
+}
+
+extern void
+DestroyWindowAll()
+{
+    g_hash_table_foreach(WindowTable, (GHFunc)destroy_window_one, NULL);
+}

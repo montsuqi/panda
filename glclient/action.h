@@ -28,6 +28,7 @@ extern	void		GrabFocus(GtkWidget *widget);
 extern	void		ResetTimer(GtkWindow *window);
 extern	XML_Node	*ShowWindow(char *wname, byte type);
 extern	void		DestroyWindow(char *sname);
+extern	void		DestroyWindowAll();
 extern	void		ClearWindowTable(void);
 extern	void		UpdateWidget(GtkWidget *widget, void *user_data);
 

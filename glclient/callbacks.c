@@ -458,6 +458,7 @@ window_destroy(
 	gpointer	user_data)
 {
 dbgmsg(">window_destroy");
+    DestroyWindowAll();
 	fInRecv = TRUE;
 	gtk_main_quit();
 dbgmsg("<window_destroy");

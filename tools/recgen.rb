@@ -4,17 +4,60 @@ require "kconv"
 include Kconv
 require "uconv"
 include Uconv
+require "getoptlong"
 
-$button_enable = false     
+$button_enable = false
+$text_enable = false
+$notab_enable = false
 
-if ARGV[0] == "-b" 
-	$button_enable = true 
-	ARGV.shift 
-end       
+def usage
+  $stderr.puts "Usage: #{File.basename($0)} [OPTIONS] [FILE]"
+  $stderr.puts "画面定義体からプロトコルv2用のPL定義体を生成する。"
+  $stderr.puts ""
+  $stderr.puts "OPTIONS:"
+  $stderr.puts "  -b, --button GtkButtonに関するPL定義体の出力を有効にする"
+  $stderr.puts "  -t, --text   varchar型をtextとして出力する"
+  $stderr.puts "  -n, --notab  インデントに4個の空白を用いる"
+  $stderr.puts "  -e, --emacs  インデントに4個の空白を用い、"
+  $stderr.puts "               Emacs用に末尾にLocal Variablesを追加する"
+  $stderr.puts "  -h, --help   このメッセージを出力して終了する"
+end
+
+parser = GetoptLong.new
+parser.set_options(['--button', '-b', GetoptLong::NO_ARGUMENT],
+                   ['--text',   '-t', GetoptLong::NO_ARGUMENT],
+                   ['--notab',  '-n', GetoptLong::NO_ARGUMENT],
+                   ['--emacs',  '-e', GetoptLong::NO_ARGUMENT],
+                   ['--help',   '-h', GetoptLong::NO_ARGUMENT])
+begin
+  parser.each_option do |name, arg|
+    case name
+    when "--button"
+      $button_enable = true 
+    when "--text"
+      $text_enable = true 
+    when "--notab"
+      $notab_enable = true 
+    when "--emacs"
+      $emacs_enable = true 
+      $notab_enable = true 
+    when "--help"
+      usage
+      exit
+    end
+  end
+rescue
+  usage
+  exit(1)
+end
 
 def	putTab(n)
 	while	n > 0
-		printf("\t");
+        if $notab_enable
+          printf("    ");
+        else
+          printf("\t");
+        end
 		n -= 1;
 	end
 end
@@ -52,7 +95,11 @@ class	Element
 		case	@klass
 		  when	:record
 			putTab(ind);
-			printf("%s\t{\n",@name);
+            if $notab_enable
+              printf("%s {\n",@name);
+            else
+              printf("%s\t{\n",@name);
+            end
 			@item_ary.each do |key|
 				@item[key].out(ind+1)
 			end
@@ -60,7 +107,11 @@ class	Element
 			printf("}");
 		  else
 			putTab(ind);
-			printf("%s\t%s",@name,@type);
+            if $notab_enable
+              printf("%s %s",@name,@type);
+            else
+              printf("%s\t%s",@name,@type);
+            end
 		end
 		if	@dim.size > 0
 			for	i in @dim
@@ -199,8 +250,10 @@ class	Widget
 			end
 			i = 0;
 			for	c in @child
-				@@record = @@record.append(sprintf("%s.item[0].value%d",@name,i),
-						sprintf("varchar(%d)",Integer(self.column_width[i])/8));
+                l = Integer(self.column_width[i]) / 8
+                t = "text"
+                t = sprintf("varchar(%d)", l) if !$text_enable || l > 0
+				@@record = @@record.append(sprintf("%s.item[0].value%d",@name,i), t)
 				i += 1;
 			end
 			@@record = @@record.append(sprintf("%s.select[0]",@name),"bool");
@@ -211,30 +264,30 @@ class	Widget
 				i += 1;
 			end
 			@@record = @@record.append(sprintf("%s.count",@name),"int");
-			@@record = @@record.append(sprintf("%s.item[0]",@name),"varchar(??)");
+            t = "text"
+            t = "varchar(??)" unless $text_enable
+			@@record = @@record.append(sprintf("%s.item[0]",@name), t)
 			@@record = @@record.append(sprintf("%s.select[0]",@name),"bool");
 		  when	"GtkCombo", "GtkPandaCombo"
 			@child[0]._panda;
 			@@record = @@record.append(sprintf("%s.count",@name),"int");
-			@@record = @@record.append(sprintf("%s.item[0]",@name),
-									sprintf("varchar(%d)",@child[0].chars));
+            l = @child[0].chars
+            t = "text"
+            t = sprintf("varchar(%d)", l) if !$text_enable || l > 0
+			@@record = @@record.append(sprintf("%s.item[0]",@name), t)
 		  when	"GtkLabel"
 			if		@label  ==  "" or
 					@label  =~  /^X+$/
-				if	@label  ==  ""
-					@@record = @@record.append(sprintf("%s.value",@name),
-							sprintf("varchar(%d)",Integer(self.width)/8));
-				  else
-					@@record = @@record.append(sprintf("%s.value",@name),
-							sprintf("varchar(%d)",label.length));
-				end
+                l = label.length
+                l = Integer(self.width)/8 if @label == ""
+                t = "text"
+                t = sprintf("varchar(%d)", l) if !$text_enable || l > 0
+                @@record = @@record.append(sprintf("%s.value",@name), t)
 			end
-		  when	"GtkEntry", "GtkPandaEntry"
-			@@record = @@record.append(sprintf("%s.value",@name),
-										sprintf("varchar(%d)",@chars));
-		  when	"GtkText", "GtkPandaText"
-			@@record = @@record.append(sprintf("%s.value",@name),
-										sprintf("varchar(%d)",@chars));
+		  when	"GtkEntry", "GtkPandaEntry", "GtkText", "GtkPandaText"
+            t = "text"
+            t = sprintf("varchar(%d)", @chars) if !$text_enable || @chars > 0
+			@@record = @@record.append(sprintf("%s.value",@name), t)
 		  when	"GtkNumberEntry"
 			len = @format.gsub(/\.,/,"").length;
 			s = @format.split(".");
@@ -249,14 +302,18 @@ class	Widget
 		  when	"GtkToggleButton", "GtkCheckButton", "GtkRadioButton"
 			@@record = @@record.append(sprintf("%s.value",@name),"bool");
 			if		@label  ==  ""
-				@@record = @@record.append(sprintf("%s.label",@name),"varchar(??)");
+              t = "text"
+              t = "varchar(??)" unless $text_enable
+              @@record = @@record.append(sprintf("%s.label",@name), t)
 			end
 		  when  "GtkButton" 
 			if	$button_enable 
 			  @@record = @@record.append(sprintf("%s.state",@name),"int");
 			  if @label =~ /^X+$/
-				@@record = @@record.append(sprintf("%s.label",@name),
-										   sprintf("varchar(%d)",label.length));
+                l = label.length
+                t = "text"
+                t = sprintf("varchar(%d)", l) if !$enable_text || l > 0
+				@@record = @@record.append(sprintf("%s.label",@name), t)
 			  end
 			end 
 		  when  "GtkFrame" 
@@ -277,6 +334,10 @@ class	Widget
 			@@record = @@record.append(sprintf("%s.year",@name),"int");
 			@@record = @@record.append(sprintf("%s.month",@name),"int");
 			@@record = @@record.append(sprintf("%s.day",@name),"int");
+          when	"GtkPandaPS"
+            t = "text"
+            t = "varchar(??)" unless $text_enable
+            @@record = @@record.append(sprintf("%s.value",@name),t)
 		  else
 			;
 		end
@@ -418,4 +479,17 @@ rescue XMLParserError
 end
 
 widget.panda;
+
+if $emacs_enable
+  puts ""
+  puts "# Local Variables:"
+  puts "# indent-tabs-mode: nil"
+  puts "# tab-width: 4"
+  puts "# End:"
+end
+
 exit 0
+
+# Local Variables:
+# tab-width: 4
+# End:

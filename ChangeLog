@@ -1,3 +1,28 @@
+2004-06-29  Kouji TAKAO  <kouji@netlab.jp>
+
+	* dblib/PostgreSQL.c (EscapeString, EscapeStringInArray) 
+	(EscapeBytea, EscapeByteaInArray): LBSの最終操作位置を変更していな
+	いバグを修正
+	(ExecPGSQL): SQLの発行に使用したLBSをクリアしていないバグを修正
+
+	* libs/SQLparser.c (SQL_Error): Errorマクロを改名し、可変長引数を
+	取るように修正
+	(ParSQL): 変数参照(:)のパース失敗時に変数名を表示するように修正
+	添字が0以下と`['だけの場合にエラー終了するように修正
+	SQL文の末尾が`;'で終わっていない場合にそのSQLを発行しないバグを修正
+
+	* tools/recgen.rb: 次のオプションを追加
+	  -t, --text   varchar型をtextとして出力する
+	  -n, --notab  インデントに4個の空白を用いる
+	  -e, --emacs インデントに4個の空白を用い、Emacs用に末尾にLocal
+	               Variablesを追加する
+	  -h, --help   このメッセージを出力して終了する
+
+	* glclient/callbacks.c (window_destroy): 全てのウィンドウにdestroy
+	イベントを送るように修正
+	* glclient/action.c (DestroyWindowAll): 全てのウィンドウをDestroy
+	する関数を追加
+
 2004-06-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/htcgen.xsl: Ver 2.0用に新設

@@ -119,6 +119,7 @@ EscapeString(LargeByteString *lbs, char *s)
             break;
         }
 	}
+    LBS_SetPos(lbs, old_size + len);
 }
 
 static	void
@@ -174,6 +175,7 @@ EscapeStringInArray(LargeByteString *lbs, char *s)
             break;
         }
 	}
+    LBS_SetPos(lbs, old_size + len);
 }
 
 static void
@@ -226,6 +228,7 @@ EscapeBytea(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
             *dp++ = *sp;
         }
     }
+    LBS_SetPos(lbs, old_size + len);
 }
 
 static void
@@ -292,6 +295,7 @@ EscapeByteaInArray(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
             *dp++ = *sp;
         }
     }
+    LBS_SetPos(lbs, old_size + len);
 }
 
 static	void
@@ -1025,7 +1029,7 @@ dbgmsg(">ExecPGSQL");
 			  case	SQL_OP_EOL:
                 LBS_EmitEnd(sql);
 				res = _PQexec(dbg,LBS_Body(sql),TRUE);
-                RewindLBS(sql);
+                LBS_Clear(sql);
 				if		(	(  res ==  NULL  )
 						||	(  ( status = PQresultStatus(res) )
 							           ==  PGRES_BAD_RESPONSE    )

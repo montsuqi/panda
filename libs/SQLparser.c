@@ -44,17 +44,14 @@ copies.
 #define	MarkCode(lbs)		((lbs)->ptr)
 #define	SeekCode(lbs,pos)	((lbs)->ptr = (pos))
 
-static	void
-_Error(
-	char	*msg,
-	char	*fn,
-	int		line)
-{
-	printf("%s:%d:%s\n",fn,line,msg);
-	exit(1);
-}
-#undef	Error
-#define	Error(msg)	{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
+#define SQL_Error(...)                                  \
+do {                                                    \
+    CURR->fError = TRUE;                                \
+    fprintf(stderr, "%s:%d:", CURR->fn, CURR->cLine);   \
+    fprintf(stderr, __VA_ARGS__);                       \
+    fprintf(stderr, "\n");                              \
+    exit(1);                                            \
+} while (0)
 #undef	GetSymbol
 #define	GetSymbol	(ComToken = SQL_Lex(FALSE))
 #undef	GetName
@@ -199,6 +196,7 @@ ENTER_FUNC;
 				LBS_Emit(sql,SQL_OP_REF);
 			}
 			if		(  GetName  ==  T_SYMBOL  ) {
+                GString *str = g_string_new("");
 				valr = rec->value;
 				valp = argp;
 				valf = argf;
@@ -206,21 +204,27 @@ ENTER_FUNC;
 					valr = GetRecordItem(TraceAlias(rec,valr),ComSymbol);
 					valp = GetRecordItem(TraceAlias(rec,valp),ComSymbol);
 					valf = GetRecordItem(TraceAlias(rec,valf),ComSymbol);
+                    str = g_string_append(str, ComSymbol);
 					switch	(GetSymbol) {
 					  case	'.':
 						GetName;
+                        str = g_string_append_c(str, '.');
 						break;
 					  case	'[':
-						if		(  GetSymbol  ==  T_SYMBOL  ) {
-							n = atoi(ComSymbol) - 1;
-							if		(  GetSymbol  !=  ']'  ) {
-								Error("] missing");
-							}
-						} else {
-							Error("invalid token(symbol missing)");
-							n = 0;
-						}
-						GetSymbol;
+						if (GetSymbol != T_SYMBOL) {
+                            SQL_Error("parse error missing symbol after `['");
+                        }
+                        str = g_string_append_c(str, '[');
+                        str = g_string_append(str, ComSymbol);
+                        str = g_string_append_c(str, ']');
+                        n = atoi(ComSymbol) - 1;
+                        if (n < 0) {
+                            SQL_Error("invalid array index: %s", ComSymbol);
+                        }
+                        if		(  GetSymbol  !=  ']'  ) {
+                            SQL_Error("parse error missing symbol: `]'");
+                        }
+                        GetSymbol;
 						valr = TraceArray(valr,n);
 						valp = TraceArray(valp,n);
 						valf = TraceArray(valf,n);
@@ -232,9 +236,10 @@ ENTER_FUNC;
 				val = (  valp  !=  NULL  ) ? valp : valr;
 				val = (  valf  !=  NULL  ) ? valf : val;
 				if		(  val  ==  NULL  ) {
-					Error("invalid value(item name missing)");
+					SQL_Error("undeclared (first in use this file): `%s'", str->str);
 				}
 				LBS_EmitPointer(sql,(void *)TraceAlias(rec,val));
+                g_string_free(str, TRUE);
 				if		(  ComToken  ==  ','  ) {
 					if		(  !fInto  ) {
 						LBS_EmitChar(sql,',');
@@ -285,6 +290,22 @@ ENTER_FUNC;
 			break;
 		}
 	}
+    
+    if (sql->body[sql->ptr - 1] != SQL_OP_EOL) {
+        if (fInto) {
+            current = MarkCode(sql);
+            SeekCode(sql,mark);
+            if (fAster) {
+                LBS_EmitInt(sql,-1);
+            }
+            else {
+                LBS_EmitInt(sql,into);
+            }
+            SeekCode(sql,current);
+        }
+        LBS_Emit(sql,SQL_OP_ESC);
+        LBS_Emit(sql,SQL_OP_EOL);
+    }
 	LBS_EmitEnd(sql);
 	LBS_EmitFix(sql);
 LEAVE_FUNC;
