@@ -171,17 +171,17 @@ ExpandAttributeString(
 	LBS_EmitChar(htc->code,'"');
 	switch	(*para) {
 	  case	'$':
-		para ++;
-		if		(  *para  ==  '$'  ) {
-			EmitCode(htc,OPC_NAME);
-			LBS_EmitPointer(htc->code,StrDup(para));
-            EmitCode(htc,OPC_REFSTR);
-		} else {
-			EmitCode(htc,OPC_NAME);
-			LBS_EmitPointer(htc->code,StrDup(para));
-			EmitCode(htc,OPC_EHSNAME);
-		}
+#if	0
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(para+1));
+		EmitCode(htc,OPC_REFSTR);
 		break;
+#else		
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(para+1));
+		EmitCode(htc,OPC_EHSNAME);
+		break;
+#endif
 	  case	'\\':
 		LBS_EmitString(htc->code,para+1);
 		break;
@@ -388,6 +388,7 @@ _Fixed(
 		,	*target
 		,	*value
 		,	*type;
+	Bool	fRaw;
 
 ENTER_FUNC;
 	value = GetArg(tag,"value",0);
@@ -395,11 +396,16 @@ ENTER_FUNC;
 	type = GetArg(tag,"type",0);
 	if		(	(  value  !=  NULL  )
 			||	(  name   !=  NULL  ) ) {
-		if		(	(  type  !=  NULL  )
-				&&	(  !stricmp(type,"html")  ) ) {
-			LBS_EmitString(htc->code,"<div");
-			Style(htc,tag);
-			LBS_EmitString(htc->code,">\n");
+		fRaw = FALSE;
+		if		(  type  !=  NULL  ) {
+			if		(  !stricmp(type,"html")  ) {
+				LBS_EmitString(htc->code,"<div");
+				Style(htc,tag);
+				LBS_EmitString(htc->code,">\n");
+			} else
+			if		(  !stricmp(type,"raw")  ) {
+				fRaw = TRUE;
+			}
 		} else {
 			LBS_EmitString(htc->code,"<span");
 			Style(htc,tag);
@@ -427,27 +433,32 @@ ENTER_FUNC;
 					||	(  name[0]  ==  '#'  ) ) {
 				EmitCode(htc,OPC_NAME);
 				LBS_EmitPointer(htc->code,StrDup(name));
-				EmitCode(htc,OPC_REFSTR);
 			} else {
 				EmitCode(htc,OPC_NAME);
 				LBS_EmitPointer(htc->code,StrDup(name));
 				EmitCode(htc,OPC_HSNAME);
-				if		(	(  type  !=  NULL  )
-						&&	(  !stricmp(type,"html")  ) ) {
-					EmitCode(htc,OPC_EMITHTML);
-				} else {
-					EmitCode(htc,OPC_EMITSTR);
-				}
+			}
+			if		(  fRaw  ) {
+				EmitCode(htc,OPC_EMITHTML);
+			} else
+			if		(	(  type  !=  NULL  )
+					&&	(  !stricmp(type,"html")  ) ) {
+				EmitCode(htc,OPC_EMITHTML);
+			} else {
+				EmitCode(htc,OPC_EMITSTR);
 			}
 		}
 		if		(  link  !=  NULL  ) {
 			LBS_EmitString(htc->code,"</a>");
 		}
-		if		(	(  type  !=  NULL  )
-				&&	(  !stricmp(type,"html")  ) ) {
-			LBS_EmitString(htc->code,"</div>");
+		if		(  fRaw  ) {
 		} else {
-			LBS_EmitString(htc->code,"</span>\n");
+			if		(	(  type  !=  NULL  )
+					&&	(  !stricmp(type,"html")  ) ) {
+				LBS_EmitString(htc->code,"</div>");
+			} else {
+				LBS_EmitString(htc->code,"</span>\n");
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -923,7 +934,9 @@ _A(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*state;
+	char	*state
+		,	*name
+		,	*target;
 	int		arg
 		,	pos;
 
@@ -955,6 +968,14 @@ ENTER_FUNC;
 	JavaScriptEvent(htc, tag, "onmousesetup");
 	JavaScriptEvent(htc, tag, "href");
 	Style(htc,tag);
+	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," name=");
+		EmitAttributeValue(htc,name,TRUE,TRUE,FALSE);
+	}
+	if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," target=");
+		EmitAttributeValue(htc,target,TRUE,TRUE,FALSE);
+	}
 	LBS_EmitString(htc->code,">");
 	pos = LBS_GetPos(htc->code);
 	LBS_SetPos(htc->code,arg);
@@ -1812,9 +1833,11 @@ ENTER_FUNC;
 	AddArg(tag,"onmouseover",TRUE);
 	AddArg(tag,"onmousesetup",TRUE);
 	AddArg(tag,"href",TRUE);
+	AddArg(tag,"name",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"style",TRUE);
+	AddArg(tag,"target",TRUE);
 
 	tag = NewTag("COUNT",_Count);
 	AddArg(tag,"var",TRUE);

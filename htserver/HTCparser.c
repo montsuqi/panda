@@ -71,7 +71,6 @@ HTC_Error(char *msg, ...)
     va_end(args);
 }
 
-#if	1
 static	void
 CopyTag(
 	HTCInfo	*htc)
@@ -113,6 +112,7 @@ ENTER_FUNC;
 	LBS_EmitChar(htc->code,HTC_Token);
 LEAVE_FUNC;
 }
+
 static	void
 CopyCommentTag(
 	HTCInfo	*htc)
@@ -138,21 +138,6 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code," -->");
 LEAVE_FUNC;
 }
-#else
-static	void
-CopyTag(
-	HTCInfo	*htc)
-{
-ENTER_FUNC;
-	LBS_EmitString(htc->code,"<");
-	LBS_EmitString(htc->code,HTC_ComSymbol);
-	while	(  GetChar  !=  '>'  ) {
-		LBS_EmitChar(htc->code,HTC_Token);
-	}
-	LBS_EmitChar(htc->code,HTC_Token);
-LEAVE_FUNC;
-}
-#endif
 
 static	void
 ClearTagValue(

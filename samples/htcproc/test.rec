@@ -1,4 +1,6 @@
 test	{
 	count	int;
 	disp	varchar(10);
+	tag		varchar(10);
+	val		int[10][2];
 };

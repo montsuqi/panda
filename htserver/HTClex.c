@@ -163,7 +163,8 @@ extern	int
 HTCLex(
 	Bool	fSymbol)
 {
-	int		c;
+	int		c
+		,	c2;
 	size_t	len;
 	int		token;
 	char	*s;
@@ -180,7 +181,20 @@ dbgmsg(">HTCLex");
 		len = 0;
 		while	(  ( c = _HTCGetChar() )  !=  '"'  ) {
 			if		(  c  ==  '\\'  ) {
-				c = _HTCGetChar();
+				switch	(c2 = _HTCGetChar()) {
+				  case	'"':
+					c = '"';
+					break;
+				  case	'n':
+					c = '\n';
+					break;
+				  case	't':
+					c = '\t';
+					break;
+				  default:
+					_HTCUnGetChar(c2);
+					break;
+				}
 			}
 			*s = c;
 			if		(  len  <  SIZE_SYMBOL  ) {

@@ -634,11 +634,13 @@ ENTER_FUNC;
 					EmitWithEscape(html,str);
 				}
 				break;
+#if	0
 			  case	OPC_REFSTR:
 				dbgmsg("OPC_REFSTR");
 				vval = Pop;
 				EmitWithEscape(html,vval.body.str);
 				break;
+#endif
 			  case	OPC_SPY:
 				dbgmsg("OPC_SPY");
 				switch	(TOP(1).type) {
@@ -751,6 +753,9 @@ ENTER_FUNC;
                     Push(vval);
                 }
                 break;
+#if	1
+			  case	OPC_REFSTR:
+#endif
               case OPC_EMITSTR:
 				dbgmsg("OPC_EMITSTR");
 				vval = Pop;

@@ -127,7 +127,7 @@ ENTER_FUNC;
 	html = NewLBS();
 	LBS_EmitStart(html);
 	ExecCode(html,htc);
-	PutHTML(html);
+	WriteLargeString(stdout,html,Codeset);
 LEAVE_FUNC;
 }
 
@@ -222,8 +222,7 @@ main(
 			file = fopen(dataname,"r");
 		}
 		if		(	(  file  !=  NULL  )
-				&&	(  fstat(fileno(file),&sb)  ==  0  )
-				&&	(  sb.st_size  >=  func->SizeValue(Conv,Value)  ) ) {
+				&&	(  fstat(fileno(file),&sb)  ==  0  ) ) {
 			if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fileno(file),0) )
 					   !=  NULL  ) {
 				InitializeValue(Value);

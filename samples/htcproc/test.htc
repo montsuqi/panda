@@ -12,7 +12,16 @@
 <entry name="foo" onchange="?moge" size="5">
 <count var="i" from=0 to="test.count">
 <a onclick="$test.disp">
-<fixed name="#i">
+<fixed name="#i"><fixed name="test.tag" type="raw">
+<fixed name="test.val[#i][0]">
+<fixed name="test.val[#i][1]">
+<fixed name="test.val[#i][0] & test.val[#i][1]">
+<fixed name="test.val[#i][0] + test.val[#i][1]">
+<fixed name="test.val[#i][0] - test.val[#i][1]">
+<fixed name="test.val[#i][0] * test.val[#i][1]">
+<fixed name="test.val[#i][0] / test.val[#i][1]">
+<fixed name="test.val[#i][0] + 1">
+<fixed name="test.val[#i][0] % 3">
 </a>
 </count>
 </BODY>

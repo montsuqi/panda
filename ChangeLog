@@ -4,6 +4,14 @@
 	glclient/protocol.c glclient/widgetOPS.c libs/enum.c:
 	  ENABLE_GNOME -> USE_GNOME
 
+2005-01-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/htc.c: 変数名だけでなく式が書けるようにした
+
+2005-01-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c (_Fixed): ニモニック変換をしないで出力するモード
+
 2005-01-20  Hiromi Yamazaki  <hiromi@netlab.jp>
 
 	* htserver/tags.c (_Calendar): デザイン変更のパラメータを増やした
