@@ -1,3 +1,7 @@
+2002-11-22  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/callbacks.c (send_event): Cancel timer before sending event.
+
 2002-09-30  Keisuke Nishida  <knishida@netlab.jp>
 
 	* aps/Shell.c: What until children exit.
