@@ -34,6 +34,7 @@ copies.
 
 extern	void	MessageDebug(char *file, int line, char *msg);
 extern	void	_MessagePrintf(char *file, int line, char *format, ...);
+extern	void	_MessageLevelPrintf(int level, char *file, int line, char *format, ...);
 extern	void	_Message(int level, char *file, int line, char *msg);
 extern	void	InitMessage(char *id,char *fn);
 

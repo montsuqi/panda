@@ -154,8 +154,7 @@ dbgmsg(">ParWindow");
 				if		(  g_hash_table_lookup(LD_Table,wname)  ==  NULL  ) {
 					g_hash_table_insert(LD_Table,strdup(wname),ld);
 				} else {
-					MessagePrintf("window is already registered.: %s", wname);
-					Error("same window name appear");
+					ErrorPrintf("window is already registered.: %s", wname);
 				}
 			} else {
 				Error("record name not found");
@@ -386,7 +385,7 @@ dbgmsg(">ParLD");
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("; missing");
+			ErrorPrintf("%s:%d: missing ;(semicolon).", InfoRoot.curr->fn, InfoRoot.curr->cLine);
 		}
 	}
     if (ret->name == NULL) {

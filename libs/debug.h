@@ -46,6 +46,11 @@ copies.
 #endif
 
 #ifdef	_INC_MESSAGE_H
+#define	ErrorPrintf(fmt, ...)                                               \
+do {                                                                        \
+    _MessageLevelPrintf(MESSAGE_ERROR,__FILE__,__LINE__,(fmt),__VA_ARGS__); \
+    exit(1);                                                                \
+} while (0)
 #define	Error(s)			_Message(MESSAGE_ERROR,__FILE__,__LINE__,(s));exit(1)
 #define	Warning(s)			_Message(MESSAGE_WARN,__FILE__,__LINE__,(s))
 #define	Message(l,s)		_Message((l),__FILE__,__LINE__,(s))

@@ -1,5 +1,10 @@
 2004-05-18  Sho Hashimoto  <sho-h@netlab.jp>
 
+	* libs/LDparser.c (ParWindow, ParLD): エラーメッセージの更新
+
+	* libs/debug.h (ErrorPrintf): New macro function, 書式指定エラーメッセージ出力とexit
+	* libs/message.c (_MessageLevelPrintf): New function, レベル付き書式指定メッセージ出力
+
 	* libs/LDparser.c (ParWindow): LD_TableにWindow名ではなくLD名を登
 	録していたバグを修正。
 
