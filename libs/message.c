@@ -52,6 +52,7 @@ copies.
 #ifndef	SIZE_BUFF
 #define	SIZE_BUFF		8192
 #endif
+#define SIZE_FORMAT		256
 
 #ifdef	USE_SYSLOG
 static	int syslog_facility =  LOG_LOCAL1;
@@ -78,11 +79,11 @@ _MessageLevelPrintf(
 	char	*format,
 	...)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_BUFF - SIZE_FORMAT];
 	va_list	va;
 
 	va_start(va,format);
-	vsprintf(buff,format,va);
+	vsnprintf(buff, sizeof(buff), format, va);
 	va_end(va);
 	_Message(level,file,line,buff);
 }
