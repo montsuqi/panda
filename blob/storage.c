@@ -92,11 +92,11 @@ ENTER_FUNC;
 	base = 0;
 	Lock(&space->obj);
 	while	(  leaf  ==  0  ) {
-		for	( i = 0 ; i < space->level ; i ++ ) {
-			for	( j = 0 ; j < space->level ; j ++ ) {
-				stack[j] = space->pos[j];
+		for	( i = 0 ; i < space->head->level ; i ++ ) {
+			for	( j = 0 ; j < space->head->level ; j ++ ) {
+				stack[j] = space->head->pos[j];
 			}
-			page = space->pos[i];
+			page = space->head->pos[i];
 			if		(  HAVE_FREECHILD(page)  ) {
 				base = 0;
 				for	( k = i ; k >= 0 ; k -- ) {
@@ -130,10 +130,11 @@ ENTER_FUNC;
 			node = NewPage(state);
 			(void)GetPage(state,node);
 			nodepage = UpdatePage(state,node);
-			nodepage[0] = space->pos[space->level-1] | PAGE_NODE;
-			space->pos[space->level] = node;
-			stack[space->level] = node;
-			space->level ++;
+			nodepage[0] = space->head->pos[space->head->level-1] | PAGE_NODE;
+			UpdateZeroPage(state);
+			space->head->pos[space->head->level] = node;
+			stack[space->head->level] = node;
+			space->head->level ++;
 
 		}
 	}
@@ -161,7 +162,7 @@ ENTER_FUNC;
 	if		(  use  ==  LEAF_ELEMENTS(state)  ) {
 		own = leaf;
 		use = 0;
-		for	( i = 0 ; i < space->level ; i ++ ) {
+		for	( i = 0 ; i < space->head->level ; i ++ ) {
 			page = stack[i];
 			(void)GetPage(state,page);
 			nodepage = UpdatePage(state,page);
@@ -177,8 +178,9 @@ ENTER_FUNC;
 			}
 			own = page;
 			if		(  fFree  )	break;
-			if		(  PAGE_NO(space->pos[i])  ==  page  ) {
-				USE_NODE(space->pos[i]);
+			if		(  PAGE_NO(space->head->pos[i])  ==  page  ) {
+				UpdateZeroPage(state);
+				USE_NODE(space->head->pos[i]);
 			}
 		}
 	}
@@ -205,10 +207,10 @@ ENTER_FUNC;
 	space = state->space;
 	base = obj / LEAF_ELEMENTS(state);
 	page = 0;
-	for	( i = space->level - 1 ; i >= 0 ; i -- ) {
+	for	( i = space->head->level - 1 ; i >= 0 ; i -- ) {
 		off = base / space->mul[i];
 		if		(  page  ==  0  ) {
-			page = space->pos[i];
+			page = space->head->pos[i];
 		}
 		if		(  path  !=  NULL  ) {
 			path[i] = page;
@@ -482,7 +484,7 @@ ENTER_FUNC;
 		FREE_OBJ(leafpage[off]);
 
 		own = page;
-		for	( i = 0 ; i < space->level ; i ++ ) {
+		for	( i = 0 ; i < space->head->level ; i ++ ) {
 			page = stack[i];
 			(void)GetPage(state,page);
 			nodepage = UpdatePage(state,page);
@@ -493,8 +495,8 @@ ENTER_FUNC;
 				}
 			}
 			own = page;
-			if			(  PAGE_NO(space->pos[i])  ==  page  ) {
-				FREE_NODE(space->pos[i]);
+			if			(  PAGE_NO(space->head->pos[i])  ==  page  ) {
+				FREE_NODE(space->head->pos[i]);
 			}
 			if		(  HAVE_FREECHILD(page)  )	break;
 		}
@@ -690,6 +692,7 @@ ENTER_FUNC;
 	UnLock(state->space);
 	state->oTable = NewLLHash();
 	state->pages = NewLLHash();
+	GetZeroPage(state);
 LEAVE_FUNC;
 	return	(TRUE);
 }

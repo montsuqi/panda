@@ -44,7 +44,7 @@ copies.
 #include	"net.h"
 #include	"blob.h"
 #include	"blob_v1.h"
-#include	"hash.h"
+#include	"table.h"
 #include	"message.h"
 #include	"debug.h"
 

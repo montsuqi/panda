@@ -243,13 +243,14 @@ main(
 			printf("buff = [%s]\n",buff);
 			WriteBLOB(state,obj[i],buff,strlen(buff)+1);
 		}
-		printf("** close(1) **\n");
 		fprintf(stderr,"** close(1) **\n");
 		for	( i = n * k ; i < n * ( k + 1 ) ; i ++ ) {
 			CloseBLOB(state,obj[i]);
 		}
+		printf("** close(1) **\n");
 	}
 	//AbortBLOB(state);
+	sleep(2);
 	CommitBLOB(state);
 	StartBLOB(state);
 	printf("** open(1) **\n");

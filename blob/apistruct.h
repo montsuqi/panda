@@ -23,8 +23,6 @@ copies.
 #define	_INC_APISTRUCT_H
 #include	<stdint.h>
 
-#define	MAX_PAGE_LEVEL		8
-
 #ifndef	pageno_t
 #define	pageno_t		uint64_t
 #endif
@@ -35,15 +33,14 @@ copies.
 #define	ObjectType		uint64_t
 #endif
 
+#include	"pagestruct.h"
+
 typedef	struct _OsekiSpace	{
 	char			*file;
 	FILE			*fp;
 	size_t			pagesize;
-	pageno_t		upages;
-	int				level;
-	pageno_t		pos[MAX_PAGE_LEVEL];
+	OsekiHeaderPage	*head;
 	pageno_t		mul[MAX_PAGE_LEVEL];
-	pageno_t		freedatapage;
 	pageno_t		*freedata;
 	GHashTable		*freepage;
 	GHashTable		*pages;

@@ -121,9 +121,14 @@ RecvnString(
 	size_t  lsize;
 ENTER_FUNC;
     lsize = RecvLength(fp);
-    size = ( size < lsize ? size : lsize );
-	Recv(fp,str,size);
-	str[size] = 0;
+	if		( size >= lsize ) {
+		size = lsize;
+		Recv(fp,str,size);
+		str[size] = 0;
+	} else {
+		Error("error size mismatch !");
+		CloseNet(fp);
+	}
 LEAVE_FUNC;
 }
 

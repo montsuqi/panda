@@ -22,10 +22,9 @@ copies.
 #ifndef	_INC_PAGESTRUCT_H
 #define	_INC_PAGESTRUCT_H
 
-#include	"apistruct.h"
-
 #define	OSEKI_FILE_HEADER	"OFH1"
 #define	OSEKI_MAGIC_SIZE	4
+#define	MAX_PAGE_LEVEL		8
 
 #ifndef	pageno_t
 #define	pageno_t		uint64_t
@@ -94,11 +93,11 @@ typedef	struct {
 typedef	struct {
 	char			magic[OSEKI_MAGIC_SIZE];
 	size_t			pagesize;
+	pageno_t		freedata;
 	pageno_t		pages;
 	int				level;
 	pageno_t		pos[MAX_PAGE_LEVEL];
-	pageno_t		freedata;
-}	OsekiFileHeader;
+}	OsekiHeaderPage;
 
 #define	ROUND_TO(p,s)	((((p)%(s)) == 0) ? (p) : (((p)/(s))+1)*(s))
 

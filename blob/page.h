@@ -34,6 +34,9 @@ extern	void		*GetPage(OsekiSession *state, pageno_t page);
 extern	void		*UpdatePage(OsekiSession *state, pageno_t page);
 extern	void	ReleasePage(OsekiSession *state, pageno_t page,Bool fCommit);
 extern	pageno_t	GetFreePage(OsekiSession *state);
+extern	void		GetZeroPage(OsekiSession *state);
+extern	void		UpdateZeroPage(OsekiSession *state);
+
 extern	void	ReturnPage(OsekiSession *state, pageno_t no);
 extern	void	CommitPages(OsekiSession *state);
 extern	void	AbortPages(OsekiSession *state);

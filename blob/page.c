@@ -85,9 +85,10 @@ NewPage(
 	pageno_t	page;
 
 ENTER_FUNC;
+	UpdateZeroPage(state);
+	page = state->space->head->pages;
+	state->space->head->pages ++;
 	Lock(state->space);
-	page = state->space->upages;
-	state->space->upages ++;
 	cb = New(CommonBuffer);
 	cb->page = page;
 	cb->old = NULL;
@@ -287,21 +288,42 @@ GetPage(
 
 ENTER_FUNC;
 	dbgprintf("get page = %lld\n",page);
-	if		(  page  <  state->space->upages  ) {
+	if		(  state->space->head  !=  NULL  ) {
+		dbgprintf("pages    = %lld\n",state->space->head->pages);
+	}
+	if		(	(  page  ==  0  )
+			||	(  page  <  state->space->head->pages  ) ) {
 		if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
 				   ==  NULL  ) {
+		dbgmsg("*");
 			ent = New(PageInfo);
 			ent->fUpdate = FALSE;
 			ent->page = page;
 			ent->body = GetCommonPage(state,page);
 			g_hash_table_insert(state->pages,&ent->page,ent);
 		}
+		dbgmsg("*");
 		ret = ent->body;
 	} else {
+		dbgmsg("*");
 		ret = NULL;
 	}
 LEAVE_FUNC;
 	return	(ret);
+}
+
+extern	void
+GetZeroPage(
+	OsekiSession	*state)
+{
+	state->space->head = GetPage(state,0LL);
+}
+
+extern	void
+UpdateZeroPage(
+	OsekiSession	*state)
+{
+	state->space->head = UpdatePage(state,0LL);
 }
 
 extern	void	*
@@ -359,13 +381,13 @@ GetFreePage(
 
 ENTER_FUNC;
 	space = state->space;
+	space->freedata = GetPage(state,space->head->freedata);
 	no = 0;
 	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
 		if		(  space->freedata[i]  !=  0  ) {
 			no = space->freedata[i];
+			space->freedata = UpdatePage(state,space->head->freedata);
 			space->freedata[i] = 0;
-			WritePage(state->space,state->space->freedata,
-					  state->space->freedatapage);
 			break;
 		}
 	}
@@ -386,13 +408,14 @@ ReturnPage(
 
 ENTER_FUNC;
 	space = state->space;
+	space->freedata = GetPage(state,space->head->freedata);
 	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
 		if		(  space->freedata[i]  ==  0  ) {
+			space->freedata = UpdatePage(state,space->head->freedata);
 			space->freedata[i] = no;
 			break;
 		}
 	}
-	WritePage(state->space,state->space->freedata,state->space->freedatapage);
 LEAVE_FUNC;
 }
 
@@ -446,7 +469,7 @@ InitOseki(
 	char	name[SIZE_LONGNAME+1];
 	char	buff[SIZE_BUFF];
 	OsekiSpace		*space;
-	OsekiFileHeader	head;
+	OsekiHeaderPage	head;
 	int				i;
 	pageno_t		mul;
 
@@ -488,13 +511,7 @@ ENTER_FUNC;
 			space->mul[i] = mul;
 			mul *= head.pagesize / sizeof(pageno_t);
 		}
-		for	( i = 0 ; i < MAX_PAGE_LEVEL ; i ++ ) {
-			space->pos[i] = head.pos[i];
-		}
-		space->upages = head.pages;
-		space->level = head.level;
-		space->freedata = ReadPage(space,head.freedata);
-		space->freedatapage = head.freedata;
+		space->freedata = NULL;
 		space->freepage = NewLLHash();
 		space->pages = NewLLHash();
 		space->trans = NewIntTree();
@@ -514,25 +531,11 @@ FinishOseki(
 	OsekiSpace	*space)
 {
 	char	name[SIZE_LONGNAME+1];
-	OsekiFileHeader	head;
-	int		i;
 
 ENTER_FUNC;
-	WritePage(space,space->freedata,space->freedatapage);
 	snprintf(name,SIZE_LONGNAME+1,"%s.pid",space->file);
 	unlink(name);
-	memcpy(head.magic,OSEKI_FILE_HEADER,OSEKI_MAGIC_SIZE);
-	head.freedata = space->freedatapage;
-	head.pagesize = space->pagesize;
-	head.pages = space->upages;
-	head.level = space->level;
-	for	( i = 0 ; i < MAX_PAGE_LEVEL ; i ++ ) {
-		head.pos[i] = space->pos[i];
-	}
-	rewind(space->fp);
-	fwrite(&head,sizeof(head),1,space->fp);
 	fclose(space->fp);
-
 	xfree(space->file);
 	DestroyLock(space);
 	xfree(space);

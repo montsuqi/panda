@@ -73,7 +73,7 @@ main(
 	pageno_t	*page;
 	char	name[SIZE_LONGNAME+1];
 	int		i;
-	OsekiFileHeader	head;
+	OsekiHeaderPage		head;
 	OsekiObjectEntry	*ent;
 
 	SetDefault();
@@ -115,7 +115,7 @@ main(
 	head.pages = 4;
 
 	memclear(page,PageSize);
-	memcpy(page,&head,sizeof(OsekiFileHeader));
+	memcpy(page,&head,sizeof(OsekiHeaderPage));
 	fwrite(page,PageSize,1,fp);
 
 	/*	free pages		(1)	*/

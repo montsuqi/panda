@@ -1,3 +1,11 @@
+2004-09-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/storage.c: トランザクションリカバリ
+
+2004-09-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/page.c: ロールバック
+
 2004-09-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* blob/blob_v2.c: BLOB全機能実装
