@@ -187,7 +187,7 @@ ENTER_FUNC;
 			TransactionEnd(NULL);
 			PutWFC(fpWFC,node);
 		} else {
-			MessagePrintf("window [%s] not found.\n",
+			Message("window [%s] not found.\n",
 						  ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL));
 			break;
 		}

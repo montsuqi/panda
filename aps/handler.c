@@ -119,7 +119,7 @@ _InitiateHandler(
 	if		(  ( handler->fInit & INIT_LOAD )  ==  0  ) {
 		handler->fInit |= INIT_LOAD;
 		if		(  ( klass = EnterHandlerClass((char *)handler->klass) )  ==  NULL  ) {
-			MessagePrintf("[%s] is invalid handler class.",(char *)handler->klass);
+			Message("[%s] is invalid handler class.",(char *)handler->klass);
 		} else {
 			handler->klass = klass;
 		}

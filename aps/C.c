@@ -144,7 +144,7 @@ ENTER_FUNC;
 			rc = TRUE;
 		}
 	} else {
-		MessagePrintf("%s is not found.",module);
+		Message("%s is not found.",module);
 		rc = FALSE;
 	}
 LEAVE_FUNC;
@@ -199,7 +199,7 @@ ENTER_FUNC;
 	if		(  ( apl = LoadModule(ApplicationTable,handler->loadpath,name) )  !=  NULL  ) {
 		rc = apl(param);
 	} else {
-		MessagePrintf("%s is not found.",name);
+		Message("%s is not found.",name);
 		rc = -1;
 	}
 LEAVE_FUNC;

@@ -157,7 +157,7 @@ ENTER_FUNC;
 	strcpy(addr.sun_path,name);
 	alen = sizeof(addr.sun_family) + strlen(addr.sun_path);
 	if		(  bind(sock,(struct sockaddr *)&addr,alen)  <  0  )	{
-		MessagePrintf("%s: %s", strerror(errno), name);
+		Message("%s: %s", strerror(errno), name);
 		close(sock);
 		Error("UNIX Domain Bind");
 	} else {

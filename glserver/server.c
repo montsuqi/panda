@@ -66,7 +66,7 @@ static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	MessagePrintf("[%s@%s] session end",scr->user,TermToHost(scr->term));
+	Message("[%s@%s] session end",scr->user,TermToHost(scr->term));
 }
 
 static	Bool
@@ -428,7 +428,7 @@ Connect(
 	GL_RecvString(fpComm,scr->user,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm,pass,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm,scr->cmd,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-	MessagePrintf("[%s@%s] session start",scr->user,TermToHost(scr->term));
+	Message("[%s@%s] session start",scr->user,TermToHost(scr->term));
 
 	if		(  TermFeture  ==  FETURE_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_E_VERSION,fFetureNetwork);

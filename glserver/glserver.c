@@ -122,6 +122,8 @@ main(
 
 	ParseURL(&Auth,AuthURL,"file");
 	InitSystem(argc,argv);
+	Message("glserver start");
 	ExecuteServer();
+	Message("glserver end");
 	return	(0);
 }

@@ -373,7 +373,7 @@ ConnectTerm(
 
 ENTER_FUNC;
 	if		(  ( fhTerm = accept(_fhTerm,0,0) )  <  0  )	{
-		MessagePrintf("_fhTerm = %d INET Domain Accept",_fhTerm);
+		Message("_fhTerm = %d INET Domain Accept",_fhTerm);
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))TermThread,(void *)fhTerm);

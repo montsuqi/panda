@@ -129,7 +129,7 @@ ConnectControl(
 
 ENTER_FUNC;
 	if		(  ( fhControl = accept(_fhControl,0,0) )  <  0  )	{
-		MessagePrintf("_fhControl = %d INET Domain Accept",_fhControl);
+		Message("_fhControl = %d INET Domain Accept",_fhControl);
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))ControlThread,(void *)fhControl);

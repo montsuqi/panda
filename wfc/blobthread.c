@@ -118,7 +118,7 @@ ConnectBlob(
 
 ENTER_FUNC;
 	if		(  ( fhBlob = accept(_fhBlob,0,0) )  <  0  )	{
-		MessagePrintf("_fhBlob = %d INET Domain Accept",_fhBlob);
+		Message("_fhBlob = %d INET Domain Accept",_fhBlob);
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))BlobThread,(void *)fhBlob);
