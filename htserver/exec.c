@@ -331,7 +331,7 @@ EncodeURI(char *q, byte *p)
 
 	qq = q;
 	while (*p != 0) {
-        if (*p & 0x80 || isspace(*p) || iscntrl(*p)) {
+        if (*p <= 0x20 || *p >= 0x7f) {
             *q++ = '%';
             q += sprintf(q, "%02X", ((int) *p) & 0xFF);
         }
@@ -366,7 +366,7 @@ EncodeLengthURI(byte *p)
 
     ret = 0;
 	while (*p != 0) {
-        if (*p & 0x80 || isspace(*p) || iscntrl(*p)) {
+        if (*p <= 0x20 || *p >= 0x7f) {
             ret += 3;
         }
         else {

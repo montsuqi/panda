@@ -95,6 +95,56 @@ EncodeString(
 	}
 }
 
+static void
+EscapeBytea(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
+{
+	unsigned char *vp;
+	unsigned char *rp;
+	unsigned char *result;
+	size_t i;
+	size_t len;
+    size_t old_size;
+
+	len = 0;
+	for (i = binlen, vp = bintext; i > 0; i--, vp++) {
+		if (*vp < 0x20 || *vp > 0x7e) {
+			len += 5;
+        }
+		else if (*vp == '\'') {
+			len += 2;
+        }
+		else if (*vp == '\\') {
+			len += 4;
+        }
+		else {
+			len++;
+        }
+	}
+
+    old_size = LBS_Size(lbs);
+    LBS_ReserveSize(lbs, old_size + len, TRUE);
+    rp = LBS_Body(lbs) + old_size;
+
+	for (i = binlen, vp = bintext; i > 0; i--, vp++) {
+		if (*vp < 0x20 || *vp > 0x7e) {
+			rp += sprintf(rp, "\\\\%03o", *vp);
+		}
+		else if (*vp == '\'') {
+			*rp++ = '\\';
+			*rp++ = '\'';
+		}
+		else if (*vp == '\\') {
+			*rp++ = '\\';
+			*rp++ = '\\';
+			*rp++ = '\\';
+			*rp++ = '\\';
+		}
+		else {
+			*rp++ = *vp;
+        }
+	}
+}
+
 static	void
 ValueToSQL(
 	DBG_Struct	*dbg,
@@ -129,7 +179,6 @@ ValueToSQL(
 	  case	GL_TYPE_BINARY:
         {
             unsigned char *bytea;
-            size_t old_size, bytea_len;
 
             if (fInArray) {
                 del = '"';
@@ -138,12 +187,7 @@ ValueToSQL(
                 del = '\'';
             }
             LBS_EmitChar(lbs,del);
-            bytea = PQescapeBytea(ValueByte(val), ValueByteLength(val),
-                                  &bytea_len);
-            old_size = LBS_Size(lbs);
-            LBS_ReserveSize(lbs, old_size + bytea_len - 1, TRUE);
-            LBS_Seek(lbs, old_size, SEEK_SET);
-            LBS_EmitString(lbs, bytea);
+            EscapeBytea(lbs, ValueByte(val), ValueByteLength(val));
             LBS_EmitChar(lbs,del);
         }
         break;
