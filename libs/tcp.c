@@ -59,7 +59,6 @@ BindSocket(
 	int		s
 	,		ld;
 	int		rc;
-	int		one;
 	struct	addrinfo	*info
 			,			hints;
 	struct	sockaddr_in	*name;
@@ -92,7 +91,7 @@ dbgmsg(">BindSocket");
 	if		( ld  <  0  ) {
 		Error("error bind");
 	} else {
-		setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one));
+		setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
 	}
 dbgmsg("<BindSocket");
 	return	(ld);
@@ -100,14 +99,13 @@ dbgmsg("<BindSocket");
 #else
 {	int		ld;
 	struct	sockaddr_in	name;
-	int		one;
 	int		iport;
 
 	if		(  ( ld = socket(AF_INET,type,0) )  <  0  )	{
 		Error("error socket");
 	}
 	iport = atoi(port);
-	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, (char *) &one, sizeof(one));
+	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
 	name.sin_family = AF_INET;
 	name.sin_addr.s_addr = INADDR_ANY;
 	name.sin_port = htons(iport);
