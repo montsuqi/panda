@@ -146,7 +146,10 @@ dbgmsg(">ExecuteDB_Server");
 				conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
 			}
 			strcpy(ctrl.func,func);
-			ExecDB_Process(&ctrl,rec,value);
+			if		(  ( ctrl.rc = ValueInteger(GetItemLongName(recDBCTRL->value,"rc")) )
+						 >=  0  ) {
+				ExecDB_Process(&ctrl,rec,value);
+			}
 		} else {
 			ctrl.rc = 0;
 		}

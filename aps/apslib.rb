@@ -1,7 +1,6 @@
 # PANDA -- a simple transaction monitor
 # 
-# Copyright (C) 1998-1999 Ogochan.
-#               2000-2003 Ogochan & JMA (Japan Medical Association).
+# Copyright (C) 1998-2003 Ogochan.
 # 
 # This module is part of PANDA.
 # 
@@ -22,6 +21,8 @@
 #
 #	Ruby interface for Exec handler
 #
+
+DEBUG=false;
 
 class PandaCore
   def decode(string)
@@ -77,11 +78,11 @@ class PandaCore
 	}
   end
   def []=(name,value)
-#	if @values[name]
+	if @values[name]
 	  @values[name] = value;
-#	else
-#	  $stderr.printf("[%s] undefined APS variable\n",name);
-#	end
+	else
+	  $stderr.printf("[%s] undefined APS variable\n",name);
+	end
   end
   def [](name)
 	if @values[name]
@@ -101,6 +102,18 @@ class PandaCore
 end
 
 class PandaDB < PandaCore
+  def dbComm(str)
+	if DEBUG
+	  $stderr.printf("<<%s\n",str);
+	end
+	@fpDBW.printf("%s\n",str);
+	@fpDBW.flush;
+	line = @fpDBR.gets.chop;
+	if DEBUG
+	  $stderr.printf(">>%s\n",line);
+	end
+	line;
+  end
   def initialize
 	@fpDBR = IO.new(3,"r");
 	@fpDBW = IO.new(4,"w");
@@ -108,11 +121,7 @@ class PandaDB < PandaCore
   def execFunction(func)
 	str  = "dbctrl.rc=0&";
 	str += "dbctrl.func=" + func;
-	@fpDBW.printf("%s\n",str);
-$stderr.printf("<<%s\n",str);
-	@fpDBW.flush;
-	@line = @fpDBR.gets.chomp;
-$stderr.printf(">>%s\n",@line);
+	@line = dbComm(str);
 	unPack;
   end
   def fpDBR
@@ -130,12 +139,17 @@ class PandaTable < PandaDB
 	@values = Hash.new;
 	str  = "dbctrl.rc=0&";
 	str += "dbctrl.rname=" + @name;
-	@db.fpDBW.printf("%s\n",str);
-#$stderr.printf("<<%s\n",str);
-	@db.fpDBW.flush;
-	@line = @db.fpDBR.gets.chop;
-#$stderr.printf(">>%s\n",@line);
-#	unPack;
+	@line = @db.dbComm(str);
+	unPack;
+  end
+  def getSchema(db,pname = "", func = "")
+	@values = Hash.new;
+	str  = "dbctrl.rc=%2D1&";
+	str += "dbctrl.func=" + func + "&";
+	str += "dbctrl.rname=" + @name + "&";
+	str += "dbctrl.pname=" + pname;
+	@line = @db.dbComm(str);
+	unPack;
   end
   def execFunction(func, pname = "")
 	str  = "dbctrl.rc=0&";
@@ -143,12 +157,7 @@ class PandaTable < PandaDB
 	str += "dbctrl.rname=" + @name + "&";
 	str += "dbctrl.pname=" + pname + "&";
 	str += pack;
-	@db.fpDBW.printf("%s\n",str);
-$stderr.printf(">>%s\n",str);
-	@db.fpDBW.flush;
-	line = @db.fpDBR.gets;
-$stderr.printf("<<%s",line);$stderr.flush;
-	@line = line.chop;
+	@line = @db.dbComm(str);
 	unPack;
   end
 end

@@ -81,6 +81,7 @@ dbgmsg(">MCPSUB");
 	} else {
 		value = NULL;
 		MakeCTRL(&ctrl,mcp);
+		ctrl.rc = 0;
 		if		(  !strcmp(mcp_func,"DBOPEN")  ) {
 			CheckArg(mcp_func,&ctrl);
 			rec = NULL;
