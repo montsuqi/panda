@@ -34,7 +34,7 @@ my-distcheck: dist
 	mkdir $(distdir)/=inst
 	dc_install_base=`cd $(distdir)/=inst && pwd`; \
 	cd $(distdir)/=build \
-	  && ../configure --with-included-gettext --srcdir=.. --prefix="$$dc_install_base" \
+	  && ../configure --srcdir=.. --prefix="$$dc_install_base" \
 	    $(DISTCHECK_CONFIGURE_FLAGS) \
 	  && $(MAKE) $(AM_MAKEFLAGS) \
 	  && $(MAKE) $(AM_MAKEFLAGS) dvi \
