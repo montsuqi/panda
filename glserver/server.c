@@ -193,7 +193,7 @@ dbgmsg(">CheckScreen");
 			}
 			sprintf(fname,"%s/%s.glade",p,wname);
 			if		(  stat(fname,&stbuf)  ==  0  ) {
-				fDone = SendFile(fpComm,fname,wname);
+				if		(  ( fDone = SendFile(fpComm,fname,wname) )  )	break;
 			}
 			p = q + 1;
 		}	while	(  !fExit  );

@@ -1,3 +1,8 @@
+2004-02-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/server.c (CheckScreen): スクリーンチェックの間違いを直
+	した
+
 2004-02-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* fdd/fdd.c: コマンドの実行論理の変更
