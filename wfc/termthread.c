@@ -96,8 +96,6 @@ dbgmsg(">FinishSession");
 		strcpy(name,data->name);
 		g_hash_table_remove(TermHash,data->name);
 		xfree(data->name);
-	} else {
-		strcpy(name,"");
 	}
 	FreeLBS(data->mcpdata);
 	FreeLBS(data->spadata);
