@@ -345,6 +345,8 @@ main(
 		name = "";
 	}
 	InitSystem(name);
+	Message("dbredirector start");
 	ExecuteServer();
+	Message("dbredirector end");
 	return	(0);
 }
