@@ -73,7 +73,7 @@ fi
 
 if test "$gnome" = yes; then
 	have_gnome=true
-	AC_DEFINE(USE_GNOME)
+	AC_DEFINE(USE_GNOME,,"")
 else
 	have_gnome=false
 fi
@@ -91,7 +91,7 @@ if test "$client" = yes; then
 	GTK_PANDA_LIBS=`$GTK_PANDA_CONFIG --libs 2>/dev/null`
 	AC_SUBST(GTK_PANDA_LIBS)
 	AC_SUBST(GTK_PANDA_CFLAGS)
-	AC_DEFINE(USE_PANDA,1,[])
+	AC_DEFINE(USE_PANDA,1,"")
 
 	AC_PATH_PROG(GLADE_PANDA_CONFIG,libglade-panda-config,no)
 	if test x$GLADE_PANDA_CONFIG = xno; then
@@ -154,7 +154,7 @@ else
       postgresdir="" 
   fi 
   POSTGRES_LIBS="-L${postgresdir}/lib -lpq" 
-  AC_DEFINE(HAVE_POSTGRES,1,[]) 
+  AC_DEFINE(HAVE_POSTGRES,1,"") 
 fi 
  
 #AM_CONDITIONAL(POSTGRES, test x$postgresdir != x) 
@@ -169,7 +169,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(shell,
 	[  --with-shell	Use shell driver],
 	if test x$withval = xyes; then
-		AC_DEFINE(USE_SHELL,1,[])
+		AC_DEFINE(USE_SHELL,1,"")
 	fi
 )		
 
@@ -201,7 +201,7 @@ AC_ARG_WITH(dotcobol,
 	  AC_MSG_WARN(dotCOBOL not used) 
 	else 
 	  DOTCOBOL_COMMAND="${dotcoboldir}/bin/fcu"
-	  AC_DEFINE(HAVE_DOTCOBOL)
+	  AC_DEFINE(HAVE_DOTCOBOL,,"")
 	fi 
  
 #	AM_CONDITIONAL(DOTCOBOL, test x$dotcoboldir != x) 
@@ -221,7 +221,7 @@ AC_ARG_WITH(opencobol,
 	  COB_CFLAGS="`cob-config --cflags`"
 	  COB_LIBS="`cob-config --libs`"
 	  AC_MSG_RESULT(yes)
-	  AC_DEFINE(HAVE_OPENCOBOL,1,[])
+	  AC_DEFINE(HAVE_OPENCOBOL,1,"")
 	else
 	  AC_MSG_RESULT(no)
 	fi
@@ -259,7 +259,7 @@ AC_ARG_WITH(ruby,
       fi
       archdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]]'`
       if test -f $archdir/ruby.h; then
-        AC_DEFINE(HAVE_RUBY,1,[])
+        AC_DEFINE(HAVE_RUBY,1,"")
         RUBY_CFLAGS="-I${archdir}"
         RUBY_SHARED=`$RUBY -r rbconfig -e 'print Config::CONFIG[["ENABLE_SHARED"]]'`
         if test "$RUBY_SHARED" = "yes"; then
@@ -294,7 +294,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(pty,
 	[  --with-pty	Use pty message],
 	if test x$withval = xyes; then
-		AC_DEFINE(USE_PTY,1,[])
+		AC_DEFINE(USE_PTY,1,"")
 	fi
 )		
 
@@ -305,7 +305,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(ipv6,
 	[  --with-ipv6	Use IP v6],
 	if test x$withval = xyes; then
-		AC_DEFINE(USE_IPv6,1,[])
+		AC_DEFINE(USE_IPv6,1,"")
 	fi
 )		
 
@@ -336,7 +336,7 @@ AC_ARG_WITH(ssl,
 			   	AC_MSG_RESULT(found OpenSSL include in $d) 
 				SSL_CFLAGS="-I${ssldir}/include"
 				SSL_LIBS="-L${ssldir}/lib -lssl" 
-				AC_DEFINE(USE_SSL,1,[])
+				AC_DEFINE(USE_SSL,1,"")
 			else 
 				AC_MSG_WARN(SSL not used) 
 			fi
@@ -354,7 +354,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(oki,
 	[  --with-oki	DOROBUNE WO OKI DE SHIZUMERU],
 	if test x$withval = xyes; then
-		AC_DEFINE(OKI,1,[])
+		AC_DEFINE(OKI,1,"")
 	fi
 )		
 
@@ -365,7 +365,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(msgd,
 	[  --with-msgd	use msgd],
 	if test x$withval = xyes; then
-		AC_DEFINE(USE_MSGD,1,[])
+		AC_DEFINE(USE_MSGD,1,"")
 	fi
 )		
 
