@@ -84,36 +84,132 @@ EncodeString(
 	char	del,
 	char	*s)
 {
-	while	(  *s  !=  0  ) {
-		if		(  *s  ==  del  ) {
-            LBS_EmitChar(lbs, del);
-            LBS_EmitChar(lbs, del);
-		} else {
-            LBS_EmitChar(lbs, *s);
-		}
-		s ++;
+    size_t old_size, src_len, buf_len, len;
+    
+    src_len = strlen(s);
+    buf_len = src_len * 2 + 1;
+    old_size = LBS_Size(lbs);
+    LBS_ReserveSize(lbs, old_size + buf_len, TRUE);
+    LBS_SetPos(lbs, old_size);
+    len = PQescapeString(LBS_Ptr(lbs), s, src_len);
+    LBS_Seek(lbs, len, SEEK_CUR);
+}
+
+static	void
+EscapeString(LargeByteString *lbs, char *s)
+{
+	unsigned char *sp;
+	unsigned char *dp;
+	size_t i;
+	size_t len;
+    size_t old_size;
+
+	len = 0;
+	for (sp = s; *sp != '\0'; sp++) {
+		switch(*sp) {
+          case '\\':
+          case '\'':
+            len += 2;
+            break;
+          default:
+			len++;
+            break;
+        }
+	}
+
+    old_size = LBS_Size(lbs);
+    LBS_ReserveSize(lbs, old_size + len, TRUE);
+    dp = LBS_Body(lbs) + old_size;
+
+	for (sp = s; *sp != '\0'; sp++) {
+		switch(*sp) {
+          case '\\':
+            *dp++ = '\\';
+            *dp++ = '\\';
+            break;
+          case '\'':
+            *dp++ = '\'';
+            *dp++ = '\'';
+            break;
+          default:
+			*dp++ = *sp;
+            break;
+        }
+	}
+}
+
+static	void
+EscapeStringInArray(LargeByteString *lbs, char *s)
+{
+	unsigned char *sp;
+	unsigned char *dp;
+	size_t i;
+	size_t len;
+    size_t old_size;
+
+	len = 0;
+	for (sp = s; *sp != '\0'; sp++) {
+		switch(*sp) {
+          case '\\':
+            len += 4;
+            break;
+          case '"':
+            len += 3;
+            break;
+          case '\'':
+            len += 2;
+            break;
+          default:
+			len++;
+            break;
+        }
+	}
+
+    old_size = LBS_Size(lbs);
+    LBS_ReserveSize(lbs, old_size + len, TRUE);
+    dp = LBS_Body(lbs) + old_size;
+
+	for (sp = s; *sp != '\0'; sp++) {
+		switch(*sp) {
+          case '\\':
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            break;
+          case '"':
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '"';
+            break;
+          case '\'':
+            *dp++ = '\'';
+            *dp++ = '\'';
+            break;
+          default:
+			*dp++ = *sp;
+            break;
+        }
 	}
 }
 
 static void
 EscapeBytea(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
 {
-	unsigned char *vp;
-	unsigned char *rp;
-	unsigned char *result;
-	size_t i;
+	unsigned char *sp, *spend = bintext + binlen;
+	unsigned char *dp;
 	size_t len;
     size_t old_size;
 
 	len = 0;
-	for (i = binlen, vp = bintext; i > 0; i--, vp++) {
-		if (*vp < 0x20 || *vp > 0x7e) {
+	for (sp = bintext; sp < spend; sp++) {
+		if (*sp < 0x20 || *sp > 0x7e) {
 			len += 5;
         }
-		else if (*vp == '\'') {
+		else if (*sp == '\'') {
 			len += 2;
         }
-		else if (*vp == '\\') {
+		else if (*sp == '\\') {
 			len += 4;
         }
 		else {
@@ -123,24 +219,84 @@ EscapeBytea(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
 
     old_size = LBS_Size(lbs);
     LBS_ReserveSize(lbs, old_size + len, TRUE);
-    rp = LBS_Body(lbs) + old_size;
+    dp = LBS_Body(lbs) + old_size;
 
-	for (i = binlen, vp = bintext; i > 0; i--, vp++) {
-		if (*vp < 0x20 || *vp > 0x7e) {
-			rp += sprintf(rp, "\\\\%03o", *vp);
+	for (sp = bintext; sp < spend; sp++) {
+		if (*sp < 0x20 || *sp > 0x7e) {
+			dp += sprintf(dp, "\\\\%03o", *sp);
 		}
-		else if (*vp == '\'') {
-			*rp++ = '\\';
-			*rp++ = '\'';
+		else if (*sp == '\'') {
+			*dp++ = '\\';
+			*dp++ = '\'';
 		}
-		else if (*vp == '\\') {
-			*rp++ = '\\';
-			*rp++ = '\\';
-			*rp++ = '\\';
-			*rp++ = '\\';
+		else if (*sp == '\\') {
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '\\';
 		}
 		else {
-			*rp++ = *vp;
+			*dp++ = *sp;
+        }
+	}
+}
+
+static void
+EscapeByteaInArray(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
+{
+	unsigned char *sp, *spend = bintext + binlen;
+	unsigned char *dp;
+	size_t len;
+    size_t old_size;
+
+	len = 0;
+	for (sp = bintext; sp < spend; sp++) {
+		if (*sp < 0x20 || *sp > 0x7e) {
+			len += 7;
+        }
+		else if (*sp == '\'') {
+			len += 2;
+        }
+		else if (*sp == '"') {
+			len += 3;
+        }
+		else if (*sp == '\\') {
+			len += 8;
+        }
+		else {
+			len++;
+        }
+	}
+
+    old_size = LBS_Size(lbs);
+    LBS_ReserveSize(lbs, old_size + len, TRUE);
+    dp = LBS_Body(lbs) + old_size;
+
+	for (sp = bintext; sp < spend; sp++) {
+		if (*sp < 0x20 || *sp > 0x7e) {
+			dp += sprintf(dp, "\\\\\\\\%03o", *sp);
+		}
+		else if (*sp == '\'') {
+			*dp++ = '\\';
+			*dp++ = '\'';
+		}
+		else if (*sp == '"') {
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '"';
+		}
+		else if (*sp == '\\') {
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '\\';
+			*dp++ = '\\';
+		}
+		else {
+			*dp++ = *sp;
         }
 	}
 }
@@ -168,28 +324,25 @@ ValueToSQL(
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_TEXT:
 		if		(  fInArray  ) {
-			del = '"';
+            LBS_EmitChar(lbs, '"');
+            EscapeStringInArray(lbs, ValueToString(val,dbg->coding));
+            LBS_EmitChar(lbs, '"');
 		} else {
-			del = '\'';
+            LBS_EmitChar(lbs, '\'');
+            EscapeString(lbs, ValueToString(val,dbg->coding));
+            LBS_EmitChar(lbs, '\'');
 		}
-        LBS_EmitChar(lbs,del);
-		EncodeString(lbs,del,ValueToString(val,dbg->coding));
-        LBS_EmitChar(lbs,del);
 		break;
 	  case	GL_TYPE_BINARY:
-        {
-            unsigned char *bytea;
-
-            if (fInArray) {
-                del = '"';
-            }
-            else {
-                del = '\'';
-            }
-            LBS_EmitChar(lbs,del);
+		if		(  fInArray  ) {
+            LBS_EmitChar(lbs, '"');
+            EscapeByteaInArray(lbs, ValueByte(val), ValueByteLength(val));
+            LBS_EmitChar(lbs, '"');
+		} else {
+            LBS_EmitChar(lbs, '\'');
             EscapeBytea(lbs, ValueByte(val), ValueByteLength(val));
-            LBS_EmitChar(lbs,del);
-        }
+            LBS_EmitChar(lbs, '\'');
+		}
         break;
 	  case	GL_TYPE_DBCODE:
 		LBS_EmitString(lbs,ValueToString(val,dbg->coding));
