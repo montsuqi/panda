@@ -219,7 +219,7 @@ ENTER_FUNC;
 		}
 	}
 
-	snprintf(name,SIZE_LONGNAME+1,"%s/blob.env",space);
+	snprintf(name,SIZE_LONGNAME+1,"%s/pnb",space);
 	if		(  ( fp = Fopen(name,"r") )  ==  NULL  ) {
 		if		(  ( fp = Fopen(name,"w") )  !=  NULL  ) {
 			memcpy(head.magic,BLOB_V1_HEADER,SIZE_BLOB_HEADER);
@@ -233,7 +233,6 @@ ENTER_FUNC;
 	} else {
 		fclose(fp);
 	}
-
 	if		(  ( fp = fopen(name,"r+") )  !=  NULL  ) {
 		fread(&head,sizeof(head),1,fp);
 		if		(  memcmp(head.magic,BLOB_V1_HEADER,SIZE_BLOB_HEADER)  !=  0  ) {
