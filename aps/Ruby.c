@@ -737,6 +737,35 @@ procnode_windows(VALUE self)
     return data->windows;
 }
 
+static VALUE
+procnode_put_window(int argc, VALUE *argv, VALUE self)
+{
+    procnode_data *data;
+    VALUE win, type;
+    ValueStruct *dc, *window, *widget, *puttype, *status, *rc;
+
+    Data_Get_Struct(self, procnode_data, data);
+    rb_scan_args(argc, argv, "11", &win, &type);
+
+    dc = GetRecordItem(data->node->mcprec->value, "dc");
+    window = GetRecordItem(dc, "window");
+    SetValueString(window, StringValuePtr(win), codeset);
+    widget = GetRecordItem(dc, "widget");
+    SetValueString(widget, "", codeset);
+    puttype = GetRecordItem(dc, "puttype");
+    if (NIL_P(type)) {
+        SetValueString(puttype, "CURRENT", codeset);
+    }
+    else {
+        SetValueString(puttype, StringValuePtr(type), codeset);
+    }
+    status = GetRecordItem(dc, "status");
+    SetValueString(status, "PUTG", codeset);
+    rc = GetRecordItem(data->node->mcprec->value, "rc");
+    SetValueInteger(rc, 0);
+    return Qnil;
+}
+
 typedef struct _path_data {
     PathStruct *path;
     VALUE args;
@@ -1179,6 +1208,7 @@ init()
     rb_define_method(cProcessNode, "link", procnode_link, 0);
     rb_define_method(cProcessNode, "spa", procnode_spa, 0);
     rb_define_method(cProcessNode, "windows", procnode_windows, 0);
+    rb_define_method(cProcessNode, "put_window", procnode_put_window, -1);
     cPath = rb_define_class_under(mPanda, "Path", rb_cObject);
     rb_define_method(cPath, "name", path_name, 0);
     rb_define_method(cPath, "args", path_args, 0);
@@ -1292,24 +1322,39 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
 {
 	VALUE app_class;
 	VALUE app;
-	ValueStruct *module_longname;
-	char *module;
+	ValueStruct *dc_module_value, *dc_status_value;
+    char *dc_module, *dc_status;
 	Bool	rc;
     int state;
+    ID handler_method;
 
     codeset = ConvCodeset(handler->conv);
-    module_longname = GetItemLongName(node->mcprec->value, "dc.module");
-    module = ValueStringPointer(module_longname);
-    app_class = load_application(handler->loadpath, module);
+    dc_module_value = GetItemLongName(node->mcprec->value, "dc.module");
+    dc_module = ValueStringPointer(dc_module_value);
+    app_class = load_application(handler->loadpath, dc_module);
     if (NIL_P(app_class)) {
-		fprintf(stderr, "%s is not found\n", module);
+		fprintf(stderr, "%s is not found\n", dc_module);
 		return FALSE;
     }
-
+    dc_status_value = GetItemLongName(node->mcprec->value, "dc.status");
+    dc_status = ValueStringPointer(dc_status_value);
+    if (strcmp(dc_status, "LINK") == 0) {
+        handler_method = rb_intern("start");
+    }
+    else if (strcmp(dc_status, "PUTG") == 0) {
+        VALUE s;
+        ValueStruct *dc_event_value;
+        char *dc_event;
+        dc_event_value = GetItemLongName(node->mcprec->value, "dc.event");
+        dc_event = ValueStringPointer(dc_event_value);
+        s = rb_str_new2("do_");
+        rb_str_cat2(s, dc_event);
+        handler_method = rb_intern(StringValuePtr(s));
+    }
     app = rb_protect_funcall(app_class, rb_intern("new"), &state, 0);
     if (state && error_handle(state))
         return FALSE;
-    rb_protect_funcall(app, rb_intern("run"), &state,
+    rb_protect_funcall(app, handler_method, &state,
                        2, procnode_new(node), database_new(DB_Table, ThisDB));
     if (state && error_handle(state))
         return FALSE;
