@@ -844,6 +844,7 @@ ParDI(
 	Bool    parse_ld)
 {
 	char	*gname;
+	char	buff[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	ThisEnv = NULL;
@@ -894,7 +895,8 @@ ENTER_FUNC;
 		  case	T_LINKAGE:
 			if		(  GetSymbol   ==  T_SYMBOL  ) {
 				if ( parse_ld ) {
-					ThisEnv->linkrec = ReadRecordDefine(ComSymbol);
+					sprintf(buff,"%s.rec",ComSymbol);
+					ThisEnv->linkrec = ReadRecordDefine(buff);
 				} else {
 					break;
 				}

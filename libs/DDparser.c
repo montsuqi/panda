@@ -48,7 +48,7 @@ DD_Parse(void)
 	RecordStruct	*ret;
 	ValueStruct		*value;
 
-dbgmsg(">DD_Parse");
+ENTER_FUNC;
 	if		(  ( value = DD_ParseMain() )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
@@ -57,7 +57,7 @@ dbgmsg(">DD_Parse");
 	} else {
 		ret = NULL;
 	}
-dbgmsg("<DD_Parse");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -92,7 +92,7 @@ ReadRecordDefine(
 	,			*q;
 	Bool		fExit;
 
-dbgmsg(">ReadRecordDefine");
+ENTER_FUNC;
 	strcpy(dir,RecordDir);
 	p = dir;
 	rec = NULL;
@@ -103,7 +103,7 @@ dbgmsg(">ReadRecordDefine");
 		} else {
 			fExit = TRUE;
 		}
-		sprintf(buf,"%s/%s.rec",p,name);
+		sprintf(buf,"%s/%s",p,name);
 		if		(  ( rec = ParseRecordFile(buf) )  !=  NULL  ) {
 			break;
 		}
@@ -115,7 +115,7 @@ dbgmsg(">ReadRecordDefine");
 		rec->value = NULL;
 		rec->type = RECORD_NULL;
 	}
-dbgmsg("<ReadRecordDefine");
+LEAVE_FUNC;
 	return	(rec);
 }
 

@@ -96,7 +96,7 @@ ParKeyItem(
 	char	*elm;
 	ValueStruct	*value;
 
-dbgmsg(">ParKeyItem");
+ENTER_FUNC;
 	ret = NULL;
 	rcount = 0;
 	while	(  GetName  ==  T_SYMBOL  ) {
@@ -143,7 +143,7 @@ dbgmsg(">ParKeyItem");
 	if		(  ComToken  !=  '}'  ) {
 		Error("} not found");
 	}
-dbgmsg("<ParKeyItem");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -154,12 +154,12 @@ ParKey(
 	DB_Struct	*db;
 	KeyStruct	*skey;
 
-dbgmsg("<ParKey");
+ENTER_FUNC;
 	db = rec->opt.db;
 	skey = New(KeyStruct);
 	skey->item = ParKeyItem(rec->value);
 	db->pkey = skey;
-dbgmsg("<ParKey");
+LEAVE_FUNC;
 }
 
 static	DB_Struct	*
@@ -393,7 +393,7 @@ ENTER_FUNC;
 			switch	(GetName) {
 			  case	T_SYMBOL:
 				sprintf(buff,"%s.db",ComSymbol);
-				use = ParseRecordFile(buff);
+				use = ReadRecordDefine(buff);
 				if		(  use  ==  NULL  ) {
 					Error("define not found");
 				} else {
