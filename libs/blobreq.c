@@ -203,7 +203,7 @@ RequestImportBLOB(
 
 	rc = FALSE;
 	RequestBLOB(fp,BLOB_IMPORT);		ON_IO_ERROR(fp,badio);
-	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	RecvObject(fp,obj);					ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
 		if		(  ( fpf = fopen(fname,"r") )  !=  NULL  ) {
 			fstat(fileno(fpf),&sb);
@@ -216,8 +216,10 @@ RequestImportBLOB(
 				left -= size;
 			}
 			fclose(fpf);
-			rc = TRUE;
+		} else {
+			SendLength(fp,0);
 		}
+		rc = TRUE;
 	}
   badio:
 	return	(rc);

@@ -32,8 +32,6 @@ copies.
 #include	<string.h>
 #include	<signal.h>
 #include	<fcntl.h>
-#include	<sys/stat.h>
-#include	<sys/socket.h>	/*	for SOCK_STREAM	*/
 #include	<unistd.h>
 #include	<dlfcn.h>
 #include	<glib.h>
@@ -45,8 +43,14 @@ copies.
 #include	"directory.h"
 #include	"load.h"
 #include	"dbgroup.h"
+#include	"blobreq.h"
 #include	"debug.h"
 
+typedef	struct {
+	MonObjectType	obj;
+	char	*fname;
+	Bool	fImport;
+}	BLOBDir;
 
 static	GHashTable	*DBMS_Table;
 static	char		*MONDB_LoadPath;
@@ -128,23 +132,29 @@ FindBlobPool(
 	char	*name
 		,	*fname;
 	char	buff[SIZE_NAME+1];
+	BLOBDir	*bd;
 
-	if		(  ( name = g_hash_table_lookup(dbg->loPool,ValueToString(value,NULL)) )
+	if		(  ( bd = (BLOBDir *)g_hash_table_lookup(dbg->loPool,ValueObject(value)) )
 			   ==  NULL  ) {
-		name = StrDup(ValueToString(value,NULL));
-		if		(  RequestExportBLOB(fpBlob,name)  ) {
-			fname = StrDup(name);
-			g_hash_table_insert(dbg->loPool,name,fname);
+		strcpy(buff,"/tmp/XXXXXX");
+		fname = TempName(buff,SIZE_NAME+1);
+		if		(  RequestExportBLOB(fpBlob,ValueObject(value),fname)  ) {
+			bd = New(BLOBDir);
+			bd->obj = *ValueObject(value);
+			fname = StrDup(fname);
+			bd->fname = fname;
+			bd->fImport = FALSE;
+			g_hash_table_insert(dbg->loPool,&bd->obj,bd);
+		} else
+		if		(  RequestImportBLOB(fpBlob,ValueObject(value),fname)  ) {
+			bd = New(BLOBDir);
+			bd->obj = *ValueObject(value);
+			fname = StrDup(fname);
+			bd->fname = fname;
+			bd->fImport = TRUE;
+			g_hash_table_insert(dbg->loPool,&bd->obj,bd);
 		} else {
-			strcpy(buff,"/tmp/XXXXXX");
-			fname = StrDup(TempName(buff,SIZE_NAME+1));
-			if		(  RequestImportBLOB(fpBlob,ValueObject(value),fname)  ) {
-				g_hash_table_insert(dbg->loPool,name,fname);
-			} else {
-				xfree(name);
-				xfree(fname);
-				fname = NULL;
-			}
+			fname = NULL;
 		}
 	}
 	return	(fname);
@@ -306,6 +316,28 @@ ExecDBG_Operation(
 	ExecFunction(dbg,name,FALSE);
 }
 
+static	guint
+ObjHash(
+	MonObjectType	*obj)
+{
+	guint	ret;
+	int		i;
+
+	ret = obj->source;
+	for	( i = 0 ; i < SIZE_OID / sizeof(unsigned int) ; i ++ ) {
+		ret += obj->id.el[i];
+	}
+	return	(ret);
+}
+
+static	gint
+ObjCompare(
+	MonObjectType	*s1,
+	MonObjectType	*s2)
+{
+	return	(!memcmp(s1,s2,sizeof(MonObjectType)));
+}
+
 extern	void
 TransactionStart(
 	DBG_Struct *dbg)
@@ -316,7 +348,8 @@ ENTER_FUNC;
 	NewPool("Transaction");
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-			ThisEnv->DBG[i]->loPool = NewNameHash();
+			ThisEnv->DBG[i]->loPool = g_hash_table_new((GHashFunc)ObjHash,
+													   (GCompareFunc)ObjCompare);
 		}
 	}
 	ExecDBG_Operation(dbg,"DBSTART");
@@ -326,12 +359,15 @@ LEAVE_FUNC;
 static	void
 _ReleaseBLOB(
 	char		*name,
-	char		*fname,
-	void		*dummy)
+	BLOBDir		*bd,
+	DBG_Struct *dbg)
 {
-	unlink(fname);
-	xfree(fname);
-	xfree(name);
+	if		(  bd->fImport  ) {
+		RequestImportBLOB(fpBlob,&bd->obj,bd->fname);
+	}
+	unlink(bd->fname);
+	xfree(bd->fname);
+	xfree(bd);
 }
 
 extern	void
@@ -346,7 +382,7 @@ ENTER_FUNC;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
 			if		(  dbg->loPool  !=  NULL  ) {
-				g_hash_table_foreach(dbg->loPool,(GHFunc)_ReleaseBLOB,NULL);
+				g_hash_table_foreach(dbg->loPool,(GHFunc)_ReleaseBLOB,dbg);
 				g_hash_table_destroy(dbg->loPool);
 				dbg->loPool = NULL;
 			}
