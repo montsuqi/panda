@@ -37,7 +37,7 @@ GLOBAL	DI_Struct	*ThisEnv;
 #undef	GLOBAL
 
 extern	void		InitDirectory(Bool);
-extern	void		SetUpDirectory(char *name, char *ld, char *bd);
+extern	void		SetUpDirectory(char *name, char *ld, char *bd, char *db);
 extern	LD_Struct	*SearchWindowToLD(char *wname);
 extern	LD_Struct	*GetLD(char *name);
 extern	BD_Struct	*GetBD(char *name);

@@ -287,7 +287,7 @@ MakeLD(void)
 
 dbgmsg(">MakeLD");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,LD_Name,"");
+	SetUpDirectory(Directory,LD_Name,"","");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -450,7 +450,7 @@ MakeLinkage(void)
 	char	*_prefix;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,LD_Name,"");
+	SetUpDirectory(Directory,LD_Name,"","");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -492,7 +492,7 @@ MakeDB(void)
 	size_t	cDB;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -548,7 +548,7 @@ MakeDBREC(
 
 dbgmsg(">MakeDBREC");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -615,7 +615,7 @@ MakeDBCOMM(void)
 	size_t	cDB;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -730,7 +730,7 @@ MakeDBPATH(void)
 	size_t	cDB;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -791,7 +791,7 @@ static	void
 MakeMCP(void)
 {
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,"","");
+	SetUpDirectory(Directory,"","","");
 
 	Prefix = "";
 	PutLevel(1);
@@ -813,7 +813,7 @@ static	ARG_TABLE	option[] = {
 		"連絡領域を出力する"							},
 	{	"screen",	BOOLEAN,	TRUE,	(void*)&fScreen,
 		"画面レコード領域を出力する"					},
-	{	"db",		BOOLEAN,	TRUE,	(void*)&fDB,
+	{	"dbarea",	BOOLEAN,	TRUE,	(void*)&fDB,
 		"MCPSUB用領域を出力する"						},
 	{	"dbrec",	BOOLEAN,	TRUE,	(void*)&fDBREC,
 		"MCBSUBの引数に使うレコード領域を出力する"	},

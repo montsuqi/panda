@@ -50,6 +50,8 @@ copies.
 #define	T_PRIORITY		(YYBASE +22)
 #define	T_LINKAGE		(YYBASE +23)
 #define	T_STACKSIZE		(YYBASE +24)
+#define	T_DB			(YYBASE +25)
+#define	T_DBDDIR		(YYBASE +26)
 
 #undef	GLOBAL
 #ifdef	_DI_PARSER

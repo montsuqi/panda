@@ -6,6 +6,7 @@ base	"~/panda/samples";
 #	"=" will be expanded to base or BASE_DIR
 lddir	"=/sample2";
 bddir	"=/sample2";
+dbddir	"=/sample2";
 record	"=/sample2";
 
 #linksize	1024;
@@ -15,6 +16,10 @@ ld	{
 	sample	"localhost:9100";
 };
 bd	{
+	sample;
+};
+
+db	{
 	sample;
 };
 

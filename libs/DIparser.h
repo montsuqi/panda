@@ -30,23 +30,28 @@ copies.
 
 #include	"LDparser.h"
 #include	"BDparser.h"
+#include	"DBparser.h"
 
 typedef	struct {
 	char		*name;
 	char		*BaseDir
 	,			*LD_Dir
 	,			*BD_Dir
+	,			*DBD_Dir
 	,			*RecordDir;
 	size_t		cLD
 	,			cBD
+	,			cDBD
 	,			linksize
 	,			stacksize;
 	ValueStruct	*mcprec;
 	ValueStruct	*linkrec;
 	GHashTable	*LD_Table;
 	GHashTable	*BD_Table;
+	GHashTable	*DBD_Table;
 	LD_Struct	**ld;
 	BD_Struct	**bd;
+	DBD_Struct	**db;
 	int			mlevel;
 	int			cDBG;
 	DBG_Struct	**DBG;
@@ -64,5 +69,5 @@ typedef	struct {
 #undef	GLOBAL
 
 extern	void		DI_ParserInit(void);
-extern	DI_Struct	*DI_Parser(char *name, char *ld, char *bd);
+extern	DI_Struct	*DI_Parser(char *name, char *ld, char *bd, char *db);
 #endif

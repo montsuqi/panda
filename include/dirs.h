@@ -37,5 +37,6 @@ GLOBAL	char	*DirectoryDir;
 GLOBAL	char	*PasswordFile;
 GLOBAL	char	*LD_Dir;
 GLOBAL	char	*BD_Dir;
+GLOBAL	char	*DBD_Dir;
 GLOBAL	URL		Auth;
 #endif

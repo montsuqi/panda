@@ -56,6 +56,7 @@ static	struct	{
 }	tokentable[] = {
 	{	"ld"				,T_LD		},
 	{	"bd"				,T_BD		},
+	{	"db"				,T_DB		},
 	{	"name"				,T_NAME 	},
 	{	"linksize"			,T_LINKSIZE	},
 	{	"multiplex_level"	,T_MULTI	},
@@ -69,6 +70,7 @@ static	struct	{
 	{	"redirect_port"		,T_REDIRECTPORT	},
 	{	"lddir"				,T_LDDIR	},
 	{	"bddir"				,T_BDDIR	},
+	{	"dbddir"			,T_DBDDIR	},
 	{	"record"			,T_RECDIR	},
 	{	"base"				,T_BASEDIR	},
 	{	"priority"			,T_PRIORITY	},
@@ -127,7 +129,11 @@ dbgmsg(">DoInclude");
 	back = New(INCFILE);
 	back->next = ftop;
 	back->fn =  DI_FileName;
-	sprintf(name,"%s/%s",DirectoryDir,fn);
+	if		(  DirectoryDir  !=  NULL  ) {
+		sprintf(name,"%s/%s",DirectoryDir,fn);
+	} else {
+		sprintf(name,"%s",fn);
+	}
 	fgetpos(DI_File,&back->pos);
 	back->cLine = DI_cLine;
 	ftop = back;

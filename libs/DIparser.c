@@ -46,6 +46,7 @@ copies.
 #include	"DDparser.h"
 #include	"DIlex.h"
 #include	"LDparser.h"
+#include	"DBparser.h"
 #include	"DIparser.h"
 #include	"dirs.h"
 #include	"driver.h"
@@ -223,6 +224,65 @@ dbgmsg(">ParBD");
 		}
 	}
 dbgmsg("<ParBD");
+}
+
+static	void
+ParDBD(
+	char	*dname)
+{
+	char		name[SIZE_BUFF];
+	DBD_Struct	*dbd;
+	DBD_Struct	**btmp;
+	char		buff[SIZE_BUFF];
+	char		*p
+	,			*q;
+
+dbgmsg(">ParDBD");
+	while	(  GetSymbol  !=  '}'  ) {
+		if		(	(  DI_Token  ==  T_SYMBOL  )
+				||	(  DI_Token  ==  T_SCONST  ) ) {
+			if		(  ThisEnv->DBD_Dir  !=  NULL  ) {
+				if		(	(  dname  ==  NULL  )
+						||	(  !strcmp(dname,DI_ComSymbol)  ) ) {
+					strcpy(buff,ThisEnv->DBD_Dir);
+					p = buff;
+					do {
+						if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+							*q = 0;
+						}
+						sprintf(name,"%s/%s.dbd",p,DI_ComSymbol);
+						if		(  (  dbd = DB_Parser(name) )  !=  NULL  ) {
+							if		(  g_hash_table_lookup(ThisEnv->DBD_Table,DI_ComSymbol)  ==  NULL  ) {
+								btmp = (DBD_Struct **)xmalloc(sizeof(DBD_Struct *)
+															 * ( ThisEnv->cDBD + 1));
+								if		(  ThisEnv->cDBD  >  0  ) {
+									memcpy(btmp,ThisEnv->db,sizeof(DBD_Struct *)
+										   * ThisEnv->cDBD);
+									xfree(ThisEnv->db);
+								}
+								ThisEnv->db = btmp;
+								ThisEnv->db[ThisEnv->cDBD] = dbd;
+								ThisEnv->cDBD ++;
+								g_hash_table_insert(ThisEnv->DBD_Table,
+													StrDup(DI_ComSymbol),dbd);
+							} else {
+								Error("same db appier");
+							}
+						}
+						p = q + 1;
+					}	while	(	(  q   !=  NULL  )
+								&&	(  dbd  ==  NULL  ) );
+					if		(  dbd  ==  NULL  ) {
+						Error("dbd not found");
+					}
+				}
+			}
+		}
+		if		(  GetSymbol  !=  ';'  ) {
+			Error("syntax error 1");
+		}
+	}
+dbgmsg("<ParDBD");
 }
 
 static	void
@@ -452,7 +512,8 @@ BuildMcpArea(
 static	DI_Struct	*
 ParDI(
 	char	*ld,
-	char	*bd)
+	char	*bd,
+	char	*db)
 {
 	char	*gname;
 
@@ -469,12 +530,15 @@ dbgmsg(">ParDI");
 				ThisEnv->BaseDir = BaseDir;
 				ThisEnv->LD_Dir = LD_Dir;
 				ThisEnv->BD_Dir = BD_Dir;
+				ThisEnv->DBD_Dir = DBD_Dir;
 				ThisEnv->RecordDir = RecordDir;
 				ThisEnv->cLD = 0;
 				ThisEnv->cBD = 0;
+				ThisEnv->cDBD = 0;
 				ThisEnv->stacksize = SIZE_STACK;
 				ThisEnv->LD_Table = NewNameHash();
 				ThisEnv->BD_Table = NewNameHash();
+				ThisEnv->DBD_Table = NewNameHash();
 				ThisEnv->mlevel = MULTI_NO;
 				ThisEnv->cDBG = 0;
 				ThisEnv->DBG = NULL;
@@ -551,6 +615,20 @@ dbgmsg(">ParDI");
 				Error("BD directory invalid");
 			}
 			break;
+		  case	T_DBDDIR:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->DBD_Dir  ==  NULL  ) {
+					if		(  !strcmp(DI_ComSymbol,".")  ) {
+						ThisEnv->DBD_Dir = StrDup(ThisEnv->BaseDir);
+					} else {
+						ThisEnv->DBD_Dir = StrDup(ExpandPath(DI_ComSymbol
+															,ThisEnv->BaseDir));
+					}
+				}
+			} else {
+				Error("DBD directory invalid");
+			}
+			break;
 		  case	T_RECDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->RecordDir  ==  NULL  ) {
@@ -597,6 +675,13 @@ dbgmsg(">ParDI");
 				Error("syntax error 2");
 			}
 			break;
+		  case	T_DB:
+			if		(  GetSymbol  ==  '{'  ) {
+				ParDBD(db);
+			} else {
+				Error("syntax error 2");
+			}
+			break;
 		  case	T_DBGROUP:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				gname = StrDup(DI_ComSymbol);
@@ -630,7 +715,8 @@ extern	DI_Struct	*
 DI_Parser(
 	char	*name,
 	char	*ld,
-	char	*bd)
+	char	*bd,
+	char	*db)
 {
 	FILE	*fp;
 	DI_Struct	*ret;
@@ -642,7 +728,7 @@ dbgmsg(">DI_Parser");
 		DI_FileName = StrDup(name);
 		DI_cLine = 1;
 		DI_File = fp;
-		ret = ParDI(ld,bd);
+		ret = ParDI(ld,bd,db);
 		fclose(DI_File);
 		if		(  fError  ) {
 			ret = NULL;

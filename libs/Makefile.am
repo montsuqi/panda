@@ -34,6 +34,8 @@ libpanda_la_SOURCES	=		\
 	DIlex.c		DIlex.h		\
 	BDparser.c	BDparser.h	\
 	BDlex.c		BDlex.h		\
+	DBparser.c	DBparser.h	\
+	DBlex.c		DBlex.h		\
 	directory.c	directory.h	\
 	driver.c	driver.h	\
 	tcp.c		tcp.h		\
@@ -94,6 +96,8 @@ libpandat_a_SOURCES	=		\
 	DIlex.c		DIlex.h		\
 	BDparser.c	BDparser.h	\
 	BDlex.c		BDlex.h		\
+	DBparser.c	DBparser.h	\
+	DBlex.c		DBlex.h		\
 	directory.c	directory.h	\
 	driver.c	driver.h	\
 	tcp.c		tcp.h		\

@@ -37,6 +37,7 @@ copies.
 #include	"DDparser.h"
 #include	"LDparser.h"
 #include	"DIparser.h"
+#include	"DBparser.h"
 #include	"driver.h"
 #include	"directory.h"
 #include	"misc.h"
@@ -53,6 +54,7 @@ dbgmsg(">InitDirectory");
 	DD_ParserInit();
 	LD_ParserInit();
 	BD_ParserInit();
+	DB_ParserInit();
 	DI_ParserInit();
 dbgmsg("<InitDirectory");
 }
@@ -103,6 +105,11 @@ dbgmsg(">AssignDBG");
 			_AssignDBG(di->bd[i]->db,di->bd[i]->cDB,di->DBG_Table);
 		}
 	}
+	for	( i = 0 ; i < di->cDBD ; i ++ ) {
+		if		(  di->db[i]->db  !=  NULL  ) {
+			_AssignDBG(di->db[i]->db,di->db[i]->cDB,di->DBG_Table);
+		}
+	}
 dbgmsg("<AssignDBG");
 }
 
@@ -110,11 +117,12 @@ extern	void
 SetUpDirectory(
 	char	*name,
 	char	*ld,
-	char	*bd)
+	char	*bd,
+	char	*db)
 {
 	DI_Struct	*di;
 dbgmsg(">SetUpDirectory");
-	di = DI_Parser(name,ld,bd);
+	di = DI_Parser(name,ld,bd,db);
 	AssignDBG(di);
 dbgmsg("<SetUpDirectory");
 }

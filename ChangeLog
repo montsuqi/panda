@@ -1,3 +1,12 @@
+2002-09-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/checkdir.c (DumpKey): つまらないエラーの修正(気にするな)
+
+	* libs/DBparser.c, libs/DBparser.h,
+	libs/DBlex.c, libs/DBlex.h: DBサーバ用定義体の解析
+
+	* libs/DIparser.c (ParDBD): DBサーバ用定義の追加
+
 2002-09-06  Keisuke Nishida  <knishida@netlab.jp>
 
 	* glclient/protocol.c, glclient/protocol.h,

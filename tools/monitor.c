@@ -243,6 +243,7 @@ StartApss(void)
 	int		i;
 
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
+		sleep(1);
 		_StartAps(ThisEnv->ld[i]);
 	}
 }
@@ -366,7 +367,7 @@ StartPrograms(void)
 {
 dbgmsg(">StartPrograms");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL);
 
 	StartServers();
 	DumpProcess();

@@ -25,8 +25,8 @@ copies.
 #define	PORT_GLTERM		8000
 #define	PORT_GLAUTH		8001
 #define	PORT_DBLOG		8002
-#define	PORT_HTSERV		8010
-#define	PORT_PGSERV		8011
+#define	PORT_HTSERV		8011
+#define	PORT_PGSERV		8012
 #define	PORT_APS_BASE	9100
 #define	PORT_WFC		9000
 #define	PORT_WFC_APS	9001

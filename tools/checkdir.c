@@ -45,6 +45,7 @@ copies.
 
 static	Bool	fLD;
 static	Bool	fBD;
+static	Bool	fDBD;
 static	Bool	fDBG;
 static	char	*Directory;
 
@@ -55,23 +56,27 @@ DumpKey(
 	char	***item
 	,		**pk;
 
-	item = pkey->item;
-	printf("\t\tpkey = ");
-	while	(  *item  !=  NULL  ) {
-		pk = *item;
-		while	(  *pk  !=  NULL  ) {
-			printf("%s",*pk);
-			pk ++;
-			if		(  *pk  !=  NULL  ) {
-				printf(".");
+dbgmsg(">DumpKey");
+	if		(  pkey  !=  NULL  ) {
+		item = pkey->item;
+		printf("\t\tpkey = ");
+		while	(  *item  !=  NULL  ) {
+			pk = *item;
+			while	(  *pk  !=  NULL  ) {
+				printf("%s",*pk);
+				pk ++;
+				if		(  *pk  !=  NULL  ) {
+					printf(".");
+				}
 			}
+			item ++;
+			if		(  *item  !=  NULL  ) {
+				printf(",");
+			}
+			printf("\n");
 		}
-		item ++;
-		if		(  *item  !=  NULL  ) {
-			printf(",");
-		}
-		printf("\n");
 	}
+dbgmsg("<DumpKey");
 }
 
 static	void
@@ -97,6 +102,7 @@ DumpDB(
 {
 	int		i;
 
+dbgmsg(">DumpDB");
 	printf("\t\tDB group = [%s]\n",db->dbg->name);
 	DumpKey(db->pkey);
 	if		(  db->pcount  >  0  ) {
@@ -105,6 +111,7 @@ DumpDB(
 			DumpPath(db->path[i]);
 		}
 	}
+dbgmsg("<DumpDB");
 }
 
 static	void
@@ -121,6 +128,7 @@ DumpLD(
 {
 	int		i;
 
+dbgmsg(">DumpLD");
 	printf("name      = [%s]\n",ld->name);
 	printf("\tgroup     = [%s]\n",ld->group);
 	printf("\tarraysize = %d\n",ld->arraysize);
@@ -136,6 +144,7 @@ DumpLD(
 	for	( i = 0 ; i < ld->cDB ; i ++ ) {
 		DumpRecord(ld->db[i]);
 	}
+dbgmsg("<DumpLD");
 }
 
 static	void
@@ -150,6 +159,21 @@ DumpBD(
 	printf("\tcDB       = %d\n",bd->cDB);
 	for	( i = 0 ; i < bd->cDB ; i ++ ) {
 		DumpRecord(bd->db[i]);
+	}
+}
+
+static	void
+DumpDBD(
+	DBD_Struct	*dbd)
+{
+	int		i;
+
+	printf("name      = [%s]\n",dbd->name);
+	printf("\tarraysize = %d\n",dbd->arraysize);
+	printf("\ttextsize  = %d\n",dbd->textsize);
+	printf("\tcDB       = %d\n",dbd->cDB);
+	for	( i = 0 ; i < dbd->cDB ; i ++ ) {
+		DumpRecord(dbd->db[i]);
 	}
 }
 
@@ -182,14 +206,16 @@ DumpDirectory(void)
 {
 	int		i;
 
+dbgmsg(">DumpDirectory");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL);
 
 	printf("name     = [%s]\n",ThisEnv->name);
 	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);
 	printf("linksize = %d\n"  ,ThisEnv->linksize);
 	printf("cLD      = %d\n"  ,ThisEnv->cLD);
 	printf("cBD      = %d\n"  ,ThisEnv->cBD);
+	printf("cDBD     = %d\n"  ,ThisEnv->cDBD);
 	if		(  fLD  ) {
 		printf("LD ----------\n");
 		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
@@ -202,10 +228,17 @@ DumpDirectory(void)
 			DumpBD(ThisEnv->bd[i]);
 		}
 	}
+	if		(  fDBD  ) {
+		printf("DBD ----------\n");
+		for	( i = 0 ; i < ThisEnv->cDBD ; i ++ ) {
+			DumpDBD(ThisEnv->db[i]);
+		}
+	}
 	if		(  fDBG  ) {
 		printf("DBG ---------\n");
 		g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)DumpDBG,NULL);
 	}
+dbgmsg("<DumpDirectory");
 }
 
 static	ARG_TABLE	option[] = {
@@ -213,6 +246,8 @@ static	ARG_TABLE	option[] = {
 		"LD情報を出力する"								},
 	{	"bd",		BOOLEAN,	TRUE,		(void*)&fBD,
 		"BD情報を出力する"								},
+	{	"dbd",		BOOLEAN,	TRUE,		(void*)&fDBD,
+		"DBD情報を出力する"								},
 	{	"dbg",		BOOLEAN,	TRUE,		(void*)&fDBG,
 		"DB group情報を出力する"						},
 
@@ -220,10 +255,12 @@ static	ARG_TABLE	option[] = {
 		"ディレクトリファイル"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"レコードのあるディレクトリ"					},
-	{	"lddir",	STRING,		TRUE,	(void*)&LD_Dir,
+	{	"LDdir",	STRING,		TRUE,	(void*)&LD_Dir,
 		"LD定義格納ディレクトリ"	 					},
-	{	"bddir",	STRING,		TRUE,	(void*)&BD_Dir,
+	{	"BDdir",	STRING,		TRUE,	(void*)&BD_Dir,
 		"BD定義格納ディレクトリ"	 					},
+	{	"DBDdir",	STRING,		TRUE,	(void*)&DBD_Dir,
+		"DB定義格納ディレクトリ"	 					},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -232,10 +269,13 @@ SetDefault(void)
 {
 	LD_Dir = NULL;
 	BD_Dir = NULL;
+	DBD_Dir = NULL;
 	RecordDir = NULL;
+
 	Directory = "./directory";
 	fLD = FALSE;
 	fBD = FALSE;
+	fDBD = FALSE;
 	fDBG = FALSE;
 }
 
