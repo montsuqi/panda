@@ -91,12 +91,21 @@ typedef	struct {
 }	OsekiDataPage;
 
 typedef	struct {
-	char			magic[OSEKI_MAGIC_SIZE];
-	size_t			pagesize;
 	pageno_t		freedata;
-	pageno_t		pages;
 	int				level;
 	pageno_t		pos[MAX_PAGE_LEVEL];
+}	OsekiObjectTable;
+
+typedef	struct {
+	pageno_t		pages;
+	uint			seq;
+	pageno_t		cOld;
+}	OsekiPhaseControl;
+
+typedef	struct {
+	char			magic[OSEKI_MAGIC_SIZE];
+	size_t			pagesize;
+	OsekiPhaseControl	phase[2];
 }	OsekiHeaderPage;
 
 #define	ROUND_TO(p,s)	((((p)%(s)) == 0) ? (p) : (((p)/(s))+1)*(s))

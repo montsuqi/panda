@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -92,11 +92,11 @@ ENTER_FUNC;
 	base = 0;
 	Lock(&space->obj);
 	while	(  leaf  ==  0  ) {
-		for	( i = 0 ; i < space->head->level ; i ++ ) {
-			for	( j = 0 ; j < space->head->level ; j ++ ) {
-				stack[j] = space->head->pos[j];
+		for	( i = 0 ; i < state->objs->level ; i ++ ) {
+			for	( j = 0 ; j < state->objs->level ; j ++ ) {
+				stack[j] = state->objs->pos[j];
 			}
-			page = space->head->pos[i];
+			page = state->objs->pos[i];
 			if		(  HAVE_FREECHILD(page)  ) {
 				base = 0;
 				for	( k = i ; k >= 0 ; k -- ) {
@@ -130,11 +130,11 @@ ENTER_FUNC;
 			node = NewPage(state);
 			(void)GetPage(state,node);
 			nodepage = UpdatePage(state,node);
-			nodepage[0] = space->head->pos[space->head->level-1] | PAGE_NODE;
-			UpdateZeroPage(state);
-			space->head->pos[space->head->level] = node;
-			stack[space->head->level] = node;
-			space->head->level ++;
+			nodepage[0] = state->objs->pos[state->objs->level-1] | PAGE_NODE;
+			state->objs = UpdatePage(state,1LL);
+			state->objs->pos[state->objs->level] = node;
+			stack[state->objs->level] = node;
+			state->objs->level ++;
 
 		}
 	}
@@ -162,7 +162,7 @@ ENTER_FUNC;
 	if		(  use  ==  LEAF_ELEMENTS(state)  ) {
 		own = leaf;
 		use = 0;
-		for	( i = 0 ; i < space->head->level ; i ++ ) {
+		for	( i = 0 ; i < state->objs->level ; i ++ ) {
 			page = stack[i];
 			(void)GetPage(state,page);
 			nodepage = UpdatePage(state,page);
@@ -178,9 +178,9 @@ ENTER_FUNC;
 			}
 			own = page;
 			if		(  fFree  )	break;
-			if		(  PAGE_NO(space->head->pos[i])  ==  page  ) {
-				UpdateZeroPage(state);
-				USE_NODE(space->head->pos[i]);
+			if		(  PAGE_NO(state->objs->pos[i])  ==  page  ) {
+				state->objs = UpdatePage(state,1LL);
+				USE_NODE(state->objs->pos[i]);
 			}
 		}
 	}
@@ -207,10 +207,11 @@ ENTER_FUNC;
 	space = state->space;
 	base = obj / LEAF_ELEMENTS(state);
 	page = 0;
-	for	( i = space->head->level - 1 ; i >= 0 ; i -- ) {
+	dbgprintf("level = %d\n",state->objs->level);
+	for	( i = state->objs->level - 1 ; i >= 0 ; i -- ) {
 		off = base / space->mul[i];
 		if		(  page  ==  0  ) {
-			page = space->head->pos[i];
+			page = state->objs->pos[i];
 		}
 		if		(  path  !=  NULL  ) {
 			path[i] = page;
@@ -286,6 +287,7 @@ NewObject(
 	pageno_t		leaf;
 
 ENTER_FUNC;
+	state->objs = GetPage(state,1LL);
 	obj = GetFreeOID(state);
 	if		(  ( leaf = SearchLeafPage(state,obj,NULL) )  !=  0  ) {
 		if		(  OpenEntry(state,leaf,obj,(byte)mode|OSEKI_OPEN_CREATE)
@@ -310,6 +312,7 @@ OpenObject(
 	ObjectInfo	*ent;
 
 ENTER_FUNC;
+	state->objs = GetPage(state,1LL);
 	if		(  ( leaf = SearchLeafPage(state,obj,NULL) )  !=  0  ) {
 		if		(  ( ent = OpenEntry(state,leaf,obj,(byte)mode) )
 				   ==  NULL  ) {
@@ -466,7 +469,6 @@ DestroyObject(
 	pageno_t		stack[MAX_PAGE_LEVEL];
 	pageno_t		page
 		,			own;
-	OsekiSpace	*space;
 	size_t			off;
 
 ENTER_FUNC;
@@ -484,7 +486,7 @@ ENTER_FUNC;
 		FREE_OBJ(leafpage[off]);
 
 		own = page;
-		for	( i = 0 ; i < space->head->level ; i ++ ) {
+		for	( i = 0 ; i < state->objs->level ; i ++ ) {
 			page = stack[i];
 			(void)GetPage(state,page);
 			nodepage = UpdatePage(state,page);
@@ -495,8 +497,8 @@ ENTER_FUNC;
 				}
 			}
 			own = page;
-			if			(  PAGE_NO(space->head->pos[i])  ==  page  ) {
-				FREE_NODE(space->head->pos[i]);
+			if			(  PAGE_NO(state->objs->pos[i])  ==  page  ) {
+				FREE_NODE(state->objs->pos[i]);
 			}
 			if		(  HAVE_FREECHILD(page)  )	break;
 		}
@@ -692,7 +694,7 @@ ENTER_FUNC;
 	UnLock(state->space);
 	state->oTable = NewLLHash();
 	state->pages = NewLLHash();
-	GetZeroPage(state);
+	state->objs = NULL;
 LEAVE_FUNC;
 	return	(TRUE);
 }

@@ -39,7 +39,8 @@ typedef	struct _OsekiSpace	{
 	char			*file;
 	FILE			*fp;
 	size_t			pagesize;
-	OsekiHeaderPage	*head;
+	pageno_t		upages;
+	int				inuse;
 	pageno_t		mul[MAX_PAGE_LEVEL];
 	pageno_t		*freedata;
 	GHashTable		*freepage;
@@ -47,19 +48,26 @@ typedef	struct _OsekiSpace	{
 	GTree			*trans;
 	int				lTran;
 	int				cTran;
+	int				cSeq;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
 	struct {
 		pthread_mutex_t	mutex;
 		pthread_cond_t	cond;
 	}	obj;
+	struct {
+		pthread_mutex_t	mutex;
+		pthread_cond_t	cond;
+	}	page;
 }	OsekiSpace;
 
 typedef	struct	_OsekiSession {
 	OsekiSpace		*space;
 	int				tid;
+	OsekiObjectTable	*objs;
 	GHashTable		*pages;
 	GHashTable		*oTable;
+	int				cOld;
 }	OsekiSession;
 
 #define	OSEKI_OPEN_CLOSE	0x00

@@ -74,6 +74,7 @@ main(
 	char	name[SIZE_LONGNAME+1];
 	int		i;
 	OsekiHeaderPage		head;
+	OsekiObjectTable	table;
 	OsekiObjectEntry	*ent;
 
 	SetDefault();
@@ -98,41 +99,44 @@ main(
 	}
 
 	memcpy(head.magic,OSEKI_FILE_HEADER,OSEKI_MAGIC_SIZE);
-#ifdef	USE_MMAP
-	if		(  PageSize % getpagesize()  !=  0  ) {
-		fprintf(stderr,"invalid page size.\n");
-		exit(1);
-	}
-#endif
-	/*	directory page	(0)	*/
-	head.freedata = 1;
 	head.pagesize = PageSize;
-	for	( i = 0 ; i < sizeof(pageno_t) ; i ++ ) {
-		head.pos[i] = 0;
-	}
-	head.level = 1;
-	head.pos[0] = 2;
-	head.pages = 4;
 
+	/*	directory page	(0)	*/
+	head.phase[0].pages = 5;
+	head.phase[0].cOld = 0;
+	head.phase[0].seq = 1;
+	head.phase[1].pages = 5;
+	head.phase[1].cOld = 0;
+	head.phase[1].seq = 0;
 	memclear(page,PageSize);
 	memcpy(page,&head,sizeof(OsekiHeaderPage));
 	fwrite(page,PageSize,1,fp);
 
-	/*	free pages		(1)	*/
+	/*	object page		(1)	*/
+	table.freedata = 2;
+	table.level = 1;
+	for	( i = 0 ; i < sizeof(pageno_t) ; i ++ ) {
+		table.pos[i] = 0;
+	}
+	table.pos[0] = 3;
+	memclear(page,PageSize);
+	memcpy(page,&table,sizeof(OsekiObjectTable));
+	fwrite(page,PageSize,1,fp);
+
+	/*	free pages		(2)	*/
 	memclear(page,PageSize);
 	fwrite(page,PageSize,1,fp);
 
-	/*	1st node page	(2)	*/
+	/*	1st node page	(3)	*/
 	memclear(page,PageSize);
-	page[0] = 3;
+	page[0] = 4;
 	fwrite(page,PageSize,1,fp);
 
-	/*	leaf page		(3)	*/
+	/*	leaf page		(4)	*/
 	memclear(page,PageSize);
 	ent = (OsekiObjectEntry *)page;
 	USE_OBJ(ent[0]);
 	fwrite(page,PageSize,1,fp);
-
 
 	fclose(fp);
 
