@@ -64,7 +64,7 @@ ApplicationsRegist(
 {
 	ApplicationStruct	*func;
 
-dbgmsg(">ApplicationsRegist");
+ENTER_FUNC;
 	if		(  ( func = g_hash_table_lookup(ApplicationTable,name) )  ==  NULL  ) {
 		func = New(ApplicationStruct); 
 		func->name = StrDup(name);
@@ -72,7 +72,7 @@ dbgmsg(">ApplicationsRegist");
 		func->link = link;
 		g_hash_table_insert(ApplicationTable,name,func);
 	}
-dbgmsg("<ApplicationsRegist");
+LEAVE_FUNC;
 	return	(func); 
 }
 
@@ -88,7 +88,7 @@ ApplicationLoad(
 	void		*handle;
 	ApplicationStruct	*func;
 
-dbgmsg(">ApplicationLoad");
+ENTER_FUNC;
 	if		(  ( func = (ApplicationStruct *)g_hash_table_lookup(ApplicationTable,name) )
 			   ==  NULL  ) {
 		sprintf(filename,"%s.so",name);
@@ -102,10 +102,10 @@ dbgmsg(">ApplicationLoad");
 			f_link = dlsym(handle,funcname);
 			sprintf(funcname,"%sMain",name);
 			f_main = dlsym(handle,funcname);
-			func = ApplicationsRegist(name,f_link,f_main);
+			func = ApplicationsRegist(StrDup(name),f_link,f_main);
 		}
 	}
-dbgmsg("<ApplicationLoad");
+LEAVE_FUNC;
 	return	(func);
 }
 
@@ -119,7 +119,7 @@ ApplicationsCall(
 	char	*p
 	,		*q;
 
-dbgmsg(">ApplicationsCall");
+ENTER_FUNC;
 	ThisScreen = scr;
 #ifdef	DEBUG
 	printf("sts = %d\n",sts);
@@ -157,7 +157,7 @@ dbgmsg(">ApplicationsCall");
 		printf("----\n");
 	}
 #endif
-dbgmsg("<ApplicationsCall");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -165,7 +165,7 @@ ApplicationsInit(
 	int		argc,
 	char	**argv)
 {
-dbgmsg(">ApplicationsInit");
+ENTER_FUNC;
 	Argc = argc; 
 	Argv = argv;
 
@@ -173,5 +173,5 @@ dbgmsg(">ApplicationsInit");
 	if		(  ( MONPS_LoadPath = getenv("MONPS_LOAD_PATH") )  ==  NULL  ) {
 		MONPS_LoadPath = MONTSUQI_LOAD_PATH;
 	}
-dbgmsg("<ApplicationsInit");
+LEAVE_FUNC;
 }
