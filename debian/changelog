@@ -1,3 +1,10 @@
+panda (1:1.0.7p2-0+0.orca.1) unstable; urgency=low
+
+  * aps/Shell.c: What until children exit.
+  * libs/tcp.c: setsockopt fix.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon, 30 Sep 2002 15:51:33 +0900
+
 panda (1:1.0.7p1-0+0.orca.1) unstable; urgency=low
 
   * fix version number.
