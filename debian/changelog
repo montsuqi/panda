@@ -1,3 +1,15 @@
+panda (1:1.0.6-0+0.orca.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 10 Jul 2002 13:08:18 +0900
+
+panda (1:1.0.5-0+0.orca.6) unstable; urgency=low
+
+  * add progressbar and timer. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  4 Jul 2002 10:54:07 +0900
+
 panda (1:1.0.5-0+0.orca.5) unstable; urgency=low
 
   * add keypress_filter. 
