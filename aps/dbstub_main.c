@@ -201,6 +201,10 @@ main(
 		fprintf(stderr,"BD名が指定されていません\n");
 		exit(1);
 	}
+	if		( fl == NULL ) {
+		fprintf(stderr,"モジュール名が指定されていません\n");
+		exit(1);
+	}
 	InitSystem(fl->name);
 	rc = ExecuteSubProcess(fl->name);
 	StopProcess(rc);
