@@ -82,21 +82,28 @@ dbgmsg("<Session");
 extern	void
 ExecuteServer(void)
 {
-	int		fh
-	,		_fh;
+	int		pid;
+	int		fd
+	,		_fd;
 	NETFILE	*fp;
 
 dbgmsg(">ExecuteServer");
-	_fh = InitServerPort(PortNumber,Back);
+	_fd = InitServerPort(PortNumber,Back);
 
 	while	(TRUE)	{
-		if		(  ( fh = accept(_fh,0,0) )  <  0  )	{
-			printf("_fh = %d\n",_fh);
+		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
+			printf("_fd = %d\n",_fd);
 			Error("INET Domain Accept");
 		}
-		fp = SocketToNet(fh);
-		Session(fp);
-		CloseNet(fp);
+		if		(  ( pid = fork() )  >  0  )	{	/*	parent	*/
+			close(fd);
+		} else
+		if		(  pid  ==  0  )	{	/*	child	*/
+			close(_fd);
+			fp = SocketToNet(fd);
+			Session(fp);
+			CloseNet(fp);
+		}
 	}
 dbgmsg("<ExecuteServer");
 }

@@ -1,3 +1,8 @@
+2003-12-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* auth/glauth.c (ExecuteServer): forkするようにした(異常クライアン
+	トに対してrobustにするため)
+
 2003-12-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/SQLparser.h : byte codeの仕様を一部変更
