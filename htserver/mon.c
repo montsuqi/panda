@@ -31,6 +31,7 @@ copies.
 #include	<stdio.h>
 #include	<string.h>
 #include	<stdlib.h>
+#include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
 #include	"const.h"
@@ -344,21 +345,54 @@ HT_RecvString(
 }
 
 static	void
+EncodeString(
+	char	*q,
+	char	*p)
+{
+	while	(  *p  !=  0  ) {
+		if		(  *p  ==  0x20  ) {
+			*q ++ = '+';
+		} else
+		if		(  isalnum(*p)  ) {
+			*q ++ = *p;
+		} else {
+			q += sprintf(q,"%%%02X",(int)*p);
+		}
+		p ++;
+	}
+	*q = 0;			
+}
+
+static	void
+SendValue(
+	char		*name,
+	char		*value)
+{
+	char	buff[SIZE_BUFF];
+
+	HT_SendString(name);
+	HT_SendString(": ");
+	EncodeString(buff,value);
+	HT_SendString(buff);
+}
+
+static	void
 SendEvent(
 	char	*button)
 {
 	char	*event;
-	char	buff[SIZE_BUFF];
 	char	*sesid;
 	HTCInfo	*htc;
 	char	*name;
-	void	SendValue(
-		char		*name,
-		char		*value,
-		void		*dummy)
+	void	GetRadio(
+		char	*name)
 		{
-			sprintf(buff,"%s: %s\n",name,value);
-			HT_SendString(buff);
+			char	*rname;
+
+			if		(  ( rname = g_hash_table_lookup(Values,name) )  !=  NULL  ) {
+				g_hash_table_remove(Values,name);
+				g_hash_table_insert(Values,rname,"TRUE");
+			}
 		}
 
 	if		(  ( name = g_hash_table_lookup(Values,"_name") )  !=  NULL  ) {
@@ -368,14 +402,18 @@ SendEvent(
 		}
 	} else {
 		event = "";
+		htc = NULL;
 	}
 
-	sprintf(buff,"%s\n",event);
-	HT_SendString(buff);
+	if		(  htc  !=  NULL  ) {
+		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
+	}
+
+	HT_SendString(event);
+	HT_SendString("\n");
 
 	g_hash_table_foreach(Values,(GHFunc)SendValue,NULL);
-	sprintf(buff,"\n");
-	HT_SendString(buff);
+	HT_SendString("\n");
 	sesid = g_hash_table_lookup(Values,"_sesid");
 	Values = NewNameHash();
 	g_hash_table_insert(Values,"_sesid",sesid);
