@@ -226,7 +226,7 @@ _StartAps(
 	for	( n = 0 ; n < ld->nports ; n ++ ) {
 		if		(  !strcmp(ld->ports[n]->host,MyHost)  ) {
 			proc = New(Process);
-			argv = (char **)xmalloc(sizeof(char *) * 13);
+			argv = (char **)xmalloc(sizeof(char *) * 15);
 			proc->argv = argv;
 			argc = 0;
 			argv[argc ++] = ApsPath;
