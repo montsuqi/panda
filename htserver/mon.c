@@ -367,12 +367,11 @@ Expired(void)
 	char	buff[SIZE_BUFF];
 	HTCInfo	*htc;
 
-
+ENTER_FUNC;
 	Codeset = SRC_CODESET;
 	html = NewLBS();
 	LBS_EmitStart(html);
     sprintf(buff,"%s/expired.htc",ScreenDir);
-
     if      (  ( htc = HTCParserFile(buff) )  ==  NULL  ) {
         LBS_EmitUTF8(html,
                      "<html><head>"
@@ -384,9 +383,9 @@ Expired(void)
                      "もう一度最初からやり直して下さい。</p>\n"
                      "</body></html>\n",SRC_CODESET);
     } else {
-        LBS_EmitStart(html);
         ExecCode(html,htc);
     }
+LEAVE_FUNC;
 	return	(html);
 }
 
@@ -498,6 +497,7 @@ main(
 	SetDefault();
 	(void)GetOption(option,argc,argv);
 	InitMessage("mon","@localhost");
+	//InitMessage("mon",NULL);
 
 	InitNET();
     lbs = NewLBS();

@@ -373,7 +373,6 @@ ENTER_FUNC;
 			ret = NULL;
 		}
 	} else {
-        fprintf(stderr, "HTC memory is null\n");
         dbgprintf("HTC memory is null\n",NULL);
 		ret = NULL;
 	}

@@ -42,7 +42,7 @@ copies.
 #include	"port.h"
 #include	"debug.h"
 
-static	void
+extern	void
 Flush(
 	NETFILE	*fp)
 {

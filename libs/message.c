@@ -90,6 +90,7 @@ PutLog(
 #ifdef	USE_MSGD
 	Send(fpLog,buff,strlen(buff));
 	Send(fpLog,"\n",1);
+	Flush(fpLog);
 #else
 	fprintf(fpLog,"%s\n",buff);
 	fflush(fpLog);
