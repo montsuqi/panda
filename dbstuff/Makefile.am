@@ -6,14 +6,14 @@ dbredirector_LDADD 		=	\
 	$(POSTGRES_LIBS) \
 	$(OPENCOBOL_LIBS)	\
 	-L$(top_srcdir)/libs -lpanda	\
-	-L$(top_srcdir)/datalib -lpandad	\
+	-L$(top_srcdir)/datalib -lpandadata	\
 	-L$(top_srcdir)/dblib -lpandadb
 
 dbs_LDADD 		=	\
 	-L/usr/lib -lglib -lm -ldl -lpthread	\
 	$(FIXED_LIBS)		\
 	-L$(top_srcdir)/libs -lpanda		\
-	-L$(top_srcdir)/datalib -lpandad	\
+	-L$(top_srcdir)/datalib -lpandadata	\
 	-L$(top_srcdir)/dblib -lpandadb
 
 INCLUDES 			= \
@@ -32,7 +32,7 @@ dbs_SOURCES	=	\
 
 dbs_DEPENDENCIES	=	\
 	$(top_srcdir)/libs/libpanda.la	\
-	$(top_srcdir)/datalib/libpandad.la	\
+	$(top_srcdir)/datalib/libpandadata.la	\
 	$(top_srcdir)/dblib/libpandadb.la
 
 dbredirector_SOURCES	=	\
@@ -40,7 +40,7 @@ dbredirector_SOURCES	=	\
 
 dbredirector_DEPENDENCIES	=	\
 	$(top_srcdir)/libs/libpanda.la	\
-	$(top_srcdir)/datalib/libpandad.la	\
+	$(top_srcdir)/datalib/libpandadata.la	\
 	$(top_srcdir)/dblib/libpandadb.la
 
 

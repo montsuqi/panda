@@ -308,6 +308,7 @@ LIBS="$old_LIBS"
 
 AC_OUTPUT(Makefile
 	  Doc/Makefile
+	  include/Makefile
 	  libs/Makefile
 	  datalib/Makefile
 	  dblib/Makefile

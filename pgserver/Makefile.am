@@ -4,7 +4,7 @@ sbin_PROGRAMS = pgserver
 
 pgserver_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl	\
-	-L$(top_srcdir)/datalib -lpandad	\
+	-L$(top_srcdir)/datalib -lpandadata	\
 	-L$(top_srcdir)/libs -lpandas
 
 INCLUDES 			= \

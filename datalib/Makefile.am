@@ -1,4 +1,11 @@
-lib_LTLIBRARIES = libpandad.la
+lib_LTLIBRARIES = libpandadata.la
+
+libpandadata_la_LDFLAGS	=	\
+	-version-info $(LTVERSION)	\
+	-export-dynamic
+
+libpandaincludedir = $(includedir)/panda
+libpandainclude_HEADERS = misc.h option.h LBSfunc.h value.h DDparser.h
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
@@ -8,7 +15,7 @@ INCLUDES 			= 		\
 	$(GNOME_INCLUDEDIR) \
 	$(FIXED_CFLAGS)
 
-libpandad_la_SOURCES	=		\
+libpandadata_la_SOURCES	=		\
 	misc.c		misc.h		\
 	option.c	option.h	\
 	LBSfunc.c	LBSfunc.h	\

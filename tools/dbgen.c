@@ -41,7 +41,6 @@ copies.
 #include	"const.h"
 #include	"enum.h"
 #include	"DDparser.h"
-#include	"dirs.h"
 #include	"option.h"
 #include	"debug.h"
 

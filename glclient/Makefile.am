@@ -14,7 +14,7 @@ glclient_LDADD	= 	\
 	$(GLADE_LIBS) $(PANDA_LIBS)	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm	-lpthread \
 	-L$(top_srcdir)/libs -lpandac	\
-	-L$(top_srcdir)/datalib -lpandad
+	-L$(top_srcdir)/datalib -lpandadata
 
 
 glclient_SOURCES	=	\

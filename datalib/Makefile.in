@@ -126,12 +126,18 @@ cflags_set = @cflags_set@
 cxxflags_set = @cxxflags_set@
 libfixed_config = @libfixed_config@
 
-lib_LTLIBRARIES = libpandad.la
+lib_LTLIBRARIES = libpandadata.la
+
+libpandadata_la_LDFLAGS =  	-version-info $(LTVERSION)		-export-dynamic
+
+
+libpandaincludedir = $(includedir)/panda
+libpandainclude_HEADERS = misc.h option.h LBSfunc.h value.h DDparser.h
 
 INCLUDES =  	-I$(top_srcdir)				-I$(top_srcdir)/include		-I$(top_srcdir)/libs		-I$(top_srcdir)/datalib		$(GNOME_INCLUDEDIR) 	$(FIXED_CFLAGS)
 
 
-libpandad_la_SOURCES =  	misc.c		misc.h			option.c	option.h		LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h
+libpandadata_la_SOURCES =  	misc.c		misc.h			option.c	option.h		LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -143,15 +149,16 @@ DEFS = @DEFS@ -I. -I$(srcdir) -I..
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
-libpandad_la_LDFLAGS = 
-libpandad_la_LIBADD = 
-libpandad_la_OBJECTS =  misc.lo option.lo LBSfunc.lo value.lo SQLlex.lo \
-SQLparser.lo DDparser.lo DDlex.lo
+libpandadata_la_LIBADD = 
+libpandadata_la_OBJECTS =  misc.lo option.lo LBSfunc.lo value.lo \
+SQLlex.lo SQLparser.lo DDparser.lo DDlex.lo
 CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+HEADERS =  $(libpandainclude_HEADERS)
+
 DIST_COMMON =  Makefile.am Makefile.in
 
 
@@ -162,8 +169,8 @@ GZIP_ENV = --best
 DEP_FILES =  .deps/DDlex.P .deps/DDparser.P .deps/LBSfunc.P \
 .deps/SQLlex.P .deps/SQLparser.P .deps/misc.P .deps/option.P \
 .deps/value.P
-SOURCES = $(libpandad_la_SOURCES)
-OBJECTS = $(libpandad_la_OBJECTS)
+SOURCES = $(libpandadata_la_SOURCES)
+OBJECTS = $(libpandadata_la_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -239,8 +246,23 @@ distclean-libtool:
 
 maintainer-clean-libtool:
 
-libpandad.la: $(libpandad_la_OBJECTS) $(libpandad_la_DEPENDENCIES)
-	$(LINK) -rpath $(libdir) $(libpandad_la_LDFLAGS) $(libpandad_la_OBJECTS) $(libpandad_la_LIBADD) $(LIBS)
+libpandadata.la: $(libpandadata_la_OBJECTS) $(libpandadata_la_DEPENDENCIES)
+	$(LINK) -rpath $(libdir) $(libpandadata_la_LDFLAGS) $(libpandadata_la_OBJECTS) $(libpandadata_la_LIBADD) $(LIBS)
+
+install-libpandaincludeHEADERS: $(libpandainclude_HEADERS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(libpandaincludedir)
+	@list='$(libpandainclude_HEADERS)'; for p in $$list; do \
+	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(libpandaincludedir)/$$p"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(libpandaincludedir)/$$p; \
+	done
+
+uninstall-libpandaincludeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	list='$(libpandainclude_HEADERS)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(libpandaincludedir)/$$p; \
+	done
 
 tags: TAGS
 
@@ -334,20 +356,20 @@ installcheck: installcheck-am
 install-exec-am: install-libLTLIBRARIES
 install-exec: install-exec-am
 
-install-data-am:
+install-data-am: install-libpandaincludeHEADERS
 install-data: install-data-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-am
-uninstall-am: uninstall-libLTLIBRARIES
+uninstall-am: uninstall-libLTLIBRARIES uninstall-libpandaincludeHEADERS
 uninstall: uninstall-am
-all-am: Makefile $(LTLIBRARIES)
+all-am: Makefile $(LTLIBRARIES) $(HEADERS)
 all-redirect: all-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs:
-	$(mkinstalldirs)  $(DESTDIR)$(libdir)
+	$(mkinstalldirs)  $(DESTDIR)$(libdir) $(DESTDIR)$(libpandaincludedir)
 
 
 mostlyclean-generic:
@@ -391,7 +413,8 @@ clean-libLTLIBRARIES maintainer-clean-libLTLIBRARIES \
 uninstall-libLTLIBRARIES install-libLTLIBRARIES mostlyclean-compile \
 distclean-compile clean-compile maintainer-clean-compile \
 mostlyclean-libtool distclean-libtool clean-libtool \
-maintainer-clean-libtool tags mostlyclean-tags distclean-tags \
+maintainer-clean-libtool uninstall-libpandaincludeHEADERS \
+install-libpandaincludeHEADERS tags mostlyclean-tags distclean-tags \
 clean-tags maintainer-clean-tags distdir mostlyclean-depend \
 distclean-depend clean-depend maintainer-clean-depend info-am info \
 dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
