@@ -461,7 +461,7 @@ OutputJs(
 		if		(	(  js->fUse   )
 				&&	(  js->fFile  ) ) {
 			sprintf(buff,
-					"\n<script language=\"javascript\" "
+					"\n<script "
 					"type=\"text/javascript\" "
 					"src=\"%s\"></script>\n",
 					js->body);
@@ -471,7 +471,7 @@ OutputJs(
 
  	g_hash_table_foreach(Jslib,(GHFunc)_OutJsFile,NULL);
 	LBS_EmitString(html,
-				   "\n<script language=\"javascript\" "
+				   "\n<script "
 				   "type=\"text/javascript\">\n"
 				   "<!--\n");
  	g_hash_table_foreach(Jslib,(GHFunc)_OutJs,NULL);
