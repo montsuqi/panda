@@ -35,15 +35,12 @@ typedef	struct {
 
 extern	void		InitProtocol(void);
 extern	void		CheckScreens(NETFILE *fp, Bool);
-extern	XML_Node	*ShowWindow(char *wname, byte type);
 extern	Bool		SendConnect(NETFILE *fpComm, char *apl);
 extern	Bool		RecvWidgetData(GtkWidget *widget, NETFILE *fp);
 extern	void		RecvValue(NETFILE *fp, char *longname);
 extern	Bool		GetScreenData(NETFILE *fpComm);
 extern  void		SendWindowData(void);
 extern	void		SendEvent(NETFILE *fpComm, char *window, char *widget, char *event);
-extern	void		AddClass(GtkType type, RecvHandler rfunc, SendHandler sfunc);
-extern	void		ResetTimer(GtkWindow *window);
 
 extern	void		GL_SendPacketClass(NETFILE *fp, PacketClass c);
 extern	PacketClass	GL_RecvPacketClass(NETFILE *fp);
@@ -56,7 +53,7 @@ extern	void			GL_SendName(NETFILE *fp, char *name);
 
 extern	PacketDataType	RecvPacketDataType(NETFILE *fp);
 extern	void			SendStringData(NETFILE *fp, PacketDataType type, char *str);
-extern	Bool			RecvStringData(NETFILE *fp, char *str);
+extern	char			*RecvStringData(NETFILE *fp, char *str, size_t size);
 extern	void			SendIntegerData(NETFILE *fp, PacketDataType type, int val);
 extern	Bool			RecvIntegerData(NETFILE *fp, int *val);
 extern	void			SendBoolData(NETFILE *fp, PacketDataType type, Bool val);
@@ -76,5 +73,6 @@ extern	Bool			RecvFixedData(NETFILE *fp, Fixed **xval);
 GLOBAL	Bool	Protocol1;
 GLOBAL	Bool	Protocol2;
 GLOBAL	PacketDataType	DataType;
+GLOBAL	GHashTable	*ClassTable;
 
 #endif

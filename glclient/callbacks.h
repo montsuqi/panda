@@ -44,7 +44,5 @@ extern	void	window_close(GtkWidget *widget, gpointer user_data);
 #ifdef	GTK_PANDA_TYPE_HTML
 extern	void	open_browser(GtkPandaHTML *html, XmHTMLAnchorCallbackStruct *cbs, void *data);
 #endif
-extern	void	ClearWindowTable(void);
-extern	void	UpdateWidget(GtkWidget *widget, void *user_data);
 
 #endif

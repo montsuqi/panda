@@ -56,12 +56,11 @@ copies.
 #include	"comm.h"
 #include	"protocol.h"
 #define		_PROTOCOL_C
+#include	"action.h"
 #include	"callbacks.h"
 #include	"widgetOPS.h"
 #include	"message.h"
 #include	"debug.h"
-
-static	GHashTable	*ClassTable;
 
 #ifdef	NETWORK_ORDER
 #define	RECV32(v)	ntohl(v)
@@ -448,71 +447,6 @@ dbgmsg("<RecvFile");
 	return	(ret);
 }
 
-extern	XML_Node	*
-ShowWindow(
-	char	*wname,
-	byte	type)
-{
-	char		*fname;
-	XML_Node	*node;
-
-dbgmsg(">ShowWindow");
-	dbgprintf("ShowWindow [%s][%d]",wname,type);
-	fname = CacheFileName(wname);
-
-	if		(  ( node = g_hash_table_lookup(WindowTable,wname) )  ==  NULL  ) {
-		/* Create new node */
-		switch	(type) {
-		  case	SCREEN_NEW_WINDOW:
-		  case	SCREEN_CURRENT_WINDOW:
-			node = New(XML_Node);
-			node->xml = glade_xml_new(fname, NULL);
-			node->window = GTK_WINDOW(glade_xml_get_widget(node->xml, wname));
-			node->name = StrDup(wname);
-			node->UpdateWidget = NewNameHash();
-			glade_xml_signal_autoconnect(node->xml);
-			g_hash_table_insert(WindowTable,node->name,node);
-		}
-	}
-
-	if		(  node  !=  NULL  ) {
-		switch	(type) {
-		  case	SCREEN_NEW_WINDOW:
-		  case	SCREEN_CURRENT_WINDOW:
-			gtk_widget_show_all(GTK_WIDGET(node->window));
-			break;
-		  case	SCREEN_CLOSE_WINDOW:
-			gtk_widget_hide_all(GTK_WIDGET(node->window));
-			/* fall through */
-		  default:
-			node = NULL;
-			break;
-		}
-	}
-
-dbgmsg("<ShowWindow");
-	return	(node);
-}
-
-static	void
-DestroyWindow(
-	char	*sname)
-{
-	XML_Node	*node;
-
-	if		(  ( node = (XML_Node *)g_hash_table_lookup(WindowTable,sname) )
-			   !=  NULL  ) {
-		gtk_widget_destroy(GTK_WIDGET(node->window));
-		gtk_object_destroy((GtkObject *)node->xml);
-		if		(  node->UpdateWidget  !=  NULL  ) {
-			g_hash_table_destroy(node->UpdateWidget);
-		}
-		xfree(node->name);
-		xfree(node);
-		g_hash_table_remove(WindowTable,sname);
-	}
-}
-
 extern	void
 CheckScreens(
 	NETFILE		*fp,
@@ -720,37 +654,6 @@ dbgmsg(">RecvValue");
 dbgmsg("<RecvValue");
 }
 
-static	gint
-_GrabFocus(gpointer data)
-{
-	gtk_widget_grab_focus(data);
-	return FALSE;
-}
-
-static	void
-GrabFocus(GtkWidget *widget)
-{
-	gtk_idle_add(_GrabFocus, widget);
-}
-
-static	void
-_ResetTimer(
-	    GtkWidget	*widget,
-	    gpointer	data)
-{
-	if (GTK_IS_CONTAINER (widget))
-		gtk_container_forall (GTK_CONTAINER (widget), _ResetTimer, NULL);
-	else if (GTK_IS_PANDA_TIMER (widget))
-		gtk_panda_timer_reset (GTK_PANDA_TIMER (widget));
-}
-
-extern	void
-ResetTimer(
-	GtkWindow	*window)
-{
-	gtk_container_forall (GTK_CONTAINER (window), _ResetTimer, NULL);
-}
-
 extern	Bool
 GetScreenData(
 	NETFILE		*fp)
@@ -921,45 +824,14 @@ dbgmsg(">SendEvent");
 dbgmsg("<SendEvent");
 }
 
-static	guint
-ClassHash(
-	gconstpointer	key)
-{
-	return	((guint)key);
-}
-
-static	gint
-ClassCompare(
-	gconstpointer	s1,
-	gconstpointer	s2)
-{
-	return	(gtk_type_is_a((GtkType)s1,(GtkType)s2));
-}
-
-extern	void
-AddClass(
-	GtkType	type,
-	RecvHandler	rfunc,
-	SendHandler	sfunc)
-{
-	HandlerNode	*node;
-
-	if		(  g_hash_table_lookup(ClassTable,(gconstpointer)type)  ==  NULL  ) {
-		node = New(HandlerNode);
-		node->type = type;
-		node->rfunc = rfunc;
-		node->sfunc = sfunc;
-		g_hash_table_insert(ClassTable,(gpointer)node->type,node);
-	}
-}
-
 extern	void
 InitProtocol(void)
 {
 dbgmsg(">InitProtocol");
-	ClassTable = g_hash_table_new((GHashFunc)ClassHash,(GCompareFunc)ClassCompare);
 	WindowTable = NewNameHash();
-//	InitScreenStack();
+#if	0
+	InitScreenStack();
+#endif
 	InitWidgetOperations();
 dbgmsg("<InitProtocol");
 }
@@ -1063,29 +935,30 @@ SendStringData(
 	}
 }
 
-extern	Bool
+extern	char	*
 RecvStringData(
 	NETFILE	*fp,
-	char	*str)
+	char	*str,
+	size_t	size)
 {
-	Bool			ret;
+	char	*ret;
 	
 	DataType = GL_RecvDataType(fp);
 
 	switch	(DataType) {
 	  case	GL_TYPE_INT:
 		sprintf(str,"%d",GL_RecvInt(fp));
-		ret = TRUE;
+		ret = str;
 		break;
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		GL_RecvString(fp,str);
-		ret = TRUE;
+		ret = str;
 		break;
 	  default:
-		ret = FALSE;
+		ret = NULL;
 		break;
 	}
 	return	(ret);

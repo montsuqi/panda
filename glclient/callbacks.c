@@ -47,37 +47,13 @@ copies.
 #include	"libmondai.h"
 #include	"comm.h"
 #include	"glclient.h"
+#include	"action.h"
 #include	"protocol.h"
 #include	"glterm.h"
 #include	"debug.h"
 
 static char *timeout_event;
 static gint timeout_hander_id = 0;
-
-static	void
-ClearWindowData(
-	char		*wname,
-	XML_Node	*node,
-	gpointer	user_data)
-{
-dbgmsg(">ClearWindowData");
-	if		(  node->UpdateWidget  !=  NULL  ) { 
-		g_hash_table_destroy(node->UpdateWidget);
-	}
-	node->UpdateWidget = NewNameHash();
-dbgmsg("<ClearWindowData");
-}
-
-extern	void
-ClearWindowTable(void)
-{
-dbgmsg(">ClearWindowTable");
-	if		(  WindowTable  !=  NULL  ) {
-		g_hash_table_foreach(WindowTable,(GHFunc)ClearWindowData,NULL);
-	}
-dbgmsg("<ClearWindowTable");
-}
-
 
 extern	gboolean
 select_all(
@@ -102,7 +78,7 @@ unselect_all(
 	return (TRUE);
 }
 
- extern	gboolean
+extern	gboolean
 keypress_filter(
 	GtkWidget	*widget,
 	GdkEventKey	*event,
@@ -152,7 +128,7 @@ struct changed_hander {
 	struct changed_hander *next;
 } *changed_hander_list = NULL;
 
-extern	void
+static	void
 RegisterChangedHander(
 	GtkObject *object,
 	GtkSignalFunc func,
@@ -336,31 +312,6 @@ entry_next_focus(
 			&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
 		gtk_widget_grab_focus(nextWidget);
 	}
-}
-
-extern	void
-UpdateWidget(
-	GtkWidget	*widget,
-	void		*user_data)
-{
-	const	char	*name;
-	char	*wname;
-	XML_Node	*node;
-	GtkWidget	*window;
-
-dbgmsg(">UpdateWidget");
-	if		(  !fInRecv  ) {
-		window = gtk_widget_get_toplevel(widget);
-		ResetTimer(GTK_WINDOW (window));
-		name = glade_get_widget_long_name(widget);
-		wname = gtk_widget_get_name(window);
-		if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
-			if	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) {
-				g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
-			}
-		}
-	}
-dbgmsg("<UpdateWidget");
 }
 
 extern	void

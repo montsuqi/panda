@@ -154,6 +154,38 @@ SetState(
 	gtk_widget_set_state(widget,state);
 }
 
+static	guint
+ClassHash(
+	gconstpointer	key)
+{
+	return	((guint)key);
+}
+
+static	gint
+ClassCompare(
+	gconstpointer	s1,
+	gconstpointer	s2)
+{
+	return	(gtk_type_is_a((GtkType)s1,(GtkType)s2));
+}
+
+static	void
+AddClass(
+	GtkType	type,
+	RecvHandler	rfunc,
+	SendHandler	sfunc)
+{
+	HandlerNode	*node;
+
+	if		(  g_hash_table_lookup(ClassTable,(gconstpointer)type)  ==  NULL  ) {
+		node = New(HandlerNode);
+		node->type = type;
+		node->rfunc = rfunc;
+		node->sfunc = sfunc;
+		g_hash_table_insert(ClassTable,(gpointer)node->type,node);
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 static	Bool
 RecvEntry(
@@ -176,10 +208,10 @@ dbgmsg(">RecvEntry");
 				SetState(widget,(GtkStateType)state);
 			} else
 			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_entry_set_text(GTK_ENTRY(widget),buff);
 			}
@@ -227,7 +259,7 @@ dbgmsg(">RecvPS");
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp,name);
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 			gtk_panda_ps_load(GTK_PANDA_PS(widget),buff);
 		}
@@ -322,7 +354,7 @@ ENTER_FUNC;
 				SetState(widget,(GtkStateType)state);
 			} else
 			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
 				sprintf(buff,"%s.%s",WidgetName,name); 
@@ -386,10 +418,10 @@ dbgmsg(">RecvLabel");
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp,name);
 			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_label_set(GTK_LABEL(widget),buff);
 			}
@@ -443,10 +475,10 @@ dbgmsg(">RecvText");
 				SetState(widget,(GtkStateType)state);
 			} else
 			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_text_freeze(GTK_TEXT(widget));
 				gtk_text_set_point(GTK_TEXT(widget), 0);
@@ -528,11 +560,11 @@ dbgmsg(">RecvButton");
 				SetState(widget,(GtkStateType)state);
 			} else
 			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				SetStyle(widget,GetStyle(buff));
 			} else
 			if		(  !stricmp(name,"label")  ) {
-				RecvStringData(fp,buff);
+				RecvStringData(fp,buff,SIZE_BUFF);
 				SetLabel(widget,buff);
 			} else {
 				RecvBoolData(fp,&fActive);
@@ -576,7 +608,7 @@ dbgmsg(">RecvCombo");
 			SetState(widget,(GtkStateType)state);
 		} else
 		if		(  !stricmp(name,"style")  ) {
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"count")  ) {
@@ -587,7 +619,7 @@ dbgmsg(">RecvCombo");
 			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 			num = GL_RecvInt(fp);
 			for	( j = 0 ; j < num ; j ++ ) {
-				if		(  RecvStringData(fp,buff)  ) {
+				if		(  RecvStringData(fp,buff,SIZE_BUFF)  !=  NULL  ) {
 					if		(  j  <  count  ) {
 						list = g_list_append(list,StrDup(buff));
 					}
@@ -643,7 +675,7 @@ dbgmsg(">RecvPandaCombo");
 			SetState(widget,(GtkStateType)state);
 		} else
 		if		(  !stricmp(name,"style")  ) {
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"count")  ) {
@@ -654,7 +686,7 @@ dbgmsg(">RecvPandaCombo");
 			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 			num = GL_RecvInt(fp);
 			for	( j = 0 ; j < num ; j ++ ) {
-				if		(  RecvStringData(fp,buff)  ) {
+				if		(  RecvStringData(fp,buff,SIZE_BUFF)  !=  NULL  ) {
 					if		(  j  <  count  ) {
 						list = g_list_append(list,StrDup(buff));
 					}
@@ -776,7 +808,7 @@ dbgmsg(">RecvPandaCList");
 			SetState(widget,(GtkStateType)state);
 		} else
 		if		(  !stricmp(name,"style")  ) {
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"row")  ) {
@@ -814,7 +846,7 @@ dbgmsg(">RecvPandaCList");
 				}
 				for	( k = 0 ; k < rnum ; k ++ ) {
 					GL_RecvName(fp,iname);
-					(void)RecvStringData(fp,buff);
+					(void)RecvStringData(fp,buff,SIZE_BUFF);
 					rdata[k] = StrDup(buff);
 				}
 				if		(	(  j             >=  from   )
@@ -938,7 +970,7 @@ dbgmsg(">RecvCList");
 			SetState(widget,(GtkStateType)state);
 		} else
 		if		(  !stricmp(name,"style")  ) {
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"row")  ) {
@@ -963,7 +995,7 @@ dbgmsg(">RecvCList");
 				}
 				for	( k = 0 ; k < rnum ; k ++ ) {
 					GL_RecvName(fp,iname);
-					(void)RecvStringData(fp,buff);
+					(void)RecvStringData(fp,buff,SIZE_BUFF);
 					rdata[k] = StrDup(buff);
 				}
 				if		(	(  j             >=  from   )
@@ -1063,7 +1095,7 @@ dbgmsg(">RecvList");
 			SetState(widget,(GtkStateType)state);
 		} else
 		if		(  !stricmp(name,"style")  ) {
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"count")  ) {
@@ -1080,7 +1112,7 @@ dbgmsg(">RecvList");
 				count = num;
 			}
 			for	( j = 0 ; j < num ; j ++ ) {
-				if		(  RecvStringData(fp,buff)  ) {
+				if		(  RecvStringData(fp,buff,SIZE_BUFF)  !=  NULL  ) {
 					if		(	(  j             >=  from   )
 							&&	(  ( j - from )  <   count  ) ) {
 						item = gtk_list_item_new_with_label(buff);
@@ -1179,7 +1211,7 @@ dbgmsg(">RecvCaleandar");
 			SetState(widget,(GtkStateType)state);
 		} else
 		if		(  !stricmp(name,"style")  ) {
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"year")  ) {
@@ -1251,7 +1283,7 @@ dbgmsg(">RecvNotebook");
 			SetState(widget,(GtkStateType)state);
 		} else
 		if		(  !stricmp(name,"style")  ) {
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"pageno")  ) {
@@ -1316,7 +1348,7 @@ dbgmsg(">RecvProgress");
 			SetState(widget,(GtkStateType)state);
 		} else
 		if		(  !stricmp(name,"style")  ) {
-			RecvStringData(fp,buff);
+			RecvStringData(fp,buff,SIZE_BUFF);
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"value")  ) {
@@ -1335,6 +1367,8 @@ InitWidgetOperations(void)
 	ValueTable = NewNameHash();
 
 	GTK_PANDA_TYPE_CLIST;	/*	for gtk+panda bug	*/
+
+	ClassTable = g_hash_table_new((GHashFunc)ClassHash,(GCompareFunc)ClassCompare);
 
 #ifdef	USE_PANDA
 	AddClass(GTK_TYPE_NUMBER_ENTRY,RecvNumberEntry,SendNumberEntry);

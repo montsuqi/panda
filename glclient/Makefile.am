@@ -28,6 +28,7 @@ glclient_DEPENDENCIES	=				\
 
 glclient_SOURCES	=		\
 	client.c 				\
+	action.c	action.h	\
 	protocol.c	protocol.h	\
 	callbacks.c	callbacks.h	\
 	widgetOPS.c	widgetOPS.h	\
