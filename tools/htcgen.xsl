@@ -3,8 +3,8 @@
   <!-- htc converter for glprotocol ver 2.0 -->
 
   <xsl:output method="html" encoding="iso-2022-jp"/>
-  <!-- xsl:variable name="genType" select="'htc'"/ -->
-  <xsl:variable name="genType" select="'html'"/>
+  <xsl:variable name="genType" select="'htc'"/>
+  <!-- xsl:variable name="genType" select="'html'"/ -->
 
   <xsl:template match="/">
     <htc coding="iso-2022-jp">
@@ -53,6 +53,8 @@ td {
   <xsl:template match="signal"/>
   <xsl:template match="xim_enabled"/>
   <xsl:template match="editable"/>
+
+  <xsl:variable name="winName" select="//widget/name"/>
 
   <xsl:template match="widget">
     <xsl:variable name="class">
@@ -271,13 +273,17 @@ td {
           </xsl:attribute>
           <xsl:attribute name="name">
             <xsl:value-of select="./name"/>
+            <xsl:text>.value</xsl:text>
           </xsl:attribute>
         </input>
       </xsl:when>
       <xsl:when test="$genType = 'htc'">
         <entry>
           <xsl:attribute name="name">
+            <xsl:value-of select="$winName"/>
+            <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
+            <xsl:text>.value</xsl:text>
           </xsl:attribute>
           <xsl:if test="./width">
             <xsl:attribute name="size">
@@ -306,7 +312,10 @@ td {
       <xsl:when test="$genType = 'htc'">
         <text>
           <xsl:attribute name="name">
+            <xsl:value-of select="$winName"/>
+            <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
+            <xsl:text>.value</xsl:text>
           </xsl:attribute>
         </text>
       </xsl:when>
@@ -324,6 +333,8 @@ td {
             <xsl:when test="$genType = 'htc'">
               <fixed>
                 <xsl:attribute name="name">
+                  <xsl:value-of select="$winName"/>
+                  <xsl:text>.</xsl:text>
                   <xsl:value-of select="./name"/>
                   <xsl:text>.value</xsl:text>
                 </xsl:attribute>
@@ -357,6 +368,8 @@ td {
             <xsl:value-of select="./group"/>
           </xsl:attribute>
           <xsl:attribute name="name">
+            <xsl:value-of select="$winName"/>
+            <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
             <xsl:text>.value</xsl:text>
           </xsl:attribute>
@@ -389,6 +402,8 @@ td {
       <xsl:when test="$genType = 'htc'">
         <checkbutton>
           <xsl:attribute name="name">
+            <xsl:value-of select="$winName"/>
+            <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
             <xsl:text>.value</xsl:text>
           </xsl:attribute>
@@ -435,7 +450,7 @@ td {
       <xsl:when test="$genType = 'htc'">
         <button>
           <xsl:attribute name="event">
-            <xsl:value-of select="./data"/>
+            <xsl:value-of select="./signal/data"/>
             <xsl:text>:</xsl:text>
             <xsl:value-of select="./name"/>
           </xsl:attribute>
@@ -480,14 +495,20 @@ td {
       <xsl:when test="$genType = 'htc'">
         <list>
           <xsl:attribute name="name">
+            <xsl:value-of select="$winName"/>
+            <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
             <xsl:text>.item</xsl:text>
           </xsl:attribute>
           <xsl:attribute name="value">
+            <xsl:value-of select="$winName"/>
+            <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
             <xsl:text>.value</xsl:text>
           </xsl:attribute>
           <xsl:attribute name="count">
+            <xsl:value-of select="$winName"/>
+            <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
             <xsl:text>.count</xsl:text>
           </xsl:attribute>
@@ -512,20 +533,67 @@ td {
         </select>
       </xsl:when>
       <xsl:when test="$genType = 'htc'">
-        <list>
-          <xsl:attribute name="name">
-            <xsl:value-of select="./name"/>
-            <xsl:text>.item</xsl:text>
-          </xsl:attribute>
-          <xsl:attribute name="value">
-            <xsl:value-of select="./name"/>
-            <xsl:text>.value</xsl:text>
-          </xsl:attribute>
-          <xsl:attribute name="count">
-            <xsl:value-of select="./name"/>
-            <xsl:text>.count</xsl:text>
-          </xsl:attribute>
-        </list>
+        <table>
+          <tr></tr>
+          <count>
+            <xsl:attribute name="var">
+              <xsl:text>i</xsl:text>
+            </xsl:attribute>
+            <xsl:attribute name="from">
+              <xsl:text>0</xsl:text>
+            </xsl:attribute>
+            <xsl:attribute name="to">
+              <xsl:value-of select="$winName"/>
+              <xsl:text>.</xsl:text>
+              <xsl:value-of select="./name"/>
+              <xsl:text>.count</xsl:text>
+            </xsl:attribute>
+            <tr>
+              <td>
+                <xsl:choose>
+                  <xsl:when test="./selection_mode = 'GTK_SELECTION_SINGLE'">
+                    <radiobutton>
+                      <xsl:attribute name="group">
+                        <xsl:value-of select="$winName"/>
+                        <xsl:text>.</xsl:text>
+                        <xsl:value-of select="./name"/>
+                      </xsl:attribute>
+                      <xsl:attribute name="name">
+                        <xsl:value-of select="$winName"/>
+                        <xsl:text>.</xsl:text>
+                        <xsl:value-of select="./name"/>
+                        <xsl:text>.select[#i]</xsl:text>
+                      </xsl:attribute>
+                      <xsl:attribute name="label">
+                        <xsl:text>$</xsl:text>
+                        <xsl:value-of select="$winName"/>
+                        <xsl:text>.</xsl:text>
+                        <xsl:value-of select="./name"/>
+                        <xsl:text>.item[#i].value1</xsl:text>
+                      </xsl:attribute>
+                    </radiobutton>
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <togglebutton>
+                      <xsl:attribute name="name">
+                        <xsl:value-of select="$winName"/>
+                        <xsl:text>.</xsl:text>
+                        <xsl:value-of select="./name"/>
+                        <xsl:text>.select[#i]</xsl:text>
+                      </xsl:attribute>
+                      <xsl:attribute name="label">
+                        <xsl:value-of select="$winName"/>
+                        <xsl:text>.</xsl:text>
+                        <xsl:value-of select="./name"/>
+                        <xsl:text>.item[#i].value1</xsl:text>
+                      </xsl:attribute>
+                    </togglebutton>
+                  </xsl:otherwise>
+                </xsl:choose>
+              </td>
+            </tr>
+          </count>
+        </table>
       </xsl:when>
     </xsl:choose>
   </xsl:template>

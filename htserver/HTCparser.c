@@ -184,7 +184,9 @@ ENTER_FUNC;
         }
 		if		(  tag  !=  NULL  ) {
 			ParMacroTag(htc,tag);
-			tag->emit(htc,tag);
+			if		(  tag->emit  !=  NULL  ) {
+				tag->emit(htc,tag);
+			}
 		} else {
 			LBS_EmitString(htc->code,"<");
 			LBS_EmitString(htc->code,HTC_ComSymbol);

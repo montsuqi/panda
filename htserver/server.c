@@ -326,6 +326,8 @@ dbgprintf("buff = [%s]\n",buff);
 					strcpy(scr->widget,"");
 					strcpy(scr->event,buff);
 				}
+printf("event  = [%s]\n",scr->event);
+printf("widget = [%s]\n",scr->widget);
 				RecvScreenData(fp,scr);
 				ApplicationsCall(APL_SESSION_GET,scr);
 				while	(  scr->status  ==  APL_SESSION_LINK  ) {

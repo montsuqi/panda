@@ -756,11 +756,15 @@ ENTER_FUNC;
 			event = htc->DefaultEvent;
 		}
 	} else {
+#ifdef	USE_IE5
 		dbgprintf("button = [%s]\n",button);
 		event = g_hash_table_lookup(htc->Trans,button);
 		if (event == NULL) {
 			event = button;
 		}
+#else
+		event = button;
+#endif
 		dbgprintf("event  = [%s]\n",event);
 	}
 	g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);

@@ -358,6 +358,16 @@ if test "x$enable_oki" = "xyes"; then
 fi
 
 dnl ***************************************************************************
+dnl IE5.x support
+dnl ***************************************************************************
+
+AC_ARG_ENABLE(ie5,
+  [  --enable-ie5            IE 5.x compatibility [[disable]]],,[enable_ie5="no"])
+if test "x$enable_ie5" = "xyes"; then
+    AC_DEFINE(USE_IE5,1,"")
+fi
+
+dnl ***************************************************************************
 dnl use msgd for message output
 dnl ***************************************************************************
 
@@ -488,4 +498,5 @@ echo "  IP v6 support:         $enable_ipv6"
 echo "  SSL support:           $enable_ssl"
 echo "  OKI support:           $enable_oki"
 echo "  msgd support:          $enable_msgd"
+echo "  IE5 support:           $enable_ie5"
 echo ""

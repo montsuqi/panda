@@ -623,7 +623,7 @@ _Button(
 	,		*size
 		,	*onclick;
 
-dbgmsg(">_Button");
+ENTER_FUNC;
 	event = GetArg(tag, "event", 0);
 	onclick = GetArg(tag,"onclick",0);
 	if ((event == NULL) &&(onclick == NULL )) {
@@ -635,6 +635,7 @@ dbgmsg(">_Button");
 	}
     if (htc->DefaultEvent == NULL)
         htc->DefaultEvent = event;
+#ifdef	USE_IE5
 	if (event != NULL) {
 		g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
 		LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
@@ -657,7 +658,33 @@ dbgmsg(">_Button");
 
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
-dbgmsg("<_Button");
+#else
+	if (event != NULL) {
+		g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
+		LBS_EmitString(htc->code,"<button type=\"submit\" name=\"_event\" value=\"");
+	} else {
+		LBS_EmitString(htc->code,"<button type=\"button\" value=\"");
+	}
+	LBS_EmitString(htc->code,event);
+	LBS_EmitString(htc->code,"\"");
+	if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," size=");
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(size));
+		EmitCode(htc,OPC_REFSTR);
+	}
+	if		(  onclick  !=  NULL  ) {
+		LBS_EmitString(htc->code," onclick=\"");
+		LBS_EmitString(htc->code,onclick);
+		LBS_EmitString(htc->code,"\"");
+	}
+
+	Style(htc,tag);
+	LBS_EmitString(htc->code,">");
+	LBS_EmitString(htc->code,face);
+	LBS_EmitString(htc->code,"</button>");
+#endif
+LEAVE_FUNC;
 }
 
 static	void
@@ -764,8 +791,15 @@ dbgmsg(">_RadioButton");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,label);
+		if		(  *label  ==  '$'  ) {
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(label+1));
+			EmitCode(htc,OPC_EHSNAME);
+		} else {
+			LBS_EmitString(htc->code,label);
+		}
 	}
+
 	g_hash_table_insert(htc->Radio,StrDup(group),(void*)1);
 dbgmsg("<_RadioButton");
 }
@@ -1249,15 +1283,6 @@ dbgmsg(">_Htc");
 dbgmsg("<_Htc");
 }	
 
-static	void
-_eHtc(
-	HTCInfo	*htc,
-	Tag		*tag)
-{
-ENTER_FUNC;
-LEAVE_FUNC;
-}	
-
 static	Tag		*
 NewTag(
 	char	*name,
@@ -1310,6 +1335,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"onkeyup",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	tag = NewTag("/ENTRY",NULL);
 
 	tag = NewTag("COMBO",_Combo);
 	AddArg(tag,"name",TRUE);
@@ -1319,6 +1345,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	tag = NewTag("/COMBO",NULL);
 
 	tag = NewTag("FIXED",_Fixed);
 	AddArg(tag,"name",TRUE);
@@ -1327,6 +1354,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"link",TRUE);
 	AddArg(tag,"target",TRUE);
+	tag = NewTag("/FIXED",NULL);
 
 	tag = NewTag("COUNT",_Count);
 	AddArg(tag,"var",TRUE);
@@ -1344,6 +1372,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"onkeyup",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	tag = NewTag("/TEXT",NULL);
 
 	tag = NewTag("BUTTON",_Button);
 	AddArg(tag,"event",TRUE);
@@ -1352,6 +1381,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"onclick",TRUE);
+	tag = NewTag("/BUTTON",NULL);
 
 	tag = NewTag("TOGGLEBUTTON",_ToggleButton);
 	AddArg(tag,"name",TRUE);
@@ -1359,6 +1389,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"onclick",TRUE);
+	tag = NewTag("/TOGGLEBUTTON",NULL);
 
 	tag = NewTag("CHECKBUTTON",_CheckButton);
 	AddArg(tag,"name",TRUE);
@@ -1366,6 +1397,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"onclick",TRUE);
+	tag = NewTag("/CHECKBUTTON",NULL);
 
 	tag = NewTag("RADIOBUTTON",_RadioButton);
 	AddArg(tag,"name",TRUE);
@@ -1374,6 +1406,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"onclick",TRUE);
+	tag = NewTag("/RADIOBUTTON",NULL);
 
 	tag = NewTag("LIST",_List);
 	AddArg(tag,"name",TRUE);
@@ -1385,6 +1418,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	tag = NewTag("/LIST",NULL);
 
 	tag = NewTag("FILESELECTION",_FileSelection);
 	AddArg(tag,"name",TRUE);
@@ -1393,6 +1427,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"maxlength",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	tag = NewTag("/FILESELECTION",NULL);
 
 	tag = NewTag("HYPERLINK",_HyperLink);
 	AddArg(tag,"event",TRUE);
@@ -1417,6 +1452,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"year",TRUE);
 	AddArg(tag,"month",TRUE);
 	AddArg(tag,"day",TRUE);
+	tag = NewTag("/CALENDAR",NULL);
 
 	tag = NewTag("TD", _Td);
 	AddArg(tag, "rowspan", TRUE);
@@ -1430,12 +1466,13 @@ dbgmsg(">TagsInit");
 
 	tag = NewTag("HTC",_Htc);
 	AddArg(tag,"coding",TRUE);
-	tag = NewTag("/HTC",_eHtc);
+	tag = NewTag("/HTC",NULL);
 
 	tag = NewTag("FORM",_Form);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"defaultevent",TRUE);
 	AddArg(tag,"target",TRUE);
+
 	tag = NewTag("HEAD",_Head);
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);

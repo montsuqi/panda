@@ -1,5 +1,8 @@
 2004-06-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* htserver/tags.c (_Button): buttonタグを使うようにした。IE5ではサ
+	ポートがいい加減なので、USE_IE5がある時はinputのままになっている。
+
 	* tools/htcgen2: Ver 2.0用htcgen
 
 2004-06-29  Masami Ogoshi  <ogochan@nurs.or.jp>
