@@ -679,6 +679,7 @@ MakeDBREC(
 	size_t	cDB;
 	char			*p;
 	int				rno;
+	char			*base_name;
 
 dbgmsg(">MakeDBREC");
 	InitDirectory();
@@ -1072,8 +1073,7 @@ main(
 {
 	FILE_LIST	*fl;
 	char		*name
-	,			*ext;
-
+    ,			*ext;
 	SetDefault();
 	fl = GetOption(option,argc,argv);
 	InitMessage("copygen",NULL);
@@ -1084,6 +1084,10 @@ main(
 		name = fl->name;
 		ext = GetExt(name);
 		if		(  fDBREC  ) {
+			if		( strchr(name, '/') !=  NULL  ) {
+                fprintf(stderr, "error: Invalid db group name: %s\n", name);
+                exit(1);
+            }
 			MakeDBREC(name);
 		} else
 		if		(	(  !stricmp(ext,".rec")  )
@@ -1135,7 +1139,11 @@ main(
 			RecName = "ldr";
 			Prefix = "ldr-";
 			MakeLD();
-		}
+		} else
+		if		(  fDBREC  ) {
+            fprintf(stderr, "error: must be set db group name.\n");
+            exit(1);
+        }
 	}
 	return	(0);
 }
