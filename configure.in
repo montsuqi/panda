@@ -7,7 +7,7 @@ PACKAGE=panda
 # make version
 MAJOR_VERSION=1
 MINOR_VERSION=0
-MICRO_VERSION=6
+MICRO_VERSION=7
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
 
 AC_SUBST(MAJOR_VERSION)
@@ -298,4 +298,4 @@ GNOME_COMPILE_WARNINGS
 
 AM_GNOME_GETTEXT
 
-AC_OUTPUT(Makefile libs/Makefile glserver/Makefile glclient/Makefile tools/Makefile wfc/Makefile aps/Makefile cobol/Makefile htserver/Makefile clserver/Makefile Doc/Makefile)
+AC_OUTPUT(Makefile libs/Makefile glserver/Makefile glclient/Makefile tools/Makefile wfc/Makefile aps/Makefile cobol/Makefile htserver/Makefile pgserver/Makefile Doc/Makefile)
