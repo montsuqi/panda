@@ -141,7 +141,8 @@ ENTER_FUNC;
 				if		(  GetSymbol  ==  '.'  ) {
 					LBS_EmitChar(sql,'.');
 					GetSymbol;
-				}
+				} else
+					break;
 			}	while	(  ComToken  ==  T_SYMBOL  );
 			LBS_EmitSpace(sql);
 			break;
