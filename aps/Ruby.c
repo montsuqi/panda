@@ -1436,6 +1436,20 @@ init()
     codeset = "utf-8";
 }
 
+static void
+setup(MessageHandler *handler)
+{
+    int i;
+
+    rb_load_path = rb_ary_new();
+    rb_ary_push(rb_load_path, rb_str_new2(handler->loadpath));
+    for (i = 0; i < RARRAY(default_load_path)->len; i++) {
+        rb_ary_push(rb_load_path,
+                    rb_str_dup(RARRAY(default_load_path)->ptr[i]));
+    }
+    codeset = ConvCodeset(handler->conv);
+}
+
 static VALUE
 get_source_filename(char *class_name, char *path)
 {
@@ -1491,19 +1505,12 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
     Bool    rc;
     int state;
     ID handler_method;
-    int i;
 
     if (handler->loadpath == NULL) {
         fprintf(stderr, "loadpath is required\n");
         return FALSE;
     }
-    rb_load_path = rb_ary_new();
-    rb_ary_push(rb_load_path, rb_str_new2(handler->loadpath));
-    for (i = 0; i < RARRAY(default_load_path)->len; i++) {
-        rb_ary_push(rb_load_path,
-                    rb_str_dup(RARRAY(default_load_path)->ptr[i]));
-    }
-    codeset = ConvCodeset(handler->conv);
+    setup(handler);
     dc_module_value = GetItemLongName(node->mcprec->value, "dc.module");
     dc_module = ValueStringPointer(dc_module_value);
     app_class = load_application(handler->loadpath, dc_module);
@@ -1557,6 +1564,7 @@ execute_batch(MessageHandler *handler, char *name, char *param)
     int state;
 
     init();
+    setup(handler);
     app_class = load_application(handler->loadpath, name);
     if (NIL_P(app_class)) {
         fprintf(stderr, "%s is not found.", module);
