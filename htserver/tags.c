@@ -58,6 +58,8 @@ static char *enctype_multipart = "multipart/form-data";
 
 static char *ScriptName;
 
+#define IsTrue(s)  (*s == 'T' || *s == 't')
+
 static	char	*
 GetArg(
 	Tag		*tag,
@@ -187,11 +189,18 @@ _Entry(
 {
 	char	*name
 	,		*size
-	,		*maxlength;
+	,		*maxlength
+	,		*visible;
 
 dbgmsg(">_Entry");
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,"<input type=\"text\" name=\"");
+        if ((visible = GetArg(tag, "visible", 0)) != NULL &&
+            !IsTrue(visible)) {
+            LBS_EmitString(htc->code,"<input type=\"password\" name=\"");
+        }
+        else {
+            LBS_EmitString(htc->code,"<input type=\"text\" name=\"");
+        }
 
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(name));
@@ -646,7 +655,7 @@ dbgmsg(">_List");
             LBS_EmitString(htc->code,"\"");
         }
         if ((multiple = GetArg(tag,"multiple",0)) != NULL &&
-            *multiple == 'T') {
+            IsTrue(multiple)) {
             LBS_EmitString(htc->code," multiple");
         }
         JavaScriptEvent(htc, tag, "onchange");
@@ -975,6 +984,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"maxlength",TRUE);
+	AddArg(tag,"visible",TRUE);
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
