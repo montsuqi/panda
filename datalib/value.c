@@ -718,6 +718,7 @@ NumericToFixed(
 	if		(  fMinus  ) {
 		*to |= 0x40;
 	}
+	xfree(fr);
 	return	(to);
 }
 
