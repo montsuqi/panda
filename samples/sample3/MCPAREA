@@ -18,9 +18,12 @@
                 04  MCP-PNAME   PIC S9(9)   BINARY.
             02  MCP-PRIVATE.
               03  MCP-COUNT   PIC S9(9)   BINARY.
-              03  MCP-SWINDOW PIC X(64)   OCCURS  16 TIMES.
-              03  MCP-STATE   PIC X(1)    OCCURS  16 TIMES.
-              03  MCP-INDEX   PIC S9(9)   BINARY  OCCURS  16 TIMES.
+              03  MCP-SWINDOW
+                      PIC X(64)   OCCURS  16 TIMES.
+              03  MCP-STATE
+                      PIC X(1)    OCCURS  16 TIMES.
+              03  MCP-INDEX
+                      PIC S9(9)   BINARY  OCCURS  16 TIMES.
               03  MCP-PSTATUS PIC X(1).
               03  MCP-PPUTTYPE    PIC X(1).
               03  MCP-PRC PIC X(1).

@@ -143,6 +143,7 @@ dbgmsg(">ParSQL");
 		  case	T_ILIKE:
 			LBS_EmitString(sql,ComSymbol);
 			LBS_EmitSpace(sql);
+			LBS_Emit(sql,SQL_OP_ESC);
 			LBS_Emit(sql,SQL_OP_VCHAR);
 			GetSymbol;
 			break;
@@ -154,6 +155,7 @@ dbgmsg(">ParSQL");
 			break;
 		  case	T_INTO:
 			if		(  !fInsert  ) {
+				LBS_Emit(sql,SQL_OP_ESC);
 				LBS_Emit(sql,SQL_OP_INTO);
 				mark = MarkCode(sql);
 				into = 0;
@@ -166,9 +168,11 @@ dbgmsg(">ParSQL");
 			break;
 		  case	':':
 			if		(  fInto  ) {
+				LBS_Emit(sql,SQL_OP_ESC);
 				LBS_Emit(sql,SQL_OP_STO);
 				into ++;
 			} else {
+				LBS_Emit(sql,SQL_OP_ESC);
 				LBS_Emit(sql,SQL_OP_REF);
 			}
 			if		(  GetName  ==  T_SYMBOL  ) {
@@ -228,6 +232,7 @@ dbgmsg(">ParSQL");
 				}
 				SeekCode(sql,current);
 			}
+			LBS_Emit(sql,SQL_OP_ESC);
 			LBS_Emit(sql,SQL_OP_EOL);
 			GetSymbol;
 			fInto = FALSE;
@@ -241,6 +246,7 @@ dbgmsg(">ParSQL");
 		  case	'~':
 			LBS_EmitChar(sql,'~');
 			LBS_EmitSpace(sql);
+			LBS_Emit(sql,SQL_OP_ESC);
 			LBS_Emit(sql,SQL_OP_VCHAR);
 			GetSymbol;
 			break;
@@ -300,13 +306,11 @@ DumpSQL(
 	sql = path->ops[ix-1];
 	if		(  sql  !=  NULL  ) {
 		while	(  ( c = FetchByte(sql) )  >=  0  ) {
-			if		(  c  < 0x7F  ) {
+			if		(  c  !=  SQL_OP_ESC  ) {
 				printf("%c",c);
 			} else {
+				c = FetchByte(sql);
 				switch	(c) {
-				  case	SQL_OP_MSB:
-					printf("%c",c | 0x80);
-					break;
 				  case	SQL_OP_INTO:
 					printf("$into\n");
 					val = (ValueStruct *)FetchPointer(sql);

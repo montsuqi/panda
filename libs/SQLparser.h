@@ -25,14 +25,13 @@ copies.
 #include	"libmondai.h"
 #include	"struct.h"
 
-#define	SQL_OP_EOS		0
-#define	SQL_OP_MSB		LBS_QUOTE_MSB
-#define	SQL_OP_INTO		0x81
-#define	SQL_OP_REF		0x82
-#define	SQL_OP_STO		0x83
-#define	SQL_OP_ASTER	0x84
-#define	SQL_OP_EOL		0x85
-#define	SQL_OP_VCHAR	0x86
+#define	SQL_OP_ESC		0x00
+#define	SQL_OP_INTO		0x01
+#define	SQL_OP_REF		0x02
+#define	SQL_OP_STO		0x03
+#define	SQL_OP_ASTER	0x04
+#define	SQL_OP_EOL		0x05
+#define	SQL_OP_VCHAR	0x06
 
 extern	LargeByteString	*ParSQL(RecordStruct *rec);
 extern	void			SQL_ParserInit(void);

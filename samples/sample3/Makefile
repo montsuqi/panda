@@ -5,7 +5,7 @@ clean:
 	rm -f LINKAREA SPAAREA SCRAREA.SE
 
 TOP			=	$(shell pwd)
-TOOLDIR		= 	/home/ogochan/panda/tools
+TOOLDIR		= 	/home/ogochan/MONTSUQI/panda/tools
 
 LDNAME	=	sample
 
@@ -18,7 +18,7 @@ LDFILE		=	$(TOP)/$(LDNAME).ld
 SCRREC		=	$(TOP)/list.rec
 
 DBGEN = $(TOOLDIR)/dbgen -record $(TOP)
-COPYGEN = $(TOOLDIR)/copygen -dir $(DIRECTORY) -lddir $(TOP) -record $(TOP)
+COPYGEN = $(TOOLDIR)/copygen -dir $(DIRECTORY) -ddir $(TOP) -record $(TOP)
 
 SAMPLE_SRC =	SAMPLE1.CBL SAMPLEB.CBL ORCGH01.CBL ORCGHID1.CBL
 

@@ -675,9 +675,10 @@ dbgmsg(">ExecPGSQL");
 	tuple = NULL;
 	fIntoAster = FALSE;
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
-		if		(  c  < 0x7F  ) {
+		if		(  c  !=  SQL_OP_ESC  ) {
 			p += sprintf(p,"%c",c);
 		} else {
+			c = LBS_FetchByte(src);
 			switch	(c) {
 			  case	SQL_OP_INTO:
 				n = LBS_FetchInt(src);

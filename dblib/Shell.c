@@ -117,19 +117,23 @@ dbgmsg(">DoShell");
 	printf("%s\n",command);
 	printf("----------------------------------------\n");
 #endif
-	if		(  ( pid = fork() )  ==  0  )	{
-		if		(  ( sh = getenv("SHELL") )  ==  NULL  ) {
-			sh = "/bin/sh";
+	if		(  *command  !=  0  ) {
+		if		(  ( pid = fork() )  ==  0  )	{
+			if		(  ( sh = getenv("SHELL") )  ==  NULL  ) {
+				sh = "/bin/sh";
+			}
+			argv[0] = sh;
+			argv[1] = "-c";
+			argv[2] = command;
+			argv[3] = NULL;
+			execve(sh, argv, environ);
+			rc = MCP_BAD_OTHER;
+		} else
+		if		(  pid  <  0  ) {
+			rc = MCP_BAD_OTHER;
+		} else {
+			rc = MCP_OK;
 		}
-		argv[0] = sh;
-		argv[1] = "-c";
-		argv[2] = command;
-		argv[3] = NULL;
-		execve(sh, argv, environ);
-		rc = MCP_BAD_OTHER;
-	} else
-	if		(  pid  <  0  ) {
-		rc = MCP_BAD_OTHER;
 	} else {
 		rc = MCP_OK;
 	}
@@ -143,17 +147,20 @@ _DBCOMMIT(
 	DBCOMM_CTRL	*ctrl)
 {
 	int			rc;
-	char		*command;
+	char		*p
+	,			*q;
+	int			c;
 
 dbgmsg(">_DBCOMMIT");
 	LBS_EmitEnd(dbg->conn);
-	command = (char *)LBS_Body(dbg->conn); 
-	if		(	(  command   !=  NULL  )
-			&&	(  *command  !=  0     ) ) {
-		rc = DoShell(command);
-	} else {
-		rc = MCP_OK;
+	RewindLBS(dbg->conn);
+	p = (char *)LBS_Body(dbg->conn);
+	while	(  ( q = strchr(p,0xFF) )  !=  NULL  ) {
+		*q = 0;
+		rc += DoShell(p);
+		p = q + 1;
 	}
+	rc += DoShell(p);
 	LBS_Clear(dbg->conn);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
@@ -223,21 +230,24 @@ dbgmsg(">ExecShell");
 		printf("function \"%s\" is not found.\n",ctrl->func);
 		exit(1);
 	}
+	RewindLBS(src);
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
-		switch	(c) {
-		  case	SQL_OP_REF:
-			val = (ValueStruct *)LBS_FetchPointer(src);
-			InsertValue(dbg,dbg->conn,val);
-			break;
-		  case	SQL_OP_EOL:
-			LBS_EmitChar(dbg->conn,';');
-			break;
-		  case	0:
-			LBS_EmitChar(dbg->conn,' ');
-			break;
-		  default:
+		if		(  c  !=  SQL_OP_ESC  ) {
 			LBS_EmitChar(dbg->conn,c);
-			break;
+		} else {
+			c = LBS_FetchByte(src);
+			switch	(c) {
+			  case	SQL_OP_REF:
+				val = (ValueStruct *)LBS_FetchPointer(src);
+				InsertValue(dbg,dbg->conn,val);
+				break;
+			  case	SQL_OP_EOL:
+			  case	0:
+				LBS_EmitChar(dbg->conn,0xFF);
+				break;
+			  default:
+				break;
+			}
 		}
 	}
 dbgmsg("<ExecShell");
