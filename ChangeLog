@@ -1,5 +1,7 @@
 2004-10-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* dblib/PostgreSQL.c (_DBCLOSECURSOR): cursor closeのdefault
+
 	* libs/DIparser.c (BuildMcpArea): mcprecの構造変更(文字列でのパス指定)
 
 	* aps/C.c (MCP_ExecFunction): MakeCTRLbyNameを使うように
@@ -13,8 +15,6 @@
 	* aps/handler.c (CallAfter): fromwinを正しくした
 
 2004-10-08  Masami Ogoshi  <ogochan@nurs.or.jp>
-
-	* glserver/glserver.c (SetDefault): veryfypeerをデフォルトにした
 
 	* glclient/client.c (SetDefault): veryfypeerをデフォルトにした
 

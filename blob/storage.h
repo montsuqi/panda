@@ -37,15 +37,13 @@ extern	Bool		OsekiTransactionStart(OsekiSession *state);
 extern	Bool		OsekiTransactionCommit(OsekiSession *state);
 extern	Bool		OsekiTransactionAbort(OsekiSession *state);
 
-extern	ObjectType	InitiateObject(OsekiSession *state,
-								   void *buff, size_t size);
-extern	ssize_t		GetObject(OsekiSession *state, ObjectType obj,
-							  void *buff, size_t size);
-extern	ssize_t		PutObject(OsekiSession *state, ObjectType obj,
-							  void *buff, size_t size);
+extern	ObjectBody	*NewObjectBody(size_t size, byte *body);
+extern	void		DestroyObjectBody(ObjectBody *obj);
 
-extern	Bool		CheckInstall(OsekiSession *ses, char *name);
-extern	void		InstallObject(OsekiSession *ses, char *name,
-								  ObjectType obj);
+extern	ObjectType	InitiateObject(OsekiSession *state, byte *buff, size_t size);
+extern	ObjectBody	*GetObject(OsekiSession *state, ObjectType obj);
+extern	ssize_t		GetObjectCopy(OsekiSession *state, ObjectType obj,
+								  void *buff, size_t size);
+extern	void		PutObject(OsekiSession *state, ObjectType obj, byte *buff, size_t size);
 
 #endif

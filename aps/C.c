@@ -80,8 +80,8 @@ LoadModule(
 	char	*path,
 	char	*name)
 {
-	char		funcname[SIZE_BUFF]
-	,			filename[SIZE_BUFF];
+	char		funcname[SIZE_LONGNAME+1]
+	,			filename[SIZE_LONGNAME+1];
 	void		*f_main;
 	void		(*f_init)(void);
 	void		*handle;

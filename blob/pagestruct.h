@@ -118,6 +118,8 @@ typedef	struct {
 	ObjectType		root;
 }	OsekiHeaderPage;
 
+#define	SIZE_RESOLUTION		sizeof(size_t)
+
 #if	0
 #define	ROUND_TO(p,s)	(p)
 #else

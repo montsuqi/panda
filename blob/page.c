@@ -47,6 +47,7 @@ copies.
 #include	"pagestruct.h"
 #include	"storage.h"
 #include	"table.h"
+#include	"core.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -413,12 +414,19 @@ GetFreePage(
 
 ENTER_FUNC;
 	space = ses->space;
-	space->freedata = GetPage(ses,ses->objs->freedata);
+	(void)GetPage(ses,ses->objs->freedata);
+	space->freedata = UpdatePage(ses,ses->objs->freedata);
 	no = 0;
+#ifdef	DEBUG
+	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
+		if		(  space->freedata[i]  !=  0  ) {
+			printf("free page = %lld\n",space->freedata[i]);
+		}
+	}
+#endif
 	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
 		if		(  space->freedata[i]  !=  0  ) {
 			no = space->freedata[i];
-			space->freedata = UpdatePage(ses,ses->objs->freedata);
 			space->freedata[i] = 0;
 			break;
 		}
@@ -442,14 +450,22 @@ ReturnPage(
 ENTER_FUNC;
 dbgprintf("return = [%lld]\n",no);
 	space = ses->space;
-	space->freedata = GetPage(ses,ses->objs->freedata);
+	(void)GetPage(ses,ses->objs->freedata);
+	space->freedata = UpdatePage(ses,ses->objs->freedata);
 	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
+		if		(  space->freedata[i]  ==  no  )	break;
 		if		(  space->freedata[i]  ==  0  ) {
-			space->freedata = UpdatePage(ses,ses->objs->freedata);
 			space->freedata[i] = no;
 			break;
 		}
 	}
+#ifdef	DEBUG
+	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
+		if		(  space->freedata[i]  !=  0  ) {
+			printf("free page = %lld\n",space->freedata[i]);
+		}
+	}
+#endif
 LEAVE_FUNC;
 }
 
@@ -641,6 +657,7 @@ ENTER_FUNC;
 			}
 			DisConnectOseki(recover);
 		}
+		//InitializeModules(space);
 	} else {
 		space = NULL;
 	}

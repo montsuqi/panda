@@ -46,7 +46,7 @@ LoadFile(
 	char	*name)
 {
 	char	buff[SIZE_BUFF]
-	,		filename[SIZE_BUFF];
+		,	filename[SIZE_LONGNAME+1];
 	char	*p
 	,		*q;
 	void	*ret;
