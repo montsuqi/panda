@@ -188,6 +188,27 @@ ENTER_FUNC;
 			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
 		}
 		break;
+	  case	BLOB_START:
+		if		(  StartBLOB(blob)  ) {
+			SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
+		} else {
+			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
+		}
+		break;
+	  case	BLOB_COMMIT:
+		if		(  CommitBLOB(blob)  ) {
+			SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
+		} else {
+			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
+		}
+		break;
+	  case	BLOB_ABORT:
+		if		(  AbortBLOB(blob)  ) {
+			SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
+		} else {
+			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
+		}
+		break;
 	  default:
 		break;
 	}

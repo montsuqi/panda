@@ -138,6 +138,27 @@ DisConnectBLOB_V1(
 	xfree(state);
 }
 
+extern	Bool
+StartBLOB_V1(
+	BLOB_V1_State	*state)
+{
+	return	(TRUE);
+}
+
+extern	Bool
+CommitBLOB_V1(
+	BLOB_V1_State	*state)
+{
+	return	(TRUE);
+}
+
+extern	Bool
+AbortBLOB_V1(
+	BLOB_V1_State	*state)
+{
+	return	(TRUE);
+}
+
 extern	MonObjectType
 NewBLOB_V1(
 	BLOB_V1_State	*state,

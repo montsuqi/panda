@@ -44,6 +44,9 @@ copies.
 #define	BLOB_WRITE			(PacketClass)0x09
 #define	BLOB_CLOSE			(PacketClass)0x0A
 #define	BLOB_SEEK			(PacketClass)0x0B
+#define	BLOB_START			(PacketClass)0x0C
+#define	BLOB_COMMIT			(PacketClass)0x0D
+#define	BLOB_ABORT			(PacketClass)0x0E
 
 #define	BLOB_OK				(PacketClass)0xFE
 #define	BLOB_NOT			(PacketClass)0xF0

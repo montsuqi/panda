@@ -1,3 +1,7 @@
+2004-08-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/blobreq.c, wfc/blobserv.c, blob/blob_v1.c : APIの整理
+
 2004-08-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfcの初期化シーケンスの時にはSendStringDelim/RecvStringDelimを使

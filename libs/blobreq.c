@@ -335,3 +335,60 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
+extern	Bool
+RequestStartBLOB(
+	NETFILE	*fp,
+	PacketClass		flag)
+{
+	Bool	rc;
+
+ENTER_FUNC;
+	rc = FALSE;
+	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
+	RequestBLOB(fp,BLOB_START);			ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+		rc = TRUE;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	Bool
+RequestCommitBLOB(
+	NETFILE	*fp,
+	PacketClass		flag)
+{
+	Bool	rc;
+
+ENTER_FUNC;
+	rc = FALSE;
+	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
+	RequestBLOB(fp,BLOB_COMMIT);		ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+		rc = TRUE;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	Bool
+RequestAbortBLOB(
+	NETFILE	*fp,
+	PacketClass		flag)
+{
+	Bool	rc;
+
+ENTER_FUNC;
+	rc = FALSE;
+	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
+	RequestBLOB(fp,BLOB_ABORT);			ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+		rc = TRUE;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(rc);
+}
+

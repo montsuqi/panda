@@ -30,6 +30,10 @@ copies.
 #define	FinishBLOB_V1		FinishBLOB
 #define	ConnectBLOB_V1		ConnectBLOB
 #define	DisConnectBLOB_V1	DisConnectBLOB
+#define	StartBLOB_V1		StartBLOB
+#define	CommitBLOB_V1		CommitBLOB
+#define	AbortBLOB_V1		AbortBLOB
+
 #define	NewBLOB_V1			NewBLOB
 #define	OpenBLOB_V1			OpenBLOB
 #define	DestroyBLOB_V1		DestroyBLOB
@@ -65,6 +69,10 @@ extern	BLOB_V1_Space	*InitBLOB_V1(char *space);
 extern	void			FinishBLOB_V1(BLOB_V1_Space *blob);
 extern	BLOB_V1_State	*ConnectBLOB_V1(BLOB_V1_Space *blob);
 extern	void			DisConnectBLOB_V1(BLOB_V1_State *state);
+extern	Bool			StartBLOB_V1(BLOB_V1_State *state);
+extern	Bool			CommitBLOB_V1(BLOB_V1_State *state);
+extern	Bool			AbortBLOB_V1(BLOB_V1_State *state);
+
 extern	MonObjectType	NewBLOB_V1(BLOB_V1_State *state, int mode);
 extern	Bool			OpenBLOB_V1(BLOB_V1_State *state, MonObjectType obj, int mode);
 extern	Bool			DestroyBLOB_V1(BLOB_V1_State *state, MonObjectType obj);

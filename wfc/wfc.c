@@ -120,7 +120,7 @@ ExecuteServer(void)
     int		ret;
 	struct	timespec	timeout;
 
-dbgmsg(">ExecuteServer");
+ENTER_FUNC;
 	_fhTerm = InitServerPort(WfcPort,Back);
 	maxfd = _fhTerm;
 	_fhAps = InitServerPort(ApsPort,Back);
@@ -174,7 +174,7 @@ dbgmsg(">ExecuteServer");
 			ConnectBlob(_fhBlob);
 		}
 	}	while	(!fShutdown);
-dbgmsg("<ExecuteServer");
+LEAVE_FUNC;
 }
 
 
@@ -260,6 +260,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
+ENTER_FUNC;
 	PortNumber = NULL;
 	ApsPortNumber = NULL;
 	Back = 5;
@@ -269,6 +270,7 @@ SetDefault(void)
 	Directory = "./directory";
 	MaxRetry = 0;
 	ControlPort = NULL;
+LEAVE_FUNC;
 }
 
 extern	int
@@ -279,20 +281,22 @@ main(
 	int			rc;
     sigset_t sigmask;
 
+ENTER_FUNC;
     sigemptyset(&sigmask);
     sigaddset(&sigmask, SIGUSR1);
     sigprocmask(SIG_BLOCK, &sigmask, &SigMask);
 
 	(void)signal(SIGPIPE, SIG_IGN);
 	signal(SIGUSR1,(void *)StopSystem);
+	InitMessage("wfc",NULL);
 
 	SetDefault();
 	GetOption(option,argc,argv);
-	InitMessage("wfc",NULL);
 
 	InitSystem();
 	ExecuteServer();
 	CleanUp();
 	rc = 0;
+LEAVE_FUNC;
 	return	(rc);
 }

@@ -39,7 +39,9 @@ extern	MonObjectType	RequestImportBLOB(NETFILE *fp, PacketClass flag, char *fnam
 extern	Bool	RequestSaveBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *fname);
 extern	Bool	RequestCheckBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
 extern	Bool	RequestDestroyBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
-
+extern	Bool	RequestStartBLOB(NETFILE *fp, PacketClass flag);
+extern	Bool	RequestCommitBLOB(NETFILE *fp, PacketClass flag);
+extern	Bool	RequestAbortBLOB(NETFILE *fp, PacketClass flag);
 
 #undef	GLOBAL
 #ifdef	MAIN
