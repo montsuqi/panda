@@ -74,7 +74,7 @@ static VALUE cRecordValue;
 static VALUE cRecordStruct;
 static VALUE cProcessNode;
 static VALUE cTable;
-static VALUE cPath;
+static VALUE cDatabase;
 
 #define TAG_RETURN	0x1
 #define TAG_BREAK	0x2
@@ -502,6 +502,8 @@ typedef struct _record_struct_data {
     VALUE value;
 } record_struct_data;
 
+#define RECORD_STRUCT(x) (((struct _record_struct_data *) x)->rec)
+
 static void
 rec_mark(record_struct_data *data)
 {
@@ -526,7 +528,7 @@ rec_name(VALUE self)
     record_struct_data *data;
 
     Data_Get_Struct(self, record_struct_data, data);
-    return rb_str_new2(data->rec->name);
+    return rb_str_new2(RECORD_STRUCT(data)->name);
 }
 
 static VALUE
@@ -653,6 +655,124 @@ procnode_windows(VALUE self)
     return data->windows;
 }
 
+typedef struct _table_data {
+    record_struct_data rec;
+    int no;
+    VALUE paths;
+} table_data;
+
+static VALUE
+table_mark(table_data *data)
+{
+    rec_mark(&data->rec);
+    rb_gc_mark(data->paths);
+}
+
+static VALUE
+table_new(int no, RecordStruct *rec)
+{
+    VALUE obj;
+    table_data *data;
+
+    obj = Data_Make_Struct(cTable, table_data,
+                           table_mark, free, data);
+    data->rec.rec = rec;
+    data->rec.value = recval_new(rec->value);
+    data->no = no;
+    data->paths = rb_hash_new();
+    return obj;
+}
+
+static VALUE
+table_exec(int argc, VALUE *argv, VALUE self)
+{
+    table_data *data;
+    VALUE funcname, pathname;
+    char *func, *pname;
+	DBCOMM_CTRL ctrl;
+	PathStruct *path;
+	int no;
+	size_t size;
+
+    Data_Get_Struct(self, table_data, data);
+    if (rb_scan_args(argc, argv, "11", &funcname, &pathname) < 2) {
+        pname = NULL;
+    }
+    else {
+        pname = StringValuePtr(pathname);
+    }
+    func = StringValuePtr(funcname);
+
+	ctrl.rno = data->no;
+	ctrl.pno = 0;
+	ctrl.blocks = 0;
+
+    if (pname != NULL) {
+        no = (int) g_hash_table_lookup(RECORD_STRUCT(data)->opt.db->paths, pname);
+        if (no != 0) {
+            ctrl.pno = no - 1;
+        }
+    }
+    size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
+    ctrl.blocks = ((size + sizeof(DBCOMM_CTRL)) / SIZE_BLOCK) + 1;
+	strcpy(ctrl.func, func);
+	ExecDB_Process(&ctrl, RECORD_STRUCT(data), RECORD_STRUCT(data)->value);
+    return INT2NUM(ctrl.rc);
+}
+
+typedef struct _database_data {
+    GHashTable *indices;
+    RecordStruct **tables;
+    VALUE cache;
+} database_data;
+
+static void
+database_mark(database_data *data)
+{
+    rb_gc_mark(data->cache);
+}
+
+static VALUE
+database_new(GHashTable *indices, RecordStruct **tables)
+{
+    VALUE obj;
+    database_data *data;
+
+    obj = Data_Make_Struct(cDatabase, database_data,
+                           database_mark, free, data);
+    data->indices = indices;
+    data->tables = tables;
+    data->cache = rb_hash_new();
+    return obj;
+}
+
+static VALUE
+database_aref(VALUE self, VALUE name)
+{
+    VALUE obj;
+    database_data *data;
+    ValueStruct *val;
+    int no, table_no;
+    RecordStruct *rec;
+
+    Data_Get_Struct(self, database_data, data);
+
+    if (!NIL_P(obj = rb_hash_aref(data->cache, name)))
+        return obj;
+
+    no = (int) g_hash_table_lookup(data->indices,
+                                   StringValuePtr(name));
+    if (no == 0) {
+        return Qnil;
+    }
+
+    table_no = no - 1;
+    rec = data->tables[table_no];
+    obj = table_new(table_no, rec);
+    rb_hash_aset(data->cache, name, obj);
+    return obj;
+}
+
 static void
 init()
 {
@@ -675,6 +795,7 @@ init()
     rb_define_method(cRecordValue, "[]", recval_aref, 1);
     rb_define_method(cRecordValue, "[]=", recval_aset, 2);
     cRecordStruct = rb_define_class_under(mPanda, "RecordStruct", rb_cObject);
+    rb_define_method(cRecordStruct, "name", rec_name, 0);
     rb_define_method(cRecordStruct, "length", rec_length, 0);
     rb_define_method(cRecordStruct, "size", rec_length, 0);
     rb_define_method(cRecordStruct, "[]", rec_aref, 1);
@@ -686,6 +807,15 @@ init()
     rb_define_method(cProcessNode, "link", procnode_link, 0);
     rb_define_method(cProcessNode, "spa", procnode_spa, 0);
     rb_define_method(cProcessNode, "windows", procnode_windows, 0);
+    cTable = rb_define_class_under(mPanda, "Table", rb_cObject);
+    rb_define_method(cTable, "name", rec_name, 0);
+    rb_define_method(cTable, "length", rec_length, 0);
+    rb_define_method(cTable, "size", rec_length, 0);
+    rb_define_method(cTable, "[]", rec_aref, 1);
+    rb_define_method(cTable, "[]=", rec_aset, 2);
+    rb_define_method(cTable, "exec", table_exec, -1);
+    cDatabase = rb_define_class_under(mPanda, "Database", rb_cObject);
+    rb_define_method(cDatabase, "[]", database_aref, 1);
 
     application_classes = rb_hash_new();
     rb_gc_register_address(&application_classes);
@@ -751,7 +881,8 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
     app = rb_protect_funcall(app_class, rb_intern("new"), &state, 0);
     if (state && error_handle(state))
         return FALSE;
-    rb_protect_funcall(app, rb_intern("start"), &state, 1, procnode_new(node));
+    rb_protect_funcall(app, rb_intern("start"), &state,
+                       2, procnode_new(node), database_new(DB_Table, ThisDB));
     if (state && error_handle(state))
         return FALSE;
     if (ValueInteger(GetItemLongName(node->mcprec->value, "rc")) < 0) {
