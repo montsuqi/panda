@@ -976,6 +976,9 @@ ExecPGSQL(
 	,		ntuples;
 	ExecStatusType	status;
 	Bool	fIntoAster;
+	char	buff[SIZE_LONGNAME+1]
+		,	*p
+		,	*q;
 
 ENTER_FUNC;
 	dbg =  rec->opt.db->dbg;
@@ -994,6 +997,26 @@ ENTER_FUNC;
 		} else {
 			c = LBS_FetchByte(src);
 			switch	(c) {
+			  case	SQL_OP_SYMBOL:
+				p = buff;
+				while	(  ( c = LBS_FetchByte(src) )  !=  ' ' ) {
+					*p ++ = c;
+				}
+				*p = 0;
+				if		(  ( q = strchr(buff,'.') )  !=  NULL  ) {
+					*q ++ = 0;
+					LBS_EmitString(sql,buff);
+					if		(  strcmp(buff,rec->name)  ==  0  ) {
+						LBS_EmitChar(sql,'.');
+					} else {
+						LBS_EmitChar(sql,'_');
+					}
+					LBS_EmitString(sql,q);
+				} else {
+					LBS_EmitString(sql,buff);
+				}
+				LBS_EmitSpace(sql);
+				break;
 			  case	SQL_OP_INTO:
 				n = LBS_FetchInt(src);
 				if		(  n  >  0  ) {

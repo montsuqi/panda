@@ -116,7 +116,7 @@ RecvLargeString(
 	int		c;
 
 ENTER_FUNC;
-	RewindLBS(lbs);
+	LBS_Clear(lbs);
 	while	(	(  ( c = RecvChar(fp) )  >=  0     )
 			&&	(  c                     !=  '\n'  ) )	{
 		LBS_EmitChar(lbs,c);

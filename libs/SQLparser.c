@@ -134,18 +134,15 @@ ENTER_FUNC;
 	while	( ComToken != '}' ) {
 		switch	(ComToken) {
 		  case	T_SYMBOL:
-			if		(  ( val = GetRecordItem(rec->value,ComSymbol) )  !=  NULL  ) {
-				do {
-					LBS_EmitString(sql,ComSymbol);
-					if		(  GetSymbol  ==  '.'  ) {
-						LBS_EmitChar(sql,'_');
-						GetSymbol;
-					}
-				}	while	(  ComToken  ==  T_SYMBOL  );
-			} else {
+			LBS_Emit(sql,SQL_OP_ESC);
+			LBS_Emit(sql,SQL_OP_SYMBOL);
+			do {
 				LBS_EmitString(sql,ComSymbol);
-				GetSymbol;
-			}
+				if		(  GetSymbol  ==  '.'  ) {
+					LBS_EmitChar(sql,'.');
+					GetSymbol;
+				}
+			}	while	(  ComToken  ==  T_SYMBOL  );
 			LBS_EmitSpace(sql);
 			break;
 		  case	T_SCONST:

@@ -20,7 +20,7 @@ db_group	"ORCA"	{
 	type	"PostgreSQL";
 	port	"localhost";
 	name	"ORCA";
-	redirect		"log";
+#	redirect		"log";
 };
 
 db_group	"system"	{

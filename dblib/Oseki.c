@@ -295,10 +295,12 @@ GetTable(
 	OsekiClientSession	*ses = OS_CONN(dbg);
 
 ENTER_FUNC;
-	OsekiReadData(ses,OsekiResult(ses),NULL,NULL);
-	p = LBS_Body(OsekiBuff(ses));
-	for	( i = 0 ; i < items ; i ++ ) {
-		p += NativeUnPackValue(NULL,p,tuple[i]);
+	if		(  OsekiReadData(ses,OsekiResult(ses),NULL,NULL)  ==  0  ) {
+		p = LBS_Body(OsekiBuff(ses));
+		for	( i = 0 ; i < items ; i ++ ) {
+			p += NativeUnPackValue(NULL,p,tuple[i]);
+DumpValueStruct(tuple[i]);
+		}
 	}
 LEAVE_FUNC;
 }
@@ -337,6 +339,12 @@ ENTER_FUNC;
 		} else {
 			c = LBS_FetchByte(src);
 			switch	(c) {
+			  case	SQL_OP_SYMBOL:
+				while	(  ( c = LBS_FetchByte(src) )  !=  ' ' ) {
+					LBS_EmitChar(sql,c);
+				}
+				LBS_EmitChar(sql,c);
+				break;
 			  case	SQL_OP_INTO:
 				n = LBS_FetchInt(src);
 				if		(  n  >  0  ) {
@@ -376,6 +384,8 @@ ENTER_FUNC;
 					if		(  OsekiIsData(OS_CONN(dbg))  )	{
 						GetTable(dbg,tuple,items);
 						ctrl->rc += MCP_OK;
+					} else {
+						ctrl->rc += MCP_EOF;
 					}
 				}
 				break;
@@ -586,9 +596,12 @@ ENTER_FUNC;
 			} else {
 				if		(  OsekiIsData(ses)  ) {
 					dbgmsg("OK");
-					OsekiReadData(ses,OsekiResult(ses),NULL,NULL);
-					NativeUnPackValue(NULL,LBS_Body(OsekiBuff(ses)),args);
-					ctrl->rc = MCP_OK;
+					if		(  OsekiReadData(ses,OsekiResult(ses),NULL,NULL)  ==  0  ) {
+						NativeUnPackValue(NULL,LBS_Body(OsekiBuff(ses)),args);
+						ctrl->rc = MCP_OK;
+					} else {
+						ctrl->rc = MCP_EOF;
+					}
 				} else {
 					dbgmsg("EOF");
 					ctrl->rc = MCP_EOF;

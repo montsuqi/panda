@@ -1,3 +1,8 @@
+2005-03-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/SQLparser.c (ParSQL): 構造がある場合に勝手なmanglingをやめ
+	た(各DBハンドラにさせる)
+
 2005-02-24  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/fileEntry.[ch]: GnomeFileEntry の動作を変更追加。

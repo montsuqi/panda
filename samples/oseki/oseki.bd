@@ -13,8 +13,13 @@ handler	"Ruby"	{
 # bind <module name> <hander name> ;
 
 bind	"Sample"		"Ruby";
+bind	"Sample2"		"Ruby";
 
 db	"Oseki"	{
+	vwords;
+	words;
+	mean;
+	deep;
 	metadb;
 	memo;
 };

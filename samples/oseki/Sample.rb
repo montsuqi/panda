@@ -6,10 +6,13 @@ class Sample
 	db.open
 	db.start
 	memo = db["memo"]
-	memo.each("memo", "memo" => "国語") do | memo |
-#	memo.each("memo", "memo" => "title1") do | memo |
+#	memo.each("memo", "memo" => "国語") do | memo |
+	memo.each("memo", "memo" => "title1") do | memo |
 	  printf("%s:%s\n",Uconv.u8toeuc(memo.title), Uconv.u8toeuc(memo.body));
-#	  printf("%s:%s\n",memo.title, memo.body);
+	end
+	memo = db["memo"]
+	memo.each("all") do | memo |
+	  printf("%s:%s\n",Uconv.u8toeuc(memo.title), Uconv.u8toeuc(memo.body));
 	end
 	db.commit
 	db.disconnect

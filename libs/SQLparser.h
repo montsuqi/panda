@@ -35,6 +35,7 @@ copies.
 #define	SQL_OP_ASTER	0x04
 #define	SQL_OP_EOL		0x05
 #define	SQL_OP_VCHAR	0x06
+#define	SQL_OP_SYMBOL	0x07
 
 extern	LargeByteString	*ParSQL(CURFILE *in,RecordStruct *rec, ValueStruct *argp,
 								ValueStruct *argf);
