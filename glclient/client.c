@@ -168,6 +168,9 @@ extern	void
 ExitSystem(void)
 {
 	GL_SendPacketClass(fpComm,GL_END);
+	if		(  fMlog  ) {
+		MessageLog("connection end\n");
+	}
 }
 
 static	void
@@ -221,6 +224,10 @@ start_client ()
 	StyleParser("gltermrc");
 	if		(  *Style  !=  0  ) {
 		StyleParser(Style);
+	}
+
+	if		(  fMlog  ) {
+		MessageLog("connection start\n");
 	}
 
     if (*Gtkrc != '\0') {

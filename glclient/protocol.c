@@ -441,6 +441,7 @@ ENTER_FUNC;
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		fp = Fopen(fname,"w");
+		fchmod(fileno(fp),0600);
 		left = (size_t)GL_RecvLong(fpC);
 		do {
 			if		(  left  >  SIZE_BUFF  ) {

@@ -196,6 +196,7 @@ ENTER_FUNC;
 	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
 		if		(  ( fpf = Fopen(fname,"w") )  !=  NULL  ) {
+			fchmod(fileno(fpf),0600);
 			left = RecvLength(fp);
 			while	(  left  >  0  ) {
 				size = (  left  >  SIZE_BUFF  ) ? SIZE_BUFF : left;

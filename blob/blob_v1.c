@@ -252,6 +252,7 @@ ENTER_FUNC;
 			fprintf(stderr,"version mismatch\n");
 			exit(1);
 		}
+		fchmod(fileno(fp),0600);
 		blob = New(BLOB_V1_Space);
 		blob->space = StrDup(space);
 		blob->fp = fp;

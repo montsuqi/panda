@@ -99,7 +99,7 @@ Send(
 			fp->fSent = FALSE;
 		}
 	} else {
-		ret = 0;
+		ret = -1;
 	}
 	return	(ret);
 }
@@ -130,7 +130,7 @@ Recv(
 			}
 		}
 	} else {
-		ret = 0;
+		ret = -1;
 	}
 	fp->fSent = FALSE;
 	return	(ret);
