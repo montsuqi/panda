@@ -805,6 +805,8 @@ _Panel(
 	Tag		*tag)
 {
 	char	*visible;
+    int		has_style;
+
 dbgmsg(">_Panel");
     if ((visible = GetArg(tag, "visible", 0)) == NULL) {
         Push(0);
@@ -817,9 +819,17 @@ dbgmsg(">_Panel");
         Push(LBS_GetPos(htc->code));
         LBS_EmitInt(htc->code, 0);
     }
-	LBS_EmitString(htc->code,"<div");
+    has_style =
+        GetArg(tag, "id", 0) !=  NULL ||
+        GetArg(tag, "class", 0) !=  NULL;
+    if (has_style) {
+        LBS_EmitString(htc->code,"<div");
+    }
     Style(htc,tag);
-    LBS_EmitString(htc->code,">");
+    if (has_style) {
+        LBS_EmitString(htc->code,">");
+    }
+    Push(has_style);
 dbgmsg("<_Panel");
 }
 
@@ -828,7 +838,9 @@ _ePanel(HTCInfo *htc, Tag *tag)
 {
     size_t jnzp_pos, pos;
 dbgmsg(">_ePanel");
-	LBS_EmitString(htc->code, "</div>");
+    if (Pop) { 
+        LBS_EmitString(htc->code, "</div>");
+    }
     if ((jnzp_pos = Pop) != 0) {
         pos = LBS_GetPos(htc->code);
         LBS_SetPos(htc->code, jnzp_pos);
