@@ -20,9 +20,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -413,7 +413,7 @@ ThisAuth(
 			&&	(  fVerify  ) ) {
 		ret = TRUE;
 	} else {
-		ret = AuthUser(user,pass,other);
+		ret = AuthUser(&Auth,user,pass,other);
 	}
 	return	(ret);
 }

@@ -22,6 +22,7 @@ copies.
 
 #ifndef	_SERVER_H
 #define	_SERVER_H
+#include	"port.h"
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -32,6 +33,7 @@ copies.
 
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
+GLOBAL	URL		Auth;
 
 extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);

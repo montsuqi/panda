@@ -60,6 +60,8 @@ static	sigset_t	hupset;
 static	char		*PortNumber;
 static	int			Back;
 static	char	*Directory;
+static	char		*AuthURL;
+static	URL			Auth;
 
 static	void
 InitSystem(
@@ -145,7 +147,7 @@ dbgmsg(">InitSession");
 		xfree(ses);
 		ses = NULL;
 	} else
-	if		(  AuthUser(ses->user,pass,NULL)  ) {
+	if		(  AuthUser(&Auth,ses->user,pass,NULL)  ) {
 		SendStringDelim(fpComm,"Connect: OK\n");
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
@@ -400,6 +402,7 @@ do_String(
 		}
 		strcpy(ctrl.func,func);
 		RecvData(fpComm);
+		ctrl.rc = 0;
 		ExecDB_Process(&ctrl,rec);
 		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
 		WriteClientString(fpComm,fType,&ctrl);

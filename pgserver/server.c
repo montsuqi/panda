@@ -194,7 +194,7 @@ dbgmsg(">MainLoop");
 			SendStringDelim(fpComm,"Error: version\n");
 			g_warning("reject client(invalid version)");
 		} else
-		if		(  AuthUser(scr->user,pass,scr->other)  ) {
+		if		(  AuthUser(&Auth,scr->user,pass,scr->other)  ) {
 			scr->Windows = NULL;
 			ApplicationsCall(APL_SESSION_LINK,scr);
 			if		(  scr->status  ==  APL_SESSION_NULL  ) {

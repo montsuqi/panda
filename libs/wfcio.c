@@ -166,6 +166,6 @@ RecvTermServerData(
 {
 dbgmsg(">RecvTermServerData");
 	RecvLBS(fp,buff);
-	NativeUnPackValue(NULL,buff->body,win->rec->value);
+	NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
 dbgmsg("<RecvTermServerData");
 }

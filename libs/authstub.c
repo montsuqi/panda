@@ -21,7 +21,6 @@ copies.
 */
 
 /*
-#define	MAIN
 #define	DEBUG
 #define	TRACE
 */
@@ -53,6 +52,7 @@ copies.
 
 extern	Bool
 AuthUser(
+	URL		*auth,
 	char	*user,
 	char	*pass,
 	char	*other)
@@ -63,15 +63,8 @@ AuthUser(
 	char	buff[SIZE_OTHER+1];
 
 dbgmsg(">AuthUser");
-#ifdef	DEBUG
-	printf("Auth.prot = [%s]\n",Auth.protocol);
-	printf("Auth.host = [%s]\n",Auth.host);
-	printf("Auth.port = [%d]\n",Auth.port);
-	printf("user      = [%s]\n",user);	fflush(stdout);
-	printf("pass      = [%s]\n",pass);	fflush(stdout);
-#endif
-	if		(  !stricmp(Auth.protocol,"glauth")  ) {
-		fh = ConnectSocket(Auth.port,SOCK_STREAM,Auth.host);
+	if		(  !stricmp(auth->protocol,"glauth")  ) {
+		fh = ConnectSocket(auth->port,SOCK_STREAM,auth->host);
 		fp = SocketToNet(fh);
 		SendString(fp,user);
 		SendString(fp,pass);
@@ -82,6 +75,9 @@ dbgmsg(">AuthUser");
 			}
 		}
 		CloseNet(fp);
+	} else
+	if		(  !stricmp(auth->protocol,"file")  ) {
+		
 	} else {
 		rc = FALSE;
 	}

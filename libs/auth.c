@@ -20,7 +20,6 @@ copies.
 */
 
 /*
-#define	MAIN
 #define	DEBUG
 #define	TRACE
 */
@@ -55,53 +54,6 @@ static	GHashTable		*PasswdTable;
 static	PassWord		**PasswdPool;
 static	int				cPass;
 
-#if	0
-static	int
-i64c(int i)
-{
-	int		ret;
-
-	if		(  i  <=  0  ) {
-		ret = '.';
-	} else
-	if		(  i  ==  1  ) {
-		ret =  '/';
-	} else
-	if		(	(  i  >=  2  )
-			&&	(  i  <  12  ) ) {
-		ret = '0' - 2 + i;
-	} else
-	if		(	(  i  >=  12  )
-			&&	(  i  <  38  ) ) {
-		ret =  'A' - 12 + i;
-	} else
-	if		(	(  i  >=  38  )
-			&&	(  i  <  63  ) ) {
-		ret = 'a' - 38 + i;
-	} else {
-		ret = 'z';
-	}
-	return	(ret);
-}
-char	*
-l64a(long l)
-{
-	static	char	buf[8];
-	int	i = 0;
-	char	*ret;
-
-	if		(  l  <  0L  ) {
-		ret = NULL;
-	} else {
-		do {
-			buf[i++] = i64c ((int) (l % 64));
-			buf[i] = '\0';
-		}	while (l /= 64L, l > 0 && i < 6);
-		ret = buf;
-	}
-	return (ret);
-}
-#endif
 extern	const	char	*
 AuthMakeSalt(void)
 {
@@ -256,6 +208,44 @@ AuthLoadPasswd(
 	fclose(fp);
 }
 
+extern	Bool
+AuthSingle(
+	char	*fname,
+	char	*name,
+	char	*pass,
+	char	*other)
+{
+	char	buff[SIZE_BUFF];
+	FILE	*fp;
+	char	*p
+	,		*q;
+	Bool	rc;
+
+	if		(  ( fp = fopen(fname,"r") )  ==  NULL  ) {
+		Error("can not open password file");
+		rc = FALSE;
+	} else {
+		rc = FALSE;
+		while	(  fgets(buff, SIZE_BUFF, fp)  !=  NULL  ) {
+			p = buff;
+			q = strchr(p,':');	*q = 0;
+			if		(  strcmp(p,name)  ==  0  ) {
+				p = q + 1;	q = strchr(p,':');	*q = 0;
+				if		(  strcmp(p, crypt(pass,p))  ==  0  ) {
+					p = q + 1;	q = strchr(p,':');	*q = 0;
+					p = q + 1;	q = strchr(p,':');	*q = 0;
+					p = q + 1;	q = strchr(p,'\n');	*q = 0;
+					strcpy(other,p);
+					rc = TRUE;
+				}
+				break;
+			}
+		}
+		fclose(fp);
+	}
+	return	(rc);
+}
+
 extern	void
 AuthSavePasswd(
 	char	*fname)
@@ -298,47 +288,3 @@ AuthMaxUID(void)
 	g_hash_table_foreach(PasswdTable,(GHFunc)CheckMax,NULL);
 	return	(MaxUID);
 }
-
-#ifdef	MAIN
-static	void
-Dump(
-	char	*name,
-	PassWord	*pwd,
-	void	*data)
-{
-	printf("%s:%s:",pwd->name,pwd->pass);
-	printf("%d:%d:",pwd->gid,pwd->uid);
-	printf("%s\n",pwd->other);
-}
-
-extern	int
-main(
-	int		argc,
-	char	**argv)
-{
-	int		i;
-
-	printf("[%s]\n",g_basename(argv[0]));
-	InitMessage();
-	AuthLoadPasswd(argv[1]);
-	printf("** dump hash\n");
-	g_hash_table_foreach(PasswdTable,(GHFunc)Dump,NULL);
-	printf("** dump seq\n");
-	for	( i = 0 ; PasswdPool[i]  !=  NULL ; i ++ ) {
-		Dump(PasswdPool[i]->name,PasswdPool[i],NULL);
-	}
-	if		(  AuthAuthUser("ogochan",";suPer00")  !=  NULL  ) {
-		printf("OK\n");
-	} else {
-		printf("NG\n");
-	}
-	AuthAddUser("ogochan",crypt(";suPer00",AuthMakeSalt()),1,1,"");
-	if		(  AuthAuthUser("ogochan",";suPer00")  !=  NULL  ) {
-		printf("OK\n");
-	} else {
-		printf("NG\n");
-	}
-	AuthSavePasswd(argv[2]);
-}
-
-#endif

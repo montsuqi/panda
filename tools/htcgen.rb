@@ -22,33 +22,18 @@ class	Stack
 	end
 end
 
-class	Signal
+class	Ssignal
+	attr_accessor :name, :handler, :data
 	def	initizlize
 		@handler = "";
 		@name = "";
 		@data = "";
 	end
-	def	name= (val)
-		@name = val;
-	end
-	def	name
-		@name;
-	end
-	def	handler= (val)
-		@handler = val;
-	end
-	def	handler
-		@handler;
-	end
-	def	data= (val)
-		@data = val;
-	end
-	def	data
-		@data;
-	end
 end
 
 class	Widget
+	attr_accessor :child, :child_name, :klass, :name, :chars, :label, :align, :signal,
+	:width, :height, :columns, :columns_width, :format, :group
 	def	initialize
 		@child = Array.new;
 		@child_name = "";
@@ -65,85 +50,6 @@ class	Widget
 		@signal = Array.new;
 		@group = "";
 	end
-	def	child
-		@child
-	end
-	def	child= (val)
-		@child = val;
-	end
-	def	child_name
-		@child_name
-	end
-	def	child_name= (val)
-		@child_name = val;
-	end
-	def	klass= (val)
-		@klass = val;
-	end
-	def	name= (val)
-		@name = val;
-	end
-	def	name
-		@name;
-	end
-	def	chars= (val)
-		@chars = val;
-	end
-	def	chars
-		@chars;
-	end
-	def	label
-		@label
-	end
-	def	label= (val)
-		@label = val;
-	end
-	def	align
-		@align
-	end
-	def	align= (val)
-		@align = val;
-	end
-	def	signal
-		@signal;
-	end
-	def	signal= (val)
-		@signal = val;
-	end
-	def	width
-		@width;
-	end
-	def	width= (val)
-		@width = val;
-	end
-	def	height
-		@height;
-	end
-	def	height= (val)
-		@height = val;
-	end
-	def	columns
-		@columns;
-	end
-	def	columns= (val)
-		@columns = val;
-	end
-	def	column_width
-		@column_width;
-	end
-	def	column_width= (val)
-		@column_width = val;
-	end
-	def	format
-		@format
-	end
-	def	format= (val)
-		@format = val;
-	end
-	def	group= (val)
-		@group = val;
-	end
-
 	def	_windowName
 		case	@klass
 		  when	"GtkWindow"
@@ -187,126 +93,132 @@ class	Widget
 		return	(ret);
 	end
 	def	_htc(vname)
+	  if $v2
+		vname = @name
+	  else
 		vname = vname + @name;
-		case	@klass
-		  when	"top-level"
-			for	c in @child
-				c._htc("");
-			end
-		  when	"GtkWindow"
-			for	c in @child
-				c._htc(vname+".");
-			end
-		  when	"GtkVBox"
-			printf("<TABLE>\n");
-			for	c in @child
-				printf("<TR>\n");
-				c._htc(vname+".");
-				printf("</TR>\n");
-			end
-			printf("</TABLE>\n");
-		  when	"GtkHBox"
-			printf("<TABLE><TR>\n");
-			for	c in @child
-				c._htc(vname+".");
-			end
-			printf("</TR></TABLE>\n");
-		  when	"GtkEntry", "GtkPandaEntry"
-			printf("<TD><entry name=\"%s.value\" size=%d maxlength=%d></TD>\n",
-					vname, @chars, @chars);
-		  when	"GtkNumberEntry"
-			printf("<TD><entry name=\"%s.value\" size=%d maxlength=%d></TD>\n",
-					vname, @format.length+2, @format.length+2);
-		  when	"GtkText", "GtkPandaText"
-			printf("<TD><text name=\"%s.value\"></TD>\n",
-					vname);
-		  when	"GtkCombo", "GtkPandaCombo"
-			printf("<COMBO count=\"%s.count\" name=\"%s.value\" item=\"%s.item\"><BR>\n",
-				vname, vname+"."+@child[0].name, vname);
-		  when	"GtkButton"
-			data = "";
-			for	s in @signal
-				if	(  s.name     ==  "clicked"     )	&&
-					(  s.handler  ==  "send_event"  )
-					data = s.data;
-				end
-			end
-			printf("<TD><button event=\"%s:%s\" face=\"%s\"></TD>\n",
-						data, @name, @label);
-		  when	"GtkToggleButton"
-			printf("<TD><togglebutton name=\"%s.value\" label=\"%s.label\"></TD>\n",
-						vname, vname);
-		  when	"GtkCheckButton"
-			printf("<TD><CHECKBUTTON name=\"%s.value\" label=\"%s\"></TD>\n",
-						vname, @label);
-		  when	"GtkRadioButton"
-			printf("<TD><RADIOBUTTON group=\"%s\" name=\"%s.value\" label=\"%s\"></TD>\n",
-						@group, vname, @label);
-		  when	"GtkCalendar"
-			printf("<TD><CALENDAR year=\"%s.year\" month=\"%s.month\" day=\"%s.day\">\n",
-						vname, vname, vname);
-		  when	"GtkCList", "GtkPandaCList"
-			printf("<TABLE BORDER>\n");
-			printf("<TR>\n");
-			for	c in @child
-				if	@label == ""
-					printf("<TD align=\"%s\"><fixed name=\"%s.value\"></TD>\n",
-							 c.align, vname+"."+c.name);
-				  else
-					printf("<TD align=\"%s\">%s</TD>\n", c.align, c.label);
-				end
-			end
-			printf("<COUNT var=\"i\" from=0 to=\"%s.count\">\n",vname);
-			printf("<TR>\n");
-			i = 1;
-			for	c in @child
-				printf("<TD align=\"%s\"><fixed name=\"%s.item[#i].value%d\"></TD>\n",
-						 @align, vname,i);
-				i += 1;
-			end
-			printf("</TR>\n");
-			printf("</COUNT>\n");
-			printf("</TABLE>\n");
-		  when	"GtkList"
-			printf("<TABLE BORDER>\n");
-			printf("<COUNT var=\"i\" from=0 to=\"%s.count\">\n",vname);
-			printf("<TR>\n");
-			printf("<TD><TOGGLEBUTTON name=\"%s.select[#i]\" label=\"%s.item[#i]\">\n",
-					 vname,vname);
-			printf("</TR>\n");
-			printf("</COUNT>\n");
-			printf("</TABLE>\n");
-		  when	"GtkLabel"
-			if	@child_name != ""
-				printf("<H2>");
-			end
-			if	@label == ""
-				printf("<fixed name=\"%s.value\"></TD>\n",vname);
-			  else
-				printf("%s\n", @label);
-			end
-			if	@child_name != ""
-				printf("</H2>");
-			end
-		  when	"GtkNotebook"
-			temp = Array.new;
-			for	c in @child
-				if	c.child_name  !=  ""
-					printf("<HR>");
-					printf("<H2>%s</H2>\n",c.label);
-					for	d in temp
-						d._htc(vname+".");
-					end
-					temp = Array.new;
-				  else
-					temp << c;
-				end
-			end
-		  else
-			for	c in @child
-				c._htc(vname+".");
-			end
+	  end
+	  case	@klass
+	  when	"top-level"
+		for	c in @child
+		  c._htc("");
 		end
+	  when	"GtkWindow"
+		for	c in @child
+		  c._htc(vname+".");
+		end
+	  when	"GtkVBox"
+		printf("<TABLE>\n");
+		for	c in @child
+		  printf("<TR>\n");
+		  c._htc(vname+".");
+		  printf("</TR>\n");
+		end
+		printf("</TABLE>\n");
+	  when	"GtkHBox"
+		printf("<TABLE><TR>\n");
+		for	c in @child
+		  c._htc(vname+".");
+		end
+		printf("</TR></TABLE>\n");
+	  when	"GtkEntry", "GtkPandaEntry"
+		printf("<TD><entry name=\"%s.value\" size=%d maxlength=%d></TD>\n",
+			   vname, @chars, @chars);
+	  when	"GtkNumberEntry"
+		printf("<TD><entry name=\"%s.value\" size=%d maxlength=%d></TD>\n",
+			   vname, @format.length+2, @format.length+2);
+	  when	"GtkText", "GtkPandaText"
+		printf("<TD><text name=\"%s.value\"></TD>\n",
+			   vname);
+	  when	"GtkCombo", "GtkPandaCombo"
+		printf("<COMBO count=\"%s.count\" name=\"%s.value\" item=\"%s.item\"><BR>\n",
+			   vname, vname+"."+@child[0].name, vname);
+	  when	"GtkButton"
+		data = "";
+		for	s in @signal
+		  if	(  s.name     ==  "clicked"     )	&&
+			  (  s.handler  ==  "send_event"  )
+			data = s.data;
+		  end
+		end
+		if data != ""
+		  printf("<TD><button event=\"%s:%s\" face=\"%s\"></TD>\n",
+				 data, @name, @label);
+		end
+	  when	"GtkToggleButton"
+		printf("<TD><togglebutton name=\"%s.value\" label=\"%s.label\"></TD>\n",
+			   vname, vname);
+	  when	"GtkCheckButton"
+		printf("<TD><CHECKBUTTON name=\"%s.value\" label=\"%s\"></TD>\n",
+			   vname, @label);
+	  when	"GtkRadioButton"
+		printf("<TD><RADIOBUTTON group=\"%s\" name=\"%s.value\" label=\"%s\"></TD>\n",
+			   @group, vname, @label);
+	  when	"GtkCalendar"
+		printf("<TD><CALENDAR year=\"%s.year\" month=\"%s.month\" day=\"%s.day\">\n",
+			   vname, vname, vname);
+	  when	"GtkCList", "GtkPandaCList"
+		printf("<TABLE BORDER>\n");
+		printf("<TR>\n");
+		for	c in @child
+		  if	@label == ""
+			printf("<TD align=\"%s\"><fixed name=\"%s.value\"></TD>\n",
+				   c.align, vname+"."+c.name);
+		  else
+			printf("<TD align=\"%s\">%s</TD>\n", c.align, c.label);
+		  end
+		end
+		printf("<COUNT var=\"i\" from=0 to=\"%s.count\">\n",vname);
+		printf("<TR>\n");
+		i = 1;
+		for	c in @child
+		  printf("<TD align=\"%s\"><fixed name=\"%s.item[#i].value%d\"></TD>\n",
+				 @align, vname,i);
+		  i += 1;
+		end
+		printf("</TR>\n");
+		printf("</COUNT>\n");
+		printf("</TABLE>\n");
+	  when	"GtkList"
+		printf("<TABLE BORDER>\n");
+		printf("<COUNT var=\"i\" from=0 to=\"%s.count\">\n",vname);
+		printf("<TR>\n");
+		printf("<TD><TOGGLEBUTTON name=\"%s.select[#i]\" label=\"%s.item[#i]\">\n",
+			   vname,vname);
+		printf("</TR>\n");
+		printf("</COUNT>\n");
+		printf("</TABLE>\n");
+	  when	"GtkLabel"
+		if	@child_name != ""
+		  printf("<H2>");
+		end
+		if	@label == ""
+		  printf("<fixed name=\"%s.value\"></TD>\n",vname);
+		else
+		  printf("%s\n", @label);
+		end
+		if	@child_name != ""
+		  printf("</H2>");
+		end
+	  when	"GtkNotebook"
+		temp = Array.new;
+		for	c in @child
+		  if	c.child_name  !=  ""
+			printf("<HR>");
+			printf("<H2>%s</H2>\n",c.label);
+			for	d in temp
+			  d._htc(vname+".");
+			end
+			temp = Array.new;
+		  else
+			temp << c;
+		  end
+		end
+	  else
+		for	c in @child
+		  c._htc(vname+".");
+		end
+	  end
 	end
 	def	htc
 		myname = File.basename($<.filename,".glade");
@@ -332,6 +244,13 @@ __EOF__
 </HTML>
 __EOF__
 	end
+end
+
+if ARGV[0] == "-v2"
+  $v2 = true
+  ARGV.shift
+else
+  $v2 = false
 end
 
 if ((xml = $<.gets).nil?); exit 1; end
@@ -383,7 +302,7 @@ begin
 				widget = Widget.new;
 				tree.push(widget);
 			  when	/signal/i
-				signal = Signal.new;
+				signal = Ssignal.new;
 			  else
 				;
 			end
@@ -431,7 +350,6 @@ begin
 				widget.child_name = data;
 			  when	/\/widget\/column_width/i
 				widget.column_width = data.split(",");
-
 			  when	/\/widget\/justify/i
 				case	data
 				  when	/GTK_JUSTIFY_CENTER/i

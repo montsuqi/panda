@@ -28,8 +28,8 @@ copies.
 
 #include	"value.h"
 typedef	struct _NETFILE	{
+	int		fd;
 	union {
-		int		fd;
 		FILE	*fp;
 #ifdef	USE_SSL
 		SSL		*ssl;
@@ -42,24 +42,25 @@ typedef	struct _NETFILE	{
 	void	(*close)(struct _NETFILE *fp);
 }	NETFILE;
 
-extern	int		Send(NETFILE *fp, void *buff, size_t size);
-extern	int		Recv(NETFILE *fp, void *buff, size_t size);
-extern	void	FreeNet(NETFILE *fp);
-extern	void	CloseNet(NETFILE *fp);
-extern	NETFILE	*NewNet(void);
-extern	NETFILE	*SocketToNet(int s);
-extern	NETFILE	*FileToNet(int f);
-extern	void	NetSetFD(NETFILE *fp, int fd);
-extern	void	InitNET(void);
+extern	int			Send(NETFILE *fp, void *buff, size_t size);
+extern	int			Recv(NETFILE *fp, void *buff, size_t size);
+extern	void		FreeNet(NETFILE *fp);
+extern	void		CloseNet(NETFILE *fp);
+extern	NETFILE		*NewNet(void);
+extern	NETFILE		*SocketToNet(int s);
+extern	NETFILE		*FileToNet(int f);
+extern	void		NetSetFD(NETFILE *fp, int fd);
+extern	void		InitNET(void);
+#define	NetGetFD(fp)	((fp)->fd)
 #ifdef	USE_SSL
-extern	NETFILE	*MakeSSL_Net(SSL_CTX *ctx, int fd);
-extern	SSL_CTX	*MakeCTX(char *key, char *cert, char *cafile, char *capath, Bool fVeri);
+extern	NETFILE		*MakeSSL_Net(SSL_CTX *ctx, int fd);
+extern	SSL_CTX		*MakeCTX(char *key, char *cert, char *cafile, char *capath, Bool fVeri);
 #define	NETFILE_SSL(fp)		((fp)->net.ssl)
 #endif
-extern	NETFILE	*OpenPort(char *url, int port);
-extern	int		InitServerPort(char *port, int back);
+extern	NETFILE		*OpenPort(char *url, int port);
+extern	int			InitServerPort(char *port, int back);
 
-extern	Bool	CheckNetFile(NETFILE *fp);
+extern	Bool		CheckNetFile(NETFILE *fp);
 
 #define	ON_IO_ERROR(fp,label)	if (!CheckNetFile(fp)) goto label
 

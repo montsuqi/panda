@@ -23,6 +23,7 @@ copies.
 #ifndef	_AUTHSTUB_H
 #define	_AUTHSTUB_H
 #include	"types.h"
+#include	"port.h"
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -31,6 +32,6 @@ copies.
 #define	GLOBAL		extern
 #endif
 
-extern	Bool	AuthUser(char *, char *, char *);
+extern	Bool	AuthUser(URL *auth, char *, char *, char *);
 
 #endif

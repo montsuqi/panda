@@ -90,14 +90,6 @@ dbgmsg("<DumpNode");
 }
 #endif
 
-#if	0
-static	void
-CatchSEGV(
-	int		ec)
-{
-}
-#endif
-
 extern	void
 ExecuteServer(void)
 {
@@ -107,9 +99,6 @@ ExecuteServer(void)
 	int		maxfd;
 
 dbgmsg(">ExecuteServer");
-#if	0
-	signal(SIGSEGV,(void *)CatchSEGV);
-#endif
 	_fhTerm = InitServerPort(PortNumber,Back);
 	maxfd = _fhTerm;
 	_fhAps = InitServerPort(ApsPortNumber,Back);

@@ -126,7 +126,7 @@ NetSetFD(
 	int		fd)
 {
 	if		(  fp  !=  NULL  ) {
-		fp->net.fd = fd;
+		fp->fd = fd;
 	}
 	fp->fOK = TRUE;
 }
@@ -142,7 +142,7 @@ FD_Read(
 {
 	ssize_t	ret;
 
-	if		(  ( ret = read(fp->net.fd,buff,size) )  <=  0  ) {
+	if		(  ( ret = read(fp->fd,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
 			fprintf(stderr,"read %s\n",strerror(errno));
 		}
@@ -160,7 +160,7 @@ FD_Write(
 {
 	ssize_t	ret;
 
-	if		(  ( ret = write(fp->net.fd,buff,size) )  <=  0  ) {
+	if		(  ( ret = write(fp->fd,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
 			fprintf(stderr,"write %s\n",strerror(errno));
 		}
@@ -174,7 +174,7 @@ static	void
 FD_Close(
 	NETFILE	*fp)
 {
-	close(fp->net.fd);
+	close(fp->fd);
 }
 
 extern	NETFILE	*
@@ -196,7 +196,7 @@ SocketToNet(
 
 	fp = NewNet();
 	SetNodelay(fd);
-	fp->net.fd = fd;
+	fp->fd = fd;
 	fp->read = FD_Read;
 	fp->write = FD_Write;
 	fp->close = FD_Close;
@@ -214,7 +214,7 @@ FileToNet(
 	NETFILE	*fp;
 
 	fp = NewNet();
-	fp->net.fd = fd;
+	fp->fd = fd;
 	fp->read = FD_Read;
 	fp->write = FD_Write;
 	fp->close = FD_Close;
@@ -286,6 +286,7 @@ MakeSSL_Net(
 	if		(  ( ssl = SSL_new(ctx)  )  !=  NULL  ) {
 		SSL_set_fd(ssl,fd);
 		fp = NewNet();
+		fp->fd = fd;
 		fp->net.ssl = ssl;
 		fp->read = SSL_Read;
 		fp->write = SSL_Write;

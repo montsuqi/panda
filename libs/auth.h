@@ -46,5 +46,6 @@ extern	PassWord	*AuthGetUser(char *name);
 extern	void	AuthLoadPasswd(char *fname);
 extern	void	AuthSavePasswd(char *fname);
 extern	int		AuthMaxUID(void);
+extern	Bool	AuthSingle(char *fname, char *name, char *pass, char *other);
 
 #endif

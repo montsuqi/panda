@@ -24,11 +24,9 @@ INCLUDES 			= 					\
 	$(FIXED_CFLAGS)
 
 glauth_SOURCES	=	\
-	auth.c	auth.h	\
 	glauth.c
 
 user_SOURCES	=	\
-	auth.c	auth.h	\
 	user.c
 
 glauth_DEPENDENCIES	=					\

@@ -22,6 +22,7 @@ copies.
 
 #ifndef	_SERVER_H
 #define	_SERVER_H
+#include	"port.h"
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -41,6 +42,7 @@ GLOBAL	char	*CertFile;
 GLOBAL	char	*CA_Path;
 GLOBAL	char	*CA_File;
 #endif
+GLOBAL	URL		Auth;
 
 extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);

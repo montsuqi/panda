@@ -63,6 +63,7 @@ libpandas_la_DEPENDENCIES	=		\
 #	queue.h
 
 libpandacom_la_SOURCES	=			\
+	auth.c			auth.h			\
 	net.c			net.h			\
 	comm.c			comm.h			\
 	comms.c			comms.h			\

@@ -94,6 +94,8 @@ RecvStringDelim(
 	while	(	(  ( c = RecvChar(fp) )  >=  0     )
 			&&	(  c                     !=  '\n'  ) )	{
 		*p ++ = c;
+		size --;
+		if		(  size  ==  0  )	break;
 	}
 	*p = 0;
 	if		(  c  >=  0  ) {
