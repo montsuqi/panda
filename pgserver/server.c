@@ -21,8 +21,8 @@ copies.
 */
 
 /*
-#define	TRACE
 #define	DEBUG
+#define	TRACE
 */
 
 #ifdef HAVE_CONFIG_H
