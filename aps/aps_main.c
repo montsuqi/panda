@@ -252,6 +252,10 @@ static	ARG_TABLE	option[] = {
 		"dbredirectorの起動をチェックしない"			},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
 		"dbredirectorを使わない"						},
+	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxRetry,
+		"dbredirector送信の再試行数を指定する"			},
+	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
+		"dbredirector送信の再試行の間隔を指定する(秒)"	},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -277,6 +281,9 @@ SetDefault(void)
 	DB_Host = NULL;
 	DB_Port = NULL;
 	DB_Name = DB_User;
+
+	MaxRetry = 3;
+	RetryInterval = 5;
 }
 
 extern	int

@@ -52,5 +52,7 @@ GLOBAL	char	*DB_Pass;
 
 GLOBAL	Bool	fNoCheck;
 GLOBAL	Bool	fNoRedirect;
+GLOBAL	int		MaxRetry;
+GLOBAL	int		RetryInterval;
 
 #endif
