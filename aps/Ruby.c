@@ -771,11 +771,13 @@ procnode_put_window(int argc, VALUE *argv, VALUE self)
     ValueStruct *dc, *window, *widget, *puttype, *status, *rc;
 
     Data_Get_Struct(self, procnode_data, data);
-    rb_scan_args(argc, argv, "11", &win, &type);
+    rb_scan_args(argc, argv, "02", &type, &win);
 
     dc = GetRecordItem(data->node->mcprec->value, "dc");
     window = GetRecordItem(dc, "window");
-    SetValueString(window, StringValuePtr(win), codeset);
+    if (!NIL_P(win)) {
+        SetValueString(window, StringValuePtr(win), codeset);
+    }
     widget = GetRecordItem(dc, "widget");
     SetValueString(widget, "", codeset);
     puttype = GetRecordItem(dc, "puttype");
