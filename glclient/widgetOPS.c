@@ -1208,6 +1208,9 @@ InitWidgetOperations(void)
 #ifdef	GTK_PANDA_TYPE_ENTRY
 	AddClass(GTK_PANDA_TYPE_ENTRY,RecvEntry,SendEntry);
 #endif
+#ifdef	GTK_PANDA_TYPE_TEXT
+	AddClass(GTK_PANDA_TYPE_TEXT,RecvText,SendText);
+#endif
 #endif
 	AddClass(GTK_TYPE_TEXT,RecvText,SendText);
 	AddClass(GTK_TYPE_LABEL,RecvLabel,NULL);
