@@ -82,7 +82,7 @@ ENTER_FUNC;
 	ent = New(BLOB_Entry);
 	ent->oid = New(MonObjectType);
 	memcpy(ent->oid,obj,sizeof(MonObjectType));
-	g_hash_table_insert(blob->table,(gconstpointer)ent->oid,ent);
+	g_hash_table_insert(blob->table,(gpointer)ent->oid,ent);
 	UnLockBLOB(blob);
 	ReleaseBLOB(blob);
 	ent->mode = mode;
