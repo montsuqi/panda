@@ -1,3 +1,9 @@
+2005-02-16  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/dialogs.[ch]: (message_dialog) メッセージダイアログ追加
+	* glclient/testdialogs.c: メッセージダイアログテスト追加
+	* glclient/widgetOPS.c (RecvFileEntry): 結果をダイアログに出すようにした
+
 2005-02-14  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/widgetOPS.c (RecvFileEntry): GnomeFileEntry support.

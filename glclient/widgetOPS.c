@@ -54,7 +54,8 @@ copies.
 #include	"comm.h"
 #include	"protocol.h"
 #include	"widgetOPS.h"
-#include    "action.h"
+#include	"action.h"
+#include	"dialogs.h"
 #include	"debug.h"
 
 static	GHashTable		*ValueTable = NULL;
@@ -322,8 +323,9 @@ LoadImage(
 	GtkWidget	*widget,
     LargeByteString *binary)
 {
-    FILE *file;
-    gchar *tmpname;
+	FILE *file;
+	
+	gchar *tmpname;
 	GtkRequisition requisition;
 	GdkImlibImage *im;
 	gint width, height;
@@ -391,19 +393,17 @@ SaveFile(
     LargeByteString *binary)
 {
     FILE *file;
+    gboolean rc = FALSE;
 
 ENTER_FUNC;
-	
 	if	((file = fopen(name,"wb")) != NULL) {
 		fchmod(fileno(file), 0600);
 		fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
 		fclose(file);
-	} else {
-		Warning("can not open file %s for writing - %s", 
-			   name, strerror(errno));
+		rc = TRUE;
 	}
 LEAVE_FUNC;
-	return (TRUE);
+	return (rc);
 }
 
 static	Bool
@@ -412,11 +412,12 @@ RecvFileEntry(
 	NETFILE	*fp)
 {
 	char	name[SIZE_BUFF]
+	,		buf[SIZE_BUFF]
 	,		*longname
 	,		*filename;
 	int		nitem
 	,		i;
-	GtkWidget	*subWidget;
+	GtkWidget	*dialog, *subWidget;
     LargeByteString *binary;
 
 ENTER_FUNC;
@@ -429,9 +430,19 @@ ENTER_FUNC;
 				RecvBinaryData(fp, binary);
 				filename = (char *)gnome_file_entry_get_full_path(GNOME_FILE_ENTRY(widget), FALSE);
 				if ( (LBS_Size(binary) > 0) && (filename)) {
-					SaveFile(filename, binary); 
-					FreeLBS(binary);
+					if (SaveFile(filename, binary) == TRUE) {
+						snprintf(buf, sizeof(buf), "%s 書き込み終了", filename);
+						dialog = message_dialog(buf, TRUE);
+					} else {
+						snprintf(buf, sizeof(buf), "%s ファイルに書き込めませんでした\n %s", filename, strerror(errno));
+						Warning(buf);
+						dialog = message_dialog(buf, FALSE);
+					}
+					gtk_window_set_transient_for (GTK_WINDOW (dialog),
+						GTK_WINDOW (gtk_widget_get_toplevel(widget)));
+					gtk_widget_show (dialog);
 				}
+				FreeLBS(binary);
 			} else {
 				subWidget = gnome_file_entry_gtk_entry(GNOME_FILE_ENTRY(widget));
 				RecvEntry(subWidget,fp);
