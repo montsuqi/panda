@@ -778,7 +778,6 @@ dbgmsg(">_FileSelection");
         Style(htc, tag);
 		LBS_EmitString(htc->code, ">\n");
 
-fprintf(stderr, "tags.c: filename: '%s'\n", filename);
         g_hash_table_insert(htc->FileSelection,
                             StrDup(name), StrDup(filename));
 

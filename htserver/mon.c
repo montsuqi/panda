@@ -566,7 +566,6 @@ SendFile(char *name, MultipartFile *file, HTCInfo *htc)
     char *p, *pend;
     int len = 0;
 
-fprintf(stderr, "mon.c: filename: '%s'\n", filename);
     filename = (char *) g_hash_table_lookup(htc->FileSelection, name);
     if (filename != NULL) {
         HT_SendString(name);
