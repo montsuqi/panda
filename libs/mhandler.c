@@ -135,7 +135,8 @@ ENTER_FUNC;
 					}
 					break;
 				  default:
-					Error("handler parameter(s)");
+					Error("%s:%d:handler parameter(s): %s",
+                          CURR->fn, CURR->cLine, ComSymbol);
 					break;
 				}
 				if		(  GetSymbol  !=  ';'  ) {

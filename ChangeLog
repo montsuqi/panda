@@ -1,3 +1,7 @@
+2004-06-10  Kouji TAKAO  <shimizu@netlab.jp>
+
+	* libs/mhandler.c (ParHANDLER): エラーメッセージの改良
+
 2004-06-09  Kouji TAKAO  <shimizu@netlab.jp>
 
 	* blob/blob.c (OpenEntry, NewBLOB, InitBLOB, InitBLOB) 
