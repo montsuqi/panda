@@ -156,10 +156,12 @@ ExecuteServer(
 	int		_fhLog;
 	fd_set	ready;
 	int		maxfd;
+	Port	*port;
 
 dbgmsg(">ExecuteServer");
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,(void *)fn); 
-	_fhLog = InitServerPort(PortNumber,Back);
+	port = ParPortName(PortNumber);
+	_fhLog = InitServerPort(port,Back);
 	maxfd = _fhLog;
 
 	while	(TRUE)	{
@@ -170,6 +172,7 @@ dbgmsg(">ExecuteServer");
 			ConnectLog(_fhLog);
 		}
 	}
+	Destroy(port);
 dbgmsg("<ExecuteServer");
 }
 
@@ -201,7 +204,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	PortNumber = IntStrDup(PORT_MSGD);
+	PortNumber = PORT_MSGD;
 	Back = 5;
 }
 

@@ -190,6 +190,25 @@ dbgmsg(">StartRedirector");
 dbgmsg("<StartRedirector");
 }
 
+static	Bool
+HerePort(
+	Port	*port)
+{
+	Bool	ret;
+
+	switch	(port->type) {
+	  case	PORT_IP:
+		ret = ( strcmp(IP_HOST(port),MyHost) == 0 ) ? TRUE : TRUE;
+		break;
+	  case	PORT_UNIX:
+		ret = TRUE;
+		break;
+	  default:
+		ret = FALSE;
+	}
+	return	(ret);
+}
+
 static	void
 _StartRedirectors(
 	DBG_Struct	*dbg)
@@ -208,7 +227,7 @@ _StartRedirectors(
 			}	while	(  dbg  !=  NULL  );
 			i --;
 			for	( ; i > 0 ; i -- ) {
-				if		(  !strcmp(dbgs[i-1]->redirectPort->host,MyHost)  ) {
+				if		(  HerePort(dbgs[i-1]->redirectPort)  ) {
 					StartRedirector(dbgs[i]);
 				}
 			}
@@ -245,8 +264,8 @@ dbgmsg(">_StartAps");
 		ld->nports = 1;
 	}
 	for	( n = 0 ; n < ld->nports ; n ++ ) {
-		if		(	(  ld->ports[n]  ==  NULL              )
-				||	(  !strcmp(ld->ports[n]->host,MyHost)  ) )	{
+		if		(	(  ld->ports[n]  ==  NULL  )
+				||	(  HerePort(ld->ports[n])  ) )	{
 			proc = New(Process);
 			argv = (char **)xmalloc(sizeof(char *) * 20);
 			proc->argv = argv;
@@ -254,9 +273,7 @@ dbgmsg(">_StartAps");
 			argc = 0;
 			argv[argc ++] = ApsPath;
 			argv[argc ++] = "-wfcport";
-			argv[argc ++] = ThisEnv->WfcApsPort->port;
-			argv[argc ++] = "-host";
-			argv[argc ++] = ThisEnv->WfcApsPort->host;
+			argv[argc ++] = StrDup(StringPort(ThisEnv->WfcApsPort));
 			if		(  Directory  !=  NULL  ) {
 				argv[argc ++] = "-dir";
 				argv[argc ++] = Directory;
@@ -313,7 +330,7 @@ StartWfc(void)
 	int		i;
 
 dbgmsg(">StartWfc");
-	if		(  !strcmp(ThisEnv->WfcApsPort->host,MyHost)  ) {
+	if		(  HerePort(ThisEnv->WfcApsPort)  ) {
 		back = 0;
 		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 			back += ThisEnv->ld[i]->nports;
@@ -327,9 +344,9 @@ dbgmsg(">StartWfc");
 		argv[argc ++] = "-back";
 		argv[argc ++] = IntStrDup(back+1);
 		argv[argc ++] = "-port";
-		argv[argc ++] = ThisEnv->TermPort->port;
+		argv[argc ++] = StrDup(StringPortName(ThisEnv->TermPort));
 		argv[argc ++] = "-apsport";
-		argv[argc ++] = ThisEnv->WfcApsPort->port;
+		argv[argc ++] = StrDup(StringPortName(ThisEnv->WfcApsPort));
 
 		if		(  Directory  !=  NULL  ) {
 			argv[argc ++] = "-dir";
@@ -425,17 +442,24 @@ ProcessMonitor(void)
 		pid = wait(&status);
 		if		(  pid  >  0  ) {
 			proc = g_int_hash_table_lookup(ProcessTable,pid);
-			fprintf(fpLog,"process down pid = %d Command =[%s]\n"
-					,(int)pid,proc->argv[0]);
+			fprintf(fpLog,"process down pid = %d(%d) Command =[%s]\n"
+					,(int)pid,WEXITSTATUS(status),proc->argv[0]);
 #ifdef	DEBUG
 			DumpCommand(proc->argv);
 #endif
+			if		(  proc->type  ==  PTYPE_WFC  ) {
+				fRestart = FALSE;
+				exit(0);
+			}
 			if		(  fRestart  ) {
-				if		(  ( proc->type & PTYPE_WFC ) !=  0  ) {
-					break;
-				} else {
-					g_int_hash_table_remove(ProcessTable,pid);
-					StartProcess(proc);
+				if		(  proc->type  !=  PTYPE_WFC  ) {
+					if		(	(  WIFEXITED(status)  )
+							&&	(  WEXITSTATUS(status)  <  2  )	) {
+						exit(0);
+					} else {
+						g_int_hash_table_remove(ProcessTable,pid);
+						StartProcess(proc);
+					}
 				}
 			}
 		}
@@ -467,7 +491,7 @@ static	void
 StopSystem(void)
 {
 	fRestart = FALSE;
-	signal(SIGCHLD,(void *)WaitStop);
+	//	signal(SIGCHLD,(void *)WaitStop);
 	KillAllProcess((PTYPE_APS | PTYPE_RED | PTYPE_WFC),SIGKILL);
 }
 
@@ -571,8 +595,5 @@ main(
 	InitSystem();
 	StartPrograms();
 	ProcessMonitor();
-	StopSystem();
-	WaitStop();
-
 	return	(0);
 }

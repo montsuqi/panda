@@ -1014,13 +1014,13 @@ dbgmsg(">_DBOPEN");
 		if		(  dbg->port  ==  NULL  ) {
 			host = NULL;
 		} else {
-			host = dbg->port->host;
+			host = IP_HOST(dbg->port);
 		}
 	}
 	if		(  DB_Port  !=  NULL  ) {
 		port = DB_Port;
 	} else {
-		port = dbg->port->port;
+		port = IP_PORT(dbg->port);
 	}
 	user =  ( DB_User != NULL ) ? DB_User : dbg->user;
 	dbname = ( DB_Name != NULL ) ? DB_Name : dbg->dbname;

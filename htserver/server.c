@@ -487,12 +487,14 @@ ExecuteServer(void)
 	int			ses
 	,			count;
 	HTC_Node	*htc;
+	Port	*port;
 
 dbgmsg(">ExecuteServer");
 	signal(SIGCHLD,SIG_IGN);
 	signal(SIGPIPE,SIG_IGN);
 
-	_fd = InitServerPort(PortNumber,Back);
+	port = ParPortName(PortNumber);
+	_fd = InitServerPort(port,Back);
 	while	(TRUE)	{
 		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
 			printf("_fd = %d\n",_fd);
@@ -518,6 +520,7 @@ dbgmsg(">ExecuteServer");
 		}
 		CloseNet(fp);
 	}
+	DestroyPort(port);
 dbgmsg("<ExecuteServer");
 }
 

@@ -83,7 +83,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	PortNumber = IntStrDup(PORT_GLTERM);
+	PortNumber = PORT_GLTERM;
 	Back = 5;
 	ScreenDir = ".";
 	RecordDir = ".";

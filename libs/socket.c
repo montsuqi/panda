@@ -33,8 +33,6 @@ Boston, MA  02111-1307, USA.
 #  include <config.h>
 #endif
 
-//#undef	USE_IPv6
-
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -83,7 +81,7 @@ ENTER_FUNC;
 	hints.ai_socktype = type;
 	hints.ai_flags = AI_PASSIVE;
 	if		(  ( rc = getaddrinfo(NULL,port,&hints,&info) )  !=  0  ) {
-		printf("%s\n",gai_strerror(rc));
+		printf("%s [%s]\n",gai_strerror(rc),port);
 		Error("error resolv");
 	}
 	ld = -1;
@@ -140,7 +138,8 @@ LEAVE_FUNC;
 extern	int
 BindUNIX_Socket(
 	char	*name,
-	int		type)
+	int		type,
+	int		mode)
 {
 	int		sock;
 	struct	sockaddr_un	addr;
@@ -150,12 +149,15 @@ ENTER_FUNC;
 	if		(  ( sock = socket(PF_UNIX,type,0) )  <  0  )	{
 		Error("error socket");
 	}
+	unlink(name);
 	addr.sun_family = AF_UNIX;
 	strcpy(addr.sun_path,name);
 	alen = sizeof(addr.sun_family) + strlen(addr.sun_path);
 	if		(  bind(sock,(struct sockaddr *)&addr,alen)  <  0  )	{
 		close(sock);
 		Error("UNIX Domain Bind");
+	} else {
+		chmod(name,mode);
 	}
 LEAVE_FUNC;
 	return	(sock);
@@ -262,4 +264,44 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return	(sock);
+}
+
+extern	int
+ConnectSocket(
+	Port	*port,
+	int		type)
+{
+	int		fd;
+	switch	(port->type) {
+	  case	PORT_IP:
+		fd = ConnectIP_Socket(IP_PORT(port),type,IP_HOST(port));
+		break;
+	  case	PORT_UNIX:
+		fd = ConnectUNIX_Socket(UNIX_NAME(port),type);
+		break;
+	  default:
+		fd = -1;
+		break;
+	}
+	return	(fd);
+}
+
+extern	int
+BindSocket(
+	Port	*port,
+	int		type)
+{
+	int		fd;
+	switch	(port->type) {
+	  case	PORT_IP:
+		fd = BindIP_Socket(IP_PORT(port),type);
+		break;
+	  case	PORT_UNIX:
+		fd = BindUNIX_Socket(UNIX_NAME(port),type,UNIX_MODE(port));
+		break;
+	  default:
+		fd = -1;
+		break;
+	}
+	return	(fd);
 }

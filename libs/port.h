@@ -30,14 +30,38 @@ typedef	struct	{
 	char	*file;
 }	URL;
 
+#define	PORT_NULL	0
+#define	PORT_IP		1
+#define	PORT_UNIX	2
+
 typedef	struct {
-	char	*host;
-	char	*port;
+	int		type;
+	union {
+		struct {
+			char	*name;
+			int		mode;
+		}	a_unix;
+		struct {
+			char	*host;
+			char	*port;
+		}	a_ip;
+	}	adrs;
 }	Port;
+
+#define	IP_PORT(p)		((p)->adrs.a_ip.port)
+#define	IP_HOST(p)		((p)->adrs.a_ip.host)
+#define	UNIX_NAME(p)	((p)->adrs.a_unix.name)
+#define	UNIX_MODE(p)	((p)->adrs.a_unix.mode)
 
 extern	void		ParseURL(URL *url, char *str);
 extern	void		DestroyPort(Port *port);
-extern	Port		*ParPort(char *str, int def);
+extern	Port		*ParPort(char *str, char *def);
+extern	Port		*ParPortName(char *str);
+extern	char		*StringPort(Port *port);
+extern	char		*StringPortName(Port *port);
+
 extern	char		*ExpandPath(char *org,char *base);
+extern	Port		*NewIP_Port(char *host, char *port);
+extern	Port		*NewUNIX_Port(char *name, int mode);
 
 #endif

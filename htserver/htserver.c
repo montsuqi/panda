@@ -60,7 +60,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	PortNumber = IntStrDup(PORT_HTSERV);
+	PortNumber = PORT_HTSERV;
 	Back = 5;
 	RecordDir = ".";
 	Expire = 5 * 60;

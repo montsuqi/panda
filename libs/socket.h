@@ -25,10 +25,15 @@ Boston, MA  02111-1307, USA.
 #define	_INC_SOCKET_H
 #include	<stdio.h>
 #include	<sys/socket.h>	/*	for socket type	*/
+#include	"port.h"
 
 extern	void	SetNodelay(int s);
+extern	int		ConnectSocket(Port *port, int type);
+extern	int		BindSocket(Port *port, int type);
+
+/*	lower level	*/
 extern	int		BindIP_Socket(char *port, int type);
-extern	int		BindUNIX_Socket(char *name, int type);
+extern	int		BindUNIX_Socket(char *name, int type, int mode);
 extern	int		ConnectIP_Socket(char *port, int type, char *host);
 extern	int		ConnectUNIX_Socket(char *name, int type);
 

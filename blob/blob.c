@@ -48,6 +48,8 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
+static	char	*BLOB_Space;
+
 extern	Bool
 NewBLOB(
 	MonObjectType	*obj,
@@ -88,4 +90,35 @@ extern	void
 InitBLOB(
 	char	*space)
 {
+	FILE	*fp;
+	char	name[SIZE_LONGNAME+1];
+	char	buff[SIZE_BUFF];
+
+	sprintf(name,"%s/pid",space);
+	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
+		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
+			if		(  getpid() != atoi(buff)  ) {
+				fprintf(stderr,"another process uses libpandablob. (%d)\n",atoi(buff));
+				exit(1);
+			}
+		}
+		fclose(fp);
+	}
+	if		(  ( fp = fopen(name,"w") )  !=  NULL  ) {
+		fprintf(fp,"%d\n",getpid());
+		fclose(fp);
+	} else {
+		fprintf(stderr,"can not make lock file(directory not writable?)\n");
+		exit(1);
+	}
+	BLOB_Space = StrDup(space);
+}
+
+extern	void
+FinishBLOB(void)
+{
+	char	name[SIZE_LONGNAME+1];
+
+	sprintf(name,"%s/pid",BLOB_Space);
+	unlink(name);
 }

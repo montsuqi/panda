@@ -31,11 +31,6 @@ copies.
 
 #include	"struct.h"
 
-//#include	"LDparser.h"
-//#include	"BDparser.h"
-//#include	"DBDparser.h"
-//#include	"dbgroup.h"
-
 #undef	GLOBAL
 #ifdef	_DI_PARSER
 #define	GLOBAL		/*	*/

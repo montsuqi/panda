@@ -484,9 +484,11 @@ ExecuteServer(void)
 	NETFILE	*fp;
 	int		pid;
 	SessionNode	*ses;
+	Port	*port;
 
 dbgmsg(">ExecuteServer");
-	_fh = InitServerPort(PortNumber,Back);
+	port = ParPortName(PortNumber);
+	_fh = InitServerPort(port,Back);
 	while	(TRUE)	{
 		if		(  ( fh = accept(_fh,0,0) )  <  0  )	{
 			printf("_fh = %d\n",_fh);
@@ -560,7 +562,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	PortNumber = IntStrDup(PORT_DBSERV);
+	PortNumber = PORT_DBSERV;
 	Back = 5;
 
 	BaseDir = NULL;

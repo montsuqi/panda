@@ -186,6 +186,7 @@ ExecuteServer(void)
 	int		pid;
 	int		fd
 	,		_fd;
+	Port	*port;
 	NETFILE	*fpComm;
 #ifdef	USE_SSL
 	SSL_CTX	*ctx;
@@ -194,7 +195,8 @@ ExecuteServer(void)
 ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
 
-	_fd = InitServerPort(PortNumber,Back);
+	port = ParPortName(PortNumber);
+	_fd = InitServerPort(port,Back);
 #ifdef	USE_SSL
 	ctx = NULL;
 	if		(  fSsl  ) {
@@ -272,7 +274,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	PortNumber = IntStrDup(PORT_FDD);
+	PortNumber = PORT_FDD;
 	Back = 5;
 	WorkDir = "/tmp";
 	ExecDir = ".";

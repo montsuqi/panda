@@ -62,8 +62,8 @@ extern	NETFILE		*MakeSSL_Net(SSL_CTX *ctx, int fd);
 extern	SSL_CTX		*MakeCTX(char *key, char *cert, char *cafile, char *capath, Bool fVeri);
 #define	NETFILE_SSL(fp)		((fp)->net.ssl)
 #endif
-extern	NETFILE		*OpenPort(char *url, int port);
-extern	int			InitServerPort(char *port, int back);
+extern	NETFILE		*OpenPort(char *url, char *defport);
+extern	int			InitServerPort(Port *port, int back);
 
 extern	Bool		CheckNetFile(NETFILE *fp);
 

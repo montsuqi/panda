@@ -56,9 +56,7 @@ dbgmsg(">OpenDB_RedirectPort");
 		dbg->fpLog = NULL;
 		dbg->redirectData = NULL;
 	} else {
-		if		(  ( fh = ConnectIP_Socket(dbg->redirectPort->port,SOCK_STREAM,
-										dbg->redirectPort->host) )
-				   <  0  ) {
+		if		(  ( fh = ConnectSocket(dbg->redirectPort,SOCK_STREAM) )  <  0  ) {
 			Warning("loging server not ready");
 			dbg->fpLog = NULL;
 			dbg->redirectData = NULL;

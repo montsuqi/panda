@@ -23,6 +23,7 @@ copies.
 #define	_INC_BLOB_H
 
 extern	void	InitBLOB(char *space);
+extern	void	FinishBLOB(void);
 extern	Bool	NewBLOB(MonObjectType *obj, int mode);
 extern	Bool	OpenBLOB(MonObjectType *obj, int mode);
 extern	Bool	CloseBLOB(MonObjectType *obj);

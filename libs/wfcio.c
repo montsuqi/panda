@@ -50,7 +50,7 @@ ConnectTermServer(
 	Bool	fKeep,
 	char	*arg)
 {
-	int		fh;
+	int		fd;
 	Port	*port;
 	NETFILE	*fp;
 
@@ -61,9 +61,9 @@ dbgmsg(">ConnectTermServer");
 	printf("port = [%s]\n",port->port);
 	fflush(stdout);
 #endif
-	fh = ConnectIP_Socket(port->port,SOCK_STREAM,port->host);
+	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
-	fp = SocketToNet(fh);
+	fp = SocketToNet(fd);
 	if		(  fKeep  ) {
 		SendPacketClass(fp,WFC_TRUE);
 	} else {

@@ -87,9 +87,11 @@ ExecuteServer(void)
 	int		fd
 	,		_fd;
 	NETFILE	*fp;
+	Port	*port;
 
 dbgmsg(">ExecuteServer");
-	_fd = InitServerPort(PortNumber,Back);
+	port = ParPortName(PortNumber);
+	_fd = InitServerPort(port,Back);
 
 	while	(TRUE)	{
 		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
@@ -155,7 +157,7 @@ static	void
 SetDefault(void)
 {
 
-	PortNumber = IntStrDup(PORT_GLAUTH);
+	PortNumber = PORT_GLAUTH;
 	Back = 5;
 	PasswordFile = "./passwd";
 }

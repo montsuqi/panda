@@ -229,8 +229,7 @@ InitMessage(
 	if		( fn  !=  NULL  ) {
 		if		(  *fn  ==  '@'  ) {
 			port = ParPort(fn+1,PORT_MSGD);
-			if		(  ( fd = ConnectIP_Socket(port->port,SOCK_STREAM,
-											port->host) )  >=  0  ) {
+			if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  >=  0  ) {
 				fpLog = SocketToNet(fd);
 				Format = "%F:%i:%f:%L:%B";
 			}

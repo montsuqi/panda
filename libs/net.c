@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -440,34 +440,35 @@ InitNET(void)
 extern	NETFILE	*
 OpenPort(
 	char	*url,
-	int		defport)
+	char	*defport)
 {
-	int		fh;
+	int		fd;
 	Port	*port;
 	NETFILE	*fp;
 
 	port = ParPort(url,defport);
-	fh = ConnectIP_Socket(port->port,SOCK_STREAM,port->host);
+	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
-	fp = SocketToNet(fh);
+	fp = SocketToNet(fd);
 	return	(fp);
 }
 
 extern	int
 InitServerPort(
-	char	*port,
+	Port	*port,	
 	int		back)
-{	int		fh;
+{
+	int		fd;
 
-dbgmsg(">InitServerPort");
-	fh = BindIP_Socket(port,SOCK_STREAM);
-
-	if		(  listen(fh,back)  <  0  )	{
-		shutdown(fh, 2);
+ENTER_FUNC;
+ printf("%s\n",StringPort(port));
+	fd = BindSocket(port,SOCK_STREAM);
+	if		(  listen(fd,back)  <  0  )	{
+		shutdown(fd, 2);
 		Error("INET Domain listen");
 	}
-dbgmsg("<InitServerPort");
-	return	(fh);
+LEAVE_FUNC;
+	return	(fd);
 }
 
 extern	Bool

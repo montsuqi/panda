@@ -42,6 +42,3 @@ data	{
 	};
 };
 
-db	{
-	metadb;
-};

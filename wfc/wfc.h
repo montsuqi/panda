@@ -35,6 +35,7 @@ copies.
 GLOBAL	GHashTable	*WindowHash;
 GLOBAL	GHashTable	*APS_Hash;
 GLOBAL	GHashTable	*MQ_Hash;
+GLOBAL	Bool		fShutdown;
 GLOBAL	int			MaxRetry;
 
 #endif

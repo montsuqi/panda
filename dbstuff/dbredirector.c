@@ -63,6 +63,7 @@ static	sigset_t	hupset;
 static	DBG_Struct	*ThisDBG;
 static	pthread_t	_FileThread;
 static	Queue		*FileQueue;
+static	Port		*RedirectPort;
 
 static	void
 LogThread(
@@ -174,7 +175,7 @@ ExecuteServer(void)
 
 dbgmsg(">ExecuteServer");
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL); 
-	_fhLog = InitServerPort(PortNumber,Back);
+	_fhLog = InitServerPort(RedirectPort,Back);
 	maxfd = _fhLog;
 
 	while	(TRUE)	{
@@ -242,10 +243,12 @@ dbgmsg(">InitSystem");
 	ThisDBG->dbt = Orig->dbt;
 	if		(  PortNumber  ==  NULL  ) {
 		if		(  Orig->redirectPort  !=  NULL  ) {
-			PortNumber = Orig->redirectPort->port;
+			RedirectPort = Orig->redirectPort;
 		} else {
-			PortNumber = IntStrDup(PORT_REDIRECT);
+			RedirectPort = ParPortName(PORT_REDIRECT);
 		}
+	} else {
+		RedirectPort = ParPortName(PortNumber);
 	}
 	FileQueue = NewQueue();
 dbgmsg("<InitSystem");

@@ -80,6 +80,7 @@ copies.
 #define	T_EXIT			(T_YYBASE +24)
 #define	T_LOCALE		(T_YYBASE +25)
 #define	T_TERMPORT		(T_YYBASE +26)
+#define	T_CONTROL		(T_YYBASE +27)
 
 #undef	Error
 #define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
@@ -120,6 +121,7 @@ static	TokenTable	tokentable[] = {
 	{	"exit"				,T_EXIT		},
 	{	"locale"			,T_LOCALE	},
 	{	"termport"			,T_TERMPORT	},
+	{	"control"			,T_CONTROL	},
 	{	""					,0			}
 };
 
@@ -134,9 +136,7 @@ dbgmsg(">ParWFC");
 		  case	T_PORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
-				ThisEnv->WfcApsPort = New(Port);
-				ThisEnv->WfcApsPort->host = "localhost";
-				ThisEnv->WfcApsPort->port = IntStrDup(ComInt);
+				ThisEnv->WfcApsPort = NewIP_Port(NULL,IntStrDup(ComInt));
 				break;
 			  case	T_SCONST:
 				ThisEnv->WfcApsPort = ParPort(ComSymbol,PORT_WFC_APS);
@@ -150,9 +150,7 @@ dbgmsg(">ParWFC");
 		  case	T_TERMPORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
-				ThisEnv->TermPort = New(Port);
-				ThisEnv->TermPort->host = "localhost";
-				ThisEnv->TermPort->port = IntStrDup(ComInt);
+				ThisEnv->TermPort = NewIP_Port(NULL,IntStrDup(ComInt));
 				break;
 			  case	T_SCONST:
 				ThisEnv->TermPort = ParPort(ComSymbol,PORT_WFC);
@@ -168,10 +166,45 @@ dbgmsg(">ParWFC");
 			break;
 		}
 		if		(  ComToken  !=  ';'  ) {		
-			Error("syntax error 1");
+			Error("missing ; in wfc directive");
 		}
 	}
 dbgmsg("<ParWFC");
+}
+
+static	void
+ParCONTROL(void)
+{
+ENTER_FUNC;
+	while	(  GetSymbol  !=  '}'  ) {
+		switch	(ComToken) {
+		  case	T_PORT:
+			switch	(GetSymbol) {
+			  case	T_ICONST:
+				ThisEnv->ControlPort = NewIP_Port(NULL,IntStrDup(ComInt));
+				GetSymbol;
+				break;
+			  case	T_SCONST:
+				ThisEnv->ControlPort = ParPort(ComSymbol,PORT_WFC_CONTROL);
+				GetSymbol;
+				break;
+			  case	';':
+				ThisEnv->ControlPort = NULL;
+				break;
+			  default:
+				Error("invalid port number");
+				break;
+			}
+			break;
+		  default:
+			Error("control keyword error");
+			break;
+		}
+		if		(  ComToken  !=  ';'  ) {		
+			Error("missing ; in control directive");
+		}
+	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -187,6 +220,7 @@ ParLD_Elements(void)
 	Port		**tports;
 	LD_Struct	*ld;
 
+ENTER_FUNC;
 	strcpy(buff,ThisEnv->D_Dir);
 	p = buff;
 	do {
@@ -239,7 +273,7 @@ ParLD_Elements(void)
 					}
 					ld->ports = tports;
 					for	( i = 0 ; i < n ; i ++ ) {
-						ld->ports[ld->nports] = ParPort(buff,PORT_APS_BASE);
+						ld->ports[ld->nports] = ParPort(buff,NULL);
 						ld->nports ++;
 					}
 					if		(  ComToken  ==  ','  ) {
@@ -256,7 +290,7 @@ ParLD_Elements(void)
 				GetSymbol;
 			} else {
 				ld->ports = (Port **)xmalloc(sizeof(Port *));
-				ld->ports[0] = ParPort("localhost",PORT_APS_BASE);
+				ld->ports[0] = ParPort("localhost",NULL);
 				ld->nports = 1;
 			}
 		}
@@ -266,29 +300,39 @@ ParLD_Elements(void)
 	if		(  ld  ==  NULL  ) {
 		Error("ld not found");
 	}
+LEAVE_FUNC;
 }
 
 static	void
 SkipLD(void)
 {
 dbgmsg(">SkipLD");
-	while	(  ComToken  ==  T_SCONST  ) {
-		switch	(GetSymbol)	{
-		  case	',':
-			break;
-		  case	'*':
-			if		(  GetSymbol  ==  T_ICONST  ) {
+	while	(  ComToken  !=  ';'  ) {
+		switch	(ComToken) {
+		  case	T_SCONST:
+			switch	(GetSymbol)	{
+			  case	',':
+				break;
+			  case	'*':
+				if		(  GetSymbol  ==  T_ICONST  ) {
+					GetSymbol;
+				} else {
+					Error("invalid number");
+				}
+				break;
+			  case	T_ICONST:
 				GetSymbol;
-			} else {
-				Error("invalid number");
+				break;
+			}
+			if		(  ComToken  ==  ','  ) {
+				GetSymbol;
 			}
 			break;
 		  case	T_ICONST:
 			GetSymbol;
 			break;
-		}
-		if		(  ComToken  ==  ','  ) {
-			GetSymbol;
+		  default:
+			break;
 		}
 	}
 dbgmsg("<SkipLD");
@@ -304,7 +348,8 @@ dbgmsg(">ParLD");
 				||	(  ComToken  ==  T_SCONST  )
 				||	(  ComToken  ==  T_EXIT    ) ) {
 			if		(  ThisEnv->D_Dir  ==  NULL  ) {
-				if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(	(  GetSymbol  ==  T_SCONST  )
+						||	(  ComToken   ==  T_ICONST  ) ) {
 					SkipLD();
 				}
 			} else {
@@ -312,7 +357,8 @@ dbgmsg(">ParLD");
 						||	(  !strcmp(ComSymbol,dname)  ) ) {
 					ParLD_Elements();
 				} else {
-					if		(  GetSymbol  ==  T_SCONST  ) {
+					if		(	(  GetSymbol  ==  T_SCONST  )
+							||	(  ComToken   ==  T_ICONST  ) ) {
 						SkipLD();
 					}
 				}
@@ -509,7 +555,7 @@ dbgmsg(">ParDBGROUP");
 			break;
 		  case	T_PORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->port = ParPort(ComSymbol,-1);
+				dbg->port = ParPort(ComSymbol,PORT_WFC);
 			} else {
 				Error("invalid port");
 			}
@@ -707,6 +753,7 @@ dbgmsg(">ParDI");
 				ThisEnv->RecordDir = RecordDir;
 				ThisEnv->WfcApsPort = ParPort("localhost",PORT_WFC_APS);
 				ThisEnv->TermPort = ParPort("localhost",PORT_WFC);
+				ThisEnv->ControlPort = ParPort(CONTROL_PORT,PORT_WFC_CONTROL);
 				ThisEnv->cLD = 0;
 				ThisEnv->cBD = 0;
 				ThisEnv->cDBD = 0;
@@ -839,52 +886,59 @@ dbgmsg(">ParDI");
 				Error("invalid multiplex level");
 			}
 			break;
+		  case	T_CONTROL:
+			if		(  GetSymbol  ==  '{'  ) {
+				ParCONTROL();
+			} else {
+				Error("syntax error in control directive");
+			}
+			break;
 		  case	T_WFC:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParWFC();
 			} else {
-				Error("syntax error 2");
+				Error("syntax error in wfc directive");
 			}
 			break;
 		  case	T_LD:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParLD(ld);
 			} else {
-				Error("syntax error 2");
+				Error("syntax error in ld directive");
 			}
 			break;
 		  case	T_BD:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParBD(bd);
 			} else {
-				Error("syntax error 2");
+				Error("syntax error in bd directive");
 			}
 			break;
 		  case	T_DB:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParDBD(db);
 			} else {
-				Error("syntax error 2");
+				Error("syntax error in db directive");
 			}
 			break;
 		  case	T_DBGROUP:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
-					Error("syntax error 3");
+					Error("syntax error in db names");
 				}
 			} else
 			if		(  ComToken  ==  '{'  ) {
 				gname = "";
 			} else {
 				gname = NULL;
-				Error("syntax error 4");
+				Error("syntax error dbgroup directive");
 			}
 			ParDBGROUP(gname);
 			break;
 		  default:
 			printf("[%X][%s]\n",ComToken,ComSymbol);
-			Error("syntax error 5");
+			Error("misc syntax error");
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {

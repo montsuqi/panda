@@ -2,7 +2,10 @@
 
 bin_SCRIPTS = panda-config
 
-SUBDIRS		= 	libs dblib include dbstuff glserver @GLCLIENT@ tools wfc aps auth htserver pgserver cobol monpls_demo fdd Doc
+SUBDIRS		= 	libs dblib blob include 	\
+	dbstuff monpls_demo fdd tools auth 		\
+	glserver @GLCLIENT@ htserver pgserver	\
+	wfc aps  cobol Doc
 
 CFLAGS		=	-O2 -Wall -Wunused
 

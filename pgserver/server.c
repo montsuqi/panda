@@ -254,11 +254,13 @@ ExecuteServer(void)
 	,		_fh;
 	NETFILE	*fpComm;
 	ScreenData	*scr;
-
+	Port	*port;
 
 	signal(SIGCHLD,SIG_IGN);
 
-	_fh = InitServerPort(PortNumber,Back);
+	port = ParPortName(PortNumber);
+	_fh = InitServerPort(port,Back);
+	DestroyPort(port);
 	while	(TRUE)	{
 		if		(  ( fh = accept(_fh,0,0) )  <  0  )	{
 			printf("_fh = %d\n",_fh);

@@ -7,7 +7,7 @@ PACKAGE=panda
 # make version
 MAJOR_VERSION=1
 MINOR_VERSION=2
-MICRO_VERSION=0
+MICRO_VERSION=2
 
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
 LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -454,6 +454,7 @@ AC_OUTPUT([
 	include/Makefile
 	libs/Makefile
 	dblib/Makefile
+	blob/Makefile
 	dbstuff/Makefile
 	cobol/Makefile
 	glclient/Makefile

@@ -34,10 +34,6 @@ copies.
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	char	*PortNumber;
-GLOBAL	char	*WfcPortNumber;
-GLOBAL	char	*WFC_Host;
-GLOBAL	int		Back;
 GLOBAL	int		ApsId;
 
 

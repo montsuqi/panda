@@ -43,59 +43,187 @@ extern	void
 DestroyPort(
 	Port	*port)
 {
-	if		(  port->port  !=  NULL  ) {
-		xfree(port->port);
-	}
-	if		(  port->host  !=  NULL  ) {
-		xfree(port->host);
+	switch	(port->type) {
+	  case	PORT_IP:
+		if		(  port->adrs.a_ip.port  !=  NULL  ) {
+			xfree(port->adrs.a_ip.port);
+		}
+		if		(  port->adrs.a_ip.host  !=  NULL  ) {
+			xfree(port->adrs.a_ip.host);
+		}
+		break;
 	}
 	xfree(port);
 }
 
 extern	Port	*
+NewIP_Port(
+	char	*host,
+	char	*portnum)
+{
+	Port	*port;
+
+	port = New(Port);
+	port->type = PORT_IP;
+	if		(	(  host   ==  NULL  )
+			||	(  *host  ==  0     ) ) {
+		port->adrs.a_ip.host = NULL;
+	} else {
+		port->adrs.a_ip.host = StrDup(host);
+	}
+	port->adrs.a_ip.port = StrDup(portnum);
+	return	(port);
+}
+
+extern	Port	*
+NewUNIX_Port(
+	char	*name,
+	int		mode)
+{
+	Port	*port;
+
+	port = New(Port);
+	port->type = PORT_UNIX;
+	port->adrs.a_unix.name = StrDup(name);
+	port->adrs.a_unix.mode = mode;
+	return	(port);
+}
+
+static	int
+otoi(
+	char	*str)
+{
+	int		ret;
+
+	if		(  *str  ==  '0'  ) {
+		str ++;
+		ret = 0;
+		while	(  *str  !=  0  ) {
+			ret = ret * 8 + *str - '0';
+			str ++;
+		}
+	} else {
+		ret = atoi(str);
+	}
+	return	(ret);
+}
+
+extern	Port	*
 ParPort(
 	char	*str,
-	int		def)
+	char	*def)
 {
 	Port	*ret;
 	char	*p;
+	int		mode;
 	char	dup[SIZE_LONGNAME+1];
 
-	strncpy(dup,str,SIZE_LONGNAME);
-	ret = New(Port);
-	if		(  dup[0]  ==  '['  ) {
-		if		(  ( p = strchr(dup,']') )  !=  NULL  ) {
-			*p = 0;
-			ret->host = StrDup(&dup[1]);
-			p ++;
-			if		(  *p  ==  ':'  ) {
-				ret->port = StrDup(p+1);
+	if		(  str  ==  NULL  ) {
+		ret = NULL;
+	} else {
+		strncpy(dup,str,SIZE_LONGNAME);
+		if		(  dup[0]  ==  '#'  ) {
+			if		(  ( p = strchr(&dup[1],':') )  !=  NULL  ) {
+				*p = 0;
+				mode = otoi(p+1);
 			} else {
-				if		(  def  <  0  ) {
-					ret->port = NULL;
+				mode = 0666;
+			}
+			ret = NewUNIX_Port(&dup[1],mode);
+		} else
+		if		(  dup[0]  ==  '['  ) {
+			if		(  ( p = strchr(dup,']') )  !=  NULL  ) {
+				*p = 0;
+				p ++;
+				if		(  *p  ==  ':'  ) {
+					ret = NewIP_Port(&dup[1],p+1);
 				} else {
-					ret->port = IntStrDup(def);
+					ret = NewIP_Port(&dup[1],def);
 				}
 			}
-		}
-	} else {
-		if		(  ( p = strchr(dup,':') )  !=  NULL  ) {
-			*p = 0;
-			ret->host = StrDup(dup);
-			ret->port = StrDup(p+1);
 		} else {
-			ret->host = StrDup(dup);
-			if		(  def  <  0  ) {
-				ret->port = NULL;
+			if		(  ( p = strchr(dup,':') )  !=  NULL  ) {
+				*p = 0;
+				ret = NewIP_Port(dup,p+1);
 			} else {
-				ret->port = IntStrDup(def);
+				ret = NewIP_Port(dup,def);
 			}
 		}
 	}
-	if		(  *ret->host  ==  0  ) {
-		ret->host = "localhost";
+	return	(ret);
+}
+
+extern	Port	*
+ParPortName(
+	char	*str)
+{
+	Port	*ret;
+	int		mode;
+	char	*p;
+
+	if		(  str  ==  NULL  ) {
+		ret = NULL;
+	} else {
+		if		(  *str  ==  '#'  ) {
+			if		(  ( p = strchr(str+1,':') )  !=  NULL  ) {
+				*p = 0;
+				mode = otoi(p+1);
+			} else {
+				mode = 0666;
+			}
+			ret = NewUNIX_Port(str+1,mode);
+		} else
+		if		(  *str  ==  ':'  ) {
+			ret = NewIP_Port(NULL,str+1);
+		} else {
+			ret = NewIP_Port(NULL,str);
+		}
 	}
 	return	(ret);
+}
+
+extern	char	*
+StringPort(
+	Port	*port)
+{
+	static	char	buff[SIZE_LONGNAME];
+
+	switch	(port->type) {
+	  case	PORT_IP:
+		if		(  IP_HOST(port)  !=  NULL  ) {
+			sprintf(buff,"%s:%s",IP_HOST(port),IP_PORT(port));
+		} else {
+			sprintf(buff,":%s",IP_PORT(port));
+		}
+		break;
+	  case	PORT_UNIX:
+		sprintf(buff,"#%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+		break;
+	  default:
+		*buff = 0;
+		break;
+	}
+	return	(buff);
+}
+
+extern	char	*
+StringPortName(
+	Port	*port)
+{
+	static	char	buff[SIZE_LONGNAME];
+
+	switch	(port->type) {
+	  case	PORT_IP:
+		sprintf(buff,"%s",IP_PORT(port));
+		break;
+	  case	PORT_UNIX:
+		sprintf(buff,"#%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+		break;
+	  default:
+		*buff = 0;
+		break;
+	}
+	return	(buff);
 }
 
 extern	void
@@ -126,9 +254,9 @@ ParseURL(
 	if		(  ( p = strchr(str,'/') )  !=  NULL  ) {
 		*p = 0;
 	}
-	port = ParPort(str,-1);
-	url->host = StrDup(port->host);
-	url->port = StrDup(port->port);
+	port = ParPort(str,NULL);
+	url->host = StrDup(port->adrs.a_ip.host);
+	url->port = StrDup(port->adrs.a_ip.port);
 	DestroyPort(port);
 	if		(  p  !=  NULL  ) {
 		url->file = StrDup(p+1);

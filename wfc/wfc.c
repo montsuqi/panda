@@ -59,6 +59,7 @@ copies.
 #include	"mqthread.h"
 #include	"corethread.h"
 #include	"termthread.h"
+#include	"controlthread.h"
 #include	"blob.h"
 #include	"option.h"
 #include	"message.h"
@@ -71,9 +72,14 @@ copies.
 
 static	char	*ApsPortNumber;
 static	char	*PortNumber;
+static	char	*ControlPortNumber;
 static	int		Back;
 static	char	*Directory;
 static	char	*BLOB_Space;
+
+static	Port	*ApsPort;
+static	Port	*WfcPort;
+static	Port	*ControlPort;
 
 #ifdef	DEBUG
 extern	void
@@ -94,29 +100,41 @@ extern	void
 ExecuteServer(void)
 {
 	int		_fhTerm
-	,		_fhAps;
+		,	_fhAps
+		,	_fhControl;
 	fd_set	ready;
 	int		maxfd;
+	struct	timeval	timeout;
 
 dbgmsg(">ExecuteServer");
-	_fhTerm = InitServerPort(PortNumber,Back);
+	_fhTerm = InitServerPort(WfcPort,Back);
 	maxfd = _fhTerm;
-	_fhAps = InitServerPort(ApsPortNumber,Back);
+	_fhAps = InitServerPort(ApsPort,Back);
 	maxfd = maxfd < _fhAps ? _fhAps : maxfd;
-
-	while	(TRUE)	{
-		dbgmsg("loop");
+	if		(  ControlPort  !=  NULL  ) {
+		_fhControl = InitServerPort(ControlPort,Back);
+		maxfd = maxfd < _fhControl ? _fhControl : maxfd;
+	} else {
+		_fhControl = 0;
+	}
+	fShutdown = FALSE;
+	do {
+		timeout.tv_sec = 1;
 		FD_ZERO(&ready);
 		FD_SET(_fhTerm,&ready);
 		FD_SET(_fhAps,&ready);
-		select(maxfd+1,&ready,NULL,NULL,NULL);
+		FD_SET(_fhControl,&ready);
+		select(maxfd+1,&ready,NULL,NULL,&timeout);
 		if		(  FD_ISSET(_fhTerm,&ready)  ) {	/*	term connect	*/
 			ConnectTerm(_fhTerm);
 		}
 		if		(  FD_ISSET(_fhAps,&ready)  ) {		/*	APS connect		*/
 			ConnectAPS(_fhAps);
 		}
-	}
+		if		(  FD_ISSET(_fhControl,&ready)  ) {		/*	control connect		*/
+			ConnectControl(_fhControl);
+		}
+	}	while	(!fShutdown);
 dbgmsg("<ExecuteServer");
 }
 
@@ -128,10 +146,19 @@ dbgmsg(">InitSystem");
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","");
 	if		(  ApsPortNumber  ==  NULL  ) {
-		ApsPortNumber = ThisEnv->WfcApsPort->port;
+		ApsPort = ThisEnv->WfcApsPort;
+	} else {
+		ApsPort = ParPortName(ApsPortNumber);
 	}
 	if		(  PortNumber  ==  NULL  ) {
-		PortNumber = ThisEnv->TermPort->port;
+		WfcPort = ThisEnv->TermPort;
+	} else {
+		WfcPort = ParPortName(PortNumber);
+	}
+	if		(  ControlPort  ==  NULL  ) {
+		ControlPort = ThisEnv->ControlPort;
+	} else {
+		ControlPort = ParPortName(ControlPortNumber);
 	}
 	InitNET();
 	InitBLOB(BLOB_Space);
@@ -140,13 +167,14 @@ dbgmsg(">InitSystem");
 	SetupMessageQueue();
 	InitTerm();
 	StartCoreThread();
+	InitControl();
 dbgmsg("<InitSystem");
 }
 
 static	void
 CleanUp(void)
 {
-
+	FinishBLOB();
 }
 
 static	ARG_TABLE	option[] = {
@@ -154,6 +182,8 @@ static	ARG_TABLE	option[] = {
 		"ポート番号"	 								},
 	{	"apsport",	STRING,		TRUE,	(void*)&ApsPortNumber,
 		"APS接続待ちポート"								},
+	{	"control",	STRING,		TRUE,	(void*)&ControlPortNumber,
+		"制御待ちポート"								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
 		"接続待ちキューの数" 							},
 
@@ -187,6 +217,7 @@ SetDefault(void)
 	Directory = "./directory";
 	MaxRetry = 0;
 	BLOB_Space = ".";
+	ControlPort = NULL;
 }
 
 extern	int

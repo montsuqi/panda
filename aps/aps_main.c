@@ -57,7 +57,7 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-static	Bool	fConnect;
+static	char	*WfcPortNumber;
 
 static	sigset_t	hupset;
 static	int		MaxTran;
@@ -145,43 +145,28 @@ ExecuteDC(
 	int		fhWFC
 	,		_fh;
 	NETFILE	*fpWFC;
-
+	Port	*port;
 	ProcessNode	*node;
 	WindowBind	*bind;
 	int		tran;
 
 ENTER_FUNC;
-	if		(  !fConnect  )	{
-		_fh = InitServerPort(PortNumber,Back);
-		if		(  ( fhWFC = accept(_fh,0,0) )  <  0  )	{
-			Error("INET Domain Accept");
+	if		(  WfcPortNumber  ==  NULL  ) {
+		if		(  ThisLD->wfc  !=  NULL  ) {
+			port = ThisLD->wfc;
+		} else {
+			port = ThisEnv->WfcApsPort;
 		}
-		fpWFC = SocketToNet(fhWFC);
 	} else {
-		if		(  WfcPortNumber  ==  NULL  ) {
-			if		(  ThisLD->wfc  !=  NULL  ) {
-				WfcPortNumber = ThisLD->wfc->port;
-			} else {
-				WfcPortNumber = ThisEnv->WfcApsPort->port;
-			}
-		}
-		if		(  WFC_Host  ==  NULL  ) {
-			if		(  ThisLD->wfc  !=  NULL  ) {
-				WFC_Host = ThisLD->wfc->host;
-			} else {
-				WFC_Host = ThisEnv->WfcApsPort->host;
-			}
-		}
-		dbgprintf("%s:%s",WFC_Host,WfcPortNumber);
-		if		(  ( fhWFC = ConnectIP_Socket(WfcPortNumber,SOCK_STREAM,WFC_Host) )
-				   <  0  ) {
-			Error("WFC not ready");
-		}
-		fpWFC = SocketToNet(fhWFC);
-		SendString(fpWFC,ThisLD->name);
-		if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
-			Error("invalid LD name");
-		}
+		port = ParPortName(WfcPortNumber);
+	}
+	if		(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
+		Error("WFC not ready");
+	}
+	fpWFC = SocketToNet(fhWFC);
+	SendString(fpWFC,ThisLD->name);
+	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
+		Error("invalid LD name");
 	}
 	InitAPSIO(fpWFC);
 	node = MakeProcessNode();
@@ -234,15 +219,6 @@ dbgmsg("<StopProcess");
 }
 
 static	ARG_TABLE	option[] = {
-	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ポート番号"	 								},
-	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"接続待ちキューの数" 							},
-
-	{	"connect",	BOOLEAN,	TRUE,	(void*)&fConnect,
-		"コネクトモード(apsからwfcに接続する)"			},
-	{	"host",		STRING,		TRUE,	(void*)&WFC_Host,
-		"WFC稼働ホスト名"								},
 	{	"wfcport",	STRING,		TRUE,	(void*)&WfcPortNumber,
 		"WFC接続待ちポート番号"	 						},
 
@@ -288,10 +264,6 @@ static	void
 SetDefault(void)
 {
 	WfcPortNumber = NULL;
-	WFC_Host = NULL;
-	PortNumber = IntStrDup(PORT_APS_BASE);
-	Back = 5;
-	fConnect = FALSE;
 	fNoCheck = FALSE;
 	fNoRedirect = FALSE;
 

@@ -251,7 +251,8 @@ typedef	struct {
 	,			*D_Dir
 	,			*RecordDir;
 	Port		*WfcApsPort
-	,			*TermPort;
+	,			*TermPort
+	,			*ControlPort;
 	size_t		cLD
 	,			cBD
 	,			cDBD

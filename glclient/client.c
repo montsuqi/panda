@@ -68,7 +68,6 @@ copies.
 #include	"debug.h"
 
 static	char	*PortNumber;
-static	char	*Host;
 static	char	*Cache;
 static	char	*Style;
 
@@ -91,10 +90,8 @@ InitSystem(void)
 }
 
 static	ARG_TABLE	option[] = {
-	{	"host",		STRING,		TRUE,	(void*)&Host,
-		"ホスト名"	 									},
-	{	"port",		STRING,	TRUE,	(void*)&PortNumber,
-		"ポート番号"									},
+	{	"port",		STRING,	TRUE,		(void*)&PortNumber,
+		"ポート"										},
 	{	"cache",	STRING,		TRUE,	(void*)&Cache,
 		"キャッシュディレクトリ名"						},
 	{	"style",	STRING,		TRUE,	(void*)&Style,
@@ -129,8 +126,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	PortNumber = IntStrDup(PORT_GLTERM);
-	Host = "localhost";
+	PortNumber = "localhost:" PORT_GLTERM;
 	CurrentApplication = "demo";
 	Cache = "cache";
 	Style = "";
@@ -155,7 +151,7 @@ CacheFileName(
 {
 	static	char	buf[SIZE_BUFF];
 
-	sprintf(buf,"%s/%s/%s/%s",Cache,Host,PortNumber,name);
+	sprintf(buf,"%s/%s/%s",Cache,PortNumber,name);
 	return	(buf);
 }
 
@@ -183,6 +179,7 @@ main(
 	FILE_LIST	*fl;
 	int		rc;
 	char	buff[SIZE_BUFF];
+	Port	*port;
 #ifdef	USE_SSL
 	SSL_CTX	*ctx;
 #endif
@@ -221,7 +218,8 @@ main(
 	}
 
 	InitNET();
-	if		(  ( fd = ConnectIP_Socket(PortNumber,SOCK_STREAM,Host) )  <  0  ) {
+	port = ParPort(PortNumber,PORT_GLTERM);
+	if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
 		g_warning("can not connect server(server port not found)");
 		return	(1);
 	}

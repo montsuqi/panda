@@ -1,3 +1,22 @@
+2004-02-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/aps_main.c: aps -> wfcの接続だけにした
+
+	* wfc/wfccontrol.c: 制御接続用クライアント
+
+	* libs/socket.c, libs/net.c : Portの仮想化とUNIX domainへの対応
+
+	* include/const.h: PORT_APS_BASE廃止(不要), CONTROL_PORT(制御接続
+	のデフォルトはUNIX domain)
+
+	* libs/DIparser.c: 制御接続の宣言子
+
+	* libs/port.c: UNIX domainへの対応
+
+	* wfc/controlthread.c : 制御接続の処理(まだ始めたばかり)
+
+	* wfc/wfc.c: 制御接続
+
 2004-02-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glserver/glcomm.c: glclient Ver 1.1.1への対応(glclient for Win32用)

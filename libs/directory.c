@@ -91,19 +91,21 @@ AssignDBG(
 	int		i;
 
 dbgmsg(">AssignDBG");
-	for	( i = 0 ; i < di->cLD ; i ++ ) {
-		if		(  di->ld[i]->db  !=  NULL  ) {
-			_AssignDBG(di->ld[i]->db,di->ld[i]->cDB,di->DBG_Table);
+	if		(  di->DBG_Table  !=  NULL  ) {
+		for	( i = 0 ; i < di->cLD ; i ++ ) {
+			if		(  di->ld[i]->db  !=  NULL  ) {
+				_AssignDBG(di->ld[i]->db,di->ld[i]->cDB,di->DBG_Table);
+			}
 		}
-	}
-	for	( i = 0 ; i < di->cBD ; i ++ ) {
-		if		(  di->bd[i]->db  !=  NULL  ) {
-			_AssignDBG(di->bd[i]->db,di->bd[i]->cDB,di->DBG_Table);
+		for	( i = 0 ; i < di->cBD ; i ++ ) {
+			if		(  di->bd[i]->db  !=  NULL  ) {
+				_AssignDBG(di->bd[i]->db,di->bd[i]->cDB,di->DBG_Table);
+			}
 		}
-	}
-	for	( i = 0 ; i < di->cDBD ; i ++ ) {
-		if		(  di->db[i]->db  !=  NULL  ) {
-			_AssignDBG(di->db[i]->db,di->db[i]->cDB,di->DBG_Table);
+		for	( i = 0 ; i < di->cDBD ; i ++ ) {
+			if		(  di->db[i]->db  !=  NULL  ) {
+				_AssignDBG(di->db[i]->db,di->db[i]->cDB,di->DBG_Table);
+			}
 		}
 	}
 dbgmsg("<AssignDBG");

@@ -173,7 +173,7 @@ SetDefault(void)
 {
 	Command = "default";
 	Host = "localhost";
-	PortNumber = IntStrDup(PORT_FDD);
+	PortNumber = PORT_FDD;
 }
 
 extern	int

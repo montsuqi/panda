@@ -580,13 +580,15 @@ ExecuteServer(void)
 	,		_fd;
 	NETFILE	*fpComm;
 	ScreenData	*scr;
+	Port	*port;
 #ifdef	USE_SSL
 	SSL_CTX	*ctx;
 #endif
 dbgmsg(">ExecureServer");
 	signal(SIGCHLD,SIG_IGN);
 
-	_fd = InitServerPort(PortNumber,Back);
+	port = ParPortName(PortNumber);
+	_fd = InitServerPort(port,Back);
 #ifdef	USE_SSL
 	ctx = NULL;
 	if		(  fSsl  ) {
@@ -626,6 +628,7 @@ dbgmsg(">ExecureServer");
 			exit(0);
 		}
 	}
+	DestroyPort(port);
 dbgmsg("<ExecureServer");
 }
 
