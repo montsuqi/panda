@@ -1,3 +1,7 @@
+2004-02-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* fdd/fdd.c: コマンドの実行論理の変更
+
 2004-02-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/DIparser.c : wfcの待機ポートをdirectoryに記述できるようにした

@@ -34,7 +34,8 @@ copies.
 #include	<string.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
-#include    <sys/select.h>
+//#include    <sys/select.h>
+#include	<sys/stat.h>
 #include	<unistd.h>
 #ifdef	USE_SSL
 #include	<openssl/crypto.h>
@@ -57,13 +58,15 @@ copies.
 static	char	*PortNumber;
 static	int		Back;
 static	char	*WorkDir;
+static	char	*ExecDir;
 
 static	void
 Process(
 	NETFILE	*fpComm)
 {
 	Bool	fOK;
-	char	buff[SIZE_BUFF+1];
+	char	buff[SIZE_BUFF+1]
+		,	name[SIZE_LONGNAME+1];
 	char	*filename
 		,	*tempname
 		,	*command;
@@ -72,6 +75,9 @@ Process(
 	int		fd;
 	int		ac;
 	FILE	*fp;
+	char	*p
+		,	*q;
+	struct	stat	stbuf;
 
 	filename = NULL;
 	command = NULL;
@@ -117,7 +123,20 @@ Process(
 	printf("file  = [%s]\n",filename);
 	printf("temp  = [%s]\n",tempname);
 #endif
-	sprintf(buff,"%s %s %s",command,tempname,filename);
+	if		(  ( q = strrchr(command,'/') )  !=  NULL  ) {
+		command = q + 1;
+	}
+	p = buff;
+	do {
+		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+			*q = 0;
+		}
+		sprintf(name,"%s/%s",p,command);
+		if		(  stat(name,&stbuf)  ==  0  )	break;
+		p = q + 1;
+	}	while	(  q  !=  NULL  );
+
+	sprintf(buff,"%s %s %s",name,tempname,filename);
 	ac = system(buff);
 	unlink(tempname);
 	SendChar(fpComm,ac);
@@ -193,6 +212,8 @@ static	ARG_TABLE	option[] = {
 		"接続待ちキューの数" 							},
 	{	"workdir",	STRING,		TRUE,	(void*)&WorkDir,
 		"一時ファイルを作るディレクトリ"				},
+	{	"execdir",	STRING,		TRUE,	(void*)&ExecDir,
+		"実行コマンドのあるディレクトリ"				},
 #ifdef	USE_SSL
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
 		"SSLを使う"				 						},
@@ -217,6 +238,7 @@ SetDefault(void)
 	PortNumber = IntStrDup(PORT_FDD);
 	Back = 5;
 	WorkDir = "/tmp";
+	ExecDir = ".";
 #ifdef	USE_SSL
 	fSsl = FALSE;
 	KeyFile = NULL;
