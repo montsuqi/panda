@@ -1,3 +1,7 @@
+2004-07-18  Kouji TAKAO  <kouji@netlab.jp>
+
+	* gettextizeをやめた。
+	
 2004-07-17  Kouji TAKAO  <kouji@netlab.jp>
 
 	* tools/msgd.c (ExecuteServer): バグ修正

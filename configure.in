@@ -53,14 +53,6 @@ AC_CHECK_LIB(crypt,crypt)
 AC_CHECK_FUNCS([strerror])
 
 dnl ***************************************************************************
-dnl i18n
-dnl ***************************************************************************
-ALL_LINGUAS="ja"
-AM_GNU_GETTEXT
-localedir='${prefix}/${DATADIRNAME}/locale'
-AC_SUBST(localedir)
-
-dnl ***************************************************************************
 dnl Gnome Support (use --disable-gnome to disable).
 dnl (Use "#ifdef USE_GNOME" in Glade for Gnome-specific code.)
 dnl ***************************************************************************
@@ -464,7 +456,7 @@ LIBS="$old_LIBS"
 LIB_DIR="${libdir}"
 AC_SUBST(LIB_DIR)
 
-AC_OUTPUT([  intl/Makefile po/Makefile.in m4/Makefile 
+AC_OUTPUT([
 	Makefile
 	Doc/Makefile
 	include/Makefile

@@ -2,10 +2,10 @@
 
 bin_SCRIPTS = panda-config
 
-SUBDIRS		= intl m4 libs dblib blob include 	\
+SUBDIRS		= 	libs dblib blob include 	\
 	dbstuff monpls_demo fdd tools auth 		\
 	glserver @GLCLIENT@ htserver pgserver	\
-	wfc aps  cobol Doc po
+	wfc aps  cobol Doc
 
 BUILT_SOURCES = defaults.h
 
@@ -22,8 +22,6 @@ defaults.h: Makefile.am $(top_builddir)/config.status
 	@echo "#define DOTCOBOL_COMMAND			\"@DOTCOBOL_COMMAND@\""	>> defaults.h
 	@echo "#define MONTSUQI_LIBRARY_PATH	\".:@LIB_DIR@\""		>> defaults.h
 	@echo "#define MONTSUQI_LOAD_PATH		\".:@LIB_DIR@\""		>> defaults.h
-
-ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = 					\
 	config.rpath				\
