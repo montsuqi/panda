@@ -297,6 +297,7 @@ dbgmsg(">ReadTerminal");
 			break;
 		  default:
 			ON_IO_ERROR(fp,badio);
+			fExit = TRUE;
 			dbgmsg("recv default");
 			break;
 		}
@@ -374,6 +375,7 @@ dbgmsg(">WriteTerminal");
 				fExit = TRUE;
 				break;
 			  default:
+				fExit = TRUE;
 				break;
 			}
 		}	while	(  !fExit  );

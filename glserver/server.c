@@ -106,7 +106,7 @@ dbgmsg(">CheckCache");
 		ret = FALSE;
 		break;
 	  default:
-		printf("kass = [%d]\n",klass);
+		printf("klass = [%d]\n",klass);
 	  badio:
 		dbgmsg("error");
 		ret = FALSE;

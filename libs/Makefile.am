@@ -33,6 +33,7 @@ enum_LDADD	= 	\
 testnet_LDADD	= 	\
 	-L/usr/lib -lglib -lm	\
 	$(MONDAI_LIBS)			\
+	$(SSL_LIBS)							\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/libs/libpandacom.la
 

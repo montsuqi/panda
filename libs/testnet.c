@@ -42,6 +42,7 @@ copies.
 
 #include	"types.h"
 #include	"libmondai.h"
+#include	"net.h"
 #include	"comm.h"
 #include	"socket.h"
 #include	"option.h"

@@ -34,13 +34,6 @@ copies.
 #include	<errno.h>
 #include	<string.h>
 #include    <sys/socket.h>
-#ifdef	USE_SSL
-#include	<openssl/crypto.h>
-#include	<openssl/x509.h>
-#include	<openssl/pem.h>
-#include	<openssl/ssl.h>
-#include	<openssl/err.h>
-#endif
 
 #include	"types.h"
 #include	"socket.h"
@@ -148,7 +141,7 @@ nputc(
 	int		c,
 	NETFILE	*fp)
 {
-	char	ch;
+	unsigned	char	ch;
 
 	ch = c;
 	return	(Send(fp,&ch,1));
@@ -158,10 +151,11 @@ extern	int
 ngetc(
 	NETFILE	*fp)
 {
-	char	ch;
+	unsigned char	ch;
+	size_t	s;
 	int		ret;
 
-	if		(  Recv(fp,&ch,1)  >=  0  ) {
+	if		(  ( s = Recv(fp,&ch,1) )  >=  0  ) {
 		ret = ch;
 	} else {
 		ret = -1;
