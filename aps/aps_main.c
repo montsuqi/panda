@@ -41,6 +41,7 @@ copies.
 #include	"types.h"
 #include	"misc.h"
 #include	"const.h"
+#include	"libmondai.h"
 #include	"enum.h"
 #include	"dirs.h"
 #include	"socket.h"
@@ -121,10 +122,9 @@ dbgmsg(">MakeProcessNode");
 
 	/*	get initialize memory area	*/
 
-	*ValueString(GetItemLongName(node->mcprec->value,"private.pstatus")) 
-		= '0' + APL_SESSION_LINK;
-	*ValueString(GetItemLongName(node->mcprec->value,"private.pputtype")) = '0';
-	*ValueString(GetItemLongName(node->mcprec->value,"private.prc")) = '0';
+	SetValueInteger(GetItemLongName(node->mcprec->value,"private.pstatus"),APL_SESSION_LINK);
+	SetValueInteger(GetItemLongName(node->mcprec->value,"private.pputtype"),0);
+	SetValueInteger(GetItemLongName(node->mcprec->value,"private.prc"),0);
 dbgmsg("<MakeProcessNode");
 	return	(node);
 }
@@ -192,9 +192,10 @@ dbgmsg(">ExecuteDC");
 		if		(  !GetWFC(fpWFC,node)  )	break;
 		dbgprintf("[%s]",ThisLD->name);
 		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,
-															  ValueString(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
+															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
 			if		(  bind->module  ==  NULL  )	break;
-			strcpy(ValueString(GetItemLongName(node->mcprec->value,"dc.module")),bind->module);
+			strcpy(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module")),
+				   bind->module);
 			ExecDB_Function("DBSTART",NULL,NULL);
 			ExecuteProcess(node);
 			if		(  Sleep  >  0  ) {
@@ -204,7 +205,7 @@ dbgmsg(">ExecuteDC");
 			PutWFC(fpWFC,node);
 		} else {
 			MessagePrintf("window [%s] not found.\n",
-						  ValueString(GetItemLongName(node->mcprec->value,"dc.window")));
+						  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
 			break;
 		}
 	}

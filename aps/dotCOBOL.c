@@ -46,16 +46,15 @@ copies.
 #include	"types.h"
 #include	"misc.h"
 #include	"libmondai.h"
-#include	"comm.h"
 #include	"directory.h"
 #include	"handler.h"
 #include	"const.h"
 #include	"defaults.h"
 #include	"enum.h"
 #include	"dblib.h"
+#include	"dbgroup.h"
 #include	"queue.h"
 #include	"pty.h"
-#include	"driver.h"
 #include	"debug.h"
 
 
@@ -81,6 +80,7 @@ static	void	*McpData
 		,		*SpaData
 		,		*ScrData;
 static	char	*Command;
+static	CONVOPT	*dotCOBOL_Conv;
 
 static	void
 DumpNode(
@@ -111,11 +111,11 @@ dbgmsg(">PutApplication");
 
 	DumpNode(node); 
 
-	dotCOBOL_PackValue(McpData,node->mcprec,node->textsize);
-	dotCOBOL_PackValue(LinkData,node->linkrec,node->textsize);
-	dotCOBOL_PackValue(SpaData,node->sparec,node->textsize);
+	dotCOBOL_PackValue(dotCOBOL_Conv,McpData,node->mcprec->value);
+	dotCOBOL_PackValue(dotCOBOL_Conv,LinkData,node->linkrec->value);
+	dotCOBOL_PackValue(dotCOBOL_Conv,SpaData,node->sparec->value);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = dotCOBOL_PackValue(p,node->scrrec[i],node->textsize);
+		p = dotCOBOL_PackValue(dotCOBOL_Conv,p,node->scrrec[i]->value);
 	}
 
 	size  = fwrite(McpData,1,McpSize,fp);
@@ -169,11 +169,11 @@ dbgmsg(">GetApplication");
 		(void)getc(fp);
 	}
 
-	dotCOBOL_UnPackValue(McpData,node->mcprec,node->textsize);
-	dotCOBOL_UnPackValue(LinkData,node->linkrec,node->textsize);
-	dotCOBOL_UnPackValue(SpaData,node->sparec,node->textsize);
+	dotCOBOL_UnPackValue(dotCOBOL_Conv,McpData,node->mcprec->value);
+	dotCOBOL_UnPackValue(dotCOBOL_Conv,LinkData,node->linkrec->value);
+	dotCOBOL_UnPackValue(dotCOBOL_Conv,SpaData,node->sparec->value);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = dotCOBOL_UnPackValue(p,node->scrrec[i],node->textsize);
+		p = dotCOBOL_UnPackValue(dotCOBOL_Conv,p,node->scrrec[i]->value);
 	}
 
 
@@ -287,7 +287,7 @@ _StopDC(
 {
 dbgmsg(">StopDC");
 	if		(  ThisLD->cDB  >  0  ) {
-		_StopDB();
+		_StopDB(handler);
 	}
 	xfree(McpData);
 	xfree(LinkData);
@@ -303,7 +303,8 @@ dbgmsg("<StopDC");
 }
 
 static	void
-ReadyApplication(void)
+ReadyApplication(
+	MessageHandler *handler)
 {
 	int		pid;
 	int		slave;
@@ -317,7 +318,7 @@ dbgmsg(">ReadyApplication");
 		exit(1);
 	}
 #endif
-	ExpandStart(line,handler->start,handler->loadpath,name,param);
+	ExpandStart(line,handler->start,handler->loadpath,"","");
 	cmd = ParCommandLine(line);
 	if		(  ( pid = fork() )  ==  0  ) {
 #ifdef	USE_PTY
@@ -367,17 +368,21 @@ dbgmsg(">ReadyDC");
 		fprintf(stderr,"can not open output pipe\n");
 		exit(1);
 	}
-	ReadyApplication();
+	ReadyApplication(handler);
 
-	McpSize = dotCOBOL_SizeValue(ThisEnv->mcprec,ThisLD->arraysize,ThisLD->textsize);
+	dotCOBOL_Conv = NewConvOpt();
+	ConvSetSize(dotCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
+	ConvSetLocale(dotCOBOL_Conv,handler->conv->locale);
+
+	McpSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisEnv->mcprec->value);
 	McpData = xmalloc(McpSize);
-	LinkSize = dotCOBOL_SizeValue(ThisEnv->linkrec,ThisLD->arraysize,ThisLD->textsize);
+	LinkSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisEnv->linkrec->value);
 	LinkData = xmalloc(LinkSize);
-	SpaSize = dotCOBOL_SizeValue(ThisLD->sparec,ThisLD->arraysize,ThisLD->textsize);
+	SpaSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisLD->sparec->value);
 	SpaData = xmalloc(SpaSize);
 	ScrSize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		ScrSize += dotCOBOL_SizeValue(ThisLD->window[i]->value,ThisLD->arraysize,ThisLD->textsize);
+		ScrSize += dotCOBOL_SizeValue(dotCOBOL_Conv,ThisLD->window[i]->rec->value);
 	}
 	ScrData = xmalloc(ScrSize);
 dbgmsg("<ReadyDC");
@@ -388,7 +393,7 @@ static	void
 _CleanUpDB(
 	MessageHandler	*handler)
 {
-	_StopDB();
+	_StopDB(handler);
 	unlink("db.input");
 	unlink("db.output");
 }
@@ -528,13 +533,13 @@ dbgmsg(">ExecuteDB_Server");
 		ctrl = (DBCOMM_CTRL *)block;
 		if		(  ctrl->rno  >=  0  ) {
 			rec = ThisDB[ctrl->rno]; 
-			dotCOBOL_UnPackValue(data, rec->rec,TextSize);
+			dotCOBOL_UnPackValue(dotCOBOL_Conv,data, rec->value);
 		} else {
 			rec = NULL;
 		}
 		ExecDB_Process(ctrl,rec);
 		if		(  rec  !=  NULL  ) {
-			dotCOBOL_PackValue(data, rec->rec,TextSize);
+			dotCOBOL_PackValue(dotCOBOL_Conv,data, rec->value);
 		}
 		dbgmsg("write");
 		WriteDB_Reply(fpDBW,block,bnum);
@@ -567,6 +572,10 @@ _StartBatch(
 	,		**cmd;
 
 dbgmsg(">StartBatch");
+	dotCOBOL_Conv = NewConvOpt();
+	ConvSetSize(dotCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
+	ConvSetLocale(dotCOBOL_Conv,handler->conv->locale);
+
 	ExpandStart(line,handler->start,handler->loadpath,name,param);
 	cmd = ParCommandLine(line);
 	if		(  ( pid = fork() )  ==  0  ) {
@@ -587,7 +596,7 @@ dbgmsg("<StartBatch");
 	return	(0); 
 }
 
-static	MessageHandler	Handler = {
+static	MessageHandlerClass	Handler = {
 	"dotCOBOL",
 	NULL,
 	_ExecuteProcess,
@@ -600,7 +609,7 @@ static	MessageHandler	Handler = {
 	_CleanUpDB,
 };
 
-extern	MessageHandler	*
+extern	MessageHandlerClass	*
 dotCOBOL(void)
 {
 	if		(  ( Command = getenv("DOTCOBOL_LINE") )  ==  NULL  ) {

@@ -5,13 +5,21 @@ textsize	200;
 
 wfc		"localhost:9001";
 
+handler	"Ruby"	{
+	class	"Exec";
+	serialize	"CGI";
+	start		"/usr/bin/ruby -Ke %p/%m.rb";
+	locale		"euc-jp";
+	encoding	"URL";
+};
+
 #bind	""			"dotCOBOL"	"TPDEMO1";
 #bind	"project1"	"dotCOBOL"	"TPDEMO1";
 #bind	"project2"	"dotCOBOL"	"TPDEMO1";
 #bind	"project5"	"dotCOBOL"	"TPDEMO3";
 
-bind	""			"Exec"		"TPDEMO1.rb";
-bind	"project1"	"Exec"		"TPDEMO1.rb";
+bind	""			"Ruby"		"TPDEMO1";
+bind	"project1"	"Ruby"		"TPDEMO1";
 
 #bind	""			"OpenCOBOL"	"TPDEMO1";
 #bind	"project1"	"OpenCOBOL"	"TPDEMO1";

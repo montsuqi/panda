@@ -124,19 +124,19 @@ TableBody(
 	  case	GL_TYPE_BYTE:
 	  case	GL_TYPE_CHAR:
 		PutItemName();
-		printf("char(%d)",val->body.CharData.len);
+		printf("char(%d)",ValueStringLength(val));
 		PutDim();
 		break;
 	  case	GL_TYPE_VARCHAR:
 		PutItemName();
-		printf("varchar(%d)",val->body.CharData.len);
+		printf("varchar(%d)",ValueStringLength(val));
 		PutDim();
 		break;
 	  case	GL_TYPE_NUMBER:
 		PutItemName();
 		printf("numeric(%d,%d)",
-			   val->body.FixedData.flen,
-			   val->body.FixedData.slen);
+			   ValueFixedLength(val),
+			   ValueFixedSlen(val));
 		PutDim();
 		break;
 	  case	GL_TYPE_TEXT:
@@ -145,8 +145,8 @@ TableBody(
 		PutDim();
 		break;
 	  case	GL_TYPE_ARRAY:
-		tmp = val->body.ArrayData.item[0];
-		Dim[alevel] = val->body.ArrayData.count;
+		tmp = ValueArrayItem(val,0);
+		Dim[alevel] = ValueArraySize(val);
 		alevel ++;
 		TableBody(tmp,arraysize,textsize);
 		alevel --;
@@ -154,15 +154,15 @@ TableBody(
 	  case	GL_TYPE_RECORD:
 		level ++;
 		fComm = FALSE;
-		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
-			tmp = val->body.RecordData.item[i];
+		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
+			tmp = ValueRecordItem(val,i);
 			if		(	(  !IS_VALUE_VIRTUAL(tmp)  )
 					&&	(  !IS_VALUE_ALIAS(tmp)    ) ) {
 				if		(  fComm  ) {
 					printf(",\n");
 				}
 				fComm = TRUE;
-				rname[level-1] = val->body.RecordData.names[i];
+				rname[level-1] = ValueRecordName(val,i);
 				TableBody(tmp,arraysize,textsize);
 			}
 		}
@@ -237,7 +237,7 @@ PutItemNames(
 
 	if		(  val  ==  NULL  )	return;
 
-	switch	(val->type) {
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
 		PutName();
 		break;
@@ -258,8 +258,8 @@ PutItemNames(
 		PutName();
 		break;
 	  case	GL_TYPE_ARRAY:
-		tmp = val->body.ArrayData.item[0];
-		Dim[alevel] = val->body.ArrayData.count;
+		tmp = ValueArrayItem(val,0);
+		Dim[alevel] = ValueArraySize(val);
 		alevel ++;
 		PutItemNames(tmp);
 		alevel --;
@@ -267,14 +267,14 @@ PutItemNames(
 	  case	GL_TYPE_RECORD:
 		level ++;
 		fComm = FALSE;
-		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
-			tmp = val->body.RecordData.item[i];
-			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
+		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
+			tmp = ValueRecordItem(val,i);
+			if		(  !IS_VALUE_VIRTUAL(tmp)  )	{
 				if		(  fComm  ) {
 					printf(",");
 				}
 				fComm = TRUE;
-				rname[level-1] = val->body.RecordData.names[i];
+				rname[level-1] = ValueRecordName(val,i);
 				PutItemNames(tmp);
 			}
 		}

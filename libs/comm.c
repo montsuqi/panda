@@ -39,7 +39,7 @@ copies.
 #include	"types.h"
 #include	"misc.h"
 #include	"value.h"
-#include	"LBSfunc.h"
+#include	"libmondai.h"
 #define	_COMM
 #include	"comm.h"
 #include	"debug.h"
@@ -698,37 +698,37 @@ SendValueBody(
 	int		i;
 
 	if		(  value  ==  NULL  )	return;
-	SendDataType(fp,value->type);
-	switch	(value->type) {
+	SendDataType(fp,ValueType(value));
+	switch	(ValueType(value)) {
 	  case	GL_TYPE_INT:
-		SendInt(fp,value->body.IntegerData);
+		SendInt(fp,ValueInteger(value));
 		break;
 	  case	GL_TYPE_FLOAT:
-		SendFloat(fp,value->body.FloatData);
+		SendFloat(fp,ValueFloat(value));
 		break;
 	  case	GL_TYPE_BOOL:
-		SendBool(fp,value->body.BoolData);
+		SendBool(fp,ValueBool(value));
 		break;
 	  case	GL_TYPE_BYTE:
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
-		SendFixedString(fp,value->body.CharData.sval,value->body.CharData.len);
+		SendFixedString(fp,ValueToString(value,NULL),ValueStringLength(value));
 		break;
 	  case	GL_TYPE_NUMBER:
-		SendFixed(fp,&value->body.FixedData);
+		SendFixed(fp,&ValueFixed(value));
 		break;
 	  case	GL_TYPE_TEXT:
-		SendString(fp,value->body.CharData.sval);
+		SendString(fp,ValueToString(value,NULL));
 		break;
 	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
-			SendValueBody(fp,value->body.ArrayData.item[i]);
+		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+			SendValueBody(fp,ValueArrayItem(value,i));
 		}
 		break;
 	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-			SendValueBody(fp,value->body.RecordData.item[i]);
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			SendValueBody(fp,ValueRecordItem(value,i));
 		}
 		break;
 	  default:
@@ -744,22 +744,26 @@ RecvValueBody(
 	int		i;
 	PacketDataType	type;
 	size_t	size;
+	char	*recvBuffer;
+	size_t	asize;
 
 	if		(  value  ==  NULL  )	return;
+	asize = 1;
+	recvBuffer = (char *)xmalloc(asize);
 	type = RecvDataType(fp);
-	if		(  type  !=  value->type  ) {
+	if		(  type  !=  ValueType(value)  ) {
 		fprintf(stderr,"fatal type miss match\n");
 		exit(1);
 	}
 	switch	(type) {
 	  case	GL_TYPE_INT:
-		value->body.IntegerData = RecvInt(fp);
+		ValueInteger(value) = RecvInt(fp);
 		break;
 	  case	GL_TYPE_FLOAT:
-		value->body.FloatData = RecvFloat(fp);
+		ValueFloat(value) = RecvFloat(fp);
 		break;
 	  case	GL_TYPE_BOOL:
-		value->body.BoolData = RecvBool(fp);
+		ValueBool(value) = RecvBool(fp);
 		break;
 	  case	GL_TYPE_TEXT:
 	  case	GL_TYPE_BYTE:
@@ -767,40 +771,40 @@ RecvValueBody(
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 		size = RecvLength(fp);
-		if		(  type  ==  GL_TYPE_TEXT  ) {
-			if		(  size  >  value->body.CharData.len  ) {
-				xfree(value->body.CharData.sval);
-				value->body.CharData.sval = (char *)xmalloc(size+1);
-				value->body.CharData.len = size;
-			}
-			memclear(value->body.CharData.sval,value->body.CharData.len+1);
+		if		(  ( size + 1)  >  asize  ) {
+			xfree(recvBuffer);
+			asize = size + 1;
+			recvBuffer = (char *)xmalloc(asize);
 		}
-		RecvStringBody(fp,value->body.CharData.sval,size);
+		memclear(recvBuffer,asize);
+		RecvStringBody(fp,recvBuffer,size);
+		SetValueString(value,recvBuffer,NULL);
 		break;
 	  case	GL_TYPE_NUMBER:
 		size = RecvLength(fp);
-		if		(  size  >  value->body.FixedData.flen  ) {
-			xfree(value->body.FixedData.sval);
-			value->body.FixedData.sval = (char *)xmalloc(size+1);
-			value->body.FixedData.flen = size;
+		if		(  size  >  ValueFixedLength(value)  ) {
+			xfree(ValueFixedBody(value));
+			ValueFixedBody(value) = (char *)xmalloc(size+1);
+			ValueFixedLength(value) = size;
 		}
-		memclear(value->body.FixedData.sval,value->body.FixedData.flen+1);
-		value->body.FixedData.slen = RecvLength(fp);
-		RecvString(fp,value->body.FixedData.sval);
+		memclear(ValueFixedBody(value),ValueFixedLength(value)+1);
+		ValueFixedSlen(value) = RecvLength(fp);
+		RecvString(fp,ValueFixedBody(value));
 		break;
 	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
-			RecvValueBody(fp,value->body.ArrayData.item[i]);
+		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+			RecvValueBody(fp,ValueArrayItem(value,i));
 		}
 		break;
 	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-			RecvValueBody(fp,value->body.RecordData.item[i]);
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			RecvValueBody(fp,ValueRecordItem(value,i));
 		}
 		break;
 	  default:
 		break;
 	}
+	xfree(recvBuffer);
 }
 
 /*
@@ -809,42 +813,43 @@ RecvValueBody(
 extern	void
 SendValue(
 	NETFILE		*fp,
-	ValueStruct	*value)
+	ValueStruct	*value,
+	char		*locale)
 {
 	int		i;
 
 	value->fUpdate = TRUE;
-	SendDataType(fp,value->type);
-	switch	(value->type) {
+	SendDataType(fp,ValueType(value));
+	switch	(ValueType(value)) {
 	  case	GL_TYPE_INT:
-		SendInt(fp,value->body.IntegerData);
+		SendInt(fp,ValueInteger(value));
 		break;
 	  case	GL_TYPE_BOOL:
-		SendBool(fp,value->body.BoolData);
+		SendBool(fp,ValueBool(value));
 		break;
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		SendString(fp,value->body.CharData.sval);
+		SendString(fp,ValueToString(value,locale));
 		break;
 	  case	GL_TYPE_FLOAT:
-		SendFloat(fp,value->body.FloatData);
+		SendFloat(fp,ValueFloat(value));
 		break;
 	  case	GL_TYPE_NUMBER:
-		SendFixed(fp,&value->body.FixedData);
+		SendFixed(fp,&ValueFixed(value));
 		break;
 	  case	GL_TYPE_ARRAY:
-		SendInt(fp,value->body.ArrayData.count);
-		for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
-			SendValue(fp,value->body.ArrayData.item[i]);
+		SendInt(fp,ValueArraySize(value));
+		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+			SendValue(fp,ValueArrayItem(value,i),locale);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
-		SendInt(fp,value->body.RecordData.count);
-		for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-			SendString(fp,value->body.RecordData.names[i]);
-			SendValue(fp,value->body.RecordData.item[i]);
+		SendInt(fp,ValueRecordSize(value));
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			SendString(fp,ValueRecordName(value,i));
+			SendValue(fp,ValueRecordItem(value,i),locale);
 		}
 		break;
 	  default:

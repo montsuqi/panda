@@ -240,8 +240,8 @@ dbgprintf("wname = [%s]\n",wname);
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
 			if		(  win->rec->value  !=  NULL  ) {
-				SendPacketClass(fpComm,GL_ScreenData);	ON_IO_ERROR(fpComm,badio);
-				SendValue(fpComm,win->rec->value);		ON_IO_ERROR(fpComm,badio);
+				SendPacketClass(fpComm,GL_ScreenData);		ON_IO_ERROR(fpComm,badio);
+				SendValue(fpComm,win->rec->value,"euc-jp");	ON_IO_ERROR(fpComm,badio);
 			} else {
 				SendPacketClass(fpComm,GL_NOT);			ON_IO_ERROR(fpComm,badio);
 			}
@@ -344,7 +344,7 @@ dbgmsg(">RecvScreenData");
 					  case	GL_TYPE_DBCODE:
 					  case	GL_TYPE_TEXT:
 						RecvString(fpComm,str);		ON_IO_ERROR(fpComm,badio);
-						SetValueString(value,str);
+						SetValueString(value,str,"euc-jp");
 						break;
 					  case	GL_TYPE_NUMBER:
 						xval = RecvFixed(fpComm);	ON_IO_ERROR(fpComm,badio);

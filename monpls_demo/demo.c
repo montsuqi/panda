@@ -37,6 +37,8 @@ copies.
 #include	"misc.h"
 #include	"debug.h"
 
+#define	SOURCE_LOCALE	"euc-jp"
+
 static	int		count;
 
 extern	void
@@ -52,47 +54,47 @@ dbgmsg(">demoLink");
 	(void)SetWindowName("project1");
 dbgmsg("*");
 	if		(  ( e = GetWindowValue("project3.vbox1.swin1.text1.value") )  !=  NULL  ) {
-		SetValueString(GetWindowValue("project1.vbox1.entry1.value"),ValueString(e));
+		SetValueString(GetWindowValue("project1.vbox1.entry1.value"),ValueStringPointer(e),SOURCE_LOCALE);
 	} else {
-		SetValueString(GetWindowValue("project1.vbox1.entry1.value"),"漢字を入れてみた");
+		SetValueString(GetWindowValue("project1.vbox1.entry1.value"),"漢字を入れてみた",SOURCE_LOCALE);
 	}
 //	SetValueInteger(GetWindowValue("project1.vbox1.entry1.state"),WIDGET_STATE_INSENSITIVE);
 
 	SetValueInteger(GetWindowValue("project1.vbox1.entry2.value"),-12345);
-	SetValueString(GetWindowValue("project1.vbox1.entry1.style"),"green");
-	SetValueString(GetWindowValue("project1.vbox1.entry2.style"),"red");
-	SetValueString(GetWindowValue("project1.vbox1.entry3.style"),"blue");
+	SetValueString(GetWindowValue("project1.vbox1.entry1.style"),"green",NULL);
+	SetValueString(GetWindowValue("project1.vbox1.entry2.style"),"red",NULL);
+	SetValueString(GetWindowValue("project1.vbox1.entry3.style"),"blue",NULL);
 
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[0]"),"おごちゃん");
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[1]"),"じゅんちゃ");
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[2]"),"えりさ");
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[3]"),"ques");
-	SetValueString(GetWindowValue("project1.vbox1.combo1.name.value"),"えりさ");
+	SetValueString(GetWindowValue("project1.vbox1.combo1.item[0]"),"おごちゃん",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.item[1]"),"じゅんちゃ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.item[2]"),"えりさ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.item[3]"),"ques",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.name.value"),"えりさ",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project1.vbox1.combo1.count"),4);
-	SetValueString(GetWindowValue("project1.vbox1.combo1.name.style"),"blue");
+	SetValueString(GetWindowValue("project1.vbox1.combo1.name.style"),"blue",NULL);
 
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[0]"),"おごちゃん");
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[1]"),"じゅんちゃ");
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[2]"),"えりさ");
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[3]"),"ques");
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[4]"),"void_No2");
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[5]"),"Mul6");
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[6]"),"末広");
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[0]"),"おごちゃん",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[1]"),"じゅんちゃ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[2]"),"えりさ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[3]"),"ques",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[4]"),"void_No2",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[5]"),"Mul6",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[6]"),"末広",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project1.vbox1.swin2.vp1.list1.count"),7);
 	SetValueInteger(GetWindowValue("project1.vbox1.swin2.vp1.list1.from"),5);
 	SetValueBool(GetWindowValue("project1.vbox1.swin2.vp1.list1.select[1]"),TRUE);
 
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label1.value"),"その１");
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label1.style"),"blue");
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label2.value"),"その２");
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label2.style"),"red");
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label3.value"),"その３");
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label3.style"),"green");
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label1.value"),"その１",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label1.style"),"blue",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label2.value"),"その２",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label2.style"),"red",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label3.value"),"その３",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label3.style"),"green",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project1.vbox1.swin1.clist1.from"),2);
 
 	SetValueBool(GetWindowValue("project1.vbox1.togglebutton1.value"),FALSE);
-	SetValueString(GetWindowValue("project1.vbox1.togglebutton1.label"),"まだ");
-	SetValueString(GetWindowValue("project1.vbox1.togglebutton1.style"),"green");
+	SetValueString(GetWindowValue("project1.vbox1.togglebutton1.label"),"まだ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.togglebutton1.style"),"green",SOURCE_LOCALE);
 
 	SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkleft.value"),FALSE);
 	SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkright.value"),FALSE);
@@ -103,14 +105,14 @@ dbgmsg("*");
 	SetValueBool(GetWindowValue("project1.vbox1.hbox6.radionone.value"),FALSE);
 
 	SetValueInteger(GetWindowValue("project1.vbox1.notebook1.pageno"),3);
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.entry4.value"),"123456");
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin3.text1.value"),"ノートブックの中身");
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.entry4.value"),"123456",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin3.text1.value"),"ノートブックの中身",SOURCE_LOCALE);
 
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.label14.value"),"名前");
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.label15.value"),"電話番号");
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.label14.value"),"名前",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.label15.value"),"電話番号",SOURCE_LOCALE);
 
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value1"),"おごちゃん");
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value2"),"070-6163-7932");
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value1"),"おごちゃん",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value2"),"070-6163-7932",NULL);
 	SetValueInteger(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.count"),1);
 
 dbgmsg("*");
@@ -163,15 +165,15 @@ dbgmsg(">demoMain");
 		e = GetWindowValue("project1.vbox1.togglebutton1");
 
 		if		(  GetRecordItem(e,"value")->body.BoolData  ) {
-			SetValueString(GetRecordItem(e,"label"),"選んだ");
+			SetValueString(GetRecordItem(e,"label"),"選んだ",SOURCE_LOCALE);
 			e1 = GetWindowValue("project1.vbox1.entry1.value");
 			e2 = GetWindowValue("project1.vbox1.entry2.value");
 			e3 = GetWindowValue("project1.vbox1.combo1.name.value");
 			v = GetWindowValue("project1.vbox1.swin1.clist1.item");
 			v = GetArrayItem(v,count);
-			SetValueString(GetRecordItem(v,"value1"),ValueString(e1));
+			SetValueString(GetRecordItem(v,"value1"),ValueStringPointer(e1),SOURCE_LOCALE);
 			SetValueFixed(GetRecordItem(v,"value2"),&ValueFixed(e2));
-			SetValueString(GetRecordItem(v,"value3"),ValueString(e3));
+			SetValueString(GetRecordItem(v,"value3"),ValueStringPointer(e3),SOURCE_LOCALE);
 #if	0
 			SetValueBool(GetWindowValue("project1.vbox1.swin1.clist1.select[0]")
 						 ,TRUE);
@@ -182,7 +184,7 @@ dbgmsg(">demoMain");
 			SetValueInteger(GetWindowValue("project1.vbox1.swin1.clist1.count")
 							,count);
 		} else {
-			SetValueString(GetRecordItem(e,"label"),"選んでない");
+			SetValueString(GetRecordItem(e,"label"),"選んでない",SOURCE_LOCALE);
 		}
 		for	( i = 0 ; i < 20 ; i ++ ) {
 			v = GetWindowValue("project1.vbox1.swin1.clist1.select");
@@ -190,7 +192,7 @@ dbgmsg(">demoMain");
 			if		(  ValueBool(v)  ) {
 				e = GetWindowValue("project1.vbox1.swin1.clist1.item");
 				e = GetArrayItem(e,i);
-				SetValueString(GetRecordItem(e,"value1"),"よい子");
+				SetValueString(GetRecordItem(e,"value1"),"よい子",SOURCE_LOCALE);
 //				ValueBool(v) = FALSE;
 			}
 		}
@@ -212,16 +214,16 @@ dbgmsg(">demoMain");
 			e1 = GetWindowValue("project1.vbox1.entry1.value");
 			e2 = GetWindowValue("project1.vbox1.entry2.value");
 			sprintf(buff2,"%s%s",
-					ValueString(e1),
-					ValueToString(e2));
+					ValueStringPointer(e1),
+					ValueStringPointer(e2));
 			strcat(buff,buff2);
 		} else
 		if		(  ValueBool(GetWindowValue("project1.vbox1.hbox6.radioright.value")) ) {
 			e1 = GetWindowValue("project1.vbox1.entry1.value");
 			e2 = GetWindowValue("project1.vbox1.entry2.value");
 			sprintf(buff2,"%s%s",
-					ValueToString(e2),
-					ValueString(e1));
+					ValueStringPointer(e2),
+					ValueStringPointer(e1));
 			strcat(buff,buff2);
 		} else {
 		}
@@ -232,12 +234,12 @@ dbgmsg(">demoMain");
 			if		(  ValueBool(v)  ) {
 				e = GetWindowValue("project1.vbox1.swin2.vp1.list1.item");
 				e = GetArrayItem(e,i);
-				SetValueString(e,"よい子");
+				SetValueString(e,"よい子",SOURCE_LOCALE);
 				ValueBool(v) = FALSE;
 			}
 		}
 
-		SetValueString(GetWindowValue("project1.vbox1.entry3.value"),buff);
+		SetValueString(GetWindowValue("project1.vbox1.entry3.value"),buff,SOURCE_LOCALE);
 
 		if		(  count  <  20  ) {
 			PutWindow(win,SCREEN_CURRENT_WINDOW);
@@ -251,9 +253,9 @@ dbgmsg(">demoMain");
 		e1 = GetItemLongName(win->rec->value,"vbox1.entry1.value");
 		e2 = GetItemLongName(win->rec->value,"vbox1.entry2.value");
 		sprintf(buff,"%s%s",
-				ValueString(e1),
-				ValueToString(e2));
-		SetValueString(GetItemLongName(win->rec->value,"vbox1.entry3.value"),buff);
+				ValueStringPointer(e1),
+				ValueStringPointer(e2));
+		SetValueString(GetItemLongName(win->rec->value,"vbox1.entry3.value"),buff,NULL);
 		SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkleft"),FALSE);
 
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
@@ -263,9 +265,9 @@ dbgmsg(">demoMain");
 		e1 = GetItemLongName(win->rec->value,"vbox1.entry1.value");
 		e2 = GetItemLongName(win->rec->value,"vbox1.entry2.value");
 		sprintf(buff,"%s%s",
-				ValueToString(e2),
-				ValueString(e1));
-		SetValueString(GetItemLongName(win->rec->value,"vbox1.entry3.value"),buff);
+				ValueStringPointer(e2),
+				ValueStringPointer(e1));
+		SetValueString(GetItemLongName(win->rec->value,"vbox1.entry3.value"),buff,NULL);
 		SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkright"),FALSE);
 
 		PutWindow(win,SCREEN_CURRENT_WINDOW);

@@ -187,7 +187,7 @@ _COBOL(
 
 	if		(  val  ==  NULL  )	return;
 
-	switch	(val->type) {
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
 		PutString("PIC S9(9)   BINARY");
 		break;
@@ -198,16 +198,16 @@ _COBOL(
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
-		sprintf(buff,"PIC X(%d)",val->body.CharData.len);
+		sprintf(buff,"PIC X(%d)",ValueStringLength(val));
 		PutString(buff);
 		break;
 	  case	GL_TYPE_NUMBER:
-		if		(  val->body.FixedData.slen  ==  0  ) {
-			sprintf(buff,"PIC S9(%d)",val->body.FixedData.flen);
+		if		(  ValueFixedSlen(val)  ==  0  ) {
+			sprintf(buff,"PIC S9(%d)",ValueFixedLength(val));
 		} else {
 			sprintf(buff,"PIC S9(%d)V9(%d)",
-					(val->body.FixedData.flen - val->body.FixedData.slen),
-					val->body.FixedData.slen);
+					(ValueFixedLength(val) - ValueFixedSlen(val)),
+					ValueFixedSlen(val));
 		}
 		PutString(buff);
 		break;
@@ -216,12 +216,12 @@ _COBOL(
 		PutString(buff);
 		break;
 	  case	GL_TYPE_ARRAY:
-		tmp = val->body.ArrayData.item[0];
-		n = val->body.ArrayData.count;
+		tmp = ValueArrayItem(val,0);
+		n = ValueArraySize(val);
 		if		(  n  ==  0  ) {
 			n = conv->arraysize;
 		}
-		switch	(tmp->type) {
+		switch	(ValueType(tmp)) {
 		  case	GL_TYPE_RECORD:
 			sprintf(buff,"OCCURS  %d TIMES",n);
 			PutTab(8);
@@ -253,31 +253,31 @@ _COBOL(
 		} else {
 			name = namebuff;
 		}
-		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
+		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
 			printf(".\n");
 			PutLevel(level,TRUE);
 			if		(  fFull  )	{
 				sprintf(name,"%s%s",(( *namebuff == 0 ) ? "": "-"),
-						val->body.RecordData.names[i]);
+						ValueRecordItem(val,i));
 			} else {
-				strcpy(namebuff,val->body.RecordData.names[i]);
+				strcpy(namebuff,ValueRecordName(val,i));
 			}
-			strcpy(PrevName,val->body.RecordData.names[i]);
+			strcpy(PrevName,ValueRecordName(val,i));
 			PrevCount = 0;
 			PutName(namebuff);
-			tmp = val->body.RecordData.item[i];
+			tmp = ValueRecordItem(val,i);
 			if		(  is_return  ) {
 				/* new line if current ValueStruct children is item and it has
 				   occurs */
-				if		(	(  tmp->type != GL_TYPE_RECORD  )
-						&&	(  tmp->type == GL_TYPE_ARRAY  )
-						&&	(  tmp->body.ArrayData.item[0]->type != GL_TYPE_RECORD  ) ) {
+				if		(	(  ValueType(tmp)  !=  GL_TYPE_RECORD  )
+						&&	(  ValueType(tmp)  ==  GL_TYPE_ARRAY  )
+						&&	(  ValueType(ValueArrayItem(tmp,0))  != GL_TYPE_RECORD  ) ) {
 					printf("\n");
 					PutLevel(level,FALSE);
 				}
 			  	is_return = FALSE;
 			}
-			if		(  tmp->type  !=  GL_TYPE_RECORD  ) {
+			if		(  ValueType(tmp)  !=  GL_TYPE_RECORD  ) {
 				PutTab(4);
 			}
 			_COBOL(conv,tmp);

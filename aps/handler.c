@@ -236,8 +236,8 @@ CallBefore(
 
 dbgmsg(">CallBefore");
 	mcp = node->mcprec->value; 
-	memcpy(ValueString(GetItemLongName(mcp,"dc.status")),
-		   STATUS[*ValueString(GetItemLongName(mcp,"private.pstatus")) - '1'],
+	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),
+		   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
 		   SIZE_STATUS);
 dbgmsg("<CallBefore");
 }
@@ -264,44 +264,44 @@ dbgmsg(">CallAfter");
 	mcp_puttype = GetItemLongName(mcp,"dc.puttype");
 	mcp_pputtype = GetItemLongName(mcp,"private.pputtype");
 	mcp_dcwindow = GetItemLongName(mcp,"dc.window");
-	if		(	(  *ValueString(mcp_puttype)          ==  0  )
-			||	(  !strcmp(ValueString(mcp_puttype),"NULL")  ) ) {
-		*ValueString(mcp_pputtype) = SCREEN_NULL + '0';
+	if		(	(  *ValueStringPointer(mcp_puttype)   ==  0  )
+			||	(  !strcmp(ValueStringPointer(mcp_puttype),"NULL")  ) ) {
+		SetValueInteger(mcp_pputtype,SCREEN_NULL);
 	} else
-	if		(  !strcmp(ValueString(mcp_puttype),"CURRENT")  ) {
-		*ValueString(mcp_pputtype) = SCREEN_CURRENT_WINDOW + '0';
+	if		(  !strcmp(ValueStringPointer(mcp_puttype),"CURRENT")  ) {
+		SetValueInteger(mcp_pputtype,SCREEN_CURRENT_WINDOW);
 	} else
-	if		(  !strcmp(ValueString(mcp_puttype),"NEW")  ) {
-		*ValueString(mcp_pputtype) = SCREEN_NEW_WINDOW + '0';
+	if		(  !strcmp(ValueStringPointer(mcp_puttype),"NEW")  ) {
+		SetValueInteger(mcp_pputtype,SCREEN_NEW_WINDOW);
 	} else
-	if		(  !strcmp(ValueString(mcp_puttype),"CLOSE")  ) {
-		*ValueString(mcp_pputtype) = SCREEN_CLOSE_WINDOW + '0';
+	if		(  !strcmp(ValueStringPointer(mcp_puttype),"CLOSE")  ) {
+		SetValueInteger(mcp_pputtype,SCREEN_CLOSE_WINDOW);
 	} else
-	if		(  !strcmp(ValueString(mcp_puttype),"CHANGE")  ) {
-		*ValueString(mcp_pputtype) = SCREEN_CHANGE_WINDOW + '0';
+	if		(  !strcmp(ValueStringPointer(mcp_puttype),"CHANGE")  ) {
+		SetValueInteger(mcp_pputtype,SCREEN_CHANGE_WINDOW);
 	} else
-	if		(  !strcmp(ValueString(mcp_puttype),"BACK")  ) {
+	if		(  !strcmp(ValueStringPointer(mcp_puttype),"BACK")  ) {
 		SetValueInteger(mcp_sindex,ValueInteger(mcp_sindex)-1);
-		memcpy(ValueString(GetItemLongName(mcp,"dc.window")),
-			   ValueString(GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex))),
+		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
+			   ValueStringPointer(GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex))),
 			   SIZE_NAME);
-		*ValueString(mcp_pputtype) = SCREEN_CHANGE_WINDOW + '0';
+		SetValueInteger(mcp_pputtype,SCREEN_CHANGE_WINDOW);
 	} else
-	if		(  !strcmp(ValueString(mcp_puttype),"JOIN")  ) {
-		*ValueString(mcp_pputtype) = SCREEN_JOIN_WINDOW + '0';
+	if		(  !strcmp(ValueStringPointer(mcp_puttype),"JOIN")  ) {
+		SetValueInteger(mcp_pputtype,SCREEN_JOIN_WINDOW);
 	} else
-	if		(  !strcmp(ValueString(mcp_puttype),"FORK")  ) {
-		*ValueString(mcp_pputtype) = SCREEN_FORK_WINDOW + '0';
+	if		(  !strcmp(ValueStringPointer(mcp_puttype),"FORK")  ) {
+		SetValueInteger(mcp_pputtype,SCREEN_FORK_WINDOW);
 	} else
-	if		(  !strcmp(ValueString(mcp_puttype),"EXIT")  ) {
-		*ValueString(mcp_pputtype) = SCREEN_END_SESSION + '0';
+	if		(  !strcmp(ValueStringPointer(mcp_puttype),"EXIT")  ) {
+		SetValueInteger(mcp_pputtype,SCREEN_END_SESSION);
 	} else {
-		*ValueString(mcp_pputtype) = SCREEN_CURRENT_WINDOW + '0';
+		SetValueInteger(mcp_pputtype,SCREEN_CURRENT_WINDOW);
 	}
 	node->w.n = 0;
 	if		(  ValueInteger(mcp_sindex)  ==  0  ) {
-		strcpy(ValueString(GetArrayItem(mcp_swindow,0)),
-			   ValueString(mcp_dcwindow));
+		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,0)),
+			   ValueStringPointer(mcp_dcwindow));
 		ValueInteger(mcp_sindex) = 1;
 	} else {
 #ifdef	DEBUG
@@ -314,21 +314,21 @@ dbgmsg(">CallAfter");
 		}
 		dbgmsg("----------------------------------------");
 #endif
-		if		(  strcmp(ValueString(
+		if		(  strcmp(ValueStringPointer(
 							  GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex) - 1)),
-						  ValueString(mcp_dcwindow))  !=  0  ) {
-			strcpy(ValueString(GetItemLongName(mcp,"dc.fromwin")),
-				   ValueString(
+						  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
+			strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
+				   ValueStringPointer(
 					   GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex) - 1)));
 			for	( i = 0 ; i < ValueInteger(mcp_sindex) ; i ++ ) {
-				if		(  strcmp(ValueString(
+				if		(  strcmp(ValueStringPointer(
 									  GetArrayItem(mcp_swindow,i)),
-								  ValueString(mcp_dcwindow))  ==  0  )
+								  ValueStringPointer(mcp_dcwindow))  ==  0  )
 					break;
 			}
-			if		(  strcmp(ValueString(
+			if		(  strcmp(ValueStringPointer(
 								  GetArrayItem(mcp_swindow,i)),
-							  ValueString(mcp_dcwindow))  ==  0  ) {
+							  ValueStringPointer(mcp_dcwindow))  ==  0  ) {
 				winfrom = i + 1;
 				winend  = ValueInteger(mcp_sindex);
 				ValueInteger(mcp_sindex) = i + 1;
@@ -336,14 +336,14 @@ dbgmsg(">CallAfter");
 				winfrom = 0;
 				winend  = ValueInteger(mcp_sindex);
 				ValueInteger(mcp_sindex) = i + 1;
-				strcpy(ValueString(
+				strcpy(ValueStringPointer(
 						   GetArrayItem(mcp_swindow,i)),
-					   ValueString(mcp_dcwindow));
+					   ValueStringPointer(mcp_dcwindow));
 			}
-			if		(  *ValueString(mcp_pputtype)  ==  SCREEN_JOIN_WINDOW + '0'  ) {
+			if		(  *ValueStringPointer(mcp_pputtype)  ==  SCREEN_JOIN_WINDOW + '0'  ) {
 				for	( i = winfrom ; i < winend ; i ++  ) {
 					strcpy(node->w.close[node->w.n].window,
-						   ValueString(GetArrayItem(mcp_swindow,i)));
+						   ValueStringPointer(GetArrayItem(mcp_swindow,i)));
 					node->w.n ++;
 				}
 			}
@@ -361,7 +361,7 @@ ExecuteProcess(
 	char		*window;
 
 dbgmsg(">ExecuteProcess");
-	window = ValueString(GetItemLongName(node->mcprec->value,"dc.window"));
+	window = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"));
 	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
 	handler = bind->handler;
 	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
@@ -537,7 +537,7 @@ MakeCTRL(
 	DBCOMM_CTRL	*ctrl,
 	ValueStruct	*mcp)
 {
-	strcpy(ctrl->func,ValueString(GetItemLongName(mcp,"func")));
+	strcpy(ctrl->func,ValueStringPointer(GetItemLongName(mcp,"func")));
 	ctrl->rc = ValueInteger(GetItemLongName(mcp,"rc"));
 	ctrl->blocks = ValueInteger(GetItemLongName(mcp,"db.path.blocks"));
 	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
@@ -552,7 +552,7 @@ MakeMCP(
 	ValueStruct	*mcp,
 	DBCOMM_CTRL	*ctrl)
 {
-	strcpy(ValueString(GetItemLongName(mcp,"func")),ctrl->func);
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"func")),ctrl->func);
 	ValueInteger(GetItemLongName(mcp,"rc")) = ctrl->rc;
 	ValueInteger(GetItemLongName(mcp,"db.path.blocks")) = ctrl->blocks;
 	ValueInteger(GetItemLongName(mcp,"db.path.rname")) = ctrl->rno;

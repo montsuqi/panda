@@ -74,10 +74,10 @@ ValueToSQL(
 		} else {
 			del = '\'';
 		}
-		sprintf(buff,"%c%s%c",del,ValueToString(val),del);
+		sprintf(buff,"%c%s%c",del,ValueToString(val,DB_LOCALE),del);
 		break;
 	  case	GL_TYPE_DBCODE:
-		strcpy(buff,ValueString(val));
+		strcpy(buff,ValueToString(val,DB_LOCALE));
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(&ValueFixed(val));
@@ -158,9 +158,9 @@ ParArray(
 			p ++;
 		}
 	} else {
-		for	( i = 0 ; i < val->body.ArrayData.count ; i ++ ) {
-			item = val->body.ArrayData.item[i];
-			switch	(item->type) {
+		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
+			item = ValueArrayItem(val,i);
+			switch	(ValueType(item)) {
 			  case	GL_TYPE_INT:
 				if		(  *p  ==  '-'  ) {
 					fMinus = TRUE;
@@ -186,10 +186,10 @@ ParArray(
 			  case	GL_TYPE_VARCHAR:
 				if		(  *p  ==  '"'  ) {
 					p ++;
-					q = item->body.CharData.sval;
+					q = ValueToString(item,DB_LOCALE);
 					len = 0;
 					while	(  *p  !=  '"'  ) {
-						if		(  len  <  item->body.CharData.len  ) {
+						if		(  len  <  ValueStringLength(item)  ) {
 							len ++;
 							*q ++ = *p;
 						}
@@ -217,15 +217,15 @@ ParArray(
 				}
 				*q = 0;
 				p ++;
-				SetValueString(item,qq);
+				SetValueString(item,qq,DB_LOCALE);
 				xfree(qq);
 				break;
 			  case	GL_TYPE_ARRAY:
 				p = ParArray(p,item);
 				break;
 			  case	GL_TYPE_RECORD:
-				for	( j = 0 ; j < item->body.RecordData.count ; j ++ ) {
-					p = ParArray(p,item->body.RecordData.item[i]);
+				for	( j = 0 ; j < ValueRecordSize(item) ; j ++ ) {
+					p = ParArray(p,ValueRecordItem(item,i));
 				}
 				break;
 			  case	GL_TYPE_DBCODE:
@@ -289,7 +289,7 @@ dbgmsg(">GetTable");
 				ValueIsNil(val);
 			}
 		} else {
-			SetValueString(val,(char *)PQgetvalue(res,0,fnum));
+			SetValueString(val,(char *)PQgetvalue(res,0,fnum),DB_LOCALE);
 		}
 		break;
 	  case	GL_TYPE_NUMBER:
@@ -301,9 +301,9 @@ dbgmsg(">GetTable");
 			}
 		} else {
 			nv = NumericInput((char *)PQgetvalue(res,0,fnum),
-						  val->body.FixedData.flen,val->body.FixedData.slen);
-			str = NumericToFixed(nv,val->body.FixedData.flen,val->body.FixedData.slen);
-			strcpy(val->body.FixedData.sval,str);
+						  ValueFixedLength(val),ValueFixedSlen(val));
+			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
+			strcpy(ValueFixedBody(val),str);
 			xfree(str);
 			NumericFree(nv);
 		}
@@ -322,9 +322,9 @@ dbgmsg(">GetTable");
 	  case	GL_TYPE_RECORD:
 		level ++;
 		dbgmsg(">record");
-		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
-			tmp = val->body.RecordData.item[i];
-			rname[level-1] = val->body.RecordData.names[i];
+		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
+			tmp = ValueRecordItem(val,i);
+			rname[level-1] = ValueRecordName(val,i);
 			GetTable(res,tmp);
 		}
 		dbgmsg("<record");
@@ -367,7 +367,7 @@ UpdateValue(
 	if		(  IS_VALUE_NIL(val)  ) {
 		p += sprintf(p,"%s%s is null",ItemName(),PutDim());
 	} else
-	switch	(val->type) {
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
 	  case	GL_TYPE_BOOL:
 	  case	GL_TYPE_BYTE:
@@ -380,8 +380,8 @@ UpdateValue(
 		break;
 	  case	GL_TYPE_ARRAY:
 		fComm = FALSE;
-		for	( i = 0 ; i < val->body.ArrayData.count ; i ++ ) {
-			tmp = val->body.ArrayData.item[i];
+		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
+			tmp = ValueArrayItem(val,i);
 			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
 				if		(  fComm  ) {
 					p += sprintf(p,",");
@@ -397,14 +397,14 @@ UpdateValue(
 	  case	GL_TYPE_RECORD:
 		level ++;
 		fComm = FALSE;
-		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
-			tmp = val->body.RecordData.item[i];
+		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
+			tmp = ValueRecordItem(val,i);
 			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
 				if		(  fComm  ) {
 					p += sprintf(p,",");
 				}
 				fComm = TRUE;
-				rname[level-1] = val->body.RecordData.names[i];
+				rname[level-1] = ValueRecordName(val,i);
 				p = UpdateValue(p,tmp);
 			}
 		}
@@ -442,14 +442,14 @@ InsertNames(
 	  case	GL_TYPE_RECORD:
 		level ++;
 		fComm = FALSE;
-		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
-			tmp = val->body.RecordData.item[i];
+		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
+			tmp = ValueRecordItem(val,i);
 			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
 				if		(  fComm  ) {
 					p += sprintf(p,",");
 				}
 				fComm = TRUE;
-				rname[level-1] = val->body.RecordData.names[i];
+				rname[level-1] = ValueRecordName(val,i);
 				p = InsertNames(p,tmp);
 			}
 		}
@@ -474,7 +474,7 @@ InsertValues(
 	if		(  IS_VALUE_NIL(val)  ) {
 		p += sprintf(p,"null");
 	} else
-	switch	(val->type) {
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
 	  case	GL_TYPE_BOOL:
 	  case	GL_TYPE_BYTE:
@@ -489,9 +489,9 @@ InsertValues(
 		p += sprintf(p,"'{");
 		fInArray = TRUE;
 		fComm = FALSE;
-		for	( i = 0 ; i < val->body.ArrayData.count ; i ++ ) {
-			tmp = val->body.ArrayData.item[i];
-			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
+		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
+			tmp = ValueArrayItem(val,i);
+			if		(  !IS_VALUE_VIRTUAL(tmp)  )	{
 				if		(  fComm  ) {
 					p += sprintf(p,",");
 				}
@@ -508,14 +508,14 @@ InsertValues(
 	  case	GL_TYPE_RECORD:
 		level ++;
 		fComm = FALSE;
-		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
-			tmp = val->body.RecordData.item[i];
-			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
+		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
+			tmp = ValueRecordItem(val,i);
+			if		(  !IS_VALUE_VIRTUAL(tmp)  )	{
 				if		(  fComm  ) {
 					p += sprintf(p,", ");
 				}
 				fComm = TRUE;
-				rname[level-1] = val->body.RecordData.names[i];
+				rname[level-1] = ValueRecordName(val,i);
 				p = InsertValues(p,tmp);
 			}
 		}
@@ -585,7 +585,7 @@ dbgmsg(">GetValue");
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:
 		  case	GL_TYPE_TEXT:
-			SetValueString(val,(char *)PQgetvalue(res,tnum,fnum));
+			SetValueString(val,(char *)PQgetvalue(res,tnum,fnum),DB_LOCALE);
 			break;
 		  case	GL_TYPE_NUMBER:
 			nv = NumericInput((char *)PQgetvalue(res,tnum,fnum),

@@ -260,13 +260,15 @@ dbgmsg(">GetWFC");
 				dbgmsg("MCPDATA");
 				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
 				NativeUnPackValue(NULL,LBS_Body(buff),node->mcprec->value);
-				node->pstatus = ValueString(GetItemLongName(node->mcprec->value,
+				node->pstatus = ValueStringPointer(GetItemLongName(node->mcprec->value,
 															"private.pstatus"));
-				strcpy(ValueString(GetItemLongName(node->mcprec->value,"dc.term")),hdr.term);
-				strcpy(ValueString(GetItemLongName(node->mcprec->value,"dc.user")),hdr.user);
-				node->window = ValueString(GetItemLongName(node->mcprec->value,"dc.window"));
-				node->widget = ValueString(GetItemLongName(node->mcprec->value,"dc.widget"));
-				node->event = ValueString(GetItemLongName(node->mcprec->value,"dc.event"));
+				strcpy(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.term")),
+					   hdr.term);
+				strcpy(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.user")),
+					   hdr.user);
+				node->window = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"));
+				node->widget = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.widget"));
+				node->event = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.event"));
 				*node->pstatus = hdr.status;
 				strcpy(node->term,hdr.term);
 				strcpy(node->user,hdr.user);
@@ -293,7 +295,7 @@ dbgmsg(">GetWFC");
 				break;
 			  case	APS_END:
 				dbgmsg("END");
-				*ValueString(GetItemLongName(node->mcprec->value,"private.prc")) = TO_CHAR(0);
+				SetValueInteger(GetItemLongName(node->mcprec->value,"private.prc"),0);
 				fEnd = TRUE;
 				break;
 			  case	APS_STOP:
@@ -340,13 +342,13 @@ dbgmsg(">PutWFC");
 
 	SendPacketClass(fp,APS_CTRLDATA);		ON_IO_ERROR(fp,badio);
 	SendChar(fp,flag);						ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueString(GetItemLongName(node->mcprec->value,"dc.term")));
+	SendString(fp,ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.term")));
 	ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueString(GetItemLongName(node->mcprec->value,"dc.window")));
+	SendString(fp,ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
 	ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueString(GetItemLongName(node->mcprec->value,"dc.widget")));
+	SendString(fp,ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.widget")));
 	ON_IO_ERROR(fp,badio);
-	SendChar(fp,*ValueString(GetItemLongName(node->mcprec->value,"private.pputtype")));
+	SendChar(fp,*ValueStringPointer(GetItemLongName(node->mcprec->value,"private.pputtype")));
 	ON_IO_ERROR(fp,badio);
 	fEnd = FALSE; 
 	while	(  !fEnd  ) {

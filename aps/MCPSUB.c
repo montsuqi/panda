@@ -70,11 +70,10 @@ MCPSUB(
 dbgmsg(">MCPSUB");
 	mcp = ThisEnv->mcprec->value; 
 	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,mcpdata,mcp);
-	mcp_func = ValueString(GetItemLongName(mcp,"func"));
+	mcp_func = ValueStringPointer(GetItemLongName(mcp,"func"));
 
 	if		(  !strcmp(mcp_func,"PUTWINDOW")  ) {
-		memcpy(ValueString(GetItemLongName(mcp,"dc.status")),
-			   "PUTG",SIZE_STATUS);
+		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),"PUTG");
 		ValueInteger(GetItemLongName(mcp,"rc")) = 0;
 	} else {
 		MakeCTRL(&ctrl,mcp);

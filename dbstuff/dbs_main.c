@@ -205,7 +205,7 @@ RecvData(
 				if		(  ( rec = ThisDB[rno-1] )  !=  NULL  ) {
 					value = GetItemLongName(rec->value,vname);
 					value->fUpdate = TRUE;
-					SetValueString(value,str);
+					SetValueString(value,str,DB_LOCALE);
 				}
 			}
 		} else

@@ -161,7 +161,7 @@ dbgmsg(">WriteClient");
 			DecodeName(&wname,&vname,buff);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
-				SendStringDelim(fp,ValueToString(value));
+				SendStringDelim(fp,ValueToString(value,"euc-jp"));
 				if		(	(  p  !=  NULL            )
 						&&	(  !stricmp(p+1,"clear")  ) ) {
 					InitializeValue(value);
@@ -198,7 +198,7 @@ RecvScreenData(
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
 				value->fUpdate = TRUE;
-				SetValueString(value,str);
+				SetValueString(value,str,"euc-jp");
 #ifdef	DEBUG
 				printf("--\n");
 				DumpValueStruct(value);

@@ -173,7 +173,7 @@ dbgmsg(">SendValueString");
 			SendStringDelim(fpComm,namebuff);
 			SendStringDelim(fpComm,": ");
 		}
-		EncodeStringURL(buff,ValueToString(value));
+		EncodeStringURL(buff,ValueToString(value,NULL));
 		SendStringDelim(fpComm,buff);
 		SendStringDelim(fpComm,"\n");
 		break;

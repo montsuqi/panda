@@ -113,7 +113,7 @@ dbgmsg(">_ExecuteProcess");
 	cob_init(0,NULL);
 	cob_set_library_path(handler->loadpath);
 
-	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
+	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
 		PutApplication(node);
 		dbgmsg(">OpenCOBOL application");
@@ -143,6 +143,7 @@ _ReadyDC(
 dbgmsg(">ReadyDC");
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
+	ConvSetLocale(OpenCOBOL_Conv,handler->conv->locale);
 
 	McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec->value));
 	LinkData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->linkrec->value));
@@ -197,6 +198,7 @@ dbgmsg(">_StartBatch");
 
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisBD->textsize,ThisBD->arraysize);
+	ConvSetLocale(OpenCOBOL_Conv,handler->conv->locale);
 
 #ifdef	DEBUG
 	printf("starting [%s][%s]\n",name,param);

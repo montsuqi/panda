@@ -141,7 +141,7 @@ _ExecuteProcess(
 	Bool	rc;
 
 dbgmsg(">ExecuteProcess");
-	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
+	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = LoadModule(ApplicationTable,handler->loadpath,module) )  !=  NULL  ) {
 		PutApplication(node);
 		dbgmsg(">C application");
@@ -282,12 +282,9 @@ MCP_PutWindow(
 	ValueStruct	*mcp;
 
 	mcp = node->mcprec->value;
-	memcpy(ValueString(GetItemLongName(mcp,"dc.window")),
-		   wname,SIZE_NAME);
-	memcpy(ValueString(GetItemLongName(mcp,"dc.puttype")),
-		   ptype[type],SIZE_PUTTYPE);
-	memcpy(ValueString(GetItemLongName(mcp,"dc.status")),
-		   "PUTG",SIZE_STATUS);
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),wname);
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.puttype")),ptype[type]);
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),"PUTG");
 	ValueInteger(GetItemLongName(mcp,"rc")) = 0;
 	return	(0);
 }
@@ -317,8 +314,8 @@ MCP_GetEventHandler(
 	GHashTable	*EventTable;
 	void		(*handler)(ProcessNode *);
 
-	status = ValueString(GetItemLongName(node->mcprec->value,"dc.status"));
-	event  = ValueString(GetItemLongName(node->mcprec->value,"dc.event"));
+	status = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.status"));
+	event = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.event"));
 
 	dbgprintf("status = [%s]",status);
 	dbgprintf("event  = [%s]",status,event);

@@ -22,6 +22,9 @@ copies.
 #ifndef	_INC_CONST_H
 #define	_INC_CONST_H
 
+#define	DB_LOCALE		"euc-jp"
+/*	#define	DB_LOCALE		NULL	*/
+
 #define	PORT_GLTERM		8000
 #define	PORT_GLAUTH		8001
 #define	PORT_DBLOG		8002

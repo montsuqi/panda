@@ -110,12 +110,12 @@ dbgmsg(">ExecuteDB_Server");
 		ConvSetRecName(handler->conv,recDBCTRL->name);
 		InitializeValue(recDBCTRL->value);
 		conv->UnPackValue(handler->conv,LBS_Body(dbbuff),recDBCTRL->value);
-		rname = ValueString(GetItemLongName(recDBCTRL->value,"rname"));
+		rname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"rname"));
 		if		(	(  rname  !=  NULL  ) 
 				&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 			ctrl.rno = rno - 1;
 			rec = ThisDB[ctrl.rno]; 
-			pname = ValueString(GetItemLongName(recDBCTRL->value,"pname"));
+			pname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"pname"));
 			if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
 														pname) )  !=  0  ) {
 				ctrl.pno = pno - 1;
@@ -128,9 +128,9 @@ dbgmsg(">ExecuteDB_Server");
 		} else {
 			rec = NULL;
 		}
-		func = ValueString(GetItemLongName(recDBCTRL->value,"func"));
+		func = ValueStringPointer(GetItemLongName(recDBCTRL->value,"func"));
 		if		(  *func  !=  0  ) {
-			strcpy(ctrl.func,ValueString(GetItemLongName(recDBCTRL->value,"func")));
+			strcpy(ctrl.func,func);
 			ExecDB_Process(&ctrl,rec);
 		} else {
 			ctrl.rc = 0;
@@ -154,7 +154,7 @@ dbgmsg(">ExecuteDB_Server");
 			LBS_EmitEnd(dbbuff);
 			SendLargeString(fpDBW,dbbuff);	ON_IO_ERROR(fpDBW,badio);
 		}
-		Send(fpDBW,conv->rsep,strlen(conv->rsep));		ON_IO_ERROR(fpDBW,badio);
+		Send(fpDBW,conv->bsep,strlen(conv->bsep));		ON_IO_ERROR(fpDBW,badio);
 	}
   badio:
 dbgmsg("<ExecuteDB_Server");
@@ -234,7 +234,7 @@ dbgmsg(">PutApplication");
 		LBS_EmitEnd(iobuff);
 		SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 	}
-	Send(fp,conv->rsep,strlen(conv->rsep));		ON_IO_ERROR(fp,badio);
+	Send(fp,conv->bsep,strlen(conv->bsep));		ON_IO_ERROR(fp,badio);
   badio:
 dbgmsg("<PutApplication");
 }
@@ -306,7 +306,7 @@ dbgmsg(">ExecuteProcess");
 		handler->loadpath = ExecPath;
 	}
 	signal(SIGPIPE, SignalHandler);
-	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
+	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	ExpandStart(line,handler->start,handler->loadpath,module,"");
 	cmd = ParCommandLine(line);
 

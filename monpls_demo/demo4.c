@@ -37,6 +37,8 @@ copies.
 #include	"misc.h"
 #include	"debug.h"
 
+#define	SOURCE_LOCALE	"iso-2022-jp"
+
 static	int		count;
 
 extern	void
@@ -51,14 +53,14 @@ dbgmsg(">demo4Link");
 	(void)SetWindowName("project6");
 	
 	/* page1 */
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.entry7.value"),"kida"); 
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.text1.value"),"testtesttesttesttest");
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.entry7.value"),"kida",SOURCE_LOCALE); 
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.text1.value"),"testtesttesttesttest",SOURCE_LOCALE);
 
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.item[0]"),"test1");
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.item[1]"),"test2");
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.item[2]"),"test3");
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.item[3]"),"test4");
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.name.value"),"test2");
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.item[0]"),"test1",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.item[1]"),"test2",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.item[2]"),"test3",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.item[3]"),"test4",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.name.value"),"test2",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed4.combo1.count"),4);
 	SetValueBool(GetWindowValue("project6.vbox1.notebook1.fixed4.checkbutton2.value"),TRUE);
 	SetValueBool(GetWindowValue("project6.vbox1.notebook1.fixed4.radiobutton2.value"),TRUE);
@@ -72,11 +74,11 @@ dbgmsg(">demo4Link");
 
 	/* page3 */
 
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.item[0]"),"test1");
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.item[1]"),"test2");
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.item[2]"),"test3");
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.item[3]"),"test4");
-	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.combo_entry7.value"),"test2");
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.item[0]"),"test1",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.item[1]"),"test2",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.item[2]"),"test3",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.item[3]"),"test4",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.combo_entry7.value"),"test2",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.count"),4);
 
 	w = PutWindowByName("project6",SCREEN_NEW_WINDOW);
@@ -116,17 +118,17 @@ dbgmsg(">demo4Main");
  	}
 	if (  !strcmp(ThisEvent,"reset")  ) {
 		win = SetWindowName("project6");
-	   	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.entry7.value"),""); 
+	   	SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.entry7.value"),"",SOURCE_LOCALE); 
 		SetValueBool(GetWindowValue("project6.vbox1.notebook1.fixed4.checkbutton2.value"),FALSE);
 		SetValueBool(GetWindowValue("project6.vbox1.notebook1.fixed4.checkbutton3.value"),FALSE);
 		SetValueBool(GetWindowValue("project6.vbox1.notebook1.fixed4.radiobutton2.value"),TRUE);
 		SetValueBool(GetWindowValue("project6.vbox1.notebook1.fixed4.radiobutton3.value"),FALSE);
-		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.text1.value"),"");
+		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.text1.value"),"",SOURCE_LOCALE);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	}
 	if (  !strcmp(ThisEvent,"reset2")  ) {
 		win = SetWindowName("project6");
-		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandaentry1.value"),""); 
+		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandaentry1.value"),"",SOURCE_LOCALE); 
 		SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed3.numberentry2.value"),0);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	}
@@ -139,22 +141,22 @@ dbgmsg(">demo4Main");
 		v = GetWindowValue("project6.vbox1.notebook1.fixed4.clist3.item");
 		v = GetArrayItem(v,count);
 
-		SetValueString(GetRecordItem(v,"value1"),ValueString(e1));
+		SetValueString(GetRecordItem(v,"value1"),ValueStringPointer(e1),SOURCE_LOCALE);
 		if ( GetRecordItem(e3,"value")->body.BoolData ) {
 			if ( ValueBool(GetWindowValue("project6.vbox1.notebook1.fixed4.radiobutton2.value")) ){
-    		    SetValueString(GetRecordItem(v,"value2"),"panda");
+    		    SetValueString(GetRecordItem(v,"value2"),"panda",SOURCE_LOCALE);
 			} else {
-				SetValueString(GetRecordItem(v,"value2"),"zebra");
+				SetValueString(GetRecordItem(v,"value2"),"zebra",SOURCE_LOCALE);
 			}		 
 		} else {      
 			if ( ValueBool(GetWindowValue("project6.vbox1.notebook1.fixed4.checkbutton2.value")) ) {
-				SetValueString(GetRecordItem(v,"value2"),"check1");
+				SetValueString(GetRecordItem(v,"value2"),"check1",SOURCE_LOCALE);
 			} else {
-				SetValueString(GetRecordItem(v,"value2"),"check2");
+				SetValueString(GetRecordItem(v,"value2"),"check2",SOURCE_LOCALE);
 			}
 		}
 
-		SetValueString(GetRecordItem(v,"value3"),ValueString(e2));
+		SetValueStringPointer(GetRecordItem(v,"value3"),ValueString(e2));
 		count ++;
 		SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed4.clist3.count"),count);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
@@ -166,9 +168,9 @@ dbgmsg(">demo4Main");
 		e6 = GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.combo_entry7.value");	
 		v1 = GetWindowValue("project6.vbox1.notebook1.fixed3.pandaclist1.item");
 		v1 = GetArrayItem(v1,count);
-		SetValueString(GetRecordItem(v1,"value1"),ValueString(e4));
+		SetValueString(GetRecordItem(v1,"value1"),ValueStringPointer(e4),SOURCE_LOCALE);
 		SetValueFixed(GetRecordItem(v1,"value2"),&ValueFixed(e5));
-		SetValueString(GetRecordItem(v1,"value3"),ValueString(e6));
+		SetValueString(GetRecordItem(v1,"value3"),ValueStringPointer(e6),SOURCE_LOCALE);
 
 		count ++;
 		SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed3.pandaclist1.count"),count);
@@ -177,19 +179,19 @@ dbgmsg(">demo4Main");
 	}
 	if ( !strcmp(ThisEvent,"SELECT")){
 		win = SetWindowName("project6");
- 		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandaentry1.value"),"");
- 		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.numberentry2.value"),"");
+ 		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.pandaentry1.value"),"",SOURCE_LOCALE);
+ 		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed3.numberentry2.value"),"",SOURCE_LOCALE);
  		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	}
 	if ( !strcmp(ThisEvent,"CHANGED")){
 		win = SetWindowName("project6");
 		e7 = GetWindowValue("project6.vbox1.notebook1.fixed4.entry7.value");
-		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.text1.value"),"");
+		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.text1.value"),"",SOURCE_LOCALE);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	}       
 	if ( !strcmp(ThisEvent,"SELECT2")){
 		win = SetWindowName("project6");
-		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.text1.value"),"");		
+		SetValueString(GetWindowValue("project6.vbox1.notebook1.fixed4.text1.value"),"",SOURCE_LOCALE);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	}
 	if ( !strcmp(ThisEvent,"CLICKED")){
@@ -208,9 +210,9 @@ dbgmsg(">demo4Main");
 		e10 = GetWindowValue("project6.vbox1.notebook1.fixed3.pandacombo1.combo_entry7.value");	
 		v1 = GetWindowValue("project6.vbox1.notebook1.fixed3.pandaclist1.item");
 		v1 = GetArrayItem(v1,count);
-		SetValueString(GetRecordItem(v1,"value1"),ValueString(e8));
+		SetValueString(GetRecordItem(v1,"value1"),ValueStringPointer(e8),SOURCE_LOCALE);
 		SetValueFixed(GetRecordItem(v1,"value2"),&ValueFixed(e9));
-		SetValueString(GetRecordItem(v1,"value3"),ValueString(e10));
+		SetValueString(GetRecordItem(v1,"value3"),ValueStringPointer(e10),SOURCE_LOCALE);
 		count ++;
 		SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed3.pandaclist1.count"),count);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);

@@ -177,7 +177,7 @@ EnterDefaultHandler(void)
 #endif
 	handler = NewMessageHandler("C","C");
 	handler->serialize = NULL;
-	handler->conv->locale = "";
+	handler->conv->locale = NULL;
 	handler->start = "";
 
 	handler = NewMessageHandler("Exec","Exec");

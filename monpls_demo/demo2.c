@@ -37,6 +37,8 @@ copies.
 #include	"misc.h"
 #include	"debug.h"
 
+#define	SOURCE_LOCALE	"euc-jp"
+
 extern	void
 demo2Link(
 	char		*arg)
@@ -45,8 +47,8 @@ dbgmsg(">demo2Link");
 	printf("arg = [%s]\n",arg);
 	(void)SetWindowName("project3");
 
-	SetValueString(GetWindowValue("project3.vbox1.swin1.text1.style"),"green");
-	SetValueString(GetWindowValue("project3.vbox1.swin1.text1.value"),"漢字を入れてみた");
+	SetValueString(GetWindowValue("project3.vbox1.swin1.text1.style"),"green",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project3.vbox1.swin1.text1.value"),"漢字を入れてみた",SOURCE_LOCALE);
 
 	PutWindowByName("project3",SCREEN_NEW_WINDOW);
 dbgmsg("<demo2Link");
@@ -68,7 +70,7 @@ dbgmsg(">demo2Main");
 	if		(  !strcmp(ThisEvent,"Quit")  ) {
 		win = SetWindowName("project3");
 		e = GetWindowValue("project3.vbox1.swin1.text1.value");
-		printf("text [%s]\n",ValueString(e));
+		printf("text [%s]\n",ValueToString(e,SOURCE_LOCALE));
 		PutWindow(win,SCREEN_CLOSE_WINDOW);
 		LinkModule("demo");
 	} else {
