@@ -813,11 +813,15 @@ DumpValueStruct(
 		fflush(stdout);
 		break;
 	  case	GL_TYPE_CHAR:
-		printf("char(%d) [%s]\n",val->body.CharData.len,val->body.CharData.sval);
+		printf("char(%d) [",val->body.CharData.len);
+		PrintFixString(val->body.CharData.sval,val->body.CharData.len);
+		printf("]\n");
 		fflush(stdout);
 		break;
 	  case	GL_TYPE_VARCHAR:
-		printf("varchar(%d) [%s]\n",val->body.CharData.len,val->body.CharData.sval);
+		printf("varchar(%d) [",val->body.CharData.len);
+		PrintFixString(val->body.CharData.sval,val->body.CharData.len);
+		printf("]\n");
 		fflush(stdout);
 		break;
 	  case	GL_TYPE_DBCODE:
@@ -831,7 +835,9 @@ DumpValueStruct(
 		fflush(stdout);
 		break;
 	  case	GL_TYPE_TEXT:
-		printf("text(%d) [%s]\n",val->body.CharData.len,val->body.CharData.sval);
+		printf("text(%d) [",val->body.CharData.len);
+		PrintFixString(val->body.CharData.sval,val->body.CharData.len);
+		printf("]\n");
 		fflush(stdout);
 		break;
 	  case	GL_TYPE_ARRAY:
@@ -985,8 +991,8 @@ dbgmsg(">UnPackValue");
 		  case	GL_TYPE_CHAR:
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:
-			//			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
-			strcpy(value->body.CharData.sval,p);
+			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
+			value->body.CharData.sval[value->body.CharData.len] = 0;
 			p += value->body.CharData.len;
 			break;
 		  case	GL_TYPE_TEXT:

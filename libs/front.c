@@ -70,8 +70,9 @@ TermName(
 	if		(  sock  ==  0  ) {
 		time(&nowtime);
 		Now = localtime(&nowtime);
+		Now->tm_year += 1900;
 		sprintf(name,"%02d%02d%02d%02d%02d%02d%8d%8s%8s",
-				Now->tm_year,Now->tm_mon,Now->tm_mday,
+				Now->tm_year,Now->tm_mon+1,Now->tm_mday,
 				Now->tm_hour,Now->tm_min,Now->tm_sec,
 				ConCou,
 				"",

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -83,6 +83,8 @@ FinishSession(
 	SessionData	*data)
 {
 	char	name[SIZE_NAME+1];
+	int		i;
+
 dbgmsg(">FinishSession");
 	xfree(data->hdr);
 	if		(  data->name  !=  NULL  ) {
@@ -91,6 +93,12 @@ dbgmsg(">FinishSession");
 		xfree(data->name);
 	} else {
 		strcpy(name,"");
+	}
+	FreeLBS(data->mcpdata);
+	FreeLBS(data->spadata);
+	FreeLBS(data->linkdata);
+	for	( i = 0 ; i < data->cWindow ; i ++ ) {
+		FreeLBS(data->scrdata[i]);
 	}
 	xfree(data);
 	printf("session end [%s]\n",name);
@@ -176,12 +184,6 @@ dbgmsg(">ReadTerminal");
 		RecvString(fp,data->hdr->window);
 		RecvString(fp,data->hdr->widget);
 		RecvString(fp,data->hdr->event);
-#ifdef	DEBUG
-		printf("window = [%s]\n",data->mcp->dc.window);
-		printf("widget = [%s]\n",data->mcp->dc.widget);
-		printf("event  = [%s]\n",data->mcp->dc.event);
-		fflush(stdout);
-#endif
 		if		(  ( aps = g_hash_table_lookup(WindowHash,data->hdr->window) )
 				   !=  NULL  ) {
 			data->aps = aps;
@@ -277,6 +279,8 @@ TermThread(
 	FinishSession(data);
 	shutdown(fhTerm, 2);
 	fclose(term->fp);
+	FreeQueue(term->que);
+	xfree(term);
 	pthread_exit(NULL);
 }
 

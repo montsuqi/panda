@@ -4,108 +4,102 @@
 <head>
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Content-Type" content="text/html; charset=euc-jp">
-<title>htserverのテスト</title>
-</head>
-<BODY TEXT="#000000" BGCOLOR="#F0F0C0" LINK="#0000FF" VLINK="#0000BB">
-<h1>htserverのテスト</h1>
-<p>
-このページはsamples/sample1に対応したものです。バックエンドで動いてい
-るプログラムは2つのLDを持ちます。この画面ともう一つの画面は、異なるLD
-になっています。
-</p>
+<TITLE>主ウィンドウ</TITLE>
+</HEAD>
+<BODY TEXT="#202020" BGCOLOR="#C0C0C0" LINK="#00FFFF" VLINK="#00BBBB">
 <form>
-<p>
-ここに表示されているものは、linkareaに取られているデータです。そのため、
-もう一つの画面に遷移しても消えません。
-</p>
-fixed1: <fixed name="project1.vbox1.entry1.value">
-<p>
-<button event="Quit:Button" face="編集">押してもう一つの画面に遷移する
-と、上の項目は編集することが出来ます。
-</p>
-<p>
-この下の項目は、glclientでは数値の項目となり、本当は右詰めで処理される
-べきものです。HTMLでは右詰めが出来ません。
-</p>
-entry2: <entry name="project1.vbox1.entry2.value" size=40>
-<p>
-この下の項目は、その下のボタンで処理された結果が入ります。
-</p>
-entry3: <entry name="project1.vbox1.entry3.value" size=40>
-<p>
-<button event="Left:Button" face=" 左 ">
-を押すと一番上の文字列が左に、二番目の数値(の内部表現文字列)が右に入り
-ます。<button event="Right:Button" face=" 右 ">を押すとその逆です。
-</p>
-<p>
-<button event="PutData:Button" face="実行">
-を押した場合は、
-</p>
-<p>
-「<togglebutton name="project1.vbox1.togglebutton1.value"
-label="project1.vbox1.togglebutton1.label">」
-がどうなっているかによって動作が変わります。チェックが入っていない場合
-は、
-</p>
-<RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioleft.value" label=" 左 ">
-<RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioright.value" label=" 右 ">
-<RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radionone.value" label="なし">
-<p>
-の状態に従います。「左」が選択されていれば、
-<button event="Left:Button" face=" 左 ">
-と同じ動作をします。同じように「右」が選択されていれば、
-<button event="Right:Button" face=" 右 ">と同じ動作になります。
-「なし」の場合は、*が出るだけです。
-</p>
-<p>
-「<togglebutton name="project1.vbox1.togglebutton1.value" label="project1.vbox1.togglebutton1.label">」
-にチェックが入っている場合は、この下のテーブルが増えて行きます。
-</p>
+<H1>主ウィンドウ</H1>
+<CALENDAR year="project5.vbox1.calendar1.year" month="project5.vbox1.calendar1.month" day="project5.vbox1.calendar1.day">
+<TABLE>
+<TR>
+<TD><button event="Quit:button6" face="glterm"></TD>
+</TR>
+<TR>
+<TD><entry name="project1.vbox1.entry1.value" size=30 maxlength=30></TD>
+</TR>
+<TR>
+<TD><entry name="project1.vbox1.entry2.value" size=13 maxlength=13></TD>
+</TR>
+<TR>
+<TD><entry name="project1.vbox1.entry3.value" size=30 maxlength=30></TD>
+</TR>
+<TR>
+<TABLE><TR>
+<TD><button event="Left:button2" face="左"></TD>
+<TD><button event="Right:button1" face="右"></TD>
+<TD><button event="PutData:button" face="実行"></TD>
+<TD><button event="OpenCalc:button3" face="開く"></TD>
+<TD><button event="CloseCalc:button4" face="閉じる"></TD>
+<TD><button event="OpenCalendar:button5" face="Calendar"></TD>
+</TR></TABLE>
+</TR>
+<TR>
+<COMBO count="project1.vbox1.combo1.count" name="project1.vbox1.combo1.name.value" item="project1.vbox1.combo1.item"><BR>
+</TR>
+<TR>
 <TABLE BORDER>
 <TR>
-<TH>count
-<TH><fixed name="project1.vbox1.swin1.clist1.label1.value">
-<TH><fixed name="project1.vbox1.swin1.clist1.label2.value">
-<TH><fixed name="project1.vbox1.swin1.clist1.label3.value">
-<COUNT var="i" to="project1.vbox1.swin1.clist1.count">
-	<TR>
-		<TD><fixed name="#i">
-		<TD><fixed name="project1.vbox1.swin1.clist1.item[#i].value1">
-		<TD><fixed name="project1.vbox1.swin1.clist1.item[#i].value2">
-		<TD><fixed name="project1.vbox1.swin1.clist1.item[#i].value3">
-	</TR>
+<TD align="center"><fixed name="project1.vbox1.swin1.clist1.label1.value"></TD>
+<TD align="center"><fixed name="project1.vbox1.swin1.clist1.label2.value"></TD>
+<TD align="center"><fixed name="project1.vbox1.swin1.clist1.label3.value"></TD>
+<COUNT var="i" from=0 to="project1.vbox1.swin1.clist1.count">
+<TR>
+<TD align="left"><fixed name="project1.vbox1.swin1.clist1.item[#i].value1"></TD>
+<TD align="left"><fixed name="project1.vbox1.swin1.clist1.item[#i].value2"></TD>
+<TD align="left"><fixed name="project1.vbox1.swin1.clist1.item[#i].value3"></TD>
+</TR>
 </COUNT>
 </TABLE>
-<p>
-このテーブルはspaareaに取られているため、
-<button event="Quit:Button" face="編集">押してもう一つの画面に遷移する
-と、消えてしまいます。これは仕様であって、プログラムがおかしいわけでは
-ありません。
-</p>
-<p>
-この下のチェックボックスにチェックを入れると、選んだものが、entry3の文
-字列を作る時に加えられます。複数選べば複数加えられます。
-</p>
-<CHECKBUTTON name="project1.vbox1.hbox5.checkleft.value" label=" 左 ">
-<CHECKBUTTON name="project1.vbox1.hbox5.checkright.value" label=" 右 ">
-<CHECKBUTTON name="project1.vbox1.hbox5.checknone.value" label="なし"><BR>
-
-<combo count="project1.vbox1.combo1.count" name="project1.vbox1.combo1.name.value"
-		item="project1.vbox1.combo1.item"><BR>
-<p>
-この下の表のチェックボックスにチェックを入れて
-<button event="PutData:Button" face="実行">
-を押すと、チェックされた項目が「よい子」に変わります。
-</p>
+</TR>
+<TR>
+<TD><togglebutton name="project1.vbox1.togglebutton1.value" label="project1.vbox1.togglebutton1.label"></TD>
+</TR>
+<TR>
+<TABLE><TR>
+<TD><CHECKBUTTON name="project1.vbox1.hbox5.checkleft.value" label="左"></TD>
+<TD><CHECKBUTTON name="project1.vbox1.hbox5.checkright.value" label="右"></TD>
+<TD><CHECKBUTTON name="project1.vbox1.hbox5.checknone.value" label="なし"></TD>
+</TR></TABLE>
+</TR>
+<TR>
+<TABLE><TR>
+<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioleft.value" label="左"></TD>
+<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioright.value" label="右"></TD>
+<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radionone.value" label="なし"></TD>
+</TR></TABLE>
+</TR>
+<TR>
+<TABLE BORDER>
+<COUNT var="i" from=0 to="project1.vbox1.swin2.vp1.list1.count">
+<TR>
+<TD><TOGGLEBUTTON name="project1.vbox1.swin2.vp1.list1.select[#i]" label="project1.vbox1.swin2.vp1.list1.item[#i]">
+</TR>
+</COUNT>
+</TABLE>
+</TR>
+<TR>
+<HR><H2>1</H2>
+<TD><text name="project1.vbox1.notebook1.swin3.text1.value"></TD>
+<HR><H2>2</H2>
+2
+<HR><H2>3</H2>
+<TD><entry name="project1.vbox1.notebook1.entry4.value" size=13 maxlength=13></TD>
+<HR><H2>4</H2>
 <TABLE BORDER>
 <TR>
-<COUNT var="i" to="project1.vbox1.swin2.vp1.list1.count">
-	<TR>
-		<TD><togglebutton name="project1.vbox1.swin2.vp1.list1.select[#i]"
-	label="project1.vbox1.swin2.vp1.list1.item[#i]">
-	</TR>
+<TD align="center"><fixed name="project1.vbox1.notebook1.swin4.clist2.label14.value"></TD>
+<TD align="center"><fixed name="project1.vbox1.notebook1.swin4.clist2.label15.value"></TD>
+<COUNT var="i" from=0 to="project1.vbox1.notebook1.swin4.clist2.count">
+<TR>
+<TD align="left"><fixed name="project1.vbox1.notebook1.swin4.clist2.item[#i].value1"></TD>
+<TD align="left"><fixed name="project1.vbox1.notebook1.swin4.clist2.item[#i].value2"></TD>
+</TR>
 </COUNT>
+</TABLE>
+<HR><H2>5</H2>
+5
+</TR>
 </TABLE>
 </form>
-</body>
-</html>
+</BODY>
+</HTML>

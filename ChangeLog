@@ -1,3 +1,11 @@
+2002-04-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.2公開(1.0.1は訳あって非公開)
+
+2002-03-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c (FinishSession): メモリ開放の追加(忘れてた)
+
 2002-03-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/LDlex.c (DoInclude): LD_DirがNULLの時の処理

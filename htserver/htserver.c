@@ -53,8 +53,6 @@ static	ARG_TABLE	option[] = {
 		"接続待ちキューの数" 							},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
-	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
-		"認証サーバ"			 						},
 	{	"expire",	INTEGER,	TRUE,	(void*)&Expire,
 		"セション変数保持時間(秒)" 						},
 #if	1
@@ -85,10 +83,6 @@ main(
 	SetDefault();
 	(void)GetOption(option,argc,argv);
 
-#ifdef	DEBUG
-#endif
-
-	ParseURL(&Auth,AuthURL);
 	InitSystem();
 	ExecuteServer();
 	return	(0);
