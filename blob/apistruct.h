@@ -51,6 +51,7 @@ typedef	struct _OsekiSpace	{
 	int				cSeq;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
+	ObjectType		root;
 	struct {
 		pthread_mutex_t	mutex;
 		pthread_cond_t	cond;
@@ -70,6 +71,11 @@ typedef	struct	_OsekiSession {
 	int				cOld;
 }	OsekiSession;
 
+typedef	struct	_ObjectBody {
+	size_t		size;
+	byte		body[0];
+}	ObjectBody;
+
 #define	OSEKI_MODE_MASK		0xF0
 #define	OSEKI_OPEN_CLOSE	0x00
 #define	OSEKI_OPEN_CREATE	0x10
@@ -81,5 +87,6 @@ typedef	struct	_OsekiSession {
 #define	OSEKI_ALLOC_PACK	0x00
 #define	OSEKI_ALLOC_LINER	0x01
 #define	OSEKI_ALLOC_TREE	0x02
+#define	OSEKI_ALLOC_SHORT	0x03
 
 #endif
