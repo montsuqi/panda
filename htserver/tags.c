@@ -45,11 +45,17 @@ copies.
 #include	"exec.h"
 #include	"debug.h"
 
-#define	SIZE_ASTACK		10
+#define	SIZE_ASTACK		30
 static	size_t	AStack[SIZE_ASTACK];
 static	size_t	pAStack;
 
-#define	Push(v)		AStack[pAStack ++] = (v)
+#define	Push(v)		do { \
+    if (pAStack == SIZE_ASTACK) { \
+        HTC_Error("stack level too deep\n"); \
+        exit(1); \
+    } \
+    AStack[pAStack ++] = (v); \
+} while (0)
 #define	Pop			(AStack[-- pAStack])
 #define	TOP(n)		AStack[pAStack-(n)]
 

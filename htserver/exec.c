@@ -73,10 +73,20 @@ Push(
 {
 	printf("pStack = %d\n",pStack);
 	printf("val = %d\n",v.ival);
+    if (pStack == SIZE_RSTACK) {
+        fprintf(stderr, "stack level too deep\n");
+        exit(1);
+    }
 	Stack[pStack ++] = v;
 }
 #else
-#define	Push(v)		Stack[pStack ++] = (v)
+#define	Push(v)		do { \
+    if (pStack == SIZE_RSTACK) { \
+        fprintf(stderr, "stack level too deep\n"); \
+        exit(1); \
+    } \
+    Stack[pStack ++] = (v); \
+} while (0)
 #endif
 
 static	int
