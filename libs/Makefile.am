@@ -2,8 +2,8 @@ lib_LTLIBRARIES = libpanda.la
 
 enum_LDADD	= 	\
 	$(GLADE_LIBS)	$(PANDA_LIBS)	\
-	-L/usr/lib -lglib -lm			\
-	-L$(top_srcdir)/datalib -lpandadata
+	-L/usr/lib -lglib -lm			
+
 noinst_PROGRAMS	=	enum
 
 noinst_LIBRARIES = libi18n.a libpandac.a libpandas.a libpandat.a
