@@ -173,7 +173,7 @@ InitSystem(void)
 {
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,"","");
+	SetUpDirectory(Directory,NULL,"","",TRUE);
 	if		(  ApsPortNumber  ==  NULL  ) {
 		ApsPort = ThisEnv->WfcApsPort;
 	} else {

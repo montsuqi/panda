@@ -210,6 +210,15 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+extern	LD_Struct	*
+LD_DummyParser(void)
+{
+	LD_Struct	*ret;
+    ret = New(LD_Struct);
+    ret->name = StrDup(ComSymbol);
+	return	(ret);
+}
+
 static	BLOB_Struct	*
 ParBLOB(void)
 {
@@ -292,7 +301,8 @@ LEAVE_FUNC;
 }
 
 static	void
-ParLD_Elements(void)
+ParLD_Elements(
+	Bool    parse_ld)
 {
 	char		buff[SIZE_BUFF];
 	char		name[SIZE_BUFF];
@@ -312,7 +322,12 @@ ENTER_FUNC;
 			*q = 0;
 		}
 		sprintf(name,"%s/%s.ld",p,ComSymbol);
-		if		(  (  ld = LD_Parser(name) )  !=  NULL  ) {
+		if ( parse_ld ) {
+			ld = LD_Parser(name); 
+		} else {
+			ld = LD_DummyParser(); 
+		}
+		if		(  ld !=  NULL  ) {
 			if		(  g_hash_table_lookup(ThisEnv->LD_Table,ComSymbol)
 					   !=  NULL  ) {
 				Error("same ld appier");
@@ -424,7 +439,8 @@ dbgmsg("<SkipLD");
 
 static	void
 ParLD(
-	char	*dname)
+	char	*dname,
+	Bool    parse_ld)
 {
 dbgmsg(">ParLD");
 	while	(  GetSymbol  !=  '}'  ) {
@@ -439,7 +455,7 @@ dbgmsg(">ParLD");
 			} else {
 				if		(	(  dname  ==  NULL  )
 						||	(  !strcmp(ComSymbol,dname)  ) ) {
-					ParLD_Elements();
+					ParLD_Elements(parse_ld);
 				} else {
 					if		(	(  GetSymbol  ==  T_SCONST  )
 							||	(  ComToken   ==  T_ICONST  ) ) {
@@ -458,7 +474,8 @@ dbgmsg("<ParLD");
 
 static	void
 ParBD(
-	char	*dname)
+	char	*dname,
+	Bool    parse_ld)
 {
 	char		name[SIZE_BUFF];
 	BD_Struct	*bd;
@@ -480,31 +497,35 @@ dbgmsg(">ParBD");
 						if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 							*q = 0;
 						}
+
 						sprintf(name,"%s/%s.bd",p,ComSymbol);
-						if		(  (  bd = BD_Parser(name) )  !=  NULL  ) {
-							if		(  g_hash_table_lookup(ThisEnv->BD_Table,ComSymbol)  ==  NULL  ) {
-								btmp = (BD_Struct **)xmalloc(sizeof(BD_Struct *)
-															 * ( ThisEnv->cBD + 1));
-								if		(  ThisEnv->cBD  >  0  ) {
-									memcpy(btmp,ThisEnv->bd,sizeof(BD_Struct *)
-										   * ThisEnv->cBD);
-									xfree(ThisEnv->bd);
-								}
-								ThisEnv->bd = btmp;
-								ThisEnv->bd[ThisEnv->cBD] = bd;
-								ThisEnv->cBD ++;
-								g_hash_table_insert(ThisEnv->BD_Table,
-													StrDup(ComSymbol),bd);
+
+						if ( parse_ld ) {
+							bd = BD_Parser(name);
+							if		(  bd  ==  NULL  ) {
+									Error("bd not found");
 							} else {
-								Error("same bd appier");
+									if		(  g_hash_table_lookup(ThisEnv->BD_Table,ComSymbol)  ==  NULL  ) {
+											btmp = (BD_Struct **)xmalloc(sizeof(BD_Struct *)
+																		 * ( ThisEnv->cBD + 1));
+											if		(  ThisEnv->cBD  >  0  ) {
+													memcpy(btmp,ThisEnv->bd,sizeof(BD_Struct *)
+														   * ThisEnv->cBD);
+													xfree(ThisEnv->bd);
+											}
+											ThisEnv->bd = btmp;
+											ThisEnv->bd[ThisEnv->cBD] = bd;
+											ThisEnv->cBD ++;
+											g_hash_table_insert(ThisEnv->BD_Table,
+																StrDup(ComSymbol),bd);
+									} else {
+											Error("same bd appier");
+									}
 							}
+							p = q + 1;
 						}
-						p = q + 1;
 					}	while	(	(  q   !=  NULL  )
 								&&	(  bd  ==  NULL  ) );
-					if		(  bd  ==  NULL  ) {
-						Error("bd not found");
-					}
 				}
 			}
 		}
@@ -818,7 +839,8 @@ static	DI_Struct	*
 ParDI(
 	char	*ld,
 	char	*bd,
-	char	*db)
+	char	*db,
+	Bool    parse_ld)
 {
 	char	*gname;
 
@@ -870,8 +892,12 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_LINKAGE:
 			if		(  GetSymbol   ==  T_SYMBOL  ) {
-				if		(  ( ThisEnv->linkrec = ReadRecordDefine(ComSymbol) )
-						   ==  NULL  ) {
+				if ( parse_ld ) {
+					ThisEnv->linkrec = ReadRecordDefine(ComSymbol);
+				} else {
+					break;
+				}
+				if		(  ThisEnv->linkrec ==  NULL  ) {
 					Error("linkage record not found");
 				} else {
 					ThisEnv->linksize = NativeSizeValue(NULL,ThisEnv->linkrec->value);
@@ -966,14 +992,14 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_LD:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParLD(ld);
+				ParLD(ld, parse_ld);
 			} else {
 				Error("syntax error in ld directive");
 			}
 			break;
 		  case	T_BD:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParBD(bd);
+				ParBD(bd, parse_ld);
 			} else {
 				Error("syntax error in bd directive");
 			}
@@ -1020,16 +1046,17 @@ DI_Parser(
 	char	*name,
 	char	*ld,
 	char	*bd,
-	char	*db)
+	char	*db,
+	Bool    parse_ld)
 {
 	struct	stat	stbuf;
-	DI_Struct	*ret;
+	DI_Struct	*ret;PushLexInfo
 
 dbgmsg(">DI_Parser");
 	DirectoryDir = dirname(StrDup(name));
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  PushLexInfo(name,DirectoryDir,Reserved)  !=  NULL  ) {
-			ret = ParDI(ld,bd,db);
+			ret = ParDI(ld,bd,db,parse_ld);
 			DropLexInfo();
 		} else {
 			ret = NULL;

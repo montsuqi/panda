@@ -73,7 +73,7 @@ dbgmsg(">InitSystem");
 	sigaddset(&hupset,SIGHUP);
 
 	InitDirectory();
-	SetUpDirectory(Directory,"","",name);
+	SetUpDirectory(Directory,"","",name,TRUE);
 	if		(  ( ThisDBD = GetDBD(name) )  ==  NULL  ) {
 		fprintf(stderr,"DBD \"%s\" not found.\n",name);
 		exit(1);

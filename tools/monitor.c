@@ -390,7 +390,7 @@ StartPrograms(void)
 {
 dbgmsg(">StartPrograms");
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 
 	StartServers();
 #ifdef	DEBUG

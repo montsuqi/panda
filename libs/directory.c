@@ -119,12 +119,15 @@ SetUpDirectory(
 	char	*name,
 	char	*ld,
 	char	*bd,
-	char	*db)
+	char	*db,
+	Bool    parse_ld)
 {
 	DI_Struct	*di;
 dbgmsg(">SetUpDirectory");
-	di = DI_Parser(name,ld,bd,db);
-	AssignDBG(di);
+	di = DI_Parser(name,ld,bd,db,parse_ld);
+	if ( parse_ld ) {
+		AssignDBG(di); 
+	}
 dbgmsg("<SetUpDirectory");
 }
 

@@ -368,7 +368,7 @@ MakeLD(void)
 
 dbgmsg(">MakeLD");
 	InitDirectory();
-	SetUpDirectory(Directory,LD_Name,"","");
+	SetUpDirectory(Directory,LD_Name,"","",TRUE);
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -533,7 +533,7 @@ MakeLinkage(void)
 	char	*_prefix;
 
 	InitDirectory();
-	SetUpDirectory(Directory,LD_Name,"","");
+	SetUpDirectory(Directory,LD_Name,"","",TRUE);
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -579,7 +579,7 @@ MakeDB(void)
 	size_t	cDB;
 
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -682,7 +682,7 @@ MakeDBREC(
 
 dbgmsg(">MakeDBREC");
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -780,7 +780,7 @@ MakeDBCOMM(void)
 	size_t	cDB;
 
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -899,7 +899,7 @@ MakeDBPATH(void)
 
 dbgmsg(">MakeDBPATH");
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -966,7 +966,7 @@ MakeMCP(void)
 {
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,"","","");
+	SetUpDirectory(Directory,"","","",TRUE);
 
 	Prefix = "";
 	PutLevel(1,TRUE);

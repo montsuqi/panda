@@ -1,3 +1,11 @@
+2004-08-09  Noboru Saitou <noborus@netlab.jp>
+
+	* 不要なldを読み込まないようにした
+
+2004-08-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c: lddir/bbdir -> ddir
+
 2004-08-05  Kouji TAKAO  <kouji@netlab.jp>
 
 	* glserver/glcomm.c (ExpandFile): PSファイルの場合に正しいファイル

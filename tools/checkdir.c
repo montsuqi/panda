@@ -416,7 +416,7 @@ DumpDirectory(void)
 
 dbgmsg(">DumpDirectory");
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 
 	printf("name     = [%s]\n",ThisEnv->name);
 	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);

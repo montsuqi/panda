@@ -406,34 +406,30 @@ ExpandFile(
 	const	char	*type;
 
 ENTER_FUNC;
-	if		(  ( type = magic_file(Magic,cname) )  ==  NULL  ) {
-		strcpy(fname,cname);
-	} else
-	if		(  !strlcmp(type,"PostScript")  ) {
-		if		(  !fFeturePS  ) {
-			if		(	(  stat(cname,&sb)  ==  0   )
-					&&	(  S_ISREG(sb.st_mode)      ) )	{
-				ps_mtime = sb.st_mtime;
-			} else {
-				ps_mtime = 0;
+	strcpy(fname,cname);
+	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  ) {
+		if		(  !strlcmp(type,"PostScript")  ) {
+			if		(  !fFeturePS  ) {
+				if		(	(  stat(cname,&sb)  ==  0   )
+						&&	(  S_ISREG(sb.st_mode)      ) )	{
+					ps_mtime = sb.st_mtime;
+				} else {
+					ps_mtime = 0;
+				}
+				sprintf(fname,"%s.png",cname);
+				if		(	(  stat(fname,&sb)  ==  0  )
+						&&	(  S_ISREG(sb.st_mode)   ) ) {
+					png_mtime = sb.st_mtime;
+				} else {
+					png_mtime = 0;
+				}
+				if		(  ps_mtime  >  png_mtime  ) {
+					//sprintf(buff,"pstopnm -portrait -stdout %s | pnmtopng > %s",cname,fname);
+					sprintf(buff,"pstopnm -stdout %s | pnmtopng > %s",cname,fname);
+					system(buff);
+				}
 			}
-			sprintf(fname,"%s.png",cname);
-			if		(	(  stat(fname,&sb)  ==  0  )
-					&&	(  S_ISREG(sb.st_mode)   ) ) {
-				png_mtime = sb.st_mtime;
-			} else {
-				png_mtime = 0;
-			}
-			if		(  ps_mtime  >  png_mtime  ) {
-				sprintf(buff,"pstopnm -portrait -stdout %s | pnmtopng > %s",cname,fname);
-				system(buff);
-			}
-		}
-        else {
-            strcpy(fname,cname);
         }
-	} else {
-		strcpy(fname,cname);
 	}
 LEAVE_FUNC;
 	return	(fname);

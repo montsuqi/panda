@@ -242,7 +242,7 @@ dbgmsg(">InitSystem");
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	InitDB_Process(NULL);
 #ifdef	DEBUG
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)DumpDBG,NULL);

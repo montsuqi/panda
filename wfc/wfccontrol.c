@@ -104,7 +104,7 @@ InitSystem(void)
 {
 dbgmsg(">InitSystem");
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,"","");
+	SetUpDirectory(Directory,NULL,"","",TRUE);
 	InitNET();
 dbgmsg("<InitSystem");
 }

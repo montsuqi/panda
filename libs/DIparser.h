@@ -42,5 +42,5 @@ copies.
 #undef	GLOBAL
 
 extern	void		DI_ParserInit(void);
-extern	DI_Struct	*DI_Parser(char *name, char *ld, char *bd, char *db);
+extern	DI_Struct	*DI_Parser(char *name, char *ld, char *bd, char *db, Bool parse_ld);
 #endif

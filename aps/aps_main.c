@@ -74,7 +74,7 @@ dbgmsg(">InitSystem");
 	sigaddset(&hupset,SIGHUP);
 	pthread_sigmask(SIG_BLOCK,&hupset,NULL);
 	InitDirectory();
-	SetUpDirectory(Directory,name,"","");
+	SetUpDirectory(Directory,name,"","",TRUE);
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		dbgprintf("LD \"%s\" not found.",name);
 		exit(1);
