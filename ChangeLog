@@ -1,3 +1,17 @@
+2004-06-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* monpls_demo/demo.c: GtkOptionMenuのサポート
+
+	* glclient/widgetOPS.c (RecvOption, SendOption): GtkOptionMenuのサポート
+
+	* tools/recgen.rb: GtkOptionMenuのサポート
+
+2004-06-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recgen.rb: GtkFrameのラベルサポート
+
+	* glclient/widgetOPS.c (RecvFrame): GtkFrameのラベルサポート
+
 2004-05-26  Kouji SHIMIZU  <shimizu@netlab.jp>
 
 	* glclient/client.c (main): Gtkのスタイルファイルの読み込み機能を

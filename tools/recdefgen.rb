@@ -268,10 +268,26 @@ class	Widget
 			putTab(ind+1);
 			printf("count\tint;\n");
 			putTab(ind+1);
-			printf("item\tvarchar(??)[??]\n");
+			printf("item\tvarchar(??)[??];\n");
 			putTab(ind+1);
 			printf("select\tbool[??];\n");
 
+			putTab(ind);
+			printf("};\n");
+		  when	"GtkOptionMenu"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			i = 0;
+			for	c in @child
+				c._panda(ind+1);
+				i += 1;
+			end
+			putTab(ind+1);
+			printf("count\tint;\n");
+			putTab(ind+1);
+			printf("item\tvarchar(??)[??];\n");
+			putTab(ind+1);
+			printf("select\tint;\n");
 			putTab(ind);
 			printf("};\n");
 		  when	"GtkCombo", "GtkPandaCombo"

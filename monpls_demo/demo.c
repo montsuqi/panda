@@ -114,6 +114,13 @@ dbgmsg(">demoLink");
 
 	SetValueInteger(GetWindowValue("project1.vbox1.notebook1.table1.progressbar1.value"),10);
 
+	SetValueString(GetWindowValue("project1.vbox1.optionmenu1.item[0]"),"item1",NULL);
+	SetValueString(GetWindowValue("project1.vbox1.optionmenu1.item[1]"),"item2",NULL);
+	SetValueString(GetWindowValue("project1.vbox1.optionmenu1.item[2]"),"item3",NULL);
+	SetValueString(GetWindowValue("project1.vbox1.optionmenu1.item[3]"),"item4",NULL);
+	SetValueInteger(GetWindowValue("project1.vbox1.optionmenu1.count"),4);
+	SetValueInteger(GetWindowValue("project1.vbox1.optionmenu1.select"),2);
+
 dbgmsg("*");
 
 	w = PutWindowByName("project1",SCREEN_NEW_WINDOW);
@@ -145,6 +152,7 @@ dbgmsg(">demoMain");
 	printf("event  = [%s]\n",ThisEvent);
 
 	printf("switch = [%d]\n",ValueInteger(GetWindowValue("project1.vbox1.notebook1.pageno")));
+	printf("item   = [%d]\n",ValueInteger(GetWindowValue("project1.vbox1.optionmenu1.select")));
 
 	if		(  !strcmp(ThisEvent,"OpenCalc")  ) {
 		win = SetWindowName("project2");

@@ -1361,6 +1361,141 @@ dbgmsg("<RecvProgress");
 	return	(TRUE);
 }
 
+static	Bool
+RecvFrame(
+	GtkWidget	*widget,
+	NETFILE		*fp)
+{
+	char	name[SIZE_BUFF]
+	,		buff[SIZE_BUFF];
+	int		nitem
+	,		i;
+	int		state;
+	char	*longname;
+
+ENTER_FUNC;
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	nitem = GL_RecvInt(fp);
+	longname = WidgetName + strlen(WidgetName);
+	for	( i = 0 ; i < nitem ; i ++ ) {
+		GL_RecvName(fp,name);
+		if		(  !stricmp(name,"state")  ) {
+			RecvIntegerData(fp,&state);
+			SetState(widget,(GtkStateType)state);
+		} else
+		if		(  !stricmp(name,"style")  ) {
+			RecvStringData(fp,buff,SIZE_BUFF);
+			gtk_widget_set_style(widget,GetStyle(buff));
+		} else
+		if		(  !stricmp(name,"label")  ) {
+			RecvStringData(fp,buff,SIZE_BUFF);
+			gtk_frame_set_label(GTK_FRAME(widget),buff);
+		} else {
+			sprintf(longname,".%s",name);
+			RecvValue(fp,longname + strlen(name) + 1);
+		}
+	}
+LEAVE_FUNC;
+	return	(TRUE);
+}
+
+static	Bool
+SendOption(
+	char	*name,
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+    GtkWidget *menu;
+	char			iname[SIZE_BUFF];
+	ValueAttribute	*v;
+
+ENTER_FUNC;
+	v = GetValue(name);
+
+	menu= gtk_option_menu_get_menu(GTK_OPTION_MENU(widget));
+
+	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
+	GL_SendPacketClass(fp,GL_ScreenData);
+	GL_SendName(fp,iname);
+	SendIntegerData(fp,v->type,g_list_index(GTK_MENU_SHELL(menu)->children,
+									GTK_OPTION_MENU(widget)->menu_item));
+LEAVE_FUNC;
+	return	(TRUE);
+}
+
+static	Bool
+RecvOption(
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+    GtkWidget *menu;
+
+	char	name[SIZE_BUFF]
+	,		buff[SIZE_BUFF]
+	,		*longname;
+	int		count
+		,	choice
+		,	nitem
+		,	num
+		,	i
+		,	j;
+	GtkWidget	*item;
+	int		state;
+
+ENTER_FUNC;
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+
+	longname = WidgetName + strlen(WidgetName);
+	nitem = GL_RecvInt(fp);
+	count = -1;
+	for	( i = 0 ; i < nitem ; i ++ ) {
+		GL_RecvName(fp,name);
+		if		(  !stricmp(name,"state")  ) {
+			RecvIntegerData(fp,&state);
+			SetState(widget,(GtkStateType)state);
+		} else
+		if		(  !stricmp(name,"style")  ) {
+			RecvStringData(fp,buff,SIZE_BUFF);
+			gtk_widget_set_style(widget,GetStyle(buff));
+		} else
+		if		(  !stricmp(name,"count")  ) {
+			RecvIntegerData(fp,&count);
+		} else
+		if		(  !stricmp(name,"select")  ) {
+			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
+			RecvIntegerData(fp,&choice);
+		} else
+		if		(  !stricmp(name,"item")  ) {
+			if		(  gtk_option_menu_get_menu(GTK_OPTION_MENU(widget))  !=  NULL  ) {
+				gtk_option_menu_remove_menu(GTK_OPTION_MENU(widget));
+			}
+			menu = gtk_menu_new();
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			num = GL_RecvInt(fp);
+			if		(  count  <  0  ) {
+				count = num;
+			}
+			for	( j = 0 ; j < num ; j ++ ) {
+				if		(  RecvStringData(fp,buff,SIZE_BUFF)  !=  NULL  ) {
+					if		(  j  <  count  ) {
+						item = gtk_menu_item_new_with_label(buff);
+						gtk_widget_show(item);
+						gtk_menu_append (GTK_MENU(menu), item);
+					}
+				}
+			}
+			gtk_option_menu_set_menu(GTK_OPTION_MENU(widget), menu);
+			gtk_option_menu_set_history(GTK_OPTION_MENU(widget), choice);
+		} else {
+			sprintf(longname,".%s",name);
+			RecvValue(fp,longname + strlen(name) + 1);
+		}
+	}
+	UpdateWidget(widget,NULL);
+LEAVE_FUNC;
+	return	(TRUE);
+}
+
 extern	void
 InitWidgetOperations(void)
 {
@@ -1392,4 +1527,7 @@ InitWidgetOperations(void)
 	AddClass(GTK_TYPE_CALENDAR,RecvCalendar,SendCalendar);
 	AddClass(GTK_TYPE_NOTEBOOK,RecvNotebook,SendNotebook);
 	AddClass(GTK_TYPE_PROGRESS_BAR,RecvProgressBar,SendProgressBar);
+
+	AddClass(GTK_TYPE_FRAME,RecvFrame,NULL);
+	AddClass(GTK_TYPE_OPTION_MENU,RecvOption,SendOption);
 }

@@ -973,6 +973,34 @@
 	<ypad>0</ypad>
       </widget>
     </widget>
+
+    <widget>
+      <class>GtkOptionMenu</class>
+      <name>optionmenu1</name>
+      <can_focus>True</can_focus>
+      <signal>
+	<name>clicked</name>
+	<handler>changed</handler>
+	<last_modification_time>Sat, 05 Jun 2004 13:05:16 GMT</last_modification_time>
+      </signal>
+      <signal>
+	<name>pressed</name>
+	<handler>changed</handler>
+	<last_modification_time>Sun, 06 Jun 2004 06:24:24 GMT</last_modification_time>
+      </signal>
+      <signal>
+	<name>button_press_event</name>
+	<handler>changed</handler>
+	<last_modification_time>Sun, 06 Jun 2004 06:31:46 GMT</last_modification_time>
+      </signal>
+      <items></items>
+      <initial_choice>0</initial_choice>
+      <child>
+	<padding>0</padding>
+	<expand>False</expand>
+	<fill>False</fill>
+      </child>
+    </widget>
   </widget>
 </widget>
 

@@ -122,6 +122,11 @@ project1	{
 				};
 			};
 		};
+		optionmenu1	{
+			count	int;
+			select	int;
+			item	varchar(20)[10];
+		};
 	};
 };
 

@@ -172,7 +172,7 @@ class	Widget
 
 	def	_panda
 		case	@klass
-		  when	"top-level", "GtkVBox", "GtkHBox", "GtkTable", "GtkFixed", "GtkScrolledWindow", "GtkViewport", "GtkFrame", "GtkHandleBox", "GtkMenuBar", "GtkToolbar"
+		  when	"top-level", "GtkVBox", "GtkHBox", "GtkTable", "GtkFixed", "GtkScrolledWindow", "GtkViewport", "GtkHandleBox", "GtkMenuBar", "GtkToolbar"
 			for	c in @child
 				c._panda;
 			end
@@ -259,8 +259,20 @@ class	Widget
 										   sprintf("varchar(%d)",label.length));
 			  end
 			end 
+		  when  "GtkFrame" 
+			if @label =~ /^X+$/
+			  @@record = @@record.append(sprintf("%s.label",@name),
+										   sprintf("varchar(%d)",label.length));
+			end
+			for	c in @child
+				c._panda;
+			end
 		  when  "GtkProgressBar" 
 			@@record = @@record.append(sprintf("%s.value",@name),"int");
+		  when	"GtkOptionMenu"
+			@@record = @@record.append(sprintf("%s.count",@name),"int");
+			@@record = @@record.append(sprintf("%s.select",@name),"int");
+			@@record = @@record.append(sprintf("%s.item[0]",@name),"varchar(??)");
 		  when	"GtkCalendar"
 			@@record = @@record.append(sprintf("%s.year",@name),"int");
 			@@record = @@record.append(sprintf("%s.month",@name),"int");
