@@ -1,3 +1,9 @@
+2005-01-26  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c glclient/callbacks.[ch] glclient/protorol.c
+	glclient/protocol.c glclient/widgetOPS.c libs/enum.c:
+	  ENABLE_GNOME -> USE_GNOME
+
 2005-01-20  Hiromi Yamazaki  <hiromi@netlab.jp>
 
 	* htserver/tags.c (_Calendar): デザイン変更のパラメータを増やした

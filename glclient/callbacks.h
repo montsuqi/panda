@@ -23,7 +23,7 @@ copies.
 #ifndef	_CALLBACKS_H
 #define	_CALLBACKS_H
 
-#ifdef ENABLE_GNOME
+#ifdef USE_GNOME
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>

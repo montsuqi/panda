@@ -42,7 +42,7 @@ copies.
 #include    <unistd.h>
 #include	<sys/time.h>
 #include	<netinet/in.h>
-#ifdef ENABLE_GNOME
+#ifdef USE_GNOME
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>

@@ -36,7 +36,7 @@ copies.
 #include	<sys/stat.h>
 #include    <unistd.h>
 #include	<sys/time.h>
-#ifdef ENABLE_GNOME
+#ifdef USE_GNOME
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>

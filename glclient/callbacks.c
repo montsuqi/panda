@@ -31,7 +31,7 @@ copies.
 
 #include	<stdio.h>
 
-#ifdef ENABLE_GNOME
+#ifdef USE_GNOME
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
