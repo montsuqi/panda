@@ -236,14 +236,20 @@ dbgmsg(">InitSystem");
 			   ==  NULL  ) {
 		Error("DB group not found");
 	}
+#if	0
 	Orig = ThisDBG;
 	if		(  ThisDBG->redirect  !=  NULL  ) {
 		ThisDBG = ThisDBG->redirect;
 	}
 	ThisDBG->dbt = Orig->dbt;
+#endif
 	if		(  PortNumber  ==  NULL  ) {
 		if		(  Orig->redirectPort  !=  NULL  ) {
+#if	0
 			RedirectPort = Orig->redirectPort;
+#else
+			RedirectPort = ThisDBG->redirectPort;
+#endif
 		} else {
 			RedirectPort = ParPortName(PORT_REDIRECT);
 		}

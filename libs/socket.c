@@ -105,6 +105,7 @@ ENTER_FUNC;
 	}
 	freeaddrinfo(head);
 	if		( ld  <  0  ) {
+		fprintf(stderr,"port = [%s]\n",port);
 		Error("error bind");
 	}
 LEAVE_FUNC;

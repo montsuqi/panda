@@ -672,7 +672,7 @@ dbgmsg(">AssignDBG");
 		  (int (*)(const void *,const void *))DBGcomp);
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		//		printf("%d DB group name = [%s]\n",dbg->priority,dbg->name);
+		dbgprintf("%d DB group name = [%s]\n",dbg->priority,dbg->name);
 		_AssignDBG(dbg->name,dbg,NULL);
 	}
 dbgmsg("<AssignDBG");

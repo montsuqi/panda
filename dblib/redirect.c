@@ -49,38 +49,43 @@ OpenDB_RedirectPort(
 	DBG_Struct	*dbg)
 {
 	int		fh;
+	DBG_Struct	*rdbg;
 
-dbgmsg(">OpenDB_RedirectPort");
+ENTER_FUNC;
 	if		(	(  fNoRedirect  )
-			||	(  dbg->redirectPort  ==  NULL  ) ) {
+			||	(  dbg->redirect  ==  NULL  ) ) {
 		dbg->fpLog = NULL;
 		dbg->redirectData = NULL;
 	} else {
-		if		(  ( fh = ConnectSocket(dbg->redirectPort,SOCK_STREAM) )  <  0  ) {
+		rdbg = dbg->redirect;
+		if		(  ( fh = ConnectSocket(rdbg->redirectPort,SOCK_STREAM) )  <  0  ) {
 			Warning("loging server not ready");
-			dbg->fpLog = NULL;
-			dbg->redirectData = NULL;
 			if		(  !fNoCheck  ) {
 				exit(1);
+			} else {
+				dbg->fpLog = NULL;
+				dbg->redirectData = NULL;
 			}
 		} else {
 			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
 		}
 	}
-dbgmsg("<OpenDB_RedirectPort");
+LEAVE_FUNC;
 }
 
 extern	void
 CloseDB_RedirectPort(
 	DBG_Struct	*dbg)
 {
-dbgmsg(">CloseDB_RedirectPort");
+ENTER_FUNC;
 	if		(  dbg->fpLog  !=  NULL  ) {
 		CloseNet(dbg->fpLog);
+	}
+	if		(  dbg->redirectData  !=  NULL  ) {
 		FreeLBS(dbg->redirectData);
 	}
-dbgmsg("<CloseDB_RedirectPort");
+LEAVE_FUNC;
 }
 
 extern	void
