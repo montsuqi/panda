@@ -511,6 +511,20 @@ bd_config_permissions (BDConfig *self)
   return 0777 & stat_buf.st_mode;
 }
 
+gboolean
+bd_config_remove_section (BDConfig * self, gchar * name)
+{
+  BDConfigSection *section;
+  
+  if (!bd_config_exist_section (self, name))
+    return FALSE;
+
+  section = bd_config_get_section (self, name);
+  g_hash_table_remove (self->sections, section->name);
+  self->names = g_list_remove (self->names, section->name);
+  bd_config_section_free (section);
+}
+
 /*************************************************************
  * Local Variables:
  * mode: c

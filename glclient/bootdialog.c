@@ -284,6 +284,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (edit_dialog_on_cancel), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
 
   /* contents */
   table = gtk_table_new (2, 1, FALSE);
@@ -546,7 +547,34 @@ server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
 {
+  GList *selection, *p;
+  gint row;
+  gchar *hostname;
+  gboolean is_update;
+
+  g_return_if_fail (GTK_CLIST (self->server_list)->selection != NULL);
   
+  selection = GTK_CLIST (self->server_list)->selection;
+  is_update = FALSE;
+  row = 0;
+  for (p = selection; p != NULL; p = g_list_next (p))
+    {
+      row = GPOINTER_TO_INT (p->data);
+      hostname = gtk_clist_get_row_data (GTK_CLIST (self->server_list), row);
+      bd_config_remove_section (self->config, hostname);
+      is_update = TRUE;
+    }
+  
+  if (is_update)
+    {
+      server_dialog_server_list_update (self);
+      if (row >= GTK_CLIST (self->server_list)->rows)
+        row = GTK_CLIST (self->server_list)->rows - 1;
+      bd_config_save (self->config, NULL, permissions);
+      gtk_clist_select_row (GTK_CLIST (self->server_list), row, 0);
+      if (!gtk_clist_row_is_visible (GTK_CLIST (self->server_list), row))
+        gtk_clist_moveto (GTK_CLIST (self->server_list), row, 0, 0.5, 0);
+    }
 }
 
 static void
@@ -599,15 +627,18 @@ server_dialog_new (BDConfig * config)
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (server_dialog_on_new), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
   self->edit = button = gtk_button_new_with_label ("Edit");
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (server_dialog_on_edit), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
   gtk_widget_set_sensitive (button, FALSE);
   self->delete = button = gtk_button_new_with_label ("Delete");
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (server_dialog_on_delete), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
   gtk_widget_set_sensitive (button, FALSE);
   button = gtk_button_new_with_label ("Close");
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
@@ -1229,11 +1260,13 @@ boot_dialog_new ()
   gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (boot_dialog_on_close), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
   
   button = gtk_button_new_with_label ("config");
   gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (boot_dialog_on_config), self);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
 
   boot_dialog_set_value (self, config_);
     

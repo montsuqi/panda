@@ -67,6 +67,7 @@ gboolean         bd_config_save              (BDConfig *self,
                                               gchar *filename,
                                               mode_t mode);
 mode_t           bd_config_permissions       (BDConfig *self);
+gboolean         bd_config_remove_section    (BDConfig *self, gchar * name);
 
 #endif /* #ifndef __BD_CONFIG_H_INCLUDED__ */
 
