@@ -518,7 +518,7 @@ MakeDB(void)
 	PutName("dbarea");
 	printf(".\n");
 	msize = 0;
-	for	( i = 0 ; i < cDB ; i ++ ) {
+	for	( i = 1 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -570,7 +570,7 @@ dbgmsg(">MakeDBREC");
 		Error("LD or BD not specified");
 	}
 	msize = 0;
-	for	( i = 0 ; i < cDB ; i ++ ) {
+	for	( i = 1 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -638,7 +638,7 @@ MakeDBCOMM(void)
 	}
 
 	msize = 0;
-	for	( i = 0 ; i < cDB ; i ++ ) {
+	for	( i = 1 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -729,6 +729,7 @@ MakeDBPATH(void)
 	,			textsize;
 	size_t	cDB;
 
+dbgmsg(">MakeDBPATH");
 	InitDirectory(TRUE);
 	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
@@ -758,7 +759,7 @@ MakeDBPATH(void)
 	PutLevel(1);
 	PutName("dbpath");
 	printf(".\n");
-	for	( i = 0 ; i < cDB ; i ++ ) {
+	for	( i = 1 ; i < cDB ; i ++ ) {
 		db = dbrec[i]->opt.db;
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
@@ -785,6 +786,7 @@ MakeDBPATH(void)
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",j);
 		}
 	}
+dbgmsg("<MakeDBPATH");
 }
 
 static	void

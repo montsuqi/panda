@@ -47,7 +47,7 @@ copies.
 
 static	char	*Directory;
 static	char	*ApsPath;
-static	char	*GlsPath;
+//static	char	*GlsPath;
 static	char	*WfcPath;
 static	char	*RedirectorPath;
 static	char	*LDDir;

@@ -48,9 +48,10 @@ copies.
 #include	"directory.h"
 #include	"queue.h"
 #include	"dbgroup.h"
-#include	"aps_main.h"
+#include	"handler.h"
 #include	"apsio.h"
 #include	"handler.h"
+#include	"aps_main.h"
 #include	"option.h"
 #include	"debug.h"
 
@@ -80,7 +81,6 @@ dbgmsg(">InitSystem");
 
 	InitiateHandler();
 	ThisDB = ThisLD->db;
-	ThisDBT = ThisLD->DB_Table;
 
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 		InitializeValue(ThisLD->window[i]->value);
@@ -143,7 +143,7 @@ ExecuteDC(
 
 dbgmsg(">ExecuteDC");
 	if		(  !fConnect  )	{
-		_fh = InitServerPort(PortNumber);
+		_fh = InitServerPort(PortNumber,Back);
 		if		(  ( fhWFC = accept(_fh,0,0) )  <  0  )	{
 			Error("INET Domain Accept");
 		}

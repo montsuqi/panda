@@ -90,22 +90,6 @@ dbgmsg("<DumpNode");
 }
 #endif
 
-static	int
-InitServerPort(
-	char	*port)
-{	int		fh;
-
-dbgmsg(">InitServerPort");
-	fh = BindSocket(port,SOCK_STREAM);
-
-	if		(  listen(fh,Back)  <  0  )	{
-		shutdown(fh, 2);
-		Error("INET Domain listen");
-	}
-dbgmsg("<InitServerPort");
-	return	(fh);
-}
-
 /*
  *	for WFC
  */
@@ -291,9 +275,9 @@ ExecuteServer(void)
 dbgmsg(">ExecuteServer");
 	signal(SIGSEGV,(void *)CatchSEGV);
 
-	_fhTerm = InitServerPort(PortNumber);
+	_fhTerm = InitServerPort(PortNumber,Back);
 	maxfd = _fhTerm;
-	_fhAps = InitServerPort(ApsPortNumber);
+	_fhAps = InitServerPort(ApsPortNumber,Back);
 	maxfd = maxfd < _fhAps ? _fhAps : maxfd;
 
 	while	(TRUE)	{

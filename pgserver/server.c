@@ -54,39 +54,6 @@ copies.
 #include	"DDparser.h"
 #include	"debug.h"
 
-static	Bool
-PG_RecvString(
-	FILE	*fp,
-	size_t	size,
-	char	*str)
-{
-	Bool	rc;
-	int		c;
-#ifdef	DEBUG
-	char	*p = str;
-#endif
-
-	rc = TRUE;
-	while	(  ( c = RecvChar(fp) )  !=  '\n'  ) {
-		if		(  c  <  0  ) {
-			rc = FALSE;
-			break;
-		} else {
-			*str ++ = c;
-		}
-	}
-	*str -- = 0;
-	while	(	(  *str  ==  '\r'  )
-			||	(  *str  ==  '\n'  ) ) {
-		*str = 0;
-		str --;
-	}
-#ifdef	DEBUG
-	printf("<<[%s]\n",p);
-#endif
-	return	(rc);
-}
-
 static	void
 FinishSession(
 	ScreenData	*scr)
@@ -133,7 +100,7 @@ RecvScreenData(
 	ValueStruct	*value;
 
 	do {
-		PG_RecvString(fpComm,SIZE_BUFF,buff);
+		RecvStringDelim(fpComm,SIZE_BUFF,buff);
 		if		(	(  *buff                     !=  0     )
 				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
 			*p = 0;
@@ -171,7 +138,7 @@ dbgmsg(">WriteClient");
 	SendStringDelim(fpComm,ThisWidget);
 	SendStringDelim(fpComm,"\n");
 	do {
-		if		(  !PG_RecvString(fpComm,SIZE_BUFF,name)  )	break;
+		if		(  !RecvStringDelim(fpComm,SIZE_BUFF,name)  )	break;
 		if		(  *name  ==  0  )	break;
 		if		(  ( p = strchr(name,':') )  !=  NULL  ) {
 			*p = 0;
@@ -207,7 +174,7 @@ MainLoop(
 	,		*q;
 
 dbgmsg(">MainLoop");
-	PG_RecvString(fpComm,SIZE_BUFF,buff);
+	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	if		(  strncmp(buff,"Start: ",7)  ==  0  ) {
 		dbgmsg("start");
 		p = buff + 7;
@@ -310,8 +277,8 @@ ExecuteServer(void)
 			strcpy(scr->term,TermName(fh));
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
-			fclose(fpComm);
 			shutdown(fh, 2);
+			fclose(fpComm);
 			exit(0);
 		}
 	}

@@ -55,6 +55,8 @@ static	ARG_TABLE	option[] = {
 		"画面格納ディレクトリ"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
+	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
+		"認証サーバ"			 						},
 #if	1
 	{	"panda",	STRING,		TRUE,	(void*)&PandaPort,
 		"ワークフローコントローラ"						},

@@ -21,7 +21,6 @@ data	{
 };
 
 db	"ORCA"	{
-	metadb;
 	adrs;
 };
 

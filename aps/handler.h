@@ -21,8 +21,20 @@ copies.
 #ifndef	_HANDLER_H
 #define	_HANDLER_H
 
-#include	"aps_main.h"
 #include	"BDparser.h"
+#include	"DBparser.h"
+
+#include	"wfc.h"
+
+typedef	struct _ProcessNode	{
+	ValueStruct	*mcprec;
+	ValueStruct	*linkrec;
+	ValueStruct	*sparec;
+	ValueStruct	**scrrec;
+	size_t		cWindow;
+	CloseWindows	w;
+}	ProcessNode;
+
 typedef	struct {
 	char	*name;
 	Bool	fUse;
@@ -60,6 +72,7 @@ extern	int		StartBatch(char *name, char *para);
 GLOBAL	char		*Directory;
 GLOBAL	LD_Struct	*ThisLD;
 GLOBAL	BD_Struct	*ThisBD;
+GLOBAL	DBD_Struct	*ThisDBD;
 GLOBAL	char		*LibPath;
 
 #undef	GLOBAL

@@ -210,3 +210,20 @@ OpenPort(
 	return	(fp);
 }
 
+extern	int
+InitServerPort(
+	char	*port,
+	int		back)
+{	int		fh;
+
+dbgmsg(">InitServerPort");
+	fh = BindSocket(port,SOCK_STREAM);
+
+	if		(  listen(fh,back)  <  0  )	{
+		shutdown(fh, 2);
+		Error("INET Domain listen");
+	}
+dbgmsg("<InitServerPort");
+	return	(fh);
+}
+

@@ -38,11 +38,10 @@ copies.
 #include	"const.h"
 #include	"value.h"
 #include	"enum.h"
-#include	"aps_main.h"
-#include	"apsio.h"
-#include	"dbgroup.h"
 #define		_HANDLER
 #include	"handler.h"
+#include	"apsio.h"
+#include	"dbgroup.h"
 #include	"glterm.h"
 #include	"BDparser.h"
 #include	"debug.h"

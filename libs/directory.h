@@ -41,5 +41,6 @@ extern	void		SetUpDirectory(char *name, char *ld, char *bd, char *db);
 extern	LD_Struct	*SearchWindowToLD(char *wname);
 extern	LD_Struct	*GetLD(char *name);
 extern	BD_Struct	*GetBD(char *name);
+extern	DBD_Struct	*GetDBD(char *name);
 
 #endif

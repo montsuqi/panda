@@ -40,7 +40,6 @@ GLOBAL	char	*WFC_Host;
 GLOBAL	int		Back;
 
 
-extern	int		InitServerPort(char *port);
 extern	void	InitAPSIO(void);
 extern	Bool	GetWFC(FILE *fpWFC, ProcessNode *node);
 extern	void	PutWFC(FILE *fpWFC, ProcessNode *node);

@@ -22,6 +22,8 @@ libpanda_la_SOURCES	=		\
 	misc.c		misc.h		\
 	option.c	option.h	\
 	comm.c		comm.h		\
+	authstub.c	authstub.h	\
+	comms.c		comms.h		\
 	LBSfunc.c	LBSfunc.h	\
 	value.c		value.h		\
 	SQLlex.c	SQLlex.h	\

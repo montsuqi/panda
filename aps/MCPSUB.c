@@ -86,6 +86,17 @@ MakeMCP(
 	ValueInteger(GetItemLongName(mcp,"db.path.pname")) = ctrl->pno;
 }
 
+static	void
+CheckArg(
+	char		*func,
+	DBCOMM_CTRL	*ctrl)
+{
+	if		(	(  ctrl->rno  !=  0  )
+			||	(  ctrl->pno  !=  0  ) ) {
+		fprintf(stderr,"argument invalid on %s\n",func);
+	}
+}
+
 extern	void
 MCPSUB(
 	char	*mcpdata,
@@ -108,18 +119,23 @@ dbgmsg(">MCPSUB");
 	} else {
 		MakeCTRL(&ctrl,mcp);
 		if		(  !strcmp(ValueString(mcp_func),"DBOPEN")  ) {
+			CheckArg(ValueString(mcp_func),&ctrl);
 			rec = NULL;
 		} else
 		if		(  !strcmp(ValueString(mcp_func),"DBCLOSE")  ) {
+			CheckArg(ValueString(mcp_func),&ctrl);
 			rec = NULL;
 		} else
 		if		(  !strcmp(ValueString(mcp_func),"DBSTART")  ) {
+			CheckArg(ValueString(mcp_func),&ctrl);
 			rec = NULL;
 		} else
 		if		(  !strcmp(ValueString(mcp_func),"DBCOMMIT")  ) {
+			CheckArg(ValueString(mcp_func),&ctrl);
 			rec = NULL;
 		} else
 		if		(  !strcmp(ValueString(mcp_func),"DBDISCONNECT")  ) {
+			CheckArg(ValueString(mcp_func),&ctrl);
 			rec = NULL;
 		} else {
 			rec = ThisDB[ctrl.rno];

@@ -70,7 +70,7 @@ _AssignDBG(
 	DBG_Struct	*dbg;
 
 dbgmsg(">_AssignDBG");
-	for	( i = 0 ; i < n ; i ++ ) {
+	for	( i = 1 ; i < n ; i ++ ) {
 		gname = (char *)db[i]->opt.db->dbg;
 		if		(  ( dbg = (DBG_Struct *)g_hash_table_lookup(DBG_Table,gname) )
 				   ==  NULL  ) {
@@ -154,6 +154,16 @@ GetBD(
 	BD_Struct	*ret;
 
 	ret = g_hash_table_lookup(ThisEnv->BD_Table,name);
+	return	(ret);
+}
+
+extern	DBD_Struct	*
+GetDBD(
+	char	*name)
+{
+	DBD_Struct	*ret;
+
+	ret = g_hash_table_lookup(ThisEnv->DBD_Table,name);
 	return	(ret);
 }
 

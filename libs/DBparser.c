@@ -80,36 +80,36 @@ dbgmsg(">ParDBDB");
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  DB_Token  ==  T_SYMBOL  )
 				||	(  DB_Token  ==  T_SCONST  ) ) {
-			strcpy(buff,RecordDir);
-			p = buff;
-			do {
-				if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-					*q = 0;
-				}
-				sprintf(name,"%s/%s.db",p,DB_ComSymbol);
-				if		(  (  db = DD_ParserDataDefines(name) )  !=  NULL  ) {
-					if		(  g_hash_table_lookup(dbd->DB_Table,DB_ComSymbol)  ==  NULL  ) {
-						rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( dbd->cDB + 1));
-						if		(  dbd->cDB  >  0  ) {
+			if		(  stricmp(DB_ComSymbol,"metadb")  ) {
+				strcpy(buff,RecordDir);
+				p = buff;
+				do {
+					if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+						*q = 0;
+					}
+					sprintf(name,"%s/%s.db",p,DB_ComSymbol);
+					if		(  (  db = DD_ParserDataDefines(name) )  !=  NULL  ) {
+						if		(  g_hash_table_lookup(dbd->DB_Table,DB_ComSymbol)  ==  NULL  ) {
+							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( dbd->cDB + 1));
 							memcpy(rtmp,dbd->db,sizeof(RecordStruct *) * dbd->cDB);
 							xfree(dbd->db);
+							if		(  db->opt.db->dbg  ==  NULL  ) {
+								db->opt.db->dbg = (DBG_Struct *)StrDup(gname);
+							}
+							dbd->db = rtmp;
+							dbd->db[dbd->cDB] = db;
+							dbd->cDB ++;
+							g_hash_table_insert(dbd->DB_Table, StrDup(DB_ComSymbol),(void *)dbd->cDB);
+						} else {
+							Error("same db appier");
 						}
-						if		(  db->opt.db->dbg  ==  NULL  ) {
-							db->opt.db->dbg = (DBG_Struct *)StrDup(gname);
-						}
-						dbd->db = rtmp;
-						dbd->db[dbd->cDB] = db;
-						dbd->cDB ++;
-						g_hash_table_insert(dbd->DB_Table, StrDup(DB_ComSymbol),db);
-					} else {
-						Error("same db appier");
 					}
+					p = q + 1;
+				}	while	(	(  q   !=  NULL  )
+								&&	(  db  ==  NULL  ) );
+				if		(  db  ==  NULL  ) {
+					Error("db not found");
 				}
-				p = q + 1;
-			}	while	(	(  q   !=  NULL  )
-						&&	(  db  ==  NULL  ) );
-			if		(  db  ==  NULL  ) {
-				Error("db not found");
 			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
@@ -136,8 +136,9 @@ dbgmsg(">ParDB");
 			} else {
 				ret = New(DBD_Struct);
 				ret->name = StrDup(DB_ComSymbol);
-				ret->cDB = 0;
-				ret->db = NULL;
+				ret->cDB = 1;
+				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
+				ret->db[0] = NULL;
 				ret->arraysize = 0;
 				ret->textsize = 0;
 				ret->DB_Table = NewNameHash();

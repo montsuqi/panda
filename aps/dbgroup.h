@@ -45,7 +45,6 @@ extern	int		ExecDB_Function(char *name, char *tname, RecordStruct *rec);
 #endif
 
 GLOBAL	RecordStruct	**ThisDB;
-GLOBAL	GHashTable		*ThisDBT;
 
 GLOBAL	char		*DB_Host;
 GLOBAL	char		*DB_Port;

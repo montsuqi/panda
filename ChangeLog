@@ -1,3 +1,18 @@
+2002-09-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.8 release
+
+	* aps/dbslib.rb: Rubyからデータベースをアクセスするライブラリ
+
+	* aps/dbs_main.c: 外部からのデータベース参照デーモン
+
+2002-09-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/MCPSUB.c (CheckArg): ちょっとした引数チェック
+
+	* libs/DBparser.c (ParDBDB),libs/LDparser.c (ParDB),libs/BDparser.c (ParDB):
+	metadbの記述を不要にした(一応下位互換あり)
+
 2002-09-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/checkdir.c (DumpKey): つまらないエラーの修正(気にするな)

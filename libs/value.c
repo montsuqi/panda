@@ -1277,6 +1277,8 @@ DecodeString(
 	char	*q,
 	char	*p)
 {
+	while	(	(  *p  !=  0    )
+			&&	(  isspace(*p)  ) )	p ++;
 	while	(  *p  !=  0  ) {
 		if		(  *p  ==  '+'  ) {
 			*q ++ = ' ';

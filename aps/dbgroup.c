@@ -101,7 +101,7 @@ dbgmsg("<SetUpDBG");
 
 typedef	void	(*DB_FUNC2)(DBCOMM_CTRL *, DBG_Struct *);
 
-static	void
+static	int
 ExecFunction(
 	char	*gname,
 	DBG_Struct	*dbg,
@@ -125,6 +125,7 @@ dbgmsg(">ExecFunction");
 		}
 	}
 dbgmsg("<ExecFunction");
+	return	(ctrl.rc); 
 }
 
 extern	void
@@ -161,7 +162,6 @@ dbgmsg(">ExecDB_Function");
 			ExecFunction(dbg->name,dbg,name);
 		}
 	} else {
-		rec = (RecordStruct *)g_hash_table_lookup(ThisDBT,tname);
 		dbg = rec->opt.db->dbg;
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl.func) )
 				   ==  NULL  ) {
@@ -190,9 +190,10 @@ dbgmsg(">ExecDB_Process");
 	printf("func = [%s] %s\n",ctrl->func,(rec == NULL)?"NULL":"rec");
 #endif
 	if		(  rec  ==  NULL  ) { 
+		ctrl->rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ExecFunction(dbg->name,dbg,ctrl->func);
+			ctrl->rc += ExecFunction(dbg->name,dbg,ctrl->func);
 		}
 	} else {
 		dbg = rec->opt.db->dbg;

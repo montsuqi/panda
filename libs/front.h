@@ -21,7 +21,6 @@ copies.
 #ifndef	_INC_FRONT_H
 #define	_INC_FRONT_H
 #include	"driver.h"
-extern	char	*TermName(int sock);
-extern	int		InitServerPort(char *port,int back);
+extern	char		*TermName(int sock);
 extern	ScreenData	*InitSession(void);
 #endif

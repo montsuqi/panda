@@ -29,4 +29,6 @@ Boston, MA  02111-1307, USA.
 extern	int		BindSocket(char *port, int type);
 extern	int		ConnectSocket(char *port, int type, char *host);
 extern	FILE	*OpenPort(char *url, int port);
+extern	int		InitServerPort(char *port, int back);
+
 #endif

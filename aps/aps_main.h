@@ -22,16 +22,6 @@ copies.
 #ifndef	_APS_MAIN_H
 #define	_APS_MAIN_H
 
-#include	"wfc.h"
-
-typedef	struct _ProcessNode	{
-	ValueStruct	*mcprec;
-	ValueStruct	*linkrec;
-	ValueStruct	*sparec;
-	ValueStruct	**scrrec;
-	size_t		cWindow;
-	CloseWindows	w;
-}	ProcessNode;
 
 #undef	GLOBAL
 #ifdef	MAIN

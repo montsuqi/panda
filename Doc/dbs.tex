@@ -1,0 +1,94 @@
+\section{dbs}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt dbs} - 外部システムがMONTSUQI配下のデータベースをアクセスするため
+のインターフェイス。
+
+\ititle{書式}
+
+\begin{verbatim}
+dbs <OPTIONS> <DBD名>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt dbs}は外部のシステムがMONTSUQI配下のデータベースにアクセスするた
+めのインターフェイスプロセスである。デーモンとして動かす。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-port}
+	待機用ポート番号。
+	デフォルトは8013。
+
+	\option{-back}
+	接続待ちキュー長。
+	デフォルトは5。
+
+	\option{-dir}
+	環境定義体のファイル名を指定する。
+	デフォルトは\verb|./directory|
+
+	\option{-base}
+	環境定義体に定義されたbaseを上書きするのに使う
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-dbddir}
+	DB定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-dbhost}
+	データベース稼働ホスト名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-dbport}
+	データベース待機ポート番号
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-db}
+	データベース名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-dbuser}
+	データベースユーザ名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-dbpass}
+	データベースのパスワード
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-auth}
+	認証サーバの指定をURL形式で行う。
+	デフォルトは\verb|glauth://localhost:8001|。これはglauthプロトコル
+	で認証を行い、localhostのポート番号8001に要求を出すという意味であ
+	る。
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+dbs sample &
+\end{verbatim}
+pgserverを起動する。定義体は、起動ディレクトリから取得する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+dbslib.rb, DBIO
+
+\ititle{注意}
+
+dbsはクライアントが接続する毎にサブプロセスを生成する。
+
+\end{function}
+

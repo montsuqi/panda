@@ -2,18 +2,17 @@ require	'socket';
 
 VER="1.0.8";
 
-class	PG_Server
+class	DB_Server
 	def get_event
 	  msg = @s.gets.chomp;
-	  if  (  msg  =~  /^Event\: (.*?)\/(.*?)$/  )
-		event = Array.new(2);
-		event[0] = $1;
-		event[1] = $2;
+	  if  (  msg  =~  /^Exec\: (.*?)$/  )
+		rc = $1.to_i;
 	  else
 		printf("error: connection lost ?\n");
 		@s.close
+		rc = -1;
 	  end
-	  event;
+	  rc;
 	end
 	def decode(string)
 	  if  string
@@ -30,57 +29,51 @@ class	PG_Server
 	  end
 	end
 
-	def	initialize(host,port,prog,user,pass)
+	def	initialize(host,port,user,pass)
 	  if  port  ==  0
-		port = 8011;
+		port = 8013;
 	  end
 	  @host = host;
 	  @port = port;
 	  @s = TCPSocket.new(@host,@port);
-	  @s.printf("Start: %s %s %s %s\n",VER,user,pass,prog);
+	  @s.printf("%s %s %s string\n",VER,user,pass);
 	  msg = @s.gets.chomp;
 	  if  (  msg  =~  /^Error\: (.*?)$/  )
 		printf("error: %s\n",$1);
 		@s.close
 	  else
 		@values = Hash.new(nil);
-		get_event;
-		@s.printf("\n");
 	  end
 	end
-	def event_data
-	  @values.each{ | name, value | @s.printf("%s: %s\n",name,encode(value)) };
+	def exec_data(rec)
+	  rec.each{ | name, value | @s.printf("%s: %s\n",name,encode(value)) };
 	  @s.printf("\n");
 	end
-	def	event(event)
-	  @s.printf("Event: %s\n",encode(event));
-	  event_data;
-	  get_event;
+	def	dbops(func)
+	  @s.printf("Exec: %s\n",func);
+	  @s.printf("\n");
+	  rc = get_event;
+	  @s.printf("\n");
+	  rc;
 	end
-	def	event2(event,widget)
-	  @s.printf("Event: %s:%s\n",encode(event),encode(widget));
-	  event_data;
-	  get_event;
-	end
-	def	getValue(name)
-	  @s.printf("%s:\n",name);
-	  @s.flush;
-	  decode(@s.gets.chomp);
-	end
-	def	getValues(name)
+	def	getValues(rec,name)
 	  @s.printf("%s\n",name);
 	  @s.flush;
-	  v = Hash.new(nil);
 	  while  is = @s.gets
 		is.chomp!
 		break if  is  ==  "";
 		dat = is.split(/: /);
-		v[dat[0]] = decode(dat[1]);
+		rec[dat[0]] = decode(dat[1]);
 	  end
-	  v;
+	  @s.printf("\n");
+	  rec;
 	end
-	def	setValue(name,value)
-		@values[name] = value;
+	def	recordops(func,rname,pname,rec)
+	  @s.printf("Exec: %s:%s:%s\n",func,rname,pname);
+	  exec_data(rec)
+	  rc = get_event;
+	  getValues(rec,rname);
+	  rc;
 	end
 	def	close
 		@s.printf("End\n");

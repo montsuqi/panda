@@ -24,6 +24,7 @@ copies.
 #include	"glterm.h"
 
 extern	void	SendStringDelim(FILE *fp, char *str);
+extern	Bool	RecvStringDelim(FILE *fp, size_t size, char *str);
 extern	void	SetValueName(char *name);
 extern	void	SendValueString(FILE *fpComm, ValueStruct *value, char *name, Bool fName);
 

@@ -39,7 +39,7 @@ copies.
 #include	"misc.h"
 #include	"value.h"
 #include	"LBSfunc.h"
-#include	"glterm.h"
+#include	"comm.h"
 #define	_COMMS
 #include	"comms.h"
 #include	"debug.h"
@@ -63,6 +63,40 @@ SendStringDelim(
 		fwrite(str,1,size,fp);
 	}
 	fflush(fp);
+}
+
+
+extern	Bool
+RecvStringDelim(
+	FILE	*fp,
+	size_t	size,
+	char	*str)
+{
+	Bool	rc;
+	int		c;
+#ifdef	DEBUG
+	char	*p = str;
+#endif
+
+	rc = TRUE;
+	while	(  ( c = RecvChar(fp) )  !=  '\n'  ) {
+		if		(  c  <  0  ) {
+			rc = FALSE;
+			break;
+		} else {
+			*str ++ = c;
+		}
+	}
+	*str -- = 0;
+	while	(	(  *str  ==  '\r'  )
+			||	(  *str  ==  '\n'  ) ) {
+		*str = 0;
+		str --;
+	}
+#ifdef	DEBUG
+	printf("<<[%s]\n",p);
+#endif
+	return	(rc);
 }
 
 static	char	namebuff[SIZE_BUFF+1];

@@ -46,8 +46,6 @@ copies.
 #include	"cobolvalue.h"
 #include	"const.h"
 #include	"enum.h"
-//#include	"wfc.h"
-//#include	"apsio.h"
 #include	"dbgroup.h"
 #include	"directory.h"
 #include	"handler.h"
@@ -82,7 +80,6 @@ dbgmsg(">InitSystem");
 	ThisLD = NULL;
 	InitiateHandler();
 	ThisDB = ThisBD->db;
-	ThisDBT = ThisBD->DB_Table;
 	if		(  ThisBD->cDB  >  0  ) {
 		ReadyDB();
 	}

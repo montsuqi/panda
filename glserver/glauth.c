@@ -56,22 +56,6 @@ static	GHashTable	*FileHash;
 static	int			Back;
 static	char		*PortNumber;
 
-static	int
-InitServerPort(
-	char	*port)
-{	int		fh;
-
-dbgmsg(">InitServerPort");
-	fh = BindSocket(port,SOCK_STREAM);
-
-	if		(  listen(fh,Back)  <  0  )	{
-		shutdown(fh, 2);
-		Error("INET Domain listen");
-	}
-dbgmsg("<InitServerPort");
-	return	(fh);
-}
-
 static	void
 SetFDs(
 	int		fd,
@@ -124,7 +108,7 @@ ExecuteServer(void)
 	int			maxfd;
 
 dbgmsg(">ExecuteServer");
-	_fh = InitServerPort(PortNumber);
+	_fh = InitServerPort(PortNumber,Back);
 
 	maxfd = _fh;
 	

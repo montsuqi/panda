@@ -75,22 +75,6 @@ typedef	struct {
 	char	*body;
 }	LOG_DATA;
 
-static	int
-InitServerPort(
-	char	*port)
-{	int		fh;
-
-dbgmsg(">InitServerPort");
-	fh = BindSocket(port,SOCK_STREAM);
-
-	if		(  listen(fh,Back)  <  0  )	{
-		shutdown(fh, 2);
-		Error("INET Domain listen");
-	}
-dbgmsg("<InitServerPort");
-	return	(fh);
-}
-
 static	void
 LogThread(
 	void	*para)
@@ -202,7 +186,7 @@ ExecuteServer(void)
 
 dbgmsg(">ExecuteServer");
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL); 
-	_fhLog = InitServerPort(PortNumber);
+	_fhLog = InitServerPort(PortNumber,Back);
 	maxfd = _fhLog;
 
 	while	(TRUE)	{

@@ -624,7 +624,7 @@ dbgmsg(">ParserDataDefines");
 					}
 					path[pcount] = InitPathStruct();
 					path[pcount]->name = StrDup(DD_ComSymbol);
-					g_hash_table_insert(ret->opt.db->paths,path[pcount]->name,path[pcount]);
+					g_hash_table_insert(ret->opt.db->paths,path[pcount]->name,(void *)(pcount+1));
 					ret->opt.db->pcount ++;
 					ret->opt.db->path = path;
 					if		(  GetSymbol  !=  '{'  ) {
