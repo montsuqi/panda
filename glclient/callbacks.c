@@ -40,6 +40,7 @@ copies.
 #ifdef	USE_PANDA
 #include	<gtkpanda/gtkpanda.h>
 #endif
+#include	<gdk/gdkkeysyms.h>
 
 #include	"callbacks.h"
 #include	"types.h"
@@ -99,6 +100,29 @@ unselect_all(
 	return (TRUE);
 }
 
+ extern	gboolean
+keypress_filter(
+	GtkWidget	*widget,
+	GdkEventKey	*event,
+	char		*next)
+{
+	GtkWidget	*nextWidget;
+	GtkWidget	*window;
+	char		*wname;
+	XML_Node	*node;
+
+	if		(event->keyval == GDK_KP_Enter) {
+		window = gtk_widget_get_toplevel(widget);
+		wname = gtk_widget_get_name(window);
+		if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )       !=  NULL  )
+				&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
+				gtk_widget_grab_focus (nextWidget);
+		}
+		gtk_signal_emit_stop_by_name(GTK_OBJECT(widget),"key_press_event");
+	}
+	return	(TRUE);
+}
+
 extern	gboolean
 press_filter(
 	GtkWidget	*widget,
@@ -119,45 +143,95 @@ press_filter(
 	return	(rc);
 }
 
+struct changed_hander {
+	GtkObject       *object;
+	GtkSignalFunc	func;
+	gpointer	data;
+	struct changed_hander *next;
+} *changed_hander_list = NULL;
+
+extern	void
+RegisterChangedHander(
+	GtkObject *object,
+	GtkSignalFunc func,
+	gpointer data)
+{
+  struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
+  p->object = object;
+  p->func = func;
+  p->data = data;
+  p->next = changed_hander_list;
+  changed_hander_list = p;
+}
+
+static void
+BlockChangedHanders(void)
+{
+  struct changed_hander *p;
+  for (p = changed_hander_list; p != NULL; p = p->next)
+    gtk_signal_handler_block_by_func (p->object, p->func, p->data);
+}
+
+static void
+UnblockChangedHanders(void)
+{
+  struct changed_hander *p;
+  for (p = changed_hander_list; p != NULL; p = p->next)
+    gtk_signal_handler_unblock_by_func (p->object, p->func, p->data);
+}
+
 extern	void
 send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	char	*name
-	,		*window;
-	EventNode	*node;
+	GtkWidget	*window;
+	GdkWindow	*pane;
+	GdkWindowAttr	attr;
+	static int	ignore_event = FALSE;
+
+	memset (&attr, 0, sizeof (GdkWindowAttr));
+	attr.wclass = GDK_INPUT_ONLY;
+	attr.window_type = GDK_WINDOW_CHILD;
+	attr.cursor = gdk_cursor_new (GDK_WATCH);
+	attr.x = attr.y = 0;
+	attr.width = attr.height = 32767;
 
 dbgmsg(">send_event");
-	if		(  !fInRecv  ) {
-		name = gtk_widget_get_name(widget);
-		window = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
-		node = New(EventNode);
-		node->window = StrDup(window);
-		node->widget = StrDup(name);
-		node->name  = StrDup(event);
-		EnQueue(ProtocolQueue,node);
-		DeQueue(ProtocolDone);
-
+	if		(  !fInRecv  &&  !ignore_event ) {
+		/* show busy cursor */
+		window = gtk_widget_get_toplevel(widget);
+		pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
+		gdk_window_show (pane);
+		gdk_flush ();
+		/* send event */
+		SendEvent(fpComm,
+			  gtk_widget_get_name(window),
+			  gtk_widget_get_name(widget),
+			  event);
+		SendWindowData();
+		BlockChangedHanders();
+		if		(  GetScreenData(fpComm)  ) {
+			ignore_event = TRUE;
+			while	(  gtk_events_pending()  ) {
+				gtk_main_iteration();
+			}
+			ignore_event = FALSE;
+		}
+		UnblockChangedHanders();
+		/* clear busy cursor */
+		gdk_window_destroy (pane);
 	}
 dbgmsg("<send_event");
 }
 
 extern	void
-send_event_if_changed(
+send_event_on_focus_out(
 	GtkWidget		*widget,
 	GdkEventFocus	*focus,
 	char			*event)
 {
-	const	char	*name;
-	char		*wname;
-	XML_Node	*node;
-	name = glade_get_widget_long_name(widget);
-	wname = gtk_widget_get_name (gtk_widget_get_toplevel (widget));
-	if		(	(  ( node = g_hash_table_lookup (WindowTable, wname) ) !=  NULL  )
-			&&	(  g_hash_table_lookup(node->UpdateWidget, name)                 ) ) {
-		send_event (widget, event);
-	}
+	send_event (widget, event);
 }
 
 static char *timeout_event;
@@ -182,18 +256,28 @@ send_event_when_idle(
 	GtkWidget	*widget,
 	char		*event)
 {
-  static int registed = 0;
+	static int registed = 0;
+	static int timeout = -1;
 
-  if (timeout_hander_id)
-    gtk_timeout_remove (timeout_hander_id);
+	if (timeout_hander_id)
+		gtk_timeout_remove (timeout_hander_id);
 
-  if (!registed) {
-    RegisterChangedHander (GTK_OBJECT (widget), send_event_when_idle, event);
-    registed = 1;
-  }
+	if (!registed) {
+		RegisterChangedHander (GTK_OBJECT (widget), send_event_when_idle, event);
+		registed = 1;
+	}
+	if (timeout == -1) {
+		char *s = getenv ("GL_SEND_EVENT_DELAY");
+		if (s)
+			timeout = atoi (s);
+		else
+			timeout = 1000;
+	}
 
-  timeout_event = event;
-  timeout_hander_id = gtk_timeout_add (1000, send_event_if_kana, widget);
+	if (timeout > 0) {
+		timeout_event = event;
+		timeout_hander_id = gtk_timeout_add (timeout, send_event_if_kana, widget);
+	}
 }
 
 extern void
@@ -226,8 +310,19 @@ entry_next_focus(
 	wname = gtk_widget_get_name(window);
 	if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )       !=  NULL  )
 			&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
-		gtk_window_set_focus(GTK_WINDOW(window),nextWidget);
+		gtk_widget_grab_focus(nextWidget);
 	}
+}
+
+extern	void
+ResetTimer(
+	GladeXML	*xml)
+{
+	GList *l, *list = glade_xml_get_widget_prefix (xml, "pandatimer");
+	for (l = list; l; l = g_list_next (l))
+		if (GTK_IS_PANDA_TIMER (l->data))
+			gtk_panda_timer_reset (GTK_PANDA_TIMER (l->data));
+	g_list_free (list);
 }
 
 static	void
@@ -243,9 +338,11 @@ dbgmsg(">UpdateWidget");
 	if		(  !fInRecv  ) {
 		name = glade_get_widget_long_name(widget);
 		wname = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
-		if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  )
-				&&	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) ) {
-			g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
+		if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
+			if	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) {
+				g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
+			}
+			ResetTimer(node->xml);
 		}
 	}
 dbgmsg("<UpdateWidget");
