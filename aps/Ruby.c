@@ -72,6 +72,7 @@ static char *codeset;
 static VALUE default_load_path;
 
 static VALUE mPanda;
+static VALUE cObjectValue;
 static VALUE cArrayValue;
 static VALUE cRecordValue;
 static VALUE cRecordStruct;
@@ -317,6 +318,7 @@ bigdecimal_new(ValueStruct *val)
 static VALUE
 get_value(ValueStruct *val)
 {
+    static VALUE objval_new(ValueStruct *val, int need_free);
     static VALUE aryval_new(ValueStruct *val, int need_free);
     static VALUE recval_new(ValueStruct *val, int need_free);
 
@@ -346,6 +348,8 @@ get_value(ValueStruct *val)
         else {
             return rb_str_new(ValueByte(val), ValueByteLength(val));
         }
+    case GL_TYPE_OBJECT:
+        return objval_new(val, 0);
     case GL_TYPE_ARRAY:
         return aryval_new(val, 0);
     case GL_TYPE_RECORD:
@@ -356,6 +360,11 @@ get_value(ValueStruct *val)
     }
     return Qnil;                /* not reached */
 }
+
+typedef struct _value_struct_data {
+    ValueStruct *value;
+    VALUE cache;
+} value_struct_data;
 
 static void
 set_value(ValueStruct *value, VALUE obj)
@@ -397,13 +406,21 @@ set_value(ValueStruct *value, VALUE obj)
             break;
         default:
             class_path = rb_class_path(CLASS_OF(obj));
-            if (strcasecmp(StringValuePtr(class_path), "BigDecimal") == 0) {
-                str = rb_funcall(obj, rb_intern("to_s"), 1, rb_str_new2("F"));
+            if (strcasecmp(StringValuePtr(class_path), "Panda::ObjectValue") == 0) {
+                value_struct_data *data;
+                
+                Data_Get_Struct(obj, value_struct_data, data);
+                CopyValue(value, data->value);
             }
             else {
-                str = rb_funcall(obj, rb_intern("to_s"), 0);
+                if (strcasecmp(StringValuePtr(class_path), "BigDecimal") == 0) {
+                    str = rb_funcall(obj, rb_intern("to_s"), 1, rb_str_new2("F"));
+                }
+                else {
+                    str = rb_funcall(obj, rb_intern("to_s"), 0);
+                }
+                SetValueString(value, StringValuePtr(str), codeset);
             }
-            SetValueString(value, StringValuePtr(str), codeset);
             break;
         }
     }
@@ -442,6 +459,18 @@ value_equal(ValueStruct *val, VALUE obj)
     case GL_TYPE_BINARY:
         return memcmp(ValueByte(val), StringValuePtr(obj),
                       ValueByteLength(val)) == 0;
+    case GL_TYPE_OBJECT:
+        {
+            value_struct_data *data;
+            
+            Data_Get_Struct(obj, value_struct_data, data);
+            if (ValueObjectSource(val) == ValueObjectSource(data->value)
+                && memcmp(&ValueObjectID(val), &ValueObjectID(data->value),
+                          sizeof(OidType)) == 0)
+                return 1;
+            else
+                return 0;
+        }
     default:
         return 0;
     }
@@ -450,11 +479,6 @@ value_equal(ValueStruct *val, VALUE obj)
 #define CACHEABLE(val) (val != NULL && \
                         (ValueType(val) == GL_TYPE_ARRAY || \
                          ValueType(val) == GL_TYPE_RECORD))
-
-typedef struct _value_struct_data {
-    ValueStruct *value;
-    VALUE cache;
-} value_struct_data;
 
 static void
 value_struct_mark(value_struct_data *data)
@@ -467,6 +491,38 @@ value_struct_free(value_struct_data *data)
 {
     FreeValueStruct(data->value);
     free(data);
+}
+
+static VALUE
+objval_new(ValueStruct *val, int need_free)
+{
+    MonObjectType *ptr;
+    VALUE obj;
+    value_struct_data *data;
+
+    obj = Data_Make_Struct(cObjectValue, value_struct_data,
+                           value_struct_mark,
+                           need_free ?
+                           (RUBY_DATA_FUNC) value_struct_free :
+                           (RUBY_DATA_FUNC) free,
+                           data);
+
+    ptr = ALLOC(MonObjectType);
+    *ptr = *ValueObject(val);
+
+    data->value = val;
+    data->cache = Data_Wrap_Struct(cObjectValue, 0, -1, ptr);
+
+    return obj;
+}
+
+static VALUE
+objval_to_s(VALUE self)
+{
+    value_struct_data *data;
+    
+    Data_Get_Struct(self, value_struct_data, data);
+    return rb_str_new2(ValueToString(data->value, codeset));
 }
 
 static VALUE
@@ -1245,6 +1301,12 @@ table_path(VALUE self, VALUE name)
     return path;
 }
 
+static VALUE
+table_blob_import(int argc, VALUE *argv, VALUE self)
+{
+    return exec_function("BLOBIMPORT", argc, argv, self);
+}
+
 typedef struct _database_data {
     GHashTable *indices;
     RecordStruct **tables;
@@ -1363,6 +1425,8 @@ init()
 	rb_global_variable(&default_load_path);
 
     mPanda = rb_define_module("Panda");
+    cObjectValue = rb_define_class_under(mPanda, "ObjectValue", rb_cObject);
+    rb_define_method(cObjectValue, "to_s", objval_to_s, 0);
     cArrayValue = rb_define_class_under(mPanda, "ArrayValue", rb_cObject);
     rb_define_method(cArrayValue, "length", aryval_length, 0);
     rb_define_method(cArrayValue, "size", aryval_length, 0);
@@ -1406,6 +1470,7 @@ init()
     rb_define_method(cTable, "select", table_select, -1);
     rb_define_method(cTable, "fetch", table_fetch, -1);
     rb_define_method(cTable, "insert", table_insert, -1);
+    rb_define_method(cTable, "blob_import", table_blob_import, -1);
     rb_define_method(cTable, "update", table_update, -1);
     rb_define_method(cTable, "delete", table_delete, -1);
     rb_define_method(cTable, "get", table_get, -1);

@@ -63,6 +63,7 @@ extern	void			SendFloatData(NETFILE *fp, PacketDataType type, double val);
 extern	Bool			RecvFloatData(NETFILE *fp, double *val);
 extern	void			SendFixedData(NETFILE *fp, PacketDataType type, Fixed *xval);
 extern	Bool			RecvFixedData(NETFILE *fp, Fixed **xval);
+extern  void            RecvBinaryData(NETFILE *fp, LargeByteString *binary);
 
 #undef	GLOBAL
 #ifdef	MAIN

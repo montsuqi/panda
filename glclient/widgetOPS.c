@@ -53,6 +53,7 @@ copies.
 #include	"comm.h"
 #include	"protocol.h"
 #include	"widgetOPS.h"
+#include    "action.h"
 #include	"debug.h"
 
 static	GHashTable		*ValueTable = NULL;
@@ -253,15 +254,41 @@ RecvPS(
 	,		name[SIZE_BUFF];
 	int		nitem
 	,		i;
+    LargeByteString *binary;
 
 dbgmsg(">RecvPS");
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp,name);
-			RecvStringData(fp,buff,SIZE_BUFF);
-			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
-			gtk_panda_ps_load(GTK_PANDA_PS(widget),buff);
+            if (strncasecmp("psdata", name, sizeof("psdata") - 1) == 0) {
+                binary = NewLBS();
+                RecvBinaryData(fp, binary);
+                {
+                    FILE *fp;
+                    char *psdata_filename = "/tmp/psdata.ps";
+                    
+                    if ((fp = fopen(psdata_filename, "w")) != NULL) {
+                        fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), fp);
+                        fclose(fp);
+                        gtk_panda_ps_load(GTK_PANDA_PS(widget), psdata_filename);
+                    }
+                }
+                FreeLBS(binary);
+            }
+            else if (strncasecmp("imagedata", name, sizeof("imagedata") - 1) == 0) {
+                binary = NewLBS();
+                RecvBinaryData(fp, binary);
+                FreeLBS(binary);
+            }
+            else {
+                RecvStringData(fp,buff,SIZE_BUFF);
+                RegistValue(widget,name,OPT_TYPE_NULL,NULL);
+                if (buff != NULL && buff[0] != '\0') {
+                    gtk_panda_ps_load(GTK_PANDA_PS(widget),buff);
+                    Warning("GtkPandaPS->value obsolate\n");
+                }
+            }
 		}
 	}
 dbgmsg("<RecvPS");
@@ -317,7 +344,6 @@ SendTimer(
 {
 	ValueAttribute	*v;
 	char	iname[SIZE_BUFF];
-	Fixed	*xval;
 
 dbgmsg(">SendTimer");
 	GL_SendPacketClass(fp,GL_ScreenData);
@@ -446,7 +472,6 @@ ENTER_FUNC;
 	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
-printf("iname = [%s]\n",iname);
 	GL_SendName(fp,iname);
 	SendStringData(fp,v->type,(char *)p);
 	g_free(p);
@@ -464,7 +489,6 @@ RecvText(
 	int		nitem
 	,		i;
 	int		state;
-	MonObjectType	obj;
 
 ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -740,7 +764,8 @@ dbgmsg(">SendPandaCList");
 			SendBoolData(fp,GL_TYPE_BOOL,((state == GTK_STATE_SELECTED) ? TRUE : FALSE));
 		}
 		if	( !fVisibleRow ) {
-			if	( visi = gtkpanda_clist_row_is_visible(GTK_PANDA_CLIST(widget),i) == GTK_VISIBILITY_FULL ) {
+            visi = gtkpanda_clist_row_is_visible(GTK_PANDA_CLIST(widget),i);
+			if	( visi == GTK_VISIBILITY_FULL ) {
 				sprintf(iname,"%s.row",v->ValueName);
 				GL_SendPacketClass(fp,GL_ScreenData);
 				GL_SendName(fp,iname);

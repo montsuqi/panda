@@ -1,5 +1,12 @@
 2004-08-04  Kouji TAKAO  <kouji@netlab.jp>
 
+	* aps/Ruby.c: object型対応
+
+	* glclient/protocol.c (RecvBinaryData): バイナリデータを受けとり
+	LBSにパックする関数を追加(GtkPandaPSのため)
+	* glclient/widgetOPS.c (RecvPS): GtkPandaPS Widgetがサーバから送ら
+	れてきたPSデータ(psdata)を処理できるように修正
+	
 	* dblib/NativeBLOB.c (_ImportBLOB): "object"の更新もれによるバグを修正
 
 2004-08-03  Kouji TAKAO  <kouji@netlab.jp>

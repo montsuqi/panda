@@ -876,8 +876,6 @@ ghfunc_window_table_free (char *wname, XML_Node *node, gpointer user_data)
 		g_hash_table_destroy (node->UpdateWidget);
 	}
     xfree (node);
-    (void *) wname; /* escape warning */
-    (void *) user_data; /* escape warning */
 }
 
 void
@@ -1247,3 +1245,22 @@ dbgmsg("<RecvFloatData");
 	return	(ret);
 }
 
+extern void
+RecvBinaryData(NETFILE *fp, LargeByteString *binary)
+{
+    DataType = GL_RecvDataType(fp);
+    switch (DataType) {
+    case  GL_TYPE_CHAR:
+    case  GL_TYPE_VARCHAR:
+    case  GL_TYPE_DBCODE:
+    case  GL_TYPE_TEXT:
+    case  GL_TYPE_BINARY:
+    case  GL_TYPE_BYTE:
+    case  GL_TYPE_OBJECT:
+        GL_RecvLBS(fp, binary);
+        break;
+    default:
+        Warning("unsupported data type: %d\n", DataType);
+        break;
+    }
+}
