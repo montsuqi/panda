@@ -474,7 +474,7 @@ dbgmsg(">_Button");
 	if		(  ( event = GetArg(tag,"event",0) )  ==  NULL  ) {
 		event = GetArg(tag,"face",0);
 	}
-	g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
+	g_hash_table_insert(htc->Trans,StrDup(ConvUTF8(face)),StrDup(event));
 	LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
 	LBS_EmitString(htc->code,face);
 	LBS_EmitString(htc->code,"\"");

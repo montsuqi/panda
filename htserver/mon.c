@@ -119,7 +119,7 @@ ConvLocal(
 	return	(cbuff);
 }
 
-static	char	*
+extern	char	*
 ConvUTF8(
 	char	*istr)
 {

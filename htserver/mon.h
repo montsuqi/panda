@@ -44,5 +44,6 @@ GLOBAL	char		*RecordDir;
 #undef	GLOBAL
 extern	void	HT_SendString(char *str);
 extern	Bool	HT_RecvString(size_t size, char *str);
+extern	char	*ConvUTF8(char *istr);
 
 #endif
