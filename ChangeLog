@@ -1,3 +1,7 @@
+2004-07-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c: BLOBサポート
+
 2004-07-18  Kouji TAKAO  <kouji@netlab.jp>
 
 	* glclient/bootdialog.c: ラベルの日本語化
@@ -13,6 +17,7 @@
 	* intl/*: 追加
 	* Makefile.am: ほぼ全てのMakefile.amを編集し、make distcheckが通るようにした。
 
+>>>>>>> 1.156
 2004-07-15  gettextize  <bug-gnu-gettext@gnu.org>
 
 	* glclient起動ダイアログのgettextize

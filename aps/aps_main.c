@@ -94,9 +94,6 @@ dbgmsg(">InitSystem");
 		InitializeValue(ThisLD->window[i]->rec->value);
 	}
 	ReadyDC();
-	if		(  ThisLD->cDB  >  0  ) {
-		ReadyOnlineDB();
-	}
 dbgmsg("<InitSystem");
 }
 
@@ -139,13 +136,12 @@ dbgmsg("<FinishSession");
 }
 
 static	void
-ExecuteDC(
-	void	*para)
+ExecuteServer(void)
 {
 	int		fhWFC
 	,		_fh;
-	NETFILE	*fpWFC;
 	Port	*port;
+	NETFILE		*fpWFC;
 	ProcessNode	*node;
 	WindowBind	*bind;
 	int		tran;
@@ -165,6 +161,9 @@ ENTER_FUNC;
 		Error("invalid LD name");
 	}
 	InitAPSIO(fpWFC);
+	if		(  ThisLD->cDB  >  0  ) {
+		ReadyOnlineDB(fpWFC);
+	}
 	node = MakeProcessNode();
 	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
 						||	(  tran     >   0  ) ); tran -- ) {
@@ -191,14 +190,6 @@ ENTER_FUNC;
 	CloseNet(fpWFC);
 	FinishSession(node);
 LEAVE_FUNC;
-}
-
-static	void
-ExecuteServer(void)
-{
-dbgmsg(">ExecuteServer");
-	ExecuteDC(NULL);
-dbgmsg("<ExecuteServer");
 }
 
 static	void

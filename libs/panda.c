@@ -52,9 +52,9 @@ static	void
 OpenPanda(
 	char	*arg)
 {
-dbgmsg(">OpenPanda");
+ENTER_FUNC;
 	fpPanda = ConnectTermServer(PandaPort,ThisTerm,ThisUser,TRUE,arg); 
-dbgmsg("<OpenPanda");
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -63,10 +63,10 @@ SendPanda(void)
 	RecordStruct	*rec;
 	Bool		rc;
 
-dbgmsg(">SendPanda");
+ENTER_FUNC;
 	rec = GetWindowRecord(ThisWindow);
 	rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,rec->value);
-dbgmsg("<SendPanda");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -81,7 +81,7 @@ RecvPanda(
 	int		i;
 	WindowControl	ctl;
 
-dbgmsg(">RecvPanda");
+ENTER_FUNC;
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
 #ifdef	NEW_SEQUENCE
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
@@ -129,7 +129,7 @@ dbgmsg(">RecvPanda");
 		MessagePrintf("invalid window [%s]\n",window);
 		exit(1);
 	}
-dbgmsg("<RecvPanda");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -140,10 +140,10 @@ pandaLink(
 	,		window[SIZE_NAME+1]
 	,		widget[SIZE_NAME+1];
 
-dbgmsg(">pandaLink");
+ENTER_FUNC;
 	OpenPanda(arg);
 	RecvPanda(user,window,widget);
-dbgmsg("<pandaLink");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -154,14 +154,14 @@ pandaMain(
 	,		window[SIZE_NAME+1]
 	,		widget[SIZE_NAME+1];
 
-dbgmsg(">pandaMain");
+ENTER_FUNC;
 	if		(  SendPanda()  ) {
 		RecvPanda(user,window,widget);
 	} else {
 		CloseNet(fpPanda);
 		exit(0);
 	}
-dbgmsg("<pandaMain");
+LEAVE_FUNC;
 }
 
 #include	"option.h"
@@ -184,8 +184,8 @@ pandaInit(
 	int		argc,
 	char	**argv)
 {
-dbgmsg(">pandaInit");
+ENTER_FUNC;
 	SetDefault();
 	(void)GetOption(option,argc,argv);
-dbgmsg("<pandaInit");
+LEAVE_FUNC;
 }

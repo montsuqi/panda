@@ -16,14 +16,21 @@ multiplex_level	no;
 #multiplex_level	id;
 #multiplex_level	aps;
 
+control {
+	port	"/tmp/sample2.control";
+};
+
 wfc	{
-#	port	":9003";
-	port	"/tmp/wfc";
+#	port		":9003";
+	port		"/tmp/sample2.wfc";
+	termport	"/tmp/sample2.term";
+#	termport	":9002";
 };
 
 ld	{
-	sample	"localhost" * 3;
-#	sample	3;
+#	sample	"localhost" * 3;
+#	sample	"/tmp/sample2.ld.sample" * 3;
+	sample	3;
 };
 bd	{
 	sample;

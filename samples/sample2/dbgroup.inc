@@ -3,8 +3,8 @@ db_group	"log"	{
 	type	"PostgreSQL";
 	port	"localhost";
 	name	"ORCA";
-	redirect_port	"localhost:9300";
-	redirect		"redirect";
+	redirect_port	"localhost:9302";
+#	redirect		"redirect";
 	file	"orca.log1";
 };
 

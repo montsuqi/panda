@@ -184,24 +184,31 @@ GetAPS_Control(
 	PacketClass	c;
 	NETFILE		*fp;
 	byte		flag;
+	Bool		done;
 
 dbgmsg(">GetAPS_Control");
 	fp = aps->fp;
-	switch	( c = RecvPacketClass(fp) ) { 
-	  case	APS_CTRLDATA:
-		flag = RecvChar(fp);				ON_IO_ERROR(fp,badio);
-		RecvString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
-		RecvString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
-		RecvString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
-		hdr->puttype = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
-		break;
-	  case	APS_BLOB:
-		break;
-	  default:
-	  badio:
-		MessageLog("aps die ?");
-		flag = 0;
-		break;
+	done = FALSE;
+	while	(  !done  )	{
+		switch	( c = RecvPacketClass(fp) ) { 
+		  case	APS_CTRLDATA:
+			flag = RecvChar(fp);				ON_IO_ERROR(fp,badio);
+			RecvString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
+			RecvString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
+			RecvString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
+			hdr->puttype = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
+			done = TRUE;
+			break;
+		  case	APS_BLOB:
+			PassiveBLOB(fp,Blob);
+			break;
+		  default:
+		  badio:
+			MessageLog("aps die ?");
+			done = TRUE;
+			flag = 0;
+			break;
+		}
 	}
 dbgmsg("<GetAPS_Control");
 	return	(flag); 

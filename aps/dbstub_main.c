@@ -90,7 +90,7 @@ dbgmsg(">InitSystem");
 		exit(1);
 	}
 	if		(  ThisBD->cDB  >  0  ) {
-		InitDB_Process();
+		InitDB_Process(NULL);
 		ReadyHandlerDB(Bind->handler);
 	}
 dbgmsg("<InitSystem");

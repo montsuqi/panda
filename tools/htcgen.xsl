@@ -128,6 +128,9 @@ td {
       <xsl:when test="class='GtkCList'">
         <xsl:call-template name="GtkCList"/>
       </xsl:when>
+      <xsl:when test="class='GtkPandaCList'">
+        <xsl:call-template name="GtkCList"/>
+      </xsl:when>
       <xsl:when test="class='GtkOptionMenu'">
         <xsl:call-template name="GtkOptionMenu"/>
       </xsl:when>
@@ -506,7 +509,9 @@ td {
       <xsl:choose>
         <xsl:when test="./selection_mode = 'GTK_SELECTION_SINGLE'"/>
         <xsl:otherwise>
-          <xsl:attribute name="multiple"/>
+          <xsl:attribute name="multiple">
+            <xsl:text>t</xsl:text>
+          </xsl:attribute>
         </xsl:otherwise>
       </xsl:choose>
       <option>
@@ -583,7 +588,9 @@ td {
       <xsl:choose>
         <xsl:when test="./selection_mode = 'GTK_SELECTION_SINGLE'"/>
         <xsl:otherwise>
-          <xsl:attribute name="multiple"/>
+          <xsl:attribute name="multiple">
+            <xsl:text>t</xsl:text>
+          </xsl:attribute>
         </xsl:otherwise>
       </xsl:choose>
       <option>

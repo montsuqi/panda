@@ -230,10 +230,11 @@ _ReadyOnlineDB(
 }
 
 extern	void
-ReadyOnlineDB(void)
+ReadyOnlineDB(
+	NETFILE	*fp)
 {
 ENTER_FUNC;
-	InitDB_Process();
+	InitDB_Process(fp);
 	OpenDB(NULL);
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyOnlineDB,NULL);
 LEAVE_FUNC;

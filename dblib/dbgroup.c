@@ -103,6 +103,53 @@ dbgmsg(">InitDBG");
 dbgmsg("<InitDBG");
 }
 
+static	char	*
+TempName(
+	char	*buff,
+	size_t	size)
+{
+	int		fd;
+	char	*ret;
+
+	if		(  ( fd = mkstemp(buff) )  >  0  ) {
+		ret = buff;
+		close(fd);
+	} else {
+		ret = NULL;
+	}
+	return	(ret);
+}
+
+extern	char	*
+FindBlobPool(
+	DBG_Struct	*dbg,
+	ValueStruct	*value)
+{
+	char	*name
+		,	*fname;
+	char	buff[SIZE_NAME+1];
+
+	if		(  ( name = g_hash_table_lookup(dbg->loPool,ValueToString(value,NULL)) )
+			   ==  NULL  ) {
+		name = StrDup(ValueToString(value,NULL));
+		if		(  RequestExportBLOB(fpBlob,name)  ) {
+			fname = StrDup(name);
+			g_hash_table_insert(dbg->loPool,name,fname);
+		} else {
+			strcpy(buff,"/tmp/XXXXXX");
+			fname = StrDup(TempName(buff,SIZE_NAME+1));
+			if		(  RequestImportBLOB(fpBlob,ValueObject(value),fname)  ) {
+				g_hash_table_insert(dbg->loPool,name,fname);
+			} else {
+				xfree(name);
+				xfree(fname);
+				fname = NULL;
+			}
+		}
+	}
+	return	(fname);
+}
+
 static	void
 SetUpDBG(void)
 {
@@ -147,12 +194,14 @@ dbgmsg("<SetUpDBG");
 }
 
 extern	void
-InitDB_Process(void)
+InitDB_Process(
+	NETFILE	*fp)
 {
-dbgmsg(">InitDB_Process");
+ENTER_FUNC;
+	fpBlob = fp;
 	InitDBG();
 	SetUpDBG();
-dbgmsg("<InitDB_Process");
+LEAVE_FUNC;
 }
 
 typedef	void	(*DB_FUNC2)(DBG_Struct *, DBCOMM_CTRL *);
@@ -261,16 +310,50 @@ extern	void
 TransactionStart(
 	DBG_Struct *dbg)
 {
+	int		i;
+
+ENTER_FUNC;
 	NewPool("Transaction");
+	if		(  dbg  ==  NULL  ) {
+		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+			ThisEnv->DBG[i]->loPool = NewNameHash();
+		}
+	}
 	ExecDBG_Operation(dbg,"DBSTART");
+LEAVE_FUNC;
+}
+
+static	void
+_ReleaseBLOB(
+	char		*name,
+	char		*fname,
+	void		*dummy)
+{
+	unlink(fname);
+	xfree(fname);
+	xfree(name);
 }
 
 extern	void
 TransactionEnd(
 	DBG_Struct *dbg)
 {
+	int		i;
+
+ENTER_FUNC;
 	ExecDBG_Operation(dbg,"DBCOMMIT");
+	if		(  dbg  ==  NULL  ) {
+		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+			dbg = ThisEnv->DBG[i];
+			if		(  dbg->loPool  !=  NULL  ) {
+				g_hash_table_foreach(dbg->loPool,(GHFunc)_ReleaseBLOB,NULL);
+				g_hash_table_destroy(dbg->loPool);
+				dbg->loPool = NULL;
+			}
+		}
+	}
 	ReleasePoolByName("Transaction");
+LEAVE_FUNC;
 }
 
 extern	void

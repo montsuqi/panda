@@ -313,6 +313,7 @@ ValueToSQL(
 	,		*p
 	,		*s;
 	Oid		id;
+	char	*name;
 
 	if		(  IS_VALUE_NIL(val)  ) {
 		LBS_EmitString(lbs,"null");
@@ -365,6 +366,11 @@ ValueToSQL(
 		break;
 	  case	GL_TYPE_OBJECT:
 		if		(  ValueObjectSource(val)  ==  0  ) {
+			if		(  ( name = FindBlobPool(dbg,val) )  !=  NULL  ) {
+				sprintf(buff,"'%s'",name);
+			} else {
+				buff[0] = 0;
+			}
 		} else {
 			id = ValueOid(ValueObject(val));
 			sprintf(buff,"%u",id);
@@ -1187,6 +1193,7 @@ dbgmsg(">_DBOPEN");
 	user =  ( DB_User != NULL ) ? DB_User : dbg->user;
 	dbname = ( DB_Name != NULL ) ? DB_Name : dbg->dbname;
 	pass = ( DB_Pass != NULL ) ? DB_Pass : dbg->pass;
+
 	conn = PQsetdbLogin(host,port,NULL,NULL,dbname,user,pass);
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
 		fprintf(stderr,"Connection to database \"%s\" failed.\n",dbname);
@@ -1196,6 +1203,7 @@ dbgmsg(">_DBOPEN");
 	OpenDB_RedirectPort(dbg);
 	dbg->conn = (void *)conn;
 	dbg->fConnect = TRUE;
+	dbg->loPool = NULL;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}

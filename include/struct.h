@@ -87,12 +87,14 @@ typedef	struct {
 
 typedef	struct _DBG_Struct	{
 	int			id;
-	char		*name;					/*	group name			*/
-	char		*type;					/*	DBMS type name		*/
+	char		*name;					/*	group name				*/
+	char		*type;					/*	DBMS type name			*/
 	struct	_DB_Func		*func;
 	GHashTable	*dbt;
-	int			priority;				/*	commit priority		*/
-	char		*coding;				/*	DB backend coding	*/
+	int			priority;				/*	commit priority			*/
+	char		*coding;				/*	DB backend coding		*/
+	/*	BLOB		*/
+	GHashTable	*loPool;				/*	BLOB cache file pool	*/
 	/*	DB depend	*/
 	Port		*port;
 	char		*dbname;

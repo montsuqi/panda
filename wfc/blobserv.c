@@ -48,7 +48,7 @@ copies.
 extern	void
 PassiveBLOB(
 	NETFILE		*fp,
-	BLOB_Space	*Blob)
+	BLOB_Space	*blob)
 {
 	MonObjectType	obj;
 	int				mode;
@@ -59,7 +59,7 @@ PassiveBLOB(
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_CREATE:
 		mode = RecvInt(fp);
-		if		(  NewBLOB(Blob,&obj,mode)  ) {
+		if		(  NewBLOB(blob,&obj,mode)  ) {
 			SendPacketClass(fp,BLOB_OK);
 			SendObject(fp,&obj);
 		} else {
@@ -69,7 +69,7 @@ PassiveBLOB(
 	  case	BLOB_OPEN:
 		mode = RecvInt(fp);
 		RecvObject(fp,&obj);
-		if		(  OpenBLOB(Blob,&obj,mode)  >=  0  ) {
+		if		(  OpenBLOB(blob,&obj,mode)  >=  0  ) {
 			SendPacketClass(fp,BLOB_OK);
 		} else {
 			SendPacketClass(fp,BLOB_NOT);
@@ -80,7 +80,7 @@ PassiveBLOB(
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
 			buff = xmalloc(size);
 			Recv(fp,buff,size);
-			size = WriteBLOB(Blob,&obj,buff,size);
+			size = WriteBLOB(blob,&obj,buff,size);
 			xfree(buff);
 		}
 		SendLength(fp,size);
@@ -89,7 +89,7 @@ PassiveBLOB(
 		RecvObject(fp,&obj);
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
 			buff = xmalloc(size);
-			size = ReadBLOB(Blob,&obj,buff,size);
+			size = ReadBLOB(blob,&obj,buff,size);
 			Send(fp,buff,size);
 			xfree(buff);
 		}
@@ -97,24 +97,24 @@ PassiveBLOB(
 		break;
 	  case	BLOB_EXPORT:
 		RecvObject(fp,&obj);
-		if		(  ( ssize = OpenBLOB(Blob,&obj,BLOB_OPEN_READ) )  >=  0  ) {
+		if		(  ( ssize = OpenBLOB(blob,&obj,BLOB_OPEN_READ) )  >=  0  ) {
 			SendPacketClass(fp,BLOB_OK);
 			SendLength(fp,ssize);
 			buff = xmalloc((  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize);
 			while	(  ssize  >  0  ) {
 				size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
-				ReadBLOB(Blob,&obj,buff,size);
+				ReadBLOB(blob,&obj,buff,size);
 				Send(fp,buff,size);
 				ssize -= size;
 			}
-			CloseBLOB(Blob,&obj);
+			CloseBLOB(blob,&obj);
 			xfree(buff);
 		} else {
 			SendPacketClass(fp,BLOB_NOT);
 		}
 		break;
 	  case	BLOB_IMPORT:
-		if		(  NewBLOB(Blob,&obj,BLOB_OPEN_WRITE)  ) {
+		if		(  NewBLOB(blob,&obj,BLOB_OPEN_WRITE)  ) {
 			SendPacketClass(fp,BLOB_OK);
 			SendObject(fp,&obj);
 			ssize = RecvLength(fp);
@@ -122,10 +122,10 @@ PassiveBLOB(
 			while	(  ssize  >  0  ) {
 				size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
 				Recv(fp,buff,size);
-				WriteBLOB(Blob,&obj,buff,size);
+				WriteBLOB(blob,&obj,buff,size);
 				ssize -= size;
 			}
-			CloseBLOB(Blob,&obj);
+			CloseBLOB(blob,&obj);
 			xfree(buff);
 		} else {
 			SendPacketClass(fp,BLOB_NOT);
@@ -133,7 +133,7 @@ PassiveBLOB(
 		break;
 	  case	BLOB_CLOSE:
 		RecvObject(fp,&obj);
-		if		(  CloseBLOB(Blob,&obj)  ) {
+		if		(  CloseBLOB(blob,&obj)  ) {
 			SendPacketClass(fp,BLOB_OK);
 		} else {
 			SendPacketClass(fp,BLOB_NOT);

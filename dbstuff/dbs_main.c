@@ -83,7 +83,7 @@ dbgmsg(">InitSystem");
 	CurrentProcess = NULL;
 
 	if		(  ThisDBD->cDB  >  0  ) {
-		InitDB_Process();
+		InitDB_Process(NULL);
 	}
 dbgmsg("<InitSystem");
 }

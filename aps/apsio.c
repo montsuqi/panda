@@ -202,9 +202,6 @@ dbgmsg("<SaveCache");
 }
 
 
-/*
- *	for APS
- */
 extern	Bool
 GetWFC(
 	NETFILE	*fp,
@@ -219,7 +216,7 @@ GetWFC(
 	byte		flag;
 	ValueStruct	*e;
 
-dbgmsg(">GetWFC");
+ENTER_FUNC;
 	fEnd = FALSE; 
 	fSuc = FALSE;
 	flag = APS_EVENTDATA | APS_MCPDATA | APS_SCRDATA;
@@ -322,7 +319,7 @@ dbgmsg(">GetWFC");
 	dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
 	dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
   badio2:
-dbgmsg("<GetWFC");
+LEAVE_FUNC;
 	return	(fSuc); 
 }
 
