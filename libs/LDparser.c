@@ -152,9 +152,10 @@ dbgmsg(">ParWindow");
 				ld->window[ld->cWindow] = bind;
 				ld->cWindow ++;
 				if		(  g_hash_table_lookup(LD_Table,wname)  ==  NULL  ) {
-					g_hash_table_insert(LD_Table,ld->name,ld);
+					g_hash_table_insert(LD_Table,strdup(wname),ld);
 				} else {
-					Error("same window name appier");
+					MessagePrintf("window is already registered.: %s", wname);
+					Error("same window name appear");
 				}
 			} else {
 				Error("record name not found");

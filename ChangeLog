@@ -1,3 +1,8 @@
+2004-05-18  Sho Hashimoto  <sho-h@netlab.jp>
+
+	* libs/LDparser.c (ParWindow): LD_TableにWindow名ではなくLD名を登
+	録していたバグを修正。
+
 2004-05-18  Kouji SHIMIZU  <shimizu@netlab.jp>
 
 	GtkLabelとGtkButtonのラベルに"X"が含まれていれば
