@@ -378,6 +378,9 @@ DB_Parse(
 
 ENTER_FUNC;
 	ret = DD_Parse();
+	if		(  ret  ==  NULL  ) {
+		exit(1);
+    }
 	if		(  !stricmp(strrchr(name,'.'),".db")  ) {
 		ret->type = RECORD_DB;
 		ret->opt.db = InitDB_Struct();

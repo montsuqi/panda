@@ -1,5 +1,8 @@
 2004-05-21  Kouji SHIMIZU  <shimizu@netlab.jp>
 
+	* libs/DBparser.c (DB_Parse): データベース定義体の文法エラー時に
+	SEGVで落ちないように修正
+
 	* libs/debug.h (Error, Warning, Message): 書式指定できるように修正
 	(ErrorPrintf): Errorで実現できるようにしたので削除。本マクロを使用
 	しているところはErrorに変更。
