@@ -20,9 +20,9 @@ copies.
 */
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -150,9 +150,6 @@ OpenCOBOL_UnPackValue(
 			p += value->body.CharData.len;
 			break;
 		  case	GL_TYPE_CHAR:
-			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
 		  case	GL_TYPE_TEXT:
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:
@@ -206,9 +203,6 @@ OpenCOBOL_PackValue(
 			p += value->body.CharData.len;
 			break;
 		  case	GL_TYPE_CHAR:
-			memcpy(p,value->body.CharData.sval,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
 		  case	GL_TYPE_TEXT:
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:
@@ -308,7 +302,6 @@ dbgmsg(">ReadyDC");
 	} else {
 		path = LibPath;
 	}
-
 	cob_init(0,NULL);
 	cob_set_library_path(path);
 

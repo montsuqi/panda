@@ -20,9 +20,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	TRACE
 #define	DEBUG
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -99,6 +99,7 @@ RecvScreenData(
 	WindowData	*win;
 	ValueStruct	*value;
 
+dbgmsg(">RecvScreenData");
 	do {
 		RecvStringDelim(fpComm,SIZE_BUFF,buff);
 		if		(	(  *buff                     !=  0     )
@@ -108,6 +109,8 @@ RecvScreenData(
 			p ++;
 			while	(  isspace(*p)  )	p ++;
 			DecodeString(str,p);
+printf("wname = [%s]\n",wname);
+printf("vname = [%s]\n",vname);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->Value,vname);
 				value->fUpdate = TRUE;
@@ -116,6 +119,7 @@ RecvScreenData(
 		} else
 			break;
 	}	while	(TRUE);
+dbgmsg("<RecvScreenData");
 }
 
 static	void

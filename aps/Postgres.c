@@ -59,8 +59,7 @@ static	Bool	fInArray;
 
 static	char	*
 ValueToSQL(
-	ValueStruct	*val,
-	Bool		fVchar)
+	ValueStruct	*val)
 {
 	static	char	buff[SIZE_BUFF];
 	char	str[SIZE_BUFF+1];
@@ -74,9 +73,6 @@ ValueToSQL(
 	  case	GL_TYPE_TEXT:
 		p = ValueString(val);
 		strcpy(str,p);
-		if		(  fVchar  ) {
-			StringCobol2C(str,strlen(p)+1);
-		}
 		if		(  fInArray  ) {
 			del = '"';
 		} else {
@@ -124,7 +120,7 @@ dbgmsg(">KeyValue");
 		pk ++;
 	}
 dbgmsg("<KeyValue");
-	return	(ValueToSQL(val,FALSE)); 
+	return	(ValueToSQL(val)); 
 }
 
 static	char	*
@@ -361,7 +357,7 @@ UpdateValue(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_TEXT:
-		p += sprintf(p,"%s%s = %s",ItemName(),PutDim(),ValueToSQL(val,FALSE));
+		p += sprintf(p,"%s%s = %s",ItemName(),PutDim(),ValueToSQL(val));
 		break;
 	  case	GL_TYPE_ARRAY:
 		fComm = FALSE;
@@ -449,8 +445,7 @@ InsertNames(
 static	char	*
 InsertValues(
 	char		*p,
-	ValueStruct	*val,
-	Bool		fVchar)
+	ValueStruct	*val)
 {
 	int		i;
 	ValueStruct	*tmp;
@@ -467,7 +462,7 @@ InsertValues(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_TEXT:
-		p += sprintf(p,"%s",ValueToSQL(val,fVchar));
+		p += sprintf(p,"%s",ValueToSQL(val));
 		break;
 	  case	GL_TYPE_ARRAY:
 		p += sprintf(p,"'{");
@@ -482,7 +477,7 @@ InsertValues(
 				fComm = TRUE;
 				Dim[alevel] = i;
 				alevel ++;
-				p = InsertValues(p,tmp,fVchar);
+				p = InsertValues(p,tmp);
 				alevel --;
 			}
 		}
@@ -500,7 +495,7 @@ InsertValues(
 				}
 				fComm = TRUE;
 				rname[level-1] = val->body.RecordData.names[i];
-				p = InsertValues(p,tmp,fVchar);
+				p = InsertValues(p,tmp);
 			}
 		}
 		level --;
@@ -523,7 +518,8 @@ _PQclear(
 static	PGresult	*
 _PQexec(
 	DBG_Struct	*dbg,
-	char	*sql)
+	char	*sql,
+	Bool	fRed)
 {
 	PGresult	*res;
 
@@ -532,7 +528,9 @@ dbgmsg(">_PQexec");
 	printf("%s;\n",sql);fflush(stdout);
 #endif
 	res = PQexec((PGconn *)dbg->conn,sql);
-	PutDB_Redirect(dbg,sql);
+	if		(  fRed  ) {
+		PutDB_Redirect(dbg,sql);
+	}
 dbgmsg("<_PQexec");
 	return	(res);
 }
@@ -595,7 +593,6 @@ ExecPGSQL(
 	,		ntuples;
 	ExecStatusType	status;
 	Bool	fIntoAster;
-	Bool	fVchar;
 	DBG_Struct	*dbg;
 
 dbgmsg(">ExecPGSQL");
@@ -609,7 +606,6 @@ dbgmsg(">ExecPGSQL");
 	items = 0;
 	tuple = NULL;
 	fIntoAster = FALSE;
-	fVchar = FALSE;
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
 		if		(  c  < 0x7F  ) {
 			p += sprintf(p,"%c",c);
@@ -627,25 +623,21 @@ dbgmsg(">ExecPGSQL");
 				} else {
 					fIntoAster = TRUE;
 				}
-				fVchar = FALSE;
 				break;
 			  case	SQL_OP_STO:
 				if		(  !fIntoAster  ) {
 					tuple[items] = (ValueStruct *)LBS_FetchPointer(src);
 					items ++;
 				}
-				fVchar = FALSE;
 				break;
 			  case	SQL_OP_REF:
 				val = (ValueStruct *)LBS_FetchPointer(src);
-				p = InsertValues(p,val,fVchar);
+				p = InsertValues(p,val);
 				break;
 			  case	SQL_OP_VCHAR:
-				fVchar = TRUE;
 				break;
 			  case	SQL_OP_EOL:
-				res = _PQexec(dbg,sql);
-				fVchar = FALSE;
+				res = _PQexec(dbg,sql,TRUE);
 				if		(	(  res ==  NULL  )
 						||	(  ( status = PQresultStatus(res) )
 							           ==  PGRES_BAD_RESPONSE    )
@@ -723,7 +715,7 @@ _EXEC(
 	ExecStatusType	status;
 	int			rc;
 
-	res = _PQexec(dbg,sql);
+	res = _PQexec(dbg,sql,TRUE);
 	if		(	(  res ==  NULL  )
 			||	(  ( status = PQresultStatus(res) )
 				   ==  PGRES_BAD_RESPONSE    )
@@ -828,7 +820,8 @@ _DBSTART(
 	int			rc;
 
 dbgmsg(">_DBSTART");
-	res = _PQexec(dbg,"begin");
+	BeginDB_Redirect(dbg); 
+	res = _PQexec(dbg,"begin",FALSE);
 	if		(	(  res ==  NULL  )
 			||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 		dbgmsg("NG");
@@ -853,7 +846,7 @@ _DBCOMMIT(
 	int			rc;
 
 dbgmsg(">_DBCOMMIT");
-	res = _PQexec(dbg,"commit work");
+	res = _PQexec(dbg,"commit work",FALSE);
 	if		(	(  res ==  NULL  )
 			||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 		dbgmsg("NG");
@@ -863,6 +856,7 @@ dbgmsg(">_DBCOMMIT");
 		rc = MCP_OK;
 	}
 	_PQclear(res);
+	CommitDB_Redirect(dbg);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
@@ -918,7 +912,7 @@ dbgmsg(">_DBFETCH");
 		} else {
 			p = sql;
 			p += sprintf(p,"fetch from %s_%s_csr",rec->name,path->name);
-			res = _PQexec(dbg,sql);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_TUPLES_OK  ) ) {
 				dbgmsg("NG");
@@ -995,7 +989,7 @@ dbgmsg(">_DBUPDATE");
 					p += sprintf(p,"and\t");
 				}
 			}
-			res = _PQexec(dbg,sql);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 						||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");
@@ -1059,7 +1053,7 @@ dbgmsg(">_DBDELETE");
 					p += sprintf(p,"and\t");
 				}
 			}
-			res = _PQexec(dbg,sql);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");
@@ -1107,9 +1101,9 @@ dbgmsg(">_DBINSERT");
 			p += sprintf(p,") ");
 			p += sprintf(p,"VALUES\t(");
 			fInArray = FALSE;
-			p = InsertValues(p,rec->rec,FALSE);
+			p = InsertValues(p,rec->rec);
 			p += sprintf(p,") ");
-			res = _PQexec(dbg,sql);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");

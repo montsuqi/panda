@@ -61,6 +61,7 @@ class	DB_Server
 	  @s.flush;
 	  while  is = @s.gets
 		is.chomp!
+printf("is = [%s]\n",is);
 		break if  is  ==  "";
 		dat = is.split(/: /);
 		rec[dat[0]] = decode(dat[1]);

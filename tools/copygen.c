@@ -569,7 +569,7 @@ dbgmsg(">MakeDBREC");
 	} else {
 		Error("LD or BD not specified");
 	}
-	msize = 0;
+	msize = 64;
 	for	( i = 1 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;

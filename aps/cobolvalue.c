@@ -41,22 +41,6 @@ copies.
 
 
 extern	void
-DumpCobol(
-	char	*name,
-	char	*p,
-	size_t	size)
-{
-	int		i;
-	if		(  name  !=  NULL  ) {
-		printf("%s:[",name);
-	}
-	for	( i = 0  ; i  < size ; i ++, p ++ ) {
-		printf("%c",*p);
-	}
-	printf("]\n");
-}
-
-extern	void
 StringCobol2C(
 	char	*str,
 	size_t	size)

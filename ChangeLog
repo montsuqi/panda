@@ -1,5 +1,7 @@
 2002-09-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* pgserver/monlib.rb : ポート番号変更
+
 	* インストールディレクトリの変更(ayの修正の吸収)
 
 	* Ver 1.0.8 release
