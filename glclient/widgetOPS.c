@@ -250,6 +250,55 @@ dbgmsg("<SendPS");
 
 #ifdef	USE_PANDA
 static	Bool
+RecvTimer(
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+	char		name[SIZE_BUFF];
+	int		duration;
+	int		nitem
+	,		i;
+
+dbgmsg(">RecvTimer");
+	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			RecvString(fp,name);
+			if		(  !stricmp(name,"duration")  ) {
+				RecvIntegerData(fp,&duration);
+				gtk_panda_timer_set(GTK_PANDA_TIMER(widget),
+						    duration);
+			}
+		}
+	}
+dbgmsg("<RecvTimer");
+	return	(TRUE);
+}
+
+
+static	Bool
+SendTimer(
+	char	*name,
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+	ValueAttribute	*v;
+	char	iname[SIZE_BUFF];
+	Fixed	*xval;
+
+dbgmsg(">SendTimer");
+	SendPacketClass(fp,GL_ScreenData);
+	v = GetValue(name);
+	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
+	SendString(fp,iname);
+	SendIntegerData(fp,v->type,GTK_PANDA_TIMER(widget)->duration / 1000);
+dbgmsg("<SendTimer");
+	return	(TRUE);
+}
+#endif
+
+#ifdef	USE_PANDA
+static	Bool
 RecvNumberEntry(
 	GtkWidget	*widget,
 	NETFILE	*fp)
@@ -395,7 +444,17 @@ dbgmsg(">RecvText");
 				RecvStringData(fp,buff);
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
-				RecvStringData(fp,buff);
+				switch	(RecvDataType(fp)) {
+				  case	GL_TYPE_INT:
+					sprintf(buff,"%d",RecvInt(fp));
+					break;
+				  case	GL_TYPE_CHAR:
+				  case	GL_TYPE_VARCHAR:
+				  case	GL_TYPE_DBCODE:
+				  case	GL_TYPE_TEXT:
+					RecvString(fp,buff);
+					break;
+				}
 				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_text_freeze(GTK_TEXT(widget));
 				gtk_text_set_point(GTK_TEXT(widget), 0);
@@ -640,9 +699,12 @@ SendPandaCList(
 	int				i;
 	char			iname[SIZE_BUFF];
 	ValueAttribute	*v;
+	GtkVisibility	visi;
+	gboolean	fVisibleRow;
 
-dbgmsg(">SendCList");
+dbgmsg(">SendPandaCList");
 	v = GetValue(name);
+	fVisibleRow = FALSE;
 	for	( children = GTK_PANDA_CLIST(widget)->row_list , i = 0 ;
 		  children  !=  NULL ; children = children->next , i ++ ) {
 		if		(  ( clist_row = GTK_PANDA_CLIST_ROW(children) )  !=  NULL  ) {
@@ -657,6 +719,16 @@ dbgmsg(">SendCList");
 				SendBool(fp,FALSE);
 			}
 		}
+		if	( !fVisibleRow ) {
+			if	( visi = gtkpanda_clist_row_is_visible(GTK_PANDA_CLIST(widget),i) == GTK_VISIBILITY_FULL ) {
+				sprintf(iname,"%s.row",v->ValueName);
+				SendPacketClass(fp,GL_ScreenData);
+				SendString(fp,iname);
+				SendDataType(fp,GL_TYPE_INT);
+				SendInt(fp,i + 1);
+				fVisibleRow = TRUE;
+			}
+		} 
 	}
 dbgmsg("<SendPandaCList");
 	return	(TRUE);
@@ -677,6 +749,8 @@ RecvPandaCList(
 	,		num
 	,		rnum
 	,		from
+	,		row
+	,		rowattr
 	,		i
 	,		j
 	,		k;
@@ -684,6 +758,7 @@ RecvPandaCList(
 	char	**rdata;
 	Bool	fActive;
 	int		state;
+	gfloat		rowattrw;
 
 dbgmsg(">RecvPandaCList");
 	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
@@ -694,6 +769,8 @@ dbgmsg(">RecvPandaCList");
 	count = -1;
 	rdata = NULL;
 	from = 0;
+	row = 0;
+	rowattrw = 0.0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
 		RecvString(fp,name);
 		sprintf(longname,".%s",name);
@@ -716,7 +793,20 @@ dbgmsg(">RecvPandaCList");
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"row")  ) {
-			/*	NOP	*/
+			RecvIntegerData(fp,&row);
+		} else
+		if		(  !stricmp(name,"rowattr")  ) {
+			RecvIntegerData(fp,&rowattr);
+			switch	(rowattr) {
+			  case	1: /* DOWN */
+				rowattrw = 1.0;
+				break;
+			  case	2: /* MIDDLE */
+				rowattrw = 0.5;
+				break;
+			  default: /* [0] TOP */
+				break;
+			}
 		} else
 		if		(  !stricmp(name,"column")  ) {
 			/*	NOP	*/
@@ -750,6 +840,7 @@ dbgmsg(">RecvPandaCList");
 			}
 			xfree(rdata);
 			gtkpanda_clist_thaw(GTK_PANDA_CLIST(widget));
+			gtkpanda_clist_moveto(GTK_PANDA_CLIST(widget), row - 1, 0, rowattrw, 0.0);
 		} else {
 			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 			RegistValue(widget,name,OPT_TYPE_INT,(void*)from);
@@ -771,6 +862,9 @@ dbgmsg(">RecvPandaCList");
 			}
 		}
 	}
+	fInRecv = FALSE;
+	UpdateWidget((GtkWidget *)widget,NULL);
+	fInRecv = TRUE;
 dbgmsg("<RecvPandaCList");
 	return	(TRUE);
 }
@@ -1272,6 +1366,7 @@ InitWidgetOperations(void)
 	AddClass(GTK_PANDA_TYPE_ENTRY,RecvEntry,SendEntry);
 	AddClass(GTK_PANDA_TYPE_TEXT,RecvText,SendText);
 	AddClass(GTK_PANDA_TYPE_PS,RecvPS,SendPS);
+	AddClass(GTK_PANDA_TYPE_TIMER,RecvTimer,SendTimer);
 #endif
 	AddClass(GTK_TYPE_TEXT,RecvText,SendText);
 	AddClass(GTK_TYPE_LABEL,RecvLabel,NULL);
