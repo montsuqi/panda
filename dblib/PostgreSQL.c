@@ -551,7 +551,6 @@ GetTable(
 	ValueStruct	*tmp;
 	int		fnum;
 	Numeric	nv;
-	Fixed	fix;
 	char	*str;
 	Oid		id;
 
@@ -618,13 +617,8 @@ dbgmsg(">GetTable");
 		} else {
 			nv = NumericInput((char *)PQgetvalue(res,0,fnum),
 						  ValueFixedLength(val),ValueFixedSlen(val));
-#if	1
 			str = NumericOutput(nv);
-			SetValueString(val,str,dbg->coding);
-#else
-			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
-			strcpy(ValueFixedBody(val),str);
-#endif
+			SetValueString(val,str,NULL);
 			xfree(str);
 			NumericFree(nv);
 		}
@@ -701,7 +695,11 @@ UpdateValue(
 	if		(  IS_VALUE_NIL(val)  ) {
         LBS_EmitString(lbs,ItemName());
         LBS_EmitString(lbs,PutDim());
-        LBS_EmitString(lbs," is null");
+#if	1
+        LBS_EmitString(lbs," = null ");
+#else
+        LBS_EmitString(lbs," is null ");
+#endif
 	} else
 	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
@@ -718,6 +716,7 @@ UpdateValue(
         LBS_EmitString(lbs,PutDim());
         LBS_EmitString(lbs," = ");
         ValueToSQL(dbg,lbs,val);
+        LBS_EmitString(lbs," ");
 		break;
 	  case	GL_TYPE_ARRAY:
 		fComm = FALSE;
