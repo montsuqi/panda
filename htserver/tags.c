@@ -556,6 +556,7 @@ _Text(
 		,	*type;
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<textarea");
+#ifdef	USE_MCE
 	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
 			||	(  !stricmp(type,"text")                      ) ) {
 	} else {
@@ -566,6 +567,7 @@ ENTER_FUNC;
 			SetFilter(GetArg(tag,"name",0),StrDup,NULL);
 		}
 	}
+#endif
 
 	LBS_EmitString(htc->code," name=\"");
 	EmitCode(htc,OPC_NAME);
@@ -1821,27 +1823,28 @@ JslibInit(void)
 {
 ENTER_FUNC;
 	Jslib = NewNameiHash();
-
+#ifdef	USE_MCE
 	NewJs("html_edit","./jscripts/tiny_mce/tiny_mce.js",TRUE);
-
+	NewJs("html_setting",
+		  "tinyMCE.init({\n"
+		  "  theme    : \"advanced\",\n"
+		  "  language : \"jp\",\n"
+		  //"  invalid_elements : \"br\",\n"
+		  "  mode     : \"specific_textareas\"\n"
+		  "});\n"
+		  ,FALSE);
+#endif
 	NewJs("send_event",
 		  "function send_event(no,event){\n"
+#ifdef	USE_MCE
 		  "  if (typeof(tinyMCE) != \"undefined\") {\n"
 		  "    tinyMCE.triggerSave();\n"
 		  "  }\n"
+#endif
 		  "  document.forms[no].elements[0].name='_event';\n"
 		  "  document.forms[no].elements[0].value=event;\n"
 		  "  document.forms[no].submit();\n"
 		  "}\n",FALSE);
-
-	NewJs("html_setting",
-		  "tinyMCE.init({\n"
-		  "  theme : \"advanced\",\n"
-		  "  language : \"jp\",\n"
-		  "  mode     : \"specific_textareas\",\n"
-		  "  elements : \"html,xml\"\n"
-		  "});\n"
-		  ,FALSE);
 		  
 LEAVE_FUNC;
 }

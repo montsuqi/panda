@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = mon htctest
+bin_PROGRAMS = mon htctest mce
 sbin_PROGRAMS = htserver
 
 htserver_LDFLAGS	=	-export-dynamic
@@ -75,3 +75,23 @@ htctest_DEPENDENCIES	=				\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la
 
+mce_LDADD 		=						\
+	-lm									\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)						\
+	$(XML2_LIBS)						\
+	$(XSLT_LIBS)						\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
+mcd_INCLUDES =					\
+	-I$(top_srcdir)				\
+	-I$(top_srcdir)/include		\
+	-I$(top_srcdir)/libs		\
+	$(XML2_CFLAGS)				\
+	$(XSLT_CFLAGS)				\
+	$(MONDAI_CFLAGS)			\
+	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
+
+mce_SOURCES	=	\
+	mce.c
