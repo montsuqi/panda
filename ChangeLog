@@ -1,3 +1,8 @@
+2004-07-12  Kouji TAKAO  <kouji@netlab.jp>
+
+	* glclient/bootdialog.c (boot_dialog_run): gtk_grab_*を
+	gtk_window_set_modalに変更
+
 2004-07-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/Makefile.am : blob通信関数を整理

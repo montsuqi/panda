@@ -436,9 +436,10 @@ boot_dialog_run ()
 
   self = boot_dialog_new ();
   gtk_widget_show_all (self->dialog);
-  gtk_grab_add (self->dialog);
+  gtk_widget_grab_focus (self->dialog);
+  gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
   gtk_main ();
-  gtk_grab_remove (self->dialog);
+  gtk_window_set_modal (GTK_WINDOW (self->dialog), FALSE);
 
   res = self->is_connect;
   if (res)
