@@ -301,13 +301,13 @@ GL_RecvFixed(
 {
 	Fixed	*xval;
 
-dbgmsg(">RecvFixed");
+ENTER_FUNC;
 	xval = New(Fixed);
 	xval->flen = GL_RecvLength(fp,fNetwork);
 	xval->slen = GL_RecvLength(fp,fNetwork);
 	xval->sval = (char *)xmalloc(xval->flen+1);
 	GL_RecvString(fp,xval->sval,fNetwork);
-dbgmsg("<RecvFixed");
+LEAVE_FUNC;
 	return	(xval); 
 }
 

@@ -60,7 +60,6 @@ static	char	*STATUS[4] = {
 	"RSND"
 };
 
-
 static	char	*APS_HandlerLoadPath;
 
 static	GHashTable	*HandlerClassTable;
@@ -75,7 +74,7 @@ EnterHandlerClass(
 	MessageHandlerClass	*(*finit)(void);
 	char			filename[SIZE_BUFF];
 
-dbgmsg(">EnterHandlerClass");
+ENTER_FUNC;
 	if		(  ( klass = g_hash_table_lookup(HandlerClassTable,name) )  ==  NULL  ) {
 		MessagePrintf("%s handlerClass invoke.", name);
 		sprintf(filename,"%s.so",name);
@@ -94,14 +93,14 @@ dbgmsg(">EnterHandlerClass");
 			fprintf(stderr,"[%s] not found.\n",name);
 		}
 	}
-dbgmsg("<EnterHandlerClass");
+LEAVE_FUNC;
 	return	(klass);
 }
 
 static	void
 InitHandler(void)
 {
-dbgmsg(">InitHandler");
+ENTER_FUNC;
 
 	if		(  ( APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH") )
 			   ==  NULL  ) {
@@ -141,7 +140,7 @@ _OnlineInit(
 extern	void
 InitiateHandler(void)
 {
-dbgmsg(">InitiateHandler");
+ENTER_FUNC;
 	InitHandler();
 	dbgprintf("LD = [%s]",ThisLD->name);
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_OnlineInit,NULL);
@@ -155,7 +154,7 @@ dbgmsg(">InitiateHandler");
 	g_hash_table_insert(TypeHash,"FORK",(gpointer)SCREEN_FORK_WINDOW);
 	g_hash_table_insert(TypeHash,"EXIT",(gpointer)SCREEN_END_SESSION);
 	g_hash_table_insert(TypeHash,"BACK",(gpointer)SCREEN_BACK_WINDOW);
-dbgmsg("<InitiateHandler");
+LEAVE_FUNC;
 }
 
 static	void
@@ -247,7 +246,7 @@ CallBefore(
 {
 	ValueStruct	*mcp;
 
-dbgmsg(">CallBefore");
+ENTER_FUNC;
 	mcp = node->mcprec->value; 
 	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),
 		   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
@@ -255,7 +254,7 @@ dbgmsg(">CallBefore");
 	ValueIsNonNil(GetItemLongName(mcp,"dc.status"));
 	node->w.n = 0;
 	CurrentProcess = node; 
-dbgmsg("<CallBefore");
+LEAVE_FUNC;
 }
 
 static	void
@@ -286,7 +285,7 @@ CallAfter(
 	ValueStruct	*mcp_dcwindow;
 	ValueStruct	*mcp;
 
-dbgmsg(">CallAfter");
+ENTER_FUNC;
 	mcp = node->mcprec->value; 
 	mcp_sindex 	= GetItemLongName(mcp,"private.count");
 	mcp_swindow = GetItemLongName(mcp,"private.swindow");
@@ -309,9 +308,12 @@ dbgmsg(">CallAfter");
 			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 1)),
 			   SIZE_NAME);
 		ValueIsNonNil(GetItemLongName(mcp,"dc.window"));
+		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
+			   ValueStringPointer(
+				   GetArrayItem(mcp_swindow,sindex + 1)));
+		ValueIsNonNil(GetItemLongName(mcp,"dc.fromwin"));
 		PutType = SCREEN_CHANGE_WINDOW;
-	}
-
+	} else
 	if		(  strcmp(ValueStringPointer(
 						  GetArrayItem(mcp_swindow,sindex - 1)),
 					  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
@@ -366,7 +368,7 @@ dbgmsg(">CallAfter");
 	}
 	dbgmsg("----------------------------------------");
 #endif
-dbgmsg("<CallAfter");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -377,7 +379,7 @@ ExecuteProcess(
 	MessageHandler	*handler;
 	char		*window;
 
-dbgmsg(">ExecuteProcess");
+ENTER_FUNC;
 	window = ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL);
 	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
 	handler = bind->handler;
@@ -389,7 +391,7 @@ dbgmsg(">ExecuteProcess");
 		}
 		CallAfter(node);
 	}
-dbgmsg("<ExecuteProcess");
+LEAVE_FUNC;
 }
 
 static	void
@@ -527,7 +529,7 @@ StartBatch(
 	BatchBind		*bind;
 	int		rc;
 
-dbgmsg(">StartBatch");
+ENTER_FUNC;
 	if		(  ( bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		fprintf(stderr,"%s application is not in BD.\n",name);
 		exit(1);
@@ -543,7 +545,7 @@ dbgmsg(">StartBatch");
 		rc = -1;
 		fprintf(stderr,"%s is handler not support batch.\n",name);
 	}
-dbgmsg("<StartBatch");
+LEAVE_FUNC;
 	return	(rc);
 }
 

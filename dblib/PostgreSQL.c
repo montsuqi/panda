@@ -551,7 +551,7 @@ GetTable(
 	char	*str;
 	Oid		id;
 
-dbgmsg(">GetTable");
+ENTER_FUNC;
 	if		(  val  ==  NULL  )	return;
 
 	switch	(ValueType(val)) {
@@ -660,7 +660,7 @@ dbgmsg(">GetTable");
 	  default:
 		break;
 	}
-dbgmsg("<GetTable");
+LEAVE_FUNC;
 }
 
 static	char	*
@@ -884,7 +884,7 @@ _PQexec(
 {
 	PGresult	*res;
 
-dbgmsg(">_PQexec");
+ENTER_FUNC;
 #ifdef	TRACE
 	printf("%s;\n",sql);fflush(stdout);
 #endif
@@ -893,7 +893,7 @@ dbgmsg(">_PQexec");
 		PutDB_Redirect(dbg,sql);
 		PutDB_Redirect(dbg,";");
 	}
-dbgmsg("<_PQexec");
+LEAVE_FUNC;
 	return	(res);
 }
 
@@ -910,7 +910,7 @@ GetValue(
 
 	if		(  val  ==  NULL  )	return;
 
-dbgmsg(">GetValue");
+ENTER_FUNC;
 	if		(  PQgetisnull(res,tnum,fnum)  ==  1  ) { 	/*	null	*/
 		ValueIsNil(val);
 	} else {
@@ -953,7 +953,7 @@ dbgmsg(">GetValue");
 			break;
 		}
 	}
-dbgmsg("<GetValue");
+LEAVE_FUNC;
 }
 
 static	void
@@ -977,7 +977,7 @@ ExecPGSQL(
 	ExecStatusType	status;
 	Bool	fIntoAster;
 
-dbgmsg(">ExecPGSQL");
+ENTER_FUNC;
 	dbg =  rec->opt.db->dbg;
 	sql = NewLBS();
 	if	(  src  ==  NULL )	{
@@ -1023,6 +1023,7 @@ dbgmsg(">ExecPGSQL");
                 LBS_EmitEnd(sql);
 				res = _PQexec(dbg,LBS_Body(sql),TRUE);
                 LBS_Clear(sql);
+				status = PGRES_FATAL_ERROR;
 				if		(	(  res ==  NULL  )
 						||	(  ( status = PQresultStatus(res) )
 							           ==  PGRES_BAD_RESPONSE    )
@@ -1096,7 +1097,7 @@ dbgmsg(">ExecPGSQL");
 		xfree(tuple);
 	}
     FreeLBS(sql);
-dbgmsg("<ExecPGSQL");
+LEAVE_FUNC;
 }
 
 static	int
@@ -1157,7 +1158,7 @@ _DBOPEN(
 	,		*pass;
 	PGconn	*conn;
 
-dbgmsg(">_DBOPEN");
+ENTER_FUNC;
 	if		(  DB_Host  !=  NULL  ) {
 		host = DB_Host;
 	} else {
@@ -1188,7 +1189,7 @@ dbgmsg(">_DBOPEN");
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
-dbgmsg("<_DBOPEN");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1196,7 +1197,7 @@ _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBDISCONNECT");
+ENTER_FUNC;
 	if		(  dbg->fConnect  ) { 
 		PQfinish(PGCONN(dbg));
 		CloseDB_RedirectPort(dbg);
@@ -1205,7 +1206,7 @@ dbgmsg(">_DBDISCONNECT");
 			ctrl->rc = MCP_OK;
 		}
 	}
-dbgmsg("<_DBDISCONNECT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1216,7 +1217,7 @@ _DBSTART(
 	PGresult	*res;
 	int			rc;
 
-dbgmsg(">_DBSTART");
+ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
 	res = _PQexec(dbg,"begin",FALSE);
 	if		(	(  res ==  NULL  )
@@ -1231,7 +1232,7 @@ dbgmsg(">_DBSTART");
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
-dbgmsg("<_DBSTART");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1242,7 +1243,7 @@ _DBCOMMIT(
 	PGresult	*res;
 	int			rc;
 
-dbgmsg(">_DBCOMMIT");
+ENTER_FUNC;
 	CheckDB_Redirect(dbg);
 	res = _PQexec(dbg,"commit work",FALSE);
 	if		(	(  res ==  NULL  )
@@ -1258,7 +1259,7 @@ dbgmsg(">_DBCOMMIT");
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
-dbgmsg("<_DBCOMMIT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1272,7 +1273,7 @@ _DBSELECT(
 	PathStruct	*path;
 	LargeByteString	*src;
 
-dbgmsg(">_DBSELECT");
+ENTER_FUNC;
 
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
@@ -1283,7 +1284,7 @@ dbgmsg(">_DBSELECT");
 		src = path->ops[DBOP_SELECT]->proc;
 		ExecPGSQL(dbg,ctrl,rec,src,args);
 	}
-dbgmsg("<_DBSELECT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1301,7 +1302,7 @@ _DBFETCH(
 	int			n;
 	LargeByteString	*src;
 
-dbgmsg(">_DBFETCH");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -1335,7 +1336,7 @@ dbgmsg(">_DBFETCH");
 			_PQclear(res);
 		}
 	}
-dbgmsg("<_DBFETCH");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1353,7 +1354,7 @@ _DBUPDATE(
 	PathStruct	*path;
 	LargeByteString	*src;
 
-dbgmsg(">_DBUPDATE");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -1408,7 +1409,7 @@ dbgmsg(">_DBUPDATE");
             FreeLBS(sql);
 		}
 	}
-dbgmsg("<_DBUPDATE");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1426,7 +1427,7 @@ _DBDELETE(
 	PathStruct	*path;
 	LargeByteString	*src;
 
-dbgmsg(">_DBDELETE");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -1475,7 +1476,7 @@ dbgmsg(">_DBDELETE");
             FreeLBS(sql);
 		}
 	}
-dbgmsg("<_DBDELETE");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1491,7 +1492,7 @@ _DBINSERT(
 	PathStruct	*path;
 	LargeByteString	*src;
 
-dbgmsg(">_DBINSERT");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -1528,7 +1529,7 @@ dbgmsg(">_DBINSERT");
             FreeLBS(sql);
 		}
 	}
-dbgmsg("<_DBINSERT");
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -1545,7 +1546,7 @@ _DBACCESS(
 	int		ix;
 	Bool	rc;
 
-dbgmsg(">_DBACCESS");
+ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",name); 
 #endif
@@ -1570,7 +1571,7 @@ dbgmsg(">_DBACCESS");
 			}
 		}
 	}
-dbgmsg("<_DBACCESS");
+LEAVE_FUNC;
 	return	(rc);
 }
 

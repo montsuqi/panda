@@ -64,7 +64,7 @@ _DBOPEN(
 	int		fh
 		,	rc;
 
-dbgmsg(">_DBOPEN");
+ENTER_FUNC;
 	if		(  fpBlob  ==  NULL  ) {
 		if		(  dbg->port  ==  NULL  ) {
 			dbg->port = ThisEnv->blob->port;
@@ -93,7 +93,7 @@ dbgmsg(">_DBOPEN");
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
-dbgmsg("<_DBOPEN");
+LEAVE_FUNC;
 }
 
 static	void
@@ -101,7 +101,7 @@ _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBDISCONNECT");
+ENTER_FUNC;
 	if		(  dbg->fConnect  ) { 
 		SendPacketClass(fpBlob,APS_END);
 		CloseNet((NETFILE *)dbg->conn);
@@ -111,7 +111,7 @@ dbgmsg(">_DBDISCONNECT");
 			ctrl->rc = MCP_OK;
 		}
 	}
-dbgmsg("<_DBDISCONNECT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -121,14 +121,14 @@ _DBSTART(
 {
 	int			rc;
 
-dbgmsg(">_DBSTART");
+ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
 	dbgmsg("OK");
 	rc = MCP_OK;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
-dbgmsg("<_DBSTART");
+LEAVE_FUNC;
 }
 
 static	void
@@ -138,7 +138,7 @@ _DBCOMMIT(
 {
 	int			rc;
 
-dbgmsg(">_DBCOMMIT");
+ENTER_FUNC;
 	CheckDB_Redirect(dbg);
 	dbgmsg("OK");
 	rc = MCP_OK;
@@ -146,7 +146,7 @@ dbgmsg(">_DBCOMMIT");
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
-dbgmsg("<_DBCOMMIT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -538,9 +538,10 @@ _DBACCESS(
 ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		rc = TRUE;
+		rc = FALSE;
 	} else {
 		ctrl->rc = MCP_OK;
+		rc = TRUE;
 	}
 LEAVE_FUNC;
 	return	(rc);

@@ -363,6 +363,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(data);
 }
+
 static	void
 MessageThread(
 	APS_Start	*aps)

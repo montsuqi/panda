@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -75,7 +75,7 @@ GetArg(
 	TagType	*type;
 	char	*ret;
 
-dbgmsg(">GetArg");
+ENTER_FUNC;
 	if		(  ( type = g_hash_table_lookup(tag->args,name) )  !=  NULL  ) {
 		if		(  type->fPara  ) {
 			if		(  i  <  type->nPara  ) {
@@ -96,7 +96,7 @@ dbgmsg(">GetArg");
 		printf("%s = [%s]\n",name,ret);
 	}
 #endif
-dbgmsg("<GetArg");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -290,7 +290,7 @@ _Entry(
 	,		*maxlength
 	,		*visible;
 
-dbgmsg(">_Entry");
+ENTER_FUNC;
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
         if ((visible = GetArg(tag, "visible", 0)) != NULL &&
             !IsTrue(visible)) {
@@ -335,7 +335,7 @@ dbgmsg(">_Entry");
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">\n");
 	}
-dbgmsg("<_Entry");
+LEAVE_FUNC;
 }
 
 static	void
@@ -394,7 +394,7 @@ _Combo(
 	char	*size;
 	size_t	pos;
 
-dbgmsg(">_Combo");
+ENTER_FUNC;
 	LBS_EmitString(htc->code,"<select name=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
@@ -439,7 +439,7 @@ dbgmsg(">_Combo");
 	LBS_EmitInt(htc->code,pos);
 	LBS_SetPos(htc->code,pos);
 	LBS_EmitString(htc->code,"</select>");
-dbgmsg("<_Combo");
+LEAVE_FUNC;
 }
 
 static	void
@@ -451,7 +451,7 @@ _Form(
 		,	*defaultevent
 		,	*target;
 
-dbgmsg(">_Form");
+ENTER_FUNC;
 	htc->FormNo++;
 	LBS_EmitString(htc->code,"<form action=\"");
     LBS_EmitString(htc->code,ScriptName);
@@ -498,7 +498,7 @@ dbgmsg(">_Form");
     if ((defaultevent = GetArg(tag, "defaultevent", 0)) != NULL) {
         htc->DefaultEvent = StrDup(defaultevent);
 	}
-dbgmsg("<_Form");
+LEAVE_FUNC;
 }
 
 static	void
@@ -509,7 +509,7 @@ _Text(
 	char	*name
 	,		*cols
 	,		*rows;
-dbgmsg(">_Text");
+ENTER_FUNC;
 	LBS_EmitString(htc->code,"<textarea name=\"");
 	EmitCode(htc,OPC_NAME);
 	name = StrDup(GetArg(tag,"name",0));
@@ -534,7 +534,7 @@ dbgmsg(">_Text");
 	LBS_EmitPointer(htc->code,name);
 	EmitCode(htc,OPC_EHSNAME);
 	LBS_EmitString(htc->code,"</textarea>\n");
-dbgmsg("<_Text");
+LEAVE_FUNC;
 }
 
 static	void
@@ -542,10 +542,10 @@ _Head(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-dbgmsg(">_Head");
+ENTER_FUNC;
 	LBS_EmitString(htc->code,
 				   "<head>\n<meta http-equiv=\"Pragma\" content=\"no-cache\">");
-dbgmsg("<_Head");
+LEAVE_FUNC;
 }	
 
 static	void
@@ -553,11 +553,11 @@ _eBody(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-dbgmsg(">_eBody");
+ENTER_FUNC;
 	if		(  !fDump  ) {
 		LBS_EmitString(htc->code,"</body>");
 	}
-dbgmsg("<_eBody");
+LEAVE_FUNC;
 }	
 
 static	void
@@ -565,12 +565,12 @@ _eHtml(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-dbgmsg(">_eHtml");
+ENTER_FUNC;
 	if		(  !fDump  ) {
 		LBS_EmitString(htc->code,"</html>");
 	}
 	LBS_EmitEnd(htc->code);
-dbgmsg("<_eHtml");
+LEAVE_FUNC;
 }
 
 static	void
@@ -582,7 +582,7 @@ _Count(
 	,		*to
 	,		*step;
 
-dbgmsg(">_Count");
+ENTER_FUNC;
 	EmitCode(htc,OPC_VAR);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"var",0)));		/*	3	var		*/
 	if		(  ( from = GetArg(tag,"from",0) )  !=  NULL  ) {
@@ -629,7 +629,7 @@ dbgmsg(">_Count");
 	Push(LBS_GetPos(htc->code));
 	EmitCode(htc,OPC_BREAK);
 	LBS_EmitInt(htc->code,0);
-dbgmsg("<_Count");
+LEAVE_FUNC;
 }
 
 static	void
@@ -638,7 +638,7 @@ _eCount(
 	Tag		*tag)
 {
 	size_t	pos;
-dbgmsg(">_eCount");
+ENTER_FUNC;
 	EmitCode(htc,OPC_LEND);
 	LBS_EmitInt(htc->code,Pop);
 	pos = LBS_GetPos(htc->code);
@@ -646,7 +646,7 @@ dbgmsg(">_eCount");
 	EmitCode(htc,OPC_BREAK);
 	LBS_EmitInt(htc->code,pos);
 	LBS_SetPos(htc->code,pos);
-dbgmsg("<_eCount");
+LEAVE_FUNC;
 }
 
 static	void
@@ -695,31 +695,6 @@ ENTER_FUNC;
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 #else
-#if	0
-	if (event != NULL) {
-		LBS_EmitString(htc->code,"<button type=\"submit\" name=\"_event\" value=\"");
-	} else {
-		LBS_EmitString(htc->code,"<button type=\"button\" value=\"");
-	}
-	LBS_EmitString(htc->code,event);
-	LBS_EmitString(htc->code,"\"");
-	if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," size=");
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(size));
-		EmitCode(htc,OPC_REFSTR);
-	}
-	if		(  onclick  !=  NULL  ) {
-		LBS_EmitString(htc->code," onclick=\"");
-		LBS_EmitString(htc->code,onclick);
-		LBS_EmitString(htc->code,"\"");
-	}
-
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">");
-	LBS_EmitString(htc->code,face);
-	LBS_EmitString(htc->code,"</button>");
-#else
 	LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
 	LBS_EmitString(htc->code,face);
 	LBS_EmitString(htc->code,"\"");
@@ -748,7 +723,6 @@ ENTER_FUNC;
 
 	LBS_EmitString(htc->code,">");
 #endif
-#endif
 LEAVE_FUNC;
 }
 
@@ -760,7 +734,7 @@ _ToggleButton(
 	char	*label
 		,	*onclick;
 
-dbgmsg(">_ToggleButton");
+ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
@@ -783,7 +757,7 @@ dbgmsg(">_ToggleButton");
 		LBS_EmitPointer(htc->code,StrDup(label));
 		EmitCode(htc,OPC_EHSNAME);
 	}
-dbgmsg("<_ToggleButton");
+LEAVE_FUNC;
 }
 
 static	void
@@ -794,7 +768,7 @@ _CheckButton(
 	char	*label
 		,	*onclick;
 
-dbgmsg(">_CheckButton");
+ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
@@ -815,7 +789,7 @@ dbgmsg(">_CheckButton");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code,label);
 	}
-dbgmsg("<_CheckButton");
+LEAVE_FUNC;
 }
 
 static	void
@@ -828,7 +802,7 @@ _RadioButton(
 		,	*label
 		,	*onclick;
 
-dbgmsg(">_RadioButton");
+ENTER_FUNC;
 	group = GetArg(tag,"group",0); 
 	name = GetArg(tag,"name",0); 
 	LBS_EmitString(htc->code,"<input type=\"radio\" name=\"");
@@ -866,7 +840,7 @@ dbgmsg(">_RadioButton");
 	}
 
 	g_hash_table_insert(htc->Radio,StrDup(group),(void*)1);
-dbgmsg("<_RadioButton");
+LEAVE_FUNC;
 }
 
 static void
@@ -876,7 +850,7 @@ _List(HTCInfo *htc, Tag *tag)
 	char	*name, *label, *count, *size, *multiple, *value;
 	size_t	pos;
 
-dbgmsg(">_List");
+ENTER_FUNC;
     if ((name = GetArg(tag,"name",0)) != NULL &&
         (label = GetArg(tag,"label",0)) != NULL &&
         (count = GetArg(tag,"count",0)) != NULL) {
@@ -947,7 +921,7 @@ dbgmsg(">_List");
         LBS_SetPos(htc->code,pos);
         LBS_EmitString(htc->code,"</select>");
     }
-dbgmsg("<_List");
+LEAVE_FUNC;
 }
 
 static void
@@ -1091,7 +1065,7 @@ _FileSelection(HTCInfo *htc, Tag *tag)
 {
 	char *name, *filename, *size, *maxlength;
 
-dbgmsg(">_FileSelection");
+ENTER_FUNC;
     if ((name = GetArg(tag, "name", 0)) != NULL &&
         (filename = GetArg(tag, "filename", 0)) != NULL) {
 		LBS_EmitString(htc->code, "<input type=\"file\" name=\"");
@@ -1134,7 +1108,7 @@ dbgmsg(">_FileSelection");
             LBS_SetPos(htc->code, pos);
         }
     }
-dbgmsg("<_FileSelection");
+LEAVE_FUNC;
 }
 
 static void
@@ -1150,7 +1124,7 @@ _HyperLink(HTCInfo *htc, Tag *tag)
     char *target;
     char buf[SIZE_BUFF];
 
-dbgmsg(">_HyperLink");
+ENTER_FUNC;
 	if ((event = GetArg(tag, "event", 0)) != NULL) {
 		LBS_EmitString(htc->code, "<a");
 		Style(htc,tag);
@@ -1256,15 +1230,15 @@ dbgmsg(">_HyperLink");
         }
 		LBS_EmitString(htc->code,">");
 	}
-dbgmsg("<_HyperLink");
+LEAVE_FUNC;
 }
 
 static void
 _eHyperLink(HTCInfo *htc, Tag *tag)
 {
-dbgmsg(">_eHyperLink");
+ENTER_FUNC;
 	LBS_EmitString(htc->code, "</a>");
-dbgmsg("<_eHyperLink");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1275,7 +1249,7 @@ _Panel(
 	char	*visible;
     int		has_style;
 
-dbgmsg(">_Panel");
+ENTER_FUNC;
     if ((visible = GetArg(tag, "visible", 0)) == NULL) {
         Push(0);
     }
@@ -1298,14 +1272,14 @@ dbgmsg(">_Panel");
         LBS_EmitString(htc->code,">");
     }
     Push(has_style);
-dbgmsg("<_Panel");
+LEAVE_FUNC;
 }
 
 static void
 _ePanel(HTCInfo *htc, Tag *tag)
 {
     size_t jnzp_pos, pos;
-dbgmsg(">_ePanel");
+ENTER_FUNC;
     if (Pop) { 
         LBS_EmitString(htc->code, "</div>");
     }
@@ -1316,7 +1290,7 @@ dbgmsg(">_ePanel");
         LBS_SetPos(htc->code, pos);
         EmitCode(htc, OPC_DROP);
     }
-dbgmsg("<_ePanel");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1334,7 +1308,7 @@ _Calendar(
 	,		this_dd;
 	size_t	pos;
 
-dbgmsg(">_Calendar");
+ENTER_FUNC;
 	time(&nowtime);
 	Now = localtime(&nowtime);
 	this_yy = Now->tm_year + 1900;
@@ -1401,7 +1375,7 @@ dbgmsg(">_Calendar");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,day);
 	EmitCode(htc,OPC_CALENDAR);
-dbgmsg("<_Calendar");
+LEAVE_FUNC;
 }
 
 
@@ -1410,10 +1384,10 @@ _Htc(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-dbgmsg(">_Htc");
+ENTER_FUNC;
 	Codeset = GetArg(tag,"coding",0); 
 	HTCSetCodeset(Codeset);
-dbgmsg("<_Htc");
+LEAVE_FUNC;
 }	
 
 static	Tag		*
@@ -1452,7 +1426,7 @@ TagsInit(char *script_name)
 {
 	Tag		*tag;
 
-dbgmsg(">TagsInit");
+ENTER_FUNC;
     ScriptName = script_name; 
  
 	pAStack = 0; 
@@ -1636,5 +1610,5 @@ dbgmsg(">TagsInit");
 	tag = NewTag("HEAD",_Head);
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);
-dbgmsg("<TagsInit");
+LEAVE_FUNC;
 }

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -145,7 +145,7 @@ ExecCalendar(
 	char	buff[5];
 	static	int		tlday[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
-dbgmsg(">ExecCalendar");
+ENTER_FUNC;
 	lday = tlday[mm - 1];
 	if		(	(  mm  ==  2  )
 			&&	(  uru(yy)    ) ) {
@@ -203,7 +203,7 @@ dbgmsg(">ExecCalendar");
 		LBS_EmitString(html,"</TR>\n");
 	}
 	LBS_EmitString(html,"</TABLE>");
-dbgmsg("<ExecCalendar");
+LEAVE_FUNC;
 }
 
 static	char	*
@@ -424,6 +424,9 @@ EmitWithEscape(LargeByteString *lbs, char *str)
             break;
         case '"':
             LBS_EmitString(lbs, "&quot;");
+            break;
+        case ' ':
+            LBS_EmitString(lbs, "&nbsp;");
             break;
         default:
             LBS_EmitChar(lbs, *p);

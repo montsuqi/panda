@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -57,7 +57,7 @@ ConnectTermServer(
 	Port	*port;
 	NETFILE	*fp;
 
-dbgmsg(">ConnectTermServer");
+ENTER_FUNC;
 	port = ParPort(url,PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
@@ -74,7 +74,7 @@ dbgmsg(">ConnectTermServer");
 	SendStringDelim(fp,arg);
 	SendStringDelim(fp,"\n");
 	buff = NewLBS();
-dbgmsg("<ConnectTermServer");
+LEAVE_FUNC;
 	return	(fp); 
 }
 
@@ -148,7 +148,7 @@ SendTermServer(
 	size_t	size;
 	Bool	rc;
 
-dbgmsg(">SendTermServer");
+ENTER_FUNC;
 	size = NativeSizeValue(NULL,value);
 	LBS_ReserveSize(buff,size,FALSE);
 	NativePackValue(NULL,LBS_Body(buff),value);
@@ -174,7 +174,7 @@ dbgmsg(">SendTermServer");
 	} else {
 		rc = FALSE;
 	}
-dbgmsg("<SendTermServer");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -191,7 +191,7 @@ RecvTermServerHeader(
 	PacketClass	c;
 	int		i;
 
-dbgmsg(">RecvTermServerHeader");
+ENTER_FUNC;
   top: 
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_HEADER:
@@ -220,7 +220,7 @@ dbgmsg(">RecvTermServerHeader");
 		rc = FALSE;
 		break;
 	}
-dbgmsg("<RecvTermServerHeader");
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -311,9 +311,9 @@ RecvTermServerData(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
-dbgmsg(">RecvTermServerData");
+ENTER_FUNC;
 	g_hash_table_foreach(scr->Windows,(GHFunc)_RecvWindow,fp);
 	SendPacketClass(fp,WFC_DONE);
-dbgmsg("<RecvTermServerData");
+LEAVE_FUNC;
 }
 

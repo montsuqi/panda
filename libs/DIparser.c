@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2003 Ogochan & JMA.
+Copyright (C) 2000-2004 Ogochan & JMA.
 
 This module is part of PANDA.
 
@@ -133,7 +133,7 @@ static	GHashTable	*Reserved;
 static	void
 ParWFC(void)
 {
-dbgmsg(">ParWFC");
+ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		switch	(ComToken) {
 		  case	T_PORT:
@@ -172,7 +172,7 @@ dbgmsg(">ParWFC");
 			Error("missing ; in wfc directive");
 		}
 	}
-dbgmsg("<ParWFC");
+LEAVE_FUNC;
 }
 
 static	void
@@ -405,7 +405,7 @@ LEAVE_FUNC;
 static	void
 SkipLD(void)
 {
-dbgmsg(">SkipLD");
+ENTER_FUNC;
 	while	(  ComToken  !=  ';'  ) {
 		switch	(ComToken) {
 		  case	T_SCONST:
@@ -434,7 +434,7 @@ dbgmsg(">SkipLD");
 			break;
 		}
 	}
-dbgmsg("<SkipLD");
+LEAVE_FUNC;
 }
 
 static	void
@@ -442,7 +442,7 @@ ParLD(
 	char	*dname,
 	Bool    parse_ld)
 {
-dbgmsg(">ParLD");
+ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  )
@@ -469,7 +469,7 @@ dbgmsg(">ParLD");
 			}
 		}
 	}
-dbgmsg("<ParLD");
+LEAVE_FUNC;
 }
 
 static	void
@@ -484,7 +484,8 @@ ParBD(
 	char		*p
 	,			*q;
 
-dbgmsg(">ParBD");
+ENTER_FUNC;
+	bd = NULL;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
@@ -533,7 +534,7 @@ dbgmsg(">ParBD");
 			Error("syntax error 1");
 		}
 	}
-dbgmsg("<ParBD");
+LEAVE_FUNC;
 }
 
 static	void
@@ -547,7 +548,7 @@ ParDBD(
 	char		*p
 	,			*q;
 
-dbgmsg(">ParDBD");
+ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
@@ -592,7 +593,7 @@ dbgmsg(">ParDBD");
 			Error("syntax error 1");
 		}
 	}
-dbgmsg("<ParDBD");
+LEAVE_FUNC;
 }
 
 static	void
@@ -601,7 +602,7 @@ AppendDBG(
 {
 	DBG_Struct	**dbga;
 
-dbgmsg(">AppendDBG");
+ENTER_FUNC;
 	dbga = (DBG_Struct **)xmalloc(sizeof(DBG_Struct *) *
 										  ( ThisEnv->cDBG + 1 ));
 	if		(  ThisEnv->cDBG  >  0  ) {
@@ -612,7 +613,7 @@ dbgmsg(">AppendDBG");
 	ThisEnv->DBG[ThisEnv->cDBG] = dbg;
 	ThisEnv->cDBG ++;
 	g_hash_table_insert(ThisEnv->DBG_Table,dbg->name,dbg);
-dbgmsg("<AppendDBG");
+LEAVE_FUNC;
 }
 
 static	void
@@ -622,7 +623,7 @@ ParDBGROUP(
 	DBG_Struct	*dbg;
 	char		*env;
 
-dbgmsg(">ParDBGROUP");
+ENTER_FUNC;
 	if		(  g_hash_table_lookup(ThisEnv->DBG_Table,name)  !=  NULL  ) {
 		Error("DB group name duplicate");
 	}
@@ -735,7 +736,7 @@ dbgmsg(">ParDBGROUP");
 		}
 	}
 	AppendDBG(dbg);
-dbgmsg("<ParDBGROUP");
+LEAVE_FUNC;
 }
 
 static	void
@@ -746,7 +747,7 @@ _AssignDBG(
 {
 	DBG_Struct	*red;
 
-dbgmsg(">_AssignDBG");
+ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL  ) {
 		red = g_hash_table_lookup(ThisEnv->DBG_Table,(char *)dbg->redirect);
 		if		(  red  ==  NULL  ) {
@@ -755,7 +756,7 @@ dbgmsg(">_AssignDBG");
 		xfree(dbg->redirect);
 		dbg->redirect = red;
 	}
-dbgmsg("<_AssignDBG");
+LEAVE_FUNC;
 }
 
 static	int
@@ -772,7 +773,7 @@ AssignDBG(void)
 	int		i;
 	DBG_Struct	*dbg;
 
-dbgmsg(">AssignDBG");
+ENTER_FUNC;
 	qsort(ThisEnv->DBG,ThisEnv->cDBG,sizeof(DBG_Struct *),
 		  (int (*)(const void *,const void *))DBGcomp);
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
@@ -780,7 +781,7 @@ dbgmsg(">AssignDBG");
 		dbgprintf("%d DB group name = [%s]\n",dbg->priority,dbg->name);
 		_AssignDBG(dbg->name,dbg,NULL);
 	}
-dbgmsg("<AssignDBG");
+LEAVE_FUNC;
 }
 
 static	RecordStruct	*
@@ -844,7 +845,7 @@ ParDI(
 {
 	char	*gname;
 
-dbgmsg(">ParDI");
+ENTER_FUNC;
 	ThisEnv = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
@@ -1037,7 +1038,7 @@ dbgmsg(">ParDI");
 	}
 	ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
 	AssignDBG();
-dbgmsg("<ParDI");
+LEAVE_FUNC;
 	return	(ThisEnv);
 }
 

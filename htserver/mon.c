@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -99,7 +99,6 @@ static	void
 HT_SendString(
 	char	*str)
 {
-	//	dbgprintf("send [%s]\n",str);
 	SendStringDelim(fpServ,str);
 }
 

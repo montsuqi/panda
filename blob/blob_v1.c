@@ -362,6 +362,8 @@ ENTER_FUNC;
 		} else {
 			ret = -1;
 		}
+	} else {
+		ret = -1;
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -384,6 +386,8 @@ ENTER_FUNC;
 		} else {
 			ret = -1;
 		}
+	} else {
+		ret = -1;
 	}
 LEAVE_FUNC;
 	return	(ret);

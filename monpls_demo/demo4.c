@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2003 Ogochan & JMA (Japan Medical Association).
+              2000-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -48,7 +48,7 @@ demo4Link(
 {
 	WindowData	*w;
 
-dbgmsg(">demo4Link");
+ENTER_FUNC;
 	count = 0; 
 	printf("arg = [%s]\n",arg);
 	(void)SetWindowName("project6");
@@ -84,7 +84,7 @@ dbgmsg(">demo4Link");
 
 	w = PutWindowByName("project6",SCREEN_NEW_WINDOW);
 	strcpy(ThisWindow,"project6");
-dbgmsg("<demo4Link");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -106,7 +106,7 @@ demo4Main(
 	,			*v1;
 
 
-dbgmsg(">demo4Main");
+ENTER_FUNC;
 	printf("arg = [%s]\n",arg);
 	printf("window = [%s]\n",ThisWindow);
 	printf("widget = [%s]\n",ThisWidget);
@@ -218,12 +218,12 @@ dbgmsg(">demo4Main");
 		SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed3.pandaclist1.count"),count);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	}
-dbgmsg("<demo4Main");
+LEAVE_FUNC;
 }
 
 extern	void
 demo4Init(void)
 {
-dbgmsg(">demo4Init");
-dbgmsg("<demo4Init");
+ENTER_FUNC;
+LEAVE_FUNC;
 }

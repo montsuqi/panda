@@ -68,7 +68,7 @@ static	void
 InitSystem(
 	char	*name)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
 
@@ -86,7 +86,7 @@ dbgmsg(">InitSystem");
 	if		(  ThisDBD->cDB  >  0  ) {
 		InitDB_Process(NULL);
 	}
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }
 
 #define	COMM_STRING		1
@@ -102,9 +102,9 @@ static	void
 FinishSession(
 	SessionNode	*node)
 {
-dbgmsg(">FinishSession");
+ENTER_FUNC;
 	xfree(node);
-dbgmsg("<FinishSession");
+LEAVE_FUNC;
 }
 
 static	SessionNode	*
@@ -232,7 +232,7 @@ WriteClientString(
 	char	*p;
 	Bool	fName;
 
-dbgmsg(">WriteClientString");
+ENTER_FUNC;
 	SendStringDelim(fpComm,"Exec: ");
 	sprintf(buff,"%d\n",ctrl->rc);
 	SendStringDelim(fpComm,buff);
@@ -257,7 +257,7 @@ dbgmsg(">WriteClientString");
 			SendStringDelim(fpComm,"\n");
 		}
 	}	while	(TRUE);
-dbgmsg("<WriteClientString");
+LEAVE_FUNC;
 }
 
 static	void
@@ -403,6 +403,7 @@ do_String(
 			ctrl.rno = 0;
 			ctrl.pno = 0;
 			rec = NULL;
+			value = NULL;
 		}
 		strcpy(ctrl.func,func);
 		RecvData(fpComm,value);
@@ -458,7 +459,7 @@ MainLoop(
 	char	buff[SIZE_BUFF+1];
 	Bool	ret;
 
-dbgmsg(">MainLoop");
+ENTER_FUNC;
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	switch	(ses->type) {
 	  case	COMM_STRING:
@@ -469,7 +470,7 @@ dbgmsg(">MainLoop");
 		ret = FALSE;
 		break;
 	}
-dbgmsg("<MainLoop");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -483,7 +484,7 @@ ExecuteServer(void)
 	SessionNode	*ses;
 	Port	*port;
 
-dbgmsg(">ExecuteServer");
+ENTER_FUNC;
 	port = ParPortName(PortNumber);
 	_fh = InitServerPort(port,Back);
 	while	(TRUE)	{
@@ -506,15 +507,15 @@ dbgmsg(">ExecuteServer");
 			exit(0);
 		}
 	}
-dbgmsg("<ExecuteServer");
+LEAVE_FUNC;
 }
 
 static	void
 StopProcess(
 	int		ec)
 {
-dbgmsg(">StopProcess");
-dbgmsg("<StopProcess");
+ENTER_FUNC;
+LEAVE_FUNC;
 	exit(ec);
 }
 

@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2003 Ogochan & JMA (Japan Medical Association).
+              2000-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -344,13 +344,13 @@ GL_RecvFixed(
 {
 	Fixed	*xval;
 
-dbgmsg(">GL_RecvFixed");
+ENTER_FUNC;
 	xval = New(Fixed);
 	xval->flen = GL_RecvLength(fp);
 	xval->slen = GL_RecvLength(fp);
 	xval->sval = (char *)xmalloc(xval->flen+1);
 	GL_RecvString(fp,xval->sval);
-dbgmsg("<GL_RecvFixed");
+LEAVE_FUNC;
 	return	(xval); 
 }
 
@@ -432,7 +432,7 @@ RecvFile(
 	char		buff[SIZE_BUFF];
 	Bool		ret;
 
-dbgmsg(">RecvFile");
+ENTER_FUNC;
 	GL_SendPacketClass(fpC,GL_GetScreen);
 	GL_SendString(fpC,name);
 	if		(  fMlog  ) {
@@ -460,7 +460,7 @@ dbgmsg(">RecvFile");
 		g_warning("invalid protocol sequence");
 		ret = FALSE;
 	}
-dbgmsg("<RecvFile");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -477,7 +477,7 @@ CheckScreens(
 	off_t		stsize;
 	PacketClass	klass;
 
-dbgmsg(">CheckScreens");
+ENTER_FUNC;
 	while		(  ( klass = GL_RecvPacketClass(fp) )  ==  GL_QueryScreen  ) {
 		GL_RecvString(fp,sname);
 		stsize = (off_t)GL_RecvLong(fp);
@@ -500,7 +500,7 @@ dbgmsg(">CheckScreens");
 			fInit = FALSE;
 		}
 	}
-dbgmsg("<CheckScreens");
+LEAVE_FUNC;
 }
 
 extern	Bool
@@ -512,7 +512,7 @@ RecvWidgetData(
 	RecvHandler	rfunc;
 	Bool		ret;
 
-dbgmsg(">RecvWidgetData");
+ENTER_FUNC;
 	if		(  ( node = g_hash_table_lookup(ClassTable,
 											(gconstpointer)((GtkTypeObject *)widget)->klass->type) )  !=  NULL  ) {
 		rfunc = node->rfunc;
@@ -520,7 +520,7 @@ dbgmsg(">RecvWidgetData");
 	} else {
 		ret = FALSE;
 	}
-dbgmsg("<RecvWidgetData");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -534,7 +534,7 @@ SendWidgetData(
 	SendHandler	sfunc;
 	Bool		ret;
 
-dbgmsg(">SendWidgetData");
+ENTER_FUNC;
 	if		(  ( node = g_hash_table_lookup(ClassTable,
 											(gconstpointer)((GtkTypeObject *)widget)->klass->type) )  !=  NULL  ) {
 		sfunc = node->sfunc;
@@ -542,7 +542,7 @@ dbgmsg(">SendWidgetData");
 	} else {
 		ret = FALSE;
 	}
-dbgmsg("<SendWidgetData");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -605,7 +605,7 @@ RecvValue(
 	,				*dataname;
 	Bool			fDone;
 
-dbgmsg(">RecvValue");
+ENTER_FUNC;
 	dbgprintf("WidgetName = [%s]\n",WidgetName);
 	if		(  ThisXML  !=  NULL  ) {
 		fDone = FALSE;
@@ -636,6 +636,11 @@ dbgmsg(">RecvValue");
 						fTrace = FALSE;
 					}
 					fDone = TRUE;
+					/*	new add 2004.08.11	*/
+				} else {
+					RecvValueSkip(fp);
+					fDone = TRUE;
+					/*	add end	*/
 				}
 			}
 		}
@@ -670,7 +675,7 @@ dbgmsg(">RecvValue");
 			break;
 		}
 	}
-dbgmsg("<RecvValue");
+LEAVE_FUNC;
 }
 
 extern	Bool
@@ -686,7 +691,7 @@ GetScreenData(
 	GtkWidget	*widget;
 	char		buff[SIZE_BUFF];
 
-dbgmsg(">GetScreenData");
+ENTER_FUNC;
 	fInRecv = TRUE; 
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
@@ -753,7 +758,7 @@ dbgmsg(">GetScreenData");
 		ResetTimer(node->window);
 	}
 	fInRecv = FALSE;
-dbgmsg("<GetScreenData");
+LEAVE_FUNC;
 	return	(fCancel);
 }
 
@@ -785,7 +790,7 @@ SendConnect(
 	Bool	rc;
 	PacketClass	pc;
 
-dbgmsg(">SendConnect");
+ENTER_FUNC;
 	GL_SendPacketClass(fp,GL_Connect);
 	GL_SendVersionString(fp);
 	GL_SendString(fp,User);
@@ -814,7 +819,7 @@ dbgmsg(">SendConnect");
 			break;
 		}
 	}
-dbgmsg("<SendConnect");
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -827,7 +832,7 @@ SendEvent(
 {
 	char		buff[SIZE_BUFF];
 
-dbgmsg(">SendEvent");
+ENTER_FUNC;
 	dbgprintf("window = [%s]",window); 
 	dbgprintf("widget = [%s]",widget); 
 	dbgprintf("event  = [%s]",event); 
@@ -840,20 +845,20 @@ dbgmsg(">SendEvent");
 	GL_SendString(fp,window);
 	GL_SendString(fp,widget);
 	GL_SendString(fp,event);
-dbgmsg("<SendEvent");
+LEAVE_FUNC;
 }
 
 extern	void
 InitProtocol(void)
 {
-dbgmsg(">InitProtocol");
+ENTER_FUNC;
 	WindowTable = NewNameHash();
 	LargeBuff = NewLBS();
 #if	0
 	InitScreenStack();
 #endif
 	InitWidgetOperations();
-dbgmsg("<InitProtocol");
+LEAVE_FUNC;
 }
 
 static void
@@ -1199,7 +1204,7 @@ RecvFloatData(
 	Bool	ret;
 	Fixed	*xval;
 
-dbgmsg(">RecvFloatData");	
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);
 
 	switch	(DataType)	{
@@ -1230,7 +1235,7 @@ dbgmsg(">RecvFloatData");
 		ret = FALSE;
 		break;
 	}
-dbgmsg("<RecvFloatData");	
+LEAVE_FUNC;
 	return	(ret);
 }
 

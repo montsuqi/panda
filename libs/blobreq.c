@@ -70,13 +70,12 @@ RequestNewBLOB(
 	MonObjectType	obj;
 
 ENTER_FUNC;
+	obj = GL_OBJ_NULL;
 	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
 	RequestBLOB(fp,BLOB_CREATE);		ON_IO_ERROR(fp,badio);
 	SendInt(fp,mode);					ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
 		obj = RecvObject(fp);			ON_IO_ERROR(fp,badio);
-	} else {
-		obj = GL_OBJ_NULL;
 	}
   badio:
 LEAVE_FUNC;

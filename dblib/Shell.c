@@ -62,14 +62,14 @@ _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBOPEN");
+ENTER_FUNC;
 	dbg->conn = NewLBS();
 	OpenDB_RedirectPort(dbg);
 	dbg->fConnect = TRUE;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
-dbgmsg("<_DBOPEN");
+LEAVE_FUNC;
 }
 
 static	void
@@ -77,7 +77,7 @@ _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBDISCONNECT");
+ENTER_FUNC;
 	if		(  dbg->fConnect  ) { 
 		CloseDB_RedirectPort(dbg);
 		FreeLBS(dbg->conn);
@@ -86,7 +86,7 @@ dbgmsg(">_DBDISCONNECT");
 			ctrl->rc = MCP_OK;
 		}
 	}
-dbgmsg("<_DBDISCONNECT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -94,12 +94,12 @@ _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBSTART");
+ENTER_FUNC;
 	LBS_EmitStart(dbg->conn); 
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
-dbgmsg("<_DBSTART");
+LEAVE_FUNC;
 }
 
 static	int
@@ -112,7 +112,7 @@ DoShell(
 	int		rc;
 	extern	char	**environ;
 
-dbgmsg(">DoShell");
+ENTER_FUNC;
 #ifdef	DEBUG
 	printf("command --------------------------------\n");
 	printf("%s\n",command);
@@ -138,7 +138,7 @@ dbgmsg(">DoShell");
 	} else {
 		rc = MCP_OK;
 	}
-dbgmsg("<DoShell");
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -151,11 +151,12 @@ _DBCOMMIT(
 	char		*p
 	,			*q;
 
-dbgmsg(">_DBCOMMIT");
+ENTER_FUNC;
 	CheckDB_Redirect(dbg);
 	LBS_EmitEnd(dbg->conn);
 	RewindLBS(dbg->conn);
 	p = (char *)LBS_Body(dbg->conn);
+	rc = 0;
 	while	(  ( q = strchr(p,0xFF) )  !=  NULL  ) {
 		*q = 0;
 		rc += DoShell(p);
@@ -167,7 +168,7 @@ dbgmsg(">_DBCOMMIT");
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
-dbgmsg("<_DBCOMMIT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -227,7 +228,7 @@ ExecShell(
 	ValueStruct	*val;
 	DBG_Struct	*dbg;
 
-dbgmsg(">ExecShell");
+ENTER_FUNC;
 	dbg =  rec->opt.db->dbg;
 	if	(  src  ==  NULL )	{
 		printf("function \"%s\" is not found.\n",ctrl->func);
@@ -257,7 +258,7 @@ dbgmsg(">ExecShell");
 			}
 		}
 	}
-dbgmsg("<ExecShell");
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -274,7 +275,7 @@ _DBACCESS(
 	int		ix;
 	Bool	rc;
 
-dbgmsg(">_DBACCESS");
+ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",name); 
 #endif
@@ -296,7 +297,7 @@ dbgmsg(">_DBACCESS");
 			}
 		}
 	}
-dbgmsg("<_DBACCESS");
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -307,13 +308,13 @@ _DBERROR(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-dbgmsg(">_DBERROR");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
 		ctrl->rc = MCP_BAD_OTHER;
 	}
-dbgmsg("<_DBERROR");
+LEAVE_FUNC;
 }
 
 static	DB_OPS	Operations[] = {
@@ -341,21 +342,21 @@ static	void
 OnChildExit(
 	int		ec)
 {
-dbgmsg(">OnChildExit");
+ENTER_FUNC;
 	while( waitpid(-1, NULL, WNOHANG) > 0 );
 	(void)signal(SIGCHLD, (void *)OnChildExit);
-dbgmsg("<OnChildExit");
+LEAVE_FUNC;
 }
 
 extern	DB_Func	*
 InitShell(void)
 {
 	DB_Func	*ret;
-dbgmsg(">InitShell");
+ENTER_FUNC;
 	(void)signal(SIGCHLD, (void *)OnChildExit);
 
 	ret = EnterDB_Function("Shell",Operations,&Core,"# ","\n");
-dbgmsg("<InitShell");
+LEAVE_FUNC;
 	return	(ret); 
 }
 
