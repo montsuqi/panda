@@ -107,6 +107,8 @@ static	ARG_TABLE	option[] = {
 		"データ処理プロトコルバージョン 1 を使う"		},
 	{	"v2",		BOOLEAN,	TRUE,	(void*)&Protocol2,
 		"データ処理プロトコルバージョン 2 を使う"		},
+	{	"mlog",		BOOLEAN,	TRUE,	(void*)&fMlog,
+		"実行ログの取得を行う"							},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
 		"鍵ファイル名(pem)"		 						},
@@ -136,6 +138,7 @@ SetDefault(void)
 	Pass = "";
 	Protocol1 = TRUE;
 	Protocol2 = FALSE;
+	fMlog = FALSE;
 #ifdef	USE_SSL
 	fSsl = FALSE;
 	KeyFile = NULL;

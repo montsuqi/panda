@@ -1,3 +1,7 @@
+2004-02-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/protocol.c: 実行時のログを取得するようにした
+
 2004-02-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/wfc.c, wfc/mqthread.c, wfc/termthread.c, tools/monitor.c:
