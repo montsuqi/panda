@@ -60,9 +60,9 @@ BindSocket(
 	,		ld;
 	int		rc;
 	struct	addrinfo	*info
-			,			hints;
+			,			hints
+			,			head;
 	struct	sockaddr_in	*name;
-
 dbgmsg(">BindSocket");
 	memclear(&hints,sizeof(struct addrinfo));
 	hints.ai_family = PF_UNSPEC;
@@ -73,6 +73,7 @@ dbgmsg(">BindSocket");
 		Error("error resolv");
 	}
 	ld = -1;
+	head = info;
 	for	( ; info != NULL ; info = info->ai_next ) {
 		name = (struct sockaddr_in *)info->ai_addr;
 #ifdef	DEBUG
@@ -90,6 +91,7 @@ dbgmsg(">BindSocket");
 		ld = s;
 		break;
 	}
+	freeaddrinfo(head);
 	if		( ld  <  0  ) {
 		Error("error bind");
 	}
@@ -129,7 +131,8 @@ ConnectSocket(
 	,		ld;
 	int		rc;
 	struct	addrinfo	*info
-			,			hints;
+			,			hints
+			,			head;
 	struct	sockaddr_in	*name;
 
 dbgmsg(">ConnectSocket");
@@ -146,6 +149,7 @@ dbgmsg(">ConnectSocket");
 		Error("error resolv");
 	}
 	ld = -1;
+	head = info;
 	for	( ; info != NULL ; info = info->ai_next ) {
 		name = (struct sockaddr_in *)info->ai_addr;
 		s = socket(info->ai_family,info->ai_socktype,info->ai_protocol);
@@ -156,7 +160,7 @@ dbgmsg(">ConnectSocket");
 		ld = s;
 		break;
 	}
-	freeaddrinfo(info);
+	freeaddrinfo(head);
 dbgmsg("<ConnectSocket");
 	return	(ld);
 }
