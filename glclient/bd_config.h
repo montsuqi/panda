@@ -60,6 +60,9 @@ gboolean         bd_config_exist_section     (BDConfig *self,
                                               gchar *name);
 BDConfigSection *bd_config_append_section    (BDConfig *self,
                                               gchar *name);
+gchar           *bd_config_get_string        (BDConfig * self,
+                                              gchar * section_name,
+                                              gchar * value_name);
 gboolean         bd_config_save              (BDConfig *self,
                                               gchar *filename,
                                               mode_t mode);

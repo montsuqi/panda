@@ -1,3 +1,10 @@
+2004-07-13  Kouji TAKAO  <kouji@netlab.jp>
+
+	サーバプリセット選択GUIを追加
+	* glclient/bd_config.c
+	* glclient/bd_config.h
+	* glclient/bootdialog.c
+
 2004-07-12  Kouji TAKAO  <kouji@netlab.jp>
 
 	* glclient/bootdialog.c (boot_dialog_run): パーミッションが0600で

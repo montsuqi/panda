@@ -421,6 +421,15 @@ bd_config_append_section (BDConfig *self, gchar *name)
   return section;
 }
 
+gchar *
+bd_config_get_string (BDConfig * self, gchar * section_name, gchar * value_name)
+{
+  BDConfigSection *section;
+  
+  section = bd_config_get_section (self, section_name);
+  return bd_config_section_get_string (section, value_name);
+}
+
 static void
 bd_config_section_to_xml (BDConfigSection *self, FILE *fp)
 {

@@ -42,6 +42,7 @@ static BDConfig *config_ = NULL;
 static gboolean is_boot_dialog_init = FALSE;
 static GString *password_;
 static mode_t permissions = 0600;
+static gchar *custom_label = "カスタム";
 
 static void
 boot_dialog_create_conf (BDConfig *config)
@@ -127,6 +128,8 @@ struct _BootDialog
   GtkWidget *dialog;
 
   GtkWidget *welcome;
+  GtkWidget *servers;
+  GHashTable *servers_hash;
   GtkWidget *host;
   GtkWidget *port;
   GtkWidget *application;
@@ -169,6 +172,32 @@ boot_dialog_on_delete_event (GtkWidget *widget, GdkEvent *event, BootDialog *sel
 }
 
 static void
+boot_dialog_servers_set_hostname (BootDialog *self, gchar *hostname)
+{
+  gint current;
+  GtkWidget *menu;
+
+  current = GPOINTER_TO_INT (g_hash_table_lookup (self->servers_hash, hostname));
+  gtk_option_menu_set_history (GTK_OPTION_MENU (self->servers), current);
+  menu = gtk_option_menu_get_menu (GTK_OPTION_MENU (self->servers));
+  gtk_menu_set_active (GTK_MENU (menu), current);
+}
+
+static gchar *
+boot_dialog_servers_get_hostname (BootDialog *self)
+{
+  GtkWidget *menu;
+  GtkWidget *menuitem;
+  gchar *hostname;
+
+  menu = gtk_option_menu_get_menu (GTK_OPTION_MENU (self->servers));
+  menuitem = gtk_menu_get_active (GTK_MENU (menu));
+  hostname = gtk_object_get_user_data (GTK_OBJECT (menuitem));
+
+  return hostname;
+}
+
+static void
 boot_dialog_set_value (BootDialog *self, BDConfig *config)
 {
   BDConfigSection *section;
@@ -184,7 +213,9 @@ boot_dialog_set_value (BootDialog *self, BDConfig *config)
                       bd_config_section_get_string (section, "welcome"));
   
   section = bd_config_get_section (config, "global");
-  
+
+  boot_dialog_servers_set_hostname (self,
+                                    bd_config_section_get_string (section, "hostname"));
   gtk_entry_set_text (GTK_ENTRY (self->host),
                       bd_config_section_get_string (section, "host"));
   gtk_entry_set_text (GTK_ENTRY (self->port),
@@ -220,6 +251,8 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
 
   section = bd_config_get_section (config, "global");
 
+  bd_config_section_set_string (section, "hostname",
+                                boot_dialog_servers_get_hostname (self));
   bd_config_section_set_string (section, "host",
                                 gtk_entry_get_text (GTK_ENTRY (self->host)));
   bd_config_section_set_string (section, "port",
@@ -255,15 +288,129 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
     }
 }
 
+static void
+boot_dialog_change_hostname (BootDialog * self, BDConfig * config)
+{
+  BDConfigSection *global, *section;
+  gchar *hostname;
+
+  g_return_if_fail (bd_config_exist_section (config, "global"));
+
+  hostname = boot_dialog_servers_get_hostname (self);
+  
+  global = bd_config_get_section (config, "global");
+  if (strcmp (hostname, bd_config_section_get_string (global, "hostname")) == 0)
+    return;
+  if (strcmp (hostname, custom_label) == 0)
+    {
+      bd_config_section_set_string (global, "hostname", custom_label);
+      return;
+    }
+  if (!bd_config_exist_section (config, hostname))
+    {
+      boot_dialog_servers_set_hostname (self, custom_label);
+      bd_config_section_set_string (global, "hostname", custom_label);
+      return;
+    }
+  
+  section = bd_config_get_section (config, hostname);
+
+  bd_config_section_set_string (global, "hostname", hostname);
+  bd_config_section_set_string (global, "host",
+                                bd_config_section_get_string (section, "host"));
+  bd_config_section_set_string (global, "port",
+                                bd_config_section_get_string (section, "port"));
+  bd_config_section_set_string (global, "application",
+                                bd_config_section_get_string (section, "application"));
+  bd_config_section_set_bool (global, "protocol_v1",
+                              bd_config_section_get_bool (section, "protocol_v1"));
+  bd_config_section_set_bool (global, "protocol_v2",
+                              bd_config_section_get_bool (section, "protocol_v2"));
+  bd_config_section_set_string (global, "cache",
+                                bd_config_section_get_string (section, "cache"));
+  bd_config_section_set_string (global, "style",
+                                bd_config_section_get_string (section, "style"));
+  bd_config_section_set_string (global, "gtkrc",
+                                bd_config_section_get_string (section, "gtkrc"));
+  bd_config_section_set_bool (global, "mlog",
+                              bd_config_section_get_bool (section, "mlog"));
+  bd_config_section_set_string (global, "user",
+                                bd_config_section_get_string (section, "user"));
+  bd_config_section_set_string (global, "password",
+                                bd_config_section_get_string (section, "password"));
+  bd_config_section_set_bool (global, "savepassword",
+                              bd_config_section_get_bool (section, "savepassword"));
+
+  boot_dialog_set_value (self, config);
+}
+
+static void
+boot_dialog_servers_on_selection_done (GtkWidget * widget, BootDialog * self)
+{
+  (void *) widget; /* Note: escape compile warning */
+  boot_dialog_change_hostname (self, config_);
+}
+
+static void
+boot_dialog_servers_update (BootDialog *self, BDConfig *config)
+{
+  GList *server_list, *p;
+  GtkWidget *menu;
+  GtkWidget *menuitem;
+  gchar *hostname;
+  gint i;
+  BDConfigSection *section;
+  gchar *desc;
+
+  server_list = NULL;
+  for (p = bd_config_get_sections (config); p != NULL; p = g_list_next (p))
+    {
+      hostname = (gchar *)p->data;
+      if (strcmp (hostname, "glclient") == 0 || strcmp (hostname, "global") == 0)
+        continue;
+      server_list = g_list_append (server_list, hostname);
+    }
+  server_list = g_list_append (server_list, custom_label);
+
+  gtk_option_menu_remove_menu (GTK_OPTION_MENU (self->servers));
+  menu = gtk_menu_new ();
+  gtk_option_menu_set_menu (GTK_OPTION_MENU (self->servers), menu);
+  gtk_signal_connect (GTK_OBJECT (menu), "selection-done",
+                      GTK_SIGNAL_FUNC (boot_dialog_servers_on_selection_done),
+                      self);
+  if (self->servers_hash != NULL)
+    g_hash_table_destroy (self->servers_hash);
+  self->servers_hash = g_hash_table_new (g_str_hash, g_str_equal);
+  for (p = server_list, i = 0; p != NULL; p = g_list_next (p), i++)
+    {
+      hostname = (gchar *) p->data;
+      if (strcmp (hostname, custom_label) != 0)
+        desc = bd_config_get_string (config, hostname, "description");
+      else
+        desc = hostname;
+      menuitem = gtk_menu_item_new_with_label (desc);
+      gtk_object_set_user_data (GTK_OBJECT (menuitem), hostname);
+      gtk_menu_append (GTK_MENU (menu), menuitem);
+      gtk_widget_show (menuitem);
+      g_hash_table_insert (self->servers_hash, hostname, GINT_TO_POINTER (i));
+    }
+  g_list_free (server_list);
+  
+  section = bd_config_get_section (config, "global");
+  hostname = bd_config_section_get_string (section, "hostname");
+  boot_dialog_servers_set_hostname (self, hostname);
+}
+
 static BootDialog *
 boot_dialog_new ()
 {
   BootDialog *self;
   GtkWidget *dialog, *vbox, *welcome, *notebook, *table, *action_area, *connect, *close;
-  GtkWidget *label, *entry, *hbox, *check, *alignment;
+  GtkWidget *label, *entry, *hbox, *check, *alignment, *omenu;
   gint ypos;
 
   self = g_new0 (BootDialog, 1);
+  self->servers_hash = NULL;
   self->is_connect = FALSE;
 
   dialog = gtk_dialog_new ();
@@ -281,6 +428,18 @@ boot_dialog_new ()
   self->welcome = welcome;
   gtk_misc_set_alignment (GTK_MISC (welcome), 0.5, 0.5);
   gtk_box_pack_start (GTK_BOX (vbox), welcome, TRUE, TRUE, 5);
+
+  hbox = gtk_hbox_new (FALSE, 5);
+  gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, TRUE, 0);
+
+  label = gtk_label_new ("Server");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
+  
+  self->servers = omenu = gtk_option_menu_new ();
+  gtk_widget_set_usize (omenu, 0, 30);
+  boot_dialog_servers_update (self, config_);
+  gtk_box_pack_start (GTK_BOX (hbox), omenu, TRUE, TRUE, 0);
 
   notebook = gtk_notebook_new ();
   gtk_notebook_set_homogeneous_tabs (GTK_NOTEBOOK (notebook), TRUE);
@@ -437,6 +596,8 @@ boot_dialog_new ()
 static void
 boot_dialog_free (BootDialog *self)
 {
+  if (self->servers_hash != NULL)
+    g_hash_table_destroy (self->servers_hash);
   g_free (self);
 }
 
