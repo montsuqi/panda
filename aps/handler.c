@@ -294,6 +294,11 @@ dbgmsg(">CallAfter");
 	if		(  ( PutType = (byte)(int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
 		PutType = SCREEN_CURRENT_WINDOW;
 	}
+	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
+		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,0)),
+			   ValueStringPointer(mcp_dcwindow));
+		sindex = 1;
+	}
 	if		(  PutType  ==  SCREEN_BACK_WINDOW  ) {
 		sindex --;
 		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
@@ -302,11 +307,6 @@ dbgmsg(">CallAfter");
 		PutType = SCREEN_CHANGE_WINDOW;
 	}
 
-	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
-		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,0)),
-			   ValueStringPointer(mcp_dcwindow));
-		sindex = 1;
-	}
 	if		(  strcmp(ValueStringPointer(
 						  GetArrayItem(mcp_swindow,sindex - 1)),
 					  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
