@@ -413,7 +413,6 @@ set_value(ValueStruct *value, VALUE obj)
 
 typedef struct _value_struct_data {
     ValueStruct *value;
-    int need_free;
     VALUE cache;
 } value_struct_data;
 
@@ -426,9 +425,8 @@ value_struct_mark(value_struct_data *data)
 static void
 value_struct_free(value_struct_data *data)
 {
-    if (data->need_free) {
-        FreeValueStruct(data->value);
-    }
+    FreeValueStruct(data->value);
+    free(data);
 }
 
 static VALUE
@@ -438,9 +436,10 @@ aryval_new(ValueStruct *val, int need_free)
     value_struct_data *data;
 
     obj = Data_Make_Struct(cArrayValue, value_struct_data,
-                           value_struct_mark, value_struct_free, data);
+                           value_struct_mark,
+                           need_free ? value_struct_free : free,
+                           data);
     data->value = val;
-    data->need_free = need_free;
     data->cache = rb_ary_new2(ValueArraySize(val));
     return obj;
 }
@@ -501,9 +500,10 @@ recval_new(ValueStruct *val, int need_free)
     static VALUE recval_set_field(VALUE self, VALUE obj);
 
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
-                           value_struct_mark, value_struct_free, data);
+                           value_struct_mark,
+                           need_free ? value_struct_free : free,
+                           data);
     data->value = val;
-    data->need_free = need_free;
     data->cache = rb_hash_new();
     for (i = 0; i < ValueRecordSize(val); i++) {
         rb_define_singleton_method(obj, ValueRecordName(val, i),
