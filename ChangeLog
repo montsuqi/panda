@@ -1,3 +1,7 @@
+2004-09-03  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/protocol.c: Send/Recv をチェックするようにした
+
 2004-09-02  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/Recv, libs/Send 失敗時には -1 を返すように変更
