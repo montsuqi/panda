@@ -609,7 +609,7 @@ AddClass(
 		node->type = type;
 		node->rfunc = rfunc;
 		node->sfunc = sfunc;
-		g_hash_table_insert(ClassTable,(gpointer)type,node);
+		g_hash_table_insert(ClassTable,(gpointer)node->type,node);
 	}
 }
 

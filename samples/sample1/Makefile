@@ -10,7 +10,7 @@ LINKREC		=	$(TOP)/link.rec
 METAREC		=	$(TOP)/metadb.db
 
 DBGEN = $(TOOLDIR)/dbgen -record $(TOP)
-COPYGEN = $(TOOLDIR)/copygen -dir $(DIRECTORY) -lddir $(TOP) -record $(TOP)
+COPYGEN = $(TOOLDIR)/copygen -dir $(DIRECTORY) -ddir $(TOP) -record $(TOP)
 
 all: suball
 

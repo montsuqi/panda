@@ -311,7 +311,7 @@ RecvNumberEntry(
 	Fixed	*xval;
 	Numeric	value;
 
-dbgmsg(">RecvNumberEntry");
+ENTER_FUNC;
 	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -337,7 +337,7 @@ dbgmsg(">RecvNumberEntry");
 			}
 		}
 	}
-dbgmsg("<RecvNumberEntry");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -750,6 +750,7 @@ RecvPandaCList(
 	,		rnum
 	,		from
 	,		row
+	,		column
 	,		rowattr
 	,		i
 	,		j
@@ -773,6 +774,7 @@ dbgmsg(">RecvPandaCList");
 	rowattrw = 0.0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
 		RecvString(fp,name);
+printf("[%s]\n",name);
 		sprintf(longname,".%s",name);
 		if		(  ( subWidget = glade_xml_get_widget_by_long_name(ThisXML,label) )
 				   !=  NULL  ) {
@@ -809,7 +811,7 @@ dbgmsg(">RecvPandaCList");
 			}
 		} else
 		if		(  !stricmp(name,"column")  ) {
-			/*	NOP	*/
+			RecvIntegerData(fp,&column);
 		} else
 		if		(  !stricmp(name,"item")  ) {
 			gtkpanda_clist_freeze(GTK_PANDA_CLIST(widget));
@@ -926,6 +928,8 @@ RecvCList(
 	char	**rdata;
 	Bool	fActive;
 	int		state;
+	int		row
+		,	column;
 
 dbgmsg(">RecvCList");
 	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
@@ -958,10 +962,10 @@ dbgmsg(">RecvCList");
 			gtk_widget_set_style(widget,GetStyle(buff));
 		} else
 		if		(  !stricmp(name,"row")  ) {
-			/*	NOP	*/
+			RecvIntegerData(fp,&row);
 		} else
 		if		(  !stricmp(name,"column")  ) {
-			/*	NOP	*/
+			RecvIntegerData(fp,&column);
 		} else
 		if		(  !stricmp(name,"item")  ) {
 			gtk_clist_freeze(GTK_CLIST(widget));
@@ -1358,7 +1362,8 @@ InitWidgetOperations(void)
 {
 	ValueTable = NewNameHash();
 
-	AddClass(GTK_TYPE_ENTRY,RecvEntry,SendEntry);
+	GTK_PANDA_TYPE_CLIST;	/*	for gtk+panda bug	*/
+
 #ifdef	USE_PANDA
 	AddClass(GTK_TYPE_NUMBER_ENTRY,RecvNumberEntry,SendNumberEntry);
 	AddClass(GTK_PANDA_TYPE_COMBO,RecvPandaCombo,NULL);
@@ -1368,6 +1373,7 @@ InitWidgetOperations(void)
 	AddClass(GTK_PANDA_TYPE_PS,RecvPS,SendPS);
 	AddClass(GTK_PANDA_TYPE_TIMER,RecvTimer,SendTimer);
 #endif
+	AddClass(GTK_TYPE_ENTRY,RecvEntry,SendEntry);
 	AddClass(GTK_TYPE_TEXT,RecvText,SendText);
 	AddClass(GTK_TYPE_LABEL,RecvLabel,NULL);
 	AddClass(gtk_combo_get_type (),RecvCombo,NULL);

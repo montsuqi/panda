@@ -2,7 +2,7 @@ all: sample adrs.create
 
 clean:
 	rm -f *.so *~ *.P
-	rm -f LINKAREA SPAAREA DB* SCRAREA.SE
+	rm -f LINKAREA SPAAREA DB* SCRAREA.SE MCPAREA
 
 TOP			=	$(shell pwd)
 TOOLDIR		= 	/home/ogochan/MONTSUQI/panda/tools

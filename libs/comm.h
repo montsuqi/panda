@@ -40,6 +40,8 @@ extern	long			RecvLong(NETFILE *fp);
 extern	void			SendLong(NETFILE *fp,long data);
 extern	int				RecvInt(NETFILE *fp);
 extern	void			SendInt(NETFILE *fp,int data);
+extern	unsigned int	RecvUInt(NETFILE *fp);
+extern	void			SendUInt(NETFILE *fp, unsigned int data);
 extern	int				RecvChar(NETFILE *fp);
 extern	void			SendChar(NETFILE *fp,int data);
 extern	double			RecvFloat(NETFILE *fp);
@@ -58,8 +60,12 @@ extern	void			SendFloatData(NETFILE *fp, PacketDataType type, double val);
 extern	Bool			RecvFloatData(NETFILE *fp, double *val);
 extern	void			SendFixedData(NETFILE *fp, PacketDataType type, Fixed *xval);
 extern	Bool			RecvFixedData(NETFILE *fp, Fixed **xval);
+extern	void			SendObject(NETFILE *fp, MonObjectType *obj);
+extern	void			RecvObject(NETFILE *fp, MonObjectType *obj);
 
 extern	void			InitComm(void);
+
+#define	RecvName(fp,name)	RecvString((fp),(name))
 
 #undef	GLOBAL
 #ifdef	_COMM

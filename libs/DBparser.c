@@ -435,7 +435,8 @@ ENTER_FUNC;
 			break;
 		}
 	}
-	if		(  ret->opt.db->pcount  ==  0  ) {
+	if		(	(  ret->type            ==  RECORD_DB  )
+			&&	(  ret->opt.db->pcount  ==  0          ) ) {
 		ret->opt.db->path = (PathStruct **)xmalloc(sizeof(PathStruct *) * 1);
 		path = InitPathStruct();
 		path->name = StrDup("primary");

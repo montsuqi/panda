@@ -56,7 +56,7 @@
            LINKAREA
            SCRAREA.
        000-MAIN                SECTION.
-           DISPLAY    '*** SAMPLE1'
+           DISPLAY    '*** SAMPLE1 ' MCP-STATUS MCP-EVENT
                UPON    CONSOLE.
       *
            EVALUATE    MCP-STATUS      ALSO    MCP-EVENT
@@ -88,6 +88,8 @@
       *
            PERFORM 800-GET-ADRS.
            MOVE    META-HOST  TO  LIST-KEY.
+           DISPLAY   'META-HOST:[' META-HOST ']'
+               UPON    CONSOLE.
       *
       *    MOVE   'NEW'       TO  MCP-PUTTYPE.
            MOVE    SPACE      TO  MCP-PUTTYPE.

@@ -2,7 +2,7 @@ all: TPDEMO1.so TPDEMO3.so
 
 clean:
 	rm -f *.so *.err *~
-	rm -f LINKAREA SPAAREA SCRAREA.SE
+	rm -f LINKAREA SPAAREA SCRAREA.SE MCPAREA
 
 LDNAME	=	demo1
 SCRREC	=	$(TOP)/project1.rec $(TOP)/project5.rec

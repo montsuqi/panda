@@ -1,3 +1,8 @@
+2004-01-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/widgetOPS.c (InitWidgetOperations): gtk+pandaのバグ回避
+	コード
+
 2004-01-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* include/struct.h: 名称変更(SQL_Operation -> DB_Operation)

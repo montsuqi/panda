@@ -259,6 +259,7 @@ SendValue(
 		SendFixed(fp,&ValueFixed(value));
 		break;
 	  case	GL_TYPE_OBJECT:
+		SendObject(fp,ValueObject(value));
 		break;
 	  case	GL_TYPE_ARRAY:
 		SendInt(fp,ValueArraySize(value));
@@ -408,7 +409,11 @@ dbgmsg(">RecvScreenData");
 					  case	GL_TYPE_DBCODE:
 					  case	GL_TYPE_TEXT:
 						RecvString(fpComm,str);		ON_IO_ERROR(fpComm,badio);
-						SetValueString(value,str,"euc-jp");
+						if		(  fFetureI18N  ) {
+							SetValueString(value,str,NULL);		ON_IO_ERROR(fpComm,badio);
+						} else {
+							SetValueString(value,str,"euc-jp");	ON_IO_ERROR(fpComm,badio);
+						}
 						break;
 					  case	GL_TYPE_NUMBER:
 						xval = RecvFixed(fpComm);	ON_IO_ERROR(fpComm,badio);
