@@ -20,53 +20,53 @@ copies.
 */
 
 /*
-#define	DEBUG
-#define	TRACE
+#define DEBUG
+#define TRACE
 */
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
-#ifdef	HAVE_RUBY
-#include	<signal.h>
-#include	<stdio.h>
-#include	<stdlib.h>
-#include	<string.h>
+#ifdef  HAVE_RUBY
+#include    <signal.h>
+#include    <stdio.h>
+#include    <stdlib.h>
+#include    <string.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
-#include	<fcntl.h>
-#include	<dlfcn.h>
-#include	<sys/time.h>
-#include	<sys/wait.h>
-#include	<unistd.h>
-#include	<ctype.h>
-#include	<pthread.h>
-#include	<glib.h>
+#include    <fcntl.h>
+#include    <dlfcn.h>
+#include    <sys/time.h>
+#include    <sys/wait.h>
+#include    <unistd.h>
+#include    <ctype.h>
+#include    <pthread.h>
+#include    <glib.h>
 
-#include	<ruby.h>
-#include	<env.h>
-#include	<st.h>
+#include    <ruby.h>
+#include    <env.h>
+#include    <st.h>
 
-#include	"types.h"
-#include	"const.h"
-#include	"libmondai.h"
-#include	"comm.h"
-#include	"directory.h"
-#include	"handler.h"
-#include	"defaults.h"
-#include	"enum.h"
-#include	"dblib.h"
-#include	"load.h"
-#include	"dbgroup.h"
-#include	"queue.h"
-#include	"driver.h"
-#include	"apslib.h"
-#include	"debug.h"
+#include    "types.h"
+#include    "const.h"
+#include    "libmondai.h"
+#include    "comm.h"
+#include    "directory.h"
+#include    "handler.h"
+#include    "defaults.h"
+#include    "enum.h"
+#include    "dblib.h"
+#include    "load.h"
+#include    "dbgroup.h"
+#include    "queue.h"
+#include    "driver.h"
+#include    "apslib.h"
+#include    "debug.h"
 
 
 static VALUE application_classes;
-static char	*load_path;
+static char *load_path;
 static char *codeset;
 
 static VALUE mPanda;
@@ -79,15 +79,15 @@ static VALUE cTable;
 static VALUE cDatabase;
 static VALUE eDatabaseError;
 
-#define TAG_RETURN	0x1
-#define TAG_BREAK	0x2
-#define TAG_NEXT	0x3
-#define TAG_RETRY	0x4
-#define TAG_REDO	0x5
-#define TAG_RAISE	0x6
-#define TAG_THROW	0x7
-#define TAG_FATAL	0x8
-#define TAG_MASK	0xf
+#define TAG_RETURN  0x1
+#define TAG_BREAK   0x2
+#define TAG_NEXT    0x3
+#define TAG_RETRY   0x4
+#define TAG_REDO    0x5
+#define TAG_RAISE   0x6
+#define TAG_THROW   0x7
+#define TAG_FATAL   0x8
+#define TAG_MASK    0xf
 
 typedef struct _protect_call_arg {
     VALUE recv;
@@ -113,18 +113,18 @@ rb_protect_funcall(VALUE recv, ID mid, int *state, int argc, ...)
     protect_call_arg arg;
 
     if (argc > 0) {
-	int i;
+    int i;
 
-	argv = ALLOCA_N(VALUE, argc);
+    argv = ALLOCA_N(VALUE, argc);
 
-	va_start(ap, argc);
-	for (i = 0; i < argc; i++) {
-	    argv[i] = va_arg(ap, VALUE);
-	}
-	va_end(ap);
+    va_start(ap, argc);
+    for (i = 0; i < argc; i++) {
+        argv[i] = va_arg(ap, VALUE);
+    }
+    va_end(ap);
     }
     else {
-	argv = 0;
+    argv = 0;
     }
     arg.recv = recv;
     arg.mid = mid;
@@ -162,7 +162,7 @@ get_backtrace(info)
 static void
 error_print()
 {
-    VALUE errat = Qnil;		/* OK */
+    VALUE errat = Qnil;     /* OK */
     volatile VALUE eclass, e;
     char *einfo;
     long elen;
@@ -211,7 +211,7 @@ error_print()
             if (RSTRING(epath)->ptr[0] == '#') epath = 0;
             if (tail = memchr(einfo, '\n', elen)) {
                 len = tail - einfo;
-                tail++;		/* skip newline */
+                tail++;     /* skip newline */
             }
             fprintf(stderr, ": ");
             fwrite(einfo, 1, len, stderr);
@@ -319,15 +319,17 @@ get_value(ValueStruct *val)
 
     if (val == NULL)
         return Qnil;
+    if (IS_VALUE_NIL(val))
+        return Qnil;
     switch (ValueType(val)) {
     case GL_TYPE_BOOL:
-		return ValueBool(val) ? Qtrue : Qfalse;
+        return ValueBool(val) ? Qtrue : Qfalse;
     case GL_TYPE_INT:
-		return INT2NUM(ValueInteger(val));
+        return INT2NUM(ValueInteger(val));
     case GL_TYPE_FLOAT:
-		return rb_float_new(ValueFloat(val));
+        return rb_float_new(ValueFloat(val));
     case GL_TYPE_NUMBER:
-		return bigdecimal_new(val);
+        return bigdecimal_new(val);
     case GL_TYPE_CHAR:
     case GL_TYPE_VARCHAR:
     case GL_TYPE_DBCODE:
@@ -357,44 +359,50 @@ set_value(ValueStruct *value, VALUE obj)
 {
     VALUE class_path, str;
 
-    switch (TYPE(obj)) {
-    case T_TRUE:
-    case T_FALSE:
-        SetValueBool(value, RTEST(obj) ? TRUE : FALSE);
-        break;
-    case T_FIXNUM:
-        SetValueInteger(value, FIX2INT(obj));
-        break;
-    case T_BIGNUM:
-        SetValueInteger(value, NUM2INT(obj));
-        break;
-    case T_FLOAT:
-        SetValueFloat(value, RFLOAT(obj)->value);
-        break;
-    case T_STRING:
-        switch (ValueType(value)) {
-        case GL_TYPE_BYTE:
-        case GL_TYPE_BINARY:
-            SetValueBinary(value, RSTRING(obj)->ptr, RSTRING(obj)->len);
+    if (NIL_P(obj)) {
+        ValueIsNil(value);
+    }
+    else {
+        ValueIsNonNil(value);
+        switch (TYPE(obj)) {
+        case T_TRUE:
+        case T_FALSE:
+            SetValueBool(value, RTEST(obj) ? TRUE : FALSE);
+            break;
+        case T_FIXNUM:
+            SetValueInteger(value, FIX2INT(obj));
+            break;
+        case T_BIGNUM:
+            SetValueInteger(value, NUM2INT(obj));
+            break;
+        case T_FLOAT:
+            SetValueFloat(value, RFLOAT(obj)->value);
+            break;
+        case T_STRING:
+            switch (ValueType(value)) {
+            case GL_TYPE_BYTE:
+            case GL_TYPE_BINARY:
+                SetValueBinary(value, RSTRING(obj)->ptr, RSTRING(obj)->len);
+                break;
+            default:
+                SetValueStringWithLength(value,
+                                         RSTRING(obj)->ptr,
+                                         RSTRING(obj)->len,
+                                         codeset);
+                break;
+            }
             break;
         default:
-            SetValueStringWithLength(value,
-                                     RSTRING(obj)->ptr,
-                                     RSTRING(obj)->len,
-                                     codeset);
+            class_path = rb_class_path(CLASS_OF(obj));
+            if (strcasecmp(StringValuePtr(class_path), "BigDecimal") == 0) {
+                str = rb_funcall(obj, rb_intern("to_s"), 1, rb_str_new2("F"));
+            }
+            else {
+                str = rb_funcall(obj, rb_intern("to_s"), 0);
+            }
+            SetValueString(value, StringValuePtr(str), codeset);
             break;
         }
-        break;
-    default:
-        class_path = rb_class_path(CLASS_OF(obj));
-        if (strcasecmp(StringValuePtr(class_path), "BigDecimal") == 0) {
-            str = rb_funcall(obj, rb_intern("to_s"), 1, rb_str_new2("F"));
-        }
-        else {
-            str = rb_funcall(obj, rb_intern("to_s"), 0);
-        }
-        SetValueString(value, StringValuePtr(str), codeset);
-        break;
     }
 }
 
@@ -465,7 +473,7 @@ aryval_aset(VALUE self, VALUE index, VALUE obj)
     Data_Get_Struct(self, value_struct_data, data);
     val = GetArrayItem(data->value, i);
     if (val == NULL)
-		rb_raise(rb_eIndexError, "index out of range: %d", i);
+        rb_raise(rb_eIndexError, "index out of range: %d", i);
     set_value(val, obj);
     return obj;
 }
@@ -699,7 +707,7 @@ procnode_new(ProcessNode *node)
     data->spa = rec_new(node->sparec);
     data->windows = rb_hash_new();
     for (i = 0; i < node->cWindow; i++) {
-		if (node->scrrec[i] != NULL &&
+        if (node->scrrec[i] != NULL &&
             node->scrrec[i]->value != NULL) {
             VALUE rec = rec_new(node->scrrec[i]);
             rb_hash_aset(data->windows,
@@ -991,10 +999,10 @@ table_exec(int argc, VALUE *argv, VALUE self)
     table_data *data;
     VALUE funcname, pathname, params;
     char *func, *pname;
-	DBCOMM_CTRL ctrl;
-	PathStruct *path;
-	int no;
-	size_t size;
+    DBCOMM_CTRL ctrl;
+    PathStruct *path;
+    int no;
+    size_t size;
     ValueStruct *value;
     VALUE result;
     static VALUE table_path(VALUE self, VALUE name);
@@ -1002,16 +1010,16 @@ table_exec(int argc, VALUE *argv, VALUE self)
     Data_Get_Struct(self, table_data, data);
     rb_scan_args(argc, argv, "12", &funcname, &pathname, &params);
     func = StringValuePtr(funcname);
-    if (argc < 2) {
+    if (NIL_P(pathname)) {
         pname = NULL;
     }
     else {
         pname = StringValuePtr(pathname);
     }
 
-	ctrl.rno = data->no;
-	ctrl.pno = 0;
-	ctrl.blocks = 0;
+    ctrl.rno = data->no;
+    ctrl.pno = 0;
+    ctrl.blocks = 0;
 
     value = RECORD_STRUCT(data)->value;
     result = self;
@@ -1049,8 +1057,8 @@ table_exec(int argc, VALUE *argv, VALUE self)
 
     size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
     ctrl.blocks = ((size + sizeof(DBCOMM_CTRL)) / SIZE_BLOCK) + 1;
-	strcpy(ctrl.func, func);
-	ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
+    strcpy(ctrl.func, func);
+    ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
     if (ctrl.rc == MCP_OK) {
         return result;
     }
@@ -1058,7 +1066,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
         return Qnil;
     }
     else {
-        rb_raise(eDatabaseError, "database error (ctrol.rc=%d)", ctrl.rc);
+        rb_raise(eDatabaseError, "database error (ctrl.rc=%d)", ctrl.rc);
         return Qnil;            /* not reached */
     }
 }
@@ -1069,7 +1077,7 @@ exec_function(char *func, int argc, VALUE *argv, VALUE self)
     int exec_argc = argc + 1;
     VALUE *exec_argv;
 
-	exec_argv = ALLOCA_N(VALUE, exec_argc);
+    exec_argv = ALLOCA_N(VALUE, exec_argc);
     exec_argv[0] = rb_str_new2(func);
     memcpy(exec_argv + 1, argv, sizeof(VALUE) * argc);
     return table_exec(exec_argc, exec_argv, self);
@@ -1278,12 +1286,12 @@ init()
 
     application_classes = rb_hash_new();
     rb_gc_register_address(&application_classes);
-	if (LibPath == NULL) {
+    if (LibPath == NULL) {
         load_path = getenv("APS_RUBY_PATH");
-	}
+    }
     else {
-		load_path = LibPath;
-	}
+        load_path = LibPath;
+    }
     codeset = "utf-8";
 }
 
@@ -1337,7 +1345,7 @@ load_application(char *path, char *name)
 
     class_name = rb_str_new2(name);
     app_class = rb_hash_aref(application_classes, class_name);
-	if (NIL_P(app_class)) {
+    if (NIL_P(app_class)) {
         filename = get_source_filename(name);
         if (NIL_P(filename)) {
             fprintf(stderr, "invalid module name: %s\n", name);
@@ -1351,18 +1359,18 @@ load_application(char *path, char *name)
         if (state && error_handle(state))
             return Qnil;
         rb_hash_aset(application_classes, class_name, app_class);
-	}
-	return app_class;
+    }
+    return app_class;
 }
 
-static	Bool
+static  Bool
 execute_dc(MessageHandler *handler, ProcessNode *node)
 {
-	VALUE app_class;
-	VALUE app;
-	ValueStruct *dc_module_value, *dc_status_value;
+    VALUE app_class;
+    VALUE app;
+    ValueStruct *dc_module_value, *dc_status_value;
     char *dc_module, *dc_status;
-	Bool	rc;
+    Bool    rc;
     int state;
     ID handler_method;
 
@@ -1371,8 +1379,8 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
     dc_module = ValueStringPointer(dc_module_value);
     app_class = load_application(handler->loadpath, dc_module);
     if (NIL_P(app_class)) {
-		fprintf(stderr, "%s is not found\n", dc_module);
-		return FALSE;
+        fprintf(stderr, "%s is not found\n", dc_module);
+        return FALSE;
     }
     dc_status_value = GetItemLongName(node->mcprec->value, "dc.status");
     dc_status = ValueStringPointer(dc_status_value);
@@ -1412,18 +1420,18 @@ ready_dc(MessageHandler *handler)
 static int
 execute_batch(MessageHandler *handler, char *name, char *param)
 {
-	VALUE app_class;
-	VALUE app;
-	char *module_longname;
-	char *module;
-	VALUE rc;
+    VALUE app_class;
+    VALUE app;
+    char *module_longname;
+    char *module;
+    VALUE rc;
     int state;
 
     init();
     app_class = load_application_class(handler->loadpath, name);
     if (NIL_P(app_class)) {
-		fprintf(stderr, "%s is not found.", module);
-		return FALSE;
+        fprintf(stderr, "%s is not found.", module);
+        return FALSE;
     }
 
     app = rb_protect_funcall(app_class, rb_intern("new"), &state, 0);
@@ -1436,30 +1444,30 @@ execute_batch(MessageHandler *handler, char *name, char *param)
     return NUM2INT(rc);
 }
 
-static	void
+static  void
 ready_execute(MessageHandler *handler)
 {
-	if (handler->loadpath == NULL) {
-		handler->loadpath = load_path;
-	}
+    if (handler->loadpath == NULL) {
+        handler->loadpath = load_path;
+    }
 }
 
-static	MessageHandlerClass	Handler = {
-	"Ruby",
-	ready_execute,
-	execute_dc,
-	execute_batch,
-	ready_dc,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
+static  MessageHandlerClass Handler = {
+    "Ruby",
+    ready_execute,
+    execute_dc,
+    execute_batch,
+    ready_dc,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
 };
 
-extern	MessageHandlerClass	*
+extern  MessageHandlerClass *
 Ruby(void)
 {
-	return (&Handler);
+    return (&Handler);
 }
 #endif
