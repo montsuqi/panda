@@ -71,7 +71,7 @@ EnterDB_Function(
 	DB_Func	*func;
 	int		i;
 
-dbgmsg(">EnterDB_Function");
+ENTER_FUNC;
 	dbgprintf("Enter [%s]\n",name); 
 	if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,name) )
 			   ==  NULL  ) {
@@ -86,19 +86,19 @@ dbgmsg(">EnterDB_Function");
 			g_hash_table_insert(func->table,ops[i].name,ops[i].func);
 		}
 	}
-dbgmsg("<EnterDB_Function");
+LEAVE_FUNC;
 	return	(func); 
 }
 
 static	void
 InitDBG(void)
 {
-dbgmsg(">InitDBG");
+ENTER_FUNC;
 	DBMS_Table = NewNameHash();
 	if		(  ( MONDB_LoadPath = getenv("MONDB_LOAD_PATH") )  ==  NULL  ) {
 		MONDB_LoadPath = MONTSUQI_LIBRARY_PATH;
 	}
-dbgmsg("<InitDBG");
+LEAVE_FUNC;
 }
 
 static	void
@@ -112,7 +112,7 @@ SetUpDBG(void)
 	void		*handle;
 	DB_Func		*(*f_init)(void);
 
-dbgmsg(">SetUpDBG");
+ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		dbg->id = i;
@@ -141,7 +141,7 @@ dbgmsg(">SetUpDBG");
 		}
 		dbg->func = func;
 	}
-dbgmsg("<SetUpDBG");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -167,7 +167,7 @@ ExecFunction(
 	DB_FUNC2	func;
 	int			i;
 
-dbgmsg(">ExecFunction");
+ENTER_FUNC;
 #ifdef	DEBUG
 	printf("func  = [%s]\n",name);
 	if		(  dbg  !=  NULL  ) {
@@ -192,7 +192,7 @@ dbgmsg(">ExecFunction");
 			}
 		}
 	}
-dbgmsg("<ExecFunction");
+LEAVE_FUNC;
 	return	(ctrl.rc); 
 }
 
@@ -222,7 +222,7 @@ ExecDB_Process(
 	DBG_Struct		*dbg;
 	int				i;
 
-dbgmsg(">ExecDB_Process");
+ENTER_FUNC;
 #ifdef	DEBUG	
 	printf("func = [%s] %s\n",ctrl->func,(rec == NULL)?"NULL":"rec");
 #endif
@@ -244,7 +244,7 @@ dbgmsg(">ExecDB_Process");
 			(*func)(dbg,ctrl,rec,args);
 		}
 	}
-dbgmsg("<ExecDB_Process");
+LEAVE_FUNC;
 }
 
 static	void
