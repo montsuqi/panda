@@ -185,6 +185,7 @@ dbgmsg("<GetApplication");
 
 static	Bool
 _ExecuteProcess(
+	MessageHandler	*handler,
 	ProcessNode	*node)
 {
 	Bool	rc;
@@ -553,6 +554,7 @@ _ReadyDB(void)
 
 static	int
 _StartBatch(
+	MessageHandler	*handler,
 	char	*name,
 	char	*param)
 {
@@ -583,7 +585,6 @@ dbgmsg("<StartBatch");
 
 static	MessageHandler	Handler = {
 	"dotCOBOL",
-	FALSE,
 	_ExecuteProcess,
 	_StartBatch,
 	_ReadyDC,

@@ -3,13 +3,21 @@ name	sample;
 arraysize	20;
 textsize	200;
 
+handler	"Ruby"	{
+	class	"Exec";
+	serialize	"CGI";
+	start		"/usr/bin/ruby -Ke %p/%m.rb";
+	locale		"euc-jp";
+	encoding	"URL";
+};
+
 # bind <module name> <hander name> ;
 
 #bind	"SAMPLEB"		"dotCOBOL";
 bind	"SAMPLEB"		"OpenCOBOL";
 bind	"say"			"OpenCOBOL";
 bind	"sampleb"		"OpenCOBOL";
-bind	"SAMPLEB.rb"	"Exec";
+#bind	"SAMPLEB"		"Ruby";
 
 db	"ORCA"	{
 	metadb;

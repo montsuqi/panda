@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -60,37 +60,38 @@ static	char	*STATUS[4] = {
 
 static	char	*APS_HandlerLoadPath;
 
-static	GHashTable	*HandlerTable;
+static	GHashTable	*HandlerClassTable;
+
 static	MessageHandlerClass	*
-EnterHandler(
+EnterHandlerClass(
 	char	*name)
 {
 	void			*dlhandle;
-	MessageHandlerClass	*handler;
+	MessageHandlerClass	*klass;
 	MessageHandlerClass	*(*finit)(void);
 	char			filename[SIZE_BUFF];
 
-dbgmsg(">EnterHandler");
-	if		(  ( handler = g_hash_table_lookup(HandlerTable,name) )  ==  NULL  ) {
-		MessagePrintf("%s handler invoke.", name);
+dbgmsg(">EnterHandlerClass");
+	if		(  ( klass = g_hash_table_lookup(HandlerClassTable,name) )  ==  NULL  ) {
+		MessagePrintf("%s handlerClass invoke.", name);
 		sprintf(filename,"%s.so",name);
-		handler = NULL;
+		klass = NULL;
 		if		(  ( dlhandle = LoadFile(APS_HandlerLoadPath,filename) )  !=  NULL  ) {
 			if		(  ( finit = (void *)dlsym(dlhandle,name) )
 					   ==  NULL  )	{
 				MessagePrintf("[%s] is invalid.",name);
 			} else {
-				handler = (*finit)();
-				if		(  g_hash_table_lookup(HandlerTable,name)  ==  NULL  ) {
-					g_hash_table_insert(HandlerTable,name,handler);
+				klass = (*finit)();
+				if		(  g_hash_table_lookup(HandlerClassTable,name)  ==  NULL  ) {
+					g_hash_table_insert(HandlerClassTable,StrDup(name),klass);
 				}
 			}
 		} else {
 			fprintf(stderr,"[%s] not found.\n",name);
 		}
 	}
-dbgmsg("<EnterHandler");
-	return	(handler); 
+dbgmsg("<EnterHandlerClass");
+	return	(klass);
 }
 
 static	void
@@ -102,32 +103,32 @@ dbgmsg(">InitHandler");
 			   ==  NULL  ) {
 		APS_HandlerLoadPath = MONTSUQI_LIBRARY_PATH;
 	}
-	HandlerTable = NewNameHash();
+	HandlerClassTable = NewNameHash();
 }
 
 static	void
 _InitiateHandler(
+	MessageHandler		*handler)
+{
+	MessageHandlerClass	*klass;
+
+	if		(  ( handler->fInit & INIT_LOAD )  ==  0  ) {
+		handler->fInit |= INIT_LOAD;
+		if		(  ( klass = EnterHandlerClass((char *)handler->klass) )  ==  NULL  ) {
+			MessagePrintf("[%s] is invalid handler class.",(char *)handler->klass);
+		} else {
+			handler->klass = klass;
+		}
+	}
+}
+
+static	void
+_OnlineInit(
 	char	*name,
 	WindowBind	*bind,
-	void		*dummy)
+	void	*dummy)
 {
-	MessageHandlerClass	*handler;
-
-	handler = g_hash_table_lookup(HandlerTable,
-								  (char *)bind->handler);
-	if		(  handler  ==  NULL  ) {
-		if		(  ( handler = EnterHandler((char *)bind->handler) )
-				   ==  NULL  ) {
-			MessagePrintf("[%s] is invalid handler.",
-						  (char *)bind->handler);
-		} else {
-			handler->fUse = TRUE;
-			bind->handler = handler;
-		}
-	} else {
-		handler->fUse = TRUE;
-		bind->handler = handler;
-	}
+	_InitiateHandler(bind->handler);
 }
 
 extern	void
@@ -136,70 +137,83 @@ InitiateHandler(void)
 dbgmsg(">InitiateHandler");
 	InitHandler();
 	dbgprintf("LD = [%s]",ThisLD->name);
-	g_hash_table_foreach(ThisLD->whash,(GHFunc)_InitiateHandler,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_OnlineInit,NULL);
 dbgmsg("<InitiateHandler");
 }
 
 static	void
-_Use(
+_BatchInit(
 	char	*name,
 	BatchBind	*bind,
 	void	*dummy)
 {
-	MessageHandlerClass	*handler;
-
-	handler = EnterHandler(bind->handler);
-	handler->fUse = TRUE;
+	_InitiateHandler(bind->handler);
 }
 
 extern	void
 InitiateBatchHandler(void)
 {
-dbgmsg(">InitiateBatchHandler");
+ENTER_FUNC;
 	InitHandler();
-	g_hash_table_foreach(ThisBD->BatchTable,(GHFunc)_Use,NULL);
-dbgmsg("<InitiateBatchHandler");
+	g_hash_table_foreach(ThisBD->BatchTable,(GHFunc)_BatchInit,NULL);
+LEAVE_FUNC;
 }
 
 static	void
 _ReadyDC(
 	char	*name,
-	MessageHandlerClass	*handler,
+	WindowBind	*bind,
 	void	*dummy)
 {
-	if		(  handler->fUse  ) {
-		if		(  handler->ReadyDC  !=  NULL  ) {
-			handler->ReadyDC();
+	MessageHandler	*handler;
+
+	handler = bind->handler;
+ENTER_FUNC;
+	if		(  ( handler->fInit & INIT_READYDC )  ==  0  ) {
+		handler->fInit |= INIT_READYDC;
+		if		(  handler->klass->ReadyDC  !=  NULL  ) {
+			handler->klass->ReadyDC();
 		}
 	}
+LEAVE_FUNC;
 }
 
 extern	void
 ReadyDC(void)
 {
-	g_hash_table_foreach(HandlerTable,(GHFunc)_ReadyDC,NULL);
+ENTER_FUNC;
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyDC,NULL);
+LEAVE_FUNC;
 }
 
-static	void
-_ReadyDB(
-	char	*name,
-	MessageHandlerClass	*handler,
-	void	*dummy)
+extern	void
+ReadyHandlerDB(
+	MessageHandler	*handler)
 {
-	if		(  handler->fUse  ) {
-		if		(  handler->ReadyDB  !=  NULL  ) {
-			handler->ReadyDB();
+	if		(  ( handler->fInit & INIT_READYDB )  ==  0  ) {
+		handler->fInit |= INIT_READYDB;
+		if		(  handler->klass->ReadyDB  !=  NULL  ) {
+			handler->klass->ReadyDB();
 		}
 	}
 }
 
+static	void
+_ReadyOnlineDB(
+	char		*name,
+	WindowBind	*bind,
+	void		*dummy)
+{
+	ReadyHandlerDB(bind->handler);
+}
+
 extern	void
-ReadyDB(void)
+ReadyOnlineDB(void)
 {
 dbgmsg(">ReadyDB");
 	InitDB_Process();
 	ExecDB_Function("DBOPEN",NULL,NULL);
-	g_hash_table_foreach(HandlerTable,(GHFunc)_ReadyDB,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyOnlineDB,NULL);
 dbgmsg("<ReadyDB");
 }
 
@@ -216,6 +230,7 @@ dbgmsg(">CallBefore");
 		   SIZE_STATUS);
 dbgmsg("<CallBefore");
 }
+
 static	void
 CallAfter(
 	ProcessNode	*node)
@@ -331,14 +346,16 @@ ExecuteProcess(
 	ProcessNode	*node)
 {
 	WindowBind	*bind;
+	MessageHandler	*handler;
 	char		*window;
 
 dbgmsg(">ExecuteProcess");
 	window = ValueString(GetItemLongName(node->mcprec->value,"dc.window"));
 	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
+	handler = bind->handler;
 	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteProcess  !=  NULL  ) {
 		CallBefore(node);
-		if		(  !((MessageHandlerClass *)bind->handler)->ExecuteProcess(node)  ) {
+		if		(  !(handler->klass->ExecuteProcess(handler,node))  ) {
 			MessageLog("application process illegular execution");
 			exit(0);
 		}
@@ -348,85 +365,129 @@ dbgmsg("<ExecuteProcess");
 }
 
 static	void
-_StopDC(
-	char	*name,
-	MessageHandlerClass	*handler,
-	void	*dummy)
+StopHandlerDC(
+	MessageHandler	*handler)
 {
-	if		(  handler->fUse  ) {
-		if		(  handler->StopDC  !=  NULL  ) {
-			handler->StopDC();
+	if		(	(  ( handler->fInit & INIT_READYDC )  !=  0  )
+			&&	(  ( handler->fInit & INIT_STOPDC  )  ==  0  ) ) {
+		handler->fInit |= INIT_STOPDC;
+		if		(  handler->klass->StopDC  !=  NULL  ) {
+			handler->klass->StopDC();
 		}
 	}
+}
+
+static	void
+_StopDC(
+	char		*name,
+	WindowBind	*bind,
+	void		*dummy)
+{
+	StopHandlerDC(bind->handler);
 }
 
 extern	void
 StopDC(void)
 {
-	g_hash_table_foreach(HandlerTable,(GHFunc)_StopDC,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_StopDC,NULL);
 }
 
 static	void
-_CleanUp(
-	char	*name,
-	MessageHandlerClass	*handler,
-	void	*dummy)
+CleanUpHandlerDC(
+	MessageHandler	*handler)
 {
-	if		(  handler->fUse  ) {
-		if		(  handler->CleanUpDC  !=  NULL  ) {
-			handler->CleanUpDC();
-		}
-		if		(  ThisLD->cDB  >  0  ) {
-			if		(  handler->CleanUpDB  !=  NULL  ) {
-				handler->CleanUpDB();
-			}
+	if		(	(  ( handler->fInit & INIT_READYDC  )  !=  0  )
+			&&	(  ( handler->fInit & INIT_CLEANDC  )  ==  0  ) ) {
+		handler->fInit |= INIT_CLEANDC;
+		if		(  handler->klass->CleanUpDC  !=  NULL  ) {
+			handler->klass->CleanUpDC();
 		}
 	}
 }
 
-extern	void
-CleanUp(void)
+static	void
+_CleanUpOnlineDC(
+	char		*name,
+	WindowBind	*bind,
+	void		*dummy)
 {
-	g_hash_table_foreach(HandlerTable,(GHFunc)_CleanUp,NULL);
+	CleanUpHandlerDC(bind->handler);
 }
 
-static	void
-_CleanUpDB(
-	char	*name,
-	MessageHandlerClass	*handler,
-	void	*dummy)
+extern	void
+CleanUpOnlineDC(void)
 {
-	if		(  handler->fUse  ) {
-		if		(  handler->CleanUpDB  !=  NULL  ) {
-			handler->CleanUpDB();
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_CleanUpOnlineDC,NULL);
+}
+
+extern	void
+CleanUpHandlerDB(
+	MessageHandler	*handler)
+{
+	if		(	(  ( handler->fInit & INIT_READYDB  )  !=  0  )
+			&&	(  ( handler->fInit & INIT_CLEANDB )  ==  0  ) ) {
+		handler->fInit |= INIT_CLEANDB;
+		if		(  handler->klass->CleanUpDB  !=  NULL  ) {
+			handler->klass->CleanUpDB();
 		}
 	}
 }
 
-extern	void
-CleanUpDB(void)
+static	void
+_CleanUpOnlineDB(
+	char		*name,
+	WindowBind	*bind,
+	void		*dummy)
 {
-	g_hash_table_foreach(HandlerTable,(GHFunc)_CleanUpDB,NULL);
+	CleanUpHandlerDB(bind->handler);
 }
 
-static	void
-_StopDB(
-	char	*name,
-	MessageHandlerClass	*handler,
-	void	*dummy)
+extern	void
+CleanUpOnlineDB(void)
 {
-	if		(  handler->fUse  ) {
-		if		(  handler->StopDB  !=  NULL  ) {
-			handler->StopDB();
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_CleanUpOnlineDB,NULL);
+}
+
+extern	void
+StopHandlerDB(
+	MessageHandler	*handler)
+{
+	if		(	(  ( handler->fInit & INIT_READYDB )  !=  0  )
+			&&	(  ( handler->fInit & INIT_STOPDB  )  ==  0  ) ) {
+		handler->fInit |= INIT_STOPDB;
+		if		(  handler->klass->StopDB  !=  NULL  ) {
+			handler->klass->StopDB();
 		}
 	}
 }
 
+static	void
+_StopOnlineDB(
+	char		*name,
+	WindowBind	*bind,
+	void		*dummy)
+{
+	StopHandlerDB(bind->handler);
+}
+
 extern	void
-StopDB(void)
+StopOnlineDB(void)
 {
 	ExecDB_Function("DBDISCONNECT",NULL,NULL);
-	g_hash_table_foreach(HandlerTable,(GHFunc)_StopDB,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_StopOnlineDB,NULL);
+}
+
+static	void
+CleanUpDC(
+	MessageHandler	*handler)
+{
+	if		(	(  ( handler->fInit & INIT_READYDC  )  !=  0  )
+			&&	(  ( handler->fInit & INIT_CLEANDC )  ==  0  ) ) {
+		handler->fInit |= INIT_CLEANDC;
+		if		(  handler->klass->CleanUpDC  !=  NULL  ) {
+			handler->klass->CleanUpDC();
+		}
+	}
 }
 
 extern	int
@@ -434,7 +495,7 @@ StartBatch(
 	char	*name,
 	char	*para)
 {
-	MessageHandlerClass	*handler;
+	MessageHandler	*handler;
 	BatchBind		*bind;
 	int		rc;
 
@@ -443,16 +504,12 @@ dbgmsg(">StartBatch");
 		fprintf(stderr,"%s application is not in BD.\n",name);
 		exit(1);
 	}
-	if		(  ( handler = g_hash_table_lookup(HandlerTable,bind->handler) )  !=  NULL  ) {
-		if		(  handler->StartBatch  !=  NULL  ) {
-			rc = handler->StartBatch(name,para);
-		} else {
-			rc = -1;
-			fprintf(stderr,"%s is handler not support batch.\n",name);
-		}
+	handler = bind->handler;
+	if		(  handler->klass->StartBatch  !=  NULL  ) {
+		rc = handler->klass->StartBatch(handler,name,para);
 	} else {
-		fprintf(stderr,"%s application is not in BD.\n",name);
-		exit(1);
+		rc = -1;
+		fprintf(stderr,"%s is handler not support batch.\n",name);
 	}
 dbgmsg("<StartBatch");
 	return	(rc);

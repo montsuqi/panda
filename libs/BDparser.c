@@ -50,6 +50,7 @@ copies.
 #include	"debug.h"
 
 static	Bool	fError;
+static	GHashTable	*Handler;
 
 #define	GetSymbol	(BD_Token = BD_Lex(FALSE))
 #define	GetName		(BD_Token = BD_Lex(TRUE))
@@ -119,6 +120,102 @@ dbgmsg(">ParDB");
 	}
 	xfree(gname);
 dbgmsg("<ParDB");
+}
+
+static	MessageHandler	*
+NewMessageHandler(
+	char	*name,
+	char	*klass)
+{
+	MessageHandler	*handler;
+
+	handler = New(MessageHandler);
+	handler->name = StrDup(name);
+	handler->klass = (MessageHandlerClass *)klass;
+	handler->serialize = NULL;
+	handler->opt = New(CONVOPT);
+	handler->opt->encode = STRING_ENCODING_URL;
+	handler->start = NULL;
+	handler->fInit = 0;
+	g_hash_table_insert(Handler,handler->name,handler);
+
+	return	(handler);
+}
+
+static	void
+ParHANDLER(void)
+{
+	MessageHandler	*handler;
+
+ENTER_FUNC;
+GetSymbol; 
+	if		(	(  BD_Token  ==  T_SYMBOL  )
+			||	(  BD_Token  ==  T_SCONST  ) ) {
+		if		(  g_hash_table_lookup(Handler,BD_ComSymbol)  ==  NULL  ) {
+			handler = NewMessageHandler(BD_ComSymbol,NULL);
+		} else {
+			Error("handler name duplicate");
+		}
+		if		(  GetSymbol  ==  '{'  ) {
+			while	(  GetSymbol  !=  '}'  ) {
+				switch	(BD_Token) {
+				  case	T_CLASS:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->klass = (MessageHandlerClass *)StrDup(BD_ComSymbol);
+					} else {
+						Error("class must be string.");
+					}
+					break;
+				  case	T_SERIALIZE:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->serialize = (ConvFuncs *)StrDup(BD_ComSymbol);
+					} else {
+						Error("serialize method must be string.");
+					}
+					break;
+				  case	T_START:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->start = StrDup(BD_ComSymbol);
+					} else {
+						Error("start parameter must be string.");
+					}
+					break;
+				  case	T_LOCALE:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->opt->locale = StrDup(BD_ComSymbol);
+					} else {
+						Error("locale name must be string.");
+					}
+					break;
+				  case	T_ENCODING:
+					if		(  GetName   ==  T_SCONST  ) {
+						if		(  !stricmp(BD_ComSymbol,"URL")  ) {
+							handler->opt->encode = STRING_ENCODING_URL;
+						} else
+						if		(  !stricmp(BD_ComSymbol,"BASE64")  ) {
+							handler->opt->encode = STRING_ENCODING_BASE64;
+						} else {
+							Error("unsupported string encoding");
+						}
+					} else {
+						Error("string encoding must be string.");
+					}
+					break;
+				  default:
+					Error("handler parameter(s)");
+					break;
+				}
+				if		(  GetSymbol  !=  ';'  ) {
+					Error("parameter ; missing");
+				}
+			}
+		} else {
+			Error("invalid char");
+		}
+	} else {
+		Error("invalid handler name");
+	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -204,6 +301,9 @@ dbgmsg(">ParBD");
 		  case	T_BIND:
 			ParBIND(ret);
 			break;
+		  case	T_HANDLER:
+			ParHANDLER();
+			break;
 		  default:
 			Error("syntax error 3");
 			break;
@@ -214,6 +314,29 @@ dbgmsg(">ParBD");
 	}
 dbgmsg("<ParBD");
 	return	(ret);
+}
+
+static	void
+_BindHandler(
+	char	*name,
+	BatchBind	*bind,
+	void		*dummy)
+{
+	MessageHandler	*handler;
+
+	if		(  ( handler = (MessageHandler *)g_hash_table_lookup(Handler,
+																 (char *)bind->handler) )  !=  NULL  ) {
+		bind->handler = handler;
+	} else {
+		Error("invalid handler name");
+	}
+}
+
+static	void
+BindHandler(
+	BD_Struct	*bd)
+{
+	g_hash_table_foreach(bd->BatchTable,(GHFunc)_BindHandler,NULL);
 }
 
 extern	BD_Struct	*
@@ -235,6 +358,8 @@ dbgmsg(">BD_Parser");
 			fclose(BD_File);
 			if		(  fError  ) {
 				ret = NULL;
+			} else {
+				BindHandler(ret);
 			}
 		} else {
 			Error("BD file not found");
@@ -247,39 +372,33 @@ dbgmsg("<BD_Parser");
 	return	(ret);
 }
 
+static	void
+EnterDefaultHandler(void)
+{
+	MessageHandler	*handler;
+
+	handler = NewMessageHandler("OpenCOBOL","OpenCOBOL");
+	handler->serialize = (ConvFuncs *)"OpenCOBOL";
+	handler->opt->locale = "euc-jp";
+	handler->start = "";
+
+	handler = NewMessageHandler("dotCOBOL","dotCOBOL");
+	handler->serialize = (ConvFuncs *)"dotCOBOL";
+	handler->opt->locale = "euc-jp";
+	handler->start = "";
+
+	handler = NewMessageHandler("C","C");
+	handler->serialize = (ConvFuncs *)"";
+	handler->opt->locale = "";
+	handler->start = "";
+}
+
 extern	void
 BD_ParserInit(void)
 {
 	BD_LexInit();
 	BD_Table = NewNameHash();
+	Handler = NewNameHash();
+	EnterDefaultHandler();
 }
 
-#ifdef	MAIN
-char	*RecordDir;
-#include	"DDparser.h"
-extern	int
-main(
-	int		argc,
-	char	**argv)
-{
-	BD_Struct	*ret;
-	int			i;
-
-	ThisScreen = NewScreenData();
-	RecordDir = "../record";
-
-	DD_ParserInit();
-	BD_ParserInit();
-	ret = BD_Parser("../lddef/demo.ld");
-
-	printf("name = [%s]\n",ret->name);
-	printf("cmd  = [%s]\n",ret->cmd);
-	printf("spa  = [%d]\n",ret->spasize);
-	for	( i = 0 ; i < ret->cWindow ; i ++ ) {
-		printf("-----\n");
-		DumpValueStruct(ret->data[i]);
-	}
-		
-	return	(0);
-}
-#endif

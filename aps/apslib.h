@@ -24,6 +24,7 @@ copies.
 
 #include	"const.h"
 #include	<libmondai.h>
+#include	"struct.h"
 #include	"enum.h"
 
 #define	MCP_PUT_NULL		0
@@ -35,33 +36,6 @@ copies.
 #define	MCP_PUT_JOIN		6
 #define	MCP_PUT_FORK		7
 #define	MCP_PUT_EXIT		8
-
-#ifndef	CloseWindows
-typedef	struct {
-	size_t	n;
-	struct {
-		char	window[SIZE_NAME];
-	}	close[15];
-}	_CloseWindows;
-#define	CloseWindows	_CloseWindows
-#endif
-
-typedef	struct _ProcessNode	{
-	char		term[SIZE_TERM+1]
-	,			user[SIZE_USER+1];
-	char		*window
-	,			*widget
-	,			*event
-	,			*pstatus;
-	RecordStruct	*mcprec;
-	RecordStruct	*linkrec;
-	RecordStruct	*sparec;
-	RecordStruct	**scrrec;
-	size_t		cWindow;
-	GHashTable	*whash;
-	size_t		textsize;
-	CloseWindows	w;
-}	ProcessNode;
 
 extern	int			MCP_PutWindow(ProcessNode *node, char *wname, int type);
 extern	RecordStruct	*MCP_GetWindowRecord(ProcessNode *node, char *name);

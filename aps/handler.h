@@ -21,38 +21,25 @@ copies.
 #ifndef	_HANDLER_H
 #define	_HANDLER_H
 
-#include	"BDparser.h"
-#include	"DBparser.h"
-#include	"LDparser.h"
-
+#include	"struct.h"
 #include	"apslib.h"
 #include	"dblib.h"
-
-typedef	struct {
-	char	*name;
-	Bool	fUse;
-	Bool	(*ExecuteProcess)(ProcessNode *);
-	int		(*StartBatch)(char *name, char *param);
-	/*	DC function	*/
-	void	(*ReadyDC)(void);
-	void	(*StopDC)(void);
-	void	(*CleanUpDC)(void);
-	/*	DB function	*/
-	void	(*ReadyDB)(void);
-	void	(*StopDB)(void);
-	void	(*CleanUpDB)(void);
-}	MessageHandlerClass;
 
 extern	void	InitiateHandler(void);
 extern	void	InitiateBatchHandler(void);
 extern	void	ReadyDC(void);
-extern	void	ReadyDB(void);
+extern	void	ReadyHandlerDB(MessageHandler *handler);
+extern	void	ReadyOnlineDB(void);
 extern	void	ExecuteProcess(ProcessNode *node);
 extern	void	StopDC(void);
-extern	void	CleanUp(void);
-extern	void	StopDB(void);
-extern	void	CleanUpDB(void);
+extern	void	StopHandlerDB(MessageHandler *handler);
+extern	void	StopOnlineDB(void);
+extern	void	CleanUpHandlerDB(MessageHandler *handler);
+extern	void	CleanUpOnlineDB(void);
+extern	void	CleanUpOnlineDC(void);
+
 extern	int		StartBatch(char *name, char *para);
+
 extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);
 extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);
 extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);

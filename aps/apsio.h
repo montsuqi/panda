@@ -24,8 +24,8 @@ copies.
 #include	"const.h"
 #include	"enum.h"
 #include	"libmondai.h"
+#include	"struct.h"
 #include	"net.h"
-#include	"LDparser.h"
 
 #undef	GLOBAL
 #ifdef	MAIN

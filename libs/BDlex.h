@@ -36,6 +36,13 @@ copies.
 #define	T_DB			(YYBASE +8)
 #define	T_BIND			(YYBASE +9)
 
+#define	T_HANDLER		(YYBASE +10)
+#define	T_CLASS			(YYBASE +11)
+#define	T_SERIALIZE		(YYBASE +12)
+#define	T_START			(YYBASE +13)
+#define	T_LOCALE		(YYBASE +14)
+#define	T_ENCODING		(YYBASE +15)
+
 #ifdef	_BD_PARSER
 #define	GLOBAL	/*	*/
 #else

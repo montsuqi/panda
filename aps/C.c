@@ -61,14 +61,13 @@ static	GHashTable	*ApplicationTable;
 
 static	void	_ReadyDC(void);
 static	void	_StopDC(void);
-static	Bool	_ExecuteProcess(ProcessNode *node);
+static	Bool	_ExecuteProcess(MessageHandler *handler, ProcessNode *node);
 static	void	_ReadyDB(void);
 static	void	_StopDB(void);
-static	int		_StartBatch(char *name, char *param);
+static	int		_StartBatch(MessageHandler *handler, char *name, char *param);
 
 static	MessageHandlerClass	Handler = {
 	"C",
-	FALSE,
 	_ExecuteProcess,
 	_StartBatch,
 	_ReadyDC,
@@ -106,6 +105,7 @@ dbgmsg("<GetApplication");
 
 static	Bool
 _ExecuteProcess(
+	MessageHandler	*handler,
 	ProcessNode	*node)
 {
 	int		(*apl)(ProcessNode *);
@@ -171,6 +171,7 @@ _ReadyDB(void)
 
 static	int
 _StartBatch(
+	MessageHandler	*handler,
 	char	*name,
 	char	*param)
 {

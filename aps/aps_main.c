@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -81,6 +81,8 @@ dbgmsg(">InitSystem");
 	if		(  ThisLD->home  !=  NULL  ) {
 		chdir(ThisLD->home);
 	}
+	ThisBD = NULL;
+	ThisDBD = NULL;
 
 	InitiateHandler();
 	ThisDB = ThisLD->db;
@@ -92,7 +94,7 @@ dbgmsg(">InitSystem");
 	}
 	ReadyDC();
 	if		(  ThisLD->cDB  >  0  ) {
-		ReadyDB();
+		ReadyOnlineDB();
 	}
 dbgmsg("<InitSystem");
 }
@@ -224,9 +226,10 @@ StopProcess(
 	int		ec)
 {
 dbgmsg(">StopProcess");
-	ExecDB_Function("DBDISCONNECT",NULL,NULL);
+	StopOnlineDB(); 
+	CleanUpOnlineDB(); 
 	StopDC();
-	CleanUp();
+	CleanUpOnlineDC();
 dbgmsg("<StopProcess");
 	exit(ec);
 }

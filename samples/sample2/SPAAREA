@@ -1,2 +1,2 @@
         01  SPAAREA.
-            02  FILLER  PIC S9(9)   BINARY.
+            02  SPA-DUMMY   PIC X(2).

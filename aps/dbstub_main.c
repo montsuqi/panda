@@ -57,6 +57,8 @@ copies.
 static	char	*Directory;
 static	char	*CommandParameter;
 static	char	*BD_Name;
+static	BatchBind	*Bind;
+		
 
 static	void
 InitData(
@@ -69,7 +71,8 @@ dbgmsg("<InitData");
 }
 
 extern	void
-InitSystem(void)
+InitSystem(
+	char	*name)
 {
 dbgmsg(">InitSystem");
 	InitData(BD_Name);
@@ -78,12 +81,19 @@ dbgmsg(">InitSystem");
 		exit(1);
 	}
 	ThisLD = NULL;
+	ThisDBD = NULL;
 	InitiateBatchHandler();
 	ThisDB = ThisBD->db;
 	DB_Table = ThisBD->DB_Table;
 	TextSize = ThisBD->textsize;
+	if		(  ( Bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
+		fprintf(stderr,"%s application is not in BD.\n",name);
+		exit(1);
+	}
 	if		(  ThisBD->cDB  >  0  ) {
-		ReadyDB();
+		InitDB_Process();
+		ExecDB_Function("DBOPEN",NULL,NULL);
+		ReadyHandlerDB(Bind->handler);
 	}
 dbgmsg("<InitSystem");
 }
@@ -105,8 +115,11 @@ StopProcess(
 	int		ec)
 {
 dbgmsg(">StopProcess");
-	StopDB();
-	CleanUpDB();
+	if		(  ThisBD->cDB  >  0  ) {
+		ExecDB_Function("DBDISCONNECT",NULL,NULL);
+		StopHandlerDB(Bind->handler);
+		CleanUpHandlerDB(Bind->handler);
+	}
 dbgmsg("<StopProcess");
 	exit(ec);
 }
@@ -170,13 +183,14 @@ main(
 	SetDefault();
 	fl = GetOption(option,argc,argv);
 	InitMessage("dbstub",NULL);
+	InitNET();
 
 	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(  BD_Name  ==  NULL  ) {
 		fprintf(stderr,"BD名が指定されていません\n");
 		exit(1);
 	}
-	InitSystem();
+	InitSystem(fl->name);
 	rc = ExecuteSubProcess(fl->name);
 	StopProcess(0);
 	return	(rc);

@@ -22,6 +22,7 @@ copies.
 #ifndef	_INC_DB_PARSER_H
 #define	_INC_DB_PARSER_H
 #include	<glib.h>
+#include	"struct.h"
 
 #undef	GLOBAL
 #ifdef	_DB_PARSER
@@ -29,15 +30,6 @@ copies.
 #else
 #define	GLOBAL		extern
 #endif
-
-typedef	struct {
-	char		*name;
-	size_t		arraysize
-	,			textsize;
-	size_t		cDB;
-	GHashTable	*DB_Table;
-	RecordStruct	**db;
-}	DBD_Struct;
 
 GLOBAL	GHashTable	*DBD_Table;
 

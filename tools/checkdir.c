@@ -199,6 +199,40 @@ dbgmsg("<DumpRecord");
 }
 
 static	void
+_DumpHandler(
+	char	*name,
+	WindowBind	*bind,
+	void	*dummy)
+{
+	MessageHandler		*handler;
+
+	handler = bind->handler;
+
+	if		(  ( handler->fInit & INIT_LOAD )  ==  0  ) {
+		handler->fInit |= INIT_LOAD;
+		printf("\thandler\t\"%s\"\t{\n",handler->name);
+		printf("\t\tclass     \"%s\";\n",(char *)handler->klass);
+		printf("\t\tselialize \"%s\";\n",(char *)handler->serialize);
+		printf("\t\tlocale    \"%s\";\n",handler->opt->locale);
+		printf("\t\tstart     \"%s\";\n",handler->start);
+		printf("\t\tencoding  ");
+		switch	(handler->opt->encode) {
+		  case	STRING_ENCODING_URL:
+			printf("\"URL\";\n");
+			break;
+		  case	STRING_ENCODING_BASE64:
+			printf("\"BASE64\";\n");
+			break;
+		  default:
+			printf("\"NULL\";\n");
+			break;
+		}
+			
+		printf("\t};\n");
+	}
+}
+
+static	void
 DumpLD(
 	LD_Struct	*ld)
 {
@@ -209,11 +243,13 @@ dbgmsg(">DumpLD");
 	printf("\tgroup     = [%s]\n",ld->group);
 	printf("\tarraysize = %d\n",ld->arraysize);
 	printf("\ttextsize  = %d\n",ld->textsize);
-	printf("\twindow %d\n",ld->cWindow);
+
+	g_hash_table_foreach(ld->whash,(GHFunc)_DumpHandler,NULL);
+
 	for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-		printf("\t\t[%s]\t[%s]\t[%s]\n",
+		printf("\tbind\t\"%s\"\t\"%s\"\t\"%s\";\n",
 			   ld->window[i]->name,
-			   (char *)ld->window[i]->handler,
+			   ld->window[i]->handler->name,
 			   ld->window[i]->module);
 	}
 	printf("\tcDB       = %d\n",ld->cDB);
@@ -232,6 +268,9 @@ DumpBD(
 	printf("name      = [%s]\n",bd->name);
 	printf("\tarraysize = %d\n",bd->arraysize);
 	printf("\ttextsize  = %d\n",bd->textsize);
+
+	g_hash_table_foreach(bd->BatchTable,(GHFunc)_DumpHandler,NULL);
+
 	printf("\tcDB       = %d\n",bd->cDB);
 	for	( i = 1 ; i < bd->cDB ; i ++ ) {
 		DumpRecord(bd->db[i]);

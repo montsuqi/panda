@@ -22,35 +22,7 @@ copies.
 #ifndef	_INC_LD_PARSER_H
 #define	_INC_LD_PARSER_H
 #include	<glib.h>
-#include	"const.h"
-#include	"libmondai.h"
-
-typedef	struct {
-	char			*name;
-	void			*handler;
-	char			*module;
-	int				ix;
-	RecordStruct	*rec;
-}	WindowBind;
-
-typedef	struct {
-	char		*name;
-	char		*group;
-	char		*home;
-	size_t		arraysize
-	,			textsize;
-	int			nCache;
-	size_t		cDB;
-	GHashTable	*DB_Table;
-	RecordStruct	**db;
-	size_t		nports;
-	Port		**ports;
-	Port		*wfc;
-	RecordStruct	*sparec;
-	size_t		cWindow;
-	WindowBind	**window;
-	GHashTable	*whash;
-}	LD_Struct;
+#include	"struct.h"
 
 #undef	GLOBAL
 #ifdef	_LD_PARSER

@@ -6,5 +6,6 @@
               03  ADR-OFFICE  PIC X(64).
             02  ADR-TOLL    PIC S9(4)V9(1).
             02  ADR-WEIGHT  PIC S9(4)V9(1).
-            02  ADR-ADDRESS PIC X(80)   OCCURS  3 TIMES.
+            02  ADR-ADDRESS
+                    PIC X(80)   OCCURS  3 TIMES.
             02  ADR-INFO    PIC X(2000).

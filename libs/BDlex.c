@@ -59,6 +59,14 @@ static	struct	{
 	{	"textsize"	,T_TEXTSIZE	},
 	{	"db"		,T_DB		},
 	{	"bind"		,T_BIND		},
+
+	{	"handler"	,T_HANDLER	},
+	{	"class"		,T_CLASS	},
+	{	"serialize"	,T_SERIALIZE},
+	{	"start"		,T_START	},
+	{	"locale"	,T_LOCALE	},
+	{	"encoding"	,T_ENCODING	},
+
 	{	""			,0	}
 };
 

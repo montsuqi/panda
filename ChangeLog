@@ -1,3 +1,8 @@
+2003-09-04  OGOSHI  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.c, libs/BDparse.c, aps/handler.c: 一部ハンドラを定
+	義可能にした
+
 2003-09-03  OGOSHI  <ogochan@nurs.or.jp>
 
 	* aps/handler.h: 型名変更(MessageHandler -> MessageHandlerClass)

@@ -49,6 +49,7 @@ copies.
 
 static	Bool	fError;
 static	GHashTable	*Windows;
+static	GHashTable	*Handler;
 
 #define	GetSymbol	(LD_Token = LD_Lex(FALSE))
 #define	GetName		(LD_Token = LD_Lex(TRUE))
@@ -243,6 +244,102 @@ dbgmsg(">ParDATA");
 dbgmsg("<ParDATA");
 }
 
+static	MessageHandler	*
+NewMessageHandler(
+	char	*name,
+	char	*klass)
+{
+	MessageHandler	*handler;
+
+	handler = New(MessageHandler);
+	handler->name = StrDup(name);
+	handler->klass = (MessageHandlerClass *)klass;
+	handler->serialize = NULL;
+	handler->opt = New(CONVOPT);
+	handler->opt->encode = STRING_ENCODING_URL;
+	handler->start = NULL;
+	handler->fInit = 0;
+	g_hash_table_insert(Handler,handler->name,handler);
+
+	return	(handler);
+}
+
+static	void
+ParHANDLER(void)
+{
+	MessageHandler	*handler;
+
+ENTER_FUNC;
+	GetSymbol; 
+	if		(	(  LD_Token  ==  T_SYMBOL  )
+			||	(  LD_Token  ==  T_SCONST  ) ) {
+		if		(  g_hash_table_lookup(Handler,LD_ComSymbol)  ==  NULL  ) {
+			handler = NewMessageHandler(LD_ComSymbol,NULL);
+		} else {
+			Error("handler name duplicate");
+		}
+		if		(  GetSymbol  ==  '{'  ) {
+			while	(  GetSymbol  !=  '}'  ) {
+				switch	(LD_Token) {
+				  case	T_CLASS:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->klass = (MessageHandlerClass *)StrDup(LD_ComSymbol);
+					} else {
+						Error("class must be string.");
+					}
+					break;
+				  case	T_SERIALIZE:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->serialize = (ConvFuncs *)StrDup(LD_ComSymbol);
+					} else {
+						Error("serialize method must be string.");
+					}
+					break;
+				  case	T_START:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->start = StrDup(LD_ComSymbol);
+					} else {
+						Error("start parameter must be string.");
+					}
+					break;
+				  case	T_LOCALE:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->opt->locale = StrDup(LD_ComSymbol);
+					} else {
+						Error("locale name must be string.");
+					}
+					break;
+				  case	T_ENCODING:
+					if		(  GetName   ==  T_SCONST  ) {
+						if		(  !stricmp(LD_ComSymbol,"URL")  ) {
+							handler->opt->encode = STRING_ENCODING_URL;
+						} else
+						if		(  !stricmp(LD_ComSymbol,"BASE64")  ) {
+							handler->opt->encode = STRING_ENCODING_BASE64;
+						} else {
+							Error("unsupported string encoding");
+						}
+					} else {
+						Error("string encoding must be string.");
+					}
+					break;
+				  default:
+					Error("handler parameter(s)");
+					break;
+				}
+				if		(  GetSymbol  !=  ';'  ) {
+					Error("parameter ; missing");
+				}
+			}
+		} else {
+			Error("invalid char");
+		}
+	} else {
+		Error("invalid handler name");
+	}
+LEAVE_FUNC;
+}
+
 static	void
 ParBIND(
 	LD_Struct	*ret)
@@ -369,6 +466,9 @@ dbgmsg(">ParLD");
 		  case	T_BIND:
 			ParBIND(ret);
 			break;
+		  case	T_HANDLER:
+			ParHANDLER();
+			break;
 		  default:
 			Error("invalid directive");
 			break;
@@ -379,6 +479,29 @@ dbgmsg(">ParLD");
 	}
 dbgmsg("<ParLD");
 	return	(ret);
+}
+
+static	void
+_BindHandler(
+	char	*name,
+	WindowBind	*bind,
+	void		*dummy)
+{
+	MessageHandler	*handler;
+
+	if		(  ( handler = (MessageHandler *)g_hash_table_lookup(Handler,
+																 (char *)bind->handler) )  !=  NULL  ) {
+		bind->handler = handler;
+	} else {
+		Error("invalid handler name");
+	}
+}
+
+static	void
+BindHandler(
+	LD_Struct	*ld)
+{
+	g_hash_table_foreach(ld->whash,(GHFunc)_BindHandler,NULL);
 }
 
 extern	LD_Struct	*
@@ -401,6 +524,8 @@ dbgmsg(name);
 			fclose(LD_File);
 			if		(  fError  ) {
 				ret = NULL;
+			} else {
+				BindHandler(ret);
 			}
 		} else {
 			printf("[%s]\n",name);
@@ -414,11 +539,33 @@ dbgmsg("<LD_Parser");
 	return	(ret);
 }
 
+static	void
+EnterDefaultHandler(void)
+{
+	MessageHandler	*handler;
+
+	handler = NewMessageHandler("OpenCOBOL","OpenCOBOL");
+	handler->serialize = (ConvFuncs *)"OpenCOBOL";
+	handler->opt->locale = "euc-jp";
+	handler->start = "";
+
+	handler = NewMessageHandler("dotCOBOL","dotCOBOL");
+	handler->serialize = (ConvFuncs *)"dotCOBOL";
+	handler->opt->locale = "euc-jp";
+	handler->start = "";
+
+	handler = NewMessageHandler("C","C");
+	handler->serialize = (ConvFuncs *)"";
+	handler->opt->locale = "";
+	handler->start = "";
+}
+
 extern	void
 LD_ParserInit(void)
 {
 	LD_LexInit();
 	LD_Table = NewNameHash();
 	Windows = NewNameHash();
+	Handler = NewNameHash();
+	EnterDefaultHandler();
 }
-

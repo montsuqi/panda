@@ -76,7 +76,12 @@ class PandaCore
 	end
   end
   def [](name)
-	@values[name];
+	if @values[name]
+	  @values[name];
+	else
+	  $stderr.printf("[%s] undefined APS variable\n",name);
+	  "";
+	end
   end
   def clear(rec)
 	@values.each { | key, value |

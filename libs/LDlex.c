@@ -68,6 +68,14 @@ static	struct	{
 	{	"multiplex_group"	,T_MGROUP		},
 	{	"bind"		,T_BIND		},
 	{	"wfc"		,T_WFC		},
+
+	{	"handler"	,T_HANDLER	},
+	{	"class"		,T_CLASS	},
+	{	"serialize"	,T_SERIALIZE},
+	{	"start"		,T_START	},
+	{	"locale"	,T_LOCALE	},
+	{	"encoding"	,T_ENCODING	},
+
 	{	""			,0	}
 };
 

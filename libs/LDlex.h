@@ -46,6 +46,13 @@ copies.
 #define	T_WFC			(YYBASE +19)
 #define	T_CACHE			(YYBASE +20)
 
+#define	T_HANDLER		(YYBASE +21)
+#define	T_CLASS			(YYBASE +22)
+#define	T_SERIALIZE		(YYBASE +23)
+#define	T_START			(YYBASE +24)
+#define	T_LOCALE		(YYBASE +25)
+#define	T_ENCODING		(YYBASE +26)
+
 #undef	GLOBAL
 #ifdef	_LD_PARSER
 #define	GLOBAL	/*	*/

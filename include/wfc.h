@@ -22,7 +22,7 @@ copies.
 #ifndef	_INC_WFC_H
 #define	_INC_WFC_H
 #include	"queue.h"
-#include	"LDparser.h"
+#include	"struct.h"
 #include	"net.h"
 
 #ifndef	PacketClass
@@ -47,15 +47,6 @@ copies.
 #define	APS_OK			(PacketClass)0xFE
 #define	APS_END			(PacketClass)0xFF
 
-#ifndef	CloseWindows
-typedef	struct {
-	size_t	n;
-	struct {
-		char	window[SIZE_NAME];
-	}	close[15];
-}	_CloseWindows;
-#define	CloseWindows	_CloseWindows
-#endif
 
 typedef	struct {
 	NETFILE	*fp;

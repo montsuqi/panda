@@ -66,10 +66,11 @@ static	NETFILE		*fpDBR
 static	RecordStruct	*recDBCTRL;
 
 static	pthread_t		_DB_Thread;
-static	pthread_cond_t	condDB;
-static	pthread_mutex_t	lockDB;
 
 static	LargeByteString	*iobuff;
+
+#define	DBIN_FILENO		3
+#define	DBOUT_FILENO	4
 
 static	void
 DumpNode(
@@ -103,7 +104,10 @@ dbgmsg(">ExecuteDB_Server");
 	while	(TRUE) {
 		dbgmsg("read");
 		LBS_EmitStart(dbbuff);
+dbgmsg("*");
+printf("%p\n",fpDBR);
 		RecvLargeString(fpDBR,dbbuff);		ON_IO_ERROR(fpDBR,badio);
+dbgmsg("**");
 		ConvSetRecName(DbConv,recDBCTRL->name);
 		InitializeValue(recDBCTRL->value);
 		CGI_UnPackValue(DbConv,LBS_Body(dbbuff),recDBCTRL->value);
@@ -290,11 +294,48 @@ SignalHandler(
 	longjmp(SubError,1);
 }
 
-#define	DBIN_FILENO		3
-#define	DBOUT_FILENO	4
+extern	void
+ExpandStart(
+	char	*line,
+	char	*start,
+	char	*path,
+	char	*module,
+	char	*param)
+{
+	char	*p
+	,		*q;
+
+	p = start;
+	q = line;
+
+	while	(  *p  !=  0  ) {
+		if		(  *p  ==  '%'  ) {
+			p ++;
+			switch	(*p) {
+			  case	'm':
+				q += sprintf(q,"%s",module);
+				break;
+			  case	'p':
+				q += sprintf(q,"%s",path);
+				break;
+			  case	'a':
+				q += sprintf(q,"%s",param);
+				break;
+			  default:
+				*q ++ = *p;
+				break;
+			}
+		} else {
+			*q ++ = *p;
+		}
+		p ++;
+	}
+	*q = 0;
+}
 
 static	Bool
 _ExecuteProcess(
+	MessageHandler	*handler,
 	ProcessNode	*node)
 {
 	char	*module;
@@ -303,16 +344,19 @@ _ExecuteProcess(
 	,		pAPW[2]
 	,		pDBR[2]
 	,		pDBW[2];
-	char	buff[SIZE_LONGNAME+1];
 	Bool	rc;
 	NETFILE	*fpAPR
 	,		*fpAPW;
+	char	line[SIZE_BUFF]
+	,		**cmd;
 
 
 dbgmsg(">ExecuteProcess");
 	signal(SIGPIPE, SignalHandler);
 	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
-	sprintf(buff,"%s/%s",ExecPath,module);
+	ExpandStart(line,handler->start,ExecPath,module,"");
+	cmd = ParCommandLine(line);
+
 	if		(  pipe(pAPR)  !=  0  ) {
 		perror("pipe");
 		exit(1);
@@ -343,7 +387,7 @@ dbgmsg(">ExecuteProcess");
 			close(pDBW[1]);
 			close(pDBR[0]);
 			close(pDBR[1]);
-			execl(buff,buff,NULL);
+			execv(cmd[0],cmd);
 		} else {
 			fpAPR = FileToNet(pAPR[0]);
 			close(pAPR[1]);
@@ -364,7 +408,6 @@ dbgmsg(">ExecuteProcess");
 		CloseNet(fpAPR);
 		CloseNet(fpDBW);
 		CloseNet(fpDBR);
-		fpDBR = NULL;
 		rc = TRUE;
 	} else {
 		rc = FALSE;
@@ -416,13 +459,17 @@ _CleanUpDC(void)
 static	void
 _ReadyDB(void)
 {
+ENTER_FUNC;
 	recDBCTRL = BuildDBCTRL();
 	DbConv = NewConvOpt();
 	dbbuff = NewLBS();
+LEAVE_FUNC;
 }
+
 
 static	int
 _StartBatch(
+	MessageHandler	*handler,
 	char	*name,
 	char	*param)
 {
@@ -432,6 +479,8 @@ _StartBatch(
 	char	line[SIZE_BUFF]
 	,		**cmd;
 	int		rc;
+	int		pAPR[2]
+	,		pAPW[2];
 
 dbgmsg(">StartBatch");
 	signal(SIGPIPE, SignalHandler);
@@ -439,6 +488,14 @@ dbgmsg(">StartBatch");
 		ExecPath = getenv("APS_EXEC_PATH");
 	} else {
 		ExecPath = LibPath;
+	}
+	if		(  pipe(pAPR)  !=  0  ) {
+		perror("pipe");
+		exit(1);
+	}
+	if		(  pipe(pAPW)  !=  0  ) {
+		perror("pipe");
+		exit(1);
 	}
 	if		(  pipe(pDBR)  !=  0  ) {
 		perror("pipe");
@@ -448,11 +505,17 @@ dbgmsg(">StartBatch");
 		perror("pipe");
 		exit(1);
 	}
-	sprintf(line,"%s/%s %s",ExecPath, name, param);
+	ExpandStart(line,handler->start,ExecPath,name,param);
 	cmd = ParCommandLine(line);
 
 	if		(  setjmp(SubError)  ==  0  ) {
 		if		(  ( pid = fork() )  ==  0  ) {
+			dup2(pAPW[0],STDIN_FILENO);
+			dup2(pAPR[1],STDOUT_FILENO);
+			close(pAPW[0]);
+			close(pAPW[1]);
+			close(pAPR[0]);
+			close(pAPR[1]);
 			dup2(pDBW[0],DBIN_FILENO);
 			dup2(pDBR[1],DBOUT_FILENO);
 			close(pDBW[0]);
@@ -461,16 +524,18 @@ dbgmsg(">StartBatch");
 			close(pDBR[1]);
 			execv(cmd[0],cmd);
 		} else {
+			close(pAPR[1]);
+			close(pAPW[0]);
 			fpDBR = FileToNet(pDBR[0]);
 			close(pDBR[1]);
 			fpDBW = FileToNet(pDBW[1]);
 			close(pDBW[0]);
-			pthread_cond_signal(&condDB);
-			(void)wait(&pid);
-			CloseNet(fpDBW);
-			CloseNet(fpDBR);
-			fpDBR = NULL;
+			StartDB();
 		}
+		(void)wait(&pid);
+		CancelDB();
+		CloseNet(fpDBW);
+		CloseNet(fpDBR);
 		rc = TRUE;
 	} else {
 		rc = FALSE;
@@ -481,7 +546,6 @@ dbgmsg("<StartBatch");
 
 static	MessageHandlerClass	Handler = {
 	"Exec",
-	FALSE,
 	_ExecuteProcess,
 	_StartBatch,
 	_ReadyDC,
