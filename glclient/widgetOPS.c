@@ -1683,21 +1683,20 @@ ENTER_FUNC;
 	vh = (int)had->value;
 	vv = (int)vad->value;
 
-	v = GetValue(name);
+	if		(  ( v = GetValue(name) )  !=  NULL  ) {
+		dbgprintf("%s.hpos = %d\n",v->ValueName,vh);
+		dbgprintf("%s.vpos = %d\n",v->ValueName,vv);
 
-	dbgprintf("%s.hpos = %d\n",v->ValueName,vh);
-	dbgprintf("%s.vpos = %d\n",v->ValueName,vv);
+		GL_SendPacketClass(fp,GL_ScreenData);
+		sprintf(iname,"%s.hpos",v->ValueName);
+		GL_SendName(fp,iname);
+		SendIntegerData(fp,v->type,vh);
 
-	GL_SendPacketClass(fp,GL_ScreenData);
-	sprintf(iname,"%s.hpos",v->ValueName);
-	GL_SendName(fp,iname);
-	SendIntegerData(fp,v->type,vh);
-
-	GL_SendPacketClass(fp,GL_ScreenData);
-	sprintf(iname,"%s.vpos",v->ValueName);
-	GL_SendName(fp,iname);
-	SendIntegerData(fp,v->type,vv);
-dbgmsg("*");
+		GL_SendPacketClass(fp,GL_ScreenData);
+		sprintf(iname,"%s.vpos",v->ValueName);
+		GL_SendName(fp,iname);
+		SendIntegerData(fp,v->type,vv);
+	}
 LEAVE_FUNC;
 	return	(TRUE);
 }
