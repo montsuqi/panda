@@ -252,6 +252,7 @@ dbgmsg(">HTCParser");
 			ret = NULL;
 		}
 	} else {
+        fprintf(stderr, "HTC file not found: %s\n", name);
 		ret = NULL;
 	}
 dbgmsg("<HTCParser");
