@@ -65,13 +65,13 @@ copies.
 //#define	TEST_READWRITE1
 //#define	TEST_SEEK1
 //#define	TEST_SEEK2
-#define	TEST_SEEK3
+//#define	TEST_SEEK3
 //#define	TEST_READWRITE2
 //#define	TEST_DESTROY2
 //#define	TEST_TRANSACTION
-#if	BLOB_VERSION == 2
+//#if	BLOB_VERSION == 2
 //#define	TEST_SHORT
-#endif
+//#endif
 
 extern	int
 main(

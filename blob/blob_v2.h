@@ -52,8 +52,6 @@ copies.
 #define	ReadBLOB			ReadObject
 #endif
 
-#include	"oseki.h"
-
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/

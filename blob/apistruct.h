@@ -52,6 +52,7 @@ typedef	struct _OsekiSpace	{
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
 	ObjectType		root;
+	ObjectType		xobj;
 	struct {
 		pthread_mutex_t	mutex;
 		pthread_cond_t	cond;
