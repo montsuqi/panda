@@ -3,15 +3,20 @@ MONPLS_OBJECTS	=	\
 	demo.la		\
 	demo2.la	\
 	demo3.la	\
-	demo4.la
+	demo4.la	\
+	demo5.la
+
 demo_la_LDFLAGS		=	-module -export-dynamic
 demo2_la_LDFLAGS	=	-module -export-dynamic
 demo3_la_LDFLAGS	=	-module -export-dynamic
 demo4_la_LDFLAGS	=	-module -export-dynamic
+demo5_la_LDFLAGS	=	-module -export-dynamic
+
 demo_la_SOURCES		=	demo.c
 demo2_la_SOURCES	=	demo2.c
 demo3_la_SOURCES	=	demo3.c
 demo4_la_SOURCES	=	demo4.c
+demo5_la_SOURCES	=	demo5.c
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
