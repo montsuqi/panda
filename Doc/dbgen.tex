@@ -1,0 +1,58 @@
+\section{copygen}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt dbgen} - DB定義体からcreate文を生成する
+
+\ititle{書式}
+
+\begin{verbatim}
+dbgen <OPTIONS> <DB定義体名>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt dbgen}はDB定義体からcreate tableのSQL文を生成するコマンドである。
+結果は標準出力に出る。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-create}
+	DB定義体からcreate tableのSQL文を生成する。
+	デフォルトはOFF。
+
+	\option{-textsize}
+	不定長文字列を固定長にする時の長さ。レコード定義から生成する時に有効
+	となる(それ以外だと実行環境定義の値を使う)。
+	デフォルトは100
+
+	\option{-arraysize}
+	不定長配列を固定長にする時の要素数。レコード定義から生成する時に有
+	効となる(それ以外だと実行環境定義の値を使う)。
+	デフォルトは10
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは起動したカレントディレクトリ
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+dbgen -create sample.db
+\end{verbatim}
+sample.dbを元に生成する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+\ititle{注意}
+
+\end{function}
+

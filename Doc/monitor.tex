@@ -1,0 +1,106 @@
+\section{monitor}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt monitor} - wfc, aps, dbredirectorの一括起動監視プログラム
+
+\ititle{書式}
+
+\begin{verbatim}
+monitor <OPTIONS>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt monitor}はwfc, aps, dbredirectorを環境定義体等の定義に従って起動
+し、異常終了等の検出すると再起動を行う。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-ApsPath}
+	apsのコマンドパスを指定する。
+	デフォルトは\verb|/usr/local/panda/bin/aps|。
+
+	\option{-wfcPath}
+	wfcのコマンドパスを指定する。
+	デフォルトは\verb|/usr/local/panda/bin/wfc|。
+
+	\option{-RedPath}
+	dbredirectorのコマンドパスを指定する。
+	デフォルトは\verb|/usr/local/panda/bin/dbredirector|。
+
+	\option{-myhost}
+	プログラムが起動されるホスト名を指定する。これは分散環境でのプロセ
+	ス起動を行う時に利用される。
+	デフォルトはlocalhost。
+
+	\option{-redirector}
+	dbredirectorを起動する。
+	デフォルトでは起動しない。
+
+	\option{-restart}
+	プロセス監視を行い、プロセス異常終了時には出来る限りの再起動を行う。
+	デフォルトでは監視しない。
+
+	\option{-log}
+	ログを取得する。現在のところプロセス起動のコマンドラインのログが取
+	得される。
+	デフォルトでは取得しない。
+
+	\option{-dir}
+	環境定義体のファイル名を指定する。
+	デフォルトは\verb|./directory|
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-lddir}
+	LD定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-bddir}
+	バッチ定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-q}
+	プロセスの起動をする時に\verb|-?|を指定する。全てのプログラムは、
+	\verb|-?|が指定されると、有効になったコマンドパラメータの表示を行っ
+	て終了する。すなわち、このパラメータを指定すると、実際に指定された
+	パラメータがどうなっているか知ることが出来る。
+	デフォルトはOFF。
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+monitor -ApsPath ~/panda/aps/aps -WfcPath ~/panda/wfc/wfc -dir ~/panda/samples/sample2/directory -restart
+
+\end{verbatim}
+\verb|~/panda/samples/sample2/directory|を参照して、必要なプロセスを起
+動する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+wfc, aps, dbredirector
+
+\ititle{注意}
+
+このコマンドが有効に使われるためには、個々のプロセスが環境定義体を上書
+きするパラメータの指定なしで起動出来る程度に設定されていなければならな
+い。
+
+{\tt -restart}が指定されていると、アプリケーションが異常終了してもリカ
+バリするが、デバッグ時にこのオプションが指定されていると、虫の発見に支
+障をきたす危険があるので、このオプションを指定するのは、実際の運用になっ
+てからの方が望ましい。
+
+\end{function}
+

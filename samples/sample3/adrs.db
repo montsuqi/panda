@@ -1,0 +1,119 @@
+adrs	{
+	name	char(40);
+	tel		char(13);
+	mail	{
+		home	char(64);
+		office	char(64);
+	};
+	toll	number(5,1);
+	weight	number(5,1);
+	address	char(80)[3];
+	info	varchar(2000);
+};
+
+primary	{
+	name;
+};
+
+path	tel	{
+	DBSELECT	{
+		DECLARE adrs_tel_csr CURSOR FOR
+		SELECT	*
+			WHERE
+				tel = :tel
+		;
+	};
+};
+
+path	mail	{
+	DBSELECT	{
+		DECLARE adrs_mail_csr CURSOR FOR
+		SELECT
+#				*
+				name,
+				tel,
+				mail.home,
+				mail.office,
+				toll,
+				weight,
+				address
+			FROM adrs
+			WHERE
+				mail.home like :mail.home
+			ORDER BY
+				name
+		;
+	};
+	DBFETCH	{
+		FETCH FROM adrs_mail_csr
+			INTO
+#				:*
+				:name,
+				:tel,
+				:mail.home,
+				:mail.office,
+				:toll,
+				:weight,
+				:address
+		;
+	};
+	DBUPDATE	{
+		UPDATE adrs
+			SET
+				tel = :tel,
+				weight = :weight,
+				address = :address
+			WHERE
+				adrs.name = :name;
+	};
+	DBDELETEINSERT	{
+		DELETE	FROM	adrs
+			WHERE
+				adrs.name = :name
+		;
+		INSERT	INTO	adrs
+			(
+				name,
+				mail.home,
+				mail.office,
+				toll,
+				weight,
+				address
+			)
+			VALUES	(
+				:name,
+				:mail.home,
+				:mail.office,
+				:toll,
+				:weight,
+				:address
+			)
+		;
+	};
+	DBINSERT	{
+		INSERT	INTO	adrs
+			(
+				name,
+				mail.home,
+				mail.office,
+				toll,
+				weight,
+				address
+			)
+			VALUES	(
+				:name,
+				:mail.home,
+				:mail.office,
+				:toll,
+				:weight,
+				:address
+			)
+		;
+	};
+	DBDELETE	{
+		DELETE	FROM	adrs
+			WHERE
+				adrs.name = :name
+		;
+	};
+};

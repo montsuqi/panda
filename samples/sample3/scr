@@ -1,0 +1,6 @@
+../tools/copygen -dir ./directory -lddir . -record . ./samplespa.rec -name SPAAREA -prefix spa- > SAMPLE-SPA
+../tools/copygen -dir ./directory -lddir . -record . sample -screen -wprefix -name scrarea > SAMPLE-SCREEN
+
+../tools/copygen -dir ./directory -lddir . -record . -ldw sample  > LDWFILE
+../tools/copygen -dir ./directory -lddir . -record . -ldr sample  > LDRFILE
+

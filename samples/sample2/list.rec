@@ -1,0 +1,17 @@
+list	{
+	fixed1	{
+		key	{
+			value	varchar(30);
+		};
+		clist1	{
+			count	int;
+			item	{
+				value1	char(12);
+				value2	char(12);
+				value3	char(12);
+				value4	char(12);
+			}	[20];
+			select	bool[20];
+		};
+	};
+};

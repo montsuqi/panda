@@ -1,0 +1,114 @@
+project1	{
+	vbox1	{
+		entry1	{
+			style	varchar(20);
+			state	int;
+			value	varchar(30);
+		};
+		entry2	{
+			style	varchar(20);
+			value	number(10,2);
+		};
+		entry3	{
+			style	varchar(20);
+			value	varchar(30);
+		};
+		combo1	{
+			name		{
+				style	varchar(20);
+				value	varchar(28);
+			};
+			count		int;
+			item		varchar(28)[20];
+		};
+		swin1	{
+			clist1	{
+				label1	{
+					style	varchar(20);
+					value	varchar(10);
+				};
+				label2	{
+					style	varchar(20);
+					value	varchar(10);
+				};
+				label3	{
+					style	varchar(20);
+					value	varchar(10);
+				};
+				count	int;
+				from	int;
+				item	{
+					value1	varchar(20);
+					value2	varchar(20);
+					value3	varchar(20);
+				}	[20];
+				select	bool[20];
+			};
+		};
+		togglebutton1	{
+			value		bool;
+			style		varchar(20);
+			label		varchar(20);
+		};
+		hbox5	{
+			checkleft	{
+				value	bool;
+			};
+			checkright	{
+				value	bool;
+			};
+			checknone	{
+				value	bool;
+			};
+		};
+		hbox6	{
+			radioleft	{
+				value	bool;
+			};
+			radioright	{
+				value	bool;
+			};
+			radionone	{
+				value	bool;
+			};
+		};
+		swin2	{
+			vp1	{
+				list1	{
+					count		int;
+					from		int;
+					item		varchar(30)[20];
+					select		bool[20];
+				};
+			};
+		};
+		notebook1	{
+			pageno	int;
+			swin3	{
+				text1	{
+					value	varchar(200);
+				};
+			};
+			entry4	{
+				value	number(10,2);
+			};
+			swin4	{
+				clist2	{
+					label14	{
+						value	varchar(10);
+					};
+					label15	{
+						value	varchar(10);
+					};
+					count	int;
+					item	{
+						value1	varchar(10);
+						value2	varchar(20);
+					}	[20];
+					select	bool[20];
+				};
+			};
+		};
+	};
+};
+

@@ -1,0 +1,7 @@
+./configure <configure options>
+	--with-opencobol	use OpenCOBOL application handler
+	--with-dotcobol		use dotCOBOL application handler
+	--with-postgres		use PostgreSQL DB handler
+
+make all
+make install

@@ -1,0 +1,525 @@
+/*	PANDA -- a simple transaction monitor
+
+Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+
+This module is part of PANDA.
+
+	PANDA is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY.  No author or distributor accepts responsibility
+to anyone for the consequences of using it or for whether it serves
+any particular purpose or works at all, unless he says so in writing.
+Refer to the GNU General Public License for full details. 
+
+	Everyone is granted permission to copy, modify and redistribute
+PANDA, but only under the conditions described in the GNU General
+Public License.  A copy of this license is supposed to have been given
+to you along with PANDA so you can know your rights and
+responsibilities.  It should be in a file named COPYING.  Among other
+things, the copyright notice and this notice must be preserved on all
+copies. 
+*/
+
+#define	DEBUG
+#define	TRACE
+/*
+*/
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<signal.h>
+#include	<string.h>
+#include    <sys/types.h>
+#include    <sys/socket.h>
+#include	<fcntl.h>
+#include	<ctype.h>
+#include	<sys/time.h>
+#include	<sys/wait.h>
+#include	<sys/stat.h>
+#include	<unistd.h>
+#include	<glib.h>
+
+#include	"types.h"
+#include	"enum.h"
+#include	"misc.h"
+#include	"tcp.h"
+#include	"value.h"
+#include	"glterm.h"
+#include	"comm.h"
+#include	"authstub.h"
+#include	"applications.h"
+#include	"driver.h"
+#include	"htserver.h"
+#include	"dirs.h"
+#include	"trid.h"
+#include	"front.h"
+#include	"debug.h"
+
+static	GHashTable	*SesHash;
+static	int			cSession;
+
+typedef	struct	{
+	int		sock;
+	int		ses;
+	int		count;
+	int		pid;
+}	HTC_Node;
+
+static	void
+HT_SendString(
+	int		fd,
+	char	*str)
+{
+#ifdef	DEBUG
+	printf(">>[%s]\n",str);
+#endif
+	write(fd,str,strlen(str));
+}
+
+static	int
+HT_RecvChar(
+	int		fd)
+{
+	char	c;
+	int		ret;
+
+	if		(  read(fd,&c,1)  ==  1  ) {
+		ret = c;
+	} else {
+		ret = -1;
+	}
+	return	(ret);
+}
+
+static	void
+HT_RecvString(
+	int		fd,
+	size_t	size,
+	char	*str)
+{
+#ifdef	DEBUG
+	char	*p = str;
+#endif
+
+	while	(  ( *str ++ = HT_RecvChar(fd) )  !=  '\n' );
+	*str -- = 0;
+	while	(	(  *str  ==  '\r'  )
+			||	(  *str  ==  '\n'  ) ) {
+		*str = 0;
+		str --;
+	}
+#ifdef	DEBUG
+	printf("<<[%s]\n",p);
+#endif
+}
+
+static	void
+FinishSession(
+	ScreenData	*scr)
+{
+dbgmsg(">FinishSession");
+	ReleasePool(NULL);
+	printf("session end\n");
+dbgmsg("<FinishSession");
+}
+
+static	void
+DecodeString(
+	char	*q,
+	char	*p)
+{
+	int		del;
+
+	del = 0;
+	while	(	(  *p  !=  del  )
+			&&	(  *p  !=  0    ) ) {
+		switch	(*p) {
+		  case	'"':
+			del = '"';
+			break;
+		  case	'\\':
+			p ++;
+			switch	(*p) {
+			  case	'n':
+				*q ++ = '\n';
+				break;
+			  default:
+				*q ++ = *p;
+				break;
+			}
+			q ++;
+			break;
+		  default:
+			*q ++ = *p;
+			break;
+		}
+		p ++;
+	}
+	*q = 0;			
+}
+
+static	void
+DecodeName(
+	char	*wname,
+	char	*vname,
+	char	*p)
+{
+	while	(  isspace(*p)  )	p ++;
+	while	(	(  *p  !=  0     )
+			&&	(  *p  !=  '.'   )
+			&&	(  !isspace(*p)  ) ) {
+		*wname ++ = *p ++;
+	}
+	*wname = 0;
+	p ++;
+	while	(  isspace(*p)  )	p ++;
+	while	(  *p  !=  0  ) {
+		if		(  !isspace(*p)  ) {
+			*vname ++ = *p;
+		}
+		p ++;
+	}
+	*vname = 0;
+}
+
+static	void
+SendWindowName(
+	int			fd,
+	ScreenData	*scr)
+{
+	void
+	SendWindow(
+		char		*wname,
+		WindowData	*win,
+		int			fd)
+	{
+		if		(  win->PutType  !=  SCREEN_NULL  ) {
+			switch	(win->PutType) {
+			  case	SCREEN_CURRENT_WINDOW:
+			  case	SCREEN_NEW_WINDOW:
+			  case	SCREEN_CHANGE_WINDOW:
+				//SendInt(fpComm,win->PutType);
+				HT_SendString(fd,"Window: ");
+				HT_SendString(fd,wname);
+				HT_SendString(fd,"\n");
+				break;
+			  default:
+				break;
+			}
+			win->PutType = SCREEN_NULL;
+		}
+	}
+dbgmsg(">SendWindowName");
+	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fd);
+	HT_SendString(fd,"\n");
+dbgmsg("<SendWindowName");
+}
+
+static	void
+WriteClient(
+	int			fd,
+	ScreenData	*scr)
+{
+	char	buff[SIZE_BUFF+1];
+	char	vname[SIZE_BUFF+1]
+	,		wname[SIZE_BUFF+1];
+	WindowData	*win;
+	ValueStruct	*value;
+
+dbgmsg(">WriteClient");
+	SendWindowName(fd,scr);
+	do {
+		HT_RecvString(fd,SIZE_BUFF,buff);
+		if		(  *buff  !=  0  ) {
+			DecodeName(wname,vname,buff);
+			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
+				value = GetItemLongName(win->Value,vname);
+				HT_SendString(fd,ToString(value));
+			}
+			HT_SendString(fd,"\n");
+		}
+	}	while	(  *buff  !=  0  );
+dbgmsg("<WriteClient");
+}
+
+static	void
+RecvScreenData(
+	int			fd,
+	ScreenData	*scr)
+{
+	char	buff[SIZE_BUFF+1];
+	char	vname[SIZE_BUFF+1]
+	,		wname[SIZE_BUFF+1]
+	,		str[SIZE_BUFF+1];
+	char	*p;
+	WindowData	*win;
+	ValueStruct	*value;
+
+	do {
+		HT_RecvString(fd,SIZE_BUFF,buff);
+		if		(	(  *buff                     !=  0     )
+				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
+			*p = 0;
+			DecodeName(wname,vname,buff);
+			p ++;
+			while	(  isspace(*p)  )	p ++;
+			DecodeString(str,p);
+			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
+				value = GetItemLongName(win->Value,vname);
+				value->fUpdate = TRUE;
+				SetValueString(value,str);
+#ifdef	DEBUG
+				printf("--\n");
+				DumpValueStruct(value);
+				printf("--\n");
+#endif
+			}
+		}
+	}	while	(  *buff  !=  0  );
+}
+
+static	void
+SesServer(
+	ScreenData	*scr,
+	int		sock)
+{
+	struct	msghdr	msg;
+	struct	cmsghdr	*cmsg;
+	struct	iovec	vec;
+	int		fd;
+	char	buff[SIZE_BUFF+1];
+	char	trid[SIZE_SESID+1];
+	char	*p;
+	HTC_Node	htc;
+	fd_set		ready;
+	struct	timeval	timeout;
+
+dbgmsg(">SesServer");
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	vec.iov_base = &htc;
+	vec.iov_len = sizeof(HTC_Node);
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	cmsg = (struct cmsghdr *)xmalloc(sizeof(struct cmsghdr) + sizeof(int));
+	cmsg->cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
+	msg.msg_control = cmsg;
+	msg.msg_controllen = cmsg->cmsg_len;
+	do {
+		FD_ZERO(&ready);
+		FD_SET(sock,&ready);
+		timeout.tv_sec = Expire;
+		timeout.tv_usec = 0;
+		select(sock+1,&ready,NULL,NULL,&timeout);
+		if		(  FD_ISSET(sock,&ready)  ) {
+			recvmsg(sock,&msg,0);
+			dbgmsg("session");
+			memcpy(&fd,CMSG_DATA(cmsg),sizeof(int));
+			memcpy(&htc,vec.iov_base,sizeof(HTC_Node));
+			htc.count += 1;
+			EncodeTRID(trid,htc.ses,htc.count);
+			HT_SendString(fd,trid);
+			HT_SendString(fd,"\n");
+			HT_RecvString(fd,SIZE_BUFF,buff);
+			if		(  *buff  ==  0  )	{
+				close(fd);
+				break;
+			}
+			if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
+				*p = 0;
+				strcpy(scr->event,buff);
+				strcpy(scr->widget,p+1);
+			} else {
+				strcpy(scr->widget,"");
+				strcpy(scr->event,buff);
+			}
+			RecvScreenData(fd,scr);
+			ApplicationsCall(APL_SESSION_GET,scr);
+			while	(  scr->status  ==  APL_SESSION_LINK  ) {
+				ApplicationsCall(scr->status,scr);
+			}
+			if		(  scr->status  !=  APL_SESSION_NULL  ) {
+				WriteClient(fd,scr);
+			}
+			close(fd);
+		}
+	}	while	(  FD_ISSET(sock,&ready)  );
+	close(sock);
+dbgmsg("<SesServer");
+}
+
+static	void
+ChildProcess(
+	int		fd,
+	int		sock,
+	int		sesid,
+	char	*arg)
+{
+	char	*user
+	,		*cmd;
+	char	*p;
+	Bool	fOk;
+	ScreenData	*scr;
+	char	trid[SIZE_SESID+1];
+
+dbgmsg(">ChildProcess");
+	if		(  *arg  ==  0  ) {
+		user = "";
+		cmd = "";
+	} else 
+	if		(  ( p = strchr(arg,'\t') )  !=  NULL  ) {
+		*p = 0;
+		cmd = arg;
+		p ++;
+		user = p;
+	} else {
+		cmd = arg;
+		user = "";
+	}
+	
+	scr = InitSession();
+	strcpy(scr->cmd,cmd);
+	strcpy(scr->user,user);
+#ifdef	DEBUG
+	printf("user = [%s]\n",user);
+	printf("cmd  = [%s]\n",cmd);
+#endif
+	scr->Windows = NULL;
+	ApplicationsCall(APL_SESSION_LINK,scr);
+	if		(  scr->status  ==  APL_SESSION_NULL  ) {
+		HT_SendString(fd,"900 invalid program\n");
+		g_warning("reject client(program name error)");
+		fOk = FALSE;
+	} else {
+		g_warning("go!!");
+		fOk = TRUE;
+	}
+	if		(  fOk  ) {
+		EncodeTRID(trid,sesid,0);
+		HT_SendString(fd,trid);
+		HT_SendString(fd,"\n");
+		WriteClient(fd,scr);
+		strcpy(scr->term,TermName(0));
+		close(fd);
+		SesServer(scr,sock);
+		FinishSession(scr);
+	} else {
+		close(fd);
+	}
+dbgmsg("<ChildProcess");
+}
+
+static	void
+NewSession(
+	int		fd,
+	char	*arg)
+{
+	HTC_Node	*htc;
+	int		pid;
+	int		socks[2];
+
+dbgmsg(">NewSession");
+	if		(  socketpair(PF_UNIX, SOCK_STREAM, 0, socks)  !=  0  ) {
+		fprintf(stderr,"make unix domain socket fail.\n");
+		exit(1);
+	}
+	if		(  ( pid = fork() )  ==  0  ) {
+		close(socks[0]);
+		ChildProcess(fd,socks[1],cSession,arg);
+		exit(0);
+	} else {
+		close(socks[1]);
+		htc = New(HTC_Node);
+		htc->sock = socks[0];
+		htc->pid = pid;
+		htc->ses = cSession;
+		htc->count = 0;
+		g_int_hash_table_insert(SesHash,htc->ses,htc);
+		cSession += (rand()>>16)+1;		/*	some random number	*/
+	}
+dbgmsg("<NewSession");
+}
+
+extern	void
+ExecuteServer(void)
+{
+	int		fd
+	,		_fd;
+	char	buff[SIZE_BUFF+1];
+	int			ses
+	,			count;
+	HTC_Node	*htc;
+	struct	msghdr	msg;
+	struct	cmsghdr	*cmsg;
+	struct	iovec	vec;
+
+dbgmsg(">ExecuteServer");
+	signal(SIGCHLD,SIG_IGN);
+	signal(SIGPIPE,SIG_IGN);
+
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	cmsg = (struct cmsghdr *)xmalloc(sizeof(struct cmsghdr) + sizeof(int));
+	cmsg->cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+
+	_fd = InitServerPort(PortNumber,Back);
+	while	(TRUE)	{
+		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
+			printf("_fd = %d\n",_fd);
+			Error("INET Domain Accept");
+		}
+		HT_RecvString(fd,SIZE_BUFF,buff);
+		if		(  strncmp(buff,"Start:",6)  ==  0  ) {
+			NewSession(fd,buff+7);
+		} else
+		if		(  strncmp(buff,"Session:",8)  ==  0  ) {
+			DecodeTRID(&ses,&count,buff+9);
+			printf("[%d:%d]\n",ses,count);
+			if		(  (  htc = g_int_hash_table_lookup(SesHash,ses) )  !=  NULL  ) {
+				htc->count = count;
+				vec.iov_base = htc;
+				vec.iov_len = sizeof(HTC_Node);
+				memcpy(CMSG_DATA(cmsg),&fd,sizeof(int));
+				msg.msg_iov = &vec;
+				msg.msg_iovlen = 1;
+				msg.msg_control = cmsg;
+				msg.msg_controllen = cmsg->cmsg_len;
+				if		(  sendmsg(htc->sock,&msg,0)  <  0  ) {
+					EncodeTRID(buff,0,0);
+					HT_SendString(fd,buff);
+					HT_SendString(fd,"\n");
+					xfree(htc);
+					g_hash_table_remove(SesHash,(void *)ses);
+				}
+			} else {
+				shutdown(fd, 2);
+			}
+		} else {
+		}
+		close(fd);
+	}
+dbgmsg("<ExecuteServer");
+}
+
+static	void
+InitData(void)
+{
+dbgmsg(">InitData");
+	SesHash = NewIntHash();
+	cSession = abs(rand());	/*	set some random number	*/
+dbgmsg("<InitData");
+}
+
+extern	void
+InitSystem(void)
+{
+dbgmsg(">InitSystem");
+	InitData();
+	ApplicationsInit();
+dbgmsg("<InitSystem");
+}

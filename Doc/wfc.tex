@@ -1,0 +1,79 @@
+\section{wfc}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt wfc} - ワークフローコントローラ
+
+\ititle{書式}
+
+\begin{verbatim}
+wfc <OPTIONS>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt wfc}はワークフローコントローラの本体である。
+デーモンとして動かす。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-port}
+	プレゼンテーションサーバからの接続待機用ポート番号。
+	デフォルトは9000。
+
+	\option{-apsport}
+	アプリケーションサーバからの接続待機用ポート番号。
+	デフォルトは9001。
+
+	\option{-back}
+	接続待ちキュー長。
+	デフォルトは5。
+
+	\option{-dir}
+	環境定義体のファイル名を指定する。
+	デフォルトは\verb|./directory|
+
+	\option{-base}
+	環境定義体に定義されたbaseを上書きするのに使う
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-lddir}
+	LD定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+wfc &
+\end{verbatim}
+ワークフローコントローラを起動する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+aps
+
+\ititle{注意}
+
+ワークフローコントローラはマルチスレッドのプログラムであり、アプリケー
+ションサーバやプレゼンテーションサーバが接続する毎に\verb|PS(3)|で見た
+時のプロセス数は増える。このプロセス数は、以下の式により求められる。
+
+\begin{quote}
+$
+	プロセス数 = mqの数 + 接続したプレゼンテーションサーバの数 + 2
+$
+\end{quote}
+
+\end{function}
+

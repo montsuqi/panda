@@ -1,0 +1,4 @@
+        01  SHELL.
+            02  SHELL-NAME  PIC X(80).
+            02  SHELL-ARG   PIC X(80).
+            02  FILLER      PIC X(2271).

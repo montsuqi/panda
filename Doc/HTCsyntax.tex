@@ -1,0 +1,209 @@
+\section{HTC定義体}
+
+HTC定義体とは、web上でpandaを実行するにあたって、ホスト変数を参照して
+でデータの入出力や体装の調整を行うことを目的として、HTMLを拡張したもの
+である。
+
+実際の内容は、HTMLにいくつかのタグを追加したものである。
+
+\subsection{追加タグ一覧}
+
+以下に追加されたタグの一覧を示す。
+
+\begin{itemize}
+\item	{\bf ENTRY}	\\
+	1行文字列の入出力
+\tem	{\bf COMBO}	\\
+	リストからの選択文字列入力
+\item	{\bf FIXED}	\\
+	文字列の出力
+\item	{\bf TEXT}	\\
+	複数行文字列の入出力
+\item	{\bf BUTTON}	\\
+	処理起動用ボタン
+\item	{\bf TOGGLEBUTTON}	\\
+	クリックでON/OFFの切り換わる状態ボタン
+\item	{\bf CHECKBUTTON}	\\
+	クリックでチェックの付く状態ボタン
+\item	{\bf RADIOBUTTON}	\\
+	クリックでチェックの付く選択状態ボタン
+\item	{\bf CALENDAR}	\\
+	クリックで日付入力の出来るカレンダ
+\item	{\bf COUNT}	\\
+	繰り返し用命令
+\end{itemize}
+
+
+\subsection{ENTRY}
+
+1行文字列の入出力を行う。
+
+属性は以下の通り。
+
+\begin{options}
+\option{name}
+	入出力するホスト変数の名前を指定する文字列
+\option{size}
+	表示する領域の大きさ。単位は文字数
+\option{maxlength}
+	入力する文字列の最大長
+\end{options}
+
+\subsection{COMBO}
+
+選択リストを選択することにより、文字列の入力を行う。
+
+属性は以下の通り。
+
+\begin{options}
+\option{name}
+	入力するホスト変数の名前を指定する文字列
+\option{size}
+	表示する領域の大きさ。単位は文字数
+\option{item}
+	選択リストを与える文字列配列変数
+\option{count}
+	選択リストの要素数
+\end{options}
+
+\subsection{FIXED}
+
+文字列の出力をホスト変数から行う。
+
+属性は以下の通り。
+
+\begin{options}
+\option{name}
+	出力するホスト変数の名前を指定する文字列
+\option{size}
+	表示する領域の大きさ。単位は文字数
+\end{options}
+
+\subsection{TEXT}
+
+複数行文字列の入出力を行う。
+
+属性は以下の通り。
+
+\begin{options}
+\option{name}
+	入出力するホスト変数の名前を指定する文字列
+\option{rows}
+	領域の行数
+\option{cols}
+	領域の桁数
+\end{options}
+
+\subsection{BUTTON}
+
+処理起動用ボタン。
+
+属性は以下の通り。
+
+\begin{options}
+\option{event}
+	ボタンの識別に使うイベント文字列
+\option{face}
+	ボタン上に表示する文字列
+\option{size}
+	大きさ
+\end{options}
+
+\subsection{TOGGLEBUTTON}
+
+クリックでON/OFFの切り換わる状態ボタン。
+
+属性は以下の通り。
+
+\begin{options}
+\option{name}
+	入出力するホスト変数の名前を指定する文字列
+\option{label}
+	ラベルで表示するホスト変数の名前を指定する文字列
+\end{options}
+
+\subsection{CHECKBUTTON}
+
+クリックでチェックの付く状態ボタン。
+
+属性は以下の通り。
+
+\begin{options}
+\option{name}
+	入出力するホスト変数の名前を指定する文字列
+\option{label}
+	ラベルで表示する文字列
+\end{options}
+
+\subsection{RADIOBUTTON}
+
+クリックでチェックの付く選択状態ボタン
+
+属性は以下の通り。
+
+\begin{options}
+\option{name}
+	入出力するホスト変数の名前を指定する文字列
+\option{label}
+	ラベルで表示する文字列
+\option{group}
+	組にして動かすボタンを識別するための文字列
+\end{options}
+
+\subsection{CALENDAR}
+
+日付入力を行うカレンダー
+
+属性は以下の通り。属性を省略すると、「今日」が指定されたものとして、カ
+レンダー表示のみを行う。
+
+\begin{options}
+\option{year}
+	「年」を入出力するホスト変数の名前を指定する文字列
+\option{month}
+	「月」を入出力するホスト変数の名前を指定する文字列
+\option{day}
+	「日」を入出力するホスト変数の名前を指定する文字列
+\end{options}
+
+\subsection{COUNT}
+
+範囲を定義して、その範囲内を指定した回数だけ展開する。
+
+\begin{options}
+\option{var}
+	繰り返しの数を数える変数(制御変数)を指定する文字列。省略すると無名
+\option{from}
+	varの初期値。省略すると0
+\option{to}
+	varの最終値。省略は出来ない
+\option{step}
+	varを増やす時の増分。省略すると1
+\end{options}
+
+\verb|<COUNT>命令は、\verb|var|で指定した制御変数が、\verb|from|の値か
+ら\verb|to|の値になるまで\varb|step|分だけ増やし、\verb|</COUNT>|まで
+の範囲を展開する。制御変数名が違えば、多重にすることも可能である。
+
+実際に使う場合には、たとえば以下のようにする。
+
+\begin{verbatim}
+<TABLE BORDER>
+<TR>
+<TD align="center"><fixed name="project1.vbox1.swin1.clist1.label1.value"></TD>
+<TD align="center"><fixed name="project1.vbox1.swin1.clist1.label2.value"></TD>
+<TD align="center"><fixed name="project1.vbox1.swin1.clist1.label3.value"></TD>
+    <COUNT var="i" from=0 to="project1.vbox1.swin1.clist1.count">
+    <TR>
+    <TD align="left"><fixed name="project1.vbox1.swin1.clist1.item[#i].value1"></TD>
+    <TD align="left"><fixed name="project1.vbox1.swin1.clist1.item[#i].value2"></TD>
+    <TD align="left"><fixed name="project1.vbox1.swin1.clist1.item[#i].value3"></TD>
+    </TR>
+    </COUNT>
+</TABLE>
+\end{verbatim}
+
+この例では、制御変数である\verb|i|を使って、
+\verb|project1.vbox1.swin1.clist1.iterm[].value|順にアクセスしながら、
+それを埋め込むためのテーブルを生成している。変数を引用する場合、ホスト
+変数と区別するために、現在のところ\verb|#|を前置しなくてはならない。

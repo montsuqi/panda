@@ -1,0 +1,94 @@
+\section{aps}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt dbstub} - バッチ用アプリケーションサーバ
+
+\ititle{書式}
+
+\begin{verbatim}
+dbstub <OPTIONS> <モジュール名>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt dbstub}はバッチ用アプリケーションサーバである。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-dir}
+	環境定義体のファイル名を指定する。
+	デフォルトは\verb|./directory|
+
+	\option{-base}
+	環境定義体に定義されたbaseを上書きするのに使う
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-bddir}
+	バッチ定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-parameter}
+	アプリケーションに渡すパラメータ。
+	デフォルトは空文字列。
+
+	\option{-path}
+	アプリケーション等のロードパス。
+	デフォルトはOpenCOBOLの場合は環境変数\verb|COB_LIBRARY_PATH|に従う
+
+	\option{-host}
+	データベース稼働ホスト名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-port}
+	データベース待機ポート番号
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-bd}
+	バッチ定義体名
+	デフォルトはないので、必ず指定しなくてはならない
+
+	\option{-db}
+	データベース名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-user}
+	データベースユーザ名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-pass}
+	データベースのパスワード
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+dbstub -bd sample SAMPLEB &
+\end{verbatim}
+sampleという名前のBDに従い、アプリケーションサーバを起動する。アプリケー
+ションモジュールとしてSAMPLEBを指定する
+
+\ititle{バグ}
+
+\ititle{参照}
+
+aps
+
+\ititle{注意}
+
+アプリケーションサーバがアプリケーションモジュールを呼び出すためには、
+様々なアプローチが取られる。どのようなアプローチでどのような制約事項が
+あるかは、それぞれの言語ハンドラおよびデータベースハンドラの説明を見る
+こと。
+
+\end{function}
+

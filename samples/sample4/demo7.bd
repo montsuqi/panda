@@ -1,0 +1,13 @@
+name	demo7;
+
+arraysize	20;
+textsize	200;
+
+bind    "SAMPLEA"       "OpenCOBOL";
+bind    "SAMPLEB"       "OpenCOBOL";
+bind    "SAMPLEC"       "OpenCOBOL";
+
+db	"ORCA"	{
+        metadb;
+	adrs;
+};

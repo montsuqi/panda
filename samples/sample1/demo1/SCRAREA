@@ -1,0 +1,72 @@
+        01  SCRAREA.
+              03  WN1.
+                04  VBOX1.
+                  05  WN1-ENTRY1.
+                    06  WN1-ENTRY1-STYLE    PIC X(20).
+                    06  WN1-ENTRY1-STATE    PIC S9(9)   BINARY.
+                    06  WN1-ENTRY1-VALUE    PIC X(30).
+                  05  WN1-ENTRY2.
+                    06  WN1-ENTRY2-STYLE    PIC X(20).
+                    06  WN1-ENTRY2-VALUE-X.
+                      07  WN1-ENTRY2-VALUE    PIC S9(8)V99.
+                  05  WN1-ENTRY3.
+                    06  WN1-ENTRY3-STYLE    PIC X(20).
+                    06  WN1-ENTRY3-VALUE    PIC X(30).
+                  05  WN1-COMBO1.
+                    06  WN1-COMBO1-STYLE  PIC X(20).
+                    06  WN1-COMBO1-ENTRY  PIC X(28).
+                    06  WN1-COMBO1-COUNT  PIC S9(9)   BINARY.
+                    06  WN1-COMBO1-ITEM   PIC X(28)   OCCURS  20.
+                  05  WN1-CLIST1.
+                    06  WN1-CLIST1-LABEL1.
+                      07  WN1-CLIST1-LABEL1-STYLE     PIC X(20).
+                      07  WN1-CLIST1-LABEL1-VALUE     PIC X(10).
+                    06  WN1-CLIST1-LABEL2.
+                      07  WN1-CLIST1-LABEL2-STYLE     PIC X(20).
+                      07  WN1-CLIST1-LABEL2-VALUE     PIC X(10).
+                    06  WN1-CLIST1-LABEL3.
+                      07  WN1-CLIST1-LABEL3-STYLE     PIC X(20).
+                      07  WN1-CLIST1-LABEL3-VALUE     PIC X(10).
+                    06  WN1-CLIST1-COUNT    PIC S9(9)   BINARY.
+                    06  WN1-CLIST1-FROM     PIC S9(9)   BINARY.
+                    06  WN1-CLIST1-ITEM     OCCURS  20.
+                      07  WN1-CLIST1-VALUE1   PIC X(20).
+                      07  WN1-CLIST1-VALUE2   PIC X(20).
+                      07  WN1-CLIST1-VALUE3   PIC X(20).
+                    06  WN1-CLIST1-SELECT   PIC X   OCCURS  20.
+                  05  WN1-TOGGLEBUTTON1   PIC X.
+                  05  WN1-TOGGLEBUTTON1S  PIC X(20).
+                  05  WN1-TOGGLEBUTTON1L  PIC X(20).
+                  05  WN1-HBOX5.
+                    06  WN1-CHECKLEFT   PIC X.
+                    06  WN1-CHECKRIGHT  PIC X.
+                    06  WN1-CHECKNONE   PIC X.
+                  05  WN1-HBOX6.
+                    06  WN1-RADIOLEFT   PIC X.
+                    06  WN1-RADIORIGHT  PIC X.
+                    06  WN1-RADIONONE   PIC X.
+                  05  WN1-LIST1.
+                    06  WN1-LIST1-COUNT   PIC S9(9)   BINARY.
+                    06  WN1-LIST1-FROM    PIC S9(9)   BINARY.
+                    06  WN1-LIST1-ITEM    PIC X(30)   OCCURS  20.
+                    06  WN1-LIST1-SELECT  PIC X   OCCURS  20.
+                  05  WN1-NOTEBOOK1.
+                    06  WN1-NOTEBOOK1-PAGE  PIC S9(9)   BINARY.
+                    06  WN1-TEXT1.
+                      07  WN1-TEXT1-VALUE   PIC X(200).
+                    06  WN1-ENTRY4.
+                      07  WN1-ENTRY4-VALUE   PIC S9(8)V9(2).
+                    06  WN1-CLIST2.
+                      07  WN1-CLIST2-LABEL1  PIC X(10).
+                      07  WN1-CLIST2-LABEL2  PIC X(10).
+                      07  WN1-CLIST2-COUNT   PIC S9(9)   BINARY.
+                      07  WN1-CLIST2-ITEM    OCCURS  20 TIMES.
+                        08  WN1-CLIST2-VALUE1  PIC X(10).
+                        08  WN1-CLIST2-VALUE2  PIC X(20).
+                      07  WN1-CLIST2-SELECT  PIC X   OCCURS  20 TIMES.
+              03  WN5.
+                04  VBOX1.
+                  05  CALENDAR1.
+                    06  WN5-YEAR    PIC S9(9)   BINARY.
+                    06  WN5-MONTH   PIC S9(9)   BINARY.
+                    06  WN5-DAY     PIC S9(9)   BINARY.

@@ -1,0 +1,254 @@
+/*	PANDA -- a simple transaction monitor
+
+Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+
+This module is part of PANDA.
+
+	PANDA is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY.  No author or distributor accepts responsibility
+to anyone for the consequences of using it or for whether it serves
+any particular purpose or works at all, unless he says so in writing.
+Refer to the GNU General Public License for full details. 
+
+	Everyone is granted permission to copy, modify and redistribute
+PANDA, but only under the conditions described in the GNU General
+Public License.  A copy of this license is supposed to have been given
+to you along with PANDA so you can know your rights and
+responsibilities.  It should be in a file named COPYING.  Among other
+things, the copyright notice and this notice must be preserved on all
+copies. 
+*/
+
+#define	MAIN
+/*
+#define	DEBUG
+#define	TRACE
+*/
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<string.h>
+#include	<ctype.h>
+#include	<unistd.h>
+#include	<glib.h>
+#include	"types.h"
+#include	"value.h"
+#include	"misc.h"
+#include	"directory.h"
+#include	"dirs.h"
+#include	"option.h"
+#include	"debug.h"
+
+static	Bool	fLD;
+static	Bool	fBD;
+static	Bool	fDBG;
+static	char	*Directory;
+
+static	void
+DumpKey(
+	KeyStruct	*pkey)
+{
+	char	***item
+	,		**pk;
+
+	item = pkey->item;
+	printf("\t\tpkey = ");
+	while	(  *item  !=  NULL  ) {
+		pk = *item;
+		while	(  *pk  !=  NULL  ) {
+			printf("%s",*pk);
+			pk ++;
+			if		(  *pk  !=  NULL  ) {
+				printf(".");
+			}
+		}
+		item ++;
+		if		(  *item  !=  NULL  ) {
+			printf(",");
+		}
+		printf("\n");
+	}
+}
+
+static	void
+DumpOps(
+	char	*name,
+	LargeByteString	*sql,
+	void	*dummy)
+{
+	printf("\t\t\top = [%s]\n",name);
+}
+
+static	void
+DumpPath(
+	PathStruct	*path)
+{
+	printf("\t\tname     = [%s]\n",path->name);
+	g_hash_table_foreach(path->opHash,(GHFunc)DumpOps,NULL);
+}
+
+static	void
+DumpDB(
+	DB_Struct	*db)
+{
+	int		i;
+
+	printf("\t\tDB group = [%s]\n",db->dbg->name);
+	DumpKey(db->pkey);
+	if		(  db->pcount  >  0  ) {
+		printf("\t\tpath ------\n");
+		for	( i = 0 ; i < db->pcount ; i ++ ) {
+			DumpPath(db->path[i]);
+		}
+	}
+}
+
+static	void
+DumpRecord(
+	RecordStruct	*db)
+{
+	printf("\tname = [%s]\n",db->name);
+	DumpDB(db->opt.db);
+}
+
+static	void
+DumpLD(
+	LD_Struct	*ld)
+{
+	int		i;
+
+	printf("name      = [%s]\n",ld->name);
+	printf("\tgroup     = [%s]\n",ld->group);
+	printf("\tarraysize = %d\n",ld->arraysize);
+	printf("\ttextsize  = %d\n",ld->textsize);
+	printf("\twindow %d\n",ld->cWindow);
+	for	( i = 0 ; i < ld->cWindow ; i ++ ) {
+		printf("\t\t[%s]\t[%s]\t[%s]\n",
+			   ld->window[i]->name,
+			   (char *)ld->window[i]->handler,
+			   ld->window[i]->module);
+	}
+	printf("\tcDB       = %d\n",ld->cDB);
+	for	( i = 0 ; i < ld->cDB ; i ++ ) {
+		DumpRecord(ld->db[i]);
+	}
+}
+
+static	void
+DumpBD(
+	BD_Struct	*bd)
+{
+	int		i;
+
+	printf("name      = [%s]\n",bd->name);
+	printf("\tarraysize = %d\n",bd->arraysize);
+	printf("\ttextsize  = %d\n",bd->textsize);
+	printf("\tcDB       = %d\n",bd->cDB);
+	for	( i = 0 ; i < bd->cDB ; i ++ ) {
+		DumpRecord(bd->db[i]);
+	}
+}
+
+static	void
+DumpDBG(
+	char		*name,
+	DBG_Struct	*dbg,
+	void		*dummy)
+{
+	printf("name     = [%s]\n",dbg->name);
+	printf("\ttype     = [%s]\n",dbg->type);
+	printf("\thost     = [%s]\n",dbg->port->host);
+	printf("\tport     = [%s]\n"  ,dbg->port->port);
+	printf("\tDB name  = [%s]\n",dbg->dbname);
+	printf("\tDB user  = [%s]\n",dbg->user);
+	printf("\tDB pass  = [%s]\n",dbg->pass);
+	if		(  dbg->file  !=  NULL  ) {
+		printf("\tlog file = [%s]\n",dbg->file);
+	}
+	if		(  dbg->redirect  !=  NULL  ) {
+		while	(  dbg->redirect  !=  NULL  ) {
+			dbg = dbg->redirect;
+		}
+		printf("\tredirect = [%s]\n",dbg->name);
+	}
+}
+
+static	void
+DumpDirectory(void)
+{
+	int		i;
+
+	InitDirectory(TRUE);
+	SetUpDirectory(Directory,NULL,NULL);
+
+	printf("name     = [%s]\n",ThisEnv->name);
+	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);
+	printf("linksize = %d\n"  ,ThisEnv->linksize);
+	printf("cLD      = %d\n"  ,ThisEnv->cLD);
+	printf("cBD      = %d\n"  ,ThisEnv->cBD);
+	if		(  fLD  ) {
+		printf("LD ----------\n");
+		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
+			DumpLD(ThisEnv->ld[i]);
+		}
+	}
+	if		(  fBD  ) {
+		printf("BD ----------\n");
+		for	( i = 0 ; i < ThisEnv->cBD ; i ++ ) {
+			DumpBD(ThisEnv->bd[i]);
+		}
+	}
+	if		(  fDBG  ) {
+		printf("DBG ---------\n");
+		g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)DumpDBG,NULL);
+	}
+}
+
+static	ARG_TABLE	option[] = {
+	{	"ld",		BOOLEAN,	TRUE,		(void*)&fLD,
+		"LD情報を出力する"								},
+	{	"bd",		BOOLEAN,	TRUE,		(void*)&fBD,
+		"BD情報を出力する"								},
+	{	"dbg",		BOOLEAN,	TRUE,		(void*)&fDBG,
+		"DB group情報を出力する"						},
+
+	{	"dir",		STRING,		TRUE,	(void*)&Directory,
+		"ディレクトリファイル"	 						},
+	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
+		"レコードのあるディレクトリ"					},
+	{	"lddir",	STRING,		TRUE,	(void*)&LD_Dir,
+		"LD定義格納ディレクトリ"	 					},
+	{	"bddir",	STRING,		TRUE,	(void*)&BD_Dir,
+		"BD定義格納ディレクトリ"	 					},
+	{	NULL,		0,			FALSE,	NULL,	NULL 	}
+};
+
+static	void
+SetDefault(void)
+{
+	LD_Dir = NULL;
+	BD_Dir = NULL;
+	RecordDir = NULL;
+	Directory = "./directory";
+	fLD = FALSE;
+	fBD = FALSE;
+	fDBG = FALSE;
+}
+
+extern	int
+main(
+	int		argc,
+	char	**argv)
+{
+	FILE_LIST	*fl;
+
+	SetDefault();
+	fl = GetOption(option,argc,argv);
+	DumpDirectory();
+
+	return	(0);
+}

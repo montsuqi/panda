@@ -1,0 +1,6 @@
+        01  SCRAREA.
+            02  SCREENDATA.
+              03  WN3.
+                04  WN3-TEXT1.
+                  05  WN3-TEXT1-STYLE   PIC X(20).
+                  05  WN3-TEXT1-VALUE   PIC X(200).

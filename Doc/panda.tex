@@ -1,0 +1,61 @@
+\documentclass[a4j]{jreport}
+\usepackage{array}
+%\usepackage{tabularx}
+\usepackage{graphics}
+\pagestyle{empty}
+\parindent 1zw
+\title{MONTSUQI\\
+The Online Transaction Processing Monitor}
+\author{生越昌己}
+\newenvironment{function}{
+	\begin{list}{■}{}}{
+	\end{list}}
+\newcommand{\ititle}[1]{\item{\bf #1}\par}
+
+\newenvironment{options}{
+	\begin{list}{}{}}{
+	\end{list}}
+\newcommand{\option}[1]{\item{\tt\it #1}\par}
+
+\newenvironment{variables}{
+	\begin{list}{・}{}}{
+	\end{list}}
+\newcommand{\variable}[1]{\item{\tt\it #1}\par}
+
+\begin{document}
+\maketitle
+
+\include{about}
+\include{struct}
+\include{db}
+\include{programing}
+\include{cobol}
+
+
+\appendix
+
+\chapter{コアプログラムの説明}
+\include{glserver}
+\include{glclient}
+\include{glauth}
+\include{wfc}
+\include{aps}
+\include{aps}
+\include{dbstub}
+\include{dbredirector}
+
+\chapter{ユーティリティコマンドの説明}
+\include{copygen}
+\include{dbgen}
+\include{checkdir}
+\include{user}
+\include{monitor}
+
+\chapter{定義体の文法}
+\include{DBsyntax}
+\include{DDsyntax}
+\include{DIsyntax}
+\include{LDsyntax}
+\include{BDsyntax}
+
+\end{document}

@@ -1,0 +1,538 @@
+# Makefile.in generated automatically by automake 1.4-p4 from Makefile.am
+
+# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+
+SHELL = @SHELL@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
+localstatedir = @localstatedir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+includedir = @includedir@
+oldincludedir = /usr/include
+
+DESTDIR =
+
+pkgdatadir = $(datadir)/@PACKAGE@
+pkglibdir = $(libdir)/@PACKAGE@
+pkgincludedir = $(includedir)/@PACKAGE@
+
+top_builddir = ..
+
+ACLOCAL = @ACLOCAL@
+AUTOCONF = @AUTOCONF@
+AUTOMAKE = @AUTOMAKE@
+AUTOHEADER = @AUTOHEADER@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+transform = @program_transform_name@
+
+NORMAL_INSTALL = :
+PRE_INSTALL = :
+POST_INSTALL = :
+NORMAL_UNINSTALL = :
+PRE_UNINSTALL = :
+POST_UNINSTALL = :
+host_alias = @host_alias@
+host_triplet = @host@
+AS = @AS@
+BUILD_INCLUDED_LIBINTL = @BUILD_INCLUDED_LIBINTL@
+CATALOGS = @CATALOGS@
+CATOBJEXT = @CATOBJEXT@
+CC = @CC@
+COB_CFLAGS = @COB_CFLAGS@
+COB_LIBS = @COB_LIBS@
+DATADIRNAME = @DATADIRNAME@
+DLLTOOL = @DLLTOOL@
+DOTCOBOL_COMMAND = @DOTCOBOL_COMMAND@
+ECHO = @ECHO@
+EXEEXT = @EXEEXT@
+FIXED_CFLAGS = @FIXED_CFLAGS@
+FIXED_LIBS = @FIXED_LIBS@
+GENCAT = @GENCAT@
+GLADE_CFLAGS = @GLADE_CFLAGS@
+GLADE_CONFIG = @GLADE_CONFIG@
+GLADE_LIBS = @GLADE_LIBS@
+GMOFILES = @GMOFILES@
+GMSGFMT = @GMSGFMT@
+GNOMEGNORBA_LIBS = @GNOMEGNORBA_LIBS@
+GNOMEUI_LIBS = @GNOMEUI_LIBS@
+GNOME_APPLETS_LIBS = @GNOME_APPLETS_LIBS@
+GNOME_CAPPLET_LIBS = @GNOME_CAPPLET_LIBS@
+GNOME_CONFIG = @GNOME_CONFIG@
+GNOME_DOCKLETS_LIBS = @GNOME_DOCKLETS_LIBS@
+GNOME_INCLUDEDIR = @GNOME_INCLUDEDIR@
+GNOME_LIBDIR = @GNOME_LIBDIR@
+GNOME_LIBS = @GNOME_LIBS@
+GNORBA_CFLAGS = @GNORBA_CFLAGS@
+GNORBA_LIBS = @GNORBA_LIBS@
+GTKXMHTML_LIBS = @GTKXMHTML_LIBS@
+GTK_CFLAGS = @GTK_CFLAGS@
+GTK_CONFIG = @GTK_CONFIG@
+GTK_LIBS = @GTK_LIBS@
+GT_NO = @GT_NO@
+GT_YES = @GT_YES@
+INCLUDE_LOCALE_H = @INCLUDE_LOCALE_H@
+INSTOBJEXT = @INSTOBJEXT@
+INTLDEPS = @INTLDEPS@
+INTLLIBS = @INTLLIBS@
+INTLOBJS = @INTLOBJS@
+LIBTOOL = @LIBTOOL@
+LN_S = @LN_S@
+MAINT = @MAINT@
+MAJOR_VERSION = @MAJOR_VERSION@
+MAKEINFO = @MAKEINFO@
+MICRO_VERSION = @MICRO_VERSION@
+MINOR_VERSION = @MINOR_VERSION@
+MKINSTALLDIRS = @MKINSTALLDIRS@
+OBJDUMP = @OBJDUMP@
+OBJEXT = @OBJEXT@
+OPENCOBOL_CFLAGS = @OPENCOBOL_CFLAGS@
+OPENCOBOL_LIBS = @OPENCOBOL_LIBS@
+ORBIT_CFLAGS = @ORBIT_CFLAGS@
+ORBIT_CONFIG = @ORBIT_CONFIG@
+ORBIT_IDL = @ORBIT_IDL@
+ORBIT_LIBS = @ORBIT_LIBS@
+PACKAGE = @PACKAGE@
+PANDA_CFLAGS = @PANDA_CFLAGS@
+PANDA_CONFIG = @PANDA_CONFIG@
+PANDA_LIBS = @PANDA_LIBS@
+POFILES = @POFILES@
+POSTGRES_CFLAGS = @POSTGRES_CFLAGS@
+POSTGRES_LIBS = @POSTGRES_LIBS@
+POSUB = @POSUB@
+RANLIB = @RANLIB@
+STRIP = @STRIP@
+USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
+USE_NLS = @USE_NLS@
+VERSION = @VERSION@
+XML_CFLAGS = @XML_CFLAGS@
+XML_CONFIG = @XML_CONFIG@
+XML_LIBS = @XML_LIBS@
+ZVT_LIBS = @ZVT_LIBS@
+cflags_set = @cflags_set@
+cxxflags_set = @cxxflags_set@
+l = @l@
+libfixed_config = @libfixed_config@
+@GNOME_SUPPORT_TRUE@THE_FLAGS = $(GNOME_INCLUDEDIR)
+@GNOME_SUPPORT_FALSE@THE_FLAGS = $(GTK_CFLAGS)
+@GNOME_SUPPORT_TRUE@THE_LIBS = -lglade-gnome -lglade $(GNOME_LIBDIR) $(GNOMEUI_LIBS)
+@GNOME_SUPPORT_FALSE@THE_LIBS = -lglade $(GTK_LIBS)
+
+lib_LTLIBRARIES = libpanda.la
+
+enum_LDADD =  	$(THE_LIBS) $(GLADE_LIBS)	$(PANDA_LIBS)		-L/usr/lib -lglib -lm
+
+noinst_PROGRAMS = enum
+
+noinst_LIBRARIES = libi18n.a libpandac.a libpandas.a libpandat.a
+
+libpanda_la_DEPENDENCIES = enum.h
+
+INCLUDES =  	-I$(top_srcdir)				-I$(top_srcdir)/include		-I$(top_srcdir)/libs		$(GNOME_INCLUDEDIR)
+
+
+libpanda_la_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h			LDparser.c	LDparser.h		LDlex.c		LDlex.h			DIparser.c	DIparser.h		DIlex.c		DIlex.h			BDparser.c	BDparser.h		BDlex.c		BDlex.h			directory.c	directory.h		driver.c	driver.h		tcp.c		tcp.h			pty.c		pty.h			queue.c		queue.h			enum.h
+
+
+libpandac_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBSfunc.c	LBSfunc.h		value.c		value.h			driver.c	driver.h		tcp.c		tcp.h			queue.c		queue.h			enum.h
+
+
+libpandas_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h			applications.c applications.h		pandaIO.c	pandaIO.h		driver.c	driver.h		tcp.c		tcp.h			pty.c		pty.h			auth.c		auth.h			authstub.c	authstub.h		front.c	front.h				wfcio.c		wfcio.h			enum.h		demo.c	demo.h		demo2.c		demo3.c		demo4.c
+
+
+libpandat_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h			LDparser.c	LDparser.h		LDlex.c		LDlex.h			DIparser.c	DIparser.h		DIlex.c		DIlex.h			BDparser.c	BDparser.h		BDlex.c		BDlex.h			directory.c	directory.h		driver.c	driver.h		tcp.c		tcp.h			pty.c		pty.h			auth.c		auth.h			authstub.c	authstub.h		front.c	front.h				wfcio.c		wfcio.h			enum.h
+
+
+libi18n_a_SOURCES =  	i18n_res.c i18n_rec.h		i18n_codeset.c	i18n_codeset.h		i18n_code.c	i18n_code.h		i18n_ctype.c		i18n_strings.c	i18n_struct.h	i18n_const.h
+
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+CONFIG_HEADER = ../config.h
+CONFIG_CLEAN_FILES = 
+LIBRARIES =  $(noinst_LIBRARIES)
+
+
+DEFS = @DEFS@ -I. -I$(srcdir) -I..
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+libi18n_a_LIBADD = 
+libi18n_a_OBJECTS =  i18n_res.$(OBJEXT) i18n_codeset.$(OBJEXT) \
+i18n_code.$(OBJEXT) i18n_ctype.$(OBJEXT) i18n_strings.$(OBJEXT)
+libpandac_a_LIBADD = 
+libpandac_a_OBJECTS =  misc.$(OBJEXT) option.$(OBJEXT) comm.$(OBJEXT) \
+LBSfunc.$(OBJEXT) value.$(OBJEXT) driver.$(OBJEXT) tcp.$(OBJEXT) \
+queue.$(OBJEXT)
+libpandas_a_LIBADD = 
+libpandas_a_OBJECTS =  misc.$(OBJEXT) option.$(OBJEXT) comm.$(OBJEXT) \
+LBSfunc.$(OBJEXT) value.$(OBJEXT) SQLlex.$(OBJEXT) SQLparser.$(OBJEXT) \
+DDparser.$(OBJEXT) DDlex.$(OBJEXT) applications.$(OBJEXT) \
+pandaIO.$(OBJEXT) driver.$(OBJEXT) tcp.$(OBJEXT) pty.$(OBJEXT) \
+auth.$(OBJEXT) authstub.$(OBJEXT) front.$(OBJEXT) wfcio.$(OBJEXT) \
+demo.$(OBJEXT) demo2.$(OBJEXT) demo3.$(OBJEXT) demo4.$(OBJEXT)
+libpandat_a_LIBADD = 
+libpandat_a_OBJECTS =  misc.$(OBJEXT) option.$(OBJEXT) comm.$(OBJEXT) \
+LBSfunc.$(OBJEXT) value.$(OBJEXT) SQLlex.$(OBJEXT) SQLparser.$(OBJEXT) \
+DDparser.$(OBJEXT) DDlex.$(OBJEXT) LDparser.$(OBJEXT) LDlex.$(OBJEXT) \
+DIparser.$(OBJEXT) DIlex.$(OBJEXT) BDparser.$(OBJEXT) BDlex.$(OBJEXT) \
+directory.$(OBJEXT) driver.$(OBJEXT) tcp.$(OBJEXT) pty.$(OBJEXT) \
+auth.$(OBJEXT) authstub.$(OBJEXT) front.$(OBJEXT) wfcio.$(OBJEXT)
+AR = ar
+LTLIBRARIES =  $(lib_LTLIBRARIES)
+
+libpanda_la_LDFLAGS = 
+libpanda_la_LIBADD = 
+libpanda_la_OBJECTS =  misc.lo option.lo comm.lo LBSfunc.lo value.lo \
+SQLlex.lo SQLparser.lo DDparser.lo DDlex.lo LDparser.lo LDlex.lo \
+DIparser.lo DIlex.lo BDparser.lo BDlex.lo directory.lo driver.lo tcp.lo \
+pty.lo queue.lo
+noinst_PROGRAMS =  enum$(EXEEXT)
+PROGRAMS =  $(noinst_PROGRAMS)
+
+enum_SOURCES = enum.c
+enum_OBJECTS =  enum.$(OBJEXT)
+@GNOME_SUPPORT_TRUE@enum_DEPENDENCIES = 
+@GNOME_SUPPORT_FALSE@enum_DEPENDENCIES = 
+enum_LDFLAGS = 
+CFLAGS = @CFLAGS@
+COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+DIST_COMMON =  Makefile.am Makefile.in
+
+
+DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+
+TAR = tar
+GZIP_ENV = --best
+DEP_FILES =  .deps/BDlex.P .deps/BDparser.P .deps/DDlex.P \
+.deps/DDparser.P .deps/DIlex.P .deps/DIparser.P .deps/LBSfunc.P \
+.deps/LDlex.P .deps/LDparser.P .deps/SQLlex.P .deps/SQLparser.P \
+.deps/applications.P .deps/auth.P .deps/authstub.P .deps/comm.P \
+.deps/demo.P .deps/demo2.P .deps/demo3.P .deps/demo4.P \
+.deps/directory.P .deps/driver.P .deps/enum.P .deps/front.P \
+.deps/i18n_code.P .deps/i18n_codeset.P .deps/i18n_ctype.P \
+.deps/i18n_res.P .deps/i18n_strings.P .deps/misc.P .deps/option.P \
+.deps/pandaIO.P .deps/pty.P .deps/queue.P .deps/tcp.P .deps/value.P \
+.deps/wfcio.P
+SOURCES = $(libi18n_a_SOURCES) $(libpandac_a_SOURCES) $(libpandas_a_SOURCES) $(libpandat_a_SOURCES) $(libpanda_la_SOURCES) enum.c
+OBJECTS = $(libi18n_a_OBJECTS) $(libpandac_a_OBJECTS) $(libpandas_a_OBJECTS) $(libpandat_a_OBJECTS) $(libpanda_la_OBJECTS) enum.$(OBJEXT)
+
+all: all-redirect
+.SUFFIXES:
+.SUFFIXES: .S .c .lo .o .obj .s
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+	cd $(top_srcdir) && $(AUTOMAKE) --gnu libs/Makefile
+
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+
+mostlyclean-noinstLIBRARIES:
+
+clean-noinstLIBRARIES:
+	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+
+distclean-noinstLIBRARIES:
+
+maintainer-clean-noinstLIBRARIES:
+
+# FIXME: We should only use cygpath when building on Windows,
+# and only if it is available.
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+
+.s.o:
+	$(COMPILE) -c $<
+
+.S.o:
+	$(COMPILE) -c $<
+
+mostlyclean-compile:
+	-rm -f *.o core *.core
+	-rm -f *.$(OBJEXT)
+
+clean-compile:
+
+distclean-compile:
+	-rm -f *.tab.c
+
+maintainer-clean-compile:
+
+.s.lo:
+	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
+
+.S.lo:
+	$(LIBTOOL) --mode=compile $(COMPILE) -c $<
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
+
+distclean-libtool:
+
+maintainer-clean-libtool:
+
+libi18n.a: $(libi18n_a_OBJECTS) $(libi18n_a_DEPENDENCIES)
+	-rm -f libi18n.a
+	$(AR) cru libi18n.a $(libi18n_a_OBJECTS) $(libi18n_a_LIBADD)
+	$(RANLIB) libi18n.a
+
+libpandac.a: $(libpandac_a_OBJECTS) $(libpandac_a_DEPENDENCIES)
+	-rm -f libpandac.a
+	$(AR) cru libpandac.a $(libpandac_a_OBJECTS) $(libpandac_a_LIBADD)
+	$(RANLIB) libpandac.a
+
+libpandas.a: $(libpandas_a_OBJECTS) $(libpandas_a_DEPENDENCIES)
+	-rm -f libpandas.a
+	$(AR) cru libpandas.a $(libpandas_a_OBJECTS) $(libpandas_a_LIBADD)
+	$(RANLIB) libpandas.a
+
+libpandat.a: $(libpandat_a_OBJECTS) $(libpandat_a_DEPENDENCIES)
+	-rm -f libpandat.a
+	$(AR) cru libpandat.a $(libpandat_a_OBJECTS) $(libpandat_a_LIBADD)
+	$(RANLIB) libpandat.a
+
+mostlyclean-libLTLIBRARIES:
+
+clean-libLTLIBRARIES:
+	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
+
+distclean-libLTLIBRARIES:
+
+maintainer-clean-libLTLIBRARIES:
+
+install-libLTLIBRARIES: $(lib_LTLIBRARIES)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(libdir)
+	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    echo "$(LIBTOOL)  --mode=install $(INSTALL) $$p $(DESTDIR)$(libdir)/$$p"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL) $$p $(DESTDIR)$(libdir)/$$p; \
+	  else :; fi; \
+	done
+
+uninstall-libLTLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	list='$(lib_LTLIBRARIES)'; for p in $$list; do \
+	  $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$$p; \
+	done
+
+libpanda.la: $(libpanda_la_OBJECTS) $(libpanda_la_DEPENDENCIES)
+	$(LINK) -rpath $(libdir) $(libpanda_la_LDFLAGS) $(libpanda_la_OBJECTS) $(libpanda_la_LIBADD) $(LIBS)
+
+mostlyclean-noinstPROGRAMS:
+
+clean-noinstPROGRAMS:
+	-test -z "$(noinst_PROGRAMS)" || rm -f $(noinst_PROGRAMS)
+
+distclean-noinstPROGRAMS:
+
+maintainer-clean-noinstPROGRAMS:
+
+enum$(EXEEXT): $(enum_OBJECTS) $(enum_DEPENDENCIES)
+	@rm -f enum$(EXEEXT)
+	$(LINK) $(enum_LDFLAGS) $(enum_OBJECTS) $(enum_LDADD) $(LIBS)
+
+tags: TAGS
+
+ID: $(HEADERS) $(SOURCES) $(LISP)
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	here=`pwd` && cd $(srcdir) \
+	  && mkid -f$$here/ID $$unique $(LISP)
+
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
+	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
+
+mostlyclean-tags:
+
+clean-tags:
+
+distclean-tags:
+	-rm -f TAGS ID
+
+maintainer-clean-tags:
+
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+
+subdir = libs
+
+distdir: $(DISTFILES)
+	here=`cd $(top_builddir) && pwd`; \
+	top_distdir=`cd $(top_distdir) && pwd`; \
+	distdir=`cd $(distdir) && pwd`; \
+	cd $(top_srcdir) \
+	  && $(AUTOMAKE) --include-deps --build-dir=$$here --srcdir-name=$(top_srcdir) --output-dir=$$top_distdir --gnu libs/Makefile
+	@for file in $(DISTFILES); do \
+	  d=$(srcdir); \
+	  if test -d $$d/$$file; then \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	  fi; \
+	done
+
+DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
+
+-include $(DEP_FILES)
+
+mostlyclean-depend:
+
+clean-depend:
+
+distclean-depend:
+	-rm -rf .deps
+
+maintainer-clean-depend:
+
+%.o: %.c
+	@echo '$(COMPILE) -c $<'; \
+	$(COMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-cp .deps/$(*F).pp .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm .deps/$(*F).pp
+
+%.lo: %.c
+	@echo '$(LTCOMPILE) -c $<'; \
+	$(LTCOMPILE) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-sed -e 's/^\([^:]*\)\.o[ 	]*:/\1.lo \1.o :/' \
+	  < .deps/$(*F).pp > .deps/$(*F).P; \
+	tr ' ' '\012' < .deps/$(*F).pp \
+	  | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+	    >> .deps/$(*F).P; \
+	rm -f .deps/$(*F).pp
+info-am:
+info: info-am
+dvi-am:
+dvi: dvi-am
+check-am: all-am
+check: check-am
+installcheck-am:
+installcheck: installcheck-am
+install-exec-am: install-libLTLIBRARIES
+install-exec: install-exec-am
+
+install-data-am:
+install-data: install-data-am
+
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+install: install-am
+uninstall-am: uninstall-libLTLIBRARIES
+uninstall: uninstall-am
+all-am: Makefile $(LIBRARIES) $(LTLIBRARIES) $(PROGRAMS)
+all-redirect: all-am
+install-strip:
+	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+installdirs:
+	$(mkinstalldirs)  $(DESTDIR)$(libdir)
+
+
+mostlyclean-generic:
+
+clean-generic:
+
+distclean-generic:
+	-rm -f Makefile $(CONFIG_CLEAN_FILES)
+	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+
+maintainer-clean-generic:
+mostlyclean-am:  mostlyclean-noinstLIBRARIES mostlyclean-compile \
+		mostlyclean-libtool mostlyclean-libLTLIBRARIES \
+		mostlyclean-noinstPROGRAMS mostlyclean-tags \
+		mostlyclean-depend mostlyclean-generic
+
+mostlyclean: mostlyclean-am
+
+clean-am:  clean-noinstLIBRARIES clean-compile clean-libtool \
+		clean-libLTLIBRARIES clean-noinstPROGRAMS clean-tags \
+		clean-depend clean-generic mostlyclean-am
+
+clean: clean-am
+
+distclean-am:  distclean-noinstLIBRARIES distclean-compile \
+		distclean-libtool distclean-libLTLIBRARIES \
+		distclean-noinstPROGRAMS distclean-tags \
+		distclean-depend distclean-generic clean-am
+	-rm -f libtool
+
+distclean: distclean-am
+
+maintainer-clean-am:  maintainer-clean-noinstLIBRARIES \
+		maintainer-clean-compile maintainer-clean-libtool \
+		maintainer-clean-libLTLIBRARIES \
+		maintainer-clean-noinstPROGRAMS maintainer-clean-tags \
+		maintainer-clean-depend maintainer-clean-generic \
+		distclean-am
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+
+maintainer-clean: maintainer-clean-am
+
+.PHONY: mostlyclean-noinstLIBRARIES distclean-noinstLIBRARIES \
+clean-noinstLIBRARIES maintainer-clean-noinstLIBRARIES \
+mostlyclean-compile distclean-compile clean-compile \
+maintainer-clean-compile mostlyclean-libtool distclean-libtool \
+clean-libtool maintainer-clean-libtool mostlyclean-libLTLIBRARIES \
+distclean-libLTLIBRARIES clean-libLTLIBRARIES \
+maintainer-clean-libLTLIBRARIES uninstall-libLTLIBRARIES \
+install-libLTLIBRARIES mostlyclean-noinstPROGRAMS \
+distclean-noinstPROGRAMS clean-noinstPROGRAMS \
+maintainer-clean-noinstPROGRAMS tags mostlyclean-tags distclean-tags \
+clean-tags maintainer-clean-tags distdir mostlyclean-depend \
+distclean-depend clean-depend maintainer-clean-depend info-am info \
+dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
+install-exec install-data-am install-data install-am install \
+uninstall-am uninstall all-redirect all-am all installdirs \
+mostlyclean-generic distclean-generic clean-generic \
+maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+
+
+enum.h:	enum
+	./enum > enum.h
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:

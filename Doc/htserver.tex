@@ -1,0 +1,65 @@
+\section{htserver}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt htserver} - web用プレゼンテーションサーバ
+
+\ititle{書式}
+
+\begin{verbatim}
+htserver <OPTIONS>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt htserver}は{\tt mon}と協調してweb browserを接続するためのプレゼン
+テーションサーバである。デーモンとして動かす。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-port}
+	待機用ポート番号。
+	デフォルトは8000。
+
+	\option{-back}
+	接続待ちキュー長。
+	デフォルトは5。
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは起動したディレクトリ。
+
+	\option{-expire}
+	セションを無捜査時間の経過で無効にするまでの時間(秒)。
+	デフォルトは300秒。
+
+	\option{-panda}
+	wfcの待機ポート。
+	デフォルトは\verb|localhost:9000|。
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+htserver &
+\end{verbatim}
+htserverを起動する。レコードの定義体は、起動ディレクトリから取得する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+mon, wfc, glserver
+
+\ititle{注意}
+
+htserverはweb browserglclientがセションを開設する毎にサブプロセスを生
+成する。
+
+\end{function}
+

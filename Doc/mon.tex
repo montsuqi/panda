@@ -1,0 +1,73 @@
+\section{mon}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt mon} - web用プレゼンテーションサーバのcgiインターフェイス
+
+\ititle{書式}
+
+\begin{verbatim}
+mon <OPTIONS>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt mon}は{\tt htserver}と協調してweb browserを接続するためのプレゼン
+テーションサーバである。CGIとして動かす。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-server}
+	サーバのホスト名とポート番号の組。
+	デフォルトはlocalhost:8010。
+
+	\option{-screen}
+	画面格納ディレクトリ
+	デフォルトはCGIが起動されたディレクトリ。
+
+	\option{-get}
+	actionをGETで処理する。
+	デフォルトはPOSTで処理する
+
+	\option{-dump}
+	デバッグ用に変数のダンプを行う。
+	デフォルトはOFF。
+
+	\option{-cookie}
+	セション変数の保持をcookieで行う。
+	デフォルトはhiddenでHTMLに埋め込む
+
+	\option{-command}
+	セション開設時にhtserverに渡すコマンドライン。
+	デフォルトはなし。
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+./mon -command "panda:demo1" -server "tencha:8010"
+\end{verbatim}
+monを起動する。レコードの定義体は、起動ディレクトリから取得する。
+htserverはtenchaというホストの8010ポートで待機している。
+
+実際にmonを使う場合は、このコマンドラインを格納したシェルスクリプトを
+作り、それを使うようにする。
+
+\ititle{バグ}
+
+web browserで「戻る」や「再読込」等の処理を行うと、セション変数が失わ
+れてセションを忘れてしまう。
+
+\ititle{参照}
+
+htserver, wfc, glserver
+
+\ititle{注意}
+
+\end{function}
+

@@ -1,0 +1,17 @@
+        01  LDW.
+            02  LDW-DATAAREA.
+              03  LDW-DATA    OCCURS  6.
+                04  FILLER      PIC X(1024).
+            02  LDW-INPUTAREA-RED   REDEFINES   LDW-DATAAREA.
+              03  LDW-MCPDATA.
+                04  FILLER  PIC X(1527).
+              03  LDW-SPADATA.
+                04  FILLER  PIC X(4).
+              03  LDW-LINKDATA.
+                04  FILLER      PIC X(200).
+              03  LDW-SCREENDATA.
+                04  LDW-PROJECT1.
+                  05  FILLER  PIC X(3597).
+                04  LDW-PROJECT5.
+                  05  FILLER  PIC X(12).
+        01  LDW-BLOCKS      PIC S9(9)   BINARY  VALUE   6.

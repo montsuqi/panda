@@ -1,0 +1,39 @@
+\section{copygen}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt copy} - COBOLソースにマクロを適用する
+
+\ititle{書式}
+
+\begin{verbatim}
+copy <COBOLソース名>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt copy}はCOBOLソースにcppを適用する。
+結果は標準出力に出る。
+
+COBOLソースを開始する前には、{\tt start-cobol}と書く。
+
+\ititle{例}
+
+\begin{verbatim}
+copy MCPMAIN.CBL.C > MCPMAIN.CBL
+\end{verbatim}
+MCPMAIN.CBL.Cを処理する
+
+\ititle{バグ}
+
+\ititle{参照}
+
+\ititle{注意}
+
+cppを使うシェルスクリプトなので、COBOLソースと言えど拡張子は{\tt C}で
+なくてはならない。
+
+\end{function}
+

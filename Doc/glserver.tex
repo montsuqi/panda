@@ -1,0 +1,69 @@
+\section{glserver}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt glserver} - glterm用プレゼンテーションサーバ
+
+\ititle{書式}
+
+\begin{verbatim}
+glserver <OPTIONS>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt glserver}はglclientを接続するためのプレゼンテーションサーバである。
+デーモンとして動かす。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-port}
+	待機用ポート番号。
+	デフォルトは8000。
+
+	\option{-back}
+	接続待ちキュー長。
+	デフォルトは5。
+
+	\option{-screen}
+	画面格納ディレクトリ名。
+	デフォルトは起動したディレクトリ。
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは起動したディレクトリ。
+
+	\option{-auth}
+	認証サーバの指定をURL形式で行う。
+	デフォルトは\verb|glauth://localhost:8001|。これはglauthプロトコル
+	で認証を行い、localhostのポート番号8001に要求を出すという意味であ
+	る。
+
+	\option{-panda}
+	wfcの待機ポート。
+	デフォルトは\verb|localhost:9000|。
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+glserver &
+\end{verbatim}
+glserverを起動する。画面およびレコードの定義体は、起動ディレクトリから
+取得する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+\ititle{注意}
+
+glserverはglclientが接続する毎にサブプロセスを生成する。
+
+\end{function}
+

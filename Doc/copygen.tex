@@ -1,0 +1,153 @@
+\section{copygen}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt copygen} - 各種定義体からCOBOL用COPY句を生成する
+結果は標準出力に出る。
+
+\ititle{書式}
+
+\begin{verbatim}
+copygen <OPTIONS>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt copygen}はレコード定義およびLD定義を元にMONTSUQIのCOBOLで書かれる
+アプリケーションプログラムの各所で必要となるCOPY句を生成するコマンドで
+ある。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-ldw}(dotCOBOLのみ)
+	LD定義からMCPMAIN用出力ファイル定義用COPY句を生成する
+	レコードの中身を制御フィールド以外はFILLERのみにして、領域のみを確保
+	する。LDから生成する時に有効となる。デフォルトはOFF。
+
+	\option{-ldr}(dotCOBOLのみ)
+	LD定義からMCPMAIN用入力ファイル定義用COPY句を生成する。
+	レコードの中身を制御フィールドとSPA以外はFILLERのみにして、領域のみ
+	を確保する。LD定義体から生成する時に有効となる。デフォルトはOFF。
+
+	\option{-spa}
+	LD定義からSPA領域定義用COPY句を生成する。
+	デフォルトはOFF。
+
+	\option{-linkage}
+	実行環境定義からLINKAGE領域定義用COPY句を生成する。
+	デフォルトはOFF。
+
+	\option{-screen}
+	LD定義から画面領域用COPY句を生成する。
+	デフォルトはOFF。
+
+	\option{-db}(dotCOBOLのみ)
+	LD定義またはバッチ定義体からMCPSUBをCALLする時の第2パラメータ(結果
+	格納用領域)のMCPSUB側COPY句を生成する。
+	デフォルトはOFF。
+
+	\option{-dbpath}
+	LD定義またはバッチ定義体からMCPSUBをCALLする時のMCP-PATHにセットす
+	る、DBのパス名テーブルのCOPY句を生成する。
+	デフォルトはOFF。
+
+	\option{-dbrec}
+	LD定義またはバッチ定義体からMCPSUBをCALLする時の第2パラメータ(結果
+	格納用領域)のCOPY句を生成する。
+	デフォルトはOFF。
+
+	\option{-dbcomm}(dotCOBOLのみ)
+	LD定義またはバッチ定義体からMCPSUBとDBサーバとの通信領域のCOPY句を
+	生成する。
+	デフォルトはOFF。
+
+	\option{-mcp}
+	実行環境定義からMCPAREAを生成する。
+	デフォルトはOFF。
+
+	\option{-textsize}
+	不定長文字列を固定長にする時の長さ。レコード定義から生成する時に有効
+	となる(それ以外だと実行環境定義の値を使う)。
+	デフォルトは100
+
+	\option{-arraysize}
+	不定長配列を固定長にする時の要素数。レコード定義から生成する時に有
+	効となる(それ以外だと実行環境定義の値を使う)。
+	デフォルトは10
+
+	\option{-prefix}
+	項目名の前に付加する文字列。
+	デフォルトは何も付加しない
+
+	\option{-wprefix}
+	画面レコードの項目名の前にウィンドウ名を付加する。
+	デフォルトは何も付加しない
+
+	\option{-name}
+	01レベルの項目名(レコードの名前)を指定する。
+	デフォルトは定義体で定義した名前と同じとなる
+
+	\option{-filler}
+	レコードの中身をFILLERのみにし、領域のみを確保する。
+	デフォルトはOFF
+
+	\option{-noconv}
+	項目名をレコード定義と同じにし、大文字に加工しない。
+	デフォルトはOFF
+
+	\option{-dir}
+	環境定義体のファイル名を指定する。
+	デフォルトは\verb|./directory|
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-lddir}
+	LD定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-bddir}
+	バッチ定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-ld}
+	LD定義体の名前。
+	デフォルトはないので、LD定義体の必要なオプションを指定したら必ず指
+	定する
+
+	\option{-bd}
+	バッチ定義体の名前。
+	デフォルトはないので、バッチ定義体の必要なオプションを指定したら必
+	ず指定する
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+copygen -ctrl -spa -screen -prefix LDR- -name LDR demo
+\end{verbatim}
+demo.ldを元に生成する。レコード名はLDR、接頭語としてLDR-を付加し、制御領
+域、SPA領域、画面領域を出力する。
+
+\begin{verbatim}
+copygen -filler -name SPAAREAR demospa.rec
+\end{verbatim}
+demspa.recを元に生成する。レコード名はSPAAREA、中身のデータ項目を個々に
+出力せず、FILLERによって大きさのみ確保する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+recdefgen.rb
+
+\ititle{注意}
+
+\end{function}
+

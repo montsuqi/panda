@@ -1,0 +1,53 @@
+\section{glauth}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt glauth} - glserver用認証サーバ
+
+\ititle{書式}
+
+\begin{verbatim}
+glauth <OPTIONS>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt glauth}はglclientがglserverに接続する際の、認証用サーバである。
+デーモンとして動かす。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-port}
+	待機用ポート番号。
+	デフォルトは8001。
+
+	\option{-back}
+	接続待ちキュー長。
+	デフォルトは5。
+
+	\option{-password}
+	パスワードファイル名。
+	デフォルトは\verb|./passwd|。
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+glauth &
+\end{verbatim}
+
+\ititle{バグ}
+
+\ititle{参照}
+
+\ititle{注意}
+
+パスワードはMD5で暗号化されている。
+
+\end{function}
+

@@ -1,0 +1,99 @@
+\section{バッチ定義体文法}
+
+\subsection{概要}
+
+バッチ定義体とは、オンライン配下とプログラムと共に実行されるバッチの実
+行環境について定義を行う定義体である。実際の内容は、
+
+\begin{itemize}
+\item	{\bf 定義体の名前}
+\item	{\bf バッチを処理するプログラムの名前}
+\item	{\bf バッチに関わるデータの内容}
+\item	{\bf データベースについての記述}
+\end{itemize}
+
+によって構成されている。
+
+\subsection{構文}
+
+\begin{verbatim}
+バッチ定義体        ::= バッチ定義体名定義 デフォルト定義 { bind定義 } { DB宣言 } .
+デフォルト定義      ::= 配列定義 文字列定義 .
+配列定義            ::= "arraysize" 大きさ ";" .
+文字列定義          ::= "textsize" 大きさ ";" .
+大きさ              ::= 整数 .
+bind定義            ::= "bind"  モジュール名 言語ハンドラ名 ";" .
+言語ハンドラ名      ::= 文字列 .
+モジュール名        ::= 文字列 .
+DB宣言              ::= "db" [ DBグループ名 ] "{" { DB名行 } "}" ";" .
+DBグループ名        ::= 文字列 .
+DB名行              ::= DB名 ";" .
+DB名                ::= 名前 .
+\end{verbatim}
+
+\subsection{意味}
+
+\begin{itemize}
+\item	{\bf バッチ定義体名}	\\
+		バッチ定義体名はバッチ定義体につける名前である。バッチ定義体は
+		システムでこの名前によって識別される。現在のところ、バッチ定義
+		体名とバッチ定義体のファイル名の関係は、
+		\begin{verbatim}
+		バッチ定義体名 + '.bd'
+		\end{verbatim}
+		でなくてはならない。
+
+\item	{\bf bind定義}	\\
+		bind定義は、バッチで使用されるアプリケーションモジュールと記述
+		言語の関連付けを決定する。すなわち、どのアプリケーションモジュー
+		ルがどの言語で書かれているか(どの言語用のハンドラを用いるべき
+		か)を定義する。
+
+\item	{\bf デフォルト定義}	\\
+		デフォルト定義は、不定長配列(個数が定義されていない配列)や不定長
+		文字列(textで定義された文字列)を固定長にするための大きさを定義す
+		る。不定長配列や不定長文字列が直接扱える言語の場合は、特に意味
+		を持たない
+
+\item	{\bf DB宣言}	\\
+		DB宣言は、このLDで使用するデータベースを宣言する。
+
+\end{itemize}
+
+\subsection{その他事項}
+
+\begin{itemize}
+\item	{\bf 外部ファイル参照}	\\
+	本定義ファイルは、任意の位置で他のファイルを読み込むことが出来る。
+	このための擬似命令が\verb|#include|である。使用するには、
+	\verb|#include|の後に\verb|<>|または\verb|""|でくくったファイル名
+	を指定すると、指定したファイルを組み入れる
+
+\item	{\bf コメント}	\\
+	本定義ファイルは、任意の位置にコメントが記述出来る。コメントとなる
+	のは、\verb|#|のから行末までである
+	
+\end{itemize}
+
+\subsection{例}
+
+以下は定義の例である。
+
+\begin{verbatim}
+name    sample;
+
+arraysize   20;
+textsize    200;
+
+# bind <module name> <hander name> ;
+
+#bind   "SAMPLEB"   "dotCOBOL";
+bind    "SAMPLEB"   "OpenCOBOL";
+bind    "say"       "OpenCOBOL";
+bind    "sampleb"   "OpenCOBOL";
+
+db  "ORCA"  {
+    metadb;
+    adrs;
+};
+\end{verbatim}

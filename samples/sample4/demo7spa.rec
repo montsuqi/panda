@@ -1,0 +1,5 @@
+spa	{
+#include	"mcpspa.rec"
+	count		int;
+};
+

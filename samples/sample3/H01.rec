@@ -1,0 +1,1498 @@
+H01	{
+	fixed6	{
+		PTNUM	{
+                    style   varchar(20);
+			value	varchar(21);
+		};
+		SRYYM	{
+			value	varchar(8);
+		};
+		SRYKA	{
+                    state   int;
+			value	varchar(3);
+		};
+		MIDASI01	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI02	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI03	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI04	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI05	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI06	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI07	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI08	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI09	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI10	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI11	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI12	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI13	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI14	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI15	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI16	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI17	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI18	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI19	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI20	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI21	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI22	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI23	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI24	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI25	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI26	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI27	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI28	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI29	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI30	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI31	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI32	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI33	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI34	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		MIDASI35	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		KHNTEN1	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN2	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN3	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN4	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN5	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN6	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN7	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN8	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN9	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN10	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN11	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN12	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN13	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN14	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN15	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN16	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN17	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN18	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN19	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN20	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN21	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN22	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN23	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN24	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN25	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN26	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN27	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN28	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN29	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN30	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN31	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN32	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN33	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN34	{
+                    state   int;
+			value	number(8);
+		};
+		KHNTEN35	{
+                    state   int;
+			value	number(8);
+		};
+		KAISU01	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU02	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU03	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU04	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU05	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU06	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU07	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU08	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU09	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU10	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU11	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU12	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU13	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU14	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU15	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU16	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU17	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU18	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU19	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU20	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU21	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU22	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU23	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU24	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU25	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU26	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU27	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU28	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU29	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU30	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU31	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU32	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU33	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU34	{
+                    state   int;
+			value	number(5);
+		};
+		KAISU35	{
+                    state   int;
+			value	number(5);
+		};
+		TENSU01	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU02	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU03	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU04	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU05	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU06	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU07	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU08	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU09	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU10	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU11	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU12	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU13	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU14	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU15	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU16	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU17	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU18	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU19	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU20	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU21	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU22	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU23	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU24	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU25	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU26	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU27	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU28	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU29	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU30	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU31	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU32	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU33	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU34	{
+                    state   int;
+			value	number(8);
+		};
+		TENSU35	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU101	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU102	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU103	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU104	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU105	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU106	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU107	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU108	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU109	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU110	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU111	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU112	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU113	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU114	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU115	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU116	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU117	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU118	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU119	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU120	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU121	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU122	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU123	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU124	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU125	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU126	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU127	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU128	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU129	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU130	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU131	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU132	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU133	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU134	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU135	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU201	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU202	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU203	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU204	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU205	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU206	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU207	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU208	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU209	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU210	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU211	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU212	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU213	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU214	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU215	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU216	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU217	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU218	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU219	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU220	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU221	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU222	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU223	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU224	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU225	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU226	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU227	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU228	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU229	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU230	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU231	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU232	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU233	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU234	{
+                    state   int;
+			value	number(8);
+		};
+		KOHTENSU235	{
+                    state   int;
+			value	number(8);
+		};
+		TOTALTEN1	{
+                    state   int;
+			value	number(8);
+		};
+		TOTALTEN2	{
+                    state   int;
+			value	number(8);
+		};
+		TOTALTEN3	{
+                    state   int;
+			value	number(8);
+		};
+		FTNMONEY1	{
+                    state   int;
+			value	number(8);
+		};
+		FTNMONEY2	{
+                    state   int;
+			value	number(8);
+		};
+		FTNMONEY3	{
+                    state   int;
+			value	number(8);
+		};
+		YKZFTN1	{
+                    state   int;
+			value	number(8);
+		};
+		YKZFTN2	{
+                    state   int;
+			value	number(8);
+		};
+		YKZFTN3	{
+                    state   int;
+			value	number(8);
+		};
+		JNISSU1	{
+                    state   int;
+			value	number(2);
+		};
+		JNISSU2	{
+                    state   int;
+			value	number(2);
+		};
+		JNISSU3	{
+                    state   int;
+			value	number(2);
+		};
+		NKHNTEN01	{
+			value	number(8);
+		};
+		NKHNTEN02	{
+			value	number(8);
+		};
+		NKHNTEN03	{
+			value	number(8);
+		};
+		NKHNTEN04	{
+			value	number(8);
+		};
+		NKHNTEN05	{
+			value	number(8);
+		};
+		NKHNTEN06	{
+			value	number(8);
+		};
+		NKHNTEN07	{
+			value	number(8);
+		};
+		NKHNTEN08	{
+			value	number(8);
+		};
+		NKHNTEN09	{
+			value	number(8);
+		};
+		NKHNTEN10	{
+			value	number(8);
+		};
+		NKHNTEN11	{
+			value	number(8);
+		};
+		NKHNTEN12	{
+			value	number(8);
+		};
+		NKHNTEN13	{
+			value	number(8);
+		};
+		NKHNTEN14	{
+			value	number(8);
+		};
+		NKHNTEN15	{
+			value	number(8);
+		};
+		NKHNTEN16	{
+			value	number(8);
+		};
+		NKHNTEN17	{
+			value	number(8);
+		};
+		NKHNTEN18	{
+			value	number(8);
+		};
+		NKHNTEN19	{
+			value	number(8);
+		};
+		NKHNTEN20	{
+			value	number(8);
+		};
+		NKHNTEN21	{
+			value	number(8);
+		};
+		NKHNTEN22	{
+			value	number(8);
+		};
+		NKHNTEN23	{
+			value	number(8);
+		};
+		NKHNTEN24	{
+			value	number(8);
+		};
+		NKHNTEN25	{
+			value	number(8);
+		};
+		NKHNTEN26	{
+			value	number(8);
+		};
+		NKHNTEN27	{
+			value	number(8);
+		};
+		NKHNTEN28	{
+			value	number(8);
+		};
+		NKHNTEN29	{
+			value	number(8);
+		};
+		NKHNTEN30	{
+			value	number(8);
+		};
+		NKHNTEN31	{
+			value	number(8);
+		};
+		NKHNTEN32	{
+			value	number(8);
+		};
+		NKHNTEN33	{
+			value	number(8);
+		};
+		NKHNTEN34	{
+			value	number(8);
+		};
+		NKHNTEN35	{
+			value	number(8);
+		};
+		NKAISU01	{
+			value	number(5);
+		};
+		NKAISU02	{
+			value	number(5);
+		};
+		NKAISU03	{
+			value	number(5);
+		};
+		NKAISU04	{
+			value	number(5);
+		};
+		NKAISU05	{
+			value	number(5);
+		};
+		NKAISU06	{
+			value	number(5);
+		};
+		NKAISU07	{
+			value	number(5);
+		};
+		NKAISU08	{
+			value	number(5);
+		};
+		NKAISU09	{
+			value	number(5);
+		};
+		NKAISU10	{
+			value	number(5);
+		};
+		NKAISU11	{
+			value	number(5);
+		};
+		NKAISU12	{
+			value	number(5);
+		};
+		NKAISU13	{
+			value	number(5);
+		};
+		NKAISU14	{
+			value	number(5);
+		};
+		NKAISU15	{
+			value	number(5);
+		};
+		NKAISU16	{
+			value	number(5);
+		};
+		NKAISU17	{
+			value	number(5);
+		};
+		NKAISU18	{
+			value	number(5);
+		};
+		NKAISU19	{
+			value	number(5);
+		};
+		NKAISU20	{
+			value	number(5);
+		};
+		NKAISU21	{
+			value	number(5);
+		};
+		NKAISU22	{
+			value	number(5);
+		};
+		NKAISU23	{
+			value	number(5);
+		};
+		NKAISU24	{
+			value	number(5);
+		};
+		NKAISU25	{
+			value	number(5);
+		};
+		NKAISU26	{
+			value	number(5);
+		};
+		NKAISU27	{
+			value	number(5);
+		};
+		NKAISU28	{
+			value	number(5);
+		};
+		NKAISU29	{
+			value	number(5);
+		};
+		NKAISU30	{
+			value	number(5);
+		};
+		NKAISU31	{
+			value	number(5);
+		};
+		NKAISU32	{
+			value	number(5);
+		};
+		NKAISU33	{
+			value	number(5);
+		};
+		NKAISU34	{
+			value	number(5);
+		};
+		NKAISU35	{
+			value	number(5);
+		};
+		NTENSU01	{
+			value	number(8);
+		};
+		NTENSU02	{
+			value	number(8);
+		};
+		NTENSU03	{
+			value	number(8);
+		};
+		NTENSU04	{
+			value	number(8);
+		};
+		NTENSU05	{
+			value	number(8);
+		};
+		NTENSU06	{
+			value	number(8);
+		};
+		NTENSU07	{
+			value	number(8);
+		};
+		NTENSU08	{
+			value	number(8);
+		};
+		NTENSU09	{
+			value	number(8);
+		};
+		NTENSU10	{
+			value	number(8);
+		};
+		NTENSU11	{
+			value	number(8);
+		};
+		NTENSU12	{
+			value	number(8);
+		};
+		NTENSU13	{
+			value	number(8);
+		};
+		NTENSU14	{
+			value	number(8);
+		};
+		NTENSU15	{
+			value	number(8);
+		};
+		NTENSU16	{
+			value	number(8);
+		};
+		NTENSU17	{
+			value	number(8);
+		};
+		NTENSU18	{
+			value	number(8);
+		};
+		NTENSU19	{
+			value	number(8);
+		};
+		NTENSU20	{
+			value	number(8);
+		};
+		NTENSU21	{
+			value	number(8);
+		};
+		NTENSU22	{
+			value	number(8);
+		};
+		NTENSU23	{
+			value	number(8);
+		};
+		NTENSU24	{
+			value	number(8);
+		};
+		NTENSU25	{
+			value	number(8);
+		};
+		NTENSU26	{
+			value	number(8);
+		};
+		NTENSU27	{
+			value	number(8);
+		};
+		NTENSU28	{
+			value	number(8);
+		};
+		NTENSU29	{
+			value	number(8);
+		};
+		NTENSU30	{
+			value	number(8);
+		};
+		NTENSU31	{
+			value	number(8);
+		};
+		NTENSU32	{
+			value	number(8);
+		};
+		NTENSU33	{
+			value	number(8);
+		};
+		NTENSU34	{
+			value	number(8);
+		};
+		NTENSU35	{
+			value	number(8);
+		};
+		NKOHTENSU101	{
+			value	number(8);
+		};
+		NKOHTENSU102	{
+			value	number(8);
+		};
+		NKOHTENSU103	{
+			value	number(8);
+		};
+		NKOHTENSU104	{
+			value	number(8);
+		};
+		NKOHTENSU105	{
+			value	number(8);
+		};
+		NKOHTENSU106	{
+			value	number(8);
+		};
+		NKOHTENSU107	{
+			value	number(8);
+		};
+		NKOHTENSU108	{
+			value	number(8);
+		};
+		NKOHTENSU109	{
+			value	number(8);
+		};
+		NKOHTENSU110	{
+			value	number(8);
+		};
+		NKOHTENSU111	{
+			value	number(8);
+		};
+		NKOHTENSU112	{
+			value	number(8);
+		};
+		NKOHTENSU113	{
+			value	number(8);
+		};
+		NKOHTENSU114	{
+			value	number(8);
+		};
+		NKOHTENSU115	{
+			value	number(8);
+		};
+		NKOHTENSU116	{
+			value	number(8);
+		};
+		NKOHTENSU117	{
+			value	number(8);
+		};
+		NKOHTENSU118	{
+			value	number(8);
+		};
+		NKOHTENSU119	{
+			value	number(8);
+		};
+		NKOHTENSU120	{
+			value	number(8);
+		};
+		NKOHTENSU121	{
+			value	number(8);
+		};
+		NKOHTENSU122	{
+			value	number(8);
+		};
+		NKOHTENSU123	{
+			value	number(8);
+		};
+		NKOHTENSU124	{
+			value	number(8);
+		};
+		NKOHTENSU125	{
+			value	number(8);
+		};
+		NKOHTENSU126	{
+			value	number(8);
+		};
+		NKOHTENSU127	{
+			value	number(8);
+		};
+		NKOHTENSU128	{
+			value	number(8);
+		};
+		NKOHTENSU129	{
+			value	number(8);
+		};
+		NKOHTENSU130	{
+			value	number(8);
+		};
+		NKOHTENSU131	{
+			value	number(8);
+		};
+		NKOHTENSU132	{
+			value	number(8);
+		};
+		NKOHTENSU133	{
+			value	number(8);
+		};
+		NKOHTENSU134	{
+			value	number(8);
+		};
+		NKOHTENSU135	{
+			value	number(8);
+		};
+		NKOHTENSU201	{
+			value	number(8);
+		};
+		NKOHTENSU202	{
+			value	number(8);
+		};
+		NKOHTENSU203	{
+			value	number(8);
+		};
+		NKOHTENSU204	{
+			value	number(8);
+		};
+		NKOHTENSU205	{
+			value	number(8);
+		};
+		NKOHTENSU206	{
+			value	number(8);
+		};
+		NKOHTENSU207	{
+			value	number(8);
+		};
+		NKOHTENSU208	{
+			value	number(8);
+		};
+		NKOHTENSU209	{
+			value	number(8);
+		};
+		NKOHTENSU210	{
+			value	number(8);
+		};
+		NKOHTENSU211	{
+			value	number(8);
+		};
+		NKOHTENSU212	{
+			value	number(8);
+		};
+		NKOHTENSU213	{
+			value	number(8);
+		};
+		NKOHTENSU214	{
+			value	number(8);
+		};
+		NKOHTENSU215	{
+			value	number(8);
+		};
+		NKOHTENSU216	{
+			value	number(8);
+		};
+		NKOHTENSU217	{
+			value	number(8);
+		};
+		NKOHTENSU218	{
+			value	number(8);
+		};
+		NKOHTENSU219	{
+			value	number(8);
+		};
+		NKOHTENSU220	{
+			value	number(8);
+		};
+		NKOHTENSU221	{
+			value	number(8);
+		};
+		NKOHTENSU222	{
+			value	number(8);
+		};
+		NKOHTENSU223	{
+			value	number(8);
+		};
+		NKOHTENSU224	{
+			value	number(8);
+		};
+		NKOHTENSU225	{
+			value	number(8);
+		};
+		NKOHTENSU226	{
+			value	number(8);
+		};
+		NKOHTENSU227	{
+			value	number(8);
+		};
+		NKOHTENSU228	{
+			value	number(8);
+		};
+		NKOHTENSU229	{
+			value	number(8);
+		};
+		NKOHTENSU230	{
+			value	number(8);
+		};
+		NKOHTENSU231	{
+			value	number(8);
+		};
+		NKOHTENSU232	{
+			value	number(8);
+		};
+		NKOHTENSU233	{
+			value	number(8);
+		};
+		NKOHTENSU234	{
+			value	number(8);
+		};
+		NKOHTENSU235	{
+			value	number(8);
+		};
+		NTOTALTEN1	{
+                    state   int;
+			value	number(8);
+		};
+		NTOTALTEN2	{
+                    state   int;
+			value	number(8);
+		};
+		NTOTALTEN3	{
+                    state   int;
+			value	number(8);
+		};
+		NFTNMONEY1	{
+			value	number(8);
+		};
+		NFTNMONEY2	{
+			value	number(8);
+		};
+		NFTNMONEY3	{
+			value	number(8);
+		};
+		NYKZFTN1	{
+			value	number(8);
+		};
+		NYKZFTN2	{
+			value	number(8);
+		};
+		NYKZFTN3	{
+			value	number(8);
+		};
+		NJNISSU1	{
+			value	number(2);
+		};
+		NJNISSU2	{
+			value	number(2);
+		};
+		NJNISSU3	{
+			value	number(2);
+		};
+		SKYKBN	{
+			value	number(1);
+		};
+		TEISEIKBN	{
+			value	number(1);
+		};
+		SKYYM	{
+			value	varchar(8);
+		};
+		HENREIYM	{
+			value	varchar(8);
+		};
+		SRYKANAME	{
+                    style   varchar(20);
+			value	varchar(18);
+		};
+		NAME	{
+			value	varchar(25);
+		};
+		SEIKYUSYUBETU	{
+                    style   varchar(20);
+			value	varchar(50);
+		};
+		SKYKBNNM	{
+                    style   varchar(20);
+			value	varchar(12);
+		};
+		TEISEIKBNNM	{
+                    style   varchar(20);
+			value	varchar(12);
+		};
+	};
+};

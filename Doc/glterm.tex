@@ -1,0 +1,802 @@
+\documentclass[a4j]{jreport}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{graphics}
+\pagestyle{empty}
+\parindent 1zw
+\title{glterm\\
+GUIをC/S化するツールキット}
+\author{生越昌己}
+\newenvironment{function}{
+    \begin{list}{■}{}}{
+    \end{list}}
+\newcommand{\ititle}[1]{\item{\bf #1}\par}
+\begin{document}
+\maketitle
+
+\chapter{概要}
+
+\section{本システムの概要}
+
+本ソフトウェアは、GUIをC/Sで実現するものである。つまり、クライアント側で
+はGUIの表示や入力を行い、サーバ側で実際の処理を行うといったシステムであ
+る。
+
+このようにすることにより、以下のメリットがある。
+
+\begin{itemize}
+\item   {\bf アプリケーションとUIの結合が疎になる}  \\
+    このことにより、インターフェイスの仮想化がやりやすくなり、クライアン
+    トのプラットフォームを問わないGUIシステムが構築出来る。
+\item   {\bf 負荷分散が可能になる}  \\
+    サーバでは重たいGUIの処理をしなくて済み、業務に専念させることが出来
+    る。また、クライアントはGUIの処理に専念することが出来る。
+\item   {\bf アプリケーションの開発が容易になる}    \\
+    GUI部品を仮想化することにより、アプリケーション開発でGUIのことを深く
+    考える必要がなくなる。
+\end{itemize}
+
+さらに、このシステムはGUIツールキットの仮想化ということになるため、以下の
+ことも実現可能になる。
+
+\begin{itemize}
+\item   {\bf 異なるGUIツールキット上でも同じアプリケーションが動かせる} \\
+    APIに機能的に対応した実装が存在すれば、GUIツールキット自身の実装や機
+    能を問う必要がない。
+\item   {\bf GUI以外の環境でも実行出来る可能性がある}   \\
+    APIに機能的に対応した実装が存在すれば、GUI環境である必要性もない。つ
+    まり、APIに対応した機能が用意出来れば、cursesでも
+    VUI\footnote{Voice User Interfade}でも実行出来る。
+\item   {\bf APIの実装がUIの実装に影響を受けない}   \\
+    このため、アプリケーション側では、UIの実装上の問題を先送りにすること
+    が出来る。そのため、未知のUIに対してもアプリケーションを作ることが出
+    来る。また、その実装の進捗とアプリケーション開発は無関係になるので、
+    並列開発が可能になる。
+\end{itemize}
+
+\section{画面定義}
+
+\subsection{概要}
+
+本システムの画面は、XMLで記述される。このXMLは
+glade\footnote{Gtk+のインターフェイスビルダ}
+によって記述するが、このXMLはプレインテキストであるため、エディタ等によ
+る修正も可能である。
+
+この関係から、本システムのGUIは現在のところGtk+を使用している。このため、
+以下の説明にはGtk+の知識を前提としている。
+
+\subsection{使用可能なGUI部品}\label{subsec:parts}
+
+本システムでは、Gtk+の全ての標準的なコンテナ系ウィジェットと、いくつかの
+入出力系ウィジェット(以下GUI部品と呼ぶ)が使用出来る。標準以外のウィジェッ
+トも、Gladeやlibgladeを対応させることによって、使用可能である。
+
+現在利用可能なGUI部品は以下のとおりである。なお、これ以外のGUI部品につい
+ては、現在全実装を目指して作業中である。
+
+\begin{itemize}
+\item   {\bf text}  \\
+    複数行のテキスト入力
+\item   {\bf label} \\
+    入力不可能な文字列表示専用
+\item   {\bf entry} \\
+    1行文字列の表示と入力。最大文字長は必ず指定すること
+item    {\bf combo} \\
+    選択テーブルを持つ入力
+item    {\bf clist} \\
+    複数カラムを持つテーブルを表示する
+\item   {\bf button}    \\
+    クリックすることによりイベント発生する
+\item   {\bf togglebutton}  \\
+    押下する毎に状態変化し、状態を保存するボタン。TRUEかFALSEの値を持つ
+\item   {\bf checkbutton}   \\
+    チェックマークをつけることにより状態変化し、状態を保存するボタン。
+    TRUEかFALSEの値を持つ
+\item   {\bf radiobutton}   \\
+    状態を保存するボタン。TRUEかFALSEの値を持ち、複数ある場合は一つだけTRUE
+    になる。
+\item   {\bf list}  \\
+    テーブルを表示する
+\item   {\bf calendar}  \\
+    カレンダーを表示し、日時入力を行う
+\item   {\bf notebook}  \\
+    タブが付いた複数枚重ねることの出来るコンテナ
+\end{itemize}
+
+このほか、gtk+pandaをインストールすることにより、以下のウィジェットも
+使用可能になる。
+
+\begin{itemize}
+\item   {\bf numberentry}   \\
+    数値を入力するのに便利な入力フィールド。右詰め、固定小数点、数値編
+    集機能を持つ
+\item   {\bf pandacombo}    \\
+    キー操作を重視したcomboで、comboの上位互換
+\item   {\bf pandaclist}    \\
+    イベントを強化したclistで、clistの上位互換
+\item   {\bf pandaentry}    \\
+    入力モードを強化したentryで、entryの上位互換
+\end{itemize}
+
+\subsection{画面作成}
+
+画面作成には基本的にgladeを使う。gladeでの画面作成についての詳細は、
+gladeのマニュアルを参考にすること。
+
+初めてgladeで画面を作る時には、アプリケーションを記述する言語やプロジェ
+クトの名前等を聞かれるが、本システムではgladeの生成する画面レイアウト
+情報のXMLファイル(.gladeという拡張子のファイル)のみが必要になるので、
+それ以外の項目については、適当に答えておいて構わない。
+
+gladeでは、一つの画面ファイルが複数のウィンドウを生成することも可能で
+あるが、本システムでは画面ファイル名と画面名が1対1対応をするという仮定
+をして処理をしているので、一つの画面ファイルに記述されるウィンドウは一
+つでなくてはならない。
+
+使用出来るGUI部品については\ref{subsec:parts}に書いてあるとおりである。
+これらと、通常のコンテナ系ウィジェットを使う限りは、特に制約となるよう
+な制限事項はない。
+
+イベントに対応したcallback関数については、\ref{subsec:callback}に挙げ
+たものを指定する。
+
+このcallback関数の中で最も重要なものは、{\tt send\_event}である。この
+callback関数は、現在の画面情報と、このcallback関数が呼び出される契機と
+なったウィンドやウィジェットの情報と、dataに指定されている文字列(一般
+にはイベントに対応した文字列にする)とを持って、glserverにイベントパケッ
+トを送信する。これにより、glserverでアプリケーションが実行される。その
+ため、実際に処理を依頼するシグナルに対応したcallback関数には、この
+{\tt send\_event}を指定する。具体的には、buttonウィジェット等に、この
+callback関数を指定する。
+
+\subsection{使用可能なcallback}\label{subsec:callback}
+
+現在用意されている標準のcallback関数は以下のとおりである。
+
+\begin{itemize}
+\item   {\bf select\_all}   \\
+    editableの全体をselectする
+\item   {\bf unselect\_all} \\
+    editableの全体をunselectする
+\item   {\bf send\_event}   \\
+    主にbuttonウィジェットのclickedシグナルのハンドラとして使用される関
+    数で、サーバと通信を行う。データにはbutton識別のための文字列を指定す
+    る。この文字列がサーバにイベントとして通知される
+\item   {\bf send\_vent\_if\_changed}   \\
+    画面の何かをいじった時にのみ{\tt send\_event}する
+\item   {\bf clist\_send\_event}    \\
+    clistの項目を選んだ時のための{\tt send\_event}。イベントはSELECT
+\item   {\bf avtivate\_widget}  \\
+    項目をactivateした時のための{\tt send\_event}。イベントはACTIVATE
+\item   {\bf entry\_next\_focus}    \\
+    「次のフィールド」をfocusさせるためのもの
+\item   {\bf entry\_changed}        \\
+    entryウィジェットのchangedシグナルのハンドラとして使用する。これは
+    entryウィジェットの内容が変更された時にという情報を得るための処理を
+    行うため、entryウィジェットには必ず指定しなくてはならない。
+\item   {\bf button\_toggled}       \\
+    button系ウィジェットのtoggledシグナルのハンドラとして使用する。
+    必ず指定しなくてはならない。
+\item   {\bf selection\_changed}    \\
+    list系ウィジェットのselect, unselectシグナルのハンドラとして使用する。
+    必ず指定しなくてはならない。
+\item   {\bf click\_column} \\
+    clist系のウィジェットのクリック。selectしたのと同じ意味を持つ
+\item   {\bf map\_event}            \\
+    windowウィジェットのmap\_eventシグナルのハンドラとして使用する。これ
+    はwindowが表示された時にサーバに表示するべき画面情報を要求して受信す
+    る。主ウィンドウには必ず指定しなくてはならない。
+\item   {\bf set\_focus}            \\
+    主にwindowウィジェットのset\_focusシグナルのハンドラとして使用する。
+    これはクランアントが複数のウィンドウを開いている時、どのウィンドウに
+    フォーカスがあるかということをクライアントが認識するために指定する。
+\item   {\bf day\_selected} \\
+    カレンダーウィジェットの日付けのselect
+\item   {\bf window\_destroy}   \\
+    主ウィンドウのdestroyイベントのハンドラとして使用する。これが呼び出
+    されると、クライアントは終了要求をサーバに通知して後、クライアントが
+    終了する。
+\item   {\bf switch\_page}  \\
+    ノートブックのタブを操作してページをめくった時
+\item   {\bf window\_close} \\
+    ウィンドウを閉じたことを通知する。全てのウィンドウを閉じると、
+    glserverとの接続を切断し、終了する
+\item   {\bf window\_destroy}   \\
+    終了する
+\item   {\bf open\_browser} \\
+    外部のウェブブラウザを開く。pandahtml専用
+\end{itemize}
+
+\chapter{プログラミング}
+
+\section{サーバアプリケーションの実行構造}
+
+\subsection{制御権}
+
+サーバが、クライアントからイベントを受け取った場合、ここでパケットを解
+析し、その結果アプリケーションをサブルーチンコールの形で呼び出す。アプ
+リケーションから復帰した後に、サーバからクライアントに結果パケットが送
+信される。つまり、本システムのアプリケーションは、GUIの一般的な制御方
+法であるcallback手続きを、クライアントサーバで実現しているということに
+なる。
+
+\subsection{アプリケーションの構造}
+
+アプリケーションは、システムが起動した時に一度だけ初期化処理が呼び出され
+る。その中では、必要なデータ等の初期化の他に、自分自身の処理実体を登録す
+る。
+
+処理実体は2つ必要である。1つはそのアプリケーションに制御が渡った時に呼び
+出されるエントリ。もう一つは、そのアプリケーションが表示した画面からのイ
+ベントを受け取るエントリである。
+
+一般に前者(Linkエントリ)はアプリケーションの初期化等を行い、その後自分が
+処理するべき画面を表示させる。
+
+後者(Getエントリ)は実際のアプリケーションの処理を行う。
+
+リスト\ref{source:1}はサンプルプログラムである。
+
+\begin{quote}
+\begin{verbatim}
+
+
+\end{verbatim}
+\label{source:1}
+\end{quote}
+
+\subsection{アプリケーションパラメータ}
+
+アプリケーションは、画面情報と共に呼び出される。その内容は、大きく
+
+\begin{enumerate}
+\item\label{enum:1-1}   {\bf イベント発生ウィンドウ名}  \\
+    イベント発生したウィンドウの名前。最長SIZE\_NAMEまでの文字列。
+\item\label{enum:1-2}   {\bf イベント発生ウィジェット名}    \\
+    イベント発生の契機になったウィジェットの名前。最長SIZE\_NAMEまでの文
+    字列。
+\item\label{enum:1-3}   {\bf イベント文字列}    \\
+    クライアントの発生したイベントに対応した文字列であり、gladeで画面作
+    成する時に「データ」に指定した文字列そのものである。最長SIZE\_EVENTま
+    での文字列である。
+\item\label{enum:1-4}   {\bf 画面データ}    \\
+    イベント発生時に画面から読み取ったデータ。ウィジェット名をキーとし、
+    ValueStructを値とするhash tableである。
+\end{enumerate}
+
+に大別される。
+
+一般的なコーディングでは、Getエントリの冒頭で
+\ref{enum:1-1}\ref{enum:1-2}や\ref{enum:1-3}
+の内容で、それぞれの内容に応じて実際の処理に分枝する。
+
+画面データは入力または出力に使われたデータの最新のものが常に入っている。
+つまり、アプリケーション内で参照した時点では、入力の状態の如何に関わらず、
+画面に表示されている内容と一致している。
+
+\section{ドライバAPI}
+
+\subsection{概要}
+
+本システムのアプリケーションはドライバAPIを呼び出すことによって、リクエ
+スを出す。
+
+現在用意されているAPIは以下のとおりである。
+
+\begin{description}
+\item[SetScreenName]    画面名をセットする
+\item[GetScreenData]    画面情報からデータを読み出す
+\item[PutScreen]        画面出力の指示(WinodwData指定)
+\item[GetWindowValue]   画面情報から変数を読み出す
+\item[PutWindow]        画面出力の指示(画面名指定)
+\item[LinkModule]       アプリケーションの切り替え
+\end{description}
+
+\subsection{SetScreenName}
+
+\begin{function}
+\ititle{意味}
+    画面名をセットする。
+\ititle{定義}
+    \begin{verbatim}
+extern  void
+SetScreenName(
+    ScreenData  *scr,
+    char        *name)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[scr]  画面情報
+    \item[name] 画面名
+    \end{description}
+\ititle{復帰値}
+    なし
+\ititle{その他}
+    なし
+\end{function}
+
+\subsection{GetScreenData}
+
+\begin{function}
+\ititle{意味}
+    画面情報からデータを読み出す
+\ititle{定義}
+    \begin{verbatim}
+extern  ValueStruct *
+GetScreenData(
+    ScreenData  *scr,
+    char        *wname)
+extern  char    *
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[scr]  画面情報
+    \item[wname]    画面名
+    \end{description}
+\ititle{復帰値}
+    窓の持っているデータ構造体のポインタ値。存在しない画面の場合はNULL
+\ititle{その他}
+    なし
+\end{function}
+
+\subsection{PutScreen}
+
+\begin{function}
+\ititle{意味}
+    画面出力の指示
+\ititle{定義}
+    \begin{verbatim}
+extern  void
+PutScreen(
+    ScreenData  *scr,
+    WindowData  *win,
+    int         type)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[scr]  画面情報
+    \item[win]  ウィンドウ情報
+    \item[type] 画面出力タイプ
+    \end{description}
+\ititle{復帰値}
+    なし
+\ititle{その他}
+    なし
+\end{function}
+
+\subsection{GetWindowValue}
+
+\begin{function}
+\ititle{意味}
+    画面情報から変数を読み出す
+\ititle{定義}
+    \begin{verbatim}
+extern  ValueStruct *
+GetWindowValue(
+    ScreenData  *scr,
+    char        *name)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[scr]  画面情報
+    \item[name] 変数名
+    \end{description}
+\ititle{復帰値}
+    変数構造体のポインタ
+\ititle{説明}
+    画面の変数へアクセスするためのポインタをフルパスで指定する。
+\end{function}
+
+\subsection{PutWindow}
+
+\begin{function}
+\ititle{意味}
+    画面出力の指示(画面名指定)
+\ititle{定義}
+    \begin{verbatim}
+extern  void
+PutWindow(
+    ScreenData  *scr,
+    char        *wname,
+    int         type)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[scr]  画面情報
+    \item[wname]    画面名
+    \item[type] 画面出力タイプ
+    \end{description}
+\ititle{復帰値}
+    なし
+\ititle{その他}
+    PutScreenとの違いは、画面構造体ではなく、画面名を指定することである。
+\end{function}
+
+\subsection{LinkModule}
+
+\begin{function}
+\ititle{意味}
+    アプリケーションの切り替え
+\ititle{定義}
+    \begin{verbatim}
+extern  void
+LinkModule(
+    ScreenData  *scr,
+    char        *name)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[scr]  画面情報
+    \item[name] 切り替え先のアプリケーション名
+    \end{description}
+\ititle{復帰値}
+    なし
+\ititle{説明}
+    別のアプリケーションに制御を移したい時に呼ぶ。画面情報はそのまま引き
+    継がれる。切り替えられたプログラムではLinkエントリを実行する。切り替
+    え元のウィンドウは自動では消さないので、消す必要がある時は自分で行う
+    必要がある。
+\end{function}
+
+\chapter{データ}
+
+\section{概要}
+
+ドライバAPIの説明を見ればわかるように、本システムで画面情報を構成すると
+いうことは、画面情報のデータ構造を作るということに帰着される。また、画面
+から情報を取り出すということは、画面情報のデータ構造から情報を取り出すと
+いうことである。
+
+以下の解説では、このデータ構造とそれを表現するデータ定義言語、およびそれ
+を操作する手続きの説明を行う。
+
+\section{データ構造と定数}
+
+\subsection{ValueStruct}
+
+ValueStructは以下の構造を持っている。
+
+\begin{quote}
+\begin{verbatim}
+typedef struct _ValueStruct {
+    PacketDataType      type;
+    ValueAttributeType  attr;
+    union {
+        struct {
+            size_t                  count;
+            struct  _ValueStruct    **item;
+        }   ArrayData;
+        struct {
+            size_t                  count;
+            struct  _ValueStruct    **item;
+            char                    **names;
+            GHashTable              *members;
+        }   RecordData;
+        struct {
+            size_t      len;
+            char        *sval;
+        }   CharData;
+        int     IntegerData;
+        Bool    BoolData;
+    }   body;
+}   ValueStruct;
+\end{verbatim}
+\label{source:2}
+\end{quote}
+
+typeはデータの型で、以下のものがある。
+
+\begin{center}
+\begin{table}[ht]
+\begin{tabular}{|l|l|}
+\hline
+記号名              &   意味                    \\
+\hline\hline
+GL\_TYPE\_NULL      &   型未定(通常はエラー)    \\
+\hline
+GL\_TYPE\_INT       &   整数                    \\
+\hline
+GL\_TYPE\_BOOL      &   論理数                  \\
+\hline
+GL\_TYPE\_CHAR      &   固定長文字列            \\
+\hline
+GL\_TYPE\_BYTE      &   固定長領域              \\
+\hline
+GL\_TYPE\_NUMBER    &   固定長数字列            \\
+\hline
+GL\_TYPE\_TEXT      &   可変長文字列            \\
+\hline
+GL\_TYPE\_ARRAY     &   配列                    \\
+\hline
+GL\_TYPE\_RECORD    &   構造体                  \\
+\hline
+\end{tabular}
+\caption[ValueStructの型]{ValueStructの型}
+\label{table:1}
+\end{table}
+\end{center}
+
+実際には、この構造体に直接アクセスすることは推奨されず、後で説明する関数
+及びマクロを使用することを推奨する。
+
+\section{データ構造記述言語}
+
+ValueStructの構造は、データ構造記述言語によって表現される。データ構造
+記述言語については、\ref{sec:DD}を参照されたい。
+
+\section{関数仕様}
+
+\subsection{FreeValueStruct}
+
+\begin{function}
+\ititle{意味}
+    ValueStructの解放
+\ititle{定義}
+    \begin{verbatim}
+extern  void
+FreeValueStruct(
+    ValueStruct *val)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[val]      解放するValueStructポインタ
+    \end{description}
+\ititle{復帰値}
+    なし
+\ititle{説明}
+    ValueStructを構造を含め完全に解放する
+\end{function}
+
+\subsection{GetRecordItem}
+
+\begin{function}
+\ititle{意味}
+    構造体のメンバへのアクセス
+\ititle{定義}
+    \begin{verbatim}
+extern  ValueStruct *
+GetRecordItem(
+    ValueStruct *value,
+    char        *name)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[value]    ValueStructポインタ
+    \item[name]     メンバ名
+    \end{description}
+\ititle{復帰値}
+    メンバに対応したValueStructポインタ。メンバがなければNULL
+\ititle{説明}
+    構造体のメンバを検索し、対応したValueStructポインタを返す
+\end{function}
+
+\subsection{GetArrayItem}
+
+\begin{function}
+\ititle{意味}
+    配列の要素へのアクセス
+\ititle{定義}
+    \begin{verbatim}
+extern  ValueStruct *
+GetArrayItem(
+    ValueStruct *value,
+    int         i)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[value]    ValueStructポインタ
+    \item[i]        インデクス
+    \end{description}
+\ititle{復帰値}
+    インデクスに対応したValueStructポインタ。要素数を超えていればNULL
+\ititle{説明}
+    配列のインデクスでアクセスし、対応したValueStructポインタを返す
+\end{function}
+
+\subsection{SetValueString}
+
+\begin{function}
+\ititle{意味}
+    文字列の代入
+\ititle{定義}
+    \begin{verbatim}
+extern  Bool
+SetValueString(
+    ValueStruct *val,
+    char        *str)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[val]      ValueStructポインタ
+    \item[str]      文字列
+    \end{description}
+\ititle{復帰値}
+    成功すればTRUE、失敗すればFALSE
+\ititle{説明}
+    valの型に従い、文字列を変換して代入する。
+    \begin{itemize}
+    \item   GL\_TYPE\_CHARの場合    \\
+        valの持っている長さにトリミングされる
+    \item   GL\_TYPE\_TEXTの場合    \\
+        strの長さに合った領域をvalに確保する。元の領域は解放される
+    \item   GL\_TYPE\_INTの場合 \\
+        数値化される。''123''は123という値として代入される
+    \item   GL\_TYPE\_BOOLの場合    \\
+        先頭の文字がT(TRUEを想定)の場合真、それ以外は偽
+    \item   これら以外の場合    \\
+        代入は失敗する
+    \end{itemize}
+\end{function}
+
+\subsection{SetValueInteger}
+
+\begin{function}
+\ititle{意味}
+    整数の代入
+\ititle{定義}
+    \begin{verbatim}
+extern  Bool
+SetValueInteger(
+    ValueStruct *val,
+    int         ival)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[val]      ValueStructポインタ
+    \item[ival]     整数値
+    \end{description}
+\ititle{復帰値}
+    成功すればTRUE、失敗すればFALSE
+\ititle{説明}
+    valの型に従い、整数を変換して代入する。
+    \begin{itemize}
+    \item   GL\_TYPE\_CHARの場合    \\
+        10進の文字列化され、valの持っている長さにトリミングされる
+    \item   GL\_TYPE\_TEXTの場合    \\
+        10進の文字列化され、結果の長さに合った領域をvalに確保する。元の
+        領域は解放される
+    \item   GL\_TYPE\_INTの場合 \\
+        そのまま代入される
+    \item   GL\_TYPE\_BOOLの場合    \\
+        0ならFALSE、0以外ならTRUE
+    \item   これら以外の場合    \\
+        代入は失敗する
+    \end{itemize}
+\end{function}
+
+\subsection{SetValueBool}
+
+\begin{function}
+\ititle{意味}
+    論理値の代入
+\ititle{定義}
+    \begin{verbatim}
+extern  Bool
+SetValueBool(
+    ValueStruct *val,
+    Bool        bval)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[val]      ValueStructポインタ
+    \item[bval]     論理値
+    \end{description}
+\ititle{復帰値}
+    成功すればTRUE、失敗すればFALSE
+\ititle{説明}
+    valの型に従い、整数を変換して代入する。
+    \begin{itemize}
+    \item   GL\_TYPE\_CHARの場合    \\
+        TRUE, FALSEの文字列化され、valの持っている長さにトリミングされる
+    \item   GL\_TYPE\_TEXTの場合    \\
+        TRUE, FALSEの文字列化され、結果の長さに合った領域をvalに確保する。
+        元の領域は解放される
+    \item   GL\_TYPE\_INTの場合 \\
+        そのまま代入される
+    \item   GL\_TYPE\_BOOLの場合    \\
+        そのまま代入される
+    \item   これら以外の場合    \\
+        代入は失敗する
+    \end{itemize}
+\end{function}
+
+\subsection{GetItemLongName}
+
+\begin{function}
+\ititle{意味}
+    ValueStructの項目へのアクセス
+\ititle{定義}
+    \begin{verbatim}
+extern  ValueStruct *
+GetItemLongName(
+    ValueStruct     *root,
+    char            *longname)
+    \end{verbatim}
+\ititle{引数}
+    \begin{description}
+    \item[root]     元になるValueStructポインタ
+    \item[longname] 項目の名前
+    \end{description}
+\ititle{復帰値}
+    成功すれば項目を示すValueStructポインタE、失敗すればNULL
+\ititle{説明}
+    rootから項目をたどりながら、目的とする項目を検索する。構造体のレベル
+    の区切りは`.'である。たとえば
+    \begin{verbatim}
+foo {
+    a   char(3);
+    b   char(2);
+    c   {
+        d   char;
+        e   char(2);
+        g   {
+            h   char(4);
+            i   char(5);
+        }   [10];
+    }   input;
+    f   {
+        d   char;
+        e   char(2);
+        g   {
+            h   char(4);
+            i   char(5);
+        }   [2] input;
+    }   [5];
+    i   {
+        d   char;
+        e   char(2);
+    }   [];
+    l   text;
+};
+    \end{verbatim}
+    のような定義をされた構造体の場合、cの中のdを示すlongnameは、`c.d'で
+    ある。\\
+    配列要素の場合は、[]の中にインデクス値を入れて表現する。たとえば、同
+    じ定義で、cの中のgの3番目の要素のiは、`c.g[2].i'となる。originは0で
+    ある。\\
+    次元数が増えた場合は、[]の並びを複数指定する。\\
+    構造体を定義した場合、構造体自身の名前はlongnameには含まない。この例
+    で言えば、fooはlongnameには含まない。なぜなら、fooに関する検索は既に
+    rootに指定することで終わっているからである。
+\end{function}
+
+\subsection{ValueString}
+
+\begin{function}
+\ititle{意味}
+    ValueStructの文字列(マクロ)
+\ititle{定義}
+    \begin{verbatim}
+#define ValueString(v)          ((v)->body.CharData.sval)
+    \end{verbatim}
+\ititle{説明}
+\end{function}
+
+\subsection{ValueInteger}
+
+\begin{function}
+\ititle{意味}
+    ValueStructの整数値(マクロ)
+\ititle{定義}
+    \begin{verbatim}
+#define ValueInteger(v)         ((v)->body.IntegerData)
+    \end{verbatim}
+\ititle{説明}
+\end{function}
+
+\subsection{ValueBool}
+
+\begin{function}
+\ititle{意味}
+    ValueStructの論理値(マクロ)
+\ititle{定義}
+    \begin{verbatim}
+#define ValueBool(v)            ((v)->body.BoolData)
+    \end{verbatim}
+\ititle{説明}
+\end{function}
+
+\include{DDsyntax}
+
+\end{document}

@@ -1,0 +1,12 @@
+        01  SCRAREA.
+            02  SCREENDATA.
+              03  LIST.
+                  05  LIST-KEY    PIC X(30).
+                  05  LIST-CLIST1.
+                    06  LIST-COUNT  PIC S9(9)   BINARY.
+                    06  LIST-ITEM       OCCURS  20 TIMES.
+                      07  LIST-NAME   PIC X(12).
+                      07  LIST-TEL    PIC X(12).
+                      07  LIST-MAIL   PIC X(12).
+                      07  LIST-ADRS   PIC X(12).
+                    06  LIST-SELECT PIC X       OCCURS  20 TIMES.

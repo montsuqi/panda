@@ -1,0 +1,4 @@
+mcp	{
+	winstk	char(64)[10];
+	winidx	int;
+};

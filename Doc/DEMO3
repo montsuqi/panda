@@ -1,0 +1,110 @@
+データベースのオンラインデモについて
+
+1. 動かし方
+
+(0) PostgreSQLの準備を行う
+
+・portmasterが起動出来ること
+・ORCAというデータベースが存在していること
+
+    $ psql < adrs.create
+
+  適当にデータを作っておく。
+
+    $ psql ORCA
+    ORCA=>insert into adrs values('ogochan1','070-xxxx-7514','ogochan');
+    ORCA=>insert into adrs values('ogochan2','070-xxxx-7514','ogochan');
+    ORCA=>insert into adrs values('ogochan3','070-xxxx-7514','ogochan');
+    ORCA=>\q
+
+(1) pandaをbuildする
+
+	$ ./configure --with-opencobol --with-dotcobol --with-postgres
+	$ make
+
+(2) 認証サーバを起動する
+
+	$ cd ./glserver
+	$  ./glauth &
+
+	あらかじめ、gluseraddでパスワードファイルは作っておくこと
+
+(3) アプリサーバを起動する
+
+	$ cd ./sample2
+	$ ../aps/aps -db ORCA sample
+
+	OpenCOBOLを使う場合には、アプリサーバを起動する前に、
+
+	$ export COB_LIBRARY_PATH=.:../aps/.libs/
+
+	のようにして、OpenCOBOLのdynamic loading pathを指定しておくこと
+
+(4) WFCを起動する
+
+	$ cd ./sample2
+	$ ~/panda/wfc/wfc
+
+	(3) (4)を一気に、
+
+	$ ~/panda/tools/monitor -ApsPath ~/panda/aps/aps -WfcPath ~/panda/wfc/wfc
+
+	のように起動することも出来ます
+
+(5) glserverを起動する
+
+	$ cd ./sample2
+	$ ~/panda/glserver/glserver
+
+(6) glclientを起動する
+
+	$ ~/panda/glclient/glclient -user ユーザ名 -pass パスワード panda:sample
+
+2. 環境の説明
+
+(1) ソース
+
+  デモのソースは、./sample2にあります。このデモでは
+
+	SAMPLE1.CBL
+
+  のプログラムを使います。その他にdotCOBOLの場合は
+
+	MCPMAIN.CBL
+	MCPSUB.CBL
+
+  を使います。
+
+  COPY句は適当に見て下さい。コンパイルするには、./sample2にて
+
+	$ make all
+
+と打てばCOPY句も含めて全てのファイルが生成されます。また、
+
+	$ make -f Makefile.OC all
+
+と打てばOpenCOBOLのコードを生成します
+
+  COBOLプログラムは、EUCコードで保存される必要があります。文字が化ける時
+は文字コードを調べてみます。
+
+(2) レコード定義ファイル
+
+	adrs.db
+	metadb.db
+
+(3) 起動パラメータ
+
+  起動パラメータを見るには、各プログラムを-?というパラメータを指定して起
+動して下さい。設定されているパラメータを表示して終了します。
+
+3. デモの内容
+
+(1) 画面が出ます
+(2) 最初の入力フィールドに検索キーを入れます
+(3) 「検索」ボタンを押すと、一覧に検索結果を表示します。例で指定したデー
+	タの場合、たとえば、
+
+ogo%
+
+	を検索キーで指定すると良いでしょう。

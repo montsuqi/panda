@@ -1,0 +1,11 @@
+project3	{
+	vbox1	{
+		swin1	{
+			text1	{
+				style	varchar(20);
+				value	varchar(200);
+			};
+		};
+	};
+};
+

@@ -1,0 +1,90 @@
+\section{dbredirector}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt dbredirector} - データベースへの要求をファイルまたは他のデータベー
+スにリダイレクトする
+
+\ititle{書式}
+
+\begin{verbatim}
+dbredirector <OPTIONS> <DBグループ名>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt dbredirector}はデータベースへの要求をリダイレクトする。
+デーモンとして動かす。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-port}
+	アプリケーションサーバからの接続待機用ポート番号。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-back}
+	接続待ちキュー長。
+	デフォルトは5。
+
+	\option{-dir}
+	環境定義体のファイル名を指定する。
+	デフォルトは\verb|./directory|
+
+	\option{-base}
+	環境定義体に定義されたbaseを上書きするのに使う
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-lddir}
+	LD定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-bddir}
+	バッチ定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-host}
+	データベース稼働ホスト名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-port}
+	データベース待機ポート番号
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-db}
+	データベース名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-user}
+	データベースユーザ名
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-pass}
+	データベースのパスワード
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+dbredirector log &
+\end{verbatim}
+logという名前のDBグループに対応したdbredirectorを起動する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+monitor
+
+\ititle{注意}
+
+\end{function}
+

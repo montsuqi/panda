@@ -1,0 +1,104 @@
+project6	{
+	vbox1	{
+		notebook1	{
+			pageno	int;
+			fixed4	{
+				entry7	{
+					value	char(30);
+				};
+				text1	{
+					value	char(30);
+				};
+				togglebutton2	{
+					value	bool;
+				};
+				list1	{
+					count	int;
+					item	char(30)[20];
+					select	bool[20];
+				};
+				clist3	{
+					count	int;
+					item	{
+						value1	char(20);
+						value2	char(20);
+						value3	char(20);
+						value4	char(20);
+					}	[30];
+					select	bool[30];
+				};
+				combo1	{
+					name	{
+						value	char(30);
+					};
+					count	int;
+					item	char(30)[20];
+				};
+				checkbutton2	{
+					value	bool;
+				};
+				checkbutton3	{
+					value	bool;
+				};
+				radiobutton2	{
+					value	bool;
+				};
+				radiobutton3	{
+					value	bool;
+				};
+			};
+			vbox18	{
+				vbox19	{
+					vbox21	{
+						vbox22	{
+						};
+					};
+					vbox20	{
+					};
+				};
+			};
+			vbox23	{
+			};
+			fixed1	{
+				calendar1	{
+					year	int;
+					month	int;
+					day	int;
+				};
+				entry4	{
+					value	char(30);
+				};
+				entry5	{
+					value	char(30);
+				};
+				entry6	{
+					value	char(30);
+				};
+			};
+			fixed3	{
+                                pandaentry1  {
+                                        value   char(30);
+                                };
+				numberentry2	{
+					value	number(9,2);
+				};
+				pandaclist1	{
+					count	int;
+					item	{
+						value1	char(10);
+						value2	char(10);
+						value3	char(10);
+					}	[30];
+					select	bool[20];
+				};
+				pandacombo1	{
+					combo_entry7    {
+                                                value   char(30);
+                                        };
+					count	int;
+					item	char(30)[20];
+				};
+			};
+		};
+	};
+};

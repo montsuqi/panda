@@ -1,0 +1,17 @@
+shell	{
+	name	varchar(80);
+	arg		varchar(80);
+};
+
+path	do	{
+	ECHO	{
+		echo :arg;
+	};
+	COMMAND	{
+		:name :arg;
+	};
+	CAT	{
+		echo :arg;
+		cat :arg;
+	};
+};

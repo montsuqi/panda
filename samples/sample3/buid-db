@@ -1,0 +1,12 @@
+../tools/dbgen -create -record . adrs.db > adrs.create
+
+../tools/copygen -dir ./directory -lddir . -record . -db > SAMPLE-DB
+
+../tools/copygen -dir ./directory -lddir . -record . -prefix adr- -dbrec adrs.db > ADRS
+../tools/copygen -dir ./directory -lddir . -record . -prefix meta- -dbrec metadb.db > METADB 
+
+../tools/copygen -dir ./directory -record . -lddir . -info > SAMPLE-DBINFO 
+
+../tools/copygen -dir ./directory -record . -lddir . -dbcomm > SAMPLE-DBCOMM
+
+../tools/copygen -dir ./directory -record . -lddir . -dbpath > SAMPLE-PATH

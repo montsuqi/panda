@@ -1,0 +1,16 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Type" content="text/html; charset=euc-jp">
+<title>テキストウィンドウ</title>
+</head>
+<BODY TEXT="#000000" BGCOLOR="#F0F0C0" LINK="#0000FF" VLINK="#0000BB">
+<h1>テキストウィンドウ</h1>
+<form>
+<button event="Quit:Button" face="閉じる"><BR>
+<text name="project3.vbox1.swin1.text1.value" rows=10 cols=40>
+</form>
+</body>
+</html>

@@ -1,0 +1,36 @@
+name	demo;
+
+#	"~" will be expanded to home directory
+base	"~/panda/samples";
+
+#	"=" will be expanded to base
+lddir	"=/sample1";
+bddir	"=/sample1";
+record	"=/sample1";
+
+#multiplex_level	no;
+#multiplex_level	ld;
+multiplex_level	id;
+
+#linksize	1024;
+linkage		link;
+
+ld	{
+	demo1	"localhost:9100";
+	demo2	"localhost:9200";
+};
+
+db_group	"log"	{
+	type	"PostgreSQL";
+	port	"localhost";
+	name	"panda";
+	file	"orca.log";
+};
+
+db_group	{
+	type	"PostgreSQL";
+	port	"localhost";
+	name	"ORCA";
+	redirect_port	"localhost";
+	redirect		"log";
+};

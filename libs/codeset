@@ -1,0 +1,72 @@
+CodeSet	ASCII
+	set:	$0000
+	type:	SBCS
+	G0:	$1B$28$42
+	G1:	$1B$29$42
+	G2:	$1B$2A$42
+	G3:	$1B$2B$42
+	GL
+End
+CodeSet	JISX0208-1983
+	set:	$3001
+	type:	DBCS
+	G0:	$1B$24$42
+#	G0:	$1B$24$28$42
+	G1:	$1B$24$29$42
+	G2:	$1B$24$2A$42
+	G3:	$1B$24$2B$42
+End
+CodeSet	JISX0201-1976-kana
+	set:	$1000
+	type:	SBCS
+	G0:	$1B$28$49
+	G1:	$1B$29$49
+	G2:	$1B$2A$49
+	G3:	$1B$2B$49
+	GR
+End
+CodeSet	JISX0201-1976-alpha
+	set:	$0000
+	type:	SBCS
+	G0:	$1B$28$4A
+	G1:	$1B$29$4A
+	G2:	$1B$2A$4A
+	G3:	$1B$2B$4A
+	GL
+End
+CodeSet	JISC6226-1978
+	set:	$3002
+	type:	DBCS
+	G0:	$1B$24$42
+	G0:	$1B$24$28$42
+	G1:	$1B$24$29$42
+	G2:	$1B$24$2A$42
+	G3:	$1B$24$2B$42
+End
+CodeSet	JISX0208-1990
+	set:	$3003
+	type:	DBCS
+	G0:	$1B$26$40$1B$24$42
+End
+CodeSet	JISX0212-1990
+	set:	$2000
+	type:	DBCS
+	G0:	$1B$24$82$44
+End
+CodeSet	JISX0201-1976-miss
+	set:	$1000
+	type:	SBCS
+	G0:	$1B$28$48
+	G1:	$1B$29$48
+	G2:	$1B$2A$48
+	G3:	$1B$2B$48
+End
+CodeSet	KSC5601-1987
+	type:	DBCS
+#	set:	$3000
+#	G0:	$1B$28$49
+#	G1:	$1B$29$49
+#	G2:	$1B$2A$49
+#	G3:	$1B$2B$49
+#	GR
+End

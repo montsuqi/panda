@@ -1,0 +1,99 @@
+user	{
+	logname	char(16);
+	name	char(40);
+	mail	{
+		provider	char(64);
+		using		char(64);
+	};
+	zip		char(8);
+	adrs	char(160)[2];
+	tel		char(12);
+	job		char(160);
+	sex		char(4);
+	cdate	{
+		year	int;
+		month	int;
+		day		int;
+	};
+	bdate	{
+		year	int;
+		month	int;
+		day		int;
+	};
+};
+
+primary	{
+	logname;
+};
+
+path	logname	{
+	SELECT	{
+		DECLARE user_logname_csr CURSOR FOR
+		SELECT
+				*
+			FROM user
+			WHERE
+				logname = :logname
+			ORDER BY
+				logname
+		;
+	};
+	FETCH	{
+		FETCH FROM user_logname_csr
+			INTO
+				:*
+		;
+	};
+	UPDATE	{
+		UPDATE	user
+			SET
+				name = :name,
+				mail.provider = :mail.provider,
+				mail.using = :mail.using,
+				zip = :zip,
+				adrs = :adrs,
+				tel = :tel,
+				job = :job,
+				cdate = :cdate,
+				bdate = :bdate
+			WHERE
+				user.logname = :logname
+		;
+	};
+	INSERT	{
+		INSERT	INTO	user
+			(
+				logname,
+				name,
+				mail.provider,
+				mail.using,
+				zip,
+				adrs,
+				tel,
+				job,
+				sex,
+				cdate,
+				bdate
+			)
+			VALUES	(
+				:logname,
+				:name,
+				:mail.provider,
+				:mail.using,
+				:zip,
+				:adrs,
+				:tel,
+				:job,
+				:sex,
+				:cdate,
+				:bdate
+			)
+		;
+	};
+	DELETE	{
+		DELETE	FROM	user
+			WHERE
+				user.logname = :logname
+		;
+	};
+};

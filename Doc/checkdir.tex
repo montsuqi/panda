@@ -1,0 +1,68 @@
+\section{checkdir}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt checkdir} - 環境定義体から各種情報を出力する
+
+\ititle{書式}
+
+\begin{verbatim}
+checkdir <OPTIONS>
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt checkdir}は環境定義体から各種情報を出力するコマンドである。
+結果は標準出力に出る。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-ld}
+	LD情報を出力する。
+	デフォルトはOFF。
+
+	\option{-bd}
+	バッチ情報を出力する。
+	デフォルトはOFF。
+
+	\option{-dbg}
+	DBグループ情報を出力する。
+	デフォルトはOFF。
+
+	\option{-dir}
+	環境定義体のファイル名を指定する。
+	デフォルトは\verb|./directory|
+
+	\option{-record}
+	レコード定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-lddir}
+	LD定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\option{-bddir}
+	バッチ定義体のあるディレクトリ。
+	デフォルトは-dirで指定したファイルの内容に従う
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+checkdir -ld -bd -dbg
+\end{verbatim}
+\verb|./directory|を元に、LD, バッチ, DBグループの情報を出力する
+
+\ititle{バグ}
+
+\ititle{参照}
+
+\ititle{注意}
+
+\end{function}
+

@@ -1,0 +1,453 @@
+\chapter{COBOL API}
+
+\section{基本事項}
+
+\subsection{データ形式}
+
+MONTSUQIのデータ規約は、Cのデータ規約とほぼ同じである。つまり、
+
+\begin{itemize}
+\item	文字列は可変長で、ヌルキャラクタで終端されている
+\item	論理値は整数で表現されている
+\item	整数のendianは機種依存
+\end{itemize}
+
+である。そのため、このままではCOBOLでは操作が出来ない。そこで、これらを
+以下のように変換する。
+
+\begin{itemize}
+\item	文字列は固定長で、余白には空白が詰められている
+\item	論理値は1文字で表現されていて、trueは`T'、falseは`F'
+\item	整数のendianは一定の規則がある
+\end{itemize}
+
+\subsection{入出力データ(dotCOBOL)}
+
+アプリケーションサーバの入出力単位は、LDのデータである。つまり、LD定義体
+のうち、data文により定義されたものに、制御フィールドを付加したものが、入
+出力データとなる。
+
+入出力データに必要なCOPY句はcopygenによって生成することが出来る。
+
+\begin{quote}
+\begin{verbatim}
+$ copygen -ldr <LD定義体名> > LDRFILE
+$ copygen -ldw <LD定義体名> > LDWFILE
+\end{verbatim}
+\end{quote}
+
+\section{MCPハンドラ}
+
+\subsection{概要}
+
+MONTSUQIの基本的な処理はLDに書かれたデータによって駆動される単一のプログラ
+ムであるが、これをそのまま使ってプログラムを書くのは、かなり面倒である上、
+TPモニタの動作に関する深い知識を必要とする。このことは、本来のアプリケー
+ションの開発とは無関係の複雑さである。
+
+そのため、MONTSUQIでCOBOLを使ってアプリケーションを開発する場合、MCPハンド
+ラを使って開発することが推奨される。
+
+このMCPハンドラは、以下の機能を持つ。
+
+\begin{itemize}
+\item	LD電文の解釈
+\item	プログラムの実行制御
+\item	インターフェイスの翻訳
+\end{itemize}
+
+MCPハンドラ上のアプリケーションは、MCPハンドラから呼び出されるサブルーチ
+ンとして作成される。
+
+\subsection{MCPハンドラのモデル}
+
+MCPハンドラは、ウィンドウとアプリケーションを結びつける。つまり、ウィン
+ドウに対応したアプリケーションが存在し、イベント発生時にはイベントの発生
+したウィンドウに結びつけられたアプリケーションを呼び出す。
+
+個々のアプリケーションは、同じLDのアプリケーションの全ての画面データおよ
+びSPAデータが操作可能である。
+
+\subsection{アプリケーションの呼び出し}
+
+MCPハンドラはイベントの発生したウィンドウに対応したアプリケーションを検
+索し、対応したアプリケーションをサブルーチンとして呼び出す。その時のパラ
+メータは、
+
+\begin{variables}
+\variable{MCPAREA}
+	MCPハンドラの制御領域
+\variable{SPAAREA}
+	SPA領域
+\variable{LINKAREA}
+	プログラム間連絡領域
+\variable{SCRAREA}
+	画面領域
+\end{variables}
+
+の4つである。
+
+アプリケーションから見ると、自分が呼び出される前に画面データを読み込み、
+自分から復帰した後に画面を出力する。また、トランザクションも、自分が呼び
+出される前にスタートし、自分から復帰した後にコミットする。
+
+アプリケーションは呼び出されてから復帰するまでに、必ず一度は
+{\tt PUTWINDOW}を呼び出さなくてはならない。これは画面描画のためのサブルー
+チンであるが、実際の描画は復帰後に行われる。
+
+\section{MCPアプリケーションの作成}
+
+\subsection{基本ロジック}
+
+MCPハンドラから呼び出されるアプリケーションは、{\tt MCPAREA}の項目である
+{\tt MCP-WIDGET}, {\tt MCP-EVENT}, {\tt MCP-STATUS}の内容によって、自分
+への要求の内容を知る。
+
+それぞれの項目の意味は、以下のようになる。
+
+\begin{variables}
+\variable{MCP-STATUS}
+	アプリケーションの状態。他のプログラムから制御が来た場合は`LINK'、自
+	分の出力した画面の処理なら`PUTG'
+\variable{MCP-WIDGET}
+	イベント発生契機となったウィジェット名
+\variable{MCP-EVENT}
+	イベント識別の文字列
+\end{variables}
+
+アプリケーションプログラムの先頭で、これらの項目の値によって処理を分枝す
+るようにプログラムを書く。
+
+多くの場合、{\tt MCP-WIDGET}の意味するところと、{\tt MCP-EVENT}の意味す
+るところは、意味的に等価であることが多いので、実際には{\tt MCP-EVENT}と
+{\tt MCP-STATUS}の値によって処理を分枝するようにする場合が多い。
+
+具体的に、以下のようなコードを書く。
+
+\begin{verbatim}
+       LINKAGE                 SECTION.
+       COPY    MCPAREA.
+       COPY    DEMOLD-SPA.
+       COPY    DEMOLD-SCREEN.
+       COPY    LINKAREA.
+            02  LINK-DEMO    REDEFINES     LINKDATA.
+              03  LNK-LINKTEXT    PIC X(200).
+      **************************************************************************
+       PROCEDURE           DIVISION    USING
+           MCPAREA
+           SPAAREA
+           SCRAREA.
+       000-MAIN                SECTION.
+           EVALUATE    MCP-STATUS      ALSO    MCP-EVENT
+             WHEN     'LINK'           ALSO    ANY
+               PERFORM 010-INIT
+             WHEN     'PUTG'           ALSO   'OpenCalendar'
+               PERFORM 210-OPEN-CALENDAR
+             WHEN     'PUTG'           ALSO   'CloseCalendar'
+               PERFORM 220-CLOSE-CALENDAR
+             WHEN     'PUTG'           ALSO   'PutData'
+               PERFORM 230-PUT-DATA
+             WHEN     'PUTG'           ALSO   'Left'
+               PERFORM 240-CLICK-LEFT
+             WHEN     'PUTG'           ALSO   'Right'
+               PERFORM 250-CLICK-RIGHT
+             WHEN      OTHER
+               PERFORM 290-OTHER
+           END-EVALUATE.
+      *
+           EXIT    PROGRAM.
+\end{verbatim}
+
+LINKAREAのCOPYの後にある項目定義は、LINKDATAの再定義によって連絡領域の項
+目名を作るためである。
+
+\subsection{COPY句の生成}
+
+MCPハンドラとのインターフェイスのうち、{\tt MCPAREA}については固定である
+が、{\tt SPAAREA}と{\tt SCRAREA}については、LD単位に作成する必要がある。
+また、{\tt LINKAREA}はシステム単位に作成する必要がある。
+
+{\tt SPAAREA}を生成するには、
+
+\begin{quote}
+\begin{verbatim}
+$ copygen -name SPAAREA -prefix SPA- <SPAのレコード定義体名>
+\end{verbatim}
+\end{quote}
+
+のようにする。保存するファイル名は任意であるが、SPAAREAはLD毎に異なるこ
+とから、
+
+\begin{itemize}
+\item	LD名
+\item	SPAAREAであること
+\end{itemize}
+
+がわかるような名前にするのが望ましい。具体的には、
+\[LD名 + ``-SPA'' \]といった感じの名前にする。
+
+{\tt SCRAREA}を生成するには、
+
+\begin{quote}
+\begin{verbatim}
+$ copygen -screen -name SCRAREA <LD名>
+\end{verbatim}
+\end{quote}
+
+のようにする。SCRAREAもSPAAREA同様にLD毎に異なるので、
+
+\begin{itemize}
+\item	LD名
+\item	SCRAREAであること
+\end{itemize}
+
+がわかるような名前にするのが望ましい。
+
+SCRAREAはこのままでも使えないことがないが、項目の階層に画面レコード定義
+の情報を直接反映してしまうので、画面の構成によっては余分な集団項目を生成
+しがちである。また、項目名が画面レコード定義と同じものを使ってしまうため、
+名前の重複が発生しやすい。さらに、いくつかの画面を束ねてLDを作るため、複
+数の画面での項目名までもが重複する危険がある。一応COBOLの文法的には重複
+した項目は{\tt OF}で修飾するようにすれば問題ないのではあるが、かなりソー
+スが繁雑になってしまう。
+
+そこで、この生成されたSCRAREAを使いやすい形に修正を行う。具体的には、
+
+\begin{itemize}
+\item	項目名の変更
+\item	不要な階層の除去
+\end{itemize}
+
+を行う。
+
+MONTSUQIの言語ラッパはオフセットのみを意識してデータを並べるので、項目
+名等は任意に変更して構わない。ただし、項目のオフセットは絶対に変更して
+はならない。だから、
+
+\begin{itemize}
+\item	基本項目の削除
+\item	OCCURSの変更
+\item	項目の順序変更
+\end{itemize}
+
+等は行ってはならない。
+
+この方法は、一度に全部を一人で作成する時には都合が良いが、現実にはそれは
+困難である。この時には分割生成を行う。分割生成するには、まず
+
+\begin{quote}
+\begin{verbatim}
+$ copygen -screen
+\end{verbatim}
+\end{quote}
+
+として、レコード定義の最初の2行を出力し、それに
+
+\begin{quote}
+\begin{verbatim}
+$ copygen -screen <画面レコード定義体>
+\end{verbatim}
+\end{quote}
+
+として出力したものを連結して行く。もちろん結合前に項目名等の変更を行って
+おく。この時の留意点は一度に作成する場合と同じである。また、連結の順序は、
+LD定義体のwindow定義と同じでなくてはならない。
+
+{\tt LINKAREA}を生成するには、
+
+\begin{quote}
+\begin{verbatim}
+$ copygen -linkage
+\end{verbatim}
+\end{quote}
+
+のようにする。項目名は必要に応じて変更する。
+
+\section{MCPハンドラ・サービスAPI}
+
+アプリケーションは、
+
+\begin{itemize}
+\item	MCPDBSUBの呼び出し
+\item	MCPDCSUBの呼び出し
+\item	MCPAREAの値の操作
+\end{itemize}
+
+によってMCPハンドラに処理依頼を出す。このうち、MCPAREAの操作によって処理
+依頼を出すことは、互換性や安全性に問題があるので、直接操作をしないで、
+MCPDBSUBやMCPDCSUBを呼び出すことによって操作するのが望ましい。
+
+MCPDBSUBやMCPDCSUBは現在のところ、dotCOBOLの制約により、処理に対応したサ
+ブルーチンをCALLするのではなく、処理の名前を処理名の項目に設定してから、
+MCPDBSUBやMCPDCSUBをCALLする。
+
+\subsection{MCPDBSUBのAPI}
+
+MCPDBSUBには、以下の機能がある。
+
+\begin{options}
+\option{DBOPEN}
+	データベースをopenする(通常はMCPMAIN中で行われている)
+\option{DBCLOSE}
+	データベースをcloseする(通常はMCPMAIN中で行われている)
+\option{DBGANY}
+	レコードをキー指定でgetする。キーに該当するレコードがなければ、失敗
+	する
+\option{DBGANYN}
+	レコードをキー指定でgetする。キーに該当するレコードがなければ、次の
+	レコードをgetする
+\option{DGBNEXT}
+	{\tt\it DBGANYN}の後で、次のレコードをgetする
+\option{DBMODIFY}
+	レコードを更新する
+\option{DBERASE}
+	レコードを削除する
+\option{DBSTORE}
+	レコードを新規に作成する
+\end{options}
+
+これらの機能を使う場合は、
+
+\begin{enumerate}
+\item	必要ならキー値をレコード上の項目に設定する
+\item	MCP-PATHにレコード名を設定する
+\item	MCP-FUNCに機能名を設定する
+\item	MCPDBSUBを呼び出す
+\item	必要ならMCP-RCを見る
+\end{enumerate}
+
+という手順で行う。MCPDBSUBの呼び出し方は、
+
+\begin{quote}
+\begin{verbatim}
+           CALL   'MCPDBSUB'   USING
+               MCPAREA
+               <レコード項目名>
+\end{verbatim}
+\end{quote}
+
+のように行う。
+
+MCP-RCは\verb|S9(9) BINARY|の変数であり、その値の意味は
+
+\begin{center}
+\begin{table}[ht]
+	\begin{tabular}{|r|l|}
+	\hline
+	0		&	正常終了 レコード存在		\\	\hline
+	1		&	正常終了 レコード不在		\\	\hline
+	99		&	異常終了 レコード名間違い	\\	\hline
+	-1		&	異常終了 処理名間違い		\\	\hline
+	\end{tabular}
+\caption[MCP-RCの値]{MCP-RCの値}
+\label{table:1-1}
+\end{table}
+\end{center}
+
+である。
+
+\subsection{MCPDCSUBのAPI}
+
+MCPDBSUBには、以下の機能がある。
+
+\begin{options}
+\option{PUTWINDOW}
+	画面を表示する
+\end{options}
+
+これらの機能を使う場合は、
+
+\begin{enumerate}
+\item	MCP-FUNCに機能名を設定する
+\item	その他のMCPAREAに必要なパラメータを設定する
+\item	MCPDCSUBを呼び出す
+\item	必要ならMCP-RCを見る
+\end{enumerate}
+
+という手順で行う。MCPDBSUBの呼び出し方は、
+
+\begin{quote}
+\begin{verbatim}
+           CALL   'MCPDCSUB'   USING
+               MCPAREA.
+\end{verbatim}
+\end{quote}
+
+のように行う。
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt PUTWINDOW} - 画面出力を行う
+
+\ititle{パラメータ}
+
+\begin{variables}
+\variable{MCP-PUTTYPE}
+	出力タイプ
+\variable{MCP-WINDOW}
+	画面名
+\end{variables}
+
+\ititle{説明}
+
+出力タイプには、以下の種類がある。
+
+\begin{center}
+\begin{table}[ht]
+	\begin{tabular}{|l|l|}
+	\hline
+	CURRENT	&	現在の画面のまま出力						\\	\hline
+	NEW		&	指定した画面を新しく開く					\\	\hline
+	CLOSE	&	指定した画面を閉じる						\\	\hline
+	CHANGE	&	指定した画面を新しく開き、元の画面を閉じる	\\	\hline
+	BACK	&	前の画面を新しく開き、現在の画面を閉じる	\\	\hline
+	\end{tabular}
+\caption[画面出力タイプ]{画面出力タイプ}
+\label{table:1-2}
+\end{table}
+\end{center}
+
+CHANGEの時の画面が別のLDの場合、別のLDに制御が渡る。
+
+\end{function}
+
+\section{MCPMAINの生成}
+
+MCPMAINは基本的なロジックは作られているが、いくつかの部分がアプリケーショ
+ン依存のため、いくつかのCOPY句の生成とソースの変更を行ってからコンパイル
+を行う。
+
+\subsection{COPY句の作成}
+
+MCPMAINの必要とするCOPY句は、
+
+\begin{variables}
+\variable{LDRFILE}
+\variable{LDWFILE}
+\end{variables}
+
+の2つである。
+
+LDRFILEを作成するには、まず、
+
+\begin{quote}
+\begin{verbatim}
+$ copygen -ldr <LD名> > LDRFILE
+\end{verbatim}
+\end{quote}
+
+として作成する\footnote{必要なら{\tt -dir}も指定する}。
+
+LDWFILEも同様に、
+けなので、
+
+\begin{quote}
+\begin{verbatim}
+$ copygen -ldw <LD名> > LDWFILE
+\end{verbatim}
+\end{quote}
+
+として作成する。
+

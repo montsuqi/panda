@@ -1,0 +1,119 @@
+\section{データ構造定義体文法}\label{sec:DD}
+
+\subsection{概要}
+
+本システムで扱うデータは、全てここで規定するデータ構造定義言語によって
+定義されたデータである。この記述により、モニタ内でのデータの扱いを決定
+し、また言語間のデータの互換性を維持する。
+
+\subsection{構文}
+
+\begin{verbatim}
+データ構造定義  ::= レコード定義 .
+レコード定義    ::= "{" { メンバ定義 } "}" .
+メンバ定義      ::= メンバ名 型名 { 配列指定 } { "," 属性 } ";" .
+メンバ名        ::= 名前 .
+配列指定        ::= "[" ( 配列サイズ | "" ) "]" .
+配列サイズ      ::= 整数 .
+型名            ::= char型 | byte型 | text型 | number型 | 整数型 | レコード型 .
+char型          ::= "char" [ "(" 文字数 ")" ] .
+byte型          ::= "byte" [ "(" byte数 ")" ] .
+number型        ::= "number" [ "(" 桁数 ")" ] .
+文字数          ::= 整数 .
+byte数          ::= 整数 .
+桁数            ::= 整数 .
+text型          ::= "text" .
+整数型          ::= "int" .
+属性            ::= "input" | "output" | "virtual" ;
+レコード型      ::= レコード定義 .
+\end{verbatim}
+
+\subsection{意味}
+
+\begin{itemize}
+\item	char型は固定長文字列を表現する。長さは"(" ")" の中の数字で指定
+		し、省略した場合は1が指定されたものとみなす
+\item	byte型は固定長領域を表現する。中身に関してはシステムは何もしない
+\item	number型は固定長数字列を表現する。数字のみによる文字列である他
+		は、char型と同じである
+\item	text型は可変長文字列を表現する。長さの指定はない
+\item	配列は型の後に大きさを指定することによって宣言する。大きさが省
+		略された場合は可変サイズになる。次元には特に制限はない
+\item	メンバはそのレコード定義内でのみスコープを持つ。つまり、他のレ
+		コード定義に同じ名前が現れても、それらは別々のものとして扱われる
+\end{itemize}
+
+\subsection{その他事項}
+
+\begin{itemize}
+\item	{\bf 外部ファイル参照}	\\
+	本定義ファイルは、任意の位置で他のファイルを読み込むことが出来る。
+	このための擬似命令が\verb|#include|である。使用するには、
+	\verb|#include|の後に\verb|<>|または\verb|""|でくくったファイル名
+	を指定すると、指定したファイルを組み入れる
+
+\item	{\bf コメント}	\\
+	本定義ファイルは、任意の位置にコメントが記述出来る。コメントとなる
+	のは、\verb|#|のから行末までである
+	
+\end{itemize}
+
+\subsection{例}
+
+以下は定義の例である。
+
+\begin{verbatim}
+foo {
+    a   char(3);
+    b   char(2);
+    c   {
+        d   char;
+        e   char(2);
+        g   {
+            h   char(4);
+            i   char(5);
+        }   [10];
+    };
+    f   {
+        d   char;
+        e   char(2);
+        g   {
+            h   char(4);
+            i   char(5);
+        }   [2];
+    }   [5];
+    i   {
+        d   char;
+        e   char(2);
+    }   [];
+    l   text;
+};
+\end{verbatim}
+
+これは同じ宣言をCOBOL形式で書くと、
+
+\begin{verbatim}
+01  foo.
+    02  a           PIC X(3).
+    02  b           PIC X(2).
+    02  c.
+      03  d             PIC X.
+      03  e             PIC X(2).
+      03  g             OCCURS  10.
+        04  h             PIC X(4).
+        04  i             PIC X(5).
+    02  f           OCCURS  5.
+      03  d             PIC X.
+      03  e             PIC X(2).
+      03  g             OCCURS  2.
+        04  h             PIC X(4).
+        04  i             PIC X(5).
+    02  i           OCCURS  ?.
+      03  d             PIC X.
+      03  e             PIX X(2).
+    02  l           PIC X(?).
+\end{verbatim}
+
+のようになる。ただし、構造体はCOBOLで言う集団項目としての切り口は持たな
+い。
+

@@ -1,0 +1,12 @@
+button
+	clicked		クリックされた時に発生
+entry
+	activate	enter keyが押された時に発生する
+	changed		文字が変更された時に発生する。ただし、enter keyの場合は
+				activateが発生するため、changedは発生しない。
+widget
+	map_event	widgetが表示される時に発生
+	destroy		destroyされた時に発生
+window
+	set_focus	focusされた時に発生。clickしてfocusさせた時には、
+				clickedとfocusと両方発生する。

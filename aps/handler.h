@@ -1,0 +1,67 @@
+/*	PANDA -- a simple transaction monitor
+
+Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+
+This module is part of PANDA.
+
+	PANDA is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY.  No author or distributor accepts responsibility
+to anyone for the consequences of using it or for whether it serves
+any particular purpose or works at all, unless he says so in writing.
+Refer to the GNU General Public License for full details. 
+
+	Everyone is granted permission to copy, modify and redistribute
+PANDA, but only under the conditions described in the GNU General
+Public License.  A copy of this license is supposed to have been given
+to you along with PANDA so you can know your rights and
+responsibilities.  It should be in a file named COPYING.  Among other
+things, the copyright notice and this notice must be preserved on all
+copies. 
+*/
+#ifndef	_HANDLER_H
+#define	_HANDLER_H
+
+#include	"aps_main.h"
+#include	"BDparser.h"
+typedef	struct {
+	char	*name;
+	Bool	fUse;
+	void	(*ExecuteProcess)(ProcessNode *);
+	int		(*StartBatch)(char *name, char *param);
+	/*	DC function	*/
+	void	(*ReadyDC)(void);
+	void	(*StopDC)(void);
+	void	(*CleanUpDC)(void);
+	/*	DB function	*/
+	void	(*ReadyDB)(void);
+	void	(*StopDB)(void);
+	void	(*CleanUpDB)(void);
+}	MessageHandler;
+
+extern	void	InitHandler(void);
+extern	void	EnterHandler(MessageHandler *handler);
+extern	void	InitiateHandler(void);
+extern	void	ReadyDC(void);
+extern	void	ReadyDB(void);
+extern	void	ExecuteProcess(ProcessNode *node);
+extern	void	StopDC(void);
+extern	void	CleanUp(void);
+extern	void	StopDB(void);
+extern	void	CleanUpDB(void);
+extern	int		StartBatch(char *name, char *para);
+
+#undef	GLOBAL
+#ifdef	_HANDLER
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+GLOBAL	char		*Directory;
+GLOBAL	LD_Struct	*ThisLD;
+GLOBAL	BD_Struct	*ThisBD;
+GLOBAL	char		*LibPath;
+
+#undef	GLOBAL
+#endif
+

@@ -1,0 +1,23 @@
+name	sample;
+
+#	"~" will be expanded to HOME
+base	"~/panda/samples";
+
+#	"=" will be expanded to base or BASE_DIR
+lddir	"=/sample2";
+bddir	"=/sample2";
+record	"=/sample2";
+
+#linksize	1024;
+linkage		link;
+
+ld	{
+	sample	"localhost:9100";
+};
+bd	{
+	sample;
+};
+
+#hander	"dotCOBOL";
+
+#include	<dbgroup.inc>

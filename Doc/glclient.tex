@@ -1,0 +1,84 @@
+\section{glclient}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt glclient} - glterm用クライアント
+
+\ititle{書式}
+
+\begin{verbatim}
+glclient <OPTIONS> アプリケーション指定
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt glclient}はglserverに接続するGUI端末クライアントである。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-host}
+	glserverの稼働しているホスト名。
+	デフォルトはlocalhost。
+
+	\option{-port}
+	glserverの待機ポート番号。
+	デフォルトは8000。
+
+	\option{-cache}
+	画面キャッシュ格納ディレクトリ。
+	デフォルトは\verb|cache|。
+
+	\option{-style}
+	追加スタイルファイル格納ディレクトリ。
+	デフォルトは空。すなわち追加スタイルファイルを使用しない。この場合
+	は、\verb|gltermrc|に記述したスタイルのみを使用する。
+
+	\option{-user}
+	glserverにloginするユーザ名。
+	デフォルトは環境変数\verb|USER|の値。
+
+	\option{-pass}
+	glserverにloginするパスワード。
+	デフォルトは空文字。
+
+	\option{-pass}
+	レコード定義体のあるディレクトリ。
+	デフォルトは起動したディレクトリ。
+
+	\option{-auth}
+	認証サーバの指定をURL形式で行う。
+	デフォルトは\verb|glauth://localhost:8001|。これはglauthプロトコル
+	で認証を行い、localhostのポート番号8001に要求を出すという意味であ
+	る。
+
+	\end{options}
+
+アプリケーション指定は、glserver上で動くアプリケーションモジュール名と
+引数\verb|:|で区切って指定する。引数の解釈は、アプリケーションモジュー
+ル依存である。MONTSUQIを使用する場合は、\verb|panda:<LD名>|という指定になる。
+
+\ititle{例}
+
+\begin{verbatim}
+glclient -user ogochan -pass "ain@Lkad" panda:sample
+\end{verbatim}
+glclientを起動する。ユーザは`ogochan'。アプリケーション`panda'に引数
+`sample'を持って接続する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+glserver
+
+\ititle{注意}
+
+glserver接続時に、相互のバージョンチェックを行い、バージョンが異なると
+接続出来ない。
+
+\end{function}
+

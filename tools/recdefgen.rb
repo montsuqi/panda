@@ -1,0 +1,533 @@
+require "xmlparser"
+require "kconv"
+include Kconv
+require "uconv"
+include Uconv
+
+# require	"OutBuff"
+
+$button_enable = false     
+if ARGV[0] == "-b" 
+	$button_enable = true 
+	ARGV.shift 
+end       
+
+def	putTab(n)
+	while	n > 0
+		printf("\t");
+		n -= 1;
+	end
+end
+
+class	Stack
+	def	initialize
+		@st = Array.new;
+	end
+	def	push(val)
+		@st.push(val);
+	end
+	def	pop
+		@st.pop;
+	end
+	def	top
+		@st[@st.size-1];
+	end
+	def	body
+		@st;
+	end
+end
+
+class	Signal
+	def	initizlize
+		@handler = "";
+		@name = "";
+		@data = "";
+	end
+	def	name= (val)
+		@name = val;
+	end
+	def	name
+		@name;
+	end
+	def	handler= (val)
+		@handler = val;
+	end
+	def	handler
+		@handler;
+	end
+	def	data= (val)
+		@data = val;
+	end
+	def	data
+		@data;
+	end
+end
+
+class	Widget
+	def	initialize
+		@child = Array.new;
+		@chars = 0;
+		@klass = "";
+		@name = "";
+		@label = "";
+		@format = "";
+		@width = 0;
+		@height = 0;
+		@columns = 0;
+		@column_width = Array.new;
+		@align = "left";
+		@signal = Array.new;
+	end
+	def	child
+		@child
+	end
+	def	child= (val)
+		@child = val;
+	end
+	def	klass= (val)
+		@klass = val;
+	end
+	def	name= (val)
+		@name = val;
+	end
+	def	name
+		@name;
+	end
+	def	chars= (val)
+		@chars = val;
+	end
+	def	chars
+		@chars;
+	end
+	def	label
+		@label
+	end
+	def	label= (val)
+		@label = val;
+	end
+	def	align
+		@align
+	end
+	def	align= (val)
+		@align = val;
+	end
+	def	signal
+		@signal;
+	end
+	def	signal= (val)
+		@signal = val;
+	end
+	def	width
+		@width;
+	end
+	def	width= (val)
+		@width = val;
+	end
+	def	height
+		@height;
+	end
+	def	height= (val)
+		@height = val;
+	end
+	def	columns
+		@columns;
+	end
+	def	columns= (val)
+		@columns = val;
+	end
+	def	column_width
+		@column_width;
+	end
+	def	column_width= (val)
+		@column_width = val;
+	end
+	def	format
+		@format
+	end
+	def	format= (val)
+		@format = val;
+	end
+
+	def	_windowName
+		case	@klass
+		  when	"GtkWindow"
+			title = @name;
+		  else
+			title = "";
+			for	c in @child
+				title = c._windowName;
+				break	if	title  !=  "";
+			end
+		end
+		return	(title);
+	end
+	def	_title
+		case	@klass
+		  when	"GtkWindow"
+			title = @label;
+		  else
+			title = "";
+			for	c in @child
+				title = c._title;
+				break	if	title  !=  "";
+			end
+		end
+		return	(title);
+	end
+	def	isData
+		case	@klass
+		  when	"GtkLabel", "GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCList", "GtkCalendar", "GtkNumberEntry", "GtkText"
+			ret = TRUE;
+		  else
+			if	@child
+				for	c in @child
+					ret = c.isData;
+					break	if	ret;
+				end
+			  else
+				ret = FALSE;
+			end
+		end
+		return	(ret);
+	end
+	def	_panda(ind)
+		vname = @name;
+		size = 0;
+		case	@klass
+		  when	"top-level"
+			for	c in @child
+				c._panda(ind);
+			end
+		  when	"GtkVBox", "GtkHBox", "GtkFixed", "GtkScrolledWindow", "GtkWindow", "GtkViewport", "GtkNotebook"
+			if	self.isData
+				putTab(ind);
+				printf("%s\t{\n",vname);
+				if		@klass  ==  "GtkNotebook"
+					putTab(ind+1);
+					printf("pageno\tint;\n");
+				end
+				for	c in @child
+					c._panda(ind+1);
+				end
+				putTab(ind);
+				printf("};\n");
+			end
+		  when	"GtkCList", "GtkPandaCList"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			i = 0;
+			for	c in @child
+				c._panda(ind+1);
+				i += 1;
+			end
+
+			putTab(ind+1);
+			printf("count\tint;\n");
+			putTab(ind+1);
+			printf("item\t{\n");
+			i = 0;
+			for	c in @child
+				putTab(ind+2);
+				printf("value%d\tchar(%d);\n",i+1,Integer(self.column_width[i])/8);
+				i += 1;
+			end
+			putTab(ind+1);
+			printf("}\t[??];\n");
+			putTab(ind+1);
+			printf("select\tbool[??];\n");
+
+			putTab(ind);
+			printf("};\n");
+		  when	"GtkList"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			i = 0;
+			for	c in @child
+				c._panda(ind+1);
+				i += 1;
+			end
+
+			putTab(ind+1);
+			printf("count\tint;\n");
+			putTab(ind+1);
+			printf("item\tchar(??)[??]\n");
+			putTab(ind+1);
+			printf("select\tbool[??];\n");
+
+			putTab(ind);
+			printf("};\n");
+		  when	"GtkCombo", "GtkPandaCombo"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			@child[0]._panda(ind+1);
+			putTab(ind+1);
+			printf("count\tint;\n");
+			putTab(ind+1);
+			printf("item\tchar(%d)[??];\n",@child[0].chars);
+			putTab(ind);
+			printf("};\n");
+		  when	"GtkLabel"
+			if		@label  ==  ""
+				putTab(ind);
+				printf("%s\t{\n",vname);
+				putTab(ind+1);
+				printf("value\tchar(%d);\n",Integer(self.width)/8);
+				putTab(ind);
+				printf("};\n");
+			end
+		  when	"GtkEntry"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			putTab(ind+1);
+			printf("value\tchar(%d);\n",@chars+1);
+			putTab(ind);
+			printf("};\n");
+		  when	"GtkText"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			putTab(ind+1);
+			printf("value\tchar(??);\n");
+			putTab(ind);
+			printf("};\n");
+		  when	"GtkNumberEntry"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			putTab(ind+1);
+			len = @format.gsub(".,","").length;
+			s = @format.split(".");
+			if		s[1]  !=  nil
+				slen = s[1].gsub(",","").length;
+				printf("value\tnumber(%d,%d);\n",len,slen);
+			  else
+				printf("value\tnumber(%d);\n",len);
+			end;
+			putTab(ind);
+			printf("};\n");
+		  when	"GtkToggleButton", "GtkCheckButton", "GtkRadioButton"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			putTab(ind+1);
+			printf("value\tbool;\n");
+			if		@label  ==  ""
+				putTab(ind+1);
+				printf("label\tchar(??);\n");
+			end
+			putTab(ind);
+			printf("};\n");
+		  when  "GtkButton" 
+			if	$button_enable 
+				putTab(ind); 
+				printf("%s\t{\n",vname); 
+				putTab(ind+1); 
+				printf("state int;\n"); 
+				putTab(ind); 
+				printf("};\n"); 
+			end 
+		  when	"GtkCalendar"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			putTab(ind+1);
+			printf("year\tint;\n");
+			putTab(ind+1);
+			printf("month\tint;\n");
+			putTab(ind+1);
+			printf("day\tint;\n");
+			putTab(ind);
+			printf("};\n");
+		  else
+			;
+		end
+	end
+	def	panda
+		self._panda(0);
+	end
+	def	_html
+		vname = @name;
+		case	@klass
+		  when	"top-level"
+			for	c in @child
+				c._html;
+			end
+		  when	"GtkWindow"
+			for	c in @child
+				c._html;
+			end
+		  when	"GtkVBox"
+			printf("<TABLE>\n");
+			for	c in @child
+				printf("<TR>\n");
+				c._html;
+				printf("</TR>\n");
+			end
+			printf("</TABLE>\n");
+		  when	"GtkHBox"
+			printf("<TABLE><TR>\n");
+			for	c in @child
+				c._html;
+			end
+			printf("</TR></TABLE>\n");
+		  when	"GtkEntry"
+			printf("<TD><input type=\"text\" name=\"%s\" size=%d value=\"$%s\" maxlength=%d></TD>\n",vname, @chars, vname, @chars);
+		  when	"GtkButton"
+			data = "";
+			for	s in @signal
+				if	(  s.name     ==  "clicked"     )	&&
+					(  s.handler  ==  "send_event"  )
+					data = s.data;
+				end
+			end
+			printf("<TD><input type=\"submit\" name=\"%s.%s\" value=\"%s\"></TD>\n",vname, data, @label);
+		  when	"GtkLabel"
+			printf("<TD align=\"%s\">%s", @align, @label);
+		  else
+			for	c in @child
+				c._html;
+			end
+		end
+	end
+	def	html
+		myname = File.basename($<.filename,".glade");
+		title = self._title;
+		printf("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\">\n<HTML>\n<HEAD>\n");
+		printf("<TITLE>%s</TITLE>\n</HEAD>\n",title);
+		printf("<BODY TEXT=\"#202020\" BGCOLOR=\"#C0C0C0\" LINK=\"#00FFFF\" VLINK=\"#00BBBB\">\n");
+		printf("<form method=\"post\" action=\"glhtml\">\n",myname);
+		printf("<input type=\"hidden\" name=\"ID\" value=\"$_sesid\">\n");
+		self._html;
+		printf("</form>\n</BODY>\n</HTML>\n");
+	end
+end
+
+if ((xml = $<.gets).nil?); exit 1; end
+
+if xml =~ /^<\?xml\sversion=.+\sencoding=.EUC-JP./i
+	xml.sub!(/EUC-JP/i, "UTF-8")
+	encoding = 'EUC-JP'
+elsif xml =~ /^<\?xml\sversion=.+\sencoding=.Shift_JIS./i
+	xml.sub!(/Shift_JIS/i, "UTF-8")
+	encoding = "Shift_JIS"
+elsif xml =~ /^<\?xml\sversion=.+\sencoding=.ISO-2022-JP./i
+	xml.sub!(/ISO-2022-JP/i, "UTF-8")
+	encoding = "ISO-2022-JP"
+else
+	xml.sub!(/EUC-JP/i, "UTF-8")
+	encoding = 'EUC-JP'
+end
+
+xml += String($<.read)
+
+if encoding == "EUC-JP"
+	xml = euctou8(xml)
+elsif encoding == "Shift_JIS"
+	xml = euctou8(kconv(xml, EUC, SJIS))
+elsif encoding == "ISO-2022-JP"
+	xml = euctou8(kconv(xml, EUC, JIS))
+end
+
+parser = XMLParser.new
+
+tag = Stack.new;
+tree = Stack.new;
+
+widget = Widget.new;
+tree.push(widget);
+widget.name = "top";
+widget.klass = "top-level";
+
+signal = nil;
+
+begin
+	current = 0;
+	parser.parse(xml) do	|type, name, data|
+		case	type
+		  when	XMLParser::START_ELEM
+			tag.push(name);
+			case	name
+			  when	/widget/i
+				widget = Widget.new;
+				tree.push(widget);
+			  when	/signal/i
+				signal = Signal.new;
+			  else
+				;
+			end
+		  when	XMLParser::END_ELEM
+			tag.pop;
+			case	name
+			  when	/widget/i
+				cur = tree.pop;
+				widget = tree.top;
+				widget.child << cur;
+			  when	/signal/i
+				widget.signal << signal;
+			  else
+				;
+			end
+		  when	XMLParser::CDATA
+			next if data =~ /^\s*$/;
+			data = Uconv.u8toeuc(data)
+			path = "";
+			for	t in tag.body
+				path = path + "/" + t;
+			end
+			case	path
+			  when	/\/class$/i
+				widget.klass = data;
+			  when	/\/widget\/name$/i
+				widget.name = data;
+			  when	/\/text_max_length$/i
+				widget.chars = Integer(data);
+			  when	/\/widget\/label$/i
+				widget.label = data;
+			  when	/\/widget\/title/i
+				widget.label = data;
+			  when	/\/widget\/width/i
+				widget.width = Integer(data);
+			  when	/\/widget\/height/i
+				widget.height = Integer(data);
+
+			  when	/\/widget\/columns/i
+				widget.columns = Integer(data);
+			  when	/\/widget\/format/i
+				widget.format = data;
+			  when	/\/widget\/column_width/i
+				widget.column_width = data.split(",");
+
+			  when	/\/widget\/justify/i
+				case	data
+				  when	/GTK_JUSTIFY_CENTER/i
+					widget.align = "center";
+				  when	/GTK_JUSTIFY_LEFT/i
+					widget.align = "left";
+				  when	/GTK_JUSTIFY_RIGHT/i
+					widget.align = "right";
+				  else
+					;
+				end
+			  when	/\/signal\/name/i
+				signal.name = data;
+			  when	/\/signal\/handler/i
+				signal.handler = data;
+			  when	/\/signal\/data/i
+				signal.data = data;
+			  else
+				;
+			end
+		  when	XMLParser::PI
+		  else
+			next if current == 0
+			data.gsub!("\n", "\\n")
+			printf("%s\n",Uconv.u8toeuc(data));
+			current = 0
+		end
+	end
+rescue XMLParserError
+	line = parser.line
+	column = parser.column
+	printf("%s:%s:%d:%d:E:%s\n",$0,$<.filename,parser.line,parser.column,$!);
+	exit 1
+end
+
+#widget.html;
+widget.panda;
+exit 0

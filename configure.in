@@ -1,0 +1,272 @@
+AC_INIT(configure.in)
+
+dnl AM_INIT_AUTOMAKE is in aclocal.m4
+# make version
+MAJOR_VERSION=1
+MINOR_VERSION=0
+MICRO_VERSION=0
+VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
+
+AC_SUBST(MAJOR_VERSION)
+AC_SUBST(MINOR_VERSION)
+AC_SUBST(MICRO_VERSION)
+
+AC_SUBST(PACKAGE)
+AC_SUBST(VERSION)
+
+AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE")
+AC_DEFINE_UNQUOTED(VERSION,"$VERSION")
+
+# Initialize automake stuff
+AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
+AM_MAINTAINER_MODE
+
+# Specify a configuration file
+AM_CONFIG_HEADER(config.h)
+
+# Build time sanity check...
+AM_SANITY_CHECK
+
+# Checks for programs.
+AC_PROG_CC
+AC_ISC_POSIX
+AC_HEADER_STDC
+AC_ARG_PROGRAM
+
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+
+AM_PROG_LIBTOOL
+
+dnl *************************************************************************** 
+dnl Add all the cflags & libs needed for the PostgreSQL 
+dnl *************************************************************************** 
+ 
+AC_ARG_WITH(postgres, 
+[--with-postgres=<directory>     use postgres backend in <directory>],[
+if test $withval != yes 
+then 
+  dir=$withval 
+else 
+  dir="/usr/local/" 
+fi 
+AC_MSG_CHECKING(for Postgres files) 
+postgresdir="" 
+for d in $dir /usr /usr/local/postgres /opt/postgres /opt/packages/postgres /disk/postgres /usr/local/pgsql 
+do 
+  if test -f $d/lib/libpq.so 
+  then 
+      AC_MSG_RESULT(found Postgres in $d) 
+      postgresdir=$d 
+      break 
+  fi 
+done 
+if test x$postgresdir = x 
+then 
+  AC_MSG_WARN(Postgres backend not used) 
+else 
+  if test -f ${postgresdir}/include/libpq-fe.h 
+  then 
+      POSTGRES_CFLAGS=-I${postgresdir}/include 
+  elif test -f ${postgresdir}/include/pgsql/libpq-fe.h 
+  then 
+      POSTGRES_CFLAGS=-I${postgresdir}/include/pgsql 
+  elif test -f ${postgresdir}/include/postgresql/libpq-fe.h 
+  then 
+      POSTGRES_CFLAGS=-I${postgresdir}/include/postgresql 
+  else 
+      AC_MSG_WARN(Postgres include files not found, backend not used) 
+      postgresdir="" 
+  fi 
+  POSTGRES_LIBS="-L${postgresdir}/lib -lpq" 
+  AC_DEFINE(HAVE_POSTGRES) 
+fi 
+ 
+AM_CONDITIONAL(POSTGRES, test x$postgresdir != x) 
+AC_SUBST(POSTGRES_LIBS) 
+AC_SUBST(POSTGRES_CFLAGS) 
+])
+
+dnl ***************************************************************************
+dnl for shell
+dnl ***************************************************************************
+
+AC_ARG_WITH(shell,
+	[  --with-shell	Use shell driver],
+	if test x$withval = xyes; then
+		AC_DEFINE(USE_SHELL)
+	fi
+)		
+
+dnl *************************************************************************** 
+dnl for the dotCOBOL
+dnl *************************************************************************** 
+ 
+AC_ARG_WITH(dotcobol, 
+[--with-dotcobol=<directory>     use dotCOBOL in <directory>],[
+	if test $withval != yes 
+	then 
+	  dir=$withval 
+	else 
+	  dir="/usr/local" 
+	fi 
+	AC_MSG_CHECKING(for dotCOBOL files) 
+	dotcoboldir="" 
+	for d in $dir /usr /usr/local /usr/local/dotcobol /opt/dotcobol /opt/packages/dotcobol /disk/dotcobol
+	do 
+	  if test -f $d/bin/fcu
+	  then 
+	      AC_MSG_RESULT(found dotCOBOL in $d) 
+	      dotcoboldir=$d 
+	      break 
+	  fi 
+	done 
+	if test x$dotcoboldir = x 
+	then 
+	  AC_MSG_WARN(dotCOBOL not used) 
+	else 
+	  DOTCOBOL_COMMAND="${dotcoboldir}/bin/fcu"
+	  AC_DEFINE(HAVE_DOTCOBOL) 
+	fi 
+ 
+	AM_CONDITIONAL(DOTCOBOL, test x$dotcoboldir != x) 
+	AC_SUBST(DOTCOBOL_COMMAND) 
+]) 
+
+dnl *************************************************************************** 
+dnl Add all the cflags & libs needed for the OpenCOBOL
+dnl *************************************************************************** 
+ 
+AC_ARG_WITH(opencobol, 
+[--with-opencobol     use OpenCOBOL],[
+	AC_MSG_CHECKING(for OpenCOBOL)
+	cob_exists=yes
+	cob-config --version > /dev/null 2> /dev/null || cob_exists=no
+	if test "x$cob_exists" = "xyes"; then
+	  COB_CFLAGS="`cob-config --cflags`"
+	  COB_LIBS="`cob-config --libs`"
+	  AC_MSG_RESULT(yes)
+	  AC_DEFINE(HAVE_OPENCOBOL)
+	else
+	  AC_MSG_RESULT(no)
+	fi
+	AC_SUBST(COB_CFLAGS)
+	AC_SUBST(COB_LIBS)
+	
+	OPENCOBOL_CFLAGS="$COB_CFLAGS"
+	OPENCOBOL_LIBS="$COB_LIBS"
+
+	AM_CONDITIONAL(OPENCOBOL, test x$withval = xyes) 
+	AC_SUBST(OPENCOBOL_LIBS) 
+	AC_SUBST(OPENCOBOL_CFLAGS) 
+])
+
+dnl ***************************************************************************
+dnl GTK
+dnl ***************************************************************************
+
+AM_PATH_GTK(1.2.0)
+
+dnl ***************************************************************************
+dnl pty message display
+dnl ***************************************************************************
+
+AC_ARG_WITH(pty,
+	[  --with-pty	Use pty message],
+	if test x$withval = xyes; then
+		AC_DEFINE(USE_PTY)
+	fi
+)		
+
+dnl ***************************************************************************
+dnl IP v6
+dnl ***************************************************************************
+
+AC_ARG_WITH(ipv6,
+	[  --with-ipv6	Use IP v6],
+	if test x$withval = xyes; then
+		AC_DEFINE(USE_IPv6)
+	fi
+)		
+
+dnl ***************************************************************************
+dnl dorobune wo oki de shizumeru
+dnl ***************************************************************************
+
+AC_ARG_WITH(oki,
+	[  --with-oki	DOROBUNE WO OKI DE SHIZUMERU],
+	if test x$withval = xyes; then
+		AC_DEFINE(OKI)
+	fi
+)		
+
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the XML modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(XML_CONFIG,xml-config,no)
+if test x$XML_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find xml-config)
+fi
+XML_LIBS=`xml-config --libs`
+XML_CFLAGS=`xml-config --cflags`
+AC_SUBST(XML_LIBS)
+AC_SUBST(XML_CFLAGS)
+
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the libglade modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(GLADE_CONFIG,libglade-config,no)
+if test x$GLADE_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find libglade-config)
+fi
+GLADE_LIBS=`libglade-config --libs`
+GLADE_CFLAGS=`libglade-config --cflags`
+AC_SUBST(GLADE_LIBS)
+AC_SUBST(GLADE_CFLAGS)
+
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the gtkpanda modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(PANDA_CONFIG, gtkpanda-config, no)
+if test x$PANDA_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find gtkpanda-config)
+fi
+PANDA_CFLAGS=`$PANDA_CONFIG --cflags 2>/dev/null`
+PANDA_LIBS=`$PANDA_CONFIG --libs 2>/dev/null`
+AC_SUBST(PANDA_LIBS)
+AC_SUBST(PANDA_CFLAGS)
+AC_DEFINE(USE_PANDA)
+
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the libfixed modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(libfixed_config, libfixed-config)
+FIXED_CFLAGS=`$libfixed_config --cflags 2>/dev/null`
+FIXED_LIBS=`$libfixed_config --libs 2>/dev/null`
+AC_SUBST(FIXED_LIBS)
+AC_SUBST(FIXED_CFLAGS)
+
+dnl Check to make sure that we have libxml >= 1.7.2 installed
+old_LIBS="$LIBS"
+LIBS="$XML_LIBS $LIBS"
+AC_CHECK_FUNC(xmlSAXUserParseFile,,
+AC_MSG_ERROR([*** libxml >= 1.7.2 is required to compile libglade]))
+LIBS="$old_LIBS"
+
+have_gnome=false
+GNOME_INIT_HOOK([
+	have_gnome=true
+	AC_DEFINE(ENABLE_GNOME)
+])
+AM_CONDITIONAL(GNOME_SUPPORT, $have_gnome)
+
+GNOME_COMPILE_WARNINGS
+
+AM_GNOME_GETTEXT
+
+AC_OUTPUT(Makefile libs/Makefile glserver/Makefile glclient/Makefile tools/Makefile wfc/Makefile aps/Makefile cobol/Makefile htserver/Makefile)

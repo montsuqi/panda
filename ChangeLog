@@ -1,0 +1,925 @@
+2002-03-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.0 release ＼(^o^)／
+
+	* htserver/mon.c (PutHTML): セション保持をcookieでも行えるようにした
+
+	* htserver/server.c (SesServer): セション保持時間の設定。長時間放
+	置するとセションを消すようにした
+
+2002-02-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/handler.c (StartBatch): 終了コードを返すようにした
+
+2002-02-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* とりあえずhtserver動くようになる
+
+2002-02-21  hikino <hiki@matsukei.co.jp>
+
+	* libs/front.c (TermName): v6対応の修正
+
+2002-02-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: htserver追加(まだ動かじ)
+
+	* aps/OpenCOBOL.c (_ReadyDC): cob_initを呼ぶ
+
+2002-02-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/value.h (GL_TYPE_DBCODE): 加工しないSQL用データ型
+
+2002-02-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c (StartWfc): wfc起動時に-backを指定するようにする
+	(defaultでは少なすぎ)
+
+2002-02-05  Keisuke Nishida <knishida@sky.sannet.ne.jp>
+
+	* glclient/widgetOPS.c (RecvText): 修正
+
+2002-02-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.16 release
+
+	* aps/OpenCOBOL.c (GetApplication): 画面遷移処理の削除
+
+	* cobol/MCPMAIN.CBL.C : 画面遷移処理の削除
+
+	* aps/handler.c (ExecuteProcess): 画面遷移処理の吸収
+
+	* aps/dotCOBOL.c: インターフェイスの整理
+
+	* aps/OpenCOBOL.c: インターフェイスの整理
+
+	* aps/handler.c: インターフェイスの整理
+
+	* aps/handler.h: インターフェイスの整理
+
+2002-01-31  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.15 release
+
+	* ドキュメント充実 B)
+
+	* tools/copygen.c: -dbinfoを廃止(不要)
+
+2002-01-30  Keisuke Nishida <knishida@sky.sannet.ne.jp>
+
+	* glclient/callbacks.c (open_browser): bug修正
+
+2002-01-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/OpenCOBOL.c (_ReadyDC): module preload
+
+2002-01-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.14 release
+
+	* configure.in: ENABLE_GNOMEを忘れていた
+
+2002-01-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.13 release
+
+	* aps/OpenCOBOL.c (FixedCobol2C): OpenCOBOLの数値表現の変更に合わせた
+
+	* Ver 0.9.12 release
+
+	* tools/monitor.c (StopSystem): 止め残したプロセスを全てkillするようにした
+
+2002-01-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c (BuildMcpArea): MCPAREAの構造を変えた
+
+	* libs/DDparser.c (ParValue): GL_TYPE_RECORDの時にメンバが全くない時の処理
+
+2002-01-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.11 release
+
+	* tools/monitor.c (KillWfc): start-stop-daemonへの対応
+
+	* Ver 0.9.10 release
+
+	* aps/OpenCOBOL.c (FixedCobol2C): 数値変換の間違いを直した
+
+	* Ver 0.9.9 release
+
+	* aps/OpenCOBOL.c (FixedC2Cobol): 数値変換の間違いを直した
+
+	* Ver 0.9.8 release
+
+	* aps/OpenCOBOL.c (FixedC2Cobol): 数値変換の間違いを直した
+
+	* glclient/widgetOPS.c (InitWidgetOperations): マクロ名を直す
+
+2002-01-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/value.h (g_int_hash_table_foreach): 整数用hash(キャストするだけぇ)
+
+	* Ver 0.9.7 release
+
+	* glclient/widgetOPS.c (InitWidgetOperations): ちょっと安全対策
+
+2002-01-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.6 release
+
+2002-01-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: gtk+pandaの存在チェックをちゃんとした
+
+	* libs/driver.h: value.hからScreenDataを引越す
+
+2002-01-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c (InitSession): セションを保持しないオプション追
+	加(DoS対策)
+
+	* glclient/protocol.c (ShowWindow): 開いてないwindowを閉じようとし
+	た時に無視する処理追加
+
+2002-01-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.5 release
+
+	* libs/DIparser.c (BuildMcpArea): window stackの大きさをdirectory
+	で指定可能にした
+
+	* MCPAREAをlinkageと同じ管理にした
+
+2002-01-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/copygen.c (MakeMCP): MCPAREAの生成を可能にする
+
+	* libs/DIparser.h: mcpareaをDI_Structに作る
+
+2002-01-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.h: linkrecをLD_StructからDI_Structに移す
+
+2002-01-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.4 release
+
+	* libs/LDparser.c (ParDATA): ここでのLINKAGE宣言を廃止して、DDparser.cに移動
+
+2002-01-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.3 release
+
+2002-01-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps : apsioをlibsから移す
+
+2002-01-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c (_StartAps): apsの起動を自ホスト分のみにした
+
+2002-01-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.2 release
+
+2002-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/Shell.c (_DBERROR): 未定義機能にエラーを出すようにした
+
+	* glclient/callbacks.c (send_event_if_changed): 宣言の間違いを直す
+
+2002-01-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 0.9.1 release
+
+	* libs/Makefile.am (libpanda_la_SOURCES): libpandaからauth.cを除いた
+
+	* Ver 0.9.0 release
+
+	* aps/dbredirector.c (FileThread): ログのタイムスタンプを正しくした
+
+	* tools/monitor.c (StartProcess): ログが取得出来るようにした
+
+2002-01-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (ReadyAPS): スレッドの初期化の間違いを直した(aps
+	からwfcに接続する時に発覚する)
+	(ChangeLD): LDを移った時の初期化忘れを直す(spa, window)
+
+	* libs/apsio.c (GetWFC): wfc切断時の処理を正しくした
+
+2002-01-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (MessageThread): apsの異常時でもwfcが死なないよう
+	にした
+
+	* libs/apsio.c (InitAPSIO): apsからwfcへの接続を確実にした
+
+2002-01-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c : 肯定応答をAPS_OK, 否定応答をAPS_NOTにした(以
+	前はTRUE, FALSEだった)
+
+	* glclient/protocol.c (ProtocolThread): 通信部のマルチスレッド化
+
+2002-01-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LBSfunc.c (LBS_RequireSize): 追加
+
+	* libs/comm.c (SendLBS, RecvLBS): LBSの送受信の追加
+
+	* libs/wfcio.c : データを一度packしてから送受信するようにした
+	(apsio.c, wfc.cも同様)
+
+2002-01-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/Shell.c: shell起動用ドライバ追加
+
+	* aps/Makefile.am: PostgreSQLのドライバを1つのソースにした
+
+	* libs/LBSfunc.[ch]: 新設
+
+	* libs/tcp.c: IPv4専用バイナリを作れるようにした
+
+2001-12-31  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/dbgroup.c: MCPSUBのファンクション名チェックをやめた
+
+	* libs/value.h: DBG_Structに優先順位パラメータを加追
+
+	* libs/DIparser.c (AppendDBG): DI_Struct中のDBG_Structの格納を順序
+	が持てるようにテーブルに保持するように変更。ただし、hashも残す
+
+2001-12-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/OpenCOBOL.c (OpenCOBOL_UnPackValue): BINARYの時の処理を正し
+	くした(PackValueも同様)
+
+	* aps/PostgresDB.c (_DBDISCONNECT): DBを二重にdisconnectしないよう
+	にした。
+
+	* aps/aps_main.c : モジュールをロードするパスをコマンドラインで指
+	定出来るようにした(dbstub_main.cも同様)
+
+2001-12-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* sample3/: 追加
+
+	* aps/OpenCOBOL.c (GetApplication): MCPMAINの機能をマトモにした
+
+2001-12-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DDparser.c : fcloseの間違い修正(LD, BD, DIのparserは全て)
+
+	* libs/DDlex.c (ReadyDirective): ディレクティブでない時の処理を修
+	正(LD, BD, DIのlexは全て)
+
+2001-12-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/Makefile.am (libpandas_a_SOURCES): glserver用ライブラリを作った
+	(libpandac_a_SOURCES): glclient用ライブラリを作った
+
+2001-12-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.c (ParLD): home指定に~を有効にした
+
+	* aps/handler.c (InitiateHandler): 存在しない言語ハンドラをエラーに
+
+2001-12-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/MCPSUB.c: OpenCOBOL用MCPSUBモジュール作成
+
+	* aps/OpenCOBOL.c: オンライン部分作成
+
+	* aps/Makefile.am: モジュール化に対応
+
+2001-12-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/dbstub_main.c: サブプロセス化
+
+2001-11-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c (ParDI): ディレクトリにlddir, bddir, recorddirが
+	記述出来るようにした
+
+2001-11-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/tcp.c: ポートを文字列で指定するようにした
+
+2001-11-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/tcp.c: IPv6をマトモな対応にした(つもり)
+
+2001-11-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c : LD_Dir, BD_Dir, RecordDirにパス概念を入れた
+
+2001-11-15  Keisuke Nishida <knishida@sky.sannet.ne.jp>
+
+	* glclient/callbacks.c (send_event_if_changed): 
+
+2001-11-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.c: command命令の廃止(環境変数で指定するようにした)。
+	home命令の追加(実行ディレクトリの指定)
+
+	* aps/dbstub_main.c : daemon形式をやめた
+
+	* aps/PostgresTable.c: COBOL依存部の排除(dotCOBOL.cで吸収)
+
+	* aps/handler.c: 言語依存の部分の集約のために新設
+
+	* aps/dotCOBOL.c (_CleanUp): 正常終了時にfcuプロセスが残らないようにした
+
+2001-11-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.h: 窓情報の持ち方を変更(bindのため)
+
+	* libs/LDparser.c: apsのためのbind構文
+
+2001-11-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/dbstub.c : dbstubを必要としない場合に対応しやすくした
+
+	* aps/aps_main.c: COBOL以外の言語に対応しやすくした
+
+	* aps/COBOL.c: apsCOBOLを整理した
+
+2001-11-02  Keisuke Nishida <knishida@sky.sannet.ne.jp>
+	
+	* glclient/protocol.c (GetScreenData): フォーカスがおかしくなることの修正
+
+2001-11-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/callbacks.c (send_event): イベント処理中のイベントを無視する
+
+2001-10-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/widgetOPS.c (InitWidgetOperations): GtkPandaEntryへの対応
+
+2001-10-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/wfc.c (CatchSEGV): SEGVの時に落ちないようにした(両刃の剣？)
+
+	* aps/dbgroup.c: データベース操作系の処理とテーブル操作系の処理を
+	別にした(テーブルの指定の有無が違うため)
+
+	* cobol/MCPSUB.CBL: DBOPEN, DBDISCONNECT, DBCLOSE, DBSTART,
+	DBCOMMITの処理を変更した(dbgroup.cの変更のため)
+
+	* libs/DIlex.c: logportをredirect_portに名称変更
+
+	* aps/dbredirector.c: log.cを名称変更, DBの処理を追加
+
+	* aps/dbgroup.c: 初期化の方法を変更(ここでまとめて行うのではなく、
+	各DB処理モジュールの中で行うようにした)
+
+	* aps/PostgresTable.c: postgres.cから分離
+
+	* aps/PostgresDB.c: postgres.cから分離
+
+2001-10-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/pandalog.c: ログをファイルに取る(forwardは未実装)
+
+	* libs/DIlex.c: include directive
+
+2001-10-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/directory.c (SetUpDirectory): 余計なLD, BDを読み込まないよ
+	うにした(メモリ節約のため)
+
+	* aps/apsCOBOL.c: シグナル処理の追加(死なないプロセスにしないため)
+
+	* libs/value.h: ValueStructにfUpdateを追加(入力された項目に印をつ
+	けるため)
+
+	* libs/DIparser.c (ParDBGROUP): DB GROUPの概念を入れる(DBマネージャ
+	の複数対応とリカバリを確実にするため)
+
+2001-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/wfcio.c : wfc <-> server間通信の信頼性を上げた(つもり)
+
+	* libs/queue.c (NewQueue): pthread_cond_waitがblockしないbug fix
+
+2001-09-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/tcp.c (ConnectSocket): ホスト名が引けない時の処理(PR#193)
+
+2001-09-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* cobol/MCPMAIN.CBL: JOIN時に途中の画面を消す機能追加
+	
+2001-09-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (ConnectAPS): apsからの再接続を確実にした
+
+	* glclient/protocol.c (CreateNewWindow): CURRENTで画面がない時には、
+	NEWするように改良
+
+	* cobol/MCPMAIN.CBL: 画面の切り換え処理の改良(画面設定の変更)
+
+	* wfc/mqthread.c (MessageThread): 画面の切り換え処理の改良
+
+2001-09-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/aps.c : aps <-> wfc間通信の信頼性を上げた(つもり)
+
+	* include/wfc.h: aps用mutexをMQ_NodeからAPS_Nodeに移した
+
+	* wfc/mqthread.c (MessageThread): apsからの接続を完全にした
+
+	* include/const.h: 広域定数を一つのファイルで定義した
+
+2001-09-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+
+	* tools/copygen.c: BDへの対応
+
+	* glserver/pandaIO.c (RecvPanda): put type JOIN追加(ポップアップを閉じるため)
+	* cobol/MCPMAIN.CBL:
+	* wfc/mqthread.c (MessageThread): 
+
+2001-09-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c : バッチ環境定義の`BD'を作った(LDとの兼用はおか
+	しい上にスペック的に問題がある)
+
+2001-09-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/dbstub.c (InitSystem): 虫取り(LD毎のDB定義に対応してなかった)
+
+2001-08-31  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/dbstub.c (main): 虫取り^^;
+
+	* wfc/mqthread.c (MessageThread): 画面切り換えの修正
+
+2001-08-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Makefile.am : ディレクトリ構成変更(glserverを分けた)
+
+	* glserver/mqthread.c (MessageThread): メッセージキューの実装(トラ
+	ンザクション順序の保証のため)
+
+	* glserver/wfc.c: スレッド毎にソース分割
+
+2001-08-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/apsCOBOL.c : COBOLの実行ログをファイルに取るようにした
+
+2001-08-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/wfc.c: マルチスレッド化
+
+2001-08-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/tinycobol.c: Tiny COBOL依存のデータ変換追加(未テスト)
+
+	* glserver/Makefile.am : dot COBOL用、Tiny Cobol用のサーバを生成するようにした
+
+	* glserver/cobolvalue.c : 処理系依存の部分を分離した
+
+	* glclient/protocol.c (SendConnect): glclientの接続エラーがわかるようにした
+
+2001-08-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/dbstub.c: apsCOBOLと同じような動作にした
+
+2001-08-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/apsCOBOL.c (ExecuteServer): aps終了時にCOBOLをEOF通知するようにした
+
+	* tools/copygen.c: LD毎にDB定義があることに対応した
+
+	* cobol/MCPMAIN.CBL: COPY句名の整理(ソース変更を不要にした)
+
+	* cobol/MCPSUB.CBL: MCPDBSUB.CBLとMCPDCSUB.CBLを統合した
+
+	* sample2/Makefile : 整理
+
+	* sample1/Makefile : 整理
+
+	* glserver/wfc.c : ワークフローコントローラを実装しはじめ、とりあえず動く
+
+2001-08-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c , libs/LDparser.c : DB定義の位置をディレクトリからLDに変えた
+
+2001-07-31  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver (SetDefault): ディレクトリのデフォルトを変えた
+
+2001-07-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/apsCOBOL.c: 起動パラメータにポート番号を入れた
+
+	* libs/DIparser.c : LDのポート番号ホスト名をディレクトリに記述するようにした
+
+2001-07-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.c (ParLD): commandの文法を変えた
+
+2001-07-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/apsCOBOL.c : LD毎にアプリ用ディレクトリを作る仮定を入れる
+
+2001-07-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/postgres.c (ExecSQL): アトリビュートの処理(忘れてた)
+
+2001-07-15  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/postgres.c (ValueToSQL): like, ~ の処理を正しくした
+
+	* libs/DDparser.c (ParValue): アトリビュートの処理
+
+	* libs/value.c (RecvValueBody): Fixedのメモリリークを解消した(つもり)
+
+2001-07-07  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/cobolvalue.c : varcharとcharの扱いを同じにしてみた
+
+2001-07-04  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/dbexec.c (WriteDB_Reply): プロック数の誤りを直した
+
+2001-06-29  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/apsCOBOL.c (InitSystem): ptyの使用をconfigure項目にした
+
+	* libs/DDlex.c: varchar追加
+
+2001-06-24  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/postgres.c : SQLインタープリタ追加
+
+	* libs/SQLparser.c: SQLパーザ追加
+
+	* libs/DDparser.c (DD_ParserDataDefines): pathの処理の追加
+
+2001-06-10  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* sample2/MCPMAIN.CBL: とりあえずのトランザクション処理をapsCOBOLへ移す
+
+	* glserver/apsCOBOL.c: dbstubと統合
+
+	* glserver/dbexec.c: dbstubを処理部とサーバ部に分割
+
+2001-06-09  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* sample2/MCPMAIN.CBL: トランザクション処理追加
+
+	* オンラインデモが動くようにした
+
+2001-06-08  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/dbstub.c: dbstubをDBMS依存部と非依存部に分割
+
+2001-06-07  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* configure.in: 斉藤君の修正の吸収
+
+2001-06-04  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c: NumericToFixed, FixedToNumericをvalue.cに移した
+
+2001-05-26  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/DDparser.c (DD_ParserDataDefines): 副次キーの処理追加
+
+2001-05-16  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/option.c (CheckParam): 同じ文字列で始まるオプションが使えるようにした
+
+2001-05-11  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/copygen.c : MCPDBSUB用COPY句の生成機能
+
+2001-04-23  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c: GtkNumberEntryの固定小数点化に対応
+
+	* glclient/protocol.c (SendConnect): バージョンチェック
+
+	* glserver/server.c (MainLoop): バージョンチェック
+
+2001-04-20  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c (RecvNumberEntry): データをFixedで通信するようにした
+
+2001-03-26  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/copygen.c: numberの時、符号を生成するようにした
+
+2001-03-20  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/recdefgen.rb: GtkButtonのアトリビュート生成
+
+2001-03-19  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/callbacks.c : change系のcallbackを元に戻した
+
+	* glserver/server.c (TermName): 端末名のフォーマットを変えた
+
+2001-03-15  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* cobol/MCPMAIN1.CBL: MCP-TERM, MCP-USER追加
+
+	* tools/user.c: ユーザ管理ユーティリティ追加
+
+2001-03-14  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/server.c : ユーザ認証、端末名
+
+	* glclient/client.c : ユーザ認証
+
+2001-03-12  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/server.c : 端末名の取得
+
+2001-03-10  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/LDlex.c : cppを不要にした
+
+	* libs/DDlex.c : cppを不要にした
+
+2001-03-09  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/DIparser.c : 認証プロトコル定義追加
+
+	* glserver/glauth.c: 認証サーバ追加
+
+2001-02-27  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/auth.c: 追加
+
+2001-02-17  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/applications.c (ApplicationsCall): アプリケーションが発見
+	出来ない時の処理を正しくした
+
+2001-02-11  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/copygen.c (MakeFromLD): 階層を一つ上げた
+
+2001-02-09  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/recdefgen.rb : GtkNumberEntryの対応が不完全だったので直した
+
+	* libs/DDparser.c (ParValue): 論理をちょっと変えた
+	(ParPKey): 追加
+
+2001-01-26  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/recdefgen.rb: GtkToggleButtonとGtkCListの処理を正しくした
+
+2001-01-25  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/recdefgen.rb : GtkNumberEntry, GtkTextに正しく対応した
+
+	* glclient/widgetOPS.c (RecvNotebook): 子ウィジェットを正しく処理す
+	るようにした
+
+2001-01-24  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* include/glterm.h (SCREEN_END_SESSION): アプリケーションからの強制
+	終了処理を追加(MCPMAINも変更している)
+
+	* glclient/callbacks.c (window_close): 画面切り換え時に窓がなくなっ
+	て終了してしまうbug修正
+
+2001-01-23  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/recdefgen.rb : 最新の仕様に合わせた
+
+	* glclient/callbacks.c (window_close): 全ての窓を閉じるとクライアン
+	トが終了するようにした
+	(switch_page): GtkNotebookのページ切り換えに対応
+
+Mon Jan 22 03:52:24 2001  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c (RecvCombo): GtkComboのエントリが元に戻らな
+	いようにした。リスト、コラムリストの表示開始インデクスが指定可能に
+	した
+	
+	* glclient/callbacks.c (entry_next_focus): フォーカス制御を
+	callbackでも出来るようにした
+
+Fri Jan 19 15:25:13 2001  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/comm.c : 浮動小数点が扱えるようにした
+
+	* libs/value.c : 固定小数点の扱いが出来るようにした
+
+	* tools/copygen.c : numberの小数点付きに対応
+
+Thu Jan 18 03:25:31 2001  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/apsCOBOL.c (RestoreValue): NUMBERに対応した(忘れていたの
+	さ)。ただし浮動小数点は未対応
+
+	* libs/value.c (SetValueString): NUMBERは右詰めになるようにした
+
+	* libs/DDparser.c (ParValue): CHARやNUMBERの時に1バイト余分に取るよ
+	うにした
+
+Wed Jan 17 19:41:07 2001  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c (RecvNumberEntry): 数値入力ウィジェット対応
+
+	* libs/value.c: 浮動小数点数対応(ただし、フォーマットは機種依存)
+
+2001-01-14  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* cobol/Makefile : 作った
+
+	* glclient/widgetOPS.c: ステートに対応
+
+2001-01-12  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c : スタイルに対応
+
+2001-01-08  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* フォーカス制御を追加。C/S間のプロトコルは上位互換であるが、その他
+	のプロトコルは非互換になったので注意が必要
+
+2001-01-07  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/value.c (RecvValueBody): 文字列、数字列、バイト列の長さの制約
+	をなくした
+
+	* tools/recdefgen.rb : GtkEntryの長さを長めに
+
+	* libs/DDparser.c (AddRecordItem): 名前重複のエラーメッセージに重複
+	した名前を表示するようにした
+
+	* glclient/protocol.c (ShowWindow): ウィンドウを破壊した後には、
+	XMLを再読み込みするようにした
+
+2001-01-04  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c : GtkCalendar追加。ボタン制御をトグルに統合
+
+2000-12-27  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/recdefgen.rb : GtkCalendarへの対応。ボタン系ウィジェットの属
+	性フィールドへの対応
+
+2000-12-25  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/copygen.c : エラー処理追加。大きさ0の場合の出力停止
+
+2000-12-22  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/copygen.c : 項目名を整理した
+
+	* デモを複数LDに変更した
+
+	* LDを横断する時にパラメータの引き渡しが出来るようにした
+
+	* glserver/apsCOBOL.c (ExecuteServer): 返答の順序を変更した
+
+	* libs/DDparser.c : ファイルがない時の処理
+
+	* libs/LDparser.c : ファイルがない時の処理
+
+2000-12-21  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/driver.c : fNewを立てる場所を、SetWindowNameからPutWindowに変
+	えた(どうもバグを作る元になっているので)
+
+2000-12-20  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/apsCOBOL.c : レコード長の制約を回避するようにし、LDのサイ
+	ズの制約を撤廃した(named pipeの扱いにも問題があった)
+
+	* ディレクトリを読むようにした。そのため起動パラメータは変更になった
+
+2000-12-18  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/directory.c: 追加(ディレクトリの概念導入)
+
+2000-12-10  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/apsCOBOL.c (ExecuteServer): 初画面の概念導入
+
+	* libs/value.c (ConvertCobol2C): nul文字の時に処理を中止しないように
+	した
+
+	* tools/recdefgen.rb : notebookへ対応
+
+2000-12-06  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/copygen.c (MakeFromLD): LDRFILE, LDWFILEの生成が容易になるよ
+	うにした
+
+2000-12-05  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* cobol/MCPMAIN.CBL: `BACK'のサポート(ただし未テスト)
+
+	* libs/DDparser.c (DD_ParserDataDefines): cppの起動をここでやるよう
+	にした。お陰でthread safeでなくなっているので注意
+
+	* libs/LDparser.c (LD_Parser): こいつも同様
+
+2000-12-04  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/value.c: number型(数字で構成される文字列)の追加
+
+	* tools/copygen.c: 動作を整理した。cppを内部的に起動するようにした。
+	コメントの文字を変更した。
+
+	* tools/recdefgen.rb : 現在サポートしているウィジェットの全てに対応
+	するようにした
+
+2000-12-03  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c (RecvCombo): ComboBoxの入力域の名前を任意にし
+	た(以前はentryに固定であった)
+	
+2000-12-02  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/pandaIO.c (PandaIO_Main): 画面データ送信されない場合があ
+	ることの対処
+
+2000-11-24  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/protocol.c (CheckScreens): 最初に送信されたウィンドウのみ
+	を起動時に表示するようにした
+
+2000-11-16  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/copygen.c : COBOL用COPY句生成系を作った
+
+2000-11-13  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/driver.c : アプリケーションからはScreenDataを意識しないよ
+	うにした(意味がないので)
+
+2000-11-10  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/driver.c (LinkModule): 別のアプリケーションに切り替える手
+	続きを作った
+
+	* glclient/callbacks.c (map_event): データ受信は行わないようにした
+	(思わぬタイミングで呼び出されて、データ通信の手順を狂わせるため)
+
+	* glserver/main.c: いわゆるmain moduleをserver.cから分離した
+
+	* glclient/callbacks.c: window_destroy実行中のchangedイベントの時には
+	UpdateWidgetの実行を止めるようにした(gtkのbug？)
+
+2000-11-08  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c : List, Clistの選択を処理可能にした
+
+2000-11-06  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/protocol.c (SendWidgetData): データ送信処理もウィジェット
+	毎の手続きにした
+
+	* libs/value.c : int, boolの追加
+
+2000-11-02  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/value.h: ValueStructに属性を付加
+
+2000-10-31  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* libs/value.h: ValueStructの構造を変更。RecordDataに名前のため
+	のデータを保持するようにした。これによりデータの並び順に名前を見
+	ることが可能になった
+
+	* libs/value.c (GetItemLongName): 追加
+
+2000-10-30  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/widgetOPS.c: 対応Widgetの種類が増えたのでprotocol.cから分離
+
+2000-10-07  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/DDparser.c : データ構造を定義するための言語処理部
+
+2000-08-09  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glserver/server.c (InitServerPort): 通信用FILE構造体を一つにした。
+	単なるタコな勘違いから必要だっただけなのさ。
+
+2000-07-25  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* tools/copygen.rb: COBOL用COPY句生成系を作った。
+
+2000-07-01  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* glclient/protocol.c (CheckScreen): 複数の窓が開くようにした。
+
+2000-06-25  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* server/applications.h: LARGE_DATAの使用をやめた。これで
+	lib/block.cをつなぐ必要がなくなった。
+
+2000-06-23  Masami Ogoshi  <ogochan@linux.or.jp>
+
+	* initial version

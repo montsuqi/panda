@@ -1,0 +1,32 @@
+name	demo;
+
+#linksize	1024;
+
+base    "~/panda/samples";
+
+lddir   "=/sample4";
+bddir   "=/sample4";
+record  "=/sample4";
+
+linksize	1024;
+linkage link;
+
+ld	{
+	demo7	"localhost:9100";
+};
+
+bd      {
+        demo7;
+};
+
+db_group       	"ORCA"  {
+        type    "PostgreSQL";
+        port    "localhost";
+        name    "ORCA";
+};
+
+db_group        "shell" {
+        type    "shell";
+        priority        1000;
+};
+

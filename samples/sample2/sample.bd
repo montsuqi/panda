@@ -1,0 +1,16 @@
+name	sample;
+
+arraysize	20;
+textsize	200;
+
+# bind <module name> <hander name> ;
+
+#bind	"SAMPLEB"	"dotCOBOL";
+bind	"SAMPLEB"	"OpenCOBOL";
+bind	"say"		"OpenCOBOL";
+bind	"sampleb"	"OpenCOBOL";
+
+db	"ORCA"	{
+	metadb;
+	adrs;
+};

@@ -1,0 +1,43 @@
+\section{htcgen}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt htcgen} - gladeを元にhtcを生成する
+
+\ititle{書式}
+
+\begin{verbatim}
+ruby htcgen.rb gladeファイル
+\end{verbatim}
+
+\ititle{説明}
+
+{\tt htcgen}はgladeファイルを元にhtcファイルを生成する。
+結果は標準出力に出る。
+
+htcファイルはmonが使うwebインターフェイス用のダイナミックHTMLの一種で、
+\verb|Gtk+|のウィジェットに対応したマクロが定義されている。
+
+\ititle{オプション}
+
+\ititle{例}
+
+\begin{verbatim}
+ruby htcgen.rb project1.glade > project1.htc
+\end{verbatim}
+\verb|./project1.glade|を元に\verb|project1.htc|を作る
+
+\ititle{バグ}
+
+GtkCalendarの処理が完全ではない
+
+その他、対応しきれていないウィジェットが多数ある
+
+\ititle{参照}
+
+\ititle{注意}
+
+\end{function}
+

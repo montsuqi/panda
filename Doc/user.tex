@@ -1,0 +1,77 @@
+\section{user}
+
+\begin{function}
+
+\ititle{名前}
+
+{\tt gluseradd} - ユーザを登録する
+
+{\tt gluserdel} - ユーザを削除する
+
+{\tt glusermod} - ユーザ情報を変更する
+
+\ititle{書式}
+
+\begin{verbatim}
+gluseradd <OPTIONS> ユーザ名
+gluserdel <OPTIONS> ユーザ名
+glusermod <OPTIONS> ユーザ名
+\end{verbatim}
+
+\ititle{説明}
+
+glserverが認証するユーザ情報を管理するコマンド群である。
+
+\ititle{オプション}
+
+	\begin{options}
+
+	\option{-file}
+	パスワードファイルを指定する。
+	デフォルトは\verb|./passwd|
+
+	\option{-u}
+	ユーザIDとなる数値を指定する。gluseradd, glusermodで有効。
+	デフォルトは、gluseraddの際は現在パスワードファイルが保持している
+	最大のユーザ$$ID + 1$$。glusermodの際は元のユーザID。
+
+	\option{-g}
+	グループIDとなる数値を指定する。gluseradd, glusermodで有効。
+	デフォルトは、gluseraddの際は0。glusermodの際は元のグループID。
+
+	\option{-o}
+	ユーザの付加情報を指定する。任意の文字列が指定可能。
+	デフォルトは空文字列。
+
+	\option{-p}
+	パスワードを指定する。パスワードは平文で指定する。
+	デフォルトは空文字列。
+
+	\end{options}
+
+\ititle{例}
+
+\begin{verbatim}
+gluseradd ogochan -p "1wsadfghp"
+\end{verbatim}
+ユーザ{\tt ogochan}を登録する
+
+\begin{verbatim}
+gluserdel ogochan -file /usr/local/etc/glpasswd
+\end{verbatim}
+\verb|/usr/local/etc/glpasswd|に登録されているユーザ{\tt ogochan}を削
+除する。
+
+\ititle{バグ}
+
+\ititle{参照}
+
+glauth
+
+\ititle{注意}
+
+ユーザ情報変更後は、glauthにSIGHUPを送って、パスワードファイルを再読み
+込みさせなくてはならない。
+
+\end{function}
+

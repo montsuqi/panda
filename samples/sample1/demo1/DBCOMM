@@ -1,0 +1,14 @@
+        01  DBCOMM.
+            02  DBCOMM-BLOCKS.
+              03  DBCOMM-BLOCK            OCCURS  1.
+                04  FILLER      PIC X(1024).
+            02  DBCOMM-DATA REDEFINES   DBCOMM-BLOCKS.
+              03  DBCOMM-CTRL.
+                04  DBCOMM-FUNC PIC X(16).
+                04  DBCOMM-RC   PIC S9(9)   BINARY.
+                04  DBCOMM-PATH.
+                  05  DBCOMM-PATH-BLOCKS      PIC S9(9)   BINARY.
+                  05  DBCOMM-PATH-RNAME       PIC S9(9)   BINARY.
+                  05  DBCOMM-PATH-PNAME       PIC S9(9)   BINARY.
+              03  DBCOMM-RECORD.
+                04  FILLER      PIC X(64).
