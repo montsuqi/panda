@@ -67,8 +67,8 @@ OpenEntry(
 	int		fd;
 
 	p  = filename;
-	p += sprintf(p,"%d",ObjectID(ent->oid));
-	sprintf(longname,"%s/%s",ent->blob->space,filename);
+	p += snprintf(p,SIZE_NAME+1,"%d",ObjectID(ent->oid));
+	snprintf(longname,SIZE_LONGNAME+1,"%s/%s",ent->blob->space,filename);
 	mode = 0;
 	if		(  ( ent->mode & BLOB_OPEN_READ )  !=  0  ) {
 		mode |= O_RDONLY;
@@ -118,7 +118,7 @@ ENTER_FUNC;
 	LockBLOB(blob);
 	ObjectID(obj) = blob->oid;
 	blob->oid ++;
-	sprintf(name,"%s/oid",blob->space);
+	snprintf(name,SIZE_LONGNAME+1,"%s/oid",blob->space);
 	if		(  ( fp = fopen(name,"w") )  !=  NULL  ) {
 		fprintf(fp,"%d\n",blob->oid);
 		fclose(fp);
@@ -188,7 +188,7 @@ InitBLOB(
 	BLOB_Space	*blob;
 	size_t	oid;
 
-	sprintf(name,"%s/pid",space);
+	snprintf(name,SIZE_LONGNAME+1,"%s/pid",space);
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
 			int pid = atoi(buff);
@@ -208,7 +208,7 @@ InitBLOB(
 		fprintf(stderr,"can not make lock file(directory not writable?)\n");
 		exit(1);
 	}
-	sprintf(name,"%s/oid",space);
+	snprintf(name,SIZE_LONGNAME+1,"%s/oid",space);
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
 			oid = atoi(buff);
@@ -237,7 +237,7 @@ FinishBLOB(
 	FILE	*fp;
 	char	name[SIZE_LONGNAME+1];
 
-	sprintf(name,"%s/pid",blob->space);
+	snprintf(name,SIZE_LONGNAME+1,"%s/pid",blob->space);
 	unlink(name);
 
 	xfree(blob->space);

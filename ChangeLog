@@ -1,3 +1,9 @@
+2004-06-09  Kouji TAKAO  <shimizu@netlab.jp>
+
+	* blob/blob.c (OpenEntry, NewBLOB, InitBLOB, InitBLOB) 
+	(FinishBLOB): バッファオーバーフロー防止のためsprintfをsnprintfへ
+	置換
+
 2004-06-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/testnet.c: 追加
