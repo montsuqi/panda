@@ -440,7 +440,7 @@ main(
 	InitMessage("dbgen",NULL);
 
 	if		(  fl  !=  NULL  ) {
-		DD_ParserInit();
+		RecParserInit();
 		DB_ParserInit();
 		if		(  fCreate  ) {
 			if		(  ( rec = DB_Parser(fl->name,NULL) )  !=  NULL  ) {

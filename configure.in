@@ -7,7 +7,7 @@ PACKAGE=panda
 # make version
 MAJOR_VERSION=1
 MINOR_VERSION=2
-MICRO_VERSION=3
+MICRO_VERSION=4
 
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
 LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -177,6 +177,25 @@ fi
 #AM_CONDITIONAL(POSTGRES, test x$postgresdir != x) 
 AC_SUBST(POSTGRES_LIBS) 
 AC_SUBST(POSTGRES_CFLAGS) 
+])
+
+dnl *************************************************************************** 
+dnl Add all the cflags & libs needed for the Oseki
+dnl *************************************************************************** 
+enable_oseki="no"
+AC_PATH_PROG(OSEKI_CONFIG,oseki-config,no)
+AC_ARG_WITH(oseki, 
+	[  --with-oseki use Oseki/Search backend in <directory>],[
+	if test x$withval = xyes; then
+        enable_oseki="yes"
+		AC_MSG_CHECKING(for Oseki files) 
+		OSEKI_LIBS=`oseki-config --libs`
+		OSEKI_CFLAGS=`oseki-config --cflags`
+	fi 
+	#AM_CONDITIONAL(OSEKI, test x$osekidir != x) 
+    AC_DEFINE(HAVE_OSEKI,1,"") 
+	AC_SUBST(OSEKI_LIBS) 
+	AC_SUBST(OSEKI_CFLAGS) 
 ])
 
 dnl ***************************************************************************
@@ -503,6 +522,7 @@ echo "  GNOME support:         $enable_gnome"
 echo "  client support:        $enable_client"
 echo "  PostgreSQL support:    $enable_postgres"
 echo "  shell driver support:  $enable_shell"
+echo "  Oseki/Search support:  $enable_oseki"
 echo "  dotCOBOL support:      $enable_dotcobol"
 echo "  OpenCOBOL support:     $enable_opencobol"
 echo "  Ruby support:          $enable_ruby"

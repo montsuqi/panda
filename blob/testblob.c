@@ -80,7 +80,6 @@ main(
 {
 	BLOB_Space	*blob;
 	BLOB_State	*state;
-	ObjectType	obj[OB_NUMBER];
 	ObjectType	lo[3];
 	char	buff[SIZE_LONGNAME+1];
 	int		i

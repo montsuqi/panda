@@ -287,7 +287,7 @@ static	void
 InitData(void)
 {
 ENTER_FUNC;
-	DD_ParserInit();
+	RecParserInit();
 	BlobCacheCleanUp();
 LEAVE_FUNC;
 }

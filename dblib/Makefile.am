@@ -16,6 +16,7 @@ INCLUDES 			=		\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/blob	\
 	$(POSTGRES_CFLAGS)		\
+	$(OSEKI_CFLAGS)		\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
@@ -27,6 +28,7 @@ DB_OBJECTS			=		\
 	PostgreSQL.la			\
 	Shell.la				\
 	System.la				\
+	Oseki.la				\
 	NativeBLOB.la
 
 PostgreSQL_la_LDFLAGS	=	-module -export-dynamic
@@ -44,3 +46,7 @@ System_la_SOURCES		=	System.c
 
 NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
 NativeBLOB_la_SOURCES	=	NativeBLOB.c
+
+Oseki_la_LDFLAGS	=	-module -export-dynamic
+Oseki_la_SOURCES	=	Oseki.c
+Oseki_la_LIBADD		=	$(OSEKI_LIBS)

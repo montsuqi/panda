@@ -49,7 +49,7 @@ InitDirectory(void)
 {
 ENTER_FUNC;
 	InitPool();
-	DD_ParserInit();
+	RecParserInit();
 	DB_ParserInit();
 	LD_ParserInit();
 	BD_ParserInit();

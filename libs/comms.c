@@ -115,7 +115,8 @@ RecvLargeString(
 	Bool	rc;
 	int		c;
 
-dbgmsg(">RecvLargeString");
+ENTER_FUNC;
+	RewindLBS(lbs);
 	while	(	(  ( c = RecvChar(fp) )  >=  0     )
 			&&	(  c                     !=  '\n'  ) )	{
 		LBS_EmitChar(lbs,c);

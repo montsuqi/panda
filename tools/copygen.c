@@ -335,7 +335,7 @@ MakeFromRecord(
 
 dbgmsg(">MakeFromRecord");
 	level = 1;
-	DD_ParserInit();
+	RecParserInit();
 	DB_ParserInit();
 	if		(  ( rec = DB_Parser(name,&ValueName) )  !=  NULL  ) {
 		PutLevel(level,TRUE);

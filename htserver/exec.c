@@ -46,8 +46,10 @@ copies.
 
 #define	SRC_CODESET		"euc-jp"
 #define	NEN		"年"
-#define	TSUKI	"月</TH></TR><TR align=\"center\">"
-#define	ATAMA	"<TH>日</TH><TH>月</TH><TH>火</TH><TH>水</TH><TH>木</TH><TH>金</TH><TH>土</TH></TR>\n"
+#define	TSUKI	"月"
+#define	HI		"日"
+#define	ATAMA	"<TH>月</TH><TH>火</TH><TH>水</TH><TH>木</TH><TH>金</TH><TH>土</TH></TR>\n"
+
 
 #define	SIZE_RSTACK		100
 
@@ -134,6 +136,18 @@ ExecCalendar(
 	int		yy,
 	int		mm,
 	int		dd,
+	int		lborder,
+	int		lcellspacing,
+	int		lcellpadding,
+	char	*lbgcolor,
+	char	*lfontcolor,
+	int		lfontsize,
+	int		sborder,
+	int		scellspacing,
+	int		scellpadding,
+	char	*sbgcolor,
+	char	*sfontcolor,
+	int		sfontsize,
 	char	*year,
 	char	*month,
 	char	*day)
@@ -170,13 +184,55 @@ ENTER_FUNC;
 		LBS_EmitString(html,"\">\n");
 	}
 
-	LBS_EmitString(html,"<TABLE BORDER><TR align=\"center\"><TH colspan=7>\n");
+	LBS_EmitString(html,"<TABLE BORDER=\"");
+	sprintf(buff,"%d",lborder);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\" CELLSPACING=\"");
+	sprintf(buff,"%d",lcellspacing);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\" CELLPADDING=\"");
+	sprintf(buff,"%d",lcellpadding);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\" BGCOLOR=\"");
+	sprintf(buff,"%s",lbgcolor);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\"><TR align=\"center\"><TH>\n");
+	LBS_EmitString(html,"<FONT COLOR=\"");
+	sprintf(buff,"%s",lfontcolor);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\" SIZE=\"");
+	sprintf(buff,"%d",lfontsize);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\">");
+
 	sprintf(buff,"%d",yy);
 	LBS_EmitString(html,buff);
 	LBS_EmitUTF8(html,NEN,SRC_CODESET);
 	sprintf(buff,"%d",mm);
 	LBS_EmitString(html,buff);
 	LBS_EmitUTF8(html,TSUKI,SRC_CODESET);
+	LBS_EmitString(html,"</FONT></TH></TR>\n");
+
+	LBS_EmitString(html,"<TR align=\"center\"><TD>\n");
+	LBS_EmitString(html,"<TABLE BORDER=\"");
+	sprintf(buff,"%d",sborder);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\" CELLSPACING=\"");
+	sprintf(buff,"%d",scellspacing);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\" CELLPADDING=\"");
+	sprintf(buff,"%d",scellpadding);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\" BGCOLOR=\"");
+	sprintf(buff,"%s",sbgcolor);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\">\n");
+	LBS_EmitString(html,"<TR align=\"center\"><TH><FONT COLOR=\"");
+	sprintf(buff,"%s",sfontcolor);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\">\n");
+	LBS_EmitUTF8(html,HI,SRC_CODESET);
+	LBS_EmitString(html,"</FONT></TH>");
 	LBS_EmitUTF8(html,ATAMA,SRC_CODESET);
 	one = youbi(yy,mm,1);
 	for	( sun = 1 - one ; sun <= 31 ; sun += 7 ) {
@@ -197,8 +253,8 @@ ENTER_FUNC;
 					} else {
 						LBS_EmitString(html,">");
 					}
+					LBS_EmitString(html,buff);
 				}
-				LBS_EmitString(html,buff);
 			} else {
 				LBS_EmitString(html,"<TD>");
 			}
@@ -206,7 +262,7 @@ ENTER_FUNC;
 		}
 		LBS_EmitString(html,"</TR>\n");
 	}
-	LBS_EmitString(html,"</TABLE>");
+	LBS_EmitString(html,"</TABLE></TD></TR></TABLE>");
 LEAVE_FUNC;
 }
 
@@ -461,7 +517,7 @@ OutputJs(
 		if		(	(  js->fUse   )
 				&&	(  js->fFile  ) ) {
 			sprintf(buff,
-					"\n<script "
+					"\n<script language=\"javascript\" "
 					"type=\"text/javascript\" "
 					"src=\"%s\"></script>\n",
 					js->body);
@@ -471,7 +527,7 @@ OutputJs(
 
  	g_hash_table_foreach(Jslib,(GHFunc)_OutJsFile,NULL);
 	LBS_EmitString(html,
-				   "\n<script "
+				   "\n<script language=\"javascript\" "
 				   "type=\"text/javascript\">\n"
 				   "<!--\n");
  	g_hash_table_foreach(Jslib,(GHFunc)_OutJs,NULL);
@@ -729,6 +785,18 @@ ENTER_FUNC;
 				  int	yy
 				  ,		mm
 				  ,		dd;
+				  int	lborder
+				  ,		lcellspacing
+				  ,		lcellpadding
+				  ,		lfontsize
+				  ,		sborder
+				  ,		scellspacing
+				  ,		scellpadding
+				  ,		sfontsize;
+				  char	*lbgcolor
+				  ,		*lfontcolor
+				  ,		*sbgcolor
+				  ,		*sfontcolor;
 
 				  day = Pop.body.str;
 				  month = Pop.body.str;
@@ -736,7 +804,27 @@ ENTER_FUNC;
 				  dd = Pop.body.ival;
 				  mm = Pop.body.ival;
 				  yy = Pop.body.ival;
-				  ExecCalendar(html,yy,mm,dd,year,month,day);
+
+				  lborder = LBS_FetchInt(htc->code);
+				  lcellspacing = LBS_FetchInt(htc->code);
+				  lcellpadding = LBS_FetchInt(htc->code);
+				  lfontsize = LBS_FetchInt(htc->code);
+				  sborder = LBS_FetchInt(htc->code);
+				  scellspacing = LBS_FetchInt(htc->code);
+				  scellpadding = LBS_FetchInt(htc->code);
+				  sfontsize = LBS_FetchInt(htc->code);
+
+				  lbgcolor = LBS_FetchPointer(htc->code);
+				  lfontcolor = LBS_FetchPointer(htc->code);
+				  sbgcolor = LBS_FetchPointer(htc->code);
+				  sfontcolor = LBS_FetchPointer(htc->code);
+
+				  ExecCalendar(html,yy,mm,dd,
+					   lborder,lcellspacing,lcellpadding,
+					   lbgcolor,lfontcolor,lfontsize,
+					   sborder,scellspacing,scellpadding,
+					   sbgcolor,sfontcolor,sfontsize,
+					   year,month,day);
 			  }
 				break;
 			  case	OPC_FLJS:

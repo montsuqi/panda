@@ -51,7 +51,7 @@ DD_Parse(
 	ValueStruct		*value;
 
 ENTER_FUNC;
-	if		(  ( value = DD_ParseMain(in) )  !=  NULL  ) {
+	if		(  ( value = RecParseMain(in) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
 		ret->name = StrDup(in->ValueName);
@@ -72,7 +72,7 @@ ParseRecordFile(
 	char			*ValueName;
 
 ENTER_FUNC;
-	if		(  ( value = DD_ParseValue(name,&ValueName) )  !=  NULL  ) {
+	if		(  ( value = RecParseValue(name,&ValueName) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
 		ret->name = StrDup(ValueName);
@@ -93,7 +93,7 @@ ParseRecordMem(
 	char			*ValueName;
 
 ENTER_FUNC;
-	if		(  ( value = DD_ParseValueMem(mem,&ValueName) )  !=  NULL  ) {
+	if		(  ( value = RecParseValueMem(mem,&ValueName) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
 		ret->name = StrDup(ValueName);

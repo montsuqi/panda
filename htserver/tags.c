@@ -1544,6 +1544,18 @@ _Calendar(
 	char	*year
 	,		*month
 	,		*day;
+	char	*lborder
+	,		*lcellspacing
+	,		*lcellpadding
+	,		*lfontsize
+	,		*sborder
+	,		*scellspacing
+	,		*scellpadding
+	,		*sfontsize
+	,		*lbgcolor
+	,		*lfontcolor
+	,		*sbgcolor
+	,		*sfontcolor;
 	time_t		nowtime;
 	struct	tm	*Now;
 	int		this_yy
@@ -1618,6 +1630,67 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,day);
 	EmitCode(htc,OPC_CALENDAR);
+	if		(  ( lborder = GetArg(tag,"lborder",0) )  ==  NULL  ) {
+		LBS_EmitInt(htc->code,1);
+	} else {
+		LBS_EmitInt(htc->code,atoi(lborder));
+	}
+	if		(  ( lcellspacing = GetArg(tag,"lcellspacing",0) )  ==  NULL  ) {
+		LBS_EmitInt(htc->code,0);
+	} else {
+		LBS_EmitInt(htc->code,atoi(lcellspacing));
+	}
+	if		(  ( lcellpadding = GetArg(tag,"lcellpadding",0) )  ==  NULL  ) {
+		LBS_EmitInt(htc->code,0);
+	} else {
+		LBS_EmitInt(htc->code,atoi(lcellpadding));
+	}
+	if		(  ( lfontsize = GetArg(tag,"lfontsize",0) )  ==  NULL  ) {
+		LBS_EmitInt(htc->code,4);
+	} else {
+		LBS_EmitInt(htc->code,atoi(lfontsize));
+	}
+	if		(  ( sborder = GetArg(tag,"sborder",0) )  ==  NULL  ) {
+		LBS_EmitInt(htc->code,0);
+	} else {
+		LBS_EmitInt(htc->code,atoi(sborder));
+	}
+	if		(  ( scellspacing = GetArg(tag,"scellspacing",0) )  ==  NULL  ) {
+		LBS_EmitInt(htc->code,0);
+	} else {
+		LBS_EmitInt(htc->code,atoi(scellspacing));
+	}
+	if		(  ( scellpadding = GetArg(tag,"scellpadding",0) )  ==  NULL  ) {
+		LBS_EmitInt(htc->code,0);
+	} else {
+		LBS_EmitInt(htc->code,atoi(scellpadding));
+	}
+	if		(  ( sfontsize = GetArg(tag,"sfontsize",0) )  ==  NULL  ) {
+		LBS_EmitInt(htc->code,3);
+	} else {
+		LBS_EmitInt(htc->code,atoi(sfontsize));
+	}
+	if		(  ( lbgcolor = GetArg(tag,"lbgcolor",0) )  ==  NULL  ) {
+		LBS_EmitPointer(htc->code,"#F0F0F0");
+	} else {
+		LBS_EmitPointer(htc->code,StrDup(lbgcolor));
+	}
+	if		(  ( lfontcolor = GetArg(tag,"lfontcolor",0) )  ==  NULL  ) {
+		LBS_EmitPointer(htc->code,"#000000");
+	} else {
+		LBS_EmitPointer(htc->code,StrDup(lfontcolor));
+	}
+	if		(  ( sbgcolor = GetArg(tag,"sbgcolor",0) )  ==  NULL  ) {
+		LBS_EmitPointer(htc->code,"#FFFFFF");
+	} else {
+		LBS_EmitPointer(htc->code,StrDup(sbgcolor));
+	}
+	if		(  ( sfontcolor = GetArg(tag,"sfontcolor",0) )  ==  NULL  ) {
+		LBS_EmitPointer(htc->code,"#FF0000");
+	} else {
+		LBS_EmitPointer(htc->code,StrDup(sfontcolor));
+	}
+		
 LEAVE_FUNC;
 }
 
@@ -1861,6 +1934,18 @@ ENTER_FUNC;
 	AddArg(tag,"year",TRUE);
 	AddArg(tag,"month",TRUE);
 	AddArg(tag,"day",TRUE);
+	AddArg(tag,"lborder",TRUE);
+    AddArg(tag,"lcellspacing",TRUE);
+    AddArg(tag,"lcellpadding",TRUE);
+    AddArg(tag,"lfontsize",TRUE);
+    AddArg(tag,"sborder",TRUE);
+	AddArg(tag,"scellspacing",TRUE);
+	AddArg(tag,"scellpadding",TRUE);
+    AddArg(tag,"sfontsize",TRUE);
+    AddArg(tag,"lbgcolor",TRUE);
+    AddArg(tag,"lfontcolor",TRUE);
+    AddArg(tag,"sbgcolor",TRUE);
+    AddArg(tag,"sfontcolor",TRUE);
 	tag = NewTag("/CALENDAR",NULL);
 
 	tag = NewTag("OPTION", _Option);

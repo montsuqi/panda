@@ -28,6 +28,16 @@ copies.
  */
 
 #include	"const.h"
+#ifndef	SIZE_USER
+#define	SIZE_USER		64
+#endif
+#ifndef	SIZE_PASS
+#define	SIZE_PASS		64
+#endif
+#ifndef	SIZE_OTHER
+#define	SIZE_OTHER		256
+#endif
+
 typedef	struct {
 	char	name[SIZE_USER+1];
 	char	pass[SIZE_PASS+1];
