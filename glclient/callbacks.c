@@ -314,6 +314,17 @@ entry_next_focus(
 	}
 }
 
+extern	void
+ResetTimer(
+	GladeXML	*xml)
+{
+	GList *l, *list = glade_xml_get_widget_prefix (xml, "pandatimer");
+	for (l = list; l; l = g_list_next (l))
+		if (GTK_IS_PANDA_TIMER (l->data))
+			gtk_panda_timer_reset (GTK_PANDA_TIMER (l->data));
+	g_list_free (list);
+}
+
 static	void
 UpdateWidget(
 	GtkWidget	*widget,
@@ -322,18 +333,16 @@ UpdateWidget(
 	const	char	*name;
 	char	*wname;
 	XML_Node	*node;
-	GtkWidget	*window;
 
 dbgmsg(">UpdateWidget");
 	if		(  !fInRecv  ) {
-		window = gtk_widget_get_toplevel(widget);
-		ResetTimer(GTK_WINDOW (window));
 		name = glade_get_widget_long_name(widget);
-		wname = gtk_widget_get_name(window);
+		wname = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
 		if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
 			if	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) {
 				g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
 			}
+			ResetTimer(node->xml);
 		}
 	}
 dbgmsg("<UpdateWidget");

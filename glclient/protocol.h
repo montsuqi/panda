@@ -44,7 +44,6 @@ extern	Bool		GetScreenData(FILE *fpComm);
 extern  void		SendWindowData(void);
 extern	void		SendEvent(FILE *fpComm, char *window, char *widget, char *event);
 extern	void		AddClass(GtkType type, RecvHandler rfunc, SendHandler sfunc);
-extern	void		ResetTimer(GtkWindow *window);
 
 
 #undef	GLOBAL
