@@ -66,7 +66,8 @@ Process(
 {
 	Bool	fOK;
 	char	buff[SIZE_BUFF+1]
-		,	name[SIZE_LONGNAME+1];
+		,	name[SIZE_LONGNAME+1]
+		,	line[SIZE_LONGNAME*3+1];
 	char	*filename
 		,	*tempname
 		,	*command;
@@ -126,6 +127,7 @@ Process(
 	if		(  ( q = strrchr(command,'/') )  !=  NULL  ) {
 		command = q + 1;
 	}
+	strcpy(buff,ExecDir);
 	p = buff;
 	do {
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
@@ -136,8 +138,8 @@ Process(
 		p = q + 1;
 	}	while	(  q  !=  NULL  );
 
-	sprintf(buff,"%s %s %s",name,tempname,filename);
-	ac = system(buff);
+	sprintf(line,"%s %s %s",name,tempname,filename);
+	ac = system(line);
 	unlink(tempname);
 	SendChar(fpComm,ac);
   badio:;
