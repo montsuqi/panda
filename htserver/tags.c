@@ -910,6 +910,7 @@ _HyperLink(HTCInfo *htc, Tag *tag)
     char *file;
     char *filename;
     char *contenttype;
+    char *disposition;
     char *target;
     char buf[SIZE_BUFF];
 
@@ -1001,6 +1002,12 @@ dbgmsg(">_HyperLink");
                 LBS_EmitString(htc->code, "&amp;_contenttype=");
                 EmitCode(htc, OPC_NAME);
                 LBS_EmitPointer(htc->code, StrDup(contenttype));
+                EmitCode(htc, OPC_REFSTR);
+            }
+            if ((disposition = GetArg(tag, "disposition", 0)) != NULL) {
+                LBS_EmitString(htc->code, "&amp;_disposition=");
+                EmitCode(htc, OPC_NAME);
+                LBS_EmitPointer(htc->code, StrDup(disposition));
                 EmitCode(htc, OPC_REFSTR);
             }
         }
@@ -1318,6 +1325,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"file",TRUE);
 	AddArg(tag,"filename",TRUE);
 	AddArg(tag,"contenttype",TRUE);
+	AddArg(tag,"disposition",TRUE);
     AddArg(tag,"target",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);

@@ -259,19 +259,29 @@ PutFile(ValueStruct *file)
     }
     if ((filename_field = LoadValue("_filename")) != NULL) {
         char *filename = GetHostValue(filename_field, FALSE);
+        char *disposition_field = LoadValue("_disposition");
+        char *disposition = "attachment";
+
+        if (disposition_field != NULL) {
+            char *tmp = GetHostValue(disposition_field, FALSE);
+            if (*tmp != '\0')
+                disposition = tmp;
+        }
         if (*filename != '\0') {
             char *user_agent = getenv("HTTP_USER_AGENT");
             if (user_agent && strstr(user_agent, "MSIE") != NULL) {
-                printf("Content-Disposition: attachment;"
+                printf("Content-Disposition: %s;"
                        " filename=%s\r\n",
+                       disposition,
                        ConvShiftJIS(filename));
             }
             else {
                 int len = EncodeLengthRFC2231(filename);
                 char *encoded = (char *) xmalloc(len + 1);
                 EncodeRFC2231(encoded, filename);
-                printf("Content-Disposition: attachment;"
+                printf("Content-Disposition: %s;"
                        " filename*=utf-8''%s\r\n",
+                       disposition,
                        encoded);
                 xfree(encoded);
             }
@@ -317,10 +327,6 @@ static	void
 SendEvent(void)
 {
 	char	*event;
-	char	*sesid;
-	char	*file;
-	char	*filename;
-	char	*contenttype;
 	HTCInfo	*htc;
 	char	*name;
 	char	htcname[SIZE_LONGNAME+1];
@@ -343,14 +349,11 @@ ENTER_FUNC;
 	g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
 	HT_SendString("\n");
 
-	sesid = LoadValue("_sesid");
-    file = LoadValue("_file");
-    filename = LoadValue("_filename");
-    contenttype = LoadValue("_contenttype");
 	SetSave("_sesid",TRUE);
     SetSave("_file",TRUE);
     SetSave("_filename",TRUE);
     SetSave("_contenttype",TRUE);
+    SetSave("_disposition",TRUE);
 	ClearValues();
 	Files = NewNameHash();
 LEAVE_FUNC;
