@@ -70,14 +70,16 @@ typedef	struct	_OsekiSession {
 	int				cOld;
 }	OsekiSession;
 
-#define	OSEKI_MODE_MASK		0x0F
+#define	OSEKI_MODE_MASK		0xF0
 #define	OSEKI_OPEN_CLOSE	0x00
-#define	OSEKI_OPEN_CREATE	0x01
-#define	OSEKI_OPEN_READ		0x02
-#define	OSEKI_OPEN_WRITE	0x04
-#define	OSEKI_OPEN_APPEND	0x08
+#define	OSEKI_OPEN_CREATE	0x10
+#define	OSEKI_OPEN_READ		0x20
+#define	OSEKI_OPEN_WRITE	0x40
+#define	OSEKI_OPEN_APPEND	0x80
 
-#define	OSEKI_TYPE_MASK		0xF0
-#define	OSEKI_ALLOC_LINER	0x10
+#define	OSEKI_TYPE_MASK		0x0F
+#define	OSEKI_ALLOC_PACK	0x00
+#define	OSEKI_ALLOC_LINER	0x01
+#define	OSEKI_ALLOC_TREE	0x02
 
 #endif

@@ -49,17 +49,17 @@ copies.
 #define	BODY_USE			0x40
 #define	BODY_SHORT			0x20
 #define	BODY_NOENT			0x10
-#define	BODY_LINER			0x08
+
+#define	BODY_PACK			0x00
+#define	BODY_LINER			0x01
+#define	BODY_TREE			0x02
 
 #define	IS_SHORTFORM(e)		((((e).flags)&BODY_SHORT) == BODY_SHORT)
 #define	IS_NOENT(e)			((((e).flags)&BODY_NOENT) == BODY_NOENT)
-#define	IS_LINER(e)			((((e).flags)&BODY_LINER) == BODY_LINER)
 #define	IS_FREEOBJ(e)		((((e).flags)&BODY_USE) == 0)
 #define	USE_OBJ(e)			(((e).flags)|=BODY_USE)
 #define	FREE_OBJ(e)			(((e).flags)&=~BODY_USE)
 #define	NOENT_OBJ(e)		(((e).flags)|=BODY_NOENT)
-#define	LINER_OBJ(e)		(((e).flags)|=BODY_LINER)
-#define	PACK_OBJ(e)			(((e).flags)&=~BODY_LINER)
 
 #define	PAGE_SIZE(state)		((state)->space->pagesize)
 #define	NODE_ELEMENTS(state)	(PAGE_SIZE(state) / sizeof(pageno_t))
@@ -80,7 +80,8 @@ copies.
 typedef	struct {
 	byte		flags	:8;
 	uint64_t	pos		:56;
-	byte		mode	:8;
+	byte		mode	:4;
+	byte		type	:4;
 	uint64_t	size	:56;
 }	OsekiObjectEntry;
 
