@@ -227,6 +227,7 @@ ENTER_FUNC;
 			xfree(scr->encoding);
 		}
 		scr->encoding = StrDup(buff+10);
+		scr->status = APL_SESSION_RESEND;
 	} else
 	if		(  strncmp(buff,"End",3)  ==  0  ) {
 		dbgmsg("end");
