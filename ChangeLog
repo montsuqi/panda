@@ -1,3 +1,7 @@
+2004-06-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c (GetTable): dbsでnilになるbug fix
+
 2004-06-10  Kouji TAKAO  <shimizu@netlab.jp>
 
 	* libs/mhandler.c (ParHANDLER): エラーメッセージの改良
