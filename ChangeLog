@@ -1,3 +1,99 @@
+2002-07-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/applications.c: termio.hのincludeをやめた(不要だった)
+
+2002-07-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.6 release -> CVS化
+
+2002-06-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/callbacks.c: knishida patch吸収
+
+2002-06-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/widgetOPS.c (RecvEntry): knishida patch吸収
+
+	* aps/redirect.c (BeginDB_Redirect): リダイレクト先がない時の間違いを修正
+
+2002-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.5 release
+
+	* aps/redirect.c : 高速化(トランザクション終結時にリダイレクト処理をする)
+
+	* aps/dbredirector.c (LogThread): ↑に対応
+
+2002-06-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: glibのルールを忘れていた
+
+2002-05-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/widgetOPS.c (RecvEntry): knishida patch吸収
+
+	* glclient/callbacks.c (send_event): knishida patch吸収
+
+2002-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.4 release
+
+	* aps/dbredirector.c (LogThread): flushを忘れている部分を直す(高速
+	化するか？)
+
+	* include/const.h (SIZE_BUFF): バッファサイズ拡張(一時しのぎ)
+
+2002-05-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/copygen.c: -dbだったパラメータを-dbareaに変更した
+
+2002-04-21  Keisuke Nishida <knishida@netlab.jp>
+
+	* glclient/widgetOPS.c (RecvEntry): Gtk(Panda)Entryの初期値が先頭
+	から表示されない問題を修正
+
+	* glclient/callbacks.c (send_event_when_idle): インクリメンタル検
+	索開始の延滞時間(デフォルトで 1 秒)を環境変数でカスタマイズ出来る
+	ようにした
+
+2002-04-12  Keisuke Nishida <knishida@netlab.jp>
+
+	* glclient/callbacks.c (send_event): 二重カーソル問題回避
+
+2002-04-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.3公開
+
+2002-04-03  Keisuke Nishida <knishida@netlab.jp>
+
+	* glclient/callbacks.c: 二重カーソル問題回避
+
+	* glclient/client.c: 
+
+	* glclient/protocol.c: 
+
+	* glclient/protocol.h: 
+
+2002-04-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.2公開(1.0.1は訳あって非公開)
+
+2002-03-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c (FinishSession): メモリ開放の追加(忘れてた)
+
+2002-03-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDlex.c (DoInclude): LD_DirがNULLの時の処理
+
+2002-03-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/value.c (FixedRescale): 負数の処理を正しくした
+
+2002-03-04  Go Kida <kida@netlab.jp>
+
+	* htserver/server.c: include sys/uio.h
+
 2002-03-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.0 release ＼(^o^)／

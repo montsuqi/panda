@@ -32,7 +32,6 @@ copies.
 #include	<stdlib.h>
 #include	<ctype.h>
 #include	<signal.h>
-#include	<termio.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
