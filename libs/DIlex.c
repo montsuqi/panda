@@ -77,6 +77,7 @@ static	struct	{
 	{	"linkage"			,T_LINKAGE	},
 	{	"stacksize"			,T_STACKSIZE	},
 	{	"wfc"				,T_WFC		},
+	{	"exit"				,T_EXIT		},
 	{	""					,0			}
 };
 

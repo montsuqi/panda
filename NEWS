@@ -62,6 +62,14 @@
 
 			  HAKAMA のデータベースハンドラの場所。デフォルトは $libdir
 
+		・APS_LOAD_PATH
+
+			Cのアプリケーションロードパス。デフォルトは $libdir
+
+		・COB_LIBRARY_PATH
+
+			OpenCOBOLのアプリケーションロードパス。デフォルトは$libdir
+
 	*	データ処理ライブラリ(libmondai)を外部に出したため、インストー
 		ル順序として、データ処理ライブラリが先行する必要がある
 

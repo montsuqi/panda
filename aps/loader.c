@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -60,10 +60,8 @@ LoadModule(
 dbgmsg(">LoadModule");
 	if		(  ( f_main = (void *)g_hash_table_lookup(table,name) )  ==  NULL  ) {
 		sprintf(filename,"%s.so",name);
-printf("[%s]\n",filename);
 		if		(  ( handle = LoadFile(APS_LoadPath,filename) )  !=  NULL  ) {
 			sprintf(funcname,"%sInit",name);
-printf("[%s]\n",funcname);
 			if		(  ( f_init = (void *)dlsym(handle,funcname) )  !=  NULL  ) {
 				f_init();
 			}

@@ -33,6 +33,7 @@ Boston, MA  02111-1307, USA.
 *	98.08.29.	ogochan	name=param style
 *	00.10.16.	ogochan	add GetExt
 *	01.05.30.	ogochan	null print
+*	03.06.02.	ogochan	add help flag("h", "H")
 */
 
 #include	<stdio.h>
@@ -283,7 +284,9 @@ GetOption(
 			if		(  *p  ==  COMMAND_SWITCH  )	{
 				LastArg = NULL;
 				p ++;
-				if		(  *p  ==  '?'  )	{
+				if		(	(  !strcmp(p,"?")  )
+						||	(  !strcmp(p,"h")  )
+						||	(  !strcmp(p,"H")  ) ) {
 					sprintf(buff,"USAGE:%s <option(s)> files...",cmd);
 					PrintUsage(tbl,buff);
 					exit(0);

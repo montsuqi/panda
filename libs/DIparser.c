@@ -232,7 +232,8 @@ ParLD(
 dbgmsg(">ParLD");
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  DI_Token  ==  T_SYMBOL  )
-				||	(  DI_Token  ==  T_SCONST  ) ) {
+				||	(  DI_Token  ==  T_SCONST  )
+				||	(  DI_Token  ==  T_EXIT    ) ) {
 			if		(  ThisEnv->LD_Dir  ==  NULL  ) {
 				if		(  GetSymbol  ==  T_SCONST  ) {
 					SkipLD();

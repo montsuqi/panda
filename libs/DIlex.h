@@ -53,6 +53,7 @@ copies.
 #define	T_DB			(YYBASE +25)
 #define	T_DBDDIR		(YYBASE +26)
 #define	T_WFC			(YYBASE +28)
+#define	T_EXIT			(YYBASE +29)
 
 #undef	GLOBAL
 #ifdef	_DI_PARSER

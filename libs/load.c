@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -52,19 +52,26 @@ LoadFile(
 	void	*ret;
 	struct	stat	st;
 
+dbgmsg(">LoadFile");
 	strcpy(buff,path);
 	p = buff;
 	ret = NULL;
 	do {
+dbgmsg("*");
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
 		sprintf(filename,"%s/%s",p,name);
+dbgmsg("**");
 		if		(  stat(filename, &st)  ==  0  ) {
-			ret = dlopen(filename,RTLD_GLOBAL | RTLD_LAZY);
+dbgmsg("***");
+			if		(  ( ret = dlopen(filename,RTLD_GLOBAL | RTLD_LAZY) )  ==  NULL  ) {
+				perror("LoadFile");
+			}
 		}
 		p = q + 1;
 	}	while	(	(  q    !=  NULL  )
 				&&	(  ret  ==  NULL  ) );
+dbgmsg("<LoadFile");
 	return	(ret);
 }
