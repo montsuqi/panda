@@ -282,6 +282,9 @@ dbgmsg(">RecvPS");
 			GL_RecvName(fp,name);
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
+			if ( LBS_Size(binary) <= 0) {
+				break;
+			}
 			tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
 			file = CreateTempfile(tmpname);
 			fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
@@ -333,6 +336,9 @@ dbgmsg(">RecvPixmap");
 			GL_RecvName(fp,name);
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
+			if ( LBS_Size(binary) <= 0) {
+				break;
+			}
 			tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
 			file = CreateTempfile(tmpname);
 			fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
