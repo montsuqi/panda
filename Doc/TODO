@@ -1,7 +1,6 @@
 TODOとアイディア
 
 □エラー
-
 	glclientがwidgetのデータの揃いが悪いと異常終了するらしい(PandaCList等)
 
 	headでポインタの踏み外しがあるようだ
@@ -10,29 +9,25 @@ TODOとアイディア
 		--with-ipv6の時にIPv4で接続すると、アドレスが同じになる(本来はlibcが射影アドレスを間違えているバグ)
 
 □ラージオブジェクトの実装について
-
 	  ラージオブジェクトは、panda内ではMonObjectで扱うが、PLserver内で
 	binaryに変換する。将来的にはPLclientでのオンデマンド転送も可能にす
 	るが、Ver 1.x系では実現しない。なぜなら、データの転送は一方通行だ
 	からである。
 
 □native XML database
-
-	  HAKAMA層でnative XML databaseを実現する
+	HAKAMA層でnative XML databaseを実現する
 
 □libmonpic内の処理の改良(未実装)
-
 	  現在、peerの生死判定は上位プロトコルでPING-PONGすることによって
 	行っている。これをlibmonpicの中で行うようにする。
 
 □改良
-
 	UNIX domain socketの消去
-
 	ValueStructの改良(NameTree)
 	メッセージログを整備する
 	mcp.dc.puttypeを数値にする
 	LDまたぎのポップアップ
+	BLOBをもっとマシなものにする
 
 □拡張
 	DBを実効ユーザ毎に開けるようにする

@@ -66,6 +66,7 @@ Auth(
 	Bool	ret;
 
 	SendStringDelim(fp,ThisEnv->name);
+	SendStringDelim(fp,"\n");
 printf("name = [%s]\n",ThisEnv->name);
 	switch	(RecvPacketClass(fp)) {
 	  case	WFCCONTROL_OK:

@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2003 Ogochan & JMA (Japan Medical Association).
+              2000-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -97,7 +97,7 @@ RecvScreenData(
 	WindowData	*win;
 	ValueStruct	*value;
 
-dbgmsg(">RecvScreenData");
+ENTER_FUNC;
 	do {
 		RecvStringDelim(fpComm,SIZE_BUFF,buff);
 		if		(	(  *buff                     !=  0     )
@@ -107,8 +107,8 @@ dbgmsg(">RecvScreenData");
 			p ++;
 			while	(  isspace(*p)  )	p ++;
 			DecodeStringURL(str,p);
-printf("wname = [%s]\n",wname);
-printf("vname = [%s]\n",vname);
+			dbgprintf("wname = [%s]\n",wname);
+			dbgprintf("vname = [%s]\n",vname);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
 				ValueIsUpdate(value);
@@ -117,7 +117,7 @@ printf("vname = [%s]\n",vname);
 		} else
 			break;
 	}	while	(TRUE);
-dbgmsg("<RecvScreenData");
+LEAVE_FUNC;
 }
 
 static	void
@@ -133,7 +133,7 @@ WriteClient(
 	char	*p;
 	Bool	fName;
 
-dbgmsg(">WriteClient");
+ENTER_FUNC;
 	SendStringDelim(fpComm,"Event: ");
 	SendStringDelim(fpComm,ThisWindow);
 	SendStringDelim(fpComm,"/");
@@ -160,7 +160,7 @@ dbgmsg(">WriteClient");
 			SendStringDelim(fpComm,"\n");
 		}
 	}	while	(TRUE);
-dbgmsg("<WriteClient");
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -175,7 +175,7 @@ MainLoop(
 	char	*p
 	,		*q;
 
-dbgmsg(">MainLoop");
+ENTER_FUNC;
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	if		(  strncmp(buff,"Start: ",7)  ==  0  ) {
 		dbgmsg("start");
@@ -242,7 +242,7 @@ dbgmsg(">MainLoop");
 		ret = TRUE;
 		break;
 	}
-dbgmsg("<MainLoop");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -286,9 +286,10 @@ ExecuteServer(void)
 static	void
 InitData(void)
 {
-dbgmsg(">InitData");
+ENTER_FUNC;
 	DD_ParserInit();
-dbgmsg("<InitData");
+	BlobCacheCleanUp();
+LEAVE_FUNC;
 }
 
 extern	void
@@ -296,9 +297,9 @@ InitSystem(
 	int		argc,
 	char	**argv)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	InitData();
 	InitNET();
 	ApplicationsInit(argc,argv);
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }

@@ -40,7 +40,7 @@ copies.
 #include	<signal.h>
 #include	"types.h"
 #include	"libmondai.h"
-#include	"directory.h"
+#include	"blob.h"
 #include	"option.h"
 #include	"message.h"
 #include	"debug.h"

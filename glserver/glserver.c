@@ -61,6 +61,8 @@ static	ARG_TABLE	option[] = {
 		"画面格納ディレクトリ"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
+	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
+		"BLOBキャッシュディレクトリ名"					},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		"認証サーバ"			 						},
 #ifdef	USE_SSL
@@ -89,6 +91,7 @@ SetDefault(void)
 	ScreenDir = ".";
 	RecordDir = ".";
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
+	CacheDir = "cache";
 #ifdef	USE_SSL
 	fSsl = FALSE;
 	KeyFile = NULL;

@@ -62,17 +62,13 @@ OpenEntry(
 	BLOB_V1_Entry	*ent)
 {
 	char	longname[SIZE_LONGNAME+1];
-	char	filename[SIZE_NAME+1];
-	char	*p;
 	int		flag;
 	int		fd;
 	struct	stat	sb;
 	size_t	size;
 
 ENTER_FUNC;
-	p  = filename;
-	p += snprintf(p,SIZE_NAME+1,"%lld",ent->oid);
-	snprintf(longname,SIZE_LONGNAME+1,"%s/%s",ent->blob->space,filename);
+	snprintf(longname,SIZE_LONGNAME+1,"%s/%lld",ent->blob->space,ent->oid);
 
 	if		(  ( ent->mode & BLOB_OPEN_WRITE )  !=  0  ) {
 		if		(  ( ent->mode & BLOB_OPEN_CREATE )  !=  0  ) {
@@ -110,15 +106,19 @@ static	void
 DestroyEntry(
 	BLOB_V1_Entry	*ent)
 {
+	char	command[SIZE_LONGNAME+1];
+
 ENTER_FUNC;
+	if		(  ent->fp  !=  NULL  ) {
+		CloseNet(ent->fp);
+	}
 	if		(  ent->oid  !=  GL_OBJ_NULL  ) {
 		LockBLOB(ent->blob);
 		g_hash_table_remove(ent->blob->table,(gpointer)&ent->oid);
+		snprintf(command,SIZE_LONGNAME+1,"rm -f %s/%lld",ent->blob->space,ent->oid);
+		system(command);
 		UnLockBLOB(ent->blob);
 		ReleaseBLOB(ent->blob);
-	}
-	if		(  ent->fp  !=  NULL  ) {
-		CloseNet(ent->fp);
 	}
 LEAVE_FUNC;
 	xfree(ent);
@@ -142,6 +142,7 @@ ENTER_FUNC;
 	rewind(blob->fp);
 	fwrite(&head,sizeof(head),1,blob->fp);
 	fflush(blob->fp);
+	fsync(fileno(blob->fp));
 
 	ent = New(BLOB_V1_Entry);
 	ent->oid = obj;
@@ -331,10 +332,17 @@ DestroyBLOB_V1(
 	BLOB_V1_Space		*blob,
 	MonObjectType	obj)
 {
+	BLOB_V1_Entry	*ent;
+	Bool			rc;
 ENTER_FUNC;
-	/*	not supported	*/
+	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
+		DestroyEntry(ent);
+		rc = TRUE;
+	} else {
+		rc = FALSE;
+	}
 LEAVE_FUNC;
-	return	(FALSE);
+	return	(rc);
 }
 
 extern	int

@@ -121,9 +121,7 @@ BlobCacheFileName(
 {
 	static	char	buf[SIZE_BUFF];
 
-	//DumpValueStruct(value);
 	sprintf(buf,"%s/%s",CacheDir,ValueToString(value,NULL));
-	//printf("cache = [%s]\n",buf);
 	return	(buf);
 }
 

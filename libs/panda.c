@@ -169,8 +169,6 @@ LEAVE_FUNC;
 
 #include	"option.h"
 static	ARG_TABLE	option[] = {
-	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
-		"BLOBキャッシュディレクトリ名"					},
 	{	"panda",	STRING,		TRUE,	(void*)&PandaPort,
 		"wfc待機ポート番号"								},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -180,7 +178,6 @@ static	void
 SetDefault()
 {
 	PandaPort = "localhost:9000";			/*	PORT_WFC	*/
-	CacheDir = "cache";
 }
 extern	void
 pandaInit(

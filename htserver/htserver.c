@@ -53,6 +53,8 @@ static	ARG_TABLE	option[] = {
 		"接続待ちキューの数" 							},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
+	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
+		"BLOBキャッシュディレクトリ名"					},
 	{	"expire",	INTEGER,	TRUE,	(void*)&Expire,
 		"セション変数保持時間(秒)" 						},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -64,7 +66,8 @@ SetDefault(void)
 	PortNumber = PORT_HTSERV;
 	Back = 5;
 	RecordDir = ".";
-	Expire = 5 * 60;
+	CacheDir = "cache";
+	Expire = 60 * 60;
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
 }
 

@@ -77,10 +77,10 @@ FinishSession(
 	ScreenData	*scr)
 {
 	char	msg[128];
-dbgmsg(">FinishSession");
+ENTER_FUNC;
 	sprintf(msg,"[%s] session end",scr->user);
 	MessageLog(msg);
-dbgmsg("<FinishSession");
+LEAVE_FUNC;
 }
 
 static	void
@@ -130,10 +130,10 @@ SendWindowName(
 			win->PutType = SCREEN_NULL;
 		}
 	}
-dbgmsg(">SendWindowName");
+ENTER_FUNC;
 	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fp);
 	SendStringDelim(fp,"\n");
-dbgmsg("<SendWindowName");
+LEAVE_FUNC;
 }
 
 static	void
@@ -150,7 +150,7 @@ WriteClient(
     LargeByteString	*lbs;
 	size_t	size;
 
-dbgmsg(">WriteClient");
+ENTER_FUNC;
 	SendWindowName(fp,scr);
     lbs = NewLBS();
 	do {
@@ -185,7 +185,7 @@ dbgmsg(">WriteClient");
 		}
 	}	while	(  *buff  !=  0  );
     FreeLBS(lbs);
-dbgmsg("<WriteClient");
+LEAVE_FUNC;
 }
 
 static	void
@@ -296,7 +296,7 @@ SesServer(
 	fd_set		ready;
 	struct	timeval	timeout;
 
-dbgmsg(">SesServer");
+ENTER_FUNC;
 	do {
 		FD_ZERO(&ready);
 		FD_SET(sock,&ready);
@@ -340,7 +340,7 @@ dbgprintf("buff = [%s]\n",buff);
 		}
 	}	while	(  FD_ISSET(sock,&ready)  );
 	close(sock);
-dbgmsg("<SesServer");
+LEAVE_FUNC;
 }
 
 static	void
@@ -411,7 +411,7 @@ NewSession(
 	,		*cmd;
 	char	*p;
 
-dbgmsg(">NewSession");
+ENTER_FUNC;
 	if		(  socketpair(PF_UNIX, SOCK_STREAM, 0, socks)  !=  0  ) {
 		fprintf(stderr,"make unix domain socket fail.\n");
 		exit(1);
@@ -444,7 +444,7 @@ dbgmsg(">NewSession");
 		g_int_hash_table_insert(SesHash,htc->ses,htc);
 		cSession += (rand()>>16)+1;		/*	some random number	*/
 	}
-dbgmsg("<NewSession");
+LEAVE_FUNC;
 }
 
 static int
@@ -489,7 +489,7 @@ ExecuteServer(void)
 	HTC_Node	*htc;
 	Port	*port;
 
-dbgmsg(">ExecuteServer");
+ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
 	signal(SIGPIPE,SIG_IGN);
 
@@ -523,17 +523,18 @@ dbgprintf("<< [%s]\n",buff);
 		CloseNet(fp);
 	}
 	DestroyPort(port);
-dbgmsg("<ExecuteServer");
+LEAVE_FUNC;
 }
 
 static	void
 InitData(void)
 {
-dbgmsg(">InitData");
+ENTER_FUNC;
 	DD_ParserInit();
+	BlobCacheCleanUp();
 	SesHash = NewIntHash();
 	cSession = abs(rand());	/*	set some random number	*/
-dbgmsg("<InitData");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -541,9 +542,9 @@ InitSystem(
 	int		argc,
 	char	**argv)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	InitNET();
 	InitData();
 	ApplicationsInit(argc,argv);
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }

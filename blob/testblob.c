@@ -89,4 +89,5 @@ main(
 	}
 
 	FinishBLOB(blob);
+	return	(0);
 }

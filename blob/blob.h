@@ -21,6 +21,7 @@ copies.
 
 #ifndef	_INC_BLOB_H
 #define	_INC_BLOB_H
+#include	"net.h"
 
 #define	BLOB_VERSION	1
 

@@ -104,13 +104,13 @@ WaitConnect(
 	LD_Node	*ld,
 	int		ix)
 {
-dbgmsg(">WaitConnect");
+ENTER_FUNC;
 	pthread_mutex_lock(&ld->lock);
 	if		(  ld->aps[ix].fp  ==  NULL  ) {
 		pthread_cond_wait(&ld->conn, &ld->lock);
 	}
 	pthread_mutex_unlock(&ld->lock);
-dbgmsg("<WaitConnect");
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -124,7 +124,7 @@ PutAPS(
 	Bool	fOK;
 	NETFILE		*fp;
 
-dbgmsg(">PutAPS");
+ENTER_FUNC;
 #ifdef	DEBUG
 	printf("term = [%s]\n",data->hdr->term);
 	printf("user = [%s]\n",data->hdr->user);
@@ -174,7 +174,7 @@ dbgmsg(">PutAPS");
 	aps->count ++;
 	fOK = TRUE;
   badio:
-dbgmsg("<PutAPS");
+LEAVE_FUNC;
 	return(fOK);
 }
 
@@ -226,9 +226,9 @@ GetAPS_Value(
 	int		i
 	,		n;
 
-dbgmsg(">GetAPS_Value");
+ENTER_FUNC;
 	if		(  ( flag & c )  !=  0  ) {
-dbgmsg("send");
+		dbgmsg("send");
 		SendPacketClass(fpLD,c);		ON_IO_ERROR(fpLD,badio);
 		switch	(c) {
 		  case	APS_WINCTRL:
@@ -267,7 +267,7 @@ dbgmsg("send");
 			break;
 		}
 	}
-dbgmsg("<GetAPS_Value");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -275,9 +275,9 @@ MessageEnqueue(
 	MQ_Node *mq,
 	SessionData *data)
 {
-dbgmsg(">MessageEnqueue");
+ENTER_FUNC;
 	EnQueue(mq->que,data);
-dbgmsg("<MessageEnqueue");
+LEAVE_FUNC;
 }
 
 static	void
@@ -378,7 +378,7 @@ MessageThread(
 	byte		flag;
 	char		msg[SIZE_BUFF];
 
-dbgmsg(">MessageThread");
+ENTER_FUNC;
 	mq = aps->mq; 
 	ix = aps->no;
 	dbgprintf("start %s(%d)\n",mq->name,ix);
@@ -460,7 +460,7 @@ dbgmsg(">MessageThread");
 			ClearAPS_Node(&ld->aps[ix]);
 		}
 	}	while	(TRUE);
-dbgmsg("<MessageThread");
+LEAVE_FUNC;
 }
 
 static	void
@@ -473,7 +473,7 @@ StartMessageThread(
 	int		i;
 	LD_Struct	*ld;
 
-dbgmsg(">StartMessageThread");
+ENTER_FUNC;
 #ifdef	TRACE
 	printf("start thread for %s\n",name);
 #endif
@@ -497,7 +497,7 @@ dbgmsg(">StartMessageThread");
 		}
 		break;
 	}
-dbgmsg("<StartMessageThread");
+LEAVE_FUNC;
 }
 
 static	GHashTable	*mqs;
@@ -507,7 +507,7 @@ SetupMessageQueue(void)
 	int		i;
 	MQ_Node	*mq;
 
-dbgmsg(">SetupMessageQueue");
+ENTER_FUNC;
 	MQ_Hash = NewNameHash();
 	mqs = NewNameHash();
 	switch	(ThisEnv->mlevel) {
@@ -557,7 +557,7 @@ dbgmsg(">SetupMessageQueue");
 		break;
 	}
 	g_hash_table_foreach(mqs,(GHFunc)StartMessageThread,NULL);
-dbgmsg("<SetupMessageQueue");
+LEAVE_FUNC;
 }
 
 static	LD_Node	**LDs;
@@ -613,7 +613,7 @@ ConnectAPS(
 	int		i;
 	LD_Node	*ld;
 
-dbgmsg(">ConnectAps");
+ENTER_FUNC;
 	if		(  ( fhAps = accept(_fhAps,0,0) )  <  0  )	{
 		Error("INET Domain Accept");
 	}
@@ -657,7 +657,7 @@ dbgmsg(">ConnectAps");
 		SendPacketClass(fp,APS_NOT);
 		printf("invalid aps = [%s]\n",buff);
 	}
-dbgmsg("<ConnectAps");
+LEAVE_FUNC;
 }
 
 extern	void

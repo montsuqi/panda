@@ -84,6 +84,14 @@ static	Port	*ControlPort;
 
 static	sigset_t SigMask;
 
+#ifndef __USE_XOPEN2K
+extern int pselect (int __nfds, fd_set *__restrict __readfds,
+		    fd_set *__restrict __writefds,
+		    fd_set *__restrict __exceptfds,
+		    const struct timespec *__restrict __timeout,
+		    const __sigset_t *__restrict __sigmask);
+#endif
+
 #ifdef	DEBUG
 extern	void
 DumpNode(
@@ -109,7 +117,7 @@ ExecuteServer(void)
 	fd_set	ready;
 	int		maxfd;
     int		ret;
-	struct	timeval	timeout;
+	struct	timespec	timeout;
 
 dbgmsg(">ExecuteServer");
 	_fhTerm = InitServerPort(WfcPort,Back);
@@ -133,7 +141,7 @@ dbgmsg(">ExecuteServer");
 	fShutdown = FALSE;
 	do {
 		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
+		timeout.tv_nsec = 0;
 		FD_ZERO(&ready);
 		FD_SET(_fhTerm,&ready);
 		FD_SET(_fhAps,&ready);
@@ -209,7 +217,9 @@ LEAVE_FUNC;
 static	void
 CleanUp(void)
 {
-	FinishBLOB(Blob);
+	if (Blob != NULL) {
+		FinishBLOB(Blob);
+	}
 }
 
 static	void

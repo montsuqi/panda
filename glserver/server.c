@@ -82,7 +82,7 @@ CheckCache(
 	Bool	ret;
 	int		klass;
 
-dbgmsg(">CheckCache");
+ENTER_FUNC;
 	GL_SendPacketClass(fpComm,GL_QueryScreen,fFetureNetwork);
 	ON_IO_ERROR(fpComm,badio);
 	GL_SendString(fpComm,name,fFetureNetwork);			ON_IO_ERROR(fpComm,badio);
@@ -105,7 +105,7 @@ dbgmsg(">CheckCache");
 		ret = FALSE;
 		break;
 	}
-dbgmsg("<CheckCache");
+LEAVE_FUNC;
 	return	(ret);
 }
 	
@@ -122,7 +122,7 @@ SendFile(
 	FILE	*fp;
 	Bool	rc;
 
-dbgmsg(">SendFile");
+ENTER_FUNC;
 	stat(fname,&stbuf);
 	if		(  CheckCache(fpComm,
 						  wname,
@@ -154,7 +154,7 @@ dbgmsg(">SendFile");
 	} else {
 		rc = TRUE;
 	}
-dbgmsg("<SendFile");
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -174,7 +174,7 @@ CheckScreen(
 	Bool	fDone
 	,		fExit;
 
-dbgmsg(">CheckScreen");
+ENTER_FUNC;
 	if		(  win->fNew  ) {
 		strcpy(dir,ScreenDir);
 		p = dir;
@@ -199,7 +199,7 @@ dbgmsg(">CheckScreen");
 		}
 		win->fNew = FALSE;
 	}
-dbgmsg("<CheckScreen");
+LEAVE_FUNC;
 }
 
 static	void
@@ -207,12 +207,12 @@ CheckScreens(
 	NETFILE		*fpComm,
 	ScreenData	*scr)
 {
-dbgmsg(">CheckScreens");
+ENTER_FUNC;
 	if		(  setjmp(envCheckScreen)  ==  0  ) {
 		g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
 	}
 	GL_SendPacketClass(fpComm,GL_END,fFetureNetwork);
-dbgmsg("<CheckScreens");
+LEAVE_FUNC;
 }
 
 static	jmp_buf	envSendWindow;
@@ -223,7 +223,7 @@ SendWindow(
 	NETFILE		*fpComm)
 {
 	Bool	rc;
-dbgmsg(">SendWindow");
+ENTER_FUNC;
 
 	rc = FALSE; 
 	if		(  win->PutType  !=  SCREEN_NULL  ) {
@@ -263,7 +263,7 @@ dbgmsg(">SendWindow");
 	rc = TRUE;
   badio:
 	if		(  !rc  )	longjmp(envSendWindow,1);
-dbgmsg("<SendWindow");
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -272,7 +272,7 @@ SendScreenAll(
 	ScreenData	*scr)
 {
 	Bool	rc;
-dbgmsg(">SendScreenAll");
+ENTER_FUNC;
 	rc = FALSE;
 	if		(  setjmp(envSendWindow)  ==  0  ) {
 		g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,fpComm);
@@ -289,7 +289,7 @@ dbgmsg(">SendScreenAll");
 	GL_SendPacketClass(fpComm,GL_END,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
 	rc = TRUE;
   badio:
-dbgmsg("<SendScreenAll");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -300,7 +300,7 @@ SendScreenData(
 {
 	Bool	rc;
 
-dbgmsg(">SendScreenData");
+ENTER_FUNC;
 	if		(  GL_RecvPacketClass(fpComm,fFetureNetwork)  ==  GL_GetData  ) {
 		if		(  GL_RecvInt(fpComm,fFetureNetwork)  ==  0  ) {	/*	get all data	*/
 			dbgmsg("get all data");
@@ -312,7 +312,7 @@ dbgmsg(">SendScreenData");
 	} else {
 		rc = FALSE;
 	}
-dbgmsg("<SendScreenData");
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -323,13 +323,13 @@ SendScreen(
 {
 	Bool	ret;
 
-dbgmsg(">SendScreen");
+ENTER_FUNC;
 	CheckScreens(fpComm,scr);
 	ret = SendScreenData(fpComm,scr);
 	if		(  !ret  ) {
 		printf("SendScreenData invalid\n");
 	}
-dbgmsg("<SendScreen");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -508,7 +508,7 @@ MainLoop(
 
 	PacketClass	klass;
 
-dbgmsg(">MainLoop");
+ENTER_FUNC;
 	klass = GL_RecvPacketClass(fpComm,fFetureNetwork); ON_IO_ERROR(fpComm,badio);
 	dbgprintf("class = %d",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
@@ -564,7 +564,7 @@ dbgmsg(">MainLoop");
 		dbgmsg("Connection lost");
 	}
 
-dbgmsg("<MainLoop");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -580,7 +580,7 @@ ExecuteServer(void)
 #ifdef	USE_SSL
 	SSL_CTX	*ctx;
 #endif
-dbgmsg(">ExecureServer");
+ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
 
 	port = ParPortName(PortNumber);
@@ -625,15 +625,16 @@ dbgmsg(">ExecureServer");
 		}
 	}
 	DestroyPort(port);
-dbgmsg("<ExecureServer");
+LEAVE_FUNC;
 }
 
 static	void
 InitData(void)
 {
-dbgmsg(">InitData");
+ENTER_FUNC;
 	DD_ParserInit();
-dbgmsg("<InitData");
+	BlobCacheCleanUp();
+LEAVE_FUNC;
 }
 
 extern	void
@@ -641,10 +642,10 @@ InitSystem(
 	int		argc,
 	char	**argv)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	InitNET();
 	InitData();
 	InitGL_Comm();
 	ApplicationsInit(argc,argv);
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }
