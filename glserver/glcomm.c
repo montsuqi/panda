@@ -429,6 +429,9 @@ ENTER_FUNC;
 				system(buff);
 			}
 		}
+        else {
+            strcpy(fname,cname);
+        }
 	} else {
 		strcpy(fname,cname);
 	}

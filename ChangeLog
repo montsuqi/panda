@@ -1,5 +1,8 @@
 2004-08-05  Kouji TAKAO  <kouji@netlab.jp>
 
+	* glserver/glcomm.c (ExpandFile): PSファイルの場合に正しいファイル
+	名を返さないをバグ修正
+
 	* configure.in: libmagicのチェックを追加
 
 2004-08-05  Masami Ogoshi  <ogochan@nurs.or.jp>
