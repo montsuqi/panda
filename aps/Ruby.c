@@ -73,6 +73,7 @@ static VALUE cArrayValue;
 static VALUE cRecordValue;
 static VALUE cRecordStruct;
 static VALUE cProcessNode;
+static VALUE cPath;
 static VALUE cTable;
 static VALUE cDatabase;
 
@@ -295,12 +296,12 @@ error_handle(int ex)
     return status;
 }
 
-static VALUE aryval_new(ValueStruct *val);
-static VALUE recval_new(ValueStruct *val);
-
 static VALUE
 get_value(ValueStruct *val)
 {
+    static VALUE aryval_new(ValueStruct *val);
+    static VALUE recval_new(ValueStruct *val);
+
     if (val == NULL)
         return Qnil;
     switch (ValueType(val)) {
@@ -448,11 +449,23 @@ recval_new(ValueStruct *val)
 {
     VALUE obj;
     value_struct_data *data;
+    int i;
+    VALUE name;
+    static VALUE recval_get_field(VALUE self);
+    static VALUE recval_set_field(VALUE self, VALUE obj);
 
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
                            value_struct_mark, free, data);
     data->value = val;
     data->cache = rb_hash_new();
+    for (i = 0; i < ValueRecordSize(val); i++) {
+        rb_define_singleton_method(obj, ValueRecordName(val, i),
+                                   recval_get_field, 0);
+        name = rb_str_new2(ValueRecordName(val, i));
+        rb_str_cat2(name, "=");
+        rb_define_singleton_method(obj, StringValuePtr(name),
+                                   recval_set_field, 1);
+    }
     return obj;
 }
 
@@ -497,6 +510,43 @@ recval_aset(VALUE self, VALUE name, VALUE obj)
     return obj;
 }
 
+static VALUE
+recval_get_field(VALUE self)
+{
+    VALUE obj;
+    value_struct_data *data;
+    ValueStruct *val;
+    char *name = rb_id2name(ruby_frame->last_func);
+
+    Data_Get_Struct(self, value_struct_data, data);
+
+    if (!NIL_P(obj = rb_hash_aref(data->cache, rb_str_new2(name))))
+        return obj;
+
+    val = GetRecordItem(data->value, name);
+    obj = get_value(val);
+    rb_hash_aset(data->cache, rb_str_new2(name), obj);
+    return obj;
+}
+
+static VALUE
+recval_set_field(VALUE self, VALUE obj)
+{
+    value_struct_data *data;
+    ValueStruct *val;
+    char *s = rb_id2name(ruby_frame->last_func);
+    VALUE name;
+
+    name = rb_str_new(s, strlen(s) - 1);
+
+    Data_Get_Struct(self, value_struct_data, data);
+    val = GetRecordItem(data->value, StringValuePtr(name));
+    if (val == NULL)
+        rb_raise(rb_eArgError, "no such field: %s", StringValuePtr(name));
+    set_value(val, obj);
+    return obj;
+}
+
 typedef struct _record_struct_data {
     RecordStruct *rec;
     VALUE value;
@@ -515,10 +565,22 @@ rec_new(RecordStruct *rec)
 {
     VALUE obj;
     record_struct_data *data;
+    int i;
+    VALUE name;
+    static VALUE rec_get_field(VALUE self);
+    static VALUE rec_set_field(VALUE self, VALUE obj);
 
     obj = Data_Make_Struct(cRecordStruct, record_struct_data,
                            rec_mark, free, data);
     data->value = recval_new(rec->value);
+    for (i = 0; i < ValueRecordSize(rec->value); i++) {
+        rb_define_singleton_method(obj, ValueRecordName(rec->value, i),
+                                   rec_get_field, 0);
+        name = rb_str_new2(ValueRecordName(rec->value, i));
+        rb_str_cat2(name, "=");
+        rb_define_singleton_method(obj, StringValuePtr(name),
+                                   rec_set_field, 1);
+    }
     return obj;
 }
 
@@ -556,6 +618,24 @@ rec_aset(VALUE self, VALUE name, VALUE obj)
 
     Data_Get_Struct(self, record_struct_data, data);
     return recval_aset(data->value, name, obj);
+}
+
+static VALUE
+rec_get_field(VALUE self)
+{
+    record_struct_data *data;
+
+    Data_Get_Struct(self, record_struct_data, data);
+    return recval_get_field(data->value);
+}
+
+static VALUE
+rec_set_field(VALUE self, VALUE obj)
+{
+    record_struct_data *data;
+
+    Data_Get_Struct(self, record_struct_data, data);
+    return recval_set_field(data->value, obj);
 }
 
 typedef struct _procnode_data {
@@ -655,6 +735,124 @@ procnode_windows(VALUE self)
     return data->windows;
 }
 
+typedef struct _path_data {
+    PathStruct *path;
+    VALUE args;
+    VALUE op_args;
+} path_data;
+
+static void
+path_mark(path_data *data)
+{
+    rb_gc_mark(data->args);
+}
+
+static VALUE
+path_new(PathStruct *path)
+{
+    VALUE obj;
+    path_data *data;
+    int i;
+    VALUE name;
+    static VALUE rec_get_field(VALUE self);
+    static VALUE rec_set_field(VALUE self, VALUE obj);
+
+    obj = Data_Make_Struct(cPath, path_data,
+                           path_mark, free, data);
+    data->path = path;
+    data->args = path->args ? recval_new(path->args) : Qnil;
+    data->op_args = rb_hash_new();
+    for (i = 0; i < ValueRecordSize(path->args); i++) {
+        rb_define_singleton_method(obj, ValueRecordName(path->args, i),
+                                   rec_get_field, 0);
+        name = rb_str_new2(ValueRecordName(path->args, i));
+        rb_str_cat2(name, "=");
+        rb_define_singleton_method(obj, StringValuePtr(name),
+                                   rec_set_field, 1);
+    }
+    return obj;
+}
+
+static VALUE
+path_name(VALUE self)
+{
+    path_data *data;
+
+    Data_Get_Struct(self, path_data, data);
+    return rb_str_new2(data->path->name);
+}
+
+static VALUE
+path_length(VALUE self)
+{
+    path_data *data;
+
+    Data_Get_Struct(self, path_data, data);
+    return recval_length(data->args);
+}
+
+static VALUE
+path_aref(VALUE self, VALUE name)
+{
+    path_data *data;
+
+    Data_Get_Struct(self, path_data, data);
+    return recval_aref(data->args, name);
+}
+
+static VALUE
+path_aset(VALUE self, VALUE name, VALUE obj)
+{
+    path_data *data;
+
+    Data_Get_Struct(self, path_data, data);
+    return recval_aset(data->args, name, obj);
+}
+
+static VALUE
+path_op_args(VALUE self, VALUE name)
+{
+    path_data *data;
+    VALUE op_args;
+    int no;
+
+    Data_Get_Struct(self, path_data, data);
+
+    if (!NIL_P(op_args = rb_hash_aref(data->op_args, name))) {
+        return op_args;
+    }
+
+    no = (int) g_hash_table_lookup(data->path->opHash, StringValuePtr(name));
+    if (no == 0) {
+        rb_raise(rb_eArgError,
+                 "no such operation: %s", StringValuePtr(name));
+    }
+    if (data->path->ops[no - 1]->args == NULL) {
+        return Qnil;
+    }
+    op_args = recval_new(data->path->ops[no - 1]->args);
+    rb_hash_aset(data->op_args, name, op_args);
+    return op_args;
+}
+
+static VALUE
+path_get_field(VALUE self)
+{
+    path_data *data;
+
+    Data_Get_Struct(self, path_data, data);
+    return recval_get_field(data->args);
+}
+
+static VALUE
+path_set_field(VALUE self, VALUE obj)
+{
+    path_data *data;
+
+    Data_Get_Struct(self, path_data, data);
+    return recval_set_field(data->args, obj);
+}
+
 typedef struct _table_data {
     record_struct_data rec;
     int no;
@@ -673,6 +871,8 @@ table_new(int no, RecordStruct *rec)
 {
     VALUE obj;
     table_data *data;
+    int i;
+    VALUE name;
 
     obj = Data_Make_Struct(cTable, table_data,
                            table_mark, free, data);
@@ -680,6 +880,14 @@ table_new(int no, RecordStruct *rec)
     data->rec.value = recval_new(rec->value);
     data->no = no;
     data->paths = rb_hash_new();
+    for (i = 0; i < ValueRecordSize(rec->value); i++) {
+        rb_define_singleton_method(obj, ValueRecordName(rec->value, i),
+                                   rec_get_field, 0);
+        name = rb_str_new2(ValueRecordName(rec->value, i));
+        rb_str_cat2(name, "=");
+        rb_define_singleton_method(obj, StringValuePtr(name),
+                                   rec_set_field, 1);
+    }
     return obj;
 }
 
@@ -693,6 +901,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
 	PathStruct *path;
 	int no;
 	size_t size;
+    ValueStruct *value;
 
     Data_Get_Struct(self, table_data, data);
     if (rb_scan_args(argc, argv, "11", &funcname, &pathname) < 2) {
@@ -707,17 +916,55 @@ table_exec(int argc, VALUE *argv, VALUE self)
 	ctrl.pno = 0;
 	ctrl.blocks = 0;
 
+    value = RECORD_STRUCT(data)->value;
     if (pname != NULL) {
         no = (int) g_hash_table_lookup(RECORD_STRUCT(data)->opt.db->paths, pname);
         if (no != 0) {
+            PathStruct *path;
             ctrl.pno = no - 1;
+            path = RECORD_STRUCT(data)->opt.db->path[ctrl.pno];
+            if (path != NULL) {
+                if (path->args != NULL)
+                    value = path->args;
+                no = (int) g_hash_table_lookup(path->opHash, func);
+                if (no != 0) {
+                    SQL_Operation *operation = path->ops[no - 1];
+                    if (operation != NULL && operation->args != NULL)
+                        value = operation->args;
+                }
+            }
         }
     }
     size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
     ctrl.blocks = ((size + sizeof(DBCOMM_CTRL)) / SIZE_BLOCK) + 1;
 	strcpy(ctrl.func, func);
-	ExecDB_Process(&ctrl, RECORD_STRUCT(data), RECORD_STRUCT(data)->value);
+	ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
     return INT2NUM(ctrl.rc);
+}
+
+static VALUE
+table_path(VALUE self, VALUE name)
+{
+    table_data *data;
+    VALUE path;
+    int no;
+
+    Data_Get_Struct(self, table_data, data);
+
+    if (!NIL_P(path = rb_hash_aref(data->paths, name))) {
+        return path;
+    }
+
+    no = (int) g_hash_table_lookup(RECORD_STRUCT(data)->opt.db->paths,
+                                   StringValuePtr(name));
+    if (no == 0) {
+        rb_raise(rb_eArgError,
+                 "no such path: %s", StringValuePtr(name));
+    }
+
+    path = path_new(RECORD_STRUCT(data)->opt.db->path[no - 1]);
+    rb_hash_aset(data->paths, name, path);
+    return path;
 }
 
 typedef struct _database_data {
@@ -807,6 +1054,13 @@ init()
     rb_define_method(cProcessNode, "link", procnode_link, 0);
     rb_define_method(cProcessNode, "spa", procnode_spa, 0);
     rb_define_method(cProcessNode, "windows", procnode_windows, 0);
+    cPath = rb_define_class_under(mPanda, "Path", rb_cObject);
+    rb_define_method(cPath, "name", path_name, 0);
+    rb_define_method(cPath, "length", path_length, 0);
+    rb_define_method(cPath, "size", path_length, 0);
+    rb_define_method(cPath, "[]", path_aref, 1);
+    rb_define_method(cPath, "[]=", path_aset, 2);
+    rb_define_method(cPath, "op_args", path_op_args, 1);
     cTable = rb_define_class_under(mPanda, "Table", rb_cObject);
     rb_define_method(cTable, "name", rec_name, 0);
     rb_define_method(cTable, "length", rec_length, 0);
@@ -814,6 +1068,7 @@ init()
     rb_define_method(cTable, "[]", rec_aref, 1);
     rb_define_method(cTable, "[]=", rec_aset, 2);
     rb_define_method(cTable, "exec", table_exec, -1);
+    rb_define_method(cTable, "path", table_path, 1);
     cDatabase = rb_define_class_under(mPanda, "Database", rb_cObject);
     rb_define_method(cDatabase, "[]", database_aref, 1);
 
