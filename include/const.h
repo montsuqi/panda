@@ -26,6 +26,7 @@ copies.
 #define	PORT_GLAUTH		8001
 #define	PORT_DBLOG		8002
 #define	PORT_HTSERV		8010
+#define	PORT_PGSERV		8011
 #define	PORT_APS_BASE	9100
 #define	PORT_WFC		9000
 #define	PORT_WFC_APS	9001
@@ -36,10 +37,12 @@ copies.
 #define	SIZE_OTHER		128
 #define	SIZE_GLOWN		1024	/*	LBS glown unit	*/
 
-#define	SIZE_SQL		16384
+//#define	SIZE_SQL		16384
+#define	SIZE_SQL		65538
 #define	SIZE_BLOCK		1024
 
-#define	SIZE_BUFF		1024
+//#define	SIZE_BUFF		1024
+#define	SIZE_BUFF		65538
 #define	SIZE_HOST		255
 
 #define	SIZE_NAME		64
