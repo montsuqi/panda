@@ -507,7 +507,9 @@ ENTER_FUNC;
 		MessageLog(buff);
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
-		fp = Fopen(fname,"w");
+		if	((fp = Fopen(fname,"w")) == NULL) {
+			Error("could not write cache file");
+		}
 		fchmod(fileno(fp), 0600);
 		left = (size_t)GL_RecvLong(fpC);
 		do {
