@@ -11,11 +11,11 @@ glserver_LDADD 		=					\
 	$(MONDAI_LIBS)						\
 	$(top_srcdir)/libs/libpandas.la		\
 	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_srcdir)/libs/libpandagl.la
 glserver_DEPENDENCIES	=				\
 	$(top_srcdir)/libs/libpandas.la		\
 	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_srcdir)/libs/libpandagl.la
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\

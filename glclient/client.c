@@ -162,7 +162,7 @@ CacheFileName(
 extern	void
 ExitSystem(void)
 {
-	SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(fpComm,GL_END);
 	exit(0);
 }
 

@@ -45,6 +45,26 @@ extern	void		SendEvent(NETFILE *fpComm, char *window, char *widget, char *event)
 extern	void		AddClass(GtkType type, RecvHandler rfunc, SendHandler sfunc);
 extern	void		ResetTimer(GtkWindow *window);
 
+extern	void		GL_SendPacketClass(NETFILE *fp, PacketClass c);
+extern	PacketClass	GL_RecvPacketClass(NETFILE *fp);
+extern	PacketDataType	GL_RecvDataType(NETFILE *fp);
+extern	void			GL_SendInt(NETFILE *fp, int data);
+extern	int				GL_RecvInt(NETFILE *fp);
+extern	void			GL_SendDataType(NETFILE *fp, PacketClass c);
+extern	void			GL_RecvName(NETFILE *fp, char *name);
+extern	void			GL_SendName(NETFILE *fp, char *name);
+
+extern	PacketDataType	RecvPacketDataType(NETFILE *fp);
+extern	void			SendStringData(NETFILE *fp, PacketDataType type, char *str);
+extern	Bool			RecvStringData(NETFILE *fp, char *str);
+extern	void			SendIntegerData(NETFILE *fp, PacketDataType type, int val);
+extern	Bool			RecvIntegerData(NETFILE *fp, int *val);
+extern	void			SendBoolData(NETFILE *fp, PacketDataType type, Bool val);
+extern	Bool			RecvBoolData(NETFILE *fp, Bool *val);
+extern	void			SendFloatData(NETFILE *fp, PacketDataType type, double val);
+extern	Bool			RecvFloatData(NETFILE *fp, double *val);
+extern	void			SendFixedData(NETFILE *fp, PacketDataType type, Fixed *xval);
+extern	Bool			RecvFixedData(NETFILE *fp, Fixed **xval);
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -55,5 +75,6 @@ extern	void		ResetTimer(GtkWindow *window);
 
 GLOBAL	Bool	Protocol1;
 GLOBAL	Bool	Protocol2;
+GLOBAL	PacketDataType	DataType;
 
 #endif

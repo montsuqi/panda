@@ -505,14 +505,13 @@ Connect(
 	char	ver[SIZE_BUFF];
 	char	msg[SIZE_BUFF];
 
-	GL_RecvString(fpComm,ver,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm,ver,FALSE);				ON_IO_ERROR(fpComm,badio);
+	CheckFeture(ver);
 	GL_RecvString(fpComm,scr->user,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm,pass,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm,scr->cmd,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 	sprintf(msg,"[%s@%s] session start",scr->user,scr->term);
 	MessageLog(msg);
-
-	CheckFeture(ver);
 
 	if		(  TermFeture  ==  FETURE_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_E_VERSION,fFetureNetwork);

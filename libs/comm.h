@@ -25,41 +25,19 @@ copies.
 #include	"net.h"
 extern	void			SendPacketClass(NETFILE *fp, PacketClass c);
 extern	PacketClass		RecvPacketClass(NETFILE *fp);
-extern	void			SendDataType(NETFILE *fp, PacketClass c);
 extern	PacketClass		RecvDataType(NETFILE *fp);
-extern	void			SendPacketDataType(NETFILE *fp, PacketDataType t);
-extern	PacketDataType	RecvPacketDataType(NETFILE *fp);
 extern	void			SendLength(NETFILE *fp, size_t size);
 extern	size_t			RecvLength(NETFILE *fp);
 extern	void			SendString(NETFILE *fp, char *str);
 extern	void			SendLBS(NETFILE *fp, LargeByteString *lbs);
 extern	void			RecvLBS(NETFILE *fp, LargeByteString *lbs);
-extern	void			RecvStringBody(NETFILE *fp, char *str, size_t size);
 extern	void			RecvString(NETFILE *fp, char *str);
-extern	long			RecvLong(NETFILE *fp);
-extern	void			SendLong(NETFILE *fp,long data);
 extern	int				RecvInt(NETFILE *fp);
 extern	void			SendInt(NETFILE *fp,int data);
-extern	unsigned int	RecvUInt(NETFILE *fp);
-extern	void			SendUInt(NETFILE *fp, unsigned int data);
 extern	int				RecvChar(NETFILE *fp);
 extern	void			SendChar(NETFILE *fp,int data);
-extern	double			RecvFloat(NETFILE *fp);
-extern	void			SendFloat(NETFILE *fp,double data);
 extern	Bool			RecvBool(NETFILE *fp);
 extern	void			SendBool(NETFILE *fp, Bool data);
-extern	Fixed			*RecvFixed(NETFILE *fp);
-extern	void			SendFixed(NETFILE *fp, Fixed *fixed);
-extern	void			SendStringData(NETFILE *fp, PacketDataType type, char *str);
-extern	Bool			RecvStringData(NETFILE *fp, char *str);
-extern	void			SendIntegerData(NETFILE *fp, PacketDataType type, int val);
-extern	Bool			RecvIntegerData(NETFILE *fp, int *val);
-extern	void			SendBoolData(NETFILE *fp, PacketDataType type, Bool val);
-extern	Bool			RecvBoolData(NETFILE *fp, Bool *val);
-extern	void			SendFloatData(NETFILE *fp, PacketDataType type, double val);
-extern	Bool			RecvFloatData(NETFILE *fp, double *val);
-extern	void			SendFixedData(NETFILE *fp, PacketDataType type, Fixed *xval);
-extern	Bool			RecvFixedData(NETFILE *fp, Fixed **xval);
 extern	void			SendObject(NETFILE *fp, MonObjectType *obj);
 extern	void			RecvObject(NETFILE *fp, MonObjectType *obj);
 
@@ -73,7 +51,6 @@ extern	void			InitComm(void);
 #else
 #define	GLOBAL		extern
 #endif
-GLOBAL	PacketDataType	DataType;
 #undef	GLOBAL
 
 #endif

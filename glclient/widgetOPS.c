@@ -154,6 +154,7 @@ SetState(
 	gtk_widget_set_state(widget,state);
 }
 
+//////////////////////////////////////////////////////////////////////
 static	Bool
 RecvEntry(
 	GtkWidget	*widget,
@@ -166,10 +167,10 @@ RecvEntry(
 	int		state;
 
 dbgmsg(">RecvEntry");
-	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = RecvInt(fp);
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			RecvString(fp,name);
+			GL_RecvName(fp,name);
 			if		(  !stricmp(name,"state")  ) {
 				RecvIntegerData(fp,&state);
 				SetState(widget,(GtkStateType)state);
@@ -201,10 +202,10 @@ SendEntry(
 
 dbgmsg(">SendEntry");
 	p = (char *)gtk_entry_get_text(GTK_ENTRY(widget));
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
-	SendString(fp,iname);
+	GL_SendName(fp,iname);
 	SendStringData(fp,v->type,(char *)p);
 dbgmsg("<SendEntry");
 	return	(TRUE);
@@ -222,10 +223,10 @@ RecvPS(
 	,		i;
 
 dbgmsg(">RecvPS");
-	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = RecvInt(fp);
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			RecvString(fp,name);
+			GL_RecvName(fp,name);
 			RecvStringData(fp,buff);
 			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 			gtk_panda_ps_load(GTK_PANDA_PS(widget),buff);
@@ -260,10 +261,10 @@ RecvTimer(
 	,		i;
 
 dbgmsg(">RecvTimer");
-	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = RecvInt(fp);
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			RecvString(fp,name);
+			GL_RecvName(fp,name);
 			if		(  !stricmp(name,"duration")  ) {
 				RecvIntegerData(fp,&duration);
 				gtk_panda_timer_set(GTK_PANDA_TIMER(widget),
@@ -287,10 +288,10 @@ SendTimer(
 	Fixed	*xval;
 
 dbgmsg(">SendTimer");
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
-	SendString(fp,iname);
+	GL_SendName(fp,iname);
 	SendIntegerData(fp,v->type,GTK_PANDA_TIMER(widget)->duration / 1000);
 dbgmsg("<SendTimer");
 	return	(TRUE);
@@ -312,10 +313,10 @@ RecvNumberEntry(
 	Numeric	value;
 
 ENTER_FUNC;
-	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = RecvInt(fp);
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			RecvString(fp,name);
+			GL_RecvName(fp,name);
 			if		(  !stricmp(name,"state")  ) {
 				RecvIntegerData(fp,&state);
 				SetState(widget,(GtkStateType)state);
@@ -355,10 +356,10 @@ SendNumberEntry(
 
 dbgmsg(">SendNumberEntry");
 	value = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
-	SendString(fp,iname);
+	GL_SendName(fp,iname);
 	xval = v->opt.xval;
 	xfree(xval->sval);
 	xval->sval = NumericToFixed(value,xval->flen,xval->slen);
@@ -380,10 +381,10 @@ RecvLabel(
 	,		i;
 
 dbgmsg(">RecvLabel");
-	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = RecvInt(fp);
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			RecvString(fp,name);
+			GL_RecvName(fp,name);
 			if		(  !stricmp(name,"style")  ) {
 				RecvStringData(fp,buff);
 				gtk_widget_set_style(widget,GetStyle(buff));
@@ -410,10 +411,10 @@ SendText(
 
 dbgmsg(">SendText");
 	p = gtk_editable_get_chars(GTK_EDITABLE(widget),0,-1); 
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
-	SendString(fp,iname);
+	GL_SendName(fp,iname);
 	SendStringData(fp,v->type,(char *)p);
 	g_free(p);
 dbgmsg("<SendText");
@@ -433,10 +434,10 @@ RecvText(
 	MonObjectType	obj;
 
 dbgmsg(">RecvText");
-	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = RecvInt(fp);
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			RecvString(fp,name);
+			GL_RecvName(fp,name);
 			if		(  !stricmp(name,"state")  ) {
 				RecvIntegerData(fp,&state);
 				SetState(widget,(GtkStateType)state);
@@ -445,20 +446,7 @@ dbgmsg(">RecvText");
 				RecvStringData(fp,buff);
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
-				switch	(RecvDataType(fp)) {
-				  case	GL_TYPE_INT:
-					sprintf(buff,"%d",RecvInt(fp));
-					break;
-				  case	GL_TYPE_CHAR:
-				  case	GL_TYPE_VARCHAR:
-				  case	GL_TYPE_DBCODE:
-				  case	GL_TYPE_TEXT:
-					RecvString(fp,buff);
-					break;
-				  case	GL_TYPE_OBJECT:
-					RecvObject(fp,&obj);
-					break;
-				}
+				RecvStringData(fp,buff);
 				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_text_freeze(GTK_TEXT(widget));
 				gtk_text_set_point(GTK_TEXT(widget), 0);
@@ -485,10 +473,10 @@ SendButton(
 
 dbgmsg(">SendButton");
 	fActive = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
-	SendString(fp,iname);
+	GL_SendName(fp,iname);
 	SendBoolData(fp,v->type,fActive);
 dbgmsg("<SendButton");
 	return	(TRUE);
@@ -531,10 +519,10 @@ RecvButton(
 	int		state;
 
 dbgmsg(">RecvButton");
-	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = RecvInt(fp);
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			RecvString(fp,name);
+			GL_RecvName(fp,name);
 			if		(  !stricmp(name,"state")  ) {
 				RecvIntegerData(fp,&state);
 				SetState(widget,(GtkStateType)state);
@@ -576,13 +564,13 @@ RecvCombo(
 	GtkCombo	*combo = GTK_COMBO(widget);
 
 dbgmsg(">RecvCombo");
-	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 
 	longname = WidgetName + strlen(WidgetName);
-	nitem = RecvInt(fp);
+	nitem = GL_RecvInt(fp);
 	count = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		RecvString(fp,name);
+		GL_RecvName(fp,name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -596,8 +584,8 @@ dbgmsg(">RecvCombo");
 		} else
 		if		(  !stricmp(name,"item")  ) {
 			list = g_list_append(NULL,StrDup(""));
-			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			num = RecvInt(fp);
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			num = GL_RecvInt(fp);
 			for	( j = 0 ; j < num ; j ++ ) {
 				if		(  RecvStringData(fp,buff)  ) {
 					if		(  j  <  count  ) {
@@ -644,12 +632,12 @@ RecvPandaCombo(
 	GtkPandaCombo	*combo = GTK_PANDA_COMBO(widget);
 
 dbgmsg(">RecvPandaCombo");
-	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 	longname = WidgetName + strlen(WidgetName);
-	nitem = RecvInt(fp);
+	nitem = GL_RecvInt(fp);
 	count = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		RecvString(fp,name);
+		GL_RecvName(fp,name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -663,8 +651,8 @@ dbgmsg(">RecvPandaCombo");
 		} else
 		if		(  !stricmp(name,"item")  ) {
 			list = g_list_append(NULL,StrDup(""));
-			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			num = RecvInt(fp);
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			num = GL_RecvInt(fp);
 			for	( j = 0 ; j < num ; j ++ ) {
 				if		(  RecvStringData(fp,buff)  ) {
 					if		(  j  <  count  ) {
@@ -714,22 +702,16 @@ dbgmsg(">SendPandaCList");
 		if		(  ( clist_row = GTK_PANDA_CLIST_ROW(children) )  !=  NULL  ) {
 			state = clist_row->state;
 			sprintf(iname,"%s.%s[%d]",v->ValueName,v->NameSuffix,i + v->opt.ival);
-			SendPacketClass(fp,GL_ScreenData);
-			SendString(fp,iname);
-			SendDataType(fp,GL_TYPE_BOOL);
-			if		(  state  ==  GTK_STATE_SELECTED  ) {
-				SendBool(fp,TRUE);
-			} else {
-				SendBool(fp,FALSE);
-			}
+			GL_SendPacketClass(fp,GL_ScreenData);
+			GL_SendName(fp,iname);
+			SendBoolData(fp,GL_TYPE_BOOL,((state == GTK_STATE_SELECTED) ? TRUE : FALSE));
 		}
 		if	( !fVisibleRow ) {
 			if	( visi = gtkpanda_clist_row_is_visible(GTK_PANDA_CLIST(widget),i) == GTK_VISIBILITY_FULL ) {
 				sprintf(iname,"%s.row",v->ValueName);
-				SendPacketClass(fp,GL_ScreenData);
-				SendString(fp,iname);
-				SendDataType(fp,GL_TYPE_INT);
-				SendInt(fp,i + 1);
+				GL_SendPacketClass(fp,GL_ScreenData);
+				GL_SendName(fp,iname);
+				SendIntegerData(fp,GL_TYPE_INT,(i + 1));
 				fVisibleRow = TRUE;
 			}
 		} 
@@ -766,18 +748,18 @@ RecvPandaCList(
 	gfloat		rowattrw;
 
 dbgmsg(">RecvPandaCList");
-	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 
 	strcpy(label,WidgetName);
 	longname = label + strlen(label);
-	nitem = RecvInt(fp);
+	nitem = GL_RecvInt(fp);
 	count = -1;
 	rdata = NULL;
 	from = 0;
 	row = 0;
 	rowattrw = 0.0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		RecvString(fp,name);
+		GL_RecvName(fp,name);
 		sprintf(longname,".%s",name);
 		if		(  ( subWidget = glade_xml_get_widget_by_long_name(ThisXML,label) )
 				   !=  NULL  ) {
@@ -819,19 +801,19 @@ dbgmsg(">RecvPandaCList");
 		if		(  !stricmp(name,"item")  ) {
 			gtkpanda_clist_freeze(GTK_PANDA_CLIST(widget));
 			gtkpanda_clist_clear(GTK_PANDA_CLIST(widget));
-			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			num = RecvInt(fp);
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
 			}
 			for	( j = 0 ; j < num ; j ++ ) {
-				DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-				rnum = RecvInt(fp);
+				DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+				rnum = GL_RecvInt(fp);
 				if		(  rdata  ==  NULL  ) {
 					rdata = (char **)xmalloc(sizeof(char *)*rnum);
 				}
 				for	( k = 0 ; k < rnum ; k ++ ) {
-					RecvString(fp,iname);
+					GL_RecvName(fp,iname);
 					(void)RecvStringData(fp,buff);
 					rdata[k] = StrDup(buff);
 				}
@@ -847,9 +829,9 @@ dbgmsg(">RecvPandaCList");
 			gtkpanda_clist_thaw(GTK_PANDA_CLIST(widget));
 			gtkpanda_clist_moveto(GTK_PANDA_CLIST(widget), row - 1, 0, rowattrw, 0.0);
 		} else {
-			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 			RegistValue(widget,name,OPT_TYPE_INT,(void*)from);
-			num = RecvInt(fp);
+			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
 			}
@@ -895,14 +877,9 @@ dbgmsg(">SendCList");
 		if		(  ( clist_row = GTK_CLIST_ROW(children) )  !=  NULL  ) {
 			state = clist_row->state;
 			sprintf(iname,"%s.%s[%d]",v->ValueName,v->NameSuffix,i + v->opt.ival);
-			SendPacketClass(fp,GL_ScreenData);
-			SendString(fp,iname);
-			SendDataType(fp,GL_TYPE_BOOL);
-			if		(  state  ==  GTK_STATE_SELECTED  ) {
-				SendBool(fp,TRUE);
-			} else {
-				SendBool(fp,FALSE);
-			}
+			GL_SendPacketClass(fp,GL_ScreenData);
+			GL_SendName(fp,iname);
+			SendBoolData(fp,GL_TYPE_BOOL,((state == GTK_STATE_SELECTED) ? TRUE : FALSE));
 		}
 	}
 dbgmsg("<SendCList");
@@ -935,16 +912,16 @@ RecvCList(
 		,	column;
 
 dbgmsg(">RecvCList");
-	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 
 	strcpy(label,WidgetName);
 	longname = label + strlen(label);
-	nitem = RecvInt(fp);
+	nitem = GL_RecvInt(fp);
 	count = -1;
 	rdata = NULL;
 	from = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		RecvString(fp,name);
+		GL_RecvName(fp,name);
 		sprintf(longname,".%s",name);
 		if		(  ( subWidget = glade_xml_get_widget_by_long_name(ThisXML,label) )
 			   !=  NULL  ) {
@@ -973,19 +950,19 @@ dbgmsg(">RecvCList");
 		if		(  !stricmp(name,"item")  ) {
 			gtk_clist_freeze(GTK_CLIST(widget));
 			gtk_clist_clear(GTK_CLIST(widget));
-			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			num = RecvInt(fp);
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
 			}
 			for	( j = 0 ; j < num ; j ++ ) {
-				DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-				rnum = RecvInt(fp);
+				DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+				rnum = GL_RecvInt(fp);
 				if		(  rdata  ==  NULL  ) {
 					rdata = (char **)xmalloc(sizeof(char *)*rnum);
 				}
 				for	( k = 0 ; k < rnum ; k ++ ) {
-					RecvString(fp,iname);
+					GL_RecvName(fp,iname);
 					(void)RecvStringData(fp,buff);
 					rdata[k] = StrDup(buff);
 				}
@@ -1000,9 +977,9 @@ dbgmsg(">RecvCList");
 			xfree(rdata);
 			gtk_clist_thaw(GTK_CLIST(widget));
 		} else {
-			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 			RegistValue(widget,name,OPT_TYPE_INT,(void*)from);
-			num = RecvInt(fp);
+			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
 			}
@@ -1045,14 +1022,9 @@ dbgmsg(">SendList");
 		child = children->data;
 		state = GTK_WIDGET_STATE(child);
 		sprintf(iname,"%s.%s[%d]",v->ValueName,v->NameSuffix,i + v->opt.ival);
-		SendPacketClass(fp,GL_ScreenData);
-		SendString(fp,iname);
-		SendDataType(fp,GL_TYPE_BOOL);
-		if		(  state  ==  GTK_STATE_SELECTED  ) {
-			SendBool(fp,TRUE);
-		} else {
-			SendBool(fp,FALSE);
-		}
+		GL_SendPacketClass(fp,GL_ScreenData);
+		GL_SendName(fp,iname);
+		SendBoolData(fp,GL_TYPE_BOOL,((state == GTK_STATE_SELECTED) ? TRUE : FALSE));
 	}
 dbgmsg("<SendList");
 	return	(TRUE);
@@ -1078,14 +1050,14 @@ RecvList(
 	//gfloat	pos;
 
 dbgmsg(">RecvList");
-	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 
 	longname = WidgetName + strlen(WidgetName);
-	nitem = RecvInt(fp);
+	nitem = GL_RecvInt(fp);
 	count = -1;
 	from = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		RecvString(fp,name);
+		GL_RecvName(fp,name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1102,8 +1074,8 @@ dbgmsg(">RecvList");
 		} else
 		if		(  !stricmp(name,"item")  ) {
 			gtk_list_clear_items(GTK_LIST(widget),0,-1);
-			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			num = RecvInt(fp);
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
 			}
@@ -1118,9 +1090,9 @@ dbgmsg(">RecvList");
 				}
 			}
 		} else {
-			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 			RegistValue(widget,name,OPT_TYPE_INT,(void *)from);
-			num = RecvInt(fp);
+			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
 			}
@@ -1164,23 +1136,20 @@ dbgmsg(">SendCaleandar");
 	gtk_calendar_get_date(GTK_CALENDAR(calendar),&year,&month,&day);
 	v = GetValue(name);
 
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	sprintf(iname,"%s.year",v->ValueName);
-	SendString(fp,(char *)iname);
-	SendDataType(fp,GL_TYPE_INT);
-	SendInt(fp,year);
+	GL_SendName(fp,(char *)iname);
+	SendIntegerData(fp,GL_TYPE_INT,year);
 
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	sprintf(iname,"%s.month",v->ValueName);
-	SendString(fp,(char *)iname);
-	SendDataType(fp,GL_TYPE_INT);
-	SendInt(fp,month+1);
+	GL_SendName(fp,(char *)iname);
+	SendIntegerData(fp,GL_TYPE_INT,(month+1));
 
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	sprintf(iname,"%s.day",v->ValueName);
-	SendString(fp,(char *)iname);
-	SendDataType(fp,GL_TYPE_INT);
-	SendInt(fp,day);
+	GL_SendName(fp,(char *)iname);
+	SendIntegerData(fp,GL_TYPE_INT,day);
 dbgmsg("<SendCaleandar");
 	return	(TRUE);
 }
@@ -1200,11 +1169,11 @@ RecvCalendar(
 	int		state;
 
 dbgmsg(">RecvCaleandar");
-	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 	RegistValue(widget,"",OPT_TYPE_NULL,NULL);
-	nitem = RecvInt(fp);
+	nitem = GL_RecvInt(fp);
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		RecvString(fp,name);
+		GL_RecvName(fp,name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1247,12 +1216,12 @@ dbgmsg(">SendNotebook");
 	v = GetValue(name);
 	page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
 
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 #ifdef	TRACE
 	printf("iname = [%s] value = %d\n",iname,page);
 #endif
-	SendString(fp,iname);
+	GL_SendName(fp,iname);
 	SendIntegerData(fp,v->type,page);
 dbgmsg("<SendNotebook");
 	return	(TRUE);
@@ -1272,11 +1241,11 @@ RecvNotebook(
 	char	*longname;
 
 dbgmsg(">RecvNotebook");
-	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-	nitem = RecvInt(fp);
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	nitem = GL_RecvInt(fp);
 	longname = WidgetName + strlen(WidgetName);
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		RecvString(fp,name);
+		GL_RecvName(fp,name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1312,12 +1281,12 @@ dbgmsg(">SendProgress");
 	v = GetValue(name);
 	value = gtk_progress_get_value(GTK_PROGRESS(progress));
 
-	SendPacketClass(fp,GL_ScreenData);
+	GL_SendPacketClass(fp,GL_ScreenData);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 #ifdef	TRACE
 	printf("iname = [%s] value = %d\n",iname,value);
 #endif
-	SendString(fp,iname);
+	GL_SendName(fp,iname);
 	SendIntegerData(fp,v->type,value);
 dbgmsg("<SendProgress");
 	return	(TRUE);
@@ -1337,11 +1306,11 @@ RecvProgressBar(
 	char	*longname;
 
 dbgmsg(">RecvProgress");
-	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-	nitem = RecvInt(fp);
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	nitem = GL_RecvInt(fp);
 	longname = WidgetName + strlen(WidgetName);
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		RecvString(fp,name);
+		GL_RecvName(fp,name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);

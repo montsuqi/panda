@@ -1,3 +1,13 @@
+2004-02-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/server.c: 複数のバイトオーダへの対応
+
+2004-02-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/glcomm.c: 新設(バイトオーダ等を意識する通信関数)
+
+	* libs/comm.c: ???Dataの関数をglclient/protocol.cに移動
+
 2004-02-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glclient/protocol.c: 実行時のログを取得するようにした

@@ -20,10 +20,10 @@ glclient_LDADD	= 						\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_srcdir)/libs/libpandagl.la
 glclient_DEPENDENCIES	=				\
 	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_srcdir)/libs/libpandagl.la
 
 
 glclient_SOURCES	=		\

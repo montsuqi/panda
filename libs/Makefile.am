@@ -1,4 +1,4 @@
-lib_LTLIBRARIES	=	libpanda.la libpandas.la libpandacom.la libpandamisc.la panda.la
+lib_LTLIBRARIES	=	libpanda.la libpandas.la libpandacom.la libpandagl.la libpandamisc.la panda.la
 
 noinst_PROGRAMS	=	enum
 
@@ -49,6 +49,7 @@ libpandas_la_SOURCES	=		\
 	DDparser.c	DDparser.h			\
 	driver.c	driver.h	enum.h	\
 	front.c		front.h				\
+	comm.c			comm.h			\
 	authstub.c	authstub.h			\
 	load.c		load.h
 
@@ -70,6 +71,11 @@ libpandacom_la_SOURCES	=			\
 	socket.c		socket.h		\
 	port.c			port.h			\
 	pty.c			pty.h			\
+	queue.c			queue.h
+libpandagl_la_SOURCES	=			\
+	net.c			net.h			\
+	socket.c		socket.h		\
+	port.c			port.h			\
 	queue.c			queue.h
 
 enum.h:	enum

@@ -33,13 +33,22 @@ copies.
 #include	<errno.h>
 #include	<string.h>
 #include	<strings.h>
+#include	<netinet/in.h>
 #include	<glib.h>
 #include	<math.h>
 
 #include	"types.h"
 #include	"libmondai.h"
+#include	"glserver.h"
 #include	"glcomm.h"
 #include	"debug.h"
+
+#include	<endian.h>
+
+#define	RECV32(v)	ntohl(v)
+#define	RECV16(v)	ntohs(v)
+#define	SEND32(v)	htonl(v)
+#define	SEND16(v)	htons(v)
 
 static	LargeByteString	*Buff;
 
@@ -49,9 +58,6 @@ GL_SendPacketClass(
 	PacketClass	c,
 	Bool	fNetwork)
 {
-#ifdef	DEBUG
-	printf("SendPacketClass = %X\n",c);
-#endif
 	nputc(c,fp);
 }
 
@@ -63,11 +69,11 @@ GL_RecvPacketClass(
 	PacketClass	c;
 
 	c = ngetc(fp);
-#ifdef	DEBUG
-	printf("RecvPacketClass = %X\n",c);
-#endif
 	return	(c);
 }
+
+#define	SendChar(fp,c)	nputc((c),(fp))
+#define	RecvChar(fp)	ngetc(fp)
 
 extern	void
 GL_SendInt(
@@ -75,14 +81,14 @@ GL_SendInt(
 	int		data,
 	Bool	fNetwork)
 {
+	byte	buff[sizeof(int)];
+
 	if		(  fNetwork  ) {
-		SendChar(fp,((data&0xFF000000) >> 24));
-		SendChar(fp,((data&0x00FF0000) >> 16));
-		SendChar(fp,((data&0x0000FF00) >>  8));
-		SendChar(fp,((data&0x000000FF)      ));
+		*(int *)buff = SEND32(data);
 	} else {
-		Send(fp,&data,sizeof(data));
+		*(int *)buff = data;
 	}
+	Send(fp,buff,sizeof(int));
 }
 
 static	void
@@ -91,14 +97,14 @@ GL_SendUInt(
 	unsigned	int		data,
 	Bool	fNetwork)
 {
+	byte	buff[sizeof(int)];
+
 	if		(  fNetwork  ) {
-		SendChar(fp,((data&0xFF000000) >> 24));
-		SendChar(fp,((data&0x00FF0000) >> 16));
-		SendChar(fp,((data&0x0000FF00) >>  8));
-		SendChar(fp,((data&0x000000FF)      ));
+		*(unsigned int *)buff = SEND32(data);
 	} else {
-		Send(fp,&data,sizeof(data));
+		*(unsigned int *)buff = data;
 	}
+	Send(fp,buff,sizeof(unsigned int));
 }
 
 extern	void
@@ -107,30 +113,30 @@ GL_SendLong(
 	long	data,
 	Bool	fNetwork)
 {
+	byte	buff[sizeof(long)];
+
 	if		(  fNetwork  ) {
-		SendChar(fp,((data&0xFF000000) >> 24));
-		SendChar(fp,((data&0x00FF0000) >> 16));
-		SendChar(fp,((data&0x0000FF00) >>  8));
-		SendChar(fp,((data&0x000000FF)      ));
+		*(long *)buff = SEND32(data);
 	} else {
-		Send(fp,&data,sizeof(data));
+		*(long *)buff = data;
 	}
+	Send(fp,buff,sizeof(long));
 }
 
 static	void
 GL_SendLength(
 	NETFILE	*fp,
-	size_t	size,
+	size_t	data,
 	Bool	fNetwork)
 {
+	byte	buff[sizeof(size_t)];
+
 	if		(  fNetwork  ) {
-		SendChar(fp,((size&0xFF000000) >> 24));
-		SendChar(fp,((size&0x00FF0000) >> 16));
-		SendChar(fp,((size&0x0000FF00) >>  8));
-		SendChar(fp,((size&0x000000FF)      ));
+		*(size_t *)buff = SEND32(data);
 	} else {
-		Send(fp,&size,sizeof(size_t));
+		*(size_t *)buff = data;
 	}
+	Send(fp,buff,sizeof(size_t));
 }
 
 extern	int
@@ -138,15 +144,14 @@ GL_RecvInt(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
+	byte	buff[sizeof(int)];
 	int		data;
 
+	Recv(fp,buff,sizeof(int));
 	if		(  fNetwork  ) {
-		data =	( RecvChar(fp) << 24 )
-			|	( RecvChar(fp) << 16 )
-			|	( RecvChar(fp) <<  8 )
-			|	( RecvChar(fp)       );
+		data = RECV32(*(int *)buff);
 	} else {
-		Recv(fp,&data,sizeof(data));
+		data = *(int *)buff;
 	}
 	return	(data);
 }
@@ -156,32 +161,16 @@ GL_RecvLength(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	size_t	size;
+	byte	buff[sizeof(size_t)];
+	size_t	data;
 
+	Recv(fp,buff,sizeof(size_t));
 	if		(  fNetwork  ) {
-		size =	( RecvChar(fp) << 24 )
-			|	( RecvChar(fp) << 16 )
-			|	( RecvChar(fp) <<  8 )
-			|	( RecvChar(fp)       );
+		data = RECV32(*(size_t *)buff);
 	} else {
-		Recv(fp,&size,sizeof(size_t));
+		data = *(size_t *)buff;
 	}
-	return	(size);
-}
-
-extern	void
-GL_RecvString(
-	NETFILE	*fp,
-	char	*str,
-	Bool	fNetwork)
-{
-	size_t	size;
-
-dbgmsg(">RecvString");
-	size = GL_RecvLength(fp,fNetwork);
-	Recv(fp,str,size);
-	str[size] = 0;
-dbgmsg("<RecvString");
+	return	(data);
 }
 
 static	void
@@ -197,6 +186,21 @@ GL_SendLBS(
 }
 
 extern	void
+GL_RecvString(
+	NETFILE	*fp,
+	char	*str,
+	Bool	fNetwork)
+{
+	size_t	size;
+
+ENTER_FUNC;
+	size = GL_RecvLength(fp,fNetwork);
+	Recv(fp,str,size);
+	str[size] = 0;
+LEAVE_FUNC;
+}
+
+extern	void
 GL_SendString(
 	NETFILE	*fp,
 	char	*str,
@@ -204,10 +208,7 @@ GL_SendString(
 {
 	size_t	size;
 
-dbgmsg(">GL_SendString");
-#ifdef	DEBUG
-	printf("[%s]\n",str);
-#endif
+ENTER_FUNC;
 	if		(   str  !=  NULL  ) { 
 		size = strlen(str);
 	} else {
@@ -217,7 +218,7 @@ dbgmsg(">GL_SendString");
 	if		(  size  >  0  ) {
 		Send(fp,str,size);
 	}
-dbgmsg("<GL_SendString");
+LEAVE_FUNC;
 }
 
 static	void
@@ -325,9 +326,6 @@ GL_RecvDataType(
 	PacketClass	c;
 
 	c = ngetc(fp);
-#ifdef	DEBUG
-	printf("RecvDataType = %X\n",c);
-#endif
 	return	(c);
 }
 

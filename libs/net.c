@@ -105,6 +105,32 @@ Recv(
 	return	(ret);
 }
 
+extern	int
+nputc(
+	int		c,
+	NETFILE	*fp)
+{
+	char	ch;
+
+	ch = c;
+	return	(Send(fp,&ch,1));
+}
+
+extern	int
+ngetc(
+	NETFILE	*fp)
+{
+	char	ch;
+	int		ret;
+
+	if		(  Recv(fp,&ch,1)  >=  0  ) {
+		ret = ch;
+	} else {
+		ret = -1;
+	}
+	return	(ret);
+}
+
 extern	void
 FreeNet(
 	NETFILE	*fp)
@@ -409,7 +435,6 @@ InitNET(void)
 	SSL_load_error_strings(); 
 	SSL_library_init(); 
 #endif
-	InitComm();
 }
 
 extern	NETFILE	*

@@ -29,6 +29,10 @@ copies.
 #  include <config.h>
 #endif
 
+/*
+#define	NETWORK_ORDER
+*/
+
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -36,6 +40,7 @@ copies.
 #include	<sys/stat.h>
 #include    <unistd.h>
 #include	<sys/time.h>
+#include	<netinet/in.h>
 #ifdef ENABLE_GNOME
 #    include <gnome.h>
 #else
@@ -58,6 +63,17 @@ copies.
 
 static	GHashTable	*ClassTable;
 
+#ifdef	NETWORK_ORDER
+#define	RECV32(v)	ntohl(v)
+#define	RECV16(v)	ntohs(v)
+#define	SEND32(v)	htonl(v)
+#define	SEND16(v)	htons(v)
+#else
+#define	RECV32(v)	(v)
+#define	RECV16(v)	(v)
+#define	SEND32(v)	(v)
+#define	SEND16(v)	(v)
+#endif
 
 #if	0
 static	GList		*ScreenStack;
@@ -99,6 +115,295 @@ PopScreenStack(void)
 }
 #endif
 
+/*
+ *	send/recv functions
+ */
+
+#define	SendChar(fp,c)	nputc((c),(fp))
+#define	RecvChar(fp)	ngetc(fp)
+
+extern	void
+GL_SendPacketClass(
+	NETFILE	*fp,
+	PacketClass	c)
+{
+	nputc(c,fp);
+}
+
+extern	PacketClass
+GL_RecvPacketClass(
+	NETFILE	*fp)
+{
+	PacketClass	c;
+
+	c = ngetc(fp);
+	return	(c);
+}
+
+extern	PacketDataType
+GL_RecvDataType(
+	NETFILE	*fp)
+{
+	PacketClass	c;
+
+	c = ngetc(fp);
+	DataType = c;
+	return	(c);
+}
+
+extern	void
+GL_SendInt(
+	NETFILE	*fp,
+	int		data)
+{
+	byte	buff[sizeof(int)];
+
+	*(int *)buff = SEND32(data);
+	Send(fp,buff,sizeof(int));
+}
+
+extern	int
+GL_RecvInt(
+	NETFILE	*fp)
+{
+	byte	buff[sizeof(int)];
+
+	Recv(fp,buff,sizeof(int));
+	return	(RECV32(*(int *)buff));
+}
+
+static	long
+GL_RecvLong(
+	NETFILE	*fp)
+{
+	byte	buff[sizeof(int)];
+
+	Recv(fp,buff,sizeof(int));
+	return	(RECV32(*(long *)buff));
+}
+
+static	void
+GL_SendLong(
+	NETFILE	*fp,
+	long	data)
+{
+	byte	buff[sizeof(int)];
+
+	*(long *)buff = SEND32(data);
+	Send(fp,buff,sizeof(long));
+}
+
+static	void
+GL_SendLength(
+	NETFILE	*fp,
+	size_t	data)
+{
+	byte	buff[sizeof(int)];
+
+	*(size_t *)buff = SEND32(data);
+	Send(fp,buff,sizeof(size_t));
+}
+
+static	size_t
+GL_RecvLength(
+	NETFILE	*fp)
+{
+	byte	buff[sizeof(int)];
+
+	Recv(fp,buff,sizeof(size_t));
+	return	(RECV32(*(size_t *)buff));
+}
+
+static	unsigned	int
+GL_RecvUInt(
+	NETFILE	*fp)
+{
+	byte	buff[sizeof(int)];
+
+	Recv(fp,buff,sizeof(unsigned int));
+	return	(RECV32(*(unsigned int *)buff));
+}
+
+static	void
+GL_SendUInt(
+	NETFILE	*fp,
+	unsigned	int		data)
+{
+	byte	buff[sizeof(int)];
+
+	*(unsigned int *)buff = SEND32(data);
+	Send(fp,buff,sizeof(unsigned int));
+}
+
+static	void
+GL_RecvString(
+	NETFILE	*fp,
+	char	*str)
+{
+	size_t	size;
+
+ENTER_FUNC;
+	size = GL_RecvLength(fp);
+	Recv(fp,str,size);
+	str[size] = 0;
+LEAVE_FUNC;
+}
+
+extern	void
+GL_RecvName(
+	NETFILE	*fp,
+	char	*name)
+{
+	size_t	size;
+
+ENTER_FUNC;
+	size = GL_RecvLength(fp);
+	Recv(fp,name,size);
+	name[size] = 0;
+LEAVE_FUNC;
+}
+
+static	void
+GL_SendString(
+	NETFILE	*fp,
+	char	*str)
+{
+	size_t	size;
+
+ENTER_FUNC;
+	if		(   str  !=  NULL  ) { 
+		size = strlen(str);
+	} else {
+		size = 0;
+	}
+	GL_SendLength(fp,size);
+	if		(  size  >  0  ) {
+		Send(fp,str,size);
+	}
+LEAVE_FUNC;
+}
+
+extern	void
+GL_SendName(
+	NETFILE	*fp,
+	char	*name)
+{
+	size_t	size;
+
+ENTER_FUNC;
+	if		(   name  !=  NULL  ) { 
+		size = strlen(name);
+	} else {
+		size = 0;
+	}
+	GL_SendLength(fp,size);
+	if		(  size  >  0  ) {
+		Send(fp,name,size);
+	}
+LEAVE_FUNC;
+}
+
+extern	void
+GL_SendDataType(
+	NETFILE	*fp,
+	PacketClass	c)
+{
+	nputc(c,fp);
+}
+
+static	void
+GL_SendObject(
+	NETFILE	*fp,
+	MonObjectType	*obj)
+{
+	int		i;
+
+	GL_SendInt(fp,obj->source);
+	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
+		GL_SendUInt(fp,obj->id.el[i]);
+	}
+}
+
+static	void
+GL_RecvObject(
+	NETFILE	*fp,
+	MonObjectType	*obj)
+{
+	int		i;
+
+	obj->source = GL_RecvInt(fp);
+	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
+		obj->id.el[i] = GL_RecvUInt(fp);
+	}
+}
+
+static	void
+GL_SendFixed(
+	NETFILE	*fp,
+	Fixed	*xval)
+{
+	GL_SendLength(fp,xval->flen);
+	GL_SendLength(fp,xval->slen);
+	GL_SendString(fp,xval->sval);
+}
+
+static	Fixed	*
+GL_RecvFixed(
+	NETFILE	*fp)
+{
+	Fixed	*xval;
+
+dbgmsg(">GL_RecvFixed");
+	xval = New(Fixed);
+	xval->flen = GL_RecvLength(fp);
+	xval->slen = GL_RecvLength(fp);
+	xval->sval = (char *)xmalloc(xval->flen+1);
+	GL_RecvString(fp,xval->sval);
+dbgmsg("<GL_RecvFixed");
+	return	(xval); 
+}
+
+static	double
+GL_RecvFloat(
+	NETFILE	*fp)
+{
+	double	data;
+
+	Recv(fp,&data,sizeof(data));
+	return	(data);
+}
+
+static	void
+GL_SendFloat(
+	NETFILE	*fp,
+	double	data)
+{
+	Send(fp,&data,sizeof(data));
+}
+
+static	Bool
+GL_RecvBool(
+	NETFILE	*fp)
+{
+	char	buf[1];
+
+	Recv(fp,buf,1);
+	return	((buf[0] == 'T' ) ? TRUE : FALSE);
+}
+
+static	void
+GL_SendBool(
+	NETFILE	*fp,
+	Bool	data)
+{
+	char	buf[1];
+
+	buf[0] = data ? 'T' : 'F';
+	Send(fp,buf,1);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 static	Bool
 RecvFile(
 	NETFILE	*fpC,
@@ -112,15 +417,15 @@ RecvFile(
 	Bool		ret;
 
 dbgmsg(">RecvFile");
-	SendPacketClass(fpC,GL_GetScreen);
-	SendString(fpC,name);
+	GL_SendPacketClass(fpC,GL_GetScreen);
+	GL_SendString(fpC,name);
 	if		(  fMlog  ) {
 		sprintf(buff,"recv screen file [%s]\n",name);
 		MessageLog(buff);
 	}
-	if		(  RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
+	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		fp = Fopen(fname,"w");
-		left = (size_t)RecvLong(fpC);
+		left = (size_t)GL_RecvLong(fpC);
 		do {
 			if		(  left  >  SIZE_BUFF  ) {
 				size = SIZE_BUFF;
@@ -222,11 +527,11 @@ CheckScreens(
 	PacketClass	klass;
 
 dbgmsg(">CheckScreens");
-	while		(  ( klass = RecvPacketClass(fp) )  ==  GL_QueryScreen  ) {
-		RecvString(fp,sname);
-		stsize = (off_t)RecvLong(fp);
-		stmtime = (time_t)RecvLong(fp);
-		stctime = (time_t)RecvLong(fp);
+	while		(  ( klass = GL_RecvPacketClass(fp) )  ==  GL_QueryScreen  ) {
+		GL_RecvString(fp,sname);
+		stsize = (off_t)GL_RecvLong(fp);
+		stmtime = (time_t)GL_RecvLong(fp);
+		stctime = (time_t)GL_RecvLong(fp);
 		fname = CacheFileName(sname);
 
 		if		(	(  stat(fname,&stbuf)  !=  0        )
@@ -237,7 +542,7 @@ dbgmsg(">CheckScreens");
 			/* Clear cache */
 			DestroyWindow(sname);
 		} else {
-			SendPacketClass(fp, GL_NOT);
+			GL_SendPacketClass(fp, GL_NOT);
 		}
 		if		(  fInit  ) {
 			ShowWindow(sname,SCREEN_NEW_WINDOW);
@@ -300,31 +605,31 @@ RecvValueSkip(
 	int				count
 	,				i;
 
-	type = RecvDataType(fp);
+	type = GL_RecvDataType(fp);
 	switch	(type) {
 	  case	GL_TYPE_INT:
-		(void)RecvInt(fp);
+		(void)GL_RecvInt(fp);
 		break;
 	  case	GL_TYPE_BOOL:
-		(void)RecvBool(fp);
+		(void)GL_RecvBool(fp);
 		break;
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 	  case	GL_TYPE_NUMBER:
-		RecvString(fp,buff);
+		GL_RecvString(fp,buff);
 		break;
 	  case	GL_TYPE_ARRAY:
-		count = RecvInt(fp);
+		count = GL_RecvInt(fp);
 		for	(  i = 0 ; i < count ; i ++ ) {
 			RecvValueSkip(fp);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
-		count = RecvInt(fp);
+		count = GL_RecvInt(fp);
 		for	(  i = 0 ; i < count ; i ++ ) {
-			RecvString(fp,name);
+			GL_RecvString(fp,name);
 			RecvValueSkip(fp);
 		}
 		break;
@@ -389,18 +694,18 @@ dbgmsg(">RecvValue");
 		RecvValueSkip(fp);
 	}
 	if		(  fTrace  ) {
-		type = RecvDataType(fp);
+		type = GL_RecvDataType(fp);
 		switch	(type) {
 		  case	GL_TYPE_RECORD:
-			count = RecvInt(fp);
+			count = GL_RecvInt(fp);
 			for	(  i = 0 ; i < count ; i ++ ) {
-				RecvString(fp,name);
+				GL_RecvString(fp,name);
 				sprintf(longname,".%s",name);
 				RecvValue(fp,longname + strlen(name) + 1);
 			}
 			break;
 		  case	GL_TYPE_ARRAY:
-			count = RecvInt(fp);
+			count = GL_RecvInt(fp);
 			for	(  i = 0 ; i < count ; i ++ ) {
 				sprintf(name,"[%d]",i);
 				sprintf(longname,"%s",name);
@@ -462,17 +767,17 @@ GetScreenData(
 dbgmsg(">GetScreenData");
 	fInRecv = TRUE; 
 	CheckScreens(fp,FALSE);	 
-	SendPacketClass(fp,GL_GetData);
-	SendLong(fp,0);					/*	get all data	*/
+	GL_SendPacketClass(fp,GL_GetData);
+	GL_SendLong(fp,0);				/*	get all data	*/
 	fCancel = FALSE;
-	while	(  ( c = RecvPacketClass(fp) )  ==  GL_WindowName  ) {
-		RecvString(fp,window);
+	while	(  ( c = GL_RecvPacketClass(fp) )  ==  GL_WindowName  ) {
+		GL_RecvString(fp,window);
 		if		(  fMlog  ) {
 			sprintf(buff,"recv window [%s]\n",window);
 			MessageLog(buff);
 		}
 		dbgprintf("[%s]\n",window);
-		switch( type = (byte)RecvInt(fpComm) ) {
+		switch( type = (byte)GL_RecvInt(fpComm) ) {
 		  case	SCREEN_END_SESSION:
 			ExitSystem();
 			fCancel= TRUE;
@@ -496,12 +801,12 @@ dbgmsg(">GetScreenData");
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
 			strcpy(WidgetName,window);
-			if		(  ( c = RecvPacketClass(fp) )  ==  GL_ScreenData  ) {
+			if		(  ( c = GL_RecvPacketClass(fp) )  ==  GL_ScreenData  ) {
 				RecvValue(fp,WidgetName + strlen(WidgetName));
 			}
 			break;
 		  default:
-			c = RecvPacketClass(fp);
+			c = GL_RecvPacketClass(fp);
 			break;
 		}
 		if		(  c  ==  GL_NOT  ) {
@@ -511,15 +816,15 @@ dbgmsg(">GetScreenData");
 		}
 	}
 	if		(  c  ==  GL_FocusName  ) {
-		RecvString(fp,window);
-		RecvString(fp,widgetName);
+		GL_RecvString(fp,window);
+		GL_RecvString(fp,widgetName);
 		if		(	(  ( node = g_hash_table_lookup(WindowTable,window) )  !=  NULL  )
 					&&	(  node->xml  !=  NULL  )
 					&&	(  ( widget = glade_xml_get_widget(node->xml,widgetName) )
 						   !=  NULL  ) ) {
 			GrabFocus(widget);
 		}
-		c = RecvPacketClass(fp);
+		c = GL_RecvPacketClass(fp);
 	}
 	/* reset GtkPandaTimer if exists */
 	if		(  ( node = g_hash_table_lookup(WindowTable,window) )  !=  NULL  ) {
@@ -528,6 +833,26 @@ dbgmsg(">GetScreenData");
 	fInRecv = FALSE;
 dbgmsg("<GetScreenData");
 	return	(fCancel);
+}
+
+static	void
+GL_SendVersionString(
+	NETFILE		*fp)
+{
+	char	*version;
+	size_t	size;
+
+#ifdef	NETWORK_ORDER
+	version = "symbolic:expand:no";
+#else
+	version = "symbolic:expand";
+#endif
+	size = strlen(version);
+	SendChar(fp,(size&0xFF));
+	SendChar(fp,0);
+	SendChar(fp,0);
+	SendChar(fp,0);
+	Send(fp,version,size);
 }
 
 extern	Bool
@@ -539,12 +864,12 @@ SendConnect(
 	PacketClass	pc;
 
 dbgmsg(">SendConnect");
-	SendPacketClass(fp,GL_Connect);
-	SendString(fp,"symbolic:expand");
-	SendString(fp,User);
-	SendString(fp,Pass);
-	SendString(fp,apl);
-	if		(  ( pc = RecvPacketClass(fp) )   ==  GL_OK  ) {
+	GL_SendPacketClass(fp,GL_Connect);
+	GL_SendVersionString(fp);
+	GL_SendString(fp,User);
+	GL_SendString(fp,Pass);
+	GL_SendString(fp,apl);
+	if		(  ( pc = GL_RecvPacketClass(fp) )   ==  GL_OK  ) {
 		rc = TRUE;
 	} else {
 		rc = FALSE;
@@ -589,10 +914,10 @@ dbgmsg(">SendEvent");
 		MessageLog(buff);
 	}
 
-	SendPacketClass(fp,GL_Event);
-	SendString(fp,window);
-	SendString(fp,widget);
-	SendString(fp,event);
+	GL_SendPacketClass(fp,GL_Event);
+	GL_SendString(fp,window);
+	GL_SendString(fp,widget);
+	GL_SendString(fp,event);
 dbgmsg("<SendEvent");
 }
 
@@ -646,10 +971,10 @@ _SendWindowData(
 	gpointer	user_data)
 {
 dbgmsg(">SendWindowData");
-	SendPacketClass(fpComm,GL_WindowName);
-	SendString(fpComm,wname);
+	GL_SendPacketClass(fpComm,GL_WindowName);
+	GL_SendString(fpComm,wname);
 	g_hash_table_foreach(node->UpdateWidget,(GHFunc)SendWidgetData,fpComm);
-	SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(fpComm,GL_END);
 dbgmsg("<SendWindowData");
 }
 
@@ -658,7 +983,321 @@ SendWindowData(void)
 {
 dbgmsg(">SendWindowData");
 	g_hash_table_foreach(WindowTable,(GHFunc)_SendWindowData,NULL);
-	SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(fpComm,GL_END);
 	ClearWindowTable();
 dbgmsg("<SendWindowData");
 }
+
+extern	Bool
+RecvFixedData(
+	NETFILE	*fp,
+	Fixed	**xval)
+{
+	Bool	ret;
+	
+	DataType = GL_RecvDataType(fp);
+
+	switch	(DataType) {
+	  case	GL_TYPE_NUMBER:
+		*xval = GL_RecvFixed(fp);
+		ret = TRUE;
+		break;
+	  default:
+		printf("invalid data conversion\n");
+		exit(1);
+		ret = FALSE;
+		break;
+	}
+	return	(ret);
+}
+
+extern	void
+SendFixedData(
+	NETFILE			*fp,
+	PacketDataType	type,
+	Fixed			*xval)
+{
+	GL_SendDataType(fp,type);
+	switch	(type) {
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		GL_SendString(fp,(char *)xval->sval);
+		break;
+	  case	GL_TYPE_NUMBER:
+		GL_SendFixed(fp,xval);
+		break;
+	  default:
+		printf("invalid data conversion\n");
+		exit(1);
+		break;
+	}
+}
+
+extern	void
+SendStringData(
+	NETFILE			*fp,
+	PacketDataType	type,
+	char			*str)
+{
+	GL_SendDataType(fp,type);
+	switch	(type) {
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		GL_SendString(fp,(char *)str);
+		break;
+	  case	GL_TYPE_INT:
+		GL_SendInt(fp,atoi(str));
+		break;
+	  case	GL_TYPE_FLOAT:
+		GL_SendFloat(fp,atof(str));
+		break;
+	  case	GL_TYPE_BOOL:
+		GL_SendBool(fp,(( *str == 'T' ) ? TRUE: FALSE ));
+		break;
+	  default:
+		break;
+	}
+}
+
+extern	Bool
+RecvStringData(
+	NETFILE	*fp,
+	char	*str)
+{
+	Bool			ret;
+	
+	DataType = GL_RecvDataType(fp);
+
+	switch	(DataType) {
+	  case	GL_TYPE_INT:
+		sprintf(str,"%d",GL_RecvInt(fp));
+		ret = TRUE;
+		break;
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		GL_RecvString(fp,str);
+		ret = TRUE;
+		break;
+	  default:
+		ret = FALSE;
+		break;
+	}
+	return	(ret);
+}
+
+
+extern	void
+SendIntegerData(
+	NETFILE			*fp,
+	PacketDataType	type,
+	int				val)
+{
+	char	buff[SIZE_BUFF];
+	
+	GL_SendDataType(fp,type);
+	switch	(type) {
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		sprintf(buff,"%d",val);
+		GL_SendString(fp,(char *)buff);
+		break;
+	  case	GL_TYPE_NUMBER:
+		GL_SendFloat(fp,(double)val);
+		break;
+	  case	GL_TYPE_INT:
+		GL_SendInt(fp,val);
+		break;
+	  case	GL_TYPE_FLOAT:
+		GL_SendFloat(fp,(double)val);
+		break;
+	  case	GL_TYPE_BOOL:
+		GL_SendBool(fp,(( val == 0 ) ? FALSE : TRUE ));
+		break;
+	  default:
+		break;
+	}
+}
+
+extern	Bool
+RecvIntegerData(
+	NETFILE	*fp,
+	int		*val)
+{
+	char	buff[SIZE_BUFF];
+	Bool	ret;
+	
+	DataType = GL_RecvDataType(fp);
+
+	switch	(DataType) {
+	  case	GL_TYPE_INT:
+		*val = GL_RecvInt(fp);
+		ret = TRUE;
+		break;
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		GL_RecvString(fp,buff);
+		*val = atoi(buff);
+		ret = TRUE;
+		break;
+	  default:
+		ret = 0;
+		ret = FALSE;
+		break;
+	}
+	return	(ret);
+}
+
+extern	void
+SendBoolData(
+	NETFILE			*fp,
+	PacketDataType	type,
+	Bool			val)
+{
+	GL_SendDataType(fp,type);
+	switch	(type) {
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		GL_SendString(fp,( val ? "T" : "F" ));
+		break;
+	  case	GL_TYPE_INT:
+		GL_SendInt(fp,(int)val);
+		break;
+	  case	GL_TYPE_FLOAT:
+		GL_SendFloat(fp,(double)val);
+		break;
+	  case	GL_TYPE_BOOL:
+		GL_SendBool(fp,val);
+		break;
+	  default:
+		break;
+	}
+}
+
+extern	Bool
+RecvBoolData(
+	NETFILE	*fp,
+	Bool	*val)
+{
+	char	buff[SIZE_BUFF];
+	Bool	ret;
+	
+	DataType = GL_RecvDataType(fp);
+
+	ret = TRUE;
+	switch	(DataType) {
+	  case	GL_TYPE_INT:
+		*val = ( GL_RecvInt(fp) == 0 ) ? FALSE : TRUE;
+		break;
+	  case	GL_TYPE_BOOL:
+		*val = GL_RecvBool(fp);
+		break;
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		GL_RecvString(fp,buff);
+		*val = (  buff[0]  ==  'T'  ) ? TRUE : FALSE;
+		break;
+	  default:
+		ret = FALSE;
+		break;
+	}
+	return	(ret);
+}
+
+extern	void
+SendFloatData(
+	NETFILE			*fp,
+	PacketDataType	type,
+	double			val)
+{
+	char	buff[SIZE_BUFF];
+	
+	GL_SendDataType(fp,type);
+	switch	(type) {
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		sprintf(buff,"%g",val);
+		GL_SendString(fp,(char *)buff);
+		break;
+#if	0
+	  case	GL_TYPE_NUMBER:
+		xval = DoubleToFixed(val);
+		GL_SendFixed(fp,xval);
+		FreeFixed(xval);
+		break;
+#endif
+	  case	GL_TYPE_INT:
+		GL_SendInt(fp,(int)val);
+		break;
+	  case	GL_TYPE_FLOAT:
+		GL_SendFloat(fp,val);
+		break;
+	  case	GL_TYPE_BOOL:
+		GL_SendBool(fp,(( val == 0 ) ? FALSE : TRUE ));
+		break;
+	  default:
+		printf("invalid data conversion\n");
+		exit(1);
+		break;
+	}
+}
+
+extern	Bool
+RecvFloatData(
+	NETFILE	*fp,
+	double	*val)
+{
+	char	buff[SIZE_BUFF];
+	Bool	ret;
+	Fixed	*xval;
+
+dbgmsg(">RecvFloatData");	
+	DataType = GL_RecvDataType(fp);
+
+	switch	(DataType)	{
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		GL_RecvString(fp,buff);
+		*val = atof(buff);
+		ret = TRUE;
+		break;
+	  case	GL_TYPE_NUMBER:
+		xval = GL_RecvFixed(fp);
+		*val = atof(xval->sval) / pow(10.0, xval->slen);
+		xfree(xval);
+		ret = TRUE;
+		break;
+	  case	GL_TYPE_INT:
+		*val = (double)GL_RecvInt(fp);
+		ret = TRUE;
+		break;
+	  case	GL_TYPE_FLOAT:
+		*val = GL_RecvFloat(fp);
+		ret = TRUE;
+		break;
+	  default:
+		ret = 0;
+		ret = FALSE;
+		break;
+	}
+dbgmsg("<RecvFloatData");	
+	return	(ret);
+}
+

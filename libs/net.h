@@ -44,6 +44,9 @@ typedef	struct _NETFILE	{
 
 extern	int			Send(NETFILE *fp, void *buff, size_t size);
 extern	int			Recv(NETFILE *fp, void *buff, size_t size);
+extern	int			nputc(int c, NETFILE *fp);
+extern	int			ngetc(NETFILE *fp);
+
 extern	void		FreeNet(NETFILE *fp);
 extern	void		CloseNet(NETFILE *fp);
 extern	NETFILE		*NewNet(void);
