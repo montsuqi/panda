@@ -401,8 +401,7 @@ dbgmsg(">MessageThread");
 			}
 		}	while	(  fp  ==  NULL  );
 		memcpy(data->hdr,&hdr,sizeof(MessageHeader));
-		if		(  ( newld = g_hash_table_lookup(WindowHash,hdr.window) )
-				   !=  NULL  ) {
+		if		(  ( newld = g_hash_table_lookup(WindowHash,hdr.window) )  !=  NULL  ) {
 			GetAPS_Value(fp,data,APS_WINCTRL,flag);
 			GetAPS_Value(fp,data,APS_MCPDATA,flag);
 			GetAPS_Value(fp,data,APS_LINKDATA,flag);
