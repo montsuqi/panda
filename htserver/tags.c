@@ -1085,27 +1085,6 @@ dbgmsg("<_ePanel");
 }
 
 static	void
-_Pre(
-	HTCInfo	*htc,
-	Tag		*tag)
-{
-ENTER_FUNC;
-	LBS_EmitString(htc->code,"<pre");
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">");
-	fPre = TRUE;
-LEAVE_FUNC;
-}
-
-static void
-_ePre(HTCInfo *htc, Tag *tag)
-{
-ENTER_FUNC;
-	LBS_EmitString(htc->code, "</pre>");
-LEAVE_FUNC;
-}
-
-static	void
 _Calendar(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -1358,12 +1337,6 @@ dbgmsg(">TagsInit");
 	AddArg(tag, "id", TRUE);
 	AddArg(tag, "class", TRUE);
 	tag = NewTag("/PANEL", _ePanel);
-
-	tag = NewTag("PRE", _Pre);
-	AddArg(tag, "id", TRUE);
-	AddArg(tag, "class", TRUE);
-	AddArg(tag, "style", TRUE);
-	tag = NewTag("/PRE", _ePre);
 
 	tag = NewTag("CALENDAR",_Calendar);
 	AddArg(tag,"year",TRUE);

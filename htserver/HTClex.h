@@ -44,8 +44,6 @@ GLOBAL	byte	*HTC_Memory;
 GLOBAL	int		(*_HTCGetChar)(void);
 GLOBAL	void	(*_HTCUnGetChar)(int c);
 
-GLOBAL	Bool	fPre;
-
 #undef	GLOBAL
 
 extern	int		GetCharFile(void);

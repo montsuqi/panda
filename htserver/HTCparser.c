@@ -182,13 +182,6 @@ ENTER_FUNC;
                 tag = g_hash_table_lookup(Tags, HTC_ComSymbol + 4);
             }
         }
-		if		(  fPre  ) {
-			if		(  !stricmp(HTC_ComSymbol,"/PRE")  ) {
-				fPre = FALSE;
-			} else {
-				tag = NULL;
-			}
-		}
 		if		(  tag  !=  NULL  ) {
 			ParMacroTag(htc,tag);
 			tag->emit(htc,tag);
@@ -212,7 +205,6 @@ ParHTC(
 	int		c;
 
 ENTER_FUNC;
-	fPre = FALSE;
 	while	(  GetChar  >= 0  ) {
 		switch	(HTC_Token) {
 		  case	'<':
