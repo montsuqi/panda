@@ -122,6 +122,7 @@ ENTER_FUNC;
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))BlobThread,(void *)fhBlob);
+	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(thr); 
 }

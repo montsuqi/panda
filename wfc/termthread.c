@@ -370,6 +370,7 @@ ENTER_FUNC;
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))TermThread,(void *)fhTerm);
+	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(thr); 
 }
