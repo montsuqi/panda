@@ -338,7 +338,7 @@ entry_next_focus(
 	}
 }
 
-static	void
+extern	void
 UpdateWidget(
 	GtkWidget	*widget,
 	void		*user_data)

@@ -81,7 +81,7 @@ RecvPanda(
 
 dbgmsg(">RecvPanda");
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
-#if	0
+#if	1
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
 			type = ctl.control[i].PutType;
 			switch	(type) {
@@ -106,7 +106,7 @@ dbgmsg(">RecvPanda");
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
-#if	1
+#if	0
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:
 			(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
