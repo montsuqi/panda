@@ -315,9 +315,7 @@ dbgmsg("<_DBERROR");
 }
 
 DB_OPS	Shell_Operations[] = {
-	{	"exec",			(DB_FUNC)_EXEC	},
 	/*	DB operations		*/
-	{	"access",		(DB_FUNC)_DBACCESS	},
 	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
 	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
 	{	"DBSTART",		(DB_FUNC)_DBSTART },
@@ -330,6 +328,15 @@ DB_OPS	Shell_Operations[] = {
 	{	"DBINSERT",		_DBERROR },
 
 	{	NULL,			NULL }
+};
+
+DB_Primitives	Core = {
+	_EXEC,
+	_DBACCESS,
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 static	void
@@ -349,7 +356,7 @@ InitShell(void)
 dbgmsg(">InitShell");
 	(void)signal(SIGCHLD, (void *)OnChildExit);
 
-	ret = EnterDB_Function("Shell",Shell_Operations,"# ","\n");
+	ret = EnterDB_Function("Shell",Shell_Operations,&Core,"# ","\n");
 dbgmsg("<InitShell");
 	return	(ret); 
 }

@@ -54,10 +54,14 @@ static	Bool	fInArray;
 static	void
 SetValueOid(
 	ValueStruct	*value,
+	DBG_Struct	*dbg,
 	Oid			id)
 {
 	memclear(&ValueObjectID(value),sizeof(ValueObjectID(value)));
 	memcpy(&ValueObjectID(value),&id,sizeof(Oid));
+	if		(  dbg  !=  NULL  ) {
+		ValueObjectSource(value) = dbg->id;
+	}
 }
 
 static	Oid
@@ -239,7 +243,7 @@ ParArray(
 					id += ( *p - '0' );
 					p ++;
 				}
-				SetValueOid(item,id);
+				SetValueOid(item,dbg,id);
 				break;
 			  case	GL_TYPE_BOOL:
 				SetValueBool(item,*p);
@@ -405,7 +409,7 @@ dbgmsg(">GetTable");
 			}
 		} else {
 			id = (Oid)atol((char *)PQgetvalue(res,0,fnum));
-			SetValueOid(val,id);
+			SetValueOid(val,dbg,id);
 		}
 		break;
 	  case	GL_TYPE_ALIAS:
@@ -662,7 +666,7 @@ dbgmsg(">GetValue");
 			SetValueInteger(val,atoi((char *)PQgetvalue(res,tnum,fnum)));
 			break;
 		  case	GL_TYPE_OBJECT:
-			SetValueOid(val,(Oid)atol((char *)PQgetvalue(res,tnum,fnum)));
+			SetValueOid(val,dbg,(Oid)atol((char *)PQgetvalue(res,tnum,fnum)));
 			break;
 		  case	GL_TYPE_BOOL:
 			SetValueBool(val,*(char *)PQgetvalue(res,tnum,fnum));
@@ -1300,9 +1304,7 @@ dbgmsg("<_DBACCESS");
 }
 
 DB_OPS	PostgresOperations[] = {
-	{	"exec",			(DB_FUNC)_EXEC	},
 	/*	DB operations		*/
-	{	"access",		(DB_FUNC)_DBACCESS	},
 	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
 	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
 	{	"DBSTART",		(DB_FUNC)_DBSTART },
@@ -1317,9 +1319,18 @@ DB_OPS	PostgresOperations[] = {
 	{	NULL,			NULL }
 };
 
+DB_Primitives	Core = {
+	_EXEC,
+	_DBACCESS,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
 extern	DB_Func	*
 InitPostgreSQL(void)
 {
-	return	(EnterDB_Function("PostgreSQL",PostgresOperations,"/*","*/\t"));
+	return	(EnterDB_Function("PostgreSQL",PostgresOperations,&Core,"/*","*/\t"));
 }
 

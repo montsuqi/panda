@@ -211,6 +211,9 @@ dbgmsg(">ReadTerminal");
 			}
 		}
 		break;
+	  case	WFC_LARGE:
+		dbgmsg("recv LARGE");
+		break;
 	  case	WFC_PING:
 		dbgmsg("recv PING");
 		SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);

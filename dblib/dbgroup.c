@@ -57,8 +57,7 @@ NewDB_Func(void)
 	DB_Func	*ret;
 
 	ret = New(DB_Func);
-	ret->exec = NULL;
-	ret->access = NULL;
+	ret->primitive = NULL;
 	ret->table = NewNameHash();
 	return	(ret);
 }
@@ -67,6 +66,7 @@ extern	DB_Func	*
 EnterDB_Function(
 	char	*name,
 	DB_OPS	*ops,
+	DB_Primitives	*primitive,
 	char	*commentStart,
 	char	*commentEnd)
 {
@@ -83,14 +83,9 @@ dbgmsg(">EnterDB_Function");
 		g_hash_table_insert(DBMS_Table,name,func);
 		func->commentStart = commentStart;
 		func->commentEnd = commentEnd;
+		func->primitive = primitive;
 	}
 	for	( i = 0 ; ops[i].name != NULL ; i ++ ) {
-		if		(  !strcmp(ops[i].name,"access")  ) {
-			func->access = (DB_FUNC_NAME)ops[i].func;
-		} else	
-		if		(  !strcmp(ops[i].name,"exec")  ) {
-			func->exec   = (DB_EXEC)ops[i].func;
-		}
 		if		(  g_hash_table_lookup(func->table,ops[i].name)  ==  NULL  ) {
 			g_hash_table_insert(func->table,ops[i].name,ops[i].func);
 		}
@@ -124,6 +119,7 @@ SetUpDBG(void)
 dbgmsg(">SetUpDBG");
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
+		dbg->id = i + 1;
 #ifdef	DEBUG
 		printf("Entering [%s]\n",dbg->type);
 #endif
@@ -207,7 +203,7 @@ ExecDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
 {
-	dbg->func->exec(dbg,sql);
+	dbg->func->primitive->exec(dbg,sql);
 }
 
 extern	void
@@ -234,7 +230,7 @@ dbgmsg(">ExecDB_Process");
 		dbg = rec->opt.db->dbg;
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl->func) )
 				   ==  NULL  ) {
-			if		(  !(*dbg->func->access)(dbg,ctrl->func,ctrl,rec,args)  ) {
+			if		(  !(*dbg->func->primitive->access)(dbg,ctrl->func,ctrl,rec,args)  ) {
 				printf("function not found [%s]\n",ctrl->func);
 				ctrl->rc = MCP_BAD_FUNC;
 			}

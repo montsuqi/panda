@@ -1,5 +1,7 @@
 2003-12-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* include/struct.h: DB_Func等の構造変更(名前表に登録しない関数を増やした)
+
 	* aps/Exec.c (ExecuteDB_Server): rcが負値の時には実処理を回避するようにした
 
 2003-12-25  Masami Ogoshi  <ogochan@nurs.or.jp>

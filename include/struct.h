@@ -86,6 +86,7 @@ typedef	struct {
 }	DBCOMM_CTRL;
 
 typedef	struct _DBG_Struct	{
+	int			id;
 	char		*name;					/*	group name			*/
 	char		*type;					/*	DBMS type name		*/
 	struct	_DB_Func		*func;
@@ -108,13 +109,18 @@ typedef	struct _DBG_Struct	{
 }	DBG_Struct;
 
 typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
-typedef	void	(*DB_EXEC)(DBG_Struct *, char *);
-typedef	Bool	(*DB_FUNC_NAME)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *,
-	ValueStruct *);
+
+typedef struct	{
+	void	(*exec)(DBG_Struct *, char *);
+	Bool	(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+	int		(*lo_open)(DBG_Struct *, MonObjectType *, int);
+	int		(*lo_close)(DBG_Struct *, int);
+	int		(*lo_read)(DBG_Struct *, int, byte *, size_t);
+	int		(*lo_write)(DBG_Struct *, int, byte *, size_t);
+}	DB_Primitives;
 
 typedef	struct _DB_Func	{
-	DB_FUNC_NAME	access;
-	DB_EXEC			exec;
+	DB_Primitives	*primitive;
 	GHashTable		*table;
 	char			*commentStart
 	,				*commentEnd;

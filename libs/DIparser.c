@@ -459,6 +459,7 @@ dbgmsg(">ParDBGROUP");
 	}
 	dbg = New(DBG_Struct);
 	dbg->name = name;
+	dbg->id = 0;
 	dbg->type = "PostgreSQL";
 	dbg->func = NULL;
 	dbg->user = NULL;
