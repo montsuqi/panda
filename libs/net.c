@@ -185,6 +185,9 @@ NewNet(void)
 	fp = New(NETFILE);
 	fp->fOK = TRUE;
 	fp->err = 0;
+        fp->read = NULL;
+        fp->write = NULL;
+        fp->close = NULL;
 	return	(fp);
 }
 

@@ -261,7 +261,6 @@ SesServer(
     int len;
 
 dbgmsg(">SesServer");
-	fp = NewNet();
 	do {
 		FD_ZERO(&ready);
 		FD_SET(sock,&ready);
@@ -274,7 +273,7 @@ dbgmsg(">SesServer");
                 exit(1);
             }
 			dbgmsg("session");
-			NetSetFD(fp,fd);
+            fp = SocketToNet(fd);
 			htc.count += 1;
 			EncodeTRID(trid,htc.ses,htc.count);
 			SendStringDelim(fp,trid);
@@ -300,7 +299,7 @@ dbgmsg(">SesServer");
 			if		(  scr->status  !=  APL_SESSION_NULL  ) {
 				WriteClient(fp,scr);
 			}
-			close(fd);
+			CloseNet(fp);
 		}
 	}	while	(  FD_ISSET(sock,&ready)  );
 	close(sock);
