@@ -3,13 +3,21 @@
 sbin_PROGRAMS = glauth
 bin_PROGRAMS = user
 
-LDADD 		=							\
+glauth_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpanda.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
+
+user_LDADD 		=						\
+	-lm									\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/libs/libpandacom.la
 
@@ -34,6 +42,4 @@ glauth_DEPENDENCIES	=					\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/libs/libpandacom.la
 user_DEPENDENCIES	=					\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_srcdir)/libs/libpandamisc.la

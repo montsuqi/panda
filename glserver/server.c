@@ -42,13 +42,6 @@ copies.
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<glib.h>
-#ifdef	USE_SSL
-#include	<openssl/crypto.h>
-#include	<openssl/x509.h>
-#include	<openssl/pem.h>
-#include	<openssl/ssl.h>
-#include	<openssl/err.h>
-#endif
 
 #include	"types.h"
 #include	"enum.h"

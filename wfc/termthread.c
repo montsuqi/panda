@@ -310,8 +310,19 @@ dbgmsg("<ReadTerminal");
 	return(ld);
 }
 
+static	void
+SendBLOB(
+	NETFILE		*fp,
+	SessionData	*data)
+{
+	MonObjectType	obj;
+
+	RecvObject(fp,&obj);
+	SendPacketClass(fp,WFC_NOT);	/*	not yet	*/
+}
+
 static	Bool
-WriteTerminal(
+SendTerminal(
 	NETFILE		*fp,
 	SessionData	*data)
 {
@@ -323,7 +334,7 @@ WriteTerminal(
 	Bool		fExit;
 	char		wname[SIZE_LONGNAME+1];
 
-dbgmsg(">WriteTerminal");
+ENTER_FUNC;
 	rc = FALSE;
 	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
 	dbgmsg("send PING");
@@ -336,9 +347,7 @@ dbgmsg(">WriteTerminal");
 		SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
-#if	1
 		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
-#endif
 		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
 		for	( i = 0 ; i < data->w.n ; i ++ ) {
 			SendInt(fp,data->w.control[i].PutType);			ON_IO_ERROR(fp,badio);
@@ -364,14 +373,12 @@ dbgmsg(">WriteTerminal");
 					SendPacketClass(fp,WFC_NOT);				ON_IO_ERROR(fp,badio);
 				}
 				break;
-#if	0
 			  case	WFC_BLOB:
-				dbgmsg("recv LARGE");
-				ProcessBLOB(fp,data);
+				dbgmsg("send LARGE");
+				SendBLOB(fp,data);
 				break;
-#endif
-			  case	WFC_OK:
-				dbgmsg("OK");
+			  case	WFC_DONE:
+				dbgmsg("DONE");
 				fExit = TRUE;
 				break;
 			  default:
@@ -384,7 +391,7 @@ dbgmsg(">WriteTerminal");
 	  badio:
 		dbgmsg("recv FALSE");
 	}
-dbgmsg("<WriteTerminal");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -411,7 +418,7 @@ dbgmsg(">TermThread");
 			dbgmsg("process !!");
 			data = DeQueue(term->que);
 			if		(  data->fAbort  )	break;
-			if		(  WriteTerminal(term->fp,data)  ) {
+			if		(  SendTerminal(term->fp,data)  ) {
 				ld = ReadTerminal(term->fp,data);
 			} else {
 				ld = NULL;

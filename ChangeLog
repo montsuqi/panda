@@ -1,3 +1,7 @@
+2004-06-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/htcgen.xsl: Ver 2.0用に新設
+
 2004-06-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* warningの掃除

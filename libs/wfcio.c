@@ -251,9 +251,7 @@ dbgmsg(">RecvTermServerHeader");
 		RecvString(fp,user);
 		RecvString(fp,window);
 		RecvString(fp,widget);
-#if	1
 		*type = TO_INT(RecvChar(fp));
-#endif
 		ctl->n = RecvInt(fp);
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
 			ctl->control[i].PutType = (byte)RecvInt(fp);
@@ -278,6 +276,81 @@ dbgmsg("<RecvTermServerHeader");
 	return	(rc);
 }
 
+static	char	*
+CacheFileName(
+	ValueStruct	*value)
+{
+	static	char	buf[SIZE_BUFF];
+
+	sprintf(buf,"%s/%s",CacheDir,ValueToString(value,NULL));
+	return	(buf);
+}
+
+
+static	void
+_FeedBLOB(
+	NETFILE		*fp,
+	ValueStruct	*value)
+{
+	int		i;
+	FILE	*fpBLOB;
+
+ENTER_FUNC;
+	if		(  value  ==  NULL  )	return;
+	if		(  IS_VALUE_NIL(value)  )	return;
+	switch	(ValueType(value)) {
+	  case	GL_TYPE_ARRAY:
+		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+			_FeedBLOB(fp,ValueArrayItem(value,i));
+		}
+		break;
+	  case	GL_TYPE_VALUES:
+		for	( i = 0 ; i < ValueValuesSize(value) ; i ++ ) {
+			_FeedBLOB(fp,ValueValuesItem(value,i));
+		}
+		break;
+	  case	GL_TYPE_RECORD:
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			_FeedBLOB(fp,ValueRecordItem(value,i));
+		}
+		break;
+	  case	GL_TYPE_INT:
+	  case	GL_TYPE_FLOAT:
+	  case	GL_TYPE_BOOL:
+	  case	GL_TYPE_BYTE:
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_NUMBER:
+		break;
+	  case	GL_TYPE_OBJECT:
+		SendPacketClass(fp,WFC_BLOB);
+		SendObject(fp,ValueObject(value));
+		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+			RecvLBS(fp,buff);
+			if		(  ( fpBLOB = Fopen(CacheFileName(value),"w") )  !=  NULL  ) {
+				fwrite(LBS_Body(buff),LBS_Size(buff),1,fpBLOB);
+				fclose(fpBLOB);
+			}
+		}
+		break;
+	  case	GL_TYPE_ALIAS:
+	  default:
+		break;
+	}
+LEAVE_FUNC;
+}
+
+static	void
+FeedBLOB(
+	NETFILE		*fp,
+	ValueStruct	*value)
+{
+	_FeedBLOB(fp,value);
+}
+
 static	void
 _RecvWindow(
 	char		*wname,
@@ -294,6 +367,7 @@ _RecvWindow(
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
 			RecvLBS(fp,buff);
 			NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
+			FeedBLOB(fp,win->rec->value);
 		}
 	}
 }
@@ -305,7 +379,7 @@ RecvTermServerData(
 {
 dbgmsg(">RecvTermServerData");
 	g_hash_table_foreach(scr->Windows,(GHFunc)_RecvWindow,fp);
-	SendPacketClass(fp,WFC_OK);
+	SendPacketClass(fp,WFC_DONE);
 dbgmsg("<RecvTermServerData");
 }
 

@@ -217,6 +217,7 @@ ENTER_FUNC;
 								Error("] missing");
 							}
 						} else {
+							Error("invalid token(symbol missing)");
 							n = 0;
 						}
 						GetSymbol;

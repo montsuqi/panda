@@ -92,6 +92,7 @@ dbgmsg(">ApplicationLoad");
 	if		(  ( func = (ApplicationStruct *)g_hash_table_lookup(ApplicationTable,name) )
 			   ==  NULL  ) {
 		sprintf(filename,"%s.so",name);
+printf("MONPS_LoadPath = [%s]\n",MONPS_LoadPath);
 		if		(  ( handle = LoadFile(MONPS_LoadPath,filename) )  !=  NULL  ) {
 			sprintf(funcname,"%sInit",name);
 			if		(  ( f_init = (APL_INIT)dlsym(handle,funcname) )  !=  NULL  ) {

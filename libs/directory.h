@@ -26,6 +26,7 @@ copies.
 #include	"DDparser.h"
 #include	"LDparser.h"
 #include	"DIparser.h"
+#include	"wfcio.h"
 
 #undef	GLOBAL
 #ifdef	_DIRECTORY

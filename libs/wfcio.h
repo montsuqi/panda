@@ -41,6 +41,7 @@ copies.
 #define	WFC_TRUE		(PacketClass)0xE1
 #define	WFC_NOT			(PacketClass)0xF0
 #define	WFC_PONG		(PacketClass)0xF2
+#define	WFC_DONE		(PacketClass)0xFD
 #define	WFC_OK			(PacketClass)0xFE
 #define	WFC_END			(PacketClass)0xFF
 
@@ -54,11 +55,15 @@ copies.
 #define	BLOB_SEEK		(PacketClass)0x08
 
 #undef	GLOBAL
-#ifdef	MAIN
+#if	defined(MAIN) || defined(_PANDA)
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern
 #endif
+
+GLOBAL	char	*CacheDir;
+
+#undef	GLOBAL
 
 extern	NETFILE	*ConnectTermServer(char *url, char *term, char *user, Bool fKeep, char *arg);
 extern	Bool	SendTermServer(NETFILE *fp, char *window, char *widget, char *event,

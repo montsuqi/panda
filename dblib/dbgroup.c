@@ -117,7 +117,7 @@ SetUpDBG(void)
 dbgmsg(">SetUpDBG");
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		dbg->id = i + 1;
+		dbg->id = i;
 		dbgprintf("Entering [%s]\n",dbg->type);
 		if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,dbg->type) )
 				   ==  NULL  ) {
