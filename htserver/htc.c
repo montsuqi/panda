@@ -56,6 +56,7 @@ GetHostValue(
 ENTER_FUNC;
 dbgprintf("name = [%s]\n",name);
 	if		(  ( value = LoadValue(name) )  ==  NULL  )	{
+#ifdef	_INC_VALUE_H
 		if		(  _GetValue  !=  NULL  ) {
 			if		(  ( val = (_GetValue)(name, fClear) )  ==  NULL  ) {
 				value = "";
@@ -66,6 +67,9 @@ dbgprintf("name = [%s]\n",name);
 		} else {
 			value = "";
 		}
+#else
+		value = "";
+#endif
 	}
 dbgprintf("value = [%s]\n",value);
 LEAVE_FUNC;

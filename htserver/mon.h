@@ -35,8 +35,6 @@ GLOBAL	char		*ScreenDir;
 GLOBAL	char		*RecordDir;
 
 #undef	GLOBAL
-//extern	char	*ConvLocal(char *istr);
-//extern	char	*ConvUTF8(char *istr);
-//extern	void	StoreValue(GHashTable *hash, char *name, char *value);
+extern	void	PutFile(ValueStruct *file);
 
 #endif

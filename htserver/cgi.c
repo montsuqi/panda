@@ -577,7 +577,7 @@ PutSessionValues(void)
 ENTER_FUNC;
 	if		(  ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
 		sprintf(fname,"%s/%s.ses",SesDir,sesid);
-		if		(  ( fp = fopen(fname,"w") )  <  0  ) {
+		if		(  ( fp = fopen(fname,"w") )  ==  NULL  ) {
 			ret = FALSE;
 		} else {
 			g_hash_table_foreach(Values,(GHFunc)PutValue,fp);

@@ -38,6 +38,10 @@ typedef	struct {
     char *filesize;
 }	FileSelectionInfo;
 
+#ifndef	_INC_VALUE_H
+#define	ValueStruct	void
+#endif
+
 typedef	ValueStruct	*(*GET_VALUE)(char *name, Bool fClear);
 
 extern	char	*GetHostValue(char *name, Bool fClear);
