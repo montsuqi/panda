@@ -12,6 +12,8 @@ MICRO_VERSION=0
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
 LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
 
+#AC_CONFIG_HEADERS([config.h])
+
 AC_SUBST(MAJOR_VERSION)
 AC_SUBST(MINOR_VERSION)
 AC_SUBST(MICRO_VERSION)
@@ -23,9 +25,9 @@ AC_SUBST(LTVERSION)
 CONFDIR=`expr $sysconfdir`
 AC_SUBST(CONFDIR)
 
-AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE")
-AC_DEFINE_UNQUOTED(VERSION,"$VERSION")
-AC_DEFINE_UNQUOTED(CONFDIR,"$CONFDIR")
+AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE","")
+AC_DEFINE_UNQUOTED(VERSION,"$VERSION","")
+AC_DEFINE_UNQUOTED(CONFDIR,"$CONFDIR","")
 
 # Initialize automake stuff
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
@@ -38,7 +40,7 @@ AM_SANITY_CHECK
 AC_PROG_CC
 AC_ISC_POSIX
 AC_HEADER_STDC
-AC_ARG_PROGRAM
+#AC_ARG_PROGRAM
 
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -59,7 +61,7 @@ dnl ***************************************************************************
 have_gnome=false
 GNOME_INIT_HOOK([
 	have_gnome=true
-	AC_DEFINE(ENABLE_GNOME)
+	AC_DEFINE(ENABLE_GNOME,1,[])
 ])
 
 GNOME_COMPILE_WARNINGS
@@ -105,7 +107,7 @@ else
       postgresdir="" 
   fi 
   POSTGRES_LIBS="-L${postgresdir}/lib -lpq" 
-  AC_DEFINE(HAVE_POSTGRES) 
+  AC_DEFINE(HAVE_POSTGRES,1,[]) 
 fi 
  
 AM_CONDITIONAL(POSTGRES, test x$postgresdir != x) 
@@ -120,7 +122,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(shell,
 	[  --with-shell	Use shell driver],
 	if test x$withval = xyes; then
-		AC_DEFINE(USE_SHELL)
+		AC_DEFINE(USE_SHELL,1,[])
 	fi
 )		
 
@@ -152,7 +154,7 @@ AC_ARG_WITH(dotcobol,
 	  AC_MSG_WARN(dotCOBOL not used) 
 	else 
 	  DOTCOBOL_COMMAND="${dotcoboldir}/bin/fcu"
-	  AC_DEFINE(HAVE_DOTCOBOL) 
+	  AC_DEFINE(HAVE_DOTCOBOL,1,[]) 
 	fi 
  
 	AM_CONDITIONAL(DOTCOBOL, test x$dotcoboldir != x) 
@@ -172,7 +174,7 @@ AC_ARG_WITH(opencobol,
 	  COB_CFLAGS="`cob-config --cflags`"
 	  COB_LIBS="`cob-config --libs`"
 	  AC_MSG_RESULT(yes)
-	  AC_DEFINE(HAVE_OPENCOBOL)
+	  AC_DEFINE(HAVE_OPENCOBOL,1,[])
 	else
 	  AC_MSG_RESULT(no)
 	fi
@@ -200,7 +202,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(pty,
 	[  --with-pty	Use pty message],
 	if test x$withval = xyes; then
-		AC_DEFINE(USE_PTY)
+		AC_DEFINE(USE_PTY,1,[])
 	fi
 )		
 
@@ -211,7 +213,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(ipv6,
 	[  --with-ipv6	Use IP v6],
 	if test x$withval = xyes; then
-		AC_DEFINE(USE_IPv6)
+		AC_DEFINE(USE_IPv6,1,[])
 	fi
 )		
 
@@ -242,7 +244,7 @@ AC_ARG_WITH(ssl,
 			   	AC_MSG_RESULT(found OpenSSL include in $d) 
 				SSL_CFLAGS="-I${ssldir}/include"
 				SSL_LIBS="-L${ssldir}/lib -lssl" 
-				AC_DEFINE(USE_SSL)
+				AC_DEFINE(USE_SSL,1,[])
 			else 
 				AC_MSG_WARN(SSL not used) 
 			fi
@@ -260,7 +262,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(oki,
 	[  --with-oki	DOROBUNE WO OKI DE SHIZUMERU],
 	if test x$withval = xyes; then
-		AC_DEFINE(OKI)
+		AC_DEFINE(OKI,1,[])
 	fi
 )		
 
@@ -271,7 +273,7 @@ dnl ***************************************************************************
 AC_ARG_WITH(msgd,
 	[  --with-msgd	use msgd],
 	if test x$withval = xyes; then
-		AC_DEFINE(USE_MSGD)
+		AC_DEFINE(USE_MSGD,1,[])
 	fi
 )		
 
@@ -344,7 +346,7 @@ GTK_PANDA_CFLAGS=`$GTK_PANDA_CONFIG --cflags 2>/dev/null`
 GTK_PANDA_LIBS=`$GTK_PANDA_CONFIG --libs 2>/dev/null`
 AC_SUBST(GTK_PANDA_LIBS)
 AC_SUBST(GTK_PANDA_CFLAGS)
-AC_DEFINE(USE_PANDA)
+AC_DEFINE(USE_PANDA,1,[])
 
 dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the libfixed modules.
