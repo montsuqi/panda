@@ -91,7 +91,6 @@ dbgmsg(">InitSystem");
 	}
 	if		(  ThisBD->cDB  >  0  ) {
 		InitDB_Process();
-		//		OpenDB(NULL);
 		ReadyHandlerDB(Bind->handler);
 	}
 dbgmsg("<InitSystem");
@@ -115,7 +114,6 @@ StopProcess(
 {
 dbgmsg(">StopProcess");
 	if		(  ThisBD->cDB  >  0  ) {
-		//CloseDB(NULL);
 		StopHandlerDB(Bind->handler);
 		CleanUpHandlerDB(Bind->handler);
 	}
