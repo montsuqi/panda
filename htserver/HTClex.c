@@ -148,6 +148,8 @@ ENTER_FUNC;
 			ret = -1;
 		}
 	}
+    if (ret == '\n')
+        HTC_cLine++;
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -162,7 +164,6 @@ HTCUnGetChar(
 #define	SKIP_SPACE	while	(  isspace( c = HTCGetChar() ) ) {	\
 						if		(  c  ==  '\n'  ) {	\
 							c = ' ';\
-							HTC_cLine ++;\
 						}	\
 					}
 
@@ -262,7 +263,6 @@ dbgmsg(">ReadyDirective");
 	} else {
 		HTCUnGetChar(c);
 		while	(  ( c = HTCGetChar() )  !=  '\n'  );
-		HTC_cLine ++;
 	}
 dbgmsg("<ReadyDirective");
 }

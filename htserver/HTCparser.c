@@ -61,7 +61,7 @@ Error(char *msg, ...)
     va_list args;
 
     fError = TRUE;
-    fprintf(stderr, "%s:%d:", HTC_FileName, HTC_cLine);
+    fprintf(stderr, "%s:%d: ", HTC_FileName, HTC_cLine);
     va_start(args, msg);
     vfprintf(stderr, msg, args);
     fputc('\n', stderr);
@@ -146,7 +146,10 @@ ENTER_FUNC;
 					type->Para = (void *)1;
 				}
 			} else {
-				Error("invalid type: %s", tag->name);
+				Error("no such attribute for <%s>: %s",
+                      tag->name, HTC_ComSymbol);
+                if (  GetSymbol  ==  '='  )
+                    GetSymbol;
 			}
 		} else {
 			Error("invalid tag: %s", tag->name);

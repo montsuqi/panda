@@ -601,6 +601,8 @@ SendEvent(void)
 	} else {
 		if		(  ( name = g_hash_table_lookup(Values,"_name") )  !=  NULL  ) {
 			htc = HTCParser(name);
+            if (htc == NULL)
+                exit(1);
 			if		(  ( event = g_hash_table_lookup(htc->Trans,ConvUTF8(button)) )
 					   ==  NULL  ) {
 				event = button;
@@ -704,6 +706,8 @@ ENTER_FUNC;
 				HT_RecvString(SIZE_BUFF,buff);	/*	\n	*/
 				g_hash_table_insert(Values,"_name",name);
 				htc = HTCParser(name);
+                if (htc == NULL)
+                    exit(1);
 				html = ExecCode(htc);
 				HT_SendString("\n");
 			} else {
