@@ -700,7 +700,7 @@ SendValue(
 		break;
 	  case	GL_TYPE_BINARY:
 	  case	GL_TYPE_BYTE:
-		LBS_ReserveSize(Buff,ValueByteLength(value));
+		LBS_ReserveSize(Buff,ValueByteLength(value),FALSE);
 		memcpy(LBS_Body(Buff),ValueByte(value),ValueByteLength(value));
 		SendLBS(fp,Buff);
 		break;
