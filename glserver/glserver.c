@@ -96,7 +96,7 @@ SetDefault(void)
 	fSsl = FALSE;
 	KeyFile = NULL;
 	CertFile = NULL;
-	fVerify = FALSE;
+	fVerify = TRUE;
 	CA_Path = NULL;
 	CA_File = NULL;
 #endif	
