@@ -1,15 +1,20 @@
 #!/bin/sh
-# Run this to generate all the initial makefiles, etc.
 
-srcdir=`dirname $0`
-test -z "$srcdir" && srcdir=.
+ACLOCAL=`which aclocal-1.4 2> /dev/null || echo aclocal`
+AUTOHEADER=`which autoheader-2.13 2> /dev/null || echo autoheader`
+AUTOMAKE=`which automake-1.4 2> /dev/null || echo automake`
+AUTOCONF=`which autoconf-2.13 2> /dev/null || echo autoconf`
 
-PKG_NAME="the package."
+echo "Running $ACLOCAL..."
+$ACLOCAL
 
-(test -f $srcdir/configure.in) || {
-    echo -n "**Error**: Directory "\`$srcdir\'" does not look like the"
-    echo " top-level directory"
-    exit 1
-}
+echo "Running $AUTOHEADER..."
+$AUTOHEADER
 
-. gnome-autogen.sh
+echo "Running $AUTOMAKE..."
+$AUTOMAKE --copy --add-missing
+
+echo "Running $AUTOCONF..."
+$AUTOCONF
+
+echo 'Done.  Run "configure --enable-maintainer-mode" now'
