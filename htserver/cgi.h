@@ -72,8 +72,5 @@ extern	void	DeleteSessionValues(void);
 extern	Bool	PutSessionValues(void);
 extern	void	ClearValues(void);
 extern	void	WriteLargeString(FILE *output, LargeByteString *lbs, char *codeset);
-extern	char	*ImportFile(LargeByteString *html, char *name, Bool fExpand);
-
-extern	char	*CheckCoding(char *str);
 
 #endif
