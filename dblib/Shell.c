@@ -223,7 +223,6 @@ dbgmsg(">ExecShell");
 		printf("function \"%s\" is not found.\n",ctrl->func);
 		exit(1);
 	}
-	RewindLBS(src);
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
 		switch	(c) {
 		  case	SQL_OP_REF:

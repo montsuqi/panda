@@ -1,5 +1,8 @@
 2003-12-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* dblib/Shell.c (ExecShell): 1トランザクション内で複数起動が出来る
+	ように(なんでこんなところにRewindLBSがあるんだよ(-_-))
+
 	* glserver/server.c (ThisAuth): AuthUserの引数変更
 
 2003-11-22  Masami Ogoshi  <ogochan@nurs.or.jp>
