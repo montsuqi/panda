@@ -44,8 +44,8 @@ copies.
 #include	<pthread.h>
 #include	<glib.h>
 
-#include	"ruby.h"
-#include	"env.h"
+#include	<ruby.h>
+#include	<env.h>
 
 #include	"types.h"
 #include	"const.h"
@@ -783,6 +783,15 @@ path_name(VALUE self)
 }
 
 static VALUE
+path_args(VALUE self)
+{
+    path_data *data;
+
+    Data_Get_Struct(self, path_data, data);
+    return data->args;
+}
+
+static VALUE
 path_length(VALUE self)
 {
     path_data *data;
@@ -1056,6 +1065,7 @@ init()
     rb_define_method(cProcessNode, "windows", procnode_windows, 0);
     cPath = rb_define_class_under(mPanda, "Path", rb_cObject);
     rb_define_method(cPath, "name", path_name, 0);
+    rb_define_method(cPath, "args", path_args, 0);
     rb_define_method(cPath, "length", path_length, 0);
     rb_define_method(cPath, "size", path_length, 0);
     rb_define_method(cPath, "[]", path_aref, 1);
