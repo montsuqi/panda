@@ -20,9 +20,9 @@ copies.
 */
 
 #define	MAIN
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -190,7 +190,6 @@ ENTER_FUNC;
 		}
 	}
 	InitAPSIO(fpWFC);
-
 	node = MakeProcessNode();
 	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
 						||	(  tran     >   0  ) ); tran -- ) {

@@ -217,7 +217,6 @@ dbgmsg(">send_event");
 #if	1	/*	This logic is escape code for GTK bug.	*/
 		strcpy(wname,glade_get_widget_long_name(widget));
 		*(strchr(wname,'.')) = 0;
-		printf("window = [%s]\n",wname);
 #else
 		strcpy(wname,gtk_widget_get_name(window));
 #endif

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -193,21 +193,31 @@ PutApplication(
 dbgmsg(">PutApplication");
 	DumpNode(node);
 	conv = handler->serialize;
-
+dbgmsg("*");
 	ConvSetRecName(handler->conv,node->mcprec->name);
+dbgmsg("*");
+DumpValueStruct(node->mcprec->value);
 	size = conv->SizeValue(handler->conv,node->mcprec->value);
+dbgmsg("*");
 	LBS_EmitStart(iobuff);
+dbgmsg("*");
 	LBS_ReserveSize(iobuff,size,FALSE);
+dbgmsg("*");
 	conv->PackValue(handler->conv,LBS_Body(iobuff),node->mcprec->value);
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
 	Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
-
+dbgmsg("*");
 	ConvSetRecName(handler->conv,node->linkrec->name);
 	size = conv->SizeValue(handler->conv,node->linkrec->value);
 	LBS_EmitStart(iobuff);
 	LBS_ReserveSize(iobuff,size,FALSE);
-	conv->PackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
+printf("size = %d\n",size);
+ {
+	 byte	*q;
+	 q = conv->PackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
+	 printf("size = %d\n",(int)(q - (byte *)LBS_Body(iobuff)));
+ }
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
 	Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
@@ -219,9 +229,11 @@ dbgmsg(">PutApplication");
 	conv->PackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
+
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		LBS_EmitStart(iobuff);
-		if		(  node->scrrec[i]  !=  NULL  ) {
+		if		(	(  node->scrrec[i]         !=  NULL  )
+				&&	(  node->scrrec[i]->value  !=  NULL  ) ) {
 			ConvSetRecName(handler->conv,node->scrrec[i]->name);
 			size = conv->SizeValue(handler->conv,node->scrrec[i]->value);
 			if		(  size  >  0  ) {
@@ -229,9 +241,9 @@ dbgmsg(">PutApplication");
 			}
 			LBS_ReserveSize(iobuff,size,FALSE);
 			conv->PackValue(handler->conv,LBS_Body(iobuff),node->scrrec[i]->value);
+			LBS_EmitEnd(iobuff);
+			SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 		}
-		LBS_EmitEnd(iobuff);
-		SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 	}
 	Send(fp,conv->bsep,strlen(conv->bsep));		ON_IO_ERROR(fp,badio);
   badio:
@@ -263,7 +275,8 @@ dbgmsg(">GetApplication");
 	conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
-		if		(  node->scrrec[i]  !=  NULL  ) {
+		if		(	(  node->scrrec[i]         !=  NULL  )
+				&&	(  node->scrrec[i]->value  !=  NULL  ) ) {
 			ConvSetRecName(handler->conv,node->scrrec[i]->name);
 			conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->scrrec[i]->value);
 		}

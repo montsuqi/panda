@@ -372,7 +372,7 @@ dbgmsg(">ReadyDC");
 
 	dotCOBOL_Conv = NewConvOpt();
 	ConvSetSize(dotCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
-	ConvSetLocale(dotCOBOL_Conv,handler->conv->locale);
+	ConvSetCoding(dotCOBOL_Conv,handler->conv->locale);
 
 	McpSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisEnv->mcprec->value);
 	McpData = xmalloc(McpSize);
@@ -574,7 +574,7 @@ _StartBatch(
 dbgmsg(">StartBatch");
 	dotCOBOL_Conv = NewConvOpt();
 	ConvSetSize(dotCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
-	ConvSetLocale(dotCOBOL_Conv,handler->conv->locale);
+	ConvSetCoding(dotCOBOL_Conv,handler->conv->locale);
 
 	ExpandStart(line,handler->start,handler->loadpath,name,param);
 	cmd = ParCommandLine(line);

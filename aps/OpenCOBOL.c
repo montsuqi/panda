@@ -143,7 +143,7 @@ _ReadyDC(
 dbgmsg(">ReadyDC");
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
-	ConvSetLocale(OpenCOBOL_Conv,handler->conv->coding);
+	ConvSetCoding(OpenCOBOL_Conv,handler->conv->coding);
 
 	McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec->value));
 	LinkData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->linkrec->value));
@@ -198,7 +198,7 @@ dbgmsg(">_StartBatch");
 
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisBD->textsize,ThisBD->arraysize);
-	ConvSetLocale(OpenCOBOL_Conv,handler->conv->coding);
+	ConvSetCoding(OpenCOBOL_Conv,handler->conv->coding);
 
 #ifdef	DEBUG
 	printf("starting [%s][%s]\n",name,param);

@@ -55,5 +55,4 @@ copies.
 #define	Message(l,s)		printf("M:%s:%d:%s\n",__FILE__,__LINE__,(s))
 #define	MessageDebug(f,l,s)	printf("D:%s:%d:%s\n",(f),(l),(s))
 #endif
-
 #endif

@@ -20,9 +20,9 @@ handler	"Ruby"	{
 
 bind	""			"Ruby"		"TPDEMO1";
 bind	"project1"	"Ruby"		"TPDEMO1";
-
 #bind	""			"OpenCOBOL"	"TPDEMO1";
 #bind	"project1"	"OpenCOBOL"	"TPDEMO1";
+
 bind	"project2"	"OpenCOBOL"	"TPDEMO1";
 bind	"project5"	"OpenCOBOL"	"TPDEMO3";
 

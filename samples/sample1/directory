@@ -14,7 +14,7 @@ record	"=/sample1";
 multiplex_level	aps;
 
 #linksize	1024;
-linkage		link;
+linkage		demolink;
 
 wfc	{
 #	port	"[192.168.2.10]:9002";

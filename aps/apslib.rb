@@ -153,7 +153,8 @@ end
 
 class PandaDC < PandaCore
   def initialize
-	@line = $stdin.gets.chomp;
+	line = $stdin.gets
+	@line = line.chomp;
 	@db = PandaDB.new;
 	unPack;
   end
