@@ -126,7 +126,7 @@ ENTER_FUNC;
 						  wname,
 						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
 		rc = FALSE;
-		GL_RecvString(fpComm,wname,fFetureNetwork);	/*	dummy	*/
+		GL_RecvString(fpComm, sizeof(wname), wname,fFetureNetwork);	/*	dummy	*/
 		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
 			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFetureNetwork);
 			ON_IO_ERROR(fpComm,badio);
@@ -422,13 +422,12 @@ Connect(
 	char	ver[SIZE_BUFF];
 
 	Bool	rc = FALSE;
-
-	GL_RecvString(fpComm,ver,FALSE);				ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(ver), ver, FALSE);	ON_IO_ERROR(fpComm,badio);
 	CheckFeture(ver);
-	GL_RecvString(fpComm,scr->user,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-	GL_RecvString(fpComm,pass,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
-	GL_RecvString(fpComm,scr->cmd,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-	Message("[%s@%s] session start",scr->user,TermToHost(scr->term));
+	GL_RecvString(fpComm, sizeof(scr->user), scr->user,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(pass), pass, fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->cmd), scr->cmd, fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+	Message("[%s@%s] session start",scr->user, TermToHost(scr->term));
 
 	if		(  TermFeture  ==  FETURE_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_E_VERSION,fFetureNetwork);
@@ -478,12 +477,12 @@ ENTER_FUNC;
 	}
 	while	(  GL_RecvPacketClass(fpComm,fFetureNetwork)  ==  GL_WindowName  ) {
 		ON_IO_ERROR(fpComm,badio);
-		GL_RecvString(fpComm,wname,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+		GL_RecvString(fpComm, sizeof(wname), wname, fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 			while	(  ( c = GL_RecvPacketClass(fpComm,fFetureNetwork) )
 					   ==  GL_ScreenData  ) {
 				ON_IO_ERROR(fpComm,badio);
-				GL_RecvString(fpComm,name,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+				GL_RecvString(fpComm, sizeof(name), name, fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
 					GL_RecvValue(fpComm,value,coding,fFetureBlob,fFetureExpand,fFetureNetwork);
@@ -522,15 +521,15 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Name:
-			GL_RecvString(fpComm,scr->term,fFetureNetwork);
+			GL_RecvString(fpComm, sizeof(scr->term), scr->term,fFetureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Event:
-			GL_RecvString(fpComm,scr->window,fFetureNetwork);
+			GL_RecvString(fpComm, sizeof(scr->window), scr->window, fFetureNetwork);
 			ON_IO_ERROR(fpComm,badio);
-			GL_RecvString(fpComm,scr->widget,fFetureNetwork);
+			GL_RecvString(fpComm, sizeof(scr->widget), scr->widget, fFetureNetwork);
 			ON_IO_ERROR(fpComm,badio);
-			GL_RecvString(fpComm,scr->event,fFetureNetwork);
+			GL_RecvString(fpComm, sizeof(scr->event), scr->event, fFetureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			dbgprintf("window = [%s]\n",scr->window);
 			dbgprintf("event  = [%s]\n",scr->event);
@@ -595,8 +594,7 @@ ENTER_FUNC;
 	if		(  fSsl  ) {
 		if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
 				   ==  NULL  ) {
-			fprintf(stderr,"CTX make error\n");
-			exit(1);
+			Error("CTX make error");
 		}
 	}
 #endif

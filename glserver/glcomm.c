@@ -244,15 +244,22 @@ LEAVE_FUNC;
 extern	void
 GL_RecvString(
 	NETFILE	*fp,
+	size_t  size,
 	char	*str,
 	Bool	fNetwork)
 {
-	size_t	size;
+	size_t	lsize;
 
 ENTER_FUNC;
-	size = GL_RecvLength(fp,fNetwork);
-	Recv(fp,str,size);
-	str[size] = 0;
+	lsize = GL_RecvLength(fp,fNetwork);
+	if		(	size > lsize 	){
+		size = lsize;
+		Recv(fp,str,size);
+		str[size] = 0;
+	} else {
+		CloseNet(fp);
+		Warning("error size mismatch !");
+	}
 LEAVE_FUNC;
 }
 
@@ -309,7 +316,7 @@ ENTER_FUNC;
 	xval->flen = GL_RecvLength(fp,fNetwork);
 	xval->slen = GL_RecvLength(fp,fNetwork);
 	xval->sval = (char *)xmalloc(xval->flen+1);
-	GL_RecvString(fp,xval->sval,fNetwork);
+	GL_RecvString(fp, xval->flen+1, xval->sval,fNetwork);
 LEAVE_FUNC;
 	return	(xval); 
 }
@@ -574,7 +581,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		dbgmsg("strings");
-		GL_RecvString(fp,str,fNetwork);		ON_IO_ERROR(fp,badio);
+		GL_RecvString(fp, sizeof(str), str,fNetwork);		ON_IO_ERROR(fp,badio);
 		SetValueString(value,str,coding);	ON_IO_ERROR(fp,badio);
 		break;
 	  case	GL_TYPE_NUMBER:

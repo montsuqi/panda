@@ -1,3 +1,8 @@
+2005-03-25  Noboru Saitou  <noborus@netlab.jp>
+
+	* glserver/server.c, glserver/glcomm.c (GL_RecvString): サイズを
+	  指定するように変更
+
 2005-03-23  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/client.c: SSLの項目が空の時に値を渡さないように修正。

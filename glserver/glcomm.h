@@ -31,7 +31,7 @@ extern	void	GL_SendInt(NETFILE *fp, int data, Bool fNetwork);
 extern	void	GL_SendLong(NETFILE *fp, long data, Bool fNetwork);
 extern	void	GL_SendString(NETFILE *fp, char *str, Bool fNetwork);
 extern	int		GL_RecvInt(NETFILE *fp ,Bool fNetwork);
-extern	void	GL_RecvString(NETFILE *fp, char *str, Bool fNetwork);
+extern	void	GL_RecvString(NETFILE *fp, size_t size, char *str, Bool fNetwork);
 extern	Fixed	*GL_RecvFixed(NETFILE *fp, Bool fNetwork);
 extern	double	GL_RecvFloat(NETFILE *fp, Bool fNetwork);
 extern	Bool	GL_RecvBool(NETFILE *fp, Bool fNetwork);
