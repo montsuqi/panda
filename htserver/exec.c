@@ -51,13 +51,18 @@ copies.
 
 #define	SIZE_RSTACK		100
 
-typedef	union	_VarType	{
-	size_t		size
-	,			pos;
-	int			ival;
-	Bool		bval;
-	char		*str;
-	union	_VarType	*ptr;
+#define	VAR_NULL	0
+#define	VAR_INT		1
+#define	VAR_STR		2
+#define	VAR_PTR		3
+
+typedef	struct	_VarType	{
+	int			type;
+	union {
+		int			ival;
+		char		*str;
+		struct	_VarType	*ptr;
+	}	body;
 }	VarType;
 
 static	VarType	Stack[SIZE_RSTACK];
@@ -74,7 +79,7 @@ Push(
 	VarType	v)
 {
 	dbgprintf("pStack = %d\n",pStack);
-	dbgprintf("val = %d\n",v.ival);
+	dbgprintf("val = %d\n",v.body.ival);
     if (pStack == SIZE_RSTACK) {
         fprintf(stderr, "stack level too deep\n");
         exit(1);
@@ -122,57 +127,6 @@ uru(
 	}
 	return	(rc);
 }
-#if	0
-#define	SIZE_CHARS		16
-extern	char	*
-LBS_EmitUTF8(
-	LargeByteString	*lbs,
-	char			*str,
-	char			*codeset)
-{
-	char	*oc
-	,		*istr;
-	char	obuff[SIZE_CHARS];
-	size_t	count
-	,		sib
-	,		sob
-	,		csize;
-	int		rc;
-	iconv_t	cd;
-	int		i;
-
-ENTER_FUNC;
-	if		(	(  libmondai_i18n  )
-			&&	(  codeset  !=  NULL  ) ) {
-		cd = iconv_open("utf8",codeset);
-		while	(  *str  !=  0  )	{
-			count = 1;
-			do {
-				istr = str;
-				sib = count;
-				oc = obuff;
-				sob = SIZE_CHARS;
-				if		(  ( rc = iconv(cd,&istr,&sib,&oc,&sob) )  <  0  ) {
-					count ++;
-				}
-			}	while	(	(  rc            !=  0  )
-						&&	(  str[count-1]  !=  0  ) );
-			csize = SIZE_CHARS - sob;
-			for	( oc = obuff , i = 0 ; i < csize ; i ++, oc ++ ) {
-				LBS_Emit(lbs,*oc);
-			}
-			str += count;
-		}
-		iconv_close(cd);
-	} else {
-		while	(  *str  !=  0  ) {
-			LBS_Emit(lbs,*str);
-			str ++;
-		}
-	}
-LEAVE_FUNC;
-}
-#endif
 
 static	void
 ExecCalendar(
@@ -261,15 +215,32 @@ ParseName(
 	char	*p
 	,		*q;
 	VarType	*var;
+	char	*outvalue(
+		char	*pp,
+		VarType	*val)
+	{
+		switch	(val->type) {
+		  case	VAR_INT:
+			pp += sprintf(pp,"%d",val->body.ival);
+			break;
+		  case	VAR_STR:
+			pp += sprintf(pp,"%s",val->body.str);
+			break;
+		  default:
+			break;
+		}
+		return	(pp);
+	}
+		
 
+ENTER_FUNC;
+dbgprintf("name = [%s]\n",str);
 	if		(  str  ==  NULL  )	return	NULL;
 	p = buff;
 	while	(  *str  !=  0  ) {
-		if		(  *str  ==  '$'  ) {
+		switch	(*str) {
+		  case	'$':
 			str ++;
-			if		(  *str ==  '$'  ) {
-				*p ++ = '$';
-			} else 
 			if		(  *str  ==  '('  ) {
 				str ++;
 				q = name;
@@ -279,7 +250,7 @@ ParseName(
 				str ++;
 				*q = 0;
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p += sprintf(p,"%s",var->str);
+					p = outvalue(p,var);
 				}
 			} else {
 				q = name;
@@ -288,15 +259,12 @@ ParseName(
 				}
 				*q = 0;
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p += sprintf(p,"%s",var->str);
+					p = outvalue(p,var);
 				}
 			}
-		} else
-		if		(  *str  ==  '#'  ) {
+			break;
+		  case	'#':
 			str ++;
-			if		(  *str ==  '#'  ) {
-				*p ++ = '#';
-			} else 
 			if		(  *str  ==  '('  ) {
 				str ++;
 				q = name;
@@ -306,7 +274,7 @@ ParseName(
 				str ++;
 				*q = 0;
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p += sprintf(p,"%d",var->ival);
+					p = outvalue(p,var);
 				}
 			} else {
 				q = name;
@@ -315,15 +283,20 @@ ParseName(
 				}
 				*q = 0;
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p += sprintf(p,"%d",var->ival);
+					p = outvalue(p,var);
 				}
 			}
-		} else {
+			break;
+		  case	'\\':
+			str ++;
+			/*	through	*/
+		  default:
 			*p ++ = *str;
 			str ++;
 		}
 	}
 	*p = 0;
+LEAVE_FUNC;
 	return	(buff);
 }
 
@@ -497,54 +470,61 @@ ENTER_FUNC;
 					var = New(VarType);
 					g_hash_table_insert(VarArea,StrDup(name),var);
 				}
-				vval.ptr = var;
+				vval.body.ptr = var;
+				vval.type = VAR_PTR;
 				Push(vval);
 				break;
 			  case	OPC_NAME:
 				dbgmsg("OPC_NAME");
 				str = LBS_FetchPointer(htc->code);
 				name = ParseName(str);
-				vval.str = StrDup(name);
+				vval.body.str = StrDup(name);
+				vval.type = VAR_STR;
 				Push(vval);
 				break;
 			  case	OPC_TOINT:
 				dbgmsg("OPC_TOINT");
-				TOP(1).ival = atoi(TOP(1).str);
+				TOP(1).body.ival = atoi(TOP(1).body.str);
+				TOP(1).type = VAR_INT;
 				break;
 			  case	OPC_HSNAME:
 				dbgmsg("OPC_HSNAME");
 				vval = Pop;
-				vval.str = GetHostValue(vval.str,FALSE);
+				vval.body.str = GetHostValue(vval.body.str,FALSE);
+				vval.type = VAR_STR;
 				Push(vval);
 				break;
 			  case	OPC_EHSNAME:
 				dbgmsg("OPC_EHSNAME");
 				vval = Pop;
-				value = GetHostValue(vval.str,FALSE);
+				value = GetHostValue(vval.body.str,FALSE);
 				EmitWithEscape(html,value);
 				break;
 			  case	OPC_HINAME:
 				dbgmsg("OPC_HINAME");
 				vval = Pop;
-				vval.ival = atoi(GetHostValue(vval.str,FALSE));
+				vval.body.ival = atoi(GetHostValue(vval.body.str,FALSE));
+				vval.type = VAR_INT;
 				Push(vval);
 				break;
 			  case	OPC_HBNAME:
 				dbgmsg("OPC_HBNAME");
-				value = GetHostValue(TOP(1).str,FALSE);
-				TOP(1).ival = (stricmp(value,"TRUE") == 0);
+				value = GetHostValue(TOP(1).body.str,FALSE);
+				TOP(1).body.ival = (stricmp(value,"TRUE") == 0);
+				TOP(1).type = VAR_INT;
 				break;
 			  case	OPC_HIVAR:
 				dbgmsg("OPC_HIVAR");
 				name = LBS_FetchPointer(htc->code);
                 str = ParseName(name);
-                vval.ival = atoi(GetHostValue(StrDup(str),FALSE));
+                vval.body.ival = atoi(GetHostValue(StrDup(str),FALSE));
+				vval.type = VAR_INT;
 				Push(vval);
 				break;
 			  case	OPC_HBES:
 				dbgmsg("OPC_HBES");
 				vval = Pop;
-				value = GetHostValue(vval.str,TRUE);
+				value = GetHostValue(vval.body.str,TRUE);
 				str = LBS_FetchPointer(htc->code);
 				if		(  stricmp(value,"TRUE")  ==  0 ) {
 					EmitWithEscape(html,str);
@@ -553,37 +533,41 @@ ENTER_FUNC;
 			  case	OPC_REFSTR:
 				dbgmsg("OPC_REFSTR");
 				vval = Pop;
-				EmitWithEscape(html,vval.str);
+				EmitWithEscape(html,vval.body.str);
 				break;
-			  case	OPC_SPYSTR:
-				dbgmsg("OPC_REFSTR");
-				EmitWithEscape(html,TOP(1).str);
+			  case	OPC_SPY:
+				dbgmsg("OPC_SPY");
+				switch	(TOP(1).type) {
+				  case	VAR_INT:
+					sprintf(buff,"%d",TOP(1).body.ival);
+					break;
+				  case	VAR_STR:
+					sprintf(buff,"%s",TOP(1).body.str);
+				}
+				EmitWithEscape(html,TOP(1).body.str);
 				break;
 			  case	OPC_REFINT:
 				dbgmsg("OPC_REFINT");
 				vval = Pop;
-				sprintf(buff,"%d",vval.ival);
-				EmitWithEscape(html,buff);
-				break;
-			  case	OPC_SPYINT:
-				dbgmsg("OPC_SPYINT");
-				sprintf(buff,"%d",TOP(1).ival);
+				sprintf(buff,"%d",vval.body.ival);
 				EmitWithEscape(html,buff);
 				break;
 			  case	OPC_ICONST:
 				dbgmsg("OPC_ICONST");
-				vval.ival = LBS_FetchInt(htc->code);
+				vval.body.ival = LBS_FetchInt(htc->code);
+				vval.type = VAR_INT;
 				Push(vval);
 				break;
 			  case	OPC_SCONST:
 				dbgmsg("OPC_SCONST");
-				vval.str = LBS_FetchPointer(htc->code);
+				vval.body.str = LBS_FetchPointer(htc->code);
+				vval.type = VAR_STR;
 				Push(vval);
 				break;
 			  case	OPC_STORE:
 				dbgmsg("OPC_STORE");
 				vval = Pop;
-				*(TOP(1).ptr) = vval;
+				*(TOP(1).body.ptr) = vval;
 				break;
 			  case	OPC_LDVAR:
 				dbgmsg("OPC_LDVAR");
@@ -595,14 +579,14 @@ ENTER_FUNC;
 				break;
 			  case	OPC_LEND:
 				dbgmsg("OPC_LEND");
-				(TOP(3).ptr)->ival += TOP(1).ival;
+				(TOP(3).body.ptr)->body.ival += TOP(1).body.ival;
 				pos = LBS_FetchInt(htc->code);
 				LBS_SetPos(htc->code,pos);
 				break;
 			  case	OPC_BREAK:
 				dbgmsg("OPC_BREAK");
 				pos = LBS_FetchInt(htc->code);
-				if		(  (TOP(3).ptr)->ival  >=  TOP(2).ival  ) {
+				if		(  (TOP(3).body.ptr)->body.ival  >=  TOP(2).body.ival  ) {
 					LBS_SetPos(htc->code,pos);
 					(void)Pop;
 					(void)Pop;
@@ -612,20 +596,20 @@ ENTER_FUNC;
 			  case	OPC_JNZP:
 				dbgmsg("OPC_JNZP");
 				pos = LBS_FetchInt(htc->code);
-				if		(  TOP(1).ival  ==  0  ) {
+				if		(  TOP(1).body.ival  ==  0  ) {
 					LBS_SetPos(htc->code,pos);
 				}
 				break;
 			  case	OPC_JNZNP:
 				dbgmsg("OPC_JNZNP");
 				pos = LBS_FetchInt(htc->code);
-				if		(  TOP(1).ival  !=  0  ) {
+				if		(  TOP(1).body.ival  !=  0  ) {
 					LBS_SetPos(htc->code,pos);
 				}
 				(void)Pop;
 				break;
 			  case	OPC_SUB:
-				TOP(2).ival = TOP(2).ival - TOP(1).ival;
+				TOP(2).body.ival = TOP(2).body.ival - TOP(1).body.ival;
 				(void)Pop;
 				break;
 			  case OPC_LOCURI:
@@ -635,11 +619,12 @@ ENTER_FUNC;
 
                     dbgmsg("OPC_LOCURI");
                     vval = Pop;
-                    local = ConvLocal(vval.str);
+                    local = ConvLocal(vval.body.str);
                     len = EncodeLengthURI(local);
                     encoded = (char *) xmalloc(len + 1);
                     EncodeURI(encoded, local);
-                    vval.str = encoded;
+                    vval.body.str = encoded;
+					vval.type = VAR_STR;
                     Push(vval);
                 }
                 break;
@@ -650,21 +635,22 @@ ENTER_FUNC;
 
                     dbgmsg("OPC_UTF8URI");
                     vval = Pop;
-                    len = EncodeLengthURI(vval.str);
+                    len = EncodeLengthURI(vval.body.str);
                     encoded = (char *) xmalloc(len + 1);
-                    EncodeURI(encoded, vval.str);
-                    vval.str = encoded;
+                    EncodeURI(encoded, vval.body.str);
+                    vval.body.str = encoded;
+					vval.type = VAR_STR;
                     Push(vval);
                 }
                 break;
               case OPC_EMITSTR:
 				dbgmsg("OPC_EMITSTR");
 				vval = Pop;
-                if (strlen(vval.str) == 0) {
+                if (strlen(vval.body.str) == 0) {
                     LBS_EmitString(html, "&nbsp;");
                 }
                 else {
-                    EmitWithEscape(html,vval.str);
+                    EmitWithEscape(html,vval.body.str);
                 }
 				break;
 			  case OPC_ESCJSS:
@@ -673,7 +659,8 @@ ENTER_FUNC;
 
                     dbgmsg("OPC_ESCJSS");
                     vval = Pop;
-                    vval.str = EscapeJavaScriptString(vval.str);
+                    vval.body.str = EscapeJavaScriptString(vval.body.str);
+					vval.type = VAR_STR;
                     Push(vval);
                 }
                 break;
@@ -686,12 +673,12 @@ ENTER_FUNC;
 				  ,		mm
 				  ,		dd;
 
-				  day = Pop.str;
-				  month = Pop.str;
-				  year = Pop.str;
-				  dd = Pop.ival;
-				  mm = Pop.ival;
-				  yy = Pop.ival;
+				  day = Pop.body.str;
+				  month = Pop.body.str;
+				  year = Pop.body.str;
+				  dd = Pop.body.ival;
+				  mm = Pop.body.ival;
+				  yy = Pop.body.ival;
 				  ExecCalendar(html,yy,mm,dd,year,month,day);
 			  }
 				break;

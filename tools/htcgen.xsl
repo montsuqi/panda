@@ -20,8 +20,7 @@ td {
             <xsl:value-of select="//widget/title"/>
           </title>
         </head>
-        <!-- body text="#202020" bgcolor="#C0C0C0" link="#00FFFF" vlink="#00BBBB" -->
-        <body>
+        <body text="#202020" bgcolor="#C0C0C0" link="#00FFFF" vlink="#00BBBB">
           <h1>
             <xsl:value-of select="//widget/title"/>
           </h1>
@@ -618,7 +617,7 @@ td {
             </xsl:attribute>
             <option>
               <xsl:attribute name="value">
-                <xsl:text>#(i)</xsl:text>
+                <xsl:text>$$i</xsl:text>
               </xsl:attribute>
               <xsl:attribute name="select">
                 <xsl:value-of select="$winName"/>
@@ -627,8 +626,7 @@ td {
                 <xsl:text>.select[#i]</xsl:text>
               </xsl:attribute>
               <fixed>
-                <xsl:attribute name="value">
-                  <xsl:text>$</xsl:text>
+                <xsl:attribute name="name">
                   <xsl:value-of select="$winName"/>
                   <xsl:text>.</xsl:text>
                   <xsl:value-of select="./name"/>
@@ -713,7 +711,7 @@ td {
             </xsl:attribute>
             <option>
               <xsl:attribute name="value">
-                <xsl:text>#(i)</xsl:text>
+                <xsl:text>$$i</xsl:text>
               </xsl:attribute>
               <xsl:attribute name="select">
                 <xsl:value-of select="$winName"/>
@@ -722,8 +720,7 @@ td {
                 <xsl:text>.select[#i]</xsl:text>
               </xsl:attribute>
               <fixed>
-                <xsl:attribute name="value">
-                  <xsl:text>$</xsl:text>
+                <xsl:attribute name="name">
                   <xsl:value-of select="$winName"/>
                   <xsl:text>.</xsl:text>
                   <xsl:value-of select="./name"/>

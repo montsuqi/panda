@@ -1,3 +1,11 @@
+2004-07-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/exec.c: VarTypeに型情報を付加した
+
+	* htserver/tags.c (_Button): Javascriptを使うようにした。これでIE
+	でも問題なく動くはず。
+	(ExpandAttributeString): 内部変数の参照は$$にした
+
 2004-07-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/HTCparser.c (ParTag): HTCタグでないものも属性に変数を指

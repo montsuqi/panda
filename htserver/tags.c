@@ -167,14 +167,19 @@ ExpandAttributeString(
 	LBS_EmitChar(htc->code,'"');
 	switch	(*para) {
 	  case	'$':
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(para));
-		EmitCode(htc,OPC_EHSNAME);
+		para ++;
+		if		(  *para  ==  '$'  ) {
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(para));
+            EmitCode(htc,OPC_REFSTR);
+		} else {
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(para));
+			EmitCode(htc,OPC_EHSNAME);
+		}
 		break;
-	  case	'#':
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(para));
-		EmitCode(htc,OPC_REFSTR);
+	  case	'\\':
+		LBS_EmitString(htc->code,para+1);
 		break;
 	  default:
 		LBS_EmitString(htc->code,para);
@@ -365,13 +370,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code,">");
 		}
 		if		(  value  !=  NULL  ) {
-			if		(  *value  ==  '$'  ) {
-				EmitCode(htc,OPC_NAME);
-				LBS_EmitPointer(htc->code,StrDup(value+1));
-				EmitCode(htc,OPC_EHSNAME);
-			} else {
-				LBS_EmitString(htc->code,value);
-			}
+			LBS_EmitString(htc->code,value);
 		} else {
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(name));
@@ -659,6 +658,7 @@ _Button(
 	,		*event
 	,		*size
 		,	*onclick;
+	char	buf[SIZE_BUFF];
 
 ENTER_FUNC;
 	event = GetArg(tag, "event", 0);
@@ -696,8 +696,8 @@ ENTER_FUNC;
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 #else
+#if	0
 	if (event != NULL) {
-		g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
 		LBS_EmitString(htc->code,"<button type=\"submit\" name=\"_event\" value=\"");
 	} else {
 		LBS_EmitString(htc->code,"<button type=\"button\" value=\"");
@@ -720,6 +720,35 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,">");
 	LBS_EmitString(htc->code,face);
 	LBS_EmitString(htc->code,"</button>");
+#else
+	LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
+	LBS_EmitString(htc->code,face);
+	LBS_EmitString(htc->code,"\"");
+	if		(  event  !=  NULL  ) {
+		LBS_EmitChar(htc->code, ' ');
+		LBS_EmitString(htc->code, "onclick");
+		snprintf(buf, SIZE_BUFF,
+				 "=\""
+				 "document.forms[%d].elements[0].name='_event';"
+				 "document.forms[%d].elements[0].value='",
+				 htc->FormNo, htc->FormNo);
+		LBS_EmitString(htc->code, buf);
+		EmitCode(htc, OPC_NAME);
+		LBS_EmitPointer(htc->code, StrDup(event));
+		EmitCode(htc, OPC_ESCJSS);
+		EmitCode(htc, OPC_REFSTR);
+		LBS_EmitString(htc->code, "';");
+		snprintf(buf, SIZE_BUFF,
+				 "document.forms[%d].submit();\"", htc->FormNo);
+		LBS_EmitString(htc->code, buf);
+	} else {
+		LBS_EmitString(htc->code," onclick=\"");
+		LBS_EmitString(htc->code,onclick);
+		LBS_EmitString(htc->code,"\"");
+	}
+
+	LBS_EmitString(htc->code,">");
+#endif
 #endif
 LEAVE_FUNC;
 }
