@@ -1,6 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = glserver
+bin_SCRIPTS = pstopng
 
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\
@@ -21,7 +22,8 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/libs	\
 	$(GLIB_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(MONDAI_CFLAGS)
+	$(MONDAI_CFLAGS)		\
+	-DBIN_DIR=\"$(bindir)\"
 
 glserver_SOURCES	=		\
 	glserver.c	glserver.h	\

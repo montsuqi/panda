@@ -400,32 +400,40 @@ ExpandFile(
 {
 	static	char	fname[SIZE_LONGNAME+1];
 	char	buff[SIZE_LONGNAME+1];
+	char	*PSTOPNGPath = BIN_DIR "/pstopng";
 	struct	stat	sb;
 	time_t	ps_mtime
-		,	png_mtime;
+		,	tmp_mtime;
 	const	char	*type;
 
 ENTER_FUNC;
 	strcpy(fname,cname);
 	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  ) {
 		if		(  !strlcmp(type,"PostScript")  ) {
-			if		(  !fFeturePS  ) {
+			if	(  !fFeturePS  ) {
 				if		(	(  stat(cname,&sb)  ==  0   )
 						&&	(  S_ISREG(sb.st_mode)      ) )	{
 					ps_mtime = sb.st_mtime;
 				} else {
 					ps_mtime = 0;
 				}
-				sprintf(fname,"%s.png",cname);
+				if		(  fFeturePDF ) {
+					sprintf(fname,"%s.pdf",cname); 
+				} else {
+					sprintf(fname,"%s.png",cname);
+				}
 				if		(	(  stat(fname,&sb)  ==  0  )
 						&&	(  S_ISREG(sb.st_mode)   ) ) {
-					png_mtime = sb.st_mtime;
+					tmp_mtime = sb.st_mtime;
 				} else {
-					png_mtime = 0;
+					tmp_mtime = 0;
 				}
-				if		(  ps_mtime  >  png_mtime  ) {
-					//sprintf(buff,"pstopnm -portrait -stdout %s | pnmtopng > %s",cname,fname);
-					sprintf(buff,"pstopnm -stdout %s | pnmtopng > %s",cname,fname);
+				if		(  ps_mtime  >  tmp_mtime  ) {
+					if		(  fFeturePDF ) {
+						sprintf(buff,"ps2pdf13 %s %s", cname,fname);
+					} else {
+						sprintf(buff,"%s %s > %s",PSTOPNGPath, cname,fname);
+					}
 					system(buff);
 				}
 			}
@@ -574,6 +582,7 @@ ENTER_FUNC;
 			if		(  fExpand  ) {
 				GL_RecvLBS(fp,Buff,fNetwork);
 				if		(  ( fpf = Fopen(BlobCacheFileName(value),"w") )  !=  NULL  ) {
+					fchmod(fileno(fpf), 0600);
 					fwrite(LBS_Body(Buff),LBS_Size(Buff),1,fpf);
 					fclose(fpf);	
 				}

@@ -32,6 +32,7 @@ copies.
 #define	FETURE_NETWORK	(byte)0x0010
 #define	FETURE_PS		(byte)0x0020
 #define	FETURE_OLD		(byte)0x0040
+#define	FETURE_PDF		(byte)0x0080
 
 #define	fFetureCore		(((TermFeture & FETURE_CORE) != 0) ? TRUE : FALSE)
 #define	fFetureBlob		(((TermFeture & FETURE_BLOB) != 0) ? TRUE : FALSE)
@@ -40,6 +41,7 @@ copies.
 #define	fFetureNetwork	(((TermFeture & FETURE_NETWORK) != 0) ? TRUE : FALSE)
 #define	fFeturePS		(((TermFeture & FETURE_PS) != 0) ? TRUE : FALSE)
 #define	fFetureOld		(((TermFeture & FETURE_OLD) != 0) ? TRUE : FALSE)
+#define	fFeturePDF		(((TermFeture & FETURE_PDF) != 0) ? TRUE : FALSE)
 
 #undef	GLOBAL
 #ifdef	MAIN
