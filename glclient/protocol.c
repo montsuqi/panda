@@ -213,7 +213,8 @@ CheckScreens(
 	char		sname[SIZE_NAME];
 	char		*fname;
 	struct	stat	stbuf;
-	time_t		st_mtime;
+	time_t		st_mtime
+	,			st_ctime;
 	off_t		st_size;
 
 dbgmsg(">CheckScreens");
@@ -221,10 +222,12 @@ dbgmsg(">CheckScreens");
 		RecvString(fp,sname);
 		st_size = (off_t)RecvLong(fp);
 		st_mtime = (time_t)RecvLong(fp);
+		st_ctime = (time_t)RecvLong(fp);
 		fname = CacheFileName(sname);
 
 		if		(	(  stat(fname,&stbuf)  !=  0         )
 				 ||	(  stbuf.st_mtime      <   st_mtime  )
+				 ||	(  stbuf.st_ctime      <   st_ctime  )
 				 ||	(  stbuf.st_size       !=  st_size   ) ) {
 			RecvFile(fp, sname, fname);
 			/* Clear cache */

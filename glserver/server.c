@@ -91,7 +91,8 @@ CheckCache(
 	FILE	*fpComm,
 	char	*name,
 	off_t	st_size,
-	time_t	st_mtime)
+	time_t	st_mtime,
+	time_t	st_ctime)
 {
 	Bool	ret;
 	int		klass;
@@ -101,6 +102,7 @@ dbgmsg(">CheckCache");
 	SendString(fpComm,name);
 	SendLong(fpComm,(long)st_size);
 	SendLong(fpComm,(long)st_mtime);
+	SendLong(fpComm,(long)st_ctime);
 	fflush(fpComm);
 	switch	(  klass = RecvPacketClass(fpComm)  ) {
 	  case	GL_GetScreen:
@@ -135,7 +137,7 @@ SendFile(
 	stat(fname,&stbuf);
 	if		(  CheckCache(fpComm,
 						  wname,
-						  stbuf.st_size, stbuf.st_mtime)  ) {
+						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
 		RecvString(fpComm,wname);	/*	dummy	*/
 		fp = fopen(fname,"r");
 		SendPacketClass(fpComm,GL_ScreenDefine);

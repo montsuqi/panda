@@ -1,5 +1,9 @@
 2002-10-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* glclient/protocol.c (CheckScreens): ctimeもチェックもするようにした
+
+	* glserver/server.c (CheckCache): ctimeもチェックもするようにした
+
 	* libs/tcp.c : つまらないバグの修正
 
 2002-10-12  Masami Ogoshi  <ogochan@nurs.or.jp>
