@@ -20,9 +20,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -1755,7 +1755,7 @@ ENTER_FUNC;
 	}
 	_UpdateWidget(widget,NULL);
 LEAVE_FUNC;
-	return	(FALSE);
+	return	(TRUE);
 }
 
 extern	void
