@@ -46,6 +46,7 @@ copies.
 
 #include	<ruby.h>
 #include	<env.h>
+#include	<st.h>
 
 #include	"types.h"
 #include	"const.h"
@@ -76,6 +77,7 @@ static VALUE cProcessNode;
 static VALUE cPath;
 static VALUE cTable;
 static VALUE cDatabase;
+static VALUE eDatabaseError;
 
 #define TAG_RETURN	0x1
 #define TAG_BREAK	0x2
@@ -900,11 +902,34 @@ table_new(int no, RecordStruct *rec)
     return obj;
 }
 
+typedef struct _set_param_arg {
+    VALUE hash;
+    ValueStruct *value;
+} set_param_arg;
+
+static int
+set_param(VALUE key, VALUE value, set_param_arg *arg)
+{
+    st_table *tbl = RHASH(arg->hash)->tbl;
+    struct st_table_entry **bins = tbl->bins;
+    char *longname;
+    ValueStruct *val;
+
+    if (key == Qundef) return ST_CONTINUE;
+    longname = StringValuePtr(key);
+    val = GetItemLongName(arg->value, longname);
+    set_value(val, value);
+    if (RHASH(arg->hash)->tbl != tbl || RHASH(arg->hash)->tbl->bins != bins){
+        rb_raise(rb_eIndexError, "rehash occurred during iteration");
+    }
+    return ST_CONTINUE;
+}
+
 static VALUE
 table_exec(int argc, VALUE *argv, VALUE self)
 {
     table_data *data;
-    VALUE funcname, pathname;
+    VALUE funcname, pathname, params;
     char *func, *pname;
 	DBCOMM_CTRL ctrl;
 	PathStruct *path;
@@ -913,13 +938,14 @@ table_exec(int argc, VALUE *argv, VALUE self)
     ValueStruct *value;
 
     Data_Get_Struct(self, table_data, data);
-    if (rb_scan_args(argc, argv, "11", &funcname, &pathname) < 2) {
+    rb_scan_args(argc, argv, "12", &funcname, &pathname, &params);
+    func = StringValuePtr(funcname);
+    if (argc < 2) {
         pname = NULL;
     }
     else {
         pname = StringValuePtr(pathname);
     }
-    func = StringValuePtr(funcname);
 
 	ctrl.rno = data->no;
 	ctrl.pno = 0;
@@ -944,11 +970,101 @@ table_exec(int argc, VALUE *argv, VALUE self)
             }
         }
     }
+
+    if (argc == 3) {
+        set_param_arg arg;
+
+        Check_Type(params, T_HASH);
+        arg.hash = params;
+        arg.value = value;
+        st_foreach(RHASH(params)->tbl, set_param, (st_data_t) &arg);
+    }
+
     size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
     ctrl.blocks = ((size + sizeof(DBCOMM_CTRL)) / SIZE_BLOCK) + 1;
 	strcpy(ctrl.func, func);
 	ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
-    return INT2NUM(ctrl.rc);
+    if (ctrl.rc == MCP_OK) {
+        return recval_new(value);
+    }
+    else if (ctrl.rc == MCP_EOF) {
+        return Qnil;
+    }
+    else {
+        rb_raise(eDatabaseError, "database error (ctrol.rc=%d)", ctrl.rc);
+        return Qnil;            /* not reached */
+    }
+}
+
+static VALUE
+exec_function(char *func, int argc, VALUE *argv, VALUE self)
+{
+    int exec_argc = argc + 1;
+    VALUE *exec_argv;
+
+	exec_argv = ALLOCA_N(VALUE, exec_argc);
+    exec_argv[0] = rb_str_new2(func);
+    memcpy(exec_argv + 1, argv, sizeof(VALUE) * argc);
+    return table_exec(exec_argc, exec_argv, self);
+}
+
+static VALUE
+table_select(int argc, VALUE *argv, VALUE self)
+{
+    return exec_function("DBSELECT", argc, argv, self);
+}
+
+static VALUE
+table_fetch(int argc, VALUE *argv, VALUE self)
+{
+    return exec_function("DBFETCH", argc, argv, self);
+}
+
+static VALUE
+table_insert(int argc, VALUE *argv, VALUE self)
+{
+    return exec_function("DBINSERT", argc, argv, self);
+}
+
+static VALUE
+table_update(int argc, VALUE *argv, VALUE self)
+{
+    return exec_function("DBUPDATE", argc, argv, self);
+}
+
+static VALUE
+table_delete(int argc, VALUE *argv, VALUE self)
+{
+    return exec_function("DBDELETE", argc, argv, self);
+}
+
+static VALUE
+table_get(int argc, VALUE *argv, VALUE self)
+{
+    return exec_function("DBGET", argc, argv, self);
+}
+
+static VALUE
+table_close_cursor(int argc, VALUE *argv, VALUE self)
+{
+    return exec_function("DBCLOSECURSOR", argc, argv, self);
+}
+
+static VALUE
+table_each(int argc, VALUE *argv, VALUE self)
+{
+    VALUE val;
+    int n = (argc > 2 ? 2 : argc);
+
+    table_select(argc, argv, self);
+    while (1) {
+        val = table_fetch(n, argv, self);
+        if (NIL_P(val))
+            break;
+        rb_yield(val);
+    }
+    table_close_cursor(n, argv, self);
+    return Qnil;
 }
 
 static VALUE
@@ -1078,9 +1194,19 @@ init()
     rb_define_method(cTable, "[]", rec_aref, 1);
     rb_define_method(cTable, "[]=", rec_aset, 2);
     rb_define_method(cTable, "exec", table_exec, -1);
+    rb_define_method(cTable, "select", table_select, -1);
+    rb_define_method(cTable, "fetch", table_fetch, -1);
+    rb_define_method(cTable, "insert", table_insert, -1);
+    rb_define_method(cTable, "update", table_update, -1);
+    rb_define_method(cTable, "delete", table_delete, -1);
+    rb_define_method(cTable, "get", table_get, -1);
+    rb_define_method(cTable, "close_cursor", table_close_cursor, -1);
+    rb_define_method(cTable, "each", table_each, -1);
     rb_define_method(cTable, "path", table_path, 1);
     cDatabase = rb_define_class_under(mPanda, "Database", rb_cObject);
     rb_define_method(cDatabase, "[]", database_aref, 1);
+    eDatabaseError = rb_define_class_under(mPanda, "DatabaseError",
+                                           rb_eStandardError);
 
     application_classes = rb_hash_new();
     rb_gc_register_address(&application_classes);
