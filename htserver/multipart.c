@@ -292,7 +292,8 @@ ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
     if (boundary_type == BOUNDARY_NONE)
         return -1;
     if (filename == NULL) {
-        StoreValue(values, name, value);
+		//        StoreValue(values, name, value);
+        SaveValue(name, value,FALSE);
     }
     else {
         MultipartFile *file = (MultipartFile *) xmalloc(sizeof(MultipartFile));

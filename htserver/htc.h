@@ -18,25 +18,29 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
-#ifndef	_INC_MON_H
-#define	_INC_MON_H
+#ifndef	_INC_HTC_H
+#define	_INC_HTC_H
 
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
+#include	"libmondai.h"
 
-//GLOBAL	GHashTable	*Values;
-//GLOBAL	GHashTable	*Files;
-//GLOBAL	GHashTable	*ListValues;
-GLOBAL	char		*ScreenDir;
-GLOBAL	char		*RecordDir;
+typedef	struct {
+	LargeByteString	*code;
+	GHashTable	*Trans;
+	GHashTable	*Radio;
+	GHashTable	*FileSelection;
+    char *DefaultEvent;
+    size_t EnctypePos;
+    int FormNo;
+}	HTCInfo;
 
-#undef	GLOBAL
-//extern	char	*ConvLocal(char *istr);
-//extern	char	*ConvUTF8(char *istr);
-//extern	void	StoreValue(GHashTable *hash, char *name, char *value);
+typedef	struct {
+    char *filename;
+    char *filesize;
+}	FileSelectionInfo;
+
+typedef	ValueStruct	*(*GET_VALUE)(char *name, Bool fClear);
+
+extern	char	*GetHostValue(char *name, Bool fClear);
+extern	void	InitHTC(char *script_name, GET_VALUE func);
 
 #endif

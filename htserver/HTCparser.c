@@ -41,10 +41,10 @@ copies.
 #include	"libmondai.h"
 #include	"HTCparser.h"
 #include	"HTClex.h"
+#include	"cgi.h"
+#include	"htc.h"
 #include	"exec.h"
 #include	"tags.h"
-#include	"mon.h"
-#include	"option.h"
 #include	"debug.h"
 
 static	Bool	fError;
@@ -222,14 +222,12 @@ dbgmsg("<ParHTC");
 
 extern	HTCInfo	*
 HTCParser(
-	char	*base)
+	char	*name)
 {
-	char	name[SIZE_BUFF+1];
 	FILE	*fp;
 	HTCInfo	*ret;
 
 dbgmsg(">HTCParser");
-	sprintf(name,"%s/%s.htc",ScreenDir,base);
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 		fError = FALSE;
 		HTC_FileName = name;
@@ -255,19 +253,6 @@ dbgmsg(">HTCParser");
 	}
 dbgmsg("<HTCParser");
 	return	(ret);
-}
-
-extern	void
-HTCParserInit(char *script_name)
-{
-dbgmsg(">HTCParserInit");
-    if (script_name == NULL) {
-        script_name = "mon.cgi";
-    }
-	HTCLexInit();
-	TagsInit(script_name);
-	Codeset = "utf-8";
-dbgmsg("<HTCParserInit");
 }
 
 extern	void

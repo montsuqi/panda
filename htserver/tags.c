@@ -40,7 +40,7 @@ copies.
 #include	"libmondai.h"
 #include	"HTClex.h"
 #include	"HTCparser.h"
-#include	"mon.h"
+#include	"cgi.h"
 #include	"tags.h"
 #include	"exec.h"
 #include	"debug.h"
@@ -123,7 +123,8 @@ EmitAttributeValue(
 	HTCInfo	*htc,
 	char	*str,
 	Bool	fQuote,
-	Bool	fEncodeURL)
+	Bool	fEncodeURL,
+    Bool	fEscapeJavaScriptString)
 {
 	if		(  fQuote  ) {
 		LBS_EmitString(htc->code,"\"");
@@ -136,6 +137,9 @@ EmitAttributeValue(
             if (fEncodeURL) {
                 EmitCode(htc,OPC_LOCURI);
             }
+            if (fEscapeJavaScriptString) {
+                EmitCode(htc,OPC_ESCJSS);
+            }
             EmitCode(htc,OPC_REFSTR);
             break;
         default:
@@ -143,6 +147,9 @@ EmitAttributeValue(
             LBS_EmitPointer(htc->code,StrDup(str));
             if (fEncodeURL) {
                 EmitCode(htc,OPC_LOCURI);
+            }
+            if (fEscapeJavaScriptString) {
+                EmitCode(htc,OPC_ESCJSS);
             }
             EmitCode(htc,OPC_REFSTR);
             break;
@@ -171,6 +178,7 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
     LBS_EmitString(htc->code, buf);
     EmitCode(htc, OPC_NAME);
     LBS_EmitPointer(htc->code, StrDup(value));
+    EmitCode(htc, OPC_ESCJSS);
     EmitCode(htc, OPC_REFSTR);
     LBS_EmitString(htc->code, "';");
     snprintf(buf, SIZE_BUFF,
@@ -212,6 +220,7 @@ JavaScriptKeyEvent(HTCInfo *htc, Tag *tag, char *event)
     LBS_EmitString(htc->code, buf);
     EmitCode(htc, OPC_NAME);
     LBS_EmitPointer(htc->code, StrDup(p));
+    EmitCode(htc, OPC_ESCJSS);
     EmitCode(htc, OPC_REFSTR);
     LBS_EmitString(htc->code, "';");
     snprintf(buf, SIZE_BUFF,
@@ -229,11 +238,11 @@ Style(
 
 	if		(  ( id = GetArg(tag,"id",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," id=");
-		EmitAttributeValue(htc,id,TRUE,FALSE);
+		EmitAttributeValue(htc,id,TRUE,FALSE,FALSE);
 	}
 	if		(  ( klass = GetArg(tag,"class",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," class=");
-		EmitAttributeValue(htc,klass,TRUE,FALSE);
+		EmitAttributeValue(htc,klass,TRUE,FALSE,FALSE);
 	}
 }
 
@@ -404,8 +413,10 @@ dbgmsg(">_Form");
 	}
 	LBS_EmitString(htc->code,">\n");
 
-    /* document.forms[htc->FormNo].elements[0] for JavaScript */
-	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_\" value=\"\">");
+    /* document.forms[htc->FormNo].elements[0] for _event */
+	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"__event__\" value=\"\">");
+    /* document.forms[htc->FormNo].elements[1] for event data */
+	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"__data__\" value=\"\">");
 
 	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_name\" value=\"");
 	EmitGetValue(htc,"_name");
@@ -828,6 +839,7 @@ _HyperLink(HTCInfo *htc, Tag *tag)
     char *file;
     char *filename;
     char *contenttype;
+    char buf[SIZE_BUFF];
 
 dbgmsg(">_HyperLink");
 	if ((event = GetArg(tag, "event", 0)) != NULL) {
@@ -835,52 +847,92 @@ dbgmsg(">_HyperLink");
 		Style(htc,tag);
 
 		LBS_EmitString(htc->code, " href=\"");
-        LBS_EmitString(htc->code,ScriptName);
-		if ((filename = GetArg(tag, "filename", 0)) != NULL) {
-            LBS_EmitChar(htc->code, '/');
+
+		if (fJavaScriptLink && htc->FormNo >= 0 &&
+            (file = GetArg(tag, "file", 0)) == NULL) {
+            LBS_EmitString(htc->code, "javascript:");
+            snprintf(buf, SIZE_BUFF,
+                     "document.forms[%d].elements[0].name='_event';"
+                     "document.forms[%d].elements[0].value='",
+                     htc->FormNo, htc->FormNo);
+            LBS_EmitString(htc->code, buf);
             EmitCode(htc, OPC_NAME);
-            LBS_EmitPointer(htc->code, StrDup(filename));
-            EmitCode(htc, OPC_HSNAME);
-            EmitCode(htc, OPC_UTF8URI);
+            LBS_EmitPointer(htc->code, StrDup(event));
+            EmitCode(htc, OPC_ESCJSS);
             EmitCode(htc, OPC_REFSTR);
+            LBS_EmitString(htc->code, "';");
+
+            if ((name = GetArg(tag, "name", 0)) != NULL &&
+                (value = GetArg(tag, "value", 0)) != NULL) {
+                snprintf(buf, SIZE_BUFF,
+                         "document.forms[%d].elements[1].name='", htc->FormNo);
+                LBS_EmitString(htc->code, buf);
+                EmitCode(htc, OPC_NAME);
+                LBS_EmitPointer(htc->code, StrDup(name));
+                EmitCode(htc, OPC_ESCJSS);
+                EmitCode(htc, OPC_REFSTR);
+                LBS_EmitString(htc->code, "';");
+                snprintf(buf, SIZE_BUFF,
+                         "document.forms[%d].elements[1].value='", htc->FormNo);
+
+                LBS_EmitString(htc->code, buf);
+                EmitAttributeValue(htc, value, FALSE, FALSE, TRUE); 
+                LBS_EmitString(htc->code, "';");
+            }
+
+            snprintf(buf, SIZE_BUFF,
+                     "document.forms[%d].submit();\"", htc->FormNo);
+            LBS_EmitString(htc->code, buf);
         }
-		LBS_EmitString(htc->code, "?_name=");
-		EmitGetValue(htc,"_name");
-		LBS_EmitString(htc->code, "&amp;_event=");
-		EmitCode(htc, OPC_NAME);
-		LBS_EmitPointer(htc->code, StrDup(event));
-		EmitCode(htc, OPC_REFSTR);
-		if (!fCookie) {
-			LBS_EmitString(htc->code, "&amp;_sesid=");
-			EmitGetValue(htc,"_sesid");
-		}
-		if ((name = GetArg(tag, "name", 0)) != NULL &&
-            (value = GetArg(tag, "value", 0)) != NULL) {
-			LBS_EmitString(htc->code,"&amp;");
-			EmitCode(htc,OPC_NAME);
-			LBS_EmitPointer(htc->code,StrDup(name));
-			EmitCode(htc,OPC_REFSTR);
-			LBS_EmitString(htc->code,"=");
-            EmitAttributeValue(htc,value,FALSE,TRUE); 
-		}
-		if ((file = GetArg(tag, "file", 0)) != NULL) {
-			LBS_EmitString(htc->code, "&amp;_file=");
+        else {
+            LBS_EmitString(htc->code,ScriptName);
+            if ((filename = GetArg(tag, "filename", 0)) != NULL) {
+                LBS_EmitChar(htc->code, '/');
+                EmitCode(htc, OPC_NAME);
+                LBS_EmitPointer(htc->code, StrDup(filename));
+                EmitCode(htc, OPC_HSNAME);
+                EmitCode(htc, OPC_UTF8URI);
+                EmitCode(htc, OPC_REFSTR);
+            }
+            LBS_EmitString(htc->code, "?_name=");
+            EmitGetValue(htc,"_name");
+            LBS_EmitString(htc->code, "&amp;_event=");
             EmitCode(htc, OPC_NAME);
-			LBS_EmitPointer(htc->code, StrDup(file));
+            LBS_EmitPointer(htc->code, StrDup(event));
             EmitCode(htc, OPC_REFSTR);
+            if (!fCookie) {
+                LBS_EmitString(htc->code, "&amp;_sesid=");
+                EmitGetValue(htc,"_sesid");
+            }
+            if ((name = GetArg(tag, "name", 0)) != NULL &&
+                (value = GetArg(tag, "value", 0)) != NULL) {
+                LBS_EmitString(htc->code,"&amp;");
+                EmitCode(htc, OPC_NAME);
+                LBS_EmitPointer(htc->code,StrDup(name));
+                EmitCode(htc, OPC_REFSTR);
+                LBS_EmitString(htc->code,"=");
+                EmitAttributeValue(htc, value, FALSE, TRUE, FALSE); 
+            }
+            if ((file = GetArg(tag, "file", 0)) != NULL) {
+                LBS_EmitString(htc->code, "&amp;_file=");
+                EmitCode(htc, OPC_NAME);
+                LBS_EmitPointer(htc->code, StrDup(file));
+                EmitCode(htc, OPC_REFSTR);
+            }
+            if (filename != NULL) {
+                LBS_EmitString(htc->code, "&amp;_filename=");
+                EmitCode(htc, OPC_NAME);
+                LBS_EmitPointer(htc->code, StrDup(filename));
+                EmitCode(htc, OPC_REFSTR);
+            }
+            if ((contenttype = GetArg(tag, "contenttype", 0)) != NULL) {
+                LBS_EmitString(htc->code, "&amp;_contenttype=");
+                EmitCode(htc, OPC_NAME);
+                LBS_EmitPointer(htc->code, StrDup(contenttype));
+                EmitCode(htc, OPC_REFSTR);
+            }
         }
-		if (filename != NULL) {
-			LBS_EmitString(htc->code, "&amp;_filename=");
-            EmitCode(htc, OPC_NAME);
-			LBS_EmitPointer(htc->code, StrDup(filename));
-            EmitCode(htc, OPC_REFSTR);
-        }
-		if ((contenttype = GetArg(tag, "contenttype", 0)) != NULL) {
-			LBS_EmitString(htc->code, "&amp;_contenttype=");
-            EmitCode(htc, OPC_NAME);
-			LBS_EmitPointer(htc->code, StrDup(contenttype));
-            EmitCode(htc, OPC_REFSTR);
-        }
+
 		LBS_EmitString(htc->code,"\">");
 	}
 dbgmsg("<_HyperLink");

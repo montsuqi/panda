@@ -45,7 +45,8 @@ copies.
 #define	OPC_LOCURI	0x15
 #define	OPC_UTF8URI	0x16
 #define	OPC_EMITSTR	0x17
-#define	OPC_CALENDAR	0x18
+#define	OPC_ESCJSS	0x18
+#define	OPC_CALENDAR	0x19
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -54,11 +55,10 @@ copies.
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	char	*Codeset;
-
 #undef	GLOBAL
 
 extern	LargeByteString	*ExecCode(HTCInfo *htc);
-extern	char	*LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
+//extern	char	*LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
+extern	char	*ParseButton(HTCInfo *htc);
 
 #endif

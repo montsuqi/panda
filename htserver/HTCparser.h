@@ -24,9 +24,8 @@ copies.
 #include	<glib.h>
 #include	"const.h"
 #include	"libmondai.h"
-#include	"mon.h"
+#include	"htc.h"
 
-extern	void		HTCParserInit(char *script_name);
 extern	HTCInfo		*HTCParser(char *name);
 extern	void		DestroyHTC(HTCInfo *htc);
 extern	void		HTC_Error(char *msg, ...);

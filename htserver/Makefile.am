@@ -43,12 +43,15 @@ htserver_DEPENDENCIES	=				\
 	$(top_srcdir)/libs/libpandacom.la
 
 mon_SOURCES	=	\
+	cgi.c		cgi.h		\
+	multipart.c	multipart.h	\
 	HTClex.c	HTClex.h	\
 	HTCparser.c	HTCparser.h	\
-	tags.c		tags.h	\
-	exec.c		exec.h	\
-	multipart.c	multipart.h	\
+	tags.c		tags.h		\
+	exec.c		exec.h		\
+	htc.c		htc.h		\
 	mon.c		mon.h
+
 mon_DEPENDENCIES	=				\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/libs/libpandacom.la

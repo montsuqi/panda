@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -177,7 +177,7 @@ dbgmsg(">WriteClient");
                     LBS_ReserveSize(lbs, size, FALSE);
                     NativePackValue(NULL, LBS_Body(lbs), value);
                     if		(	(  p  !=  NULL            )
-                                &&	(  !stricmp(p+1,"clear")  ) ) {
+							&&	(  !stricmp(p+1,"clear")  ) ) {
                         InitializeValue(value);
                     }
                 }
@@ -314,6 +314,7 @@ dbgmsg(">SesServer");
 			SendStringDelim(fp,trid);
 			SendStringDelim(fp,"\n");
 			RecvStringDelim(fp,SIZE_BUFF,buff);
+dbgprintf("buff = [%s]\n",buff);
 			if		(  *buff  ==  0  )	{
 				break;
 			} else {
@@ -371,8 +372,10 @@ dbgmsg(">ChildProcess");
 	} else {
 		fOk = TRUE;
 	}
+dbgmsg("*");
 	if		(  fOk  ) {
 		EncodeTRID(trid,sesid,0);
+dbgprintf("Child<< [%s]\n",trid);
 		SendStringDelim(fp,trid);
 		SendStringDelim(fp,"\n");
 		WriteClient(fp,scr);
@@ -502,6 +505,7 @@ dbgmsg(">ExecuteServer");
 		}
 		fp = SocketToNet(fd);
 		RecvStringDelim(fp,SIZE_BUFF,buff);
+dbgprintf(">> [%s]\n",buff);
 		if		(  strncmp(buff,"Start:",6)  ==  0  ) {
 			NewSession(fp,buff+7);
 		} else
@@ -513,6 +517,7 @@ dbgmsg(">ExecuteServer");
 					EncodeTRID(buff,0,0);
 					SendStringDelim(fp,buff);
 					SendStringDelim(fp,"\n");
+dbgprintf("<< [%s]\n",buff);
 					xfree(htc);
 					g_hash_table_remove(SesHash,(void *)ses);
 				}

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -38,7 +38,8 @@ copies.
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
-#include	"mon.h"
+#include	"htc.h"
+#include	"cgi.h"
 #include	"exec.h"
 #include	"debug.h"
 
@@ -71,8 +72,8 @@ static	void
 Push(
 	VarType	v)
 {
-	printf("pStack = %d\n",pStack);
-	printf("val = %d\n",v.ival);
+	dbgprintf("pStack = %d\n",pStack);
+	dbgprintf("val = %d\n",v.ival);
     if (pStack == SIZE_RSTACK) {
         fprintf(stderr, "stack level too deep\n");
         exit(1);
@@ -120,7 +121,7 @@ uru(
 	}
 	return	(rc);
 }
-
+#if	0
 #define	SIZE_CHARS		16
 extern	char	*
 LBS_EmitUTF8(
@@ -170,6 +171,7 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 }
+#endif
 
 static	void
 ExecCalendar(
@@ -391,25 +393,63 @@ EncodeLengthURI(byte *p)
 	return ret;
 }
 
+static char *
+EscapeJavaScriptString(char *str)
+{
+    char *p, *rp, *result;
+    int len;
+
+    len = 0;
+    for (p = str; *p != '\0'; p++) {
+        switch (*p) {
+          case '\'':
+          case '\\':
+            len += 2;
+            break;
+          default:
+            len++;
+            break;
+        }
+    }
+
+    result = (char *) xmalloc(len + 1);
+    rp = result;
+    for (p = str; *p != '\0'; p++) {
+        switch (*p) {
+          case '\'':
+          case '\\':
+            *rp++ = '\\';
+            *rp++ = *p;
+            break;
+          default:
+            *rp++ = *p;
+            break;
+        }
+    }
+    *rp = '\0';
+    return result;
+}
+
 static void
 EmitWithEscape(LargeByteString *lbs, char *str)
 {
     char *p;
+
     for (p = str; *p != '\0'; p++) {
         switch (*p) {
         case CHAR_NIL:
-            break;
-        case '&':
-            LBS_EmitString(lbs, "&amp;");
-            break;
-        case '"':
-            LBS_EmitString(lbs, "&quot;");
             break;
         case '<':
             LBS_EmitString(lbs, "&lt;");
             break;
         case '>':
             LBS_EmitString(lbs, "&gt;");
+            break;
+        case '&':
+            LBS_EmitString(lbs, "&amp;");
+            break;
+        case '"':
+            LBS_EmitString(lbs, "&quot;");
             break;
         default:
             LBS_EmitChar(lbs, *p);
@@ -447,7 +487,7 @@ dbgmsg(">ExecCode");
 			  case	OPC_REF:
 				dbgmsg("OPC_REF");
 				name = LBS_FetchPointer(htc->code);
-				value = HT_GetValueString(name,FALSE);
+				value = GetHostValue(name,FALSE);
                 EmitWithEscape(html,value);
 				break;
 			  case	OPC_VAR:
@@ -471,37 +511,37 @@ dbgmsg(">ExecCode");
 			  case	OPC_HSNAME:
 				dbgmsg("OPC_HSNAME");
 				vval = Pop;
-				vval.str = HT_GetValueString(vval.str,FALSE);
+				vval.str = GetHostValue(vval.str,FALSE);
 				Push(vval);
 				break;
 			  case	OPC_EHSNAME:
 				dbgmsg("OPC_EHSNAME");
 				vval = Pop;
-				value = HT_GetValueString(vval.str,FALSE);
+				value = GetHostValue(vval.str,FALSE);
 				EmitWithEscape(html,value);
 				break;
 			  case	OPC_HINAME:
 				dbgmsg("OPC_HINAME");
 				vval = Pop;
-				vval.ival = atoi(HT_GetValueString(vval.str,FALSE));
+				vval.ival = atoi(GetHostValue(vval.str,FALSE));
 				Push(vval);
 				break;
 			  case	OPC_HBNAME:
 				dbgmsg("OPC_HBNAME");
-				value = HT_GetValueString(TOP(1).str,FALSE);
+				value = GetHostValue(TOP(1).str,FALSE);
 				TOP(1).ival = (stricmp(value,"TRUE") == 0);
 				break;
 			  case	OPC_HIVAR:
 				dbgmsg("OPC_HIVAR");
 				name = LBS_FetchPointer(htc->code);
                 str = ParseName(name);
-                vval.ival = atoi(HT_GetValueString(StrDup(str),FALSE));
+                vval.ival = atoi(GetHostValue(StrDup(str),FALSE));
 				Push(vval);
 				break;
 			  case	OPC_HBES:
 				dbgmsg("OPC_HBES");
 				vval = Pop;
-				value = HT_GetValueString(vval.str,TRUE);
+				value = GetHostValue(vval.str,TRUE);
 				str = LBS_FetchPointer(htc->code);
 				if		(  stricmp(value,"TRUE")  ==  0 ) {
 					EmitWithEscape(html,str);
@@ -610,6 +650,16 @@ dbgmsg(">ExecCode");
                     EmitWithEscape(html,vval.str);
                 }
 				break;
+			  case OPC_ESCJSS:
+                {
+                    char *escaped;
+
+                    dbgmsg("OPC_ESCJSS");
+                    vval = Pop;
+                    vval.str = EscapeJavaScriptString(vval.str);
+                    Push(vval);
+                }
+                break;
 			  case	OPC_CALENDAR:
 			  {
 				  char	*year
@@ -634,7 +684,7 @@ dbgmsg(">ExecCode");
 			}
 		} else {
 #ifdef	DEBUG
-			printf("%c",c);
+			dbgprintf("%c",c);
 #endif
 			LBS_EmitChar(html,c);
 		}
@@ -643,3 +693,39 @@ dbgmsg(">ExecCode");
 dbgmsg("<ExecCode");
 	return	(html);
 }
+
+extern	char	*
+ParseButton(
+	HTCInfo	*htc)
+{
+	char	*button;
+	char	*event;
+
+	void	GetRadio(
+		char	*name)
+	{
+		char	*rname;
+
+		if		(  ( rname = LoadValue(name) )  !=  NULL  ) {
+			RemoveValue(name);
+			SaveValue(rname,"TRUE",FALSE);
+		}
+	}
+	
+	if ((button = LoadValue("_event")) == NULL) {
+		if (htc->DefaultEvent == NULL) {
+			event = "";
+			htc = NULL;
+		} else {
+			event = htc->DefaultEvent;
+		}
+	} else {
+		event = g_hash_table_lookup(htc->Trans,ConvUTF8(button));
+		if (event == NULL) {
+			event = button;
+		}
+	}
+	g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
+	return	(event);
+}
+
