@@ -6,6 +6,7 @@ require "uconv"
 include Uconv
 
 $button_enable = false     
+
 if ARGV[0] == "-b" 
 	$button_enable = true 
 	ARGV.shift 
@@ -117,7 +118,7 @@ class	Element
 	end
 end
 
-class	Signal
+class	Gsignal
 	attr_accessor	:name, :handler, :data
 	def	initizlize
 		@handler = "";
@@ -230,8 +231,7 @@ class	Widget
 			@@record = @@record.append(sprintf("%s.value",@name),
 										sprintf("varchar(%d)",@chars));
 		  when	"GtkNumberEntry"
-
-			len = @format.gsub(".,","").length;
+			len = @format.gsub(/\.,/,"").length;
 			s = @format.split(".");
 			if		s[1]  !=  nil
 				slen = s[1].gsub(",","").length;
@@ -248,7 +248,11 @@ class	Widget
 			end
 		  when  "GtkButton" 
 			if	$button_enable 
-				@@record = @@record.append(sprintf("%s.state",@name),"int");
+			  @@record = @@record.append(sprintf("%s.state",@name),"int");
+			  if @label =~ /X+/
+				@@record = @@record.append(sprintf("%s.label",@name),
+										   sprintf("varchar(%d)",label.length));
+			  end
 			end 
 		  when  "GtkProgressBar" 
 			@@record = @@record.append(sprintf("%s.value",@name),"int");
@@ -314,7 +318,7 @@ begin
 				widget = Widget.new;
 				tree.push(widget);
 			  when	/signal/i
-				signal = Signal.new;
+				signal = Gsignal.new;
 			  else
 				;
 			end

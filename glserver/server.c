@@ -20,9 +20,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -233,6 +233,7 @@ dbgmsg(">SendWindow");
 	if		(  win->PutType  !=  SCREEN_NULL  ) {
 		SendPacketClass(fpComm,GL_WindowName);	ON_IO_ERROR(fpComm,badio);
 		SendString(fpComm,wname);				ON_IO_ERROR(fpComm,badio);
+dbgprintf("wname = [%s]\n",wname);
 		SendInt(fpComm,win->PutType);			ON_IO_ERROR(fpComm,badio);
 		switch	(win->PutType) {
 		  case	SCREEN_CURRENT_WINDOW:
@@ -473,7 +474,8 @@ dbgmsg(">MainLoop");
 			RecvString(fpComm,scr->window);		ON_IO_ERROR(fpComm,badio);
 			RecvString(fpComm,scr->widget);		ON_IO_ERROR(fpComm,badio);
 			RecvString(fpComm,scr->event);		ON_IO_ERROR(fpComm,badio);
-			dbgprintf("event = [%s]\n",scr->event);
+			dbgprintf("window = [%s]\n",scr->window);
+			dbgprintf("event  = [%s]\n",scr->event);
 			RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
 			ApplicationsCall(APL_SESSION_GET,scr);
 			break;
@@ -485,7 +487,7 @@ dbgmsg(">MainLoop");
 			scr->status = APL_SESSION_NULL;
 			break;
 		  default:
-			printf("class = %X\n",klass);
+			printf("invalid class = %X\n",klass);
 			scr->status = APL_SESSION_NULL;
 			break;
 		}

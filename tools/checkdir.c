@@ -313,6 +313,10 @@ dbgmsg(">DumpLD");
 
 	g_hash_table_foreach(ld->whash,(GHFunc)_DumpHandler,NULL);
 
+	printf("\tSPA = [%s]\n",ld->sparec->name);
+	nTab = 1;
+	DumpItems(ld->sparec->value);
+	printf(";\n");
 	for	( i = 0 ; i < ld->cWindow ; i ++ ) {
 		printf("\tbind\t\"%s\"\t\"%s\"\t\"%s\";\n",
 			   ld->window[i]->name,
@@ -400,6 +404,10 @@ dbgmsg(">DumpDirectory");
 	printf("cLD      = %d\n"  ,ThisEnv->cLD);
 	printf("cBD      = %d\n"  ,ThisEnv->cBD);
 	printf("cDBD     = %d\n"  ,ThisEnv->cDBD);
+#if	0
+	printf("LINK ---------\n");
+	DumpRecord(ThisEnv->linkrec);
+#endif
 	if		(  fLD  ) {
 		printf("LD ----------\n");
 		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {

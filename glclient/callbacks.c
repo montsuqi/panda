@@ -171,16 +171,20 @@ static void
 BlockChangedHanders(void)
 {
   struct changed_hander *p;
+ENTER_FUNC;
   for (p = changed_hander_list; p != NULL; p = p->next)
     gtk_signal_handler_block_by_func (p->object, p->func, p->data);
+LEAVE_FUNC;
 }
 
 static void
 UnblockChangedHanders(void)
 {
   struct changed_hander *p;
+ENTER_FUNC;
   for (p = changed_hander_list; p != NULL; p = p->next)
     gtk_signal_handler_unblock_by_func (p->object, p->func, p->data);
+LEAVE_FUNC;
 }
 
 extern	void
@@ -192,6 +196,7 @@ send_event(
 	GdkWindow	*pane;
 	GdkWindowAttr	attr;
 	static int	ignore_event = FALSE;
+	char	wname[SIZE_LONGNAME];
 
 dbgmsg(">send_event");
 	memset (&attr, 0, sizeof (GdkWindowAttr));
@@ -209,14 +214,28 @@ dbgmsg(">send_event");
 		}
 		/* show busy cursor */
 		window = gtk_widget_get_toplevel(widget);
+#if	1	/*	This logic is escape code for GTK bug.	*/
+		strcpy(wname,glade_get_widget_long_name(widget));
+		*(strchr(wname,'.')) = 0;
+		printf("window = [%s]\n",wname);
+#else
+		strcpy(wname,gtk_widget_get_name(window));
+#endif
 		pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
 		gdk_window_show (pane);
 		gdk_flush ();
 		/* send event */
-		SendEvent(fpComm,
-			  gtk_widget_get_name(window),
-			  gtk_widget_get_name(widget),
-			  event);
+		if		(  event  !=  NULL  ) {
+			SendEvent(fpComm,
+					  wname,
+					  gtk_widget_get_name(widget),
+					  event);
+		} else {
+			SendEvent(fpComm,
+					  wname,
+					  gtk_widget_get_name(widget),
+					  gtk_widget_get_name(widget));
+		}
 		SendWindowData();
 		BlockChangedHanders();
 		if		(  GetScreenData(fpComm)  ) {

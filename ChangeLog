@@ -1,3 +1,16 @@
+2003-10-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recgen.rb: ボタンのアイテム生成
+
+2003-10-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/callbacks.c (send_event): gtk_widget_get_toplevelのバグ
+	回避(なぜか名前が消えていることがある)
+
+2003-10-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recgen.rb: Signal -> Gsignal(Ruby 1.8でエラーとなったため)
+
 2003-10-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/copygen.c (_COBOL): aliasに対応

@@ -109,7 +109,6 @@ TableBody(
 	Bool	fComm;
 
 	if		(  val  ==  NULL  )	return;
-	if		(  ( ValueAttribute(val) & GL_ATTR_VIRTUAL )  !=  0  )	return;
 
 	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
@@ -157,7 +156,8 @@ TableBody(
 		fComm = FALSE;
 		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
 			tmp = val->body.RecordData.item[i];
-			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
+			if		(	(  !IS_VALUE_VIRTUAL(tmp)  )
+					&&	(  !IS_VALUE_ALIAS(tmp)    ) ) {
 				if		(  fComm  ) {
 					printf(",\n");
 				}
