@@ -1,3 +1,9 @@
+2002-09-04  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/protocol.c, glclient/protocol.h,
+	glclient/callbacks.c, glclient/callbacks.h:
+	2002-08-20 の修正を取り消し。
+
 2002-08-25  gettextize  <bug-gnu-gettext@gnu.org>
 
 	* Makefile.am (SUBDIRS): Add m4.
