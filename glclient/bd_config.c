@@ -26,7 +26,7 @@ copies.
 #include <glib.h>
 #include <libxml/tree.h>
 #include <libxml/parser.h>
-#include <sys/types.h>		/* open, fstat */
+#include <sys/types.h>		/* open, fstat, mode_t */
 #include <sys/stat.h>		/* open, fstat */
 #include <fcntl.h>		    /* open */
 #include <unistd.h>		    /* fstat, close */
@@ -437,7 +437,7 @@ bd_config_section_to_xml (BDConfigSection *self, FILE *fp)
 }
 
 gboolean
-bd_config_save (BDConfig *self, gchar *filename)
+bd_config_save (BDConfig *self, gchar *filename, mode_t mode)
 {
   FILE *fp;
   GList *p;
@@ -478,8 +478,27 @@ bd_config_save (BDConfig *self, gchar *filename)
     }
   fprintf (fp, "</config>\n");
   fclose (fp);
+  
+  chmod (filename, mode);
 
   return TRUE;
+}
+
+mode_t
+bd_config_permissions (BDConfig *self)
+{
+  int fd;
+  struct stat stat_buf;
+
+  g_return_val_if_fail (self != NULL, 0000);
+
+  if ((fd = open (self->filename, O_RDONLY)) == -1)
+    return 0000;
+  
+  fstat (fd, &stat_buf);
+  close (fd);
+
+  return 0777 & stat_buf.st_mode;
 }
 
 /*************************************************************

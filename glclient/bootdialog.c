@@ -41,6 +41,46 @@ copies.
 static BDConfig *config_ = NULL;
 static gboolean is_boot_dialog_init = FALSE;
 static GString *password_;
+static mode_t permissions = 0600;
+
+static void
+boot_dialog_create_conf (BDConfig *config)
+{
+  BDConfigSection *section;
+  gboolean is_create = FALSE;
+  
+  if (!bd_config_exist_section (config, "glclient"))
+    {
+      section = bd_config_append_section (config, "glclient");
+      bd_config_section_append_value (section, "splash", "");
+      bd_config_section_append_value (section, "caption", "glclient ランチャー");
+      bd_config_section_append_value (section, "welcome", "glclient ランチャー");
+      
+      is_create = TRUE;
+    }
+  if (!bd_config_exist_section (config, "global"))
+    {
+      section = bd_config_append_section (config, "global");
+      bd_config_section_append_value (section, "hostname", "カスタム");
+      bd_config_section_append_value (section, "host", "localhost");
+      bd_config_section_append_value (section, "port", "8000");
+      bd_config_section_append_value (section, "application", "panda:");
+      bd_config_section_append_value (section, "protocol_v1", "true");
+      bd_config_section_append_value (section, "protocol_v2", "false");
+      bd_config_section_append_value (section, "cache", "./cache");
+      bd_config_section_append_value (section, "style", "");
+      bd_config_section_append_value (section, "gtkrc", "");
+      bd_config_section_append_value (section, "mlog", "false");
+      bd_config_section_append_value (section, "user", "");
+      bd_config_section_append_value (section, "password", "");
+      bd_config_section_append_value (section, "savepassword", "false");
+      
+      is_create = TRUE;
+    }
+
+  if (is_create)
+    bd_config_save (config, NULL, permissions);
+}
 
 static void
 boot_dialog_init ()
@@ -56,30 +96,7 @@ boot_dialog_init ()
         fprintf (stderr, "error: could not create per-user config directory\n");
       file = g_strconcat(dir, G_DIR_SEPARATOR_S, "glclient.conf", NULL);
       config_ = bd_config_new_with_filename (file);
-      if (!bd_config_exist_section (config_, "glclient"))
-        {
-          section = bd_config_append_section (config_, "glclient");
-          bd_config_section_append_value (section, "splash", "");
-          bd_config_section_append_value (section, "caption", "glclient ランチャー");
-          bd_config_section_append_value (section, "welcome", "glclient ランチャー");
-        }
-      if (!bd_config_exist_section (config_, "global"))
-        {
-          section = bd_config_append_section (config_, "global");
-          bd_config_section_append_value (section, "hostname", "カスタム");
-          bd_config_section_append_value (section, "host", "localhost");
-          bd_config_section_append_value (section, "port", "8000");
-          bd_config_section_append_value (section, "application", "panda:");
-          bd_config_section_append_value (section, "protocol_v1", "true");
-          bd_config_section_append_value (section, "protocol_v2", "false");
-          bd_config_section_append_value (section, "cache", "./cache");
-          bd_config_section_append_value (section, "style", "");
-          bd_config_section_append_value (section, "gtkrc", "");
-          bd_config_section_append_value (section, "mlog", "false");
-          bd_config_section_append_value (section, "user", "");
-          bd_config_section_append_value (section, "password", "");
-          bd_config_section_append_value (section, "savepassword", "false");
-        }
+      boot_dialog_create_conf (config_);
       
       section = bd_config_get_section (config_, "global");
       password_ = g_string_new (bd_config_section_get_string (section, "password"));
@@ -433,6 +450,12 @@ boot_dialog_run ()
   gboolean res;
 
   boot_dialog_init ();
+  if (bd_config_permissions (config_) != permissions)
+    {
+      fprintf (stderr, "error: permissions is not 0%o: %s\n",
+               permissions, bd_config_get_filename (config_));
+      return FALSE;
+    }
 
   self = boot_dialog_new ();
   gtk_widget_show_all (self->dialog);
@@ -445,7 +468,7 @@ boot_dialog_run ()
   if (res)
     {
       boot_dialog_get_value (self, config_);
-      bd_config_save (config_, NULL);
+      bd_config_save (config_, NULL, permissions);
     }
 
   gtk_widget_destroy (self->dialog);

@@ -1,5 +1,15 @@
 2004-07-12  Kouji TAKAO  <kouji@netlab.jp>
 
+	* glclient/bootdialog.c (boot_dialog_run): パーミッションが0600で
+	なければダイアログを起動しないように修正。また、ダイアログの設定ファ
+	イルのパーミッションを0600に変更。
+	(boot_dialog_create_conf): 設定ファイルが存在しない場合に作成する
+	関数を追加
+	* glclient/bd_config.c (bd_config_save): 保存時にパーミッションを
+	設定できるように修正
+	(bd_config_permissions): 設定ファイルのパーミッションを取得する関
+	数を追加
+
 	* glclient/bootdialog.c (boot_dialog_run): gtk_grab_*を
 	gtk_window_set_modalに変更
 

@@ -23,8 +23,9 @@ copies.
 #ifndef __BD_CONFIG_H_INCLUDED__
 #define __BD_CONFIG_H_INCLUDED__
 
-#include <stdio.h> /* FILE */
-#include <glib.h>  /* gchar, gboolean */
+#include <stdio.h>     /* FILE */
+#include <glib.h>      /* gchar, gboolean */
+#include <sys/types.h> /* mode_t */
 
 typedef struct _BDConfig BDConfig;
 typedef struct _BDConfigSection BDConfigSection;
@@ -60,7 +61,9 @@ gboolean         bd_config_exist_section     (BDConfig *self,
 BDConfigSection *bd_config_append_section    (BDConfig *self,
                                               gchar *name);
 gboolean         bd_config_save              (BDConfig *self,
-                                              gchar *filename);
+                                              gchar *filename,
+                                              mode_t mode);
+mode_t           bd_config_permissions       (BDConfig *self);
 
 #endif /* #ifndef __BD_CONFIG_H_INCLUDED__ */
 
