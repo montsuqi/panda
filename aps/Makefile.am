@@ -46,7 +46,7 @@ LANG_DRIVERS	=	\
 LANG_OBJECTS	= $(LANG_DRIVERS:.c=.o)
 
 aps_SOURCES	=	\
-	aps_main.c	aps_main.h	defaults.h	\
+	aps_main.c	aps_main.h	\
 	apsio.c		apsio.h		\
 	dbgroup.c	\
 	redirect.c	redirect.h	\
@@ -90,6 +90,8 @@ MCPSUB_la_SOURCES	=	\
 	handler.c	handler.h	\
 	redirect.c	redirect.h	\
 	cobolvalue.c	cobolvalue.h
+
+BUILT_SOURCES = defaults.h
 
 defaults.h: Makefile.am $(top_builddir)/config.status
 	@echo "Creating defaults.h..."
