@@ -193,16 +193,19 @@ edit_dialog_validate (EditDialog * self)
       fprintf (stderr, "warning: Description is blank\n");
       return FALSE;
     }
-  for (p = bd_config_get_sections (self->config); p != NULL; p = g_list_next (p))
+  if (self->hostname == NULL)
     {
-      hostname = (gchar *) p->data;
-      if (strcmp (hostname, "glclient") == 0 || strcmp (hostname, "global") == 0)
-        continue;
-      str = bd_config_get_string (self->config, hostname, "description");
-      if (strcmp (str, desc) == 0)
+      for (p = bd_config_get_sections (self->config); p != NULL; p = g_list_next (p))
         {
-          fprintf (stderr, "warning: already used description\n");
-          return FALSE;
+          hostname = (gchar *) p->data;
+          if (strcmp (hostname, "glclient") == 0 || strcmp (hostname, "global") == 0)
+            continue;
+          str = bd_config_get_string (self->config, hostname, "description");
+          if (strcmp (str, desc) == 0)
+            {
+              fprintf (stderr, "warning: already used description\n");
+              return FALSE;
+            }
         }
     }
   return TRUE;
@@ -461,6 +464,7 @@ server_dialog_server_list_update (ServerDialog * self)
   gchar *hostname;
   BDConfigSection *section;
   gint i;
+  gint row;
   
   g_return_if_fail (self != NULL);
 
@@ -477,7 +481,8 @@ server_dialog_server_list_update (ServerDialog * self)
       for (i = 0; i < server_dialog_titles_count; i++)
         text_list[i]
           = bd_config_section_get_string (section, server_dialog_titles[i].value_name);
-      gtk_clist_append (GTK_CLIST (self->server_list), text_list);
+      row = gtk_clist_append (GTK_CLIST (self->server_list), text_list);
+      gtk_clist_set_row_data (GTK_CLIST (self->server_list), row, hostname);
     }
   gtk_clist_columns_autosize (GTK_CLIST (self->server_list));
   
@@ -494,10 +499,16 @@ server_dialog_on_delete_event (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
 {
+  gint row;
+  
   if (edit_dialog_run (self->config, NULL))
     {
       server_dialog_server_list_update (self);
       bd_config_save (self->config, NULL, permissions);
+      row = GTK_CLIST (self->server_list)->rows - 1;
+      gtk_clist_select_row (GTK_CLIST (self->server_list), row, 0);
+      if (!gtk_clist_row_is_visible (GTK_CLIST (self->server_list), row))
+        gtk_clist_moveto (GTK_CLIST (self->server_list), row, 0, 0.5, 0);
     }
   gdk_window_raise (self->dialog->window);
 }
@@ -505,7 +516,31 @@ server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
 {
+  GList *selection, *p;
+  gint row;
+  gchar *hostname;
+  gboolean is_update;
+
+  g_return_if_fail (GTK_CLIST (self->server_list)->selection != NULL);
   
+  selection = GTK_CLIST (self->server_list)->selection;
+  is_update = FALSE;
+  row = 0;
+  for (p = selection; p != NULL; p = g_list_next (p))
+    {
+      row = GPOINTER_TO_INT (p->data);
+      hostname = gtk_clist_get_row_data (GTK_CLIST (self->server_list), row);
+      is_update = (edit_dialog_run (self->config, hostname) || is_update);
+    }
+  if (is_update)
+    {
+      server_dialog_server_list_update (self);
+      bd_config_save (self->config, NULL, permissions);
+      gtk_clist_select_row (GTK_CLIST (self->server_list), row, 0);
+      if (!gtk_clist_row_is_visible (GTK_CLIST (self->server_list), row))
+        gtk_clist_moveto (GTK_CLIST (self->server_list), row, 0, 0.5, 0);
+    }
+  gdk_window_raise (self->dialog->window);
 }
 
 static void
@@ -518,6 +553,22 @@ static void
 server_dialog_on_close (GtkWidget * widget, ServerDialog * self)
 {
   gtk_main_quit ();
+}
+
+static void
+server_dialog_on_select_row (GtkWidget * widget, gint row, gint column,
+                             GdkEvent * event, ServerDialog * self)
+{
+  gtk_widget_set_sensitive (self->edit, TRUE);
+  gtk_widget_set_sensitive (self->delete, TRUE);
+}
+
+static void
+server_dialog_on_unselect_row (GtkWidget * widget, gint row, gint column,
+                               GdkEvent * event, ServerDialog * self)
+{
+  gtk_widget_set_sensitive (self->edit, FALSE);
+  gtk_widget_set_sensitive (self->delete, FALSE);
 }
 
 static ServerDialog *
@@ -578,6 +629,12 @@ server_dialog_new (BDConfig * config)
                                                          titles);
   gtk_clist_column_titles_show (GTK_CLIST (clist));
   gtk_container_add (GTK_CONTAINER (scroll), clist);
+  gtk_signal_connect (GTK_OBJECT (clist), "select_row",
+                      GTK_SIGNAL_FUNC (server_dialog_on_select_row),
+                      self);
+  gtk_signal_connect (GTK_OBJECT (clist), "unselect_row",
+                      GTK_SIGNAL_FUNC (server_dialog_on_unselect_row),
+                      self);
 
   server_dialog_server_list_update (self);
     
