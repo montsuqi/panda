@@ -26,13 +26,13 @@
 
   <widget>
     <class>GtkVBox</class>
-    <name>vb1</name>
+    <name>vbox</name>
     <homogeneous>False</homogeneous>
     <spacing>0</spacing>
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb4</name>
+      <name>h1</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -81,7 +81,7 @@
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb5</name>
+      <name>h2</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -130,7 +130,7 @@
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb7</name>
+      <name>h3</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -240,7 +240,7 @@
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb12</name>
+      <name>h4</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -345,7 +345,7 @@
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb13</name>
+      <name>h5</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -455,7 +455,7 @@
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb11</name>
+      <name>h6</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -504,7 +504,7 @@
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb14</name>
+      <name>h7</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -515,7 +515,7 @@
 
       <widget>
 	<class>GtkHBox</class>
-	<name>hb15</name>
+	<name>h8</name>
 	<homogeneous>False</homogeneous>
 	<spacing>0</spacing>
 	<child>
@@ -733,7 +733,7 @@
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb17</name>
+      <name>h9</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -916,7 +916,7 @@
 
     <widget>
       <class>GtkHBox</class>
-      <name>hb19</name>
+      <name>h10</name>
       <homogeneous>False</homogeneous>
       <spacing>0</spacing>
       <child>
@@ -927,7 +927,7 @@
 
       <widget>
 	<class>GtkHBox</class>
-	<name>hb20</name>
+	<name>h11</name>
 	<homogeneous>False</homogeneous>
 	<spacing>0</spacing>
 	<child>
@@ -994,7 +994,7 @@
 
       <widget>
 	<class>GtkHBox</class>
-	<name>hb21</name>
+	<name>h12</name>
 	<homogeneous>False</homogeneous>
 	<spacing>0</spacing>
 	<child>

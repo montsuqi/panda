@@ -36,10 +36,12 @@ copies.
 #define	SIZE_OTHER		128
 #define	SIZE_GLOWN		1024	/*	LBS glown unit	*/
 
-#define	SIZE_SQL		16384
+//#define	SIZE_SQL		16384
+#define	SIZE_SQL		65538
 #define	SIZE_BLOCK		1024
 
-#define	SIZE_BUFF		1024
+//#define	SIZE_BUFF		1024
+#define	SIZE_BUFF		65538
 #define	SIZE_HOST		255
 
 #define	SIZE_NAME		64

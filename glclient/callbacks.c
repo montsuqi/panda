@@ -163,42 +163,39 @@ send_event(
 {
 	char	*name
 	,		*window;
-	static int ignore_event = FALSE;
+	GtkWidget	*w;
+	static int	ignore_event = FALSE;
 
 dbgmsg(">send_event");
-	if		(  !fInRecv  &&  !ignore_event ) {
-		name = gtk_widget_get_name(widget);
-		window = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
-		SendEvent(fpComm,window,name,event);
-		SendWindowData();
-		BlockChangedHanders();
-		if		(  GetScreenData(fpComm)  ) {
-			ignore_event = TRUE;
-			while	(  gtk_events_pending()  ) {
-				gtk_main_iteration();
+	/* don't send event if the window has lost focus */
+	for (w = widget; !GTK_IS_WINDOW (w); w = w->parent);
+	if		(  GTK_WINDOW (w)->window_has_focus  )	{
+		if		(  !fInRecv  &&  !ignore_event ) {
+			name = gtk_widget_get_name(widget);
+			window = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
+			SendEvent(fpComm,window,name,event);
+			SendWindowData();
+			BlockChangedHanders();
+			if		(  GetScreenData(fpComm)  ) {
+				ignore_event = TRUE;
+				while	(  gtk_events_pending()  ) {
+					gtk_main_iteration();
+				}
+				ignore_event = FALSE;
 			}
-			ignore_event = FALSE;
+			UnblockChangedHanders();
 		}
-		UnblockChangedHanders();
 	}
 dbgmsg("<send_event");
 }
 
 extern	void
-send_event_if_changed(
+send_event_on_focus_out(
 	GtkWidget		*widget,
 	GdkEventFocus	*focus,
 	char			*event)
 {
-	const	char	*name;
-	char		*wname;
-	XML_Node	*node;
-	name = glade_get_widget_long_name(widget);
-	wname = gtk_widget_get_name (gtk_widget_get_toplevel (widget));
-	if		(	(  ( node = g_hash_table_lookup (WindowTable, wname) ) !=  NULL  )
-			&&	(  g_hash_table_lookup(node->UpdateWidget, name)                 ) ) {
-		send_event (widget, event);
-	}
+	send_event (widget, event);
 }
 
 static char *timeout_event;
@@ -223,18 +220,28 @@ send_event_when_idle(
 	GtkWidget	*widget,
 	char		*event)
 {
-  static int registed = 0;
+	static int registed = 0;
+	static int timeout = -1;
 
-  if (timeout_hander_id)
-    gtk_timeout_remove (timeout_hander_id);
+	if (timeout_hander_id)
+		gtk_timeout_remove (timeout_hander_id);
 
-  if (!registed) {
-    RegisterChangedHander (GTK_OBJECT (widget), send_event_when_idle, event);
-    registed = 1;
-  }
+	if (!registed) {
+		RegisterChangedHander (GTK_OBJECT (widget), send_event_when_idle, event);
+		registed = 1;
+	}
+	if (timeout == -1) {
+		char *s = getenv ("GL_SEND_EVENT_DELAY");
+		if (s)
+			timeout = atoi (s);
+		else
+			timeout = 1000;
+	}
 
-  timeout_event = event;
-  timeout_hander_id = gtk_timeout_add (1000, send_event_if_kana, widget);
+	if (timeout > 0) {
+		timeout_event = event;
+		timeout_hander_id = gtk_timeout_add (timeout, send_event_if_kana, widget);
+	}
 }
 
 extern void

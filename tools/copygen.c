@@ -813,7 +813,7 @@ static	ARG_TABLE	option[] = {
 		"連絡領域を出力する"							},
 	{	"screen",	BOOLEAN,	TRUE,	(void*)&fScreen,
 		"画面レコード領域を出力する"					},
-	{	"db",		BOOLEAN,	TRUE,	(void*)&fDB,
+	{	"dbarea",	BOOLEAN,	TRUE,	(void*)&fDB,
 		"MCPSUB用領域を出力する"						},
 	{	"dbrec",	BOOLEAN,	TRUE,	(void*)&fDBREC,
 		"MCBSUBの引数に使うレコード領域を出力する"	},

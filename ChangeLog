@@ -1,3 +1,29 @@
+2002-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.4 release
+
+	* aps/dbredirector.c (LogThread): flushを忘れている部分を直す(高速
+	化するか？)
+
+	* include/const.h (SIZE_BUFF): バッファサイズ拡張(一時しのぎ)
+
+2002-05-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/copygen.c: -dbだったパラメータを-dbareaに変更した
+
+2002-04-21  Keisuke Nishida <knishida@netlab.jp>
+
+	* glclient/widgetOPS.c (RecvEntry): Gtk(Panda)Entryの初期値が先頭
+	から表示されない問題を修正
+
+	* glclient/callbacks.c (send_event_when_idle): インクリメンタル検
+	索開始の延滞時間(デフォルトで 1 秒)を環境変数でカスタマイズ出来る
+	ようにした
+
+2002-04-12  Keisuke Nishida <knishida@netlab.jp>
+
+	* glclient/callbacks.c (send_event): 二重カーソル問題回避
+
 2002-04-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.3公開

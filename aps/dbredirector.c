@@ -113,18 +113,20 @@ dbgmsg(">LogThread");
 		  case	RED_DATA:
 			RecvString(fpLog,buff);
 			SendPacketClass(fpLog,RED_OK);
+			fflush(fpLog);
 			fSuc = TRUE;
 			break;
 		  case	RED_PING:
 			SendPacketClass(fpLog,RED_PONG);
+			fflush(fpLog);
 			goto	top;
 			break;
 		  default:
 			SendPacketClass(fpLog,RED_NOT);
+			fflush(fpLog);
 			fSuc = FALSE;
 			break;
 		}
-		fflush(fpLog);
 		if		(  !stricmp(buff,"begin")  ) {
 			data = New(LOG_DATA);
 			data->asize = SIZE_SQL;
