@@ -52,9 +52,6 @@ copies.
 #define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
 #define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
-#define	BLOB_OPEN_CREATE	0x01
-#define	BLOB_OPEN_APPEND	0x08
-
 static	size_t
 OpenEntry(
 	BLOB_V1_Entry	*ent,
@@ -255,6 +252,7 @@ ENTER_FUNC;
 			fprintf(stderr,"version mismatch\n");
 			exit(1);
 		}
+		fchmod(fileno(fp),0600);
 		blob = New(BLOB_V1_Space);
 		blob->space = StrDup(space);
 		blob->fp = fp;
