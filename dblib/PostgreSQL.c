@@ -179,109 +179,119 @@ EscapeStringInArray(LargeByteString *lbs, char *s)
 static void
 EscapeBytea(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
 {
-	unsigned char *sp, *spend = bintext + binlen;
-	unsigned char *dp;
-	size_t len;
+    unsigned char *sp, *spend = bintext + binlen;
+    unsigned char *dp;
+    size_t len;
     size_t old_size;
 
-	len = 0;
-	for (sp = bintext; sp < spend; sp++) {
-		if (*sp < 0x20 || *sp > 0x7e) {
-			len += 5;
+    len = 0;
+    for (sp = bintext; sp < spend; sp++) {
+        if (*sp < 0x20 || *sp > 0x7e) {
+            len += 5;
         }
-		else if (*sp == '\'') {
-			len += 2;
+        else if (*sp == '\'') {
+            len += 2;
         }
-		else if (*sp == '\\') {
-			len += 4;
+        else if (*sp == '\\') {
+            len += 4;
         }
-		else {
-			len++;
+        else {
+            len++;
         }
-	}
+    }
 
     old_size = LBS_Size(lbs);
     LBS_ReserveSize(lbs, old_size + len, TRUE);
     dp = LBS_Body(lbs) + old_size;
 
-	for (sp = bintext; sp < spend; sp++) {
-		if (*sp < 0x20 || *sp > 0x7e) {
-			dp += sprintf(dp, "\\\\%03o", *sp);
-		}
-		else if (*sp == '\'') {
-			*dp++ = '\\';
-			*dp++ = '\'';
-		}
-		else if (*sp == '\\') {
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '\\';
-		}
-		else {
-			*dp++ = *sp;
+    for (sp = bintext; sp < spend; sp++) {
+        if (*sp < 0x20 || *sp > 0x7e) {
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '0' + ((*sp >> 6) & 7);
+            *dp++ = '0' + ((*sp >> 3) & 7);
+            *dp++ = '0' + (*sp & 7);
         }
-	}
+        else if (*sp == '\'') {
+            *dp++ = '\\';
+            *dp++ = '\'';
+        }
+        else if (*sp == '\\') {
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+        }
+        else {
+            *dp++ = *sp;
+        }
+    }
 }
 
 static void
 EscapeByteaInArray(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
 {
-	unsigned char *sp, *spend = bintext + binlen;
-	unsigned char *dp;
-	size_t len;
+    unsigned char *sp, *spend = bintext + binlen;
+    unsigned char *dp;
+    size_t len;
     size_t old_size;
 
-	len = 0;
-	for (sp = bintext; sp < spend; sp++) {
-		if (*sp < 0x20 || *sp > 0x7e) {
-			len += 7;
+    len = 0;
+    for (sp = bintext; sp < spend; sp++) {
+        if (*sp < 0x20 || *sp > 0x7e) {
+            len += 7;
         }
-		else if (*sp == '\'') {
-			len += 2;
+        else if (*sp == '\'') {
+            len += 2;
         }
-		else if (*sp == '"') {
-			len += 3;
+        else if (*sp == '"') {
+            len += 3;
         }
-		else if (*sp == '\\') {
-			len += 8;
+        else if (*sp == '\\') {
+            len += 8;
         }
-		else {
-			len++;
+        else {
+            len++;
         }
-	}
+    }
 
     old_size = LBS_Size(lbs);
     LBS_ReserveSize(lbs, old_size + len, TRUE);
     dp = LBS_Body(lbs) + old_size;
 
-	for (sp = bintext; sp < spend; sp++) {
-		if (*sp < 0x20 || *sp > 0x7e) {
-			dp += sprintf(dp, "\\\\\\\\%03o", *sp);
-		}
-		else if (*sp == '\'') {
-			*dp++ = '\\';
-			*dp++ = '\'';
-		}
-		else if (*sp == '"') {
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '"';
-		}
-		else if (*sp == '\\') {
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '\\';
-			*dp++ = '\\';
-		}
-		else {
-			*dp++ = *sp;
+    for (sp = bintext; sp < spend; sp++) {
+        if (*sp < 0x20 || *sp > 0x7e) {
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '0' + ((*sp >> 6) & 7);
+            *dp++ = '0' + ((*sp >> 3) & 7);
+            *dp++ = '0' + (*sp & 7);
         }
-	}
+        else if (*sp == '\'') {
+            *dp++ = '\\';
+            *dp++ = '\'';
+        }
+        else if (*sp == '"') {
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '"';
+        }
+        else if (*sp == '\\') {
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+        }
+        else {
+            *dp++ = *sp;
+        }
+    }
 }
 
 static	void
