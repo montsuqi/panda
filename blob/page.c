@@ -47,7 +47,6 @@ copies.
 #include	"pagestruct.h"
 #include	"storage.h"
 #include	"table.h"
-#include	"core.h"
 #include	"message.h"
 #include	"debug.h"
 
