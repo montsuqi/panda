@@ -59,6 +59,7 @@ static	Bool	fRedirector;
 static	Bool	fNoCheck;
 static	Bool	fRestart;
 static	int		interval;
+static	int		wfcinterval;
 static	int		MaxTran;
 static	int		Sleep;
 
@@ -346,7 +347,7 @@ dbgmsg(">StartWfc");
 		proc->argc = argc;
 		argv[argc ++] = NULL;
 		StartProcess(proc);
-		sleep(interval);
+		sleep(wfcinterval);
 	}
 dbgmsg("<StartWfc");
 }
@@ -498,6 +499,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"wait",		INTEGER,	TRUE,	(void*)&interval,
 		"プロセス操作時の待ち時間"	 					},
+	{	"wfcwait",	INTEGER,	TRUE,	(void*)&wfcinterval,
+		"wfc起動後の待ち時間(遅いCPU用)"				},
 
 	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
 		"自分のホスト名を指定する"	 					},
@@ -526,7 +529,8 @@ SetDefault(void)
 	LDDir = NULL;
 	RecDir = NULL;
 	Log = NULL;
-	interval = 2;
+	interval = 0;
+	wfcinterval = 0;
 	MaxTran = 0;
 	Sleep = 0;
 
