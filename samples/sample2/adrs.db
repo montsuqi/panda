@@ -57,6 +57,9 @@ path	mail	{
 				:address
 		;
 	};
+	DBCLOSECURSOR	{
+		CLOSE adrs_mail_csr;
+	};
 	DBUPDATE	{
 		UPDATE adrs
 			SET
