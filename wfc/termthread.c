@@ -91,14 +91,12 @@ dbgmsg(">FinishSession");
 		strcpy(name,data->name);
 		g_hash_table_remove(TermHash,data->name);
 		xfree(data->name);
-	} else {
-		strcpy(name,"");
-	}
-	FreeLBS(data->mcpdata);
-	FreeLBS(data->spadata);
-	FreeLBS(data->linkdata);
-	for	( i = 0 ; i < data->cWindow ; i ++ ) {
-		FreeLBS(data->scrdata[i]);
+		FreeLBS(data->mcpdata);
+		FreeLBS(data->spadata);
+		FreeLBS(data->linkdata);
+		for	( i = 0 ; i < data->cWindow ; i ++ ) {
+			FreeLBS(data->scrdata[i]);
+		}
 	}
 	xfree(data);
 	printf("session end [%s]\n",name);
@@ -275,8 +273,8 @@ TermThread(
 				aps = NULL;
 			}
 		}	while	(  aps  !=  NULL  );
+		FinishSession(data);
 	}
-	FinishSession(data);
 	shutdown(fhTerm, 2);
 	fclose(term->fp);
 	FreeQueue(term->que);

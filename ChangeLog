@@ -1,3 +1,8 @@
+2003-11-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* wfc/termthread.c: 存在しないLDの時落ちるバグ修正
+	                    (1.2 から取り込み)
+
 2003-04-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* src/LBSfunc.h: asizeの管理を追加、sizeは「使った大きさ」にした
