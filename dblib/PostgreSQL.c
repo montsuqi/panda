@@ -985,6 +985,7 @@ _DBCOMMIT(
 	int			rc;
 
 dbgmsg(">_DBCOMMIT");
+	CheckDB_Redirect(dbg);
 	res = _PQexec(dbg,"commit work",FALSE);
 	if		(	(  res ==  NULL  )
 			||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {

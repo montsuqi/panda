@@ -152,6 +152,7 @@ _DBCOMMIT(
 	int			c;
 
 dbgmsg(">_DBCOMMIT");
+	CheckDB_Redirect(dbg);
 	LBS_EmitEnd(dbg->conn);
 	RewindLBS(dbg->conn);
 	p = (char *)LBS_Body(dbg->conn);
@@ -162,6 +163,7 @@ dbgmsg(">_DBCOMMIT");
 	}
 	rc += DoShell(p);
 	LBS_Clear(dbg->conn);
+	CommitDB_Redirect(dbg);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}

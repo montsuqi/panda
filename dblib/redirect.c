@@ -108,14 +108,38 @@ dbgmsg(">BeginDB_Redirect");
 dbgmsg("<BeginDB_Redirect");
 }
 
+extern	Bool
+CheckDB_Redirect(
+	DBG_Struct	*dbg)
+{
+	Bool	rc;
+
+	SendPacketClass(dbg->fpLog,RED_PING);
+	if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
+		Warning("log server down?");
+		if		(  !fNoCheck  ) {
+			exit(1);
+		}
+		CloseNet(dbg->fpLog);
+		dbg->fpLog = NULL;
+		FreeLBS(dbg->redirectData);
+		dbg->redirectData = NULL;
+		rc = FALSE;
+	} else {
+		rc = TRUE;
+	}
+	return	(rc);
+}
+
 extern	void
 CommitDB_Redirect(
 	DBG_Struct	*dbg)
 {
 dbgmsg(">CommitDB_Redirect");
 	if		(  dbg->redirectData  !=  NULL  ) {
-		SendPacketClass(dbg->fpLog,RED_PING);
-		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
+		SendPacketClass(dbg->fpLog,RED_DATA);
+		SendLBS(dbg->fpLog,dbg->redirectData);
+		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
 			Warning("log server down?");
 			if		(  !fNoCheck  ) {
 				exit(1);
@@ -124,19 +148,6 @@ dbgmsg(">CommitDB_Redirect");
 			dbg->fpLog = NULL;
 			FreeLBS(dbg->redirectData);
 			dbg->redirectData = NULL;
-		} else {
-			SendPacketClass(dbg->fpLog,RED_DATA);
-			SendLBS(dbg->fpLog,dbg->redirectData);
-			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
-				Warning("log server down?");
-				if		(  !fNoCheck  ) {
-					exit(1);
-				}
-				CloseNet(dbg->fpLog);
-				dbg->fpLog = NULL;
-				FreeLBS(dbg->redirectData);
-				dbg->redirectData = NULL;
-			}
 		}
 	}
 dbgmsg("<CommitDB_Redirect");
