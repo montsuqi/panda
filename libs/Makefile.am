@@ -1,6 +1,6 @@
 lib_LTLIBRARIES	=	libpanda.la libpandas.la libpandacom.la libpandagl.la libpandamisc.la panda.la
 
-noinst_PROGRAMS	=	enum
+noinst_PROGRAMS	=	enum testnet
 
 panda_la_LDFLAGS	=	-module -export-dynamic
 panda_la_SOURCES	=	panda.c
@@ -29,6 +29,12 @@ enum_LDADD	= 	\
 	$(GLADE_LIBS)			\
 	-L/usr/lib -lglib -lm	\
 	$(MONDAI_LIBS)
+
+testnet_LDADD	= 	\
+	-L/usr/lib -lglib -lm	\
+	$(MONDAI_LIBS)			\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
 
 libpanda_la_SOURCES	=		\
 	Dlex.h					\

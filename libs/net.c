@@ -49,6 +49,23 @@ copies.
 #include	"port.h"
 #include	"debug.h"
 
+static	void
+Flush(
+	NETFILE	*fp)
+{
+	char	*p = fp->buff;
+	ssize_t	count;
+
+	while	(  fp->ptr  >  0  ) {
+		if		(  ( count = fp->write(fp,p,fp->ptr) )  >  0  ) {
+			fp->ptr -= count;
+			p += count;
+		} else {
+			break;
+		}
+	}
+}
+
 extern	int
 Send(
 	NETFILE	*fp,
@@ -56,19 +73,37 @@ Send(
 	size_t	size)
 {
 	char	*p = buff;
-	ssize_t	count;
+	ssize_t	count
+		,	left;
 	int		ret;
 
 	if		(  fp->fOK  ) {
-		ret = size;
-		while	(  size  >  0  ) {
-			if		(  ( count = fp->write(fp,p,size) )  >  0  ) {
-				size -= count;
-				p += count;
-			} else {
-				ret = -1;
-				break;
+		if		(	(  fp->buff  !=  NULL  )
+				&&	(  fp->size  >  size  ) ) {
+			if		(  size + fp->ptr  >  fp->size  ) {
+				left = fp->size - fp->ptr;
+				memcpy((fp->buff + fp->ptr),buff,left);
+				fp->ptr = fp->size;
+				Flush(fp);
+				buff += left;
+				size -= left;
 			}
+			memcpy((fp->buff + fp->ptr),buff,size);
+			fp->ptr += size;
+			fp->fSent = TRUE;
+		} else {
+			Flush(fp);
+			ret = size;
+			while	(  size  >  0  ) {
+				if		(  ( count = fp->write(fp,p,size) )  >  0  ) {
+					size -= count;
+					p += count;
+				} else {
+					ret = -1;
+					break;
+				}
+			}
+			fp->fSent = FALSE;
 		}
 	} else {
 		ret = 0;
@@ -87,6 +122,9 @@ Recv(
 	int		ret;
 
 	if		(  fp->fOK  ) {
+		if		(  fp->fSent  ) {
+			Flush(fp);
+		}
 		ret = size;
 		p = buff;
 		while	(  size  >  0  ) {
@@ -101,6 +139,7 @@ Recv(
 	} else {
 		ret = 0;
 	}
+	fp->fSent = FALSE;
 	return	(ret);
 }
 
@@ -134,6 +173,9 @@ extern	void
 FreeNet(
 	NETFILE	*fp)
 {
+	if		(  fp->buff  !=  NULL  ) {
+		xfree(fp->buff);
+	}
 	xfree(fp);
 }
 
@@ -141,6 +183,7 @@ extern	void
 CloseNet(
 	NETFILE	*fp)
 {
+	Flush(fp);
 	fp->close(fp);
 	FreeNet(fp);
 }
@@ -213,6 +256,10 @@ NewNet(void)
 	fp->read = NULL;
 	fp->write = NULL;
 	fp->close = NULL;
+	fp->fSent = FALSE;
+	fp->size = 0;
+	fp->ptr = 0;
+	fp->buff = NULL;
 	return	(fp);
 }
 
@@ -228,6 +275,11 @@ SocketToNet(
 	fp->read = FD_Read;
 	fp->write = FD_Write;
 	fp->close = FD_Close;
+#if	1
+	fp->buff = xmalloc(SIZE_BUFF);
+	fp->size = SIZE_BUFF;
+	fp->ptr = 0;
+#endif
 	return	(fp);
 }
 

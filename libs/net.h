@@ -28,7 +28,6 @@ copies.
 
 #include	"socket.h"
 
-//#include	"value.h"
 typedef	struct _NETFILE	{
 	int		fd;
 	union {
@@ -37,8 +36,12 @@ typedef	struct _NETFILE	{
 		SSL		*ssl;
 #endif
 	}	net;
-	Bool	fOK;
+	Bool	fOK
+	,		fSent;
 	int		err;
+	size_t	size
+	,		ptr;
+	byte	*buff;
 	ssize_t	(*read)(struct _NETFILE *fp, void *buf, size_t count);
 	ssize_t	(*write)(struct _NETFILE *fp, void *buf, size_t count);
 	void	(*close)(struct _NETFILE *fp);

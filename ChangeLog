@@ -1,3 +1,9 @@
+2004-06-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/testnet.c: 追加
+
+	* libs/net.c: 通信のブロック化
+
 2004-06-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* samples/sample1/demo1: GtkOptionMenuのサポート
