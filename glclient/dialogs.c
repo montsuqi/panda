@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2003 Ogochan & JMA (Japan Medical Association).
+              2000-2005 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -18,6 +18,11 @@ to you along with PANDA so you can know your rights and
 responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
+*/
+
+/*
+#define	DEBUG
+#define	TRACE
 */
 
 #ifdef HAVE_CONFIG_H
