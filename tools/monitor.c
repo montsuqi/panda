@@ -246,6 +246,9 @@ _StartAps(
 			}
 			argv[argc ++] = ld->name;
 			argv[argc ++] = "-connect";
+			argv[argc ++] = "-maxtran";
+			argv[argc ++] = IntStrDup(MaxTran);
+
 			if		(  fQ  ) {
 				argv[argc ++] = "-?";
 			}
