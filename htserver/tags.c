@@ -56,6 +56,7 @@ static	size_t	pAStack;
 static char *enctype_urlencoded = "application/x-www-form-urlencoded";
 static char *enctype_multipart = "multipart/form-data";
 static size_t enctype_pos;
+static int form_no = -1;
 
 static	char	*
 GetArg(
@@ -144,6 +145,24 @@ EmitAttributeValue(
 }
 
 static	void
+JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
+{
+    char *value;
+
+    if ((value = GetArg(tag, event, 0)) != NULL) {
+        char buf[SIZE_BUFF];
+        
+        snprintf(buf, SIZE_BUFF,
+                 " %s=\""
+                 "document.forms[%d].elements[0].name='_event';"
+                 "document.forms[%d].elements[0].value='%s';"
+                 "document.forms[%d].submit();\"",
+                 event, form_no, form_no, value, form_no);
+        LBS_EmitString(htc->code, buf);
+    }
+}
+
+static	void
 Style(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -203,6 +222,7 @@ dbgmsg(">_Entry");
 			LBS_EmitString(htc->code,"\"");
 
 		}
+        JavaScriptEvent(htc, tag, "onchange");
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">\n");
 	}
@@ -234,7 +254,7 @@ _Combo(
 	Tag		*tag)
 {
 	char	name[SIZE_ARG];
-	char	*size;
+	char	*size, *onchange;
 	size_t	pos;
 
 dbgmsg(">_Combo");
@@ -250,8 +270,9 @@ dbgmsg(">_Combo");
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
 		EmitCode(htc,OPC_REFSTR);
-		LBS_EmitString(htc->code,">\n");
+		LBS_EmitString(htc->code,"\"");
 	}
+    JavaScriptEvent(htc, tag, "onchange");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 	EmitCode(htc,OPC_VAR);
@@ -292,6 +313,7 @@ _Form(
 	char	*name;
 
 dbgmsg(">_Form");
+	form_no++;
 	LBS_EmitString(htc->code,"<form action=\"mon.cgi\" method=\"");
 	if		(  fGet  ) {
 		LBS_EmitString(htc->code,"get");
@@ -312,6 +334,9 @@ dbgmsg(">_Form");
 		LBS_EmitString(htc->code,"\"");
 	}
 	LBS_EmitString(htc->code,">\n");
+
+    /* document.forms[form_no].elements[0] for JavaScript */
+	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_\" value=\"\">");
 
 	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_name\" value=\"");
 	EmitGetValue(htc,"_name");
@@ -357,6 +382,7 @@ dbgmsg(">_Text");
 		EmitCode(htc,OPC_REFSTR);
 		LBS_EmitString(htc->code,"\"");
 	}
+    JavaScriptEvent(htc, tag, "onchange");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 
@@ -869,6 +895,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"maxlength",TRUE);
+	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 
@@ -877,6 +904,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"item",TRUE);
 	AddArg(tag,"count",TRUE);
+	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 
@@ -897,6 +925,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"rows",TRUE);
 	AddArg(tag,"cols",TRUE);
+	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 
