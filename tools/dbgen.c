@@ -222,8 +222,8 @@ static	void
 SetDefault(void)
 {
 	fCreate = FALSE;
-	ArraySize = 10;
-	TextSize = 100;
+	ArraySize = SIZE_DEFAULT_ARRAY_SIZE;
+	TextSize = SIZE_DEFAULT_TEXT_SIZE;
 	RecordDir = ".";
 }
 

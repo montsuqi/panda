@@ -201,7 +201,9 @@ _StartRedirectors(
 					StartRedirector(dbgs[i]);
 				}
 			}
-			//			StartRedirector(dbgs[0]);
+#if	1
+			StartRedirector(dbgs[0]);
+#endif
 		}
 	}
 }

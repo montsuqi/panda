@@ -212,6 +212,7 @@ _StartBatch(
 	int		(*apl)(char *);
 	int		rc;
 	char	*path;
+	char	*arg;
 
 dbgmsg(">_StartBatch");
 	if		(  LibPath  ==  NULL  ) { 
@@ -225,7 +226,11 @@ dbgmsg(">_StartBatch");
 	printf("starting [%s][%s]\n",name,param);
 #endif
 	if		(  ( apl = cob_resolve(name) )  !=  NULL  ) {
-		rc = apl(param);
+		arg = (char *)xmalloc(ThisBD->textsize);
+		strncpy(arg,param,ThisBD->textsize+1);
+		arg[ThisBD->textsize] = 0;
+		StringC2Cobol(arg,ThisBD->textsize);
+		rc = apl(arg);
 	} else {
 		fprintf(stderr,"%s\n%s is not found.\n",cob_resolve_error(),name);
 		rc = -1;

@@ -56,7 +56,6 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-//GLOBAL	LD_Struct		*ThisLD;
 static	char	*PortNumber;
 static	int		Back;
 static	char	*Directory;
@@ -65,12 +64,6 @@ static	sigset_t	hupset;
 static	DBG_Struct	*ThisDBG;
 static	pthread_t	_FileThread;
 static	Queue		*FileQueue;
-
-typedef	struct {
-	size_t	asize
-	,		usize;
-	char	*body;
-}	LOG_DATA;
 
 static	void
 LogThread(

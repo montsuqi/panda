@@ -45,7 +45,7 @@ copies.
 #define	RETURN(v)			return(v)
 #endif
 
-#define	Error(s)			_Message(MESSAGE_ERROR,__FILE__,__LINE__,(s))
+#define	Error(s)			_Message(MESSAGE_ERROR,__FILE__,__LINE__,(s));exit(1)
 #define	Warning(s)			_Message(MESSAGE_WARN,__FILE__,__LINE__,(s))
 #define	Message(l,s)		_Message((l),__FILE__,__LINE__,(s))
 

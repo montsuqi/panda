@@ -611,9 +611,6 @@ dbgmsg(">ExecPGSQL");
 			p += sprintf(p,"%c",c);
 		} else {
 			switch	(c) {
-			  case	SQL_OP_MSB:
-				p += sprintf(p,"%c",c | 0x80);
-				break;
 			  case	SQL_OP_INTO:
 				n = LBS_FetchInt(src);
 				if		(  n  >  0  ) {

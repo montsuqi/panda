@@ -187,10 +187,10 @@ class	Widget
 				end
 			end
 		  when	"GtkCList", "GtkPandaCList"
+			@@record = @@record.append(sprintf("%s.count",@name),"int");
 			for	c in @child
 				c._panda;
 			end
-			@@record = @@record.append(sprintf("%s.count",@name),"int");
 			i = 0;
 			for	c in @child
 				@@record = @@record.append(sprintf("%s.item[0].value%d",@name,i),

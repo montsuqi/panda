@@ -130,7 +130,7 @@ dbgmsg(">SetUpDBG");
 		if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,dbg->type) )
 				   ==  NULL  ) {
 			sprintf(filename,"%s.so",dbg->type);
-printf("[%s][%s]\n",MONDB_LoadPath,filename);
+			dbgprintf("[%s][%s]",MONDB_LoadPath,filename);
 			if		(  ( handle = LoadFile(MONDB_LoadPath,filename) )  !=  NULL  ) {
 				sprintf(funcname,"Init%s",dbg->type);
 				if		(  ( f_init = dlsym(handle,funcname) )

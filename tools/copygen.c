@@ -950,8 +950,8 @@ SetDefault(void)
 	fDBPATH = FALSE;
 	fMCP = FALSE;
 	fFull = FALSE;
-	ArraySize = -1;
-	TextSize = -1;
+	ArraySize = SIZE_DEFAULT_ARRAY_SIZE;
+	TextSize = SIZE_DEFAULT_TEXT_SIZE;
 	Prefix = "";
 	RecName = "";
 	LD_Name = NULL;

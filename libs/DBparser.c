@@ -31,6 +31,7 @@ copies.
 
 #define	_DB_PARSER
 
+#include	"const.h"
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -139,8 +140,8 @@ dbgmsg(">ParDB");
 				ret->cDB = 1;
 				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
 				ret->db[0] = NULL;
-				ret->arraysize = 0;
-				ret->textsize = 0;
+				ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
+				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
 				ret->DB_Table = NewNameHash();
 			}
 			break;
