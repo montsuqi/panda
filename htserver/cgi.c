@@ -780,14 +780,16 @@ Dump(void)
 
 	html = NewLBS();
 	LBS_EmitStart(html);
-	LBS_EmitUTF8(html,
-				 "<HR>\n",SRC_CODESET);
-	PutEnv(html);
-	DumpValues(html,Values);
-	DumpFiles(html,Files);
-	LBS_EmitUTF8(html,
-				 "</BODY>\n"
-				 "</HTML>\n",SRC_CODESET);
+    if (fDump) {
+        LBS_EmitUTF8(html,
+                     "<HR>\n",SRC_CODESET);
+        PutEnv(html);
+        DumpValues(html,Values);
+        DumpFiles(html,Files);
+        LBS_EmitUTF8(html,
+                     "</BODY>\n"
+                     "</HTML>\n",SRC_CODESET);
+    }
 	LBS_EmitEnd(html);
 	WriteLargeString(stdout,html,Codeset);
 }
