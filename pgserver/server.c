@@ -153,7 +153,7 @@ ENTER_FUNC;
 		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 			value = GetItemLongName(win->rec->value,vname);
 			SetValueName(name);
-			SendValueString(fpComm,value,NULL,fName,FALSE);
+			SendValueString(fpComm,value,NULL,fName,FALSE,scr->encoding);
 			if		(  fName  ) {
 				SendStringDelim(fpComm,"\n");
 			}

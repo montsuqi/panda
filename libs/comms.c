@@ -146,12 +146,13 @@ SendValueString(
 	ValueStruct	*value,
 	char		*name,
 	Bool		fName,
-	Bool		fType)
+	Bool		fType,
+	char		*encode)
 {
 	char	buff[SIZE_BUFF+1];
 	int		i;
 
-dbgmsg(">SendValueString");
+ENTER_FUNC;
 	if		(  name  ==  NULL  ) { 
 		name = namebuff + strlen(namebuff);
 	}
@@ -160,14 +161,14 @@ dbgmsg(">SendValueString");
 		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
 			sprintf(name,"[%d]",i);
 			SendValueString(fpComm,
-							ValueArrayItem(value,i),name+strlen(name),fName,fType);
+							ValueArrayItem(value,i),name+strlen(name),fName,fType,encode);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
 			sprintf(name,".%s",ValueRecordName(value,i));
 			SendValueString(fpComm,
-							ValueRecordItem(value,i),name+strlen(name),fName,fType);
+							ValueRecordItem(value,i),name+strlen(name),fName,fType,encode);
 		}
 		break;
 	  default:
@@ -212,11 +213,11 @@ dbgmsg(">SendValueString");
 			}
 			SendStringDelim(fpComm,": ");
 		}
-		EncodeStringURL(buff,ValueToString(value,NULL));
+		EncodeStringURL(buff,ValueToString(value,encode));
 		SendStringDelim(fpComm,buff);
 		SendStringDelim(fpComm,"\n");
 		break;
 	}
-dbgmsg("<SendValueString");
+LEAVE_FUNC;
 }
 

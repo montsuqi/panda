@@ -253,7 +253,7 @@ ENTER_FUNC;
 			value = args;
 		}
 		SetValueName(name);
-		SendValueString(fpComm,value,NULL,fName,fType);
+		SendValueString(fpComm,value,NULL,fName,fType,NULL);
 		if		(  fName  ) {
 			SendStringDelim(fpComm,"\n");
 		}

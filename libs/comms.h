@@ -29,7 +29,7 @@ extern	Bool	RecvLargeString(NETFILE *fp, LargeByteString *lbs);
 extern	void	SendLargeString(NETFILE *fp, LargeByteString *lbs);
 extern	void	SetValueName(char *name);
 extern	void	SendValueString(NETFILE *fpComm, ValueStruct *value, char *name,
-								Bool fName, Bool fType);
+								Bool fName, Bool fType, char *encode);
 
 #undef	GLOBAL
 #ifdef	_COMMS

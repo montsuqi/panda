@@ -1,3 +1,7 @@
+2005-03-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/comms.c (SendValueString): bug fix i18n
+
 2005-03-10  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/bootdialog.c: 起動ダイアログに SSLの項目追加
