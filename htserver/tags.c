@@ -792,12 +792,12 @@ dbgmsg("<_FileSelection");
 }
 
 static void
-_Link(HTCInfo *htc, Tag *tag)
+_HyperLink(HTCInfo *htc, Tag *tag)
 {
 	char *event;
 	char *name;
 	char *value;
-dbgmsg(">_Link");
+dbgmsg(">_HyperLink");
 	if ((event = GetArg(tag, "event", 0)) != NULL) {
 		LBS_EmitString(htc->code, "<a");
 		Style(htc,tag);
@@ -825,15 +825,15 @@ dbgmsg(">_Link");
 		}
 		LBS_EmitString(htc->code,"\">");
 	}
-dbgmsg("<_Link");
+dbgmsg("<_HyperLink");
 }
 
 static void
-_eLink(HTCInfo *htc, Tag *tag)
+_eHyperLink(HTCInfo *htc, Tag *tag)
 {
-dbgmsg(">_eLink");
+dbgmsg(">_eHyperLink");
 	LBS_EmitString(htc->code, "</a>");
-dbgmsg("<_eLink");
+dbgmsg("<_eHyperLink");
 }
 
 static	void
@@ -1116,13 +1116,13 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 
-	tag = NewTag("LINK",_Link);
+	tag = NewTag("HYPERLINK",_HyperLink);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"value",TRUE);
 	AddArg(tag,"event",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
-	tag = NewTag("/LINK",_eLink);
+	tag = NewTag("/HYPERLINK",_eHyperLink);
 
 	tag = NewTag("PANEL", _Panel);
 	AddArg(tag, "visible", TRUE);
