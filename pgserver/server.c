@@ -20,8 +20,8 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#define	DEBUG
 #define	TRACE
+#define	DEBUG
 /*
 */
 
@@ -71,19 +71,30 @@ PG_SendString(
 	if		(  size  >  0  ) {
 		fwrite(str,1,size,fp);
 	}
+	fflush(fp);
 }
 
-static	void
+static	Bool
 PG_RecvString(
 	FILE	*fp,
 	size_t	size,
 	char	*str)
 {
+	Bool	rc;
+	int		c;
 #ifdef	DEBUG
 	char	*p = str;
 #endif
 
-	while	(  ( *str ++ = RecvChar(fp) )  !=  '\n' );
+	rc = TRUE;
+	while	(  ( c = RecvChar(fp) )  !=  '\n'  ) {
+		if		(  c  <  0  ) {
+			rc = FALSE;
+			break;
+		} else {
+			*str ++ = c;
+		}
+	}
 	*str -- = 0;
 	while	(	(  *str  ==  '\r'  )
 			||	(  *str  ==  '\n'  ) ) {
@@ -93,31 +104,13 @@ PG_RecvString(
 #ifdef	DEBUG
 	printf("<<[%s]\n",p);
 #endif
-}
-
-static	void
-ClearWindows(
-	gpointer	key,
-	gpointer	value,
-	gpointer	user_data)
-{
-	WindowData	*win = (WindowData *)value;
-
-	xfree(key);
-	FreeValueStruct(win->Value);
-	xfree(win->name);
+	return	(rc);
 }
 
 static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	if		(	(  scr  !=  NULL  )
-			&&	(  scr->Windows  !=  NULL  ) ) {
-		g_hash_table_foreach(scr->Windows,(GHFunc)ClearWindows,NULL);
-		g_hash_table_destroy(scr->Windows);
-		xfree(scr);
-	}
 	ReleasePool(NULL);
 	printf("session end\n");
 }
@@ -147,41 +140,6 @@ DecodeName(
 }
 
 static	void
-DecodeString(
-	char	*q,
-	char	*p)
-{
-	int		del;
-
-	del = 0;
-	while	(	(  *p  !=  del  )
-			&&	(  *p  !=  0    ) ) {
-		switch	(*p) {
-		  case	'"':
-			del = '"';
-			break;
-		  case	'\\':
-			p ++;
-			switch	(*p) {
-			  case	'n':
-				*q ++ = '\n';
-				break;
-			  default:
-				*q ++ = *p;
-				break;
-			}
-			q ++;
-			break;
-		  default:
-			*q ++ = *p;
-			break;
-		}
-		p ++;
-	}
-	*q = 0;			
-}
-
-static	void
 RecvScreenData(
 	FILE	*fpComm,
 	ScreenData	*scr)
@@ -207,15 +165,49 @@ RecvScreenData(
 				value = GetItemLongName(win->Value,vname);
 				value->fUpdate = TRUE;
 				SetValueString(value,str);
-#ifdef	DEBUG
-				printf("--\n");
-				DumpValueStruct(value);
-				printf("--\n");
-#endif
 			}
 		}
 	}	while	(  *buff  !=  0  );
-	PG_SendString(fpComm,"Event: OK\n");
+}
+
+static	char	namebuff[SIZE_BUFF+1];
+static	void
+SendValueString(
+	FILE		*fpComm,
+	ValueStruct	*value,
+	char		*name,
+	Bool		fName)
+{
+	char	buff[SIZE_BUFF+1];
+	int		i;
+
+dbgmsg(">SendValueString");
+	switch	(value->type) {
+	  case	GL_TYPE_ARRAY:
+		for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
+			sprintf(name,"[%d]",i);
+			SendValueString(fpComm,
+							value->body.ArrayData.item[i],name+strlen(name),fName);
+		}
+		break;
+	  case	GL_TYPE_RECORD:
+		for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
+			sprintf(name,".%s",value->body.RecordData.names[i]);
+			SendValueString(fpComm,
+							value->body.RecordData.item[i],name+strlen(name),fName);
+		}
+		break;
+	  default:
+		if		(  fName  ) {
+			PG_SendString(fpComm,namebuff);
+			PG_SendString(fpComm,": ");
+		}
+		EncodeString(buff,ToString(value));
+		PG_SendString(fpComm,buff);
+		PG_SendString(fpComm,"\n");
+		break;
+	}
+dbgmsg("<SendValueString");
 }
 
 static	void
@@ -223,32 +215,41 @@ WriteClient(
 	FILE		*fpComm,
 	ScreenData	*scr)
 {
-	char	buff[SIZE_BUFF+1];
-	char	vname[SIZE_BUFF+1]
+	char	name[SIZE_BUFF+1]
+	,		vname[SIZE_BUFF+1]
 	,		wname[SIZE_BUFF+1];
 	WindowData	*win;
 	ValueStruct	*value;
 	char	*p;
+	Bool	fName;
 
 dbgmsg(">WriteClient");
+	PG_SendString(fpComm,"Event: ");
+	PG_SendString(fpComm,ThisWindow);
+	PG_SendString(fpComm,"/");
+	PG_SendString(fpComm,ThisWidget);
+	PG_SendString(fpComm,"\n");
 	do {
-		PG_RecvString(fpComm,SIZE_BUFF,buff);
-		if		(  ( p = strchr(buff,' ') )  !=  NULL  ) {
+		if		(  !PG_RecvString(fpComm,SIZE_BUFF,name)  )	break;
+		if		(  *name  ==  0  )	break;
+		if		(  ( p = strchr(name,':') )  !=  NULL  ) {
 			*p = 0;
+			fName = FALSE;
+		} else {
+			fName = TRUE;
 		}
-		if		(  *buff  !=  0  ) {
-			DecodeName(wname,vname,buff);
-			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-				value = GetItemLongName(win->Value,vname);
-				PG_SendString(fpComm,ToString(value));
-				if		(	(  p  !=  NULL            )
-						&&	(  !stricmp(p+1,"clear")  ) ) {
-					InitializeValue(value);
-				}
+		DecodeName(wname,vname,name);
+		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
+			value = GetItemLongName(win->Value,vname);
+			strcpy(namebuff,name);
+			SendValueString(fpComm,value,namebuff+strlen(namebuff),fName);
+			if		(  fName  ) {
+				PG_SendString(fpComm,"\n");
 			}
+		} else {
 			PG_SendString(fpComm,"\n");
 		}
-	}	while	(  *buff  !=  0  );
+	}	while	(TRUE);
 dbgmsg("<WriteClient");
 }
 
@@ -278,7 +279,6 @@ dbgmsg(">MainLoop");
 		*(q = strchr(p,' ')) = 0;
 		pass = p;
 		strcpy(scr->cmd,q+1);
-		//printf("[%s][%s][%s][%s]\n",ver,scr->user,pass,scr->cmd);
 		if		(  strcmp(ver,VERSION)  ) {
 			PG_SendString(fpComm,"Error: version\n");
 			g_warning("reject client(invalid version)");
@@ -302,10 +302,10 @@ dbgmsg(">MainLoop");
 		p = buff + 7;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
-			strcpy(scr->widget,p);
-			strcpy(scr->event,q+1);
+			DecodeString(scr->widget,p);
+			DecodeString(scr->event,q+1);
 		} else {
-			strcpy(scr->event,p);
+			DecodeString(scr->event,p);
 			*scr->widget = 0;
 		}
 		RecvScreenData(fpComm,scr);
