@@ -47,6 +47,7 @@ extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);
 
 extern	void	ExpandStart(char *line, char *start, char *path,
 							char *module, char *param);
+extern	void	ReadyExecuteCommon(MessageHandler *handler);
 
 #undef	GLOBAL
 #ifdef	_HANDLER

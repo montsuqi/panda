@@ -46,6 +46,7 @@ copies.
 #include	"const.h"
 #include	"enum.h"
 #include	"dblib.h"
+#include	"dbgroup.h"
 #include	"directory.h"
 #include	"handler.h"
 #include	"option.h"
@@ -133,7 +134,7 @@ static	ARG_TABLE	option[] = {
 		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
-	{	"bddir",	STRING,		TRUE,	(void*)&BD_Dir,
+	{	"bddir",	STRING,		TRUE,	(void*)&D_Dir,
 		"バッチ定義格納ディレクトリ"	 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"ディレクトリファイル"	 						},
@@ -158,8 +159,7 @@ SetDefault(void)
 {
 	BaseDir = NULL;
 	RecordDir = NULL;
-	LD_Dir = NULL;
-	BD_Dir = NULL;
+	D_Dir = NULL;
 	Directory = "./directory";
 	LibPath = NULL;
 

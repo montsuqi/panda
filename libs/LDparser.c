@@ -28,7 +28,7 @@ copies.
 #  include <config.h>
 #endif
 
-#define	_LD_PARSER
+#define	_D_PARSER
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -40,31 +40,16 @@ copies.
 #include	"types.h"
 #include	"libmondai.h"
 #include	"misc.h"
+#include	"mhandler.h"
 #include	"DDparser.h"
-#include	"LDlex.h"
+#include	"Dlex.h"
 #include	"LDparser.h"
 #include	"DBparser.h"
 #include	"directory.h"
 #include	"dirs.h"
 #include	"debug.h"
 
-static	Bool	fError;
 static	GHashTable	*Windows;
-static	GHashTable	*Handler;
-
-#define	GetSymbol	(LD_Token = LD_Lex(FALSE))
-#define	GetName		(LD_Token = LD_Lex(TRUE))
-#undef	Error
-#define	Error(msg)	{fError=TRUE;_Error((msg),LD_FileName,LD_cLine);}
-
-static	void
-_Error(
-	char	*msg,
-	char	*fn,
-	int		line)
-{
-	printf("%s:%d:%s\n",fn,line,msg);
-}
 
 static	WindowBind	*
 AddWindow(
@@ -119,8 +104,8 @@ dbgmsg(">ParWindow");
 		Error("syntax error");
 	} else {
 		while	(  GetName  !=  '}'  ) {
-			if		(  LD_Token  ==  T_SYMBOL  ) {
-				strcpy(wname,LD_ComSymbol);
+			if		(  D_Token  ==  T_SYMBOL  ) {
+				strcpy(wname,D_ComSymbol);
 				if		(  ( bind = (WindowBind *)g_hash_table_lookup(ld->whash,wname) )
 						   ==  NULL  ) {
 					bind = AddWindow(ld,wname);
@@ -167,18 +152,18 @@ ParDB(
 
 dbgmsg(">ParDB");
 	while	(  GetSymbol  !=  '}'  ) {
-		if		(	(  LD_Token  ==  T_SYMBOL  )
-				||	(  LD_Token  ==  T_SCONST  ) ) {
-			if		(  stricmp(LD_ComSymbol,"metadb")  ) {
+		if		(	(  D_Token  ==  T_SYMBOL  )
+				||	(  D_Token  ==  T_SCONST  ) ) {
+			if		(  stricmp(D_ComSymbol,"metadb")  ) {
 				strcpy(buff,RecordDir);
 				p = buff;
 				do {
 					if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 						*q = 0;
 					}
-					sprintf(name,"%s/%s.db",p,LD_ComSymbol);
+					sprintf(name,"%s/%s.db",p,D_ComSymbol);
 					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
-						if		(  g_hash_table_lookup(ld->DB_Table,LD_ComSymbol)  ==  NULL  ) {
+						if		(  g_hash_table_lookup(ld->DB_Table,D_ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
 							memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
 							xfree(ld->db);
@@ -188,7 +173,7 @@ dbgmsg(">ParDB");
 							ld->db = rtmp;
 							ld->db[ld->cDB] = db;
 							ld->cDB ++;
-							g_hash_table_insert(ld->DB_Table,StrDup(LD_ComSymbol),(void *)ld->cDB);
+							g_hash_table_insert(ld->DB_Table,StrDup(D_ComSymbol),(void *)ld->cDB);
 						} else {
 							Error("same db appier");
 						}
@@ -216,11 +201,11 @@ ParDATA(
 dbgmsg(">ParDATA");
 	if		(  GetSymbol  ==  '{'  ) {
 		while	(  GetSymbol  !=  '}'  ) {
-			switch	(LD_Token) {
+			switch	(D_Token) {
 			  case	T_SPA:
 				GetName;
-				if		(  LD_Token   ==  T_SYMBOL  ) {
-					if		(  ( ld->sparec = ReadRecordDefine(LD_ComSymbol) )
+				if		(  D_Token   ==  T_SYMBOL  ) {
+					if		(  ( ld->sparec = ReadRecordDefine(D_ComSymbol) )
 							   ==  NULL  ) {
 						Error("spa record not found");
 					}
@@ -245,111 +230,6 @@ dbgmsg(">ParDATA");
 dbgmsg("<ParDATA");
 }
 
-static	MessageHandler	*
-NewMessageHandler(
-	char	*name,
-	char	*klass)
-{
-	MessageHandler	*handler;
-
-	handler = New(MessageHandler);
-	handler->name = StrDup(name);
-	handler->klass = (MessageHandlerClass *)klass;
-	handler->serialize = NULL;
-	handler->conv = New(CONVOPT);
-	handler->conv->encode = STRING_ENCODING_URL;
-	handler->start = NULL;
-	handler->fInit = 0;
-	handler->loadpath = NULL;
-	handler->private = NULL;
-	g_hash_table_insert(Handler,handler->name,handler);
-
-	return	(handler);
-}
-
-static	void
-ParHANDLER(void)
-{
-	MessageHandler	*handler;
-
-ENTER_FUNC;
-	GetSymbol; 
-	if		(	(  LD_Token  ==  T_SYMBOL  )
-			||	(  LD_Token  ==  T_SCONST  ) ) {
-		if		(  g_hash_table_lookup(Handler,LD_ComSymbol)  ==  NULL  ) {
-			handler = NewMessageHandler(LD_ComSymbol,NULL);
-		} else {
-			Error("handler name duplicate");
-		}
-		if		(  GetSymbol  ==  '{'  ) {
-			while	(  GetSymbol  !=  '}'  ) {
-				switch	(LD_Token) {
-				  case	T_CLASS:
-					if		(  GetName   ==  T_SCONST  ) {
-						handler->klass = (MessageHandlerClass *)StrDup(LD_ComSymbol);
-					} else {
-						Error("class must be string.");
-					}
-					break;
-				  case	T_SERIALIZE:
-					if		(  GetName   ==  T_SCONST  ) {
-						handler->serialize = (ConvFuncs *)StrDup(LD_ComSymbol);
-					} else {
-						Error("serialize method must be string.");
-					}
-					break;
-				  case	T_START:
-					if		(  GetName   ==  T_SCONST  ) {
-						handler->start = StrDup(LD_ComSymbol);
-					} else {
-						Error("start parameter must be string.");
-					}
-					break;
-				  case	T_LOCALE:
-					if		(  GetName   ==  T_SCONST  ) {
-						handler->conv->locale = StrDup(LD_ComSymbol);
-					} else {
-						Error("locale name must be string.");
-					}
-					break;
-				  case	T_LOADPATH:
-					if		(  GetName   ==  T_SCONST  ) {
-						handler->loadpath = StrDup(LD_ComSymbol);
-					} else {
-						Error("load path must be string.");
-					}
-					break;
-				  case	T_ENCODING:
-					if		(  GetName   ==  T_SCONST  ) {
-						if		(  !stricmp(LD_ComSymbol,"URL")  ) {
-							handler->conv->encode = STRING_ENCODING_URL;
-						} else
-						if		(  !stricmp(LD_ComSymbol,"BASE64")  ) {
-							handler->conv->encode = STRING_ENCODING_BASE64;
-						} else {
-							Error("unsupported string encoding");
-						}
-					} else {
-						Error("string encoding must be string.");
-					}
-					break;
-				  default:
-					Error("handler parameter(s)");
-					break;
-				}
-				if		(  GetSymbol  !=  ';'  ) {
-					Error("parameter ; missing");
-				}
-			}
-		} else {
-			Error("invalid char");
-		}
-	} else {
-		Error("invalid handler name");
-	}
-LEAVE_FUNC;
-}
-
 static	void
 ParBIND(
 	LD_Struct	*ret)
@@ -359,22 +239,22 @@ ParBIND(
 
 dbgmsg(">ParBIND");
 	if		(	(  GetSymbol  ==  T_SCONST  )
-			||	(  LD_Token   ==  T_SYMBOL  ) ) {
-		if		(  ( ix = (int)g_hash_table_lookup(ret->whash,LD_ComSymbol) )  ==  0  ) {
-			bind = AddWindow(ret,LD_ComSymbol);
+			||	(  D_Token    ==  T_SYMBOL  ) ) {
+		if		(  ( ix = (int)g_hash_table_lookup(ret->whash,D_ComSymbol) )  ==  0  ) {
+			bind = AddWindow(ret,D_ComSymbol);
 			bind->rec = NULL;
 		} else {
 			bind = ret->window[ix-1];
 		}
 		if		(	(  GetSymbol  ==  T_SCONST  )
-				||	(  LD_Token   ==  T_SYMBOL  ) ) {
-			bind->handler = (void *)StrDup(LD_ComSymbol);
+				||	(  D_Token    ==  T_SYMBOL  ) ) {
+			bind->handler = (void *)StrDup(D_ComSymbol);
 		} else {
 			Error("handler name error");
 		}
 		if		(	(  GetSymbol  ==  T_SCONST  )
-				||	(  LD_Token   ==  T_SYMBOL  ) ) {
-			bind->module = StrDup(LD_ComSymbol);
+				||	(  D_Token    ==  T_SYMBOL  ) ) {
+			bind->module = StrDup(D_ComSymbol);
 		} else {
 			Error("module name error");
 		}
@@ -393,13 +273,13 @@ ParLD(void)
 dbgmsg(">ParLD");
 	ret = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
-		switch	(LD_Token) {
+		switch	(D_Token) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("no name");
 			} else {
 				ret = New(LD_Struct);
-				ret->name = StrDup(LD_ComSymbol);
+				ret->name = StrDup(D_ComSymbol);
 				ret->group = "";
 				ret->ports = NULL;
 				ret->whash = NewNameHash();
@@ -417,38 +297,38 @@ dbgmsg(">ParLD");
 			break;
 		  case	T_ARRAYSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->arraysize = LD_ComInt;
+				ret->arraysize = D_ComInt;
 			} else {
 				Error("invalid array size");
 			}
 			break;
 		  case	T_TEXTSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->textsize = LD_ComInt;
+				ret->textsize = D_ComInt;
 			} else {
 				Error("invalid text size");
 			}
 			break;
 		  case	T_CACHE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->nCache = LD_ComInt;
+				ret->nCache = D_ComInt;
 			} else {
 				Error("invalid cache size");
 			}
 			break;
 		  case	T_MGROUP:
 			GetName;
-			ret->group = StrDup(LD_ComSymbol);
+			ret->group = StrDup(D_ComSymbol);
 			break;
 		  case	T_DB:
 			if		(	(  GetSymbol  ==  T_SCONST  )
-					||	(  LD_Token  ==  T_SYMBOL   ) ) {
-				gname = StrDup(LD_ComSymbol);
+					||	(  D_Token    ==  T_SYMBOL   ) ) {
+				gname = StrDup(D_ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
 					Error("DB { missing");
 				}
 			} else
-			if		(  LD_Token  ==  '{'  ) {
+			if		(  D_Token  ==  '{'  ) {
 				gname = StrDup("");
 			} else {
 				gname = NULL;
@@ -461,14 +341,14 @@ dbgmsg(">ParLD");
 			break;
 		  case	T_HOME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				ret->home = StrDup(ExpandPath(LD_ComSymbol,ThisEnv->BaseDir));
+				ret->home = StrDup(ExpandPath(D_ComSymbol,ThisEnv->BaseDir));
 			} else {
 				Error("home directory invalid");
 			}
 			break;
 		  case	T_WFC:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				ret->wfc = ParPort(LD_ComSymbol,PORT_WFC_APS);
+				ret->wfc = ParPort(D_ComSymbol,PORT_WFC_APS);
 			} else {
 				Error("wfc invalid");
 			}
@@ -499,12 +379,7 @@ _BindHandler(
 {
 	MessageHandler	*handler;
 
-	if		(  ( handler = (MessageHandler *)g_hash_table_lookup(Handler,
-																 (char *)bind->handler) )  !=  NULL  ) {
-		bind->handler = handler;
-	} else {
-		Error("invalid handler name");
-	}
+	BindMessageHandlerCommon(&bind->handler);
 }
 
 static	void
@@ -526,17 +401,12 @@ dbgmsg(">LD_Parser");
 dbgmsg(name); 
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
-			fError = FALSE;
-			LD_FileName = name;
-			LD_cLine = 1;
-			LD_File = fp;
+			D_FileName = name;
+			D_cLine = 1;
+			D_File = fp;
 			ret = ParLD();
-			fclose(LD_File);
-			if		(  fError  ) {
-				ret = NULL;
-			} else {
-				BindHandler(ret);
-			}
+			fclose(D_File);
+			BindHandler(ret);
 		} else {
 			printf("[%s]\n",name);
 			Error("LD file not found");
@@ -549,38 +419,11 @@ dbgmsg("<LD_Parser");
 	return	(ret);
 }
 
-static	void
-EnterDefaultHandler(void)
-{
-	MessageHandler	*handler;
-
-	handler = NewMessageHandler("OpenCOBOL","OpenCOBOL");
-	handler->serialize = (ConvFuncs *)"OpenCOBOL";
-	handler->conv->locale = "euc-jp";
-	handler->start = "";
-
-	handler = NewMessageHandler("dotCOBOL","dotCOBOL");
-	handler->serialize = (ConvFuncs *)"dotCOBOL";
-	handler->conv->locale = "euc-jp";
-	handler->start = "";
-
-	handler = NewMessageHandler("C","C");
-	handler->serialize = NULL;
-	handler->conv->locale = "";
-	handler->start = "";
-
-	handler = NewMessageHandler("Exec","Exec");
-	handler->serialize = (ConvFuncs *)"CGI";
-	handler->conv->locale = "euc-jp";
-	handler->start = "%m";
-}
-
 extern	void
 LD_ParserInit(void)
 {
-	LD_LexInit();
+	D_LexInit();
 	LD_Table = NewNameHash();
 	Windows = NewNameHash();
-	Handler = NewNameHash();
-	EnterDefaultHandler();
+	MessageHandlerInit();
 }

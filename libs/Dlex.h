@@ -19,36 +19,61 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_INC_DBD_LEX_H
-#define	_INC_DBD_LEX_H
+#ifndef	_INC_LD_LEX_H
+#define	_INC_LD_LEX_H
 #include	<glib.h>
 
+/*	common	*/
 #define	SIZE_SYMBOL		255
-
 #define	YYBASE			256
 #define	T_EOF			(YYBASE +1)
 #define	T_SYMBOL		(YYBASE +2)
 #define	T_ICONST		(YYBASE +3)
 #define	T_SCONST		(YYBASE +4)
-#define	T_NAME			(YYBASE +5)
-#define	T_ARRAYSIZE		(YYBASE +6)
-#define	T_TEXTSIZE		(YYBASE +7)
-#define	T_DB			(YYBASE +8)
+#define	T_NAME			(YYBASE +7)
+#define	T_ARRAYSIZE		(YYBASE +12)
+#define	T_TEXTSIZE		(YYBASE +13)
+#define	T_DB			(YYBASE +15)
+#define	T_BIND			(YYBASE +18)
+/*	LD only	*/
+#define	T_DATA			(YYBASE +6)
+#define	T_SPA			(YYBASE +8)
+#define	T_WINDOW		(YYBASE +9)
+#define	T_PORT			(YYBASE +10)
+#define	T_HOST			(YYBASE +11)
+#define	T_LINKAGE		(YYBASE +14)
+#define	T_MGROUP		(YYBASE +16)
+#define	T_HOME			(YYBASE +17)
+#define	T_WFC			(YYBASE +19)
+#define	T_CACHE			(YYBASE +20)
+/*	handler	*/
+#define	T_HANDLER		(YYBASE +21)
+#define	T_CLASS			(YYBASE +22)
+#define	T_SERIALIZE		(YYBASE +23)
+#define	T_START			(YYBASE +24)
+#define	T_LOCALE		(YYBASE +25)
+#define	T_ENCODING		(YYBASE +26)
+#define	T_LOADPATH		(YYBASE +27)
 
-#ifdef	_DBD_PARSER
+#undef	GLOBAL
+#ifdef	_D_PARSER
 #define	GLOBAL	/*	*/
 #else
 #define	GLOBAL	extern
 #endif
-GLOBAL	char	DBD_ComSymbol[SIZE_SYMBOL+1];
-GLOBAL	int		DBD_ComInt;
-GLOBAL	char	*DBD_FileName;
-GLOBAL	int		DBD_Token;
-GLOBAL	FILE	*DBD_File;
-GLOBAL	int		DBD_cLine;
+GLOBAL	char	D_ComSymbol[SIZE_SYMBOL+1];
+GLOBAL	int		D_ComInt;
+GLOBAL	char	*D_FileName;
+GLOBAL	int		D_Token;
+GLOBAL	FILE	*D_File;
+GLOBAL	int		D_cLine;
+GLOBAL	Bool	fD_Error;
 #undef	GLOBAL
 
-extern	int		DBD_Lex(Bool fSymbol);
-extern	void	DBD_LexInit(void);
+extern	int		D_Lex(Bool fSymbol);
+extern	void	D_LexInit(void);
+
+#define	GetSymbol	(D_Token = D_Lex(FALSE))
+#define	GetName		(D_Token = D_Lex(TRUE))
 
 #endif

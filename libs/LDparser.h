@@ -25,7 +25,7 @@ copies.
 #include	"struct.h"
 
 #undef	GLOBAL
-#ifdef	_LD_PARSER
+#ifdef	_D_PARSER
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern

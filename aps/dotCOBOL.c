@@ -80,7 +80,7 @@ static	void	*McpData
 		,		*LinkData
 		,		*SpaData
 		,		*ScrData;
-
+static	char	*Command;
 
 static	void
 DumpNode(
@@ -307,7 +307,7 @@ ReadyApplication(void)
 {
 	int		pid;
 	int		slave;
-	char	*line
+	char	line[SIZE_BUFF]
 	,		**cmd;
 
 dbgmsg(">ReadyApplication");
@@ -317,9 +317,7 @@ dbgmsg(">ReadyApplication");
 		exit(1);
 	}
 #endif
-	if		(  ( line = getenv("DOTCOBOL_LINE") )  ==  NULL  ) {
-		line = DOTCOBOL_COMMAND " ./MCPMAIN";
-	}
+	ExpandStart(line,handler->start,handler->loadpath,name,param);
 	cmd = ParCommandLine(line);
 	if		(  ( pid = fork() )  ==  0  ) {
 #ifdef	USE_PTY
@@ -569,7 +567,7 @@ _StartBatch(
 	,		**cmd;
 
 dbgmsg(">StartBatch");
-	sprintf(line,"%s %s",DOTCOBOL_COMMAND, name);
+	ExpandStart(line,handler->start,handler->loadpath,name,param);
 	cmd = ParCommandLine(line);
 	if		(  ( pid = fork() )  ==  0  ) {
 #if	0
@@ -591,6 +589,7 @@ dbgmsg("<StartBatch");
 
 static	MessageHandler	Handler = {
 	"dotCOBOL",
+	NULL,
 	_ExecuteProcess,
 	_StartBatch,
 	_ReadyDC,
@@ -604,6 +603,9 @@ static	MessageHandler	Handler = {
 extern	MessageHandler	*
 dotCOBOL(void)
 {
+	if		(  ( Command = getenv("DOTCOBOL_LINE") )  ==  NULL  ) {
+		Command = DOTCOBOL_COMMAND " %m";
+	}
 	return	(&Handler);
 }
 #endif

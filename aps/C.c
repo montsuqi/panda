@@ -35,6 +35,7 @@ copies.
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
+#include	<dlfcn.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<unistd.h>
@@ -51,13 +52,67 @@ copies.
 #include	"defaults.h"
 #include	"enum.h"
 #include	"dblib.h"
+#include	"load.h"
+#include	"dbgroup.h"
 #include	"queue.h"
 #include	"driver.h"
-#include	"loader.h"
 #include	"apslib.h"
 #include	"debug.h"
 
 static	GHashTable	*ApplicationTable;
+static	char	*APS_LoadPath;
+
+static	GHashTable	*
+InitLoader(void)
+{
+	GHashTable	*table;
+	char		*path;
+
+dbgmsg(">InitLoader");
+	table = NewNameHash();
+	if		(  LibPath  ==  NULL  ) { 
+		if		(  ( path = getenv("APS_LOAD_PATH") )  ==  NULL  ) {
+			APS_LoadPath = MONTSUQI_LOAD_PATH;
+		} else {
+			APS_LoadPath = path;
+		}
+	} else {
+		APS_LoadPath = LibPath;
+	}
+dbgmsg("<InitLoader");
+	return	(table);
+}
+
+static	void	*
+LoadModule(
+	GHashTable	*table,
+	char	*path,
+	char	*name)
+{
+	char		funcname[SIZE_BUFF]
+	,			filename[SIZE_BUFF];
+	void		*f_main;
+	void		(*f_init)(void);
+	void		*handle;
+
+dbgmsg(">LoadModule");
+	if		(  ( f_main = (void *)g_hash_table_lookup(table,name) )  ==  NULL  ) {
+		sprintf(filename,"%s.so",name);
+		if		(  ( handle = LoadFile(path,filename) )  !=  NULL  ) {
+			sprintf(funcname,"%sInit",name);
+			if		(  ( f_init = (void *)dlsym(handle,funcname) )  !=  NULL  ) {
+				f_init();
+			}
+			sprintf(funcname,"%sMain",name);
+			f_main = dlsym(handle,funcname);
+			g_hash_table_insert(table,StrDup(name),f_main);
+		} else {
+			fprintf(stderr,"[%s] not found.\n",name);
+		}
+	}
+dbgmsg("<LoadModule");
+	return	(f_main);
+}
 
 static	void
 PutApplication(
@@ -87,7 +142,7 @@ _ExecuteProcess(
 
 dbgmsg(">ExecuteProcess");
 	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
-	if		(  ( apl = LoadModule(ApplicationTable,module) )  !=  NULL  ) {
+	if		(  ( apl = LoadModule(ApplicationTable,handler->loadpath,module) )  !=  NULL  ) {
 		PutApplication(node);
 		dbgmsg(">C application");
 		(void)apl(node);
@@ -150,7 +205,7 @@ _StartBatch(
 dbgmsg(">_StartBatch");
 	ApplicationTable = InitLoader(); 
 	dbgprintf("starting [%s][%s]\n",name,param);
-	if		(  ( apl = LoadModule(ApplicationTable,name) )  !=  NULL  ) {
+	if		(  ( apl = LoadModule(ApplicationTable,handler->loadpath,name) )  !=  NULL  ) {
 		rc = apl(param);
 	} else {
 		MessagePrintf("%s is not found.",name);
@@ -160,8 +215,18 @@ dbgmsg("<_StartBatch");
  return	(rc); 
 }
 
+static	void
+_ReadyExecute(
+	MessageHandler	*handler)
+{
+	if		(  handler->loadpath  ==  NULL  ) {
+		handler->loadpath = APS_LoadPath;
+	}
+}
+
 static	MessageHandlerClass	Handler = {
 	"C",
+	_ReadyExecute,
 	_ExecuteProcess,
 	_StartBatch,
 	_ReadyDC,
@@ -175,7 +240,19 @@ static	MessageHandlerClass	Handler = {
 extern	MessageHandlerClass	*
 C(void)
 {
+	GHashTable	*table;
+	char		*path;
 dbgmsg(">C");
+	table = NewNameHash();
+	if		(  LibPath  ==  NULL  ) { 
+		if		(  ( path = getenv("APS_LOAD_PATH") )  ==  NULL  ) {
+			APS_LoadPath = MONTSUQI_LOAD_PATH;
+		} else {
+			APS_LoadPath = path;
+		}
+	} else {
+		APS_LoadPath = LibPath;
+	}
 dbgmsg("<C");
 	return	(&Handler);
 }

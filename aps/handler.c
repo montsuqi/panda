@@ -172,6 +172,12 @@ _ReadyDC(
 
 	handler = bind->handler;
 ENTER_FUNC;
+	if		(  ( handler->fInit & INIT_EXECUTE )  ==  0  ) {
+		handler->fInit |= INIT_EXECUTE;
+		if		(  handler->klass->ReadyExecute  !=  NULL  ) {
+			handler->klass->ReadyExecute(handler);
+		}
+	}
 	if		(  ( handler->fInit & INIT_READYDC )  ==  0  ) {
 		handler->fInit |= INIT_READYDC;
 		if		(  handler->klass->ReadyDC  !=  NULL  ) {
@@ -356,9 +362,9 @@ dbgmsg(">ExecuteProcess");
 	window = ValueString(GetItemLongName(node->mcprec->value,"dc.window"));
 	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
 	handler = bind->handler;
-	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteProcess  !=  NULL  ) {
+	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
 		CallBefore(node);
-		if		(  !(handler->klass->ExecuteProcess(handler,node))  ) {
+		if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
 			MessageLog("application process illegular execution");
 			exit(0);
 		}
@@ -508,8 +514,11 @@ dbgmsg(">StartBatch");
 		exit(1);
 	}
 	handler = bind->handler;
-	if		(  handler->klass->StartBatch  !=  NULL  ) {
-		rc = handler->klass->StartBatch(handler,name,para);
+	if		(  handler->klass->ReadyExecute  !=  NULL  ) {
+		handler->klass->ReadyExecute(handler);
+	}
+	if		(  handler->klass->ExecuteBatch  !=  NULL  ) {
+		rc = handler->klass->ExecuteBatch(handler,name,para);
 	} else {
 		rc = -1;
 		fprintf(stderr,"%s is handler not support batch.\n",name);
@@ -620,3 +629,8 @@ ExpandStart(
 	*q = 0;
 }
 
+extern	void
+ReadyExecuteCommon(
+	MessageHandler	*handler)
+{
+}

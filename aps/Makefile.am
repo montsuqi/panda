@@ -64,7 +64,6 @@ Resident_la_SOURCES		=	Resident.c
 aps_SOURCES	=	\
 	aps_main.c	aps_main.h				\
 	apsio.c		apsio.h					\
-	loader.c	loader.h				\
 	handler.c	handler.h
 
 aps_DEPENDENCIES	=					\
@@ -76,7 +75,6 @@ aps_DEPENDENCIES	=					\
 
 dbstub_SOURCES	=	\
 	dbstub_main.c						\
-	loader.c		loader.h			\
 	handler.c		handler.h
 
 dbstub_DEPENDENCIES	=					\

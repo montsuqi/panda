@@ -40,6 +40,7 @@ copies.
 #include	"const.h"
 #include	"libmondai.h"
 #include	"dblib.h"
+#include	"dbgroup.h"
 #include	"handler.h"
 #include	"OpenCOBOL.h"
 #include	"directory.h"

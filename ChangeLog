@@ -1,3 +1,9 @@
+2003-09-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/Dlex.c: LDlex.c BDlex.c DBDlex.cを統合
+
+	* libs/mhandler.c: LDparser.c BDparser.cのうち、handlerの処理部分を分離
+
 2003-09-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/DB*.[ch] : libmondaiから分離した

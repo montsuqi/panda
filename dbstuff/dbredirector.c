@@ -264,10 +264,8 @@ static	ARG_TABLE	option[] = {
 		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
-	{	"bddir",	STRING,		TRUE,	(void*)&BD_Dir,
-		"バッチ定義格納ディレクトリ"	 				},
-	{	"lddir",	STRING,		TRUE,	(void*)&LD_Dir,
-		"データ定義格納ディレクトリ"	 				},
+	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
+		"定義格納ディレクトリ"			 				},
 
 	{	"host",		STRING,		TRUE,	(void*)&DB_Host,
 		"PostgreSQL稼働ホスト名"						},
@@ -289,8 +287,7 @@ SetDefault(void)
 	Back = 5;
 	BaseDir = NULL;
 	RecordDir = NULL;
-	LD_Dir = NULL;
-	BD_Dir = NULL;
+	D_Dir = NULL;
 	Directory = "./directory";
 
 	DB_User = NULL;

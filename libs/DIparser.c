@@ -46,10 +46,11 @@ copies.
 #include	"DDparser.h"
 #include	"DIlex.h"
 #include	"LDparser.h"
+#include	"BDparser.h"
 #include	"DBDparser.h"
 #include	"DIparser.h"
 #include	"dirs.h"
-#define	_DIRECTORY
+#define		_DIRECTORY
 #include	"directory.h"
 #include	"debug.h"
 
@@ -115,7 +116,7 @@ ParLD_Elements(void)
 	Port		**tports;
 	LD_Struct	*ld;
 
-	strcpy(buff,ThisEnv->LD_Dir);
+	strcpy(buff,ThisEnv->D_Dir);
 	p = buff;
 	do {
 dbgmsg("-4");
@@ -244,7 +245,7 @@ dbgmsg(">ParLD");
 		if		(	(  DI_Token  ==  T_SYMBOL  )
 				||	(  DI_Token  ==  T_SCONST  )
 				||	(  DI_Token  ==  T_EXIT    ) ) {
-			if		(  ThisEnv->LD_Dir  ==  NULL  ) {
+			if		(  ThisEnv->D_Dir  ==  NULL  ) {
 				if		(  GetSymbol  ==  T_SCONST  ) {
 					SkipLD();
 				}
@@ -282,10 +283,10 @@ dbgmsg(">ParBD");
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  DI_Token  ==  T_SYMBOL  )
 				||	(  DI_Token  ==  T_SCONST  ) ) {
-			if		(  ThisEnv->BD_Dir  !=  NULL  ) {
+			if		(  ThisEnv->D_Dir  !=  NULL  ) {
 				if		(	(  dname  ==  NULL  )
 						||	(  !strcmp(dname,DI_ComSymbol)  ) ) {
-					strcpy(buff,ThisEnv->BD_Dir);
+					strcpy(buff,ThisEnv->D_Dir);
 					p = buff;
 					do {
 						if		(  ( q = strchr(p,':') )  !=  NULL  ) {
@@ -341,10 +342,10 @@ dbgmsg(">ParDBD");
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  DI_Token  ==  T_SYMBOL  )
 				||	(  DI_Token  ==  T_SCONST  ) ) {
-			if		(  ThisEnv->DBD_Dir  !=  NULL  ) {
+			if		(  ThisEnv->D_Dir  !=  NULL  ) {
 				if		(	(  dname  ==  NULL  )
 						||	(  !strcmp(dname,DI_ComSymbol)  ) ) {
-					strcpy(buff,ThisEnv->DBD_Dir);
+					strcpy(buff,ThisEnv->D_Dir);
 					p = buff;
 					do {
 						if		(  ( q = strchr(p,':') )  !=  NULL  ) {
@@ -622,9 +623,7 @@ dbgmsg(">ParDI");
 				ThisEnv = New(DI_Struct);
 				ThisEnv->name = StrDup(DI_ComSymbol);
 				ThisEnv->BaseDir = BaseDir;
-				ThisEnv->LD_Dir = LD_Dir;
-				ThisEnv->BD_Dir = BD_Dir;
-				ThisEnv->DBD_Dir = DBD_Dir;
+				ThisEnv->D_Dir = D_Dir;
 				ThisEnv->RecordDir = RecordDir;
 				ThisEnv->WfcApsPort = ParPort("localhost",PORT_WFC_APS);
 				ThisEnv->cLD = 0;
@@ -684,11 +683,11 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_LDDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				if		(  ThisEnv->LD_Dir  ==  NULL  ) {
+				if		(  ThisEnv->D_Dir  ==  NULL  ) {
 					if		(  !strcmp(DI_ComSymbol,".")  ) {
-						ThisEnv->LD_Dir = StrDup(ThisEnv->BaseDir);
+						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
 					} else {
-						ThisEnv->LD_Dir = StrDup(ExpandPath(DI_ComSymbol
+						ThisEnv->D_Dir = StrDup(ExpandPath(DI_ComSymbol
 															,ThisEnv->BaseDir));
 					}
 				}
@@ -698,11 +697,11 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_BDDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				if		(  ThisEnv->BD_Dir  ==  NULL  ) {
+				if		(  ThisEnv->D_Dir  ==  NULL  ) {
 					if		(  !strcmp(DI_ComSymbol,".")  ) {
-						ThisEnv->BD_Dir = StrDup(ThisEnv->BaseDir);
+						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
 					} else {
-						ThisEnv->BD_Dir = StrDup(ExpandPath(DI_ComSymbol
+						ThisEnv->D_Dir = StrDup(ExpandPath(DI_ComSymbol
 															,ThisEnv->BaseDir));
 					}
 				}
@@ -712,11 +711,11 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_DBDDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				if		(  ThisEnv->DBD_Dir  ==  NULL  ) {
+				if		(  ThisEnv->D_Dir  ==  NULL  ) {
 					if		(  !strcmp(DI_ComSymbol,".")  ) {
-						ThisEnv->DBD_Dir = StrDup(ThisEnv->BaseDir);
+						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
 					} else {
-						ThisEnv->DBD_Dir = StrDup(ExpandPath(DI_ComSymbol
+						ThisEnv->D_Dir = StrDup(ExpandPath(DI_ComSymbol
 															,ThisEnv->BaseDir));
 					}
 				}

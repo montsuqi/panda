@@ -54,6 +54,7 @@ copies.
 #include	"defaults.h"
 #include	"enum.h"
 #include	"dblib.h"
+#include	"dbgroup.h"
 #include	"queue.h"
 #include	"driver.h"
 #include	"message.h"
@@ -499,8 +500,18 @@ dbgmsg("<StartBatch");
 	return	(rc);
 }
 
+static	void
+_ReadyExecute(
+	MessageHandler	*handler)
+{
+	if		(  handler->loadpath  ==  NULL  ) {
+		handler->loadpath = ExecPath;
+	}
+}
+
 static	MessageHandlerClass	Handler = {
 	"Exec",
+	_ReadyExecute,
 	_ExecuteProcess,
 	_StartBatch,
 	_ReadyDC,

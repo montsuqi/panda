@@ -29,37 +29,12 @@ copies.
 #define	MULTI_ID		3
 #define	MULTI_APS		4
 
-#include	"LDparser.h"
-#include	"BDparser.h"
-#include	"DBDparser.h"
-#include	"dbgroup.h"
+#include	"struct.h"
 
-typedef	struct {
-	char		*name;
-	char		*BaseDir
-	,			*LD_Dir
-	,			*BD_Dir
-	,			*DBD_Dir
-	,			*RecordDir;
-	Port		*WfcApsPort;
-	size_t		cLD
-	,			cBD
-	,			cDBD
-	,			linksize
-	,			stacksize;
-	RecordStruct	*mcprec;
-	RecordStruct	*linkrec;
-	GHashTable	*LD_Table;
-	GHashTable	*BD_Table;
-	GHashTable	*DBD_Table;
-	LD_Struct	**ld;
-	BD_Struct	**bd;
-	DBD_Struct	**db;
-	int			mlevel;
-	int			cDBG;
-	DBG_Struct	**DBG;
-	GHashTable	*DBG_Table;
-}	DI_Struct;
+//#include	"LDparser.h"
+//#include	"BDparser.h"
+//#include	"DBDparser.h"
+//#include	"dbgroup.h"
 
 #undef	GLOBAL
 #ifdef	_DI_PARSER

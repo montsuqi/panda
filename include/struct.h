@@ -28,6 +28,53 @@ copies.
 #include	<glib.h>
 #include	"const.h"
 #include	"libmondai.h"
+#include	"net.h"
+
+typedef	struct {
+	char	func[SIZE_FUNC];
+	int		rc;
+	int		blocks;
+	int		rno;
+	int		pno;
+}	DBCOMM_CTRL;
+
+typedef	struct _DBG_Struct	{
+	char		*name;					/*	group name		*/
+	char		*type;					/*	DBMS type name	*/
+	struct	_DB_Func		*func;
+	NETFILE		*fpLog;
+	LargeByteString	*redirectData;
+	char		*file;
+	Port		*redirectPort;
+	struct	_DBG_Struct	*redirect;
+	GHashTable	*dbt;
+	int			priority;
+	/*	DB depend	*/
+	Port		*port;
+	char		*dbname;
+	char		*user;
+	char		*pass;
+	/*	DB connection variable	*/
+	Bool		fConnect;
+	void		*conn;
+}	DBG_Struct;
+
+typedef	void	(*DB_FUNC)(DBCOMM_CTRL *, RecordStruct *);
+typedef	void	(*DB_EXEC)(DBG_Struct *, char *);
+typedef	Bool	(*DB_FUNC_NAME)(char *, DBCOMM_CTRL *, RecordStruct *);
+
+typedef	struct _DB_Func	{
+	DB_FUNC_NAME	access;
+	DB_EXEC			exec;
+	GHashTable		*table;
+	char			*commentStart
+	,				*commentEnd;
+}	DB_Func;
+
+typedef	struct {
+	char	*name;
+	DB_FUNC	func;
+}	DB_OPS;
 
 typedef	struct {
 	size_t	n;
@@ -35,7 +82,6 @@ typedef	struct {
 		char	window[SIZE_NAME];
 	}	close[15];
 }	CloseWindows;
-
 
 typedef	struct _ProcessNode	{
 	char		term[SIZE_TERM+1]
@@ -67,8 +113,9 @@ typedef	struct	{
 
 typedef	struct _MessageHandlerClass	{
 	char	*name;
-	Bool	(*ExecuteProcess)(MessageHandler *handler, ProcessNode *);
-	int		(*StartBatch)(MessageHandler *handler, char *name, char *param);
+	void	(*ReadyExecute)(MessageHandler *handler);
+	Bool	(*ExecuteDC)(MessageHandler *handler, ProcessNode *);
+	int		(*ExecuteBatch)(MessageHandler *handler, char *name, char *param);
 	/*	DC function	*/
 	void	(*ReadyDC)(MessageHandler *handler);
 	void	(*StopDC)(MessageHandler *handler);
@@ -80,8 +127,9 @@ typedef	struct _MessageHandlerClass	{
 }	MessageHandlerClass;
 
 #define	INIT_LOAD		0x01
-#define	INIT_READYDC	0x02
-#define	INIT_READYDB	0x04
+#define	INIT_EXECUTE	0x02
+#define	INIT_READYDC	0x04
+#define	INIT_READYDB	0x08
 #define	INIT_STOPDC		0x10
 #define	INIT_STOPDB		0x20
 #define	INIT_CLEANDB	0x40
@@ -137,5 +185,30 @@ typedef	struct {
 	GHashTable	*BatchTable;
 	RecordStruct	**db;
 }	BD_Struct;
+
+typedef	struct {
+	char		*name;
+	char		*BaseDir
+	,			*D_Dir
+	,			*RecordDir;
+	Port		*WfcApsPort;
+	size_t		cLD
+	,			cBD
+	,			cDBD
+	,			linksize
+	,			stacksize;
+	RecordStruct	*mcprec;
+	RecordStruct	*linkrec;
+	GHashTable	*LD_Table;
+	GHashTable	*BD_Table;
+	GHashTable	*DBD_Table;
+	LD_Struct	**ld;
+	BD_Struct	**bd;
+	DBD_Struct	**db;
+	int			mlevel;
+	int			cDBG;
+	DBG_Struct	**DBG;
+	GHashTable	*DBG_Table;
+}	DI_Struct;
 
 #endif

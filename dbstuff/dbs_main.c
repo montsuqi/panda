@@ -50,6 +50,7 @@ copies.
 #include	"authstub.h"
 #include	"directory.h"
 #include	"dblib.h"
+#include	"dbgroup.h"
 #include	"dbs_main.h"
 #include	"option.h"
 #include	"message.h"
@@ -390,8 +391,8 @@ static	ARG_TABLE	option[] = {
 		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
-	{	"dbddir",	STRING,		TRUE,	(void*)&DBD_Dir,
-		"DB定義格納ディレクトリ"		 				},
+	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
+		"定義格納ディレクトリ"			 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"ディレクトリファイル"	 						},
 
@@ -420,9 +421,7 @@ SetDefault(void)
 
 	BaseDir = NULL;
 	RecordDir = NULL;
-	LD_Dir = NULL;
-	BD_Dir = NULL;
-	DBD_Dir = NULL;
+	D_Dir = NULL;
 	Directory = "./directory";
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
 

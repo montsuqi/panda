@@ -55,6 +55,7 @@ copies.
 #define	SIZE_TRID		16
 #define	SIZE_SESID		16
 #define	SIZE_ARG		255
+#define	SIZE_FUNC		16
 
 #ifndef	SIZE_LONGNAME
 #define	SIZE_LONGNAME		1024

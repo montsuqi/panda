@@ -54,6 +54,7 @@ copies.
 #include	"defaults.h"
 #include	"enum.h"
 #include	"dblib.h"
+#include	"dbgroup.h"
 #include	"queue.h"
 #include	"driver.h"
 #include	"message.h"
@@ -501,6 +502,7 @@ dbgmsg("<StartBatch");
 
 static	MessageHandlerClass	Handler = {
 	"Exec",
+	NULL,
 	_ExecuteProcess,
 	_StartBatch,
 	_ReadyDC,

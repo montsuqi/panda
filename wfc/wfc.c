@@ -169,8 +169,8 @@ static	ARG_TABLE	option[] = {
 		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
-	{	"lddir",	STRING,		TRUE,	(void*)&LD_Dir,
-		"データ定義格納ディレクトリ"	 				},
+	{	"lddir",	STRING,		TRUE,	(void*)&D_Dir,
+		"LD定義格納ディレクトリ"		 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"ディレクトリファイル"	 						},
 	{	NULL,		0,			TRUE,	NULL		 	}
@@ -184,8 +184,7 @@ SetDefault(void)
 	Back = 5;
 	BaseDir = NULL;
 	RecordDir = NULL;
-	LD_Dir = NULL;
-	BD_Dir = NULL;
+	D_Dir = NULL;
 	Directory = "./directory";
 }
 

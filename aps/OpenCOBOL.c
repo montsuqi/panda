@@ -64,6 +64,8 @@ static	void	*LinkData;
 static	void	*SpaData;
 static	void	*ScrData;
 
+static	char	*LoadPath;
+
 static	void
 PutApplication(
 	ProcessNode	*node)
@@ -108,6 +110,9 @@ _ExecuteProcess(
 	Bool	rc;
 
 dbgmsg(">_ExecuteProcess");
+	cob_init(0,NULL);
+	cob_set_library_path(handler->loadpath);
+
 	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
 		PutApplication(node);
@@ -132,18 +137,10 @@ static	void
 _ReadyDC(
 	MessageHandler	*handler)
 {
-	char	*path;
 	int		i;
 	size_t	scrsize;
 
 dbgmsg(">ReadyDC");
-	if		(  LibPath  ==  NULL  ) { 
-		path = getenv("COB_LIBRARY_PATH");
-	} else {
-		path = LibPath;
-	}
-	cob_init(0,NULL);
-	cob_set_library_path(path);
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
 
@@ -192,17 +189,11 @@ _StartBatch(
 {
 	int		(*apl)(char *);
 	int		rc;
-	char	*path;
 	char	*arg;
 
 dbgmsg(">_StartBatch");
-	if		(  LibPath  ==  NULL  ) { 
-		path = getenv("COB_LIBRARY_PATH");
-	} else {
-		path = LibPath;
-	}
 	cob_init(0,NULL);
-	cob_set_library_path(path);
+	cob_set_library_path(handler->loadpath);
 
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisBD->textsize,ThisBD->arraysize);
@@ -225,8 +216,18 @@ dbgmsg("<_StartBatch");
  return	(rc); 
 }
 
+static	void
+_ReadyExecute(
+	MessageHandler	*handler)
+{
+	if		(  handler->loadpath  ==  NULL  ) {
+		handler->loadpath = LoadPath;
+	}
+}
+
 static	MessageHandlerClass	Handler = {
 	"OpenCOBOL",
+	_ReadyExecute,
 	_ExecuteProcess,
 	_StartBatch,
 	_ReadyDC,
@@ -241,8 +242,12 @@ extern	MessageHandlerClass	*
 OpenCOBOL(void)
 {
 dbgmsg(">OpenCOBOL");
+	if		(  LibPath  ==  NULL  ) { 
+		LoadPath = getenv("COB_LIBRARY_PATH");
+	} else {
+		LoadPath = LibPath;
+	}
 dbgmsg("<OpenCOBOL");
 	return	(&Handler);
 }
 #endif
-
