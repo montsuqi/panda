@@ -148,7 +148,7 @@ _Message(
 	struct	tm	*Now;
 
 #ifdef USE_SYSLOG
-	syslog(SyslogLevel(level), msg);
+	syslog(SyslogLevel(level), "%s", msg);
 #endif
 	
 	if		(  fpLog  !=  NULL  ) {
@@ -249,7 +249,7 @@ InitMessage(
 #endif
 
 #ifdef USE_SYSLOG
-	char	buff[SIZE_BUFF];
+	static char	buff[SIZE_BUFF];
 
 	snprintf(buff, SIZE_BUFF, "%s/%s", PACKAGE, id);
 	openlog(buff, LOG_PID, syslog_facility);
