@@ -250,6 +250,7 @@ WriteTerminal(
 	WindowBind	*bind;
 	int			ix;
 	Bool		fExit;
+	char		wname[SIZE_LONGNAME+1];
 
 dbgmsg(">WriteTerminal");
 	rc = FALSE;
@@ -282,12 +283,14 @@ dbgmsg(">WriteTerminal");
 				break;
 			  case	WFC_DATA:
 				dbgmsg("DATA");
-				bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,
-														 data->hdr->window);
-				if		(  bind  !=  NULL  ) {
-					if		(  bind->ix  >=  0  ) {
-						SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
-					}
+				RecvString(fp,wname);				ON_IO_ERROR(fp,badio);
+				bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,wname);
+				if		(	(  bind      !=  NULL  )
+						&&	(  bind->ix  >=  0     ) )	{
+					SendPacketClass(fp,WFC_OK);					ON_IO_ERROR(fp,badio);
+					SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
+				} else {
+					SendPacketClass(fp,WFC_NOT);				ON_IO_ERROR(fp,badio);
 				}
 				break;
 			  case	WFC_LARGE:

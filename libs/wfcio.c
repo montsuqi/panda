@@ -165,15 +165,34 @@ dbgmsg("<RecvTermServerHeader");
 	return	(rc);
 }
 
+static	void
+_RecvWindow(
+	char		*wname,
+	WindowData	*win,
+	NETFILE		*fp)
+{
+	switch	(win->PutType) {
+	  case	SCREEN_NULL:
+	  case	SCREEN_CLOSE_WINDOW:
+		break;
+	  default:
+		SendPacketClass(fp,WFC_DATA);
+		SendString(fp,wname);
+		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+			RecvLBS(fp,buff);
+			NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
+		}
+	}
+}
+
 extern	void
 RecvTermServerData(
-	NETFILE	*fp,
-	WindowData	*win)
+	NETFILE		*fp,
+	ScreenData	*scr)
 {
+	WindowData	*win;
 dbgmsg(">RecvTermServerData");
-	SendPacketClass(fp,WFC_DATA);
-	RecvLBS(fp,buff);
-	NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
+	g_hash_table_foreach(scr->Windows,(GHFunc)_RecvWindow,fp);
 	SendPacketClass(fp,WFC_OK);
 dbgmsg("<RecvTermServerData");
 }

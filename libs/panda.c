@@ -104,8 +104,6 @@ dbgmsg(">RecvPanda");
 			}
 		}
 #endif
-		win = SetWindowName(window);
-		RecvTermServerData(fpPanda,win);
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
@@ -121,8 +119,10 @@ dbgmsg(">RecvPanda");
 		  default:
 			break;
 		}
-		PutWindow(win,type);
+		(void)SetWindowName(window);
+		(void)PutWindowByName(window,type);
 #endif
+		RecvTermServerData(fpPanda,ThisScreen);
 		strcpy(ThisWindow,window);
 		strcpy(ThisWidget,widget);
 		strcpy(ThisUser,user);

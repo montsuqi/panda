@@ -56,6 +56,6 @@ extern	Bool	SendTermServer(NETFILE *fp, char *window, char *widget, char *event,
 							   ValueStruct *value);
 extern	Bool	RecvTermServerHeader(NETFILE *fp, char *user, char *window, char *widget,
 									 int *type, WindowControl *ctl);
-extern	void	RecvTermServerData(NETFILE *fp, WindowData *win);
+extern	void	RecvTermServerData(NETFILE *fp, ScreenData *scr);
 
 #endif
