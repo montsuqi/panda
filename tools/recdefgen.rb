@@ -186,7 +186,7 @@ class	Widget
 	end
 	def	isData
 		case	@klass
-		  when	"GtkLabel", "GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCList", "GtkCalendar", "GtkNumberEntry", "GtkText"
+		  when	"GtkLabel", "GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkPandaCList"
 			ret = TRUE;
 		  else
 			if	@child
@@ -285,14 +285,14 @@ class	Widget
 				putTab(ind);
 				printf("};\n");
 			end
-		  when	"GtkEntry"
+		  when	"GtkEntry", "GtkPandaEntry"
 			putTab(ind);
 			printf("%s\t{\n",vname);
 			putTab(ind+1);
 			printf("value\tvarchar(%d);\n",@chars);
 			putTab(ind);
 			printf("};\n");
-		  when	"GtkText"
+		  when	"GtkText", "GtkPandaText"
 			putTab(ind);
 			printf("%s\t{\n",vname);
 			putTab(ind+1);
