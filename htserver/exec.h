@@ -47,8 +47,11 @@ copies.
 #define	GLOBAL		extern
 #endif
 
+GLOBAL	char	*Codeset;
+
 #undef	GLOBAL
 
 extern	LargeByteString	*ExecCode(HTCInfo *htc);
+extern	char	*LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
 
 #endif

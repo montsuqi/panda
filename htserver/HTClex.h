@@ -45,5 +45,6 @@ extern	int		HTCGetChar(void);
 extern	void	HTCUnGetChar(int c);
 extern	int		HTCLex(Bool fSymbol);
 extern	void	HTCLexInit(void);
+extern	void	HTCSetCodeset(char *codeset);
 
 #endif

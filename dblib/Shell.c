@@ -179,7 +179,7 @@ InsertValue(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		LBS_EmitChar(lbs,'"');
-		LBS_EmitString(lbs,ValueToString(val,dbg->locale));
+		LBS_EmitString(lbs,ValueToString(val,dbg->coding));
 		LBS_EmitChar(lbs,'"');
 		break;
 	  case	GL_TYPE_NUMBER:

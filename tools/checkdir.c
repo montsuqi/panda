@@ -378,7 +378,7 @@ DumpDBG(
 	printf("\tDB name  = [%s]\n",dbg->dbname);
 	printf("\tDB user  = [%s]\n",dbg->user);
 	printf("\tDB pass  = [%s]\n",dbg->pass);
-	printf("\tDB locale= [%s]\n",dbg->locale);
+	printf("\tDB locale= [%s]\n",dbg->coding);
 	if		(  dbg->file  !=  NULL  ) {
 		printf("\tlog file = [%s]\n",dbg->file);
 	}

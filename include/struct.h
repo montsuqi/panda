@@ -88,7 +88,7 @@ typedef	struct _DBG_Struct	{
 	struct	_DBG_Struct	*redirect;
 	GHashTable	*dbt;
 	int			priority;				/*	commit priority		*/
-	char		*locale;				/*	DB backend locale	*/
+	char		*coding;				/*	DB backend coding	*/
 	/*	DB depend	*/
 	Port		*port;
 	char		*dbname;

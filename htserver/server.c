@@ -146,6 +146,7 @@ WriteClient(
 	char	buff[SIZE_BUFF+1];
 	char	*vname
 	,		*wname;
+	char	*str;
 	WindowData	*win;
 	ValueStruct	*value;
 	char	*p;
@@ -161,7 +162,10 @@ dbgmsg(">WriteClient");
 			DecodeName(&wname,&vname,buff);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
-				SendStringDelim(fp,ValueToString(value,"euc-jp"));
+				//str =  ValueToString(value,"utf8");
+				str =  ValueToString(value,NULL);
+dbgprintf("send [%s][%s]\n",vname,str);
+				SendStringDelim(fp,str);
 				if		(	(  p  !=  NULL            )
 						&&	(  !stricmp(p+1,"clear")  ) ) {
 					InitializeValue(value);
@@ -198,7 +202,7 @@ RecvScreenData(
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
 				ValueIsUpdate(value);
-				SetValueString(value,str,"euc-jp");
+				SetValueString(value,str,"utf8");
 #ifdef	DEBUG
 				printf("--\n");
 				DumpValueStruct(value);

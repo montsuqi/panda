@@ -32,12 +32,16 @@ copies.
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
+#include	<iconv.h>
+
 #include	"types.h"
 #include	"misc.h"
 #include	"dirs.h"
 #include	"libmondai.h"
 #include	"HTClex.h"
 #include	"debug.h"
+
+#define	SIZE_CHARS		16
 
 typedef	struct	INCFILE_S	{
 	struct	INCFILE_S	*next;
@@ -54,6 +58,11 @@ static	struct	{
 	{	""			,0	}
 };
 
+static	iconv_t			ReadCd;
+static	byte	obuff[SIZE_CHARS];
+static	size_t	sob
+		,		op;
+
 static	GHashTable	*Reserved;
 extern	void
 HTCLexInit(void)
@@ -64,6 +73,9 @@ HTCLexInit(void)
 	for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
 		g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
 	}
+	ReadCd = (iconv_t)0;
+	op = 0;
+	sob = SIZE_CHARS;
 }
 
 static	int
@@ -81,16 +93,61 @@ CheckReserved(
 	return	(ret);
 }
 
+extern	void
+HTCSetCodeset(
+	char	*codeset)
+{
+	if		(  ReadCd  !=  (iconv_t)0  ) {
+		iconv_close(ReadCd);
+	}
+	ReadCd = iconv_open("utf8",codeset);
+}
+
 extern	int
 HTCGetChar(void)
 {
 	int		c;
+	byte	ibuff[SIZE_CHARS]
+	,		*ic;
+	char	*oc
+	,		*istr;
+	int		ret;
+	size_t	count;
+	int		rc;
 
-	c = fgetc(HTC_File);
-	if		(  c  ==  EOF  ) {
-		c = T_EOF;
+ENTER_FUNC;
+  retry:
+	if		(  op  <  ( SIZE_CHARS - sob )  ) {
+		ret = obuff[op];
+		op ++;
+	} else {
+		op = 0;
+		if		(  ( c = fgetc(HTC_File) )  !=  EOF  ) {
+			if		(  ReadCd  !=  (iconv_t)0  ) {
+				ic = ibuff;
+				do {
+					*ic ++ = c;
+					istr = ibuff;
+					count = (size_t)(ic - ibuff);
+					oc = obuff;
+					sob = SIZE_CHARS;
+					if		(  ( rc = iconv(ReadCd,&istr,&count,&oc,&sob) )  !=  0  ) {
+						if		(  ( c = fgetc(HTC_File) )  ==  EOF  )	break;
+					}
+				}	while	(  rc  !=  0  );
+				if		(  c  ==  EOF  ) {
+					ret = -1;
+				} else goto	retry;
+			} else {
+				sob = SIZE_CHARS;
+				ret = c;
+			}
+		} else {
+			ret = -1;
+		}
 	}
-	return	(c);
+LEAVE_FUNC;
+	return	(ret);
 }
 
 extern	void

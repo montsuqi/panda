@@ -1,3 +1,13 @@
+2003-11-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/struct.h: change member name
+
+	* dblib/PostgreSQL.c (ValueToSQL): bug fix(quote忘れ)
+
+2003-11-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/: 国際化
+
 2003-10-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.2.0 リリース(安定版ブランチ作成)

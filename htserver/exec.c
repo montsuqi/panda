@@ -33,6 +33,8 @@ copies.
 #include	<unistd.h>
 #include	<glib.h>
 #include	<ctype.h>
+#include	<iconv.h>
+
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
@@ -40,6 +42,11 @@ copies.
 #include	"exec.h"
 #include	"misc.h"
 #include	"debug.h"
+
+#define	SRC_CODESET		"euc-jp"
+#define	NEN		"年"
+#define	TSUKI	"月</TH></TR><TR align=\"center\">"
+#define	ATAMA	"<TH>日</TH><TH>月</TH><TH>火</TH><TH>水</TH><TH>木</TH><TH>金</TH><TH>土</TH></TR>\n"
 
 #define	SIZE_RSTACK		100
 
@@ -105,6 +112,54 @@ uru(
 	return	(rc);
 }
 
+#define	SIZE_CHARS		16
+extern	char	*
+LBS_EmitUTF8(
+	LargeByteString	*lbs,
+	char			*str,
+	char			*codeset)
+{
+	char	*oc
+	,		*istr;
+	char	obuff[SIZE_CHARS];
+	size_t	count
+	,		sib
+	,		sob
+	,		csize;
+	int		rc;
+	iconv_t	cd;
+	int		i;
+
+ENTER_FUNC;
+	if		(  codeset  !=  NULL  ) {
+		cd = iconv_open("utf8",codeset);
+		while	(  *str  !=  0  )	{
+			count = 1;
+			do {
+				istr = str;
+				sib = count;
+				oc = obuff;
+				sob = SIZE_CHARS;
+				if		(  ( rc = iconv(cd,&istr,&sib,&oc,&sob) )  <  0  ) {
+					count ++;
+				}
+			}	while	(	(  rc            !=  0  )
+						&&	(  str[count-1]  !=  0  ) );
+			csize = SIZE_CHARS - sob;
+			for	( oc = obuff , i = 0 ; i < csize ; i ++, oc ++ ) {
+				LBS_Emit(lbs,*oc);
+			}
+			str += count;
+		}
+		iconv_close(cd);
+	} else {
+		while	(  *str  !=  0  ) {
+			LBS_Emit(lbs,*str);
+		}
+	}
+LEAVE_FUNC;
+}
+
 static	void
 ExecCalendar(
 	LargeByteString	*html,
@@ -146,11 +201,11 @@ dbgmsg(">ExecCalendar");
 	LBS_EmitString(html,"<TABLE BORDER><TR align=\"center\"><TH colspan=7>\n");
 	sprintf(buff,"%d",yy);
 	LBS_EmitString(html,buff);
-	LBS_EmitString(html,"年");
+	LBS_EmitUTF8(html,NEN,SRC_CODESET);
 	sprintf(buff,"%d",mm);
 	LBS_EmitString(html,buff);
-	LBS_EmitString(html,"月</TH></TR><TR align=\"center\">");
-	LBS_EmitString(html,"<TH>日</TH><TH>月</TH><TH>火</TH><TH>水</TH><TH>木</TH><TH>金</TH><TH>土</TH></TR>\n");
+	LBS_EmitUTF8(html,TSUKI,SRC_CODESET);
+	LBS_EmitUTF8(html,ATAMA,SRC_CODESET);
 	one = youbi(yy,mm,1);
 	for	( sun = 1 - one ; sun <= 31 ; sun += 7 ) {
 		LBS_EmitString(html,"<TR align=\"center\">");
@@ -263,10 +318,9 @@ HTGetValue(
 	char		*name,
 	Bool		fClear)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_BUFF+1];
 	char	*value;
 
-	//	printf("\nname = [%s]\n",name);
 	if		(  *name  ==  0  ) {
 		value = "";
 	} else
@@ -274,10 +328,8 @@ HTGetValue(
 		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
 		HT_SendString(buff);
 		HT_RecvString(SIZE_BUFF,buff);
-		g_hash_table_insert(Values,StrDup(name),StrDup(buff));
-	}
-	if		(  ( value = g_hash_table_lookup(Values,name) )  ==  NULL  ) {
-		value = "";
+		value = StrDup(buff);
+		g_hash_table_insert(Values,StrDup(name),value);
 	}
 	return	(value);
 }

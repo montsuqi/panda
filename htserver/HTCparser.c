@@ -41,6 +41,7 @@ copies.
 #include	"misc.h"
 #include	"HTCparser.h"
 #include	"HTClex.h"
+#include	"exec.h"
 #include	"tags.h"
 #include	"mon.h"
 #include	"option.h"
@@ -183,7 +184,7 @@ ParHTC(
 	int		c;
 
 dbgmsg(">ParHTC");
-	while	(  GetChar  != T_EOF  ) {
+	while	(  GetChar  >= 0  ) {
 		switch	(HTC_Token) {
 		  case	'<':
 			ParTag(htc);
@@ -240,6 +241,7 @@ HTCParserInit(void)
 dbgmsg(">HTCParserInit");
 	HTCLexInit();
 	TagsInit();
+	Codeset = "euc-jp";
 dbgmsg("<HTCParserInit");
 }
 

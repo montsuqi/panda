@@ -473,10 +473,10 @@ dbgmsg(">ParDBGROUP");
 	dbg->dbt = NULL;
 	dbg->priority = 50;
 	if		(  ( env = getenv("MONDB_LOCALE") )  ==  NULL  ) {
-		dbg->locale = DB_LOCALE;
+		dbg->coding = DB_LOCALE;
 	} else
 	if		(  stricmp(env,"UTF8")  ==  0  ) {
-		dbg->locale = NULL;
+		dbg->coding = NULL;
 	}
 	while	(  GetSymbol  !=  '}'  ) {
 		switch	(ComToken) {
@@ -534,9 +534,9 @@ dbgmsg(">ParDBGROUP");
 		  case	T_LOCALE:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  stricmp(ComSymbol,"utf8")  ==  0  ) {
-					dbg->locale = NULL;
+					dbg->coding = NULL;
 				} else {
-					dbg->locale = StrDup(ComSymbol);
+					dbg->coding = StrDup(ComSymbol);
 				}
 			} else {
 				Error("invalid logging file name");

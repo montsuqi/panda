@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -34,6 +34,9 @@ copies.
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
+#include	<errno.h>
+#include	<iconv.h>
+
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
@@ -48,6 +51,10 @@ copies.
 #include	"misc.h"
 #include	"message.h"
 #include	"debug.h"
+
+#define	SRC_CODESET		"euc-jp"
+
+#define	SIZE_CHARS		16
 
 static	NETFILE	*fpServ;
 static	char	*ServerPort;
@@ -93,14 +100,56 @@ HexCharToInt(
 	return	(ret);
 }
 
+static	char	*
+ConvLocal(
+	char	*istr)
+{
+	iconv_t	cd;
+	size_t	sib
+	,		sob;
+	char	*ostr;
+	static	char	cbuff[SIZE_BUFF];
+
+	cd = iconv_open(Codeset,"utf8");
+	sib = strlen(istr);
+	ostr = cbuff;
+	sob = SIZE_BUFF;
+	iconv(cd,&istr,&sib,&ostr,&sob);
+	*ostr = 0;
+	iconv_close(cd);
+	return	(cbuff);
+}
+
+static	char	*
+ConvUTF8(
+	char	*istr)
+{
+	iconv_t	cd;
+	size_t	sib
+	,		sob;
+	char	*ostr;
+	static	char	cbuff[SIZE_BUFF];
+
+	cd = iconv_open("utf8",Codeset);
+	sib = strlen(istr);
+	ostr = cbuff;
+	sob = SIZE_BUFF;
+	if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
+		dbgprintf("error = %d\n",errno);
+	}
+	*ostr = 0;
+	iconv_close(cd);
+	return	(cbuff);
+}
+
 static	char	*ScanArgValue;
 static	Bool
 ScanEnv(
 	char	*name,
-	char	*value)
+	byte	*value)
 {
-	char	buff[SIZE_BUFF];
-	char	*p;
+	byte	buff[SIZE_BUFF];
+	byte	*p;
 	int		c;
 	Bool	rc;
 
@@ -151,7 +200,7 @@ ScanEnv(
 static	Bool
 ScanPost(
 	char	*name,
-	char	*value)
+	byte	*value)
 {
 	char	buff[SIZE_BUFF];
 	char	*p;
@@ -191,36 +240,82 @@ ScanPost(
 	return	(rc);
 }
 
-static	GHashTable	*
-GetArg(void)
+static	void
+GetArgs(void)
 {
-	GHashTable	*args;
-	char	name[SIZE_BUFF]
-	,		value[SIZE_BUFF];
+	char	name[SIZE_BUFF];
+	byte	value[SIZE_BUFF];
 
-	args = NewNameHash();
 	if		(  ( ScanArgValue = getenv("QUERY_STRING") )  !=  NULL  ) {
 		while	(  ScanEnv(name,value)  ) {
-			if		(  g_hash_table_lookup(args,name)  ==  NULL  ) {
-				g_hash_table_insert(args,StrDup(name),StrDup(value));
+			if		(  g_hash_table_lookup(Values,name)  ==  NULL  ) {
+				g_hash_table_insert(Values,StrDup(name),StrDup(value));
 			}
 		}
 	}
 	while	(  ScanPost(name,value)  ) {
-		if		(  g_hash_table_lookup(args,name)  ==  NULL  ) {
-			g_hash_table_insert(args,StrDup(name),StrDup(value));
+		if		(  g_hash_table_lookup(Values,name)  ==  NULL  ) {
+			g_hash_table_insert(Values,StrDup(name),StrDup(value));
 		}
 	}
 	if		(  fCookie  ) {
 		if		(  ( ScanArgValue = getenv("HTTP_COOKIE") )  !=  NULL  ) {
 			while	(  ScanEnv(name,value)  ) {
-				if		(  g_hash_table_lookup(args,name)  ==  NULL  ) {
-					g_hash_table_insert(args,StrDup(name),StrDup(value));
+				if		(  g_hash_table_lookup(Values,name)  ==  NULL  ) {
+					g_hash_table_insert(Values,StrDup(name),StrDup(value));
 				}
 			}
 		}
 	}
-	return	(args);
+}
+
+static	void
+WriteLargeString(
+	FILE			*output,
+	LargeByteString	*lbs,
+	char			*codeset)
+{
+	char	*oc
+	,		*ic
+	,		*istr;
+	char	obuff[SIZE_CHARS]
+	,		ibuff[SIZE_CHARS];
+	size_t	count
+	,		sib
+	,		sob;
+	int		rc
+	,		ch;
+	iconv_t	cd;
+
+ENTER_FUNC;
+	cd = iconv_open("utf8",codeset);
+
+	RewindLBS(lbs);
+	if		(  codeset  !=  NULL  ) {
+		cd = iconv_open(codeset,"utf8");
+		while	(  !LBS_Eof(lbs)  ) {
+			count = 0;
+			ic = ibuff;
+			do {
+				ch = LBS_FetchChar(lbs);
+				*ic ++ = ch;
+				count ++;
+				istr = ibuff;
+				sib = count;
+				oc = obuff;
+				sob = SIZE_CHARS;
+				rc = iconv(cd,&istr,&sib,&oc,&sob);
+			}	while	(	(  rc  !=  0  )
+						&&	(  ch  !=  0  ) );
+			for	( oc = obuff ; sob < SIZE_CHARS ; oc ++ , sob ++ ) {
+				fprintf(output,"%c",*oc);
+			}
+		}
+		iconv_close(cd);
+	} else {
+		fprintf(output,"%s\n",LBS_Body(lbs));
+	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -232,67 +327,86 @@ PutHTML(
 
 dbgmsg(">PutHTML");
 	printf("Content-type: text/html\n");
+	LBS_EmitEnd(html);
 	if		(  fCookie  ) {
 		if		(  ( sesid = g_hash_table_lookup(Values,"_sesid") )  !=  NULL  ) {
 			printf("Set-Cookie: _sesid=%s;\n",sesid);
 		}
 	}
 	printf("\n");
-	RewindLBS(html);
-	while	(  ( c = LBS_FetchChar(html) )  !=  0  ) {
-		printf("%c",c);
-	}
+	WriteLargeString(stdout,html,Codeset);
 dbgmsg("<PutHTML");
 }
 
 static	void
 DumpValues(
+	LargeByteString	*html,
 	GHashTable	*args)
 {
+	char	buff[SIZE_BUFF];
 	void
 	DumpValue(
 			char		*name,
 			char		*value,
 			gpointer	user_data)
 	{
-		printf("<TR><TD>%s<TD>%s\n",name,value);
+		sprintf(buff,"<TR><TD>%s<TD>%s\n",name,value);
+		LBS_EmitString(html,buff);
 	}
 
-	printf("<HR>\n");
-	printf("<H2>引数</H2>");
-	printf("<TABLE BORDER>\n");
-	printf("<TR><TD width=\"150\">名前<TD width=\"150\">値\n");
+	LBS_EmitUTF8(html,
+				 "<HR>\n"
+				 "<H2>引数</H2>"
+				 "<TABLE BORDER>\n"
+				 "<TR><TD width=\"150\">名前<TD width=\"150\">値\n"
+				 ,SRC_CODESET);
 	g_hash_table_foreach(args,(GHFunc)DumpValue,NULL);
-	printf("</TABLE>\n");
+	LBS_EmitUTF8(html,
+				 "</TABLE>\n"
+				 ,SRC_CODESET);
 }
 
 static	void
-PutEnv(void)
+PutEnv(
+	LargeByteString	*html)
 {
 	extern	char	**environ;
 	char	**env;
 
 	env = environ;
-	printf("<HR>\n");
-	printf("<H2>環境変数</H2>\n");
+	LBS_EmitUTF8(html,
+				 "<HR>\n"
+				 "<H2>環境変数</H2>\n",SRC_CODESET);
 	while	(  *env  !=  NULL  ) {
-		printf("[%s]<BR>\n",*env ++);
+		LBS_EmitUTF8(html,"[",SRC_CODESET);
+		LBS_EmitUTF8(html,*env,SRC_CODESET);
+		env ++;
+		LBS_EmitUTF8(html,
+					 "]<BR>\n",SRC_CODESET);
 	}
 }
 
 static	void
 Dump(void)
 {
+	LargeByteString	*html;
+
 	if		(  fDump  ) {
-		printf("<HR>\n");
-		printf("<H2>コマンドライン</H2>\n");
-		printf("<PRE>\n");
-		PrintUsage(option,"");
-		printf("</PRE>\n");
-		PutEnv();
-		DumpValues(Values);
-		printf("</BODY>\n");
-		printf("</HTML>\n");
+		html = NewLBS();
+		LBS_EmitStart(html);
+		LBS_EmitUTF8(html,
+					 "<HR>\n",SRC_CODESET);
+		//					 "<H2>コマンドライン</H2>\n"
+		//					 "<PRE>\n"
+		//					 //		PrintUsage(option,"");
+		//		printf("</PRE>\n");
+		PutEnv(html);
+		DumpValues(html,Values);
+		LBS_EmitUTF8(html,
+					 "</BODY>\n"
+					 "</HTML>\n",SRC_CODESET);
+		LBS_EmitEnd(html);
+		WriteLargeString(stdout,html,Codeset);
 	}
 }
 
@@ -311,7 +425,7 @@ extern	void
 HT_SendString(
 	char	*str)
 {
-	dbgprintf("send [%s]\n",str);
+	//	dbgprintf("send [%s]\n",str);
 	SendStringDelim(fpServ,str);
 }
 
@@ -330,25 +444,28 @@ HT_RecvString(
 static	void
 SendValueDelim(
 	char		*name,
-	char		*value)
+	byte		*value)
 {
 	char	buff[SIZE_BUFF];
 
 	HT_SendString(name);
 	HT_SendString(": ");
-	EncodeStringURL(buff,value);
+	EncodeStringURL(buff,ConvUTF8(value));
 	HT_SendString(buff);
 	HT_SendString("\n");
+	dbgprintf("send value = [%s: %s]\n",name,buff);
+
 }
 
 static	void
-SendEvent(
-	char	*button)
+SendEvent(void)
 {
+	char	*button;
 	char	*event;
 	char	*sesid;
 	HTCInfo	*htc;
 	char	*name;
+
 	void	GetRadio(
 		char	*name)
 		{
@@ -359,17 +476,22 @@ SendEvent(
 				g_hash_table_insert(Values,rname,"TRUE");
 			}
 		}
-
-	if		(  ( name = g_hash_table_lookup(Values,"_name") )  !=  NULL  ) {
-		htc = HTCParser(name);
-		if		(  ( event = g_hash_table_lookup(htc->Trans,button) )  ==  NULL  ) {
-			event = button;
-		}
-	} else {
+	
+	if		(  ( button = g_hash_table_lookup(Values,"_event") )  ==  NULL  ) {
 		event = "";
 		htc = NULL;
+	} else {
+		if		(  ( name = g_hash_table_lookup(Values,"_name") )  !=  NULL  ) {
+			htc = HTCParser(name);
+			if		(  ( event = g_hash_table_lookup(htc->Trans,ConvUTF8(button)) )
+					   ==  NULL  ) {
+				event = button;
+			}
+		} else {
+			event = "";
+			htc = NULL;
+		}
 	}
-
 	if		(  htc  !=  NULL  ) {
 		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
 	}
@@ -379,6 +501,7 @@ SendEvent(
 
 	g_hash_table_foreach(Values,(GHFunc)SendValueDelim,NULL);
 	HT_SendString("\n");
+
 	sesid = g_hash_table_lookup(Values,"_sesid");
 	Values = NewNameHash();
 	g_hash_table_insert(Values,"_sesid",sesid);
@@ -395,15 +518,15 @@ Expired(void)
 	} else {
 		html = NewLBS();
 		LBS_EmitStart(html);
-		LBS_EmitString(html,
-					   "<html><head>"
-					   "<title>htserver error</title>"
-					   "</head><body>\n"
-					   "<H1>htserver error</H1>\n"
-					   "<p>maybe session was expired. please retry.</p>\n"
-					   "<p>おそらくセション変数の保持時間切れでしょう。"
-					   "もう一度最初からやり直して下さい。</p>\n"
-					   "</body></html>\n");
+		LBS_EmitUTF8(html,
+					 "<html><head>"
+					 "<title>htserver error</title>"
+					 "</head><body>\n"
+					 "<H1>htserver error</H1>\n"
+					 "<p>maybe session was expired. please retry.</p>\n"
+					 "<p>おそらくセション変数の保持時間切れでしょう。"
+					 "もう一度最初からやり直して下さい。</p>\n"
+					 "</body></html>\n",SRC_CODESET);
 	}
 	return	(html);
 }
@@ -424,7 +547,6 @@ ENTER_FUNC;
   retry:
 	fError = FALSE;
 	if		(  ( fpServ = OpenPort(ServerPort,PORT_HTSERV) )  !=  NULL  ) {
-		HTCParserInit();
 		if		(  ( sesid = g_hash_table_lookup(Values,"_sesid") )  ==  NULL  ) {
 			if		(  ( user = getenv("REMOTE_USER") )  ==  NULL  ) {
 				if		(  ( user = getenv("USER") )  ==  NULL  ) {
@@ -443,12 +565,7 @@ ENTER_FUNC;
 			if		(  HT_RecvString(SIZE_BUFF,buff)  ) {
 				if		(  *buff  !=  0  ) {
 					strncpy(sesid,buff,SIZE_SESID);
-					if		(  ( button = g_hash_table_lookup(Values,"_event") )
-							   !=  NULL  ) {
-						SendEvent(button);
-					} else {
-						SendEvent("");
-					}
+					SendEvent();
 				} else {
 					fError = TRUE;
 				}
@@ -480,6 +597,24 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+DumpV(void)
+{
+	char	buff[SIZE_BUFF];
+	void
+	DumpVs(
+			char		*name,
+			char		*value,
+			gpointer	user_data)
+	{
+		dbgprintf("[%s][%s]\n",name,value);
+	}
+
+ENTER_FUNC;
+	g_hash_table_foreach(Values,(GHFunc)DumpVs,NULL);
+LEAVE_FUNC;
+}
+
 extern	int
 main(
 	int		argc,
@@ -490,7 +625,10 @@ main(
 	InitMessage("mon","@localhost");
 
 	InitNET();
-	Values = GetArg();
+	HTCParserInit();
+	Values = NewNameHash();
+	GetArgs();
+DumpV();
 	Session();
 	Dump();
 	return	(0);

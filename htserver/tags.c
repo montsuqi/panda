@@ -38,6 +38,7 @@ copies.
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
+#include	"HTClex.h"
 #include	"HTCparser.h"
 #include	"mon.h"
 #include	"tags.h"
@@ -660,6 +661,17 @@ dbgmsg(">_Calendar");
 dbgmsg("<_Calendar");
 }
 
+static	void
+_Htc(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+dbgmsg(">_Htc");
+	Codeset = GetArg(tag,"coding",0); 
+	HTCSetCodeset(Codeset);
+dbgmsg("<_Htc");
+}	
+
 static	Tag		*
 NewTag(
 	char	*name,
@@ -765,6 +777,9 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"year",TRUE);
 	AddArg(tag,"month",TRUE);
 	AddArg(tag,"day",TRUE);
+
+	tag = NewTag("HTC",_Htc);
+	AddArg(tag,"coding",TRUE);
 
 	tag = NewTag("FORM",_Form);
 	tag = NewTag("HEAD",_Head);

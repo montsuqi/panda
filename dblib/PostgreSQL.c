@@ -52,6 +52,28 @@ static	int		alevel;
 static	int		Dim[SIZE_RNAME];
 static	Bool	fInArray;
 
+static	size_t
+EncodeString(
+	char	*p,
+	char	del,
+	char	*s)
+{
+	char	*q;
+
+	q = p;
+	while	(  *s  !=  0  ) {
+		if		(  *s  ==  del  ) {
+			*p ++ = del;
+			*p ++ = del;
+		} else {
+			*p ++ = *s;
+		}
+		s ++;
+	}
+	*p = 0;
+	return	(p-q);
+}
+
 static	char	*
 ValueToSQL(
 	DBG_Struct	*dbg,
@@ -61,7 +83,8 @@ ValueToSQL(
 	char	str[SIZE_BUFF+1];
 	Numeric	nv;
 	char	del
-	,		*p;
+	,		*p
+	,		*s;
 
 	if		(  IS_VALUE_NIL(val)  ) {
 		sprintf(buff,"null");
@@ -75,10 +98,16 @@ ValueToSQL(
 		} else {
 			del = '\'';
 		}
-		sprintf(buff,"%c%s%c",del,ValueToString(val,dbg->locale),del);
+		p = buff;
+		*p ++ = del;
+		p += EncodeString(p,del,ValueToString(val,dbg->coding));
+		*p ++ = del;
+		*p = 0;
 		break;
 	  case	GL_TYPE_DBCODE:
-		strcpy(buff,ValueToString(val,dbg->locale));
+		p = buff;
+		p += EncodeString(p,'\'',ValueToString(val,dbg->coding));
+		*p = 0;
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(&ValueFixed(val));
@@ -189,7 +218,7 @@ ParArray(
 			  case	GL_TYPE_VARCHAR:
 				if		(  *p  ==  '"'  ) {
 					p ++;
-					q = ValueToString(item,dbg->locale);
+					q = ValueToString(item,dbg->coding);
 					len = 0;
 					while	(  *p  !=  '"'  ) {
 						if		(  len  <  ValueStringLength(item)  ) {
@@ -220,7 +249,7 @@ ParArray(
 				}
 				*q = 0;
 				p ++;
-				SetValueString(item,qq,dbg->locale);
+				SetValueString(item,qq,dbg->coding);
 				xfree(qq);
 				break;
 			  case	GL_TYPE_ARRAY:
@@ -293,7 +322,7 @@ dbgmsg(">GetTable");
 				ValueIsNil(val);
 			}
 		} else {
-			SetValueString(val,(char *)PQgetvalue(res,0,fnum),dbg->locale);
+			SetValueString(val,(char *)PQgetvalue(res,0,fnum),dbg->coding);
 		}
 		break;
 	  case	GL_TYPE_NUMBER:
@@ -592,7 +621,7 @@ dbgmsg(">GetValue");
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:
 		  case	GL_TYPE_TEXT:
-			SetValueString(val,(char *)PQgetvalue(res,tnum,fnum),dbg->locale);
+			SetValueString(val,(char *)PQgetvalue(res,tnum,fnum),dbg->coding);
 			break;
 		  case	GL_TYPE_NUMBER:
 			nv = NumericInput((char *)PQgetvalue(res,tnum,fnum),
