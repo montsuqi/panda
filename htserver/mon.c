@@ -320,7 +320,9 @@ ENTER_FUNC;
 			}	while	(	(  ch     !=  0           )
 						&&	(  count  <   SIZE_CHARS  ) );
 			for	( oc = obuff ; sob < SIZE_CHARS ; oc ++ , sob ++ ) {
-				fputc((int)*oc,output);
+				if		(  *oc  !=  0  ) {
+					fputc((int)*oc,output);
+				}
 			}
 		}
 		iconv_close(cd);
