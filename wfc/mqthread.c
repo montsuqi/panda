@@ -574,7 +574,7 @@ dbgmsg(">ReadyAPS");
 			ld->aps[j].id = ApsId ++;
 			ClearAPS_Node(&ld->aps[j]);
 			if		(  info->ports[j]  !=  NULL  ) {
-				fh = ConnectSocket(info->ports[j]->port,
+				fh = ConnectIP_Socket(info->ports[j]->port,
 								   SOCK_STREAM,
 								   info->ports[j]->host);
 				if		(  fh  >  0  ) {

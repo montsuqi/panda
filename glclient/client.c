@@ -218,7 +218,7 @@ main(
 	}
 
 	InitNET();
-	if		(  ( fd = ConnectSocket(PortNumber,SOCK_STREAM,Host) )  <  0  ) {
+	if		(  ( fd = ConnectIP_Socket(PortNumber,SOCK_STREAM,Host) )  <  0  ) {
 		g_warning("can not connect server(server port not found)");
 		return	(1);
 	}

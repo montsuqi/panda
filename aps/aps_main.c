@@ -172,7 +172,7 @@ ENTER_FUNC;
 			}
 		}
 		dbgprintf("%s:%s",WFC_Host,WfcPortNumber);
-		if		(  ( fhWFC = ConnectSocket(WfcPortNumber,SOCK_STREAM,WFC_Host) )
+		if		(  ( fhWFC = ConnectIP_Socket(WfcPortNumber,SOCK_STREAM,WFC_Host) )
 				   <  0  ) {
 			Error("WFC not ready");
 		}
