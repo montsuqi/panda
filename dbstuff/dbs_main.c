@@ -77,6 +77,7 @@ dbgmsg(">InitSystem");
 	}
 
 	ThisDB = ThisDBD->db;
+	DB_Table = ThisDBD->DB_Table;
 
 	if		(  ThisDBD->cDB  >  0  ) {
 		InitDB_Process();
@@ -177,8 +178,7 @@ DecodeName(
 
 static	void
 RecvData(
-	NETFILE	*fpComm,
-	GHashTable	*DB_Table)
+	NETFILE	*fpComm)
 {
 	char	buff[SIZE_BUFF+1];
 	char	vname[SIZE_BUFF+1]
@@ -211,8 +211,7 @@ RecvData(
 static	void
 WriteClient(
 	NETFILE		*fpComm,
-	DBCOMM_CTRL		*ctrl,
-	GHashTable	*DB_Table)
+	DBCOMM_CTRL		*ctrl)
 {
 	char	name[SIZE_BUFF+1]
 	,		rname[SIZE_BUFF+1]
@@ -294,7 +293,7 @@ dbgmsg(">MainLoop");
 					strcpy(rname,"");
 				}
 				DecodeString(pname,p);
-				if		(  ( rno = (int)g_hash_table_lookup(ThisDBD->DB_Table,rname) )  !=  0  ) {
+				if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 					ctrl.rno = rno - 1;
 					rec = ThisDB[ctrl.rno];
 					if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
@@ -314,9 +313,9 @@ dbgmsg(">MainLoop");
 				rec = NULL;
 			}
 			strcpy(ctrl.func,func);
-			RecvData(fpComm,ThisDBD->DB_Table);
+			RecvData(fpComm);
 			ExecDB_Process(&ctrl,rec);
-			WriteClient(fpComm,&ctrl,ThisDBD->DB_Table);
+			WriteClient(fpComm,&ctrl);
 			ret = TRUE;
 		} else
 		if		(  strncmp(buff,"End",3)  ==  0  ) {

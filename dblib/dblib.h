@@ -78,4 +78,13 @@ extern	void	ExecDBOP(DBG_Struct *dbg, char *sql);
 extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec);
 extern	int		ExecDB_Function(char *name, char *tname, RecordStruct *rec);
 
+#undef	GLOBAL
+#ifdef	MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+GLOBAL	GHashTable	*DB_Table;
+
 #endif

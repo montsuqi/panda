@@ -51,7 +51,6 @@ copies.
 #include	"handler.h"
 #include	"wfc.h"
 #include	"apsio.h"
-#include	"handler.h"
 #include	"aps_main.h"
 #include	"option.h"
 #include	"message.h"
@@ -85,6 +84,7 @@ dbgmsg(">InitSystem");
 
 	InitiateHandler();
 	ThisDB = ThisLD->db;
+	DB_Table = ThisLD->DB_Table;
 	TextSize = ThisLD->textsize;
 
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {

@@ -24,6 +24,7 @@ copies.
 
 #include	"const.h"
 #include	<libmondai.h>
+#include	"enum.h"
 
 #define	MCP_PUT_NULL		0
 #define	MCP_PUT_CURRENT		1
@@ -63,7 +64,10 @@ typedef	struct _ProcessNode	{
 
 extern	int			MCP_PutWindow(ProcessNode *node, char *wname, int type);
 extern	ValueStruct	*MCP_GetWindowRecord(ProcessNode *node, char *name);
-extern	int			HAKAMA_Function(ValueStruct *mcp, ValueStruct *data);
+extern	int			MCP_ExecFunction(ProcessNode *node, char *rname,
+									 char *pname, char *func, ValueStruct *data);
+extern	ValueStruct	*MCP_GetDB_Define(char *name);
+
 extern	void		*MCP_GetEventHandler(GHashTable *StatusTable, ProcessNode *node);
 extern	void		MCP_RegistHandler(GHashTable *StatusTable, char *status,
 									 char *event,void (*handler)(ProcessNode *));

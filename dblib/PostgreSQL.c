@@ -640,7 +640,9 @@ dbgmsg(">ExecPGSQL");
 			  case	SQL_OP_VCHAR:
 				break;
 			  case	SQL_OP_EOL:
+				*p = 0;
 				res = _PQexec(dbg,sql,TRUE);
+				p = sql;
 				if		(	(  res ==  NULL  )
 						||	(  ( status = PQresultStatus(res) )
 							           ==  PGRES_BAD_RESPONSE    )
@@ -700,7 +702,6 @@ dbgmsg(">ExecPGSQL");
 					}
 					_PQclear(res);
 				}
-				p = sql;
 				break;
 			  default:
 				break;

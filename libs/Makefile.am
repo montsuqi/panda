@@ -8,7 +8,11 @@ panda_la_DEPENDENCIES = libpanda.la
 panda_la_LIBADD		=	\
 	-L. -lpanda
 
-libpanda_la_DEPENDENCIES = enum.h
+libpandaincludedir = $(includedir)/panda
+libpandainclude_HEADERS =	\
+	enum.h
+libpanda_la_DEPENDENCIES =	\
+	enum.h
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\

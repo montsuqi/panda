@@ -417,6 +417,7 @@ dbgmsg(">MessageThread");
 				switch	(TO_INT(data->hdr->puttype)) {
 				  case	SCREEN_CHANGE_WINDOW:
 				  case	SCREEN_JOIN_WINDOW:
+				  case	SCREEN_NEW_WINDOW:
 					data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 					CoreEnqueue(data);
 					break;
@@ -428,6 +429,7 @@ dbgmsg(">MessageThread");
 					data->hdr->puttype = puttype;
 					TermEnqueue(data->term,data);
 					break;
+				  case	SCREEN_CLOSE_WINDOW:
 				  default:
 					TermEnqueue(data->term,data);
 					break;

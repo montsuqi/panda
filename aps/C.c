@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -283,41 +283,66 @@ MCP_RegistHandler(
 }
 
 extern	int
-HAKAMA_Function(
-	ValueStruct	*mcp,
+MCP_ExecFunction(
+	ProcessNode	*node,
+	char	*rname,
+	char	*pname,
+	char	*func,
 	ValueStruct	*data)
 {
-	DBCOMM_CTRL	ctrl;
+	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
-	char		*mcp_func;
+	int			rno
+	,			pno;
+	size_t		size;
 
-dbgmsg(">HAKAMA_Function");
-	mcp_func = ValueString(GetItemLongName(mcp,"func"));
-
-	MakeCTRL(&ctrl,mcp);
-	if		(  !strcmp(mcp_func,"DBOPEN")  ) {
+dbgmsg(">MCP_ExecFunction");
+	ctrl.rno = 0;
+	ctrl.pno = 0;
+	ctrl.blocks = 0;
+	if		(  rname  ==  NULL  ) {
 		rec = NULL;
 	} else
-	if		(  !strcmp(mcp_func,"DBCLOSE")  ) {
-		rec = NULL;
-	} else
-	if		(  !strcmp(mcp_func,"DBSTART")  ) {
-		rec = NULL;
-	} else
-	if		(  !strcmp(mcp_func,"DBCOMMIT")  ) {
-		rec = NULL;
-	} else
-	if		(  !strcmp(mcp_func,"DBDISCONNECT")  ) {
-		rec = NULL;
-	} else {
+	if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
+		ctrl.rno = rno - 1;
 		rec = ThisDB[ctrl.rno];
+		if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+													pname) )  !=  0  ) {
+			ctrl.pno = pno - 1;
+		} else {
+			ctrl.pno = 0;
+		}
+	} else {
+		rec = NULL;
+	}
+	if		(  rec  !=  NULL  ) {
+		size = NativeSizeValue(rec->rec,0,0);
+		ctrl.blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 		CopyValue(rec->rec,data);
 	}
+	strcpy(ctrl.func,func);
 	ExecDB_Process(&ctrl,rec);
 	if		(  rec  !=  NULL  ) {
 		CopyValue(data,rec->rec);
 	}
-	MakeMCP(mcp,&ctrl);
-dbgmsg("<HAKAMA_Function");
-	return	(ValueInteger(GetItemLongName(mcp,"rc")));
+	MakeMCP(node->mcprec,&ctrl);
+dbgmsg("<MCP_ExecFunction");
+	return	(ctrl.rc);
+}
+
+extern	ValueStruct	*
+MCP_GetDB_Define(
+	char	*name)
+{
+	int				rno;
+	RecordStruct	*rec;
+	ValueStruct		*val;
+
+	if		(  ( rno = (int)g_hash_table_lookup(DB_Table,name) )  !=  0  ) {
+		rec = ThisDB[rno-1];
+		val = DuplicateValue(rec->rec);
+	} else {
+		val = NULL;
+	}
+	return	(val);		
 }

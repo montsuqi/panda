@@ -46,6 +46,7 @@ dbs_DEPENDENCIES	=					\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/dblib/libpandadb.la
 
+dbredirector_LDFLAGS	=	-export-dynamic
 dbredirector_SOURCES	=	\
 	dbredirector.c
 

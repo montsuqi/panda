@@ -349,42 +349,52 @@ dbgmsg(">RecvScreenData");
 	while	(  RecvPacketClass(fpComm)  ==  GL_WindowName  ) {
 		ON_IO_ERROR(fpComm,badio);
 		RecvString(fpComm,wname);	ON_IO_ERROR(fpComm,badio);
-		win = g_hash_table_lookup(scr->Windows,wname);
-		while	(  ( c = RecvPacketClass(fpComm) )  ==  GL_ScreenData  ) {
-			ON_IO_ERROR(fpComm,badio);
-			RecvString(fpComm,name);		ON_IO_ERROR(fpComm,badio);
-			value = GetItemLongName(win->Value,name+strlen(wname)+1);
-			value->fUpdate = TRUE;
-			type = RecvDataType(fpComm);	ON_IO_ERROR(fpComm,badio);
-			switch	(type)	{
-			  case	GL_TYPE_CHAR:
-			  case	GL_TYPE_VARCHAR:
-			  case	GL_TYPE_DBCODE:
-			  case	GL_TYPE_TEXT:
-				RecvString(fpComm,str);		ON_IO_ERROR(fpComm,badio);
-				SetValueString(value,str);
-				break;
-			  case	GL_TYPE_NUMBER:
-				xval = RecvFixed(fpComm);	ON_IO_ERROR(fpComm,badio);
-				SetValueFixed(value,xval);
-				xfree(xval->sval);
-				xfree(xval);
-				break;
-			  case	GL_TYPE_INT:
-				ival = RecvInt(fpComm);		ON_IO_ERROR(fpComm,badio);
-				SetValueInteger(value,ival);
-				break;
-			  case	GL_TYPE_FLOAT:
-				fval = RecvFloat(fpComm);	ON_IO_ERROR(fpComm,badio);
-				SetValueFloat(value,fval);
-				break;
-			  case	GL_TYPE_BOOL:
-				bval = RecvBool(fpComm);	ON_IO_ERROR(fpComm,badio);
-				SetValueBool(value,bval);
-				break;
-			  default:
-				break;
+		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
+			while	(  ( c = RecvPacketClass(fpComm) )  ==  GL_ScreenData  ) {
+				ON_IO_ERROR(fpComm,badio);
+				RecvString(fpComm,name);		ON_IO_ERROR(fpComm,badio);
+				if		(  ( value = GetItemLongName(win->Value,name+strlen(wname)+1) )
+						   !=  NULL  ) {
+					value->fUpdate = TRUE;
+					type = RecvDataType(fpComm);	ON_IO_ERROR(fpComm,badio);
+					switch	(type)	{
+					  case	GL_TYPE_CHAR:
+					  case	GL_TYPE_VARCHAR:
+					  case	GL_TYPE_DBCODE:
+					  case	GL_TYPE_TEXT:
+						RecvString(fpComm,str);		ON_IO_ERROR(fpComm,badio);
+						SetValueString(value,str);
+						break;
+					  case	GL_TYPE_NUMBER:
+						xval = RecvFixed(fpComm);	ON_IO_ERROR(fpComm,badio);
+						SetValueFixed(value,xval);
+						xfree(xval->sval);
+						xfree(xval);
+						break;
+					  case	GL_TYPE_INT:
+						ival = RecvInt(fpComm);		ON_IO_ERROR(fpComm,badio);
+						SetValueInteger(value,ival);
+						break;
+					  case	GL_TYPE_FLOAT:
+						fval = RecvFloat(fpComm);	ON_IO_ERROR(fpComm,badio);
+						SetValueFloat(value,fval);
+						break;
+					  case	GL_TYPE_BOOL:
+						bval = RecvBool(fpComm);	ON_IO_ERROR(fpComm,badio);
+						SetValueBool(value,bval);
+						break;
+					  default:
+						printf("type = [%d]\n",type);
+						break;
+					}
+				} else {
+					printf("[%s]\n",name);
+					Error("invalid item name");
+				}
 			}
+		} else {
+			printf("[%s]\n",wname);
+			Error("invalid window name");
 		}
 	}
 	rc = TRUE;

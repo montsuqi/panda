@@ -80,6 +80,7 @@ dbgmsg(">InitSystem");
 	ThisLD = NULL;
 	InitiateBatchHandler();
 	ThisDB = ThisBD->db;
+	DB_Table = ThisBD->DB_Table;
 	TextSize = ThisBD->textsize;
 	if		(  ThisBD->cDB  >  0  ) {
 		ReadyDB();

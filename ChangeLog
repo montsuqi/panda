@@ -1,3 +1,10 @@
+2003-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (MessageThread): MCP_PUT_NEWの処理に誤りがあった
+
+	* libs/Makefile.am (libpanda_la_DEPENDENCIES): enum.hをインストー
+	ル対象にした
+
 2003-05-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glserver/server.c (CheckScreen): ログ出しの変更
