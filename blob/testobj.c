@@ -91,13 +91,7 @@ main(
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		memclear(buff,SIZE_LONGNAME+1);
 		sprintf(buff,"put %d",i);
-#if	0
-		DestroyObject(ses,obj[i]);
-		//		obj[i] = InitiateObject(ses,buff,strlen(buff)+1);
-#else
-		//		(void)PutObject(ses,obj[i],buff,strlen(buff)+1);
 		(void)PutObject(ses,obj[i],buff,512);
-#endif
 	}
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		if		(  ( size = GetObject(ses,obj[i],buff,SIZE_LONGNAME) )  >  0  ) {

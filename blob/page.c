@@ -229,25 +229,20 @@ ENTER_FUNC;
 	} else {
 		if		(  cb->utid  >  0  ) {
 			if		(  state->tid  ==  cb->utid  ) {
-dbgmsg("*");
 				ret = cb->update;
 			} else {
 				if		(  cb->ltid  >  0  ) {
 					if		(  state->tid  <  cb->ltid  ) {
-dbgmsg("*");
 						ret = cb->old;
 					} else {
-dbgmsg("*");
 						cb->current = ReadPage(space,page);
 						ret = cb->current;
 					}
 				} else {
-dbgmsg("*");
 					ret = cb->current;
 				}
 			}
 		} else {
-dbgmsg("*");
 			ret = cb->current;
 		}
 	}
@@ -502,6 +497,34 @@ AbortPage(
 ENTER_FUNC;
 	ReleasePage(state,*page,FALSE);
 LEAVE_FUNC;
+}
+
+extern	Bool
+CheckInstall(
+	OsekiSpace	*space,
+	size_t		no)
+{
+	OsekiHeaderPage	*head;
+	Bool	ret;
+
+	head = ReadPage(space,0LL);
+	ret = ( head->slot[no] > 0 ) ? TRUE : FALSE;
+	ReleasePageBuffer(head);
+	return	(ret);
+}
+
+extern	void
+InstallObject(
+	OsekiSpace	*space,
+	size_t		no,
+	ObjectType	obj)
+{
+	OsekiHeaderPage	*head;
+
+	head = ReadPage(space,0LL);
+	head->slot[no] = obj;
+	WritePage(space,head,0LL);
+	ReleasePageBuffer(head);
 }
 
 extern	void

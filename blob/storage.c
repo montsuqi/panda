@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -65,6 +65,20 @@ static	void	FlushBuffer(OsekiSession *state, ObjectInfo *ent, Bool fOnly);
 
 #ifdef	DEBUG
 static	void
+_DumpObject(
+	OsekiSession		*state,
+	OsekiObjectEntry	*ent)
+{
+	printf("ent->flag   = %X\n",(int)ent->flags);
+	printf("ent->pos    = %lld:%d\n",
+		   OBJ_PAGE(state,ent->pos),OBJ_OFF(state,ent->pos));
+	printf("ent->mode   = %X\n",(int)ent->mode);
+	printf("ent->type   = %X\n",(int)ent->type);
+	printf("ent->size   = %lld\n",ent->size);
+}
+#define	DumpObject(s,ent)		_DumpObject((s),(ent))
+
+static	void
 _DumpInfo(
 	OsekiSession	*state,
 	ObjectInfo		*ent)
@@ -100,6 +114,7 @@ _DumpEntry(
 #define	DumpEntry(s,el)		_DumpEntry((s),(el))
 #define	DumpPage(s,d)		_DumpPage((s)->space,(byte *)(d))
 #else
+#define	DumpObject(s,ent)	/*	*/
 #define	DumpInfo(s,ent)		/*	*/
 #define	DumpEntry(s,el)		/*	*/
 #define	DumpPage(s,d)		/*	*/
@@ -297,6 +312,7 @@ ENTER_FUNC;
 		break;
 	  case	OSEKI_ALLOC_PACK:
 		dbgmsg("*");
+		DumpObject(state,ent);
 		while	(  pos  !=  0  ) {
 			page = OBJ_PAGE(state,pos);
 			(void)GetPage(state,page);
@@ -305,8 +321,7 @@ ENTER_FUNC;
 			shlink = 0;
 			for	( cur = sizeof(OsekiDataPage) ; cur < data->use ;  ) {
 				el = (OsekiDataEntry *)((byte *)data + cur);
-				nsize = ROUND_TO(el->size,sizeof(size_t))
-					+ sizeof(OsekiDataEntry);
+				nsize = ROUND_TO(el->size,sizeof(size_t));
 				if		(  cur  ==  off  ) {
 					pos = el->next;
 					memmove((byte *)data + cur,
@@ -348,6 +363,7 @@ ENTER_FUNC;
 				}
 				cur += nsize;
 			}
+		dbgmsg("*");
 			if		(  PAGE_SIZE(state) - data->use
 					   >  sizeof(OsekiDataEntry)  ) {
 				ReturnPage(state,page);
@@ -529,8 +545,6 @@ ENTER_FUNC;
 		}
 		leafnode[off].mode = OSEKI_OPEN_CLOSE >> 4;
 	}
-	g_hash_table_remove(state->oTable,&obj);
-	xfree(ent);
 LEAVE_FUNC;
 }
 
@@ -548,6 +562,8 @@ ENTER_FUNC;
 	Lock(&state->space->obj);
 	if		(  ( ent = g_hash_table_lookup(state->oTable,&obj) )  !=  NULL  ) {
 		CloseEntry(state,ent,obj);
+		g_hash_table_remove(state->oTable,&obj);
+		xfree(ent);
 	} else {
 		ret = FALSE;
 	}
@@ -570,6 +586,7 @@ DestroyObject(
 	pageno_t		page
 		,			own;
 	size_t			off;
+	ObjectInfo		*ent;
 
 ENTER_FUNC;
 	dbgprintf("obj = %lld\n",obj);
@@ -584,7 +601,6 @@ ENTER_FUNC;
 		off = obj % LEAF_ELEMENTS(state);
 		FreeEntry(state,&leafpage[off]);
 		FREE_OBJ(leafpage[off]);
-
 		own = page;
 		for	( i = 0 ; i < state->objs->level ; i ++ ) {
 			page = stack[i];
@@ -601,6 +617,11 @@ ENTER_FUNC;
 				FREE_NODE(state->objs->pos[i]);
 			}
 			if		(  HAVE_FREECHILD(page)  )	break;
+		}
+		if		(  ( ent = g_hash_table_lookup(state->oTable,&obj) )
+				   !=  NULL  ) {
+			g_hash_table_remove(state->oTable,&obj);
+			xfree(ent);
 		}
 		rc = TRUE;
 	}
@@ -720,7 +741,7 @@ ENTER_FUNC;
 			ent->buff = NULL;
 			if		(  el->size  ==  0  ) {
 				el->size = ent->use;
-				data->use += ent->use;
+				data->use += ROUND_TO(ent->use,sizeof(size_t));
 				if		(  ent->head  ==  0  ) {
 					ent->head = ent->curr;
 				} else {
@@ -1022,6 +1043,8 @@ ENTER_FUNC;
 	if		(  obj  !=  GL_OBJ_NULL  ) {
 		WriteEntry(state,ent,buff,size);
 		CloseEntry(state,ent,obj);
+		g_hash_table_remove(state->oTable,&obj);
+		xfree(ent);
 	}
 LEAVE_FUNC;
 	return	(obj);
@@ -1052,6 +1075,8 @@ ENTER_FUNC;
 		}
 		ReadEntry(state,ent,buff,size);
 		CloseEntry(state,ent,obj);
+		g_hash_table_remove(state->oTable,&obj);
+		xfree(ent);
 		ret = size;
 	} else {
 		ret = -1;
@@ -1092,6 +1117,8 @@ ENTER_FUNC;
 	if		(  ent  !=  NULL  ) {
 		WriteEntry(state,ent,buff,size);
 		CloseEntry(state,ent,obj);
+		g_hash_table_remove(state->oTable,&obj);
+		xfree(ent);
 		ret = size;
 	} else {
 		ret = -1;
@@ -1190,7 +1217,7 @@ extern	int
 SeekObject(
 	OsekiSession	*state,
 	ObjectType		obj,
-	uint64_t		pos)
+	objpos_t		pos)
 {
 	ObjectInfo	*ent;
 	int			ret;
@@ -1233,7 +1260,7 @@ SyncObject(
 	OsekiSession	*state)
 {
 ENTER_FUNC;
-	CloseEntry(state,ent,*obj);
+	CloseEntry(state,ent,ent->obj);
 	xfree(ent);
 LEAVE_FUNC;
 }

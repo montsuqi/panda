@@ -39,6 +39,9 @@ extern	void	ReturnPage(OsekiSession *state, pageno_t no);
 extern	void	CommitPages(OsekiSession *state);
 extern	void	AbortPages(OsekiSession *state);
 
+extern	Bool	CheckInstall(OsekiSpace *space, size_t no);
+extern	void	InstallObject(OsekiSpace *space, size_t no, ObjectType obj);
+
 extern	void	_DumpPage(OsekiSpace *space, byte *data);
 
 #undef	GLOBAL

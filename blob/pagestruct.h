@@ -107,10 +107,13 @@ typedef	struct {
 	pageno_t		cOld;
 }	OsekiPhaseControl;
 
+#define	SLOT_SCHEMA		0
+
 typedef	struct {
 	char			magic[OSEKI_MAGIC_SIZE];
 	size_t			pagesize;
 	OsekiPhaseControl	phase[2];
+	ObjectType		slot[1];
 }	OsekiHeaderPage;
 
 #define	ROUND_TO(p,s)	((((p)%(s)) == 0) ? (p) : (((p)/(s))+1)*(s))
