@@ -1,5 +1,7 @@
 2004-06-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* samples/sample1/demo1: GtkOptionMenuのサポート
+
 	* monpls_demo/demo.c: GtkOptionMenuのサポート
 
 	* glclient/widgetOPS.c (RecvOption, SendOption): GtkOptionMenuのサポート

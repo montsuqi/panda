@@ -67,6 +67,16 @@
                         08  WN1-CLIST2-VALUE1  PIC X(10).
                         08  WN1-CLIST2-VALUE2  PIC X(20).
                       07  WN1-CLIST2-SELECT  PIC X   OCCURS  20 TIMES.
+                    06  WN1-TABLE1.
+                      07  WN1-CALENDAR1.
+                        08  WN1-CALENDAR1-YY   PIC S9(9)   BINARY.
+                        08  WN1-CALENDAR1-MM   PIC S9(9)   BINARY.
+                        08  WN1-CALENDAR1-DD   PIC S9(9)   BINARY.
+                      07  WN1-PROGRESBAR1    PIC S9(9)   BINARY.
+                  05  WN1-OPTION1.
+                    06  WN1-OPTION1-COUNT  PIC S9(9)   BINARY.
+                    06  WN1-OPTION1-SELECT PIC S9(9)   BINARY.
+                    06  WN1-OPTION1-ITEM   PIC X(20)   OCCURS  10.
               03  WN5.
                 04  VBOX1.
                   05  CALENDAR1.

@@ -155,6 +155,13 @@
                                TO  WN1-CLIST2-VALUE2(1).
            MOVE    1           TO  WN1-CLIST2-COUNT.
       *
+           MOVE   'item1'      TO  WN1-OPTION1-ITEM(1).
+           MOVE   'item2'      TO  WN1-OPTION1-ITEM(2).
+           MOVE   'item3'      TO  WN1-OPTION1-ITEM(3).
+           MOVE   'item4'      TO  WN1-OPTION1-ITEM(4).
+           MOVE    4           TO  WN1-OPTION1-COUNT.
+           MOVE    2           TO  WN1-OPTION1-SELECT.
+      *
            MOVE    SPACE       TO  MCP-PUTTYPE.
            MOVE   'entry2'     TO  MCP-WIDGET.
            MOVE   'project1'   TO  MCP-WINDOW.
@@ -175,6 +182,8 @@
       **************************************************************************
        230-PUT-DATA            SECTION.
            DISPLAY '*'
+               UPON    CONSOLE.
+           DISPLAY 'OPTION =' WN1-OPTION1-SELECT
                UPON    CONSOLE.
       *    IF      WN1-ENTRY4-VALUE  >  ZERO
                DISPLAY 'WN1-ENTRY4-VALUE = ' "[" 
