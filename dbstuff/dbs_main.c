@@ -588,6 +588,7 @@ main(
 	FILE_LIST	*fl;
 	int			rc;
 
+	(void)signal(SIGCHLD,SIG_IGN);
 	(void)signal(SIGHUP,(void *)StopProcess);
 	SetDefault();
 	fl = GetOption(option,argc,argv);
