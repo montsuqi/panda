@@ -168,6 +168,9 @@ extern	void
 ExitSystem(void)
 {
 	GL_SendPacketClass(fpComm,GL_END);
+	if	(  fMlog  ) {
+		MessageLog("connection end\n");
+	}
 }
 
 static	void

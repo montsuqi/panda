@@ -712,9 +712,6 @@ ENTER_FUNC;
 		switch( type = (byte)GL_RecvInt(fpComm) ) {
 		  case	SCREEN_END_SESSION:
 			ExitSystem();
-			if		(  fMlog  ) {
-					MessageLog("connection end\n");
-			}
 			fCancel= TRUE;
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
