@@ -36,6 +36,11 @@ copies.
 #define	T_FG			(YYBASE +7)
 #define	T_BG			(YYBASE +8)
 #define	T_BG_PIXMAP		(YYBASE +9)
+#define	T_TEXT			(YYBASE +10)
+#define	T_BASE			(YYBASE +11)
+#define	T_LIGHT			(YYBASE +12)
+#define	T_DARK			(YYBASE +13)
+#define	T_MID			(YYBASE +14)
 
 #define	T_NORMAL		(YYBASE +101)
 #define	T_PRELIGHT		(YYBASE +102)

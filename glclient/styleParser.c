@@ -196,6 +196,11 @@ dbgmsg(">ParStyle");
 				  case	T_FG:
 				  case	T_BG:
 				  case	T_BG_PIXMAP:
+				  case	T_TEXT:
+				  case	T_BASE:
+				  case	T_LIGHT:
+				  case	T_DARK:
+				  case	T_MID:
 					token = StyleToken;
 					state = 0;
 					if		(  GetSymbol  ==  '['  ) {
@@ -234,6 +239,21 @@ dbgmsg(">ParStyle");
 						break;
 					  case	T_BG:
 						ParColor(&st->bg[state]);
+						break;
+					  case	T_TEXT:
+						ParColor(&st->text[state]);
+						break;
+					  case	T_BASE:
+						ParColor(&st->base[state]);
+						break;
+					  case	T_LIGHT:
+						ParColor(&st->light[state]);
+						break;
+					  case	T_DARK:
+						ParColor(&st->dark[state]);
+						break;
+					  case	T_MID:
+						ParColor(&st->mid[state]);
 						break;
 					  case	T_BG_PIXMAP:
 						Error("not support");

@@ -173,7 +173,7 @@ send_event(
 	static int	ignore_event = FALSE;
 	char	wname[SIZE_LONGNAME];
 
-dbgmsg(">send_event");
+ENTER_FUNC;
 	memset (&attr, 0, sizeof (GdkWindowAttr));
 	attr.wclass = GDK_INPUT_ONLY;
 	attr.window_type = GDK_WINDOW_CHILD;
@@ -223,7 +223,7 @@ dbgmsg(">send_event");
 		/* clear busy cursor */
 		gdk_window_destroy (pane);
 	}
-dbgmsg("<send_event");
+LEAVE_FUNC;
 }
 
 extern	void

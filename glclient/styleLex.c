@@ -46,22 +46,27 @@ static	struct	{
 	char	*str;
 	int		token;
 }	tokentable[] = {
-	{	"style"		,T_STYLE },
-	{	"fontset"	,T_FONTSET },
-	{	"fg"		,T_FG },
-	{	"bg"		,T_BG },
-	{	"bg_pixmap"	,T_BG_PIXMAP },
-	{	"normal"	,T_NORMAL },
-	{	"NORMAL"	,T_NORMAL },
-	{	"prelight"	,T_PRELIGHT },
-	{	"PRELIGHT"	,T_PRELIGHT },
-	{	"insensitive",T_INSENSITIVE },
-	{	"INSENSITIVE",T_INSENSITIVE },
-	{	"selected"	,T_SELECTED },
-	{	"SELECTED"	,T_SELECTED },
-	{	"active"	,T_ACTIVE },
-	{	"ACTIVE"	,T_ACTIVE },
-	{	""			,0	}
+	{	"style",		T_STYLE			},
+	{	"fontset",		T_FONTSET		},
+	{	"fg",			T_FG			},
+	{	"bg",			T_BG			},
+	{	"bg_pixmap",	T_BG_PIXMAP		},
+	{	"text",			T_TEXT			},
+	{	"base",			T_BASE			},
+	{	"light",		T_LIGHT			},
+	{	"dark",			T_DARK			},
+	{	"mid",			T_MID			},
+	{	"normal",		T_NORMAL		},
+	{	"NORMAL",		T_NORMAL		},
+	{	"prelight",		T_PRELIGHT		},
+	{	"PRELIGHT",		T_PRELIGHT		},
+	{	"insensitive",	T_INSENSITIVE	},
+	{	"INSENSITIVE",	T_INSENSITIVE	},
+	{	"selected",		T_SELECTED 		},
+	{	"SELECTED",		T_SELECTED		},
+	{	"active",		T_ACTIVE		},
+	{	"ACTIVE",		T_ACTIVE		},
+	{	"",				0				}
 };
 
 static	GHashTable	*Reserved;
