@@ -893,7 +893,7 @@ CheckCoding(
 	return	(coding);
 }
 
-extern	void
+extern	char	*
 ImportFile(
 	LargeByteString	*html,
 	char	*name,
@@ -912,48 +912,51 @@ ImportFile(
 ENTER_FUNC;
 	if		(  ( fd = open(name,O_RDONLY ) )  >=  0  ) {
 		fstat(fd,&sb);
-		if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0) )  !=  NULL  ) {
-			str = (char *)xmalloc(sb.st_size+1);
-			memcpy(str,p,sb.st_size);
-			str[sb.st_size] = 0;
-			coding = CheckCoding(str);
-			SaveValue("_coding",coding,TRUE);
-			text = NewLBS();
-			LBS_EmitStart(text);
-			LBS_EmitUTF8(text,str,coding);
-			LBS_EmitEnd(text);
-			munmap(p,sb.st_size);
-			xfree(str);
-		}
-		close(fd);
-		RewindLBS(text);
-		while	(  !LBS_Eof(text)  ) {
-			switch	(ch = LBS_FetchChar(text)) {
-			  case	'$':
-				if		(  fExpand  ) {
-					p = vname;
-					while	(	(  isalnum(ch = LBS_FetchChar(text))  )
-							||	(  ch  ==  '_'  ) ) {
-						*p ++ = ch;
-					}
-					*p = 0;
-					if		(  ( val = LoadValue(vname) )  !=  NULL  ) {
-						LBS_EmitString(html,val);
-					}
-				}
-				break;
-			  case	0:
-				break;
-			  default:
-				LBS_Emit(html,ch);
-				break;
+		if		(  S_ISREG(sb.st_mode)  ) {
+			if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0) )  !=  NULL  ) {
+				str = (char *)xmalloc(sb.st_size+1);
+				memcpy(str,p,sb.st_size);
+				str[sb.st_size] = 0;
+				coding = CheckCoding(str);
+				text = NewLBS();
+				LBS_EmitStart(text);
+				LBS_EmitUTF8(text,str,coding);
+				LBS_EmitEnd(text);
+				munmap(p,sb.st_size);
+				xfree(str);
 			}
+			close(fd);
+			RewindLBS(text);
+			while	(  !LBS_Eof(text)  ) {
+				switch	(ch = LBS_FetchChar(text)) {
+				  case	'$':
+					if		(  fExpand  ) {
+						p = vname;
+						while	(	(  isalnum(ch = LBS_FetchChar(text))  )
+									||	(  ch  ==  '_'  ) ) {
+							*p ++ = ch;
+						}
+						*p = 0;
+						if		(  ( val = LoadValue(vname) )  !=  NULL  ) {
+							LBS_EmitString(html,val);
+						}
+					}
+					LBS_Emit(html,ch);
+					break;
+				  case	0:
+					break;
+				  default:
+					LBS_Emit(html,ch);
+					break;
+				}
+			}
+			FreeLBS(text);
 		}
-		FreeLBS(text);
 	} else {
 		dbgprintf("file not found = [%s]\n",name);
 	}
 LEAVE_FUNC;
+	return	(coding);
 }
 
 extern	void
