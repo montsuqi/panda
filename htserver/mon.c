@@ -49,6 +49,7 @@ copies.
 #include	"exec.h"
 #include	"option.h"
 #include	"message.h"
+#include	"multipart.h"
 #include	"debug.h"
 
 #define	SRC_CODESET		"euc-jp"
@@ -253,6 +254,7 @@ GetArgs(void)
 {
 	char	name[SIZE_BUFF];
 	byte	value[SIZE_BUFF];
+    char	*boundary;
 
 	if		(  ( ScanArgValue = getenv("QUERY_STRING") )  !=  NULL  ) {
 		while	(  ScanEnv(name,value)  ) {
@@ -261,11 +263,19 @@ GetArgs(void)
 			}
 		}
 	}
-	while	(  ScanPost(name,value)  ) {
-		if		(  g_hash_table_lookup(Values,name)  ==  NULL  ) {
-			g_hash_table_insert(Values,StrDup(name),StrDup(value));
-		}
-	}
+    if ((boundary = GetMultipartBoundary(getenv("CONTENT_TYPE"))) != NULL) {
+        if (ParseMultipart(stdin, boundary, Values, Files) < 0) {
+            fprintf(stderr, "malformed multipart/form-data\n");
+            exit(1);
+        }
+    }
+    else {
+        while	(  ScanPost(name,value)  ) {
+            if		(  g_hash_table_lookup(Values,name)  ==  NULL  ) {
+                g_hash_table_insert(Values,StrDup(name),StrDup(value));
+            }
+        }
+    }
 	if		(  fCookie  ) {
 		if		(  ( ScanArgValue = getenv("HTTP_COOKIE") )  !=  NULL  ) {
 			while	(  ScanEnv(name,value)  ) {
@@ -460,7 +470,7 @@ SendValueDelim(
 	char		*name,
 	byte		*value)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_BUFF * 3];
 
 	HT_SendString(name);
 	HT_SendString(": ");
@@ -469,6 +479,67 @@ SendValueDelim(
 	HT_SendString("\n");
 	dbgprintf("send value = [%s: %s]\n",name,buff);
 
+}
+
+static void
+URLEncodeBinary(char *dest, byte *src, int len)
+{
+    char *p, *q;
+    char *pend;
+
+    p = src;
+    q = dest;
+    pend = p + len;
+	while (p < pend) {
+		if (*p == 0x20) {
+			*q++ = '+';
+		}
+        else if (isalnum(*p)) {
+            *q++ = *p;
+		}
+        else {
+			*q++ = '%';
+			q += sprintf(q,"%02X",((int)*p)&0xFF);
+		}
+		p++;
+	}
+	*q = '\0';
+}
+
+static	void
+SendFile(char *name, char *filename)
+{
+    char buff[SIZE_BUFF * 3 + 1];
+    MultipartFile *file;
+    char *p, *pend;
+    int len = 0;
+
+    if ((file = (MultipartFile *) g_hash_table_lookup(Files, name)) != NULL) {
+        HT_SendString(name);
+        HT_SendString(": ");
+        p = file->value;
+        pend = p + file->length;
+        while (p < pend) {
+            if (pend - p > SIZE_BUFF) {
+                len = SIZE_BUFF;
+            }
+            else {
+                len = pend - p;
+            }
+            URLEncodeBinary(buff, p, len);
+            HT_SendString(buff);
+            p += len;
+        }
+        HT_SendString("\n");
+        dbgprintf("send value = [%s]\n", name);
+
+        HT_SendString(filename);
+        HT_SendString(": ");
+        EncodeStringURL(buff,ConvUTF8(file->filename));
+        HT_SendString(buff);
+        HT_SendString("\n");
+        dbgprintf("send value = [%s: %s]\n", filename, buff);
+    }
 }
 
 static	void
@@ -514,11 +585,13 @@ SendEvent(void)
 	HT_SendString("\n");
 
 	g_hash_table_foreach(Values,(GHFunc)SendValueDelim,NULL);
+	g_hash_table_foreach(Files,(GHFunc)SendFile,NULL);
 	HT_SendString("\n");
 
 	sesid = g_hash_table_lookup(Values,"_sesid");
 	Values = NewNameHash();
 	g_hash_table_insert(Values,"_sesid",sesid);
+	Files = NewNameHash();
 }
 
 static	LargeByteString	*
@@ -586,6 +659,7 @@ ENTER_FUNC;
 			} else {
 				CloseNet(fpServ);
 				Values = NewNameHash();
+				Files = NewNameHash();
 				goto	retry;
 			}
 		}
@@ -641,6 +715,7 @@ main(
 	InitNET();
 	HTCParserInit();
 	Values = NewNameHash();
+    Files = NewNameHash();
 	GetArgs();
 DumpV();
 	Session();

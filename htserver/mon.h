@@ -25,7 +25,13 @@ typedef	struct {
 	LargeByteString	*code;
 	GHashTable	*Trans;
 	GHashTable	*Radio;
+	GHashTable	*FileSelection;
 }	HTCInfo;
+
+typedef	struct {
+    char *filename;
+    char *filesize;
+}	FileSelectionInfo;
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -35,6 +41,7 @@ typedef	struct {
 #endif
 
 GLOBAL	GHashTable	*Values;
+GLOBAL	GHashTable	*Files;
 GLOBAL	Bool		fGet;
 GLOBAL	Bool		fDump;
 GLOBAL	Bool		fCookie;

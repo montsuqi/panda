@@ -279,6 +279,7 @@ _Form(
 	Tag		*tag)
 {
 	char	*name;
+	char	*enctype;
 
 dbgmsg(">_Form");
 	LBS_EmitString(htc->code,"<form action=\"mon.cgi\" method=\"");
@@ -288,6 +289,11 @@ dbgmsg(">_Form");
 		LBS_EmitString(htc->code,"post");
 	}
 	LBS_EmitString(htc->code,"\"");
+    if ((enctype = GetArg(tag, "enctype", 0)) != NULL) {
+		LBS_EmitString(htc->code, " enctype=\"");
+		LBS_EmitString(htc->code, enctype);
+		LBS_EmitString(htc->code, "\"");
+    }
 	Style(htc,tag);
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," name=\"");
@@ -575,6 +581,132 @@ dbgmsg(">_RadioButton");
 dbgmsg("<_RadioButton");
 }
 
+static	void
+_FileSelection(HTCInfo *htc, Tag *tag)
+{
+	char *name, *filename, *size, *maxlength;
+
+dbgmsg(">_FileSelection");
+    if ((name = GetArg(tag, "name", 0)) != NULL &&
+        (filename = GetArg(tag, "filename", 0)) != NULL) {
+		LBS_EmitString(htc->code, "<input type=\"file\" name=\"");
+		EmitCode(htc, OPC_NAME);
+		LBS_EmitPointer(htc->code, StrDup(name));
+		EmitCode(htc, OPC_REFSTR);
+
+		LBS_EmitString(htc->code, "\" value=\"");
+		EmitCode(htc, OPC_NAME);
+		LBS_EmitPointer(htc->code, StrDup(filename));
+		EmitCode(htc, OPC_HSNAME);
+        LBS_EmitString(htc->code, "\"");
+
+		if ((size = GetArg(tag, "size", 0)) != NULL) {
+			LBS_EmitString(htc->code, " size=\"");
+			EmitCode(htc, OPC_NAME);
+			LBS_EmitPointer(htc->code, StrDup(size));
+			EmitCode(htc, OPC_REFSTR);
+			LBS_EmitString(htc->code, "\"");
+		}
+
+        if ((maxlength = GetArg(tag, "maxlength", 0)) != NULL) {
+			LBS_EmitString(htc->code, " maxlength=\"");
+			EmitCode(htc, OPC_NAME);
+			LBS_EmitPointer(htc->code, StrDup(maxlength));
+			EmitCode(htc, OPC_REFSTR);
+			LBS_EmitString(htc->code, "\"");
+		}
+
+        Style(htc, tag);
+		LBS_EmitString(htc->code, ">\n");
+
+        g_hash_table_insert(htc->FileSelection,
+                            StrDup(name), StrDup(filename));
+    }
+dbgmsg("<_FileSelection");
+}
+
+static void
+_Link(HTCInfo *htc, Tag *tag)
+{
+	char *event;
+	char *name;
+	char *value;
+dbgmsg(">_Link");
+	if ((event = GetArg(tag, "event", 0)) != NULL) {
+		LBS_EmitString(htc->code, "<a");
+		Style(htc,tag);
+
+		LBS_EmitString(htc->code, " href=\"mon.cgi?_name=");
+		EmitGetValue(htc,"_name");
+		LBS_EmitString(htc->code, "&amp;_event=");
+		EmitCode(htc, OPC_NAME);
+		LBS_EmitPointer(htc->code, StrDup(event));
+		EmitCode(htc, OPC_REFSTR);
+		if (!fCookie) {
+			LBS_EmitString(htc->code, "&amp;_sesid=");
+			EmitGetValue(htc,"_sesid");
+		}
+		if ((name = GetArg(tag, "name", 0)) != NULL &&
+                    (value = GetArg(tag, "value", 0)) != NULL) {
+			LBS_EmitString(htc->code,"&amp;");
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(name));
+			EmitCode(htc,OPC_REFSTR);
+			LBS_EmitString(htc->code,"=");
+                        EmitAttributeValue(htc,value,FALSE); 
+		}
+		LBS_EmitString(htc->code,"\">");
+	}
+dbgmsg("<_Link");
+}
+
+static void
+_eLink(HTCInfo *htc, Tag *tag)
+{
+dbgmsg(">_eLink");
+	LBS_EmitString(htc->code, "</a>");
+dbgmsg("<_eLink");
+}
+
+static	void
+_Panel(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*visible;
+dbgmsg(">_Panel");
+    if ((visible = GetArg(tag, "visible", 0)) == NULL) {
+        Push(0);
+    }
+    else {
+        EmitCode(htc, OPC_NAME);
+        LBS_EmitPointer(htc->code, StrDup(visible));
+        EmitCode(htc, OPC_HINAME);
+        EmitCode(htc, OPC_JNZP);
+        Push(LBS_GetPos(htc->code));
+        LBS_EmitInt(htc->code, 0);
+    }
+	LBS_EmitString(htc->code,"<div");
+    Style(htc,tag);
+    LBS_EmitString(htc->code,">");
+dbgmsg("<_Panel");
+}
+
+static void
+_ePanel(HTCInfo *htc, Tag *tag)
+{
+    size_t jnzp_pos, pos;
+dbgmsg(">_ePanel");
+	LBS_EmitString(htc->code, "</div>");
+    if ((jnzp_pos = Pop) != 0) {
+        pos = LBS_GetPos(htc->code);
+        LBS_SetPos(htc->code, jnzp_pos);
+        LBS_EmitInt(htc->code, pos);
+        LBS_SetPos(htc->code, pos);
+        EmitCode(htc, OPC_DROP);
+    }
+dbgmsg("<_ePanel");
+}
 
 static	void
 _Calendar(
@@ -662,89 +794,6 @@ dbgmsg(">_Calendar");
 	LBS_EmitPointer(htc->code,day);
 	EmitCode(htc,OPC_CALENDAR);
 dbgmsg("<_Calendar");
-}
-
-static void
-_Link(HTCInfo *htc, Tag *tag)
-{
-	char *event;
-	char *name;
-	char *value;
-dbgmsg(">_Link");
-	if ((event = GetArg(tag, "event", 0)) != NULL) {
-		LBS_EmitString(htc->code, "<a");
-		Style(htc,tag);
-
-		LBS_EmitString(htc->code, " href=\"mon.cgi?_name=");
-		EmitGetValue(htc,"_name");
-		LBS_EmitString(htc->code, "&amp;_event=");
-		EmitCode(htc, OPC_NAME);
-		LBS_EmitPointer(htc->code, StrDup(event));
-		EmitCode(htc, OPC_REFSTR);
-		if (!fCookie) {
-			LBS_EmitString(htc->code, "&amp;_sesid=");
-			EmitGetValue(htc,"_sesid");
-		}
-		if ((name = GetArg(tag, "name", 0)) != NULL &&
-                    (value = GetArg(tag, "value", 0)) != NULL) {
-			LBS_EmitString(htc->code,"&amp;");
-			EmitCode(htc,OPC_NAME);
-			LBS_EmitPointer(htc->code,StrDup(name));
-			EmitCode(htc,OPC_REFSTR);
-			LBS_EmitString(htc->code,"=");
-                        EmitAttributeValue(htc,value,FALSE); 
-		}
-		LBS_EmitString(htc->code,"\">");
-	}
-dbgmsg("<_Link");
-}
-
-static void
-_eLink(HTCInfo *htc, Tag *tag)
-{
-dbgmsg(">_eLink");
-	LBS_EmitString(htc->code, "</a>");
-dbgmsg("<_eLink");
-}
-
-static	void
-_Panel(
-	HTCInfo	*htc,
-	Tag		*tag)
-{
-	char	*visible;
-dbgmsg(">_Panel");
-    if ((visible = GetArg(tag, "visible", 0)) == NULL) {
-        Push(0);
-    }
-    else {
-        EmitCode(htc, OPC_NAME);
-        LBS_EmitPointer(htc->code, StrDup(visible));
-        EmitCode(htc, OPC_HINAME);
-        EmitCode(htc, OPC_JNZP);
-        Push(LBS_GetPos(htc->code));
-        LBS_EmitInt(htc->code, 0);
-    }
-	LBS_EmitString(htc->code,"<div");
-    Style(htc,tag);
-    LBS_EmitString(htc->code,">");
-dbgmsg("<_Panel");
-}
-
-static void
-_ePanel(HTCInfo *htc, Tag *tag)
-{
-    size_t jnzp_pos, pos;
-dbgmsg(">_ePanel");
-	LBS_EmitString(htc->code, "</div>");
-    if ((jnzp_pos = Pop) != 0) {
-        pos = LBS_GetPos(htc->code);
-        LBS_SetPos(htc->code, jnzp_pos);
-        LBS_EmitInt(htc->code, pos);
-        LBS_SetPos(htc->code, pos);
-        EmitCode(htc, OPC_DROP);
-    }
-dbgmsg("<_ePanel");
 }
 
 static	void
@@ -859,10 +908,13 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 
-	tag = NewTag("CALENDAR",_Calendar);
-	AddArg(tag,"year",TRUE);
-	AddArg(tag,"month",TRUE);
-	AddArg(tag,"day",TRUE);
+	tag = NewTag("FILESELECTION",_FileSelection);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"filename",TRUE);
+	AddArg(tag,"size",TRUE);
+	AddArg(tag,"maxlength",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("LINK",_Link);
 	AddArg(tag,"name",TRUE);
@@ -878,11 +930,17 @@ dbgmsg(">TagsInit");
 	AddArg(tag, "class", TRUE);
 	tag = NewTag("/PANEL", _ePanel);
 
+	tag = NewTag("CALENDAR",_Calendar);
+	AddArg(tag,"year",TRUE);
+	AddArg(tag,"month",TRUE);
+	AddArg(tag,"day",TRUE);
+
 	tag = NewTag("HTC",_Htc);
 	AddArg(tag,"coding",TRUE);
 
 	tag = NewTag("FORM",_Form);
 	AddArg(tag,"name",TRUE);
+	AddArg(tag,"enctype",TRUE);
 	tag = NewTag("HEAD",_Head);
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);

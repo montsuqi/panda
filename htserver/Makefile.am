@@ -47,6 +47,7 @@ mon_SOURCES	=	\
 	HTCparser.c	HTCparser.h	\
 	tags.c		tags.h	\
 	exec.c		exec.h	\
+	multipart.c	multipart.h	\
 	mon.c		mon.h
 mon_DEPENDENCIES	=				\
 	$(top_srcdir)/libs/libpandamisc.la	\

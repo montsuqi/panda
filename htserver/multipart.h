@@ -7,4 +7,8 @@ typedef struct _MultipartFile {
     int length;
 } MultipartFile;
 
+char *GetMultipartBoundary(char *content_type);
+int ParseMultipart(FILE *fp, char *boundary,
+                   GHashTable *values, GHashTable *files);
+
 #endif

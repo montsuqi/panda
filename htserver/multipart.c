@@ -31,10 +31,8 @@ copies.
 #include	<errno.h>
 #include	<iconv.h>
 
-#if 0
 #include	"const.h"
 #include	"types.h"
-#endif
 #include	"libmondai.h"
 #include	"multipart.h"
 
@@ -49,7 +47,8 @@ GetMultipartBoundary(char *content_type)
 {
     char *p;
 
-    if (strncasecmp(content_type, "multipart/form-data",
+    if (content_type == NULL ||
+        strncasecmp(content_type, "multipart/form-data",
                     STR_LITERAL_LENGTH("multipart/form-data")) != 0)
         return NULL;
     p = content_type + STR_LITERAL_LENGTH("multipart/form-data");
@@ -150,7 +149,7 @@ ParseParameter(char **s, char *name)
 static int
 ParseHeader(FILE *fp, char **name, char **filename)
 {
-    char buf[BUFSIZ];
+    char buf[SIZE_BUFF];
     int in_content_disposition = 0;
 
     *name = NULL;
@@ -246,10 +245,10 @@ ParseBody(FILE *fp, char *delimiter, char *close_delimiter,
           char **value, int *value_len)
 {
     int boundary_type = BOUNDARY_NONE;
-    char buf[BUFSIZ];
+    char buf[SIZE_BUFF];
     int read_len;
     char *val;
-    int val_capa = BUFSIZ, val_len = 0;
+    int val_capa = SIZE_BUFF, val_len = 0;
 
     val = (char *) xmalloc(val_capa);
     while ((read_len = ReadLine(fp, buf, sizeof(buf))) > 0) {
@@ -283,7 +282,7 @@ ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
 {
     char *name, *filename, *value;
     int value_len;
-    char buf[BUFSIZ];
+    char buf[SIZE_BUFF];
     int boundary_type;
 
     if (ParseHeader(fp, &name, &filename) < 0)
@@ -309,7 +308,7 @@ int
 ParseMultipart(FILE *fp, char *boundary,
                GHashTable *values, GHashTable *files)
 {
-    char buf[BUFSIZ];
+    char buf[SIZE_BUFF];
     char *p;
     char delimiter[STR_LITERAL_LENGTH("--") +
                    MAX_BOUNDARY_SIZE +

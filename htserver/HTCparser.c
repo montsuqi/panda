@@ -225,6 +225,7 @@ dbgmsg(">HTCParser");
 		ret->code = NewLBS();
 		ret->Trans = NewNameHash();
 		ret->Radio = NewNameHash();
+		ret->FileSelection = NewNameHash();
 		LBS_EmitStart(ret->code);
 		ParHTC(ret);
 		fclose(HTC_File);

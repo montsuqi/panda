@@ -136,6 +136,104 @@ dbgmsg(">SendWindowName");
 dbgmsg("<SendWindowName");
 }
 
+static void *
+xrealloc(void *ptr, size_t size)
+{
+    void *p;
+
+    p = realloc(ptr, size);
+    if (p == NULL) {
+        fprintf(stderr, "xrealloc: no memory space!!\n");
+        exit(1);
+    }
+    return p;
+}
+
+static int
+RecvLine(NETFILE *fp, char *buf, int buf_len)
+{
+    int c;
+    char *p, *pend;
+
+    p = buf;
+    pend = buf + buf_len - 1;
+    while (p < pend && (c = RecvChar(fp)) != EOF) {
+        *p++ = c;
+        if (c == '\n') break;
+    }
+    *p = '\0';
+    return p - buf;
+}
+
+#define BUFFER_EXPANSION_STRATEGY_THRESHOLD (1024 * 1024)
+#define BUFFER_EXPANSION_UNIT (512 * 1024)
+
+#define ENSURE_LINE_CAPACITY(line, line_capa, lp, lendp) { \
+    if (lp >= lendp) {\
+        int len = lp - line; \
+        if (line_capa < BUFFER_EXPANSION_STRATEGY_THRESHOLD) { \
+            line_capa = line_capa * 2; \
+        } \
+        else { \
+            line_capa += BUFFER_EXPANSION_UNIT; \
+        } \
+        fprintf(stderr, "xrealloc(%p, %d)\n", line, line_capa); \
+        line = (char *) xrealloc(line, line_capa); \
+        lp = line + len; \
+        lendp = line + line_capa; \
+        fprintf(stderr, "line=%p, line_capa=%d, lp=%p, lendp=%p\n", \
+                line, line_capa, lp, lendp); \
+    } \
+}
+
+static int
+RecvLineWithURLDecode(NETFILE *fp, char **result)
+{
+    char buf[SIZE_BUFF];
+    int read_len;
+    char *line;
+    int line_capa = SIZE_BUFF, line_len = 0;
+    char *lp, *lendp, *bp, *bendp;
+
+    line = (char *) xmalloc(line_capa);
+    lp = line;
+    lendp = lp + line_capa;
+    while ((read_len = RecvLine(fp, buf, sizeof(buf))) > 0) {
+        bp = buf;
+        bendp = bp + read_len;
+        while (bp < bendp) {
+            switch (*bp) {
+            case '\n':
+                goto end;
+            case '%':
+                if (bp + 2 < bendp) {
+                    ENSURE_LINE_CAPACITY(line, line_capa, lp, lendp);
+                    *lp++ = HexToInt(bp + 1, 2);
+                    bp += 3;
+                }
+                else {
+                    bp = bendp;
+                }
+                break;
+            case '+':
+                ENSURE_LINE_CAPACITY(line, line_capa, lp, lendp);
+                *lp++ = ' ';
+                bp++;
+                break;
+            default:
+                ENSURE_LINE_CAPACITY(line, line_capa, lp, lendp);
+                *lp++ = *bp++;
+                break;
+            }
+        }
+    }
+  end:
+    ENSURE_LINE_CAPACITY(line, line_capa, lp, lendp);
+    *lp = '\0';
+    *result = line;
+    return lp - line;
+}
+
 static	void
 WriteClient(
 	NETFILE		*fp,
@@ -180,27 +278,28 @@ RecvScreenData(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
-	char	buff[SIZE_BUFF+1];
-	char	*vname
-	,		*wname
-	,		str[SIZE_BUFF+1];
-	char	*p;
+    char *line;
+    int line_len;
+	char *vname, *wname;
+	char *p;
 	WindowData	*win;
 	ValueStruct	*value;
 
-	do {
-		RecvStringDelim(fp,SIZE_BUFF,buff);
-		if		(	(  *buff                     !=  0     )
-				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
-			*p = 0;
-			DecodeName(&wname,&vname,buff);
-			p ++;
-			while	(  isspace(*p)  )	p ++;
-			DecodeStringURL(str,p);
-			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-				value = GetItemLongName(win->rec->value,vname);
+    while ((line_len = RecvLineWithURLDecode(fp, &line)) > 0) {
+		if ((p = strchr(line,':'))  !=  NULL) {
+			*p = '\0';
+			DecodeName(&wname, &vname, line);
+			p++;
+			while (isspace(*p)) p ++;
+			if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
+				value = GetItemLongName(win->rec->value, vname);
 				ValueIsUpdate(value);
-				SetValueString(value,str,"utf8");
+                if (ValueType(value) == GL_TYPE_BINARY) {
+                    SetValueBinary(value, p, line_len - (p - line));
+                }
+                else {
+                    SetValueString(value, p, "utf8");
+                }
 #ifdef	DEBUG
 				printf("--\n");
 				DumpValueStruct(value);
@@ -208,7 +307,8 @@ RecvScreenData(
 #endif
 			}
 		}
-	}	while	(  *buff  !=  0  );
+        xfree(line);
+	}
 }
 
 static int
