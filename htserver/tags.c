@@ -165,6 +165,41 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
 }
 
 static	void
+JavaScriptKeyEvent(HTCInfo *htc, Tag *tag, char *event)
+{
+    char *value;
+
+    if ((value = GetArg(tag, event, 0)) != NULL) {
+        char buf[SIZE_BUFF];
+        char *key, *p = value;
+
+        while (isspace(*p)) p++;
+        if (strncmp(p, "key=", 4) != 0) {
+            fprintf(stderr,
+                    "%s:%d: missing `key=' parameter in %s event of <%s>\n",
+                    HTC_FileName, HTC_cLine, event, tag->name);
+            return;
+        }
+        key = p + 4;
+        if ((p = strchr(key, ';')) == NULL) {
+            fprintf(stderr,
+                    "%s:%d: missing `;' in %s event of <%s>\n",
+                    HTC_FileName, HTC_cLine, event, tag->name);
+            return;
+        }
+        *p++ = '\0';
+        while (isspace(*p)) p++;
+        snprintf(buf, SIZE_BUFF,
+                 " %s=\"if (event.keyCode == %s) { "
+                 "document.forms[%d].elements[0].name='_event';"
+                 "document.forms[%d].elements[0].value='%s';"
+                 "document.forms[%d].submit(); }\"",
+                 event, key, htc->FormNo, htc->FormNo, p, htc->FormNo);
+        LBS_EmitString(htc->code, buf);
+    }
+}
+
+static	void
 Style(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -232,6 +267,8 @@ dbgmsg(">_Entry");
 
 		}
         JavaScriptEvent(htc, tag, "onchange");
+        JavaScriptKeyEvent(htc, tag, "onkeydown");
+        JavaScriptKeyEvent(htc, tag, "onkeyup");
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">\n");
 	}
@@ -394,6 +431,8 @@ dbgmsg(">_Text");
 		LBS_EmitString(htc->code,"\"");
 	}
     JavaScriptEvent(htc, tag, "onchange");
+    JavaScriptKeyEvent(htc, tag, "onkeydown");
+    JavaScriptKeyEvent(htc, tag, "onkeyup");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 
@@ -998,6 +1037,8 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"maxlength",TRUE);
 	AddArg(tag,"visible",TRUE);
 	AddArg(tag,"onchange",TRUE);
+	AddArg(tag,"onkeydown",TRUE);
+	AddArg(tag,"onkeyup",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 
@@ -1028,6 +1069,8 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"rows",TRUE);
 	AddArg(tag,"cols",TRUE);
 	AddArg(tag,"onchange",TRUE);
+	AddArg(tag,"onkeydown",TRUE);
+	AddArg(tag,"onkeyup",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 
