@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -21,7 +21,7 @@ copies.
 
 #ifndef	_HTSERVER_H
 #define	_HTSERVER_H
-#include	"value.h"
+#include	"libmondai.h"
 #include	"driver.h"
 #include	"queue.h"
 
@@ -38,7 +38,7 @@ GLOBAL	char	*Directory;
 GLOBAL	Queue	*DistQueue;
 GLOBAL	int		Expire;
 
-extern	void	InitSystem(void);
+extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);
 
 #endif

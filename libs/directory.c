@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -33,24 +33,19 @@ copies.
 #include	<unistd.h>
 #include	<glib.h>
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"DDparser.h"
 #include	"LDparser.h"
 #include	"DIparser.h"
 #include	"DBparser.h"
-#include	"driver.h"
 #include	"directory.h"
 #include	"misc.h"
 #include	"debug.h"
 
 extern	void
-InitDirectory(
-	Bool	fScreen)
+InitDirectory(void)
 {
 dbgmsg(">InitDirectory");
-	if		(  fScreen  )	{
-		ThisScreen = NewScreenData();
-	}
 	DD_ParserInit();
 	LD_ParserInit();
 	BD_ParserInit();

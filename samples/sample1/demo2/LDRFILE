@@ -1,0 +1,39 @@
+        01  LDR.
+            02  LDR-DATAAREA.
+              03  LDR-DATA    OCCURS  2.
+                04  FILLER      PIC X(1024).
+            02  LDR-INPUTAREA-RED   REDEFINES   LDR-DATAAREA.
+              03  LDR-MCPDATA.
+                04  LDR-MCP-FUNC    PIC X(16).
+                04  LDR-MCP-RC  PIC S9(9)   BINARY.
+                04  LDR-MCP-DC.
+                  05  LDR-MCP-WINDOW  PIC X(64).
+                  05  LDR-MCP-WIDGET  PIC X(64).
+                  05  LDR-MCP-EVENT   PIC X(64).
+                  05  LDR-MCP-MODULE  PIC X(64).
+                  05  LDR-MCP-FROMWIN PIC X(64).
+                  05  LDR-MCP-STATUS  PIC X(4).
+                  05  LDR-MCP-PUTTYPE PIC X(8).
+                  05  LDR-MCP-TERM    PIC X(36).
+                  05  LDR-MCP-USER    PIC X(16).
+                04  LDR-MCP-DB.
+                  05  LDR-MCP-PATH.
+                    06  LDR-MCP-BLOCKS  PIC S9(9)   BINARY.
+                    06  LDR-MCP-RNAME   PIC S9(9)   BINARY.
+                    06  LDR-MCP-PNAME   PIC S9(9)   BINARY.
+                04  LDR-MCP-PRIVATE.
+                  05  LDR-MCP-COUNT   PIC S9(9)   BINARY.
+                  05  LDR-MCP-SWINDOW PIC X(64)       OCCURS  16 TIMES.
+                  05  LDR-MCP-STATE   PIC X(1)        OCCURS  16 TIMES.
+                  05  LDR-MCP-INDEX   PIC S9(9)   BINARY      OCCURS  16 TIMES.
+                  05  LDR-MCP-PSTATUS PIC X(1).
+                  05  LDR-MCP-PPUTTYPE    PIC X(1).
+                  05  LDR-MCP-PRC PIC X(1).
+              03  LDR-SPADATA.
+                04  SPA-COUNT   PIC S9(9)   BINARY.
+              03  LDR-LINKDATA.
+                04  FILLER      PIC X(200).
+              03  LDR-SCREENDATA.
+                04  LDR-PROJECT3.
+                  05  FILLER  PIC X(220).
+        01  LDR-BLOCKS      PIC S9(9)   BINARY  VALUE   2.

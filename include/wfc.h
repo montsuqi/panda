@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -23,47 +23,58 @@ copies.
 #define	_INC_WFC_H
 #include	"queue.h"
 #include	"LDparser.h"
+#include	"net.h"
 
 #ifndef	PacketClass
 #define	PacketClass		unsigned char
 #endif
 
 #define	APS_Null		(PacketClass)0x00
-#define	APS_PING		(PacketClass)0x01
 
-#define	APS_EVENTDATA	(PacketClass)0x02
-#define	APS_MCPDATA		(PacketClass)0x03
+#define	APS_EVENTDATA	(PacketClass)0x01
+#define	APS_MCPDATA		(PacketClass)0x02
 #define	APS_LINKDATA	(PacketClass)0x04
-#define	APS_SPADATA		(PacketClass)0x05
-#define	APS_SCRDATA		(PacketClass)0x06
-#define	APS_CTRLDATA	(PacketClass)0x07
-#define	APS_CLSWIN		(PacketClass)0x08
+#define	APS_SPADATA		(PacketClass)0x08
+#define	APS_SCRDATA		(PacketClass)0x10
+#define	APS_CLSWIN		(PacketClass)0x20
+#define	APS_CTRLDATA	(PacketClass)0x40
 
 #define	APS_NOT			(PacketClass)0xF0
 #define	APS_PONG		(PacketClass)0xF1
-#define	APS_STOP		(PacketClass)0xF2
+#define	APS_PING		(PacketClass)0xF2
+#define	APS_STOP		(PacketClass)0xF3
+#define	APS_REQ			(PacketClass)0xF4
 #define	APS_OK			(PacketClass)0xFE
 #define	APS_END			(PacketClass)0xFF
 
+#ifndef	CloseWindows
 typedef	struct {
 	size_t	n;
 	struct {
 		char	window[SIZE_NAME];
 	}	close[15];
-}	CloseWindows;
+}	_CloseWindows;
+#define	CloseWindows	_CloseWindows
+#endif
 
 typedef	struct {
-	FILE	*fp;
+	NETFILE	*fp;
 	Queue	*que;
 }	TermNode;
 
 typedef	struct {
-	LD_Struct	*ld;
+	NETFILE	*fp;
+	int		id;
+	long	count;
+}	APS_Node;
+
+typedef	struct {
+	LD_Struct	*info;
 	size_t	nports;
-	FILE	**fp;
+	APS_Node	*aps;
 	pthread_cond_t	conn;
 	pthread_mutex_t	lock;
-}	APS_Node;
+}	LD_Node;
 
 typedef	struct {
 	char	*name;
@@ -85,8 +96,9 @@ typedef	struct {
 typedef	struct {
 	char		*name;
 	TermNode	*term;
+	int			apsid;
 	Bool		fKeep;
-	APS_Node	*aps;
+	LD_Node		*ld;
 	CloseWindows	w;
 	size_t			cWindow;
 	MessageHeader	*hdr;
@@ -95,10 +107,6 @@ typedef	struct {
 	LargeByteString	*linkdata;
 	LargeByteString	**scrdata;
 }	SessionData;
-
-extern	int		PutAPS(APS_Node *aps, SessionData *data);
-extern	Bool	GetAPS_Control(FILE *fpAPS, MessageHeader *hdr);
-extern	Bool	GetAPS_Value(FILE *fpAPS, SessionData *data, PacketClass c);
 
 #undef	GLOBAL
 #ifdef	_WFC

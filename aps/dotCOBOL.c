@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -27,10 +27,12 @@ copies.
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+#ifdef	HAVE_DOTCOBOL
 #include	<signal.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
+#include	<iconv.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -43,20 +45,17 @@ copies.
 
 #include	"types.h"
 #include	"misc.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"comm.h"
 #include	"directory.h"
-#include	"cobolvalue.h"
 #include	"handler.h"
 #include	"const.h"
 #include	"defaults.h"
 #include	"enum.h"
-#include	"dbgroup.h"
-#include	"i18n_code.h"
+#include	"dblib.h"
 #include	"queue.h"
 #include	"pty.h"
 #include	"driver.h"
-#include	"dotCOBOL.h"
 #include	"debug.h"
 
 
@@ -82,156 +81,6 @@ static	void	*McpData
 		,		*SpaData
 		,		*ScrData;
 
-static	void
-IntegerCobol2C(
-	int		*ival)
-{
-	char	*p
-	,		c;
-	p = (char *)ival;
-	c = p[3];
-	p[3] = p[0];
-	p[0] = c;
-	c = p[2];
-	p[2] = p[1];
-	p[1] = c;
-}
-
-static	void
-FixedCobol2C(
-	char	*buff,
-	size_t	size)
-{
-	buff[size] = 0;
-	if		(  buff[size - 1]  >=  0x70  ) {
-		buff[size - 1] ^= 0x40;
-		*buff |= 0x40;
-	}
-}
-
-static	void
-FixedC2Cobol(
-	char	*buff,
-	size_t	size)
-{
-	if		(  *buff  >=  0x70  ) {
-		*buff ^= 0x40;
-		buff[size - 1] |= 0x40;
-	}
-}
-
-static	char	*
-UnPackValueCobol(
-	char	*p,
-	ValueStruct	*value)
-{
-	int		i;
-	char	buff[SIZE_BUFF];
-
-dbgmsg(">UnPackValueCobol");
-	if		(  value  !=  NULL  ) {
-		switch	(value->type) {
-		  case	GL_TYPE_INT:
-			value->body.IntegerData = *(int *)p;
-			IntegerCobol2C(&value->body.IntegerData);
-			p += sizeof(int);
-			break;
-		  case	GL_TYPE_BOOL:
-			value->body.BoolData = ( *(char *)p == 'T' ) ? TRUE : FALSE;
-			p ++;
-			break;
-		  case	GL_TYPE_BYTE:
-			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
-		  case	GL_TYPE_CHAR:
-		  case	GL_TYPE_TEXT:
-		  case	GL_TYPE_VARCHAR:
-		  case	GL_TYPE_DBCODE:
-			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
-			p += value->body.CharData.len;
-			StringCobol2C(value->body.CharData.sval,value->body.CharData.len);
-			break;
-		  case	GL_TYPE_NUMBER:
-			memcpy(buff,p,ValueFixed(value)->flen);
-			FixedCobol2C(buff,ValueFixed(value)->flen);
-			strcpy(ValueFixed(value)->sval,buff);
-			p += value->body.FixedData.flen;
-			break;
-		  case	GL_TYPE_ARRAY:
-			for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
-				p = UnPackValueCobol(p,value->body.ArrayData.item[i]);
-			}
-			break;
-		  case	GL_TYPE_RECORD:
-			for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-				p = UnPackValueCobol(p,value->body.RecordData.item[i]);
-			}
-			break;
-		  default:
-			break;
-		}
-	}
-dbgmsg("<UnPackValueCobol");
-	return	(p);
-}
-
-static	char	*
-PackValueCobol(
-	char	*p,
-	ValueStruct	*value)
-{
-	int		i;
-
-dbgmsg(">PackValueCobol");
-	if		(  value  !=  NULL  ) {
-		switch	(value->type) {
-		  case	GL_TYPE_INT:
-			*(int *)p = value->body.IntegerData;
-			IntegerC2Cobol((int *)p);
-			p += sizeof(int);
-			break;
-		  case	GL_TYPE_BOOL:
-			*(char *)p = value->body.BoolData ? 'T' : 'F';
-			p ++;
-			break;
-		  case	GL_TYPE_BYTE:
-			memcpy(p,value->body.CharData.sval,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
-		  case	GL_TYPE_CHAR:
-			memcpy(p,value->body.CharData.sval,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
-		  case	GL_TYPE_TEXT:
-		  case	GL_TYPE_VARCHAR:
-		  case	GL_TYPE_DBCODE:
-			StringC2Cobol(value->body.CharData.sval,value->body.CharData.len);
-			memcpy(p,value->body.CharData.sval,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
-		  case	GL_TYPE_NUMBER:
-			memcpy(p,ValueFixed(value)->sval,ValueFixed(value)->flen);
-			FixedC2Cobol(p,ValueFixed(value)->flen);
-			p += value->body.FixedData.flen;
-			break;
-		  case	GL_TYPE_ARRAY:
-			for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
-				p = PackValueCobol(p,value->body.ArrayData.item[i]);
-			}
-			break;
-		  case	GL_TYPE_RECORD:
-			for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-				p = PackValueCobol(p,value->body.RecordData.item[i]);
-			}
-			break;
-		  default:
-			break;
-		}
-	}
-dbgmsg("<PackValueCobol");
-	return	(p);
-}
 
 static	void
 DumpNode(
@@ -244,18 +93,6 @@ dbgmsg(">DumpNode");
 	printf("spasize  = %d\n",node->spasize);
 	printf("scrsize  = %d\n",node->scrsize);
 dbgmsg("<DumpNode");
-#endif
-}
-
-static	void
-DumpDB_Node(
-	DBCOMM_CTRL	*ctrl)
-{
-#ifdef	DEBUG
-	printf("func   = [%s]\n",ctrl->func);
-	printf("blocks = %d\n",ctrl->blocks);
-	printf("rno    = %d\n",ctrl->rno);
-	printf("pno    = %d\n",ctrl->pno);
 #endif
 }
 
@@ -274,11 +111,11 @@ dbgmsg(">PutApplication");
 
 	DumpNode(node); 
 
-	PackValueCobol(McpData,node->mcprec);
-	PackValueCobol(LinkData,node->linkrec);
-	PackValueCobol(SpaData,node->sparec);
+	dotCOBOL_PackValue(McpData,node->mcprec,node->textsize);
+	dotCOBOL_PackValue(LinkData,node->linkrec,node->textsize);
+	dotCOBOL_PackValue(SpaData,node->sparec,node->textsize);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = PackValueCobol(p,node->scrrec[i]);
+		p = dotCOBOL_PackValue(p,node->scrrec[i],node->textsize);
 	}
 
 	size  = fwrite(McpData,1,McpSize,fp);
@@ -332,11 +169,11 @@ dbgmsg(">GetApplication");
 		(void)getc(fp);
 	}
 
-	UnPackValueCobol(McpData,node->mcprec);
-	UnPackValueCobol(LinkData,node->linkrec);
-	UnPackValueCobol(SpaData,node->sparec);
+	dotCOBOL_UnPackValue(McpData,node->mcprec,node->textsize);
+	dotCOBOL_UnPackValue(LinkData,node->linkrec,node->textsize);
+	dotCOBOL_UnPackValue(SpaData,node->sparec,node->textsize);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = UnPackValueCobol(p,node->scrrec[i]);
+		p = dotCOBOL_UnPackValue(p,node->scrrec[i],node->textsize);
 	}
 
 
@@ -359,30 +196,53 @@ dbgmsg("<ExecuteProcess");
 
 #ifdef	USE_PTY
 static	void
+PrintSJIS(
+	char	*istr)
+{
+	char	*ob;
+	char	obb[3];
+	size_t	sib
+	,		sob;
+	iconv_t		cd;
+
+	if		(  istr  ==  NULL  )	return;
+	if		(  ( cd = iconv_open("EUC-JP","Shift-JIS") )  <  0  ) {
+		printf("code set error\n");
+		exit(1);
+	}
+	
+	sib = strlen(istr);
+	
+	do {
+		ob = obb;
+		sob = 3;
+		if		(  iconv(cd,&istr,&sib,&ob,&sob)  <  0  ) {
+			printf("error\n");
+			exit(1);
+		}
+		*ob = 0;
+		printf("%s",obb);
+	}	while	(  sib  >  0  );
+	iconv_close(cd);
+}
+
+static	void
 ConsoleThread(
 	void	*para)
 {
 	int		i;
-	STREAM	*is;
-	Char	c;
 	Bool	fExit;
 	int		fh = (int)para;
 	char	buff[SIZE_BUFF+1];
 
 	fExit = FALSE;
-	CodeInit(ENCODE_EUC);
 	while	( !fExit ) {
 		dbgmsg("msg");
 		if		(  ( i = read(fh,buff,SIZE_BUFF) )  >  0  ) {
 			buff[i] = 0;
-			is = CodeOpenString(buff);
-			CodeSetEncode(is,ENCODE_SJIS);
-			while	(  ( c = CodeGetChar(is) )  !=  Char_EOF  )	{
-				CodePutChar(STDOUT,c);
-			}
+			PrintSJIS(buff);
 			printf("\n");
 			fflush(stdout);
-			CodeClose(is);
 		} else {
 			fExit = TRUE;
 		}
@@ -499,15 +359,15 @@ dbgmsg(">ReadyDC");
 	}
 	ReadyApplication();
 
-	McpSize = SizeValue(ThisEnv->mcprec,ThisLD->arraysize,ThisLD->textsize);
+	McpSize = dotCOBOL_SizeValue(ThisEnv->mcprec,ThisLD->arraysize,ThisLD->textsize);
 	McpData = xmalloc(McpSize);
-	LinkSize = SizeValue(ThisEnv->linkrec,ThisLD->arraysize,ThisLD->textsize);
+	LinkSize = dotCOBOL_SizeValue(ThisEnv->linkrec,ThisLD->arraysize,ThisLD->textsize);
 	LinkData = xmalloc(LinkSize);
-	SpaSize = SizeValue(ThisLD->sparec,ThisLD->arraysize,ThisLD->textsize);
+	SpaSize = dotCOBOL_SizeValue(ThisLD->sparec,ThisLD->arraysize,ThisLD->textsize);
 	SpaData = xmalloc(SpaSize);
 	ScrSize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		ScrSize += SizeValue(ThisLD->window[i]->value,ThisLD->arraysize,ThisLD->textsize);
+		ScrSize += dotCOBOL_SizeValue(ThisLD->window[i]->value,ThisLD->arraysize,ThisLD->textsize);
 	}
 	ScrData = xmalloc(ScrSize);
 dbgmsg("<ReadyDC");
@@ -537,10 +397,10 @@ ReadControl(
 	DBCOMM_CTRL	*ctrl)
 {
 	StringCobol2C(ctrl->func,SIZE_FUNC);
-	IntegerCobol2C(&ctrl->blocks);
-	IntegerCobol2C(&ctrl->rc);
-	IntegerCobol2C(&ctrl->rno);
-	IntegerCobol2C(&ctrl->pno);
+	dotCOBOL_IntegerCobol2C(&ctrl->blocks);
+	dotCOBOL_IntegerCobol2C(&ctrl->rc);
+	dotCOBOL_IntegerCobol2C(&ctrl->rno);
+	dotCOBOL_IntegerCobol2C(&ctrl->pno);
 }
 
 static	void
@@ -548,10 +408,10 @@ SetControl(
 	DBCOMM_CTRL	*ctrl)
 {
 	StringC2Cobol(ctrl->func,SIZE_FUNC);
-	IntegerC2Cobol(&ctrl->blocks);
-	IntegerC2Cobol(&ctrl->rc);
-	IntegerC2Cobol(&ctrl->rno);
-	IntegerC2Cobol(&ctrl->pno);
+	dotCOBOL_IntegerC2Cobol(&ctrl->blocks);
+	dotCOBOL_IntegerC2Cobol(&ctrl->rc);
+	dotCOBOL_IntegerC2Cobol(&ctrl->rno);
+	dotCOBOL_IntegerC2Cobol(&ctrl->pno);
 }
 
 static	Bool
@@ -656,13 +516,13 @@ dbgmsg(">ExecuteDB_Server");
 		ctrl = (DBCOMM_CTRL *)block;
 		if		(  ctrl->rno  >=  0  ) {
 			rec = ThisDB[ctrl->rno]; 
-			UnPackValueCobol(data, rec->rec);
+			dotCOBOL_UnPackValue(data, rec->rec,TextSize);
 		} else {
 			rec = NULL;
 		}
 		ExecDB_Process(ctrl,rec);
 		if		(  rec  !=  NULL  ) {
-			PackValueCobol(data, rec->rec);
+			dotCOBOL_PackValue(data, rec->rec,TextSize);
 		}
 		dbgmsg("write");
 		WriteDB_Reply(fpDBW,block,bnum);
@@ -713,7 +573,7 @@ dbgmsg("<StartBatch");
 	return	(0); 
 }
 
-static	MessageHandler	dotCOBOL_Handler = {
+static	MessageHandler	Handler = {
 	"dotCOBOL",
 	FALSE,
 	_ExecuteProcess,
@@ -726,9 +586,9 @@ static	MessageHandler	dotCOBOL_Handler = {
 	_CleanUpDB,
 };
 
-extern	void
-Init_dotCOBOL_Handler(void)
+extern	MessageHandler	*
+dotCOBOL(void)
 {
-	EnterHandler(&dotCOBOL_Handler);
+	return	(&Handler);
 }
-
+#endif

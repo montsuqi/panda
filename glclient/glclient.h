@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -24,7 +24,8 @@ copies.
 #define	_INC_GLCLIENT_H
 
 #include <glade/glade.h>
-#include	"value.h"
+#include	"libmondai.h"
+#include	"net.h"
 
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -49,8 +50,16 @@ GLOBAL	char		*CurrentApplication;
 
 GLOBAL	Bool	fInRecv;
 
-GLOBAL	FILE	*fpComm;
+GLOBAL	NETFILE	*fpComm;
 GLOBAL	char	*User;
 GLOBAL	char	*Pass;
+#ifdef	USE_SSL
+GLOBAL	Bool	fSsl;
+GLOBAL	Bool	fVerify;
+GLOBAL	char	*KeyFile;
+GLOBAL	char	*CertFile;
+GLOBAL	char	*CA_Path;
+GLOBAL	char	*CA_File;
+#endif
 
 #endif

@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -33,7 +33,6 @@ copies.
 #include	<stdlib.h>
 #include	<signal.h>
 #include	<string.h>
-#include	<termio.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<netinet/in.h>
@@ -47,12 +46,11 @@ copies.
 
 #include	"types.h"
 #include	"misc.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"tcp.h"
 #include	"front.h"
 #include	"debug.h"
 
-static	int		ConCou;
 extern	char	*
 TermName(
 	int		sock)
@@ -60,49 +58,62 @@ TermName(
 	time_t		nowtime;
 	struct	tm	*Now;
 	socklen_t	len;
-	static	char			name[SIZE_TERM+1];
+	static	char			name[SIZE_TERM+1];	//	SIZE_TERM == 64
 	struct	sockaddr		addr;
 	struct	sockaddr_in		*in;
 	struct	sockaddr_in6	*in6;
 
+dbgmsg(">TermName");
 	memclear(name,SIZE_TERM+1);
-	len = sizeof(addr);
 	if		(  sock  ==  0  ) {
 		time(&nowtime);
 		Now = localtime(&nowtime);
 		Now->tm_year += 1900;
-		sprintf(name,"%02d%02d%02d%02d%02d%02d%8d%8s%8s",
+		sprintf(name,"%04d%02d%02d:%02d%02d%02d:%08X",
 				Now->tm_year,Now->tm_mon+1,Now->tm_mday,
 				Now->tm_hour,Now->tm_min,Now->tm_sec,
-				ConCou,
-				"",
-				"");
-		ConCou ++;
+				getpid());
 	} else {
+		len = sizeof(addr);
 		getpeername(sock,&addr,&len);
 		switch	(addr.sa_family) {
 		  case	AF_INET:
 			in = (struct sockaddr_in *)&addr;
-			sprintf(name,"%04X%08X%8s%8s%8s",
+			sprintf(name,"%04X:%08X:%08X",
 					(int)in->sin_port,
 					(int)(in->sin_addr.s_addr),
-					"",
-					"",
-					"");
+					getpid());
 			break;
 		  case	AF_INET6:
 			in6 = (struct sockaddr_in6 *)&addr;
-			sprintf(name,"%04X%08X%08X%08X%08X",
+			sprintf(name,"%04X:%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X:%08X",
 					(int)in6->sin6_port,
-					(int)(in6->sin6_addr.in6_u.u6_addr32[0]),
-					(int)(in6->sin6_addr.in6_u.u6_addr32[1]),
-					(int)(in6->sin6_addr.in6_u.u6_addr32[2]),
-					(int)(in6->sin6_addr.in6_u.u6_addr32[3]));
+					(int)(in6->sin6_addr.s6_addr[0]),
+					(int)(in6->sin6_addr.s6_addr[1]),
+					(int)(in6->sin6_addr.s6_addr[2]),
+					(int)(in6->sin6_addr.s6_addr[3]),
+					(int)(in6->sin6_addr.s6_addr[4]),
+					(int)(in6->sin6_addr.s6_addr[5]),
+					(int)(in6->sin6_addr.s6_addr[6]),
+					(int)(in6->sin6_addr.s6_addr[7]),
+					(int)(in6->sin6_addr.s6_addr[8]),
+					(int)(in6->sin6_addr.s6_addr[9]),
+					(int)(in6->sin6_addr.s6_addr[10]),
+					(int)(in6->sin6_addr.s6_addr[11]),
+					(int)(in6->sin6_addr.s6_addr[12]),
+					(int)(in6->sin6_addr.s6_addr[13]),
+					(int)(in6->sin6_addr.s6_addr[14]),
+					(int)(in6->sin6_addr.s6_addr[15]),
+					getpid());
 			break;
 		  default:
 			break;
 		}
 	}
+#ifdef	DEBUG
+	printf("term name = [%s]\n",name);
+#endif
+dbgmsg("<TermName");
 	return	(name); 
 }
 

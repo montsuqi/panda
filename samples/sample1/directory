@@ -10,14 +10,20 @@ record	"=/sample1";
 
 #multiplex_level	no;
 #multiplex_level	ld;
-multiplex_level	id;
+#multiplex_level	id;
+multiplex_level	aps;
 
 #linksize	1024;
 linkage		link;
 
+wfc	{
+	port	":9002";
+};
+
 ld	{
-	demo1	"localhost:9100";
-	demo2	"localhost:9200";
+#	demo1	"localhost" * 1, "localhost:9001" * 1;
+	demo1	"localhost" * 1;
+	demo2	"localhost" * 1;
 };
 
 db_group	"log"	{

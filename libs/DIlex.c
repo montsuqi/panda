@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -34,7 +34,7 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"misc.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"DIlex.h"
 #include	"dirs.h"
 #include	"debug.h"
@@ -76,6 +76,7 @@ static	struct	{
 	{	"priority"			,T_PRIORITY	},
 	{	"linkage"			,T_LINKAGE	},
 	{	"stacksize"			,T_STACKSIZE	},
+	{	"wfc"				,T_WFC		},
 	{	""					,0			}
 };
 
@@ -180,7 +181,7 @@ static	void
 ReadyDirective(void)
 {
 	char	buff[SIZE_BUFF];
-	char	fn[SIZE_NAME+1];
+	char	fn[SIZE_BUFF];
 	char	*s;
 	int		c;
 

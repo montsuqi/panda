@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -23,17 +23,10 @@ copies.
 
 #include	"BDparser.h"
 #include	"DBparser.h"
+#include	"LDparser.h"
 
-#include	"wfc.h"
-
-typedef	struct _ProcessNode	{
-	ValueStruct	*mcprec;
-	ValueStruct	*linkrec;
-	ValueStruct	*sparec;
-	ValueStruct	**scrrec;
-	size_t		cWindow;
-	CloseWindows	w;
-}	ProcessNode;
+#include	"apslib.h"
+#include	"dblib.h"
 
 typedef	struct {
 	char	*name;
@@ -50,9 +43,8 @@ typedef	struct {
 	void	(*CleanUpDB)(void);
 }	MessageHandler;
 
-extern	void	InitHandler(void);
-extern	void	EnterHandler(MessageHandler *handler);
 extern	void	InitiateHandler(void);
+extern	void	InitiateBatchHandler(void);
 extern	void	ReadyDC(void);
 extern	void	ReadyDB(void);
 extern	void	ExecuteProcess(ProcessNode *node);
@@ -61,6 +53,9 @@ extern	void	CleanUp(void);
 extern	void	StopDB(void);
 extern	void	CleanUpDB(void);
 extern	int		StartBatch(char *name, char *para);
+extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);
+extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);
+extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);
 
 #undef	GLOBAL
 #ifdef	_HANDLER
@@ -74,6 +69,9 @@ GLOBAL	LD_Struct	*ThisLD;
 GLOBAL	BD_Struct	*ThisBD;
 GLOBAL	DBD_Struct	*ThisDBD;
 GLOBAL	char		*LibPath;
+
+GLOBAL	size_t		TextSize;
+GLOBAL	int			nCache;
 
 #undef	GLOBAL
 #endif

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -26,7 +26,6 @@ copies.
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<signal.h>
-#include	<termio.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -42,8 +41,8 @@ copies.
 #include	"dirs.h"
 #include	"DDparser.h"
 #include	"option.h"
-#include	"pandaIO.h"
 #include	"htserver.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	char		*AuthURL;
@@ -56,10 +55,6 @@ static	ARG_TABLE	option[] = {
 		"データ定義格納ディレクトリ"	 				},
 	{	"expire",	INTEGER,	TRUE,	(void*)&Expire,
 		"セション変数保持時間(秒)" 						},
-#if	1
-	{	"panda",	STRING,		TRUE,	(void*)&PandaPort,
-		"ワークフローコントローラ"						},
-#endif
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -71,9 +66,6 @@ SetDefault(void)
 	RecordDir = ".";
 	Expire = 5 * 60;
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
-#if	1
-	PandaPort = "localhost:9000";			/*	PORT_WFC	*/
-#endif
 }
 
 extern	int
@@ -83,8 +75,9 @@ main(
 {
 	SetDefault();
 	(void)GetOption(option,argc,argv);
+	InitMessage();
 
-	InitSystem();
+	InitSystem(argc,argv);
 	ExecuteServer();
 	return	(0);
 }

@@ -45,6 +45,7 @@ copies.
 #include	"driver.h"
 #include	"dirs.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	Bool	fNoConv;
@@ -60,6 +61,7 @@ static	Bool	fDBREC;
 static	Bool	fDBCOMM;
 static	Bool	fDBPATH;
 static	Bool	fMCP;
+static	Bool	fFull;
 static	int		TextSize;
 static	int		ArraySize;
 static	char	*Prefix;
@@ -67,16 +69,19 @@ static	char	*RecName;
 static	char	*LD_Name;
 static	char	*BD_Name;
 static	char	*Directory;
+static	char	*Lang;
 
 static	int		level;
-
-static	void	COBOL(ValueStruct *val, size_t arraysize, size_t textsize);
-
 static	int		Col;
+static	int		is_return = FALSE;
+static	char	namebuff[SIZE_BUFF];
+
+static	void	_COBOL(ValueStruct *val, size_t arraysize, size_t textsize);
 
 static	void
 PutLevel(
-	int		level)
+	int		level,
+	Bool	fNum)
 {
 	int		n;
 
@@ -87,7 +92,11 @@ PutLevel(
 	for	( ; n > 0 ; n -- ) {
 		fputc(' ',stdout);
 	}
-	printf("%02d  ",level);
+	if		(  fNum  ) {
+		printf("%02d  ",level);
+	} else {
+		printf("    ");
+	}
 	Col = 0;
 }
 
@@ -136,27 +145,42 @@ static	void
 PutName(
 	char	*name)
 {
-	char	buff[SIZE_NAME+1];
+	char	buff[SIZE_BUFF];
 
 	if		(	(  name           ==  NULL  )
 			||	(  !stricmp(name,"filler")  ) ) {
 		strcpy(buff,"filler");
 	} else {
+		int threshold;
+
 		sprintf(buff,"%s%s",Prefix,name);
+#define MAX_CHARACTER_IN_LINE 65
+
+		threshold = MAX_CHARACTER_IN_LINE -
+					(8 + level * 2 + 4 + 4 + 18 + 2 + 18 + 1);
+		if		(	(  threshold <= 0          )
+				||	(  strlen(buff) > threshold) ) {
+			is_return = TRUE;
+		}
 	}
 	PutString(buff);
 }
 
+static	char	PrevName[SIZE_BUFF];
+static	int		PrevCount;
+static	char	*PrevSuffix[] = { "X","Y","Z" };
 static	void
-COBOL(
+_COBOL(
 	ValueStruct	*val,
 	size_t		arraysize,
 	size_t		textsize)
 {
 	int		i
 	,		n;
-	ValueStruct	*tmp;
+	ValueStruct	*tmp
+	,			*dummy;
 	char	buff[SIZE_BUFF+1];
+	char	*name;
 
 	if		(  val  ==  NULL  )	return;
 
@@ -194,35 +218,83 @@ COBOL(
 		if		(  n  ==  0  ) {
 			n = arraysize;
 		}
-		if		(  tmp->type  ==  GL_TYPE_RECORD  ) {
+		switch	(tmp->type) {
+		  case	GL_TYPE_RECORD:
 			sprintf(buff,"OCCURS  %d TIMES",n);
 			PutTab(8);
 			PutString(buff);
-			COBOL(tmp,arraysize,textsize);
-		} else {
-			COBOL(tmp,arraysize,textsize);
+			_COBOL(tmp,arraysize,textsize);
+			break;
+		  case	GL_TYPE_ARRAY:
 			sprintf(buff,"OCCURS  %d TIMES",n);
 			PutTab(8);
 			PutString(buff);
+			dummy = NewValue(GL_TYPE_RECORD);
+			sprintf(buff,"%s-%s",PrevName,PrevSuffix[PrevCount]);
+			ValueAddRecordItem(dummy,buff,tmp);
+			PrevCount ++;
+			_COBOL(dummy,arraysize,textsize);
+			break;
+		  default:
+			_COBOL(tmp,arraysize,textsize);
+			sprintf(buff,"OCCURS  %d TIMES",n);
+			PutTab(8);
+			PutString(buff);
+			break;
 		}
 		break;
 	  case	GL_TYPE_RECORD:
 		level ++;
+		if		(  fFull  ) {
+			name = namebuff + strlen(namebuff);
+		} else {
+			name = namebuff;
+		}
 		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
 			printf(".\n");
-			PutLevel(level);
+			PutLevel(level,TRUE);
+			if		(  fFull  )	{
+				sprintf(name,"%s%s",(( *namebuff == 0 ) ? "": "-"),
+						val->body.RecordData.names[i]);
+			} else {
+				strcpy(namebuff,val->body.RecordData.names[i]);
+			}
+			strcpy(PrevName,val->body.RecordData.names[i]);
+			PrevCount = 0;
+			PutName(namebuff);
 			tmp = val->body.RecordData.item[i];
-			PutName(val->body.RecordData.names[i]);
+			if		(  is_return  ) {
+				/* new line if current ValueStruct children is item and it has
+				   occurs */
+				if		(	(  tmp->type != GL_TYPE_RECORD  )
+						&&	(  tmp->type == GL_TYPE_ARRAY  )
+						&&	(  tmp->body.ArrayData.item[0]->type != GL_TYPE_RECORD  ) ) {
+					printf("\n");
+					PutLevel(level,FALSE);
+				}
+			  	is_return = FALSE;
+			}
 			if		(  tmp->type  !=  GL_TYPE_RECORD  ) {
 				PutTab(4);
 			}
-			COBOL(tmp,arraysize,textsize);
+			_COBOL(tmp,arraysize,textsize);
+			*name = 0;
 		}
 		level --;
 		break;
 	  default:
 		break;
 	}
+}
+
+static	void
+COBOL(
+	ValueStruct	*val,
+	size_t		arraysize,
+	size_t		textsize)
+{
+	*namebuff = 0;
+	_COBOL(val,arraysize,textsize);
 }
 
 static	void
@@ -235,7 +307,7 @@ SIZE(
 
 	if		(  val  ==  NULL  )	return;
 	level ++;
-	PutLevel(level);
+	PutLevel(level,TRUE);
 	PutName("filler");
 	PutTab(8);
 	sprintf(buff,"PIC X(%d)",SizeValue(val,arraysize,textsize));
@@ -256,7 +328,7 @@ MakeFromRecord(
 	}
 	DD_ParserInit();
 	if		(  ( rec = DD_ParserDataDefines(name) )  !=  NULL  ) {
-		PutLevel(level);
+		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
 			PutString(rec->name);
 		} else {
@@ -286,13 +358,13 @@ MakeLD(void)
 	int		base;
 
 dbgmsg(">MakeLD");
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,LD_Name,"","");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
 
-	PutLevel(1);
+	PutLevel(1,TRUE);
 	if		(  *RecName  ==  0  ) {
 		sprintf(buff,"%s",ld->name);
 	} else {
@@ -312,21 +384,21 @@ dbgmsg(">MakeLD");
 		}
 		num = ( size / SIZE_BLOCK ) + 1;
 
-		PutLevel(base);
+		PutLevel(base,TRUE);
 		PutName("dataarea");
 		printf(".\n");
 
-		PutLevel(base+1);
+		PutLevel(base+1,TRUE);
 		PutName("data");
 		PutTab(12);
 		printf("OCCURS  %d.\n",num);
 
-		PutLevel(base+2);
+		PutLevel(base+2,TRUE);
 		PutName("filler");
 		PutTab(12);
 		printf("PIC X(%d).\n",SIZE_BLOCK);
 
-		PutLevel(base);
+		PutLevel(base,TRUE);
 		PutName("inputarea-red");
 		PutTab(4);
 		printf("REDEFINES   ");
@@ -338,7 +410,7 @@ dbgmsg(">MakeLD");
 	if		(  fMCP  ) {
 		if		(  ( mcpsize = SizeValue(ThisEnv->mcprec,ld->arraysize,ld->textsize) )
 				   >  0  ) {
-			PutLevel(base);
+			PutLevel(base,TRUE);
 			PutName("mcpdata");
 			level = base;
 			if		(	(  fFiller  )
@@ -357,11 +429,11 @@ dbgmsg(">MakeLD");
 	if		(  fSPA  ) {
 		if		(  ( spasize = SizeValue(ld->sparec,ld->arraysize,ld->textsize) )
 				   >  0  ) {
-			PutLevel(base);
+			PutLevel(base,TRUE);
 			PutName("spadata");
 			if		(  ld->sparec  ==  NULL  ) {
 				printf(".\n");
-				PutLevel(base+1);
+				PutLevel(base+1,TRUE);
 				PutName("filler");
 				printf("      PIC X(%d).\n",spasize);
 			} else {
@@ -382,14 +454,14 @@ dbgmsg(">MakeLD");
 	}
 	if		(  fLinkage  ) {
 		if		(  SizeValue(ThisEnv->linkrec,ld->arraysize,ld->textsize)  >  0  ) {
-			PutLevel(base);
+			PutLevel(base,TRUE);
 			PutName("linkdata");
 			level = base;
 			if		(	(  fFiller  )
 					||	(  fLDR     )
 					||	(  fLDW     ) ) {
 				printf(".\n");
-				PutLevel(level+1);
+				PutLevel(level+1,TRUE);
 				PutName("filler");
 				printf("      PIC X(%d)",ThisEnv->linksize);
 			} else {
@@ -402,7 +474,7 @@ dbgmsg(">MakeLD");
 		}
 	}
 	if		(  fScreen  ) {
-		PutLevel(base);
+		PutLevel(base,TRUE);
 		sprintf(buff,"screendata");
 		PutName(buff);
 		printf(".\n");
@@ -410,7 +482,7 @@ dbgmsg(">MakeLD");
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
 			if		(  SizeValue(ld->window[i]->value,ld->arraysize,ld->textsize)  >  0  ) {
 				Prefix = _prefix;
-				PutLevel(base+1);
+				PutLevel(base+1,TRUE);
 				sprintf(buff,"%s",ld->window[i]->name);
 				PutName(buff);
 				if		(  fWindowPrefix  ) {
@@ -435,7 +507,7 @@ dbgmsg(">MakeLD");
 	}
 	if		(	(  fLDR     )
 			||	(  fLDW     ) ) {
-		PutLevel(1);
+		PutLevel(1,TRUE);
 		PutName("blocks");
 		PutTab(8);
 		printf("PIC S9(9)   BINARY  VALUE   %d.\n",num);
@@ -449,7 +521,7 @@ MakeLinkage(void)
 	LD_Struct	*ld;
 	char	*_prefix;
 
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,LD_Name,"","");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
@@ -457,15 +529,15 @@ MakeLinkage(void)
 
 	_prefix = Prefix;
 	Prefix = "";
-	PutLevel(1);
+	PutLevel(1,TRUE);
 	PutName("linkarea.\n");
-	PutLevel(2);
+	PutLevel(2,TRUE);
 	PutName("linkdata-redefine.\n");
-	PutLevel(3);
+	PutLevel(3,TRUE);
 	PutName("filler");
 	printf("      PIC X(%d).\n",ThisEnv->linksize);
 
-	PutLevel(2);
+	PutLevel(2,TRUE);
 	PutName(ld->name);
 	PutTab(4);
 	printf("REDEFINES   ");
@@ -491,7 +563,7 @@ MakeDB(void)
 	,			textsize;
 	size_t	cDB;
 
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
@@ -512,9 +584,10 @@ MakeDB(void)
 		cDB = bd->cDB;
 	} else {
 		Error("LD or BD not specified");
+		exit(1);
 	}
 
-	PutLevel(1);
+	PutLevel(1,TRUE);
 	PutName("dbarea");
 	printf(".\n");
 	msize = 0;
@@ -523,7 +596,7 @@ MakeDB(void)
 		msize = ( msize > size ) ? msize : size;
 	}
 
-	PutLevel(2);
+	PutLevel(2,TRUE);
 	PutName("dbdata");
 	PutTab(12);
 	printf("PIC X(%d).\n",msize);
@@ -547,7 +620,7 @@ MakeDBREC(
 	size_t	cDB;
 
 dbgmsg(">MakeDBREC");
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
@@ -568,6 +641,7 @@ dbgmsg(">MakeDBREC");
 		cDB = bd->cDB;
 	} else {
 		Error("LD or BD not specified");
+		exit(1);
 	}
 	msize = 64;
 	for	( i = 1 ; i < cDB ; i ++ ) {
@@ -576,7 +650,7 @@ dbgmsg(">MakeDBREC");
 	}
 	if		(  ( rec = DD_ParserDataDefines(name) )  !=  NULL  ) {
 		level = 1;
-		PutLevel(level);
+		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
 			rname = rec->name;
 		} else {
@@ -591,7 +665,7 @@ dbgmsg(">MakeDBREC");
 
 		size = SizeValue(rec->rec,arraysize,textsize);
 		if		(  msize  !=  size  ) {
-			PutLevel(2);
+			PutLevel(2,TRUE);
 			PutName("filler");
 			PutTab(12);
 			printf("PIC X(%d).\n",msize - size);
@@ -614,7 +688,7 @@ MakeDBCOMM(void)
 	,			textsize;
 	size_t	cDB;
 
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
@@ -635,6 +709,7 @@ MakeDBCOMM(void)
 		cDB = bd->cDB;
 	} else {
 		Error("LD or BD not specified");
+		exit(1);
 	}
 
 	msize = 0;
@@ -643,71 +718,71 @@ MakeDBCOMM(void)
 		msize = ( msize > size ) ? msize : size;
 	}
 
-	PutLevel(1);
+	PutLevel(1,TRUE);
 	PutName("dbcomm");
 	printf(".\n");
 
 	num = ( ( msize + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 
-	PutLevel(2);
+	PutLevel(2,TRUE);
 	PutName("dbcomm-blocks");
 	printf(".\n");
 
-	PutLevel(3);
+	PutLevel(3,TRUE);
 	PutName("dbcomm-block");
 	PutTab(12);
 	printf("OCCURS  %d.\n",num);
 
-	PutLevel(4);
+	PutLevel(4,TRUE);
 	PutName("filler");
 	PutTab(12);
 	printf("PIC X(%d).\n",SIZE_BLOCK);
 
-	PutLevel(2);
+	PutLevel(2,TRUE);
 	PutName("dbcomm-data");
 	PutTab(4);
 	printf("REDEFINES   ");
 	PutName("dbcomm-blocks");
 	printf(".\n");
 
-	PutLevel(3);
+	PutLevel(3,TRUE);
 	PutName("dbcomm-ctrl");
 	printf(".\n");
 
-	PutLevel(4);
+	PutLevel(4,TRUE);
 	PutName("dbcomm-func");
 	PutTab(12);
 	printf("PIC X(16).\n");
 
-	PutLevel(4);
+	PutLevel(4,TRUE);
 	PutName("dbcomm-rc");
 	PutTab(12);
 	printf("PIC S9(9)   BINARY.\n");
 
-	PutLevel(4);
+	PutLevel(4,TRUE);
 	PutName("dbcomm-path");
 	printf(".\n");
 
-	PutLevel(5);
+	PutLevel(5,TRUE);
 	PutName("dbcomm-path-blocks");
 	PutTab(12);
 	printf("PIC S9(9)   BINARY.\n");
 
-	PutLevel(5);
+	PutLevel(5,TRUE);
 	PutName("dbcomm-path-rname");
 	PutTab(12);
 	printf("PIC S9(9)   BINARY.\n");
 
-	PutLevel(5);
+	PutLevel(5,TRUE);
 	PutName("dbcomm-path-pname");
 	PutTab(12);
 	printf("PIC S9(9)   BINARY.\n");
 
-	PutLevel(3);
+	PutLevel(3,TRUE);
 	PutName("dbcomm-record");
 	printf(".\n");
 
-	PutLevel(4);
+	PutLevel(4,TRUE);
 	PutName("filler");
 	PutTab(12);
 	printf("PIC X(%d).\n",msize);
@@ -730,11 +805,12 @@ MakeDBPATH(void)
 	size_t	cDB;
 
 dbgmsg(">MakeDBPATH");
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
+			exit(1);
 		} else {
 			dbrec = ld->db;
 			arraysize = ld->arraysize;
@@ -745,6 +821,7 @@ dbgmsg(">MakeDBPATH");
 	if		(  BD_Name  !=  NULL  ) {
 		if		(  ( bd = GetBD(BD_Name) )  ==  NULL  ) {
 			Error("BD not found.\n");
+			exit(1);
 		} else {
 			dbrec = bd->db;
 			arraysize = bd->arraysize;
@@ -753,10 +830,11 @@ dbgmsg(">MakeDBPATH");
 		}
 	} else {
 		Error("LD or BD not specified");
+		exit(1);
 	}
 
 
-	PutLevel(1);
+	PutLevel(1,TRUE);
 	PutName("dbpath");
 	printf(".\n");
 	for	( i = 1 ; i < cDB ; i ++ ) {
@@ -765,22 +843,22 @@ dbgmsg(">MakeDBPATH");
 		blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 		
 		for	( j = 0 ; j < db->pcount ; j ++ ) {
-			PutLevel(2);
+			PutLevel(2,TRUE);
 			sprintf(buff,"path-%s-%s",dbrec[i]->name,db->path[j]->name);
 			PutName(buff);
 			printf(".\n");
 
-			PutLevel(3);
+			PutLevel(3,TRUE);
 			PutName("filler");
 			PutTab(12);
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",blocks);
 
-			PutLevel(3);
+			PutLevel(3,TRUE);
 			PutName("filler");
 			PutTab(12);
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",i);
 
-			PutLevel(3);
+			PutLevel(3,TRUE);
 			PutName("filler");
 			PutTab(12);
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",j);
@@ -792,11 +870,11 @@ dbgmsg("<MakeDBPATH");
 static	void
 MakeMCP(void)
 {
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,"","","");
 
 	Prefix = "";
-	PutLevel(1);
+	PutLevel(1,TRUE);
 	PutName("mcparea");
 	Prefix = "mcp_";
 	level = 1;
@@ -825,6 +903,8 @@ static	ARG_TABLE	option[] = {
 		"MCPSUBとDBサーバとの通信領域を出力する"		},
 	{	"mcp",		BOOLEAN,	TRUE,	(void*)&fMCP,
 		"MCPAREAを出力する"								},
+	{	"lang",		STRING,		TRUE,	(void*)&Lang	,
+		"対象言語名"			 						},
 	{	"textsize",	INTEGER,	TRUE,	(void*)&TextSize,
 		"textの最大長"									},
 	{	"arraysize",INTEGER,	TRUE,	(void*)&ArraySize,
@@ -837,6 +917,8 @@ static	ARG_TABLE	option[] = {
 		"レコードの名前"								},
 	{	"filler",	BOOLEAN,	TRUE,	(void*)&fFiller,
 		"レコードの中身をFILLERにする"					},
+	{	"full",		BOOLEAN,	TRUE,	(void*)&fFull,
+		"階層構造を名前に反映する"						},
 	{	"noconv",	BOOLEAN,	TRUE,	(void*)&fNoConv,
 		"項目名を大文字に加工しない"					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
@@ -867,6 +949,7 @@ SetDefault(void)
 	fDBCOMM = FALSE;
 	fDBPATH = FALSE;
 	fMCP = FALSE;
+	fFull = FALSE;
 	ArraySize = -1;
 	TextSize = -1;
 	Prefix = "";
@@ -880,6 +963,7 @@ SetDefault(void)
 	LD_Dir = NULL;
 	BD_Dir = NULL;
 	Directory = "./directory";
+	Lang = "OpenCOBOL";
 }
 
 extern	int
@@ -893,7 +977,8 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-
+	InitMessage();
+	SetLanguage(Lang);
 	if		(  fl  !=  NULL  ) {
 		name = fl->name;
 		ext = GetExt(name);
@@ -907,10 +992,10 @@ main(
 	} else {
 		if		(  fScreen  ) {
 			if		(  LD_Name  ==  NULL  ) {
-				PutLevel(1);
+				PutLevel(1,TRUE);
 				PutString("scrarea");
 				printf(".\n");
-				PutLevel(2);
+				PutLevel(2,TRUE);
 				PutString("screendata");
 				printf(".\n");
 			} else {

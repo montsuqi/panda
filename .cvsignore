@@ -6,3 +6,6 @@ configure
 libtool
 stamp-h
 stamp-h.in
+defaults.h
+ltmain.sh
+panda-config

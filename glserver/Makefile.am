@@ -1,29 +1,30 @@
 ## Process this file with automake to produce Makefile.in
 
-sbin_PROGRAMS = glserver glauth
+sbin_PROGRAMS = glserver
 
-glserver_LDADD 		=	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	-L$(top_srcdir)/libs -lpandas
-glauth_LDADD 		=	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lcrypt	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	-L$(top_srcdir)/libs -lpandas
-
-INCLUDES 			= \
-	-I$(top_srcdir)	\
+glserver_LDFLAGS	=	-export-dynamic
+glserver_LDADD 		=					\
+	-lm 								\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
+	$(top_srcdir)/libs/libpandas.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
+glserver_DEPENDENCIES	=				\
+	$(top_srcdir)/libs/libpandas.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
+INCLUDES 			= 		\
+	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/datalib	\
-	$(POSTGRES_CFLAGS)	\
-	$(GNOME_INCLUDEDIR) \
-	$(FIXED_CFLAGS)
+	$(GLIB_CFLAGS)			\
+	$(SSL_CFLAGS)			\
+	$(FIXED_CFLAGS)			\
+	$(MONDAI_CFLAGS)
 
 glserver_SOURCES	=	\
 	glserver.c	glserver.h	\
 	server.c	
-
-glauth_SOURCES	=	\
-	glauth.c
-

@@ -1,0 +1,2 @@
+        01  SPAAREA.
+            02  SPA-COUNT   PIC S9(9)   BINARY.

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -36,12 +36,14 @@ copies.
 #include	<unistd.h>
 #include	<glib.h>
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
+#include	"dirs.h"
 #include	"misc.h"
 #include	"const.h"
 #include	"enum.h"
-#include	"DDparser.h"
+#include	"directory.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	Bool	fCreate;
@@ -235,6 +237,8 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
+	InitMessage();
+
 	if		(  fl  !=  NULL  ) {
 		if		(  fCreate  ) {
 			DD_ParserInit();

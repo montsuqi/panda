@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -44,6 +44,7 @@ copies.
 #define	T_HOME			(YYBASE +17)
 #define	T_BIND			(YYBASE +18)
 #define	T_WFC			(YYBASE +19)
+#define	T_CACHE			(YYBASE +20)
 
 #undef	GLOBAL
 #ifdef	_LD_PARSER

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -38,11 +38,12 @@ copies.
 #include	<sys/wait.h>
 #include	<signal.h>
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"directory.h"
 #include	"dirs.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	char	*Directory;
@@ -58,6 +59,8 @@ static	Bool	fQ;
 static	Bool	fRedirector;
 static	Bool	fRestart;
 static	int		interval;
+static	int		MaxTran;
+static	int		Sleep;
 
 static	FILE		*fpLog;
 static	pid_t		PidWfc;
@@ -145,6 +148,7 @@ StartRedirector(
 	char	**argv;
 	Process	*proc;
 
+dbgmsg(">StartRedirector");
 	proc = New(Process);
 	argv = (char **)xmalloc(sizeof(char *) * 12);
 	proc->argv = argv;
@@ -173,6 +177,7 @@ StartRedirector(
 	proc->argc = argc;
 	argv[argc ++] = NULL;
 	pid = StartProcess(proc);
+dbgmsg("<StartRedirector");
 }
 
 static	void
@@ -222,15 +227,22 @@ _StartAps(
 	Process	*proc;
 	int		n;
 
+dbgmsg(">_StartAps");
+	if		(  ThisEnv->mlevel  !=  MULTI_APS  ) {
+		ld->nports = 1;
+	}
 	for	( n = 0 ; n < ld->nports ; n ++ ) {
-		if		(  !strcmp(ld->ports[n]->host,MyHost)  ) {
+		if		(	(  ld->ports[n]  ==  NULL              )
+				||	(  !strcmp(ld->ports[n]->host,MyHost)  ) )	{
 			proc = New(Process);
-			argv = (char **)xmalloc(sizeof(char *) * 13);
+			argv = (char **)xmalloc(sizeof(char *) * 19);
 			proc->argv = argv;
 			argc = 0;
 			argv[argc ++] = ApsPath;
-			argv[argc ++] = "-port";
-			argv[argc ++] = ld->ports[n]->port;
+			argv[argc ++] = "-wfcport";
+			argv[argc ++] = ThisEnv->WfcApsPort->port;
+			argv[argc ++] = "-host";
+			argv[argc ++] = ThisEnv->WfcApsPort->host;
 			if		(  Directory  !=  NULL  ) {
 				argv[argc ++] = "-dir";
 				argv[argc ++] = Directory;
@@ -245,6 +257,11 @@ _StartAps(
 			}
 			argv[argc ++] = ld->name;
 			argv[argc ++] = "-connect";
+			argv[argc ++] = "-maxtran";
+			argv[argc ++] = IntStrDup(MaxTran);
+			argv[argc ++] = "-sleep";
+			argv[argc ++] = IntStrDup(Sleep);
+
 			if		(  fQ  ) {
 				argv[argc ++] = "-?";
 			}
@@ -253,6 +270,7 @@ _StartAps(
 			StartProcess(proc);
 		}
 	}
+dbgmsg("<_StartAps");
 }
 
 static	void
@@ -260,9 +278,11 @@ StartApss(void)
 {
 	int		i;
 
+dbgmsg(">StartApss");
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 		_StartAps(ThisEnv->ld[i]);
 	}
+dbgmsg("<StartApss");
 }
 
 static	void
@@ -274,55 +294,64 @@ StartWfc(void)
 	int		back;
 	int		i;
 
-	back = 0;
-	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
-		back += ThisEnv->ld[i]->nports;
-	}
-	proc = New(Process);
-	argv = (char **)xmalloc(sizeof(char *) * 12);
-	proc->argv = argv;
-	argc = 0;
-	argv[argc ++] = WfcPath;
-	argv[argc ++] = "-back";
-	argv[argc ++] = IntStrDup(back+1);
+dbgmsg(">StartWfc");
+	if		(  !strcmp(ThisEnv->WfcApsPort->host,MyHost)  ) {
+		back = 0;
+		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
+			back += ThisEnv->ld[i]->nports;
+		}
+		proc = New(Process);
+		argv = (char **)xmalloc(sizeof(char *) * 14);
+		proc->argv = argv;
+		argc = 0;
+		argv[argc ++] = WfcPath;
+		argv[argc ++] = "-back";
+		argv[argc ++] = IntStrDup(back+1);
+		argv[argc ++] = "-apsport";
+		argv[argc ++] = ThisEnv->WfcApsPort->port;
 
-	if		(  Directory  !=  NULL  ) {
-		argv[argc ++] = "-dir";
-		argv[argc ++] = Directory;
+		if		(  Directory  !=  NULL  ) {
+			argv[argc ++] = "-dir";
+			argv[argc ++] = Directory;
+		}
+		if		(  LDDir  !=  NULL  ) {
+			argv[argc ++] = "-lddir";
+			argv[argc ++] = LDDir;
+		}
+		if		(  RecDir  !=  NULL  ) {
+			argv[argc ++] = "-record";
+			argv[argc ++] = RecDir;
+		}
+		if		(  fQ  ) {
+			argv[argc ++] = "-?";
+		}
+		proc->argc = argc;
+		argv[argc ++] = NULL;
+		PidWfc = StartProcess(proc);
+		sleep(interval);
 	}
-	if		(  LDDir  !=  NULL  ) {
-		argv[argc ++] = "-lddir";
-		argv[argc ++] = LDDir;
-	}
-	if		(  RecDir  !=  NULL  ) {
-		argv[argc ++] = "-record";
-		argv[argc ++] = RecDir;
-	}
-	if		(  fQ  ) {
-		argv[argc ++] = "-?";
-	}
-	proc->argc = argc;
-	argv[argc ++] = NULL;
-	PidWfc = StartProcess(proc);
+dbgmsg("<StartWfc");
 }
 
 
 static	void
 StartServers(void)
 {
+dbgmsg(">StartServers");
 	ProcessTable = NewIntHash();
 	if		(  fRedirector  ) {
 		StartRedirectors();
 	}
 	StartWfc();
 	StartApss();
+dbgmsg("<StartServers");
 }
 
 static	void
 StartPrograms(void)
 {
 dbgmsg(">StartPrograms");
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL);
 
 	StartServers();
@@ -432,10 +461,15 @@ static	ARG_TABLE	option[] = {
 	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
 		"自分のホスト名を指定する"	 					},
 
+	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
+		"apsの処理するトランザクション数を指定する"		},
+
 	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
 		"-?を指定する"				 					},
 	{	"log",		STRING,		TRUE,	(void*)&Log,
 		"実行ログを取るファイル名を指定する"			},
+	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
+		"実行時間に足す処理時間(for debug)"				},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -452,6 +486,8 @@ SetDefault(void)
 	RecDir = NULL;
 	Log = NULL;
 	interval = 2;
+	MaxTran = 0;
+	Sleep = 0;
 
 	MyHost = "localhost";
 
@@ -469,6 +505,8 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
+	InitMessage();
+
 	signal(SIGHUP,(void *)StopSystem);
 	InitSystem();
 	StartPrograms();

@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1996-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -28,7 +28,5 @@ Boston, MA  02111-1307, USA.
 
 extern	int		BindSocket(char *port, int type);
 extern	int		ConnectSocket(char *port, int type, char *host);
-extern	FILE	*OpenPort(char *url, int port);
-extern	int		InitServerPort(char *port, int back);
 
 #endif

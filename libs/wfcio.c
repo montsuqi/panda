@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -34,16 +34,16 @@ copies.
 #include	"const.h"
 #include	"misc.h"
 
-#include	"value.h"
+#include	"libmondai.h"
 #include	"comm.h"
 #include	"wfc.h"
 #include	"wfcio.h"
 #include	"debug.h"
 #include	"tcp.h"
 
-static	LargeByteString	*iobuff;
+static	LargeByteString	*buff;
 
-extern	FILE	*
+extern	NETFILE	*
 ConnectTermServer(
 	char	*url,
 	char	*term,
@@ -53,21 +53,18 @@ ConnectTermServer(
 {
 	int		fh;
 	Port	*port;
-	FILE	*fp;
+	NETFILE	*fp;
 
 dbgmsg(">ConnectTermServer");
 	port = ParPort(url,PORT_WFC);
 #ifdef	DEBUG
 	printf("host = [%s]\n",port->host);
-	printf("port = [%d]\n",port->number);
+	printf("port = [%s]\n",port->port);
 	fflush(stdout);
 #endif
 	fh = ConnectSocket(port->port,SOCK_STREAM,port->host);
 	DestroyPort(port);
-	if		(  ( fp = fdopen(fh,"w+") )  ==  NULL  ) {
-		close(fh);
-		exit(1);
-	}
+	fp = SocketToNet(fh);
 	if		(  fKeep  ) {
 		SendPacketClass(fp,WFC_TRUE);
 	} else {
@@ -76,15 +73,14 @@ dbgmsg(">ConnectTermServer");
 	SendString(fp,term);
 	SendString(fp,user);
 	SendString(fp,arg);
-	fflush(fp);
-	iobuff = NewLBS();
+	buff = NewLBS();
 dbgmsg("<ConnectTermServer");
 	return	(fp); 
 }
 
 extern	Bool
 SendTermServer(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	*window,
 	char	*widget,
 	char	*event,
@@ -94,9 +90,9 @@ SendTermServer(
 	Bool	rc;
 
 dbgmsg(">SendTermServer");
-	size = SizeValue(value,0,0);
-	LBS_RequireSize(iobuff,size,FALSE);
-	PackValue(iobuff->body,value);
+	size = NativeSizeValue(value,0,0);
+	LBS_ReserveSize(buff,size,FALSE);
+	NativePackValue(buff->body,value,0);
 	SendPacketClass(fp,WFC_PING);
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
 		SendPacketClass(fp,WFC_DATA);
@@ -104,13 +100,12 @@ dbgmsg(">SendTermServer");
 		SendString(fp,widget);
 		SendString(fp,event);
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
-			SendLBS(fp,iobuff);
+			SendLBS(fp,buff);
 			rc = TRUE;
 		} else {
 			/*	window not found	*/
 			rc = FALSE;
 		}
-		fflush(fp);
 	} else {
 		rc = FALSE;
 	}
@@ -120,7 +115,7 @@ dbgmsg("<SendTermServer");
 
 extern	Bool
 RecvTermServerHeader(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	*window,
 	char	*widget,
 	int		*type,
@@ -130,6 +125,7 @@ RecvTermServerHeader(
 	PacketClass	c;
 	int		i;
 
+dbgmsg(">RecvTermServerHeader");
   top: 
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_DATA:
@@ -154,14 +150,17 @@ RecvTermServerHeader(
 		rc = FALSE;
 		break;
 	}
+dbgmsg("<RecvTermServerHeader");
 	return	(rc);
 }
 
 extern	void
 RecvTermServerData(
-	FILE	*fp,
+	NETFILE	*fp,
 	WindowData	*win)
 {
-	RecvLBS(fp,iobuff);
-	UnPackValue(iobuff->body,win->Value);
+dbgmsg(">RecvTermServerData");
+	RecvLBS(fp,buff);
+	NativeUnPackValue(buff->body,win->Value,0);
+dbgmsg("<RecvTermServerData");
 }

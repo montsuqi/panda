@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -36,11 +36,12 @@ copies.
 #include	<unistd.h>
 #include	<glib.h>
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"directory.h"
 #include	"dirs.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	Bool	fLD;
@@ -103,11 +104,11 @@ DumpDB(
 	int		i;
 
 dbgmsg(">DumpDB");
-	printf("\t\tDB group = [%s]\n",db->dbg->name);
+	printf("\t\tDB group = [%s]\n",((DBG_Struct *)db->dbg)->name);
 	DumpKey(db->pkey);
 	if		(  db->pcount  >  0  ) {
 		printf("\t\tpath ------\n");
-		for	( i = 0 ; i < db->pcount ; i ++ ) {
+		for	( i = 1 ; i < db->pcount ; i ++ ) {
 			DumpPath(db->path[i]);
 		}
 	}
@@ -118,8 +119,10 @@ static	void
 DumpRecord(
 	RecordStruct	*db)
 {
+dbgmsg(">DumpRecord");
 	printf("\tname = [%s]\n",db->name);
 	DumpDB(db->opt.db);
+dbgmsg("<DumpRecord");
 }
 
 static	void
@@ -141,7 +144,7 @@ dbgmsg(">DumpLD");
 			   ld->window[i]->module);
 	}
 	printf("\tcDB       = %d\n",ld->cDB);
-	for	( i = 0 ; i < ld->cDB ; i ++ ) {
+	for	( i = 1 ; i < ld->cDB ; i ++ ) {
 		DumpRecord(ld->db[i]);
 	}
 dbgmsg("<DumpLD");
@@ -157,7 +160,7 @@ DumpBD(
 	printf("\tarraysize = %d\n",bd->arraysize);
 	printf("\ttextsize  = %d\n",bd->textsize);
 	printf("\tcDB       = %d\n",bd->cDB);
-	for	( i = 0 ; i < bd->cDB ; i ++ ) {
+	for	( i = 1 ; i < bd->cDB ; i ++ ) {
 		DumpRecord(bd->db[i]);
 	}
 }
@@ -172,7 +175,7 @@ DumpDBD(
 	printf("\tarraysize = %d\n",dbd->arraysize);
 	printf("\ttextsize  = %d\n",dbd->textsize);
 	printf("\tcDB       = %d\n",dbd->cDB);
-	for	( i = 0 ; i < dbd->cDB ; i ++ ) {
+	for	( i = 1 ; i < dbd->cDB ; i ++ ) {
 		DumpRecord(dbd->db[i]);
 	}
 }
@@ -207,7 +210,7 @@ DumpDirectory(void)
 	int		i;
 
 dbgmsg(">DumpDirectory");
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL);
 
 	printf("name     = [%s]\n",ThisEnv->name);
@@ -288,6 +291,8 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
+	InitMessage();
+
 	DumpDirectory();
 
 	return	(0);

@@ -6,7 +6,7 @@ import java.io.*;
 
 public class DB_Server extends AbstractServer {
 
-    public static final String VER = "1.1.1";
+    public static final String VER = "1.1.3";
 
     Dictionary values;
 

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -49,18 +49,13 @@ copies.
 #include	"comms.h"
 #include	"authstub.h"
 #include	"directory.h"
-#include	"dbgroup.h"
-#ifdef	HAVE_POSTGRES
-#include	"Postgres.h"
-#endif
-#ifdef	USE_SHELL
-#include	"Shell.h"
-#endif
+#include	"dblib.h"
 #include	"dbs_main.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
-GLOBAL	DBD_Struct	*ThisDBD;
+static	DBD_Struct	*ThisDBD;
 static	sigset_t	hupset;
 static	char		*PortNumber;
 static	int			Back;
@@ -74,7 +69,7 @@ dbgmsg(">InitSystem");
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
 
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,"","",name);
 	if		(  ( ThisDBD = GetDBD(name) )  ==  NULL  ) {
 		fprintf(stderr,"DBD \"%s\" not found.\n",name);
@@ -108,7 +103,7 @@ dbgmsg("<FinishSession");
 
 static	SessionNode	*
 InitSession(
-	FILE	*fpComm)
+	NETFILE	*fpComm)
 {
 	SessionNode	*ses;
 	char	buff[SIZE_BUFF+1];
@@ -147,7 +142,6 @@ dbgmsg(">InitSession");
 		SendStringDelim(fpComm,"Error: authentication\n");
 		g_warning("reject client(authentication error)");
 	}
-	fflush(fpComm);
 dbgmsg("<InitSession");
 	return	(ses); 
 }
@@ -183,7 +177,7 @@ DecodeName(
 
 static	void
 RecvData(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	GHashTable	*DB_Table)
 {
 	char	buff[SIZE_BUFF+1];
@@ -216,7 +210,7 @@ RecvData(
 
 static	void
 WriteClient(
-	FILE		*fpComm,
+	NETFILE		*fpComm,
 	DBCOMM_CTRL		*ctrl,
 	GHashTable	*DB_Table)
 {
@@ -264,7 +258,7 @@ dbgmsg("<WriteClient");
 
 static	Bool
 MainLoop(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	SessionNode	*ses)
 {
 	DBCOMM_CTRL	ctrl;
@@ -344,7 +338,7 @@ ExecuteServer(void)
 {
 	int		fh
 	,		_fh;
-	FILE	*fp;
+	NETFILE	*fp;
 	int		pid;
 	SessionNode	*ses;
 
@@ -360,17 +354,13 @@ dbgmsg(">ExecuteServer");
 			close(fh);
 		} else
 		if		(  pid  ==  0  )	{	/*	child	*/
-			if		(  ( fp = fdopen(fh,"w+") )  ==  NULL  ) {
-				close(fh);
-				exit(1);
-			}
+			fp = SocketToNet(fh);
 			close(_fh);
 			if		(  ( ses = InitSession(fp) )  !=  NULL  ) {
 				while	(  MainLoop(fp,ses)  );
 				FinishSession(ses);
 			}
-			shutdown(fh, 2);
-			fclose(fp);
+			CloseNet(fp);
 			exit(0);
 		}
 	}
@@ -449,13 +439,15 @@ main(
 	int			rc;
 
 	(void)signal(SIGHUP,(void *)StopProcess);
-
 	SetDefault();
 	fl = GetOption(option,argc,argv);
+	InitMessage();
+
 	ParseURL(&Auth,AuthURL);
 
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
+		InitNET();
 		InitSystem(fl->name);
 		ExecuteServer();
 		StopProcess(0);

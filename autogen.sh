@@ -5,6 +5,9 @@ AUTOHEADER=`which autoheader-2.13 2> /dev/null || echo autoheader`
 AUTOMAKE=`which automake-1.4 2> /dev/null || echo automake`
 AUTOCONF=`which autoconf-2.13 2> /dev/null || echo autoconf`
 
+echo "Running libtoolize..."
+libtoolize --automake --force --copy
+
 echo "Running $ACLOCAL..."
 $ACLOCAL -I m4
 

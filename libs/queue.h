@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -34,7 +34,8 @@ typedef	struct {
 	pthread_mutex_t	qlock;
 	pthread_cond_t	isdata;
 	QueueElement	*head
-	,				*tail;
+	,				*tail
+	,				*curr;
 }	Queue;
 
 #undef	GLOBAL
@@ -47,7 +48,18 @@ typedef	struct {
 extern	Queue	*NewQueue(void);
 extern	void	EnQueue(Queue *que, void *data);
 extern	void	*DeQueue(Queue *que);
+extern	void	*PeekQueue(Queue *que);
 extern	Bool	IsQueue(Queue *que);
 extern	void	FreeQueue(Queue *que);
+extern	void	OpenQueue(Queue *que);
+extern	void	*GetElement(Queue *que);
+extern	void	CloseQueue(Queue *que);
+extern	void	RewindQueue(Queue *que);
+extern	void	*WithdrawQueue(Queue *que);
+extern	void	WaitQueue(Queue *que);
+
+#define	LockQueue(que)		pthread_mutex_lock(&(que)->qlock)
+#define	UnLockQueue(que)	pthread_mutex_unlock(&(que)->qlock)
+#define	ReleaseQueue(que)	pthread_cond_signal(&(que)->isdata)
 
 #endif

@@ -24,14 +24,15 @@
 
 (2) 認証サーバを起動する
 
-	$ cd ./glserver
+	$ cd ./auth
 	$  ./glauth &
 
 	あらかじめ、gluseraddでパスワードファイルは作っておくこと
 
 (3) アプリサーバを起動する
 
-	$ cd ./sample2
+	$ export APS_HANDLER_LOAD_PATH=.:~/panda/aps/.libs/
+	$ cd ./samples/sample2
 	$ ../aps/aps -db ORCA sample
 
 	OpenCOBOLを使う場合には、アプリサーバを起動する前に、
@@ -42,7 +43,7 @@
 
 (4) WFCを起動する
 
-	$ cd ./sample2
+	$ cd ./samples/sample2
 	$ ~/panda/wfc/wfc
 
 	(3) (4)を一気に、
@@ -53,7 +54,8 @@
 
 (5) glserverを起動する
 
-	$ cd ./sample2
+	$ export MONPS_LOAD_PATH=.:~/panda/libs/.libs/
+	$ cd ./samples/sample2
 	$ ~/panda/glserver/glserver
 
 (6) glclientを起動する
@@ -64,7 +66,7 @@
 
 (1) ソース
 
-  デモのソースは、./sample2にあります。このデモでは
+  デモのソースは、./samples/sample2にあります。このデモでは
 
 	SAMPLE1.CBL
 
@@ -75,15 +77,15 @@
 
   を使います。
 
-  COPY句は適当に見て下さい。コンパイルするには、./sample2にて
+  COPY句は適当に見て下さい。コンパイルするには、./samples/sample2にて
 
 	$ make all
 
 と打てばCOPY句も含めて全てのファイルが生成されます。また、
 
-	$ make -f Makefile.OC all
+	$ make -f Makefile.dotCOBOL all
 
-と打てばOpenCOBOLのコードを生成します
+と打てばdotCOBOLのコードを生成します
 
   COBOLプログラムは、EUCコードで保存される必要があります。文字が化ける時
 は文字コードを調べてみます。
@@ -97,6 +99,23 @@
 
   起動パラメータを見るには、各プログラムを-?というパラメータを指定して起
 動して下さい。設定されているパラメータを表示して終了します。
+
+(4) 環境変数
+
+APS_HANDLER_LOAD_PATH
+
+	   APS言語ハンドラのある場所を指定します。言語ハンドラの拡張子は.so
+	です。
+
+MONPS_LOAD_PATH
+
+	  glserverのアプリケーションモジュールのある場所を指定します。wfc
+	にインターフェイスするモジュールはpandaという名称なので、panda.so
+	のある場所を指定します。
+
+COB_LIBRARY_PATH
+
+	  OpenCOBOLで書かれたアプリケーションの存在する場所を指定します。
 
 3. デモの内容
 

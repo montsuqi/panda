@@ -1,3 +1,142 @@
+2003-05-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/widgetOPS.c (RegistValue): 名前の持ち方を変更(V2対応)
+
+	* glclient/callbacks.c: V2プロトコルへの対応を正しくした
+
+2003-05-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/copygen.c (_COBOL): COBOL二次元配列問題対応
+
+2003-05-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (SelectData): apsのピン止め
+
+2003-05-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/protocol.c (RecvValue): 処理するプロトコルバージョンを指定可能にした
+
+2003-05-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/load.c: libltdlを使うのをやめた(Woodyでは正常に動かないため)
+
+2003-05-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.c (ParLD): キャッシュ数の追加
+
+	* aps/apsio.c (CheckCache): spa, linkのキャッシュ機構
+
+2003-05-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c: aps多重化
+
+	* libs/queue.c (PeekQueue): 追加
+
+2003-05-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/apslib.h: handler.h, wfc.hから外向けAPI分を分離
+
+2003-05-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* panda-config.in: libpandadbの外向けAPI用に追加
+
+	* dblib/dblib.h: dbgroup.hから外向けAPI分を分離
+
+	* aps/loader.c: dynamic loader module
+
+	* aps/C.c: C用言語ハンドラ
+
+2003-04-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recgen.rb: 配列の大きさの間違いを修正した
+
+2003-04-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recdefgen.rb: gsub -> tr
+
+2003-04-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/Postgres.c: エラー時のメモリーリーク対策
+
+2003-04-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c: イベントの耐障害性向上
+
+	* glserver/server.c: 通信の耐障害性向上
+
+2003-04-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/applications.c (ApplicationsInit): アプリケーションに初期化
+	パラメータを渡すようにした
+
+2003-04-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/server.c,glserver/glserver.c, glclient/client.c: SSL化
+
+	* libs/net.c: SSLコード追加
+
+2003-04-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in, acconfig.h: SSL化の準備
+
+2003-04-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/net.c: ネットワークコードの改良(SSL化の準備)
+
+2003-04-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/aps_main.c, tools/monitor.c: apsの寿命を設定するパラメータ付加(MaxTran)
+
+2003-03-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: PANDA_CONFIG -> GTK_PANDA_CONFIG
+
+2003-03-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/directory.c (InitDirectory): 引数廃止(不要だった)
+
+	* libs/driver.c (ReadRecordDefine): DDparser.cに移した
+
+2003-03-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c: データベースハンドラのデマンドロード
+
+	* tools/copygen.c : 言語の指定をするようにした
+
+2003-03-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/handler.c (InitiateBatchHandler): 言語ハンドラのデマンドロード
+
+2003-03-04  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/widgetOPS.c: GtkPandaPS support.
+
+2003-03-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Pack/UnPack関係の整理(libmondai絡み)
+
+2003-02-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* ライブラリ周辺の整理をした
+
+	* datalib/を分離した -> libmondai
+
+2003-02-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/Makefile.am: libi18nの廃止(iconvを使うようにした)
+
+	* auth/: 認証関連プログラムを別ディレクトリに
+
+	* libs/applications.c: アプリケーションモジュールのダイナミックリンク
+
+2003-02-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.7-branch吸収
+
+2003-01-30  Noboru Saitou  <noborus@netlab.jp>
+	* tools/recdefgen.rb add support GtkFrame and GtkProgressBar.
+                             fix GtkLabel in column list.
+
 2002-11-22  Keisuke Nishida  <knishida@netlab.jp>
 
 	* dblib/Postgres.c (GetTable, GetValue): Fix memory leak.
@@ -19,6 +158,16 @@
 	* glserver/server.c (CheckCache): ctimeもチェックもするようにした
 
 	* libs/tcp.c : つまらないバグの修正
+
+2002-10-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* datalib/value.c: textの修正、ラージオブジェクト対応
+
+	* datalib/DDlex.c, datalib/DDparser.c : ラージオブジェクト対応
+
+2002-10-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recdefgen.rb: アプリチームの修正を吸収(対応ウィジェットを増やした)
 
 2002-10-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 

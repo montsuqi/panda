@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -35,7 +35,7 @@ copies.
 #include	"types.h"
 #include	"misc.h"
 #include	"dirs.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"BDlex.h"
 #include	"debug.h"
 
@@ -117,7 +117,11 @@ dbgmsg(">DoInclude");
 	back->cLine = BD_cLine;
 	ftop = back;
 	fclose(BD_File);
-	strcpy(buff,BD_Dir);
+	if		(  BD_Dir  !=  NULL  ) {
+		strcpy(buff,BD_Dir);
+	} else {
+		strcpy(buff,".");
+	}
 	p = buff;
 	do {
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
@@ -157,7 +161,7 @@ static	void
 ReadyDirective(void)
 {
 	char	buff[SIZE_BUFF];
-	char	fn[SIZE_NAME+1];
+	char	fn[SIZE_BUFF];
 	char	*s;
 	int		c;
 

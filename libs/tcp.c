@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1996-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -198,38 +198,4 @@ dbgmsg("<ConnectSocket");
 }
 #endif
 
-extern	FILE	*
-OpenPort(
-	char	*url,
-	int		defport)
-{
-	int		fh;
-	Port	*port;
-	FILE	*fp;
-
-	port = ParPort(url,defport);
-	fh = ConnectSocket(port->port,SOCK_STREAM,port->host);
-	DestroyPort(port);
-	if		(  ( fp = fdopen(fh,"w+") )  ==  NULL  ) {
-		close(fh);
-	}
-	return	(fp);
-}
-
-extern	int
-InitServerPort(
-	char	*port,
-	int		back)
-{	int		fh;
-
-dbgmsg(">InitServerPort");
-	fh = BindSocket(port,SOCK_STREAM);
-
-	if		(  listen(fh,back)  <  0  )	{
-		shutdown(fh, 2);
-		Error("INET Domain listen");
-	}
-dbgmsg("<InitServerPort");
-	return	(fh);
-}
 

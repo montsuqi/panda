@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -50,6 +50,7 @@ copies.
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"styleParser.h"
+#include	"net.h"
 #include	"comm.h"
 #include	"protocol.h"
 #include	"widgetOPS.h"
@@ -58,10 +59,18 @@ copies.
 static	GHashTable		*ValueTable;
 
 typedef	struct {
-	char	*name;
+	char	*key;
 	PacketDataType	type;
-	char	*vname;
-	void	*opt;
+	char	*NameSuffix;
+	char	*ValueName;
+	int		optype;
+#define	OPT_TYPE_NULL	0
+#define	OPT_TYPE_FIXED	1
+#define	OPT_TYPE_INT	2
+	union	{
+		Fixed	*xval;
+		int		ival;
+	}	opt;
 }	ValueAttribute;
 
 static	void
@@ -82,27 +91,45 @@ FreeStringList(
 
 static	void
 RegistValue(
+	GtkWidget	*widget,
 	char	*vname,
+	int		optype,
 	void	*opt)
 {
 	ValueAttribute	*p;
+	const	char	*rname;
 
+	rname = glade_get_widget_long_name(widget);
 #ifdef	TRACE
-	printf("Regist = [%s]\n",WidgetName);
+	printf("Regist = [%s:%s]\n",WidgetName,rname);
 #endif
-	if		(  ( p = (ValueAttribute *)g_hash_table_lookup(ValueTable,WidgetName) )
+	if		(  ( p = (ValueAttribute *)g_hash_table_lookup(ValueTable,rname) )
 			   ==  NULL  ) {
 		p = New(ValueAttribute);
-		p->name = StrDup(WidgetName);
-		p->type = DataType;
-		p->vname = StrDup(vname);
-		g_hash_table_insert(ValueTable,p->name,p);
+		p->key = StrDup((char *)rname);
+		p->NameSuffix = StrDup(vname);
+		p->ValueName = StrDup(WidgetName);
+		g_hash_table_insert(ValueTable,p->key,p);
 	} else {
-		p->type = DataType;
-		xfree(p->vname);
-		p->vname = StrDup(vname);
+		if		(  p->optype  ==  OPT_TYPE_FIXED  ) {
+			xfree(p->opt.xval->sval);
+			xfree(p->opt.xval);
+		}
+		xfree(p->NameSuffix);
+		p->NameSuffix = StrDup(vname);
 	}
-	p->opt = opt;
+	p->type = DataType;
+	p->optype = optype;
+	switch	(optype) {
+	  case	OPT_TYPE_FIXED:
+		p->opt.xval = (Fixed *)opt;
+		break;
+	  case	OPT_TYPE_INT:
+		p->opt.ival = (int)opt;
+		break;
+	  default:
+		break;
+	}
 }
 
 static	ValueAttribute	*
@@ -131,10 +158,10 @@ SetState(
 static	Bool
 RecvEntry(
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	char	buff[SIZE_BUFF]
-	,		name[SIZE_NAME+1];
+	,		name[SIZE_BUFF];
 	int		nitem
 	,		i;
 	int		state;
@@ -153,7 +180,7 @@ dbgmsg(">RecvEntry");
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
 				RecvStringData(fp,buff);
-				RegistValue(name,NULL);
+				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_entry_set_text(GTK_ENTRY(widget),buff);
 			}
 		}
@@ -167,7 +194,7 @@ static	Bool
 SendEntry(
 	char	*name,
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	char	*p;
 	ValueAttribute	*v;
@@ -177,7 +204,7 @@ dbgmsg(">SendEntry");
 	p = (char *)gtk_entry_get_text(GTK_ENTRY(widget));
 	SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
-	sprintf(iname,"%s.%s",name,v->vname);
+	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 	SendString(fp,iname);
 	SendStringData(fp,v->type,(char *)p);
 dbgmsg("<SendEntry");
@@ -186,12 +213,50 @@ dbgmsg("<SendEntry");
 
 #ifdef	USE_PANDA
 static	Bool
-RecvNumberEntry(
+RecvPS(
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	char	buff[SIZE_BUFF]
-	,		name[SIZE_NAME+1];
+	,		name[SIZE_BUFF];
+	int		nitem
+	,		i;
+
+dbgmsg(">RecvPS");
+	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			RecvString(fp,name);
+			RecvStringData(fp,buff);
+			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
+			gtk_panda_ps_load(GTK_PANDA_PS(widget),buff);
+		}
+	}
+dbgmsg("<RecvPS");
+	return	(TRUE);
+}
+
+
+static	Bool
+SendPS(
+	char	*name,
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+dbgmsg(">SendPS");
+dbgmsg("<SendPS");
+	return	(TRUE);
+}
+#endif
+
+#ifdef	USE_PANDA
+static	Bool
+RecvNumberEntry(
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+	char	buff[SIZE_BUFF]
+	,		name[SIZE_BUFF];
 	int		nitem
 	,		i;
 	int		state;
@@ -211,12 +276,13 @@ dbgmsg(">RecvNumberEntry");
 				RecvStringData(fp,buff);
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
-				if		(  ( xval = (Fixed *)GetValue(name) )  !=  NULL  ) {
+				sprintf(buff,"%s.%s",WidgetName,name); 
+				if		(  ( xval = (Fixed *)GetValue(buff) )  !=  NULL  ) {
 					xfree(xval->sval);
 					xfree(xval);
 				}
 				RecvFixedData(fp,&xval);
-				RegistValue(name,xval);
+				RegistValue(widget,name,OPT_TYPE_FIXED,xval);
 				value = FixedToNumeric(xval);
 				gtk_number_entry_set_value(GTK_NUMBER_ENTRY(widget),value);
 				NumericFree(value);
@@ -232,7 +298,7 @@ static	Bool
 SendNumberEntry(
 	char	*name,
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	Numeric	value;
 	ValueAttribute	*v;
@@ -243,9 +309,10 @@ dbgmsg(">SendNumberEntry");
 	value = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
 	SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
-	sprintf(iname,"%s.%s",name,v->vname);
+	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 	SendString(fp,iname);
-	xval = (Fixed *)v->opt;
+	xval = v->opt.xval;
+	xfree(xval->sval);
 	xval->sval = NumericToFixed(value,xval->flen,xval->slen);
 	NumericFree(value);
 	SendFixedData(fp,v->type,xval);
@@ -257,10 +324,10 @@ dbgmsg("<SendNumberEntry");
 static	Bool
 RecvLabel(
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	char	buff[SIZE_BUFF]
-	,		name[SIZE_NAME+1];
+	,		name[SIZE_BUFF];
 	int		nitem
 	,		i;
 
@@ -274,7 +341,7 @@ dbgmsg(">RecvLabel");
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
 				RecvStringData(fp,buff);
-				RegistValue(name,NULL);
+				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_label_set(GTK_LABEL(widget),buff);
 			}
 		}
@@ -287,7 +354,7 @@ static	Bool
 SendText(
 	char	*name,
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	char	*p;
 	ValueAttribute	*v;
@@ -297,7 +364,7 @@ dbgmsg(">SendText");
 	p = gtk_editable_get_chars(GTK_EDITABLE(widget),0,-1); 
 	SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
-	sprintf(iname,"%s.%s",name,v->vname);
+	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 	SendString(fp,iname);
 	SendStringData(fp,v->type,(char *)p);
 	g_free(p);
@@ -308,10 +375,10 @@ dbgmsg("<SendText");
 static	Bool
 RecvText(
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	char	buff[SIZE_BUFF]
-	,		name[SIZE_NAME+1];
+	,		name[SIZE_BUFF];
 	int		nitem
 	,		i;
 	int		state;
@@ -330,7 +397,7 @@ dbgmsg(">RecvText");
 				gtk_widget_set_style(widget,GetStyle(buff));
 			} else {
 				RecvStringData(fp,buff);
-				RegistValue(name,NULL);
+				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_text_freeze(GTK_TEXT(widget));
 				gtk_text_set_point(GTK_TEXT(widget), 0);
 				gtk_text_forward_delete(GTK_TEXT(widget),
@@ -348,7 +415,7 @@ static	Bool
 SendButton(
 	char	*name,
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	Bool	fActive;
 	ValueAttribute	*v;
@@ -358,7 +425,7 @@ dbgmsg(">SendButton");
 	fActive = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 	SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
-	sprintf(iname,"%s.%s",name,v->vname);
+	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 	SendString(fp,iname);
 	SendBoolData(fp,v->type,fActive);
 dbgmsg("<SendButton");
@@ -392,10 +459,10 @@ SetStyle(
 static	Bool
 RecvButton(
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	Bool	fActive;
-	char	name[SIZE_NAME+1]
+	char	name[SIZE_BUFF]
 	,		buff[SIZE_BUFF];
 	int		nitem
 	,		i;
@@ -419,7 +486,7 @@ dbgmsg(">RecvButton");
 				SetLabel(widget,buff);
 			} else {
 				RecvBoolData(fp,&fActive);
-				RegistValue(name,NULL);
+				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), fActive);
 			}
 		}
@@ -431,9 +498,9 @@ dbgmsg("<RecvButton");
 static	Bool
 RecvCombo(
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
-	char	name[SIZE_NAME+1]
+	char	name[SIZE_BUFF]
 	,		buff[SIZE_BUFF]
 	,		*longname;
 	int		count
@@ -499,9 +566,9 @@ dbgmsg("<RecvCombo");
 static	Bool
 RecvPandaCombo(
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
-	char	name[SIZE_NAME+1]
+	char	name[SIZE_BUFF]
 	,		buff[SIZE_BUFF]
 	,		*longname;
 	int		count
@@ -566,7 +633,7 @@ static	Bool
 SendPandaCList(
 	char	*name,
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	GList			*children;
 	GtkStateType	state;
@@ -581,7 +648,7 @@ dbgmsg(">SendCList");
 		  children  !=  NULL ; children = children->next , i ++ ) {
 		if		(  ( clist_row = GTK_PANDA_CLIST_ROW(children) )  !=  NULL  ) {
 			state = clist_row->state;
-			sprintf(iname,"%s.%s[%d]",name,v->vname,i + (int)v->opt);
+			sprintf(iname,"%s.%s[%d]",v->ValueName,v->NameSuffix,i + v->opt.ival);
 			SendPacketClass(fp,GL_ScreenData);
 			SendString(fp,iname);
 			SendDataType(fp,GL_TYPE_BOOL);
@@ -599,11 +666,11 @@ dbgmsg("<SendPandaCList");
 static	Bool
 RecvPandaCList(
 	GtkWidget	*widget,
-	FILE		*fp)
+	NETFILE		*fp)
 {
-	char	name[SIZE_NAME+1]
-	,		iname[SIZE_NAME+1]
-	,		label[SIZE_BUFF+1]
+	char	name[SIZE_BUFF]
+	,		iname[SIZE_BUFF]
+	,		label[SIZE_BUFF]
 	,		buff[SIZE_BUFF]
 	,		*longname;
 	int		count
@@ -686,7 +753,7 @@ dbgmsg(">RecvPandaCList");
 			gtkpanda_clist_thaw(GTK_PANDA_CLIST(widget));
 		} else {
 			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			RegistValue(name,(void*)from);
+			RegistValue(widget,name,OPT_TYPE_INT,(void*)from);
 			num = RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
@@ -714,7 +781,7 @@ static	Bool
 SendCList(
 	char	*name,
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	GList			*children;
 	GtkStateType	state;
@@ -729,7 +796,7 @@ dbgmsg(">SendCList");
 		  children  !=  NULL ; children = children->next , i ++ ) {
 		if		(  ( clist_row = GTK_CLIST_ROW(children) )  !=  NULL  ) {
 			state = clist_row->state;
-			sprintf(iname,"%s.%s[%d]",name,v->vname,i + (int)v->opt);
+			sprintf(iname,"%s.%s[%d]",v->ValueName,v->NameSuffix,i + v->opt.ival);
 			SendPacketClass(fp,GL_ScreenData);
 			SendString(fp,iname);
 			SendDataType(fp,GL_TYPE_BOOL);
@@ -747,11 +814,11 @@ dbgmsg("<SendCList");
 static	Bool
 RecvCList(
 	GtkWidget	*widget,
-	FILE		*fp)
+	NETFILE		*fp)
 {
-	char	name[SIZE_NAME+1]
-	,		iname[SIZE_NAME+1]
-	,		label[SIZE_BUFF+1]
+	char	name[SIZE_BUFF]
+	,		iname[SIZE_BUFF]
+	,		label[SIZE_BUFF]
 	,		buff[SIZE_BUFF]
 	,		*longname;
 	int		count
@@ -834,7 +901,7 @@ dbgmsg(">RecvCList");
 			gtk_clist_thaw(GTK_CLIST(widget));
 		} else {
 			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			RegistValue(name,(void*)from);
+			RegistValue(widget,name,OPT_TYPE_INT,(void*)from);
 			num = RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
@@ -862,7 +929,7 @@ static	Bool
 SendList(
 	char	*name,
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	GtkWidget		*child;
 	GList			*children;
@@ -877,7 +944,7 @@ dbgmsg(">SendList");
 		  children  !=  NULL ; children = children->next , i ++ ) {
 		child = children->data;
 		state = GTK_WIDGET_STATE(child);
-		sprintf(iname,"%s.%s[%d]",name,v->vname,i + (int)v->opt);
+		sprintf(iname,"%s.%s[%d]",v->ValueName,v->NameSuffix,i + v->opt.ival);
 		SendPacketClass(fp,GL_ScreenData);
 		SendString(fp,iname);
 		SendDataType(fp,GL_TYPE_BOOL);
@@ -894,9 +961,9 @@ dbgmsg("<SendList");
 static	Bool
 RecvList(
 	GtkWidget	*widget,
-	FILE	*fp)
+	NETFILE	*fp)
 {
-	char	name[SIZE_NAME+1]
+	char	name[SIZE_BUFF]
 	,		buff[SIZE_BUFF]
 	,		*longname;
 	int		count
@@ -952,7 +1019,7 @@ dbgmsg(">RecvList");
 			}
 		} else {
 			DataType = RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			RegistValue(name,(void *)from);
+			RegistValue(widget,name,OPT_TYPE_INT,(void *)from);
 			num = RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
@@ -985,30 +1052,32 @@ static	Bool
 SendCalendar(
 	char		*name,
 	GtkWidget	*calendar,
-	FILE		*fp)
+	NETFILE		*fp)
 {
 	char	iname[SIZE_BUFF];
 	int		year
 	,		month
 	,		day;
+	ValueAttribute	*v;
 
 dbgmsg(">SendCaleandar");
 	gtk_calendar_get_date(GTK_CALENDAR(calendar),&year,&month,&day);
+	v = GetValue(name);
 
 	SendPacketClass(fp,GL_ScreenData);
-	sprintf(iname,"%s.year",name);
+	sprintf(iname,"%s.year",v->ValueName);
 	SendString(fp,(char *)iname);
 	SendDataType(fp,GL_TYPE_INT);
 	SendInt(fp,year);
 
 	SendPacketClass(fp,GL_ScreenData);
-	sprintf(iname,"%s.month",name);
+	sprintf(iname,"%s.month",v->ValueName);
 	SendString(fp,(char *)iname);
 	SendDataType(fp,GL_TYPE_INT);
 	SendInt(fp,month+1);
 
 	SendPacketClass(fp,GL_ScreenData);
-	sprintf(iname,"%s.day",name);
+	sprintf(iname,"%s.day",v->ValueName);
 	SendString(fp,(char *)iname);
 	SendDataType(fp,GL_TYPE_INT);
 	SendInt(fp,day);
@@ -1019,9 +1088,9 @@ dbgmsg("<SendCaleandar");
 static	Bool
 RecvCalendar(
 	GtkWidget	*widget,
-	FILE		*fp)
+	NETFILE		*fp)
 {
-	char	name[SIZE_NAME+1]
+	char	name[SIZE_BUFF]
 	,		buff[SIZE_BUFF];
 	int		nitem
 	,		i;
@@ -1032,7 +1101,7 @@ RecvCalendar(
 
 dbgmsg(">RecvCaleandar");
 	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-	RegistValue("",NULL);
+	RegistValue(widget,"",OPT_TYPE_NULL,NULL);
 	nitem = RecvInt(fp);
 	for	( i = 0 ; i < nitem ; i ++ ) {
 		RecvString(fp,name);
@@ -1056,8 +1125,10 @@ dbgmsg(">RecvCaleandar");
 			/*	fatal error	*/
 		}
 	}
-	gtk_calendar_select_month(GTK_CALENDAR(widget),month-1,year);
-	gtk_calendar_select_day(GTK_CALENDAR(widget),day);
+	if		(  year  >  0  ) {
+		gtk_calendar_select_month(GTK_CALENDAR(widget),month-1,year);
+		gtk_calendar_select_day(GTK_CALENDAR(widget),day);
+	}
 dbgmsg("<RecvCaleandar");
 	return	(TRUE); 
 }
@@ -1066,7 +1137,7 @@ static	Bool
 SendNotebook(
 	char		*name,
 	GtkWidget	*notebook,
-	FILE		*fp)
+	NETFILE		*fp)
 {
 	char	iname[SIZE_BUFF];
 	ValueAttribute	*v;
@@ -1077,7 +1148,7 @@ dbgmsg(">SendNotebook");
 	page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
 
 	SendPacketClass(fp,GL_ScreenData);
-	sprintf(iname,"%s.%s",name,v->vname);
+	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 #ifdef	TRACE
 	printf("iname = [%s] value = %d\n",iname,page);
 #endif
@@ -1090,9 +1161,9 @@ dbgmsg("<SendNotebook");
 static	Bool
 RecvNotebook(
 	GtkWidget	*widget,
-	FILE		*fp)
+	NETFILE		*fp)
 {
-	char	name[SIZE_NAME+1]
+	char	name[SIZE_BUFF]
 	,		buff[SIZE_BUFF];
 	int		nitem
 	,		i;
@@ -1116,7 +1187,7 @@ dbgmsg(">RecvNotebook");
 		} else
 		if		(  !stricmp(name,"pageno")  ) {
 			RecvIntegerData(fp,&page);
-			RegistValue(name,NULL);
+			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 		} else {
 			sprintf(longname,".%s",name);
 			RecvValue(fp,longname + strlen(name) + 1);
@@ -1131,7 +1202,7 @@ static	Bool
 SendProgressBar(
 	char		*name,
 	GtkWidget	*progress,
-	FILE		*fp)
+	NETFILE		*fp)
 {
 	char	iname[SIZE_BUFF];
 	ValueAttribute	*v;
@@ -1142,7 +1213,7 @@ dbgmsg(">SendProgress");
 	value = gtk_progress_get_value(GTK_PROGRESS(progress));
 
 	SendPacketClass(fp,GL_ScreenData);
-	sprintf(iname,"%s.%s",name,v->vname);
+	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 #ifdef	TRACE
 	printf("iname = [%s] value = %d\n",iname,value);
 #endif
@@ -1155,9 +1226,9 @@ dbgmsg("<SendProgress");
 static	Bool
 RecvProgressBar(
 	GtkWidget	*widget,
-	FILE		*fp)
+	NETFILE		*fp)
 {
-	char	name[SIZE_NAME+1]
+	char	name[SIZE_BUFF]
 	,		buff[SIZE_BUFF];
 	int		nitem
 	,		i;
@@ -1181,7 +1252,7 @@ dbgmsg(">RecvProgress");
 		} else
 		if		(  !stricmp(name,"value")  ) {
 			RecvIntegerData(fp,&value);
-			RegistValue(name,NULL);
+			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 			gtk_progress_set_value(GTK_PROGRESS(widget),value);
 		}
 	}
@@ -1196,21 +1267,12 @@ InitWidgetOperations(void)
 
 	AddClass(GTK_TYPE_ENTRY,RecvEntry,SendEntry);
 #ifdef	USE_PANDA
-#ifdef	GTK_TYPE_NUMBER_ENTRY
 	AddClass(GTK_TYPE_NUMBER_ENTRY,RecvNumberEntry,SendNumberEntry);
-#endif
-#ifdef	GTK_PANDA_TYPE_COMBO
 	AddClass(GTK_PANDA_TYPE_COMBO,RecvPandaCombo,NULL);
-#endif
-#ifdef	GTK_PANDA_TYPE_CLIST
 	AddClass(GTK_PANDA_TYPE_CLIST,RecvPandaCList,SendPandaCList);
-#endif
-#ifdef	GTK_PANDA_TYPE_ENTRY
 	AddClass(GTK_PANDA_TYPE_ENTRY,RecvEntry,SendEntry);
-#endif
-#ifdef	GTK_PANDA_TYPE_TEXT
 	AddClass(GTK_PANDA_TYPE_TEXT,RecvText,SendText);
-#endif
+	AddClass(GTK_PANDA_TYPE_PS,RecvPS,SendPS);
 #endif
 	AddClass(GTK_TYPE_TEXT,RecvText,SendText);
 	AddClass(GTK_TYPE_LABEL,RecvLabel,NULL);

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -23,7 +23,7 @@ copies.
 #define	_INC_HTC_PARSER_H
 #include	<glib.h>
 #include	"const.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"mon.h"
 
 extern	void		HTCParserInit(void);

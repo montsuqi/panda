@@ -59,16 +59,21 @@
 #undef HAVE_CATGETS
 #undef HAVE_GETTEXT
 
+
+#undef	HAVE_CRYPT_H
 /*	*/
-#undef USE_PANDA
-#undef USE_PTY
-#undef USE_IPv6
-#undef OKI
-#undef DOTCOBOL_COMMAND
-#undef HAVE_DOTCOBOL
-#undef HAVE_OPENCOBOL
-#undef HAVE_POSTGRES
-#undef USE_SHELL
+#undef	USE_PANDA
+#undef	USE_PTY
+#undef	USE_IPv6
+#undef	USE_SSL
+#undef	OKI
+#undef	HAVE_DOTCOBOL
+#undef	HAVE_OPENCOBOL
+#undef	HAVE_POSTGRES
+#undef	USE_SHELL
+#undef	_POSIX_C_SOURCE
+#undef	_XOPEN_SOURCE
+#undef	_XOPEN_SOURCE_EXTENDED
 
 /* Define if you have the __argz_count function.  */
 #undef HAVE___ARGZ_COUNT

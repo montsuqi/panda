@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -40,7 +40,7 @@ copies.
 #include	"types.h"
 #include	"misc.h"
 
-#include	"value.h"
+#include	"libmondai.h"
 #include	"queue.h"
 #include	"wfc.h"
 #include	"mqthread.h"
@@ -66,7 +66,7 @@ dbgmsg(">CoreThread");
 	do {
 		data = (SessionData *)DeQueue(CoreQueue);
 		dbgmsg("de queue");
-		if		(  ( mq = g_hash_table_lookup(MQ_Hash,data->aps->ld->name) )
+		if		(  ( mq = g_hash_table_lookup(MQ_Hash,data->ld->info->name) )
 				   !=  NULL  ) {
 			MessageEnqueue(mq,data);
 		}
@@ -79,6 +79,8 @@ extern	void
 StartCoreThread(void)
 {
 	static	pthread_t	core;
+dbgmsg(">StartCoreThread");
 	pthread_create(&core,NULL,(void *(*)(void *))CoreThread,NULL);
+dbgmsg("<StartCoreThread");
 }
 

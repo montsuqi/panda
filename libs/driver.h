@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -24,7 +24,8 @@ copies.
 
 #include	"const.h"
 #include	"enum.h"
-#include	"value.h"
+#include	"libmondai.h"
+#include	"glterm.h"
 
 typedef	struct {
 	char		window[SIZE_NAME+1];
@@ -37,6 +38,13 @@ typedef	struct {
 	int			status;
 	GHashTable	*Windows;
 }	ScreenData;
+
+typedef	struct {
+	char		*name;
+	Bool		fNew;
+	int			PutType;
+	ValueStruct	*Value;
+}	WindowData;
 
 extern	ValueStruct	*ReadRecordDefine(char *name);
 extern	WindowData	*SetWindowName(char *name);

@@ -82,7 +82,11 @@
                UPON    CONSOLE.
       *
            PERFORM 010-INIT.
+           DISPLAY    '*** INIT'
+               UPON    CONSOLE.
            PERFORM 100-DUMP.
+           DISPLAY    '*** DUMP'
+               UPON    CONSOLE.
            PERFORM 200-INSERT.
            PERFORM 090-FINISH.
       *
@@ -146,12 +150,16 @@
            PERFORM 800-DBINSERT-ADRS.
       **************************************************************************
        800-DBOPEN              SECTION.
+           DISPLAY    '*** DBOPEN'
+               UPON    CONSOLE.
            MOVE    LOW-VALUE   TO  MCP-PATH.
            MOVE   'DBOPEN'     TO  MCP-FUNC.
       *
            CALL   'MCPSUB'     USING
                 MCPAREA
                 METADB.
+           DISPLAY    '*** DBOPEN END'
+               UPON    CONSOLE.
       **************************************************************************
        800-DBSTART             SECTION.
            MOVE    LOW-VALUE   TO  MCP-PATH.

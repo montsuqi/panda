@@ -10,6 +10,7 @@ bind	"list"		"OpenCOBOL"	"SAMPLE1";
 
 arraysize	20;
 textsize	200;
+cache		5;
 
 home	"=/sample2";
 

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -43,13 +43,13 @@ copies.
 #include	"misc.h"
 
 #include	"dirs.h"
-#include	"cobolvalue.h"
 #include	"const.h"
 #include	"enum.h"
-#include	"dbgroup.h"
+#include	"dblib.h"
 #include	"directory.h"
 #include	"handler.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 #include	"directory.h"
@@ -63,7 +63,7 @@ InitData(
 	char	*name)
 {
 dbgmsg(">InitData");
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,"",name,"");
 dbgmsg("<InitData");
 }
@@ -78,8 +78,9 @@ dbgmsg(">InitSystem");
 		exit(1);
 	}
 	ThisLD = NULL;
-	InitiateHandler();
+	InitiateBatchHandler();
 	ThisDB = ThisBD->db;
+	TextSize = ThisBD->textsize;
 	if		(  ThisBD->cDB  >  0  ) {
 		ReadyDB();
 	}
@@ -165,11 +166,11 @@ main(
 	FILE_LIST	*fl;
 	int		rc;
 
-	(void)signal(SIGHUP,(void *)StopProcess);
-
 	SetDefault();
 	fl = GetOption(option,argc,argv);
+	InitMessage();
 
+	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(  BD_Name  ==  NULL  ) {
 		fprintf(stderr,"BD名が指定されていません\n");
 		exit(1);

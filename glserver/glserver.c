@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -20,13 +20,17 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
+#define	DEBUG
+#define	TRACE
+*/
+
 #define	MAIN
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 #include	<stdio.h>
 #include	<stdlib.h>
-#include	<termio.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -43,8 +47,8 @@ copies.
 #include	"glserver.h"
 #include	"dirs.h"
 #include	"DDparser.h"
-#include	"pandaIO.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	char		*AuthURL;
@@ -59,9 +63,19 @@ static	ARG_TABLE	option[] = {
 		"データ定義格納ディレクトリ"	 				},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		"認証サーバ"			 						},
-#if	1
-	{	"panda",	STRING,		TRUE,	(void*)&PandaPort,
-		"ワークフローコントローラ"						},
+#ifdef	USE_SSL
+	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
+		"SSLを使う"				 						},
+	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
+		"鍵ファイル名(pem)"		 						},
+	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
+		"証明書ファイル名(pem)"	 						},
+	{	"verifypeer",BOOLEAN,	TRUE,	(void*)&fVerify,
+		"クライアント証明書の検証を行う"				},
+	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
+		"CA証明書へのパス"								},
+	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
+		"CA証明書ファイル"								},
 #endif
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -74,7 +88,14 @@ SetDefault(void)
 	ScreenDir = ".";
 	RecordDir = ".";
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
-	PandaPort = "localhost:9000";			/*	PORT_WFC	*/
+#ifdef	USE_SSL
+	fSsl = FALSE;
+	KeyFile = NULL;
+	CertFile = NULL;
+	fVerify = FALSE;
+	CA_Path = NULL;
+	CA_File = NULL;
+#endif	
 }
 
 static	void
@@ -91,15 +112,12 @@ main(
 	char	**argv)
 {
 	(void)signal(SIGPIPE,(void *)StopProcess);
-
 	SetDefault();
 	(void)GetOption(option,argc,argv);
-
-#ifdef	DEBUG
-#endif
+	InitMessage();
 
 	ParseURL(&Auth,AuthURL);
-	InitSystem();
+	InitSystem(argc,argv);
 	ExecuteServer();
 	return	(0);
 }

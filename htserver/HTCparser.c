@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -37,7 +37,7 @@ copies.
 #include	<unistd.h>
 #include	<sys/stat.h>
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"HTCparser.h"
 #include	"HTClex.h"
@@ -217,6 +217,7 @@ dbgmsg(">HTCParser");
 		ret = New(HTCInfo);
 		ret->code = NewLBS();
 		ret->Trans = NewNameHash();
+		ret->Radio = NewNameHash();
 		LBS_EmitStart(ret->code);
 		ParHTC(ret);
 		fclose(HTC_File);

@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -35,10 +35,6 @@ copies.
 #define	SCREEN_JOIN_WINDOW			5
 #define	SCREEN_END_SESSION			6
 
-#ifndef	PacketClass
-#define	PacketClass		unsigned char
-#endif
-
 #define	GL_Null			(PacketClass)0x00
 #define	GL_Connect		(PacketClass)0x01
 #define	GL_QueryScreen	(PacketClass)0x02
@@ -50,6 +46,7 @@ copies.
 #define	GL_WindowName	(PacketClass)0x08
 #define	GL_FocusName	(PacketClass)0x09
 #define	GL_Auth			(PacketClass)0x0A
+#define	GL_Name			(PacketClass)0x0B
 
 #define	GL_OK			(PacketClass)0x80
 #define	GL_END			(PacketClass)0x81

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -36,7 +36,7 @@ copies.
 GLOBAL	DI_Struct	*ThisEnv;
 #undef	GLOBAL
 
-extern	void		InitDirectory(Bool);
+extern	void		InitDirectory(void);
 extern	void		SetUpDirectory(char *name, char *ld, char *bd, char *db);
 extern	LD_Struct	*SearchWindowToLD(char *wname);
 extern	LD_Struct	*GetLD(char *name);

@@ -1,24 +1,33 @@
 INCLUDES	=		\
-	-I$(top_srcdir)	\
+	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
-	-I$(top_srcdir)/datalib	\
 	-I$(top_srcdir)/libs	\
-	$(THE_FLAGS)			\
+	$(SSL_CFLAGS)			\
 	$(XML_CFLAGS)			\
 	$(GLADE_CFLAGS)			\
-	$(PANDA_CFLAGS)
+	$(FIXED_CFLAGS)			\
+	$(MONDAI_CFLAGS)		\
+	$(GTK_PANDA_CFLAGS)
 
 bin_PROGRAMS = glclient
 
-glclient_LDADD	= 	\
-	$(GLADE_LIBS) $(PANDA_LIBS)	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm	-lpthread \
-	-L$(top_srcdir)/libs -lpandac	\
-	$(top_srcdir)/datalib/libpandadata.la
+glclient_LDADD	= 						\
+	-lm									\
+	$(GLIB_LIBS)						\
+	$(GLADE_LIBS)						\
+	$(SSL_LIBS)							\
+	$(GTK_PANDA_LIBS)					\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
+glclient_DEPENDENCIES	=				\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
 
 
-glclient_SOURCES	=	\
-	client.c 	\
+glclient_SOURCES	=		\
+	client.c 				\
 	protocol.c	protocol.h	\
 	callbacks.c	callbacks.h	\
 	widgetOPS.c	widgetOPS.h	\

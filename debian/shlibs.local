@@ -1,4 +1,0 @@
-libesd 0 libesd0 | libesd-alsa0
-libpanda 0 panda-server
-libpq 2 libpgsql2.1
-MCPSUP so panda-server

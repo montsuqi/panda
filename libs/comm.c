@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -39,30 +39,54 @@ copies.
 #include	"misc.h"
 #include	"value.h"
 #include	"LBSfunc.h"
-#include	"glterm.h"
 #define	_COMM
 #include	"comm.h"
 #include	"debug.h"
 
+static	int
+nputc(
+	int		c,
+	NETFILE	*fp)
+{
+	char	ch;
+
+	ch = c;
+	return	(Send(fp,&ch,1));
+}
+
+static	int
+ngetc(
+	NETFILE	*fp)
+{
+	char	ch;
+	int		ret;
+
+	if		(  Recv(fp,&ch,1)  >=  0  ) {
+		ret = ch;
+	} else {
+		ret = -1;
+	}
+	return	(ret);
+}
+
 extern	void
 SendPacketClass(
-	FILE	*fp,
+	NETFILE	*fp,
 	PacketClass	c)
 {
 #ifdef	DEBUG
 	printf("SendPacketClass = %X\n",c);
 #endif
-	fputc(c,fp);
-	fflush(fp);
+	nputc(c,fp);
 }
 
 extern	PacketClass
 RecvPacketClass(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	PacketClass	c;
 
-	c = fgetc(fp);
+	c = ngetc(fp);
 #ifdef	DEBUG
 	printf("RecvPacketClass = %X\n",c);
 #endif
@@ -71,22 +95,22 @@ RecvPacketClass(
 
 extern	void
 SendDataType(
-	FILE	*fp,
+	NETFILE	*fp,
 	PacketClass	c)
 {
 #ifdef	DEBUG
 	printf("SendDataType = %X\n",c);
 #endif
-	fputc(c,fp);
+	nputc(c,fp);
 }
 
 extern	PacketDataType
 RecvDataType(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	PacketClass	c;
 
-	c = fgetc(fp);
+	c = ngetc(fp);
 #ifdef	DEBUG
 	printf("RecvDataType = %X\n",c);
 #endif
@@ -95,35 +119,35 @@ RecvDataType(
 
 extern	void
 SendPacketDataType(
-	FILE	*fp,
+	NETFILE	*fp,
 	PacketDataType	t)
 {
-	fputc(t,fp);
+	nputc(t,fp);
 }
 
 extern	PacketDataType
 RecvPacketDataType(
-	FILE	*fp)
+	NETFILE	*fp)
 {
-	return	(fgetc(fp));
+	return	(ngetc(fp));
 }
 
 extern	void
 SendLength(
-	FILE	*fp,
+	NETFILE	*fp,
 	size_t	size)
 {
-	fwrite(&size,sizeof(size),1,fp);
+	Send(fp,&size,sizeof(size));
 }
 
 extern	size_t
 RecvLength(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	size_t	size;
 
 dbgmsg(">RecvLength");
-	fread(&size,sizeof(size),1,fp);
+	Recv(fp,&size,sizeof(size));
 #ifdef	DEBUG
 	printf("[%d]\n",size);
 #endif
@@ -133,7 +157,7 @@ dbgmsg("<RecvLength");
 
 extern	void
 SendString(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	*str)
 {
 	size_t	size;
@@ -149,14 +173,14 @@ dbgmsg(">SendString");
 	}
 	SendLength(fp,size);
 	if		(  size  >  0  ) {
-		fwrite(str,1,size,fp);
+		Send(fp,str,size);
 	}
 dbgmsg("<SendString");
 }
 
 extern	void
 SendFixedString(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	*str,
 	size_t	size)
 {
@@ -166,45 +190,45 @@ dbgmsg(">SendFixedString");
 #endif
 	SendLength(fp,size);
 	if		(  size  >  0  ) {
-		fwrite(str,1,size,fp);
+		Send(fp,str,size);
 	}
 dbgmsg("<SendFixedString");
 }
 
 extern	void
 SendLBS(
-	FILE	*fp,
+	NETFILE	*fp,
 	LargeByteString	*lbs)
 {
 	SendLength(fp,lbs->ptr);
 	if		(  lbs->ptr  >  0  ) {
-		fwrite(lbs->body,1,lbs->ptr,fp);
+		Send(fp,lbs->body,lbs->ptr);
 	}
 }
 
 extern	void
 RecvLBS(
-	FILE	*fp,
+	NETFILE	*fp,
 	LargeByteString	*lbs)
 {
 	size_t	size;
 
 	size = RecvLength(fp);
-	LBS_RequireSize(lbs,size,FALSE);
+	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
-		fread(lbs->body,1,size,fp);
+		Recv(fp,lbs->body,size);
 	}
 	lbs->ptr = size;
 }	
 
 extern	void
 RecvStringBody(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	*str,
 	size_t	size)
 {
 dbgmsg(">RecvStringBody");
-	fread(str,1,size,fp);
+	Recv(fp,str,size);
 	str[size] = 0;
 #ifdef	DEBUG
 	printf("[%s]\n",str);
@@ -214,7 +238,7 @@ dbgmsg("<RecvStringBody");
 
 extern	void
 RecvString(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	*str)
 {
 	size_t	size;
@@ -227,48 +251,48 @@ dbgmsg("<RecvString");
 
 extern	long
 RecvLong(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	long	data;
 
-	fread(&data,sizeof(data),1,fp);
+	Recv(fp,&data,sizeof(data));
 	return	(data);
 }
 
 extern	void
 SendLong(
-	FILE	*fp,
+	NETFILE	*fp,
 	long	data)
 {
-	fwrite(&data,sizeof(data),1,fp);
+	Send(fp,&data,sizeof(data));
 }
 
 extern	int
 RecvInt(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	int		data;
 
-	fread(&data,sizeof(data),1,fp);
+	Recv(fp,&data,sizeof(data));
 	return	(data);
 }
 
 extern	void
 SendInt(
-	FILE	*fp,
+	NETFILE	*fp,
 	int		data)
 {
-	fwrite(&data,sizeof(data),1,fp);
+	Send(fp,&data,sizeof(data));
 }
 
 extern	int
 RecvChar(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	char	data;
 	int		ret;
 
-	if		(  fread(&data,sizeof(data),1,fp)  ==  sizeof(data)  ) {
+	if		(  Recv(fp,&data,sizeof(data))  ==  sizeof(data)  ) {
 		ret = data;
 	} else {
 		ret = -1;
@@ -278,54 +302,54 @@ RecvChar(
 
 extern	void
 SendChar(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	data)
 {
-	fwrite(&data,sizeof(data),1,fp);
+	Send(fp,&data,sizeof(data));
 }
 
 extern	double
 RecvFloat(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	double	data;
 
-	fread(&data,sizeof(data),1,fp);
+	Recv(fp,&data,sizeof(data));
 	return	(data);
 }
 
 extern	void
 SendFloat(
-	FILE	*fp,
+	NETFILE	*fp,
 	double	data)
 {
-	fwrite(&data,sizeof(data),1,fp);
+	Send(fp,&data,sizeof(data));
 }
 
 extern	Bool
 RecvBool(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	char	buf[1];
 
-	fread(buf,1,1,fp);
+	Recv(fp,buf,1);
 	return	((buf[0] == 'T' ) ? TRUE : FALSE);
 }
 
 extern	void
 SendBool(
-	FILE	*fp,
+	NETFILE	*fp,
 	Bool	data)
 {
 	char	buf[1];
 
 	buf[0] = data ? 'T' : 'F';
-	fwrite(buf,1,1,fp);
+	Send(fp,buf,1);
 }
 
 extern	void
 SendFixed(
-	FILE	*fp,
+	NETFILE	*fp,
 	Fixed	*xval)
 {
 	SendLength(fp,xval->flen);
@@ -335,7 +359,7 @@ SendFixed(
 
 extern	Fixed	*
 RecvFixed(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	Fixed	*xval;
 
@@ -351,7 +375,7 @@ dbgmsg("<RecvFixed");
 
 extern	Bool
 RecvFixedData(
-	FILE	*fp,
+	NETFILE	*fp,
 	Fixed	**xval)
 {
 	Bool	ret;
@@ -374,7 +398,7 @@ RecvFixedData(
 
 extern	void
 SendFixedData(
-	FILE			*fp,
+	NETFILE			*fp,
 	PacketDataType	type,
 	Fixed			*xval)
 {
@@ -398,7 +422,7 @@ SendFixedData(
 
 extern	void
 SendStringData(
-	FILE			*fp,
+	NETFILE			*fp,
 	PacketDataType	type,
 	char			*str)
 {
@@ -426,7 +450,7 @@ SendStringData(
 
 extern	Bool
 RecvStringData(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	*str)
 {
 	Bool			ret;
@@ -455,7 +479,7 @@ RecvStringData(
 
 extern	void
 SendIntegerData(
-	FILE			*fp,
+	NETFILE			*fp,
 	PacketDataType	type,
 	int				val)
 {
@@ -489,7 +513,7 @@ SendIntegerData(
 
 extern	Bool
 RecvIntegerData(
-	FILE	*fp,
+	NETFILE	*fp,
 	int		*val)
 {
 	char	buff[SIZE_BUFF];
@@ -520,7 +544,7 @@ RecvIntegerData(
 
 extern	void
 SendBoolData(
-	FILE			*fp,
+	NETFILE			*fp,
 	PacketDataType	type,
 	Bool			val)
 {
@@ -548,7 +572,7 @@ SendBoolData(
 
 extern	Bool
 RecvBoolData(
-	FILE	*fp,
+	NETFILE	*fp,
 	Bool	*val)
 {
 	char	buff[SIZE_BUFF];
@@ -580,7 +604,7 @@ RecvBoolData(
 
 extern	void
 SendFloatData(
-	FILE			*fp,
+	NETFILE			*fp,
 	PacketDataType	type,
 	double			val)
 {
@@ -620,7 +644,7 @@ SendFloatData(
 
 extern	Bool
 RecvFloatData(
-	FILE	*fp,
+	NETFILE	*fp,
 	double	*val)
 {
 	char	buff[SIZE_BUFF];
@@ -664,7 +688,7 @@ dbgmsg("<RecvFloatData");
 
 extern	void
 SendValueBody(
-	FILE		*fp,
+	NETFILE		*fp,
 	ValueStruct	*value)
 {
 	int		i;
@@ -710,7 +734,7 @@ SendValueBody(
 
 extern	void
 RecvValueBody(
-	FILE		*fp,
+	NETFILE		*fp,
 	ValueStruct	*value)
 {
 	int		i;
@@ -780,7 +804,7 @@ RecvValueBody(
  */
 extern	void
 SendValue(
-	FILE		*fp,
+	NETFILE		*fp,
 	ValueStruct	*value)
 {
 	int		i;

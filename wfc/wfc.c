@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -21,11 +21,11 @@ copies.
 
 /*
   TODO
-	glserverからの再接続
 	wfc間通信
 */
 
 #define	MAIN
+
 /*
 #define	DEBUG
 #define	TRACE
@@ -40,7 +40,6 @@ copies.
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<signal.h>
-#include	<termio.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -55,6 +54,7 @@ copies.
 #include	"misc.h"
 
 #include	"value.h"
+#include	"net.h"
 #include	"comm.h"
 #include	"dirs.h"
 #include	"wfc.h"
@@ -62,6 +62,7 @@ copies.
 #include	"corethread.h"
 #include	"termthread.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 #include	"tcp.h"
@@ -81,188 +82,22 @@ DumpNode(
 	SessionData	*data)
 {
 dbgmsg(">DumpNode");
-	printf("window   = [%s]\n",data->ctrl->window);
-	printf("widget   = [%s]\n",data->ctrl->widget);
-	printf("event    = [%s]\n",data->ctrl->event);
-	printf("term     = [%s]\n",data->ctrl->term);
-	printf("user     = [%s]\n",data->ctrl->user);
+	printf("window   = [%s]\n",data->hdr->window);
+	printf("widget   = [%s]\n",data->hdr->widget);
+	printf("event    = [%s]\n",data->hdr->event);
+	printf("term     = [%s]\n",data->hdr->term);
+	printf("user     = [%s]\n",data->hdr->user);
 dbgmsg("<DumpNode");
 }
 #endif
 
-/*
- *	for WFC
- */
-extern	int
-PutAPS(
-	APS_Node	*aps,
-	SessionData	*data)
-{
-	MessageHeader	*hdr;
-	int		i
-	,		j;
-	FILE	*fpAPS;
-	int		ix;
-
-dbgmsg(">PutAPS");
-#ifdef	DEBUG
-	printf("term = [%s]\n",data->ctrl->term);
-	printf("user = [%s]\n",data->ctrl->user);
-#endif
-	fpAPS = NULL;
-	ix = -1;
-  retry:
-	for	( i = 0 ; i < aps->nports ; i ++ ) {
-		fpAPS = aps->fp[i];
-		if		(  fpAPS  !=  NULL  ) {
-			SendPacketClass(fpAPS,APS_PING);
-			if		(  RecvPacketClass(fpAPS)  ==  APS_PONG  ) {
-				hdr = data->hdr;
-				SendPacketClass(fpAPS,APS_EVENTDATA);
-				SendChar(fpAPS,hdr->status);
-				SendString(fpAPS,hdr->term);
-				SendString(fpAPS,hdr->user);
-				SendString(fpAPS,hdr->window);
-				SendString(fpAPS,hdr->widget);
-				SendString(fpAPS,hdr->event);
-				SendPacketClass(fpAPS,APS_MCPDATA);
-				SendLBS(fpAPS,data->mcpdata);
-				SendPacketClass(fpAPS,APS_SPADATA);
-				SendLBS(fpAPS,data->spadata);
-				SendPacketClass(fpAPS,APS_LINKDATA);
-				SendLBS(fpAPS,data->linkdata);
-				SendPacketClass(fpAPS,APS_SPADATA);
-				SendLBS(fpAPS,data->spadata);
-				SendPacketClass(fpAPS,APS_SCRDATA);
-				for	( j = 0 ; j < data->aps->ld->cWindow ; j ++ ) {
-					SendLBS(fpAPS,data->scrdata[j]);
-				}
-				SendPacketClass(fpAPS,APS_END);
-				ix = i;
-				break;
-			} else {
-				shutdown(fileno(aps->fp[i]), 2);
-				fclose(aps->fp[i]);
-				aps->fp[i] = NULL;
-			}
-		}
-	}
-	if		(  i  ==  aps->nports  ) {
-		dbgmsg("wait aps connect");
-		pthread_mutex_lock(&aps->lock);
-		do {
-			for	( i = 0 ; i < aps->nports ; i ++ ) {
-				if		(  aps->fp[i]  !=  NULL  )	break;
-			}
-			if		(  i  ==  aps->nports  ) {
-				pthread_cond_wait(&aps->conn, &aps->lock);
-			}
-		}	while	(  i  ==  aps->nports  );
-		pthread_mutex_unlock(&aps->lock);
-		dbgmsg("release aps connect");
-		goto	retry;
-	}
-dbgmsg("<PutAPS");
-	return(ix);
-}
-
-extern	Bool
-GetAPS_Control(
-	FILE	*fpAPS,
-	MessageHeader	*hdr)
-{
-	PacketClass	c;
-	Bool		fSuc;
-
-dbgmsg(">GetAPS_Control");
-	switch	( c = RecvPacketClass(fpAPS) ) { 
-	  case	APS_CTRLDATA:
-		RecvString(fpAPS,hdr->term);
-		RecvString(fpAPS,hdr->window);
-		RecvString(fpAPS,hdr->widget);
-		hdr->puttype = (char)RecvChar(fpAPS);
-		fSuc = TRUE;
-#ifdef	DEBUG
-		printf("[%s][%c]\n",hdr->window,hdr->puttype);fflush(stdout);
-#endif
-		break;
-	  default:
-		dbgmsg("aps die ?");
-		fSuc = FALSE;
-		break;
-	}
-dbgmsg("<GetAPS_Control");
-	return	(fSuc); 
-}
-
-extern	Bool
-GetAPS_Value(
-	FILE	*fpAPS,
-	SessionData	*data,
-	PacketClass	c)
-{
-	int		i
-	,		nclose;
-	Bool	fSuc;
-
-dbgmsg(">GetAPS_Value");
-	SendPacketClass(fpAPS,c);
-	switch	(c) {
-	  case	APS_CLSWIN:
-		dbgmsg("CLSWIN");
-		nclose = RecvInt(fpAPS); 
-		for	( i = 0 ; i < nclose ; i ++ ) {
-			RecvString(fpAPS,data->w.close[data->w.n].window);
-			data->w.n ++;
-		}
-		fSuc = TRUE;
-		break;
-	  case	APS_MCPDATA:
-		dbgmsg("MCPDATA");
-		RecvLBS(fpAPS,data->mcpdata);
-		fSuc = TRUE;
-		break;
-	  case	APS_LINKDATA:
-		dbgmsg("LINKDATA");
-		RecvLBS(fpAPS,data->linkdata);
-		fSuc = TRUE;
-		break;
-	  case	APS_SPADATA:
-		dbgmsg("SPADATA");
-		RecvLBS(fpAPS,data->spadata);
-		fSuc = TRUE;
-		break;
-	  case	APS_SCRDATA:
-		dbgmsg("SCRDATA");
-		for	( i = 0 ; i < data->cWindow ; i ++ ) {
-			RecvLBS(fpAPS,data->scrdata[i]);
-		}
-		fSuc = TRUE;
-		break;
-	  case	APS_END:
-		dbgmsg("END");
-		fSuc = TRUE;
-		break;
-	  case	APS_PING:
-		dbgmsg("PING");
-		RecvPacketClass(fpAPS);
-		fSuc = TRUE;
-		break;
-	  default:
-		printf("class = [%X]\n",(int)c);
-		dbgmsg("protocol error");
-		fSuc = FALSE;
-		break;
-	}
-dbgmsg("<GetAPS_Value");
-	return	(fSuc); 
-}
-
+#if	0
 static	void
 CatchSEGV(
 	int		ec)
 {
 }
+#endif
 
 extern	void
 ExecuteServer(void)
@@ -273,15 +108,16 @@ ExecuteServer(void)
 	int		maxfd;
 
 dbgmsg(">ExecuteServer");
+#if	0
 	signal(SIGSEGV,(void *)CatchSEGV);
-
+#endif
 	_fhTerm = InitServerPort(PortNumber,Back);
 	maxfd = _fhTerm;
 	_fhAps = InitServerPort(ApsPortNumber,Back);
 	maxfd = maxfd < _fhAps ? _fhAps : maxfd;
 
 	while	(TRUE)	{
-dbgmsg("loop");
+		dbgmsg("loop");
 		FD_ZERO(&ready);
 		FD_SET(_fhTerm,&ready);
 		FD_SET(_fhAps,&ready);
@@ -301,8 +137,13 @@ static	void
 InitSystem(void)
 {
 dbgmsg(">InitSystem");
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","");
+	if		(  ApsPortNumber  ==  NULL  ) {
+		ApsPortNumber = ThisEnv->WfcApsPort->port;
+	}
+	InitNET();
+	InitMessageQueue();
 	ReadyAPS();
 	SetupMessageQueue();
 	InitTerm();
@@ -320,7 +161,7 @@ static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
 		"ポート番号"	 								},
 	{	"apsport",	STRING,		TRUE,	(void*)&ApsPortNumber,
-		"APS接続待ちポート番号"	 						},
+		"APS接続待ちポート"								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
 		"接続待ちキューの数" 							},
 
@@ -332,14 +173,14 @@ static	ARG_TABLE	option[] = {
 		"データ定義格納ディレクトリ"	 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"ディレクトリファイル"	 						},
-	{	NULL,		0,			FALSE,	NULL,	NULL 	}
+	{	NULL,		0,			TRUE,	NULL		 	}
 };
 
 static	void
 SetDefault(void)
 {
 	PortNumber = IntStrDup(PORT_WFC);
-	ApsPortNumber = IntStrDup(PORT_WFC_APS);
+	ApsPortNumber = NULL;
 	Back = 5;
 	BaseDir = NULL;
 	RecordDir = NULL;
@@ -357,6 +198,7 @@ main(
 
 	SetDefault();
 	GetOption(option,argc,argv);
+	InitMessage();
 
 	InitSystem();
 	ExecuteServer();

@@ -9,7 +9,7 @@
               03  MCP-FROMWIN PIC X(64).
               03  MCP-STATUS  PIC X(4).
               03  MCP-PUTTYPE PIC X(8).
-              03  MCP-TERM    PIC X(36).
+              03  MCP-TERM    PIC X(64).
               03  MCP-USER    PIC X(16).
             02  MCP-DB.
               03  MCP-PATH.

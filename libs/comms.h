@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -21,12 +21,12 @@ copies.
 
 #ifndef	_INC_COMMS_H
 #define	_INC_COMMS_H
-#include	"glterm.h"
+#include	"value.h"
 
-extern	void	SendStringDelim(FILE *fp, char *str);
-extern	Bool	RecvStringDelim(FILE *fp, size_t size, char *str);
+extern	void	SendStringDelim(NETFILE *fp, char *str);
+extern	Bool	RecvStringDelim(NETFILE *fp, size_t size, char *str);
 extern	void	SetValueName(char *name);
-extern	void	SendValueString(FILE *fpComm, ValueStruct *value, char *name, Bool fName);
+extern	void	SendValueString(NETFILE *fpComm, ValueStruct *value, char *name, Bool fName);
 
 #undef	GLOBAL
 #ifdef	_COMMS

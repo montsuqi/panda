@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -41,7 +41,7 @@ copies.
 #include	<sys/stat.h>
 #include	<gtk/gtk.h>
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"styleLex.h"
 #include	"styleParser.h"

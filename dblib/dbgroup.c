@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -35,26 +35,35 @@ copies.
 #include	<sys/stat.h>
 #include	<sys/socket.h>	/*	for SOCK_STREAM	*/
 #include	<unistd.h>
+#include	<dlfcn.h>
 #include	<glib.h>
 
-#ifdef	HAVE_POSTGRES
-#include	"Postgres.h"
-#endif
-#ifdef	USE_SHELL
-#include	"Shell.h"
-#endif
-
+#include	"defaults.h"
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"directory.h"
+#include	"load.h"
 #include	"dbgroup.h"
 #include	"debug.h"
 
 
 static	GHashTable	*DBMS_Table;
+static	char		*MONDB_LoadPath;
 
-extern	void
+extern	DB_Func	*
+NewDB_Func(void)
+{
+	DB_Func	*ret;
+
+	ret = New(DB_Func);
+	ret->exec = NULL;
+	ret->access = NULL;
+	ret->table = NewNameHash();
+	return	(ret);
+}
+
+extern	DB_Func	*
 EnterDB_Function(
 	char	*name,
 	DB_OPS	*ops,
@@ -64,6 +73,10 @@ EnterDB_Function(
 	DB_Func	*func;
 	int		i;
 
+dbgmsg(">EnterDB_Function");
+#ifdef	DEBUG
+	printf("Enter [%s]\n",name); 
+#endif
 	if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,name) )
 			   ==  NULL  ) {
 		func = NewDB_Func();
@@ -82,25 +95,61 @@ EnterDB_Function(
 			g_hash_table_insert(func->table,ops[i].name,ops[i].func);
 		}
 	}
+dbgmsg("<EnterDB_Function");
+	return	(func); 
 }
 
-extern	void
+static	void
 InitDBG(void)
 {
 dbgmsg(">InitDBG");
 	DBMS_Table = NewNameHash();
+	if		(  ( MONDB_LoadPath = getenv("MONDB_LOAD_PATH") )  ==  NULL  ) {
+		MONDB_LoadPath = MONTSUQI_LIBRARY_PATH;
+	}
 dbgmsg("<InitDBG");
 }
 
-extern	void
+static	void
 SetUpDBG(void)
 {
 	DBG_Struct	*dbg;
 	int		i;
+	DB_Func	*func;
+	char		funcname[SIZE_BUFF]
+	,			filename[SIZE_BUFF];
+	void		*handle;
+	DB_Func		*(*f_init)(void);
+
 dbgmsg(">SetUpDBG");
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		dbg->func = (DB_Func *)g_hash_table_lookup(DBMS_Table,dbg->type);
+#ifdef	DEBUG
+		printf("Entering [%s]\n",dbg->type);
+#endif
+		if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,dbg->type) )
+				   ==  NULL  ) {
+			sprintf(filename,"%s.so",dbg->type);
+printf("[%s][%s]\n",MONDB_LoadPath,filename);
+			if		(  ( handle = LoadFile(MONDB_LoadPath,filename) )  !=  NULL  ) {
+				sprintf(funcname,"Init%s",dbg->type);
+				if		(  ( f_init = dlsym(handle,funcname) )
+						   !=  NULL  ) {
+					func = (*f_init)();
+				} else {
+					fprintf(stderr,
+							"DB group type [%s] not found.(can not initialize)\n",
+							dbg->type);
+					exit(1);
+				}
+			} else {
+				fprintf(stderr,
+						"DB group type [%s] not found.(module not exist)\n",
+						dbg->type);
+				exit(1);
+			}
+		}
+		dbg->func = func;
 	}
 dbgmsg("<SetUpDBG");
 }
@@ -220,12 +269,6 @@ InitDB_Process(void)
 {
 dbgmsg(">InitDB_Process");
 	InitDBG();
-#ifdef	HAVE_POSTGRES
-	InitPostgres();
-#endif
-#ifdef	USE_SHELL
-	InitShellOperation();
-#endif
 	SetUpDBG();
 dbgmsg("<InitDB_Process");
 }

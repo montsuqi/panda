@@ -1,12 +1,12 @@
-lib_LTLIBRARIES = libpanda.la
+lib_LTLIBRARIES	=	libpanda.la libpandas.la libpandacom.la libpandamisc.la panda.la
 
-enum_LDADD	= 	\
-	$(GLADE_LIBS)	$(PANDA_LIBS)	\
-	-L/usr/lib -lglib -lm
 noinst_PROGRAMS	=	enum
 
-noinst_LIBRARIES = libi18n.a libpandac.a libpandas.a libpandat.a
-
+panda_la_LDFLAGS	=	-module -export-dynamic
+panda_la_SOURCES	=	panda.c
+panda_la_DEPENDENCIES = libpanda.la
+panda_la_LIBADD		=	\
+	-L. -lpanda
 
 libpanda_la_DEPENDENCIES = enum.h
 
@@ -14,16 +14,18 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/datalib	\
-	$(GNOME_INCLUDEDIR) \
-	$(FIXED_CFLAGS)
+	-I$(top_srcdir)/dblib	\
+	$(GTK_CFLAGS)			\
+	$(GLIB_CFLAGS)			\
+	$(FIXED_CFLAGS)			\
+	$(MONDAI_CFLAGS)
 
-
+enum_LDADD	= 	\
+	$(GLADE_LIBS)			\
+	-L/usr/lib -lglib -lm	\
+	$(MONDAI_LIBS)
 
 libpanda_la_SOURCES	=		\
-	comm.c		comm.h		\
-	authstub.c	authstub.h	\
-	comms.c		comms.h		\
 	LDparser.c	LDparser.h	\
 	LDlex.c		LDlex.h		\
 	DIparser.c	DIparser.h	\
@@ -33,63 +35,36 @@ libpanda_la_SOURCES	=		\
 	DBparser.c	DBparser.h	\
 	DBlex.c		DBlex.h		\
 	directory.c	directory.h	\
-	driver.c	driver.h	\
-	tcp.c		tcp.h		\
-	pty.c		pty.h		\
-	queue.c		queue.h		\
-	enum.h
+	wfcio.c		wfcio.h		\
+	load.c		load.h
 
-libpandac_a_SOURCES	=		\
-	comm.c		comm.h		\
-	driver.c	driver.h	\
-	tcp.c		tcp.h		\
-	queue.c		queue.h		\
-	enum.h
-
-libpandas_a_SOURCES	=		\
-	comm.c		comm.h		\
-	comms.c		comms.h		\
+libpandas_la_SOURCES	=		\
 	applications.c applications.h	\
-	pandaIO.c	pandaIO.h	\
-	driver.c	driver.h	\
-	tcp.c		tcp.h		\
-	pty.c		pty.h		\
-	auth.c		auth.h		\
-	authstub.c	authstub.h	\
-	front.c	front.h			\
-	wfcio.c		wfcio.h		\
-	enum.h	\
-	demo.c	demo.h	\
-	demo2.c	\
-	demo3.c	\
-	demo4.c
+	driver.c	driver.h	enum.h	\
+	front.c		front.h				\
+	authstub.c	authstub.h			\
+	load.c		load.h
 
-libpandat_a_SOURCES	=		\
-	comm.c		comm.h		\
-	LDparser.c	LDparser.h	\
-	LDlex.c		LDlex.h		\
-	DIparser.c	DIparser.h	\
-	DIlex.c		DIlex.h		\
-	BDparser.c	BDparser.h	\
-	BDlex.c		BDlex.h		\
-	DBparser.c	DBparser.h	\
-	DBlex.c		DBlex.h		\
-	directory.c	directory.h	\
-	driver.c	driver.h	\
-	tcp.c		tcp.h		\
-	pty.c		pty.h		\
-	auth.c		auth.h		\
-	authstub.c	authstub.h	\
-	front.c	front.h			\
-	wfcio.c		wfcio.h		\
-	enum.h
+libpandas_la_DEPENDENCIES	=		\
+	$(top_srcdir)/defaults.h
 
-libi18n_a_SOURCES	=		\
-	i18n_res.c i18n_res.h	\
-	i18n_codeset.c	i18n_codeset.h	\
-	i18n_code.c	i18n_code.h	\
-	i18n_ctype.c	\
-	i18n_strings.c	i18n_struct.h	i18n_const.h
+#libpandacominclude_HEADERS =	\
+#	comm.h			\
+#	comms.h			\
+#	tcp.h			\
+#	pty.h			\
+#	queue.h
+libpandacom_la_SOURCES	=		\
+	net.c			net.h			\
+	comm.c			comm.h			\
+	comms.c			comms.h			\
+	tcp.c			tcp.h			\
+	pty.c			pty.h			\
+	queue.c			queue.h
 
 enum.h:	enum
 	./enum > enum.h
+
+libpandamisc_la_SOURCES	=		\
+	option.c		option.h	\
+	message.c		message.h

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan.
+Copyright (C) 2002-2003 Ogochan.
 
 This module is part of PANDA.
 
@@ -37,12 +37,10 @@ copies.
 
 #include	"types.h"
 #include	"misc.h"
-#include	"value.h"
-#include	"LBSfunc.h"
+#include	"libmondai.h"
 #include	"enum.h"
 #include	"SQLparser.h"
 #include	"dbgroup.h"
-#include	"Shell.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -322,13 +320,15 @@ dbgmsg(">OnChildExit");
 dbgmsg("<OnChildExit");
 }
 
-extern	void
-InitShellOperation(void)
+extern	DB_Func	*
+InitShell(void)
 {
-dbgmsg(">InitShellOperation");
+	DB_Func	*ret;
+dbgmsg(">InitShell");
 	(void)signal(SIGCHLD, (void *)OnChildExit);
 
-	EnterDB_Function("shell",Shell_Operations,"# ","\n");
-dbgmsg("<InitShellOperation");
+	ret = EnterDB_Function("Shell",Shell_Operations,"# ","\n");
+dbgmsg("<InitShell");
+	return	(ret); 
 }
 

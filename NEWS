@@ -1,0 +1,76 @@
+1.1.2 -> 1.2.0
+
+	*	monitor の注意事項
+
+		・-myhost は複数ホストで運用する場合は、明示的に指定するのが望
+		  ましい
+
+	*	*.ldに命令追加/変更
+
+		[cache]
+
+			  apsが端末情報をキャッシュする端末数。デフォルトではキャッ
+			シュをしない
+
+	*	directoryに命令追加/変更
+
+		[wfc]
+
+			  wfc の動作を記述する。現在のところ port のみ指定可能。こ
+			こで指定したポートで aps からの接続を待機する。ホスト名が
+			指定ない場合は localhost が指定されているものとみなす
+
+		[ld]
+
+			  aps の個数を指定可能にした。この数だけ同じ LD の aps が
+			の接続を受けつける(monitor配下の場合は起動される)。数だけ
+			指定されている場合は、 localhost 上での起動とみなす。
+
+		[multiplex_level]
+
+			  "aps"というレベルを作った。この指定をすると、apsを並列に
+			動かす。
+
+	*	C用言語ハンドラが出来た
+
+		・ロードパスは、 APS_LOAD_PATH 。default は MONTSUQI_LOAD_PATH
+		  で定義されたもので、これは通常 $libdir
+
+		・ハンドラ名は、"C"
+
+		・開発環境として、 libpandadb, apslib.h, dblib.h が追加になり、
+		  この設定のために panda-config がある
+
+	*	DBハンドラの名前が変更になった。DBハンドラの名前は、最初の文字
+		が大文字
+
+		shell -> Shell
+
+	*	多くのモジュールをプラグイン化したためにロードパスの指定が必要
+		になった。
+
+		・MONPS_LOAD_PATH
+
+			  glserver のアプリケーションの場所。具体的には panda.so
+			の場所。デフォルトは $libdir 。
+
+		・APS_HANDLER_LOAD_PATH
+
+			  aps(dbstab も含む) の言語ハンドラの場所。デフォルトは $libdir
+
+		・MONDB_LOAD_PATH
+
+			  HAKAMA のデータベースハンドラの場所。デフォルトは $libdir
+
+	*	データ処理ライブラリ(libmondai)を外部に出したため、インストー
+		ル順序として、データ処理ライブラリが先行する必要がある
+
+	*	libi18n を廃止した
+
+	*	SSL, X509 対応した。そのため、
+
+		・configure のパラメータに --with-ssl が追加になった
+
+		・glserver, glclient に SSL, X509 関係のパラメータが追加された
+
+		・X509 で証明書が正しければパスワードが不要になった

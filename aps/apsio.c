@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -36,9 +36,9 @@ copies.
 #include	"const.h"
 #include	"misc.h"
 
-#include	"value.h"
+#include	"libmondai.h"
 #include	"directory.h"
-#include	"LBSfunc.h"
+#include	"net.h"
 #include	"comm.h"
 #include	"wfc.h"
 #include	"handler.h"
@@ -46,20 +46,169 @@ copies.
 #include	"tcp.h"
 #include	"debug.h"
 
-static	LargeByteString	*iobuff;
+typedef	struct _SessionCache	{
+	char	*term;
+	struct	_SessionCache	*prev
+	,						*next;
+	LargeByteString	*spadata;
+	LargeByteString	*linkdata;
+}	SessionCache;
+
+static	LargeByteString	*buff;
+static	GHashTable		*CacheTable;
+static	SessionCache	*Head
+		,				*Tail;
+static	int				cTerm;
 
 extern	void
-InitAPSIO(void)
+InitAPSIO(
+	NETFILE	*fpWFC)
 {
-	iobuff = NewLBS();
+	buff = NewLBS();
+	CacheTable = NewNameHash();
+	ApsId = RecvInt(fpWFC);
+	Head = NULL;
+	Tail = NULL;
+	cTerm = 0;
+	if		(  nCache  ==  0  ) {
+		nCache = ThisLD->nCache;
+	}
+#ifdef	DEBUG
+	printf("my id = %d\n",ApsId);
+#endif
 }
+
+static	Bool
+CheckCache(
+	ProcessNode	*node,
+	char		*term)
+{
+	Bool	ret;
+	SessionCache	*ent;
+
+dbgmsg(">CheckCache");
+	if		(  ( ent = g_hash_table_lookup(CacheTable,term) )  !=  NULL  ) {
+		NativeUnPackValue(ent->linkdata->body,node->linkrec,0);
+		NativeUnPackValue(ent->spadata->body,node->linkrec,0);
+		ret = TRUE;
+	} else {
+		ret = FALSE;
+	}
+dbgmsg("<CheckCache");
+	return	(ret);
+}
+
+static	byte
+SaveCache(
+	ProcessNode	*node)
+{
+	byte		flag;
+	SessionCache	*ent;
+	size_t		size;
+
+dbgmsg(">SaveCache");
+	flag = 0;
+	printf("node->term = [%s]\n",node->term);
+	if		(  ( ent = g_hash_table_lookup(CacheTable,node->term) )  ==  NULL  ) {
+		dbgmsg("empty");
+		/*	cache purge logic here	*/
+		if		(  cTerm  ==  nCache  ) {
+			if		(  Tail  !=  NULL  ) {
+				if		(  Tail->prev  !=  NULL  ) {
+					Tail->prev->next = NULL;
+				}
+				ent = Tail->prev;
+				xfree(Tail->linkdata);
+				xfree(Tail->spadata);
+				xfree(Tail->term);
+				xfree(Tail);
+				if		(  Head  ==  Tail  ) {
+					Head = NULL;
+					Tail = NULL;
+				} else {
+					Tail = ent;
+				}
+			}
+		} else {
+			cTerm ++;
+		}
+		ent = New(SessionCache);
+		ent->term = StrDup(node->term);
+		g_hash_table_insert(CacheTable,ent->term,ent);
+		ent->linkdata = NULL;
+		ent->spadata = NULL;
+		ent->next = Head;
+		if		(  Tail  ==  NULL  ) {
+			Tail = ent;
+		}
+	} else {
+		if		(  ent  !=  Head  ) {
+			if		(  ent->next  !=  NULL  ) {
+				ent->next->prev = ent->prev;
+			}
+			if		(  ent->prev  !=  NULL  ) {
+				ent->prev->next = ent->next;
+			}
+			if		(  ent  ==  Tail  ) {
+				Tail = ent->prev;
+			}
+			ent->next = Head;
+		}
+	}
+	if		(  Head  !=  NULL  ) {
+		Head->prev = ent;
+	}
+	ent->prev = NULL;
+	Head = ent;
+#ifdef	DEBUG
+	{
+		SessionCache	*p;
+		printf("*** term dump Head -> Tail ***\n");
+		for	( p = Head ; p != NULL ; p = p->next ) {
+			printf("[%s]\n",p->term);
+		}
+		printf("*****************\n");
+		printf("*** term dump Tail -> Head  ***\n");
+		for	( p = Tail ; p != NULL ; p = p->prev ) {
+			printf("[%s]\n",p->term);
+		}
+		printf("*****************\n");
+	}
+#endif
+
+	size =  NativeSizeValue(node->linkrec,0,0);
+	LBS_ReserveSize(buff,size,FALSE);
+	NativePackValue(buff->body,node->linkrec,0);
+	if		(	(  ent->linkdata  ==  NULL  )
+			||	(  memcmp(buff->body,ent->linkdata->body,size)  ) ) {
+			flag |= APS_LINKDATA;
+			if		(  ent->linkdata  !=  NULL  ) {
+				FreeLBS(ent->linkdata);
+			}
+			ent->linkdata = LBS_Duplicate(buff);
+	}
+	size =  NativeSizeValue(node->sparec,0,0);
+	LBS_ReserveSize(buff,size,FALSE);
+	NativePackValue(buff->body,node->sparec,0);
+	if		(	(  ent->spadata  ==  NULL  )
+			||	(  memcmp(buff->body,ent->spadata->body,size)  ) ) {
+			flag |= APS_SPADATA;
+			if		(  ent->spadata  !=  NULL  ) {
+				FreeLBS(ent->spadata);
+			}
+			ent->spadata = LBS_Duplicate(buff);
+	}
+dbgmsg("<SaveCache");
+	return	(flag);
+}
+
 
 /*
  *	for APS
  */
 extern	Bool
 GetWFC(
-	FILE	*fpWFC,
+	NETFILE	*fp,
 	ProcessNode	*node)
 {
 	int			i;
@@ -67,134 +216,172 @@ GetWFC(
 	Bool		fSuc;
 	Bool		fEnd;
 	MessageHeader	hdr;
+	char		term[SIZE_TERM+1];
+	byte		flag;
 
 dbgmsg(">GetWFC");
 	fEnd = FALSE; 
 	fSuc = FALSE;
-	while	(  !fEnd  ) {
-		switch	(c = RecvPacketClass(fpWFC)) {
-		  case	APS_EVENTDATA:
-			dbgmsg("EVENTDATA");
-			hdr.status = RecvChar(fpWFC);
-			RecvString(fpWFC,hdr.term);
-			RecvString(fpWFC,hdr.user);
-			RecvString(fpWFC,hdr.window);
-			RecvString(fpWFC,hdr.widget);
-			RecvString(fpWFC,hdr.event);
-#ifdef	DEBUG
-			printf("status = [%c]\n",hdr.status);
-			printf("term   = [%s]\n",hdr.term);
-			printf("user   = [%s]\n",hdr.user);
-			printf("window = [%s]\n",hdr.window);
-			printf("widget = [%s]\n",hdr.widget);
-			printf("event  = [%s]\n",hdr.event);
-#endif
-			fSuc = TRUE;
-			break;
-		  case	APS_MCPDATA:
-			dbgmsg("MCPDATA");
-			RecvLBS(fpWFC,iobuff);
-			UnPackValue(iobuff->body,node->mcprec);
-			*ValueString(GetItemLongName(node->mcprec,"private.pstatus")) = hdr.status;
-			strcpy(ValueString(GetItemLongName(node->mcprec,"dc.term")),hdr.term);
-			strcpy(ValueString(GetItemLongName(node->mcprec,"dc.user")),hdr.user);
-			strcpy(ValueString(GetItemLongName(node->mcprec,"dc.window")),hdr.window);
-			strcpy(ValueString(GetItemLongName(node->mcprec,"dc.widget")),hdr.widget);
-			strcpy(ValueString(GetItemLongName(node->mcprec,"dc.event")),hdr.event);
-			break;
-		  case	APS_LINKDATA:
-			dbgmsg("LINKDATA");
-			RecvLBS(fpWFC,iobuff);
-			UnPackValue(iobuff->body,node->linkrec);
-			break;
-		  case	APS_SPADATA:
-			dbgmsg("SPADATA");
-			RecvLBS(fpWFC,iobuff);
-			UnPackValue(iobuff->body,node->sparec);
-			break;
-		  case	APS_SCRDATA:
-			dbgmsg("SCRDATA");
-			for	( i = 0 ; i < node->cWindow ; i ++ ) {
-				RecvLBS(fpWFC,iobuff);
-				UnPackValue(iobuff->body,node->scrrec[i]);
+	flag = APS_EVENTDATA | APS_MCPDATA | APS_SCRDATA;
+	fSuc = FALSE;
+	if		(  RecvPacketClass(fp)  ==  APS_REQ  ) {
+		dbgmsg("REQ");
+		RecvString(fp,term);				ON_IO_ERROR(fp,badio2);
+		if		(  nCache  >  0  ) {
+			if		(  !CheckCache(node,term)  ) {
+				flag |= APS_SPADATA;
+				flag |= APS_LINKDATA;
 			}
-			break;
-		  case	APS_END:
-			dbgmsg("END");
-			*ValueString(GetItemLongName(node->mcprec,"private.prc")) = TO_CHAR(0);
-			fEnd = TRUE;
-			break;
-		  case	APS_STOP:
-			dbgmsg("STOP");
-			fSuc = FALSE;
-			fEnd = TRUE;
-			break;
-		  case	APS_PING:
-			dbgmsg("PING");
-			SendPacketClass(fpWFC,APS_PONG);
-			break;
-		  default:
-			dbgmsg("default");
-			SendPacketClass(fpWFC,APS_NOT);
-			fSuc = FALSE;
-			fEnd = TRUE;
-			break;
+		} else {
+			flag |= APS_SPADATA | APS_LINKDATA;
+		}
+		SendChar(fp,flag);					ON_IO_ERROR(fp,badio2);
+		while	(  !fEnd  ) {
+			switch	(c = RecvPacketClass(fp)) {
+			  case	APS_EVENTDATA:
+				dbgmsg("EVENTDATA");
+				hdr.status = RecvChar(fp);			ON_IO_ERROR(fp,badio);
+				RecvString(fp,hdr.term);			ON_IO_ERROR(fp,badio);
+				RecvString(fp,hdr.user);			ON_IO_ERROR(fp,badio);
+				RecvString(fp,hdr.window);			ON_IO_ERROR(fp,badio);
+				RecvString(fp,hdr.widget);			ON_IO_ERROR(fp,badio);
+				RecvString(fp,hdr.event);			ON_IO_ERROR(fp,badio);
+#ifdef	DEBUG
+				printf("status = [%c]\n",hdr.status);
+				printf("term   = [%s]\n",hdr.term);
+				printf("user   = [%s]\n",hdr.user);
+				printf("window = [%s]\n",hdr.window);
+				printf("widget = [%s]\n",hdr.widget);
+				printf("event  = [%s]\n",hdr.event);
+#endif
+				fSuc = TRUE;
+				break;
+			  case	APS_MCPDATA:
+				dbgmsg("MCPDATA");
+				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+				NativeUnPackValue(buff->body,node->mcprec,0);
+				node->pstatus = ValueString(GetItemLongName(node->mcprec,"private.pstatus"));
+				strcpy(ValueString(GetItemLongName(node->mcprec,"dc.term")),hdr.term);
+				strcpy(ValueString(GetItemLongName(node->mcprec,"dc.user")),hdr.user);
+				node->window = ValueString(GetItemLongName(node->mcprec,"dc.window"));
+				node->widget = ValueString(GetItemLongName(node->mcprec,"dc.widget"));
+				node->event = ValueString(GetItemLongName(node->mcprec,"dc.event"));
+				*node->pstatus = hdr.status;
+				strcpy(node->term,hdr.term);
+				strcpy(node->user,hdr.user);
+				strcpy(node->window,hdr.window);
+				strcpy(node->widget,hdr.widget);
+				strcpy(node->event,hdr.event);
+				break;
+			  case	APS_LINKDATA:
+				dbgmsg("LINKDATA");
+				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+				NativeUnPackValue(buff->body,node->linkrec,0);
+				break;
+			  case	APS_SPADATA:
+				dbgmsg("SPADATA");
+				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+				NativeUnPackValue(buff->body,node->sparec,0);
+				break;
+			  case	APS_SCRDATA:
+				dbgmsg("SCRDATA");
+				for	( i = 0 ; i < node->cWindow ; i ++ ) {
+					RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+					NativeUnPackValue(buff->body,node->scrrec[i],0);
+				}
+				break;
+			  case	APS_END:
+				dbgmsg("END");
+				*ValueString(GetItemLongName(node->mcprec,"private.prc")) = TO_CHAR(0);
+				fEnd = TRUE;
+				break;
+			  case	APS_STOP:
+				dbgmsg("STOP");
+				fSuc = FALSE;
+				fEnd = TRUE;
+				break;
+			  case	APS_PING:
+				dbgmsg("PING");
+				SendPacketClass(fp,APS_PONG);		ON_IO_ERROR(fp,badio);
+				break;
+			  default:
+				dbgmsg("default");
+				SendPacketClass(fp,APS_NOT);		ON_IO_ERROR(fp,badio);
+			  badio:
+				fEnd = TRUE;
+				break;
+			}
 		}
 	}
+  badio2:
 dbgmsg("<GetWFC");
 	return	(fSuc); 
 }
 
 extern	void
 PutWFC(
-	FILE	*fpWFC,
+	NETFILE	*fp,
 	ProcessNode	*node)
 {
 	int				i;
 	PacketClass		c;
 	Bool			fEnd;
+	byte		flag;
 
 dbgmsg(">PutWFC");
-	SendPacketClass(fpWFC,APS_CTRLDATA);
-	SendString(fpWFC,ValueString(GetItemLongName(node->mcprec,"dc.term")));
-	SendString(fpWFC,ValueString(GetItemLongName(node->mcprec,"dc.window")));
-	SendString(fpWFC,ValueString(GetItemLongName(node->mcprec,"dc.widget")));
-	SendChar(fpWFC,*ValueString(GetItemLongName(node->mcprec,"private.pputtype")));
+	flag = APS_MCPDATA | APS_SCRDATA;
+	flag |= ( node->w.n > 0 ) ? APS_CLSWIN : 0;
+	if		(  nCache  >  0  ) {
+		flag |= SaveCache(node);
+	} else {
+		flag |= APS_LINKDATA | APS_SPADATA;
+	}
+
+	SendPacketClass(fp,APS_CTRLDATA);		ON_IO_ERROR(fp,badio);
+	SendChar(fp,flag);						ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueString(GetItemLongName(node->mcprec,"dc.term")));
+	ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueString(GetItemLongName(node->mcprec,"dc.window")));
+	ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueString(GetItemLongName(node->mcprec,"dc.widget")));
+	ON_IO_ERROR(fp,badio);
+	SendChar(fp,*ValueString(GetItemLongName(node->mcprec,"private.pputtype")));
+	ON_IO_ERROR(fp,badio);
 	fEnd = FALSE; 
 	while	(  !fEnd  ) {
-		switch	(c = RecvPacketClass(fpWFC)) {
+		switch	(c = RecvPacketClass(fp)) {
 		  case	APS_CLSWIN:
 			dbgmsg("CLSWIN");
-			SendInt(fpWFC,node->w.n);
+			SendInt(fp,node->w.n);					ON_IO_ERROR(fp,badio);
 			for	( i = 0 ; i < node->w.n ; i ++ ) {
-				SendString(fpWFC,node->w.close[i].window);
+				SendString(fp,node->w.close[i].window);
 			}
 			break;
 		  case	APS_MCPDATA:
 			dbgmsg("MCPDATA");
-			LBS_RequireSize(iobuff,SizeValue(node->mcprec,0,0),FALSE);
-			PackValue(iobuff->body,node->mcprec);
-			SendLBS(fpWFC,iobuff);
+			LBS_ReserveSize(buff,NativeSizeValue(node->mcprec,0,0),FALSE);
+			NativePackValue(buff->body,node->mcprec,0);
+			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			break;
 		  case	APS_LINKDATA:
 			dbgmsg("LINKDATA");
-			LBS_RequireSize(iobuff,SizeValue(node->linkrec,0,0),FALSE);
-			PackValue(iobuff->body,node->linkrec);
-			SendLBS(fpWFC,iobuff);
+			LBS_ReserveSize(buff,NativeSizeValue(node->linkrec,0,0),FALSE);
+			NativePackValue(buff->body,node->linkrec,0);
+			SendLBS(fp,buff);
 			break;
 		  case	APS_SPADATA:
 			dbgmsg("SPADATA");
-			LBS_RequireSize(iobuff,SizeValue(node->sparec,0,0),FALSE);
-			PackValue(iobuff->body,node->sparec);
-			SendLBS(fpWFC,iobuff);
+			LBS_ReserveSize(buff,NativeSizeValue(node->sparec,0,0),FALSE);
+			NativePackValue(buff->body,node->sparec,0);
+			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			break;
 		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
 			for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-				LBS_RequireSize(iobuff,
-								SizeValue(node->scrrec[i],0,0),FALSE);
-				PackValue(iobuff->body,node->scrrec[i]);
-				SendLBS(fpWFC,iobuff);
+				LBS_ReserveSize(buff,
+								NativeSizeValue(node->scrrec[i],0,0),FALSE);
+				NativePackValue(buff->body,node->scrrec[i],0);
+				SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			}
 			break;
 		  case	APS_END:
@@ -203,16 +390,16 @@ dbgmsg(">PutWFC");
 			break;
 		  case	APS_PING:
 			dbgmsg("PING");
-			SendPacketClass(fpWFC,APS_PONG);
+			SendPacketClass(fp,APS_PONG);			ON_IO_ERROR(fp,badio);
 			break;
 		  default:
 			dbgmsg("default");
-			SendPacketClass(fpWFC,APS_NOT);
+			SendPacketClass(fp,APS_NOT);			ON_IO_ERROR(fp,badio);
+		  badio:
 			fEnd = TRUE;
 			break;
 		}
 	}
-	fflush(fpWFC);
 dbgmsg("<PutWFC");
 }
 

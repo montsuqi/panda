@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -27,25 +27,8 @@ copies.
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-
 #include	<stdio.h>
-#include	<stdlib.h>
-#include	<signal.h>
-#include	<string.h>
-#include	<termio.h>
-#include    <sys/types.h>
-#include    <sys/socket.h>
-#include	<fcntl.h>
-#include	<sys/time.h>
-#include	<sys/wait.h>
-#include	<sys/stat.h>
-#include	<unistd.h>
-#include	<glib.h>
-
-#include	"types.h"
-#include	"misc.h"
 #include	"trid.h"
-#include	"debug.h"
 
 static	char	*EnBase = "AAAAAAAAAAAAAAAA";
 extern	void
@@ -82,7 +65,6 @@ EncodeTRID(
 	unsigned	int		mask;
 	char	*base;
 
-	printf("ses = %d\n",ses);
 	base = EnBase;
 	mask = 0xF0000000;
 	for	( i = 32 ; i > 0 ; i -= 4 , trid ++ ) {

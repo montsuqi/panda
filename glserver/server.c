@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -33,7 +33,7 @@ copies.
 #include	<stdlib.h>
 #include	<signal.h>
 #include	<string.h>
-#include	<termio.h>
+#include	<setjmp.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -42,13 +42,21 @@ copies.
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<glib.h>
+#ifdef	USE_SSL
+#include	<openssl/crypto.h>
+#include	<openssl/x509.h>
+#include	<openssl/pem.h>
+#include	<openssl/ssl.h>
+#include	<openssl/err.h>
+#endif
 
 #include	"types.h"
 #include	"enum.h"
 #include	"misc.h"
 #include	"tcp.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"glterm.h"
+#include	"net.h"
 #include	"comm.h"
 #include	"authstub.h"
 #include	"applications.h"
@@ -59,6 +67,7 @@ copies.
 #include	"DDparser.h"
 #include	"debug.h"
 
+#if	0
 static	void
 ClearWindows(
 	gpointer	key,
@@ -71,11 +80,17 @@ ClearWindows(
 	FreeValueStruct(win->Value);
 	xfree(win->name);
 }
+#endif
 
 static	void
 FinishSession(
 	ScreenData	*scr)
 {
+	char	msg[SIZE_BUFF];
+
+	sprintf(msg,"[%s:%s] session end",scr->term,scr->user);
+	Message(MESSAGE_LOG,msg);
+#if	0
 	if		(	(  scr  !=  NULL  )
 			&&	(  scr->Windows  !=  NULL  ) ) {
 		g_hash_table_foreach(scr->Windows,(GHFunc)ClearWindows,NULL);
@@ -83,27 +98,26 @@ FinishSession(
 		xfree(scr);
 	}
 	ReleasePool(NULL);
-	printf("session end\n");
+#endif
 }
 
 static	Bool
 CheckCache(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	char	*name,
-	off_t	st_size,
-	time_t	st_mtime,
-	time_t	st_ctime)
+	off_t	stsize,
+	time_t	stmtime,
+	time_t	stctime)
 {
 	Bool	ret;
 	int		klass;
 
 dbgmsg(">CheckCache");
-	SendPacketClass(fpComm,GL_QueryScreen);
-	SendString(fpComm,name);
-	SendLong(fpComm,(long)st_size);
-	SendLong(fpComm,(long)st_mtime);
-	SendLong(fpComm,(long)st_ctime);
-	fflush(fpComm);
+	SendPacketClass(fpComm,GL_QueryScreen);	ON_IO_ERROR(fpComm,badio);
+	SendString(fpComm,name);				ON_IO_ERROR(fpComm,badio);
+	SendLong(fpComm,(long)stsize);			ON_IO_ERROR(fpComm,badio);
+	SendLong(fpComm,(long)stmtime);			ON_IO_ERROR(fpComm,badio);
+	SendLong(fpComm,(long)stctime);			ON_IO_ERROR(fpComm,badio);
 	switch	(  klass = RecvPacketClass(fpComm)  ) {
 	  case	GL_GetScreen:
 		dbgmsg("GetScreen");
@@ -114,6 +128,7 @@ dbgmsg(">CheckCache");
 		ret = FALSE;
 		break;
 	  default:
+	  badio:
 		dbgmsg("error");
 		ret = FALSE;
 		break;
@@ -122,9 +137,9 @@ dbgmsg("<CheckCache");
 	return	(ret);
 }
 	
-static	void
+static	Bool
 SendFile(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	char	*fname,
 	char	*wname)
 {
@@ -133,38 +148,46 @@ SendFile(
 	size_t	size
 	,		left;
 	FILE	*fp;
+	Bool	rc;
 
 	stat(fname,&stbuf);
 	if		(  CheckCache(fpComm,
 						  wname,
 						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
+		rc = FALSE;
 		RecvString(fpComm,wname);	/*	dummy	*/
-		fp = fopen(fname,"r");
-		SendPacketClass(fpComm,GL_ScreenDefine);
-		SendLong(fpComm,(long)stbuf.st_size);
-		left = stbuf.st_size;
-		do {
-			if		(  left  >  SIZE_BUFF  ) {
-				size = SIZE_BUFF;
-			} else {
-				size = left;
-			}
-			size = fread(buff,1,size,fp);
-			if		(  size  >  0  ) {
-				fwrite(buff,1,size,fpComm);
-				left -= size;
-			}
-		}	while	(  left  >  0  );
-		fflush(fpComm);
-		fclose(fp);
+		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
+			SendPacketClass(fpComm,GL_ScreenDefine);	ON_IO_ERROR(fpComm,badio);
+			SendLong(fpComm,(long)stbuf.st_size);		ON_IO_ERROR(fpComm,badio);
+			left = stbuf.st_size;
+			do {
+				if		(  left  >  SIZE_BUFF  ) {
+					size = SIZE_BUFF;
+				} else {
+					size = left;
+				}
+				size = fread(buff,1,size,fp);
+				if		(  size  >  0  ) {
+					Send(fpComm,buff,size);			ON_IO_ERROR(fpComm,badio);
+					left -= size;
+				}
+			}	while	(  left  >  0  );
+			rc = TRUE;
+		  badio:
+			fclose(fp);
+		}
+	} else {
+		rc = TRUE;
 	}
+	return	(rc);
 }
 
+static	jmp_buf	envCheckScreen;
 static	void
 CheckScreen(
 	char		*wname,
 	WindowData	*win,
-	FILE		*fpComm)
+	NETFILE		*fpComm)
 {
 	char	fname[SIZE_BUFF]
 	,			dir[SIZE_BUFF];
@@ -188,14 +211,13 @@ dbgmsg(">CheckScreen");
 			}
 			sprintf(fname,"%s/%s.glade",p,wname);
 			if		(  stat(fname,&stbuf)  ==  0  ) {
-				SendFile(fpComm,fname,wname);
-				fDone = TRUE;
+				fDone = SendFile(fpComm,fname,wname);
 			}
 			p = q + 1;
 		}	while	(  !fExit  );
 		if		(  !fDone  ) {
 			printf("screen file not exists. [%s]\n",wname);
-			exit(1);
+			longjmp(envCheckScreen,1);
 		}
 		win->fNew = FALSE;
 	}
@@ -204,67 +226,84 @@ dbgmsg("<CheckScreen");
 
 static	void
 CheckScreens(
-	FILE		*fpComm,
+	NETFILE		*fpComm,
 	ScreenData	*scr)
 {
 dbgmsg(">CheckScreens");
-	g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
+	if		(  setjmp(envCheckScreen)  ==  0  ) {
+		g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
+	}
 	SendPacketClass(fpComm,GL_END);
 dbgmsg("<CheckScreens");
 }
 
+static	jmp_buf	envSendWindow;
 static	void
 SendWindow(
 	char		*wname,
 	WindowData	*win,
-	FILE		*fpComm)
+	NETFILE		*fpComm)
 {
+	Bool	rc;
 dbgmsg(">SendWindow");
+
+	rc = FALSE; 
 	if		(  win->PutType  !=  SCREEN_NULL  ) {
-		SendPacketClass(fpComm,GL_WindowName);
-		SendString(fpComm,wname);
-		SendInt(fpComm,win->PutType);
+		SendPacketClass(fpComm,GL_WindowName);	ON_IO_ERROR(fpComm,badio);
+		SendString(fpComm,wname);				ON_IO_ERROR(fpComm,badio);
+		SendInt(fpComm,win->PutType);			ON_IO_ERROR(fpComm,badio);
 		switch	(win->PutType) {
 		  case	SCREEN_CURRENT_WINDOW:
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
 			if		(  win->Value  !=  NULL  ) {
-				SendPacketClass(fpComm,GL_ScreenData);
-				SendValue(fpComm,win->Value);
+				SendPacketClass(fpComm,GL_ScreenData);	ON_IO_ERROR(fpComm,badio);
+				SendValue(fpComm,win->Value);			ON_IO_ERROR(fpComm,badio);
 			} else {
-				SendPacketClass(fpComm,GL_NOT);
+				SendPacketClass(fpComm,GL_NOT);			ON_IO_ERROR(fpComm,badio);
 			}
 			break;
 		  default:
-			SendPacketClass(fpComm,GL_NOT);
+			SendPacketClass(fpComm,GL_NOT);				ON_IO_ERROR(fpComm,badio);
 			break;
 		}
 		win->PutType = SCREEN_NULL;
-		fflush(fpComm);
 	}
+	rc = TRUE;
+  badio:
+	if		(  !rc  )	longjmp(envSendWindow,1);
 dbgmsg("<SendWindow");
 }
 
-static	void
+static	Bool
 SendScreenAll(
-	FILE		*fpComm,
+	NETFILE		*fpComm,
 	ScreenData	*scr)
 {
+	Bool	rc;
 dbgmsg(">SendScreenAll");
-	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,fpComm);
+	rc = FALSE;
+	if		(  setjmp(envSendWindow)  ==  0  ) {
+		g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,fpComm);
+	} else {
+		goto	badio;
+	}
 	if		(	(  *scr->window  !=  0  )
 			&&	(  *scr->widget  !=  0  ) ) {
-		SendPacketClass(fpComm,GL_FocusName);
-		SendString(fpComm,scr->window);
-		SendString(fpComm,scr->widget);
+		SendPacketClass(fpComm,GL_FocusName);	ON_IO_ERROR(fpComm,badio);
+		SendString(fpComm,scr->window);			ON_IO_ERROR(fpComm,badio);
+		SendString(fpComm,scr->widget);			ON_IO_ERROR(fpComm,badio);
 	}
-	SendPacketClass(fpComm,GL_END);
+	SendPacketClass(fpComm,GL_END);			ON_IO_ERROR(fpComm,badio);
+	rc = TRUE;
+  badio:
 dbgmsg("<SendScreenAll");
+	return	(rc); 
 }
 
 static	Bool
 SendScreenData(
-	FILE		*fpComm,
+	NETFILE		*fpComm,
 	ScreenData	*scr)
 {
 	Bool	rc;
@@ -273,12 +312,11 @@ dbgmsg(">SendScreenData");
 	if		(  RecvPacketClass(fpComm)  ==  GL_GetData  ) {
 		if		(  RecvInt(fpComm)  ==  0  ) {	/*	get all data	*/
 			dbgmsg("get all data");
-			SendScreenAll(fpComm,scr);
-			fflush(fpComm);
+			rc = SendScreenAll(fpComm,scr);
 		} else {
+			rc = TRUE;
 			dbgmsg("get partial");
 		}
-		rc = TRUE;
 	} else {
 		rc = FALSE;
 	}
@@ -286,9 +324,9 @@ dbgmsg("<SendScreenData");
 	return	(rc);
 }
 
-static	void
+static	Bool
 RecvScreenData(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	int		c;
@@ -302,39 +340,44 @@ RecvScreenData(
 	WindowData	*win;
 	ValueStruct	*value;
 	PacketDataType	type;
+	Bool		rc;
 
+dbgmsg(">RecvScreenData");
+	rc = FALSE;
 	while	(  RecvPacketClass(fpComm)  ==  GL_WindowName  ) {
-		RecvString(fpComm,wname);
+		ON_IO_ERROR(fpComm,badio);
+		RecvString(fpComm,wname);	ON_IO_ERROR(fpComm,badio);
 		win = g_hash_table_lookup(scr->Windows,wname);
 		while	(  ( c = RecvPacketClass(fpComm) )  ==  GL_ScreenData  ) {
-			RecvString(fpComm,name);
+			ON_IO_ERROR(fpComm,badio);
+			RecvString(fpComm,name);		ON_IO_ERROR(fpComm,badio);
 			value = GetItemLongName(win->Value,name+strlen(wname)+1);
 			value->fUpdate = TRUE;
-			type = RecvDataType(fpComm);
+			type = RecvDataType(fpComm);	ON_IO_ERROR(fpComm,badio);
 			switch	(type)	{
 			  case	GL_TYPE_CHAR:
 			  case	GL_TYPE_VARCHAR:
 			  case	GL_TYPE_DBCODE:
 			  case	GL_TYPE_TEXT:
-				RecvString(fpComm,str);
+				RecvString(fpComm,str);		ON_IO_ERROR(fpComm,badio);
 				SetValueString(value,str);
 				break;
 			  case	GL_TYPE_NUMBER:
-				xval = RecvFixed(fpComm);
+				xval = RecvFixed(fpComm);	ON_IO_ERROR(fpComm,badio);
 				SetValueFixed(value,xval);
 				xfree(xval->sval);
 				xfree(xval);
 				break;
 			  case	GL_TYPE_INT:
-				ival = RecvInt(fpComm);
+				ival = RecvInt(fpComm);		ON_IO_ERROR(fpComm,badio);
 				SetValueInteger(value,ival);
 				break;
 			  case	GL_TYPE_FLOAT:
-				fval = RecvFloat(fpComm);
+				fval = RecvFloat(fpComm);	ON_IO_ERROR(fpComm,badio);
 				SetValueFloat(value,fval);
 				break;
 			  case	GL_TYPE_BOOL:
-				bval = RecvBool(fpComm);
+				bval = RecvBool(fpComm);	ON_IO_ERROR(fpComm,badio);
 				SetValueBool(value,bval);
 				break;
 			  default:
@@ -342,11 +385,15 @@ RecvScreenData(
 			}
 		}
 	}
+	rc = TRUE;
+  badio:
+dbgmsg("<RecvScreenData");
+	return	(rc);
 }
 
 static	Bool
 SendScreen(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	Bool	ret;
@@ -358,9 +405,30 @@ dbgmsg("<SendScreen");
 	return	(ret);
 }
 
+#ifdef	USE_SSL
+static	Bool
+ThisAuth(
+	char	*user,
+	char	*pass,
+	char	*other)
+{
+	Bool	ret;
+
+	if		(	(  fSsl     )
+			&&	(  fVerify  ) ) {
+		ret = TRUE;
+	} else {
+		ret = AuthUser(user,pass,other);
+	}
+	return	(ret);
+}
+#else
+#define	ThisAuth(user,pass,other)	AuthUser((user),(pass),(other))
+#endif
+
 static	Bool
 MainLoop(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	Bool	ret;
@@ -368,43 +436,54 @@ MainLoop(
 	PacketClass	klass;
 	char	pass[SIZE_PASS+1];
 	char	ver[SIZE_NAME+1];
+	char	msg[SIZE_BUFF];
 
 dbgmsg(">MainLoop");
-	klass = RecvPacketClass(fpComm); 
-	if		(  klass  !=  GL_Null  ) {
+	klass = RecvPacketClass(fpComm); ON_IO_ERROR(fpComm,badio);
 #ifdef	TRACE
-		printf("class = %d\n",(int)klass);
+	printf("class = %d\n",(int)klass);
 #endif
+	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
 		  case	GL_Connect:
-			RecvString(fpComm,ver);
-			RecvString(fpComm,scr->user);
-			RecvString(fpComm,pass);
-			RecvString(fpComm,scr->cmd);
+			RecvString(fpComm,ver);			ON_IO_ERROR(fpComm,badio);
+			RecvString(fpComm,scr->user);	ON_IO_ERROR(fpComm,badio);
+			RecvString(fpComm,pass);		ON_IO_ERROR(fpComm,badio);
+			RecvString(fpComm,scr->cmd);	ON_IO_ERROR(fpComm,badio);
+			sprintf(msg,"[%s:%s] session start",scr->term,scr->user);
+			Message(MESSAGE_LOG,msg);
+#if	0
+			strcpy(ver,VERSION);
+#endif
 			if		(  strcmp(ver,VERSION)  ) {
-				SendPacketClass(fpComm,GL_E_VERSION);
+				SendPacketClass(fpComm,GL_E_VERSION);	ON_IO_ERROR(fpComm,badio);
 				g_warning("reject client(invalid version)");
 			} else
-			if		(  AuthUser(scr->user,pass,scr->other)  ) {
+			if		(  ThisAuth(scr->user,pass,scr->other)  ) {
 				scr->Windows = NULL;
 				ApplicationsCall(APL_SESSION_LINK,scr);
 				if		(  scr->status  ==  APL_SESSION_NULL  ) {
-					SendPacketClass(fpComm,GL_E_APPL);
+					SendPacketClass(fpComm,GL_E_APPL);	ON_IO_ERROR(fpComm,badio);
 				} else {
-					SendPacketClass(fpComm,GL_OK);
+					SendPacketClass(fpComm,GL_OK);		ON_IO_ERROR(fpComm,badio);
 					CheckScreens(fpComm,scr);
 				}
 			} else {
 				g_warning("reject client(authentication error)");
-				SendPacketClass(fpComm,GL_E_AUTH);
+				SendPacketClass(fpComm,GL_E_AUTH);		ON_IO_ERROR(fpComm,badio);
 			}
-			fflush(fpComm);
+			break;
+		  case	GL_Name:
+			RecvString(fpComm,scr->term);		ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Event:
-			RecvString(fpComm,scr->window);
-			RecvString(fpComm,scr->widget);
-			RecvString(fpComm,scr->event);
-			RecvScreenData(fpComm,scr);
+			RecvString(fpComm,scr->window);		ON_IO_ERROR(fpComm,badio);
+			RecvString(fpComm,scr->widget);		ON_IO_ERROR(fpComm,badio);
+			RecvString(fpComm,scr->event);		ON_IO_ERROR(fpComm,badio);
+#ifdef	TRACE
+			printf("event = [%s]\n",scr->event);
+#endif
+			RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
 			ApplicationsCall(APL_SESSION_GET,scr);
 			break;
 		  case	GL_ScreenData:
@@ -434,7 +513,9 @@ dbgmsg(">MainLoop");
 			break;
 		}
 	} else {
+	  badio:
 		ret = FALSE;
+		dbgmsg("Connection lost");
 	}
 
 dbgmsg("<MainLoop");
@@ -445,53 +526,75 @@ extern	void
 ExecuteServer(void)
 {
 	int		pid;
-	int		fh
-	,		_fh;
-	FILE	*fpComm;
+	int		fd
+	,		_fd;
+	NETFILE	*fpComm;
 	ScreenData	*scr;
-
-
+#ifdef	USE_SSL
+	SSL_CTX	*ctx;
+#endif
+dbgmsg(">ExecureServer");
 	signal(SIGCHLD,SIG_IGN);
 
-	_fh = InitServerPort(PortNumber,Back);
+	_fd = InitServerPort(PortNumber,Back);
+#ifdef	USE_SSL
+	ctx = NULL;
+	if		(  fSsl  ) {
+		if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
+				   ==  NULL  ) {
+			fprintf(stderr,"CTX make error\n");
+			exit(1);
+		}
+	}
+#endif
 	while	(TRUE)	{
-		if		(  ( fh = accept(_fh,0,0) )  <  0  )	{
-			printf("_fh = %d\n",_fh);
+		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
+			printf("_fd = %d\n",_fd);
 			Error("INET Domain Accept");
 		}
 
 		if		(  ( pid = fork() )  >  0  )	{	/*	parent	*/
-			close(fh);
+			close(fd);
 		} else
 		if		(  pid  ==  0  )	{	/*	child	*/
-			if		(  ( fpComm = fdopen(fh,"w+") )  ==  NULL  ) {
-				close(fh);
-				exit(1);
+#ifdef	USE_SSL
+			if		(  fSsl  ) {
+				fpComm = MakeSSL_Net(ctx,fd);
+				SSL_accept(NETFILE_SSL(fpComm));
+			} else {
+				fpComm = SocketToNet(fd);
 			}
-			close(_fh);
+#else
+			fpComm = SocketToNet(fd);
+#endif
+			close(_fd);
 			scr = InitSession();
-			strcpy(scr->term,TermName(fh));
+			strcpy(scr->term,TermName(fd));
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
-			fclose(fpComm);
-			shutdown(fh, 2);
+			CloseNet(fpComm);
 			exit(0);
 		}
 	}
+dbgmsg("<ExecureServer");
 }
 
 static	void
 InitData(void)
 {
 dbgmsg(">InitData");
+	DD_ParserInit();
 dbgmsg("<InitData");
 }
 
 extern	void
-InitSystem(void)
+InitSystem(
+	int		argc,
+	char	**argv)
 {
 dbgmsg(">InitSystem");
+	InitNET();
 	InitData();
-	ApplicationsInit();
+	ApplicationsInit(argc,argv);
 dbgmsg("<InitSystem");
 }

@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -31,27 +31,33 @@ copies.
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<ctype.h>
+#include	<string.h>
 #include	<signal.h>
-#include    <sys/types.h>
-#include    <sys/socket.h>
+#include	<dlfcn.h>
 #include	<fcntl.h>
+#include    <sys/types.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<glib.h>
 
+#include	"defaults.h"
 #include	"types.h"
-#include	"enum.h"
 #include	"misc.h"
 #include	"tcp.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"glterm.h"
+#include	"load.h"
 #include	"applications.h"
-#include	"driver.h"
 #include	"debug.h"
 
-static	GHashTable	*ApplicationTable;
+typedef	void	(*APL_INIT)(int, char **);
 
-extern	void
+static	GHashTable	*ApplicationTable;
+static	int			Argc;
+static	char		**Argv;
+static	char		*MONPS_LoadPath;
+
+static	ApplicationStruct	*
 ApplicationsRegist(
 	char	*name,
 	APL_FUNC	link,
@@ -60,7 +66,7 @@ ApplicationsRegist(
 	ApplicationStruct	*func;
 
 dbgmsg(">ApplicationsRegist");
-	if		(  g_hash_table_lookup(ApplicationTable,name)  ==  NULL  ) {
+	if		(  ( func = g_hash_table_lookup(ApplicationTable,name) )  ==  NULL  ) {
 		func = New(ApplicationStruct); 
 		func->name = StrDup(name);
 		func->main = main;
@@ -68,21 +74,42 @@ dbgmsg(">ApplicationsRegist");
 		g_hash_table_insert(ApplicationTable,name,func);
 	}
 dbgmsg("<ApplicationsRegist");
+	return	(func); 
 }
 
-#ifdef	DEBUG
-static	void
-DumpWindow(
-	gpointer	key,
-	gpointer	value,
-	gpointer	user_data)
+static	ApplicationStruct	*
+ApplicationLoad(
+	char	*name)
 {
-	WindowData	*win = (WindowData *)value;
+	char		funcname[SIZE_BUFF]
+	,			filename[SIZE_BUFF];
+	APL_FUNC	f_link
+	,			f_main;
+	APL_INIT	f_init;
+	void		*handle;
+	ApplicationStruct	*func;
 
-	printf("Window = [%s]\n",(char *)key);
-	DumpValueStruct(win->Value);
+dbgmsg(">ApplicationLoad");
+	if		(  ( func = (ApplicationStruct *)g_hash_table_lookup(ApplicationTable,name) )
+			   ==  NULL  ) {
+		sprintf(filename,"%s.so",name);
+		if		(  ( handle = LoadFile(MONPS_LoadPath,filename) )  !=  NULL  ) {
+			sprintf(funcname,"%sInit",name);
+			if		(  ( f_init = (APL_INIT)dlsym(handle,funcname) )  !=  NULL  ) {
+				f_init(Argc,Argv);
+			}
+			sprintf(funcname,"%sLink",name);
+			f_link = dlsym(handle,funcname);
+			sprintf(funcname,"%sMain",name);
+			f_main = dlsym(handle,funcname);
+			func = ApplicationsRegist(name,f_link,f_main);
+		} else {
+			fprintf(stderr,"[%s] not found.\n",name);
+		}
+	}
+dbgmsg("<ApplicationLoad");
+	return	(func);
 }
-#endif
 
 extern	void
 ApplicationsCall(
@@ -108,8 +135,11 @@ dbgmsg(">ApplicationsCall");
 	*q = 0;
 	p ++;
 	while	(  *p && isspace(*p)  )	p ++;
-	if		(  ( apl = (ApplicationStruct *)g_hash_table_lookup(ApplicationTable,name) )
-			   !=  NULL  ) {
+	apl = ApplicationLoad(name);
+	if		(  apl  ==  NULL  ) {
+		fprintf(stderr,"application not found [%s]\n",ThisScreen->cmd);
+		scr->status = APL_SESSION_NULL;
+	} else {
 		switch	(sts) {
 		  case	APL_SESSION_LINK:
 			apl->link(p);
@@ -121,9 +151,6 @@ dbgmsg(">ApplicationsCall");
 			fprintf(stderr,"invalid status [%s] %d\n",name,sts);
 			break;
 		}
-	} else {
-		fprintf(stderr,"application not found [%s]\n",ThisScreen->cmd);
-		scr->status = APL_SESSION_NULL;
 	}
 #if	0
 	if		(  scr->Windows  !=  NULL  ) { 
@@ -135,19 +162,18 @@ dbgmsg(">ApplicationsCall");
 dbgmsg("<ApplicationsCall");
 }
 
-#include	"pandaIO.h"
-#include	"demo.h"
-
 extern	void
-ApplicationsInit(void)
+ApplicationsInit(
+	int		argc,
+	char	**argv)
 {
 dbgmsg(">ApplicationsInit");
+	Argc = argc; 
+	Argv = argv;
+
 	ApplicationTable = NewNameHash();
-	DemoInit();
-	Demo2Init();
-	Demo3Init();
-	Demo4Init();
-	PandaIO_Init();
+	if		(  ( MONPS_LoadPath = getenv("MONPS_LOAD_PATH") )  ==  NULL  ) {
+		MONPS_LoadPath = MONTSUQI_LOAD_PATH;
+	}
 dbgmsg("<ApplicationsInit");
 }
-

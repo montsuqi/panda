@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -23,9 +23,9 @@ copies.
 #define	_APS_H
 #include	"const.h"
 #include	"enum.h"
-#include	"value.h"
+#include	"libmondai.h"
+#include	"net.h"
 #include	"LDparser.h"
-#include	"wfc.h"
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -38,10 +38,11 @@ GLOBAL	char	*PortNumber;
 GLOBAL	char	*WfcPortNumber;
 GLOBAL	char	*WFC_Host;
 GLOBAL	int		Back;
+GLOBAL	int		ApsId;
 
 
-extern	void	InitAPSIO(void);
-extern	Bool	GetWFC(FILE *fpWFC, ProcessNode *node);
-extern	void	PutWFC(FILE *fpWFC, ProcessNode *node);
+extern	void	InitAPSIO(NETFILE *fpWFC);
+extern	Bool	GetWFC(NETFILE *fpWFC, ProcessNode *node);
+extern	void	PutWFC(NETFILE *fpWFC, ProcessNode *node);
 
 #endif

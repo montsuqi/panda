@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -44,19 +44,23 @@ copies.
 #include	"enum.h"
 #include	"dirs.h"
 #include	"tcp.h"
+#include	"net.h"
 #include	"comm.h"
 #include	"directory.h"
-#include	"queue.h"
-#include	"dbgroup.h"
+#include	"dblib.h"
 #include	"handler.h"
+#include	"wfc.h"
 #include	"apsio.h"
 #include	"handler.h"
 #include	"aps_main.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	Bool	fConnect;
 static	sigset_t	hupset;
+static	int		MaxTran;
+static	int		Sleep;
 
 static	void
 InitSystem(
@@ -69,7 +73,7 @@ dbgmsg(">InitSystem");
 	sigaddset(&hupset,SIGHUP);
 	pthread_sigmask(SIG_BLOCK,&hupset,NULL);
 
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,name,"","");
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		fprintf(stderr,"LD \"%s\" not found.\n",name);
@@ -81,6 +85,7 @@ dbgmsg(">InitSystem");
 
 	InitiateHandler();
 	ThisDB = ThisLD->db;
+	TextSize = ThisLD->textsize;
 
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 		InitializeValue(ThisLD->window[i]->value);
@@ -105,6 +110,8 @@ dbgmsg(">MakeProcessNode");
 	node->linkrec = ThisEnv->linkrec;
 	node->sparec = ThisLD->sparec;
 	node->cWindow = ThisLD->cWindow;
+	node->whash = ThisLD->whash;
+	node->textsize = ThisLD->textsize;
 	node->scrrec = (ValueStruct **)xmalloc(sizeof(ValueStruct *) * node->cWindow);
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		node->scrrec[i] = ThisLD->window[i]->value;
@@ -125,6 +132,7 @@ FinishSession(
 	ProcessNode	*node)
 {
 dbgmsg(">FinishSession");
+	xfree(node->scrrec); 
 	xfree(node);
 dbgmsg("<FinishSession");
 }
@@ -135,11 +143,12 @@ ExecuteDC(
 {
 	int		fhWFC
 	,		_fh;
-	FILE	*fpWFC;
+	NETFILE	*fpWFC;
 
 	ProcessNode	*node;
 	WindowBind	*bind;
 	int		ix;
+	int		tran;
 
 dbgmsg(">ExecuteDC");
 	if		(  !fConnect  )	{
@@ -147,31 +156,40 @@ dbgmsg(">ExecuteDC");
 		if		(  ( fhWFC = accept(_fh,0,0) )  <  0  )	{
 			Error("INET Domain Accept");
 		}
-		fpWFC = fdopen(fhWFC,"w+");
+		fpWFC = SocketToNet(fhWFC);
 	} else {
 		if		(  WfcPortNumber  ==  NULL  ) {
-			WfcPortNumber = ThisLD->wfc->port;
+			if		(  ThisLD->wfc  !=  NULL  ) {
+				WfcPortNumber = ThisLD->wfc->port;
+			} else {
+				WfcPortNumber = ThisEnv->WfcApsPort->port;
+			}
 		}
 		if		(  WFC_Host  ==  NULL  ) {
-			WFC_Host = ThisLD->wfc->host;
+			if		(  ThisLD->wfc  !=  NULL  ) {
+				WFC_Host = ThisLD->wfc->host;
+			} else {
+				WFC_Host = ThisEnv->WfcApsPort->host;
+			}
 		}
-#if	0
+#ifdef	DEBUG
 		printf("%s:%s\n",WFC_Host,WfcPortNumber);
 #endif
 		if		(  ( fhWFC = ConnectSocket(WfcPortNumber,SOCK_STREAM,WFC_Host) )
 				   <  0  ) {
 			Error("WFC not ready");
 		}
-		fpWFC = fdopen(fhWFC,"w+");
+		fpWFC = SocketToNet(fhWFC);
 		SendString(fpWFC,ThisLD->name);
 		if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
 			Error("invalid LD name");
 		}
 	}
-	InitAPSIO();
+	InitAPSIO(fpWFC);
 
 	node = MakeProcessNode();
-	while	(TRUE) {
+	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
+						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)  )	break;
 #ifdef	DEBUG
 		printf("[%s]\n",ThisLD->name);
@@ -179,11 +197,11 @@ dbgmsg(">ExecuteDC");
 		if		(  ( ix = (int)g_hash_table_lookup(ThisLD->whash,
 												   ValueString(GetItemLongName(node->mcprec,"dc.window"))))  !=  0  ) {
 			bind = ThisLD->window[ix-1];
-			printf("module [%s]\n",bind->module);
 			if		(  bind->module  ==  NULL  )	break;
 			strcpy(ValueString(GetItemLongName(node->mcprec,"dc.module")),bind->module);
 			ExecDB_Function("DBSTART",NULL,NULL);
 			ExecuteProcess(node);
+			sleep(Sleep);
 			ExecDB_Function("DBCOMMIT",NULL,NULL);
 			PutWFC(fpWFC,node);
 		} else {
@@ -192,8 +210,7 @@ dbgmsg(">ExecuteDC");
 		}
 	}
 	printf("exiting DC_Thread\n");
-	fclose(fpWFC);
-	shutdown(fhWFC, 2);
+	CloseNet(fpWFC);
 	FinishSession(node);
 dbgmsg("<ExecuteDC");
 }
@@ -252,6 +269,14 @@ static	ARG_TABLE	option[] = {
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
 		"データベースのパスワード"						},
 
+	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
+		"apsの処理するトランザクション数を指定する"		},
+	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
+		"端末情報をキャッシュする端末数"				},
+
+	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
+		"実行時間に足す処理時間(for debug)"				},
+
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -270,6 +295,9 @@ SetDefault(void)
 	BD_Dir = NULL;
 	Directory = "./directory";
 	LibPath = NULL;
+	MaxTran = 0;
+	nCache = 0;
+	Sleep = 0;
 
 	DB_User = NULL;
 	DB_Pass = NULL;
@@ -286,13 +314,14 @@ main(
 	FILE_LIST	*fl;
 	int			rc;
 
-	(void)signal(SIGHUP,(void *)StopProcess);
-
 	SetDefault();
 	fl = GetOption(option,argc,argv);
+	InitMessage();
 
+	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
+		InitNET();
 		InitSystem(fl->name);
 		ExecuteServer();
 		StopProcess(0);

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002  Ogochan.
+Copyright (C) 2000-2003  Ogochan.
 
 This module is part of PANDA.
 
@@ -27,6 +27,7 @@ copies.
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+#include	<sys/types.h>
 #include	<pthread.h>
 #include	<stdio.h>
 #include	"queue.h"
@@ -41,6 +42,7 @@ NewQueue(void)
 	que = New(Queue);
 	que->head = NULL;
 	que->tail = NULL;
+	que->curr = NULL;
 	pthread_cond_init(&que->isdata,NULL);
 	pthread_mutex_init(&que->qlock,NULL);
 	return	(que);
@@ -56,7 +58,7 @@ EnQueue(
 dbgmsg(">EnQueue");
 	el = New(QueueElement);
 	el->data = data;
-	pthread_mutex_lock(&que->qlock);
+	LockQueue(que);
 	el->prev = que->tail;
 	el->next = NULL;
 	if		(  que->tail  ==  NULL  ) {
@@ -65,9 +67,19 @@ dbgmsg(">EnQueue");
 		que->tail->next = el;
 	}
 	que->tail = el;
-	pthread_mutex_unlock(&que->qlock);
-	pthread_cond_signal(&que->isdata);
+	UnLockQueue(que);
+	ReleaseQueue(que);
 dbgmsg("<EnQueue");
+}
+
+extern	void
+WaitQueue(
+	Queue	*que)
+{
+	while	(  que->head  ==  NULL  ) {
+		dbgmsg("wait");
+		pthread_cond_wait(&que->isdata,&que->qlock);
+	}
 }
 
 extern	void	*
@@ -78,11 +90,8 @@ DeQueue(
 	void			*ret;
 
 dbgmsg(">DeQueue");
-	pthread_mutex_lock(&que->qlock);
-	while	(  ( el = que->head )  ==  NULL  ) {
-		dbgmsg("wait");
-		pthread_cond_wait(&que->isdata,&que->qlock);
-	}
+	LockQueue(que);
+	WaitQueue(que);
 	el = que->head;
 	if		(  el->next  ==  NULL  ) {
 		que->tail = NULL;
@@ -91,9 +100,98 @@ dbgmsg(">DeQueue");
 	}
 	que->head = el->next;
 	ret = el->data;
-	pthread_mutex_unlock(&que->qlock);
+	UnLockQueue(que);
 	xfree(el);
 dbgmsg("<DeQueue");
+	return	(ret);
+}
+
+extern	void
+OpenQueue(
+	Queue	*que)
+{
+	LockQueue(que);
+	que->curr = NULL;
+}
+
+extern	void
+RewindQueue(
+	Queue	*que)
+{
+	que->curr = NULL;
+}
+
+extern	void	*
+GetElement(
+	Queue	*que)
+{
+	void	*data;
+
+	if		(  que->curr  ==  NULL  ) {
+		que->curr = que->head;
+	} else {
+		que->curr = que->curr->next;
+	}
+	if		(  que->curr  !=  NULL  ) {
+		data = que->curr->data;
+	} else {
+		data = NULL;
+	}
+	return	(data);
+}
+
+extern	void
+CloseQueue(
+	Queue	*que)
+{
+	que->curr = NULL;
+	UnLockQueue(que);
+}
+
+extern	void	*
+WithdrawQueue(
+	Queue	*que)
+{
+	QueueElement	*el;
+	void			*ret;
+
+dbgmsg(">WithdrawQueue");
+	el = que->curr;
+	if		(  el->next  !=  NULL  ) {
+		el->next->prev = el->prev;
+	}
+	if		(  el->prev  !=  NULL  ) {
+		el->prev->next = el->next;
+	}
+	if		(  el  ==  que->tail  ) {
+		que->tail = el->prev;
+	}
+	if		(  el  ==  que->head  ) {
+		que->head = el->next;
+	}
+
+	ret = el->data;
+	xfree(el);
+dbgmsg("<WithdrawQueue");
+	return	(ret);
+}
+
+extern	void	*
+PeekQueue(
+	Queue	*que)
+{
+	QueueElement	*el;
+	void			*ret;
+
+dbgmsg(">PeekQueue");
+	pthread_mutex_lock(&que->qlock);
+	if		(  ( el = que->head )  ==  NULL  ) {
+		ret = NULL;
+	} else {
+		ret = el->data;
+	}
+	pthread_mutex_unlock(&que->qlock);
+dbgmsg("<PeekQueue");
 	return	(ret);
 }
 

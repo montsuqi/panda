@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -20,7 +20,7 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
+/*		
 #define	DEBUG
 #define	TRACE
 */
@@ -101,7 +101,7 @@ PopScreenStack(void)
 
 static	Bool
 RecvFile(
-	FILE	*fpC,
+	NETFILE	*fpC,
 	char	*name,
 	char	*fname)
 {
@@ -113,7 +113,6 @@ RecvFile(
 
 	SendPacketClass(fpC,GL_GetScreen);
 	SendString(fpC,name);
-	fflush(fpC);
 	if		(  RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		fp = Fopen(fname,"w");
 		left = (size_t)RecvLong(fpC);
@@ -123,7 +122,7 @@ RecvFile(
 			} else {
 				size = left;
 			}
-			size = fread(buff,1,size,fpC);
+			size = Recv(fpC,buff,size);
 			if		(  size  >  0  ) {
 				fwrite(buff,1,size,fp);
 				left -= size;
@@ -207,34 +206,33 @@ DestroyWindow(
 
 extern	void
 CheckScreens(
-	FILE		*fp,
+	NETFILE		*fp,
 	Bool		fInit)
 {	
-	char		sname[SIZE_NAME];
+	char		sname[SIZE_BUFF];
 	char		*fname;
 	struct	stat	stbuf;
-	time_t		st_mtime
-	,			st_ctime;
-	off_t		st_size;
+	time_t		stmtime
+	,			stctime;
+	off_t		stsize;
 
 dbgmsg(">CheckScreens");
 	while		(  RecvPacketClass(fp)  ==  GL_QueryScreen  ) {
 		RecvString(fp,sname);
-		st_size = (off_t)RecvLong(fp);
-		st_mtime = (time_t)RecvLong(fp);
-		st_ctime = (time_t)RecvLong(fp);
+		stsize = (off_t)RecvLong(fp);
+		stmtime = (time_t)RecvLong(fp);
+		stctime = (time_t)RecvLong(fp);
 		fname = CacheFileName(sname);
 
-		if		(	(  stat(fname,&stbuf)  !=  0         )
-				 ||	(  stbuf.st_mtime      <   st_mtime  )
-				 ||	(  stbuf.st_ctime      <   st_ctime  )
-				 ||	(  stbuf.st_size       !=  st_size   ) ) {
+		if		(	(  stat(fname,&stbuf)  !=  0        )
+				 ||	(  stbuf.st_mtime      <   stmtime  )
+				 ||	(  stbuf.st_ctime      <   stctime  )
+				 ||	(  stbuf.st_size       !=  stsize   ) ) {
 			RecvFile(fp, sname, fname);
 			/* Clear cache */
 			DestroyWindow(sname);
 		} else {
 			SendPacketClass(fp, GL_NOT);
-			fflush(fp);
 		}
 		if		(  fInit  ) {
 			ShowWindow(sname,SCREEN_NEW_WINDOW);
@@ -247,7 +245,7 @@ dbgmsg("<CheckScreens");
 extern	Bool
 RecvWidgetData(
 	GtkWidget	*widget,
-	FILE		*fp)
+	NETFILE		*fp)
 {
 	HandlerNode	*node;
 	RecvHandler	rfunc;
@@ -265,11 +263,11 @@ dbgmsg("<RecvWidgetData");
 	return	(ret);
 }
 
-extern	Bool
+static	Bool
 SendWidgetData(
 	char		*name,
 	GtkWidget	*widget,
-	FILE		*fp)
+	NETFILE		*fp)
 {
 	HandlerNode	*node;
 	SendHandler	sfunc;
@@ -289,10 +287,10 @@ dbgmsg("<SendWidgetData");
 
 static	void
 RecvValueSkip(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	PacketDataType	type;
-	char			name[SIZE_NAME+1];
+	char			name[SIZE_BUFF];
 	char			buff[SIZE_BUFF];
 	int				count
 	,				i;
@@ -332,7 +330,7 @@ RecvValueSkip(
 
 extern	void
 RecvValue(
-	FILE		*fp,
+	NETFILE		*fp,
 	char		*longname)
 {
 	GtkWidget		*widget;
@@ -340,26 +338,57 @@ RecvValue(
 	PacketDataType	type;
 	int				count
 	,				i;
-	char			name[SIZE_NAME+1];
+	char			name[SIZE_BUFF]
+	,				*dataname;
+	Bool			fDone;
 
 dbgmsg(">RecvValue");
 #ifdef	TRACE
-	printf("WidgetName = [%s]\n",WidgetName);
+	printf("WidgetName = [%s]",WidgetName);
 #endif
-	if		(	(  ThisXML  !=  NULL  )
-			&&	(  ( widget = glade_xml_get_widget_by_long_name(ThisXML,WidgetName) )
-			   !=  NULL  ) ) {
-		if		(  RecvWidgetData(widget,fp)  ) {
-			fTrace = FALSE;
-		} else {
+	if		(  ThisXML  !=  NULL  ) {
+		fDone = FALSE;
+		fTrace = TRUE;
+		if		(  Protocol1  ) {
+			if		(  ( widget = glade_xml_get_widget_by_long_name(ThisXML,WidgetName) )
+					   !=  NULL  ) {
+				if		(  RecvWidgetData(widget,fp)  ) {
+					fTrace = FALSE;
+				}
+				fDone = TRUE;
+			} else {
+				if		(  !Protocol2  ) {
+					fTrace = FALSE;	/*	fatal error	*/
+					fDone = TRUE;
+					RecvValueSkip(fp);
+				}
+			}
+		}
+		if		(  Protocol2  ) {
+			if		(  !fDone  ) {
+				if		(  ( dataname = strchr(WidgetName,'.') )  !=  NULL  ) {
+					dataname ++;
+				}
+				if		(  ( widget = glade_xml_get_widget(ThisXML,dataname) )
+						   !=  NULL  ) {
+					if		(  RecvWidgetData(widget,fp)  ) {
+						fTrace = FALSE;
+					}
+					fDone = TRUE;
+				}
+			}
+		}
+		if		(  !fDone  ) {
 			fTrace = TRUE;
 		}
 	} else {
 		fTrace = FALSE;	/*	fatal error	*/
 		RecvValueSkip(fp);
 	}
-
 	if		(  fTrace  ) {
+#ifdef	TRACE
+		printf("-\n");
+#endif
 		type = RecvDataType(fp);
 		switch	(type) {
 		  case	GL_TYPE_RECORD:
@@ -370,9 +399,22 @@ dbgmsg(">RecvValue");
 				RecvValue(fp,longname + strlen(name) + 1);
 			}
 			break;
+		  case	GL_TYPE_ARRAY:
+			count = RecvInt(fp);
+			for	(  i = 0 ; i < count ; i ++ ) {
+				sprintf(name,"[%d]",i);
+				sprintf(longname,"%s",name);
+				RecvValue(fp,longname + strlen(name));
+			}
+			break;
 		  default:
+			RecvValueSkip(fp);
 			break;
 		}
+#ifdef	TRACE
+	} else {
+		printf("+\n");
+#endif
 	}
 dbgmsg("<RecvValue");
 }
@@ -410,10 +452,10 @@ ResetTimer(
 
 extern	Bool
 GetScreenData(
-	FILE		*fp)
+	NETFILE		*fp)
 {
-	char		window[SIZE_NAME+1]
-	,			widgetName[SIZE_NAME+1];
+	char		window[SIZE_BUFF]
+	,			widgetName[SIZE_BUFF];
 	PacketClass	c;
 	Bool		fCancel;
 	int			type;
@@ -425,8 +467,8 @@ dbgmsg(">GetScreenData");
 	CheckScreens(fp,FALSE);	 
 	SendPacketClass(fp,GL_GetData);
 	SendLong(fp,0);					/*	get all data	*/
-	fflush(fp);
 	fCancel = FALSE;
+dbgmsg("*");
 	while	(  ( c = RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		RecvString(fp,window);
 		switch( type = RecvInt(fpComm) ) {
@@ -467,6 +509,7 @@ dbgmsg(">GetScreenData");
 			/*	fatal error	*/
 		}
 	}
+dbgmsg("**");
 	if		(  c  ==  GL_FocusName  ) {
 		RecvString(fp,window);
 		RecvString(fp,widgetName);
@@ -479,6 +522,7 @@ dbgmsg(">GetScreenData");
 		c = RecvPacketClass(fp);
 	}
 	/* reset GtkPandaTimer if exists */
+dbgmsg("***");
 	if		(  ( node = g_hash_table_lookup(WindowTable,window) )  !=  NULL  ) {
 		ResetTimer(node->window);
 	}
@@ -489,7 +533,7 @@ dbgmsg("<GetScreenData");
 
 extern	Bool
 SendConnect(
-	FILE		*fp,
+	NETFILE		*fp,
 	char		*apl)
 {
 	Bool	rc;
@@ -501,7 +545,6 @@ dbgmsg(">SendConnect");
 	SendString(fp,User);
 	SendString(fp,Pass);
 	SendString(fp,apl);
-	fflush(fp);
 	if		(  ( pc = RecvPacketClass(fp) )   ==  GL_OK  ) {
 		rc = TRUE;
 	} else {
@@ -531,17 +574,21 @@ dbgmsg("<SendConnect");
 
 extern	void
 SendEvent(
-	FILE		*fp,
+	NETFILE		*fp,
 	char		*window,
 	char		*widget,
 	char		*event)
 {
 dbgmsg(">SendEvent");
+#ifdef	DEBUG
+	printf("window = [%s]\n",window); 
+	printf("widget = [%s]\n",widget); 
+	printf("event  = [%s]\n",event); 
+#endif
 	SendPacketClass(fp,GL_Event);
-	SendString(fp,(char *)window);
-	SendString(fp,(char *)widget);
-	SendString(fp,(char *)event);
-	fflush(fp);
+	SendString(fp,window);
+	SendString(fp,widget);
+	SendString(fp,event);
 dbgmsg("<SendEvent");
 }
 
@@ -607,6 +654,5 @@ SendWindowData(void)
 {
 	g_hash_table_foreach(WindowTable,(GHFunc)_SendWindowData,NULL);
 	SendPacketClass(fpComm,GL_END);
-	fflush(fpComm);
 	ClearWindowTable();
 }

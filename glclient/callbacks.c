@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -44,7 +44,7 @@ copies.
 
 #include	"callbacks.h"
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"comm.h"
 #include	"glclient.h"
@@ -193,6 +193,7 @@ send_event(
 	GdkWindowAttr	attr;
 	static int	ignore_event = FALSE;
 
+dbgmsg(">send_event");
 	memset (&attr, 0, sizeof (GdkWindowAttr));
 	attr.wclass = GDK_INPUT_ONLY;
 	attr.window_type = GDK_WINDOW_CHILD;
@@ -200,7 +201,6 @@ send_event(
 	attr.x = attr.y = 0;
 	attr.width = attr.height = 32767;
 
-dbgmsg(">send_event");
 	if		(  !fInRecv  &&  !ignore_event ) {
 		/* remove timer */
 		if (timeout_hander_id != 0) {
@@ -282,6 +282,8 @@ send_event_when_idle(
 	if (timeout > 0) {
 		timeout_event = event;
 		timeout_hander_id = gtk_timeout_add (timeout, send_event_if_kana, widget);
+	} else {
+		entry_changed (widget, event);
 	}
 }
 
@@ -433,7 +435,7 @@ day_selected(
 	gpointer	user_data)
 {
 	UpdateWidget((GtkWidget *)widget,user_data);
-#if	0
+#ifdef	DEBUG
 	printf("%d\n",(int)user_data);
 	printf("year = %d\n",widget->year);
 	printf("month = %d\n",widget->month+1);

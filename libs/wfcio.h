@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -23,7 +23,9 @@ copies.
 #define	_WFCIO_H
 #include	"const.h"
 #include	"enum.h"
+#include	"driver.h"
 #include	"wfc.h"
+#include	"net.h"
 
 #ifndef	PacketClass
 #define	PacketClass		unsigned char
@@ -46,11 +48,11 @@ copies.
 #define	GLOBAL		extern
 #endif
 
-extern	FILE	*ConnectTermServer(char *url, char *term, char *user, Bool fKeep, char *arg);
-extern	Bool	SendTermServer(FILE *fp, char *window, char *widget, char *event,
+extern	NETFILE	*ConnectTermServer(char *url, char *term, char *user, Bool fKeep, char *arg);
+extern	Bool	SendTermServer(NETFILE *fp, char *window, char *widget, char *event,
 							   ValueStruct *value);
-extern	Bool	RecvTermServerHeader(FILE *fp, char *window, char *widget,
+extern	Bool	RecvTermServerHeader(NETFILE *fp, char *window, char *widget,
 									 int *type, CloseWindows *cls);
-extern	void	RecvTermServerData(FILE *fp, WindowData *win);
+extern	void	RecvTermServerData(NETFILE *fp, WindowData *win);
 
 #endif

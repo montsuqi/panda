@@ -25,8 +25,8 @@ SPAAREA:	$(SPAREC)
 DB-META:	$(METAREC)
 	$(COPYGEN) -prefix meta- -dbrec -ld $(LDNAME) $(METAREC) > DB-META
 
-SCRAREA.SE:	$(DIRECTORY) $(LINKREC) $(SPAREC) $(SCRREC)
-	$(COPYGEN) -ld $(LDNAME) -spa -ctrl -linkage -screen > SCRAREA.SE
+SCRAREA.SE:	$(DIRECTORY) $(SCRREC) $(LDFILE)
+	$(COPYGEN) -ld $(LDNAME) -screen -name scrarea > SCRAREA.SE
 
 MCPAREA: $(DIRECTORY)
 	$(COPYGEN) -mcp  > MCPAREA

@@ -186,8 +186,13 @@ class	Widget
 	end
 	def	isData
 		case	@klass
-		  when	"GtkLabel", "GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkPandaCList"
+		  when	"GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkCList", "GtkPandaCList"
 			ret = TRUE;
+		  when  "GtkLabel"
+		  	if	@label == "" or
+				@label =~ /X+/
+			  ret = TRUE;
+			end
 		  else
 			if	@child
 				for	c in @child
@@ -208,7 +213,7 @@ class	Widget
 			for	c in @child
 				c._panda(ind);
 			end
-		  when	"GtkVBox", "GtkHBox", "GtkFixed", "GtkScrolledWindow", "GtkWindow", "GtkViewport", "GtkNotebook"
+		  when	"GtkVBox", "GtkHBox", "GtkTable", "GtkFixed", "GtkScrolledWindow", "GtkWindow", "GtkViewport", "GtkNotebook", "GtkFrame", "GtkHandleBox", "GtkMenuBar", "GtkToolbar"
 			if	self.isData
 				putTab(ind);
 				printf("%s\t{\n",vname);
@@ -256,7 +261,6 @@ class	Widget
 				c._panda(ind+1);
 				i += 1;
 			end
-
 			putTab(ind+1);
 			printf("count\tint;\n");
 			putTab(ind+1);
@@ -277,11 +281,16 @@ class	Widget
 			putTab(ind);
 			printf("};\n");
 		  when	"GtkLabel"
-			if		@label  ==  ""
+			if		@label  ==  "" or
+					@label  =~  /X+/
 				putTab(ind);
 				printf("%s\t{\n",vname);
 				putTab(ind+1);
-				printf("value\tvarchar(%d);\n",Integer(self.width)/8);
+				if	@label  ==  ""
+					printf("value\tvarchar(%d);\n",Integer(self.width)/8);
+				  else
+					printf("value\tvarchar(%d);\n",label.length);
+				end
 				putTab(ind);
 				printf("};\n");
 			end
@@ -303,10 +312,10 @@ class	Widget
 			putTab(ind);
 			printf("%s\t{\n",vname);
 			putTab(ind+1);
-			len = @format.gsub(".,","").length;
+			len = @format.tr(".,","").length;
 			s = @format.split(".");
 			if		s[1]  !=  nil
-				slen = s[1].gsub(",","").length;
+				slen = s[1].tr(",","").length;
 				printf("value\tnumber(%d,%d);\n",len,slen);
 			  else
 				printf("value\tnumber(%d);\n",len);
@@ -333,6 +342,13 @@ class	Widget
 				putTab(ind); 
 				printf("};\n"); 
 			end 
+		  when  "GtkProgressBar" 
+			putTab(ind); 
+			printf("%s\t{\n",vname); 
+			putTab(ind+1); 
+			printf("value\tint;\n"); 
+			putTab(ind); 
+			printf("};\n"); 
 		  when	"GtkCalendar"
 			putTab(ind);
 			printf("%s\t{\n",vname);

@@ -28,14 +28,15 @@
 
 (2) 認証サーバを起動する
 
-	$ cd ./glserver
+	$ cd ./auth
 	$  ./glauth &
 
 	あらかじめ、gluseraddでパスワードファイルは作っておくこと
 
 (3) アプリサーバを起動する
 
-	$ cd ./sample3
+	$ export APS_HANDLER_LOAD_PATH=.:~/panda/aps/.libs/
+	$ cd ./samples/sample3
 	$ ../aps/aps -db ORCA sample
 
 	OpenCOBOLを使う場合には、アプリサーバを起動する前に、
@@ -46,7 +47,7 @@
 
 (4) WFCを起動する
 
-	$ cd ./sample3
+	$ cd ./samples/sample3
 	$ ~/panda/wfc/wfc
 
 	(3) (4)を一気に、
@@ -57,7 +58,8 @@
 
 (5) glserverを起動する
 
-	$ cd ./sample3
+	$ export MONPS_LOAD_PATH=.:~/panda/libs/.libs/
+	$ cd ./samples/sample3
 	$ ~/panda/glserver/glserver
 
 (6) glclientを起動する
@@ -68,7 +70,7 @@
 
 (1) ソース
 
-  デモのソースは、./sample3にあります。このデモでは
+  デモのソースは、./samples/sample3にあります。このデモでは
 
 	SAMPLE1.CBL
 	ORCGH01.CBL
@@ -81,7 +83,7 @@
 
   を使います。
 
-  COPY句は適当に見て下さい。コンパイルするには、./sample3にて
+  COPY句は適当に見て下さい。コンパイルするには、./samples/sample3にて
 
 	$ make all
 
@@ -104,6 +106,23 @@
 
   起動パラメータを見るには、各プログラムを-?というパラメータを指定して起
 動して下さい。設定されているパラメータを表示して終了します。
+
+(4) 環境変数
+
+APS_HANDLER_LOAD_PATH
+
+	   APS言語ハンドラのある場所を指定します。言語ハンドラの拡張子は.so
+	です。
+
+MONPS_LOAD_PATH
+
+	  glserverのアプリケーションモジュールのある場所を指定します。wfc
+	にインターフェイスするモジュールはpandaという名称なので、panda.so
+	のある場所を指定します。
+
+COB_LIBRARY_PATH
+
+	  OpenCOBOLで書かれたアプリケーションの存在する場所を指定します。
 
 3. デモの内容
 

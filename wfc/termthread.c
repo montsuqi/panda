@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +42,8 @@ copies.
 #include	"enum.h"
 #include	"misc.h"
 
-#include	"value.h"
+#include	"libmondai.h"
+#include	"net.h"
 #include	"comm.h"
 #include	"tcp.h"
 #include	"queue.h"
@@ -52,6 +53,7 @@ copies.
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"driver.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	GHashTable	*TermHash;
@@ -74,6 +76,7 @@ dbgmsg(">MakeSessionData");
 	data->hdr = New(MessageHeader);
 	data->name = NULL;
 	memclear(data->hdr,sizeof(MessageHeader));
+	data->apsid = -1;
 dbgmsg("<MakeSessionData");
 	return	(data);
 }
@@ -83,7 +86,12 @@ FinishSession(
 	SessionData	*data)
 {
 	char	name[SIZE_NAME+1];
+	char	msg[SIZE_BUFF];
+	int		i;
+
 dbgmsg(">FinishSession");
+	sprintf(msg,"[%s:%s] session end",data->hdr->term,data->hdr->user);
+	Message(MESSAGE_LOG,msg);
 	xfree(data->hdr);
 	if		(  data->name  !=  NULL  ) {
 		strcpy(name,data->name);
@@ -92,18 +100,24 @@ dbgmsg(">FinishSession");
 	} else {
 		strcpy(name,"");
 	}
+	FreeLBS(data->mcpdata);
+	FreeLBS(data->spadata);
+	FreeLBS(data->linkdata);
+	for	( i = 0 ; i < data->cWindow ; i ++ ) {
+		FreeLBS(data->scrdata[i]);
+	}
 	xfree(data);
-	printf("session end [%s]\n",name);
 dbgmsg("<FinishSession");
 }
 
 static	SessionData	*
 InitSession(
-	FILE	*fp)
+	NETFILE	*fp)
 {
 	SessionData	*data;
 	char	buff[SIZE_NAME];
-	APS_Node	*aps;
+	char	msg[SIZE_NAME];
+	LD_Node	*ld;
 	int			i;
 
 dbgmsg(">InitSession");
@@ -113,106 +127,113 @@ dbgmsg(">InitSession");
 	} else {
 		data->fKeep = FALSE;
 	}
-	RecvString(fp,data->hdr->term);
-	RecvString(fp,data->hdr->user);
+	ON_IO_ERROR(fp,badio);
+	RecvString(fp,data->hdr->term);		ON_IO_ERROR(fp,badio);
+	RecvString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
+	sprintf(msg,"[%s:%s] session start",data->hdr->term,data->hdr->user);
+	Message(MESSAGE_LOG,msg);
 #ifdef	DEBUG
 	printf("term = [%s]\n",data->hdr->term);
 	printf("user = [%s]\n",data->hdr->user);
 #endif
-	RecvString(fp,buff);	/*	LD name	*/
-	if		(  ( aps = g_hash_table_lookup(APS_Hash,buff) )
-			   ==  NULL  ) {
-		printf("not found LD name = [%s]\n",buff);
-		SendPacketClass(fp,APS_NOT);
-		FinishSession(data);
-		data = NULL;
-	} else {
-		data->aps = aps;
+	RecvString(fp,buff);	/*	LD name	*/		ON_IO_ERROR(fp,badio);
+	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )
+			   !=  NULL  ) {
+		data->ld = ld;
 		data->mcpdata = NewLBS();
 		InitializeValue(ThisEnv->mcprec);
-		LBS_RequireSize(data->mcpdata,SizeValue(ThisEnv->mcprec,0,0),FALSE);
-		PackValue(data->mcpdata->body,ThisEnv->mcprec);
+		LBS_ReserveSize(data->mcpdata,NativeSizeValue(ThisEnv->mcprec,0,0),FALSE);
+		NativePackValue(data->mcpdata->body,ThisEnv->mcprec,0);
 		data->spadata = NewLBS();
-		InitializeValue(aps->ld->sparec);
-		LBS_RequireSize(data->spadata,SizeValue(aps->ld->sparec,0,0),FALSE);
-		PackValue(data->spadata->body,aps->ld->sparec);
+		InitializeValue(ld->info->sparec);
+		LBS_ReserveSize(data->spadata,NativeSizeValue(ld->info->sparec,0,0),FALSE);
+		NativePackValue(data->spadata->body,ld->info->sparec,0);
 		data->linkdata = NewLBS();
 		InitializeValue(ThisEnv->linkrec);
-		LBS_RequireSize(data->linkdata,SizeValue(ThisEnv->linkrec,0,0),FALSE);
-		PackValue(data->linkdata->body,ThisEnv->linkrec);
-		data->cWindow = aps->ld->cWindow;
+		LBS_ReserveSize(data->linkdata,NativeSizeValue(ThisEnv->linkrec,0,0),FALSE);
+		NativePackValue(data->linkdata->body,ThisEnv->linkrec,0);
+		data->cWindow = ld->info->cWindow;
 		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 													* data->cWindow);
 		for	( i = 0 ; i < data->cWindow ; i ++ ) {
 			data->scrdata[i] = NewLBS();
-			InitializeValue(data->aps->ld->window[i]->value);
-			LBS_RequireSize(data->scrdata[i],
-							SizeValue(aps->ld->window[i]->value,0,0),FALSE);
-			PackValue(data->scrdata[i]->body,aps->ld->window[i]->value);
+			InitializeValue(data->ld->info->window[i]->value);
+			LBS_ReserveSize(data->scrdata[i],
+							NativeSizeValue(ld->info->window[i]->value,0,0),FALSE);
+			NativePackValue(data->scrdata[i]->body,ld->info->window[i]->value,0);
 		}
 		data->name = StrDup(data->hdr->term);
 		g_hash_table_insert(TermHash,data->name,data);
 		data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 		data->hdr->puttype = TO_CHAR(0);
 		data->w.n = 0;
+	} else {
+		sprintf(msg,"[%s] session fail LD [%s] not found.",data->hdr->term,buff);
+		Message(MESSAGE_LOG,msg);
+	  badio:
+		SendPacketClass(fp,APS_NOT);
+		FinishSession(data);
+		data = NULL;
 	}
 dbgmsg("<InitSession");
 	return	(data);
 }
 
-static	APS_Node	*
+static	LD_Node	*
 ReadTerminal(
-	FILE		*fp,
+	NETFILE		*fp,
 	SessionData	*data)
 {
-	APS_Node	*aps;
+	LD_Node	*ld;
 	int			ix;
 
 dbgmsg(">ReadTerminal");
   top: 
+	ld = NULL; 
 	switch	(RecvPacketClass(fp)) {
 	  case	WFC_DATA:
 		dbgmsg("DATA");
-		RecvString(fp,data->hdr->window);
-		RecvString(fp,data->hdr->widget);
-		RecvString(fp,data->hdr->event);
+		RecvString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
+		RecvString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
+		RecvString(fp,data->hdr->event);	ON_IO_ERROR(fp,badio);
 #ifdef	DEBUG
-		printf("window = [%s]\n",data->mcp->dc.window);
-		printf("widget = [%s]\n",data->mcp->dc.widget);
-		printf("event  = [%s]\n",data->mcp->dc.event);
-		fflush(stdout);
+		printf("window = [%s]\n",data->hdr->window);
+		printf("widget = [%s]\n",data->hdr->widget);
+		printf("event  = [%s]\n",data->hdr->event);
 #endif
-		if		(  ( aps = g_hash_table_lookup(WindowHash,data->hdr->window) )
+		if		(  ( ld = g_hash_table_lookup(WindowHash,data->hdr->window) )
 				   !=  NULL  ) {
-			data->aps = aps;
-			ix = (int)g_hash_table_lookup(aps->ld->whash,data->hdr->window);
-			SendPacketClass(fp,APS_OK);
-			RecvLBS(fp,data->scrdata[ix-1]);
-			data->hdr->rc = TO_CHAR(0);
-			data->hdr->status = TO_CHAR(APL_SESSION_GET);
-			data->hdr->puttype = TO_CHAR(0);
-		} else {
-			SendPacketClass(fp,APS_NOT);
+			data->ld = ld;
+			ix = (int)g_hash_table_lookup(ld->info->whash,data->hdr->window);
+			if		(  ix  >  0  ) {
+				SendPacketClass(fp,APS_OK);			ON_IO_ERROR(fp,badio);
+				RecvLBS(fp,data->scrdata[ix-1]);	ON_IO_ERROR(fp,badio);
+				data->hdr->rc = TO_CHAR(0);
+				data->hdr->status = TO_CHAR(APL_SESSION_GET);
+				data->hdr->puttype = TO_CHAR(0);
+			}
 		}
 		break;
 	  case	WFC_PING:
 		dbgmsg("PING");
-		SendPacketClass(fp,WFC_PONG);
+		SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
 		goto	top;
 		break;
 	  default:
 		dbgmsg("default");
-		SendPacketClass(fp,WFC_NOT);
-		aps = NULL;
 		break;
 	}
+  badio:
+	if		(  ld  ==  NULL  ) {
+		SendPacketClass(fp,WFC_NOT);
+	}
 dbgmsg("<ReadTerminal");
-	return(aps);
+	return(ld);
 }
 
 static	Bool
 WriteTerminal(
-	FILE		*fp,
+	NETFILE		*fp,
 	SessionData	*data)
 {
 	MessageHeader	*hdr;
@@ -221,28 +242,31 @@ WriteTerminal(
 	int			ix;
 
 dbgmsg(">WriteTerminal");
-	SendPacketClass(fp,WFC_PING);
+	rc = FALSE;
+	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
-		SendPacketClass(fp,WFC_DATA);
+		dbgmsg("PONG");
+		ON_IO_ERROR(fp,badio);
+		SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
 		hdr = data->hdr;
-		SendString(fp,hdr->window);
-		SendString(fp,hdr->widget);
-		SendChar(fp,hdr->puttype);
-		SendInt(fp,data->w.n);
+		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
+		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
+		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
+		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
 		for	( i = 0 ; i < data->w.n ; i ++ ) {
-			SendString(fp,data->w.close[i].window);
+			SendString(fp,data->w.close[i].window);		ON_IO_ERROR(fp,badio);
 		}
 		data->w.n = 0;
-		ix = (int)g_hash_table_lookup(data->aps->ld->whash,data->hdr->window);
-		SendLBS(fp,data->scrdata[ix-1]);
-		fflush(fp);
-		if		(  data->fKeep  ) {
-			rc = TRUE;
-		} else {
-			rc = FALSE;
+		ix = (int)g_hash_table_lookup(data->ld->info->whash,data->hdr->window);
+		if		(  ix  >  0  ) {
+			SendLBS(fp,data->scrdata[ix-1]);			ON_IO_ERROR(fp,badio);
+			if		(  data->fKeep  ) {
+				rc = TRUE;
+			}
 		}
 	} else {
-		rc = FALSE;
+	  badio:
+		dbgmsg("FALSE");
 	}
 dbgmsg("<WriteTerminal");
 	return	(rc); 
@@ -253,13 +277,14 @@ TermThread(
 	void	*para)
 {
 	int		fhTerm = (int)para;
-	APS_Node	*aps;
+	LD_Node	*ld;
 	TermNode	*term;
 	SessionData	*data;
 
+dbgmsg(">TermThread");
 	term = New(TermNode);
 	term->que = NewQueue();
-	term->fp = fdopen(fhTerm,"w+");
+	term->fp = SocketToNet(fhTerm);
 	
 	if		(  ( data = InitSession(term->fp) )  !=  NULL  ) {
 		do {
@@ -268,15 +293,17 @@ TermThread(
 			dbgmsg("process !!");
 			data = DeQueue(term->que);
 			if		(  WriteTerminal(term->fp,data)  ) {
-				aps = ReadTerminal(term->fp,data);
+				ld = ReadTerminal(term->fp,data);
 			} else {
-				aps = NULL;
+				ld = NULL;
 			}
-		}	while	(  aps  !=  NULL  );
+		}	while	(  ld  !=  NULL  );
+		FinishSession(data);
 	}
-	FinishSession(data);
-	shutdown(fhTerm, 2);
-	fclose(term->fp);
+	CloseNet(term->fp);
+	FreeQueue(term->que);
+	xfree(term);
+dbgmsg("<TermThread");
 	pthread_exit(NULL);
 }
 
@@ -300,5 +327,7 @@ dbgmsg("<ConnectTerm");
 extern	void
 InitTerm(void)
 {
+dbgmsg(">InitTerm");
 	TermHash = NewNameHash();
+dbgmsg("<InitTerm");
 }

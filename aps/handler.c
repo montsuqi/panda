@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -27,31 +27,28 @@ copies.
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+#include	"defaults.h"
 #include	<signal.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
+#include	<dlfcn.h>
 #include	<glib.h>
 
+#include	"defaults.h"
 #include	"types.h"
 #include	"misc.h"
 #include	"const.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"enum.h"
+#include	"load.h"
 #define		_HANDLER
 #include	"handler.h"
 #include	"apsio.h"
-#include	"dbgroup.h"
+#include	"dblib.h"
 #include	"glterm.h"
 #include	"BDparser.h"
 #include	"debug.h"
-
-#ifdef	HAVE_DOTCOBOL
-#include	"dotCOBOL.h"
-#endif
-#ifdef	HAVE_OPENCOBOL
-#include	"OpenCOBOL.h"
-#endif
 
 static	char	*STATUS[4] = {
 	"LINK",
@@ -60,31 +57,52 @@ static	char	*STATUS[4] = {
 	"RSND"
 };
 
+
+static	char	*APS_HandlerLoadPath;
+
 static	GHashTable	*HandlerTable;
-
-extern	void
-InitHandler(void)
-{
-	HandlerTable = NewNameHash();
-}
-
-extern	void
+static	MessageHandler	*
 EnterHandler(
-	MessageHandler	*handler)
+	char	*name)
 {
-	printf("%s handler invoke\n", handler->name);
-	if		(  g_hash_table_lookup(HandlerTable,handler->name)  ==  NULL  ) {
-		g_hash_table_insert(HandlerTable,handler->name,handler);
+	void			*dlhandle;
+	MessageHandler	*handler;
+	MessageHandler	*(*finit)(void);
+	char			filename[SIZE_BUFF];
+
+dbgmsg(">EnterHandler");
+	if		(  ( handler = g_hash_table_lookup(HandlerTable,name) )  ==  NULL  ) {
+		printf("%s handler invoke\n", name);
+		sprintf(filename,"%s.so",name);
+		handler = NULL;
+		if		(  ( dlhandle = LoadFile(APS_HandlerLoadPath,filename) )  !=  NULL  ) {
+			if		(  ( finit = (void *)dlsym(dlhandle,name) )
+					   ==  NULL  )	{
+				fprintf(stderr,"[%s] is invalid.\n",name);
+			} else {
+				handler = (*finit)();
+				if		(  g_hash_table_lookup(HandlerTable,name)  ==  NULL  ) {
+					g_hash_table_insert(HandlerTable,name,handler);
+				}
+			}
+		} else {
+			fprintf(stderr,"[%s] not found.\n",name);
+		}
 	}
+dbgmsg("<EnterHandler");
+	return	(handler); 
 }
 
 static	void
-_Use(
-	char	*name,
-	MessageHandler	*handler,
-	void	*dummy)
+InitHandler(void)
 {
-	handler->fUse = TRUE;
+dbgmsg(">InitHandler");
+
+	if		(  ( APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH") )
+			   ==  NULL  ) {
+		APS_HandlerLoadPath = MONTSUQI_LIBRARY_PATH;
+	}
+	HandlerTable = NewNameHash();
 }
 
 extern	void
@@ -95,31 +113,48 @@ InitiateHandler(void)
 
 dbgmsg(">InitiateHandler");
 	InitHandler();
-#ifdef	HAVE_DOTCOBOL
-	Init_dotCOBOL_Handler();
-#endif
-#ifdef	HAVE_OPENCOBOL
-	Init_OpenCOBOL_Handler();
-#endif
-	if		(  ThisLD  !=  NULL  ) {
 #ifdef	DEBUG
-		printf("LD = [%s]\n",ThisLD->name);
+	printf("LD = [%s]\n",ThisLD->name);
 #endif
-		for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-			handler = g_hash_table_lookup(HandlerTable,
-										  (char *)ThisLD->window[i]->handler);
-			if		(  handler  ==  NULL  ) {
+	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
+		handler = g_hash_table_lookup(HandlerTable,
+									  (char *)ThisLD->window[i]->handler);
+		if		(  handler  ==  NULL  ) {
+			if		(  ( handler = EnterHandler((char *)ThisLD->window[i]->handler) )
+					   ==  NULL  ) {
 				printf("[%s] is invalid handler.\n",
 					   (char *)ThisLD->window[i]->handler);
 			} else {
 				handler->fUse = TRUE;
 				ThisLD->window[i]->handler = handler;
 			}
+		} else {
+			handler->fUse = TRUE;
+			ThisLD->window[i]->handler = handler;
 		}
-	} else {
-		g_hash_table_foreach(HandlerTable,(GHFunc)_Use,NULL);
 	}
 dbgmsg("<InitiateHandler");
+}
+
+static	void
+_Use(
+	char	*name,
+	BatchBind	*bind,
+	void	*dummy)
+{
+	MessageHandler	*handler;
+
+	handler = EnterHandler(bind->handler);
+	handler->fUse = TRUE;
+}
+
+extern	void
+InitiateBatchHandler(void)
+{
+dbgmsg(">InitiateBatchHandler");
+	InitHandler();
+	g_hash_table_foreach(ThisBD->BatchTable,(GHFunc)_Use,NULL);
+dbgmsg("<InitiateBatchHandler");
 }
 
 static	void
@@ -410,3 +445,42 @@ dbgmsg("<StartBatch");
 	return	(rc);
 }
 
+/*
+ *	handler misc functions
+ */
+extern	void
+MakeCTRL(
+	DBCOMM_CTRL	*ctrl,
+	ValueStruct	*mcp)
+{
+	strcpy(ctrl->func,ValueString(GetItemLongName(mcp,"func")));
+	ctrl->rc = ValueInteger(GetItemLongName(mcp,"rc"));
+	ctrl->blocks = ValueInteger(GetItemLongName(mcp,"db.path.blocks"));
+	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
+	ctrl->pno = ValueInteger(GetItemLongName(mcp,"db.path.pname"));
+#ifdef	DEBUG
+	DumpDB_Node(ctrl);
+#endif
+}
+
+extern	void
+MakeMCP(
+	ValueStruct	*mcp,
+	DBCOMM_CTRL	*ctrl)
+{
+	strcpy(ValueString(GetItemLongName(mcp,"func")),ctrl->func);
+	ValueInteger(GetItemLongName(mcp,"rc")) = ctrl->rc;
+	ValueInteger(GetItemLongName(mcp,"db.path.blocks")) = ctrl->blocks;
+	ValueInteger(GetItemLongName(mcp,"db.path.rname")) = ctrl->rno;
+	ValueInteger(GetItemLongName(mcp,"db.path.pname")) = ctrl->pno;
+}
+
+extern	void
+DumpDB_Node(
+	DBCOMM_CTRL	*ctrl)
+{
+	printf("func   = [%s]\n",ctrl->func);
+	printf("blocks = %d\n",ctrl->blocks);
+	printf("rno    = %d\n",ctrl->rno);
+	printf("pno    = %d\n",ctrl->pno);
+}

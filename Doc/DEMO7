@@ -24,7 +24,7 @@
 
 (2) 認証サーバを起動する
 
-	$ cd ./glserver
+	$ cd ./auth
 	$  ./glauth &
 
 	あらかじめ、gluseraddでパスワードファイルは作っておくこと

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -27,6 +27,7 @@ copies.
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+
 #ifdef	HAVE_OPENCOBOL
 #include	<signal.h>
 #include	<stdio.h>
@@ -37,7 +38,6 @@ copies.
 #include	<fcntl.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
-#include	<sys/stat.h>		/*	for	mknod	*/
 #include	<unistd.h>
 #include	<pthread.h>
 #include	<glib.h>
@@ -45,18 +45,16 @@ copies.
 #include	"types.h"
 #include	"const.h"
 #include	"misc.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"comm.h"
 #include	"directory.h"
-#include	"cobolvalue.h"
 #include	"handler.h"
 #include	"defaults.h"
 #include	"enum.h"
-#include	"dbgroup.h"
+#include	"dblib.h"
 #include	"queue.h"
 #include	"driver.h"
 #include	"libcob.h"
-#include	"OpenCOBOL.h"
 #include	"debug.h"
 
 static	void	*McpData;
@@ -71,7 +69,7 @@ static	void	_ReadyDB(void);
 static	void	_StopDB(void);
 static	int		_StartBatch(char *name, char *param);
 
-static	MessageHandler	OpenCOBOL_Handler = {
+static	MessageHandler	Handler = {
 	"OpenCOBOL",
 	FALSE,
 	_ExecuteProcess,
@@ -84,147 +82,12 @@ static	MessageHandler	OpenCOBOL_Handler = {
 	NULL
 };
 
-static	void
-IntegerCobol2C(
-	int		*ival)
+extern	MessageHandler	*
+OpenCOBOL(void)
 {
-	/*	NOP	*/
-}
-
-/*
-  unsigned	0123456789
-  plus		0123456789
-  minus		@ABCDEFGHI
-*/
-
-static	void
-FixedCobol2C(
-	char	*buff,
-	size_t	size)
-{
-	buff[size] = 0;
-	if		(	(  buff[size - 1]  >=  '@'  )
-			&&	(  buff[size - 1]  <=  'I'  ) ) {
-		buff[size - 1] = '0' + ( buff[size - 1] - '@' );
-		*buff |= 0x40;
-	}
-}
-
-static	void
-FixedC2Cobol(
-	char	*buff,
-	size_t	size)
-{
-	if		(  *buff  >=  0x70  ) {
-		*buff ^= 0x40;
-		buff[size - 1]  -= '0' - '@';
-	}
-}
-
-extern	char	*
-OpenCOBOL_UnPackValue(
-	char	*p,
-	ValueStruct	*value)
-{
-	int		i;
-	char	buff[SIZE_BUFF];
-
-	if		(  value  !=  NULL  ) {
-		switch	(value->type) {
-		  case	GL_TYPE_INT:
-			value->body.IntegerData = *(int *)p;
-			IntegerCobol2C(&value->body.IntegerData);
-			p += sizeof(int);
-			break;
-		  case	GL_TYPE_BOOL:
-			value->body.BoolData = ( *(char *)p == 'T' ) ? TRUE : FALSE;
-			p ++;
-			break;
-		  case	GL_TYPE_BYTE:
-			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
-		  case	GL_TYPE_CHAR:
-		  case	GL_TYPE_TEXT:
-		  case	GL_TYPE_VARCHAR:
-		  case	GL_TYPE_DBCODE:
-			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
-			p += value->body.CharData.len;
-			StringCobol2C(value->body.CharData.sval,value->body.CharData.len);
-			break;
-		  case	GL_TYPE_NUMBER:
-			memcpy(buff,p,ValueFixed(value)->flen);
-			FixedCobol2C(buff,ValueFixed(value)->flen);
-			strcpy(ValueFixed(value)->sval,buff);
-			p += value->body.FixedData.flen;
-			break;
-		  case	GL_TYPE_ARRAY:
-			for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
-				p = OpenCOBOL_UnPackValue(p,value->body.ArrayData.item[i]);
-			}
-			break;
-		  case	GL_TYPE_RECORD:
-			for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-				p = OpenCOBOL_UnPackValue(p,value->body.RecordData.item[i]);
-			}
-			break;
-		  default:
-			break;
-		}
-	}
-	return	(p);
-}
-
-extern	char	*
-OpenCOBOL_PackValue(
-	char	*p,
-	ValueStruct	*value)
-{
-	int		i;
-
-	if		(  value  !=  NULL  ) {
-		switch	(value->type) {
-		  case	GL_TYPE_INT:
-			*(int *)p = value->body.IntegerData;
-			IntegerC2Cobol((int *)p);
-			p += sizeof(int);
-			break;
-		  case	GL_TYPE_BOOL:
-			*(char *)p = value->body.BoolData ? 'T' : 'F';
-			p ++;
-			break;
-		  case	GL_TYPE_BYTE:
-			memcpy(p,value->body.CharData.sval,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
-		  case	GL_TYPE_CHAR:
-		  case	GL_TYPE_TEXT:
-		  case	GL_TYPE_VARCHAR:
-		  case	GL_TYPE_DBCODE:
-			StringC2Cobol(value->body.CharData.sval,value->body.CharData.len);
-			memcpy(p,value->body.CharData.sval,value->body.CharData.len);
-			p += value->body.CharData.len;
-			break;
-		  case	GL_TYPE_NUMBER:
-			memcpy(p,ValueFixed(value)->sval,ValueFixed(value)->flen);
-			FixedC2Cobol(p,ValueFixed(value)->flen);
-			p += value->body.FixedData.flen;
-			break;
-		  case	GL_TYPE_ARRAY:
-			for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
-				p = OpenCOBOL_PackValue(p,value->body.ArrayData.item[i]);
-			}
-			break;
-		  case	GL_TYPE_RECORD:
-			for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-				p = OpenCOBOL_PackValue(p,value->body.RecordData.item[i]);
-			}
-			break;
-		  default:
-			break;
-		}
-	}
-	return	(p);
+dbgmsg(">OpenCOBOL");
+dbgmsg("<OpenCOBOL");
+	return	(&Handler);
 }
 
 static	void
@@ -235,11 +98,11 @@ PutApplication(
 	char	*p;
 
 dbgmsg(">PutApplication");
-	OpenCOBOL_PackValue(McpData,node->mcprec);
-	OpenCOBOL_PackValue(LinkData,node->linkrec);
-	OpenCOBOL_PackValue(SpaData,node->sparec);
+	OpenCOBOL_PackValue(McpData,node->mcprec,ThisLD->textsize);
+	OpenCOBOL_PackValue(LinkData,node->linkrec,ThisLD->textsize);
+	OpenCOBOL_PackValue(SpaData,node->sparec,ThisLD->textsize);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = OpenCOBOL_PackValue(p,node->scrrec[i]);
+		p = OpenCOBOL_PackValue(p,node->scrrec[i],ThisLD->textsize);
 	}
 dbgmsg("<PutApplication");
 }
@@ -252,11 +115,11 @@ GetApplication(
 	int		i;
 
 dbgmsg(">GetApplication");
-	OpenCOBOL_UnPackValue(McpData,node->mcprec);
-	OpenCOBOL_UnPackValue(LinkData,node->linkrec);
-	OpenCOBOL_UnPackValue(SpaData,node->sparec);
+	OpenCOBOL_UnPackValue(McpData,node->mcprec,ThisLD->textsize);
+	OpenCOBOL_UnPackValue(LinkData,node->linkrec,ThisLD->textsize);
+	OpenCOBOL_UnPackValue(SpaData,node->sparec,ThisLD->textsize);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = OpenCOBOL_UnPackValue(p,node->scrrec[i]);
+		p = OpenCOBOL_UnPackValue(p,node->scrrec[i],ThisLD->textsize);
 	}
 
 dbgmsg("<GetApplication");
@@ -300,18 +163,17 @@ dbgmsg(">ReadyDC");
 	cob_init(0,NULL);
 	cob_set_library_path(path);
 
-	McpData = xmalloc(SizeValue(ThisEnv->mcprec,ThisLD->arraysize,ThisLD->textsize));
-	LinkData = xmalloc(SizeValue(ThisEnv->linkrec,ThisLD->arraysize,ThisLD->textsize));
-	SpaData = xmalloc(SizeValue(ThisLD->sparec,ThisLD->arraysize,ThisLD->textsize));
+	McpData = xmalloc(OpenCOBOL_SizeValue(ThisEnv->mcprec,ThisLD->arraysize,ThisLD->textsize));
+	LinkData = xmalloc(OpenCOBOL_SizeValue(ThisEnv->linkrec,ThisLD->arraysize,ThisLD->textsize));
+	SpaData = xmalloc(OpenCOBOL_SizeValue(ThisLD->sparec,ThisLD->arraysize,ThisLD->textsize));
 	scrsize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		scrsize += SizeValue(ThisLD->window[i]->value,ThisLD->arraysize,ThisLD->textsize);
+		scrsize += OpenCOBOL_SizeValue(ThisLD->window[i]->value,ThisLD->arraysize,ThisLD->textsize);
 	}
 	ScrData = xmalloc(scrsize);
-
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 		bind = ThisLD->window[i];
-		if		(  bind->handler  ==  (void *)&OpenCOBOL_Handler  ) {
+		if		(  bind->handler  ==  (void *)&Handler  ) {
 			printf("preload [%s]\n",bind->module);
 			(void)cob_resolve(bind->module);
 		}
@@ -370,13 +232,5 @@ dbgmsg(">_StartBatch");
 	}
 dbgmsg("<_StartBatch");
  return	(rc); 
-}
-
-extern	void
-Init_OpenCOBOL_Handler(void)
-{
-dbgmsg(">Init_OpenCOBOL_Handler");
-	EnterHandler(&OpenCOBOL_Handler);
-dbgmsg("<Init_OpenCOBOL_Handler");
 }
 #endif

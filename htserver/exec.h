@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -35,6 +35,10 @@ copies.
 #define	OPC_REFSTR	0x0B
 #define	OPC_HINAME	0x0C
 #define	OPC_BREAK	0x0D
+#define	OPC_HBES	0x0E
+#define	OPC_JNZNP	0x0F
+#define	OPC_DROP	0x10
+#define	OPC_CALENDAR	0x11
 
 #undef	GLOBAL
 #ifdef	MAIN

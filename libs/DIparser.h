@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -27,10 +27,12 @@ copies.
 #define	MULTI_DB		1
 #define	MULTI_LD		2
 #define	MULTI_ID		3
+#define	MULTI_APS		4
 
 #include	"LDparser.h"
 #include	"BDparser.h"
 #include	"DBparser.h"
+#include	"dbgroup.h"
 
 typedef	struct {
 	char		*name;
@@ -39,6 +41,7 @@ typedef	struct {
 	,			*BD_Dir
 	,			*DBD_Dir
 	,			*RecordDir;
+	Port		*WfcApsPort;
 	size_t		cLD
 	,			cBD
 	,			cDBD

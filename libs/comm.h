@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -21,47 +21,48 @@ copies.
 
 #ifndef	_INC_COMM_H
 #define	_INC_COMM_H
-#include	"glterm.h"
-extern	void			SendPacketClass(FILE *fp, PacketClass c);
-extern	PacketClass		RecvPacketClass(FILE *fp);
-extern	void			SendDataType(FILE *fp, PacketClass c);
-extern	PacketClass		RecvDataType(FILE *fp);
-extern	void			SendPacketDataType(FILE *fp, PacketDataType t);
-extern	PacketDataType	RecvPacketDataType(FILE *fp);
-extern	void			SendLength(FILE *fp, size_t size);
-extern	size_t			RecvLength(FILE *fp);
-extern	void			SendString(FILE *fp, char *str);
-extern	void			SendFixedString(FILE *fp, char *str, size_t size);
-extern	void			SendLBS(FILE *fp, LargeByteString *lbs);
-extern	void			RecvLBS(FILE *fp, LargeByteString *lbs);
-extern	void			RecvStringBody(FILE *fp, char *str, size_t size);
-extern	void			RecvString(FILE *fp, char *str);
-extern	long			RecvLong(FILE *fp);
-extern	void			SendLong(FILE *fp,long data);
-extern	int				RecvInt(FILE *fp);
-extern	void			SendInt(FILE *fp,int data);
-extern	int				RecvChar(FILE *fp);
-extern	void			SendChar(FILE *fp,char data);
-extern	double			RecvFloat(FILE *fp);
-extern	void			SendFloat(FILE *fp,double data);
-extern	Bool			RecvBool(FILE *fp);
-extern	void			SendBool(FILE *fp, Bool data);
-extern	Fixed			*RecvFixed(FILE *fp);
-extern	void			SendFixed(FILE *fp, Fixed *fixed);
-extern	void			SendStringData(FILE *fp, PacketDataType type, char *str);
-extern	Bool			RecvStringData(FILE *fp, char *str);
-extern	void			SendIntegerData(FILE *fp, PacketDataType type, int val);
-extern	Bool			RecvIntegerData(FILE *fp, int *val);
-extern	void			SendBoolData(FILE *fp, PacketDataType type, Bool val);
-extern	Bool			RecvBoolData(FILE *fp, Bool *val);
-extern	void			SendFloatData(FILE *fp, PacketDataType type, double val);
-extern	Bool			RecvFloatData(FILE *fp, double *val);
-extern	void			SendFixedData(FILE *fp, PacketDataType type, Fixed *xval);
-extern	Bool			RecvFixedData(FILE *fp, Fixed **xval);
+#include	"value.h"
+#include	"net.h"
+extern	void			SendPacketClass(NETFILE *fp, PacketClass c);
+extern	PacketClass		RecvPacketClass(NETFILE *fp);
+extern	void			SendDataType(NETFILE *fp, PacketClass c);
+extern	PacketClass		RecvDataType(NETFILE *fp);
+extern	void			SendPacketDataType(NETFILE *fp, PacketDataType t);
+extern	PacketDataType	RecvPacketDataType(NETFILE *fp);
+extern	void			SendLength(NETFILE *fp, size_t size);
+extern	size_t			RecvLength(NETFILE *fp);
+extern	void			SendString(NETFILE *fp, char *str);
+extern	void			SendFixedString(NETFILE *fp, char *str, size_t size);
+extern	void			SendLBS(NETFILE *fp, LargeByteString *lbs);
+extern	void			RecvLBS(NETFILE *fp, LargeByteString *lbs);
+extern	void			RecvStringBody(NETFILE *fp, char *str, size_t size);
+extern	void			RecvString(NETFILE *fp, char *str);
+extern	long			RecvLong(NETFILE *fp);
+extern	void			SendLong(NETFILE *fp,long data);
+extern	int				RecvInt(NETFILE *fp);
+extern	void			SendInt(NETFILE *fp,int data);
+extern	int				RecvChar(NETFILE *fp);
+extern	void			SendChar(NETFILE *fp,char data);
+extern	double			RecvFloat(NETFILE *fp);
+extern	void			SendFloat(NETFILE *fp,double data);
+extern	Bool			RecvBool(NETFILE *fp);
+extern	void			SendBool(NETFILE *fp, Bool data);
+extern	Fixed			*RecvFixed(NETFILE *fp);
+extern	void			SendFixed(NETFILE *fp, Fixed *fixed);
+extern	void			SendStringData(NETFILE *fp, PacketDataType type, char *str);
+extern	Bool			RecvStringData(NETFILE *fp, char *str);
+extern	void			SendIntegerData(NETFILE *fp, PacketDataType type, int val);
+extern	Bool			RecvIntegerData(NETFILE *fp, int *val);
+extern	void			SendBoolData(NETFILE *fp, PacketDataType type, Bool val);
+extern	Bool			RecvBoolData(NETFILE *fp, Bool *val);
+extern	void			SendFloatData(NETFILE *fp, PacketDataType type, double val);
+extern	Bool			RecvFloatData(NETFILE *fp, double *val);
+extern	void			SendFixedData(NETFILE *fp, PacketDataType type, Fixed *xval);
+extern	Bool			RecvFixedData(NETFILE *fp, Fixed **xval);
 
-extern	void		SendValue(FILE *fp, ValueStruct *value);
-extern	void		SendValueBody(FILE *fp, ValueStruct *value);
-extern	void		RecvValueBody(FILE *fp, ValueStruct *value);
+extern	void			SendValue(NETFILE *fp, ValueStruct *value);
+extern	void			SendValueBody(NETFILE *fp, ValueStruct *value);
+extern	void			RecvValueBody(NETFILE *fp, ValueStruct *value);
 
 #undef	GLOBAL
 #ifdef	_COMM

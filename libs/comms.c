@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -37,7 +37,7 @@ copies.
 
 #include	"types.h"
 #include	"misc.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"LBSfunc.h"
 #include	"comm.h"
 #define	_COMMS
@@ -46,7 +46,7 @@ copies.
 
 extern	void
 SendStringDelim(
-	FILE	*fp,
+	NETFILE	*fp,
 	char	*str)
 {
 	size_t	size;
@@ -60,15 +60,14 @@ SendStringDelim(
 		size = 0;
 	}
 	if		(  size  >  0  ) {
-		fwrite(str,1,size,fp);
+		Send(fp,str,size);
 	}
-	fflush(fp);
 }
 
 
 extern	Bool
 RecvStringDelim(
-	FILE	*fp,
+	NETFILE	*fp,
 	size_t	size,
 	char	*str)
 {
@@ -110,7 +109,7 @@ SetValueName(
 
 extern	void
 SendValueString(
-	FILE		*fpComm,
+	NETFILE		*fpComm,
 	ValueStruct	*value,
 	char		*name,
 	Bool		fName)

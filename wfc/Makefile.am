@@ -2,23 +2,35 @@
 
 sbin_PROGRAMS = wfc
 
-INCLUDES 			= \
-	-I$(top_srcdir)	\
+INCLUDES 			= 		\
+	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/datalib	\
-	$(POSTGRES_CFLAGS)	\
-	$(GNOME_INCLUDEDIR) \
-	$(FIXED_CFLAGS)
+	-I$(top_srcdir)/dblib	\
+	$(SSL_CFLAGS)			\
+	$(GLIB_CFLAGS)			\
+	$(FIXED_CFLAGS)			\
+	$(MONDAI_CFLAGS)
 
-wfc_LDADD 		=	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lpthread $(POSTGRES_LIBS) \
-	-L$(top_srcdir)/libs -li18n 	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	$(top_srcdir)/libs/libpanda.la	
+wfc_LDADD 		=						\
+	-lm									\
+	$(SSL_LIBS)							\
+	$(GLIB_LIBS)						\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
+	$(top_srcdir)/libs/libpanda.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
 
-wfc_SOURCES	=	\
-	wfc.c			\
-	mqthread.c		mqthread.h		\
-	corethread.c	corethread.h	\
+
+wfc_SOURCES	=							\
+	wfc.c								\
+	mqthread.c		mqthread.h			\
+	corethread.c	corethread.h		\
 	termthread.c	termthread.h
+
+wfc_DEPENDENCIES	=					\
+	$(top_srcdir)/defaults.h			\
+	$(top_srcdir)/libs/libpanda.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la

@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -41,7 +41,7 @@ copies.
 #include	"enum.h"
 #include	"misc.h"
 #include	"tcp.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"glterm.h"
 #include	"comm.h"
 #include	"comms.h"
@@ -88,7 +88,7 @@ DecodeName(
 
 static	void
 RecvScreenData(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	char	buff[SIZE_BUFF+1];
@@ -124,7 +124,7 @@ dbgmsg("<RecvScreenData");
 
 static	void
 WriteClient(
-	FILE		*fpComm,
+	NETFILE		*fpComm,
 	ScreenData	*scr)
 {
 	char	name[SIZE_BUFF+1]
@@ -167,7 +167,7 @@ dbgmsg("<WriteClient");
 
 static	Bool
 MainLoop(
-	FILE	*fpComm,
+	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	Bool	ret;
@@ -207,7 +207,6 @@ dbgmsg(">MainLoop");
 			SendStringDelim(fpComm,"Error: authentication\n");
 			g_warning("reject client(authentication error)");
 		}
-		fflush(fpComm);
 	} else
 	if		(  strncmp(buff,"Event: ",7)  ==  0  ) {
 		dbgmsg("event");
@@ -255,7 +254,7 @@ ExecuteServer(void)
 	int		pid;
 	int		fh
 	,		_fh;
-	FILE	*fpComm;
+	NETFILE	*fpComm;
 	ScreenData	*scr;
 
 
@@ -272,17 +271,13 @@ ExecuteServer(void)
 			close(fh);
 		} else
 		if		(  pid  ==  0  )	{	/*	child	*/
-			if		(  ( fpComm = fdopen(fh,"w+") )  ==  NULL  ) {
-				close(fh);
-				exit(1);
-			}
+			fpComm = SocketToNet(fh);
 			close(_fh);
 			scr = InitSession();
 			strcpy(scr->term,TermName(fh));
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
-			shutdown(fh, 2);
-			fclose(fpComm);
+			CloseNet(fpComm);
 			exit(0);
 		}
 	}
@@ -292,14 +287,18 @@ static	void
 InitData(void)
 {
 dbgmsg(">InitData");
+	DD_ParserInit();
 dbgmsg("<InitData");
 }
 
 extern	void
-InitSystem(void)
+InitSystem(
+	int		argc,
+	char	**argv)
 {
 dbgmsg(">InitSystem");
 	InitData();
-	ApplicationsInit();
+	InitNET();
+	ApplicationsInit(argc,argv);
 dbgmsg("<InitSystem");
 }

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -36,17 +36,20 @@ copies.
 #include	<glib.h>
 #include	"const.h"
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
+#include	"net.h"
 #include	"tcp.h"
+#include	"comm.h"
 #include	"HTCparser.h"
 #include	"mon.h"
 #include	"tags.h"
 #include	"exec.h"
 #include	"option.h"
 #include	"misc.h"
+#include	"message.h"
 #include	"debug.h"
 
-static	FILE	*fpServ;
+static	NETFILE	*fpServ;
 static	char	*ServerPort;
 static	char	*Command;
 
@@ -109,7 +112,10 @@ ScanEnv(
 			switch	(c) {
 			  case	'%':
 				ScanArgValue ++;
-				*p = ( HexCharToInt( *ScanArgValue++ ) << 4 ) | HexCharToInt( *ScanArgValue++ );
+				*p = ( HexCharToInt(*ScanArgValue) << 4) ;
+				ScanArgValue ++;
+				*p |= HexCharToInt(*ScanArgValue);
+				ScanArgValue ++;
 				break;
 			  case	'+':
 				ScanArgValue ++;
@@ -292,10 +298,8 @@ Dump(void)
 static	void
 SetDefault(void)
 {
-	extern	char	*get_current_dir_name(void);
-
 	ServerPort = "localhost:8010";
-	ScreenDir = get_current_dir_name();
+	ScreenDir = getcwd(NULL,0);
 	Command = "demo";
 	fDump = FALSE;
 	fGet = FALSE;
@@ -309,8 +313,7 @@ HT_SendString(
 #ifdef	DEBUG
 	printf(" send [%s]\n",str);
 #endif
-	fprintf(fpServ,"%s",str);
-	fflush(fpServ);
+	Send(fpServ,str,strlen(str));
 }
 
 extern	Bool
@@ -325,8 +328,8 @@ HT_RecvString(
 
 	p = str;
 #endif
-	while	(	(  ( c = getc(fpServ) )  >=  0     )
-			&&	(  c                 !=  '\n'  ) )	{
+	while	(	(  ( c = RecvChar(fpServ) )  >=  0     )
+			&&	(  c                         !=  '\n'  ) )	{
 		*str ++ = c;
 	}
 	if		(  c  >=  0  ) {
@@ -347,7 +350,7 @@ HT_RecvString(
 }
 
 static	void
-SendValue(
+SendValueDelim(
 	char		*name,
 	char		*value)
 {
@@ -396,7 +399,7 @@ SendEvent(
 	HT_SendString(event);
 	HT_SendString("\n");
 
-	g_hash_table_foreach(Values,(GHFunc)SendValue,NULL);
+	g_hash_table_foreach(Values,(GHFunc)SendValueDelim,NULL);
 	HT_SendString("\n");
 	sesid = g_hash_table_lookup(Values,"_sesid");
 	Values = NewNameHash();
@@ -471,7 +474,7 @@ Session(void)
 					fError = TRUE;
 				}
 			} else {
-				fclose(fpServ);
+				CloseNet(fpServ);
 				Values = NewNameHash();
 				goto	retry;
 			}
@@ -504,6 +507,9 @@ main(
 {
 	SetDefault();
 	(void)GetOption(option,argc,argv);
+	InitMessage();
+
+	InitNET();
 	Values = GetArg();
 	Session();
 	Dump();

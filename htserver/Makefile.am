@@ -3,28 +3,44 @@
 bin_PROGRAMS = mon
 sbin_PROGRAMS = htserver
 
-htserver_LDADD 		=	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lpthread	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	-L$(top_srcdir)/libs -lpandas
-mon_LDADD 		=	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lpthread	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	-L$(top_srcdir)/libs -lpandas
+htserver_LDFLAGS	=	-export-dynamic
+htserver_LDADD 		=					\
+	-lm									\
+	$(SSL_LIBS)							\
+	$(GLIB_LIBS)						\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
+	$(top_srcdir)/libs/libpandas.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
+
+mon_LDADD 		=						\
+	-lm									\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
 
 INCLUDES 			= \
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/datalib	\
 	$(POSTGRES_CFLAGS)	\
 	$(FIXED_CFLAGS)		\
-	$(GNOME_INCLUDEDIR)
+	$(SSL_CFLAGS)		\
+	$(MONDAI_CFLAGS)	\
+	$(GLIB_CFLAGS)
 
 htserver_SOURCES	=	\
 	htserver.c	htserver.h	\
 	server.c	\
 	trid.c		trid.h
+htserver_DEPENDENCIES	=				\
+	$(top_srcdir)/libs/libpandas.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
 
 mon_SOURCES	=	\
 	HTClex.c	HTClex.h	\
@@ -32,3 +48,6 @@ mon_SOURCES	=	\
 	tags.c		tags.h	\
 	exec.c		exec.h	\
 	mon.c		mon.h
+mon_DEPENDENCIES	=				\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la

@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -26,7 +26,6 @@ copies.
 #endif
 #include	<stdio.h>
 #include	<stdlib.h>
-#include	<termio.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -42,8 +41,8 @@ copies.
 #include	"pgserver.h"
 #include	"dirs.h"
 #include	"DDparser.h"
-#include	"pandaIO.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	char		*AuthURL;
@@ -58,10 +57,6 @@ static	ARG_TABLE	option[] = {
 		"データ定義格納ディレクトリ"	 				},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		"認証サーバ"			 						},
-#if	1
-	{	"panda",	STRING,		TRUE,	(void*)&PandaPort,
-		"ワークフローコントローラ"						},
-#endif
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -73,7 +68,6 @@ SetDefault(void)
 	ScreenDir = ".";
 	RecordDir = ".";
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
-	PandaPort = "localhost:9000";			/*	PORT_WFC	*/
 }
 
 extern	int
@@ -83,9 +77,10 @@ main(
 {
 	SetDefault();
 	(void)GetOption(option,argc,argv);
+	InitMessage();
 
 	ParseURL(&Auth,AuthURL);
-	InitSystem();
+	InitSystem(argc,argv);
 	ExecuteServer();
 	return	(0);
 }

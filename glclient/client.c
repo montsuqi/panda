@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -32,13 +32,19 @@ copies.
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<signal.h>
-#include	<termio.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<sys/stat.h>
 #include	<fcntl.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
+#ifdef	USE_SSL
+#include	<openssl/crypto.h>
+#include	<openssl/x509.h>
+#include	<openssl/pem.h>
+#include	<openssl/ssl.h>
+#include	<openssl/err.h>
+#endif
 #ifdef ENABLE_GNOME
 #    include <gnome.h>
 #else
@@ -49,7 +55,7 @@ copies.
 #include	<gtkpanda/gtkpanda.h>
 #endif
 #define		MAIN
-
+#include	"const.h"
 #include	"types.h"
 #include	"option.h"
 #include	"tcp.h"
@@ -59,6 +65,7 @@ copies.
 #include	"styleParser.h"
 #include	"comm.h"
 #include	"protocol.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	char	*PortNumber;
@@ -97,6 +104,24 @@ static	ARG_TABLE	option[] = {
 		"ユーザ名"										},
 	{	"pass",		STRING,		TRUE,	(void*)&Pass,
 		"パスワード"									},
+	{	"v1",		BOOLEAN,	TRUE,	(void*)&Protocol1,
+		"データ処理プロトコルバージョン 1 を使う"		},
+	{	"v2",		BOOLEAN,	TRUE,	(void*)&Protocol2,
+		"データ処理プロトコルバージョン 2 を使う"		},
+#ifdef	USE_SSL
+	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
+		"鍵ファイル名(pem)"		 						},
+	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
+		"証明書ファイル名(pem)"	 						},
+	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
+		"SSLを使う"				 						},
+	{	"verifypeer",BOOLEAN,	TRUE,	(void*)&fVerify,
+		"クライアント証明書の検証を行う"				},
+	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
+		"CA証明書へのパス"								},
+	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
+		"CA証明書ファイル"								},
+#endif
 	{	NULL,		0,			FALSE,	NULL,	NULL	},
 };
 
@@ -110,6 +135,16 @@ SetDefault(void)
 	Style = "";
 	User = getenv("USER");
 	Pass = "";
+	Protocol1 = TRUE;
+	Protocol2 = TRUE;
+#ifdef	USE_SSL
+	fSsl = FALSE;
+	KeyFile = NULL;
+	CertFile = NULL;
+	fVerify = FALSE;
+	CA_Path = NULL;
+	CA_File = NULL;
+#endif	
 }
 
 extern	char	*
@@ -126,7 +161,6 @@ extern	void
 ExitSystem(void)
 {
 	SendPacketClass(fpComm,GL_END);
-	fclose(fpComm);
 	exit(0);
 }
 
@@ -135,7 +169,7 @@ bannar(void)
 {
 	printf("glclient ver %s\n",VERSION);
 	printf("Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n");
-	printf("              2000-2002 Masami Ogoshi & JMA.\n");
+	printf("              2000-2003 Masami Ogoshi & JMA.\n");
 }
 
 extern	int
@@ -143,16 +177,21 @@ main(
 	int		argc,
 	char	**argv)
 {
-	int		fhPort;
+	int		fd;
 	FILE_LIST	*fl;
 	int		rc;
 	char	buff[SIZE_BUFF];
+#ifdef	USE_SSL
+	SSL_CTX	*ctx;
+#endif
 
 	bannar();
 	SetDefault();
 	if		(  ( fl = GetOption(option,argc,argv) )  !=  NULL  ) {
 		CurrentApplication = fl->name;
 	}
+	InitMessage();
+
 	argc = 1;
 	argv[1] = NULL;
 	InitSystem();
@@ -179,11 +218,25 @@ main(
 		StyleParser(Style);
 	}
 
-	if		(  ( fhPort = ConnectSocket(PortNumber,SOCK_STREAM,Host) )  <  0  ) {
+	InitNET();
+	if		(  ( fd = ConnectSocket(PortNumber,SOCK_STREAM,Host) )  <  0  ) {
 		g_warning("can not connect server(server port not found)");
 		return	(1);
 	}
-	fpComm = fdopen(fhPort,"w+");
+#ifdef	USE_SSL
+	if		(  fSsl  ) {
+		if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
+				   ==  NULL  ) {
+			exit(1);
+		}
+		fpComm = MakeSSL_Net(ctx,fd);
+		SSL_connect(NETFILE_SSL(fpComm));
+	} else {
+		fpComm = SocketToNet(fd);
+	}
+#else
+	fpComm = SocketToNet(fd);
+#endif
 	InitProtocol();
 
 	if		(  !SendConnect(fpComm,CurrentApplication)  ) {
@@ -191,7 +244,6 @@ main(
 	} else {
 		CheckScreens(fpComm,TRUE);
 		(void)GetScreenData(fpComm);
-		StartProtocolThread();
 dbgmsg(">gtk_main");
 		gtk_main();
 dbgmsg("<gtk_main");

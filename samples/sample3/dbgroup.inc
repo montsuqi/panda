@@ -15,6 +15,6 @@ db_group	"log"	{
 };
 
 db_group	"shell"	{
-	type	"shell";
+	type	"Shell";
 	priority	1000;
 };

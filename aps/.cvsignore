@@ -1,7 +1,7 @@
 *.lo
+*.la
 .deps
 .libs
-MCPSUB.la
 Makefile
 Makefile.in
 aps

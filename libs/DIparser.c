@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA.
+Copyright (C) 2000-2003 Ogochan & JMA.
 
 This module is part of PANDA.
 
@@ -41,7 +41,7 @@ copies.
 #include	"types.h"
 #include	"const.h"
 #include	"dirs.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"DDparser.h"
 #include	"DIlex.h"
@@ -49,7 +49,6 @@ copies.
 #include	"DBparser.h"
 #include	"DIparser.h"
 #include	"dirs.h"
-#include	"driver.h"
 #define	_DIRECTORY
 #include	"directory.h"
 #include	"debug.h"
@@ -71,97 +70,187 @@ _Error(
 }
 
 static	void
+ParWFC(void)
+{
+dbgmsg(">ParWFC");
+	while	(  GetSymbol  !=  '}'  ) {
+		switch	(DI_Token) {
+		  case	T_PORT:
+			switch	(GetSymbol) {
+			  case	T_ICONST:
+				ThisEnv->WfcApsPort = New(Port);
+				ThisEnv->WfcApsPort->host = "localhost";
+				ThisEnv->WfcApsPort->port = IntStrDup(DI_ComInt);
+				break;
+			  case	T_SCONST:
+				ThisEnv->WfcApsPort = ParPort(DI_ComSymbol,PORT_WFC_APS);
+				break;
+			  default:
+				Error("invalid port number");
+				break;
+			}
+			GetSymbol;
+			break;
+		  default:
+			Error("wfc keyword error");
+			break;
+		}
+		if		(  DI_Token  !=  ';'  ) {		
+			Error("syntax error 1");
+		}
+	}
+dbgmsg("<ParWFC");
+}
+
+static	void
+ParLD_Elements(void)
+{
+	char		buff[SIZE_BUFF];
+	char		name[SIZE_BUFF];
+	char		*p
+	,			*q;
+	LD_Struct	**tmp;
+	int			i
+	,			n;
+	Port		**tports;
+	LD_Struct	*ld;
+
+	strcpy(buff,ThisEnv->LD_Dir);
+	p = buff;
+	do {
+		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+			*q = 0;
+		}
+		sprintf(name,"%s/%s.ld",p,DI_ComSymbol);
+		if		(  (  ld = LD_Parser(name) )  !=  NULL  ) {
+			if		(  g_hash_table_lookup(ThisEnv->LD_Table,DI_ComSymbol)
+					   !=  NULL  ) {
+				Error("same ld appier");
+			}
+			tmp = (LD_Struct **)xmalloc(sizeof(LD_Struct *) * ( ThisEnv->cLD + 1));
+			if		(  ThisEnv->cLD  >  0  ) {
+				memcpy(tmp,ThisEnv->ld,sizeof(LD_Struct *) * ThisEnv->cLD);
+				xfree(ThisEnv->ld);
+			}
+			ThisEnv->ld = tmp;
+			ThisEnv->ld[ThisEnv->cLD] = ld;
+			ThisEnv->cLD ++;
+			g_hash_table_insert(ThisEnv->LD_Table, StrDup(DI_ComSymbol),ld);
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ld->nports = 0;
+				while	(  DI_Token  ==  T_SCONST  ) {
+					strcpy(buff,DI_ComSymbol);
+					n = 0;
+					switch	(GetSymbol) {
+					  case	',':
+						dbgmsg(",");
+						n = 1;
+						break;
+					  case	'*':
+						dbgmsg("*");
+						if		(  GetSymbol  ==  T_ICONST  ) {
+							n = DI_ComInt;
+							GetSymbol;
+						} else {
+							Error("invalid number");
+						}
+						break;
+					  case	';':
+						dbgmsg(";");
+						n = 1;
+						break;
+					  default:
+						Error("invalid operator");
+						break;
+					}
+					tports = (Port **)xmalloc(sizeof(Port *) * ( ld->nports + n));
+					if		(  ld->nports  >  0  ) {
+						memcpy(tports,ld->ports,sizeof(Port *) * ld->nports);
+						xfree(ld->ports);
+					}
+					ld->ports = tports;
+					for	( i = 0 ; i < n ; i ++ ) {
+						ld->ports[ld->nports] = ParPort(buff,PORT_APS_BASE);
+						ld->nports ++;
+					}
+					if		(  DI_Token  ==  ','  ) {
+						GetSymbol;
+					}
+				}
+			} else
+			if		(  DI_Token  ==  T_ICONST  ) {
+				ld->nports = DI_ComInt;
+				ld->ports = (Port **)xmalloc(sizeof(Port *) * ld->nports);
+				for	( i = 0 ; i < ld->nports ; i ++ ) {
+					ld->ports[i] = NULL;
+				}
+				GetSymbol;
+			} else {
+				ld->ports = (Port **)xmalloc(sizeof(Port *));
+				ld->ports[0] = ParPort("localhost",PORT_APS_BASE);
+				ld->nports = 1;
+			}
+		}
+		p = q + 1;
+	}	while	(	(  q   !=  NULL  )
+				&&	(  ld  ==  NULL  ) );
+	if		(  ld  ==  NULL  ) {
+		Error("ld not found");
+	}
+}
+
+static	void
+SkipLD(void)
+{
+dbgmsg(">SkipLD");
+	while	(  DI_Token  ==  T_SCONST  ) {
+		switch	(GetSymbol)	{
+		  case	',':
+			break;
+		  case	'*':
+			if		(  GetSymbol  ==  T_ICONST  ) {
+				GetSymbol;
+			} else {
+				Error("invalid number");
+			}
+			break;
+		  case	T_ICONST:
+			GetSymbol;
+			break;
+		}
+		if		(  DI_Token  ==  ','  ) {
+			GetSymbol;
+		}
+	}
+dbgmsg("<SkipLD");
+}
+
+static	void
 ParLD(
 	char	*dname)
 {
-	char		name[SIZE_BUFF];
-	LD_Struct	*ld;
-	LD_Struct	**tmp;
-	Port		**tports;
-	char		buff[SIZE_BUFF];
-	char		*p
-	,			*q;
-
 dbgmsg(">ParLD");
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  DI_Token  ==  T_SYMBOL  )
 				||	(  DI_Token  ==  T_SCONST  ) ) {
 			if		(  ThisEnv->LD_Dir  ==  NULL  ) {
 				if		(  GetSymbol  ==  T_SCONST  ) {
-					while	(  DI_Token  ==  T_SCONST  ) {
-						if		(  GetSymbol  ==  ','  ) {
-							GetSymbol;
-						}
-					}
+					SkipLD();
 				}
 			} else {
 				if		(	(  dname  ==  NULL  )
 						||	(  !strcmp(DI_ComSymbol,dname)  ) ) {
-					strcpy(buff,ThisEnv->LD_Dir);
-					p = buff;
-					do {
-						if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-							*q = 0;
-						}
-						sprintf(name,"%s/%s.ld",p,DI_ComSymbol);
-						if		(  (  ld = LD_Parser(name) )  !=  NULL  ) {
-							if		(  g_hash_table_lookup(ThisEnv->LD_Table,DI_ComSymbol)
-									   ==  NULL  ) {
-								tmp = (LD_Struct **)xmalloc(sizeof(LD_Struct *)
-															* ( ThisEnv->cLD + 1));
-								if		(  ThisEnv->cLD  >  0  ) {
-									memcpy(tmp,ThisEnv->ld,sizeof(LD_Struct *)
-										   * ThisEnv->cLD);
-									xfree(ThisEnv->ld);
-								}
-								ThisEnv->ld = tmp;
-								ThisEnv->ld[ThisEnv->cLD] = ld;
-								ThisEnv->cLD ++;
-								g_hash_table_insert(ThisEnv->LD_Table,
-													StrDup(DI_ComSymbol),ld);
-								ld->nports = 0;
-								if		(  GetSymbol  ==  T_SCONST  ) {
-									while	(  DI_Token  ==  T_SCONST  ) {
-										tports = (Port **)xmalloc(sizeof(Port *) * ( ld->nports + 1));
-										if		(  ld->nports  >  0  ) {
-											memcpy(tports,ld->ports,sizeof(Port *) * ld->nports);
-											xfree(ld->ports);
-										}
-										ld->ports = tports;
-										ld->ports[ld->nports] = ParPort(DI_ComSymbol,PORT_APS_BASE);
-										ld->nports ++;
-										if		(  GetSymbol  ==  ','  ) {
-											GetSymbol;
-										}
-									}
-								} else {
-									ld->ports = (Port **)xmalloc(sizeof(Port *));
-									ld->ports[0] = ParPort("localhost",PORT_APS_BASE);
-									ld->nports = 1;
-								}
-							} else {
-								Error("same ld appier");
-							}
-						}
-						p = q + 1;
-					}	while	(	(  q   !=  NULL  )
-								&&	(  ld  ==  NULL  ) );
-					if		(  ld  ==  NULL  ) {
-						Error("ld not found");
-					}
+					ParLD_Elements();
 				} else {
 					if		(  GetSymbol  ==  T_SCONST  ) {
-						while	(  DI_Token  ==  T_SCONST  ) {
-							if		(  GetSymbol  ==  ','  ) {
-								GetSymbol;
-							}
-						}
+						SkipLD();
 					}
 				}
 			}
-		}
-		if		(  DI_Token  !=  ';'  ) {
-			Error("syntax error 1");
+			if		(  DI_Token  !=  ';'  ) {
+				printf("[%s]\n",DI_ComSymbol);
+				Error("syntax error 2");
+			}
 		}
 	}
 dbgmsg("<ParLD");
@@ -461,15 +550,11 @@ BuildMcpArea(
 	RecordStruct	*rec;
 	ValueStruct		*val;
 	FILE			*fp;
-	int				fd;
-	char			temp[16];
 
-	strcpy(temp,"/tmp/mcpXXXXXX");
-	if		(  ( fd = mkstemp(temp) )  <  0  ) {
+	if		(  ( fp = tmpfile() )  ==  NULL  ) {
 		fprintf(stderr,"tempfile can not make.\n");
 		exit(1);
 	}
-	fp = fdopen(fd,"w");
 	fprintf(fp,	"mcparea	{");
 	fprintf(fp,		"func varchar(%d);",SIZE_FUNC);
 	fprintf(fp,		"rc int;");
@@ -501,9 +586,10 @@ BuildMcpArea(
 	fprintf(fp,			"prc		char(1);");
 	fprintf(fp,		"};");
 	fprintf(fp,	"};");
+	rewind(fp);
+	rec = DD_Parse(fp,"");
 	fclose(fp);
-	rec = DD_ParserDataDefines(temp);
-	remove(temp);
+
 	val = rec->rec;
 	xfree(rec);
 	return	(val);
@@ -532,6 +618,7 @@ dbgmsg(">ParDI");
 				ThisEnv->BD_Dir = BD_Dir;
 				ThisEnv->DBD_Dir = DBD_Dir;
 				ThisEnv->RecordDir = RecordDir;
+				ThisEnv->WfcApsPort = ParPort("localhost",PORT_WFC_APS);
 				ThisEnv->cLD = 0;
 				ThisEnv->cBD = 0;
 				ThisEnv->cDBD = 0;
@@ -567,7 +654,7 @@ dbgmsg(">ParDI");
 						   ==  NULL  ) {
 					Error("linkage record not found");
 				} else {
-					ThisEnv->linksize = SizeValue(ThisEnv->linkrec,0,0);
+					ThisEnv->linksize = NativeSizeValue(ThisEnv->linkrec,0,0);
 				}
 			} else {
 				Error("linkage invalid");
@@ -657,8 +744,18 @@ dbgmsg(">ParDI");
 			} else
 			if		(  stricmp(DI_ComSymbol,"id")  ==  0  ) {
 				ThisEnv->mlevel = MULTI_ID;
+			} else
+			if		(  stricmp(DI_ComSymbol,"aps")  ==  0  ) {
+				ThisEnv->mlevel = MULTI_APS;
 			} else {
 				Error("invalid multiplex level");
+			}
+			break;
+		  case	T_WFC:
+			if		(  GetSymbol  ==  '{'  ) {
+				ParWFC();
+			} else {
+				Error("syntax error 2");
 			}
 			break;
 		  case	T_LD:

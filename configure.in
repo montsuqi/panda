@@ -6,8 +6,8 @@ PACKAGE=panda
 
 # make version
 MAJOR_VERSION=1
-MINOR_VERSION=1
-MICRO_VERSION=2
+MINOR_VERSION=2
+MICRO_VERSION=0
 
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
 LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -31,9 +31,6 @@ AC_DEFINE_UNQUOTED(CONFDIR,"$CONFDIR")
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 AM_MAINTAINER_MODE
 
-# Specify a configuration file
-AM_CONFIG_HEADER(config.h)
-
 # Build time sanity check...
 AM_SANITY_CHECK
 
@@ -48,6 +45,13 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
 AM_PROG_LIBTOOL
+
+# Specify a configuration file
+AM_CONFIG_HEADER(config.h)
+AC_CHECK_HEADERS(crypt.h)
+AC_CHECK_LIB(dl,dlopen)
+AC_CHECK_LIB(pthread,pthread_create)
+AC_CHECK_LIB(crypt,crypt)
 
 dnl ***************************************************************************
 dnl Checks for GNOME
@@ -212,6 +216,44 @@ AC_ARG_WITH(ipv6,
 )		
 
 dnl ***************************************************************************
+dnl SSL
+dnl ***************************************************************************
+
+AC_ARG_WITH(ssl,
+	[--with-ssl=<directory>     use SSL in <directory>],[
+	if test x$withval = xyes; then
+		AC_MSG_CHECKING(for OpenSSL files) 
+		ssldir="" 
+		for d in $dir /usr /usr/local/ssl /opt/ssl /opt/packages/ssl /disk/ssl
+		do 
+		  if test -f $d/lib/libssl.so 
+		  then 
+		      AC_MSG_RESULT(found OpenSSL lib in $d) 
+		      ssldir=$d 
+		      break 
+		  fi 
+		done 
+		if test x$ssldir = x 
+		then 
+			AC_MSG_WARN(SSL not used) 
+		else 
+			if test -f $ssldir/include/openssl/ssl.h
+			then 
+			   	AC_MSG_RESULT(found OpenSSL include in $d) 
+				SSL_CFLAGS="-I${ssldir}/include"
+				SSL_LIBS="-L${ssldir}/lib -lssl" 
+				AC_DEFINE(USE_SSL)
+			else 
+				AC_MSG_WARN(SSL not used) 
+			fi
+		fi
+	fi 
+	AM_CONDITIONAL(SSL, test x$ssldir != x) 
+	AC_SUBST(SSL_LIBS) 
+	AC_SUBST(SSL_CFLAGS) 
+])		
+
+dnl ***************************************************************************
 dnl dorobune wo oki de shizumeru
 dnl ***************************************************************************
 
@@ -283,14 +325,14 @@ dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the gtkpanda modules.
 dnl ***************************************************************************
 
-AC_PATH_PROG(PANDA_CONFIG, gtkpanda-config, no)
-if test x$PANDA_CONFIG = xno; then
+AC_PATH_PROG(GTK_PANDA_CONFIG, gtkpanda-config, no)
+if test x$GTK_PANDA_CONFIG = xno; then
   AC_MSG_ERROR(Couldn't find gtkpanda-config)
 fi
-PANDA_CFLAGS=`$PANDA_CONFIG --cflags 2>/dev/null`
-PANDA_LIBS=`$PANDA_CONFIG --libs 2>/dev/null`
-AC_SUBST(PANDA_LIBS)
-AC_SUBST(PANDA_CFLAGS)
+GTK_PANDA_CFLAGS=`$GTK_PANDA_CONFIG --cflags 2>/dev/null`
+GTK_PANDA_LIBS=`$GTK_PANDA_CONFIG --libs 2>/dev/null`
+AC_SUBST(GTK_PANDA_LIBS)
+AC_SUBST(GTK_PANDA_CFLAGS)
 AC_DEFINE(USE_PANDA)
 
 dnl ***************************************************************************
@@ -303,6 +345,20 @@ FIXED_LIBS=`$libfixed_config --libs 2>/dev/null`
 AC_SUBST(FIXED_LIBS)
 AC_SUBST(FIXED_CFLAGS)
 
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the libmondai modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(libmondai_config, libmondai-config)
+MONDAI_CFLAGS=`$libmondai_config --cflags 2>/dev/null`
+MONDAI_LIBS=`$libmondai_config --libs 2>/dev/null`
+AC_SUBST(MONDAI_LIBS)
+AC_SUBST(MONDAI_CFLAGS)
+
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the libxml modules.
+dnl ***************************************************************************
+
 dnl Check to make sure that we have libxml >= 1.7.2 installed
 old_LIBS="$LIBS"
 LIBS="$XML_LIBS $LIBS"
@@ -310,18 +366,25 @@ AC_CHECK_FUNC(xmlSAXUserParseFile,,
 AC_MSG_ERROR([*** libxml >= 1.7.2 is required to compile libglade]))
 LIBS="$old_LIBS"
 
-AC_OUTPUT(Makefile
-	  Doc/Makefile
-	  include/Makefile
-	  libs/Makefile
-	  datalib/Makefile
-	  dblib/Makefile
-	  dbstuff/Makefile
-	  cobol/Makefile
-	  glclient/Makefile
-	  glserver/Makefile
-	  htserver/Makefile
-	  aps/Makefile
-	  pgserver/Makefile
-	  tools/Makefile
-	  wfc/Makefile)
+LIB_DIR="${libdir}"
+AC_SUBST(LIB_DIR)
+
+AC_OUTPUT([
+	Makefile
+	Doc/Makefile
+	include/Makefile
+	libs/Makefile
+	dblib/Makefile
+	dbstuff/Makefile
+	cobol/Makefile
+	glclient/Makefile
+	glserver/Makefile
+	htserver/Makefile
+	aps/Makefile
+	auth/Makefile
+	pgserver/Makefile
+	tools/Makefile
+	wfc/Makefile
+	monpls_demo/Makefile
+	panda-config
+], [chmod +x panda-config])

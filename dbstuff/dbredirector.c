@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -34,7 +34,9 @@ copies.
 #include	<string.h>
 #include	<signal.h>
 #include    <sys/types.h>
+#include    <sys/time.h>
 #include    <sys/socket.h>
+#include    <sys/select.h>
 #include	<time.h>
 #include	<unistd.h>
 #include	<pthread.h>
@@ -42,24 +44,19 @@ copies.
 
 #include	"types.h"
 #include	"misc.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"comm.h"
 #include	"dirs.h"
 #include	"redirect.h"
-#include	"dbgroup.h"
-#ifdef	HAVE_POSTGRES
-#include	"Postgres.h"
-#endif
-#ifdef	USE_SHELL
-#include	"Shell.h"
-#endif
+#include	"dblib.h"
 #include	"directory.h"
 #include	"queue.h"
 #include	"tcp.h"
 #include	"option.h"
+#include	"message.h"
 #include	"debug.h"
 
-GLOBAL	LD_Struct		*ThisLD;
+//GLOBAL	LD_Struct		*ThisLD;
 static	char	*PortNumber;
 static	int		Back;
 static	char	*Directory;
@@ -81,12 +78,12 @@ LogThread(
 {
 	int		fhLog = (int)para;
 	LargeByteString	*data;
-	FILE	*fpLog;
+	NETFILE	*fpLog;
 	PacketClass	c;
 	Bool	fSuc;
 
 dbgmsg(">LogThread");
-	fpLog = fdopen(fhLog,"w+");
+	fpLog = SocketToNet(fhLog);
 	do {
 		switch	( c = RecvPacketClass(fpLog) ) {
 		  case	RED_DATA:
@@ -106,10 +103,8 @@ dbgmsg(">LogThread");
 			fSuc = FALSE;
 			break;
 		}
-		fflush(fpLog);
 	}	while	(  fSuc  );
-	shutdown(fhLog, 2);
-	fclose(fpLog);
+	CloseNet(fpLog);
 	//	pthread_exit(NULL);
 dbgmsg("<LogThread");
 }
@@ -234,9 +229,10 @@ InitSystem(
 	DBG_Struct	*Orig;
 
 dbgmsg(">InitSystem");
+	InitNET();
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
-	InitDirectory(TRUE);
+	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL);
 	InitDB_Process();
 #ifdef	DEBUG
@@ -320,6 +316,7 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
+	InitMessage();
 
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {

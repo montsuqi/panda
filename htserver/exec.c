@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -35,7 +35,7 @@ copies.
 #include	<ctype.h>
 #include	"const.h"
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"mon.h"
 #include	"exec.h"
 #include	"misc.h"
@@ -47,6 +47,7 @@ typedef	union	_VarType	{
 	size_t		size
 	,			pos;
 	int			ival;
+	Bool		bval;
 	char		*str;
 	union	_VarType	*ptr;
 }	VarType;
@@ -56,7 +57,7 @@ static	size_t	pStack;
 static	GHashTable	*VarArea;
 
 
-#define	Pop			(Stack[-- pStack])
+#define	Pop			Stack[-- pStack]
 #define	TOP(n)		Stack[pStack-(n)]
 
 #ifdef	DEBUG
@@ -82,6 +83,7 @@ ParseName(
 	,		*q;
 	VarType	*var;
 
+	if		(  str  ==  NULL  )	return	NULL;
 	p = buff;
 	while	(  *str  !=  0  ) {
 		if		(  *str  ==  '$'  ) {
@@ -148,7 +150,8 @@ ParseName(
 
 static	char	*
 HTGetValue(
-	char		*name)
+	char		*name,
+	Bool		fClear)
 {
 	char	buff[SIZE_BUFF];
 	char	*value;
@@ -157,7 +160,7 @@ HTGetValue(
 		value = "";
 	} else
 	if		(  ( value = g_hash_table_lookup(Values,name) )  ==  NULL  ) {
-		sprintf(buff,"%s\n",name);
+		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
 		HT_SendString(buff);
 		HT_RecvString(SIZE_BUFF,buff);
 		g_hash_table_insert(Values,StrDup(name),StrDup(buff));
@@ -166,6 +169,116 @@ HTGetValue(
 		value = "";
 	}
 	return	(value);
+}
+
+static	int
+youbi(
+	int		yy,
+	int		mm,
+	int		dd)
+{
+	int		wday;
+
+	if		(  mm  <  3  ) {
+		yy --;
+		mm += 12;
+	}
+	wday = ( yy + yy / 4 - yy / 100 + yy / 400 + ( 13 * mm + 8 ) / 5 + dd ) % 7;
+	return	(wday);			 
+}
+
+static	Bool
+uru(
+	int		yy)
+{
+	Bool	rc;
+
+	if		(	(  ( yy % 4 )    ==  0  )
+			&&	(  ( yy % 4 )    !=  0  )
+			||	(  ( yy % 400 )  ==  0  ) ) {
+		rc = TRUE;
+	} else {
+		rc = FALSE;
+	}
+	return	(rc);
+}
+
+static	void
+ExecCalendar(
+	LargeByteString	*html,
+	int		yy,
+	int		mm,
+	int		dd,
+	char	*year,
+	char	*month,
+	char	*day)
+{
+	int		sun
+	,		one
+	,		lday
+	,		i;
+	char	buff[5];
+	static	int		tlday[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+
+dbgmsg(">ExecCalendar");
+	lday = tlday[mm - 1];
+	if		(	(  mm  ==  2  )
+			&&	(  uru(yy)    ) ) {
+		lday ++;
+	}
+
+	LBS_EmitString(html,"<INPUT TYPE=\"hidden\" name=\"");
+	LBS_EmitString(html,year);
+	LBS_EmitString(html,"\" value=\"");
+	sprintf(buff,"%d",yy);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\">\n");
+
+	LBS_EmitString(html,"<INPUT TYPE=\"hidden\" name=\"");
+	LBS_EmitString(html,month);
+	LBS_EmitString(html,"\" value=\"");
+	sprintf(buff,"%d",mm);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"\">\n");
+
+	LBS_EmitString(html,"<TABLE BORDER><TR align=\"center\"><TH colspan=7>\n");
+	sprintf(buff,"%d",yy);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"年");
+	sprintf(buff,"%d",mm);
+	LBS_EmitString(html,buff);
+	LBS_EmitString(html,"月</TH></TR><TR align=\"center\">");
+	LBS_EmitString(html,"<TH>日</TH><TH>月</TH><TH>火</TH><TH>水</TH><TH>木</TH><TH>金</TH><TH>土</TH></TR>\n");
+	one = youbi(yy,mm,1);
+	for	( sun = 1 - one ; sun <= 31 ; sun += 7 ) {
+		LBS_EmitString(html,"<TR align=\"center\">");
+		for	( i = sun ; i < sun + 7 ; i ++ ) {
+			if		(	(  i  >   0     )
+					&&	(  i  <=  lday  ) ) {
+				LBS_EmitString(html,"<TD>");
+				sprintf(buff,"%d",i);
+				if		(  day  !=  NULL  ) {
+					LBS_EmitString(html,"<input type=\"radio\" name=\"");
+					LBS_EmitString(html,day);
+					LBS_EmitString(html,"\" value=\"");
+					LBS_EmitString(html,buff);
+					LBS_EmitString(html,"\"");
+					if		(  i  ==  dd  ) {
+						LBS_EmitString(html," checked>");
+					} else {
+						LBS_EmitString(html,">");
+					}
+				}
+				LBS_EmitString(html,buff);
+			} else {
+				LBS_EmitString(html,"<TD>");
+			}
+			LBS_EmitString(html,"</TD>");
+		}
+		LBS_EmitString(html,"</TR>\n");
+	}
+	LBS_EmitString(html,"</TABLE>");
+dbgmsg("<ExecCalendar");
 }
 
 extern	LargeByteString	*
@@ -191,10 +304,13 @@ dbgmsg(">ExecCode");
 	while	(  ( c = LBS_FetchChar(htc->code) )  !=  0  ) {
 		if		(  c  ==  0x01  ) {	/*	code escape	*/
 			switch	(LBS_FetchChar(htc->code)) {
+			  case	OPC_DROP:
+				(void)Pop;
+				break;
 			  case	OPC_REF:
 				dbgmsg("OPC_REF");
 				name = LBS_FetchPointer(htc->code);
-				value = HTGetValue(name);
+				value = HTGetValue(name,FALSE);
 				LBS_EmitString(html,value);
 				break;
 			  case	OPC_VAR:
@@ -218,20 +334,29 @@ dbgmsg(">ExecCode");
 			  case	OPC_HSNAME:
 				dbgmsg("OPC_HSNAME");
 				vval = Pop;
-				value = HTGetValue(vval.str);
+				value = HTGetValue(vval.str,FALSE);
 				LBS_EmitString(html,value);
 				break;
 			  case	OPC_HINAME:
 				dbgmsg("OPC_HINAME");
 				vval = Pop;
-				vval.ival = atoi(HTGetValue(vval.str));
+				vval.ival = atoi(HTGetValue(vval.str,FALSE));
 				Push(vval);
 				break;
 			  case	OPC_HIVAR:
 				dbgmsg("OPC_HIVAR");
 				name = LBS_FetchPointer(htc->code);
-				vval.ival = atoi(HTGetValue(name));
+				vval.ival = atoi(HTGetValue(name,FALSE));
 				Push(vval);
+				break;
+			  case	OPC_HBES:
+				dbgmsg("OPC_HBES");
+				vval = Pop;
+				value = HTGetValue(vval.str,TRUE);
+				str = LBS_FetchPointer(htc->code);
+				if		(  stricmp(value,"TRUE")  ==  0 ) {
+					LBS_EmitString(html,str);
+				}
 				break;
 			  case	OPC_REFSTR:
 				dbgmsg("OPC_REFSTR");
@@ -275,6 +400,31 @@ dbgmsg(">ExecCode");
 					(void)Pop;
 				}
 				break;
+			  case	OPC_JNZNP:
+				dbgmsg("OPC_JNZNP");
+				pos = LBS_FetchInt(htc->code);
+				if		(  TOP(1).ival  !=  0  ) {
+					LBS_SetPos(htc->code,pos);
+				}
+				break;
+			  case	OPC_CALENDAR:
+			  {
+				  char	*year
+				  ,		*month
+				  ,		*day;
+				  int	yy
+				  ,		mm
+				  ,		dd;
+
+				  day = Pop.str;
+				  month = Pop.str;
+				  year = Pop.str;
+				  dd = Pop.ival;
+				  mm = Pop.ival;
+				  yy = Pop.ival;
+				  ExecCalendar(html,yy,mm,dd,year,month,day);
+			  }
+				break;
 			  default:
 				fprintf(stderr,"invalid opcode\n");
 				break;
@@ -286,6 +436,7 @@ dbgmsg(">ExecCode");
 			LBS_EmitChar(html,c);
 		}
 	}
+	LBS_EmitEnd(html);
 dbgmsg("<ExecCode");
 	return	(html);
 }

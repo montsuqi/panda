@@ -1,8 +1,8 @@
 db_group	"log"	{
 	priority	100;
 	type	"PostgreSQL";
-	port	"localhost";
-	name	"panda";
+#	port	"localhost";
+#	name	"ORCA";
 	file	"orca.log";
 };
 
@@ -15,6 +15,6 @@ db_group	"ORCA"	{
 };
 
 db_group	"shell"	{
-	type	"shell";
+	type	"Shell";
 	priority	1000;
 };

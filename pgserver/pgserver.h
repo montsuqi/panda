@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -32,11 +32,8 @@ copies.
 
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
-#if	1
-GLOBAL	char	*Directory;
-#endif
 
-extern	void	InitSystem(void);
+extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);
 
 #endif

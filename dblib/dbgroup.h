@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -22,21 +22,12 @@ copies.
 #ifndef	_DBGROUP_H
 #define	_DBGROUP_H
 
-#include	"value.h"
+#include	"libmondai.h"
+#include	"net.h"
+#include	"dblib.h"
 
-typedef	struct {
-	char	*name;
-	DB_FUNC	func;
-}	DB_OPS;
-
-extern	void	EnterDB_Function(char *name, DB_OPS *ops, char *commentStart, char *commentEnd);
-extern	void	InitDBG(void);
-extern	void	SetUpDBG(void);
-extern	void	InitDB_Process(void);
-extern	void	ExecDBG_Operation(DBG_Struct *dbg, char *name);
-extern	void	ExecDBOP(DBG_Struct *dbg, char *sql);
-extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec);
-extern	int		ExecDB_Function(char *name, char *tname, RecordStruct *rec);
+extern	DB_Func		*NewDB_Func(void);
+extern	DB_Func	*EnterDB_Function(char *name, DB_OPS *ops, char *commentStart, char *commentEnd);
 
 #undef	GLOBAL
 #ifdef	MAIN

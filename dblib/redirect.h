@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -21,6 +21,7 @@ copies.
 
 #ifndef	_INC_LOG_H
 #define	_INC_LOG_H
+#include	"dbgroup.h"
 
 #ifndef	PacketClass
 #define	PacketClass		unsigned char

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2001-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -37,9 +37,11 @@ copies.
 #include	<glib.h>
 
 #include	"types.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"tcp.h"
+#include	"net.h"
+#include	"dbgroup.h"
 #include	"redirect.h"
 #include	"comm.h"
 #include	"debug.h"
@@ -59,7 +61,7 @@ dbgmsg(">OpenDB_RedirectPort");
 			dbg->fpLog = NULL;
 			dbg->redirectData = NULL;
 		} else {
-			dbg->fpLog = fdopen(fh,"w+");
+			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
 		}
 	} else {
@@ -75,8 +77,7 @@ CloseDB_RedirectPort(
 {
 dbgmsg(">CloseDB_RedirectPort");
 	if		(  dbg->fpLog  !=  NULL  ) {
-		shutdown(fileno(dbg->fpLog), 2);
-		fclose(dbg->fpLog);
+		CloseNet(dbg->fpLog);
 		FreeLBS(dbg->redirectData);
 	}
 dbgmsg("<CloseDB_RedirectPort");
@@ -113,20 +114,18 @@ CommitDB_Redirect(
 dbgmsg(">CommitDB_Redirect");
 	if		(  dbg->redirectData  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_PING);
-		fflush(dbg->fpLog);
 		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
 			Warning("log server down?");
-			fclose(dbg->fpLog);
+			CloseNet(dbg->fpLog);
 			dbg->fpLog = NULL;
 			FreeLBS(dbg->redirectData);
 			dbg->redirectData = NULL;
 		} else {
 			SendPacketClass(dbg->fpLog,RED_DATA);
 			SendLBS(dbg->fpLog,dbg->redirectData);
-			fflush(dbg->fpLog);
 			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
 				Warning("log server down?");
-				fclose(dbg->fpLog);
+				CloseNet(dbg->fpLog);
 				dbg->fpLog = NULL;
 				FreeLBS(dbg->redirectData);
 				dbg->redirectData = NULL;

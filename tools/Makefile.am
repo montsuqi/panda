@@ -1,33 +1,35 @@
 ## Process this file with automake to produce Makefile.in
 
 bin_PROGRAMS = copygen dbgen checkdir
-sbin_PROGRAMS = user monitor
+sbin_PROGRAMS = monitor
 bin_SCRIPTS = recdefgen.rb
-#bin_PROGRAMS = copygen structgen dbgen user checkdir monitor
 
-LDADD 		=	\
-	-L/usr/lib -lglib -lm \
-	$(FIXED_LIBS)  -ldl	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	-L$(top_srcdir)/libs -lpandat
-dbgen_LDADD 		=	\
-	-L/usr/lib -lglib -lm \
-	$(FIXED_LIBS)  -ldl	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	-L$(top_srcdir)/libs -lpandat
-user_LDADD 		=	\
-	-L/usr/lib -lglib -lm \
-	$(FIXED_LIBS)  -ldl	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	-L$(top_srcdir)/libs -lpandat -lcrypt 
+LDADD 		=							\
+	-lm									\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
+	$(top_srcdir)/libs/libpanda.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
 
-INCLUDES 			= \
-	-I$(top_srcdir)	\
+
+INCLUDES 			= 		\
+	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/datalib	\
-	$(GNOME_INCLUDEDIR) \
-	$(FIXED_CFLAGS)
+	-I$(top_srcdir)/dblib	\
+	$(GLIB_CFLAGS)			\
+	$(SSL_CFLAGS)			\
+	$(FIXED_CFLAGS)			\
+	$(MONDAI_CFLAGS)
+
+monitor_DEPENDENCIES	=				\
+	$(top_srcdir)/defaults.h			\
+	$(top_srcdir)/libs/libpanda.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la
 
 copygen_SOURCES	=	\
 	copygen.c
@@ -37,9 +39,6 @@ copygen_SOURCES	=	\
 
 dbgen_SOURCES	=	\
 	dbgen.c
-
-user_SOURCES	=	\
-	user.c
 
 checkdir_SOURCES	=	\
 	checkdir.c

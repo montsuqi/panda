@@ -45,9 +45,33 @@ glclient <OPTIONS> アプリケーション指定
 	glserverにloginするパスワード。
 	デフォルトは空文字。
 
-	\option{-pass}
-	レコード定義体のあるディレクトリ。
-	デフォルトは起動したディレクトリ。
+	\option{-ssl}
+	glclientとの通信にSSLを使う。SSLを使用しない場合は、SSL用のパラメー
+	タである\verb|-key|, \verb|-cert|, \verb|-CApath|, \verb|-CAfile|,
+	\verb|-verifypeer|の指定は意味を持たない
+	デフォルトはSSLを使用しない
+
+	\option{-key}
+	SSLの秘密鍵ファイル名。鍵はpem形式
+	デフォルトは秘密鍵ファイルを指定しない(証明書と同じファイルになっている)
+
+	\option{-cert}
+	証明書ファイル名。証明書はpem形式。
+	デフォルトは証明書を指定しない。\verb|-key|も\verb|-cert|も指定さ
+	れていない場合はエラーになる
+
+	\option{-CApath}
+	CA証明書へのパス。
+	デフォルトはCA証明書パスを使用しない。
+
+	\option{-CAfile}
+	CA証明書ファイルへのパス。
+	デフォルトはCA証明書ファイルを指定しない。-CApathも-CAfileも指定さ
+	れていない場合は、CA証明書による機能を使わない。
+
+	\option{-verifypeer}
+	クライアント証明書の検証を行う。
+	デフォルトは検証を行わない。
 
 	\end{options}
 

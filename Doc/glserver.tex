@@ -43,6 +43,34 @@ glserver <OPTIONS>
 	で認証を行い、localhostのポート番号8001に要求を出すという意味であ
 	る。
 
+	\option{-ssl}
+	glclientとの通信にSSLを使う。SSLを使用しない場合は、SSL用のパラメー
+	タである\verb|-key|, \verb|-cert|, \verb|-CApath|, \verb|-CAfile|,
+	\verb|-verifypeer|の指定は意味を持たない
+	デフォルトはSSLを使用しない
+
+	\option{-key}
+	SSLの秘密鍵ファイル名。鍵はpem形式
+	デフォルトは秘密鍵ファイルを指定しない(証明書と同じファイルになっている)
+
+	\option{-cert}
+	証明書ファイル名。証明書はpem形式。
+	デフォルトは証明書を指定しない。\verb|-key|も\verb|-cert|も指定さ
+	れていない場合はエラーになる
+
+	\option{-CApath}
+	CA証明書へのパス。
+	デフォルトはCA証明書パスを使用しない。
+
+	\option{-CAfile}
+	CA証明書ファイルへのパス。
+	デフォルトはCA証明書ファイルを指定しない。-CApathも-CAfileも指定さ
+	れていない場合は、CA証明書による機能を使わない。
+
+	\option{-verifypeer}
+	クライアント証明書の検証を行う。
+	デフォルトは検証を行わない。
+
 	\option{-panda}
 	wfcの待機ポート。
 	デフォルトは\verb|localhost:9000|。
@@ -64,6 +92,11 @@ glserverを起動する。画面およびレコードの定義体は、起動ディレクトリから
 \ititle{注意}
 
 glserverはglclientが接続する毎にサブプロセスを生成する。
+
+SSLを使う場合、正規の証明書が必須である(自己証明は不可)。
+
+SSLを使った場合で、かつクライアント証明書の検証が行われる場合
+(\verb|-verifypeer|が指定された場合)、glauthを使った認証は無効になる。
 
 \end{function}
 

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -33,10 +33,11 @@ copies.
 #include	<unistd.h>
 #include	<ctype.h>
 #include	<glib.h>
+#include	<time.h>
+#include	<sys/time.h>
 #include	"const.h"
 #include	"types.h"
-#include	"value.h"
-#include	"LBSfunc.h"
+#include	"libmondai.h"
 #include	"HTCparser.h"
 #include	"mon.h"
 #include	"tags.h"
@@ -63,9 +64,6 @@ GetArg(
 	char	*ret;
 
 dbgmsg(">GetArg");
-#ifdef	DEBUG
-	printf("arg = [%s]\n",name);
-#endif
 	if		(  ( type = g_hash_table_lookup(tag->args,name) )  !=  NULL  ) {
 		if		(  type->fPara  ) {
 			if		(  i  <  type->nPara  ) {
@@ -81,9 +79,9 @@ dbgmsg(">GetArg");
 	}
 #ifdef	DEBUG
 	if		(  ret  ==  NULL  ) {
-		printf("NULL\n");
+		printf("%s = NULL\n",name);
 	} else {
-		printf("[%s]\n",ret);
+		printf("%s = [%s]\n",name,ret);
 	}
 #endif
 dbgmsg("<GetArg");
@@ -113,7 +111,8 @@ _Entry(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*size;
+	char	*size
+	,		*maxlength;
 
 dbgmsg(">_Entry");
 	LBS_EmitString(htc->code,"<input type=\"text\" name=\"");
@@ -124,16 +123,20 @@ dbgmsg(">_Entry");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_HSNAME);
-	size = GetArg(tag,"size",0);
-	if		(  size  ==  NULL  ) {
-		LBS_EmitString(htc->code,"\">\n");
-	} else {
-		LBS_EmitString(htc->code,"\" size=");
+	LBS_EmitString(htc->code,"\"");
+	if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," size=");
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(size));
 		EmitCode(htc,OPC_REFSTR);
-		LBS_EmitString(htc->code,">\n");
 	}
+	if		(  ( maxlength = GetArg(tag,"maxlength",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," maxlength=");
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(maxlength));
+		EmitCode(htc,OPC_REFSTR);
+	}
+	LBS_EmitString(htc->code,">\n");
 dbgmsg("<_Entry");
 }
 
@@ -314,6 +317,7 @@ dbgmsg(">_eHtml");
 	if		(  !fDump  ) {
 		LBS_EmitString(htc->code,"</html>");
 	}
+	LBS_EmitEnd(htc->code);
 dbgmsg("<_eHtml");
 }
 
@@ -328,7 +332,7 @@ _Count(
 
 dbgmsg(">_Count");
 	EmitCode(htc,OPC_VAR);
-	LBS_EmitPointer(htc->code,GetArg(tag,"var",0));		/*	3	var		*/
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"var",0)));		/*	3	var		*/
 	if		(  ( from = GetArg(tag,"from",0) )  !=  NULL  ) {
 		if		(  isdigit(*from)  ) {
 			EmitCode(htc,OPC_ICONST);
@@ -399,7 +403,8 @@ _Button(
 	Tag		*tag)
 {
 	char	*face
-	,		*event;
+	,		*event
+	,		*size;
 
 dbgmsg(">_Button");
 	if		(  ( face = GetArg(tag,"face",0) )  ==  NULL  ) {
@@ -411,53 +416,227 @@ dbgmsg(">_Button");
 	g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
 	LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
 	LBS_EmitString(htc->code,face);
-	LBS_EmitString(htc->code,"\">");
+	LBS_EmitString(htc->code,"\"");
+	if		(  ( size = GetArg(tag,"size",0) )  ==  NULL  ) {
+		LBS_EmitString(htc->code,">");
+	} else {
+		LBS_EmitString(htc->code," size=");
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(size));
+		EmitCode(htc,OPC_REFSTR);
+		LBS_EmitString(htc->code,">");
+	}
 dbgmsg("<_Button");
+}
+
+static	void
+_ToggleButton(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+dbgmsg(">_ToggleButton");
+	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_REFSTR);
+	LBS_EmitString(htc->code,"\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_HBES);
+	LBS_EmitPointer(htc->code," checked ");
+	LBS_EmitString(htc->code," value=\"TRUE\">");
+
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"label",0)));
+	EmitCode(htc,OPC_HSNAME);
+dbgmsg("<_ToggleButton");
+}
+
+static	void
+_CheckButton(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+dbgmsg(">_CheckButton");
+	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_REFSTR);
+	LBS_EmitString(htc->code,"\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_HBES);
+	LBS_EmitPointer(htc->code," checked");
+	LBS_EmitString(htc->code," value=\"TRUE\">");
+	LBS_EmitString(htc->code,GetArg(tag,"label",0));
+dbgmsg("<_CheckButton");
+}
+
+static	void
+_RadioButton(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*group
+	,		*name;
+
+dbgmsg(">_RadioButton");
+	group = GetArg(tag,"group",0); 
+	name = GetArg(tag,"name",0); 
+	LBS_EmitString(htc->code,"<input type=\"radio\" name=\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(group));
+	EmitCode(htc,OPC_REFSTR);
+	LBS_EmitString(htc->code,"\"");
+
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	EmitCode(htc,OPC_HBES);
+	LBS_EmitPointer(htc->code," checked ");
+
+	LBS_EmitString(htc->code,"value=\"");
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,StrDup(name));
+	EmitCode(htc,OPC_REFSTR);
+	LBS_EmitString(htc->code,"\">");
+	LBS_EmitString(htc->code,GetArg(tag,"label",0));
+	g_hash_table_insert(htc->Radio,StrDup(group),(void*)1);
+dbgmsg("<_RadioButton");
+}
+
+
+static	void
+_Calendar(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*year
+	,		*month
+	,		*day;
+	time_t		nowtime;
+	struct	tm	*Now;
+	int		this_yy
+	,		this_mm
+	,		this_dd;
+	size_t	pos;
+
+dbgmsg(">_Calendar");
+	time(&nowtime);
+	Now = localtime(&nowtime);
+	this_yy = Now->tm_year + 1900;
+	this_mm = Now->tm_mon + 1;
+	this_dd = Now->tm_mday;
+	if		(  ( year = GetArg(tag,"year",0) )  ==  NULL  ) {
+		EmitCode(htc,OPC_ICONST);
+		LBS_EmitInt(htc->code,this_yy);
+	} else {
+		year = StrDup(year);
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,year);
+		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_JNZNP);
+		Push(LBS_GetPos(htc->code));
+		LBS_EmitInt(htc->code,0);
+		EmitCode(htc,OPC_DROP);
+		EmitCode(htc,OPC_ICONST);
+		LBS_EmitInt(htc->code,this_yy);
+		pos = LBS_GetPos(htc->code);
+		LBS_SetPos(htc->code,Pop);
+		LBS_EmitInt(htc->code,pos);
+		LBS_SetPos(htc->code,pos);
+	}
+	if		(  ( month = GetArg(tag,"month",0) )  ==  NULL  ) {
+		EmitCode(htc,OPC_ICONST);
+		LBS_EmitInt(htc->code,this_mm);
+	} else {
+		month = StrDup(month);
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,month);
+		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_JNZNP);
+		Push(LBS_GetPos(htc->code));
+		LBS_EmitInt(htc->code,0);
+		EmitCode(htc,OPC_DROP);
+		EmitCode(htc,OPC_ICONST);
+		LBS_EmitInt(htc->code,this_mm);
+		pos = LBS_GetPos(htc->code);
+		LBS_SetPos(htc->code,Pop);
+		LBS_EmitInt(htc->code,pos);
+		LBS_SetPos(htc->code,pos);
+	}
+	if		(  ( day = GetArg(tag,"day",0) )  ==  NULL  ) {
+		EmitCode(htc,OPC_ICONST);
+		LBS_EmitInt(htc->code,this_dd);
+	} else {
+		day = StrDup(day);
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,day);
+		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_JNZNP);
+		Push(LBS_GetPos(htc->code));
+		LBS_EmitInt(htc->code,0);
+		EmitCode(htc,OPC_DROP);
+		EmitCode(htc,OPC_ICONST);
+		LBS_EmitInt(htc->code,this_dd);
+		pos = LBS_GetPos(htc->code);
+		LBS_SetPos(htc->code,Pop);
+		LBS_EmitInt(htc->code,pos);
+		LBS_SetPos(htc->code,pos);
+	}
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,year);
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,month);
+	EmitCode(htc,OPC_NAME);
+	LBS_EmitPointer(htc->code,day);
+	EmitCode(htc,OPC_CALENDAR);
+dbgmsg("<_Calendar");
+}
+
+static	Tag		*
+NewTag(
+	char	*name,
+	void	(*emit)(HTCInfo *, struct _Tag *))
+{
+	Tag		*tag;
+
+	tag = New(Tag);
+	tag->name = name;
+	tag->emit = emit;
+	tag->args = NewNameiHash();
+	g_hash_table_insert(Tags,tag->name,tag);
+	return	(tag);
+}
+
+static	void
+AddArg(
+	Tag		*tag,
+	char	*name,
+	Bool	fPara)
+{
+	TagType	*type;
+
+	type = New(TagType);
+	type->name = name;
+	type->fPara = fPara;
+	type->nPara = 0;
+	type->Para = NULL;
+	g_hash_table_insert(tag->args,type->name,type);
 }
 
 extern	void
 TagsInit(void)
 {
-	Tag		*NewTag(
-		char	*name,
-		void	(*emit)(HTCInfo *, struct _Tag *))
-	{
-		Tag		*tag;
-
-		tag = New(Tag);
-		tag->name = name;
-		tag->emit = emit;
-		tag->args = NewNameiHash();
-		g_hash_table_insert(Tags,tag->name,tag);
-		return	(tag);
-	}
-	void	AddArg(
-		Tag		*tag,
-		char	*name,
-		Bool	fPara)
-	{
-		TagType	*type;
-
-		type = New(TagType);
-		type->name = name;
-		type->fPara = fPara;
-		type->nPara = 0;
-		type->Para = NULL;
-		g_hash_table_insert(tag->args,type->name,type);
-	}
 	Tag		*tag;
 
 dbgmsg(">TagsInit");
 	pAStack = 0; 
 	Tags = NewNameiHash();
 
-	tag = NewTag("BUTTON",_Button);
-	AddArg(tag,"event",TRUE);
-	AddArg(tag,"face",TRUE);
-
 	tag = NewTag("ENTRY",_Entry);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
+	AddArg(tag,"maxlength",TRUE);
 
 	tag = NewTag("COMBO",_Combo);
 	AddArg(tag,"name",TRUE);
@@ -475,12 +654,34 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"to",TRUE);
 	AddArg(tag,"step",TRUE);
 	tag = NewTag("/COUNT",_eCount);
-	AddArg(tag,"name",TRUE);
 
 	tag = NewTag("TEXT",_Text);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"rows",TRUE);
 	AddArg(tag,"cols",TRUE);
+
+	tag = NewTag("BUTTON",_Button);
+	AddArg(tag,"event",TRUE);
+	AddArg(tag,"face",TRUE);
+	AddArg(tag,"size",TRUE);
+
+	tag = NewTag("TOGGLEBUTTON",_ToggleButton);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"label",TRUE);
+
+	tag = NewTag("CHECKBUTTON",_CheckButton);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"label",TRUE);
+
+	tag = NewTag("RADIOBUTTON",_RadioButton);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"group",TRUE);
+	AddArg(tag,"label",TRUE);
+
+	tag = NewTag("CALENDAR",_Calendar);
+	AddArg(tag,"year",TRUE);
+	AddArg(tag,"month",TRUE);
+	AddArg(tag,"day",TRUE);
 
 	tag = NewTag("FORM",_Form);
 	tag = NewTag("HEAD",_Head);

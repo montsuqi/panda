@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -37,7 +37,6 @@ typedef	struct {
 
 extern	void		DestroyValues(GHashTable *value);
 extern	void		ApplicationsCall(int sts, ScreenData *scr);
-extern	void		ApplicationsInit(void);
+extern	void		ApplicationsInit(int argc, char **argv);
 extern	APL_FUNC	ApplicationsLookup(char *name);
-extern	void		ApplicationsRegist(char *name, APL_FUNC link, APL_FUNC main);
 #endif

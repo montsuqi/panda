@@ -1,0 +1,2 @@
+        01  DBAREA.
+            02  DBDATA      PIC X(2431).

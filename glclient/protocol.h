@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -24,8 +24,8 @@ copies.
 #define	_INC_PROTOCOL_H
 #include	"queue.h"
 
-typedef	Bool	(*RecvHandler)(GtkWidget *, FILE *);
-typedef	Bool	(*SendHandler)(char *, GtkWidget *, FILE *);
+typedef	Bool	(*RecvHandler)(GtkWidget *, NETFILE *);
+typedef	Bool	(*SendHandler)(char *, GtkWidget *, NETFILE *);
 
 typedef	struct {
 	GtkType		type;
@@ -34,15 +34,14 @@ typedef	struct {
 }	HandlerNode;
 
 extern	void		InitProtocol(void);
-extern	void		CheckScreens(FILE *fp, Bool);
+extern	void		CheckScreens(NETFILE *fp, Bool);
 extern	XML_Node	*ShowWindow(char *wname, int type);
-extern	Bool		SendConnect(FILE *fpComm, char *apl);
-extern	Bool		RecvWidgetData(GtkWidget *widget, FILE *fp);
-extern	Bool		SendWidgetData(char *name, GtkWidget *widget, FILE *fp);
-extern	void		RecvValue(FILE *fp, char *longname);
-extern	Bool		GetScreenData(FILE *fpComm);
+extern	Bool		SendConnect(NETFILE *fpComm, char *apl);
+extern	Bool		RecvWidgetData(GtkWidget *widget, NETFILE *fp);
+extern	void		RecvValue(NETFILE *fp, char *longname);
+extern	Bool		GetScreenData(NETFILE *fpComm);
 extern  void		SendWindowData(void);
-extern	void		SendEvent(FILE *fpComm, char *window, char *widget, char *event);
+extern	void		SendEvent(NETFILE *fpComm, char *window, char *widget, char *event);
 extern	void		AddClass(GtkType type, RecvHandler rfunc, SendHandler sfunc);
 extern	void		ResetTimer(GtkWindow *window);
 
@@ -53,5 +52,8 @@ extern	void		ResetTimer(GtkWindow *window);
 #else
 #define	GLOBAL		extern
 #endif
+
+GLOBAL	Bool	Protocol1;
+GLOBAL	Bool	Protocol2;
 
 #endif

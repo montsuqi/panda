@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -36,19 +36,14 @@ copies.
 
 #define	SIZE_PASS		3+8+22
 #define	SIZE_OTHER		128
-#define	SIZE_GLOWN		1024	/*	LBS glown unit	*/
 
-//#define	SIZE_SQL		16384
-#define	SIZE_SQL		65538
 #define	SIZE_BLOCK		1024
 
-//#define	SIZE_BUFF		1024
-#define	SIZE_BUFF		65538
 #define	SIZE_HOST		255
 
 #define	SIZE_NAME		64
 #define	SIZE_EVENT		64
-#define	SIZE_TERM		36
+#define	SIZE_TERM		64
 #define	SIZE_FUNC		16
 #define	SIZE_USER		16
 #define	SIZE_RNAME		16

@@ -103,7 +103,7 @@
            MOVE   'red'        TO  WN1-ENTRY2-STYLE.
            MOVE   'blue'       TO  WN1-ENTRY3-STYLE.
       *
-           MOVE    -1234       TO  WN1-ENTRY2-VALUE.
+           MOVE    1234       TO  WN1-ENTRY2-VALUE.
            MOVE   'おごちゃん' TO  WN1-COMBO1-ITEM(1).
            MOVE   'じゅんちゃ' TO  WN1-COMBO1-ITEM(2).
            MOVE   'えりさ'     TO  WN1-COMBO1-ITEM(3).

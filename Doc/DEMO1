@@ -9,13 +9,14 @@ COBOLデモについて
 
 (2) 認証サーバを起動する
 
-	$ cd ./glserver
+	$ cd ./auth
 	$  ./glauth &
 
 	あらかじめ、gluseraddでパスワードファイルは作っておくこと
 
 (3) アプリサーバを起動する
 
+	$ export APS_HANDLER_LOAD_PATH=.:~/panda/aps/.libs/
 	$ cd ./sample1/demo1
 	$ ~/panda/aps/aps -port 9100 -record .. -lddir .. -dir ../directory -db ORCA demo1
 	$ cd ./sample1/demo2
@@ -40,7 +41,8 @@ COBOLデモについて
 
 (5) glserverを起動する
 
-	$ cd ./sample1
+	$ export MONPS_LOAD_PATH=.:~/panda/libs/.libs/
+	$ cd ./samples/sample1
 	$ ~/panda/glserver/glserver
 
 (6) glclientを起動する
@@ -55,7 +57,7 @@ COBOLデモについて
 
 (1) COBOLソース
 
-  COBOLソースは、./sample1以下にあります。このデモでは
+  COBOLソースは、./samples/sample1以下にあります。このデモでは
 
 	MCPMAIN.CBL
 	MCPSUB.CBL
@@ -71,16 +73,16 @@ COBOLデモについて
 
 と打てばCOPY句も含めて全てのファイルが生成されます。また、
 
-	$ make -f Makefile.OC all
+	$ make -f Makefile.dotCOBOL all
 
-と打てばOpenCOBOLのコードを生成します
+と打てばdotCOBOLのコードを生成します
 
   COBOLプログラムは、EUCコードで保存される必要があります。文字が化ける時
 は文字コードを調べてみます。
 
 (2) 画面ファイル
 
-  画面ファイルは、./sample1にあります。このデモでは、
+  画面ファイルは、./samples/sample1にあります。このデモでは、
 
 	project1.glade
 	project2.glade
@@ -92,7 +94,7 @@ COBOLデモについて
 (3) レコード定義ファイル
 
   プロセス間のデータのやりとりや処理を規定するために、通信レコード定義
-を行います。このデモ用のものは、./sample1にあります。このデモでは、
+を行います。このデモ用のものは、./samples/sample1にあります。このデモでは、
 
 	demo1spa.rec
 	demo2spa.rec
@@ -106,7 +108,7 @@ COBOLデモについて
 (4) LD定義ファイル
 
   LDの動作を定義するために、LD定義ファイルを使います。このデモ用のもの
-は、./sample1にあります。このデモでは、
+は、./samples/sample1にあります。このデモでは、
 
 	demo1.ld
 	demo2.ld
@@ -116,9 +118,26 @@ COBOLデモについて
 (5) ディレクトリ
 
   システム全体の環境定義のために、ディレクトリファイルを使います。デモ用
-のものは、./sample1/directoryです。
+のものは、./samples/sample1/directoryです。
 
 (6) 起動パラメータ
 
   起動パラメータを見るには、各プログラムを-?というパラメータを指定して起
 動して下さい。設定されているパラメータを表示して終了します。
+
+(7) 環境変数
+
+APS_HANDLER_LOAD_PATH
+
+	   APS言語ハンドラのある場所を指定します。言語ハンドラの拡張子は.so
+	です。
+
+MONPS_LOAD_PATH
+
+	  glserverのアプリケーションモジュールのある場所を指定します。wfc
+	にインターフェイスするモジュールはpandaという名称なので、panda.so
+	のある場所を指定します。
+
+COB_LIBRARY_PATH
+
+	  OpenCOBOLで書かれたアプリケーションの存在する場所を指定します。

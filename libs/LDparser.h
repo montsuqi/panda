@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -23,7 +23,7 @@ copies.
 #define	_INC_LD_PARSER_H
 #include	<glib.h>
 #include	"const.h"
-#include	"value.h"
+#include	"libmondai.h"
 
 typedef	struct {
 	char	*name;
@@ -38,6 +38,7 @@ typedef	struct {
 	char		*home;
 	size_t		arraysize
 	,			textsize;
+	int			nCache;
 	size_t		cDB;
 	GHashTable	*DB_Table;
 	RecordStruct	**db;

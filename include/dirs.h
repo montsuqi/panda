@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -21,7 +21,7 @@ copies.
 
 #ifndef	_DIRS_H
 #define	_DIRS_H
-#include	"value.h"
+#include	"libmondai.h"
 
 #undef	GLOBAL
 #ifdef	MAIN

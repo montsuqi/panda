@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -47,7 +47,7 @@ copies.
 #include	"enum.h"
 #include	"misc.h"
 #include	"tcp.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"glterm.h"
 #include	"comm.h"
 #include	"authstub.h"
@@ -55,6 +55,7 @@ copies.
 #include	"driver.h"
 #include	"htserver.h"
 #include	"dirs.h"
+#include	"DDparser.h"
 #include	"trid.h"
 #include	"front.h"
 #include	"debug.h"
@@ -513,16 +514,20 @@ static	void
 InitData(void)
 {
 dbgmsg(">InitData");
+	DD_ParserInit();
 	SesHash = NewIntHash();
 	cSession = abs(rand());	/*	set some random number	*/
 dbgmsg("<InitData");
 }
 
 extern	void
-InitSystem(void)
+InitSystem(
+	int		argc,
+	char	**argv)
 {
 dbgmsg(">InitSystem");
+	InitNET();
 	InitData();
-	ApplicationsInit();
+	ApplicationsInit(argc,argv);
 dbgmsg("<InitSystem");
 }

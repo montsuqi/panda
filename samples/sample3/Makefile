@@ -1,8 +1,8 @@
 all: sample adrs.create
 
 clean:
-	rm -f *.cod *.err *~ db.* dc.*
-	rm -f LINKAREA DBCOMM DBAREA
+	rm -f *.so *~
+	rm -f LINKAREA SPAAREA SCRAREA.SE
 
 TOP			=	$(shell pwd)
 TOOLDIR		= 	/home/ogochan/panda/tools
@@ -20,32 +20,26 @@ SCRREC		=	$(TOP)/list.rec
 DBGEN = $(TOOLDIR)/dbgen -record $(TOP)
 COPYGEN = $(TOOLDIR)/copygen -dir $(DIRECTORY) -lddir $(TOP) -record $(TOP)
 
-SAMPLE_SRC =	MCPMAIN.CBL MCPSUB.CBL	\
-		SAMPLE1.CBL SAMPLEB.CBL ORCGH01.CBL ORCGHID1.CBL
+SAMPLE_SRC =	SAMPLE1.CBL SAMPLEB.CBL ORCGH01.CBL ORCGHID1.CBL
 
-SAMPLE_CODE = $(SAMPLE_SRC:.CBL=.cod)
+SAMPLE_CODE = $(SAMPLE_SRC:.CBL=.so)
 
-%.cod	: %.CBL
-	cobol -L -E1 -R $<
+%.so	: %.CBL
+	cobc -m -dynamic $<
 
 sample: $(SAMPLE_CODE)
 
 LDRECORDS	=	LINKAREA SPAAREA SCRAREA
-DBRECORDS	=	DBPATH DB-META DB-ADRS
+DBRECORDS	=	DBPATH DB-META DB-ADRS DB-SHELL
 
-MCPMAIN.cod		: MCPMAIN.CBL MCPAREA LDRFILE LDWFILE DB-META
-MCPSUB.cod		: MCPSUB.CBL MCPAREA DBINFO DBCOMM DBAREA
+SAMPLE1.so	: SAMPLE1.CBL ENUM-VALUE MCPAREA $(LDRECORDS) $(DBRECORDS)
+ORCGH01.so	: ORCGH01.CBL ENUM-VALUE MCPAREA $(LDRECORDS) $(DBRECORDS)
+ORCGHID1.so	: ORCGHID1.CBL ENUM-VALUE MCPAREA $(LDRECORDS) $(DBRECORDS)
 
-SAMPLE1.cod	: SAMPLE1.CBL ENUM-VALUE MCPAREA $(LDRECORDS) $(DBRECORDS)
-ORCGH01.cod	: ORCGH01.CBL ENUM-VALUE MCPAREA $(LDRECORDS) $(DBRECORDS)
-ORCGHID1.cod: ORCGHID1.CBL ENUM-VALUE MCPAREA $(LDRECORDS) $(DBRECORDS)
-SAMPLEB.cod	: SAMPLEB.CBL ENUM-VALUE MCPAREA $(DBRECORDS) 
+SAMPLEB.so	: SAMPLEB.CBL ENUM-VALUE MCPAREA $(DBRECORDS) 
 
 adrs.create:	adrs.db
 	$(DBGEN) -create adrs.db > adrs.create
-
-DBAREA:	directory adrs.db metadb.db
-	$(COPYGEN) -db -ld $(LDNAME) > DBAREA
 
 DB-ADRS:	adrs.db
 	$(COPYGEN) -prefix adr- -dbrec -ld $(LDNAME) adrs.db > DB-ADRS
@@ -53,13 +47,10 @@ DB-ADRS:	adrs.db
 DB-META:	metadb.db
 	$(COPYGEN) -prefix meta- -dbrec -ld $(LDNAME) metadb.db > DB-META
 
-DBINFO:	directory adrs.db metadb.db
-	$(COPYGEN) -dbinfo -ld $(LDNAME) > DBINFO
+DB-SHELL:	shell.db
+	$(COPYGEN) -prefix shell- -dbrec -ld $(LDNAME) shell.db > DB-SHELL
 
-DBCOMM:	directory adrs.db metadb.db
-	$(COPYGEN) -ld $(LDNAME) -dbcomm > DBCOMM
-
-DBPATH:	directory adrs.db metadb.db
+DBPATH:	directory adrs.db metadb.db shell.db
 	$(COPYGEN) -dbpath -ld $(LDNAME) > DBPATH
 
 LINKAREA:	$(LINKREC) $(DIRECTORY)
@@ -67,12 +58,6 @@ LINKAREA:	$(LINKREC) $(DIRECTORY)
 
 SCRAREA.SE:	$(DIRECTORY) $(LINKREC) $(SPAREC) $(SCRREC) $(LDFILE)
 	$(COPYGEN) -ld $(LDNAME) -screen -wprefix -name scrarea > SCRAREA.SE
-
-LDWFILE: $(DIRECTORY) $(LDFILE) $(SPAREC) $(LINKREC) $(SCRREC)
-	$(COPYGEN) -ldw -ld $(LDNAME)  > LDWFILE
-
-LDRFILE: $(DIRECTORY) $(LDFILE) $(SPAREC) $(LINKREC) $(SCRREC)
-	$(COPYGEN) -ldr -ld $(LDNAME)  > LDRFILE
 
 MCPAREA: $(DIRECTORY)
 	$(COPYGEN) -mcp  > MCPAREA

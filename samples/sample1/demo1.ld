@@ -17,6 +17,8 @@ bind	"project5"	"OpenCOBOL"	"TPDEMO3";
 
 multiplex_group	demo1;
 
+cache		5;
+
 home	"=/sample1/demo1";
 
 data	{

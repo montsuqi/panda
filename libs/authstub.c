@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2002 Ogochan & JMA (Japan Medical Association).
+              2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -31,8 +31,8 @@ copies.
 #endif
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<string.h>
 #include	<signal.h>
-#include	<termio.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -42,11 +42,11 @@ copies.
 #include	<unistd.h>
 #include	<glib.h>
 
+#include	"const.h"
 #include	"types.h"
 #include	"misc.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"comm.h"
-#include	"auth.h"
 #include	"dirs.h"
 #include	"tcp.h"
 #include	"option.h"
@@ -59,7 +59,7 @@ AuthUser(
 	char	*other)
 {
 	int		fh;
-	FILE	*fp;
+	NETFILE	*fp;
 	Bool	rc;
 	char	buff[SIZE_OTHER+1];
 
@@ -73,22 +73,16 @@ dbgmsg(">AuthUser");
 #endif
 	if		(  !stricmp(Auth.protocol,"glauth")  ) {
 		fh = ConnectSocket(Auth.port,SOCK_STREAM,Auth.host);
-		if		(  ( fp = fdopen(fh,"w+") )  ==  NULL  ) {
-			close(fh);
-			exit(1);
-		}
+		fp = SocketToNet(fh);
 		SendString(fp,user);
 		SendString(fp,pass);
-		fflush(fp);
 		if		(  ( rc = RecvBool(fp) )  ) {
 			RecvString(fp,buff);
 			if		(  other  !=  NULL  ) {
 				strcpy(other,buff);
 			}
 		}
-		fclose(fp);
-		shutdown(fh,2);
-		close(fh);
+		CloseNet(fp);
 	} else {
 		rc = FALSE;
 	}

@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2002 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -34,7 +34,7 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"enum.h"
-#include	"value.h"
+#include	"libmondai.h"
 #include	"misc.h"
 #include	"comm.h"
 #include	"DDparser.h"
@@ -42,38 +42,6 @@ copies.
 #include	"driver.h"
 #include	"dirs.h"
 #include	"debug.h"
-
-extern	ValueStruct	*
-ReadRecordDefine(
-	char	*name)
-{
-	RecordStruct	*rec;
-	ValueStruct		*ret;
-	char		buf[SIZE_BUFF]
-	,			dir[SIZE_BUFF];
-	char		*p
-	,			*q;
-	Bool		fExit;
-
-	strcpy(dir,RecordDir);
-	p = dir;
-	ret = NULL;
-	do {
-		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-			*q = 0;
-			fExit = FALSE;
-		} else {
-			fExit = TRUE;
-		}
-		sprintf(buf,"%s/%s.rec",p,name);
-		if		(  ( rec = DD_ParserDataDefines(buf) )  !=  NULL  ) {
-			ret = rec->rec;
-			break;
-		}
-		p = q + 1;
-	}	while	(  !fExit  );
-	return	(ret);
-}
 
 extern	WindowData	*
 SetWindowName(
