@@ -82,9 +82,9 @@ ENTER_FUNC;
 			}
 		}
 	}
+	OpenDB_RedirectPort(dbg);
+	dbg->conn = (void *)fpBlob;
 	if		(  fpBlob  !=  NULL  ) {
-		OpenDB_RedirectPort(dbg);
-		dbg->conn = (void *)fpBlob;
 		dbg->fConnect = TRUE;
 		rc = MCP_OK;
 	} else {
