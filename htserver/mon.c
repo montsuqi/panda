@@ -334,7 +334,7 @@ SendEvent(void)
 ENTER_FUNC;
     if		(  ( name = LoadValue("_name") )  !=  NULL  ) {
 		sprintf(htcname,"%s/%s.htc",ScreenDir,name);
-		if		(  ( htc = HTCParser(htcname) )  ==  NULL  ) {
+		if		(  ( htc = HTCParserFile(htcname) )  ==  NULL  ) {
 			exit(1);
 		}
 	} else {
@@ -422,7 +422,7 @@ ENTER_FUNC;
                     }
                 }
 				sprintf(buff,"%s/%s.htc",ScreenDir,name);
-                htc = HTCParser(buff);
+                htc = HTCParserFile(buff);
                 if (htc == NULL)
                     exit(1);
 				html = NewLBS();

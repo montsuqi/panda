@@ -1,3 +1,7 @@
+2004-04-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/HTCparser.c: in memory parser
+
 2004-03-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/tags.c : <fixed>にlink属性追加

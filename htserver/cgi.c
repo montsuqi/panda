@@ -637,7 +637,7 @@ PutHTML(
 	char	*sesid;
 	int		c;
 
-dbgmsg(">PutHTML");
+ENTER_FUNC;
 	printf("Content-Type: text/html; charset=%s\r\n", Codeset);
 	LBS_EmitEnd(html);
 	if		(  fCookie  ) {
@@ -651,7 +651,7 @@ dbgmsg(">PutHTML");
 	printf("\r\n");
 	WriteLargeString(stdout,html,Codeset);
 	//	WriteLargeString(_fpLog,html,Codeset);
-dbgmsg("<PutHTML");
+LEAVE_FUNC;
 }
 
 extern	void

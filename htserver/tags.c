@@ -642,8 +642,10 @@ dbgmsg(">_Button");
         htc->DefaultEvent = event;
 	if (event != NULL) {
 		g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
+		LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
+	} else {
+		LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
 	}
-	LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
 	LBS_EmitString(htc->code,face);
 	LBS_EmitString(htc->code,"\"");
 	if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {

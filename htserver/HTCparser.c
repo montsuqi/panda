@@ -225,8 +225,34 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	HTCInfo	*
+HTCParserCore(
+	int		(*getfunc)(void))
+{
+	HTCInfo	*ret;
+
+	_HTCGetChar = getfunc;
+	ret = New(HTCInfo);
+	ret->code = NewLBS();
+	ret->Trans = NewNameHash();
+	ret->Radio = NewNameHash();
+	ret->FileSelection = NewNameHash();
+	ret->DefaultEvent = NULL;
+	ret->EnctypePos = 0;
+	ret->FormNo = -1;
+	LBS_EmitStart(ret->code);
+	ParHTC(ret);
+	return	(ret);
+}
+
+static	int
+GetCharFile(void)
+{
+	return	(fgetc(HTC_File));
+}
+
 extern	HTCInfo	*
-HTCParser(
+HTCParserFile(
 	char	*name)
 {
 	FILE	*fp;
@@ -238,16 +264,9 @@ ENTER_FUNC;
 		HTC_FileName = name;
 		HTC_cLine = 1;
 		HTC_File = fp;
-		ret = New(HTCInfo);
-		ret->code = NewLBS();
-		ret->Trans = NewNameHash();
-		ret->Radio = NewNameHash();
-		ret->FileSelection = NewNameHash();
-        ret->DefaultEvent = NULL;
-        ret->EnctypePos = 0;
-        ret->FormNo = -1;
-		LBS_EmitStart(ret->code);
-		ParHTC(ret);
+		HTC_Memory = NULL;
+		_HTCGetChar = GetCharFile;
+		ret = HTCParserCore(GetCharFile);
 		fclose(HTC_File);
 		if		(  fError  ) {
 			ret = NULL;
@@ -255,6 +274,41 @@ ENTER_FUNC;
 	} else {
         fprintf(stderr, "HTC file not found: %s\n", name);
         dbgprintf("HTC file not found: %s\n", name);
+		ret = NULL;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	int
+GetCharMemory(void)
+{
+	int		c;
+
+	c = *HTC_Memory ++;
+	return	(c);
+}
+
+extern	HTCInfo	*
+HTCParserMemory(
+	char	*buff)
+{
+	HTCInfo	*ret;
+
+ENTER_FUNC;
+	if		(  buff  !=  NULL  ) {
+		fError = FALSE;
+		HTC_FileName = "*memory*";
+		HTC_cLine = 1;
+		HTC_File = NULL;
+		HTC_Memory = buff;
+		ret = HTCParserCore(GetCharMemory);
+		if		(  fError  ) {
+			ret = NULL;
+		}
+	} else {
+        fprintf(stderr, "HTC memory is null\n");
+        dbgprintf("HTC memory is null\n",NULL);
 		ret = NULL;
 	}
 LEAVE_FUNC;
