@@ -60,8 +60,6 @@ copies.
 #include	"action.h"
 #include	"callbacks.h"
 #include	"widgetOPS.h"
-#include	"dialogs.h"
-#include	"dialogs.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -129,7 +127,8 @@ PopScreenStack(void)
 static void
 GL_Error(void)
 {
-	exit_dialog("Connection lost");
+	MessageLog("Connection lost\n");
+	exit(1);
 }
 
 extern	void
@@ -1001,10 +1000,10 @@ RecvFixedData(
 		ret = TRUE;
 		break;
 	  default:
+		printf("invalid data conversion\n");
+		exit(1);
 		ret = FALSE;
-		exit_dialog("invalid data conversion");
 		break;
-		exit_dialog("invalid data conversion");
 	}
 	return	(ret);
 }
@@ -1027,7 +1026,8 @@ SendFixedData(
 		GL_SendFixed(fp,xval);
 		break;
 	  default:
-		exit_dialog("invalid data conversion");
+		printf("invalid data conversion\n");
+		exit(1);
 		break;
 	}
 }
@@ -1273,7 +1273,8 @@ SendFloatData(
 		GL_SendBool(fp,(( val == 0 ) ? FALSE : TRUE ));
 		break;
 	  default:
-		exit_dialog("invalid data conversion");
+		printf("invalid data conversion\n");
+		exit(1);
 		break;
 	}
 }

@@ -265,7 +265,7 @@ CreateTempfile(
 	}
 	fchmod(fildes, 0600);
 	if ((file = fdopen(fildes, "wb")) == NULL ) {
-		exit_dialog("Couldn't open tempfile %s",tmpname);
+		Error("Couldn't open tempfile %s",tmpname);
 	}
 	return file;
 }

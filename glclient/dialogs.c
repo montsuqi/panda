@@ -79,30 +79,6 @@ message_dialog(
 	return (dialog);
 }
 
-void
-exit_dialog(
-	const char *message)
-{
-	GtkWidget *dialog;
-	dialog = message_dialog(message, FALSE);
-	gtk_signal_connect (GTK_OBJECT (dialog), "destroy",
-						GTK_SIGNAL_FUNC(gtk_main_quit),
-						NULL);
-	gtk_widget_show (dialog);
-}
-
-void
-exit_dialog(
-	const char *message)
-{
-	GtkWidget *dialog;
-	dialog = message_dialog(message, FALSE);
-	gtk_signal_connect (GTK_OBJECT (dialog), "destroy",
-						GTK_SIGNAL_FUNC(gtk_main_quit),
-						NULL);
-	gtk_widget_show (dialog);
-}
-
 #ifdef USE_GNOME
 GtkWidget*
 question_dialog(
