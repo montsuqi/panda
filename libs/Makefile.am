@@ -1,7 +1,15 @@
+if GNOME_SUPPORT
+THE_FLAGS = $(GNOME_INCLUDEDIR)
+THE_LIBS  = -lglade-gnome -lglade $(GNOME_LIBDIR) $(GNOMEUI_LIBS)
+else
+THE_FLAGS = $(GTK_CFLAGS)
+THE_LIBS  = -lglade $(GTK_LIBS)
+endif
+
 lib_LTLIBRARIES = libpanda.la
 
 enum_LDADD	= 	\
-	$(GLADE_LIBS)	$(PANDA_LIBS)	\
+	$(THE_LIBS) $(GLADE_LIBS)	$(PANDA_LIBS)	\
 	-L/usr/lib -lglib -lm
 noinst_PROGRAMS	=	enum
 
@@ -14,24 +22,26 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/datalib	\
-	$(GNOME_INCLUDEDIR) \
-	$(FIXED_CFLAGS)
+	$(GNOME_INCLUDEDIR)
 
 
 
 libpanda_la_SOURCES	=		\
+	misc.c		misc.h		\
+	option.c	option.h	\
 	comm.c		comm.h		\
-	authstub.c	authstub.h	\
-	comms.c		comms.h		\
+	LBSfunc.c	LBSfunc.h	\
+	value.c		value.h		\
+	SQLlex.c	SQLlex.h	\
+	SQLparser.c	SQLparser.h	\
+	DDparser.c	DDparser.h	\
+	DDlex.c		DDlex.h		\
 	LDparser.c	LDparser.h	\
 	LDlex.c		LDlex.h		\
 	DIparser.c	DIparser.h	\
 	DIlex.c		DIlex.h		\
 	BDparser.c	BDparser.h	\
 	BDlex.c		BDlex.h		\
-	DBparser.c	DBparser.h	\
-	DBlex.c		DBlex.h		\
 	directory.c	directory.h	\
 	driver.c	driver.h	\
 	tcp.c		tcp.h		\
@@ -40,15 +50,27 @@ libpanda_la_SOURCES	=		\
 	enum.h
 
 libpandac_a_SOURCES	=		\
+	misc.c		misc.h		\
+	option.c	option.h	\
 	comm.c		comm.h		\
+	LBSfunc.c	LBSfunc.h	\
+	value.c		value.h		\
 	driver.c	driver.h	\
 	tcp.c		tcp.h		\
 	queue.c		queue.h		\
 	enum.h
 
 libpandas_a_SOURCES	=		\
+	misc.c		misc.h		\
+	option.c	option.h	\
 	comm.c		comm.h		\
 	comms.c		comms.h		\
+	LBSfunc.c	LBSfunc.h	\
+	value.c		value.h		\
+	SQLlex.c	SQLlex.h	\
+	SQLparser.c	SQLparser.h	\
+	DDparser.c	DDparser.h	\
+	DDlex.c		DDlex.h		\
 	applications.c applications.h	\
 	pandaIO.c	pandaIO.h	\
 	driver.c	driver.h	\
@@ -65,15 +87,21 @@ libpandas_a_SOURCES	=		\
 	demo4.c
 
 libpandat_a_SOURCES	=		\
+	misc.c		misc.h		\
+	option.c	option.h	\
 	comm.c		comm.h		\
+	LBSfunc.c	LBSfunc.h	\
+	value.c		value.h		\
+	SQLlex.c	SQLlex.h	\
+	SQLparser.c	SQLparser.h	\
+	DDparser.c	DDparser.h	\
+	DDlex.c		DDlex.h		\
 	LDparser.c	LDparser.h	\
 	LDlex.c		LDlex.h		\
 	DIparser.c	DIparser.h	\
 	DIlex.c		DIlex.h		\
 	BDparser.c	BDparser.h	\
 	BDlex.c		BDlex.h		\
-	DBparser.c	DBparser.h	\
-	DBlex.c		DBlex.h		\
 	directory.c	directory.h	\
 	driver.c	driver.h	\
 	tcp.c		tcp.h		\

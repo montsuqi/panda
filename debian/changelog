@@ -1,3 +1,9 @@
+panda (1:1.0.7p1-0+0.orca.1) unstable; urgency=low
+
+  * fix version number.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu, 26 Sep 2002 16:21:33 +0900
+
 panda (1:1.0.7-0+0.orca.2) unstable; urgency=low
 
   * Fix version number.

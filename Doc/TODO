@@ -1,6 +1,5 @@
-glserverのプロセスが残る問題[middle:3484]
-
 dbcodeのサイズ
+glade, libgladeのfork
 
 webインターフェイス
 複数画面のPUT
@@ -9,6 +8,3 @@ webインターフェイス
 DBを実効ユーザ毎に開けるようにする
 libの整理
 ロードバランス
-
-done
-	glade, libgladeのfork

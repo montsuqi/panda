@@ -287,7 +287,7 @@ MakeLD(void)
 
 dbgmsg(">MakeLD");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,LD_Name,"","");
+	SetUpDirectory(Directory,LD_Name,"");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -450,7 +450,7 @@ MakeLinkage(void)
 	char	*_prefix;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,LD_Name,"","");
+	SetUpDirectory(Directory,LD_Name,"");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -492,7 +492,7 @@ MakeDB(void)
 	size_t	cDB;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -518,7 +518,7 @@ MakeDB(void)
 	PutName("dbarea");
 	printf(".\n");
 	msize = 0;
-	for	( i = 1 ; i < cDB ; i ++ ) {
+	for	( i = 0 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -548,7 +548,7 @@ MakeDBREC(
 
 dbgmsg(">MakeDBREC");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -569,8 +569,8 @@ dbgmsg(">MakeDBREC");
 	} else {
 		Error("LD or BD not specified");
 	}
-	msize = 64;
-	for	( i = 1 ; i < cDB ; i ++ ) {
+	msize = 0;
+	for	( i = 0 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -615,7 +615,7 @@ MakeDBCOMM(void)
 	size_t	cDB;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -638,7 +638,7 @@ MakeDBCOMM(void)
 	}
 
 	msize = 0;
-	for	( i = 1 ; i < cDB ; i ++ ) {
+	for	( i = 0 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -729,9 +729,8 @@ MakeDBPATH(void)
 	,			textsize;
 	size_t	cDB;
 
-dbgmsg(">MakeDBPATH");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -759,7 +758,7 @@ dbgmsg(">MakeDBPATH");
 	PutLevel(1);
 	PutName("dbpath");
 	printf(".\n");
-	for	( i = 1 ; i < cDB ; i ++ ) {
+	for	( i = 0 ; i < cDB ; i ++ ) {
 		db = dbrec[i]->opt.db;
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
@@ -786,14 +785,13 @@ dbgmsg(">MakeDBPATH");
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",j);
 		}
 	}
-dbgmsg("<MakeDBPATH");
 }
 
 static	void
 MakeMCP(void)
 {
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,"","","");
+	SetUpDirectory(Directory,"","");
 
 	Prefix = "";
 	PutLevel(1);

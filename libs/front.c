@@ -106,6 +106,21 @@ TermName(
 	return	(name); 
 }
 
+extern	int
+InitServerPort(
+	char	*port,
+	int		back)
+{	int		fh;
+
+	fh = BindSocket(port,SOCK_STREAM);
+
+	if		(  listen(fh,back)  <  0  )	{
+		shutdown(fh, 2);
+		Error("INET Domain listen");
+	}
+	return	(fh);
+}
+
 extern	ScreenData	*
 InitSession(void)
 {

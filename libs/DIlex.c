@@ -56,7 +56,6 @@ static	struct	{
 }	tokentable[] = {
 	{	"ld"				,T_LD		},
 	{	"bd"				,T_BD		},
-	{	"db"				,T_DB		},
 	{	"name"				,T_NAME 	},
 	{	"linksize"			,T_LINKSIZE	},
 	{	"multiplex_level"	,T_MULTI	},
@@ -70,7 +69,6 @@ static	struct	{
 	{	"redirect_port"		,T_REDIRECTPORT	},
 	{	"lddir"				,T_LDDIR	},
 	{	"bddir"				,T_BDDIR	},
-	{	"dbddir"			,T_DBDDIR	},
 	{	"record"			,T_RECDIR	},
 	{	"base"				,T_BASEDIR	},
 	{	"priority"			,T_PRIORITY	},

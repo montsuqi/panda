@@ -50,8 +50,6 @@ static	FILE	*fpServ;
 static	char	*ServerPort;
 static	char	*Command;
 
-//char		*RecordDir;	/*	dummy	*/
-
 static	ARG_TABLE	option[] = {
 	{	"server",	STRING,		TRUE,	(void*)&ServerPort,
 		"サーバポート"	 								},

@@ -19,43 +19,24 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_INC_CONST_H
-#define	_INC_CONST_H
+#ifndef	_INC_LOG_H
+#define	_INC_LOG_H
 
-#define	PORT_GLTERM		8000
-#define	PORT_GLAUTH		8001
-#define	PORT_DBLOG		8002
-#define	PORT_HTSERV		8010
-#define	PORT_PGSERV		8011
-#define	PORT_APS_BASE	9100
-#define	PORT_WFC		9000
-#define	PORT_WFC_APS	9001
-#define	PORT_POSTGRES	5432
-#define	PORT_REDIRECT	8010
+#ifndef	PacketClass
+#define	PacketClass		unsigned char
+#endif
 
-#define	SIZE_PASS		3+8+22
-#define	SIZE_OTHER		128
-#define	SIZE_GLOWN		1024	/*	LBS glown unit	*/
+#define	RED_PING		(PacketClass)0x01
+#define	RED_DATA		(PacketClass)0x02
+#define	RED_NOT			(PacketClass)0xF0
+#define	RED_PONG		(PacketClass)0xF1
+#define	RED_OK			(PacketClass)0xFE
+#define	RED_END			(PacketClass)0xFF
 
-//#define	SIZE_SQL		16384
-#define	SIZE_SQL		65538
-#define	SIZE_BLOCK		1024
-
-//#define	SIZE_BUFF		1024
-#define	SIZE_BUFF		65538
-#define	SIZE_HOST		255
-
-#define	SIZE_NAME		64
-#define	SIZE_EVENT		64
-#define	SIZE_TERM		36
-#define	SIZE_FUNC		16
-#define	SIZE_USER		16
-#define	SIZE_RNAME		16
-#define	SIZE_STATUS		4
-#define	SIZE_PUTTYPE	8
-#define	SIZE_STACK		16
-#define	SIZE_TRID		16
-#define	SIZE_SESID		16
-#define	SIZE_ARG		255
+extern	void	OpenDB_RedirectPort(DBG_Struct *dbg);
+extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
+extern	void	PutDB_Redirect(DBG_Struct *dbg, char *data);
+extern	void	BeginDB_Redirect(DBG_Struct *dbg);
+extern	void	CommitDB_Redirect(DBG_Struct *dbg);
 
 #endif

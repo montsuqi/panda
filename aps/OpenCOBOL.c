@@ -46,13 +46,19 @@ copies.
 #include	"misc.h"
 #include	"value.h"
 #include	"comm.h"
+#include	"dirs.h"
+#include	"aps_main.h"
 #include	"directory.h"
 #include	"cobolvalue.h"
 #include	"handler.h"
 #include	"defaults.h"
 #include	"enum.h"
+#include	"wfc.h"
+#include	"apsio.h"
 #include	"dbgroup.h"
+#include	"Postgres.h"
 #include	"queue.h"
+#include	"tcp.h"
 #include	"driver.h"
 #include	"libcob.h"
 #include	"OpenCOBOL.h"
@@ -144,6 +150,9 @@ OpenCOBOL_UnPackValue(
 			p += value->body.CharData.len;
 			break;
 		  case	GL_TYPE_CHAR:
+			memcpy(value->body.CharData.sval,p,value->body.CharData.len);
+			p += value->body.CharData.len;
+			break;
 		  case	GL_TYPE_TEXT:
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:
@@ -197,6 +206,9 @@ OpenCOBOL_PackValue(
 			p += value->body.CharData.len;
 			break;
 		  case	GL_TYPE_CHAR:
+			memcpy(p,value->body.CharData.sval,value->body.CharData.len);
+			p += value->body.CharData.len;
+			break;
 		  case	GL_TYPE_TEXT:
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:

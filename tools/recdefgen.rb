@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 require "xmlparser"
 require "kconv"
 include Kconv

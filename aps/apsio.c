@@ -41,12 +41,29 @@ copies.
 #include	"LBSfunc.h"
 #include	"comm.h"
 #include	"wfc.h"
-#include	"handler.h"
+#include	"aps_main.h"
 #include	"apsio.h"
+#include	"handler.h"
 #include	"tcp.h"
 #include	"debug.h"
 
 static	LargeByteString	*iobuff;
+
+extern	int
+InitServerPort(
+	char	*port)
+{	int		fh;
+
+dbgmsg(">InitServerPort");
+	fh = BindSocket(port,SOCK_STREAM);
+
+	if		(  listen(fh,Back)  <  0  )	{
+		shutdown(fh, 2);
+		Error("INET Domain listen");
+	}
+dbgmsg("<InitServerPort");
+	return	(fh);
+}
 
 extern	void
 InitAPSIO(void)

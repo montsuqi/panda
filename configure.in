@@ -6,11 +6,9 @@ PACKAGE=panda
 
 # make version
 MAJOR_VERSION=1
-MINOR_VERSION=1
-MICRO_VERSION=0
-
+MINOR_VERSION=0
+MICRO_VERSION=7
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
-LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
 
 AC_SUBST(MAJOR_VERSION)
 AC_SUBST(MINOR_VERSION)
@@ -18,7 +16,6 @@ AC_SUBST(MICRO_VERSION)
 
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
-AC_SUBST(LTVERSION)
 
 AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION,"$VERSION")
@@ -44,17 +41,6 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
 AM_PROG_LIBTOOL
-
-dnl ***************************************************************************
-dnl Checks for GNOME
-dnl ***************************************************************************
-have_gnome=false
-GNOME_INIT_HOOK([
-	have_gnome=true
-	AC_DEFINE(ENABLE_GNOME)
-])
-
-GNOME_COMPILE_WARNINGS
 
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the PostgreSQL 
@@ -261,17 +247,12 @@ dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the libglade modules.
 dnl ***************************************************************************
 
-AC_PATH_PROG(GLADE_PANDA_CONFIG,libglade-panda-config,no)
-if test x$GLADE_PANDA_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find libglade-panda-config)
+AC_PATH_PROG(GLADE_CONFIG,libglade-config,no)
+if test x$GLADE_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find libglade-config)
 fi
-if test "x$have_gnome" = "xtrue"; then
-  GLADE_LIBS=`libglade-panda-config --libs gnome`
-  GLADE_CFLAGS=`libglade-panda-config --cflags gnome`
-else
-  GLADE_LIBS=`libglade-panda-config --libs`
-  GLADE_CFLAGS=`libglade-panda-config --cflags`
-fi
+GLADE_LIBS=`libglade-config --libs`
+GLADE_CFLAGS=`libglade-config --cflags`
 AC_SUBST(GLADE_LIBS)
 AC_SUBST(GLADE_CFLAGS)
 
@@ -306,18 +287,23 @@ AC_CHECK_FUNC(xmlSAXUserParseFile,,
 AC_MSG_ERROR([*** libxml >= 1.7.2 is required to compile libglade]))
 LIBS="$old_LIBS"
 
+have_gnome=false
+GNOME_INIT_HOOK([
+	have_gnome=true
+	AC_DEFINE(ENABLE_GNOME)
+])
+AM_CONDITIONAL(GNOME_SUPPORT, $have_gnome)
+
+GNOME_COMPILE_WARNINGS
+
 AC_OUTPUT(Makefile
 	  Doc/Makefile
-	  include/Makefile
-	  libs/Makefile
-	  datalib/Makefile
-	  dblib/Makefile
-	  dbstuff/Makefile
+	  aps/Makefile
 	  cobol/Makefile
 	  glclient/Makefile
 	  glserver/Makefile
 	  htserver/Makefile
-	  aps/Makefile
+	  libs/Makefile
 	  pgserver/Makefile
 	  tools/Makefile
 	  wfc/Makefile)
