@@ -58,6 +58,7 @@ copies.
 #include	"debug.h"
 
 static	Bool	fConnect;
+
 static	sigset_t	hupset;
 static	int		MaxTran;
 static	int		Sleep;
@@ -274,6 +275,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
 		"実行時間に足す処理時間(for debug)"				},
+	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
+		"dbredirectorの起動をチェックしない"			},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -286,6 +289,7 @@ SetDefault(void)
 	PortNumber = IntStrDup(PORT_APS_BASE);
 	Back = 5;
 	fConnect = FALSE;
+	fNoCheck = FALSE;
 
 	BaseDir = NULL;
 	RecordDir = NULL;

@@ -230,7 +230,6 @@ dbgmsg(">ExecDB_Process");
 		dbg = rec->opt.db->dbg;
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl->func) )
 				   ==  NULL  ) {
-printf("%p\n",dbg->func->primitive->access);fflush(stdout);
 			if		(  !(*dbg->func->primitive->access)(dbg,ctrl->func,ctrl,rec,args)  ) {
 				printf("function not found [%s]\n",ctrl->func);
 				ctrl->rc = MCP_BAD_FUNC;

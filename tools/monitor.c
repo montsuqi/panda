@@ -56,6 +56,7 @@ static	char	*MyHost;
 static	char	*Log;
 static	Bool	fQ;
 static	Bool	fRedirector;
+static	Bool	fNoCheck;
 static	Bool	fRestart;
 static	int		interval;
 static	int		MaxTran;
@@ -244,7 +245,7 @@ dbgmsg(">_StartAps");
 		if		(	(  ld->ports[n]  ==  NULL              )
 				||	(  !strcmp(ld->ports[n]->host,MyHost)  ) )	{
 			proc = New(Process);
-			argv = (char **)xmalloc(sizeof(char *) * 19);
+			argv = (char **)xmalloc(sizeof(char *) * 20);
 			proc->argv = argv;
 			proc->type = PTYPE_APS;
 			argc = 0;
@@ -271,6 +272,10 @@ dbgmsg(">_StartAps");
 			argv[argc ++] = IntStrDup(MaxTran);
 			argv[argc ++] = "-sleep";
 			argv[argc ++] = IntStrDup(Sleep);
+
+			if		(  fNoCheck  ) {
+				argv[argc ++] = "-nocheck";
+			}
 
 			if		(  fQ  ) {
 				argv[argc ++] = "-?";
@@ -483,6 +488,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
 		"dbredirectorを起動する"	 					},
+	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
+		"dbredirectorの起動をチェックしない"			},
 
 	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
 		"aps異常終了時に再起動する"	 					},
@@ -524,6 +531,7 @@ SetDefault(void)
 	MyHost = "localhost";
 
 	fRedirector = FALSE;
+	fNoCheck = FALSE;
 	fRestart = FALSE;
 	fQ = FALSE;
 }

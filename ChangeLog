@@ -1,3 +1,7 @@
+2004-01-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/redirect.c: リダイレクタが異常の時に落とす機能をつけた
+
 2004-01-15  Shugo Maeda  <shugo@netlab.jp>
 
 	* aps/Ruby.c : Rubyハンドラのサポート

@@ -276,6 +276,10 @@ static	ARG_TABLE	option[] = {
 		"ユーザ名"										},
 	{	"pass",		STRING,		TRUE,	(void*)&DB_Pass,
 		"パスワード"									},
+
+	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
+		"dbredirectorの起動をチェックしない"			},
+
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -294,6 +298,8 @@ SetDefault(void)
 	DB_Host = NULL;
 	DB_Port = NULL;
 	DB_Name = DB_User;
+
+	fNoCheck = FALSE;
 }
 
 extern	int

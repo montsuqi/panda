@@ -58,6 +58,9 @@ dbgmsg(">OpenDB_RedirectPort");
 			Warning("loging server not ready");
 			dbg->fpLog = NULL;
 			dbg->redirectData = NULL;
+			if		(  !fNoCheck  ) {
+				exit(1);
+			}
 		} else {
 			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
@@ -114,6 +117,9 @@ dbgmsg(">CommitDB_Redirect");
 		SendPacketClass(dbg->fpLog,RED_PING);
 		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
 			Warning("log server down?");
+			if		(  !fNoCheck  ) {
+				exit(1);
+			}
 			CloseNet(dbg->fpLog);
 			dbg->fpLog = NULL;
 			FreeLBS(dbg->redirectData);
@@ -123,6 +129,9 @@ dbgmsg(">CommitDB_Redirect");
 			SendLBS(dbg->fpLog,dbg->redirectData);
 			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
 				Warning("log server down?");
+				if		(  !fNoCheck  ) {
+					exit(1);
+				}
 				CloseNet(dbg->fpLog);
 				dbg->fpLog = NULL;
 				FreeLBS(dbg->redirectData);

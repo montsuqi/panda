@@ -58,7 +58,6 @@ static	char	*Directory;
 static	char	*CommandParameter;
 static	char	*BD_Name;
 static	BatchBind	*Bind;
-		
 
 static	void
 InitData(
@@ -150,6 +149,10 @@ static	ARG_TABLE	option[] = {
 		"パスワード"									},
 	{	"bd",		STRING,		TRUE,	(void*)&BD_Name,
 		"BD定義名"										},
+
+	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
+		"dbredirectorの起動をチェックしない"			},
+
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -169,6 +172,8 @@ SetDefault(void)
 	DB_Name = DB_User;
 	BD_Name = NULL;
 	CommandParameter = "";
+
+	fNoCheck = FALSE;
 }
 
 extern	int

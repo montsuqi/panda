@@ -40,11 +40,12 @@ extern	DB_Func	*EnterDB_Function(char *name, DB_OPS *ops, DB_Primitives *primiti
 
 GLOBAL	RecordStruct	**ThisDB;
 
-GLOBAL	char		*DB_Host;
-GLOBAL	char		*DB_Port;
-GLOBAL	char		*DB_Name;
-GLOBAL	char		*DB_User;
-GLOBAL	char		*DB_Pass;
+GLOBAL	char	*DB_Host;
+GLOBAL	char	*DB_Port;
+GLOBAL	char	*DB_Name;
+GLOBAL	char	*DB_User;
+GLOBAL	char	*DB_Pass;
 
+GLOBAL	Bool	fNoCheck;
 
 #endif
