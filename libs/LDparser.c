@@ -363,8 +363,9 @@ dbgmsg(">ParLD");
 			ParDB(ret,gname);
 			break;
 		  case	T_DATA:
-            if (ret->name == NULL)
+            if (ret->name == NULL) {
                 Error("name directive is required");
+            }
 			ParDATA(ret);
 			break;
 		  case	T_HOME:
@@ -395,8 +396,9 @@ dbgmsg(">ParLD");
 			Error("; missing");
 		}
 	}
-    if (ret->name == NULL)
+    if (ret->name == NULL) {
         Error("name directive is required");
+    }
 dbgmsg("<ParLD");
 	return	(ret);
 }
