@@ -261,14 +261,19 @@ SendInt(
 	fwrite(&data,sizeof(data),1,fp);
 }
 
-extern	char
+extern	int
 RecvChar(
 	FILE	*fp)
 {
 	char	data;
+	int		ret;
 
-	fread(&data,sizeof(data),1,fp);
-	return	(data);
+	if		(  fread(&data,sizeof(data),1,fp)  ==  sizeof(data)  ) {
+		ret = data;
+	} else {
+		ret = -1;
+	}
+	return	(ret);
 }
 
 extern	void

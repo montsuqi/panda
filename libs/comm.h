@@ -40,7 +40,7 @@ extern	long			RecvLong(FILE *fp);
 extern	void			SendLong(FILE *fp,long data);
 extern	int				RecvInt(FILE *fp);
 extern	void			SendInt(FILE *fp,int data);
-extern	char			RecvChar(FILE *fp);
+extern	int				RecvChar(FILE *fp);
 extern	void			SendChar(FILE *fp,char data);
 extern	double			RecvFloat(FILE *fp);
 extern	void			SendFloat(FILE *fp,double data);
