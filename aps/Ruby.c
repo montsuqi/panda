@@ -1084,26 +1084,63 @@ init()
 }
 
 static VALUE
+get_source_filename(char *class_name)
+{
+    char *p = class_name;
+    VALUE filename = rb_str_new("", 0);
+    int upper_flag = 1;
+    char buf[1];
+
+    if (!isupper(*p)) {
+        return Qnil;
+    }
+
+    buf[0] = tolower(*p);
+    rb_str_cat(filename, buf, 1);
+    p++;
+
+    while (*p != '\0') {
+        if (isupper(*p)) {
+            if (upper_flag) {
+                if (islower(*(p + 1))) {
+                    rb_str_cat(filename, "-", 1);
+                }
+            }
+            else {
+                rb_str_cat(filename, "-", 1);
+                upper_flag = 1;
+            }
+            buf[0] = tolower(*p);
+            rb_str_cat(filename, buf, 1);
+        }
+        else {
+            rb_str_cat(filename, p, 1);
+            upper_flag = 0;
+        }
+        p++;
+    }
+    rb_str_cat(filename, ".rb", 3);
+    return filename;
+}
+
+static VALUE
 load_application(char *path, char *name)
 {
     VALUE app_class, class_name;
-    char *filename;
+    VALUE filename;
     char *p;
     int state;
 
     class_name = rb_str_new2(name);
     app_class = rb_hash_aref(application_classes, class_name);
 	if (NIL_P(app_class)) {
-        filename = (char *) alloca(strlen(name) + 4);
-		sprintf(filename, "%s.rb", name);
-        p = filename;
-        while (*p) {
-            if (isupper(*p))
-                *p = tolower(*p);
-            p++;
+        filename = get_source_filename(name);
+        if (NIL_P(filename)) {
+            fprintf(stderr, "invalid module name: %s\n", name);
+            return Qnil;
         }
-
-        rb_load_protect(rb_str_new2(filename), 0, &state);
+        
+        rb_load_protect(filename, 0, &state);
         if (state && error_handle(state))
             return Qnil;
         app_class = rb_eval_string_protect(name, &state);
