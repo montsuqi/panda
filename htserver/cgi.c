@@ -349,7 +349,14 @@ ScanEnv(
 		if		(  ( p = strchr(buff,'=') )  !=  NULL  ) {
 			*p = 0;
 			strcpy(name,buff);
-			strcpy(value,p+1);
+			p ++;
+			while	(  *p  !=  0  ) {
+				if		(  *p  !=  '\r'  ) {
+					*value ++ = *p;
+				}
+				p ++;
+			}
+			*value = 0;
 		} else {
 			*name = 0;
 			strcpy(value,buff);
@@ -392,7 +399,14 @@ ScanPost(
 		if		(  ( p = strchr(buff,'=') )  !=  NULL  ) {
 			*p = 0;
 			strcpy(name,buff);
-			strcpy(value,p+1);
+			p ++;
+			while	(  *p  !=  0  ) {
+				if		(  *p  !=  '\r'  ) {
+					*value ++ = *p;
+				}
+				p ++;
+			}
+			*value = 0;
 		} else {
 			*name = 0;
 			strcpy(value,buff);
@@ -783,7 +797,8 @@ CheckCoding(
 	int		blace
 		,	quote;
 	Bool	fMeta
-		,	fHTC;
+		,	fHTC
+		,	fXML;
 	char	*p;
 	static	char	coding[SIZE_NAME+1];
 
@@ -791,12 +806,18 @@ CheckCoding(
 	quote = 0;
 	fMeta = FALSE;
 	fHTC = FALSE;
+	fXML = FALSE;
 	strcpy(coding,SRC_CODESET);
 	while	(  *str  !=  0  ) {
 		switch	(*str) {
 		  case	'<':
 			if		(  !strlicmp(str,"<HTC")  ) {
 				fHTC = TRUE;
+				str += strlen("<HTC");
+			} else
+			if		(  !strlicmp(str,"<?xml")  ) {
+				fXML = TRUE;
+				str += strlen("<?xml");
 			}
 			break;
 		  case	'm':
@@ -833,13 +854,32 @@ CheckCoding(
 				while	(  isspace(*str)  )	str ++;
 				if		(  *str  ==  '='  )	str ++;
 				while	(  isspace(*str)  )	str ++;
+				if		(  *str  ==  '"'  )	str ++;
 				p = coding;
 				while	(	(  !isspace(*str)  )
 						&&	(  *str  !=  '"'   ) ) {
 					*p ++ = *str ++;
 				}
 				*p = 0;
-				str --;
+			}
+			break;
+		} else
+		if		(  fXML  ) {
+			while	(  *str  !=  '>'  ) {
+				if		(  !strlicmp(str,"encoding")  ) {
+					str += strlen("encoding");
+					while	(  isspace(*str)  )	str ++;
+					if		(  *str  ==  '='  )	str ++;
+					while	(  isspace(*str)  )	str ++;
+					if		(  *str  ==  '"'  )	str ++;
+					p = coding;
+					while	(	(  !isspace(*str)  )
+							&&	(  *str  !=  '"'   ) ) {
+						*p ++ = *str ++;
+					}
+					*p = 0;
+				}
+				str ++;
 			}
 			break;
 		}

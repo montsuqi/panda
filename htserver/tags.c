@@ -474,10 +474,6 @@ dbgmsg(">_Text");
 	name = StrDup(GetArg(tag,"name",0));
 	LBS_EmitPointer(htc->code,name);
 	EmitCode(htc,OPC_REFSTR);
-	LBS_EmitString(htc->code,"\" value=\"");
-	EmitCode(htc,OPC_NAME);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-	EmitCode(htc,OPC_REFSTR);
 	LBS_EmitString(htc->code,"\"");
 	if		(  ( cols = GetArg(tag,"cols",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," cols=\"");
