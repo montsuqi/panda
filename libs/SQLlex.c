@@ -38,8 +38,23 @@ copies.
 #include	"SQLlex.h"
 #include	"debug.h"
 
-#define	GetChar(fp)		fgetc(fp)
-#define	UnGetChar(fp,c)	ungetc((c),(fp))
+#define	UnGetChar(in,c)	(in)->body[-- (in)->pos] =(c)
+
+#if	0
+#define	GetChar(in)		(in)->body[(in)->pos ++]
+#else
+static	int
+GetChar(
+	CURFILE	*in)
+{
+	int		c;
+
+	if		(  ( c = in->body[in->pos ++] )  ==  0  ) {
+		c = EOF;
+	}
+	return	(c);
+}
+#endif
 
 static	TokenTable	tokentable[] = {
 	/*	SQL92	*/
@@ -351,23 +366,23 @@ SQL_Lex(
 
 dbgmsg(">SQL_Lex");
   retry: 
-	while	(  isspace( c = GetChar(CURR->fp) ) ) {
+	while	(  isspace( c = GetChar(CURR) ) ) {
 		if		(  c  ==  '\n'  ) {
 			c = ' ';
 			CURR->cLine ++;
 		}
 	}
 	if		(  c  ==  '#'  ) {
-		while	(  ( c = GetChar(CURR->fp) )  !=  '\n'  );
+		while	(  ( c = GetChar(CURR) )  !=  '\n'  );
 		CURR->cLine ++;
 		goto	retry;
 	}
 	if		(  c  ==  '"'  ) {
 		s = CURR->Symbol;
 		len = 0;
-		while	(  ( c = GetChar(CURR->fp) )  !=  '"'  ) {
+		while	(  ( c = GetChar(CURR) )  !=  '"'  ) {
 			if		(  c  ==  '\\'  ) {
-				c = GetChar(CURR->fp);
+				c = GetChar(CURR);
 			}
 			*s = c;
 			if		(  len  <  SIZE_SYMBOL  ) {
@@ -381,9 +396,9 @@ dbgmsg(">SQL_Lex");
 	if		(  c  ==  '\''  ) {
 		s = CURR->Symbol;
 		len = 0;
-		while	(  ( c = GetChar(CURR->fp) )  !=  '\''  ) {
+		while	(  ( c = GetChar(CURR) )  !=  '\''  ) {
 			if		(  c  ==  '\\'  ) {
-				c = GetChar(CURR->fp);
+				c = GetChar(CURR);
 			}
 			*s = c;
 			if		(  len  <  SIZE_SYMBOL  ) {
@@ -404,12 +419,12 @@ dbgmsg(">SQL_Lex");
 				s ++;
 				len ++;
 			}
-			c = GetChar(CURR->fp);
+			c = GetChar(CURR);
 		}	while	(	(  isalpha(c)  )
 					||	(  isdigit(c)  )
 					||	(  c  ==  '_'  ) );
 		*s = 0;
-		UnGetChar(CURR->fp,c);
+		UnGetChar(CURR,c);
 		if		(  fName  ) {
 			token = T_SYMBOL;
 		} else {

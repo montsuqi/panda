@@ -24,5 +24,6 @@ copies.
 
 extern	RecordStruct	*DD_Parse(void);
 extern	RecordStruct	*ParseRecordFile(char *name);
+extern	RecordStruct	*ParseRecordMem(char *mem);
 extern	RecordStruct	*ReadRecordDefine(char *name);
 #endif

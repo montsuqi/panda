@@ -108,6 +108,19 @@ if test "x$enable_client" = "xyes"; then
 	fi
 	AC_SUBST(GLADE_LIBS)
 	AC_SUBST(GLADE_CFLAGS)
+	AC_PATH_PROG(XML_CONFIG,xml-config,no)
+	if test x$XML_CONFIG = xno; then
+	  AC_MSG_ERROR(Couldn't find xml-config)
+	fi
+	XML_LIBS=`xml-config --libs`
+	XML_CFLAGS=`xml-config --cflags`
+	AC_SUBST(XML_LIBS)
+	AC_SUBST(XML_CFLAGS)
+	old_LIBS="$LIBS"
+	LIBS="$XML_LIBS $LIBS"
+	AC_CHECK_FUNC(xmlSAXUserParseFile,,
+	AC_MSG_ERROR([*** libxml >= 1.7.2 is required to compile libglade]))
+	LIBS="$old_LIBS"
 	GLCLIENT="glclient"
 else
 	GLCLIENT=""
@@ -367,6 +380,33 @@ if test "x$enable_oki" = "xyes"; then
 fi
 
 dnl ***************************************************************************
+dnl tinyMCE support
+dnl ***************************************************************************
+
+AC_ARG_ENABLE(mce,
+  [  --enable-mce            MCE input  [[disable]]],,[enable_mce="no"])
+if test "x$enable_mce" = "xyes"; then
+    AC_DEFINE(USE_MCE,1,"")
+fi
+AC_PATH_PROG(XML2_CONFIG,xml2-config,no)
+if test x$XML2_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find xml2-config)
+fi
+XML2_LIBS=`xml2-config --libs`
+XML2_CFLAGS=`xml2-config --cflags`
+AC_SUBST(XML2_LIBS)
+AC_SUBST(XML2_CFLAGS)
+
+AC_PATH_PROG(XSLT_CONFIG,xslt-config,no)
+if test x$XSLT_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find xslt-config)
+fi
+XSLT_LIBS=`xslt-config --libs`' -lexslt'
+XSLT_CFLAGS=`xslt-config --cflags`' -I /usr/include/libexslt'
+AC_SUBST(XSLT_LIBS)
+AC_SUBST(XSLT_CFLAGS)
+
+dnl ***************************************************************************
 dnl IE5.x support
 dnl ***************************************************************************
 
@@ -400,19 +440,6 @@ AC_SUBST(GLIB_LIBS)
 AC_SUBST(GLIB_CFLAGS)
 
 dnl ***************************************************************************
-dnl Add all the cflags & libs needed for the XML modules.
-dnl ***************************************************************************
-
-AC_PATH_PROG(XML_CONFIG,xml-config,no)
-if test x$XML_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find xml-config)
-fi
-XML_LIBS=`xml-config --libs`
-XML_CFLAGS=`xml-config --cflags`
-AC_SUBST(XML_LIBS)
-AC_SUBST(XML_CFLAGS)
-
-dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the XML2 modules.
 dnl ***************************************************************************
 
@@ -438,16 +465,6 @@ MONDAI_LIBS=`libmondai-config --libs 2>/dev/null`
 AC_SUBST(MONDAI_LIBS)
 AC_SUBST(MONDAI_CFLAGS)
 
-dnl ***************************************************************************
-dnl Add all the cflags & libs needed for the libxml modules.
-dnl ***************************************************************************
-
-dnl Check to make sure that we have libxml >= 1.7.2 installed
-old_LIBS="$LIBS"
-LIBS="$XML_LIBS $LIBS"
-AC_CHECK_FUNC(xmlSAXUserParseFile,,
-AC_MSG_ERROR([*** libxml >= 1.7.2 is required to compile libglade]))
-LIBS="$old_LIBS"
 
 LIB_DIR="${libdir}"
 AC_SUBST(LIB_DIR)
@@ -495,4 +512,5 @@ echo "  SSL support:           $enable_ssl"
 echo "  OKI support:           $enable_oki"
 echo "  msgd support:          $enable_msgd"
 echo "  IE5 support:           $enable_ie5"
+echo "  MCE support:           $enable_mce"
 echo ""

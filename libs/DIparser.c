@@ -788,50 +788,43 @@ static	RecordStruct	*
 BuildMcpArea(
 	size_t	stacksize)
 {
-	FILE	*fp;
-	char	name[SIZE_LONGNAME+1];
 	RecordStruct	*rec;
+	char	buff[SIZE_BUFF];
+	char	*p;
 
-	sprintf(name,"/tmp/mcparea%d.rec",(int)getpid());
-	if		(  ( fp = fopen(name,"w") )  ==  NULL  ) {
-		fprintf(stderr,"tempfile can not make.: %s\n", name);
-		exit(1);
-	}
-	fprintf(fp,	"mcparea	{");
-	fprintf(fp,		"func varchar(%d);",SIZE_FUNC);
-	fprintf(fp,		"rc int;");
-	fprintf(fp,		"dc	{");
-	fprintf(fp,			"window	 varchar(%d);",SIZE_NAME);
-	fprintf(fp,			"widget	 varchar(%d);",SIZE_NAME);
-	fprintf(fp,			"event	 varchar(%d);",SIZE_EVENT);
-	fprintf(fp,			"module	 varchar(%d);",SIZE_NAME);
-	fprintf(fp,			"fromwin varchar(%d);",SIZE_NAME);
-	fprintf(fp,			"status	 varchar(%d);",SIZE_STATUS);
-	fprintf(fp,			"puttype varchar(%d);",SIZE_PUTTYPE);
-	fprintf(fp,			"term	 varchar(%d);",SIZE_TERM);
-	fprintf(fp,			"user	 varchar(%d);",SIZE_USER);
-	fprintf(fp,		"};");
-	fprintf(fp,		"db	{");
-	fprintf(fp,			"path	{");
-	fprintf(fp,				"blocks	int;");
-	fprintf(fp,				"rname	int;");
-	fprintf(fp,				"pname	int;");
-	fprintf(fp,			"};");
-	fprintf(fp,		"};");
-	fprintf(fp,		"private	{");
-	fprintf(fp,			"count	int;");
-	fprintf(fp,			"swindow	char(%d)[%d];",SIZE_NAME,stacksize);
-	fprintf(fp,			"state		char(1)[%d];",stacksize);
-	fprintf(fp,			"index		int[%d];",stacksize);
-	fprintf(fp,			"pstatus	char(1);");
-	fprintf(fp,			"pputtype 	char(1);");
-	fprintf(fp,			"prc		char(1);");
-	fprintf(fp,		"};");
-	fprintf(fp,	"};");
-	fclose(fp);
-
-	rec = ParseRecordFile(name);
-	remove(name);
+	p = buff;
+	p += sprintf(p,	"mcparea	{");
+	p += sprintf(p,		"func varchar(%d);",SIZE_FUNC);
+	p += sprintf(p,		"rc int;");
+	p += sprintf(p,		"dc	{");
+	p += sprintf(p,			"window	 varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"widget	 varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"event	 varchar(%d);",SIZE_EVENT);
+	p += sprintf(p,			"module	 varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"fromwin varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"status	 varchar(%d);",SIZE_STATUS);
+	p += sprintf(p,			"puttype varchar(%d);",SIZE_PUTTYPE);
+	p += sprintf(p,			"term	 varchar(%d);",SIZE_TERM);
+	p += sprintf(p,			"user	 varchar(%d);",SIZE_USER);
+	p += sprintf(p,		"};");
+	p += sprintf(p,		"db	{");
+	p += sprintf(p,			"path	{");
+	p += sprintf(p,				"blocks	int;");
+	p += sprintf(p,				"rname	int;");
+	p += sprintf(p,				"pname	int;");
+	p += sprintf(p,			"};");
+	p += sprintf(p,		"};");
+	p += sprintf(p,		"private	{");
+	p += sprintf(p,			"count	int;");
+	p += sprintf(p,			"swindow	char(%d)[%d];",SIZE_NAME,stacksize);
+	p += sprintf(p,			"state		char(1)[%d];",stacksize);
+	p += sprintf(p,			"index		int[%d];",stacksize);
+	p += sprintf(p,			"pstatus	char(1);");
+	p += sprintf(p,			"pputtype 	char(1);");
+	p += sprintf(p,			"prc		char(1);");
+	p += sprintf(p,		"};");
+	p += sprintf(p,	"};");
+	rec = ParseRecordMem(buff);
 
 	return	(rec);
 }
@@ -849,6 +842,7 @@ ParDI(
 ENTER_FUNC;
 	ThisEnv = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
+dbgmsg("*");
 		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
@@ -1027,6 +1021,7 @@ ENTER_FUNC;
 				gname = NULL;
 				Error("syntax error dbgroup directive");
 			}
+printf("gname = [%s]\n",gname);
 			ParDBGROUP(gname);
 			break;
 		  default:
@@ -1037,8 +1032,11 @@ ENTER_FUNC;
 		if		(  GetSymbol  !=  ';'  ) {
 			Error("; missing");
 		}
+dbgmsg("*");
 	}
+dbgmsg("*");
 	ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
+dbgmsg("*");
 	AssignDBG();
 LEAVE_FUNC;
 	return	(ThisEnv);

@@ -1097,13 +1097,14 @@ ENTER_FUNC;
         LBS_EmitInt(htc->code,0);
 
         LBS_EmitString(htc->code,"<option value=\"");
-		EmitCode(htc,OPC_LDVAR);
-		LBS_EmitPointer(htc->code,"");
-		EmitCode(htc,OPC_REFINT);
-        LBS_EmitString(htc->code,"\"");
 
 		EmitCode(htc,OPC_LDVAR);
-		LBS_EmitPointer(htc->code,"");
+		LBS_EmitPointer(htc->code,NULL);
+		EmitCode(htc,OPC_REFINT);
+        LBS_EmitString(htc->code,"\" ");
+
+		EmitCode(htc,OPC_LDVAR);
+		LBS_EmitPointer(htc->code,NULL);
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(sel));
 		EmitCode(htc,OPC_HSNAME);
@@ -1114,7 +1115,7 @@ ENTER_FUNC;
 		LBS_EmitInt(htc->code,0);
 
 		EmitCode(htc,OPC_SCONST);
-        LBS_EmitPointer(htc->code," selected");
+        LBS_EmitPointer(htc->code,"selected");
 		EmitCode(htc,OPC_REFSTR);
 
 		pos = LBS_GetPos(htc->code);

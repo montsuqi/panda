@@ -46,7 +46,7 @@ copies.
 extern	void
 InitDirectory(void)
 {
-dbgmsg(">InitDirectory");
+ENTER_FUNC;
 	InitPool();
 	DD_ParserInit();
 	DB_ParserInit();
@@ -54,7 +54,7 @@ dbgmsg(">InitDirectory");
 	BD_ParserInit();
 	DBD_ParserInit();
 	DI_ParserInit();
-dbgmsg("<InitDirectory");
+LEAVE_FUNC;
 }
 
 static	void

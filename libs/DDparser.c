@@ -82,6 +82,26 @@ LEAVE_FUNC;
 }
 
 extern	RecordStruct	*
+ParseRecordMem(
+	char	*mem)
+{
+	RecordStruct	*ret;
+	ValueStruct		*value;
+
+ENTER_FUNC;
+	if		(  ( value = DD_ParseValueMem(mem) )  !=  NULL  ) {
+		ret = New(RecordStruct);
+		ret->value = value;
+		ret->name = StrDup(ValueName);
+		ret->type = RECORD_NULL;
+	} else {
+		ret = NULL;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+extern	RecordStruct	*
 ReadRecordDefine(
 	char	*name)
 {

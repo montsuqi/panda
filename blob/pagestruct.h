@@ -113,10 +113,6 @@ typedef	struct {
 	OsekiPhaseControl	phase[2];
 }	OsekiHeaderPage;
 
-#if	1
 #define	ROUND_TO(p,s)	((((p)%(s)) == 0) ? (p) : (((p)/(s))+1)*(s))
-#else
-#define	ROUND_TO(p,s)	(p)
-#endif
 
 #endif
