@@ -1,0 +1,9 @@
+*.lo
+*.o
+*.la
+.deps
+.libs
+Makefile
+Makefile.in
+dbs
+dbredirector

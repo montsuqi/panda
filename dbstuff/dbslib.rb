@@ -1,6 +1,6 @@
 require	'socket';
 
-VER="1.0.8";
+VER="1.1.0";
 
 class	DB_Server
 	def get_event
