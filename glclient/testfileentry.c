@@ -7,8 +7,8 @@
 #    include <gtk/gtk.h>
 #endif
 
-#include "comm.h"
-#include "fileEntry.h"
+#include	"comm.h"
+#include	"fileEntry.h"
 
 int 
 main(int argc, char *argv[])

@@ -25,7 +25,9 @@ copies.
 
 GtkWidget* message_dialog( const char *message, gboolean message_type);
 #ifdef USE_GNOME
-GtkWidget* question_dialog(	const char *message);
+GtkWidget* question_dialog(	const char *message, GtkSignalFunc clicked_handler,
+							GtkWidget	*widget, GtkWindow	*window);
+
 #endif
 
 #endif

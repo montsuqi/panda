@@ -48,8 +48,9 @@ main(int argc, char *argv[])
 	dialog2 = message_dialog("Error message", FALSE);
 	gtk_widget_show (dialog2);
 #ifdef USE_GNOME
-	dialog3 = gnome_question_dialog_parented("Already file Write?",
-				GTK_SIGNAL_FUNC(question_clicked), NULL, GTK_WINDOW(dialog2));
+	dialog3 = question_dialog("Already file Write?",
+				(GtkSignalFunc) question_clicked, NULL,
+							  GTK_WINDOW(dialog2));
 	gtk_widget_show (dialog3);
 #endif
 	gtk_main();

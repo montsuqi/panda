@@ -35,7 +35,7 @@ copies.
 #    include <gtk/gtk.h>
 #endif
 
-#include "dialogs.h"
+#include	"dialogs.h"
 
 GtkWidget*
 message_dialog(
@@ -80,25 +80,18 @@ message_dialog(
 }
 
 #ifdef USE_GNOME
-static void
-question_clicked(GtkWidget *widget, int button,gpointer data)
-{
-	gnome_dialog_close(GNOME_DIALOG(widget));
-}
-
 GtkWidget*
 question_dialog(
-	const char *message)
+	const char	*message,
+	GtkSignalFunc	clicked_handler,
+	GtkWidget	*widget,
+	GtkWindow	*window)
 {
-	GtkWidget *dialog, *button;
-	dialog = gnome_message_box_new (message, GNOME_MESSAGE_BOX_QUESTION,
-										GNOME_STOCK_BUTTON_OK, 
-									    GNOME_STOCK_BUTTON_NO, NULL);
-	gtk_signal_connect (GTK_OBJECT (dialog), "clicked",
-						GTK_SIGNAL_FUNC (question_clicked), NULL);
-
-	button = GNOME_DIALOG (dialog)->buttons->data;
-	gtk_widget_grab_focus (button);
+	GtkWidget *dialog;
+		
+	dialog = gnome_question_dialog_modal_parented(message,
+									GTK_SIGNAL_FUNC(clicked_handler), 
+									GTK_WIDGET(widget), GTK_WINDOW(window));
 	return (dialog);
 }
 #endif

@@ -39,9 +39,9 @@ copies.
 #    include <gtk/gtk.h>
 #endif
 
-#include "comm.h"
-#include "dialogs.h"
-#include "fileEntry.h"
+#include	"comm.h"
+#include	"dialogs.h"
+#include	"fileEntry.h"
 
 static Bool
 CheckAlreadyFile(
@@ -73,7 +73,6 @@ CheckAlreadyFile(
 			}
 		}
 	}
-	
 	return (rc);
 }
 
@@ -103,6 +102,7 @@ SaveFile(
 		gtk_window_set_transient_for (GTK_WINDOW (dialog),
 							GTK_WINDOW (gtk_widget_get_toplevel(widget)));
 	}
+	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
 	gtk_widget_show (dialog);
 	return (rc);
 }
@@ -139,7 +139,6 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 	GnomeFileEntry *fentry;
 	GtkWidget *entry;
     LargeByteString *binary;
-
 	char	*filename;
 
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(widget),"clicked");
@@ -160,9 +159,10 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 			if (SaveFile(filename, binary, widget)){
 			}
 		} else {
-			dialog = gnome_question_dialog_parented(
-			"ファイルが既に存在します。書き換えますか？",
-			GTK_SIGNAL_FUNC(question_clicked), GTK_WIDGET(fs), GTK_WINDOW(fs));
+			dialog = question_dialog(
+					"ファイルが既に存在します。書き換えますか？",
+					(GtkSignalFunc) question_clicked, GTK_WIDGET(fs),
+					                                  GTK_WINDOW(fs));
 		}
 	} else {
 		/* do nothing */
@@ -174,6 +174,7 @@ static void
 browse_dialog_destroy (GtkWidget *widget, gpointer data)
 {
     LargeByteString *binary;
+
 	binary = gtk_object_get_data(GTK_OBJECT(widget), "recvobject");
 	FreeLBS(binary);
 }
