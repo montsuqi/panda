@@ -41,7 +41,8 @@ copies.
 #include	<unistd.h>
 #include	<pthread.h>
 #include	<glib.h>
-
+#include	<setjmp.h>
+#include	<signal.h>
 #include	"const.h"
 #include	"types.h"
 #include	"misc.h"
@@ -95,7 +96,11 @@ dbgmsg(">PutApplication");
 	LBS_ReserveSize(iobuff,size,FALSE);
 	CGI_PackValue(ExecConv,LBS_Body(iobuff),node->mcprec->value);
 	LBS_EmitEnd(iobuff);
-	SendLargeString(fp,iobuff);
+dbgmsg("*");
+	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
+dbgmsg("**");
+	Send(fp,"&",1);					ON_IO_ERROR(fp,badio);
+dbgmsg("***");
 
 	ConvSetRecName(ExecConv,node->linkrec->name);
 	size = CGI_SizeValue(ExecConv,node->linkrec->value);
@@ -103,7 +108,9 @@ dbgmsg(">PutApplication");
 	LBS_ReserveSize(iobuff,size,FALSE);
 	CGI_PackValue(ExecConv,LBS_Body(iobuff),node->linkrec->value);
 	LBS_EmitEnd(iobuff);
-	SendLargeString(fp,iobuff);
+	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
+	Send(fp,"&",1);					ON_IO_ERROR(fp,badio);
+dbgmsg("****");
 
 	ConvSetRecName(ExecConv,node->sparec->name);
 	size = CGI_SizeValue(ExecConv,node->sparec->value);
@@ -111,20 +118,36 @@ dbgmsg(">PutApplication");
 	LBS_ReserveSize(iobuff,size,FALSE);
 	CGI_PackValue(ExecConv,LBS_Body(iobuff),node->sparec->value);
 	LBS_EmitEnd(iobuff);
-	SendLargeString(fp,iobuff);
+	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
+dbgmsg("*****");
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
+dbgmsg("-");
 		LBS_EmitStart(iobuff);
+dbgmsg("--");
 		if		(  node->scrrec[i]  !=  NULL  ) {
+dbgmsg("---");
 			ConvSetRecName(ExecConv,node->scrrec[i]->name);
+dbgmsg("----");
 			size = CGI_SizeValue(ExecConv,node->scrrec[i]->value);
+dbgmsg("-----");
+			if		(  size  >  0  ) {
+dbgmsg("------");
+				Send(fp,"&",1);				ON_IO_ERROR(fp,badio);
+dbgmsg("-------");
+			}
 			LBS_ReserveSize(iobuff,size,FALSE);
+dbgmsg("--------");
 			CGI_PackValue(ExecConv,LBS_Body(iobuff),node->scrrec[i]->value);
+dbgmsg("---------");
 		}
 		LBS_EmitEnd(iobuff);
-		SendLargeString(fp,iobuff);
+dbgmsg("----------");
+		SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 	}
-	Send(fp,"\n",1);
+dbgmsg("******");
+	Send(fp,"\n",1);		ON_IO_ERROR(fp,badio);
+  badio:
 dbgmsg("<PutApplication");
 }
 
@@ -137,29 +160,43 @@ GetApplication(
 
 dbgmsg(">GetApplication");
 	LBS_EmitStart(iobuff);
-	RecvLargeString(fp,iobuff);
+	RecvLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 
+printf("*\n");
 	ConvSetRecName(ExecConv,node->mcprec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->mcprec->value);
+printf("**\n");
 
 	ConvSetRecName(ExecConv,node->linkrec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->linkrec->value);
+printf("***\n");
 
 	ConvSetRecName(ExecConv,node->sparec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->sparec->value);
+printf("****\n");
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
 			ConvSetRecName(ExecConv,node->scrrec[i]->name);
 			CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->scrrec[i]->value);
+printf("*****\n");
 		}
 	}
 	DumpNode(node);
+  badio:
 dbgmsg("<GetApplication");
 }
 
+static	jmp_buf	SubError;
 
 static	void
+SignalHandler(
+	int		dummy)
+{
+	longjmp(SubError,1);
+}
+
+static	Bool
 _ExecuteProcess(
 	ProcessNode	*node)
 {
@@ -168,8 +205,10 @@ _ExecuteProcess(
 	int		ofiledes[2]
 	,		ifiledes[2];
 	char	buff[SIZE_LONGNAME+1];
+	Bool	rc;
 
 dbgmsg(">ExecuteProcess");
+	signal(SIGPIPE, SignalHandler);
 	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
 	sprintf(buff,"%s/%s",ExecPath,module);
 	if		(  pipe(ofiledes)  !=  0  ) {
@@ -180,25 +219,32 @@ dbgmsg(">ExecuteProcess");
 		perror("pipe");
 		exit(1);
 	}
-	if		(  ( pid = fork() )  ==  0  ) {
-		dup2(ifiledes[0],STDIN_FILENO);
-		dup2(ofiledes[1],STDOUT_FILENO);
-		close(ifiledes[0]);
-		close(ifiledes[1]);
-		close(ofiledes[0]);
-		close(ofiledes[1]);
-		execl(buff,buff,NULL);
+	if		(  setjmp(SubError)  ==  0  ) {
+		if		(  ( pid = fork() )  ==  0  ) {
+			dup2(ifiledes[0],STDIN_FILENO);
+			dup2(ofiledes[1],STDOUT_FILENO);
+			close(ifiledes[0]);
+			close(ifiledes[1]);
+			close(ofiledes[0]);
+			close(ofiledes[1]);
+			execl(buff,buff,NULL);
+		} else {
+			fpAPR = FileToNet(ofiledes[0]);
+			close(ofiledes[1]);
+			fpAPW = FileToNet(ifiledes[1]);
+			close(ifiledes[0]);
+		}
+		PutApplication(fpAPW,node);
+		GetApplication(fpAPR,node);
+		rc = TRUE;
 	} else {
-		fpAPR = FileToNet(ofiledes[0]);
-		close(ofiledes[1]);
-		fpAPW = FileToNet(ifiledes[1]);
-		close(ifiledes[0]);
+		rc = FALSE;
 	}
-	PutApplication(fpAPW,node);
+	signal(SIGPIPE, SIG_DFL);
 	CloseNet(fpAPW);
-	GetApplication(fpAPR,node);
 	CloseNet(fpAPR);
 dbgmsg("<ExecuteProcess");
+	return	(rc); 
 }
 
 static	void

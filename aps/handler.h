@@ -31,7 +31,7 @@ copies.
 typedef	struct {
 	char	*name;
 	Bool	fUse;
-	void	(*ExecuteProcess)(ProcessNode *);
+	Bool	(*ExecuteProcess)(ProcessNode *);
 	int		(*StartBatch)(char *name, char *param);
 	/*	DC function	*/
 	void	(*ReadyDC)(void);

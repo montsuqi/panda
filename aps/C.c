@@ -61,7 +61,7 @@ static	GHashTable	*ApplicationTable;
 
 static	void	_ReadyDC(void);
 static	void	_StopDC(void);
-static	void	_ExecuteProcess(ProcessNode *node);
+static	Bool	_ExecuteProcess(ProcessNode *node);
 static	void	_ReadyDB(void);
 static	void	_StopDB(void);
 static	int		_StartBatch(char *name, char *param);
@@ -104,12 +104,13 @@ dbgmsg(">GetApplication");
 dbgmsg("<GetApplication");
 }
 
-static	void
+static	Bool
 _ExecuteProcess(
 	ProcessNode	*node)
 {
 	int		(*apl)(ProcessNode *);
 	char	*module;
+	Bool	rc;
 
 dbgmsg(">ExecuteProcess");
 	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
@@ -119,10 +120,17 @@ dbgmsg(">ExecuteProcess");
 		(void)apl(node);
 		dbgmsg("<C application");
 		GetApplication(node);
+		if		(  ValueInteger(GetItemLongName(node->mcprec->value,"rc"))  <  0  ) {
+			rc = FALSE;
+		} else {
+			rc = TRUE;
+		}
 	} else {
 		MessagePrintf("%s is not found.",module);
+		rc = FALSE;
 	}
 dbgmsg("<ExecuteProcess");
+	return	(rc); 
 }
 
 static	void

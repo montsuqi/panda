@@ -183,14 +183,22 @@ dbgmsg("<GetApplication");
 }
 
 
-static	void
+static	Bool
 _ExecuteProcess(
 	ProcessNode	*node)
 {
+	Bool	rc;
+
 dbgmsg(">ExecuteProcess");
 	PutApplication(fpAPW,node);
 	GetApplication(fpAPR,node);
+	if		(  ValueInteger(GetItemLongName(node->mcprec->value,"rc"))  <  0  ) {
+		rc = FALSE;
+	} else {
+		rc = TRUE;
+	}
 dbgmsg("<ExecuteProcess");
+	return	(rc); 
 }
 
 

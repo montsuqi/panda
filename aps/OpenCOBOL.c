@@ -66,7 +66,7 @@ static	void	*ScrData;
 
 static	void	_ReadyDC(void);
 static	void	_StopDC(void);
-static	void	_ExecuteProcess(ProcessNode *node);
+static	Bool	_ExecuteProcess(ProcessNode *node);
 static	void	_ReadyDB(void);
 static	void	_StopDB(void);
 static	int		_StartBatch(char *name, char *param);
@@ -127,12 +127,13 @@ dbgmsg(">GetApplication");
 dbgmsg("<GetApplication");
 }
 
-static	void
+static	Bool
 _ExecuteProcess(
 	ProcessNode	*node)
 {
 	int		(*apl)(char *, char *, char *, char *);
 	char	*module;
+	Bool	rc;
 
 dbgmsg(">_ExecuteProcess");
 	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
@@ -142,10 +143,17 @@ dbgmsg(">_ExecuteProcess");
 		(void)apl(McpData,SpaData,LinkData,ScrData);
 		dbgmsg("<OpenCOBOL application");
 		GetApplication(node);
+		if		(  ValueInteger(GetItemLongName(node->mcprec->value,"rc"))  <  0  ) {
+			rc = FALSE;
+		} else {
+			rc = TRUE;
+		}
 	} else {
 		printf("%s\n%s is not found.\n",cob_resolve_error(),module);
+		rc = FALSE;
 	}
 dbgmsg("<_ExecuteProcess");
+	return	(rc); 
 }
 
 static	void

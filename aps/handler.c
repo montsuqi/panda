@@ -337,7 +337,7 @@ dbgmsg(">ExecuteProcess");
 	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
 	if		(  ((MessageHandler *)bind->handler)->ExecuteProcess  !=  NULL  ) {
 		CallBefore(node);
-		((MessageHandler *)bind->handler)->ExecuteProcess(node);
+		while	(  !((MessageHandler *)bind->handler)->ExecuteProcess(node)  );
 		CallAfter(node);
 	}
 dbgmsg("<ExecuteProcess");
