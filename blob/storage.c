@@ -922,15 +922,16 @@ printf("ent->off   = %lld\n",ent->off);
 printf("ent->bsize = %d\n",ent->bsize);
 			if		(  ent->bsize  ==  0  )	break;
 			if		(  ent->off + ent->bsize >  pos  ) {
-dbgmsg("*");
 				ent->use = pos - ent->off;
 				ent->off = pos;
 			} else {
-dbgmsg("*");
 				ent->off += ent->bsize;
 			}
 		}
 	} else {
+		ent->last = ent->head + pos;
+		ent->off = pos;
+		ent->use = OBJ_OFF(state,pos);
 	}
 printf("ent->use  = %d\n",ent->use);
 printf("ent->off  = %lld\n",ent->off);

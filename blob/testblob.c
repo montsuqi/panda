@@ -149,11 +149,10 @@ main(
 #ifdef	TEST_SEEK
 	printf("* test seek **\n");
 	printf("** write(1) **\n");
-	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
-	//lo[0] = NewBLOB(state,BLOB_OPEN_WRITE);
-	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE);
+	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE);
+	//	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE);
+	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
 	for	( i = 0 ; i < 512 ; i ++ ) {
-	//for	( i = 0 ; i < 200 ; i ++ ) {
 		for	( j = 0 ; j < 64 ; j ++ ) {
 			buff[j] = (j+i)%64+32;
 		}
@@ -163,7 +162,6 @@ main(
 	CloseBLOB(state,lo[0]);
 	CloseBLOB(state,lo[1]);
 	printf("** write(1) end **\n");
-#if	1
 	printf("** read(1) **\n");
 	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
 	do {
@@ -173,10 +171,9 @@ main(
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[0]);
 	printf("** read(1) end **\n");
-#endif
-#if	1
 	printf("** read(2) **\n");
 	printf("** all read(2) **\n");
+	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
 	OpenBLOB(state,lo[1],BLOB_OPEN_READ);
 	do {
 		size = ReadBLOB(state,lo[1],buff,64);
@@ -185,21 +182,47 @@ main(
 	}	while	(  size  >  0  );
 	printf("** all read(2) end **\n");
 	printf("** seek 64 **\n");
+	SeekObject(state,lo[0],256);
+	size = ReadBLOB(state,lo[0],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+
 	SeekObject(state,lo[1],256);
 	size = ReadBLOB(state,lo[1],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
+
 	printf("** seek 64*128 **\n");
+	SeekObject(state,lo[0],64*128);
+	size = ReadBLOB(state,lo[0],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+
 	SeekObject(state,lo[1],64*128);
 	size = ReadBLOB(state,lo[1],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
+
 	printf("** seek 64*256 **\n");
+	SeekObject(state,lo[0],64*256);
+	size = ReadBLOB(state,lo[0],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+
 	SeekObject(state,lo[1],64*256);
 	size = ReadBLOB(state,lo[1],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
+
 	printf("** seek 64*511 **\n");
+	SeekObject(state,lo[0],64*511);
+	do {
+		size = ReadBLOB(state,lo[0],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[0]);
+
 	SeekObject(state,lo[1],64*511);
 	do {
 		size = ReadBLOB(state,lo[1],buff,64);
@@ -208,7 +231,6 @@ main(
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[1]);
 	printf("** read(2) end **\n");
-#endif
 #endif
 #ifdef	TEST_READWRITE2
 	printf("* test read/write(2) **\n");
