@@ -233,9 +233,11 @@ dbgmsg(">SendWindow");
 		SendPacketClass(fpComm,GL_WindowName);	ON_IO_ERROR(fpComm,badio);
 		SendString(fpComm,wname);				ON_IO_ERROR(fpComm,badio);
 dbgprintf("wname = [%s]\n",wname);
+ if		(  win->PutType  ==  SCREEN_NULL  ) {
+	 win->PutType = SCREEN_CURRENT_WINDOW;
+ }
 		SendInt(fpComm,win->PutType);			ON_IO_ERROR(fpComm,badio);
 		switch	(win->PutType) {
-		  case	SCREEN_NULL:	/*	special	*/
 		  case	SCREEN_CURRENT_WINDOW:
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
