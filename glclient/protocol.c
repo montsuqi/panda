@@ -42,7 +42,6 @@ copies.
 #    include <gtk/gtk.h>
 #endif
 #include	<glade/glade.h>
-#include	<pthread.h>
 #include	"types.h"
 #include	"misc.h"
 #include	"glterm.h"
@@ -372,22 +371,17 @@ dbgmsg(">RecvValue");
 dbgmsg("<RecvValue");
 }
 
-static	void
-StopUpdate(void)
+static	gint
+_GrabFocus(gpointer data)
 {
-	//	gtk_widget_set_sensitive(widget,FALSE);
-	while	(  gtk_events_pending()  ) {
-		gtk_main_iteration();
-	}
+	gtk_widget_grab_focus(data);
+	return FALSE;
 }
 
 static	void
-StartUpdate(void)
+GrabFocus(GtkWidget *widget)
 {
-	while	(  gtk_events_pending()  ) {
-		gtk_main_iteration();
-	}
-	//	gtk_widget_set_sensitive(widget,TRUE);
+	gtk_idle_add(_GrabFocus, widget);
 }
 
 extern	Bool
@@ -403,7 +397,6 @@ GetScreenData(
 	GtkWidget	*widget;
 
 dbgmsg(">GetScreenData");
-	StopUpdate(); 
 	fInRecv = TRUE; 
 	CheckScreens(fp,FALSE);	 
 	SendPacketClass(fp,GL_GetData);
@@ -457,11 +450,10 @@ dbgmsg(">GetScreenData");
 					&&	(  node->xml  !=  NULL  )
 					&&	(  ( widget = glade_xml_get_widget(node->xml,widgetName) )
 						   !=  NULL  ) ) {
-			gtk_widget_grab_focus(widget);
+			GrabFocus(widget);
 		}
 		c = RecvPacketClass(fp);
 	}
-	StartUpdate();
 	fInRecv = FALSE;
 dbgmsg("<GetScreenData");
 	return	(fCancel);
@@ -582,90 +574,11 @@ dbgmsg(">SendWindowData");
 dbgmsg("<SendWindowData");
 }
 
-static	void
+void
 SendWindowData(void)
 {
 	g_hash_table_foreach(WindowTable,(GHFunc)_SendWindowData,NULL);
 	SendPacketClass(fpComm,GL_END);
 	fflush(fpComm);
 	ClearWindowTable();
-}
-
-struct changed_hander {
-	GtkObject       *object;
-	GtkSignalFunc	func;
-	gpointer	data;
-	struct changed_hander *next;
-} *changed_hander_list = NULL;
-
-extern	void
-RegisterChangedHander(
-	GtkObject *object,
-	GtkSignalFunc func,
-	gpointer data)
-{
-  struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
-  p->object = object;
-  p->func = func;
-  p->data = data;
-  p->next = changed_hander_list;
-  changed_hander_list = p;
-}
-
-static void
-BlockChangedHanders(void)
-{
-  struct changed_hander *p;
-  for (p = changed_hander_list; p != NULL; p = p->next)
-    gtk_signal_handler_block_by_func (p->object, p->func, p->data);
-}
-
-static void
-UnblockChangedHanders(void)
-{
-  struct changed_hander *p;
-  for (p = changed_hander_list; p != NULL; p = p->next)
-    gtk_signal_handler_unblock_by_func (p->object, p->func, p->data);
-}
-
-static	void
-ProtocolThread(
-	void	*para)
-{
-	EventNode	*event;
-
-dbgmsg(">ProtocolThread");
-	ProtocolQueue = NewQueue();
-	ProtocolDone = NewQueue();
-	do {
-		if		(  ( event = DeQueue(ProtocolQueue) )  ==  NULL  )	break;
-		dbgmsg("de queue");
-		SendEvent(fpComm,event->window,event->widget,event->name);
-		xfree(event->window);
-		xfree(event->widget);
-		xfree(event->name);
-		xfree(event);
-		SendWindowData();
-		BlockChangedHanders();
-		if		(  GetScreenData(fpComm)  ) {
-			while	(  IsQueue(ProtocolQueue)  ) {
-				event = DeQueue(ProtocolQueue);
-				xfree(event->window);
-				xfree(event->widget);
-				xfree(event->name);
-				xfree(event);
-			}
-		}
-		UnblockChangedHanders();
-		EnQueue(ProtocolDone,NULL);
-	}	while	(  TRUE  );
-	pthread_exit(NULL);
-dbgmsg("<ProtocolThread");
-}
-
-extern	void
-StartProtocolThread(void)
-{
-	static	pthread_t	protocol;
-	pthread_create(&protocol,NULL,(void *(*)(void *))ProtocolThread,NULL);
 }

@@ -1,3 +1,17 @@
+2002-04-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.3公開
+
+2002-04-03  Keisuke Nishida <knishida@netlab.jp>
+
+	* glclient/callbacks.c: 二重カーソル問題回避
+
+	* glclient/client.c: 
+
+	* glclient/protocol.c: 
+
+	* glclient/protocol.h: 
+
 2002-04-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.2公開(1.0.1は訳あって非公開)

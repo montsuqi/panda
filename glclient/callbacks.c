@@ -119,6 +119,43 @@ press_filter(
 	return	(rc);
 }
 
+struct changed_hander {
+	GtkObject       *object;
+	GtkSignalFunc	func;
+	gpointer	data;
+	struct changed_hander *next;
+} *changed_hander_list = NULL;
+
+extern	void
+RegisterChangedHander(
+	GtkObject *object,
+	GtkSignalFunc func,
+	gpointer data)
+{
+  struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
+  p->object = object;
+  p->func = func;
+  p->data = data;
+  p->next = changed_hander_list;
+  changed_hander_list = p;
+}
+
+static void
+BlockChangedHanders(void)
+{
+  struct changed_hander *p;
+  for (p = changed_hander_list; p != NULL; p = p->next)
+    gtk_signal_handler_block_by_func (p->object, p->func, p->data);
+}
+
+static void
+UnblockChangedHanders(void)
+{
+  struct changed_hander *p;
+  for (p = changed_hander_list; p != NULL; p = p->next)
+    gtk_signal_handler_unblock_by_func (p->object, p->func, p->data);
+}
+
 extern	void
 send_event(
 	GtkWidget	*widget,
@@ -126,19 +163,23 @@ send_event(
 {
 	char	*name
 	,		*window;
-	EventNode	*node;
+	static int ignore_event = FALSE;
 
 dbgmsg(">send_event");
-	if		(  !fInRecv  ) {
+	if		(  !fInRecv  &&  !ignore_event ) {
 		name = gtk_widget_get_name(widget);
 		window = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
-		node = New(EventNode);
-		node->window = StrDup(window);
-		node->widget = StrDup(name);
-		node->name  = StrDup(event);
-		EnQueue(ProtocolQueue,node);
-		DeQueue(ProtocolDone);
-
+		SendEvent(fpComm,window,name,event);
+		SendWindowData();
+		BlockChangedHanders();
+		if		(  GetScreenData(fpComm)  ) {
+			ignore_event = TRUE;
+			while	(  gtk_events_pending()  ) {
+				gtk_main_iteration();
+			}
+			ignore_event = FALSE;
+		}
+		UnblockChangedHanders();
 	}
 dbgmsg("<send_event");
 }

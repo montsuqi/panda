@@ -191,7 +191,6 @@ main(
 	} else {
 		CheckScreens(fpComm,TRUE);
 		(void)GetScreenData(fpComm);
-		StartProtocolThread();
 dbgmsg(">gtk_main");
 		gtk_main();
 dbgmsg("<gtk_main");
