@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 echo "Running libtoolize..."
 libtoolize --automake --force --copy
 
