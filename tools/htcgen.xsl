@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="iso-2022-jp"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:date="http://exslt.org/dates-and-times"
+  extension-element-prefixes="date">
+  
+  <!-- xsl:import href="date.xsl" / -->
   <!-- htc converter for glprotocol ver 2.0 -->
 
   <xsl:output method="html" encoding="iso-2022-jp"/>
-  <xsl:variable name="genType" select="'htc'"/>
-  <!-- xsl:variable name="genType" select="'html'"/ -->
 
   <xsl:template match="/">
     <htc coding="iso-2022-jp">
@@ -19,6 +22,13 @@ td {
 		  <title>
             <xsl:value-of select="//widget/title"/>
           </title>
+          <xsl:comment>
+            <xsl:value-of select="date:year()"/>
+            <xsl:text>/</xsl:text>
+            <xsl:value-of select="date:month-in-year()"/>
+            <xsl:text>/</xsl:text>
+            <xsl:value-of select="date:day-in-month()"/>
+          </xsl:comment>
         </head>
         <body text="#202020" bgcolor="#C0C0C0" link="#00FFFF" vlink="#00BBBB">
           <h1>
@@ -106,6 +116,9 @@ td {
       <xsl:when test="class='GtkCheckButton'">
         <xsl:call-template name="GtkCheckButton"/>
       </xsl:when>
+      <xsl:when test="class='GtkToggleButton'">
+        <xsl:call-template name="GtkToggleButton"/>
+      </xsl:when>
       <xsl:when test="class='GtkButton'">
         <xsl:call-template name="GtkButton"/>
       </xsl:when>
@@ -117,6 +130,12 @@ td {
       </xsl:when>
       <xsl:when test="class='GtkOptionMenu'">
         <xsl:call-template name="GtkOptionMenu"/>
+      </xsl:when>
+      <xsl:when test="class='GtkCombo'">
+        <xsl:call-template name="GtkCombo"/>
+      </xsl:when>
+      <xsl:when test="class='GtkPandaCombo'">
+        <xsl:call-template name="GtkCombo"/>
       </xsl:when>
       <xsl:otherwise/>
     </xsl:choose>
@@ -266,79 +285,49 @@ td {
   </xsl:template>
 
   <xsl:template name="GtkEntry">
-    <xsl:choose>
-      <xsl:when test="$genType = 'html'">
-        <input>
-          <xsl:attribute name="type">
-            <xsl:text>text</xsl:text>
-          </xsl:attribute>
+    <entry>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.value</xsl:text>
+      </xsl:attribute>
+      <xsl:choose>
+        <xsl:when test="./width">
           <xsl:attribute name="size">
-            <!-- xsl:value-of select="number(./width)"/ -->
-            <xsl:value-of select="4"/>
+            <xsl:value-of select="floor(number(./width) div 8)"/>
           </xsl:attribute>
-          <xsl:attribute name="name">
-            <xsl:value-of select="./name"/>
-            <xsl:text>.value</xsl:text>
+        </xsl:when>
+        <xsl:when test="./text_max_length">
+          <xsl:attribute name="size">
+            <xsl:choose>
+              <xsl:when test="number(./text_max_length) &gt; 50">
+                <xsl:value-of select="floor(number(./text_max_length) div 10)"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="number(./text_max_length)"/>
+              </xsl:otherwise>
+            </xsl:choose>
           </xsl:attribute>
-        </input>
-      </xsl:when>
-      <xsl:when test="$genType = 'htc'">
-        <entry>
-          <xsl:attribute name="name">
-            <xsl:value-of select="$winName"/>
-            <xsl:text>.</xsl:text>
-            <xsl:value-of select="./name"/>
-            <xsl:text>.value</xsl:text>
-          </xsl:attribute>
-          <xsl:choose>
-            <xsl:when test="./width">
-              <xsl:attribute name="size">
-                <xsl:value-of select="floor(number(./width) div 8)"/>
-              </xsl:attribute>
-            </xsl:when>
-            <xsl:when test="./text_max_length">
-              <xsl:attribute name="size">
-                <xsl:choose>
-                  <xsl:when test="number(./text_max_length) &gt; 50">
-                    <xsl:value-of select="floor(number(./text_max_length) div 10)"/>
-                  </xsl:when>
-                  <xsl:otherwise>
-                    <xsl:value-of select="number(./text_max_length)"/>
-                  </xsl:otherwise>
-                </xsl:choose>
-              </xsl:attribute>
-            </xsl:when>
-          </xsl:choose>
-          <xsl:if test="./text_max_length">
-            <xsl:attribute name="maxlength">
-              <xsl:value-of select="number(./text_max_length)"/>
-            </xsl:attribute>
-          </xsl:if>
-        </entry>
-      </xsl:when>
-    </xsl:choose>
+        </xsl:when>
+      </xsl:choose>
+      <xsl:if test="./text_max_length">
+        <xsl:attribute name="maxlength">
+          <xsl:value-of select="number(./text_max_length)"/>
+        </xsl:attribute>
+      </xsl:if>
+    </entry>
   </xsl:template>
-
+  
   <xsl:template name="GtkText">
-    <xsl:choose>
-      <xsl:when test="$genType = 'html'">
-        <textarea>
-          <xsl:attribute name="name">
-            <xsl:value-of select="./name"/>
-          </xsl:attribute>
-        </textarea>
-      </xsl:when>
-      <xsl:when test="$genType = 'htc'">
-        <text>
-          <xsl:attribute name="name">
-            <xsl:value-of select="$winName"/>
-            <xsl:text>.</xsl:text>
-            <xsl:value-of select="./name"/>
-            <xsl:text>.value</xsl:text>
-          </xsl:attribute>
-        </text>
-      </xsl:when>
-    </xsl:choose>
+    <text>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.value</xsl:text>
+      </xsl:attribute>
+    </text>
   </xsl:template>
 
   <xsl:template name="GtkLabel">
@@ -348,192 +337,142 @@ td {
           <xsl:value-of select="./label"/>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:choose>
-            <xsl:when test="$genType = 'htc'">
-              <fixed>
-                <xsl:attribute name="name">
-                  <xsl:value-of select="$winName"/>
-                  <xsl:text>.</xsl:text>
-                  <xsl:value-of select="./name"/>
-                  <xsl:text>.value</xsl:text>
-                </xsl:attribute>
-              </fixed>
-            </xsl:when>
-          </xsl:choose>
+          <fixed>
+            <xsl:attribute name="name">
+              <xsl:value-of select="$winName"/>
+              <xsl:text>.</xsl:text>
+              <xsl:value-of select="./name"/>
+              <xsl:text>.value</xsl:text>
+            </xsl:attribute>
+          </fixed>
         </xsl:otherwise>
       </xsl:choose>
     </div>
   </xsl:template>
 
+  <xsl:template name="GtkCombo">
+    <combo>
+      <xsl:attribute name="count">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.count</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./widget[class = 'GtkEntry']/name"/>
+        <xsl:text>.value</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="item">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.item</xsl:text>
+      </xsl:attribute>
+    </combo>
+  </xsl:template>
+
   <xsl:template name="GtkRadioButton">
-    <xsl:choose>
-      <xsl:when test="$genType = 'html'">
-        <input>
-          <xsl:attribute name="type">
-            <xsl:text>radio</xsl:text>
-          </xsl:attribute>
-          <xsl:attribute name="name">
-            <xsl:value-of select="./name"/>
-            <xsl:text>.value</xsl:text>
-          </xsl:attribute>
-        </input>
-        <xsl:if test="./label">
+    <radiobutton>
+      <xsl:attribute name="group">
+        <xsl:value-of select="./group"/>
+      </xsl:attribute>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.value</xsl:text>
+      </xsl:attribute>
+      <xsl:if test="./label">
+        <xsl:attribute name="label">
           <xsl:value-of select="./label"/>
-        </xsl:if>
-      </xsl:when>
-      <xsl:when test="$genType = 'htc'">
-        <radiobutton>
-          <xsl:attribute name="group">
-            <xsl:value-of select="./group"/>
-          </xsl:attribute>
-          <xsl:attribute name="name">
-            <xsl:value-of select="$winName"/>
-            <xsl:text>.</xsl:text>
-            <xsl:value-of select="./name"/>
-            <xsl:text>.value</xsl:text>
-          </xsl:attribute>
-          <xsl:if test="./label">
-            <xsl:attribute name="label">
-              <xsl:value-of select="./label"/>
-            </xsl:attribute>
-          </xsl:if>
-        </radiobutton>
-      </xsl:when>
-    </xsl:choose>
+        </xsl:attribute>
+      </xsl:if>
+    </radiobutton>
   </xsl:template>
 
   <xsl:template name="GtkCheckButton">
-    <xsl:choose>
-      <xsl:when test="$genType = 'html'">
-        <input>
-          <xsl:attribute name="type">
-            <xsl:text>checkbox</xsl:text>
-          </xsl:attribute>
-          <xsl:attribute name="name">
-            <xsl:value-of select="./name"/>
-            <xsl:text>.value</xsl:text>
-          </xsl:attribute>
-        </input>
-        <xsl:if test="./label">
+    <checkbutton>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.value</xsl:text>
+      </xsl:attribute>
+      <xsl:if test="./label">
+        <xsl:attribute name="label">
           <xsl:value-of select="./label"/>
-        </xsl:if>
-      </xsl:when>
-      <xsl:when test="$genType = 'htc'">
-        <checkbutton>
-          <xsl:attribute name="name">
-            <xsl:value-of select="$winName"/>
-            <xsl:text>.</xsl:text>
-            <xsl:value-of select="./name"/>
-            <xsl:text>.value</xsl:text>
-          </xsl:attribute>
-          <xsl:if test="./label">
-            <xsl:attribute name="label">
-              <xsl:value-of select="./label"/>
-            </xsl:attribute>
-          </xsl:if>
-        </checkbutton>
-      </xsl:when>
-    </xsl:choose>
+        </xsl:attribute>
+      </xsl:if>
+    </checkbutton>
+  </xsl:template>
+
+  <xsl:template name="GtkToggleButton">
+    <togglebutton>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.value</xsl:text>
+      </xsl:attribute>
+      <xsl:if test="./label">
+        <xsl:attribute name="label">
+          <xsl:value-of select="./label"/>
+        </xsl:attribute>
+      </xsl:if>
+    </togglebutton>
   </xsl:template>
 
   <xsl:template name="GtkButton">
-    <xsl:choose>
-      <xsl:when test="$genType = 'html'">
-        <input>
-          <xsl:attribute name="type">
-            <xsl:text>submit</xsl:text>
-          </xsl:attribute>
-          <xsl:attribute name="name">
-            <xsl:text>_event</xsl:text>
-          </xsl:attribute>
-          <xsl:attribute name="value">
+    <button>
+      <xsl:attribute name="event">
+        <xsl:value-of select="./signal/data"/>
+        <xsl:text>:</xsl:text>
+        <xsl:value-of select="./name"/>
+      </xsl:attribute>
+      <xsl:attribute name="face">
+        <xsl:choose>
+          <xsl:when test="./label">
+            <xsl:value-of select="./label"/>
+          </xsl:when>
+          <xsl:when test="./stock_button">
             <xsl:choose>
-              <xsl:when test="./label">
-                <xsl:value-of select="./label"/>
+              <xsl:when test="./stock_button = 'GNOME_STOCK_BUTTON_OK'">
+                <xsl:text>OK</xsl:text>
               </xsl:when>
-              <xsl:when test="./stock_button">
-                <xsl:choose>
-                  <xsl:when test="./stock_button = 'GNOME_STOCK_BUTTON_OK'">
-                    <xsl:text>OK</xsl:text>
-                  </xsl:when>
-                  <xsl:when test="./stock_button = 'GNOME_STOCK_BUTTON_CANCEL'">
-                    <xsl:text>CANCEL</xsl:text>
-                  </xsl:when>
-                  <xsl:otherwise/>
-                </xsl:choose>
+              <xsl:when test="./stock_button = 'GNOME_STOCK_BUTTON_CANCEL'">
+                <xsl:text>CANCEL</xsl:text>
               </xsl:when>
+              <xsl:otherwise/>
             </xsl:choose>
-          </xsl:attribute>
-        </input>
-      </xsl:when>
-      <xsl:when test="$genType = 'htc'">
-        <button>
-          <xsl:attribute name="event">
-            <xsl:value-of select="./signal/data"/>
-            <xsl:text>:</xsl:text>
-            <xsl:value-of select="./name"/>
-          </xsl:attribute>
-          <xsl:attribute name="face">
-            <xsl:choose>
-              <xsl:when test="./label">
-                <xsl:value-of select="./label"/>
-              </xsl:when>
-              <xsl:when test="./stock_button">
-                <xsl:choose>
-                  <xsl:when test="./stock_button = 'GNOME_STOCK_BUTTON_OK'">
-                    <xsl:text>OK</xsl:text>
-                  </xsl:when>
-                  <xsl:when test="./stock_button = 'GNOME_STOCK_BUTTON_CANCEL'">
-                    <xsl:text>CANCEL</xsl:text>
-                  </xsl:when>
-                  <xsl:otherwise/>
-                </xsl:choose>
-              </xsl:when>
-            </xsl:choose>
-          </xsl:attribute>
-        </button>
-      </xsl:when>
-    </xsl:choose>
+          </xsl:when>
+        </xsl:choose>
+      </xsl:attribute>
+    </button>
   </xsl:template>
 
   <xsl:template name="GtkOptionMenu">
-    <xsl:choose>
-      <xsl:when test="$genType = 'html'">
-        <select>
-          <xsl:attribute name="value">
-            <xsl:value-of select="./name"/>
-          </xsl:attribute>
-          <xsl:if test="./selection_mode = 'GTK_SELECTION_MULTIPLE'">
-            <xsl:attribute name="multiple"/>
-          </xsl:if>
-          <option>
-            <xsl:text>dummy</xsl:text>
-          </option>
-        </select>
-      </xsl:when>
-      <xsl:when test="$genType = 'htc'">
-        <optionmenu>
-          <xsl:attribute name="count">
-            <xsl:value-of select="$winName"/>
-            <xsl:text>.</xsl:text>
-            <xsl:value-of select="./name"/>
-            <xsl:text>.count</xsl:text>
-          </xsl:attribute>
-          <xsl:attribute name="select">
-            <xsl:value-of select="$winName"/>
-            <xsl:text>.</xsl:text>
-            <xsl:value-of select="./name"/>
-            <xsl:text>.select</xsl:text>
-          </xsl:attribute>
-          <xsl:attribute name="item">
-            <xsl:value-of select="$winName"/>
-            <xsl:text>.</xsl:text>
-            <xsl:value-of select="./name"/>
-            <xsl:text>.item</xsl:text>
-          </xsl:attribute>
-        </optionmenu>
-      </xsl:when>
-    </xsl:choose>
+    <optionmenu>
+      <xsl:attribute name="count">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.count</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="select">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.select</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="item">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.item</xsl:text>
+      </xsl:attribute>
+    </optionmenu>
   </xsl:template>
 
   <xsl:template name="MakeWidth">
@@ -547,191 +486,157 @@ td {
   </xsl:template>
 
   <xsl:template name="GtkList">
-    <xsl:choose>
-      <xsl:when test="$genType = 'html'">
-        <select>
+    <select>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.select</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="size">
+        <xsl:choose>
+          <xsl:when test="../../widget/height">
+            <xsl:value-of select="floor(number(../../widget/height) div 12)"/>
+          </xsl:when>
+          <xsl:when test="../../widget/class = 'GtkViewport'">
+            <xsl:value-of select="4"/>
+          </xsl:when>
+        </xsl:choose>
+      </xsl:attribute>
+      <xsl:choose>
+        <xsl:when test="./selection_mode = 'GTK_SELECTION_SINGLE'"/>
+        <xsl:otherwise>
+          <xsl:attribute name="multiple"/>
+        </xsl:otherwise>
+      </xsl:choose>
+      <option>
+        <xsl:attribute name="value">
+          <xsl:text>-1</xsl:text>
+        </xsl:attribute>
+        <xsl:choose>
+          <xsl:when test="./column_widths">
+            <xsl:call-template name="MakeWidth">
+              <xsl:with-param name="_width" select="floor(number(./column_widths) div 2.5)"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:call-template name="MakeWidth">
+              <xsl:with-param name="_width" select="20"/>
+            </xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
+      </option>
+      <count>
+        <xsl:attribute name="var">
+          <xsl:text>i</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="from">
+          <xsl:text>0</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="to">
+          <xsl:value-of select="$winName"/>
+          <xsl:text>.</xsl:text>
+          <xsl:value-of select="./name"/>
+          <xsl:text>.count</xsl:text>
+        </xsl:attribute>
+        <option>
           <xsl:attribute name="value">
-            <xsl:value-of select="./name"/>
+            <xsl:text>$$i</xsl:text>
           </xsl:attribute>
-          <xsl:if test="./selection_mode = 'GTK_SELECTION_MULTIPLE'">
-            <xsl:attribute name="multiple"/>
-          </xsl:if>
-          <option>
-            <xsl:text>dummy</xsl:text>
-          </option>
-        </select>
-      </xsl:when>
-      <xsl:when test="$genType = 'htc'">
-        <select>
-          <xsl:attribute name="name">
+          <xsl:attribute name="select">
             <xsl:value-of select="$winName"/>
             <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
-            <xsl:text>.select</xsl:text>
+            <xsl:text>.select[#i]</xsl:text>
           </xsl:attribute>
-          <xsl:attribute name="size">
-            <xsl:choose>
-              <xsl:when test="../../widget/height">
-                <xsl:value-of select="floor(number(../../widget/height) div 12)"/>
-              </xsl:when>
-              <xsl:when test="../../widget/class = 'GtkViewport'">
-                <xsl:value-of select="4"/>
-              </xsl:when>
-            </xsl:choose>
-          </xsl:attribute>
-          <xsl:choose>
-            <xsl:when test="./selection_mode = 'GTK_SELECTION_SINGLE'"/>
-            <xsl:otherwise>
-              <xsl:attribute name="multiple"/>
-            </xsl:otherwise>
-          </xsl:choose>
-          <option>
-            <xsl:attribute name="value">
-              <xsl:text>-1</xsl:text>
-            </xsl:attribute>
-            <xsl:choose>
-              <xsl:when test="./column_widths">
-                <xsl:call-template name="MakeWidth">
-                  <xsl:with-param name="_width" select="floor(number(./column_widths) div 2.5)"/>
-                </xsl:call-template>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:call-template name="MakeWidth">
-                  <xsl:with-param name="_width" select="20"/>
-                </xsl:call-template>
-              </xsl:otherwise>
-            </xsl:choose>
-          </option>
-          <count>
-            <xsl:attribute name="var">
-              <xsl:text>i</xsl:text>
-            </xsl:attribute>
-            <xsl:attribute name="from">
-              <xsl:text>0</xsl:text>
-            </xsl:attribute>
-            <xsl:attribute name="to">
+          <fixed>
+            <xsl:attribute name="name">
               <xsl:value-of select="$winName"/>
               <xsl:text>.</xsl:text>
               <xsl:value-of select="./name"/>
-              <xsl:text>.count</xsl:text>
+              <xsl:text>.item[#i]</xsl:text>
             </xsl:attribute>
-            <option>
-              <xsl:attribute name="value">
-                <xsl:text>$$i</xsl:text>
-              </xsl:attribute>
-              <xsl:attribute name="select">
-                <xsl:value-of select="$winName"/>
-                <xsl:text>.</xsl:text>
-                <xsl:value-of select="./name"/>
-                <xsl:text>.select[#i]</xsl:text>
-              </xsl:attribute>
-              <fixed>
-                <xsl:attribute name="name">
-                  <xsl:value-of select="$winName"/>
-                  <xsl:text>.</xsl:text>
-                  <xsl:value-of select="./name"/>
-                  <xsl:text>.item[#i]</xsl:text>
-                </xsl:attribute>
-              </fixed>
-            </option>
-          </count>
-        </select>
-      </xsl:when>
-    </xsl:choose>
+          </fixed>
+        </option>
+      </count>
+    </select>
   </xsl:template>
 
   <xsl:template name="GtkCList">
-    <xsl:choose>
-      <xsl:when test="$genType = 'html'">
-        <select>
+    <select>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.select</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="size">
+        <xsl:choose>
+          <xsl:when test="../../widget/height">
+            <xsl:value-of select="floor(number(../../widget/height) div 12)"/>
+          </xsl:when>
+          <xsl:when test="../../widget/class = 'GtkViewport'">
+            <xsl:value-of select="4"/>
+          </xsl:when>
+        </xsl:choose>
+      </xsl:attribute>
+      <xsl:choose>
+        <xsl:when test="./selection_mode = 'GTK_SELECTION_SINGLE'"/>
+        <xsl:otherwise>
+          <xsl:attribute name="multiple"/>
+        </xsl:otherwise>
+      </xsl:choose>
+      <option>
+        <xsl:attribute name="value">
+          <xsl:text>-1</xsl:text>
+        </xsl:attribute>
+        <xsl:choose>
+          <xsl:when test="./column_widths">
+            <xsl:call-template name="MakeWidth">
+              <xsl:with-param name="_width" select="floor(number(./column_widths) div 2.5)"/>
+            </xsl:call-template>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:call-template name="MakeWidth">
+              <xsl:with-param name="_width" select="20"/>
+            </xsl:call-template>
+          </xsl:otherwise>
+        </xsl:choose>
+      </option>
+      <count>
+        <xsl:attribute name="var">
+          <xsl:text>i</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="from">
+          <xsl:text>0</xsl:text>
+        </xsl:attribute>
+        <xsl:attribute name="to">
+          <xsl:value-of select="$winName"/>
+          <xsl:text>.</xsl:text>
+          <xsl:value-of select="./name"/>
+          <xsl:text>.count</xsl:text>
+        </xsl:attribute>
+        <option>
           <xsl:attribute name="value">
-            <xsl:value-of select="./name"/>
+            <xsl:text>$$i</xsl:text>
           </xsl:attribute>
-          <xsl:if test="./selection_mode = 'GTK_SELECTION_MULTIPLE'">
-            <xsl:attribute name="multiple"/>
-          </xsl:if>
-          <option>
-            <xsl:text>dummy</xsl:text>
-          </option>
-        </select>
-      </xsl:when>
-      <xsl:when test="$genType = 'htc'">
-        <select>
-          <xsl:attribute name="name">
+          <xsl:attribute name="select">
             <xsl:value-of select="$winName"/>
             <xsl:text>.</xsl:text>
             <xsl:value-of select="./name"/>
-            <xsl:text>.select</xsl:text>
+            <xsl:text>.select[#i]</xsl:text>
           </xsl:attribute>
-          <xsl:attribute name="size">
-            <xsl:choose>
-              <xsl:when test="../../widget/height">
-                <xsl:value-of select="floor(number(../../widget/height) div 12)"/>
-              </xsl:when>
-              <xsl:when test="../../widget/class = 'GtkViewport'">
-                <xsl:value-of select="4"/>
-              </xsl:when>
-            </xsl:choose>
-          </xsl:attribute>
-          <xsl:choose>
-            <xsl:when test="./selection_mode = 'GTK_SELECTION_SINGLE'"/>
-            <xsl:otherwise>
-              <xsl:attribute name="multiple"/>
-            </xsl:otherwise>
-          </xsl:choose>
-          <option>
-            <xsl:attribute name="value">
-              <xsl:text>-1</xsl:text>
-            </xsl:attribute>
-            <xsl:choose>
-              <xsl:when test="./column_widths">
-                <xsl:call-template name="MakeWidth">
-                  <xsl:with-param name="_width" select="floor(number(./column_widths) div 2.5)"/>
-                </xsl:call-template>
-              </xsl:when>
-              <xsl:otherwise>
-                <xsl:call-template name="MakeWidth">
-                  <xsl:with-param name="_width" select="20"/>
-                </xsl:call-template>
-              </xsl:otherwise>
-            </xsl:choose>
-          </option>
-          <count>
-            <xsl:attribute name="var">
-              <xsl:text>i</xsl:text>
-            </xsl:attribute>
-            <xsl:attribute name="from">
-              <xsl:text>0</xsl:text>
-            </xsl:attribute>
-            <xsl:attribute name="to">
+          <fixed>
+            <xsl:attribute name="name">
               <xsl:value-of select="$winName"/>
               <xsl:text>.</xsl:text>
               <xsl:value-of select="./name"/>
-              <xsl:text>.count</xsl:text>
+              <xsl:text>.item[#i].value1</xsl:text>
             </xsl:attribute>
-            <option>
-              <xsl:attribute name="value">
-                <xsl:text>$$i</xsl:text>
-              </xsl:attribute>
-              <xsl:attribute name="select">
-                <xsl:value-of select="$winName"/>
-                <xsl:text>.</xsl:text>
-                <xsl:value-of select="./name"/>
-                <xsl:text>.select[#i]</xsl:text>
-              </xsl:attribute>
-              <fixed>
-                <xsl:attribute name="name">
-                  <xsl:value-of select="$winName"/>
-                  <xsl:text>.</xsl:text>
-                  <xsl:value-of select="./name"/>
-                  <xsl:text>.item[#i].value1</xsl:text>
-                </xsl:attribute>
-              </fixed>
-            </option>
-          </count>
-        </select>
-      </xsl:when>
-    </xsl:choose>
+          </fixed>
+        </option>
+      </count>
+    </select>
   </xsl:template>
 
 

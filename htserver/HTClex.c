@@ -53,7 +53,8 @@ static	struct	{
 	char	*str;
 	int		token;
 }	tokentable[] = {
-	{	""			,0	}
+	{	"!--"		,T_COMMENT	},
+	{	""			,0			}
 };
 
 static	iconv_t			ReadCd;
@@ -270,6 +271,7 @@ extern	int
 HTCLex(
 	Bool	fSymbol)
 {	int		c
+		,	c2
 	,		len;
 	int		token;
 	char	*s;
@@ -297,9 +299,34 @@ dbgmsg(">HTCLex");
 		*s = 0;
 		token = T_SCONST;
 	} else
+	if		(  c  ==  '-'  ) {
+		s = HTC_ComSymbol;
+		len = 0;
+		do {
+			*s = c;
+			if		(  len  <  SIZE_SYMBOL  ) {
+				s ++;
+				len ++;
+			}
+			c = _HTCGetChar();
+		}	while	(  c  ==  '-'  );
+		*s = 0;
+		if		(  c  ==  '>'  ) {
+			if		(  len  >  1  ) {
+				token = T_COMMENTE;
+			} else {
+				_HTCUnGetChar(c);
+				token = T_SYMBOL;
+			}
+		} else {
+			_HTCUnGetChar(c);
+			token = T_SYMBOL;
+		}
+	} else
 	if		(	(  isalpha(c)  )
 			||	(  isdigit(c)  )
-			||	(  c  ==  '/'  ) ) {
+			||	(  c  ==  '/'  )
+			||	(  c  ==  '!'  ) ) {
 		s = HTC_ComSymbol;
 		len = 0;
 		do {
@@ -313,6 +340,7 @@ dbgmsg(">HTCLex");
 					 ||	(  isdigit(c) )
 					 ||	(  c  ==  '.' )
 					 ||	(  c  ==  '_' )
+					 ||	(  c  ==  '-' )
 					 ||	(  c  ==  ':' ) );
 		*s = 0;
 		_HTCUnGetChar(c);

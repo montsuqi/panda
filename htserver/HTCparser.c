@@ -72,6 +72,7 @@ HTC_Error(char *msg, ...)
 }
 
 #if	1
+static	void
 CopyTag(
 	HTCInfo	*htc)
 {
@@ -82,7 +83,8 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,HTC_ComSymbol);
 	while	(  GetName  !=  '>'  ) {
 		LBS_EmitChar(htc->code,' ');
-		if		(  HTC_Token  ==  T_SYMBOL  ) {
+		switch	(HTC_Token)	{
+		  case	T_SYMBOL:
 			LBS_EmitString(htc->code,HTC_ComSymbol);
 			if		(  GetName  ==  '='  ) {
 				LBS_EmitChar(htc->code,HTC_Token);
@@ -99,9 +101,41 @@ ENTER_FUNC;
 					break;
 				}
 			}
+			break;
+		  case	T_SCONST:
+			para = HTC_ComSymbol;
+			ExpandAttributeString(htc,para);
+			break;
+		  default:
+			break;
 		}
 	}
 	LBS_EmitChar(htc->code,HTC_Token);
+LEAVE_FUNC;
+}
+static	void
+CopyCommentTag(
+	HTCInfo	*htc)
+{
+	char	*p;
+	char	cbuff[3+1];
+	int		i;
+
+ENTER_FUNC;
+	LBS_EmitString(htc->code,"<!-- ");
+	for	( i = 0 , p = cbuff ; i < 3 ; i ++ , p ++ ) {
+		if		(  ( *p = _HTCGetChar() )  ==  EOF  )	return;
+	}
+	*p = 0;
+	while	(  strcmp(cbuff,"-->")  !=  0  ) {
+		LBS_EmitChar(htc->code,cbuff[0]);
+		for	( i = 0 ; i < 2 ; i ++ ) {
+			cbuff[i] = cbuff[i+1];
+		}
+		if		(  ( cbuff[2] = _HTCGetChar() )  ==  EOF  )	return;
+		cbuff[3] = 0;
+	}
+	LBS_EmitString(htc->code," -->");
 LEAVE_FUNC;
 }
 #else
@@ -205,7 +239,8 @@ ParTag(
 	Tag		*tag;
 
 ENTER_FUNC;
-	if		(  GetSymbol  ==  T_SYMBOL  ) {
+	switch	(GetSymbol) {
+	  case	T_SYMBOL:
 		dbgprintf("tag = [%s]\n",HTC_ComSymbol);
 		tag = g_hash_table_lookup(Tags, HTC_ComSymbol);
         if (tag == NULL) {
@@ -227,8 +262,13 @@ ENTER_FUNC;
 		} else {
 			CopyTag(htc);
 		}
-	} else {
+		break;
+	  case	T_COMMENT:
+		CopyCommentTag(htc);
+		break;
+	  default:
 		CopyTag(htc);
+		break;
 	}
 LEAVE_FUNC;
 }

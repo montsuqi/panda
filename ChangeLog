@@ -1,3 +1,8 @@
+2004-07-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* HTCparser.c (CopyTag): コメントのコピーを正しく行うようにした(で
+	ないと、JavascriptやCSSで困るから)
+
 2004-07-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/exec.c: VarTypeに型情報を付加した

@@ -246,13 +246,6 @@ __EOF__
 	end
 end
 
-if ARGV[0] == "-v2"
-  $v2 = true
-  ARGV.shift
-else
-  $v2 = false
-end
-
 if ((xml = $<.gets).nil?); exit 1; end
 
 if xml =~ /^<\?xml\sversion=.+\sencoding=.EUC-JP./i
