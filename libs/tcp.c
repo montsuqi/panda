@@ -59,6 +59,7 @@ BindSocket(
 	int		s
 	,		ld;
 	int		rc;
+	int		one;
 	struct	addrinfo	*info
 			,			hints;
 	struct	sockaddr_in	*name;
@@ -81,6 +82,8 @@ dbgmsg(">BindSocket");
 		printf("protocol = %d\n",info->ai_protocol);
 #endif
 		s = socket(info->ai_family,info->ai_socktype,info->ai_protocol);
+		one = 1;
+		setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *) &one, sizeof(one));
 		if		(  bind(s,info->ai_addr,info->ai_addrlen)  <  0  )	{
 			close(s);
 			continue;
@@ -90,8 +93,6 @@ dbgmsg(">BindSocket");
 	}
 	if		( ld  <  0  ) {
 		Error("error bind");
-	} else {
-		setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
 	}
 dbgmsg("<BindSocket");
 	return	(ld);
@@ -99,13 +100,15 @@ dbgmsg("<BindSocket");
 #else
 {	int		ld;
 	struct	sockaddr_in	name;
+	int		one;
 	int		iport;
 
 	if		(  ( ld = socket(AF_INET,type,0) )  <  0  )	{
 		Error("error socket");
 	}
 	iport = atoi(port);
-	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
+	one = 1;
+	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, (void *) &one, sizeof(one));
 	name.sin_family = AF_INET;
 	name.sin_addr.s_addr = INADDR_ANY;
 	name.sin_port = htons(iport);
@@ -206,22 +209,5 @@ OpenPort(
 		close(fh);
 	}
 	return	(fp);
-}
-
-extern	int
-InitServerPort(
-	char	*port,
-	int		back)
-{	int		fh;
-
-dbgmsg(">InitServerPort");
-	fh = BindSocket(port,SOCK_STREAM);
-
-	if		(  listen(fh,back)  <  0  )	{
-		shutdown(fh, 2);
-		Error("INET Domain listen");
-	}
-dbgmsg("<InitServerPort");
-	return	(fh);
 }
 
