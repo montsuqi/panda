@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -203,6 +203,7 @@ ENTER_FUNC;
 			break;
 		  case	APS_BLOB:
 			PassiveBLOB(fp,Blob);				ON_IO_ERROR(fp,badio);
+			flag = 0;
 			break;
 		  default:
 		  badio:
@@ -383,6 +384,7 @@ ENTER_FUNC;
 	mq = aps->mq; 
 	ix = aps->no;
 	dbgprintf("start %s(%d)\n",mq->name,ix);
+	puttype = 0;
 	do {
 		fp = NULL;
 		do {
