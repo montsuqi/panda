@@ -83,6 +83,7 @@ CloseDB_RedirectPort(
 {
 ENTER_FUNC;
 	if		(  dbg->fpLog  !=  NULL  ) {
+		SendPacketClass(dbg->fpLog,RED_END);
 		CloseNet(dbg->fpLog);
 	}
 	if		(  dbg->redirectData  !=  NULL  ) {

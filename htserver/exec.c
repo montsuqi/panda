@@ -733,10 +733,20 @@ ParseInput(
 			file->filename = StrDup(u8);
 		}
 	}
+	void	_Dump(
+		char	*name,
+		char	*trans)
+	{
+		dbgprintf("[%s]",name);
+		dbgprintf("[%s]\n",trans);
+	}
 	
 ENTER_FUNC;
  	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);
  	g_hash_table_foreach(Files,(GHFunc)FileNameToUTF8,NULL);
+#ifdef	DEBUG
+ 	g_hash_table_foreach(htc->Trans,(GHFunc)_Dump,NULL);
+#endif
 	if		(	(  ( button = LoadValue("_event") )  ==  NULL  )
 			||	(  *button  ==  0  ) ) {
 		if (htc->DefaultEvent == NULL) {
@@ -746,10 +756,12 @@ ENTER_FUNC;
 			event = htc->DefaultEvent;
 		}
 	} else {
+		dbgprintf("button = [%s]\n",button);
 		event = g_hash_table_lookup(htc->Trans,button);
 		if (event == NULL) {
 			event = button;
 		}
+		dbgprintf("event  = [%s]\n",event);
 	}
 	g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
 LEAVE_FUNC;

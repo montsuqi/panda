@@ -515,16 +515,14 @@ GetSessionValues(void)
 	char	*p;
 
 ENTER_FUNC;
-	if		( ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
+	if		(   ( ( sesid = LoadValue("_sesid") )  !=  NULL  )
+            &&  (  *sesid  !=  0  ) ) {
 		sprintf(fname,"%s/%s.ses",SesDir,sesid);
         if		(  ( fd = open(fname,O_RDONLY ) )  <  0  ) {
-dbgmsg("*");
 			ret = FALSE;
 		} else {
-dbgmsg("*");
 			fstat(fd,&sb);
 			if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0) )  !=  NULL  ) {
-dbgmsg("*");
 				StartScanEnv(p);
 				while	(  ScanEnv(name,value)  ) {
 					if		(  LoadValue(name)  ==  NULL  ) {
@@ -534,16 +532,13 @@ dbgmsg("*");
 					}
 				}
 				munmap(p,sb.st_size);
-dbgmsg("*");
 				ret = TRUE;
 			} else {
-dbgmsg("*");
 				ret = FALSE;
 			}
 			close(fd);
 		}
 	} else {
-dbgmsg("*");
 		ret = FALSE;
 	}
 LEAVE_FUNC;
@@ -591,7 +586,8 @@ PutSessionValues(void)
 	char	*sesid;
 
 ENTER_FUNC;
-	if		(  ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
+ if		(   (  ( sesid = LoadValue("_sesid") )  !=  NULL  )
+        &&  (  *sesid  !=  0  ) ) {
 		sprintf(fname,"%s/%s.ses",SesDir,sesid);
 		if		(  ( fp = fopen(fname,"w") )  ==  NULL  ) {
 			ret = FALSE;

@@ -92,6 +92,9 @@ dbgmsg(">LogThread");
 			SendPacketClass(fpLog,RED_PONG);
 			fSuc = TRUE;
 			break;
+		  case	RED_END:
+			fSuc = FALSE;
+			break;
 		  default:
 			SendPacketClass(fpLog,RED_NOT);
 			fSuc = FALSE;
@@ -99,7 +102,7 @@ dbgmsg(">LogThread");
 		}
 	}	while	(  fSuc  );
 	CloseNet(fpLog);
-	//	pthread_exit(NULL);
+	pthread_exit(NULL);
 dbgmsg("<LogThread");
 }
 
@@ -144,7 +147,6 @@ dbgmsg(">FileThread");
 	} else {
 		fp = NULL;
 	}
-dbgmsg("*");
 	count = 0;
 	while	(TRUE)	{
 		data = (LargeByteString *)DeQueue(FileQueue);
@@ -157,11 +159,9 @@ dbgmsg("*");
 				ExecRedirectDBOP(ThisDBG,p);
 				TransactionRedirectEnd(ThisDBG);
 			}
-dbgmsg("*");
 			BeginDB_Redirect(ThisDBG);
 			PutDB_Redirect(ThisDBG,p);
 			CommitDB_Redirect(ThisDBG);
-dbgmsg("*");
 			if		(  fp  !=  NULL  ) {
 				time(&nowtime);
 				Now = localtime(&nowtime);
