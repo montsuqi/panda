@@ -52,6 +52,7 @@ static	Bool	fInsert;
 
 static	int		TextSize;
 static	int		ArraySize;
+static	char	*DB_Name;
 
 static	int		level;
 static	char	*rname[SIZE_RNAME];
@@ -288,12 +289,16 @@ static	ARG_TABLE	option[] = {
 	{	"create",	BOOLEAN,	TRUE,	(void*)&fCreate,
 		"create tableを作る"							},
 
+	{	"insert",	BOOLEAN,	TRUE,	(void*)&fInsert,
+		"insert用スクリプトを作る"						},
+
 	{	"textsize",	INTEGER,	TRUE,	(void*)&TextSize,
 		"textの最大長"									},
 	{	"arraysize",INTEGER,	TRUE,	(void*)&ArraySize,
 		"可変要素配列の最大繰り返し数"					},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"レコードのあるディレクトリ"					},
+
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -305,6 +310,7 @@ SetDefault(void)
 	ArraySize = SIZE_DEFAULT_ARRAY_SIZE;
 	TextSize = SIZE_DEFAULT_TEXT_SIZE;
 	RecordDir = ".";
+	DB_Name = "";
 }
 
 extern	int

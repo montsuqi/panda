@@ -142,10 +142,10 @@ class PandaTable < PandaDB
 	str += "dbctrl.pname=" + pname + "&";
 	str += pack;
 	@db.fpDBW.printf("%s\n",str);
-$stderr.printf(">>%s\n",str);
+#$stderr.printf(">>%s\n",str);
 	@db.fpDBW.flush;
 	line = @db.fpDBR.gets;
-$stderr.printf("<<%s",line);$stderr.flush;
+#$stderr.printf("<<%s",line);$stderr.flush;
 	@line = line.chop;
 	unPack;
   end

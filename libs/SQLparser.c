@@ -62,6 +62,33 @@ _Error(
 #undef	GetName
 #define	GetName		(ComToken = SQL_Lex(TRUE))
 
+static	ValueStruct	*
+TraceAlias(
+	RecordStruct	*rec,
+	ValueStruct		*val)
+{
+	char		*name;
+	char		*p;
+	RecordStruct	*use;
+
+	if		(  ValueType(val)  ==  GL_TYPE_ALIAS  ) {
+		name = ValueAliasName(val);
+		if		(  *name  !=  '.'  ) {
+			if		(  ( p = strchr(name,'.') )  !=  NULL  ) {
+				*p = 0;
+				if		(  ( use = g_hash_table_lookup(rec->opt.db->use,name) )
+						   !=  NULL  ) {
+					val = GetItemLongName(use->value,p+1);
+				} else {
+					printf("alias table not found [%s]\n",name);
+				}
+				*p = '.';
+			}
+		}
+	}
+	return	(val);
+}
+
 extern	LargeByteString	*
 ParSQL(
 	RecordStruct	*rec)
@@ -75,9 +102,6 @@ ParSQL(
 	int		into;
 	int		n;
 	Bool	fInsert;
-	char		*name;
-	char		*p;
-	RecordStruct	*use;
 
 dbgmsg(">ParSQL");
 	sql = NewLBS();
@@ -151,7 +175,7 @@ dbgmsg(">ParSQL");
 			if		(  GetName  ==  T_SYMBOL  ) {
 				val = rec->value;
 				do {
-					val = GetRecordItem(val,ComSymbol);
+					val = GetRecordItem(TraceAlias(rec,val),ComSymbol);
 					if		(  val  ==  NULL  ) {
 						printf("[%s]\n",ComSymbol);
 						Error("item name missing");
@@ -178,22 +202,7 @@ dbgmsg(">ParSQL");
 						break;
 					}
 				}	while	(  ComToken  ==  T_SYMBOL  );
-				if		(  ValueType(val)  ==  GL_TYPE_ALIAS  ) {
-					name = ValueAliasName(val);
-					if		(  *name  !=  '.'  ) {
-						if		(  ( p = strchr(name,'.') )  !=  NULL  ) {
-							*p = 0;
-							if		(  ( use = g_hash_table_lookup(rec->opt.db->use,name) )
-									   !=  NULL  ) {
-								val = GetItemLongName(use->value,p+1);
-							} else {
-								printf("alias table not found [%s]\n",name);
-							}
-							*p = '.';
-						}
-					}
-				}
-				LBS_EmitPointer(sql,(void *)val);
+				LBS_EmitPointer(sql,(void *)TraceAlias(rec,val));
 				if		(  ComToken  ==  ','  ) {
 					if		(  !fInto  ) {
 						LBS_EmitChar(sql,',');
