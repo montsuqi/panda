@@ -281,6 +281,8 @@ _Form(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
+	char	*name;
+
 dbgmsg(">_Form");
 	LBS_EmitString(htc->code,"<form action=\"mon.cgi\" method=\"");
 	if		(  fGet  ) {
@@ -290,6 +292,10 @@ dbgmsg(">_Form");
 	}
 	LBS_EmitString(htc->code,"\"");
 	Style(htc,tag);
+	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," name=");
+		EmitAttributeValue(htc,name,TRUE);
+	}
 	LBS_EmitString(htc->code,">\n");
 
 	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_name\" value=\"");

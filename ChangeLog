@@ -1,5 +1,7 @@
 2003-12-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* htserver/tags.c (_Form): name=のサポート
+
 	* アプリケーションからuserを変更可能にした
 
 2003-12-17  Shugo Maeda  <shugo@netlab.jp>

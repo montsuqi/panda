@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -282,13 +282,10 @@ WriteLargeString(
 	size_t	count
 	,		sib
 	,		sob;
-	int		rc
-	,		ch;
+	int		ch;
 	iconv_t	cd;
 
 ENTER_FUNC;
-	cd = iconv_open("utf8",codeset);
-
 	RewindLBS(lbs);
 	if		(  codeset  !=  NULL  ) {
 		cd = iconv_open(codeset,"utf8");
@@ -303,9 +300,9 @@ ENTER_FUNC;
 				sib = count;
 				oc = obuff;
 				sob = SIZE_CHARS;
-				rc = iconv(cd,&istr,&sib,&oc,&sob);
-			}	while	(	(  rc  !=  0  )
-						&&	(  ch  !=  0  ) );
+				if		(  iconv(cd,&istr,&sib,&oc,&sob)  ==  0  )	break;
+				if		(  errno  !=  E2BIG  )	break;
+			}	while	(  ch  !=  0  );
 			for	( oc = obuff ; sob < SIZE_CHARS ; oc ++ , sob ++ ) {
 				fprintf(output,"%c",*oc);
 			}

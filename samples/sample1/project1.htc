@@ -1,10 +1,10 @@
-<HTC coding="shift-jis">
+<HTC coding="euc-jp">
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
  "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <meta name="robots" content="noindex,nofollow">
-<meta http-equiv="Content-Type" content="text/html; charset=shift-jis">
+<meta http-equiv="Content-Type" content="text/html; charset=eud-jp">
 <!-- LINK REL="stylesheet" TYPE="text/css" HREF="sample1.css" -->
 <STYLE>
 .red { 
@@ -17,11 +17,11 @@
 	color: blue;
 }
 </STYLE>
-<TITLE>主ウィンドウ</TITLE>
+<TITLE>ｼ逾ｦ･｣･ﾉ･ｦ</TITLE>
 </HEAD>
 <BODY TEXT="#202020" BGCOLOR="#C0C0C0" LINK="#00FFFF" VLINK="#00BBBB">
 <form>
-<H1>主ウィンドウ</H1>
+<H1>ｼ逾ｦ･｣･ﾉ･ｦ</H1>
 <CALENDAR year="project5.vbox1.calendar1.year" month="project5.vbox1.calendar1.month" day="project5.vbox1.calendar1.day">
 <TABLE>
 <TR>
@@ -41,11 +41,11 @@
 </TR>
 <TR>
 <TABLE><TR>
-<TD><button event="Left:button2" face="左"></TD>
-<TD><button event="Right:button1" face="右"></TD>
-<TD><button event="PutData:button" face="実行"></TD>
-<TD><button event="OpenCalc:button3" face="開く"></TD>
-<TD><button event="CloseCalc:button4" face="閉じる"></TD>
+<TD><button event="Left:button2" face="ｺｸ"></TD>
+<TD><button event="Right:button1" face="ｱｦ"></TD>
+<TD><button event="PutData:button" face="ｼﾂｹﾔ"></TD>
+<TD><button event="OpenCalc:button3" face="ｳｫ､ｯ"></TD>
+<TD><button event="CloseCalc:button4" face="ﾊﾄ､ｸ､�"></TD>
 <TD><button event="OpenCalendar:button5" face="Calendar"></TD>
 </TR></TABLE>
 </TR>
@@ -75,16 +75,16 @@ class="project1.vbox1.swin1.clist1.label3.style"></TD>
 </TR>
 <TR>
 <TABLE><TR>
-<TD><CHECKBUTTON name="project1.vbox1.hbox5.checkleft.value" label="左"></TD>
-<TD><CHECKBUTTON name="project1.vbox1.hbox5.checkright.value" label="右"></TD>
-<TD><CHECKBUTTON name="project1.vbox1.hbox5.checknone.value" label="なし"></TD>
+<TD><CHECKBUTTON name="project1.vbox1.hbox5.checkleft.value" label="ｺｸ"></TD>
+<TD><CHECKBUTTON name="project1.vbox1.hbox5.checkright.value" label="ｱｦ"></TD>
+<TD><CHECKBUTTON name="project1.vbox1.hbox5.checknone.value" label="､ﾊ､ｷ"></TD>
 </TR></TABLE>
 </TR>
 <TR>
 <TABLE><TR>
-<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioleft.value" label="左"></TD>
-<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioright.value" label="右"></TD>
-<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radionone.value" label="なし"></TD>
+<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioleft.value" label="ｺｸ"></TD>
+<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radioright.value" label="ｱｦ"></TD>
+<TD><RADIOBUTTON group="radio" name="project1.vbox1.hbox6.radionone.value" label="､ﾊ､ｷ"></TD>
 </TR></TABLE>
 </TR>
 <TR>
