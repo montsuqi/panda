@@ -1,3 +1,8 @@
+2004-02-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/redirect.c (OpenDB_RedirectPort): dbredirectorに接続しない
+	機能
+
 2004-01-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glclient/widgetOPS.c (InitWidgetOperations): gtk+pandaのバグ回避

@@ -275,8 +275,11 @@ static	ARG_TABLE	option[] = {
 
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
 		"実行時間に足す処理時間(for debug)"				},
+
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"dbredirectorの起動をチェックしない"			},
+	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
+		"dbredirectorを使わない"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -290,6 +293,7 @@ SetDefault(void)
 	Back = 5;
 	fConnect = FALSE;
 	fNoCheck = FALSE;
+	fNoRedirect = FALSE;
 
 	BaseDir = NULL;
 	RecordDir = NULL;

@@ -430,6 +430,7 @@ RecvText(
 	int		nitem
 	,		i;
 	int		state;
+	MonObjectType	obj;
 
 dbgmsg(">RecvText");
 	if		(  RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -453,6 +454,9 @@ dbgmsg(">RecvText");
 				  case	GL_TYPE_DBCODE:
 				  case	GL_TYPE_TEXT:
 					RecvString(fp,buff);
+					break;
+				  case	GL_TYPE_OBJECT:
+					RecvObject(fp,&obj);
 					break;
 				}
 				RegistValue(widget,name,OPT_TYPE_NULL,NULL);

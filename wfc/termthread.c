@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -182,49 +182,55 @@ ReadTerminal(
 	LD_Node	*ld;
 	WindowBind	*bind;
 	int			ix;
+	Bool		fExit;
 
 dbgmsg(">ReadTerminal");
-  top: 
-	ld = NULL; 
-	switch	(RecvPacketClass(fp)) {
-	  case	WFC_DATA:
-		dbgmsg("recv DATA");
-		RecvString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
-		RecvString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
-		RecvString(fp,data->hdr->event);	ON_IO_ERROR(fp,badio);
-		dbgprintf("window = [%s]",data->hdr->window);
-		dbgprintf("widget = [%s]",data->hdr->widget);
-		dbgprintf("event  = [%s]",data->hdr->event);
-		if		(  ( ld = g_hash_table_lookup(WindowHash,data->hdr->window) )
-				   !=  NULL  ) {
-			data->ld = ld;
-			bind = (WindowBind *)g_hash_table_lookup(ld->info->whash,data->hdr->window);
-			if		(  bind  !=  NULL  ) {
-				if		(  bind->ix  >=  0  ) {
-					SendPacketClass(fp,APS_OK);				ON_IO_ERROR(fp,badio);
-					dbgmsg("send OK");
-					RecvLBS(fp,data->scrdata[bind->ix]);	ON_IO_ERROR(fp,badio);
-					data->hdr->rc = TO_CHAR(0);
-					data->hdr->status = TO_CHAR(APL_SESSION_GET);
-					data->hdr->puttype = TO_CHAR(SCREEN_NULL);
+	ld = NULL;
+	fExit = FALSE;
+	do {
+		switch	(RecvPacketClass(fp)) {
+		  case	WFC_DATA:
+			dbgmsg("recv DATA");
+			RecvString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
+			RecvString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
+			RecvString(fp,data->hdr->event);	ON_IO_ERROR(fp,badio);
+			dbgprintf("window = [%s]",data->hdr->window);
+			dbgprintf("widget = [%s]",data->hdr->widget);
+			dbgprintf("event  = [%s]",data->hdr->event);
+			if		(  ( ld = g_hash_table_lookup(WindowHash,data->hdr->window) )
+					   !=  NULL  ) {
+				data->ld = ld;
+				bind = (WindowBind *)g_hash_table_lookup(ld->info->whash,data->hdr->window);
+				if		(  bind  !=  NULL  ) {
+					if		(  bind->ix  >=  0  ) {
+						SendPacketClass(fp,APS_OK);				ON_IO_ERROR(fp,badio);
+						dbgmsg("send OK");
+						RecvLBS(fp,data->scrdata[bind->ix]);	ON_IO_ERROR(fp,badio);
+						data->hdr->rc = TO_CHAR(0);
+						data->hdr->status = TO_CHAR(APL_SESSION_GET);
+						data->hdr->puttype = TO_CHAR(SCREEN_NULL);
+					}
 				}
 			}
+			break;
+		  case	WFC_LARGE:
+			dbgmsg("recv LARGE");
+			break;
+		  case	WFC_PING:
+			dbgmsg("recv PING");
+			SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
+			dbgmsg("send PONG");
+			break;
+		  case	WFC_OK:
+			dbgmsg("OK");
+			fExit = TRUE;
+			break;
+		  default:
+			ON_IO_ERROR(fp,badio);
+			dbgmsg("recv default");
+			break;
 		}
-		break;
-	  case	WFC_LARGE:
-		dbgmsg("recv LARGE");
-		break;
-	  case	WFC_PING:
-		dbgmsg("recv PING");
-		SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
-		dbgmsg("send PONG");
-		goto	top;
-		break;
-	  default:
-		ON_IO_ERROR(fp,badio);
-		dbgmsg("recv default");
-		break;
-	}
+	}	while	(  !fExit  );
   badio:
 	if		(  ld  ==  NULL  ) {
 		SendPacketClass(fp,WFC_NOT);
@@ -243,6 +249,7 @@ WriteTerminal(
 	Bool		rc;
 	WindowBind	*bind;
 	int			ix;
+	Bool		fExit;
 
 dbgmsg(">WriteTerminal");
 	rc = FALSE;
@@ -251,7 +258,7 @@ dbgmsg(">WriteTerminal");
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
 		dbgmsg("recv PONG");
 		ON_IO_ERROR(fp,badio);
-		SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
+		SendPacketClass(fp,WFC_HEADER);		ON_IO_ERROR(fp,badio);
 		dbgmsg("send DATA");
 		hdr = data->hdr;
 		SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
@@ -266,13 +273,35 @@ dbgmsg(">WriteTerminal");
 			SendString(fp,data->w.control[i].window);		ON_IO_ERROR(fp,badio);
 		}
 		data->w.n = 0;
-		bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,data->hdr->window);
-		if		(  bind  !=  NULL  ) {
-			if		(  bind->ix  >=  0  ) {
-				SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
+		fExit = FALSE;
+		do {
+			switch	(RecvPacketClass(fp))	{
+			  case	WFC_PING:
+				dbgmsg("PING");
+				SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
+				break;
+			  case	WFC_DATA:
+				dbgmsg("DATA");
+				bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,
+														 data->hdr->window);
+				if		(  bind  !=  NULL  ) {
+					if		(  bind->ix  >=  0  ) {
+						SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
+					}
+				}
+				break;
+			  case	WFC_LARGE:
+				dbgmsg("recv LARGE");
+				break;
+			  case	WFC_OK:
+				dbgmsg("OK");
+				fExit = TRUE;
+				break;
+			  default:
+				break;
 			}
-			rc = TRUE;
-		}
+		}	while	(  !fExit  );
+		rc = TRUE;
 	} else {
 	  badio:
 		dbgmsg("recv FALSE");

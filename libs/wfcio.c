@@ -104,6 +104,7 @@ dbgmsg(">SendTermServer");
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
 			dbgmsg("recv OK");
 			SendLBS(fp,buff);
+			SendPacketClass(fp,WFC_OK);
 			rc = TRUE;
 		} else {
 			/*	window not found	*/
@@ -132,8 +133,8 @@ RecvTermServerHeader(
 dbgmsg(">RecvTermServerHeader");
   top: 
 	switch	(c = RecvPacketClass(fp)) {
-	  case	WFC_DATA:
-		dbgmsg("recv DATA");
+	  case	WFC_HEADER:
+		dbgmsg("recv HEADER");
 		RecvString(fp,user);
 		RecvString(fp,window);
 		RecvString(fp,widget);
@@ -170,7 +171,15 @@ RecvTermServerData(
 	WindowData	*win)
 {
 dbgmsg(">RecvTermServerData");
+	SendPacketClass(fp,WFC_DATA);
 	RecvLBS(fp,buff);
 	NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
+	SendPacketClass(fp,WFC_OK);
 dbgmsg("<RecvTermServerData");
 }
+
+#if	0
+extern	void
+RecvTermBLOB(
+	NETFILE	*fp,
+#endif

@@ -152,6 +152,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"dbredirectorの起動をチェックしない"			},
+	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
+		"dbredirectorを使わない"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -174,6 +176,7 @@ SetDefault(void)
 	CommandParameter = "";
 
 	fNoCheck = FALSE;
+	fNoRedirect = FALSE;
 }
 
 extern	int

@@ -47,5 +47,6 @@ GLOBAL	char	*DB_User;
 GLOBAL	char	*DB_Pass;
 
 GLOBAL	Bool	fNoCheck;
+GLOBAL	Bool	fNoRedirect;
 
 #endif

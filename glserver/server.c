@@ -259,7 +259,10 @@ SendValue(
 		SendFixed(fp,&ValueFixed(value));
 		break;
 	  case	GL_TYPE_OBJECT:
-		SendObject(fp,ValueObject(value));
+		if		(  fFetureExpand  ) {
+		} else {
+			SendObject(fp,ValueObject(value));
+		}
 		break;
 	  case	GL_TYPE_ARRAY:
 		SendInt(fp,ValueArraySize(value));
@@ -518,6 +521,9 @@ CheckFeture(
 				if		(  !strlicmp(p,"blob")  ) {
 					TermFeture |= FETURE_BLOB;
 				}
+				if		(  !strlicmp(p,"expand")  ) {
+					TermFeture |= FETURE_EXPAND;
+				}
 				if		(  !strlicmp(p,"i18n")  ) {
 					TermFeture |= FETURE_I18N;
 				}
@@ -525,6 +531,10 @@ CheckFeture(
 			}
 		}
 	}
+	printf("core   = %s\n",fFetureCore ? "YES" : "NO");
+	printf("i18n   = %s\n",fFetureI18N ? "YES" : "NO");
+	printf("expand = %s\n",fFetureExpand ? "YES" : "NO");
+	printf("blob   = %s\n",fFetureBlob ? "YES" : "NO");
 }
 
 static	void

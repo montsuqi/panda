@@ -51,7 +51,11 @@ OpenDB_RedirectPort(
 	int		fh;
 
 dbgmsg(">OpenDB_RedirectPort");
-	if		(  dbg->redirectPort  !=  NULL  ) {
+	if		(	(  fNoRedirect  )
+			||	(  dbg->redirectPort  ==  NULL  ) ) {
+		dbg->fpLog = NULL;
+		dbg->redirectData = NULL;
+	} else {
 		if		(  ( fh = ConnectIP_Socket(dbg->redirectPort->port,SOCK_STREAM,
 										dbg->redirectPort->host) )
 				   <  0  ) {
@@ -65,9 +69,6 @@ dbgmsg(">OpenDB_RedirectPort");
 			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
 		}
-	} else {
-		dbg->fpLog = NULL;
-		dbg->redirectData = NULL;
 	}
 dbgmsg("<OpenDB_RedirectPort");
 }

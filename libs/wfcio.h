@@ -35,6 +35,8 @@ copies.
 #define	WFC_DATA		(PacketClass)0x01
 #define	WFC_PING		(PacketClass)0x02
 #define	WFC_LARGE		(PacketClass)0x03
+#define	WFC_HEADER		(PacketClass)0x04
+
 #define	WFC_FALSE		(PacketClass)0xE0
 #define	WFC_TRUE		(PacketClass)0xE1
 #define	WFC_NOT			(PacketClass)0xF0

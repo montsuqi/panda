@@ -531,7 +531,7 @@ SendConnect(
 
 dbgmsg(">SendConnect");
 	SendPacketClass(fp,GL_Connect);
-	SendString(fp,"symbolic:blob");
+	SendString(fp,"symbolic:expand");
 	SendString(fp,User);
 	SendString(fp,Pass);
 	SendString(fp,apl);

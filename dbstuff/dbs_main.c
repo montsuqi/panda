@@ -551,6 +551,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"dbredirectorの起動をチェックしない"			},
+	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
+		"dbredirectorを使わない"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -572,6 +574,9 @@ SetDefault(void)
 	DB_Host = NULL;
 	DB_Port = NULL;
 	DB_Name = DB_User;
+
+	fNoCheck = FALSE;
+	fNoRedirect = FALSE;
 }
 
 extern	int
