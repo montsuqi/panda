@@ -357,8 +357,7 @@ dbgmsg(">SQL_Lex");
 			CURR->cLine ++;
 		}
 	}
-	if		(	(  c  ==  '!'  )
-			||	(  c  ==  '#'  ) ) {
+	if		(  c  ==  '#'  ) {
 		while	(  ( c = GetChar(CURR->fp) )  !=  '\n'  );
 		CURR->cLine ++;
 		goto	retry;
