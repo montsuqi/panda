@@ -804,7 +804,7 @@ _Button(
 	char	buf[SIZE_BUFF];
 	char	*state;
 	int		arg
-		,	pos
+		,	pos;
 
 ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
