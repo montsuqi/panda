@@ -22,6 +22,7 @@ copies.
 /*
 #define	DEBUG
 #define	TRACE
+#define	NEW_SEQUENCT
 */
 
 #ifdef HAVE_CONFIG_H
@@ -328,7 +329,9 @@ dbgmsg(">CallAfter");
 					   ValueStringPointer(GetArrayItem(mcp_swindow,i)),
 					   SCREEN_CLOSE_WINDOW);
 		}
+#ifdef	NEW_SEQUENCE
 		SetPutType(node,ValueStringPointer(mcp_dcwindow),SCREEN_CURRENT_WINDOW);
+#endif
 		break;
 	  case	SCREEN_BACK_WINDOW:
 		sindex --;
@@ -337,7 +340,9 @@ dbgmsg(">CallAfter");
 			   SIZE_NAME);
 		PutType = SCREEN_CHANGE_WINDOW;
 		/*	through	*/
+#ifdef	NEW_SEQUENCE
 	  default:
+#endif
 		SetPutType(node,ValueStringPointer(mcp_dcwindow),PutType);
 		break;
 	}

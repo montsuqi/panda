@@ -23,6 +23,9 @@ copies.
 #define	DEBUG
 #define	TRACE
 */
+/*
+#define	NEW_SEQUENCE
+*/
 
 #define	_PANDA
 
@@ -81,7 +84,7 @@ RecvPanda(
 
 dbgmsg(">RecvPanda");
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
-#if	1
+#ifdef	NEW_SEQUENCE
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
 			type = ctl.control[i].PutType;
 			switch	(type) {
@@ -106,7 +109,7 @@ dbgmsg(">RecvPanda");
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
-#if	0
+#ifndef	NEW_SEQUENCE
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:
 			(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
