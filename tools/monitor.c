@@ -61,6 +61,7 @@ static	Bool	fRestart;
 static	int		interval;
 static	int		wfcinterval;
 static	int		MaxTran;
+static	int		MaxRetry;
 static	int		Sleep;
 
 static	FILE		*fpLog;
@@ -76,6 +77,7 @@ typedef	struct {
 	pid_t	pid;
 	byte	type;
 	int		argc;
+	int		count;
 	char	**argv;
 }	Process;
 
@@ -318,7 +320,7 @@ dbgmsg(">StartWfc");
 		}
 		proc = New(Process);
 		proc->type = PTYPE_WFC;
-		argv = (char **)xmalloc(sizeof(char *) * 16);
+		argv = (char **)xmalloc(sizeof(char *) * 18);
 		proc->argv = argv;
 		argc = 0;
 		argv[argc ++] = WfcPath;
@@ -340,6 +342,10 @@ dbgmsg(">StartWfc");
 		if		(  RecDir  !=  NULL  ) {
 			argv[argc ++] = "-record";
 			argv[argc ++] = RecDir;
+		}
+		if		(  MaxRetry  >  0  ) {
+			argv[argc ++] = "-retry";
+			argv[argc ++] = IntStrDup(MaxRetry);
 		}
 		if		(  fQ  ) {
 			argv[argc ++] = "-?";
@@ -507,6 +513,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
 		"apsの処理するトランザクション数を指定する"		},
+	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
+		"トランザクションを再試行する時の上限数"		},
 
 	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
 		"-?を指定する"				 					},
@@ -532,6 +540,7 @@ SetDefault(void)
 	interval = 0;
 	wfcinterval = 0;
 	MaxTran = 0;
+	MaxRetry = 0;
 	Sleep = 0;
 
 	MyHost = "localhost";

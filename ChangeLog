@@ -1,5 +1,8 @@
 2004-02-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* wfc/wfc.c, wfc/mqthread.c, wfc/termthread.c, tools/monitor.c:
+	トランザクションの再試行回数の上限を設定できるようにした
+
 	* tools/monitor.c: wfc起動後の待ち時間の指定
 
 	* fdd/fdd.c (fdd_system): system()の安全性確保

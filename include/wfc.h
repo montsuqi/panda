@@ -92,6 +92,8 @@ typedef	struct {
 	LD_Node		*ld;
 	WindowControl	w;
 	size_t			cWindow;
+	int			retry;
+	Bool		fAbort;
 	MessageHeader	*hdr;
 	LargeByteString	*mcpdata;
 	LargeByteString	*spadata;
@@ -109,5 +111,6 @@ typedef	struct {
 GLOBAL	GHashTable	*WindowHash;
 GLOBAL	GHashTable	*APS_Hash;
 GLOBAL	GHashTable	*MQ_Hash;
+GLOBAL	int			MaxRetry;
 
 #endif

@@ -387,7 +387,14 @@ dbgmsg(">MessageThread");
 				if		(  fp  ==  NULL  ) {
 					ClearAPS_Node(&ld->aps[ix]);
 					data->apsid = -1;
-					EnQueue(mq->que,data);
+					data->retry ++;
+					if		(	(  MaxRetry  >  0  )
+							&&	(  data->retry  >  MaxRetry  ) ) {
+						data->fAbort = TRUE;
+						TermEnqueue(data->term,data);
+					} else {
+						EnQueue(mq->que,data);
+					}
 					WaitConnect(ld,ix);
 					sched_yield();
 				}

@@ -330,9 +330,12 @@ dbgmsg(">TermThread");
 	if		(  ( data = InitSession(term->fp) )  !=  NULL  ) {
 		do {
 			data->term = term;
+			data->retry = 0;
+			data->fAbort = FALSE;
 			CoreEnqueue(data);
 			dbgmsg("process !!");
 			data = DeQueue(term->que);
+			if		(  data->fAbort  )	break;
 			if		(  WriteTerminal(term->fp,data)  ) {
 				ld = ReadTerminal(term->fp,data);
 			} else {

@@ -164,6 +164,10 @@ static	ARG_TABLE	option[] = {
 		"LD定義格納ディレクトリ"		 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"ディレクトリファイル"	 						},
+
+	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
+		"トランザクションを再試行する時の上限数"		},
+
 	{	NULL,		0,			TRUE,	NULL		 	}
 };
 
@@ -177,6 +181,7 @@ SetDefault(void)
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
+	MaxRetry = 0;
 }
 
 extern	int
