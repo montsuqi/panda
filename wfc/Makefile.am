@@ -12,9 +12,10 @@ INCLUDES 			= \
 	$(FIXED_CFLAGS)
 
 wfc_LDADD 		=	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lpthread $(POSTGRES_LIBS)	\
-	-L$(top_srcdir)/datalib -lpandadata	\
-	-L$(top_srcdir)/libs -lpanda -li18n
+	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lpthread $(POSTGRES_LIBS) \
+	-L$(top_srcdir)/libs -li18n 	\
+	$(top_srcdir)/datalib/libpandadata.la	\
+	$(top_srcdir)/libs/libpanda.la	
 
 wfc_SOURCES	=	\
 	wfc.c			\

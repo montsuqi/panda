@@ -8,17 +8,17 @@ bin_SCRIPTS = recdefgen.rb
 LDADD 		=	\
 	-L/usr/lib -lglib -lm \
 	$(FIXED_LIBS)  -ldl	\
-	-L$(top_srcdir)/datalib -lpandadata	\
+	$(top_srcdir)/datalib/libpandadata.la	\
 	-L$(top_srcdir)/libs -lpandat
 dbgen_LDADD 		=	\
 	-L/usr/lib -lglib -lm \
 	$(FIXED_LIBS)  -ldl	\
-	-L$(top_srcdir)/datalib -lpandadata	\
+	$(top_srcdir)/datalib/libpandadata.la	\
 	-L$(top_srcdir)/libs -lpandat
 user_LDADD 		=	\
 	-L/usr/lib -lglib -lm \
 	$(FIXED_LIBS)  -ldl	\
-	-L$(top_srcdir)/datalib -lpandadata	\
+	$(top_srcdir)/datalib/libpandadata.la	\
 	-L$(top_srcdir)/libs -lpandat -lcrypt 
 
 INCLUDES 			= \

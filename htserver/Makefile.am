@@ -5,11 +5,11 @@ sbin_PROGRAMS = htserver
 
 htserver_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lpthread	\
-	-L$(top_srcdir)/datalib -lpandadata	\
+	$(top_srcdir)/datalib/libpandadata.la	\
 	-L$(top_srcdir)/libs -lpandas
 mon_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lpthread	\
-	-L$(top_srcdir)/datalib -lpandadata	\
+	$(top_srcdir)/datalib/libpandadata.la	\
 	-L$(top_srcdir)/libs -lpandas
 
 INCLUDES 			= \

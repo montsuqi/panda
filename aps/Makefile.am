@@ -12,18 +12,20 @@ aps_LDADD 		=	\
 	$(LANG_OBJECTS)		\
 	-L/usr/lib -lglib -lm -ldl -lpthread	\
 	$(FIXED_LIBS)		\
-	-L$(top_srcdir)/libs -lpanda -li18n $(OPENCOBOL_LIBS)	\
-	-L$(top_srcdir)/datalib -lpandadata	\
-	-L$(top_srcdir)/dblib -lpandadb	\
+	-L$(top_srcdir)/libs -li18n $(OPENCOBOL_LIBS)	\
+	$(top_srcdir)/libs/libpanda.la	\
+	$(top_srcdir)/datalib/libpandadata.la	\
+	$(top_srcdir)/dblib/libpandadb.la \
 	MCPSUB.la
 
 dbstub_LDADD 		=	\
 	$(LANG_OBJECTS)		\
 	-L/usr/lib -lglib -lm -ldl -lpthread \
 	$(FIXED_LIBS)		\
-	-L$(top_srcdir)/libs -lpanda $(OPENCOBOL_LIBS)	\
-	-L$(top_srcdir)/datalib -lpandadata	\
-	-L$(top_srcdir)/dblib -lpandadb	\
+	-L$(top_srcdir)/libs $(OPENCOBOL_LIBS)	\
+	$(top_srcdir)/libs/libpanda.la	\
+	$(top_srcdir)/datalib/libpandadata.la	\
+	$(top_srcdir)/dblib/libpandadb.la \
 	MCPSUB.la
 
 MCPSUB_la_LIBADD	=
@@ -51,23 +53,10 @@ aps_SOURCES	=	\
 	handler.c	handler.h	\
 	defaults.h
 
-aps_DEPENDENCIES	=	\
-	defaults.h			\
-	$(top_srcdir)/libs/libpanda.la	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	$(top_srcdir)/dblib/libpandadb.la
-	MCPSUB.la
-
 dbstub_SOURCES	=	\
 	dbstub_main.c	\
 	handler.c	handler.h	\
 	defaults.h
-
-dbstub_DEPENDENCIES	=	\
-	MCPSUB.la			\
-	$(top_srcdir)/libs/libpanda.la	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	$(top_srcdir)/dblib/libpandadb.la
 
 MCPSUB_la_SOURCES	=	\
 	MCPSUB.c			\
