@@ -610,21 +610,56 @@ MakeDB(void)
 }
 
 static	void
+PutDBREC(
+	ValueStruct	*value,
+	char	*rname,
+	size_t	msize)
+{
+	size_t	size;
+	char	*_prefix;
+
+	level = 1;
+	PutLevel(level,TRUE);
+	_prefix = Prefix;
+	Prefix = "";
+	PutName(rname);
+	Prefix = _prefix;
+	COBOL(Conv,value);
+	printf(".\n");
+
+	size = SizeValue(Conv,value);
+	if		(  msize  !=  size  ) {
+		PutLevel(2,TRUE);
+		PutName("filler");
+		PutTab(12);
+		printf("PIC X(%d).\n",msize - size);
+	}
+}
+
+static	void
 MakeDBREC(
 	char	*name)
 {
-	ValueStruct	*val;
 	size_t	msize
 	,		size;
-	int		i;
-	char	*_prefix;
+	int		i
+		,	j
+		,	k;
 	char	*rname;
 	LD_Struct	*ld;
 	BD_Struct	*bd;
-	RecordStruct	**dbrec;
-	size_t		arraysize
-	,			textsize;
+	RecordStruct	**dbrec
+		,			*rec;
+	DB_Struct		*db;
+	PathStruct		*path;
+	SQL_Operation	*op;
+	ValueStruct		*value;
+	GHashTable		*dbtable;
+	size_t			arraysize
+	,				textsize;
 	size_t	cDB;
+	char			*p;
+	int				rno;
 
 dbgmsg(">MakeDBREC");
 	InitDirectory();
@@ -637,6 +672,7 @@ dbgmsg(">MakeDBREC");
 		arraysize = ld->arraysize;
 		textsize = ld->textsize;
 		cDB = ld->cDB;
+		dbtable = ld->DB_Table;
 	} else
 	if		(  BD_Name  !=  NULL  ) {
 		if		(  ( bd = GetBD(BD_Name) )  ==  NULL  ) {
@@ -646,40 +682,45 @@ dbgmsg(">MakeDBREC");
 		arraysize = bd->arraysize;
 		textsize = bd->textsize;
 		cDB = bd->cDB;
+		dbtable = bd->DB_Table;
 	} else {
 		Error("LD or BD not specified");
 		exit(1);
 	}
 
 	ConvSetSize(Conv,textsize,arraysize);
-
 	msize = 64;
 	for	( i = 1 ; i < cDB ; i ++ ) {
-		size = SizeValue(Conv,dbrec[i]->value);
+		rec = dbrec[i];
+		size = SizeValue(Conv,rec->value);
 		msize = ( msize > size ) ? msize : size;
+		for	( j = 0 ; j < rec->opt.db->pcount ; j ++ ) {
+			path = rec->opt.db->path[j];
+			if		(  path->args  !=  NULL  ) {
+				size = SizeValue(Conv,path->args);
+				msize = ( msize > size ) ? msize : size;
+			}
+			for	( k = 0 ; k < path->ocount ; k ++ ) {
+				op = path->ops[k];
+				if		(  op->args  !=  NULL  ) {
+					size = SizeValue(Conv,op->args);
+					msize = ( msize > size ) ? msize : size;
+				}
+			}
+		}
 	}
-	if		(  ( val = DD_ParseValue(name) )  !=  NULL  ) {
-		level = 1;
-		PutLevel(level,TRUE);
+	if		( ( p = strchr(name,'.') )  !=  NULL  ) {
+		*p = 0;
+	}
+	if		(  ( rno = (int)g_hash_table_lookup(dbtable,rname) )  !=  0  ) {
+		rec = dbrec[rno-1];
+		value = rec->value;
 		if		(  *RecName  ==  0  ) {
-			rname = ValueName;
+			rname = rec->name;
 		} else {
 			rname = RecName;
 		}
-		_prefix = Prefix;
-		Prefix = "";
-		PutName(rname);
-		Prefix = _prefix;
-		COBOL(Conv,val);
-		printf(".\n");
-
-		size = SizeValue(Conv,val);
-		if		(  msize  !=  size  ) {
-			PutLevel(2,TRUE);
-			PutName("filler");
-			PutTab(12);
-			printf("PIC X(%d).\n",msize - size);
-		}
+		PutDBREC(value,rname,msize);
 	}
 dbgmsg("<MakeDBREC");
 }
