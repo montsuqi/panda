@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -152,19 +152,23 @@ ENTER_FUNC;
 		lday ++;
 	}
 
-	LBS_EmitString(html,"<INPUT TYPE=\"hidden\" name=\"");
-	LBS_EmitString(html,year);
-	LBS_EmitString(html,"\" value=\"");
-	sprintf(buff,"%d",yy);
-	LBS_EmitString(html,buff);
-	LBS_EmitString(html,"\">\n");
+	if		(  year  !=  NULL  ) {
+		LBS_EmitString(html,"<INPUT TYPE=\"hidden\" name=\"");
+		LBS_EmitString(html,year);
+		LBS_EmitString(html,"\" value=\"");
+		sprintf(buff,"%d",yy);
+		LBS_EmitString(html,buff);
+		LBS_EmitString(html,"\">\n");
+	}
 
-	LBS_EmitString(html,"<INPUT TYPE=\"hidden\" name=\"");
-	LBS_EmitString(html,month);
-	LBS_EmitString(html,"\" value=\"");
-	sprintf(buff,"%d",mm);
-	LBS_EmitString(html,buff);
-	LBS_EmitString(html,"\">\n");
+	if		(  month  !=  NULL  ) {
+		LBS_EmitString(html,"<INPUT TYPE=\"hidden\" name=\"");
+		LBS_EmitString(html,month);
+		LBS_EmitString(html,"\" value=\"");
+		sprintf(buff,"%d",mm);
+		LBS_EmitString(html,buff);
+		LBS_EmitString(html,"\">\n");
+	}
 
 	LBS_EmitString(html,"<TABLE BORDER><TR align=\"center\"><TH colspan=7>\n");
 	sprintf(buff,"%d",yy);

@@ -538,7 +538,7 @@ static	void
 InitData(void)
 {
 ENTER_FUNC;
-	DD_ParserInit();
+	RecParserInit();
 	BlobCacheCleanUp();
 	SesHash = NewIntHash();
 	cSession = abs(rand());	/*	set some random number	*/
