@@ -88,7 +88,7 @@ FinishSession(
 {
 	char	msg[SIZE_BUFF];
 
-	sprintf(msg,"[%s:%s] session end",scr->term,scr->user);
+	sprintf(msg,"[%s@%s] session end",scr->user,scr->term);
 	Message(MESSAGE_LOG,msg);
 #if	0
 	if		(	(  scr  !=  NULL  )
@@ -190,7 +190,8 @@ CheckScreen(
 	NETFILE		*fpComm)
 {
 	char	fname[SIZE_BUFF]
-	,			dir[SIZE_BUFF];
+	,		dir[SIZE_BUFF];
+	char	msg[SIZE_BUFF];
 	struct	stat	stbuf;
 	char	*p
 	,		*q;
@@ -216,7 +217,8 @@ dbgmsg(">CheckScreen");
 			p = q + 1;
 		}	while	(  !fExit  );
 		if		(  !fDone  ) {
-			printf("screen file not exists. [%s]\n",wname);
+			sprintf(msg,"[%s] screen file not exitsts.",wname);
+			Message(MESSAGE_LOG,msg);
 			longjmp(envCheckScreen,1);
 		}
 		win->fNew = FALSE;
@@ -450,11 +452,11 @@ dbgmsg(">MainLoop");
 			RecvString(fpComm,scr->user);	ON_IO_ERROR(fpComm,badio);
 			RecvString(fpComm,pass);		ON_IO_ERROR(fpComm,badio);
 			RecvString(fpComm,scr->cmd);	ON_IO_ERROR(fpComm,badio);
-			sprintf(msg,"[%s:%s] session start",scr->term,scr->user);
+			sprintf(msg,"[%s@%s] session start",scr->user,scr->term);
 			Message(MESSAGE_LOG,msg);
-#if	0
-			strcpy(ver,VERSION);
-#endif
+			if		(  fIgnoreVersion  ) {
+				strcpy(ver,VERSION);
+			}
 			if		(  strcmp(ver,VERSION)  ) {
 				SendPacketClass(fpComm,GL_E_VERSION);	ON_IO_ERROR(fpComm,badio);
 				g_warning("reject client(invalid version)");

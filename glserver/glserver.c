@@ -77,6 +77,9 @@ static	ARG_TABLE	option[] = {
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
 		"CA証明書ファイル"								},
 #endif
+	{	"ignore",	BOOLEAN,	TRUE,	(void*)&fIgnoreVersion,
+		"クライアントのバージョンチェックをしない"		},
+
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -96,6 +99,7 @@ SetDefault(void)
 	CA_Path = NULL;
 	CA_File = NULL;
 #endif	
+	fIgnoreVersion = FALSE;
 }
 
 static	void

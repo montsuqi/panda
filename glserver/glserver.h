@@ -30,6 +30,7 @@ copies.
 #define	GLOBAL		extern
 #endif
 
+GLOBAL	Bool	fIgnoreVersion;
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
 #ifdef	USE_SSL
