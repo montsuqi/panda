@@ -136,8 +136,12 @@ dbgmsg(">ExecuteServer");
 		FD_ZERO(&ready);
 		FD_SET(_fhTerm,&ready);
 		FD_SET(_fhAps,&ready);
-		FD_SET(_fhControl,&ready);
-		FD_SET(_fhBlob,&ready);
+		if		(  _fhControl  >=  0  ) {
+			FD_SET(_fhControl,&ready);
+		}
+		if		(  _fhBlob  >=  0  ) {
+			FD_SET(_fhBlob,&ready);
+		}
 		ret = pselect(maxfd+1,&ready,NULL,NULL,&timeout,&SigMask);
         if (ret == -1) {
             if (errno == EINTR)
