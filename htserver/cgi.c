@@ -194,7 +194,8 @@ ConvLocal(
 
 extern	char	*
 ConvUTF8(
-	char	*istr)
+	char	*istr,
+	char	*code)
 {
 	iconv_t	cd;
 	size_t	sib
@@ -202,7 +203,7 @@ ConvUTF8(
 	char	*ostr;
 	static	char	cbuff[SIZE_BUFF];
 
-	cd = iconv_open("utf8",Codeset);
+	cd = iconv_open("utf8",code);
 	if		(  ( sib = strlen(istr)  )  >  0  ) {
 		ostr = cbuff;
 		sob = SIZE_BUFF;
@@ -414,6 +415,8 @@ GetArgs(void)
 		,	*str;
 
 ENTER_FUNC;
+	Values = NewNameHash();
+    Files = NewNameHash();
 	if		(  ( env = getenv("QUERY_STRING") )  !=  NULL  ) {
 		StartScanEnv(env);
 		while	(  ScanEnv(name,value)  ) {
@@ -874,7 +877,5 @@ LEAVE_FUNC;
 extern	void
 InitCGI(void)
 {
-	Values = NewNameHash();
-    Files = NewNameHash();
 	GetArgs();
 }

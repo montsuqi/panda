@@ -151,7 +151,7 @@ ENTER_FUNC;
 			&&	(  value->body  !=  NULL  ) ) {
 		HT_SendString(name);
 		HT_SendString("\n");
-		s = ConvUTF8(value->body);
+		s = ConvUTF8(value->body,Codeset);
 		len = strlen(s);
 		SendLength(fpServ, len);
 		Send(fpServ, s, len);
@@ -303,7 +303,7 @@ ENTER_FUNC;
 	} else {
 		exit(1);
 	}
-	event = ParseButton(htc);
+	event = ParseInput(htc);
 
 	HT_SendString(event);
 	HT_SendString("\n");

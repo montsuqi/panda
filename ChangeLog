@@ -1,3 +1,7 @@
+2004-03-31  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c : <fixed>にlink属性追加
+
 2004-03-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/tags.c: <form>にtarget属性付加

@@ -692,7 +692,7 @@ LEAVE_FUNC;
 }
 
 extern	char	*
-ParseButton(
+ParseInput(
 	HTCInfo	*htc)
 {
 	char	*button;
@@ -708,8 +708,21 @@ ParseButton(
 			SaveValue(rname,"TRUE",FALSE);
 		}
 	}
+	void	ToUTF8(
+		char	*name,
+		CGIValue	*val)
+	{
+		char	*u8;
+
+		if		(  val->body  !=  NULL  ) {
+			u8 = ConvUTF8(val->body,Codeset);
+			xfree(val->body);
+			val->body = StrDup(u8);
+		}
+	}
 	
 ENTER_FUNC;
+	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);
 	if		(	(  ( button = LoadValue("_event") )  ==  NULL  )
 			||	(  *button  ==  0  ) ) {
 		if (htc->DefaultEvent == NULL) {
@@ -719,7 +732,7 @@ ENTER_FUNC;
 			event = htc->DefaultEvent;
 		}
 	} else {
-		event = g_hash_table_lookup(htc->Trans,ConvUTF8(button));
+		event = g_hash_table_lookup(htc->Trans,button);
 		if (event == NULL) {
 			event = button;
 		}

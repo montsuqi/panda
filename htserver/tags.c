@@ -309,16 +309,36 @@ _Fixed(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*name;
+	char	*name
+		,	*link
+		,	*target;
 dbgmsg(">_Fixed");
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code,"<span");
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">");
+		if		(  ( link = GetArg(tag,"link",0) )  !=  NULL  ) {
+			LBS_EmitString(htc->code,"<a href=\"");
+
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(link));
+			EmitCode(htc,OPC_EHSNAME);
+
+			LBS_EmitString(htc->code,"\"");
+			if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
+				LBS_EmitString(htc->code," target=\"");
+				LBS_EmitString(htc->code,target);
+				LBS_EmitString(htc->code,"\"");
+			}
+			LBS_EmitString(htc->code,">");
+		}
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(name));
         EmitCode(htc,OPC_HSNAME);
         EmitCode(htc,OPC_EMITSTR);
+		if		(  link  !=  NULL  ) {
+			LBS_EmitString(htc->code,"</a>");
+		}
 		LBS_EmitString(htc->code,"</span>");
 	}
 dbgmsg("<_Fixed");
@@ -457,20 +477,20 @@ dbgmsg(">_Text");
 	LBS_EmitString(htc->code,"\" value=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-	EmitCode(htc,OPC_EHSNAME);
+	EmitCode(htc,OPC_REFSTR);
 	LBS_EmitString(htc->code,"\"");
 	if		(  ( cols = GetArg(tag,"cols",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," cols=\"");
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(cols));
-		EmitCode(htc,OPC_REFSTR);
+		EmitCode(htc,OPC_EHSNAME);
 		LBS_EmitString(htc->code,"\"");
 	}
 	if		(  ( rows = GetArg(tag,"rows",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," rows=\"");
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(rows));
-		EmitCode(htc,OPC_REFSTR);
+		EmitCode(htc,OPC_EHSNAME);
 		LBS_EmitString(htc->code,"\"");
 	}
     JavaScriptEvent(htc, tag, "onchange");
@@ -700,9 +720,9 @@ dbgmsg(">_RadioButton");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
-	LBS_EmitPointer(htc->code," checked ");
+	LBS_EmitPointer(htc->code," checked");
 
-	LBS_EmitString(htc->code,"value=\"");
+	LBS_EmitString(htc->code," value=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_REFSTR);
@@ -718,7 +738,7 @@ static void
 _List(HTCInfo *htc, Tag *tag)
 {
 	char	buf[SIZE_ARG];
-	char	*name, *label, *count, *size, *multiple, *onchange;
+	char	*name, *label, *count, *size, *multiple, *onchange, *value;
 	size_t	pos;
 
 dbgmsg(">_List");
@@ -758,16 +778,25 @@ dbgmsg(">_List");
         LBS_EmitInt(htc->code,0);
 
         LBS_EmitString(htc->code,"<option value=\"");
-        EmitCode(htc,OPC_LDVAR);
-        LBS_EmitPointer(htc->code,"");
-        EmitCode(htc,OPC_REFINT);
+        if ((value = GetArg(tag,"value",0)) != NULL) {
+			EmitCode(htc,OPC_NAME);
+			sprintf(buf,"%s[#]",value);
+			LBS_EmitPointer(htc->code,StrDup(buf));
+			EmitCode(htc,OPC_EHSNAME);
+		} else {
+			EmitCode(htc,OPC_LDVAR);
+			LBS_EmitPointer(htc->code,"");
+			EmitCode(htc,OPC_REFINT);
+		}
         LBS_EmitString(htc->code,"\"");
+
         EmitCode(htc,OPC_NAME);
         sprintf(buf,"%s[#]",name);
         LBS_EmitPointer(htc->code,StrDup(buf));
         EmitCode(htc,OPC_HBES);
         LBS_EmitPointer(htc->code," selected");
         LBS_EmitString(htc->code,">");
+
         EmitCode(htc,OPC_NAME);
         sprintf(buf,"%s[#]",label);
         LBS_EmitPointer(htc->code,StrDup(buf));
@@ -1171,6 +1200,8 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"link",TRUE);
+	AddArg(tag,"target",TRUE);
 
 	tag = NewTag("COUNT",_Count);
 	AddArg(tag,"var",TRUE);
@@ -1218,6 +1249,7 @@ dbgmsg(">TagsInit");
 	tag = NewTag("LIST",_List);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"label",TRUE);
+	AddArg(tag,"value",TRUE);
 	AddArg(tag,"count",TRUE);
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"multiple",TRUE);

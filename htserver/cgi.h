@@ -49,7 +49,7 @@ GLOBAL	char		*SesDir;
 
 #undef	GLOBAL
 
-extern	char	*ConvUTF8(char *istr);
+extern	char	*ConvUTF8(char *istr, char *code);
 extern	char	*ConvLocal(char *istr);
 
 extern	char	*LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
