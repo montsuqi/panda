@@ -418,7 +418,7 @@ ThisAuth(
 	return	(ret);
 }
 #else
-#define	ThisAuth(user,pass,other)	AuthUser((user),(pass),(other))
+#define	ThisAuth(user,pass,other)	AuthUser(&Auth,(user),(pass),(other))
 #endif
 
 static	Bool

@@ -1,3 +1,7 @@
+2003-12-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/server.c (ThisAuth): AuthUserの引数変更
+
 2003-11-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dbstuff/dbs_main.c : スキーマ問い合わせコマンド追加
