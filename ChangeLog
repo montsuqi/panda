@@ -1,3 +1,9 @@
+2004-05-23  Kouji SHIMIZU  <shimizu@netlab.jp>
+
+	* tools/recgen.rb (Element::out, Element::_append): Widgetのプロパ
+	ティのappend順を保持する配列(@item_ary)を導入し、append順にデータ
+	定義体を出力するように修正
+
 2004-05-21  Kouji SHIMIZU  <shimizu@netlab.jp>
 
 	* libs/DBparser.c (DB_Parse): データベース定義体の文法エラー時に

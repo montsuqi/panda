@@ -46,14 +46,15 @@ class	Element
 		@type = "";
 		@dim = Array.new(0);
 		@item = Hash.new;
+		@item_ary = []
 	end
 	def	out(ind)
 		case	@klass
 		  when	:record
 			putTab(ind);
 			printf("%s\t{\n",@name);
-			for	k,v in @item
-				v.out(ind+1);
+			@item_ary.each do |key|
+				@item[key].out(ind+1)
 			end
 			putTab(ind);
 			printf("}");
@@ -101,6 +102,7 @@ class	Element
 				end
 			end
 			self.item.store(body,el);
+			@item_ary.push(body)
 		end
 		if		name.size  ==  1
 			el.type = type;
