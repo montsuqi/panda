@@ -42,10 +42,12 @@ GLOBAL	int		HTC_cLine;
 GLOBAL	char	*HTC_Memory;
 
 GLOBAL	int		(*_HTCGetChar)(void);
+GLOBAL	void	(*_HTCUnGetChar)(int c);
+
 #undef	GLOBAL
 
-extern	int		HTCGetChar(void);
-extern	void	HTCUnGetChar(int c);
+extern	int		GetCharFile(void);
+extern	void	UnGetCharFile(int c);
 extern	int		HTCLex(Bool fSymbol);
 extern	void	HTCLexInit(void);
 extern	void	HTCSetCodeset(char *codeset);

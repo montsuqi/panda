@@ -27,6 +27,7 @@ copies.
 #include	"htc.h"
 
 extern	HTCInfo		*HTCParserFile(char *name);
+extern	HTCInfo		*HTCParserMemory(char *buff);
 extern	void		DestroyHTC(HTCInfo *htc);
 extern	void		HTC_Error(char *msg, ...);
 #endif

@@ -51,7 +51,7 @@ static	Bool	fError;
 
 #define	GetSymbol	(HTC_Token = HTCLex(FALSE))
 #define	GetName		(HTC_Token = HTCLex(TRUE))
-#define	GetChar		(HTC_Token = HTCGetChar())
+#define	GetChar		(HTC_Token = _HTCGetChar())
 
 void
 HTC_Error(char *msg, ...)
@@ -227,11 +227,13 @@ LEAVE_FUNC;
 
 static	HTCInfo	*
 HTCParserCore(
-	int		(*getfunc)(void))
+	int		(*getfunc)(void),
+	void	(*ungetfunc)(int c))
 {
 	HTCInfo	*ret;
 
 	_HTCGetChar = getfunc;
+	_HTCUnGetChar = ungetfunc;
 	ret = New(HTCInfo);
 	ret->code = NewLBS();
 	ret->Trans = NewNameHash();
@@ -243,12 +245,6 @@ HTCParserCore(
 	LBS_EmitStart(ret->code);
 	ParHTC(ret);
 	return	(ret);
-}
-
-static	int
-GetCharFile(void)
-{
-	return	(fgetc(HTC_File));
 }
 
 extern	HTCInfo	*
@@ -265,8 +261,7 @@ ENTER_FUNC;
 		HTC_cLine = 1;
 		HTC_File = fp;
 		HTC_Memory = NULL;
-		_HTCGetChar = GetCharFile;
-		ret = HTCParserCore(GetCharFile);
+		ret = HTCParserCore(GetCharFile,UnGetCharFile);
 		fclose(HTC_File);
 		if		(  fError  ) {
 			ret = NULL;
@@ -285,8 +280,20 @@ GetCharMemory(void)
 {
 	int		c;
 
-	c = *HTC_Memory ++;
+	if		(  ( c = *HTC_Memory )  ==  0  ) {
+		c = -1;
+	} else {
+		HTC_Memory ++;
+	}
 	return	(c);
+}
+
+static	void
+UnGetCharMemory(
+	int		c)
+{
+	HTC_Memory --;
+	*HTC_Memory = c;
 }
 
 extern	HTCInfo	*
@@ -302,7 +309,7 @@ ENTER_FUNC;
 		HTC_cLine = 1;
 		HTC_File = NULL;
 		HTC_Memory = buff;
-		ret = HTCParserCore(GetCharMemory);
+		ret = HTCParserCore(GetCharMemory,UnGetCharMemory);
 		if		(  fError  ) {
 			ret = NULL;
 		}

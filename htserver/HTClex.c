@@ -104,7 +104,7 @@ HTCSetCodeset(
 }
 
 extern	int
-HTCGetChar(void)
+GetCharFile(void)
 {
 	int		c;
 	byte	ibuff[SIZE_CHARS]
@@ -154,13 +154,13 @@ LEAVE_FUNC;
 }
 
 extern	void
-HTCUnGetChar(
+UnGetCharFile(
 	int		c)
 {
 	ungetc(c,HTC_File);
 }
 
-#define	SKIP_SPACE	while	(  isspace( c = HTCGetChar() ) ) {	\
+#define	SKIP_SPACE	while	(  isspace( c = _HTCGetChar() ) ) {	\
 						if		(  c  ==  '\n'  ) {	\
 							c = ' ';\
 						}	\
@@ -234,20 +234,20 @@ dbgmsg(">ReadyDirective");
 	do {
 		*s = c;
 		s ++;
-	}	while	(  !isspace( c = HTCGetChar() )  );
+	}	while	(  !isspace( c = _HTCGetChar() )  );
 	*s = 0;
 	if		(  !stricmp(buff,"include")  ) {
 		SKIP_SPACE;
 		s = fn;
 		switch	(c) {
 		  case	'"':
-			while	(  ( c = HTCGetChar() )  !=  '"'  ) {
+			while	(  ( c = _HTCGetChar() )  !=  '"'  ) {
 				*s ++ = c;
 			}
 			*s = 0;
 			break;
 		  case	'<':
-			while	(  ( c = HTCGetChar() )  !=  '>'  ) {
+			while	(  ( c = _HTCGetChar() )  !=  '>'  ) {
 				*s ++ = c;
 			}
 			*s = 0;
@@ -260,8 +260,8 @@ dbgmsg(">ReadyDirective");
 			DoInclude(fn);
 		}
 	} else {
-		HTCUnGetChar(c);
-		while	(  ( c = HTCGetChar() )  !=  '\n'  );
+		_HTCUnGetChar(c);
+		while	(  ( c = _HTCGetChar() )  !=  '\n'  );
 	}
 dbgmsg("<ReadyDirective");
 }
@@ -284,9 +284,9 @@ dbgmsg(">HTCLex");
 	if		(  c  ==  '"'  ) {
 		s = HTC_ComSymbol;
 		len = 0;
-		while	(  ( c = HTCGetChar() )  !=  '"'  ) {
+		while	(  ( c = _HTCGetChar() )  !=  '"'  ) {
 			if		(  c  ==  '\\'  ) {
-				c = HTCGetChar();
+				c = _HTCGetChar();
 			}
 			*s = c;
 			if		(  len  <  SIZE_SYMBOL  ) {
@@ -308,14 +308,14 @@ dbgmsg(">HTCLex");
 				s ++;
 				len ++;
 			}
-			c = HTCGetChar();
+			c = _HTCGetChar();
 		}	while	(	(  isalpha(c) )
 					 ||	(  isdigit(c) )
 					 ||	(  c  ==  '.' )
 					 ||	(  c  ==  '_' )
 					 ||	(  c  ==  ':' ) );
 		*s = 0;
-		HTCUnGetChar(c);
+		_HTCUnGetChar(c);
 		if		(  fSymbol  ) {
 			token = T_SYMBOL;
 		} else {
