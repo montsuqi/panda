@@ -665,11 +665,9 @@ InitGL_Comm(void)
 
 	if		(  ( Magic = magic_open(MAGIC_SYMLINK|MAGIC_COMPRESS|MAGIC_PRESERVE_ATIME) )
 			   ==  NULL  ) {
-		fprintf(stderr, "magic: %s\n", strerror(errno));
-		exit(1);
+		Error("magic: %s", strerror(errno));
 	}
 	if		(  magic_load(Magic, NULL)  <  0  )	{
-		fprintf(stderr, "magic: %s\n", magic_error(Magic));
-		exit(1);
+		Error("magic: %s", magic_error(Magic));
 	}
 }

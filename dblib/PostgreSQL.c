@@ -655,7 +655,7 @@ ENTER_FUNC;
 		}
 		break;
 	  case	GL_TYPE_ALIAS:
-		printf("invalid data type\n");
+		Warning("invalid data type");
 		break;
 	  default:
 		break;
@@ -985,8 +985,7 @@ ENTER_FUNC;
 	dbg =  rec->opt.db->dbg;
 	sql = NewLBS();
 	if	(  src  ==  NULL )	{
-		printf("function \"%s\" is not found.\n",ctrl->func);
-		exit(1);
+		Error("function \"%s\" is not found.",ctrl->func);
 	}
 	RewindLBS(src);
 	items = 0;
@@ -1143,7 +1142,7 @@ _EXEC(
 				   ==  PGRES_BAD_RESPONSE    )
 			||	(  status  ==  PGRES_FATAL_ERROR     )
 			||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
-		fprintf(stderr,"%s",PQerrorMessage(PGCONN(dbg)));
+		Warning("%s",PQerrorMessage(PGCONN(dbg)));
 		dbgmsg("NG");
 		rc = MCP_BAD_OTHER;
 		_PQclear(res);
@@ -1206,9 +1205,8 @@ ENTER_FUNC;
 
 	conn = PQsetdbLogin(host,port,NULL,NULL,dbname,user,pass);
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
-		fprintf(stderr,"Connection to database \"%s\" failed.\n",dbname);
-		fprintf(stderr,"%s.\n",PQerrorMessage(conn));
-		exit(1);
+		Message("Connection to database \"%s\" failed.",dbname);
+		Error("%s",PQerrorMessage(conn));
 	}
 	OpenDB_RedirectPort(dbg);
 	dbg->conn = (void *)conn;

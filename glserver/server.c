@@ -433,7 +433,7 @@ Connect(
 	if		(  TermFeture  ==  FETURE_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_E_VERSION,fFetureNetwork);
 		ON_IO_ERROR(fpComm,badio);
-		Warning("reject client(invalid version)");
+		Warning("[%s@%s] reject client(invalid version)",scr->user,TermToHost(scr->term));
 	} else
 	if		(  ThisAuth(scr->user,pass,scr->other)  ) {
 		scr->Windows = NULL;
@@ -450,7 +450,7 @@ Connect(
 	} else {
 		GL_SendPacketClass(fpComm,GL_E_AUTH,fFetureNetwork);
 		ON_IO_ERROR(fpComm,badio);
-		Warning("reject client(authentication error)");
+		Warning("[%s@%s] reject client(authentication error)",scr->user,TermToHost(scr->term));
 	}
   badio:
 	return (rc);
@@ -566,7 +566,7 @@ ENTER_FUNC;
 	} else {
 	  badio:
 		ret = FALSE;
-		MessageLog("Connection lost");
+		Message("[%s@%s] abnormal client termination",scr->user,TermToHost(scr->term));
 	}
 
 LEAVE_FUNC;

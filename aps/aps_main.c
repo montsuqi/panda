@@ -164,6 +164,9 @@ ENTER_FUNC;
 	SendStringDelim(fpWFC,ThisLD->name);
 	SendStringDelim(fpWFC,"\n");
 	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
+		if		(  !CheckNetFile(fpWFC) ) {
+			Error("WFC connection lost");
+		}
 		Error("invalid LD name");
 	}
 	InitAPSIO(fpWFC);
@@ -187,13 +190,13 @@ ENTER_FUNC;
 			TransactionEnd(NULL);
 			PutWFC(fpWFC,node);
 		} else {
-			Message("window [%s] not found.\n",
+			Message("window [%s] not found.",
 						  ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL));
 			break;
 		}
 	}
-	MessageLog("exiting DC_Thread\n");
 	CloseNet(fpWFC);
+	MessageLog("exiting DC_Thread");
 	FinishSession(node);
 LEAVE_FUNC;
 }
@@ -306,7 +309,7 @@ main(
 		rc = 0;
 	} else {
 		rc = -1;
-		Error("LD名が指定されていません");
+		Error("LD name is not specified.");
 	}
 	exit(rc);
 }

@@ -231,8 +231,7 @@ ExecShell(
 ENTER_FUNC;
 	dbg =  rec->opt.db->dbg;
 	if	(  src  ==  NULL )	{
-		printf("function \"%s\" is not found.\n",ctrl->func);
-		exit(1);
+		Error("function \"%s\" is not found.",ctrl->func);
 	}
 	RewindLBS(src);
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {

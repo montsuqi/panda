@@ -62,7 +62,7 @@ ENTER_FUNC;
 		}
 		sprintf(filename,"%s/%s",p,name);
 		if		(  stat(filename, &st)  ==  0  ) {
-			MessageLogPrintf("load [%s]",filename);
+			dbgprintf("load [%s]",filename);
 			if		(  ( ret = dlopen(filename,RTLD_GLOBAL | RTLD_LAZY) )  !=  NULL  )
 				break;
 		}

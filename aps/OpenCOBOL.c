@@ -114,7 +114,7 @@ dbgmsg(">_ExecuteProcess");
 			rc = TRUE;
 		}
 	} else {
-		printf("%s\n%s is not found.\n",cob_resolve_error(),module);
+		Warning("%s - %s is not found.",cob_resolve_error(),module);
 		rc = FALSE;
 	}
 dbgmsg("<_ExecuteProcess");
@@ -197,7 +197,7 @@ dbgmsg(">_StartBatch");
 		rc = apl(arg);
 dbgmsg("ret");
 	} else {
-		fprintf(stderr,"%s\n%s is not found.\n",cob_resolve_error(),name);
+		Warning( "%s - %s is not found.", cob_resolve_error(),name);
 		rc = -1;
 	}
 dbgmsg("<_StartBatch");
