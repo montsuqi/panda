@@ -221,10 +221,32 @@ EncodeLengthRFC2231(byte *p)
 	return ret;
 }
 
+static	char	*
+ConvShiftJIS(
+	char	*istr)
+{
+	iconv_t	cd;
+	size_t	sib
+	,		sob;
+	char	*ostr;
+	static	char	cbuff[SIZE_BUFF];
+
+	cd = iconv_open("sjis","utf8");
+	sib = strlen(istr);
+	ostr = cbuff;
+	sob = SIZE_BUFF;
+	iconv(cd,&istr,&sib,&ostr,&sob);
+	*ostr = 0;
+	iconv_close(cd);
+	return	(cbuff);
+}
+
 extern	void
 PutFile(ValueStruct *file)
 {
-    char *filename_field, *ctype_field;
+    char *ctype_field;
+    char *filename_field;
+    char *user_agent;
     char *p;
 
     if ((ctype_field = LoadValue("_contenttype")) != NULL) {
@@ -238,12 +260,21 @@ PutFile(ValueStruct *file)
     if ((filename_field = LoadValue("_filename")) != NULL) {
         char *filename = GetHostValue(filename_field, FALSE);
         if (*filename != '\0') {
-            int len = EncodeLengthRFC2231(filename);
-            char *encoded = (char *) xmalloc(len + 1);
-            EncodeRFC2231(encoded, filename);
-            printf("Content-Disposition: attachment; filename*=utf-8''%s\r\n",
-                   encoded);
-            xfree(encoded);
+            char *user_agent = getenv("HTTP_USER_AGENT");
+            if (user_agent && strstr(user_agent, "MSIE") != NULL) {
+                printf("Content-Disposition: attachment;"
+                       " filename=%s\r\n",
+                       ConvShiftJIS(filename));
+            }
+            else {
+                int len = EncodeLengthRFC2231(filename);
+                char *encoded = (char *) xmalloc(len + 1);
+                EncodeRFC2231(encoded, filename);
+                printf("Content-Disposition: attachment;"
+                       " filename*=utf-8''%s\r\n",
+                       encoded);
+                xfree(encoded);
+            }
         }
     }
 	printf("\r\n");

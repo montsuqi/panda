@@ -885,6 +885,7 @@ _HyperLink(HTCInfo *htc, Tag *tag)
     char *file;
     char *filename;
     char *contenttype;
+    char *target;
     char buf[SIZE_BUFF];
 
 dbgmsg(">_HyperLink");
@@ -978,8 +979,14 @@ dbgmsg(">_HyperLink");
                 EmitCode(htc, OPC_REFSTR);
             }
         }
+		LBS_EmitString(htc->code,"\"");
 
-		LBS_EmitString(htc->code,"\">");
+        if ((target = GetArg(tag, "target", 0)) != NULL) {
+            LBS_EmitString(htc->code, " target=\"");
+            LBS_EmitString(htc->code, target);
+            LBS_EmitString(htc->code, "\"");
+        }
+		LBS_EmitString(htc->code,">");
 	}
 dbgmsg("<_HyperLink");
 }
@@ -1282,6 +1289,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"file",TRUE);
 	AddArg(tag,"filename",TRUE);
 	AddArg(tag,"contenttype",TRUE);
+    AddArg(tag,"target",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	tag = NewTag("/HYPERLINK",_eHyperLink);
