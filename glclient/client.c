@@ -65,12 +65,14 @@ copies.
 #include	"comm.h"
 #include	"protocol.h"
 #include	"message.h"
+#include	"bootdialog.h"
 #include	"debug.h"
 
 static	char	*PortNumber;
 static	char	*Cache;
 static	char	*Style;
 static	char	*Gtkrc;
+static	Bool 	fDialog;
 
 static	void
 InitData(void)
@@ -109,6 +111,8 @@ static	ARG_TABLE	option[] = {
 		"データ処理プロトコルバージョン 2 を使う"		},
 	{	"mlog",		BOOLEAN,	TRUE,	(void*)&fMlog,
 		"実行ログの取得を行う"							},
+	{	"dialog",	BOOLEAN,	TRUE,	(void*)&fDialog,
+		"起動ダイアログを表示する"						},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
 		"鍵ファイル名(pem)"		 						},
@@ -139,6 +143,7 @@ SetDefault(void)
 	Protocol1 = TRUE;
 	Protocol2 = FALSE;
 	fMlog = FALSE;
+	fDialog = FALSE;
 #ifdef	USE_SSL
 	fSsl = FALSE;
 	KeyFile = NULL;
@@ -172,6 +177,36 @@ bannar(void)
 	printf("glclient ver %s\n",VERSION);
 	printf("Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n");
 	printf("              2000-2003 Masami Ogoshi & JMA.\n");
+}
+
+static void
+show_boot_dialog ()
+{
+    static char *PortNumber_ = NULL;
+
+    BootProperty prop;
+    GString *buf;
+
+    if (!boot_dialog_run ())
+        exit (0);
+    boot_property_config_to_property (&prop);
+
+    buf = g_string_new (NULL);
+    g_string_sprintf (buf, "%s:%s", prop.host, prop.port);
+    g_free (PortNumber_);
+    PortNumber = PortNumber_ = buf->str;
+    g_string_free (buf, FALSE);
+    CurrentApplication = prop.application;
+    Protocol1 = prop.protocol_v1;
+    Protocol2 = prop.protocol_v2;
+    Cache = prop.cache;
+    Style = prop.style;
+    Gtkrc = prop.gtkrc;
+    fMlog = prop.mlog;
+    User = prop.user;
+    Pass = prop.password;
+    
+    boot_property_inspect (&prop, NULL);
 }
 
 extern	int
@@ -213,6 +248,9 @@ main(
 	glade_init();
 #endif
 
+    if (fDialog)
+        show_boot_dialog ();
+    
 	StyleParserInit();
 	sprintf(buff,"%s/gltermrc",getenv("HOME"));
 	StyleParser(buff);
@@ -226,7 +264,7 @@ main(
     }
 
 	InitNET();
-	port = ParPort(PortNumber,PORT_GLTERM);
+    port = ParPort(PortNumber,PORT_GLTERM);
 	if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
 		g_warning("can not connect server(server port not found)");
 		return	(1);
@@ -255,7 +293,7 @@ main(
 dbgmsg(">gtk_main");
 		gtk_main();
 dbgmsg("<gtk_main");
-		ExitSystem(); 
+		ExitSystem();
 		rc = 0;
 	}
 	return	(rc);

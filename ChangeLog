@@ -1,3 +1,12 @@
+2004-07-09  Kouji TAKAO  <kouji@netlab.jp>
+
+	起動ダイアログを追加
+	* glclient/client.c (show_boot_dialog, main, SetDefault)
+	* glclient/bd_config.c
+	* glclient/bd_config.h
+	* glclient/bootdialog.c
+	* glclient/bootdialog.h
+
 2004-07-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glclient/styleParser.c (ParStyle): text, base, light, dark, mid
