@@ -10,9 +10,9 @@ htserver_LDADD 		=					\
 	$(GLIB_LIBS)						\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpandas.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandas.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 mon_LDADD 		=						\
 	-lm									\
@@ -20,8 +20,8 @@ mon_LDADD 		=						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 INCLUDES 			= \
 	-I$(top_srcdir)	\
@@ -38,9 +38,9 @@ htserver_SOURCES	=	\
 	server.c	\
 	trid.c		trid.h
 htserver_DEPENDENCIES	=				\
-	$(top_srcdir)/libs/libpandas.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandas.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 mon_SOURCES	=	\
 	cgi.c		cgi.h		\
@@ -53,5 +53,5 @@ mon_SOURCES	=	\
 	mon.c		mon.h
 
 mon_DEPENDENCIES	=				\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la

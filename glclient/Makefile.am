@@ -2,7 +2,7 @@ bin_PROGRAMS = 					\
 	glclient
 
 glclient_SOURCES =				\
-	client.c				\
+	client.c	glclient.h		\
 	bootdialog.c	bootdialog.h		\
 	bd_config.c	bd_config.h		\
 	action.c	action.h		\
@@ -13,8 +13,8 @@ glclient_SOURCES =				\
 	styleParser.c styleParser.h
 
 glclient_DEPENDENCIES =				\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandagl.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandagl.la
 
 INCLUDES =					\
 	-I$(top_srcdir)				\
@@ -38,5 +38,5 @@ glclient_LDADD =				\
 	$(GTK_PANDA_LIBS)			\
 	$(FIXED_LIBS)				\
 	$(MONDAI_LIBS)				\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandagl.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandagl.la

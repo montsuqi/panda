@@ -1,3 +1,9 @@
+2004-07-17  Kouji TAKAO  <kouji@netlab.jp>
+
+	* bootstrap.sh: 削除
+	* intl/*: 追加
+	* Makefile.am: ほぼ全てのMakefile.amを編集し、make distcheckが通るようにした。
+
 2004-07-15  gettextize  <bug-gnu-gettext@gnu.org>
 
 	* glclient起動ダイアログのgettextize

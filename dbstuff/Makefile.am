@@ -7,10 +7,10 @@ dbredirector_LDADD 		=				\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(POSTGRES_LIBS)					\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la	\
-	$(top_srcdir)/dblib/libpandadb.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/dblib/libpandadb.la
 
 dbs_LDADD 		=						\
 	-lm									\
@@ -18,11 +18,11 @@ dbs_LDADD 		=						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandas.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la	\
-	$(top_srcdir)/dblib/libpandadb.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandas.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/dblib/libpandadb.la
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
@@ -38,21 +38,21 @@ INCLUDES 			= 		\
 
 dbs_LDFLAGS	=	-export-dynamic
 dbs_SOURCES	=	\
-	dbs_main.c
+	dbs_main.c	dbs_main.h
 
 dbs_DEPENDENCIES	=					\
-	$(top_srcdir)/defaults.h			\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/dblib/libpandadb.la
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/dblib/libpandadb.la
 
 dbredirector_LDFLAGS	=	-export-dynamic
 dbredirector_SOURCES	=	\
 	dbredirector.c
 
 dbredirector_DEPENDENCIES	=			\
-	$(top_srcdir)/defaults.h			\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/dblib/libpandadb.la
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/dblib/libpandadb.la
 

@@ -23,10 +23,10 @@ LDADD 		=							\
 	$(MONDAI_LIBS)						\
 	$(OPENCOBOL_LIBS)					\
 	$(RUBY_LIBS)						\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la	\
-	$(top_srcdir)/dblib/libpandadb.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/dblib/libpandadb.la
 
 MCPSUB_la_LIBADD	=
 
@@ -74,24 +74,24 @@ aps_SOURCES	=	\
 	handler.c	handler.h
 
 aps_DEPENDENCIES	=					\
-	$(top_srcdir)/defaults.h			\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la	\
-	$(top_srcdir)/dblib/libpandadb.la
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/dblib/libpandadb.la
 
 dbstub_SOURCES	=	\
 	dbstub_main.c						\
 	handler.c		handler.h
 
 dbstub_DEPENDENCIES	=					\
-	$(top_srcdir)/defaults.h			\
+	$(top_builddir)/defaults.h			\
 	MCPSUB.la							\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la	\
-	$(top_srcdir)/dblib/libpandadb.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/dblib/libpandadb.la
 
-MCPSUB_la_SOURCES	=	\
-	MCPSUB.c
-
+MCPSUB_la_SOURCES	=			\
+	MCPSUB.c				\
+	OpenCOBOL.h

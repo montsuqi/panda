@@ -20,20 +20,20 @@ LDADD 			=						\
 	$(GLIB_LIBS)						\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la	\
-	$(top_srcdir)/blob/libpandablob.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/blob/libpandablob.la
 DEPENDENCIES	=						\
-	$(top_srcdir)/defaults.h			\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la	\
-	$(top_srcdir)/blob/libpandablob.la
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/blob/libpandablob.la
 
 
 wfc_SOURCES	=							\
-	wfc.c								\
+	wfc.c		wfc.h						\
 	mqthread.c		mqthread.h			\
 	corethread.c	corethread.h		\
 	controlthread.c	controlthread.h		\

@@ -9,8 +9,8 @@ glauth_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 user_LDADD 		=						\
 	-lm									\
@@ -18,8 +18,8 @@ user_LDADD 		=						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 INCLUDES 			= 					\
 	-I$(top_srcdir)						\
@@ -38,8 +38,8 @@ user_SOURCES	=	\
 	user.c
 
 glauth_DEPENDENCIES	=					\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 user_DEPENDENCIES	=					\
-	$(top_srcdir)/libs/libpandamisc.la
+	$(top_builddir)/libs/libpandamisc.la

@@ -9,6 +9,5 @@ EXTRA_DIST = \
 	about.tex      dbredirector.tex  htserver.tex		\
 	wfc.tex		aps.tex	     dbstub.tex			\
 	lang.tex	checkdir.tex	mon.tex			\
-	DEMO1	DEMO2	DEMO3	DEMO4				\
-	DEMO5	DEMO6	DEMO7	event.doc
+	event.doc
 

@@ -9,8 +9,8 @@ LDADD 		=							\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
@@ -23,6 +23,6 @@ INCLUDES 			= 		\
 	$(MONDAI_CFLAGS)
 
 fdw_SOURCES		=	\
-	fdw.c
+	fdw.c	fdd.h
 fdd_SOURCES		=	\
-	fdd.c
+	fdd.c	fdd.h

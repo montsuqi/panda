@@ -22,17 +22,22 @@ libpandablob_la_SOURCES	=		\
 	blob.c			blob.h
 
 libpandablob_la_DEPENDENCIES	=		\
-	$(top_srcdir)/defaults.h			\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
-testblob_LDADD	= 	\
-	-lm									\
-	$(GLIB_LIBS)						\
-	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
-	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpandacom.la	\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/blob/libpandablob.la
+testblob_LDADD	=				\
+	-lm					\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
+	$(FIXED_LIBS)				\
+	$(MONDAI_LIBS)				\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/blob/libpandablob.la
+
+testblob_DEPENDENCIES	=			\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/blob/libpandablob.la

@@ -9,9 +9,9 @@ pgserver_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpandas.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandas.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 
 INCLUDES 			= \
@@ -27,7 +27,7 @@ pgserver_SOURCES	=	\
 	pgserver.c	pgserver.h	\
 	server.c	
 pgserver_DEPENDENCIES	=				\
-	$(top_srcdir)/libs/libpandas.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandas.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 

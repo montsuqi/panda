@@ -2,8 +2,6 @@ lib_LTLIBRARIES	=	libpanda.la libpandas.la libpandacom.la libpandagl.la libpanda
 
 noinst_PROGRAMS	=	enum testnet
 
-CFLAGS		=	-O2 -Wall -Wunused
-
 panda_la_LDFLAGS	=	-module -export-dynamic
 panda_la_SOURCES	=	panda.c
 panda_la_DEPENDENCIES = libpanda.la
@@ -36,8 +34,12 @@ testnet_LDADD	= 	\
 	-L/usr/lib -lglib -lm	\
 	$(MONDAI_LIBS)			\
 	$(SSL_LIBS)							\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
+
+testnet_DEPENDENCIES	=		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 libpanda_la_SOURCES	=		\
 	Dlex.h					\
@@ -53,7 +55,9 @@ libpanda_la_SOURCES	=		\
 	directory.c	directory.h	\
 	wfcio.c		wfcio.h		\
 	blobreq.c	blobreq.h	\
-	load.c		load.h
+	load.c		load.h		\
+	blobcom.h			\
+	debug.h
 
 libpandas_la_SOURCES	=		\
 	applications.c applications.h	\

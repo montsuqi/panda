@@ -1,10 +1,13 @@
-TOOLDIR		= 	../tools
+COPYCMD = $(top_srcdir)/tools/copy
 
 all:	ENUM-VALUE MCPMAIN.CBL
 
 ENUM-VALUE: ENUM-VALUE.C
-	$(TOOLDIR)/copy ENUM-VALUE.C > ENUM-VALUE
+	$(COPYCMD) $< > $@
 
 MCPMAIN.CBL: MCPMAIN.CBL.C
-	$(TOOLDIR)/copy MCPMAIN.CBL.C > MCPMAIN.CBL
+	$(COPYCMD) $< > $@
 
+EXTRA_DIST =					\
+	ENUM-VALUE.C				\
+	MCPMAIN.CBL.C

@@ -27,6 +27,8 @@ copies.
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+
+#ifdef HAVE_POSTGRES
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -1633,3 +1635,5 @@ InitPostgreSQL(void)
 {
 	return	(EnterDB_Function("PostgreSQL",Operations,&Core,"/*","*/\t"));
 }
+
+#endif /* #ifdef HAVE_POSTGRES */

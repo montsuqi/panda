@@ -3,6 +3,7 @@
 bin_PROGRAMS = copygen dbgen checkdir msgd
 sbin_PROGRAMS = monitor
 bin_SCRIPTS = recdefgen.rb recgen.rb
+noinst_SCRIPTS = copy
 
 copygen_LDADD 		=					\
 	-lm									\
@@ -10,44 +11,44 @@ copygen_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 dbgen_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 checkdir_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 monitor_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 msgd_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 
 INCLUDES 			= 		\
@@ -62,10 +63,10 @@ INCLUDES 			= 		\
 	-DSERVER_DIR=\"$(sbindir)\"
 
 monitor_DEPENDENCIES	=				\
-	$(top_srcdir)/defaults.h			\
-	$(top_srcdir)/libs/libpanda.la		\
-	$(top_srcdir)/libs/libpandamisc.la	\
-	$(top_srcdir)/libs/libpandacom.la
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la
 
 copygen_SOURCES		=	\
 	copygen.c
@@ -87,3 +88,8 @@ install-exec-hook:
 	$(LN_S) -f user $(bindir)/gluseradd
 	$(LN_S) -f user $(bindir)/gluserdel
 	$(LN_S) -f user $(bindir)/glusermod
+
+EXTRA_DIST =					\
+	recdefgen.rb				\
+	recgen.rb				\
+	copy
