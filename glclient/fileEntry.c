@@ -126,7 +126,7 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 	gtk_signal_emit_by_name (GTK_OBJECT (entry), "activate");
 
 	filename = (char *)gnome_file_entry_get_full_path(GNOME_FILE_ENTRY(fentry), FALSE);
-	binary = gtk_object_get_data(GTK_OBJECT(fentry), "object");
+	binary = gtk_object_get_data(GTK_OBJECT(fentry), "recvobject");
 
 	if ((binary) && (LBS_Size(binary) > 0)){
 		if (CheckAlreadyFile(filename)){
@@ -147,7 +147,7 @@ static void
 browse_dialog_destroy (GtkWidget *widget, gpointer data)
 {
     LargeByteString *binary;
-	binary = gtk_object_get_data(GTK_OBJECT(widget), "object");
+	binary = gtk_object_get_data(GTK_OBJECT(widget), "recvobject");
 	FreeLBS(binary);
 }
 
