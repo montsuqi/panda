@@ -13,13 +13,13 @@ echo "Running aclocal..."
 aclocal
 
 echo "Running autoheader..."
-autoheader
+autoheader  2> /dev/null
 
-echo "Running $AUTOMAKE..."
+echo "Running automake..."
 #$AUTOMAKE --copy --add-missing
-$AUTOMAKE
+automake --copy --add-missing
 
-echo "Running $AUTOCONF..."
-$AUTOCONF
+echo "Running autoconf..."
+autoconf
 
 echo 'Done.  Run "configure --enable-maintainer-mode" now'

@@ -61,7 +61,7 @@ dnl ***************************************************************************
 have_gnome=false
 GNOME_INIT_HOOK([
 	have_gnome=true
-	AC_DEFINE(ENABLE_GNOME,1,[])
+	AC_DEFINE(ENABLE_GNOME,1)
 ])
 
 GNOME_COMPILE_WARNINGS
