@@ -43,9 +43,15 @@ typedef	struct {
 
 typedef	struct {
 	char			*name;
+	LargeByteString	*proc;
+	ValueStruct		*args;
+}	SQL_Operation;
+
+typedef	struct {
+	char			*name;
 	GHashTable		*opHash;
 	int				ocount;
-	LargeByteString	**ops;
+	SQL_Operation	**ops;
 }	PathStruct;
 
 

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -173,7 +173,7 @@ InitPathStruct(void)
 ENTER_FUNC;
 	ret = New(PathStruct);
 	ret->opHash = NewNameHash();
-	ret->ops = (LargeByteString **)xmalloc(sizeof(LargeByteString *) * 5);
+	ret->ops = (SQL_Operation **)xmalloc(sizeof(SQL_Operation *) * 5);
 	ret->ops[DBOP_SELECT] = NULL;
 	ret->ops[DBOP_FETCH ] = NULL;
 	ret->ops[DBOP_UPDATE] = NULL;
@@ -199,8 +199,105 @@ EnterUse(
 		g_hash_table_insert(root->opt.db->use,name,rec);
 	}
 }
-	
 
+static	SQL_Operation	*
+NewOperation(
+	char	*name)
+{
+	SQL_Operation	*op;
+
+	op = New(SQL_Operation);
+	op->name = StrDup(name);
+	op->proc = NULL;
+	op->args = NULL;
+	return	(op);
+}
+
+static	void
+ParPath(
+	RecordStruct	*rec)
+{
+	int		ix
+	,		pcount;
+	PathStruct		**path;
+	SQL_Operation	**ops
+	,				*op;
+	ValueStruct		*value;
+	char			name[SIZE_SYMBOL+1];
+
+ENTER_FUNC;
+	pcount = rec->opt.db->pcount;
+	path = (PathStruct **)xmalloc(sizeof(PathStruct *) * (pcount + 1));
+	if		(  pcount  >  0  ) {
+		memcpy(path,rec->opt.db->path,(sizeof(PathStruct *) * pcount));
+		xfree(rec->opt.db->path);
+	}
+	path[pcount] = InitPathStruct();
+	path[pcount]->name = StrDup(ComSymbol);
+	g_hash_table_insert(rec->opt.db->paths,path[pcount]->name,(void *)(pcount+1));
+	rec->opt.db->pcount ++;
+	rec->opt.db->path = path;
+	if		(  GetSymbol  !=  '{'  ) {
+		Error("{ missing");
+	}
+	while	(  GetName  ==  T_SYMBOL  ) {
+		if		(  ( ix = (int)g_hash_table_lookup(
+						 path[pcount]->opHash,ComSymbol) )  ==  0  ) {
+			ix = path[pcount]->ocount;
+			ops = (SQL_Operation **)xmalloc(sizeof(SQL_Operation *) * ( ix + 1 ));
+			memcpy(ops,path[pcount]->ops,(sizeof(SQL_Operation *) * ix));
+			xfree(path[pcount]->ops);
+			path[pcount]->ops = ops;
+			op = NewOperation(ComSymbol);
+			g_hash_table_insert(path[pcount]->opHash, op->name, (gpointer)(ix + 1));
+			path[pcount]->ops[ix] = op;
+			path[pcount]->ocount ++;
+		} else {
+			ix --;
+			op = NewOperation(ComSymbol);
+			path[pcount]->ops[ix] = op;
+		}
+		if		(  GetSymbol  ==  '('  ) {
+			op->args = NewValue(GL_TYPE_RECORD);
+			GetName;
+			while	(  ComToken  ==  T_SYMBOL  ) {
+				strcpy(name,ComSymbol);
+				value = ParValueDefine();
+				if		(  ComToken  ==  ','  ) {
+					GetName;
+				}
+				SetValueAttribute(value,GL_ATTR_NULL);
+				ValueAddRecordItem(op->args,name,value);
+			}
+			if		(  ComToken  ==  ')'  ) {
+				GetSymbol;
+			} else {
+				Error(") missing");
+			}
+			SetReserved(Reserved); 
+		}
+		if		(  ComToken  == '{'  ) {
+			if		(  op->proc  ==  NULL  ) {
+				op->proc = ParSQL(rec);
+				if		(  GetSymbol  !=  ';'  ) {
+					Error("; missing");
+				}
+			} else {
+				Error("function duplicate");
+			}
+		} else {
+			Error("{ missing");
+		}
+	}
+	if		(  ComToken  ==  '}'  ) {
+		if		(  GetSymbol  !=  ';'  ) {
+			Error("; missing");
+		}
+	} else {
+		Error("} missing");
+	}
+LEAVE_FUNC;
+}
 
 static	RecordStruct	*
 DB_Parse(
@@ -208,13 +305,9 @@ DB_Parse(
 {
 	RecordStruct	*ret
 	,				*use;
-	int		ix
-	,		pcount;
-	PathStruct		**path;
-	LargeByteString	**ops;
 	char	buff[SIZE_LONGNAME+1];
 
-dbgmsg(">DB_Parse");
+ENTER_FUNC;
 	ret = DD_Parse();
 	if		(  !stricmp(strrchr(name,'.'),".db")  ) {
 		ret->type = RECORD_DB;
@@ -263,51 +356,8 @@ dbgmsg(">DB_Parse");
 			dbgmsg("path");
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("path name invalid");
-			}
-			pcount = ret->opt.db->pcount;
-			path = (PathStruct **)xmalloc(sizeof(PathStruct *) * (pcount + 1));
-			if		(  pcount  >  0  ) {
-				memcpy(path,ret->opt.db->path,(sizeof(PathStruct *) * pcount));
-				xfree(ret->opt.db->path);
-			}
-			path[pcount] = InitPathStruct();
-			path[pcount]->name = StrDup(ComSymbol);
-			g_hash_table_insert(ret->opt.db->paths,path[pcount]->name,(void *)(pcount+1));
-			ret->opt.db->pcount ++;
-			ret->opt.db->path = path;
-			if		(  GetSymbol  !=  '{'  ) {
-				Error("{ missing");
-			}
-			while	(  GetName  ==  T_SYMBOL  ) {
-				if		(  ( ix = (int)g_hash_table_lookup(
-								 path[pcount]->opHash,ComSymbol) )  ==  0  ) {
-					ix = path[pcount]->ocount;
-					ops = (LargeByteString **)xmalloc(sizeof(LargeByteString *) * ( ix + 1 ));
-					memcpy(ops,path[pcount]->ops,(sizeof(LargeByteString *) * ix));
-					xfree(path[pcount]->ops);
-					path[pcount]->ops = ops;
-					g_hash_table_insert(path[pcount]->opHash,
-										StrDup(ComSymbol),
-										(gpointer)(ix + 1));
-					path[pcount]->ocount ++;
-				} else {
-					ix --;
-				}
-				if		(  GetSymbol  == '{'  ) {
-					path[pcount]->ops[ix] = ParSQL(ret);
-					if		(  GetSymbol  !=  ';'  ) {
-						Error("; missing");
-					}
-				} else {
-					Error("{ missing");
-				}
-			}
-			if		(  ComToken  ==  '}'  ) {
-				if		(  GetSymbol  !=  ';'  ) {
-					Error("; missing");
-				}
 			} else {
-				Error("} missing");
+				ParPath(ret);
 			}
 			break;
 		  default:
@@ -317,7 +367,7 @@ dbgmsg(">DB_Parse");
 			break;
 		}
 	}
-dbgmsg("<DB_Parse");
+LEAVE_FUNC;
 	return	(ret);
 }
 

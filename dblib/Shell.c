@@ -283,7 +283,7 @@ dbgmsg(">_DBACCESS");
 		if		(  ( ix = (int)g_hash_table_lookup(path->opHash,name) )  ==  0  ) {
 			rc = FALSE;
 		} else {
-			src = path->ops[ix-1];
+			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
 				ExecShell(ctrl,rec,src);
 				rc = TRUE;

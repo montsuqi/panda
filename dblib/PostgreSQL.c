@@ -961,7 +961,7 @@ dbgmsg(">_DBSELECT");
 		ctrl->rc = MCP_OK;
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
-		src = path->ops[DBOP_SELECT];
+		src = path->ops[DBOP_SELECT]->proc;
 		ExecPGSQL(dbg,ctrl,rec,src);
 	}
 dbgmsg("<_DBSELECT");
@@ -987,7 +987,7 @@ dbgmsg(">_DBFETCH");
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
-		src = path->ops[DBOP_FETCH];
+		src = path->ops[DBOP_FETCH]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src);
@@ -1041,7 +1041,7 @@ dbgmsg(">_DBUPDATE");
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
-		src = path->ops[DBOP_UPDATE];
+		src = path->ops[DBOP_UPDATE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src);
@@ -1109,7 +1109,7 @@ dbgmsg(">_DBDELETE");
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
-		src = path->ops[DBOP_DELETE];
+		src = path->ops[DBOP_DELETE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src);
@@ -1169,7 +1169,7 @@ dbgmsg(">_DBINSERT");
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
-		src = path->ops[DBOP_INSERT];
+		src = path->ops[DBOP_INSERT]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src);
@@ -1226,7 +1226,7 @@ dbgmsg(">_DBACCESS");
 		if		(  ( ix = (int)g_hash_table_lookup(path->opHash,name) )  ==  0  ) {
 			rc = FALSE;
 		} else {
-			src = path->ops[ix-1];
+			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
 				ctrl->rc = MCP_OK;
 				ExecPGSQL(dbg,ctrl,rec,src);

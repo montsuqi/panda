@@ -47,6 +47,7 @@ static	Bool	fLD;
 static	Bool	fBD;
 static	Bool	fDBD;
 static	Bool	fDBG;
+static	int		nTab;
 static	char	*Directory;
 
 static	void
@@ -56,6 +57,77 @@ PutTab(
 	for	( ; n > 0 ; n -- ) {
 		printf("\t");
 	}
+}
+
+static	void
+_DumpItems(
+	ValueStruct	*value)
+{
+	int		i;
+
+	if		(  value  ==  NULL  )	return;
+	switch	(ValueType(value)) {
+	  case	GL_TYPE_INT:
+		printf("int");
+		break;
+	  case	GL_TYPE_BOOL:
+		printf("bool");
+		break;
+	  case	GL_TYPE_BYTE:
+		printf("byte");
+		break;
+	  case	GL_TYPE_CHAR:
+		printf("char(%d)",ValueStringLength(value));
+		break;
+	  case	GL_TYPE_VARCHAR:
+		printf("varchar(%d)",ValueStringLength(value));
+		break;
+	  case	GL_TYPE_DBCODE:
+		printf("dbcode(%d)",ValueStringLength(value));
+		break;
+	  case	GL_TYPE_NUMBER:
+		if		(  ValueFixedSlen(value)  ==  0  ) {
+			printf("number(%d)",ValueFixedLength(value));
+		} else {
+			printf("number(%d,%d)",
+				   ValueFixedLength(value),
+				   ValueFixedSlen(value));
+		}
+		break;
+	  case	GL_TYPE_TEXT:
+		printf("text");
+		break;
+	  case	GL_TYPE_ARRAY:
+		_DumpItems(ValueArrayItem(value,0));
+		printf("[%d]",ValueArraySize(value));
+		break;
+	  case	GL_TYPE_RECORD:
+		printf("{\n");
+		nTab ++;
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			PutTab(nTab);
+			printf("%s\t",ValueRecordName(value,i));
+			_DumpItems(ValueRecordItem(value,i));
+			printf(";\n");
+		}
+		nTab --;
+		PutTab(nTab);
+		printf("}");
+		break;
+	  default:
+		break;
+	}
+}
+
+static	void
+DumpItems(
+	int			n,
+	ValueStruct	*value)
+{
+	int		i;
+
+	nTab = n;
+	_DumpItems(value);
 }
 
 static	void
@@ -103,16 +175,16 @@ _DumpOps(
 	printf("\t\t\t\tlength = %d\n",LBS_Size(sql));
 	fIntoAster = FALSE;
 	while	(  ( c = LBS_FetchByte(sql) )  >=  0  ) {
-		if		(  c  < 0x80  ) {
+		if		(  c  !=  SQL_OP_ESC  ) {
 			printf("%04d ",LBS_GetPos(sql)-1);
 			do {
 				printf("%c",c);
 			}	while	(	(  ( c = LBS_FetchByte(sql) )  >=  0  )
-						&&	(  c  <  0x80  ) );
+						&&	(  c  !=  SQL_OP_ESC  ) );
 			printf("\n");
 		}
 		printf("%04d ",LBS_GetPos(sql)-1);
-		switch	(c) {
+		switch	(c = LBS_FetchByte(sql)) {
 		  case	SQL_OP_INTO:
 			n = LBS_FetchInt(sql);
 			printf("INTO\t%d",n);
@@ -154,11 +226,16 @@ DumpOps(
 	int		ops,
 	PathStruct	*path)
 {
-	LargeByteString	*sql;
+	SQL_Operation	*op;
 
 	printf("\t\t\top = [%s]\n",name);
-	if		(  ( sql = path->ops[ops-1] )  !=  NULL  ) {
-		_DumpOps(sql);
+	if		(  ( op = path->ops[ops-1] )  !=  NULL  ) {
+		if		(  op->args  !=  NULL  ) {
+			printf("** args\n\t\t\t");
+			DumpItems(3,op->args);
+			printf("\n");
+		}
+		_DumpOps(op->proc);
 	} else {
 		printf("default operation.\n");
 	}
@@ -190,67 +267,6 @@ dbgmsg(">DumpDB");
 dbgmsg("<DumpDB");
 }
 
-static	int		nTab;
-static	void
-DumpItems(
-	ValueStruct	*value)
-{
-	int		i;
-
-	if		(  value  ==  NULL  )	return;
-	switch	(ValueType(value)) {
-	  case	GL_TYPE_INT:
-		printf("int");
-		break;
-	  case	GL_TYPE_BOOL:
-		printf("bool");
-		break;
-	  case	GL_TYPE_BYTE:
-		printf("byte");
-		break;
-	  case	GL_TYPE_CHAR:
-		printf("char(%d)",ValueStringLength(value));
-		break;
-	  case	GL_TYPE_VARCHAR:
-		printf("varchar(%d)",ValueStringLength(value));
-		break;
-	  case	GL_TYPE_DBCODE:
-		printf("dbcode(%d)",ValueStringLength(value));
-		break;
-	  case	GL_TYPE_NUMBER:
-		if		(  ValueFixedSlen(value)  ==  0  ) {
-			printf("number(%d)",ValueFixedLength(value));
-		} else {
-			printf("number(%d,%d)",
-				   ValueFixedLength(value),
-				   ValueFixedSlen(value));
-		}
-		break;
-	  case	GL_TYPE_TEXT:
-		printf("text");
-		break;
-	  case	GL_TYPE_ARRAY:
-		DumpItems(ValueArrayItem(value,0));
-		printf("[%d]",ValueArraySize(value));
-		break;
-	  case	GL_TYPE_RECORD:
-		printf("{\n");
-		nTab ++;
-		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			PutTab(nTab);
-			printf("%s\t",ValueRecordName(value,i));
-			DumpItems(ValueRecordItem(value,i));
-			printf(";\n");
-		}
-		nTab --;
-		PutTab(nTab);
-		printf("}");
-		break;
-	  default:
-		break;
-	}
-}
-
 static	void
 DumpRecord(
 	RecordStruct	*db)
@@ -259,7 +275,7 @@ dbgmsg(">DumpRecord");
 	DumpDB(db->opt.db);
 	nTab = 2;
 	printf("\t\t%s\t",db->name);
-	DumpItems(db->value);
+	DumpItems(2,db->value);
 	printf(";\n");
 dbgmsg("<DumpRecord");
 }
@@ -314,12 +330,11 @@ dbgmsg(">DumpLD");
 	g_hash_table_foreach(ld->whash,(GHFunc)_DumpHandler,NULL);
 
 	printf("\t%s\t",ld->sparec->name);
-	nTab = 1;
-	DumpItems(ld->sparec->value);
+	DumpItems(1,ld->sparec->value);
 	printf(";\n");
 	for	( i = 0 ; i < ld->cWindow ; i ++ ) {
 		printf("\t%s\t",ld->window[i]->name);
-		DumpItems(ld->window[i]->rec->value);
+		DumpItems(1,ld->window[i]->rec->value);
 		printf(";\n");
 	}
 	printf("\tcDB       = %d\n",ld->cDB);
