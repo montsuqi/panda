@@ -893,6 +893,7 @@ dbgmsg(">_PQexec");
 	res = PQexec(PGCONN(dbg),sql);
 	if		(  fRed  ) {
 		PutDB_Redirect(dbg,sql);
+		PutDB_Redirect(dbg,";");
 	}
 dbgmsg("<_PQexec");
 	return	(res);
