@@ -651,12 +651,9 @@ SendEvent(void)
     contenttype = g_hash_table_lookup(Values,"_contenttype");
 	Values = NewNameHash();
 	g_hash_table_insert(Values,"_sesid",sesid);
-    if (file != NULL)
-        g_hash_table_insert(Values,"_file",file);
-    if (filename != NULL)
-        g_hash_table_insert(Values,"_filename",filename);
-    if (contenttype != NULL)
-        g_hash_table_insert(Values,"_contenttype",contenttype);
+    g_hash_table_insert(Values,"_file",file);
+    g_hash_table_insert(Values,"_filename",filename);
+    g_hash_table_insert(Values,"_contenttype",contenttype);
 	Files = NewNameHash();
 }
 
@@ -739,9 +736,9 @@ ENTER_FUNC;
                 if ((file = g_hash_table_lookup(Values, "_file")) != NULL) {
                     ValueStruct *value = HT_GetValue(file, TRUE);
 
-                    fprintf(stderr, "IS_VALUE_NIL(value): %d\n", IS_VALUE_NIL(value));
                     if (value != NULL && !IS_VALUE_NIL(value)) {
                         PutFile(value);
+                        HT_SendString("\n");
                         return;
                     }
                 }

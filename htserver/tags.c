@@ -161,11 +161,13 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
     if ((value = GetArg(tag, event, 0)) == NULL)
         return;
 
+    LBS_EmitChar(htc->code, ' ');
+    LBS_EmitString(htc->code, event);
     snprintf(buf, SIZE_BUFF,
-             " %s=\""
+             "=\""
              "document.forms[%d].elements[0].name='_event';"
              "document.forms[%d].elements[0].value='",
-             event, htc->FormNo, htc->FormNo);
+             htc->FormNo, htc->FormNo);
     LBS_EmitString(htc->code, buf);
     EmitCode(htc, OPC_NAME);
     LBS_EmitPointer(htc->code, StrDup(value));
@@ -200,11 +202,13 @@ JavaScriptKeyEvent(HTCInfo *htc, Tag *tag, char *event)
     }
     *p++ = '\0';
     while (isspace(*p)) p++;
+    LBS_EmitChar(htc->code, ' ');
+    LBS_EmitString(htc->code, event);
     snprintf(buf, SIZE_BUFF,
-             " %s=\"if (event.keyCode == %s) { "
+             "=\"if (event.keyCode == %s) { "
              "document.forms[%d].elements[0].name='_event';"
              "document.forms[%d].elements[0].value='",
-             event, key, htc->FormNo, htc->FormNo);
+             key, htc->FormNo, htc->FormNo);
     LBS_EmitString(htc->code, buf);
     EmitCode(htc, OPC_NAME);
     LBS_EmitPointer(htc->code, StrDup(p));
