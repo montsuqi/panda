@@ -1,9 +1,9 @@
 if GNOME_SUPPORT
 THE_FLAGS = $(GNOME_INCLUDEDIR)
-THE_LIBS  = -lglade-gnome -lglade $(GNOME_LIBDIR) $(GNOMEUI_LIBS)
+THE_LIBS  = -lglade-panda-gnome $(GNOME_LIBDIR) $(GNOMEUI_LIBS)
 else
 THE_FLAGS = $(GTK_CFLAGS)
-THE_LIBS  = -lglade $(GTK_LIBS)
+THE_LIBS  = $(GTK_LIBS)
 endif
 
 lib_LTLIBRARIES = libpanda.la
