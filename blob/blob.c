@@ -37,6 +37,7 @@ copies.
 #include	<glib.h>
 #include	<pthread.h>
 #include	<fcntl.h>
+#include	<errno.h>
 
 #include	"types.h"
 
@@ -190,7 +191,10 @@ InitBLOB(
 	sprintf(name,"%s/pid",space);
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
-			if		(  getpid() != atoi(buff)  ) {
+			int pid = atoi(buff);
+
+			if		(	(  getpid() != pid  )
+					&&	(  kill(pid, 0) == 0 || errno == EPERM  ) ) {
 				fprintf(stderr,"another process uses libpandablob. (%d)\n",atoi(buff));
 				exit(1);
 			}
