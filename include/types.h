@@ -62,13 +62,6 @@ copies.
 #define	TO_INT(x)	((x) - '0')
 #define	TO_CHAR(x)	((x) + '0')
 
-typedef	struct	POOL_S	{
-	struct	POOL_S	*next;
-#if defined(sparc)
-	long dummy;					/* for 8byte alignment */
-#endif
-}	POOL;
-
 #define	ALIGN_BYTES		sizeof(int)
 
 #define	ROUND_ALIGN(p)	\
