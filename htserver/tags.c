@@ -293,8 +293,9 @@ dbgmsg(">_Form");
 	LBS_EmitString(htc->code,"\"");
 	Style(htc,tag);
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," name=");
-		EmitAttributeValue(htc,name,TRUE);
+		LBS_EmitString(htc->code," name=\"");
+		LBS_EmitString(htc->code,name);
+		LBS_EmitString(htc->code,"\"");
 	}
 	LBS_EmitString(htc->code,">\n");
 
