@@ -239,16 +239,16 @@ InitMessage(
 	}
 	fpLog = NULL;
 	Processid = StrDup(id);
-	if		(  ( Format = getenv("LOG_DATA_FORMAT") )  ==  NULL  ) {
-		Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
-	}
+	Format = getenv("LOG_DATA_FORMAT");
 #ifdef	USE_MSGD
 	if		( fn  !=  NULL  ) {
 		if		(  *fn  ==  '@'  ) {
 			port = ParPort(fn+1,PORT_MSGD);
 			if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  >=  0  ) {
 				fpLog = SocketToNet(fd);
-				Format = "%F:%i:%f:%L:%B";
+				if		(  Format  ==  NULL  ) {
+					Format = "%F:%i:%f:%L:%B";
+				}
 			}
 			DestroyPort(port);
 		} else {
@@ -258,7 +258,9 @@ InitMessage(
 		}
 	}
 	if		(  fpLog  ==  NULL  ) {
-		Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
+		if		(  Format  ==  NULL  ) {
+			Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
+		}
 		fpLog = FileToNet(STDOUT_FILENO);
 	}
 #else
@@ -266,4 +268,7 @@ InitMessage(
 		fpLog = stdout;
 	}
 #endif
+	if		(  Format  ==  NULL  ) {
+		Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
+	}
 }
