@@ -110,8 +110,6 @@ _ExecuteProcess(
 	Bool	rc;
 
 dbgmsg(">_ExecuteProcess");
-	cob_set_library_path(handler->loadpath);
-
 	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
 		PutApplication(node);
@@ -192,8 +190,6 @@ _StartBatch(
 	char	*arg;
 
 dbgmsg(">_StartBatch");
-	cob_set_library_path(handler->loadpath);
-
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisBD->textsize,ThisBD->arraysize);
 	ConvSetCodeset(OpenCOBOL_Conv,ConvCodeset(handler->conv));
@@ -224,6 +220,7 @@ _ReadyExecute(
 		handler->loadpath = LoadPath;
 	}
 	cob_init(0,NULL);
+	cob_set_library_path(handler->loadpath);
 }
 
 static	MessageHandlerClass	Handler = {
