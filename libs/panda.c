@@ -19,9 +19,9 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #define	_PANDA
@@ -96,7 +96,9 @@ dbgmsg(">RecvPanda");
 		}
 #else
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
-			PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
+			if		(  ctl.control[i].PutType  ==  SCREEN_CLOSE_WINDOW  ) {
+				PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
+			}
 		}
 #endif
 		win = SetWindowName(window);
