@@ -102,21 +102,6 @@ dbgmsg(">ExecuteServer");
 dbgmsg("<ExecuteServer");
 }
 
-static	guint
-Hash(
-	int	key)
-{
-	return	((guint)key);
-}
-
-static	gint
-Compare(
-	int		s1,
-	int		s2)
-{
-	return	(s1 == s2);
-}
-
 static	void
 InitData(void)
 {
@@ -162,7 +147,7 @@ main(
 	int		argc,
 	char	**argv)
 {
-	InitMessage();
+	InitMessage("glauth",NULL);
 	SetDefault();
 	(void)GetOption(option,argc,argv);
 

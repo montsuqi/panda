@@ -118,7 +118,7 @@ main(
 	(void)signal(SIGPIPE,(void *)StopProcess);
 	SetDefault();
 	(void)GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("glserver",NULL);
 
 	ParseURL(&Auth,AuthURL);
 	InitSystem(argc,argv);

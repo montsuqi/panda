@@ -198,7 +198,7 @@ main(
 
 	SetDefault();
 	GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("wfc",NULL);
 
 	InitSystem();
 	ExecuteServer();

@@ -169,7 +169,7 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("dbstub",NULL);
 
 	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(  BD_Name  ==  NULL  ) {

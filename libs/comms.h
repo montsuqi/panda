@@ -21,8 +21,8 @@ copies.
 
 #ifndef	_INC_COMMS_H
 #define	_INC_COMMS_H
-#include	"value.h"
-
+#include	"libmondai.h"
+#include	"net.h"
 extern	void	SendStringDelim(NETFILE *fp, char *str);
 extern	Bool	RecvStringDelim(NETFILE *fp, size_t size, char *str);
 extern	void	SetValueName(char *name);

@@ -337,7 +337,7 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("dbgen",NULL);
 
 	if		(  fl  !=  NULL  ) {
 		DD_ParserInit();

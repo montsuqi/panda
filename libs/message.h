@@ -29,10 +29,12 @@ copies.
 #define	MESSAGE_LOG			4
 #define	MESSAGE_PRINT		5
 
+#define	MessageLog(msg)		_Message(MESSAGE_LOG,__FILE__,__LINE__,(msg))
+
 extern	void	MessageDebug(char *file, int line, char *msg);
 extern	void	MessagePrintf(char *file, int line, char *fotmat, ...);
 extern	void	_Message(int level, char *file, int line, char *msg);
-extern	void	InitMessage();
+extern	void	InitMessage(char *id,char *fn);
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -20,9 +20,9 @@ copies.
 */
 
 #define	MAIN
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -39,7 +39,7 @@ copies.
 #include	"libmondai.h"
 #include	"net.h"
 #include	"tcp.h"
-#include	"comm.h"
+#include	"comms.h"
 #include	"HTCparser.h"
 #include	"mon.h"
 #include	"tags.h"
@@ -311,10 +311,8 @@ extern	void
 HT_SendString(
 	char	*str)
 {
-#ifdef	DEBUG
-	printf(" send [%s]\n",str);
-#endif
-	Send(fpServ,str,strlen(str));
+	dbgprintf("send [%s]\n",str);
+	SendStringDelim(fpServ,str);
 }
 
 extern	Bool
@@ -322,31 +320,10 @@ HT_RecvString(
 	size_t	size,
 	char	*str)
 {
-	int		c;
 	Bool	rc;
-#ifdef	DEBUG
-	char	*p = str;
-#endif
 
-	while	(	(  ( c = RecvChar(fpServ) )  >=  0     )
-			&&	(  c                         !=  '\n'  ) )	{
-		*str ++ = c;
-	}
-	*str = 0;
-	if		(  c  >=  0  ) {
-		*str -- = 0;
-		while	(	(  *str  ==  '\r'  )
-				||	(  *str  ==  '\n'  ) ) {
-			*str = 0;
-			str --;
-		}
-		rc = TRUE;
-	} else {
-		rc = FALSE;
-	}
-#ifdef	DEBUG
-	printf(" recv [%s]\n",p);
-#endif
+	rc = RecvStringDelim(fpServ,size,str);
+	dbgprintf("recv [%s]\n",str);
 	return	(rc);
 }
 
@@ -510,7 +487,7 @@ main(
 {
 	SetDefault();
 	(void)GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("mon","@localhost");
 
 	InitNET();
 	Values = GetArg();

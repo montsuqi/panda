@@ -313,14 +313,16 @@ main(
 {
 	FILE_LIST	*fl;
 	int			rc;
+	char		id[128];
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage();
 
 	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
+		sprintf(id,"aps-%s",fl->name);
+		InitMessage(id,NULL);
 		InitNET();
 		InitSystem(fl->name);
 		ExecuteServer();

@@ -130,8 +130,11 @@ NetSetFD(
 	fp->fOK = TRUE;
 }
 
+/*
+ *	socket
+ */
 static	ssize_t
-SocketRead(
+FD_Read(
 	NETFILE	*fp,
 	void	*buff,
 	size_t	size)
@@ -149,7 +152,7 @@ SocketRead(
 }
 
 static	ssize_t
-SocketWrite(
+FD_Write(
 	NETFILE	*fp,
 	void	*buff,
 	size_t	size)
@@ -167,7 +170,7 @@ SocketWrite(
 }
 
 static	void
-SocketClose(
+FD_Close(
 	NETFILE	*fp)
 {
 	close(fp->net.fd);
@@ -193,12 +196,33 @@ SocketToNet(
 	fp = NewNet();
 	SetNodelay(fd);
 	fp->net.fd = fd;
-	fp->read = SocketRead;
-	fp->write = SocketWrite;
-	fp->close = SocketClose;
+	fp->read = FD_Read;
+	fp->write = FD_Write;
+	fp->close = FD_Close;
 	return	(fp);
 }
 
+/*
+ *	file
+ */
+
+extern	NETFILE	*
+FileToNet(
+	int		fd)
+{
+	NETFILE	*fp;
+
+	fp = NewNet();
+	fp->net.fd = fd;
+	fp->read = FD_Read;
+	fp->write = FD_Write;
+	fp->close = FD_Close;
+	return	(fp);
+}
+
+/*
+ *	SSL
+ */
 #ifdef	USE_SSL
 static	ssize_t
 SSL_Read(
@@ -416,7 +440,7 @@ dbgmsg("<InitServerPort");
 }
 
 extern	Bool
-_CheckNetFile(
+CheckNetFile(
 	NETFILE	*fp)
 {
 	Bool	ret;

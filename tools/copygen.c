@@ -977,7 +977,7 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("copygen",NULL);
 	SetLanguage(Lang);
 	if		(  fl  !=  NULL  ) {
 		name = fl->name;

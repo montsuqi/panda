@@ -310,7 +310,7 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("dbredirector",NULL);
 
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {

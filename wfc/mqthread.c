@@ -440,7 +440,7 @@ dbgmsg(">MessageThread");
 		} else {
 			sprintf(msg,"window not found [%s] [%s:%s]\n",
 					hdr.window,hdr.term,hdr.user);
-			Message(MESSAGE_LOG,msg);
+			MessageLog(msg);
 			ClearAPS_Node(&ld->aps[ix]);
 		}
 	}	while	(TRUE);

@@ -83,7 +83,7 @@ main(
 	PassWord	*pw;
 	char		*p;
 
-	InitMessage();
+	InitMessage(g_basename(argv[0]),NULL);
 	SetDefault();
 	fl = GetOption(option,argc,argv);
 	

@@ -109,8 +109,12 @@ EmitGetValue(
 static	void
 EmitAttributeValue(
 	HTCInfo	*htc,
-	char	*str)
+	char	*str,
+	Bool	fQuote)
 {
+	if		(  fQuote  ) {
+		LBS_EmitString(htc->code,"\"");
+	}
 	switch	(*str) {
 	  case	'$':
 		EmitCode(htc,OPC_VAR);
@@ -128,6 +132,9 @@ EmitAttributeValue(
 		EmitCode(htc,OPC_HSNAME);
 		break;
 	}
+	if		(  fQuote  ) {
+		LBS_EmitString(htc->code,"\"");
+	}
 }
 
 static	void
@@ -139,14 +146,12 @@ Style(
 	,		*klass;
 
 	if		(  ( id = GetArg(tag,"id",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," id=\"");
-		EmitAttributeValue(htc,id);
-		LBS_EmitString(htc->code,"\"");
+		LBS_EmitString(htc->code," id=");
+		EmitAttributeValue(htc,id,TRUE);
 	}
 	if		(  ( klass = GetArg(tag,"class",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," class=\"");
-		EmitAttributeValue(htc,klass);
-		LBS_EmitString(htc->code,"\"");
+		LBS_EmitString(htc->code," class=");
+		EmitAttributeValue(htc,klass,TRUE);
 	}
 }
 
@@ -155,33 +160,46 @@ _Entry(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*size
+	char	*name
+	,		*size
 	,		*maxlength;
 
 dbgmsg(">_Entry");
-	LBS_EmitString(htc->code,"<input type=\"text\" name=\"");
-	EmitCode(htc,OPC_NAME);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-	EmitCode(htc,OPC_REFSTR);
-	LBS_EmitString(htc->code,"\" value=\"");
-	EmitCode(htc,OPC_NAME);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-	EmitCode(htc,OPC_HSNAME);
-	LBS_EmitString(htc->code,"\"");
-	if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," size=");
+	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,"<input type=\"text\" name=\"");
+
 		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(size));
+		LBS_EmitPointer(htc->code,StrDup(name));
 		EmitCode(htc,OPC_REFSTR);
-	}
-	if		(  ( maxlength = GetArg(tag,"maxlength",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," maxlength=");
+
+		LBS_EmitString(htc->code,"\" value=\"");
+
 		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(maxlength));
-		EmitCode(htc,OPC_REFSTR);
+		LBS_EmitPointer(htc->code,StrDup(name));
+		EmitCode(htc,OPC_HSNAME);
+
+		LBS_EmitString(htc->code,"\"");
+		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+			LBS_EmitString(htc->code," size=\"");
+
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(size));
+			EmitCode(htc,OPC_REFSTR);
+			LBS_EmitString(htc->code,"\"");
+
+		}
+		if		(  ( maxlength = GetArg(tag,"maxlength",0) )  !=  NULL  ) {
+			LBS_EmitString(htc->code," maxlength=\"");
+
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(maxlength));
+			EmitCode(htc,OPC_REFSTR);
+			LBS_EmitString(htc->code,"\"");
+
+		}
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">\n");
 	}
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">\n");
 dbgmsg("<_Entry");
 }
 
@@ -192,12 +210,13 @@ _Fixed(
 {
 	char	*name;
 dbgmsg(">_Fixed");
-	name = StrDup(GetArg(tag,"name",0));
-	LBS_EmitString(htc->code,"<span");
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">");
-	EmitAttributeValue(htc,name);
-	LBS_EmitString(htc->code,"</span>");
+	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,"<span");
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">");
+		EmitAttributeValue(htc,name,FALSE);
+		LBS_EmitString(htc->code,"</span>");
+	}
 dbgmsg("<_Fixed");
 }
 
@@ -302,21 +321,21 @@ dbgmsg(">_Text");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_HSNAME);
+	LBS_EmitString(htc->code,"\"");
 	if		(  ( cols = GetArg(tag,"cols",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,"\" cols=");
+		LBS_EmitString(htc->code," cols=\"");
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(cols));
 		EmitCode(htc,OPC_REFSTR);
-		LBS_EmitString(htc->code," ");
+		LBS_EmitString(htc->code,"\"");
 	}
 	if		(  ( rows = GetArg(tag,"rows",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,"\" rows=");
+		LBS_EmitString(htc->code," rows=\"");
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(rows));
 		EmitCode(htc,OPC_REFSTR);
+		LBS_EmitString(htc->code,"\"");
 	}
-
-	LBS_EmitString(htc->code,"\"");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 

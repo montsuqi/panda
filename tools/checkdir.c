@@ -291,7 +291,7 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("checkdir",NULL);
 
 	DumpDirectory();
 

@@ -75,7 +75,7 @@ main(
 {
 	SetDefault();
 	(void)GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("htserver",NULL);
 
 	InitSystem(argc,argv);
 	ExecuteServer();

@@ -508,7 +508,7 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("monitor",NULL);
 
 	signal(SIGHUP,(void *)StopSystem);
 	InitSystem();

@@ -190,7 +190,7 @@ main(
 	if		(  ( fl = GetOption(option,argc,argv) )  !=  NULL  ) {
 		CurrentApplication = fl->name;
 	}
-	InitMessage();
+	InitMessage("glclient",NULL);
 
 	argc = 1;
 	argv[1] = NULL;

@@ -444,7 +444,7 @@ main(
 	(void)signal(SIGHUP,(void *)StopProcess);
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("dbs",NULL);
 
 	ParseURL(&Auth,AuthURL);
 

@@ -33,6 +33,7 @@ copies.
 #define	PORT_WFC_APS	9001
 #define	PORT_POSTGRES	5432
 #define	PORT_REDIRECT	8010
+#define	PORT_MSGD		8514
 
 #define	SIZE_PASS		3+8+22
 #define	SIZE_OTHER		128

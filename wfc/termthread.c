@@ -91,7 +91,7 @@ FinishSession(
 
 dbgmsg(">FinishSession");
 	sprintf(msg,"[%s:%s] session end",data->hdr->term,data->hdr->user);
-	Message(MESSAGE_LOG,msg);
+	MessageLog(msg);
 	xfree(data->hdr);
 	if		(  data->name  !=  NULL  ) {
 		strcpy(name,data->name);
@@ -131,7 +131,7 @@ dbgmsg(">InitSession");
 	RecvString(fp,data->hdr->term);		ON_IO_ERROR(fp,badio);
 	RecvString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
 	sprintf(msg,"[%s:%s] session start",data->hdr->term,data->hdr->user);
-	Message(MESSAGE_LOG,msg);
+	MessageLog(msg);
 #ifdef	DEBUG
 	printf("term = [%s]\n",data->hdr->term);
 	printf("user = [%s]\n",data->hdr->user);
@@ -169,7 +169,7 @@ dbgmsg(">InitSession");
 		data->w.n = 0;
 	} else {
 		sprintf(msg,"[%s] session fail LD [%s] not found.",data->hdr->term,buff);
-		Message(MESSAGE_LOG,msg);
+		MessageLog(msg);
 	  badio:
 		SendPacketClass(fp,APS_NOT);
 		FinishSession(data);

@@ -77,7 +77,7 @@ main(
 {
 	SetDefault();
 	(void)GetOption(option,argc,argv);
-	InitMessage();
+	InitMessage("pgserver",NULL);
 
 	ParseURL(&Auth,AuthURL);
 	InitSystem(argc,argv);

@@ -73,105 +73,6 @@ Push(
 #define	Push(v)		Stack[pStack ++] = (v)
 #endif
 
-static	char	*
-ParseName(
-	char	*str)
-{
-	static	char	buff[SIZE_ARG]
-			,		name[SIZE_ARG];
-	char	*p
-	,		*q;
-	VarType	*var;
-
-	if		(  str  ==  NULL  )	return	NULL;
-	p = buff;
-	while	(  *str  !=  0  ) {
-		if		(  *str  ==  '$'  ) {
-			str ++;
-			if		(  *str ==  '$'  ) {
-				*p ++ = '$';
-			} else 
-			if		(  *str  ==  '('  ) {
-				str ++;
-				q = name;
-				while	(  *str !=  ')'  ) {
-					*q ++ = *str ++;
-				}
-				str ++;
-				*q = 0;
-				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p += sprintf(p,"%s",var->str);
-				}
-			} else {
-				q = name;
-				while	(  isalnum(*str)  ) {
-					*q ++ = *str ++;
-				}
-				*q = 0;
-				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p += sprintf(p,"%s",var->str);
-				}
-			}
-		} else
-		if		(  *str  ==  '#'  ) {
-			str ++;
-			if		(  *str ==  '#'  ) {
-				*p ++ = '#';
-			} else 
-			if		(  *str  ==  '('  ) {
-				str ++;
-				q = name;
-				while	(  *str !=  ')'  ) {
-					*q ++ = *str ++;
-				}
-				str ++;
-				*q = 0;
-				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p += sprintf(p,"%d",var->ival);
-				}
-			} else {
-				q = name;
-				while	(  isalnum(*str)  ) {
-					*q ++ = *str ++;
-				}
-				*q = 0;
-				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p += sprintf(p,"%d",var->ival);
-				}
-			}
-		} else {
-			*p ++ = *str;
-			str ++;
-		}
-	}
-	*p = 0;
-	return	(buff);
-}
-
-static	char	*
-HTGetValue(
-	char		*name,
-	Bool		fClear)
-{
-	char	buff[SIZE_BUFF];
-	char	*value;
-
-	//	printf("\nname = [%s]\n",name);
-	if		(  *name  ==  0  ) {
-		value = "";
-	} else
-	if		(  ( value = g_hash_table_lookup(Values,name) )  ==  NULL  ) {
-		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
-		HT_SendString(buff);
-		HT_RecvString(SIZE_BUFF,buff);
-		g_hash_table_insert(Values,StrDup(name),StrDup(buff));
-	}
-	if		(  ( value = g_hash_table_lookup(Values,name) )  ==  NULL  ) {
-		value = "";
-	}
-	return	(value);
-}
-
 static	int
 youbi(
 	int		yy,
@@ -280,6 +181,105 @@ dbgmsg(">ExecCalendar");
 	}
 	LBS_EmitString(html,"</TABLE>");
 dbgmsg("<ExecCalendar");
+}
+
+static	char	*
+ParseName(
+	char	*str)
+{
+	static	char	buff[SIZE_ARG]
+			,		name[SIZE_ARG];
+	char	*p
+	,		*q;
+	VarType	*var;
+
+	if		(  str  ==  NULL  )	return	NULL;
+	p = buff;
+	while	(  *str  !=  0  ) {
+		if		(  *str  ==  '$'  ) {
+			str ++;
+			if		(  *str ==  '$'  ) {
+				*p ++ = '$';
+			} else 
+			if		(  *str  ==  '('  ) {
+				str ++;
+				q = name;
+				while	(  *str !=  ')'  ) {
+					*q ++ = *str ++;
+				}
+				str ++;
+				*q = 0;
+				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
+					p += sprintf(p,"%s",var->str);
+				}
+			} else {
+				q = name;
+				while	(  isalnum(*str)  ) {
+					*q ++ = *str ++;
+				}
+				*q = 0;
+				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
+					p += sprintf(p,"%s",var->str);
+				}
+			}
+		} else
+		if		(  *str  ==  '#'  ) {
+			str ++;
+			if		(  *str ==  '#'  ) {
+				*p ++ = '#';
+			} else 
+			if		(  *str  ==  '('  ) {
+				str ++;
+				q = name;
+				while	(  *str !=  ')'  ) {
+					*q ++ = *str ++;
+				}
+				str ++;
+				*q = 0;
+				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
+					p += sprintf(p,"%d",var->ival);
+				}
+			} else {
+				q = name;
+				while	(  isalnum(*str)  ) {
+					*q ++ = *str ++;
+				}
+				*q = 0;
+				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
+					p += sprintf(p,"%d",var->ival);
+				}
+			}
+		} else {
+			*p ++ = *str;
+			str ++;
+		}
+	}
+	*p = 0;
+	return	(buff);
+}
+
+static	char	*
+HTGetValue(
+	char		*name,
+	Bool		fClear)
+{
+	char	buff[SIZE_BUFF];
+	char	*value;
+
+	//	printf("\nname = [%s]\n",name);
+	if		(  *name  ==  0  ) {
+		value = "";
+	} else
+	if		(  ( value = g_hash_table_lookup(Values,name) )  ==  NULL  ) {
+		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
+		HT_SendString(buff);
+		HT_RecvString(SIZE_BUFF,buff);
+		g_hash_table_insert(Values,StrDup(name),StrDup(buff));
+	}
+	if		(  ( value = g_hash_table_lookup(Values,name) )  ==  NULL  ) {
+		value = "";
+	}
+	return	(value);
 }
 
 extern	LargeByteString	*

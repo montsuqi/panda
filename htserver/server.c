@@ -77,9 +77,7 @@ HT_SendString(
 	NETFILE	*fp,
 	char	*str)
 {
-#ifdef	DEBUG
-	printf(">>[%s]\n",str);
-#endif
+	dbgprintf("send [%s]\n",str);
 	Send(fp,str,strlen(str));
 }
 
@@ -111,9 +109,7 @@ HT_RecvString(
 	} else {
 		rc = FALSE;
 	}
-#ifdef	DEBUG
-	printf(" recv [%s]\n",p);
-#endif
+	dbgprintf("recv [%s]\n",p);
 	return	(rc);
 }
 
@@ -378,17 +374,10 @@ PutLog(
 	char	*cmd,
 	int		sesno)
 {
-	time_t		nowtime;
-	struct	tm	*Now;
+	char	buff[128];
 
-	time(&nowtime);
-	Now = localtime(&nowtime);
-	Now->tm_year += 1900;
-	printf("%04d/%02d/%02d %02d:%02d:%02d %08d %s %s\n",
-		   Now->tm_year,Now->tm_mon+1,Now->tm_mday,
-		   Now->tm_hour,Now->tm_min,Now->tm_sec,
-		   sesno,user,cmd);
-	
+	sprintf(buff,"%08d %s %s",sesno,user,cmd);
+	MessageLog(buff);
 }
 
 static	void

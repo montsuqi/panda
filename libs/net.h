@@ -21,7 +21,7 @@ copies.
 
 #ifndef	_INC_NET_H
 #define	_INC_NET_H
-
+#include	<stdio.h>
 #ifdef	USE_SSL
 #include	<openssl/ssl.h>
 #endif
@@ -30,6 +30,7 @@ copies.
 typedef	struct _NETFILE	{
 	union {
 		int		fd;
+		FILE	*fp;
 #ifdef	USE_SSL
 		SSL		*ssl;
 #endif
@@ -47,6 +48,7 @@ extern	void	FreeNet(NETFILE *fp);
 extern	void	CloseNet(NETFILE *fp);
 extern	NETFILE	*NewNet(void);
 extern	NETFILE	*SocketToNet(int s);
+extern	NETFILE	*FileToNet(int f);
 extern	void	NetSetFD(NETFILE *fp, int fd);
 extern	void	InitNET(void);
 #ifdef	USE_SSL
@@ -57,8 +59,8 @@ extern	SSL_CTX	*MakeCTX(char *key, char *cert, char *cafile, char *capath, Bool 
 extern	NETFILE	*OpenPort(char *url, int port);
 extern	int		InitServerPort(char *port, int back);
 
-extern	Bool	_CheckNetFile(NETFILE *fp);
+extern	Bool	CheckNetFile(NETFILE *fp);
 
-#define	ON_IO_ERROR(fp,label)	if (!_CheckNetFile(fp)) goto label
+#define	ON_IO_ERROR(fp,label)	if (!CheckNetFile(fp)) goto label
 
 #endif

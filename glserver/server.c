@@ -89,7 +89,7 @@ FinishSession(
 	char	msg[SIZE_BUFF];
 
 	sprintf(msg,"[%s@%s] session end",scr->user,scr->term);
-	Message(MESSAGE_LOG,msg);
+	MessageLog(msg);
 #if	0
 	if		(	(  scr  !=  NULL  )
 			&&	(  scr->Windows  !=  NULL  ) ) {
@@ -221,7 +221,7 @@ dbgmsg(">CheckScreen");
 		}	while	(  !fExit  );
 		if		(  !fDone  ) {
 			sprintf(msg,"[%s] screen file not exitsts.",wname);
-			Message(MESSAGE_LOG,msg);
+			MessageLog(msg);
 			longjmp(envCheckScreen,1);
 		}
 		win->fNew = FALSE;
@@ -469,7 +469,7 @@ dbgmsg(">MainLoop");
 			RecvString(fpComm,pass);		ON_IO_ERROR(fpComm,badio);
 			RecvString(fpComm,scr->cmd);	ON_IO_ERROR(fpComm,badio);
 			sprintf(msg,"[%s@%s] session start",scr->user,scr->term);
-			Message(MESSAGE_LOG,msg);
+			MessageLog(msg);
 			if		(  fIgnoreVersion  ) {
 				strcpy(ver,VERSION);
 			}

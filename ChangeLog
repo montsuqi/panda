@@ -1,3 +1,9 @@
+2003-06-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/message.c (InitMessage): msgdに出力する機能
+
+	* tools/msgd.c: メッセージログを収集するdaemon新規作成
+
 2003-06-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/net.c (Send, Recv): EOF判定を直した

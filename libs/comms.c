@@ -51,9 +51,6 @@ SendStringDelim(
 {
 	size_t	size;
 
-#ifdef	DEBUG
-	printf(">>[%s]\n",str);
-#endif
 	if		(   str  !=  NULL  ) { 
 		size = strlen(str);
 	} else {
@@ -64,7 +61,6 @@ SendStringDelim(
 	}
 }
 
-
 extern	Bool
 RecvStringDelim(
 	NETFILE	*fp,
@@ -73,28 +69,20 @@ RecvStringDelim(
 {
 	Bool	rc;
 	int		c;
-#ifdef	DEBUG
-	char	*p = str;
-#endif
+	char	*p;
 
-	rc = TRUE;
-	while	(  ( c = RecvChar(fp) )  !=  '\n'  ) {
-		if		(  c  <  0  ) {
-			rc = FALSE;
-			break;
-		} else {
-			*str ++ = c;
-		}
+	p = str;
+	while	(	(  ( c = RecvChar(fp) )  >=  0     )
+			&&	(  c                     !=  '\n'  ) )	{
+		*p ++ = c;
 	}
-	*str -- = 0;
-	while	(	(  *str  ==  '\r'  )
-			||	(  *str  ==  '\n'  ) ) {
-		*str = 0;
-		str --;
+	*p = 0;
+	if		(  c  >=  0  ) {
+		StringChop(str);
+		rc = TRUE;
+	} else {
+		rc = FALSE;
 	}
-#ifdef	DEBUG
-	printf("<<[%s]\n",p);
-#endif
 	return	(rc);
 }
 

@@ -23,12 +23,45 @@ copies.
 #define	DEBUG
 #define	TRACE
 */
+
+/*
+*/
+#define		USE_MSGD
+
 #include	<stdio.h>
 #include	<sys/time.h>
 #include	<time.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<fcntl.h>
 #include	<unistd.h>
+#include	<string.h>
 #include	<stdarg.h>
+#include	<stdlib.h>
+#include	"const.h"
+#ifdef	USE_MSGD
+#include	"libmondai.h"
+#include	"tcp.h"
+#include	"net.h"
+#endif
 #include	"message.h"
+
+#ifndef	SIZE_BUFF
+#define	SIZE_BUFF		8192
+#endif
+
+#ifdef	USE_MSGD
+static	NETFILE	*fpLog = NULL;
+#else
+static	FILE	*fpLog = NULL;
+#endif
+
+static	char	*Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
+
+static	char	*Processid = "";
+
+static	char	*FlagChar[]	= {
+	"M",	"D",	"W",	"E",	"L",	"L",	"P",	"?"};
 
 extern	void
 MessageDebug(
@@ -56,22 +89,18 @@ MessagePrintf(
 }
 
 static	void
-MessageLog(
-	char	*msg)
+PutLog(
+	char	*str)
 {
-	struct	timeval	tv;
-	struct	tm	Now;
+	char	buff[SIZE_BUFF];
 
-	gettimeofday(&tv,NULL);
-	Now = *localtime((time_t *)&tv.tv_sec);
-	Now.tm_year += 1900;
-	Now.tm_mon ++;
-
-	printf("L:%04d%02d%02d %02d%02d%02d.%03d:%s\n",
-		   Now.tm_year, Now.tm_mon, Now.tm_mday,
-		   Now.tm_hour, Now.tm_min, Now.tm_sec,
-		   (int)(tv.tv_usec/1000),
-		   msg);
+	sprintf(buff,"%s\n",StringChop(str));
+#ifdef	USE_MSGD
+	Send(fpLog,buff,strlen(buff));
+#else
+	fprintf(fpLog,"%s",buff);
+	fflush(fpLog);
+#endif
 }
 
 extern	void
@@ -81,33 +110,143 @@ _Message(
 	int		line,
 	char	*msg)
 {
-	switch	(level) {
-	  case	MESSAGE_MESSAGE:
-		printf("M:%s:%d:%s\n",file,line,msg);
-		break;
-	  case	MESSAGE_DEBUG:
-		printf("D:%s\n",msg);
-		break;
-	  case	MESSAGE_PRINT:
-		printf("D:%s",msg);
-		break;
-	  case	MESSAGE_WARN:
-		printf("W:%s:%d:%s\n",file,line,msg);
-		break;
-	  case	MESSAGE_ERROR:
-		printf("E:%s:%d:%s\n",file,line,msg);
-		break;
-	  case	MESSAGE_LOG:
-		MessageLog(msg);
-		break;
-	  default:
-		printf("?:%s:%d:%s\n",file,line,msg);
-		break;
+	char	buff[SIZE_BUFF];
+	char	*f
+	,		*p
+	,		*s;
+	Bool	fOut
+	,		fDot;
+	struct	timeval	tv;
+	struct	tm	*Now;
+
+	if		(  fpLog  !=  NULL  ) {
+		gettimeofday(&tv,NULL);
+		Now = localtime((time_t *)&tv.tv_sec);
+		p = buff;
+		fOut = TRUE;
+		for	( f = Format ; *f != 0 ; f ++ ) {
+			if		(  *f  ==  '%'  ) {
+				f ++;
+				switch	(*f) {
+				  case	'Y':
+					p += sprintf(p,"%04d",Now->tm_year+1900);
+					break;
+				  case	'M':
+					p += sprintf(p,"%02d",Now->tm_mon+1);
+					break;
+				  case	'D':
+					p += sprintf(p,"%02d",Now->tm_mday);
+					break;
+				  case	'h':
+					p += sprintf(p,"%02d",Now->tm_hour);
+					break;
+				  case	'm':
+					p += sprintf(p,"%02d",Now->tm_min);
+					break;
+				  case	's':
+					p += sprintf(p,"%02d",Now->tm_sec);
+					break;
+				  case	'p':
+					p += sprintf(p,"%03d",(int)(tv.tv_usec/1000));
+					break;
+				  case	'F':
+					fDot = FALSE;
+					if		(  *(f+1)  ==  '('  ) {
+						f += 2;
+						fOut = FALSE;
+						while	(  *f  !=  ')'  ) {
+							if		(  *f  ==  *FlagChar[level]  ) {
+								fOut = TRUE;
+							}
+							if		(  *f  ==  '.'  ) {
+								fDot = TRUE;
+							}
+							f ++;
+						}
+					}
+					if		(  !fDot  ) {
+						p += sprintf(p,"%s",FlagChar[level]);
+					}
+					break;
+				  case	'i':
+					p += sprintf(p,"%s",Processid);
+					break;
+				  case	'f':
+					p += sprintf(p,"%s",file);
+					break;
+				  case	'L':
+					p += sprintf(p,"%d",line);
+					break;
+				  case	'B':
+					for	( s = msg ; *s != 0 ; s ++ ) {
+						switch	(*s) {
+						  case	'\\':
+							p += sprintf(p,"\\\\");
+							break;
+						  case	'\n':
+							p += sprintf(p,"\\n");
+							break;
+						  default:
+							*p ++ = *s;
+							break;
+						}
+					}
+					break;
+				  default:
+					*p ++ = *f;
+					break;
+				}
+			} else {
+				*p ++ = *f;
+			}
+		}
+		*p = 0;
+		if		(  fOut  ) {
+			PutLog(buff);
+		}
 	}
-	fflush(stdout);
 }
 
 extern	void
-InitMessage(void)
+InitMessage(
+	char	*id,
+	char	*fn)
 {
+#ifdef	USE_MSGD
+	int		fd;
+	Port	*port;
+#endif
+
+	if		(  fn  ==  NULL  ) {
+		fn = getenv("LOG_FILE_NAME");
+	}
+	fpLog = NULL;
+	Processid = StrDup(id);
+	if		(  ( Format = getenv("LOG_DATA_FORMAT") )  ==  NULL  ) {
+		Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
+	}
+#ifdef	USE_MSGD
+	if		( fn  !=  NULL  ) {
+		if		(  *fn  ==  '@'  ) {
+			port = ParPort(fn+1,PORT_MSGD);
+			if		(  ( fd = ConnectSocket(port->port,SOCK_STREAM,
+											port->host) )  >=  0  ) {
+				fpLog = SocketToNet(fd);
+				Format = "%F:%i:%f:%L:%B";
+			}
+			DestroyPort(port);
+		} else {
+			if		(  ( fd = open(fn,O_WRONLY|O_CREAT) )  >=  0  ) {
+				fpLog = FileToNet(fd);
+			}
+		}
+	}
+	if		(  fpLog  ==  NULL  ) {
+		fpLog = FileToNet(STDOUT_FILENO);
+	}
+#else
+	if		(  ( fpLog = fopen(fn,"w+") )  ==  NULL  ) {
+		fpLog = stdout;
+	}
+#endif
 }
