@@ -110,7 +110,6 @@ _ExecuteProcess(
 	Bool	rc;
 
 dbgmsg(">_ExecuteProcess");
-	cob_init(0,NULL);
 	cob_set_library_path(handler->loadpath);
 
 	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
@@ -193,7 +192,6 @@ _StartBatch(
 	char	*arg;
 
 dbgmsg(">_StartBatch");
-	cob_init(0,NULL);
 	cob_set_library_path(handler->loadpath);
 
 	OpenCOBOL_Conv = NewConvOpt();
@@ -225,6 +223,7 @@ _ReadyExecute(
 	if		(  handler->loadpath  ==  NULL  ) {
 		handler->loadpath = LoadPath;
 	}
+	cob_init(0,NULL);
 }
 
 static	MessageHandlerClass	Handler = {
