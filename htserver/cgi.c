@@ -684,6 +684,34 @@ DumpValues(
 				 ,SRC_CODESET);
 }
 
+extern	void
+DumpFiles(
+	LargeByteString	*html,
+	GHashTable	*args)
+{
+	char	buff[SIZE_BUFF];
+	void
+	DumpFile(
+			char		*name,
+			MultipartFile	*value,
+			gpointer	user_data)
+	{
+		sprintf(buff,"<TR><TD>%s<TD>%-10d\n",value->filename,value->length);
+		LBS_EmitString(html,buff);
+	}
+
+	LBS_EmitUTF8(html,
+				 "<HR>\n"
+				 "<H2>ファイル</H2>"
+				 "<TABLE BORDER>\n"
+				 "<TR><TD width=\"150\">ファイル名<TD width=\"150\">大きさ\n"
+				 ,SRC_CODESET);
+	g_hash_table_foreach(args,(GHFunc)DumpFile,NULL);
+	LBS_EmitUTF8(html,
+				 "</TABLE>\n"
+				 ,SRC_CODESET);
+}
+
 static	void
 PutEnv(
 	LargeByteString	*html)
@@ -715,6 +743,7 @@ Dump(void)
 				 "<HR>\n",SRC_CODESET);
 	PutEnv(html);
 	DumpValues(html,Values);
+	DumpFiles(html,Files);
 	LBS_EmitUTF8(html,
 				 "</BODY>\n"
 				 "</HTML>\n",SRC_CODESET);

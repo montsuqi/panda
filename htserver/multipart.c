@@ -19,6 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+#define	DEBUG
+#define	TRACE
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -35,6 +38,7 @@ copies.
 #include	"types.h"
 #include	"libmondai.h"
 #include	"multipart.h"
+#include	"debug.h"
 
 #define STR_LITERAL_LENGTH(x) (sizeof(x) - 1)
 #define MAX_BOUNDARY_SIZE 70
@@ -46,23 +50,30 @@ char *
 GetMultipartBoundary(char *content_type)
 {
     char *p;
+	char *ret;
 
+ENTER_FUNC;
     if (content_type == NULL ||
         strncasecmp(content_type, "multipart/form-data",
-                    STR_LITERAL_LENGTH("multipart/form-data")) != 0)
-        return NULL;
-    p = content_type + STR_LITERAL_LENGTH("multipart/form-data");
-    while (*p != '\0' && !isalpha(*p)) p++;
-    if (strncasecmp(p, "boundary=", STR_LITERAL_LENGTH("boundary=")) == 0) {
-        p += STR_LITERAL_LENGTH("boundary=");
-        if (strlen(p) > MAX_BOUNDARY_SIZE) {
-            return NULL;
-        }
-        return StrDup(p);
-    }
-    else {
-        return NULL;
-    }
+                    STR_LITERAL_LENGTH("multipart/form-data")) != 0) {
+        ret = NULL;
+	} else {
+		p = content_type + STR_LITERAL_LENGTH("multipart/form-data");
+		while (*p != '\0' && !isalpha(*p)) p++;
+		if (strncasecmp(p, "boundary=", STR_LITERAL_LENGTH("boundary=")) == 0) {
+			p += STR_LITERAL_LENGTH("boundary=");
+			if (strlen(p) > MAX_BOUNDARY_SIZE) {
+				ret = NULL;
+			} else {
+				ret = StrDup(p);
+			}
+		}
+		else {
+			ret = NULL;
+		}
+	}
+LEAVE_FUNC;
+	return	(ret);
 }
 
 static int
@@ -285,6 +296,7 @@ ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
     char buf[SIZE_BUFF];
     int boundary_type;
 
+ENTER_FUNC;
     if (ParseHeader(fp, &name, &filename) < 0)
         return -1;
     boundary_type = ParseBody(fp, delimiter, close_delimiter,
@@ -292,16 +304,18 @@ ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
     if (boundary_type == BOUNDARY_NONE)
         return -1;
     if (filename == NULL) {
-		//        StoreValue(values, name, value);
         SaveValue(name, value,FALSE);
     }
     else {
-        MultipartFile *file = (MultipartFile *) xmalloc(sizeof(MultipartFile));
+        MultipartFile *file = New(MultipartFile);
         file->filename = filename;
         file->value = value;
         file->length = value_len;
         g_hash_table_insert(files, name, file);
+dbgprintf("filename = [%s]\n",file->filename);
+dbgprintf("length   = [%d]\n",file->length);
     }
+LEAVE_FUNC;
     return boundary_type;
 }
 
@@ -310,6 +324,7 @@ ParseMultipart(FILE *fp, char *boundary,
                GHashTable *values, GHashTable *files)
 {
     char buf[SIZE_BUFF];
+	int  rc;
     char *p;
     char delimiter[STR_LITERAL_LENGTH("--") +
                    MAX_BOUNDARY_SIZE +
@@ -321,26 +336,33 @@ ParseMultipart(FILE *fp, char *boundary,
                          1];
     int boundary_type = BOUNDARY_NONE;
 
+ENTER_FUNC;
     if (strlen(boundary) > MAX_BOUNDARY_SIZE) {
-        return -1;
-    }
+		rc = -1;
+    } else {
 
-    sprintf(delimiter, "--%s\r\n", boundary);
-    sprintf(close_delimiter, "--%s--\r\n", boundary);
+		sprintf(delimiter, "--%s\r\n", boundary);
+		sprintf(close_delimiter, "--%s--\r\n", boundary);
 
-    while (fgets(buf, sizeof(buf), fp) != NULL) {
-        boundary_type = CheckBoundary(buf, delimiter, close_delimiter);
-        if (boundary_type != BOUNDARY_NONE) {
-            break;
-        }
-    }
-    while (boundary_type == BOUNDARY_DELIMITER) {
-        boundary_type = ParsePart(fp, delimiter, close_delimiter,
-                                  values, files);
-    }
-    if (boundary_type != BOUNDARY_CLOSE_DELIMITER)
-        return -1;
-    return 0;
+		while (fgets(buf, sizeof(buf), fp) != NULL) {
+			boundary_type = CheckBoundary(buf, delimiter, close_delimiter);
+			if (boundary_type != BOUNDARY_NONE) {
+				break;
+			}
+		}
+		while (boundary_type == BOUNDARY_DELIMITER) {
+			boundary_type = ParsePart(fp, delimiter, close_delimiter,
+									  values, files);
+		}
+		if (boundary_type != BOUNDARY_CLOSE_DELIMITER) {
+			rc = -1;
+		} else {
+			rc = 0;
+		}
+	}
+dbgprintf("rc = %d\n",rc);
+LEAVE_FUNC;
+	return rc;
 }
 
 #if 0
