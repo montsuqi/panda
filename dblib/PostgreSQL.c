@@ -1195,8 +1195,6 @@ _DBUPDATE(
 	ValueStruct		*args)
 {
 	LargeByteString	*sql;
-	char	name[SIZE_NAME+1]
-	,		*q;
 	DB_Struct	*db;
 	char	***item
 	,		**pk;
@@ -1227,8 +1225,9 @@ dbgmsg(">_DBUPDATE");
 			LBS_EmitString(sql,"WHERE\t");
 			item = db->pkey->item;
 			while	(  *item  !=  NULL  ) {
+                LBS_EmitString(sql,rec->name);
+                LBS_EmitChar(sql,'.');
 				pk = *item;
-				q = name;
 				while	(  *pk  !=  NULL  ) {
                     LBS_EmitString(sql,*pk);
 					pk ++;
@@ -1236,9 +1235,6 @@ dbgmsg(">_DBUPDATE");
                         LBS_EmitChar(sql,'_');
 					}
 				}
-                LBS_EmitString(sql,rec->name);
-                LBS_EmitChar(sql,'.');
-                LBS_EmitString(sql,name);
                 LBS_EmitString(sql," = ");
                 KeyValue(dbg,sql,args,*item);
                 LBS_EmitChar(sql,' ');
@@ -1272,8 +1268,6 @@ _DBDELETE(
 	ValueStruct		*args)
 {
     LargeByteString	*sql;
-	char	name[SIZE_NAME+1]
-	,		*q;
 	DB_Struct	*db;
 	char	***item
 	,		**pk;
@@ -1299,7 +1293,8 @@ dbgmsg(">_DBDELETE");
 			item = db->pkey->item;
 			while	(  *item  !=  NULL  ) {
 				pk = *item;
-				q = name;
+                LBS_EmitString(sql,rec->name);
+                LBS_EmitChar(sql,'.');
 				while	(  *pk  !=  NULL  ) {
                     LBS_EmitString(sql,*pk);
 					pk ++;
@@ -1307,9 +1302,6 @@ dbgmsg(">_DBDELETE");
                         LBS_EmitChar(sql,' ');
 					}
 				}
-                LBS_EmitString(sql,rec->name);
-                LBS_EmitChar(sql,'.');
-                LBS_EmitString(sql,name);
                 LBS_EmitString(sql," = ");
                 KeyValue(dbg,sql,args,*item);
                 LBS_EmitChar(sql,' ');
