@@ -459,7 +459,7 @@ SetDefault(void)
 	RecDir = NULL;
 	Log = NULL;
 	interval = 2;
-	MaxTran = -1;
+	MaxTran = 0;
 
 	MyHost = "localhost";
 

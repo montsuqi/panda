@@ -172,6 +172,9 @@ dbgmsg(">ExecuteDC");
 	}
 	InitAPSIO();
 
+	if		(  MaxTran  ==  0  ) {
+		MaxTran = -1;
+	}
 	node = MakeProcessNode();
 	for	( tran = MaxTran; tran != 0 ; tran -- ) {
 		if		(  !GetWFC(fpWFC,node)  )	break;
@@ -275,7 +278,7 @@ SetDefault(void)
 	BD_Dir = NULL;
 	Directory = "./directory";
 	LibPath = NULL;
-	MaxTran = -1;
+	MaxTran = 0;
 
 	DB_User = NULL;
 	DB_Pass = NULL;
