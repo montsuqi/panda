@@ -1,0 +1,284 @@
+panda (1:1.0.5-0+0.orca.5) unstable; urgency=low
+
+  * add keypress_filter. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 21 Jun 2002 15:16:43 +0900
+
+panda (1:1.0.5-0+0.orca.4) unstable; urgency=low
+
+  * remove debug printf (widgetOPS.c). 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  6 Jun 2002 21:38:57 +0900
+
+panda (1:1.0.5-0+0.orca.3) unstable; urgency=low
+
+  * remove set_position. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  6 Jun 2002 20:06:52 +0900
+
+panda (1:1.0.5-0+0.orca.2) unstable; urgency=low
+
+  * fix redirector off mode. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  6 Jun 2002 17:51:30 +0900
+
+panda (1:1.0.5-0+0.orca.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  6 Jun 2002 11:07:11 +0900
+
+panda (1:1.0.4-0+0.orca.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 24 May 2002 19:20:53 +0900
+
+panda (1:1.0.3-0+0.orca.3) unstable; urgency=low
+
+  * remove set_position.
+  * remove send_event_on_focus_out.
+  * db -> dbarea
+  * increase SIZE_BUFF 15000
+  * fix version.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu, 23 May 2002 17:47:45 +0900
+
+panda (1:1.0.3-2) unstable; urgency=low
+
+  * add send_event_on_focus_out 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon, 15 Apr 2002 17:12:12 +0900
+
+panda (1:1.0.3-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 10 Apr 2002 15:09:37 +0900
+
+panda (1:1.0.2-1) unstable; urgency=low
+
+  * New upstream release. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue,  2 Apr 2002 01:55:06 +0900
+
+panda (1:0.9.13-6) unstable; urgency=low
+
+  * fix GtkText. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue,  5 Feb 2002 18:51:10 +0900
+
+panda (1:0.9.13-5) unstable; urgency=low
+
+  * fix increment search.
+  * add event block. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu, 31 Jan 2002 13:08:04 +0900
+
+panda (1:0.9.13-4) unstable; urgency=low
+
+  * fix open_browser. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 30 Jan 2002 13:41:37 +0900
+
+panda (1:0.9.13-3) unstable; urgency=low
+
+  * add configure option --with-shell. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 29 Jan 2002 13:00:32 +0900
+
+panda (1:0.9.13-2) unstable; urgency=low
+
+  * add shlibs.local. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon, 28 Jan 2002 19:13:19 +0900
+
+panda (1:0.9.13-1) unstable; urgency=low
+
+  * New upstram release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 25 Jan 2002 14:11:26 +0900
+
+panda (1:0.9.11-1) unstable; urgency=low
+
+  * New upstream release. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 23 Jan 2002 23:09:36 +0900
+
+panda (011226-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 26 Dec 2001 19:05:14 +0900
+
+panda (011106-2) unstable; urgency=low
+
+  * add handler send_event_if_changed.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 14 Nov 2001 00:01:57 +0900
+
+panda (011106-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 13 Nov 2001 23:53:19 +0900
+
+panda (011102-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon,  5 Nov 2001 14:35:58 +0900
+
+panda (011023-7) unstable; urgency=low
+
+  * gtk_widget_show -> gtk_widget_show_all 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 31 Oct 2001 18:46:10 +0900
+
+panda (011023-6) unstable; urgency=low
+
+  * enable cache and enable ic_destroy 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 31 Oct 2001 16:04:21 +0900
+
+panda (011023-5) unstable; urgency=low
+
+  * add xim_on 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 31 Oct 2001 03:32:12 +0900
+
+panda (011023-4) unstable; urgency=low
+
+  * disable cache. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 30 Oct 2001 19:17:10 +0900
+
+panda (011023-3) unstable; urgency=low
+
+  * add widgetOPS.c gtk_panda_entry_type
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 30 Oct 2001 15:07:52 +0900
+
+panda (011023-2) unstable; urgency=low
+
+  * fix link add some bug. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 30 Oct 2001 02:46:51 +0900
+
+panda (011023-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon, 29 Oct 2001 21:00:58 +0900
+
+panda (011018-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 19 Oct 2001 12:42:16 +0900
+
+panda (010928-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 28 Sep 2001 12:22:47 +0900
+
+panda (010918-2) unstable; urgency=low
+
+  * add clist_send_event and activate_widget. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 19 Sep 2001 23:49:36 +0900
+
+panda (010918-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 19 Sep 2001 21:52:34 +0900
+
+panda (010911-2) unstable; urgency=low
+
+  * add clist_send_event. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 19 Sep 2001 18:47:20 +0900
+
+panda (010911-1) unstable; urgency=low
+
+  * New upstream release. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu, 13 Sep 2001 13:55:45 +0900
+
+panda (010719-2) unstable; urgency=low
+
+  * add focus_out_event and clist event.  
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 24 Aug 2001 19:02:29 +0900
+
+panda (010719-1) unstable; urgency=low
+
+  * orca build 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Fri, 20 Jul 2001 04:17:23 +0900
+
+panda (010718-3-1) unstable; urgency=low
+
+  * New upstream release. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Wed, 18 Jul 2001 18:01:39 +0900
+
+panda (010629-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@zetabits.com>  Thu, 12 Jul 2001 00:37:30 +0900
+
+panda (010518-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@zetabits.com>  Thu, 21 Jun 2001 14:56:34 +0900
+
+panda (010319-7) unstable; urgency=low
+
+  * passwd file changed. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Wed, 11 Apr 2001 01:28:01 +0900
+
+panda (010319-6) unstable; urgency=low
+
+  * add init.d. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Tue, 10 Apr 2001 08:14:52 +0900
+
+panda (010319-5) unstable; urgency=low
+
+  * add link gluseradd gluserdel glsermod 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Tue, 10 Apr 2001 05:31:31 +0900
+
+panda (010319-4) unstable; urgency=low
+
+  * apscobo.sh changed. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Tue, 10 Apr 2001 05:21:58 +0900
+
+panda (010319-3) unstable; urgency=low
+
+  * passwd -> /usr/local/orca/passwd. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Tue, 10 Apr 2001 04:24:19 +0900
+
+panda (010319-2) unstable; urgency=low
+
+  * add Description and some bug fix.
+
+ -- Noboru Saitou <noborus@zetabits.com>  Mon,  9 Apr 2001 22:35:51 +0900
+
+panda (010319-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Noboru Saitou <noborus@zetabits.com>  Fri,  6 Apr 2001 14:25:45 +0900
+
+Local variables:
+mode: debian-changelog
+End:

@@ -1,0 +1,23 @@
+Source: panda
+Section: unknown
+Priority: optional
+Maintainer: Noboru Saitou <noborus@netlab.jp>
+Build-Depends: debhelper (>> 2.0.0)
+Standards-Version: 3.2.1
+
+Package: panda-server
+Architecture: any
+Depends: ${shlibs:Depends}
+Conflicts: panda
+Replaces: panda
+Provides: panda
+Description: OLTP monitor and client server GUI.
+ panda is Online Transaction processing.
+ server program.
+
+Package: panda-client
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: OLTP monitor and client server GUI.
+ panda is Online Transaction processing.
+ client program (glclient).
