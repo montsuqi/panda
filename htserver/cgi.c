@@ -517,11 +517,14 @@ GetSessionValues(void)
 ENTER_FUNC;
 	if		( ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
 		sprintf(fname,"%s/%s.ses",SesDir,sesid);
-		if		(  ( fd = open(fname,O_RDONLY ) )  <  0  ) {
+        if		(  ( fd = open(fname,O_RDONLY ) )  <  0  ) {
+dbgmsg("*");
 			ret = FALSE;
 		} else {
+dbgmsg("*");
 			fstat(fd,&sb);
 			if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0) )  !=  NULL  ) {
+dbgmsg("*");
 				StartScanEnv(p);
 				while	(  ScanEnv(name,value)  ) {
 					if		(  LoadValue(name)  ==  NULL  ) {
@@ -531,13 +534,16 @@ ENTER_FUNC;
 					}
 				}
 				munmap(p,sb.st_size);
+dbgmsg("*");
 				ret = TRUE;
 			} else {
+dbgmsg("*");
 				ret = FALSE;
 			}
 			close(fd);
 		}
 	} else {
+dbgmsg("*");
 		ret = FALSE;
 	}
 LEAVE_FUNC;
@@ -670,28 +676,21 @@ PutHTML(
 {
 	char	*sesid
 		,	*server;
-	char	domain[SIZE_LONGNAME+1];
 	int		c;
 
 ENTER_FUNC;
 	printf("Content-Type: text/html; charset=%s\r\n", Codeset);
 	LBS_EmitEnd(html);
-	if		(  ( server = getenv("SERVER_NAME") )  !=  NULL  ) {
-		sprintf(domain,"domain=%s;",server);
-	} else {
-		strcpy(domain,"");
-	}
 	if		(  fCookie  ) {
 		if		(  ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
-			printf("Set-Cookie: _sesid=%s;%s\r\n",sesid,domain);
+            printf("Set-Cookie: _sesid=%s;\r\n",sesid);
 		} else {
-			printf("Set-Cookie: _sesid=;%s\r\n",domain);
+			printf("Set-Cookie: _sesid=;\r\n");
 		}
 	}
 	printf("Cache-Control: no-cache\r\n");
 	printf("\r\n");
 	WriteLargeString(stdout,html,Codeset);
-	//	WriteLargeString(_fpLog,html,Codeset);
 LEAVE_FUNC;
 }
 

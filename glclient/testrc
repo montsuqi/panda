@@ -4,9 +4,9 @@ style	"small"	{
 }
 
 style	"red"	{
-#	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
-	fontset = "-misc-fixed-medium-r-normal--14-*-*-*-*-*-jisx0208.1983-0,*-r-*"
-	fg[NORMAL] = { 1.0, 0.0, 0.0}
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+#	fontset = "-misc-fixed-medium-r-normal--14-*-*-*-*-*-jisx0208.1983-0,*-r-*"
+	fg[NORMAL] = { 1.0, 1.0, 0.0}
 }
 
 style	"green"	{
