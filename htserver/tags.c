@@ -959,6 +959,7 @@ _A(
 {
 	char	*state
 		,	*name
+		,	*href
 		,	*target;
 	int		arg
 		,	pos;
@@ -989,15 +990,18 @@ ENTER_FUNC;
 	JavaScriptEvent(htc, tag, "onmousemove");
 	JavaScriptEvent(htc, tag, "onmouseout");
 	JavaScriptEvent(htc, tag, "onmousesetup");
-	JavaScriptEvent(htc, tag, "href");
 	Style(htc,tag);
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," name=");
-		EmitAttributeValue(htc,name,TRUE,TRUE,FALSE);
+		ExpandAttributeString(htc,name);
+	}
+	if		(  ( href = GetArg(tag,"href",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," href=");
+		ExpandAttributeString(htc,href);
 	}
 	if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," target=");
-		EmitAttributeValue(htc,target,TRUE,TRUE,FALSE);
+		ExpandAttributeString(htc,target);
 	}
 	LBS_EmitString(htc->code,">");
 	pos = LBS_GetPos(htc->code);

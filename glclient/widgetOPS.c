@@ -1706,7 +1706,7 @@ RecvScrolledWindow(
 	GtkWidget	*widget,
 	NETFILE		*fp)
 {
-	char	name[SIZE_BUFF]
+	char	name[SIZE_LONGNAME+1]
 	,		buff[SIZE_BUFF];
 	int		nitem
 	,		i;

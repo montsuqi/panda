@@ -199,8 +199,11 @@ RecvScreenData(
 	WindowData	*win;
 	ValueStruct	*value;
     LargeByteString *lbs;
-	int			i;
+	int			i
+		,		ival;
 	ValueStruct	*v;
+	char		*p
+		,		*pend;
 
 ENTER_FUNC;
     lbs = NewLBS();
@@ -219,18 +222,18 @@ ENTER_FUNC;
 						v = GetArrayItem(value, i);
 						SetValueBool(v, FALSE);
 					}
-					{
-						char *p = LBS_Body(lbs), *pend = p + LBS_Size(lbs);
-						while (p < pend) {
-							i = atoi(p);
-							if		(  ( v = GetArrayItem(value, i) )  !=  NULL  ) {
-								SetValueBool(v, TRUE);
-							}
-							while (isdigit(*p))
-								p++;
-							if (*p == ',')
-								p++;
+					p = LBS_Body(lbs);
+					pend = p + LBS_Size(lbs);
+					while	(  p  <  pend  ) {
+						ival = atoi(p);
+						if		(  ( v = GetArrayItem(value, ival) )  !=  NULL  ) {
+							SetValueBool(v, TRUE);
 						}
+						while	(	(  isdigit(*p)  )
+								||	(  *p  ==  '-'  ) ) {
+							p++;
+						}
+						if	(  *p  ==  ','  )	p++;
 					}
 					break;
 				  case GL_TYPE_BYTE:
@@ -320,7 +323,7 @@ ENTER_FUNC;
 			SendStringDelim(fp,trid);
 			SendStringDelim(fp,"\n");
 			RecvStringDelim(fp,SIZE_BUFF,buff);
-dbgprintf("buff = [%s]\n",buff);
+			dbgprintf("buff = [%s]\n",buff);
 			if		(  *buff  ==  0  ) {
 				strcpy(scr->event,"");
 				strcpy(scr->widget,"");
@@ -335,10 +338,8 @@ dbgprintf("buff = [%s]\n",buff);
 			}
 			sts = APL_SESSION_GET;
 			RecvScreenData(fp,scr);
-#ifdef	DEBUG
-	printf("user = [%s]\n",scr->user);
-	printf("cmd  = [%s]\n",scr->cmd);
-#endif
+			dbgprintf("user = [%s]\n",scr->user);
+			dbgprintf("cmd  = [%s]\n",scr->cmd);
 			ApplicationsCall(sts,scr);
 			while	(  scr->status  ==  APL_SESSION_LINK  ) {
 				ApplicationsCall(scr->status,scr);
@@ -512,7 +513,7 @@ ENTER_FUNC;
 		}
 		fp = SocketToNet(fd);
 		RecvStringDelim(fp,SIZE_BUFF,buff);
-dbgprintf(">> [%s]\n",buff);
+		dbgprintf(">> [%s]\n",buff);
 		if		(  strncmp(buff,"Start:",6)  ==  0  ) {
 			NewSession(fp,buff+7);
 		} else
@@ -524,7 +525,7 @@ dbgprintf(">> [%s]\n",buff);
 					EncodeTRID(buff,0,0);
 					SendStringDelim(fp,buff);
 					SendStringDelim(fp,"\n");
-dbgprintf("<< [%s]\n",buff);
+					dbgprintf("<< [%s]\n",buff);
 					xfree(htc);
 					g_hash_table_remove(SesHash,(void *)ses);
 				}
