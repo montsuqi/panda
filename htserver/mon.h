@@ -25,6 +25,7 @@ typedef	struct {
 	LargeByteString	*code;
 	GHashTable	*Trans;
 	GHashTable	*Radio;
+    GHashTable	*List;
 	GHashTable	*FileSelection;
     size_t EnctypePos;
     int FormNo;
@@ -44,6 +45,7 @@ typedef	struct {
 
 GLOBAL	GHashTable	*Values;
 GLOBAL	GHashTable	*Files;
+GLOBAL	GHashTable	*ListValues;
 GLOBAL	Bool		fGet;
 GLOBAL	Bool		fDump;
 GLOBAL	Bool		fCookie;
@@ -53,6 +55,8 @@ GLOBAL	char		*RecordDir;
 #undef	GLOBAL
 extern	void	HT_SendString(char *str);
 extern	Bool	HT_RecvString(size_t size, char *str);
+extern	char	*ConvLocal(char *istr);
 extern	char	*ConvUTF8(char *istr);
+extern	void	StoreValue(GHashTable *hash, char *name, char *value);
 
 #endif

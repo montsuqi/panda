@@ -225,6 +225,7 @@ dbgmsg(">HTCParser");
 		ret->code = NewLBS();
 		ret->Trans = NewNameHash();
 		ret->Radio = NewNameHash();
+		ret->List = NewNameHash();
 		ret->FileSelection = NewNameHash();
         ret->EnctypePos = 0;
         ret->FormNo = -1;
@@ -242,11 +243,14 @@ dbgmsg("<HTCParser");
 }
 
 extern	void
-HTCParserInit(void)
+HTCParserInit(char *script_name)
 {
 dbgmsg(">HTCParserInit");
+    if (script_name == NULL) {
+        script_name = "mon.cgi";
+    }
 	HTCLexInit();
-	TagsInit();
+	TagsInit(script_name);
 	Codeset = "euc-jp";
 dbgmsg("<HTCParserInit");
 }

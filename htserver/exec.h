@@ -29,19 +29,21 @@ copies.
 #define	OPC_REFINT	0x05
 #define	OPC_LEND	0x06
 #define	OPC_STORE	0x07
-#define	OPC_SCONST	0x08
-#define	OPC_NAME	0x09
-#define	OPC_HSNAME	0x0A
-#define	OPC_EHSNAME	0x0B
-#define	OPC_REFSTR	0x0C
-#define	OPC_HINAME	0x0D
-#define	OPC_BREAK	0x0E
-#define	OPC_HBES	0x0F
-#define	OPC_JNZP	0x10
-#define	OPC_JNZNP	0x11
-#define	OPC_DROP	0x12
-#define	OPC_URLENC	0x13
-#define	OPC_CALENDAR	0x14
+#define	OPC_LDVAR	0x08
+#define	OPC_SCONST	0x09
+#define	OPC_NAME	0x0A
+#define	OPC_HSNAME	0x0B
+#define	OPC_EHSNAME	0x0C
+#define	OPC_REFSTR	0x0D
+#define	OPC_HINAME	0x0E
+#define	OPC_HBNAME	0x0F
+#define	OPC_BREAK	0x10
+#define	OPC_HBES	0x11
+#define	OPC_JNZP	0x12
+#define	OPC_JNZNP	0x13
+#define	OPC_DROP	0x14
+#define	OPC_URLENC	0x15
+#define	OPC_CALENDAR	0x16
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -56,6 +56,8 @@ static	size_t	pAStack;
 static char *enctype_urlencoded = "application/x-www-form-urlencoded";
 static char *enctype_multipart = "multipart/form-data";
 
+static char *ScriptName;
+
 static	char	*
 GetArg(
 	Tag		*tag,
@@ -312,7 +314,9 @@ _Form(
 
 dbgmsg(">_Form");
 	htc->FormNo++;
-	LBS_EmitString(htc->code,"<form action=\"mon.cgi\" method=\"");
+	LBS_EmitString(htc->code,"<form action=\"");
+    LBS_EmitString(htc->code,ScriptName);
+    LBS_EmitString(htc->code,"\" method=\"");
 	if		(  fGet  ) {
 		LBS_EmitString(htc->code,"get");
 	} else {
@@ -616,6 +620,80 @@ dbgmsg(">_RadioButton");
 dbgmsg("<_RadioButton");
 }
 
+static void
+_List(HTCInfo *htc, Tag *tag)
+{
+	char	buf[SIZE_ARG];
+	char	*name, *label, *count, *size, *multiple, *onchange;
+	size_t	pos;
+
+dbgmsg(">_List");
+    if ((name = GetArg(tag,"name",0)) != NULL &&
+        (label = GetArg(tag,"label",0)) != NULL &&
+        (count = GetArg(tag,"count",0)) != NULL) {
+        g_hash_table_insert(htc->List, StrDup(name), (void *) 1);
+
+        LBS_EmitString(htc->code,"<select name=\"");
+        EmitCode(htc,OPC_NAME);
+        LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+        EmitCode(htc,OPC_REFSTR);
+        LBS_EmitString(htc->code,"\"");
+        if ((size = GetArg(tag,"size",0)) != NULL) {
+            LBS_EmitString(htc->code," size=");
+            EmitCode(htc,OPC_NAME);
+            LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
+            EmitCode(htc,OPC_REFSTR);
+            LBS_EmitString(htc->code,"\"");
+        }
+        if ((multiple = GetArg(tag,"multiple",0)) != NULL &&
+            *multiple == 'T') {
+            LBS_EmitString(htc->code," multiple");
+        }
+        JavaScriptEvent(htc, tag, "onchange");
+        Style(htc,tag);
+        LBS_EmitString(htc->code,">\n");
+        EmitCode(htc,OPC_VAR);
+        LBS_EmitPointer(htc->code,NULL);					/*	3	var		*/
+        EmitCode(htc,OPC_ICONST);
+        LBS_EmitInt(htc->code,0);
+        EmitCode(htc,OPC_STORE);
+        EmitCode(htc,OPC_HIVAR);							/*	2	limit	*/
+        LBS_EmitPointer(htc->code,count);
+        EmitCode(htc,OPC_ICONST);							/*	1	step	*/
+        LBS_EmitInt(htc->code,1);
+        Push(LBS_GetPos(htc->code));
+        EmitCode(htc,OPC_BREAK);
+        LBS_EmitInt(htc->code,0);
+
+        LBS_EmitString(htc->code,"<option value=\"");
+        EmitCode(htc,OPC_LDVAR);
+        LBS_EmitPointer(htc->code,"");
+        EmitCode(htc,OPC_REFINT);
+        LBS_EmitString(htc->code,"\"");
+        EmitCode(htc,OPC_NAME);
+        sprintf(buf,"%s[#]",name);
+        LBS_EmitPointer(htc->code,StrDup(buf));
+        EmitCode(htc,OPC_HBES);
+        LBS_EmitPointer(htc->code," selected");
+        LBS_EmitString(htc->code,">");
+        EmitCode(htc,OPC_NAME);
+        sprintf(buf,"%s[#]",label);
+        LBS_EmitPointer(htc->code,StrDup(buf));
+        EmitCode(htc,OPC_EHSNAME);
+        LBS_EmitString(htc->code,"</option>\n");
+
+        EmitCode(htc,OPC_LEND);
+        LBS_EmitInt(htc->code,Pop);
+        pos = LBS_GetPos(htc->code);
+        LBS_SetPos(htc->code,TOP(0));
+        EmitCode(htc,OPC_BREAK);
+        LBS_EmitInt(htc->code,pos);
+        LBS_SetPos(htc->code,pos);
+        LBS_EmitString(htc->code,"</select>");
+    }
+dbgmsg("<_List");
+}
+
 static	void
 _FileSelection(HTCInfo *htc, Tag *tag)
 {
@@ -678,7 +756,9 @@ dbgmsg(">_Link");
 		LBS_EmitString(htc->code, "<a");
 		Style(htc,tag);
 
-		LBS_EmitString(htc->code, " href=\"mon.cgi?_name=");
+		LBS_EmitString(htc->code, " href=\"");
+        LBS_EmitString(htc->code,ScriptName);
+		LBS_EmitString(htc->code, "?_name=");
 		EmitGetValue(htc,"_name");
 		LBS_EmitString(htc->code, "&amp;_event=");
 		EmitCode(htc, OPC_NAME);
@@ -723,7 +803,7 @@ dbgmsg(">_Panel");
     else {
         EmitCode(htc, OPC_NAME);
         LBS_EmitPointer(htc->code, StrDup(visible));
-        EmitCode(htc, OPC_HINAME);
+        EmitCode(htc, OPC_HBNAME);
         EmitCode(htc, OPC_JNZP);
         Push(LBS_GetPos(htc->code));
         LBS_EmitInt(htc->code, 0);
@@ -881,11 +961,13 @@ AddArg(
 }
 
 extern	void
-TagsInit(void)
+TagsInit(char *script_name)
 {
 	Tag		*tag;
 
 dbgmsg(">TagsInit");
+    ScriptName = script_name; 
+ 
 	pAStack = 0; 
 	Tags = NewNameiHash();
 
@@ -950,6 +1032,16 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"group",TRUE);
 	AddArg(tag,"label",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+
+	tag = NewTag("LIST",_List);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"label",TRUE);
+	AddArg(tag,"count",TRUE);
+	AddArg(tag,"size",TRUE);
+	AddArg(tag,"multiple",TRUE);
+	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 

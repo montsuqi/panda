@@ -292,7 +292,7 @@ ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
     if (boundary_type == BOUNDARY_NONE)
         return -1;
     if (filename == NULL) {
-        g_hash_table_insert(values, name, value);
+        StoreValue(values, name, value);
     }
     else {
         MultipartFile *file = (MultipartFile *) xmalloc(sizeof(MultipartFile));

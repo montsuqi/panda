@@ -100,7 +100,7 @@ HexCharToInt(
 	return	(ret);
 }
 
-static	char	*
+extern	char	*
 ConvLocal(
 	char	*istr)
 {
@@ -249,18 +249,32 @@ ScanPost(
 	return	(rc);
 }
 
+extern void
+StoreValue(GHashTable *hash, char *name, char *value)
+{
+    char *old_value;
+    if ((old_value = g_hash_table_lookup(hash, name)) == NULL) {
+        g_hash_table_insert(hash, StrDup(name), StrDup(value));
+    }
+    else {
+        char *new_value = (char *) xmalloc(strlen(old_value) + 1 +
+                                           strlen(value) + 1);
+        sprintf(new_value, "%s,%s", old_value, value);
+        g_hash_table_insert(hash, StrDup(name), new_value);
+    }
+}
+
 static	void
 GetArgs(void)
 {
 	char	name[SIZE_BUFF];
 	byte	value[SIZE_BUFF];
     char	*boundary;
+    char    *old_value;
 
 	if		(  ( ScanArgValue = getenv("QUERY_STRING") )  !=  NULL  ) {
 		while	(  ScanEnv(name,value)  ) {
-			if		(  g_hash_table_lookup(Values,name)  ==  NULL  ) {
-				g_hash_table_insert(Values,StrDup(name),StrDup(value));
-			}
+            StoreValue(Values, name, value);
 		}
 	}
     if ((boundary = GetMultipartBoundary(getenv("CONTENT_TYPE"))) != NULL) {
@@ -271,9 +285,7 @@ GetArgs(void)
     }
     else {
         while	(  ScanPost(name,value)  ) {
-            if		(  g_hash_table_lookup(Values,name)  ==  NULL  ) {
-                g_hash_table_insert(Values,StrDup(name),StrDup(value));
-            }
+            StoreValue(Values, name, value);
         }
     }
 	if		(  fCookie  ) {
@@ -561,6 +573,25 @@ SendEvent(void)
 				g_hash_table_insert(Values,rname,"TRUE");
 			}
 		}
+
+    void GetList(char *name) {
+        int i;
+        char buf[SIZE_ARG];
+        char *value, *p;
+
+        value = g_hash_table_lookup(Values, name);
+        p = value;
+        while (*p != '\0') {
+            i = atoi(p);
+            sprintf(buf, "%s[%d]", name, i);
+            g_hash_table_insert(Values, StrDup(buf), "TRUE");
+            while (isdigit(*p))
+                p++;
+            if (*p == ',')
+                p++;
+        }
+        g_hash_table_remove(Values, name);
+    }
 	
 	if		(  ( button = g_hash_table_lookup(Values,"_event") )  ==  NULL  ) {
 		event = "";
@@ -579,6 +610,7 @@ SendEvent(void)
 	}
 	if		(  htc  !=  NULL  ) {
 		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
+		g_hash_table_foreach(htc->List,(GHFunc)GetList,NULL);
 	}
 
 	HT_SendString(event);
@@ -713,7 +745,7 @@ main(
 	InitMessage("mon","@localhost");
 
 	InitNET();
-	HTCParserInit();
+	HTCParserInit(getenv("SCRIPT_NAME"));
 	Values = NewNameHash();
     Files = NewNameHash();
 	GetArgs();

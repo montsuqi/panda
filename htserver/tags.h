@@ -45,5 +45,5 @@ GLOBAL	GHashTable	*Tags;
 
 #undef	GLOBAL
 
-extern	void	TagsInit(void);
+extern	void	TagsInit(char *);
 #endif

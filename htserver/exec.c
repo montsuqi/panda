@@ -314,7 +314,7 @@ ParseName(
 	return	(buff);
 }
 
-static	char	*
+static char	*
 HTGetValue(
 	char		*name,
 	Bool		fClear)
@@ -428,6 +428,11 @@ dbgmsg(">ExecCode");
 				vval.ival = atoi(HTGetValue(vval.str,FALSE));
 				Push(vval);
 				break;
+			  case	OPC_HBNAME:
+				dbgmsg("OPC_HBNAME");
+				value = HTGetValue(TOP(1).str,FALSE);
+				TOP(1).ival = (stricmp(value,"TRUE") == 0);
+				break;
 			  case	OPC_HIVAR:
 				dbgmsg("OPC_HIVAR");
 				name = LBS_FetchPointer(htc->code);
@@ -451,7 +456,7 @@ dbgmsg(">ExecCode");
 			  case	OPC_REFINT:
 				dbgmsg("OPC_REFINT");
 				vval = Pop;
-				sprintf(buff,"%d",(vval.ptr)->ival);
+				sprintf(buff,"%d",vval.ival);
 				EmitWithEscape(html,buff);
 				break;
 			  case	OPC_ICONST:
@@ -468,6 +473,14 @@ dbgmsg(">ExecCode");
 				dbgmsg("OPC_STORE");
 				vval = Pop;
 				*(TOP(1).ptr) = vval;
+				break;
+			  case	OPC_LDVAR:
+				dbgmsg("OPC_LDVAR");
+				name = LBS_FetchPointer(htc->code);
+				if		(  name  ==  NULL  )	name = "";
+				var = g_hash_table_lookup(VarArea,name);
+                vval = *var;
+                Push(vval);
 				break;
 			  case	OPC_LEND:
 				dbgmsg("OPC_LEND");
@@ -502,14 +515,15 @@ dbgmsg(">ExecCode");
 			  case OPC_URLENC:
 			  {
                 int len;
-                char *s;
+                char *local, *encoded;
 
 				dbgmsg("OPC_URLENC");
 				vval = Pop;
-                len = EncodeStringLengthURL(vval.str);
-				s = (char *) xmalloc(len + 1);
-                EncodeStringURL(s, vval.str);
-                vval.str = s;
+                local = ConvLocal(vval.str);
+                len = EncodeStringLengthURL(local);
+				encoded = (char *) xmalloc(len + 1);
+                EncodeStringURL(encoded, local);
+                vval.str = encoded;
 				Push(vval);
 			  }
                 break;
