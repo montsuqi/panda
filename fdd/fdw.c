@@ -55,7 +55,7 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-static	char	*DriveName;
+static	char	*Command;
 static	char	*Host;
 static	char	*PortNumber;
 
@@ -106,7 +106,7 @@ ExecuteClient(
 #endif
 			fp = fopen(localname,"r");
 
-			sprintf(buff,"Drive: %s\n",DriveName);
+			sprintf(buff,"Command: %s\n",Command);
 			SendStringDelim(net,buff);
 			sprintf(buff,"Filename: %s\n",(( remotename != NULL ) ? remotename : localname));
 			SendStringDelim(net,buff);
@@ -144,8 +144,8 @@ ExecuteClient(
 }
 
 static	ARG_TABLE	option[] = {
-	{	"dev",		STRING,		TRUE,	(void*)&DriveName,
-		"ドライブ名"	 								},
+	{	"command",	STRING,		TRUE,	(void*)&Command,
+		"コマンド名"	 								},
 	{	"host",		STRING,		TRUE,	(void*)&Host,
 		"ホスト名"	 									},
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
@@ -171,7 +171,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	DriveName = "default";
+	Command = "default";
 	Host = "localhost";
 	PortNumber = IntStrDup(PORT_FDD);
 }

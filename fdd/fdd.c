@@ -66,7 +66,7 @@ Process(
 	char	buff[SIZE_BUFF+1];
 	char	*filename
 		,	*tempname
-		,	*drive;
+		,	*command;
 	size_t	size
 		,	left;
 	int		fd;
@@ -74,12 +74,12 @@ Process(
 	FILE	*fp;
 
 	filename = NULL;
-	drive = NULL;
+	command = NULL;
 	size = 0;
 	do {
 		if		(  ( fOK = RecvStringDelim(fpComm,SIZE_BUFF,buff) )  ) {
-			if		(  strlicmp(buff,"Drive: ")  ==  0  ) {
-				drive = StrDup(strchr(buff,' ')+1);
+			if		(  strlicmp(buff,"Command: ")  ==  0  ) {
+				command = StrDup(strchr(buff,' ')+1);
 			} else
 			if		(  strlicmp(buff,"Filename: ")  ==  0  ) {
 				filename = StrDup(strchr(buff,' ')+1);
@@ -112,9 +112,14 @@ Process(
 		left -= size;
 	}	while	(  left  >  0  );
 	fclose(fp);
-	printf("drive = [%s]\n",drive);
+#if	0
+	printf("command = [%s]\n",command);
 	printf("file  = [%s]\n",filename);
 	printf("temp  = [%s]\n",tempname);
+#endif
+	sprintf(buff,"%s %s %s",command,tempname,filename);
+	system(buff);
+	unlink(tempname);
   badio:;
 }
 
