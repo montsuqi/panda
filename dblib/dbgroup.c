@@ -276,6 +276,7 @@ TransactionStart(
 {
 	NewPool("Transaction");
 	ExecDBG_Operation(dbg,"DBSTART");
+	//ExecFunction(dbg,"DBSTART",TRUE);
 }
 
 extern	void
@@ -283,6 +284,7 @@ TransactionEnd(
 	DBG_Struct *dbg)
 {
 	ExecDBG_Operation(dbg,"DBCOMMIT");
+	//ExecFunction(dbg,"DBCOMMIT",TRUE);
 	ReleasePoolByName("Transaction");
 }
 
@@ -298,6 +300,22 @@ OpenRedirectDB(
 	DBG_Struct *dbg)
 {
 	ExecFunction(dbg,"DBOPEN",TRUE);
+}
+
+extern	void
+TransactionRedirectStart(
+	DBG_Struct *dbg)
+{
+	NewPool("Transaction");
+	ExecFunction(dbg,"DBSTART",TRUE);
+}
+
+extern	void
+TransactionRedirectEnd(
+	DBG_Struct *dbg)
+{
+	ExecFunction(dbg,"DBCOMMIT",TRUE);
+	ReleasePoolByName("Transaction");
 }
 
 extern	void

@@ -147,11 +147,11 @@ dbgmsg(">FileThread");
 		data = (LargeByteString *)DeQueue(FileQueue);
 		dbgmsg("de queue");
 		LBS_EmitEnd(data);
-		p = LBS_ToString(data);
+		p = LBS_Body(data);
 		if		(  ThisDBG->dbname  !=  NULL  )	{
-			TransactionStart(ThisDBG);
+			TransactionRedirectStart(ThisDBG);
 			ExecRedirectDBOP(ThisDBG,p);
-			TransactionEnd(ThisDBG);
+			TransactionRedirectEnd(ThisDBG);
 		}
 		BeginDB_Redirect(ThisDBG);
 		if		(  ThisDBG->redirectData  !=  NULL  ) {
@@ -169,7 +169,6 @@ dbgmsg(">FileThread");
 			fprintf(fp,"%s\n",p);
 			fflush(fp);
 		}
-		xfree(p);
 		count ++;
 		FreeLBS(data);
 	}
