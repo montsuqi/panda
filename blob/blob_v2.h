@@ -65,25 +65,34 @@ copies.
 
 #define	BODY_USE			0x40
 #define	BODY_SHORT			0x20
-#define	OBJ_MODE			0x0F
+#define	BODY_NOENT			0x10
 
 #define	IS_SHORTFORM(e)		((((e).flags)&BODY_SHORT) == BODY_SHORT)
+#define	IS_NOENT(e)			((((e).flags)&BODY_NOENT) == BODY_NOENT)
 #define	IS_FREEOBJ(e)		((((e).flags)&BODY_USE) == 0)
 #define	USE_OBJ(e)			(((e).flags)|=BODY_USE)
 #define	FREE_OBJ(e)			(((e).flags)&=~BODY_USE)
-#define	GET_BODYSIZE(e)		(((e).flags)&~PAGE_FLAGS)
-#define	SET_BODYSIZE(e,s)	(((e).flags)=(((e).size)&PAGE_FLAGS)|(s))
+#define	NOENT_OBJ(e)		(((e).flags)|=BODY_NOENT)
 
-#define	NODE_ELEMENTS(state)		((state)->space->pagesize / sizeof(pageno_t))
-#define	LEAF_ELEMENTS(state)		((state)->space->pagesize / sizeof(BLOB_V2_Entry))
-#define	LockBLOB(blob)				pthread_mutex_lock(&(blob)->mutex)
-#define	UnLockBLOB(blob)			pthread_mutex_unlock(&(blob)->mutex)
-#define	ReleaseBLOB(blob)			pthread_cond_signal(&(blob)->cond)
-#define	WaitBLOB(blod)				pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
+#define	PAGE_SIZE(state)		((state)->space->pagesize)
+#define	NODE_ELEMENTS(state)	(PAGE_SIZE(state) / sizeof(pageno_t))
+#define	LEAF_ELEMENTS(state)	(PAGE_SIZE(state) / sizeof(BLOB_V2_Entry))
+#define	LockBLOB(blob)			pthread_mutex_lock(&(blob)->mutex)
+#define	UnLockBLOB(blob)		pthread_mutex_unlock(&(blob)->mutex)
+#define	ReleaseBLOB(blob)		pthread_cond_signal(&(blob)->cond)
+#define	WaitBLOB(blod)			pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
 #define	SIZE_EXT			0x80000000
 #define	IS_EXT_SIZE(p)		(((p)&SIZE_EXT) == SIZE_EXT)
 #define	INPAGE_SIZE(p)		((p)&~SIZE_EXT)
+
+#define	OBJ_NODE			0x8000000000000000LL
+#define	OBJ_PAGE(s,p)		(((p)&~OBJ_NODE)/(s)->space->pagesize)
+#define	OBJ_OFF(s,p)		(((p)&~OBJ_NODE)%(s)->space->pagesize)
+#define	OBJ_POS(s,p,o)		((((p)&~OBJ_NODE)*(s)->space->pagesize)+(o))
+#define	OBJ_ADRS(p)			((p)&~OBJ_NODE)
+#define	OBJ_POINT_NODE(p)	((p)|=OBJ_NODE)
+#define	IS_OBJ_NODE(p)		(((p)&OBJ_NODE) == OBJ_NODE)
 
 #ifndef	objpos_t
 #define	objpos_t		uint64_t
@@ -99,6 +108,7 @@ typedef	struct {
 typedef	struct {
 	MonObjectType	obj;
 	byte			mode;
+	objpos_t		node;
 	objpos_t		head;
 	objpos_t		first;
 	objpos_t		last;

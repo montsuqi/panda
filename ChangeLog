@@ -1,3 +1,7 @@
+2004-09-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/blob_v2.c: BLOB全機能実装
+
 2004-08-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/mqthread.c: LDが変わってもSPAを忘れないようにした

@@ -47,19 +47,18 @@ copies.
 
 #define	BLOB_FILE	"test"
 
-#if	BLOB_VERSION == 2
-//#define	TEST_CREAT
-//#define	TEST_DESTROY
-//#define	OB_NUMBER	40000
-#define	OB_NUMBER	40
-#define	TEST_WRITE1
-#define	TEST_READ1
+#define	DIVIDE		40
+#define	OB_NUMBER	40000
+//#define	OB_NUMBER	20000
+//#define	OB_NUMBER	1000
+//#define	OB_NUMBER	20
 
-#else
-#define	TEST_WRITE
-#define	TEST_OPEN
-#define	OB_NUMBER	1000
-#endif
+#define	TEST_INIT
+//#define	TEST_CREAT
+//#define	TEST_DESTROY1
+//#define	TEST_READWRITE1
+#define	TEST_READWRITE2
+#define	TEST_DESTROY2
 
 extern	int
 main(
@@ -69,13 +68,16 @@ main(
 	BLOB_Space	*blob;
 	BLOB_State	*state;
 	MonObjectType	obj[OB_NUMBER];
+	MonObjectType	lo[2];
 	char	buff[SIZE_LONGNAME+1];
 	int		i
 		,	j
+		,	k
+		,	n
 		,	size;
 
 	InitMessage("testblob",NULL);
-#if	0
+#ifdef	TEST_INIT
 	blob = InitBLOB(BLOB_FILE);
 	sleep(1);
 	FinishBLOB(blob);
@@ -85,6 +87,7 @@ main(
 	state = ConnectBLOB(blob);
 	StartBLOB(state);
 	printf("** new(1) **\n");
+#ifdef	TEST_CREAT
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		obj[i] = NewBLOB(state,BLOB_OPEN_WRITE);
 		printf("main oid = %lld\n",obj[i]);
@@ -93,77 +96,131 @@ main(
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		CloseBLOB(state,obj[i]);
 	}
-#ifdef	TEST_CREAT
-	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
-		size = OpenBLOB(state,obj[i],BLOB_OPEN_READ);
-		printf("oid = %lld size = %d\n",obj[i],size);
-	}
 #endif
-#ifdef	TEST_DESTROY
-	for	( i = 30000 ; i < 35000 ; i ++ ) {
+#ifdef	TEST_DESTROY1
+	for	( i = OB_NUMBER / 4 ; i < ( OB_NUMBER * 3 ) / 4 ; i ++ ) {
 		DestroyBLOB(state,obj[i]);
 	}
-	for	( i = 0 ; i < 5000 ; i ++ ) {
+	for	( i = OB_NUMBER / 4 ; i < ( OB_NUMBER * 3 ) / 4 ; i ++ ) {
 		obj[i] = NewBLOB(state,BLOB_OPEN_WRITE);
 		printf("main oid = %lld\n",obj[i]);
 	}
 #endif
-#ifdef	TEST_WRITE1
-	printf("** test write(1) **\n");
-	OpenBLOB(state,obj[2],BLOB_OPEN_WRITE);
-	OpenBLOB(state,obj[3],BLOB_OPEN_WRITE);
+#ifdef	TEST_READWRITE1
+	printf("* test read/write(1) **\n");
+	printf("** write(1) **\n");
+	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE);
+	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE);
 	for	( i = 0 ; i < 200 ; i ++ ) {
 		for	( j = 0 ; j < 64 ; j ++ ) {
 			buff[j] = (j+i)%64+32;
 		}
-		WriteBLOB(state,obj[2],buff,64);
+		WriteBLOB(state,lo[0],buff,64);
 	}
-	CloseBLOB(state,obj[2]);
-	CloseBLOB(state,obj[3]);
-	printf("** test write(1) end **\n");
-#endif
-#ifdef	TEST_READ1
-	printf("** test read(1) **\n");
-	OpenBLOB(state,obj[2],BLOB_OPEN_READ);
+	CloseBLOB(state,lo[0]);
+	CloseBLOB(state,lo[1]);
+	printf("** write(1) end **\n");
+
+	printf("** read(1) **\n");
+	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
 	do {
-		size = ReadBLOB(state,obj[2],buff,64);
+		size = ReadBLOB(state,lo[0],buff,64);
 		buff[size] = 0;
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
-	CloseBLOB(state,obj[2]);
-	printf("** test read(1) end **\n");
-	printf("** test read(2) **\n");
-	OpenBLOB(state,obj[2],BLOB_OPEN_READ);
+	CloseBLOB(state,lo[0]);
+	printf("** read(1) end **\n");
+	printf("** read(2) **\n");
+	OpenBLOB(state,lo[1],BLOB_OPEN_READ);
 	do {
-		size = ReadBLOB(state,obj[2],buff,64);
+		size = ReadBLOB(state,lo[1],buff,64);
 		buff[size] = 0;
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
-	CloseBLOB(state,obj[2]);
-	printf("** test read(2) end **\n");
+	CloseBLOB(state,lo[1]);
+	printf("** read(2) end **\n");
 #endif
-#ifdef	TEST_WRITE2
+#ifdef	TEST_READWRITE2
+	printf("* test read/write(2) **\n");
+	printf("** open(1) **\n");
+#if	1
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
-		sprintf(buff,"%d\n%d\n",i,i);
-		WriteBLOB(state,obj[i],buff,strlen(buff));
+		obj[i] = NewBLOB(state,BLOB_OPEN_WRITE);
+		printf("main oid = %lld\n",obj[i]);
 	}
-	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
-		CloseBLOB(state,obj[i]);
-	}
-#endif
-#ifdef	TEST_OPEN
+#else
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		OpenBLOB(state,obj[i],BLOB_OPEN_WRITE);
 	}
-
-	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
-		sprintf(buff,"add %d\n",i);
-		WriteBLOB(state,obj[i],buff,strlen(buff));
+#endif
+	printf("** write(1) **\n");
+	n = OB_NUMBER / DIVIDE ;
+	for	( k = 0 ; k < DIVIDE ; k ++ ) {
+		for	( i = n * k ; i < n * ( k + 1 ) ; i ++ ) {
+			sprintf(buff,"add %d",i);
+			for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+				buff[j] = (j+i)%64+32;
+			}
+			buff[j] = 0;
+			printf("buff = [%s]\n",buff);
+			WriteBLOB(state,obj[i],buff,strlen(buff)+1);
+		}
+		printf("** close(1) **\n");
+		fprintf(stderr,"** close(1) **\n");
+		for	( i = n * k ; i < n * ( k + 1 ) ; i ++ ) {
+			CloseBLOB(state,obj[i]);
+		}
 	}
-
+	printf("** open(2) **\n");
+	fprintf(stderr,"** open(2) **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		OpenBLOB(state,obj[i],BLOB_OPEN_READ);
+	}
+	printf("** read(2) **\n");
+	fprintf(stderr,"** read(2) **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		size = ReadBLOB(state,obj[i],buff,SIZE_LONGNAME+1);
+		printf("%d = [%s]\n",size,buff);
+	}
+	printf("** close(2) **\n");
+	fprintf(stderr,"** close(2) **\n");
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		CloseBLOB(state,obj[i]);
 	}
+	printf("* test read/write(2) end **\n");
+#endif
+#ifdef	TEST_READWRITE2
+#ifdef	TEST_DESTROY2
+	printf("* test destroy(2) *\n");
+	fprintf(stderr,"* test destroy(2) *\n");
+	printf("** destroy(1) **\n");
+	fprintf(stderr,"** destroy(1) **\n");
+	for	( i = OB_NUMBER / 4 ; i < ( OB_NUMBER * 3 ) / 4 ; i ++ ) {
+		DestroyBLOB(state,obj[i]);
+	}
+	printf("** open(1) **\n");
+	fprintf(stderr,"** open(1) **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		size = OpenBLOB(state,obj[i],BLOB_OPEN_READ);
+		printf("%lld = %d\n",obj[i],size);
+	}
+	printf("** read **\n");
+	fprintf(stderr,"** read **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		size = ReadBLOB(state,obj[i],buff,SIZE_LONGNAME+1);
+		if		(  size  <  0  ) {
+			*buff = 0;
+		}
+		printf("(%d:%lld) %d = [%s]\n",i,obj[i],size,buff);
+	}
+	printf("** read end **\n");
+	fprintf(stderr,"** read end **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		CloseBLOB(state,obj[i]);
+	}
+	printf("* test destroy(2) end *\n");
+	fprintf(stderr,"* test destroy(2) end *\n");
+#endif
 #endif
 	CommitBLOB(state);
 	DisConnectBLOB(state);

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -85,6 +85,8 @@ ENTER_FUNC;
 	if		(  ( ret = xmalloc(blob->pagesize) )  !=  NULL  ) {
 		fseek(blob->fp,page*blob->pagesize,SEEK_SET);
 		fread(ret,blob->pagesize,1,blob->fp);
+	} else {
+		fprintf(stderr,"memory empty\n");
 	}
 #endif
 LEAVE_FUNC;
@@ -124,8 +126,6 @@ ENTER_FUNC;
 	if		(  ( ent = (BLOB_V2_Page *)g_hash_table_lookup(state->pages,&page) )
 			   !=  NULL  ) {
 		ent->fUpdate = TRUE;
-	} else {
-		dbgmsg("*");
 	}
 LEAVE_FUNC;
 }
@@ -167,8 +167,8 @@ LEAVE_FUNC;
 	return	(ent);
 }
 
-extern	void
-ReleasePage(
+static	void
+_ReleasePage(
 	BLOB_V2_State	*state,
 	pageno_t		page)
 {
@@ -188,6 +188,53 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+extern	pageno_t
+GetFreePage(
+	BLOB_V2_State	*state)
+{
+	BLOB_V2_Space	*blob;
+	pageno_t		no;
+	int				i;
+
+ENTER_FUNC;
+	blob = state->space;
+	no = 0;
+	for	( i = 0 ; i < blob->pagesize / sizeof(pageno_t) ; i ++ ) {
+		if		(  blob->freedata[i]  !=  0  ) {
+			no = blob->freedata[i];
+			blob->freedata[i] = 0;
+			WritePage(state->space,state->space->freedata,
+					  state->space->freedatapage);
+			break;
+		}
+	}
+	if		(  no  ==  0  ) {
+		no = NewPage(state);
+	}
+LEAVE_FUNC;
+	return	(no);
+}
+
+extern	void
+ReturnPage(
+	BLOB_V2_State	*state,
+	pageno_t		no)
+{
+	BLOB_V2_Space	*blob;
+	int				i;
+
+ENTER_FUNC;
+	blob = state->space;
+	for	( i = 0 ; i < blob->pagesize / sizeof(pageno_t) ; i ++ ) {
+		if		(  blob->freedata[i]  ==  0  ) {
+			blob->freedata[i] = no;
+			break;
+		}
+	}
+	WritePage(state->space,state->space->freedata,state->space->freedatapage);
+LEAVE_FUNC;
+}
+
 extern	Bool
 StartBLOB_V2(
 	BLOB_V2_State	*state)
@@ -201,6 +248,7 @@ ENTER_FUNC;
 	ReleaseBLOB(state->space);
 	state->tid = tid;
 	state->oTable = NewLLHash();
+	state->pages = NewLLHash();
 LEAVE_FUNC;
 	return	(TRUE);
 }
@@ -218,6 +266,17 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+_SyncPage(
+	pageno_t		*page,
+	BLOB_V2_Page	*ent,
+	BLOB_V2_State	*state)
+{
+ENTER_FUNC;
+	_ReleasePage(state,*page);
+LEAVE_FUNC;
+}
+
 extern	Bool
 CommitBLOB_V2(
 	BLOB_V2_State	*state)
@@ -226,6 +285,9 @@ ENTER_FUNC;
 	state->tid = 0;
 	g_hash_table_foreach(state->oTable,(GHFunc)SyncObject,state);
 	g_hash_table_destroy(state->oTable);
+	state->oTable = NULL;
+	g_hash_table_foreach(state->pages,(GHFunc)_SyncPage,state);
+	g_hash_table_destroy(state->pages);
 	state->oTable = NULL;
 LEAVE_FUNC;
 	return	(TRUE);
@@ -345,7 +407,7 @@ ConnectBLOB_V2(
 	ret = New(BLOB_V2_State);
 	ret->space = blob;
 	ret->tid = 0;
-	ret->pages = NewLLHash();
+	ret->pages = NULL;
 	return	(ret);
 }
 
