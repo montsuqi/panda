@@ -90,11 +90,11 @@ FinishSession(
 	SessionData	*data)
 {
 	char	name[SIZE_NAME+1];
-	char	msg[SIZE_BUFF];
+	char	msg[SIZE_LONGNAME+1];
 	int		i;
 
 ENTER_FUNC;
-	sprintf(msg,"[%s:%s] session end",data->hdr->term,data->hdr->user);
+	snprintf(msg,SIZE_LONGNAME,"[%s:%s] session end",data->hdr->term,data->hdr->user);
 	MessageLog(msg);
 	xfree(data->hdr);
 	if		(  data->name  !=  NULL  ) {
@@ -132,7 +132,7 @@ ENTER_FUNC;
 	ON_IO_ERROR(fp,badio);
 	RecvStringDelim(fp,SIZE_NAME,data->hdr->term);		ON_IO_ERROR(fp,badio);
 	RecvStringDelim(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
-	sprintf(msg,"[%s:%s] session start",data->hdr->term,data->hdr->user);
+	snprintf(msg,SIZE_LONGNAME,"[%s:%s] session start",data->hdr->term,data->hdr->user);
 	MessageLog(msg);
 	dbgprintf("term = [%s]",data->hdr->term);
 	dbgprintf("user = [%s]",data->hdr->user);
@@ -168,7 +168,8 @@ ENTER_FUNC;
 		data->hdr->puttype = TO_CHAR(SCREEN_NULL);
 		data->w.n = 0;
 	} else {
-		sprintf(msg,"[%s] session fail LD [%s] not found.",data->hdr->term,buff);
+		snprintf(msg,SIZE_LONGNAME,
+				 "[%s] session fail LD [%s] not found.",data->hdr->term,buff);
 		MessageLog(msg);
 	  badio:
 		SendPacketClass(fp,WFC_NOT);
