@@ -107,6 +107,7 @@ static	TokenTable	tokentable[] = {
 	{	"HAVING",		T_SQL	},
 	{	"HOUR_P",		T_SQL	},
 	{	"IN",			T_SQL	},
+	{	"INNER",		T_SQL	},
 	{	"INNER_P",		T_SQL	},
 	{	"INSENSITIVE",	T_SQL	},
 	{	"INSERT",		T_INSERT	},
