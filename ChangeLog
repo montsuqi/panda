@@ -1,3 +1,7 @@
+2003-04-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* src/LBSfunc.h: asizeの管理を追加、sizeは「使った大きさ」にした
+
 2003-04-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/wfc.c (PutAPS): spa二重送り修正

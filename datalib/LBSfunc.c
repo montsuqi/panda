@@ -35,7 +35,7 @@ copies.
 #include	<math.h>
 
 #include	"types.h"
-#include	"const.h"
+#include	"value.h"
 #include	"misc.h"
 #include	"LBSfunc.h"
 #include	"debug.h"
@@ -48,6 +48,7 @@ NewLBS(void)
 	lbs = New(LargeByteString);
 	lbs->ptr = 0;
 	lbs->size = 0;
+	lbs->asize = 0;
 	lbs->body = NULL;
 
 	return	(lbs);
@@ -73,7 +74,7 @@ LBS_RequireSize(
 {
 	byte	*body;
 
-	if		(  lbs->size  <  size  ) {
+	if		(  lbs->asize  <  size  ) {
 		body = (byte *)xmalloc(size);
 		if		(  fKeep  ) {
 			memcpy(body,lbs->body,lbs->size);
@@ -83,6 +84,7 @@ LBS_RequireSize(
 		}
 		lbs->body = body;
 		lbs->size = size;
+		lbs->asize = size;
 	}
 	lbs->ptr = size;
 }
@@ -152,8 +154,9 @@ LBS_EmitStart(
 	LargeByteString	*lbs)
 {
 	lbs->ptr = 0;
-	if		(  lbs->size  >  0  ) {
-		memclear(lbs->body,lbs->size);
+	lbs->size = 0;
+	if		(  lbs->asize  >  0  ) {
+		memclear(lbs->body,lbs->asize);
 	}
 }
 
@@ -164,17 +167,18 @@ LBS_Emit(
 {
 	byte	*body;
 
-	if		(  lbs->ptr  ==  lbs->size  ) {
-		lbs->size += SIZE_GLOWN;
-		body = (byte *)xmalloc(lbs->size);
+	if		(  lbs->ptr  ==  lbs->asize  ) {
+		lbs->asize += SIZE_GLOWN;
+		body = (byte *)xmalloc(lbs->asize);
 		if		(  lbs->body  !=  NULL  ) {
-			memcpy(body,lbs->body,lbs->ptr);
+			memcpy(body,lbs->body,lbs->size);
 			xfree(lbs->body);
 		}
 		lbs->body = body;
 	}
 	lbs->body[lbs->ptr] = code;
 	lbs->ptr ++;
+	lbs->size ++;
 }
 
 extern	void
@@ -229,16 +233,16 @@ LBS_EmitFix(
 {
 	byte	*body;
 
-	if		(  lbs->ptr  >  0  ) {
-		body = (byte *)xmalloc(lbs->ptr);
-		memcpy(body,lbs->body,lbs->ptr);
+	if		(  lbs->size  >  0  ) {
+		body = (byte *)xmalloc(lbs->size);
+		memcpy(body,lbs->body,lbs->size);
 		xfree(lbs->body);
 		lbs->body = body;
 	} else {
 		xfree(lbs->body);
 		lbs->body = NULL;
 	}
-	lbs->size = lbs->ptr;
+	lbs->asize = lbs->size;
 	lbs->ptr = 0;
 }
 

@@ -40,6 +40,7 @@ copies.
 #include	<sys/wait.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
+#include	<string.h>
 #include	<glib.h>
 
 #include	"types.h"
@@ -61,6 +62,7 @@ AuthUser(
 	int		fh;
 	FILE	*fp;
 	Bool	rc;
+	char	buff[SIZE_OTHER+1];
 
 dbgmsg(">AuthUser");
 #ifdef	DEBUG
@@ -80,7 +82,10 @@ dbgmsg(">AuthUser");
 		SendString(fp,pass);
 		fflush(fp);
 		if		(  ( rc = RecvBool(fp) )  ) {
-			RecvString(fp,other);
+			RecvString(fp,buff);
+			if		(  other  !=  NULL  ) {
+				strcpy(other,buff);
+			}
 		}
 		fclose(fp);
 		shutdown(fh,2);
