@@ -39,5 +39,6 @@ copies.
 #endif
 
 extern	int		VersionBLOB(char *space);
+extern	GHashTable	*NewLLHash(void);
 
 #endif

@@ -52,6 +52,9 @@ copies.
 #define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
 #define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
+#define	BLOB_OPEN_CREATE	0x01
+#define	BLOB_OPEN_APPEND	0x08
+
 static	size_t
 OpenEntry(
 	BLOB_V1_Entry	*ent,
@@ -67,11 +70,15 @@ ENTER_FUNC;
 	snprintf(longname,SIZE_LONGNAME+1,"%s/%lld",ent->blob->space,ent->oid);
 
 	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
+#if	1
+		flag = O_CREAT | O_APPEND | O_TRUNC;
+#else
 		if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
 			flag = O_CREAT;
 		} else {
 			flag = (  ( mode & BLOB_OPEN_APPEND )  !=  0  )  ? O_APPEND : O_TRUNC;
 		}
+#endif
 		if		(  ( mode & BLOB_OPEN_READ )  !=  0  ) {
 			flag |= O_RDWR;
 		} else {

@@ -434,6 +434,12 @@ td {
         <xsl:text>:</xsl:text>
         <xsl:value-of select="./name"/>
       </xsl:attribute>
+      <xsl:attribute name="state">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.state</xsl:text>
+      </xsl:attribute>
       <xsl:attribute name="face">
         <xsl:choose>
           <xsl:when test="./label">
