@@ -371,15 +371,14 @@ CheckFeture(
 		,	*n;
 
 	TermFeture = FETURE_NULL;
-	if		(	(  strlcmp(ver,"1.2")    ==  0  )
+	if		(  strlcmp(ver,"1.2")    ==  0  ) {
+		TermFeture |= FETURE_CORE;
+	} else
+	  if	(	(  strlcmp(ver,"1.1.1")  ==  0  )
 			||	(  strlcmp(ver,"1.1.2")  ==  0  ) ) {
 		TermFeture |= FETURE_CORE;
-	} else
-	if		(  strlcmp(ver,"1.1.1")  ==  0  )	{
-		TermFeture |= FETURE_CORE;
 		TermFeture |= FETURE_OLD;
-	} else
-	if		(  !strlicmp(ver,"symbolic")  ) {
+	} else {
 		TermFeture = FETURE_CORE;
 		if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
 			p ++;

@@ -406,7 +406,15 @@ GL_SendValue(
 		GL_SendInt(fp,ValueRecordSize(value),fNetwork);
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
 			GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-			GL_SendValue(fp,ValueRecordItem(value,i),coding,fExpand,fNetwork);
+			if		(  fFetureOld  ) {
+				if		(	(  stricmp(ValueRecordName(value,i),"row")     ==  0  )
+						||	(  stricmp(ValueRecordName(value,i),"column")  ==  0  ) )	{
+				} else {
+					GL_SendValue(fp,ValueRecordItem(value,i),coding,fExpand,fNetwork);
+				}
+			} else {
+				GL_SendValue(fp,ValueRecordItem(value,i),coding,fExpand,fNetwork);
+			}
 		}
 		break;
 	  default:
