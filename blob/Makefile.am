@@ -10,6 +10,7 @@ libpandablobincludedir = $(includedir)/panda
 libpandablobinclude_HEADERS =	\
 	blob_v1.h					\
 	blob_v2.h					\
+	lock.h						\
 	storage.h					\
 	page.h						\
 	oseki.h						\

@@ -41,7 +41,7 @@ copies.
 
 #include	"types.h"
 #include	"libmondai.h"
-#include	"coreobj.h"
+#include	"lock.h"
 #include	"page.h"
 #include	"pagestruct.h"
 #include	"table.h"
@@ -66,30 +66,6 @@ typedef struct	{
 	pthread_cond_t	cond;
 }	CommonBuffer;
 
-extern	pageno_t
-NewPage(
-	OsekiSession	*state)
-{
-	pageno_t	page;
-	byte		zero;
-	int			i;
-
-ENTER_FUNC;
-	Lock(state->space);
-	page = state->space->upages;
-	state->space->upages ++;
-	fseek(state->space->fp,0,SEEK_END);
-	zero = 0;
-	for	( i = 0 ; i < state->space->pagesize ; i ++ ) {
-		fwrite(&zero,1,1,state->space->fp);
-	}
-	fflush(state->space->fp);
-	dbgprintf("new page = %lld\n",page);
-	UnLock(state->space);
-LEAVE_FUNC;
-	return	(page);
-}
-
 static	void	*
 NewPageBuffer(
 	OsekiSpace	*space)
@@ -99,6 +75,34 @@ NewPageBuffer(
 	ret = xmalloc(space->pagesize);
 
 	return	(ret);
+}
+
+extern	pageno_t
+NewPage(
+	OsekiSession	*state)
+{
+	CommonBuffer	*cb;
+	pageno_t	page;
+
+ENTER_FUNC;
+	Lock(state->space);
+	page = state->space->upages;
+	state->space->upages ++;
+	cb = New(CommonBuffer);
+	cb->page = page;
+	cb->old = NULL;
+	cb->update = NULL;
+	cb->current = NewPageBuffer(state->space);
+	memclear(cb->current,state->space->pagesize);
+	cb->utid = 0;
+	cb->ltid = 0;
+	cb->cRef = 0;
+	InitLock(cb);
+	g_hash_table_insert(state->space->pages,&cb->page,cb);
+	UnLock(state->space);
+	dbgprintf("new page = %lld\n",page);
+LEAVE_FUNC;
+	return	(page);
 }
 
 static	void	*
@@ -209,10 +213,8 @@ ENTER_FUNC;
 	space = state->space;
 	if		(  ( cb = SearchCommonBuffer(space,page) )
 			   !=  NULL  ) {
-dbgmsg("*");
 		Lock(cb);
 		if		(  cb->update  ==  NULL  ) {
-dbgmsg("*");
 			cb->old = cb->current;
 			cb->current = NULL;
 			cb->update = NewPageBuffer(space);
@@ -281,20 +283,25 @@ GetPage(
 	pageno_t		page)
 {
 	PageInfo	*ent;
+	void		*ret;
 
 ENTER_FUNC;
 	dbgprintf("get page = %lld\n",page);
-	if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
-			   ==  NULL  ) {
-dbgmsg("*");
-		ent = New(PageInfo);
-		ent->fUpdate = FALSE;
-		ent->page = page;
-		ent->body = GetCommonPage(state,page);
-		g_hash_table_insert(state->pages,&ent->page,ent);
+	if		(  page  <  state->space->upages  ) {
+		if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
+				   ==  NULL  ) {
+			ent = New(PageInfo);
+			ent->fUpdate = FALSE;
+			ent->page = page;
+			ent->body = GetCommonPage(state,page);
+			g_hash_table_insert(state->pages,&ent->page,ent);
+		}
+		ret = ent->body;
+	} else {
+		ret = NULL;
 	}
 LEAVE_FUNC;
-	return	(ent->body);
+	return	(ret);
 }
 
 extern	void	*
@@ -308,7 +315,6 @@ UpdatePage(
 ENTER_FUNC;
 	if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
 			   !=  NULL  ) {
-dbgmsg("*");
 		if		(  !ent->fUpdate  ) {
 			ent->fUpdate = TRUE;
 			ret = UpdateCommonPage(state,page);
@@ -477,14 +483,16 @@ ENTER_FUNC;
 		space->file = StrDup(file);
 		space->fp = fp;
 		space->pagesize = head.pagesize;
-		space->upages = head.pages;
-		space->level = head.level;
 		mul = 1;
 		for	( i = 0 ; i < MAX_PAGE_LEVEL ; i ++ ) {
-			space->pos[i] = head.pos[i];
 			space->mul[i] = mul;
 			mul *= head.pagesize / sizeof(pageno_t);
 		}
+		for	( i = 0 ; i < MAX_PAGE_LEVEL ; i ++ ) {
+			space->pos[i] = head.pos[i];
+		}
+		space->upages = head.pages;
+		space->level = head.level;
 		space->freedata = ReadPage(space,head.freedata);
 		space->freedatapage = head.freedata;
 		space->freepage = NewLLHash();

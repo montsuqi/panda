@@ -249,7 +249,7 @@ main(
 			CloseBLOB(state,obj[i]);
 		}
 	}
-	//	AbortBLOB(state);
+	//AbortBLOB(state);
 	CommitBLOB(state);
 	StartBLOB(state);
 	printf("** open(1) **\n");

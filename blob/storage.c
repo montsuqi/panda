@@ -40,7 +40,7 @@ copies.
 #include	"types.h"
 #include	"libmondai.h"
 #include	"pagestruct.h"
-#include	"coreobj.h"
+#include	"lock.h"
 #include	"storage.h"
 #include	"table.h"
 #include	"page.h"
