@@ -309,6 +309,7 @@ LIBS="$old_LIBS"
 AC_OUTPUT(Makefile
 	  Doc/Makefile
 	  libs/Makefile
+	  datalib/Makefile
 	  dblib/Makefile
 	  dbstuff/Makefile
 	  cobol/Makefile

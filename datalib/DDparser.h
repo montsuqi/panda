@@ -28,4 +28,14 @@ extern	void	ValueAddRecordItem(ValueStruct *upper, char *name, ValueStruct *valu
 
 extern	void			 DD_ParserInit(void);
 extern	RecordStruct	*DD_ParserDataDefines(char *name);
+
+#undef	GLOBAL
+#ifdef	_DD_PARSER
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+GLOBAL	char	*RecordDir;
+
 #endif

@@ -32,6 +32,7 @@ typedef	struct {
 extern	void	EnterDB_Function(char *name, DB_OPS *ops, char *commentStart, char *commentEnd);
 extern	void	InitDBG(void);
 extern	void	SetUpDBG(void);
+extern	void	InitDB_Process(void);
 extern	void	ExecDBG_Operation(DBG_Struct *dbg, char *name);
 extern	void	ExecDBOP(DBG_Struct *dbg, char *sql);
 extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec);

@@ -32,7 +32,6 @@ copies.
 
 GLOBAL	char	*BaseDir;
 GLOBAL	char	*ScreenDir;
-GLOBAL	char	*RecordDir;
 GLOBAL	char	*DirectoryDir;
 GLOBAL	char	*PasswordFile;
 GLOBAL	char	*LD_Dir;

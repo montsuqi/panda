@@ -1,6 +1,7 @@
 INCLUDES	=		\
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
+	-I$(top_srcdir)/datalib	\
 	-I$(top_srcdir)/libs	\
 	$(THE_FLAGS)			\
 	$(XML_CFLAGS)			\
@@ -12,7 +13,8 @@ bin_PROGRAMS = glclient
 glclient_LDADD	= 	\
 	$(GLADE_LIBS) $(PANDA_LIBS)	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm	-lpthread \
-	-L$(top_srcdir)/libs -lpandac
+	-L$(top_srcdir)/libs -lpandac	\
+	-L$(top_srcdir)/datalib -lpandad
 
 
 glclient_SOURCES	=	\

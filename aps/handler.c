@@ -46,13 +46,6 @@ copies.
 #include	"BDparser.h"
 #include	"debug.h"
 
-#ifdef	HAVE_POSTGRES
-#include	"Postgres.h"
-#endif
-#ifdef	USE_SHELL
-#include	"Shell.h"
-#endif
-
 #ifdef	HAVE_DOTCOBOL
 #include	"dotCOBOL.h"
 #endif
@@ -146,19 +139,6 @@ extern	void
 ReadyDC(void)
 {
 	g_hash_table_foreach(HandlerTable,(GHFunc)_ReadyDC,NULL);
-}
-
-static	void
-InitDB_Process(void)
-{
-	InitDBG();
-#ifdef	HAVE_POSTGRES
-	InitPostgres();
-#endif
-#ifdef	USE_SHELL
-	InitShellOperation();
-#endif
-	SetUpDBG();
 }
 
 static	void

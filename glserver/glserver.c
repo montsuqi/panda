@@ -41,6 +41,7 @@ copies.
 #include	"misc.h"
 #include	"glserver.h"
 #include	"dirs.h"
+#include	"DDparser.h"
 #include	"pandaIO.h"
 #include	"option.h"
 #include	"debug.h"

@@ -57,8 +57,12 @@ extern	void
 FreeLBS(
 	LargeByteString	*lbs)
 {
-	xfree(lbs->body);
-	xfree(lbs);
+	if		(  lbs  !=  NULL  ) {
+		if		(  lbs->body  !=  NULL  ) {
+			xfree(lbs->body);
+		}
+		xfree(lbs);
+	}
 }
 
 extern	void

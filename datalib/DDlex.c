@@ -34,9 +34,9 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"misc.h"
-#include	"dirs.h"
 #include	"value.h"
 #include	"DDlex.h"
+#include	"DDparser.h"
 #include	"debug.h"
 
 typedef	struct	INCFILE_S	{
@@ -125,7 +125,11 @@ dbgmsg(">DoInclude");
 	back->cLine = DD_cLine;
 	ftop = back;
 	fclose(DD_File);
-	strcpy(buff,RecordDir);
+	if		(  RecordDir  !=  NULL  ) {
+		strcpy(buff,RecordDir);
+	} else {
+		strcpy(buff,".");
+	}
 	p = buff;
 	do {
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {

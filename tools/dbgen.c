@@ -19,11 +19,11 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
-*/
 #define	MAIN
+/*
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -40,9 +40,7 @@ copies.
 #include	"misc.h"
 #include	"const.h"
 #include	"enum.h"
-#include	"wfc.h"
-#include	"directory.h"
-#include	"driver.h"
+#include	"DDparser.h"
 #include	"dirs.h"
 #include	"option.h"
 #include	"debug.h"

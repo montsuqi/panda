@@ -13,6 +13,7 @@ aps_LDADD 		=	\
 	-L/usr/lib -lglib -lm -ldl -lpthread	\
 	$(FIXED_LIBS)		\
 	-L$(top_srcdir)/libs -lpanda -li18n $(OPENCOBOL_LIBS)	\
+	-L$(top_srcdir)/datalib -lpandad	\
 	-L$(top_srcdir)/dblib -lpandadb	\
 	MCPSUB.la
 
@@ -21,7 +22,9 @@ dbstub_LDADD 		=	\
 	-L/usr/lib -lglib -lm -ldl -lpthread \
 	$(FIXED_LIBS)		\
 	-L$(top_srcdir)/libs -lpanda $(OPENCOBOL_LIBS)	\
+	-L$(top_srcdir)/datalib -lpandad	\
 	-L$(top_srcdir)/dblib -lpandadb	\
+	-L$(top_srcdir)/datalib -lpandad	\
 	MCPSUB.la
 
 MCPSUB_la_LIBADD	=
@@ -31,6 +34,7 @@ INCLUDES 			= \
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
+	-I$(top_srcdir)/datalib	\
 	$(OPENCOBOL_CFLAGS)	\
 	$(FIXED_CFLAGS)		\
 	$(GNOME_INCLUDEDIR)
@@ -50,6 +54,9 @@ aps_SOURCES	=	\
 
 aps_DEPENDENCIES	=	\
 	defaults.h			\
+	$(top_srcdir)/libs/libpanda.la	\
+	$(top_srcdir)/datalib/libpandad.la	\
+	$(top_srcdir)/dblib/libpandadb.la
 	MCPSUB.la
 
 dbstub_SOURCES	=	\
@@ -59,7 +66,9 @@ dbstub_SOURCES	=	\
 
 dbstub_DEPENDENCIES	=	\
 	MCPSUB.la			\
-	../dblib/libpandadb.la
+	$(top_srcdir)/libs/libpanda.la	\
+	$(top_srcdir)/datalib/libpandad.la	\
+	$(top_srcdir)/dblib/libpandadb.la
 
 MCPSUB_la_SOURCES	=	\
 	MCPSUB.c			\

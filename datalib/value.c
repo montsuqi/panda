@@ -38,8 +38,6 @@ copies.
 #include	"types.h"
 #include	"misc.h"
 #include	"value.h"
-#include	"glterm.h"
-#include	"comm.h"
 #include	"debug.h"
 
 #define	NUM_BUFF	60

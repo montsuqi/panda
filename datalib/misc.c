@@ -327,7 +327,11 @@ PrintFixString(
 {	int		i;
 
 	for	( i = 0 ; i < len ; i ++ )	{
-		putchar(*s);
+		if		(  *s  ==  0  ) {
+			putchar('.');
+		} else {
+			putchar(*s);
+		}
 		s ++;
 	}
 }

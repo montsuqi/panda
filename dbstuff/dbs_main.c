@@ -67,21 +67,6 @@ static	int			Back;
 static	char	*Directory;
 
 static	void
-InitDB_Process(void)
-{
-dbgmsg(">InitDB_Process");
-	InitDBG();
-#ifdef	HAVE_POSTGRES
-	InitPostgres();
-#endif
-#ifdef	USE_SHELL
-	InitShellOperation();
-#endif
-	SetUpDBG();
-dbgmsg("<InitDB_Process");
-}
-
-static	void
 InitSystem(
 	char	*name)
 {

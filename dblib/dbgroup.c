@@ -37,6 +37,13 @@ copies.
 #include	<unistd.h>
 #include	<glib.h>
 
+#ifdef	HAVE_POSTGRES
+#include	"Postgres.h"
+#endif
+#ifdef	USE_SHELL
+#include	"Shell.h"
+#endif
+
 #include	"types.h"
 #include	"value.h"
 #include	"misc.h"
@@ -207,3 +214,19 @@ dbgmsg(">ExecDB_Process");
 	}
 dbgmsg("<ExecDB_Process");
 }
+
+extern	void
+InitDB_Process(void)
+{
+dbgmsg(">InitDB_Process");
+	InitDBG();
+#ifdef	HAVE_POSTGRES
+	InitPostgres();
+#endif
+#ifdef	USE_SHELL
+	InitShellOperation();
+#endif
+	SetUpDBG();
+dbgmsg("<InitDB_Process");
+}
+

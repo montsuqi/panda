@@ -4,15 +4,18 @@ sbin_PROGRAMS = glserver glauth
 
 glserver_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl	\
+	-L$(top_srcdir)/datalib -lpandad	\
 	-L$(top_srcdir)/libs -lpandas
 glauth_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lcrypt	\
+	-L$(top_srcdir)/datalib -lpandad	\
 	-L$(top_srcdir)/libs -lpandas
 
 INCLUDES 			= \
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
+	-I$(top_srcdir)/datalib	\
 	$(POSTGRES_CFLAGS)	\
 	$(GNOME_INCLUDEDIR) \
 	$(FIXED_CFLAGS)

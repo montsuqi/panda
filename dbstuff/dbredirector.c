@@ -227,21 +227,6 @@ DumpDBG(
 }
 #endif
 
-static	void
-InitDB_Process(void)
-{
-dbgmsg(">InitDB_Process");
-	InitDBG();
-#ifdef	HAVE_POSTGRES
-	InitPostgres();
-#endif
-#ifdef	USE_SHELL
-	InitShellOperation();
-#endif
-	SetUpDBG();
-dbgmsg("<InitDB_Process");
-}
-
 extern	void
 InitSystem(
 	char	*name)

@@ -18,6 +18,6 @@ clean: subclean
 	rm -f *~
 
 suball:
-	set -e; for i in $(SUBDIRS); do $(MAKE) -f Makefile.OC -C $$i all; done
+	set -e; for i in $(SUBDIRS); do $(MAKE) -f Makefile.dotCOBOL -C $$i all; done
 subclean:
-	set -e; for i in $(SUBDIRS); do $(MAKE) -f Makefile.OC -C $$i clean; done
+	set -e; for i in $(SUBDIRS); do $(MAKE) -f Makefile.dotCOBOL -C $$i clean; done

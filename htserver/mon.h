@@ -24,6 +24,7 @@ copies.
 typedef	struct {
 	LargeByteString	*code;
 	GHashTable	*Trans;
+	GHashTable	*Radio;
 }	HTCInfo;
 
 #undef	GLOBAL
@@ -38,6 +39,7 @@ GLOBAL	Bool		fGet;
 GLOBAL	Bool		fDump;
 GLOBAL	Bool		fCookie;
 GLOBAL	char		*ScreenDir;
+GLOBAL	char		*RecordDir;
 
 #undef	GLOBAL
 extern	void	HT_SendString(char *str);
