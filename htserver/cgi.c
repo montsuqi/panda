@@ -417,7 +417,10 @@ GetArgs(void)
 ENTER_FUNC;
 	Values = NewNameHash();
     Files = NewNameHash();
-	if		(  ( env = getenv("QUERY_STRING") )  !=  NULL  ) {
+	if		(  ( env  =  CommandLine )  ==  NULL  ) {
+		env = getenv("QUERY_STRING");
+	}
+	if		(  env  !=  NULL  ) {
 		StartScanEnv(env);
 		while	(  ScanEnv(name,value)  ) {
 			dbgprintf("var name = [%s]\n",name);
@@ -431,36 +434,38 @@ ENTER_FUNC;
 			}
 		}
 	}
-    if ((boundary = GetMultipartBoundary(getenv("CONTENT_TYPE"))) != NULL) {
-        if (ParseMultipart(stdin, boundary, Values, Files) < 0) {
-            fprintf(stderr, "malformed multipart/form-data\n");
-            exit(1);
-        }
-    } else {
-        while	(  ScanPost(name,value)  ) {
-			dbgprintf("var name = [%s]\n",name);
-			if		(  ( val = LoadValue(name) )  !=  NULL  ) {
-				str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
-				sprintf(str,"%s,%s",val,value);
-				SaveValue(name, str,FALSE);
-				xfree(str);
-			} else {
-				SaveValue(name, value,FALSE);
+	if		(  CommandLine  ==  NULL  ) {
+		if ((boundary = GetMultipartBoundary(getenv("CONTENT_TYPE"))) != NULL) {
+			if (ParseMultipart(stdin, boundary, Values, Files) < 0) {
+				fprintf(stderr, "malformed multipart/form-data\n");
+				exit(1);
 			}
-        }
-    }
-	if		(  fCookie  ) {
-		if		(  ( env = getenv("HTTP_COOKIE") )  !=  NULL  ) {
-			StartScanEnv(env);
-			while	(  ScanEnv(name,value)  ) {
+		} else {
+			while	(  ScanPost(name,value)  ) {
 				dbgprintf("var name = [%s]\n",name);
 				if		(  ( val = LoadValue(name) )  !=  NULL  ) {
 					str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
 					sprintf(str,"%s,%s",val,value);
-					SaveValue(name,str,FALSE);
+					SaveValue(name, str,FALSE);
 					xfree(str);
 				} else {
 					SaveValue(name, value,FALSE);
+				}
+			}
+		}
+		if		(  fCookie  ) {
+			if		(  ( env = getenv("HTTP_COOKIE") )  !=  NULL  ) {
+				StartScanEnv(env);
+				while	(  ScanEnv(name,value)  ) {
+					dbgprintf("var name = [%s]\n",name);
+					if		(  ( val = LoadValue(name) )  !=  NULL  ) {
+						str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
+						sprintf(str,"%s,%s",val,value);
+						SaveValue(name,str,FALSE);
+						xfree(str);
+					} else {
+						SaveValue(name, value,FALSE);
+					}
 				}
 			}
 		}

@@ -91,6 +91,7 @@ SetDefault(void)
 	fDump = FALSE;
 	fGet = FALSE;
 	fCookie = FALSE;
+	CommandLine = NULL;
 }
 
 static	void

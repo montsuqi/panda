@@ -46,7 +46,7 @@ GLOBAL	Bool		fCookie;
 GLOBAL	Bool		fDump;
 GLOBAL	Bool		fJavaScriptLink;
 GLOBAL	char		*SesDir;
-
+GLOBAL	char		*CommandLine;
 #undef	GLOBAL
 
 extern	char	*ConvUTF8(char *istr, char *code);
