@@ -1,5 +1,6 @@
 .deps
 .libs
 Makefile
+Makefile.in
 htserver
 mon

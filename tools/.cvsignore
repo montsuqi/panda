@@ -1,6 +1,7 @@
 .deps
 .libs
 Makefile
+Makefile.in
 checkdir
 copygen
 dbgen

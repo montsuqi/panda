@@ -3,6 +3,7 @@
 .libs
 MCPSUB.la
 Makefile
+Makefile.in
 aps
 dbredirector
 dbstub
