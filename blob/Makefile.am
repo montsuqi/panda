@@ -1,4 +1,5 @@
 lib_LTLIBRARIES =	libpandablob.la
+bin_PROGRAMS = 		blobup
 noinst_PROGRAMS	=	testblob
 
 libpandablob_la_LDFLAGS	=	\
@@ -7,6 +8,7 @@ libpandablob_la_LDFLAGS	=	\
 
 libpandablobincludedir = $(includedir)/panda
 libpandablobinclude_HEADERS =	\
+	blob_v1.h					\
 	blob.h
 
 INCLUDES 			=		\
@@ -19,6 +21,7 @@ INCLUDES 			=		\
 	$(GLIB_CFLAGS)
 
 libpandablob_la_SOURCES	=		\
+	blob_v1.c		blob_v1.h	\
 	blob.c			blob.h
 
 libpandablob_la_DEPENDENCIES	=		\
@@ -38,6 +41,21 @@ testblob_LDADD	=				\
 	$(top_builddir)/blob/libpandablob.la
 
 testblob_DEPENDENCIES	=			\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/blob/libpandablob.la
+
+blobup_LDADD	=				\
+	-lm					\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
+	$(FIXED_LIBS)				\
+	$(MONDAI_LIBS)				\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/blob/libpandablob.la
+
+blobup_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpandacom.la	\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/blob/libpandablob.la

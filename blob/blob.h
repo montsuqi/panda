@@ -22,40 +22,20 @@ copies.
 #ifndef	_INC_BLOB_H
 #define	_INC_BLOB_H
 
-typedef	struct {
-	int		mode;
-	NETFILE	*fp;
-	MonObjectType	oid;
-	struct	_BLOB_Space	*blob;
-}	BLOB_Entry;
+#define	BLOB_VERSION	1
 
-typedef	struct _BLOB_Space	{
-	char	*space;
-	MonObjectType	oid;
-	GHashTable	*table;
-	pthread_mutex_t	mutex;
-	pthread_cond_t	cond;
-}	BLOB_Space;
-
-extern	BLOB_Space	*InitBLOB(char *space);
-extern	void		FinishBLOB(BLOB_Space *blob);
-extern	MonObjectType	NewBLOB(BLOB_Space *blob, int mode);
-extern	Bool	OpenBLOB(BLOB_Space *blob, MonObjectType obj, int mode);
-extern	Bool	DestroyBLOB(BLOB_Space *blob, MonObjectType obj);
-extern	Bool	CloseBLOB(BLOB_Space *blob, MonObjectType obj);
-extern	int		WriteBLOB(BLOB_Space *blob, MonObjectType obj, byte *buff, size_t size);
-extern	int		ReadBLOB(BLOB_Space *blob, MonObjectType obj, byte *buff, size_t size);
-
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
+#define	SIZE_BLOB_HEADER	4
+#define	BLOB_V1_HEADER		"PLO1"
 
 #define	BLOB_OPEN_CREATE	0x01
 #define	BLOB_OPEN_READ		0x02
 #define	BLOB_OPEN_WRITE		0x04
 #define	BLOB_OPEN_APPEND	0x08
+
+#if	BLOB_VERSION == 1
+#include	"blob_v1.h"
+#endif
+
+extern	int		VersionBLOB(char *space);
 
 #endif
