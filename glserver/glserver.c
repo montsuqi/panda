@@ -43,7 +43,6 @@ copies.
 
 #include	"types.h"
 #include	"const.h"
-#include	"misc.h"
 #include	"glserver.h"
 #include	"dirs.h"
 #include	"DDparser.h"

@@ -48,7 +48,6 @@ copies.
 #include	"tags.h"
 #include	"exec.h"
 #include	"option.h"
-#include	"misc.h"
 #include	"message.h"
 #include	"debug.h"
 

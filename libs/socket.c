@@ -48,7 +48,7 @@ Boston, MA  02111-1307, USA.
 #include	<netinet/tcp.h>
 #include	<arpa/inet.h>
 #include	"socket.h"
-#include	"misc.h"	/*	for memclear	*/
+#include	"libmondai.h"	/*	for memclear	*/
 #include	"debug.h"
 
 extern	void

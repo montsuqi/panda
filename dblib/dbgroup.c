@@ -42,7 +42,6 @@ copies.
 #include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
-#include	"misc.h"
 #include	"directory.h"
 #include	"load.h"
 #include	"dbgroup.h"
@@ -174,6 +173,7 @@ ExecFunction(
 {
 	DBCOMM_CTRL	ctrl;
 	DB_FUNC2	func;
+	int			i;
 
 dbgmsg(">ExecFunction");
 #ifdef	DEBUG
@@ -181,6 +181,12 @@ dbgmsg(">ExecFunction");
 	printf("func  = [%s]\n",name);
 	printf("name  = [%s]\n",dbg->name);
 #endif
+	if		(  dbg  ==  NULL  ) {
+		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+			dbg = ThisEnv->DBG[i];
+			ctrl.rc += ExecFunction(dbg,dbg->name,name);
+		}
+	} else
 	if		(  dbg->dbt  !=  NULL  ) { 
 		if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
 				   !=  NULL  ) {
@@ -210,40 +216,6 @@ ExecDBOP(
 	char		*sql)
 {
 	dbg->func->exec(dbg,sql);
-}
-
-extern	int
-ExecDB_Function(
-	char	*name,
-	char	*tname,
-	RecordStruct	*rec)
-{
-	DB_FUNC	func;
-	DBCOMM_CTRL	ctrl;
-	DBG_Struct		*dbg;
-	int				i;
-
-dbgmsg(">ExecDB_Function");
-	if		(  tname  ==  NULL  ) {
-		ctrl.rc = 0;
-		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-			dbg = ThisEnv->DBG[i];
-			ctrl.rc += ExecFunction(dbg,dbg->name,name);
-		}
-	} else {
-		dbg = rec->opt.db->dbg;
-		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl.func) )
-				   ==  NULL  ) {
-			if		(  !(*dbg->func->access)(dbg,name,&ctrl,rec)  ) {
-				printf("function not found [%s]\n",name);
-				ctrl.rc = MCP_BAD_FUNC;
-			}
-		} else {
-			(*func)(dbg,&ctrl,rec);
-		}
-	}
-dbgmsg("<ExecDB_Function");
-	return	(ctrl.rc);
 }
 
 extern	void
@@ -279,5 +251,3 @@ dbgmsg(">ExecDB_Process");
 	}
 dbgmsg("<ExecDB_Process");
 }
-
-

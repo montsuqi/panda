@@ -35,7 +35,6 @@ copies.
 #include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
-#include	"misc.h"
 #include	"comm.h"
 #include	"DDparser.h"
 #define		_DRIVER

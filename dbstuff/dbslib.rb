@@ -1,6 +1,6 @@
 require	'socket';
 
-VER="1.1.3";
+VER="1.2.0";
 
 class	DB_Server
 	def get_event
@@ -36,7 +36,7 @@ class	DB_Server
 	  @host = host;
 	  @port = port;
 	  @s = TCPSocket.new(@host,@port);
-	  @s.printf("%s %s %s string\n",VER,user,pass);
+	  @s.printf("%s %s %s stringe\n",VER,user,pass);
 	  msg = @s.gets.chomp;
 	  if  (  msg  =~  /^Error\: (.*?)$/  )
 		printf("error: %s\n",$1);
@@ -64,7 +64,8 @@ class	DB_Server
 printf("is = [%s]\n",is);
 		break if  is  ==  "";
 		dat = is.split(/: /);
-		rec[dat[0]] = decode(dat[1]);
+		var = data[0].split(/;/);
+		rec[var[0]] = decode(dat[1]);
 	  end
 	  @s.printf("\n");
 	  rec;

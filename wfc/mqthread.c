@@ -37,7 +37,6 @@ copies.
 #include	<pthread.h>
 
 #include	"types.h"
-#include	"misc.h"
 #include	"libmondai.h"
 #include	"socket.h"
 #include	"net.h"

@@ -43,7 +43,6 @@ copies.
 #include	<glib.h>
 
 #include	"types.h"
-#include	"misc.h"
 #include	"libmondai.h"
 #include	"comm.h"
 #include	"dirs.h"

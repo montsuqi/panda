@@ -44,7 +44,6 @@ copies.
 
 #include	"types.h"
 #include	"const.h"
-#include	"misc.h"
 #include	"libmondai.h"
 #include	"comm.h"
 #include	"directory.h"

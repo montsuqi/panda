@@ -39,7 +39,6 @@ copies.
 #include	"types.h"
 #include	"libmondai.h"
 #include	"struct.h"
-#include	"misc.h"
 #include	"mhandler.h"
 #include	"Dlex.h"
 #include	"debug.h"

@@ -40,7 +40,6 @@ copies.
 #include	<glib.h>
 
 #include	"types.h"
-#include	"misc.h"
 
 #include	"dirs.h"
 #include	"const.h"
@@ -93,7 +92,7 @@ dbgmsg(">InitSystem");
 	}
 	if		(  ThisBD->cDB  >  0  ) {
 		InitDB_Process();
-		ExecDB_Function("DBOPEN",NULL,NULL);
+		ExecDBG_Operation(NULL,"DBOPEN");
 		ReadyHandlerDB(Bind->handler);
 	}
 dbgmsg("<InitSystem");
@@ -117,7 +116,7 @@ StopProcess(
 {
 dbgmsg(">StopProcess");
 	if		(  ThisBD->cDB  >  0  ) {
-		ExecDB_Function("DBDISCONNECT",NULL,NULL);
+		ExecDBG_Operation(NULL,"DBDISCONNECT");
 		StopHandlerDB(Bind->handler);
 		CleanUpHandlerDB(Bind->handler);
 	}

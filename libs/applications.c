@@ -42,7 +42,6 @@ copies.
 
 #include	"defaults.h"
 #include	"types.h"
-#include	"misc.h"
 #include	"socket.h"
 #include	"libmondai.h"
 #include	"glterm.h"

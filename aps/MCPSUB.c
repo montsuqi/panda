@@ -36,7 +36,6 @@ copies.
 #include	<glib.h>
 
 #include	"types.h"
-#include	"misc.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"dblib.h"

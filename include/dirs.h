@@ -22,6 +22,7 @@ copies.
 #ifndef	_DIRS_H
 #define	_DIRS_H
 #include	"libmondai.h"
+#include	"port.h"
 
 #undef	GLOBAL
 #ifdef	MAIN

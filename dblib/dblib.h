@@ -29,7 +29,6 @@ extern	void	InitDB_Process(void);
 extern	void	ExecDBG_Operation(DBG_Struct *dbg, char *name);
 extern	void	ExecDBOP(DBG_Struct *dbg, char *sql);
 extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec);
-extern	int		ExecDB_Function(char *name, char *tname, RecordStruct *rec);
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -42,7 +42,6 @@ copies.
 #include	<gtk/gtk.h>
 #include	"types.h"
 #include	"libmondai.h"
-#include	"misc.h"
 #include	"styleLex.h"
 #include	"styleParser.h"
 #include	"debug.h"

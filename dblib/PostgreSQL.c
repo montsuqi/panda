@@ -43,7 +43,6 @@ copies.
 #include	"libmondai.h"
 #include	"dbgroup.h"
 #include	"redirect.h"
-#include	"misc.h"
 #include	"debug.h"
 
 static	int		level;
@@ -791,7 +790,8 @@ _EXEC(
 {
 	PGresult	*res;
 	ExecStatusType	status;
-	int			rc;
+	int			rc
+	,			n;
 
 	res = _PQexec(dbg,sql,TRUE);
 	if		(	(  res ==  NULL  )
@@ -805,10 +805,11 @@ _EXEC(
 	} else {
 		switch	(status) {
 		  case	PGRES_TUPLES_OK:
-			if		(  PQntuples(res)  >  0  ) {
+			if		(  ( n = PQntuples(res) )  >  0  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
+				_PQclear(res);
 			}
 			break;
 		  case	PGRES_COMMAND_OK:
@@ -820,9 +821,9 @@ _EXEC(
 		  case	PGRES_NONFATAL_ERROR:
 		  default:
 			rc = MCP_NONFATAL;
+			_PQclear(res);
 			break;
 		}
-		_PQclear(res);
 	}
 	return	(rc);
 }

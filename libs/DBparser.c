@@ -38,9 +38,7 @@ copies.
 #include	<sys/stat.h>	/*	for stbuf	*/
 #include	"types.h"
 #include	"hash.h"
-#include	"value.h"
-#include	"misc.h"
-#include	"monstring.h"
+#include	"libmondai.h"
 #include	"Lex.h"
 #include	"DBparser.h"
 #include	"DDparser.h"

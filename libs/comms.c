@@ -36,9 +36,7 @@ copies.
 #include	<math.h>
 
 #include	"types.h"
-#include	"misc.h"
 #include	"libmondai.h"
-#include	"LBSfunc.h"
 #include	"comm.h"
 #define	_COMMS
 #include	"comms.h"
@@ -144,7 +142,8 @@ SendValueString(
 	NETFILE		*fpComm,
 	ValueStruct	*value,
 	char		*name,
-	Bool		fName)
+	Bool		fName,
+	Bool		fType)
 {
 	char	buff[SIZE_BUFF+1];
 	int		i;
@@ -153,24 +152,61 @@ dbgmsg(">SendValueString");
 	if		(  name  ==  NULL  ) { 
 		name = namebuff + strlen(namebuff);
 	}
-	switch	(value->type) {
+	switch	(ValueType(value)) {
 	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
+		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
 			sprintf(name,"[%d]",i);
 			SendValueString(fpComm,
-							ValueArrayItem(value,i),name+strlen(name),fName);
+							ValueArrayItem(value,i),name+strlen(name),fName,fType);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
 			sprintf(name,".%s",ValueRecordName(value,i));
 			SendValueString(fpComm,
-							ValueRecordItem(value,i),name+strlen(name),fName);
+							ValueRecordItem(value,i),name+strlen(name),fName,fType);
 		}
 		break;
 	  default:
 		if		(  fName  ) {
 			SendStringDelim(fpComm,namebuff);
+			if		(  fType  ) {
+				SendStringDelim(fpComm,";");
+				switch	(ValueType(value)) {
+				  case	GL_TYPE_INT:
+					sprintf(buff,"integer");
+					break;
+				  case	GL_TYPE_FLOAT:
+					sprintf(buff,"float");
+					break;
+				  case	GL_TYPE_BOOL:
+					sprintf(buff,"Bool");
+					break;
+				  case	GL_TYPE_CHAR:
+					sprintf(buff,"char(%d)",ValueStringLength(value));
+					break;
+				  case	GL_TYPE_VARCHAR:
+					sprintf(buff,"varchar(%d)",ValueStringLength(value));
+					break;
+				  case	GL_TYPE_DBCODE:
+					sprintf(buff,"code(%d)",ValueStringLength(value));
+					break;
+				  case	GL_TYPE_NUMBER:
+					sprintf(buff,"number(%d,%d)",
+							ValueFixedLength(value),ValueFixedSlen(value));
+					break;
+				  case	GL_TYPE_TEXT:
+					sprintf(buff,"text");
+					break;
+				  case	GL_TYPE_OBJECT:
+					sprintf(buff,"object");
+					break;
+				  default:
+					*buff = 0;
+					break;
+				}
+				SendStringDelim(fpComm,buff);
+			}
 			SendStringDelim(fpComm,": ");
 		}
 		EncodeStringURL(buff,ValueToString(value,NULL));

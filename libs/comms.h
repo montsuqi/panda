@@ -28,7 +28,8 @@ extern	Bool	RecvStringDelim(NETFILE *fp, size_t size, char *str);
 extern	Bool	RecvLargeString(NETFILE *fp, LargeByteString *lbs);
 extern	void	SendLargeString(NETFILE *fp, LargeByteString *lbs);
 extern	void	SetValueName(char *name);
-extern	void	SendValueString(NETFILE *fpComm, ValueStruct *value, char *name, Bool fName);
+extern	void	SendValueString(NETFILE *fpComm, ValueStruct *value, char *name,
+								Bool fName, Bool fType);
 
 #undef	GLOBAL
 #ifdef	_COMMS

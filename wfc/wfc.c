@@ -51,7 +51,6 @@ copies.
 #include	<pthread.h>
 
 #include	"types.h"
-#include	"misc.h"
 
 #include	"value.h"
 #include	"net.h"

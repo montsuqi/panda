@@ -43,7 +43,6 @@ copies.
 #include	"mon.h"
 #include	"tags.h"
 #include	"exec.h"
-#include	"misc.h"
 #include	"debug.h"
 
 #define	SIZE_ASTACK		10

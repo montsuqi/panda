@@ -30,8 +30,8 @@ copies.
 #include	<sys/types.h>
 #include	<pthread.h>
 #include	<stdio.h>
+#include	"libmondai.h"
 #include	"queue.h"
-#include	"misc.h"
 #include	"debug.h"
 
 extern	Queue	*

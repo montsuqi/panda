@@ -38,7 +38,6 @@ copies.
 #include	"types.h"
 #include	"libmondai.h"
 #include	"struct.h"
-#include	"misc.h"
 #include	"const.h"
 #include	"enum.h"
 #include	"wfc.h"

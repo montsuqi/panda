@@ -37,7 +37,6 @@ copies.
 #include	<glib.h>
 #include	"types.h"
 #include	"libmondai.h"
-#include	"misc.h"
 #include	"const.h"
 #include	"enum.h"
 #include	"wfc.h"

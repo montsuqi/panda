@@ -37,8 +37,6 @@ copies.
 #include	<math.h>
 
 #include	"types.h"
-#include	"misc.h"
-#include	"value.h"
 #include	"libmondai.h"
 #define	_COMM
 #include	"comm.h"

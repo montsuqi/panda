@@ -39,7 +39,6 @@ copies.
 
 #include	"dirs.h"
 #include	"option.h"
-#include	"misc.h"
 #include	"dirs.h"
 #include	"auth.h"
 #include	"message.h"

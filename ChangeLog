@@ -1,3 +1,7 @@
+2003-11-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/comms.c (SendValueString): 型情報の付加オプション追加
+
 2003-11-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* configure.in: libmondaiのチェックエラー時の停止

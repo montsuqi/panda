@@ -47,6 +47,7 @@ copies.
 #include	"socket.h"
 #include	"net.h"
 #include	<libmondai.h>
+#include	"port.h"
 #include	"debug.h"
 
 extern	int

@@ -36,7 +36,6 @@ copies.
 #include	<signal.h>
 
 #include	"types.h"
-#include	"misc.h"
 #include	"libmondai.h"
 #include	"enum.h"
 #include	"SQLparser.h"

@@ -37,7 +37,6 @@ copies.
 
 #include	"types.h"
 #include	"const.h"
-#include	"misc.h"
 #include	"pgserver.h"
 #include	"dirs.h"
 #include	"DDparser.h"

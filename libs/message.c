@@ -41,6 +41,7 @@ copies.
 #ifdef	USE_MSGD
 #include	"const.h"
 #include	"socket.h"
+#include	"port.h"
 #include	"net.h"
 #endif
 #include	"message.h"

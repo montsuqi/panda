@@ -37,7 +37,6 @@ copies.
 
 #include	"defaults.h"
 #include	"types.h"
-#include	"misc.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"struct.h"
@@ -223,7 +222,7 @@ ReadyOnlineDB(void)
 {
 ENTER_FUNC;
 	InitDB_Process();
-	ExecDB_Function("DBOPEN",NULL,NULL);
+	ExecDBG_Operation(NULL,"DBOPEN");
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyOnlineDB,NULL);
 LEAVE_FUNC;
 }
@@ -484,7 +483,7 @@ _StopOnlineDB(
 extern	void
 StopOnlineDB(void)
 {
-	ExecDB_Function("DBDISCONNECT",NULL,NULL);
+	ExecDBG_Operation(NULL,"DBDISCONNECT");
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_StopOnlineDB,NULL);
 }
 

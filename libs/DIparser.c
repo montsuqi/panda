@@ -43,7 +43,6 @@ copies.
 #include	"const.h"
 #include	"dirs.h"
 #include	"libmondai.h"
-#include	"misc.h"
 #include	"DDparser.h"
 #include	"Lex.h"
 #include	"LDparser.h"

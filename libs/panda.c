@@ -40,7 +40,6 @@ copies.
 #include	"wfc.h"
 #include	"wfcio.h"
 #include	"driver.h"
-#include	"misc.h"
 #include	"debug.h"
 
 static	NETFILE	*fpPanda;

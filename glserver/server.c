@@ -52,7 +52,6 @@ copies.
 
 #include	"types.h"
 #include	"enum.h"
-#include	"misc.h"
 #include	"libmondai.h"
 #include	"glterm.h"
 #include	"socket.h"

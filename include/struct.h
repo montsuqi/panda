@@ -28,6 +28,7 @@ copies.
 #include	<glib.h>
 #include	"const.h"
 #include	"libmondai.h"
+#include	"port.h"
 #include	"net.h"
 
 typedef	struct {

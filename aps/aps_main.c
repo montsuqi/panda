@@ -39,7 +39,6 @@ copies.
 #include	<glib.h>
 
 #include	"types.h"
-#include	"misc.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"enum.h"
@@ -199,12 +198,12 @@ ENTER_FUNC;
 															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
 			if		(  bind->module  ==  NULL  )	break;
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
-			ExecDB_Function("DBSTART",NULL,NULL);
+			ExecDBG_Operation(NULL,"DBSTART");
 			ExecuteProcess(node);
 			if		(  Sleep  >  0  ) {
 				sleep(Sleep);
 			}
-			ExecDB_Function("DBCOMMIT",NULL,NULL);
+			ExecDBG_Operation(NULL,"DBCOMMIT");
 			PutWFC(fpWFC,node);
 		} else {
 			MessagePrintf("window [%s] not found.\n",

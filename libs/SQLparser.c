@@ -36,8 +36,7 @@ copies.
 #include	<glib.h>
 #define		_SQL_PARSER
 #include	"types.h"
-#include	"value.h"
-#include	"misc.h"
+#include	"libmondai.h"
 #include	"Lex.h"
 #include	"SQLlex.h"
 #include	"SQLparser.h"

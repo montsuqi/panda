@@ -44,7 +44,6 @@ copies.
 
 #include	"const.h"
 #include	"types.h"
-#include	"misc.h"
 #include	"libmondai.h"
 #include	"comms.h"
 #include	"queue.h"

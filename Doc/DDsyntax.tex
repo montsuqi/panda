@@ -15,13 +15,15 @@
 メンバ叹        ::= 叹涟 .
 芹误回年        ::= "[" ( 芹误サイズ | "" ) "]" .
 芹误サイズ      ::= 腊眶 .
-房叹            ::= char房 | byte房 | text房 | number房 | 腊眶房 | レコ〖ド房 .
+房叹            ::= char房 | varchar房 | byte房 | text房 | number房 | 腊眶房 | レコ〖ド房 .
 char房          ::= "char" [ "(" 矢机眶 ")" ] .
+varchar房       ::= "char" [ "(" 矢机眶 ")" ] .
 byte房          ::= "byte" [ "(" byte眶 ")" ] .
-number房        ::= "number" [ "(" 峰眶 ")" ] .
+number房        ::= "number" [ "(" 峰眶 [ "," 井眶爬笆布峰眶 ] ")" ] .
 矢机眶          ::= 腊眶 .
 byte眶          ::= 腊眶 .
 峰眶            ::= 腊眶 .
+井眶爬笆布峰眶  ::= 腊眶 .
 text房          ::= "text" .
 腊眶房          ::= "int" .
 掳拉            ::= "input" | "output" | "virtual" ;

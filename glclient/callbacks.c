@@ -45,7 +45,6 @@ copies.
 #include	"callbacks.h"
 #include	"types.h"
 #include	"libmondai.h"
-#include	"misc.h"
 #include	"comm.h"
 #include	"glclient.h"
 #include	"protocol.h"

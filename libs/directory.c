@@ -39,7 +39,6 @@ copies.
 #include	"DIparser.h"
 #include	"DBDparser.h"
 #include	"directory.h"
-#include	"misc.h"
 #include	"debug.h"
 
 extern	void

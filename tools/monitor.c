@@ -39,7 +39,6 @@ copies.
 #include	<signal.h>
 #include	"types.h"
 #include	"libmondai.h"
-#include	"misc.h"
 #include	"directory.h"
 #include	"dirs.h"
 #include	"option.h"

@@ -34,7 +34,6 @@ copies.
 #include	"libmondai.h"
 #include	"applications.h"
 #include	"driver.h"
-#include	"misc.h"
 #include	"debug.h"
 
 extern	void

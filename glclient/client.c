@@ -59,7 +59,6 @@ copies.
 #include	"types.h"
 #include	"option.h"
 #include	"socket.h"
-#include	"misc.h"
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"styleParser.h"

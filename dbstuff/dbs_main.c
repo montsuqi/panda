@@ -40,7 +40,6 @@ copies.
 #include	<glib.h>
 
 #include	"types.h"
-#include	"misc.h"
 #include	"const.h"
 #include	"enum.h"
 #include	"dirs.h"
@@ -88,6 +87,7 @@ dbgmsg("<InitSystem");
 
 #define	COMM_STRING		1
 #define	COMM_BINARY		2
+#define	COMM_STRINGE	3
 
 typedef	struct {
 	char	user[SIZE_USER+1];
@@ -131,8 +131,13 @@ dbgmsg(">InitSession");
 	pass = p;
 	if		(  !stricmp(q+1,"binary")  ) {
 		ses->type = COMM_BINARY;
-	} else {
+	} else
+	if		(  !stricmp(q+1,"string")  ) {
 		ses->type = COMM_STRING;
+	} else
+	if		(  !stricmp(q+1,"stringe")  ) {
+		ses->type = COMM_STRINGE;
+	} else {
 	}
 	if		(  strcmp(ver,VERSION)  ) {
 		SendStringDelim(fpComm,"Error: version\n");
@@ -214,9 +219,10 @@ RecvData(
 }
 
 static	void
-WriteClient(
+WriteClientString(
 	NETFILE		*fpComm,
-	DBCOMM_CTRL		*ctrl)
+	Bool		fType,
+	DBCOMM_CTRL	*ctrl)
 {
 	char	name[SIZE_BUFF+1]
 	,		rname[SIZE_BUFF+1]
@@ -228,7 +234,7 @@ WriteClient(
 	Bool	fName;
 	int		rno;
 
-dbgmsg(">WriteClient");
+dbgmsg(">WriteClientString");
 	SendStringDelim(fpComm,"Exec: ");
 	sprintf(buff,"%d\n",ctrl->rc);
 	SendStringDelim(fpComm,buff);
@@ -250,26 +256,27 @@ dbgmsg(">WriteClient");
 					value = rec->value;
 				}
 				SetValueName(name);
-				SendValueString(fpComm,value,NULL,fName);
+				SendValueString(fpComm,value,NULL,fName,fType);
 				if		(  fName  ) {
 					SendStringDelim(fpComm,"\n");
 				}
 			}
 		}
 	}	while	(TRUE);
-dbgmsg("<WriteClient");
+dbgmsg("<WriteClientString");
 }
 
 static	Bool
-MainLoop(
+do_String(
 	NETFILE	*fpComm,
+	char	*input,
 	SessionNode	*ses)
 {
+	Bool	ret
+	,		fType;
 	DBCOMM_CTRL	ctrl;
 	RecordStruct	*rec;
-	Bool	ret;
-	char	buff[SIZE_BUFF+1]
-	,		func[SIZE_FUNC+1]
+	char	func[SIZE_FUNC+1]
 	,		rname[SIZE_RNAME+1]
 	,		pname[SIZE_PNAME+1];
 	char	*p
@@ -277,61 +284,75 @@ MainLoop(
 	int		rno
 	,		pno;
 
-dbgmsg(">MainLoop");
-	if		(  ses->type  ==  COMM_STRING  ) {
-		RecvStringDelim(fpComm,SIZE_BUFF,buff);
-		if		(  strncmp(buff,"Exec: ",6)  ==  0  ) {
-			/*
-			 *	Exec: func:rec:path\n
-			 */
-			dbgmsg("exec");
-			p = buff + 6;
+	if		(  strncmp(input,"Exec: ",6)  ==  0  ) {
+		dbgmsg("exec");
+		p = input + 6;
+		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+			*q = 0;
+			DecodeStringURL(func,p);
+			p = q + 1;
 			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 				*q = 0;
-				DecodeStringURL(func,p);
+				DecodeStringURL(rname,p);
 				p = q + 1;
-				if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-					*q = 0;
-					DecodeStringURL(rname,p);
-					p = q + 1;
+			} else {
+				strcpy(rname,"");
+			}
+			DecodeStringURL(pname,p);
+			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
+				ctrl.rno = rno - 1;
+				rec = ThisDB[ctrl.rno];
+				if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+															pname) )  !=  0  ) {
+					ctrl.pno = pno - 1;
 				} else {
-					strcpy(rname,"");
-				}
-				DecodeStringURL(pname,p);
-				if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
-					ctrl.rno = rno - 1;
-					rec = ThisDB[ctrl.rno];
-					if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
-																pname) )  !=  0  ) {
-						ctrl.pno = pno - 1;
-					} else {
-						ctrl.pno = 0;
-					}
-				} else {
-					ctrl.rno = 0;
-					rec = NULL;
+					ctrl.pno = 0;
 				}
 			} else {
-				DecodeStringURL(func,p);
 				ctrl.rno = 0;
-				ctrl.pno = 0;
 				rec = NULL;
 			}
-			strcpy(ctrl.func,func);
-			RecvData(fpComm);
-			ExecDB_Process(&ctrl,rec);
-			WriteClient(fpComm,&ctrl);
-			ret = TRUE;
-		} else
-		if		(  strncmp(buff,"End",3)  ==  0  ) {
-			dbgmsg("end");
-			ret = FALSE;
 		} else {
-			printf("invalid message [%s]\n",buff);
-			ret = FALSE;
+			DecodeStringURL(func,p);
+			ctrl.rno = 0;
+			ctrl.pno = 0;
+			rec = NULL;
 		}
-	} else {
+		strcpy(ctrl.func,func);
+		RecvData(fpComm);
+		ExecDB_Process(&ctrl,rec);
+		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
+		WriteClientString(fpComm,fType,&ctrl);
+		ret = TRUE;
+	} else
+	if		(  strncmp(input,"End",3)  ==  0  ) {
+		dbgmsg("end");
 		ret = FALSE;
+	} else {
+		printf("invalid message [%s]\n",input);
+		ret = FALSE;
+	}
+	return	(ret);
+}
+
+static	Bool
+MainLoop(
+	NETFILE	*fpComm,
+	SessionNode	*ses)
+{
+	char	buff[SIZE_BUFF+1];
+	Bool	ret;
+
+dbgmsg(">MainLoop");
+	RecvStringDelim(fpComm,SIZE_BUFF,buff);
+	switch	(ses->type) {
+	  case	COMM_STRING:
+	  case	COMM_STRINGE:
+		ret = do_String(fpComm,buff,ses);
+		break;
+	  default:
+		ret = FALSE;
+		break;
 	}
 dbgmsg("<MainLoop");
 	return	(ret);

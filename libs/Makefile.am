@@ -62,11 +62,12 @@ libpandas_la_DEPENDENCIES	=		\
 #	pty.h			\
 #	queue.h
 
-libpandacom_la_SOURCES	=		\
+libpandacom_la_SOURCES	=			\
 	net.c			net.h			\
 	comm.c			comm.h			\
 	comms.c			comms.h			\
 	socket.c		socket.h		\
+	port.c			port.h			\
 	pty.c			pty.h			\
 	queue.c			queue.h
 
@@ -75,4 +76,5 @@ enum.h:	enum
 
 libpandamisc_la_SOURCES	=		\
 	option.c		option.h	\
+	memory.c		memory.h	\
 	message.c		message.h

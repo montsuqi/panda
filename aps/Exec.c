@@ -45,7 +45,6 @@ copies.
 #include	<signal.h>
 #include	"const.h"
 #include	"types.h"
-#include	"misc.h"
 #include	"libmondai.h"
 #include	"net.h"
 #include	"comm.h"

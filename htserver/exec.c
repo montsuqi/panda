@@ -40,7 +40,6 @@ copies.
 #include	"libmondai.h"
 #include	"mon.h"
 #include	"exec.h"
-#include	"misc.h"
 #include	"debug.h"
 
 #define	SRC_CODESET		"euc-jp"

@@ -46,7 +46,6 @@ copies.
 #endif
 
 #include	"types.h"
-#include	"misc.h"
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"comm.h"
