@@ -3,8 +3,6 @@ name	demo1;
 arraysize	20;
 textsize	200;
 
-wfc		"localhost:9001";
-
 handler	"Ruby"	{
 	class	"Exec";
 	serialize	"CGI";

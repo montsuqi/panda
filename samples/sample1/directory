@@ -13,7 +13,7 @@ record	"=/sample1";
 multiplex_level	aps;
 
 #linksize	1024;
-linkage		demolink;
+linkage		link;
 
 control	{
 #	port	":9003";

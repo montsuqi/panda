@@ -1,3 +1,9 @@
+2004-03-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/cgi.c: CGI処理を分離した
+
+	* htserver/htc.c: HTCをポータブルにした(他でも使いたいため)
+
 2004-03-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/LDparser.c (ParLD) aps/aps_main.c : LD定義体にwfcの宣言を除

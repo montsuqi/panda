@@ -380,6 +380,7 @@ dbgmsg(">ParLD");
 			ParHANDLER();
 			break;
 		  default:
+			printf("[%s]\n",ComSymbol);
 			Error("invalid directive");
 			break;
 		}
