@@ -461,7 +461,6 @@ InitServerPort(
 	int		fd;
 
 ENTER_FUNC;
- printf("%s\n",StringPort(port));
 	fd = BindSocket(port,SOCK_STREAM);
 	if		(  listen(fd,back)  <  0  )	{
 		shutdown(fd, 2);

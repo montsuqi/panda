@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -1025,6 +1025,13 @@ dbgmsg(">_DBOPEN");
 	user =  ( DB_User != NULL ) ? DB_User : dbg->user;
 	dbname = ( DB_Name != NULL ) ? DB_Name : dbg->dbname;
 	pass = ( DB_Pass != NULL ) ? DB_Pass : dbg->pass;
+#ifdef	DEBUG
+	printf("host   = [%s]\n",host);
+	printf("port   = [%s]\n",port);
+	printf("dbname = [%s]\n",dbname);
+	printf("user   = [%s]\n",user);
+	printf("pass   = [%s]\n",pass);
+#endif
 	conn = PQsetdbLogin(host,port,NULL,NULL,dbname,user,pass);
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
 		fprintf(stderr,"Connection to database \"%s\" failed.\n",dbname);

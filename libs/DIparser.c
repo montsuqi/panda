@@ -555,7 +555,7 @@ dbgmsg(">ParDBGROUP");
 			break;
 		  case	T_PORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->port = ParPort(ComSymbol,PORT_WFC);
+				dbg->port = ParPort(ComSymbol,NULL);
 			} else {
 				Error("invalid port");
 			}

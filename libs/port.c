@@ -131,6 +131,16 @@ ParPort(
 			}
 			ret = NewUNIX_Port(&dup[1],mode);
 		} else
+			if		(	(  dup[0]  ==  '/'  )
+					||	(  dup[0]  ==  '.'  ) ) {
+			if		(  ( p = strchr(dup,':') )  !=  NULL  ) {
+				*p = 0;
+				mode = otoi(p+1);
+			} else {
+				mode = 0666;
+			}
+			ret = NewUNIX_Port(dup,mode);
+		} else
 		if		(  dup[0]  ==  '['  ) {
 			if		(  ( p = strchr(dup,']') )  !=  NULL  ) {
 				*p = 0;
@@ -173,6 +183,16 @@ ParPortName(
 			}
 			ret = NewUNIX_Port(str+1,mode);
 		} else
+			if		(	(  *str  ==  '/'  )
+					||	(  *str  ==  '.'  ) ) {
+			if		(  ( p = strchr(str,':') )  !=  NULL  ) {
+				*p = 0;
+				mode = otoi(p+1);
+			} else {
+				mode = 0666;
+			}
+			ret = NewUNIX_Port(str,mode);
+		} else
 		if		(  *str  ==  ':'  ) {
 			ret = NewIP_Port(NULL,str+1);
 		} else {
@@ -197,7 +217,12 @@ StringPort(
 		}
 		break;
 	  case	PORT_UNIX:
-		sprintf(buff,"#%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+		if		(	(  *UNIX_NAME(port)  ==  '/'  )
+				||	(  *UNIX_NAME(port)  ==  '.'  ) ) {
+			sprintf(buff,"%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+		} else {
+			sprintf(buff,"#%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+		}
 		break;
 	  default:
 		*buff = 0;
@@ -217,7 +242,12 @@ StringPortName(
 		sprintf(buff,"%s",IP_PORT(port));
 		break;
 	  case	PORT_UNIX:
-		sprintf(buff,"#%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+		if		(	(  *UNIX_NAME(port)  ==  '/'  )
+				||	(  *UNIX_NAME(port)  ==  '.'  ) ) {
+			sprintf(buff,"%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+		} else {
+			sprintf(buff,"#%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+		}
 		break;
 	  default:
 		*buff = 0;

@@ -24,18 +24,18 @@ control	{
 wfc	{
 #	port	"[192.168.2.10]:9002";
 #	port	":9002";
-	port	"#/tmp/sample1";
+	port	"/tmp/sample1";
 };
 
 ld	{
 #	demo1	"localhost" * 1, "localhost:9001" * 1;
 #	demo1	"localhost" * 1;
-	demo1	"#/tmp/sample1demo1" * 1;
-#	demo1	1;
+#	demo1	"/tmp/sample1demo1" * 1;
+	demo1	1;
 #	demo1	"192.168.2.10" * 1;
 #	demo2	"[192.168.2.10]" * 1;
 #	demo2	"localhost" * 1;
-	demo2	"#/tmp/sample1demo2" * 1;
-#	demo2	1;
+#	demo2	"/tmp/sample1demo2" * 1;
+	demo2	1;
 };
 

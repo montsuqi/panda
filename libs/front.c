@@ -77,6 +77,15 @@ dbgmsg(">TermName");
 		len = sizeof(struct sockaddr_storage);
 		getpeername(sock,(struct sockaddr *)&addr,&len);
 		switch	(((struct sockaddr *)&addr)->sa_family) {
+		  case	AF_UNIX:
+			time(&nowtime);
+			Now = localtime(&nowtime);
+			Now->tm_year += 1900;
+			sprintf(name,"U%04d%02d%02d:%02d%02d%02d:%08X",
+					Now->tm_year,Now->tm_mon+1,Now->tm_mday,
+					Now->tm_hour,Now->tm_min,Now->tm_sec,
+					getpid());
+			break;
 		  case	AF_INET:
 			in = (struct sockaddr_in *)&addr;
 			sprintf(name,"4%04X:%08X:%08X",

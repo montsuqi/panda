@@ -41,7 +41,7 @@ copies.
 #define	PORT_MSGD			"8514"
 #define	PORT_FDD			"8515"
 
-#define	CONTROL_PORT	"#/tmp/wfc.control:0600"
+#define	CONTROL_PORT	"/tmp/wfc.control:0600"
 
 #define	SIZE_PASS		3+8+22
 #define	SIZE_OTHER		128

@@ -161,6 +161,9 @@ ENTER_FUNC;
 			strcpy(host,buff);
 		}
 		break;
+	  case	'U':	/*	UNIX domain	*/
+		strcpy(host,"localhost");
+		break;
 	  default:
 		*host = 0;
 		break;

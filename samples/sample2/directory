@@ -18,7 +18,8 @@ multiplex_level	no;
 #multiplex_level	aps;
 
 wfc	{
-	port	":9003";
+#	port	":9003";
+	port	"/tmp/wfc";
 };
 
 ld	{
