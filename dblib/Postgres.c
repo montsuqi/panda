@@ -616,6 +616,9 @@ dbgmsg(">ExecPGSQL");
 			  case	SQL_OP_INTO:
 				n = LBS_FetchInt(src);
 				if		(  n  >  0  ) {
+					if		(  tuple  !=  NULL  ) {
+						xfree(tuple);
+					}
 					tuple = (ValueStruct **)xmalloc(sizeof(ValueStruct *) * n);
 					items = 0;
 					fIntoAster = FALSE;
@@ -678,6 +681,7 @@ dbgmsg(">ExecPGSQL");
 						}
 						if		(  tuple  !=  NULL  ) {
 							xfree(tuple);
+							tuple = NULL;
 						}
 						break;
 					  case	PGRES_COMMAND_OK:
@@ -701,6 +705,10 @@ dbgmsg(">ExecPGSQL");
 				break;
 			}
 		}
+	}
+	if		(  tuple  !=  NULL  ) {
+		dbgmsg("exception free");
+		xfree(tuple);
 	}
 dbgmsg("<ExecPGSQL");
 }

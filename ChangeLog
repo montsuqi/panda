@@ -1,3 +1,7 @@
+2003-04-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/Postgres.c: エラー時のメモリーリーク対策
+
 2003-04-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* src/LBSfunc.c (LBS_RequireSize): fix memory leak
