@@ -363,7 +363,7 @@ PutHTML(
 
 dbgmsg(">PutHTML");
 	printf("Cache-Control: no-cache\r\n");
-	printf("Content-type: text/html\r\n");
+	printf("Content-type: text/html; charset=%s\r\n", Codeset);
 	LBS_EmitEnd(html);
 	if		(  fCookie  ) {
 		if		(  ( sesid = g_hash_table_lookup(Values,"_sesid") )  !=  NULL  ) {
