@@ -280,54 +280,16 @@ dbgmsg(">RecvPS");
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp,name);
-#if	1
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
 			tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
-			fildes = mkstemp(tmpname);
-			_umask = umask(0);
-			umask(_umask);
-			mode = 0666 & ~_umask;
-			fchmod(fildes, mode);
-			file = fdopen(fildes, "wb");
+			file = CreateTempfile(tmpname);
 			fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
 			fclose(file);
 			gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
 			unlink(tmpname);
 			g_free(tmpname);
 			FreeLBS(binary);
-#else
-            if (strncasecmp("psdata", name, sizeof("psdata") - 1) == 0) {
-                binary = NewLBS();
-                RecvBinaryData(fp, binary);
-                tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
-                fildes = mkstemp(tmpname);
-                _umask = umask(0);
-                umask(_umask);
-                mode = 0666 & ~_umask;
-                fchmod(fildes, mode);
-                file = fdopen(fildes, "wb");
-                fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
-                fclose(file);
-                gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
-                unlink(tmpname);
-                g_free(tmpname);
-                FreeLBS(binary);
-            }
-            else if (strncasecmp("imagedata", name, sizeof("imagedata") - 1) == 0) {
-                binary = NewLBS();
-                RecvBinaryData(fp, binary);
-                FreeLBS(binary);
-            }
-            else {
-                RecvStringData(fp,buff,SIZE_BUFF);
-                RegistValue(widget,name,OPT_TYPE_NULL,NULL);
-                if (buff != NULL && buff[0] != '\0') {
-                    gtk_panda_ps_load(GTK_PANDA_PS(widget),buff);
-                    Warning("GtkPandaPS->value obsolate\n");
-                }
-            }
-#endif
 		}
 	}
 dbgmsg("<RecvPS");
@@ -377,17 +339,17 @@ dbgmsg(">RecvPixmap");
 			fclose(file);
 			gtk_widget_size_request(widget, &requisition);
 			if ( requisition.width && requisition.height) {
-					width = requisition.width;
-					height = requisition.height;
-					im = gdk_imlib_load_image ((char *)tmpname);
-					xscale = (gdouble)width / im->rgb_width;
-					yscale = (gdouble)height / im->rgb_height;
-					scale = MIN(xscale, yscale);
-					width = im->rgb_width * scale;
-					height = im->rgb_height * scale;
-					gnome_pixmap_load_imlib_at_size(GNOME_PIXMAP(widget), im, width, height);
+				width = requisition.width;
+				height = requisition.height;
+				im = gdk_imlib_load_image ((char *)tmpname);
+				xscale = (gdouble)width / im->rgb_width;
+				yscale = (gdouble)height / im->rgb_height;
+				scale = MIN(xscale, yscale);
+				width = im->rgb_width * scale;
+				height = im->rgb_height * scale;
+				gnome_pixmap_load_imlib_at_size(GNOME_PIXMAP(widget), im, width, height);
 			} else {
-					gnome_pixmap_load_file(GNOME_PIXMAP(widget), tmpname);
+				gnome_pixmap_load_file(GNOME_PIXMAP(widget), tmpname);
 			}
 			unlink(tmpname);  
 			g_free(tmpname);
