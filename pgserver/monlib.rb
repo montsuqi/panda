@@ -32,7 +32,7 @@ class	PG_Server
 
 	def	initialize(host,port,prog,user,pass)
 	  if  port  ==  0
-		port = 8011;
+		port = 8012;
 	  end
 	  @host = host;
 	  @port = port;
