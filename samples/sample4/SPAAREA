@@ -1,5 +1,0 @@
-        01  SPAAREA.
-            02  SPA-MCP.
-              03  SPA-WINSTK  PIC X(64)   OCCURS  10 TIMES.
-              03  SPA-WINIDX  PIC S9(9)   BINARY.
-            02  SPA-COUNT   PIC S9(9)   BINARY.
