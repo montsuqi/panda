@@ -132,7 +132,7 @@ _ExecuteProcess(
 	int		(*apl)(char *, char *, char *, char *);
 	char	*module;
 
-dbgmsg(">ExecuteProcess");
+dbgmsg(">_ExecuteProcess");
 	module = ValueString(GetItemLongName(node->mcprec,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
 		PutApplication(node);
@@ -143,7 +143,7 @@ dbgmsg(">ExecuteProcess");
 	} else {
 		printf("%s\n%s is not found.\n",cob_resolve_error(),module);
 	}
-dbgmsg("<ExecuteProcess");
+dbgmsg("<_ExecuteProcess");
 }
 
 static	void

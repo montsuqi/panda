@@ -147,6 +147,7 @@ _DBCOMMIT(
 	char		*command;
 
 dbgmsg(">_DBCOMMIT");
+	LBS_EmitEnd(dbg->conn);
 	command = LBS_ToString(dbg->conn); 
 	if		(  *command  !=  0  ) {
 		rc = DoShell(command);

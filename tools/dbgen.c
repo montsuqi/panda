@@ -47,6 +47,8 @@ copies.
 #include	"debug.h"
 
 static	Bool	fCreate;
+static	Bool	fInsert;
+
 static	int		TextSize;
 static	int		ArraySize;
 
@@ -206,9 +208,106 @@ MakeCreate(
 	}
 }
 
+static	void
+PutName(void)
+{
+	int		j;
+
+	if		(  level  >  1  ) {
+		for	( j = 0 ; j < level - 1 ; j ++ ) {
+			printf("%s_",rname[j]);
+		}
+	}
+	printf("%s",rname[level-1]);
+}
+
+
+static	void
+PutItemNames(
+	ValueStruct	*val)
+{
+	int		i;
+	ValueStruct	*tmp;
+	Bool	fComm;
+
+	if		(  val  ==  NULL  )	return;
+
+	switch	(val->type) {
+	  case	GL_TYPE_INT:
+		PutName();
+		break;
+	  case	GL_TYPE_BOOL:
+		PutName();
+		break;
+	  case	GL_TYPE_BYTE:
+	  case	GL_TYPE_CHAR:
+		PutName();
+		break;
+	  case	GL_TYPE_VARCHAR:
+		PutName();
+		break;
+	  case	GL_TYPE_NUMBER:
+		PutName();
+		break;
+	  case	GL_TYPE_TEXT:
+		PutName();
+		break;
+	  case	GL_TYPE_ARRAY:
+		tmp = val->body.ArrayData.item[0];
+		Dim[alevel] = val->body.ArrayData.count;
+		alevel ++;
+		PutItemNames(tmp);
+		alevel --;
+		break;
+	  case	GL_TYPE_RECORD:
+		level ++;
+		fComm = FALSE;
+		for	( i = 0 ; i < val->body.RecordData.count ; i ++ ) {
+			tmp = val->body.RecordData.item[i];
+			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
+				if		(  fComm  ) {
+					printf(",");
+				}
+				fComm = TRUE;
+				rname[level-1] = val->body.RecordData.names[i];
+				PutItemNames(tmp);
+			}
+		}
+		level --;
+		break;
+	  default:
+		break;
+	}
+}
+
+static	void
+MakeInsert(
+	RecordStruct	*rec)
+{
+	level = 0;
+	alevel = 0;
+
+	printf("#! /bin/sh\n");
+	printf("psql PIM > %s.dump << __EOF__\n",rec->name);
+	printf("\\copy %s to stdout using delimiters ','\n",rec->name);
+	printf("__EOF__\n");
+	printf("sed < %s.dump -e \"{\n",rec->name);
+	printf("s/\N//g\n");
+	printf("s/,/','/g\n");
+	printf("s/^/insert into %s (",rec->name);
+	PutItemNames(rec->rec);
+	printf(") values ('/\n");
+	printf("s/$/');/\n");
+	printf("}\"\n");
+
+}
+
 static	ARG_TABLE	option[] = {
 	{	"create",	BOOLEAN,	TRUE,	(void*)&fCreate,
 		"create tableを作る"							},
+	{	"insert",	BOOLEAN,	TRUE,	(void*)&fInsert,
+		"insert用スクリプトを作る"						},
+
 	{	"textsize",	INTEGER,	TRUE,	(void*)&TextSize,
 		"textの最大長"									},
 	{	"arraysize",INTEGER,	TRUE,	(void*)&ArraySize,
@@ -222,6 +321,7 @@ static	void
 SetDefault(void)
 {
 	fCreate = FALSE;
+	fInsert = FALSE;
 	ArraySize = SIZE_DEFAULT_ARRAY_SIZE;
 	TextSize = SIZE_DEFAULT_TEXT_SIZE;
 	RecordDir = ".";
@@ -240,12 +340,16 @@ main(
 	InitMessage();
 
 	if		(  fl  !=  NULL  ) {
+		DD_ParserInit();
 		if		(  fCreate  ) {
-			DD_ParserInit();
 			if		(  ( rec = DD_ParserDataDefines(fl->name) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
-		} else {
+		} else
+		if		(  fInsert  ) {
+			if		(  ( rec = DD_ParserDataDefines(fl->name) )  !=  NULL  ) {
+				MakeInsert(rec);
+			}
 		}
 	}
 
