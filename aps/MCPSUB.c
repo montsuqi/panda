@@ -113,7 +113,8 @@ ENTER_FUNC;
 			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
 		}
 		ExecDB_Process(&ctrl,rec,value);
-		if		(  rec  !=  NULL  ) {
+		if		(	(  rec      !=  NULL    )
+				&&	(  ctrl.rc  ==  MCP_OK  ) )	{
 			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, value);
 		}
 		MakeMCP(mcp,&ctrl);
