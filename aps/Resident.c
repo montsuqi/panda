@@ -127,9 +127,11 @@ dbgmsg(">ExecuteDB_Server");
 				value = ( path->args != NULL ) ? path->args : value;
 			} else {
 				ctrl.pno = 0;
+				path = NULL;
 			}
 		} else {
 			rec = NULL;
+			path = NULL;
 		}
 		func = ValueStringPointer(GetItemLongName(recDBCTRL->value,"func"));
 		if		(  *func  !=  0  ) {
@@ -361,16 +363,16 @@ dbgmsg(">ExecuteProcess");
 			fpDBW = FileToNet(pDBW[1]);
 			close(pDBW[0]);
 			StartDB(handler);
+			PutApplication(handler,fpAPW,node);
+			GetApplication(handler,fpAPR,node);
+			(void)wait(&pid);
+			CancelDB();
+			signal(SIGPIPE, SIG_DFL);
+			CloseNet(fpAPW);
+			CloseNet(fpAPR);
+			CloseNet(fpDBW);
+			CloseNet(fpDBR);
 		}
-		PutApplication(handler,fpAPW,node);
-		GetApplication(handler,fpAPR,node);
-		(void)wait(&pid);
-		CancelDB();
-		signal(SIGPIPE, SIG_DFL);
-		CloseNet(fpAPW);
-		CloseNet(fpAPR);
-		CloseNet(fpDBW);
-		CloseNet(fpDBR);
 		rc = TRUE;
 	} else {
 		rc = FALSE;

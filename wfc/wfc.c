@@ -81,6 +81,7 @@ static	char	*Directory;
 static	Port	*ApsPort;
 static	Port	*WfcPort;
 static	Port	*ControlPort;
+static	BLOB_Space	*Blob;
 
 static	sigset_t SigMask;
 
@@ -202,8 +203,10 @@ ENTER_FUNC;
 	if		(	(  ThisEnv->blob       !=  NULL  )
 			&&	(  ThisEnv->blob->dir  !=  NULL  ) ) {
 		Blob = InitBLOB(ThisEnv->blob->dir);
+		BlobState = ConnectBLOB(Blob);
 	} else {
 		Blob = NULL;
+		BlobState = NULL;
 	}
 	InitMessageQueue();
 	ReadyAPS();
@@ -217,7 +220,8 @@ LEAVE_FUNC;
 static	void
 CleanUp(void)
 {
-	if (Blob != NULL) {
+	if (BlobState != NULL) {
+		DisConnectBLOB(BlobState);
 		FinishBLOB(Blob);
 	}
 }

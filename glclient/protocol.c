@@ -479,6 +479,7 @@ CheckScreens(
 
 ENTER_FUNC;
 	while		(  ( klass = GL_RecvPacketClass(fp) )  ==  GL_QueryScreen  ) {
+dbgmsg("*");
 		GL_RecvString(fp,sname);
 		stsize = (off_t)GL_RecvLong(fp);
 		stmtime = (time_t)GL_RecvLong(fp);
@@ -556,6 +557,7 @@ RecvValueSkip(
 	int				count
 	,				i;
 
+ENTER_FUNC;
 	type = GL_RecvDataType(fp);
 	switch	(type) {
 	  case	GL_TYPE_INT:
@@ -569,6 +571,11 @@ RecvValueSkip(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		GL_RecvString(fp,buff);
+		break;
+	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_BYTE:
+	  case	GL_TYPE_OBJECT:
+		GL_RecvLBS(fp,LargeBuff);
 		break;
 	  case	GL_TYPE_NUMBER:
 		FreeFixed(GL_RecvFixed(fp));
@@ -587,8 +594,10 @@ RecvValueSkip(
 		}
 		break;
 	  default:
+dbgmsg("*");
 		break;
 	}
+LEAVE_FUNC;
 }
 
 extern	void
@@ -636,11 +645,6 @@ ENTER_FUNC;
 						fTrace = FALSE;
 					}
 					fDone = TRUE;
-					/*	new add 2004.08.11	*/
-				} else {
-					RecvValueSkip(fp);
-					fDone = TRUE;
-					/*	add end	*/
 				}
 			}
 		}
@@ -959,6 +963,7 @@ SendStringData(
 	PacketDataType	type,
 	char			*str)
 {
+ENTER_FUNC;
 	GL_SendDataType(fp,type);
 	switch	(type) {
 	  case	GL_TYPE_CHAR:
@@ -986,6 +991,7 @@ SendStringData(
 	  default:
 		break;
 	}
+LEAVE_FUNC;
 }
 
 extern	char	*
@@ -995,11 +1001,12 @@ RecvStringData(
 	size_t	size)
 {
 	char	*ret;
-	
-	DataType = GL_RecvDataType(fp);
 
+ENTER_FUNC;
+	DataType = GL_RecvDataType(fp);
 	switch	(DataType) {
 	  case	GL_TYPE_INT:
+		dbgmsg("int");
 		sprintf(str,"%d",GL_RecvInt(fp));
 		ret = str;
 		break;
@@ -1013,6 +1020,7 @@ RecvStringData(
 	  case	GL_TYPE_BINARY:
 	  case	GL_TYPE_BYTE:
 	  case	GL_TYPE_OBJECT:
+		dbgmsg("LBS");
 		GL_RecvLBS(fp,LargeBuff);
 		if		(  LBS_Size(LargeBuff)  >  0  ) {
 			memcpy(str,LBS_Body(LargeBuff),LBS_Size(LargeBuff));
@@ -1026,6 +1034,7 @@ RecvStringData(
 		ret = NULL;
 		break;
 	}
+LEAVE_FUNC;
 	return	(ret);
 }
 

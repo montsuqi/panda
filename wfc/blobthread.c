@@ -53,6 +53,7 @@ copies.
 #include	"authstub.h"
 #include	"blobthread.h"
 #include	"blobcom.h"
+#include	"blobserv.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -66,11 +67,11 @@ InitSession(
 	Bool	rc;
 
 ENTER_FUNC;
+	rc = FALSE;
 	RecvStringDelim(fp,SIZE_NAME,user);		ON_IO_ERROR(fp,badio);
 	RecvStringDelim(fp,SIZE_NAME,pass);		ON_IO_ERROR(fp,badio);
 	dbgprintf("user = [%s]\n",user);
 	dbgprintf("pass = [%s]\n",pass);
-	rc = FALSE;
 	if		(  AuthUser(ThisEnv->blob->auth,user,pass,NULL)  ) {
 		SendPacketClass(fp,APS_OK);
 		sprintf(msg,"[%s] Native BLOB connect",user);
@@ -99,7 +100,7 @@ ENTER_FUNC;
 	
 	if		(  InitSession(fp)  ) {
 		while	(  RecvChar(fp)  ==  APS_BLOB  ) {
-			PassiveBLOB(fp,Blob);		ON_IO_ERROR(fp,badio);
+			PassiveBLOB(fp,BlobState);		ON_IO_ERROR(fp,badio);
 		}
 	}
   badio:

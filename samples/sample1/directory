@@ -23,7 +23,8 @@ control	{
 wfc	{
 #	port	"[192.168.2.10]:9002";
 #	port	":9002";
-	port	"/tmp/sample1";
+	port		"/tmp/sample1";
+	termport	"/tmp/sample1.term";
 };
 
 ld	{

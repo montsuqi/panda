@@ -309,7 +309,9 @@ ENTER_FUNC;
 			rc = TRUE;
 			dbgmsg("get partial");
 		}
+		dbgmsg("*");
 	} else {
+		dbgmsg("*");
 		rc = FALSE;
 	}
 LEAVE_FUNC;

@@ -54,7 +54,8 @@ copies.
 
 static	size_t
 OpenEntry(
-	BLOB_V1_Entry	*ent)
+	BLOB_V1_Entry	*ent,
+	int		mode)
 {
 	char	longname[SIZE_LONGNAME+1];
 	int		flag;
@@ -65,22 +66,22 @@ OpenEntry(
 ENTER_FUNC;
 	snprintf(longname,SIZE_LONGNAME+1,"%s/%lld",ent->blob->space,ent->oid);
 
-	if		(  ( ent->mode & BLOB_OPEN_WRITE )  !=  0  ) {
-		if		(  ( ent->mode & BLOB_OPEN_CREATE )  !=  0  ) {
+	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
+		if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
 			flag = O_CREAT;
 		} else {
-			flag = (  ( ent->mode & BLOB_OPEN_APPEND )  !=  0  )  ? O_APPEND : O_TRUNC;
+			flag = (  ( mode & BLOB_OPEN_APPEND )  !=  0  )  ? O_APPEND : O_TRUNC;
 		}
-		if		(  ( ent->mode & BLOB_OPEN_READ )  !=  0  ) {
+		if		(  ( mode & BLOB_OPEN_READ )  !=  0  ) {
 			flag |= O_RDWR;
 		} else {
 			flag |= O_WRONLY;
 		}
 	} else {
-		flag = (  ( ent->mode & BLOB_OPEN_READ )  !=  0  ) ? O_RDONLY : 0;
+		flag = (  ( mode & BLOB_OPEN_READ )  !=  0  ) ? O_RDONLY : 0;
 	}
 
-	if		(  ( ent->mode & BLOB_OPEN_CREATE )  !=  0  ) {
+	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
 		fd = open(longname,flag,0600);
 	} else {
 		fd = open(longname,flag);
@@ -119,9 +120,27 @@ LEAVE_FUNC;
 	xfree(ent);
 }	
 
+extern	BLOB_V1_State	*
+ConnectBLOB_V1(
+	BLOB_V1_Space	*blob)
+{
+	BLOB_V1_State	*ret;
+
+	ret = New(BLOB_V1_State);
+	ret->blob = blob;
+	return	(ret);
+}
+
+extern	void
+DisConnectBLOB_V1(
+	BLOB_V1_State	*state)
+{
+	xfree(state);
+}
+
 extern	MonObjectType
 NewBLOB_V1(
-	BLOB_V1_Space		*blob,
+	BLOB_V1_State	*state,
 	int				mode)
 {
 	BLOB_V1_Entry	*ent;
@@ -129,25 +148,25 @@ NewBLOB_V1(
 	BLOB_V1_Header	head;
 
 ENTER_FUNC;
-	LockBLOB(blob);
-	obj = blob->oid;
-	blob->oid ++;
+	LockBLOB(state->blob);
+	obj = state->blob->oid;
+	state->blob->oid ++;
 	memcpy(head.magic,BLOB_V1_HEADER,SIZE_BLOB_HEADER);
-	head.oid = blob->oid;
-	rewind(blob->fp);
-	fwrite(&head,sizeof(head),1,blob->fp);
-	fflush(blob->fp);
-	fsync(fileno(blob->fp));
+	head.oid = state->blob->oid;
+	rewind(state->blob->fp);
+	fwrite(&head,sizeof(head),1,state->blob->fp);
+	fflush(state->blob->fp);
+	fsync(fileno(state->blob->fp));
 
 	ent = New(BLOB_V1_Entry);
 	ent->oid = obj;
-	g_hash_table_insert(blob->table,(gpointer)&ent->oid,ent);
-	UnLockBLOB(blob);
-	ReleaseBLOB(blob);
-	ent->blob = blob;
+	g_hash_table_insert(state->blob->table,(gpointer)&ent->oid,ent);
+	UnLockBLOB(state->blob);
+	ReleaseBLOB(state->blob);
+	ent->blob = state->blob;
 
-	ent->mode = mode | BLOB_OPEN_CREATE;
-	OpenEntry(ent);
+	mode = mode | BLOB_OPEN_CREATE;
+	OpenEntry(ent,mode);
 	if		(  ent->fp  ==  NULL  ) {
 		DestroyEntry(ent);
 		obj = GL_OBJ_NULL;
@@ -268,7 +287,7 @@ LEAVE_FUNC;
 
 extern	ssize_t
 OpenBLOB_V1(
-	BLOB_V1_Space		*blob,
+	BLOB_V1_State	*state,
 	MonObjectType	obj,
 	int				mode)
 {
@@ -277,19 +296,18 @@ OpenBLOB_V1(
 
 ENTER_FUNC;
 	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
-		ret = ( obj = NewBLOB_V1(blob,mode) ) != GL_OBJ_NULL  ? 0 : -1;
+		ret = ( obj = NewBLOB_V1(state,mode) ) != GL_OBJ_NULL  ? 0 : -1;
 	} else {
-		if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  ==  NULL  ) {
-			LockBLOB(blob);
+		if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )  ==  NULL  ) {
+			LockBLOB(state->blob);
 			ent = New(BLOB_V1_Entry);
 			ent->oid = obj;
-			g_hash_table_insert(blob->table,(gpointer)&ent->oid,ent);
-			UnLockBLOB(blob);
-			ReleaseBLOB(blob);
-			ent->blob = blob;
+			g_hash_table_insert(state->blob->table,(gpointer)&ent->oid,ent);
+			UnLockBLOB(state->blob);
+			ReleaseBLOB(state->blob);
+			ent->blob = state->blob;
 		}
-		ent->mode = mode;
-		ret = OpenEntry(ent);
+		ret = OpenEntry(ent,mode);
 		if		(  ent->fp  ==  NULL  ) {
 			DestroyEntry(ent);
 			ret = -1;
@@ -301,14 +319,15 @@ LEAVE_FUNC;
 
 extern	Bool
 CloseBLOB_V1(
-	BLOB_V1_Space		*blob,
+	BLOB_V1_State	*state,
 	MonObjectType	obj)
 {
 	BLOB_V1_Entry	*ent;
 	Bool		ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
+	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )
+			   !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			CloseNet(ent->fp);
 		}
@@ -323,13 +342,14 @@ LEAVE_FUNC;
 
 extern	Bool
 DestroyBLOB_V1(
-	BLOB_V1_Space		*blob,
+	BLOB_V1_State	*state,
 	MonObjectType	obj)
 {
 	BLOB_V1_Entry	*ent;
 	Bool			rc;
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
+	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )
+			   !=  NULL  ) {
 		DestroyEntry(ent);
 		rc = TRUE;
 	} else {
@@ -341,7 +361,7 @@ LEAVE_FUNC;
 
 extern	int
 WriteBLOB_V1(
-	BLOB_V1_Space		*blob,
+	BLOB_V1_State	*state,
 	MonObjectType	obj,
 	byte			*buff,
 	size_t			size)
@@ -350,7 +370,8 @@ WriteBLOB_V1(
 	int			ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
+	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )
+			   !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			ret = Send(ent->fp,buff,size);
 		} else {
@@ -365,7 +386,7 @@ LEAVE_FUNC;
 
 extern	int
 ReadBLOB_V1(
-	BLOB_V1_Space		*blob,
+	BLOB_V1_State	*state,
 	MonObjectType	obj,
 	byte			*buff,
 	size_t			size)
@@ -374,7 +395,8 @@ ReadBLOB_V1(
 	int			ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
+	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )
+			   !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			ret = Recv(ent->fp,buff,size);
 		} else {

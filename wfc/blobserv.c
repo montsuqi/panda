@@ -48,7 +48,7 @@ copies.
 extern	void
 PassiveBLOB(
 	NETFILE		*fp,
-	BLOB_Space	*blob)
+	BLOB_State	*blob)
 {
 	MonObjectType	obj;
 	int				mode;

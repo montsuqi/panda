@@ -452,6 +452,7 @@ GL_SendValue(
 	FILE	*fpf;
 	char	*fname;
 
+ENTER_FUNC;
 	ValueIsNotUpdate(value);
 	GL_SendDataType(fp,ValueType(value),fNetwork);
 	switch	(ValueType(value)) {
@@ -526,6 +527,7 @@ GL_SendValue(
 	  default:
 		break;
 	}
+LEAVE_FUNC;
 }
 
 extern	void
@@ -555,7 +557,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		dbgmsg("strings");
-		GL_RecvString(fp,str,fNetwork);ON_IO_ERROR(fp,badio);
+		GL_RecvString(fp,str,fNetwork);		ON_IO_ERROR(fp,badio);
 		SetValueString(value,str,coding);	ON_IO_ERROR(fp,badio);
 		break;
 	  case	GL_TYPE_NUMBER:

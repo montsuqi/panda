@@ -202,7 +202,7 @@ ENTER_FUNC;
 			done = TRUE;
 			break;
 		  case	APS_BLOB:
-			PassiveBLOB(fp,Blob);				ON_IO_ERROR(fp,badio);
+			PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
 			flag = 0;
 			break;
 		  default:

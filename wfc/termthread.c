@@ -55,6 +55,7 @@ copies.
 #include	"corethread.h"
 #include	"blob.h"
 #include	"blobcom.h"
+#include	"blobserv.h"
 #include	"driver.h"
 #include	"message.h"
 #include	"debug.h"
@@ -218,7 +219,7 @@ ENTER_FUNC;
 			break;
 		  case	WFC_BLOB:
 			dbgmsg("recv BLOB");
-			PassiveBLOB(fp,Blob);				ON_IO_ERROR(fp,badio);
+			PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
 			break;
 		  case	WFC_PING:
 			dbgmsg("recv PING");
@@ -297,7 +298,7 @@ ENTER_FUNC;
 				break;
 			  case	WFC_BLOB:
 				dbgmsg("send BLOB");
-				PassiveBLOB(fp,Blob);				ON_IO_ERROR(fp,badio);
+				PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
 				break;
 			  case	WFC_DONE:
 				dbgmsg("DONE");

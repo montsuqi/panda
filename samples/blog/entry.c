@@ -54,7 +54,7 @@ dbgmsg(">do_LINK");
 	entry = MCP_GetWindowRecord(node,"entry");							  
 	if		(  strlen(node->window)  ==  0  )	{
 		SetValueString(GetItemLongName(entry->value,"title.value"),"",NULL);
-		SetValueString(GetItemLongName(entry->value,"body.value"),"0",NULL);
+		SetValueString(GetItemLongName(entry->value,"body.value"),"1",NULL);
 	}
 	MCP_PutWindow(node,"entry",MCP_PUT_CURRENT);
 dbgmsg("<do_LINK");

@@ -432,7 +432,6 @@ MCP_GetDB_Define(
 	ValueStruct		*val
 		,			*ret;
 	char			*p
-		,			*q
 		,			*rname
 		,			*pname
 		,			*oname;
@@ -444,14 +443,14 @@ ENTER_FUNC;
 		*p = 0;
 		pname = p + 1;
 		if		(  ( p = strchr(pname,':') )  !=  NULL  ) {
-			*q = 0;
+			*p = 0;
 			oname = p + 1;
 		} else {
 			oname = NULL;
 		}
 	} else {
 		oname = NULL;
-		oname = NULL;
+		pname = NULL;
 	}		
 
 	val = NULL;

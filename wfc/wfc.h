@@ -38,6 +38,6 @@ GLOBAL	GHashTable	*APS_Hash;
 GLOBAL	GHashTable	*MQ_Hash;
 GLOBAL	Bool		fShutdown;
 GLOBAL	int			MaxRetry;
-GLOBAL	BLOB_Space	*Blob;
+GLOBAL	BLOB_State	*BlobState;
 
 #endif

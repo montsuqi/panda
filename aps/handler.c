@@ -293,6 +293,8 @@ ENTER_FUNC;
 	mcp_pputtype = GetItemLongName(mcp,"private.pputtype");
 	mcp_dcwindow = GetItemLongName(mcp,"dc.window");
 
+	winfrom = 0;
+	winend = 0;
 	if		(  ( PutType = (byte)(int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
 		PutType = SCREEN_CURRENT_WINDOW;
 	}

@@ -24,8 +24,12 @@ copies.
 
 #define	BLOB_V1_Entry		BLOB_Entry
 #define	BLOB_V1_Space		BLOB_Space
+#define	BLOB_V1_State		BLOB_State
+
 #define	InitBLOB_V1			InitBLOB
 #define	FinishBLOB_V1		FinishBLOB
+#define	ConnectBLOB_V1		ConnectBLOB
+#define	DisConnectBLOB_V1	DisConnectBLOB
 #define	NewBLOB_V1			NewBLOB
 #define	OpenBLOB_V1			OpenBLOB
 #define	DestroyBLOB_V1		DestroyBLOB
@@ -34,7 +38,6 @@ copies.
 #define	ReadBLOB_V1			ReadBLOB
 
 typedef	struct {
-	int		mode;
 	NETFILE	*fp;
 	MonObjectType	oid;
 	struct	_BLOB_Space	*blob;
@@ -54,14 +57,20 @@ typedef	struct {
 	MonObjectType	oid;
 }	BLOB_V1_Header;
 
+typedef	struct	_BLOB_V1_State {
+	BLOB_V1_Space	*blob;
+}	BLOB_V1_State;
+
 extern	BLOB_V1_Space	*InitBLOB_V1(char *space);
 extern	void			FinishBLOB_V1(BLOB_V1_Space *blob);
-extern	MonObjectType	NewBLOB_V1(BLOB_V1_Space *blob, int mode);
-extern	Bool			OpenBLOB_V1(BLOB_V1_Space *blob, MonObjectType obj, int mode);
-extern	Bool			DestroyBLOB_V1(BLOB_V1_Space *blob, MonObjectType obj);
-extern	Bool			CloseBLOB_V1(BLOB_V1_Space *blob, MonObjectType obj);
-extern	int	WriteBLOB_V1(BLOB_V1_Space *blob, MonObjectType obj, byte *buff, size_t size);
-extern	int	ReadBLOB_V1(BLOB_V1_Space *blob, MonObjectType obj, byte *buff, size_t size);
+extern	BLOB_V1_State	*ConnectBLOB_V1(BLOB_V1_Space *blob);
+extern	void			DisConnectBLOB_V1(BLOB_V1_State *state);
+extern	MonObjectType	NewBLOB_V1(BLOB_V1_State *state, int mode);
+extern	Bool			OpenBLOB_V1(BLOB_V1_State *state, MonObjectType obj, int mode);
+extern	Bool			DestroyBLOB_V1(BLOB_V1_State *state, MonObjectType obj);
+extern	Bool			CloseBLOB_V1(BLOB_V1_State *state, MonObjectType obj);
+extern	int	WriteBLOB_V1(BLOB_V1_State *state, MonObjectType obj, byte *buff, size_t size);
+extern	int	ReadBLOB_V1(BLOB_V1_State *state, MonObjectType obj, byte *buff, size_t size);
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -26,7 +26,7 @@ copies.
 #include	"net.h"
 #include	"blob.h"
 
-extern	void	PassiveBLOB(NETFILE *fp, BLOB_Space *Blob);
+extern	void	PassiveBLOB(NETFILE *fp, BLOB_State *state);
 
 #undef	GLOBAL
 #ifdef	MAIN
