@@ -307,10 +307,10 @@ class	Widget
 			putTab(ind);
 			printf("%s\t{\n",vname);
 			putTab(ind+1);
-			len = @format.gsub(".,","").length;
+			len = @format.tr(".,","").length;
 			s = @format.split(".");
 			if		s[1]  !=  nil
-				slen = s[1].gsub(",","").length;
+				slen = s[1].tr(",","").length;
 				printf("value\tnumber(%d,%d);\n",len,slen);
 			  else
 				printf("value\tnumber(%d);\n",len);

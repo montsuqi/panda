@@ -1,3 +1,7 @@
+2003-04-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recdefgen.rb: gsub -> tr
+
 2003-04-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/Postgres.c: エラー時のメモリーリーク対策
