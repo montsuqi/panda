@@ -108,7 +108,7 @@ ResetTimer(
 }
 
 extern	void
-UpdateWidget(
+_UpdateWidget(
 	GtkWidget	*widget,
 	void		*user_data)
 {
@@ -118,16 +118,26 @@ UpdateWidget(
 	GtkWidget	*window;
 
 ENTER_FUNC;
-	if		(  !fInRecv  ) {
-		window = gtk_widget_get_toplevel(widget);
-		ResetTimer(GTK_WINDOW (window));
-		name = glade_get_widget_long_name(widget);
-		wname = gtk_widget_get_name(window);
-		if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
-			if	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) {
-				g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
-			}
+	window = gtk_widget_get_toplevel(widget);
+	ResetTimer(GTK_WINDOW (window));
+	name = glade_get_widget_long_name(widget);
+	wname = gtk_widget_get_name(window);
+	if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
+		if	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) {
+			g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
 		}
+	}
+LEAVE_FUNC;
+}
+
+extern	void
+UpdateWidget(
+	GtkWidget	*widget,
+	void		*user_data)
+{
+ENTER_FUNC;
+	if		(  !fInRecv  ) {
+		_UpdateWidget(widget,user_data);
 	}
 LEAVE_FUNC;
 }

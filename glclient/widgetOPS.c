@@ -1,7 +1,7 @@
 /*	PANDA -- a simple transaction monitor
 
 Copyright (C) 1998-1999 Ogochan.
-              2000-2003 Ogochan & JMA (Japan Medical Association).
+              2000-2005 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -107,6 +107,7 @@ RegistValue(
 	ValueAttribute	*p;
 	const	char	*rname;
 
+ENTER_FUNC;
 	rname = glade_get_widget_long_name(widget);
 #ifdef	TRACE
 	printf("Regist = [%s:%s]\n",WidgetName,rname);
@@ -138,6 +139,7 @@ RegistValue(
 	  default:
 		break;
 	}
+LEAVE_FUNC;
 }
 
 static	ValueAttribute	*
@@ -207,7 +209,7 @@ RecvEntry(
 	,		i;
 	int		state;
 
-dbgmsg(">RecvEntry");
+ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -226,7 +228,7 @@ dbgmsg(">RecvEntry");
 			}
 		}
 	}
-dbgmsg("<RecvEntry");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -241,14 +243,14 @@ SendEntry(
 	ValueAttribute	*v;
 	char	iname[SIZE_BUFF];
 
-dbgmsg(">SendEntry");
+ENTER_FUNC;
 	p = (char *)gtk_entry_get_text(GTK_ENTRY(widget));
 	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 	GL_SendName(fp,iname);
 	SendStringData(fp,v->type,(char *)p);
-dbgmsg("<SendEntry");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -259,6 +261,7 @@ CreateTempfile(
     int fildes;
     FILE *file;
 
+ENTER_FUNC;
 	if ((fildes = mkstemp(tmpname)) == -1) {
 		Error("Couldn't make tempfile %s",tmpname );
 			
@@ -267,6 +270,7 @@ CreateTempfile(
 	if ((file = fdopen(fildes, "wb")) == NULL ) {
 		Error("Couldn't open tempfile %s",tmpname);
 	}
+LEAVE_FUNC;
 	return file;
 }
 
@@ -457,7 +461,7 @@ RecvTimer(
 	int		nitem
 	,		i;
 
-dbgmsg(">RecvTimer");
+ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -469,7 +473,7 @@ dbgmsg(">RecvTimer");
 			}
 		}
 	}
-dbgmsg("<RecvTimer");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -483,13 +487,13 @@ SendTimer(
 	ValueAttribute	*v;
 	char	iname[SIZE_BUFF];
 
-dbgmsg(">SendTimer");
+ENTER_FUNC;
 	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 	GL_SendName(fp,iname);
 	SendIntegerData(fp,v->type,GTK_PANDA_TIMER(widget)->duration / 1000);
-dbgmsg("<SendTimer");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 #endif
@@ -550,7 +554,7 @@ SendNumberEntry(
 	char	iname[SIZE_BUFF];
 	Fixed	*xval;
 
-dbgmsg(">SendNumberEntry");
+ENTER_FUNC;
 	value = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
 	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
@@ -561,7 +565,7 @@ dbgmsg(">SendNumberEntry");
 	xval->sval = NumericToFixed(value,xval->flen,xval->slen);
 	NumericFree(value);
 	SendFixedData(fp,v->type,xval);
-dbgmsg("<SendNumberEntry");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 #endif
@@ -576,7 +580,7 @@ RecvLabel(
 	int		nitem
 	,		i;
 
-dbgmsg(">RecvLabel");
+ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -591,7 +595,7 @@ dbgmsg(">RecvLabel");
 			}
 		}
 	}
-dbgmsg("<RecvLabel");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -666,14 +670,14 @@ SendButton(
 	ValueAttribute	*v;
 	char	iname[SIZE_BUFF];
 
-dbgmsg(">SendButton");
+ENTER_FUNC;
 	fActive = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 	GL_SendPacketClass(fp,GL_ScreenData);
 	v = GetValue(name);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
 	GL_SendName(fp,iname);
 	SendBoolData(fp,v->type,fActive);
-dbgmsg("<SendButton");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -713,7 +717,7 @@ RecvButton(
 	,		i;
 	int		state;
 
-dbgmsg(">RecvButton");
+ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -736,7 +740,7 @@ dbgmsg(">RecvButton");
 			}
 		}
 	}
-dbgmsg("<RecvButton");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -758,7 +762,7 @@ RecvCombo(
 	int		state;
 	GtkCombo	*combo = GTK_COMBO(widget);
 
-dbgmsg(">RecvCombo");
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 
 	longname = WidgetName + strlen(WidgetName);
@@ -803,7 +807,7 @@ dbgmsg(">RecvCombo");
 			}
 		}
 	}
-dbgmsg("<RecvCombo");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -826,7 +830,7 @@ RecvPandaCombo(
 	int		state;
 	GtkPandaCombo	*combo = GTK_PANDA_COMBO(widget);
 
-dbgmsg(">RecvPandaCombo");
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 	longname = WidgetName + strlen(WidgetName);
 	nitem = GL_RecvInt(fp);
@@ -870,7 +874,7 @@ dbgmsg(">RecvPandaCombo");
 			}
 		}
 	}
-dbgmsg("<RecvPandaCombo");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -889,7 +893,7 @@ SendPandaCList(
 	GtkVisibility	visi;
 	gboolean	fVisibleRow;
 
-dbgmsg(">SendPandaCList");
+ENTER_FUNC;
 	v = GetValue(name);
 	fVisibleRow = FALSE;
 	for	( children = GTK_PANDA_CLIST(widget)->row_list , i = 0 ;
@@ -912,7 +916,7 @@ dbgmsg(">SendPandaCList");
 			}
 		} 
 	}
-dbgmsg("<SendPandaCList");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -943,7 +947,7 @@ RecvPandaCList(
 	int		state;
 	gfloat		rowattrw;
 
-dbgmsg(">RecvPandaCList");
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 
 	strcpy(label,WidgetName);
@@ -1048,7 +1052,7 @@ dbgmsg(">RecvPandaCList");
 	fInRecv = FALSE;
 	UpdateWidget((GtkWidget *)widget,NULL);
 	fInRecv = TRUE;
-dbgmsg("<RecvPandaCList");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 #endif
@@ -1066,7 +1070,7 @@ SendCList(
 	char			iname[SIZE_BUFF];
 	ValueAttribute	*v;
 
-dbgmsg(">SendCList");
+ENTER_FUNC;
 	v = GetValue(name);
 	for	( children = GTK_CLIST(widget)->row_list , i = 0 ;
 		  children  !=  NULL ; children = children->next , i ++ ) {
@@ -1078,7 +1082,7 @@ dbgmsg(">SendCList");
 			SendBoolData(fp,GL_TYPE_BOOL,((state == GTK_STATE_SELECTED) ? TRUE : FALSE));
 		}
 	}
-dbgmsg("<SendCList");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -1107,7 +1111,7 @@ RecvCList(
 	int		row
 		,	column;
 
-dbgmsg(">RecvCList");
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 
 	strcpy(label,WidgetName);
@@ -1193,7 +1197,7 @@ dbgmsg(">RecvCList");
 			}
 		}
 	}
-dbgmsg("<RecvCList");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -1211,7 +1215,7 @@ SendList(
 	char			iname[SIZE_BUFF];
 	ValueAttribute	*v;
 
-dbgmsg(">SendList");
+ENTER_FUNC;
 	v = GetValue(name);
 	for	( children = GTK_LIST(widget)->children , i = 0 ;
 		  children  !=  NULL ; children = children->next , i ++ ) {
@@ -1222,7 +1226,7 @@ dbgmsg(">SendList");
 		GL_SendName(fp,iname);
 		SendBoolData(fp,GL_TYPE_BOOL,((state == GTK_STATE_SELECTED) ? TRUE : FALSE));
 	}
-dbgmsg("<SendList");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -1245,7 +1249,7 @@ RecvList(
 	int		state;
 	//gfloat	pos;
 
-dbgmsg(">RecvList");
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 
 	longname = WidgetName + strlen(WidgetName);
@@ -1311,7 +1315,7 @@ dbgmsg(">RecvList");
 printf("pos = %f\n",(double)pos);
 	gtk_list_scroll_vertical(GTK_LIST(widget),GTK_SCROLL_JUMP,pos);
 #endif
-dbgmsg("<RecvList");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -1327,7 +1331,7 @@ SendCalendar(
 	,		day;
 	ValueAttribute	*v;
 
-dbgmsg(">SendCaleandar");
+ENTER_FUNC;
 	gtk_calendar_get_date(GTK_CALENDAR(calendar),&year,&month,&day);
 	v = GetValue(name);
 
@@ -1363,7 +1367,7 @@ RecvCalendar(
 	,		day;
 	int		state;
 
-dbgmsg(">RecvCaleandar");
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 	RegistValue(widget,"",OPT_TYPE_NULL,NULL);
 	nitem = GL_RecvInt(fp);
@@ -1393,7 +1397,7 @@ dbgmsg(">RecvCaleandar");
 		gtk_calendar_select_month(GTK_CALENDAR(widget),month-1,year);
 		gtk_calendar_select_day(GTK_CALENDAR(widget),day);
 	}
-dbgmsg("<RecvCaleandar");
+LEAVE_FUNC;
 	return	(TRUE); 
 }
 
@@ -1407,7 +1411,7 @@ SendNotebook(
 	ValueAttribute	*v;
 	int		page;
 
-dbgmsg(">SendNotebook");
+ENTER_FUNC;
 	v = GetValue(name);
 	page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
 
@@ -1418,7 +1422,7 @@ dbgmsg(">SendNotebook");
 #endif
 	GL_SendName(fp,iname);
 	SendIntegerData(fp,v->type,page);
-dbgmsg("<SendNotebook");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -1435,7 +1439,7 @@ RecvNotebook(
 	int		state;
 	char	*longname;
 
-dbgmsg(">RecvNotebook");
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 	nitem = GL_RecvInt(fp);
 	longname = WidgetName + strlen(WidgetName);
@@ -1458,7 +1462,7 @@ dbgmsg(">RecvNotebook");
 		}
 	}
 	gtk_notebook_set_page(GTK_NOTEBOOK(widget),page);
-dbgmsg("<RecvNotebook");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -1472,7 +1476,7 @@ SendProgressBar(
 	ValueAttribute	*v;
 	int		value;
 
-dbgmsg(">SendProgress");
+ENTER_FUNC;
 	v = GetValue(name);
 	value = gtk_progress_get_value(GTK_PROGRESS(progress));
 
@@ -1483,7 +1487,7 @@ dbgmsg(">SendProgress");
 #endif
 	GL_SendName(fp,iname);
 	SendIntegerData(fp,v->type,value);
-dbgmsg("<SendProgress");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -1500,7 +1504,7 @@ RecvProgressBar(
 	int		state;
 	char	*longname;
 
-dbgmsg(">RecvProgress");
+ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 	nitem = GL_RecvInt(fp);
 	longname = WidgetName + strlen(WidgetName);
@@ -1520,7 +1524,7 @@ dbgmsg(">RecvProgress");
 			gtk_progress_set_value(GTK_PROGRESS(widget),value);
 		}
 	}
-dbgmsg("<RecvProgress");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -1659,6 +1663,98 @@ LEAVE_FUNC;
 	return	(TRUE);
 }
 
+static	Bool
+SendScrolledWindow(
+	char		*name,
+	GtkWidget	*widget,
+	NETFILE		*fp)
+{
+	GtkAdjustment	*vad
+		,			*had;
+	char	iname[SIZE_BUFF];
+	ValueAttribute	*v;
+	int		vh
+		,	vv;
+
+ENTER_FUNC;
+	vad = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
+	had = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
+
+	vh = (int)had->value;
+	vv = (int)vad->value;
+
+	v = GetValue(name);
+
+	dbgprintf("%s.hpos = %d\n",v->ValueName,vh);
+	dbgprintf("%s.vpos = %d\n",v->ValueName,vv);
+
+	GL_SendPacketClass(fp,GL_ScreenData);
+	sprintf(iname,"%s.hpos",v->ValueName);
+	GL_SendName(fp,iname);
+	SendIntegerData(fp,v->type,vh);
+
+	GL_SendPacketClass(fp,GL_ScreenData);
+	sprintf(iname,"%s.vpos",v->ValueName);
+	GL_SendName(fp,iname);
+	SendIntegerData(fp,v->type,vv);
+dbgmsg("*");
+LEAVE_FUNC;
+	return	(TRUE);
+}
+
+static	Bool
+RecvScrolledWindow(
+	GtkWidget	*widget,
+	NETFILE		*fp)
+{
+	char	name[SIZE_BUFF]
+	,		buff[SIZE_BUFF];
+	int		nitem
+	,		i;
+	int		vpos
+		,	hpos;
+	int		state;
+	char	*longname;
+	GtkAdjustment	*ad;
+
+ENTER_FUNC;
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	nitem = GL_RecvInt(fp);
+	longname = WidgetName + strlen(WidgetName);
+	for	( i = 0 ; i < nitem ; i ++ ) {
+		GL_RecvName(fp,name);
+		if		(  !stricmp(name,"state")  ) {
+			RecvIntegerData(fp,&state);
+			SetState(widget,(GtkStateType)state);
+		} else
+		if		(  !stricmp(name,"style")  ) {
+			RecvStringData(fp,buff,SIZE_BUFF);
+			gtk_widget_set_style(widget,GetStyle(buff));
+		} else
+		if		(  !stricmp(name,"vpos")  ) {
+			RecvIntegerData(fp,&vpos);
+			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
+			dbgprintf("%s = %d\n",name,vpos);
+
+			ad = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
+			ad->value = (gfloat)vpos;
+			gtk_adjustment_value_changed(ad);
+		} else
+		if		(  !stricmp(name,"hpos")  ) {
+			RecvIntegerData(fp,&hpos);
+			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
+			dbgprintf("%s = %d\n",name,hpos);
+
+			ad = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
+			ad->value = (gfloat)hpos;
+			gtk_adjustment_value_changed(ad);
+		}
+	}
+	_UpdateWidget(widget,NULL);
+LEAVE_FUNC;
+	return	(TRUE);
+}
+
 extern	void
 InitWidgetOperations(void)
 {
@@ -1696,6 +1792,7 @@ InitWidgetOperations(void)
 
 	AddClass(GTK_TYPE_FRAME,RecvFrame,NULL);
 	AddClass(GTK_TYPE_OPTION_MENU,RecvOption,SendOption);
+	AddClass(GTK_TYPE_SCROLLED_WINDOW,RecvScrolledWindow,SendScrolledWindow);
 #ifdef USE_GNOME
 	AddClass(GNOME_TYPE_PIXMAP,RecvPixmap,NULL);
 	AddClass(GNOME_TYPE_FILE_ENTRY,RecvFileEntry,NULL);

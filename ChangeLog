@@ -1,3 +1,8 @@
+2005-03-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/widgetOPS.c (SendScrolledWindow), (RecvScrolledWindow)
+	  :  ScrolledWindowsの位置設定
+
 2005-03-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/PostgreSQL.c (ExecPGSQL): vitrual DB時のmanglingを正しくし

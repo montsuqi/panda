@@ -30,6 +30,7 @@ extern	XML_Node	*ShowWindow(char *wname, byte type);
 extern	void		DestroyWindow(char *sname);
 extern	void		DestroyWindowAll();
 extern	void		ClearWindowTable(void);
+extern	void		_UpdateWidget(GtkWidget *widget, void *user_data);
 extern	void		UpdateWidget(GtkWidget *widget, void *user_data);
 
 #endif

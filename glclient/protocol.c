@@ -710,6 +710,7 @@ ENTER_FUNC;
 				if		(  ( dataname = strchr(WidgetName,'.') )  !=  NULL  ) {
 					dataname ++;
 				}
+				dbgprintf("dataname = [%s]\n",dataname);
 				if		(  ( widget = glade_xml_get_widget(ThisXML,dataname) )
 						   !=  NULL  ) {
 					if		(  RecvWidgetData(widget,fp)  ) {
