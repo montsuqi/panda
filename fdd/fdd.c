@@ -36,7 +36,6 @@ copies.
 #include    <sys/wait.h>
 #include    <errno.h>
 #include    <sys/socket.h>
-//#include    <sys/select.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
 #ifdef	USE_SSL

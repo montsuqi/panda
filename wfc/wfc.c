@@ -191,6 +191,8 @@ main(
 {
 	int			rc;
 
+	(void)signal(SIGPIPE, SIG_IGN);
+
 	SetDefault();
 	GetOption(option,argc,argv);
 	InitMessage("wfc",NULL);
