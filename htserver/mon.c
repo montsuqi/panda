@@ -377,11 +377,10 @@ dbgmsg("<PutHTML");
 }
 
 static void
-PutFile(char *file_field)
+PutFile(ValueStruct *file)
 {
     char *filename_field, *ctype_field;
     char *filename, *ctype;
-    ValueStruct *file;
     char *p;
 
     if ((ctype_field = g_hash_table_lookup(Values, "_contenttype")) != NULL) {
@@ -397,7 +396,6 @@ PutFile(char *file_field)
     }
 	printf("Cache-Control: no-cache\r\n");
 	printf("\r\n");
-    file = HT_GetValue(file_field, TRUE);
     switch (ValueType(file)) {
     case GL_TYPE_BYTE:
     case GL_TYPE_BINARY:
@@ -527,7 +525,6 @@ HT_GetValue(char *name, Bool fClear)
         return NULL;
     type = *(PacketDataType *) LBS_Body(lbs);
     value = NewValue(type);
-    InitializeValue(value);
     NativeUnPackValue(NULL, LBS_Body(lbs), value);
 	return value;
 }
@@ -761,8 +758,13 @@ ENTER_FUNC;
 				HT_RecvString(SIZE_BUFF,buff);	/*	\n	*/
 				g_hash_table_insert(Values,"_name",name);
                 if ((file = g_hash_table_lookup(Values, "_file")) != NULL) {
-                    PutFile(file);
-                    return;
+                    ValueStruct *value = HT_GetValue(file, TRUE);
+
+                    fprintf(stderr, "IS_VALUE_NIL(value): %d\n", IS_VALUE_NIL(value));
+                    if (value != NULL && !IS_VALUE_NIL(value)) {
+                        PutFile(value);
+                        return;
+                    }
                 }
                 htc = HTCParser(name);
                 if (htc == NULL)
