@@ -588,7 +588,7 @@ CheckFeture(
 			}
 		}
 	}
-#if 1
+#if 0
 	printf("core   = %s\n",fFetureCore ? "YES" : "NO");
 	printf("i18n   = %s\n",fFetureI18N ? "YES" : "NO");
 	printf("expand = %s\n",fFetureExpand ? "YES" : "NO");
