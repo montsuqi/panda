@@ -1,3 +1,7 @@
+2002-10-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.1.1 release
+
 2002-10-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/recdefgen.rb: 無意味な文字数+1を削除、char -> varchar

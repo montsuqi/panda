@@ -5,7 +5,7 @@ import java.util.*;
 import java.io.*;
 
 public abstract class AbstractServer {
-    public static final String VER = "1.0.7";
+    public static final String VER = "1.1.1";
 
     protected String host;
     protected int port;

@@ -1,6 +1,6 @@
 require	'socket';
 
-VER="1.1.0";
+VER="1.1.1";
 
 class	PG_Server
 	def get_event

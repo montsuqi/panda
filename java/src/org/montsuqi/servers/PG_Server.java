@@ -6,7 +6,7 @@ import java.io.*;
 
 public class PG_Server extends AbstractServer {
 
-    public static final String VER = "1.0.7";
+    public static final String VER = "1.1.1";
 
     String prog;
 
