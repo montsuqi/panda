@@ -35,6 +35,7 @@ copies.
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<glib.h>
+#include	<signal.h>
 
 #include	"types.h"
 #include	"const.h"
