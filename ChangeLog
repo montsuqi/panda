@@ -1,3 +1,7 @@
+2003-08-15  OGOSHI  <ogochan@nurs.or.jp>
+
+	* aps/Exec.c: CGIスタイルに任意のsub processをexecするハンドラ
+
 2003-08-09  OGOSHI  <ogochan@nurs.or.jp>
 
 	* configure.in: GNOMEの処理を正しくした。サーバのみbuild出来るよう

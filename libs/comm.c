@@ -201,9 +201,9 @@ SendLBS(
 	NETFILE	*fp,
 	LargeByteString	*lbs)
 {
-	SendLength(fp,lbs->ptr);
-	if		(  lbs->ptr  >  0  ) {
-		Send(fp,lbs->body,lbs->ptr);
+	SendLength(fp,LBS_Size(lbs));
+	if		(  LBS_GetPos(lbs)  >  0  ) {
+		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
 	}
 }
 
@@ -217,9 +217,9 @@ RecvLBS(
 	size = RecvLength(fp);
 	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
-		Recv(fp,lbs->body,size);
+		Recv(fp,LBS_Body(lbs),size);
+		LBS_SetPos(lbs,size-1);
 	}
-	lbs->ptr = size;
 }	
 
 extern	void

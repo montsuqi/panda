@@ -78,7 +78,7 @@ _MessagePrintf(
 	char	*format,
 	...)
 {
-	char	buff[1024];
+	char	buff[SIZE_BUFF];
 	va_list	va;
 
 	va_start(va,format);

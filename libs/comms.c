@@ -61,6 +61,25 @@ SendStringDelim(
 	}
 }
 
+extern	void
+SendLargeString(
+	NETFILE			*fp,
+	LargeByteString	*lbs)
+{
+	size_t	size;
+	char	*str;
+
+	str = LBS_Body(lbs);
+	if		(   str  !=  NULL  ) { 
+		size = strlen(str);
+	} else {
+		size = 0;
+	}
+	if		(  size  >  0  ) {
+		Send(fp,str,size);
+	}
+}
+
 extern	Bool
 RecvStringDelim(
 	NETFILE	*fp,
@@ -79,6 +98,27 @@ RecvStringDelim(
 	*p = 0;
 	if		(  c  >=  0  ) {
 		StringChop(str);
+		rc = TRUE;
+	} else {
+		rc = FALSE;
+	}
+	return	(rc);
+}
+
+extern	Bool
+RecvLargeString(
+	NETFILE			*fp,
+	LargeByteString	*lbs)
+{
+	Bool	rc;
+	int		c;
+
+	while	(	(  ( c = RecvChar(fp) )  >=  0     )
+			&&	(  c                     !=  '\n'  ) )	{
+		LBS_EmitChar(lbs,c);
+	}
+	LBS_EmitChar(lbs,0);
+	if		(  c  >=  0  ) {
 		rc = TRUE;
 	} else {
 		rc = FALSE;

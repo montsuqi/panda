@@ -10,8 +10,11 @@ wfc		"localhost:9001";
 #bind	"project2"	"dotCOBOL"	"TPDEMO1";
 #bind	"project5"	"dotCOBOL"	"TPDEMO3";
 
-bind	""			"OpenCOBOL"	"TPDEMO1";
-bind	"project1"	"OpenCOBOL"	"TPDEMO1";
+bind	""			"Exec"		"TPDEMO1.rb";
+bind	"project1"	"Exec"		"TPDEMO1.rb";
+
+#bind	""			"OpenCOBOL"	"TPDEMO1";
+#bind	"project1"	"OpenCOBOL"	"TPDEMO1";
 bind	"project2"	"OpenCOBOL"	"TPDEMO1";
 bind	"project5"	"OpenCOBOL"	"TPDEMO3";
 

@@ -105,20 +105,18 @@
       *
            MOVE    -1234       TO  WN1-ENTRY2-VALUE.
            MOVE   'おごちゃん' TO  WN1-COMBO1-ITEM(1).
-           MOVE   'じゅんちゃ' TO  WN1-COMBO1-ITEM(2).
-           MOVE   'えりさ'     TO  WN1-COMBO1-ITEM(3).
-           MOVE   'ques'       TO  WN1-COMBO1-ITEM(4).
+           MOVE   'えりさ'     TO  WN1-COMBO1-ITEM(2).
+           MOVE   'ques'       TO  WN1-COMBO1-ITEM(3).
            MOVE   'blue'       TO  WN1-COMBO1-STYLE.
-           MOVE    4           TO  WN1-COMBO1-COUNT.
+           MOVE    3           TO  WN1-COMBO1-COUNT.
       *
            MOVE   'おごちゃん' TO  WN1-LIST1-ITEM(1).
-           MOVE   'じゅんちゃ' TO  WN1-LIST1-ITEM(2).
-           MOVE   'えりさ'     TO  WN1-LIST1-ITEM(3).
-           MOVE   'ques'       TO  WN1-LIST1-ITEM(4).
-           MOVE   'void_No2'   TO  WN1-LIST1-ITEM(5).
-           MOVE   'Mul6'       TO  WN1-LIST1-ITEM(6).
-           MOVE   '末広'       TO  WN1-LIST1-ITEM(7).
-           MOVE    7           TO  WN1-LIST1-COUNT.
+           MOVE   'えりさ'     TO  WN1-LIST1-ITEM(2).
+           MOVE   'ques'       TO  WN1-LIST1-ITEM(3).
+           MOVE   'void_No2'   TO  WN1-LIST1-ITEM(4).
+           MOVE   'Mul6'       TO  WN1-LIST1-ITEM(5).
+           MOVE   '末広'       TO  WN1-LIST1-ITEM(6).
+           MOVE    6           TO  WN1-LIST1-COUNT.
            MOVE    2           TO  WN1-LIST1-FROM.
            MOVE   'T'          TO  WN1-LIST1-SELECT(2).
       *
