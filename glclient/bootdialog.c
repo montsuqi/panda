@@ -54,7 +54,7 @@ boot_dialog_init ()
       dir = g_strconcat(g_get_home_dir (), G_DIR_SEPARATOR_S, ".glclient", NULL);
       if (mkdir (dir, 0755) && errno != EEXIST)
         fprintf (stderr, "error: could not create per-user config directory\n");
-      file = g_strconcat(dir, G_DIR_SEPARATOR_S, "glclient.conf");
+      file = g_strconcat(dir, G_DIR_SEPARATOR_S, "glclient.conf", NULL);
       config_ = bd_config_new_with_filename (file);
       if (!bd_config_exist_section (config_, "glclient"))
         {
