@@ -33,12 +33,12 @@ libpandablob_la_DEPENDENCIES	=		\
 
 testblob_LDADD	=				\
 	-lm					\
-	$(GLIB_LIBS)				\
-	$(SSL_LIBS)				\
-	$(MONDAI_LIBS)				\
 	$(top_builddir)/libs/libpandacom.la	\
 	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/blob/libpandablob.la
+	$(top_builddir)/blob/libpandablob.la	\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
+	$(MONDAI_LIBS)				
 
 testblob_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpandacom.la	\

@@ -15,13 +15,13 @@ INCLUDES 			= 		\
 
 LDADD 			=						\
 	-lm									\
-	$(SSL_LIBS)							\
-	$(GLIB_LIBS)						\
-	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpanda.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/blob/libpandablob.la
+	$(top_builddir)/blob/libpandablob.la	\
+	$(SSL_LIBS)							\
+	$(GLIB_LIBS)						\
+	$(MONDAI_LIBS)						
 DEPENDENCIES	=						\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/libs/libpanda.la		\

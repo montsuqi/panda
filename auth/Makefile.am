@@ -5,19 +5,19 @@ bin_PROGRAMS = user
 
 glauth_LDADD 		=					\
 	-lm									\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(MONDAI_LIBS)
 
 user_LDADD 		=						\
 	-lm									\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(MONDAI_LIBS)
 
 INCLUDES 			= 					\
 	-I$(top_srcdir)						\

@@ -32,14 +32,14 @@ INCLUDES =					\
 
 glclient_LDADD =				\
 	-lm					\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandagl.la	\
 	$(GLIB_LIBS)				\
 	$(GTK_LIBS)				\
 	$(GLADE_LIBS)				\
 	$(SSL_LIBS)				\
 	$(GTK_PANDA_LIBS)			\
-	$(MONDAI_LIBS)				\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandagl.la
+	$(MONDAI_LIBS)
 
 noinst_PROGRAMS = testdialogs testfileentry
 
@@ -55,5 +55,6 @@ testfileentry_LDADD =\
 	$(GLADE_LIBS) \
 	$(MONDAI_LIBS) \
 	dialogs.o \
-	fileEntry.o
+	fileEntry.o 
+
 

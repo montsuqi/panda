@@ -2,25 +2,25 @@ sbin_PROGRAMS =  dbredirector dbs
 
 dbredirector_LDADD 		=				\
 	-lm									\
-	$(GLIB_LIBS)						\
-	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						\
-	$(POSTGRES_LIBS)					\
 	$(top_builddir)/libs/libpanda.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/dblib/libpandadb.la
-
-dbs_LDADD 		=						\
-	-lm									\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\
+	$(POSTGRES_LIBS)					
+
+dbs_LDADD 		=						\
+	-lm									\
 	$(top_builddir)/libs/libpanda.la		\
 	$(top_builddir)/libs/libpandas.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/dblib/libpandadb.la
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)						
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\

@@ -21,15 +21,15 @@ MONFUNC_la_LDFLAGS	=			\
 
 LDADD 		=							\
 	-lm									\
+	$(top_builddir)/libs/libpanda.la		\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/dblib/libpandadb.la     \
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\
 	$(OPENCOBOL_LIBS)					\
-	$(RUBY_LIBS)						\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/dblib/libpandadb.la
+	$(RUBY_LIBS)						
 
 MCPSUB_la_LIBADD	=
 MONFUNC_la_LIBADD	=

@@ -6,28 +6,28 @@ sbin_PROGRAMS = htserver
 htserver_LDFLAGS	=	-export-dynamic
 htserver_LDADD 		=					\
 	-lm									\
-	$(SSL_LIBS)							\
-	$(GLIB_LIBS)						\
-	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpandas.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandacom.la	\
+	$(SSL_LIBS)							\
+	$(GLIB_LIBS)						\
+	$(MONDAI_LIBS)
 
 mon_LDADD 		=						\
 	-lm									\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(MONDAI_LIBS)
 
 htcproc_LDADD 	=						\
 	-lm									\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(MONDAI_LIBS)
 
 INCLUDES 			= \
 	-I$(top_srcdir)	\
@@ -77,13 +77,14 @@ htcproc_DEPENDENCIES	=				\
 
 mce_LDADD 		=						\
 	-lm									\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/libs/libpandacom.la	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\
 	$(XML2_LIBS)						\
-	$(XSLT_LIBS)						\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(XSLT_LIBS)
+
 mcd_INCLUDES =					\
 	-I$(top_srcdir)				\
 	-I$(top_srcdir)/include		\
