@@ -813,6 +813,8 @@ BuildMcpArea(
 	p += sprintf(p,				"rname	int;");
 	p += sprintf(p,				"pname	int;");
 	p += sprintf(p,			"};");
+	p += sprintf(p,			"table      varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"pathname   varchar(%d);",SIZE_NAME);
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"private	{");
 	p += sprintf(p,			"count	int;");

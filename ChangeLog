@@ -1,3 +1,17 @@
+2004-10-21  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c (BuildMcpArea): mcprecの構造変更(文字列でのパス指定)
+
+	* aps/C.c (MCP_ExecFunction): MakeCTRLbyNameを使うように
+
+	* aps/handler.c (MakeCTRLbyName): 名前からパスを検索する
+
+	* aps/MONFUNC.c: パス名を文字列で指定するCOBOL API
+
+2004-10-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/handler.c (CallAfter): fromwinを正しくした
+
 2004-10-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glserver/glserver.c (SetDefault): veryfypeerをデフォルトにした

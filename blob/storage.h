@@ -44,4 +44,8 @@ extern	ssize_t		GetObject(OsekiSession *state, ObjectType obj,
 extern	ssize_t		PutObject(OsekiSession *state, ObjectType obj,
 							  void *buff, size_t size);
 
+extern	Bool		CheckInstall(OsekiSession *ses, char *name);
+extern	void		InstallObject(OsekiSession *ses, char *name,
+								  ObjectType obj);
+
 #endif

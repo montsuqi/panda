@@ -1340,6 +1340,58 @@ LEAVE_FUNC;
 }
 
 static	void
+_DBCLOSECURSOR(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	char	sql[SIZE_SQL+1]
+	,		*p;
+	DB_Struct	*db;
+	PathStruct	*path;
+	PGresult	*res;
+	int			n;
+	LargeByteString	*src;
+
+ENTER_FUNC;
+	if		(  rec->type  !=  RECORD_DB  ) {
+		ctrl->rc = MCP_BAD_ARG;
+	} else {
+		db = rec->opt.db;
+		path = db->path[ctrl->pno];
+		src = path->ops[DBOP_CLOSE]->proc;
+		if		(  src  !=  NULL  ) {
+			ctrl->rc = MCP_OK;
+			ExecPGSQL(dbg,ctrl,rec,src,args);
+		} else {
+			p = sql;
+			p += sprintf(p,"close from %s_%s_csr",rec->name,path->name);
+			res = _PQexec(dbg,sql,TRUE);
+			if		(	(  res ==  NULL  )
+					||	(  PQresultStatus(res)  !=  PGRES_TUPLES_OK  ) ) {
+				dbgmsg("NG");
+				ctrl->rc = MCP_BAD_OTHER;
+			} else {
+				ctrl->rc = MCP_OK;
+				if		(  ( n = PQntuples(res) )  >  0  ) {
+					dbgmsg("OK");
+					level = 0;
+					alevel = 0;
+					GetTable(dbg,res,args);
+					ctrl->rc = MCP_OK;
+				} else {
+					dbgmsg("EOF");
+					ctrl->rc = MCP_EOF;
+				}
+			}
+			_PQclear(res);
+		}
+	}
+LEAVE_FUNC;
+}
+
+static	void
 _DBUPDATE(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -1504,7 +1556,7 @@ ENTER_FUNC;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
             sql = NewLBS();
-			LBS_EmitString(sql,"INSERT\tINTO\t");
+			LBS_EmitString(sql,"insert\tinto\t");
 			LBS_EmitString(sql,rec->name);
 			LBS_EmitString(sql," (");
 
@@ -1587,6 +1639,7 @@ static	DB_OPS	Operations[] = {
 	{	"DBUPDATE",		_DBUPDATE },
 	{	"DBDELETE",		_DBDELETE },
 	{	"DBINSERT",		_DBINSERT },
+	{	"DBCLOSECURSOR",_DBCLOSECURSOR },
 
 	{	NULL,			NULL }
 };

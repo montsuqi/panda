@@ -360,13 +360,7 @@ MCP_ExecFunction(
 {
 	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
-	PathStruct		*path;
-	DB_Operation	*op;
 	ValueStruct		*value;
-	int			rno
-		,		pno
-		,		ono;
-	size_t		size;
 
 ENTER_FUNC;
 #ifdef	DEBUG
@@ -374,39 +368,10 @@ ENTER_FUNC;
 	dbgprintf("pname = [%s]",pname); 
 	dbgprintf("func  = [%s]",func); 
 #endif
-	ctrl.rno = 0;
-	ctrl.pno = 0;
-	ctrl.blocks = 0;
-
-	value = NULL;
-	if		(	(  rname  !=  NULL  )
-			&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
-		ctrl.rno = rno - 1;
-		rec = ThisDB[ctrl.rno];
-		value = rec->value;
-		if		(	(  pname  !=  NULL  )
-				&&	(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
-														pname) )  !=  0  ) ) {
-			ctrl.pno = pno - 1;
-			path = rec->opt.db->path[pno-1];
-			value = ( path->args != NULL ) ? path->args : value;
-			if		(	(  func  !=  NULL  )
-					&&	( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
-				op = path->ops[ono-1];
-				value = ( op->args != NULL ) ? op->args : value;
-			}
-		} else {
-			ctrl.pno = 0;
-		}
-	} else {
-		rec = NULL;
-	}
+	rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
 	if		(  rec  !=  NULL  ) {
-		size = NativeSizeValue(NULL,rec->value);
-		ctrl.blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 		CopyValue(value,data);
 	}
-	strcpy(ctrl.func,func);
 	ExecDB_Process(&ctrl,rec,value);
 	if		(  rec  !=  NULL  ) {
 		CopyValue(data,value);

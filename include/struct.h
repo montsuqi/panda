@@ -40,6 +40,7 @@ typedef	struct {
 #define	DBOP_UPDATE		2
 #define	DBOP_INSERT		3
 #define	DBOP_DELETE		4
+#define	DBOP_CLOSE		5
 
 typedef	struct {
 	char			*name;

@@ -41,6 +41,8 @@ extern	void	CleanUpOnlineDC(void);
 extern	int		StartBatch(char *name, char *para);
 
 extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);
+extern	RecordStruct	*MakeCTRLbyName(ValueStruct **value, DBCOMM_CTRL *ctrl,
+										char *rname, char *pname, char *func);
 extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);
 extern	RecordStruct	*BuildDBCTRL(void);
 extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);

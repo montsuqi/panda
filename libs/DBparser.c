@@ -213,13 +213,14 @@ InitPathStruct(void)
 ENTER_FUNC;
 	ret = New(PathStruct);
 	ret->opHash = NewNameHash();
-	ret->ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * 5);
+	ret->ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * 6);
 	InsertBuildIn(ret,"DBSELECT",DBOP_SELECT);
 	InsertBuildIn(ret,"DBFETCH",DBOP_FETCH);
 	InsertBuildIn(ret,"DBUPDATE",DBOP_UPDATE);
 	InsertBuildIn(ret,"DBINSERT",DBOP_INSERT);
 	InsertBuildIn(ret,"DBDELETE",DBOP_DELETE);
-	ret->ocount = 5;
+	InsertBuildIn(ret,"DBCLOSECURSOR",DBOP_CLOSE);
+	ret->ocount = 6;
 	ret->args = NULL;
 LEAVE_FUNC;
 	return	(ret);

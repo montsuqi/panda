@@ -46,20 +46,16 @@ copies.
 #define	FREE_NODE(p)		((p)&=~PAGE_USECHILD)
 #define	PAGE_NO(p)			((p)&~PAGE_FLAGS)
 
-#define	BODY_USE			0x40
-#define	BODY_SHORT			0x20
-#define	BODY_NOENT			0x10
+//#define	BODY_USE			0x04
 
 #define	BODY_PACK			0x00
 #define	BODY_LINER			0x01
 #define	BODY_TREE			0x02
+#define	BODY_SHORT			0x03
 
-#define	IS_SHORTFORM(e)		((((e).flags)&BODY_SHORT) == BODY_SHORT)
-#define	IS_NOENT(e)			((((e).flags)&BODY_NOENT) == BODY_NOENT)
-#define	IS_FREEOBJ(e)		((((e).flags)&BODY_USE) == 0)
-#define	USE_OBJ(e)			(((e).flags)|=BODY_USE)
-#define	FREE_OBJ(e)			(((e).flags)&=~BODY_USE)
-#define	NOENT_OBJ(e)		(((e).flags)|=BODY_NOENT)
+#define	IS_FREEOBJ(e)		((e).use == 0)
+#define	USE_OBJ(e)			((e).use = 1)
+#define	FREE_OBJ(e)			((e).use = 0)
 
 #define	PAGE_SIZE(state)		((state)->space->pagesize)
 #define	NODE_ELEMENTS(state)	(PAGE_SIZE(state) / sizeof(pageno_t))
@@ -77,12 +73,20 @@ copies.
 #define	OBJ_POINT_NODE(p)	((p)|=OBJ_NODE)
 #define	IS_OBJ_NODE(p)		(((p)&OBJ_NODE) == OBJ_NODE)
 
+#define	SIZE_SMALL		14
 typedef	struct {
-	byte		flags	:8;
-	uint64_t	pos		:56;
+	byte		use		:1;
+	byte		type	:3;
 	byte		mode	:4;
-	byte		type	:4;
-	uint64_t	size	:56;
+	byte		ssize	:4;
+	byte		fill	:4;
+	union {
+		struct {
+			uint64_t	pos		:56;
+			uint64_t	size	:56;
+		}	pointer;
+		byte	small[SIZE_SMALL];
+	}	body;
 }	OsekiObjectEntry;
 
 typedef	struct {
@@ -107,15 +111,17 @@ typedef	struct {
 	pageno_t		cOld;
 }	OsekiPhaseControl;
 
-#define	SLOT_SCHEMA		0
-
 typedef	struct {
 	char			magic[OSEKI_MAGIC_SIZE];
 	size_t			pagesize;
 	OsekiPhaseControl	phase[2];
-	ObjectType		slot[1];
+	ObjectType		root;
 }	OsekiHeaderPage;
 
+#if	0
+#define	ROUND_TO(p,s)	(p)
+#else
 #define	ROUND_TO(p,s)	((((p)%(s)) == 0) ? (p) : (((p)/(s))+1)*(s))
+#endif
 
 #endif

@@ -69,12 +69,16 @@ _DumpObject(
 	OsekiSession		*state,
 	OsekiObjectEntry	*ent)
 {
-	printf("ent->flag   = %X\n",(int)ent->flags);
-	printf("ent->pos    = %lld:%d\n",
-		   OBJ_PAGE(state,ent->pos),OBJ_OFF(state,ent->pos));
+	printf("ent->use    = %s\n",ent->use ? "TRUE" : "FALSE");
 	printf("ent->mode   = %X\n",(int)ent->mode);
 	printf("ent->type   = %X\n",(int)ent->type);
-	printf("ent->size   = %lld\n",ent->size);
+	if		(  ent->type  ==  OSEKI_ALLOC_SHORT  ) {
+	} else {
+		printf("ent->pos    = %lld:%d\n",
+			   OBJ_PAGE(state,ent->body.pointer.pos),
+			   OBJ_OFF(state,ent->body.pointer.pos));
+		printf("ent->size   = %lld\n",ent->body.pointer.size);
+	}
 }
 #define	DumpObject(s,ent)		_DumpObject((s),(ent))
 
@@ -202,7 +206,7 @@ ENTER_FUNC;
 			if		(  off  <  0  ) {
 				USE_OBJ(leafpage[j]);
 				leafpage[j].mode = OSEKI_OPEN_CLOSE;
-				leafpage[j].pos = 0;
+				leafpage[j].body.pointer.pos = 0;
 				off = j;
 				use ++;
 			}
@@ -302,7 +306,7 @@ FreeEntry(
 	OsekiObjectEntry	*leafnode;
 
 ENTER_FUNC;
-	pos = ent->pos;
+	pos = ent->body.pointer.pos;
 	switch	(ent->mode & OSEKI_TYPE_MASK) {
 	  case	OSEKI_ALLOC_LINER:
 		dbgmsg("*");
@@ -350,7 +354,7 @@ ENTER_FUNC;
 						leaf = OBJ_PAGE(state,el->prio);
 						(void)GetPage(state,leaf);
 						leafnode = (OsekiObjectEntry *)UpdatePage(state,leaf);
-						leafnode[OBJ_OFF(state,el->prio)].pos = npos;
+						leafnode[OBJ_OFF(state,el->prio)].body.pointer.pos = npos;
 					}
 					if		(  el->next  >  0  ) {
 						npage = OBJ_PAGE(state,el->next);
@@ -363,11 +367,13 @@ ENTER_FUNC;
 				}
 				cur += nsize;
 			}
-		dbgmsg("*");
 			if		(  PAGE_SIZE(state) - data->use
 					   >  sizeof(OsekiDataEntry)  ) {
 				ReturnPage(state,page);
 			}
+			break;
+		  case	OSEKI_ALLOC_SHORT:
+			dbgmsg("*");
 			break;
 		}
 	}
@@ -394,18 +400,18 @@ ENTER_FUNC;
 		if		(  IS_FREEOBJ(leafnode[off])  ) {
 			ent = NULL;
 		} else
-		if		(	(  ( leafnode[off].mode >> 4 )     ==  OSEKI_OPEN_CLOSE  )
-				||	(	(  ( leafnode[off].mode >> 4)  ==  OSEKI_OPEN_READ  )
+		if		(	(  ( leafnode[off].mode << 4 )     ==  OSEKI_OPEN_CLOSE  )
+				||	(	(  ( leafnode[off].mode << 4)  ==  OSEKI_OPEN_READ  )
 					&&	(  mode                ==  OSEKI_OPEN_READ  ) ) ) {
 			if		(  ( leafnode[off].mode & OSEKI_OPEN_WRITE )  !=  0  ) {
 				leafnode = (OsekiObjectEntry *)UpdatePage(state,leaf);
 			}
 			if		( ( mode & OSEKI_OPEN_CREATE )  !=  0  ) {
-				if		(  leafnode[off].pos  >  0  ) {
+				if		(  leafnode[off].body.pointer.pos  >  0  ) {
 					FreeEntry(state,&leafnode[off]);
 				}
-				leafnode[off].pos = 0;
-				leafnode[off].size = 0;
+				leafnode[off].body.pointer.pos = 0;
+				leafnode[off].body.pointer.size = 0;
 				leafnode[off].mode = ( mode & OSEKI_MODE_MASK ) >> 4;
 				switch	( mode & OSEKI_TYPE_MASK ) {
 				  case	OSEKI_ALLOC_LINER:
@@ -413,6 +419,9 @@ ENTER_FUNC;
 					break;
 				  case	OSEKI_ALLOC_TREE:
 					leafnode[off].type = BODY_TREE;
+					break;
+				  case	OSEKI_ALLOC_SHORT:
+					leafnode[off].type = BODY_SHORT;
 					break;
 				  default:
 					leafnode[off].type = BODY_PACK;
@@ -424,11 +433,20 @@ ENTER_FUNC;
 			ent = New(ObjectInfo);
 			ent->obj = obj;
 			ent->mode = mode;
-			ent->head = leafnode[off].pos;
-			ent->curr = ent->head;
-			ent->size = leafnode[off].size;
-			ent->buff = NULL;
-			ent->bsize = 0;
+			if		(  ( mode & OSEKI_TYPE_MASK )  ==  OSEKI_ALLOC_SHORT  ) {
+				ent->head = 0;
+				ent->curr = 0;
+				ent->size = leafnode[off].ssize;
+				ent->buff = (byte *)xmalloc(SIZE_SMALL);
+				memcpy(ent->buff,leafnode[off].body.small,SIZE_SMALL);
+				ent->bsize = SIZE_SMALL;
+			} else {
+				ent->head = leafnode[off].body.pointer.pos;
+				ent->curr = ent->head;
+				ent->size = leafnode[off].body.pointer.size;
+				ent->buff = NULL;
+				ent->bsize = 0;
+			}
 			ent->use = 0;
 			ent->off = 0;
 			ent->fDurty = FALSE;
@@ -540,8 +558,15 @@ ENTER_FUNC;
 		off = obj % LEAF_ELEMENTS(state);
 		if		(  ( leafnode[off].mode & ( OSEKI_OPEN_WRITE >> 4 ) )
 				   !=  0  ) {
-			leafnode[off].size = ent->size;
-			leafnode[off].pos = ent->head;
+			if		(  leafnode[off].type  ==  OSEKI_ALLOC_SHORT  ) {
+				memcpy(leafnode[off].body.small,ent->buff,SIZE_SMALL);
+				leafnode[off].ssize = ent->size;
+				xfree(ent->buff);
+				ent->buff = NULL;
+			} else {
+				leafnode[off].body.pointer.size = ent->size;
+				leafnode[off].body.pointer.pos = ent->head;
+			}
 		}
 		leafnode[off].mode = OSEKI_OPEN_CLOSE >> 4;
 	}
@@ -719,6 +744,7 @@ FlushBuffer(
 	OsekiDataEntry	*el
 		,			*wel;
 	size_t			off;
+	objpos_t		next;
 
 ENTER_FUNC;
 	if		(	(  ent->buff  ==  NULL  )
@@ -738,10 +764,13 @@ ENTER_FUNC;
 			off = OBJ_OFF(state,ent->curr);
 			data = GetPage(state,page);
 			el = (OsekiDataEntry *)((byte *)data + off);
+			next = el->next;
 			ent->buff = NULL;
 			if		(  el->size  ==  0  ) {
 				el->size = ent->use;
-				data->use += ROUND_TO(ent->use,sizeof(size_t));
+				data = UpdatePage(state,page);
+				data->use += ROUND_TO(ent->use+sizeof(OsekiDataEntry),
+									  sizeof(size_t));
 				if		(  ent->head  ==  0  ) {
 					ent->head = ent->curr;
 				} else {
@@ -758,6 +787,11 @@ ENTER_FUNC;
 				}
 			}
 			break;
+		  case	OSEKI_ALLOC_SHORT:
+			dbgmsg("*");
+			break;
+		  default:
+			break;
 		}
 	}
 	if		(  !fOnly  ) {
@@ -770,14 +804,14 @@ ENTER_FUNC;
 			SeekTree(state,ent,TRUE);
 			break;
 		  case	OSEKI_ALLOC_PACK:
-			ent->curr = el->next;
+			ent->curr = next;
 			break;
+		  case	OSEKI_ALLOC_SHORT:
 		  default:
 			break;
 		}
 	}
 	ent->fDurty = FALSE;
-	//ent->bsize = 0;
 	DumpInfo(state,ent);
 LEAVE_FUNC;
 }
@@ -797,7 +831,7 @@ ENTER_FUNC;
 	if		(  ent->curr  >  0  ) {
 		switch	(ent->mode & OSEKI_TYPE_MASK) {
 		  case	OSEKI_ALLOC_LINER:
-dbgmsg("*");
+			dbgmsg("*");
 			page = OBJ_PAGE(state,ent->curr);
 			data = GetPage(state,page);
 			if		(  data  !=  NULL  ) {
@@ -809,7 +843,7 @@ dbgmsg("*");
 			ent->use = OBJ_OFF(state,ent->curr);
 			break;
 		  case	OSEKI_ALLOC_TREE:
-dbgmsg("*");
+			dbgmsg("*");
 			SeekTree(state,ent,(ent->mode&OSEKI_OPEN_WRITE) != 0);
 			if		(  ent->curr  >  0  ) {
 				page = OBJ_PAGE(state,ent->curr);
@@ -826,15 +860,19 @@ dbgmsg("*");
 			ent->use = OBJ_OFF(state,ent->curr);
 			break;
 		  case	OSEKI_ALLOC_PACK:
-dbgmsg("*");
+			dbgmsg("*");
 			page = OBJ_PAGE(state,ent->curr);
 			off = OBJ_OFF(state,ent->curr);
 			data = GetPage(state,page);
 			el = (OsekiDataEntry *)((byte *)data + off);
 			ent->buff = (byte *)el + sizeof(OsekiDataEntry);
 			ent->bsize = el->size;
-			dbgprintf("el->size = %d\n",el->size);
 			ent->use = 0;
+			break;
+		  case	OSEKI_ALLOC_SHORT:
+			dbgmsg("*");
+			break;
+		  default:
 			break;
 		}
 		if		(  !fOnly  ) {
@@ -844,6 +882,8 @@ dbgmsg("*");
 				break;
 			  case	OSEKI_ALLOC_PACK:
 				ent->curr = el->next;
+				break;
+			  case	OSEKI_ALLOC_SHORT:
 				break;
 			  default:
 				break;
@@ -918,7 +958,7 @@ dbgmsg("*");
 		DumpInfo(state,ent);
 		break;
 	  case	OSEKI_ALLOC_PACK:
-dbgmsg("*");
+		dbgmsg("*");
 		page = GetFreePage(state);
 		(void)GetPage(state,page);
 		data = UpdatePage(state,page);
@@ -938,6 +978,10 @@ dbgmsg("*");
 		ent->bsize = PAGE_SIZE(state) -
 			( data->use + sizeof(OsekiDataEntry));
 		break;
+	  case	OSEKI_ALLOC_SHORT:
+		dbgmsg("*");
+		ent->bsize = 0;
+		break;
 	}
 	ent->use = 0;
 LEAVE_FUNC;
@@ -954,6 +998,7 @@ WriteEntry(
 	size_t		csize
 		,		left;
 
+ENTER_FUNC;
 	ret = 0;
 	while	(  size  >  0  ) {
 		left = ent->bsize - ent->use;
@@ -979,6 +1024,7 @@ WriteEntry(
 	if		(  ent->off  >  ent->size  ) {
 		ent->size = ent->off;
 	}
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -997,6 +1043,7 @@ ENTER_FUNC;
 	ret = 0;
 	DumpInfo(state,ent);
 	FlushBuffer(state,ent,TRUE);
+	DumpInfo(state,ent);
 	while	(	(  size      >  0          )
 			&&	(  ent->off  <  ent->size  ) ) {
 		left = ent->bsize - ent->use;
@@ -1007,6 +1054,7 @@ ENTER_FUNC;
 				( ent->size - ent->off ) : ent->bsize;
 		}
 		csize = ( size < left ) ? size : left;
+		if		(  csize  ==  0  )	break;
 		memcpy(buff,&ent->buff[ent->use],csize);
 		ent->use += csize;
 		size -= csize;
@@ -1027,13 +1075,18 @@ InitiateObject(
 	ObjectInfo	*ent;
 	ObjectType	obj;
 	pageno_t	leaf;
+	byte		mode;
 
 ENTER_FUNC;
 	state->objs = GetPage(state,1LL);
 	obj = GetFreeOID(state);
+	mode = OSEKI_OPEN_WRITE | OSEKI_OPEN_CREATE;
+	if		(  size  <=  SIZE_SMALL  ) {
+		mode |= OSEKI_ALLOC_SHORT;
+	}
 	if		(  ( leaf = SearchLeafPage(state,obj,NULL) )  !=  0  ) {
 		if		(  ( ent = OpenEntry(state,leaf,obj,
-									 OSEKI_OPEN_WRITE|OSEKI_OPEN_CREATE) )  ==  NULL  ) {
+									 mode) )  ==  NULL  ) {
 			obj = GL_OBJ_NULL;
 		}
 	} else {
@@ -1106,8 +1159,8 @@ ENTER_FUNC;
 		off = obj % LEAF_ELEMENTS(state);
 		FreeEntry(state,&leafpage[off]);
 		leafpage[off].mode = OSEKI_OPEN_CLOSE;
-		leafpage[off].pos = 0;
-		leafpage[off].size = 0;
+		leafpage[off].body.pointer.pos = 0;
+		leafpage[off].body.pointer.size = 0;
 		USE_OBJ(leafpage[off]);
 		UnLock(&state->space->obj);
 		ent = OpenEntry(state,leaf,obj,OSEKI_OPEN_WRITE);
@@ -1187,7 +1240,6 @@ SeekEntry(
 		ent->off = pos;
 		ent->use = OBJ_OFF(state,pos);
 		ReadBuffer(state,ent,TRUE);
-		ent->curr = ent->head + pos;
 		break;
 	  case	OSEKI_ALLOC_TREE:
 		ent->off = pos;
@@ -1196,6 +1248,7 @@ SeekEntry(
 	  case	OSEKI_ALLOC_PACK:
 		ent->curr = ent->head;
 		ent->off = 0;
+		ReadBuffer(state,ent,TRUE);
 		while	(	(  ent->off  <  pos        )
 				&&	(  ent->off  <  ent->size  ) ) {
 			ReadBuffer(state,ent,FALSE);
@@ -1206,6 +1259,11 @@ SeekEntry(
 			} else {
 				ent->off += ent->bsize;
 			}
+		}
+		break;
+	  case	OSEKI_ALLOC_SHORT:
+		if		(  pos  <  SIZE_SMALL  ) {
+			ent->off = pos;
 		}
 		break;
 	}
@@ -1343,3 +1401,5 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(TRUE);
 }
+
+

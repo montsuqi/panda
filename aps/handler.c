@@ -46,6 +46,7 @@ copies.
 #include	"enum.h"
 #include	"load.h"
 #define		_HANDLER
+#include	"dbgroup.h"
 #include	"handler.h"
 #include	"apsio.h"
 #include	"dblib.h"
@@ -275,7 +276,7 @@ CallAfter(
 	int		i
 		,	winfrom
 		,	winend
-		,	sindex;
+		,	sindex;	/*	sindex orgine is 1	*/
 	byte	PutType;
 
 	ValueStruct	*mcp_swindow;
@@ -304,9 +305,14 @@ ENTER_FUNC;
 		ValueIsNonNil(GetArrayItem(mcp_swindow,0));
 		sindex = 1;
 	}
-	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
-		   ValueStringPointer(GetItemLongName(mcp,"dc.window")),
-		   SIZE_NAME);
+	if		(  sindex  >  1  ) {
+		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
+			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 2)),
+			   SIZE_NAME);
+	} else {
+		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
+			   "");
+	}
 	ValueIsNonNil(GetItemLongName(mcp,"dc.fromwin"));
 	if		(  PutType  ==  SCREEN_BACK_WINDOW  ) {
 		sindex --;
@@ -370,6 +376,47 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+DumpProcessNode(
+	ProcessNode	*node)
+{
+	int		i;
+	int		sindex;
+	ValueStruct	*mcp;
+	ValueStruct	*mcp_dcwindow;
+	ValueStruct	*mcp_swindow;
+	ValueStruct	*mcp_sindex;
+
+	mcp = node->mcprec->value; 
+	mcp_dcwindow = GetItemLongName(mcp,"dc.window");
+	mcp_swindow = GetItemLongName(mcp,"private.swindow");
+	mcp_sindex 	= GetItemLongName(mcp,"private.count");
+	sindex = ValueInteger(mcp_sindex);
+
+	printf("mcp_sindex = %d\n",sindex);
+	printf("mcp->dc.window = [%s]\n",ValueStringPointer(mcp_dcwindow));
+	printf("**** window stack dump *****************\n");
+	for	( i = 0 ; i < sindex ; i ++ ) {
+		printf("[%d:%s]\n",i,(ValueStringPointer(
+								   GetArrayItem(mcp_swindow,i))));
+	}
+#if	0
+	printf("term   = [%s]\n",node->term);
+	printf("user   = [%s]\n",node->user);
+	printf("window = [%s]\n",node->window);
+	printf("widget = [%s]\n",node->widget);
+	printf("event  = [%s]\n",node->event);
+	printf("*** mcprec ***\n");
+	DumpValueStruct(node->mcprec->value);
+	printf("*** sparec ***\n");
+	DumpValueStruct(node->sparec->value);
+	for	( i = 0 ; i < node->cWindow ; i ++ ) {
+		printf(" *** [%s] ***\n",node->scrrec[i]->name);
+		DumpValueStruct(node->scrrec[i]->value);
+	}
+#endif
+}
+
 extern	void
 ExecuteProcess(
 	ProcessNode	*node)
@@ -384,6 +431,7 @@ ENTER_FUNC;
 	handler = bind->handler;
 	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
 		CallBefore(node);
+DumpProcessNode(node);
 		if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
 			MessageLog("application process illegular execution");
 			exit(2);
@@ -564,6 +612,55 @@ MakeCTRL(
 #ifdef	DEBUG
 	DumpDB_Node(ctrl);
 #endif
+}
+
+extern	RecordStruct	*
+MakeCTRLbyName(
+	ValueStruct		**value,
+	DBCOMM_CTRL	*ctrl,
+	char	*rname,
+	char	*pname,
+	char	*func)
+{
+	RecordStruct	*rec;
+	PathStruct		*path;
+	DB_Operation	*op;
+	int			rno
+		,		pno
+		,		ono;
+
+	ctrl->rno = 0;
+	ctrl->pno = 0;
+	ctrl->blocks = 0;
+
+	value = NULL;
+	if		(	(  rname  !=  NULL  )
+			&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
+		ctrl->rno = rno - 1;
+		rec = ThisDB[ctrl->rno];
+		*value = rec->value;
+		if		(	(  pname  !=  NULL  )
+				&&	(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+														pname) )  !=  0  ) ) {
+			ctrl->pno = pno - 1;
+			path = rec->opt.db->path[pno-1];
+			*value = ( path->args != NULL ) ? path->args : *value;
+			if		(	(  func  !=  NULL  )
+					&&	( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
+				op = path->ops[ono-1];
+				*value = ( op->args != NULL ) ? op->args : *value;
+			}
+		} else {
+			ctrl->pno = 0;
+		}
+	} else {
+		rec = NULL;
+	}
+	strcpy(ctrl->func,func);
+#ifdef	DEBUG
+	DumpDB_Node(ctrl);
+#endif
+	return	(rec);
 }
 
 extern	void

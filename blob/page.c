@@ -73,11 +73,12 @@ typedef struct	{
 
 static	void	*
 NewPageBuffer(
-	OsekiSpace	*space)
+	OsekiSession	*ses)
 {
 	void	*ret;
 
-	ret = xmalloc(space->pagesize);
+	ret = xmalloc(ses->space->pagesize);
+	memclear(ret,PAGE_SIZE(ses));
 
 	return	(ret);
 }
@@ -107,24 +108,24 @@ _DumpPage(
 #endif
 
 
-static	void
+extern	void
 ReleasePageBuffer(
 	void	*buff)
 {
 	xfree(buff);
 }
 
-static	void	*
+extern	void	*
 ReadPage(
-	OsekiSpace	*space,
+	OsekiSession	*ses,
 	pageno_t	page)
 {
 	void	*ret;
 
 ENTER_FUNC;
-	if		(  ( ret = NewPageBuffer(space) )  !=  NULL  ) {
-		fseek(space->fp,page*space->pagesize,SEEK_SET);
-		fread(ret,space->pagesize,1,space->fp);
+	if		(  ( ret = NewPageBuffer(ses) )  !=  NULL  ) {
+		fseek(ses->space->fp,page*ses->space->pagesize,SEEK_SET);
+		fread(ret,ses->space->pagesize,1,ses->space->fp);
 	} else {
 		fprintf(stderr,"memory empty\n");
 	}
@@ -132,15 +133,15 @@ LEAVE_FUNC;
 	return	(ret);
 }
 	
-static	void
+extern	void
 WritePage(
-	OsekiSpace	*space,
+	OsekiSession	*ses,
 	void		*buff,
 	pageno_t	page)
 {
-	fseek(space->fp,page*space->pagesize,SEEK_SET);
-	fwrite(buff,space->pagesize,1,space->fp);
-	fflush(space->fp);
+	fseek(ses->space->fp,page*ses->space->pagesize,SEEK_SET);
+	fwrite(buff,ses->space->pagesize,1,ses->space->fp);
+	fflush(ses->space->fp);
 }
 
 static	CommonBuffer	*
@@ -168,7 +169,7 @@ RegistCommonPage(
 
 extern	pageno_t
 NewPage(
-	OsekiSession	*state,
+	OsekiSession	*ses,
 	pageno_t		n)
 {
 	pageno_t	page
@@ -179,15 +180,14 @@ ENTER_FUNC;
 	if		(  n  ==  0  ) {
 		ret = 0LL;
 	} else {
-		ret = state->space->upages;
+		ret = ses->space->upages;
 		for	( ; n > 0 ; n -- ) {
-			Lock(state->space);
-			page = state->space->upages;
-			state->space->upages ++;
-			UnLock(state->space);
-			data = NewPageBuffer(state->space);
-			memclear(data,PAGE_SIZE(state));
-			RegistCommonPage(state->space,data,page);
+			Lock(ses->space);
+			page = ses->space->upages;
+			ses->space->upages ++;
+			UnLock(ses->space);
+			data = NewPageBuffer(ses);
+			RegistCommonPage(ses->space,data,page);
 		}
 	}
 	dbgprintf("new page = %lld\n",ret);
@@ -213,7 +213,7 @@ LEAVE_FUNC;
 
 static	void	*
 GetCommonPage(
-	OsekiSession	*state,
+	OsekiSession	*ses,
 	pageno_t	page)
 {
 	OsekiSpace		*space;
@@ -221,21 +221,21 @@ GetCommonPage(
 	void			*ret;
 
 ENTER_FUNC;
-	space = state->space;
+	space = ses->space;
 	if		(  ( cb = SearchCommonBuffer(space,page) )
 			   ==  NULL  ) {
-		ret = ReadPage(space,page);
+		ret = ReadPage(ses,page);
 		cb = RegistCommonPage(space,ret,page);
 	} else {
 		if		(  cb->utid  >  0  ) {
-			if		(  state->tid  ==  cb->utid  ) {
+			if		(  ses->tid  ==  cb->utid  ) {
 				ret = cb->update;
 			} else {
 				if		(  cb->ltid  >  0  ) {
-					if		(  state->tid  <  cb->ltid  ) {
+					if		(  ses->tid  <  cb->ltid  ) {
 						ret = cb->old;
 					} else {
-						cb->current = ReadPage(space,page);
+						cb->current = ReadPage(ses,page);
 						ret = cb->current;
 					}
 				} else {
@@ -253,7 +253,7 @@ LEAVE_FUNC;
 
 static	void	*
 UpdateCommonPage(
-	OsekiSession	*state,
+	OsekiSession	*ses,
 	pageno_t		page)
 {
 	OsekiSpace		*space;
@@ -261,16 +261,16 @@ UpdateCommonPage(
 	void			*ret;
 
 ENTER_FUNC;
-	space = state->space;
+	space = ses->space;
 	if		(  ( cb = SearchCommonBuffer(space,page) )
 			   !=  NULL  ) {
 		Lock(cb);
 		if		(  cb->update  ==  NULL  ) {
 			cb->old = cb->current;
 			cb->current = NULL;
-			cb->update = NewPageBuffer(space);
+			cb->update = NewPageBuffer(ses);
 			memcpy(cb->update,cb->old,space->pagesize);
-			cb->utid = state->tid;
+			cb->utid = ses->tid;
 			ret = cb->update;
 		} else {
 			ret = NULL;
@@ -285,7 +285,7 @@ LEAVE_FUNC;
 
 static	void
 SyncCommonPage(
-	OsekiSession	*state,
+	OsekiSession	*ses,
 	pageno_t		page,
 	Bool			fCommit)
 {
@@ -295,17 +295,17 @@ SyncCommonPage(
 ENTER_FUNC;
 	dbgprintf("sync    = [%lld]\n",page);
 
-	space = state->space;
+	space = ses->space;
 	if		(  ( cb = SearchCommonBuffer(space,page) )
 			   !=  NULL  ) {
 		Lock(cb);
 		if		(  fCommit  ) {
-			WritePage(space,cb->update,cb->page);
+			WritePage(ses,cb->update,cb->page);
 			cb->current = cb->update;
 			cb->update = NULL;
 			cb->ltid = space->cTran;
 		}
-		if		(  state->space->lTran  >=  cb->ltid  ) {
+		if		(  ses->space->lTran  >=  cb->ltid  ) {
 			xfree(cb->old);
 			cb->old = NULL;
 		}
@@ -330,7 +330,7 @@ LEAVE_FUNC;
 
 extern	void	*
 GetPage(
-	OsekiSession	*state,
+	OsekiSession	*ses,
 	pageno_t		page)
 {
 	PageInfo	*ent;
@@ -338,15 +338,15 @@ GetPage(
 
 ENTER_FUNC;
 	dbgprintf("get page = [%lld]\n",page);
-	dbgprintf("pages    = %lld\n",state->space->upages);
-	if		(  page  <  state->space->upages  ) {
-		if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
+	dbgprintf("pages    = %lld\n",ses->space->upages);
+	if		(  page  <  ses->space->upages  ) {
+		if		(  ( ent = (PageInfo *)g_hash_table_lookup(ses->pages,&page) )
 				   ==  NULL  ) {
 			ent = New(PageInfo);
 			ent->fUpdate = FALSE;
 			ent->page = page;
-			ent->body = GetCommonPage(state,page);
-			g_hash_table_insert(state->pages,&ent->page,ent);
+			ent->body = GetCommonPage(ses,page);
+			g_hash_table_insert(ses->pages,&ent->page,ent);
 		}
 		ret = ent->body;
 	} else {
@@ -358,18 +358,18 @@ LEAVE_FUNC;
 
 extern	void	*
 UpdatePage(
-	OsekiSession	*state,
+	OsekiSession	*ses,
 	pageno_t		page)
 {
 	void		*ret;
 	PageInfo	*ent;
 
 ENTER_FUNC;
-	if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
+	if		(  ( ent = (PageInfo *)g_hash_table_lookup(ses->pages,&page) )
 			   !=  NULL  ) {
 		if		(  !ent->fUpdate  ) {
 			ent->fUpdate = TRUE;
-			ret = UpdateCommonPage(state,page);
+			ret = UpdateCommonPage(ses,page);
 			ent->body = ret;
 		} else {
 			ret = ent->body;
@@ -385,7 +385,7 @@ LEAVE_FUNC;
 
 extern	void
 ReleasePage(
-	OsekiSession	*state,
+	OsekiSession	*ses,
 	pageno_t		page,
 	Bool			fCommit)
 {
@@ -395,9 +395,9 @@ ENTER_FUNC;
 	dbgprintf("release = [%lld]\n",page);
 	if		(  page  ==  0  ) {
 	} else
-	if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
+	if		(  ( ent = (PageInfo *)g_hash_table_lookup(ses->pages,&page) )
 			   !=  NULL  ) {
-		SyncCommonPage(state,page,(fCommit && ent->fUpdate));
+		SyncCommonPage(ses,page,(fCommit && ent->fUpdate));
 		xfree(ent);
 	}
 LEAVE_FUNC;
@@ -405,26 +405,26 @@ LEAVE_FUNC;
 
 extern	pageno_t
 GetFreePage(
-	OsekiSession	*state)
+	OsekiSession	*ses)
 {
 	OsekiSpace	*space;
 	pageno_t	no;
 	int			i;
 
 ENTER_FUNC;
-	space = state->space;
-	space->freedata = GetPage(state,state->objs->freedata);
+	space = ses->space;
+	space->freedata = GetPage(ses,ses->objs->freedata);
 	no = 0;
 	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
 		if		(  space->freedata[i]  !=  0  ) {
 			no = space->freedata[i];
-			space->freedata = UpdatePage(state,state->objs->freedata);
+			space->freedata = UpdatePage(ses,ses->objs->freedata);
 			space->freedata[i] = 0;
 			break;
 		}
 	}
 	if		(  no  ==  0  ) {
-		no = NewPage(state,1);
+		no = NewPage(ses,1);
 	}
 	dbgprintf("free page = %lld\n",no);
 LEAVE_FUNC;
@@ -433,7 +433,7 @@ LEAVE_FUNC;
 
 extern	void
 ReturnPage(
-	OsekiSession	*state,
+	OsekiSession	*ses,
 	pageno_t		no)
 {
 	OsekiSpace	*space;
@@ -441,11 +441,11 @@ ReturnPage(
 
 ENTER_FUNC;
 dbgprintf("return = [%lld]\n",no);
-	space = state->space;
-	space->freedata = GetPage(state,state->objs->freedata);
+	space = ses->space;
+	space->freedata = GetPage(ses,ses->objs->freedata);
 	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
 		if		(  space->freedata[i]  ==  0  ) {
-			space->freedata = UpdatePage(state,state->objs->freedata);
+			space->freedata = UpdatePage(ses,ses->objs->freedata);
 			space->freedata[i] = no;
 			break;
 		}
@@ -457,20 +457,20 @@ static	void
 SaveOld(
 	pageno_t		*page,
 	PageInfo		*ent,
-	OsekiSession	*state)
+	OsekiSession	*ses)
 {
 	OsekiSpace		*space;
 	CommonBuffer	*cb;
 
 ENTER_FUNC;
-	space = state->space;
+	space = ses->space;
 	if		(  ( cb = SearchCommonBuffer(space,*page) )
 			   !=  NULL  ) {
 		Lock(cb);
 		if		(  cb->old  !=  NULL  ) {
 			fwrite(page,sizeof(pageno_t),1,space->fp);
 			fwrite(cb->old,space->pagesize,1,space->fp);
-			state->cOld ++;
+			ses->cOld ++;
 		}
 		UnLock(cb);
 	}
@@ -481,10 +481,10 @@ static	void
 CommitPage(
 	pageno_t		*page,
 	PageInfo		*ent,
-	OsekiSession	*state)
+	OsekiSession	*ses)
 {
 ENTER_FUNC;
-	ReleasePage(state,*page,TRUE);
+	ReleasePage(ses,*page,TRUE);
 LEAVE_FUNC;
 }
 
@@ -492,85 +492,57 @@ static	void
 AbortPage(
 	pageno_t		*page,
 	PageInfo		*ent,
-	OsekiSession	*state)
+	OsekiSession	*ses)
 {
 ENTER_FUNC;
-	ReleasePage(state,*page,FALSE);
+	ReleasePage(ses,*page,FALSE);
 LEAVE_FUNC;
-}
-
-extern	Bool
-CheckInstall(
-	OsekiSpace	*space,
-	size_t		no)
-{
-	OsekiHeaderPage	*head;
-	Bool	ret;
-
-	head = ReadPage(space,0LL);
-	ret = ( head->slot[no] > 0 ) ? TRUE : FALSE;
-	ReleasePageBuffer(head);
-	return	(ret);
-}
-
-extern	void
-InstallObject(
-	OsekiSpace	*space,
-	size_t		no,
-	ObjectType	obj)
-{
-	OsekiHeaderPage	*head;
-
-	head = ReadPage(space,0LL);
-	head->slot[no] = obj;
-	WritePage(space,head,0LL);
-	ReleasePageBuffer(head);
 }
 
 extern	void
 CommitPages(
-	OsekiSession	*state)
+	OsekiSession	*ses)
 {
 	OsekiSpace		*space;
 	OsekiHeaderPage	*head;
 
 ENTER_FUNC;
-	space = state->space;
-	head = ReadPage(space,0LL);
+	space = ses->space;
+	head = ReadPage(ses,0LL);
 	Lock(space);
 	fseek(space->fp,space->upages*space->pagesize,SEEK_SET);
-	state->cOld = 0;
-	g_hash_table_foreach(state->pages,(GHFunc)SaveOld,state);
+	ses->cOld = 0;
+	g_hash_table_foreach(ses->pages,(GHFunc)SaveOld,ses);
 	fflush(space->fp);
-	if		(  state->cOld  >  0  ) {
+	if		(  ses->cOld  >  0  ) {
 		memcpy(&head->phase[ALTER_GENERATION(space)],
 			   &head->phase[CURRENT_GENERATION(space)],
 			   sizeof(OsekiPhaseControl));
 		head->phase[ALTER_GENERATION(space)].seq = space->cSeq ++;
-		head->phase[ALTER_GENERATION(space)].cOld = state->cOld;
+		head->phase[ALTER_GENERATION(space)].cOld = ses->cOld;
 		head->phase[ALTER_GENERATION(space)].pages = space->upages;
-		WritePage(space,head,0LL);
-		g_hash_table_foreach(state->pages,(GHFunc)CommitPage,state);
+		WritePage(ses,head,0LL);
+		g_hash_table_foreach(ses->pages,(GHFunc)CommitPage,ses);
 		head->phase[ALTER_GENERATION(space)].cOld = 0;
-		WritePage(space,head,0LL);
+		WritePage(ses,head,0LL);
 		CURRENT_GENERATION(space) = ALTER_GENERATION(space);
 	} else {
-		g_hash_table_foreach(state->pages,(GHFunc)AbortPage,state);
+		g_hash_table_foreach(ses->pages,(GHFunc)AbortPage,ses);
 	}
 	ReleasePageBuffer(head);
-	g_hash_table_destroy(state->pages);
+	g_hash_table_destroy(ses->pages);
 	UnLock(space);
-	state->pages = NULL;
+	ses->pages = NULL;
 LEAVE_FUNC;
 }
 
 extern	void
 AbortPages(
-	OsekiSession	*state)
+	OsekiSession	*ses)
 {
-	g_hash_table_foreach(state->pages,(GHFunc)AbortPage,state);
-	g_hash_table_destroy(state->pages);
-	state->pages = NULL;
+	g_hash_table_foreach(ses->pages,(GHFunc)AbortPage,ses);
+	g_hash_table_destroy(ses->pages);
+	ses->pages = NULL;
 }
 
 extern	OsekiSpace	*
@@ -628,6 +600,7 @@ ENTER_FUNC;
 		space->cTran = 1;
 		space->lTran = 0;
 		space->pagesize = head.pagesize;
+		space->root = head.root;
 		mul = 1;
 		for	( i = 0 ; i < MAX_PAGE_LEVEL ; i ++ ) {
 			space->mul[i] = mul;
@@ -659,7 +632,7 @@ ENTER_FUNC;
 			fseek(space->fp,space->upages*space->pagesize,SEEK_SET);
 			for	( cp = 0 ; cp < head.phase[CURRENT_GENERATION(space)].cOld ; cp ++ ) {
 				fread(&page,sizeof(pageno_t),1,space->fp);
-				old = NewPageBuffer(space);
+				old = NewPageBuffer(recover);
 				fread(old,space->pagesize,1,space->fp);
 				(void)RegistCommonPage(space,old,page);
 				GetPage(recover,page);
@@ -708,13 +681,13 @@ LEAVE_FUNC;
 
 extern	void
 DisConnectOseki(
-	OsekiSession	*state)
+	OsekiSession	*ses)
 {
 ENTER_FUNC;
-	if		(  state->pages  !=  NULL  ) {
-		AbortPages(state);
+	if		(  ses->pages  !=  NULL  ) {
+		AbortPages(ses);
 	}
-	xfree(state);
+	xfree(ses);
 LEAVE_FUNC;
 }
 

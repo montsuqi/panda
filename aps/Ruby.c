@@ -20,9 +20,9 @@ copies.
 */
 
 /*
+*/
 #define DEBUG
 #define TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -789,7 +789,7 @@ procnode_new(ProcessNode *node)
         if (node->scrrec[i] != NULL &&
             node->scrrec[i]->value != NULL) {
             VALUE rec = rec_new(node->scrrec[i]);
-            rb_hash_aset(data->windows,
+			rb_hash_aset(data->windows,
                          rb_str_new2(node->scrrec[i]->name), rec);
         }
     }
@@ -1537,7 +1537,7 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
         dc_event = ValueStringPointer(dc_event_value);
         s = rb_str_new2("do_");
         rb_str_cat2(s, dc_event);
-        handler_method = rb_intern(StringValuePtr(s));
+		handler_method = rb_intern(StringValuePtr(s));
     }
     app = rb_protect_funcall(app_class, rb_intern("new"), &state, 0);
     if (state && error_handle(state))

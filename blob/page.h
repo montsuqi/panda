@@ -27,20 +27,20 @@ copies.
 extern	OsekiSpace		*InitOseki(char *space);
 extern	void		FinishOseki(OsekiSpace *space);
 extern	OsekiSession	*ConnectOseki(OsekiSpace *blob);
-extern	void		DisConnectOseki(OsekiSession *state);
+extern	void		DisConnectOseki(OsekiSession *ses);
 
-extern	pageno_t	NewPage(OsekiSession *state, pageno_t n);
-extern	void		*GetPage(OsekiSession *state, pageno_t page);
-extern	void		*UpdatePage(OsekiSession *state, pageno_t page);
-extern	void	ReleasePage(OsekiSession *state, pageno_t page,Bool fCommit);
-extern	pageno_t	GetFreePage(OsekiSession *state);
+extern	pageno_t	NewPage(OsekiSession *ses, pageno_t n);
+extern	void		*GetPage(OsekiSession *ses, pageno_t page);
+extern	void		*UpdatePage(OsekiSession *ses, pageno_t page);
+extern	void	ReleasePage(OsekiSession *ses, pageno_t page,Bool fCommit);
+extern	pageno_t	GetFreePage(OsekiSession *ses);
+extern	void		ReleasePageBuffer(void *buff);
+extern	void		*ReadPage(OsekiSession *ses, pageno_t page);
+extern	void		WritePage(OsekiSession *ses, void *buff, pageno_t page);
 
-extern	void	ReturnPage(OsekiSession *state, pageno_t no);
-extern	void	CommitPages(OsekiSession *state);
-extern	void	AbortPages(OsekiSession *state);
-
-extern	Bool	CheckInstall(OsekiSpace *space, size_t no);
-extern	void	InstallObject(OsekiSpace *space, size_t no, ObjectType obj);
+extern	void	ReturnPage(OsekiSession *ses, pageno_t no);
+extern	void	CommitPages(OsekiSession *ses);
+extern	void	AbortPages(OsekiSession *ses);
 
 extern	void	_DumpPage(OsekiSpace *space, byte *data);
 

@@ -1,7 +1,7 @@
 name	sample;
 
 #	"~" will be expanded to HOME
-base	"~/MONTSUQI/panda/samples";
+base	"~/MONTSUQI/panda-current/samples";
 
 #	"=" will be expanded to base or BASE_DIR
 ddir	"=/sample2";
