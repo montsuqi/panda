@@ -44,6 +44,7 @@ copies.
 #include	"value.h"
 #include	"glterm.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"authstub.h"
 #include	"applications.h"
 #include	"driver.h"
@@ -52,27 +53,6 @@ copies.
 #include	"dirs.h"
 #include	"DDparser.h"
 #include	"debug.h"
-
-static	void
-PG_SendString(
-	FILE	*fp,
-	char	*str)
-{
-	size_t	size;
-
-#ifdef	DEBUG
-	printf(">>[%s]\n",str);
-#endif
-	if		(   str  !=  NULL  ) { 
-		size = strlen(str);
-	} else {
-		size = 0;
-	}
-	if		(  size  >  0  ) {
-		fwrite(str,1,size,fp);
-	}
-	fflush(fp);
-}
 
 static	Bool
 PG_RecvString(
@@ -166,48 +146,9 @@ RecvScreenData(
 				value->fUpdate = TRUE;
 				SetValueString(value,str);
 			}
-		}
-	}	while	(  *buff  !=  0  );
-}
-
-static	char	namebuff[SIZE_BUFF+1];
-static	void
-SendValueString(
-	FILE		*fpComm,
-	ValueStruct	*value,
-	char		*name,
-	Bool		fName)
-{
-	char	buff[SIZE_BUFF+1];
-	int		i;
-
-dbgmsg(">SendValueString");
-	switch	(value->type) {
-	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
-			sprintf(name,"[%d]",i);
-			SendValueString(fpComm,
-							value->body.ArrayData.item[i],name+strlen(name),fName);
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-			sprintf(name,".%s",value->body.RecordData.names[i]);
-			SendValueString(fpComm,
-							value->body.RecordData.item[i],name+strlen(name),fName);
-		}
-		break;
-	  default:
-		if		(  fName  ) {
-			PG_SendString(fpComm,namebuff);
-			PG_SendString(fpComm,": ");
-		}
-		EncodeString(buff,ToString(value));
-		PG_SendString(fpComm,buff);
-		PG_SendString(fpComm,"\n");
-		break;
-	}
-dbgmsg("<SendValueString");
+		} else
+			break;
+	}	while	(TRUE);
 }
 
 static	void
@@ -224,11 +165,11 @@ WriteClient(
 	Bool	fName;
 
 dbgmsg(">WriteClient");
-	PG_SendString(fpComm,"Event: ");
-	PG_SendString(fpComm,ThisWindow);
-	PG_SendString(fpComm,"/");
-	PG_SendString(fpComm,ThisWidget);
-	PG_SendString(fpComm,"\n");
+	SendStringDelim(fpComm,"Event: ");
+	SendStringDelim(fpComm,ThisWindow);
+	SendStringDelim(fpComm,"/");
+	SendStringDelim(fpComm,ThisWidget);
+	SendStringDelim(fpComm,"\n");
 	do {
 		if		(  !PG_RecvString(fpComm,SIZE_BUFF,name)  )	break;
 		if		(  *name  ==  0  )	break;
@@ -241,13 +182,13 @@ dbgmsg(">WriteClient");
 		DecodeName(wname,vname,name);
 		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 			value = GetItemLongName(win->Value,vname);
-			strcpy(namebuff,name);
-			SendValueString(fpComm,value,namebuff+strlen(namebuff),fName);
+			SetValueName(name);
+			SendValueString(fpComm,value,NULL,fName);
 			if		(  fName  ) {
-				PG_SendString(fpComm,"\n");
+				SendStringDelim(fpComm,"\n");
 			}
 		} else {
-			PG_SendString(fpComm,"\n");
+			SendStringDelim(fpComm,"\n");
 		}
 	}	while	(TRUE);
 dbgmsg("<WriteClient");
@@ -280,19 +221,19 @@ dbgmsg(">MainLoop");
 		pass = p;
 		strcpy(scr->cmd,q+1);
 		if		(  strcmp(ver,VERSION)  ) {
-			PG_SendString(fpComm,"Error: version\n");
+			SendStringDelim(fpComm,"Error: version\n");
 			g_warning("reject client(invalid version)");
 		} else
 		if		(  AuthUser(scr->user,pass,scr->other)  ) {
 			scr->Windows = NULL;
 			ApplicationsCall(APL_SESSION_LINK,scr);
 			if		(  scr->status  ==  APL_SESSION_NULL  ) {
-				PG_SendString(fpComm,"Error: application\n");
+				SendStringDelim(fpComm,"Error: application\n");
 			} else {
-				PG_SendString(fpComm,"Connect: OK\n");
+				SendStringDelim(fpComm,"Connect: OK\n");
 			}
 		} else {
-			PG_SendString(fpComm,"Error: authentication\n");
+			SendStringDelim(fpComm,"Error: authentication\n");
 			g_warning("reject client(authentication error)");
 		}
 		fflush(fpComm);

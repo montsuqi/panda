@@ -155,7 +155,9 @@ dbgmsg(">ExecuteDC");
 		if		(  WFC_Host  ==  NULL  ) {
 			WFC_Host = ThisLD->wfc->host;
 		}
+#if	0
 		printf("%s:%s\n",WFC_Host,WfcPortNumber);
+#endif
 		if		(  ( fhWFC = ConnectSocket(WfcPortNumber,SOCK_STREAM,WFC_Host) )
 				   <  0  ) {
 			Error("WFC not ready");

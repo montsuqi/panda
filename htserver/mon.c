@@ -345,25 +345,6 @@ HT_RecvString(
 }
 
 static	void
-EncodeString(
-	char	*q,
-	char	*p)
-{
-	while	(  *p  !=  0  ) {
-		if		(  *p  ==  0x20  ) {
-			*q ++ = '+';
-		} else
-		if		(  isalnum(*p)  ) {
-			*q ++ = *p;
-		} else {
-			q += sprintf(q,"%%%02X",(int)*p);
-		}
-		p ++;
-	}
-	*q = 0;			
-}
-
-static	void
 SendValue(
 	char		*name,
 	char		*value)

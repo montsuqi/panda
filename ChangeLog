@@ -1,3 +1,14 @@
+2002-08-25  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (SUBDIRS): Add m4.
+	(ACLOCAL_AMFLAGS): New variable.
+	(EXTRA_DIST): New variable.
+	* configure.in (AC_OUTPUT): Add m4/Makefile.
+
+2002-08-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/comms.c (SendValueString): 文字列による通信
+
 2002-08-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* pgserver: 外部プログラムからのwfcインターフェイスのリリース

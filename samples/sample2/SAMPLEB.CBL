@@ -146,6 +146,7 @@
            PERFORM 800-DBINSERT-ADRS.
       **************************************************************************
        800-DBOPEN              SECTION.
+           MOVE    LOW-VALUE   TO  MCP-PATH.
            MOVE   'DBOPEN'     TO  MCP-FUNC.
       *
            CALL   'MCPSUB'     USING
@@ -153,6 +154,7 @@
                 METADB.
       **************************************************************************
        800-DBSTART             SECTION.
+           MOVE    LOW-VALUE   TO  MCP-PATH.
            MOVE   'DBSTART'    TO  MCP-FUNC.
       *
            CALL   'MCPSUB'     USING
@@ -203,6 +205,7 @@
                 ADRS.
       **************************************************************************
        800-DBCOMMIT            SECTION.
+           MOVE    LOW-VALUE   TO  MCP-PATH.
            MOVE   'DBCOMMIT'   TO  MCP-FUNC.
       *
            CALL   'MCPSUB'     USING
@@ -210,6 +213,7 @@
                 METADB.
       **************************************************************************
        800-DBDISCONNECT        SECTION.
+           MOVE    LOW-VALUE   TO  MCP-PATH.
            MOVE   'DBDISCONNECT'    TO  MCP-FUNC.
       *
            CALL   'MCPSUB'     USING

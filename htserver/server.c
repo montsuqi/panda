@@ -139,26 +139,6 @@ dbgmsg("<FinishSession");
 }
 
 static	void
-DecodeString(
-	char	*q,
-	char	*p)
-{
-	while	(  *p  !=  0  ) {
-		if		(  *p  ==  '+'  ) {
-			*q ++ = ' ';
-		} else
-		if		(  *p  ==  '%'  ) {
-			*q ++ = (char)HexToInt(p+1,2);
-			p += 2;
-		} else {
-			*q ++ = *p;
-		}
-		p ++;
-	}
-	*q = 0;			
-}
-
-static	void
 DecodeName(
 	char	*wname,
 	char	*vname,

@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -145,17 +145,21 @@ cxxflags_set = @cxxflags_set@
 l = @l@
 libfixed_config = @libfixed_config@
 
-SUBDIRS = libs glserver glclient tools wfc aps htserver clserver cobol Doc
+SUBDIRS = m4 	libs glserver glclient tools wfc aps htserver pgserver cobol Doc
 #CFLAGS		=	-g -O2 -funsigned-char -Wall -Wunused
 CFLAGS = -O2 -funsigned-char -Wall -Wunused
+
+ACLOCAL_AMFLAGS = -I m4
+
+EXTRA_DIST = config.rpath
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES = 
 DIST_COMMON =  README ./stamp-h.in ABOUT-NLS AUTHORS COPYING ChangeLog \
 INSTALL Makefile.am Makefile.in NEWS acconfig.h aclocal.m4 config.guess \
-config.h.in config.sub configure configure.in install-sh ltconfig \
-ltmain.sh missing mkinstalldirs
+config.h.in config.sub configure configure.in install-sh ltmain.sh \
+missing mkinstalldirs
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -171,8 +175,13 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status $(BUILT_SOURCES)
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
-$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ configure.in 
-	cd $(srcdir) && $(ACLOCAL)
+$(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ configure.in  m4/codeset.m4 \
+		m4/gettext.m4 m4/glibc21.m4 m4/iconv.m4 m4/intdiv0.m4 \
+		m4/inttypes-pri.m4 m4/inttypes.m4 m4/inttypes_h.m4 \
+		m4/isc-posix.m4 m4/lcmessage.m4 m4/lib-ld.m4 \
+		m4/lib-link.m4 m4/lib-prefix.m4 m4/progtest.m4 \
+		m4/stdint_h.m4 m4/uintmax_t.m4 m4/ulonglong.m4
+	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
@@ -243,7 +252,7 @@ maintainer-clean-recursive:
 	dot_seen=no; \
 	rev=''; list='$(SUBDIRS)'; for subdir in $$list; do \
 	  rev="$$subdir $$rev"; \
-	  test "$$subdir" = "." && dot_seen=yes; \
+	  test "$$subdir" != "." || dot_seen=yes; \
 	done; \
 	test "$$dot_seen" = "no" && rev=". $$rev"; \
 	target=`echo $@ | sed s/-recursive//`; \
@@ -285,7 +294,7 @@ TAGS: tags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) $(LI
 	  awk '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
 	test -z "$(ETAGS_ARGS)config.h.in$$unique$(LISP)$$tags" \
-	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags config.h.in $$unique $(LISP) -o $$here/TAGS)
+	  || (cd $(srcdir) && etags -o $$here/TAGS $(ETAGS_ARGS) $$tags config.h.in $$unique $(LISP))
 
 mostlyclean-tags:
 

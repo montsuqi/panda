@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -168,7 +168,7 @@ libpanda_la_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBS
 libpandac_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBSfunc.c	LBSfunc.h		value.c		value.h			driver.c	driver.h		tcp.c		tcp.h			queue.c		queue.h			enum.h
 
 
-libpandas_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h			applications.c applications.h		pandaIO.c	pandaIO.h		driver.c	driver.h		tcp.c		tcp.h			pty.c		pty.h			auth.c		auth.h			authstub.c	authstub.h		front.c	front.h				wfcio.c		wfcio.h			enum.h		demo.c	demo.h		demo2.c		demo3.c		demo4.c
+libpandas_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			comms.c		comms.h			LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h			applications.c applications.h		pandaIO.c	pandaIO.h		driver.c	driver.h		tcp.c		tcp.h			pty.c		pty.h			auth.c		auth.h			authstub.c	authstub.h		front.c	front.h				wfcio.c		wfcio.h			enum.h		demo.c	demo.h		demo2.c		demo3.c		demo4.c
 
 
 libpandat_a_SOURCES =  	misc.c		misc.h			option.c	option.h		comm.c		comm.h			LBSfunc.c	LBSfunc.h		value.c		value.h			SQLlex.c	SQLlex.h		SQLparser.c	SQLparser.h		DDparser.c	DDparser.h		DDlex.c		DDlex.h			LDparser.c	LDparser.h		LDlex.c		LDlex.h			DIparser.c	DIparser.h		DIlex.c		DIlex.h			BDparser.c	BDparser.h		BDlex.c		BDlex.h			directory.c	directory.h		driver.c	driver.h		tcp.c		tcp.h			pty.c		pty.h			auth.c		auth.h			authstub.c	authstub.h		front.c	front.h				wfcio.c		wfcio.h			enum.h
@@ -195,11 +195,12 @@ LBSfunc.$(OBJEXT) value.$(OBJEXT) driver.$(OBJEXT) tcp.$(OBJEXT) \
 queue.$(OBJEXT)
 libpandas_a_LIBADD = 
 libpandas_a_OBJECTS =  misc.$(OBJEXT) option.$(OBJEXT) comm.$(OBJEXT) \
-LBSfunc.$(OBJEXT) value.$(OBJEXT) SQLlex.$(OBJEXT) SQLparser.$(OBJEXT) \
-DDparser.$(OBJEXT) DDlex.$(OBJEXT) applications.$(OBJEXT) \
-pandaIO.$(OBJEXT) driver.$(OBJEXT) tcp.$(OBJEXT) pty.$(OBJEXT) \
-auth.$(OBJEXT) authstub.$(OBJEXT) front.$(OBJEXT) wfcio.$(OBJEXT) \
-demo.$(OBJEXT) demo2.$(OBJEXT) demo3.$(OBJEXT) demo4.$(OBJEXT)
+comms.$(OBJEXT) LBSfunc.$(OBJEXT) value.$(OBJEXT) SQLlex.$(OBJEXT) \
+SQLparser.$(OBJEXT) DDparser.$(OBJEXT) DDlex.$(OBJEXT) \
+applications.$(OBJEXT) pandaIO.$(OBJEXT) driver.$(OBJEXT) tcp.$(OBJEXT) \
+pty.$(OBJEXT) auth.$(OBJEXT) authstub.$(OBJEXT) front.$(OBJEXT) \
+wfcio.$(OBJEXT) demo.$(OBJEXT) demo2.$(OBJEXT) demo3.$(OBJEXT) \
+demo4.$(OBJEXT)
 libpandat_a_LIBADD = 
 libpandat_a_OBJECTS =  misc.$(OBJEXT) option.$(OBJEXT) comm.$(OBJEXT) \
 LBSfunc.$(OBJEXT) value.$(OBJEXT) SQLlex.$(OBJEXT) SQLparser.$(OBJEXT) \
@@ -240,7 +241,7 @@ DEP_FILES =  .deps/BDlex.P .deps/BDparser.P .deps/DDlex.P \
 .deps/DDparser.P .deps/DIlex.P .deps/DIparser.P .deps/LBSfunc.P \
 .deps/LDlex.P .deps/LDparser.P .deps/SQLlex.P .deps/SQLparser.P \
 .deps/applications.P .deps/auth.P .deps/authstub.P .deps/comm.P \
-.deps/demo.P .deps/demo2.P .deps/demo3.P .deps/demo4.P \
+.deps/comms.P .deps/demo.P .deps/demo2.P .deps/demo3.P .deps/demo4.P \
 .deps/directory.P .deps/driver.P .deps/enum.P .deps/front.P \
 .deps/i18n_code.P .deps/i18n_codeset.P .deps/i18n_ctype.P \
 .deps/i18n_res.P .deps/i18n_strings.P .deps/misc.P .deps/option.P \
@@ -386,7 +387,7 @@ TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
 	  awk '    { files[$$0] = 1; } \
 	       END { for (i in files) print i; }'`; \
 	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
-	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
+	  || (cd $(srcdir) && etags -o $$here/TAGS $(ETAGS_ARGS) $$tags  $$unique $(LISP))
 
 mostlyclean-tags:
 
