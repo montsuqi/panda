@@ -27,6 +27,7 @@ typedef	struct {
 	GHashTable	*Radio;
     GHashTable	*List;
 	GHashTable	*FileSelection;
+    char *DefaultEvent;
     size_t EnctypePos;
     int FormNo;
 }	HTCInfo;

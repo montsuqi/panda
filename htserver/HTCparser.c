@@ -241,6 +241,7 @@ dbgmsg(">HTCParser");
 		ret->Radio = NewNameHash();
 		ret->List = NewNameHash();
 		ret->FileSelection = NewNameHash();
+        ret->DefaultEvent = NULL;
         ret->EnctypePos = 0;
         ret->FormNo = -1;
 		LBS_EmitStart(ret->code);

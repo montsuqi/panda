@@ -354,7 +354,7 @@ _Form(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*name;
+	char	*name, *defaultevent;
 
 dbgmsg(">_Form");
 	htc->FormNo++;
@@ -391,6 +391,10 @@ dbgmsg(">_Form");
 		LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_sesid\" value=\"");
 		EmitGetValue(htc,"_sesid");
 		LBS_EmitString(htc->code,"\">");
+	}
+
+    if ((defaultevent = GetArg(tag, "defaultevent", 0)) != NULL) {
+        htc->DefaultEvent = StrDup(defaultevent);
 	}
 dbgmsg("<_Form");
 }
@@ -563,12 +567,15 @@ _Button(
 	,		*size;
 
 dbgmsg(">_Button");
-	if		(  ( face = GetArg(tag,"face",0) )  ==  NULL  ) {
-		face = GetArg(tag,"event",0);
+	if ((event = GetArg(tag, "event", 0)) == NULL) {
+        HTC_Error("`event' attribute is required for <%s>\n", tag->name);
+        return;
 	}
-	if		(  ( event = GetArg(tag,"event",0) )  ==  NULL  ) {
-		event = GetArg(tag,"face",0);
+	if ((face = GetArg(tag, "face", 0)) == NULL) {
+		face = event;
 	}
+    if (htc->DefaultEvent == NULL)
+        htc->DefaultEvent = event;
 	g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
 	LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
 	LBS_EmitString(htc->code,face);
@@ -1165,6 +1172,7 @@ dbgmsg(">TagsInit");
 
 	tag = NewTag("FORM",_Form);
 	AddArg(tag,"name",TRUE);
+	AddArg(tag,"defaultevent",TRUE);
 	tag = NewTag("HEAD",_Head);
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);

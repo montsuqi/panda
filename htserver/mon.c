@@ -634,23 +634,29 @@ SendEvent(void)
         g_hash_table_remove(Values, name);
     }
 	
-	if		(  ( button = g_hash_table_lookup(Values,"_event") )  ==  NULL  ) {
-		event = "";
-		htc = NULL;
-	} else {
-		if		(  ( name = g_hash_table_lookup(Values,"_name") )  !=  NULL  ) {
-			htc = HTCParser(name);
-            if (htc == NULL)
-                exit(1);
-			if		(  ( event = g_hash_table_lookup(htc->Trans,ConvUTF8(button)) )
-					   ==  NULL  ) {
-				event = button;
-			}
-		} else {
-			event = "";
-			htc = NULL;
-		}
-	}
+    if		(  ( name = g_hash_table_lookup(Values,"_name") )  !=  NULL  ) {
+        htc = HTCParser(name);
+        if (htc == NULL)
+            exit(1);
+        if ((button = g_hash_table_lookup(Values,"_event")) == NULL) {
+            if (htc->DefaultEvent == NULL) {
+                event = "";
+                htc = NULL;
+            }
+            else {
+                event = htc->DefaultEvent;
+            }
+        }
+        else {
+            event = g_hash_table_lookup(htc->Trans,ConvUTF8(button));
+            if (event == NULL) {
+                event = button;
+            }
+        }
+    } else {
+        event = "";
+        htc = NULL;
+    }
 	if		(  htc  !=  NULL  ) {
 		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
 		g_hash_table_foreach(htc->List,(GHFunc)GetList,NULL);
