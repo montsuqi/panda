@@ -39,7 +39,7 @@ GLOBAL	char	*HTC_FileName;
 GLOBAL	int		HTC_Token;
 GLOBAL	FILE	*HTC_File;
 GLOBAL	int		HTC_cLine;
-GLOBAL	char	*HTC_Memory;
+GLOBAL	byte	*HTC_Memory;
 
 GLOBAL	int		(*_HTCGetChar)(void);
 GLOBAL	void	(*_HTCUnGetChar)(int c);
