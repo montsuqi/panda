@@ -37,6 +37,9 @@ copies.
 #include	<string.h>
 #include	<stdarg.h>
 #include	<stdlib.h>
+#ifdef	USE_SYSLOG
+#include	<syslog.h>
+#endif
 #include	"libmondai.h"
 #ifdef	USE_MSGD
 #include	"const.h"
@@ -48,6 +51,10 @@ copies.
 
 #ifndef	SIZE_BUFF
 #define	SIZE_BUFF		8192
+#endif
+
+#ifdef	USE_SYSLOG
+static	int syslog_facility =  LOG_LOCAL1;
 #endif
 
 #ifdef	USE_MSGD
@@ -79,6 +86,33 @@ _MessageLevelPrintf(
 	va_end(va);
 	_Message(level,file,line,buff);
 }
+
+#ifdef	USE_SYSLOG
+static int 
+SyslogLevel(
+	int level)
+{
+	int syslog_level;
+
+	switch (level){
+	  case MESSAGE_MESSAGE:
+		  syslog_level = LOG_INFO;     break;
+	  case MESSAGE_DEBUG:
+		  syslog_level = LOG_DEBUG;    break;
+	  case MESSAGE_WARN:
+		  syslog_level = LOG_WARNING;  break;
+	  case MESSAGE_ERROR:
+		  syslog_level = LOG_ERR;      break;
+	  case MESSAGE_LOG:
+		  syslog_level = LOG_NOTICE;   break;
+	  case MESSAGE_PRINT:
+		  syslog_level = LOG_INFO;     break;
+	  default:
+		  syslog_level = LOG_INFO;
+	}
+	return (syslog_level);
+};
+#endif
 
 static	void
 PutLog(
@@ -113,6 +147,10 @@ _Message(
 	struct	timeval	tv;
 	struct	tm	*Now;
 
+#ifdef USE_SYSLOG
+	syslog(SyslogLevel(level), msg);
+#endif
+	
 	if		(  fpLog  !=  NULL  ) {
 		gettimeofday(&tv,NULL);
 		Now = localtime((time_t *)&tv.tv_sec);
@@ -208,6 +246,13 @@ InitMessage(
 #ifdef	USE_MSGD
 	int		fd;
 	Port	*port;
+#endif
+
+#ifdef USE_SYSLOG
+	char	buff[SIZE_BUFF];
+
+	snprintf(buff, SIZE_BUFF, "%s/%s", PACKAGE, id);
+	openlog(buff, LOG_PID, syslog_facility);
 #endif
 
 	if		(  fn  ==  NULL  ) {
