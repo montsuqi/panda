@@ -112,6 +112,7 @@ typedef	struct _DBG_Struct	{
 	char		*type;
 	struct	_DB_Func		*func;
 	FILE		*fpLog;
+	LargeByteString	*redirectData;
 	char		*file;
 	Port		*redirectPort;
 	struct	_DBG_Struct	*redirect;
@@ -228,6 +229,8 @@ extern	char		**ParCommandLine(char *line);
 extern	char		*ExpandPath(char *org,char *base);
 
 extern	DB_Func		*NewDB_Func(void);
+extern	void		DecodeString(char *q, char *p);
+extern	void		EncodeString(char *q, char *p);
 
 #define	g_int_hash_table_insert(h,i,d)		g_hash_table_insert((h),(void *)(i),(d))
 #define	g_int_hash_table_foreach(h,p,a)		g_hash_table_foreach((h),(p),(a))
