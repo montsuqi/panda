@@ -721,7 +721,8 @@ NumericToFixed(
 	if		(  fMinus  ) {
 		*to |= 0x40;
 	}
-	xfree(str);
+	/* FIXME: this causes a trouble.  Why? */
+	/* xfree(str); */
 	return	(to);
 }
 
