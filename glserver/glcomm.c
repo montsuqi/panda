@@ -362,6 +362,7 @@ GL_SendValue(
 	Bool		fNetwork)
 {
 	int		i;
+	int		count;
 
 	ValueIsNotUpdate(value);
 	GL_SendDataType(fp,ValueType(value),fNetwork);
@@ -403,17 +404,29 @@ GL_SendValue(
 		}
 		break;
 	  case	GL_TYPE_RECORD:
-		GL_SendInt(fp,ValueRecordSize(value),fNetwork);
+		count =  ValueRecordSize(value);
+		if		(  fFetureOld  ) {
+			for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+				if		(  stricmp(ValueRecordName(value,i),"rowattr")  ==  0  ) {
+					count --;
+					break;
+				}
+			}
+		}
+		GL_SendInt(fp,count,fNetwork);
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			GL_SendString(fp,ValueRecordName(value,i),fNetwork);
 			if		(  fFetureOld  ) {
 				if		(	(  stricmp(ValueRecordName(value,i),"row")      ==  0  )
-						||	(  stricmp(ValueRecordName(value,i),"rowattr")  ==  0  )
 						||	(  stricmp(ValueRecordName(value,i),"column")   ==  0  ) )	{
+					GL_SendString(fp,ValueRecordName(value,i),fNetwork);
+				} else
+				if		(  stricmp(ValueRecordName(value,i),"rowattr")  ==  0  ) {
 				} else {
+					GL_SendString(fp,ValueRecordName(value,i),fNetwork);
 					GL_SendValue(fp,ValueRecordItem(value,i),coding,fExpand,fNetwork);
 				}
 			} else {
+				GL_SendString(fp,ValueRecordName(value,i),fNetwork);
 				GL_SendValue(fp,ValueRecordItem(value,i),coding,fExpand,fNetwork);
 			}
 		}
