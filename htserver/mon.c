@@ -569,31 +569,6 @@ SendValueDelim(
 	dbgprintf("send value = [%s: %s]\n",name,value);
 }
 
-static void
-URLEncodeBinary(char *dest, byte *src, int len)
-{
-    char *p, *q;
-    char *pend;
-
-    p = src;
-    q = dest;
-    pend = p + len;
-	while (p < pend) {
-		if (*p == 0x20) {
-			*q++ = '+';
-		}
-        else if (isalnum(*p)) {
-            *q++ = *p;
-		}
-        else {
-			*q++ = '%';
-			q += sprintf(q,"%02X",((int)*p)&0xFF);
-		}
-		p++;
-	}
-	*q = '\0';
-}
-
 static	void
 SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 {
