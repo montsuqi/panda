@@ -1,3 +1,7 @@
+2004-08-03  Kouji TAKAO  <kouji@netlab.jp>
+
+	* aps/Ruby.c: コンパイルワーニングの除去
+
 2004-08-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/NativeBLOB.c: blob用のDBハンドラ

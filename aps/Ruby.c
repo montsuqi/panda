@@ -211,7 +211,8 @@ error_print()
             long len = elen;
 
             if (RSTRING(epath)->ptr[0] == '#') epath = 0;
-            if (tail = memchr(einfo, '\n', elen)) {
+            tail = memchr(einfo, '\n', elen);
+            if (tail) {
                 len = tail - einfo;
                 tail++;     /* skip newline */
             }
@@ -534,7 +535,6 @@ static VALUE
 aryval_index(VALUE self, VALUE obj)
 {
     value_struct_data *data;
-    ValueStruct *val;
     int i;
 
     Data_Get_Struct(self, value_struct_data, data);
@@ -986,6 +986,8 @@ path_op_args(VALUE self, VALUE name)
     return op_args;
 }
 
+#if 0
+
 static VALUE
 path_get_field(VALUE self)
 {
@@ -1004,13 +1006,15 @@ path_set_field(VALUE self, VALUE obj)
     return recval_set_field(data->args, obj);
 }
 
+#endif
+
 typedef struct _table_data {
     record_struct_data rec;
     int no;
     VALUE paths;
 } table_data;
 
-static VALUE
+static void
 table_mark(table_data *data)
 {
     rec_mark(&data->rec);
@@ -1075,7 +1079,6 @@ table_exec(int argc, VALUE *argv, VALUE self)
     VALUE funcname, pathname, params;
     char *func, *pname;
     DBCOMM_CTRL ctrl;
-    PathStruct *path;
     int no;
     size_t size;
     ValueStruct *value;
@@ -1273,7 +1276,6 @@ database_aref(VALUE self, VALUE name)
 {
     VALUE obj;
     database_data *data;
-    ValueStruct *val;
     int no, table_no;
     RecordStruct *rec;
 
@@ -1301,10 +1303,6 @@ database_exec(VALUE self, VALUE funcname)
     table_data *data;
     char *func;
     DBCOMM_CTRL ctrl;
-    PathStruct *path;
-    int no;
-    size_t size;
-    ValueStruct *value;
     static VALUE table_path(VALUE self, VALUE name);
 
     Data_Get_Struct(self, table_data, data);
@@ -1454,7 +1452,6 @@ static VALUE
 get_source_filename(char *class_name, char *path)
 {
     VALUE filename;
-    int i;
 
     if (!isupper(*class_name)) {
         return Qnil;
@@ -1472,7 +1469,6 @@ load_application(char *path, char *name)
 {
     VALUE app_class, class_name;
     VALUE filename;
-    char *p;
     int state;
 
     class_name = rb_str_new2(name);
@@ -1502,7 +1498,6 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
     VALUE app;
     ValueStruct *dc_module_value, *dc_status_value;
     char *dc_module, *dc_status;
-    Bool    rc;
     int state;
     ID handler_method;
 
@@ -1558,7 +1553,6 @@ execute_batch(MessageHandler *handler, char *name, char *param)
 {
     VALUE app_class;
     VALUE app;
-    char *module_longname;
     char *module;
     VALUE rc;
     int state;
