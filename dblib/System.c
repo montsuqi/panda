@@ -47,7 +47,8 @@ copies.
 static	int
 _EXEC(
 	DBG_Struct	*dbg,
-	char		*sql)
+	char		*sql,
+	Bool		fRedirect)
 {
 	return	(TRUE);
 }

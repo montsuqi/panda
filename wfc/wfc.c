@@ -125,10 +125,10 @@ dbgmsg(">ExecuteServer");
 		FD_SET(_fhAps,&ready);
 		FD_SET(_fhControl,&ready);
 		select(maxfd+1,&ready,NULL,NULL,&timeout);
-		if		(  FD_ISSET(_fhTerm,&ready)  ) {	/*	term connect	*/
+		if		(  FD_ISSET(_fhTerm,&ready)  ) {		/*	term connect	*/
 			ConnectTerm(_fhTerm);
 		}
-		if		(  FD_ISSET(_fhAps,&ready)  ) {		/*	APS connect		*/
+		if		(  FD_ISSET(_fhAps,&ready)  ) {			/*	APS connect		*/
 			ConnectAPS(_fhAps);
 		}
 		if		(  FD_ISSET(_fhControl,&ready)  ) {		/*	control connect		*/

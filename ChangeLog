@@ -1,3 +1,7 @@
+2004-02-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c: リダイレクト専用関数
+
 2004-02-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/redirect.c , tools/monitor.c: リダイレクトの仕様変更

@@ -56,13 +56,25 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-static	void
+static	Bool
 InitSession(
 	NETFILE	*fp)
 {
+	Bool	ret;
+	char	name[SIZE_LONGNAME+1];
+
 ENTER_FUNC;
+	RecvString(fp,name);
+	if		(  strcmp(name,ThisEnv->name)  ==  0  ) {
+		SendPacketClass(fp,WFCCONTROL_OK);
+		ret = TRUE;
+	} else {
+		SendPacketClass(fp,WFCCONTROL_NG);
+		ret = FALSE;
+	}
 	MessageLog("control session start");
 LEAVE_FUNC;
+	return	(ret);
 }
 
 static	void
@@ -83,21 +95,22 @@ ControlThread(
 ENTER_FUNC;
 	fp = SocketToNet((int)para);
 	
-	InitSession(fp);
-	fExit = FALSE;
-	while	(!fExit) {
-		switch	(RecvPacketClass(fp)) {
-		  case	WFCCONTROL_STOP:
-			fShutdown = TRUE;
-			fExit = TRUE;
-			break;
-		  case	WFCCONTROL_END:
-			fExit = TRUE;
-			break;
-		  default:
-			break;
+	if		(  InitSession(fp)  ) {
+		fExit = FALSE;
+		while	(!fExit) {
+			switch	(RecvPacketClass(fp)) {
+			  case	WFCCONTROL_STOP:
+				fShutdown = TRUE;
+				fExit = TRUE;
+				break;
+			  case	WFCCONTROL_END:
+				fExit = TRUE;
+				break;
+			  default:
+				break;
+			}
+			ON_IO_ERROR(fp,badio);
 		}
-		ON_IO_ERROR(fp,badio);
 	}
   badio:
 	FinishSession();

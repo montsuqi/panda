@@ -52,12 +52,14 @@ OpenDB_RedirectPort(
 	DBG_Struct	*rdbg;
 
 ENTER_FUNC;
+	dbgprintf("dbg [%s]\n",dbg->name);
 	if		(	(  fNoRedirect  )
 			||	(  dbg->redirect  ==  NULL  ) ) {
 		dbg->fpLog = NULL;
 		dbg->redirectData = NULL;
 	} else {
 		rdbg = dbg->redirect;
+		dbgprintf("redirect [%s] -> [%s]\n",dbg->name,rdbg->name);
 		if		(  ( fh = ConnectSocket(rdbg->redirectPort,SOCK_STREAM) )  <  0  ) {
 			Warning("loging server not ready");
 			if		(  !fNoCheck  ) {
@@ -71,6 +73,7 @@ ENTER_FUNC;
 			dbg->redirectData = NewLBS();
 		}
 	}
+	dbg->fConnect = FALSE;
 LEAVE_FUNC;
 }
 
@@ -96,7 +99,6 @@ PutDB_Redirect(
 dbgmsg(">PutDB_Redirect");
 	if		(  dbg->redirectData  !=  NULL  ) {
 		LBS_EmitString(dbg->redirectData,data);
-		LBS_EmitString(dbg->redirectData,";"); 
 	}
 dbgmsg("<PutDB_Redirect");
 }

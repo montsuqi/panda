@@ -132,34 +132,49 @@ FileThread(
 
 dbgmsg(">FileThread");
 	if		(  ThisDBG->dbname  !=  NULL  ) {
-		OpenDB(ThisDBG);
+		OpenRedirectDB(ThisDBG);
+	} else {
+		OpenDB_RedirectPort(ThisDBG);
 	}
-	if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
-		Error("log file can not open");
+	if		(  ThisDBG->file  !=  NULL  ) {
+		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
+			Error("log file can not open");
+		}
+	} else {
+		fp = NULL;
 	}
 	count = 0;
 	while	(TRUE)	{
 		data = (LargeByteString *)DeQueue(FileQueue);
 		dbgmsg("de queue");
 		LBS_EmitEnd(data);
-		p = LBS_ToString(data);
-		if		(  ThisDBG->dbname  !=  NULL  )	{
-			TransactionStart(ThisDBG);
-			ExecDBOP(ThisDBG,p);
-			TransactionEnd(ThisDBG);
+		p = LBS_Body(data);
+		if		(  *p  !=  0  ) {
+			if		(  ThisDBG->fConnect  )	{
+				TransactionRedirectStart(ThisDBG);
+				ExecRedirectDBOP(ThisDBG,p);
+				TransactionRedirectEnd(ThisDBG);
+			}
+			BeginDB_Redirect(ThisDBG);
+			PutDB_Redirect(ThisDBG,p);
+			CommitDB_Redirect(ThisDBG);
+			if		(  fp  !=  NULL  ) {
+				time(&nowtime);
+				Now = localtime(&nowtime);
+				fprintf(fp,"%s%04d/%02d/%02d/%02d:%02d:%02d/%08d%s"
+						,ThisDBG->func->commentStart
+						, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
+						, Now->tm_hour,Now->tm_min,Now->tm_sec,count
+						,ThisDBG->func->commentEnd);
+				fprintf(fp,"%s\n",p);
+				fflush(fp);
+			}
+			count ++;
 		}
-		time(&nowtime);
-		Now = localtime(&nowtime);
-		fprintf(fp,"%s%04d/%02d/%02d/%02d:%02d:%02d/%08d%s"
-				,ThisDBG->func->commentStart
-				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-				, Now->tm_hour,Now->tm_min,Now->tm_sec,count
-				,ThisDBG->func->commentEnd);
-		fprintf(fp,"%s\n",p);
-		xfree(p);
-		fflush(fp);
-		count ++;
 		FreeLBS(data);
+	}
+	if		(  ThisDBG->dbname  ==  NULL  ) {
+		CloseDB_RedirectPort(ThisDBG);
 	}
 	//	pthread_exit(NULL);
 dbgmsg("<FileThread");
@@ -236,20 +251,9 @@ dbgmsg(">InitSystem");
 			   ==  NULL  ) {
 		Error("DB group not found");
 	}
-#if	0
-	Orig = ThisDBG;
-	if		(  ThisDBG->redirect  !=  NULL  ) {
-		ThisDBG = ThisDBG->redirect;
-	}
-	ThisDBG->dbt = Orig->dbt;
-#endif
 	if		(  PortNumber  ==  NULL  ) {
-		if		(  Orig->redirectPort  !=  NULL  ) {
-#if	0
-			RedirectPort = Orig->redirectPort;
-#else
+		if		(  ThisDBG->redirectPort  !=  NULL  ) {
 			RedirectPort = ThisDBG->redirectPort;
-#endif
 		} else {
 			RedirectPort = ParPortName(PORT_REDIRECT);
 		}

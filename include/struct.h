@@ -90,11 +90,6 @@ typedef	struct _DBG_Struct	{
 	char		*name;					/*	group name			*/
 	char		*type;					/*	DBMS type name		*/
 	struct	_DB_Func		*func;
-	NETFILE		*fpLog;
-	LargeByteString	*redirectData;
-	char		*file;
-	Port		*redirectPort;
-	struct	_DBG_Struct	*redirect;
 	GHashTable	*dbt;
 	int			priority;				/*	commit priority		*/
 	char		*coding;				/*	DB backend coding	*/
@@ -106,6 +101,12 @@ typedef	struct _DBG_Struct	{
 	/*	DB connection variable	*/
 	Bool		fConnect;
 	void		*conn;
+	/*	DB redirect variable	*/
+	Port		*redirectPort;
+	struct	_DBG_Struct	*redirect;
+	NETFILE		*fpLog;
+	LargeByteString	*redirectData;
+	char		*file;
 }	DBG_Struct;
 
 typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
@@ -114,7 +115,7 @@ typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct
 #define	BLOB_OPEN_WRITE		0x02
 
 typedef struct	{
-	int		(*exec)(DBG_Struct *, char *);
+	int		(*exec)(DBG_Struct *, char *, Bool);
 	Bool	(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 	int		(*OpenBLOB)(DBG_Struct *, MonObjectType *, int);
 	int		(*CloseBLOB)(DBG_Struct *, int);

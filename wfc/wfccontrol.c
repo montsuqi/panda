@@ -58,14 +58,44 @@ static	char	*ControlPort;
 static	int		Back;
 static	char	*Directory;
 
+static	Bool
+Auth(
+	NETFILE	*fp)
+{
+	Bool	ret;
+
+	SendString(fp,ThisEnv->name);
+printf("name = [%s]\n",ThisEnv->name);
+	switch	(RecvPacketClass(fp)) {
+	  case	WFCCONTROL_OK:
+		ret = TRUE;
+		break;
+	  default:
+		ret = FALSE;
+		break;
+	}
+	return	(ret);
+}
+
 static	void
-MainProc(void)
+MainProc(
+	char	*comm)
 {
 	NETFILE	*fp;
 
 	if		(  ( fp = OpenPort(ControlPort,0) )  !=  NULL  ) {
-		SendPacketClass(fp,WFCCONTROL_STOP);
+		if		(  Auth(fp)  ) {
+			if		(  stricmp(comm,"stop")  ==  0  ) {
+				SendPacketClass(fp,WFCCONTROL_STOP);
+			} else {
+				printf("command error\n");
+			}
+		} else {
+			printf("auth fail\n");
+		}
 		CloseNet(fp);
+	} else {
+		fprintf(stderr,"invalid control port\n");
 	}
 }
 
@@ -73,10 +103,8 @@ static	void
 InitSystem(void)
 {
 dbgmsg(">InitSystem");
-#if	0
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","");
-#endif
 	InitNET();
 dbgmsg("<InitSystem");
 }
@@ -119,13 +147,23 @@ main(
 	char	**argv)
 {
 
+	FILE_LIST	*fl;
+	char		*command;
+
 	SetDefault();
-	GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv);
 
 	InitMessage("wfccontrol",NULL);
 
+	if		(	(  fl  !=  NULL  )
+			&&	(  fl->name  !=  NULL  ) ) {
+		command = fl->name;
+	} else {
+		command = "stop";
+	}
+
 	InitSystem();
-	MainProc();
+	MainProc(command);
 	CleanUp();
 	return	(0);
 }

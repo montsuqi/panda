@@ -25,6 +25,8 @@ copies.
 #include	"wfcdata.h"
 
 #define	WFCCONTROL_NULL		(PacketClass)0x00
+#define	WFCCONTROL_OK		(PacketClass)0xE0
+#define	WFCCONTROL_NG		(PacketClass)0xE1
 #define	WFCCONTROL_STOP		(PacketClass)0xFE
 #define	WFCCONTROL_END		(PacketClass)0xFF
 

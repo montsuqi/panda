@@ -78,77 +78,31 @@ ValueOid(
 }
 /**/
 
-static	void
+static	size_t
 EncodeString(
-	LargeByteString	*lbs,
+	char	*p,
 	char	del,
 	char	*s)
 {
+	char	*q;
+
+	q = p;
 	while	(  *s  !=  0  ) {
 		if		(  *s  ==  del  ) {
-            LBS_EmitChar(lbs, del);
-            LBS_EmitChar(lbs, del);
+			*p ++ = del;
+			*p ++ = del;
 		} else {
-            LBS_EmitChar(lbs, *s);
+			*p ++ = *s;
 		}
 		s ++;
 	}
+	*p = 0;
+	return	(p-q);
 }
 
-static void
-EscapeBytea(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
-{
-	unsigned char *vp;
-	unsigned char *rp;
-	unsigned char *result;
-	size_t i;
-	size_t len;
-    size_t old_size;
-
-	len = 0;
-	for (i = binlen, vp = bintext; i > 0; i--, vp++) {
-		if (*vp < 0x20 || *vp > 0x7e) {
-			len += 5;
-        }
-		else if (*vp == '\'') {
-			len += 2;
-        }
-		else if (*vp == '\\') {
-			len += 4;
-        }
-		else {
-			len++;
-        }
-	}
-
-    old_size = LBS_Size(lbs);
-    LBS_ReserveSize(lbs, old_size + len, TRUE);
-    rp = LBS_Body(lbs) + old_size;
-
-	for (i = binlen, vp = bintext; i > 0; i--, vp++) {
-		if (*vp < 0x20 || *vp > 0x7e) {
-			rp += sprintf(rp, "\\\\%03o", *vp);
-		}
-		else if (*vp == '\'') {
-			*rp++ = '\\';
-			*rp++ = '\'';
-		}
-		else if (*vp == '\\') {
-			*rp++ = '\\';
-			*rp++ = '\\';
-			*rp++ = '\\';
-			*rp++ = '\\';
-		}
-		else {
-			*rp++ = *vp;
-        }
-	}
-}
-
-static	void
+static	char	*
 ValueToSQL(
 	DBG_Struct	*dbg,
-	LargeByteString	*lbs,
 	ValueStruct	*val)
 {
 	static	char	buff[SIZE_BUFF];
@@ -160,10 +114,9 @@ ValueToSQL(
 	Oid		id;
 
 	if		(  IS_VALUE_NIL(val)  ) {
-		LBS_EmitString(lbs,"null");
+		sprintf(buff,"null");
 	} else
 	switch	(ValueType(val)) {
-	  case	GL_TYPE_BYTE:
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_TEXT:
@@ -172,59 +125,42 @@ ValueToSQL(
 		} else {
 			del = '\'';
 		}
-        LBS_EmitChar(lbs,del);
-		EncodeString(lbs,del,ValueToString(val,dbg->coding));
-        LBS_EmitChar(lbs,del);
+		p = buff;
+		*p ++ = del;
+		p += EncodeString(p,del,ValueToString(val,dbg->coding));
+		*p ++ = del;
+		*p = 0;
 		break;
-	  case	GL_TYPE_BINARY:
-        {
-            unsigned char *bytea;
-
-            if (fInArray) {
-                del = '"';
-            }
-            else {
-                del = '\'';
-            }
-            LBS_EmitChar(lbs,del);
-            EscapeBytea(lbs, ValueByte(val), ValueByteLength(val));
-            LBS_EmitChar(lbs,del);
-        }
-        break;
 	  case	GL_TYPE_DBCODE:
-		LBS_EmitString(lbs,ValueToString(val,dbg->coding));
+		sprintf(buff,"%s",ValueToString(val,dbg->coding));
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(&ValueFixed(val));
-		LBS_EmitString(lbs,NumericOutput(nv));
+		sprintf(buff,"%s",NumericOutput(nv));
 		NumericFree(nv);
 		break;
 	  case	GL_TYPE_INT:
 		sprintf(buff,"%d",ValueToInteger(val));
-		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_FLOAT:
 		sprintf(buff,"%g",ValueToFloat(val));
-		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_BOOL:
 		sprintf(buff,"'%s'",ValueToBool(val) ? "t" : "f");
-		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_OBJECT:
 		id = ValueOid(ValueObject(val));
 		sprintf(buff,"%u",id);
-		LBS_EmitString(lbs,buff);
 		break;
 	  default:
-		break;
+		*buff = 0;
 	}
+	return	(buff);
 }
 
 static	char	*
 KeyValue(
 	DBG_Struct	*dbg,
-	LargeByteString	*lbs,
 	ValueStruct	*args,
 	char		**pk)
 {
@@ -237,7 +173,7 @@ dbgmsg(">KeyValue");
 		pk ++;
 	}
 dbgmsg("<KeyValue");
-	ValueToSQL(dbg,lbs,val);
+	return	(ValueToSQL(dbg,val));
 }
 
 static	char	*
@@ -354,27 +290,6 @@ ParArray(
 				SetValueString(item,qq,dbg->coding);
 				xfree(qq);
 				break;
-              case	GL_TYPE_BINARY:
-                pp = p;
-                if		(  *p  ==  '"'  ) {
-                    p ++;
-                    len = 0;
-                    while	(  *p  !=  '"'  ) {
-                        p ++;
-                        len ++;
-                    }
-                } else break;
-                qq = (char *)xmalloc(len+1);
-                p = pp + 1;
-                q = qq;
-                while	(  *p  !=  '"'  ) {
-                    *q ++ = *p ++;
-                }
-                *q = 0;
-                p ++;
-                SetValueBinary(item, qq, q - qq);
-                xfree(qq);
-                break;
 			  case	GL_TYPE_ARRAY:
 				p = ParArray(dbg,p,item);
 				break;
@@ -449,18 +364,6 @@ dbgmsg(">GetTable");
 			SetValueString(val,(char *)PQgetvalue(res,0,fnum),dbg->coding);
 		}
 		break;
-	  case	GL_TYPE_BINARY:
-		dbgmsg("byte");
-		fnum = PQfnumber(res,ItemName());
-		if		(  fnum  <  0  ) {
-			if		(  !IS_VALUE_VIRTUAL(val)  ) {
-				ValueIsNil(val);
-			}
-		} else {
-            SetValueBinary(val, PQgetvalue(res,0,fnum),
-                           PQgetlength(res,0,fnum));
-		}
-        break;
 	  case	GL_TYPE_NUMBER:
 		dbgmsg("number");
 		fnum = PQfnumber(res,ItemName());
@@ -535,21 +438,19 @@ PutDim(void)
 	return	(buff);
 }
 
-static	void
+static	char	*
 UpdateValue(
 	DBG_Struct	*dbg,
-	LargeByteString	*lbs,
+	char		*p,
 	ValueStruct	*val)
 {
 	int		i;
 	ValueStruct	*tmp;
 	Bool	fComm;
 
-	if		(  val  ==  NULL  )	return;
+	if		(  val  ==  NULL  )	return	(p);
 	if		(  IS_VALUE_NIL(val)  ) {
-        LBS_EmitString(lbs,ItemName());
-        LBS_EmitString(lbs,PutDim());
-        LBS_EmitString(lbs," is null");
+		p += sprintf(p,"%s%s is null",ItemName(),PutDim());
 	} else
 	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
@@ -560,12 +461,8 @@ UpdateValue(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_TEXT:
-	  case	GL_TYPE_BINARY:
 	  case	GL_TYPE_OBJECT:
-        LBS_EmitString(lbs,ItemName());
-        LBS_EmitString(lbs,PutDim());
-        LBS_EmitString(lbs," = ");
-        ValueToSQL(dbg,lbs,val);
+		p += sprintf(p,"%s%s = %s",ItemName(),PutDim(),ValueToSQL(dbg,val));
 		break;
 	  case	GL_TYPE_ARRAY:
 		fComm = FALSE;
@@ -573,12 +470,12 @@ UpdateValue(
 			tmp = ValueArrayItem(val,i);
 			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
 				if		(  fComm  ) {
-                    LBS_EmitChar(lbs,',');
+					p += sprintf(p,",");
 				}
 				fComm = TRUE;
 				Dim[alevel] = i;
 				alevel ++;
-				UpdateValue(dbg,lbs,tmp);
+				p = UpdateValue(dbg,p,tmp);
 				alevel --;
 			}
 		}
@@ -590,11 +487,11 @@ UpdateValue(
 			tmp = ValueRecordItem(val,i);
 			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
 				if		(  fComm  ) {
-                    LBS_EmitChar(lbs,',');
+					p += sprintf(p,",");
 				}
 				fComm = TRUE;
 				rname[level-1] = ValueRecordName(val,i);
-				UpdateValue(dbg,lbs,tmp);
+				p = UpdateValue(dbg,p,tmp);
 			}
 		}
 		level --;
@@ -602,11 +499,12 @@ UpdateValue(
 	  default:
 		break;
 	}
+	return	(p);
 }
 
-static	void
+static	char	*
 InsertNames(
-	LargeByteString	*lbs,
+	char		*p,
 	ValueStruct	*val)
 {
 	int		i;
@@ -624,11 +522,9 @@ InsertNames(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_TEXT:
-	  case	GL_TYPE_BINARY:
 	  case	GL_TYPE_OBJECT:
 	  case	GL_TYPE_ARRAY:
-        LBS_EmitString(lbs,ItemName());
-        LBS_EmitString(lbs,PutDim());
+		p += sprintf(p,"%s%s",ItemName(),PutDim());
 		break;
 	  case	GL_TYPE_RECORD:
 		level ++;
@@ -637,11 +533,11 @@ InsertNames(
 			tmp = ValueRecordItem(val,i);
 			if		(  ( tmp->attr & GL_ATTR_VIRTUAL )  !=  GL_ATTR_VIRTUAL  ) {
 				if		(  fComm  ) {
-                    LBS_EmitChar(lbs,',');
+					p += sprintf(p,",");
 				}
 				fComm = TRUE;
 				rname[level-1] = ValueRecordName(val,i);
-				InsertNames(lbs,tmp);
+				p = InsertNames(p,tmp);
 			}
 		}
 		level --;
@@ -649,21 +545,22 @@ InsertNames(
 	  default:
 		break;
 	}
+	return	(p);
 }
 
-static	void
+static	char	*
 InsertValues(
 	DBG_Struct	*dbg,
-	LargeByteString		*lbs,
+	char		*p,
 	ValueStruct	*val)
 {
 	int		i;
 	ValueStruct	*tmp;
 	Bool	fComm;
 
-	if		(  val  ==  NULL  )	return;
+	if		(  val  ==  NULL  )	return	(p);
 	if		(  IS_VALUE_NIL(val)  ) {
-        LBS_EmitString(lbs, "null");
+		p += sprintf(p,"null");
 	} else
 	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
@@ -675,28 +572,27 @@ InsertValues(
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_OBJECT:
 	  case	GL_TYPE_TEXT:
-	  case	GL_TYPE_BINARY:
-		ValueToSQL(dbg,lbs,val);
+		p += sprintf(p,"%s",ValueToSQL(dbg,val));
 		break;
 	  case	GL_TYPE_ARRAY:
-        LBS_EmitString(lbs, "'{");
+		p += sprintf(p,"'{");
 		fInArray = TRUE;
 		fComm = FALSE;
 		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
 			tmp = ValueArrayItem(val,i);
 			if		(  !IS_VALUE_VIRTUAL(tmp)  )	{
 				if		(  fComm  ) {
-                    LBS_EmitChar(lbs,',');
+					p += sprintf(p,",");
 				}
 				fComm = TRUE;
 				Dim[alevel] = i;
 				alevel ++;
-				InsertValues(dbg,lbs,tmp);
+				p = InsertValues(dbg,p,tmp);
 				alevel --;
 			}
 		}
 		fInArray = FALSE;
-        LBS_EmitString(lbs,"}' ");
+		p += sprintf(p,"}' ");
 		break;
 	  case	GL_TYPE_RECORD:
 		level ++;
@@ -705,11 +601,11 @@ InsertValues(
 			tmp = ValueRecordItem(val,i);
 			if		(  !IS_VALUE_VIRTUAL(tmp)  )	{
 				if		(  fComm  ) {
-                    LBS_EmitString(lbs,", ");
+					p += sprintf(p,", ");
 				}
 				fComm = TRUE;
 				rname[level-1] = ValueRecordName(val,i);
-				InsertValues(dbg,lbs,tmp);
+				p = InsertValues(dbg,p,tmp);
 			}
 		}
 		level --;
@@ -717,6 +613,7 @@ InsertValues(
 	  default:
 		break;
 	}
+	return	(p);
 }
 
 static	void
@@ -738,11 +635,12 @@ _PQexec(
 
 dbgmsg(">_PQexec");
 #ifdef	TRACE
-	printf("%s;\n",sql);fflush(stdout);
+	printf("%s[%s;]\n",dbg->name,sql);fflush(stdout);
 #endif
 	res = PQexec(PGCONN(dbg),sql);
 	if		(  fRed  ) {
 		PutDB_Redirect(dbg,sql);
+		PutDB_Redirect(dbg,";");
 	}
 dbgmsg("<_PQexec");
 	return	(res);
@@ -783,10 +681,6 @@ dbgmsg(">GetValue");
 		  case	GL_TYPE_TEXT:
 			SetValueString(val,(char *)PQgetvalue(res,tnum,fnum),dbg->coding);
 			break;
-          case	GL_TYPE_BINARY:
-            SetValueBinary(val, PQgetvalue(res,tnum,fnum),
-                           PQgetlength(res,tnum,fnum));
-            break;
 		  case	GL_TYPE_NUMBER:
 			nv = NumericInput((char *)PQgetvalue(res,tnum,fnum),
 							  ValueFixedLength(val),ValueFixedSlen(val));
@@ -815,7 +709,8 @@ ExecPGSQL(
 	LargeByteString	*src,
 	ValueStruct		*args)
 {
-    LargeByteString *sql;
+	char	sql[SIZE_SQL+1]
+	,		*p;
 	int		c;
 	ValueStruct	*val;
 	PGresult	*res;
@@ -830,7 +725,7 @@ ExecPGSQL(
 
 dbgmsg(">ExecPGSQL");
 	dbg =  rec->opt.db->dbg;
-	sql = NewLBS();
+	p = sql;
 	if	(  src  ==  NULL )	{
 		printf("function \"%s\" is not found.\n",ctrl->func);
 		exit(1);
@@ -841,7 +736,7 @@ dbgmsg(">ExecPGSQL");
 	fIntoAster = FALSE;
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
 		if		(  c  !=  SQL_OP_ESC  ) {
-            LBS_EmitChar(sql,c);
+			p += sprintf(p,"%c",c);
 		} else {
 			c = LBS_FetchByte(src);
 			switch	(c) {
@@ -866,14 +761,14 @@ dbgmsg(">ExecPGSQL");
 				break;
 			  case	SQL_OP_REF:
 				val = (ValueStruct *)LBS_FetchPointer(src);
-				InsertValues(dbg,sql,val);
+				p = InsertValues(dbg,p,val);
 				break;
 			  case	SQL_OP_VCHAR:
 				break;
 			  case	SQL_OP_EOL:
-                LBS_EmitEnd(sql);
-				res = _PQexec(dbg,LBS_Body(sql),TRUE);
-                RewindLBS(sql);
+				*p = 0;
+				res = _PQexec(dbg,sql,TRUE);
+				p = sql;
 				if		(	(  res ==  NULL  )
 						||	(  ( status = PQresultStatus(res) )
 							           ==  PGRES_BAD_RESPONSE    )
@@ -946,21 +841,21 @@ dbgmsg(">ExecPGSQL");
 		dbgmsg("exception free");
 		xfree(tuple);
 	}
-    FreeLBS(sql);
 dbgmsg("<ExecPGSQL");
 }
 
 static	int
 _EXEC(
 	DBG_Struct	*dbg,
-	char		*sql)
+	char		*sql,
+	Bool		fRed)
 {
 	PGresult	*res;
 	ExecStatusType	status;
 	int			rc
 	,			n;
 
-	res = _PQexec(dbg,sql,TRUE);
+	res = _PQexec(dbg,sql,fRed);
 	if		(	(  res ==  NULL  )
 			||	(  ( status = PQresultStatus(res) )
 				   ==  PGRES_BAD_RESPONSE    )
@@ -1025,21 +920,14 @@ dbgmsg(">_DBOPEN");
 	user =  ( DB_User != NULL ) ? DB_User : dbg->user;
 	dbname = ( DB_Name != NULL ) ? DB_Name : dbg->dbname;
 	pass = ( DB_Pass != NULL ) ? DB_Pass : dbg->pass;
-#ifdef	DEBUG
-	printf("host   = [%s]\n",host);
-	printf("port   = [%s]\n",port);
-	printf("dbname = [%s]\n",dbname);
-	printf("user   = [%s]\n",user);
-	printf("pass   = [%s]\n",pass);
-#endif
 	conn = PQsetdbLogin(host,port,NULL,NULL,dbname,user,pass);
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
 		fprintf(stderr,"Connection to database \"%s\" failed.\n",dbname);
 		fprintf(stderr,"%s.\n",PQerrorMessage(conn));
 		exit(1);
 	}
-	dbg->conn = (void *)conn;
 	OpenDB_RedirectPort(dbg);
+	dbg->conn = (void *)conn;
 	dbg->fConnect = TRUE;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
@@ -1201,7 +1089,10 @@ _DBUPDATE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	LargeByteString	*sql;
+	char	sql[SIZE_SQL+1]
+	,		*p;
+	char	name[SIZE_NAME+1]
+	,		*q;
 	DB_Struct	*db;
 	char	***item
 	,		**pk;
@@ -1220,38 +1111,32 @@ dbgmsg(">_DBUPDATE");
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
-            sql = NewLBS();
-            LBS_EmitString(sql,"UPDATE ");
-            LBS_EmitString(sql,rec->name);
-            LBS_EmitString(sql,"\tSET ");
+			p = sql;
+			p += sprintf(p,"UPDATE %s\tSET ",rec->name);
 			level = 0;
 			alevel = 0;
 			fInArray = FALSE;
-			UpdateValue(dbg,sql,args);
+			p = UpdateValue(dbg,p,args);
 
-			LBS_EmitString(sql,"WHERE\t");
+			p += sprintf(p,"WHERE\t");
 			item = db->pkey->item;
 			while	(  *item  !=  NULL  ) {
-                LBS_EmitString(sql,rec->name);
-                LBS_EmitChar(sql,'.');
 				pk = *item;
+				q = name;
 				while	(  *pk  !=  NULL  ) {
-                    LBS_EmitString(sql,*pk);
+					q += sprintf(q,"%s",*pk);
 					pk ++;
 					if		(  *pk  !=  NULL  ) {
-                        LBS_EmitChar(sql,'_');
+						q += sprintf(q,"_");
 					}
 				}
-                LBS_EmitString(sql," = ");
-                KeyValue(dbg,sql,args,*item);
-                LBS_EmitChar(sql,' ');
+				p += sprintf(p,"%s.%s = %s ",rec->name,name,KeyValue(dbg,args,*item));
 				item ++;
 				if		(  *item  !=  NULL  ) {
-                    LBS_EmitString(sql,"and\t");
+					p += sprintf(p,"and\t");
 				}
 			}
-            LBS_EmitEnd(sql);
-			res = _PQexec(dbg,LBS_Body(sql),TRUE);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 						||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");
@@ -1261,7 +1146,6 @@ dbgmsg(">_DBUPDATE");
 				ctrl->rc = MCP_OK;
 			}
 			_PQclear(res);
-            FreeLBS(sql);
 		}
 	}
 dbgmsg("<_DBUPDATE");
@@ -1274,7 +1158,10 @@ _DBDELETE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-    LargeByteString	*sql;
+	char	sql[SIZE_SQL+1]
+	,		*p;
+	char	name[SIZE_NAME+1]
+	,		*q;
 	DB_Struct	*db;
 	char	***item
 	,		**pk;
@@ -1293,32 +1180,28 @@ dbgmsg(">_DBDELETE");
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
-            sql = NewLBS();
-			LBS_EmitString(sql,"delete\tfrom\t");
-            LBS_EmitString(sql,rec->name);
-            LBS_EmitString(sql," where\t");
+			p = sql;
+			p += sprintf(p,"delete\tfrom\t%s ",rec->name);
+			p += sprintf(p,"where\t");
 			item = db->pkey->item;
 			while	(  *item  !=  NULL  ) {
 				pk = *item;
-                LBS_EmitString(sql,rec->name);
-                LBS_EmitChar(sql,'.');
+				q = name;
 				while	(  *pk  !=  NULL  ) {
-                    LBS_EmitString(sql,*pk);
+					q += sprintf(q,"%s",*pk);
 					pk ++;
 					if		(  *pk  !=  NULL  ) {
-                        LBS_EmitChar(sql,' ');
+						q += sprintf(q,"_");
 					}
 				}
-                LBS_EmitString(sql," = ");
-                KeyValue(dbg,sql,args,*item);
-                LBS_EmitChar(sql,' ');
+				p += sprintf(p,"%s.%s = %s ",rec->name,name,
+							 KeyValue(dbg,args,*item));
 				item ++;
 				if		(  *item  !=  NULL  ) {
-                    LBS_EmitString(sql,"and\t");
+					p += sprintf(p,"and\t");
 				}
 			}
-            LBS_EmitEnd(sql);
-			res = _PQexec(dbg,LBS_Body(sql),TRUE);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");
@@ -1328,7 +1211,6 @@ dbgmsg(">_DBDELETE");
 				ctrl->rc = MCP_OK;
 			}
 			_PQclear(res);
-            FreeLBS(sql);
 		}
 	}
 dbgmsg("<_DBDELETE");
@@ -1341,7 +1223,8 @@ _DBINSERT(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-    LargeByteString	*sql;
+	char	sql[SIZE_SQL+1]
+	,		*p;
 	DB_Struct	*db;
 	PGresult	*res;
 	PathStruct	*path;
@@ -1358,20 +1241,18 @@ dbgmsg(">_DBINSERT");
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
-            sql = NewLBS();
-			LBS_EmitString(sql,"INSERT\tINTO\t");
-			LBS_EmitString(sql,rec->name);
-			LBS_EmitString(sql," (");
+			p = sql;
+			p += sprintf(p,"INSERT\tINTO\t%s (",rec->name);
 
 			level = 0;
 			alevel = 0;
-			InsertNames(sql,args);
-			LBS_EmitString(sql,") VALUES\t(");
+			p = InsertNames(p,args);
+			p += sprintf(p,") ");
+			p += sprintf(p,"VALUES\t(");
 			fInArray = FALSE;
-			InsertValues(dbg,sql,args);
-			LBS_EmitString(sql,") ");
-            LBS_EmitEnd(sql);
-			res = _PQexec(dbg,LBS_Body(sql),TRUE);
+			p = InsertValues(dbg,p,args);
+			p += sprintf(p,") ");
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");
@@ -1381,7 +1262,6 @@ dbgmsg(">_DBINSERT");
 				ctrl->rc = MCP_OK;
 			}
 			_PQclear(res);
-            FreeLBS(sql);
 		}
 	}
 dbgmsg("<_DBINSERT");

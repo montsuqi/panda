@@ -160,8 +160,8 @@ typedef	void	(*DB_FUNC2)(DBG_Struct *, DBCOMM_CTRL *);
 static	int
 ExecFunction(
 	DBG_Struct	*dbg,
-	char		*gname,
-	char		*name)
+	char		*name,
+	Bool		fAll)
 {
 	DBCOMM_CTRL	ctrl;
 	DB_FUNC2	func;
@@ -169,7 +169,6 @@ ExecFunction(
 
 dbgmsg(">ExecFunction");
 #ifdef	DEBUG
-	printf("group = [%s]\n",gname);
 	printf("func  = [%s]\n",name);
 	if		(  dbg  !=  NULL  ) {
 		printf("name  = [%s]\n",dbg->name);
@@ -178,16 +177,18 @@ dbgmsg(">ExecFunction");
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl.rc += ExecFunction(dbg,dbg->name,name);
+			ctrl.rc += ExecFunction(dbg,name,fAll);
 		}
-	} else
-	if		(  dbg->dbt  !=  NULL  ) { 
-		if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
-				   !=  NULL  ) {
-			(*func)(dbg,&ctrl);
-		} else {
-			printf("function not found [%s]\n",name);
-			ctrl.rc = MCP_BAD_FUNC;
+	} else {
+		if		(	(  fAll  )
+				||	(  dbg->dbt  !=  NULL  ) ) { 
+			if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
+					   !=  NULL  ) {
+				(*func)(dbg,&ctrl);
+			} else {
+				printf("function not found [%s]\n",name);
+				ctrl.rc = MCP_BAD_FUNC;
+			}
 		}
 	}
 dbgmsg("<ExecFunction");
@@ -199,7 +200,17 @@ ExecDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
 {
-	dbg->func->primitive->exec(dbg,sql);
+	dbg->func->primitive->exec(dbg,sql,TRUE);
+}
+
+extern	void
+ExecRedirectDBOP(
+	DBG_Struct	*dbg,
+	char		*sql)
+{
+	char	*p;
+
+	dbg->func->primitive->exec(dbg,sql,FALSE);
 }
 
 extern	void
@@ -220,7 +231,7 @@ dbgmsg(">ExecDB_Process");
 		ctrl->rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl->rc += ExecFunction(dbg,dbg->name,ctrl->func);
+			ctrl->rc += ExecFunction(dbg,ctrl->func,FALSE);
 		}
 	} else {
 		dbg = rec->opt.db->dbg;
@@ -242,7 +253,7 @@ ExecDBG_Operation(
 	DBG_Struct	*dbg,
 	char		*name)
 {
-	ExecFunction(dbg,NULL,name);
+	ExecFunction(dbg,name,FALSE);
 }
 
 extern	void
@@ -269,8 +280,32 @@ OpenDB(
 }
 
 extern	void
+OpenRedirectDB(
+	DBG_Struct *dbg)
+{
+	ExecFunction(dbg,"DBOPEN",TRUE);
+}
+
+extern	void
+TransactionRedirectStart(
+	DBG_Struct *dbg)
+{
+	NewPool("Transaction");
+	ExecFunction(dbg,"DBSTART",TRUE);
+}
+
+extern	void
+TransactionRedirectEnd(
+	DBG_Struct *dbg)
+{
+	ExecFunction(dbg,"DBCOMMIT",TRUE);
+	ReleasePoolByName("Transaction");
+}
+
+extern	void
 CloseDB(
 	DBG_Struct *dbg)
 {
 	ExecDBG_Operation(dbg,"DBDISCONNECT");
 }
+
