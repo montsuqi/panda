@@ -1,0 +1,8 @@
+*.lo
+.deps
+.libs
+MCPSUB.la
+Makefile
+aps
+dbredirector
+dbstub
