@@ -55,6 +55,8 @@ GLOBAL	char		*RecordDir;
 #undef	GLOBAL
 extern	void	HT_SendString(char *str);
 extern	Bool	HT_RecvString(size_t size, char *str);
+extern	ValueStruct	*HT_GetValue(char *name, Bool fClear);
+extern	char	*HT_GetValueString(char *name, Bool fClear);
 extern	char	*ConvLocal(char *istr);
 extern	char	*ConvUTF8(char *istr);
 extern	void	StoreValue(GHashTable *hash, char *name, char *value);

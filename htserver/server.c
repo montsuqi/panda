@@ -243,9 +243,12 @@ WriteClient(
 	WindowData	*win;
 	ValueStruct	*value;
 	char	*p;
+    LargeByteString	*lbs;
+	size_t	size;
 
 dbgmsg(">WriteClient");
 	SendWindowName(fp,scr);
+    lbs = NewLBS();
 	do {
 		if		(  !RecvStringDelim(fp,SIZE_BUFF,buff)  )	break;
 		if		(  ( p = strchr(buff,' ') )  !=  NULL  ) {
@@ -253,25 +256,31 @@ dbgmsg(">WriteClient");
 		}
 		if		(  *buff  !=  0  ) {
 			DecodeName(&wname,&vname,buff);
+            LBS_ReserveSize(lbs, 0, FALSE);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
                 if (value == NULL) {
                     fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
                 }
+                else if (ValueType(value) == GL_TYPE_ARRAY ||
+                         ValueType(value) == GL_TYPE_RECORD) {
+                    fprintf(stderr, "can't send array or record: %s.%s\n",
+                            wname, vname);
+                }
                 else {
-                    //str =  ValueToString(value,"utf8");
-                    str =  ValueToString(value,NULL);
-dbgprintf("send [%s][%s]\n",vname,str);
-                    SendStringDelim(fp,str);
+                    size = NativeSizeValue(NULL, value);
+                    LBS_ReserveSize(lbs, size, FALSE);
+                    NativePackValue(NULL, LBS_Body(lbs), value);
                     if		(	(  p  !=  NULL            )
                                 &&	(  !stricmp(p+1,"clear")  ) ) {
                         InitializeValue(value);
                     }
                 }
             }
-			SendStringDelim(fp,"\n");
+            SendLBS(fp, lbs);
 		}
 	}	while	(  *buff  !=  0  );
+    FreeLBS(lbs);
 dbgmsg("<WriteClient");
 }
 
@@ -280,37 +289,38 @@ RecvScreenData(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
-    char *line;
-    int line_len;
+    char buff[SIZE_BUFF + 1];
 	char *vname, *wname;
 	char *p;
 	WindowData	*win;
 	ValueStruct	*value;
+    LargeByteString *lbs;
 
-    while ((line_len = RecvLineWithURLDecode(fp, &line)) > 0) {
-		if ((p = strchr(line,':'))  !=  NULL) {
-			*p = '\0';
-			DecodeName(&wname, &vname, line);
-			p++;
-			while (isspace(*p)) p ++;
-			if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
-				value = GetItemLongName(win->rec->value, vname);
-				ValueIsUpdate(value);
-                if (ValueType(value) == GL_TYPE_BINARY) {
-                    SetValueBinary(value, p, line_len - (p - line));
-                }
-                else {
-                    SetValueString(value, p, "utf8");
-                }
+    lbs = NewLBS();
+    while (RecvStringDelim(fp, SIZE_BUFF, buff) && *buff != '\0') {
+        DecodeName(&wname, &vname, buff);
+        RecvLBS(fp, lbs);
+        if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
+            value = GetItemLongName(win->rec->value, vname);
+            ValueIsUpdate(value);
+            switch (ValueType(value)) {
+            case GL_TYPE_BYTE:
+            case GL_TYPE_BINARY:
+                SetValueBinary(value, LBS_Body(lbs), LBS_Size(lbs));
+                break;
+            default:
+                LBS_EmitChar(lbs, '\0');
+                SetValueString(value, LBS_Body(lbs), "utf8");
+                break;
+            }
 #ifdef	DEBUG
-				printf("--\n");
-				DumpValueStruct(value);
-				printf("--\n");
+            printf("--\n");
+            DumpValueStruct(value);
+            printf("--\n");
 #endif
-			}
-		}
-        xfree(line);
-	}
+        }
+    }
+    FreeLBS(lbs);
 }
 
 static int

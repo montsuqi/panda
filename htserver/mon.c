@@ -59,6 +59,7 @@ copies.
 static	NETFILE	*fpServ;
 static	char	*ServerPort;
 static	char	*Command;
+static	LargeByteString	*lbs;
 
 //char		*RecordDir;	/*	dummy	*/
 static	ARG_TABLE	option[] = {
@@ -379,37 +380,32 @@ static void
 PutFile(char *file_field)
 {
     char *filename_field, *ctype_field;
-    char *file, *filename, *ctype;
+    char *filename, *ctype;
+    ValueStruct *file;
     char *p;
 
     if ((ctype_field = g_hash_table_lookup(Values, "_contenttype")) != NULL) {
-        ctype = HTGetValue(ctype_field, FALSE);
+        ctype = HT_GetValueString(ctype_field, FALSE);
         printf("Content-Type: %s\r\n", ctype);
     }
     else {
         printf("Content-Type: application/octet-stream\r\n");
     }
     if ((filename_field = g_hash_table_lookup(Values, "_filename")) != NULL) {
-        filename = HTGetValue(filename_field, FALSE);
+        filename = HT_GetValueString(filename_field, FALSE);
         printf("Content-Disposition: attachment; filename=%s\r\n", filename);
     }
 	printf("Cache-Control: no-cache\r\n");
 	printf("\r\n");
-    file = HTGetValue(file_field, TRUE);
-    for	(p = file; *p != '\0'; p++) {
-        if (*p == '%') {
-            p++;
-            if (*p == '%') {
-                putchar('%');
-            }
-            else {
-                putchar(HexToInt(p, 2));
-                p++;
-            }
-        }
-        else {
-            putchar(*p);
-        }
+    file = HT_GetValue(file_field, TRUE);
+    switch (ValueType(file)) {
+    case GL_TYPE_BYTE:
+    case GL_TYPE_BINARY:
+        fwrite(ValueByte(file), 1, ValueByteLength(file), stdout);
+        break;
+    default:
+        fputs(ValueToString(file, Codeset), stdout);
+        break;
     }
     fDump = FALSE;
 }
@@ -517,20 +513,60 @@ HT_RecvString(
 	return	(rc);
 }
 
+extern ValueStruct *
+HT_GetValue(char *name, Bool fClear)
+{
+	char	buff[SIZE_BUFF+1];
+	PacketDataType	type;
+    ValueStruct *value;
+
+    sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
+    HT_SendString(buff);
+    RecvLBS(fpServ, lbs);
+    if (LBS_Size(lbs) == 0)
+        return NULL;
+    type = *(PacketDataType *) LBS_Body(lbs);
+    value = NewValue(type);
+    InitializeValue(value);
+    NativeUnPackValue(NULL, LBS_Body(lbs), value);
+	return value;
+}
+
+extern char	*
+HT_GetValueString(char *name, Bool fClear)
+{
+	char	*value;
+    ValueStruct *val;
+    char	*s;
+
+	if (*name == '\0') {
+		return "";
+	}
+    else if ((value = g_hash_table_lookup(Values, name))  ==  NULL) {
+        val = HT_GetValue(name, fClear);
+        if (val == NULL)
+            return "";
+        value = StrDup(ValueToString(val, NULL));
+        g_hash_table_insert(Values, StrDup(name), value);
+        return value;
+	}
+}
+
 static	void
 SendValueDelim(
 	char		*name,
 	byte		*value)
 {
-	char	buff[SIZE_BUFF * 3];
+    char	*s;
+    size_t len;
 
 	HT_SendString(name);
-	HT_SendString(": ");
-	EncodeStringURL(buff,ConvUTF8(value));
-	HT_SendString(buff);
 	HT_SendString("\n");
-	dbgprintf("send value = [%s: %s]\n",name,buff);
-
+    s = ConvUTF8(value);
+    len = strlen(s);
+	SendLength(fpServ, len);
+    Send(fpServ, s, len);
+	dbgprintf("send value = [%s: %s]\n",name,value);
 }
 
 static void
@@ -565,33 +601,17 @@ SendFile(char *name, MultipartFile *file, HTCInfo *htc)
     char buff[SIZE_BUFF * 3 + 1];
     char *p, *pend;
     int len = 0;
+    int x = 0;
 
     filename = (char *) g_hash_table_lookup(htc->FileSelection, name);
     if (filename != NULL) {
         HT_SendString(name);
-        HT_SendString(": ");
-        p = file->value;
-        pend = p + file->length;
-        while (p < pend) {
-            if (pend - p > SIZE_BUFF) {
-                len = SIZE_BUFF;
-            }
-            else {
-                len = pend - p;
-            }
-            URLEncodeBinary(buff, p, len);
-            HT_SendString(buff);
-            p += len;
-        }
         HT_SendString("\n");
+        SendLength(fpServ, file->length);
+        Send(fpServ, file->value, file->length);
         dbgprintf("send value = [%s]\n", name);
 
-        HT_SendString(filename);
-        HT_SendString(": ");
-        EncodeStringURL(buff,ConvUTF8(file->filename));
-        HT_SendString(buff);
-        HT_SendString("\n");
-        dbgprintf("send value = [%s: %s]\n", filename, buff);
+        SendValueDelim(filename, file->filename);
     }
 }
 
@@ -812,6 +832,7 @@ main(
 	HTCParserInit(getenv("SCRIPT_NAME"));
 	Values = NewNameHash();
     Files = NewNameHash();
+    lbs = NewLBS();
 	GetArgs();
 DumpV();
 	Session();

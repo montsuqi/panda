@@ -314,27 +314,6 @@ ParseName(
 	return	(buff);
 }
 
-char	*
-HTGetValue(
-	char		*name,
-	Bool		fClear)
-{
-	char	buff[SIZE_BUFF+1];
-	char	*value;
-
-	if		(  *name  ==  0  ) {
-		value = "";
-	} else
-	if		(  ( value = g_hash_table_lookup(Values,name) )  ==  NULL  ) {
-		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
-		HT_SendString(buff);
-		HT_RecvString(SIZE_BUFF,buff);
-		value = StrDup(buff);
-		g_hash_table_insert(Values,StrDup(name),value);
-	}
-	return	(value);
-}
-
 static void
 EmitWithEscape(LargeByteString *lbs, char *str)
 {
@@ -391,7 +370,7 @@ dbgmsg(">ExecCode");
 			  case	OPC_REF:
 				dbgmsg("OPC_REF");
 				name = LBS_FetchPointer(htc->code);
-				value = HTGetValue(name,FALSE);
+				value = HT_GetValueString(name,FALSE);
                 EmitWithEscape(html,value);
 				break;
 			  case	OPC_VAR:
@@ -415,37 +394,37 @@ dbgmsg(">ExecCode");
 			  case	OPC_HSNAME:
 				dbgmsg("OPC_HSNAME");
 				vval = Pop;
-				vval.str = HTGetValue(vval.str,FALSE);
+				vval.str = HT_GetValueString(vval.str,FALSE);
 				Push(vval);
 				break;
 			  case	OPC_EHSNAME:
 				dbgmsg("OPC_EHSNAME");
 				vval = Pop;
-				value = HTGetValue(vval.str,FALSE);
+				value = HT_GetValueString(vval.str,FALSE);
 				EmitWithEscape(html,value);
 				break;
 			  case	OPC_HINAME:
 				dbgmsg("OPC_HINAME");
 				vval = Pop;
-				vval.ival = atoi(HTGetValue(vval.str,FALSE));
+				vval.ival = atoi(HT_GetValueString(vval.str,FALSE));
 				Push(vval);
 				break;
 			  case	OPC_HBNAME:
 				dbgmsg("OPC_HBNAME");
-				value = HTGetValue(TOP(1).str,FALSE);
+				value = HT_GetValueString(TOP(1).str,FALSE);
 				TOP(1).ival = (stricmp(value,"TRUE") == 0);
 				break;
 			  case	OPC_HIVAR:
 				dbgmsg("OPC_HIVAR");
 				name = LBS_FetchPointer(htc->code);
                 str = ParseName(name);
-                vval.ival = atoi(HTGetValue(StrDup(str),FALSE));
+                vval.ival = atoi(HT_GetValueString(StrDup(str),FALSE));
 				Push(vval);
 				break;
 			  case	OPC_HBES:
 				dbgmsg("OPC_HBES");
 				vval = Pop;
-				value = HTGetValue(vval.str,TRUE);
+				value = HT_GetValueString(vval.str,TRUE);
 				str = LBS_FetchPointer(htc->code);
 				if		(  stricmp(value,"TRUE")  ==  0 ) {
 					EmitWithEscape(html,str);
