@@ -2,9 +2,5 @@
 .libs
 Makefile
 Makefile.in
-checkdir
-copygen
-dbgen
-monitor
-user
-msgd
+fdd
+fdw
