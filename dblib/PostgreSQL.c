@@ -35,6 +35,7 @@ copies.
 #include	<numeric.h>
 
 #include	<libpq-fe.h>
+#include	<libpq/libpq-fs.h>
 
 #include	"const.h"
 #include	"types.h"
@@ -51,13 +52,15 @@ static	int		alevel;
 static	int		Dim[SIZE_RNAME];
 static	Bool	fInArray;
 
+#define	PGCONN(dbg)		((PGconn *)(dbg)->conn)
+
+/*	This code depends on sizeof(Oid).	*/
 static	void
 SetValueOid(
 	ValueStruct	*value,
 	DBG_Struct	*dbg,
 	Oid			id)
 {
-	/*	This code depends on sizeof(Oid).	*/
 	ValueObjectID(value).el[0] = (unsigned int)id;
 	if		(  dbg  !=  NULL  ) {
 		ValueObjectSource(value) = dbg->id;
@@ -66,13 +69,14 @@ SetValueOid(
 
 static	Oid
 ValueOid(
-	ValueStruct	*value)
+	MonObjectType	*obj)
 {
 	Oid	id;
 
-	memcpy(&id,&ValueObjectID(value),sizeof(Oid));
+	id = obj->id.el[0];
 	return	(id);
 }
+/**/
 
 static	size_t
 EncodeString(
@@ -128,9 +132,7 @@ ValueToSQL(
 		*p = 0;
 		break;
 	  case	GL_TYPE_DBCODE:
-		p = buff;
-		p += EncodeString(p,'\'',ValueToString(val,dbg->coding));
-		*p = 0;
+		sprintf(buff,"%s",ValueToString(val,dbg->coding));
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(&ValueFixed(val));
@@ -147,7 +149,7 @@ ValueToSQL(
 		sprintf(buff,"'%s'",ValueToBool(val) ? "t" : "f");
 		break;
 	  case	GL_TYPE_OBJECT:
-		id = ValueOid(val);
+		id = ValueOid(ValueObject(val));
 		sprintf(buff,"%u",id);
 		break;
 	  default:
@@ -635,7 +637,7 @@ dbgmsg(">_PQexec");
 #ifdef	TRACE
 	printf("%s;\n",sql);fflush(stdout);
 #endif
-	res = PQexec((PGconn *)dbg->conn,sql);
+	res = PQexec(PGCONN(dbg),sql);
 	if		(  fRed  ) {
 		PutDB_Redirect(dbg,sql);
 	}
@@ -938,7 +940,7 @@ _DBDISCONNECT(
 {
 dbgmsg(">_DBDISCONNECT");
 	if		(  dbg->fConnect  ) { 
-		PQfinish((PGconn *)dbg->conn);
+		PQfinish(PGCONN(dbg));
 		CloseDB_RedirectPort(dbg);
 		dbg->fConnect = FALSE;
 		if		(  ctrl  !=  NULL  ) {
@@ -1303,7 +1305,27 @@ dbgmsg("<_DBACCESS");
 	return	(rc);
 }
 
-DB_OPS	PostgresOperations[] = {
+static	int
+OpenBLOB(
+	DBG_Struct		*dbg,
+	MonObjectType	*obj,
+	int				mode)
+{
+	int		pgmode;
+	int		res;
+
+	pgmode = 0;
+	if		(  ( mode & BLOB_OPEN_READ )  !=  0  ) {
+		pgmode |= INV_READ;
+	}
+	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
+		pgmode |= INV_WRITE;
+	}
+	res = lo_open(PGCONN(dbg),ValueOid(obj),pgmode);
+	return	(res);
+}
+
+DB_OPS	Operations[] = {
 	/*	DB operations		*/
 	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
 	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
@@ -1322,7 +1344,7 @@ DB_OPS	PostgresOperations[] = {
 DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
-	NULL,
+	OpenBLOB,
 	NULL,
 	NULL,
 	NULL
@@ -1331,6 +1353,5 @@ DB_Primitives	Core = {
 extern	DB_Func	*
 InitPostgreSQL(void)
 {
-	return	(EnterDB_Function("PostgreSQL",PostgresOperations,&Core,"/*","*/\t"));
+	return	(EnterDB_Function("PostgreSQL",Operations,&Core,"/*","*/\t"));
 }
-

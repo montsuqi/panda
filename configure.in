@@ -414,5 +414,6 @@ AC_OUTPUT([
 	tools/Makefile
 	wfc/Makefile
 	monpls_demo/Makefile
+	fdd/Makefile
 	panda-config
 ], [chmod +x panda-config])

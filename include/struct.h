@@ -110,13 +110,16 @@ typedef	struct _DBG_Struct	{
 
 typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 
+#define	BLOB_OPEN_READ		0x01
+#define	BLOB_OPEN_WRITE		0x02
+
 typedef struct	{
-	void	(*exec)(DBG_Struct *, char *);
+	int		(*exec)(DBG_Struct *, char *);
 	Bool	(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
-	int		(*lo_open)(DBG_Struct *, MonObjectType *, int);
-	int		(*lo_close)(DBG_Struct *, int);
-	int		(*lo_read)(DBG_Struct *, int, byte *, size_t);
-	int		(*lo_write)(DBG_Struct *, int, byte *, size_t);
+	int		(*OpenBLOB)(DBG_Struct *, MonObjectType *, int);
+	int		(*CloseBLOB)(DBG_Struct *, int);
+	int		(*ReadBLOB)(DBG_Struct *, int, byte *, size_t);
+	int		(*WriteBLOB)(DBG_Struct *, int, byte *, size_t);
 }	DB_Primitives;
 
 typedef	struct _DB_Func	{

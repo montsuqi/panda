@@ -1,3 +1,12 @@
+2004-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c (ValueToSQL): クオートの誤りを直した
+
+2004-01-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/socket.c : Socket -> IP_Socket(IP以外のsocketを扱う関数を追
+	加するため). UNIXドメインの処理の追加
+
 2003-12-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* include/struct.h: DB_Func等の構造変更(名前表に登録しない関数を増やした)
