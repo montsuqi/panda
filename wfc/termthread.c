@@ -175,9 +175,7 @@ ENTER_FUNC;
 		data->hdr->puttype = TO_CHAR(SCREEN_NULL);
 		data->w.n = 0;
 	} else {
-		snprintf(msg,SIZE_LONGNAME,
-				 "[%s] session fail LD [%s] not found.",data->hdr->term,buff);
-		MessageLog(msg);
+		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
 	  badio:
 		SendPacketClass(fp,WFC_NOT);
 		FinishSession(data);

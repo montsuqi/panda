@@ -157,8 +157,7 @@ ENTER_FUNC;
         if (ret == -1) {
             if (errno == EINTR)
                 continue;
-            perror("select");
-            exit(1);
+            Error("select: ", strerror(errno));
         }
 		if		(  FD_ISSET(_fhTerm,&ready)  ) {		/*	term connect	*/
 			ConnectTerm(_fhTerm);
@@ -231,6 +230,7 @@ static	void
 StopSystem(void)
 {
 	fShutdown = TRUE;
+	Message("receive stop signal");
 }
 
 static	ARG_TABLE	option[] = {
@@ -295,7 +295,9 @@ ENTER_FUNC;
 	GetOption(option,argc,argv);
 
 	InitSystem();
+	Message("wfc server start");
 	ExecuteServer();
+	Message("wfc server end");
 	CleanUp();
 	rc = 0;
 LEAVE_FUNC;

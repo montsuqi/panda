@@ -77,8 +77,7 @@ InitSystem(
 dbgmsg(">InitSystem");
 	InitData(BD_Name);
 	if		(  ( ThisBD = GetBD(BD_Name) )  ==  NULL  ) {
-		fprintf(stderr,"BD file not found.\n");
-		exit(1);
+		Error("BD file not found.");
 	}
 	ThisLD = NULL;
 	ThisDBD = NULL;
@@ -87,8 +86,7 @@ dbgmsg(">InitSystem");
 	DB_Table = ThisBD->DB_Table;
 	TextSize = ThisBD->textsize;
 	if		(  ( Bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
-		fprintf(stderr,"%s application is not in BD.\n",name);
-		exit(1);
+		Error("%s application is not in BD.",name);
 	}
 	if		(  ThisBD->cDB  >  0  ) {
 		InitDB_Process(NULL);
@@ -199,12 +197,10 @@ main(
 
 	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(  BD_Name  ==  NULL  ) {
-		fprintf(stderr,"BD名が指定されていません\n");
-		exit(1);
+		Error("BD name is not specified.");
 	}
 	if		( fl == NULL ) {
-		fprintf(stderr,"モジュール名が指定されていません\n");
-		exit(1);
+		Error("module name is not specified.");
 	}
 	InitSystem(fl->name);
 	rc = ExecuteSubProcess(fl->name);
