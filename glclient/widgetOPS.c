@@ -31,10 +31,11 @@ copies.
 
 #include	<stdio.h>
 #include	<stdlib.h>
-#include    <sys/types.h>
+#include	<sys/types.h>
 #include	<sys/stat.h>
-#include    <unistd.h>
+#include	<unistd.h>
 #include	<sys/time.h>
+#include	<errno.h>
 #ifdef USE_GNOME
 #    include <gnome.h>
 #else
@@ -309,8 +310,8 @@ SendPS(
 	GtkWidget	*widget,
 	NETFILE	*fp)
 {
-dbgmsg(">SendPS");
-dbgmsg("<SendPS");
+ENTER_FUNC;
+LEAVE_FUNC;
 	return	(TRUE);
 }
 #endif
@@ -378,6 +379,63 @@ ENTER_FUNC;
 			RecvBinaryData(fp, binary);
 			LoadPixmap(widget, binary); 
 			FreeLBS(binary);
+		}
+	}
+LEAVE_FUNC;
+	return	(TRUE);
+}
+
+static Bool
+SaveFile(
+	char *name,
+    LargeByteString *binary)
+{
+    FILE *file;
+
+ENTER_FUNC;
+	
+	if	((file = fopen(name,"wb")) != NULL) {
+		fchmod(fileno(file), 0600);
+		fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
+		fclose(file);
+	} else {
+		Warning("can not open file %s for writing - %s", 
+			   name, strerror(errno));
+	}
+LEAVE_FUNC;
+	return (TRUE);
+}
+
+static	Bool
+RecvFileEntry(
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+	char	name[SIZE_BUFF]
+	,		*longname
+	,		*filename;
+	int		nitem
+	,		i;
+	GtkWidget	*subWidget;
+    LargeByteString *binary;
+
+ENTER_FUNC;
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp,name);
+			if		(  !stricmp(name,"objectdata")  ) {
+				binary = NewLBS();
+				RecvBinaryData(fp, binary);
+				filename = (char *)gnome_file_entry_get_full_path(GNOME_FILE_ENTRY(widget), FALSE);
+				if ( (LBS_Size(binary) > 0) && (filename)) {
+					SaveFile(filename, binary); 
+					FreeLBS(binary);
+				}
+			} else {
+				subWidget = gnome_file_entry_gtk_entry(GNOME_FILE_ENTRY(widget));
+				RecvEntry(subWidget,fp);
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -798,16 +856,16 @@ dbgmsg(">RecvPandaCombo");
 			gtkpanda_combo_set_popdown_strings(combo,list);
 			FreeStringList(list);
 			gtk_signal_handler_unblock (GTK_OBJECT (combo->list), combo->list_change_id);
+		} else {
+			sprintf(longname,".%s",name);
+			if		(  ( subWidget = glade_xml_get_widget_by_long_name(ThisXML,WidgetName) )
+					   !=  NULL  ) {
+				RecvEntry(subWidget,fp);
 			} else {
-				sprintf(longname,".%s",name);
-				if		(  ( subWidget = glade_xml_get_widget_by_long_name(ThisXML,WidgetName) )
-						   !=  NULL  ) {
-					RecvEntry(subWidget,fp);
-				} else {
-					printf("sub widget not found\n");
-					/*	fatal error	*/
-				}
+				printf("sub widget not found\n");
+				/*	fatal error	*/
 			}
+		}
 	}
 dbgmsg("<RecvPandaCombo");
 	return	(TRUE);
@@ -1638,5 +1696,6 @@ InitWidgetOperations(void)
 	AddClass(GTK_TYPE_OPTION_MENU,RecvOption,SendOption);
 #ifdef USE_GNOME
 	AddClass(GNOME_TYPE_PIXMAP,RecvPixmap,NULL);
+	AddClass(GNOME_TYPE_FILE_ENTRY,RecvFileEntry,NULL);
 #endif
 }

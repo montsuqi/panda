@@ -1,3 +1,7 @@
+2005-02-14  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/widgetOPS.c (RecvFileEntry): GnomeFileEntry support.
+
 2005-02-08  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/widgetOPS.c (RecvPixmap): GnomePixmap support.
