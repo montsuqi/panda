@@ -746,9 +746,9 @@ GL_SendVersionString(
 	size_t	size;
 
 #ifdef	NETWORK_ORDER
-	version = "symbolic:expand:no";
+	version = "version:expand:no";
 #else
-	version = "symbolic:expand";
+	version = "version:expand";
 #endif
 	size = strlen(version);
 	SendChar(fp,(size&0xFF));

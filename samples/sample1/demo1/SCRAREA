@@ -29,6 +29,9 @@
                       07  WN1-CLIST1-LABEL3-VALUE     PIC X(10).
                     06  WN1-CLIST1-COUNT    PIC S9(9)   BINARY.
                     06  WN1-CLIST1-FROM     PIC S9(9)   BINARY.
+                    06  WN1-CLIST1-ROW      PIC S9(9)   BINARY.
+                    06  WN1-CLIST1-COLUMN   PIC S9(9)   BINARY.
+                    06  WN1-CLIST1-ROWATTR  PIC S9(9)   BINARY.
                     06  WN1-CLIST1-ITEM     OCCURS  20.
                       07  WN1-CLIST1-VALUE1   PIC X(20).
                       07  WN1-CLIST1-VALUE2   PIC X(20).

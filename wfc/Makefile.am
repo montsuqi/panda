@@ -25,6 +25,7 @@ wfc_LDADD 		=						\
 
 wfc_SOURCES	=							\
 	wfc.c								\
+	blob.c			blob.h				\
 	mqthread.c		mqthread.h			\
 	corethread.c	corethread.h		\
 	termthread.c	termthread.h
