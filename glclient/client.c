@@ -55,6 +55,7 @@ copies.
 #include	<gtkpanda/gtkpanda.h>
 #endif
 #define		MAIN
+#include    "intl.h"
 #include	"const.h"
 #include	"types.h"
 #include	"option.h"
@@ -285,6 +286,13 @@ main(
 
 	argc = 1;
 	argv[1] = NULL;
+
+	gtk_set_locale();
+#ifdef ENABLE_NLS
+    bindtextdomain(PACKAGE, PACKAGE_LOCALE_DIR);
+    textdomain(PACKAGE);
+#endif
+
 	InitSystem();
 #ifdef USE_GNOME
 	gnome_init("glclient", VERSION, argc, argv);
@@ -293,7 +301,6 @@ main(
 #endif
 	glade_gnome_init();
 #else
-	gtk_set_locale();
 	gtk_init(&argc, &argv);
 #ifdef	USE_PANDA
 	gtkpanda_init(&argc,&argv);

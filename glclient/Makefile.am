@@ -26,7 +26,8 @@ INCLUDES =					\
 	$(FIXED_CFLAGS)				\
 	$(MONDAI_CFLAGS)			\
 	$(GTK_PANDA_CFLAGS)			\
-	$(GTK_CFLAGS)
+	$(GTK_CFLAGS)				\
+        -DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
 glclient_LDADD =				\
 	-lm					\

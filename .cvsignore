@@ -11,3 +11,5 @@ ltmain.sh
 panda-config
 autom4te.cache
 stamp-h1
+intl
+ABOUT-NLS

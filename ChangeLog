@@ -1,3 +1,13 @@
+2004-07-15  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* glclient起動ダイアログのgettextize
+
+2004-07-15  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (ACLOCAL_AMFLAGS): New variable.
+	(EXTRA_DIST): New variable.
+	* configure.in (AC_OUTPUT): Add po/Makefile.in,
+
 2004-07-15  Kouji TAKAO  <kouji@netlab.jp>
 
 	* glclient/bootdialog.c: サーバプリセット移動機能を追加
