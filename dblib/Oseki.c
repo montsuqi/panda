@@ -299,7 +299,6 @@ ENTER_FUNC;
 		p = LBS_Body(OsekiBuff(ses));
 		for	( i = 0 ; i < items ; i ++ ) {
 			p += NativeUnPackValue(NULL,p,tuple[i]);
-DumpValueStruct(tuple[i]);
 		}
 	}
 LEAVE_FUNC;
