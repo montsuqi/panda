@@ -31,12 +31,15 @@ copies.
 #define	PORT_HTSERV		8011
 #define	PORT_PGSERV		8012
 #define	PORT_DBSERV		8013
-#define	PORT_APS_BASE	9100
+
 #define	PORT_WFC		9000
 #define	PORT_WFC_APS	9001
+#define	PORT_APS_BASE	9100
 #define	PORT_POSTGRES	5432
 #define	PORT_REDIRECT	8010
+
 #define	PORT_MSGD		8514
+#define	PORT_FDD		8515
 
 #define	SIZE_PASS		3+8+22
 #define	SIZE_OTHER		128
