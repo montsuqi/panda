@@ -12,7 +12,7 @@ class	PG_Server
 	  @s = TCPSocket.new(@host,@port);
 	  @s.printf("Start: %s %s %s %s\n",VER,user,pass,prog);
 	  msg = @s.gets.chomp;
-	  if  (  msg  ==  /^Error: (.*?)/  )
+	  if  (  msg  =~  /^Error\: (.*?)$/  )
 		printf("error: %s\n",$1);
 		@s.close
 	  else
@@ -28,7 +28,7 @@ class	PG_Server
 	  @values.each{ | name, value | @s.printf("%s: %s\n",name,value) };
 	  @s.printf("\n");
 	  msg = @s.gets.chomp;
-	  if  (  msg  ==  /^Event: (.*?)/  )
+	  if  (  msg  =~  /^Event\: (.*?)$/  )
 		if  (  $1  !=  "OK"  )
 		  printf("error: %s\n",$1);
 		  @s.close
