@@ -414,20 +414,18 @@ aryval_aref(VALUE self, VALUE index)
     value_struct_data *data;
     int i = NUM2INT(index);
     VALUE obj;
+    ValueStruct *val;
 
     Data_Get_Struct(self, value_struct_data, data);
-    if (i >= 0 && i < ValueArraySize(data->value)) {
-        if (i < RARRAY(data->cache)->len &&
-            !NIL_P(RARRAY(data->cache)->ptr[i]))
-            return RARRAY(data->cache)->ptr[i];
-        
-        obj = get_value(ValueArrayItem(data->value, i));
-        rb_ary_store(data->cache, i, obj);
-        return obj;
-	}
-    else {
-		return Qnil;
-	}
+    if (i >= 0 && i < RARRAY(data->cache)->len &&
+        !NIL_P(RARRAY(data->cache)->ptr[i]))
+        return RARRAY(data->cache)->ptr[i];
+    val = GetArrayItem(data->value, i);
+    if (val == NULL)
+        return Qnil;
+    obj = get_value(val);
+    rb_ary_store(data->cache, i, obj);
+    return obj;
 }
 
 static VALUE
@@ -435,14 +433,13 @@ aryval_aset(VALUE self, VALUE index, VALUE obj)
 {
     value_struct_data *data;
     int i = NUM2INT(index);
+    ValueStruct *val;
 
     Data_Get_Struct(self, value_struct_data, data);
-    if (i >= 0 && i < ValueArraySize(data->value)) {
-        set_value(ValueArrayItem(data->value, i), obj);
-	}
-    else {
+    val = GetArrayItem(data->value, i);
+    if (val == NULL)
 		rb_raise(rb_eIndexError, "index out of range: %d", i);
-	}
+    set_value(val, obj);
     return obj;
 }
 
