@@ -1,3 +1,9 @@
+panda (1:1.0.7p5-0+0.orca.1) unstable; urgency=low
+
+  * (NumericToFixed): Temporary fix to avoid seg fault.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  5 Dec 2002 22:19:21 +0900
+
 panda (1:1.0.7p4-0+0.orca.1) unstable; urgency=low
 
   * datalib/value.c (NumericToFixed): Refix memory leak.
