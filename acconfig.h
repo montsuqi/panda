@@ -142,6 +142,8 @@
 /* Version number of package */
 #undef VERSION
 
+/* Confdir of package */
+#undef CONFDIR
 
 #ifdef DEBUG
 #  define debug(stmnt) stmnt

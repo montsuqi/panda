@@ -76,11 +76,21 @@ SetDefault(void)
 	PandaPort = "localhost:9000";			/*	PORT_WFC	*/
 }
 
+static	void
+StopProcess(
+	int		ec)
+{
+dbgmsg(">StopProcess");
+dbgmsg("<StopProcess");
+	exit(ec);
+}
 extern	int
 main(
 	int		argc,
 	char	**argv)
 {
+	(void)signal(SIGPIPE,(void *)StopProcess);
+
 	SetDefault();
 	(void)GetOption(option,argc,argv);
 

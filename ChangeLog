@@ -1,5 +1,13 @@
 2002-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* dblib/Shell.c (OnChildExit): aps_main.cより移動
+
+2002-09-28  Tomohiro 'Tomo-p' KATO <tomop@teamgedoh.net>
+
+	* aps/aps_main.c (OnChildExit): shellハンドラのzonbee対策
+
+2002-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+	
 	* Doc/glclient.tex: 間違い修正
 
 2002-09-24  Masami Ogoshi  <ogochan@nurs.or.jp>

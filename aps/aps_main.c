@@ -216,6 +216,7 @@ dbgmsg(">StopProcess");
 dbgmsg("<StopProcess");
 	exit(ec);
 }
+
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
 		"ポート番号"	 								},

@@ -28,6 +28,7 @@ copies.
 #  include <config.h>
 #endif
 #include	<sys/types.h>
+#include	<sys/wait.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
@@ -310,10 +311,22 @@ DB_OPS	Shell_Operations[] = {
 	{	NULL,			NULL }
 };
 
+static	void
+OnChildExit(
+	int		ec)
+{
+dbgmsg(">OnChildExit");
+	while( waitpid(-1, NULL, WNOHANG) > 0 );
+	(void)signal(SIGCHLD, (void *)OnChildExit);
+dbgmsg("<OnChildExit");
+}
+
 extern	void
 InitShellOperation(void)
 {
 dbgmsg(">InitShellOperation");
+	(void)signal(SIGCHLD, (void *)OnChildExit);
+
 	EnterDB_Function("shell",Shell_Operations,"# ","\n");
 dbgmsg("<InitShellOperation");
 }
