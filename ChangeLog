@@ -1,3 +1,8 @@
+2005-03-23  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/client.c: SSLの項目が空の時に値を渡さないように修正。
+	  -verifypeer オプションの廃止
+
 2005-03-17  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/message.c: syslog対応追加
