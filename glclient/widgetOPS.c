@@ -520,7 +520,6 @@ dbgmsg(">RecvPandaCombo");
 	nitem = RecvInt(fp);
 	count = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		printf("%s\n", name);
 		RecvString(fp,name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
@@ -1128,6 +1127,68 @@ dbgmsg("<RecvNotebook");
 	return	(TRUE);
 }
 
+static	Bool
+SendProgressBar(
+	char		*name,
+	GtkWidget	*progress,
+	FILE		*fp)
+{
+	char	iname[SIZE_BUFF];
+	ValueAttribute	*v;
+	int		value;
+
+dbgmsg(">SendProgress");
+	v = GetValue(name);
+	value = gtk_progress_get_value(GTK_PROGRESS(progress));
+
+	SendPacketClass(fp,GL_ScreenData);
+	sprintf(iname,"%s.%s",name,v->vname);
+#ifdef	TRACE
+	printf("iname = [%s] value = %d\n",iname,value);
+#endif
+	SendString(fp,iname);
+	SendIntegerData(fp,v->type,value);
+dbgmsg("<SendProgress");
+	return	(TRUE);
+}
+
+static	Bool
+RecvProgressBar(
+	GtkWidget	*widget,
+	FILE		*fp)
+{
+	char	name[SIZE_NAME+1]
+	,		buff[SIZE_BUFF];
+	int		nitem
+	,		i;
+	int		value;
+	int		state;
+	char	*longname;
+
+dbgmsg(">RecvProgress");
+	DataType = RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	nitem = RecvInt(fp);
+	longname = WidgetName + strlen(WidgetName);
+	for	( i = 0 ; i < nitem ; i ++ ) {
+		RecvString(fp,name);
+		if		(  !stricmp(name,"state")  ) {
+			RecvIntegerData(fp,&state);
+			SetState(widget,(GtkStateType)state);
+		} else
+		if		(  !stricmp(name,"style")  ) {
+			RecvStringData(fp,buff);
+			gtk_widget_set_style(widget,GetStyle(buff));
+		} else
+		if		(  !stricmp(name,"value")  ) {
+			RecvIntegerData(fp,&value);
+			RegistValue(name,NULL);
+			gtk_progress_set_value(GTK_PROGRESS(widget),value);
+		}
+	}
+dbgmsg("<RecvProgress");
+	return	(TRUE);
+}
+
 extern	void
 InitWidgetOperations(void)
 {
@@ -1159,4 +1220,5 @@ InitWidgetOperations(void)
 	AddClass(GTK_TYPE_LIST,RecvList,SendList);
 	AddClass(GTK_TYPE_CALENDAR,RecvCalendar,SendCalendar);
 	AddClass(GTK_TYPE_NOTEBOOK,RecvNotebook,SendNotebook);
+	AddClass(GTK_TYPE_PROGRESS_BAR,RecvProgressBar,SendProgressBar);
 }
