@@ -53,13 +53,17 @@ copies.
 //#define	OB_NUMBER	1000
 #define	OB_NUMBER	20
 
+#define	TEST_PACK
+#define	TEST_LINER
+#define	TEST_TREE
+
 //#define	TEST_INIT
 //#define	TEST_CREAT
 //#define	TEST_DESTROY1
-#define	TEST_READWRITE1
+//#define	TEST_READWRITE1
 //#define	TEST_SEEK1
 //#define	TEST_SEEK2
-//#define	TEST_SEEK3
+#define	TEST_SEEK3
 //#define	TEST_READWRITE2
 //#define	TEST_DESTROY2
 //#define	TEST_TRANSACTION
@@ -115,12 +119,15 @@ main(
 #endif
 #ifdef	TEST_READWRITE1
 	printf("* test read/write(1) **\n");
+#ifdef	TEST_PACK
 	printf("** write(1) **\n");
-	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE);
+	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_PACK);
 	for	( i = 0 ; i < 512 ; i ++ ) {
-		for	( j = 0 ; j < 64 ; j ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
 			buff[j] = (j+i)%64+32;
 		}
+		buff[j] = 0;
 		WriteBLOB(state,lo[0],buff,64);
 	}
 	CloseBLOB(state,lo[0]);
@@ -137,21 +144,16 @@ main(
 	printf("rc = %d\n",i);
 	CloseBLOB(state,lo[0]);
 	printf("** read(1) end **\n");
-#if	1
+#endif
+#ifdef	TEST_LINER
 	printf("** write(2) **\n");
 	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
 	for	( i = 0 ; i < 512 ; i ++ ) {
-#if	1
 		sprintf(buff,"add %d",i);
 		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
 			buff[j] = (j+i)%64+32;
 		}
 		buff[j] = 0;
-#else
-		for	( j = 0 ; j < 64 ; j ++ ) {
-			buff[j] = (j+i)%64+32;
-		}
-#endif
 		WriteBLOB(state,lo[1],buff,64);
 	}
 	CloseBLOB(state,lo[1]);
@@ -169,21 +171,15 @@ main(
 	CloseBLOB(state,lo[1]);
 	printf("** read(2) end **\n");
 #endif
-#if	1
+#ifdef	TEST_TREE
 	printf("** write(3) **\n");
 	lo[2] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_TREE);
 	for	( i = 0 ; i < 512 ; i ++ ) {
-#if	1
 		sprintf(buff,"add %d",i);
 		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
 			buff[j] = (j+i)%64+32;
 		}
 		buff[j] = 0;
-#else
-		for	( j = 0 ; j < 64 ; j ++ ) {
-			buff[j] = (j+i)%64+32;
-		}
-#endif
 		WriteBLOB(state,lo[2],buff,64);
 	}
 	CloseBLOB(state,lo[2]);
@@ -201,26 +197,49 @@ main(
 	CloseBLOB(state,lo[2]);
 	printf("** read(3) end **\n");
 #endif
-
 #endif
+
 #ifdef	TEST_SEEK1
 	printf("* test seek **\n");
 	printf("** write(1) **\n");
+#ifdef	TEST_PACK
 	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE);
-	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
-	lo[2] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_TREE);
 	for	( i = 0 ; i < 512 ; i ++ ) {
-		for	( j = 0 ; j < 64 ; j ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
 			buff[j] = (j+i)%64+32;
 		}
+		buff[j] = 0;
 		WriteBLOB(state,lo[0],buff,64);
-		WriteBLOB(state,lo[1],buff,64);
-		WriteBLOB(state,lo[2],buff,64);
 	}
 	CloseBLOB(state,lo[0]);
+#endif
+#ifdef	TEST_LINER
+	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
+	for	( i = 0 ; i < 512 ; i ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+			buff[j] = (j+i)%64+32;
+		}
+		buff[j] = 0;
+		WriteBLOB(state,lo[1],buff,64);
+	}
 	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
+	lo[2] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_TREE);
+	for	( i = 0 ; i < 512 ; i ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+			buff[j] = (j+i)%64+32;
+		}
+		buff[j] = 0;
+		WriteBLOB(state,lo[2],buff,64);
+	}
 	CloseBLOB(state,lo[2]);
+#endif
 	printf("** write(1) end **\n");
+#ifdef	TEST_PACK
 	printf("** read(1) **\n");
 	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
 	do {
@@ -229,67 +248,114 @@ main(
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[0]);
-	printf("** read(1) end **\n");
+#endif
+#ifdef	TEST_LINER
 	printf("** read(2) **\n");
-	printf("** all read(2) **\n");
-	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
 	OpenBLOB(state,lo[1],BLOB_OPEN_READ);
-	OpenBLOB(state,lo[2],BLOB_OPEN_READ);
 	do {
 		size = ReadBLOB(state,lo[1],buff,64);
 		buff[size] = 0;
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
-	printf("** all read(2) end **\n");
+	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
+	printf("** read(3) **\n");
+	OpenBLOB(state,lo[2],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[2],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[2]);
+#endif
+	printf("** all read end **\n");
+
 	printf("** seek 64*4 **\n");
+#ifdef	TEST_PACK
+	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
 	SeekObject(state,lo[0],64*4);
 	size = ReadBLOB(state,lo[0],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
-
+#endif
+#ifdef	TEST_LINER
+	OpenBLOB(state,lo[1],BLOB_OPEN_READ);
 	SeekObject(state,lo[1],64*4);
 	size = ReadBLOB(state,lo[1],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
-
+#endif
+#ifdef	TEST_TREE
+	OpenBLOB(state,lo[2],BLOB_OPEN_READ);
 	SeekObject(state,lo[2],64*4);
-	size = ReadBLOB(state,lo[1],buff,64);
+	size = ReadBLOB(state,lo[2],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
+#endif
 
 	printf("** seek 64*128 **\n");
+#ifdef	TEST_PACK
 	SeekObject(state,lo[0],64*128);
 	size = ReadBLOB(state,lo[0],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
-
+#endif
+#ifdef	TEST_LINER
 	SeekObject(state,lo[1],64*128);
 	size = ReadBLOB(state,lo[1],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
-
+#endif
+#ifdef	TEST_TREE
 	SeekObject(state,lo[2],64*128);
+	size = ReadBLOB(state,lo[2],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+#endif
+
+	printf("** seek 32*5 **\n");
+#ifdef	TEST_PACK
+	SeekObject(state,lo[0],32*5);
+	size = ReadBLOB(state,lo[0],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+#endif
+#ifdef	TEST_LINER
+	SeekObject(state,lo[1],32*5);
 	size = ReadBLOB(state,lo[1],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
+#endif
+#ifdef	TEST_TREE
+	SeekObject(state,lo[2],32*5);
+	size = ReadBLOB(state,lo[2],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+#endif
 
 	printf("** seek 64*256 **\n");
+#ifdef	TEST_PACK
 	SeekObject(state,lo[0],64*256);
 	size = ReadBLOB(state,lo[0],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
-
+#endif
+#ifdef	TEST_LINER
 	SeekObject(state,lo[1],64*256);
 	size = ReadBLOB(state,lo[1],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
-
+#endif
+#ifdef	TEST_TREE
 	SeekObject(state,lo[2],64*256);
-	size = ReadBLOB(state,lo[1],buff,64);
+	size = ReadBLOB(state,lo[2],buff,64);
 	buff[size] = 0;
 	printf("%d = [%s]\n",size,buff);
+#endif
 
 	printf("** seek 64*511 **\n");
+#ifdef	TEST_PACK
 	SeekObject(state,lo[0],64*511);
 	do {
 		size = ReadBLOB(state,lo[0],buff,64);
@@ -297,7 +363,8 @@ main(
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[0]);
-
+#endif
+#ifdef	TEST_LINER
 	SeekObject(state,lo[1],64*511);
 	do {
 		size = ReadBLOB(state,lo[1],buff,64);
@@ -305,7 +372,8 @@ main(
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[1]);
-
+#endif
+#ifdef	TEST_TREE
 	SeekObject(state,lo[2],64*511);
 	do {
 		size = ReadBLOB(state,lo[2],buff,64);
@@ -315,26 +383,48 @@ main(
 	CloseBLOB(state,lo[2]);
 	printf("** read(2) end **\n");
 #endif
+#endif
 #ifdef	TEST_SEEK2
-	printf("* test seek **\n");
+	printf("* test seek(2) **\n");
 	printf("** write(1) **\n");
+#ifdef	TEST_PACK
 	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE);
-	//lo[0] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
-	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
-	lo[2] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_TREE);
 	for	( i = 0 ; i < 512 ; i ++ ) {
-		for	( j = 0 ; j < 64 ; j ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
 			buff[j] = (j+i)%64+32;
 		}
+		buff[j] = 0;
 		WriteBLOB(state,lo[0],buff,64);
-		WriteBLOB(state,lo[1],buff,64);
-		WriteBLOB(state,lo[2],buff,64);
 	}
 	CloseBLOB(state,lo[0]);
+#endif
+#ifdef	TEST_LINER
+	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
+	for	( i = 0 ; i < 512 ; i ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+			buff[j] = (j+i)%64+32;
+		}
+		buff[j] = 0;
+		WriteBLOB(state,lo[1],buff,64);
+	}
 	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
+	lo[2] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_TREE);
+	for	( i = 0 ; i < 512 ; i ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+			buff[j] = (j+i)%64+32;
+		}
+		buff[j] = 0;
+		WriteBLOB(state,lo[2],buff,64);
+	}
 	CloseBLOB(state,lo[2]);
+#endif
 	printf("** write(1) end **\n");
-
+#ifdef	TEST_PACK
 	printf("** read(1) **\n");
 	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
 	do {
@@ -343,57 +433,364 @@ main(
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[0]);
+#endif
+#ifdef	TEST_LINER
+	printf("** read(2) **\n");
+	OpenBLOB(state,lo[1],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[1],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
+	printf("** read(3) **\n");
+	OpenBLOB(state,lo[2],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[2],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[2]);
+#endif
+	printf("** all read end **\n");
 
 	printf("** write(2) **\n");
-	OpenBLOB(state,lo[0],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
-	OpenBLOB(state,lo[1],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
-	OpenBLOB(state,lo[2],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
 	printf("** seek 64*4**\n");
 	for	( j = 0 ; j < 64 ; j ++ ) {
 		buff[j] = '1';
 	}
+#ifdef	TEST_PACK
+	OpenBLOB(state,lo[0],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
 	SeekObject(state,lo[0],64*4);
 	size = WriteBLOB(state,lo[0],buff,64);
+#endif
+#ifdef	TEST_LINER
+	OpenBLOB(state,lo[1],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
 	SeekObject(state,lo[1],64*4);
 	size = WriteBLOB(state,lo[1],buff,64);
+#endif
+#ifdef	TEST_TREE
+	OpenBLOB(state,lo[2],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
 	SeekObject(state,lo[2],64*4);
 	size = WriteBLOB(state,lo[2],buff,64);
+#endif
 
 	printf("** seek 64*128 **\n");
 	for	( j = 0 ; j < 64 ; j ++ ) {
 		buff[j] = '2';
 	}
+#ifdef	TEST_PACK
 	SeekObject(state,lo[0],64*128);
 	size = WriteBLOB(state,lo[0],buff,64);
+#endif
+#ifdef	TEST_LINER
 	SeekObject(state,lo[1],64*128);
 	size = WriteBLOB(state,lo[1],buff,64);
+#endif
+#ifdef	TEST_TREE
 	SeekObject(state,lo[2],64*128);
 	size = WriteBLOB(state,lo[2],buff,64);
+#endif
 
 	printf("** seek 64*256 **\n");
 	for	( j = 0 ; j < 64 ; j ++ ) {
 		buff[j] = '3';
 	}
+#ifdef	TEST_PACK
 	SeekObject(state,lo[0],64*256);
 	size = WriteBLOB(state,lo[0],buff,64);
+#endif
+#ifdef	TEST_LINER
 	SeekObject(state,lo[1],64*256);
 	size = WriteBLOB(state,lo[1],buff,64);
+#endif
+#ifdef	TEST_TREE
 	SeekObject(state,lo[2],64*256);
 	size = WriteBLOB(state,lo[2],buff,64);
+#endif
 
 	printf("** seek 64*511 **\n");
 	for	( j = 0 ; j < 64 ; j ++ ) {
 		buff[j] = '4';
 	}
+#ifdef	TEST_PACK
 	SeekObject(state,lo[0],64*511);
 	size = WriteBLOB(state,lo[0],buff,64);
+	CloseBLOB(state,lo[0]);
+#endif
+#ifdef	TEST_LINER
 	SeekObject(state,lo[1],64*511);
 	size = WriteBLOB(state,lo[1],buff,64);
+	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
 	SeekObject(state,lo[2],64*511);
 	size = WriteBLOB(state,lo[2],buff,64);
-	CloseBLOB(state,lo[0]);
+	CloseBLOB(state,lo[2]);
+#endif
 	printf("** write(2) end **\n");
 
+#ifdef	TEST_PACK
+	printf("** read(4) **\n");
+	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[0],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[0]);
+#endif
+#ifdef	TEST_LINER
+	printf("** read(5) **\n");
+	OpenBLOB(state,lo[1],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[1],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
+	printf("** read(6) **\n");
+	OpenBLOB(state,lo[2],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[2],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[2]);
+#endif
+#endif
+#ifdef	TEST_SEEK3
+	printf("* test seek **\n");
+	printf("** write(1) **\n");
+#ifdef	TEST_PACK
+	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE);
+	for	( i = 0 ; i < 512 ; i ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+			buff[j] = (j+i)%64+32;
+		}
+		buff[j] = 0;
+		WriteBLOB(state,lo[0],buff,64);
+	}
+	CloseBLOB(state,lo[0]);
+#endif
+#ifdef	TEST_LINER
+	lo[1] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
+	for	( i = 0 ; i < 512 ; i ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+			buff[j] = (j+i)%64+32;
+		}
+		buff[j] = 0;
+		WriteBLOB(state,lo[1],buff,64);
+	}
+	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
+	lo[2] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_TREE);
+	for	( i = 0 ; i < 512 ; i ++ ) {
+		sprintf(buff,"add %d",i);
+		for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+			buff[j] = (j+i)%64+32;
+		}
+		buff[j] = 0;
+		WriteBLOB(state,lo[2],buff,64);
+	}
+	CloseBLOB(state,lo[2]);
+#endif
+	printf("** write(1) end **\n");
+#ifdef	TEST_PACK
+	printf("** read(1) **\n");
+	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[0],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[0]);
+#endif
+#ifdef	TEST_LINER
+	printf("** read(2) **\n");
+	OpenBLOB(state,lo[1],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[1],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
+	printf("** read(3) **\n");
+	OpenBLOB(state,lo[2],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,lo[2],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,lo[2]);
+#endif
+	printf("** all read end **\n");
+
+	printf("** write(2) **\n");
+#ifdef	TEST_PACK
+	OpenBLOB(state,lo[0],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
+	printf("** seek 64*511 **\n");
+	SeekObject(state,lo[0],64*511);
+	size = ReadBLOB(state,lo[0],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '4';
+	}
+	SeekObject(state,lo[0],64*511);
+	size = WriteBLOB(state,lo[0],buff,64);
+#endif
+#ifdef	TEST_LINER
+	OpenBLOB(state,lo[1],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
+	printf("** seek 64*511 **\n");
+	SeekObject(state,lo[1],64*511);
+	size = ReadBLOB(state,lo[1],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '4';
+	}
+	SeekObject(state,lo[1],64*511);
+	size = WriteBLOB(state,lo[1],buff,64);
+#endif
+#ifdef	TEST_TREE
+	OpenBLOB(state,lo[2],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
+	printf("** seek 64*511 **\n");
+	SeekObject(state,lo[2],64*511);
+	size = ReadBLOB(state,lo[2],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '4';
+	}
+	SeekObject(state,lo[2],64*511);
+	size = WriteBLOB(state,lo[2],buff,64);
+#endif
+
+#ifdef	TEST_PACK
+	printf("** seek 64*128 **\n");
+	SeekObject(state,lo[0],64*128);
+	size = ReadBLOB(state,lo[0],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '2';
+	}
+	SeekObject(state,lo[0],64*128);
+	size = WriteBLOB(state,lo[0],buff,64);
+#endif
+#ifdef	TEST_LINER
+	printf("** seek 64*128 **\n");
+	SeekObject(state,lo[1],64*128);
+	size = ReadBLOB(state,lo[1],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '2';
+	}
+	SeekObject(state,lo[1],64*128);
+	size = WriteBLOB(state,lo[1],buff,64);
+#endif
+#ifdef	TEST_TREE
+	printf("** seek 64*128 **\n");
+	SeekObject(state,lo[2],64*128);
+	size = ReadBLOB(state,lo[2],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '2';
+	}
+	SeekObject(state,lo[2],64*128);
+	size = WriteBLOB(state,lo[2],buff,64);
+#endif
+
+#ifdef	TEST_PACK
+	printf("** seek 64*4 **\n");
+	SeekObject(state,lo[0],64*4);
+	size = ReadBLOB(state,lo[0],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '1';
+	}
+	SeekObject(state,lo[0],64*4);
+	size = WriteBLOB(state,lo[0],buff,64);
+#endif
+#ifdef	TEST_LINER
+	printf("** seek 64*4 **\n");
+	SeekObject(state,lo[1],64*4);
+	size = ReadBLOB(state,lo[1],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '1';
+	}
+	SeekObject(state,lo[1],64*4);
+	size = WriteBLOB(state,lo[1],buff,64);
+#endif
+#ifdef	TEST_TREE
+	printf("** seek 64*4 **\n");
+	SeekObject(state,lo[2],64*4);
+	size = ReadBLOB(state,lo[2],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '1';
+	}
+	SeekObject(state,lo[2],64*4);
+	size = WriteBLOB(state,lo[2],buff,64);
+#endif
+
+#ifdef	TEST_PACK
+	printf("** seek 64*256 **\n");
+	SeekObject(state,lo[0],64*256);
+	size = ReadBLOB(state,lo[0],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '3';
+	}
+	SeekObject(state,lo[0],64*256);
+	size = WriteBLOB(state,lo[0],buff,64);
+	CloseBLOB(state,lo[0]);
+#endif
+#ifdef	TEST_LINER
+	printf("** seek 64*256 **\n");
+	SeekObject(state,lo[1],64*256);
+	size = ReadBLOB(state,lo[1],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '3';
+	}
+	SeekObject(state,lo[1],64*256);
+	size = WriteBLOB(state,lo[1],buff,64);
+	CloseBLOB(state,lo[1]);
+#endif
+#ifdef	TEST_TREE
+	printf("** seek 64*256 **\n");
+	SeekObject(state,lo[2],64*256);
+	size = ReadBLOB(state,lo[2],buff,64);
+	buff[size] = 0;
+	printf("%d = [%s]\n",size,buff);
+	for	( j = 0 ; j < 64 ; j ++ ) {
+		buff[j] = '3';
+	}
+	SeekObject(state,lo[2],64*256);
+	size = WriteBLOB(state,lo[2],buff,64);
+	CloseBLOB(state,lo[2]);
+#endif
+	printf("** write(2) end **\n");
+#ifdef	TEST_PACK
 	printf("** read(3) **\n");
 	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
 	do {
@@ -402,8 +799,8 @@ main(
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[0]);
-	printf("** read(3) end **\n");
-
+#endif
+#ifdef	TEST_LINER
 	printf("** read(4) **\n");
 	OpenBLOB(state,lo[1],BLOB_OPEN_READ);
 	do {
@@ -412,8 +809,8 @@ main(
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[1]);
-	printf("** read(4) end **\n");
-
+#endif
+#ifdef	TEST_TREE
 	printf("** read(5) **\n");
 	OpenBLOB(state,lo[2],BLOB_OPEN_READ);
 	do {
@@ -422,90 +819,7 @@ main(
 		printf("%d = [%s]\n",size,buff);
 	}	while	(  size  >  0  );
 	CloseBLOB(state,lo[2]);
-	printf("** read(5) end **\n");
-
 #endif
-#ifdef	TEST_SEEK3
-	printf("* test seek **\n");
-	printf("** write(1) **\n");
-	lo[0] = NewBLOB(state,BLOB_OPEN_WRITE|OSEKI_ALLOC_LINER);
-	for	( i = 0 ; i < 512 ; i ++ ) {
-		for	( j = 0 ; j < 64 ; j ++ ) {
-			buff[j] = (j+i)%64+32;
-		}
-		WriteBLOB(state,lo[0],buff,64);
-	}
-	CloseBLOB(state,lo[0]);
-	printf("** write(1) end **\n");
-	printf("** read(1) **\n");
-	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
-	do {
-		size = ReadBLOB(state,lo[0],buff,64);
-		buff[size] = 0;
-		printf("%d = [%s]\n",size,buff);
-	}	while	(  size  >  0  );
-	CloseBLOB(state,lo[0]);
-
-	printf("** write(2) **\n");
-	OpenBLOB(state,lo[0],BLOB_OPEN_READ|BLOB_OPEN_WRITE);
-
-	printf("** seek 64*511 **\n");
-	SeekObject(state,lo[0],64*511);
-	size = ReadBLOB(state,lo[0],buff,64);
-	buff[size] = 0;
-	printf("%d = [%s]\n",size,buff);
-	for	( j = 0 ; j < 64 ; j ++ ) {
-		buff[j] = '4';
-	}
-	SeekObject(state,lo[0],64*511);
-	size = WriteBLOB(state,lo[0],buff,64);
-
-	printf("** seek 64*128 **\n");
-	SeekObject(state,lo[0],64*128);
-	size = ReadBLOB(state,lo[0],buff,64);
-	buff[size] = 0;
-	printf("%d = [%s]\n",size,buff);
-	for	( j = 0 ; j < 64 ; j ++ ) {
-		buff[j] = '2';
-	}
-	SeekObject(state,lo[0],64*128);
-	size = WriteBLOB(state,lo[0],buff,64);
-
-	printf("** seek 64*4**\n");
-	SeekObject(state,lo[0],64*4);
-	size = ReadBLOB(state,lo[0],buff,64);
-	buff[size] = 0;
-	printf("%d = [%s]\n",size,buff);
-	for	( j = 0 ; j < 64 ; j ++ ) {
-		buff[j] = '1';
-	}
-	SeekObject(state,lo[0],64*4);
-	size = WriteBLOB(state,lo[0],buff,64);
-
-	printf("** seek 64*256 **\n");
-	SeekObject(state,lo[0],64*256);
-	size = ReadBLOB(state,lo[0],buff,64);
-	buff[size] = 0;
-	printf("%d = [%s]\n",size,buff);
-	for	( j = 0 ; j < 64 ; j ++ ) {
-		buff[j] = '3';
-	}
-	SeekObject(state,lo[0],64*256);
-	size = WriteBLOB(state,lo[0],buff,64);
-
-	CloseBLOB(state,lo[0]);
-	printf("** write(2) end **\n");
-
-	printf("** read(3) **\n");
-	OpenBLOB(state,lo[0],BLOB_OPEN_READ);
-	do {
-		size = ReadBLOB(state,lo[0],buff,64);
-		buff[size] = 0;
-		printf("%d = [%s]\n",size,buff);
-	}	while	(  size  >  0  );
-	CloseBLOB(state,lo[0]);
-	printf("** read(3) end **\n");
-
 #endif
 #ifdef	TEST_READWRITE2
 	printf("* test read/write(2) **\n");

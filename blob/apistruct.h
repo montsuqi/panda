@@ -41,7 +41,7 @@ typedef	struct _OsekiSpace	{
 	size_t			pagesize;
 	pageno_t		upages;
 	int				inuse;
-	pageno_t		mul[MAX_PAGE_LEVEL];
+	uint64_t		mul[MAX_PAGE_LEVEL];
 	pageno_t		*freedata;
 	GHashTable		*freepage;
 	GHashTable		*pages;

@@ -138,7 +138,7 @@ td {
         <xsl:call-template name="GtkCombo"/>
       </xsl:when>
       <xsl:when test="class='GtkPandaCombo'">
-        <xsl:call-template name="GtkCombo"/>
+        <xsl:call-template name="GtkPandaCombo"/>
       </xsl:when>
       <xsl:otherwise/>
     </xsl:choose>
@@ -365,6 +365,29 @@ td {
         <xsl:value-of select="$winName"/>
         <xsl:text>.</xsl:text>
         <xsl:value-of select="./widget[class = 'GtkEntry']/name"/>
+        <xsl:text>.value</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="item">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.item</xsl:text>
+      </xsl:attribute>
+    </combo>
+  </xsl:template>
+
+  <xsl:template name="GtkPandaCombo">
+    <combo>
+      <xsl:attribute name="count">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./name"/>
+        <xsl:text>.count</xsl:text>
+      </xsl:attribute>
+      <xsl:attribute name="name">
+        <xsl:value-of select="$winName"/>
+        <xsl:text>.</xsl:text>
+        <xsl:value-of select="./widget[class = 'GtkPandaEntry']/name"/>
         <xsl:text>.value</xsl:text>
       </xsl:attribute>
       <xsl:attribute name="item">

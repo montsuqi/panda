@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -48,19 +48,20 @@ typedef	struct {
 	byte		mode;
 	objpos_t	node;
 	objpos_t	head;
-	objpos_t	last;
+	objpos_t	curr;
 	uint64_t	size;
 	uint64_t	off;
 	byte		*buff;
 	size_t		bsize;
 	size_t		use;
 	int			tid;
+	int			depth;
 	Bool		fDurty;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
 }	ObjectInfo;
 
-static	void	WriteBuffer(OsekiSession *state, ObjectInfo *ent);
+static	void	FlushBuffer(OsekiSession *state, ObjectInfo *ent, Bool fOnly);
 
 #ifdef	DEBUG
 static	void
@@ -68,16 +69,20 @@ _DumpInfo(
 	OsekiSession	*state,
 	ObjectInfo		*ent)
 {
-	printf("ent->obj   = %lld\n",ent->obj);
-	printf("ent->mode  = %02X\n",ent->mode);
-	printf("ent->size  = %lld\n",ent->size);
-	printf("ent->use   = %d\n",ent->use);
-	printf("ent->off   = %lld\n",ent->off);
-	printf("ent->bsize = %d\n",ent->bsize);
-	printf("ent->head  = %lld:%d\n",
+	printf("ent->obj    = %lld\n",ent->obj);
+	printf("ent->mode   = %02X\n",ent->mode);
+	printf("ent->size   = %lld\n",ent->size);
+	printf("ent->use    = %d\n",ent->use);
+	printf("ent->off    = %lld\n",ent->off);
+	printf("ent->bsize  = %d\n",ent->bsize);
+	printf("ent->node   = %lld:%d\n",
+		   OBJ_PAGE(state,ent->node),OBJ_OFF(state,ent->node));
+	printf("ent->head   = %lld:%d\n",
 		   OBJ_PAGE(state,ent->head),OBJ_OFF(state,ent->head));
-	printf("ent->last  = %lld:%d\n",
-		   OBJ_PAGE(state,ent->last),OBJ_OFF(state,ent->last));
+	printf("ent->curr   = %lld:%d\n",
+		   OBJ_PAGE(state,ent->curr),OBJ_OFF(state,ent->curr));
+	printf("ent->fDurty = %s\n",ent->fDurty ? "TRUE" : "FALSE");
+	printf("ent->depth  = %d\n",ent->depth);
 }
 #define	DumpInfo(s,ent)		_DumpInfo((s),(ent))
 
@@ -93,19 +98,9 @@ _DumpEntry(
 		   OBJ_PAGE(state,el->next),OBJ_OFF(state,el->next));
 }
 #define	DumpEntry(s,el)		_DumpEntry((s),(el))
-static	void
-_DumpPage(
-	OsekiSession	*state,
-	byte			*data)
-{
-	int		i;
-	for ( i = 0 ; i < PAGE_SIZE(state) ; i ++ )
-		printf("%c",data[i]);
-	printf("\n");
-}
-#define	DumpPage(s,d)		_DumpPage((s),(byte *)(d))
+#define	DumpPage(s,d)		_DumpPage((s)->space,(byte *)(d))
 #else
-#defien	DumpInfo(s,ent)		/*	*/
+#define	DumpInfo(s,ent)		/*	*/
 #define	DumpEntry(s,el)		/*	*/
 #define	DumpPage(s,d)		/*	*/
 #endif
@@ -292,63 +287,72 @@ FreeEntry(
 	OsekiObjectEntry	*leafnode;
 
 ENTER_FUNC;
-	dbgprintf("ent->flags = %X\n",(int)ent->flags);
-	dbgprintf("ent->mode  = %X\n",(int)ent->mode);
-	dbgprintf("ent->pos   = %lld\n",ent->pos);
-	dbgprintf("ent->size  = %lld\n",ent->size);
 	pos = ent->pos;
-	while	(  pos  !=  0  ) {
-		page = OBJ_PAGE(state,pos);
-		(void)GetPage(state,page);
-		data = UpdatePage(state,page);
-		off = OBJ_OFF(state,pos);
-		shlink = 0;
-		for	( cur = sizeof(OsekiDataPage) ; cur < data->use ;  ) {
-			el = (OsekiDataEntry *)((byte *)data + cur);
-			nsize = ROUND_TO(el->size,sizeof(size_t))
-				+ sizeof(OsekiDataEntry);
-			if		(  cur  ==  off  ) {
-				pos = el->next;
-				memmove((byte *)data + cur,
-					   (byte *)data + cur + nsize,
-						data->use - cur - nsize);
-				data->use -= nsize;
-				memclear((byte *)data+data->use,PAGE_SIZE(state)-data->use);
-				off = 0;
+	switch	(ent->mode & OSEKI_TYPE_MASK) {
+	  case	OSEKI_ALLOC_LINER:
+		dbgmsg("*");
+		break;
+	  case	OSEKI_ALLOC_TREE:
+		dbgmsg("*");
+		break;
+	  case	OSEKI_ALLOC_PACK:
+		dbgmsg("*");
+		while	(  pos  !=  0  ) {
+			page = OBJ_PAGE(state,pos);
+			(void)GetPage(state,page);
+			data = UpdatePage(state,page);
+			off = OBJ_OFF(state,pos);
+			shlink = 0;
+			for	( cur = sizeof(OsekiDataPage) ; cur < data->use ;  ) {
 				el = (OsekiDataEntry *)((byte *)data + cur);
 				nsize = ROUND_TO(el->size,sizeof(size_t))
 					+ sizeof(OsekiDataEntry);
-			}
-			if		(  cur  ==  data->use  )	break;
-			DumpEntry(state,el);
-			if		(  cur  >  off  ) {
-				npos = OBJ_POS(state,page,cur);
-				if		(  !IS_OBJ_NODE(el->prio)  ) {
-					ppage = OBJ_PAGE(state,el->prio);
-					(void)GetPage(state,ppage);
-					wd = UpdatePage(state,ppage);
-					wel = (OsekiDataEntry *)((byte *)wd
-											 + OBJ_OFF(state,el->prio));
-					wel->next = npos;
-				} else {
-					leaf = OBJ_PAGE(state,el->prio);
-					(void)GetPage(state,leaf);
-					leafnode = (OsekiObjectEntry *)UpdatePage(state,leaf);
-					leafnode[OBJ_OFF(state,el->prio)].pos = npos;
+				if		(  cur  ==  off  ) {
+					pos = el->next;
+					memmove((byte *)data + cur,
+							(byte *)data + cur + nsize,
+							data->use - cur - nsize);
+					data->use -= nsize;
+					memclear((byte *)data+data->use,
+							 PAGE_SIZE(state)-data->use);
+					off = 0;
+					el = (OsekiDataEntry *)((byte *)data + cur);
+					nsize = ROUND_TO(el->size,sizeof(size_t))
+						+ sizeof(OsekiDataEntry);
 				}
-				if		(  el->next  >  0  ) {
-					npage = OBJ_PAGE(state,el->next);
-					(void)GetPage(state,npage);
-					wd = UpdatePage(state,npage);
-					wel = (OsekiDataEntry *)((byte *)wd
-											 + OBJ_OFF(state,el->next));
-					wel->prio = npos;
+				if		(  cur  ==  data->use  )	break;
+				DumpEntry(state,el);
+				if		(  cur  >  off  ) {
+					npos = OBJ_POS(state,page,cur);
+					if		(  !IS_OBJ_NODE(el->prio)  ) {
+						ppage = OBJ_PAGE(state,el->prio);
+						(void)GetPage(state,ppage);
+						wd = UpdatePage(state,ppage);
+						wel = (OsekiDataEntry *)((byte *)wd
+												 + OBJ_OFF(state,el->prio));
+						wel->next = npos;
+					} else {
+						leaf = OBJ_PAGE(state,el->prio);
+						(void)GetPage(state,leaf);
+						leafnode = (OsekiObjectEntry *)UpdatePage(state,leaf);
+						leafnode[OBJ_OFF(state,el->prio)].pos = npos;
+					}
+					if		(  el->next  >  0  ) {
+						npage = OBJ_PAGE(state,el->next);
+						(void)GetPage(state,npage);
+						wd = UpdatePage(state,npage);
+						wel = (OsekiDataEntry *)((byte *)wd
+												 + OBJ_OFF(state,el->next));
+						wel->prio = npos;
+					}
 				}
+				cur += nsize;
 			}
-			cur += nsize;
-		}
-		if		(  PAGE_SIZE(state) - data->use  >  sizeof(OsekiDataEntry)  ) {
-			ReturnPage(state,page);
+			if		(  PAGE_SIZE(state) - data->use
+					   >  sizeof(OsekiDataEntry)  ) {
+				ReturnPage(state,page);
+			}
+			break;
 		}
 	}
 LEAVE_FUNC;
@@ -364,6 +368,7 @@ OpenEntry(
 	OsekiObjectEntry	*leafnode;
 	int			off;
 	ObjectInfo	*ent;
+	uint64_t	size;
 
 ENTER_FUNC;
 	Lock(&state->space->obj);
@@ -380,7 +385,6 @@ ENTER_FUNC;
 				leafnode = (OsekiObjectEntry *)UpdatePage(state,leaf);
 			}
 			if		( ( mode & OSEKI_OPEN_CREATE )  !=  0  ) {
-dbgmsg("*");
 				if		(  leafnode[off].pos  >  0  ) {
 					FreeEntry(state,&leafnode[off]);
 				}
@@ -401,30 +405,36 @@ dbgmsg("*");
 			} else {
 				mode = ( mode & OSEKI_MODE_MASK ) | leafnode[off].type;
 			}
-			if		(	(  ( mode & OSEKI_TYPE_MASK   ) ==  OSEKI_ALLOC_PACK  )
-					&&	(  ( mode & OSEKI_OPEN_CREATE )  ==  0  )
-					&&	(  ( mode & OSEKI_OPEN_WRITE  )  !=  0  ) ) {
-dbgmsg("*");
-				ent = NULL;
-			} else {
-dbgmsg("*");
-				ent = New(ObjectInfo);
-				ent->obj = obj;
-				ent->mode = mode;
-				ent->head = leafnode[off].pos;
-				ent->last = ent->head;
-				ent->size = leafnode[off].size;
-				ent->buff = xmalloc(state->space->pagesize);
-				ent->bsize = 0;
-				ent->use = 0;
-				ent->off = 0;
-				ent->fDurty = FALSE;
-				ent->node = OBJ_POS(state,leaf,off);
-				ent->tid = state->tid;
-				InitLock(ent);
-				g_hash_table_insert(state->oTable,&ent->obj,ent);
-				DumpInfo(state,ent);
+			ent = New(ObjectInfo);
+			ent->obj = obj;
+			ent->mode = mode;
+			ent->head = leafnode[off].pos;
+			ent->curr = ent->head;
+			ent->size = leafnode[off].size;
+			ent->buff = NULL;
+			ent->bsize = 0;
+			ent->use = 0;
+			ent->off = 0;
+			ent->fDurty = FALSE;
+			ent->node = OBJ_POS(state,leaf,off);
+			ent->tid = state->tid;
+			switch	( mode & OSEKI_TYPE_MASK ) {
+			  case	OSEKI_ALLOC_TREE:
+				ent->depth = 0;
+				size = ent->size;
+				size /= PAGE_SIZE(state);
+				while	(  size  >  0  ) {
+					ent->depth ++;
+					size /= NODE_ELEMENTS(state);
+				}
+				break;
+			  default:
+				ent->depth = 0;
+				break;
 			}
+			InitLock(ent);
+			g_hash_table_insert(state->oTable,&ent->obj,ent);
+			DumpInfo(state,ent);
 		} else {
 			ent = NULL;
 		}
@@ -489,8 +499,8 @@ FlushObject(
 	ObjectInfo	*ent)
 {
 	if		(  ( ent->mode & OSEKI_OPEN_WRITE )  !=  0  ) {
-		while	(  ent->use  >  0  ) {
-			WriteBuffer(state,ent);
+		if		(  ent->use  >  0  ) {
+			FlushBuffer(state,ent,TRUE);
 		}
 	}
 }
@@ -520,7 +530,6 @@ ENTER_FUNC;
 		leafnode[off].mode = OSEKI_OPEN_CLOSE >> 4;
 	}
 	g_hash_table_remove(state->oTable,&obj);
-	xfree(ent->buff);
 	xfree(ent);
 LEAVE_FUNC;
 }
@@ -606,71 +615,53 @@ SeekTree(
 	ObjectInfo		*ent,
 	Bool			fWrite)
 {
-	int			depth1
-		,		depth2
+	int			depth2
 		,		depth
 		,		off;
 	uint64_t	size
-		,		m
-		,		mul[MAX_PAGE_LEVEL]
 		,		base;
 	pageno_t	page
 		,		prio;
 	pageno_t	*pages;
 
 ENTER_FUNC;
-	depth1 = 0;
-	size = ent->size;
-	size /= PAGE_SIZE(state);
-	m = 1;
-	while	(  size  >  0  ) {
-		mul[depth1] = m;
-		depth1 ++;
-		size /= NODE_ELEMENTS(state);
-		m *= NODE_ELEMENTS(state);
-	}
 	depth2 = 0;
 	size = ent->off;
 	size /= PAGE_SIZE(state);
-	m = 1;
 	while	(  size  >  0  ) {
-		mul[depth2] = m;
 		depth2 ++;
 		size /= NODE_ELEMENTS(state);
-		m *= NODE_ELEMENTS(state);
 	}
-printf("depth1 = %d\n",depth1);
-printf("depth2 = %d\n",depth2);
 	if		(  fWrite  ) {
-		depth = ( depth2 > depth1 ? depth2 : depth1 );
-		for	( ; depth2 > depth1 ; depth2 -- ) {
+		depth = ( depth2 > ent->depth ? depth2 : ent->depth );
+		for	( ; depth2 > ent->depth ; depth2 -- ) {
 			page = NewPage(state,1);
 			(void)GetPage(state,page);
 			pages = UpdatePage(state,page);
 			memclear(pages,PAGE_SIZE(state));
-			pages[0] = ent->head;
-			ent->head = page;
+			pages[0] = OBJ_PAGE(state,ent->head);
+			ent->head = OBJ_POS(state,page,0);
 		}
-	} else {
-		depth = depth1;
+		ent->depth = depth;
 	}
 	page = OBJ_PAGE(state,ent->head);
-	base = ent->off / NODE_ELEMENTS(state);
+	base = ent->off / PAGE_SIZE(state);
 	prio = 0;
 	off = 0;
-	for	( ; depth > 0 ; depth -- ) {
-dbgmsg("*");
+	for	( depth = ent->depth ; depth > 0 ; depth -- ) {
 		if		(  page  ==  0  ) {
-			if		(  !fWrite  )	break;
-			page = NewPage(state,1);
-			if		(  prio  ==  0  ) {
-				ent->head = OBJ_POS(state,page,0);
-			} else {
-				pages = UpdatePage(state,prio);
-				pages[off] = page;
-			}
+			if		(  fWrite  ) {
+				page = NewPage(state,1);
+				if		(  prio  ==  0  ) {
+					ent->head = OBJ_POS(state,page,0);
+				} else {
+					pages = UpdatePage(state,prio);
+					pages[off] = page;
+				}
+			} else
+				break;
 		}
-		off = base / mul[depth];
+		off = base / state->space->mul[depth-1];
 		pages = GetPage(state,page);
 		prio = page;
 		page = pages[off];
@@ -685,137 +676,87 @@ dbgmsg("*");
 				pages = UpdatePage(state,prio);
 				pages[off] = page;
 			}
-			ent->last = OBJ_POS(state,page,OBJ_OFF(state,ent->off));
+			ent->curr = OBJ_POS(state,page,OBJ_OFF(state,ent->off));
 		} else {
-			ent->last = GL_OBJ_NULL;
+			ent->curr = GL_OBJ_NULL;
 		}
 	} else {
-		ent->last = OBJ_POS(state,page,OBJ_OFF(state,ent->off));
+		ent->curr = OBJ_POS(state,page,OBJ_OFF(state,ent->off));
 	}
 LEAVE_FUNC;
 }
 
 static	void
-WriteBuffer(
+FlushBuffer(
 	OsekiSession	*state,
-	ObjectInfo		*ent)
+	ObjectInfo		*ent,
+	Bool			fOnly)
 {
 	pageno_t		page
-		,			wpage
-		,			pages
-		,			from
-		,			ip;
-	OsekiDataPage	*data
-		,			*fd;
+		,			wpage;
+	OsekiDataPage	*data;
 	OsekiDataEntry	*el
 		,			*wel;
-	objpos_t		pos;
-	size_t			csize
-		,			left;
+	size_t			off;
 
 ENTER_FUNC;
-	switch	(ent->mode & OSEKI_TYPE_MASK) {
-	  case	OSEKI_ALLOC_LINER:
-		wpage = 0;
-		if		(	(  ent->last  >  0  )
-				&&	(  ent->head  >  0  ) ) {
-			if		(  ent->size   <  ( ent->off + ent->use )  ) {
-				pages = OBJ_PAGE(state,ent->size);
-				dbgprintf("pages = %lld\n",pages);
-				page = NewPage(state,pages+1);
-				wpage = page;
-				from = OBJ_PAGE(state,ent->head);
-				for	( ip = 0 ; ip < pages ; ip ++ , from ++ , page ++ ) {
-dbgmsg("*");
-					fd = GetPage(state,from);
-					(void)GetPage(state,page);
-					data = UpdatePage(state,page);
-					memcpy(data,fd,PAGE_SIZE(state));
-DumpPage(state,data);
-					fd = UpdatePage(state,from);
-					memclear(fd,PAGE_SIZE(state));
-					ReturnPage(state,from);
+	if		(	(  ent->buff  ==  NULL  )
+			||	(  ent->curr  ==  0  ) ) {
+	} else
+	if		(  ent->fDurty  ) {
+		switch	(ent->mode & OSEKI_TYPE_MASK) {
+		  case	OSEKI_ALLOC_LINER:
+			dbgmsg("*");
+			break;
+		  case	OSEKI_ALLOC_TREE:
+			dbgmsg("*");
+			break;
+		  case	OSEKI_ALLOC_PACK:
+			dbgmsg("*");
+			page = OBJ_PAGE(state,ent->curr);
+			off = OBJ_OFF(state,ent->curr);
+			data = GetPage(state,page);
+			el = (OsekiDataEntry *)((byte *)data + off);
+			ent->buff = NULL;
+			if		(  el->size  ==  0  ) {
+				el->size = ent->use;
+				data->use += ent->use;
+				if		(  ent->head  ==  0  ) {
+					ent->head = ent->curr;
+				} else {
+					wpage = OBJ_PAGE(state,el->prio);
+					(void)GetPage(state,wpage);
+					data = UpdatePage(state,wpage);
+					wel = (OsekiDataEntry *)
+						((byte *)data + OBJ_OFF(state,el->prio));
+					wel->next = ent->curr;
 				}
-			} else {
-				page = OBJ_PAGE(state,ent->head + ent->off);
+				if		(  ( PAGE_SIZE(state) - data->use )
+						   >  sizeof(OsekiDataEntry)  ) {
+					ReturnPage(state,page);
+				}
 			}
-		} else {
-			page = NewPage(state,1);
-			wpage = page;
+			break;
 		}
-		(void)GetPage(state,page);
-		data = UpdatePage(state,page);
-		DumpInfo(state,ent);
-		memcpy((byte *)data+OBJ_OFF(state,ent->off),ent->buff,ent->use);
-		ent->fDurty = FALSE;
-		if		(  wpage  >  0  ) {
-			ent->head = OBJ_POS(state,wpage,0);
-		}
-		ent->last = ent->head + ent->size;
-		//ent->last = ent->head + ent->off;
-		ent->use = 0;
-		break;
-	  case	OSEKI_ALLOC_TREE:
-dbgmsg("*");
-		SeekTree(state,ent,TRUE);
-		page = OBJ_PAGE(state,ent->last);
-		(void)GetPage(state,page);
-		data = UpdatePage(state,page);
-		DumpInfo(state,ent);
-		memcpy((byte *)data+OBJ_OFF(state,ent->off),ent->buff,ent->use);
-		ent->fDurty = FALSE;
-		ent->use = 0;
-		break;
-	  default:
-		page = GetFreePage(state);
-		(void)GetPage(state,page);
-		data = UpdatePage(state,page);
-		if		(  data->use  ==  0  ) {
-			data->use =  sizeof(OsekiDataPage);
-		}
-		left = state->space->pagesize - ( data->use + sizeof(OsekiDataEntry) );
-		if		(  left  <  ent->use  ) {
-			csize = left;
-		} else {
-			csize = ent->use;
-		}
-		if		(  csize  >  0  ) {
-			dbgprintf("data->use = %d\n",data->use);
-			el = (OsekiDataEntry *)((byte *)data + data->use);
-			pos = OBJ_POS(state,page,data->use);
-			el->size = csize;
-			el->next = 0;
-			if		(  ent->last  !=  ent->head  ) {
-				el->prio = ent->last;
-			} else {
-				el->prio = ent->node;
-				OBJ_POINT_NODE(el->prio);
-			}
-			memcpy((byte *)el + sizeof(OsekiDataEntry),ent->buff,csize);
-			memmove(ent->buff,ent->buff + csize,
-					(PAGE_SIZE(state) - csize));
-			ent->fDurty = FALSE;
-			ent->use -= csize;
-			data->use += ROUND_TO(csize,sizeof(size_t))
-				+ sizeof(OsekiDataEntry);
-			if		(  PAGE_SIZE(state) - data->use 
-					   >  sizeof(OsekiDataEntry)  ) {
-				ReturnPage(state,page);
-			}
-			if		(  ent->head  ==  0  ) {
-				ent->head = pos;
-			} else {
-				wpage = OBJ_PAGE(state,ent->last);
-				(void)GetPage(state,wpage);
-				data = UpdatePage(state,wpage);
-				wel = (OsekiDataEntry *)
-					((byte *)data + OBJ_OFF(state,ent->last));
-				wel->next = pos;
-			}
-			ent->last = pos;
-		}
-		break;
 	}
+	if		(  !fOnly  ) {
+		switch	(ent->mode & OSEKI_TYPE_MASK) {
+		  case	OSEKI_ALLOC_LINER:
+			ent->curr = ent->head + ent->off + ent->use;
+			break;
+		  case	OSEKI_ALLOC_TREE:
+			//ent->off += ent->use;
+			SeekTree(state,ent,TRUE);
+			break;
+		  case	OSEKI_ALLOC_PACK:
+			ent->curr = el->next;
+			break;
+		  default:
+			break;
+		}
+	}
+	ent->fDurty = FALSE;
+	//ent->bsize = 0;
 	DumpInfo(state,ent);
 LEAVE_FUNC;
 }
@@ -823,7 +764,8 @@ LEAVE_FUNC;
 static	void
 ReadBuffer(
 	OsekiSession	*state,
-	ObjectInfo		*ent)
+	ObjectInfo		*ent,
+	Bool			fOnly)
 {
 	pageno_t			page;
 	OsekiDataPage	*data;
@@ -831,31 +773,28 @@ ReadBuffer(
 	size_t			off;
 
 ENTER_FUNC;
-	DumpInfo(state,ent);
-	if		(  ent->last  >  0  ) {
+	if		(  ent->curr  >  0  ) {
 		switch	(ent->mode & OSEKI_TYPE_MASK) {
 		  case	OSEKI_ALLOC_LINER:
 dbgmsg("*");
-			page = OBJ_PAGE(state,ent->last);
+			page = OBJ_PAGE(state,ent->curr);
 			data = GetPage(state,page);
 			if		(  data  !=  NULL  ) {
-dbgmsg("*");
-				memcpy(ent->buff,data,PAGE_SIZE(state));
+				ent->buff = (byte *)data;
 				ent->bsize = PAGE_SIZE(state);
-				ent->last += PAGE_SIZE(state);
 			} else {
-dbgmsg("*");
 				ent->bsize = 0;
 			}
+			ent->use = OBJ_OFF(state,ent->curr);
 			break;
 		  case	OSEKI_ALLOC_TREE:
 dbgmsg("*");
-			SeekTree(state,ent,FALSE);
-			if		(  ent->last  >  0  ) {
-				page = OBJ_PAGE(state,ent->last);
+			SeekTree(state,ent,(ent->mode&OSEKI_OPEN_WRITE) != 0);
+			if		(  ent->curr  >  0  ) {
+				page = OBJ_PAGE(state,ent->curr);
 				data = GetPage(state,page);
 				if		(  data  !=  NULL  ) {
-					memcpy(ent->buff,data,PAGE_SIZE(state));
+					ent->buff = (byte *)data;
 					ent->bsize = PAGE_SIZE(state);
 				} else {
 					ent->bsize = 0;
@@ -863,23 +802,123 @@ dbgmsg("*");
 			} else {
 				ent->bsize = 0;
 			}
+			ent->use = OBJ_OFF(state,ent->curr);
 			break;
 		  case	OSEKI_ALLOC_PACK:
 dbgmsg("*");
-			page = OBJ_PAGE(state,ent->last);
-			off = OBJ_OFF(state,ent->last);
+			page = OBJ_PAGE(state,ent->curr);
+			off = OBJ_OFF(state,ent->curr);
 			data = GetPage(state,page);
 			el = (OsekiDataEntry *)((byte *)data + off);
-			memcpy(ent->buff,(byte *)el + sizeof(OsekiDataEntry),el->size);
+			ent->buff = (byte *)el + sizeof(OsekiDataEntry);
 			ent->bsize = el->size;
 			dbgprintf("el->size = %d\n",el->size);
-			ent->last = el->next;
+			ent->use = 0;
 			break;
 		}
-		ent->use = 0;
+		if		(  !fOnly  ) {
+			switch	(ent->mode & OSEKI_TYPE_MASK) {
+			  case	OSEKI_ALLOC_LINER:
+				ent->curr += PAGE_SIZE(state);
+				break;
+			  case	OSEKI_ALLOC_PACK:
+				ent->curr = el->next;
+				break;
+			  default:
+				break;
+			}
+		}
 	} else {
 		ent->bsize = 0;
 	}
+	DumpInfo(state,ent);
+LEAVE_FUNC;
+}
+
+static	void
+NewBuffer(
+	OsekiSession	*state,
+	ObjectInfo		*ent)
+{
+	pageno_t		page
+		,			pages
+		,			wpage
+		,			from
+		,			ip;
+	OsekiDataPage	*data
+		,			*fd;
+	OsekiDataEntry	*el;
+
+ENTER_FUNC;
+	DumpInfo(state,ent);
+	switch	(ent->mode & OSEKI_TYPE_MASK) {
+	  case	OSEKI_ALLOC_LINER:
+dbgmsg("*");
+		wpage = 0;
+		if		(  ent->head  >  0  ) {
+			if		(  ent->off  <  ent->size  ) {
+				page = OBJ_PAGE(state,ent->head + ent->off);
+			} else {
+				dbgprintf("size  = %lld\n",ent->size);
+				pages = OBJ_PAGE(state,ent->size);
+				dbgprintf("pages = %lld\n",pages);
+				page = NewPage(state,pages+1);
+				wpage = page;
+				from = OBJ_PAGE(state,ent->head);
+				for	( ip = 0 ; ip < pages ; ip ++ , from ++ , page ++ ) {
+					fd = GetPage(state,from);
+					(void)GetPage(state,page);
+					data = UpdatePage(state,page);
+					memcpy(data,fd,PAGE_SIZE(state));
+					fd = UpdatePage(state,from);
+					memclear(fd,PAGE_SIZE(state));
+					ReturnPage(state,from);
+				}
+			}
+		} else {
+			page = NewPage(state,1);
+			wpage = page;
+		}
+		(void)GetPage(state,page);
+		ent->buff = UpdatePage(state,page);
+		DumpInfo(state,ent);
+		if		(  wpage  >  0  ) {
+			ent->head = OBJ_POS(state,wpage,0);
+		}
+		ent->curr = OBJ_POS(state,page,0);
+		ent->bsize = PAGE_SIZE(state);
+		break;
+	  case	OSEKI_ALLOC_TREE:
+dbgmsg("*");
+		SeekTree(state,ent,TRUE);
+		page = OBJ_PAGE(state,ent->curr);
+		(void)GetPage(state,page);
+		ent->buff = UpdatePage(state,page);
+		DumpInfo(state,ent);
+		break;
+	  case	OSEKI_ALLOC_PACK:
+dbgmsg("*");
+		page = GetFreePage(state);
+		(void)GetPage(state,page);
+		data = UpdatePage(state,page);
+		if		(  data->use  ==  0  ) {
+			data->use =  sizeof(OsekiDataPage);
+		}
+		el = (OsekiDataEntry *)((byte *)data + data->use);
+		el->size = 0;
+		el->prio = ent->node;
+		if		(  ent->curr  ==  ent->head  ) {
+			OBJ_POINT_NODE(el->prio);
+		}
+		ent->curr = OBJ_POS(state,page,data->use);
+		ent->node = ent->curr;
+		el->next = 0;
+		ent->buff = (byte *)el + sizeof(OsekiDataEntry);
+		ent->bsize = PAGE_SIZE(state) -
+			( data->use + sizeof(OsekiDataEntry));
+		break;
+	}
+	ent->use = 0;
 LEAVE_FUNC;
 }
 
@@ -896,21 +935,28 @@ WriteEntry(
 
 	ret = 0;
 	while	(  size  >  0  ) {
-		left = state->space->pagesize - ent->use;
+		left = ent->bsize - ent->use;
+		if		(  left  ==  0  ) {
+			ReadBuffer(state,ent,TRUE);
+			if		(  ent->bsize  ==  0  ) {
+				NewBuffer(state,ent);
+			}
+			left = ent->bsize;
+		}
 		csize = ( size < left ) ? size : left;
 		memcpy(&ent->buff[ent->use],buff,csize);
 		ent->fDurty = TRUE;
 		ent->use += csize;
-		ent->off += csize;
-		if		(  ent->off  >  ent->size  ) {
-			ent->size = ent->off;
+		if		(  ent->use  ==  ent->bsize  ) {
+			FlushBuffer(state,ent,FALSE);
 		}
+		ent->off += csize;
 		ret += csize;
 		size -= csize;
 		buff += csize;
-		if		(  ent->use  ==  state->space->pagesize  ) {
-			WriteBuffer(state,ent);
-		}
+	}
+	if		(  ent->off  >  ent->size  ) {
+		ent->size = ent->off;
 	}
 	return	(ret);
 }
@@ -928,15 +974,13 @@ ReadEntry(
 
 ENTER_FUNC;
 	ret = 0;
-	if		(  ent->fDurty  ) {
-		WriteBuffer(state,ent);
-	}
 	DumpInfo(state,ent);
+	FlushBuffer(state,ent,TRUE);
 	while	(	(  size      >  0          )
 			&&	(  ent->off  <  ent->size  ) ) {
 		left = ent->bsize - ent->use;
 		if		(  left  ==  0  ) {
-			ReadBuffer(state,ent);
+			ReadBuffer(state,ent,FALSE);
 			if		(  ent->bsize  ==  0  )	break;
 			left = ( ent->bsize > ( ent->size - ent->off ) ) ?
 				( ent->size - ent->off ) : ent->bsize;
@@ -1109,26 +1153,25 @@ SeekEntry(
 	ssize_t		ret;
 
 	ret = 0;
-	if		(  ent->fDurty  ) {
-		WriteBuffer(state,ent);
-	}
+	FlushBuffer(state,ent,TRUE);
 	switch	(ent->mode & OSEKI_TYPE_MASK) {
 	  case	OSEKI_ALLOC_LINER:
-		ent->last = ent->head + pos;
+		ent->curr = ent->head + pos;
 		ent->off = pos;
 		ent->use = OBJ_OFF(state,pos);
-		ReadBuffer(state,ent);
-		ent->last = ent->head + pos;
+		ReadBuffer(state,ent,TRUE);
+		ent->curr = ent->head + pos;
 		break;
 	  case	OSEKI_ALLOC_TREE:
 		ent->off = pos;
+		ReadBuffer(state,ent,TRUE);
 		break;
 	  case	OSEKI_ALLOC_PACK:
-		ent->last = ent->head;
+		ent->curr = ent->head;
 		ent->off = 0;
 		while	(	(  ent->off  <  pos        )
 				&&	(  ent->off  <  ent->size  ) ) {
-			ReadBuffer(state,ent);
+			ReadBuffer(state,ent,FALSE);
 			if		(  ent->bsize  ==  0  )	break;
 			if		(  ent->off + ent->bsize >  pos  ) {
 				ent->use = pos - ent->off;
@@ -1216,7 +1259,7 @@ SetLeast(
 		OsekiSpace		*space)
 	{
 		space->lTran = ses->tid;
-		printf("tid = %d\n",space->lTran);
+		dbgprintf("tid = %d\n",space->lTran);
 		return	(TRUE);
 	}
 ENTER_FUNC;

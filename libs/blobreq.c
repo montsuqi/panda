@@ -205,7 +205,6 @@ ENTER_FUNC;
 				left -= size;
 			}
 			fclose(fpf);
-			chmod(fname,0644);
 			rc = TRUE;
 		}
 	}

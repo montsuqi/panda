@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -83,7 +83,7 @@ NewPageBuffer(
 }
 
 extern	void
-DumpPage(
+_DumpPage(
 	OsekiSpace	*space,
 	byte		*data)
 {
@@ -98,6 +98,13 @@ DumpPage(
 	}
 	printf("\n");
 }
+
+#ifdef	DEBUG
+//#define	DumpPage(s,d)		_DumpPage((s),(byte *)(d))
+#define	DumpPage(s,d)		/*	*/
+#else
+#define	DumpPage(s,d)		/*	*/
+#endif
 
 
 static	void
@@ -335,7 +342,7 @@ GetPage(
 	void		*ret;
 
 ENTER_FUNC;
-	dbgprintf("get page = %lld\n",page);
+	dbgprintf("get page = [%lld]\n",page);
 	dbgprintf("pages    = %lld\n",state->space->upages);
 	if		(  page  <  state->space->upages  ) {
 		if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
@@ -347,7 +354,6 @@ ENTER_FUNC;
 			g_hash_table_insert(state->pages,&ent->page,ent);
 		}
 		ret = ent->body;
-		//DumpPage(state->space,ret);
 	} else {
 		ret = NULL;
 	}
@@ -392,6 +398,8 @@ ReleasePage(
 
 ENTER_FUNC;
 	dbgprintf("release = [%lld]\n",page);
+	if		(  page  ==  0  ) {
+	} else
 	if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
 			   !=  NULL  ) {
 		SyncCommonPage(state,page,(fCommit && ent->fUpdate));
@@ -552,9 +560,9 @@ InitOseki(
 	OsekiSpace		*space;
 	OsekiHeaderPage	head;
 	int				i;
-	pageno_t		mul
-		,			cp
+	pageno_t		cp
 		,			page;
+	int64_t			mul;
 	void			*old;
 	OsekiSession	*recover;
 
@@ -640,8 +648,6 @@ ENTER_FUNC;
 	} else {
 		space = NULL;
 	}
-printf("%d\n",(int)space);fflush(stdout);
-
 LEAVE_FUNC;
 	return	(space);
 }

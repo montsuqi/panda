@@ -1,3 +1,16 @@
+2004-10-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/storage.c: tree allocation
+
+2004-09-27  Noboru Saitou  <noborus@netlab.jp>
+
+	* glserver/glcomm.c 印刷プレビューにPDFサポートの追加
+	* glserver/pstopng PS->PNG変換スクリプトを追加
+
+2004-09-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/storage.c (SeekEntry): liner allocation read seek
+
 2004-09-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* blob/storage.c (SeekEntry): non liner allocation read seek
@@ -22,6 +35,25 @@
 
 	* blob/blob_v2.c: BLOB全機能実装
 
+2004-09-03  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/protocol.c: Send/Recv をチェックするようにした
+
+2004-09-02  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/Recv, libs/Send 失敗時には -1 を返すように変更
+
+2004-08-31  Noboru Saitou  <noborus@netlab.jp>
+
+	* ダイアログ再表示をしないように修正。
+
+2004-08-25  Noboru Saitou <noborus@netlab.jp>
+
+	* wfc/mqthread.c: 無効なapsを指定されたときにリソースを解放した
+
+	* wfc/blobthread.c, wfc/controlthread.c, wfc/termthread.c:
+	pthread_exit でリソースが解放されるように pthread_detach した  
+	
 2004-08-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/mqthread.c: LDが変わってもSPAを忘れないようにした

@@ -39,6 +39,8 @@ extern	void	ReturnPage(OsekiSession *state, pageno_t no);
 extern	void	CommitPages(OsekiSession *state);
 extern	void	AbortPages(OsekiSession *state);
 
+extern	void	_DumpPage(OsekiSpace *space, byte *data);
+
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
