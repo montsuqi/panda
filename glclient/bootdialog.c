@@ -153,9 +153,7 @@ edit_dialog_value_to_config (EditDialog * self)
   gint i;
   gchar *password;
   gboolean savepassword;
-#ifdef	USE_SSL
-  gboolean ssl;
-#endif
+
   section = NULL;
   if (self->hostname != NULL)
     {
