@@ -35,6 +35,7 @@ copies.
 #include	<string.h>
 #include	<signal.h>
 #include    <sys/types.h>
+#include    <sys/stat.h>
 #include    <sys/time.h>
 #include    <sys/socket.h>
 #include    <sys/select.h>
@@ -142,6 +143,7 @@ dbgmsg(">FileThread");
 		OpenDB_RedirectPort(ThisDBG);
 	}
 	if		(  ThisDBG->file  !=  NULL  ) {
+		umask((mode_t) 0077);
 		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
 			Error("log file can not open");
 		}
