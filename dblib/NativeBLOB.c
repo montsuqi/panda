@@ -123,8 +123,10 @@ _DBSTART(
 
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
-	if		(	(  dbg->fConnect  )
-			&&	(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) ) {
+	if		(  !dbg->fConnect  ) {
+		rc = MCP_OK;
+	} else
+	if		(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) {
 		dbgmsg("OK");
 		rc = MCP_OK;
 	} else {
@@ -146,8 +148,10 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	if		(	(  dbg->fConnect  )
-			&&	(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) ) {
+	if		(  !dbg->fConnect  ) {
+		rc = MCP_OK;
+	} else
+	if		(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) {
 		dbgmsg("OK");
 		rc = MCP_OK;
 	} else {
