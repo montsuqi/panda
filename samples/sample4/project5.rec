@@ -1,9 +1,0 @@
-project5	{
-	vbox1	{
-		calendar1	{
-			year	int;
-			month	int;
-			day	int;
-		};
-	};
-};
