@@ -1,3 +1,7 @@
+2003-04-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/aps_main.c, tools/monitor.c: apsの寿命を設定するパラメータ付加(MaxTran)
+
 2003-03-04  Keisuke Nishida  <knishida@netlab.jp>
 
 	* glclient/widgetOPS.c: GtkPandaPS support.

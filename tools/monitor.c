@@ -47,7 +47,6 @@ copies.
 
 static	char	*Directory;
 static	char	*ApsPath;
-static	char	*GlsPath;
 static	char	*WfcPath;
 static	char	*RedirectorPath;
 static	char	*LDDir;
@@ -58,11 +57,11 @@ static	char	*Log;
 static	Bool	fQ;
 static	Bool	fRedirector;
 static	Bool	fRestart;
-static	Bool	fGlserver;
+static	int		interval;
+static	int		MaxTran;
 
 static	FILE		*fpLog;
 static	pid_t		PidWfc;
-static	pid_t		PidGls;
 static	GHashTable	*ProcessTable;
 
 typedef	struct {
@@ -71,6 +70,7 @@ typedef	struct {
 	char	**argv;
 }	Process;
 
+#ifdef	DEBUG
 static	void
 DumpCommand(
 	char	**argv)
@@ -82,6 +82,26 @@ DumpCommand(
 		printf("\targ[%d] = [%s]\n",i,argv[i]);
 	}
 }
+
+static	void
+_DumpProcess(
+	pid_t		pid,
+	Process		*proc,
+	void		*dummy)
+{
+	printf("pid = %d\n",(int)pid);
+	DumpCommand(proc->argv);
+}
+static	void
+DumpProcess(void)
+{
+	printf("*** process table dump ***\n");
+	g_int_hash_table_foreach(ProcessTable,(GHFunc)_DumpProcess,NULL);
+	printf("**************************\n");
+}
+#endif
+
+
 static	void
 _execv(
 	char	*cmd,
@@ -104,16 +124,15 @@ dbgmsg(">StartProcess");
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
 		g_int_hash_table_insert(ProcessTable,pid,proc);
-		if		(  fpLog  !=  NULL  ) {
-			for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
-				fprintf(fpLog,"%s ",proc->argv[i]);
-			}
-			fprintf(fpLog,"(%d)\n",pid);
-			fflush(fpLog);
+		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
+			fprintf(fpLog,"%s ",proc->argv[i]);
 		}
+		fprintf(fpLog,"(%d)\n",pid);
+		fflush(fpLog);
 	} else {
 		_execv(proc->argv[0],proc->argv);
 	}
+	sleep(interval);
 dbgmsg("<StartProcess");
 	return	(pid);
 }
@@ -243,7 +262,6 @@ StartApss(void)
 	int		i;
 
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
-		sleep(1);
 		_StartAps(ThisEnv->ld[i]);
 	}
 }
@@ -289,57 +307,6 @@ StartWfc(void)
 	PidWfc = StartProcess(proc);
 }
 
-#if	0
-static	void
-StartGlserver(void)
-{
-	int		argc;
-	char	**argv;
-	Process	*proc;
-
-	proc = New(Process);
-	argv = (char **)xmalloc(sizeof(char *) * 12);
-	proc->argv = argv;
-	argc = 0;
-	argv[argc ++] = GlsPath;
-	if		(  Directory  !=  NULL  ) {
-		argv[argc ++] = "-dir";
-		argv[argc ++] = Directory;
-	}
-	if		(  LDDir  !=  NULL  ) {
-		argv[argc ++] = "-lddir";
-		argv[argc ++] = LDDir;
-	}
-	if		(  RecDir  !=  NULL  ) {
-		argv[argc ++] = "-record";
-		argv[argc ++] = RecDir;
-	}
-	if		(  fQ  ) {
-		argv[argc ++] = "-?";
-	}
-	proc->argc = argc;
-	argv[argc ++] = NULL;
-	PidGls = StartProcess(proc);
-}
-#endif
-
-static	void
-_DumpProcess(
-	pid_t		pid,
-	Process		*proc,
-	void		*dummy)
-{
-	printf("pid = %d\n",(int)pid);
-	DumpCommand(proc->argv);
-}
-
-static	void
-DumpProcess(void)
-{
-	printf("*** process table dump ***\n");
-	g_int_hash_table_foreach(ProcessTable,(GHFunc)_DumpProcess,NULL);
-	printf("**************************\n");
-}
 
 static	void
 StartServers(void)
@@ -350,16 +317,6 @@ StartServers(void)
 	}
 	StartWfc();
 	StartApss();
-	if		(  fGlserver  ) {
-#if	0
-		StartGlserver();
-#else
-		PidGls = 0;
-#endif
-	} else {
-		PidGls = 0;
-	}
-
 }
 
 static	void
@@ -367,10 +324,12 @@ StartPrograms(void)
 {
 dbgmsg(">StartPrograms");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL,NULL);
 
 	StartServers();
+#ifdef	DEBUG
 	DumpProcess();
+#endif
 dbgmsg("<StartPrograms");
 }
 
@@ -403,13 +362,13 @@ ProcessMonitor(void)
 		pid = wait(&status);
 		if		(  pid  >  0  ) {
 			proc = g_int_hash_table_lookup(ProcessTable,pid);
-			printf("process down pid = %d\n",(int)pid);
+			fprintf(fpLog,"process down pid = %d Command =[%s]\n"
+					,(int)pid,proc->argv[0]);
+#ifdef	DEBUG
 			DumpCommand(proc->argv);
+#endif
 			if		(  fRestart  ) {
 				if		(  pid  ==  PidWfc  ) {
-					break;
-				} else
-				if		(  pid  ==  PidGls  ) {
 					break;
 				} else {
 					g_int_hash_table_remove(ProcessTable,pid);
@@ -425,9 +384,11 @@ InitSystem(void)
 {
 dbgmsg(">InitSystem");
 	if		(  Log  !=  NULL  ) {
-		fpLog = fopen(Log,"a+");
+		if		(  ( fpLog = fopen(Log,"a+") )  ==  NULL  ) {
+			fpLog = stdout;
+		}
 	} else {
-		fpLog = NULL;
+		fpLog = stdout;
 	}
 dbgmsg("<InitSystem");
 }
@@ -437,9 +398,9 @@ StopSystem(void)
 {
 	fRestart = FALSE;
 	kill(PidWfc,SIGKILL);
-	sleep(1);
+	sleep(interval);
 	KillAllProcess(SIGKILL);
-	sleep(1);
+	sleep(interval);
 	exit(0);
 }
 
@@ -466,8 +427,14 @@ static	ARG_TABLE	option[] = {
 	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
 		"aps異常終了時に再起動する"	 					},
 
+	{	"wait",		INTEGER,	TRUE,	(void*)&interval,
+		"プロセス操作時の待ち時間"	 					},
+
 	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
 		"自分のホスト名を指定する"	 					},
+
+	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
+		"apsの処理するトランザクション数を指定する"		},
 
 	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
 		"-?を指定する"				 					},
@@ -488,6 +455,8 @@ SetDefault(void)
 	LDDir = NULL;
 	RecDir = NULL;
 	Log = NULL;
+	interval = 2;
+	MaxTran = -1;
 
 	MyHost = "localhost";
 

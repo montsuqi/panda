@@ -48,14 +48,16 @@ copies.
 #include	"directory.h"
 #include	"queue.h"
 #include	"dbgroup.h"
-#include	"aps_main.h"
+#include	"handler.h"
 #include	"apsio.h"
 #include	"handler.h"
+#include	"aps_main.h"
 #include	"option.h"
 #include	"debug.h"
 
 static	Bool	fConnect;
 static	sigset_t	hupset;
+static	int		MaxTran;
 
 static	void
 InitSystem(
@@ -69,7 +71,7 @@ dbgmsg(">InitSystem");
 	pthread_sigmask(SIG_BLOCK,&hupset,NULL);
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,name,"");
+	SetUpDirectory(Directory,name,"","");
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		fprintf(stderr,"LD \"%s\" not found.\n",name);
 		exit(1);
@@ -80,7 +82,6 @@ dbgmsg(">InitSystem");
 
 	InitiateHandler();
 	ThisDB = ThisLD->db;
-	ThisDBT = ThisLD->DB_Table;
 
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 		InitializeValue(ThisLD->window[i]->value);
@@ -140,10 +141,11 @@ ExecuteDC(
 	ProcessNode	*node;
 	WindowBind	*bind;
 	int		ix;
+	int		tran;
 
 dbgmsg(">ExecuteDC");
 	if		(  !fConnect  )	{
-		_fh = InitServerPort(PortNumber);
+		_fh = InitServerPort(PortNumber,Back);
 		if		(  ( fhWFC = accept(_fh,0,0) )  <  0  )	{
 			Error("INET Domain Accept");
 		}
@@ -155,7 +157,9 @@ dbgmsg(">ExecuteDC");
 		if		(  WFC_Host  ==  NULL  ) {
 			WFC_Host = ThisLD->wfc->host;
 		}
+#if	0
 		printf("%s:%s\n",WFC_Host,WfcPortNumber);
+#endif
 		if		(  ( fhWFC = ConnectSocket(WfcPortNumber,SOCK_STREAM,WFC_Host) )
 				   <  0  ) {
 			Error("WFC not ready");
@@ -169,7 +173,7 @@ dbgmsg(">ExecuteDC");
 	InitAPSIO();
 
 	node = MakeProcessNode();
-	while	(TRUE) {
+	for	( tran = MaxTran; tran != 0 ; tran -- ) {
 		if		(  !GetWFC(fpWFC,node)  )	break;
 #ifdef	DEBUG
 		printf("[%s]\n",ThisLD->name);
@@ -214,6 +218,7 @@ dbgmsg(">StopProcess");
 dbgmsg("<StopProcess");
 	exit(ec);
 }
+
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
 		"ポート番号"	 								},
@@ -248,6 +253,9 @@ static	ARG_TABLE	option[] = {
 		"データベースのユーザ名"						},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
 		"データベースのパスワード"						},
+
+	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
+		"apsの処理するトランザクション数を指定する"		},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
