@@ -1173,7 +1173,7 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
     app = rb_protect_funcall(app_class, rb_intern("new"), &state, 0);
     if (state && error_handle(state))
         return FALSE;
-    rb_protect_funcall(app, rb_intern("start"), &state,
+    rb_protect_funcall(app, rb_intern("run"), &state,
                        2, procnode_new(node), database_new(DB_Table, ThisDB));
     if (state && error_handle(state))
         return FALSE;
