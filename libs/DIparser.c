@@ -898,8 +898,8 @@ dbgmsg(">DI_Parser");
 			ret = NULL;
 		}
 	} else {
-		Error("DI file not found");
-		ret = NULL;
+        fprintf(stderr, "DI file not found\n");
+        exit(1);
 	}
 dbgmsg("<DI_Parser");
 	return	(ret);
