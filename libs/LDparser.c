@@ -297,28 +297,28 @@ ParLD(void)
 	char		*gname;
 
 dbgmsg(">ParLD");
-	ret = NULL;
+    ret = New(LD_Struct);
+    ret->name = NULL;
+    ret->group = "";
+    ret->ports = NULL;
+    ret->whash = NewNameHash();
+    ret->nCache = 0;
+    ret->cDB = 1;
+    ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
+    ret->db[0] = NULL;
+    ret->cWindow = 0;
+    ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
+    ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
+    ret->DB_Table = NewNameHash();
+    ret->home = NULL;
+    ret->wfc = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("no name");
 			} else {
-				ret = New(LD_Struct);
-				ret->name = StrDup(ComSymbol);
-				ret->group = "";
-				ret->ports = NULL;
-				ret->whash = NewNameHash();
-				ret->nCache = 0;
-				ret->cDB = 1;
-				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
-				ret->db[0] = NULL;
-				ret->cWindow = 0;
-				ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
-				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
-				ret->DB_Table = NewNameHash();
-				ret->home = NULL;
-				ret->wfc = NULL;
+                ret->name = StrDup(ComSymbol);
 			}
 			break;
 		  case	T_ARRAYSIZE:
@@ -363,6 +363,8 @@ dbgmsg(">ParLD");
 			ParDB(ret,gname);
 			break;
 		  case	T_DATA:
+            if (ret->name == NULL)
+                Error("name directive is required");
 			ParDATA(ret);
 			break;
 		  case	T_HOME:
@@ -393,6 +395,8 @@ dbgmsg(">ParLD");
 			Error("; missing");
 		}
 	}
+    if (ret->name == NULL)
+        Error("name directive is required");
 dbgmsg("<ParLD");
 	return	(ret);
 }
