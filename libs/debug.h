@@ -30,12 +30,12 @@ copies.
 #include	"message.h"
 
 #ifdef	TRACE
-#define	dbgmsg(s)			MessageDebug(__FILE__,__LINE__,(s))
-#define	dbgprintf(fmt, ...)	_MessageLevelPrintf(MESSAGE_DEBUG, __FILE__,__LINE__,(fmt), __VA_ARGS__)
-#define	PASS(s)				MessageDebug(__FILE__,__LINE__,(s))
-#define	ENTER_FUNC			_MessageLevelPrintf(MESSAGE_LOG,__FILE__,__LINE__,">%s", __func__)
-#define	LEAVE_FUNC			_MessageLevelPrintf(MESSAGE_LOG,__FILE__,__LINE__,"<%s", __func__)
-#define	RETURN(v)			_MessageLevelPrintf(MESSAGE_LOG,__FILE__,__LINE__,"<%s", __func__),return(v)
+#define	dbgmsg(s)			MessageDebug(s)
+#define	dbgprintf(fmt,...)	MessageDebugPrintf((fmt), __VA_ARGS__)
+#define	PASS(s)				MessageDebug(s)
+#define	ENTER_FUNC			MessageDebugPrintf(">%s", __func__)
+#define	LEAVE_FUNC			MessageDebugPrintf("<%s", __func__)
+#define	RETURN(v)			MessageDebugPrintf("<%s", __func__),return(v)
 #else
 #define	dbgmsg(s)			/*	*/
 #define	dbgprintf(fmt,...)	/*	*/
@@ -55,8 +55,8 @@ do {                                                                    \
 } while (0)
 #define	Warning(...)                                                \
 _MessageLevelPrintf(MESSAGE_WARN,__FILE__,__LINE__,__VA_ARGS__);
-#define	Message(l,...)                                  \
-_MessageLevelPrintf((l),__FILE__,__LINE__,__VA_ARGS__);
+#define	Message(...)                                  \
+_MessageLevelPrintf(MESSAGE_PRINT,__FILE__,__LINE__,__VA_ARGS__);
 #else
 #define	Error(...)                              \
 do {                                            \
@@ -77,6 +77,19 @@ do {                                            \
     printf(__VA_ARGS__);                        \
     printf("\n");                               \
 } while (0)
-#define	MessageDebug(f,l,s)	printf("D:%s:%d:%s\n",(f),(l),(s))
+#define	MessageLog(s) printf("L:%s:%d:%s\n",__FILE__,__LINE__,(s))
+#define MessageLogPrintf(...)                   \
+do {                                            \
+    printf("L:%s:%d:",__FILE__,__LINE__);       \
+    printf(__VA_ARGS__);                        \
+    printf("\n");                               \
+} while (0)
+#define	MessageDebug(s)	printf("D:%s:%d:%s\n",__FILE__,__LINE__,(s))
+#define MessageDebugPrintf(...)                 \
+do {                                            \
+    printf("D:%s:%d:",__FILE__,__LINE__);       \
+    printf(__VA_ARGS__);                        \
+    printf("\n");                               \
+} while (0)
 #endif
 #endif

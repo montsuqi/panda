@@ -64,15 +64,6 @@ static	char	*FlagChar[]	= {
 	"M",	"D",	"W",	"E",	"L",	"P",	"?"};
 
 extern	void
-MessageDebug(
-	char	*file,
-	int		line,
-	char	*msg)
-{
-	_Message(MESSAGE_DEBUG,file,line,msg);
-}
-
-extern	void
 _MessageLevelPrintf(
 	int 	level,
 	char	*file,
