@@ -1,6 +1,10 @@
+2002-09-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/ のうちデータベース絡みのプログラムを dbstuff/ に移した
+
 2002-09-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/ のうちデータベース絡みの部分を dblib/に移した
+	* aps/ のうちデータベース絡みのライブラリ部分を dblib/ に移した
 
 2002-09-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 

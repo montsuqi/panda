@@ -310,6 +310,7 @@ AC_OUTPUT(Makefile
 	  Doc/Makefile
 	  libs/Makefile
 	  dblib/Makefile
+	  dbstuff/Makefile
 	  cobol/Makefile
 	  glclient/Makefile
 	  glserver/Makefile

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-sbin_PROGRAMS = aps dbstub dbredirector dbs
+sbin_PROGRAMS = aps dbstub
 lib_LTLIBRARIES = MCPSUB.la
 
 MCPSUB_la_LDFLAGS	=	\
@@ -24,20 +24,6 @@ dbstub_LDADD 		=	\
 	-L$(top_srcdir)/dblib -lpandadb	\
 	MCPSUB.la
 
-dbredirector_LDADD 		=	\
-	-L/usr/lib -lglib -lm -ldl -lpthread	\
-	$(FIXED_LIBS)		\
-	$(POSTGRES_LIBS) \
-	$(OPENCOBOL_LIBS)	\
-	-L$(top_srcdir)/libs -lpanda -li18n	\
-	-L$(top_srcdir)/dblib -lpandadb
-
-dbs_LDADD 		=	\
-	-L/usr/lib -lglib -lm -ldl -lpthread	\
-	$(FIXED_LIBS)		\
-	-L$(top_srcdir)/libs -lpanda	\
-	-L$(top_srcdir)/dblib -lpandadb
-
 MCPSUB_la_LIBADD	=
 
 INCLUDES 			= \
@@ -45,7 +31,6 @@ INCLUDES 			= \
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
-	$(POSTGRES_CFLAGS)	\
 	$(OPENCOBOL_CFLAGS)	\
 	$(FIXED_CFLAGS)		\
 	$(GNOME_INCLUDEDIR)
@@ -74,18 +59,6 @@ dbstub_SOURCES	=	\
 
 dbstub_DEPENDENCIES	=	\
 	MCPSUB.la			\
-	../dblib/libpandadb.la
-
-dbs_SOURCES	=	\
-	dbs_main.c
-
-dbs_DEPENDENCIES	=	\
-	../dblib/libpandadb.la
-
-dbredirector_SOURCES	=	\
-	dbredirector.c
-
-dbredirector_DEPENDENCIES	=	\
 	../dblib/libpandadb.la
 
 MCPSUB_la_SOURCES	=	\
