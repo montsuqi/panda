@@ -6,3 +6,4 @@ Makefile
 aps
 dbredirector
 dbstub
+defaults.h
