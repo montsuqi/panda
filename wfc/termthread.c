@@ -160,7 +160,7 @@ dbgmsg(">InitSession");
 		data->name = StrDup(data->hdr->term);
 		g_hash_table_insert(TermHash,data->name,data);
 		data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-		data->hdr->puttype = TO_CHAR(0);
+		data->hdr->puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
 		data->w.n = 0;
 	} else {
 		sprintf(msg,"[%s] session fail LD [%s] not found.",data->hdr->term,buff);
