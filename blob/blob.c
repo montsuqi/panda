@@ -36,6 +36,7 @@ copies.
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<pthread.h>
+#include	<fcntl.h>
 
 #include	"types.h"
 
@@ -57,18 +58,60 @@ static	void
 OpenEntry(
 	BLOB_Entry	*ent)
 {
-	ent->fp = NULL;
+	char	longname[SIZE_LONGNAME+1];
+	char	filename[SIZE_NAME+1];
+	char	*p;
+	int		i;
+	int		mode;
+	int		fd;
+
+	p  = filename;
+	p += sprintf(p,"%d",ObjectID(ent->oid));
+	sprintf(longname,"%s/%s",ent->blob->space,filename);
+	mode = 0;
+	if		(  ( ent->mode & BLOB_OPEN_READ )  !=  0  ) {
+		mode |= O_RDONLY;
+	}
+	if		(  ( ent->mode & BLOB_OPEN_WRITE )  !=  0  ) {
+		mode |= O_WRONLY;
+	}
+	if		(  ( ent->mode & BLOB_OPEN_CREATE )  !=  0  ) {
+		mode |= O_CREAT;
+	}
+	if		(  ( fd = open(longname,mode) )  >=  0  ) {
+		ent->fp = FileToNet(fd);
+	} else {
+		ent->fp = NULL;
+	}
 }
+
+static	void
+DestroyEntry(
+	BLOB_Entry	*ent)
+{
+	if		(  ent->oid  !=  NULL  ) {
+		LockBLOB(ent->blob);
+		g_hash_table_remove(ent->blob->table,(gpointer)ent->oid);
+		UnLockBLOB(ent->blob);
+		ReleaseBLOB(ent->blob);
+		xfree(ent->oid);
+	}
+	if		(  ent->fp  !=  NULL  ) {
+		CloseNet(ent->fp);
+	}
+	xfree(ent);
+}	
 
 extern	Bool
 NewBLOB(
-	BLOB_Node		*blob,
+	BLOB_Space		*blob,
 	MonObjectType	*obj,
 	int				mode)
 {
 	char	name[SIZE_LONGNAME+1];
 	FILE	*fp;
 	BLOB_Entry	*ent;
+	Bool	ret;
 
 ENTER_FUNC;
 	LockBLOB(blob);
@@ -85,9 +128,17 @@ ENTER_FUNC;
 	g_hash_table_insert(blob->table,(gpointer)ent->oid,ent);
 	UnLockBLOB(blob);
 	ReleaseBLOB(blob);
-	ent->mode = mode;
+	ent->mode = mode | BLOB_OPEN_CREATE;
+	ent->blob = blob;
 	OpenEntry(ent);
+	if		(  ent->fp  ==  NULL  ) {
+		DestroyEntry(ent);
+		ret = FALSE;
+	} else {
+		ret = TRUE;
+	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
 static	guint
@@ -126,14 +177,14 @@ IdCompare(
 	return	(check == 0);
 }
 
-extern	BLOB_Node	*
+extern	BLOB_Space	*
 InitBLOB(
 	char	*space)
 {
 	FILE	*fp;
 	char	name[SIZE_LONGNAME+1];
 	char	buff[SIZE_BUFF];
-	BLOB_Node	*blob;
+	BLOB_Space	*blob;
 	size_t	oid;
 
 	sprintf(name,"%s/pid",space);
@@ -165,7 +216,7 @@ InitBLOB(
 		oid = 0;
 	}
 
-	blob = New(BLOB_Node);
+	blob = New(BLOB_Space);
 	blob->space = StrDup(space);
 	blob->oid = oid;
 	blob->table = g_hash_table_new((GHashFunc)IdHash,(GCompareFunc)IdCompare);
@@ -177,7 +228,7 @@ InitBLOB(
 
 extern	void
 FinishBLOB(
-	BLOB_Node	*blob)
+	BLOB_Space	*blob)
 {
 	FILE	*fp;
 	char	name[SIZE_LONGNAME+1];
@@ -193,7 +244,7 @@ FinishBLOB(
 
 extern	Bool
 OpenBLOB(
-	BLOB_Node		*blob,
+	BLOB_Space		*blob,
 	MonObjectType	*obj,
 	int				mode)
 {
@@ -201,14 +252,14 @@ OpenBLOB(
 
 extern	Bool
 CloseBLOB(
-	BLOB_Node		*blob,
+	BLOB_Space		*blob,
 	MonObjectType	*obj)
 {
 }
 
 extern	size_t
 WriteBLOB(
-	BLOB_Node		*blob,
+	BLOB_Space		*blob,
 	MonObjectType	*obj,
 	byte			*buff,
 	size_t			size)
@@ -217,7 +268,7 @@ WriteBLOB(
 
 extern	size_t
 ReadBLOB(
-	BLOB_Node		*blob,
+	BLOB_Space		*blob,
 	MonObjectType	*obj,
 	byte			*buff,
 	size_t			size)

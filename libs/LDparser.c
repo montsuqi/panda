@@ -61,7 +61,6 @@ static	TokenTable	tokentable[] = {
 	{	"db"		,T_DB		},
 	{	"multiplex_group"	,T_MGROUP		},
 	{	"bind"		,T_BIND		},
-	{	"wfc"		,T_WFC		},
 
 	{	"handler"	,T_HANDLER	},
 	{	"class"		,T_CLASS	},
@@ -311,7 +310,6 @@ dbgmsg(">ParLD");
     ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
     ret->DB_Table = NewNameHash();
     ret->home = NULL;
-    ret->wfc = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
 		  case	T_NAME:
@@ -373,13 +371,6 @@ dbgmsg(">ParLD");
 				ret->home = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				Error("home directory invalid");
-			}
-			break;
-		  case	T_WFC:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				ret->wfc = ParPort(ComSymbol,PORT_WFC_APS);
-			} else {
-				Error("wfc invalid");
 			}
 			break;
 		  case	T_BIND:

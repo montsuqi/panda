@@ -37,7 +37,6 @@ copies.
 #include	<glib.h>
 #include	<sys/stat.h>	/*	for stbuf	*/
 #include	"types.h"
-#include	"hash.h"
 #include	"libmondai.h"
 #include	"Lex.h"
 #include	"DBparser.h"

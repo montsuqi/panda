@@ -51,7 +51,7 @@ main(
 	int		argc,
 	char	**argv)
 {
-	BLOB_Node	*blob;
+	BLOB_Space	*blob;
 	MonObjectType	obj;
 	int		i;
 

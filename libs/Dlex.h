@@ -38,7 +38,7 @@ copies.
 #define	T_LINKAGE		(T_YYBASE +11)
 #define	T_MGROUP		(T_YYBASE +12)
 #define	T_HOME			(T_YYBASE +13)
-#define	T_WFC			(T_YYBASE +14)
+//#define	T_WFC			(T_YYBASE +14)
 #define	T_CACHE			(T_YYBASE +15)
 /*	handler	*/
 #define	T_HANDLER		(T_YYBASE +16)

@@ -20,9 +20,9 @@ copies.
 */
 
 #define	MAIN
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -143,6 +143,7 @@ dbgmsg(">FileThread");
 	} else {
 		fp = NULL;
 	}
+dbgmsg("*");
 	count = 0;
 	while	(TRUE)	{
 		data = (LargeByteString *)DeQueue(FileQueue);
@@ -155,9 +156,11 @@ dbgmsg(">FileThread");
 				ExecRedirectDBOP(ThisDBG,p);
 				TransactionRedirectEnd(ThisDBG);
 			}
+dbgmsg("*");
 			BeginDB_Redirect(ThisDBG);
 			PutDB_Redirect(ThisDBG,p);
 			CommitDB_Redirect(ThisDBG);
+dbgmsg("*");
 			if		(  fp  !=  NULL  ) {
 				time(&nowtime);
 				Now = localtime(&nowtime);
@@ -214,10 +217,6 @@ DumpDBG(
 {
 	printf("name     = [%s]\n",dbg->name);
 	printf("\ttype     = [%s]\n",dbg->type);
-	if		(  dbg->port  !=  NULL  ) {
-		printf("\thost     = [%s]\n",dbg->port->host);
-		printf("\tport     = [%s]\n",dbg->port->port);
-	}
 	printf("\tDB name  = [%s]\n",dbg->dbname);
 	printf("\tDB user  = [%s]\n",dbg->user);
 	printf("\tDB pass  = [%s]\n",dbg->pass);

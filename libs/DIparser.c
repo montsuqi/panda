@@ -78,7 +78,7 @@ copies.
 #define	T_DBDDIR		(T_YYBASE +22)
 #define	T_WFC			(T_YYBASE +23)
 #define	T_EXIT			(T_YYBASE +24)
-#define	T_LOCALE		(T_YYBASE +25)
+#define	T_ENCODING		(T_YYBASE +25)
 #define	T_TERMPORT		(T_YYBASE +26)
 #define	T_CONTROL		(T_YYBASE +27)
 #define	T_DDIR			(T_YYBASE +28)
@@ -121,7 +121,8 @@ static	TokenTable	tokentable[] = {
 	{	"stacksize"			,T_STACKSIZE	},
 	{	"wfc"				,T_WFC		},
 	{	"exit"				,T_EXIT		},
-	{	"locale"			,T_LOCALE	},
+	{	"locale"			,T_ENCODING	},
+	{	"encoding"			,T_ENCODING	},
 	{	"termport"			,T_TERMPORT	},
 	{	"control"			,T_CONTROL	},
 	{	""					,0			}
@@ -526,7 +527,7 @@ dbgmsg(">ParDBGROUP");
 	dbg = New(DBG_Struct);
 	dbg->name = name;
 	dbg->id = 0;
-	dbg->type = "PostgreSQL";
+	dbg->type = NULL;
 	dbg->func = NULL;
 	dbg->user = NULL;
 	dbg->dbname = NULL;
@@ -597,7 +598,7 @@ dbgmsg(">ParDBGROUP");
 				Error("invalid logging file name");
 			}
 			break;
-		  case	T_LOCALE:
+		  case	T_ENCODING:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  stricmp(ComSymbol,"utf8")  ==  0  ) {
 					dbg->coding = NULL;

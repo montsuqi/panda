@@ -152,11 +152,7 @@ ExecuteDC(
 
 ENTER_FUNC;
 	if		(  WfcPortNumber  ==  NULL  ) {
-		if		(  ThisLD->wfc  !=  NULL  ) {
-			port = ThisLD->wfc;
-		} else {
-			port = ThisEnv->WfcApsPort;
-		}
+		port = ThisEnv->WfcApsPort;
 	} else {
 		port = ParPortName(WfcPortNumber);
 	}

@@ -28,7 +28,7 @@ copies.
 
 #include	"socket.h"
 
-#include	"value.h"
+//#include	"value.h"
 typedef	struct _NETFILE	{
 	int		fd;
 	union {

@@ -61,7 +61,6 @@ static	TokenTable	tokentable[] = {
 	{	"db"		,T_DB		},
 	{	"multiplex_group"	,T_MGROUP		},
 	{	"bind"		,T_BIND		},
-	{	"wfc"		,T_WFC		},
 
 	{	"handler"	,T_HANDLER	},
 	{	"class"		,T_CLASS	},

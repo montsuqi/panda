@@ -20,8 +20,8 @@ copies.
 */
 
 #define	MAIN
-/*
 #define	DEBUG
+/*
 #define	TRACE
 */
 

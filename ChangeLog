@@ -1,3 +1,8 @@
+2004-03-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.c (ParLD) aps/aps_main.c : LD定義体にwfcの宣言を除
+	いた(実用的な意味がない)
+
 2004-03-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/wfc.c (StopSystem): SIGUSR1で正常終了

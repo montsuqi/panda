@@ -75,12 +75,12 @@ static	char	*PortNumber;
 static	char	*ControlPortNumber;
 static	int		Back;
 static	char	*Directory;
-static	char	*BLOB_Space;
+static	char	*BLOB_Dir;
 
 static	Port	*ApsPort;
 static	Port	*WfcPort;
 static	Port	*ControlPort;
-static	BLOB_Node	*Blob;
+static	BLOB_Space	*Blob;
 
 static	sigset_t SigMask;
 
@@ -171,7 +171,7 @@ dbgmsg(">InitSystem");
 		ControlPort = ParPortName(ControlPortNumber);
 	}
 	InitNET();
-	Blob = InitBLOB(BLOB_Space);
+	Blob = InitBLOB(BLOB_Dir);
 	InitMessageQueue();
 	ReadyAPS();
 	SetupMessageQueue();
@@ -215,7 +215,7 @@ static	ARG_TABLE	option[] = {
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
 		"トランザクションを再試行する時の上限数"		},
 
-	{	"blob",		STRING,		TRUE,	(void*)&BLOB_Space,
+	{	"blob",		STRING,		TRUE,	(void*)&BLOB_Dir,
 		"BLOB領域"					 					},
 
 	{	NULL,		0,			TRUE,	NULL		 	}
@@ -232,7 +232,7 @@ SetDefault(void)
 	D_Dir = NULL;
 	Directory = "./directory";
 	MaxRetry = 0;
-	BLOB_Space = ".";
+	BLOB_Dir = ".";
 	ControlPort = NULL;
 }
 

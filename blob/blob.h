@@ -24,25 +24,26 @@ copies.
 
 typedef	struct {
 	int		mode;
-	FILE	*fp;
+	NETFILE	*fp;
 	MonObjectType	*oid;
+	struct	_BLOB_Space	*blob;
 }	BLOB_Entry;
 
-typedef	struct {
+typedef	struct _BLOB_Space	{
 	char	*space;
 	size_t	oid;
 	GHashTable	*table;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
-}	BLOB_Node;
+}	BLOB_Space;
 
-extern	BLOB_Node	*InitBLOB(char *space);
-extern	void		FinishBLOB(BLOB_Node *blob);
-extern	Bool	NewBLOB(BLOB_Node *blob,MonObjectType *obj, int mode);
-extern	Bool	OpenBLOB(BLOB_Node *blob, MonObjectType *obj, int mode);
-extern	Bool	CloseBLOB(BLOB_Node *blob, MonObjectType *obj);
-extern	size_t	WriteBLOB(BLOB_Node *blob, MonObjectType *obj, byte *buff, size_t size);
-extern	size_t	ReadBLOB(BLOB_Node *blob, MonObjectType *obj, byte *buff, size_t size);
+extern	BLOB_Space	*InitBLOB(char *space);
+extern	void		FinishBLOB(BLOB_Space *blob);
+extern	Bool	NewBLOB(BLOB_Space *blob,MonObjectType *obj, int mode);
+extern	Bool	OpenBLOB(BLOB_Space *blob, MonObjectType *obj, int mode);
+extern	Bool	CloseBLOB(BLOB_Space *blob, MonObjectType *obj);
+extern	size_t	WriteBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t size);
+extern	size_t	ReadBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t size);
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -51,7 +52,8 @@ extern	size_t	ReadBLOB(BLOB_Node *blob, MonObjectType *obj, byte *buff, size_t s
 #define	GLOBAL		extern
 #endif
 
-#define	BLOB_OPEN_READ		0x01
-#define	BLOB_OPEN_WRITE		0x02
+#define	BLOB_OPEN_CREATE	0x01
+#define	BLOB_OPEN_READ		0x02
+#define	BLOB_OPEN_WRITE		0x04
 
 #endif

@@ -33,7 +33,6 @@ copies.
 #include	<ctype.h>
 #include	<glib.h>
 #include	"types.h"
-#include	"hash.h"
 #include	"libmondai.h"
 #include	"Lex.h"
 #include	"SQLlex.h"

@@ -212,7 +212,6 @@ typedef	struct {
 	RecordStruct	**db;
 	size_t		nports;
 	Port		**ports;
-	Port		*wfc;
 	RecordStruct	*sparec;
 	size_t		cWindow;
 	WindowBind	**window;

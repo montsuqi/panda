@@ -43,7 +43,6 @@ copies.
 #endif
 
 #include	"types.h"
-#include	"misc.h"
 #include	"socket.h"
 #include	"net.h"
 #include	<libmondai.h>
