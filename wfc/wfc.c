@@ -130,8 +130,6 @@ dbgmsg(">PutAPS");
 				SendLBS(fpAPS,data->spadata);
 				SendPacketClass(fpAPS,APS_LINKDATA);
 				SendLBS(fpAPS,data->linkdata);
-				SendPacketClass(fpAPS,APS_SPADATA);
-				SendLBS(fpAPS,data->spadata);
 				SendPacketClass(fpAPS,APS_SCRDATA);
 				for	( j = 0 ; j < data->aps->ld->cWindow ; j ++ ) {
 					SendLBS(fpAPS,data->scrdata[j]);
