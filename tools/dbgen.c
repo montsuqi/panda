@@ -96,6 +96,20 @@ PutItemName(void)
 	printf("\t");
 }
 
+static	void
+PutItemNameEx(void)
+{
+	int		j;
+
+	PutTab(1);
+	if		(  level  >  1  ) {
+		for	( j = 0 ; j < level - 1 ; j ++ ) {
+			printf("%s_",rname[j]);
+		}
+	}
+	printf("%s",rname[level-1]);
+}
+
 
 static	void
 TableBody(
@@ -222,6 +236,103 @@ MakeCreate(
 	}
 }
 
+static void
+TableInsert(ValueStruct *val, size_t arraysize, size_t textsize, int type)
+{
+    int i;
+    ValueStruct *tmp;
+    Bool    fComm;
+
+    if (val == NULL) return;
+
+    switch (ValueType(val)) {
+      case  GL_TYPE_INT:
+        if (type)
+            PutItemNameEx();
+        else
+            printf("\t0");
+        break;
+      case  GL_TYPE_BOOL:
+        if( type ) PutItemNameEx();
+        else printf("\ttrue");
+        break;
+      case  GL_TYPE_BYTE:
+      case  GL_TYPE_CHAR:
+        if (type)
+            PutItemNameEx();
+        else
+            printf("\t''");
+        break;
+      case  GL_TYPE_VARCHAR:
+        if (type)
+            PutItemNameEx();
+        else
+            printf("\t''");
+        break;
+      case  GL_TYPE_NUMBER:
+        if (type)
+            PutItemNameEx();
+        else
+            printf("\t0");
+        break;
+      case  GL_TYPE_TEXT:
+        if (type)
+            PutItemNameEx();
+        else
+            printf("\t''");
+        break;
+      case  GL_TYPE_RECORD:
+        level ++;
+        fComm = FALSE;
+        for ( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
+            tmp = ValueRecordItem(val,i);
+            if      (   (  !IS_VALUE_VIRTUAL(tmp)  )
+                        &&  (  !IS_VALUE_ALIAS(tmp)    ) ) {
+                if      (  fComm  ) {
+                    printf(",\n");
+                }
+                fComm = TRUE;
+                rname[level-1] = ValueRecordName(val,i);
+                TableInsert(tmp,arraysize,textsize, type);
+            }
+        }
+        level --;
+        break;
+      default:
+        if (type == 0)
+            fprintf(stderr, "対応していない型です。: %s\n", rname[level-1]);
+        break;
+    }
+}
+
+static void
+MakeInsert(
+	RecordStruct	*rec)
+{
+
+	char	***item
+	,		**pk;
+	KeyStruct	*key;
+
+	Bool	fComm;
+
+	if		(  ( ValueAttribute(rec->value) & GL_ATTR_VIRTUAL )  ==  0  ) {
+		printf("insert into %s (\n",rec->name);
+    }
+
+    level = 0;
+    alevel = 0;
+    TableInsert(rec->value,ArraySize,TextSize, 1);
+
+    printf(")\nvalues (\n");
+
+    level = 0;
+    alevel = 0;
+    TableInsert(rec->value,ArraySize,TextSize, 0);
+
+    printf(");\n");
+}
+
 static	void
 PutName(void)
 {
@@ -341,7 +452,11 @@ main(
 			if		(  ( rec = DB_Parser(fl->name) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
-		}
+		} else if		( fInsert ) {
+            if		(  ( rec = DB_Parser(fl->name) )  !=  NULL  ) {
+                MakeInsert(rec);
+            }
+        }
 	}
 
 	return	(0);

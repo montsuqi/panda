@@ -152,7 +152,7 @@ class	Widget
 			ret = TRUE;
 		  when  "GtkLabel"
 		  	if	@label == "" or
-				@label =~ /X+/
+				@label =~ /^X+$/
 			  ret = TRUE;
 			end
 		  else
@@ -215,7 +215,7 @@ class	Widget
 									sprintf("varchar(%d)",@child[0].chars));
 		  when	"GtkLabel"
 			if		@label  ==  "" or
-					@label  =~  /X+/
+					@label  =~  /^X+$/
 				if	@label  ==  ""
 					@@record = @@record.append(sprintf("%s.value",@name),
 							sprintf("varchar(%d)",Integer(self.width)/8));
@@ -249,7 +249,7 @@ class	Widget
 		  when  "GtkButton" 
 			if	$button_enable 
 			  @@record = @@record.append(sprintf("%s.state",@name),"int");
-			  if @label =~ /X+/
+			  if @label =~ /^X+$/
 				@@record = @@record.append(sprintf("%s.label",@name),
 										   sprintf("varchar(%d)",label.length));
 			  end

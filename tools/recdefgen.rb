@@ -190,7 +190,7 @@ class	Widget
 			ret = TRUE;
 		  when  "GtkLabel"
 		  	if	@label == "" or
-				@label =~ /X+/
+				@label =~ /^X+$/
 			  ret = TRUE;
 			end
 		  else
@@ -282,7 +282,7 @@ class	Widget
 			printf("};\n");
 		  when	"GtkLabel"
 			if		@label  ==  "" or
-					@label  =~  /X+/
+					@label  =~  /^X+$/
 				putTab(ind);
 				printf("%s\t{\n",vname);
 				putTab(ind+1);

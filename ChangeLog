@@ -1,3 +1,14 @@
+2004-05-18  Kouji SHIMIZU  <shimizu@netlab.jp>
+
+	GtkLabelとGtkButtonのラベルに"X"が含まれていれば
+	recを生成してしまうバグを修正
+	* tools/recgen.rb (Widget::isData, Widget::_panda) 
+	(Widget::_panda): 
+	* tools/recdefgen.rb (Widget::isData, Widget::_panda): 
+
+	* tools/dbgen.c: -insertオプションでSQLのinsert文のテンプレートを
+	出力するように修正。
+
 2004-05-15  Kouji SHIMIZU  <shimizu@netlab.jp>
 
 	* configure.in: Added check 'errno.h' and 'strerror()'.
