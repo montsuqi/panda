@@ -934,10 +934,8 @@ static	ARG_TABLE	option[] = {
 		"ディレクトリファイル"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"レコードのあるディレクトリ"					},
-	{	"lddir",	STRING,		TRUE,	(void*)&LD_Dir,
-		"LD定義格納ディレクトリ"	 					},
-	{	"bddir",	STRING,		TRUE,	(void*)&BD_Dir,
-		"BD定義格納ディレクトリ"	 					},
+	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
+		"定義格納ディレクトリ"	 					},
 	{	"ld",		STRING,		TRUE,	(void*)&LD_Name,
 		"LD名"						 					},
 	{	"bd",		STRING,		TRUE,	(void*)&BD_Name,
@@ -969,8 +967,7 @@ SetDefault(void)
 	fLDR = FALSE;
 	fWindowPrefix = FALSE;
 	RecordDir = NULL;
-	LD_Dir = NULL;
-	BD_Dir = NULL;
+	D_Dir = NULL;
 	Directory = "./directory";
 	Lang = "OpenCOBOL";
 }

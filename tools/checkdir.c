@@ -370,21 +370,15 @@ static	ARG_TABLE	option[] = {
 		"ディレクトリファイル"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"レコードのあるディレクトリ"					},
-	{	"LDdir",	STRING,		TRUE,	(void*)&LD_Dir,
-		"LD定義格納ディレクトリ"	 					},
-	{	"BDdir",	STRING,		TRUE,	(void*)&BD_Dir,
-		"BD定義格納ディレクトリ"	 					},
-	{	"DBDdir",	STRING,		TRUE,	(void*)&DBD_Dir,
-		"DB定義格納ディレクトリ"	 					},
+	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
+		"定義格納ディレクトリ"		 					},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
 static	void
 SetDefault(void)
 {
-	LD_Dir = NULL;
-	BD_Dir = NULL;
-	DBD_Dir = NULL;
+	D_Dir = NULL;
 	RecordDir = NULL;
 
 	Directory = "./directory";

@@ -480,9 +480,9 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	ApsPath = "/usr/local/panda/bin/aps";
-	WfcPath = "/usr/local/panda/bin/wfc";
-	RedirectorPath = "/usr/local/panda/bin/dbredirector";
+	ApsPath = "/usr/local/bin/aps";
+	WfcPath = "/usr/local/bin/wfc";
+	RedirectorPath = "/usr/local/bin/dbredirector";
 
 	Directory = "./directory";
 	LDDir = NULL;
