@@ -1323,7 +1323,6 @@ dbgmsg("<RecvList");
 	return	(TRUE);
 }
 
-#include	<gtk/gtkcalendar.h>
 static	Bool
 SendCalendar(
 	char		*name,
