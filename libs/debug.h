@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 1989-2003 Ogochan.
+Copyright (C) 1989-2005 Ogochan.
 
 This module is part of PANDA.
 
