@@ -714,7 +714,8 @@ _RadioButton(
 {
 	char	*group
 		,	*name
-		,	*label;
+		,	*label
+		,	*onclick;
 
 dbgmsg(">_RadioButton");
 	group = GetArg(tag,"group",0); 
@@ -735,6 +736,12 @@ dbgmsg(">_RadioButton");
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_REFSTR);
 	LBS_EmitString(htc->code,"\"");
+	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,"onclick=\"");
+		LBS_EmitString(htc->code,onclick);
+		LBS_EmitString(htc->code,"\"");
+	}
+
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
@@ -1243,6 +1250,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"onclick",TRUE);
 
 	tag = NewTag("TOGGLEBUTTON",_ToggleButton);
 	AddArg(tag,"name",TRUE);
