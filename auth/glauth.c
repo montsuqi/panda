@@ -58,42 +58,27 @@ static	int			Back;
 static	char		*PortNumber;
 
 static	void
-SetFDs(
-	int		fd,
-	NETFILE	*fp,
-	fd_set	*fds)
-{
-	FD_SET(fd,fds);
-}
-
-static	void
-ReadFDs(
-	int		fd,
-	NETFILE	*fp,
-	fd_set	*fds)
+Session(
+	NETFILE	*fp)
 {
 	size_t	size;
 	char	user[SIZE_USER+1]
 	,		pass[SIZE_PASS+1];
 	PassWord	*pw;
 
-dbgmsg(">ReadFDs");
-	if		(  FD_ISSET(fd,fds)  ) {
-		if		(  Recv(fp,&size,sizeof(size))  >  0  ) {
-			RecvStringBody(fp,user,size);
-			RecvString(fp,pass);
-			if		(  ( pw = AuthAuthUser(user,pass) )  ==  NULL  ) {
-				SendBool(fp,FALSE);
-			} else {
-				SendBool(fp,TRUE);
-				SendString(fp,pw->other);
-			}
+dbgmsg(">Session");
+	if		(  Recv(fp,&size,sizeof(size))  >  0  ) {
+		RecvStringBody(fp,user,size);	ON_IO_ERROR(fp,badio);
+		RecvString(fp,pass);			ON_IO_ERROR(fp,badio);
+		if		(  ( pw = AuthAuthUser(user,pass) )  ==  NULL  ) {
+			SendBool(fp,FALSE);				ON_IO_ERROR(fp,badio);
 		} else {
-			CloseNet(fp);
-			g_hash_table_remove(FileHash,(void *)fd);
+			SendBool(fp,TRUE);				ON_IO_ERROR(fp,badio);
+			SendString(fp,pw->other);		ON_IO_ERROR(fp,badio);
 		}
 	}
-dbgmsg("<ReadFDs");
+  badio:
+dbgmsg("<Session");
 }
 
 extern	void
@@ -101,30 +86,19 @@ ExecuteServer(void)
 {
 	int		fh
 	,		_fh;
-
-	fd_set		ready;
-	int			maxfd;
+	NETFILE	*fp;
 
 dbgmsg(">ExecuteServer");
 	_fh = InitServerPort(PortNumber,Back);
 
-	maxfd = _fh;
-	
 	while	(TRUE)	{
-		FD_ZERO(&ready);
-		FD_SET(_fh,&ready);
-		g_hash_table_foreach(FileHash,(GHFunc)SetFDs,&ready);
-		select(maxfd+1,&ready,NULL,NULL,NULL);
-		if		(  FD_ISSET(_fh,&ready)  ) {	/*	connect	*/
-			dbgmsg("connect");
-			if		(  ( fh = accept(_fh,0,0) )  <  0  )	{
-				printf("_fh = %d\n",_fh);
-				Error("INET Domain Accept");
-			}
-			maxfd = ( maxfd > fh ) ? maxfd : fh;
-			g_hash_table_insert(FileHash,(void *)fh,SocketToNet(fh));
+		if		(  ( fh = accept(_fh,0,0) )  <  0  )	{
+			printf("_fh = %d\n",_fh);
+			Error("INET Domain Accept");
 		}
-		g_hash_table_foreach(FileHash,(GHFunc)ReadFDs,&ready);
+		fp = SocketToNet(fh);
+		Session(fp);
+		CloseNet(fp);
 	}
 dbgmsg("<ExecuteServer");
 }

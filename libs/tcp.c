@@ -45,10 +45,21 @@ Boston, MA  02111-1307, USA.
 #include    <sys/socket.h>
 #include	<netdb.h>
 #include	<netinet/in.h>
+#include	<netinet/tcp.h>
 #include	<arpa/inet.h>
 #include	"misc.h"
 #include	"value.h"
 #include	"debug.h"
+
+extern	void
+SetNodelay(
+	int		s)
+{
+	int		one;
+
+	one = 1;
+	setsockopt(s, SOL_TCP, TCP_NODELAY, (void *) &one, sizeof(one));
+}
 
 extern	int
 BindSocket(
@@ -137,6 +148,7 @@ ConnectSocket(
 			,			hints
 			,			*head;
 	struct	sockaddr_in	*name;
+	int		one;
 
 dbgmsg(">ConnectSocket");
 #ifdef	DEBUG

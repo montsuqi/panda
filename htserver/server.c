@@ -48,6 +48,7 @@ copies.
 #include	"enum.h"
 #include	"misc.h"
 #include	"tcp.h"
+#include	"net.h"
 #include	"libmondai.h"
 #include	"glterm.h"
 #include	"comm.h"
@@ -73,72 +74,45 @@ typedef	struct	{
 
 static	void
 HT_SendString(
-	int		fd,
+	NETFILE	*fp,
 	char	*str)
 {
-	char	*p;
-	size_t	size
-	,		count;
 #ifdef	DEBUG
-	printf(">>[%s]%d\n",str,strlen(str));
+	printf(">>[%s]\n",str);
 #endif
-	size = strlen(str);
-	p = str;
-	while	(  size  >  0  ) {
-		if		(  ( count = write(fd,p,size) )  >  0  ) {
-			size -= count;
-			p += count;
-		} else {
-			fprintf(stderr,"write %s\n",strerror(errno));
-			break;
-		}
-	}
+	Send(fp,str,strlen(str));
 }
 
-static	int
-HT_RecvChar(
-	int		fd)
-{
-	char	c;
-	int		ret;
-
-	if		(  read(fd,&c,1)  ==  1  ) {
-		ret = c;
-	} else {
-		ret = -1;
-	}
-	return	(ret);
-}
-
-static	Bool
+extern	Bool
 HT_RecvString(
-	int		fd,
+	NETFILE	*fp,
 	size_t	size,
 	char	*str)
 {
-	Bool	rc;
 	int		c;
+	Bool	rc;
 #ifdef	DEBUG
 	char	*p = str;
 #endif
 
-	rc = TRUE;
-	while	(  ( c = HT_RecvChar(fd) )  !=  '\n' ) {
-		if		(  c  <  0  ) {
-			rc = FALSE;
-			break;
-		} else {
-			*str ++ = c;
-		}
+	while	(	(  ( c = RecvChar(fp) )  >=  0     )
+			&&	(  c                     !=  '\n'  ) )	{
+		*str ++ = c;
 	}
 	*str = 0;
-	while	(	(  *str  ==  '\r'  )
-			||	(  *str  ==  '\n'  ) ) {
-		*str = 0;
-		str --;
+	if		(  c  >=  0  ) {
+		*str -- = 0;
+		while	(	(  *str  ==  '\r'  )
+				||	(  *str  ==  '\n'  ) ) {
+			*str = 0;
+			str --;
+		}
+		rc = TRUE;
+	} else {
+		rc = FALSE;
 	}
 #ifdef	DEBUG
-	printf("<<[%s]\n",p);
+	printf(" recv [%s]\n",p);
 #endif
 	return	(rc);
 }
@@ -179,23 +153,23 @@ DecodeName(
 
 static	void
 SendWindowName(
-	int			fd,
+	NETFILE		*fp,
 	ScreenData	*scr)
 {
 	void
 	SendWindow(
 		char		*wname,
 		WindowData	*win,
-		int			fd)
+		NETFILE		*fp)
 	{
 		if		(  win->PutType  !=  SCREEN_NULL  ) {
 			switch	(win->PutType) {
 			  case	SCREEN_CURRENT_WINDOW:
 			  case	SCREEN_NEW_WINDOW:
 			  case	SCREEN_CHANGE_WINDOW:
-				HT_SendString(fd,"Window: ");
-				HT_SendString(fd,wname);
-				HT_SendString(fd,"\n");
+				HT_SendString(fp,"Window: ");
+				HT_SendString(fp,wname);
+				HT_SendString(fp,"\n");
 				break;
 			  default:
 				break;
@@ -204,14 +178,14 @@ SendWindowName(
 		}
 	}
 dbgmsg(">SendWindowName");
-	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fd);
-	HT_SendString(fd,"\n");
+	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fp);
+	HT_SendString(fp,"\n");
 dbgmsg("<SendWindowName");
 }
 
 static	void
 WriteClient(
-	int			fd,
+	NETFILE		*fp,
 	ScreenData	*scr)
 {
 	char	buff[SIZE_BUFF+1];
@@ -222,9 +196,9 @@ WriteClient(
 	char	*p;
 
 dbgmsg(">WriteClient");
-	SendWindowName(fd,scr);
+	SendWindowName(fp,scr);
 	do {
-		if		(  !HT_RecvString(fd,SIZE_BUFF,buff)  )	break;
+		if		(  !HT_RecvString(fp,SIZE_BUFF,buff)  )	break;
 		if		(  ( p = strchr(buff,' ') )  !=  NULL  ) {
 			*p = 0;
 		}
@@ -232,13 +206,13 @@ dbgmsg(">WriteClient");
 			DecodeName(wname,vname,buff);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->Value,vname);
-				HT_SendString(fd,ToString(value));
+				HT_SendString(fp,ToString(value));
 				if		(	(  p  !=  NULL            )
 						&&	(  !stricmp(p+1,"clear")  ) ) {
 					InitializeValue(value);
 				}
 			}
-			HT_SendString(fd,"\n");
+			HT_SendString(fp,"\n");
 		}
 	}	while	(  *buff  !=  0  );
 dbgmsg("<WriteClient");
@@ -246,7 +220,7 @@ dbgmsg("<WriteClient");
 
 static	void
 RecvScreenData(
-	int			fd,
+	NETFILE		*fp,
 	ScreenData	*scr)
 {
 	char	buff[SIZE_BUFF+1];
@@ -258,7 +232,7 @@ RecvScreenData(
 	ValueStruct	*value;
 
 	do {
-		HT_RecvString(fd,SIZE_BUFF,buff);
+		HT_RecvString(fp,SIZE_BUFF,buff);
 		if		(	(  *buff                     !=  0     )
 				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
 			*p = 0;
@@ -289,6 +263,7 @@ SesServer(
 	struct	cmsghdr	*cmsg;
 	struct	iovec	vec;
 	int		fd;
+	NETFILE	*fp;
 	char	buff[SIZE_BUFF+1];
 	char	trid[SIZE_SESID+1];
 	char	*p;
@@ -307,6 +282,7 @@ dbgmsg(">SesServer");
 	cmsg->cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
 	msg.msg_control = cmsg;
 	msg.msg_controllen = cmsg->cmsg_len;
+	fp = NewNet();
 	do {
 		FD_ZERO(&ready);
 		FD_SET(sock,&ready);
@@ -318,11 +294,12 @@ dbgmsg(">SesServer");
 			dbgmsg("session");
 			memcpy(&fd,CMSG_DATA(cmsg),sizeof(int));
 			memcpy(&htc,vec.iov_base,sizeof(HTC_Node));
+			NetSetFD(fp,fd);
 			htc.count += 1;
 			EncodeTRID(trid,htc.ses,htc.count);
-			HT_SendString(fd,trid);
-			HT_SendString(fd,"\n");
-			HT_RecvString(fd,SIZE_BUFF,buff);
+			HT_SendString(fp,trid);
+			HT_SendString(fp,"\n");
+			HT_RecvString(fp,SIZE_BUFF,buff);
 			if		(  *buff  ==  0  )	{
 				break;
 			} else {
@@ -334,14 +311,14 @@ dbgmsg(">SesServer");
 					strcpy(scr->widget,"");
 					strcpy(scr->event,buff);
 				}
-				RecvScreenData(fd,scr);
+				RecvScreenData(fp,scr);
 				ApplicationsCall(APL_SESSION_GET,scr);
 				while	(  scr->status  ==  APL_SESSION_LINK  ) {
 					ApplicationsCall(scr->status,scr);
 				}
 			}
 			if		(  scr->status  !=  APL_SESSION_NULL  ) {
-				WriteClient(fd,scr);
+				WriteClient(fp,scr);
 			}
 			close(fd);
 		}
@@ -352,7 +329,7 @@ dbgmsg("<SesServer");
 
 static	void
 ChildProcess(
-	int		fd,
+	NETFILE	*fp,
 	int		sock,
 	int		sesid,
 	char	*user,
@@ -374,7 +351,7 @@ dbgmsg(">ChildProcess");
 	scr->Windows = NULL;
 	ApplicationsCall(APL_SESSION_LINK,scr);
 	if		(  scr->status  ==  APL_SESSION_NULL  ) {
-		HT_SendString(fd,"900 invalid program\n");
+		HT_SendString(fp,"900 invalid program\n");
 		printf("reject client(program name error)\n");
 		fOk = FALSE;
 	} else {
@@ -382,15 +359,15 @@ dbgmsg(">ChildProcess");
 	}
 	if		(  fOk  ) {
 		EncodeTRID(trid,sesid,0);
-		HT_SendString(fd,trid);
-		HT_SendString(fd,"\n");
-		WriteClient(fd,scr);
+		HT_SendString(fp,trid);
+		HT_SendString(fp,"\n");
+		WriteClient(fp,scr);
 		strcpy(scr->term,TermName(0));
-		close(fd);
+		CloseNet(fp);
 		SesServer(scr,sock);
 		FinishSession(scr);
 	} else {
-		close(fd);
+		CloseNet(fp);
 	}
 dbgmsg("<ChildProcess");
 }
@@ -416,7 +393,7 @@ PutLog(
 
 static	void
 NewSession(
-	int		fd,
+	NETFILE	*fp,
 	char	*arg)
 {
 	HTC_Node	*htc;
@@ -447,7 +424,7 @@ dbgmsg(">NewSession");
 	PutLog(user,cmd,cSession);
 	if		(  ( pid = fork() )  ==  0  ) {
 		close(socks[0]);
-		ChildProcess(fd,socks[1],cSession,user,cmd);
+		ChildProcess(fp,socks[1],cSession,user,cmd);
 		exit(0);
 	} else {
 		close(socks[1]);
@@ -467,6 +444,7 @@ ExecuteServer(void)
 {
 	int		fd
 	,		_fd;
+	NETFILE	*fp;
 	char	buff[SIZE_BUFF+1];
 	int			ses
 	,			count;
@@ -492,9 +470,10 @@ dbgmsg(">ExecuteServer");
 			printf("_fd = %d\n",_fd);
 			Error("INET Domain Accept");
 		}
-		HT_RecvString(fd,SIZE_BUFF,buff);
+		fp = SocketToNet(fd);
+		HT_RecvString(fp,SIZE_BUFF,buff);
 		if		(  strncmp(buff,"Start:",6)  ==  0  ) {
-			NewSession(fd,buff+7);
+			NewSession(fp,buff+7);
 		} else
 		if		(  strncmp(buff,"Session:",8)  ==  0  ) {
 			DecodeTRID(&ses,&count,buff+9);
@@ -509,17 +488,14 @@ dbgmsg(">ExecuteServer");
 				msg.msg_controllen = cmsg->cmsg_len;
 				if		(  sendmsg(htc->sock,&msg,0)  <  0  ) {
 					EncodeTRID(buff,0,0);
-					HT_SendString(fd,buff);
-					HT_SendString(fd,"\n");
+					HT_SendString(fp,buff);
+					HT_SendString(fp,"\n");
 					xfree(htc);
 					g_hash_table_remove(SesHash,(void *)ses);
 				}
-			} else {
-				shutdown(fd, 2);
 			}
-		} else {
 		}
-		close(fd);
+		CloseNet(fp);
 	}
 dbgmsg("<ExecuteServer");
 }

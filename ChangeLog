@@ -1,3 +1,9 @@
+2003-06-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* auth/glauth.c (ExecuteServer): 多重化をやめる(必要性がない)
+
+	* libs/tcp.c (SetNodelay): 追加(TCP_NODELAYを設定する)
+
 2003-06-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* aps/OpenCOBOL.c (_ReadyDC): preloadをやめた(ifをいじれば元に戻る)

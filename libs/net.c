@@ -170,7 +170,6 @@ static	void
 SocketClose(
 	NETFILE	*fp)
 {
-	shutdown(fp->net.fd,2);
 	close(fp->net.fd);
 }
 
@@ -192,11 +191,11 @@ SocketToNet(
 	NETFILE	*fp;
 
 	fp = NewNet();
+	SetNodelay(fd);
 	fp->net.fd = fd;
 	fp->read = SocketRead;
 	fp->write = SocketWrite;
 	fp->close = SocketClose;
-	
 	return	(fp);
 }
 

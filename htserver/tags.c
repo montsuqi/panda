@@ -107,7 +107,31 @@ EmitGetValue(
 }
 
 static	void
-Attribute(
+EmitAttributeValue(
+	HTCInfo	*htc,
+	char	*str)
+{
+	switch	(*str) {
+	  case	'$':
+		EmitCode(htc,OPC_VAR);
+		LBS_EmitPointer(htc->code,StrDup(str+1));
+		EmitCode(htc,OPC_REFSTR);
+		break;
+	  case	'#':
+		EmitCode(htc,OPC_VAR);
+		LBS_EmitPointer(htc->code,StrDup(str+1));
+		EmitCode(htc,OPC_REFINT);
+		break;
+	  default:
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(str));
+		EmitCode(htc,OPC_HSNAME);
+		break;
+	}
+}
+
+static	void
+Style(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
@@ -116,12 +140,12 @@ Attribute(
 
 	if		(  ( id = GetArg(tag,"id",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," id=\"");
-		LBS_EmitString(htc->code,id);
+		EmitAttributeValue(htc,id);
 		LBS_EmitString(htc->code,"\"");
 	}
 	if		(  ( klass = GetArg(tag,"class",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," class=\"");
-		LBS_EmitString(htc->code,klass);
+		EmitAttributeValue(htc,klass);
 		LBS_EmitString(htc->code,"\"");
 	}
 }
@@ -156,7 +180,7 @@ dbgmsg(">_Entry");
 		LBS_EmitPointer(htc->code,StrDup(maxlength));
 		EmitCode(htc,OPC_REFSTR);
 	}
-	Attribute(htc,tag);
+	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 dbgmsg("<_Entry");
 }
@@ -169,23 +193,11 @@ _Fixed(
 	char	*name;
 dbgmsg(">_Fixed");
 	name = StrDup(GetArg(tag,"name",0));
-	switch	(*name) {
-	  case	'$':
-		EmitCode(htc,OPC_VAR);
-		LBS_EmitPointer(htc->code,name+1);
-		EmitCode(htc,OPC_REFSTR);
-		break;
-	  case	'#':
-		EmitCode(htc,OPC_VAR);
-		LBS_EmitPointer(htc->code,name+1);
-		EmitCode(htc,OPC_REFINT);
-		break;
-	  default:
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,name);
-		EmitCode(htc,OPC_HSNAME);
-		break;
-	}
+	LBS_EmitString(htc->code,"<span");
+	Style(htc,tag);
+	LBS_EmitString(htc->code,">");
+	EmitAttributeValue(htc,name);
+	LBS_EmitString(htc->code,"</span>");
 dbgmsg("<_Fixed");
 }
 
@@ -213,7 +225,7 @@ dbgmsg(">_Combo");
 		EmitCode(htc,OPC_REFSTR);
 		LBS_EmitString(htc->code,">\n");
 	}
-	Attribute(htc,tag);
+	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 	EmitCode(htc,OPC_VAR);
 	LBS_EmitPointer(htc->code,NULL);					/*	3	var		*/
@@ -258,7 +270,7 @@ dbgmsg(">_Form");
 		LBS_EmitString(htc->code,"post");
 	}
 	LBS_EmitString(htc->code,"\"");
-	Attribute(htc,tag);
+	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 
 	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_name\" value=\"");
@@ -305,7 +317,7 @@ dbgmsg(">_Text");
 	}
 
 	LBS_EmitString(htc->code,"\"");
-	Attribute(htc,tag);
+	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 
 	EmitCode(htc,OPC_NAME);
@@ -454,7 +466,7 @@ dbgmsg(">_Button");
 		EmitCode(htc,OPC_REFSTR);
 	}
 
-	Attribute(htc,tag);
+	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 dbgmsg("<_Button");
 }
@@ -475,7 +487,7 @@ dbgmsg(">_ToggleButton");
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code," checked ");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
-	Attribute(htc,tag);
+	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 
 	EmitCode(htc,OPC_NAME);
@@ -500,7 +512,7 @@ dbgmsg(">_CheckButton");
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code," checked");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
-	Attribute(htc,tag);
+	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	LBS_EmitString(htc->code,GetArg(tag,"label",0));
 dbgmsg("<_CheckButton");
@@ -533,7 +545,7 @@ dbgmsg(">_RadioButton");
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_REFSTR);
 	LBS_EmitString(htc->code,"\"");
-	Attribute(htc,tag);
+	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	LBS_EmitString(htc->code,GetArg(tag,"label",0));
 	g_hash_table_insert(htc->Radio,StrDup(group),(void*)1);
@@ -687,6 +699,8 @@ dbgmsg(">TagsInit");
 	tag = NewTag("FIXED",_Fixed);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("COUNT",_Count);
 	AddArg(tag,"var",TRUE);

@@ -26,6 +26,7 @@ Boston, MA  02111-1307, USA.
 #include	<stdio.h>
 #include	<sys/socket.h>
 
+extern	void	SetNodelay(int s);
 extern	int		BindSocket(char *port, int type);
 extern	int		ConnectSocket(char *port, int type, char *host);
 
