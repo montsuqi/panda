@@ -1624,7 +1624,7 @@ dbgmsg(">TagsInit");
 	tag = NewTag("SELECT",_Select);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
-	AddArg(tag,"multiple",TRUE);
+	AddArg(tag,"multiple",FALSE);
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
