@@ -46,18 +46,35 @@ copies.
 #endif
 
 #ifdef	_INC_MESSAGE_H
-#define	ErrorPrintf(fmt, ...)                                               \
-do {                                                                        \
-    _MessageLevelPrintf(MESSAGE_ERROR,__FILE__,__LINE__,(fmt),__VA_ARGS__); \
-    exit(1);                                                                \
+#define	Error(...)                                                      \
+do {                                                                    \
+    _MessageLevelPrintf(MESSAGE_ERROR,__FILE__,__LINE__,__VA_ARGS__);   \
+    exit(1);                                                            \
 } while (0)
-#define	Error(s)			_Message(MESSAGE_ERROR,__FILE__,__LINE__,(s));exit(1)
-#define	Warning(s)			_Message(MESSAGE_WARN,__FILE__,__LINE__,(s))
-#define	Message(l,s)		_Message((l),__FILE__,__LINE__,(s))
+#define	Warning(...)                                                \
+_MessageLevelPrintf(MESSAGE_WARN,__FILE__,__LINE__,__VA_ARGS__);
+#define	Message(l,...)                                  \
+_MessageLevelPrintf((l),__FILE__,__LINE__,__VA_ARGS__);
 #else
-#define	Error(s)			printf("E:%s:%d:%s\n",__FILE__,__LINE__,(s));exit(1)
-#define	Warning(s)			printf("W:%s:%d:%s\n",__FILE__,__LINE__,(s))
-#define	Message(l,s)		printf("M:%s:%d:%s\n",__FILE__,__LINE__,(s))
+#define	Error(...)                              \
+do {                                            \
+    printf("E:%s:%d:",__FILE__,__LINE__);       \
+    printf(__VA_ARGS__);                        \
+    printf("\n");                               \
+    exit(1);                                    \
+} while (0)
+#define	Warning(...)                            \
+do {                                            \
+    printf("W:%s:%d:",__FILE__,__LINE__);       \
+    printf(__VA_ARGS__);                        \
+    printf("\n");                               \
+} while (0)
+#define	Message(l, ...)                         \
+do {                                            \
+    printf("M:%s:%d:",__FILE__,__LINE__);       \
+    printf(__VA_ARGS__);                        \
+    printf("\n");                               \
+} while (0)
 #define	MessageDebug(f,l,s)	printf("D:%s:%d:%s\n",(f),(l),(s))
 #endif
 #endif

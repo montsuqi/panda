@@ -1,3 +1,9 @@
+2004-05-21  Kouji SHIMIZU  <shimizu@netlab.jp>
+
+	* libs/debug.h (Error, Warning, Message): 書式指定できるように修正
+	(ErrorPrintf): Errorで実現できるようにしたので削除。本マクロを使用
+	しているところはErrorに変更。
+
 2004-05-18  Sho Hashimoto  <sho-h@netlab.jp>
 
 	* libs/LDparser.c (ParWindow, ParLD): エラーメッセージの更新
