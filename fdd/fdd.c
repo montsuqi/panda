@@ -118,8 +118,9 @@ Process(
 	printf("temp  = [%s]\n",tempname);
 #endif
 	sprintf(buff,"%s %s %s",command,tempname,filename);
-	system(buff);
+	ac = system(buff);
 	unlink(tempname);
+	SendChar(fpComm,ac);
   badio:;
 }
 

@@ -1,3 +1,7 @@
+2004-01-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* fdd/fdd.c, fdd/fdw.c : 処理の実行ステータスの返却
+
 2004-01-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/comm.c (SendValueBody, RecvValueBody, SendFixedString): 不要なので削除した

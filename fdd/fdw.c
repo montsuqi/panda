@@ -132,7 +132,7 @@ ExecuteClient(
 					left -= size;
 				}
 			}	while	(  left  >  0  );
-			rc = 0;
+			rc = RecvChar(net);
 		  badio:
 			fclose(fp);
 			CloseNet(net);
