@@ -1200,6 +1200,9 @@ set_param(VALUE key, VALUE value, set_param_arg *arg)
     if (key == Qundef) return ST_CONTINUE;
     longname = StringValuePtr(key);
     val = GetItemLongName(arg->value, longname);
+    if (val == NULL) {
+        rb_raise(rb_eArgError, "no such parameter: %s", longname);
+    }
     set_value(val, value);
     if (RHASH(arg->hash)->tbl != tbl || RHASH(arg->hash)->tbl->bins != bins){
         rb_raise(rb_eIndexError, "rehash occurred during iteration");
