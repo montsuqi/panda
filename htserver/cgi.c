@@ -426,12 +426,14 @@ ScanPost(
 extern	void
 GetArgs(void)
 {
-	char	name[SIZE_BUFF];
-	byte	value[SIZE_BUFF];
+	char	name[SIZE_LONGNAME+1];
+	byte	value[SIZE_BUFF]
+		,	buff[SIZE_BUFF];
     char	*boundary;
 	char	*env;
 	char	*val
-		,	*str;
+		,	*str
+		,	*p;
 
 ENTER_FUNC;
 	Values = NewNameHash();
@@ -474,7 +476,9 @@ ENTER_FUNC;
 		}
 		if		(  fCookie  ) {
 			if		(  ( env = getenv("HTTP_COOKIE") )  !=  NULL  ) {
-				StartScanEnv(env);
+				strcpy(buff,env);
+				if      (  ( p = strrchr(buff,';') )  !=  NULL  )   *p = 0;
+                StartScanEnv(buff);
 				while	(  ScanEnv(name,value)  ) {
 					dbgprintf("var name = [%s]\n",name);
 					if		(  ( val = LoadValue(name) )  !=  NULL  ) {
@@ -658,17 +662,24 @@ extern	void
 PutHTML(
 	LargeByteString	*html)
 {
-	char	*sesid;
+	char	*sesid
+		,	*server;
+	char	domain[SIZE_LONGNAME+1];
 	int		c;
 
 ENTER_FUNC;
 	printf("Content-Type: text/html; charset=%s\r\n", Codeset);
 	LBS_EmitEnd(html);
+	if		(  ( server = getenv("SERVER_NAME") )  !=  NULL  ) {
+		sprintf(domain,"domain=%s;",server);
+	} else {
+		strcpy(domain,"");
+	}
 	if		(  fCookie  ) {
 		if		(  ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
-			printf("Set-Cookie: _sesid=%s;\r\n",sesid);
+			printf("Set-Cookie: _sesid=%s;%s\r\n",sesid,domain);
 		} else {
-			printf("Set-Cookie: _sesid=;\r\n");
+			printf("Set-Cookie: _sesid=;%s\r\n",domain);
 		}
 	}
 	printf("Cache-Control: no-cache\r\n");
