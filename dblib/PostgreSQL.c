@@ -1367,7 +1367,7 @@ ENTER_FUNC;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
-			p += sprintf(p,"close from %s_%s_csr",rec->name,path->name);
+			p += sprintf(p,"close %s_%s_csr",rec->name,path->name);
 			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_TUPLES_OK  ) ) {
