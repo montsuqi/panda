@@ -53,7 +53,6 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-static	GHashTable	*FileHash;
 static	int			Back;
 static	char		*PortNumber;
 
@@ -122,7 +121,6 @@ static	void
 InitData(void)
 {
 dbgmsg(">InitData");
-	FileHash = g_hash_table_new((GHashFunc)Hash,(GCompareFunc)Compare);
 dbgmsg("<InitData");
 }
 

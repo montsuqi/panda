@@ -1,3 +1,7 @@
+2003-06-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/net.c (Send, Recv): EOF判定を直した
+
 2003-06-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* auth/glauth.c (ExecuteServer): 多重化をやめる(必要性がない)
