@@ -258,15 +258,20 @@ dbgmsg(">WriteClient");
 			DecodeName(&wname,&vname,buff);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
-				//str =  ValueToString(value,"utf8");
-				str =  ValueToString(value,NULL);
+                if (value == NULL) {
+                    fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
+                }
+                else {
+                    //str =  ValueToString(value,"utf8");
+                    str =  ValueToString(value,NULL);
 dbgprintf("send [%s][%s]\n",vname,str);
-				SendStringDelim(fp,str);
-				if		(	(  p  !=  NULL            )
-						&&	(  !stricmp(p+1,"clear")  ) ) {
-					InitializeValue(value);
-				}
-			}
+                    SendStringDelim(fp,str);
+                    if		(	(  p  !=  NULL            )
+                                &&	(  !stricmp(p+1,"clear")  ) ) {
+                        InitializeValue(value);
+                    }
+                }
+            }
 			SendStringDelim(fp,"\n");
 		}
 	}	while	(  *buff  !=  0  );
