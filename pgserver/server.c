@@ -153,7 +153,7 @@ dbgmsg(">WriteClient");
 		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 			value = GetItemLongName(win->rec->value,vname);
 			SetValueName(name);
-			SendValueString(fpComm,value,NULL,fName);
+			SendValueString(fpComm,value,NULL,fName,FALSE);
 			if		(  fName  ) {
 				SendStringDelim(fpComm,"\n");
 			}
