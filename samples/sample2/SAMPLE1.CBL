@@ -86,6 +86,9 @@
                MOVE   'F'          TO  LIST-SELECT(I)
            END-PERFORM.
       *
+           PERFORM 800-GET-ADRS.
+           MOVE    META-HOST  TO  LIST-KEY.
+      *
       *    MOVE   'NEW'       TO  MCP-PUTTYPE.
            MOVE    SPACE      TO  MCP-PUTTYPE.
            MOVE   'list'      TO  MCP-WINDOW.
@@ -144,6 +147,15 @@
            CALL   'MCPSUB'     USING
                 MCPAREA
                 ADRS.
+      **************************************************************************
+       800-GET-ADRS            SECTION.
+           MOVE   'DBFETCH'    TO  MCP-FUNC.
+           MOVE    PATH-METADB-PRIMARY TO  MCP-PATH.
+           INITIALIZE  METADB.
+      *
+           CALL   'MCPSUB'     USING
+                MCPAREA
+                METADB.
       **************************************************************************
        900-PUT-WINDOW          SECTION.
            MOVE   'PUTWINDOW'  TO  MCP-FUNC.

@@ -23,9 +23,10 @@ libpandadb_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h
 
-DB_OBJECTS			=	\
+DB_OBJECTS			=		\
 	PostgreSQL.la			\
-	Shell.la
+	Shell.la				\
+	System.la
 
 PostgreSQL_la_LDFLAGS	=	-module -export-dynamic
 PostgreSQL_la_SOURCES	=	PostgreSQL.c
@@ -36,3 +37,6 @@ PostgreSQL_la_DEPENDENCIES	=		\
 
 Shell_la_LDFLAGS		=	-module -export-dynamic
 Shell_la_SOURCES		=	Shell.c
+
+System_la_LDFLAGS		=	-module -export-dynamic
+System_la_SOURCES		=	System.c

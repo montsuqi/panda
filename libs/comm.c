@@ -42,8 +42,6 @@ copies.
 #include	"comm.h"
 #include	"debug.h"
 
-static	LargeByteString	*Buff;
-
 static	int
 nputc(
 	int		c,
@@ -675,62 +673,5 @@ dbgmsg("<RecvFloatData");
 extern	void
 InitComm(void)
 {
-	Buff = NewLBS();
-}
-
-/*
- *	This function sends value with valiable name.
- */
-extern	void
-SendValue(
-	NETFILE		*fp,
-	ValueStruct	*value,
-	char		*locale)
-{
-	int		i;
-
-	ValueIsUpdate(value);
-	SendDataType(fp,ValueType(value));
-	switch	(ValueType(value)) {
-	  case	GL_TYPE_INT:
-		SendInt(fp,ValueInteger(value));
-		break;
-	  case	GL_TYPE_BOOL:
-		SendBool(fp,ValueBool(value));
-		break;
-	  case	GL_TYPE_BINARY:
-	  case	GL_TYPE_BYTE:
-		LBS_ReserveSize(Buff,ValueByteLength(value),FALSE);
-		memcpy(LBS_Body(Buff),ValueByte(value),ValueByteLength(value));
-		SendLBS(fp,Buff);
-		break;
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		SendString(fp,ValueToString(value,locale));
-		break;
-	  case	GL_TYPE_FLOAT:
-		SendFloat(fp,ValueFloat(value));
-		break;
-	  case	GL_TYPE_NUMBER:
-		SendFixed(fp,&ValueFixed(value));
-		break;
-	  case	GL_TYPE_ARRAY:
-		SendInt(fp,ValueArraySize(value));
-		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			SendValue(fp,ValueArrayItem(value,i),locale);
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		SendInt(fp,ValueRecordSize(value));
-		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			SendString(fp,ValueRecordName(value,i));
-			SendValue(fp,ValueRecordItem(value,i),locale);
-		}
-		break;
-	  default:
-		break;
-	}
 }
 

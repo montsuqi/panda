@@ -1,6 +1,7 @@
 ./configure <configure options>
 	--with-opencobol	use OpenCOBOL application handler
 	--with-dotcobol		use dotCOBOL application handler
+	--with-ruby=PATH	use Ruby application handler
 	--with-postgres		use PostgreSQL DB handler
 	--with-shell		use shell DB handler
 	--with-ssl			use SSL for network

@@ -67,6 +67,8 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
+static	LargeByteString	*Buff;
+
 static	void
 FinishSession(
 	ScreenData	*scr)
@@ -216,6 +218,62 @@ dbgmsg(">CheckScreens");
 	}
 	SendPacketClass(fpComm,GL_END);
 dbgmsg("<CheckScreens");
+}
+
+/*
+ *	This function sends value with valiable name.
+ */
+static	void
+SendValue(
+	NETFILE		*fp,
+	ValueStruct	*value,
+	char		*locale)
+{
+	int		i;
+
+	ValueIsNotUpdate(value);
+	SendDataType(fp,ValueType(value));
+	switch	(ValueType(value)) {
+	  case	GL_TYPE_INT:
+		SendInt(fp,ValueInteger(value));
+		break;
+	  case	GL_TYPE_BOOL:
+		SendBool(fp,ValueBool(value));
+		break;
+	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_BYTE:
+		LBS_ReserveSize(Buff,ValueByteLength(value),FALSE);
+		memcpy(LBS_Body(Buff),ValueByte(value),ValueByteLength(value));
+		SendLBS(fp,Buff);
+		break;
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		SendString(fp,ValueToString(value,locale));
+		break;
+	  case	GL_TYPE_FLOAT:
+		SendFloat(fp,ValueFloat(value));
+		break;
+	  case	GL_TYPE_NUMBER:
+		SendFixed(fp,&ValueFixed(value));
+		break;
+	  case	GL_TYPE_ARRAY:
+		SendInt(fp,ValueArraySize(value));
+		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+			SendValue(fp,ValueArrayItem(value,i),locale);
+		}
+		break;
+	  case	GL_TYPE_RECORD:
+		SendInt(fp,ValueRecordSize(value));
+		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+			SendString(fp,ValueRecordName(value,i));
+			SendValue(fp,ValueRecordItem(value,i),locale);
+		}
+		break;
+	  default:
+		break;
+	}
 }
 
 static	jmp_buf	envSendWindow;
@@ -422,6 +480,44 @@ ThisAuth(
 #define	ThisAuth(user,pass,other)	AuthUser(&Auth,(user),(pass),(other))
 #endif
 
+static	void
+Connect(
+	NETFILE	*fpComm,
+	ScreenData	*scr)
+{
+	char	pass[SIZE_PASS+1];
+	char	ver[SIZE_NAME+1];
+	char	msg[SIZE_BUFF];
+
+	RecvString(fpComm,ver);			ON_IO_ERROR(fpComm,badio);
+	RecvString(fpComm,scr->user);	ON_IO_ERROR(fpComm,badio);
+	RecvString(fpComm,pass);		ON_IO_ERROR(fpComm,badio);
+	RecvString(fpComm,scr->cmd);	ON_IO_ERROR(fpComm,badio);
+	sprintf(msg,"[%s@%s] session start",scr->user,scr->term);
+	MessageLog(msg);
+	if		(  fIgnoreVersion  ) {
+		strcpy(ver,VERSION);
+	}
+	if		(  strcmp(ver,VERSION)  ) {
+		SendPacketClass(fpComm,GL_E_VERSION);	ON_IO_ERROR(fpComm,badio);
+		g_warning("reject client(invalid version)");
+	} else
+	if		(  ThisAuth(scr->user,pass,scr->other)  ) {
+		scr->Windows = NULL;
+		ApplicationsCall(APL_SESSION_LINK,scr);
+		if		(  scr->status  ==  APL_SESSION_NULL  ) {
+			SendPacketClass(fpComm,GL_E_APPL);	ON_IO_ERROR(fpComm,badio);
+		} else {
+			SendPacketClass(fpComm,GL_OK);		ON_IO_ERROR(fpComm,badio);
+			CheckScreens(fpComm,scr);
+		}
+	} else {
+		g_warning("reject client(authentication error)");
+		SendPacketClass(fpComm,GL_E_AUTH);		ON_IO_ERROR(fpComm,badio);
+	}
+  badio:;
+}
+
 static	Bool
 MainLoop(
 	NETFILE	*fpComm,
@@ -430,9 +526,6 @@ MainLoop(
 	Bool	ret;
 
 	PacketClass	klass;
-	char	pass[SIZE_PASS+1];
-	char	ver[SIZE_NAME+1];
-	char	msg[SIZE_BUFF];
 
 dbgmsg(">MainLoop");
 	klass = RecvPacketClass(fpComm); ON_IO_ERROR(fpComm,badio);
@@ -440,32 +533,7 @@ dbgmsg(">MainLoop");
 	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
 		  case	GL_Connect:
-			RecvString(fpComm,ver);			ON_IO_ERROR(fpComm,badio);
-			RecvString(fpComm,scr->user);	ON_IO_ERROR(fpComm,badio);
-			RecvString(fpComm,pass);		ON_IO_ERROR(fpComm,badio);
-			RecvString(fpComm,scr->cmd);	ON_IO_ERROR(fpComm,badio);
-			sprintf(msg,"[%s@%s] session start",scr->user,scr->term);
-			MessageLog(msg);
-			if		(  fIgnoreVersion  ) {
-				strcpy(ver,VERSION);
-			}
-			if		(  strcmp(ver,VERSION)  ) {
-				SendPacketClass(fpComm,GL_E_VERSION);	ON_IO_ERROR(fpComm,badio);
-				g_warning("reject client(invalid version)");
-			} else
-			if		(  ThisAuth(scr->user,pass,scr->other)  ) {
-				scr->Windows = NULL;
-				ApplicationsCall(APL_SESSION_LINK,scr);
-				if		(  scr->status  ==  APL_SESSION_NULL  ) {
-					SendPacketClass(fpComm,GL_E_APPL);	ON_IO_ERROR(fpComm,badio);
-				} else {
-					SendPacketClass(fpComm,GL_OK);		ON_IO_ERROR(fpComm,badio);
-					CheckScreens(fpComm,scr);
-				}
-			} else {
-				g_warning("reject client(authentication error)");
-				SendPacketClass(fpComm,GL_E_AUTH);		ON_IO_ERROR(fpComm,badio);
-			}
+			Connect(fpComm,scr);				ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Name:
 			RecvString(fpComm,scr->term);		ON_IO_ERROR(fpComm,badio);
@@ -589,5 +657,6 @@ dbgmsg(">InitSystem");
 	InitNET();
 	InitData();
 	ApplicationsInit(argc,argv);
+	Buff = NewLBS();
 dbgmsg("<InitSystem");
 }

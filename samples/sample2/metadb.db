@@ -1,7 +1,6 @@
 metadb	{
-	name	char(64);
+	host	varchar(1024);
 };
 
-primary	{
-	name;
+path	primary	{
 };

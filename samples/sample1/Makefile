@@ -1,7 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
 TOP			=	$(shell pwd)
-TOOLDIR		= 	~/panda/tools
+TOOLDIR		= 	~/MONTSUQI/panda/tools
 
 SUBDIRS		=	demo1 demo2
 

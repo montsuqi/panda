@@ -2,9 +2,15 @@
 	ipv4アドレスのエンコードが同一になってしまう[middle:04214]
 		--with-ipv6の時にIPv4で接続すると、アドレスが同じになる(本来はlibcが射影アドレスを間違えているバグ)
 
+□ラージオブジェクトの実装について
+
+	  ラージオブジェクトは、panda内ではMonObjectで扱うが、PLserver内で
+	binaryに変換する。将来的にはPLclientでのオンデマンド転送も可能にす
+	るが、Ver 1.x系では実現しない。なぜなら、データの転送は一方通行だ
+	からである。
+
 □改良
 	dbcodeのサイズの制限をなくす
-	termthreadを非スレッド化する
 	ValueStructの改良(NameTree)
 	メッセージログを整備する
 	mcp.dc.puttypeを数値にする
@@ -44,3 +50,4 @@
 □放置
 	インチキ証明書対応
 	必要度の低いthreadを減らす
+	termthreadを非スレッド化する

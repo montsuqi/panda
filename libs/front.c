@@ -43,6 +43,7 @@ copies.
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<glib.h>
+#include	<netdb.h>
 
 #include	"types.h"
 #include	"libmondai.h"
@@ -58,7 +59,7 @@ TermName(
 	struct	tm	*Now;
 	socklen_t	len;
 	static	char			name[SIZE_TERM+1];	//	SIZE_TERM == 64
-	struct	sockaddr		addr;
+	struct	sockaddr_storage	addr;
 	struct	sockaddr_in		*in;
 	struct	sockaddr_in6	*in6;
 
@@ -68,41 +69,30 @@ dbgmsg(">TermName");
 		time(&nowtime);
 		Now = localtime(&nowtime);
 		Now->tm_year += 1900;
-		sprintf(name,"%04d%02d%02d:%02d%02d%02d:%08X",
+		sprintf(name,"T%04d%02d%02d:%02d%02d%02d:%08X",
 				Now->tm_year,Now->tm_mon+1,Now->tm_mday,
 				Now->tm_hour,Now->tm_min,Now->tm_sec,
 				getpid());
 	} else {
-		len = sizeof(addr);
-		getpeername(sock,&addr,&len);
-		switch	(addr.sa_family) {
+		len = sizeof(struct sockaddr_storage);
+		getpeername(sock,(struct sockaddr *)&addr,&len);
+		switch	(((struct sockaddr *)&addr)->sa_family) {
 		  case	AF_INET:
 			in = (struct sockaddr_in *)&addr;
-			sprintf(name,"%04X:%08X:%08X",
-					(int)in->sin_port,
-					(int)(in->sin_addr.s_addr),
+			sprintf(name,"4%04X:%08X:%08X",
+					(unsigned int)in->sin_port,
+					(unsigned int)(in->sin_addr.s_addr),
 					getpid());
 			break;
 		  case	AF_INET6:
 			in6 = (struct sockaddr_in6 *)&addr;
-			sprintf(name,"%04X:%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X:%08X",
-					(int)in6->sin6_port,
-					(int)(in6->sin6_addr.s6_addr[0]),
-					(int)(in6->sin6_addr.s6_addr[1]),
-					(int)(in6->sin6_addr.s6_addr[2]),
-					(int)(in6->sin6_addr.s6_addr[3]),
-					(int)(in6->sin6_addr.s6_addr[4]),
-					(int)(in6->sin6_addr.s6_addr[5]),
-					(int)(in6->sin6_addr.s6_addr[6]),
-					(int)(in6->sin6_addr.s6_addr[7]),
-					(int)(in6->sin6_addr.s6_addr[8]),
-					(int)(in6->sin6_addr.s6_addr[9]),
-					(int)(in6->sin6_addr.s6_addr[10]),
-					(int)(in6->sin6_addr.s6_addr[11]),
-					(int)(in6->sin6_addr.s6_addr[12]),
-					(int)(in6->sin6_addr.s6_addr[13]),
-					(int)(in6->sin6_addr.s6_addr[14]),
-					(int)(in6->sin6_addr.s6_addr[15]),
+			sprintf(name,"6%04X:%08X%08X%08X%08X%08X:%08X",
+					(unsigned int)in6->sin6_port,
+					(unsigned int)(in6->sin6_addr.s6_addr32[0]),
+					(unsigned int)(in6->sin6_addr.s6_addr32[1]),
+					(unsigned int)(in6->sin6_addr.s6_addr32[2]),
+					(unsigned int)(in6->sin6_addr.s6_addr32[3]),
+					(unsigned int)(in6->sin6_scope_id),
 					getpid());
 			break;
 		  default:

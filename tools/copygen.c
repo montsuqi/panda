@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -621,6 +621,7 @@ PutDBREC(
 	char	*_prefix;
 	char	prefix[SIZE_LONGNAME+1];
 
+ENTER_FUNC;
 	level = 1;
 	PutLevel(level,TRUE);
 	if		(  fRecordPrefix  ) {
@@ -643,6 +644,7 @@ PutDBREC(
 			printf("PIC X(%d).\n",msize - size);
 		}
 	}
+LEAVE_FUNC;
 }
 
 static	void

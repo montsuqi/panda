@@ -184,7 +184,7 @@ dbgmsg(">ParDB");
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
-			if		(  stricmp(ComSymbol,"metadb")  ) {
+//			if		(  stricmp(ComSymbol,"metadb")  ) {
 				strcpy(buff,RecordDir);
 				p = buff;
 				do {
@@ -214,7 +214,7 @@ dbgmsg(">ParDB");
 				if		(  db  ==  NULL  ) {
 					Error("db not found");
 				}
-			}
+//			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
 			Error("DB ; missing");

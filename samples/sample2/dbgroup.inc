@@ -14,6 +14,10 @@ db_group	"ORCA"	{
 	redirect		"log";
 };
 
+db_group	"system"	{
+	type	"System";
+};
+
 db_group	"shell"	{
 	type	"Shell";
 	priority	1000;

@@ -13,11 +13,11 @@ handler	"Ruby"	{
 #bind	""			"dotCOBOL"	"SAMPLE1";
 #bind	"list"		"dotCOBOL"	"SAMPLE1";
 
-#bind	""			"OpenCOBOL"	"SAMPLE1";
-#bind	"list"		"OpenCOBOL"	"SAMPLE1";
+bind	""			"OpenCOBOL"	"SAMPLE1";
+bind	"list"		"OpenCOBOL"	"SAMPLE1";
 
-bind	""			"Ruby"		"SAMPLE1";
-bind	"list"		"Ruby"		"SAMPLE1";
+#bind	""			"Ruby"		"SAMPLE1";
+#bind	"list"		"Ruby"		"SAMPLE1";
 
 arraysize	20;
 textsize	200;
@@ -38,4 +38,9 @@ db	"ORCA"	{
 
 db	"shell"	{
 	shell;
+};
+
+db	"system"	{
+	metadb;
+#	system;
 };

@@ -251,6 +251,7 @@ dbgmsg(">CallBefore");
 		   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
 		   SIZE_STATUS);
 	node->w.n = 0;
+	CurrentProcess = node; 
 dbgmsg("<CallBefore");
 }
 
@@ -524,6 +525,7 @@ dbgmsg(">StartBatch");
 		fprintf(stderr,"%s application is not in BD.\n",name);
 		exit(1);
 	}
+	CurrentProcess = NULL;
 	handler = bind->handler;
 	if		(  handler->klass->ReadyExecute  !=  NULL  ) {
 		handler->klass->ReadyExecute(handler);

@@ -41,5 +41,6 @@ extern	void	CloseDB(DBG_Struct *dbg);
 #endif
 
 GLOBAL	GHashTable	*DB_Table;
+GLOBAL	ProcessNode	*CurrentProcess;	/*	for System handler	*/
 
 #endif
