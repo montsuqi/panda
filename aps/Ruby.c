@@ -316,8 +316,8 @@ bigdecimal_new(ValueStruct *val)
 static VALUE
 get_value(ValueStruct *val)
 {
-    static VALUE aryval_new(ValueStruct *val);
-    static VALUE recval_new(ValueStruct *val);
+    static VALUE aryval_new(ValueStruct *val, int need_free);
+    static VALUE recval_new(ValueStruct *val, int need_free);
 
     if (val == NULL)
         return Qnil;
@@ -346,9 +346,9 @@ get_value(ValueStruct *val)
             return rb_str_new(ValueByte(val), ValueByteLength(val));
         }
     case GL_TYPE_ARRAY:
-        return aryval_new(val);
+        return aryval_new(val, 0);
     case GL_TYPE_RECORD:
-        return recval_new(val);
+        return recval_new(val, 0);
     default:
         rb_raise(rb_eArgError, "unsupported ValueStruct type");
         break;
@@ -413,6 +413,7 @@ set_value(ValueStruct *value, VALUE obj)
 
 typedef struct _value_struct_data {
     ValueStruct *value;
+    int need_free;
     VALUE cache;
 } value_struct_data;
 
@@ -422,15 +423,24 @@ value_struct_mark(value_struct_data *data)
     rb_gc_mark(data->cache);
 }
 
+static void
+value_struct_free(value_struct_data *data)
+{
+    if (data->need_free) {
+        FreeValueStruct(data->value);
+    }
+}
+
 static VALUE
-aryval_new(ValueStruct *val)
+aryval_new(ValueStruct *val, int need_free)
 {
     VALUE obj;
     value_struct_data *data;
 
     obj = Data_Make_Struct(cArrayValue, value_struct_data,
-                           value_struct_mark, free, data);
+                           value_struct_mark, value_struct_free, data);
     data->value = val;
+    data->need_free = need_free;
     data->cache = rb_ary_new2(ValueArraySize(val));
     return obj;
 }
@@ -481,7 +491,7 @@ aryval_aset(VALUE self, VALUE index, VALUE obj)
 }
 
 static VALUE
-recval_new(ValueStruct *val)
+recval_new(ValueStruct *val, int need_free)
 {
     VALUE obj;
     value_struct_data *data;
@@ -491,8 +501,9 @@ recval_new(ValueStruct *val)
     static VALUE recval_set_field(VALUE self, VALUE obj);
 
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
-                           value_struct_mark, free, data);
+                           value_struct_mark, value_struct_free, data);
     data->value = val;
+    data->need_free = need_free;
     data->cache = rb_hash_new();
     for (i = 0; i < ValueRecordSize(val); i++) {
         rb_define_singleton_method(obj, ValueRecordName(val, i),
@@ -610,7 +621,7 @@ rec_new(RecordStruct *rec)
 
     obj = Data_Make_Struct(cRecordStruct, record_struct_data,
                            rec_mark, free, data);
-    data->value = recval_new(rec->value);
+    data->value = recval_new(rec->value, 0);
     for (i = 0; i < ValueRecordSize(rec->value); i++) {
         rb_define_singleton_method(obj, ValueRecordName(rec->value, i),
                                    rec_get_field, 0);
@@ -829,7 +840,7 @@ path_new(PathStruct *path)
     obj = Data_Make_Struct(cPath, path_data,
                            path_mark, free, data);
     data->path = path;
-    data->args = path->args ? recval_new(path->args) : Qnil;
+    data->args = path->args ? recval_new(path->args, 0) : Qnil;
     data->op_args = rb_hash_new();
     for (i = 0; i < ValueRecordSize(path->args); i++) {
         rb_define_singleton_method(obj, ValueRecordName(path->args, i),
@@ -908,7 +919,7 @@ path_op_args(VALUE self, VALUE name)
     if (data->path->ops[no - 1]->args == NULL) {
         return Qnil;
     }
-    op_args = recval_new(data->path->ops[no - 1]->args);
+    op_args = recval_new(data->path->ops[no - 1]->args, 0);
     rb_hash_aset(data->op_args, name, op_args);
     return op_args;
 }
@@ -955,7 +966,7 @@ table_new(int no, RecordStruct *rec)
     obj = Data_Make_Struct(cTable, table_data,
                            table_mark, free, data);
     data->rec.rec = rec;
-    data->rec.value = recval_new(rec->value);
+    data->rec.value = recval_new(rec->value, 0);
     data->no = no;
     data->paths = rb_hash_new();
     for (i = 0; i < ValueRecordSize(rec->value); i++) {
@@ -1006,7 +1017,6 @@ table_exec(int argc, VALUE *argv, VALUE self)
     int no;
     size_t size;
     ValueStruct *value;
-    VALUE result;
     static VALUE table_path(VALUE self, VALUE name);
 
     Data_Get_Struct(self, table_data, data);
@@ -1024,7 +1034,6 @@ table_exec(int argc, VALUE *argv, VALUE self)
     ctrl.blocks = 0;
 
     value = RECORD_STRUCT(data)->value;
-    result = self;
     if (pname != NULL) {
         no = (int) g_hash_table_lookup(RECORD_STRUCT(data)->opt.db->paths, pname);
         if (no != 0) {
@@ -1034,14 +1043,12 @@ table_exec(int argc, VALUE *argv, VALUE self)
             if (path != NULL) {
                 if (path->args != NULL) {
                     value = path->args;
-                    result = table_path(self, rb_str_new2(pname));
                 }
                 no = (int) g_hash_table_lookup(path->opHash, func);
                 if (no != 0) {
                     DB_Operation *operation = path->ops[no - 1];
                     if (operation != NULL && operation->args != NULL) {
                         value = operation->args;
-                        result = path_op_args(result, rb_str_new2(func));
                     }
                 }
             }
@@ -1062,7 +1069,11 @@ table_exec(int argc, VALUE *argv, VALUE self)
     strcpy(ctrl.func, func);
     ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
     if (ctrl.rc == MCP_OK) {
-        return result;
+        ValueStruct *result;
+
+        result = DuplicateValue(value);
+        CopyValue(result, value);
+        return recval_new(result, 1);
     }
     else if (ctrl.rc == MCP_EOF) {
         return Qnil;
