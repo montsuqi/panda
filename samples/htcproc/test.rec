@@ -1,0 +1,4 @@
+test	{
+	count	int;
+	disp	varchar(10);
+};

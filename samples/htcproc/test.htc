@@ -1,0 +1,19 @@
+<HTC coding="shift-jis">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+ "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Type" content="text/html; charset=shift-jis">
+<!-- LINK REL="stylesheet" TYPE="text/css" HREF="sample1.css" -->
+<TITLE>主ウィンドウ</TITLE>
+</HEAD>
+<BODY TEXT="#202020" BGCOLOR="#C0C0C0" LINK="#00FFFF" VLINK="#00BBBB">
+<entry name="foo" onchange="?moge" size="5">
+<count var="i" from=0 to="test.count">
+<a onclick="$test.disp">
+<fixed name="#i">
+</a>
+</count>
+</BODY>
+</HTML>

@@ -1,0 +1,20 @@
+name	oseki;
+
+arraysize	20;
+textsize	200;
+
+handler	"Ruby"	{
+	class		"Ruby";
+    loadpath	"=/oseki";
+	locale		"utf-8";
+#	locale		"euc-jp";
+};
+
+# bind <module name> <hander name> ;
+
+bind	"Sample"		"Ruby";
+
+db	"Oseki"	{
+	metadb;
+	memo;
+};

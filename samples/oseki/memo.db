@@ -1,0 +1,17 @@
+memo	{
+	title		varchar(250);
+	body		text;
+	memo		text;
+};
+
+path	memo	{
+	DBSELECT	{
+		DECLARE memo_memo_csr CURSOR FOR
+		SELECT	title, body	FROM	memo
+			WHERE
+				match(memo_ix, :memo)
+#		ORDER BY title DESC
+		ORDER BY title ASC
+		;
+	};
+};
