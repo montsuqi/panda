@@ -218,7 +218,8 @@ static	void
 ExecShell(
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
-	LargeByteString	*src)
+	LargeByteString	*src,
+	ValueStruct		*args)
 {
 	int		c;
 	ValueStruct	*val;
@@ -262,7 +263,8 @@ _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 	DB_Struct	*db;
 	PathStruct	*path;
@@ -285,7 +287,7 @@ dbgmsg(">_DBACCESS");
 		} else {
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
-				ExecShell(ctrl,rec,src);
+				ExecShell(ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
 				rc = FALSE;
@@ -300,7 +302,8 @@ static	void
 _DBERROR(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 dbgmsg(">_DBERROR");
 	if		(  rec->type  !=  RECORD_DB  ) {

@@ -179,7 +179,9 @@ dbgmsg(">ExecFunction");
 #ifdef	DEBUG
 	printf("group = [%s]\n",gname);
 	printf("func  = [%s]\n",name);
-	printf("name  = [%s]\n",dbg->name);
+	if		(  dbg  !=  NULL  ) {
+		printf("name  = [%s]\n",dbg->name);
+	}
 #endif
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
@@ -211,7 +213,8 @@ ExecDBOP(
 extern	void
 ExecDB_Process(
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 	DB_FUNC	func;
 	DBG_Struct		*dbg;
@@ -231,12 +234,12 @@ dbgmsg(">ExecDB_Process");
 		dbg = rec->opt.db->dbg;
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl->func) )
 				   ==  NULL  ) {
-			if		(  !(*dbg->func->access)(dbg,ctrl->func,ctrl,rec)  ) {
+			if		(  !(*dbg->func->access)(dbg,ctrl->func,ctrl,rec,args)  ) {
 				printf("function not found [%s]\n",ctrl->func);
 				ctrl->rc = MCP_BAD_FUNC;
 			}
 		} else {
-			(*func)(dbg,ctrl,rec);
+			(*func)(dbg,ctrl,rec,args);
 		}
 	}
 dbgmsg("<ExecDB_Process");

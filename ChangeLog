@@ -1,3 +1,7 @@
+2003-12-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c (ExecDB_Process): path, funcに引数が使えるようにした
+
 2003-12-25  Shugo Maeda  <shugo@netlab.jp>
 
 	* htserver/tags.c: <LINK>のサポート

@@ -89,10 +89,14 @@ ExecuteDB_Server(
 	MessageHandler	*handler)
 {
 	RecordStruct	*rec;
+	ValueStruct		*value;
+	PathStruct		*path;
+	SQL_Operation	*op;
 	size_t			size;
 	char			buff[SIZE_ARG];
 	int				rno
-	,				pno;
+		,			pno
+		,			ono;
 	DBCOMM_CTRL		ctrl;
 	char			*rname
 	,				*pname
@@ -109,27 +113,35 @@ dbgmsg(">ExecuteDB_Server");
 		InitializeValue(recDBCTRL->value);
 		conv->UnPackValue(handler->conv,LBS_Body(dbbuff),recDBCTRL->value);
 		rname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"rname"));
+		value = NULL;
 		if		(	(  rname  !=  NULL  ) 
 				&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 			ctrl.rno = rno - 1;
-			rec = ThisDB[ctrl.rno]; 
+			rec = ThisDB[ctrl.rno];
+			value = rec->value;
 			pname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"pname"));
 			if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
 														pname) )  !=  0  ) {
 				ctrl.pno = pno - 1;
+				path = rec->opt.db->path[pno-1];
+				value = ( path->args != NULL ) ? path->args : value;
 			} else {
 				ctrl.pno = 0;
 			}
-			ConvSetRecName(handler->conv,rec->name);
-			InitializeValue(rec->value);
-			conv->UnPackValue(handler->conv,LBS_Body(dbbuff), rec->value);
 		} else {
 			rec = NULL;
 		}
 		func = ValueStringPointer(GetItemLongName(recDBCTRL->value,"func"));
 		if		(  *func  !=  0  ) {
+			if		( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) {
+				op = path->ops[ono-1];
+				value = ( op->args != NULL ) ? op->args : value;
+			}
+			ConvSetRecName(handler->conv,rec->name);
+			InitializeValue(value);
+			conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
 			strcpy(ctrl.func,func);
-			ExecDB_Process(&ctrl,rec);
+			ExecDB_Process(&ctrl,rec,value);
 		} else {
 			ctrl.rc = 0;
 		}
@@ -146,9 +158,9 @@ dbgmsg(">ExecuteDB_Server");
 			Send(fpDBW,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fpDBW,badio);
 			LBS_EmitStart(dbbuff);
 			ConvSetRecName(handler->conv,rec->name);
-			size = conv->SizeValue(handler->conv,rec->value);
+			size = conv->SizeValue(handler->conv,value);
 			LBS_ReserveSize(dbbuff,size,FALSE);
-			conv->PackValue(handler->conv,LBS_Body(dbbuff), rec->value);
+			conv->PackValue(handler->conv,LBS_Body(dbbuff), value);
 			LBS_EmitEnd(dbbuff);
 			SendLargeString(fpDBW,dbbuff);	ON_IO_ERROR(fpDBW,badio);
 		}

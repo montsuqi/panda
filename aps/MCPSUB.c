@@ -61,10 +61,14 @@ MCPSUB(
 	char	*mcpdata,
 	char	*data)
 {
-	DBCOMM_CTRL	ctrl;
+	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
-	ValueStruct	*mcp;
-	char		*mcp_func;
+	PathStruct		*path;
+	SQL_Operation	*op;
+	ValueStruct		*mcp
+		,			*value;
+	char			*mcp_func;
+	int				ono;
 
 dbgmsg(">MCPSUB");
 	mcp = ThisEnv->mcprec->value; 
@@ -75,6 +79,7 @@ dbgmsg(">MCPSUB");
 		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),"PUTG");
 		ValueInteger(GetItemLongName(mcp,"rc")) = 0;
 	} else {
+		value = NULL;
 		MakeCTRL(&ctrl,mcp);
 		if		(  !strcmp(mcp_func,"DBOPEN")  ) {
 			CheckArg(mcp_func,&ctrl);
@@ -97,11 +102,18 @@ dbgmsg(">MCPSUB");
 			rec = NULL;
 		} else {
 			rec = ThisDB[ctrl.rno];
-			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, rec->value);
+			value = rec->value;
+			path = rec->opt.db->path[ctrl.pno];
+			value = ( path->args != NULL ) ? path->args : value;
+			if		(  ( ono = (int)g_hash_table_lookup(path->opHash,mcp_func) )  !=  0  ) {
+				op = path->ops[ono-1];
+				value = ( op->args != NULL ) ? op->args : value;
+			}
+			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
 		}
-		ExecDB_Process(&ctrl,rec);
+		ExecDB_Process(&ctrl,rec,value);
 		if		(  rec  !=  NULL  ) {
-			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, rec->value);
+			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, value);
 		}
 		MakeMCP(mcp,&ctrl);
 	}

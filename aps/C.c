@@ -360,8 +360,12 @@ MCP_ExecFunction(
 {
 	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
+	PathStruct		*path;
+	SQL_Operation	*op;
+	ValueStruct		*value;
 	int			rno
-	,			pno;
+		,		pno
+		,		ono;
 	size_t		size;
 
 dbgmsg(">MCP_ExecFunction");
@@ -373,30 +377,40 @@ dbgmsg(">MCP_ExecFunction");
 	ctrl.rno = 0;
 	ctrl.pno = 0;
 	ctrl.blocks = 0;
-	if		(  rname  ==  NULL  ) {
-		rec = NULL;
-	} else
-	if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
+
+	value = NULL;
+	if		(	(  rname  !=  NULL  )
+			&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 		ctrl.rno = rno - 1;
 		rec = ThisDB[ctrl.rno];
-		if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
-													pname) )  !=  0  ) {
+		value = rec->value;
+		if		(	(  pname  !=  NULL  )
+				&&	(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+														pname) )  !=  0  ) ) {
 			ctrl.pno = pno - 1;
+			path = rec->opt.db->path[pno-1];
+			value = ( path->args != NULL ) ? path->args : value;
+			if		(	(  func  !=  NULL  )
+					&&	( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
+				op = path->ops[ono-1];
+				value = ( op->args != NULL ) ? op->args : value;
+			}
 		} else {
 			ctrl.pno = 0;
 		}
 	} else {
 		rec = NULL;
 	}
+
 	if		(  rec  !=  NULL  ) {
 		size = NativeSizeValue(NULL,rec->value);
 		ctrl.blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
-		CopyValue(rec->value,data);
+		CopyValue(value,data);
 	}
 	strcpy(ctrl.func,func);
-	ExecDB_Process(&ctrl,rec);
+	ExecDB_Process(&ctrl,rec,value);
 	if		(  rec  !=  NULL  ) {
-		CopyValue(data,rec->value);
+		CopyValue(data,value);
 	}
 	MakeMCP(node->mcprec->value,&ctrl);
 dbgmsg("<MCP_ExecFunction");
@@ -407,15 +421,20 @@ extern	ValueStruct	*
 MCP_GetDB_Define(
 	char	*name)
 {
-	int				rno;
-	RecordStruct	*rec;
-	ValueStruct		*val;
 	char			buff[SIZE_LONGNAME+1];
+	int				rno
+		,			pno
+		,			ono;
+	RecordStruct	*rec;
+	PathStruct		*path;
+	SQL_Operation	*op;
+	ValueStruct		*val
+		,			*ret;
 	char			*p
 		,			*q
 		,			*rname
 		,			*pname
-		,			*fname;
+		,			*oname;
 
 	strcpy(buff,name);
 	rname = buff;
@@ -424,20 +443,36 @@ MCP_GetDB_Define(
 		pname = p + 1;
 		if		(  ( p = strchr(pname,':') )  !=  NULL  ) {
 			*q = 0;
-			fname = p + 1;
+			oname = p + 1;
 		} else {
-			fname = NULL;
+			oname = NULL;
 		}
 	} else {
-		pname = NULL;
-		fname = NULL;
+		oname = NULL;
+		oname = NULL;
 	}		
 
+	val = NULL;
 	if		(  ( rno = (int)g_hash_table_lookup(DB_Table,name) )  !=  0  ) {
 		rec = ThisDB[rno-1];
-		val = DuplicateValue(rec->value);
-	} else {
-		val = NULL;
+		val = rec->value;
+		if		(	(  pname  !=  NULL  )
+				&&	(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+														pname) )  !=  0  ) )	{
+			path = rec->opt.db->path[pno-1];
+			val = ( path->args != NULL ) ? path->args : val;
+			if		(	(  oname  !=  NULL  )
+					&&	(  ( ono = (int)g_hash_table_lookup(path->opHash,oname) )  !=  0  ) )
+				{
+				op = path->ops[ono-1];
+				val = ( op->args != NULL ) ? op->args : val;
+			}
+		}
 	}
-	return	(val);		
+	if		(  val  !=  NULL  ) {
+		ret = DuplicateValue(val);
+	} else {
+		ret = NULL;
+	}
+	return	(ret);		
 }

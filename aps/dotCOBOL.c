@@ -536,7 +536,7 @@ dbgmsg(">ExecuteDB_Server");
 		} else {
 			rec = NULL;
 		}
-		ExecDB_Process(ctrl,rec);
+		ExecDB_Process(ctrl,rec,rec->value);
 		if		(  rec  !=  NULL  ) {
 			dotCOBOL_PackValue(dotCOBOL_Conv,data, rec->value);
 		}

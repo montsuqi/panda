@@ -26,9 +26,8 @@ copies.
 #include	<libmondai.h>
 
 extern	void	InitDB_Process(void);
-//extern	void	ExecDBG_Operation(DBG_Struct *dbg, char *name);
 extern	void	ExecDBOP(DBG_Struct *dbg, char *sql);
-extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec);
+extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec, ValueStruct *args);
 extern	void	TransactionStart(DBG_Struct *dbg);
 extern	void	TransactionEnd(DBG_Struct *dbg);
 extern	void	OpenDB(DBG_Struct *dbg);

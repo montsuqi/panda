@@ -107,9 +107,10 @@ typedef	struct _DBG_Struct	{
 	void		*conn;
 }	DBG_Struct;
 
-typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *);
+typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 typedef	void	(*DB_EXEC)(DBG_Struct *, char *);
-typedef	Bool	(*DB_FUNC_NAME)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *);
+typedef	Bool	(*DB_FUNC_NAME)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *,
+	ValueStruct *);
 
 typedef	struct _DB_Func	{
 	DB_FUNC_NAME	access;

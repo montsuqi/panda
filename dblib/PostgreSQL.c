@@ -154,20 +154,20 @@ ValueToSQL(
 
 static	char	*
 KeyValue(
-	DBG_Struct		*dbg,
-	RecordStruct	*rec,
-	char			**pk)
+	DBG_Struct	*dbg,
+	ValueStruct	*args,
+	char		**pk)
 {
 	ValueStruct	*val;
 
 dbgmsg(">KeyValue");
-	val = rec->value;
+	val = args;
 	while	(  *pk  !=  NULL  ) {
-		val = GetRecordItem(val,*pk);
+		val = GetRecordItem(args,*pk);
 		pk ++;
 	}
 dbgmsg("<KeyValue");
-	return	(ValueToSQL(dbg,val)); 
+	return	(ValueToSQL(dbg,val));
 }
 
 static	char	*
@@ -699,7 +699,8 @@ ExecPGSQL(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
-	LargeByteString	*src)
+	LargeByteString	*src,
+	ValueStruct		*args)
 {
 	char	sql[SIZE_SQL+1]
 	,		*p;
@@ -778,7 +779,7 @@ dbgmsg(">ExecPGSQL");
 								dbgmsg("OK");
 								level = 0;
 								alevel = 0;
-								GetTable(dbg,res,rec->value);
+								GetTable(dbg,res,args);
 								ctrl->rc += MCP_OK;
 							} else {
 								dbgmsg("EOF");
@@ -999,7 +1000,8 @@ static	void
 _DBSELECT(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 	DB_Struct	*db;
 	PathStruct	*path;
@@ -1014,7 +1016,7 @@ dbgmsg(">_DBSELECT");
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_SELECT]->proc;
-		ExecPGSQL(dbg,ctrl,rec,src);
+		ExecPGSQL(dbg,ctrl,rec,src,args);
 	}
 dbgmsg("<_DBSELECT");
 }
@@ -1023,7 +1025,8 @@ static	void
 _DBFETCH(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 	char	sql[SIZE_SQL+1]
 	,		*p;
@@ -1042,7 +1045,7 @@ dbgmsg(">_DBFETCH");
 		src = path->ops[DBOP_FETCH]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src);
+			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
 			p += sprintf(p,"fetch from %s_%s_csr",rec->name,path->name);
@@ -1057,7 +1060,7 @@ dbgmsg(">_DBFETCH");
 					dbgmsg("OK");
 					level = 0;
 					alevel = 0;
-					GetTable(dbg,res,rec->value);
+					GetTable(dbg,res,args);
 					ctrl->rc = MCP_OK;
 				} else {
 					dbgmsg("EOF");
@@ -1074,7 +1077,8 @@ static	void
 _DBUPDATE(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 	char	sql[SIZE_SQL+1]
 	,		*p;
@@ -1096,14 +1100,14 @@ dbgmsg(">_DBUPDATE");
 		src = path->ops[DBOP_UPDATE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src);
+			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
 			p += sprintf(p,"UPDATE %s\tSET ",rec->name);
 			level = 0;
 			alevel = 0;
 			fInArray = FALSE;
-			p = UpdateValue(dbg,p,rec->value);
+			p = UpdateValue(dbg,p,args);
 
 			p += sprintf(p,"WHERE\t");
 			item = db->pkey->item;
@@ -1117,7 +1121,7 @@ dbgmsg(">_DBUPDATE");
 						q += sprintf(q,"_");
 					}
 				}
-				p += sprintf(p,"%s.%s = %s ",rec->name,name,KeyValue(dbg,rec,*item));
+				p += sprintf(p,"%s.%s = %s ",rec->name,name,KeyValue(dbg,args,*item));
 				item ++;
 				if		(  *item  !=  NULL  ) {
 					p += sprintf(p,"and\t");
@@ -1142,7 +1146,8 @@ static	void
 _DBDELETE(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 	char	sql[SIZE_SQL+1]
 	,		*p;
@@ -1164,7 +1169,7 @@ dbgmsg(">_DBDELETE");
 		src = path->ops[DBOP_DELETE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src);
+			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
 			p += sprintf(p,"delete\tfrom\t%s ",rec->name);
@@ -1181,7 +1186,7 @@ dbgmsg(">_DBDELETE");
 					}
 				}
 				p += sprintf(p,"%s.%s = %s ",rec->name,name,
-							 KeyValue(dbg,rec,*item));
+							 KeyValue(dbg,args,*item));
 				item ++;
 				if		(  *item  !=  NULL  ) {
 					p += sprintf(p,"and\t");
@@ -1206,7 +1211,8 @@ static	void
 _DBINSERT(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 	char	sql[SIZE_SQL+1]
 	,		*p;
@@ -1224,18 +1230,18 @@ dbgmsg(">_DBINSERT");
 		src = path->ops[DBOP_INSERT]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src);
+			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
 			p += sprintf(p,"INSERT\tINTO\t%s (",rec->name);
 
 			level = 0;
 			alevel = 0;
-			p = InsertNames(p,rec->value);
+			p = InsertNames(p,args);
 			p += sprintf(p,") ");
 			p += sprintf(p,"VALUES\t(");
 			fInArray = FALSE;
-			p = InsertValues(dbg,p,rec->value);
+			p = InsertValues(dbg,p,args);
 			p += sprintf(p,") ");
 			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
@@ -1257,7 +1263,8 @@ _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	ValueStruct		*args)
 {
 	DB_Struct	*db;
 	PathStruct	*path;
@@ -1281,7 +1288,7 @@ dbgmsg(">_DBACCESS");
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
 				ctrl->rc = MCP_OK;
-				ExecPGSQL(dbg,ctrl,rec,src);
+				ExecPGSQL(dbg,ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
 				rc = FALSE;

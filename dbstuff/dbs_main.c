@@ -190,7 +190,8 @@ DecodeName(
 
 static	void
 RecvData(
-	NETFILE	*fpComm)
+	NETFILE		*fpComm,
+	ValueStruct	*args)
 {
 	char	buff[SIZE_BUFF+1];
 	char	vname[SIZE_BUFF+1]
@@ -198,7 +199,7 @@ RecvData(
 	,		str[SIZE_BUFF+1];
 	char	*p;
 	int		rno;
-	ValueStruct	*value;
+	ValueStruct		*value;
 	RecordStruct	*rec;
 
 	do {
@@ -208,13 +209,9 @@ RecvData(
 			*p = 0;
 			DecodeName(rname,vname,buff);
 			DecodeStringURL(str,p+1);
-			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
-				if		(  ( rec = ThisDB[rno-1] )  !=  NULL  ) {
-					value = GetItemLongName(rec->value,vname);
-					ValueIsUpdate(value);
-					SetValueString(value,str,DB_LOCALE);
-				}
-			}
+			value = GetItemLongName(args,vname);
+			ValueIsUpdate(value);
+			SetValueString(value,str,DB_LOCALE);
 		} else
 			break;
 	}	while	(TRUE);
@@ -224,7 +221,8 @@ static	void
 WriteClientString(
 	NETFILE		*fpComm,
 	Bool		fType,
-	DBCOMM_CTRL	*ctrl)
+	DBCOMM_CTRL	*ctrl,
+	ValueStruct	*args)
 {
 	char	name[SIZE_BUFF+1]
 	,		rname[SIZE_BUFF+1]
@@ -250,19 +248,15 @@ dbgmsg(">WriteClientString");
 			fName = TRUE;
 		}
 		DecodeName(rname,vname,name);
-		if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
-			if		(  ( rec = ThisDB[rno-1] )  !=  NULL  ) {
-				if		(  *vname  !=  0  ) {
-					value = GetItemLongName(rec->value,vname);
-				} else {
-					value = rec->value;
-				}
-				SetValueName(name);
-				SendValueString(fpComm,value,NULL,fName,fType);
-				if		(  fName  ) {
-					SendStringDelim(fpComm,"\n");
-				}
-			}
+		if		(  *vname  !=  0  ) {
+			value = GetItemLongName(args,vname);
+		} else {
+			value = args;
+		}
+		SetValueName(name);
+		SendValueString(fpComm,value,NULL,fName,fType);
+		if		(  fName  ) {
+			SendStringDelim(fpComm,"\n");
 		}
 	}	while	(TRUE);
 dbgmsg("<WriteClientString");
@@ -357,14 +351,18 @@ do_String(
 	Bool	ret
 	,		fType;
 	DBCOMM_CTRL	ctrl;
+	ValueStruct		*value;
 	RecordStruct	*rec;
-	char	func[SIZE_FUNC+1]
-	,		rname[SIZE_RNAME+1]
-	,		pname[SIZE_PNAME+1];
+	PathStruct		*path;
+	SQL_Operation	*op;
+	char			func[SIZE_FUNC+1]
+		,			rname[SIZE_RNAME+1]
+		,			pname[SIZE_PNAME+1];
 	char	*p
-	,		*q;
+		,	*q;
 	int		rno
-	,		pno;
+		,	pno
+		,	ono;
 
 	if		(  strncmp(input,"Exec: ",6)  ==  0  ) {
 		dbgmsg("exec");
@@ -381,12 +379,20 @@ do_String(
 				strcpy(rname,"");
 			}
 			DecodeStringURL(pname,p);
+			value = NULL;
 			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 				ctrl.rno = rno - 1;
 				rec = ThisDB[ctrl.rno];
+				value = rec->value;
 				if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
 															pname) )  !=  0  ) {
 					ctrl.pno = pno - 1;
+					path = rec->opt.db->path[pno-1];
+					value = ( path->args != NULL ) ? path->args : value;
+					if		(  ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  )	{
+						op = path->ops[ono-1];
+						value = ( op->args != NULL ) ? op->args : value;
+					}
 				} else {
 					ctrl.pno = 0;
 				}
@@ -401,11 +407,11 @@ do_String(
 			rec = NULL;
 		}
 		strcpy(ctrl.func,func);
-		RecvData(fpComm);
+		RecvData(fpComm,value);
 		ctrl.rc = 0;
-		ExecDB_Process(&ctrl,rec);
+		ExecDB_Process(&ctrl,rec,value);
 		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
-		WriteClientString(fpComm,fType,&ctrl);
+		WriteClientString(fpComm,fType,&ctrl,value);
 		ret = TRUE;
 	} else
 	if		(  strncmp(input,"Schema: ",8)  ==  0  ) {
