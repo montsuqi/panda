@@ -15,4 +15,6 @@ automake --copy --add-missing
 echo "Running autoconf..."
 autoconf
 
-echo 'Done.  Run "configure --enable-maintainer-mode --with-postgres=yes --with-shell=yes --with-ruby=/usr/bin/ruby --with-opencobol" now'
+echo 'Done.  Run "./configure" now'
+echo 'Usually configure option:'
+echo '  --enable-maintainer-mode --enable-opencobol --with-postgres=yes --with-ruby=/usr/bin/ruby'
