@@ -1,3 +1,7 @@
+2004-01-15  Shugo Maeda  <shugo@netlab.jp>
+
+	* aps/Ruby.c : Rubyハンドラのサポート
+
 2004-01-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* fdd/fdd.c, fdd/fdw.c : 処理の実行ステータスの返却

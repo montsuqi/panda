@@ -70,6 +70,7 @@
 
 #undef	HAVE_DOTCOBOL
 #undef	HAVE_OPENCOBOL
+#undef	HAVE_RUBY
 #undef	HAVE_POSTGRES
 #undef	USE_SHELL
 #undef	_POSIX_C_SOURCE

@@ -236,6 +236,45 @@ AC_ARG_WITH(opencobol,
 	AC_SUBST(OPENCOBOL_CFLAGS) 
 ])
 
+dnl *************************************************************************** 
+dnl for Ruby
+dnl *************************************************************************** 
+ 
+AC_ARG_WITH(ruby, 
+[  --with-ruby=PATH     path to ruby],[
+        if test "x$withval" = "xyes"; then
+          AC_PATH_PROG(RUBY, ruby, no)
+        else
+	  AC_MSG_CHECKING(for ruby)
+          RUBY="$withval"
+          AC_MSG_RESULT($RUBY)
+        fi
+        if test "x$RUBY" != "xno"; then
+	  AC_DEFINE(HAVE_RUBY,1,[])
+	  RUBY_CFLAGS=`$RUBY -r rbconfig -e 'print "-I" + Config::CONFIG[["archdir"]]'`
+	  RUBY_SHARED=`$RUBY -r rbconfig -e 'print Config::CONFIG[["ENABLE_SHARED"]]'`
+	  if test "$RUBY_SHARED" = "yes"; then
+	    RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["LIBRUBYARG"]].gsub(/-L\./, "-L" + Config::CONFIG[["libdir"]]) + " " + Config::CONFIG[["LIBS"]]'`
+	    RUBY_EXT_LIBS="$RUBY_LIBS"
+	  else
+	    RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]] + "/" + Config::CONFIG[["LIBRUBYARG"]] + " " + Config::CONFIG[["LIBS"]]'`
+	    RUBY_EXT_LIBS=`$RUBY -r rbconfig -e 'Config::CONFIG[["LIBS"]]'`
+	  fi
+	  rubylibdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["rubylibdir"]]'`
+	  rubyarchdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]]'`
+	fi
+	AC_SUBST(RUBY) 
+	AC_SUBST(RUBY_CFLAGS) 
+	AC_SUBST(RUBY_SHARED)
+	AC_SUBST(RUBY_LIBS)
+	AC_SUBST(RUBY_EXT_LIBS)
+	AC_SUBST(rubylibdir) 
+	AC_SUBST(rubyarchdir) 
+],[
+	AC_MSG_CHECKING(for ruby)
+        AC_MSG_RESULT(no)
+])
+
 dnl ***************************************************************************
 dnl pty message display
 dnl ***************************************************************************

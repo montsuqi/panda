@@ -22,6 +22,7 @@ LDADD 		=							\
 	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(OPENCOBOL_LIBS)					\
+	$(RUBY_LIBS)						\
 	$(top_srcdir)/libs/libpanda.la		\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/libs/libpandacom.la	\
@@ -35,6 +36,7 @@ INCLUDES 			= \
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
+	$(RUBY_CFLAGS)		\
 	$(SSL_CFLAGS)			\
 	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
@@ -45,13 +47,15 @@ HANDLER_OBJECTS	=	\
 	OpenCOBOL.la	\
 	C.la			\
 	Exec.la			\
-	Resident.la
+	Resident.la		\
+	Ruby.la
 
 dotCOBOL_la_LDFLAGS		=	-module -export-dynamic
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic
 C_la_LDFLAGS			=	-module -export-dynamic
 Exec_la_LDFLAGS			=	-module -export-dynamic
 Resident_la_LDFLAGS		=	-module -export-dynamic
+Ruby_la_LDFLAGS			=   -module -export-dynamic
 
 dotCOBOL_la_SOURCES		=	dotCOBOL.c
 C_la_SOURCES			=	C.c
@@ -60,6 +64,8 @@ OpenCOBOL_la_LIBADD		=	\
 	$(OPENCOBOL_LIBS)
 Exec_la_SOURCES			=	Exec.c
 Resident_la_SOURCES		=	Resident.c
+Ruby_la_SOURCES			=	Ruby.c
+Ruby_la_LIBADD			=	$(RUBY_LIBS)
 
 aps_SOURCES	=	\
 	aps_main.c	aps_main.h				\
