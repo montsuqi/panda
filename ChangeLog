@@ -1,3 +1,7 @@
+2003-08-19  OGOSHI  <ogochan@nurs.or.jp>
+
+	* aps/apsio.c (CheckCache): 間違い修正
+
 2003-08-15  OGOSHI  <ogochan@nurs.or.jp>
 
 	* aps/Exec.c: CGIスタイルに任意のsub processをexecするハンドラ

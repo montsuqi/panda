@@ -193,11 +193,7 @@ dbgmsg(">ExecuteDC");
 			if		(  bind->module  ==  NULL  )	break;
 			strcpy(ValueString(GetItemLongName(node->mcprec->value,"dc.module")),bind->module);
 			ExecDB_Function("DBSTART",NULL,NULL);
-printf("before\n");
-DumpValueStruct(node->linkrec->value);
 			ExecuteProcess(node);
-printf("after\n");
-DumpValueStruct(node->linkrec->value);
 			if		(  Sleep  >  0  ) {
 				sleep(Sleep);
 			}

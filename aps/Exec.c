@@ -96,11 +96,8 @@ dbgmsg(">PutApplication");
 	LBS_ReserveSize(iobuff,size,FALSE);
 	CGI_PackValue(ExecConv,LBS_Body(iobuff),node->mcprec->value);
 	LBS_EmitEnd(iobuff);
-dbgmsg("*");
 	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
-dbgmsg("**");
 	Send(fp,"&",1);					ON_IO_ERROR(fp,badio);
-dbgmsg("***");
 
 	ConvSetRecName(ExecConv,node->linkrec->name);
 	size = CGI_SizeValue(ExecConv,node->linkrec->value);
@@ -110,7 +107,6 @@ dbgmsg("***");
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 	Send(fp,"&",1);					ON_IO_ERROR(fp,badio);
-dbgmsg("****");
 
 	ConvSetRecName(ExecConv,node->sparec->name);
 	size = CGI_SizeValue(ExecConv,node->sparec->value);
@@ -119,33 +115,21 @@ dbgmsg("****");
 	CGI_PackValue(ExecConv,LBS_Body(iobuff),node->sparec->value);
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
-dbgmsg("*****");
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
-dbgmsg("-");
 		LBS_EmitStart(iobuff);
-dbgmsg("--");
 		if		(  node->scrrec[i]  !=  NULL  ) {
-dbgmsg("---");
 			ConvSetRecName(ExecConv,node->scrrec[i]->name);
-dbgmsg("----");
 			size = CGI_SizeValue(ExecConv,node->scrrec[i]->value);
-dbgmsg("-----");
 			if		(  size  >  0  ) {
-dbgmsg("------");
 				Send(fp,"&",1);				ON_IO_ERROR(fp,badio);
-dbgmsg("-------");
 			}
 			LBS_ReserveSize(iobuff,size,FALSE);
-dbgmsg("--------");
 			CGI_PackValue(ExecConv,LBS_Body(iobuff),node->scrrec[i]->value);
-dbgmsg("---------");
 		}
 		LBS_EmitEnd(iobuff);
-dbgmsg("----------");
 		SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 	}
-dbgmsg("******");
 	Send(fp,"\n",1);		ON_IO_ERROR(fp,badio);
   badio:
 dbgmsg("<PutApplication");
@@ -162,24 +146,18 @@ dbgmsg(">GetApplication");
 	LBS_EmitStart(iobuff);
 	RecvLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 
-printf("*\n");
 	ConvSetRecName(ExecConv,node->mcprec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->mcprec->value);
-printf("**\n");
 
 	ConvSetRecName(ExecConv,node->linkrec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->linkrec->value);
-printf("***\n");
-
 	ConvSetRecName(ExecConv,node->sparec->name);
 	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->sparec->value);
-printf("****\n");
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
 			ConvSetRecName(ExecConv,node->scrrec[i]->name);
 			CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->scrrec[i]->value);
-printf("*****\n");
 		}
 	}
 	DumpNode(node);

@@ -123,7 +123,6 @@ dbgmsg(">GetApplication");
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
 		p = OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
 	}
-
 dbgmsg("<GetApplication");
 }
 
