@@ -406,12 +406,14 @@ CheckFeture(
 			}
 		}
 	}
+#ifdef	DEBUG
 	printf("core    = %s\n",fFetureCore ? "YES" : "NO");
 	printf("i18n    = %s\n",fFetureI18N ? "YES" : "NO");
 	printf("expand  = %s\n",fFetureExpand ? "YES" : "NO");
 	printf("blob    = %s\n",fFetureBlob ? "YES" : "NO");
 	printf("network = %s\n",fFetureNetwork ? "YES" : "NO");
 	printf("old     = %s\n",fFetureOld ? "YES" : "NO");
+#endif
 }
 
 static	void
