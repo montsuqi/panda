@@ -446,8 +446,9 @@ value_equal(ValueStruct *val, VALUE obj)
     }
 }
 
-#define CACHEABLE(val) (ValueType(val) == GL_TYPE_ARRAY || \
-                        ValueType(val) == GL_TYPE_RECORD)
+#define CACHEABLE(val) (val != NULL && \
+                        (ValueType(val) == GL_TYPE_ARRAY || \
+                         ValueType(val) == GL_TYPE_RECORD))
 
 typedef struct _value_struct_data {
     ValueStruct *value;
@@ -595,6 +596,8 @@ recval_aref(VALUE self, VALUE name)
         return obj;
 
     val = GetRecordItem(data->value, StringValuePtr(name));
+    if (val == NULL)
+        rb_raise(rb_eArgError, "no such field: %s", StringValuePtr(name));
     obj = get_value(val);
     if (CACHEABLE(val))
         rb_hash_aset(data->cache, name, obj);
@@ -1567,7 +1570,12 @@ execute_batch(MessageHandler *handler, char *name, char *param)
                             2, rb_str_new2(param), database_new(DB_Table, ThisDB));
     if (state && error_handle(state))
         return -1;
-    return NUM2INT(rc);
+    if (FIXNUM_P(rc)) {
+        return NUM2INT(rc);
+    }
+    else {
+        return -1;
+    }
 }
 
 static  void
