@@ -61,7 +61,7 @@ static	char	*Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
 static	char	*Processid = "";
 
 static	char	*FlagChar[]	= {
-	"M",	"D",	"W",	"E",	"L",	"L",	"P",	"?"};
+	"M",	"D",	"W",	"E",	"L",	"P",	"?"};
 
 extern	void
 MessageDebug(
