@@ -134,11 +134,13 @@ FindBlobPool(
 	char	buff[SIZE_NAME+1];
 	BLOBDir	*bd;
 
+ENTER_FUNC;
 	if		(  ( bd = (BLOBDir *)g_hash_table_lookup(dbg->loPool,ValueObject(value)) )
 			   ==  NULL  ) {
 		strcpy(buff,"/tmp/XXXXXX");
 		fname = TempName(buff,SIZE_NAME+1);
-		if		(  RequestExportBLOB(fpBlob,ValueObject(value),fname)  ) {
+		if		(	(  ValueObjectID(value).el[0]  !=  0  )
+				&&	(  RequestExportBLOB(fpBlob,APS_BLOB,ValueObject(value),fname)  ) ) {
 			bd = New(BLOBDir);
 			bd->obj = *ValueObject(value);
 			fname = StrDup(fname);
@@ -146,7 +148,7 @@ FindBlobPool(
 			bd->fImport = FALSE;
 			g_hash_table_insert(dbg->loPool,&bd->obj,bd);
 		} else
-		if		(  RequestImportBLOB(fpBlob,ValueObject(value),fname)  ) {
+		if		(  RequestImportBLOB(fpBlob,APS_BLOB,ValueObject(value),fname)  ) {
 			bd = New(BLOBDir);
 			bd->obj = *ValueObject(value);
 			fname = StrDup(fname);
@@ -157,6 +159,7 @@ FindBlobPool(
 			fname = NULL;
 		}
 	}
+LEAVE_FUNC;
 	return	(fname);
 }
 
@@ -363,9 +366,9 @@ _ReleaseBLOB(
 	DBG_Struct *dbg)
 {
 	if		(  bd->fImport  ) {
-		RequestImportBLOB(fpBlob,&bd->obj,bd->fname);
+		RequestImportBLOB(fpBlob,APS_BLOB,&bd->obj,bd->fname);
 	}
-	unlink(bd->fname);
+	//	unlink(bd->fname);
 	xfree(bd->fname);
 	xfree(bd);
 }

@@ -1,3 +1,8 @@
+2004-07-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (ReadyAPS): wfc -> aps接続のコードが残っていたの
+	で削除
+
 2004-07-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/server.c (ChildProcess): termの設定のタイミングを正しくした

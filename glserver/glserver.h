@@ -27,8 +27,8 @@ copies.
 #define	FETURE_NULL		(byte)0x0000
 #define	FETURE_CORE		(byte)0x0001
 #define	FETURE_I18N		(byte)0x0002
-#define	FETURE_EXPAND	(byte)0x0004
-#define	FETURE_BLOB		(byte)0x0008
+#define	FETURE_BLOB		(byte)0x0004
+#define	FETURE_EXPAND	(byte)0x0008
 #define	FETURE_NETWORK	(byte)0x0010
 #define	FETURE_OLD		(byte)0x0020
 

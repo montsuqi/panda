@@ -38,6 +38,7 @@ copies.
 #include	"wfcdata.h"
 #include	"wfcio.h"
 #include	"blobcom.h"
+#include	"front.h"
 #include	"debug.h"
 #include	"socket.h"
 
@@ -57,11 +58,6 @@ ConnectTermServer(
 
 dbgmsg(">ConnectTermServer");
 	port = ParPort(url,PORT_WFC);
-#ifdef	DEBUG
-	printf("host = [%s]\n",port->host);
-	printf("port = [%s]\n",port->port);
-	fflush(stdout);
-#endif
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
 	fp = SocketToNet(fd);
@@ -164,17 +160,6 @@ dbgmsg("<RecvTermServerHeader");
 	return	(rc);
 }
 
-static	char	*
-CacheFileName(
-	ValueStruct	*value)
-{
-	static	char	buf[SIZE_BUFF];
-
-	sprintf(buf,"%s/%s",CacheDir,ValueToString(value,NULL));
-	return	(buf);
-}
-
-
 static	void
 _FeedBLOB(
 	NETFILE		*fp,
@@ -214,14 +199,22 @@ ENTER_FUNC;
 	  case	GL_TYPE_NUMBER:
 		break;
 	  case	GL_TYPE_OBJECT:
+		ValueIsNonNil(value);
 		SendPacketClass(fp,WFC_BLOB);
 		SendPacketClass(fp,BLOB_EXPORT);
 		SendObject(fp,ValueObject(value));
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
 			RecvLBS(fp,buff);
-			if		(  ( fpBLOB = Fopen(CacheFileName(value),"w") )  !=  NULL  ) {
+			if		(  ( fpBLOB = Fopen(BlobCacheFileName(value),"w") )  !=  NULL  ) {
 				fwrite(LBS_Body(buff),LBS_Size(buff),1,fpBLOB);
 				fclose(fpBLOB);
+			}
+		} else {
+			SendPacketClass(fp,WFC_BLOB);
+			SendPacketClass(fp,BLOB_IMPORT);
+			if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+				RecvObject(fp,ValueObject(value));
+				SendLength(fp,0);
 			}
 		}
 		break;

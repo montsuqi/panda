@@ -151,7 +151,7 @@ dbgmsg("<ExecuteServer");
 static	void
 InitSystem(void)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","");
 	if		(  ApsPortNumber  ==  NULL  ) {
@@ -179,7 +179,7 @@ dbgmsg(">InitSystem");
 	InitTerm();
 	StartCoreThread();
 	InitControl();
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }
 
 static	void

@@ -242,11 +242,11 @@ dbgmsg(">SendWindow");
 				ON_IO_ERROR(fpComm,badio);
 				if		(  fFetureI18N  ) {
 					GL_SendValue(fpComm,win->rec->value,NULL,
-								 fFetureExpand,fFetureNetwork);
+								 fFetureBlob,fFetureExpand,fFetureNetwork);
 					ON_IO_ERROR(fpComm,badio);
 				} else {
 					GL_SendValue(fpComm,win->rec->value,"euc-jp",
-								 fFetureExpand,fFetureNetwork);
+								 fFetureBlob,fFetureExpand,fFetureNetwork);
 					ON_IO_ERROR(fpComm,badio);
 				}
 			} else {
@@ -399,12 +399,12 @@ CheckFeture(
 		}
 	}
 #ifdef	DEBUG
-	printf("core    = %s\n",fFetureCore ? "YES" : "NO");
-	printf("i18n    = %s\n",fFetureI18N ? "YES" : "NO");
-	printf("expand  = %s\n",fFetureExpand ? "YES" : "NO");
-	printf("blob    = %s\n",fFetureBlob ? "YES" : "NO");
-	printf("network = %s\n",fFetureNetwork ? "YES" : "NO");
-	printf("old     = %s\n",fFetureOld ? "YES" : "NO");
+	printf("core      = %s\n",fFetureCore ? "YES" : "NO");
+	printf("i18n      = %s\n",fFetureI18N ? "YES" : "NO");
+	printf("blob      = %s\n",fFetureBlob ? "YES" : "NO");
+	printf("expand    = %s\n",fFetureExpand ? "YES" : "NO");
+	printf("network   = %s\n",fFetureNetwork ? "YES" : "NO");
+	printf("old       = %s\n",fFetureOld ? "YES" : "NO");
 #endif
 }
 
@@ -479,7 +479,7 @@ ENTER_FUNC;
 				GL_RecvString(fpComm,name,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
-					GL_RecvValue(fpComm,value,coding,fFetureExpand,fFetureNetwork);
+					GL_RecvValue(fpComm,value,coding,fFetureBlob,fFetureExpand,fFetureNetwork);
 				} else {
 					MessagePrintf("invalid item name [%s]\n",name);
 					exit(1);

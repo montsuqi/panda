@@ -46,6 +46,7 @@ copies.
 #include	"glserver.h"
 #include	"dirs.h"
 #include	"DDparser.h"
+#include	"front.h"
 #include	"option.h"
 #include	"message.h"
 #include	"debug.h"

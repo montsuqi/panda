@@ -74,6 +74,8 @@ copies.
 #define	SEND16(v)	(v)
 #endif
 
+static	LargeByteString	*LargeBuff;
+
 #if	0
 static	GList		*ScreenStack;
 static	void
@@ -401,6 +403,31 @@ GL_SendBool(
 	Send(fp,buf,1);
 }
 
+static	void
+GL_RecvLBS(
+	NETFILE	*fp,
+	LargeByteString	*lbs)
+{
+	size_t	size;
+
+	size = GL_RecvLength(fp);
+	LBS_ReserveSize(lbs,size,FALSE);
+	if		(  size  >  0  ) {
+		Recv(fp,LBS_Body(lbs),size);
+	}
+}
+
+static	void
+GL_SendLBS(
+	NETFILE	*fp,
+	LargeByteString	*lbs)
+{
+	GL_SendLength(fp,LBS_Size(lbs));
+	if		(  LBS_Size(lbs)  >  0  ) {
+		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 
 static	Bool
@@ -538,6 +565,7 @@ RecvValueSkip(
 	char			buff[SIZE_BUFF];
 	int				count
 	,				i;
+	Fixed	*xval;
 
 	type = GL_RecvDataType(fp);
 	switch	(type) {
@@ -551,8 +579,10 @@ RecvValueSkip(
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-	  case	GL_TYPE_NUMBER:
 		GL_RecvString(fp,buff);
+		break;
+	  case	GL_TYPE_NUMBER:
+		FreeFixed(GL_RecvFixed(fp));
 		break;
 	  case	GL_TYPE_ARRAY:
 		count = GL_RecvInt(fp);
@@ -746,9 +776,9 @@ GL_SendVersionString(
 	size_t	size;
 
 #ifdef	NETWORK_ORDER
-	version = "version:expand:no";
+	version = "version:no:blob:expand";
 #else
-	version = "version:expand";
+	version = "version:blob:expand";
 #endif
 	size = strlen(version);
 	SendChar(fp,(size&0xFF));
@@ -829,6 +859,7 @@ InitProtocol(void)
 {
 dbgmsg(">InitProtocol");
 	WindowTable = NewNameHash();
+	LargeBuff = NewLBS();
 #if	0
 	InitScreenStack();
 #endif
@@ -865,22 +896,22 @@ _SendWindowData(
 	XML_Node	*node,
 	gpointer	user_data)
 {
-dbgmsg(">SendWindowData");
+ENTER_FUNC;
 	GL_SendPacketClass(fpComm,GL_WindowName);
 	GL_SendString(fpComm,wname);
 	g_hash_table_foreach(node->UpdateWidget,(GHFunc)SendWidgetData,fpComm);
 	GL_SendPacketClass(fpComm,GL_END);
-dbgmsg("<SendWindowData");
+ENTER_FUNC;
 }
 
 extern	void
 SendWindowData(void)
 {
-dbgmsg(">SendWindowData");
+ENTER_FUNC;
 	g_hash_table_foreach(WindowTable,(GHFunc)_SendWindowData,NULL);
 	GL_SendPacketClass(fpComm,GL_END);
 	ClearWindowTable();
-dbgmsg("<SendWindowData");
+ENTER_FUNC;
 }
 
 extern	Bool
@@ -944,6 +975,13 @@ SendStringData(
 	  case	GL_TYPE_TEXT:
 		GL_SendString(fp,(char *)str);
 		break;
+	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_BYTE:
+	  case	GL_TYPE_OBJECT:
+		LBS_ReserveSize(LargeBuff,strlen(str)+1,FALSE);
+		strcpy(LBS_Body(LargeBuff),str);
+		GL_SendLBS(fp,LargeBuff);
+		break;
 	  case	GL_TYPE_INT:
 		GL_SendInt(fp,atoi(str));
 		break;
@@ -978,6 +1016,18 @@ RecvStringData(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		GL_RecvString(fp,str);
+		ret = str;
+		break;
+	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_BYTE:
+	  case	GL_TYPE_OBJECT:
+		GL_RecvLBS(fp,LargeBuff);
+		if		(  LBS_Size(LargeBuff)  >  0  ) {
+			memcpy(str,LBS_Body(LargeBuff),LBS_Size(LargeBuff));
+			str[LBS_Size(LargeBuff)] = 0;
+		} else {
+			*str = 0;
+		}
 		ret = str;
 		break;
 	  default:

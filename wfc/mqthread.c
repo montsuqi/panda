@@ -68,13 +68,13 @@ ActivateAPS_Node(
 	APS_Node	*aps,
 	NETFILE		*fp)
 {
-dbgmsg(">ActivateAPS_Node");
+ENTER_FUNC;
 	aps->count = 0;
 	aps->fp = fp;
 	if		(  fp  !=  NULL  ) {
 		SendInt(fp,aps->id);
 	}
-dbgmsg("<ActivateAPS_Node");
+LEAVE_FUNC;
 }
 
 static	byte
@@ -571,7 +571,7 @@ ReadyAPS(void)
 	NETFILE	*fp;
 	LD_Node	*ld;
 
-dbgmsg(">ReadyAPS");
+ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 		info = ThisEnv->ld[i];
 		ld = New(LD_Node);
@@ -585,17 +585,6 @@ dbgmsg(">ReadyAPS");
 			ld->aps[j].fp = NULL;
 			ld->aps[j].id = ApsId ++;
 			ClearAPS_Node(&ld->aps[j]);
-			if		(  info->ports[j]  !=  NULL  ) {
-				fh = ConnectSocket(info->ports[j],SOCK_STREAM);
-				if		(  fh  >  0  ) {
-					fp = SocketToNet(fh);
-				} else {
-					fp = NULL;
-				}
-			} else {
-				fp = NULL;
-			}
-			ActivateAPS_Node(&ld->aps[j],fp);
 		}
 
 		ld->info = info;
@@ -611,7 +600,7 @@ dbgmsg(">ReadyAPS");
 			}
 		}
 	}
-dbgmsg("<ReadyAPS");
+LEAVE_FUNC;
 }
 
 extern	void

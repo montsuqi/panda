@@ -26,15 +26,15 @@ copies.
 #include	"net.h"
 #include	"blob.h"
 
-extern	Bool	RequestNewBLOB(NETFILE *fp, int mode, MonObjectType *obj);
-extern	Bool	RequestOpenBLOB(NETFILE *fp, int mode, MonObjectType *obj);
-extern	size_t	RequestWriteBLOB(NETFILE *fp, MonObjectType *obj,
+extern	Bool	RequestNewBLOB(NETFILE *fp, PacketClass flag, int mode, MonObjectType *obj);
+extern	Bool	RequestOpenBLOB(NETFILE *fp, PacketClass flag, int mode, MonObjectType *obj);
+extern	size_t	RequestWriteBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj,
 								 byte *buff, size_t size);
-extern	size_t	RequestReadBLOB(NETFILE *fp, MonObjectType *obj,
+extern	size_t	RequestReadBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj,
 								byte *buff, size_t size);
-extern	Bool	RequestCloseBLOB(NETFILE *fp, MonObjectType *obj);
-extern	Bool	RequestExportBLOB(NETFILE *fp, MonObjectType *obj, char *fname);
-extern	Bool	RequestImportBLOB(NETFILE *fp, MonObjectType *obj, char *fname);
+extern	Bool	RequestCloseBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj);
+extern	Bool	RequestExportBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj, char *fname);
+extern	Bool	RequestImportBLOB(NETFILE *fp, PacketClass flag, MonObjectType *obj, char *fname);
 
 #undef	GLOBAL
 #ifdef	MAIN

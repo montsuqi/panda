@@ -638,7 +638,7 @@ td {
               <xsl:value-of select="$winName"/>
               <xsl:text>.</xsl:text>
               <xsl:value-of select="./name"/>
-              <xsl:text>.item[#i].value1</xsl:text>
+              <xsl:text>.item[#i].value0</xsl:text>
             </xsl:attribute>
           </fixed>
         </option>

@@ -115,6 +115,27 @@ dbgmsg("<TermName");
 	return	(name); 
 }
 
+extern	char	*
+BlobCacheFileName(
+	ValueStruct	*value)
+{
+	static	char	buf[SIZE_BUFF];
+
+	//DumpValueStruct(value);
+	sprintf(buf,"%s/%s",CacheDir,ValueToString(value,NULL));
+	//printf("cache = [%s]\n",buf);
+	return	(buf);
+}
+
+extern	void
+BlobCacheCleanUp(void)
+{
+	static	char	buf[SIZE_BUFF];
+
+	sprintf(buf,"rm -f %s/*",CacheDir);
+	system(buf);
+}
+
 extern	ScreenData	*
 InitSession(void)
 {

@@ -187,7 +187,7 @@ ReadTerminal(
 	int			ix;
 	Bool		fExit;
 
-dbgmsg(">ReadTerminal");
+ENTER_FUNC;
 	ld = NULL;
 	fExit = FALSE;
 	do {
@@ -206,7 +206,7 @@ dbgmsg(">ReadTerminal");
 				bind = (WindowBind *)g_hash_table_lookup(ld->info->whash,data->hdr->window);
 				if		(  bind  !=  NULL  ) {
 					if		(  bind->ix  >=  0  ) {
-						SendPacketClass(fp,APS_OK);				ON_IO_ERROR(fp,badio);
+						SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
 						dbgmsg("send OK");
 						RecvLBS(fp,data->scrdata[bind->ix]);	ON_IO_ERROR(fp,badio);
 						data->hdr->rc = TO_CHAR(0);
@@ -217,7 +217,7 @@ dbgmsg(">ReadTerminal");
 			}
 			break;
 		  case	WFC_BLOB:
-			dbgmsg("recv LARGE");
+			dbgmsg("recv BLOB");
 			PassiveBLOB(fp,Blob);
 			break;
 		  case	WFC_PING:
@@ -240,19 +240,8 @@ dbgmsg(">ReadTerminal");
 	if		(  ld  ==  NULL  ) {
 		SendPacketClass(fp,WFC_NOT);
 	}
-dbgmsg("<ReadTerminal");
+LEAVE_FUNC;
 	return(ld);
-}
-
-static	void
-SendBLOB(
-	NETFILE		*fp,
-	SessionData	*data)
-{
-	MonObjectType	obj;
-
-	RecvObject(fp,&obj);
-	SendPacketClass(fp,WFC_NOT);	/*	not yet	*/
 }
 
 static	Bool
@@ -308,8 +297,8 @@ ENTER_FUNC;
 				}
 				break;
 			  case	WFC_BLOB:
-				dbgmsg("send LARGE");
-				SendBLOB(fp,data);
+				dbgmsg("send BLOB");
+				PassiveBLOB(fp,Blob);
 				break;
 			  case	WFC_DONE:
 				dbgmsg("DONE");

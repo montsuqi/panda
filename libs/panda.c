@@ -19,10 +19,12 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
+
 /*
 #define	DEBUG
 #define	TRACE
 */
+
 /*
 #define	NEW_SEQUENCE
 */
@@ -42,6 +44,7 @@ copies.
 #include	"DDparser.h"
 #include	"wfcdata.h"
 #include	"wfcio.h"
+#include	"front.h"
 #include	"driver.h"
 #include	"debug.h"
 

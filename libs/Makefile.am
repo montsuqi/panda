@@ -3,7 +3,9 @@ lib_LTLIBRARIES	=	libpanda.la libpandas.la libpandacom.la libpandagl.la libpanda
 noinst_PROGRAMS	=	enum testnet
 
 panda_la_LDFLAGS	=	-module -export-dynamic
-panda_la_SOURCES	=	panda.c
+panda_la_SOURCES	=		\
+	wfcio.c		wfcio.h		\
+	panda.c
 panda_la_DEPENDENCIES = libpanda.la
 panda_la_LIBADD		=	\
 	-L. -lpanda
@@ -52,9 +54,8 @@ libpanda_la_SOURCES	=		\
 	DBparser.c	DBparser.h	\
 	SQLlex.c	SQLlex.h	\
 	SQLparser.c	SQLparser.h	\
-	directory.c	directory.h	\
-	wfcio.c		wfcio.h		\
 	blobreq.c	blobreq.h	\
+	directory.c	directory.h	\
 	load.c		load.h		\
 	blobcom.h			\
 	debug.h

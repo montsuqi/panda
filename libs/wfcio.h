@@ -45,17 +45,6 @@ copies.
 #define	WFC_OK			(PacketClass)0xFE
 #define	WFC_END			(PacketClass)0xFF
 
-#undef	GLOBAL
-#if	defined(MAIN) || defined(_PANDA)
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
-
-GLOBAL	char	*CacheDir;
-
-#undef	GLOBAL
-
 extern	NETFILE	*ConnectTermServer(char *url, char *term, char *user, Bool fKeep, char *arg);
 extern	Bool	SendTermServer(NETFILE *fp, char *window, char *widget, char *event,
 							   ValueStruct *value);

@@ -50,6 +50,7 @@ copies.
 #include	"directory.h"
 #include	"dblib.h"
 #include	"dbgroup.h"
+#include	"front.h"
 #include	"dbs_main.h"
 #include	"option.h"
 #include	"message.h"
@@ -107,7 +108,7 @@ dbgmsg("<FinishSession");
 }
 
 static	SessionNode	*
-InitSession(
+InitDBSSession(
 	NETFILE	*fpComm)
 {
 	SessionNode	*ses;
@@ -117,7 +118,7 @@ InitSession(
 	char	*p
 	,		*q;
 
-dbgmsg(">InitSession");
+ENTER_FUNC;
 	ses = New(SessionNode);
 	/*
 	 version user password type\n
@@ -156,7 +157,7 @@ dbgmsg(">InitSession");
 		xfree(ses);
 		ses = NULL;
 	}
-dbgmsg("<InitSession");
+LEAVE_FUNC;
 	return	(ses); 
 }
 
@@ -501,7 +502,7 @@ dbgmsg(">ExecuteServer");
 		if		(  pid  ==  0  )	{	/*	child	*/
 			fp = SocketToNet(fh);
 			close(_fh);
-			if		(  ( ses = InitSession(fp) )  !=  NULL  ) {
+			if		(  ( ses = InitDBSSession(fp) )  !=  NULL  ) {
 				while	(  MainLoop(fp,ses)  );
 				FinishSession(ses);
 			}

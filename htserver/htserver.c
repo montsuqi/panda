@@ -40,6 +40,7 @@ copies.
 #include	"dirs.h"
 #include	"DDparser.h"
 #include	"option.h"
+#include	"front.h"
 #include	"htserver.h"
 #include	"message.h"
 #include	"debug.h"

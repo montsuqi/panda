@@ -1,6 +1,6 @@
 /*	PANDA -- a simple transaction monitor
 
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+Copyright (C) 2000-2004 Ogochan & JMA (Japan Medical Association).
 
 This module is part of PANDA.
 
@@ -34,6 +34,8 @@ copies.
 #include	<string.h>
 #include	<strings.h>
 #include	<netinet/in.h>
+#include    <sys/types.h>
+#include	<sys/stat.h>
 #include	<glib.h>
 #include	<math.h>
 
@@ -41,6 +43,7 @@ copies.
 #include	"libmondai.h"
 #include	"glserver.h"
 #include	"glcomm.h"
+#include	"front.h"
 #include	"debug.h"
 
 #include	<endian.h>
@@ -109,10 +112,10 @@ GL_SendInt(
 static	void
 GL_SendUInt(
 	NETFILE	*fp,
-	unsigned	int		data,
+	unsigned	int	data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
+	byte	buff[sizeof(unsigned int)];
 
 	if		(  fNetwork  ) {
 		*(unsigned int *)buff = SEND32(data);
@@ -120,6 +123,23 @@ GL_SendUInt(
 		*(unsigned int *)buff = data;
 	}
 	Send(fp,buff,sizeof(unsigned int));
+}
+
+static	unsigned	int
+GL_RecvUInt(
+	NETFILE	*fp,
+	Bool	fNetwork)
+{
+	byte	buff[sizeof(unsigned int)];
+	unsigned	int	data;
+
+	Recv(fp,buff,sizeof(unsigned int));
+	if		(  fNetwork  ) {
+		data = RECV32(*(unsigned int *)buff);
+	} else {
+		data = *(unsigned int *)buff;
+	}
+	return	(data);
 }
 
 extern	void
@@ -189,6 +209,21 @@ GL_RecvLength(
 }
 
 static	void
+GL_RecvLBS(
+	NETFILE	*fp,
+	LargeByteString	*lbs,
+	Bool	fNetwork)
+{
+	size_t	size;
+
+	size = GL_RecvLength(fp,fNetwork);
+	LBS_ReserveSize(lbs,size,FALSE);
+	if		(  size  >  0  ) {
+		Recv(fp,LBS_Body(lbs),size);
+	}
+}
+
+static	void
 GL_SendLBS(
 	NETFILE	*fp,
 	LargeByteString	*lbs,
@@ -247,6 +282,20 @@ GL_SendObject(
 	GL_SendInt(fp,obj->source,fNetwork);
 	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
 		GL_SendUInt(fp,obj->id.el[i],fNetwork);
+	}
+}
+
+static	void
+GL_RecvObject(
+	NETFILE	*fp,
+	MonObjectType	*obj,
+	Bool	fNetwork)
+{
+	int		i;
+
+	obj->source = GL_RecvInt(fp,fNetwork);
+	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
+		obj->id.el[i] = GL_RecvUInt(fp,fNetwork);
 	}
 }
 
@@ -358,10 +407,13 @@ GL_SendValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
 	char		*coding,
+	Bool		fBlob,
 	Bool		fExpand,
 	Bool		fNetwork)
 {
 	int		i;
+	struct	stat	sb;
+	FILE	*fpf;
 
 	ValueIsNotUpdate(value);
 	GL_SendDataType(fp,ValueType(value),fNetwork);
@@ -391,15 +443,26 @@ GL_SendValue(
 		GL_SendFixed(fp,&ValueFixed(value),fNetwork);
 		break;
 	  case	GL_TYPE_OBJECT:
-		if		(  fExpand  ) {
-		} else {
-			GL_SendObject(fp,ValueObject(value),fNetwork);
+		if		(  fBlob  ) {
+			if		(  fExpand  ) {
+				if		(  ( fpf = Fopen(BlobCacheFileName(value),"r") )  !=  NULL  ) {
+					fstat(fileno(fpf),&sb);
+					LBS_ReserveSize(Buff,sb.st_size,FALSE);
+					fread(LBS_Body(Buff),sb.st_size,1,fpf);
+					fclose(fpf);	
+				} else {
+					LBS_ReserveSize(Buff,0,FALSE);
+				}
+				GL_SendLBS(fp,Buff,fNetwork);
+			} else {
+				GL_SendObject(fp,ValueObject(value),fNetwork);
+			}
 		}
 		break;
 	  case	GL_TYPE_ARRAY:
 		GL_SendInt(fp,ValueArraySize(value),fNetwork);
 		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			GL_SendValue(fp,ValueArrayItem(value,i),coding,fExpand,fNetwork);
+			GL_SendValue(fp,ValueArrayItem(value,i),coding,fBlob,fExpand,fNetwork);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
@@ -414,11 +477,11 @@ GL_SendValue(
 					GL_SendString(fp,"row",fNetwork);
 				} else {
 					GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-					GL_SendValue(fp,ValueRecordItem(value,i),coding,fExpand,fNetwork);
+					GL_SendValue(fp,ValueRecordItem(value,i),coding,fBlob,fExpand,fNetwork);
 				}
 			} else {
 				GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-				GL_SendValue(fp,ValueRecordItem(value,i),coding,fExpand,fNetwork);
+				GL_SendValue(fp,ValueRecordItem(value,i),coding,fBlob,fExpand,fNetwork);
 			}
 		}
 		break;
@@ -432,6 +495,7 @@ GL_RecvValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
 	char		*coding,
+	Bool		fBlob,
 	Bool		fExpand,
 	Bool		fNetwork)
 {
@@ -441,6 +505,7 @@ GL_RecvValue(
 	Bool		bval;
 	double		fval;
 	char		str[SIZE_BUFF];
+	FILE		*fpf;
 
 ENTER_FUNC;
 	ValueIsUpdate(value);
@@ -460,6 +525,19 @@ ENTER_FUNC;
 		SetValueFixed(value,xval);
 		xfree(xval->sval);
 		xfree(xval);
+		break;
+	  case	GL_TYPE_OBJECT:
+		if		(  fBlob  ) {
+			if		(  fExpand  ) {
+				GL_RecvLBS(fp,Buff,fNetwork);
+				if		(  ( fpf = Fopen(BlobCacheFileName(value),"w") )  !=  NULL  ) {
+					fwrite(LBS_Body(Buff),LBS_Size(Buff),1,fpf);
+					fclose(fpf);	
+				}
+			} else {
+				GL_RecvObject(fp,ValueObject(value),fNetwork);
+			}
+		}
 		break;
 	  case	GL_TYPE_INT:
 		ival = GL_RecvInt(fp,fFetureNetwork);

@@ -56,8 +56,10 @@ PassiveBLOB(
 	ssize_t			ssize;
 	byte			*buff;
 
+ENTER_FUNC;
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_CREATE:
+		dbgmsg("BLOB_CREATE");
 		mode = RecvInt(fp);
 		if		(  NewBLOB(blob,&obj,mode)  ) {
 			SendPacketClass(fp,BLOB_OK);
@@ -67,6 +69,7 @@ PassiveBLOB(
 		}
 		break;
 	  case	BLOB_OPEN:
+		dbgmsg("BLOB_OPEN");
 		mode = RecvInt(fp);
 		RecvObject(fp,&obj);
 		if		(  OpenBLOB(blob,&obj,mode)  >=  0  ) {
@@ -76,6 +79,7 @@ PassiveBLOB(
 		}
 		break;
 	  case	BLOB_WRITE:
+		dbgmsg("BLOB_WRITE");
 		RecvObject(fp,&obj);
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
 			buff = xmalloc(size);
@@ -86,6 +90,7 @@ PassiveBLOB(
 		SendLength(fp,size);
 		break;
 	  case	BLOB_READ:
+		dbgmsg("BLOB_READ");
 		RecvObject(fp,&obj);
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
 			buff = xmalloc(size);
@@ -96,6 +101,7 @@ PassiveBLOB(
 		SendLength(fp,size);
 		break;
 	  case	BLOB_EXPORT:
+		dbgmsg("BLOB_EXPORT");
 		RecvObject(fp,&obj);
 		if		(  ( ssize = OpenBLOB(blob,&obj,BLOB_OPEN_READ) )  >=  0  ) {
 			SendPacketClass(fp,BLOB_OK);
@@ -114,6 +120,8 @@ PassiveBLOB(
 		}
 		break;
 	  case	BLOB_IMPORT:
+		dbgmsg("BLOB_IMPORT");
+		ObjectSource(&obj) = GL_OBJ_NULL;
 		if		(  NewBLOB(blob,&obj,BLOB_OPEN_WRITE)  ) {
 			SendPacketClass(fp,BLOB_OK);
 			SendObject(fp,&obj);
@@ -132,6 +140,7 @@ PassiveBLOB(
 		}
 		break;
 	  case	BLOB_CLOSE:
+		dbgmsg("BLOB_CLOSE");
 		RecvObject(fp,&obj);
 		if		(  CloseBLOB(blob,&obj)  ) {
 			SendPacketClass(fp,BLOB_OK);
@@ -142,5 +151,6 @@ PassiveBLOB(
 	  default:
 		break;
 	}
+LEAVE_FUNC;
 }
 
