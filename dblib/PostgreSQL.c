@@ -1197,7 +1197,11 @@ ENTER_FUNC;
 	if		(  DB_Port  !=  NULL  ) {
 		port = DB_Port;
 	} else {
-		port = IP_PORT(dbg->port);
+		if		(  dbg->port  ==  NULL  ) {
+			port = NULL;
+		} else {
+			port = IP_PORT(dbg->port);
+		}
 	}
 	user =  ( DB_User != NULL ) ? DB_User : dbg->user;
 	dbname = ( DB_Name != NULL ) ? DB_Name : dbg->dbname;
