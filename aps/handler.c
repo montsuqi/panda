@@ -573,9 +573,11 @@ extern	RecordStruct	*
 BuildDBCTRL(void)
 {
 	RecordStruct	*rec;
+	char			name[SIZE_LONGNAME+1];
 	FILE			*fp;
 
-	if		(  ( fp = tmpfile() )  ==  NULL  ) {
+	sprintf(name,"/tmp/dbctrl%d.rec",(int)getpid());
+	if		(  ( fp = fopen(name,"w") )  ==  NULL  ) {
 		fprintf(stderr,"tempfile can not make.\n");
 		exit(1);
 	}
@@ -585,9 +587,10 @@ BuildDBCTRL(void)
 	fprintf(fp,		"rname	varchar(%d);",SIZE_NAME);
 	fprintf(fp,		"pname	varchar(%d);",SIZE_NAME);
 	fprintf(fp,	"};");
-	rewind(fp);
-	rec = DD_Parse(fp,"");
 	fclose(fp);
+
+	rec = ParseRecordFile(name);
+	remove(name);
 
 	return	(rec);
 }

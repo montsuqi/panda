@@ -21,9 +21,9 @@ copies.
 
 /*
 #define	MAIN
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -49,6 +49,35 @@ copies.
 #include	"dirs.h"
 #include	"debug.h"
 
+static	TokenTable	tokentable[] = {
+	{	"data"		,T_DATA 	},
+	{	"host"		,T_HOST		},
+	{	"name"		,T_NAME		},
+	{	"home"		,T_HOME		},
+	{	"port"		,T_PORT		},
+	{	"spa"		,T_SPA		},
+	{	"window"	,T_WINDOW	},
+	{	"cache"		,T_CACHE	},
+	{	"arraysize"	,T_ARRAYSIZE},
+	{	"textsize"	,T_TEXTSIZE	},
+	{	"db"		,T_DB		},
+	{	"multiplex_group"	,T_MGROUP		},
+	{	"bind"		,T_BIND		},
+	{	"wfc"		,T_WFC		},
+
+	{	"handler"	,T_HANDLER	},
+	{	"class"		,T_CLASS	},
+	{	"serialize"	,T_SERIALIZE},
+	{	"start"		,T_START	},
+	{	"locale"	,T_LOCALE	},
+	{	"encoding"	,T_ENCODING	},
+	{	"loadpath"	,T_LOADPATH	},
+
+	{	""			,0	}
+};
+
+static	GHashTable	*Reserved;
+
 static	void
 ParDBDB(
 	DBD_Struct	*dbd,
@@ -63,18 +92,18 @@ ParDBDB(
 
 dbgmsg(">ParDBDB");
 	while	(  GetSymbol  !=  '}'  ) {
-		if		(	(  D_Token  ==  T_SYMBOL  )
-				||	(  D_Token  ==  T_SCONST  ) ) {
-			if		(  stricmp(D_ComSymbol,"metadb")  ) {
+		if		(	(  ComToken  ==  T_SYMBOL  )
+				||	(  ComToken  ==  T_SCONST  ) ) {
+			if		(  stricmp(ComSymbol,"metadb")  ) {
 				strcpy(buff,RecordDir);
 				p = buff;
 				do {
 					if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 						*q = 0;
 					}
-					sprintf(name,"%s/%s.db",p,D_ComSymbol);
+					sprintf(name,"%s/%s.db",p,ComSymbol);
 					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
-						if		(  g_hash_table_lookup(dbd->DBD_Table,D_ComSymbol)  ==  NULL  ) {
+						if		(  g_hash_table_lookup(dbd->DBD_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( dbd->cDB + 1));
 							memcpy(rtmp,dbd->db,sizeof(RecordStruct *) * dbd->cDB);
 							xfree(dbd->db);
@@ -84,7 +113,7 @@ dbgmsg(">ParDBDB");
 							dbd->db = rtmp;
 							dbd->db[dbd->cDB] = db;
 							dbd->cDB ++;
-							g_hash_table_insert(dbd->DBD_Table, StrDup(D_ComSymbol),(void *)dbd->cDB);
+							g_hash_table_insert(dbd->DBD_Table, StrDup(ComSymbol),(void *)dbd->cDB);
 						} else {
 							Error("same db appier");
 						}
@@ -114,13 +143,13 @@ ParDB(void)
 dbgmsg(">ParDB");
 	ret = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
-		switch	(D_Token) {
+		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("no name");
 			} else {
 				ret = New(DBD_Struct);
-				ret->name = StrDup(D_ComSymbol);
+				ret->name = StrDup(ComSymbol);
 				ret->cDB = 1;
 				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
 				ret->db[0] = NULL;
@@ -131,26 +160,26 @@ dbgmsg(">ParDB");
 			break;
 		  case	T_ARRAYSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->arraysize = D_ComInt;
+				ret->arraysize = ComInt;
 			} else {
 				Error("invalid array size");
 			}
 			break;
 		  case	T_TEXTSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->textsize = D_ComInt;
+				ret->textsize = ComInt;
 			} else {
 				Error("invalid text size");
 			}
 			break;
 		  case	T_DB:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				gname = StrDup(D_ComSymbol);
+				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
 					Error("syntax error 3");
 				}
 			} else
-			if		(  D_Token  ==  '{'  ) {
+			if		(  ComToken  ==  '{'  ) {
 				gname = StrDup("");
 			} else {
 				gname = NULL;
@@ -174,20 +203,16 @@ extern	DBD_Struct	*
 DBD_Parser(
 	char	*name)
 {
-	FILE	*fp;
 	DBD_Struct	*ret;
 	struct	stat	stbuf;
 
 dbgmsg(">DBD_Parser");
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
-			D_FileName = name;
-			D_cLine = 1;
-			D_File = fp;
+		if		(  PushLexInfo(name,D_Dir,Reserved)  !=  NULL  ) {
 			ret = ParDB();
-			fclose(D_File);
+			DropLexInfo();
 		} else {
-			Error("DB file not found");
+			Error("DBD file not found");
 			ret = NULL;
 		}
 	} else {
@@ -200,7 +225,9 @@ dbgmsg("<DBD_Parser");
 extern	void
 DBD_ParserInit(void)
 {
-	D_LexInit();
+	LexInit();
+	Reserved = MakeReservedTable(tokentable);
+
 	DBD_Table = NewNameHash();
 }
 

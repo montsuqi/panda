@@ -30,15 +30,13 @@ enum_LDADD	= 	\
 	$(MONDAI_LIBS)
 
 libpanda_la_SOURCES	=		\
-	Dlex.c		Dlex.h		\
+	Dlex.h					\
 	mhandler.c	mhandler.h	\
 	DDparser.c	DDparser.h	\
 	BDparser.c	BDparser.h	\
 	LDparser.c	LDparser.h	\
 	DBDparser.c	DBDparser.h	\
 	DIparser.c	DIparser.h	\
-	DIlex.c		DIlex.h		\
-	DBlex.c		DBlex.h		\
 	DBparser.c	DBparser.h	\
 	SQLlex.c	SQLlex.h	\
 	SQLparser.c	SQLparser.h	\

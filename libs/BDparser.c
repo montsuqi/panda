@@ -50,6 +50,35 @@ copies.
 #include	"dirs.h"
 #include	"debug.h"
 
+static	TokenTable	tokentable[] = {
+	{	"data"		,T_DATA 	},
+	{	"host"		,T_HOST		},
+	{	"name"		,T_NAME		},
+	{	"home"		,T_HOME		},
+	{	"port"		,T_PORT		},
+	{	"spa"		,T_SPA		},
+	{	"window"	,T_WINDOW	},
+	{	"cache"		,T_CACHE	},
+	{	"arraysize"	,T_ARRAYSIZE},
+	{	"textsize"	,T_TEXTSIZE	},
+	{	"db"		,T_DB		},
+	{	"multiplex_group"	,T_MGROUP		},
+	{	"bind"		,T_BIND		},
+	{	"wfc"		,T_WFC		},
+
+	{	"handler"	,T_HANDLER	},
+	{	"class"		,T_CLASS	},
+	{	"serialize"	,T_SERIALIZE},
+	{	"start"		,T_START	},
+	{	"locale"	,T_LOCALE	},
+	{	"encoding"	,T_ENCODING	},
+	{	"loadpath"	,T_LOADPATH	},
+
+	{	""			,0	}
+};
+
+static	GHashTable	*Reserved;
+
 static	void
 ParDB(
 	BD_Struct	*bd,
@@ -64,18 +93,18 @@ ParDB(
 
 dbgmsg(">ParDB");
 	while	(  GetSymbol  !=  '}'  ) {
-		if		(	(  D_Token  ==  T_SYMBOL  )
-				||	(  D_Token  ==  T_SCONST  ) ) {
-			if		(  stricmp(D_ComSymbol,"metadb")  ) {
+		if		(	(  ComToken  ==  T_SYMBOL  )
+				||	(  ComToken  ==  T_SCONST  ) ) {
+			if		(  stricmp(ComSymbol,"metadb")  ) {
 				strcpy(buff,RecordDir);
 				p = buff;
 				do {
 					if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 						*q = 0;
 					}
-					sprintf(name,"%s/%s.db",p,D_ComSymbol);
+					sprintf(name,"%s/%s.db",p,ComSymbol);
 					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
-						if		(  g_hash_table_lookup(bd->DB_Table,D_ComSymbol)  ==  NULL  ) {
+						if		(  g_hash_table_lookup(bd->DB_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( bd->cDB + 1));
 							memcpy(rtmp,bd->db,sizeof(RecordStruct *) * bd->cDB);
 							xfree(bd->db);
@@ -85,7 +114,7 @@ dbgmsg(">ParDB");
 							bd->db = rtmp;
 							bd->db[bd->cDB] = db;
 							bd->cDB ++;
-							g_hash_table_insert(bd->DB_Table, StrDup(D_ComSymbol),(void *)bd->cDB);
+							g_hash_table_insert(bd->DB_Table, StrDup(ComSymbol),(void *)bd->cDB);
 						} else {
 							Error("same db appier");
 						}
@@ -114,15 +143,15 @@ ParBIND(
 
 dbgmsg(">ParBIND");
 	if		(	(  GetSymbol  ==  T_SCONST  )
-			||	(  D_Token   ==  T_SYMBOL  ) ) {
-		if		(  ( bind = g_hash_table_lookup(ret->BatchTable,D_ComSymbol) )  ==  NULL  ) {
+			||	(  ComToken   ==  T_SYMBOL  ) ) {
+		if		(  ( bind = g_hash_table_lookup(ret->BatchTable,ComSymbol) )  ==  NULL  ) {
 			bind = New(BatchBind);
-			bind->module = StrDup(D_ComSymbol);;
+			bind->module = StrDup(ComSymbol);;
 			g_hash_table_insert(ret->BatchTable,bind->module,bind);
 		}
 		if		(	(  GetSymbol  ==  T_SCONST  )
-				||	(  D_Token   ==  T_SYMBOL  ) ) {
-			bind->handler = (void *)StrDup(D_ComSymbol);
+				||	(  ComToken   ==  T_SYMBOL  ) ) {
+			bind->handler = (void *)StrDup(ComSymbol);
 		} else {
 			Error("handler name error");
 		}
@@ -141,13 +170,13 @@ ParBD(void)
 dbgmsg(">ParBD");
 	ret = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
-		switch	(D_Token) {
+		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("no name");
 			} else {
 				ret = New(BD_Struct);
-				ret->name = StrDup(D_ComSymbol);
+				ret->name = StrDup(ComSymbol);
 				ret->cDB = 1;
 				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
 				ret->db[0] = NULL;
@@ -159,26 +188,26 @@ dbgmsg(">ParBD");
 			break;
 		  case	T_ARRAYSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->arraysize = D_ComInt;
+				ret->arraysize = ComInt;
 			} else {
 				Error("invalid array size");
 			}
 			break;
 		  case	T_TEXTSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->textsize = D_ComInt;
+				ret->textsize = ComInt;
 			} else {
 				Error("invalid text size");
 			}
 			break;
 		  case	T_DB:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				gname = StrDup(D_ComSymbol);
+				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
 					Error("syntax error 3");
 				}
 			} else
-			if		(  D_Token  ==  '{'  ) {
+			if		(  ComToken  ==  '{'  ) {
 				gname = StrDup("");
 			} else {
 				gname = NULL;
@@ -226,18 +255,14 @@ extern	BD_Struct	*
 BD_Parser(
 	char	*name)
 {
-	FILE	*fp;
 	BD_Struct	*ret;
 	struct	stat	stbuf;
 
 dbgmsg(">BD_Parser");
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
-			D_FileName = name;
-			D_cLine = 1;
-			D_File = fp;
+		if		(  PushLexInfo(name,D_Dir,Reserved)  !=  NULL  ) {
 			ret = ParBD();
-			fclose(D_File);
+			DropLexInfo();
 			BindHandler(ret);
 		} else {
 			Error("BD file not found");
@@ -253,7 +278,9 @@ dbgmsg("<BD_Parser");
 extern	void
 BD_ParserInit(void)
 {
-	D_LexInit();
+	LexInit();
+	Reserved = MakeReservedTable(tokentable);
+
 	BD_Table = NewNameHash();
 	MessageHandlerInit();
 }

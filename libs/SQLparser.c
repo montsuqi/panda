@@ -38,7 +38,7 @@ copies.
 #include	"types.h"
 #include	"value.h"
 #include	"misc.h"
-#include	"DBlex.h"
+#include	"Lex.h"
 #include	"SQLlex.h"
 #include	"SQLparser.h"
 #include	"debug.h"
@@ -56,10 +56,11 @@ _Error(
 	exit(1);
 }
 #undef	Error
-#define	Error(msg)	{fDB_Error=TRUE;_Error((msg),DB_FileName,DB_cLine);}
-
-#define	GetSymbol	(DB_Token = SQL_Lex(FALSE))
-#define	GetName		(DB_Token = SQL_Lex(TRUE))
+#define	Error(msg)	{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
+#undef	GetSymbol
+#define	GetSymbol	(ComToken = SQL_Lex(FALSE))
+#undef	GetName
+#define	GetName		(ComToken = SQL_Lex(TRUE))
 
 extern	LargeByteString	*
 ParSQL(
@@ -83,44 +84,44 @@ dbgmsg(">ParSQL");
 	into = 0;
 	fAster = FALSE;
 	fInsert = FALSE;
-	while	( DB_Token != '}' ) {
-		switch	(DB_Token) {
+	while	( ComToken != '}' ) {
+		switch	(ComToken) {
 		  case	T_SYMBOL:
-			if		(  ( val = GetRecordItem(rec->value,DB_ComSymbol) )  !=  NULL  ) {
+			if		(  ( val = GetRecordItem(rec->value,ComSymbol) )  !=  NULL  ) {
 				do {
-					LBS_EmitString(sql,DB_ComSymbol);
+					LBS_EmitString(sql,ComSymbol);
 					if		(  GetSymbol  ==  '.'  ) {
 						LBS_EmitChar(sql,'_');
 						GetSymbol;
 					}
-				}	while	(  DB_Token  ==  T_SYMBOL  );
+				}	while	(  ComToken  ==  T_SYMBOL  );
 			} else {
-				LBS_EmitString(sql,DB_ComSymbol);
+				LBS_EmitString(sql,ComSymbol);
 				GetSymbol;
 			}
 			LBS_EmitSpace(sql);
 			break;
 		  case	T_SCONST:
 			LBS_EmitChar(sql,'\'');
-			LBS_EmitString(sql,DB_ComSymbol);
+			LBS_EmitString(sql,ComSymbol);
 			LBS_EmitChar(sql,'\'');
 			LBS_EmitSpace(sql);
 			GetSymbol;
 			break;
 		  case	T_SQL:
-			LBS_EmitString(sql,DB_ComSymbol);
+			LBS_EmitString(sql,ComSymbol);
 			LBS_EmitSpace(sql);
 			GetSymbol;
 			break;
 		  case	T_LIKE:
 		  case	T_ILIKE:
-			LBS_EmitString(sql,DB_ComSymbol);
+			LBS_EmitString(sql,ComSymbol);
 			LBS_EmitSpace(sql);
 			LBS_Emit(sql,SQL_OP_VCHAR);
 			GetSymbol;
 			break;
 		  case	T_INSERT:
-			LBS_EmitString(sql,DB_ComSymbol);
+			LBS_EmitString(sql,ComSymbol);
 			LBS_EmitSpace(sql);
 			fInsert = TRUE;
 			GetSymbol;
@@ -147,9 +148,9 @@ dbgmsg(">ParSQL");
 			if		(  GetName  ==  T_SYMBOL  ) {
 				val = rec->value;
 				do {
-					val = GetRecordItem(val,DB_ComSymbol);
+					val = GetRecordItem(val,ComSymbol);
 					if		(  val  ==  NULL  ) {
-						printf("[%s]\n",DB_ComSymbol);
+						printf("[%s]\n",ComSymbol);
 						Error("item name missing");
 					}
 					switch	(GetSymbol) {
@@ -157,9 +158,9 @@ dbgmsg(">ParSQL");
 						GetName;
 						break;
 					  case	'[':
-						if		(  val->type  ==  GL_TYPE_ARRAY  ) {
+						if		(  ValueType(val)  ==  GL_TYPE_ARRAY  ) {
 							if		(  GetSymbol  ==  T_SYMBOL  ) {
-								n = atoi(DB_ComSymbol) - 1;
+								n = atoi(ComSymbol) - 1;
 								val = GetArrayItem(val,n);
 								if		(  GetSymbol  !=  ']'  ) {
 									Error("] missing");
@@ -173,9 +174,9 @@ dbgmsg(">ParSQL");
 					  default:
 						break;
 					}
-				}	while	(  DB_Token  ==  T_SYMBOL  );
+				}	while	(  ComToken  ==  T_SYMBOL  );
 				LBS_EmitPointer(sql,(void *)val);
-				if		(  DB_Token  ==  ','  ) {
+				if		(  ComToken  ==  ','  ) {
 					if		(  !fInto  ) {
 						LBS_EmitChar(sql,',');
 					}
@@ -185,7 +186,7 @@ dbgmsg(">ParSQL");
 				}
 				fAster = FALSE;
 			} else
-			if		(  DB_Token  ==  '*'  ) {
+			if		(  ComToken  ==  '*'  ) {
 				fAster = TRUE;
 				GetSymbol;
 			}
@@ -218,7 +219,7 @@ dbgmsg(">ParSQL");
 			GetSymbol;
 			break;
 		  default:
-			LBS_EmitChar(sql,(char)DB_Token);
+			LBS_EmitChar(sql,(char)ComToken);
 			GetSymbol;
 			break;
 		}

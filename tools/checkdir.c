@@ -367,8 +367,10 @@ DumpDBG(
 {
 	printf("name     = [%s]\n",dbg->name);
 	printf("\ttype     = [%s]\n",dbg->type);
-	printf("\thost     = [%s]\n",dbg->port->host);
-	printf("\tport     = [%s]\n"  ,dbg->port->port);
+	if		(  dbg->port  !=  NULL  ) {
+		printf("\thost     = [%s]\n",dbg->port->host);
+		printf("\tport     = [%s]\n"  ,dbg->port->port);
+	}
 	printf("\tDB name  = [%s]\n",dbg->dbname);
 	printf("\tDB user  = [%s]\n",dbg->user);
 	printf("\tDB pass  = [%s]\n",dbg->pass);

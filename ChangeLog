@@ -1,3 +1,8 @@
+2003-10-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/ : Dlex.[ch], DBlex.[ch], DIlex.[ch]をやめて、libmondai中の
+	汎用Lexを使うようにした
+
 2003-09-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/dbgen.c (main): DBのあたりの変更に対応

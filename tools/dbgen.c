@@ -181,32 +181,34 @@ MakeCreate(
 	,		**pk;
 	KeyStruct	*key;
 
-	printf("create\ttable\t%s\t(\n",rec->name);
-	level = 0;
-	alevel = 0;
-	TableBody(rec->value,ArraySize,TextSize);
-	if		(  ( key = rec->opt.db->pkey )  !=  NULL  ) {
-		item = key->item;
-		printf(",\n\tprimary\tkey(\n");
-		while	(  *item  !=  NULL  ) {
-			pk = *item;
-			printf("\t\t");
-			while	(  *pk  !=  NULL  ) {
-				printf("%s",*pk);
-				pk ++;
-				if		(  *pk  !=  NULL  ) {
-					printf("_");
+	if		(  ( ValueAttribute(rec->value) & GL_ATTR_VIRTUAL )  ==  0  ) {
+		printf("create\ttable\t%s\t(\n",rec->name);
+		level = 0;
+		alevel = 0;
+		TableBody(rec->value,ArraySize,TextSize);
+		if		(  ( key = rec->opt.db->pkey )  !=  NULL  ) {
+			item = key->item;
+			printf(",\n\tprimary\tkey(\n");
+			while	(  *item  !=  NULL  ) {
+				pk = *item;
+				printf("\t\t");
+				while	(  *pk  !=  NULL  ) {
+					printf("%s",*pk);
+					pk ++;
+					if		(  *pk  !=  NULL  ) {
+						printf("_");
+					}
 				}
+				item ++;
+				if		(  *item  !=  NULL  ) {
+					printf(",");
+				}
+				printf("\n");
 			}
-			item ++;
-			if		(  *item  !=  NULL  ) {
-				printf(",");
-			}
-			printf("\n");
+			printf("\t)\n);\n");
+		} else {
+			printf("\n);\n");
 		}
-		printf("\t)\n);\n");
-	} else {
-		printf("\n);\n");
 	}
 }
 

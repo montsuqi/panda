@@ -41,11 +41,24 @@ copies.
 #include	"value.h"
 #include	"misc.h"
 #include	"monstring.h"
-#include	"DBlex.h"
+#include	"Lex.h"
 #include	"DBparser.h"
 #include	"DDparser.h"
 #include	"SQLparser.h"
 #include	"debug.h"
+
+static	GHashTable	*Reserved;
+
+#define	T_PRIMARY		(T_YYBASE +1)
+#define	T_PATH			(T_YYBASE +2)
+#define	T_USE			(T_YYBASE +3)
+
+static	TokenTable	tokentable[] = {
+	{	"primary"	,T_PRIMARY	},
+	{	"path"		,T_PATH		},
+	{	"use"		,T_USE		},
+	{	""			,0			}
+};
 
 static	void
 _Error(
@@ -57,16 +70,17 @@ _Error(
 }
 
 #undef	Error
-#define	Error(msg)	{fDB_Error=TRUE;_Error((msg),DB_FileName,DB_cLine);}
-#define	GetSymbol	(DB_Token = DB_Lex(FALSE))
-#define	GetName		(DB_Token = DB_Lex(TRUE))
+#define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
 
 extern	void
 DB_ParserInit(void)
 {
-	DB_LexInit();
+	LexInit();
+	Reserved = MakeReservedTable(tokentable);
+
 	SQL_ParserInit();
 }
+
 
 static	char	***
 ParKeyItem(void)
@@ -91,20 +105,20 @@ dbgmsg(">ParKeyItem");
 				xfree(name);
 			}
 			name = p;
-			name[count] = StrDup(DB_ComSymbol);
+			name[count] = StrDup(ComSymbol);
 			name[count+1] = NULL;
 			count ++;
 			GetSymbol;
-			if		(  DB_Token  ==  '.'  ) {
+			if		(  ComToken  ==  '.'  ) {
 				GetName;
 			} else
-			if		(  DB_Token  ==  ','  ) {
+			if		(  ComToken  ==  ','  ) {
 				break;
 			} else
-			if		(  DB_Token  !=  ';'  ) {
+			if		(  ComToken  !=  ';'  ) {
 					Error("; not found");
 			}
-		}	while	(  DB_Token  ==  T_SYMBOL  );
+		}	while	(  ComToken  ==  T_SYMBOL  );
 		r = (char ***)xmalloc(sizeof(char **) * ( rcount + 2 ));
 		if		(  ret  !=  NULL  ) {
 			memcpy(r,ret,sizeof(char ***) * rcount);
@@ -115,7 +129,7 @@ dbgmsg(">ParKeyItem");
 		ret[rcount+1] = NULL;
 		rcount ++;
 	}
-	if		(  DB_Token  !=  '}'  ) {
+	if		(  ComToken  !=  '}'  ) {
 		Error("} not found");
 	}
 dbgmsg("<ParKeyItem");
@@ -144,6 +158,7 @@ InitDB_Struct(void)
 ENTER_FUNC;
 	ret = New(DB_Struct);
 	ret->paths = NewNameHash();
+	ret->use = NewNameHash();
 	ret->pkey = NULL;
 	ret->path = NULL;
 	ret->dbg = NULL;
@@ -176,31 +191,62 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+static	void
+EnterUse(
+	RecordStruct	*root,
+	char			*name,
+	RecordStruct	*rec)
+{
+	if		(  g_hash_table_lookup(root->opt.db->use,name)  ==  NULL  ) {
+		g_hash_table_insert(root->opt.db->use,name,rec);
+	}
+}
+	
+
+
 static	RecordStruct	*
 DB_Parse(
-	FILE	*fp,
 	char	*name)
 {
-	RecordStruct	*ret;
+	RecordStruct	*ret
+	,				*use;
 	int		ix
 	,		pcount;
 	PathStruct		**path;
 	LargeByteString	**ops;
 
 dbgmsg(">DB_Parse");
-	ret = DD_Parse(fp,name);
+	ret = DD_Parse();
 	if		(  !stricmp(strrchr(name,'.'),".db")  ) {
 		ret->type = RECORD_DB;
 		ret->opt.db = InitDB_Struct();
 	} else {
 		ret->type = RECORD_NULL;
 	}
-
-	DB_FileName = StrDup(name);
-	DB_cLine = 1;
-	DB_File = fp;
+	SetReserved(Reserved); 
 	while	(  	GetSymbol  !=  T_EOF  ) {
-		switch	(DB_Token) {
+		switch	(ComToken) {
+		  case	T_USE:
+			switch	(GetName) {
+			  case	T_SYMBOL:
+				if		(  GetName  ==  T_SYMBOL  ) {
+					char	buff[SIZE_LONGNAME+1];
+					sprintf(buff,"%s.db",ComSymbol);
+					use = DB_Parser(name);
+					EnterUse(ret,use->name,use);
+				} else {
+					Error("invalid token in use statement");
+				}
+				break;
+			  case	'{':
+				use = DB_Parse(name);
+				EnterUse(ret,use->name,use);
+				break;
+			  default:
+				Error("use invalid symbol");
+				break;
+			}
+			break;
 		  case	T_PRIMARY:
 			dbgmsg("primary");
 			if		(  ret->type  ==  RECORD_NULL  ) {
@@ -213,7 +259,7 @@ dbgmsg(">DB_Parse");
 					Error("; missing");
 				}
 			} else {
-				Error("syntax error");
+				Error("syntax error(PRIMARY)");
 			}
 			break;
 		  case	T_PATH:
@@ -228,7 +274,7 @@ dbgmsg(">DB_Parse");
 				xfree(ret->opt.db->path);
 			}
 			path[pcount] = InitPathStruct();
-			path[pcount]->name = StrDup(DB_ComSymbol);
+			path[pcount]->name = StrDup(ComSymbol);
 			g_hash_table_insert(ret->opt.db->paths,path[pcount]->name,(void *)(pcount+1));
 			ret->opt.db->pcount ++;
 			ret->opt.db->path = path;
@@ -237,14 +283,14 @@ dbgmsg(">DB_Parse");
 			}
 			while	(  GetName  ==  T_SYMBOL  ) {
 				if		(  ( ix = (int)g_hash_table_lookup(
-								 path[pcount]->opHash,DB_ComSymbol) )  ==  0  ) {
+								 path[pcount]->opHash,ComSymbol) )  ==  0  ) {
 					ix = path[pcount]->ocount;
 					ops = (LargeByteString **)xmalloc(sizeof(LargeByteString *) * ( ix + 1 ));
 					memcpy(ops,path[pcount]->ops,(sizeof(LargeByteString *) * ix));
 					xfree(path[pcount]->ops);
 					path[pcount]->ops = ops;
 					g_hash_table_insert(path[pcount]->opHash,
-										StrDup(DB_ComSymbol),
+										StrDup(ComSymbol),
 										(gpointer)(ix + 1));
 					path[pcount]->ocount ++;
 				} else {
@@ -259,7 +305,7 @@ dbgmsg(">DB_Parse");
 					Error("{ missing");
 				}
 			}
-			if		(  DB_Token  ==  '}'  ) {
+			if		(  ComToken  ==  '}'  ) {
 				if		(  GetSymbol  !=  ';'  ) {
 					Error("; missing");
 				}
@@ -268,12 +314,12 @@ dbgmsg(">DB_Parse");
 			}
 			break;
 		  default:
-			Error("syntax error");
-			printf("token = [%X]\n",DB_Token);
+			Error("syntax error(other)");
+			printf("token = [%X]\n",ComToken);
+			exit(1);
 			break;
 		}
 	}
-	xfree(DB_FileName);
 dbgmsg("<DB_Parse");
 	return	(ret);
 }
@@ -283,16 +329,14 @@ extern	RecordStruct	*
 DB_Parser(
 	char	*name)
 {
-	FILE	*fp;
 	struct	stat	stbuf;
 	RecordStruct	*ret;
 
 ENTER_FUNC;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		fDB_Error = FALSE;
-		if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
-			ret = DB_Parse(fp,name);
-			fclose(fp);
+		if		(  PushLexInfo(name,RecordDir,Reserved)  !=  NULL  ) {
+			ret = DB_Parse(name);
+			DropLexInfo();
 		} else {
 			ret = NULL;
 		}

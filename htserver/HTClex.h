@@ -23,8 +23,6 @@ copies.
 #define	_INC_HTC_LEX_H
 #include	<glib.h>
 
-#define	SIZE_SYMBOL		4096
-
 #define	YYBASE			256
 #define	T_EOF			(YYBASE +1)
 #define	T_SYMBOL		(YYBASE +2)

@@ -22,18 +22,15 @@ copies.
 #ifndef	_INC_SQL_LEX_H
 #define	_INC_SQL_LEX_H
 #include	<glib.h>
+#include	"Lex.h"
 
 #define	SIZE_SYMBOL		255
 
-#define	YYBASE			256
-#define	T_EOF			(YYBASE +1)
-#define	T_SYMBOL		(YYBASE +2)
-#define	T_SCONST		(YYBASE +3)
-#define	T_SQL			(YYBASE +4)
-#define	T_INTO			(YYBASE +5)
-#define	T_INSERT		(YYBASE +6)
-#define	T_LIKE			(YYBASE +7)
-#define	T_ILIKE			(YYBASE +8)
+#define	T_SQL			(T_YYBASE +1)
+#define	T_INTO			(T_YYBASE +2)
+#define	T_INSERT		(T_YYBASE +3)
+#define	T_LIKE			(T_YYBASE +4)
+#define	T_ILIKE			(T_YYBASE +5)
 
 #ifdef	_SQL_PARSER
 #define	GLOBAL	/*	*/

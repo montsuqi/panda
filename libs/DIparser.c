@@ -36,6 +36,7 @@ copies.
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
+#include	<sys/stat.h>	/*	for stbuf	*/
 #include	<unistd.h>
 #include	<libgen.h>
 #include	"types.h"
@@ -44,7 +45,7 @@ copies.
 #include	"libmondai.h"
 #include	"misc.h"
 #include	"DDparser.h"
-#include	"DIlex.h"
+#include	"Lex.h"
 #include	"LDparser.h"
 #include	"BDparser.h"
 #include	"DBDparser.h"
@@ -54,12 +55,33 @@ copies.
 #include	"directory.h"
 #include	"debug.h"
 
-static	Bool	fError;
+#define	T_NAME			(T_YYBASE +1)
+#define	T_LD			(T_YYBASE +2)
+#define	T_LINKSIZE		(T_YYBASE +3)
+#define	T_MULTI			(T_YYBASE +4)
+#define	T_BD			(T_YYBASE +5)
+#define	T_DBGROUP		(T_YYBASE +6)
+#define	T_PORT			(T_YYBASE +7)
+#define	T_USER			(T_YYBASE +8)
+#define	T_PASS			(T_YYBASE +9)
+#define	T_TYPE			(T_YYBASE +10)
+#define	T_FILE			(T_YYBASE +11)
+#define	T_REDIRECT		(T_YYBASE +12)
+#define	T_REDIRECTPORT	(T_YYBASE +13)
+#define	T_LDDIR			(T_YYBASE +14)
+#define	T_BDDIR			(T_YYBASE +15)
+#define	T_RECDIR		(T_YYBASE +16)
+#define	T_BASEDIR		(T_YYBASE +17)
+#define	T_PRIORITY		(T_YYBASE +18)
+#define	T_LINKAGE		(T_YYBASE +19)
+#define	T_STACKSIZE		(T_YYBASE +20)
+#define	T_DB			(T_YYBASE +21)
+#define	T_DBDDIR		(T_YYBASE +22)
+#define	T_WFC			(T_YYBASE +23)
+#define	T_EXIT			(T_YYBASE +24)
 
-#define	GetSymbol	(DI_Token = DI_Lex(FALSE))
-#define	GetName		(DI_Token = DI_Lex(TRUE))
 #undef	Error
-#define	Error(msg)	{fError=TRUE;_Error((msg),DI_FileName,DI_cLine);}
+#define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
 
 static	void
 _Error(
@@ -70,21 +92,51 @@ _Error(
 	printf("%s:%d:%s\n",fn,line,msg);
 }
 
+static	TokenTable	tokentable[] = {
+	{	"ld"				,T_LD		},
+	{	"bd"				,T_BD		},
+	{	"db"				,T_DB		},
+	{	"name"				,T_NAME 	},
+	{	"linksize"			,T_LINKSIZE	},
+	{	"multiplex_level"	,T_MULTI	},
+	{	"db_group"			,T_DBGROUP	},
+	{	"port"				,T_PORT		},
+	{	"user"				,T_USER		},
+	{	"password"			,T_PASS		},
+	{	"type"				,T_TYPE		},
+	{	"file"				,T_FILE		},
+	{	"redirect"			,T_REDIRECT	},
+	{	"redirect_port"		,T_REDIRECTPORT	},
+	{	"lddir"				,T_LDDIR	},
+	{	"bddir"				,T_BDDIR	},
+	{	"dbddir"			,T_DBDDIR	},
+	{	"record"			,T_RECDIR	},
+	{	"base"				,T_BASEDIR	},
+	{	"priority"			,T_PRIORITY	},
+	{	"linkage"			,T_LINKAGE	},
+	{	"stacksize"			,T_STACKSIZE	},
+	{	"wfc"				,T_WFC		},
+	{	"exit"				,T_EXIT		},
+	{	""					,0			}
+};
+
+static	GHashTable	*Reserved;
+
 static	void
 ParWFC(void)
 {
 dbgmsg(">ParWFC");
 	while	(  GetSymbol  !=  '}'  ) {
-		switch	(DI_Token) {
+		switch	(ComToken) {
 		  case	T_PORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
 				ThisEnv->WfcApsPort = New(Port);
 				ThisEnv->WfcApsPort->host = "localhost";
-				ThisEnv->WfcApsPort->port = IntStrDup(DI_ComInt);
+				ThisEnv->WfcApsPort->port = IntStrDup(ComInt);
 				break;
 			  case	T_SCONST:
-				ThisEnv->WfcApsPort = ParPort(DI_ComSymbol,PORT_WFC_APS);
+				ThisEnv->WfcApsPort = ParPort(ComSymbol,PORT_WFC_APS);
 				break;
 			  default:
 				Error("invalid port number");
@@ -96,7 +148,7 @@ dbgmsg(">ParWFC");
 			Error("wfc keyword error");
 			break;
 		}
-		if		(  DI_Token  !=  ';'  ) {		
+		if		(  ComToken  !=  ';'  ) {		
 			Error("syntax error 1");
 		}
 	}
@@ -123,10 +175,10 @@ dbgmsg("-4");
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
-		sprintf(name,"%s/%s.ld",p,DI_ComSymbol);
+		sprintf(name,"%s/%s.ld",p,ComSymbol);
 dbgmsg("-3");
 		if		(  (  ld = LD_Parser(name) )  !=  NULL  ) {
-			if		(  g_hash_table_lookup(ThisEnv->LD_Table,DI_ComSymbol)
+			if		(  g_hash_table_lookup(ThisEnv->LD_Table,ComSymbol)
 					   !=  NULL  ) {
 				Error("same ld appier");
 			}
@@ -140,12 +192,12 @@ dbgmsg("-2");
 			ThisEnv->ld[ThisEnv->cLD] = ld;
 			ThisEnv->cLD ++;
 dbgmsg("-1");
-			g_hash_table_insert(ThisEnv->LD_Table, StrDup(DI_ComSymbol),ld);
+			g_hash_table_insert(ThisEnv->LD_Table, StrDup(ComSymbol),ld);
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				ld->nports = 0;
 dbgmsg("0");
-				while	(  DI_Token  ==  T_SCONST  ) {
-					strcpy(buff,DI_ComSymbol);
+				while	(  ComToken  ==  T_SCONST  ) {
+					strcpy(buff,ComSymbol);
 					n = 0;
 					switch	(GetSymbol) {
 					  case	',':
@@ -153,7 +205,7 @@ dbgmsg("0");
 						break;
 					  case	'*':
 						if		(  GetSymbol  ==  T_ICONST  ) {
-							n = DI_ComInt;
+							n = ComInt;
 							GetSymbol;
 						} else {
 							Error("invalid number");
@@ -179,14 +231,14 @@ dbgmsg("2");
 						ld->nports ++;
 					}
 dbgmsg("3");
-					if		(  DI_Token  ==  ','  ) {
+					if		(  ComToken  ==  ','  ) {
 						GetSymbol;
 					}
 				}
 			} else
-			if		(  DI_Token  ==  T_ICONST  ) {
+			if		(  ComToken  ==  T_ICONST  ) {
 dbgmsg("4");
-				ld->nports = DI_ComInt;
+				ld->nports = ComInt;
 				ld->ports = (Port **)xmalloc(sizeof(Port *) * ld->nports);
 				for	( i = 0 ; i < ld->nports ; i ++ ) {
 					ld->ports[i] = NULL;
@@ -214,7 +266,7 @@ static	void
 SkipLD(void)
 {
 dbgmsg(">SkipLD");
-	while	(  DI_Token  ==  T_SCONST  ) {
+	while	(  ComToken  ==  T_SCONST  ) {
 		switch	(GetSymbol)	{
 		  case	',':
 			break;
@@ -229,7 +281,7 @@ dbgmsg(">SkipLD");
 			GetSymbol;
 			break;
 		}
-		if		(  DI_Token  ==  ','  ) {
+		if		(  ComToken  ==  ','  ) {
 			GetSymbol;
 		}
 	}
@@ -242,16 +294,16 @@ ParLD(
 {
 dbgmsg(">ParLD");
 	while	(  GetSymbol  !=  '}'  ) {
-		if		(	(  DI_Token  ==  T_SYMBOL  )
-				||	(  DI_Token  ==  T_SCONST  )
-				||	(  DI_Token  ==  T_EXIT    ) ) {
+		if		(	(  ComToken  ==  T_SYMBOL  )
+				||	(  ComToken  ==  T_SCONST  )
+				||	(  ComToken  ==  T_EXIT    ) ) {
 			if		(  ThisEnv->D_Dir  ==  NULL  ) {
 				if		(  GetSymbol  ==  T_SCONST  ) {
 					SkipLD();
 				}
 			} else {
 				if		(	(  dname  ==  NULL  )
-						||	(  !strcmp(DI_ComSymbol,dname)  ) ) {
+						||	(  !strcmp(ComSymbol,dname)  ) ) {
 					ParLD_Elements();
 				} else {
 					if		(  GetSymbol  ==  T_SCONST  ) {
@@ -259,8 +311,8 @@ dbgmsg(">ParLD");
 					}
 				}
 			}
-			if		(  DI_Token  !=  ';'  ) {
-				printf("[%s]\n",DI_ComSymbol);
+			if		(  ComToken  !=  ';'  ) {
+				printf("[%s]\n",ComSymbol);
 				Error("syntax error 2");
 			}
 		}
@@ -281,20 +333,20 @@ ParBD(
 
 dbgmsg(">ParBD");
 	while	(  GetSymbol  !=  '}'  ) {
-		if		(	(  DI_Token  ==  T_SYMBOL  )
-				||	(  DI_Token  ==  T_SCONST  ) ) {
+		if		(	(  ComToken  ==  T_SYMBOL  )
+				||	(  ComToken  ==  T_SCONST  ) ) {
 			if		(  ThisEnv->D_Dir  !=  NULL  ) {
 				if		(	(  dname  ==  NULL  )
-						||	(  !strcmp(dname,DI_ComSymbol)  ) ) {
+						||	(  !strcmp(dname,ComSymbol)  ) ) {
 					strcpy(buff,ThisEnv->D_Dir);
 					p = buff;
 					do {
 						if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 							*q = 0;
 						}
-						sprintf(name,"%s/%s.bd",p,DI_ComSymbol);
+						sprintf(name,"%s/%s.bd",p,ComSymbol);
 						if		(  (  bd = BD_Parser(name) )  !=  NULL  ) {
-							if		(  g_hash_table_lookup(ThisEnv->BD_Table,DI_ComSymbol)  ==  NULL  ) {
+							if		(  g_hash_table_lookup(ThisEnv->BD_Table,ComSymbol)  ==  NULL  ) {
 								btmp = (BD_Struct **)xmalloc(sizeof(BD_Struct *)
 															 * ( ThisEnv->cBD + 1));
 								if		(  ThisEnv->cBD  >  0  ) {
@@ -306,7 +358,7 @@ dbgmsg(">ParBD");
 								ThisEnv->bd[ThisEnv->cBD] = bd;
 								ThisEnv->cBD ++;
 								g_hash_table_insert(ThisEnv->BD_Table,
-													StrDup(DI_ComSymbol),bd);
+													StrDup(ComSymbol),bd);
 							} else {
 								Error("same bd appier");
 							}
@@ -340,20 +392,20 @@ ParDBD(
 
 dbgmsg(">ParDBD");
 	while	(  GetSymbol  !=  '}'  ) {
-		if		(	(  DI_Token  ==  T_SYMBOL  )
-				||	(  DI_Token  ==  T_SCONST  ) ) {
+		if		(	(  ComToken  ==  T_SYMBOL  )
+				||	(  ComToken  ==  T_SCONST  ) ) {
 			if		(  ThisEnv->D_Dir  !=  NULL  ) {
 				if		(	(  dname  ==  NULL  )
-						||	(  !strcmp(dname,DI_ComSymbol)  ) ) {
+						||	(  !strcmp(dname,ComSymbol)  ) ) {
 					strcpy(buff,ThisEnv->D_Dir);
 					p = buff;
 					do {
 						if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 							*q = 0;
 						}
-						sprintf(name,"%s/%s.dbd",p,DI_ComSymbol);
+						sprintf(name,"%s/%s.dbd",p,ComSymbol);
 						if		(  (  dbd = DBD_Parser(name) )  !=  NULL  ) {
-							if		(  g_hash_table_lookup(ThisEnv->DBD_Table,DI_ComSymbol)  ==  NULL  ) {
+							if		(  g_hash_table_lookup(ThisEnv->DBD_Table,ComSymbol)  ==  NULL  ) {
 								btmp = (DBD_Struct **)xmalloc(sizeof(DBD_Struct *)
 															 * ( ThisEnv->cDBD + 1));
 								if		(  ThisEnv->cDBD  >  0  ) {
@@ -365,7 +417,7 @@ dbgmsg(">ParDBD");
 								ThisEnv->db[ThisEnv->cDBD] = dbd;
 								ThisEnv->cDBD ++;
 								g_hash_table_insert(ThisEnv->DBD_Table,
-													StrDup(DI_ComSymbol),dbd);
+													StrDup(ComSymbol),dbd);
 							} else {
 								Error("same db appier");
 							}
@@ -431,75 +483,75 @@ dbgmsg(">ParDBGROUP");
 	dbg->dbt = NULL;
 	dbg->priority = 50;
 	while	(  GetSymbol  !=  '}'  ) {
-		switch	(DI_Token) {
+		switch	(ComToken) {
 		  case	T_TYPE:
 			GetSymbol;
-			if		(	(  DI_Token  ==  T_SYMBOL  )
-					||	(  DI_Token  ==  T_SCONST  ) ) {
-				dbg->type = StrDup(DI_ComSymbol);
+			if		(	(  ComToken  ==  T_SYMBOL  )
+					||	(  ComToken  ==  T_SCONST  ) ) {
+				dbg->type = StrDup(ComSymbol);
 			} else {
 				Error("invalid DBMS type");
 			}
 			break;
 		  case	T_PORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->port = ParPort(DI_ComSymbol,-1);
+				dbg->port = ParPort(ComSymbol,-1);
 			} else {
 				Error("invalid port");
 			}
 			break;
 		  case	T_REDIRECTPORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->redirectPort = ParPort(DI_ComSymbol,PORT_REDIRECT);
+				dbg->redirectPort = ParPort(ComSymbol,PORT_REDIRECT);
 			} else {
 				Error("invalid port");
 			}
 			break;
 		  case	T_NAME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->dbname = StrDup(DI_ComSymbol);
+				dbg->dbname = StrDup(ComSymbol);
 			} else {
 				Error("invalid DB name");
 			}
 			break;
 		  case	T_USER:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->user = StrDup(DI_ComSymbol);
+				dbg->user = StrDup(ComSymbol);
 			} else {
 				Error("invalid DB user");
 			}
 			break;
 		  case	T_PASS:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->pass = StrDup(DI_ComSymbol);
+				dbg->pass = StrDup(ComSymbol);
 			} else {
 				Error("invalid DB password");
 			}
 			break;
 		  case	T_FILE:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->file = StrDup(DI_ComSymbol);
+				dbg->file = StrDup(ComSymbol);
 			} else {
 				Error("invalid logging file name");
 			}
 			break;
 		  case	T_REDIRECT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->redirect = (DBG_Struct *)StrDup(DI_ComSymbol);
+				dbg->redirect = (DBG_Struct *)StrDup(ComSymbol);
 			} else {
 				Error("invalid redirect group");
 			}
 			break;
 		  case	T_PRIORITY:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				dbg->priority = atoi(DI_ComSymbol);
+				dbg->priority = atoi(ComSymbol);
 			} else {
 				Error("priority invalid");
 			}
 			break;
 		  default:
 			Error("other syntax error in db_group");
-			printf("[%s]\n",DI_ComSymbol);
+			printf("[%s]\n",ComSymbol);
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
@@ -559,10 +611,12 @@ static	RecordStruct	*
 BuildMcpArea(
 	size_t	stacksize)
 {
+	FILE	*fp;
+	char	name[SIZE_LONGNAME+1];
 	RecordStruct	*rec;
-	FILE			*fp;
 
-	if		(  ( fp = tmpfile() )  ==  NULL  ) {
+	sprintf(name,"/tmp/mcparea%d.rec",(int)getpid());
+	if		(  ( fp = fopen(name,"w") )  ==  NULL  ) {
 		fprintf(stderr,"tempfile can not make.\n");
 		exit(1);
 	}
@@ -597,9 +651,10 @@ BuildMcpArea(
 	fprintf(fp,			"prc		char(1);");
 	fprintf(fp,		"};");
 	fprintf(fp,	"};");
-	rewind(fp);
-	rec = DD_Parse(fp,"");
 	fclose(fp);
+
+	rec = ParseRecordFile(name);
+	remove(name);
 
 	return	(rec);
 }
@@ -615,13 +670,13 @@ ParDI(
 dbgmsg(">ParDI");
 	ThisEnv = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
-		switch	(DI_Token) {
+		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("no name");
 			} else {
 				ThisEnv = New(DI_Struct);
-				ThisEnv->name = StrDup(DI_ComSymbol);
+				ThisEnv->name = StrDup(ComSymbol);
 				ThisEnv->BaseDir = BaseDir;
 				ThisEnv->D_Dir = D_Dir;
 				ThisEnv->RecordDir = RecordDir;
@@ -641,8 +696,8 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_STACKSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				if		(  DI_ComInt  >  SIZE_STACK  ) {
-					ThisEnv->stacksize = DI_ComInt;
+				if		(  ComInt  >  SIZE_STACK  ) {
+					ThisEnv->stacksize = ComInt;
 				}
 			} else {
 				Error("stacksize must be integer");
@@ -650,14 +705,14 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_LINKSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ThisEnv->linksize = DI_ComInt;
+				ThisEnv->linksize = ComInt;
 			} else {
 				Error("linksize must be integer");
 			}
 			break;
 		  case	T_LINKAGE:
 			if		(  GetSymbol   ==  T_SYMBOL  ) {
-				if		(  ( ThisEnv->linkrec = ReadRecordDefine(DI_ComSymbol) )
+				if		(  ( ThisEnv->linkrec = ReadRecordDefine(ComSymbol) )
 						   ==  NULL  ) {
 					Error("linkage record not found");
 				} else {
@@ -670,10 +725,10 @@ dbgmsg(">ParDI");
 		  case	T_BASEDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->BaseDir  ==  NULL  ) {
-					if		(  !strcmp(DI_ComSymbol,".")  ) {
+					if		(  !strcmp(ComSymbol,".")  ) {
 						ThisEnv->BaseDir = ".";
 					} else {
-						ThisEnv->BaseDir = StrDup(ExpandPath(DI_ComSymbol
+						ThisEnv->BaseDir = StrDup(ExpandPath(ComSymbol
 															,NULL));
 					}
 				}
@@ -684,10 +739,10 @@ dbgmsg(">ParDI");
 		  case	T_LDDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->D_Dir  ==  NULL  ) {
-					if		(  !strcmp(DI_ComSymbol,".")  ) {
+					if		(  !strcmp(ComSymbol,".")  ) {
 						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
 					} else {
-						ThisEnv->D_Dir = StrDup(ExpandPath(DI_ComSymbol
+						ThisEnv->D_Dir = StrDup(ExpandPath(ComSymbol
 															,ThisEnv->BaseDir));
 					}
 				}
@@ -698,10 +753,10 @@ dbgmsg(">ParDI");
 		  case	T_BDDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->D_Dir  ==  NULL  ) {
-					if		(  !strcmp(DI_ComSymbol,".")  ) {
+					if		(  !strcmp(ComSymbol,".")  ) {
 						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
 					} else {
-						ThisEnv->D_Dir = StrDup(ExpandPath(DI_ComSymbol
+						ThisEnv->D_Dir = StrDup(ExpandPath(ComSymbol
 															,ThisEnv->BaseDir));
 					}
 				}
@@ -712,10 +767,10 @@ dbgmsg(">ParDI");
 		  case	T_DBDDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->D_Dir  ==  NULL  ) {
-					if		(  !strcmp(DI_ComSymbol,".")  ) {
+					if		(  !strcmp(ComSymbol,".")  ) {
 						ThisEnv->D_Dir = StrDup(ThisEnv->BaseDir);
 					} else {
-						ThisEnv->D_Dir = StrDup(ExpandPath(DI_ComSymbol
+						ThisEnv->D_Dir = StrDup(ExpandPath(ComSymbol
 															,ThisEnv->BaseDir));
 					}
 				}
@@ -726,10 +781,10 @@ dbgmsg(">ParDI");
 		  case	T_RECDIR:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				if		(  ThisEnv->RecordDir  ==  NULL  ) {
-					if		(  !strcmp(DI_ComSymbol,".")  ) {
+					if		(  !strcmp(ComSymbol,".")  ) {
 						ThisEnv->RecordDir = StrDup(ThisEnv->BaseDir);
 					} else {
-						ThisEnv->RecordDir = StrDup(ExpandPath(DI_ComSymbol
+						ThisEnv->RecordDir = StrDup(ExpandPath(ComSymbol
 															,ThisEnv->BaseDir));
 					}
 					RecordDir = ThisEnv->RecordDir;
@@ -740,19 +795,19 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_MULTI:
 			GetName;
-			if		(  stricmp(DI_ComSymbol,"no")  ==  0  ) {
+			if		(  stricmp(ComSymbol,"no")  ==  0  ) {
 				ThisEnv->mlevel = MULTI_NO;
 			} else
-			if		(  stricmp(DI_ComSymbol,"db")  ==  0  ) {
+			if		(  stricmp(ComSymbol,"db")  ==  0  ) {
 				ThisEnv->mlevel = MULTI_DB;
 			} else
-			if		(  stricmp(DI_ComSymbol,"ld")  ==  0  ) {
+			if		(  stricmp(ComSymbol,"ld")  ==  0  ) {
 				ThisEnv->mlevel = MULTI_LD;
 			} else
-			if		(  stricmp(DI_ComSymbol,"id")  ==  0  ) {
+			if		(  stricmp(ComSymbol,"id")  ==  0  ) {
 				ThisEnv->mlevel = MULTI_ID;
 			} else
-			if		(  stricmp(DI_ComSymbol,"aps")  ==  0  ) {
+			if		(  stricmp(ComSymbol,"aps")  ==  0  ) {
 				ThisEnv->mlevel = MULTI_APS;
 			} else {
 				Error("invalid multiplex level");
@@ -788,12 +843,12 @@ dbgmsg(">ParDI");
 			break;
 		  case	T_DBGROUP:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				gname = StrDup(DI_ComSymbol);
+				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
 					Error("syntax error 3");
 				}
 			} else
-			if		(  DI_Token  ==  '{'  ) {
+			if		(  ComToken  ==  '{'  ) {
 				gname = "";
 			} else {
 				gname = NULL;
@@ -802,6 +857,7 @@ dbgmsg(">ParDI");
 			ParDBGROUP(gname);
 			break;
 		  default:
+			printf("[%X][%s]\n",ComToken,ComSymbol);
 			Error("syntax error 5");
 			break;
 		}
@@ -822,19 +878,16 @@ DI_Parser(
 	char	*bd,
 	char	*db)
 {
-	FILE	*fp;
+	struct	stat	stbuf;
 	DI_Struct	*ret;
 
 dbgmsg(">DI_Parser");
-	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
-		fError = FALSE;
-		DirectoryDir = dirname(StrDup(name));
-		DI_FileName = StrDup(name);
-		DI_cLine = 1;
-		DI_File = fp;
-		ret = ParDI(ld,bd,db);
-		fclose(DI_File);
-		if		(  fError  ) {
+	DirectoryDir = dirname(StrDup(name));
+	if		(  stat(name,&stbuf)  ==  0  ) { 
+		if		(  PushLexInfo(name,DirectoryDir,Reserved)  !=  NULL  ) {
+			ret = ParDI(ld,bd,db);
+			DropLexInfo();
+		} else {
 			ret = NULL;
 		}
 	} else {
@@ -848,5 +901,6 @@ dbgmsg("<DI_Parser");
 extern	void
 DI_ParserInit(void)
 {
-	DI_LexInit();
+	LexInit();
+	Reserved = MakeReservedTable(tokentable);
 }

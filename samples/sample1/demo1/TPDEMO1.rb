@@ -3,7 +3,7 @@
 require "apslib"
 
 class Main < PandaDC
-  def start(aps)
+  def start(aps,db)
 	$stderr.printf("start TPDEMO1.rb\n");
 	f = open("aps.log","w");
 	aps.dump(f);
@@ -68,7 +68,7 @@ class Main < PandaDC
 
 	putWindow("project1","entry2");
   end
-  def do_Left(aps)
+  def do_Left(aps,db)
 	aps["project1.vbox1.entry3.value"] =
 	  aps["project1.vbox1.entry1.value"] +
 	  aps["project1.vbox1.entry2.value"];
@@ -76,7 +76,7 @@ class Main < PandaDC
 
 	putWindow("project1","entry2");
   end
-  def do_Right(aps)
+  def do_Right(aps,db)
 	aps["project1.vbox1.entry3.value"] =
 	  aps["project1.vbox1.entry2.value"] +
 	  aps["project1.vbox1.entry1.value"];
@@ -84,23 +84,23 @@ class Main < PandaDC
 
 	putWindow("project1","entry2");
   end
-  def do_OpenCalc(aps)
+  def do_OpenCalc(aps,db)
 	putWindow("project2","entry2","NEW");
   end
-  def do_CloseCalc(aps)
+  def do_CloseCalc(aps,db)
 	putWindow("project2","entry2","CLOSE");
   end
-  def do_Quit(aps)
+  def do_Quit(aps,db)
 	f = open("aps.log","a");
 	f.printf("Quit\n");
 	aps.dump(f);
 	f.close;
 	putWindow("project3","entry2","CHANGE");
   end
-  def do_OpenCalendar(aps)
+  def do_OpenCalendar(aps,db)
 	putWindow("project5","entry2","CHANGE");
   end
-  def do_PutData(aps)
+  def do_PutData(aps,db)
 	f = open("log","a");
 	f.printf("PutData\n");
 	aps.dump(f);

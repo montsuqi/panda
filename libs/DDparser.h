@@ -18,40 +18,11 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
+#ifndef	_DD_PARSER_H
+#define	_DD_PARSER_H
+#include	"struct.h"
 
-#ifndef	_INC_DB_LEX_H
-#define	_INC_DB_LEX_H
-#include	<glib.h>
-
-#define	SIZE_SYMBOL		255
-
-#define	YYBASE			256
-#define	T_EOF			(YYBASE +1)
-#define	T_SYMBOL		(YYBASE +2)
-#define	T_SCONST		(YYBASE +3)
-#define	T_ICONST		(YYBASE +4)
-
-#define	T_PRIMARY		(YYBASE +5)
-#define	T_PATH			(YYBASE +6)
-
-#undef	GLOBAL
-#ifdef	_DB_PARSER
-#define	GLOBAL	/*	*/
-#else
-#define	GLOBAL	extern
-#endif
-
-GLOBAL	char	DB_ComSymbol[SIZE_SYMBOL+1];
-GLOBAL	int		DB_ComInt;
-GLOBAL	int		DB_Token;
-GLOBAL	FILE	*DB_File;
-GLOBAL	char	*DB_FileName;
-GLOBAL	int		DB_cLine;
-GLOBAL	Bool	fDB_Error;
-
-#undef	GLOBAL
-
-extern	int		DB_Lex(Bool fSymbol);
-extern	void	DB_LexInit(void);
-
+extern	RecordStruct	*DD_Parse(void);
+extern	RecordStruct	*ParseRecordFile(char *name);
+extern	RecordStruct	*ReadRecordDefine(char *name);
 #endif

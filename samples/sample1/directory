@@ -1,7 +1,7 @@
 name	demo;
 
 #	"~" will be expanded to home directory
-base	"~/panda/samples";
+base	"~/MONTSUQI/panda/samples";
 
 #	"=" will be expanded to base
 lddir	"=/sample1";

@@ -52,6 +52,7 @@ typedef	struct {
 	KeyStruct	*pkey;
 	PathStruct	**path;
 	GHashTable	*paths;
+	GHashTable	*use;
 	int			pcount;
 	void		*dbg;
 }	DB_Struct;

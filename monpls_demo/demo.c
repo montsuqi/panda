@@ -19,10 +19,10 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
-
+/*
 #define	DEBUG
 #define	TRACE
-
+*/
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -50,7 +50,7 @@ dbgmsg(">demoLink");
 	count = 0; 
 	printf("arg = [%s]\n",arg);
 	(void)SetWindowName("project1");
-
+dbgmsg("*");
 	if		(  ( e = GetWindowValue("project3.vbox1.swin1.text1.value") )  !=  NULL  ) {
 		SetValueString(GetWindowValue("project1.vbox1.entry1.value"),ValueString(e));
 	} else {
@@ -113,8 +113,10 @@ dbgmsg(">demoLink");
 	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value2"),"070-6163-7932");
 	SetValueInteger(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.count"),1);
 
+dbgmsg("*");
 
 	w = PutWindowByName("project1",SCREEN_NEW_WINDOW);
+dbgmsg("*");
 	strcpy(ThisWindow,"project1");
 	strcpy(ThisWidget,"entry2");
 dbgmsg("<demoLink");

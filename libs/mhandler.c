@@ -75,56 +75,56 @@ ParHANDLER(void)
 
 ENTER_FUNC;
 	GetSymbol; 
-	if		(	(  D_Token  ==  T_SYMBOL  )
-			||	(  D_Token  ==  T_SCONST  ) ) {
-		if		(  ( handler = (MessageHandler *)g_hash_table_lookup(Handler,D_ComSymbol) )
+	if		(	(  ComToken  ==  T_SYMBOL  )
+			||	(  ComToken  ==  T_SCONST  ) ) {
+		if		(  ( handler = (MessageHandler *)g_hash_table_lookup(Handler,ComSymbol) )
 				   ==  NULL  ) {
-			handler = NewMessageHandler(D_ComSymbol,NULL);
+			handler = NewMessageHandler(ComSymbol,NULL);
 		}
 		if		(  GetSymbol  ==  '{'  ) {
 			while	(  GetSymbol  !=  '}'  ) {
-				switch	(D_Token) {
+				switch	(ComToken) {
 				  case	T_CLASS:
 					if		(  GetName   ==  T_SCONST  ) {
-						handler->klass = (MessageHandlerClass *)StrDup(D_ComSymbol);
+						handler->klass = (MessageHandlerClass *)StrDup(ComSymbol);
 					} else {
 						Error("class must be string.");
 					}
 					break;
 				  case	T_SERIALIZE:
 					if		(  GetName   ==  T_SCONST  ) {
-						handler->serialize = (ConvFuncs *)StrDup(D_ComSymbol);
+						handler->serialize = (ConvFuncs *)StrDup(ComSymbol);
 					} else {
 						Error("serialize method must be string.");
 					}
 					break;
 				  case	T_START:
 					if		(  GetName   ==  T_SCONST  ) {
-						handler->start = StrDup(D_ComSymbol);
+						handler->start = StrDup(ComSymbol);
 					} else {
 						Error("start parameter must be string.");
 					}
 					break;
 				  case	T_LOCALE:
 					if		(  GetName   ==  T_SCONST  ) {
-						handler->conv->locale = StrDup(D_ComSymbol);
+						handler->conv->locale = StrDup(ComSymbol);
 					} else {
 						Error("locale name must be string.");
 					}
 					break;
 				  case	T_LOADPATH:
 					if		(  GetName   ==  T_SCONST  ) {
-						handler->loadpath = StrDup(D_ComSymbol);
+						handler->loadpath = StrDup(ComSymbol);
 					} else {
 						Error("load path must be string.");
 					}
 					break;
 				  case	T_ENCODING:
 					if		(  GetName   ==  T_SCONST  ) {
-						if		(  !stricmp(D_ComSymbol,"URL")  ) {
+						if		(  !stricmp(ComSymbol,"URL")  ) {
 							handler->conv->encode = STRING_ENCODING_URL;
 						} else
-						if		(  !stricmp(D_ComSymbol,"BASE64")  ) {
+						if		(  !stricmp(ComSymbol,"BASE64")  ) {
 							handler->conv->encode = STRING_ENCODING_BASE64;
 						} else {
 							Error("unsupported string encoding");

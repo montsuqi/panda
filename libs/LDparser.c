@@ -28,8 +28,7 @@ copies.
 #  include <config.h>
 #endif
 
-#define	_D_PARSER
-
+#define		_D_PARSER
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -48,6 +47,35 @@ copies.
 #include	"directory.h"
 #include	"dirs.h"
 #include	"debug.h"
+
+static	TokenTable	tokentable[] = {
+	{	"data"		,T_DATA 	},
+	{	"host"		,T_HOST		},
+	{	"name"		,T_NAME		},
+	{	"home"		,T_HOME		},
+	{	"port"		,T_PORT		},
+	{	"spa"		,T_SPA		},
+	{	"window"	,T_WINDOW	},
+	{	"cache"		,T_CACHE	},
+	{	"arraysize"	,T_ARRAYSIZE},
+	{	"textsize"	,T_TEXTSIZE	},
+	{	"db"		,T_DB		},
+	{	"multiplex_group"	,T_MGROUP		},
+	{	"bind"		,T_BIND		},
+	{	"wfc"		,T_WFC		},
+
+	{	"handler"	,T_HANDLER	},
+	{	"class"		,T_CLASS	},
+	{	"serialize"	,T_SERIALIZE},
+	{	"start"		,T_START	},
+	{	"locale"	,T_LOCALE	},
+	{	"encoding"	,T_ENCODING	},
+	{	"loadpath"	,T_LOADPATH	},
+
+	{	""			,0	}
+};
+
+static	GHashTable	*Reserved;
 
 static	GHashTable	*Windows;
 
@@ -104,8 +132,8 @@ dbgmsg(">ParWindow");
 		Error("syntax error");
 	} else {
 		while	(  GetName  !=  '}'  ) {
-			if		(  D_Token  ==  T_SYMBOL  ) {
-				strcpy(wname,D_ComSymbol);
+			if		(  ComToken  ==  T_SYMBOL  ) {
+				strcpy(wname,ComSymbol);
 				if		(  ( bind = (WindowBind *)g_hash_table_lookup(ld->whash,wname) )
 						   ==  NULL  ) {
 					bind = AddWindow(ld,wname);
@@ -152,18 +180,18 @@ ParDB(
 
 dbgmsg(">ParDB");
 	while	(  GetSymbol  !=  '}'  ) {
-		if		(	(  D_Token  ==  T_SYMBOL  )
-				||	(  D_Token  ==  T_SCONST  ) ) {
-			if		(  stricmp(D_ComSymbol,"metadb")  ) {
+		if		(	(  ComToken  ==  T_SYMBOL  )
+				||	(  ComToken  ==  T_SCONST  ) ) {
+			if		(  stricmp(ComSymbol,"metadb")  ) {
 				strcpy(buff,RecordDir);
 				p = buff;
 				do {
 					if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 						*q = 0;
 					}
-					sprintf(name,"%s/%s.db",p,D_ComSymbol);
+					sprintf(name,"%s/%s.db",p,ComSymbol);
 					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
-						if		(  g_hash_table_lookup(ld->DB_Table,D_ComSymbol)  ==  NULL  ) {
+						if		(  g_hash_table_lookup(ld->DB_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
 							memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
 							xfree(ld->db);
@@ -173,7 +201,7 @@ dbgmsg(">ParDB");
 							ld->db = rtmp;
 							ld->db[ld->cDB] = db;
 							ld->cDB ++;
-							g_hash_table_insert(ld->DB_Table,StrDup(D_ComSymbol),(void *)ld->cDB);
+							g_hash_table_insert(ld->DB_Table,StrDup(ComSymbol),(void *)ld->cDB);
 						} else {
 							Error("same db appier");
 						}
@@ -201,11 +229,11 @@ ParDATA(
 dbgmsg(">ParDATA");
 	if		(  GetSymbol  ==  '{'  ) {
 		while	(  GetSymbol  !=  '}'  ) {
-			switch	(D_Token) {
+			switch	(ComToken) {
 			  case	T_SPA:
 				GetName;
-				if		(  D_Token   ==  T_SYMBOL  ) {
-					if		(  ( ld->sparec = ReadRecordDefine(D_ComSymbol) )
+				if		(  ComToken   ==  T_SYMBOL  ) {
+					if		(  ( ld->sparec = ReadRecordDefine(ComSymbol) )
 							   ==  NULL  ) {
 						Error("spa record not found");
 					}
@@ -239,22 +267,22 @@ ParBIND(
 
 dbgmsg(">ParBIND");
 	if		(	(  GetSymbol  ==  T_SCONST  )
-			||	(  D_Token    ==  T_SYMBOL  ) ) {
-		if		(  ( ix = (int)g_hash_table_lookup(ret->whash,D_ComSymbol) )  ==  0  ) {
-			bind = AddWindow(ret,D_ComSymbol);
+			||	(  ComToken    ==  T_SYMBOL  ) ) {
+		if		(  ( ix = (int)g_hash_table_lookup(ret->whash,ComSymbol) )  ==  0  ) {
+			bind = AddWindow(ret,ComSymbol);
 			bind->rec = NULL;
 		} else {
 			bind = ret->window[ix-1];
 		}
 		if		(	(  GetSymbol  ==  T_SCONST  )
-				||	(  D_Token    ==  T_SYMBOL  ) ) {
-			bind->handler = (void *)StrDup(D_ComSymbol);
+				||	(  ComToken    ==  T_SYMBOL  ) ) {
+			bind->handler = (void *)StrDup(ComSymbol);
 		} else {
 			Error("handler name error");
 		}
 		if		(	(  GetSymbol  ==  T_SCONST  )
-				||	(  D_Token    ==  T_SYMBOL  ) ) {
-			bind->module = StrDup(D_ComSymbol);
+				||	(  ComToken    ==  T_SYMBOL  ) ) {
+			bind->module = StrDup(ComSymbol);
 		} else {
 			Error("module name error");
 		}
@@ -273,13 +301,13 @@ ParLD(void)
 dbgmsg(">ParLD");
 	ret = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
-		switch	(D_Token) {
+		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("no name");
 			} else {
 				ret = New(LD_Struct);
-				ret->name = StrDup(D_ComSymbol);
+				ret->name = StrDup(ComSymbol);
 				ret->group = "";
 				ret->ports = NULL;
 				ret->whash = NewNameHash();
@@ -297,38 +325,38 @@ dbgmsg(">ParLD");
 			break;
 		  case	T_ARRAYSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->arraysize = D_ComInt;
+				ret->arraysize = ComInt;
 			} else {
 				Error("invalid array size");
 			}
 			break;
 		  case	T_TEXTSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->textsize = D_ComInt;
+				ret->textsize = ComInt;
 			} else {
 				Error("invalid text size");
 			}
 			break;
 		  case	T_CACHE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->nCache = D_ComInt;
+				ret->nCache = ComInt;
 			} else {
 				Error("invalid cache size");
 			}
 			break;
 		  case	T_MGROUP:
 			GetName;
-			ret->group = StrDup(D_ComSymbol);
+			ret->group = StrDup(ComSymbol);
 			break;
 		  case	T_DB:
 			if		(	(  GetSymbol  ==  T_SCONST  )
-					||	(  D_Token    ==  T_SYMBOL   ) ) {
-				gname = StrDup(D_ComSymbol);
+					||	(  ComToken    ==  T_SYMBOL   ) ) {
+				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
 					Error("DB { missing");
 				}
 			} else
-			if		(  D_Token  ==  '{'  ) {
+			if		(  ComToken  ==  '{'  ) {
 				gname = StrDup("");
 			} else {
 				gname = NULL;
@@ -341,14 +369,14 @@ dbgmsg(">ParLD");
 			break;
 		  case	T_HOME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				ret->home = StrDup(ExpandPath(D_ComSymbol,ThisEnv->BaseDir));
+				ret->home = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				Error("home directory invalid");
 			}
 			break;
 		  case	T_WFC:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				ret->wfc = ParPort(D_ComSymbol,PORT_WFC_APS);
+				ret->wfc = ParPort(ComSymbol,PORT_WFC_APS);
 			} else {
 				Error("wfc invalid");
 			}
@@ -393,19 +421,15 @@ extern	LD_Struct	*
 LD_Parser(
 	char	*name)
 {
-	FILE	*fp;
 	LD_Struct	*ret;
 	struct	stat	stbuf;
 
 dbgmsg(">LD_Parser");
 dbgmsg(name); 
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
-			D_FileName = name;
-			D_cLine = 1;
-			D_File = fp;
+		if		(  PushLexInfo(name,D_Dir,Reserved)  !=  NULL  ) {
 			ret = ParLD();
-			fclose(D_File);
+			DropLexInfo();
 			BindHandler(ret);
 		} else {
 			printf("[%s]\n",name);
@@ -422,7 +446,9 @@ dbgmsg("<LD_Parser");
 extern	void
 LD_ParserInit(void)
 {
-	D_LexInit();
+	LexInit();
+	Reserved = MakeReservedTable(tokentable);
+
 	LD_Table = NewNameHash();
 	Windows = NewNameHash();
 	MessageHandlerInit();

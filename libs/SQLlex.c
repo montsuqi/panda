@@ -35,18 +35,15 @@ copies.
 #include	"types.h"
 #include	"misc.h"
 #include	"hash.h"
-#include	"value.h"
-#include	"DBlex.h"
+#include	"libmondai.h"
+#include	"Lex.h"
 #include	"SQLlex.h"
 #include	"debug.h"
 
 #define	GetChar(fp)		fgetc(fp)
 #define	UnGetChar(fp,c)	ungetc((c),(fp))
 
-static	struct	{
-	char	*str;
-	int		token;
-}	tokentable[] = {
+static	TokenTable	tokentable[] = {
 	/*	SQL92	*/
 	{	"ABSOLUTE",		T_SQL	},
 	{	"ACTION",		T_SQL	},
@@ -318,7 +315,8 @@ SQL_LexInit(void)
 
 	Reserved = NewNameHash();
 	for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
-		g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
+		g_hash_table_insert(Reserved,StrDup(tokentable[i].str),
+							(gpointer)tokentable[i].token);
 	}
 }
 
@@ -354,24 +352,24 @@ SQL_Lex(
 
 dbgmsg(">SQL_Lex");
   retry: 
-	while	(  isspace( c = GetChar(DB_File) ) ) {
+	while	(  isspace( c = GetChar(CURR->fp) ) ) {
 		if		(  c  ==  '\n'  ) {
 			c = ' ';
-			DB_cLine ++;
+			CURR->cLine ++;
 		}
 	}
 	if		(	(  c  ==  '!'  )
 			||	(  c  ==  '#'  ) ) {
-		while	(  ( c = GetChar(DB_File) )  !=  '\n'  );
-		DB_cLine ++;
+		while	(  ( c = GetChar(CURR->fp) )  !=  '\n'  );
+		CURR->cLine ++;
 		goto	retry;
 	}
 	if		(  c  ==  '"'  ) {
-		s = DB_ComSymbol;
+		s = CURR->Symbol;
 		len = 0;
-		while	(  ( c = GetChar(DB_File) )  !=  '"'  ) {
+		while	(  ( c = GetChar(CURR->fp) )  !=  '"'  ) {
 			if		(  c  ==  '\\'  ) {
-				c = GetChar(DB_File);
+				c = GetChar(CURR->fp);
 			}
 			*s = c;
 			if		(  len  <  SIZE_SYMBOL  ) {
@@ -383,11 +381,11 @@ dbgmsg(">SQL_Lex");
 		token = T_SCONST;
 	} else
 	if		(  c  ==  '\''  ) {
-		s = DB_ComSymbol;
+		s = CURR->Symbol;
 		len = 0;
-		while	(  ( c = GetChar(DB_File) )  !=  '\''  ) {
+		while	(  ( c = GetChar(CURR->fp) )  !=  '\''  ) {
 			if		(  c  ==  '\\'  ) {
-				c = GetChar(DB_File);
+				c = GetChar(CURR->fp);
 			}
 			*s = c;
 			if		(  len  <  SIZE_SYMBOL  ) {
@@ -400,7 +398,7 @@ dbgmsg(">SQL_Lex");
 	} else
 	if		(	(  isalpha(c)  )
 			||	(  isdigit(c) ) )	{
-		s = DB_ComSymbol;
+		s = CURR->Symbol;
 		len = 0;
 		do {
 			*s = c;
@@ -408,16 +406,16 @@ dbgmsg(">SQL_Lex");
 				s ++;
 				len ++;
 			}
-			c = GetChar(DB_File);
+			c = GetChar(CURR->fp);
 		}	while	(	(  isalpha(c)  )
 					||	(  isdigit(c)  )
 					||	(  c  ==  '_'  ) );
 		*s = 0;
-		UnGetChar(DB_File,c);
+		UnGetChar(CURR->fp,c);
 		if		(  fName  ) {
 			token = T_SYMBOL;
 		} else {
-			token = CheckReserved(DB_ComSymbol);
+			token = CheckReserved(CURR->Symbol);
 		}
 	} else {
 		switch	(c) {
@@ -431,7 +429,7 @@ dbgmsg(">SQL_Lex");
 	}
 #ifdef	TRACE
 	if		(  token  >  0x7F  ) {
-		printf("DB_Token = [%X][%s]\n",token,DB_ComSymbol);
+		printf("DB_Token = [%X][%s]\n",token,CURR->Symbol);
 	} else {
 		printf("DB_Token = [%c]\n",token);
 	}
