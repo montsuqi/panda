@@ -236,7 +236,7 @@ InitMessage(
 			}
 			DestroyPort(port);
 		} else {
-			if		(  ( fd = open(fn,O_WRONLY|O_CREAT) )  >=  0  ) {
+			if		(  ( fd = open(fn,O_WRONLY|O_CREAT,0600) )  >=  0  ) {
 				fpLog = FileToNet(fd);
 			}
 		}
