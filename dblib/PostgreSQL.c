@@ -1006,6 +1006,9 @@ ENTER_FUNC;
 				if		(  ( q = strchr(buff,'.') )  !=  NULL  ) {
 					*q ++ = 0;
 					LBS_EmitString(sql,buff);
+					if		(  IS_VALUE_VIRTUAL(rec->value)  ) {
+						LBS_EmitChar(sql,'.');
+					} else
 					if		(  strcmp(buff,rec->name)  ==  0  ) {
 						LBS_EmitChar(sql,'.');
 					} else {

@@ -67,25 +67,6 @@ ValueToSQL(
 	SQL_PackValue(NULL,LBS_Ptr(lbs),val);
 }
 
-static	void
-KeyValue(
-	DBG_Struct	*dbg,
-	LargeByteString	*lbs,
-	ValueStruct	*args,
-	char		**pk)
-{
-	ValueStruct	*val;
-
-ENTER_FUNC;
-	val = args;
-	while	(  *pk  !=  NULL  ) {
-		val = GetRecordItem(args,*pk);
-		pk ++;
-	}
-	ValueToSQL(dbg,lbs,val);
-LEAVE_FUNC;
-}
-
 static	char	*
 ItemName(void)
 {
@@ -686,11 +667,7 @@ _DBDELETE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-    LargeByteString	*sql;
 	DB_Struct	*db;
-	char	***item
-	,		**pk;
-	int			res;
 	PathStruct	*path;
 	LargeByteString	*src;
 
@@ -705,41 +682,7 @@ ENTER_FUNC;
 			ctrl->rc = MCP_OK;
 			ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
-            sql = NewLBS();
-			LBS_EmitString(sql,"DELETE\tFROM\t");
-            LBS_EmitString(sql,rec->name);
-            LBS_EmitString(sql," WHERE\t");
-			item = db->pkey->item;
-			while	(  *item  !=  NULL  ) {
-				pk = *item;
-                LBS_EmitString(sql,rec->name);
-                LBS_EmitChar(sql,'.');
-				while	(  *pk  !=  NULL  ) {
-                    LBS_EmitString(sql,*pk);
-					pk ++;
-					if		(  *pk  !=  NULL  ) {
-                        LBS_EmitChar(sql,' ');
-					}
-				}
-                LBS_EmitString(sql," = ");
-                KeyValue(dbg,sql,args,*item);
-                LBS_EmitChar(sql,' ');
-				item ++;
-				if		(  *item  !=  NULL  ) {
-                    LBS_EmitString(sql,"AND\t");
-				}
-			}
-			LBS_EmitChar(sql,';');
-            LBS_EmitEnd(sql);
-			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
-			if		(  res  !=  0  ) {
-				dbgmsg("NG");
-				ctrl->rc = MCP_BAD_OTHER;
-			} else {
-				dbgmsg("OK");
-				ctrl->rc = MCP_OK;
-			}
-            FreeLBS(sql);
+			ctrl->rc = MCP_BAD_OTHER;
 		}
 	}
 LEAVE_FUNC;

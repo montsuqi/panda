@@ -6,18 +6,20 @@ textsize	200;
 handler	"Ruby"	{
 	class		"Ruby";
     loadpath	"=/oseki";
-	locale		"utf-8";
-#	locale		"euc-jp";
+#	locale		"utf-8";
+	locale		"euc-jp";
 };
 
 # bind <module name> <hander name> ;
 
 bind	"Sample"		"Ruby";
 bind	"Sample2"		"Ruby";
+bind	"Sample3"		"Ruby";
 
 db	"Oseki"	{
 	vwords;
 	words;
+	word;
 	mean;
 	deep;
 	metadb;

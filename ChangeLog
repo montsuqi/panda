@@ -1,3 +1,8 @@
+2005-03-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c (ExecPGSQL): vitrual DB時のmanglingを正しくし
+	た
+
 2005-03-02  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/fileEntry.c (SaveFile): fopenではなくopenで開くように変更
