@@ -1,3 +1,7 @@
+2002-10-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recdefgen.rb: 無意味な文字数+1を削除、char -> varchar
+
 2002-09-29  akira yamada / やまだあきら <akira@vinecaves.com>
 
 	* libs/tcp.c : SO_REUSEADDRの調整
