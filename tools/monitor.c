@@ -187,6 +187,7 @@ dbgmsg(">StartRedirector");
 	proc->argc = argc;
 	argv[argc ++] = NULL;
 	pid = StartProcess(proc);
+	dbg->fConnect = TRUE;
 dbgmsg("<StartRedirector");
 }
 
@@ -196,14 +197,11 @@ _StartRedirectors(
 {
 
 ENTER_FUNC;
-	if		(  dbg->dbt  !=  NULL  ) {
-		while	(  dbg->redirect  !=  NULL  ) {
-			if		(  !dbg->fConnect  ) {
-				StartRedirector(dbg->redirect);
-				dbg->fConnect = TRUE;
-			}
-			dbg = dbg->redirect;
-		}
+	if		(  dbg->redirect  !=  NULL  ) {
+		_StartRedirectors(dbg->redirect);
+	}
+	if		(  !dbg->fConnect  ) {
+		StartRedirector(dbg);
 	}
 LEAVE_FUNC;
 }
@@ -220,7 +218,9 @@ ENTER_FUNC;
 	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		_StartRedirectors(dbg);
+		if		(  dbg->redirect  !=  NULL  ) {
+			_StartRedirectors(dbg->redirect);
+		}
 	}
 LEAVE_FUNC;
 }

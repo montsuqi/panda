@@ -164,7 +164,6 @@ typedef	void	(*DB_FUNC2)(DBG_Struct *, DBCOMM_CTRL *);
 static	int
 ExecFunction(
 	DBG_Struct	*dbg,
-	char		*gname,
 	char		*name)
 {
 	DBCOMM_CTRL	ctrl;
@@ -173,7 +172,6 @@ ExecFunction(
 
 dbgmsg(">ExecFunction");
 #ifdef	DEBUG
-	printf("group = [%s]\n",gname);
 	printf("func  = [%s]\n",name);
 	if		(  dbg  !=  NULL  ) {
 		printf("name  = [%s]\n",dbg->name);
@@ -182,7 +180,7 @@ dbgmsg(">ExecFunction");
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl.rc += ExecFunction(dbg,dbg->name,name);
+			ctrl.rc += ExecFunction(dbg,name);
 		}
 	} else
 	if		(  dbg->dbt  !=  NULL  ) { 
@@ -224,7 +222,7 @@ dbgmsg(">ExecDB_Process");
 		ctrl->rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl->rc += ExecFunction(dbg,dbg->name,ctrl->func);
+			ctrl->rc += ExecFunction(dbg,ctrl->func);
 		}
 	} else {
 		dbg = rec->opt.db->dbg;
@@ -246,7 +244,7 @@ ExecDBG_Operation(
 	DBG_Struct	*dbg,
 	char		*name)
 {
-	ExecFunction(dbg,NULL,name);
+	ExecFunction(dbg,name);
 }
 
 extern	void

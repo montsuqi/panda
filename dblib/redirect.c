@@ -52,12 +52,14 @@ OpenDB_RedirectPort(
 	DBG_Struct	*rdbg;
 
 dbgmsg(">OpenDB_RedirectPort");
+	dbgprintf("dbg [%s]\n",dbg->name);
 	if		(	(  fNoRedirect  )
 			||	(  dbg->redirect  ==  NULL  ) ) {
 		dbg->fpLog = NULL;
 		dbg->redirectData = NULL;
 	} else {
 		rdbg = dbg->redirect;
+		dbgprintf("redirect [%s] -> [%s]\n",dbg->name,rdbg->name);
 		if		(  ( fh = ConnectIP_Socket(rdbg->redirectPort->port,SOCK_STREAM,
 										rdbg->redirectPort->host) )
 				   <  0  ) {

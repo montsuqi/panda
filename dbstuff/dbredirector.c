@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -132,9 +132,15 @@ FileThread(
 dbgmsg(">FileThread");
 	if		(  ThisDBG->dbname  !=  NULL  ) {
 		OpenDB(ThisDBG);
+	} else {
+		OpenDB_RedirectPort(ThisDBG);
 	}
-	if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
-		Error("log file can not open");
+	if		(  ThisDBG->file  !=  NULL  ) {
+		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
+			Error("log file can not open");
+		}
+	} else {
+		fp = NULL;
 	}
 	count = 0;
 	while	(TRUE)	{
@@ -146,20 +152,27 @@ dbgmsg(">FileThread");
 			TransactionStart(ThisDBG);
 			ExecDBOP(ThisDBG,p);
 			TransactionEnd(ThisDBG);
+		} else {
+			BeginDB_Redirect(ThisDBG);
+			PutDB_Redirect(ThisDBG,p);
+			CommitDB_Redirect(ThisDBG);
 		}
-		time(&nowtime);
-		Now = localtime(&nowtime);
-		fprintf(fp,"%s%04d/%02d/%02d/%02d:%02d:%02d/%08d%s"
-				,ThisDBG->func->commentStart
-				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-				, Now->tm_hour,Now->tm_min,Now->tm_sec,count
-				,ThisDBG->func->commentEnd);
-		fprintf(fp,"%s\n",p);
+		if		(  fp  !=  NULL  ) {
+			time(&nowtime);
+			Now = localtime(&nowtime);
+			fprintf(fp,"%s%04d/%02d/%02d/%02d:%02d:%02d/%08d%s"
+					,ThisDBG->func->commentStart
+					, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
+					, Now->tm_hour,Now->tm_min,Now->tm_sec,count
+					,ThisDBG->func->commentEnd);
+			fprintf(fp,"%s\n",p);
+			fflush(fp);
+		}
 		xfree(p);
-		fflush(fp);
 		count ++;
 		FreeLBS(data);
 	}
+	CloseDB_RedirectPort(ThisDBG);
 	//	pthread_exit(NULL);
 dbgmsg("<FileThread");
 }
@@ -235,24 +248,14 @@ dbgmsg(">InitSystem");
 			   ==  NULL  ) {
 		Error("DB group not found");
 	}
-	Orig = ThisDBG;
-#if	0
-	if		(  ThisDBG->redirect  !=  NULL  ) {
-		ThisDBG = ThisDBG->redirect;
-	}
-	ThisDBG->dbt = Orig->dbt;
-#endif
 	if		(  PortNumber  ==  NULL  ) {
-		if		(  Orig->redirectPort  !=  NULL  ) {
-#if	0
-			PortNumber = Orig->redirectPort->port;
-#else
+		if		(  ThisDBG->redirectPort  !=  NULL  ) {
 			PortNumber = ThisDBG->redirectPort->port;
-#endif
 		} else {
 			PortNumber = IntStrDup(PORT_REDIRECT);
 		}
 	}
+printf("[%s]\n",PortNumber);
 	FileQueue = NewQueue();
 dbgmsg("<InitSystem");
 }
