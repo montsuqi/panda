@@ -201,7 +201,7 @@ class	Widget
 
 	def	isData
 		case	@klass
-		  when	"GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkCList", "GtkPandaCList"
+		  when	"GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkCList", "GtkPandaCList", "GtkScrolledWindow"
 			ret = TRUE;
 		  when  "GtkLabel"
 		  	if	@label == "" or
@@ -223,7 +223,7 @@ class	Widget
 
 	def	_panda
 		case	@klass
-		  when	"top-level", "GtkVBox", "GtkHBox", "GtkTable", "GtkFixed", "GtkScrolledWindow", "GtkViewport", "GtkHandleBox", "GtkMenuBar", "GtkToolbar"
+		  when	"top-level", "GtkVBox", "GtkHBox", "GtkTable", "GtkFixed", "GtkViewport", "GtkHandleBox", "GtkMenuBar", "GtkToolbar"
 			for	c in @child
 				c._panda;
 			end
@@ -326,6 +326,12 @@ class	Widget
 			end
 		  when  "GtkProgressBar" 
 			@@record = @@record.append(sprintf("%s.value",@name),"int");
+		  when  "GtkScrolledWindow"
+			@@record = @@record.append(sprintf("%s.hpos",@name),"int");
+			@@record = @@record.append(sprintf("%s.vpos",@name),"int");
+			for	c in @child
+				c._panda;
+			end
 		  when	"GtkOptionMenu"
 			@@record = @@record.append(sprintf("%s.count",@name),"int");
 			@@record = @@record.append(sprintf("%s.select",@name),"int");

@@ -221,6 +221,12 @@ class	Widget
 					putTab(ind+1);
 					printf("pageno\tint;\n");
 				end
+				if		@klass  ==  "GtkScrolledWindow"
+					putTab(ind+1); 
+					printf("hpos\tint;\n"); 
+					putTab(ind+1); 
+					printf("vpos\tint;\n"); 
+				end
 				for	c in @child
 					c._panda(ind+1);
 				end
