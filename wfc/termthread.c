@@ -75,13 +75,13 @@ MakeSessionData(void)
 {
 	SessionData	*data;
 
-dbgmsg(">MakeSessionData");
+ENTER_FUNC;
 	data = New(SessionData);
 	data->hdr = New(MessageHeader);
 	data->name = NULL;
 	memclear(data->hdr,sizeof(MessageHeader));
 	data->apsid = -1;
-dbgmsg("<MakeSessionData");
+LEAVE_FUNC;
 	return	(data);
 }
 
@@ -93,7 +93,7 @@ FinishSession(
 	char	msg[SIZE_BUFF];
 	int		i;
 
-dbgmsg(">FinishSession");
+ENTER_FUNC;
 	sprintf(msg,"[%s:%s] session end",data->hdr->term,data->hdr->user);
 	MessageLog(msg);
 	xfree(data->hdr);
@@ -109,7 +109,7 @@ dbgmsg(">FinishSession");
 		}
 	}
 	xfree(data);
-dbgmsg("<FinishSession");
+LEAVE_FUNC;
 }
 
 static	SessionData	*
@@ -117,12 +117,12 @@ InitSession(
 	NETFILE	*fp)
 {
 	SessionData	*data;
-	char	buff[SIZE_NAME];
-	char	msg[SIZE_NAME];
+	char	buff[SIZE_LONGNAME+1];
+	char	msg[SIZE_LONGNAME+1];
 	LD_Node	*ld;
 	int			i;
 
-dbgmsg(">InitSession");
+ENTER_FUNC;
 	data = MakeSessionData();
 	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
 		data->fKeep = TRUE;
@@ -175,7 +175,7 @@ dbgmsg(">InitSession");
 		FinishSession(data);
 		data = NULL;
 	}
-dbgmsg("<InitSession");
+LEAVE_FUNC;
 	return	(data);
 }
 
@@ -327,7 +327,7 @@ TermThread(
 	TermNode	*term;
 	SessionData	*data;
 
-dbgmsg(">TermThread");
+ENTER_FUNC;
 	term = New(TermNode);
 	term->que = NewQueue();
 	term->fp = SocketToNet(fhTerm);
@@ -352,7 +352,7 @@ dbgmsg(">TermThread");
 	CloseNet(term->fp);
 	FreeQueue(term->que);
 	xfree(term);
-dbgmsg("<TermThread");
+LEAVE_FUNC;
 	pthread_exit(NULL);
 }
 
@@ -363,20 +363,20 @@ ConnectTerm(
 	int		fhTerm;
 	pthread_t	thr;
 
-dbgmsg(">ConnectTerm");
+ENTER_FUNC;
 	if		(  ( fhTerm = accept(_fhTerm,0,0) )  <  0  )	{
 		MessagePrintf("_fhTerm = %d INET Domain Accept",_fhTerm);
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))TermThread,(void *)fhTerm);
-dbgmsg("<ConnectTerm");
+LEAVE_FUNC;
 	return	(thr); 
 }
 
 extern	void
 InitTerm(void)
 {
-dbgmsg(">InitTerm");
+ENTER_FUNC;
 	TermHash = NewNameHash();
-dbgmsg("<InitTerm");
+LEAVE_FUNC;
 }
