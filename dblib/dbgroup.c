@@ -188,7 +188,6 @@ dbgmsg(">ExecFunction");
 				||	(  dbg->dbt  !=  NULL  ) ) { 
 			if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
 					   !=  NULL  ) {
-printf("%s[%s]\n",dbg->name,name);
 				(*func)(dbg,&ctrl);
 			} else {
 				printf("function not found [%s]\n",name);
@@ -215,16 +214,7 @@ ExecRedirectDBOP(
 {
 	char	*p;
 
-	do {
-		if		(  ( p = strchr(sql,';') )  !=  NULL  ) {
-			*p = 0;
-		}
-		dbg->func->primitive->exec(dbg,sql,FALSE);
-		if		(  p  !=  NULL  ) {
-			*p = ';';
-			sql = p + 1;
-		}
-	}	while	(  p  !=  NULL  );
+	dbg->func->primitive->exec(dbg,sql,FALSE);
 }
 
 extern	void
@@ -276,7 +266,6 @@ TransactionStart(
 {
 	NewPool("Transaction");
 	ExecDBG_Operation(dbg,"DBSTART");
-	//ExecFunction(dbg,"DBSTART",TRUE);
 }
 
 extern	void
@@ -284,7 +273,6 @@ TransactionEnd(
 	DBG_Struct *dbg)
 {
 	ExecDBG_Operation(dbg,"DBCOMMIT");
-	//ExecFunction(dbg,"DBCOMMIT",TRUE);
 	ReleasePoolByName("Transaction");
 }
 

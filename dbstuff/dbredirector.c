@@ -148,28 +148,30 @@ dbgmsg(">FileThread");
 		dbgmsg("de queue");
 		LBS_EmitEnd(data);
 		p = LBS_Body(data);
-		if		(  ThisDBG->dbname  !=  NULL  )	{
-			TransactionRedirectStart(ThisDBG);
-			ExecRedirectDBOP(ThisDBG,p);
-			TransactionRedirectEnd(ThisDBG);
+		if		(  *p  !=  0  ) {
+			if		(  ThisDBG->dbname  !=  NULL  )	{
+				TransactionRedirectStart(ThisDBG);
+				ExecRedirectDBOP(ThisDBG,p);
+				TransactionRedirectEnd(ThisDBG);
+			}
+			BeginDB_Redirect(ThisDBG);
+			if		(  ThisDBG->redirectData  !=  NULL  ) {
+				LBS_EmitString(ThisDBG->redirectData,p);
+			}
+			CommitDB_Redirect(ThisDBG);
+			if		(  fp  !=  NULL  ) {
+				time(&nowtime);
+				Now = localtime(&nowtime);
+				fprintf(fp,"%s%04d/%02d/%02d/%02d:%02d:%02d/%08d%s"
+						,ThisDBG->func->commentStart
+						, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
+						, Now->tm_hour,Now->tm_min,Now->tm_sec,count
+						,ThisDBG->func->commentEnd);
+				fprintf(fp,"%s\n",p);
+				fflush(fp);
+			}
+			count ++;
 		}
-		BeginDB_Redirect(ThisDBG);
-		if		(  ThisDBG->redirectData  !=  NULL  ) {
-			LBS_EmitString(ThisDBG->redirectData,p);
-		}
-		CommitDB_Redirect(ThisDBG);
-		if		(  fp  !=  NULL  ) {
-			time(&nowtime);
-			Now = localtime(&nowtime);
-			fprintf(fp,"%s%04d/%02d/%02d/%02d:%02d:%02d/%08d%s"
-					,ThisDBG->func->commentStart
-					, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-					, Now->tm_hour,Now->tm_min,Now->tm_sec,count
-					,ThisDBG->func->commentEnd);
-			fprintf(fp,"%s\n",p);
-			fflush(fp);
-		}
-		count ++;
 		FreeLBS(data);
 	}
 	if		(  ThisDBG->dbname  ==  NULL  ) {
