@@ -658,7 +658,7 @@ dbgmsg(">_List");
         LBS_EmitInt(htc->code,0);
         EmitCode(htc,OPC_STORE);
         EmitCode(htc,OPC_HIVAR);							/*	2	limit	*/
-        LBS_EmitPointer(htc->code,count);
+        LBS_EmitPointer(htc->code,StrDup(count));
         EmitCode(htc,OPC_ICONST);							/*	1	step	*/
         LBS_EmitInt(htc->code,1);
         Push(LBS_GetPos(htc->code));
