@@ -580,6 +580,8 @@ SendEvent(void)
         char *value, *p;
 
         value = g_hash_table_lookup(Values, name);
+        if (value == NULL)
+            return;
         p = value;
         while (*p != '\0') {
             i = atoi(p);
