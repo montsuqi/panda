@@ -114,6 +114,10 @@ RecvFile(
 dbgmsg(">RecvFile");
 	SendPacketClass(fpC,GL_GetScreen);
 	SendString(fpC,name);
+	if		(  fMlog  ) {
+		sprintf(buff,"recv screen file [%s]\n",name);
+		MessageLog(buff);
+	}
 	if		(  RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		fp = Fopen(fname,"w");
 		left = (size_t)RecvLong(fpC);
@@ -453,6 +457,7 @@ GetScreenData(
 	byte		type;
 	XML_Node	*node;
 	GtkWidget	*widget;
+	char		buff[SIZE_BUFF];
 
 dbgmsg(">GetScreenData");
 	fInRecv = TRUE; 
@@ -462,6 +467,10 @@ dbgmsg(">GetScreenData");
 	fCancel = FALSE;
 	while	(  ( c = RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		RecvString(fp,window);
+		if		(  fMlog  ) {
+			sprintf(buff,"recv window [%s]\n",window);
+			MessageLog(buff);
+		}
 		dbgprintf("[%s]\n",window);
 		switch( type = (byte)RecvInt(fpComm) ) {
 		  case	SCREEN_END_SESSION:
@@ -569,10 +578,16 @@ SendEvent(
 	char		*widget,
 	char		*event)
 {
+	char		buff[SIZE_BUFF];
+
 dbgmsg(">SendEvent");
 	dbgprintf("window = [%s]",window); 
 	dbgprintf("widget = [%s]",widget); 
 	dbgprintf("event  = [%s]",event); 
+	if		(  fMlog  ) {
+		sprintf(buff,"send event  [%s:%s:%s]\n",window,widget,event);
+		MessageLog(buff);
+	}
 
 	SendPacketClass(fp,GL_Event);
 	SendString(fp,window);

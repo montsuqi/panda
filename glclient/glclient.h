@@ -53,6 +53,7 @@ GLOBAL	Bool	fInRecv;
 GLOBAL	NETFILE	*fpComm;
 GLOBAL	char	*User;
 GLOBAL	char	*Pass;
+GLOBAL	Bool	fMlog;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
 GLOBAL	Bool	fVerify;
