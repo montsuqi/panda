@@ -712,6 +712,9 @@ ENTER_FUNC;
 		switch( type = (byte)GL_RecvInt(fpComm) ) {
 		  case	SCREEN_END_SESSION:
 			ExitSystem();
+			if		(  fMlog  ) {
+					MessageLog("connection end\n");
+			}
 			fCancel= TRUE;
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
@@ -796,6 +799,9 @@ SendConnect(
 	PacketClass	pc;
 
 ENTER_FUNC;
+	if		(  fMlog  ) {
+		MessageLog("connection start\n");
+	}
 	GL_SendPacketClass(fp,GL_Connect);
 	GL_SendVersionString(fp);
 	GL_SendString(fp,User);
