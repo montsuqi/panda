@@ -318,7 +318,7 @@ LEAVE_FUNC;
 
 #ifdef USE_GNOME
 static void
-LoadPixmap(
+LoadImage(
 	GtkWidget	*widget,
     LargeByteString *binary)
 {
@@ -377,7 +377,7 @@ ENTER_FUNC;
 			GL_RecvName(fp,name);
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
-			LoadPixmap(widget, binary); 
+			LoadImage(widget, binary); 
 			FreeLBS(binary);
 		}
 	}
