@@ -1,3 +1,9 @@
+panda (1:1.0.7p4-0+0.orca.1) unstable; urgency=low
+
+  * datalib/value.c (NumericToFixed): Refix memory leak.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue,  3 Dec 2002 15:46:31 +0900
+
 panda (1:1.0.7p3-0+0.orca.1) unstable; urgency=low
 
   * dblib/Postgres.c (GetTable, GetValue): Fix memory leak.
