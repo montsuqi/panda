@@ -118,6 +118,7 @@ dbgmsg(">ConnectLog");
 		Error("INET Domain Accept");
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)fhLog);
+	pthread_detach(thr);
 dbgmsg("<ConnectLog");
 	return	(thr); 
 }
