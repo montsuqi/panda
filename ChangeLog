@@ -1,3 +1,8 @@
+2002-10-29  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/callbacks.c (send_event): タイマーによる send_event を
+	キャンセルするようにした
+
 2002-10-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.1.2 release

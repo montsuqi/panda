@@ -52,6 +52,9 @@ copies.
 #include	"glterm.h"
 #include	"debug.h"
 
+static char *timeout_event;
+static gint timeout_hander_id = 0;
+
 static	void
 ClearWindowData(
 	char		*wname,
@@ -199,6 +202,11 @@ send_event(
 
 dbgmsg(">send_event");
 	if		(  !fInRecv  &&  !ignore_event ) {
+		/* remove timer */
+		if (timeout_hander_id != 0) {
+			gtk_timeout_remove(timeout_hander_id);
+			timeout_hander_id = 0;
+		}
 		/* show busy cursor */
 		window = gtk_widget_get_toplevel(widget);
 		pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
@@ -233,9 +241,6 @@ send_event_on_focus_out(
 {
 	send_event (widget, event);
 }
-
-static char *timeout_event;
-static gint timeout_hander_id = 0;
 
 static gint
 send_event_if_kana (gpointer widget)
