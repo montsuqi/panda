@@ -1436,21 +1436,16 @@ init()
 static VALUE
 get_source_filename(char *class_name, char *path)
 {
-    VALUE basename, filename;
+    VALUE filename;
     int i;
 
     if (!isupper(*class_name)) {
         return Qnil;
     }
 
-    basename = rb_str_new2(class_name);
-    for (i = 0; i < RSTRING(basename)->len; i++) {
-        if (isupper(RSTRING(basename)->ptr[i]))
-            RSTRING(basename)->ptr[i] = tolower(RSTRING(basename)->ptr[i]);
-    }
     filename = rb_str_new2(path);
     rb_str_cat(filename, "/", 1);
-    rb_str_concat(filename, basename); 
+    rb_str_cat2(filename, class_name);
     rb_str_cat(filename, ".rb", 3);
     return filename;
 }
