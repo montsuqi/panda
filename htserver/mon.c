@@ -362,14 +362,15 @@ PutHTML(
 	int		c;
 
 dbgmsg(">PutHTML");
-	printf("Content-type: text/html\n");
+	printf("Cache-Control: no-cache\r\n");
+	printf("Content-type: text/html\r\n");
 	LBS_EmitEnd(html);
 	if		(  fCookie  ) {
 		if		(  ( sesid = g_hash_table_lookup(Values,"_sesid") )  !=  NULL  ) {
-			printf("Set-Cookie: _sesid=%s;\n",sesid);
+			printf("Set-Cookie: _sesid=%s;\r\n",sesid);
 		}
 	}
-	printf("\n");
+	printf("\r\n");
 	WriteLargeString(stdout,html,Codeset);
 dbgmsg("<PutHTML");
 }
