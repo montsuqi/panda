@@ -120,8 +120,6 @@ static	ARG_TABLE	option[] = {
 		"証明書ファイル名(pem)"	 						},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
 		"SSLを使う"				 						},
-	{	"verifypeer",BOOLEAN,	TRUE,	(void*)&fVerify,
-		"クライアント証明書の検証を行う"				},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
 		"CA証明書へのパス"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
