@@ -1,3 +1,7 @@
+2004-09-29  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.2 release
+
 2004-09-27  Noboru Saitou  <noborus@netlab.jp>
 
 	* glserver/glcomm.c 印刷プレビューにPDFサポートの追加
