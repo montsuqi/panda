@@ -269,6 +269,7 @@ CallAfter(
 	ProcessNode	*node)
 {
 	int		i
+		,	winfrom
 		,	winend
 		,	sindex;
 	byte	PutType;
@@ -288,6 +289,10 @@ dbgmsg(">CallAfter");
 	mcp_pputtype = GetItemLongName(mcp,"private.pputtype");
 	mcp_dcwindow = GetItemLongName(mcp,"dc.window");
 
+	if		(  ( PutType = (byte)(int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
+		PutType = SCREEN_CURRENT_WINDOW;
+	}
+
 	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
 		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,0)),
 			   ValueStringPointer(mcp_dcwindow));
@@ -305,18 +310,20 @@ dbgmsg(">CallAfter");
 							  ValueStringPointer(mcp_dcwindow))  ==  0  )
 				break;
 		}
-		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,i)),
-			   ValueStringPointer(mcp_dcwindow));
+		if		(  i  <  sindex  ) {
+			winfrom = i + 1;
+		} else {
+			winfrom = 0;
+			strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,i)),
+				   ValueStringPointer(mcp_dcwindow));
+		}
 		winend  = sindex;
 		sindex = i + 1;
 	}
 
-	if		(  ( PutType = (byte)(int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
-		PutType = SCREEN_CURRENT_WINDOW;
-	}
 	switch	(PutType) {
 	  case	SCREEN_JOIN_WINDOW:
-		for	( i = sindex ; i < winend ; i ++  ) {
+		for	( i = winfrom ; i < winend ; i ++  ) {
 			SetPutType(node,
 					   ValueStringPointer(GetArrayItem(mcp_swindow,i)),
 					   SCREEN_CLOSE_WINDOW);

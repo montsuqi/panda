@@ -406,6 +406,9 @@ dbgmsg(">MessageThread");
 				GetAPS_Value(fp,data,APS_SPADATA,flag);
 				GetAPS_Value(fp,data,APS_SCRDATA,flag);
 				SendPacketClass(fp,APS_END);
+				if		(  puttype  ==  TO_CHAR(SCREEN_NULL)  ) {
+					puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
+				}
 				switch	(TO_INT(data->hdr->puttype)) {
 				  case	SCREEN_CHANGE_WINDOW:
 				  case	SCREEN_JOIN_WINDOW:
@@ -414,11 +417,7 @@ dbgmsg(">MessageThread");
 					CoreEnqueue(data);
 					break;
 				  case	SCREEN_CURRENT_WINDOW:
-					if		(  puttype  ==  TO_CHAR(SCREEN_NULL)  ) {
-						data->hdr->puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
-					} else {
-						data->hdr->puttype = puttype;
-					}
+					data->hdr->puttype = puttype;
 					TermEnqueue(data->term,data);
 					break;
 				  case	SCREEN_CLOSE_WINDOW:
