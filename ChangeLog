@@ -1,5 +1,20 @@
 2004-07-09  Kouji TAKAO  <kouji@netlab.jp>
 
+	glclientを全てのウィンドウを閉じたときに再度ダイアログを表示できる
+	ように修正
+	
+	* glclient/widgetOPS.c (InitWidgetOperations): 複数回呼ぶことができるように修正
+	* glclient/styleLex.c (StyleLexInit)
+
+	* glclient/styleParser.c (StyleParserTerm): 終了処理をおこなう関数を追加
+	* glclient/protocol.c (TermProtocol)
+
+	* glclient/client.c (start_client): 繰り返しセッションを接続するた
+	めにその処理を関数に変更。また、グローバル変数のfreeを実装。
+	(main): ダイアログの表示、セッションの接続を繰り返すように修正
+	(ExitSystem): exitしないように修正
+	(show_boot_dialog): 接続/終了を返すように修正
+
 	* glclient/bootdialog.c (boot_dialog_init): バグ修正
 	
 	起動ダイアログを追加

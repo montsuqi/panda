@@ -69,17 +69,19 @@ static	struct	{
 	{	"",				0				}
 };
 
-static	GHashTable	*Reserved;
+static	GHashTable	*Reserved = NULL;
 
 extern	void
 StyleLexInit(void)
 {
 	int		i;
 
-	Reserved = NewNameHash();
-	for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
-		g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
-	}
+    if (Reserved == NULL) {
+        Reserved = NewNameHash();
+        for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
+            g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
+        }
+    }
 }
 
 static	int

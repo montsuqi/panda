@@ -168,7 +168,6 @@ extern	void
 ExitSystem(void)
 {
 	GL_SendPacketClass(fpComm,GL_END);
-	exit(0);
 }
 
 static	void
@@ -179,23 +178,20 @@ bannar(void)
 	printf("              2000-2003 Masami Ogoshi & JMA.\n");
 }
 
-static void
+static gboolean
 show_boot_dialog ()
 {
     static char *PortNumber_ = NULL;
 
     BootProperty prop;
-    GString *buf;
 
     if (!boot_dialog_run ())
-        exit (0);
+        return FALSE;
+
     boot_property_config_to_property (&prop);
 
-    buf = g_string_new (NULL);
-    g_string_sprintf (buf, "%s:%s", prop.host, prop.port);
     g_free (PortNumber_);
-    PortNumber = PortNumber_ = buf->str;
-    g_string_free (buf, FALSE);
+    PortNumber = PortNumber_ = g_strconcat (prop.host, ":", prop.port, NULL);
     CurrentApplication = prop.application;
     Protocol1 = prop.protocol_v1;
     Protocol2 = prop.protocol_v2;
@@ -206,7 +202,71 @@ show_boot_dialog ()
     User = prop.user;
     Pass = prop.password;
     
-    boot_property_inspect (&prop, NULL);
+    return TRUE;
+}
+
+static void
+start_client ()
+{
+	int		fd;
+	char	buff[SIZE_BUFF];
+	Port	*port;
+#ifdef	USE_SSL
+	SSL_CTX	*ctx = NULL;
+#endif
+
+	StyleParserInit();
+	sprintf(buff,"%s/gltermrc",getenv("HOME"));
+	StyleParser(buff);
+	StyleParser("gltermrc");
+	if		(  *Style  !=  0  ) {
+		StyleParser(Style);
+	}
+
+    if (*Gtkrc != '\0') {
+        gtk_rc_parse(Gtkrc);
+    }
+
+    port = ParPort(PortNumber,PORT_GLTERM);
+	if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
+		g_warning("can not connect server(server port not found)");
+        DestroyPort (port);
+        gtk_rc_reparse_all ();
+        StyleParserTerm ();
+		return;
+	}
+#ifdef	USE_SSL
+	if		(  fSsl  ) {
+		if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
+				   ==  NULL  ) {
+			exit(1);
+		}
+		fpComm = MakeSSL_Net(ctx,fd);
+		SSL_connect(NETFILE_SSL(fpComm));
+	} else {
+		fpComm = SocketToNet(fd);
+	}
+#else
+	fpComm = SocketToNet(fd);
+#endif
+	InitProtocol();
+
+	if (SendConnect(fpComm,CurrentApplication)) {
+		CheckScreens(fpComm,TRUE);
+		(void)GetScreenData(fpComm);
+		gtk_main();
+		ExitSystem();
+	}
+    
+    TermProtocol ();
+    CloseNet (fpComm);
+#ifdef	USE_SSL
+    if (ctx != NULL)
+        SSL_CTX_free (ctx);
+#endif
+    DestroyPort (port);
+    gtk_rc_reparse_all ();
+	StyleParserTerm ();
 }
 
 extern	int
@@ -214,14 +274,8 @@ main(
 	int		argc,
 	char	**argv)
 {
-	int		fd;
 	FILE_LIST	*fl;
 	int		rc;
-	char	buff[SIZE_BUFF];
-	Port	*port;
-#ifdef	USE_SSL
-	SSL_CTX	*ctx;
-#endif
 
 	bannar();
 	SetDefault();
@@ -248,53 +302,14 @@ main(
 	glade_init();
 #endif
 
-    if (fDialog)
-        show_boot_dialog ();
-    
-	StyleParserInit();
-	sprintf(buff,"%s/gltermrc",getenv("HOME"));
-	StyleParser(buff);
-	StyleParser("gltermrc");
-	if		(  *Style  !=  0  ) {
-		StyleParser(Style);
-	}
-
-    if (*Gtkrc != '\0') {
-        gtk_rc_parse(Gtkrc);
-    }
+    if (fDialog && !show_boot_dialog ())
+        return 0;
 
 	InitNET();
-    port = ParPort(PortNumber,PORT_GLTERM);
-	if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
-		g_warning("can not connect server(server port not found)");
-		return	(1);
-	}
-#ifdef	USE_SSL
-	if		(  fSsl  ) {
-		if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
-				   ==  NULL  ) {
-			exit(1);
-		}
-		fpComm = MakeSSL_Net(ctx,fd);
-		SSL_connect(NETFILE_SSL(fpComm));
-	} else {
-		fpComm = SocketToNet(fd);
-	}
-#else
-	fpComm = SocketToNet(fd);
-#endif
-	InitProtocol();
 
-	if		(  !SendConnect(fpComm,CurrentApplication)  ) {
-		rc = 1;
-	} else {
-		CheckScreens(fpComm,TRUE);
-		(void)GetScreenData(fpComm);
-dbgmsg(">gtk_main");
-		gtk_main();
-dbgmsg("<gtk_main");
-		ExitSystem();
-		rc = 0;
-	}
+    do {
+        start_client ();
+    } while (show_boot_dialog ());
+    
 	return	(rc);
 }

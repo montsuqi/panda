@@ -281,6 +281,24 @@ StyleParserInit(void)
 	Styles = NewNameHash();	 
 }
 
+void
+ghfunc_styles_free (char *name, GtkStyle *value, gpointer user_data)
+{
+    xfree (name);
+    gtk_style_unref (value);
+    (void *) user_data; /* escape warning */
+}
+
+void
+StyleParserTerm(void)
+{
+    if (Styles != NULL) {
+        g_hash_table_foreach(Styles, (GHFunc) ghfunc_styles_free, NULL);
+        g_hash_table_destroy (Styles);
+        Styles = NULL;
+    }
+}
+
 extern	void
 StyleParser(
 	char	*name)

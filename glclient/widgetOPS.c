@@ -55,7 +55,7 @@ copies.
 #include	"widgetOPS.h"
 #include	"debug.h"
 
-static	GHashTable		*ValueTable;
+static	GHashTable		*ValueTable = NULL;
 
 typedef	struct {
 	char	*key;
@@ -1499,7 +1499,10 @@ LEAVE_FUNC;
 extern	void
 InitWidgetOperations(void)
 {
-	ValueTable = NewNameHash();
+    if (ValueTable != NULL)
+        return;
+    
+    ValueTable = NewNameHash();
 
 	GTK_PANDA_TYPE_CLIST;	/*	for gtk+panda bug	*/
 

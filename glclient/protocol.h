@@ -34,6 +34,7 @@ typedef	struct {
 }	HandlerNode;
 
 extern	void		InitProtocol(void);
+extern  void        TermProtocol(void);
 extern	void		CheckScreens(NETFILE *fp, Bool);
 extern	Bool		SendConnect(NETFILE *fpComm, char *apl);
 extern	Bool		RecvWidgetData(GtkWidget *widget, NETFILE *fp);
@@ -50,6 +51,7 @@ extern	int				GL_RecvInt(NETFILE *fp);
 extern	void			GL_SendDataType(NETFILE *fp, PacketClass c);
 extern	void			GL_RecvName(NETFILE *fp, char *name);
 extern	void			GL_SendName(NETFILE *fp, char *name);
+extern	void			GL_RecvLBS(NETFILE *fp, LargeByteString *lbs);
 
 extern	PacketDataType	RecvPacketDataType(NETFILE *fp);
 extern	void			SendStringData(NETFILE *fp, PacketDataType type, char *str);

@@ -836,6 +836,29 @@ dbgmsg(">InitProtocol");
 dbgmsg("<InitProtocol");
 }
 
+static void
+ghfunc_window_table_free (char *wname, XML_Node *node, gpointer user_data)
+{
+    gtk_object_unref (GTK_OBJECT (node->xml));
+    xfree (node->name);
+    if (node->UpdateWidget != NULL) { 
+		g_hash_table_destroy (node->UpdateWidget);
+	}
+    xfree (node);
+    (void *) wname; /* escape warning */
+    (void *) user_data; /* escape warning */
+}
+
+void
+TermProtocol(void)
+{
+	if (WindowTable != NULL) {
+		g_hash_table_foreach(WindowTable, (GHFunc) ghfunc_window_table_free, NULL);
+        g_hash_table_destroy (WindowTable);
+        WindowTable = NULL;
+	}
+}
+
 static	void
 _SendWindowData(
 	char		*wname,

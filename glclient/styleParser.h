@@ -27,5 +27,6 @@ copies.
 extern	void		StyleParserInit(void);
 extern	void		StyleParser(char *name);
 extern	GtkStyle	*GetStyle(char *name);
+extern  void        StyleParserTerm(void);
 
 #endif
