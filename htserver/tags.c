@@ -292,7 +292,8 @@ dbgmsg(">_Fixed");
 		LBS_EmitString(htc->code,">");
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(name));
-        EmitCode(htc,OPC_EHSNAME);
+        EmitCode(htc,OPC_HSNAME);
+        EmitCode(htc,OPC_EMITSTR);
 		LBS_EmitString(htc->code,"</span>");
 	}
 dbgmsg("<_Fixed");
@@ -690,8 +691,6 @@ dbgmsg(">_List");
     if ((name = GetArg(tag,"name",0)) != NULL &&
         (label = GetArg(tag,"label",0)) != NULL &&
         (count = GetArg(tag,"count",0)) != NULL) {
-        g_hash_table_insert(htc->List, StrDup(name), (void *) 1);
-
         LBS_EmitString(htc->code,"<select name=\"");
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));

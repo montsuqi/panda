@@ -239,7 +239,6 @@ dbgmsg(">HTCParser");
 		ret->code = NewLBS();
 		ret->Trans = NewNameHash();
 		ret->Radio = NewNameHash();
-		ret->List = NewNameHash();
 		ret->FileSelection = NewNameHash();
         ret->DefaultEvent = NULL;
         ret->EnctypePos = 0;

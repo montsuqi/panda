@@ -505,20 +505,30 @@ dbgmsg(">ExecCode");
 				}
 				break;
 			  case OPC_URLENC:
-			  {
-                int len;
-                char *local, *encoded;
+                {
+                    int len;
+                    char *local, *encoded;
 
-				dbgmsg("OPC_URLENC");
-				vval = Pop;
-                local = ConvLocal(vval.str);
-                len = EncodeStringLengthURL(local);
-				encoded = (char *) xmalloc(len + 1);
-                EncodeStringURL(encoded, local);
-                vval.str = encoded;
-				Push(vval);
-			  }
+                    dbgmsg("OPC_URLENC");
+                    vval = Pop;
+                    local = ConvLocal(vval.str);
+                    len = EncodeStringLengthURL(local);
+                    encoded = (char *) xmalloc(len + 1);
+                    EncodeStringURL(encoded, local);
+                    vval.str = encoded;
+                    Push(vval);
+                }
                 break;
+              case OPC_EMITSTR:
+				dbgmsg("OPC_EMITSTR");
+				vval = Pop;
+                if (strlen(vval.str) == 0) {
+                    LBS_EmitString(html, "&nbsp;");
+                }
+                else {
+                    EmitWithEscape(html,vval.str);
+                }
+				break;
 			  case	OPC_CALENDAR:
 			  {
 				  char	*year

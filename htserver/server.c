@@ -204,17 +204,35 @@ RecvScreenData(
     lbs = NewLBS();
     while (RecvStringDelim(fp, SIZE_BUFF, buff) && *buff != '\0') {
         DecodeName(&wname, &vname, buff);
+        LBS_EmitStart(lbs);
         RecvLBS(fp, lbs);
+        LBS_EmitEnd(lbs);
         if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
             value = GetItemLongName(win->rec->value, vname);
             ValueIsUpdate(value);
             switch (ValueType(value)) {
-            case GL_TYPE_BYTE:
-            case GL_TYPE_BINARY:
+              case GL_TYPE_ARRAY:
+                {
+                    char *p = LBS_Body(lbs);
+                    ValueStruct *v;
+                    int i;
+
+                    while (*p != '\0') {
+                        i = atoi(p);
+                        v = GetArrayItem(value, i);
+                        SetValueBool(v, TRUE);
+                        while (isdigit(*p))
+                            p++;
+                        if (*p == ',')
+                            p++;
+                    }
+                }
+                break;
+              case GL_TYPE_BYTE:
+              case GL_TYPE_BINARY:
                 SetValueBinary(value, LBS_Body(lbs), LBS_Size(lbs));
                 break;
-            default:
-                LBS_EmitChar(lbs, '\0');
+              default:
                 SetValueString(value, LBS_Body(lbs), "utf8");
                 break;
             }

@@ -25,7 +25,6 @@ typedef	struct {
 	LargeByteString	*code;
 	GHashTable	*Trans;
 	GHashTable	*Radio;
-    GHashTable	*List;
 	GHashTable	*FileSelection;
     char *DefaultEvent;
     size_t EnctypePos;

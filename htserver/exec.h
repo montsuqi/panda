@@ -43,7 +43,8 @@ copies.
 #define	OPC_JNZNP	0x13
 #define	OPC_DROP	0x14
 #define	OPC_URLENC	0x15
-#define	OPC_CALENDAR	0x16
+#define	OPC_EMITSTR	0x16
+#define	OPC_CALENDAR	0x17
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -518,6 +518,7 @@ HT_GetValue(char *name, Bool fClear)
 	PacketDataType	type;
     ValueStruct *value;
 
+    LBS_EmitStart(lbs);
     sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
     HT_SendString(buff);
     RecvLBS(fpServ, lbs);
@@ -609,27 +610,6 @@ SendEvent(void)
 				g_hash_table_insert(Values,rname,"TRUE");
 			}
 		}
-
-    void GetList(char *name) {
-        int i;
-        char buf[SIZE_ARG];
-        char *value, *p;
-
-        value = g_hash_table_lookup(Values, name);
-        if (value == NULL)
-            return;
-        p = value;
-        while (*p != '\0') {
-            i = atoi(p);
-            sprintf(buf, "%s[%d]", name, i);
-            g_hash_table_insert(Values, StrDup(buf), "TRUE");
-            while (isdigit(*p))
-                p++;
-            if (*p == ',')g_hash_table_insert(Values,"_sesid",sesid);
-                p++;
-        }
-        g_hash_table_remove(Values, name);
-    }
 	
     if		(  ( name = g_hash_table_lookup(Values,"_name") )  !=  NULL  ) {
         htc = HTCParser(name);
@@ -656,7 +636,6 @@ SendEvent(void)
     }
 	if		(  htc  !=  NULL  ) {
 		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
-		g_hash_table_foreach(htc->List,(GHFunc)GetList,NULL);
 	}
 
 	HT_SendString(event);
