@@ -147,13 +147,13 @@ _DBCOMMIT(
 
 dbgmsg(">_DBCOMMIT");
 	LBS_EmitEnd(dbg->conn);
-	command = LBS_ToString(dbg->conn); 
-	if		(  *command  !=  0  ) {
+	command = (char *)LBS_Body(dbg->conn); 
+	if		(	(  command   !=  NULL  )
+			&&	(  *command  !=  0     ) ) {
 		rc = DoShell(command);
 	} else {
 		rc = MCP_OK;
 	}
-	xfree(command);
 	LBS_Clear(dbg->conn);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
@@ -231,6 +231,9 @@ dbgmsg(">ExecShell");
 			break;
 		  case	SQL_OP_EOL:
 			LBS_EmitChar(dbg->conn,';');
+			break;
+		  case	0:
+			LBS_EmitChar(dbg->conn,' ');
 			break;
 		  default:
 			LBS_EmitChar(dbg->conn,c);
