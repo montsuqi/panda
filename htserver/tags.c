@@ -1836,6 +1836,7 @@ ENTER_FUNC;
 
 	NewJs("html_setting",
 		  "tinyMCE.init({\n"
+		  "  theme : \"advanced\",\n"
 		  "  language : \"jp\",\n"
 		  "  mode     : \"specific_textareas\",\n"
 		  "  elements : \"html,xml\"\n"
