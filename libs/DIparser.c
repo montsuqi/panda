@@ -79,6 +79,7 @@ copies.
 #define	T_DBDDIR		(T_YYBASE +22)
 #define	T_WFC			(T_YYBASE +23)
 #define	T_EXIT			(T_YYBASE +24)
+#define	T_LOCALE		(T_YYBASE +25)
 
 #undef	Error
 #define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
@@ -117,6 +118,7 @@ static	TokenTable	tokentable[] = {
 	{	"stacksize"			,T_STACKSIZE	},
 	{	"wfc"				,T_WFC		},
 	{	"exit"				,T_EXIT		},
+	{	"locale"			,T_LOCALE	},
 	{	""					,0			}
 };
 
@@ -171,19 +173,16 @@ ParLD_Elements(void)
 	strcpy(buff,ThisEnv->D_Dir);
 	p = buff;
 	do {
-dbgmsg("-4");
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
 		sprintf(name,"%s/%s.ld",p,ComSymbol);
-dbgmsg("-3");
 		if		(  (  ld = LD_Parser(name) )  !=  NULL  ) {
 			if		(  g_hash_table_lookup(ThisEnv->LD_Table,ComSymbol)
 					   !=  NULL  ) {
 				Error("same ld appier");
 			}
 			tmp = (LD_Struct **)xmalloc(sizeof(LD_Struct *) * ( ThisEnv->cLD + 1));
-dbgmsg("-2");
 			if		(  ThisEnv->cLD  >  0  ) {
 				memcpy(tmp,ThisEnv->ld,sizeof(LD_Struct *) * ThisEnv->cLD);
 				xfree(ThisEnv->ld);
@@ -191,11 +190,9 @@ dbgmsg("-2");
 			ThisEnv->ld = tmp;
 			ThisEnv->ld[ThisEnv->cLD] = ld;
 			ThisEnv->cLD ++;
-dbgmsg("-1");
 			g_hash_table_insert(ThisEnv->LD_Table, StrDup(ComSymbol),ld);
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				ld->nports = 0;
-dbgmsg("0");
 				while	(  ComToken  ==  T_SCONST  ) {
 					strcpy(buff,ComSymbol);
 					n = 0;
@@ -218,43 +215,35 @@ dbgmsg("0");
 						Error("invalid operator");
 						break;
 					}
-dbgmsg("1");
 					tports = (Port **)xmalloc(sizeof(Port *) * ( ld->nports + n));
 					if		(  ld->nports  >  0  ) {
 						memcpy(tports,ld->ports,sizeof(Port *) * ld->nports);
 						xfree(ld->ports);
 					}
-dbgmsg("2");
 					ld->ports = tports;
 					for	( i = 0 ; i < n ; i ++ ) {
 						ld->ports[ld->nports] = ParPort(buff,PORT_APS_BASE);
 						ld->nports ++;
 					}
-dbgmsg("3");
 					if		(  ComToken  ==  ','  ) {
 						GetSymbol;
 					}
 				}
 			} else
 			if		(  ComToken  ==  T_ICONST  ) {
-dbgmsg("4");
 				ld->nports = ComInt;
 				ld->ports = (Port **)xmalloc(sizeof(Port *) * ld->nports);
 				for	( i = 0 ; i < ld->nports ; i ++ ) {
 					ld->ports[i] = NULL;
 				}
-dbgmsg("5");
 				GetSymbol;
 			} else {
-dbgmsg("6");
 				ld->ports = (Port **)xmalloc(sizeof(Port *));
 				ld->ports[0] = ParPort("localhost",PORT_APS_BASE);
 				ld->nports = 1;
-dbgmsg("7");
 			}
 		}
 		p = q + 1;
-dbgmsg("8");
 	}	while	(	(  q   !=  NULL  )
 				&&	(  ld  ==  NULL  ) );
 	if		(  ld  ==  NULL  ) {
@@ -463,6 +452,7 @@ ParDBGROUP(
 	char	*name)
 {
 	DBG_Struct	*dbg;
+	char		*env;
 
 dbgmsg(">ParDBGROUP");
 	if		(  g_hash_table_lookup(ThisEnv->DBG_Table,name)  !=  NULL  ) {
@@ -482,6 +472,12 @@ dbgmsg(">ParDBGROUP");
 	dbg->fpLog = NULL;
 	dbg->dbt = NULL;
 	dbg->priority = 50;
+	if		(  ( env = getenv("MONDB_LOCALE") )  ==  NULL  ) {
+		dbg->locale = DB_LOCALE;
+	} else
+	if		(  stricmp(env,"UTF8")  ==  0  ) {
+		dbg->locale = NULL;
+	}
 	while	(  GetSymbol  !=  '}'  ) {
 		switch	(ComToken) {
 		  case	T_TYPE:
@@ -531,6 +527,17 @@ dbgmsg(">ParDBGROUP");
 		  case	T_FILE:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->file = StrDup(ComSymbol);
+			} else {
+				Error("invalid logging file name");
+			}
+			break;
+		  case	T_LOCALE:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  stricmp(ComSymbol,"utf8")  ==  0  ) {
+					dbg->locale = NULL;
+				} else {
+					dbg->locale = StrDup(ComSymbol);
+				}
 			} else {
 				Error("invalid logging file name");
 			}

@@ -204,7 +204,7 @@ RecvData(
 			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 				if		(  ( rec = ThisDB[rno-1] )  !=  NULL  ) {
 					value = GetItemLongName(rec->value,vname);
-					value->fUpdate = TRUE;
+					ValueIsUpdate(value);
 					SetValueString(value,str,DB_LOCALE);
 				}
 			}

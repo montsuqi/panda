@@ -161,6 +161,9 @@ dbgmsg(">ConnectSocket");
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = type;
 	if		(  ( rc = getaddrinfo(host,port,&hints,&info) )  !=  0  ) {
+		printf("port = %s\n",port);
+		printf("type = %d\n",type);
+		printf("host = %s\n",host);
 		printf("%s\n",gai_strerror(rc));
 		Error("error resolv");
 	}

@@ -219,7 +219,6 @@ dbgmsg(">PutApplication");
 	conv->PackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
-
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		LBS_EmitStart(iobuff);
 		if		(  node->scrrec[i]  !=  NULL  ) {

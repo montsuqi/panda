@@ -20,9 +20,9 @@ copies.
 */
 
 #define	MAIN
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -73,9 +73,10 @@ dbgmsg(">InitSystem");
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
 	pthread_sigmask(SIG_BLOCK,&hupset,NULL);
-
 	InitDirectory();
+dbgmsg("*");
 	SetUpDirectory(Directory,name,"","");
+dbgmsg("*");
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		dbgprintf("LD \"%s\" not found.",name);
 		exit(1);
@@ -86,7 +87,9 @@ dbgmsg(">InitSystem");
 	ThisBD = NULL;
 	ThisDBD = NULL;
 
+dbgmsg("*");
 	InitiateHandler();
+dbgmsg("*");
 	ThisDB = ThisLD->db;
 	DB_Table = ThisLD->DB_Table;
 	TextSize = ThisLD->textsize;
@@ -94,7 +97,9 @@ dbgmsg(">InitSystem");
 		dbgprintf("[%s]",ThisLD->window[i]->rec->name);
 		InitializeValue(ThisLD->window[i]->rec->value);
 	}
+dbgmsg("*");
 	ReadyDC();
+dbgmsg("*");
 	if		(  ThisLD->cDB  >  0  ) {
 		ReadyOnlineDB();
 	}
@@ -151,7 +156,7 @@ ExecuteDC(
 	WindowBind	*bind;
 	int		tran;
 
-dbgmsg(">ExecuteDC");
+ENTER_FUNC;
 	if		(  !fConnect  )	{
 		_fh = InitServerPort(PortNumber,Back);
 		if		(  ( fhWFC = accept(_fh,0,0) )  <  0  )	{
@@ -212,7 +217,7 @@ dbgmsg(">ExecuteDC");
 	MessageLog("exiting DC_Thread\n");
 	CloseNet(fpWFC);
 	FinishSession(node);
-dbgmsg("<ExecuteDC");
+LEAVE_FUNC;
 }
 
 static	void

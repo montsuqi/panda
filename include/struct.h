@@ -78,8 +78,8 @@ typedef	struct {
 }	DBCOMM_CTRL;
 
 typedef	struct _DBG_Struct	{
-	char		*name;					/*	group name		*/
-	char		*type;					/*	DBMS type name	*/
+	char		*name;					/*	group name			*/
+	char		*type;					/*	DBMS type name		*/
 	struct	_DB_Func		*func;
 	NETFILE		*fpLog;
 	LargeByteString	*redirectData;
@@ -87,7 +87,8 @@ typedef	struct _DBG_Struct	{
 	Port		*redirectPort;
 	struct	_DBG_Struct	*redirect;
 	GHashTable	*dbt;
-	int			priority;
+	int			priority;				/*	commit priority		*/
+	char		*locale;				/*	DB backend locale	*/
 	/*	DB depend	*/
 	Port		*port;
 	char		*dbname;
@@ -98,9 +99,9 @@ typedef	struct _DBG_Struct	{
 	void		*conn;
 }	DBG_Struct;
 
-typedef	void	(*DB_FUNC)(DBCOMM_CTRL *, RecordStruct *);
+typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *);
 typedef	void	(*DB_EXEC)(DBG_Struct *, char *);
-typedef	Bool	(*DB_FUNC_NAME)(char *, DBCOMM_CTRL *, RecordStruct *);
+typedef	Bool	(*DB_FUNC_NAME)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *);
 
 typedef	struct _DB_Func	{
 	DB_FUNC_NAME	access;

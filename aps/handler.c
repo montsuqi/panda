@@ -221,11 +221,11 @@ _ReadyOnlineDB(
 extern	void
 ReadyOnlineDB(void)
 {
-dbgmsg(">ReadyDB");
+ENTER_FUNC;
 	InitDB_Process();
 	ExecDB_Function("DBOPEN",NULL,NULL);
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyOnlineDB,NULL);
-dbgmsg("<ReadyDB");
+LEAVE_FUNC;
 }
 
 static	void
@@ -306,10 +306,10 @@ dbgmsg(">CallAfter");
 	} else {
 #ifdef	DEBUG
 		dbgprintf("mcp_sindex = %d",ValueInteger(mcp_sindex));
-		dbgprintf("mcp->dc.window = [%s]",ValueString(mcp_dcwindow));
+		dbgprintf("mcp->dc.window = [%s]",ValueStringPointer(mcp_dcwindow));
 		dbgmsg("**** window stack dump *****************");
 		for	( i = 0 ; i < ValueInteger(mcp_sindex) ; i ++ ) {
-			dbgprintf("[%d:%s]",i,(ValueString(
+			dbgprintf("[%d:%s]",i,(ValueStringPointer(
 									  GetArrayItem(mcp_swindow,i))));
 		}
 		dbgmsg("----------------------------------------");

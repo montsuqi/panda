@@ -197,7 +197,7 @@ RecvScreenData(
 			DecodeStringURL(str,p);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
-				value->fUpdate = TRUE;
+				ValueIsUpdate(value);
 				SetValueString(value,str,"euc-jp");
 #ifdef	DEBUG
 				printf("--\n");

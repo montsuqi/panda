@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -59,8 +59,8 @@ _EXEC(
 
 static	void
 _DBOPEN(
-	DBCOMM_CTRL	*ctrl,
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
 {
 dbgmsg(">_DBOPEN");
 	dbg->conn = NewLBS();
@@ -74,8 +74,8 @@ dbgmsg("<_DBOPEN");
 
 static	void
 _DBDISCONNECT(
-	DBCOMM_CTRL	*ctrl,
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
 {
 dbgmsg(">_DBDISCONNECT");
 	if		(  dbg->fConnect  ) { 
@@ -91,8 +91,8 @@ dbgmsg("<_DBDISCONNECT");
 
 static	void
 _DBSTART(
-	DBCOMM_CTRL	*ctrl,
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
 {
 dbgmsg(">_DBSTART");
 	LBS_EmitStart(dbg->conn); 
@@ -140,8 +140,8 @@ dbgmsg("<DoShell");
 
 static	void
 _DBCOMMIT(
-	DBCOMM_CTRL	*ctrl,
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL	*ctrl)
 {
 	int			rc;
 	char		*command;
@@ -164,6 +164,7 @@ dbgmsg("<_DBCOMMIT");
 
 static	void
 InsertValue(
+	DBG_Struct		*dbg,
 	LargeByteString	*lbs,
 	ValueStruct		*val)
 {
@@ -178,7 +179,7 @@ InsertValue(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		LBS_EmitChar(lbs,'"');
-		LBS_EmitString(lbs,ValueToString(val,DB_LOCALE));
+		LBS_EmitString(lbs,ValueToString(val,dbg->locale));
 		LBS_EmitChar(lbs,'"');
 		break;
 	  case	GL_TYPE_NUMBER:
@@ -228,7 +229,7 @@ dbgmsg(">ExecShell");
 		switch	(c) {
 		  case	SQL_OP_REF:
 			val = (ValueStruct *)LBS_FetchPointer(src);
-			InsertValue(dbg->conn,val);
+			InsertValue(dbg,dbg->conn,val);
 			break;
 		  case	SQL_OP_EOL:
 			LBS_EmitChar(dbg->conn,';');
@@ -243,8 +244,9 @@ dbgmsg("<ExecShell");
 
 static	Bool
 _DBACCESS(
-	char	*name,
-	DBCOMM_CTRL	*ctrl,
+	DBG_Struct		*dbg,
+	char			*name,
+	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec)
 {
 	DB_Struct	*db;
@@ -281,7 +283,8 @@ dbgmsg("<_DBACCESS");
 
 static	void
 _DBERROR(
-	DBCOMM_CTRL	*ctrl,
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec)
 {
 dbgmsg(">_DBERROR");

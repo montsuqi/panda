@@ -336,7 +336,7 @@ dbgmsg(">RecvScreenData");
 				RecvString(fpComm,name);		ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
-					value->fUpdate = TRUE;
+					ValueIsUpdate(value);
 					type = RecvDataType(fpComm);	ON_IO_ERROR(fpComm,badio);
 					switch	(type)	{
 					  case	GL_TYPE_CHAR:

@@ -164,13 +164,13 @@ dbgmsg(">InitDB_Process");
 dbgmsg("<InitDB_Process");
 }
 
-typedef	void	(*DB_FUNC2)(DBCOMM_CTRL *, DBG_Struct *);
+typedef	void	(*DB_FUNC2)(DBG_Struct *, DBCOMM_CTRL *);
 
 static	int
 ExecFunction(
-	char	*gname,
 	DBG_Struct	*dbg,
-	char	*name)
+	char		*gname,
+	char		*name)
 {
 	DBCOMM_CTRL	ctrl;
 	DB_FUNC2	func;
@@ -184,7 +184,7 @@ dbgmsg(">ExecFunction");
 	if		(  dbg->dbt  !=  NULL  ) { 
 		if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
 				   !=  NULL  ) {
-			(*func)(&ctrl,dbg);
+			(*func)(dbg,&ctrl);
 		} else {
 			printf("function not found [%s]\n",name);
 			ctrl.rc = MCP_BAD_FUNC;
@@ -201,7 +201,7 @@ ExecDBG_Operation(
 	DBG_Struct	*dbg,
 	char		*name)
 {
-	ExecFunction(NULL,dbg,name);
+	ExecFunction(dbg,NULL,name);
 }
 
 extern	void
@@ -228,18 +228,18 @@ dbgmsg(">ExecDB_Function");
 		ctrl.rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl.rc += ExecFunction(dbg->name,dbg,name);
+			ctrl.rc += ExecFunction(dbg,dbg->name,name);
 		}
 	} else {
 		dbg = rec->opt.db->dbg;
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl.func) )
 				   ==  NULL  ) {
-			if		(  !(*dbg->func->access)(name,&ctrl,rec)  ) {
+			if		(  !(*dbg->func->access)(dbg,name,&ctrl,rec)  ) {
 				printf("function not found [%s]\n",name);
 				ctrl.rc = MCP_BAD_FUNC;
 			}
 		} else {
-			(*func)(&ctrl,rec);
+			(*func)(dbg,&ctrl,rec);
 		}
 	}
 dbgmsg("<ExecDB_Function");
@@ -263,18 +263,18 @@ dbgmsg(">ExecDB_Process");
 		ctrl->rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ctrl->rc += ExecFunction(dbg->name,dbg,ctrl->func);
+			ctrl->rc += ExecFunction(dbg,dbg->name,ctrl->func);
 		}
 	} else {
 		dbg = rec->opt.db->dbg;
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl->func) )
 				   ==  NULL  ) {
-			if		(  !(*dbg->func->access)(ctrl->func,ctrl,rec)  ) {
+			if		(  !(*dbg->func->access)(dbg,ctrl->func,ctrl,rec)  ) {
 				printf("function not found [%s]\n",ctrl->func);
 				ctrl->rc = MCP_BAD_FUNC;
 			}
 		} else {
-			(*func)(ctrl,rec);
+			(*func)(dbg,ctrl,rec);
 		}
 	}
 dbgmsg("<ExecDB_Process");

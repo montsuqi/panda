@@ -818,7 +818,7 @@ SendValue(
 {
 	int		i;
 
-	value->fUpdate = TRUE;
+	ValueIsUpdate(value);
 	SendDataType(fp,ValueType(value));
 	switch	(ValueType(value)) {
 	  case	GL_TYPE_INT:
