@@ -5,6 +5,7 @@ import java.util.*;
 import java.io.*;
 
 public class DB_Server {
+
     public static final String VER = "1.1.0";
 
     String host;
@@ -33,7 +34,10 @@ public class DB_Server {
 	    out.println(VER + " " + user + " " + pass);
 	    out.flush();
 	    String msg = in.readLine();
-	    if  (msg.startsWith("Error: ")) {
+	    if (msg == null) {
+		System.out.println("error: no data from socket.");
+		s.close();
+	    } else if  (msg.startsWith("Error: ")) {
 		System.out.println("error: " + msg.substring("Error: ".length()));
 		s.close();
 	    } else {
@@ -47,7 +51,7 @@ public class DB_Server {
     public int get_event() {
 	try {
 	    String msg = in.readLine();
-	    if (msg.startsWith("Exec: ")) {
+	    if (msg != null && msg.startsWith("Exec: ")) {
 		return Integer.parseInt(msg.substring("Exec: ".length()));
 	    } else {
 		System.out.println("error: connection lost ?");

@@ -33,7 +33,10 @@ public class PG_Server {
 	    out.println("Start: " + VER + " " + user + " " + pass + " " + prog);
 	    out.flush();
 	    String msg = in.readLine();
-	    if (msg.startsWith("Error: ")) {
+	    if (msg == null) {
+		System.out.println("error: no data from socket.");
+		s.close();
+	    } else if (msg.startsWith("Error: ")) {
 		System.out.println("error: " + msg.substring("Error: ".length()));
 		s.close();
 	    } else {
@@ -83,7 +86,7 @@ public class PG_Server {
 	String is;
 	try {
 	    while ((is = in.readLine()) != null) {
-		if (is.equals("")) {
+		if (is.length() == 0) {
 		    break;
 		}
 		int index = is.indexOf(": ");
@@ -120,7 +123,7 @@ public class PG_Server {
     private PG_Event get_event() {
 	try {
 	    String msg = in.readLine();
-	    if  (msg.startsWith("Event: ")) {
+	    if  (msg != null && msg.startsWith("Event: ")) {
 		String data = msg.substring("Event: ".length());
 		int index = data.indexOf('/');
 		if (index > 0) {
