@@ -691,7 +691,7 @@ BuildMcpArea(
 
 	sprintf(name,"/tmp/mcparea%d.rec",(int)getpid());
 	if		(  ( fp = fopen(name,"w") )  ==  NULL  ) {
-		fprintf(stderr,"tempfile can not make.\n");
+		fprintf(stderr,"tempfile can not make.: %s\n", name);
 		exit(1);
 	}
 	fprintf(fp,	"mcparea	{");

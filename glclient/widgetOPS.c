@@ -635,7 +635,7 @@ dbgmsg(">RecvCombo");
 			   !=  NULL  ) {
 				RecvEntry(subWidget,fp);
 			} else {
-				printf("sub widget not found\n");
+				printf("sub widget not found: %s\n", longname);
 				/*	fatal error	*/
 			}
 		}
