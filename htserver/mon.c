@@ -360,6 +360,36 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	LargeByteString	*
+Expired(void)
+{
+	LargeByteString	*html;
+	char	buff[SIZE_BUFF];
+	HTCInfo	*htc;
+
+
+	Codeset = SRC_CODESET;
+	html = NewLBS();
+	LBS_EmitStart(html);
+    sprintf(buff,"%s/expired.htc",ScreenDir);
+
+    if      (  ( htc = HTCParserFile(buff) )  ==  NULL  ) {
+        LBS_EmitUTF8(html,
+                     "<html><head>"
+                     "<title>htserver error</title>"
+                     "</head><body>\n"
+                     "<H1>htserver error</H1>\n"
+                     "<p>maybe session was expired. please retry.</p>\n"
+                     "<p>おそらくセション変数の保持時間切れでしょう。"
+                     "もう一度最初からやり直して下さい。</p>\n"
+                     "</body></html>\n",SRC_CODESET);
+    } else {
+        LBS_EmitStart(html);
+        ExecCode(html,htc);
+    }
+	return	(html);
+}
+
 static	void
 Session(void)
 {

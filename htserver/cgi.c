@@ -846,26 +846,6 @@ Dump(void)
 	WriteLargeString(stdout,html,Codeset);
 }
 
-extern	LargeByteString	*
-Expired(void)
-{
-	LargeByteString	*html;
-
-	Codeset = SRC_CODESET;
-	html = NewLBS();
-	LBS_EmitStart(html);
-	LBS_EmitUTF8(html,
-				 "<html><head>"
-				 "<title>htserver error</title>"
-				 "</head><body>\n"
-				 "<H1>htserver error</H1>\n"
-				 "<p>maybe session was expired. please retry.</p>\n"
-				 "<p>おそらくセション変数の保持時間切れでしょう。"
-				 "もう一度最初からやり直して下さい。</p>\n"
-				 "</body></html>\n",SRC_CODESET);
-	return	(html);
-}
-
 extern	void
 InitCGI(void)
 {
