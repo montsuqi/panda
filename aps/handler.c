@@ -302,7 +302,7 @@ dbgmsg(">CallAfter");
 	if		(  PutType  ==  SCREEN_BACK_WINDOW  ) {
 		sindex --;
 		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
-			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex)),
+			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 1)),
 			   SIZE_NAME);
 		PutType = SCREEN_CHANGE_WINDOW;
 	}
