@@ -199,6 +199,6 @@ main(
 	}
 	InitSystem(fl->name);
 	rc = ExecuteSubProcess(fl->name);
-	StopProcess(0);
+	StopProcess(rc);
 	return	(rc);
 }
