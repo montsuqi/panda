@@ -31,11 +31,11 @@ copies.
 
 #ifdef	TRACE
 #define	dbgmsg(s)			MessageDebug(__FILE__,__LINE__,(s))
-#define	dbgprintf(fmt, ...)	_MessageLevelPrintf(MESSAGE_DEBUG, __FILE__,__LINE__,(fmt), __VA_ARGS__)
+#define	dbgprintf(fmt, ...)	_MessagePrintf(__FILE__,__LINE__,(fmt), __VA_ARGS__)
 #define	PASS(s)				MessageDebug(__FILE__,__LINE__,(s))
-#define	ENTER_FUNC			_MessageLevelPrintf(MESSAGE_LOG,__FILE__,__LINE__,">%s", __func__)
-#define	LEAVE_FUNC			_MessageLevelPrintf(MESSAGE_LOG,__FILE__,__LINE__,"<%s", __func__)
-#define	RETURN(v)			_MessageLevelPrintf(MESSAGE_LOG,__FILE__,__LINE__,"<%s", __func__),return(v)
+#define	ENTER_FUNC			_MessagePrintf(__FILE__,__LINE__,">%s", __func__)
+#define	LEAVE_FUNC			_MessagePrintf(__FILE__,__LINE__,"<%s", __func__)
+#define	RETURN(v)			_MessagePrintf(__FILE__,__LINE__,"<%s", __func__),return(v)
 #else
 #define	dbgmsg(s)			/*	*/
 #define	dbgprintf(fmt,...)	/*	*/

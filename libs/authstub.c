@@ -65,21 +65,16 @@ AuthUser(
 dbgmsg(">AuthUser");
 	if		(  !stricmp(auth->protocol,"glauth")  ) {
 		fh = ConnectIP_Socket(auth->port,SOCK_STREAM,auth->host);
-		if	( fh > 0) {
-			fp = SocketToNet(fh);
-			SendString(fp,user);
-			SendString(fp,pass);
-			if		(  ( rc = RecvBool(fp) )  ) {
-				RecvString(fp,buff);
-				if		(  other  !=  NULL  ) {
-					strcpy(other,buff);
-				}
+		fp = SocketToNet(fh);
+		SendString(fp,user);
+		SendString(fp,pass);
+		if		(  ( rc = RecvBool(fp) )  ) {
+			RecvString(fp,buff);
+			if		(  other  !=  NULL  ) {
+				strcpy(other,buff);
 			}
-			CloseNet(fp);
-		} else{
-			Warning("can not connect glauth server");
-			rc = FALSE;
 		}
+		CloseNet(fp);
 	} else
 	if		(  !stricmp(auth->protocol,"file")  ) {
 		rc = AuthSingle(auth->file,user,pass,NULL);
