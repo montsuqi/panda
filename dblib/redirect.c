@@ -49,6 +49,7 @@ OpenDB_RedirectPort(
 	DBG_Struct	*dbg)
 {
 	int		fh;
+	DBG_Struct	*rdbg;
 
 dbgmsg(">OpenDB_RedirectPort");
 	if		(	(  fNoRedirect  )
@@ -56,15 +57,16 @@ dbgmsg(">OpenDB_RedirectPort");
 		dbg->fpLog = NULL;
 		dbg->redirectData = NULL;
 	} else {
-		if		(  ( fh = ConnectIP_Socket(dbg->redirectPort->port,SOCK_STREAM,
-										dbg->redirectPort->host) )
+		rdbg = dbg->redirect;
+		if		(  ( fh = ConnectIP_Socket(rdbg->redirectPort->port,SOCK_STREAM,
+										rdbg->redirectPort->host) )
 				   <  0  ) {
 			Warning("loging server not ready");
-			dbg->fpLog = NULL;
-			dbg->redirectData = NULL;
 			if		(  !fNoCheck  ) {
 				exit(1);
 			}
+			dbg->fpLog = NULL;
+			dbg->redirectData = NULL;
 		} else {
 			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
@@ -80,6 +82,8 @@ CloseDB_RedirectPort(
 dbgmsg(">CloseDB_RedirectPort");
 	if		(  dbg->fpLog  !=  NULL  ) {
 		CloseNet(dbg->fpLog);
+	}
+	if		(  dbg->redirectData  !=  NULL  ) {
 		FreeLBS(dbg->redirectData);
 	}
 dbgmsg("<CloseDB_RedirectPort");

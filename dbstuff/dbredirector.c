@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -235,14 +235,20 @@ dbgmsg(">InitSystem");
 			   ==  NULL  ) {
 		Error("DB group not found");
 	}
+#if	0
 	Orig = ThisDBG;
 	if		(  ThisDBG->redirect  !=  NULL  ) {
 		ThisDBG = ThisDBG->redirect;
 	}
 	ThisDBG->dbt = Orig->dbt;
+#endif
 	if		(  PortNumber  ==  NULL  ) {
 		if		(  Orig->redirectPort  !=  NULL  ) {
+#if	0
 			PortNumber = Orig->redirectPort->port;
+#else
+			PortNumber = ThisDBG->redirectPort->port;
+#endif
 		} else {
 			PortNumber = IntStrDup(PORT_REDIRECT);
 		}

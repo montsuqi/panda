@@ -1,3 +1,7 @@
+2004-02-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/redirect.c , tools/monitor.c: リダイレクトの仕様変更
+
 2004-02-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* Ver 1.2.1 release

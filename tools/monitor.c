@@ -195,28 +195,17 @@ _StartRedirectors(
 	DBG_Struct	*dbg)
 {
 
-	DBG_Struct	*dbgs[10];
-	int			i;
-
+ENTER_FUNC;
 	if		(  dbg->dbt  !=  NULL  ) {
-		if		(  dbg->redirect  !=  NULL  ) {
-			i = 0;
-			do {
-				dbgs[i] = dbg;
-				i ++;
-				dbg = dbg->redirect;
-			}	while	(  dbg  !=  NULL  );
-			i --;
-			for	( ; i > 0 ; i -- ) {
-				if		(  !strcmp(dbgs[i-1]->redirectPort->host,MyHost)  ) {
-					StartRedirector(dbgs[i]);
-				}
+		while	(  dbg->redirect  !=  NULL  ) {
+			if		(  !dbg->fConnect  ) {
+				StartRedirector(dbg->redirect);
+				dbg->fConnect = TRUE;
 			}
-#if	0
-			StartRedirector(dbgs[0]);
-#endif
+			dbg = dbg->redirect;
 		}
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -225,10 +214,15 @@ StartRedirectors(void)
 	int		i;
 	DBG_Struct	*dbg;
 
+ENTER_FUNC;
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		ThisEnv->DBG[i]->fConnect = FALSE;
+	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		_StartRedirectors(dbg);
 	}
+LEAVE_FUNC;
 }
 
 static	void
