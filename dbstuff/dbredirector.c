@@ -172,7 +172,9 @@ dbgmsg(">FileThread");
 		count ++;
 		FreeLBS(data);
 	}
-	CloseDB_RedirectPort(ThisDBG);
+	if		(  ThisDBG->dbname  ==  NULL  ) {
+		CloseDB_RedirectPort(ThisDBG);
+	}
 	//	pthread_exit(NULL);
 dbgmsg("<FileThread");
 }
@@ -255,7 +257,6 @@ dbgmsg(">InitSystem");
 			PortNumber = IntStrDup(PORT_REDIRECT);
 		}
 	}
-printf("[%s]\n",PortNumber);
 	FileQueue = NewQueue();
 dbgmsg("<InitSystem");
 }

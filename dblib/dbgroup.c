@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -182,8 +182,8 @@ dbgmsg(">ExecFunction");
 			dbg = ThisEnv->DBG[i];
 			ctrl.rc += ExecFunction(dbg,name);
 		}
-	} else
-	if		(  dbg->dbt  !=  NULL  ) { 
+	} else {
+		//	if		(  dbg->dbt  !=  NULL  ) { 
 		if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
 				   !=  NULL  ) {
 			(*func)(dbg,&ctrl);

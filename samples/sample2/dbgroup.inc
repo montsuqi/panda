@@ -2,7 +2,7 @@ db_group	"log"	{
 	priority	100;
 	type	"PostgreSQL";
 	port	"localhost";
-#	name	"ORCA";
+	name	"ORCA";
 	redirect_port	"localhost:9300";
 	redirect		"redirect";
 	file	"orca.log1";
