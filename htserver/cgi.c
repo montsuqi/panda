@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -59,25 +59,27 @@ SaveValue(
 	Bool		fSave)
 {
 	CGIValue	*val;
+	char		*ret;
 
 ENTER_FUNC;
-    if		(  ( val = g_hash_table_lookup(Values, name) )  ==  NULL  )	{
+	if		(  ( val = g_hash_table_lookup(Values, name) )  ==  NULL  )	{
 		val = New(CGIValue);
 		val->name = StrDup(name);
-        g_hash_table_insert(Values, val->name, val);
-    } else {
+		g_hash_table_insert(Values, val->name, val);
+	} else {
 		if		(  val->body  !=  NULL  ) {
 			xfree(val->body);
 		}
-    }
+	}
 	if		(  value  !=  NULL  ) {
 		val->body = StrDup(value);
 	} else {
 		val->body = NULL;
 	}
 	val->fSave = fSave;
+	ret = val->body;
 LEAVE_FUNC;
-	return	(val->body);
+	return	(ret);
 }
 
 extern	void
@@ -194,9 +196,10 @@ ConvLocal(
 
 extern	char	*
 ConvUTF8(
-	char	*istr,
+	unsigned char	*str,
 	char	*code)
 {
+	char	*istr;
 	iconv_t	cd;
 	size_t	sib
 	,		sob;
@@ -204,7 +207,9 @@ ConvUTF8(
 	static	char	cbuff[SIZE_BUFF];
 
 	cd = iconv_open("utf8",code);
-	if		(  ( sib = strlen(istr)  )  >  0  ) {
+	istr = str;
+dbgprintf("size = %d\n",strlen(str));
+	if		(  ( sib = strlen(str)  )  >  0  ) {
 		ostr = cbuff;
 		sob = SIZE_BUFF;
 		if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
@@ -937,10 +942,12 @@ ENTER_FUNC;
 					}
 				}
 				break;
+			  case	0:
+				break;
 			  default:
+				LBS_Emit(html,ch);
 				break;
 			}
-			LBS_Emit(html,ch);
 		}
 		FreeLBS(text);
 	} else {
