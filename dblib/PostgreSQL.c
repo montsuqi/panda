@@ -1325,7 +1325,7 @@ OpenBLOB(
 	return	(res);
 }
 
-DB_OPS	Operations[] = {
+static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
 	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
 	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
@@ -1341,7 +1341,7 @@ DB_OPS	Operations[] = {
 	{	NULL,			NULL }
 };
 
-DB_Primitives	Core = {
+static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
 	OpenBLOB,
