@@ -77,6 +77,7 @@ dbgmsg(">AuthUser");
 		CloseNet(fp);
 	} else
 	if		(  !stricmp(auth->protocol,"file")  ) {
+		rc = AuthSingle(auth->file,user,pass,NULL);
 		rc = FALSE;
 	} else {
 		rc = FALSE;

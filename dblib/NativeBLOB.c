@@ -62,16 +62,30 @@ _DBOPEN(
 	,		*user
 	,		*dbname
 	,		*pass;
+	int		fh
+		,	rc;
 
 dbgmsg(">_DBOPEN");
 	if		(  fpBlob  ==  NULL  ) {
-		/*	batch	*/
+		fh = ConnectSocket(dbg->port,SOCK_STREAM);
+		fpBlob = SocketToNet(fh);
+		SendString(fpBlob,dbg->user);
+		SendString(fpBlob,dbg->pass);
+		if		(  RecvPacketClass(fpBlob)  !=  APS_OK  ) {
+			CloseNet(fpBlob);
+			fpBlob = NULL;
+		}
 	}
-	OpenDB_RedirectPort(dbg);
-	dbg->conn = (void *)fpBlob;
-	dbg->fConnect = TRUE;
+	if		(  fpBlob  ==  NULL  ) {
+		OpenDB_RedirectPort(dbg);
+		dbg->conn = (void *)fpBlob;
+		dbg->fConnect = TRUE;
+		rc = MCP_OK;
+	} else {
+		rc = MCP_BAD_OTHER;
+	}
 	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
+		ctrl->rc = rc;
 	}
 dbgmsg("<_DBOPEN");
 }
@@ -83,6 +97,7 @@ _DBDISCONNECT(
 {
 dbgmsg(">_DBDISCONNECT");
 	if		(  dbg->fConnect  ) { 
+		SendPacketClass(fpBlob,APS_END);
 		CloseNet((NETFILE *)dbg->conn);
 		CloseDB_RedirectPort(dbg);
 		dbg->fConnect = FALSE;

@@ -235,7 +235,9 @@ AuthSingle(
 					p = q + 1;	q = strchr(p,':');	*q = 0;
 					p = q + 1;	q = strchr(p,':');	*q = 0;
 					p = q + 1;	q = strchr(p,'\n');	*q = 0;
-					strcpy(other,p);
+					if		(  other  !=  NULL  ) {
+						strcpy(other,p);
+					}
 					rc = TRUE;
 				}
 				break;

@@ -261,7 +261,8 @@ StringPortName(
 extern	void
 ParseURL(
 	URL		*url,
-	char	*instr)
+	char	*instr,
+	char	*protocol)
 {
 	char	*p
 	,		*str;
@@ -271,7 +272,7 @@ ParseURL(
 	strcpy(buff,instr);
 	str = buff;
 	if		(  ( p = strchr(str,':') )  ==  NULL  ) {
-		url->protocol = StrDup("http");
+		url->protocol = StrDup(protocol);
 	} else {
 		*p = 0;
 		url->protocol = StrDup(str);
@@ -286,10 +287,15 @@ ParseURL(
 	if		(  ( p = strchr(str,'/') )  !=  NULL  ) {
 		*p = 0;
 	}
-	port = ParPort(str,NULL);
-	url->host = StrDup(port->adrs.a_ip.host);
-	url->port = StrDup(port->adrs.a_ip.port);
-	DestroyPort(port);
+	if		(  !stricmp(url->protocol,"file")  ) {
+		url->host = NULL;
+		url->port = NULL;
+	} else {
+		port = ParPort(str,NULL);
+		url->host = StrDup(port->adrs.a_ip.host);
+		url->port = StrDup(port->adrs.a_ip.port);
+		DestroyPort(port);
+	}
 	if		(  p  !=  NULL  ) {
 		url->file = StrDup(p+1);
 	} else {

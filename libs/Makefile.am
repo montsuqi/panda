@@ -65,7 +65,8 @@ libpandas_la_SOURCES	=		\
 	DDparser.c	DDparser.h			\
 	driver.c	driver.h	enum.h	\
 	front.c		front.h				\
-	comm.c			comm.h			\
+	comm.c		comm.h				\
+	auth.c		auth.h				\
 	authstub.c	authstub.h			\
 	load.c		load.h
 
@@ -81,6 +82,7 @@ libpandas_la_DEPENDENCIES	=		\
 
 libpandacom_la_SOURCES	=			\
 	auth.c			auth.h			\
+	authstub.c		authstub.h		\
 	net.c			net.h			\
 	comm.c			comm.h			\
 	comms.c			comms.h			\

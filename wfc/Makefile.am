@@ -36,6 +36,7 @@ wfc_SOURCES	=							\
 	wfc.c		wfc.h						\
 	mqthread.c		mqthread.h			\
 	corethread.c	corethread.h		\
+	blobthread.c	blobthread.h		\
 	controlthread.c	controlthread.h		\
 	blobserv.c		blobserv.h			\
 	termthread.c	termthread.h

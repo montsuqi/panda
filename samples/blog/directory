@@ -4,7 +4,6 @@ base	"~/MONTSUQI/panda/samples";
 
 ddir	"=/blog";
 record	"=/blog";
-blob	"=/blog";
 
 linkage		link;
 
@@ -21,6 +20,12 @@ wfc	{
 
 ld	{
 	blog;
+};
+
+blob	{
+	space	"=/blog";
+	port	"/tmp/blog.blob";
+	auth	"=/password";
 };
 
 db_group	"blog_body"	{

@@ -239,11 +239,16 @@ typedef	struct {
 }	BD_Struct;
 
 typedef	struct {
+	char		*dir;
+	Port		*port;
+	URL			*auth;
+}	BLOB_Struct;
+
+typedef	struct {
 	char		*name;
 	char		*BaseDir
 	,			*D_Dir
-	,			*RecordDir
-	,			*BlobDir;
+	,			*RecordDir;
 	Port		*WfcApsPort
 	,			*TermPort
 	,			*ControlPort;
@@ -252,6 +257,7 @@ typedef	struct {
 	,			cDBD
 	,			linksize
 	,			stacksize;
+	BLOB_Struct		*blob;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
 	GHashTable	*LD_Table;

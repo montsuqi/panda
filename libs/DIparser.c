@@ -79,7 +79,9 @@ copies.
 #define	T_TERMPORT		(T_YYBASE +26)
 #define	T_CONTROL		(T_YYBASE +27)
 #define	T_DDIR			(T_YYBASE +28)
-#define	T_BLOBDIR		(T_YYBASE +29)
+#define	T_BLOB			(T_YYBASE +29)
+#define	T_AUTH			(T_YYBASE +30)
+#define	T_SPACE			(T_YYBASE +31)
 
 #undef	Error
 #define	Error(msg)		{CURR->fError=TRUE;_Error((msg),CURR->fn,CURR->cLine);}
@@ -120,7 +122,9 @@ static	TokenTable	tokentable[] = {
 	{	"encoding"			,T_ENCODING	},
 	{	"termport"			,T_TERMPORT	},
 	{	"control"			,T_CONTROL	},
-	{	"blob"				,T_BLOBDIR	},
+	{	"blob"				,T_BLOB		},
+	{	"auth"				,T_AUTH		},
+	{	"space"				,T_SPACE	},
 	{	""					,0			}
 };
 
@@ -204,6 +208,85 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+}
+
+static	BLOB_Struct	*
+ParBLOB(void)
+{
+	BLOB_Struct	*blob;
+	URL			*auth;
+
+ENTER_FUNC;
+	blob = New(BLOB_Struct);
+	blob->port = NULL;
+	blob->auth = NULL;
+	blob->dir = NULL;
+	while	(  GetSymbol  !=  '}'  ) {
+		switch	(ComToken) {
+		  case	T_AUTH:
+			switch	(GetSymbol) {
+			  case	T_SCONST:
+				auth = New(URL);
+				ParseURL(auth,ComSymbol,"file");
+				if		(  !stricmp(auth->protocol,"file")  ) {
+					if		(  auth->file  !=  NULL  ) {
+						xfree(auth->file);
+					}
+					auth->file = StrDup(ExpandPath(auth->file,ThisEnv->BaseDir));
+				}
+				blob->auth = auth;
+				GetSymbol;
+				break;
+			  case	';':
+				blob->auth = NULL;
+				break;
+			  default:
+				Error("invalid auth URL");
+				break;
+			}
+			break;
+		  case	T_PORT:
+			switch	(GetSymbol) {
+			  case	T_ICONST:
+				blob->port = NewIP_Port(NULL,IntStrDup(ComInt));
+				GetSymbol;
+				break;
+			  case	T_SCONST:
+				blob->port = ParPort(ComSymbol,PORT_BLOB);
+				GetSymbol;
+				break;
+			  case	';':
+				blob->port = NULL;
+				break;
+			  default:
+				Error("invalid port number");
+				break;
+			}
+			break;
+		  case	T_SPACE:
+			switch	(GetSymbol) {
+			  case	T_SCONST:
+				blob->dir = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
+				GetSymbol;
+				break;
+			  case	';':
+				blob->dir = NULL;
+				break;
+			  default:
+				Error("invalid blob space");
+				break;
+			}
+			break;
+		  default:
+			Error("blob keyword error");
+			break;
+		}
+		if		(  ComToken  !=  ';'  ) {		
+			Error("missing ; in blob directive");
+		}
+	}
+LEAVE_FUNC;
+	return	(blob);
 }
 
 static	void
@@ -750,7 +833,6 @@ dbgmsg(">ParDI");
 				ThisEnv->BaseDir = BaseDir;
 				ThisEnv->D_Dir = D_Dir;
 				ThisEnv->RecordDir = RecordDir;
-				ThisEnv->BlobDir = NULL;
 				ThisEnv->WfcApsPort = ParPort("localhost",PORT_WFC_APS);
 				ThisEnv->TermPort = ParPort("localhost",PORT_WFC);
 				ThisEnv->ControlPort = ParPort(CONTROL_PORT,PORT_WFC_CONTROL);
@@ -765,6 +847,7 @@ dbgmsg(">ParDI");
 				ThisEnv->cDBG = 0;
 				ThisEnv->DBG = NULL;
 				ThisEnv->DBG_Table = NewNameHash();
+				ThisEnv->blob = NULL;
 			}
 			break;
 		  case	T_STACKSIZE:
@@ -838,20 +921,6 @@ dbgmsg(">ParDI");
 				Error("DDIR directory invalid");
 			}
 			break;
-		  case	T_BLOBDIR:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				if		(  ThisEnv->BlobDir  ==  NULL  ) {
-					if		(  !strcmp(ComSymbol,".")  ) {
-						ThisEnv->BlobDir = StrDup(ThisEnv->BaseDir);
-					} else {
-						ThisEnv->BlobDir = StrDup(ExpandPath(ComSymbol
-															 ,ThisEnv->BaseDir));
-					}
-				}
-			} else {
-				Error("BLOB directory invalid");
-			}
-			break;
 		  case	T_MULTI:
 			GetName;
 			if		(  stricmp(ComSymbol,"no")  ==  0  ) {
@@ -870,6 +939,13 @@ dbgmsg(">ParDI");
 				ThisEnv->mlevel = MULTI_APS;
 			} else {
 				Error("invalid multiplex level");
+			}
+			break;
+		  case	T_BLOB:
+			if		(  GetSymbol  ==  '{'  ) {
+				ThisEnv->blob = ParBLOB();
+			} else {
+				Error("syntax error in blob directive");
 			}
 			break;
 		  case	T_CONTROL:

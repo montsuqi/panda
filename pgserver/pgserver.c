@@ -79,7 +79,7 @@ main(
 	(void)GetOption(option,argc,argv);
 	InitMessage("pgserver",NULL);
 
-	ParseURL(&Auth,AuthURL);
+	ParseURL(&Auth,AuthURL,"file");
 	InitSystem(argc,argv);
 	ExecuteServer();
 	return	(0);

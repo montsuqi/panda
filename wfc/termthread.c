@@ -169,7 +169,7 @@ dbgmsg(">InitSession");
 		sprintf(msg,"[%s] session fail LD [%s] not found.",data->hdr->term,buff);
 		MessageLog(msg);
 	  badio:
-		SendPacketClass(fp,APS_NOT);
+		SendPacketClass(fp,WFC_NOT);
 		FinishSession(data);
 		data = NULL;
 	}

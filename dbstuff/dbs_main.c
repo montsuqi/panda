@@ -595,7 +595,7 @@ main(
 	fl = GetOption(option,argc,argv);
 	InitMessage("dbs",NULL);
 
-	ParseURL(&Auth,AuthURL);
+	ParseURL(&Auth,AuthURL,"file");
 
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {

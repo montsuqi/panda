@@ -53,7 +53,7 @@ typedef	struct {
 #define	UNIX_NAME(p)	((p)->adrs.a_unix.name)
 #define	UNIX_MODE(p)	((p)->adrs.a_unix.mode)
 
-extern	void		ParseURL(URL *url, char *str);
+extern	void		ParseURL(URL *url, char *instr, char *protocol);
 extern	void		DestroyPort(Port *port);
 extern	Port		*ParPort(char *str, char *def);
 extern	Port		*ParPortName(char *str);
