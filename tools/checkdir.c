@@ -213,10 +213,10 @@ _DumpHandler(
 		printf("\thandler\t\"%s\"\t{\n",handler->name);
 		printf("\t\tclass     \"%s\";\n",(char *)handler->klass);
 		printf("\t\tselialize \"%s\";\n",(char *)handler->serialize);
-		printf("\t\tlocale    \"%s\";\n",handler->opt->locale);
+		printf("\t\tlocale    \"%s\";\n",handler->conv->locale);
 		printf("\t\tstart     \"%s\";\n",handler->start);
 		printf("\t\tencoding  ");
-		switch	(handler->opt->encode) {
+		switch	(handler->conv->encode) {
 		  case	STRING_ENCODING_URL:
 			printf("\"URL\";\n");
 			break;

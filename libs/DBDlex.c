@@ -36,7 +36,7 @@ copies.
 #include	"misc.h"
 #include	"dirs.h"
 #include	"libmondai.h"
-#include	"DBlex.h"
+#include	"DBDlex.h"
 #include	"debug.h"
 
 typedef	struct	INCFILE_S	{
@@ -64,16 +64,16 @@ static	struct	{
 static	GHashTable	*Reserved;
 
 extern	void
-DB_LexInit(void)
+DBD_LexInit(void)
 {
 	int		i;
 
-dbgmsg(">DB_LexInit");
+ENTER_FUNC;
 	Reserved = NewNameHash();
 	for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
 		g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
 	}
-dbgmsg("<DB_LexInit");
+LEAVE_FUNC;
 }
 
 static	int
@@ -91,10 +91,10 @@ CheckReserved(
 	return	(ret);
 }
 
-#define	SKIP_SPACE	while	(  isspace( c = GetChar(DB_File) ) ) {	\
+#define	SKIP_SPACE	while	(  isspace( c = GetChar(DBD_File) ) ) {	\
 						if		(  c  ==  '\n'  ) {	\
 							c = ' ';\
-							DB_cLine ++;\
+							DBD_cLine ++;\
 						}	\
 					}
 
@@ -111,11 +111,11 @@ DoInclude(
 dbgmsg(">DoInclude");
 	back = New(INCFILE);
 	back->next = ftop;
-	back->fn =  DB_FileName;
-	fgetpos(DB_File,&back->pos);
-	back->cLine = DB_cLine;
+	back->fn =  DBD_FileName;
+	fgetpos(DBD_File,&back->pos);
+	back->cLine = DBD_cLine;
 	ftop = back;
-	fclose(DB_File);
+	fclose(DBD_File);
 	if		(  DBD_Dir  !=  NULL  ) {
 		strcpy(buff,DBD_Dir);
 	} else {
@@ -127,14 +127,14 @@ dbgmsg(">DoInclude");
 			*q = 0;
 		}
 		sprintf(name,"%s/%s",p,fn);
-		if		(  ( DB_File = fopen(name,"r") )  !=  NULL  )	break;
+		if		(  ( DBD_File = fopen(name,"r") )  !=  NULL  )	break;
 		p = q + 1;
 	}	while	(  q  !=  NULL  );
-	if		(  DB_File  ==  NULL  ) {
+	if		(  DBD_File  ==  NULL  ) {
 		Error("include not found");
 	}
-	DB_cLine = 1;
-	DB_FileName = StrDup(name);
+	DBD_cLine = 1;
+	DBD_FileName = StrDup(name);
 dbgmsg("<DoInclude");
 }
 
@@ -144,13 +144,13 @@ ExitInclude(void)
 	INCFILE	*back;
 
 dbgmsg(">ExitInclude");
-	fclose(DB_File);
+	fclose(DBD_File);
 	back = ftop;
-	DB_File = fopen(back->fn,"r");
-	xfree(DB_FileName);
-	DB_FileName = back->fn;
-	fsetpos(DB_File,&back->pos);
-	DB_cLine = back->cLine;
+	DBD_File = fopen(back->fn,"r");
+	xfree(DBD_FileName);
+	DBD_FileName = back->fn;
+	fsetpos(DBD_File,&back->pos);
+	DBD_cLine = back->cLine;
 	ftop = back->next;
 	xfree(back);
 dbgmsg("<ExitInclude");
@@ -170,20 +170,20 @@ dbgmsg(">ReadyDirective");
 	do {
 		*s = c;
 		s ++;
-	}	while	(  !isspace( c = GetChar(DB_File) )  );
+	}	while	(  !isspace( c = GetChar(DBD_File) )  );
 	*s = 0;
 	if		(  !stricmp(buff,"include")  ) {
 		SKIP_SPACE;
 		s = fn;
 		switch	(c) {
 		  case	'"':
-			while	(  ( c = GetChar(DB_File) )  !=  '"'  ) {
+			while	(  ( c = GetChar(DBD_File) )  !=  '"'  ) {
 				*s ++ = c;
 			}
 			*s = 0;
 			break;
 		  case	'<':
-			while	(  ( c = GetChar(DB_File) )  !=  '>'  ) {
+			while	(  ( c = GetChar(DBD_File) )  !=  '>'  ) {
 				*s ++ = c;
 			}
 			*s = 0;
@@ -196,22 +196,22 @@ dbgmsg(">ReadyDirective");
 			DoInclude(fn);
 		}
 	} else {
-		UnGetChar(DB_File,c);
-		while	(  ( c = GetChar(DB_File) )  !=  '\n'  );
-		DB_cLine ++;
+		UnGetChar(DBD_File,c);
+		while	(  ( c = GetChar(DBD_File) )  !=  '\n'  );
+		DBD_cLine ++;
 	}
 dbgmsg("<ReadyDirective");
 }
 
 extern	int
-DB_Lex(
+DBD_Lex(
 	Bool	fSymbol)
 {	int		c
 	,		len;
 	int		token;
 	char	*s;
 
-dbgmsg(">DB_Lex");
+dbgmsg(">DBD_Lex");
   retry:
 	SKIP_SPACE; 
 	if		(  c  ==  '#'  ) {
@@ -219,16 +219,16 @@ dbgmsg(">DB_Lex");
 		goto	retry;
 	}
 	if		(  c  ==  '!'  ) {
-		while	(  ( c = GetChar(DB_File) )  !=  '\n'  );
-		DB_cLine ++;
+		while	(  ( c = GetChar(DBD_File) )  !=  '\n'  );
+		DBD_cLine ++;
 		goto	retry;
 	}
 	if		(  c  ==  '"'  ) {
-		s = DB_ComSymbol;
+		s = DBD_ComSymbol;
 		len = 0;
-		while	(  ( c = GetChar(DB_File) )  !=  '"'  ) {
+		while	(  ( c = GetChar(DBD_File) )  !=  '"'  ) {
 			if		(  c  ==  '\\'  ) {
-				c = GetChar(DB_File);
+				c = GetChar(DBD_File);
 			}
 			*s = c;
 			if		(  len  <  SIZE_SYMBOL  ) {
@@ -240,7 +240,7 @@ dbgmsg(">DB_Lex");
 		token = T_SCONST;
 	} else
 	if		(  isalpha(c)  ) {
-		s = DB_ComSymbol;
+		s = DBD_ComSymbol;
 		len = 0;
 		do {
 			*s = c;
@@ -248,21 +248,21 @@ dbgmsg(">DB_Lex");
 				s ++;
 				len ++;
 			}
-			c = GetChar(DB_File);
+			c = GetChar(DBD_File);
 		}	while	(	(  isalpha(c) )
 					 ||	(  isdigit(c) )
 					 ||	(  c  ==  '.' )
 					 ||	(  c  ==  '_' ) );
 		*s = 0;
-		UnGetChar(DB_File,c);
+		UnGetChar(DBD_File,c);
 		if		(  fSymbol  ) {
 			token = T_SYMBOL;
 		} else {
-			token = CheckReserved(DB_ComSymbol);
+			token = CheckReserved(DBD_ComSymbol);
 		}
 	} else
 	if		(  isdigit(c)  )	{
-		s = DB_ComSymbol;
+		s = DBD_ComSymbol;
 		len = 0;
 		do {
 			*s = c;
@@ -270,12 +270,12 @@ dbgmsg(">DB_Lex");
 				s ++;
 				len ++;
 			}
-			c = GetChar(DB_File);
+			c = GetChar(DBD_File);
 		}	while	(  isdigit(c)  );
 		*s = 0;
-		UnGetChar(DB_File,c);
+		UnGetChar(DBD_File,c);
 		token = T_ICONST;
-		DB_ComInt = atoi(DB_ComSymbol);
+		DBD_ComInt = atoi(DBD_ComSymbol);
 	} else {
 		switch	(c) {
 		  case	EOF:
@@ -291,7 +291,7 @@ dbgmsg(">DB_Lex");
 			break;
 		}
 	}
-dbgmsg("<DB_Lex");
+dbgmsg("<DBD_Lex");
 	return	(token);
 }
 

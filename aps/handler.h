@@ -42,7 +42,11 @@ extern	int		StartBatch(char *name, char *para);
 
 extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);
 extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);
+extern	RecordStruct	*BuildDBCTRL(void);
 extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);
+
+extern	void	ExpandStart(char *line, char *start, char *path,
+							char *module, char *param);
 
 #undef	GLOBAL
 #ifdef	_HANDLER

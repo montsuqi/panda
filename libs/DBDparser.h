@@ -19,36 +19,22 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_INC_DB_LEX_H
-#define	_INC_DB_LEX_H
+#ifndef	_INC_DBD_PARSER_H
+#define	_INC_DBD_PARSER_H
 #include	<glib.h>
+#include	"struct.h"
 
-#define	SIZE_SYMBOL		255
-
-#define	YYBASE			256
-#define	T_EOF			(YYBASE +1)
-#define	T_SYMBOL		(YYBASE +2)
-#define	T_ICONST		(YYBASE +3)
-#define	T_SCONST		(YYBASE +4)
-#define	T_NAME			(YYBASE +5)
-#define	T_ARRAYSIZE		(YYBASE +6)
-#define	T_TEXTSIZE		(YYBASE +7)
-#define	T_DB			(YYBASE +8)
-
-#ifdef	_DB_PARSER
-#define	GLOBAL	/*	*/
+#undef	GLOBAL
+#ifdef	_DBD_PARSER
+#define	GLOBAL		/*	*/
 #else
-#define	GLOBAL	extern
+#define	GLOBAL		extern
 #endif
-GLOBAL	char	DB_ComSymbol[SIZE_SYMBOL+1];
-GLOBAL	int		DB_ComInt;
-GLOBAL	char	*DB_FileName;
-GLOBAL	int		DB_Token;
-GLOBAL	FILE	*DB_File;
-GLOBAL	int		DB_cLine;
+
+GLOBAL	GHashTable	*DBD_Table;
+
 #undef	GLOBAL
 
-extern	int		DB_Lex(Bool fSymbol);
-extern	void	DB_LexInit(void);
-
+extern	void		DBD_ParserInit(void);
+extern	DBD_Struct	*DBD_Parser(char *name);
 #endif

@@ -90,7 +90,7 @@ dbgmsg(">ParDB");
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,BD_ComSymbol);
-					if		(  (  db = DD_ParserDataDefines(name) )  !=  NULL  ) {
+					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(bd->DB_Table,BD_ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( bd->cDB + 1));
 							memcpy(rtmp,bd->db,sizeof(RecordStruct *) * bd->cDB);
@@ -133,10 +133,12 @@ NewMessageHandler(
 	handler->name = StrDup(name);
 	handler->klass = (MessageHandlerClass *)klass;
 	handler->serialize = NULL;
-	handler->opt = New(CONVOPT);
-	handler->opt->encode = STRING_ENCODING_URL;
+	handler->conv = New(CONVOPT);
+	handler->conv->encode = STRING_ENCODING_URL;
 	handler->start = NULL;
 	handler->fInit = 0;
+	handler->loadpath = NULL;
+	handler->private = NULL;
 	g_hash_table_insert(Handler,handler->name,handler);
 
 	return	(handler);
@@ -182,18 +184,25 @@ GetSymbol;
 					break;
 				  case	T_LOCALE:
 					if		(  GetName   ==  T_SCONST  ) {
-						handler->opt->locale = StrDup(BD_ComSymbol);
+						handler->conv->locale = StrDup(BD_ComSymbol);
 					} else {
 						Error("locale name must be string.");
+					}
+					break;
+				  case	T_LOADPATH:
+					if		(  GetName   ==  T_SCONST  ) {
+						handler->loadpath = StrDup(BD_ComSymbol);
+					} else {
+						Error("load path must be string.");
 					}
 					break;
 				  case	T_ENCODING:
 					if		(  GetName   ==  T_SCONST  ) {
 						if		(  !stricmp(BD_ComSymbol,"URL")  ) {
-							handler->opt->encode = STRING_ENCODING_URL;
+							handler->conv->encode = STRING_ENCODING_URL;
 						} else
 						if		(  !stricmp(BD_ComSymbol,"BASE64")  ) {
-							handler->opt->encode = STRING_ENCODING_BASE64;
+							handler->conv->encode = STRING_ENCODING_BASE64;
 						} else {
 							Error("unsupported string encoding");
 						}
@@ -379,18 +388,23 @@ EnterDefaultHandler(void)
 
 	handler = NewMessageHandler("OpenCOBOL","OpenCOBOL");
 	handler->serialize = (ConvFuncs *)"OpenCOBOL";
-	handler->opt->locale = "euc-jp";
+	handler->conv->locale = "euc-jp";
 	handler->start = "";
 
 	handler = NewMessageHandler("dotCOBOL","dotCOBOL");
 	handler->serialize = (ConvFuncs *)"dotCOBOL";
-	handler->opt->locale = "euc-jp";
+	handler->conv->locale = "euc-jp";
 	handler->start = "";
 
 	handler = NewMessageHandler("C","C");
-	handler->serialize = (ConvFuncs *)"";
-	handler->opt->locale = "";
+	handler->serialize = NULL;
+	handler->conv->locale = "";
 	handler->start = "";
+
+	handler = NewMessageHandler("Exec","Exec");
+	handler->serialize = (ConvFuncs *)"CGI";
+	handler->conv->locale = "euc-jp";
+	handler->start = "%m";
 }
 
 extern	void

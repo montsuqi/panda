@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -119,6 +119,9 @@ _InitiateHandler(
 		} else {
 			handler->klass = klass;
 		}
+		if		(  handler->serialize  !=  NULL  ) {
+			handler->serialize = GetConvFunc((char *)handler->serialize);
+		}
 	}
 }
 
@@ -172,7 +175,7 @@ ENTER_FUNC;
 	if		(  ( handler->fInit & INIT_READYDC )  ==  0  ) {
 		handler->fInit |= INIT_READYDC;
 		if		(  handler->klass->ReadyDC  !=  NULL  ) {
-			handler->klass->ReadyDC();
+			handler->klass->ReadyDC(handler);
 		}
 	}
 LEAVE_FUNC;
@@ -193,7 +196,7 @@ ReadyHandlerDB(
 	if		(  ( handler->fInit & INIT_READYDB )  ==  0  ) {
 		handler->fInit |= INIT_READYDB;
 		if		(  handler->klass->ReadyDB  !=  NULL  ) {
-			handler->klass->ReadyDB();
+			handler->klass->ReadyDB(handler);
 		}
 	}
 }
@@ -372,7 +375,7 @@ StopHandlerDC(
 			&&	(  ( handler->fInit & INIT_STOPDC  )  ==  0  ) ) {
 		handler->fInit |= INIT_STOPDC;
 		if		(  handler->klass->StopDC  !=  NULL  ) {
-			handler->klass->StopDC();
+			handler->klass->StopDC(handler);
 		}
 	}
 }
@@ -400,7 +403,7 @@ CleanUpHandlerDC(
 			&&	(  ( handler->fInit & INIT_CLEANDC  )  ==  0  ) ) {
 		handler->fInit |= INIT_CLEANDC;
 		if		(  handler->klass->CleanUpDC  !=  NULL  ) {
-			handler->klass->CleanUpDC();
+			handler->klass->CleanUpDC(handler);
 		}
 	}
 }
@@ -428,7 +431,7 @@ CleanUpHandlerDB(
 			&&	(  ( handler->fInit & INIT_CLEANDB )  ==  0  ) ) {
 		handler->fInit |= INIT_CLEANDB;
 		if		(  handler->klass->CleanUpDB  !=  NULL  ) {
-			handler->klass->CleanUpDB();
+			handler->klass->CleanUpDB(handler);
 		}
 	}
 }
@@ -456,7 +459,7 @@ StopHandlerDB(
 			&&	(  ( handler->fInit & INIT_STOPDB  )  ==  0  ) ) {
 		handler->fInit |= INIT_STOPDB;
 		if		(  handler->klass->StopDB  !=  NULL  ) {
-			handler->klass->StopDB();
+			handler->klass->StopDB(handler);
 		}
 	}
 }
@@ -485,7 +488,7 @@ CleanUpDC(
 			&&	(  ( handler->fInit & INIT_CLEANDC )  ==  0  ) ) {
 		handler->fInit |= INIT_CLEANDC;
 		if		(  handler->klass->CleanUpDC  !=  NULL  ) {
-			handler->klass->CleanUpDC();
+			handler->klass->CleanUpDC(handler);
 		}
 	}
 }
@@ -554,3 +557,66 @@ DumpDB_Node(
 	printf("rno    = %d\n",ctrl->rno);
 	printf("pno    = %d\n",ctrl->pno);
 }
+
+extern	RecordStruct	*
+BuildDBCTRL(void)
+{
+	RecordStruct	*rec;
+	FILE			*fp;
+
+	if		(  ( fp = tmpfile() )  ==  NULL  ) {
+		fprintf(stderr,"tempfile can not make.\n");
+		exit(1);
+	}
+	fprintf(fp,	"dbctrl	{");
+	fprintf(fp,		"rc int;");
+	fprintf(fp,		"func	varchar(%d);",SIZE_FUNC);
+	fprintf(fp,		"rname	varchar(%d);",SIZE_NAME);
+	fprintf(fp,		"pname	varchar(%d);",SIZE_NAME);
+	fprintf(fp,	"};");
+	rewind(fp);
+	rec = DD_Parse(fp,"");
+	fclose(fp);
+
+	return	(rec);
+}
+
+extern	void
+ExpandStart(
+	char	*line,
+	char	*start,
+	char	*path,
+	char	*module,
+	char	*param)
+{
+	char	*p
+	,		*q;
+
+	p = start;
+	q = line;
+
+	while	(  *p  !=  0  ) {
+		if		(  *p  ==  '%'  ) {
+			p ++;
+			switch	(*p) {
+			  case	'm':
+				q += sprintf(q,"%s",module);
+				break;
+			  case	'p':
+				q += sprintf(q,"%s",path);
+				break;
+			  case	'a':
+				q += sprintf(q,"%s",param);
+				break;
+			  default:
+				*q ++ = *p;
+				break;
+			}
+		} else {
+			*q ++ = *p;
+		}
+		p ++;
+	}
+	*q = 0;
+}
+

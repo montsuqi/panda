@@ -2,6 +2,10 @@
 	--with-opencobol	use OpenCOBOL application handler
 	--with-dotcobol		use dotCOBOL application handler
 	--with-postgres		use PostgreSQL DB handler
+	--with-shell		use shell DB handler
+	--with-ssl			use SSL for network
+	--with-ipv6			user IPv6 for network
+	--with-msgd			use msgd for message ourput
 
 make all
 make install

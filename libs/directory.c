@@ -37,7 +37,7 @@ copies.
 #include	"DDparser.h"
 #include	"LDparser.h"
 #include	"DIparser.h"
-#include	"DBparser.h"
+#include	"DBDparser.h"
 #include	"directory.h"
 #include	"misc.h"
 #include	"debug.h"
@@ -47,9 +47,10 @@ InitDirectory(void)
 {
 dbgmsg(">InitDirectory");
 	DD_ParserInit();
+	DB_ParserInit();
 	LD_ParserInit();
 	BD_ParserInit();
-	DB_ParserInit();
+	DBD_ParserInit();
 	DI_ParserInit();
 dbgmsg("<InitDirectory");
 }

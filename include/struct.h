@@ -59,8 +59,10 @@ typedef	struct	{
 	byte	fInit;
 	struct	_MessageHandlerClass	*klass;
 	ConvFuncs			*serialize;
-	CONVOPT				*opt;
+	CONVOPT				*conv;
 	char				*start;
+	char				*loadpath;
+	void				*private;
 }	MessageHandler;
 
 typedef	struct _MessageHandlerClass	{
@@ -68,13 +70,13 @@ typedef	struct _MessageHandlerClass	{
 	Bool	(*ExecuteProcess)(MessageHandler *handler, ProcessNode *);
 	int		(*StartBatch)(MessageHandler *handler, char *name, char *param);
 	/*	DC function	*/
-	void	(*ReadyDC)(void);
-	void	(*StopDC)(void);
-	void	(*CleanUpDC)(void);
+	void	(*ReadyDC)(MessageHandler *handler);
+	void	(*StopDC)(MessageHandler *handler);
+	void	(*CleanUpDC)(MessageHandler *handler);
 	/*	DB function	*/
-	void	(*ReadyDB)(void);
-	void	(*StopDB)(void);
-	void	(*CleanUpDB)(void);
+	void	(*ReadyDB)(MessageHandler *handler);
+	void	(*StopDB)(MessageHandler *handler);
+	void	(*CleanUpDB)(MessageHandler *handler);
 }	MessageHandlerClass;
 
 #define	INIT_LOAD		0x01
@@ -117,7 +119,7 @@ typedef	struct {
 	size_t		arraysize
 	,			textsize;
 	size_t		cDB;
-	GHashTable	*DB_Table;
+	GHashTable	*DBD_Table;
 	RecordStruct	**db;
 }	DBD_Struct;
 

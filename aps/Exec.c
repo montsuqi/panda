@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -59,18 +59,19 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-static	CONVOPT		*ExecConv;
-static	char		*ExecPath;
+#define	DBIN_FILENO		3
+#define	DBOUT_FILENO	4
+
+static	char			*ExecPath;
+static	RecordStruct	*recDBCTRL;
+
 static	NETFILE		*fpDBR
 		,			*fpDBW;
-static	RecordStruct	*recDBCTRL;
 
 static	pthread_t		_DB_Thread;
 
 static	LargeByteString	*iobuff;
-
-#define	DBIN_FILENO		3
-#define	DBOUT_FILENO	4
+static	LargeByteString	*dbbuff;
 
 static	void
 DumpNode(
@@ -78,17 +79,15 @@ DumpNode(
 {
 #ifdef	DEBUG
 dbgmsg(">DumpNode");
- printf("node = %p\n",node); 
+	printf("node = %p\n",node); 
 //	DumpValueStruct(node->mcprec->value); 
 dbgmsg("<DumpNode");
 #endif
 }
 
-static	CONVOPT			*DbConv;
-static	LargeByteString	*dbbuff;
 static	void
 ExecuteDB_Server(
-	void	*para)
+	MessageHandler	*handler)
 {
 	RecordStruct	*rec;
 	size_t			size;
@@ -99,18 +98,17 @@ ExecuteDB_Server(
 	char			*rname
 	,				*pname
 	,				*func;
+	ConvFuncs		*conv;
 
 dbgmsg(">ExecuteDB_Server");
+	conv = handler->serialize;
 	while	(TRUE) {
 		dbgmsg("read");
 		LBS_EmitStart(dbbuff);
-dbgmsg("*");
-printf("%p\n",fpDBR);
 		RecvLargeString(fpDBR,dbbuff);		ON_IO_ERROR(fpDBR,badio);
-dbgmsg("**");
-		ConvSetRecName(DbConv,recDBCTRL->name);
+		ConvSetRecName(handler->conv,recDBCTRL->name);
 		InitializeValue(recDBCTRL->value);
-		CGI_UnPackValue(DbConv,LBS_Body(dbbuff),recDBCTRL->value);
+		conv->UnPackValue(handler->conv,LBS_Body(dbbuff),recDBCTRL->value);
 		rname = ValueString(GetItemLongName(recDBCTRL->value,"rname"));
 		if		(	(  rname  !=  NULL  ) 
 				&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
@@ -123,9 +121,9 @@ dbgmsg("**");
 			} else {
 				ctrl.pno = 0;
 			}
-			ConvSetRecName(DbConv,rec->name);
+			ConvSetRecName(handler->conv,rec->name);
 			InitializeValue(rec->value);
-			CGI_UnPackValue(DbConv,LBS_Body(dbbuff), rec->value);
+			conv->UnPackValue(handler->conv,LBS_Body(dbbuff), rec->value);
 		} else {
 			rec = NULL;
 		}
@@ -137,52 +135,36 @@ dbgmsg("**");
 			ctrl.rc = 0;
 		}
 		dbgmsg("write");
-		sprintf(buff,"%s.rc=%d",recDBCTRL->name,ctrl.rc);
-		Send(fpDBW,buff,strlen(buff));	ON_IO_ERROR(fpDBW,badio);
+		SetValueInteger(GetItemLongName(recDBCTRL->value,"rc"),ctrl.rc);
+		ConvSetRecName(handler->conv,recDBCTRL->name);
+		LBS_EmitStart(dbbuff);
+		size = conv->SizeValue(handler->conv,recDBCTRL->value);
+		LBS_ReserveSize(dbbuff,size,FALSE);
+		conv->PackValue(handler->conv,LBS_Body(dbbuff), recDBCTRL->value);
+		LBS_EmitEnd(dbbuff);
+		SendLargeString(fpDBW,dbbuff);			ON_IO_ERROR(fpDBW,badio);
 		if		(  rec  !=  NULL  ) {
-			Send(fpDBW,"&",1);				ON_IO_ERROR(fpDBW,badio);
+			Send(fpDBW,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fpDBW,badio);
 			LBS_EmitStart(dbbuff);
-			ConvSetRecName(DbConv,rec->name);
-			size = CGI_SizeValue(DbConv,rec->value);
+			ConvSetRecName(handler->conv,rec->name);
+			size = conv->SizeValue(handler->conv,rec->value);
 			LBS_ReserveSize(dbbuff,size,FALSE);
-			CGI_PackValue(DbConv,LBS_Body(dbbuff), rec->value);
+			conv->PackValue(handler->conv,LBS_Body(dbbuff), rec->value);
 			LBS_EmitEnd(dbbuff);
 			SendLargeString(fpDBW,dbbuff);	ON_IO_ERROR(fpDBW,badio);
 		}
-		Send(fpDBW,"\n",1);				ON_IO_ERROR(fpDBW,badio);
+		Send(fpDBW,conv->rsep,strlen(conv->rsep));		ON_IO_ERROR(fpDBW,badio);
 	}
   badio:
 dbgmsg("<ExecuteDB_Server");
 }
 
-static	RecordStruct	*
-BuildDBCTRL(void)
-{
-	RecordStruct	*rec;
-	FILE			*fp;
-
-	if		(  ( fp = tmpfile() )  ==  NULL  ) {
-		fprintf(stderr,"tempfile can not make.\n");
-		exit(1);
-	}
-	fprintf(fp,	"dbctrl	{");
-	fprintf(fp,		"rc int;");
-	fprintf(fp,		"func	varchar(%d);",SIZE_FUNC);
-	fprintf(fp,		"rname	varchar(%d);",SIZE_NAME);
-	fprintf(fp,		"pname	varchar(%d);",SIZE_NAME);
-	fprintf(fp,	"};");
-	rewind(fp);
-	rec = DD_Parse(fp,"");
-	fclose(fp);
-
-	return	(rec);
-}
-
 static	void
-StartDB(void)
+StartDB(
+	MessageHandler	*handler)
 {
 dbgmsg(">StartDB");
-	pthread_create(&_DB_Thread,NULL,(void *(*)(void *))ExecuteDB_Server,NULL);
+	pthread_create(&_DB_Thread,NULL,(void *(*)(void *))ExecuteDB_Server,handler);
 dbgmsg("<StartDB");
 }
 
@@ -199,85 +181,91 @@ dbgmsg("<CancelDB");
 
 static	void
 PutApplication(
+	MessageHandler	*handler,
 	NETFILE		*fp,
 	ProcessNode	*node)
 {
 	int		i;
 	size_t	size;
+	ConvFuncs	*conv;
 
 dbgmsg(">PutApplication");
 	DumpNode(node);
+	conv = handler->serialize;
 
-	ConvSetRecName(ExecConv,node->mcprec->name);
-	size = CGI_SizeValue(ExecConv,node->mcprec->value);
+	ConvSetRecName(handler->conv,node->mcprec->name);
+	size = conv->SizeValue(handler->conv,node->mcprec->value);
 	LBS_EmitStart(iobuff);
 	LBS_ReserveSize(iobuff,size,FALSE);
-	CGI_PackValue(ExecConv,LBS_Body(iobuff),node->mcprec->value);
+	conv->PackValue(handler->conv,LBS_Body(iobuff),node->mcprec->value);
 	LBS_EmitEnd(iobuff);
-	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
-	Send(fp,"&",1);					ON_IO_ERROR(fp,badio);
+	SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
+	Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
 
-	ConvSetRecName(ExecConv,node->linkrec->name);
-	size = CGI_SizeValue(ExecConv,node->linkrec->value);
+	ConvSetRecName(handler->conv,node->linkrec->name);
+	size = conv->SizeValue(handler->conv,node->linkrec->value);
 	LBS_EmitStart(iobuff);
 	LBS_ReserveSize(iobuff,size,FALSE);
-	CGI_PackValue(ExecConv,LBS_Body(iobuff),node->linkrec->value);
+	conv->PackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
 	LBS_EmitEnd(iobuff);
-	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
-	Send(fp,"&",1);					ON_IO_ERROR(fp,badio);
+	SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
+	Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
 
-	ConvSetRecName(ExecConv,node->sparec->name);
-	size = CGI_SizeValue(ExecConv,node->sparec->value);
+	ConvSetRecName(handler->conv,node->sparec->name);
+	size = conv->SizeValue(handler->conv,node->sparec->value);
 	LBS_EmitStart(iobuff);
 	LBS_ReserveSize(iobuff,size,FALSE);
-	CGI_PackValue(ExecConv,LBS_Body(iobuff),node->sparec->value);
+	conv->PackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		LBS_EmitStart(iobuff);
 		if		(  node->scrrec[i]  !=  NULL  ) {
-			ConvSetRecName(ExecConv,node->scrrec[i]->name);
-			size = CGI_SizeValue(ExecConv,node->scrrec[i]->value);
+			ConvSetRecName(handler->conv,node->scrrec[i]->name);
+			size = conv->SizeValue(handler->conv,node->scrrec[i]->value);
 			if		(  size  >  0  ) {
-				Send(fp,"&",1);				ON_IO_ERROR(fp,badio);
+				Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
 			}
 			LBS_ReserveSize(iobuff,size,FALSE);
-			CGI_PackValue(ExecConv,LBS_Body(iobuff),node->scrrec[i]->value);
+			conv->PackValue(handler->conv,LBS_Body(iobuff),node->scrrec[i]->value);
 		}
 		LBS_EmitEnd(iobuff);
 		SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 	}
-	Send(fp,"\n",1);		ON_IO_ERROR(fp,badio);
+	Send(fp,conv->rsep,strlen(conv->rsep));		ON_IO_ERROR(fp,badio);
   badio:
 dbgmsg("<PutApplication");
 }
 
 static	void
 GetApplication(
+	MessageHandler	*handler,
 	NETFILE		*fp,
 	ProcessNode	*node)
 {
 	int		i;
+	ConvFuncs	*conv;
 
 dbgmsg(">GetApplication");
+	conv = handler->serialize;
+
 	LBS_EmitStart(iobuff);
 	RecvLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
 
-	//dbgprintf("[%s]\n",LBS_Body(iobuff));
-	ConvSetRecName(ExecConv,node->mcprec->name);
-	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->mcprec->value);
+	ConvSetRecName(handler->conv,node->mcprec->name);
+	conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->mcprec->value);
 
-	ConvSetRecName(ExecConv,node->linkrec->name);
-	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->linkrec->value);
+	ConvSetRecName(handler->conv,node->linkrec->name);
+	conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
 
-	ConvSetRecName(ExecConv,node->sparec->name);
-	CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->sparec->value);
+	ConvSetRecName(handler->conv,node->sparec->name);
+	conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
-			ConvSetRecName(ExecConv,node->scrrec[i]->name);
-			CGI_UnPackValue(ExecConv,LBS_Body(iobuff),node->scrrec[i]->value);
+			ConvSetRecName(handler->conv,node->scrrec[i]->name);
+			conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->scrrec[i]->value);
 		}
 	}
 	DumpNode(node);
@@ -292,45 +280,6 @@ SignalHandler(
 	int		dummy)
 {
 	longjmp(SubError,1);
-}
-
-extern	void
-ExpandStart(
-	char	*line,
-	char	*start,
-	char	*path,
-	char	*module,
-	char	*param)
-{
-	char	*p
-	,		*q;
-
-	p = start;
-	q = line;
-
-	while	(  *p  !=  0  ) {
-		if		(  *p  ==  '%'  ) {
-			p ++;
-			switch	(*p) {
-			  case	'm':
-				q += sprintf(q,"%s",module);
-				break;
-			  case	'p':
-				q += sprintf(q,"%s",path);
-				break;
-			  case	'a':
-				q += sprintf(q,"%s",param);
-				break;
-			  default:
-				*q ++ = *p;
-				break;
-			}
-		} else {
-			*q ++ = *p;
-		}
-		p ++;
-	}
-	*q = 0;
 }
 
 static	Bool
@@ -352,9 +301,12 @@ _ExecuteProcess(
 
 
 dbgmsg(">ExecuteProcess");
+	if		(  handler->loadpath  ==  NULL  ) {
+		handler->loadpath = ExecPath;
+	}
 	signal(SIGPIPE, SignalHandler);
 	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
-	ExpandStart(line,handler->start,ExecPath,module,"");
+	ExpandStart(line,handler->start,handler->loadpath,module,"");
 	cmd = ParCommandLine(line);
 
 	if		(  pipe(pAPR)  !=  0  ) {
@@ -397,10 +349,10 @@ dbgmsg(">ExecuteProcess");
 			close(pDBR[1]);
 			fpDBW = FileToNet(pDBW[1]);
 			close(pDBW[0]);
-			StartDB();
+			StartDB(handler);
 		}
-		PutApplication(fpAPW,node);
-		GetApplication(fpAPR,node);
+		PutApplication(handler,fpAPW,node);
+		GetApplication(handler,fpAPR,node);
 		(void)wait(&pid);
 		CancelDB();
 		signal(SIGPIPE, SIG_DFL);
@@ -417,52 +369,52 @@ dbgmsg("<ExecuteProcess");
 }
 
 static	void
-_StopDB(void)
+_StopDB(
+	MessageHandler	*handler)
 {
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	void
-_StopDC(void)
+_StopDC(
+	MessageHandler	*handler)
 {
 dbgmsg(">StopDC");
 	if		(  ThisLD->cDB  >  0  ) {
-		_StopDB();
+		_StopDB(handler);
 	}
 dbgmsg("<StopDC");
 }
 
 static	void
-_ReadyDC(void)
-{
-dbgmsg(">ReadyApplication");
-	if		(  LibPath  ==  NULL  ) { 
-		ExecPath = getenv("APS_EXEC_PATH");
-	} else {
-		ExecPath = LibPath;
-	}
-	ExecConv = NewConvOpt();
-	iobuff = NewLBS();
-dbgmsg("<ReadyApplication");
-}
-
-static	void
-_CleanUpDB(void)
-{
-	_StopDB();
-}
-
-static	void
-_CleanUpDC(void)
-{
-}
-
-static	void
-_ReadyDB(void)
+_ReadyDC(
+	MessageHandler	*handler)
 {
 ENTER_FUNC;
-	recDBCTRL = BuildDBCTRL();
-	DbConv = NewConvOpt();
-	dbbuff = NewLBS();
+LEAVE_FUNC;
+}
+
+static	void
+_CleanUpDB(
+	MessageHandler	*handler)
+{
+	_StopDB(handler);
+}
+
+static	void
+_CleanUpDC(
+	MessageHandler	*handler)
+{
+ENTER_FUNC;
+LEAVE_FUNC;
+}
+
+static	void
+_ReadyDB(
+	MessageHandler	*handler)
+{
+ENTER_FUNC;
 LEAVE_FUNC;
 }
 
@@ -483,6 +435,9 @@ _StartBatch(
 	,		pAPW[2];
 
 dbgmsg(">StartBatch");
+	if		(  handler->loadpath  ==  NULL  ) {
+		handler->loadpath = ExecPath;
+	}
 	signal(SIGPIPE, SignalHandler);
 	if		(  LibPath  ==  NULL  ) { 
 		ExecPath = getenv("APS_EXEC_PATH");
@@ -505,7 +460,7 @@ dbgmsg(">StartBatch");
 		perror("pipe");
 		exit(1);
 	}
-	ExpandStart(line,handler->start,ExecPath,name,param);
+	ExpandStart(line,handler->start,handler->loadpath,name,param);
 	cmd = ParCommandLine(line);
 
 	if		(  setjmp(SubError)  ==  0  ) {
@@ -530,7 +485,7 @@ dbgmsg(">StartBatch");
 			close(pDBR[1]);
 			fpDBW = FileToNet(pDBW[1]);
 			close(pDBW[0]);
-			StartDB();
+			StartDB(handler);
 		}
 		(void)wait(&pid);
 		CancelDB();
@@ -559,5 +514,15 @@ static	MessageHandlerClass	Handler = {
 extern	MessageHandlerClass	*
 Exec(void)
 {
+ENTER_FUNC;
+	if		(  LibPath  ==  NULL  ) { 
+		ExecPath = getenv("APS_EXEC_PATH");
+	} else {
+		ExecPath = LibPath;
+	}
+	iobuff = NewLBS();
+	recDBCTRL = BuildDBCTRL();
+	dbbuff = NewLBS();
+LEAVE_FUNC;
 	return	(&Handler);
 }

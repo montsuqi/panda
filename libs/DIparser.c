@@ -46,7 +46,7 @@ copies.
 #include	"DDparser.h"
 #include	"DIlex.h"
 #include	"LDparser.h"
-#include	"DBparser.h"
+#include	"DBDparser.h"
 #include	"DIparser.h"
 #include	"dirs.h"
 #define	_DIRECTORY
@@ -351,7 +351,7 @@ dbgmsg(">ParDBD");
 							*q = 0;
 						}
 						sprintf(name,"%s/%s.dbd",p,DI_ComSymbol);
-						if		(  (  dbd = DB_Parser(name) )  !=  NULL  ) {
+						if		(  (  dbd = DBD_Parser(name) )  !=  NULL  ) {
 							if		(  g_hash_table_lookup(ThisEnv->DBD_Table,DI_ComSymbol)  ==  NULL  ) {
 								btmp = (DBD_Struct **)xmalloc(sizeof(DBD_Struct *)
 															 * ( ThisEnv->cDBD + 1));

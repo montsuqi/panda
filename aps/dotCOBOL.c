@@ -272,7 +272,8 @@ StartConsole(void)
 #endif
 
 static	void
-_StopDB(void)
+_StopDB(
+	MessageHandler	*handler)
 {
 	if		(  pthread_kill(_DB_Thread,0)  ==  0  ) {
 		pthread_cancel(_DB_Thread);
@@ -281,7 +282,8 @@ _StopDB(void)
 }
 
 static	void
-_StopDC(void)
+_StopDC(
+	MessageHandler	*handler)
 {
 dbgmsg(">StopDC");
 	if		(  ThisLD->cDB  >  0  ) {
@@ -346,7 +348,8 @@ dbgmsg("<ReadyApplication");
 }
 
 static	void
-_ReadyDC(void)
+_ReadyDC(
+	MessageHandler	*handler)
 {
 	int		i;
 dbgmsg(">ReadyDC");
@@ -384,7 +387,8 @@ dbgmsg("<ReadyDC");
 
 
 static	void
-_CleanUpDB(void)
+_CleanUpDB(
+	MessageHandler	*handler)
 {
 	_StopDB();
 	unlink("db.input");
@@ -392,7 +396,8 @@ _CleanUpDB(void)
 }
 
 static	void
-_CleanUpDC(void)
+_CleanUpDC(
+	MessageHandler	*handler)
 {
 	fclose(fpAPW);
 	fclose(fpAPR);
@@ -546,7 +551,8 @@ StartDB(void)
 }
 
 static	void
-_ReadyDB(void)
+_ReadyDB(
+	MessageHandler	*handler)
 {
 	MakeDB_Pipe();
 	StartDB();

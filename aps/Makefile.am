@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = aps dbstub
-lib_LTLIBRARIES = MCPSUB.la $(LANG_OBJECTS)
+lib_LTLIBRARIES = MCPSUB.la $(HANDLER_OBJECTS)
 
 libpandadbincludedir = $(includedir)/panda
 libpandadbinclude_HEADERS =	\
@@ -40,16 +40,18 @@ INCLUDES 			= \
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
-LANG_OBJECTS	=	\
+HANDLER_OBJECTS	=	\
 	dotCOBOL.la		\
 	OpenCOBOL.la	\
 	C.la			\
-	Exec.la
+	Exec.la			\
+	Resident.la
 
 dotCOBOL_la_LDFLAGS		=	-module -export-dynamic
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic
 C_la_LDFLAGS			=	-module -export-dynamic
 Exec_la_LDFLAGS			=	-module -export-dynamic
+Resident_la_LDFLAGS		=	-module -export-dynamic
 
 dotCOBOL_la_SOURCES		=	dotCOBOL.c
 C_la_SOURCES			=	C.c
@@ -57,6 +59,7 @@ OpenCOBOL_la_SOURCES	=	OpenCOBOL.c
 OpenCOBOL_la_LIBADD		=	\
 	$(OPENCOBOL_LIBS)
 Exec_la_SOURCES			=	Exec.c
+Resident_la_SOURCES		=	Resident.c
 
 aps_SOURCES	=	\
 	aps_main.c	aps_main.h				\

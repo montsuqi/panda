@@ -48,11 +48,19 @@ class PandaCore
 	end
   end
   def unPack
+	rc = 0;
 	@values = Hash.new;
 	@line.split("&").each { | elem |
 	  e = elem.split("=");
-	  @values[e[0]] = decode(e[1]);
+	  if e[0] =~ /^dbctrl/
+		if e[0] == "dbctrl.rc"
+		  rc = decode(e[1]).to_i;
+		end
+	  else
+		@values[e[0]] = decode(e[1]);
+	  end
 	}
+	rc;
   end
   def pack
 	str = "";
@@ -105,7 +113,6 @@ class PandaDB < PandaCore
 	@fpDBW.flush;
 	@line = @fpDBR.gets.chomp;
 	unPack;
-	@values["dbctrl.rc"];
   end
   def fpDBR
 	@fpDBR
@@ -138,8 +145,8 @@ $stderr.printf(">>%s\n",str);
 $stderr.printf(">>%s\n",str);
 	@db.fpDBW.flush;
 	@line = @db.fpDBR.gets.chop;
+$stderr.printf("<<%s\n",@line);
 	unPack;
-	@values["dbctrl.rc"].to_i;
   end
 end
 

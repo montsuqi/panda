@@ -107,8 +107,9 @@ TableBody(
 	Bool	fComm;
 
 	if		(  val  ==  NULL  )	return;
+	if		(  ( ValueAttribute(val) & GL_ATTR_VIRTUAL )  !=  0  )	return;
 
-	switch	(val->type) {
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
 		PutItemName();
 		printf("integer");

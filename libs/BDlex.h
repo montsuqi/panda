@@ -42,6 +42,7 @@ copies.
 #define	T_START			(YYBASE +13)
 #define	T_LOCALE		(YYBASE +14)
 #define	T_ENCODING		(YYBASE +15)
+#define	T_LOADPATH		(YYBASE +16)
 
 #ifdef	_BD_PARSER
 #define	GLOBAL	/*	*/

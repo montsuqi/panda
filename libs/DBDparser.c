@@ -29,7 +29,7 @@ copies.
 #  include <config.h>
 #endif
 
-#define	_DB_PARSER
+#define	_DBD_PARSER
 
 #include	"const.h"
 #include	<stdio.h>
@@ -44,17 +44,17 @@ copies.
 #include	"misc.h"
 #include	"dbgroup.h"
 #include	"DDparser.h"
-#include	"DBparser.h"
-#include	"DBlex.h"
+#include	"DBDparser.h"
+#include	"DBDlex.h"
 #include	"dirs.h"
 #include	"debug.h"
 
 static	Bool	fError;
 
-#define	GetSymbol	(DB_Token = DB_Lex(FALSE))
-#define	GetName		(DB_Token = DB_Lex(TRUE))
+#define	GetSymbol	(DBD_Token = DBD_Lex(FALSE))
+#define	GetName		(DBD_Token = DBD_Lex(TRUE))
 #undef	Error
-#define	Error(msg)	{fError=TRUE;_Error((msg),DB_FileName,DB_cLine);}
+#define	Error(msg)	{fError=TRUE;_Error((msg),DBD_FileName,DBD_cLine);}
 
 static	void
 _Error(
@@ -79,18 +79,18 @@ ParDBDB(
 
 dbgmsg(">ParDBDB");
 	while	(  GetSymbol  !=  '}'  ) {
-		if		(	(  DB_Token  ==  T_SYMBOL  )
-				||	(  DB_Token  ==  T_SCONST  ) ) {
-			if		(  stricmp(DB_ComSymbol,"metadb")  ) {
+		if		(	(  DBD_Token  ==  T_SYMBOL  )
+				||	(  DBD_Token  ==  T_SCONST  ) ) {
+			if		(  stricmp(DBD_ComSymbol,"metadb")  ) {
 				strcpy(buff,RecordDir);
 				p = buff;
 				do {
 					if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 						*q = 0;
 					}
-					sprintf(name,"%s/%s.db",p,DB_ComSymbol);
-					if		(  (  db = DD_ParserDataDefines(name) )  !=  NULL  ) {
-						if		(  g_hash_table_lookup(dbd->DB_Table,DB_ComSymbol)  ==  NULL  ) {
+					sprintf(name,"%s/%s.db",p,DBD_ComSymbol);
+					if		(  (  db = DB_Parser(name) )  !=  NULL  ) {
+						if		(  g_hash_table_lookup(dbd->DBD_Table,DBD_ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( dbd->cDB + 1));
 							memcpy(rtmp,dbd->db,sizeof(RecordStruct *) * dbd->cDB);
 							xfree(dbd->db);
@@ -100,7 +100,7 @@ dbgmsg(">ParDBDB");
 							dbd->db = rtmp;
 							dbd->db[dbd->cDB] = db;
 							dbd->cDB ++;
-							g_hash_table_insert(dbd->DB_Table, StrDup(DB_ComSymbol),(void *)dbd->cDB);
+							g_hash_table_insert(dbd->DBD_Table, StrDup(DBD_ComSymbol),(void *)dbd->cDB);
 						} else {
 							Error("same db appier");
 						}
@@ -130,43 +130,43 @@ ParDB(void)
 dbgmsg(">ParDB");
 	ret = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
-		switch	(DB_Token) {
+		switch	(DBD_Token) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
 				Error("no name");
 			} else {
 				ret = New(DBD_Struct);
-				ret->name = StrDup(DB_ComSymbol);
+				ret->name = StrDup(DBD_ComSymbol);
 				ret->cDB = 1;
 				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
 				ret->db[0] = NULL;
 				ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
 				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
-				ret->DB_Table = NewNameHash();
+				ret->DBD_Table = NewNameHash();
 			}
 			break;
 		  case	T_ARRAYSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->arraysize = DB_ComInt;
+				ret->arraysize = DBD_ComInt;
 			} else {
 				Error("invalid array size");
 			}
 			break;
 		  case	T_TEXTSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				ret->textsize = DB_ComInt;
+				ret->textsize = DBD_ComInt;
 			} else {
 				Error("invalid text size");
 			}
 			break;
 		  case	T_DB:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				gname = StrDup(DB_ComSymbol);
+				gname = StrDup(DBD_ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
 					Error("syntax error 3");
 				}
 			} else
-			if		(  DB_Token  ==  '{'  ) {
+			if		(  DBD_Token  ==  '{'  ) {
 				gname = StrDup("");
 			} else {
 				gname = NULL;
@@ -187,22 +187,22 @@ dbgmsg("<ParDB");
 }
 
 extern	DBD_Struct	*
-DB_Parser(
+DBD_Parser(
 	char	*name)
 {
 	FILE	*fp;
 	DBD_Struct	*ret;
 	struct	stat	stbuf;
 
-dbgmsg(">DB_Parser");
+dbgmsg(">DBD_Parser");
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 			fError = FALSE;
-			DB_FileName = name;
-			DB_cLine = 1;
-			DB_File = fp;
+			DBD_FileName = name;
+			DBD_cLine = 1;
+			DBD_File = fp;
 			ret = ParDB();
-			fclose(DB_File);
+			fclose(DBD_File);
 			if		(  fError  ) {
 				ret = NULL;
 			}
@@ -213,14 +213,14 @@ dbgmsg(">DB_Parser");
 	} else {
 		ret = NULL;
 	}
-dbgmsg("<DB_Parser");
+dbgmsg("<DBD_Parser");
 	return	(ret);
 }
 
 extern	void
-DB_ParserInit(void)
+DBD_ParserInit(void)
 {
-	DB_LexInit();
+	DBD_LexInit();
 	DBD_Table = NewNameHash();
 }
 
@@ -232,15 +232,15 @@ main(
 	int		argc,
 	char	**argv)
 {
-	DB_Struct	*ret;
+	DBD_Struct	*ret;
 	int			i;
 
 	ThisScreen = NewScreenData();
 	RecordDir = "../record";
 
-	DD_ParserInit();
 	DB_ParserInit();
-	ret = DB_Parser("../lddef/demo.db");
+	DBD_ParserInit();
+	ret = DBD_Parser("../lddef/demo.db");
 
 	printf("name = [%s]\n",ret->name);
 	printf("cmd  = [%s]\n",ret->cmd);

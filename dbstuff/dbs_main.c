@@ -76,10 +76,8 @@ dbgmsg(">InitSystem");
 		exit(1);
 	}
 
-	ThisLD = NULL;
-	ThisBD = NULL;
 	ThisDB = ThisDBD->db;
-	DB_Table = ThisDBD->DB_Table;
+	DB_Table = ThisDBD->DBD_Table;
 
 	if		(  ThisDBD->cDB  >  0  ) {
 		InitDB_Process();

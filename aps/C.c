@@ -59,33 +59,6 @@ copies.
 
 static	GHashTable	*ApplicationTable;
 
-static	void	_ReadyDC(void);
-static	void	_StopDC(void);
-static	Bool	_ExecuteProcess(MessageHandler *handler, ProcessNode *node);
-static	void	_ReadyDB(void);
-static	void	_StopDB(void);
-static	int		_StartBatch(MessageHandler *handler, char *name, char *param);
-
-static	MessageHandlerClass	Handler = {
-	"C",
-	_ExecuteProcess,
-	_StartBatch,
-	_ReadyDC,
-	_StopDC,
-	NULL,
-	_ReadyDB,
-	_StopDB,
-	NULL
-};
-
-extern	MessageHandlerClass	*
-C(void)
-{
-dbgmsg(">C");
-dbgmsg("<C");
-	return	(&Handler);
-}
-
 static	void
 PutApplication(
 	ProcessNode	*node)
@@ -134,38 +107,34 @@ dbgmsg("<ExecuteProcess");
 }
 
 static	void
-_ReadyDC(void)
+_ReadyDC(
+	MessageHandler	*handler)
 {
 	WindowBind	*bind;
 	int		i;
 
 dbgmsg(">ReadyDC");
 	ApplicationTable = InitLoader(); 
-
-	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		bind = ThisLD->window[i];
-		if		(  bind->handler  ==  (void *)&Handler  ) {
-			printf("preload [%s][%s]\n",bind->name,bind->module);
-			(void)LoadModule(ApplicationTable,bind->module);
-		}
-	}
 dbgmsg("<ReadyDC");
 }
 
 static	void
-_StopDC(void)
+_StopDC(
+	MessageHandler	*handler)
 {
 }
 
 static	void
-_StopDB(void)
+_StopDB(
+	MessageHandler	*handler)
 {
 dbgmsg(">StopDB");
 dbgmsg("<StopDB");
 }
 
 static	void
-_ReadyDB(void)
+_ReadyDB(
+	MessageHandler	*handler)
 {
 }
 
@@ -189,6 +158,26 @@ dbgmsg(">_StartBatch");
 	}
 dbgmsg("<_StartBatch");
  return	(rc); 
+}
+
+static	MessageHandlerClass	Handler = {
+	"C",
+	_ExecuteProcess,
+	_StartBatch,
+	_ReadyDC,
+	_StopDC,
+	NULL,
+	_ReadyDB,
+	_StopDB,
+	NULL
+};
+
+extern	MessageHandlerClass	*
+C(void)
+{
+dbgmsg(">C");
+dbgmsg("<C");
+	return	(&Handler);
 }
 
 /*

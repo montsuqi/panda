@@ -66,6 +66,7 @@ static	struct	{
 	{	"start"		,T_START	},
 	{	"locale"	,T_LOCALE	},
 	{	"encoding"	,T_ENCODING	},
+	{	"loadpath"	,T_LOADPATH	},
 
 	{	""			,0	}
 };
@@ -78,7 +79,7 @@ BD_LexInit(void)
 	int		i;
 
 dbgmsg(">BD_LexInit");
-	Reserved = NewNameHash();
+	Reserved = NewNameiHash();
 	for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
 		g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
 	}
