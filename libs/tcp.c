@@ -59,10 +59,12 @@ BindSocket(
 	int		s
 	,		ld;
 	int		rc;
+	int		one;
 	struct	addrinfo	*info
 			,			hints
-			,			head;
+			,			*head;
 	struct	sockaddr_in	*name;
+
 dbgmsg(">BindSocket");
 	memclear(&hints,sizeof(struct addrinfo));
 	hints.ai_family = PF_UNSPEC;
@@ -102,6 +104,7 @@ dbgmsg("<BindSocket");
 {	int		ld;
 	struct	sockaddr_in	name;
 	int		iport;
+	int		one;
 
 	if		(  ( ld = socket(AF_INET,type,0) )  <  0  )	{
 		Error("error socket");
@@ -132,7 +135,7 @@ ConnectSocket(
 	int		rc;
 	struct	addrinfo	*info
 			,			hints
-			,			head;
+			,			*head;
 	struct	sockaddr_in	*name;
 
 dbgmsg(">ConnectSocket");
