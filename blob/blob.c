@@ -34,6 +34,7 @@ copies.
 #include    <sys/types.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
+#include	<sys/stat.h>
 #include	<glib.h>
 #include	<pthread.h>
 #include	<fcntl.h>
@@ -63,33 +64,52 @@ OpenEntry(
 	char	filename[SIZE_NAME+1];
 	char	*p;
 	int		i;
-	int		mode;
+	int		flag;
 	int		fd;
 
+ENTER_FUNC;
 	p  = filename;
 	p += snprintf(p,SIZE_NAME+1,"%d",ObjectID(ent->oid));
 	snprintf(longname,SIZE_LONGNAME+1,"%s/%s",ent->blob->space,filename);
-	mode = 0;
-	if		(  ( ent->mode & BLOB_OPEN_READ )  !=  0  ) {
-		mode |= O_RDONLY;
-	}
+
 	if		(  ( ent->mode & BLOB_OPEN_WRITE )  !=  0  ) {
-		mode |= O_WRONLY;
+		if		(  ( ent->mode & BLOB_OPEN_CREATE )  !=  0  ) {
+			flag = O_CREAT;
+		} else {
+			flag = (  ( ent->mode & BLOB_OPEN_APPEND )  !=  0  )  ? O_APPEND : 0;
+		}
+		if		(  ( ent->mode & BLOB_OPEN_READ )  !=  0  ) {
+			flag |= O_RDWR;
+		} else {
+			flag |= O_WRONLY;
+		}
+	} else {
+		flag = (  ( ent->mode & BLOB_OPEN_READ )  !=  0  ) ? O_RDONLY : 0;
 	}
+
 	if		(  ( ent->mode & BLOB_OPEN_CREATE )  !=  0  ) {
-		mode |= O_CREAT;
+		fd = open(longname,flag,0600);
+	} else {
+		fd = open(longname,flag);
+#if	0
+		if		(  ( ent->mode & BLOB_OPEN_APPEND )  !=  0  ) {
+			lseek(fd,0,SEEK_END);
+		}
+#endif
 	}
-	if		(  ( fd = open(longname,mode) )  >=  0  ) {
+	if		(  fd  >=  0  ) {
 		ent->fp = FileToNet(fd);
 	} else {
 		ent->fp = NULL;
 	}
+LEAVE_FUNC;
 }
 
 static	void
 DestroyEntry(
 	BLOB_Entry	*ent)
 {
+ENTER_FUNC;
 	if		(  ent->oid  !=  NULL  ) {
 		LockBLOB(ent->blob);
 		g_hash_table_remove(ent->blob->table,(gpointer)ent->oid);
@@ -100,6 +120,7 @@ DestroyEntry(
 	if		(  ent->fp  !=  NULL  ) {
 		CloseNet(ent->fp);
 	}
+LEAVE_FUNC;
 	xfree(ent);
 }	
 
@@ -123,14 +144,16 @@ ENTER_FUNC;
 		fprintf(fp,"%d\n",blob->oid);
 		fclose(fp);
 	}
+
 	ent = New(BLOB_Entry);
 	ent->oid = New(MonObjectType);
 	memcpy(ent->oid,obj,sizeof(MonObjectType));
 	g_hash_table_insert(blob->table,(gpointer)ent->oid,ent);
 	UnLockBLOB(blob);
 	ReleaseBLOB(blob);
-	ent->mode = mode | BLOB_OPEN_CREATE;
 	ent->blob = blob;
+
+	ent->mode = mode | BLOB_OPEN_CREATE;
 	OpenEntry(ent);
 	if		(  ent->fp  ==  NULL  ) {
 		DestroyEntry(ent);
@@ -188,6 +211,7 @@ InitBLOB(
 	BLOB_Space	*blob;
 	size_t	oid;
 
+ENTER_FUNC;
 	snprintf(name,SIZE_LONGNAME+1,"%s/pid",space);
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
@@ -227,6 +251,7 @@ InitBLOB(
 	pthread_mutex_init(&blob->mutex,NULL);
 	pthread_cond_init(&blob->cond,NULL);
 
+LEAVE_FUNC;
 	return	(blob);
 }
 
@@ -237,6 +262,7 @@ FinishBLOB(
 	FILE	*fp;
 	char	name[SIZE_LONGNAME+1];
 
+ENTER_FUNC;
 	snprintf(name,SIZE_LONGNAME+1,"%s/pid",blob->space);
 	unlink(name);
 
@@ -244,6 +270,7 @@ FinishBLOB(
 	pthread_mutex_destroy(&blob->mutex);
 	pthread_cond_destroy(&blob->cond);
 	xfree(blob);
+LEAVE_FUNC;
 }
 
 extern	Bool
@@ -252,6 +279,34 @@ OpenBLOB(
 	MonObjectType	*obj,
 	int				mode)
 {
+	BLOB_Entry	*ent;
+	Bool		ret;
+
+ENTER_FUNC;
+	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
+		ret = NewBLOB(blob,obj,mode);
+	} else {
+		if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  ==  NULL  ) {
+			LockBLOB(blob);
+			ent = New(BLOB_Entry);
+			ent->oid = New(MonObjectType);
+			memcpy(ent->oid,obj,sizeof(MonObjectType));
+			g_hash_table_insert(blob->table,(gpointer)ent->oid,ent);
+			UnLockBLOB(blob);
+			ReleaseBLOB(blob);
+			ent->blob = blob;
+		}
+		ent->mode = mode;
+		OpenEntry(ent);
+		if		(  ent->fp  ==  NULL  ) {
+			DestroyEntry(ent);
+			ret = FALSE;
+		} else {
+			ret = TRUE;
+		}
+	}
+LEAVE_FUNC;
+	return	(ret);
 }
 
 extern	Bool
@@ -259,23 +314,63 @@ CloseBLOB(
 	BLOB_Space		*blob,
 	MonObjectType	*obj)
 {
+	BLOB_Entry	*ent;
+	Bool		ret;
+
+ENTER_FUNC;
+	if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  !=  NULL  ) {
+		if		(  ent->fp  !=  NULL  ) {
+			CloseNet(ent->fp);
+		}
+		ret = TRUE;
+		ent->fp = NULL;
+	} else {
+		ret = FALSE;
+	}
+LEAVE_FUNC;
+	return	(ret);
 }
 
-extern	size_t
+extern	int
 WriteBLOB(
 	BLOB_Space		*blob,
 	MonObjectType	*obj,
 	byte			*buff,
 	size_t			size)
 {
+	BLOB_Entry	*ent;
+	int			ret;
+
+ENTER_FUNC;
+	if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  !=  NULL  ) {
+		if		(  ent->fp  !=  NULL  ) {
+			ret = Send(ent->fp,buff,size);
+		} else {
+			ret = -1;
+		}
+	}
+LEAVE_FUNC;
+	return	(ret);
 }
 
-extern	size_t
+extern	int
 ReadBLOB(
 	BLOB_Space		*blob,
 	MonObjectType	*obj,
 	byte			*buff,
 	size_t			size)
 {
-}
+	BLOB_Entry	*ent;
+	int			ret;
 
+ENTER_FUNC;
+	if		(  ( ent = g_hash_table_lookup(blob->table,obj) )  !=  NULL  ) {
+		if		(  ent->fp  !=  NULL  ) {
+			ret = Recv(ent->fp,buff,size);
+		} else {
+			ret = -1;
+		}
+	}
+LEAVE_FUNC;
+	return	(ret);
+}

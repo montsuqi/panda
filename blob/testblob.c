@@ -45,6 +45,7 @@ copies.
 #include	"debug.h"
 
 #define	BLOB_FILE	"."
+#define	OB_NUMBER	10
 
 extern	int
 main(
@@ -52,16 +53,40 @@ main(
 	char	**argv)
 {
 	BLOB_Space	*blob;
-	MonObjectType	obj;
+	MonObjectType	obj[OB_NUMBER];
 	int		i;
+	char	buff[100];
 
 	blob = InitBLOB(BLOB_FILE);
 	sleep(1);
 	FinishBLOB(blob);
 	sleep(1);
 	blob = InitBLOB(BLOB_FILE);
-	for	( i = 0 ; i < 10 ; i ++ ) {
-		NewBLOB(blob,&obj,BLOB_OPEN_READ);
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		NewBLOB(blob,&obj[i],BLOB_OPEN_WRITE);
 	}
+
+	for	( i = 0 ; i < 10 ; i ++ ) {
+		sprintf(buff,"%d\n%d\n",i,i);
+		WriteBLOB(blob,&obj[i],buff,strlen(buff));
+	}
+
+	for	( i = 0 ; i < 10 ; i ++ ) {
+		CloseBLOB(blob,&obj[i]);
+	}
+
+	for	( i = 0 ; i < 10 ; i ++ ) {
+		OpenBLOB(blob,&obj[i],BLOB_OPEN_WRITE|BLOB_OPEN_APPEND);
+	}
+
+	for	( i = 0 ; i < 10 ; i += 2 ) {
+		sprintf(buff,"add %d\n",i);
+		WriteBLOB(blob,&obj[i],buff,strlen(buff));
+	}
+
+	for	( i = 0 ; i < 10 ; i ++ ) {
+		CloseBLOB(blob,&obj[i]);
+	}
+
 	FinishBLOB(blob);
 }

@@ -42,8 +42,8 @@ extern	void		FinishBLOB(BLOB_Space *blob);
 extern	Bool	NewBLOB(BLOB_Space *blob,MonObjectType *obj, int mode);
 extern	Bool	OpenBLOB(BLOB_Space *blob, MonObjectType *obj, int mode);
 extern	Bool	CloseBLOB(BLOB_Space *blob, MonObjectType *obj);
-extern	size_t	WriteBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t size);
-extern	size_t	ReadBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t size);
+extern	int		WriteBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t size);
+extern	int		ReadBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t size);
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -55,5 +55,6 @@ extern	size_t	ReadBLOB(BLOB_Space *blob, MonObjectType *obj, byte *buff, size_t 
 #define	BLOB_OPEN_CREATE	0x01
 #define	BLOB_OPEN_READ		0x02
 #define	BLOB_OPEN_WRITE		0x04
+#define	BLOB_OPEN_APPEND	0x08
 
 #endif

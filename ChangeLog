@@ -1,3 +1,7 @@
+2004-06-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/blob.c: blobのload/store
+
 2004-06-29  Kouji TAKAO  <kouji@netlab.jp>
 
 	* dblib/PostgreSQL.c (EscapeString, EscapeStringInArray) 
