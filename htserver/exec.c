@@ -715,7 +715,8 @@ ParseButton(
 	}
 	
 ENTER_FUNC;
-	if ((button = LoadValue("_event")) == NULL) {
+	if		(	(  ( button = LoadValue("_event") )  ==  NULL  )
+			||	(  *button  ==  0  ) ) {
 		if (htc->DefaultEvent == NULL) {
 			event = "";
 			htc = NULL;
