@@ -92,6 +92,14 @@ FinishSession(
 	char	name[SIZE_NAME+1];
 	char	msg[SIZE_BUFF];
 	int		i;
+	void	FreeSpa(
+		char	*name,
+		LargeByteString	*spa,
+		void		*dummy)
+	{
+		xfree(name);
+		FreeLBS(spa);
+	}
 
 dbgmsg(">FinishSession");
 	sprintf(msg,"[%s:%s] session end",data->hdr->term,data->hdr->user);
@@ -102,7 +110,8 @@ dbgmsg(">FinishSession");
 		g_hash_table_remove(TermHash,data->name);
 		xfree(data->name);
 		FreeLBS(data->mcpdata);
-		FreeLBS(data->spadata);
+		g_hash_table_foreach(data->spadata,(GHFunc)FreeSpa,NULL);
+		g_hash_table_destroy(data->spadata);
 		FreeLBS(data->linkdata);
 		for	( i = 0 ; i < data->cWindow ; i ++ ) {
 			FreeLBS(data->scrdata[i]);
@@ -144,10 +153,8 @@ dbgmsg(">InitSession");
 		InitializeValue(ThisEnv->mcprec->value);
 		LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
 		NativePackValue(NULL,data->mcpdata->body,ThisEnv->mcprec->value);
-		data->spadata = NewLBS();
-		InitializeValue(ld->info->sparec->value);
-		LBS_ReserveSize(data->spadata,NativeSizeValue(NULL,ld->info->sparec->value),FALSE);
-		NativePackValue(NULL,data->spadata->body,ld->info->sparec->value);
+
+		data->spadata = NewNameHash();
 		data->linkdata = NewLBS();
 		InitializeValue(ThisEnv->linkrec->value);
 		LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);

@@ -1,3 +1,7 @@
+2004-08-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c: LDが変わってもspaareaを忘れないようにした
+
 2004-08-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/blobreq.c, wfc/blobserv.c, blob/blob_v1.c : APIの整理

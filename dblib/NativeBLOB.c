@@ -82,9 +82,9 @@ ENTER_FUNC;
 			}
 		}
 	}
+	OpenDB_RedirectPort(dbg);
+	dbg->conn = (void *)fpBlob;
 	if		(  fpBlob  !=  NULL  ) {
-		OpenDB_RedirectPort(dbg);
-		dbg->conn = (void *)fpBlob;
 		dbg->fConnect = TRUE;
 		rc = MCP_OK;
 	} else {
@@ -123,6 +123,9 @@ _DBSTART(
 
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
+	if		(  !dbg->fConnect  ) {
+		rc = MCP_OK;
+	} else
 	if		(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) {
 		dbgmsg("OK");
 		rc = MCP_OK;
@@ -145,6 +148,9 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
+	if		(  !dbg->fConnect  ) {
+		rc = MCP_OK;
+	} else
 	if		(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) {
 		dbgmsg("OK");
 		rc = MCP_OK;

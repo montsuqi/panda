@@ -96,8 +96,9 @@ typedef	struct {
 	int			retry;
 	Bool		fAbort;
 	MessageHeader	*hdr;
+	GHashTable		*spadata;
+	LargeByteString	*spa;
 	LargeByteString	*mcpdata;
-	LargeByteString	*spadata;
 	LargeByteString	*linkdata;
 	LargeByteString	**scrdata;
 }	SessionData;

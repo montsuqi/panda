@@ -177,8 +177,17 @@ ENTER_FUNC;
 	}
 	if		(  ( flag & APS_SPADATA )  !=  0  ) {
 		dbgmsg("SPADATA");
+		if		(  ( data->spa = g_hash_table_lookup(data->spadata,data->ld->info->name) )
+				   ==  NULL  ) {
+			data->spa = NewLBS();
+			g_hash_table_insert(data->spadata,StrDup(data->ld->info->name),data->spa);
+			InitializeValue(ld->info->sparec->value);
+			LBS_ReserveSize(data->spa,
+							NativeSizeValue(NULL,ld->info->sparec->value),FALSE);
+			NativePackValue(NULL,LBS_Body(data->spa),ld->info->sparec->value);
+		}
 		SendPacketClass(fp,APS_SPADATA);	ON_IO_ERROR(fp,badio);
-		SendLBS(fp,data->spadata);			ON_IO_ERROR(fp,badio);
+		SendLBS(fp,data->spa);				ON_IO_ERROR(fp,badio);
 	}
 	SendPacketClass(fp,APS_END);		ON_IO_ERROR(fp,badio);
 	aps->count ++;
@@ -266,7 +275,8 @@ ENTER_FUNC;
 			break;
 		  case	APS_SPADATA:
 			dbgmsg("SPADATA");
-			RecvLBS(fpLD,data->spadata);	ON_IO_ERROR(fpLD,badio);
+			RecvLBS(fpLD,data->spa);
+			ON_IO_ERROR(fpLD,badio);
 			break;
 		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
@@ -300,12 +310,15 @@ ChangeLD(
 {
 	int		i;
 
-	LBS_Clear(data->spadata);
-
-	InitializeValue(data->ld->info->sparec->value);
-	LBS_ReserveSize(data->spadata,NativeSizeValue(NULL,data->ld->info->sparec->value),FALSE);
-	NativePackValue(NULL,data->spadata->body,data->ld->info->sparec->value);
-
+	if		(  ( data->spa = g_hash_table_lookup(data->spadata,data->ld->info->name) )
+			   ==  NULL  ) {
+		data->spa = NewLBS();
+		g_hash_table_insert(data->spadata,StrDup(data->ld->info->name),data->spa);
+		InitializeValue(data->ld->info->sparec->value);
+		LBS_ReserveSize(data->spa,
+						NativeSizeValue(NULL,data->ld->info->sparec->value),FALSE);
+		NativePackValue(NULL,LBS_Body(data->spa),data->ld->info->sparec->value);
+	}
 	for	( i = 0 ; i < data->cWindow ; i ++ ) {
 		FreeLBS(data->scrdata[i]);
 	}
@@ -438,36 +451,33 @@ ENTER_FUNC;
 			GetAPS_Value(fp,data,APS_WINCTRL,flag);
 			GetAPS_Value(fp,data,APS_MCPDATA,flag);
 			GetAPS_Value(fp,data,APS_LINKDATA,flag);
+			GetAPS_Value(fp,data,APS_SPADATA,flag);
 			if		(  newld  ==  ld  ) {
-				GetAPS_Value(fp,data,APS_SPADATA,flag);
 				GetAPS_Value(fp,data,APS_SCRDATA,flag);
-				SendPacketClass(fp,APS_END);
-				if		(  puttype  ==  TO_CHAR(SCREEN_NULL)  ) {
-					puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
-				}
-				switch	(TO_INT(data->hdr->puttype)) {
-				  case	SCREEN_CHANGE_WINDOW:
-				  case	SCREEN_JOIN_WINDOW:
-				  case	SCREEN_FORK_WINDOW:
-					data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-					CoreEnqueue(data);
-					break;
-				  case	SCREEN_CURRENT_WINDOW:
-					data->hdr->puttype = puttype;
-					TermEnqueue(data->term,data);
-					break;
-				  case	SCREEN_CLOSE_WINDOW:
-				  default:
-					TermEnqueue(data->term,data);
-					break;
-				}
-			} else {
-				SendPacketClass(fp,APS_END);
-				data->ld = newld;
-				ChangeLD(data);
-				data->hdr->rc = TO_CHAR(0);
+			}
+			data->ld = newld;
+			SendPacketClass(fp,APS_END);
+			if		(  puttype  ==  TO_CHAR(SCREEN_NULL)  ) {
+				puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
+			}
+			switch	(TO_INT(data->hdr->puttype)) {
+			  case	SCREEN_CHANGE_WINDOW:
+			  case	SCREEN_JOIN_WINDOW:
+			  case	SCREEN_FORK_WINDOW:
 				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+				if		(  newld  !=  ld  ) {
+					ChangeLD(data);
+				}
 				CoreEnqueue(data);
+				break;
+			  case	SCREEN_CURRENT_WINDOW:
+				data->hdr->puttype = puttype;
+				TermEnqueue(data->term,data);
+				break;
+			  case	SCREEN_CLOSE_WINDOW:
+			  default:
+				TermEnqueue(data->term,data);
+				break;
 			}
 		} else {
 			sprintf(msg,"window not found [%s] [%s:%s]\n",

@@ -94,6 +94,7 @@
            IF          (  LNK-LINKTEXT  =  SPACE  )
                    OR  (  LNK-LINKTEXT  =  LOW-VALUE  )
                MOVE   '漢字を入れてみた'   TO  WN1-ENTRY1-VALUE
+               MOVE    ZERO        TO  SPA-COUNT
              ELSE
                MOVE    LNK-LINKTEXT        TO  WN1-ENTRY1-VALUE
            END-IF.
@@ -143,7 +144,6 @@
       *
            MOVE    3           TO  WN1-NOTEBOOK1-PAGE.
       *
-           MOVE    ZERO        TO  SPA-COUNT.
            MOVE   'ノートブックの中身'
                                TO  WN1-TEXT1-VALUE.
            MOVE    1234        TO  WN1-ENTRY4-VALUE.
@@ -185,13 +185,13 @@
                UPON    CONSOLE.
            DISPLAY 'OPTION =' WN1-OPTION1-SELECT
                UPON    CONSOLE.
+           DISPLAY '* SPA-COUNT = ' SPA-COUNT
+               UPON    CONSOLE
       *    IF      WN1-ENTRY4-VALUE  >  ZERO
                DISPLAY 'WN1-ENTRY4-VALUE = ' "[" 
                        WN1-ENTRY4-VALUE "]"
       *    END-IF.
            IF      WN1-TOGGLEBUTTON1  =  'T'
-               DISPLAY '* SPA-COUNT = ' SPA-COUNT
-                   UPON    CONSOLE
                COMPUTE SPA-COUNT = SPA-COUNT + 1
                MOVE    WN1-ENTRY1-VALUE
                    TO  WN1-CLIST1-VALUE1(SPA-COUNT)
