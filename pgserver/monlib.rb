@@ -1,6 +1,6 @@
 require	'socket';
 
-VER="1.1.0";
+VER="1.0.7";
 
 class	PG_Server
 	def get_event
@@ -32,7 +32,7 @@ class	PG_Server
 
 	def	initialize(host,port,prog,user,pass)
 	  if  port  ==  0
-		port = 8012;
+		port = 8011;
 	  end
 	  @host = host;
 	  @port = port;

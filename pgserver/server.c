@@ -20,9 +20,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	TRACE
 #define	DEBUG
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -53,6 +53,39 @@ copies.
 #include	"dirs.h"
 #include	"DDparser.h"
 #include	"debug.h"
+
+static	Bool
+PG_RecvString(
+	FILE	*fp,
+	size_t	size,
+	char	*str)
+{
+	Bool	rc;
+	int		c;
+#ifdef	DEBUG
+	char	*p = str;
+#endif
+
+	rc = TRUE;
+	while	(  ( c = RecvChar(fp) )  !=  '\n'  ) {
+		if		(  c  <  0  ) {
+			rc = FALSE;
+			break;
+		} else {
+			*str ++ = c;
+		}
+	}
+	*str -- = 0;
+	while	(	(  *str  ==  '\r'  )
+			||	(  *str  ==  '\n'  ) ) {
+		*str = 0;
+		str --;
+	}
+#ifdef	DEBUG
+	printf("<<[%s]\n",p);
+#endif
+	return	(rc);
+}
 
 static	void
 FinishSession(
@@ -99,9 +132,8 @@ RecvScreenData(
 	WindowData	*win;
 	ValueStruct	*value;
 
-dbgmsg(">RecvScreenData");
 	do {
-		RecvStringDelim(fpComm,SIZE_BUFF,buff);
+		PG_RecvString(fpComm,SIZE_BUFF,buff);
 		if		(	(  *buff                     !=  0     )
 				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
 			*p = 0;
@@ -109,8 +141,6 @@ dbgmsg(">RecvScreenData");
 			p ++;
 			while	(  isspace(*p)  )	p ++;
 			DecodeString(str,p);
-printf("wname = [%s]\n",wname);
-printf("vname = [%s]\n",vname);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->Value,vname);
 				value->fUpdate = TRUE;
@@ -119,7 +149,6 @@ printf("vname = [%s]\n",vname);
 		} else
 			break;
 	}	while	(TRUE);
-dbgmsg("<RecvScreenData");
 }
 
 static	void
@@ -142,7 +171,7 @@ dbgmsg(">WriteClient");
 	SendStringDelim(fpComm,ThisWidget);
 	SendStringDelim(fpComm,"\n");
 	do {
-		if		(  !RecvStringDelim(fpComm,SIZE_BUFF,name)  )	break;
+		if		(  !PG_RecvString(fpComm,SIZE_BUFF,name)  )	break;
 		if		(  *name  ==  0  )	break;
 		if		(  ( p = strchr(name,':') )  !=  NULL  ) {
 			*p = 0;
@@ -178,7 +207,7 @@ MainLoop(
 	,		*q;
 
 dbgmsg(">MainLoop");
-	RecvStringDelim(fpComm,SIZE_BUFF,buff);
+	PG_RecvString(fpComm,SIZE_BUFF,buff);
 	if		(  strncmp(buff,"Start: ",7)  ==  0  ) {
 		dbgmsg("start");
 		p = buff + 7;
@@ -281,8 +310,8 @@ ExecuteServer(void)
 			strcpy(scr->term,TermName(fh));
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
-			shutdown(fh, 2);
 			fclose(fpComm);
+			shutdown(fh, 2);
 			exit(0);
 		}
 	}
