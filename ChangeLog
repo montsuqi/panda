@@ -1,3 +1,9 @@
+2003-10-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.2.0 リリース(安定版ブランチ作成)
+
+	* libs/comm.c (SendLBS): bug fix
+
 2003-10-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/recgen.rb: ボタンのアイテム生成

@@ -198,8 +198,7 @@ ENTER_FUNC;
 		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,
 															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
 			if		(  bind->module  ==  NULL  )	break;
-			strcpy(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module")),
-				   bind->module);
+			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
 			ExecDB_Function("DBSTART",NULL,NULL);
 			ExecuteProcess(node);
 			if		(  Sleep  >  0  ) {
@@ -209,7 +208,7 @@ ENTER_FUNC;
 			PutWFC(fpWFC,node);
 		} else {
 			MessagePrintf("window [%s] not found.\n",
-						  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
+						  ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL));
 			break;
 		}
 	}

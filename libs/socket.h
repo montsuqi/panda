@@ -21,10 +21,10 @@ Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 Boston, MA  02111-1307, USA.
 */
 
-#ifndef	_INC_TCP_H
-#define	_INC_TCP_H
+#ifndef	_INC_SOCKET_H
+#define	_INC_SOCKET_H
 #include	<stdio.h>
-#include	<sys/socket.h>
+#include	<sys/socket.h>	/*	for socket type	*/
 
 extern	void	SetNodelay(int s);
 extern	int		BindSocket(char *port, int type);

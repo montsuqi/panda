@@ -202,7 +202,7 @@ SendLBS(
 	LargeByteString	*lbs)
 {
 	SendLength(fp,LBS_Size(lbs));
-	if		(  LBS_GetPos(lbs)  >  0  ) {
+	if		(  LBS_Size(lbs)  >  0  ) {
 		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
 	}
 }

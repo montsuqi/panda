@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -361,7 +361,7 @@ ExecuteProcess(
 	char		*window;
 
 dbgmsg(">ExecuteProcess");
-	window = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"));
+	window = ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL);
 	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
 	handler = bind->handler;
 	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -81,7 +81,8 @@ DumpNode(
 #ifdef	DEBUG
 dbgmsg(">DumpNode");
 	printf("node = %p\n",node); 
-//	DumpValueStruct(node->mcprec->value); 
+	printf("mcp = [%s]\n",node->mcprec->name);
+	//	DumpValueStruct(node->mcprec->value); 
 dbgmsg("<DumpNode");
 #endif
 }
@@ -193,31 +194,19 @@ PutApplication(
 dbgmsg(">PutApplication");
 	DumpNode(node);
 	conv = handler->serialize;
-dbgmsg("*");
 	ConvSetRecName(handler->conv,node->mcprec->name);
-dbgmsg("*");
-DumpValueStruct(node->mcprec->value);
 	size = conv->SizeValue(handler->conv,node->mcprec->value);
-dbgmsg("*");
 	LBS_EmitStart(iobuff);
-dbgmsg("*");
 	LBS_ReserveSize(iobuff,size,FALSE);
-dbgmsg("*");
 	conv->PackValue(handler->conv,LBS_Body(iobuff),node->mcprec->value);
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
 	Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
-dbgmsg("*");
 	ConvSetRecName(handler->conv,node->linkrec->name);
 	size = conv->SizeValue(handler->conv,node->linkrec->value);
 	LBS_EmitStart(iobuff);
 	LBS_ReserveSize(iobuff,size,FALSE);
-printf("size = %d\n",size);
- {
-	 byte	*q;
-	 q = conv->PackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
-	 printf("size = %d\n",(int)(q - (byte *)LBS_Body(iobuff)));
- }
+	conv->PackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
 	LBS_EmitEnd(iobuff);
 	SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
 	Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
@@ -318,7 +307,7 @@ dbgmsg(">ExecuteProcess");
 		handler->loadpath = ExecPath;
 	}
 	signal(SIGPIPE, SignalHandler);
-	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
+	module = ValueToString(GetItemLongName(node->mcprec->value,"dc.module"),NULL);
 	ExpandStart(line,handler->start,handler->loadpath,module,"");
 	cmd = ParCommandLine(line);
 

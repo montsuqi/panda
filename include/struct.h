@@ -126,10 +126,10 @@ typedef	struct {
 typedef	struct _ProcessNode	{
 	char		term[SIZE_TERM+1]
 	,			user[SIZE_USER+1];
-	char		*window
-	,			*widget
-	,			*event
-	,			*pstatus;
+	char		window[SIZE_NAME+1]
+	,			widget[SIZE_NAME+1]
+	,			event[SIZE_EVENT]
+	,			pstatus;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
 	RecordStruct	*sparec;

@@ -108,7 +108,7 @@ SaveCache(
 
 dbgmsg(">SaveCache");
 	flag = 0;
-	printf("node->term = [%s]\n",node->term);
+	dbgprintf("node->term = [%s]\n",node->term);
 	if		(  ( ent = g_hash_table_lookup(CacheTable,node->term) )  ==  NULL  ) {
 		dbgmsg("empty");
 		/*	cache purge logic here	*/
@@ -218,6 +218,7 @@ GetWFC(
 	MessageHeader	hdr;
 	char		term[SIZE_TERM+1];
 	byte		flag;
+	ValueStruct	*e;
 
 dbgmsg(">GetWFC");
 	fEnd = FALSE; 
@@ -259,17 +260,17 @@ dbgmsg(">GetWFC");
 			  case	APS_MCPDATA:
 				dbgmsg("MCPDATA");
 				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				NativeUnPackValue(NULL,LBS_Body(buff),node->mcprec->value);
-				node->pstatus = ValueStringPointer(GetItemLongName(node->mcprec->value,
-															"private.pstatus"));
-				strcpy(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.term")),
-					   hdr.term);
-				strcpy(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.user")),
-					   hdr.user);
-				node->window = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"));
-				node->widget = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.widget"));
-				node->event = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.event"));
-				*node->pstatus = hdr.status;
+				e = node->mcprec->value;
+				NativeUnPackValue(NULL,LBS_Body(buff),e);
+
+				SetValueChar(GetItemLongName(e,"private.pstatus"),hdr.status);
+				SetValueString(GetItemLongName(e,"dc.term"),hdr.term,NULL);
+				SetValueString(GetItemLongName(e,"dc.user"),hdr.user,NULL);
+				SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
+				SetValueString(GetItemLongName(e,"dc.widget"),hdr.widget,NULL);
+				SetValueString(GetItemLongName(e,"dc.event"),hdr.event,NULL);
+
+				node->pstatus = hdr.status;
 				strcpy(node->term,hdr.term);
 				strcpy(node->user,hdr.user);
 				strcpy(node->window,hdr.window);
@@ -290,7 +291,9 @@ dbgmsg(">GetWFC");
 				dbgmsg("SCRDATA");
 				for	( i = 0 ; i < node->cWindow ; i ++ ) {
 					RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-					NativeUnPackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
+					if		(  node->scrrec[i]->value  !=  NULL  ) {
+						NativeUnPackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
+					}
 				}
 				break;
 			  case	APS_END:
@@ -316,6 +319,9 @@ dbgmsg(">GetWFC");
 			}
 		}
 	}
+	dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
+	dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
+	dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
   badio2:
 dbgmsg("<GetWFC");
 	return	(fSuc); 
@@ -330,6 +336,7 @@ PutWFC(
 	PacketClass		c;
 	Bool			fEnd;
 	byte		flag;
+	ValueStruct	*e;
 
 dbgmsg(">PutWFC");
 	flag = APS_MCPDATA | APS_SCRDATA;
@@ -340,15 +347,16 @@ dbgmsg(">PutWFC");
 		flag |= APS_LINKDATA | APS_SPADATA;
 	}
 
+	e = node->mcprec->value;
 	SendPacketClass(fp,APS_CTRLDATA);		ON_IO_ERROR(fp,badio);
 	SendChar(fp,flag);						ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.term")));
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.term")));
 	ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.window")));
 	ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.widget")));
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));
 	ON_IO_ERROR(fp,badio);
-	SendChar(fp,*ValueStringPointer(GetItemLongName(node->mcprec->value,"private.pputtype")));
+	SendChar(fp,*ValueStringPointer(GetItemLongName(e,"private.pputtype")));
 	ON_IO_ERROR(fp,badio);
 	fEnd = FALSE; 
 	while	(  !fEnd  ) {
@@ -369,6 +377,10 @@ dbgmsg(">PutWFC");
 			break;
 		  case	APS_MCPDATA:
 			dbgmsg("MCPDATA");
+			//SetValueString(GetItemLongName(e,"dc.window"),node->window,NULL);
+			//SetValueString(GetItemLongName(e,"dc.widget"),node->widget,NULL);
+			//SetValueString(GetItemLongName(e,"dc.event"),node->event,NULL);
+
 			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->mcprec->value),FALSE);
 			NativePackValue(NULL,LBS_Body(buff),node->mcprec->value);
 			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);

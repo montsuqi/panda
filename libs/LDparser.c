@@ -107,10 +107,8 @@ dbgmsg(">GetWindow");
 					 (RecordStruct *)g_hash_table_lookup(Windows,name) )
 				   ==  NULL  ) {
 			wname = StrDup(name);
-			if		(	(  ( rec = ReadRecordDefine(name) )  !=  NULL  )
-					&&	(  rec->value  !=  NULL  ) ) {
-				g_hash_table_insert(Windows,wname,rec);
-			}
+			rec = ReadRecordDefine(name);
+			g_hash_table_insert(Windows,wname,rec);
 		}
 	} else {
 		rec = NULL;
