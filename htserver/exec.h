@@ -57,7 +57,7 @@ copies.
 
 #undef	GLOBAL
 
-extern	LargeByteString	*ExecCode(HTCInfo *htc);
+extern	void	ExecCode(LargeByteString *html, HTCInfo *htc);
 //extern	char	*LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
 extern	char	*ParseButton(HTCInfo *htc);
 

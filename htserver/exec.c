@@ -458,11 +458,11 @@ EmitWithEscape(LargeByteString *lbs, char *str)
 	}
 }
 
-extern	LargeByteString	*
+extern	void
 ExecCode(
+	LargeByteString	*html,
 	HTCInfo	*htc)
 {
-	LargeByteString	*html;
 	int		c;
 	char	*name
 	,		*value
@@ -472,12 +472,15 @@ ExecCode(
 	size_t	pos;
 	char	buff[SIZE_BUFF];
 
-dbgmsg(">ExecCode");
-	html = NewLBS();
-	LBS_EmitStart(html);
+ENTER_FUNC;
+dbgmsg("*");
+dbgmsg("*");
 	RewindLBS(htc->code);
+dbgmsg("*");
 	VarArea = NewNameHash();
+dbgmsg("*");
 	pStack = 0;
+dbgmsg("*");
 	while	(  ( c = LBS_FetchChar(htc->code) )  !=  0  ) {
 		if		(  c  ==  0x01  ) {	/*	code escape	*/
 			switch	(LBS_FetchChar(htc->code)) {
@@ -690,8 +693,7 @@ dbgmsg(">ExecCode");
 		}
 	}
 	LBS_EmitEnd(html);
-dbgmsg("<ExecCode");
-	return	(html);
+LEAVE_FUNC;
 }
 
 extern	char	*
@@ -712,6 +714,7 @@ ParseButton(
 		}
 	}
 	
+ENTER_FUNC;
 	if ((button = LoadValue("_event")) == NULL) {
 		if (htc->DefaultEvent == NULL) {
 			event = "";
@@ -726,6 +729,7 @@ ParseButton(
 		}
 	}
 	g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
+LEAVE_FUNC;
 	return	(event);
 }
 

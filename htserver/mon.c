@@ -391,7 +391,9 @@ ENTER_FUNC;
                 htc = HTCParser(buff);
                 if (htc == NULL)
                     exit(1);
-                html = ExecCode(htc);
+				html = NewLBS();
+				LBS_EmitStart(html);
+                ExecCode(html,htc);
 				HT_SendString("\n");
 			} else {
 				html = Expired();

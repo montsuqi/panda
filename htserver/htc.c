@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -55,15 +55,19 @@ GetHostValue(
 
 ENTER_FUNC;
 dbgprintf("name = [%s]\n",name);
-	if		(	(  ( value = LoadValue(name) )  ==  NULL  )
-			&&	(  _GetValue  !=  NULL  ) ) {
-		if		(  ( val = (_GetValue)(name, fClear) )  ==  NULL  ) {
-			value = "";
+	if		(  ( value = LoadValue(name) )  ==  NULL  )	{
+		if		(  _GetValue  !=  NULL  ) {
+			if		(  ( val = (_GetValue)(name, fClear) )  ==  NULL  ) {
+				value = "";
+			} else {
+				value = ValueToString(val, NULL);
+			}
+			value = SaveValue(name,value,FALSE);
 		} else {
-			value = ValueToString(val, NULL);
+			value = "";
 		}
-		value = SaveValue(name,value,FALSE);
 	}
+dbgprintf("value = [%s]\n",value);
 LEAVE_FUNC;
 	return	(value);
 }

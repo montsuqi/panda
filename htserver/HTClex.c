@@ -35,7 +35,6 @@ copies.
 #include	<iconv.h>
 
 #include	"types.h"
-#include	"dirs.h"
 #include	"libmondai.h"
 #include	"HTClex.h"
 #include	"debug.h"

@@ -386,7 +386,9 @@ _Form(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*name, *defaultevent;
+	char	*name
+		,	*defaultevent
+		,	*target;
 
 dbgmsg(">_Form");
 	htc->FormNo++;
@@ -409,6 +411,11 @@ dbgmsg(">_Form");
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," name=\"");
 		LBS_EmitString(htc->code,name);
+		LBS_EmitString(htc->code,"\"");
+	}
+	if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," target=\"");
+		LBS_EmitString(htc->code,target);
 		LBS_EmitString(htc->code,"\"");
 	}
 	LBS_EmitString(htc->code,">\n");
@@ -1254,6 +1261,7 @@ dbgmsg(">TagsInit");
 	tag = NewTag("FORM",_Form);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"defaultevent",TRUE);
+	AddArg(tag,"target",TRUE);
 	tag = NewTag("HEAD",_Head);
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -162,9 +162,9 @@ ParTag(
 {
 	Tag		*tag;
 
-dbgmsg(">ParTag");
+ENTER_FUNC;
 	if		(  GetSymbol  ==  T_SYMBOL  ) {
-dbgprintf("tag = [%s]\n",HTC_ComSymbol);
+		dbgprintf("tag = [%s]\n",HTC_ComSymbol);
 		tag = g_hash_table_lookup(Tags, HTC_ComSymbol);
 
         if (tag == NULL) {
@@ -191,7 +191,7 @@ dbgprintf("tag = [%s]\n",HTC_ComSymbol);
 		LBS_EmitChar(htc->code,HTC_Token);
 		CopyTag(htc);
 	}
-dbgmsg("<ParTag");
+LEAVE_FUNC;
 }
 
 static	void
@@ -200,7 +200,7 @@ ParHTC(
 {
 	int		c;
 
-dbgmsg(">ParHTC");
+ENTER_FUNC;
 	while	(  GetChar  >= 0  ) {
 		switch	(HTC_Token) {
 		  case	'<':
@@ -217,7 +217,7 @@ dbgmsg(">ParHTC");
 		}
 	}
 	LBS_EmitEnd(htc->code);
-dbgmsg("<ParHTC");
+LEAVE_FUNC;
 }
 
 extern	HTCInfo	*
@@ -227,7 +227,7 @@ HTCParser(
 	FILE	*fp;
 	HTCInfo	*ret;
 
-dbgmsg(">HTCParser");
+ENTER_FUNC;
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 		fError = FALSE;
 		HTC_FileName = name;
@@ -251,7 +251,7 @@ dbgmsg(">HTCParser");
         fprintf(stderr, "HTC file not found: %s\n", name);
 		ret = NULL;
 	}
-dbgmsg("<HTCParser");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -267,7 +267,9 @@ DestroyHTC(
 			xfree(event);
 		}
 
+ENTER_FUNC;
 	g_hash_table_foreach(htc->Trans,(GHFunc)Clear,NULL);
 	FreeLBS(htc->code);
 	xfree(htc);
+LEAVE_FUNC;
 }

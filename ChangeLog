@@ -1,3 +1,7 @@
+2004-03-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c: <form>にtarget属性付加
+
 2004-03-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/cgi.c: CGI処理を分離した
