@@ -172,7 +172,11 @@ Process(
 
 	ac = fdd_system(name, command, tempname, filename);
 	unlink(tempname);
-	SendChar(fpComm,ac);
+	if ( ac == -1){
+			SendChar(fpComm,-1);
+	} else {
+			SendChar(fpComm,WEXITSTATUS(ac));
+	}
   badio:;
 }
 
