@@ -284,6 +284,10 @@ ParseURL(
 	if		(  *str  ==  '/'  ) {
 		str ++;
 	}
+	if		(	(  *str  ==  '='  )
+			||	(  *str  ==  '~'  ) ) {
+		p = str - 1;
+	} else
 	if		(  ( p = strchr(str,'/') )  !=  NULL  ) {
 		*p = 0;
 	}

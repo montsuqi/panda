@@ -65,6 +65,8 @@ InitSession(
 ENTER_FUNC;
 	RecvString(fp,user);		ON_IO_ERROR(fp,badio);
 	RecvString(fp,pass);		ON_IO_ERROR(fp,badio);
+	dbgprintf("user = [%s]\n",user);
+	dbgprintf("pass = [%s]\n",pass);
 	rc = FALSE;
 	if		(  AuthUser(ThisEnv->blob->auth,user,pass,NULL)  ) {
 		SendPacketClass(fp,APS_OK);
@@ -72,7 +74,7 @@ ENTER_FUNC;
 		MessageLog(msg);
 		rc = TRUE;
 	} else {
-		sprintf(msg,"[%s] Native BLOB auth.",user);
+		sprintf(msg,"[%s] Native BLOB auth error.",user);
 		MessageLog(msg);
 	  badio:
 		SendPacketClass(fp,APS_NOT);

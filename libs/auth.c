@@ -222,6 +222,7 @@ AuthSingle(
 	Bool	rc;
 
 	if		(  ( fp = fopen(fname,"r") )  ==  NULL  ) {
+		printf("[%s]",fname);
 		Error("can not open password file");
 		rc = FALSE;
 	} else {

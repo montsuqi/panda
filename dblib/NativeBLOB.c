@@ -38,6 +38,7 @@ copies.
 #include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
+#include	"directory.h"
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"blobreq.h"
@@ -68,7 +69,11 @@ _DBOPEN(
 
 dbgmsg(">_DBOPEN");
 	if		(  fpBlob  ==  NULL  ) {
-		if		(  ( fh = ConnectSocket(dbg->port,SOCK_STREAM) )  >=  0  ) {
+		if		(  dbg->port  ==  NULL  ) {
+			dbg->port = ThisEnv->blob->port;
+		}
+		if		(	(  dbg->port  !=  NULL  )
+				&&	(  ( fh = ConnectSocket(dbg->port,SOCK_STREAM) )  >=  0  ) ) {
 			fpBlob = SocketToNet(fh);
 			SendString(fpBlob,dbg->user);
 			SendString(fpBlob,dbg->pass);

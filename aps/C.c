@@ -59,7 +59,7 @@ InitLoader(void)
 	GHashTable	*table;
 	char		*path;
 
-dbgmsg(">InitLoader");
+ENTER_FUNC;
 	table = NewNameHash();
 	if		(  LibPath  ==  NULL  ) { 
 		if		(  ( path = getenv("APS_LOAD_PATH") )  ==  NULL  ) {
@@ -70,7 +70,7 @@ dbgmsg(">InitLoader");
 	} else {
 		APS_LoadPath = LibPath;
 	}
-dbgmsg("<InitLoader");
+LEAVE_FUNC;
 	return	(table);
 }
 
@@ -86,7 +86,7 @@ LoadModule(
 	void		(*f_init)(void);
 	void		*handle;
 
-dbgmsg(">LoadModule");
+ENTER_FUNC;
 	if		(  ( f_main = (void *)g_hash_table_lookup(table,name) )  ==  NULL  ) {
 		sprintf(filename,"%s.so",name);
 		if		(  ( handle = LoadFile(path,filename) )  !=  NULL  ) {
@@ -101,7 +101,7 @@ dbgmsg(">LoadModule");
 			fprintf(stderr,"[%s] not found.\n",name);
 		}
 	}
-dbgmsg("<LoadModule");
+LEAVE_FUNC;
 	return	(f_main);
 }
 
@@ -109,17 +109,16 @@ static	void
 PutApplication(
 	ProcessNode	*node)
 {
-
-dbgmsg(">PutApplication");
-dbgmsg("<PutApplication");
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	void
 GetApplication(
 	ProcessNode	*node)
 {
-dbgmsg(">GetApplication");
-dbgmsg("<GetApplication");
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -131,7 +130,7 @@ _ExecuteProcess(
 	char	*module;
 	Bool	rc;
 
-dbgmsg(">ExecuteProcess");
+ENTER_FUNC;
 	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = LoadModule(ApplicationTable,handler->loadpath,module) )  !=  NULL  ) {
 		PutApplication(node);
@@ -148,7 +147,7 @@ dbgmsg(">ExecuteProcess");
 		MessagePrintf("%s is not found.",module);
 		rc = FALSE;
 	}
-dbgmsg("<ExecuteProcess");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -159,29 +158,33 @@ _ReadyDC(
 	WindowBind	*bind;
 	int		i;
 
-dbgmsg(">ReadyDC");
+ENTER_FUNC;
 	ApplicationTable = InitLoader(); 
-dbgmsg("<ReadyDC");
+LEAVE_FUNC;
 }
 
 static	void
 _StopDC(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	void
 _StopDB(
 	MessageHandler	*handler)
 {
-dbgmsg(">StopDB");
-dbgmsg("<StopDB");
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	void
 _ReadyDB(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	int
@@ -193,7 +196,7 @@ _StartBatch(
 	int		(*apl)(char *);
 	int		rc;
 
-dbgmsg(">_StartBatch");
+ENTER_FUNC;
 	ApplicationTable = InitLoader(); 
 	dbgprintf("starting [%s][%s]\n",name,param);
 	if		(  ( apl = LoadModule(ApplicationTable,handler->loadpath,name) )  !=  NULL  ) {
@@ -202,17 +205,19 @@ dbgmsg(">_StartBatch");
 		MessagePrintf("%s is not found.",name);
 		rc = -1;
 	}
-dbgmsg("<_StartBatch");
- return	(rc); 
+LEAVE_FUNC;
+	return	(rc); 
 }
 
 static	void
 _ReadyExecute(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
 	if		(  handler->loadpath  ==  NULL  ) {
 		handler->loadpath = APS_LoadPath;
 	}
+LEAVE_FUNC;
 }
 
 static	MessageHandlerClass	Handler = {
@@ -233,7 +238,7 @@ C(void)
 {
 	GHashTable	*table;
 	char		*path;
-dbgmsg(">C");
+ENTER_FUNC;
 	table = NewNameHash();
 	if		(  LibPath  ==  NULL  ) { 
 		if		(  ( path = getenv("APS_LOAD_PATH") )  ==  NULL  ) {
@@ -244,7 +249,7 @@ dbgmsg(">C");
 	} else {
 		APS_LoadPath = LibPath;
 	}
-dbgmsg("<C");
+LEAVE_FUNC;
 	return	(&Handler);
 }
 
@@ -272,11 +277,13 @@ MCP_PutWindow(
 {
 	ValueStruct	*mcp;
 
+ENTER_FUNC;
 	mcp = node->mcprec->value;
 	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),wname);
 	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.puttype")),ptype[type]);
 	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),"PUTG");
 	ValueInteger(GetItemLongName(mcp,"rc")) = 0;
+LEAVE_FUNC;
 	return	(0);
 }
 
@@ -288,10 +295,10 @@ MCP_GetWindowRecord(
 	WindowBind	*bind;
 	RecordStruct	*ret;
 
-dbgmsg(">MCP_GetWindowRecord");
+ENTER_FUNC;
 	bind = (WindowBind *)g_hash_table_lookup(node->whash,name);
 	ret = bind->rec;
-dbgmsg("<MCP_GetWindowRecord");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -305,6 +312,7 @@ MCP_GetEventHandler(
 	GHashTable	*EventTable;
 	void		(*handler)(ProcessNode *);
 
+ENTER_FUNC;
 	status = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.status"));
 	event = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.event"));
 
@@ -321,6 +329,7 @@ MCP_GetEventHandler(
 		handler = NULL;
 	}
 
+LEAVE_FUNC;
 	return	(handler);		
 }
 
@@ -333,6 +342,7 @@ MCP_RegistHandler(
 {
 	GHashTable	*EventTable;
 
+ENTER_FUNC;
 	if		(  ( EventTable = g_hash_table_lookup(StatusTable,status) )  ==  NULL  ) {
 		EventTable = NewNameHash();
 		g_hash_table_insert(StatusTable,StrDup(status),EventTable);
@@ -340,6 +350,7 @@ MCP_RegistHandler(
 	if		(  g_hash_table_lookup(EventTable,event)  ==  NULL  ) {
 		g_hash_table_insert(EventTable,StrDup(event),handler);
 	}
+LEAVE_FUNC;
 }
 
 extern	int
@@ -360,7 +371,7 @@ MCP_ExecFunction(
 		,		ono;
 	size_t		size;
 
-dbgmsg(">MCP_ExecFunction");
+ENTER_FUNC;
 #ifdef	DEBUG
 	dbgprintf("rname = [%s]",rname); 
 	dbgprintf("pname = [%s]",pname); 
@@ -393,7 +404,6 @@ dbgmsg(">MCP_ExecFunction");
 	} else {
 		rec = NULL;
 	}
-
 	if		(  rec  !=  NULL  ) {
 		size = NativeSizeValue(NULL,rec->value);
 		ctrl.blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
@@ -404,8 +414,10 @@ dbgmsg(">MCP_ExecFunction");
 	if		(  rec  !=  NULL  ) {
 		CopyValue(data,value);
 	}
-	MakeMCP(node->mcprec->value,&ctrl);
-dbgmsg("<MCP_ExecFunction");
+	if		(  node  !=  NULL  ) {
+		MakeMCP(node->mcprec->value,&ctrl);
+	}
+LEAVE_FUNC;
 	return	(ctrl.rc);
 }
 
@@ -428,6 +440,7 @@ MCP_GetDB_Define(
 		,			*pname
 		,			*oname;
 
+ENTER_FUNC;
 	strcpy(buff,name);
 	rname = buff;
 	if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
@@ -466,5 +479,6 @@ MCP_GetDB_Define(
 	} else {
 		ret = NULL;
 	}
+LEAVE_FUNC;
 	return	(ret);		
 }

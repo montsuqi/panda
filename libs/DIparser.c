@@ -215,6 +215,7 @@ ParBLOB(void)
 {
 	BLOB_Struct	*blob;
 	URL			*auth;
+	char		*file;
 
 ENTER_FUNC;
 	blob = New(BLOB_Struct);
@@ -229,10 +230,11 @@ ENTER_FUNC;
 				auth = New(URL);
 				ParseURL(auth,ComSymbol,"file");
 				if		(  !stricmp(auth->protocol,"file")  ) {
-					if		(  auth->file  !=  NULL  ) {
-						xfree(auth->file);
+					file = auth->file;
+					auth->file = StrDup(ExpandPath(file,ThisEnv->BaseDir));
+					if		(  file  !=  NULL  ) {
+						xfree(file);
 					}
-					auth->file = StrDup(ExpandPath(auth->file,ThisEnv->BaseDir));
 				}
 				blob->auth = auth;
 				GetSymbol;
