@@ -778,7 +778,6 @@ dbgmsg(">RecvPandaCList");
 	rowattrw = 0.0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
 		RecvString(fp,name);
-printf("[%s]\n",name);
 		sprintf(longname,".%s",name);
 		if		(  ( subWidget = glade_xml_get_widget_by_long_name(ThisXML,label) )
 				   !=  NULL  ) {
