@@ -60,31 +60,32 @@ ENTER_FUNC;
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_CREATE:
 		dbgmsg("BLOB_CREATE");
-		mode = RecvInt(fp);
+		mode = RecvInt(fp);			ON_IO_ERROR(fp,badio);
 		if		(  NewBLOB(blob,&obj,mode)  ) {
-			SendPacketClass(fp,BLOB_OK);
+			SendPacketClass(fp,BLOB_OK);	ON_IO_ERROR(fp,badio);
 			ObjectSource(&obj) = 0;
-			SendObject(fp,&obj);
+			SendObject(fp,&obj);			ON_IO_ERROR(fp,badio);
 		} else {
-			SendPacketClass(fp,BLOB_NOT);
+			SendPacketClass(fp,BLOB_NOT);	ON_IO_ERROR(fp,badio);
 		}
 		break;
 	  case	BLOB_OPEN:
 		dbgmsg("BLOB_OPEN");
-		mode = RecvInt(fp);
-		RecvObject(fp,&obj);
+		mode = RecvInt(fp);			ON_IO_ERROR(fp,badio);
+		RecvObject(fp,&obj);		ON_IO_ERROR(fp,badio);
 		if		(  OpenBLOB(blob,&obj,mode)  >=  0  ) {
-			SendPacketClass(fp,BLOB_OK);
+			SendPacketClass(fp,BLOB_OK);	ON_IO_ERROR(fp,badio);
 		} else {
-			SendPacketClass(fp,BLOB_NOT);
+			SendPacketClass(fp,BLOB_NOT);	ON_IO_ERROR(fp,badio);
 		}
 		break;
 	  case	BLOB_WRITE:
 		dbgmsg("BLOB_WRITE");
-		RecvObject(fp,&obj);
+		RecvObject(fp,&obj);		ON_IO_ERROR(fp,badio);
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
+			ON_IO_ERROR(fp,badio);
 			buff = xmalloc(size);
-			Recv(fp,buff,size);
+			Recv(fp,buff,size);			ON_IO_ERROR(fp,badio);
 			size = WriteBLOB(blob,&obj,buff,size);
 			xfree(buff);
 		}
@@ -92,95 +93,97 @@ ENTER_FUNC;
 		break;
 	  case	BLOB_READ:
 		dbgmsg("BLOB_READ");
-		RecvObject(fp,&obj);
+		RecvObject(fp,&obj);		ON_IO_ERROR(fp,badio);
 		if		(  ( size = RecvLength(fp) )  >  0  ) {
+			ON_IO_ERROR(fp,badio);
 			buff = xmalloc(size);
 			size = ReadBLOB(blob,&obj,buff,size);
-			Send(fp,buff,size);
+			Send(fp,buff,size);						ON_IO_ERROR(fp,badio);
 			xfree(buff);
 		}
-		SendLength(fp,size);
+		SendLength(fp,size);		ON_IO_ERROR(fp,badio);
 		break;
 	  case	BLOB_EXPORT:
 		dbgmsg("BLOB_EXPORT");
-		RecvObject(fp,&obj);
+		RecvObject(fp,&obj);		ON_IO_ERROR(fp,badio);
 		if		(  ( ssize = OpenBLOB(blob,&obj,BLOB_OPEN_READ) )  >=  0  ) {
-			SendPacketClass(fp,BLOB_OK);
-			SendLength(fp,ssize);
+			SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
+			SendLength(fp,ssize);					ON_IO_ERROR(fp,badio);
 			buff = xmalloc((  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize);
 			while	(  ssize  >  0  ) {
 				size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
-				ReadBLOB(blob,&obj,buff,size);
-				Send(fp,buff,size);
+				ReadBLOB(blob,&obj,buff,size);		ON_IO_ERROR(fp,badio);
+				Send(fp,buff,size);					ON_IO_ERROR(fp,badio);
 				ssize -= size;
 			}
 			CloseBLOB(blob,&obj);
 			xfree(buff);
 		} else {
-			SendPacketClass(fp,BLOB_NOT);
+			SendPacketClass(fp,BLOB_NOT);			ON_IO_ERROR(fp,badio);
 		}
 		break;
 	  case	BLOB_IMPORT:
 		dbgmsg("BLOB_IMPORT");
 		ObjectSource(&obj) = GL_OBJ_NULL;
 		if		(  NewBLOB(blob,&obj,BLOB_OPEN_WRITE)  ) {
-			SendPacketClass(fp,BLOB_OK);
-			SendObject(fp,&obj);
+			SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
+			SendObject(fp,&obj);					ON_IO_ERROR(fp,badio);
 			ssize = RecvLength(fp);
 			buff = xmalloc((  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize);
 			while	(  ssize  >  0  ) {
 				size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
-				Recv(fp,buff,size);
-				WriteBLOB(blob,&obj,buff,size);
+				Recv(fp,buff,size);					ON_IO_ERROR(fp,badio);
+				WriteBLOB(blob,&obj,buff,size);	
 				ssize -= size;
 			}
 			CloseBLOB(blob,&obj);
 			xfree(buff);
 		} else {
-			SendPacketClass(fp,BLOB_NOT);
+			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
 		}
 		break;
 	  case	BLOB_SAVE:
 		dbgmsg("BLOB_SAVE");
-		RecvObject(fp,&obj);
+		RecvObject(fp,&obj);				ON_IO_ERROR(fp,badio);
 		if		(  OpenBLOB(blob,&obj,BLOB_OPEN_WRITE)  >=  0  ) {
-			SendPacketClass(fp,BLOB_OK);
-			ssize = RecvLength(fp);
+			SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
+			ssize = RecvLength(fp);				ON_IO_ERROR(fp,badio);
 			buff = xmalloc((  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize);
 			while	(  ssize  >  0  ) {
 				size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
-				Recv(fp,buff,size);
+				Recv(fp,buff,size);					ON_IO_ERROR(fp,badio);
 				WriteBLOB(blob,&obj,buff,size);
 				ssize -= size;
 			}
 			CloseBLOB(blob,&obj);
 			xfree(buff);
 		} else {
-			SendPacketClass(fp,BLOB_NOT);
+			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
 		}
 		break;
 	  case	BLOB_CHECK:
 		dbgmsg("BLOB_CHECK");
-		RecvObject(fp,&obj);
+		RecvObject(fp,&obj);				ON_IO_ERROR(fp,badio);
 		if		(  OpenBLOB(blob,&obj,BLOB_OPEN_READ)  >=  0  ) {
-			SendPacketClass(fp,BLOB_OK);
+			SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
 			CloseBLOB(blob,&obj);
 		} else {
-			SendPacketClass(fp,BLOB_NOT);
+			SendPacketClass(fp,BLOB_NOT);			ON_IO_ERROR(fp,badio);
 		}
 		break;
 	  case	BLOB_CLOSE:
 		dbgmsg("BLOB_CLOSE");
-		RecvObject(fp,&obj);
+		RecvObject(fp,&obj);				ON_IO_ERROR(fp,badio);
 		if		(  CloseBLOB(blob,&obj)  ) {
-			SendPacketClass(fp,BLOB_OK);
+			SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
 		} else {
-			SendPacketClass(fp,BLOB_NOT);
+			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
 		}
 		break;
 	  default:
 		break;
 	}
+  badio:
 LEAVE_FUNC;
 }
 

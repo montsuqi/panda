@@ -218,7 +218,7 @@ ENTER_FUNC;
 			break;
 		  case	WFC_BLOB:
 			dbgmsg("recv BLOB");
-			PassiveBLOB(fp,Blob);
+			PassiveBLOB(fp,Blob);				ON_IO_ERROR(fp,badio);
 			break;
 		  case	WFC_PING:
 			dbgmsg("recv PING");
@@ -298,7 +298,7 @@ ENTER_FUNC;
 				break;
 			  case	WFC_BLOB:
 				dbgmsg("send BLOB");
-				PassiveBLOB(fp,Blob);
+				PassiveBLOB(fp,Blob);				ON_IO_ERROR(fp,badio);
 				break;
 			  case	WFC_DONE:
 				dbgmsg("DONE");

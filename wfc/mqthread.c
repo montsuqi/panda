@@ -186,7 +186,7 @@ GetAPS_Control(
 	byte		flag;
 	Bool		done;
 
-dbgmsg(">GetAPS_Control");
+ENTER_FUNC;
 	fp = aps->fp;
 	done = FALSE;
 	while	(  !done  )	{
@@ -200,7 +200,7 @@ dbgmsg(">GetAPS_Control");
 			done = TRUE;
 			break;
 		  case	APS_BLOB:
-			PassiveBLOB(fp,Blob);
+			PassiveBLOB(fp,Blob);				ON_IO_ERROR(fp,badio);
 			break;
 		  default:
 		  badio:
@@ -210,7 +210,7 @@ dbgmsg(">GetAPS_Control");
 			break;
 		}
 	}
-dbgmsg("<GetAPS_Control");
+LEAVE_FUNC;
 	return	(flag); 
 }
 

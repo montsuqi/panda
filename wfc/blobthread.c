@@ -94,9 +94,10 @@ ENTER_FUNC;
 	
 	if		(  InitSession(fp)  ) {
 		while	(  RecvChar(fp)  ==  APS_BLOB  ) {
-			PassiveBLOB(fp,Blob);
+			PassiveBLOB(fp,Blob);		ON_IO_ERROR(fp,badio);
 		}
 	}
+  badio:
 	CloseNet(fp);
 LEAVE_FUNC;
 	pthread_exit(NULL);
