@@ -46,4 +46,7 @@ GLOBAL	GHashTable	*Tags;
 #undef	GLOBAL
 
 extern	void	TagsInit(char *);
+extern	void	EmitCode(HTCInfo *htc, byte code);
+extern	void	ExpandAttributeString(HTCInfo *htc, char *para);
+
 #endif

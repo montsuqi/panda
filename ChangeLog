@@ -1,3 +1,14 @@
+2004-07-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/HTCparser.c (ParTag): HTCタグでないものも属性に変数を指
+	定可能にした
+
+	* tools/htcgen.xsl: 強化(顧客管理システムはほぼ100%変換可能)
+
+	* htserver/exec.c (ExecCode): 命令追加、JNZNPがdropするようにした
+
+	* htserver/tags.c (TagsInit): optionmenu, option, selectの追加
+
 2004-06-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/tags.c (_Button): buttonタグを使うようにした。IE5ではサ

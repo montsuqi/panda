@@ -71,17 +71,54 @@ HTC_Error(char *msg, ...)
     va_end(args);
 }
 
+#if	1
+CopyTag(
+	HTCInfo	*htc)
+{
+	char	*para;
+
+ENTER_FUNC;
+	LBS_EmitString(htc->code,"<");
+	LBS_EmitString(htc->code,HTC_ComSymbol);
+	while	(  GetName  !=  '>'  ) {
+		LBS_EmitChar(htc->code,' ');
+		if		(  HTC_Token  ==  T_SYMBOL  ) {
+			LBS_EmitString(htc->code,HTC_ComSymbol);
+			if		(  GetName  ==  '='  ) {
+				LBS_EmitChar(htc->code,HTC_Token);
+				switch	(GetName) {
+				  case	T_SCONST:
+					para = HTC_ComSymbol;
+					ExpandAttributeString(htc,para);
+					break;
+				  case	T_SYMBOL:
+					LBS_EmitString(htc->code,HTC_ComSymbol);
+					break;
+				  default:
+					LBS_EmitChar(htc->code,HTC_Token);
+					break;
+				}
+			}
+		}
+	}
+	LBS_EmitChar(htc->code,HTC_Token);
+LEAVE_FUNC;
+}
+#else
 static	void
 CopyTag(
 	HTCInfo	*htc)
 {
-dbgmsg(">CopyTag");
+ENTER_FUNC;
+	LBS_EmitString(htc->code,"<");
+	LBS_EmitString(htc->code,HTC_ComSymbol);
 	while	(  GetChar  !=  '>'  ) {
 		LBS_EmitChar(htc->code,HTC_Token);
 	}
 	LBS_EmitChar(htc->code,HTC_Token);
-dbgmsg("<CopyTag");
+LEAVE_FUNC;
 }
+#endif
 
 static	void
 ClearTagValue(
@@ -188,13 +225,9 @@ ENTER_FUNC;
 				tag->emit(htc,tag);
 			}
 		} else {
-			LBS_EmitString(htc->code,"<");
-			LBS_EmitString(htc->code,HTC_ComSymbol);
 			CopyTag(htc);
 		}
 	} else {
-		LBS_EmitString(htc->code,"<");
-		LBS_EmitChar(htc->code,HTC_Token);
 		CopyTag(htc);
 	}
 LEAVE_FUNC;

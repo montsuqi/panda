@@ -507,6 +507,10 @@ ENTER_FUNC;
 				vval.str = StrDup(name);
 				Push(vval);
 				break;
+			  case	OPC_TOINT:
+				dbgmsg("OPC_TOINT");
+				TOP(1).ival = atoi(TOP(1).str);
+				break;
 			  case	OPC_HSNAME:
 				dbgmsg("OPC_HSNAME");
 				vval = Pop;
@@ -551,10 +555,19 @@ ENTER_FUNC;
 				vval = Pop;
 				EmitWithEscape(html,vval.str);
 				break;
+			  case	OPC_SPYSTR:
+				dbgmsg("OPC_REFSTR");
+				EmitWithEscape(html,TOP(1).str);
+				break;
 			  case	OPC_REFINT:
 				dbgmsg("OPC_REFINT");
 				vval = Pop;
 				sprintf(buff,"%d",vval.ival);
+				EmitWithEscape(html,buff);
+				break;
+			  case	OPC_SPYINT:
+				dbgmsg("OPC_SPYINT");
+				sprintf(buff,"%d",TOP(1).ival);
 				EmitWithEscape(html,buff);
 				break;
 			  case	OPC_ICONST:
@@ -609,9 +622,14 @@ ENTER_FUNC;
 				if		(  TOP(1).ival  !=  0  ) {
 					LBS_SetPos(htc->code,pos);
 				}
+				(void)Pop;
+				break;
+			  case	OPC_SUB:
+				TOP(2).ival = TOP(2).ival - TOP(1).ival;
+				(void)Pop;
 				break;
 			  case OPC_LOCURI:
-                {
+			    {
                     int len;
                     char *local, *encoded;
 

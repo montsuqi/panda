@@ -100,7 +100,7 @@ dbgmsg("<GetArg");
 	return	(ret);
 }
 
-static	void
+extern	void
 EmitCode(
 	HTCInfo	*htc,
 	byte	code)
@@ -157,6 +157,30 @@ EmitAttributeValue(
 	if		(  fQuote  ) {
 		LBS_EmitString(htc->code,"\"");
 	}
+}
+
+extern	void
+ExpandAttributeString(
+	HTCInfo	*htc,
+	char	*para)
+{
+	LBS_EmitChar(htc->code,'"');
+	switch	(*para) {
+	  case	'$':
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(para));
+		EmitCode(htc,OPC_EHSNAME);
+		break;
+	  case	'#':
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(para));
+		EmitCode(htc,OPC_REFSTR);
+		break;
+	  default:
+		LBS_EmitString(htc->code,para);
+		break;
+	}
+	LBS_EmitChar(htc->code,'"');
 }
 
 static void
@@ -316,9 +340,12 @@ _Fixed(
 {
 	char	*name
 		,	*link
-		,	*target;
-dbgmsg(">_Fixed");
-	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+		,	*target
+		,	*value;
+
+ENTER_FUNC;
+	if		(	(  ( value = GetArg(tag,"value",0) )  !=  NULL  )
+			||	(  ( name = GetArg(tag,"name",0) )    !=  NULL  ) ) {
 		LBS_EmitString(htc->code,"<span");
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">");
@@ -337,16 +364,26 @@ dbgmsg(">_Fixed");
 			}
 			LBS_EmitString(htc->code,">");
 		}
-        EmitCode(htc,OPC_NAME);
-        LBS_EmitPointer(htc->code,StrDup(name));
-        EmitCode(htc,OPC_HSNAME);
-        EmitCode(htc,OPC_EMITSTR);
+		if		(  value  !=  NULL  ) {
+			if		(  *value  ==  '$'  ) {
+				EmitCode(htc,OPC_NAME);
+				LBS_EmitPointer(htc->code,StrDup(value+1));
+				EmitCode(htc,OPC_EHSNAME);
+			} else {
+				LBS_EmitString(htc->code,value);
+			}
+		} else {
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(name));
+			EmitCode(htc,OPC_HSNAME);
+			EmitCode(htc,OPC_EMITSTR);
+		}
 		if		(  link  !=  NULL  ) {
 			LBS_EmitString(htc->code,"</a>");
 		}
 		LBS_EmitString(htc->code,"</span>");
 	}
-dbgmsg("<_Fixed");
+LEAVE_FUNC;
 }
 
 static	void
@@ -885,6 +922,143 @@ dbgmsg(">_List");
 dbgmsg("<_List");
 }
 
+static void
+_Optionmenu(HTCInfo *htc, Tag *tag)
+{
+	char	buf[SIZE_ARG];
+	char	*item, *count, *sel;
+	size_t	pos;
+
+ENTER_FUNC;
+	if		(	(  ( item  = GetArg(tag,"item",0) )    !=  NULL  )
+			&&	(  ( sel   = GetArg(tag,"select",0) )  !=  NULL  )
+			&&	(  ( count = GetArg(tag,"count",0) )   !=  NULL  ) ) {
+        LBS_EmitString(htc->code,"<select name=\"");
+        EmitCode(htc,OPC_NAME);
+        LBS_EmitPointer(htc->code,StrDup(sel));
+        EmitCode(htc,OPC_REFSTR);
+        LBS_EmitString(htc->code,"\" size=\"1\"");
+        Style(htc,tag);
+        LBS_EmitString(htc->code,">\n");
+
+        EmitCode(htc,OPC_VAR);
+        LBS_EmitPointer(htc->code,NULL);					/*	3	var		*/
+        EmitCode(htc,OPC_ICONST);
+        LBS_EmitInt(htc->code,0);
+        EmitCode(htc,OPC_STORE);
+        EmitCode(htc,OPC_HIVAR);							/*	2	limit	*/
+        LBS_EmitPointer(htc->code,StrDup(count));
+        EmitCode(htc,OPC_ICONST);							/*	1	step	*/
+        LBS_EmitInt(htc->code,1);
+        Push(LBS_GetPos(htc->code));
+        EmitCode(htc,OPC_BREAK);
+        LBS_EmitInt(htc->code,0);
+
+        LBS_EmitString(htc->code,"<option value=\"");
+		EmitCode(htc,OPC_LDVAR);
+		LBS_EmitPointer(htc->code,"");
+		EmitCode(htc,OPC_REFINT);
+        LBS_EmitString(htc->code,"\"");
+
+		EmitCode(htc,OPC_LDVAR);
+		LBS_EmitPointer(htc->code,"");
+        EmitCode(htc,OPC_NAME);
+        LBS_EmitPointer(htc->code,StrDup(sel));
+		EmitCode(htc,OPC_HSNAME);
+		EmitCode(htc,OPC_TOINT);
+		EmitCode(htc,OPC_SUB);
+		EmitCode(htc,OPC_JNZNP);
+		Push(LBS_GetPos(htc->code));
+		LBS_EmitInt(htc->code,0);
+
+		EmitCode(htc,OPC_SCONST);
+        LBS_EmitPointer(htc->code," selected");
+		EmitCode(htc,OPC_REFSTR);
+
+		pos = LBS_GetPos(htc->code);
+		LBS_SetPos(htc->code,Pop);
+		LBS_EmitInt(htc->code,pos);
+		LBS_SetPos(htc->code,pos);
+
+        LBS_EmitString(htc->code,">");
+
+        EmitCode(htc,OPC_NAME);
+        sprintf(buf,"%s[#]",item);
+        LBS_EmitPointer(htc->code,StrDup(buf));
+        EmitCode(htc,OPC_EHSNAME);
+        LBS_EmitString(htc->code,"</option>\n");
+
+        EmitCode(htc,OPC_LEND);
+        LBS_EmitInt(htc->code,Pop);
+        pos = LBS_GetPos(htc->code);
+        LBS_SetPos(htc->code,TOP(0));
+        EmitCode(htc,OPC_BREAK);
+        LBS_EmitInt(htc->code,pos);
+        LBS_SetPos(htc->code,pos);
+        LBS_EmitString(htc->code,"</select>");
+    }
+LEAVE_FUNC;
+}
+
+static void
+_Select(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	buf[SIZE_ARG];
+	char	*name, *size, *multiple, *onchange;
+
+ENTER_FUNC;
+	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+        LBS_EmitString(htc->code,"<select name=\"");
+        EmitCode(htc,OPC_NAME);
+        LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+        EmitCode(htc,OPC_REFSTR);
+        LBS_EmitString(htc->code,"\"");
+        if ((size = GetArg(tag,"size",0)) != NULL) {
+            LBS_EmitString(htc->code," size=");
+            EmitCode(htc,OPC_NAME);
+            LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
+            EmitCode(htc,OPC_REFSTR);
+            LBS_EmitString(htc->code,"\"");
+        }
+        if ((multiple = GetArg(tag,"multiple",0)) != NULL &&
+            IsTrue(multiple)) {
+            LBS_EmitString(htc->code," multiple");
+        }
+        JavaScriptEvent(htc, tag, "onchange");
+        Style(htc,tag);
+        LBS_EmitString(htc->code,">\n");
+    }
+LEAVE_FUNC;
+}
+
+static	void
+_Option(
+	HTCInfo	*htc,
+	Tag	*tag)
+{
+	char	*select
+		,	*value;
+
+ENTER_FUNC;
+	LBS_EmitString(htc->code,"<option");
+	if		(  ( value = GetArg(tag,"value",0) )  !=  NULL  )	{
+		LBS_EmitString(htc->code," value=");
+		ExpandAttributeString(htc,value);
+		LBS_EmitString(htc->code,"\"");
+	}
+	if		(  ( select = GetArg(tag,"select",0) )  !=  NULL  ) {
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(select));
+		EmitCode(htc,OPC_HBES);
+		LBS_EmitPointer(htc->code," selected");
+	}
+	Style(htc,tag);
+	LBS_EmitString(htc->code,">");
+LEAVE_FUNC;
+}
+
 static	void
 _FileSelection(HTCInfo *htc, Tag *tag)
 {
@@ -1150,7 +1324,6 @@ dbgmsg(">_Calendar");
 		EmitCode(htc,OPC_JNZNP);
 		Push(LBS_GetPos(htc->code));
 		LBS_EmitInt(htc->code,0);
-		EmitCode(htc,OPC_DROP);
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,this_yy);
 		pos = LBS_GetPos(htc->code);
@@ -1169,7 +1342,6 @@ dbgmsg(">_Calendar");
 		EmitCode(htc,OPC_JNZNP);
 		Push(LBS_GetPos(htc->code));
 		LBS_EmitInt(htc->code,0);
-		EmitCode(htc,OPC_DROP);
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,this_mm);
 		pos = LBS_GetPos(htc->code);
@@ -1188,7 +1360,6 @@ dbgmsg(">_Calendar");
 		EmitCode(htc,OPC_JNZNP);
 		Push(LBS_GetPos(htc->code));
 		LBS_EmitInt(htc->code,0);
-		EmitCode(htc,OPC_DROP);
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,this_dd);
 		pos = LBS_GetPos(htc->code);
@@ -1354,6 +1525,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"link",TRUE);
 	AddArg(tag,"target",TRUE);
+	AddArg(tag,"value",TRUE);
 	tag = NewTag("/FIXED",NULL);
 
 	tag = NewTag("COUNT",_Count);
@@ -1420,6 +1592,15 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"class",TRUE);
 	tag = NewTag("/LIST",NULL);
 
+	tag = NewTag("SELECT",_Select);
+	AddArg(tag,"name",TRUE);
+	AddArg(tag,"size",TRUE);
+	AddArg(tag,"multiple",TRUE);
+	AddArg(tag,"onchange",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+	tag = NewTag("/SELECT",NULL);
+
 	tag = NewTag("FILESELECTION",_FileSelection);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"filename",TRUE);
@@ -1454,6 +1635,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"day",TRUE);
 	tag = NewTag("/CALENDAR",NULL);
 
+#if	0
 	tag = NewTag("TD", _Td);
 	AddArg(tag, "rowspan", TRUE);
 	AddArg(tag, "colspan", TRUE);
@@ -1463,6 +1645,22 @@ dbgmsg(">TagsInit");
 	AddArg(tag, "width", TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+#endif
+
+	tag = NewTag("OPTION", _Option);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+	AddArg(tag,"select",TRUE);
+	AddArg(tag,"value",TRUE);
+	tag = NewTag("/OPTION", NULL);
+
+	tag = NewTag("OPTIONMENU",_Optionmenu);
+	AddArg(tag,"count",TRUE);
+	AddArg(tag,"select",TRUE);
+	AddArg(tag,"item",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+	tag = NewTag("/OPTIONMENU",NULL);
 
 	tag = NewTag("HTC",_Htc);
 	AddArg(tag,"coding",TRUE);

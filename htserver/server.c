@@ -200,6 +200,8 @@ RecvScreenData(
 	WindowData	*win;
 	ValueStruct	*value;
     LargeByteString *lbs;
+	int			i;
+	ValueStruct	*v;
 
     lbs = NewLBS();
     while (RecvStringDelim(fp, SIZE_BUFF, buff) && *buff != '\0') {
@@ -211,15 +213,18 @@ RecvScreenData(
             ValueIsUpdate(value);
             switch (ValueType(value)) {
               case GL_TYPE_ARRAY:
+				for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+					v = GetArrayItem(value, i);
+					SetValueBool(v, FALSE);
+				}
                 {
                     char *p = LBS_Body(lbs), *pend = p + LBS_Size(lbs);
-                    ValueStruct *v;
-                    int i;
 
                     while (p < pend) {
                         i = atoi(p);
-                        v = GetArrayItem(value, i);
-                        SetValueBool(v, TRUE);
+                        if		(  ( v = GetArrayItem(value, i) )  !=  NULL  ) {
+							SetValueBool(v, TRUE);
+						}
                         while (isdigit(*p))
                             p++;
                         if (*p == ',')

@@ -47,6 +47,10 @@ copies.
 #define	OPC_EMITSTR	0x17
 #define	OPC_ESCJSS	0x18
 #define	OPC_CALENDAR	0x19
+#define	OPC_TOINT		0x1A
+#define	OPC_SUB			0x1B
+#define	OPC_SPYINT		0x1C
+#define	OPC_SPYSTR		0x1D
 
 #undef	GLOBAL
 #ifdef	MAIN
