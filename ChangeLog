@@ -1,3 +1,7 @@
+2003-09-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c: null値対応
+
 2003-09-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/Dlex.c: LDlex.c BDlex.c DBDlex.cを統合

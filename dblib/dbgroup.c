@@ -40,6 +40,7 @@ copies.
 
 #include	"defaults.h"
 #include	"types.h"
+#include	"enum.h"
 #include	"libmondai.h"
 #include	"misc.h"
 #include	"directory.h"
@@ -154,6 +155,15 @@ dbgmsg(">SetUpDBG");
 dbgmsg("<SetUpDBG");
 }
 
+extern	void
+InitDB_Process(void)
+{
+dbgmsg(">InitDB_Process");
+	InitDBG();
+	SetUpDBG();
+dbgmsg("<InitDB_Process");
+}
+
 typedef	void	(*DB_FUNC2)(DBCOMM_CTRL *, DBG_Struct *);
 
 static	int
@@ -177,7 +187,10 @@ dbgmsg(">ExecFunction");
 			(*func)(&ctrl,dbg);
 		} else {
 			printf("function not found [%s]\n",name);
+			ctrl.rc = MCP_BAD_FUNC;
 		}
+	} else {
+		ctrl.rc = MCP_BAD_OTHER;
 	}
 dbgmsg("<ExecFunction");
 	return	(ctrl.rc); 
@@ -212,9 +225,10 @@ ExecDB_Function(
 
 dbgmsg(">ExecDB_Function");
 	if		(  tname  ==  NULL  ) {
+		ctrl.rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
-			ExecFunction(dbg->name,dbg,name);
+			ctrl.rc += ExecFunction(dbg->name,dbg,name);
 		}
 	} else {
 		dbg = rec->opt.db->dbg;
@@ -222,6 +236,7 @@ dbgmsg(">ExecDB_Function");
 				   ==  NULL  ) {
 			if		(  !(*dbg->func->access)(name,&ctrl,rec)  ) {
 				printf("function not found [%s]\n",name);
+				ctrl.rc = MCP_BAD_FUNC;
 			}
 		} else {
 			(*func)(&ctrl,rec);
@@ -256,6 +271,7 @@ dbgmsg(">ExecDB_Process");
 				   ==  NULL  ) {
 			if		(  !(*dbg->func->access)(ctrl->func,ctrl,rec)  ) {
 				printf("function not found [%s]\n",ctrl->func);
+				ctrl->rc = MCP_BAD_FUNC;
 			}
 		} else {
 			(*func)(ctrl,rec);
@@ -264,12 +280,4 @@ dbgmsg(">ExecDB_Process");
 dbgmsg("<ExecDB_Process");
 }
 
-extern	void
-InitDB_Process(void)
-{
-dbgmsg(">InitDB_Process");
-	InitDBG();
-	SetUpDBG();
-dbgmsg("<InitDB_Process");
-}
 

@@ -62,7 +62,10 @@ ValueToSQL(
 	char	del
 	,		*p;
 
-	switch	(val->type) {
+	if		(  IS_VALUE_NIL(val)  ) {
+		sprintf(buff,"null");
+	} else
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_TEXT:
@@ -339,7 +342,9 @@ UpdateValue(
 	ValueStruct	*tmp;
 	Bool	fComm;
 
-	if		(  val  ==  NULL  ) {
+	if		(  val  ==  NULL  )	return	(p);
+	if		(  IS_VALUE_NIL(val)  ) {
+		p += sprintf(p,"%s%s is null",ItemName(),PutDim());
 	} else
 	switch	(val->type) {
 	  case	GL_TYPE_INT:
@@ -401,7 +406,7 @@ InsertNames(
 
 	if		(  val  ==  NULL  ) {
 	} else
-	switch	(val->type) {
+	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
 	  case	GL_TYPE_BOOL:
 	  case	GL_TYPE_BYTE:
@@ -444,7 +449,9 @@ InsertValues(
 	ValueStruct	*tmp;
 	Bool	fComm;
 
-	if		(  val  ==  NULL  ) {
+	if		(  val  ==  NULL  )	return	(p);
+	if		(  IS_VALUE_NIL(val)  ) {
+		p += sprintf(p,"null");
 	} else
 	switch	(val->type) {
 	  case	GL_TYPE_INT:
@@ -531,6 +538,7 @@ dbgmsg("<_PQexec");
 static	void
 GetValue(
 	PGresult	*res,
+	int			tnum,
 	int			fnum,
 	ValueStruct	*val)
 {
@@ -540,35 +548,40 @@ GetValue(
 	if		(  val  ==  NULL  )	return;
 
 dbgmsg(">GetValue");
-	switch	(val->type) {
-	  case	GL_TYPE_INT:
-		SetValueInteger(val,atoi((char *)PQgetvalue(res,0,fnum)));
-		break;
-	  case	GL_TYPE_BOOL:
-		SetValueBool(val,*(char *)PQgetvalue(res,0,fnum));
-		break;
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		SetValueString(val,(char *)PQgetvalue(res,0,fnum));
-		break;
-	  case	GL_TYPE_NUMBER:
-		nv = NumericInput((char *)PQgetvalue(res,0,fnum),
-						  val->body.FixedData.flen,val->body.FixedData.slen);
-		str = NumericToFixed(nv,val->body.FixedData.flen,val->body.FixedData.slen);
-		strcpy(val->body.FixedData.sval,str);
-		xfree(str);
-		NumericFree(nv);
-		break;
-	  case	GL_TYPE_ARRAY:
-		ParArray(PQgetvalue(res,0,fnum),val);
-		break;
-	  case	GL_TYPE_RECORD:
-		break;
-	  default:
-		break;
+	if		(  PQgetisnull(res,tnum,fnum)  ==  1  ) { 	/*	null	*/
+		ValueAttribute(val) |= GL_ATTR_NIL;
+	} else {
+		ValueAttribute(val) &= ~GL_ATTR_NIL;
+		switch	(val->type) {
+		  case	GL_TYPE_INT:
+			SetValueInteger(val,atoi((char *)PQgetvalue(res,tnum,fnum)));
+			break;
+		  case	GL_TYPE_BOOL:
+			SetValueBool(val,*(char *)PQgetvalue(res,tnum,fnum));
+			break;
+		  case	GL_TYPE_BYTE:
+		  case	GL_TYPE_CHAR:
+		  case	GL_TYPE_VARCHAR:
+		  case	GL_TYPE_DBCODE:
+		  case	GL_TYPE_TEXT:
+			SetValueString(val,(char *)PQgetvalue(res,tnum,fnum));
+			break;
+		  case	GL_TYPE_NUMBER:
+			nv = NumericInput((char *)PQgetvalue(res,tnum,fnum),
+							  ValueFixedLength(val),ValueFixedSlen(val));
+			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
+			strcpy(ValueFixedBody(val),str);
+			xfree(str);
+			NumericFree(nv);
+			break;
+		  case	GL_TYPE_ARRAY:
+			ParArray(PQgetvalue(res,tnum,fnum),val);
+			break;
+		  case	GL_TYPE_RECORD:
+			break;
+		  default:
+			break;
+		}
 	}
 dbgmsg("<GetValue");
 }
@@ -587,6 +600,7 @@ ExecPGSQL(
 	ValueStruct	**tuple;
 	int		n
 	,		i
+	,		j
 	,		items
 	,		ntuples;
 	ExecStatusType	status;
@@ -669,8 +683,10 @@ dbgmsg(">ExecPGSQL");
 						} else
 						if		(  ( ntuples = PQntuples(res) )  >  0  ) {
 							dbgmsg("+");
-							for	( i = 0 ; i < items ; i ++ ) {
-								GetValue(res,i,tuple[i]);
+							for	( i = 0 ; i < ntuples ; i ++ ) {
+								for	( j = 0 ; j < items ; j ++ ) {
+									GetValue(res,i,j,tuple[j]);
+								}
 							}
 							ctrl->rc += MCP_OK;
 						} else {
