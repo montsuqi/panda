@@ -551,6 +551,7 @@ GetTable(
 	ValueStruct	*tmp;
 	int		fnum;
 	Numeric	nv;
+	Fixed	fix;
 	char	*str;
 	Oid		id;
 
@@ -617,10 +618,13 @@ dbgmsg(">GetTable");
 		} else {
 			nv = NumericInput((char *)PQgetvalue(res,0,fnum),
 						  ValueFixedLength(val),ValueFixedSlen(val));
-			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
 #if	1
-			SetValueString(val,str,dbg->coding);
+			fix.sval = str;
+			fix.flen = strlen(str) + 1;
+			fix.slen = ValueFixedSlen(val);
+			SetValueFixed(val,&fix);
 #else
+			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
 			strcpy(ValueFixedBody(val),str);
 #endif
 			xfree(str);
