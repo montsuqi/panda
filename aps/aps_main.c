@@ -91,6 +91,10 @@ dbgmsg(">InitSystem");
 	ThisDB = ThisLD->db;
 	DB_Table = ThisLD->DB_Table;
 	TextSize = ThisLD->textsize;
+	InitializeValue(ThisEnv->mcprec->value);
+	InitializeValue(ThisEnv->linkrec->value);
+	InitializeValue(ThisLD->sparec->value);
+
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 		dbgprintf("[%s]",ThisLD->window[i]->rec->name);
 		InitializeValue(ThisLD->window[i]->rec->value);
