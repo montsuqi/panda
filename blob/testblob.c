@@ -47,18 +47,19 @@ copies.
 
 #define	BLOB_FILE	"test"
 
-#define	DIVIDE		40
-#define	OB_NUMBER	40000
+#define	DIVIDE		1
+//#define	OB_NUMBER	40000
 //#define	OB_NUMBER	20000
 //#define	OB_NUMBER	1000
-//#define	OB_NUMBER	20
+#define	OB_NUMBER	20
 
-#define	TEST_INIT
+//#define	TEST_INIT
 //#define	TEST_CREAT
 //#define	TEST_DESTROY1
 //#define	TEST_READWRITE1
-#define	TEST_READWRITE2
-#define	TEST_DESTROY2
+//#define	TEST_READWRITE2
+//#define	TEST_DESTROY2
+#define	TEST_TRANSACTION
 
 extern	int
 main(
@@ -67,8 +68,8 @@ main(
 {
 	BLOB_Space	*blob;
 	BLOB_State	*state;
-	MonObjectType	obj[OB_NUMBER];
-	MonObjectType	lo[2];
+	ObjectType	obj[OB_NUMBER];
+	ObjectType	lo[2];
 	char	buff[SIZE_LONGNAME+1];
 	int		i
 		,	j
@@ -223,6 +224,56 @@ main(
 #endif
 #endif
 	CommitBLOB(state);
+#ifdef	TEST_TRANSACTION
+	StartBLOB(state);
+	printf("** new(1) **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		obj[i] = NewBLOB(state,BLOB_OPEN_WRITE);
+		printf("main oid = %lld\n",obj[i]);
+	}
+	printf("** write(1) **\n");
+	n = OB_NUMBER / DIVIDE ;
+	for	( k = 0 ; k < DIVIDE ; k ++ ) {
+		for	( i = n * k ; i < n * ( k + 1 ) ; i ++ ) {
+			sprintf(buff,"add %d",i);
+			for	( j = strlen(buff) ; j < 64 ; j ++ ) {
+				buff[j] = (j+i)%64+32;
+			}
+			buff[j] = 0;
+			printf("buff = [%s]\n",buff);
+			WriteBLOB(state,obj[i],buff,strlen(buff)+1);
+		}
+		printf("** close(1) **\n");
+		fprintf(stderr,"** close(1) **\n");
+		for	( i = n * k ; i < n * ( k + 1 ) ; i ++ ) {
+			CloseBLOB(state,obj[i]);
+		}
+	}
+	//	AbortBLOB(state);
+	CommitBLOB(state);
+	StartBLOB(state);
+	printf("** open(1) **\n");
+	fprintf(stderr,"** open(1) **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		size = OpenBLOB(state,obj[i],BLOB_OPEN_READ);
+		printf("%lld = %d\n",obj[i],size);
+	}
+	printf("** read **\n");
+	fprintf(stderr,"** read **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		size = ReadBLOB(state,obj[i],buff,SIZE_LONGNAME+1);
+		if		(  size  <  0  ) {
+			*buff = 0;
+		}
+		printf("(%d:%lld) %d = [%s]\n",i,obj[i],size,buff);
+	}
+	printf("** read end **\n");
+	fprintf(stderr,"** read end **\n");
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		CloseBLOB(state,obj[i]);
+	}
+	printf("* test transaction(1) **\n");
+#endif
 	DisConnectBLOB(state);
 	FinishBLOB(blob);
 	return	(0);

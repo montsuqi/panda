@@ -41,9 +41,9 @@ copies.
 
 #include	"types.h"
 #include	"libmondai.h"
-#include	"net.h"
-#include	"blob.h"
-#include	"blob_v2.h"
+#include	"oseki.h"
+#include	"pagestruct.h"
+#include	"oseki.h"
 #include	"message.h"
 #include	"debug.h"
 #include	"option.h"
@@ -73,8 +73,8 @@ main(
 	pageno_t	*page;
 	char	name[SIZE_LONGNAME+1];
 	int		i;
-	BLOB_V2_Header	head;
-	BLOB_V2_Entry	*ent;
+	OsekiFileHeader	head;
+	OsekiObjectEntry	*ent;
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
@@ -97,7 +97,7 @@ main(
 		exit(1);
 	}
 
-	memcpy(head.magic,BLOB_V2_HEADER,SIZE_BLOB_HEADER);
+	memcpy(head.magic,OSEKI_FILE_HEADER,OSEKI_MAGIC_SIZE);
 #ifdef	USE_MMAP
 	if		(  PageSize % getpagesize()  !=  0  ) {
 		fprintf(stderr,"invalid page size.\n");
@@ -115,7 +115,7 @@ main(
 	head.pages = 4;
 
 	memclear(page,PageSize);
-	memcpy(page,&head,sizeof(BLOB_V2_Header));
+	memcpy(page,&head,sizeof(OsekiFileHeader));
 	fwrite(page,PageSize,1,fp);
 
 	/*	free pages		(1)	*/
@@ -129,7 +129,7 @@ main(
 
 	/*	leaf page		(3)	*/
 	memclear(page,PageSize);
-	ent = (BLOB_V2_Entry *)page;
+	ent = (OsekiObjectEntry *)page;
 	USE_OBJ(ent[0]);
 	fwrite(page,PageSize,1,fp);
 

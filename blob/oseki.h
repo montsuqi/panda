@@ -19,24 +19,15 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_OSEKI_PAGE_H
-#define	_OSEKI_PAGE_H
-#include	<stdint.h>
+#ifndef	_INC_OSEKI_H
+#define	_INC_OSEKI_H
+
+#define	MIN_PAGE_SIZE		2048
+
 #include	"apistruct.h"
+#include	"storage.h"
+#include	"page.h"
 
-extern	OsekiSpace		*InitOseki(char *space);
-extern	void		FinishOseki(OsekiSpace *blob);
-extern	OsekiSession	*ConnectOseki(OsekiSpace *blob);
-extern	void		DisConnectOseki(OsekiSession *state);
-
-extern	pageno_t	NewPage(OsekiSession *state);
-extern	void		*GetPage(OsekiSession *state, pageno_t page);
-extern	void		*UpdatePage(OsekiSession *state, pageno_t page);
-extern	void	ReleasePage(OsekiSession *state, pageno_t page,Bool fCommit);
-extern	pageno_t	GetFreePage(OsekiSession *state);
-extern	void	ReturnPage(OsekiSession *state, pageno_t no);
-extern	void	CommitPages(OsekiSession *state);
-extern	void	AbortPages(OsekiSession *state);
 
 #undef	GLOBAL
 #ifdef	MAIN

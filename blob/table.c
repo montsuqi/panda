@@ -19,30 +19,63 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-#ifndef	_OSEKI_PAGE_H
-#define	_OSEKI_PAGE_H
-#include	<stdint.h>
-#include	"apistruct.h"
+/*
+#define	DEBUG
+#define	TRACE
+*/
 
-extern	OsekiSpace		*InitOseki(char *space);
-extern	void		FinishOseki(OsekiSpace *blob);
-extern	OsekiSession	*ConnectOseki(OsekiSpace *blob);
-extern	void		DisConnectOseki(OsekiSession *state);
-
-extern	pageno_t	NewPage(OsekiSession *state);
-extern	void		*GetPage(OsekiSession *state, pageno_t page);
-extern	void		*UpdatePage(OsekiSession *state, pageno_t page);
-extern	void	ReleasePage(OsekiSession *state, pageno_t page,Bool fCommit);
-extern	pageno_t	GetFreePage(OsekiSession *state);
-extern	void	ReturnPage(OsekiSession *state, pageno_t no);
-extern	void	CommitPages(OsekiSession *state);
-extern	void	AbortPages(OsekiSession *state);
-
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
 #endif
+#include	<stdlib.h>
+#include	<glib.h>
 
-#endif
+#include	"types.h"
+#include	"table.h"
+#include	"debug.h"
+
+static	guint
+IdHash(
+	uint64_t	*key)
+{
+	guint	ret;
+
+	ret = (guint)*key;
+	return	(ret);
+}
+
+static	gint
+IdCompare(
+	uint64_t	*o1,
+	uint64_t	*o2)
+{
+	int		check;
+
+	if		(	(  o1  !=  NULL  )
+			&&	(  o2  !=  NULL  ) ) {
+		check = *o1 - *o2;
+	} else {
+		check = 1;
+	}
+	return	(check == 0);
+}
+
+extern	GHashTable	*
+NewLLHash(void)
+{
+	return	(g_hash_table_new((GHashFunc)IdHash,(GCompareFunc)IdCompare));
+}
+
+static	int
+intcmp(
+	int		o1,
+	int		o2)
+{
+	return	(o1-o2);
+}
+
+extern	GTree	*
+NewIntTree(void)
+{
+	return	(g_tree_new((GCompareFunc)intcmp));
+}

@@ -22,32 +22,33 @@ copies.
 #ifndef	_INC_BLOB_V1_H
 #define	_INC_BLOB_V1_H
 
+#define	BLOB_V1_HEADER		"PNB1"
 #if	BLOB_VERSION == 1
-#define	BLOB_V1_Entry		BLOB_Entry
-#define	BLOB_V1_Space		BLOB_Space
-#define	BLOB_V1_State		BLOB_State
 
-#define	InitBLOB_V1			InitBLOB
-#define	FinishBLOB_V1		FinishBLOB
-#define	ConnectBLOB_V1		ConnectBLOB
-#define	DisConnectBLOB_V1	DisConnectBLOB
-#define	StartBLOB_V1		StartBLOB
-#define	CommitBLOB_V1		CommitBLOB
-#define	AbortBLOB_V1		AbortBLOB
+#define	BLOB_OPEN_CLOSE		0x00
+#define	BLOB_OPEN_CREATE	0x01
+#define	BLOB_OPEN_READ		0x02
+#define	BLOB_OPEN_WRITE		0x04
+#define	BLOB_OPEN_APPEND	0x08
 
-#define	NewBLOB_V1			NewBLOB
-#define	OpenBLOB_V1			OpenBLOB
-#define	DestroyBLOB_V1		DestroyBLOB
-#define	CloseBLOB_V1		CloseBLOB
-#define	WriteBLOB_V1		WriteBLOB
-#define	ReadBLOB_V1			ReadBLOB
+#define	BLOB_Space			BLOB_V1_Space
+#define	BLOB_State			BLOB_V1_State
+
+#define	InitBLOB			InitBLOB_V1
+#define	FinishBLOB			FinishBLOB_V1
+#define	ConnectBLOB			ConnectBLOB_V1
+#define	DisConnectBLOB		DisConnectBLOB_V1
+#define	StartBLOB			StartBLOB_V1
+#define	CommitBLOB			CommitBLOB_V1
+#define	AbortBLOB			AbortBLOB_V1
+
+#define	NewBLOB				NewBLOB_V1
+#define	OpenBLOB			OpenBLOB_V1
+#define	DestroyBLOB			DestroyBLOB_V1
+#define	CloseBLOB			CloseBLOB_V1
+#define	WriteBLOB			WriteBLOB_V1
+#define	ReadBLOB			ReadBLOB_V1
 #endif
-
-typedef	struct {
-	NETFILE	*fp;
-	MonObjectType	oid;
-	struct	_BLOB_Space	*blob;
-}	BLOB_V1_Entry;
 
 typedef	struct _BLOB_Space	{
 	char			*space;

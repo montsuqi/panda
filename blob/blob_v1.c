@@ -44,6 +44,7 @@ copies.
 #include	"net.h"
 #include	"blob.h"
 #include	"blob_v1.h"
+#include	"hash.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -51,6 +52,12 @@ copies.
 #define	UnLockBLOB(blob)	pthread_mutex_unlock(&(blob)->mutex)
 #define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
 #define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
+
+typedef	struct {
+	NETFILE	*fp;
+	MonObjectType	oid;
+	struct	_BLOB_Space	*blob;
+}	BLOB_V1_Entry;
 
 static	size_t
 OpenEntry(

@@ -10,6 +10,9 @@ libpandablobincludedir = $(includedir)/panda
 libpandablobinclude_HEADERS =	\
 	blob_v1.h					\
 	blob_v2.h					\
+	storage.h					\
+	page.h						\
+	oseki.h						\
 	blob.h
 
 INCLUDES 			=		\
@@ -20,11 +23,13 @@ INCLUDES 			=		\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
-libpandablob_la_SOURCES	=		\
-	blob_v1.c		blob_v1.h	\
-	blob_v2.c		blob_v2.h	\
-	page.c			page.h		\
-	blob.c			blob.h
+libpandablob_la_SOURCES	=			\
+	blob_v1.c		blob_v1.h		\
+					blob_v2.h		\
+	storage.c		storage.h		\
+	page.c			page.h			\
+	blob.c			blob.h			\
+	table.c			table.h
 
 libpandablob_la_DEPENDENCIES	=		\
 	$(top_builddir)/defaults.h			\
