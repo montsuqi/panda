@@ -78,8 +78,7 @@ dbgmsg(">InitSystem");
 	InitDirectory();
 	SetUpDirectory(Directory,name,"","",TRUE);
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
-		dbgprintf("LD \"%s\" not found.",name);
-		exit(1);
+		Error("LD \"%s\" not found.",name);
 	}
 	if		(  ThisLD->home  !=  NULL  ) {
 		chdir(ThisLD->home);
@@ -158,7 +157,7 @@ ENTER_FUNC;
 		port = ParPortName(WfcPortNumber);
 	}
 	while	(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
-		fprintf(stderr,"WFC connection retry\n");
+		Warning("WFC connection retry");
 		sleep(1);
 	}
 	fpWFC = SocketToNet(fhWFC);
@@ -307,7 +306,7 @@ main(
 		rc = 0;
 	} else {
 		rc = -1;
-		fprintf(stderr,"LD名が指定されていません\n");
+		Error("LD名が指定されていません");
 	}
 	exit(rc);
 }

@@ -52,7 +52,7 @@ LoadFile(
 	void	*ret;
 	struct	stat	st;
 
-dbgmsg(">LoadFile");
+ENTER_FUNC;
 	strcpy(buff,path);
 	p = buff;
 	ret = NULL;
@@ -62,13 +62,13 @@ dbgmsg(">LoadFile");
 		}
 		sprintf(filename,"%s/%s",p,name);
 		if		(  stat(filename, &st)  ==  0  ) {
-			MessagePrintf("load [%s]",filename);
+			MessageLogPrintf("load [%s]",filename);
 			if		(  ( ret = dlopen(filename,RTLD_GLOBAL | RTLD_LAZY) )  !=  NULL  )
 				break;
 		}
 		p = q + 1;
 	}	while	(	(  q    !=  NULL  )
 				&&	(  ret  ==  NULL  ) );
-dbgmsg("<LoadFile");
+LEAVE_FUNC;
 	return	(ret);
 }

@@ -218,12 +218,13 @@ GL_RecvLBS(
 	Bool	fNetwork)
 {
 	size_t	size;
-
+ENTER_FUNC;
 	size = GL_RecvLength(fp,fNetwork);
 	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
 		Recv(fp,LBS_Body(lbs),size);
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -232,10 +233,12 @@ GL_SendLBS(
 	LargeByteString	*lbs,
 	Bool	fNetwork)
 {
+ENTER_FUNC;
 	GL_SendLength(fp,LBS_Size(lbs),fNetwork);
 	if		(  LBS_Size(lbs)  >  0  ) {
 		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
 	}
+LEAVE_FUNC;
 }
 
 extern	void
@@ -503,6 +506,7 @@ ENTER_FUNC;
 					fread(LBS_Body(Buff),sb.st_size,1,fpf);
 					fclose(fpf);	
 				} else {
+					dbgprintf("could not open for read: %s\n", fname);
 					LBS_ReserveSize(Buff,0,FALSE);
 				}
 				GL_SendLBS(fp,Buff,fNetwork);

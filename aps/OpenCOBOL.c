@@ -212,7 +212,10 @@ _ReadyExecute(
 		handler->loadpath = LoadPath;
 	}
 	cob_init(0,NULL);
-	cob_set_library_path(handler->loadpath);
+	if		(  handler->loadpath  !=  NULL  ) {
+		cob_set_library_path(handler->loadpath);
+	}
+	
 }
 
 static	MessageHandlerClass	Handler = {

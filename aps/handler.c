@@ -77,13 +77,13 @@ EnterHandlerClass(
 
 ENTER_FUNC;
 	if		(  ( klass = g_hash_table_lookup(HandlerClassTable,name) )  ==  NULL  ) {
-		MessagePrintf("%s handlerClass invoke.", name);
+		MessageLogPrintf("%s handlerClass invoke.", name);
 		sprintf(filename,"%s.so",name);
 		klass = NULL;
 		if		(  ( dlhandle = LoadFile(APS_HandlerLoadPath,filename) )  !=  NULL  ) {
 			if		(  ( finit = (void *)dlsym(dlhandle,name) )
 					   ==  NULL  )	{
-				MessagePrintf("[%s] is invalid.",name);
+				Warning("[%s] is invalid.",name);
 			} else {
 				klass = (*finit)();
 				if		(  g_hash_table_lookup(HandlerClassTable,name)  ==  NULL  ) {
@@ -91,7 +91,7 @@ ENTER_FUNC;
 				}
 			}
 		} else {
-			fprintf(stderr,"[%s] not found.\n",name);
+			Warning("[%s] not found.",name);
 		}
 	}
 LEAVE_FUNC;
@@ -431,7 +431,6 @@ ENTER_FUNC;
 	handler = bind->handler;
 	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
 		CallBefore(node);
-DumpProcessNode(node);
 		if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
 			MessageLog("application process illegular execution");
 			exit(2);

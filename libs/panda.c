@@ -130,8 +130,7 @@ ENTER_FUNC;
 		strcpy(ThisWidget,widget);
 		strcpy(ThisUser,user);
 	} else {
-		MessagePrintf("invalid window [%s]\n",window);
-		exit(1);
+		Error("invalid LD");
 	}
 LEAVE_FUNC;
 }

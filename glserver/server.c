@@ -56,6 +56,7 @@ copies.
 #include	"glserver.h"
 #include	"glcomm.h"
 #include	"front.h"
+#include	"term.h"
 #include	"dirs.h"
 #include	"RecParser.h"
 #include	"message.h"
@@ -65,10 +66,7 @@ static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	char	msg[SIZE_BUFF];
-
-	sprintf(msg,"[%s@%s] session end",scr->user,scr->term);
-	MessageLog(msg);
+	MessagePrintf("[%s@%s] session end",scr->user,TermToHost(scr->term));
 }
 
 static	Bool
@@ -99,7 +97,7 @@ ENTER_FUNC;
 		ret = FALSE;
 		break;
 	  default:
-		printf("klass = [%d]\n",klass);
+		dbgprintf("klass = [%d]\n",klass);
 	  badio:
 		dbgmsg("error");
 		ret = FALSE;
@@ -167,7 +165,6 @@ CheckScreen(
 {
 	char	fname[SIZE_BUFF]
 	,		dir[SIZE_BUFF];
-	char	msg[SIZE_BUFF];
 	struct	stat	stbuf;
 	char	*p
 	,		*q;
@@ -193,8 +190,7 @@ ENTER_FUNC;
 			p = q + 1;
 		}	while	(  !fExit  );
 		if		(  !fDone  ) {
-			sprintf(msg,"[%s] screen file not exitsts.",wname);
-			MessageLog(msg);
+			Warning("[%s] screen file not exitsts.",wname);
 			longjmp(envCheckScreen,1);
 		}
 		win->fNew = FALSE;
@@ -329,7 +325,7 @@ ENTER_FUNC;
 	CheckScreens(fpComm,scr);
 	ret = SendScreenData(fpComm,scr);
 	if		(  !ret  ) {
-		printf("SendScreenData invalid\n");
+		Warning("SendScreenData invalid");
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -417,27 +413,27 @@ CheckFeture(
 #endif
 }
 
-static	void
+static	Bool
 Connect(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	char	pass[SIZE_PASS+1];
 	char	ver[SIZE_BUFF];
-	char	msg[SIZE_BUFF];
+
+	Bool	rc = FALSE;
 
 	GL_RecvString(fpComm,ver,FALSE);				ON_IO_ERROR(fpComm,badio);
 	CheckFeture(ver);
 	GL_RecvString(fpComm,scr->user,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm,pass,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm,scr->cmd,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-	sprintf(msg,"[%s@%s] session start",scr->user,scr->term);
-	MessageLog(msg);
+	MessagePrintf("[%s@%s] session start",scr->user,TermToHost(scr->term));
 
 	if		(  TermFeture  ==  FETURE_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_E_VERSION,fFetureNetwork);
 		ON_IO_ERROR(fpComm,badio);
-		g_warning("reject client(invalid version)");
+		Warning("reject client(invalid version)");
 	} else
 	if		(  ThisAuth(scr->user,pass,scr->other)  ) {
 		scr->Windows = NULL;
@@ -449,13 +445,15 @@ Connect(
 			GL_SendPacketClass(fpComm,GL_OK,fFetureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			CheckScreens(fpComm,scr);
+			rc = TRUE;
 		}
 	} else {
-		g_warning("reject client(authentication error)");
 		GL_SendPacketClass(fpComm,GL_E_AUTH,fFetureNetwork);
 		ON_IO_ERROR(fpComm,badio);
+		Warning("reject client(authentication error)");
 	}
-  badio:;
+  badio:
+	return (rc);
 }
 
 static	Bool
@@ -490,13 +488,11 @@ ENTER_FUNC;
 						   !=  NULL  ) {
 					GL_RecvValue(fpComm,value,coding,fFetureBlob,fFetureExpand,fFetureNetwork);
 				} else {
-					MessagePrintf("invalid item name [%s]\n",name);
-					exit(1);
+					Error("invalid item name [%s]\n",name);
 				}
 			}
 		} else {
-			MessagePrintf("invalid wind name [%s]\n",wname);
-			exit(1);
+			Error("invalid wind name [%s]\n",wname);
 		}
 	}
 	rc = TRUE;
@@ -520,7 +516,10 @@ ENTER_FUNC;
 	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
 		  case	GL_Connect:
-			Connect(fpComm,scr);				ON_IO_ERROR(fpComm,badio);
+			if (!Connect(fpComm,scr)){
+				scr->status = APL_SESSION_NULL;
+			}
+			ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Name:
 			GL_RecvString(fpComm,scr->term,fFetureNetwork);
@@ -546,7 +545,7 @@ ENTER_FUNC;
 			scr->status = APL_SESSION_NULL;
 			break;
 		  default:
-			printf("invalid class = %X\n",klass);
+			Warning("invalid class = %X\n",klass);
 			scr->status = APL_SESSION_NULL;
 			break;
 		}
@@ -567,7 +566,7 @@ ENTER_FUNC;
 	} else {
 	  badio:
 		ret = FALSE;
-		dbgmsg("Connection lost");
+		MessageLog("Connection lost");
 	}
 
 LEAVE_FUNC;
@@ -603,7 +602,7 @@ ENTER_FUNC;
 #endif
 	while	(TRUE)	{
 		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
-			printf("_fd = %d\n",_fd);
+			dbgprintf("_fd = %d\n",_fd);
 			Error("INET Domain Accept");
 		}
 

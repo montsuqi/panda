@@ -1,8 +1,11 @@
 2005-02-21  Noboru Saitou  <noborus@netlab.jp>
 
-	* libs/debug.h
-	* libs/message.c:
-	* libs/message.h: debug 関連のメッセージレベルの変更
+	* aps/OpenCOBOL.c aps/aps_main.c aps/handler.c glserver/glcomm.c
+	  glserver/server.c libs/applications.c libs/authstub.c libs/load.c
+	  libs/panda.c libs/wfcio.c: メッセージ形式の統一
+
+	* libs/debug.h libs/message.c libs/message.h:
+	  debug 関連のメッセージレベルの変更
 
 2005-02-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
