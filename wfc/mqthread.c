@@ -56,8 +56,12 @@ copies.
 
 static	void
 ClearAPS_Node(
-	APS_Node	*aps)
+	LD_Node		*ld,
+	int			ix)
 {
+	APS_Node	*aps;
+
+	aps = &ld->aps[ix];
 	if		(  aps->fp  !=  NULL  ) {
 		CloseNet(aps->fp);
 		aps->fp = NULL;
@@ -81,12 +85,15 @@ LEAVE_FUNC;
 
 static	byte
 CheckAPS(
-	APS_Node	*aps,
+	LD_Node		*ld,
+	int			ix,
 	char		*term)
 {
+	APS_Node	*aps;
 	byte	flag;
 	NETFILE	*fp;
 
+	aps = &ld->aps[ix];
 	fp = aps->fp;
 	if		(  fp  !=  NULL  ) {
 		SendPacketClass(fp,APS_REQ);	ON_IO_ERROR(fp,badio);
@@ -115,11 +122,13 @@ LEAVE_FUNC;
 
 static	Bool
 PutAPS(
-	APS_Node	*aps,
+	LD_Node		*ld,
+	int			ix,
 	SessionData	*data,
 	byte		flag)
 {
 	MessageHeader	*hdr;
+	APS_Node	*aps;
 	int		i;
 	Bool	fOK;
 	NETFILE		*fp;
@@ -130,6 +139,7 @@ ENTER_FUNC;
 	printf("user = [%s]\n",data->hdr->user);
 #endif
 
+	aps = &ld->aps[ix];
 	fp = aps->fp;
 	hdr = data->hdr;
 	fOK = FALSE;
@@ -180,15 +190,18 @@ LEAVE_FUNC;
 
 static	byte
 GetAPS_Control(
-	APS_Node	*aps,
+	LD_Node			*ld,
+	int				ix,
 	MessageHeader	*hdr)
 {
+	APS_Node	*aps;
 	PacketClass	c;
 	NETFILE		*fp;
 	byte		flag;
 	Bool		done;
 
 ENTER_FUNC;
+	aps = &ld->aps[ix];
 	fp = aps->fp;
 	done = FALSE;
 	while	(  !done  )	{
@@ -391,17 +404,17 @@ ENTER_FUNC;
 			if		(  ( data = SelectData(mq->que,ix) )  !=  NULL  ) {
 				dbgprintf("act %s\n",mq->name);
 				ld = data->ld;
-				if		(  ( flag = CheckAPS(&ld->aps[ix],data->name) )  !=  0  ) {
+				if		(  ( flag = CheckAPS(ld,ix,data->name) )  !=  0  ) {
 					memcpy(&hdr,data->hdr,sizeof(MessageHeader));
 					puttype = hdr.puttype;
-					if		(	(  PutAPS(&ld->aps[ix],data,flag)  )
-							&&	(  ( flag = GetAPS_Control(&ld->aps[ix],&hdr) )
+					if		(	(  PutAPS(ld,ix,data,flag)  )
+							&&	(  ( flag = GetAPS_Control(ld,ix,&hdr) )
 									   !=  0  ) ) {
 						fp = ld->aps[ix].fp;
 					}
 				}
 				if		(  fp  ==  NULL  ) {
-					ClearAPS_Node(&ld->aps[ix]);
+					ClearAPS_Node(ld,ix);
 					data->apsid = -1;
 					data->retry ++;
 					if		(	(  MaxRetry  >  0  )
@@ -460,7 +473,7 @@ ENTER_FUNC;
 			sprintf(msg,"window not found [%s] [%s:%s]\n",
 					hdr.window,hdr.term,hdr.user);
 			MessageLog(msg);
-			ClearAPS_Node(&ld->aps[ix]);
+			ClearAPS_Node(ld,ix);
 		}
 	}	while	(TRUE);
 LEAVE_FUNC;
@@ -587,7 +600,7 @@ ENTER_FUNC;
 		for	( j = 0 ; j < ld->nports ; j ++ ) {
 			ld->aps[j].fp = NULL;
 			ld->aps[j].id = ApsId ++;
-			ClearAPS_Node(&ld->aps[j]);
+			ClearAPS_Node(ld,j);
 		}
 
 		ld->info = info;
@@ -634,7 +647,7 @@ ENTER_FUNC;
 			if		(  ld->aps[i].fp  ==  NULL  )	break;
 		}
 		if		(  i  <  ld->nports  ) {
-			ClearAPS_Node(&ld->aps[i]);
+			ClearAPS_Node(ld,i);
 			ActivateAPS_Node(&ld->aps[i],fp);
 			pthread_cond_signal(&ld->conn);
 		} else {
@@ -643,7 +656,7 @@ ENTER_FUNC;
 				ON_IO_ERROR(ld->aps[i].fp,deadaps);
 				if		(  RecvPacketClass(ld->aps[i].fp) !=  APS_PONG  ) {
 				  deadaps:
-					ClearAPS_Node(&ld->aps[i]);
+					ClearAPS_Node(ld,i);
 					ActivateAPS_Node(&ld->aps[i],fp);
 					pthread_cond_signal(&ld->conn);
 					break;
