@@ -260,6 +260,7 @@ GetTable(
 	ValueStruct	*tmp;
 	int		fnum;
 	Numeric	nv;
+	char *str;
 
 dbgmsg(">GetTable");
 	if		(  val  ==  NULL  )	return;
@@ -298,7 +299,9 @@ dbgmsg(">GetTable");
 		if		(  fnum  >=  0  ) {
 			nv = NumericInput((char *)PQgetvalue(res,0,fnum),
 						  val->body.FixedData.flen,val->body.FixedData.slen);
-			strcpy(val->body.FixedData.sval,NumericToFixed(nv,val->body.FixedData.flen,val->body.FixedData.slen));
+			str = NumericToFixed(nv,val->body.FixedData.flen,val->body.FixedData.slen);
+			strcpy(val->body.FixedData.sval,str);
+			xfree(str);
 			NumericFree(nv);
 		}
 		break;
@@ -547,6 +550,7 @@ GetValue(
 	ValueStruct	*val)
 {
 	Numeric	nv;
+	char *str;
 
 	if		(  val  ==  NULL  )	return;
 
@@ -567,7 +571,9 @@ GetValue(
 	  case	GL_TYPE_NUMBER:
 		nv = NumericInput((char *)PQgetvalue(res,0,fnum),
 						  val->body.FixedData.flen,val->body.FixedData.slen);
-		strcpy(val->body.FixedData.sval,NumericToFixed(nv,val->body.FixedData.flen,val->body.FixedData.slen));
+		str = NumericToFixed(nv,val->body.FixedData.flen,val->body.FixedData.slen);
+		strcpy(val->body.FixedData.sval,str);
+		xfree(str);
 		NumericFree(nv);
 		break;
 	  case	GL_TYPE_ARRAY:

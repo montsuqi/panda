@@ -1,5 +1,10 @@
 2002-11-22  Keisuke Nishida  <knishida@netlab.jp>
 
+	* dblib/Postgres.c (GetTable, GetValue): Fix memory leak.
+	* datalib/value.c (NumericToFixed): Fix memory leak.
+
+2002-11-22  Keisuke Nishida  <knishida@netlab.jp>
+
 	* glclient/callbacks.c (send_event): Cancel timer before sending event.
 
 2002-09-30  Keisuke Nishida  <knishida@netlab.jp>
