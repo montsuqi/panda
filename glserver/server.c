@@ -126,7 +126,7 @@ ENTER_FUNC;
 						  wname,
 						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
 		rc = FALSE;
-		GL_RecvString(fpComm, sizeof(wname), wname,fFetureNetwork);	/*	dummy	*/
+		GL_RecvString(fpComm, SIZE_NAME, wname,fFetureNetwork);	/*	dummy	*/
 		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
 			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFetureNetwork);
 			ON_IO_ERROR(fpComm,badio);
