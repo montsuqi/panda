@@ -86,10 +86,12 @@ AddWindow(
 {
 	WindowBind	*bind;
 
+ENTER_FUNC;
 	bind = New(WindowBind);
 	bind->name = StrDup(name);
 	bind->ix = -1;
 	g_hash_table_insert(ld->whash,bind->name,bind);
+LEAVE_FUNC;
 	return	(bind);
 }
 
@@ -268,11 +270,9 @@ ParBIND(
 dbgmsg(">ParBIND");
 	if		(	(  GetSymbol  ==  T_SCONST  )
 			||	(  ComToken    ==  T_SYMBOL  ) ) {
-		if		(  ( ix = (int)g_hash_table_lookup(ret->whash,ComSymbol) )  ==  0  ) {
+		if		(  ( bind = g_hash_table_lookup(ret->whash,ComSymbol) )  ==  NULL  ) {
 			bind = AddWindow(ret,ComSymbol);
 			bind->rec = NULL;
-		} else {
-			bind = ret->window[ix-1];
 		}
 		if		(	(  GetSymbol  ==  T_SCONST  )
 				||	(  ComToken    ==  T_SYMBOL  ) ) {

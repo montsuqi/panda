@@ -61,7 +61,7 @@ dbgmsg(">ConnectTermServer");
 	printf("port = [%s]\n",port->port);
 	fflush(stdout);
 #endif
-	fh = ConnectSocket(port->port,SOCK_STREAM,port->host);
+	fh = ConnectIP_Socket(port->port,SOCK_STREAM,port->host);
 	DestroyPort(port);
 	fp = SocketToNet(fh);
 	if		(  fKeep  ) {

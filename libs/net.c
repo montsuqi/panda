@@ -185,9 +185,9 @@ NewNet(void)
 	fp = New(NETFILE);
 	fp->fOK = TRUE;
 	fp->err = 0;
-        fp->read = NULL;
-        fp->write = NULL;
-        fp->close = NULL;
+	fp->read = NULL;
+	fp->write = NULL;
+	fp->close = NULL;
 	return	(fp);
 }
 
@@ -421,7 +421,7 @@ OpenPort(
 	NETFILE	*fp;
 
 	port = ParPort(url,defport);
-	fh = ConnectSocket(port->port,SOCK_STREAM,port->host);
+	fh = ConnectIP_Socket(port->port,SOCK_STREAM,port->host);
 	DestroyPort(port);
 	fp = SocketToNet(fh);
 	return	(fp);
@@ -434,7 +434,7 @@ InitServerPort(
 {	int		fh;
 
 dbgmsg(">InitServerPort");
-	fh = BindSocket(port,SOCK_STREAM);
+	fh = BindIP_Socket(port,SOCK_STREAM);
 
 	if		(  listen(fh,back)  <  0  )	{
 		shutdown(fh, 2);

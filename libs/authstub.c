@@ -64,7 +64,7 @@ AuthUser(
 
 dbgmsg(">AuthUser");
 	if		(  !stricmp(auth->protocol,"glauth")  ) {
-		fh = ConnectSocket(auth->port,SOCK_STREAM,auth->host);
+		fh = ConnectIP_Socket(auth->port,SOCK_STREAM,auth->host);
 		fp = SocketToNet(fh);
 		SendString(fp,user);
 		SendString(fp,pass);

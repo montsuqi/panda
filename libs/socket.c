@@ -33,23 +33,24 @@ Boston, MA  02111-1307, USA.
 #  include <config.h>
 #endif
 
+//#undef	USE_IPv6
+
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
-#include	<termios.h>
 #include	<unistd.h>
 #include	<fcntl.h>
-#include	<time.h>
 
 #include    <sys/types.h>
 #include    <sys/socket.h>
+#include	<sys/un.h>
 #include	<netdb.h>
 #include	<netinet/in.h>
 #include	<netinet/tcp.h>
-#include	<arpa/inet.h>
 #include	"socket.h"
-#include	"libmondai.h"	/*	for memclear	*/
 #include	"debug.h"
+
+#define	memclear(b,s)	memset((b),0,(s))
 
 extern	void
 SetNodelay(
@@ -62,7 +63,7 @@ SetNodelay(
 }
 
 extern	int
-BindSocket(
+BindIP_Socket(
 	char	*port,
 	int		type)
 #ifdef	USE_IPv6
@@ -76,7 +77,7 @@ BindSocket(
 			,			*head;
 	struct	sockaddr_in	*name;
 
-dbgmsg(">BindSocket");
+ENTER_FUNC;
 	memclear(&hints,sizeof(struct addrinfo));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = type;
@@ -108,7 +109,7 @@ dbgmsg(">BindSocket");
 	if		( ld  <  0  ) {
 		Error("error bind");
 	}
-dbgmsg("<BindSocket");
+LEAVE_FUNC;
 	return	(ld);
 }
 #else
@@ -117,7 +118,8 @@ dbgmsg("<BindSocket");
 	int		iport;
 	int		one;
 
-	if		(  ( ld = socket(AF_INET,type,0) )  <  0  )	{
+ENTER_FUNC;
+	if		(  ( ld = socket(PF_INET,type,0) )  <  0  )	{
 		Error("error socket");
 	}
 	iport = atoi(port);
@@ -130,12 +132,37 @@ dbgmsg("<BindSocket");
 		close(ld);
 		Error("INET Domain Bind");
 	}
+LEAVE_FUNC;
 	return	(ld);
 }
 #endif
 
 extern	int
-ConnectSocket(
+BindUNIX_Socket(
+	char	*name,
+	int		type)
+{
+	int		sock;
+	struct	sockaddr_un	addr;
+	size_t	alen;
+
+ENTER_FUNC;
+	if		(  ( sock = socket(PF_UNIX,type,0) )  <  0  )	{
+		Error("error socket");
+	}
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path,name);
+	alen = sizeof(addr.sun_family) + strlen(addr.sun_path);
+	if		(  bind(sock,(struct sockaddr *)&addr,alen)  <  0  )	{
+		close(sock);
+		Error("UNIX Domain Bind");
+	}
+LEAVE_FUNC;
+	return	(sock);
+}
+
+extern	int
+ConnectIP_Socket(
 	char	*port,
 	int		type,
 	char	*host)
@@ -150,7 +177,7 @@ ConnectSocket(
 	struct	sockaddr_in	*name;
 	int		one;
 
-dbgmsg(">ConnectSocket");
+ENTER_FUNC;
 #ifdef	DEBUG
 	printf("port = %s\n",port);
 	printf("type = %d\n",type);
@@ -179,7 +206,7 @@ dbgmsg(">ConnectSocket");
 		break;
 	}
 	freeaddrinfo(head);
-dbgmsg("<ConnectSocket");
+LEAVE_FUNC;
 	return	(ld);
 }
 #else
@@ -191,8 +218,8 @@ dbgmsg("<ConnectSocket");
 	struct	hostent		*hp;
 	struct	sockaddr_in	name;
 
-dbgmsg(">ConnectSocket");
-	if		(  ( ld = socket(AF_INET,type,0) )  <  0  )	{
+ENTER_FUNC;
+	if		(  ( ld = socket(PF_INET,type,0) )  <  0  )	{
 		Error("error socket");
 	}
 	iport = atoi(port);
@@ -208,9 +235,31 @@ dbgmsg(">ConnectSocket");
 	} else {
 		ld = -1;
 	}
-dbgmsg("<ConnectSocket");
+LEAVE_FUNC;
 	return	(ld);
 }
 #endif
 
+extern	int
+ConnectUNIX_Socket(
+	char	*name,
+	int		type)
+{
+	int		sock;
+	size_t	alen;
+	struct	sockaddr_un	addr;
 
+ENTER_FUNC;
+	if		(  ( sock = socket(PF_UNIX,type,0) )  <  0  )	{
+		Error("error socket");
+	}
+	addr.sun_family = AF_UNIX;
+	strcpy(addr.sun_path,name);
+	alen = sizeof(addr.sun_family) + strlen(addr.sun_path);
+
+	if		(  connect(sock,(struct sockaddr *)&addr,alen)  <  0  )	{
+		sock = -1;
+	}
+LEAVE_FUNC;
+	return	(sock);
+}
