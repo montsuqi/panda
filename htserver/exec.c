@@ -341,6 +341,8 @@ EmitWithEscape(LargeByteString *lbs, char *str)
     char *p;
     for (p = str; *p != '\0'; p++) {
         switch (*p) {
+        case '\x01':
+            break;
         case '&':
             LBS_EmitString(lbs, "&amp;");
             break;
