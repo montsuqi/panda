@@ -182,7 +182,7 @@ InsertValue(
 		LBS_EmitChar(lbs,'"');
 		break;
 	  case	GL_TYPE_NUMBER:
-		nv = FixedToNumeric(ValueFixed(val));
+		nv = FixedToNumeric(&ValueFixed(val));
 		LBS_EmitString(lbs,NumericOutput(nv));
 		NumericFree(nv);
 		break;

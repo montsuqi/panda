@@ -167,7 +167,7 @@ dbgmsg(">demo4Main");
 		v1 = GetWindowValue("project6.vbox1.notebook1.fixed3.pandaclist1.item");
 		v1 = GetArrayItem(v1,count);
 		SetValueString(GetRecordItem(v1,"value1"),ValueString(e4));
-		SetValueFixed(GetRecordItem(v1,"value2"),ValueFixed(e5));
+		SetValueFixed(GetRecordItem(v1,"value2"),&ValueFixed(e5));
 		SetValueString(GetRecordItem(v1,"value3"),ValueString(e6));
 
 		count ++;
@@ -209,7 +209,7 @@ dbgmsg(">demo4Main");
 		v1 = GetWindowValue("project6.vbox1.notebook1.fixed3.pandaclist1.item");
 		v1 = GetArrayItem(v1,count);
 		SetValueString(GetRecordItem(v1,"value1"),ValueString(e8));
-		SetValueFixed(GetRecordItem(v1,"value2"),ValueFixed(e9));
+		SetValueFixed(GetRecordItem(v1,"value2"),&ValueFixed(e9));
 		SetValueString(GetRecordItem(v1,"value3"),ValueString(e10));
 		count ++;
 		SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed3.pandaclist1.count"),count);

@@ -114,14 +114,14 @@ dbgmsg(">SendValueString");
 		for	( i = 0 ; i < value->body.ArrayData.count ; i ++ ) {
 			sprintf(name,"[%d]",i);
 			SendValueString(fpComm,
-							value->body.ArrayData.item[i],name+strlen(name),fName);
+							ValueArrayItem(value,i),name+strlen(name),fName);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
 		for	( i = 0 ; i < value->body.RecordData.count ; i ++ ) {
-			sprintf(name,".%s",value->body.RecordData.names[i]);
+			sprintf(name,".%s",ValueRecordName(value,i));
 			SendValueString(fpComm,
-							value->body.RecordData.item[i],name+strlen(name),fName);
+							ValueRecordItem(value,i),name+strlen(name),fName);
 		}
 		break;
 	  default:
@@ -129,7 +129,7 @@ dbgmsg(">SendValueString");
 			SendStringDelim(fpComm,namebuff);
 			SendStringDelim(fpComm,": ");
 		}
-		EncodeString(buff,ToString(value));
+		EncodeStringURL(buff,ValueToString(value));
 		SendStringDelim(fpComm,buff);
 		SendStringDelim(fpComm,"\n");
 		break;

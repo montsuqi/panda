@@ -336,7 +336,7 @@ SendValueDelim(
 
 	HT_SendString(name);
 	HT_SendString(": ");
-	EncodeString(buff,value);
+	EncodeStringURL(buff,value);
 	HT_SendString(buff);
 	HT_SendString("\n");
 }

@@ -168,7 +168,7 @@ dbgmsg(">demoMain");
 			v = GetWindowValue("project1.vbox1.swin1.clist1.item");
 			v = GetArrayItem(v,count);
 			SetValueString(GetRecordItem(v,"value1"),ValueString(e1));
-			SetValueFixed(GetRecordItem(v,"value2"),ValueFixed(e2));
+			SetValueFixed(GetRecordItem(v,"value2"),&ValueFixed(e2));
 			SetValueString(GetRecordItem(v,"value3"),ValueString(e3));
 #if	0
 			SetValueBool(GetWindowValue("project1.vbox1.swin1.clist1.select[0]")
@@ -211,14 +211,14 @@ dbgmsg(">demoMain");
 			e2 = GetWindowValue("project1.vbox1.entry2.value");
 			sprintf(buff2,"%s%s",
 					ValueString(e1),
-					ToString(e2));
+					ValueToString(e2));
 			strcat(buff,buff2);
 		} else
 		if		(  ValueBool(GetWindowValue("project1.vbox1.hbox6.radioright.value")) ) {
 			e1 = GetWindowValue("project1.vbox1.entry1.value");
 			e2 = GetWindowValue("project1.vbox1.entry2.value");
 			sprintf(buff2,"%s%s",
-					ToString(e2),
+					ValueToString(e2),
 					ValueString(e1));
 			strcat(buff,buff2);
 		} else {
@@ -250,7 +250,7 @@ dbgmsg(">demoMain");
 		e2 = GetItemLongName(win->Value,"vbox1.entry2.value");
 		sprintf(buff,"%s%s",
 				ValueString(e1),
-				ToString(e2));
+				ValueToString(e2));
 		SetValueString(GetItemLongName(win->Value,"vbox1.entry3.value"),buff);
 		SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkleft"),FALSE);
 
@@ -261,7 +261,7 @@ dbgmsg(">demoMain");
 		e1 = GetItemLongName(win->Value,"vbox1.entry1.value");
 		e2 = GetItemLongName(win->Value,"vbox1.entry2.value");
 		sprintf(buff,"%s%s",
-				ToString(e2),
+				ValueToString(e2),
 				ValueString(e1));
 		SetValueString(GetItemLongName(win->Value,"vbox1.entry3.value"),buff);
 		SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkright"),FALSE);

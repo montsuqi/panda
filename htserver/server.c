@@ -52,6 +52,7 @@ copies.
 #include	"libmondai.h"
 #include	"glterm.h"
 #include	"comm.h"
+#include	"comms.h"
 #include	"authstub.h"
 #include	"applications.h"
 #include	"driver.h"
@@ -73,78 +74,36 @@ typedef	struct	{
 }	HTC_Node;
 
 static	void
-HT_SendString(
-	NETFILE	*fp,
-	char	*str)
-{
-	dbgprintf("send [%s]\n",str);
-	Send(fp,str,strlen(str));
-}
-
-extern	Bool
-HT_RecvString(
-	NETFILE	*fp,
-	size_t	size,
-	char	*str)
-{
-	int		c;
-	Bool	rc;
-#ifdef	DEBUG
-	char	*p = str;
-#endif
-
-	while	(	(  ( c = RecvChar(fp) )  >=  0     )
-			&&	(  c                     !=  '\n'  ) )	{
-		*str ++ = c;
-	}
-	*str = 0;
-	if		(  c  >=  0  ) {
-		*str -- = 0;
-		while	(	(  *str  ==  '\r'  )
-				||	(  *str  ==  '\n'  ) ) {
-			*str = 0;
-			str --;
-		}
-		rc = TRUE;
-	} else {
-		rc = FALSE;
-	}
-	dbgprintf("recv [%s]\n",p);
-	return	(rc);
-}
-
-static	void
 FinishSession(
 	ScreenData	*scr)
 {
+	char	msg[128];
 dbgmsg(">FinishSession");
 	ReleasePool(NULL);
-	printf("session end\n");
+	sprintf(msg,"[%s] session end",scr->user);
+	MessageLog(msg);
 dbgmsg("<FinishSession");
 }
 
 static	void
 DecodeName(
-	char	*wname,
-	char	*vname,
+	char	**rname,
+	char	**vname,
 	char	*p)
 {
 	while	(  isspace(*p)  )	p ++;
+	*rname = p;
 	while	(	(  *p  !=  0     )
-			&&	(  *p  !=  '.'   )
-			&&	(  !isspace(*p)  ) ) {
-		*wname ++ = *p ++;
-	}
-	*wname = 0;
+			&&	(  *p  !=  '.'   ) )	p ++;
+	*p = 0;
 	p ++;
 	while	(  isspace(*p)  )	p ++;
-	while	(  *p  !=  0  ) {
-		if		(  !isspace(*p)  ) {
-			*vname ++ = *p;
-		}
-		p ++;
+	*vname = p;
+	if		(  *p  !=  0  ) {
+		while	(	(  *p  !=  0     )
+				&&	(  !isspace(*p)  ) )	p ++;
 	}
-	*vname = 0;
+	*p = 0;
 }
 
 static	void
@@ -163,9 +122,9 @@ SendWindowName(
 			  case	SCREEN_CURRENT_WINDOW:
 			  case	SCREEN_NEW_WINDOW:
 			  case	SCREEN_CHANGE_WINDOW:
-				HT_SendString(fp,"Window: ");
-				HT_SendString(fp,wname);
-				HT_SendString(fp,"\n");
+				SendStringDelim(fp,"Window: ");
+				SendStringDelim(fp,wname);
+				SendStringDelim(fp,"\n");
 				break;
 			  default:
 				break;
@@ -175,7 +134,7 @@ SendWindowName(
 	}
 dbgmsg(">SendWindowName");
 	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fp);
-	HT_SendString(fp,"\n");
+	SendStringDelim(fp,"\n");
 dbgmsg("<SendWindowName");
 }
 
@@ -185,8 +144,8 @@ WriteClient(
 	ScreenData	*scr)
 {
 	char	buff[SIZE_BUFF+1];
-	char	vname[SIZE_BUFF+1]
-	,		wname[SIZE_BUFF+1];
+	char	*vname
+	,		*wname;
 	WindowData	*win;
 	ValueStruct	*value;
 	char	*p;
@@ -194,21 +153,21 @@ WriteClient(
 dbgmsg(">WriteClient");
 	SendWindowName(fp,scr);
 	do {
-		if		(  !HT_RecvString(fp,SIZE_BUFF,buff)  )	break;
+		if		(  !RecvStringDelim(fp,SIZE_BUFF,buff)  )	break;
 		if		(  ( p = strchr(buff,' ') )  !=  NULL  ) {
 			*p = 0;
 		}
 		if		(  *buff  !=  0  ) {
-			DecodeName(wname,vname,buff);
+			DecodeName(&wname,&vname,buff);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->Value,vname);
-				HT_SendString(fp,ToString(value));
+				SendStringDelim(fp,ValueToString(value));
 				if		(	(  p  !=  NULL            )
 						&&	(  !stricmp(p+1,"clear")  ) ) {
 					InitializeValue(value);
 				}
 			}
-			HT_SendString(fp,"\n");
+			SendStringDelim(fp,"\n");
 		}
 	}	while	(  *buff  !=  0  );
 dbgmsg("<WriteClient");
@@ -220,22 +179,22 @@ RecvScreenData(
 	ScreenData	*scr)
 {
 	char	buff[SIZE_BUFF+1];
-	char	vname[SIZE_BUFF+1]
-	,		wname[SIZE_BUFF+1]
+	char	*vname
+	,		*wname
 	,		str[SIZE_BUFF+1];
 	char	*p;
 	WindowData	*win;
 	ValueStruct	*value;
 
 	do {
-		HT_RecvString(fp,SIZE_BUFF,buff);
+		RecvStringDelim(fp,SIZE_BUFF,buff);
 		if		(	(  *buff                     !=  0     )
 				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
 			*p = 0;
-			DecodeName(wname,vname,buff);
+			DecodeName(&wname,&vname,buff);
 			p ++;
 			while	(  isspace(*p)  )	p ++;
-			DecodeString(str,p);
+			DecodeStringURL(str,p);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->Value,vname);
 				value->fUpdate = TRUE;
@@ -293,9 +252,9 @@ dbgmsg(">SesServer");
 			NetSetFD(fp,fd);
 			htc.count += 1;
 			EncodeTRID(trid,htc.ses,htc.count);
-			HT_SendString(fp,trid);
-			HT_SendString(fp,"\n");
-			HT_RecvString(fp,SIZE_BUFF,buff);
+			SendStringDelim(fp,trid);
+			SendStringDelim(fp,"\n");
+			RecvStringDelim(fp,SIZE_BUFF,buff);
 			if		(  *buff  ==  0  )	{
 				break;
 			} else {
@@ -347,7 +306,7 @@ dbgmsg(">ChildProcess");
 	scr->Windows = NULL;
 	ApplicationsCall(APL_SESSION_LINK,scr);
 	if		(  scr->status  ==  APL_SESSION_NULL  ) {
-		HT_SendString(fp,"900 invalid program\n");
+		SendStringDelim(fp,"900 invalid program\n");
 		printf("reject client(program name error)\n");
 		fOk = FALSE;
 	} else {
@@ -355,8 +314,8 @@ dbgmsg(">ChildProcess");
 	}
 	if		(  fOk  ) {
 		EncodeTRID(trid,sesid,0);
-		HT_SendString(fp,trid);
-		HT_SendString(fp,"\n");
+		SendStringDelim(fp,trid);
+		SendStringDelim(fp,"\n");
 		WriteClient(fp,scr);
 		strcpy(scr->term,TermName(0));
 		CloseNet(fp);
@@ -376,7 +335,7 @@ PutLog(
 {
 	char	buff[128];
 
-	sprintf(buff,"%08d %s %s",sesno,user,cmd);
+	sprintf(buff,"%08d [%s] [%s] session start",sesno,user,cmd);
 	MessageLog(buff);
 }
 
@@ -460,7 +419,7 @@ dbgmsg(">ExecuteServer");
 			Error("INET Domain Accept");
 		}
 		fp = SocketToNet(fd);
-		HT_RecvString(fp,SIZE_BUFF,buff);
+		RecvStringDelim(fp,SIZE_BUFF,buff);
 		if		(  strncmp(buff,"Start:",6)  ==  0  ) {
 			NewSession(fp,buff+7);
 		} else
@@ -477,8 +436,8 @@ dbgmsg(">ExecuteServer");
 				msg.msg_controllen = cmsg->cmsg_len;
 				if		(  sendmsg(htc->sock,&msg,0)  <  0  ) {
 					EncodeTRID(buff,0,0);
-					HT_SendString(fp,buff);
-					HT_SendString(fp,"\n");
+					SendStringDelim(fp,buff);
+					SendStringDelim(fp,"\n");
 					xfree(htc);
 					g_hash_table_remove(SesHash,(void *)ses);
 				}

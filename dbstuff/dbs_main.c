@@ -199,7 +199,7 @@ RecvData(
 				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
 			*p = 0;
 			DecodeName(rname,vname,buff);
-			DecodeString(str,p+1);
+			DecodeStringURL(str,p+1);
 			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 				if		(  ( rec = ThisDB[rno-1] )  !=  NULL  ) {
 					value = GetItemLongName(rec->rec,vname);
@@ -287,16 +287,16 @@ dbgmsg(">MainLoop");
 			p = buff + 6;
 			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 				*q = 0;
-				DecodeString(func,p);
+				DecodeStringURL(func,p);
 				p = q + 1;
 				if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 					*q = 0;
-					DecodeString(rname,p);
+					DecodeStringURL(rname,p);
 					p = q + 1;
 				} else {
 					strcpy(rname,"");
 				}
-				DecodeString(pname,p);
+				DecodeStringURL(pname,p);
 				if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 					ctrl.rno = rno - 1;
 					rec = ThisDB[ctrl.rno];
@@ -311,7 +311,7 @@ dbgmsg(">MainLoop");
 					rec = NULL;
 				}
 			} else {
-				DecodeString(func,p);
+				DecodeStringURL(func,p);
 				ctrl.rno = 0;
 				ctrl.pno = 0;
 				rec = NULL;

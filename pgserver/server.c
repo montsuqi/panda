@@ -108,7 +108,7 @@ dbgmsg(">RecvScreenData");
 			DecodeName(wname,vname,buff);
 			p ++;
 			while	(  isspace(*p)  )	p ++;
-			DecodeString(str,p);
+			DecodeStringURL(str,p);
 printf("wname = [%s]\n",wname);
 printf("vname = [%s]\n",vname);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
@@ -213,10 +213,10 @@ dbgmsg(">MainLoop");
 		p = buff + 7;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
-			DecodeString(scr->widget,p);
-			DecodeString(scr->event,q+1);
+			DecodeStringURL(scr->widget,p);
+			DecodeStringURL(scr->event,q+1);
 		} else {
-			DecodeString(scr->event,p);
+			DecodeStringURL(scr->event,p);
 			*scr->widget = 0;
 		}
 		RecvScreenData(fpComm,scr);

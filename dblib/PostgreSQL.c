@@ -79,7 +79,7 @@ ValueToSQL(
 		strcpy(buff,ValueString(val));
 		break;
 	  case	GL_TYPE_NUMBER:
-		nv = FixedToNumeric(ValueFixed(val));
+		nv = FixedToNumeric(&ValueFixed(val));
 		sprintf(buff,"%s",NumericOutput(nv));
 		NumericFree(nv);
 		break;
