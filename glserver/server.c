@@ -495,7 +495,7 @@ ENTER_FUNC;
 				}
 			}
 		} else {
-			MessagePrintf("invalud wind name [%s]\n",wname);
+			MessagePrintf("invalid wind name [%s]\n",wname);
 			exit(1);
 		}
 	}
