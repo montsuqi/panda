@@ -383,7 +383,7 @@ dbgmsg(">ExecuteProcess");
 		CallBefore(node);
 		if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
 			MessageLog("application process illegular execution");
-			exit(0);
+			exit(2);
 		}
 		CallAfter(node);
 	}
