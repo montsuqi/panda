@@ -1,3 +1,7 @@
+2003-01-13  Koji SHIMIZU  <shimizu@netlab.jp>
+
+	* tools/copygen.c (PutName, COBOL): 1行に73文字以上出力させないようにした
+
 2002-11-22  Keisuke Nishida  <knishida@netlab.jp>
 
 	* dblib/Postgres.c (GetTable, GetValue): Fix memory leak.

@@ -73,6 +73,8 @@ static	int		level;
 static	void	COBOL(ValueStruct *val, size_t arraysize, size_t textsize);
 
 static	int		Col;
+static	int		is_return = FALSE;
+static	int		is_gen_copy = FALSE;
 
 static	void
 PutLevel(
@@ -143,6 +145,17 @@ PutName(
 		strcpy(buff,"filler");
 	} else {
 		sprintf(buff,"%s%s",Prefix,name);
+		if (is_gen_copy) {
+#define MAX_CHARACTER_IN_LINE 65
+			int threshold;
+
+			threshold = MAX_CHARACTER_IN_LINE -
+						(8 + level * 2 + 4 + 4 + 18 + 2 + 18 + 1);
+			if		(	(  threshold <= 0          )
+					||	(  strlen(buff) > threshold) ) {
+				is_return = TRUE;
+			}
+		}
 	}
 	PutString(buff);
 }
@@ -213,6 +226,19 @@ COBOL(
 			PutLevel(level);
 			tmp = val->body.RecordData.item[i];
 			PutName(val->body.RecordData.names[i]);
+			if		(  is_return  ) {
+			  /* new line if current ValueStruct children is item and it has
+				 occurs */
+				if		(	(  tmp->type != GL_TYPE_RECORD  )
+						&&	(  tmp->type == GL_TYPE_ARRAY  )
+						&&	(  tmp->body.ArrayData.item[0]->type != GL_TYPE_RECORD  ) ) {
+					fputs("\n",stdout);
+					fputs("        " /* comment */
+					      "                   " /* indent */,stdout);
+					Col = 0;
+				}
+			  	is_return = FALSE;
+			}
 			if		(  tmp->type  !=  GL_TYPE_RECORD  ) {
 				PutTab(4);
 			}
@@ -248,6 +274,8 @@ MakeFromRecord(
 	char	*name)
 {
 	RecordStruct	*rec;
+
+	is_gen_copy = TRUE;
 
 	if		(  fScreen  ) {
 		level = 3;
@@ -287,7 +315,7 @@ MakeLD(void)
 
 dbgmsg(">MakeLD");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,LD_Name,"","");
+	SetUpDirectory(Directory,LD_Name,"");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -450,7 +478,7 @@ MakeLinkage(void)
 	char	*_prefix;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,LD_Name,"","");
+	SetUpDirectory(Directory,LD_Name,"");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -492,7 +520,7 @@ MakeDB(void)
 	size_t	cDB;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -518,7 +546,7 @@ MakeDB(void)
 	PutName("dbarea");
 	printf(".\n");
 	msize = 0;
-	for	( i = 1 ; i < cDB ; i ++ ) {
+	for	( i = 0 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -548,7 +576,7 @@ MakeDBREC(
 
 dbgmsg(">MakeDBREC");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -569,8 +597,8 @@ dbgmsg(">MakeDBREC");
 	} else {
 		Error("LD or BD not specified");
 	}
-	msize = 64;
-	for	( i = 1 ; i < cDB ; i ++ ) {
+	msize = 0;
+	for	( i = 0 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -615,7 +643,7 @@ MakeDBCOMM(void)
 	size_t	cDB;
 
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -638,7 +666,7 @@ MakeDBCOMM(void)
 	}
 
 	msize = 0;
-	for	( i = 1 ; i < cDB ; i ++ ) {
+	for	( i = 0 ; i < cDB ; i ++ ) {
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		msize = ( msize > size ) ? msize : size;
 	}
@@ -729,9 +757,8 @@ MakeDBPATH(void)
 	,			textsize;
 	size_t	cDB;
 
-dbgmsg(">MakeDBPATH");
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,NULL,NULL,NULL);
+	SetUpDirectory(Directory,NULL,NULL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -759,7 +786,7 @@ dbgmsg(">MakeDBPATH");
 	PutLevel(1);
 	PutName("dbpath");
 	printf(".\n");
-	for	( i = 1 ; i < cDB ; i ++ ) {
+	for	( i = 0 ; i < cDB ; i ++ ) {
 		db = dbrec[i]->opt.db;
 		size = SizeValue(dbrec[i]->rec,arraysize,textsize);
 		blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
@@ -786,14 +813,13 @@ dbgmsg(">MakeDBPATH");
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",j);
 		}
 	}
-dbgmsg("<MakeDBPATH");
 }
 
 static	void
 MakeMCP(void)
 {
 	InitDirectory(TRUE);
-	SetUpDirectory(Directory,"","","");
+	SetUpDirectory(Directory,"","");
 
 	Prefix = "";
 	PutLevel(1);
