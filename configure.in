@@ -257,18 +257,23 @@ AC_ARG_WITH(ruby,
         AC_MSG_RESULT(no)
         AC_MSG_ERROR(Ruby version is too old)
       fi
-      AC_DEFINE(HAVE_RUBY,1,[])
-      RUBY_CFLAGS=`$RUBY -r rbconfig -e 'print "-I" + Config::CONFIG[["archdir"]]'`
-      RUBY_SHARED=`$RUBY -r rbconfig -e 'print Config::CONFIG[["ENABLE_SHARED"]]'`
-      if test "$RUBY_SHARED" = "yes"; then
-        RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["LIBRUBYARG"]].gsub(/-L\./, "-L" + Config::CONFIG[["libdir"]]) + " " + Config::CONFIG[["LIBS"]]'`
-        RUBY_EXT_LIBS="$RUBY_LIBS"
+      archdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]]'`
+      if test -f $archdir/ruby.h; then
+        AC_DEFINE(HAVE_RUBY,1,[])
+        RUBY_CFLAGS="-I${archdir}"
+        RUBY_SHARED=`$RUBY -r rbconfig -e 'print Config::CONFIG[["ENABLE_SHARED"]]'`
+        if test "$RUBY_SHARED" = "yes"; then
+          RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["LIBRUBYARG"]].gsub(/-L\./, "-L" + Config::CONFIG[["libdir"]]) + " " + Config::CONFIG[["LIBS"]]'`
+          RUBY_EXT_LIBS="$RUBY_LIBS"
+        else
+          RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]] + "/" + Config::CONFIG[["LIBRUBYARG"]] + " " + Config::CONFIG[["LIBS"]]'`
+          RUBY_EXT_LIBS=`$RUBY -r rbconfig -e 'Config::CONFIG[["LIBS"]]'`
+        fi
+        rubylibdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["rubylibdir"]]'`
+        rubyarchdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]]'`
       else
-        RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]] + "/" + Config::CONFIG[["LIBRUBYARG"]] + " " + Config::CONFIG[["LIBS"]]'`
-        RUBY_EXT_LIBS=`$RUBY -r rbconfig -e 'Config::CONFIG[["LIBS"]]'`
+        AC_MSG_ERROR(ruby.h not found)
       fi
-      rubylibdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["rubylibdir"]]'`
-      rubyarchdir=`$RUBY -r rbconfig -e 'print Config::CONFIG[["archdir"]]'`
     fi
     AC_SUBST(RUBY) 
     AC_SUBST(RUBY_CFLAGS) 
