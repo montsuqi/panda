@@ -294,6 +294,13 @@ dbgmsg(">CallAfter");
 	if		(  ( PutType = (byte)(int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
 		PutType = SCREEN_CURRENT_WINDOW;
 	}
+	if		(  PutType  ==  SCREEN_BACK_WINDOW  ) {
+		sindex --;
+		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
+			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex)),
+			   SIZE_NAME);
+		PutType = SCREEN_CHANGE_WINDOW;
+	}
 
 	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
 		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,0)),
@@ -334,17 +341,10 @@ dbgmsg(">CallAfter");
 		SetPutType(node,ValueStringPointer(mcp_dcwindow),SCREEN_CURRENT_WINDOW);
 #endif
 		break;
-	  case	SCREEN_BACK_WINDOW:
-		sindex --;
-		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
-			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex)),
-			   SIZE_NAME);
-		PutType = SCREEN_CHANGE_WINDOW;
-		/*	through	*/
-#ifdef	NEW_SEQUENCE
 	  default:
-#endif
+#ifdef	NEW_SEQUENCE
 		SetPutType(node,ValueStringPointer(mcp_dcwindow),PutType);
+#endif
 		break;
 	}
 	SetValueInteger(mcp_pputtype,(int)PutType);
