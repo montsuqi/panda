@@ -1,3 +1,17 @@
+2002-07-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.6 release -> CVS化
+
+2002-06-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/callbacks.c: knishida patch吸収
+
+2002-06-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/widgetOPS.c (RecvEntry): knishida patch吸収
+
+	* aps/redirect.c (BeginDB_Redirect): リダイレクト先がない時の間違いを修正
+
 2002-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.5 release

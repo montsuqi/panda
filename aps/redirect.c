@@ -102,7 +102,9 @@ BeginDB_Redirect(
 	DBG_Struct	*dbg)
 {
 dbgmsg(">BeginDB_Redirect");
-	LBS_EmitStart(dbg->redirectData); 
+	if		(  dbg->redirectData  !=  NULL  ) { 
+		LBS_EmitStart(dbg->redirectData);
+	}
 dbgmsg("<BeginDB_Redirect");
 }
 

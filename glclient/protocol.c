@@ -169,6 +169,7 @@ dbgmsg(">ShowWindow");
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CURRENT_WINDOW:
 			gtk_widget_show_all(GTK_WIDGET(node->window));
+			ResetTimer(node->xml);
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
 			gtk_widget_hide_all(GTK_WIDGET(node->window));

@@ -258,7 +258,8 @@ GetOption(
 					*q = (char)c;
 					q ++;
 					c = fgetc(fpParam);
-				}	while	(  c  !=  '\n'  );
+				}	while	(	(  c  !=  '\n'  )
+							&&	(  c  !=  EOF   ) );
 				*q = 0;
 				ungetc(c,fpParam);
 			} else {

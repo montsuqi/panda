@@ -40,6 +40,7 @@ copies.
 #ifdef	USE_PANDA
 #include	<gtkpanda/gtkpanda.h>
 #endif
+#include	<gdk/gdkkeysyms.h>
 
 #include	"callbacks.h"
 #include	"types.h"
@@ -97,6 +98,29 @@ unselect_all(
 	GtkEntry *entry = GTK_ENTRY (widget);
 	gtk_entry_select_region (entry, 0, 0);
 	return (TRUE);
+}
+
+ extern	gboolean
+keypress_filter(
+	GtkWidget	*widget,
+	GdkEventKey	*event,
+	char		*next)
+{
+	GtkWidget	*nextWidget;
+	GtkWidget	*window;
+	char		*wname;
+	XML_Node	*node;
+
+	if		(event->keyval == GDK_KP_Enter) {
+		window = gtk_widget_get_toplevel(widget);
+		wname = gtk_widget_get_name(window);
+		if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )       !=  NULL  )
+				&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
+				gtk_widget_grab_focus (nextWidget);
+		}
+		gtk_signal_emit_stop_by_name(GTK_OBJECT(widget),"key_press_event");
+	}
+	return	(TRUE);
 }
 
 extern	gboolean
@@ -163,12 +187,9 @@ send_event(
 {
 	char	*name
 	,		*window;
-	GtkWidget	*w;
 	static int	ignore_event = FALSE;
 
 dbgmsg(">send_event");
-	/* don't send event if the window has lost focus */
-	for (w = widget; !GTK_IS_WINDOW (w); w = w->parent);
 	if		(  !fInRecv  &&  !ignore_event ) {
 		name = gtk_widget_get_name(widget);
 		window = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
@@ -272,8 +293,19 @@ entry_next_focus(
 	wname = gtk_widget_get_name(window);
 	if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )       !=  NULL  )
 			&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
-		gtk_window_set_focus(GTK_WINDOW(window),nextWidget);
+		gtk_widget_grab_focus(nextWidget);
 	}
+}
+
+extern	void
+ResetTimer(
+	GladeXML	*xml)
+{
+	GList *l, *list = glade_xml_get_widget_prefix (xml, "pandatimer");
+	for (l = list; l; l = g_list_next (l))
+		if (GTK_IS_PANDA_TIMER (l->data))
+			gtk_panda_timer_reset (GTK_PANDA_TIMER (l->data));
+	g_list_free (list);
 }
 
 static	void
@@ -289,9 +321,11 @@ dbgmsg(">UpdateWidget");
 	if		(  !fInRecv  ) {
 		name = glade_get_widget_long_name(widget);
 		wname = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
-		if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  )
-				&&	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) ) {
-			g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
+		if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
+			if	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) {
+				g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
+			}
+			ResetTimer(node->xml);
 		}
 	}
 dbgmsg("<UpdateWidget");

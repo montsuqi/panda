@@ -45,4 +45,5 @@ extern	void	window_close(GtkWidget *widget, gpointer user_data);
 extern	void	open_browser(GtkPandaHTML *html, XmHTMLAnchorCallbackStruct *cbs, void *data);
 #endif
 extern	void	ClearWindowTable(void);
+extern	void	ResetTimer(GladeXML *xml);
 #endif
