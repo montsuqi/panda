@@ -81,6 +81,14 @@ copies.
 #define	ReleaseBLOB(blob)			pthread_cond_signal(&(blob)->cond)
 #define	WaitBLOB(blod)				pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
+#define	SIZE_EXT			0x80000000
+#define	IS_EXT_SIZE(p)		(((p)&SIZE_EXT) == SIZE_EXT)
+#define	INPAGE_SIZE(p)		((p)&~SIZE_EXT)
+
+#ifndef	objpos_t
+#define	objpos_t		uint64_t
+#endif
+
 typedef	struct {
 	byte		flags	:8;
 	uint64_t	pos		:56;
@@ -91,11 +99,13 @@ typedef	struct {
 typedef	struct {
 	MonObjectType	obj;
 	byte			mode;
-	pageno_t		head;
-	pageno_t		last;
+	objpos_t		head;
+	objpos_t		first;
+	objpos_t		last;
 	uint64_t		size;
-	void			*buff;
-	size_t			bleft;
+	byte			*buff;
+	size_t			bsize;
+	size_t			use;
 }	BLOB_V2_Open;
 
 typedef	struct {
@@ -104,6 +114,7 @@ typedef	struct {
 	pageno_t		pages;
 	int				level;
 	pageno_t		pos[MAX_PAGE_LEVEL];
+	pageno_t		freedata;
 }	BLOB_V2_Header;
 
 typedef	struct _BLOB_V2_Space	{
@@ -114,20 +125,22 @@ typedef	struct _BLOB_V2_Space	{
 	int				level;
 	pageno_t		pos[MAX_PAGE_LEVEL];
 	pageno_t		mul[MAX_PAGE_LEVEL];
+	pageno_t		freedatapage;
+	pageno_t		*freedata;
+	GHashTable		*freepage;
 	int				cTran;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
 }	BLOB_V2_Space;
 
 typedef	struct {
-	size_t	pos;
-	size_t	len;
+	objpos_t	prio;
+	objpos_t	next;
+	size_t		size;
 }	BLOB_V2_DataEntry;
 
 typedef	struct {
-	size_t				left;
-	size_t				count;
-	BLOB_V2_DataEntry	data[0];
+	size_t		use;
 }	BLOB_V2_DataPage;
 
 typedef	struct {
@@ -157,8 +170,8 @@ extern	MonObjectType	NewBLOB_V2(BLOB_V2_State *state, int mode);
 extern	Bool			OpenBLOB_V2(BLOB_V2_State *state, MonObjectType obj, int mode);
 extern	Bool			DestroyBLOB_V2(BLOB_V2_State *state, MonObjectType obj);
 extern	Bool			CloseBLOB_V2(BLOB_V2_State *state, MonObjectType obj);
-extern	int	WriteBLOB_V2(BLOB_V2_Space *blob, MonObjectType obj, byte *buff, size_t size);
-extern	int	ReadBLOB_V2(BLOB_V2_Space *blob, MonObjectType obj, byte *buff, size_t size);
+extern	int	WriteBLOB_V2(BLOB_V2_State *state, MonObjectType obj, byte *buff, size_t size);
+extern	int	ReadBLOB_V2(BLOB_V2_State *state, MonObjectType obj, byte *buff, size_t size);
 
 #undef	GLOBAL
 #ifdef	MAIN

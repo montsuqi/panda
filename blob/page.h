@@ -27,6 +27,9 @@ extern	pageno_t	NewPage(BLOB_V2_State *state);
 extern	void		*GetPage(BLOB_V2_State *state, pageno_t page);
 extern	void		UpdatePage(BLOB_V2_State *state, pageno_t page);
 extern	void		ReleasePage(BLOB_V2_State *state, pageno_t page);
+extern	BLOB_V2_Page	*SyncPage(BLOB_V2_State *state, pageno_t page);
+extern	void		WritePage(BLOB_V2_Space *blob, void *buff, pageno_t page);
+extern	void		*ReadPage(BLOB_V2_Space *blob, pageno_t page);
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -55,6 +55,7 @@ NewPage(
 		,		zero;
 	int			i;
 
+ENTER_FUNC;
 	page = state->space->pages;
 	state->space->pages ++;
 	fseek(state->space->fp,0,SEEK_END);
@@ -64,8 +65,32 @@ NewPage(
 	}
 	fflush(state->space->fp);
 	dbgprintf("new page = %lld\n",page);
+LEAVE_FUNC;
 	return	(page);
 }
+
+extern	void	*
+ReadPage(
+	BLOB_V2_Space	*blob,
+	pageno_t		page)
+{
+	void	*ret;
+
+ENTER_FUNC;
+#ifdef	USE_MMAP
+	ret = mmap(NULL,blob->pagesize,
+			   PROT_READ|PROT_WRITE,MAP_SHARED,fileno(blob->fp),
+						 page*blob->pagesize);
+#else
+	if		(  ( ret = xmalloc(blob->pagesize) )  !=  NULL  ) {
+		fseek(blob->fp,page*blob->pagesize,SEEK_SET);
+		fread(ret,blob->pagesize,1,blob->fp);
+	}
+#endif
+LEAVE_FUNC;
+	return	(ret);
+}
+	
 
 extern	void	*
 GetPage(
@@ -82,15 +107,7 @@ ENTER_FUNC;
 		ent->fUpdate = FALSE;
 		ent->page = page;
 		g_hash_table_insert(state->pages,&ent->page,ent);
-#ifdef	USE_MMAP
-		ent->body = mmap(NULL,state->space->pagesize,
-						 PROT_READ|PROT_WRITE,MAP_SHARED,fileno(state->space->fp),
-						 page*state->space->pagesize);
-#else
-		ent->body = xmalloc(state->space->pagesize);
-		fseek(state->space->fp,page*state->space->pagesize,SEEK_SET);
-		fread(ent->body,state->space->pagesize,1,state->space->fp);
-#endif
+		ent->body = ReadPage(state->space,page);
 	}
 LEAVE_FUNC;
 	return	(ent->body);
@@ -114,6 +131,43 @@ LEAVE_FUNC;
 }
 
 extern	void
+WritePage(
+	BLOB_V2_Space	*blob,
+	void			*buff,
+	pageno_t		page)
+{
+#ifdef	USE_MMAP
+	msync(buff,blob->pagesize,MS_SYNC);
+#else
+	fseek(blob->fp,page*blob->pagesize,SEEK_SET);
+	fwrite(buff,blob->pagesize,1,blob->fp);
+	fflush(blob->fp);
+#endif
+}
+
+
+extern	BLOB_V2_Page	*
+SyncPage(
+	BLOB_V2_State	*state,
+	pageno_t		page)
+{
+	BLOB_V2_Page	*ent;
+
+ENTER_FUNC;
+	dbgprintf("sync    = [%lld]\n",page);
+	if		(  ( ent = (BLOB_V2_Page *)g_hash_table_lookup(state->pages,&page) )
+			   !=  NULL  ) {
+		if		(  ent->fUpdate  ) {
+			dbgmsg("update");
+			WritePage(state->space,ent->body,page);
+			ent->fUpdate = FALSE;
+		}
+	}
+LEAVE_FUNC;
+	return	(ent);
+}
+
+extern	void
 ReleasePage(
 	BLOB_V2_State	*state,
 	pageno_t		page)
@@ -122,18 +176,7 @@ ReleasePage(
 
 ENTER_FUNC;
 	dbgprintf("release = [%lld]\n",page);
-	if		(  ( ent = (BLOB_V2_Page *)g_hash_table_lookup(state->pages,&page) )
-			   !=  NULL  ) {
-		if		(  ent->fUpdate  ) {
-			dbgmsg("update");
-#ifdef	USE_MMAP
-			msync(ent->body,state->space->pagesize,MS_SYNC);
-#else
-			fseek(state->space->fp,page*state->space->pagesize,SEEK_SET);
-			fwrite(ent->body,state->space->pagesize,1,state->space->fp);
-			fflush(state->space->fp);
-#endif
-		}
+	if		(  ( ent = SyncPage(state,page) )  !=  NULL  ) {
 #ifdef	USE_MMAP
 		munmap(ent->body,state->space->pagesize);
 #else
@@ -151,13 +194,14 @@ StartBLOB_V2(
 {
 	int		tid;
 
+ENTER_FUNC;
 	LockBLOB(state->space);
 	tid = state->space->cTran ++;
 	UnLockBLOB(state->space);
 	ReleaseBLOB(state->space);
 	state->tid = tid;
 	state->oTable = NewLLHash();
-
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -167,20 +211,23 @@ SyncObject(
 	BLOB_V2_Open	*ent,
 	BLOB_V2_State	*state)
 {
+ENTER_FUNC;
 	/*	free	*/
 	xfree(ent->buff);
 	xfree(ent);
-}	
+LEAVE_FUNC;
+}
 
 extern	Bool
 CommitBLOB_V2(
 	BLOB_V2_State	*state)
 {
+ENTER_FUNC;
 	state->tid = 0;
-
 	g_hash_table_foreach(state->oTable,(GHFunc)SyncObject,state);
 	g_hash_table_destroy(state->oTable);
 	state->oTable = NULL;
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -244,6 +291,9 @@ ENTER_FUNC;
 			blob->mul[i] = mul;
 			mul *= head.pagesize / sizeof(pageno_t);
 		}
+		blob->freedata = ReadPage(blob,head.freedata);
+		blob->freedatapage = head.freedata;
+		blob->freepage = NewLLHash();
 		blob->cTran = 1;
 		pthread_mutex_init(&blob->mutex,NULL);
 		pthread_cond_init(&blob->cond,NULL);
@@ -264,9 +314,11 @@ FinishBLOB_V2(
 	int		i;
 
 ENTER_FUNC;
+	WritePage(blob,blob->freedata,blob->freedatapage);
 	snprintf(name,SIZE_LONGNAME+1,"%s.pid",blob->space);
 	unlink(name);
 	memcpy(head.magic,BLOB_V2_HEADER,SIZE_BLOB_HEADER);
+	head.freedata = blob->freedatapage;
 	head.pagesize = blob->pagesize;
 	head.pages = blob->pages;
 	head.level = blob->level;

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -44,6 +44,10 @@ copies.
 #include	"blob_v2.h"
 #include	"message.h"
 #include	"debug.h"
+
+#define	ROUND_TO(p,s)	((((p)%(s)) == 0) ? (p) : (((p)/(s))+1)*(s))
+
+static	void	WriteBuffer(BLOB_V2_State *state, BLOB_V2_Open *ent);
 
 static	MonObjectType
 GetFreeOID(
@@ -80,16 +84,9 @@ ENTER_FUNC;
 				base = 0;
 				for	( k = i ; k >= 0 ; k -- ) {
 					stack[k] = page;
-dbgprintf("k    = %d\n",k);
-dbgprintf("page = %lld\n",page);
 					nodepage = GetPage(state,page);
 					lower = page;
 					node = 0;
-#if	0
-for	( j = 0 ; j <  NODE_ELEMENTS(state) ; j ++ ) {
-	printf("dump %lld\n",PAGE_NO(nodepage[j]));
-}
-#endif
 					for	( j = 0 ; j <  NODE_ELEMENTS(state) ; j ++ ) {
 						if		(  HAVE_FREECHILD(nodepage[j])  ) {
 							if		(  ( lower = PAGE_NO(nodepage[j]) )  ==  0  ) {
@@ -102,7 +99,6 @@ for	( j = 0 ; j <  NODE_ELEMENTS(state) ; j ++ ) {
 								UpdatePage(state,page);
 							}
 							leaf = lower;
-printf("new leaf = %lld\n",leaf);
 							node = j;
 							break;
 						}
@@ -115,7 +111,6 @@ printf("new leaf = %lld\n",leaf);
 			}
 		}
 		if		(  leaf  ==  0  ) {
-dbgprintf("level up\n");
 			node = NewPage(state);
 			nodepage = GetPage(state,node);
 			nodepage[0] = blob->pos[blob->level-1] | PAGE_NODE;
@@ -135,6 +130,7 @@ dbgprintf("level up\n");
 			if		(  off  <  0  ) {
 				USE_OBJ(leafpage[j]);
 				leafpage[j].mode = BLOB_OPEN_CLOSE;
+				leafpage[j].pos = 0;
 				off = j;
 				use ++;
 			}
@@ -149,12 +145,6 @@ dbgprintf("level up\n");
 	UpdatePage(state,leaf);
 	ReleasePage(state,leaf);
 	if		(  use  ==  LEAF_ELEMENTS(state)  ) {
-#ifdef	DEBUG
-		dbgprintf("stack dump\n");
-		for	( i = 0 ; i < blob->level ; i ++ ) {
-			dbgprintf("stack[%d] = %lld\n",i,stack[i]);
-		}
-#endif
 		own = leaf;
 		use = 0;
 		for	( i = 0 ; i < blob->level ; i ++ ) {
@@ -230,21 +220,33 @@ ENTER_FUNC;
 	if		(  ( ent = g_hash_table_lookup(state->oTable,&obj) )  ==  NULL  ) {
 		leafnode = (BLOB_V2_Entry *)GetPage(state,leaf);
 		off = obj % LEAF_ELEMENTS(state);
+printf("off = %d\n",off);
 		if		(	(  leafnode[off].mode  ==  BLOB_OPEN_CLOSE  )
 				||	(	(  leafnode[off].mode  ==  BLOB_OPEN_READ  )
 					&&	(  mode                ==  BLOB_OPEN_READ  ) ) ) {
 			if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
-				leafnode[off].size = obj;	/*	dummy	*/
+				//				leafnode[off].size = obj;	/*	dummy	*/
 			}
 			leafnode[off].mode = mode;
+printf("leafnode[off].pos = %lld\n",leafnode[off].pos);
+			if		(	(  leafnode[off].pos            !=  0  )
+					&&	(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) ) {
+				/*	remove	*/
+				leafnode[off].pos = 0;
+				leafnode[off].size = 0;
+			}
 			ent = New(BLOB_V2_Open);
 			ent->obj = obj;
 			ent->mode = mode;
 			ent->head = leafnode[off].pos;
-			ent->last = leafnode[off].pos;
+			ent->first = leafnode[off].pos;
+printf("ent->head = %lld\n",ent->head);
+			ent->last = ent->head;
 			ent->size = leafnode[off].size;
+printf("ent->size = %lld\n",ent->size);
 			ent->buff = xmalloc(state->space->pagesize);
-			ent->bleft = state->space->pagesize;
+			ent->bsize = 0;
+			ent->use = 0;
 			g_hash_table_insert(state->oTable,&ent->obj,ent);
 			UpdatePage(state,leaf);
 		} else {
@@ -310,6 +312,7 @@ FlushBLOB_V2(
 	BLOB_V2_State	*state,
 	BLOB_V2_Open	*ent)
 {
+	WriteBuffer(state,ent);
 }
 
 extern	Bool
@@ -331,8 +334,11 @@ ENTER_FUNC;
 		if		(  ( leaf = SearchLeafPage(state,obj) )  !=  0  ) {
 			leafnode = (BLOB_V2_Entry *)GetPage(state,leaf);
 			off = obj % LEAF_ELEMENTS(state);
+			if		(  ( leafnode[off].mode & BLOB_OPEN_WRITE )  !=  0  ) {
+				leafnode[off].size = ent->size;
+				leafnode[off].pos = ent->first;
+			}
 			leafnode[off].mode = BLOB_OPEN_CLOSE;
-			leafnode[off].size = ent->size;
 			UpdatePage(state,leaf);
 			ReleasePage(state,leaf);
 		}
@@ -393,14 +399,12 @@ ENTER_FUNC;
 		ReleasePage(state,page);
 
 		own = page;
-printf("own = %lld\n",own);
 		for	( i = 0 ; i < blob->level ; i ++ ) {
 			page = stack[i];
 			nodepage = GetPage(state,page);
 			for	( j = 0 ; j < NODE_ELEMENTS(state) ; j ++ ) {
 				if		(  PAGE_NO(nodepage[j])  ==  own  ) {
 					FREE_NODE(nodepage[j]);
-printf("free page = %lld, off = %d\n",page,j);
 					break;
 				}
 			}
@@ -420,26 +424,146 @@ printf("free page = %lld, off = %d\n",page,j);
 LEAVE_FUNC;
 	return	(rc);
 }
-#if	0
+
+static	pageno_t
+GetFreePage(
+	BLOB_V2_State	*state)
+{
+	BLOB_V2_Space	*blob;
+	pageno_t		no;
+	int				i;
+
+ENTER_FUNC;
+	blob = state->space;
+	no = 0;
+	for	( i = 0 ; i < blob->pagesize / sizeof(pageno_t) ; i ++ ) {
+		if		(  blob->freedata[i]  !=  0  ) {
+			no = blob->freedata[i];
+			blob->freedata[i] = 0;
+			WritePage(state->space,state->space->freedata,
+					  state->space->freedatapage);
+			break;
+		}
+	}
+	if		(  no  ==  0  ) {
+		no = NewPage(state);
+	}
+LEAVE_FUNC;
+	return	(no);
+}
+
+static	void
+ReturnPage(
+	BLOB_V2_State	*state,
+	pageno_t		no)
+{
+	BLOB_V2_Space	*blob;
+	int				i;
+
+ENTER_FUNC;
+	blob = state->space;
+	for	( i = 0 ; i < blob->pagesize / sizeof(pageno_t) ; i ++ ) {
+		if		(  blob->freedata[i]  ==  0  ) {
+			blob->freedata[i] = no;
+			break;
+		}
+	}
+	WritePage(state->space,state->space->freedata,state->space->freedatapage);
+LEAVE_FUNC;
+}
+
+static	void
+WriteBuffer(
+	BLOB_V2_State	*state,
+	BLOB_V2_Open	*ent)
+{
+	pageno_t			page
+		,				wpage;
+	BLOB_V2_DataPage	*data;
+	BLOB_V2_DataEntry	*el
+		,				*wel;
+	objpos_t			pos;
+	size_t				csize
+		,				left;
+
+ENTER_FUNC;
+	if		(  ent->head  ==  0  ) {
+		page = GetFreePage(state);
+		data = GetPage(state,page);
+		left = state->space->pagesize
+			- ( data->use + sizeof(BLOB_V2_DataEntry) );
+		if		(  left  <  ent->use  ) {
+			csize = left;
+		} else {
+			csize = ent->use;
+		}
+printf("csize = %d\n",csize);
+		if		(  csize  >  0  ) {
+			el = (BLOB_V2_DataEntry *)((byte *)data + data->use);
+			pos = page * state->space->pagesize + data->use;
+			el->size = csize;
+			el->next = 0;
+			el->prio = ent->last;
+			memcpy((byte *)el + sizeof(BLOB_V2_DataEntry),ent->buff,csize);
+			memcpy(ent->buff,ent->buff+csize,csize);
+			ent->use -= csize;
+			data->use += ROUND_TO(csize,sizeof(size_t))
+				+ sizeof(BLOB_V2_DataEntry);
+			UpdatePage(state,page);
+			if		(  data->use  <  state->space->pagesize  ) {
+				ReturnPage(state,page);
+			}
+printf("pos = %lld\n",pos);
+			if		(  ent->last  !=  ent->head  ) {
+dbgmsg("*");
+				wpage = ent->last / state->space->pagesize;
+				data = GetPage(state,wpage);
+				wel = (BLOB_V2_DataEntry *)
+					((byte *)data + ent->last % state->space->pagesize);
+				wel->next = pos;
+				UpdatePage(state,wpage);
+				ReleasePage(state,wpage);
+			} else {
+dbgmsg("*");
+				ent->first = pos;
+			}
+			ent->last = pos;
+		}
+		ReleasePage(state,page);
+	} else {
+	}
+LEAVE_FUNC;
+}
+
 extern	int
 WriteBLOB_V2(
-	BLOB_V2_Space		*blob,
+	BLOB_V2_State	*state,
 	MonObjectType	obj,
 	byte			*buff,
 	size_t			size)
 {
-	pageno_t	leaf;
-
-	BLOB_V2_Entry	*ent;
+	BLOB_V2_Open	*ent;
 	int			ret;
+	size_t		csize
+		,		left;
 
 ENTER_FUNC;
 	LockBLOB(state->space);
-	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
-		if		(  ent->fp  !=  NULL  ) {
-			ret = Send(ent->fp,buff,size);
-		} else {
-			ret = -1;
+	if		(  ( ent = g_hash_table_lookup(state->oTable,(gpointer)&obj) )
+			   !=  NULL  ) {
+		ret = 0;
+		while	(  size  >  0  ) {
+			left = state->space->pagesize - ent->use;
+			csize = ( size < left ) ? size : left;
+			memcpy(&ent->buff[ent->use],buff,csize);
+			ent->use += csize;
+			ret += csize;
+			size -= csize;
+			buff += csize;
+printf("use = %d\n",ent->use);
+			if		(  ent->use  ==  state->space->pagesize  ) {
+				WriteBuffer(state,ent);
+			}
 		}
 	} else {
 		ret = -1;
@@ -450,27 +574,72 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+static	void
+ReadBuffer(
+	BLOB_V2_State	*state,
+	BLOB_V2_Open	*ent)
+{
+	pageno_t			page;
+	BLOB_V2_DataPage	*data;
+	BLOB_V2_DataEntry	*el;
+	size_t				off;
+
+ENTER_FUNC;
+	if		(  ent->last  >  0  ) {
+		page = ent->last / state->space->pagesize;
+		off = ent->last % state->space->pagesize;
+printf("page = %lld\n",page);
+printf("off = %d\n",off);
+		data = GetPage(state,page);
+		el = (BLOB_V2_DataEntry *)((byte *)data + off);
+		memcpy(ent->buff,(byte *)el + sizeof(BLOB_V2_DataEntry),el->size);
+		ent->bsize = el->size;
+printf("el->size = %d\n",el->size);
+		ent->last = el->next;
+		ent->use = 0;
+		ReleasePage(state,page);
+	} else {
+		ent->bsize = 0;
+	}
+LEAVE_FUNC;
+}
+
 extern	int
 ReadBLOB_V2(
-	BLOB_V2_Space		*blob,
+	BLOB_V2_State	*state,
 	MonObjectType	obj,
 	byte			*buff,
 	size_t			size)
 {
-	BLOB_V2_Entry	*ent;
+	BLOB_V2_Open	*ent;
 	int			ret;
+	size_t		csize
+		,		left;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(blob->table,(gpointer)&obj) )  !=  NULL  ) {
-		if		(  ent->fp  !=  NULL  ) {
-			ret = Recv(ent->fp,buff,size);
-		} else {
-			ret = -1;
+	LockBLOB(state->space);
+	if		(  ( ent = g_hash_table_lookup(state->oTable,(gpointer)&obj) )
+			   !=  NULL  ) {
+		ret = 0;
+		while	(  size  >  0  ) {
+			left = ent->bsize - ent->use;
+			if		(  left  ==  0  ) {
+				ReadBuffer(state,ent);
+				if		(  ent->bsize  ==  0  )	break;
+				left = ent->bsize;
+			}
+			csize = ( size < left ) ? size : left;
+			memcpy(buff,&ent->buff[ent->use],csize);
+			ent->use += csize;
+			size -= csize;
+			ret += csize;
+			buff += csize;
 		}
 	} else {
 		ret = -1;
 	}
+	UnLockBLOB(state->space);
+	ReleaseBLOB(state->space);
 LEAVE_FUNC;
 	return	(ret);
 }
-#endif

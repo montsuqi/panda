@@ -49,8 +49,12 @@ copies.
 
 #if	BLOB_VERSION == 2
 //#define	TEST_CREAT
-#define	TEST_DESTROY
-#define	OB_NUMBER	40000
+//#define	TEST_DESTROY
+//#define	OB_NUMBER	40000
+#define	OB_NUMBER	40
+#define	TEST_WRITE1
+#define	TEST_READ1
+
 #else
 #define	TEST_WRITE
 #define	TEST_OPEN
@@ -66,8 +70,9 @@ main(
 	BLOB_State	*state;
 	MonObjectType	obj[OB_NUMBER];
 	char	buff[SIZE_LONGNAME+1];
-	int		i;
-	ssize_t	size;
+	int		i
+		,	j
+		,	size;
 
 	InitMessage("testblob",NULL);
 #if	0
@@ -78,10 +83,13 @@ main(
 #endif
 	blob = InitBLOB(BLOB_FILE);
 	state = ConnectBLOB(blob);
+	StartBLOB(state);
+	printf("** new(1) **\n");
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		obj[i] = NewBLOB(state,BLOB_OPEN_WRITE);
 		printf("main oid = %lld\n",obj[i]);
 	}
+	printf("** close(1) **\n");
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		CloseBLOB(state,obj[i]);
 	}
@@ -100,7 +108,41 @@ main(
 		printf("main oid = %lld\n",obj[i]);
 	}
 #endif
-#ifdef	TEST_WRITE
+#ifdef	TEST_WRITE1
+	printf("** test write(1) **\n");
+	OpenBLOB(state,obj[2],BLOB_OPEN_WRITE);
+	OpenBLOB(state,obj[3],BLOB_OPEN_WRITE);
+	for	( i = 0 ; i < 200 ; i ++ ) {
+		for	( j = 0 ; j < 64 ; j ++ ) {
+			buff[j] = (j+i)%64+32;
+		}
+		WriteBLOB(state,obj[2],buff,64);
+	}
+	CloseBLOB(state,obj[2]);
+	CloseBLOB(state,obj[3]);
+	printf("** test write(1) end **\n");
+#endif
+#ifdef	TEST_READ1
+	printf("** test read(1) **\n");
+	OpenBLOB(state,obj[2],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,obj[2],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,obj[2]);
+	printf("** test read(1) end **\n");
+	printf("** test read(2) **\n");
+	OpenBLOB(state,obj[2],BLOB_OPEN_READ);
+	do {
+		size = ReadBLOB(state,obj[2],buff,64);
+		buff[size] = 0;
+		printf("%d = [%s]\n",size,buff);
+	}	while	(  size  >  0  );
+	CloseBLOB(state,obj[2]);
+	printf("** test read(2) end **\n");
+#endif
+#ifdef	TEST_WRITE2
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		sprintf(buff,"%d\n%d\n",i,i);
 		WriteBLOB(state,obj[i],buff,strlen(buff));
@@ -123,6 +165,7 @@ main(
 		CloseBLOB(state,obj[i]);
 	}
 #endif
+	CommitBLOB(state);
 	DisConnectBLOB(state);
 	FinishBLOB(blob);
 	return	(0);

@@ -105,22 +105,21 @@ main(
 	}
 #endif
 	/*	directory page	(0)	*/
+	head.freedata = 1;
 	head.pagesize = PageSize;
 	for	( i = 0 ; i < sizeof(pageno_t) ; i ++ ) {
 		head.pos[i] = 0;
 	}
-#if	0
-	head.level = 2;
+	head.level = 1;
 	head.pos[0] = 2;
-	head.pos[1] = 1;
 	head.pages = 4;
+
 	memclear(page,PageSize);
 	memcpy(page,&head,sizeof(BLOB_V2_Header));
 	fwrite(page,PageSize,1,fp);
 
-	/*	1st node page	(1)	*/
+	/*	free pages		(1)	*/
 	memclear(page,PageSize);
-	page[0] = 2 | PAGE_NODE ;
 	fwrite(page,PageSize,1,fp);
 
 	/*	1st node page	(2)	*/
@@ -133,25 +132,7 @@ main(
 	ent = (BLOB_V2_Entry *)page;
 	USE_OBJ(ent[0]);
 	fwrite(page,PageSize,1,fp);
-#else
-	head.level = 1;
-	head.pos[0] = 1;
-	head.pages = 3;
-	memclear(page,PageSize);
-	memcpy(page,&head,sizeof(BLOB_V2_Header));
-	fwrite(page,PageSize,1,fp);
 
-	/*	1st node page	(1)	*/
-	memclear(page,PageSize);
-	page[0] = 2;
-	fwrite(page,PageSize,1,fp);
-
-	/*	leaf page		(2)	*/
-	memclear(page,PageSize);
-	ent = (BLOB_V2_Entry *)page;
-	USE_OBJ(ent[0]);
-	fwrite(page,PageSize,1,fp);
-#endif
 
 	fclose(fp);
 
