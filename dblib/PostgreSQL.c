@@ -52,6 +52,28 @@ static	int		alevel;
 static	int		Dim[SIZE_RNAME];
 static	Bool	fInArray;
 
+static	size_t
+EncodeString(
+	char	*p,
+	char	del,
+	char	*s)
+{
+	char	*q;
+
+	q = p;
+	while	(  *s  !=  0  ) {
+		if		(  *s  ==  del  ) {
+			*p ++ = del;
+			*p ++ = del;
+		} else {
+			*p ++ = *s;
+		}
+		s ++;
+	}
+	*p = 0;
+	return	(p-q);
+}
+
 static	char	*
 ValueToSQL(
 	DBG_Struct	*dbg,
@@ -75,10 +97,25 @@ ValueToSQL(
 		} else {
 			del = '\'';
 		}
+		p = buff;
+#if	1
+		p = buff;
+		*p ++ = del;
+		p += EncodeString(p,del,ValueToString(val,dbg->locale));
+		*p ++ = del;
+		*p = 0;
+#else
 		sprintf(buff,"%c%s%c",del,ValueToString(val,dbg->locale),del);
+#endif
 		break;
 	  case	GL_TYPE_DBCODE:
+#if	1
+		p = buff;
+		p += EncodeString(p,'\'',ValueToString(val,dbg->locale));
+		*p = 0;
+#else
 		strcpy(buff,ValueToString(val,dbg->locale));
+#endif
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(&ValueFixed(val));
