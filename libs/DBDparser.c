@@ -43,7 +43,7 @@ copies.
 #include	"libmondai.h"
 #include	"misc.h"
 #include	"dbgroup.h"
-#include	"DDparser.h"
+#include	"DBparser.h"
 #include	"DBDparser.h"
 #include	"DBDlex.h"
 #include	"dirs.h"

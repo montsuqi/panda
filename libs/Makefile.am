@@ -34,10 +34,14 @@ libpanda_la_SOURCES	=		\
 	LDlex.c		LDlex.h		\
 	DIparser.c	DIparser.h	\
 	DIlex.c		DIlex.h		\
+	DBparser.c	DBparser.h	\
+	DBlex.c		DBlex.h		\
 	BDparser.c	BDparser.h	\
 	BDlex.c		BDlex.h		\
 	DBDparser.c	DBDparser.h	\
 	DBDlex.c	DBDlex.h	\
+	SQLlex.c	SQLlex.h	\
+	SQLparser.c	SQLparser.h	\
 	directory.c	directory.h	\
 	wfcio.c		wfcio.h		\
 	load.c		load.h

@@ -43,6 +43,7 @@ copies.
 #include	"DDparser.h"
 #include	"LDlex.h"
 #include	"LDparser.h"
+#include	"DBparser.h"
 #include	"directory.h"
 #include	"dirs.h"
 #include	"debug.h"
