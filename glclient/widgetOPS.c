@@ -1748,11 +1748,14 @@ ENTER_FUNC;
 			ad = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
 			ad->value = (gfloat)hpos;
 			gtk_adjustment_value_changed(ad);
+		} else {
+			sprintf(longname,".%s",name);
+			RecvValue(fp,longname + strlen(name) + 1);
 		}
 	}
 	_UpdateWidget(widget,NULL);
 LEAVE_FUNC;
-	return	(TRUE);
+	return	(FALSE);
 }
 
 extern	void
