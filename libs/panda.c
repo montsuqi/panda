@@ -81,10 +81,9 @@ RecvPanda(
 
 dbgmsg(">RecvPanda");
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
-		for	( i = 0 ; i < ctl.n ; i ++ ) {
 #if	0
+		for	( i = 0 ; i < ctl.n ; i ++ ) {
 			type = ctl.control[i].PutType;
-#endif
 			switch	(type) {
 			  case	SCREEN_CHANGE_WINDOW:
 				(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
@@ -95,11 +94,30 @@ dbgmsg(">RecvPanda");
 			}
 			PutWindowByName(ctl.control[i].window,type);
 		}
+#else
+		for	( i = 0 ; i < ctl.n ; i ++ ) {
+			PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
+		}
+#endif
 		win = SetWindowName(window);
 		RecvTermServerData(fpPanda,win);
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
+#if	1
+		switch	(type) {
+		  case	SCREEN_CHANGE_WINDOW:
+			(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
+			type = SCREEN_NEW_WINDOW;
+			break;
+		  case	SCREEN_JOIN_WINDOW:
+			type = SCREEN_CURRENT_WINDOW;
+			break;
+		  default:
+			break;
+		}
+		PutWindow(win,type);
+#endif
 		strcpy(ThisWindow,window);
 		strcpy(ThisWidget,widget);
 		strcpy(ThisUser,user);
