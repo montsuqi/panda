@@ -685,10 +685,11 @@ NumericToFixed(
 	,		*to;
 	char	*p
 	,		*q;
+	char	*str;
 	size_t	len;
 	Bool	fMinus;
 
-	fr = NumericOutput(value);
+	fr = str = NumericOutput(value);
 	if		(  *fr  ==  '-'  ) {
 		fMinus = TRUE;
 		fr ++;
@@ -720,7 +721,7 @@ NumericToFixed(
 	if		(  fMinus  ) {
 		*to |= 0x40;
 	}
-	xfree(fr);
+	xfree(str);
 	return	(to);
 }
 
