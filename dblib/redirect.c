@@ -84,10 +84,12 @@ CloseDB_RedirectPort(
 {
 dbgmsg(">CloseDB_RedirectPort");
 	if		(  dbg->fpLog  !=  NULL  ) {
+		SendPacketClass(dbg->fpLog,RED_END);
 		CloseNet(dbg->fpLog);
 	}
 	if		(  dbg->redirectData  !=  NULL  ) {
 		FreeLBS(dbg->redirectData);
+		dbg->redirectData = NULL;
 	}
 dbgmsg("<CloseDB_RedirectPort");
 }
@@ -120,21 +122,27 @@ CheckDB_Redirect(
 	DBG_Struct	*dbg)
 {
 	Bool	rc;
+	int		i;
 
 	if		(  dbg->redirectData  !=  NULL  ) {
-		SendPacketClass(dbg->fpLog,RED_PING);
-		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
-			Warning("log server down?");
-			if		(  !fNoCheck  ) {
-				exit(1);
+		i = 0;
+		do {
+			SendPacketClass(dbg->fpLog,RED_PING);
+			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
+				Warning("log server down?");
+				CloseDB_RedirectPort(dbg);
+				sleep(RetryInterval);
+				OpenDB_RedirectPort(dbg);
+				rc = FALSE;
+				i ++;
+			} else {
+				rc = TRUE;
 			}
-			CloseNet(dbg->fpLog);
-			dbg->fpLog = NULL;
-			FreeLBS(dbg->redirectData);
-			dbg->redirectData = NULL;
-			rc = FALSE;
-		} else {
-			rc = TRUE;
+		}	while	(	(  rc  ==  FALSE  )
+					&&	(  i  <  MaxRetry  ) );
+		if		(	(  !rc  )
+				&&	(  !fNoCheck  ) ) {
+			exit(1);
 		}
 	} else {
 		rc = TRUE;

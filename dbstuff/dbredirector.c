@@ -90,6 +90,9 @@ dbgmsg(">LogThread");
 			SendPacketClass(fpLog,RED_PONG);
 			fSuc = TRUE;
 			break;
+		  case	RED_END:
+			fSuc = FALSE;
+			break;
 		  default:
 			SendPacketClass(fpLog,RED_NOT);
 			fSuc = FALSE;
@@ -97,7 +100,6 @@ dbgmsg(">LogThread");
 		}
 	}	while	(  fSuc  );
 	CloseNet(fpLog);
-	//	pthread_exit(NULL);
 dbgmsg("<LogThread");
 }
 
@@ -114,6 +116,7 @@ dbgmsg(">ConnectLog");
 		Error("INET Domain Accept");
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)fhLog);
+	pthread_detach(thr);
 dbgmsg("<ConnectLog");
 	return	(thr); 
 }
@@ -149,13 +152,15 @@ dbgmsg(">FileThread");
 		LBS_EmitEnd(data);
 		p = LBS_Body(data);
 		if		(  *p  !=  0  ) {
-			if		(  ThisDBG->fConnect  )	{
+			if		(  ThisDBG->dbname  !=  NULL  )	{
 				TransactionRedirectStart(ThisDBG);
 				ExecRedirectDBOP(ThisDBG,p);
 				TransactionRedirectEnd(ThisDBG);
 			}
 			BeginDB_Redirect(ThisDBG);
-			PutDB_Redirect(ThisDBG,p);
+			if		(  ThisDBG->redirectData  !=  NULL  ) {
+				LBS_EmitString(ThisDBG->redirectData,p);
+			}
 			CommitDB_Redirect(ThisDBG);
 			if		(  fp  !=  NULL  ) {
 				time(&nowtime);
@@ -292,6 +297,10 @@ static	ARG_TABLE	option[] = {
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
 		"dbredirectorを使わない"						},
 
+	{	"maxretry",INTEGER,	TRUE,	(void*)&MaxRetry,
+		"dbredirector送信の再試行数を指定する"						},
+	{	"retryint",INTEGER,	TRUE,	(void*)&RetryInterval,
+		"dbredirector送信の再試行の間隔を指定する(秒)"						},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -313,6 +322,8 @@ SetDefault(void)
 
 	fNoCheck = FALSE;
 	fNoRedirect = FALSE;
+	MaxRetry = 3;
+	RetryInterval = 5;
 }
 
 extern	int

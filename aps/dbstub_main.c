@@ -91,7 +91,6 @@ dbgmsg(">InitSystem");
 	}
 	if		(  ThisBD->cDB  >  0  ) {
 		InitDB_Process();
-		OpenDB(NULL);
 		ReadyHandlerDB(Bind->handler);
 	}
 dbgmsg("<InitSystem");
@@ -115,7 +114,6 @@ StopProcess(
 {
 dbgmsg(">StopProcess");
 	if		(  ThisBD->cDB  >  0  ) {
-		CloseDB(NULL);
 		StopHandlerDB(Bind->handler);
 		CleanUpHandlerDB(Bind->handler);
 	}
@@ -155,6 +153,10 @@ static	ARG_TABLE	option[] = {
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
 		"dbredirectorを使わない"						},
 
+	{	"maxretry",INTEGER,	TRUE,	(void*)&MaxRetry,
+		"dbredirector送信の再試行数を指定する"						},
+	{	"retryint",INTEGER,	TRUE,	(void*)&RetryInterval,
+		"dbredirector送信の再試行の間隔を指定する(秒)"						},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -177,6 +179,8 @@ SetDefault(void)
 
 	fNoCheck = FALSE;
 	fNoRedirect = FALSE;
+	MaxRetry = 3;
+	RetryInterval = 5;
 }
 
 extern	int
