@@ -186,7 +186,7 @@ class	Widget
 	end
 	def	isData
 		case	@klass
-		  when	"GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkCList", "GtkPandaCList"
+		  when	"GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkCList", "GtkPandaCList", "GtkPandaPS", "GnomePixmap"
 			ret = TRUE;
 		  when  "GtkLabel"
 		  	if	@label == "" or
@@ -378,6 +378,13 @@ class	Widget
 			printf("month\tint;\n");
 			putTab(ind+1);
 			printf("day\tint;\n");
+			putTab(ind);
+			printf("};\n");
+		  when  "GnomePixmap", "GtkPandaPS"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			putTab(ind+1);
+		        printf("%s\tobject;\n",vname);
 			putTab(ind);
 			printf("};\n");
 		  else
