@@ -1173,6 +1173,72 @@ dbgmsg("<_Calendar");
 }
 
 static	void
+_Td(
+	HTCInfo	*htc,
+	Tag	*tag)
+{
+        char	*rowspan
+	  ,		*colspan
+	  ,		*bgcolor
+	  ,		*align
+	  ,		*height
+	  ,		*width;
+dbgmsg(">_Td");
+        LBS_EmitString(htc->code, "<td");
+	if ((rowspan = GetArg(tag, "rowspan", 0)) != NULL) {
+	  LBS_EmitString(htc->code, " rowspan=\"");
+	  EmitCode(htc, OPC_NAME);
+	  LBS_EmitPointer(htc->code, StrDup(rowspan));
+	  EmitCode(htc, OPC_HSNAME);
+	  EmitCode(htc, OPC_EMITSTR);
+	  LBS_EmitString(htc->code, "\"");
+	}
+	if ((colspan = GetArg(tag, "colspan", 0)) != NULL) {
+	  LBS_EmitString(htc->code, " colspan=\"");
+	  EmitCode(htc, OPC_NAME);
+	  LBS_EmitPointer(htc->code, StrDup(colspan));
+	  EmitCode(htc, OPC_HSNAME);
+	  EmitCode(htc, OPC_EMITSTR);
+	  LBS_EmitString(htc->code, "\"");
+	}
+	if ((bgcolor = GetArg(tag, "bgcolor", 0)) != NULL) {
+	  LBS_EmitString(htc->code, " bgcolor=\"");
+	  EmitCode(htc, OPC_NAME);
+	  LBS_EmitPointer(htc->code, StrDup(bgcolor));
+	  EmitCode(htc, OPC_HSNAME);
+	  EmitCode(htc, OPC_EMITSTR);
+	  LBS_EmitString(htc->code, "\"");
+	}
+	if ((align = GetArg(tag, "align", 0)) != NULL) {
+	  LBS_EmitString(htc->code, " align=\"");
+	  EmitCode(htc, OPC_NAME);
+	  LBS_EmitPointer(htc->code, StrDup(align));
+	  EmitCode(htc, OPC_HSNAME);
+	  EmitCode(htc, OPC_EMITSTR);
+	  LBS_EmitString(htc->code, "\"");
+	}
+	if ((height = GetArg(tag, "height", 0)) != NULL) {
+	  LBS_EmitString(htc->code, " height=\"");
+	  EmitCode(htc, OPC_NAME);
+	  LBS_EmitPointer(htc->code, StrDup(height));
+	  EmitCode(htc, OPC_HSNAME);
+	  EmitCode(htc, OPC_EMITSTR);
+	  LBS_EmitString(htc->code, "\"");
+	}
+	if ((width = GetArg(tag, "width", 0)) != NULL) {
+	  LBS_EmitString(htc->code, " width=\"");
+	  EmitCode(htc, OPC_NAME);
+	  LBS_EmitPointer(htc->code, StrDup(width));
+	  EmitCode(htc, OPC_HSNAME);
+	  EmitCode(htc, OPC_EMITSTR);
+	  LBS_EmitString(htc->code, "\"");
+	}
+	Style(htc,tag);
+        LBS_EmitString(htc->code,">");
+dbgmsg("<_Td");
+}
+
+static	void
 _Htc(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -1342,6 +1408,16 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"year",TRUE);
 	AddArg(tag,"month",TRUE);
 	AddArg(tag,"day",TRUE);
+
+	tag = NewTag("TD", _Td);
+	AddArg(tag, "rowspan", TRUE);
+	AddArg(tag, "colspan", TRUE);
+	AddArg(tag, "bgcolor", TRUE);
+	AddArg(tag, "align", TRUE);
+	AddArg(tag, "height", TRUE);
+	AddArg(tag, "width", TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("HTC",_Htc);
 	AddArg(tag,"coding",TRUE);
