@@ -235,8 +235,8 @@ dbgmsg(">InitSystem");
 			   ==  NULL  ) {
 		Error("DB group not found");
 	}
-#if	0
 	Orig = ThisDBG;
+#if	0
 	if		(  ThisDBG->redirect  !=  NULL  ) {
 		ThisDBG = ThisDBG->redirect;
 	}
