@@ -39,9 +39,6 @@ Boston, MA  02111-1307, USA.
 #include	<stdlib.h>
 #include	<string.h>
 #include	<ctype.h>
-#ifndef	__GNUC__
-#include	<conio.h>
-#endif
 #include	"types.h"
 #include	"option.h"
 
@@ -258,7 +255,8 @@ GetOption(
 					*q = (char)c;
 					q ++;
 					c = fgetc(fpParam);
-				}	while	(  c  !=  '\n'  );
+				}	while	(	(  c  !=  '\n'  )
+							&&	(  c  !=  EOF   ) );
 				*q = 0;
 				ungetc(c,fpParam);
 			} else {
