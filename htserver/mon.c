@@ -357,6 +357,7 @@ SendValue(
 	HT_SendString(": ");
 	EncodeString(buff,value);
 	HT_SendString(buff);
+	HT_SendString("\n");
 }
 
 static	void
