@@ -635,7 +635,7 @@ _PQexec(
 
 dbgmsg(">_PQexec");
 #ifdef	TRACE
-	printf("%s;\n",sql);fflush(stdout);
+	printf("%s[%s;]\n",dbg->name,sql);fflush(stdout);
 #endif
 	res = PQexec(PGCONN(dbg),sql);
 	if		(  fRed  ) {

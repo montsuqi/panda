@@ -213,7 +213,18 @@ ExecRedirectDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
 {
-	dbg->func->primitive->exec(dbg,sql,FALSE);
+	char	*p;
+
+	do {
+		if		(  ( p = strchr(sql,';') )  !=  NULL  ) {
+			*p = 0;
+		}
+		dbg->func->primitive->exec(dbg,sql,FALSE);
+		if		(  p  !=  NULL  ) {
+			*p = ';';
+			sql = p + 1;
+		}
+	}	while	(  p  !=  NULL  );
 }
 
 extern	void
