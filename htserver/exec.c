@@ -314,7 +314,7 @@ ParseName(
 	return	(buff);
 }
 
-static char	*
+char	*
 HTGetValue(
 	char		*name,
 	Bool		fClear)

@@ -58,5 +58,6 @@ GLOBAL	char	*Codeset;
 
 extern	LargeByteString	*ExecCode(HTCInfo *htc);
 extern	char	*LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
+extern	char	*HTGetValue(char *name, Bool fClear);
 
 #endif

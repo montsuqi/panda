@@ -362,17 +362,56 @@ PutHTML(
 	int		c;
 
 dbgmsg(">PutHTML");
-	printf("Cache-Control: no-cache\r\n");
-	printf("Content-type: text/html; charset=%s\r\n", Codeset);
+	printf("Content-Type: text/html; charset=%s\r\n", Codeset);
 	LBS_EmitEnd(html);
 	if		(  fCookie  ) {
 		if		(  ( sesid = g_hash_table_lookup(Values,"_sesid") )  !=  NULL  ) {
 			printf("Set-Cookie: _sesid=%s;\r\n",sesid);
 		}
 	}
+	printf("Cache-Control: no-cache\r\n");
 	printf("\r\n");
 	WriteLargeString(stdout,html,Codeset);
 dbgmsg("<PutHTML");
+}
+
+static void
+PutFile(char *file_field)
+{
+    char *filename_field, *ctype_field;
+    char *file, *filename, *ctype;
+    char *p;
+
+    if ((ctype_field = g_hash_table_lookup(Values, "_contenttype")) != NULL) {
+        ctype = HTGetValue(ctype_field, FALSE);
+        printf("Content-Type: %s\r\n", ctype);
+    }
+    else {
+        printf("Content-Type: application/octet-stream\r\n");
+    }
+    if ((filename_field = g_hash_table_lookup(Values, "_filename")) != NULL) {
+        filename = HTGetValue(filename_field, FALSE);
+        printf("Content-Disposition: attachment; filename=%s\r\n", filename);
+    }
+	printf("Cache-Control: no-cache\r\n");
+	printf("\r\n");
+    file = HTGetValue(file_field, TRUE);
+    for	(p = file; *p != '\0'; p++) {
+        if (*p == '%') {
+            p++;
+            if (*p == '%') {
+                putchar('%');
+            }
+            else {
+                putchar(HexToInt(p, 2));
+                p++;
+            }
+        }
+        else {
+            putchar(*p);
+        }
+    }
+    fDump = FALSE;
 }
 
 static	void
@@ -520,14 +559,16 @@ URLEncodeBinary(char *dest, byte *src, int len)
 }
 
 static	void
-SendFile(char *name, char *filename)
+SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 {
+    char *filename;
     char buff[SIZE_BUFF * 3 + 1];
-    MultipartFile *file;
     char *p, *pend;
     int len = 0;
 
-    if ((file = (MultipartFile *) g_hash_table_lookup(Files, name)) != NULL) {
+fprintf(stderr, "mon.c: filename: '%s'\n", filename);
+    filename = (char *) g_hash_table_lookup(htc->FileSelection, name);
+    if (filename != NULL) {
         HT_SendString(name);
         HT_SendString(": ");
         p = file->value;
@@ -561,6 +602,9 @@ SendEvent(void)
 	char	*button;
 	char	*event;
 	char	*sesid;
+	char	*file;
+	char	*filename;
+	char	*contenttype;
 	HTCInfo	*htc;
 	char	*name;
 
@@ -590,7 +634,7 @@ SendEvent(void)
             g_hash_table_insert(Values, StrDup(buf), "TRUE");
             while (isdigit(*p))
                 p++;
-            if (*p == ',')
+            if (*p == ',')g_hash_table_insert(Values,"_sesid",sesid);
                 p++;
         }
         g_hash_table_remove(Values, name);
@@ -622,12 +666,21 @@ SendEvent(void)
 	HT_SendString("\n");
 
 	g_hash_table_foreach(Values,(GHFunc)SendValueDelim,NULL);
-	g_hash_table_foreach(Files,(GHFunc)SendFile,NULL);
+	g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
 	HT_SendString("\n");
 
 	sesid = g_hash_table_lookup(Values,"_sesid");
+    file = g_hash_table_lookup(Values,"_file");
+    filename = g_hash_table_lookup(Values,"_filename");
+    contenttype = g_hash_table_lookup(Values,"_contenttype");
 	Values = NewNameHash();
 	g_hash_table_insert(Values,"_sesid",sesid);
+    if (file != NULL)
+        g_hash_table_insert(Values,"_file",file);
+    if (filename != NULL)
+        g_hash_table_insert(Values,"_filename",filename);
+    if (contenttype != NULL)
+        g_hash_table_insert(Values,"_contenttype",contenttype);
 	Files = NewNameHash();
 }
 
@@ -661,7 +714,8 @@ Session(void)
 	char	*user
 	,		*sesid
 	,		*button
-	,		*name;
+	,		*name
+	,		*file;
 	char	buff[SIZE_BUFF];
 	HTCInfo	*htc;
 	LargeByteString	*html;
@@ -706,10 +760,14 @@ ENTER_FUNC;
 				name = StrDup(buff+8);
 				HT_RecvString(SIZE_BUFF,buff);	/*	\n	*/
 				g_hash_table_insert(Values,"_name",name);
-				htc = HTCParser(name);
+                if ((file = g_hash_table_lookup(Values, "_file")) != NULL) {
+                    PutFile(file);
+                    return;
+                }
+                htc = HTCParser(name);
                 if (htc == NULL)
                     exit(1);
-				html = ExecCode(htc);
+                html = ExecCode(htc);
 				HT_SendString("\n");
 			} else {
 				html = Expired();

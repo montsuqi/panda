@@ -177,12 +177,9 @@ RecvLine(NETFILE *fp, char *buf, int buf_len)
         else { \
             line_capa += BUFFER_EXPANSION_UNIT; \
         } \
-        fprintf(stderr, "xrealloc(%p, %d)\n", line, line_capa); \
         line = (char *) xrealloc(line, line_capa); \
         lp = line + len; \
         lendp = line + line_capa; \
-        fprintf(stderr, "line=%p, line_capa=%d, lp=%p, lendp=%p\n", \
-                line, line_capa, lp, lendp); \
     } \
 }
 

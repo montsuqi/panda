@@ -778,6 +778,7 @@ dbgmsg(">_FileSelection");
         Style(htc, tag);
 		LBS_EmitString(htc->code, ">\n");
 
+fprintf(stderr, "tags.c: filename: '%s'\n", filename);
         g_hash_table_insert(htc->FileSelection,
                             StrDup(name), StrDup(filename));
 
@@ -797,6 +798,10 @@ _HyperLink(HTCInfo *htc, Tag *tag)
 	char *event;
 	char *name;
 	char *value;
+    char *file;
+    char *filename;
+    char *contenttype;
+
 dbgmsg(">_HyperLink");
 	if ((event = GetArg(tag, "event", 0)) != NULL) {
 		LBS_EmitString(htc->code, "<a");
@@ -815,7 +820,7 @@ dbgmsg(">_HyperLink");
 			EmitGetValue(htc,"_sesid");
 		}
 		if ((name = GetArg(tag, "name", 0)) != NULL &&
-                    (value = GetArg(tag, "value", 0)) != NULL) {
+            (value = GetArg(tag, "value", 0)) != NULL) {
 			LBS_EmitString(htc->code,"&amp;");
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(name));
@@ -823,6 +828,24 @@ dbgmsg(">_HyperLink");
 			LBS_EmitString(htc->code,"=");
             EmitAttributeValue(htc,value,FALSE,TRUE); 
 		}
+		if ((file = GetArg(tag, "file", 0)) != NULL) {
+			LBS_EmitString(htc->code, "&amp;_file=");
+            EmitCode(htc, OPC_NAME);
+			LBS_EmitPointer(htc->code, StrDup(file));
+            EmitCode(htc, OPC_REFSTR);
+        }
+		if ((filename = GetArg(tag, "filename", 0)) != NULL) {
+			LBS_EmitString(htc->code, "&amp;_filename=");
+            EmitCode(htc, OPC_NAME);
+			LBS_EmitPointer(htc->code, StrDup(filename));
+            EmitCode(htc, OPC_REFSTR);
+        }
+		if ((contenttype = GetArg(tag, "contenttype", 0)) != NULL) {
+			LBS_EmitString(htc->code, "&amp;_contenttype=");
+            EmitCode(htc, OPC_NAME);
+			LBS_EmitPointer(htc->code, StrDup(contenttype));
+            EmitCode(htc, OPC_REFSTR);
+        }
 		LBS_EmitString(htc->code,"\">");
 	}
 dbgmsg("<_HyperLink");
@@ -1117,9 +1140,12 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("HYPERLINK",_HyperLink);
+	AddArg(tag,"event",TRUE);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"value",TRUE);
-	AddArg(tag,"event",TRUE);
+	AddArg(tag,"file",TRUE);
+	AddArg(tag,"filename",TRUE);
+	AddArg(tag,"contenttype",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	tag = NewTag("/HYPERLINK",_eHyperLink);
