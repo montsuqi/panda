@@ -70,7 +70,6 @@ static char	*load_path;
 static char *codeset;
 
 static VALUE mPanda;
-static VALUE cFixedDecimal;
 static VALUE cArrayValue;
 static VALUE cRecordValue;
 static VALUE cRecordStruct;
@@ -300,9 +299,21 @@ error_handle(int ex)
 }
 
 static VALUE
+bigdecimal_new(ValueStruct *val)
+{
+    VALUE cBigDecimal;
+    char *s;
+
+    rb_require("bigdecimal");
+    cBigDecimal = rb_const_get(rb_cObject, rb_intern("BigDecimal"));
+    s = ValueToString(val, codeset);
+    return rb_funcall(cBigDecimal, rb_intern("new"), 2, rb_str_new2(s),
+                      INT2NUM((ValueFixedLength(val))));
+}
+
+static VALUE
 get_value(ValueStruct *val)
 {
-    static VALUE fixed_new(NumericData *num);
     static VALUE aryval_new(ValueStruct *val);
     static VALUE recval_new(ValueStruct *val);
 
@@ -316,7 +327,7 @@ get_value(ValueStruct *val)
     case GL_TYPE_FLOAT:
 		return rb_float_new(ValueFloat(val));
     case GL_TYPE_NUMBER:
-		return fixed_new(FixedToNumeric(&ValueFixed(val)));
+		return bigdecimal_new(val);
     case GL_TYPE_CHAR:
     case GL_TYPE_VARCHAR:
     case GL_TYPE_DBCODE:
@@ -344,292 +355,51 @@ get_value(ValueStruct *val)
 static void
 set_value(ValueStruct *value, VALUE obj)
 {
-    static int is_fixed(VALUE obj);
-    static NumericData *get_numeric(VALUE obj);
-
-    if (is_fixed(obj)) {
-        NumericData *num = get_numeric(obj);
-        char *str;
-
-        if (ValueType(value) == GL_TYPE_NUMBER) {
-            str = NumericToFixed(num, ValueFixedLength(value),
-                                 ValueFixedSlen(value));
-            strcpy(ValueFixedBody(value), str);
-            xfree(str);
-        }
-        else {
-            str = NumericOutput(num);
-            SetValueString(value, str, codeset);
-            xfree(str);
-        }
-    }
-    else {
-        switch (TYPE(obj)) {
-        case T_TRUE:
-        case T_FALSE:
-            SetValueBool(value, RTEST(obj) ? TRUE : FALSE);
-            break;
-        case T_FIXNUM:
-            SetValueInteger(value, FIX2INT(obj));
-            break;
-        case T_BIGNUM:
-            SetValueInteger(value, NUM2INT(obj));
-            break;
-        case T_FLOAT:
-            SetValueFloat(value, RFLOAT(obj)->value);
-            break;
-        case T_STRING:
-            switch (ValueType(value)) {
-            case GL_TYPE_BYTE:
-            case GL_TYPE_BINARY:
-                SetValueBinary(value, RSTRING(obj)->ptr, RSTRING(obj)->len);
-                break;
-            default:
-                SetValueStringWithLength(value,
-                                         RSTRING(obj)->ptr,
-                                         RSTRING(obj)->len,
-                                         codeset);
-                break;
-            }
-            break;
-        default:
-            rb_raise(rb_eArgError, "unsupported type: %d",
-                     rb_class2name(CLASS_OF(obj)));
-            break;
-        }
-    }
-}
-
-static void
-fixed_free(NumericData *num)
-{
-    NumericFree(num);
-}
-
-static VALUE
-fixed_new(NumericData *num)
-{
-    return Data_Wrap_Struct(cFixedDecimal, NULL, fixed_free, num);
-}
-
-static VALUE
-fixed_s_new(int argc, VALUE *argv, VALUE self)
-{
-    VALUE val, vprecision, vscale;
-    NumericData *num;
-    int precision, scale;
-
-    rb_scan_args(argc, argv, "12", &val, &vprecision, &vscale);
-    if (NIL_P(vprecision)) {
-        precision = NUMERIC_DEFAULT_PRECISION;
-    }
-    else {
-        precision = NUM2INT(vprecision);
-    }
-    if (NIL_P(vscale)) {
-        scale = NUMERIC_DEFAULT_SCALE;
-    }
-    else {
-        scale = NUM2INT(vscale);
-    }
-    switch (TYPE(val)) {
-    case T_FIXNUM:
-    case T_BIGNUM:
-        num = IntToNumeric(NUM2INT(val));
-        break;
-    case T_FLOAT:
-        num = DoubleToNumeric(NUM2DBL(val));
-        break;
-    default:
-        num = NumericInput(StringValuePtr(val), precision, scale);
-        break;
-    }
-    return Data_Wrap_Struct(self, NULL, fixed_free, num);
-}
-
-static int
-is_fixed(VALUE obj)
-{
-    return TYPE(obj) == T_DATA &&
-        RDATA(obj)->dfree == (RUBY_DATA_FUNC) fixed_free;
-}
-
-static NumericData *
-get_numeric(VALUE obj)
-{
-    if (TYPE(obj) != T_DATA ||
-        RDATA(obj)->dfree != (RUBY_DATA_FUNC) fixed_free) {
-        rb_raise(rb_eTypeError, "wrong argument type %s (expected FixedDecimal)",
-                 rb_obj_classname(obj));
-    }
-    return (NumericData *) RDATA(obj)->data;
-}
-
-static VALUE
-to_fixed(VALUE obj)
-{
-    NumericData *num;
+    VALUE class_path, str;
 
     switch (TYPE(obj)) {
+    case T_TRUE:
+    case T_FALSE:
+        SetValueBool(value, RTEST(obj) ? TRUE : FALSE);
+        break;
     case T_FIXNUM:
+        SetValueInteger(value, FIX2INT(obj));
+        break;
     case T_BIGNUM:
-        num = IntToNumeric(NUM2INT(obj));
+        SetValueInteger(value, NUM2INT(obj));
         break;
     case T_FLOAT:
-        num = DoubleToNumeric(NUM2DBL(obj));
+        SetValueFloat(value, RFLOAT(obj)->value);
+        break;
+    case T_STRING:
+        switch (ValueType(value)) {
+        case GL_TYPE_BYTE:
+        case GL_TYPE_BINARY:
+            SetValueBinary(value, RSTRING(obj)->ptr, RSTRING(obj)->len);
+            break;
+        default:
+            SetValueStringWithLength(value,
+                                     RSTRING(obj)->ptr,
+                                     RSTRING(obj)->len,
+                                     codeset);
+            break;
+        }
         break;
     default:
-        return Qnil;
-    }
-    return fixed_new(num);
-}
-
-static VALUE
-fixed_to_s(VALUE self)
-{
-    NumericData *num;
-    char *s;
-    VALUE result;
-
-    num = get_numeric(self);
-    s = NumericOutput(num);
-    result = rb_str_new2(s);
-    xfree(s);
-    return result;
-}
-
-static VALUE
-fixed_to_i(VALUE self)
-{
-    NumericData *num;
-
-    num = get_numeric(self);
-    return INT2NUM(NumericToInt(num));
-}
-
-static VALUE
-fixed_to_f(VALUE self)
-{
-    NumericData *num;
-
-    num = get_numeric(self);
-    return rb_float_new(NumericToDouble(num));
-}
-
-static VALUE
-fixed_plus(VALUE self, VALUE other)
-{
-    if (is_fixed(other)) {
-        NumericData *x, *y, *z;
-
-        x = get_numeric(self);
-        y = get_numeric(other);
-        z = NumericADD(x, y);
-        return fixed_new(z);
-    }
-    else {
-        VALUE fixed = to_fixed(other);
-
-        if (NIL_P(fixed)) {
-            return rb_num_coerce_bin(self, other);
+        class_path = rb_class_path(CLASS_OF(obj));
+        if (strcasecmp(StringValuePtr(class_path), "BigDecimal") == 0) {
+            str = rb_funcall(obj, rb_intern("to_s"), 1, rb_str_new2("F"));
         }
         else {
-            return fixed_plus(self, fixed);
+            str = rb_funcall(obj, rb_intern("to_s"), 0);
         }
+        SetValueString(value, StringValuePtr(str), codeset);
+        break;
     }
 }
 
-static VALUE
-fixed_minus(VALUE self, VALUE other)
-{
-    if (is_fixed(other)) {
-        NumericData *x, *y, *z;
-
-        x = get_numeric(self);
-        y = get_numeric(other);
-        z = NumericSUB(x, y);
-        return fixed_new(z);
-    }
-    else {
-        VALUE fixed = to_fixed(other);
-
-        if (NIL_P(fixed)) {
-            return rb_num_coerce_bin(self, other);
-        }
-        else {
-            return fixed_minus(self, fixed);
-        }
-    }
-}
-
-static VALUE
-fixed_mul(VALUE self, VALUE other)
-{
-    if (is_fixed(other)) {
-        NumericData *x, *y, *z;
-
-        x = get_numeric(self);
-        y = get_numeric(other);
-        z = NumericMUL(x, y);
-        return fixed_new(z);
-    }
-    else {
-        VALUE fixed = to_fixed(other);
-
-        if (NIL_P(fixed)) {
-            return rb_num_coerce_bin(self, other);
-        }
-        else {
-            return fixed_mul(self, fixed);
-        }
-    }
-}
-
-static VALUE
-fixed_div(VALUE self, VALUE other)
-{
-    if (is_fixed(other)) {
-        NumericData *x, *y, *z;
-
-        x = get_numeric(self);
-        y = get_numeric(other);
-        z = NumericDIV(x, y);
-        return fixed_new(z);
-    }
-    else {
-        VALUE fixed = to_fixed(other);
-
-        if (NIL_P(fixed)) {
-            return rb_num_coerce_bin(self, other);
-        }
-        else {
-            return fixed_div(self, fixed);
-        }
-    }
-}
-
-static VALUE
-fixed_mod(VALUE self, VALUE other)
-{
-    if (is_fixed(other)) {
-        NumericData *x, *y, *z;
-
-        x = get_numeric(self);
-        y = get_numeric(other);
-        z = NumericMOD(x, y);
-        return fixed_new(z);
-    }
-    else {
-        VALUE fixed = to_fixed(other);
-
-        if (NIL_P(fixed)) {
-            return rb_num_coerce_bin(self, other);
-        }
-        else {
-            return fixed_mod(self, fixed);
-        }
-    }
-}
+#define CACHEABLE(val) (ValueType(val) == GL_TYPE_ARRAY || \
+                        ValueType(val) == GL_TYPE_RECORD)
 
 typedef struct _value_struct_data {
     ValueStruct *value;
@@ -680,7 +450,8 @@ aryval_aref(VALUE self, VALUE index)
     if (val == NULL)
         return Qnil;
     obj = get_value(val);
-    rb_ary_store(data->cache, i, obj);
+    if (CACHEABLE(val))
+        rb_ary_store(data->cache, i, obj);
     return obj;
 }
 
@@ -747,7 +518,8 @@ recval_aref(VALUE self, VALUE name)
 
     val = GetRecordItem(data->value, StringValuePtr(name));
     obj = get_value(val);
-    rb_hash_aset(data->cache, name, obj);
+    if (CACHEABLE(val))
+        rb_hash_aset(data->cache, name, obj);
     return obj;
 }
 
@@ -780,7 +552,8 @@ recval_get_field(VALUE self)
 
     val = GetRecordItem(data->value, name);
     obj = get_value(val);
-    rb_hash_aset(data->cache, rb_str_new2(name), obj);
+    if (CACHEABLE(val))
+        rb_hash_aset(data->cache, rb_str_new2(name), obj);
     return obj;
 }
 
@@ -1448,17 +1221,6 @@ init()
     ruby_init_loadpath();
 
     mPanda = rb_define_module("Panda");
-    cFixedDecimal = rb_define_class_under(mPanda, "FixedDecimal", rb_cNumeric);
-    rb_define_singleton_method(cFixedDecimal, "new", fixed_s_new, -1);
-    rb_define_method(cFixedDecimal, "to_s", fixed_to_s, 0);
-    rb_define_method(cFixedDecimal, "inspect", fixed_to_s, 0);
-    rb_define_method(cFixedDecimal, "to_i", fixed_to_i, 0);
-    rb_define_method(cFixedDecimal, "to_f", fixed_to_f, 0);
-    rb_define_method(cFixedDecimal, "+", fixed_plus, 1);
-    rb_define_method(cFixedDecimal, "-", fixed_minus, 1);
-    rb_define_method(cFixedDecimal, "*", fixed_mul, 1);
-    rb_define_method(cFixedDecimal, "/", fixed_div, 1);
-    rb_define_method(cFixedDecimal, "%", fixed_mod, 1);
     cArrayValue = rb_define_class_under(mPanda, "ArrayValue", rb_cObject);
     rb_define_method(cArrayValue, "length", aryval_length, 0);
     rb_define_method(cArrayValue, "size", aryval_length, 0);
