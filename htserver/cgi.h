@@ -47,6 +47,7 @@ GLOBAL	Bool		fDump;
 GLOBAL	Bool		fJavaScriptLink;
 GLOBAL	char		*SesDir;
 GLOBAL	char		*CommandLine;
+GLOBAL	time_t		SesExpire;
 #undef	GLOBAL
 
 extern  void	CGI_InitValues(void);
@@ -67,6 +68,7 @@ extern	char	*LoadValue(char *name);
 extern	void	RemoveValue(char *name);
 extern	void	SetSave(char *name, Bool fSave);
 
+extern  void	CheckSessionExpire(void);
 extern	Bool	GetSessionValues(void);
 extern	void	DeleteSessionValues(void);
 extern	Bool	PutSessionValues(void);

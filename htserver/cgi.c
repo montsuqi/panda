@@ -35,6 +35,7 @@ copies.
 #include	<glib.h>
 #include	<errno.h>
 #include	<iconv.h>
+#include	<dirent.h>
 
 #include	<sys/mman.h>
 #include	<sys/stat.h>
@@ -574,6 +575,31 @@ PutValue(
 	}
 }
 
+extern  void
+CheckSessionExpire(void)
+{
+	DIR		*dir;
+	struct	dirent	*ent;
+	struct	stat	sb;
+	time_t		    nowtime
+        ,           exp;
+    char    fname[SIZE_LONGNAME+1];
+
+    time(&nowtime);
+    exp = nowtime - SesExpire;
+	dir = opendir(SesDir);
+	while	(  ( ent = readdir(dir) )  !=  NULL  ) {
+        sprintf(fname,"%s/%s",SesDir,ent->d_name);
+		if		(	(  stat(fname,&sb)  ==  0  )
+                &&	(  S_ISREG(sb.st_mode)     ) ) {
+            if      (  sb.st_mtime  <  exp  ) {
+                unlink(fname);
+            }
+		}
+	}
+	closedir(dir);
+}
+
 extern	Bool
 PutSessionValues(void)
 {
@@ -586,8 +612,9 @@ PutSessionValues(void)
 	char	*sesid;
 
 ENTER_FUNC;
- if		(   (  ( sesid = LoadValue("_sesid") )  !=  NULL  )
-        &&  (  *sesid  !=  0  ) ) {
+	CheckSessionExpire();
+	if		(   (  ( sesid = LoadValue("_sesid") )  !=  NULL  )
+            &&  (  *sesid  !=  0  ) ) {
 		sprintf(fname,"%s/%s.ses",SesDir,sesid);
 		if		(  ( fp = fopen(fname,"w") )  ==  NULL  ) {
 			ret = FALSE;
