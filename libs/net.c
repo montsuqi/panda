@@ -62,7 +62,7 @@ Send(
 	if		(  fp->fOK  ) {
 		ret = size;
 		while	(  size  >  0  ) {
-			if		(  ( count = fp->write(fp,p,size) )  >=  0  ) {
+			if		(  ( count = fp->write(fp,p,size) )  >  0  ) {
 				size -= count;
 				p += count;
 			} else {
@@ -90,7 +90,7 @@ Recv(
 		ret = size;
 		p = buff;
 		while	(  size  >  0  ) {
-			if		(  ( count = fp->read(fp,p,size) )  >=  0  ) {
+			if		(  ( count = fp->read(fp,p,size) )  >  0  ) {
 				size -= count;
 				p += count;
 			} else {
