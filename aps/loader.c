@@ -60,8 +60,10 @@ LoadModule(
 dbgmsg(">LoadModule");
 	if		(  ( f_main = (void *)g_hash_table_lookup(table,name) )  ==  NULL  ) {
 		sprintf(filename,"%s.so",name);
+printf("[%s]\n",filename);
 		if		(  ( handle = LoadFile(APS_LoadPath,filename) )  !=  NULL  ) {
 			sprintf(funcname,"%sInit",name);
+printf("[%s]\n",funcname);
 			if		(  ( f_init = (void *)dlsym(handle,funcname) )  !=  NULL  ) {
 				f_init();
 			}
@@ -87,6 +89,8 @@ dbgmsg(">InitLoader");
 	if		(  LibPath  ==  NULL  ) { 
 		if		(  ( path = getenv("APS_LOAD_PATH") )  ==  NULL  ) {
 			APS_LoadPath = MONTSUQI_LOAD_PATH;
+		} else {
+			APS_LoadPath = path;
 		}
 	} else {
 		APS_LoadPath = LibPath;
