@@ -305,8 +305,8 @@ SelectData(
 	SessionData	*data;
 	LD_Node		*ld;
 
-dbgmsg(">SelectData");
-#if	0
+ENTER_FUNC;
+#if	1
 	data = DeQueue(que); 
 #else
 	OpenQueue(que);
@@ -347,7 +347,7 @@ dbgmsg(">SelectData");
 		ReleaseQueue(que);
 	}
 #endif
-dbgmsg("<SelectData");
+LEAVE_FUNC;
 	return	(data);
 }
 static	void
@@ -368,16 +368,12 @@ MessageThread(
 dbgmsg(">MessageThread");
 	mq = aps->mq; 
 	ix = aps->no;
-#ifdef	DEBUG
-	printf("start %s(%d)\n",mq->name,ix);
-#endif
+	dbgprintf("start %s(%d)\n",mq->name,ix);
 	do {
 		fp = NULL;
 		do {
 			if		(  ( data = SelectData(mq->que,ix) )  !=  NULL  ) {
-#ifdef	DEBUG
-				printf("act %s\n",mq->name);
-#endif
+				dbgprintf("act %s\n",mq->name);
 				ld = data->ld;
 				if		(  ( flag = CheckAPS(&ld->aps[ix],data->name) )  !=  0  ) {
 					memcpy(&hdr,data->hdr,sizeof(MessageHeader));
@@ -429,7 +425,7 @@ dbgmsg(">MessageThread");
 					data->hdr->puttype = puttype;
 					TermEnqueue(data->term,data);
 					break;
-					//	case	SCREEN_CLOSE_WINDOW:
+				  case	SCREEN_CLOSE_WINDOW:
 				  default:
 					TermEnqueue(data->term,data);
 					break;
