@@ -4,48 +4,21 @@ import java.net.*;
 import java.util.*;
 import java.io.*;
 
-public class DB_Server {
+public class DB_Server extends AbstractServer {
 
     public static final String VER = "1.1.0";
 
-    String host;
-    int port;
-    
-    Socket s;
-
-    PrintWriter out;
-    BufferedReader in;
-
     Dictionary values;
 
-    public DB_Server(String host, int port, String user, String pass) {
-	if (port == 0) {
-	    port = 8013;
-	}
+    public DB_Server(String host, int port, String user, String pass)
+	throws IOException {
+	super(host, port == 0 ? 8013 : port, user, pass);
+	authenticate();
+	values = new Hashtable();
+    }
 
-	this.host = host;
-	this.port = port;
-
-	try {
-	    s = new Socket(host, port);
-	    out = new PrintWriter(s.getOutputStream());
-	    in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-
-	    out.println(VER + " " + user + " " + pass);
-	    out.flush();
-	    String msg = in.readLine();
-	    if (msg == null) {
-		System.out.println("error: no data from socket.");
-		s.close();
-	    } else if  (msg.startsWith("Error: ")) {
-		System.out.println("error: " + msg.substring("Error: ".length()));
-		s.close();
-	    } else {
-		values = new Hashtable();
-	    }
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+    public String getAuthenticateString() {
+	return VER + " " + user + " " + pass;
     }
     
     public int get_event() {
@@ -112,6 +85,35 @@ public class DB_Server {
 	return rec;
     }
 
+
+    public Dictionary getValues(String name) {
+	out.println(name);
+	out.flush();
+	Dictionary v = new Hashtable();
+	String is;
+	try {
+	    while ((is = in.readLine()) != null) {
+		if (is.length() == 0) {
+		    break;
+		}
+		int index = is.indexOf(": ");
+		if (index > 0) {
+		    String nam = is.substring(0, index);
+		    String val = decode(is.substring(index + ": ".length()));
+		    v.put(nam, val);
+		}
+	    }
+	} catch (IOException e) {
+	    e.printStackTrace();
+	    try {
+		s.close();
+	    } catch (IOException e2) {
+		e2.printStackTrace();
+	    }
+	}
+	return v;
+    }
+
     public int recordops(String func, String rname, String pname, Dictionary rec) {
 	out.println("Exec: " + func + ":" + rname + ":" + pname);
 	exec_data(rec);
@@ -120,21 +122,4 @@ public class DB_Server {
 	return rc;
     }
 
-    public void close() {
-	out.println("End");
-	try {
-	    s.close();
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
-    }
-    
-    // Utilitiy methods
-    private static String decode(String string) {
-	return string != null ? URLDecoder.decode(string) : null;
-    }
-
-    private static String encode(String url) {
-	return url != null ? URLEncoder.encode(url).toUpperCase() : null;
-    }
 }

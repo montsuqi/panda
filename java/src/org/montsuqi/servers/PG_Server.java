@@ -4,49 +4,26 @@ import java.net.*;
 import java.util.*;
 import java.io.*;
 
-public class PG_Server {
+public class PG_Server extends AbstractServer {
 
     public static final String VER = "1.0.7";
 
-    String host;
-    int port;
-
-    Socket s;
-
-    PrintWriter out;
-    BufferedReader in;
+    String prog;
 
     Dictionary values;
-    
-    public PG_Server(String host, int port, String prog, String user, String pass) {
-	if (port == 0) {
-	    port = 8011;
-	}
 
-	this.host = host;
-	this.port = port;
+    public PG_Server(String host, int port, String prog, String user, String pass)
+	throws IOException {
+	super(host, port == 0 ? 8011 : port, user, pass);
+	this.prog = prog;
+	authenticate();
+	values = new Hashtable();
+	get_event();
+	out.println();
+    }
 
-	try {
-	    s = new Socket(host, port);
-	    out = new PrintWriter(s.getOutputStream());
-	    in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-	    out.println("Start: " + VER + " " + user + " " + pass + " " + prog);
-	    out.flush();
-	    String msg = in.readLine();
-	    if (msg == null) {
-		System.out.println("error: no data from socket.");
-		s.close();
-	    } else if (msg.startsWith("Error: ")) {
-		System.out.println("error: " + msg.substring("Error: ".length()));
-		s.close();
-	    } else {
-		values = new Hashtable();
-		get_event();
-		out.println();
-	    }
-	} catch (IOException e) {
-	    e.printStackTrace();
-	}
+    protected String getAuthenticateString() {
+	return "Start: " + VER + " " + user + " " + pass + " " + prog;
     }
 
     public PG_Event event(String event) {
@@ -156,14 +133,5 @@ public class PG_Server {
 	    out.println(name + ": " + value);
 	}
 	out.println();
-    }
-
-    // Utilitiy methods
-    private static String decode(String string) {
-	return string != null ? URLDecoder.decode(string) : null;
-    }
-
-    private static String encode(String url) {
-	return url != null ? URLEncoder.encode(url) : null;
     }
 }
