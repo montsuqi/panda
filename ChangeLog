@@ -1,3 +1,10 @@
+2004-08-25  Noboru Saitou <noborus@netlab.jp>
+
+	* wfc/mqthread.c: 無効なapsを指定されたときにリソースを解放した
+
+	* wfc/blobthread.c, wfc/controlthread.c, wfc/termthread.c:
+	pthread_exit でリソースが解放されるように pthread_detach した  
+	
 2004-08-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/blobreq.c, wfc/blobserv.c, blob/blob_v1.c : APIの整理
