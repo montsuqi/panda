@@ -64,10 +64,12 @@ copies.
 #include    "apslib.h"
 #include    "debug.h"
 
+EXTERN VALUE rb_load_path;
 
 static VALUE application_classes;
 static char *load_path;
 static char *codeset;
+static VALUE default_load_path;
 
 static VALUE mPanda;
 static VALUE cArrayValue;
@@ -1229,6 +1231,8 @@ init()
     ruby_init();
     Init_stack(&stack_start);
     ruby_init_loadpath();
+	default_load_path = rb_load_path;
+	rb_global_variable(&default_load_path);
 
     mPanda = rb_define_module("Panda");
     cArrayValue = rb_define_class_under(mPanda, "ArrayValue", rb_cObject);
@@ -1355,7 +1359,18 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
     Bool    rc;
     int state;
     ID handler_method;
+    int i;
 
+    if (handler->loadpath == NULL) {
+        fprintf(stderr, "loadpath is required\n");
+        return FALSE;
+    }
+    rb_load_path = rb_ary_new();
+    rb_ary_push(rb_load_path, rb_str_new2(handler->loadpath));
+    for (i = 0; i < RARRAY(default_load_path)->len; i++) {
+        rb_ary_push(rb_load_path,
+                    rb_str_dup(RARRAY(default_load_path)->ptr[i]));
+    }
     codeset = ConvCodeset(handler->conv);
     dc_module_value = GetItemLongName(node->mcprec->value, "dc.module");
     dc_module = ValueStringPointer(dc_module_value);
