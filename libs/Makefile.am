@@ -76,5 +76,4 @@ enum.h:	enum
 
 libpandamisc_la_SOURCES	=		\
 	option.c		option.h	\
-	memory.c		memory.h	\
 	message.c		message.h

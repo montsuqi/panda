@@ -36,7 +36,7 @@ copies.
 
 #include	"types.h"
 #include	"libmondai.h"
-#include	"port_p.h"
+#include	"port.h"
 #include	"debug.h"
 
 extern	void
