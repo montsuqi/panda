@@ -146,13 +146,13 @@ ENTER_FUNC;
 					type->Para = (void *)1;
 				}
 			} else {
-				Error("no such attribute for <%s>: %s",
+				Error("unknown attribute for <%s>: %s",
                       tag->name, HTC_ComSymbol);
                 if (  GetSymbol  ==  '='  )
                     GetSymbol;
 			}
 		} else {
-			Error("invalid tag: %s", tag->name);
+			Error("invalid tag: <%s>", tag->name);
 		}
 	}
 LEAVE_FUNC;
