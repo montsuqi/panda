@@ -255,6 +255,11 @@ RecvPS(
 	int		nitem
 	,		i;
     LargeByteString *binary;
+    FILE *file;
+    gchar *tmpname;
+    mode_t _umask;
+    mode_t mode;
+    int fildes;
 
 dbgmsg(">RecvPS");
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -264,16 +269,18 @@ dbgmsg(">RecvPS");
             if (strncasecmp("psdata", name, sizeof("psdata") - 1) == 0) {
                 binary = NewLBS();
                 RecvBinaryData(fp, binary);
-                {
-                    FILE *fp;
-                    char *psdata_filename = "/tmp/psdata.ps";
-                    
-                    if ((fp = fopen(psdata_filename, "w")) != NULL) {
-                        fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), fp);
-                        fclose(fp);
-                        gtk_panda_ps_load(GTK_PANDA_PS(widget), psdata_filename);
-                    }
-                }
+                tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
+                fildes = mkstemp(tmpname);
+                _umask = umask(0);
+                umask(_umask);
+                mode = 0666 & ~_umask;
+                fchmod(fildes, mode);
+                file = fdopen(fildes, "wb");
+                fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
+                fclose(file);
+                gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
+                unlink(tmpname);
+                g_free(tmpname);
                 FreeLBS(binary);
             }
             else if (strncasecmp("imagedata", name, sizeof("imagedata") - 1) == 0) {
