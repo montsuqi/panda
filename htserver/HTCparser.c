@@ -56,12 +56,17 @@ static	Bool	fError;
 void
 HTC_Error(char *msg, ...)
 {
+	char	buff[SIZE_LONGNAME+1];
     va_list args;
 
     fError = TRUE;
     fprintf(stderr, "%s:%d: ", HTC_FileName, HTC_cLine);
+    sprintf(buff, "%s:%d: ", HTC_FileName, HTC_cLine);
+	dbgmsg(buff);
     va_start(args, msg);
     vfprintf(stderr, msg, args);
+    vsprintf(buff, msg, args);
+	dbgmsg(buff);
     fputc('\n', stderr);
     va_end(args);
 }

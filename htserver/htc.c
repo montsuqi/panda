@@ -40,6 +40,7 @@ copies.
 #include	"libmondai.h"
 #include	"cgi.h"
 #include	"htc.h"
+#include	"storage.h"
 #include	"debug.h"
 
 static	GET_VALUE	_GetValue;
@@ -86,5 +87,35 @@ ENTER_FUNC;
 	Codeset = "utf-8";
 	_GetValue = func;
 LEAVE_FUNC;
+}
+
+extern	void
+ExecHTC(
+	LargeByteString	*html,
+	char	*name)
+{
+	HTCInfo	*htc;
+
+ENTER_FUNC;
+	SaveValue("_name",name,FALSE);
+	dbgprintf("name = [%s]\n",name);
+	if		(  ( htc = HTCParser(PartsFileName(NameHTC(name))) )  !=  NULL  ) {
+		ExecCode(html,htc);
+	} else {
+		dbgprintf("[%s] not found\n",name);
+	}
+LEAVE_FUNC;
+}
+
+extern	char	*
+NameHTC(
+	char	*name)
+{
+	static	char	buff[SIZE_LONGNAME+1];
+
+ENTER_FUNC;
+	sprintf(buff,"%s.htc",name);
+LEAVE_FUNC;
+	return	(buff);
 }
 

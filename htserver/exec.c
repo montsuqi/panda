@@ -473,14 +473,9 @@ ExecCode(
 	char	buff[SIZE_BUFF];
 
 ENTER_FUNC;
-dbgmsg("*");
-dbgmsg("*");
 	RewindLBS(htc->code);
-dbgmsg("*");
 	VarArea = NewNameHash();
-dbgmsg("*");
 	pStack = 0;
-dbgmsg("*");
 	while	(  ( c = LBS_FetchChar(htc->code) )  !=  0  ) {
 		if		(  c  ==  0x01  ) {	/*	code escape	*/
 			switch	(LBS_FetchChar(htc->code)) {

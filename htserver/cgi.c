@@ -739,7 +739,7 @@ Expired(void)
 	return	(html);
 }
 
-static	char	*
+extern	char	*
 CheckCoding(
 	char	*str)
 {

@@ -42,6 +42,8 @@ typedef	ValueStruct	*(*GET_VALUE)(char *name, Bool fClear);
 
 extern	char	*GetHostValue(char *name, Bool fClear);
 extern	void	InitHTC(char *script_name, GET_VALUE func);
+extern	void	ExecHTC(LargeByteString *html, char *name);
+extern	char	*NameHTC(char *name);
 
 #include	"tags.h"
 #include	"HTCparser.h"

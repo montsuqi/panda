@@ -71,5 +71,6 @@ extern	void	WriteLargeString(FILE *output, LargeByteString *lbs, char *codeset);
 extern	void	ImportFile(LargeByteString *html, char *name, Bool fExpand);
 
 extern	void	PutFile(ValueStruct *file);
+extern	char	*CheckCoding(char *str);
 
 #endif
