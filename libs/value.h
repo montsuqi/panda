@@ -112,6 +112,7 @@ typedef	struct _DBG_Struct	{
 	char		*type;
 	struct	_DB_Func		*func;
 	FILE		*fpLog;
+	LargeByteString	*redirectData;
 	char		*file;
 	Port		*redirectPort;
 	struct	_DBG_Struct	*redirect;

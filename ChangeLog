@@ -1,3 +1,21 @@
+2002-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.5 release
+
+	* aps/redirect.c : 高速化(トランザクション終結時にリダイレクト処理をする)
+
+	* aps/dbredirector.c (LogThread): ↑に対応
+
+2002-06-03  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: glibのルールを忘れていた
+
+2002-05-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/widgetOPS.c (RecvEntry): knishida patch吸収
+
+	* glclient/callbacks.c (send_event): knishida patch吸収
+
 2002-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.4 release

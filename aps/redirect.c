@@ -59,11 +59,14 @@ dbgmsg(">OpenDB_RedirectPort");
 				   <  0  ) {
 			Warning("loging server not ready");
 			dbg->fpLog = NULL;
+			dbg->redirectData = NULL;
 		} else {
 			dbg->fpLog = fdopen(fh,"w+");
+			dbg->redirectData = NewLBS();
 		}
 	} else {
 		dbg->fpLog = NULL;
+		dbg->redirectData = NULL;
 	}
 dbgmsg("<OpenDB_RedirectPort");
 }
@@ -76,6 +79,7 @@ dbgmsg(">CloseDB_RedirectPort");
 	if		(  dbg->fpLog  !=  NULL  ) {
 		shutdown(fileno(dbg->fpLog), 2);
 		fclose(dbg->fpLog);
+		FreeLBS(dbg->redirectData);
 	}
 dbgmsg("<CloseDB_RedirectPort");
 }
@@ -85,22 +89,49 @@ PutDB_Redirect(
 	DBG_Struct	*dbg,
 	char		*data)
 {
-
 dbgmsg(">PutDB_Redirect");
-	if		(  dbg->fpLog  !=  NULL  ) {
+	if		(  dbg->redirectData  !=  NULL  ) {
+		LBS_EmitString(dbg->redirectData,data);
+		LBS_EmitString(dbg->redirectData,";"); 
+	}
+dbgmsg("<PutDB_Redirect");
+}
+
+extern	void
+BeginDB_Redirect(
+	DBG_Struct	*dbg)
+{
+dbgmsg(">BeginDB_Redirect");
+	LBS_EmitStart(dbg->redirectData); 
+dbgmsg("<BeginDB_Redirect");
+}
+
+extern	void
+CommitDB_Redirect(
+	DBG_Struct	*dbg)
+{
+dbgmsg(">CommitDB_Redirect");
+	if		(  dbg->redirectData  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_PING);
+		fflush(dbg->fpLog);
 		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
 			Warning("log server down?");
+			fclose(dbg->fpLog);
 			dbg->fpLog = NULL;
+			FreeLBS(dbg->redirectData);
+			dbg->redirectData = NULL;
 		} else {
 			SendPacketClass(dbg->fpLog,RED_DATA);
-			SendString(dbg->fpLog,data);
+			SendLBS(dbg->fpLog,dbg->redirectData);
 			fflush(dbg->fpLog);
 			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
 				Warning("log server down?");
+				fclose(dbg->fpLog);
 				dbg->fpLog = NULL;
+				FreeLBS(dbg->redirectData);
+				dbg->redirectData = NULL;
 			}
 		}
 	}
-dbgmsg("<PutDB_Redirect");
+dbgmsg("<CommitDB_Redirect");
 }

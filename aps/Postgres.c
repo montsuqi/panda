@@ -523,7 +523,8 @@ _PQclear(
 static	PGresult	*
 _PQexec(
 	DBG_Struct	*dbg,
-	char	*sql)
+	char	*sql,
+	Bool	fRed)
 {
 	PGresult	*res;
 
@@ -532,7 +533,9 @@ dbgmsg(">_PQexec");
 	printf("%s;\n",sql);fflush(stdout);
 #endif
 	res = PQexec((PGconn *)dbg->conn,sql);
-	PutDB_Redirect(dbg,sql);
+	if		(  fRed  ) {
+		PutDB_Redirect(dbg,sql);
+	}
 dbgmsg("<_PQexec");
 	return	(res);
 }
@@ -644,7 +647,7 @@ dbgmsg(">ExecPGSQL");
 				fVchar = TRUE;
 				break;
 			  case	SQL_OP_EOL:
-				res = _PQexec(dbg,sql);
+				res = _PQexec(dbg,sql,TRUE);
 				fVchar = FALSE;
 				if		(	(  res ==  NULL  )
 						||	(  ( status = PQresultStatus(res) )
@@ -723,7 +726,7 @@ _EXEC(
 	ExecStatusType	status;
 	int			rc;
 
-	res = _PQexec(dbg,sql);
+	res = _PQexec(dbg,sql,TRUE);
 	if		(	(  res ==  NULL  )
 			||	(  ( status = PQresultStatus(res) )
 				   ==  PGRES_BAD_RESPONSE    )
@@ -828,7 +831,8 @@ _DBSTART(
 	int			rc;
 
 dbgmsg(">_DBSTART");
-	res = _PQexec(dbg,"begin");
+	BeginDB_Redirect(dbg); 
+	res = _PQexec(dbg,"begin",FALSE);
 	if		(	(  res ==  NULL  )
 			||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 		dbgmsg("NG");
@@ -853,7 +857,7 @@ _DBCOMMIT(
 	int			rc;
 
 dbgmsg(">_DBCOMMIT");
-	res = _PQexec(dbg,"commit work");
+	res = _PQexec(dbg,"commit work",FALSE);
 	if		(	(  res ==  NULL  )
 			||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 		dbgmsg("NG");
@@ -863,6 +867,7 @@ dbgmsg(">_DBCOMMIT");
 		rc = MCP_OK;
 	}
 	_PQclear(res);
+	CommitDB_Redirect(dbg);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
@@ -918,7 +923,7 @@ dbgmsg(">_DBFETCH");
 		} else {
 			p = sql;
 			p += sprintf(p,"fetch from %s_%s_csr",rec->name,path->name);
-			res = _PQexec(dbg,sql);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_TUPLES_OK  ) ) {
 				dbgmsg("NG");
@@ -995,7 +1000,7 @@ dbgmsg(">_DBUPDATE");
 					p += sprintf(p,"and\t");
 				}
 			}
-			res = _PQexec(dbg,sql);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 						||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");
@@ -1059,7 +1064,7 @@ dbgmsg(">_DBDELETE");
 					p += sprintf(p,"and\t");
 				}
 			}
-			res = _PQexec(dbg,sql);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");
@@ -1109,7 +1114,7 @@ dbgmsg(">_DBINSERT");
 			fInArray = FALSE;
 			p = InsertValues(p,rec->rec,FALSE);
 			p += sprintf(p,") ");
-			res = _PQexec(dbg,sql);
+			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )
 					||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
 				dbgmsg("NG");

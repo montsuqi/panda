@@ -20,9 +20,9 @@ copies.
 */
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -308,7 +308,6 @@ dbgmsg(">ReadyDC");
 	} else {
 		path = LibPath;
 	}
-
 	cob_init(0,NULL);
 	cob_set_library_path(path);
 

@@ -154,7 +154,6 @@ dbgmsg(">RecvEntry");
 			} else {
 				RecvStringData(fp,buff);
 				RegistValue(name,NULL);
-				gtk_entry_set_text(GTK_ENTRY(widget),buff);
 				gtk_entry_set_position(GTK_ENTRY(widget),0);
 			}
 		}

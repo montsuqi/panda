@@ -20,9 +20,9 @@ copies.
 */
 
 #define	MAIN
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -96,67 +96,33 @@ LogThread(
 	void	*para)
 {
 	int		fhLog = (int)para;
-	LOG_DATA	*data;
-	char	buff[SIZE_SQL];
+	LargeByteString	*data;
 	FILE	*fpLog;
 	PacketClass	c;
 	Bool	fSuc;
-	size_t	left;
-	char	*p;
 
 dbgmsg(">LogThread");
 	fpLog = fdopen(fhLog,"w+");
-	data = NULL;
 	do {
-	  top:
 		switch	( c = RecvPacketClass(fpLog) ) {
 		  case	RED_DATA:
-			RecvString(fpLog,buff);
+			data = NewLBS();
+			LBS_EmitStart(data);
+			RecvLBS(fpLog,data);
 			SendPacketClass(fpLog,RED_OK);
-			fflush(fpLog);
+			EnQueue(FileQueue,data);
 			fSuc = TRUE;
 			break;
 		  case	RED_PING:
 			SendPacketClass(fpLog,RED_PONG);
-			fflush(fpLog);
-			goto	top;
+			fSuc = TRUE;
 			break;
 		  default:
 			SendPacketClass(fpLog,RED_NOT);
-			fflush(fpLog);
 			fSuc = FALSE;
 			break;
 		}
-		if		(  !stricmp(buff,"begin")  ) {
-			data = New(LOG_DATA);
-			data->asize = SIZE_SQL;
-			data->usize = 0;
-			data->body = (char *)xmalloc(data->asize);
-			*data->body = 0;
-		} else
-		if		(	(  !stricmp(buff,"commit work")  )
-				||	(  !stricmp(buff,"commit")       ) ) {
-			if		(  data  !=  NULL  ) {
-				EnQueue(FileQueue,data);
-				data = NULL;
-			}
-		} else {
-			if		(  data  !=  NULL  ) {
-				left = data->asize - data->usize;
-				strcat(buff,";");
-				if		(  left  <  strlen(buff)  ) {
-					data->asize += SIZE_SQL;
-					p = (char *)xmalloc(data->asize);
-					strcpy(p,data->body);
-					xfree(data->body);
-					data->body = p;
-				}
-				strcpy(&data->body[data->usize],buff);
-				data->usize += strlen(buff);
-			} else {
-				Warning("transaction not begin");
-			}
-		}
+		fflush(fpLog);
 	}	while	(  fSuc  );
 	shutdown(fhLog, 2);
 	fclose(fpLog);
@@ -185,7 +151,8 @@ static	void
 FileThread(
 	void	*dummy)
 {
-	LOG_DATA	*data;
+	LargeByteString	*data;
+	char	*p;
 	FILE	*fp;
 	time_t	nowtime;
 	struct	tm	*Now;
@@ -200,11 +167,12 @@ dbgmsg(">FileThread");
 	}
 	count = 0;
 	while	(TRUE)	{
-		data = (LOG_DATA *)DeQueue(FileQueue);
+		data = (LargeByteString *)DeQueue(FileQueue);
 		dbgmsg("de queue");
+		p = LBS_ToString(data);
 		if		(  ThisDBG->dbname  !=  NULL  )	{
 			ExecDBG_Operation(ThisDBG,"DBSTART");
-			ExecDBOP(ThisDBG,data->body);
+			ExecDBOP(ThisDBG,p);
 			ExecDBG_Operation(ThisDBG,"DBCOMMIT");
 		}
 		time(&nowtime);
@@ -214,11 +182,11 @@ dbgmsg(">FileThread");
 				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
 				, Now->tm_hour,Now->tm_min,Now->tm_sec,count
 				,ThisDBG->func->commentEnd);
-		fprintf(fp,"%s\n",data->body);
+		fprintf(fp,"%s\n",p);
+		xfree(p);
 		fflush(fp);
 		count ++;
-		xfree(data->body);
-		xfree(data);
+		FreeLBS(data);
 	}
 	//	pthread_exit(NULL);
 dbgmsg("<FileThread");

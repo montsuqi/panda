@@ -36,4 +36,7 @@ copies.
 extern	void	OpenDB_RedirectPort(DBG_Struct *dbg);
 extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
 extern	void	PutDB_Redirect(DBG_Struct *dbg, char *data);
+extern	void	BeginDB_Redirect(DBG_Struct *dbg);
+extern	void	CommitDB_Redirect(DBG_Struct *dbg);
+
 #endif

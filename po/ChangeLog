@@ -1,3 +1,15 @@
+2002-06-04  gettextize  <bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.40.
+
+2002-06-03  gettextize  <bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.40.
+
+2002-06-03  gettextize  <bug-gnu-utils@gnu.org>
+
+	* Makefile.in.in: Upgrade to gettext-0.10.40.
+
 2002-02-23  gettextize  <bug-gnu-utils@gnu.org>
 
 	* Makefile.in.in: Upgrade to gettext-0.10.40.

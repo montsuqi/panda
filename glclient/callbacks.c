@@ -169,22 +169,20 @@ send_event(
 dbgmsg(">send_event");
 	/* don't send event if the window has lost focus */
 	for (w = widget; !GTK_IS_WINDOW (w); w = w->parent);
-	if		(  GTK_WINDOW (w)->window_has_focus  )	{
-		if		(  !fInRecv  &&  !ignore_event ) {
-			name = gtk_widget_get_name(widget);
-			window = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
-			SendEvent(fpComm,window,name,event);
-			SendWindowData();
-			BlockChangedHanders();
-			if		(  GetScreenData(fpComm)  ) {
-				ignore_event = TRUE;
-				while	(  gtk_events_pending()  ) {
-					gtk_main_iteration();
-				}
-				ignore_event = FALSE;
+	if		(  !fInRecv  &&  !ignore_event ) {
+		name = gtk_widget_get_name(widget);
+		window = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
+		SendEvent(fpComm,window,name,event);
+		SendWindowData();
+		BlockChangedHanders();
+		if		(  GetScreenData(fpComm)  ) {
+			ignore_event = TRUE;
+			while	(  gtk_events_pending()  ) {
+				gtk_main_iteration();
 			}
-			UnblockChangedHanders();
+			ignore_event = FALSE;
 		}
+		UnblockChangedHanders();
 	}
 dbgmsg("<send_event");
 }

@@ -202,6 +202,19 @@ AC_ARG_WITH(oki,
 )		
 
 dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the glib modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(GLIB_CONFIG,glib-config,no)
+if test x$GLIB_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find glib-config)
+fi
+GLIB_LIBS=`glib-config --libs`
+GLIB_CFLAGS=`glib-config --cflags`
+AC_SUBST(GLIB_LIBS)
+AC_SUBST(GLIB_CFLAGS)
+
+dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the XML modules.
 dnl ***************************************************************************
 
