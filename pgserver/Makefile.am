@@ -7,7 +7,6 @@ pgserver_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpandas.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
@@ -20,7 +19,6 @@ INCLUDES 			= \
 	-I$(top_srcdir)/libs	\
 	$(GLIB_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
 pgserver_SOURCES	=	\

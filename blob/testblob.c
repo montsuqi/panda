@@ -24,6 +24,7 @@ copies.
 #define	TRACE
 */
 
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -44,8 +45,17 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-#define	BLOB_FILE	"."
-#define	OB_NUMBER	10
+#define	BLOB_FILE	"test"
+
+#if	BLOB_VERSION == 2
+//#define	TEST_CREAT
+#define	TEST_DESTROY
+#define	OB_NUMBER	40000
+#else
+#define	TEST_WRITE
+#define	TEST_OPEN
+#define	OB_NUMBER	1000
+#endif
 
 extern	int
 main(
@@ -55,40 +65,64 @@ main(
 	BLOB_Space	*blob;
 	BLOB_State	*state;
 	MonObjectType	obj[OB_NUMBER];
+	char	buff[SIZE_LONGNAME+1];
 	int		i;
-	char	buff[100];
+	ssize_t	size;
 
+	InitMessage("testblob",NULL);
+#if	0
 	blob = InitBLOB(BLOB_FILE);
 	sleep(1);
 	FinishBLOB(blob);
 	sleep(1);
+#endif
 	blob = InitBLOB(BLOB_FILE);
 	state = ConnectBLOB(blob);
 	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		obj[i] = NewBLOB(state,BLOB_OPEN_WRITE);
+		printf("main oid = %lld\n",obj[i]);
 	}
-
-	for	( i = 0 ; i < 10 ; i ++ ) {
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		CloseBLOB(state,obj[i]);
+	}
+#ifdef	TEST_CREAT
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		size = OpenBLOB(state,obj[i],BLOB_OPEN_READ);
+		printf("oid = %lld size = %d\n",obj[i],size);
+	}
+#endif
+#ifdef	TEST_DESTROY
+	for	( i = 30000 ; i < 35000 ; i ++ ) {
+		DestroyBLOB(state,obj[i]);
+	}
+	for	( i = 0 ; i < 5000 ; i ++ ) {
+		obj[i] = NewBLOB(state,BLOB_OPEN_WRITE);
+		printf("main oid = %lld\n",obj[i]);
+	}
+#endif
+#ifdef	TEST_WRITE
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		sprintf(buff,"%d\n%d\n",i,i);
 		WriteBLOB(state,obj[i],buff,strlen(buff));
 	}
-
-	for	( i = 0 ; i < 10 ; i ++ ) {
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		CloseBLOB(state,obj[i]);
 	}
-
-	for	( i = 0 ; i < 10 ; i ++ ) {
-		OpenBLOB(state,obj[i],BLOB_OPEN_WRITE|BLOB_OPEN_APPEND);
+#endif
+#ifdef	TEST_OPEN
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
+		OpenBLOB(state,obj[i],BLOB_OPEN_WRITE);
 	}
 
-	for	( i = 0 ; i < 10 ; i += 2 ) {
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		sprintf(buff,"add %d\n",i);
 		WriteBLOB(state,obj[i],buff,strlen(buff));
 	}
 
-	for	( i = 0 ; i < 10 ; i ++ ) {
+	for	( i = 0 ; i < OB_NUMBER ; i ++ ) {
 		CloseBLOB(state,obj[i]);
 	}
+#endif
 	DisConnectBLOB(state);
 	FinishBLOB(blob);
 	return	(0);

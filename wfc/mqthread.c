@@ -681,6 +681,7 @@ ENTER_FUNC;
 		}
 	} else {
 		SendPacketClass(fp,APS_NOT);
+		CloseNet(fp);
 		printf("invalid aps = [%s]\n",buff);
 	}
 LEAVE_FUNC;

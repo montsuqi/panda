@@ -77,3 +77,34 @@ LEAVE_FUNC;
 	return	(version);
 }
 
+static	guint
+IdHash(
+	uint64_t	*key)
+{
+	guint	ret;
+
+	ret = (guint)*key;
+	return	(ret);
+}
+
+static	gint
+IdCompare(
+	uint64_t	*o1,
+	uint64_t	*o2)
+{
+	int		check;
+
+	if		(	(  o1  !=  NULL  )
+			&&	(  o2  !=  NULL  ) ) {
+		check = *o1 - *o2;
+	} else {
+		check = 1;
+	}
+	return	(check == 0);
+}
+
+extern	GHashTable	*
+NewLLHash(void)
+{
+	return	(g_hash_table_new((GHashFunc)IdHash,(GCompareFunc)IdCompare));
+}

@@ -24,7 +24,6 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/blob	\
 	$(GTK_CFLAGS)			\
 	$(GLIB_CFLAGS)			\
-	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
 enum_LDADD	= 	\

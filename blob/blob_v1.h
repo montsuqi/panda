@@ -22,6 +22,7 @@ copies.
 #ifndef	_INC_BLOB_V1_H
 #define	_INC_BLOB_V1_H
 
+#if	BLOB_VERSION == 1
 #define	BLOB_V1_Entry		BLOB_Entry
 #define	BLOB_V1_Space		BLOB_Space
 #define	BLOB_V1_State		BLOB_State
@@ -40,6 +41,7 @@ copies.
 #define	CloseBLOB_V1		CloseBLOB
 #define	WriteBLOB_V1		WriteBLOB
 #define	ReadBLOB_V1			ReadBLOB
+#endif
 
 typedef	struct {
 	NETFILE	*fp;

@@ -23,7 +23,6 @@ INCLUDES =					\
 	$(SSL_CFLAGS)				\
 	$(XML_CFLAGS)				\
 	$(GLADE_CFLAGS)				\
-	$(FIXED_CFLAGS)				\
 	$(MONDAI_CFLAGS)			\
 	$(GTK_PANDA_CFLAGS)			\
 	$(GTK_CFLAGS)				\
@@ -36,7 +35,6 @@ glclient_LDADD =				\
 	$(GLADE_LIBS)				\
 	$(SSL_LIBS)				\
 	$(GTK_PANDA_LIBS)			\
-	$(FIXED_LIBS)				\
 	$(MONDAI_LIBS)				\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandagl.la

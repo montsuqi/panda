@@ -28,9 +28,6 @@ copies.
 #define	GLOBAL		extern
 #endif
 
-//GLOBAL	GHashTable	*Values;
-//GLOBAL	GHashTable	*Files;
-//GLOBAL	GHashTable	*ListValues;
 GLOBAL	char		*ScreenDir;
 GLOBAL	char		*RecordDir;
 

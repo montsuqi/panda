@@ -751,7 +751,9 @@ ENTER_FUNC;
  	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);
  	g_hash_table_foreach(Files,(GHFunc)FileNameToUTF8,NULL);
 #ifdef	DEBUG
- 	g_hash_table_foreach(htc->Trans,(GHFunc)_Dump,NULL);
+	if		(  htc  !=  NULL  ) {
+		g_hash_table_foreach(htc->Trans,(GHFunc)_Dump,NULL);
+	}
 #endif
 	if		(	(  ( button = LoadValue("_event") )  ==  NULL  )
 			||	(  *button  ==  0  ) ) {

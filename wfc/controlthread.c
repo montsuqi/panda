@@ -133,6 +133,7 @@ ENTER_FUNC;
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))ControlThread,(void *)fhControl);
+	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(thr); 
 }

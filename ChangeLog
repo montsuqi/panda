@@ -1,6 +1,6 @@
 2004-08-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c: LDが変わってもspaareaを忘れないようにした
+	* wfc/mqthread.c: LDが変わってもSPAを忘れないようにした
 
 2004-08-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 

@@ -3,7 +3,7 @@
 sbin_PROGRAMS = clserver
 
 clserver_LDADD 		=	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm $(XML2_LIBS)	\
+	-L/usr/lib -lglib -lm $(XML2_LIBS)	\
 	-L$(top_srcdir)/libs -lpandas
 
 INCLUDES 			= \

@@ -4,21 +4,17 @@ TODOとアイディア
 
 	glclientがwidgetのデータの揃いが悪いと異常終了するらしい(PandaCList等)
 
-	headでポインタの踏み外しがあるようだ
-
-	ipv4アドレスのエンコードが同一になってしまう[middle:04214]
-		--with-ipv6の時にIPv4で接続すると、アドレスが同じになる(本来はlibcが射影アドレスを間違えているバグ)
-
 	htcgen2で自動作成されるCListについて
 		WebクライアントでCListの部分が1列しか表示されない。
 
 □テスト中
 
-	MCP-PUTTYPE"BACK"の動作について
-		LDをまたがるとひとつ前の画面に戻らない場合がある。
+	LDまたぎのポップアップ
 
 	gladeファイルの修正について
     	recファイルで宣言しているウィジェットを削除すると画面が表示されなくなる。
+
+	headでポインタの踏み外しがあるようだ
 
 □ラージオブジェクトの実装について
 
@@ -26,13 +22,10 @@ TODOとアイディア
 	binaryに変換する。将来的にはPLclientでのオンデマンド転送も可能にす
 	るが、Ver 1.x系では実現しない。
 
-□native XML database
+□データベースハンドラ追加
 
-	HAKAMA層でnative XML databaseを実現する
-
-□full text search
-
-	HAKAMA層でfull text searchを実現する
+	full text search
+	native XML database
 
 □libmonpic内の処理の改良(未実装)
 
@@ -45,7 +38,6 @@ TODOとアイディア
 	ValueStructの改良(NameTree)
 	メッセージログを整備する
 	mcp.dc.puttypeを数値にする
-	LDまたぎのポップアップ
 	BLOBをもっとマシなものにする
 
 □拡張
@@ -62,7 +54,6 @@ TODOとアイディア
 
 □作業中
 
-	いわゆるラージデータの処理
 	webインターフェイス(siomanで対応中)
 	多プログラム言語対応
 	ロードバランス(まだ改良の余地あり)
@@ -92,9 +83,14 @@ TODOとアイディア
 		プログラムでスペースを表示するよう設定するが表示されない。
 	Webクライアントのnumberの表示について
 		numberを表示すると最後にゴミがついてくる
+	いわゆるラージデータの処理
 
 □放置
 
 	インチキ証明書対応
 	必要度の低いthreadを減らす
 	termthreadを非スレッド化する
+
+	ipv4アドレスのエンコードが同一になってしまう[middle:04214]
+		--with-ipv6の時にIPv4で接続すると、アドレスが同じになる(本来はlibcが射影アドレスを間違えているバグ)
+

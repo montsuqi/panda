@@ -52,6 +52,9 @@ copies.
 #define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
 #define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
+#define	BLOB_OPEN_CREATE	0x01
+#define	BLOB_OPEN_APPEND	0x08
+
 static	size_t
 OpenEntry(
 	BLOB_V1_Entry	*ent,
@@ -67,11 +70,15 @@ ENTER_FUNC;
 	snprintf(longname,SIZE_LONGNAME+1,"%s/%lld",ent->blob->space,ent->oid);
 
 	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
+#if	1
+		flag = O_CREAT | O_APPEND | O_TRUNC;
+#else
 		if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
 			flag = O_CREAT;
 		} else {
 			flag = (  ( mode & BLOB_OPEN_APPEND )  !=  0  )  ? O_APPEND : O_TRUNC;
 		}
+#endif
 		if		(  ( mode & BLOB_OPEN_READ )  !=  0  ) {
 			flag |= O_RDWR;
 		} else {
@@ -186,7 +193,7 @@ ENTER_FUNC;
 	ReleaseBLOB(state->blob);
 	ent->blob = state->blob;
 
-	mode = mode | BLOB_OPEN_CREATE;
+	mode |=  BLOB_OPEN_CREATE;
 	OpenEntry(ent,mode);
 	if		(  ent->fp  ==  NULL  ) {
 		DestroyEntry(ent);
@@ -194,32 +201,6 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return	(obj);
-}
-
-static	guint
-IdHash(
-	MonObjectType	*key)
-{
-	guint	ret;
-
-	ret = (guint)*key;
-	return	(ret);
-}
-
-static	gint
-IdCompare(
-	MonObjectType	*o1,
-	MonObjectType	*o2)
-{
-	guint	check;
-
-	if		(	(  o1  !=  NULL  )
-			&&	(  o2  !=  NULL  ) ) {
-		check = *o1 - *o2;
-	} else {
-		check = 1;
-	}
-	return	(check == 0);
 }
 
 extern	BLOB_V1_Space	*
@@ -278,7 +259,7 @@ ENTER_FUNC;
 		blob->space = StrDup(space);
 		blob->fp = fp;
 		blob->oid = head.oid;
-		blob->table = g_hash_table_new((GHashFunc)IdHash,(GCompareFunc)IdCompare);
+		blob->table = NewLLHash();
 		pthread_mutex_init(&blob->mutex,NULL);
 		pthread_cond_init(&blob->cond,NULL);
 	} else {
@@ -316,23 +297,19 @@ OpenBLOB_V1(
 	ssize_t		ret;
 
 ENTER_FUNC;
-	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
-		ret = ( obj = NewBLOB_V1(state,mode) ) != GL_OBJ_NULL  ? 0 : -1;
-	} else {
-		if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )  ==  NULL  ) {
-			LockBLOB(state->blob);
-			ent = New(BLOB_V1_Entry);
-			ent->oid = obj;
-			g_hash_table_insert(state->blob->table,(gpointer)&ent->oid,ent);
-			UnLockBLOB(state->blob);
-			ReleaseBLOB(state->blob);
-			ent->blob = state->blob;
-		}
-		ret = OpenEntry(ent,mode);
-		if		(  ent->fp  ==  NULL  ) {
-			DestroyEntry(ent);
-			ret = -1;
-		}
+	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )  ==  NULL  ) {
+		LockBLOB(state->blob);
+		ent = New(BLOB_V1_Entry);
+		ent->oid = obj;
+		g_hash_table_insert(state->blob->table,(gpointer)&ent->oid,ent);
+		UnLockBLOB(state->blob);
+		ReleaseBLOB(state->blob);
+		ent->blob = state->blob;
+	}
+	ret = OpenEntry(ent,mode);
+	if		(  ent->fp  ==  NULL  ) {
+		DestroyEntry(ent);
+		ret = -1;
 	}
 LEAVE_FUNC;
 	return	(ret);

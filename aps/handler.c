@@ -304,25 +304,22 @@ ENTER_FUNC;
 		ValueIsNonNil(GetArrayItem(mcp_swindow,0));
 		sindex = 1;
 	}
+	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
+		   ValueStringPointer(GetItemLongName(mcp,"dc.window")),
+		   SIZE_NAME);
+	ValueIsNonNil(GetItemLongName(mcp,"dc.fromwin"));
 	if		(  PutType  ==  SCREEN_BACK_WINDOW  ) {
 		sindex --;
 		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
 			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 1)),
 			   SIZE_NAME);
 		ValueIsNonNil(GetItemLongName(mcp,"dc.window"));
-		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
-			   ValueStringPointer(
-				   GetArrayItem(mcp_swindow,sindex + 1)));
-		ValueIsNonNil(GetItemLongName(mcp,"dc.fromwin"));
 		PutType = SCREEN_CHANGE_WINDOW;
+		SetValueString(GetItemLongName(mcp,"dc.puttype"),"CHANGE",NULL);
 	} else
 	if		(  strcmp(ValueStringPointer(
 						  GetArrayItem(mcp_swindow,sindex - 1)),
 					  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
-		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
-			   ValueStringPointer(
-				   GetArrayItem(mcp_swindow,sindex - 1)));
-		ValueIsNonNil(GetItemLongName(mcp,"dc.fromwin"));
 		for	( i = 0 ; i < sindex ; i ++ ) {
 			if		(  strcmp(ValueStringPointer(
 								  GetArrayItem(mcp_swindow,i)),

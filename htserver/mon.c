@@ -62,6 +62,7 @@ static	NETFILE	*fpServ;
 static	char	*ServerPort;
 static	char	*Command;
 static	LargeByteString	*lbs;
+static	Bool		fComm;
 
 //char		*RecordDir;	/*	dummy	*/
 static	ARG_TABLE	option[] = {
@@ -91,6 +92,7 @@ SetDefault(void)
 	Command = "demo";
 	fDump = FALSE;
 	fGet = FALSE;
+	fComm = FALSE;
 	fCookie = FALSE;
 	CommandLine = NULL;
 }
@@ -122,17 +124,21 @@ HT_GetValue(char *name, Bool fClear)
     ValueStruct *value;
 
 ENTER_FUNC;
-    LBS_EmitStart(lbs);
-    sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
-    HT_SendString(buff);
-    RecvLBS(fpServ, lbs);
-    LBS_EmitEnd(lbs);
-    if (LBS_Size(lbs) == 0) {
-        value = NULL;
+	if		(  fComm  ) {
+		LBS_EmitStart(lbs);
+		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
+		HT_SendString(buff);
+		RecvLBS(fpServ, lbs);
+		LBS_EmitEnd(lbs);
+		if (LBS_Size(lbs) == 0) {
+			value = NULL;
+		} else {
+			type = *(PacketDataType *) LBS_Body(lbs);
+			value = NewValue(type);
+			NativeUnPackValue(NULL, LBS_Body(lbs), value);
+		}
 	} else {
-		type = *(PacketDataType *) LBS_Body(lbs);
-		value = NewValue(type);
-		NativeUnPackValue(NULL, LBS_Body(lbs), value);
+		value = NULL;
 	}
 LEAVE_FUNC;
 	return value;
@@ -327,12 +333,14 @@ SendEvent(void)
 ENTER_FUNC;
     if		(  ( name = LoadValue("_name") )  !=  NULL  ) {
 		sprintf(htcname,"%s/%s.htc",ScreenDir,name);
+		fComm = FALSE;
 		if		(  ( htc = HTCParserFile(htcname) )  ==  NULL  ) {
 			exit(1);
 		}
 	} else {
 		exit(1);
 	}
+	fComm = TRUE;
 	event = ParseInput(htc);
 
 	HT_SendString(event);
@@ -414,6 +422,7 @@ ENTER_FUNC;
                     }
                 }
 				sprintf(buff,"%s/%s.htc",ScreenDir,name);
+				fComm = TRUE;
                 htc = HTCParserFile(buff);
                 if (htc == NULL)
                     exit(1);

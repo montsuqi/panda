@@ -70,7 +70,7 @@ MCPSUB(
 	char			*mcp_func;
 	int				ono;
 
-dbgmsg(">MCPSUB");
+ENTER_FUNC;
 	mcp = ThisEnv->mcprec->value; 
 	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,mcpdata,mcp);
 	mcp_func = ValueStringPointer(GetItemLongName(mcp,"func"));
@@ -119,7 +119,7 @@ dbgmsg(">MCPSUB");
 		MakeMCP(mcp,&ctrl);
 	}
 	OpenCOBOL_PackValue(OpenCOBOL_Conv, mcpdata,mcp);
-dbgmsg("<MCPSUB");
+LEAVE_FUNC;
 }
 
 #endif

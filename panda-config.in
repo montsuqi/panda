@@ -72,10 +72,10 @@ if test "$echo_exec_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo @GLIB_CFLAGS@ @FIXED_CFLAGS@ @MONDAI_CFLAGS@ -I@includedir@/panda
+      echo @GLIB_CFLAGS@ @MONDAI_CFLAGS@ -I@includedir@/panda
 fi
 
 if test "$echo_libs" = "yes"; then
       libdirs=-L@libdir@
-      echo @GLIB_LIBS@ @FIXED_LIBS@ @MONDAI_LIBS@ $libdirs -lpandadb -lm
+      echo @GLIB_LIBS@ @MONDAI_LIBS@ $libdirs -lpandadb -lm
 fi

@@ -83,22 +83,28 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-char *
-SaveArgValue(char *name, char *value, Bool fSave)
+extern  char    *
+SaveArgValue(
+    char *name, char *value, Bool fSave)
 {
-    char    *val;
+    char    *val
+        ,   *ret;
+    char    *str;
 
+    if      (  *name  ==  0  ) {
+      RemoveValue(name);
+        ret = SaveValue(name, value,fSave);
+    } else
     if ((val = LoadValue(name)) != NULL) {
-        char *str, *ret;
 
         str = (char *) xmalloc(strlen(val) + strlen(value) + 2);
         sprintf(str, "%s,%s", val, value);
         ret = SaveValue(name, str, fSave);
         xfree(str);
-        return ret;
     } else {
-        return SaveValue(name, value, fSave);
+        ret = SaveValue(name, value, fSave);
     }
+    return  (ret);
 }
 
 extern	void
@@ -486,6 +492,10 @@ ENTER_FUNC;
                 StartScanEnv(buff);
 				while	(  ScanEnv(name,value)  ) {
 					dbgprintf("var name = [%s]\n",name);
+                    if      (  *name  ==  0  ) {
+                        RemoveValue(name);
+						SaveValue(name, value,FALSE);
+                    } else
 					if		(  ( val = LoadValue(name) )  !=  NULL  ) {
 						str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
 						sprintf(str,"%s,%s",val,value);
@@ -527,7 +537,9 @@ ENTER_FUNC;
 					if		(  LoadValue(name)  ==  NULL  ) {
 						SaveValue(name,value,TRUE);
 					} else {
-						SetSave(name,TRUE);
+                        if      (  *name  !=  0  ) {
+                            SetSave(name,TRUE);
+                        }
 					}
 				}
 				munmap(p,sb.st_size);

@@ -41,6 +41,7 @@ copies.
 #include	"HTClex.h"
 #include	"HTCparser.h"
 #include	"cgi.h"
+#include	"enum.h"
 #include	"tags.h"
 #include	"exec.h"
 #include	"debug.h"
@@ -349,8 +350,10 @@ _Fixed(
 		,	*value;
 
 ENTER_FUNC;
-	if		(	(  ( value = GetArg(tag,"value",0) )  !=  NULL  )
-			||	(  ( name = GetArg(tag,"name",0) )    !=  NULL  ) ) {
+	value = GetArg(tag,"value",0);
+	name = GetArg(tag,"name",0);
+	if		(	(  value  !=  NULL  )
+			||	(  name   !=  NULL  ) ) {
 		LBS_EmitString(htc->code,"<span");
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">");
@@ -655,73 +658,90 @@ _Button(
 	Tag		*tag)
 {
 	char	*face
-	,		*event
-		,	*onclick;
+		,	*event
+		,	*onclick
+		,	*state
+		,	*ival;
+	int		val;
 	char	buf[SIZE_BUFF];
 
 ENTER_FUNC;
-	event = GetArg(tag, "event", 0);
-	onclick = GetArg(tag,"onclick",0);
-	if ((event == NULL) &&(onclick == NULL )) {
-        HTC_Error("`event' or `on' attribute is required for <%s>\n", tag->name);
-        return;
-	}
-	if ((face = GetArg(tag, "face", 0)) == NULL) {
-		face = event;
-	}
-    if (htc->DefaultEvent == NULL)
-        htc->DefaultEvent = event;
 #ifdef	USE_IE5
-	if (event != NULL) {
-		g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
-		LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
-	} else {
-		LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
-	}
-	LBS_EmitString(htc->code,face);
-	LBS_EmitString(htc->code,"\"");
-	if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," size=");
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(size));
-		EmitCode(htc,OPC_REFSTR);
-	}
-	if		(  onclick  !=  NULL  ) {
-		LBS_EmitString(htc->code," onclick=\"");
-		LBS_EmitString(htc->code,onclick);
-		LBS_EmitString(htc->code,"\"");
-	}
-
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">");
+	val = WIDGET_STATE_NORMAL;
 #else
-	LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
-	LBS_EmitString(htc->code,face);
-	LBS_EmitString(htc->code,"\"");
-	if		(  event  !=  NULL  ) {
-		LBS_EmitChar(htc->code, ' ');
-		LBS_EmitString(htc->code, "onclick");
-		snprintf(buf, SIZE_BUFF,
-				 "=\""
-				 "document.forms[%d].elements[0].name='_event';"
-				 "document.forms[%d].elements[0].value='",
-				 htc->FormNo, htc->FormNo);
-		LBS_EmitString(htc->code, buf);
-		EmitCode(htc, OPC_NAME);
-		LBS_EmitPointer(htc->code, StrDup(event));
-		EmitCode(htc, OPC_ESCJSS);
-		EmitCode(htc, OPC_REFSTR);
-		LBS_EmitString(htc->code, "';");
-		snprintf(buf, SIZE_BUFF,
-				 "document.forms[%d].submit();\"", htc->FormNo);
-		LBS_EmitString(htc->code, buf);
+	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
+		if		(  ( ival = GetHostValue(state,FALSE) )  !=  NULL  ) {
+			val = atoi(ival);
+		} else {
+			val = WIDGET_STATE_INSENSITIVE;
+		}
 	} else {
-		LBS_EmitString(htc->code," onclick=\"");
-		LBS_EmitString(htc->code,onclick);
-		LBS_EmitString(htc->code,"\"");
+		val = WIDGET_STATE_NORMAL;
 	}
+#endif
+	if		(  val  ==  WIDGET_STATE_NORMAL  ) {
+		event = GetArg(tag, "event", 0);
+		onclick = GetArg(tag,"onclick",0);
+		if ((event == NULL) &&(onclick == NULL )) {
+			HTC_Error("`event' or `on' attribute is required for <%s>\n", tag->name);
+			return;
+		}
+		if ((face = GetArg(tag, "face", 0)) == NULL) {
+			face = event;
+		}
+		if (htc->DefaultEvent == NULL)
+			htc->DefaultEvent = event;
+#ifdef	USE_IE5
+		if (event != NULL) {
+			g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
+			LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
+		} else {
+			LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
+		}
+		LBS_EmitString(htc->code,face);
+		LBS_EmitString(htc->code,"\"");
+		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+			LBS_EmitString(htc->code," size=");
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(size));
+			EmitCode(htc,OPC_REFSTR);
+		}
+		if		(  onclick  !=  NULL  ) {
+			LBS_EmitString(htc->code," onclick=\"");
+			LBS_EmitString(htc->code,onclick);
+			LBS_EmitString(htc->code,"\"");
+		}
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">");
+#else
+		LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
+		LBS_EmitString(htc->code,face);
+		LBS_EmitString(htc->code,"\"");
+		if		(  event  !=  NULL  ) {
+			LBS_EmitChar(htc->code, ' ');
+			LBS_EmitString(htc->code, "onclick");
+			snprintf(buf, SIZE_BUFF,
+					 "=\""
+					 "document.forms[%d].elements[0].name='_event';"
+					 "document.forms[%d].elements[0].value='",
+					 htc->FormNo, htc->FormNo);
+			LBS_EmitString(htc->code, buf);
+			EmitCode(htc, OPC_NAME);
+			LBS_EmitPointer(htc->code, StrDup(event));
+			EmitCode(htc, OPC_ESCJSS);
+			EmitCode(htc, OPC_REFSTR);
+			LBS_EmitString(htc->code, "';");
+			snprintf(buf, SIZE_BUFF,
+					 "document.forms[%d].submit();\"", htc->FormNo);
+			LBS_EmitString(htc->code, buf);
+		} else {
+			LBS_EmitString(htc->code," onclick=\"");
+			LBS_EmitString(htc->code,onclick);
+			LBS_EmitString(htc->code,"\"");
+		}
 
-	LBS_EmitString(htc->code,">");
+		LBS_EmitString(htc->code,">");
+	}
 #endif
 LEAVE_FUNC;
 }
@@ -1489,6 +1509,7 @@ ENTER_FUNC;
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
 	AddArg(tag,"onclick",TRUE);
+	AddArg(tag,"state",TRUE);
 	tag = NewTag("/BUTTON",NULL);
 
 	tag = NewTag("TOGGLEBUTTON",_ToggleButton);

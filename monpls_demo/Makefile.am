@@ -20,5 +20,4 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/dblib	\
 	$(GTK_CFLAGS)			\
 	$(GLIB_CFLAGS)			\
-	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)

@@ -75,13 +75,13 @@ MakeSessionData(void)
 {
 	SessionData	*data;
 
-dbgmsg(">MakeSessionData");
+ENTER_FUNC;
 	data = New(SessionData);
 	data->hdr = New(MessageHeader);
 	data->name = NULL;
 	memclear(data->hdr,sizeof(MessageHeader));
 	data->apsid = -1;
-dbgmsg("<MakeSessionData");
+LEAVE_FUNC;
 	return	(data);
 }
 
@@ -90,7 +90,7 @@ FinishSession(
 	SessionData	*data)
 {
 	char	name[SIZE_NAME+1];
-	char	msg[SIZE_BUFF];
+	char	msg[SIZE_LONGNAME+1];
 	int		i;
 	void	FreeSpa(
 		char	*name,
@@ -101,8 +101,8 @@ FinishSession(
 		FreeLBS(spa);
 	}
 
-dbgmsg(">FinishSession");
-	sprintf(msg,"[%s:%s] session end",data->hdr->term,data->hdr->user);
+ENTER_FUNC;
+	snprintf(msg,SIZE_LONGNAME,"[%s:%s] session end",data->hdr->term,data->hdr->user);
 	MessageLog(msg);
 	xfree(data->hdr);
 	if		(  data->name  !=  NULL  ) {
@@ -118,7 +118,7 @@ dbgmsg(">FinishSession");
 		}
 	}
 	xfree(data);
-dbgmsg("<FinishSession");
+LEAVE_FUNC;
 }
 
 static	SessionData	*
@@ -126,12 +126,12 @@ InitSession(
 	NETFILE	*fp)
 {
 	SessionData	*data;
-	char	buff[SIZE_NAME];
-	char	msg[SIZE_NAME];
+	char	buff[SIZE_LONGNAME+1];
+	char	msg[SIZE_LONGNAME+1];
 	LD_Node	*ld;
 	int			i;
 
-dbgmsg(">InitSession");
+ENTER_FUNC;
 	data = MakeSessionData();
 	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
 		data->fKeep = TRUE;
@@ -141,7 +141,7 @@ dbgmsg(">InitSession");
 	ON_IO_ERROR(fp,badio);
 	RecvStringDelim(fp,SIZE_NAME,data->hdr->term);		ON_IO_ERROR(fp,badio);
 	RecvStringDelim(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
-	sprintf(msg,"[%s:%s] session start",data->hdr->term,data->hdr->user);
+	snprintf(msg,SIZE_LONGNAME,"[%s:%s] session start",data->hdr->term,data->hdr->user);
 	MessageLog(msg);
 	dbgprintf("term = [%s]",data->hdr->term);
 	dbgprintf("user = [%s]",data->hdr->user);
@@ -175,14 +175,15 @@ dbgmsg(">InitSession");
 		data->hdr->puttype = TO_CHAR(SCREEN_NULL);
 		data->w.n = 0;
 	} else {
-		sprintf(msg,"[%s] session fail LD [%s] not found.",data->hdr->term,buff);
+		snprintf(msg,SIZE_LONGNAME,
+				 "[%s] session fail LD [%s] not found.",data->hdr->term,buff);
 		MessageLog(msg);
 	  badio:
 		SendPacketClass(fp,WFC_NOT);
 		FinishSession(data);
 		data = NULL;
 	}
-dbgmsg("<InitSession");
+LEAVE_FUNC;
 	return	(data);
 }
 
@@ -334,7 +335,7 @@ TermThread(
 	TermNode	*term;
 	SessionData	*data;
 
-dbgmsg(">TermThread");
+ENTER_FUNC;
 	term = New(TermNode);
 	term->que = NewQueue();
 	term->fp = SocketToNet(fhTerm);
@@ -359,7 +360,7 @@ dbgmsg(">TermThread");
 	CloseNet(term->fp);
 	FreeQueue(term->que);
 	xfree(term);
-dbgmsg("<TermThread");
+LEAVE_FUNC;
 	pthread_exit(NULL);
 }
 
@@ -370,20 +371,21 @@ ConnectTerm(
 	int		fhTerm;
 	pthread_t	thr;
 
-dbgmsg(">ConnectTerm");
+ENTER_FUNC;
 	if		(  ( fhTerm = accept(_fhTerm,0,0) )  <  0  )	{
 		MessagePrintf("_fhTerm = %d INET Domain Accept",_fhTerm);
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))TermThread,(void *)fhTerm);
-dbgmsg("<ConnectTerm");
+	pthread_detach(thr);
+LEAVE_FUNC;
 	return	(thr); 
 }
 
 extern	void
 InitTerm(void)
 {
-dbgmsg(">InitTerm");
+ENTER_FUNC;
 	TermHash = NewNameHash();
-dbgmsg("<InitTerm");
+LEAVE_FUNC;
 }

@@ -7,7 +7,6 @@ glauth_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la
@@ -16,7 +15,6 @@ user_LDADD 		=						\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la
@@ -28,8 +26,7 @@ INCLUDES 			= 					\
 	-I$(top_srcdir)/datalib				\
 	$(SSL_CFLAGS)						\
 	$(GLIB_CFLAGS)						\
-	$(MONDAI_CFLAGS)					\
-	$(FIXED_CFLAGS)
+	$(MONDAI_CFLAGS)
 
 glauth_SOURCES	=	\
 	glauth.c

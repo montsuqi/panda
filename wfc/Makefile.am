@@ -11,14 +11,12 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/blob	\
 	$(SSL_CFLAGS)			\
 	$(GLIB_CFLAGS)			\
-	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
 LDADD 			=						\
 	-lm									\
 	$(SSL_LIBS)							\
 	$(GLIB_LIBS)						\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpanda.la		\
 	$(top_builddir)/libs/libpandamisc.la	\

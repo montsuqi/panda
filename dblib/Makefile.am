@@ -16,7 +16,6 @@ INCLUDES 			=		\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/blob	\
 	$(POSTGRES_CFLAGS)		\
-	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 

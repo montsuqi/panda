@@ -9,7 +9,6 @@ copygen_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpanda.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
@@ -18,7 +17,6 @@ dbgen_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpanda.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
@@ -27,7 +25,6 @@ checkdir_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpanda.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
@@ -36,7 +33,6 @@ monitor_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpanda.la		\
 	$(top_builddir)/libs/libpandamisc.la	\
@@ -45,7 +41,6 @@ msgd_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la
@@ -58,7 +53,6 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/dblib	\
 	$(GLIB_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
 	-DSERVER_DIR=\"$(sbindir)\"
 

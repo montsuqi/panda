@@ -19,7 +19,6 @@ LDADD 		=							\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(FIXED_LIBS)						\
 	$(MONDAI_LIBS)						\
 	$(OPENCOBOL_LIBS)					\
 	$(RUBY_LIBS)						\
@@ -39,7 +38,6 @@ INCLUDES 			= \
 	$(OPENCOBOL_CFLAGS)		\
 	$(RUBY_CFLAGS)		\
 	$(SSL_CFLAGS)			\
-	$(FIXED_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
