@@ -1,3 +1,7 @@
+2002-09-29  akira yamada / やまだあきら <akira@vinecaves.com>
+
+	* libs/tcp.c : SO_REUSEADDRの調整
+
 2002-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/Shell.c (OnChildExit): aps_main.cより移動

@@ -81,6 +81,8 @@ dbgmsg(">BindSocket");
 		printf("protocol = %d\n",info->ai_protocol);
 #endif
 		s = socket(info->ai_family,info->ai_socktype,info->ai_protocol);
+		one = 1;
+		setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *) &one, sizeof(one));
 		if		(  bind(s,info->ai_addr,info->ai_addrlen)  <  0  )	{
 			close(s);
 			continue;
@@ -90,8 +92,6 @@ dbgmsg(">BindSocket");
 	}
 	if		( ld  <  0  ) {
 		Error("error bind");
-	} else {
-		setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
 	}
 dbgmsg("<BindSocket");
 	return	(ld);
@@ -105,7 +105,8 @@ dbgmsg("<BindSocket");
 		Error("error socket");
 	}
 	iport = atoi(port);
-	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
+	one = 1;
+	setsockopt(ld, SOL_SOCKET, SO_REUSEADDR, (void *) &one, sizeof(one));
 	name.sin_family = AF_INET;
 	name.sin_addr.s_addr = INADDR_ANY;
 	name.sin_port = htons(iport);
