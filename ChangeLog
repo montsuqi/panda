@@ -1,5 +1,7 @@
 2004-07-18  Kouji TAKAO  <kouji@netlab.jp>
 
+	* glclient/bootdialog.c: ラベルの日本語化
+
 	* gettextizeをやめた。
 	
 2004-07-17  Kouji TAKAO  <kouji@netlab.jp>
