@@ -1,3 +1,7 @@
+2003-11-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c (StopSystem): SIGHUPでaps再起動、SIGUSR1で停止
+
 2003-11-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/comms.c (SendValueString): 型情報の付加オプション追加

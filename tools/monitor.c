@@ -62,11 +62,17 @@ static	int		MaxTran;
 static	int		Sleep;
 
 static	FILE		*fpLog;
-static	pid_t		PidWfc;
+
 static	GHashTable	*ProcessTable;
+
+#define	PTYPE_NULL	(byte)0x00
+#define	PTYPE_APS	(byte)0x01
+#define	PTYPE_WFC	(byte)0x02
+#define	PTYPE_RED	(byte)0x04
 
 typedef	struct {
 	pid_t	pid;
+	byte	type;
 	int		argc;
 	char	**argv;
 }	Process;
@@ -151,6 +157,7 @@ dbgmsg(">StartRedirector");
 	proc = New(Process);
 	argv = (char **)xmalloc(sizeof(char *) * 12);
 	proc->argv = argv;
+	proc->type = PTYPE_RED;
 	argc = 0;
 	argv[argc ++] = RedirectorPath;
 	if		(  Directory  !=  NULL  ) {
@@ -239,6 +246,7 @@ dbgmsg(">_StartAps");
 			proc = New(Process);
 			argv = (char **)xmalloc(sizeof(char *) * 19);
 			proc->argv = argv;
+			proc->type = PTYPE_APS;
 			argc = 0;
 			argv[argc ++] = ApsPath;
 			argv[argc ++] = "-wfcport";
@@ -303,6 +311,7 @@ dbgmsg(">StartWfc");
 			back += ThisEnv->ld[i]->nports;
 		}
 		proc = New(Process);
+		proc->type = PTYPE_WFC;
 		argv = (char **)xmalloc(sizeof(char *) * 14);
 		proc->argv = argv;
 		argc = 0;
@@ -329,7 +338,7 @@ dbgmsg(">StartWfc");
 		}
 		proc->argc = argc;
 		argv[argc ++] = NULL;
-		PidWfc = StartProcess(proc);
+		StartProcess(proc);
 		sleep(interval);
 	}
 dbgmsg("<StartWfc");
@@ -363,22 +372,32 @@ dbgmsg(">StartPrograms");
 dbgmsg("<StartPrograms");
 }
 
+typedef	struct {
+	byte	type;
+	int		sig;
+}	KILLALL;
+
 static	void
 _KillProcess(
 	pid_t		pid,
 	Process		*proc,
-	int			sig)
+	KILLALL		*kills)
 {
-	kill(pid,sig);
+	if		(  ( kills->type & proc->type )  !=  0  ) {
+		kill(pid,kills->sig);
+	}
 }
 
 static	void
 KillAllProcess(
+	byte	type,
 	int		sig)
 {
-	printf("*** process kill ***\n");
-	g_int_hash_table_foreach(ProcessTable,(GHFunc)_KillProcess,(void *)sig);
-	printf("**************************\n");
+	KILLALL	kills;
+
+	kills.type = type;
+	kills.sig = sig;
+	g_int_hash_table_foreach(ProcessTable,(GHFunc)_KillProcess,(void *)&kills);
 }
 
 static	void
@@ -398,7 +417,7 @@ ProcessMonitor(void)
 			DumpCommand(proc->argv);
 #endif
 			if		(  fRestart  ) {
-				if		(  pid  ==  PidWfc  ) {
+				if		(  ( proc->type & PTYPE_WFC ) !=  0  ) {
 					break;
 				} else {
 					g_int_hash_table_remove(ProcessTable,pid);
@@ -424,14 +443,25 @@ dbgmsg("<InitSystem");
 }
 
 static	void
+WaitStop(void)
+{
+	while	(  waitpid(-1,0,WNOHANG)  >  0  );
+	exit(0);
+}
+
+static	void
 StopSystem(void)
 {
 	fRestart = FALSE;
-	kill(PidWfc,SIGKILL);
+	signal(SIGCHLD,(void *)WaitStop);
+	KillAllProcess((PTYPE_APS | PTYPE_RED | PTYPE_WFC ),SIGKILL);
+}
+
+static	void
+StopApss(void)
+{
 	sleep(interval);
-	KillAllProcess(SIGKILL);
-	sleep(interval);
-	exit(0);
+	KillAllProcess(PTYPE_APS,SIGKILL);
 }
 
 static	ARG_TABLE	option[] = {
@@ -509,11 +539,14 @@ main(
 	fl = GetOption(option,argc,argv);
 	InitMessage("monitor",NULL);
 
-	signal(SIGHUP,(void *)StopSystem);
+	signal(SIGUSR1,(void *)StopSystem);
+	signal(SIGHUP,(void *)StopApss);
+
 	InitSystem();
 	StartPrograms();
 	ProcessMonitor();
 	StopSystem();
+	WaitStop();
 
 	return	(0);
 }
