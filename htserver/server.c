@@ -299,6 +299,7 @@ SesServer(
 	HTC_Node	htc;
 	fd_set		ready;
 	struct	timeval	timeout;
+	int		sts;
 
 ENTER_FUNC;
 	do {
@@ -314,32 +315,32 @@ ENTER_FUNC;
             }
 			dbgmsg("session");
             fp = SocketToNet(fd);
-			htc.count += 1;
-			EncodeTRID(trid,htc.ses,htc.count);
+			EncodeTRID(trid,htc.ses,0);
 			SendStringDelim(fp,trid);
 			SendStringDelim(fp,"\n");
 			RecvStringDelim(fp,SIZE_BUFF,buff);
 dbgprintf("buff = [%s]\n",buff);
-			if		(  *buff  ==  0  )	{
-				break;
+			if		(  *buff  ==  0  ) {
+				strcpy(scr->event,"");
+				strcpy(scr->widget,"");
+			} else
+			if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
+				*p = 0;
+				strcpy(scr->event,buff);
+				strcpy(scr->widget,p+1);
 			} else {
-				if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
-					*p = 0;
-					strcpy(scr->event,buff);
-					strcpy(scr->widget,p+1);
-				} else {
-					strcpy(scr->widget,"");
-					strcpy(scr->event,buff);
-				}
-				RecvScreenData(fp,scr);
+				strcpy(scr->widget,"");
+				strcpy(scr->event,buff);
+			}
+			sts = APL_SESSION_GET;
+			RecvScreenData(fp,scr);
 #ifdef	DEBUG
 	printf("user = [%s]\n",scr->user);
 	printf("cmd  = [%s]\n",scr->cmd);
 #endif
-				ApplicationsCall(APL_SESSION_GET,scr);
-				while	(  scr->status  ==  APL_SESSION_LINK  ) {
-					ApplicationsCall(scr->status,scr);
-				}
+			ApplicationsCall(sts,scr);
+			while	(  scr->status  ==  APL_SESSION_LINK  ) {
+				ApplicationsCall(scr->status,scr);
 			}
 			if		(  scr->status  !=  APL_SESSION_NULL  ) {
 				WriteClient(fp,scr);
