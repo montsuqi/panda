@@ -60,6 +60,7 @@ copies.
 #include	"RecParser.h"
 #include	"trid.h"
 #include	"front.h"
+#include	"term.h"
 #include	"debug.h"
 
 static	GHashTable	*SesHash;

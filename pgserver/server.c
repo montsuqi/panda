@@ -49,6 +49,7 @@ copies.
 #include	"driver.h"
 #include	"pgserver.h"
 #include	"front.h"
+#include	"term.h"
 #include	"dirs.h"
 #include	"RecParser.h"
 #include	"debug.h"
