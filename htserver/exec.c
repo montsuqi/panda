@@ -704,8 +704,8 @@ ParseInput(
 		char	*rname;
 
 		if		(  ( rname = LoadValue(name) )  !=  NULL  ) {
-			RemoveValue(name);
 			SaveValue(rname,"TRUE",FALSE);
+			RemoveValue(name);
 		}
 	}
 	void	ToUTF8(
@@ -722,7 +722,7 @@ ParseInput(
 	}
 	
 ENTER_FUNC;
-	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);
+ 	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);
 	if		(	(  ( button = LoadValue("_event") )  ==  NULL  )
 			||	(  *button  ==  0  ) ) {
 		if (htc->DefaultEvent == NULL) {

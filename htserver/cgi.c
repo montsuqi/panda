@@ -748,40 +748,23 @@ CheckCoding(
 {
 	int		blace
 		,	quote;
-	Bool	fMeta;
+	Bool	fMeta
+		,	fHTC;
 	char	*p;
 	static	char	coding[SIZE_NAME+1];
 
-#if	0
-	blace = 0;
-#else
 	blace = 1;
-#endif
 	quote = 0;
 	fMeta = FALSE;
+	fHTC = FALSE;
 	strcpy(coding,SRC_CODESET);
 	while	(  *str  !=  0  ) {
 		switch	(*str) {
-#if	0
 		  case	'<':
-			if		(  quote  ==  0  ) {
-				blace ++;
+			if		(  !strlicmp(str,"<HTC")  ) {
+				fHTC = TRUE;
 			}
 			break;
-		  case	'>':
-			if		(  quote  ==  0  ) {
-				blace --;
-				fMeta = FALSE;
-			}
-			break;
-		  case	'"':
-			if		(  quote  ==  0  ) {
-				quote ++;
-			} else {
-				quote --;
-			}
-			break;
-#endif
 		  case	'm':
 		  case	'M':
 			if		(	(  blace  >   0  )
@@ -806,7 +789,25 @@ CheckCoding(
 				}
 				*p = 0;
 				str --;
+				break;
 			}
+		} else
+		if		(  fHTC  ) {
+			while	(  isspace(*str)  )	str ++;
+			if		(  !strlicmp(str,"coding")  ) {
+				str += strlen("coding");
+				while	(  isspace(*str)  )	str ++;
+				if		(  *str  ==  '='  )	str ++;
+				while	(  isspace(*str)  )	str ++;
+				p = coding;
+				while	(	(  !isspace(*str)  )
+						&&	(  *str  !=  '"'   ) ) {
+					*p ++ = *str ++;
+				}
+				*p = 0;
+				str --;
+			}
+			break;
 		}
 		str ++;
 	}

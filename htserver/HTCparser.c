@@ -254,6 +254,7 @@ ENTER_FUNC;
 		}
 	} else {
         fprintf(stderr, "HTC file not found: %s\n", name);
+        dbgprintf("HTC file not found: %s\n", name);
 		ret = NULL;
 	}
 LEAVE_FUNC;
