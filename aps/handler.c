@@ -263,6 +263,7 @@ SetPutType(
 	node->w.control[node->w.n].PutType = type;
 	node->w.n ++;
 }
+
 static	void
 CallAfter(
 	ProcessNode	*node)
@@ -320,7 +321,7 @@ dbgmsg(">CallAfter");
 					   ValueStringPointer(GetArrayItem(mcp_swindow,i)),
 					   SCREEN_CLOSE_WINDOW);
 		}
-		SetPutType(node,ValueStringPointer(mcp_dcwindow),SCREEN_CURRENT_WINDOW);
+		//		SetPutType(node,ValueStringPointer(mcp_dcwindow),SCREEN_CURRENT_WINDOW);
 		break;
 	  case	SCREEN_BACK_WINDOW:
 		sindex --;
@@ -329,7 +330,7 @@ dbgmsg(">CallAfter");
 			   SIZE_NAME);
 		PutType = SCREEN_CHANGE_WINDOW;
 		/*	through	*/
-	  default:
+		//	  default:
 		SetPutType(node,ValueStringPointer(mcp_dcwindow),PutType);
 		break;
 	}
