@@ -27,14 +27,14 @@ copies.
 #ifndef	_INC_GLTERM_H
 #define	_INC_GLTERM_H
 
-#define	SCREEN_NULL					0
-#define	SCREEN_CURRENT_WINDOW		1
-#define	SCREEN_NEW_WINDOW			2
-#define	SCREEN_CLOSE_WINDOW			3
-#define	SCREEN_CHANGE_WINDOW		4
-#define	SCREEN_JOIN_WINDOW			5
-#define	SCREEN_FORK_WINDOW			6
-#define	SCREEN_END_SESSION			7
+#define	SCREEN_NULL					(byte)0x00
+#define	SCREEN_CURRENT_WINDOW		(byte)0x01
+#define	SCREEN_NEW_WINDOW			(byte)0x02
+#define	SCREEN_CLOSE_WINDOW			(byte)0x03
+#define	SCREEN_CHANGE_WINDOW		(byte)0x04
+#define	SCREEN_JOIN_WINDOW			(byte)0x05
+#define	SCREEN_FORK_WINDOW			(byte)0x06
+#define	SCREEN_END_SESSION			(byte)0x07
 
 #define	GL_Null			(PacketClass)0x00
 #define	GL_Connect		(PacketClass)0x01

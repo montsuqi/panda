@@ -35,7 +35,7 @@ typedef	struct {
 
 extern	void		InitProtocol(void);
 extern	void		CheckScreens(NETFILE *fp, Bool);
-extern	XML_Node	*ShowWindow(char *wname, int type);
+extern	XML_Node	*ShowWindow(char *wname, byte type);
 extern	Bool		SendConnect(NETFILE *fpComm, char *apl);
 extern	Bool		RecvWidgetData(GtkWidget *widget, NETFILE *fp);
 extern	void		RecvValue(NETFILE *fp, char *longname);

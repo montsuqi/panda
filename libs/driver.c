@@ -92,7 +92,7 @@ dbgmsg("<GetWindowRecord");
 extern	Bool
 PutWindow(
 	WindowData	*win,
-	int			type)
+	byte		type)
 {
 	Bool		rc;
 
@@ -147,7 +147,7 @@ GetWindowValue(
 extern	WindowData	*
 PutWindowByName(
 	char		*wname,
-	int			type)
+	byte		type)
 {
 	WindowData	*win;
 

@@ -142,7 +142,7 @@ dbgmsg("<RecvFile");
 extern	XML_Node	*
 ShowWindow(
 	char	*wname,
-	int		type)
+	byte	type)
 {
 	char		*fname;
 	XML_Node	*node;
@@ -450,7 +450,7 @@ GetScreenData(
 	,			widgetName[SIZE_BUFF];
 	PacketClass	c;
 	Bool		fCancel;
-	int			type;
+	byte		type;
 	XML_Node	*node;
 	GtkWidget	*widget;
 
@@ -463,7 +463,7 @@ dbgmsg(">GetScreenData");
 	while	(  ( c = RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		RecvString(fp,window);
 		dbgprintf("[%s]\n",window);
-		switch( type = RecvInt(fpComm) ) {
+		switch( type = (byte)RecvInt(fpComm) ) {
 		  case	SCREEN_END_SESSION:
 			ExitSystem();
 			fCancel= TRUE;

@@ -42,19 +42,19 @@ typedef	struct {
 
 typedef	struct {
 	Bool			fNew;
-	int				PutType;
+	byte			PutType;
 	RecordStruct	*rec;
 }	WindowData;
 
-extern	WindowData	*SetWindowName(char *name);
-extern	Bool		PutWindow(WindowData *win, int type);
+extern	WindowData		*SetWindowName(char *name);
+extern	Bool			PutWindow(WindowData *win, byte type);
 extern	RecordStruct	*GetWindowRecord(char *wname);
-extern	void		LinkModule(char *name);
-extern	ScreenData	*NewScreenData(void);
+extern	void			LinkModule(char *name);
+extern	ScreenData		*NewScreenData(void);
 
 /*	for easy C programing	*/
 extern	ValueStruct	*GetWindowValue(char *name);
-extern	WindowData	*PutWindowByName(char *wname, int type);
+extern	WindowData	*PutWindowByName(char *wname, byte type);
 
 #define	ThisWindow	(ThisScreen->window)
 #define	ThisWidget	(ThisScreen->widget)
