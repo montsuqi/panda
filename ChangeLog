@@ -1,3 +1,7 @@
+2004-08-31  Noboru Saitou  <noboru@netlab.jp>
+
+	* ダイアログ再表示をしないように修正。
+
 2004-08-25  Noboru Saitou <noborus@netlab.jp>
 
 	* wfc/mqthread.c: 無効なapsを指定されたときにリソースを解放した
