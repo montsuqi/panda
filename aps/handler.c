@@ -250,6 +250,7 @@ dbgmsg(">CallBefore");
 	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),
 		   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
 		   SIZE_STATUS);
+	ValueIsNonNil(GetItemLongName(mcp,"dc.status"));
 	node->w.n = 0;
 	CurrentProcess = node; 
 dbgmsg("<CallBefore");
