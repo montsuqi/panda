@@ -89,7 +89,6 @@ typedef	struct {
 	TermNode	*term;
 	int			apsid;
 	Bool		fKeep;
-	char		otype;
 	LD_Node		*ld;
 	WindowControl	w;
 	size_t			cWindow;

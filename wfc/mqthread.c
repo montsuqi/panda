@@ -377,7 +377,7 @@ dbgmsg(">MessageThread");
 				ld = data->ld;
 				if		(  ( flag = CheckAPS(&ld->aps[ix],data->name) )  !=  0  ) {
 					memcpy(&hdr,data->hdr,sizeof(MessageHeader));
-					data->otype = hdr.puttype;
+					puttype = hdr.puttype;
 					if		(	(  PutAPS(&ld->aps[ix],data,flag)  )
 							&&	(  ( flag = GetAPS_Control(&ld->aps[ix],&hdr) )
 									   !=  0  ) ) {
@@ -411,11 +411,14 @@ dbgmsg(">MessageThread");
 				  case	SCREEN_JOIN_WINDOW:
 				  case	SCREEN_FORK_WINDOW:
 					data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-					data->otype = data->hdr->puttype;
 					CoreEnqueue(data);
 					break;
 				  case	SCREEN_CURRENT_WINDOW:
-					data->hdr->puttype = data->otype;
+					if		(  puttype  ==  TO_CHAR(SCREEN_NULL)  ) {
+						data->hdr->puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
+					} else {
+						data->hdr->puttype = puttype;
+					}
 					TermEnqueue(data->term,data);
 					break;
 				  case	SCREEN_CLOSE_WINDOW:
