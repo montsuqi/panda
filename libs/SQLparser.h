@@ -22,6 +22,8 @@ copies.
 #ifndef	_INC_SQL_PARSER_H
 #define	_INC_SQL_PARSER_H
 
+#define	SIZE_SQL		65538
+
 #include	"libmondai.h"
 #include	"struct.h"
 

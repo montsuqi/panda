@@ -57,7 +57,6 @@ static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	ReleasePool(NULL);
 	printf("session end\n");
 }
 

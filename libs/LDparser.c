@@ -67,7 +67,8 @@ static	TokenTable	tokentable[] = {
 	{	"class"		,T_CLASS	},
 	{	"serialize"	,T_SERIALIZE},
 	{	"start"		,T_START	},
-	{	"locale"	,T_LOCALE	},
+	{	"locale"	,T_CODING	},
+	{	"coding"	,T_CODING	},
 	{	"encoding"	,T_ENCODING	},
 	{	"loadpath"	,T_LOADPATH	},
 

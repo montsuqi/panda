@@ -9,7 +9,7 @@ handler	"Ruby"	{
 	class	"Exec";
 	serialize	"CGI";
 	start		"/usr/bin/ruby -Ke %p/%m.rb";
-	locale		"euc-jp";
+	coding		"euc-jp";
 	encoding	"URL";
 };
 
