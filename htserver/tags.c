@@ -53,6 +53,9 @@ static	size_t	pAStack;
 #define	Pop			(AStack[-- pAStack])
 #define	TOP(n)		AStack[pAStack-(n)]
 
+static char *enctype_urlencoded = "application/x-www-form-urlencoded";
+static char *enctype_multipart = "multipart/form-data";
+static size_t enctype_pos;
 
 static	char	*
 GetArg(
@@ -279,7 +282,6 @@ _Form(
 	Tag		*tag)
 {
 	char	*name;
-	char	*enctype;
 
 dbgmsg(">_Form");
 	LBS_EmitString(htc->code,"<form action=\"mon.cgi\" method=\"");
@@ -289,11 +291,12 @@ dbgmsg(">_Form");
 		LBS_EmitString(htc->code,"post");
 	}
 	LBS_EmitString(htc->code,"\"");
-    if ((enctype = GetArg(tag, "enctype", 0)) != NULL) {
-		LBS_EmitString(htc->code, " enctype=\"");
-		LBS_EmitString(htc->code, enctype);
-		LBS_EmitString(htc->code, "\"");
-    }
+    LBS_EmitString(htc->code, " enctype=\"");
+    EmitCode(htc, OPC_SCONST);
+    enctype_pos = LBS_GetPos(htc->code);
+    LBS_EmitPointer(htc->code, enctype_urlencoded);
+    EmitCode(htc, OPC_REFSTR);
+    LBS_EmitString(htc->code, "\"");
 	Style(htc,tag);
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," name=\"");
@@ -621,6 +624,13 @@ dbgmsg(">_FileSelection");
 
         g_hash_table_insert(htc->FileSelection,
                             StrDup(name), StrDup(filename));
+
+        if (enctype_pos != 0) {
+            size_t pos = LBS_GetPos(htc->code);
+            LBS_SetPos(htc->code, enctype_pos);
+            LBS_EmitPointer(htc->code, enctype_multipart);
+            LBS_SetPos(htc->code, pos);
+        }
     }
 dbgmsg("<_FileSelection");
 }
@@ -940,7 +950,6 @@ dbgmsg(">TagsInit");
 
 	tag = NewTag("FORM",_Form);
 	AddArg(tag,"name",TRUE);
-	AddArg(tag,"enctype",TRUE);
 	tag = NewTag("HEAD",_Head);
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);
