@@ -78,7 +78,6 @@ RecvPanda(
 	char	*widget)
 {
 	int		type;
-	WindowData	*win;
 	int		i;
 	WindowControl	ctl;
 

@@ -301,8 +301,7 @@ static	void
 ParPath(
 	RecordStruct	*rec)
 {
-	int		ix
-	,		pcount;
+	int		pcount;
 	PathStruct		**paths
 		,			*path;
 	ValueStruct		*value;

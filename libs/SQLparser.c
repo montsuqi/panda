@@ -216,6 +216,8 @@ ENTER_FUNC;
 							if		(  GetSymbol  !=  ']'  ) {
 								Error("] missing");
 							}
+						} else {
+							n = 0;
 						}
 						GetSymbol;
 						valr = TraceArray(valr,n);

@@ -123,8 +123,6 @@ ParWindow(
 	LD_Struct	*ld)
 {
 	WindowBind	*bind;
-	int			ix;
-	RecordStruct	*rec;
 	WindowBind	**wnb;
 	char		wname[SIZE_NAME+1];
 
@@ -262,7 +260,6 @@ ParBIND(
 	LD_Struct	*ret)
 {
 	WindowBind	*bind;
-	int			ix;
 
 dbgmsg(">ParBIND");
 	if		(	(  GetSymbol  ==  T_SCONST  )
@@ -401,8 +398,6 @@ _BindHandler(
 	WindowBind	*bind,
 	void		*dummy)
 {
-	MessageHandler	*handler;
-
 	BindMessageHandlerCommon(&bind->handler);
 }
 

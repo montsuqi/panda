@@ -2,6 +2,8 @@ lib_LTLIBRARIES	=	libpanda.la libpandas.la libpandacom.la libpandagl.la libpanda
 
 noinst_PROGRAMS	=	enum testnet
 
+CFLAGS		=	-O2 -Wall -Wunused
+
 panda_la_LDFLAGS	=	-module -export-dynamic
 panda_la_SOURCES	=	panda.c
 panda_la_DEPENDENCIES = libpanda.la

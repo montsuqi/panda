@@ -303,7 +303,6 @@ RecvTermServerData(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
-	WindowData	*win;
 dbgmsg(">RecvTermServerData");
 	g_hash_table_foreach(scr->Windows,(GHFunc)_RecvWindow,fp);
 	SendPacketClass(fp,WFC_OK);

@@ -133,6 +133,8 @@ GetWindowValue(
 	rec = GetWindowRecord(wname);
 	if		(  rec  !=  NULL  ) {
 		val = GetItemLongName(rec->value,p);
+	} else {
+		val = NULL;
 	}
 #ifdef	DEBUG
 	if		(  val  ==  NULL  ) {

@@ -240,8 +240,6 @@ _BindHandler(
 	BatchBind	*bind,
 	void		*dummy)
 {
-	MessageHandler	*handler;
-
 	BindMessageHandlerCommon(&bind->handler);
 }
 

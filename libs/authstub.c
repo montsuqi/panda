@@ -77,7 +77,7 @@ dbgmsg(">AuthUser");
 		CloseNet(fp);
 	} else
 	if		(  !stricmp(auth->protocol,"file")  ) {
-		
+		rc = FALSE;
 	} else {
 		rc = FALSE;
 	}

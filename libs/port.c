@@ -150,6 +150,8 @@ ParPort(
 				} else {
 					ret = NewIP_Port(&dup[1],def);
 				}
+			} else {
+				ret = NewIP_Port(&dup[1],def);
 			}
 		} else {
 			if		(  ( p = strchr(dup,':') )  !=  NULL  ) {

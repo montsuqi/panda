@@ -37,6 +37,8 @@ copies.
 #include	"DDparser.h"
 #include	"LDparser.h"
 #include	"DIparser.h"
+#include	"DBparser.h"
+#include	"BDparser.h"
 #include	"DBDparser.h"
 #include	"directory.h"
 #include	"debug.h"

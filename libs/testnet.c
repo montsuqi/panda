@@ -177,7 +177,6 @@ main(
 	char	**argv)
 {
 	FILE_LIST	*fl;
-	char		*name;
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);

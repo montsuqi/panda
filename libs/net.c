@@ -71,6 +71,7 @@ Send(
 	int		ret;
 
 	if		(  fp->fOK  ) {
+		ret = size;
 		if		(	(  fp->buff  !=  NULL  )
 				&&	(  fp->size  >  size  ) ) {
 			if		(  size + fp->ptr  >  fp->size  ) {
@@ -86,7 +87,6 @@ Send(
 			fp->fSent = TRUE;
 		} else {
 			Flush(fp);
-			ret = size;
 			while	(  size  >  0  ) {
 				if		(  ( count = fp->write(fp,p,size) )  >  0  ) {
 					size -= count;
