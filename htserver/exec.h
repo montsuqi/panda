@@ -36,9 +36,10 @@ copies.
 #define	OPC_HINAME	0x0C
 #define	OPC_BREAK	0x0D
 #define	OPC_HBES	0x0E
-#define	OPC_JNZNP	0x0F
-#define	OPC_DROP	0x10
-#define	OPC_CALENDAR	0x11
+#define	OPC_JNZP	0x0F
+#define	OPC_JNZNP	0x10
+#define	OPC_DROP	0x11
+#define	OPC_CALENDAR	0x12
 
 #undef	GLOBAL
 #ifdef	MAIN

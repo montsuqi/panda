@@ -712,8 +712,19 @@ _Panel(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*name;
+	char	*visible;
 dbgmsg(">_Panel");
+    if ((visible = GetArg(tag, "visible", 0)) == NULL) {
+        Push(0);
+    }
+    else {
+        EmitCode(htc, OPC_NAME);
+        LBS_EmitPointer(htc->code, StrDup(visible));
+        EmitCode(htc, OPC_HINAME);
+        EmitCode(htc, OPC_JNZP);
+        Push(LBS_GetPos(htc->code));
+        LBS_EmitInt(htc->code, 0);
+    }
 	LBS_EmitString(htc->code,"<div");
     Style(htc,tag);
     LBS_EmitString(htc->code,">");
@@ -723,8 +734,16 @@ dbgmsg("<_Panel");
 static void
 _ePanel(HTCInfo *htc, Tag *tag)
 {
+    size_t jnzp_pos, pos;
 dbgmsg(">_ePanel");
 	LBS_EmitString(htc->code, "</div>");
+    if ((jnzp_pos = Pop) != 0) {
+        pos = LBS_GetPos(htc->code);
+        LBS_SetPos(htc->code, jnzp_pos);
+        LBS_EmitInt(htc->code, pos);
+        LBS_SetPos(htc->code, pos);
+        EmitCode(htc, OPC_DROP);
+    }
 dbgmsg("<_ePanel");
 }
 
@@ -854,6 +873,7 @@ dbgmsg(">TagsInit");
 	tag = NewTag("/LINK",_eLink);
 
 	tag = NewTag("PANEL", _Panel);
+	AddArg(tag, "visible", TRUE);
 	AddArg(tag, "id", TRUE);
 	AddArg(tag, "class", TRUE);
 	tag = NewTag("/PANEL", _ePanel);

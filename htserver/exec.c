@@ -454,6 +454,13 @@ dbgmsg(">ExecCode");
 					(void)Pop;
 				}
 				break;
+			  case	OPC_JNZP:
+				dbgmsg("OPC_JNZP");
+				pos = LBS_FetchInt(htc->code);
+				if		(  TOP(1).ival  ==  0  ) {
+					LBS_SetPos(htc->code,pos);
+				}
+				break;
 			  case	OPC_JNZNP:
 				dbgmsg("OPC_JNZNP");
 				pos = LBS_FetchInt(htc->code);
