@@ -31,6 +31,7 @@ copies.
 #define	_HTC_PARSER
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<stdarg.h>
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
@@ -53,15 +54,18 @@ static	Bool	fError;
 #define	GetChar		(HTC_Token = HTCGetChar())
 
 #undef	Error
-#define	Error(msg)	{fError=TRUE;_Error((msg),HTC_FileName,HTC_cLine);}
 
 static	void
-_Error(
-	char	*msg,
-	char	*fn,
-	int		line)
+Error(char *msg, ...)
 {
-	printf("%s:%d:%s\n",fn,line,msg);
+    va_list args;
+
+    fError = TRUE;
+    fprintf(stderr, "%s:%d:", HTC_FileName, HTC_cLine);
+    va_start(args, msg);
+    vfprintf(stderr, msg, args);
+    fputc('\n', stderr);
+    va_end(args);
 }
 
 static	void
@@ -142,10 +146,10 @@ ENTER_FUNC;
 					type->Para = (void *)1;
 				}
 			} else {
-				Error("invalid type");
+				Error("invalid type: %s", tag->name);
 			}
 		} else {
-			Error("invalid tag");
+			Error("invalid tag: %s", tag->name);
 		}
 	}
 LEAVE_FUNC;
