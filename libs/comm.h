@@ -42,7 +42,7 @@ extern	void			SendLong(NETFILE *fp,long data);
 extern	int				RecvInt(NETFILE *fp);
 extern	void			SendInt(NETFILE *fp,int data);
 extern	int				RecvChar(NETFILE *fp);
-extern	void			SendChar(NETFILE *fp,char data);
+extern	void			SendChar(NETFILE *fp,int data);
 extern	double			RecvFloat(NETFILE *fp);
 extern	void			SendFloat(NETFILE *fp,double data);
 extern	Bool			RecvBool(NETFILE *fp);

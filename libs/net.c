@@ -60,10 +60,9 @@ Send(
 	int		ret;
 
 	if		(  fp->fOK  ) {
-		fp->fOK = TRUE;
 		ret = size;
 		while	(  size  >  0  ) {
-			if		(  ( count = fp->write(fp,p,size) )  >  0  ) {
+			if		(  ( count = fp->write(fp,p,size) )  >=  0  ) {
 				size -= count;
 				p += count;
 			} else {
@@ -83,15 +82,15 @@ Recv(
 	void	*buff,
 	size_t	size)
 {
-	char	*p = buff;
+	char	*p;
 	ssize_t	count;
 	int		ret;
 
 	if		(  fp->fOK  ) {
-		fp->fOK = TRUE;
 		ret = size;
+		p = buff;
 		while	(  size  >  0  ) {
-			if		(  ( count = fp->read(fp,p,size) )  >  0  ) {
+			if		(  ( count = fp->read(fp,p,size) )  >=  0  ) {
 				size -= count;
 				p += count;
 			} else {
@@ -106,11 +105,29 @@ Recv(
 }
 
 extern	void
+FreeNet(
+	NETFILE	*fp)
+{
+	xfree(fp);
+}
+
+extern	void
 CloseNet(
 	NETFILE	*fp)
 {
 	fp->close(fp);
-	xfree(fp);
+	FreeNet(fp);
+}
+
+extern	void
+NetSetFD(
+	NETFILE	*fp,
+	int		fd)
+{
+	if		(  fp  !=  NULL  ) {
+		fp->net.fd = fd;
+	}
+	fp->fOK = TRUE;
 }
 
 static	ssize_t
@@ -158,18 +175,28 @@ SocketClose(
 }
 
 extern	NETFILE	*
+NewNet(void)
+{
+	NETFILE	*fp;
+
+	fp = New(NETFILE);
+	fp->fOK = TRUE;
+	fp->err = 0;
+	return	(fp);
+}
+
+extern	NETFILE	*
 SocketToNet(
 	int		fd)
 {
 	NETFILE	*fp;
 
-	fp = New(NETFILE);
+	fp = NewNet();
 	fp->net.fd = fd;
 	fp->read = SocketRead;
 	fp->write = SocketWrite;
 	fp->close = SocketClose;
-	fp->fOK = TRUE;
-	fp->err = 0;
+	
 	return	(fp);
 }
 
@@ -234,13 +261,11 @@ MakeSSL_Net(
 
 	if		(  ( ssl = SSL_new(ctx)  )  !=  NULL  ) {
 		SSL_set_fd(ssl,fd);
-		fp = New(NETFILE);
+		fp = NewNet();
 		fp->net.ssl = ssl;
 		fp->read = SSL_Read;
 		fp->write = SSL_Write;
 		fp->close = SSL_Close;
-		fp->fOK = TRUE;
-		fp->err = 0;
 	} else {
 		fp = NULL;
 	}

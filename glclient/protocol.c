@@ -346,7 +346,7 @@ RecvValue(
 	Bool			fDone;
 
 dbgmsg(">RecvValue");
-	dbgprintf("WidgetName = [%s]",WidgetName);
+	dbgprintf("WidgetName = [%s]\n",WidgetName);
 	if		(  ThisXML  !=  NULL  ) {
 		fDone = FALSE;
 		fTrace = TRUE;

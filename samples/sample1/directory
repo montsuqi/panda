@@ -17,12 +17,15 @@ multiplex_level	aps;
 linkage		link;
 
 wfc	{
+#	port	"[192.168.2.10]:9002";
 	port	":9002";
 };
 
 ld	{
 #	demo1	"localhost" * 1, "localhost:9001" * 1;
 	demo1	"localhost" * 1;
+#	demo1	"192.168.2.10" * 1;
+#	demo2	"[192.168.2.10]" * 1;
 	demo2	"localhost" * 1;
 };
 

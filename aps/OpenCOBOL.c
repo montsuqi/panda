@@ -150,7 +150,6 @@ static	void
 _ReadyDC(void)
 {
 	char	*path;
-	WindowBind	*bind;
 	int		i;
 	size_t	scrsize;
 
@@ -171,13 +170,18 @@ dbgmsg(">ReadyDC");
 		scrsize += OpenCOBOL_SizeValue(ThisLD->window[i]->value,ThisLD->arraysize,ThisLD->textsize);
 	}
 	ScrData = xmalloc(scrsize);
-	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		bind = ThisLD->window[i];
-		if		(  bind->handler  ==  (void *)&Handler  ) {
-			printf("preload [%s]\n",bind->module);
-			(void)cob_resolve(bind->module);
+#if	0
+	{
+		WindowBind	*bind;
+		for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
+			bind = ThisLD->window[i];
+			if		(  bind->handler  ==  (void *)&Handler  ) {
+				printf("preload [%s]\n",bind->module);
+				(void)cob_resolve(bind->module);
+			}
 		}
 	}
+#endif
 dbgmsg("<ReadyDC");
 }
 

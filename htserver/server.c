@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -41,6 +41,7 @@ copies.
 #include	<sys/stat.h>
 #include	<sys/uio.h>
 #include	<unistd.h>
+#include	<errno.h>
 #include	<glib.h>
 
 #include	"types.h"
@@ -75,10 +76,23 @@ HT_SendString(
 	int		fd,
 	char	*str)
 {
+	char	*p;
+	size_t	size
+	,		count;
 #ifdef	DEBUG
-	printf(">>[%s]\n",str);
+	printf(">>[%s]%d\n",str,strlen(str));
 #endif
-	write(fd,str,strlen(str));
+	size = strlen(str);
+	p = str;
+	while	(  size  >  0  ) {
+		if		(  ( count = write(fd,p,size) )  >  0  ) {
+			size -= count;
+			p += count;
+		} else {
+			fprintf(stderr,"write %s\n",strerror(errno));
+			break;
+		}
+	}
 }
 
 static	int

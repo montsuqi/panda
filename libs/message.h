@@ -27,6 +27,7 @@ copies.
 #define	MESSAGE_WARN		2
 #define	MESSAGE_ERROR		3
 #define	MESSAGE_LOG			4
+#define	MESSAGE_PRINT		5
 
 extern	void	MessageDebug(char *file, int line, char *msg);
 extern	void	MessagePrintf(char *file, int line, char *fotmat, ...);

@@ -54,7 +54,6 @@ static	char	*ServerPort;
 static	char	*Command;
 
 //char		*RecordDir;	/*	dummy	*/
-
 static	ARG_TABLE	option[] = {
 	{	"server",	STRING,		TRUE,	(void*)&ServerPort,
 		"サーバポート"	 								},
@@ -212,10 +211,12 @@ GetArg(void)
 			g_hash_table_insert(args,StrDup(name),StrDup(value));
 		}
 	}
-	if		(  ( ScanArgValue = getenv("HTTP_COOKIE") )  !=  NULL  ) {
-		while	(  ScanEnv(name,value)  ) {
-			if		(  g_hash_table_lookup(args,name)  ==  NULL  ) {
-				g_hash_table_insert(args,StrDup(name),StrDup(value));
+	if		(  fCookie  ) {
+		if		(  ( ScanArgValue = getenv("HTTP_COOKIE") )  !=  NULL  ) {
+			while	(  ScanEnv(name,value)  ) {
+				if		(  g_hash_table_lookup(args,name)  ==  NULL  ) {
+					g_hash_table_insert(args,StrDup(name),StrDup(value));
+				}
 			}
 		}
 	}
@@ -324,14 +325,14 @@ HT_RecvString(
 	int		c;
 	Bool	rc;
 #ifdef	DEBUG
-	char	*p;
-
-	p = str;
+	char	*p = str;
 #endif
+
 	while	(	(  ( c = RecvChar(fpServ) )  >=  0     )
 			&&	(  c                         !=  '\n'  ) )	{
 		*str ++ = c;
 	}
+	*str = 0;
 	if		(  c  >=  0  ) {
 		*str -- = 0;
 		while	(	(  *str  ==  '\r'  )
@@ -442,6 +443,7 @@ Session(void)
 	LargeByteString	*html;
 	Bool	fError;
 
+ENTER_FUNC;
   retry:
 	fError = FALSE;
 	if		(  ( fpServ = OpenPort(ServerPort,PORT_HTSERV) )  !=  NULL  ) {
@@ -498,6 +500,7 @@ Session(void)
 	} else {
 		fprintf(stderr,"htserver down??\n");
 	}
+LEAVE_FUNC;
 }
 
 extern	int

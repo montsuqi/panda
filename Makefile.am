@@ -3,8 +3,8 @@
 bin_SCRIPTS = panda-config
 
 SUBDIRS		= 	libs dblib include dbstuff glserver glclient tools wfc aps auth htserver pgserver cobol monpls_demo Doc
-#CFLAGS		=	-g -O2 -funsigned-char -Wall -Wunused
-CFLAGS		=	-O2 -funsigned-char -Wall -Wunused
+
+CFLAGS		=	-O2 -Wall -Wunused
 
 BUILT_SOURCES = defaults.h
 

@@ -43,8 +43,11 @@ typedef	struct _NETFILE	{
 
 extern	int		Send(NETFILE *fp, void *buff, size_t size);
 extern	int		Recv(NETFILE *fp, void *buff, size_t size);
+extern	void	FreeNet(NETFILE *fp);
 extern	void	CloseNet(NETFILE *fp);
+extern	NETFILE	*NewNet(void);
 extern	NETFILE	*SocketToNet(int s);
+extern	void	NetSetFD(NETFILE *fp, int fd);
 extern	void	InitNET(void);
 #ifdef	USE_SSL
 extern	NETFILE	*MakeSSL_Net(SSL_CTX *ctx, int fd);

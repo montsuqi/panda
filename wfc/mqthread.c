@@ -18,6 +18,9 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
+
+#define	APS_STICK
+
 /*
 #define	DEBUG
 #define	TRACE
@@ -306,7 +309,7 @@ SelectData(
 	LD_Node		*ld;
 
 ENTER_FUNC;
-#if	1
+#ifndef	APS_STICK
 	data = DeQueue(que); 
 #else
 	OpenQueue(que);
@@ -329,23 +332,19 @@ ENTER_FUNC;
 				||	(  ThisEnv->mlevel  ==  MULTI_ID  ) )	break;
 	}
 	if		(  data  !=  NULL  ) {
-#ifdef	DEBUG
 		if		(  data->apsid  ==  -1  ) {
-			printf("virgin data\n");
+			dbgprintf("virgin data\n");
 		}
 		if		(  data->apsid  ==  ld->aps[ix].id  ) {
-			printf("same aps selected\n");
+			dbgprintf("same aps selected\n");
 		}
-#endif
 		data = WithdrawQueue(que);
 	}
-	CloseQueue(que);
 	if		(  data  ==  NULL  ){
-#ifdef	DEBUG
-		printf("null\n");
-#endif
+		dbgprintf("null\n");
 		ReleaseQueue(que);
 	}
+	CloseQueue(que);
 #endif
 LEAVE_FUNC;
 	return	(data);

@@ -156,6 +156,7 @@ HTGetValue(
 	char	buff[SIZE_BUFF];
 	char	*value;
 
+	//	printf("\nname = [%s]\n",name);
 	if		(  *name  ==  0  ) {
 		value = "";
 	} else

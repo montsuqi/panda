@@ -136,12 +136,16 @@ dbgmsg(">InitSession");
 	if		(  strcmp(ver,VERSION)  ) {
 		SendStringDelim(fpComm,"Error: version\n");
 		g_warning("reject client(invalid version)");
+		xfree(ses);
+		ses = NULL;
 	} else
 	if		(  AuthUser(ses->user,pass,NULL)  ) {
 		SendStringDelim(fpComm,"Connect: OK\n");
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
 		g_warning("reject client(authentication error)");
+		xfree(ses);
+		ses = NULL;
 	}
 dbgmsg("<InitSession");
 	return	(ses); 

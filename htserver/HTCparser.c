@@ -122,6 +122,7 @@ ParMacroTag(
 {
 	TagType	*type;
 
+ENTER_FUNC;
 	ClearTagValue(tag);
 	while	(  GetSymbol  !=  '>'  ) {
 		if		(  HTC_Token  ==  T_SYMBOL  ) {
@@ -147,6 +148,7 @@ ParMacroTag(
 			Error("invalid tag");
 		}
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -157,6 +159,7 @@ ParTag(
 
 dbgmsg(">ParTag");
 	if		(  GetSymbol  ==  T_SYMBOL  ) {
+dbgprintf("tag = [%s]\n",HTC_ComSymbol);
 		if		(  ( tag = g_hash_table_lookup(Tags,HTC_ComSymbol) )  !=  NULL  ) {
 			ParMacroTag(htc,tag);
 			tag->emit(htc,tag);

@@ -52,7 +52,7 @@ MessagePrintf(
 	va_start(va,format);
 	vsprintf(buff,format,va);
 	va_end(va);
-	_Message(MESSAGE_DEBUG,file,line,buff);
+	_Message(MESSAGE_PRINT,file,line,buff);
 }
 
 static	void
@@ -87,6 +87,9 @@ _Message(
 		break;
 	  case	MESSAGE_DEBUG:
 		printf("D:%s\n",msg);
+		break;
+	  case	MESSAGE_PRINT:
+		printf("D:%s",msg);
 		break;
 	  case	MESSAGE_WARN:
 		printf("W:%s:%d:%s\n",file,line,msg);

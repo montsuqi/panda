@@ -107,6 +107,26 @@ EmitGetValue(
 }
 
 static	void
+Attribute(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*id
+	,		*klass;
+
+	if		(  ( id = GetArg(tag,"id",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," id=\"");
+		LBS_EmitString(htc->code,id);
+		LBS_EmitString(htc->code,"\"");
+	}
+	if		(  ( klass = GetArg(tag,"class",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," class=\"");
+		LBS_EmitString(htc->code,klass);
+		LBS_EmitString(htc->code,"\"");
+	}
+}
+
+static	void
 _Entry(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -136,6 +156,7 @@ dbgmsg(">_Entry");
 		LBS_EmitPointer(htc->code,StrDup(maxlength));
 		EmitCode(htc,OPC_REFSTR);
 	}
+	Attribute(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 dbgmsg("<_Entry");
 }
@@ -184,7 +205,7 @@ dbgmsg(">_Combo");
 	EmitCode(htc,OPC_REFSTR);
 	size = GetArg(tag,"size",0);
 	if		(  size  ==  NULL  ) {
-		LBS_EmitString(htc->code,"\">\n");
+		LBS_EmitString(htc->code,"\"");
 	} else {
 		LBS_EmitString(htc->code,"\" size=");
 		EmitCode(htc,OPC_NAME);
@@ -192,6 +213,8 @@ dbgmsg(">_Combo");
 		EmitCode(htc,OPC_REFSTR);
 		LBS_EmitString(htc->code,">\n");
 	}
+	Attribute(htc,tag);
+	LBS_EmitString(htc->code,">\n");
 	EmitCode(htc,OPC_VAR);
 	LBS_EmitPointer(htc->code,NULL);					/*	3	var		*/
 	EmitCode(htc,OPC_ICONST);
@@ -205,7 +228,7 @@ dbgmsg(">_Combo");
 	EmitCode(htc,OPC_BREAK);
 	LBS_EmitInt(htc->code,0);
 
-	LBS_EmitString(htc->code,"<option>");
+	LBS_EmitString(htc->code,"<option>\n");
 	EmitCode(htc,OPC_NAME);
 	sprintf(name,"%s[#]",GetArg(tag,"item",0));
 	LBS_EmitPointer(htc->code,StrDup(name));
@@ -234,7 +257,10 @@ dbgmsg(">_Form");
 	} else {
 		LBS_EmitString(htc->code,"post");
 	}
-	LBS_EmitString(htc->code,"\">");
+	LBS_EmitString(htc->code,"\"");
+	Attribute(htc,tag);
+	LBS_EmitString(htc->code,">\n");
+
 	LBS_EmitString(htc->code,"\n<input type=\"hidden\" name=\"_name\" value=\"");
 	EmitGetValue(htc,"_name");
 	LBS_EmitString(htc->code,"\">");
@@ -277,7 +303,11 @@ dbgmsg(">_Text");
 		LBS_EmitPointer(htc->code,StrDup(rows));
 		EmitCode(htc,OPC_REFSTR);
 	}
-	LBS_EmitString(htc->code,"\">\n");
+
+	LBS_EmitString(htc->code,"\"");
+	Attribute(htc,tag);
+	LBS_EmitString(htc->code,">\n");
+
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,name);
 	EmitCode(htc,OPC_HSNAME);
@@ -417,15 +447,15 @@ dbgmsg(">_Button");
 	LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
 	LBS_EmitString(htc->code,face);
 	LBS_EmitString(htc->code,"\"");
-	if		(  ( size = GetArg(tag,"size",0) )  ==  NULL  ) {
-		LBS_EmitString(htc->code,">");
-	} else {
+	if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," size=");
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(size));
 		EmitCode(htc,OPC_REFSTR);
-		LBS_EmitString(htc->code,">");
 	}
+
+	Attribute(htc,tag);
+	LBS_EmitString(htc->code,">");
 dbgmsg("<_Button");
 }
 
@@ -444,7 +474,9 @@ dbgmsg(">_ToggleButton");
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code," checked ");
-	LBS_EmitString(htc->code," value=\"TRUE\">");
+	LBS_EmitString(htc->code," value=\"TRUE\"");
+	Attribute(htc,tag);
+	LBS_EmitString(htc->code,">");
 
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"label",0)));
@@ -467,7 +499,9 @@ dbgmsg(">_CheckButton");
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code," checked");
-	LBS_EmitString(htc->code," value=\"TRUE\">");
+	LBS_EmitString(htc->code," value=\"TRUE\"");
+	Attribute(htc,tag);
+	LBS_EmitString(htc->code,">");
 	LBS_EmitString(htc->code,GetArg(tag,"label",0));
 dbgmsg("<_CheckButton");
 }
@@ -498,7 +532,9 @@ dbgmsg(">_RadioButton");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_REFSTR);
-	LBS_EmitString(htc->code,"\">");
+	LBS_EmitString(htc->code,"\"");
+	Attribute(htc,tag);
+	LBS_EmitString(htc->code,">");
 	LBS_EmitString(htc->code,GetArg(tag,"label",0));
 	g_hash_table_insert(htc->Radio,StrDup(group),(void*)1);
 dbgmsg("<_RadioButton");
@@ -637,12 +673,16 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"maxlength",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("COMBO",_Combo);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"item",TRUE);
 	AddArg(tag,"count",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("FIXED",_Fixed);
 	AddArg(tag,"name",TRUE);
@@ -659,24 +699,34 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"rows",TRUE);
 	AddArg(tag,"cols",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("BUTTON",_Button);
 	AddArg(tag,"event",TRUE);
 	AddArg(tag,"face",TRUE);
 	AddArg(tag,"size",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("TOGGLEBUTTON",_ToggleButton);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"label",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("CHECKBUTTON",_CheckButton);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"label",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("RADIOBUTTON",_RadioButton);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"group",TRUE);
 	AddArg(tag,"label",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
 
 	tag = NewTag("CALENDAR",_Calendar);
 	AddArg(tag,"year",TRUE);

@@ -1,3 +1,7 @@
+2003-06-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/OpenCOBOL.c (_ReadyDC): preloadをやめた(ifをいじれば元に戻る)
+
 2003-06-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* aps/OpenCOBOL.c (_StartBatch): パラメータの文字列をCOBOL形式に変更

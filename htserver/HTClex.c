@@ -113,9 +113,9 @@ DoInclude(
 {
 	INCFILE	*back;
 	char	name[SIZE_BUFF];
-	char		buff[SIZE_BUFF];
-	char		*p
-	,			*q;
+	char	buff[SIZE_BUFF];
+	char	*p
+	,		*q;
 
 dbgmsg(">DoInclude");
 	back = New(INCFILE);

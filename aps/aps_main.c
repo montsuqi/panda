@@ -202,9 +202,7 @@ dbgmsg(">ExecuteDC");
 			ExecDB_Function("DBSTART",NULL,NULL);
 			ExecuteProcess(node);
 			sleep(Sleep);
-dbgmsg("*");
 			ExecDB_Function("DBCOMMIT",NULL,NULL);
-dbgmsg("**");
 			PutWFC(fpWFC,node);
 		} else {
 			printf("window [%s] not found.\n",ValueString(GetItemLongName(node->mcprec,"dc.window")));

@@ -292,7 +292,7 @@ MakeInsert(
 	printf("\\copy %s to stdout using delimiters ','\n",rec->name);
 	printf("__EOF__\n");
 	printf("sed < %s.dump -e \"{\n",rec->name);
-	printf("s/\N//g\n");
+	printf("s/\\N//g\n");
 	printf("s/,/','/g\n");
 	printf("s/^/insert into %s (",rec->name);
 	PutItemNames(rec->rec);

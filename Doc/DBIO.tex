@@ -1,0 +1,205 @@
+\section{外部データベース公開インターフェイス}\label{sec:DBIO}
+
+\subsection{概要}
+
+本システムのデータベースを外部のプログラムに公開するサーバの通信手順に
+ついて解説をする。
+
+\subsection{データの伝送}
+
+データの伝送にはTCPを使う。現在のところ、通信に暗号化は行われない。
+
+\subsection{セションの開設}
+
+セションの開設は、クライアント側からポート番号8013にconnectすることに
+より行われる。
+
+なお、ポート番号はdbsの起動オプションにより変更可能である。dbsについて
+の詳細は、\ref{sec:dbs}参照のこと。
+
+\subsection{データ形式}
+
+\begin{itemize}
+\item	サーバ$leftrightarrow$クライアント間の通信は行単位で行われる
+\item	現在のところデータは文字列にエンコードされる通信方法のみが実装
+	されている
+\item	全ての伝送される文字列はURL encodeによりエンコードされる
+\end{itemize}
+
+\subsection{セションの流れ}
+
+\begin{enumerate}
+\item	{\bf セション開設要求}	\\
+	\begin{itemize}
+	\item	セションの開設要求を行う
+	\item	クライアント $\rightarrow$ サーバ
+	\item	以下のものを空白で区切り送信する
+		\begin{itemize}
+		\item	{\bf バージョン番号}
+		\item	{\bf ユーザ名}
+		\item	{\bf パスワード}
+		\item	{\bf 固定文字列}{\it string}
+		\end{itemize}
+	\item	開設要求後には、開設応答に遷移する
+	\end{itemize}
+\item	{\bf セション開設応答}	\\
+	\begin{itemize}
+	\item	セションの開設の結果の応答を行う
+	\item	セション開設が成功応答の後、コマンド受付可能状態になる
+	\item	クライアント $\leftarrow$ サーバ
+	\item	開設成功時には、以下のものを空白で区切り送信する
+		\begin{itemize}
+		\item	{\bf 固定文字列}{\it Connect:}
+		\item	{\bf 固定文字列}{\it OK}
+		\end{itemize}
+	\item	開設失敗時には、以下のものを空白で区切り送信する
+		\begin{itemize}
+		\item	{\bf 固定文字列}{\it Error:}
+		\item	{\bf エラー内容}
+		\end{itemize}
+	\item	開設失敗時のエラー内容には、以下のものがある
+		\begin{itemize}
+		\item	{\bf version}\\
+			サーバ、クライアントのバージョン不整合
+		\item	{\bf authentication}	\\
+			認証エラー
+		\end{itemize}
+	\item	セション開設成功通知後は{\bf コマンド送信}に遷移
+	\item	セション開設失敗通知後は切断
+	\end{itemize}
+\item	{\bf コマンド送信}	\\
+	\begin{itemize}
+	\item	コマンドの送信を行う
+	\item	クライアント $\rightarrow$ サーバ
+	\item	以下のものを空白で区切り送信する
+		\begin{itemize}
+		\item	{\bf 処理区分}
+		\item	{\bf コマンド文字列}
+		\end{itemize}
+	\item	処理区分としては、以下のものがある
+		\begin{itemize}
+		\item	固定文字列{\it Exec:}\\
+			コマンドの実行
+		\item	固定文字列{\it End:}\\
+			処理の終了。この時コマンド文字列を指定しても無視される
+		\end{itemize}
+	\item	コマンド文字列として以下のものを\verb|:|で区切り送信する
+		\begin{itemize}
+		\item	{\bf 処理名}	\\
+			DB定義体に指定されたマクロ名
+		\item	{\bf テーブル名}	\\
+			処理対象のテーブル名。テーブルに関係のない処理(
+			{\it DBOPEN}, {\it DBCLOSE}, {\it DBSTART}, {\it DBEND}等)
+			については、指定不要
+		\item	{\bf パス名}	\\
+			処理対象のパス名。パスの関係ない処理については、指定不要
+		\end{itemize}
+	\item	コマンド送出後は{\bf データ送信}に遷移
+	\item	実行はデータ送信後に行われる
+	\end{itemize}
+\item	{\bf 状態コード応答}	\\
+	\begin{itemize}
+	\item	コマンドの処理状態の通知を行う
+	\item	クライアント $\leftarrow$ サーバ
+	\item	以下のものを送信する
+		\begin{itemize}
+		\item	{\bf 固定文字列}{\it Exec: }
+		\item	{\bf 状態通知コード}
+		\end{itemize}
+	\item	状態通知コードには、以下のものがある
+		\par
+		\begin{quote}
+		\begin{tabular}{r|l}
+		値	&	状態			\\	\hline
+		0	&	OK				\\
+		1	&	EOF				\\
+		2	&	NONFATAL		\\
+		-1	&	引数不正		\\
+		-2	&	処理名不正		\\
+		-3	&	SQL不正			\\
+		-4	&	その他不正		\\
+		\end{tabular}
+		\end{quote}
+	\item	状態通知コード送信後には{\bf データ受信}に遷移
+	\end{itemize}
+\item	{\bf データ送信}	\\
+	\begin{itemize}
+	\item	クライアントからサーバにデータを送る
+	\item	クライアント $\rightarrow$ サーバ
+	\item	以下のものを必要回送信する
+		\begin{itemize}
+		\item	{\bf レコード名}
+		\item	{\bf 固定文字}\verb|'.'|
+		\item	{\bf 項目名}
+		\item	{\bf 固定文字列}\verb|': '|
+		\item	{\bf 値文字列}
+		\end{itemize}
+	\item	必要回送信後は、空行を送信して終了を通知する
+	\item	データ送信後は、直前に送信されたコマンドを実行する
+	\item	実行後は{\bf 状態コード応答}に遷移
+	\end{itemize}
+\item	{\bf データ受信}	\\
+	\begin{itemize}
+	\item	サーバからクライアントにデータを送る
+	\item	クライアント $\leftarrow$ サーバ
+	\item	以下のことを必要回行う
+		\begin{itemize}
+		\item	{\bf 必要項目名送信}
+		\item	{\bf 項目値受信}
+		\end{itemize}
+	\item	必要回実行後は、空行を送信して終了を通知する
+	\item	データ受信が必要がない場合は、空行のみ送る
+	\item	実行後は{\bf コマンド送信}に遷移
+	\end{itemize}
+\item	{\bf 項目名送信}	\\
+	\begin{itemize}
+	\item	データを受信したい項目名をサーバに通知する
+	\item	クライアント $\rightarrow$ サーバ
+	\item	以下のものを送信する
+		\begin{itemize}
+		\item	{\bf レコード名}
+		\item	{\bf 固定文字}\verb|'.'|
+		\item	{\bf 項目名}
+		\item	{\bf 名前送信指定}\\
+			ここで固定文字列\verb|': '|を付加すると、項目名がサーバか
+			ら送信されず、値だけ送信される。\verb|': '|を付加しなけれ
+			ば、項目名と共に値が送信される
+		\end{itemize}
+	\item	項目名指定のさいに下位項目を持つ項目を指定すると、下位項目
+		全てのデータを送信する。この時には名前送信指定をしておくと、項
+		目の名前と共に送られて来るので識別が可能になる。問い合わせの往
+		復がなくなるので、多くの項目を一度に読む時には、この指定が良い
+	\item	複数の項目が一度に送られる指定を行った場合、全て送った後は
+		空行が送られて来て終了を通知する
+	\end{itemize}
+\item	{\bf 項目値受信}	\\
+	\begin{itemize}
+	\item	サーバの値をクライアントに送信する
+	\item	クライアント $\leftarrow$ サーバ
+	\item	以下のものを受信する
+		\begin{itemize}
+		\item	{\bf 項目名}	\\
+			{\bf 項目名送信}で名前送信指定が行われた場合付加される。項
+			目名にはレコード名も含む
+		\item	{\bf 固定文字列}\verb|': '|\\
+			{\bf 項目名送信}で名前送信指定が行われた場合付加される
+		\item	{\bf 値}\\
+			URL encodeされた値を表現する文字列
+		\end{itemize}
+	\end{itemize}
+\end{enumerate}
+
+\subsection{標準処理名}
+
+以下に挙げる処理名は、システムで既定であり、特に定義する必要はない。定
+義された場合は、既定の動作を置換する。
+
+\begin{description}
+\item	[DBOPEN]	データベース処理の開設
+\item	[DBCLOSE]	データベース処理の終了
+\item	[DBSTART]	トランザクションの開始
+\item	[DBEND]		トランザクションの終了
+\end{description}
+
+これ以外の既定処理については、データベースハンドラ固有のものとなるので、
+各データベースハンドラのドキュメントを参照のこと。

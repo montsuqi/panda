@@ -33,9 +33,9 @@ copies.
 #define	dbgmsg(s)			MessageDebug(__FILE__,__LINE__,(s))
 #define	dbgprintf(fmt, ...)	MessagePrintf(__FILE__,__LINE__,(fmt), __VA_ARGS__)
 #define	PASS(s)				MessageDebug(__FILE__,__LINE__,(s))
-#define	ENTER_FUNC			dbgprintf(">%s", __func__)
-#define	LEAVE_FUNC			dbgprintf("<%s", __func__)
-#define	RETURN(v)			dbgprintf("<%s", __func__),return(v)
+#define	ENTER_FUNC			dbgprintf(">%s\n", __func__)
+#define	LEAVE_FUNC			dbgprintf("<%s\n", __func__)
+#define	RETURN(v)			dbgprintf("<%s\n", __func__),return(v)
 #else
 #define	dbgmsg(s)			/*	*/
 #define	dbgprintf(fmt,...)	/*	*/

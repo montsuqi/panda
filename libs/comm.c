@@ -30,6 +30,7 @@ copies.
 
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<errno.h>
 #include	<string.h>
 #include	<strings.h>
 #include	<glib.h>
@@ -289,7 +290,7 @@ extern	int
 RecvChar(
 	NETFILE	*fp)
 {
-	char	data;
+	byte	data;
 	int		ret;
 
 	if		(  Recv(fp,&data,sizeof(data))  ==  sizeof(data)  ) {
@@ -303,9 +304,12 @@ RecvChar(
 extern	void
 SendChar(
 	NETFILE	*fp,
-	char	data)
+	int		data)
 {
-	Send(fp,&data,sizeof(data));
+	byte	buf;
+
+	buf = (byte)data;
+	Send(fp,&buf,sizeof(buf));
 }
 
 extern	double

@@ -94,17 +94,14 @@ GetWindow(
 	char		*wname;
 
 dbgmsg(">GetWindow");
-	dbgprintf("GetWindow(%s)",name);
+	dbgprintf("GetWindow(%s)\n",name);
 	if		(  name  !=  NULL  ) {
 		if		(  ( value = 
 					 (ValueStruct *)g_hash_table_lookup(Windows,name) )
 				   ==  NULL  ) {
-dbgmsg("*");
 			wname = StrDup(name);
 			value = ReadRecordDefine(name);
-dbgmsg("**");
 			g_hash_table_insert(Windows,wname,value);
-dbgmsg("***");
 		}
 	} else {
 		value = NULL;

@@ -192,7 +192,8 @@ _StartRedirectors(
 		if		(  dbg->redirect  !=  NULL  ) {
 			i = 0;
 			do {
-				dbgs[i ++] = dbg;
+				dbgs[i] = dbg;
+				i ++;
 				dbg = dbg->redirect;
 			}	while	(  dbg  !=  NULL  );
 			i --;
@@ -201,7 +202,7 @@ _StartRedirectors(
 					StartRedirector(dbgs[i]);
 				}
 			}
-#if	1
+#if	0
 			StartRedirector(dbgs[0]);
 #endif
 		}

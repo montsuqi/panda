@@ -1,4 +1,4 @@
-sbin_PROGRAMS =  dbredirector dbs
+sbin_PROGRAMS =  dbredirector dbs dbman
 
 
 dbredirector_LDADD 		=				\
@@ -21,6 +21,17 @@ dbs_LDADD 		=						\
 	$(MONDAI_LIBS)						\
 	$(top_srcdir)/libs/libpanda.la		\
 	$(top_srcdir)/libs/libpandas.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/libs/libpandacom.la	\
+	$(top_srcdir)/dblib/libpandadb.la
+
+dbman_LDADD 		=					\
+	-lm									\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(FIXED_LIBS)						\
+	$(MONDAI_LIBS)						\
+	$(top_srcdir)/libs/libpanda.la		\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/libs/libpandacom.la	\
 	$(top_srcdir)/dblib/libpandadb.la
@@ -56,6 +67,12 @@ dbredirector_DEPENDENCIES	=			\
 	$(top_srcdir)/libs/libpandamisc.la	\
 	$(top_srcdir)/dblib/libpandadb.la
 
-
-
+dbman_LDFLAGS	=	-export-dynamic
+dbman_SOURCES	=						\
+	dbman.c
+dbman_DEPENDENCIES	=					\
+	$(top_srcdir)/defaults.h			\
+	$(top_srcdir)/libs/libpanda.la		\
+	$(top_srcdir)/libs/libpandamisc.la	\
+	$(top_srcdir)/dblib/libpandadb.la
 
