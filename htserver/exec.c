@@ -324,6 +324,73 @@ ParseName(
 	return	(buff);
 }
 
+static size_t
+EncodeURI(char *q, byte *p)
+{
+	char	*qq;
+
+	qq = q;
+	while (*p != 0) {
+        if (*p & 0x80 || isspace(*p) || iscntrl(*p)) {
+            *q++ = '%';
+            q += sprintf(q, "%02X", ((int) *p) & 0xFF);
+        }
+        else {
+            switch (*p) {
+                /* delims */
+              case '<': case '>': case '#': case '%': case '"':
+                /* unwise */
+              case '{': case '}': case '|': case '\\': case '^':
+              case '[': case ']': case '`':
+                /* reserved */
+              case ';': case '/': case '?': case ':': case '@':
+              case '&': case '=': case '+': case '$': case ',':
+                *q++ = '%';
+                q += sprintf(q, "%02X", ((int) *p) & 0xFF);
+                break;
+              default:
+                *q ++ = *p;
+                break;
+            }
+        }
+		p++;
+	}
+	*q = 0;
+	return q - qq;
+}
+
+static size_t
+EncodeLengthURI(byte *p)
+{
+	size_t ret;
+
+    ret = 0;
+	while (*p != 0) {
+        if (*p & 0x80 || isspace(*p) || iscntrl(*p)) {
+            ret += 3;
+        }
+        else {
+            switch (*p) {
+                /* delims */
+              case '<': case '>': case '#': case '%': case '"':
+                /* unwise */
+              case '{': case '}': case '|': case '\\': case '^':
+              case '[': case ']': case '`':
+                /* reserved */
+              case ';': case '/': case '?': case ':': case '@':
+              case '&': case '=': case '+': case '$': case ',':
+                ret += 3;
+                break;
+              default:
+                ret++;
+                break;
+            }
+        }
+		p++;
+	}
+	return ret;
+}
+
 static void
 EmitWithEscape(LargeByteString *lbs, char *str)
 {
@@ -504,17 +571,31 @@ dbgmsg(">ExecCode");
 					LBS_SetPos(htc->code,pos);
 				}
 				break;
-			  case OPC_URLENC:
+			  case OPC_LOCURI:
                 {
                     int len;
                     char *local, *encoded;
 
-                    dbgmsg("OPC_URLENC");
+                    dbgmsg("OPC_LOCURI");
                     vval = Pop;
                     local = ConvLocal(vval.str);
-                    len = EncodeStringLengthURL(local);
+                    len = EncodeLengthURI(local);
                     encoded = (char *) xmalloc(len + 1);
-                    EncodeStringURL(encoded, local);
+                    EncodeURI(encoded, local);
+                    vval.str = encoded;
+                    Push(vval);
+                }
+                break;
+			  case OPC_UTF8URI:
+                {
+                    int len;
+                    char *encoded;
+
+                    dbgmsg("OPC_UTF8URI");
+                    vval = Pop;
+                    len = EncodeLengthURI(vval.str);
+                    encoded = (char *) xmalloc(len + 1);
+                    EncodeURI(encoded, vval.str);
                     vval.str = encoded;
                     Push(vval);
                 }

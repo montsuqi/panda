@@ -376,23 +376,89 @@ dbgmsg(">PutHTML");
 dbgmsg("<PutHTML");
 }
 
+static size_t
+EncodeRFC2231(char *q, byte *p)
+{
+	char	*qq;
+
+	qq = q;
+	while (*p != 0) {
+        if (*p & 0x80 || isspace(*p) || iscntrl(*p)) {
+            *q++ = '%';
+            q += sprintf(q, "%02X", ((int) *p) & 0xFF);
+        }
+        else {
+            switch (*p) {
+            case '*': case '\'': case '%':
+            case '(': case ')': case '<': case '>': case '@':
+            case ',': case ';': case ':': case '\\': case '"':
+            case '/': case '[': case ']': case '?': case '=':
+                *q++ = '%';
+                q += sprintf(q, "%02X", ((int) *p) & 0xFF);
+                break;
+            default:
+                *q ++ = *p;
+                break;
+            }
+        }
+		p++;
+	}
+	*q = 0;
+	return q - qq;
+}
+
+static size_t
+EncodeLengthRFC2231(byte *p)
+{
+	size_t ret;
+
+    ret = 0;
+	while (*p != 0) {
+        if (*p & 0x80 || isspace(*p) || iscntrl(*p)) {
+            ret += 3;
+        }
+        else {
+            switch (*p) {
+              case '*': case '\'': case '%':
+              case '(': case ')': case '<': case '>': case '@':
+              case ',': case ';': case ':': case '\\': case '"':
+              case '/': case '[': case ']': case '?': case '=':
+                ret += 3;
+                break;
+              default:
+                ret++;
+                break;
+            }
+        }
+		p++;
+	}
+	return ret;
+}
+
 static void
 PutFile(ValueStruct *file)
 {
     char *filename_field, *ctype_field;
-    char *filename, *ctype;
     char *p;
 
     if ((ctype_field = g_hash_table_lookup(Values, "_contenttype")) != NULL) {
-        ctype = HT_GetValueString(ctype_field, FALSE);
-        printf("Content-Type: %s\r\n", ctype);
+        char *ctype = HT_GetValueString(ctype_field, FALSE);
+        if (*ctype != '\0')
+            printf("Content-Type: %s\r\n", ctype);
     }
     else {
         printf("Content-Type: application/octet-stream\r\n");
     }
     if ((filename_field = g_hash_table_lookup(Values, "_filename")) != NULL) {
-        filename = HT_GetValueString(filename_field, FALSE);
-        printf("Content-Disposition: attachment; filename=%s\r\n", filename);
+        char *filename = HT_GetValueString(filename_field, FALSE);
+        if (*filename != '\0') {
+            int len = EncodeLengthRFC2231(filename);
+            char *encoded = (char *) xmalloc(len + 1);
+            EncodeRFC2231(encoded, filename);
+            printf("Content-Disposition: attachment; filename*=utf-8''%s\r\n",
+                   encoded);
+            xfree(encoded);
+        }
     }
 	printf("Cache-Control: no-cache\r\n");
 	printf("\r\n");
@@ -709,6 +775,7 @@ ENTER_FUNC;
 			HT_RecvString(SIZE_BUFF,buff);
 			sesid = (char *)xmalloc(SIZE_SESID+1);
 			strncpy(sesid,buff,SIZE_SESID);
+            sesid[SIZE_SESID] = '\0';
 			g_hash_table_insert(Values,"_sesid",sesid);
 		} else {
 			sprintf(buff,"Session: %s\n",sesid);

@@ -134,7 +134,7 @@ EmitAttributeValue(
             LBS_EmitPointer(htc->code,StrDup(str+1));
             EmitCode(htc,OPC_HSNAME);
             if (fEncodeURL) {
-                EmitCode(htc,OPC_URLENC);
+                EmitCode(htc,OPC_LOCURI);
             }
             EmitCode(htc,OPC_REFSTR);
             break;
@@ -142,7 +142,7 @@ EmitAttributeValue(
             EmitCode(htc,OPC_NAME);
             LBS_EmitPointer(htc->code,StrDup(str));
             if (fEncodeURL) {
-                EmitCode(htc,OPC_URLENC);
+                EmitCode(htc,OPC_LOCURI);
             }
             EmitCode(htc,OPC_REFSTR);
             break;
@@ -836,6 +836,14 @@ dbgmsg(">_HyperLink");
 
 		LBS_EmitString(htc->code, " href=\"");
         LBS_EmitString(htc->code,ScriptName);
+		if ((filename = GetArg(tag, "filename", 0)) != NULL) {
+            LBS_EmitChar(htc->code, '/');
+            EmitCode(htc, OPC_NAME);
+            LBS_EmitPointer(htc->code, StrDup(filename));
+            EmitCode(htc, OPC_HSNAME);
+            EmitCode(htc, OPC_UTF8URI);
+            EmitCode(htc, OPC_REFSTR);
+        }
 		LBS_EmitString(htc->code, "?_name=");
 		EmitGetValue(htc,"_name");
 		LBS_EmitString(htc->code, "&amp;_event=");
@@ -861,7 +869,7 @@ dbgmsg(">_HyperLink");
 			LBS_EmitPointer(htc->code, StrDup(file));
             EmitCode(htc, OPC_REFSTR);
         }
-		if ((filename = GetArg(tag, "filename", 0)) != NULL) {
+		if (filename != NULL) {
 			LBS_EmitString(htc->code, "&amp;_filename=");
             EmitCode(htc, OPC_NAME);
 			LBS_EmitPointer(htc->code, StrDup(filename));

@@ -42,9 +42,10 @@ copies.
 #define	OPC_JNZP	0x12
 #define	OPC_JNZNP	0x13
 #define	OPC_DROP	0x14
-#define	OPC_URLENC	0x15
-#define	OPC_EMITSTR	0x16
-#define	OPC_CALENDAR	0x17
+#define	OPC_LOCURI	0x15
+#define	OPC_UTF8URI	0x16
+#define	OPC_EMITSTR	0x17
+#define	OPC_CALENDAR	0x18
 
 #undef	GLOBAL
 #ifdef	MAIN
