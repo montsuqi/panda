@@ -20,9 +20,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*		
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -54,6 +54,7 @@ copies.
 #define		_PROTOCOL_C
 #include	"callbacks.h"
 #include	"widgetOPS.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	GHashTable	*ClassTable;
@@ -148,9 +149,7 @@ ShowWindow(
 	XML_Node	*node;
 
 dbgmsg(">ShowWindow");
-#ifdef	TRACE
-	printf("ShowWindow [%s][%d]\n",wname,type);
-#endif
+	dbgprintf("ShowWindow [%s][%d]",wname,type);
 	fname = CacheFileName(wname);
 
 	if		(  ( node = g_hash_table_lookup(WindowTable,wname) )  ==  NULL  ) {
@@ -571,11 +570,10 @@ SendEvent(
 	char		*event)
 {
 dbgmsg(">SendEvent");
-#ifdef	DEBUG
-	printf("window = [%s]\n",window); 
-	printf("widget = [%s]\n",widget); 
-	printf("event  = [%s]\n",event); 
-#endif
+	dbgprintf("window = [%s]",window); 
+	dbgprintf("widget = [%s]",widget); 
+	dbgprintf("event  = [%s]",event); 
+
 	SendPacketClass(fp,GL_Event);
 	SendString(fp,window);
 	SendString(fp,widget);
@@ -640,10 +638,12 @@ dbgmsg(">SendWindowData");
 dbgmsg("<SendWindowData");
 }
 
-void
+extern	void
 SendWindowData(void)
 {
+dbgmsg(">SendWindowData");
 	g_hash_table_foreach(WindowTable,(GHFunc)_SendWindowData,NULL);
 	SendPacketClass(fpComm,GL_END);
 	ClearWindowTable();
+dbgmsg("<SendWindowData");
 }

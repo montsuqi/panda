@@ -202,7 +202,7 @@ RecvData(
 			DecodeStringURL(str,p+1);
 			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 				if		(  ( rec = ThisDB[rno-1] )  !=  NULL  ) {
-					value = GetItemLongName(rec->rec,vname);
+					value = GetItemLongName(rec->value,vname);
 					value->fUpdate = TRUE;
 					SetValueString(value,str);
 				}
@@ -244,9 +244,9 @@ dbgmsg(">WriteClient");
 		if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 			if		(  ( rec = ThisDB[rno-1] )  !=  NULL  ) {
 				if		(  *vname  !=  0  ) {
-					value = GetItemLongName(rec->rec,vname);
+					value = GetItemLongName(rec->value,vname);
 				} else {
-					value = rec->rec;
+					value = rec->value;
 				}
 				SetValueName(name);
 				SendValueString(fpComm,value,NULL,fName);

@@ -21,9 +21,9 @@ copies.
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -75,7 +75,7 @@ dbgmsg(">InitSystem");
 	InitDirectory();
 	SetUpDirectory(Directory,name,"","");
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
-		fprintf(stderr,"LD \"%s\" not found.\n",name);
+		dbgprintf("LD \"%s\" not found.",name);
 		exit(1);
 	}
 	if		(  ThisLD->home  !=  NULL  ) {
@@ -86,11 +86,10 @@ dbgmsg(">InitSystem");
 	ThisDB = ThisLD->db;
 	DB_Table = ThisLD->DB_Table;
 	TextSize = ThisLD->textsize;
-
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		InitializeValue(ThisLD->window[i]->value);
+		dbgprintf("[%s]",ThisLD->window[i]->rec->name);
+		InitializeValue(ThisLD->window[i]->rec->value);
 	}
-
 	ReadyDC();
 	if		(  ThisLD->cDB  >  0  ) {
 		ReadyDB();
@@ -112,17 +111,17 @@ dbgmsg(">MakeProcessNode");
 	node->cWindow = ThisLD->cWindow;
 	node->whash = ThisLD->whash;
 	node->textsize = ThisLD->textsize;
-	node->scrrec = (ValueStruct **)xmalloc(sizeof(ValueStruct *) * node->cWindow);
+	node->scrrec = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * node->cWindow);
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
-		node->scrrec[i] = ThisLD->window[i]->value;
+		node->scrrec[i] = ThisLD->window[i]->rec;
 	}
 
 	/*	get initialize memory area	*/
 
-	*ValueString(GetItemLongName(node->mcprec,"private.pstatus")) 
+	*ValueString(GetItemLongName(node->mcprec->value,"private.pstatus")) 
 		= '0' + APL_SESSION_LINK;
-	*ValueString(GetItemLongName(node->mcprec,"private.pputtype")) = '0';
-	*ValueString(GetItemLongName(node->mcprec,"private.prc")) = '0';
+	*ValueString(GetItemLongName(node->mcprec->value,"private.pputtype")) = '0';
+	*ValueString(GetItemLongName(node->mcprec->value,"private.prc")) = '0';
 dbgmsg("<MakeProcessNode");
 	return	(node);
 }
@@ -147,7 +146,6 @@ ExecuteDC(
 
 	ProcessNode	*node;
 	WindowBind	*bind;
-	int		ix;
 	int		tran;
 
 dbgmsg(">ExecuteDC");
@@ -172,9 +170,7 @@ dbgmsg(">ExecuteDC");
 				WFC_Host = ThisEnv->WfcApsPort->host;
 			}
 		}
-#ifdef	DEBUG
-		printf("%s:%s\n",WFC_Host,WfcPortNumber);
-#endif
+		dbgprintf("%s:%s",WFC_Host,WfcPortNumber);
 		if		(  ( fhWFC = ConnectSocket(WfcPortNumber,SOCK_STREAM,WFC_Host) )
 				   <  0  ) {
 			Error("WFC not ready");
@@ -191,25 +187,25 @@ dbgmsg(">ExecuteDC");
 	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
 						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)  )	break;
-#ifdef	DEBUG
-		printf("[%s]\n",ThisLD->name);
-#endif
-		if		(  ( ix = (int)g_hash_table_lookup(ThisLD->whash,
-												   ValueString(GetItemLongName(node->mcprec,"dc.window"))))  !=  0  ) {
-			bind = ThisLD->window[ix-1];
+		dbgprintf("[%s]",ThisLD->name);
+		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,
+															  ValueString(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
 			if		(  bind->module  ==  NULL  )	break;
-			strcpy(ValueString(GetItemLongName(node->mcprec,"dc.module")),bind->module);
+			strcpy(ValueString(GetItemLongName(node->mcprec->value,"dc.module")),bind->module);
 			ExecDB_Function("DBSTART",NULL,NULL);
 			ExecuteProcess(node);
-			sleep(Sleep);
+			if		(  Sleep  >  0  ) {
+				sleep(Sleep);
+			}
 			ExecDB_Function("DBCOMMIT",NULL,NULL);
 			PutWFC(fpWFC,node);
 		} else {
-			printf("window [%s] not found.\n",ValueString(GetItemLongName(node->mcprec,"dc.window")));
+			MessagePrintf("window [%s] not found.\n",
+						  ValueString(GetItemLongName(node->mcprec->value,"dc.window")));
 			break;
 		}
 	}
-	printf("exiting DC_Thread\n");
+	MessageLog("exiting DC_Thread\n");
 	CloseNet(fpWFC);
 	FinishSession(node);
 dbgmsg("<ExecuteDC");
@@ -317,7 +313,6 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-
 	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
@@ -325,6 +320,7 @@ main(
 		InitMessage(id,NULL);
 		InitNET();
 		InitSystem(fl->name);
+dbgmsg("-\n---\n");
 		ExecuteServer();
 		StopProcess(0);
 		rc = 0;

@@ -55,7 +55,63 @@ AC_CHECK_LIB(pthread,pthread_create)
 AC_CHECK_LIB(crypt,crypt)
 
 #GNOME_COMPILE_WARNINGS
-have_gnome=true
+dnl ***************************************************************************
+dnl Gnome Support (use --disable-gnome to disable).
+dnl (Use "#ifdef USE_GNOME" in Glade for Gnome-specific code.)
+dnl ***************************************************************************
+
+AC_ARG_ENABLE(gnome,
+[  --disable-gnome         disable use of gnome],
+	gnome=$enableval, gnome=yes)
+
+if test "x$gnome" = "xyes"; then
+	AC_PATH_PROG(gnome_config, gnome-config)
+	if test "x$gnome_config" = "x"; then
+		gnome=no
+	fi
+fi
+
+if test "$gnome" = yes; then
+	have_gnome=true
+	AC_DEFINE(USE_GNOME)
+else
+	have_gnome=false
+fi
+
+AC_ARG_ENABLE(client,
+[  --disable-client         disable build client],
+	client=$enableval, client=yes)
+
+if test "$client" = yes; then
+	AC_PATH_PROG(GTK_PANDA_CONFIG, gtkpanda-config, no)
+	if test x$GTK_PANDA_CONFIG = xno; then
+	  AC_MSG_ERROR(Couldn't find gtkpanda-config)
+	fi
+	GTK_PANDA_CFLAGS=`$GTK_PANDA_CONFIG --cflags 2>/dev/null`
+	GTK_PANDA_LIBS=`$GTK_PANDA_CONFIG --libs 2>/dev/null`
+	AC_SUBST(GTK_PANDA_LIBS)
+	AC_SUBST(GTK_PANDA_CFLAGS)
+	AC_DEFINE(USE_PANDA,1,[])
+
+	AC_PATH_PROG(GLADE_PANDA_CONFIG,libglade-panda-config,no)
+	if test x$GLADE_PANDA_CONFIG = xno; then
+	  AC_MSG_ERROR(Couldn't find libglade-panda-config)
+	fi
+	if test "x$have_gnome" = "xtrue"; then
+	  GLADE_LIBS=`libglade-panda-config --libs gnome`
+	  GLADE_CFLAGS=`libglade-panda-config --cflags gnome`
+	else
+	  GLADE_LIBS=`libglade-panda-config --libs`
+	  GLADE_CFLAGS=`libglade-panda-config --cflags`
+	fi
+	AC_SUBST(GLADE_LIBS)
+	AC_SUBST(GLADE_CFLAGS)
+	GLCLIENT="glclient"
+else
+	GLCLIENT=""
+fi
+AC_SUBST(GLCLIENT)
+AM_PATH_GTK(1.2.0)
 
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the PostgreSQL 
@@ -153,7 +209,7 @@ AC_ARG_WITH(dotcobol,
 ]) 
 
 dnl *************************************************************************** 
-dnl Add all the cflags & libs needed for the OpenCOBOL
+dnl for the OpenCOBOL
 dnl *************************************************************************** 
  
 AC_ARG_WITH(opencobol, 
@@ -179,12 +235,6 @@ AC_ARG_WITH(opencobol,
 	AC_SUBST(OPENCOBOL_LIBS) 
 	AC_SUBST(OPENCOBOL_CFLAGS) 
 ])
-
-dnl ***************************************************************************
-dnl GTK
-dnl ***************************************************************************
-
-AM_PATH_GTK(1.2.0)
 
 dnl ***************************************************************************
 dnl pty message display
@@ -306,38 +356,6 @@ XML2_LIBS=`xml2-config --libs`
 XML2_CFLAGS=`xml2-config --cflags`
 AC_SUBST(XML2_LIBS)
 AC_SUBST(XML2_CFLAGS)
-
-dnl ***************************************************************************
-dnl Add all the cflags & libs needed for the libglade modules.
-dnl ***************************************************************************
-
-AC_PATH_PROG(GLADE_PANDA_CONFIG,libglade-panda-config,no)
-if test x$GLADE_PANDA_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find libglade-panda-config)
-fi
-if test "x$have_gnome" = "xtrue"; then
-  GLADE_LIBS=`libglade-panda-config --libs gnome`
-  GLADE_CFLAGS=`libglade-panda-config --cflags gnome`
-else
-  GLADE_LIBS=`libglade-panda-config --libs`
-  GLADE_CFLAGS=`libglade-panda-config --cflags`
-fi
-AC_SUBST(GLADE_LIBS)
-AC_SUBST(GLADE_CFLAGS)
-
-dnl ***************************************************************************
-dnl Add all the cflags & libs needed for the gtkpanda modules.
-dnl ***************************************************************************
-
-AC_PATH_PROG(GTK_PANDA_CONFIG, gtkpanda-config, no)
-if test x$GTK_PANDA_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find gtkpanda-config)
-fi
-GTK_PANDA_CFLAGS=`$GTK_PANDA_CONFIG --cflags 2>/dev/null`
-GTK_PANDA_LIBS=`$GTK_PANDA_CONFIG --libs 2>/dev/null`
-AC_SUBST(GTK_PANDA_LIBS)
-AC_SUBST(GTK_PANDA_CFLAGS)
-AC_DEFINE(USE_PANDA,1,[])
 
 dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the libfixed modules.

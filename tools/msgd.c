@@ -56,6 +56,7 @@ copies.
 static	char	*PortNumber;
 static	int		Back;
 static	Bool	fDate;
+static	Bool	fStdout;
 
 static	sigset_t	hupset;
 static	pthread_t	_FileThread;
@@ -114,10 +115,9 @@ dbgmsg(">FileThread");
 	if		(  fn  !=  NULL  ) { 
 		if		(  ( fp = fopen(fn,"w") )  ==  NULL  ) {
 			Error("log file can not open");
-			fp = stdout;
 		}
 	} else {
-		fp = stdout;
+		fp = NULL;
 	}
 	while	(TRUE)	{
 		p = (char *)DeQueue(FileQueue);
@@ -125,12 +125,25 @@ dbgmsg(">FileThread");
 		if		(  fDate  ) {
 			time(&nowtime);
 			Now = localtime(&nowtime);
-			fprintf(fp,"%04d/%02d/%02d/%02d:%02d:%02d "
-					, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-					, Now->tm_hour,Now->tm_min,Now->tm_sec);
+			if		(  fp  !=  NULL  ) {
+				fprintf(fp,"%04d/%02d/%02d/%02d:%02d:%02d "
+						, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
+						, Now->tm_hour,Now->tm_min,Now->tm_sec);
+			}
+			if		(  fStdout  ) {
+				printf("%04d/%02d/%02d/%02d:%02d:%02d "
+					   , Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
+					   , Now->tm_hour,Now->tm_min,Now->tm_sec);
+			}
 		}
-		fprintf(fp,"%s\n",p);
-		fflush(fp);
+		if		(  fp  !=  NULL  ) {
+			fprintf(fp,"%s\n",p);
+			fflush(fp);
+		}
+		if		(  fStdout  ) {
+			printf("%s\n",p);
+			fflush(stdout);
+		}
 		xfree(p);
 	}
 dbgmsg("<FileThread");
@@ -180,6 +193,8 @@ static	ARG_TABLE	option[] = {
 		"接続待ちキューの数" 							},
 	{	"date",		BOOLEAN,	TRUE,	(void*)&fDate,
 		"時刻表示を行う"								},
+	{	"stdout",	BOOLEAN,	TRUE,	(void*)&fStdout,
+		"ログをstdoutに出力する"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };

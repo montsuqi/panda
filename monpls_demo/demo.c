@@ -246,24 +246,24 @@ dbgmsg(">demoMain");
 	if		(  !strcmp(ThisEvent,"Left")  ) {
 		win = SetWindowName("project1");
 
-		e1 = GetItemLongName(win->Value,"vbox1.entry1.value");
-		e2 = GetItemLongName(win->Value,"vbox1.entry2.value");
+		e1 = GetItemLongName(win->rec->value,"vbox1.entry1.value");
+		e2 = GetItemLongName(win->rec->value,"vbox1.entry2.value");
 		sprintf(buff,"%s%s",
 				ValueString(e1),
 				ValueToString(e2));
-		SetValueString(GetItemLongName(win->Value,"vbox1.entry3.value"),buff);
+		SetValueString(GetItemLongName(win->rec->value,"vbox1.entry3.value"),buff);
 		SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkleft"),FALSE);
 
 		PutWindow(win,SCREEN_CURRENT_WINDOW);
 	} else
 	if		(  !strcmp(ThisEvent,"Right")  ) {
 		win = SetWindowName("project1");
-		e1 = GetItemLongName(win->Value,"vbox1.entry1.value");
-		e2 = GetItemLongName(win->Value,"vbox1.entry2.value");
+		e1 = GetItemLongName(win->rec->value,"vbox1.entry1.value");
+		e2 = GetItemLongName(win->rec->value,"vbox1.entry2.value");
 		sprintf(buff,"%s%s",
 				ValueToString(e2),
 				ValueString(e1));
-		SetValueString(GetItemLongName(win->Value,"vbox1.entry3.value"),buff);
+		SetValueString(GetItemLongName(win->rec->value,"vbox1.entry3.value"),buff);
 		SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkright"),FALSE);
 
 		PutWindow(win,SCREEN_CURRENT_WINDOW);

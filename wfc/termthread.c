@@ -132,35 +132,33 @@ dbgmsg(">InitSession");
 	RecvString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
 	sprintf(msg,"[%s:%s] session start",data->hdr->term,data->hdr->user);
 	MessageLog(msg);
-#ifdef	DEBUG
-	printf("term = [%s]\n",data->hdr->term);
-	printf("user = [%s]\n",data->hdr->user);
-#endif
+	dbgprintf("term = [%s]",data->hdr->term);
+	dbgprintf("user = [%s]",data->hdr->user);
 	RecvString(fp,buff);	/*	LD name	*/		ON_IO_ERROR(fp,badio);
 	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )
 			   !=  NULL  ) {
 		data->ld = ld;
 		data->mcpdata = NewLBS();
-		InitializeValue(ThisEnv->mcprec);
-		LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec),FALSE);
-		NativePackValue(NULL,data->mcpdata->body,ThisEnv->mcprec);
+		InitializeValue(ThisEnv->mcprec->value);
+		LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
+		NativePackValue(NULL,data->mcpdata->body,ThisEnv->mcprec->value);
 		data->spadata = NewLBS();
-		InitializeValue(ld->info->sparec);
-		LBS_ReserveSize(data->spadata,NativeSizeValue(NULL,ld->info->sparec),FALSE);
-		NativePackValue(NULL,data->spadata->body,ld->info->sparec);
+		InitializeValue(ld->info->sparec->value);
+		LBS_ReserveSize(data->spadata,NativeSizeValue(NULL,ld->info->sparec->value),FALSE);
+		NativePackValue(NULL,data->spadata->body,ld->info->sparec->value);
 		data->linkdata = NewLBS();
-		InitializeValue(ThisEnv->linkrec);
-		LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec),FALSE);
-		NativePackValue(NULL,data->linkdata->body,ThisEnv->linkrec);
+		InitializeValue(ThisEnv->linkrec->value);
+		LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
+		NativePackValue(NULL,data->linkdata->body,ThisEnv->linkrec->value);
 		data->cWindow = ld->info->cWindow;
 		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 													* data->cWindow);
 		for	( i = 0 ; i < data->cWindow ; i ++ ) {
 			data->scrdata[i] = NewLBS();
-			InitializeValue(data->ld->info->window[i]->value);
+			InitializeValue(data->ld->info->window[i]->rec->value);
 			LBS_ReserveSize(data->scrdata[i],
-							NativeSizeValue(NULL,ld->info->window[i]->value),FALSE);
-			NativePackValue(NULL,data->scrdata[i]->body,ld->info->window[i]->value);
+							NativeSizeValue(NULL,ld->info->window[i]->rec->value),FALSE);
+			NativePackValue(NULL,data->scrdata[i]->body,ld->info->window[i]->rec->value);
 		}
 		data->name = StrDup(data->hdr->term);
 		g_hash_table_insert(TermHash,data->name,data);
@@ -185,6 +183,7 @@ ReadTerminal(
 	SessionData	*data)
 {
 	LD_Node	*ld;
+	WindowBind	*bind;
 	int			ix;
 
 dbgmsg(">ReadTerminal");
@@ -196,22 +195,22 @@ dbgmsg(">ReadTerminal");
 		RecvString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
 		RecvString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
 		RecvString(fp,data->hdr->event);	ON_IO_ERROR(fp,badio);
-#ifdef	DEBUG
-		printf("window = [%s]\n",data->hdr->window);
-		printf("widget = [%s]\n",data->hdr->widget);
-		printf("event  = [%s]\n",data->hdr->event);
-#endif
+		dbgprintf("window = [%s]",data->hdr->window);
+		dbgprintf("widget = [%s]",data->hdr->widget);
+		dbgprintf("event  = [%s]",data->hdr->event);
 		if		(  ( ld = g_hash_table_lookup(WindowHash,data->hdr->window) )
 				   !=  NULL  ) {
 			data->ld = ld;
-			ix = (int)g_hash_table_lookup(ld->info->whash,data->hdr->window);
-			if		(  ix  >  0  ) {
-				SendPacketClass(fp,APS_OK);			ON_IO_ERROR(fp,badio);
-				dbgmsg("send OK");
-				RecvLBS(fp,data->scrdata[ix-1]);	ON_IO_ERROR(fp,badio);
-				data->hdr->rc = TO_CHAR(0);
-				data->hdr->status = TO_CHAR(APL_SESSION_GET);
-				data->hdr->puttype = TO_CHAR(0);
+			bind = (WindowBind *)g_hash_table_lookup(ld->info->whash,data->hdr->window);
+			if		(  bind  !=  NULL  ) {
+				if		(  bind->ix  >=  0  ) {
+					SendPacketClass(fp,APS_OK);				ON_IO_ERROR(fp,badio);
+					dbgmsg("send OK");
+					RecvLBS(fp,data->scrdata[bind->ix]);	ON_IO_ERROR(fp,badio);
+					data->hdr->rc = TO_CHAR(0);
+					data->hdr->status = TO_CHAR(APL_SESSION_GET);
+					data->hdr->puttype = TO_CHAR(0);
+				}
 			}
 		}
 		break;
@@ -242,6 +241,7 @@ WriteTerminal(
 	MessageHeader	*hdr;
 	int			i;
 	Bool		rc;
+	WindowBind	*bind;
 	int			ix;
 
 dbgmsg(">WriteTerminal");
@@ -259,15 +259,14 @@ dbgmsg(">WriteTerminal");
 		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
 		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
 		for	( i = 0 ; i < data->w.n ; i ++ ) {
-printf("send [%s]\n",data->w.close[i].window);
 			SendString(fp,data->w.close[i].window);		ON_IO_ERROR(fp,badio);
 		}
-printf("data->w.n = %d\n",data->w.n);
 		data->w.n = 0;
-		ix = (int)g_hash_table_lookup(data->ld->info->whash,data->hdr->window);
-		if		(  ix  >  0  ) {
-			SendLBS(fp,data->scrdata[ix-1]);			ON_IO_ERROR(fp,badio);
-dbgmsg("SendLBS");
+		bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,data->hdr->window);
+		if		(  bind  !=  NULL  ) {
+			if		(  bind->ix  >=  0  ) {
+				SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
+			}
 			rc = TRUE;
 		}
 	} else {
@@ -322,8 +321,8 @@ ConnectTerm(
 
 dbgmsg(">ConnectTerm");
 	if		(  ( fhTerm = accept(_fhTerm,0,0) )  <  0  )	{
-		printf("_fhTerm = %d\n",_fhTerm);
-		Error("INET Domain Accept");
+		MessagePrintf("_fhTerm = %d INET Domain Accept",_fhTerm);
+		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))TermThread,(void *)fhTerm);
 dbgmsg("<ConnectTerm");

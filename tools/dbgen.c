@@ -182,7 +182,7 @@ MakeCreate(
 	printf("create\ttable\t%s\t(\n",rec->name);
 	level = 0;
 	alevel = 0;
-	TableBody(rec->rec,ArraySize,TextSize);
+	TableBody(rec->value,ArraySize,TextSize);
 	if		(  ( key = rec->opt.db->pkey )  !=  NULL  ) {
 		item = key->item;
 		printf(",\n\tprimary\tkey(\n");
@@ -295,7 +295,7 @@ MakeInsert(
 	printf("s/\\N//g\n");
 	printf("s/,/','/g\n");
 	printf("s/^/insert into %s (",rec->name);
-	PutItemNames(rec->rec);
+	PutItemNames(rec->value);
 	printf(") values ('/\n");
 	printf("s/$/');/\n");
 	printf("}\"\n");

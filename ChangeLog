@@ -1,3 +1,13 @@
+2003-08-09  OGOSHI  <ogochan@nurs.or.jp>
+
+	* configure.in: GNOMEの処理を正しくした。サーバのみbuild出来るよう
+	にした
+
+2003-08-05  OGOSHI  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.h: WindowBindの構造の若干の変更、cWindowsの論理の
+	変更(このため、データの並びが変更になっている)
+
 2003-07-27  OGOSHI  <ogochan@nurs.or.jp>
 
 	* libs/socket.c: tcp.cから名前変更(TCP以外の接続するかも知れんからね)

@@ -59,12 +59,15 @@
 
 #undef	HAVE_CRYPT_H
 /*	*/
+#undef	OKI
+
 #undef	USE_PANDA
 #undef	USE_PTY
 #undef	USE_IPv6
 #undef	USE_SSL
 #undef	USE_MSGD
-#undef	OKI
+#undef	USE_GNOME
+
 #undef	HAVE_DOTCOBOL
 #undef	HAVE_OPENCOBOL
 #undef	HAVE_POSTGRES

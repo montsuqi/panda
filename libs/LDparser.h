@@ -26,10 +26,11 @@ copies.
 #include	"libmondai.h"
 
 typedef	struct {
-	char	*name;
-	void	*handler;
-	char	*module;
-	ValueStruct	*value;
+	char			*name;
+	void			*handler;
+	char			*module;
+	int				ix;
+	RecordStruct	*rec;
 }	WindowBind;
 
 typedef	struct {
@@ -45,7 +46,7 @@ typedef	struct {
 	size_t		nports;
 	Port		**ports;
 	Port		*wfc;
-	ValueStruct	*sparec;
+	RecordStruct	*sparec;
 	size_t		cWindow;
 	WindowBind	**window;
 	GHashTable	*whash;

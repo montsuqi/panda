@@ -45,7 +45,7 @@ copies.
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
 #endif
-#ifdef ENABLE_GNOME
+#ifdef USE_GNOME
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
@@ -195,7 +195,7 @@ main(
 	argc = 1;
 	argv[1] = NULL;
 	InitSystem();
-#ifdef ENABLE_GNOME
+#ifdef USE_GNOME
 	gnome_init("glclient", VERSION, argc, argv);
 #ifdef	USE_PANDA
 	gtkpanda_init(&argc,&argv);

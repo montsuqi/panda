@@ -20,9 +20,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -65,22 +65,8 @@ copies.
 #include	"front.h"
 #include	"dirs.h"
 #include	"DDparser.h"
+#include	"message.h"
 #include	"debug.h"
-
-#if	0
-static	void
-ClearWindows(
-	gpointer	key,
-	gpointer	value,
-	gpointer	user_data)
-{
-	WindowData	*win = (WindowData *)value;
-
-	xfree(key);
-	FreeValueStruct(win->Value);
-	xfree(win->name);
-}
-#endif
 
 static	void
 FinishSession(
@@ -90,15 +76,6 @@ FinishSession(
 
 	sprintf(msg,"[%s@%s] session end",scr->user,scr->term);
 	MessageLog(msg);
-#if	0
-	if		(	(  scr  !=  NULL  )
-			&&	(  scr->Windows  !=  NULL  ) ) {
-		g_hash_table_foreach(scr->Windows,(GHFunc)ClearWindows,NULL);
-		g_hash_table_destroy(scr->Windows);
-		xfree(scr);
-	}
-	ReleasePool(NULL);
-#endif
 }
 
 static	Bool
@@ -261,9 +238,9 @@ dbgmsg(">SendWindow");
 		  case	SCREEN_CURRENT_WINDOW:
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
-			if		(  win->Value  !=  NULL  ) {
+			if		(  win->rec->value  !=  NULL  ) {
 				SendPacketClass(fpComm,GL_ScreenData);	ON_IO_ERROR(fpComm,badio);
-				SendValue(fpComm,win->Value);			ON_IO_ERROR(fpComm,badio);
+				SendValue(fpComm,win->rec->value);		ON_IO_ERROR(fpComm,badio);
 			} else {
 				SendPacketClass(fpComm,GL_NOT);			ON_IO_ERROR(fpComm,badio);
 			}
@@ -356,7 +333,7 @@ dbgmsg(">RecvScreenData");
 			while	(  ( c = RecvPacketClass(fpComm) )  ==  GL_ScreenData  ) {
 				ON_IO_ERROR(fpComm,badio);
 				RecvString(fpComm,name);		ON_IO_ERROR(fpComm,badio);
-				if		(  ( value = GetItemLongName(win->Value,name+strlen(wname)+1) )
+				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
 					value->fUpdate = TRUE;
 					type = RecvDataType(fpComm);	ON_IO_ERROR(fpComm,badio);
@@ -391,13 +368,13 @@ dbgmsg(">RecvScreenData");
 						break;
 					}
 				} else {
-					printf("[%s]\n",name);
-					Error("invalid item name");
+					MessagePrintf("invalid item name [%s]\n",name);
+					exit(1);
 				}
 			}
 		} else {
-			printf("[%s]\n",wname);
-			Error("invalid window name");
+			MessagePrintf("invalud wind name [%s]\n",wname);
+			exit(1);
 		}
 	}
 	rc = TRUE;
@@ -458,9 +435,7 @@ MainLoop(
 
 dbgmsg(">MainLoop");
 	klass = RecvPacketClass(fpComm); ON_IO_ERROR(fpComm,badio);
-#ifdef	TRACE
-	printf("class = %d\n",(int)klass);
-#endif
+	dbgprintf("class = %d",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
 		  case	GL_Connect:
@@ -498,9 +473,7 @@ dbgmsg(">MainLoop");
 			RecvString(fpComm,scr->window);		ON_IO_ERROR(fpComm,badio);
 			RecvString(fpComm,scr->widget);		ON_IO_ERROR(fpComm,badio);
 			RecvString(fpComm,scr->event);		ON_IO_ERROR(fpComm,badio);
-#ifdef	TRACE
-			printf("event = [%s]\n",scr->event);
-#endif
+			dbgprintf("event = [%s]\n",scr->event);
 			RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
 			ApplicationsCall(APL_SESSION_GET,scr);
 			break;

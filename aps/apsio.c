@@ -88,8 +88,8 @@ CheckCache(
 
 dbgmsg(">CheckCache");
 	if		(  ( ent = g_hash_table_lookup(CacheTable,term) )  !=  NULL  ) {
-		NativeUnPackValue(NULL,ent->linkdata->body,node->linkrec);
-		NativeUnPackValue(NULL,ent->spadata->body,node->linkrec);
+		NativeUnPackValue(NULL,ent->linkdata->body,node->linkrec->value);
+		NativeUnPackValue(NULL,ent->spadata->body,node->linkrec->value);
 		ret = TRUE;
 	} else {
 		ret = FALSE;
@@ -176,9 +176,9 @@ dbgmsg(">SaveCache");
 	}
 #endif
 
-	size =  NativeSizeValue(NULL,node->linkrec);
+	size =  NativeSizeValue(NULL,node->linkrec->value);
 	LBS_ReserveSize(buff,size,FALSE);
-	NativePackValue(NULL,buff->body,node->linkrec);
+	NativePackValue(NULL,buff->body,node->linkrec->value);
 	if		(	(  ent->linkdata  ==  NULL  )
 			||	(  memcmp(buff->body,ent->linkdata->body,size)  ) ) {
 			flag |= APS_LINKDATA;
@@ -187,9 +187,9 @@ dbgmsg(">SaveCache");
 			}
 			ent->linkdata = LBS_Duplicate(buff);
 	}
-	size =  NativeSizeValue(NULL,node->sparec);
+	size =  NativeSizeValue(NULL,node->sparec->value);
 	LBS_ReserveSize(buff,size,FALSE);
-	NativePackValue(NULL,buff->body,node->sparec);
+	NativePackValue(NULL,buff->body,node->sparec->value);
 	if		(	(  ent->spadata  ==  NULL  )
 			||	(  memcmp(buff->body,ent->spadata->body,size)  ) ) {
 			flag |= APS_SPADATA;
@@ -259,13 +259,14 @@ dbgmsg(">GetWFC");
 			  case	APS_MCPDATA:
 				dbgmsg("MCPDATA");
 				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				NativeUnPackValue(NULL,buff->body,node->mcprec);
-				node->pstatus = ValueString(GetItemLongName(node->mcprec,"private.pstatus"));
-				strcpy(ValueString(GetItemLongName(node->mcprec,"dc.term")),hdr.term);
-				strcpy(ValueString(GetItemLongName(node->mcprec,"dc.user")),hdr.user);
-				node->window = ValueString(GetItemLongName(node->mcprec,"dc.window"));
-				node->widget = ValueString(GetItemLongName(node->mcprec,"dc.widget"));
-				node->event = ValueString(GetItemLongName(node->mcprec,"dc.event"));
+				NativeUnPackValue(NULL,buff->body,node->mcprec->value);
+				node->pstatus = ValueString(GetItemLongName(node->mcprec->value,
+															"private.pstatus"));
+				strcpy(ValueString(GetItemLongName(node->mcprec->value,"dc.term")),hdr.term);
+				strcpy(ValueString(GetItemLongName(node->mcprec->value,"dc.user")),hdr.user);
+				node->window = ValueString(GetItemLongName(node->mcprec->value,"dc.window"));
+				node->widget = ValueString(GetItemLongName(node->mcprec->value,"dc.widget"));
+				node->event = ValueString(GetItemLongName(node->mcprec->value,"dc.event"));
 				*node->pstatus = hdr.status;
 				strcpy(node->term,hdr.term);
 				strcpy(node->user,hdr.user);
@@ -276,23 +277,23 @@ dbgmsg(">GetWFC");
 			  case	APS_LINKDATA:
 				dbgmsg("LINKDATA");
 				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				NativeUnPackValue(NULL,buff->body,node->linkrec);
+				NativeUnPackValue(NULL,buff->body,node->linkrec->value);
 				break;
 			  case	APS_SPADATA:
 				dbgmsg("SPADATA");
 				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				NativeUnPackValue(NULL,buff->body,node->sparec);
+				NativeUnPackValue(NULL,buff->body,node->sparec->value);
 				break;
 			  case	APS_SCRDATA:
 				dbgmsg("SCRDATA");
 				for	( i = 0 ; i < node->cWindow ; i ++ ) {
 					RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-					NativeUnPackValue(NULL,buff->body,node->scrrec[i]);
+					NativeUnPackValue(NULL,buff->body,node->scrrec[i]->value);
 				}
 				break;
 			  case	APS_END:
 				dbgmsg("END");
-				*ValueString(GetItemLongName(node->mcprec,"private.prc")) = TO_CHAR(0);
+				*ValueString(GetItemLongName(node->mcprec->value,"private.prc")) = TO_CHAR(0);
 				fEnd = TRUE;
 				break;
 			  case	APS_STOP:
@@ -339,13 +340,13 @@ dbgmsg(">PutWFC");
 
 	SendPacketClass(fp,APS_CTRLDATA);		ON_IO_ERROR(fp,badio);
 	SendChar(fp,flag);						ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueString(GetItemLongName(node->mcprec,"dc.term")));
+	SendString(fp,ValueString(GetItemLongName(node->mcprec->value,"dc.term")));
 	ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueString(GetItemLongName(node->mcprec,"dc.window")));
+	SendString(fp,ValueString(GetItemLongName(node->mcprec->value,"dc.window")));
 	ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueString(GetItemLongName(node->mcprec,"dc.widget")));
+	SendString(fp,ValueString(GetItemLongName(node->mcprec->value,"dc.widget")));
 	ON_IO_ERROR(fp,badio);
-	SendChar(fp,*ValueString(GetItemLongName(node->mcprec,"private.pputtype")));
+	SendChar(fp,*ValueString(GetItemLongName(node->mcprec->value,"private.pputtype")));
 	ON_IO_ERROR(fp,badio);
 	fEnd = FALSE; 
 	while	(  !fEnd  ) {
@@ -359,28 +360,28 @@ dbgmsg(">PutWFC");
 			break;
 		  case	APS_MCPDATA:
 			dbgmsg("MCPDATA");
-			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->mcprec),FALSE);
-			NativePackValue(NULL,buff->body,node->mcprec);
+			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->mcprec->value),FALSE);
+			NativePackValue(NULL,buff->body,node->mcprec->value);
 			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			break;
 		  case	APS_LINKDATA:
 			dbgmsg("LINKDATA");
-			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->linkrec),FALSE);
-			NativePackValue(NULL,buff->body,node->linkrec);
+			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->linkrec->value),FALSE);
+			NativePackValue(NULL,buff->body,node->linkrec->value);
 			SendLBS(fp,buff);
 			break;
 		  case	APS_SPADATA:
 			dbgmsg("SPADATA");
-			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->sparec),FALSE);
-			NativePackValue(NULL,buff->body,node->sparec);
+			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->sparec->value),FALSE);
+			NativePackValue(NULL,buff->body,node->sparec->value);
 			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			break;
 		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
 			for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 				LBS_ReserveSize(buff,
-								NativeSizeValue(NULL,node->scrrec[i]),FALSE);
-				NativePackValue(NULL,buff->body,node->scrrec[i]);
+								NativeSizeValue(NULL,node->scrrec[i]->value),FALSE);
+				NativePackValue(NULL,buff->body,node->scrrec[i]->value);
 				SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			}
 			break;

@@ -56,6 +56,10 @@ copies.
 #define	SIZE_SESID		16
 #define	SIZE_ARG		255
 
+#ifndef	SIZE_LONGNAME
+#define	SIZE_LONGNAME		1024
+#endif
+
 #define	SIZE_DEFAULT_ARRAY_SIZE		64
 #define	SIZE_DEFAULT_TEXT_SIZE		256
 

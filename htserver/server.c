@@ -160,7 +160,7 @@ dbgmsg(">WriteClient");
 		if		(  *buff  !=  0  ) {
 			DecodeName(&wname,&vname,buff);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-				value = GetItemLongName(win->Value,vname);
+				value = GetItemLongName(win->rec->value,vname);
 				SendStringDelim(fp,ValueToString(value));
 				if		(	(  p  !=  NULL            )
 						&&	(  !stricmp(p+1,"clear")  ) ) {
@@ -196,7 +196,7 @@ RecvScreenData(
 			while	(  isspace(*p)  )	p ++;
 			DecodeStringURL(str,p);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-				value = GetItemLongName(win->Value,vname);
+				value = GetItemLongName(win->rec->value,vname);
 				value->fUpdate = TRUE;
 				SetValueString(value,str);
 #ifdef	DEBUG

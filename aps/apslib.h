@@ -53,10 +53,10 @@ typedef	struct _ProcessNode	{
 	,			*widget
 	,			*event
 	,			*pstatus;
-	ValueStruct	*mcprec;
-	ValueStruct	*linkrec;
-	ValueStruct	*sparec;
-	ValueStruct	**scrrec;
+	RecordStruct	*mcprec;
+	RecordStruct	*linkrec;
+	RecordStruct	*sparec;
+	RecordStruct	**scrrec;
 	size_t		cWindow;
 	GHashTable	*whash;
 	size_t		textsize;
@@ -64,7 +64,7 @@ typedef	struct _ProcessNode	{
 }	ProcessNode;
 
 extern	int			MCP_PutWindow(ProcessNode *node, char *wname, int type);
-extern	ValueStruct	*MCP_GetWindowRecord(ProcessNode *node, char *name);
+extern	RecordStruct	*MCP_GetWindowRecord(ProcessNode *node, char *name);
 extern	int			MCP_ExecFunction(ProcessNode *node, char *rname,
 									 char *pname, char *func, ValueStruct *data);
 extern	ValueStruct	*MCP_GetDB_Define(char *name);

@@ -93,11 +93,12 @@ PutLog(
 {
 	char	buff[SIZE_BUFF];
 
-	sprintf(buff,"%s\n",StringChop(str));
+	sprintf(buff,"%s",StringChop(str));
 #ifdef	USE_MSGD
 	Send(fpLog,buff,strlen(buff));
+	Send(fpLog,"\n",1);
 #else
-	fprintf(fpLog,"%s",buff);
+	fprintf(fpLog,"%s\n",buff);
 	fflush(fpLog);
 #endif
 }
@@ -183,7 +184,6 @@ _Message(
 							p += sprintf(p,"\\\\");
 							break;
 						  case	'\n':
-							p += sprintf(p,"\\n");
 							break;
 						  default:
 							*p ++ = *s;

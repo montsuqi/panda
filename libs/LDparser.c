@@ -20,9 +20,9 @@ copies.
 */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -70,44 +70,36 @@ AddWindow(
 	char	*name)
 {
 	WindowBind	*bind;
-	WindowBind	**wnb;
 
 	bind = New(WindowBind);
-	wnb = (WindowBind **)xmalloc(sizeof(WindowBind *) * ( ld->cWindow + 1));
-	if		(  ld->cWindow  >  0  ) {
-		memcpy(wnb,ld->window,sizeof(WindowBind *) * ld->cWindow);
-		xfree(ld->window);
-	}
-	ld->window = wnb;
-	ld->window[ld->cWindow] = bind;
-	ld->cWindow ++;
-	bind->name = name;
-	g_hash_table_insert(ld->whash,bind->name,(void *)ld->cWindow);
+	bind->name = StrDup(name);
+	bind->ix = -1;
+	g_hash_table_insert(ld->whash,bind->name,bind);
 	return	(bind);
 }
 
-static	ValueStruct	*
+static	RecordStruct	*
 GetWindow(
 	char		*name)
 {
-	ValueStruct	*value;
+	RecordStruct	*rec;
 	char		*wname;
 
 dbgmsg(">GetWindow");
-	dbgprintf("GetWindow(%s)\n",name);
+	dbgprintf("GetWindow(%s)",name);
 	if		(  name  !=  NULL  ) {
-		if		(  ( value = 
-					 (ValueStruct *)g_hash_table_lookup(Windows,name) )
+		if		(  ( rec = 
+					 (RecordStruct *)g_hash_table_lookup(Windows,name) )
 				   ==  NULL  ) {
 			wname = StrDup(name);
-			value = ReadRecordDefine(name);
-			g_hash_table_insert(Windows,wname,value);
+			rec = ReadRecordDefine(name);
+			g_hash_table_insert(Windows,wname,rec);
 		}
 	} else {
-		value = NULL;
+		rec = NULL;
 	}
 dbgmsg("<GetWindow");
-	return	(value);
+	return	(rec);
 }
 
 static	void
@@ -116,8 +108,9 @@ ParWindow(
 {
 	WindowBind	*bind;
 	int			ix;
-	ValueStruct	*value;
-	char		wname[SIZE_BUFF];
+	RecordStruct	*rec;
+	WindowBind	**wnb;
+	char		wname[SIZE_NAME+1];
 
 dbgmsg(">ParWindow");
 	if		(  GetSymbol  !=  '{'  ) { 
@@ -125,22 +118,27 @@ dbgmsg(">ParWindow");
 	} else {
 		while	(  GetName  !=  '}'  ) {
 			if		(  LD_Token  ==  T_SYMBOL  ) {
-				if		(  ( value = GetWindow(LD_ComSymbol) )  !=  NULL  ) {
-					strcpy(wname,LD_ComSymbol);
-					if		(  ( ix = (int)g_hash_table_lookup(ld->whash,wname) )
-							   ==  0  ) {
-						bind = AddWindow(ld,StrDup(wname));
-						bind->handler = NULL;
-						bind->module = NULL;
-					} else {
-						bind = ld->window[ix-1];
-					}
-					bind->value = value;
-					if		(  g_hash_table_lookup(LD_Table,wname)  ==  NULL  ) {
-						g_hash_table_insert(LD_Table,ld->name,ld);
-					} else {
-						Error("same window name appier");
-					}
+				strcpy(wname,LD_ComSymbol);
+				if		(  ( bind = (WindowBind *)g_hash_table_lookup(ld->whash,wname) )
+						   ==  NULL  ) {
+					bind = AddWindow(ld,wname);
+					bind->handler = NULL;
+					bind->module = NULL;
+				}
+				bind->rec = GetWindow(wname);
+				bind->ix = ld->cWindow;
+				wnb = (WindowBind **)xmalloc(sizeof(WindowBind *) * ( ld->cWindow + 1));
+				if		(  ld->cWindow  >  0  ) {
+					memcpy(wnb,ld->window,sizeof(WindowBind *) * ld->cWindow);
+					xfree(ld->window);
+				}
+				ld->window = wnb;
+				ld->window[ld->cWindow] = bind;
+				ld->cWindow ++;
+				if		(  g_hash_table_lookup(LD_Table,wname)  ==  NULL  ) {
+					g_hash_table_insert(LD_Table,ld->name,ld);
+				} else {
+					Error("same window name appier");
 				}
 			} else {
 				Error("record name not found");
@@ -256,8 +254,8 @@ dbgmsg(">ParBIND");
 	if		(	(  GetSymbol  ==  T_SCONST  )
 			||	(  LD_Token   ==  T_SYMBOL  ) ) {
 		if		(  ( ix = (int)g_hash_table_lookup(ret->whash,LD_ComSymbol) )  ==  0  ) {
-			bind = AddWindow(ret,StrDup(LD_ComSymbol));
-			bind->value = NULL;
+			bind = AddWindow(ret,LD_ComSymbol);
+			bind->rec = NULL;
 		} else {
 			bind = ret->window[ix-1];
 		}

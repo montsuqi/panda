@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -100,11 +100,11 @@ PutApplication(
 	char	*p;
 
 dbgmsg(">PutApplication");
-	OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,node->mcprec);
-	OpenCOBOL_PackValue(OpenCOBOL_Conv,LinkData,node->linkrec);
-	OpenCOBOL_PackValue(OpenCOBOL_Conv,SpaData,node->sparec);
+	OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
+	OpenCOBOL_PackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
+	OpenCOBOL_PackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = OpenCOBOL_PackValue(OpenCOBOL_Conv,p,node->scrrec[i]);
+		p = OpenCOBOL_PackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
 	}
 dbgmsg("<PutApplication");
 }
@@ -117,11 +117,11 @@ GetApplication(
 	int		i;
 
 dbgmsg(">GetApplication");
-	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,McpData,node->mcprec);
-	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,LinkData,node->linkrec);
-	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,SpaData,node->sparec);
+	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
+	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
+	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]);
+		p = OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
 	}
 
 dbgmsg("<GetApplication");
@@ -135,7 +135,7 @@ _ExecuteProcess(
 	char	*module;
 
 dbgmsg(">_ExecuteProcess");
-	module = ValueString(GetItemLongName(node->mcprec,"dc.module"));
+	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
 		PutApplication(node);
 		dbgmsg(">OpenCOBOL application");
@@ -166,12 +166,12 @@ dbgmsg(">ReadyDC");
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
 
-	McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec));
-	LinkData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->linkrec));
-	SpaData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->sparec));
+	McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec->value));
+	LinkData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->linkrec->value));
+	SpaData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->sparec->value));
 	scrsize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->window[i]->value);
+		scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->window[i]->rec->value);
 	}
 	ScrData = xmalloc(scrsize);
 

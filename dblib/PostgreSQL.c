@@ -106,7 +106,7 @@ KeyValue(
 	ValueStruct	*val;
 
 dbgmsg(">KeyValue");
-	val = rec->rec;
+	val = rec->value;
 	while	(  *pk  !=  NULL  ) {
 		val = GetRecordItem(val,*pk);
 		pk ++;
@@ -657,7 +657,7 @@ dbgmsg(">ExecPGSQL");
 								dbgmsg("OK");
 								level = 0;
 								alevel = 0;
-								GetTable(res,rec->rec);
+								GetTable(res,rec->value);
 								ctrl->rc = MCP_OK;
 							} else {
 								dbgmsg("EOF");
@@ -929,7 +929,7 @@ dbgmsg(">_DBFETCH");
 					dbgmsg("OK");
 					level = 0;
 					alevel = 0;
-					GetTable(res,rec->rec);
+					GetTable(res,rec->value);
 					ctrl->rc = MCP_OK;
 				} else {
 					dbgmsg("EOF");
@@ -975,7 +975,7 @@ dbgmsg(">_DBUPDATE");
 			level = 0;
 			alevel = 0;
 			fInArray = FALSE;
-			p = UpdateValue(p,rec->rec);
+			p = UpdateValue(p,rec->value);
 
 			p += sprintf(p,"WHERE\t");
 			item = db->pkey->item;
@@ -1103,11 +1103,11 @@ dbgmsg(">_DBINSERT");
 
 			level = 0;
 			alevel = 0;
-			p = InsertNames(p,rec->rec);
+			p = InsertNames(p,rec->value);
 			p += sprintf(p,") ");
 			p += sprintf(p,"VALUES\t(");
 			fInArray = FALSE;
-			p = InsertValues(p,rec->rec);
+			p = InsertValues(p,rec->value);
 			p += sprintf(p,") ");
 			res = _PQexec(dbg,sql,TRUE);
 			if		(	(  res ==  NULL  )

@@ -67,7 +67,7 @@ MCPSUB(
 	char		*mcp_func;
 
 dbgmsg(">MCPSUB");
-	mcp = ThisEnv->mcprec; 
+	mcp = ThisEnv->mcprec->value; 
 	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,mcpdata,mcp);
 	mcp_func = ValueString(GetItemLongName(mcp,"func"));
 
@@ -98,11 +98,11 @@ dbgmsg(">MCPSUB");
 			rec = NULL;
 		} else {
 			rec = ThisDB[ctrl.rno];
-			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, rec->rec);
+			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, rec->value);
 		}
 		ExecDB_Process(&ctrl,rec);
 		if		(  rec  !=  NULL  ) {
-			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, rec->rec);
+			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, rec->value);
 		}
 		MakeMCP(mcp,&ctrl);
 	}

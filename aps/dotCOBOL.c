@@ -88,10 +88,10 @@ DumpNode(
 {
 #ifdef	DEBUG
 dbgmsg(">DumpNode");
-	printf("mcpsize  = %d\n",node->mcpsize);
-	printf("linksize = %d\n",node->linksize);
-	printf("spasize  = %d\n",node->spasize);
-	printf("scrsize  = %d\n",node->scrsize);
+	dbgprintf("mcpsize  = %d\n",node->mcpsize);
+	dbgprintf("linksize = %d\n",node->linksize);
+	dbgprintf("spasize  = %d\n",node->spasize);
+	dbgprintf("scrsize  = %d\n",node->scrsize);
 dbgmsg("<DumpNode");
 #endif
 }

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -112,7 +112,7 @@ _ExecuteProcess(
 	char	*module;
 
 dbgmsg(">ExecuteProcess");
-	module = ValueString(GetItemLongName(node->mcprec,"dc.module"));
+	module = ValueString(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = LoadModule(ApplicationTable,module) )  !=  NULL  ) {
 		PutApplication(node);
 		dbgmsg(">C application");
@@ -120,7 +120,7 @@ dbgmsg(">ExecuteProcess");
 		dbgmsg("<C application");
 		GetApplication(node);
 	} else {
-		printf("%s is not found.\n",module);
+		MessagePrintf("%s is not found.",module);
 	}
 dbgmsg("<ExecuteProcess");
 }
@@ -173,13 +173,11 @@ _StartBatch(
 
 dbgmsg(">_StartBatch");
 	ApplicationTable = InitLoader(); 
-#ifdef	DEBUG
-	printf("starting [%s][%s]\n",name,param);
-#endif
+	dbgprintf("starting [%s][%s]\n",name,param);
 	if		(  ( apl = LoadModule(ApplicationTable,name) )  !=  NULL  ) {
 		rc = apl(param);
 	} else {
-		fprintf(stderr,"%s is not found.\n",name);
+		MessagePrintf("%s is not found.",name);
 		rc = -1;
 	}
 dbgmsg("<_StartBatch");
@@ -210,7 +208,7 @@ MCP_PutWindow(
 {
 	ValueStruct	*mcp;
 
-	mcp = node->mcprec;
+	mcp = node->mcprec->value;
 	memcpy(ValueString(GetItemLongName(mcp,"dc.window")),
 		   wname,SIZE_NAME);
 	memcpy(ValueString(GetItemLongName(mcp,"dc.puttype")),
@@ -221,19 +219,18 @@ MCP_PutWindow(
 	return	(0);
 }
 
-extern	ValueStruct	*
+extern	RecordStruct	*
 MCP_GetWindowRecord(
 	ProcessNode	*node,
 	char		*name)
 {
-	int		ix;
-	ValueStruct	*ret;
+	WindowBind	*bind;
+	RecordStruct	*ret;
 
-	if		(  ( ix = (int)g_hash_table_lookup(node->whash,name) )  !=  0  ) {
-		ret = node->scrrec[ix-1];
-	} else {
-		ret = NULL;
-	}
+dbgmsg(">MCP_GetWindowRecord");
+	bind = (WindowBind *)g_hash_table_lookup(node->whash,name);
+	ret = bind->rec;
+dbgmsg("<MCP_GetWindowRecord");
 	return	(ret);
 }
 
@@ -247,10 +244,11 @@ MCP_GetEventHandler(
 	GHashTable	*EventTable;
 	void		(*handler)(ProcessNode *);
 
-	status = ValueString(GetItemLongName(node->mcprec,"dc.status"));
-	event  = ValueString(GetItemLongName(node->mcprec,"dc.event"));
+	status = ValueString(GetItemLongName(node->mcprec->value,"dc.status"));
+	event  = ValueString(GetItemLongName(node->mcprec->value,"dc.event"));
 
-	printf("status = [%s]\nevent  = [%s]\n",status,event);
+	dbgprintf("status = [%s]",status);
+	dbgprintf("event  = [%s]",status,event);
 	if		(  ( EventTable = g_hash_table_lookup(StatusTable,status) )  ==  NULL  ) {
 		EventTable = g_hash_table_lookup(StatusTable,"");
 	}
@@ -299,9 +297,9 @@ MCP_ExecFunction(
 
 dbgmsg(">MCP_ExecFunction");
 #ifdef	DEBUG
- printf("D:rname = [%s]\n",rname); 
- printf("D:pname = [%s]\n",pname); 
- printf("D:func  = [%s]\n",func); 
+	dbgprintf("rname = [%s]",rname); 
+	dbgprintf("pname = [%s]",pname); 
+	dbgprintf("func  = [%s]",func); 
 #endif
 	ctrl.rno = 0;
 	ctrl.pno = 0;
@@ -322,16 +320,16 @@ dbgmsg(">MCP_ExecFunction");
 		rec = NULL;
 	}
 	if		(  rec  !=  NULL  ) {
-		size = NativeSizeValue(NULL,rec->rec);
+		size = NativeSizeValue(NULL,rec->value);
 		ctrl.blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
-		CopyValue(rec->rec,data);
+		CopyValue(rec->value,data);
 	}
 	strcpy(ctrl.func,func);
 	ExecDB_Process(&ctrl,rec);
 	if		(  rec  !=  NULL  ) {
-		CopyValue(data,rec->rec);
+		CopyValue(data,rec->value);
 	}
-	MakeMCP(node->mcprec,&ctrl);
+	MakeMCP(node->mcprec->value,&ctrl);
 dbgmsg("<MCP_ExecFunction");
 	return	(ctrl.rc);
 }
@@ -346,7 +344,7 @@ MCP_GetDB_Define(
 
 	if		(  ( rno = (int)g_hash_table_lookup(DB_Table,name) )  !=  0  ) {
 		rec = ThisDB[rno-1];
-		val = DuplicateValue(rec->rec);
+		val = DuplicateValue(rec->value);
 	} else {
 		val = NULL;
 	}

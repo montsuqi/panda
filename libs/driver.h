@@ -40,16 +40,14 @@ typedef	struct {
 }	ScreenData;
 
 typedef	struct {
-	char		*name;
-	Bool		fNew;
-	int			PutType;
-	ValueStruct	*Value;
+	Bool			fNew;
+	int				PutType;
+	RecordStruct	*rec;
 }	WindowData;
 
-extern	ValueStruct	*ReadRecordDefine(char *name);
 extern	WindowData	*SetWindowName(char *name);
 extern	Bool		PutWindow(WindowData *win, int type);
-extern	ValueStruct	*GetWindowRecord(char *wname);
+extern	RecordStruct	*GetWindowRecord(char *wname);
 extern	void		LinkModule(char *name);
 extern	ScreenData	*NewScreenData(void);
 

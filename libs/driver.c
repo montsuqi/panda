@@ -61,11 +61,10 @@ dbgmsg(">SetWindowName");
 					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,name) )
 				   ==  NULL  ) {
 			entry = New(WindowData);
-			entry->name = StrDup(name);
 			entry->PutType = SCREEN_NULL;
 			entry->fNew = FALSE;
-			entry->Value = ReadRecordDefine(name);
-			g_hash_table_insert(ThisScreen->Windows,entry->name,entry);
+			entry->rec = ReadRecordDefine(name);
+			g_hash_table_insert(ThisScreen->Windows,entry->rec->name,entry);
 		}
 	} else {
 		entry = NULL;
@@ -74,21 +73,21 @@ dbgmsg("<SetWindowName");
 	return	(entry);
 }
 
-extern	ValueStruct	*
+extern	RecordStruct	*
 GetWindowRecord(
 	char		*wname)
 {
 	WindowData	*win;
-	ValueStruct	*value;
+	RecordStruct	*rec;
 
 dbgmsg(">GetWindowRecord");
 	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,wname) )  !=  NULL  ) {
-		value = win->Value;
+		rec = win->rec;
 	} else {
-		value = NULL;
+		rec = NULL;
 	}
 dbgmsg("<GetWindowRecord");
-	return	(value); 
+	return	(rec); 
 }
 
 extern	Bool
@@ -118,6 +117,7 @@ GetWindowValue(
 	char	wname[SIZE_NAME+1];
 	char	*p
 	,		*q;
+	RecordStruct	*rec;
 	ValueStruct	*val;
 
 #ifdef	DEBUG
@@ -131,9 +131,9 @@ GetWindowValue(
 	*q = 0;
 	p ++;
 	
-	val = GetWindowRecord(wname);
-	if		(  val  !=  NULL  ) {
-		val = GetItemLongName(val,p);
+	rec = GetWindowRecord(wname);
+	if		(  rec  !=  NULL  ) {
+		val = GetItemLongName(rec->value,p);
 	}
 #ifdef	DEBUG
 	if		(  val  ==  NULL  ) {

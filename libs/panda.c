@@ -19,9 +19,9 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #define	_PANDA
@@ -58,12 +58,12 @@ dbgmsg("<OpenPanda");
 static	Bool
 SendPanda(void)
 {
-	ValueStruct	*value;
+	RecordStruct	*rec;
 	Bool		rc;
 
 dbgmsg(">SendPanda");
-	value = GetWindowRecord(ThisWindow);
-	rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,value);
+	rec = GetWindowRecord(ThisWindow);
+	rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,rec->value);
 dbgmsg("<SendPanda");
 	return	(rc); 
 }
@@ -81,17 +81,14 @@ RecvPanda(
 
 dbgmsg(">RecvPanda");
 	if		(  RecvTermServerHeader(fpPanda,window,widget,&type,&cls)  ) {
-printf("cls.n = %d\n",cls.n);
 		for	( i = 0 ; i < cls.n ; i ++ ) {
 			PutWindowByName(cls.close[i].window,SCREEN_CLOSE_WINDOW);
 		}
 		win = SetWindowName(window);
 		RecvTermServerData(fpPanda,win);
-#ifdef	TRACE
-		printf("type =     [%d]\n",type);
-		printf("ThisWindow [%s]\n",ThisWindow);
-		printf("window     [%s]\n",window);
-#endif
+		dbgprintf("type =     [%d]",type);
+		dbgprintf("ThisWindow [%s]",ThisWindow);
+		dbgprintf("window     [%s]",window);
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:
 			(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
@@ -107,7 +104,7 @@ printf("cls.n = %d\n",cls.n);
 		strcpy(ThisWindow,window);
 		strcpy(ThisWidget,widget);
 	} else {
-		fprintf(stderr,"invalid window [%s]\n",window);
+		MessagePrintf("invalid window [%s]\n",window);
 		exit(1);
 	}
 dbgmsg("<RecvPanda");

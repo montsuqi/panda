@@ -112,7 +112,7 @@ dbgmsg(">RecvScreenData");
 printf("wname = [%s]\n",wname);
 printf("vname = [%s]\n",vname);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-				value = GetItemLongName(win->Value,vname);
+				value = GetItemLongName(win->rec->value,vname);
 				value->fUpdate = TRUE;
 				SetValueString(value,str);
 			}
@@ -152,7 +152,7 @@ dbgmsg(">WriteClient");
 		}
 		DecodeName(wname,vname,name);
 		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-			value = GetItemLongName(win->Value,vname);
+			value = GetItemLongName(win->rec->value,vname);
 			SetValueName(name);
 			SendValueString(fpComm,value,NULL,fName);
 			if		(  fName  ) {

@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -105,34 +105,38 @@ dbgmsg(">InitHandler");
 	HandlerTable = NewNameHash();
 }
 
+static	void
+_InitiateHandler(
+	char	*name,
+	WindowBind	*bind,
+	void		*dummy)
+{
+	MessageHandler	*handler;
+
+	handler = g_hash_table_lookup(HandlerTable,
+								  (char *)bind->handler);
+	if		(  handler  ==  NULL  ) {
+		if		(  ( handler = EnterHandler((char *)bind->handler) )
+				   ==  NULL  ) {
+			MessagePrintf("[%s] is invalid handler.",
+						  (char *)bind->handler);
+		} else {
+			handler->fUse = TRUE;
+			bind->handler = handler;
+		}
+	} else {
+		handler->fUse = TRUE;
+		bind->handler = handler;
+	}
+}
+
 extern	void
 InitiateHandler(void)
 {
-	int		i;
-	MessageHandler	*handler;
-
 dbgmsg(">InitiateHandler");
 	InitHandler();
-#ifdef	DEBUG
-	printf("LD = [%s]\n",ThisLD->name);
-#endif
-	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		handler = g_hash_table_lookup(HandlerTable,
-									  (char *)ThisLD->window[i]->handler);
-		if		(  handler  ==  NULL  ) {
-			if		(  ( handler = EnterHandler((char *)ThisLD->window[i]->handler) )
-					   ==  NULL  ) {
-				MessagePrintf("[%s] is invalid handler.\n",
-							  (char *)ThisLD->window[i]->handler);
-			} else {
-				handler->fUse = TRUE;
-				ThisLD->window[i]->handler = handler;
-			}
-		} else {
-			handler->fUse = TRUE;
-			ThisLD->window[i]->handler = handler;
-		}
-	}
+	dbgprintf("LD = [%s]",ThisLD->name);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_InitiateHandler,NULL);
 dbgmsg("<InitiateHandler");
 }
 
@@ -205,7 +209,7 @@ CallBefore(
 	ValueStruct	*mcp;
 
 dbgmsg(">CallBefore");
-	mcp = node->mcprec; 
+	mcp = node->mcprec->value; 
 	memcpy(ValueString(GetItemLongName(mcp,"dc.status")),
 		   STATUS[*ValueString(GetItemLongName(mcp,"private.pstatus")) - '1'],
 		   SIZE_STATUS);
@@ -224,13 +228,15 @@ CallAfter(
 	ValueStruct	*mcp_puttype;
 	ValueStruct	*mcp_pputtype;
 	ValueStruct	*mcp_dcwindow;
+	ValueStruct	*mcp;
 
 dbgmsg(">CallAfter");
-	mcp_sindex 	= GetItemLongName(node->mcprec,"private.count");
-	mcp_swindow = GetItemLongName(node->mcprec,"private.swindow");
-	mcp_puttype = GetItemLongName(node->mcprec,"dc.puttype");
-	mcp_pputtype = GetItemLongName(node->mcprec,"private.pputtype");
-	mcp_dcwindow = GetItemLongName(node->mcprec,"dc.window");
+	mcp = node->mcprec->value; 
+	mcp_sindex 	= GetItemLongName(mcp,"private.count");
+	mcp_swindow = GetItemLongName(mcp,"private.swindow");
+	mcp_puttype = GetItemLongName(mcp,"dc.puttype");
+	mcp_pputtype = GetItemLongName(mcp,"private.pputtype");
+	mcp_dcwindow = GetItemLongName(mcp,"dc.window");
 	if		(	(  *ValueString(mcp_puttype)          ==  0  )
 			||	(  !strcmp(ValueString(mcp_puttype),"NULL")  ) ) {
 		*ValueString(mcp_pputtype) = SCREEN_NULL + '0';
@@ -249,7 +255,7 @@ dbgmsg(">CallAfter");
 	} else
 	if		(  !strcmp(ValueString(mcp_puttype),"BACK")  ) {
 		SetValueInteger(mcp_sindex,ValueInteger(mcp_sindex)-1);
-		memcpy(ValueString(GetItemLongName(node->mcprec,"dc.window")),
+		memcpy(ValueString(GetItemLongName(mcp,"dc.window")),
 			   ValueString(GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex))),
 			   SIZE_NAME);
 		*ValueString(mcp_pputtype) = SCREEN_CHANGE_WINDOW + '0';
@@ -272,19 +278,19 @@ dbgmsg(">CallAfter");
 		ValueInteger(mcp_sindex) = 1;
 	} else {
 #ifdef	DEBUG
-		printf("mcp_sindex = %d\n",ValueInteger(mcp_sindex));
-		printf("mcp->dc.window = [%s]\n",ValueString(mcp_dcwindow));
-		printf("**** window stack dump *****************\n");
+		dbgprintf("mcp_sindex = %d",ValueInteger(mcp_sindex));
+		dbgprintf("mcp->dc.window = [%s]",ValueString(mcp_dcwindow));
+		dbgmsg("**** window stack dump *****************");
 		for	( i = 0 ; i < ValueInteger(mcp_sindex) ; i ++ ) {
-			printf("[%d:%s]\n",i,(ValueString(
+			dbgprintf("[%d:%s]",i,(ValueString(
 									  GetArrayItem(mcp_swindow,i))));
 		}
-		printf("----------------------------------------\n");
+		dbgmsg("----------------------------------------");
 #endif
 		if		(  strcmp(ValueString(
 							  GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex) - 1)),
 						  ValueString(mcp_dcwindow))  !=  0  ) {
-			strcpy(ValueString(GetItemLongName(node->mcprec,"dc.fromwin")),
+			strcpy(ValueString(GetItemLongName(mcp,"dc.fromwin")),
 				   ValueString(
 					   GetArrayItem(mcp_swindow,ValueInteger(mcp_sindex) - 1)));
 			for	( i = 0 ; i < ValueInteger(mcp_sindex) ; i ++ ) {
@@ -324,12 +330,11 @@ ExecuteProcess(
 	ProcessNode	*node)
 {
 	WindowBind	*bind;
-	int			ix;
 	char		*window;
+
 dbgmsg(">ExecuteProcess");
-	window = ValueString(GetItemLongName(node->mcprec,"dc.window"));
-	ix = (int)g_hash_table_lookup(ThisLD->whash,window);
-	bind = ThisLD->window[ix-1];
+	window = ValueString(GetItemLongName(node->mcprec->value,"dc.window"));
+	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
 	if		(  ((MessageHandler *)bind->handler)->ExecuteProcess  !=  NULL  ) {
 		CallBefore(node);
 		((MessageHandler *)bind->handler)->ExecuteProcess(node);

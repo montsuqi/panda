@@ -554,12 +554,11 @@ dbgmsg(">AssignDBG");
 dbgmsg("<AssignDBG");
 }
 
-static	ValueStruct	*
+static	RecordStruct	*
 BuildMcpArea(
 	size_t	stacksize)
 {
 	RecordStruct	*rec;
-	ValueStruct		*val;
 	FILE			*fp;
 
 	if		(  ( fp = tmpfile() )  ==  NULL  ) {
@@ -601,9 +600,7 @@ BuildMcpArea(
 	rec = DD_Parse(fp,"");
 	fclose(fp);
 
-	val = rec->rec;
-	xfree(rec);
-	return	(val);
+	return	(rec);
 }
 
 static	DI_Struct	*
@@ -665,7 +662,7 @@ dbgmsg(">ParDI");
 						   ==  NULL  ) {
 					Error("linkage record not found");
 				} else {
-					ThisEnv->linksize = NativeSizeValue(NULL,ThisEnv->linkrec);
+					ThisEnv->linksize = NativeSizeValue(NULL,ThisEnv->linkrec->value);
 				}
 			} else {
 				Error("linkage invalid");

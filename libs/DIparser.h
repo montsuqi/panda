@@ -47,8 +47,8 @@ typedef	struct {
 	,			cDBD
 	,			linksize
 	,			stacksize;
-	ValueStruct	*mcprec;
-	ValueStruct	*linkrec;
+	RecordStruct	*mcprec;
+	RecordStruct	*linkrec;
 	GHashTable	*LD_Table;
 	GHashTable	*BD_Table;
 	GHashTable	*DBD_Table;

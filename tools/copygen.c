@@ -335,9 +335,9 @@ MakeFromRecord(
 		}
 		if		(  fFiller  ) {
 			printf(".\n");
-			SIZE(Conv,rec->rec);
+			SIZE(Conv,rec->value);
 		} else {
-			COBOL(Conv,rec->rec);
+			COBOL(Conv,rec->value);
 		}
 		printf(".\n");
 	}
@@ -377,11 +377,11 @@ dbgmsg(">MakeLD");
 	base = 2;
 	if		(	(  fLDR     )
 			||	(  fLDW     ) ) {
-		size =	SizeValue(Conv,ThisEnv->mcprec);
+		size =	SizeValue(Conv,ThisEnv->mcprec->value);
 			+	ThisEnv->linksize
-			+	SizeValue(Conv,ld->sparec);
+			+	SizeValue(Conv,ld->sparec->value);
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-			size += SizeValue(Conv,ld->window[i]->value);
+			size += SizeValue(Conv,ld->window[i]->rec->value);
 		}
 		num = ( size / SIZE_BLOCK ) + 1;
 
@@ -409,7 +409,7 @@ dbgmsg(">MakeLD");
 		num = 0;
 	}
 	if		(  fMCP  ) {
-		if		(  ( mcpsize = SizeValue(Conv,ThisEnv->mcprec) )
+		if		(  ( mcpsize = SizeValue(Conv,ThisEnv->mcprec->value) )
 				   >  0  ) {
 			PutLevel(base,TRUE);
 			PutName("mcpdata");
@@ -417,18 +417,18 @@ dbgmsg(">MakeLD");
 			if		(	(  fFiller  )
 					||	(  fLDW     ) ) {
 				printf(".\n");
-				SIZE(Conv,ThisEnv->mcprec);
+				SIZE(Conv,ThisEnv->mcprec->value);
 			} else {
 				_prefix = Prefix;
 				Prefix = "ldr-mcp-";
-				COBOL(Conv,ThisEnv->mcprec);
+				COBOL(Conv,ThisEnv->mcprec->value);
 				Prefix = _prefix;
 			}
 			printf(".\n");
 		}
 	}
 	if		(  fSPA  ) {
-		if		(  ( spasize = SizeValue(Conv,ld->sparec) )
+		if		(  ( spasize = SizeValue(Conv,ld->sparec->value) )
 				   >  0  ) {
 			PutLevel(base,TRUE);
 			PutName("spadata");
@@ -442,11 +442,11 @@ dbgmsg(">MakeLD");
 				if		(	(  fFiller  )
 						||	(  fLDW     ) ) {
 					printf(".\n");
-					SIZE(Conv,ld->sparec);
+					SIZE(Conv,ld->sparec->value);
 				} else {
 					_prefix = Prefix;
 					Prefix = "spa-";
-					COBOL(Conv,ld->sparec);
+					COBOL(Conv,ld->sparec->value);
 					Prefix = _prefix;
 				}
 				printf(".\n");
@@ -454,7 +454,7 @@ dbgmsg(">MakeLD");
 		}
 	}
 	if		(  fLinkage  ) {
-		if		(  SizeValue(Conv,ThisEnv->linkrec)  >  0  ) {
+		if		(  SizeValue(Conv,ThisEnv->linkrec->value)  >  0  ) {
 			PutLevel(base,TRUE);
 			PutName("linkdata");
 			level = base;
@@ -468,7 +468,7 @@ dbgmsg(">MakeLD");
 			} else {
 				_prefix = Prefix;
 				Prefix = "lnk-";
-				COBOL(Conv,ThisEnv->linkrec);
+				COBOL(Conv,ThisEnv->linkrec->value);
 				Prefix = _prefix;
 			}
 			printf(".\n");
@@ -481,7 +481,7 @@ dbgmsg(">MakeLD");
 		printf(".\n");
 		_prefix = Prefix;
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-			if		(  SizeValue(Conv,ld->window[i]->value)  >  0  ) {
+			if		(  SizeValue(Conv,ld->window[i]->rec->value)  >  0  ) {
 				Prefix = _prefix;
 				PutLevel(base+1,TRUE);
 				sprintf(buff,"%s",ld->window[i]->name);
@@ -495,9 +495,9 @@ dbgmsg(">MakeLD");
 						||	(  fLDR     )
 						||	(  fLDW     ) ) {
 					printf(".\n");
-					SIZE(Conv,ld->window[i]->value);
+					SIZE(Conv,ld->window[i]->rec->value);
 				} else {
-					COBOL(Conv,ld->window[i]->value);
+					COBOL(Conv,ld->window[i]->rec->value);
 				}
 				printf(".\n");
 				if		(  fWindowPrefix  ) {
@@ -547,7 +547,7 @@ MakeLinkage(void)
 	PutName("linkdata-redefine");
 	Prefix = _prefix;
 	level = 3;
-	COBOL(Conv,ThisEnv->linkrec);
+	COBOL(Conv,ThisEnv->linkrec->value);
 	printf(".\n");
 }
 
@@ -595,7 +595,7 @@ MakeDB(void)
 	printf(".\n");
 	msize = 0;
 	for	( i = 1 ; i < cDB ; i ++ ) {
-		size = SizeValue(Conv,dbrec[i]->rec);
+		size = SizeValue(Conv,dbrec[i]->value);
 		msize = ( msize > size ) ? msize : size;
 	}
 
@@ -651,7 +651,7 @@ dbgmsg(">MakeDBREC");
 
 	msize = 64;
 	for	( i = 1 ; i < cDB ; i ++ ) {
-		size = SizeValue(Conv,dbrec[i]->rec);
+		size = SizeValue(Conv,dbrec[i]->value);
 		msize = ( msize > size ) ? msize : size;
 	}
 	if		(  ( rec = DD_ParserDataDefines(name) )  !=  NULL  ) {
@@ -666,10 +666,10 @@ dbgmsg(">MakeDBREC");
 		Prefix = "";
 		PutName(rname);
 		Prefix = _prefix;
-		COBOL(Conv,rec->rec);
+		COBOL(Conv,rec->value);
 		printf(".\n");
 
-		size = SizeValue(Conv,rec->rec);
+		size = SizeValue(Conv,rec->value);
 		if		(  msize  !=  size  ) {
 			PutLevel(2,TRUE);
 			PutName("filler");
@@ -722,7 +722,7 @@ MakeDBCOMM(void)
 
 	msize = 0;
 	for	( i = 1 ; i < cDB ; i ++ ) {
-		size = SizeValue(Conv,dbrec[i]->rec);
+		size = SizeValue(Conv,dbrec[i]->value);
 		msize = ( msize > size ) ? msize : size;
 	}
 
@@ -848,7 +848,7 @@ dbgmsg(">MakeDBPATH");
 	printf(".\n");
 	for	( i = 1 ; i < cDB ; i ++ ) {
 		db = dbrec[i]->opt.db;
-		size = SizeValue(Conv,dbrec[i]->rec);
+		size = SizeValue(Conv,dbrec[i]->value);
 		blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 		
 		for	( j = 0 ; j < db->pcount ; j ++ ) {
@@ -887,7 +887,7 @@ MakeMCP(void)
 	PutName("mcparea");
 	Prefix = "mcp_";
 	level = 1;
-	COBOL(Conv,ThisEnv->mcprec);
+	COBOL(Conv,ThisEnv->mcprec->value);
 	printf(".\n");
 }
 
