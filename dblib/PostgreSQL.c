@@ -619,10 +619,8 @@ dbgmsg(">GetTable");
 			nv = NumericInput((char *)PQgetvalue(res,0,fnum),
 						  ValueFixedLength(val),ValueFixedSlen(val));
 #if	1
-			fix.sval = str;
-			fix.flen = strlen(str) + 1;
-			fix.slen = ValueFixedSlen(val);
-			SetValueFixed(val,&fix);
+			str = NumericOutput(nv);
+			SetValueString(val,str,dbg->coding);
 #else
 			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
 			strcpy(ValueFixedBody(val),str);
