@@ -76,7 +76,7 @@ dbgmsg(">_DBOPEN");
 			fpBlob = NULL;
 		}
 	}
-	if		(  fpBlob  ==  NULL  ) {
+	if		(  fpBlob  !=  NULL  ) {
 		OpenDB_RedirectPort(dbg);
 		dbg->conn = (void *)fpBlob;
 		dbg->fConnect = TRUE;
