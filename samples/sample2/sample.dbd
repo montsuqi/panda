@@ -1,0 +1,13 @@
+name	sample;
+
+arraysize	20;
+textsize	200;
+
+db	"ORCA"	{
+	metadb;
+	adrs;
+};
+
+db	"shell"	{
+	shell;
+};
