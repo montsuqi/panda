@@ -90,9 +90,9 @@ SendTermServer(
 	Bool	rc;
 
 dbgmsg(">SendTermServer");
-	size = NativeSizeValue(value,0,0);
+	size = NativeSizeValue(NULL,value);
 	LBS_ReserveSize(buff,size,FALSE);
-	NativePackValue(buff->body,value,0);
+	NativePackValue(NULL,buff->body,value);
 	SendPacketClass(fp,WFC_PING);
 	dbgmsg("send PING");
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
@@ -167,6 +167,6 @@ RecvTermServerData(
 {
 dbgmsg(">RecvTermServerData");
 	RecvLBS(fp,buff);
-	NativeUnPackValue(buff->body,win->Value,0);
+	NativeUnPackValue(NULL,buff->body,win->Value);
 dbgmsg("<RecvTermServerData");
 }

@@ -49,9 +49,6 @@
 /* extra debugging output */
 #undef DEBUG
 
-/* If true, include GNOME support */
-#undef ENABLE_GNOME
-
 /* for gettext ... */
 #undef HAVE_LC_MESSAGES
 #undef HAVE_STPCPY

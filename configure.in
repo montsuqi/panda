@@ -55,16 +55,8 @@ AC_CHECK_LIB(dl,dlopen)
 AC_CHECK_LIB(pthread,pthread_create)
 AC_CHECK_LIB(crypt,crypt)
 
-dnl ***************************************************************************
-dnl Checks for GNOME
-dnl ***************************************************************************
-have_gnome=false
-GNOME_INIT_HOOK([
-	have_gnome=true
-	AC_DEFINE(ENABLE_GNOME,1)
-])
-
-GNOME_COMPILE_WARNINGS
+#GNOME_COMPILE_WARNINGS
+have_gnome=true
 
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the PostgreSQL 
@@ -110,7 +102,7 @@ else
   AC_DEFINE(HAVE_POSTGRES,1,[]) 
 fi 
  
-AM_CONDITIONAL(POSTGRES, test x$postgresdir != x) 
+#AM_CONDITIONAL(POSTGRES, test x$postgresdir != x) 
 AC_SUBST(POSTGRES_LIBS) 
 AC_SUBST(POSTGRES_CFLAGS) 
 ])
@@ -157,7 +149,7 @@ AC_ARG_WITH(dotcobol,
 	  AC_DEFINE(HAVE_DOTCOBOL,1,[]) 
 	fi 
  
-	AM_CONDITIONAL(DOTCOBOL, test x$dotcoboldir != x) 
+#	AM_CONDITIONAL(DOTCOBOL, test x$dotcoboldir != x) 
 	AC_SUBST(DOTCOBOL_COMMAND) 
 ]) 
 

@@ -665,7 +665,7 @@ dbgmsg(">ParDI");
 						   ==  NULL  ) {
 					Error("linkage record not found");
 				} else {
-					ThisEnv->linksize = NativeSizeValue(ThisEnv->linkrec,0,0);
+					ThisEnv->linksize = NativeSizeValue(NULL,ThisEnv->linkrec);
 				}
 			} else {
 				Error("linkage invalid");
