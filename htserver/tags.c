@@ -113,7 +113,8 @@ static	void
 EmitAttributeValue(
 	HTCInfo	*htc,
 	char	*str,
-	Bool	fQuote)
+	Bool	fQuote,
+	Bool	fEncodeURL)
 {
 	if		(  fQuote  ) {
 		LBS_EmitString(htc->code,"\"");
@@ -123,10 +124,17 @@ EmitAttributeValue(
             EmitCode(htc,OPC_NAME);
             LBS_EmitPointer(htc->code,StrDup(str+1));
             EmitCode(htc,OPC_HSNAME);
+            if (fEncodeURL) {
+                EmitCode(htc,OPC_URLENC);
+            }
+            EmitCode(htc,OPC_REFSTR);
             break;
         default:
             EmitCode(htc,OPC_NAME);
             LBS_EmitPointer(htc->code,StrDup(str));
+            if (fEncodeURL) {
+                EmitCode(htc,OPC_URLENC);
+            }
             EmitCode(htc,OPC_REFSTR);
             break;
 	}
@@ -145,11 +153,11 @@ Style(
 
 	if		(  ( id = GetArg(tag,"id",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," id=");
-		EmitAttributeValue(htc,id,TRUE);
+		EmitAttributeValue(htc,id,TRUE,FALSE);
 	}
 	if		(  ( klass = GetArg(tag,"class",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," class=");
-		EmitAttributeValue(htc,klass,TRUE);
+		EmitAttributeValue(htc,klass,TRUE,FALSE);
 	}
 }
 
@@ -174,7 +182,7 @@ dbgmsg(">_Entry");
 
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(name));
-		EmitCode(htc,OPC_HSNAME);
+		EmitCode(htc,OPC_EHSNAME);
 
 		LBS_EmitString(htc->code,"\"");
 		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
@@ -214,7 +222,7 @@ dbgmsg(">_Fixed");
 		LBS_EmitString(htc->code,">");
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(name));
-        EmitCode(htc,OPC_HSNAME);
+        EmitCode(htc,OPC_EHSNAME);
 		LBS_EmitString(htc->code,"</span>");
 	}
 dbgmsg("<_Fixed");
@@ -263,7 +271,7 @@ dbgmsg(">_Combo");
 	EmitCode(htc,OPC_NAME);
 	sprintf(name,"%s[#]",GetArg(tag,"item",0));
 	LBS_EmitPointer(htc->code,StrDup(name));
-	EmitCode(htc,OPC_HSNAME);
+	EmitCode(htc,OPC_EHSNAME);
 
 	EmitCode(htc,OPC_LEND);
 	LBS_EmitInt(htc->code,Pop);
@@ -333,7 +341,7 @@ dbgmsg(">_Text");
 	LBS_EmitString(htc->code,"\" value=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-	EmitCode(htc,OPC_HSNAME);
+	EmitCode(htc,OPC_EHSNAME);
 	LBS_EmitString(htc->code,"\"");
 	if		(  ( cols = GetArg(tag,"cols",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," cols=\"");
@@ -354,7 +362,7 @@ dbgmsg(">_Text");
 
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,name);
-	EmitCode(htc,OPC_HSNAME);
+	EmitCode(htc,OPC_EHSNAME);
 	LBS_EmitString(htc->code,"</textarea>\n");
 dbgmsg("<_Text");
 }
@@ -524,7 +532,7 @@ dbgmsg(">_ToggleButton");
 
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"label",0)));
-	EmitCode(htc,OPC_HSNAME);
+	EmitCode(htc,OPC_EHSNAME);
 dbgmsg("<_ToggleButton");
 }
 
@@ -600,7 +608,7 @@ dbgmsg(">_FileSelection");
 		LBS_EmitString(htc->code, "\" value=\"");
 		EmitCode(htc, OPC_NAME);
 		LBS_EmitPointer(htc->code, StrDup(filename));
-		EmitCode(htc, OPC_HSNAME);
+		EmitCode(htc, OPC_EHSNAME);
         LBS_EmitString(htc->code, "\"");
 
 		if ((size = GetArg(tag, "size", 0)) != NULL) {
@@ -663,7 +671,7 @@ dbgmsg(">_Link");
 			LBS_EmitPointer(htc->code,StrDup(name));
 			EmitCode(htc,OPC_REFSTR);
 			LBS_EmitString(htc->code,"=");
-                        EmitAttributeValue(htc,value,FALSE); 
+            EmitAttributeValue(htc,value,FALSE,TRUE); 
 		}
 		LBS_EmitString(htc->code,"\">");
 	}

@@ -32,14 +32,16 @@ copies.
 #define	OPC_SCONST	0x08
 #define	OPC_NAME	0x09
 #define	OPC_HSNAME	0x0A
-#define	OPC_REFSTR	0x0B
-#define	OPC_HINAME	0x0C
-#define	OPC_BREAK	0x0D
-#define	OPC_HBES	0x0E
-#define	OPC_JNZP	0x0F
-#define	OPC_JNZNP	0x10
-#define	OPC_DROP	0x11
-#define	OPC_CALENDAR	0x12
+#define	OPC_EHSNAME	0x0B
+#define	OPC_REFSTR	0x0C
+#define	OPC_HINAME	0x0D
+#define	OPC_BREAK	0x0E
+#define	OPC_HBES	0x0F
+#define	OPC_JNZP	0x10
+#define	OPC_JNZNP	0x11
+#define	OPC_DROP	0x12
+#define	OPC_URLENC	0x13
+#define	OPC_CALENDAR	0x14
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -335,6 +335,31 @@ HTGetValue(
 	return	(value);
 }
 
+static void
+EmitWithEscape(LargeByteString *lbs, char *str)
+{
+    char *p;
+    for (p = str; *p != '\0'; p++) {
+        switch (*p) {
+        case '&':
+            LBS_EmitString(lbs, "&amp;");
+            break;
+        case '"':
+            LBS_EmitString(lbs, "&quot;");
+            break;
+        case '<':
+            LBS_EmitString(lbs, "&lt;");
+            break;
+        case '>':
+            LBS_EmitString(lbs, "&gt;");
+            break;
+        default:
+            LBS_EmitChar(lbs, *p);
+            break;
+        }
+	}
+}
+
 extern	LargeByteString	*
 ExecCode(
 	HTCInfo	*htc)
@@ -365,7 +390,7 @@ dbgmsg(">ExecCode");
 				dbgmsg("OPC_REF");
 				name = LBS_FetchPointer(htc->code);
 				value = HTGetValue(name,FALSE);
-				LBS_EmitString(html,value);
+                EmitWithEscape(html,value);
 				break;
 			  case	OPC_VAR:
 				dbgmsg("OPC_VAR");
@@ -388,8 +413,14 @@ dbgmsg(">ExecCode");
 			  case	OPC_HSNAME:
 				dbgmsg("OPC_HSNAME");
 				vval = Pop;
+				vval.str = HTGetValue(vval.str,FALSE);
+				Push(vval);
+				break;
+			  case	OPC_EHSNAME:
+				dbgmsg("OPC_EHSNAME");
+				vval = Pop;
 				value = HTGetValue(vval.str,FALSE);
-				LBS_EmitString(html,value);
+				EmitWithEscape(html,value);
 				break;
 			  case	OPC_HINAME:
 				dbgmsg("OPC_HINAME");
@@ -409,19 +440,19 @@ dbgmsg(">ExecCode");
 				value = HTGetValue(vval.str,TRUE);
 				str = LBS_FetchPointer(htc->code);
 				if		(  stricmp(value,"TRUE")  ==  0 ) {
-					LBS_EmitString(html,str);
+					EmitWithEscape(html,str);
 				}
 				break;
 			  case	OPC_REFSTR:
 				dbgmsg("OPC_REFSTR");
 				vval = Pop;
-				LBS_EmitString(html,vval.str);
+				EmitWithEscape(html,vval.str);
 				break;
 			  case	OPC_REFINT:
 				dbgmsg("OPC_REFINT");
 				vval = Pop;
 				sprintf(buff,"%d",(vval.ptr)->ival);
-				LBS_EmitString(html,buff);
+				EmitWithEscape(html,buff);
 				break;
 			  case	OPC_ICONST:
 				dbgmsg("OPC_ICONST");
@@ -468,6 +499,20 @@ dbgmsg(">ExecCode");
 					LBS_SetPos(htc->code,pos);
 				}
 				break;
+			  case OPC_URLENC:
+			  {
+                int len;
+                char *s;
+
+				dbgmsg("OPC_URLENC");
+				vval = Pop;
+                len = EncodeStringLengthURL(vval.str);
+				s = (char *) xmalloc(len + 1);
+                EncodeStringURL(s, vval.str);
+                vval.str = s;
+				Push(vval);
+			  }
+                break;
 			  case	OPC_CALENDAR:
 			  {
 				  char	*year
