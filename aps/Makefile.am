@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = aps dbstub
-lib_LTLIBRARIES = MCPSUB.la $(LANG_OBJECTS) apslib.rb
+lib_LTLIBRARIES = MCPSUB.la $(LANG_OBJECTS)
 
 libpandadbincludedir = $(includedir)/panda
 libpandadbinclude_HEADERS =	\
