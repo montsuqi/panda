@@ -136,12 +136,8 @@ dbgmsg(">ExecuteServer");
 		FD_ZERO(&ready);
 		FD_SET(_fhTerm,&ready);
 		FD_SET(_fhAps,&ready);
-		if		(  _fhControl  >=  0  ) {
-			FD_SET(_fhControl,&ready);
-		}
-		if		(  _fhBlob  >=  0  ) {
-			FD_SET(_fhBlob,&ready);
-		}
+		FD_SET(_fhControl,&ready);
+		FD_SET(_fhBlob,&ready);
 		ret = pselect(maxfd+1,&ready,NULL,NULL,&timeout,&SigMask);
         if (ret == -1) {
             if (errno == EINTR)
@@ -155,10 +151,12 @@ dbgmsg(">ExecuteServer");
 		if		(  FD_ISSET(_fhAps,&ready)  ) {			/*	APS connect		*/
 			ConnectAPS(_fhAps);
 		}
-		if		(  FD_ISSET(_fhControl,&ready)  ) {		/*	control connect		*/
+		if		(	(  _fhControl  >=  0  )
+				&&	(  FD_ISSET(_fhControl,&ready)  ) ) {	/*	control connect		*/
 			ConnectControl(_fhControl);
 		}
-		if		(  FD_ISSET(_fhBlob,&ready)  ) {		/*	control connect		*/
+		if		(	(  _fhBlob  >=  0  )
+				&&	(  FD_ISSET(_fhBlob,&ready)  ) ) {		/*	blob connect		*/
 			ConnectBlob(_fhBlob);
 		}
 	}	while	(!fShutdown);
