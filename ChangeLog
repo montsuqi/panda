@@ -1,5 +1,7 @@
 2004-08-05  Kouji TAKAO  <kouji@netlab.jp>
 
+	* aps/Ruby.c: 新しいobject型(longlong)に対応
+
 	* glclient/widgetOPS.c (RecvPS): 一時ファイルをmkstemp(3)で作成し、
 	load後に削除するように修正
 
