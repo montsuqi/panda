@@ -375,6 +375,7 @@ DB_Parse(
 	RecordStruct	*ret
 	,				*use;
 	char	buff[SIZE_LONGNAME+1];
+	PathStruct		*path;
 
 ENTER_FUNC;
 	ret = DD_Parse();
@@ -433,6 +434,14 @@ ENTER_FUNC;
 			exit(1);
 			break;
 		}
+	}
+	if		(  ret->opt.db->pcount  ==  0  ) {
+		ret->opt.db->path = (PathStruct **)xmalloc(sizeof(PathStruct *) * 1);
+		path = InitPathStruct();
+		path->name = StrDup("primary");
+		g_hash_table_insert(ret->opt.db->paths,path->name,(void *)1);
+		ret->opt.db->pcount ++;
+		ret->opt.db->path[0] = path;
 	}
 LEAVE_FUNC;
 	return	(ret);
