@@ -277,7 +277,7 @@ extern	void
 OpenRedirectDB(
 	DBG_Struct *dbg)
 {
-	ExecFunction(dbg,"DBOPEN",TRUE);
+	ExecFunction(dbg,"OPEN",TRUE);
 }
 
 extern	void
