@@ -278,32 +278,24 @@ ParseURL(
 		url->protocol = StrDup(str);
 		str = p + 1;
 	}
-	if		(  *str  ==  '/'  ) {
-		str ++;
-	}
-	if		(  *str  ==  '/'  ) {
-		str ++;
-	}
-	if		(	(  *str  ==  '='  )
-			||	(  *str  ==  '~'  ) ) {
-		p = str - 1;
-	} else
-	if		(  ( p = strchr(str,'/') )  !=  NULL  ) {
-		*p = 0;
+	if		(  !strlcmp(str,"//")  ) {
+		str += 2;
 	}
 	if		(  !stricmp(url->protocol,"file")  ) {
 		url->host = NULL;
 		url->port = NULL;
+		url->file = StrDup(str);
 	} else {
+		if		(  ( p = strchr(str,'/') )  !=  NULL  ) {
+			*p = 0;
+			url->file = StrDup(p+1);
+		} else {
+			url->file = NULL;
+		}			
 		port = ParPort(str,NULL);
 		url->host = StrDup(port->adrs.a_ip.host);
 		url->port = StrDup(port->adrs.a_ip.port);
 		DestroyPort(port);
-	}
-	if		(  p  !=  NULL  ) {
-		url->file = StrDup(p+1);
-	} else {
-		url->file = "";
 	}
 }
 

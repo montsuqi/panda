@@ -31,8 +31,6 @@ copies.
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<string.h>
-#include    <sys/types.h>
-#include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<sys/stat.h>
 #include	<glib.h>
@@ -44,9 +42,6 @@ copies.
 
 #include	"libmondai.h"
 #include	"net.h"
-#include	"comm.h"
-#include	"queue.h"
-#include	"directory.h"
 #include	"blob.h"
 #include	"blob_v1.h"
 #include	"message.h"
