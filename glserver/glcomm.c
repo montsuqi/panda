@@ -31,6 +31,7 @@ copies.
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<errno.h>
+#include	<magic.h>
 #include	<string.h>
 #include	<strings.h>
 #include	<netinet/in.h>
@@ -66,6 +67,8 @@ copies.
 #define	GL_OLDTYPE_RECORD		(PacketDataType)0xA0
 
 static	LargeByteString	*Buff;
+
+static	struct	magic_set	*Magic;
 
 static	PacketDataType	ToOldType[256];
 static	PacketDataType	ToNewType[256];
@@ -391,6 +394,48 @@ GL_RecvDataType(
 	return	(c);
 }
 
+static	char	*
+ExpandFile(
+	char	*cname)
+{
+	static	char	fname[SIZE_LONGNAME+1];
+	char	buff[SIZE_LONGNAME+1];
+	struct	stat	sb;
+	time_t	ps_mtime
+		,	png_mtime;
+	const	char	*type;
+
+ENTER_FUNC;
+	if		(  ( type = magic_file(Magic,cname) )  ==  NULL  ) {
+		strcpy(fname,cname);
+	} else
+	if		(  !strlcmp(type,"PostScript")  ) {
+		if		(  !fFeturePS  ) {
+			if		(	(  stat(cname,&sb)  ==  0   )
+					&&	(  S_ISREG(sb.st_mode)      ) )	{
+				ps_mtime = sb.st_mtime;
+			} else {
+				ps_mtime = 0;
+			}
+			sprintf(fname,"%s.png",cname);
+			if		(	(  stat(fname,&sb)  ==  0  )
+					&&	(  S_ISREG(sb.st_mode)   ) ) {
+				png_mtime = sb.st_mtime;
+			} else {
+				png_mtime = 0;
+			}
+			if		(  ps_mtime  >  png_mtime  ) {
+				sprintf(buff,"pstopnm -portrait -stdout %s | pnmtopng > %s",cname,fname);
+				system(buff);
+			}
+		}
+	} else {
+		strcpy(fname,cname);
+	}
+LEAVE_FUNC;
+	return	(fname);
+}
+
 /*
  *	This function sends value with valiable name.
  */
@@ -406,6 +451,7 @@ GL_SendValue(
 	int		i;
 	struct	stat	sb;
 	FILE	*fpf;
+	char	*fname;
 
 	ValueIsNotUpdate(value);
 	GL_SendDataType(fp,ValueType(value),fNetwork);
@@ -437,7 +483,8 @@ GL_SendValue(
 	  case	GL_TYPE_OBJECT:
 		if		(  fBlob  ) {
 			if		(  fExpand  ) {
-				if		(  ( fpf = Fopen(BlobCacheFileName(value),"r") )  !=  NULL  ) {
+				fname = ExpandFile(BlobCacheFileName(value));
+				if		(  ( fpf = Fopen(fname,"r") )  !=  NULL  ) {
 					fstat(fileno(fpf),&sb);
 					LBS_ReserveSize(Buff,sb.st_size,FALSE);
 					fread(LBS_Body(Buff),sb.st_size,1,fpf);
@@ -597,4 +644,14 @@ InitGL_Comm(void)
 	TO_NEWTYPE(DBCODE);
 	TO_NEWTYPE(ARRAY);
 	TO_NEWTYPE(RECORD);
+
+	if		(  ( Magic = magic_open(MAGIC_SYMLINK|MAGIC_COMPRESS|MAGIC_PRESERVE_ATIME) )
+			   ==  NULL  ) {
+		fprintf(stderr, "magic: %s\n", strerror(errno));
+		exit(1);
+	}
+	if		(  magic_load(Magic, NULL)  <  0  )	{
+		fprintf(stderr, "magic: %s\n", magic_error(Magic));
+		exit(1);
+	}
 }

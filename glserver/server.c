@@ -394,6 +394,9 @@ CheckFeture(
 				if		(  !strlicmp(p,"no")  ) {
 					TermFeture |= FETURE_NETWORK;
 				}
+				if		(  !strlicmp(p,"ps")  ) {
+					TermFeture |= FETURE_PS;
+				}
 				p = n;
 			}
 		}
@@ -404,6 +407,7 @@ CheckFeture(
 	printf("blob      = %s\n",fFetureBlob ? "YES" : "NO");
 	printf("expand    = %s\n",fFetureExpand ? "YES" : "NO");
 	printf("network   = %s\n",fFetureNetwork ? "YES" : "NO");
+	printf("ps        = %s\n",fFeturePS ? "YES" : "NO");
 	printf("old       = %s\n",fFetureOld ? "YES" : "NO");
 #endif
 }

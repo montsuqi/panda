@@ -266,6 +266,23 @@ dbgmsg(">RecvPS");
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp,name);
+#if	1
+			binary = NewLBS();
+			RecvBinaryData(fp, binary);
+			tmpname = g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
+			fildes = mkstemp(tmpname);
+			_umask = umask(0);
+			umask(_umask);
+			mode = 0666 & ~_umask;
+			fchmod(fildes, mode);
+			file = fdopen(fildes, "wb");
+			fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
+			fclose(file);
+			gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
+			unlink(tmpname);
+			g_free(tmpname);
+			FreeLBS(binary);
+#else
             if (strncasecmp("psdata", name, sizeof("psdata") - 1) == 0) {
                 binary = NewLBS();
                 RecvBinaryData(fp, binary);
@@ -296,6 +313,7 @@ dbgmsg(">RecvPS");
                     Warning("GtkPandaPS->value obsolate\n");
                 }
             }
+#endif
 		}
 	}
 dbgmsg("<RecvPS");

@@ -767,9 +767,9 @@ GL_SendVersionString(
 	size_t	size;
 
 #ifdef	NETWORK_ORDER
-	version = "version:no:blob:expand";
+	version = "version:no:blob:expand:ps";
 #else
-	version = "version:blob:expand";
+	version = "version:blob:expand:ps";
 #endif
 	size = strlen(version);
 	SendChar(fp,(size&0xFF));

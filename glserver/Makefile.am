@@ -4,7 +4,7 @@ sbin_PROGRAMS = glserver
 
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\
-	-lm 								\
+	-lm -lmagic							\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(FIXED_LIBS)						\
