@@ -206,18 +206,17 @@ RecvScreenData(
         DecodeName(&wname, &vname, buff);
         LBS_EmitStart(lbs);
         RecvLBS(fp, lbs);
-        LBS_EmitEnd(lbs);
         if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
             value = GetItemLongName(win->rec->value, vname);
             ValueIsUpdate(value);
             switch (ValueType(value)) {
               case GL_TYPE_ARRAY:
                 {
-                    char *p = LBS_Body(lbs);
+                    char *p = LBS_Body(lbs), *pend = p + LBS_Size(lbs);
                     ValueStruct *v;
                     int i;
 
-                    while (*p != '\0') {
+                    while (p < pend) {
                         i = atoi(p);
                         v = GetArrayItem(value, i);
                         SetValueBool(v, TRUE);
@@ -233,6 +232,7 @@ RecvScreenData(
                 SetValueBinary(value, LBS_Body(lbs), LBS_Size(lbs));
                 break;
               default:
+                LBS_EmitEnd(lbs);
                 SetValueString(value, LBS_Body(lbs), "utf8");
                 break;
             }
