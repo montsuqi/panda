@@ -211,7 +211,7 @@ GetAPS_Value(
 	byte		flag)
 {
 	int		i
-	,		nclose;
+	,		n;
 
 dbgmsg(">GetAPS_Value");
 	if		(  ( flag & c )  !=  0  ) {
@@ -220,8 +220,8 @@ dbgmsg("send");
 		switch	(c) {
 		  case	APS_WINCTRL:
 			dbgmsg("WINCTRL");
-			nclose = RecvInt(fpLD);		ON_IO_ERROR(fpLD,badio);
-			for	( i = 0 ; i < nclose ; i ++ ) {
+			n = RecvInt(fpLD);		ON_IO_ERROR(fpLD,badio);
+			for	( i = 0 ; i < n ; i ++ ) {
 				data->w.control[data->w.n].PutType = (byte)RecvInt(fpLD);
 				ON_IO_ERROR(fpLD,badio);
 				RecvString(fpLD,data->w.control[data->w.n].window);
@@ -377,7 +377,7 @@ dbgmsg(">MessageThread");
 				ld = data->ld;
 				if		(  ( flag = CheckAPS(&ld->aps[ix],data->name) )  !=  0  ) {
 					memcpy(&hdr,data->hdr,sizeof(MessageHeader));
-					puttype = hdr.puttype;
+					data->otype = hdr.puttype;
 					if		(	(  PutAPS(&ld->aps[ix],data,flag)  )
 							&&	(  ( flag = GetAPS_Control(&ld->aps[ix],&hdr) )
 									   !=  0  ) ) {
@@ -411,10 +411,11 @@ dbgmsg(">MessageThread");
 				  case	SCREEN_JOIN_WINDOW:
 				  case	SCREEN_FORK_WINDOW:
 					data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+					data->otype = data->hdr->puttype;
 					CoreEnqueue(data);
 					break;
 				  case	SCREEN_CURRENT_WINDOW:
-					data->hdr->puttype = puttype;
+					data->hdr->puttype = data->otype;
 					TermEnqueue(data->term,data);
 					break;
 				  case	SCREEN_CLOSE_WINDOW:
