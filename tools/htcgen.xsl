@@ -18,6 +18,37 @@
 td {
   font-size: 10pt;
 }
+
+.menu ul {
+  margin:0;
+  padding:0;
+  list-style-type: none;
+}
+
+.menu li {
+  float:left;
+  width:7em;
+  margin-bottom:0.1em;
+  border:1px solid #333;
+  text-decoration:none;
+  background-color:#ffe;
+  display: inline;
+}
+
+.menu li ul {
+  display: none;
+}
+
+.menu li:hover ul {
+  visibility: visible;
+  display: block;
+  position:absolute;
+  z-index:1;
+  width:7em;
+}
+.menu span:hover{
+  background-color: gray;
+};
 </style>
 		  <title>
             <xsl:value-of select="//widget/title"/>
@@ -378,6 +409,7 @@ td {
       </xsl:attribute>
       <xsl:if test="./widget[class = 'GtkPandaEntry']/signal[name = 'activate']">
         <xsl:attribute name="onChange">
+          <xsl:text>?</xsl:text>
           <xsl:value-of select="./widget[class = 'GtkPandaEntry']/signal[name = 'activate']/data"/>
           <xsl:text>:</xsl:text>
           <xsl:value-of select="./name"/>
@@ -408,6 +440,7 @@ td {
       </xsl:attribute>
       <xsl:if test="./widget[class = 'GtkPandaEntry']/signal[name = 'activate']">
         <xsl:attribute name="onChange">
+          <xsl:text>?</xsl:text>
           <xsl:value-of select="./widget[class = 'GtkPandaEntry']/signal[name = 'activate']/data"/>
           <xsl:text>:</xsl:text>
           <xsl:value-of select="./name"/>
@@ -717,7 +750,7 @@ td {
       <tr>
         <xsl:for-each select="./widget[class = 'GtkMenuItem']">
           <td>
-            <xsl:call-template name="GtkMenuItem">
+            <xsl:call-template name="GtkMenuItem_a">
               <xsl:with-param name="title" select="substring-before(./name,'(')"/>
             </xsl:call-template>
           </td>
@@ -726,7 +759,7 @@ td {
     </table>
   </xsl:template>
 
-  <xsl:template name="GtkMenuItem">
+  <xsl:template name="GtkMenuItem_select">
     <xsl:param name="title"/>
     <select>
       <xsl:attribute name="name">
@@ -770,6 +803,59 @@ td {
         </xsl:choose>
       </xsl:for-each>
     </select>
+  </xsl:template>
+
+  <xsl:template name="GtkMenuItem_a">
+    <xsl:param name="title"/>
+    <div>
+      <xsl:attribute name="class">
+        <xsl:text>menu</xsl:text>
+      </xsl:attribute>
+      <ul>
+        <li>
+          <xsl:value-of select="$title"/>
+          <ul>
+            <li>
+              <xsl:for-each select="./widget[class = 'GtkMenu']/widget">
+                <xsl:choose>
+                  <xsl:when test="class = 'GtkPixmapMenuItem'">
+                    <xsl:if test="./signal">
+                      <span>
+                        <xsl:attribute name="onclick">
+                          <xsl:text>?</xsl:text>
+                          <xsl:value-of select="./name"/>
+                          <xsl:text>:</xsl:text>
+                          <xsl:value-of select="./name"/>
+                        </xsl:attribute>
+                        <xsl:value-of select="./label"/>
+                      </span>
+                      <br/>
+                    </xsl:if>
+                  </xsl:when>
+                  <xsl:when test="class = 'GtkMenuItem'">
+                    <xsl:if test="./signal">
+                      <span>
+                        <xsl:attribute name="onclick">
+                          <xsl:text>?</xsl:text>
+                          <xsl:value-of select="./name"/>
+                          <xsl:text>:</xsl:text>
+                          <xsl:value-of select="./name"/>
+                        </xsl:attribute>
+                        <xsl:value-of select="./label"/>
+                      </span>
+                      <br/>
+                    </xsl:if>
+                  </xsl:when>
+                  <xsl:otherwise>
+                    <!-- xsl:value-of select="$title"/ -->
+                  </xsl:otherwise>
+                </xsl:choose>
+              </xsl:for-each>
+            </li>
+          </ul>
+        </li>
+    </ul>
+  </div>
   </xsl:template>
 
 </xsl:stylesheet>

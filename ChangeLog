@@ -1,6 +1,10 @@
 2004-10-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/tags.c (_Button): stateの処理を正しくした
+	(JavaScriptEvent): send_eventの扱い方を変えた
+	(_Text): HTMLエディタの追加
+	(EmitAttributeValue): Styleから呼び出された時の処理を正しくした
+	(_Fixed): HTMLを無加工でそのまま出力する機能を追加
 
 	* tools/htcgen.xsl: メニューバー対応
 

@@ -701,6 +701,13 @@ ENTER_FUNC;
                     EmitWithEscape(html,vval.body.str);
                 }
 				break;
+              case OPC_EMITHTML:
+				dbgmsg("OPC_EMITHTML");
+				vval = Pop;
+                if (strlen(vval.body.str) > 0) {
+					LBS_EmitString(html,vval.body.str);
+                }
+				break;
 			  case OPC_ESCJSS:
                 {
                     dbgmsg("OPC_ESCJSS");

@@ -51,6 +51,7 @@ copies.
 #define	OPC_SUB			0x1B
 #define	OPC_SPY			0x1C
 #define	OPC_SCMP		0x1D
+#define	OPC_EMITHTML	0x1E
 
 #define	OPC_FLJS		0x7F
 

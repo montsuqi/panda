@@ -28,6 +28,8 @@ copies.
 typedef	struct {
 	char	*name;
 	char	*body;
+	char	*(*inFilter)(char *in);
+	char	*(*outFilter)(char *out);
 	Bool	fSave;
 }	CGIValue;
 
@@ -67,6 +69,8 @@ extern	char	*SaveArgValue(char *name, char *value, Bool fSave);
 extern	char	*LoadValue(char *name);
 extern	void	RemoveValue(char *name);
 extern	void	SetSave(char *name, Bool fSave);
+extern  void	SetFilter(char *name, char *(*inFilter)(char *in),
+						  char *(*outFilter)(char *out));
 
 extern  void	CheckSessionExpire(void);
 extern	Bool	GetSessionValues(void);

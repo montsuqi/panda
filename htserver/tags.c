@@ -148,11 +148,14 @@ EmitAttributeValue(
             LBS_EmitPointer(htc->code,StrDup(str));
             if (fEncodeURL) {
                 EmitCode(htc,OPC_LOCURI);
-            }
+				EmitCode(htc,OPC_REFSTR);
+            } else
             if (fEscapeJavaScriptString) {
                 EmitCode(htc,OPC_ESCJSS);
-            }
-            EmitCode(htc,OPC_REFSTR);
+				EmitCode(htc,OPC_REFSTR);
+            } else {
+				EmitCode(htc,OPC_EMITHTML);
+			}
             break;
 	}
 	if		(  fQuote  ) {
@@ -199,11 +202,16 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
         return;
 
     LBS_EmitChar(htc->code, ' ');
-    LBS_EmitString(htc->code, event);
-	InvokeJs("send_event");
-	snprintf(buf, SIZE_BUFF,
-			 "=\""
-			 "send_event(%d,'%s');\"",htc->FormNo,value);
+	LBS_EmitString(htc->code, event);
+	if		(  *value  ==  '?'  ) {
+		InvokeJs("send_event");
+		snprintf(buf, SIZE_BUFF,
+				 "=\""
+				 "send_event(%d,'%s');\"",htc->FormNo,value+1);
+	} else {
+		snprintf(buf, SIZE_BUFF,
+				 "=\"%s\"",value);
+	}
 	LBS_EmitString(htc->code, buf);
 }
 
@@ -329,16 +337,25 @@ _Fixed(
 	char	*name
 		,	*link
 		,	*target
-		,	*value;
+		,	*value
+		,	*type;
 
 ENTER_FUNC;
 	value = GetArg(tag,"value",0);
 	name = GetArg(tag,"name",0);
+	type = GetArg(tag,"type",0);
 	if		(	(  value  !=  NULL  )
 			||	(  name   !=  NULL  ) ) {
-		LBS_EmitString(htc->code,"<span");
-		Style(htc,tag);
-		LBS_EmitString(htc->code,">");
+		if		(	(  type  !=  NULL  )
+				&&	(  !stricmp(type,"html")  ) ) {
+			LBS_EmitString(htc->code,"<div");
+			Style(htc,tag);
+			LBS_EmitString(htc->code,">\n");
+		} else {
+			LBS_EmitString(htc->code,"<span");
+			Style(htc,tag);
+			LBS_EmitString(htc->code,">");
+		}
 		if		(  ( link = GetArg(tag,"link",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code,"<a href=\"");
 
@@ -360,12 +377,22 @@ ENTER_FUNC;
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(name));
 			EmitCode(htc,OPC_HSNAME);
-			EmitCode(htc,OPC_EMITSTR);
+			if		(	(  type  !=  NULL  )
+					&&	(  !stricmp(type,"html")  ) ) {
+				EmitCode(htc,OPC_EMITHTML);
+			} else {
+				EmitCode(htc,OPC_EMITSTR);
+			}
 		}
 		if		(  link  !=  NULL  ) {
 			LBS_EmitString(htc->code,"</a>");
 		}
-		LBS_EmitString(htc->code,"</span>");
+		if		(	(  type  !=  NULL  )
+				&&	(  !stricmp(type,"html")  ) ) {
+			LBS_EmitString(htc->code,"</div>");
+		} else {
+			LBS_EmitString(htc->code,"</span>\n");
+		}
 	}
 LEAVE_FUNC;
 }
@@ -535,6 +562,9 @@ ENTER_FUNC;
 		InvokeJs("html_edit");
 		InvokeJs("html_setting");
 		LBS_EmitString(htc->code," mce_editable=\"true\"");
+		if		(  !stricmp(type,"xml")  ) {
+			SetFilter(GetArg(tag,"name",0),StrDup,NULL);
+		}
 	}
 
 	LBS_EmitString(htc->code," name=\"");
@@ -559,7 +589,13 @@ ENTER_FUNC;
 
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,name);
-	EmitCode(htc,OPC_EHSNAME);
+	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
+			||	(  !stricmp(type,"text")                      ) ) {
+		EmitCode(htc,OPC_EHSNAME);
+	} else {
+		EmitCode(htc,OPC_HSNAME);
+		EmitCode(htc,OPC_EMITHTML);
+	}
 	LBS_EmitString(htc->code,"</textarea>\n");
 LEAVE_FUNC;
 }
@@ -677,6 +713,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	Bool	fButton;
 static	void
 _Button(
 	HTCInfo	*htc,
@@ -686,11 +723,9 @@ _Button(
 		,	*event
 		,	*onclick;
 	char	buf[SIZE_BUFF];
-#ifndef	USE_IE5
 	char	*state;
 	int		arg
 		,	pos;
-#endif
 
 ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
@@ -707,45 +742,51 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_JNZNP);
 	arg = LBS_GetPos(htc->code);
 	LBS_EmitInt(htc->code,0);
-
-	event = GetArg(tag, "event", 0);
-	onclick = GetArg(tag,"onclick",0);
-	if ((event == NULL) &&(onclick == NULL )) {
-		HTC_Error("`event' or `on' attribute is required for <%s>\n", tag->name);
-		return;
-	}
-	if ((face = GetArg(tag, "face", 0)) == NULL) {
-		face = event;
-	}
-	if (htc->DefaultEvent == NULL)
-		htc->DefaultEvent = event;
-#ifdef	USE_IE5
-	if (event != NULL) {
-		g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
-		LBS_EmitString(htc->code,"<input type=\"submit\" name=\"_event\" value=\"");
+	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
+		fButton = TRUE;
+		LBS_EmitString(htc->code,"<button");
+        JavaScriptEvent(htc, tag, "onclick");
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">");
+		if ((face = GetArg(tag, "face", 0)) == NULL) {
+			face = "click";
+		}
+		LBS_EmitString(htc->code,face);
 	} else {
-		LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
-	}
-	LBS_EmitString(htc->code,face);
-	LBS_EmitString(htc->code,"\"");
-	if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," size=");
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(size));
-		EmitCode(htc,OPC_REFSTR);
-	}
-	if		(  onclick  !=  NULL  ) {
-		LBS_EmitString(htc->code," onclick=\"");
-		LBS_EmitString(htc->code,onclick);
+		fButton = FALSE;
+		event = GetArg(tag, "event", 0);
+		if		(  event  ==  NULL  ) {
+			HTC_Error("`event' or `on' attribute is required for <%s>\n", tag->name);
+			return;
+		}
+		if ((face = GetArg(tag, "face", 0)) == NULL) {
+			face = event;
+		}
+		if (htc->DefaultEvent == NULL)
+			htc->DefaultEvent = event;
+#ifdef	USE_IE5
+		if (event != NULL) {
+			g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
+			LBS_EmitString(htc->code,
+						   "<input type=\"submit\" name=\"_event\" value=\"");
+		} else {
+			LBS_EmitString(htc->code,
+						   "<input type=\"button\" value=\"");
+		}
+		LBS_EmitString(htc->code,face);
 		LBS_EmitString(htc->code,"\"");
-	}
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">");
+		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+			LBS_EmitString(htc->code," size=");
+			EmitCode(htc,OPC_NAME);
+			LBS_EmitPointer(htc->code,StrDup(size));
+			EmitCode(htc,OPC_REFSTR);
+		}
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">");
 #else
-	LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
-	LBS_EmitString(htc->code,face);
-	LBS_EmitString(htc->code,"\"");
-	if		(  event  !=  NULL  ) {
+		LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
+		LBS_EmitString(htc->code,face);
+		LBS_EmitString(htc->code,"\"");
 		LBS_EmitChar(htc->code, ' ');
 		InvokeJs("send_event");
 		LBS_EmitString(htc->code, "onclick");
@@ -753,13 +794,63 @@ ENTER_FUNC;
 				 "=\""
 				 "send_event(%d,'%s');\"",htc->FormNo,event);
 		LBS_EmitString(htc->code, buf);
-	} else {
-		LBS_EmitString(htc->code," onclick=\"");
-		LBS_EmitString(htc->code,onclick);
-		LBS_EmitString(htc->code,"\"");
-	}
-	LBS_EmitString(htc->code,">");
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">");
 #endif
+	}
+	pos = LBS_GetPos(htc->code);
+	LBS_SetPos(htc->code,arg);
+	LBS_EmitInt(htc->code,pos);
+	LBS_SetPos(htc->code,pos);
+LEAVE_FUNC;
+}
+
+static	void
+_eButton(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	if		(  fButton  ) {
+		LBS_EmitString(htc->code,"</button>\n");
+	}
+}
+
+static	void
+_Span(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*state;
+	int		arg
+		,	pos;
+
+ENTER_FUNC;
+	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(state));
+		EmitCode(htc,OPC_HINAME);
+	} else {
+		EmitCode(htc,OPC_ICONST);
+		LBS_EmitInt(htc->code,0);
+	}
+	EmitCode(htc,OPC_ICONST);
+	LBS_EmitInt(htc->code,0);
+	EmitCode(htc,OPC_SUB);
+	EmitCode(htc,OPC_JNZNP);
+	arg = LBS_GetPos(htc->code);
+	LBS_EmitInt(htc->code,0);
+	LBS_EmitString(htc->code,"<span");
+	JavaScriptEvent(htc, tag, "onclick");
+	JavaScriptEvent(htc, tag, "onchange");
+	JavaScriptEvent(htc, tag, "onkeydown");
+	JavaScriptEvent(htc, tag, "onkeypress");
+	JavaScriptEvent(htc, tag, "onkeyup");
+	JavaScriptEvent(htc, tag, "onmousedown");
+	JavaScriptEvent(htc, tag, "onmousemove");
+	JavaScriptEvent(htc, tag, "onmouseout");
+	JavaScriptEvent(htc, tag, "onmousesetup");
+	Style(htc,tag);
+	LBS_EmitString(htc->code,">");
 	pos = LBS_GetPos(htc->code);
 	LBS_SetPos(htc->code,arg);
 	LBS_EmitInt(htc->code,pos);
@@ -1503,6 +1594,7 @@ ENTER_FUNC;
 	AddArg(tag,"onkeyup",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/ENTRY",NULL);
 
 	tag = NewTag("COMBO",_Combo);
@@ -1513,17 +1605,36 @@ ENTER_FUNC;
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/COMBO",NULL);
 
 	tag = NewTag("FIXED",_Fixed);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
+	AddArg(tag,"type",TRUE);
 	AddArg(tag,"link",TRUE);
 	AddArg(tag,"target",TRUE);
 	AddArg(tag,"value",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/FIXED",NULL);
+
+	tag = NewTag("SPAN",_Span);
+	AddArg(tag,"onclick",TRUE);
+	AddArg(tag,"onchange",TRUE);
+	AddArg(tag,"onkeydown",TRUE);
+	AddArg(tag,"onkeypress",TRUE);
+	AddArg(tag,"onkeyup",TRUE);
+	AddArg(tag,"onmousedown",TRUE);
+	AddArg(tag,"onmousemove",TRUE);
+	AddArg(tag,"onmouseout",TRUE);
+	AddArg(tag,"onmouseover",TRUE);
+	AddArg(tag,"onmousesetup",TRUE);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
+	//	tag = NewTag("/SPAN",NULL);
 
 	tag = NewTag("COUNT",_Count);
 	AddArg(tag,"var",TRUE);
@@ -1542,23 +1653,26 @@ ENTER_FUNC;
 	AddArg(tag,"onkeyup",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/TEXT",NULL);
 
 	tag = NewTag("BUTTON",_Button);
 	AddArg(tag,"event",TRUE);
 	AddArg(tag,"face",TRUE);
 	AddArg(tag,"size",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
 	AddArg(tag,"onclick",TRUE);
 	AddArg(tag,"state",TRUE);
-	tag = NewTag("/BUTTON",NULL);
+	AddArg(tag,"id",TRUE);
+	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
+	tag = NewTag("/BUTTON",_eButton);
 
 	tag = NewTag("TOGGLEBUTTON",_ToggleButton);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"label",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	AddArg(tag,"onclick",TRUE);
 	tag = NewTag("/TOGGLEBUTTON",NULL);
 
@@ -1567,6 +1681,7 @@ ENTER_FUNC;
 	AddArg(tag,"label",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	AddArg(tag,"onclick",TRUE);
 	tag = NewTag("/CHECKBUTTON",NULL);
 
@@ -1576,6 +1691,7 @@ ENTER_FUNC;
 	AddArg(tag,"label",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	AddArg(tag,"onclick",TRUE);
 	tag = NewTag("/RADIOBUTTON",NULL);
 
@@ -1588,6 +1704,7 @@ ENTER_FUNC;
 	AddArg(tag,"multiple",TRUE);
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
+	AddArg(tag,"style",TRUE);
 	AddArg(tag,"class",TRUE);
 	tag = NewTag("/LIST",NULL);
 
@@ -1599,6 +1716,7 @@ ENTER_FUNC;
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/SELECT",NULL);
 
 	tag = NewTag("FILESELECTION",_FileSelection);
@@ -1608,6 +1726,7 @@ ENTER_FUNC;
 	AddArg(tag,"maxlength",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/FILESELECTION",NULL);
 
 	tag = NewTag("HYPERLINK",_HyperLink);
@@ -1621,12 +1740,14 @@ ENTER_FUNC;
     AddArg(tag,"target",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/HYPERLINK",_eHyperLink);
 
 	tag = NewTag("PANEL", _Panel);
 	AddArg(tag, "visible", TRUE);
 	AddArg(tag, "id", TRUE);
 	AddArg(tag, "class", TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/PANEL", _ePanel);
 
 	tag = NewTag("CALENDAR",_Calendar);
@@ -1638,6 +1759,7 @@ ENTER_FUNC;
 	tag = NewTag("OPTION", _Option);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	AddArg(tag,"select",TRUE);
 	AddArg(tag,"value",TRUE);
 	tag = NewTag("/OPTION", NULL);
@@ -1648,6 +1770,7 @@ ENTER_FUNC;
 	AddArg(tag,"item",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"style",TRUE);
 	tag = NewTag("/OPTIONMENU",NULL);
 
 	tag = NewTag("HTC",_Htc);
@@ -1703,17 +1826,21 @@ ENTER_FUNC;
 
 	NewJs("send_event",
 		  "function send_event(no,event){\n"
-		  "    document.forms[no].elements[0].name='_event';\n"
-		  "    document.forms[no].elements[0].value=event;\n"
-		  "    document.forms[no].submit();\n"
+		  "  if (typeof(tinyMCE) != \"undefined\") {\n"
+		  "    tinyMCE.triggerSave();\n"
+		  "  }\n"
+		  "  document.forms[no].elements[0].name='_event';\n"
+		  "  document.forms[no].elements[0].value=event;\n"
+		  "  document.forms[no].submit();\n"
 		  "}\n",FALSE);
 
 	NewJs("html_setting",
 		  "tinyMCE.init({\n"
-		  "    language : \"jp\",\n"
-		  "    mode     : \"specific_textareas\",\n"
-		  "    elements : \"html,xml\"\n"
-		  "});\n",FALSE);
+		  "  language : \"jp\",\n"
+		  "  mode     : \"specific_textareas\",\n"
+		  "  elements : \"html,xml\"\n"
+		  "});\n"
+		  ,FALSE);
 		  
 LEAVE_FUNC;
 }

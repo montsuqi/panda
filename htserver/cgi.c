@@ -66,6 +66,7 @@ ENTER_FUNC;
 	if		(  ( val = g_hash_table_lookup(Values, name) )  ==  NULL  )	{
 		val = New(CGIValue);
 		val->name = StrDup(name);
+        val->inFilter = StrDup;
 		g_hash_table_insert(Values, val->name, val);
 	} else {
 		if		(  val->body  !=  NULL  ) {
@@ -73,7 +74,11 @@ ENTER_FUNC;
 		}
 	}
 	if		(  value  !=  NULL  ) {
-		val->body = StrDup(value);
+        if      (  val->inFilter  !=  NULL  ) {
+            val->body = (*val->inFilter)(value);
+        } else {
+            val->body = StrDup(value);
+        }
 	} else {
 		val->body = NULL;
 	}
@@ -81,6 +86,26 @@ ENTER_FUNC;
 	ret = val->body;
 LEAVE_FUNC;
 	return	(ret);
+}
+
+extern  void
+SetFilter(
+    char    *name,
+    char    *(*inFilter)(char *in),
+    char    *(*outFilter)(char *out))
+{
+	CGIValue	*val;
+
+ENTER_FUNC;
+	if		(  ( val = g_hash_table_lookup(Values, name) )  ==  NULL  )	{
+		val = New(CGIValue);
+		val->name = StrDup(name);
+        val->body = NULL;
+    }
+    val->inFilter = inFilter;
+    val->outFilter = outFilter;
+    g_hash_table_insert(Values, val->name, val);
+LEAVE_FUNC;
 }
 
 extern  char    *
@@ -92,7 +117,7 @@ SaveArgValue(
     char    *str;
 
     if      (  *name  ==  0  ) {
-      RemoveValue(name);
+        RemoveValue(name);
         ret = SaveValue(name, value,fSave);
     } else
     if ((val = LoadValue(name)) != NULL) {
