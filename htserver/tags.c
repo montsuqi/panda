@@ -695,7 +695,7 @@ dbgmsg(">_Link");
 			LBS_EmitPointer(htc->code,StrDup(name));
 			EmitCode(htc,OPC_REFSTR);
 			LBS_EmitString(htc->code,"=");
-                        EmitAttributeValue(htc,value,TRUE); 
+                        EmitAttributeValue(htc,value,FALSE); 
 		}
 		LBS_EmitString(htc->code,"\">");
 	}
