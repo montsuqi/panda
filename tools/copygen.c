@@ -266,7 +266,7 @@ _COBOL(
 			PutLevel(level,TRUE);
 			if		(  fFull  )	{
 				sprintf(name,"%s%s",(( *namebuff == 0 ) ? "": "-"),
-						ValueRecordItem(val,i));
+						ValueRecordName(val,i));
 			} else {
 				strcpy(namebuff,ValueRecordName(val,i));
 			}
