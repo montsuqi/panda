@@ -37,6 +37,9 @@ project1	{
 				};
 				count	int;
 				from	int;
+				row		int;
+				column	int;
+				rowattr	int;
 				item	{
 					value1	varchar(20);
 					value2	varchar(20);
