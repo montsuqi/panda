@@ -76,6 +76,119 @@ dbgmsg(">ConnectTermServer");
 dbgmsg("<ConnectTermServer");
 	return	(fp); 
 }
+#if	0
+static	Bool
+RequestBLOB(
+	NETFILE	*fp,
+	PacketClass	op)
+{
+	Bool	rc;
+
+	rc = FALSE;
+	SendPacketClass(fp,WFC_BLOB);		ON_IO_ERROR(fp,badio);
+	SendPacketClass(fp,op);				ON_IO_ERROR(fp,badio);
+	rc = TRUE;
+  badio:
+	return	(rc);
+}
+
+extern	Bool
+NewBLOB(
+	NETFILE	*fp,
+	int		mode,
+	MonObjectType	*obj)
+{
+	Bool	rc;
+
+	rc = FALSE;
+	RequestBLOB(BLOB_CREATE);			ON_IO_ERROR(fp,badio);
+	SendInt(fp,mode);					ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+		RecvObject(fp,obj);				ON_IO_ERROR(fp,badio);
+		rc = TRUE;
+	}
+  badio:
+	return	(rc);
+}
+
+extern	Bool
+OpenBLOB(
+	NETFILE	*fp,
+	int		mode,
+	MonObjectType	*obj)
+{
+	Bool	rc;
+	
+	rc = FALSE;
+	RequestBLOB(BLOB_OPEN);				ON_IO_ERROR(fp,badio);
+	SendInt(fp,mode);					ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+		rc = TRUE;
+	}
+  badio:
+	return	(rc);
+}
+
+extern	size_t
+WriteBLOB(
+	NETFILE	*fp,
+	MonObjectType	*obj,
+	byte	*buff,
+	size_t	size)
+{
+	size_t	wrote;
+	
+	wrote = 0;
+	RequestBLOB(BLOB_WRITE);			ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	SendLength(fp,size);				ON_IO_ERROR(fp,badio);
+	if		(  size  >  0  ) {
+		Send(fp,buff,size);					ON_IO_ERROR(fp,badio);
+		wrote = RecvLength(fp);				ON_IO_ERROR(fp,badio);
+	}
+  badio:
+	return	(wrote);
+}
+
+extern	size_t
+ReadBLOB(
+	NETFILE	*fp,
+	MonObjectType	*obj,
+	byte	*buff,
+	size_t	size)
+{
+	size_t	red;
+	
+	red = 0;
+	RequestBLOB(BLOB_READ);				ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	SendLength(fp,size);				ON_IO_ERROR(fp,badio);
+	if		(  size  >  0  ) {
+		Recv(fp,buff,size);					ON_IO_ERROR(fp,badio);
+		red = RecvLength(fp);				ON_IO_ERROR(fp,badio);
+	}
+  badio:
+	return	(red);
+}
+
+extern	Bool
+CloseBLOB(
+	NETFILE	*fp,
+	MonObjectType	*obj)
+{
+	Bool	rc;
+	
+	rc = FALSE;
+	RequestBLOB(BLOB_CLOSE);			ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+		rc = TRUE;
+	}
+  badio:
+	return	(rc);
+}
+#endif
 
 extern	Bool
 SendTermServer(
@@ -197,8 +310,3 @@ dbgmsg(">RecvTermServerData");
 dbgmsg("<RecvTermServerData");
 }
 
-#if	0
-extern	void
-RecvTermBLOB(
-	NETFILE	*fp,
-#endif

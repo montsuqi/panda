@@ -198,6 +198,7 @@ dbgmsg(">_StartBatch");
 #endif
 	if		(  ( apl = cob_resolve(name) )  !=  NULL  ) {
 		arg = (char *)xmalloc(ThisBD->textsize);
+		memclear(arg,ThisBD->textsize);
 		strncpy(arg,param,ThisBD->textsize+1);
 		arg[ThisBD->textsize] = 0;
 		StringC2Cobol(arg,ThisBD->textsize);

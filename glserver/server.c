@@ -325,93 +325,6 @@ dbgmsg("<SendScreenData");
 }
 
 static	Bool
-RecvScreenData(
-	NETFILE	*fpComm,
-	ScreenData	*scr)
-{
-	int		c;
-	char		wname[SIZE_NAME+1]
-	,			name[SIZE_NAME+1];
-	char		str[SIZE_BUFF];
-	int			ival;
-	Bool		bval;
-	double		fval;
-	Fixed		*xval;
-	WindowData	*win;
-	ValueStruct	*value;
-	PacketDataType	type;
-	Bool		rc;
-
-dbgmsg(">RecvScreenData");
-	rc = FALSE;
-	while	(  GL_RecvPacketClass(fpComm,fFetureNetwork)  ==  GL_WindowName  ) {
-		ON_IO_ERROR(fpComm,badio);
-		GL_RecvString(fpComm,wname,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-			while	(  ( c = GL_RecvPacketClass(fpComm,fFetureNetwork) )
-					   ==  GL_ScreenData  ) {
-				ON_IO_ERROR(fpComm,badio);
-				GL_RecvString(fpComm,name,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
-						   !=  NULL  ) {
-					ValueIsUpdate(value);
-					type = GL_RecvDataType(fpComm,fFetureNetwork);
-					ON_IO_ERROR(fpComm,badio);
-					switch	(type)	{
-					  case	GL_TYPE_CHAR:
-					  case	GL_TYPE_VARCHAR:
-					  case	GL_TYPE_DBCODE:
-					  case	GL_TYPE_TEXT:
-						GL_RecvString(fpComm,str,fFetureNetwork);ON_IO_ERROR(fpComm,badio);
-						if		(  fFetureI18N  ) {
-							SetValueString(value,str,NULL);	ON_IO_ERROR(fpComm,badio);
-						} else {
-							SetValueString(value,str,"euc-jp");ON_IO_ERROR(fpComm,badio);
-						}
-						break;
-					  case	GL_TYPE_NUMBER:
-						xval = GL_RecvFixed(fpComm,fFetureNetwork);
-						ON_IO_ERROR(fpComm,badio);
-						SetValueFixed(value,xval);
-						xfree(xval->sval);
-						xfree(xval);
-						break;
-					  case	GL_TYPE_INT:
-						ival = GL_RecvInt(fpComm,fFetureNetwork);
-						ON_IO_ERROR(fpComm,badio);
-						SetValueInteger(value,ival);
-						break;
-					  case	GL_TYPE_FLOAT:
-						fval = GL_RecvFloat(fpComm,fFetureNetwork);
-						ON_IO_ERROR(fpComm,badio);
-						SetValueFloat(value,fval);
-						break;
-					  case	GL_TYPE_BOOL:
-						bval = GL_RecvBool(fpComm,fFetureNetwork);
-						ON_IO_ERROR(fpComm,badio);
-						SetValueBool(value,bval);
-						break;
-					  default:
-						printf("type = [%d]\n",type);
-						break;
-					}
-				} else {
-					MessagePrintf("invalid item name [%s]\n",name);
-					exit(1);
-				}
-			}
-		} else {
-			MessagePrintf("invalud wind name [%s]\n",wname);
-			exit(1);
-		}
-	}
-	rc = TRUE;
-  badio:
-dbgmsg("<RecvScreenData");
-	return	(rc);
-}
-
-static	Bool
 SendScreen(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
@@ -462,6 +375,10 @@ CheckFeture(
 			||	(  strlcmp(ver,"1.1.2")  ==  0  ) ) {
 		TermFeture |= FETURE_CORE;
 	} else
+	if		(  strlcmp(ver,"1.1.1")  ==  0  )	{
+		TermFeture |= FETURE_CORE;
+		TermFeture |= FETURE_OLD;
+	} else
 	if		(  !strlicmp(ver,"symbolic")  ) {
 		TermFeture = FETURE_CORE;
 		if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
@@ -494,6 +411,7 @@ CheckFeture(
 	printf("expand  = %s\n",fFetureExpand ? "YES" : "NO");
 	printf("blob    = %s\n",fFetureBlob ? "YES" : "NO");
 	printf("network = %s\n",fFetureNetwork ? "YES" : "NO");
+	printf("old     = %s\n",fFetureOld ? "YES" : "NO");
 }
 
 static	void
@@ -535,6 +453,53 @@ Connect(
 		ON_IO_ERROR(fpComm,badio);
 	}
   badio:;
+}
+
+static	Bool
+RecvScreenData(
+	NETFILE		*fpComm,
+	ScreenData	*scr)
+{
+	int		c;
+	char		wname[SIZE_NAME+1]
+	,			name[SIZE_NAME+1];
+	WindowData	*win;
+	ValueStruct	*value;
+	Bool		rc;
+	char		*coding;
+
+ENTER_FUNC;
+	rc = FALSE;
+	if		(  fFetureI18N  ) {
+		coding = NULL;
+	} else {
+		coding = "euc-jp";
+	}
+	while	(  GL_RecvPacketClass(fpComm,fFetureNetwork)  ==  GL_WindowName  ) {
+		ON_IO_ERROR(fpComm,badio);
+		GL_RecvString(fpComm,wname,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
+			while	(  ( c = GL_RecvPacketClass(fpComm,fFetureNetwork) )
+					   ==  GL_ScreenData  ) {
+				ON_IO_ERROR(fpComm,badio);
+				GL_RecvString(fpComm,name,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
+						   !=  NULL  ) {
+					GL_RecvValue(fpComm,value,coding,fFetureExpand,fFetureNetwork);
+				} else {
+					MessagePrintf("invalid item name [%s]\n",name);
+					exit(1);
+				}
+			}
+		} else {
+			MessagePrintf("invalud wind name [%s]\n",wname);
+			exit(1);
+		}
+	}
+	rc = TRUE;
+  badio:
+LEAVE_FUNC;
+	return	(rc);
 }
 
 static	Bool

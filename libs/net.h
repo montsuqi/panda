@@ -26,6 +26,8 @@ copies.
 #include	<openssl/ssl.h>
 #endif
 
+#include	"socket.h"
+
 #include	"value.h"
 typedef	struct _NETFILE	{
 	int		fd;

@@ -74,9 +74,7 @@ EnterDB_Function(
 	int		i;
 
 dbgmsg(">EnterDB_Function");
-#ifdef	DEBUG
-	printf("Enter [%s]\n",name); 
-#endif
+	dbgprintf("Enter [%s]\n",name); 
 	if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,name) )
 			   ==  NULL  ) {
 		func = NewDB_Func();
@@ -120,9 +118,7 @@ dbgmsg(">SetUpDBG");
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		dbg->id = i + 1;
-#ifdef	DEBUG
-		printf("Entering [%s]\n",dbg->type);
-#endif
+		dbgprintf("Entering [%s]\n",dbg->type);
 		if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,dbg->type) )
 				   ==  NULL  ) {
 			sprintf(filename,"%s.so",dbg->type);

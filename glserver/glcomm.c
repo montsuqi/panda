@@ -50,7 +50,22 @@ copies.
 #define	SEND32(v)	htonl(v)
 #define	SEND16(v)	htons(v)
 
+#define	GL_OLDTYPE_INT			(PacketDataType)0x10
+#define	GL_OLDTYPE_BOOL			(PacketDataType)0x11
+#define	GL_OLDTYPE_FLOAT		(PacketDataType)0x20
+#define	GL_OLDTYPE_CHAR			(PacketDataType)0x30
+#define	GL_OLDTYPE_TEXT			(PacketDataType)0x31
+#define	GL_OLDTYPE_VARCHAR		(PacketDataType)0x32
+#define	GL_OLDTYPE_BYTE			(PacketDataType)0x40
+#define	GL_OLDTYPE_NUMBER		(PacketDataType)0x50
+#define	GL_OLDTYPE_DBCODE		(PacketDataType)0x60
+#define	GL_OLDTYPE_ARRAY		(PacketDataType)0x90
+#define	GL_OLDTYPE_RECORD		(PacketDataType)0xA0
+
 static	LargeByteString	*Buff;
+
+static	PacketDataType	ToOldType[256];
+static	PacketDataType	ToNewType[256];
 
 extern	void
 GL_SendPacketClass(
@@ -315,6 +330,9 @@ GL_SendDataType(
 #ifdef	DEBUG
 	printf("SendDataType = %X\n",c);
 #endif
+	if		(  fFetureOld  ) {
+		c = ToOldType[c];
+	}
 	nputc(c,fp);
 }
 
@@ -326,6 +344,9 @@ GL_RecvDataType(
 	PacketClass	c;
 
 	c = ngetc(fp);
+	if		(  fFetureOld  ) {
+		c = ToNewType[c];
+	}
 	return	(c);
 }
 
@@ -394,7 +415,97 @@ GL_SendValue(
 }
 
 extern	void
+GL_RecvValue(
+	NETFILE		*fp,
+	ValueStruct	*value,
+	char		*coding,
+	Bool		fExpand,
+	Bool		fNetwork)
+{
+	PacketDataType	type;
+	Fixed		*xval;
+	int			ival;
+	Bool		bval;
+	double		fval;
+	char		str[SIZE_BUFF];
+
+ENTER_FUNC;
+	ValueIsUpdate(value);
+	type = GL_RecvDataType(fp,fNetwork);
+	ON_IO_ERROR(fp,badio);
+	switch	(type)	{
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_DBCODE:
+	  case	GL_TYPE_TEXT:
+		GL_RecvString(fp,str,fNetwork);ON_IO_ERROR(fp,badio);
+		SetValueString(value,str,coding);	ON_IO_ERROR(fp,badio);
+		break;
+	  case	GL_TYPE_NUMBER:
+		xval = GL_RecvFixed(fp,fFetureNetwork);
+		ON_IO_ERROR(fp,badio);
+		SetValueFixed(value,xval);
+		xfree(xval->sval);
+		xfree(xval);
+		break;
+	  case	GL_TYPE_INT:
+		ival = GL_RecvInt(fp,fFetureNetwork);
+		ON_IO_ERROR(fp,badio);
+		SetValueInteger(value,ival);
+		break;
+	  case	GL_TYPE_FLOAT:
+		fval = GL_RecvFloat(fp,fFetureNetwork);
+		ON_IO_ERROR(fp,badio);
+		SetValueFloat(value,fval);
+		break;
+	  case	GL_TYPE_BOOL:
+		bval = GL_RecvBool(fp,fFetureNetwork);
+		ON_IO_ERROR(fp,badio);
+		SetValueBool(value,bval);
+		break;
+	  default:
+		printf("type = [%d]\n",type);
+		break;
+	}
+  badio:
+LEAVE_FUNC;
+}
+
+extern	void
 InitGL_Comm(void)
 {
+	int		i;
+
 	Buff = NewLBS();
+#define	TO_OLDTYPE(t)	ToOldType[GL_TYPE_##t] = GL_OLDTYPE_##t
+#define	TO_NEWTYPE(t)	ToNewType[GL_OLDTYPE_##t] = GL_TYPE_##t
+
+	for	( i = 0 ; i < 256 ; i ++ ) {
+		ToOldType[i] = GL_TYPE_NULL;
+		ToNewType[i] = GL_TYPE_NULL;
+	}
+
+	TO_OLDTYPE(INT);
+	TO_OLDTYPE(BOOL);
+	TO_OLDTYPE(FLOAT);
+	TO_OLDTYPE(CHAR);
+	TO_OLDTYPE(TEXT);
+	TO_OLDTYPE(VARCHAR);
+	TO_OLDTYPE(BYTE);
+	TO_OLDTYPE(NUMBER);
+	TO_OLDTYPE(DBCODE);
+	TO_OLDTYPE(ARRAY);
+	TO_OLDTYPE(RECORD);
+
+	TO_NEWTYPE(INT);
+	TO_NEWTYPE(BOOL);
+	TO_NEWTYPE(FLOAT);
+	TO_NEWTYPE(CHAR);
+	TO_NEWTYPE(TEXT);
+	TO_NEWTYPE(VARCHAR);
+	TO_NEWTYPE(BYTE);
+	TO_NEWTYPE(NUMBER);
+	TO_NEWTYPE(DBCODE);
+	TO_NEWTYPE(ARRAY);
+	TO_NEWTYPE(RECORD);
 }

@@ -155,6 +155,24 @@ SendInt(
 	Send(fp,&data,sizeof(data));
 }
 
+extern	unsigned int
+RecvUInt(
+	NETFILE	*fp)
+{
+	unsigned	int		data;
+
+	Recv(fp,&data,sizeof(data));
+	return	(data);
+}
+
+extern	void
+SendUInt(
+	NETFILE	*fp,
+	unsigned int		data)
+{
+	Send(fp,&data,sizeof(data));
+}
+
 extern	int
 RecvChar(
 	NETFILE	*fp)
@@ -200,6 +218,32 @@ SendBool(
 
 	buf[0] = data ? 'T' : 'F';
 	Send(fp,buf,1);
+}
+
+extern	void
+SendObject(
+	NETFILE	*fp,
+	MonObjectType	*obj)
+{
+	int		i;
+
+	SendInt(fp,obj->source);
+	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
+		SendUInt(fp,obj->id.el[i]);
+	}
+}
+
+extern	void
+RecvObject(
+	NETFILE	*fp,
+	MonObjectType	*obj)
+{
+	int		i;
+
+	obj->source = RecvInt(fp);
+	for	( i = 0 ; i < SIZE_OID/sizeof(unsigned int) ; i ++ ) {
+		obj->id.el[i] = RecvUInt(fp);
+	}
 }
 
 extern	void

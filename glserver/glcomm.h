@@ -38,6 +38,8 @@ extern	Bool	GL_RecvBool(NETFILE *fp, Bool fNetwork);
 
 extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, char *coding,
 							 Bool fExpand, Bool fNetwork);
+extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, char *coding,
+							 Bool fExpand, Bool fNetwork);
 
 extern	void	InitGL_Comm(void);
 #endif

@@ -34,7 +34,7 @@ copies.
 #define	WFC_Null		(PacketClass)0x00
 #define	WFC_DATA		(PacketClass)0x01
 #define	WFC_PING		(PacketClass)0x02
-#define	WFC_LARGE		(PacketClass)0x03
+#define	WFC_BLOB		(PacketClass)0x03
 #define	WFC_HEADER		(PacketClass)0x04
 
 #define	WFC_FALSE		(PacketClass)0xE0
@@ -43,6 +43,15 @@ copies.
 #define	WFC_PONG		(PacketClass)0xF2
 #define	WFC_OK			(PacketClass)0xFE
 #define	WFC_END			(PacketClass)0xFF
+
+#define	BLOB_CREATE		(PacketClass)0x01
+#define	BLOB_OPEN		(PacketClass)0x02
+#define	BLOB_IMPORT		(PacketClass)0x03
+#define	BLOB_EXPORT		(PacketClass)0x04
+#define	BLOB_READ		(PacketClass)0x05
+#define	BLOB_WRITE		(PacketClass)0x06
+#define	BLOB_CLOSE		(PacketClass)0x07
+#define	BLOB_SEEK		(PacketClass)0x08
 
 #undef	GLOBAL
 #ifdef	MAIN

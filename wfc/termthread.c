@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
+/*
 #define	DEBUG
 #define	TRACE
-/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -51,6 +51,7 @@ copies.
 #include	"wfcio.h"
 #include	"termthread.h"
 #include	"corethread.h"
+#include	"blob.h"
 #include	"driver.h"
 #include	"message.h"
 #include	"debug.h"
@@ -174,6 +175,70 @@ dbgmsg("<InitSession");
 	return	(data);
 }
 
+static	void
+ProcessBLOB(
+	NETFILE		*fp,
+	SessionData	*data)
+{
+#if	0
+	MonObjectType	obj;
+	int				mode;
+	size_t			size;
+
+	switch	(RecvPacketClass(fp)) {
+	  case	BLOB_CREATE:
+		mode = RecvInt(fp);
+		if		(  NewBLOB(&obj,mode)  ) {
+			SendPacketClass(fp,WFC_OK);
+			SendObject(fp,&obj);
+		} else {
+			SendPacketClass(fp,WFC_NG);
+		}
+		break;
+	  case	BLOB_OPEN:
+		mode = RecvInt(fp);
+		RecvObject(fp,&obj);
+		if		(  OpenBLOB(&obj,mode)  ) {
+			SendPacketClass(fp,WFC_OK);
+		} else {
+			SendPacketClass(fp,WFC_NG);
+		}
+		break;
+	  case	BLOB_WRITE:
+		RecvObject(fp,&obj);
+		if		(  ( size = RecvLength(fp) )  >  0  ) {
+			buff = xmalloc(size);
+			Recv(fp,buff,size);
+			size = WriteBLOB(&obj,buff,size);
+			xfree(buff);
+		}
+		SendLength(fp,size);
+		break;
+	  case	BLOB_READ:
+		RecvObject(fp,&obj);
+		if		(  ( size = RecvLength(fp) )  >  0  ) {
+			buff = xmalloc(size);
+			size = ReadBLOB(&obj,buff,size);
+			Send(fp,buff,size);
+			xfree(buff);
+		}
+		SendLength(fp,size);
+		break;
+	  case	BLOB_CLOSE:
+		RecvObject(fp,&obj);
+		if		(  CloseBLOB(&obj)  ) {
+			SendPacketClass(fp,WFC_OK);
+		} else {
+			SendPacketClass(fp,WFC_NG);
+		}
+		break;
+	  default:
+		break;
+	}
+#endif
+}
+
+
 static	LD_Node	*
 ReadTerminal(
 	NETFILE		*fp,
@@ -213,8 +278,9 @@ dbgmsg(">ReadTerminal");
 				}
 			}
 			break;
-		  case	WFC_LARGE:
+		  case	WFC_BLOB:
 			dbgmsg("recv LARGE");
+			ProcessBLOB(fp,data);
 			break;
 		  case	WFC_PING:
 			dbgmsg("recv PING");
@@ -293,8 +359,9 @@ dbgmsg(">WriteTerminal");
 					SendPacketClass(fp,WFC_NOT);				ON_IO_ERROR(fp,badio);
 				}
 				break;
-			  case	WFC_LARGE:
+			  case	WFC_BLOB:
 				dbgmsg("recv LARGE");
+				ProcessBLOB(fp,data);
 				break;
 			  case	WFC_OK:
 				dbgmsg("OK");

@@ -37,26 +37,26 @@ copies.
 #define	SCREEN_END_SESSION			(byte)0x07
 #define	SCREEN_BACK_WINDOW			(byte)0x08
 
-#define	GL_Null			(PacketClass)0x00
-#define	GL_Connect		(PacketClass)0x01
-#define	GL_QueryScreen	(PacketClass)0x02
-#define	GL_GetScreen	(PacketClass)0x03
-#define	GL_GetData		(PacketClass)0x04
-#define	GL_Event		(PacketClass)0x05
-#define	GL_ScreenData	(PacketClass)0x06
-#define	GL_ScreenDefine	(PacketClass)0x07
-#define	GL_WindowName	(PacketClass)0x08
-#define	GL_FocusName	(PacketClass)0x09
-#define	GL_Auth			(PacketClass)0x0A
-#define	GL_Name			(PacketClass)0x0B
+#define	GL_Null						(PacketClass)0x00
+#define	GL_Connect					(PacketClass)0x01
+#define	GL_QueryScreen				(PacketClass)0x02
+#define	GL_GetScreen				(PacketClass)0x03
+#define	GL_GetData					(PacketClass)0x04
+#define	GL_Event					(PacketClass)0x05
+#define	GL_ScreenData				(PacketClass)0x06
+#define	GL_ScreenDefine				(PacketClass)0x07
+#define	GL_WindowName				(PacketClass)0x08
+#define	GL_FocusName				(PacketClass)0x09
+#define	GL_Auth						(PacketClass)0x0A
+#define	GL_Name						(PacketClass)0x0B
 
-#define	GL_OK			(PacketClass)0x80
-#define	GL_END			(PacketClass)0x81
-#define	GL_NOT			(PacketClass)0x83
+#define	GL_OK						(PacketClass)0x80
+#define	GL_END						(PacketClass)0x81
+#define	GL_NOT						(PacketClass)0x83
 
-#define	GL_E_VERSION	(PacketClass)0xF1
-#define	GL_E_AUTH		(PacketClass)0xF2
-#define	GL_E_APPL		(PacketClass)0xF3
+#define	GL_E_VERSION				(PacketClass)0xF1
+#define	GL_E_AUTH					(PacketClass)0xF2
+#define	GL_E_APPL					(PacketClass)0xF3
 
 
 #endif
