@@ -625,7 +625,8 @@ _Button(
 {
 	char	*face
 	,		*event
-	,		*size;
+	,		*size
+		,	*onclick;
 
 dbgmsg(">_Button");
 	if ((event = GetArg(tag, "event", 0)) == NULL) {
@@ -647,6 +648,11 @@ dbgmsg(">_Button");
 		LBS_EmitPointer(htc->code,StrDup(size));
 		EmitCode(htc,OPC_REFSTR);
 	}
+	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,"onclick=\"");
+		LBS_EmitString(htc->code,onclick);
+		LBS_EmitString(htc->code,"\"");
+	}
 
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
@@ -658,7 +664,8 @@ _ToggleButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*label;
+	char	*label
+		,	*onclick;
 
 dbgmsg(">_ToggleButton");
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
@@ -671,6 +678,11 @@ dbgmsg(">_ToggleButton");
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code," checked ");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
+	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,"onclick=\"");
+		LBS_EmitString(htc->code,onclick);
+		LBS_EmitString(htc->code,"\"");
+	}
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
@@ -686,7 +698,8 @@ _CheckButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*label;
+	char	*label
+		,	*onclick;
 
 dbgmsg(">_CheckButton");
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
@@ -699,6 +712,11 @@ dbgmsg(">_CheckButton");
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code," checked");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
+	if		(  ( onclick = GetArg(tag,"onclick",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,"onclick=\"");
+		LBS_EmitString(htc->code,onclick);
+		LBS_EmitString(htc->code,"\"");
+	}
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
@@ -1257,12 +1275,14 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"label",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"onclick",TRUE);
 
 	tag = NewTag("CHECKBUTTON",_CheckButton);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"label",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"onclick",TRUE);
 
 	tag = NewTag("RADIOBUTTON",_RadioButton);
 	AddArg(tag,"name",TRUE);
@@ -1270,6 +1290,7 @@ dbgmsg(">TagsInit");
 	AddArg(tag,"label",TRUE);
 	AddArg(tag,"id",TRUE);
 	AddArg(tag,"class",TRUE);
+	AddArg(tag,"onclick",TRUE);
 
 	tag = NewTag("LIST",_List);
 	AddArg(tag,"name",TRUE);
