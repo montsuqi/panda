@@ -109,13 +109,17 @@ ConvLocal(
 	char	*ostr;
 	static	char	cbuff[SIZE_BUFF];
 
-	cd = iconv_open(Codeset,"utf8");
-	sib = strlen(istr);
-	ostr = cbuff;
-	sob = SIZE_BUFF;
-	iconv(cd,&istr,&sib,&ostr,&sob);
-	*ostr = 0;
-	iconv_close(cd);
+	if		(  libmondai_i18n  ) {
+		cd = iconv_open(Codeset,"utf8");
+		sib = strlen(istr);
+		ostr = cbuff;
+		sob = SIZE_BUFF;
+		iconv(cd,&istr,&sib,&ostr,&sob);
+		*ostr = 0;
+		iconv_close(cd);
+	} else {
+		strcpy(cbuff,istr);
+	}
 	return	(cbuff);
 }
 
@@ -129,15 +133,20 @@ ConvUTF8(
 	char	*ostr;
 	static	char	cbuff[SIZE_BUFF];
 
-	cd = iconv_open("utf8",Codeset);
-	sib = strlen(istr);
-	ostr = cbuff;
-	sob = SIZE_BUFF;
-	if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
-		dbgprintf("error = %d\n",errno);
+	if		(  libmondai_i18n  ) {
+		cd = iconv_open("utf8",Codeset);
+		sib = strlen(istr);
+		ostr = cbuff;
+		sob = SIZE_BUFF;
+		if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
+			dbgprintf("error = %d\n",errno);
+		}
+		*ostr = 0;
+		iconv_close(cd);
+	} else {
+		strcpy(cbuff,istr);
 	}
-	*ostr = 0;
-	iconv_close(cd);
+
 	return	(cbuff);
 }
 
@@ -287,7 +296,8 @@ WriteLargeString(
 
 ENTER_FUNC;
 	RewindLBS(lbs);
-	if		(  codeset  !=  NULL  ) {
+	if		(	(  libmondai_i18n  )
+			&&	(  codeset  !=  NULL  ) ) {
 		cd = iconv_open(codeset,"utf8");
 		while	(  !LBS_Eof(lbs)  ) {
 			count = 0;

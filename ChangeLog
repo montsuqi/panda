@@ -1,3 +1,7 @@
+2003-12-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libmondaiが国際化されていない時の動作を直した
+
 2003-12-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/dbgroup.c (ExecDBG_Operation): staticにした(必要がなくなった)

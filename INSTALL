@@ -6,6 +6,7 @@
 	--with-ssl			use SSL for network
 	--with-ipv6			user IPv6 for network
 	--with-msgd			use msgd for message ourput
+	--disable-client	disable building client
 
 make all
 make install

@@ -51,6 +51,25 @@ static	int		alevel;
 static	int		Dim[SIZE_RNAME];
 static	Bool	fInArray;
 
+static	void
+SetValueOid(
+	ValueStruct	*value,
+	Oid			id)
+{
+	memclear(&ValueObjectID(value),sizeof(ValueObjectID(value)));
+	memcpy(&ValueObjectID(value),&id,sizeof(Oid));
+}
+
+static	Oid
+ValueOid(
+	ValueStruct	*value)
+{
+	Oid	id;
+
+	memcpy(&id,&ValueObjectID(value),sizeof(Oid));
+	return	(id);
+}
+
 static	size_t
 EncodeString(
 	char	*p,
@@ -84,6 +103,7 @@ ValueToSQL(
 	char	del
 	,		*p
 	,		*s;
+	Oid		id;
 
 	if		(  IS_VALUE_NIL(val)  ) {
 		sprintf(buff,"null");
@@ -121,6 +141,10 @@ ValueToSQL(
 		break;
 	  case	GL_TYPE_BOOL:
 		sprintf(buff,"'%s'",ValueToBool(val) ? "t" : "f");
+		break;
+	  case	GL_TYPE_OBJECT:
+		id = ValueOid(val);
+		sprintf(buff,"%u",id);
 		break;
 	  default:
 		*buff = 0;
@@ -178,7 +202,7 @@ ParArray(
 	char	*pp
 	,		*q
 	,		*qq;
-
+	Oid		id;
 	int		i
 	,		j;
 	int		ival;
@@ -207,6 +231,15 @@ ParArray(
 				}
 				ival = ( fMinus ) ? -ival : ival;
 				SetValueInteger(item,ival);
+				break;
+			  case	GL_TYPE_OBJECT:
+				id = 0;
+				while	(  isdigit(*p)  ) {
+					id *= 10;
+					id += ( *p - '0' );
+					p ++;
+				}
+				SetValueOid(item,id);
 				break;
 			  case	GL_TYPE_BOOL:
 				SetValueBool(item,*p);
@@ -281,7 +314,8 @@ GetTable(
 	ValueStruct	*tmp;
 	int		fnum;
 	Numeric	nv;
-	char *str;
+	char	*str;
+	Oid		id;
 
 dbgmsg(">GetTable");
 	if		(  val  ==  NULL  )	return;
@@ -362,6 +396,18 @@ dbgmsg(">GetTable");
 		dbgmsg("<record");
 		level --;
 		break;
+	  case	GL_TYPE_OBJECT:
+		dbgmsg("object");
+		fnum = PQfnumber(res,ItemName());
+		if		(  fnum  <  0  ) {
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
+		} else {
+			id = (Oid)atol((char *)PQgetvalue(res,0,fnum));
+			SetValueOid(val,id);
+		}
+		break;
 	  case	GL_TYPE_ALIAS:
 		printf("invalid data type\n");
 		break;
@@ -409,6 +455,7 @@ UpdateValue(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_TEXT:
+	  case	GL_TYPE_OBJECT:
 		p += sprintf(p,"%s%s = %s",ItemName(),PutDim(),ValueToSQL(dbg,val));
 		break;
 	  case	GL_TYPE_ARRAY:
@@ -469,6 +516,7 @@ InsertNames(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_TEXT:
+	  case	GL_TYPE_OBJECT:
 	  case	GL_TYPE_ARRAY:
 		p += sprintf(p,"%s%s",ItemName(),PutDim());
 		break;
@@ -516,6 +564,7 @@ InsertValues(
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_NUMBER:
+	  case	GL_TYPE_OBJECT:
 	  case	GL_TYPE_TEXT:
 		p += sprintf(p,"%s",ValueToSQL(dbg,val));
 		break;
@@ -599,7 +648,7 @@ GetValue(
 	ValueStruct	*val)
 {
 	Numeric	nv;
-	char *str;
+	char	*str;
 
 	if		(  val  ==  NULL  )	return;
 
@@ -611,6 +660,9 @@ dbgmsg(">GetValue");
 		switch	(ValueType(val)) {
 		  case	GL_TYPE_INT:
 			SetValueInteger(val,atoi((char *)PQgetvalue(res,tnum,fnum)));
+			break;
+		  case	GL_TYPE_OBJECT:
+			SetValueOid(val,(Oid)atol((char *)PQgetvalue(res,tnum,fnum)));
 			break;
 		  case	GL_TYPE_BOOL:
 			SetValueBool(val,*(char *)PQgetvalue(res,tnum,fnum));

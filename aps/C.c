@@ -410,6 +410,28 @@ MCP_GetDB_Define(
 	int				rno;
 	RecordStruct	*rec;
 	ValueStruct		*val;
+	char			buff[SIZE_LONGNAME+1];
+	char			*p
+		,			*q
+		,			*rname
+		,			*pname
+		,			*fname;
+
+	strcpy(buff,name);
+	rname = buff;
+	if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
+		*p = 0;
+		pname = p + 1;
+		if		(  ( p = strchr(pname,':') )  !=  NULL  ) {
+			*q = 0;
+			fname = p + 1;
+		} else {
+			fname = NULL;
+		}
+	} else {
+		pname = NULL;
+		fname = NULL;
+	}		
 
 	if		(  ( rno = (int)g_hash_table_lookup(DB_Table,name) )  !=  0  ) {
 		rec = ThisDB[rno-1];

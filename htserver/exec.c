@@ -130,7 +130,8 @@ LBS_EmitUTF8(
 	int		i;
 
 ENTER_FUNC;
-	if		(  codeset  !=  NULL  ) {
+	if		(	(  libmondai_i18n  )
+			&&	(  codeset  !=  NULL  ) ) {
 		cd = iconv_open("utf8",codeset);
 		while	(  *str  !=  0  )	{
 			count = 1;
@@ -154,6 +155,7 @@ ENTER_FUNC;
 	} else {
 		while	(  *str  !=  0  ) {
 			LBS_Emit(lbs,*str);
+			str ++;
 		}
 	}
 LEAVE_FUNC;

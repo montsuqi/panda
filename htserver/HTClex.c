@@ -96,10 +96,12 @@ extern	void
 HTCSetCodeset(
 	char	*codeset)
 {
-	if		(  ReadCd  !=  (iconv_t)0  ) {
-		iconv_close(ReadCd);
+	if		(  libmondai_i18n  ) {
+		if		(  ReadCd  !=  (iconv_t)0  ) {
+			iconv_close(ReadCd);
+		}
+		ReadCd = iconv_open("utf8",codeset);
 	}
-	ReadCd = iconv_open("utf8",codeset);
 }
 
 extern	int
@@ -122,7 +124,8 @@ ENTER_FUNC;
 	} else {
 		op = 0;
 		if		(  ( c = fgetc(HTC_File) )  !=  EOF  ) {
-			if		(  ReadCd  !=  (iconv_t)0  ) {
+			if		(	(  libmondai_i18n  )
+					&&	(  ReadCd  !=  (iconv_t)0  ) ) {
 				ic = ibuff;
 				do {
 					*ic ++ = c;

@@ -254,6 +254,7 @@ extern	void
 TransactionStart(
 	DBG_Struct *dbg)
 {
+	NewPool("Transaction");
 	ExecDBG_Operation(dbg,"DBSTART");
 }
 
@@ -262,6 +263,7 @@ TransactionEnd(
 	DBG_Struct *dbg)
 {
 	ExecDBG_Operation(dbg,"DBCOMMIT");
+	ReleasePoolByName("Transaction");
 }
 
 extern	void
