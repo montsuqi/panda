@@ -172,6 +172,8 @@ extern	ScreenData	*
 NewScreenData(void)
 {
 	ScreenData	*scr;
+	char		*encoding
+		,		*lang;
 
 ENTER_FUNC;
 	scr = New(ScreenData);
@@ -183,6 +185,16 @@ ENTER_FUNC;
 	memclear(scr->user,SIZE_USER+1);
 	memclear(scr->other,SIZE_OTHER+1);
 	scr->Windows = NULL;
+	if		(  libmondai_i18n  ) {
+		if		(  ( lang = getenv("LANG") )  !=  NULL  ) {
+			encoding = strchr(lang,'.') + 1;
+			scr->encoding = StrDup(encoding);
+		} else {
+			scr->encoding = NULL;
+		}
+	} else {
+		scr->encoding = StrDup("euc-jp");
+	}
 LEAVE_FUNC;
 	return	(scr); 
 }

@@ -15,8 +15,13 @@ handler	"Ruby"	{
 bind	"Sample"		"Ruby";
 bind	"Sample2"		"Ruby";
 bind	"Sample3"		"Ruby";
+bind	"Sample4"		"Ruby";
+bind	"Sample5"		"Ruby";
+bind	"Sample6"		"Ruby";
 
 db	"Oseki"	{
+	grouppro;
+	product;
 	vwords;
 	words;
 	word;

@@ -38,6 +38,7 @@ typedef	struct {
 	char		other[SIZE_OTHER+1];
 	int			status;
 	GHashTable	*Windows;
+	char		*encoding;
 }	ScreenData;
 
 typedef	struct {

@@ -1,3 +1,7 @@
+2005-03-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* pgserver/server.c (MainLoop): 文字encodingの設定コマンド
+
 2005-03-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glclient/widgetOPS.c (SendScrolledWindow), (RecvScrolledWindow)

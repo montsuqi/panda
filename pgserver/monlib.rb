@@ -82,6 +82,9 @@ class	PG_Server
 	def	setValue(name,value)
 		@values[name] = value;
 	end
+	def setEncoding(encoding)
+	  @s.printf("Encoding: %s\n",encoding);
+	end
 	def	close
 		@s.printf("End\n");
 		@s.close;

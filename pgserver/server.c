@@ -113,7 +113,7 @@ ENTER_FUNC;
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 				value = GetItemLongName(win->rec->value,vname);
 				ValueIsUpdate(value);
-				SetValueString(value,str,"euc-jp");
+				SetValueString(value,str,scr->encoding);
 			}
 		} else
 			break;
@@ -220,6 +220,13 @@ ENTER_FUNC;
 		}
 		RecvScreenData(fpComm,scr);
 		ApplicationsCall(APL_SESSION_GET,scr);
+	} else
+	if		(  strncmp(buff,"Encoding: ",10)  ==  0  ) {
+		dbgmsg("encoding");
+		if		(  scr->encoding  !=  NULL  ) {
+			xfree(scr->encoding);
+		}
+		scr->encoding = StrDup(buff+10);
 	} else
 	if		(  strncmp(buff,"End",3)  ==  0  ) {
 		dbgmsg("end");
