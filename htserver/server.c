@@ -359,8 +359,7 @@ ChildProcess(
 	ScreenData	*scr;
 	char	trid[SIZE_SESID+1];
 
-dbgmsg(">ChildProcess");
-	
+ENTER_FUNC;
 	scr = InitSession();
 	strcpy(scr->cmd,cmd);
 	strcpy(scr->user,user);
@@ -369,6 +368,7 @@ dbgmsg(">ChildProcess");
 	printf("cmd  = [%s]\n",cmd);
 #endif
 	scr->Windows = NULL;
+	strcpy(scr->term,TermName(0));
 	ApplicationsCall(APL_SESSION_LINK,scr);
 	if		(  scr->status  ==  APL_SESSION_NULL  ) {
 		SendStringDelim(fp,"900 invalid program\n");
@@ -377,21 +377,18 @@ dbgmsg(">ChildProcess");
 	} else {
 		fOk = TRUE;
 	}
-dbgmsg("*");
 	if		(  fOk  ) {
 		EncodeTRID(trid,sesid,0);
-dbgprintf("Child<< [%s]\n",trid);
 		SendStringDelim(fp,trid);
 		SendStringDelim(fp,"\n");
 		WriteClient(fp,scr);
-		strcpy(scr->term,TermName(0));
 		CloseNet(fp);
 		SesServer(scr,sock);
 		FinishSession(scr);
 	} else {
 		CloseNet(fp);
 	}
-dbgmsg("<ChildProcess");
+LEAVE_FUNC;
 }
 
 static	void

@@ -1,3 +1,7 @@
+2004-07-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/server.c (ChildProcess): termの設定のタイミングを正しくした
+
 2004-07-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/dbgroup.c: BLOBサポート
@@ -17,7 +21,6 @@
 	* intl/*: 追加
 	* Makefile.am: ほぼ全てのMakefile.amを編集し、make distcheckが通るようにした。
 
->>>>>>> 1.156
 2004-07-15  gettextize  <bug-gnu-gettext@gnu.org>
 
 	* glclient起動ダイアログのgettextize
