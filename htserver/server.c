@@ -143,30 +143,15 @@ DecodeString(
 	char	*q,
 	char	*p)
 {
-	int		del;
-
-	del = 0;
-	while	(	(  *p  !=  del  )
-			&&	(  *p  !=  0    ) ) {
-		switch	(*p) {
-		  case	'"':
-			del = '"';
-			break;
-		  case	'\\':
-			p ++;
-			switch	(*p) {
-			  case	'n':
-				*q ++ = '\n';
-				break;
-			  default:
-				*q ++ = *p;
-				break;
-			}
-			q ++;
-			break;
-		  default:
+	while	(  *p  !=  0  ) {
+		if		(  *p  ==  '+'  ) {
+			*q ++ = ' ';
+		} else
+		if		(  *p  ==  '%'  ) {
+			*q ++ = (char)HexToInt(p+1,2);
+			p += 2;
+		} else {
 			*q ++ = *p;
-			break;
 		}
 		p ++;
 	}
