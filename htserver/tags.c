@@ -234,7 +234,8 @@ Style(
 	Tag		*tag)
 {
 	char	*id
-	,		*klass;
+		,	*klass
+		,	*style;
 
 	if		(  ( id = GetArg(tag,"id",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," id=");
@@ -243,6 +244,10 @@ Style(
 	if		(  ( klass = GetArg(tag,"class",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," class=");
 		EmitAttributeValue(htc,klass,TRUE,FALSE,FALSE);
+	}
+	if		(  ( style = GetArg(tag,"style",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," style=");
+		EmitAttributeValue(htc,style,TRUE,FALSE,FALSE);
 	}
 }
 
@@ -1080,6 +1085,27 @@ dbgmsg("<_ePanel");
 }
 
 static	void
+_Pre(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+ENTER_FUNC;
+	LBS_EmitString(htc->code,"<pre");
+	Style(htc,tag);
+	LBS_EmitString(htc->code,">");
+	fPre = TRUE;
+LEAVE_FUNC;
+}
+
+static void
+_ePre(HTCInfo *htc, Tag *tag)
+{
+ENTER_FUNC;
+	LBS_EmitString(htc->code, "</pre>");
+LEAVE_FUNC;
+}
+
+static	void
 _Calendar(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -1332,6 +1358,12 @@ dbgmsg(">TagsInit");
 	AddArg(tag, "id", TRUE);
 	AddArg(tag, "class", TRUE);
 	tag = NewTag("/PANEL", _ePanel);
+
+	tag = NewTag("PRE", _Pre);
+	AddArg(tag, "id", TRUE);
+	AddArg(tag, "class", TRUE);
+	AddArg(tag, "style", TRUE);
+	tag = NewTag("/PRE", _ePre);
 
 	tag = NewTag("CALENDAR",_Calendar);
 	AddArg(tag,"year",TRUE);

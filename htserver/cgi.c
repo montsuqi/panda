@@ -862,7 +862,7 @@ CheckCoding(
 				}
 				*p = 0;
 				str --;
-				break;
+				goto	quit;
 			}
 		} else
 		if		(  fHTC  ) {
@@ -880,7 +880,7 @@ CheckCoding(
 				}
 				*p = 0;
 			}
-			break;
+			goto	quit;
 		} else
 		if		(  fXML  ) {
 			while	(  *str  !=  '>'  ) {
@@ -899,10 +899,11 @@ CheckCoding(
 				}
 				str ++;
 			}
-			break;
+			goto	quit;
 		}
 		str ++;
 	}
+  quit:
 	return	(coding);
 }
 
