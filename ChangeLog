@@ -1,3 +1,143 @@
+2002-11-22  Keisuke Nishida  <knishida@netlab.jp>
+
+	* dblib/Postgres.c (GetTable, GetValue): Fix memory leak.
+	* datalib/value.c (NumericToFixed): Fix memory leak.
+
+2002-10-29  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/callbacks.c (send_event): タイマーによる send_event を
+	キャンセルするようにした
+
+2002-10-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.1.2 release
+
+2002-10-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/protocol.c (CheckScreens): ctimeもチェックもするようにした
+
+	* glserver/server.c (CheckCache): ctimeもチェックもするようにした
+
+	* libs/tcp.c : つまらないバグの修正
+
+2002-10-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.1.1 release
+
+2002-10-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/recdefgen.rb: 無意味な文字数+1を削除、char -> varchar
+
+2002-09-29  akira yamada / やまだあきら <akira@vinecaves.com>
+
+	* libs/tcp.c : SO_REUSEADDRの調整
+
+2002-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/Shell.c (OnChildExit): aps_main.cより移動
+
+2002-09-28  Tomohiro 'Tomo-p' KATO <tomop@teamgedoh.net>
+
+	* aps/aps_main.c (OnChildExit): shellハンドラのzonbee対策
+
+2002-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+	
+	* Doc/glclient.tex: 間違い修正
+
+2002-09-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c: プロセス操作時の待機時間を設定可能にした
+
+2002-09-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.1.0 release
+
+	* libs/ のうちデータ絡みのライブラリを datalib/ に移した
+
+2002-09-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/ のうちデータベース絡みのプログラムを dbstuff/ に移した
+
+2002-09-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/ のうちデータベース絡みのライブラリ部分を dblib/ に移した
+
+2002-09-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* pgserver/monlib.rb : ポート番号変更
+
+	* インストールディレクトリの変更(ayの修正の吸収)
+
+	* Ver 1.0.8 release
+
+	* aps/dbslib.rb: Rubyからデータベースをアクセスするライブラリ
+
+	* aps/dbs_main.c: 外部からのデータベース参照デーモン
+
+2002-09-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/MCPSUB.c (CheckArg): ちょっとした引数チェック
+
+	* libs/DBparser.c (ParDBDB),libs/LDparser.c (ParDB),libs/BDparser.c (ParDB):
+	metadbの記述を不要にした(一応下位互換あり)
+
+2002-09-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/checkdir.c (DumpKey): つまらないエラーの修正(気にするな)
+
+	* libs/DBparser.c, libs/DBparser.h,
+	libs/DBlex.c, libs/DBlex.h: DBサーバ用定義体の解析
+
+	* libs/DIparser.c (ParDBD): DBサーバ用定義の追加
+
+2002-09-06  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/protocol.c, glclient/protocol.h,
+	glclient/callbacks.c, glclient/callbacks.h:
+	Fixes in ResetTimer.
+
+2002-09-04  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/protocol.c, glclient/protocol.h,
+	glclient/callbacks.c, glclient/callbacks.h:
+	2002-08-20 の修正を取り消し。
+
+2002-08-25  gettextize  <bug-gnu-gettext@gnu.org>
+
+	* Makefile.am (SUBDIRS): Add m4.
+	(ACLOCAL_AMFLAGS): New variable.
+	(EXTRA_DIST): New variable.
+	* configure.in (AC_OUTPUT): Add m4/Makefile.
+
+2002-08-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/comms.c (SendValueString): 文字列による通信
+
+2002-08-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* pgserver: 外部プログラムからのwfcインターフェイスのリリース
+
+2002-08-20  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/protocol.c (ResetTimer): glclient/callbacks.c から移動。
+	gtk_container_forall を使って再実装。
+	(ShowWindow): 新しい ResetTimer を呼び出し。
+	* glclient/callbacks.c (UpdateWidget): 新しい ResetTimer を呼び出し。
+
+2002-08-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.0.7 release
+
+	* pgserver/: アプリケーションからwfcを呼び出すためのインターフェイスを作った
+
+2002-07-26  Keisuke Nishida  <knishida@netlab.jp>
+
+	* glclient/callbacks.c (send_event): ビジーカーソル(砂時計)対応
+
+2002-07-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/applications.c: termio.hのincludeをやめた(不要だった)
+
 2002-07-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.6 release -> CVS化

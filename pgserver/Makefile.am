@@ -1,13 +1,9 @@
 ## Process this file with automake to produce Makefile.in
 
-sbin_PROGRAMS = glserver glauth
+sbin_PROGRAMS = pgserver
 
-glserver_LDADD 		=	\
+pgserver_LDADD 		=	\
 	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl	\
-	$(top_srcdir)/datalib/libpandadata.la	\
-	-L$(top_srcdir)/libs -lpandas
-glauth_LDADD 		=	\
-	-L/usr/lib -lglib $(FIXED_LIBS) -lm -ldl -lcrypt	\
 	$(top_srcdir)/datalib/libpandadata.la	\
 	-L$(top_srcdir)/libs -lpandas
 
@@ -17,13 +13,10 @@ INCLUDES 			= \
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/datalib	\
 	$(POSTGRES_CFLAGS)	\
-	$(GNOME_INCLUDEDIR) \
-	$(FIXED_CFLAGS)
+	$(FIXED_CFLAGS)		\
+	$(GNOME_INCLUDEDIR)
 
-glserver_SOURCES	=	\
-	glserver.c	glserver.h	\
+pgserver_SOURCES	=	\
+	pgserver.c	pgserver.h	\
 	server.c	
-
-glauth_SOURCES	=	\
-	glauth.c
 

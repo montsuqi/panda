@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require "xmlparser"
 require "kconv"
 include Kconv
@@ -185,7 +186,7 @@ class	Widget
 	end
 	def	isData
 		case	@klass
-		  when	"GtkLabel", "GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCList", "GtkCalendar", "GtkNumberEntry", "GtkText"
+		  when	"GtkLabel", "GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkPandaCList"
 			ret = TRUE;
 		  else
 			if	@child
@@ -237,7 +238,7 @@ class	Widget
 			i = 0;
 			for	c in @child
 				putTab(ind+2);
-				printf("value%d\tchar(%d);\n",i+1,Integer(self.column_width[i])/8);
+				printf("value%d\tvarchar(%d);\n",i,Integer(self.column_width[i])/8);
 				i += 1;
 			end
 			putTab(ind+1);
@@ -259,7 +260,7 @@ class	Widget
 			putTab(ind+1);
 			printf("count\tint;\n");
 			putTab(ind+1);
-			printf("item\tchar(??)[??]\n");
+			printf("item\tvarchar(??)[??]\n");
 			putTab(ind+1);
 			printf("select\tbool[??];\n");
 
@@ -272,7 +273,7 @@ class	Widget
 			putTab(ind+1);
 			printf("count\tint;\n");
 			putTab(ind+1);
-			printf("item\tchar(%d)[??];\n",@child[0].chars);
+			printf("item\tvarchar(%d)[??];\n",@child[0].chars);
 			putTab(ind);
 			printf("};\n");
 		  when	"GtkLabel"
@@ -280,22 +281,22 @@ class	Widget
 				putTab(ind);
 				printf("%s\t{\n",vname);
 				putTab(ind+1);
-				printf("value\tchar(%d);\n",Integer(self.width)/8);
+				printf("value\tvarchar(%d);\n",Integer(self.width)/8);
 				putTab(ind);
 				printf("};\n");
 			end
-		  when	"GtkEntry"
+		  when	"GtkEntry", "GtkPandaEntry"
 			putTab(ind);
 			printf("%s\t{\n",vname);
 			putTab(ind+1);
-			printf("value\tchar(%d);\n",@chars+1);
+			printf("value\tvarchar(%d);\n",@chars);
 			putTab(ind);
 			printf("};\n");
-		  when	"GtkText"
+		  when	"GtkText", "GtkPandaText"
 			putTab(ind);
 			printf("%s\t{\n",vname);
 			putTab(ind+1);
-			printf("value\tchar(??);\n");
+			printf("value\tvarchar(??);\n");
 			putTab(ind);
 			printf("};\n");
 		  when	"GtkNumberEntry"
@@ -319,7 +320,7 @@ class	Widget
 			printf("value\tbool;\n");
 			if		@label  ==  ""
 				putTab(ind+1);
-				printf("label\tchar(??);\n");
+				printf("label\tvarchar(??);\n");
 			end
 			putTab(ind);
 			printf("};\n");

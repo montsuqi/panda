@@ -31,6 +31,7 @@ copies.
 #include	<stdio.h>
 #include	<string.h>
 #include	<stdlib.h>
+#include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
 #include	"const.h"
@@ -48,6 +49,8 @@ copies.
 static	FILE	*fpServ;
 static	char	*ServerPort;
 static	char	*Command;
+
+//char		*RecordDir;	/*	dummy	*/
 
 static	ARG_TABLE	option[] = {
 	{	"server",	STRING,		TRUE,	(void*)&ServerPort,
@@ -344,21 +347,27 @@ HT_RecvString(
 }
 
 static	void
+SendValue(
+	char		*name,
+	char		*value)
+{
+	char	buff[SIZE_BUFF];
+
+	HT_SendString(name);
+	HT_SendString(": ");
+	EncodeString(buff,value);
+	HT_SendString(buff);
+	HT_SendString("\n");
+}
+
+static	void
 SendEvent(
 	char	*button)
 {
 	char	*event;
-	char	buff[SIZE_BUFF];
 	char	*sesid;
 	HTCInfo	*htc;
 	char	*name;
-	void	SendValue(
-		char		*name,
-		char		*value)
-		{
-			sprintf(buff,"%s: %s\n",name,value);
-			HT_SendString(buff);
-		}
 	void	GetRadio(
 		char	*name)
 		{
@@ -384,12 +393,11 @@ SendEvent(
 		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
 	}
 
-	sprintf(buff,"%s\n",event);
-	HT_SendString(buff);
+	HT_SendString(event);
+	HT_SendString("\n");
 
 	g_hash_table_foreach(Values,(GHFunc)SendValue,NULL);
-	sprintf(buff,"\n");
-	HT_SendString(buff);
+	HT_SendString("\n");
 	sesid = g_hash_table_lookup(Values,"_sesid");
 	Values = NewNameHash();
 	g_hash_table_insert(Values,"_sesid",sesid);

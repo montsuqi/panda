@@ -1,41 +1,43 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = aps dbstub dbredirector
+sbin_PROGRAMS = aps dbstub
 lib_LTLIBRARIES = MCPSUB.la
 
 MCPSUB_la_LDFLAGS	=	\
-	-module -avoid-version
+	-module 					\
+	-version-info $(LTVERSION)	\
+	-export-dynamic
 
 aps_LDADD 		=	\
 	$(LANG_OBJECTS)		\
 	-L/usr/lib -lglib -lm -ldl -lpthread	\
 	$(FIXED_LIBS)		\
-	-L$(top_srcdir)/libs -lpanda -li18n $(OPENCOBOL_LIBS)	\
+	-L$(top_srcdir)/libs -li18n $(OPENCOBOL_LIBS)	\
+	$(top_srcdir)/libs/libpanda.la	\
+	$(top_srcdir)/datalib/libpandadata.la	\
+	$(top_srcdir)/dblib/libpandadb.la \
 	MCPSUB.la
 
 dbstub_LDADD 		=	\
 	$(LANG_OBJECTS)		\
 	-L/usr/lib -lglib -lm -ldl -lpthread \
 	$(FIXED_LIBS)		\
-	-L$(top_srcdir)/libs -lpanda $(OPENCOBOL_LIBS)	\
+	-L$(top_srcdir)/libs $(OPENCOBOL_LIBS)	\
+	$(top_srcdir)/libs/libpanda.la	\
+	$(top_srcdir)/datalib/libpandadata.la	\
+	$(top_srcdir)/dblib/libpandadb.la \
 	MCPSUB.la
-dbredirector_LDADD 		=	\
-	-L/usr/lib -lglib -lm -ldl -lpthread	\
-	$(FIXED_LIBS)		\
-	$(POSTGRES_LIBS) \
-	$(OPENCOBOL_LIBS)	\
-	-L$(top_srcdir)/libs -lpanda -li18n
 
-MCPSUB_la_LIBADD	=	\
-	$(OPENCOBOL_LIBS)	\
-	$(POSTGRES_LIBS)
+MCPSUB_la_LIBADD	=
 
 INCLUDES 			= \
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	$(POSTGRES_CFLAGS)	\
+	-I$(top_srcdir)/dblib	\
+	-I$(top_srcdir)/datalib	\
 	$(OPENCOBOL_CFLAGS)	\
+	$(FIXED_CFLAGS)		\
 	$(GNOME_INCLUDEDIR)
 
 
@@ -46,50 +48,23 @@ LANG_DRIVERS	=	\
 LANG_OBJECTS	= $(LANG_DRIVERS:.c=.o)
 
 aps_SOURCES	=	\
-	aps_main.c	aps_main.h	defaults.h	\
+	aps_main.c	aps_main.h	\
 	apsio.c		apsio.h		\
-	dbgroup.c	\
-	redirect.c	redirect.h	\
-	defaults.h	\
-	cobolvalue.c	cobolvalue.h
-
-aps_DEPENDENCIES	=	\
-	defaults.h			\
-	MCPSUB.la
+	handler.c	handler.h	\
+	defaults.h
 
 dbstub_SOURCES	=	\
 	dbstub_main.c	\
-	dbgroup.c	\
-	redirect.c	redirect.h	\
-	defaults.h	\
-	cobolvalue.c	cobolvalue.h
-
-dbstub_DEPENDENCIES	=	\
-	MCPSUB.la
-
-dbredirector_SOURCES	=	\
-	dbredirector.c	\
-	dbgroup.c	\
-	cobolvalue.c	cobolvalue.h	\
-	dotCOBOL.c	dotCOBL.h	\
-	OpenCOBOL.c	OpenCOBOL.h	\
-	Postgres.c	Postgres.h	\
-	Shell.c		Shell.h		\
 	handler.c	handler.h	\
-	redirect.c	redirect.h
-
-dbredirector_DEPENDENCIES	=
+	defaults.h
 
 MCPSUB_la_SOURCES	=	\
-	MCPSUB.c				\
-	dotCOBOL.c	dotCOBL.h	\
+	MCPSUB.c			\
+	dotCOBOL.c	dotCOBOL.h	\
 	OpenCOBOL.c	OpenCOBOL.h	\
-	Postgres.c	Postgres.h	\
-	Shell.c		Shell.h		\
-	dbgroup.c				\
-	handler.c	handler.h	\
-	redirect.c	redirect.h	\
 	cobolvalue.c	cobolvalue.h
+
+BUILT_SOURCES = defaults.h
 
 defaults.h: Makefile.am $(top_builddir)/config.status
 	@echo "Creating defaults.h..."

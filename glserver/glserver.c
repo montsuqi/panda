@@ -35,12 +35,14 @@ copies.
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<glib.h>
+#include	<signal.h>
 
 #include	"types.h"
 #include	"const.h"
 #include	"misc.h"
 #include	"glserver.h"
 #include	"dirs.h"
+#include	"DDparser.h"
 #include	"pandaIO.h"
 #include	"option.h"
 #include	"debug.h"
@@ -75,11 +77,21 @@ SetDefault(void)
 	PandaPort = "localhost:9000";			/*	PORT_WFC	*/
 }
 
+static	void
+StopProcess(
+	int		ec)
+{
+dbgmsg(">StopProcess");
+dbgmsg("<StopProcess");
+	exit(ec);
+}
 extern	int
 main(
 	int		argc,
 	char	**argv)
 {
+	(void)signal(SIGPIPE,(void *)StopProcess);
+
 	SetDefault();
 	(void)GetOption(option,argc,argv);
 

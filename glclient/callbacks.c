@@ -52,6 +52,9 @@ copies.
 #include	"glterm.h"
 #include	"debug.h"
 
+static char *timeout_event;
+static gint timeout_hander_id = 0;
+
 static	void
 ClearWindowData(
 	char		*wname,
@@ -185,15 +188,35 @@ send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	char	*name
-	,		*window;
+	GtkWidget	*window;
+	GdkWindow	*pane;
+	GdkWindowAttr	attr;
 	static int	ignore_event = FALSE;
+
+	memset (&attr, 0, sizeof (GdkWindowAttr));
+	attr.wclass = GDK_INPUT_ONLY;
+	attr.window_type = GDK_WINDOW_CHILD;
+	attr.cursor = gdk_cursor_new (GDK_WATCH);
+	attr.x = attr.y = 0;
+	attr.width = attr.height = 32767;
 
 dbgmsg(">send_event");
 	if		(  !fInRecv  &&  !ignore_event ) {
-		name = gtk_widget_get_name(widget);
-		window = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
-		SendEvent(fpComm,window,name,event);
+		/* remove timer */
+		if (timeout_hander_id != 0) {
+			gtk_timeout_remove(timeout_hander_id);
+			timeout_hander_id = 0;
+		}
+		/* show busy cursor */
+		window = gtk_widget_get_toplevel(widget);
+		pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
+		gdk_window_show (pane);
+		gdk_flush ();
+		/* send event */
+		SendEvent(fpComm,
+			  gtk_widget_get_name(window),
+			  gtk_widget_get_name(widget),
+			  event);
 		SendWindowData();
 		BlockChangedHanders();
 		if		(  GetScreenData(fpComm)  ) {
@@ -204,6 +227,8 @@ dbgmsg(">send_event");
 			ignore_event = FALSE;
 		}
 		UnblockChangedHanders();
+		/* clear busy cursor */
+		gdk_window_destroy (pane);
 	}
 dbgmsg("<send_event");
 }
@@ -216,9 +241,6 @@ send_event_on_focus_out(
 {
 	send_event (widget, event);
 }
-
-static char *timeout_event;
-static gint timeout_hander_id = 0;
 
 static gint
 send_event_if_kana (gpointer widget)
@@ -297,17 +319,6 @@ entry_next_focus(
 	}
 }
 
-extern	void
-ResetTimer(
-	GladeXML	*xml)
-{
-	GList *l, *list = glade_xml_get_widget_prefix (xml, "pandatimer");
-	for (l = list; l; l = g_list_next (l))
-		if (GTK_IS_PANDA_TIMER (l->data))
-			gtk_panda_timer_reset (GTK_PANDA_TIMER (l->data));
-	g_list_free (list);
-}
-
 static	void
 UpdateWidget(
 	GtkWidget	*widget,
@@ -316,16 +327,18 @@ UpdateWidget(
 	const	char	*name;
 	char	*wname;
 	XML_Node	*node;
+	GtkWidget	*window;
 
 dbgmsg(">UpdateWidget");
 	if		(  !fInRecv  ) {
+		window = gtk_widget_get_toplevel(widget);
+		ResetTimer(GTK_WINDOW (window));
 		name = glade_get_widget_long_name(widget);
-		wname = gtk_widget_get_name(gtk_widget_get_toplevel(widget));
+		wname = gtk_widget_get_name(window);
 		if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
 			if	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) {
 				g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
 			}
-			ResetTimer(node->xml);
 		}
 	}
 dbgmsg("<UpdateWidget");
