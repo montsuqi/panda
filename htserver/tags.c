@@ -658,6 +658,8 @@ _ToggleButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
+	char	*label;
+
 dbgmsg(">_ToggleButton");
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 	EmitCode(htc,OPC_NAME);
@@ -671,10 +673,11 @@ dbgmsg(">_ToggleButton");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
-
-	EmitCode(htc,OPC_NAME);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"label",0)));
-	EmitCode(htc,OPC_EHSNAME);
+	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(label));
+		EmitCode(htc,OPC_EHSNAME);
+	}
 dbgmsg("<_ToggleButton");
 }
 
@@ -683,6 +686,8 @@ _CheckButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
+	char	*label;
+
 dbgmsg(">_CheckButton");
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 	EmitCode(htc,OPC_NAME);
@@ -696,7 +701,9 @@ dbgmsg(">_CheckButton");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
-	LBS_EmitString(htc->code,GetArg(tag,"label",0));
+	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,label);
+	}
 dbgmsg("<_CheckButton");
 }
 
@@ -706,7 +713,8 @@ _RadioButton(
 	Tag		*tag)
 {
 	char	*group
-	,		*name;
+		,	*name
+		,	*label;
 
 dbgmsg(">_RadioButton");
 	group = GetArg(tag,"group",0); 
@@ -729,7 +737,9 @@ dbgmsg(">_RadioButton");
 	LBS_EmitString(htc->code,"\"");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
-	LBS_EmitString(htc->code,GetArg(tag,"label",0));
+	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,label);
+	}
 	g_hash_table_insert(htc->Radio,StrDup(group),(void*)1);
 dbgmsg("<_RadioButton");
 }
