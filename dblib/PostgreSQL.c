@@ -375,7 +375,11 @@ dbgmsg(">GetTable");
 			nv = NumericInput((char *)PQgetvalue(res,0,fnum),
 						  ValueFixedLength(val),ValueFixedSlen(val));
 			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
+#if	1
+			SetValueString(val,str,dbg->coding);
+#else
 			strcpy(ValueFixedBody(val),str);
+#endif
 			xfree(str);
 			NumericFree(nv);
 		}
