@@ -1,3 +1,11 @@
+2004-09-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/storage.c (SeekEntry): non liner allocation read seek
+
+2004-09-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* blob/storage.c: リニアアロケーション(seekの準備)
+
 2004-09-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* blob/page.c: よりrobustなトランザクションリカバリ

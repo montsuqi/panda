@@ -25,11 +25,11 @@ copies.
 #include	"apistruct.h"
 
 extern	OsekiSpace		*InitOseki(char *space);
-extern	void		FinishOseki(OsekiSpace *blob);
+extern	void		FinishOseki(OsekiSpace *space);
 extern	OsekiSession	*ConnectOseki(OsekiSpace *blob);
 extern	void		DisConnectOseki(OsekiSession *state);
 
-extern	pageno_t	NewPage(OsekiSession *state);
+extern	pageno_t	NewPage(OsekiSession *state, pageno_t n);
 extern	void		*GetPage(OsekiSession *state, pageno_t page);
 extern	void		*UpdatePage(OsekiSession *state, pageno_t page);
 extern	void	ReleasePage(OsekiSession *state, pageno_t page,Bool fCommit);

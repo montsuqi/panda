@@ -31,9 +31,17 @@ extern	int			WriteObject(OsekiSession *state, ObjectType obj,
 								byte *buff, size_t size);
 extern	int			ReadObject(OsekiSession *state, ObjectType obj,
 							   byte *buff, size_t size);
-extern	Bool	OsekiTransactionStart(OsekiSession *state);
-extern	Bool	OsekiTransactionCommit(OsekiSession *state);
-extern	Bool	OsekiTransactionAbort(OsekiSession *state);
+extern	int			SeekObject(OsekiSession *state, ObjectType obj,
+							   uint64_t pos);
+extern	Bool		OsekiTransactionStart(OsekiSession *state);
+extern	Bool		OsekiTransactionCommit(OsekiSession *state);
+extern	Bool		OsekiTransactionAbort(OsekiSession *state);
 
+extern	ObjectType	InitiateObject(OsekiSession *state,
+								   void *buff, size_t size);
+extern	ssize_t		GetObject(OsekiSession *state, ObjectType obj,
+							  void *buff, size_t size);
+extern	ssize_t		PutObject(OsekiSession *state, ObjectType obj,
+							  void *buff, size_t size);
 
 #endif

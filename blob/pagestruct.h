@@ -49,13 +49,17 @@ copies.
 #define	BODY_USE			0x40
 #define	BODY_SHORT			0x20
 #define	BODY_NOENT			0x10
+#define	BODY_LINER			0x08
 
 #define	IS_SHORTFORM(e)		((((e).flags)&BODY_SHORT) == BODY_SHORT)
 #define	IS_NOENT(e)			((((e).flags)&BODY_NOENT) == BODY_NOENT)
+#define	IS_LINER(e)			((((e).flags)&BODY_LINER) == BODY_LINER)
 #define	IS_FREEOBJ(e)		((((e).flags)&BODY_USE) == 0)
 #define	USE_OBJ(e)			(((e).flags)|=BODY_USE)
 #define	FREE_OBJ(e)			(((e).flags)&=~BODY_USE)
 #define	NOENT_OBJ(e)		(((e).flags)|=BODY_NOENT)
+#define	LINER_OBJ(e)		(((e).flags)|=BODY_LINER)
+#define	PACK_OBJ(e)			(((e).flags)&=~BODY_LINER)
 
 #define	PAGE_SIZE(state)		((state)->space->pagesize)
 #define	NODE_ELEMENTS(state)	(PAGE_SIZE(state) / sizeof(pageno_t))
@@ -67,7 +71,7 @@ copies.
 
 #define	OBJ_NODE			0x8000000000000000LL
 #define	OBJ_PAGE(s,p)		(((p)&~OBJ_NODE)/(s)->space->pagesize)
-#define	OBJ_OFF(s,p)		(((p)&~OBJ_NODE)%(s)->space->pagesize)
+#define	OBJ_OFF(s,p)		(size_t)(((p)&~OBJ_NODE)%(s)->space->pagesize)
 #define	OBJ_POS(s,p,o)		((((p)&~OBJ_NODE)*(s)->space->pagesize)+(o))
 #define	OBJ_ADRS(p)			((p)&~OBJ_NODE)
 #define	OBJ_POINT_NODE(p)	((p)|=OBJ_NODE)
@@ -108,6 +112,10 @@ typedef	struct {
 	OsekiPhaseControl	phase[2];
 }	OsekiHeaderPage;
 
+#if	1
 #define	ROUND_TO(p,s)	((((p)%(s)) == 0) ? (p) : (((p)/(s))+1)*(s))
+#else
+#define	ROUND_TO(p,s)	(p)
+#endif
 
 #endif

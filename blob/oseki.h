@@ -28,7 +28,6 @@ copies.
 #include	"storage.h"
 #include	"page.h"
 
-
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/

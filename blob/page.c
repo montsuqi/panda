@@ -19,9 +19,9 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 */
 
 #ifdef HAVE_CONFIG_H
@@ -31,6 +31,7 @@ copies.
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<string.h>
+#include	<ctype.h>
 #include	<sys/wait.h>
 #include	<sys/stat.h>
 #include	<glib.h>
@@ -81,39 +82,29 @@ NewPageBuffer(
 	return	(ret);
 }
 
+extern	void
+DumpPage(
+	OsekiSpace	*space,
+	byte		*data)
+{
+	int		i;
+
+	for	( i = 0 ; i < space->pagesize ; i ++ , data ++) {
+		if	(  isprint(*data)  ) {
+			printf("%c",(int)*data);
+		} else {
+			printf("[%02X]",(int)*data);
+		}
+	}
+	printf("\n");
+}
+
+
 static	void
 ReleasePageBuffer(
 	void	*buff)
 {
 	xfree(buff);
-}
-
-extern	pageno_t
-NewPage(
-	OsekiSession	*state)
-{
-	CommonBuffer	*cb;
-	pageno_t	page;
-
-ENTER_FUNC;
-	Lock(state->space);
-	page = state->space->upages;
-	state->space->upages ++;
-	cb = New(CommonBuffer);
-	cb->page = page;
-	cb->old = NULL;
-	cb->update = NULL;
-	cb->current = NewPageBuffer(state->space);
-	memclear(cb->current,state->space->pagesize);
-	cb->utid = 0;
-	cb->ltid = 0;
-	cb->cRef = 0;
-	InitLock(cb);
-	g_hash_table_insert(state->space->pages,&cb->page,cb);
-	UnLock(state->space);
-	dbgprintf("new page = %lld\n",page);
-LEAVE_FUNC;
-	return	(page);
 }
 
 static	void	*
@@ -146,21 +137,6 @@ WritePage(
 }
 
 static	CommonBuffer	*
-SearchCommonBuffer(
-	OsekiSpace	*space,
-	pageno_t	page)
-{
-	CommonBuffer	*cb;
-
-ENTER_FUNC;
-	Lock(&space->page);
-	cb = (CommonBuffer *)g_hash_table_lookup(space->pages,&page);
-	UnLock(&space->page);
-LEAVE_FUNC;
-	return	(cb);
-}
-
-static	CommonBuffer	*
 RegistCommonPage(
 	OsekiSpace		*space,
 	void		*data,
@@ -183,6 +159,51 @@ RegistCommonPage(
 	return	(cb);
 }
 
+extern	pageno_t
+NewPage(
+	OsekiSession	*state,
+	pageno_t		n)
+{
+	pageno_t	page
+		,		ret;
+	void		*data;
+
+ENTER_FUNC;
+	if		(  n  ==  0  ) {
+		ret = 0LL;
+	} else {
+		ret = state->space->upages;
+		for	( ; n > 0 ; n -- ) {
+			Lock(state->space);
+			page = state->space->upages;
+			state->space->upages ++;
+			UnLock(state->space);
+			data = NewPageBuffer(state->space);
+			memclear(data,PAGE_SIZE(state));
+			RegistCommonPage(state->space,data,page);
+		}
+	}
+	dbgprintf("new page = %lld\n",ret);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	CommonBuffer	*
+SearchCommonBuffer(
+	OsekiSpace	*space,
+	pageno_t	page)
+{
+	CommonBuffer	*cb;
+
+ENTER_FUNC;
+	Lock(&space->page);
+	cb = (CommonBuffer *)g_hash_table_lookup(space->pages,&page);
+	UnLock(&space->page);
+LEAVE_FUNC;
+	return	(cb);
+}
+
+
 static	void	*
 GetCommonPage(
 	OsekiSession	*state,
@@ -201,20 +222,25 @@ ENTER_FUNC;
 	} else {
 		if		(  cb->utid  >  0  ) {
 			if		(  state->tid  ==  cb->utid  ) {
+dbgmsg("*");
 				ret = cb->update;
 			} else {
 				if		(  cb->ltid  >  0  ) {
 					if		(  state->tid  <  cb->ltid  ) {
+dbgmsg("*");
 						ret = cb->old;
 					} else {
+dbgmsg("*");
 						cb->current = ReadPage(space,page);
 						ret = cb->current;
 					}
 				} else {
+dbgmsg("*");
 					ret = cb->current;
 				}
 			}
 		} else {
+dbgmsg("*");
 			ret = cb->current;
 		}
 	}
@@ -311,8 +337,7 @@ GetPage(
 ENTER_FUNC;
 	dbgprintf("get page = %lld\n",page);
 	dbgprintf("pages    = %lld\n",state->space->upages);
-	if		(	(  page  ==  0  )
-			||	(  page  <  state->space->upages  ) ) {
+	if		(  page  <  state->space->upages  ) {
 		if		(  ( ent = (PageInfo *)g_hash_table_lookup(state->pages,&page) )
 				   ==  NULL  ) {
 			ent = New(PageInfo);
@@ -322,6 +347,7 @@ ENTER_FUNC;
 			g_hash_table_insert(state->pages,&ent->page,ent);
 		}
 		ret = ent->body;
+		//DumpPage(state->space,ret);
 	} else {
 		ret = NULL;
 	}
@@ -395,7 +421,7 @@ ENTER_FUNC;
 		}
 	}
 	if		(  no  ==  0  ) {
-		no = NewPage(state);
+		no = NewPage(state,1);
 	}
 	dbgprintf("free page = %lld\n",no);
 LEAVE_FUNC;
@@ -411,6 +437,7 @@ ReturnPage(
 	int				i;
 
 ENTER_FUNC;
+dbgprintf("return = [%lld]\n",no);
 	space = state->space;
 	space->freedata = GetPage(state,state->objs->freedata);
 	for	( i = 0 ; i < space->pagesize / sizeof(pageno_t) ; i ++ ) {
@@ -613,6 +640,7 @@ ENTER_FUNC;
 	} else {
 		space = NULL;
 	}
+printf("%d\n",(int)space);fflush(stdout);
 
 LEAVE_FUNC;
 	return	(space);

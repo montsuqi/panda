@@ -1,6 +1,6 @@
 lib_LTLIBRARIES =	libpandablob.la
 bin_PROGRAMS = 		blobup createpnb
-noinst_PROGRAMS	=	testblob
+noinst_PROGRAMS	=	testblob testobj
 
 libpandablob_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
@@ -46,8 +46,20 @@ testblob_LDADD	=				\
 	$(top_builddir)/libs/libpandacom.la	\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/blob/libpandablob.la
+testobj_LDADD	=				\
+	-lm					\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
+	$(MONDAI_LIBS)				\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/blob/libpandablob.la
 
 testblob_DEPENDENCIES	=			\
+	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.la	\
+	$(top_builddir)/blob/libpandablob.la
+testobj_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpandacom.la	\
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/blob/libpandablob.la
