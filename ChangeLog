@@ -1,3 +1,10 @@
+2004-08-10  Kouji TAKAO  <kouji@netlab.jp>
+
+	* configure.in (--with-ruby): Ruby-1.8を/usrや/usr/local以外にイン
+	ストールしている場合に対応
+
+	* tools/copygen.c (_COBOL): object型をPIC X(sizeof(MonObjectType))に修正
+
 2004-08-09  Noboru Saitou <noborus@netlab.jp>
 
 	* 不要なldを読み込まないようにした

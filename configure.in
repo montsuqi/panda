@@ -272,7 +272,7 @@ AC_ARG_WITH(ruby,
         RUBY_CFLAGS="-I${archdir}"
         RUBY_SHARED=`$RUBY -r rbconfig -e 'print Config::CONFIG[["ENABLE_SHARED"]]'`
         if test "$RUBY_SHARED" = "yes"; then
-          RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["LIBRUBYARG"]].gsub(/-L\./, "-L" + Config::CONFIG[["libdir"]]) + " " + Config::CONFIG[["LIBS"]]'`
+          RUBY_LIBS=`$RUBY -r rbconfig -e 'print "-L" + Config::CONFIG[["libdir"]] + " " + Config::CONFIG[["LIBRUBYARG"]].gsub(/-L\./, "-L" + Config::CONFIG[["libdir"]]) + " " + Config::CONFIG[["LIBS"]]'`
           RUBY_EXT_LIBS="$RUBY_LIBS"
         else
           RUBY_LIBS=`$RUBY -r rbconfig -e 'print Config::CONFIG[["libdir"]] + "/" + Config::CONFIG[["LIBRUBY_A"]] + " " + Config::CONFIG[["LIBS"]]'`

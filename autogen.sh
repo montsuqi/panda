@@ -19,4 +19,4 @@ autoconf
 
 echo 'Done.  Run "./configure" now'
 echo 'Usually configure option:'
-echo './configure --prefix=$HOME/local --enable-maintainer-mode --enable-opencobol --with-postgres=yes --with-ruby=/usr/bin/ruby CFLAGS="-g -Wall -Wunused"'
+echo 'CFLAGS="-g -Wall -Wunused" ./configure --prefix=$HOME/local --enable-maintainer-mode --enable-opencobol --with-postgres=yes --with-ruby=/usr/bin/ruby'

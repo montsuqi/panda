@@ -206,7 +206,7 @@ _COBOL(
 		PutString(buff);
 		break;
 	  case	GL_TYPE_OBJECT:
-		sprintf(buff,"PIC X(%d)",sizeof(int)+SIZE_OID);
+        sprintf(buff,"PIC X(%d)",sizeof(MonObjectType));
 		PutString(buff);
 		break;
 	  case	GL_TYPE_NUMBER:
@@ -679,7 +679,6 @@ MakeDBREC(
 	size_t	cDB;
 	char			*p;
 	int				rno;
-	char			*base_name;
 
 dbgmsg(">MakeDBREC");
 	InitDirectory();
@@ -1074,6 +1073,7 @@ main(
 	FILE_LIST	*fl;
 	char		*name
     ,			*ext;
+
 	SetDefault();
 	fl = GetOption(option,argc,argv);
 	InitMessage("copygen",NULL);
