@@ -46,6 +46,7 @@ GLOBAL	char		*Codeset;
 GLOBAL	Bool		fGet;
 GLOBAL	Bool		fCookie;
 GLOBAL	Bool		fDump;
+GLOBAL	Bool		fDebug;
 GLOBAL	Bool		fJavaScriptLink;
 GLOBAL	char		*SesDir;
 GLOBAL	char		*CommandLine;

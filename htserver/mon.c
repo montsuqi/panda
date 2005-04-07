@@ -75,6 +75,8 @@ static	ARG_TABLE	option[] = {
 		"actionをgetで処理する"	 						},
 	{	"dump",		BOOLEAN,	TRUE,	(void*)&fDump,
 		"変数のダンプを行う"	 						},
+	{	"debug",	BOOLEAN,	TRUE,	(void*)&fDebug,
+		"デバッグモード"		 						},
 	{	"cookie",	BOOLEAN,	TRUE,	(void*)&fCookie,
 		"セション変数をcookieで行う"					},
 	{	"jslink",	BOOLEAN,	TRUE,	(void*)&fJavaScriptLink,
@@ -96,6 +98,7 @@ SetDefault(void)
 	fComm = FALSE;
 	fCookie = FALSE;
 	fJavaScript = TRUE;
+	fDebug = FALSE;
 	CommandLine = NULL;
 }
 

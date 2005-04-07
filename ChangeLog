@@ -1,3 +1,9 @@
+2005-04-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c (ExpandAttributeString): 'で括った文字列に対応
+
+	* tools/htcgen.xsl: GtkListの幅処理をstyleで対応するようにした
+
 2005-04-07  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/protocol.c (GL_RecvString): サイズを指定するように変更

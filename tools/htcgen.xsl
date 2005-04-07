@@ -565,16 +565,6 @@ td {
     </optionmenu>
   </xsl:template>
 
-  <xsl:template name="MakeWidth">
-    <xsl:param name="_width"/>
-    <xsl:text>&#160;</xsl:text>
-    <xsl:if test="$_width &gt; 0">
-      <xsl:call-template name="MakeWidth">
-        <xsl:with-param name="_width" select="$_width - 1"/>
-      </xsl:call-template>
-    </xsl:if>
-  </xsl:template>
-
   <xsl:template name="GtkList">
     <select>
       <xsl:attribute name="name">
@@ -593,6 +583,18 @@ td {
           </xsl:when>
         </xsl:choose>
       </xsl:attribute>
+      <xsl:attribute name="style">
+        <xsl:text>width:</xsl:text>
+        <xsl:choose>
+          <xsl:when test="./column_widths">
+            <xsl:value-of select="floor(number(./column_widths) div 2.5)"/>
+          </xsl:when>
+          <xsl:otherwise>
+            <xsl:value-of select="20"/>
+          </xsl:otherwise>
+        </xsl:choose>
+        <xsl:text>em</xsl:text>
+      </xsl:attribute>
       <xsl:choose>
         <xsl:when test="./selection_mode = 'GTK_SELECTION_SINGLE'"/>
         <xsl:otherwise>
@@ -601,23 +603,6 @@ td {
           </xsl:attribute>
         </xsl:otherwise>
       </xsl:choose>
-      <option>
-        <xsl:attribute name="value">
-          <xsl:text>-1</xsl:text>
-        </xsl:attribute>
-        <xsl:choose>
-          <xsl:when test="./column_widths">
-            <xsl:call-template name="MakeWidth">
-              <xsl:with-param name="_width" select="floor(number(./column_widths) div 2.5)"/>
-            </xsl:call-template>
-          </xsl:when>
-          <xsl:otherwise>
-            <xsl:call-template name="MakeWidth">
-              <xsl:with-param name="_width" select="20"/>
-            </xsl:call-template>
-          </xsl:otherwise>
-        </xsl:choose>
-      </option>
       <count>
         <xsl:attribute name="var">
           <xsl:text>i</xsl:text>

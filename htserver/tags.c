@@ -168,20 +168,20 @@ ExpandAttributeString(
 	HTCInfo	*htc,
 	char	*para)
 {
-	LBS_EmitChar(htc->code,'"');
+	Bool	fQuote;
+
+	fQuote = ( strchr(para,'"')  !=  NULL );
+	if		(  fQuote  ) {
+		LBS_EmitChar(htc->code,'\'');
+	} else {
+		LBS_EmitChar(htc->code,'"');
+	}
 	switch	(*para) {
 	  case	'$':
-#if	0
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(para+1));
-		EmitCode(htc,OPC_REFSTR);
-		break;
-#else		
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(para+1));
 		EmitCode(htc,OPC_EHSNAME);
 		break;
-#endif
 	  case	'\\':
 		LBS_EmitString(htc->code,para+1);
 		break;
@@ -189,7 +189,11 @@ ExpandAttributeString(
 		LBS_EmitString(htc->code,para);
 		break;
 	}
-	LBS_EmitChar(htc->code,'"');
+	if		(  fQuote  ) {
+		LBS_EmitChar(htc->code,'\'');
+	} else {
+		LBS_EmitChar(htc->code,'"');
+	}
 }
 
 static void
@@ -356,7 +360,6 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,"\"");
 		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code," size=\"");
-
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(size));
 			EmitCode(htc,OPC_REFSTR);
@@ -692,6 +695,12 @@ _eBody(
 	Tag		*tag)
 {
 ENTER_FUNC;
+	if		(  fDebug  ) {
+		LBS_EmitString(htc->code,"<span>");
+		LBS_EmitString(htc->code,__DATE__);
+		LBS_EmitString(htc->code,__TIME__);
+		LBS_EmitString(htc->code,"</span>");
+	}
 	if		(  !fDump  ) {
 		LBS_EmitString(htc->code,"</body>");
 	}
@@ -996,8 +1005,12 @@ ENTER_FUNC;
 		ExpandAttributeString(htc,name);
 	}
 	if		(  ( href = GetArg(tag,"href",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," href=");
-		ExpandAttributeString(htc,href);
+		if		(  strlicmp(href,"javascript:")  ==  0  ) {
+			JavaScriptEvent(htc, tag, "href");
+		} else {
+			LBS_EmitString(htc->code," href=");
+			ExpandAttributeString(htc,href);
+		}
 	}
 	if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," target=");
@@ -1136,7 +1149,7 @@ ENTER_FUNC;
         EmitCode(htc,OPC_REFSTR);
         LBS_EmitString(htc->code,"\"");
         if ((size = GetArg(tag,"size",0)) != NULL) {
-            LBS_EmitString(htc->code," size=");
+            LBS_EmitString(htc->code," size=\"");
             EmitCode(htc,OPC_NAME);
             LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
             EmitCode(htc,OPC_REFSTR);
@@ -1298,7 +1311,7 @@ ENTER_FUNC;
         EmitCode(htc,OPC_REFSTR);
         LBS_EmitString(htc->code,"\"");
         if ((size = GetArg(tag,"size",0)) != NULL) {
-            LBS_EmitString(htc->code," size=");
+            LBS_EmitString(htc->code," size=\"");
             EmitCode(htc,OPC_NAME);
             LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
             EmitCode(htc,OPC_REFSTR);

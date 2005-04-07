@@ -205,6 +205,35 @@ dbgmsg(">HTCLex");
 		*s = 0;
 		token = T_SCONST;
 	} else
+	if		(  c  ==  '\''  ) {
+		s = HTC_ComSymbol;
+		len = 0;
+		while	(  ( c = _HTCGetChar() )  !=  '\''  ) {
+			if		(  c  ==  '\\'  ) {
+				switch	(c2 = _HTCGetChar()) {
+				  case	'\'':
+					c = '\'';
+					break;
+				  case	'n':
+					c = '\n';
+					break;
+				  case	't':
+					c = '\t';
+					break;
+				  default:
+					_HTCUnGetChar(c2);
+					break;
+				}
+			}
+			*s = c;
+			if		(  len  <  SIZE_SYMBOL  ) {
+				s ++;
+				len ++;
+			}
+		}
+		*s = 0;
+		token = T_SCONST;
+	} else
 	if		(  c  ==  '-'  ) {
 		s = HTC_ComSymbol;
 		len = 0;
