@@ -1,3 +1,9 @@
+2005-04-07  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/protocol.c (GL_RecvString): サイズを指定するように変更
+	* aps/apsio.c, auth/glauth.c, libs/wfcio.c, libs/authstub.c: 
+	  RecvString を RecvnString に変更
+	
 2005-03-25  Noboru Saitou  <noborus@netlab.jp>
 
 	* glserver/server.c, glserver/glcomm.c (GL_RecvString): サイズを

@@ -70,7 +70,7 @@ dbgmsg(">AuthUser");
 			SendString(fp,user);
 			SendString(fp,pass);
 			if		(  ( rc = RecvBool(fp) )  ) {
-				RecvString(fp,buff);
+				RecvnString(fp, sizeof(buff), buff);
 				if		(  other  !=  NULL  ) {
 					strcpy(other,buff);
 				}

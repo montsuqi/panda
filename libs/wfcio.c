@@ -201,14 +201,14 @@ ENTER_FUNC;
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_HEADER:
 		dbgmsg("recv HEADER");
-		RecvString(fp,user);
-		RecvString(fp,window);
-		RecvString(fp,widget);
+		RecvnString(fp, SIZE_NAME+1, user);
+		RecvnString(fp, SIZE_NAME+1, window);
+		RecvnString(fp, SIZE_NAME+1, widget);
 		*type = TO_INT(RecvChar(fp));
 		ctl->n = RecvInt(fp);
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
 			ctl->control[i].PutType = (byte)RecvInt(fp);
-			RecvString(fp,ctl->control[i].window);
+			RecvnString(fp, SIZE_NAME+1, ctl->control[i].window);
 		}
 		rc = TRUE;
 		break;

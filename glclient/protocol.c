@@ -268,17 +268,23 @@ GL_SendUInt(
 static	void
 GL_RecvString(
 	NETFILE	*fp,
+	size_t  size,
 	char	*str)
 {
-	size_t	size;
+	size_t	lsize;
 
 ENTER_FUNC;
-	size = GL_RecvLength(fp);
-	Recv(fp,str,size);
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
+	lsize = GL_RecvLength(fp);
+	if		(	size > lsize 	){
+		size = lsize;
+		Recv(fp,str,size);
+		if		(  !CheckNetFile(fp)  ) {
+			GL_Error();
+		}
+		str[size] = 0;
+	} else {
+		Error("error size mismatch !");
 	}
-	str[size] = 0;
 LEAVE_FUNC;
 }
 
@@ -395,7 +401,7 @@ ENTER_FUNC;
 	xval->flen = GL_RecvLength(fp);
 	xval->slen = GL_RecvLength(fp);
 	xval->sval = (char *)xmalloc(xval->flen+1);
-	GL_RecvString(fp,xval->sval);
+	GL_RecvString(fp, (xval->flen + 1), xval->sval);
 LEAVE_FUNC;
 	return	(xval); 
 }
@@ -550,7 +556,7 @@ CheckScreens(
 ENTER_FUNC;
 	while		(  ( klass = GL_RecvPacketClass(fp) )  ==  GL_QueryScreen  ) {
 dbgmsg("*");
-		GL_RecvString(fp,sname);
+		GL_RecvString(fp, sizeof(sname), sname);
 		stsize = (off_t)GL_RecvLong(fp);
 		stmtime = (time_t)GL_RecvLong(fp);
 		stctime = (time_t)GL_RecvLong(fp);
@@ -642,12 +648,12 @@ ENTER_FUNC;
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp,buff);
+		GL_RecvString(fp, sizeof(buff), buff);
 		break;
 	  case	GL_TYPE_BINARY:
 	  case	GL_TYPE_BYTE:
 	  case	GL_TYPE_OBJECT:
-		GL_RecvLBS(fp,LargeBuff);
+		GL_RecvLBS(fp, LargeBuff);
 		break;
 	  case	GL_TYPE_NUMBER:
 		FreeFixed(GL_RecvFixed(fp));
@@ -661,7 +667,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_RECORD:
 		count = GL_RecvInt(fp);
 		for	(  i = 0 ; i < count ; i ++ ) {
-			GL_RecvString(fp,name);
+			GL_RecvString(fp, sizeof(name), name);
 			RecvValueSkip(fp,GL_TYPE_NULL);
 		}
 		break;
@@ -733,7 +739,7 @@ ENTER_FUNC;
 		  case	GL_TYPE_RECORD:
 			count = GL_RecvInt(fp);
 			for	(  i = 0 ; i < count ; i ++ ) {
-				GL_RecvString(fp,name);
+				GL_RecvString(fp, sizeof(name), name);
 				sprintf(longname,".%s",name);
 				RecvValue(fp,longname + strlen(name) + 1);
 			}
@@ -774,7 +780,7 @@ ENTER_FUNC;
 	GL_SendLong(fp,0);				/*	get all data	*/
 	fCancel = FALSE;
 	while	(  ( c = GL_RecvPacketClass(fp) )  ==  GL_WindowName  ) {
-		GL_RecvString(fp,window);
+		GL_RecvString(fp, sizeof(window), window);
 		if		(  fMlog  ) {
 			sprintf(buff,"recv window [%s]\n",window);
 			MessageLog(buff);
@@ -819,8 +825,8 @@ ENTER_FUNC;
 		}
 	}
 	if		(  c  ==  GL_FocusName  ) {
-		GL_RecvString(fp,window);
-		GL_RecvString(fp,widgetName);
+		GL_RecvString(fp, sizeof(window), window);
+		GL_RecvString(fp, sizeof(widgetName), widgetName);
 		if		(	(  ( node = g_hash_table_lookup(WindowTable,window) )  !=  NULL  )
 					&&	(  node->xml  !=  NULL  )
 					&&	(  ( widget = glade_xml_get_widget(node->xml,widgetName) )
@@ -896,7 +902,7 @@ ENTER_FUNC;
 			g_warning("can not connect server(application name invalid)");
 			break;
 		  default:
-			printf("[%X]\n",pc);
+			dbgprintf("[%X]\n",pc);
 			g_warning("can not connect server(other protocol error)");
 			break;
 		}
@@ -1092,7 +1098,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp,str);
+		GL_RecvString(fp, size, str);
 		ret = str;
 		break;
 	  case	GL_TYPE_BINARY:
@@ -1170,7 +1176,7 @@ RecvIntegerData(
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp,buff);
+		GL_RecvString(fp, sizeof(buff), buff);
 		*val = atoi(buff);
 		ret = TRUE;
 		break;
@@ -1232,7 +1238,7 @@ RecvBoolData(
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp,buff);
+		GL_RecvString(fp, sizeof(buff), buff);
 		*val = (  buff[0]  ==  'T'  ) ? TRUE : FALSE;
 		break;
 	  default:
@@ -1299,7 +1305,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp,buff);
+		GL_RecvString(fp, sizeof(buff), buff);
 		*val = atof(buff);
 		ret = TRUE;
 		break;

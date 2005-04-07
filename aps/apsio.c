@@ -223,7 +223,7 @@ ENTER_FUNC;
 	fSuc = FALSE;
 	if		(  RecvPacketClass(fp)  ==  APS_REQ  ) {
 		dbgmsg("REQ");
-		RecvString(fp,term);				ON_IO_ERROR(fp,badio2);
+		RecvnString(fp, sizeof(term), term);			ON_IO_ERROR(fp,badio2);
 		if		(  nCache  >  0  ) {
 			if		(  !CheckCache(node,term)  ) {
 				flag |= APS_SPADATA;
@@ -237,12 +237,12 @@ ENTER_FUNC;
 			switch	(c = RecvPacketClass(fp)) {
 			  case	APS_EVENTDATA:
 				dbgmsg("EVENTDATA");
-				hdr.status = RecvChar(fp);			ON_IO_ERROR(fp,badio);
-				RecvString(fp,hdr.term);			ON_IO_ERROR(fp,badio);
-				RecvString(fp,hdr.user);			ON_IO_ERROR(fp,badio);
-				RecvString(fp,hdr.window);			ON_IO_ERROR(fp,badio);
-				RecvString(fp,hdr.widget);			ON_IO_ERROR(fp,badio);
-				RecvString(fp,hdr.event);			ON_IO_ERROR(fp,badio);
+				hdr.status = RecvChar(fp);					ON_IO_ERROR(fp,badio);
+				RecvnString(fp, SIZE_TERM+1, hdr.term);		ON_IO_ERROR(fp,badio);
+				RecvnString(fp, SIZE_USER+1, hdr.user);		ON_IO_ERROR(fp,badio);
+				RecvnString(fp, SIZE_NAME+1, hdr.window);	ON_IO_ERROR(fp,badio);
+				RecvnString(fp, SIZE_NAME+1, hdr.widget);	ON_IO_ERROR(fp,badio);
+				RecvnString(fp, SIZE_EVENT+1, hdr.event);	ON_IO_ERROR(fp,badio);
 #ifdef	DEBUG
 				dbgprintf("status = [%c]\n",hdr.status);
 				dbgprintf("term   = [%s]\n",hdr.term);

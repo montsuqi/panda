@@ -68,7 +68,7 @@ dbgmsg(">Session");
 	if		(  Recv(fp,&size,sizeof(size))  >  0  ) {
 		Recv(fp,user,size);
 		user[size] = 0;
-		RecvString(fp,pass);			ON_IO_ERROR(fp,badio);
+		RecvnString(fp, sizeof(pass), pass);	ON_IO_ERROR(fp,badio);
 		if		(  ( pw = AuthAuthUser(user,pass) )  ==  NULL  ) {
 			SendBool(fp,FALSE);				ON_IO_ERROR(fp,badio);
 		} else {
