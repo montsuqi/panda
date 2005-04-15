@@ -32,11 +32,9 @@ copies.
 #define	OPC_LDVAR	0x08
 #define	OPC_SCONST	0x09
 #define	OPC_NAME	0x0A
-#define	OPC_HSNAME	0x0B
-#define	OPC_EHSNAME	0x0C
-#define	OPC_REFSTR	0x0D
-#define	OPC_HINAME	0x0E
-#define	OPC_HBNAME	0x0F
+#define	OPC_PHSTR	0x0B
+#define	OPC_PHINT	0x0E
+#define	OPC_PHBOOL	0x0F
 #define	OPC_BREAK	0x10
 #define	OPC_HBES	0x11
 #define	OPC_JNZP	0x12
@@ -51,9 +49,48 @@ copies.
 #define	OPC_SUB			0x1B
 #define	OPC_SPY			0x1C
 #define	OPC_SCMP		0x1D
-#define	OPC_EMITHTML	0x1E
+#define	OPC_EMITRAW		0x1E
 
 #define	OPC_FLJS		0x7F
+
+#define	VAR_NULL	0
+#define	VAR_INT		1
+#define	VAR_STR		2
+#define	VAR_PTR		3
+
+#define	EXPR_NONE			0
+
+#define	EXPR_SYMBOL			1
+#define	EXPR_VALUE			2
+#define	EXPR_FUNC			6
+
+#define	EXPR_NEG			10
+#define	EXPR_ADD			11
+#define	EXPR_SUB			12
+#define	EXPR_MUL			13
+#define	EXPR_DIV			14
+#define	EXPR_MOD			15
+#define	EXPR_CAT			16
+
+#define	EXPR_SEQ			30
+#define	EXPR_FUNCALL		31
+#define	EXPR_VREF			32
+#define	EXPR_ITEM			33
+
+typedef	struct	_Expr	{
+	int		type;
+	union {
+		char	*name;
+		int		ival;
+		char	*sval;
+		struct	_Expr	*(*func)(void *args);
+		struct	_Expr		*ptr;
+		struct {
+			struct	_Expr	*left
+			,				*right;
+		}	cons;
+	}	body;
+}	Expr;
 
 #undef	GLOBAL
 #ifdef	MAIN

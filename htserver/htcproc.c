@@ -91,6 +91,8 @@ static	ARG_TABLE	option[] = {
 		"recの名前"										},
 	{	"code",		STRING,		TRUE,	(void*)&Code,
 		"文字コードセット名"							},
+	{	"js",		BOOLEAN,	TRUE,	(void*)&fJavaScript,
+		"JavaScriptを使ったHTML生成を行う"	},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -106,6 +108,7 @@ SetDefault(void)
 	fCookie = FALSE;
 	CommandLine = NULL;
 	Code = NULL;
+	fJavaScript = TRUE;
 
 	ArraySize = -1;
 	TextSize = -1;

@@ -42,26 +42,8 @@ copies.
 #include	"cgi.h"
 extern	void	HTCLexInit(void);
 #include	"htc.h"
+#include	"exec.h"
 #include	"debug.h"
-
-#define	EXPR_NONE			0
-
-#define	EXPR_SYMBOL			1
-#define	EXPR_VALUE			2
-#define	EXPR_FUNC			6
-
-#define	EXPR_NEG			10
-#define	EXPR_ADD			11
-#define	EXPR_SUB			12
-#define	EXPR_MUL			13
-#define	EXPR_DIV			14
-#define	EXPR_MOD			15
-#define	EXPR_CAT			16
-
-#define	EXPR_SEQ			30
-#define	EXPR_FUNCALL		31
-#define	EXPR_VREF			32
-#define	EXPR_ITEM			33
 
 static	GHashTable			*Reserved;
 static	GET_VALUE	_GetValue;
@@ -70,19 +52,6 @@ static	Bool		fClear;
 static	TokenTable	tokentable[] = {
 	{	""				,0			}
 };
-
-typedef	struct	_Expr	{
-	int		type;
-	union {
-		char	*name;
-		char	*sval;
-		struct	_Expr	*(*func)(void *args);
-		struct {
-			struct	_Expr	*left
-			,				*right;
-		}	cons;
-	}	value;
-}	Expr;
 
 static	Expr	*ParSequence(CURFILE *in);
 static	Expr	*ParExpr(CURFILE *in);
@@ -97,8 +66,8 @@ NewCons(
 
 	expr = New(Expr);
 	expr->type = type;
-	expr->value.cons.left = left;
-	expr->value.cons.right = right;
+	expr->body.cons.left = left;
+	expr->body.cons.right = right;
 	return	(expr);
 }
 
@@ -119,7 +88,7 @@ ENTER_FUNC;
 			  case	T_SYMBOL:
 				arg = New(Expr);
 				arg->type = EXPR_SYMBOL;
-				arg->value.name = StrDup(ComSymbol);
+				arg->body.name = StrDup(ComSymbol);
 				GetName;
 				break;
 			  case	'[':
@@ -136,7 +105,7 @@ ENTER_FUNC;
 				break;
 			}
 			*exprw = NewCons(EXPR_ITEM,arg,NULL);
-			exprw = &(*exprw)->value.cons.right;
+			exprw = &(*exprw)->body.cons.right;
 			if		(  ComToken  ==  '.'  ) {
 				GetName;
 			}
@@ -157,7 +126,7 @@ ENTER_FUNC;
 	  case	T_ICONST:
 		expr = New(Expr);
 		expr->type = EXPR_VALUE;
-		expr->value.sval = StrDup(ComSymbol);
+		expr->body.sval = StrDup(ComSymbol);
 		GetSymbol;
 		break;
 	  default:
@@ -258,7 +227,7 @@ ENTER_FUNC;
 		switch	(ComToken) {
 		  case	',':
 		  case	')':
-			expr = (Expr **)&((*expr)->value.cons.right);
+			expr = (Expr **)&((*expr)->body.cons.right);
 			if		(  ComToken  ==  ')'  ) {
 				fExit = TRUE;
 			} else {
@@ -339,30 +308,30 @@ ENTER_FUNC;
 			p = buff;
 			temp = expr;
 			while	(  temp  !=  NULL  ) {
-				left = temp->value.cons.left;
+				left = temp->body.cons.left;
 				switch	(left->type) {
 				  case	EXPR_SYMBOL:
-					p += sprintf(p,"%s",left->value.name);
+					p += sprintf(p,"%s",left->body.name);
 					break;
 				  default:
 					ix = EvalExpr(left);
-					p += sprintf(p,"[%d]",atoi(ix->value.sval));
+					p += sprintf(p,"[%d]",atoi(ix->body.sval));
 				}
-				temp = temp->value.cons.right;
+				temp = temp->body.cons.right;
 				if		(  temp  !=  NULL  ) {
 					p += sprintf(p,".");
 				}
 			}
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(buff);
+			result->body.sval = StrDup(buff);
 			break;
 		  case	EXPR_VREF:
 			dbgmsg("VREF");
-			left = EvalExpr(expr->value.cons.left);
+			left = EvalExpr(expr->body.cons.left);
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(ValueSymbol(left->value.sval));
+			result->body.sval = StrDup(ValueSymbol(left->body.sval));
 			break;
 		  case	EXPR_SEQ:
 			dbgmsg(">SEQ");
@@ -371,72 +340,72 @@ ENTER_FUNC;
 			do {
 				*res = New(Expr);
 				(*res)->type = EXPR_SEQ;
-				(*res)->value.cons.left = EvalExpr(temp->value.cons.left);
-				(*res)->value.cons.right = NULL;
-				res = (Expr **)&((*res)->value.cons.right);
-				temp = temp->value.cons.right;
+				(*res)->body.cons.left = EvalExpr(temp->body.cons.left);
+				(*res)->body.cons.right = NULL;
+				res = (Expr **)&((*res)->body.cons.right);
+				temp = temp->body.cons.right;
 			}	while	(  temp  !=  NULL  );
 			dbgmsg("<SEQ");
 			break;
 		  case	EXPR_CAT:
 			dbgmsg("CAT");
-			left = EvalExpr(expr->value.cons.left);
-			right = EvalExpr(expr->value.cons.right);
-			sprintf(buff,"%s%s",left->value.sval,right->value.sval);
+			left = EvalExpr(expr->body.cons.left);
+			right = EvalExpr(expr->body.cons.right);
+			sprintf(buff,"%s%s",left->body.sval,right->body.sval);
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(buff);
+			result->body.sval = StrDup(buff);
 			break;
 		  case	EXPR_ADD:
 			dbgmsg("ADD");
-			left = EvalExpr(expr->value.cons.left);
-			right = EvalExpr(expr->value.cons.right);
-			sprintf(buff,"%d",atoi(left->value.sval)+atoi(right->value.sval));
+			left = EvalExpr(expr->body.cons.left);
+			right = EvalExpr(expr->body.cons.right);
+			sprintf(buff,"%d",atoi(left->body.sval)+atoi(right->body.sval));
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(buff);
+			result->body.sval = StrDup(buff);
 			break;
 		  case	EXPR_SUB:
 			dbgmsg("SUB");
-			left = EvalExpr(expr->value.cons.left);
-			right = EvalExpr(expr->value.cons.right);
-			sprintf(buff,"%d",atoi(left->value.sval)-atoi(right->value.sval));
+			left = EvalExpr(expr->body.cons.left);
+			right = EvalExpr(expr->body.cons.right);
+			sprintf(buff,"%d",atoi(left->body.sval)-atoi(right->body.sval));
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(buff);
+			result->body.sval = StrDup(buff);
 			break;
 		  case	EXPR_MUL:
 			dbgmsg("MUL");
-			left = EvalExpr(expr->value.cons.left);
-			right = EvalExpr(expr->value.cons.right);
-			sprintf(buff,"%d",atoi(left->value.sval)*atoi(right->value.sval));
+			left = EvalExpr(expr->body.cons.left);
+			right = EvalExpr(expr->body.cons.right);
+			sprintf(buff,"%d",atoi(left->body.sval)*atoi(right->body.sval));
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(buff);
+			result->body.sval = StrDup(buff);
 			break;
 		  case	EXPR_DIV:
 			dbgmsg("DIV");
-			left = EvalExpr(expr->value.cons.left);
-			right = EvalExpr(expr->value.cons.right);
-			sprintf(buff,"%d",atoi(left->value.sval)/atoi(right->value.sval));
+			left = EvalExpr(expr->body.cons.left);
+			right = EvalExpr(expr->body.cons.right);
+			sprintf(buff,"%d",atoi(left->body.sval)/atoi(right->body.sval));
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(buff);
+			result->body.sval = StrDup(buff);
 			break;
 		  case	EXPR_MOD:
 			dbgmsg("MOD");
-			left = EvalExpr(expr->value.cons.left);
-			right = EvalExpr(expr->value.cons.right);
-			sprintf(buff,"%d",atoi(left->value.sval)%atoi(right->value.sval));
+			left = EvalExpr(expr->body.cons.left);
+			right = EvalExpr(expr->body.cons.right);
+			sprintf(buff,"%d",atoi(left->body.sval)%atoi(right->body.sval));
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(buff);
+			result->body.sval = StrDup(buff);
 			break;
 		  case	EXPR_VALUE:
 			dbgmsg("VALUE");
 			result = New(Expr);
 			result->type = EXPR_VALUE;
-			result->value.sval = StrDup(expr->value.sval);
+			result->body.sval = StrDup(expr->body.sval);
 			break;
 		  default:
 			Error("not support expression");
@@ -461,7 +430,7 @@ dbgprintf("name = [%s]\n",name);
 	expr = ParseMem(name);
 	expr = EvalExpr(expr);
 	dbgprintf("type = %d\n",expr->type);
-	value = expr->value.sval;
+	value = expr->body.sval;
 dbgprintf("value = [%s]\n",value);
 LEAVE_FUNC;
 	return	(value);

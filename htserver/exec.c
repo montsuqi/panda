@@ -50,24 +50,9 @@ copies.
 #define	HI		"日"
 #define	ATAMA	"<TH>月</TH><TH>火</TH><TH>水</TH><TH>木</TH><TH>金</TH><TH>土</TH></TR>\n"
 
-
 #define	SIZE_RSTACK		100
 
-#define	VAR_NULL	0
-#define	VAR_INT		1
-#define	VAR_STR		2
-#define	VAR_PTR		3
-
-typedef	struct	_VarType	{
-	int			type;
-	union {
-		int			ival;
-		char		*str;
-		struct	_VarType	*ptr;
-	}	body;
-}	VarType;
-
-static	VarType	Stack[SIZE_RSTACK];
+static	Expr	Stack[SIZE_RSTACK];
 static	size_t	pStack;
 static	GHashTable	*VarArea;
 
@@ -274,17 +259,17 @@ ParseName(
 			,		name[SIZE_ARG];
 	char	*p
 	,		*q;
-	VarType	*var;
+	Expr	*var;
 	char	*outvalue(
 		char	*pp,
-		VarType	*val)
+		Expr	*val)
 	{
 		switch	(val->type) {
 		  case	VAR_INT:
 			pp += sprintf(pp,"%d",val->body.ival);
 			break;
 		  case	VAR_STR:
-			pp += sprintf(pp,"%s",val->body.str);
+			pp += sprintf(pp,"%s",val->body.sval);
 			break;
 		  default:
 			break;
@@ -547,7 +532,7 @@ ExecCode(
 	char	*name
 	,		*value
 	,		*str;
-	VarType	*var
+	Expr	*var
 	,		vval;
 	size_t	pos;
 	char	buff[SIZE_BUFF];
@@ -568,12 +553,18 @@ ENTER_FUNC;
 				value = GetHostValue(name,FALSE);
                 EmitWithEscape(html,value);
 				break;
+			  case	OPC_REFINT:
+				dbgmsg("OPC_REFINT");
+				vval = Pop;
+				sprintf(buff,"%d",vval.body.ival);
+				EmitWithEscape(html,buff);
+				break;
 			  case	OPC_VAR:
 				dbgmsg("OPC_VAR");
 				name = LBS_FetchPointer(htc->code);
 				if		(  name  ==  NULL  )	name = "";
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  ==  NULL  ) {
-					var = New(VarType);
+					var = New(Expr);
 					g_hash_table_insert(VarArea,StrDup(name),var);
 				}
 				vval.body.ptr = var;
@@ -584,38 +575,32 @@ ENTER_FUNC;
 				dbgmsg("OPC_NAME");
 				str = LBS_FetchPointer(htc->code);
 				name = ParseName(str);
-				vval.body.str = StrDup(name);
+				vval.body.sval = StrDup(name);
 				vval.type = VAR_STR;
 				Push(vval);
 				break;
 			  case	OPC_TOINT:
 				dbgmsg("OPC_TOINT");
-				TOP(1).body.ival = atoi(TOP(1).body.str);
+				TOP(1).body.ival = atoi(TOP(1).body.sval);
 				TOP(1).type = VAR_INT;
 				break;
-			  case	OPC_HSNAME:
-				dbgmsg("OPC_HSNAME");
+			  case	OPC_PHSTR:
+				dbgmsg("OPC_PHSTR");
 				vval = Pop;
-				vval.body.str = GetHostValue(vval.body.str,FALSE);
+				vval.body.sval = GetHostValue(vval.body.sval,FALSE);
 				vval.type = VAR_STR;
 				Push(vval);
 				break;
-			  case	OPC_EHSNAME:
-				dbgmsg("OPC_EHSNAME");
+			  case	OPC_PHINT:
+				dbgmsg("OPC_PHINT");
 				vval = Pop;
-				value = GetHostValue(vval.body.str,FALSE);
-				EmitWithEscape(html,value);
-				break;
-			  case	OPC_HINAME:
-				dbgmsg("OPC_HINAME");
-				vval = Pop;
-				vval.body.ival = atoi(GetHostValue(vval.body.str,FALSE));
+				vval.body.ival = atoi(GetHostValue(vval.body.sval,FALSE));
 				vval.type = VAR_INT;
 				Push(vval);
 				break;
-			  case	OPC_HBNAME:
-				dbgmsg("OPC_HBNAME");
-				value = GetHostValue(TOP(1).body.str,FALSE);
+			  case	OPC_PHBOOL:
+				dbgmsg("OPC_PHBNAME");
+				value = GetHostValue(TOP(1).body.sval,FALSE);
 				TOP(1).body.ival = (stricmp(value,"TRUE") == 0);
 				TOP(1).type = VAR_INT;
 				break;
@@ -630,19 +615,12 @@ ENTER_FUNC;
 			  case	OPC_HBES:
 				dbgmsg("OPC_HBES");
 				vval = Pop;
-				value = GetHostValue(vval.body.str,TRUE);
+				value = GetHostValue(vval.body.sval,TRUE);
 				str = LBS_FetchPointer(htc->code);
 				if		(  stricmp(value,"TRUE")  ==  0 ) {
 					EmitWithEscape(html,str);
 				}
 				break;
-#if	0
-			  case	OPC_REFSTR:
-				dbgmsg("OPC_REFSTR");
-				vval = Pop;
-				EmitWithEscape(html,vval.body.str);
-				break;
-#endif
 			  case	OPC_SPY:
 				dbgmsg("OPC_SPY");
 				switch	(TOP(1).type) {
@@ -650,15 +628,9 @@ ENTER_FUNC;
 					sprintf(buff,"%d",TOP(1).body.ival);
 					break;
 				  case	VAR_STR:
-					sprintf(buff,"%s",TOP(1).body.str);
+					sprintf(buff,"%s",TOP(1).body.sval);
 				}
-				EmitWithEscape(html,TOP(1).body.str);
-				break;
-			  case	OPC_REFINT:
-				dbgmsg("OPC_REFINT");
-				vval = Pop;
-				sprintf(buff,"%d",vval.body.ival);
-				EmitWithEscape(html,buff);
+				EmitWithEscape(html,TOP(1).body.sval);
 				break;
 			  case	OPC_ICONST:
 				dbgmsg("OPC_ICONST");
@@ -668,7 +640,7 @@ ENTER_FUNC;
 				break;
 			  case	OPC_SCONST:
 				dbgmsg("OPC_SCONST");
-				vval.body.str = LBS_FetchPointer(htc->code);
+				vval.body.sval = LBS_FetchPointer(htc->code);
 				vval.type = VAR_STR;
 				Push(vval);
 				break;
@@ -721,7 +693,7 @@ ENTER_FUNC;
 				(void)Pop;
 				break;
 			  case	OPC_SCMP:
-				TOP(2).body.ival = strcmp(TOP(2).body.str,TOP(1).body.str);
+				TOP(2).body.ival = strcmp(TOP(2).body.sval,TOP(1).body.sval);
 				(void)Pop;
 				break;
 			  case OPC_LOCURI:
@@ -731,11 +703,11 @@ ENTER_FUNC;
 
                     dbgmsg("OPC_LOCURI");
                     vval = Pop;
-                    local = ConvLocal(vval.body.str);
+                    local = ConvLocal(vval.body.sval);
                     len = EncodeLengthURI(local);
                     encoded = (char *) xmalloc(len + 1);
                     EncodeURI(encoded, local);
-                    vval.body.str = encoded;
+                    vval.body.sval = encoded;
 					vval.type = VAR_STR;
                     Push(vval);
                 }
@@ -747,39 +719,40 @@ ENTER_FUNC;
 
                     dbgmsg("OPC_UTF8URI");
                     vval = Pop;
-                    len = EncodeLengthURI(vval.body.str);
+                    len = EncodeLengthURI(vval.body.sval);
                     encoded = (char *) xmalloc(len + 1);
-                    EncodeURI(encoded, vval.body.str);
-                    vval.body.str = encoded;
+                    EncodeURI(encoded, vval.body.sval);
+                    vval.body.sval = encoded;
 					vval.type = VAR_STR;
                     Push(vval);
                 }
                 break;
-#if	1
-			  case	OPC_REFSTR:
-#endif
               case OPC_EMITSTR:
 				dbgmsg("OPC_EMITSTR");
 				vval = Pop;
-                if (strlen(vval.body.str) == 0) {
+#if	0
+                if (strlen(vval.body.sval) == 0) {
                     LBS_EmitString(html, "&nbsp;");
                 }
                 else {
-                    EmitWithEscape(html,vval.body.str);
+                    EmitWithEscape(html,vval.body.sval);
                 }
+#else
+				EmitWithEscape(html,vval.body.sval);
+#endif
 				break;
-              case OPC_EMITHTML:
-				dbgmsg("OPC_EMITHTML");
+              case OPC_EMITRAW:
+				dbgmsg("OPC_EMITRAW");
 				vval = Pop;
-                if (strlen(vval.body.str) > 0) {
-					LBS_EmitString(html,vval.body.str);
+                if (strlen(vval.body.sval) > 0) {
+					LBS_EmitString(html,vval.body.sval);
                 }
 				break;
 			  case OPC_ESCJSS:
                 {
                     dbgmsg("OPC_ESCJSS");
                     vval = Pop;
-                    vval.body.str = EscapeJavaScriptString(vval.body.str);
+                    vval.body.sval = EscapeJavaScriptString(vval.body.sval);
 					vval.type = VAR_STR;
                     Push(vval);
                 }
@@ -805,9 +778,9 @@ ENTER_FUNC;
 				  ,		*sbgcolor
 				  ,		*sfontcolor;
 
-				  day = Pop.body.str;
-				  month = Pop.body.str;
-				  year = Pop.body.str;
+				  day = Pop.body.sval;
+				  month = Pop.body.sval;
+				  year = Pop.body.sval;
 				  dd = Pop.body.ival;
 				  mm = Pop.body.ival;
 				  yy = Pop.body.ival;

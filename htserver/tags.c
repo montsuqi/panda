@@ -131,35 +131,51 @@ EmitAttributeValue(
 		LBS_EmitString(htc->code,"\"");
 	}
 	switch	(*str) {
-        case '$':
-            EmitCode(htc,OPC_NAME);
-            LBS_EmitPointer(htc->code,StrDup(str+1));
-            EmitCode(htc,OPC_HSNAME);
-            if (fEncodeURL) {
-                EmitCode(htc,OPC_LOCURI);
-            }
-            if (fEscapeJavaScriptString) {
-                EmitCode(htc,OPC_ESCJSS);
-            }
-            EmitCode(htc,OPC_REFSTR);
-            break;
-        default:
-            EmitCode(htc,OPC_NAME);
-            LBS_EmitPointer(htc->code,StrDup(str));
-            if (fEncodeURL) {
-                EmitCode(htc,OPC_LOCURI);
-				EmitCode(htc,OPC_REFSTR);
-            } else
-            if (fEscapeJavaScriptString) {
-                EmitCode(htc,OPC_ESCJSS);
-				EmitCode(htc,OPC_REFSTR);
-            } else {
-				EmitCode(htc,OPC_EMITHTML);
-			}
-            break;
+	  case '$':
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(str+1));
+		EmitCode(htc,OPC_PHSTR);
+		if (fEncodeURL) {
+			EmitCode(htc,OPC_LOCURI);
+		}
+		if (fEscapeJavaScriptString) {
+			EmitCode(htc,OPC_ESCJSS);
+		}
+		EmitCode(htc,OPC_EMITSTR);
+		break;
+	  default:
+		EmitCode(htc,OPC_NAME);
+		LBS_EmitPointer(htc->code,StrDup(str));
+		if (fEncodeURL) {
+			EmitCode(htc,OPC_LOCURI);
+			EmitCode(htc,OPC_EMITSTR);
+		} else
+		if (fEscapeJavaScriptString) {
+			EmitCode(htc,OPC_ESCJSS);
+			EmitCode(htc,OPC_EMITSTR);
+		} else {
+			EmitCode(htc,OPC_EMITRAW);
+		}
+		break;
 	}
 	if		(  fQuote  ) {
 		LBS_EmitString(htc->code,"\"");
+	}
+}
+
+static	void
+EmitAttribute(
+	HTCInfo	*htc,
+	Tag		*tag,
+	char	*name)
+{
+	char	*attr;
+
+	if		(  ( attr = GetArg(tag,name,0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code," ");
+		LBS_EmitString(htc->code,name);
+		LBS_EmitString(htc->code,"=");
+		EmitAttributeValue(htc,attr,TRUE,FALSE,FALSE);
 	}
 }
 
@@ -180,7 +196,8 @@ ExpandAttributeString(
 	  case	'$':
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(para+1));
-		EmitCode(htc,OPC_EHSNAME);
+		EmitCode(htc,OPC_PHSTR);
+		EmitCode(htc,OPC_EMITSTR);
 		break;
 	  case	'\\':
 		LBS_EmitString(htc->code,para+1);
@@ -248,11 +265,12 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
 						||	(  buf[0]  ==  '#'  ) ) {
 					EmitCode(htc,OPC_NAME);
 					LBS_EmitPointer(htc->code,StrDup(buf));
-					EmitCode(htc,OPC_REFSTR);
+					EmitCode(htc,OPC_EMITSTR);
 				} else {
 					EmitCode(htc,OPC_NAME);
 					LBS_EmitPointer(htc->code,StrDup(buf));
-					EmitCode(htc,OPC_EHSNAME);
+					EmitCode(htc,OPC_PHSTR);
+					EmitCode(htc,OPC_EMITSTR);
 				}
 				break;
 			  case	'\\':
@@ -309,22 +327,9 @@ Style(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*id
-		,	*klass
-		,	*style;
-
-	if		(  ( id = GetArg(tag,"id",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," id=");
-		EmitAttributeValue(htc,id,TRUE,FALSE,FALSE);
-	}
-	if		(  ( klass = GetArg(tag,"class",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," class=");
-		EmitAttributeValue(htc,klass,TRUE,FALSE,FALSE);
-	}
-	if		(  ( style = GetArg(tag,"style",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code," style=");
-		EmitAttributeValue(htc,style,TRUE,FALSE,FALSE);
-	}
+	EmitAttribute(htc,tag,"id");
+	EmitAttribute(htc,tag,"class");
+	EmitAttribute(htc,tag,"style");
 }
 
 static	void
@@ -349,20 +354,21 @@ ENTER_FUNC;
 
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(name));
-		EmitCode(htc,OPC_REFSTR);
+		EmitCode(htc,OPC_EMITSTR);
 
 		LBS_EmitString(htc->code,"\" value=\"");
 
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(name));
-		EmitCode(htc,OPC_EHSNAME);
+		EmitCode(htc,OPC_PHSTR);
+		EmitCode(htc,OPC_EMITSTR);
 
 		LBS_EmitString(htc->code,"\"");
 		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code," size=\"");
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(size));
-			EmitCode(htc,OPC_REFSTR);
+			EmitCode(htc,OPC_EMITSTR);
 			LBS_EmitString(htc->code,"\"");
 
 		}
@@ -371,7 +377,7 @@ ENTER_FUNC;
 
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(maxlength));
-			EmitCode(htc,OPC_REFSTR);
+			EmitCode(htc,OPC_EMITSTR);
 			LBS_EmitString(htc->code,"\"");
 
 		}
@@ -394,7 +400,12 @@ _Fixed(
 		,	*target
 		,	*value
 		,	*type;
-	Bool	fRaw;
+	int		dtype;
+
+#define	DTYPE_RAW		0
+#define	DTYPE_DIV		1
+#define	DTYPE_SPAN		2
+#define	DTYPE_PRE		3
 
 ENTER_FUNC;
 	value = GetArg(tag,"value",0);
@@ -402,27 +413,40 @@ ENTER_FUNC;
 	type = GetArg(tag,"type",0);
 	if		(	(  value  !=  NULL  )
 			||	(  name   !=  NULL  ) ) {
-		fRaw = FALSE;
 		if		(  type  !=  NULL  ) {
 			if		(  !stricmp(type,"html")  ) {
 				LBS_EmitString(htc->code,"<div");
 				Style(htc,tag);
 				LBS_EmitString(htc->code,">\n");
+				dtype = DTYPE_DIV;
 			} else
 			if		(  !stricmp(type,"raw")  ) {
-				fRaw = TRUE;
+				dtype = DTYPE_RAW;
+			} else
+			if		(  !stricmp(type,"pre")  ) {
+				LBS_EmitString(htc->code,"<pre");
+				Style(htc,tag);
+				LBS_EmitString(htc->code,">");
+				dtype = DTYPE_PRE;
+			} else {
+				LBS_EmitString(htc->code,"<span");
+				Style(htc,tag);
+				LBS_EmitString(htc->code,">");
+				dtype = DTYPE_SPAN;
 			}
 		} else {
 			LBS_EmitString(htc->code,"<span");
 			Style(htc,tag);
 			LBS_EmitString(htc->code,">");
+			dtype = DTYPE_SPAN;
 		}
 		if		(  ( link = GetArg(tag,"link",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code,"<a href=\"");
 
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(link));
-			EmitCode(htc,OPC_EHSNAME);
+			EmitCode(htc,OPC_PHSTR);
+			EmitCode(htc,OPC_EMITSTR);
 
 			LBS_EmitString(htc->code,"\"");
 			if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
@@ -442,29 +466,34 @@ ENTER_FUNC;
 			} else {
 				EmitCode(htc,OPC_NAME);
 				LBS_EmitPointer(htc->code,StrDup(name));
-				EmitCode(htc,OPC_HSNAME);
+				EmitCode(htc,OPC_PHSTR);
 			}
-			if		(  fRaw  ) {
-				EmitCode(htc,OPC_EMITHTML);
-			} else
-			if		(	(  type  !=  NULL  )
-					&&	(  !stricmp(type,"html")  ) ) {
-				EmitCode(htc,OPC_EMITHTML);
-			} else {
+			switch	(dtype) {
+			  case	DTYPE_RAW:
+			  case	DTYPE_DIV:
+			  case	DTYPE_PRE:
+				EmitCode(htc,OPC_EMITRAW);
+				break;
+			  default:
 				EmitCode(htc,OPC_EMITSTR);
+				break;
 			}
 		}
 		if		(  link  !=  NULL  ) {
 			LBS_EmitString(htc->code,"</a>");
 		}
-		if		(  fRaw  ) {
-		} else {
-			if		(	(  type  !=  NULL  )
-					&&	(  !stricmp(type,"html")  ) ) {
-				LBS_EmitString(htc->code,"</div>");
-			} else {
-				LBS_EmitString(htc->code,"</span>\n");
-			}
+		switch	(dtype) {
+		  case	DTYPE_RAW:
+			break;
+		  case	DTYPE_DIV:
+			LBS_EmitString(htc->code,"</div>");
+			break;
+		  case	DTYPE_SPAN:
+			LBS_EmitString(htc->code,"</span>\n");
+			break;
+		  case	DTYPE_PRE:
+			LBS_EmitString(htc->code,"</pre>");
+			break;
 		}
 	}
 LEAVE_FUNC;
@@ -486,7 +515,7 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_NAME);
 	vname = StrDup(GetArg(tag,"name",0));
 	LBS_EmitPointer(htc->code,vname);
-	EmitCode(htc,OPC_REFSTR);
+	EmitCode(htc,OPC_EMITSTR);
 	size = GetArg(tag,"size",0);
 	if		(  size  ==  NULL  ) {
 		LBS_EmitString(htc->code,"\"");
@@ -494,7 +523,7 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,"\" size=");
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
-		EmitCode(htc,OPC_REFSTR);
+		EmitCode(htc,OPC_EMITSTR);
 		LBS_EmitString(htc->code,"\"");
 	}
     JavaScriptEvent(htc, tag, "onchange");
@@ -518,18 +547,18 @@ ENTER_FUNC;
 	/*	selected	*/
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,vname);
-	EmitCode(htc,OPC_HSNAME);
+	EmitCode(htc,OPC_PHSTR);
 	EmitCode(htc,OPC_NAME);
 	sprintf(name,"%s[#]",GetArg(tag,"item",0));
 	LBS_EmitPointer(htc->code,StrDup(name));
-	EmitCode(htc,OPC_HSNAME);
+	EmitCode(htc,OPC_PHSTR);
 	EmitCode(htc,OPC_SCMP);
 	EmitCode(htc,OPC_JNZNP);
 	arg = LBS_GetPos(htc->code);
 	LBS_EmitInt(htc->code,0);
 	EmitCode(htc,OPC_SCONST);
 	LBS_EmitPointer(htc->code,"selected");
-	EmitCode(htc,OPC_REFSTR);
+	EmitCode(htc,OPC_EMITSTR);
 	pos = LBS_GetPos(htc->code);
 	LBS_SetPos(htc->code,arg);
 	LBS_EmitInt(htc->code,pos);
@@ -540,7 +569,8 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_NAME);
 	sprintf(name,"%s[#]",GetArg(tag,"item",0));
 	LBS_EmitPointer(htc->code,StrDup(name));
-	EmitCode(htc,OPC_EHSNAME);
+	EmitCode(htc,OPC_PHSTR);
+	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"</option>\n");
 
 	EmitCode(htc,OPC_LEND);
@@ -578,7 +608,7 @@ ENTER_FUNC;
     EmitCode(htc, OPC_SCONST);
     htc->EnctypePos = LBS_GetPos(htc->code);
     LBS_EmitPointer(htc->code, enctype_urlencoded);
-    EmitCode(htc, OPC_REFSTR);
+    EmitCode(htc, OPC_EMITSTR);
     LBS_EmitString(htc->code, "\"");
 	Style(htc,tag);
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
@@ -648,7 +678,7 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_NAME);
 	name = StrDup(GetArg(tag,"name",0));
 	LBS_EmitPointer(htc->code,name);
-	EmitCode(htc,OPC_REFSTR);
+	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\"");
 	if		(  ( cols = GetArg(tag,"cols",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," cols=");
@@ -666,28 +696,74 @@ ENTER_FUNC;
 
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,name);
+	EmitCode(htc,OPC_PHSTR);
 	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
 			||	(  !stricmp(type,"text")                      ) ) {
-		EmitCode(htc,OPC_EHSNAME);
+		EmitCode(htc,OPC_EMITSTR);
 	} else {
-		EmitCode(htc,OPC_HSNAME);
-		EmitCode(htc,OPC_EMITHTML);
+		EmitCode(htc,OPC_EMITRAW);
 	}
 	LBS_EmitString(htc->code,"</textarea>\n");
 LEAVE_FUNC;
 }
 
+static	Bool	fHead;
 static	void
 _Head(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
 ENTER_FUNC;
+	LBS_EmitString(htc->code,"<head");
+	EmitAttribute(htc,tag,"profile");
+	EmitAttribute(htc,tag,"class");
+	EmitAttribute(htc,tag,"id");
+	EmitAttribute(htc,tag,"dir");
+	EmitAttribute(htc,tag,"lang");
+	EmitAttribute(htc,tag,"title");
+	LBS_EmitString(htc->code,">\n");
 	LBS_EmitString(htc->code,
-				   "<head>\n<meta http-equiv=\"Pragma\" content=\"no-cache\">");
+				   "<meta http-equiv=\"Pragma\" content=\"no-cache\">\n");
 	EmitCode(htc,OPC_FLJS);
+	fHead = TRUE;
 LEAVE_FUNC;
-}	
+}
+
+static	void
+_Body(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+ENTER_FUNC;
+	if		(  !fHead  ) {
+		LBS_EmitString(htc->code,
+					   "<head>\n<meta http-equiv=\"Pragma\" content=\"no-cache\">\n");
+		EmitCode(htc,OPC_FLJS);
+		LBS_EmitString(htc->code,"</head>\n");
+		fHead = TRUE;
+	}
+	LBS_EmitString(htc->code,"<body");
+	EmitAttribute(htc,tag,"text");
+	EmitAttribute(htc,tag,"link");
+	EmitAttribute(htc,tag,"vlink");
+	EmitAttribute(htc,tag,"alink");
+	EmitAttribute(htc,tag,"bgcolor");
+	EmitAttribute(htc,tag,"background");
+	EmitAttribute(htc,tag,"bgproperties");
+	EmitAttribute(htc,tag,"marginheight");
+	EmitAttribute(htc,tag,"marginwidth");
+	EmitAttribute(htc,tag,"topmargin");
+	EmitAttribute(htc,tag,"leftmargin");
+	EmitAttribute(htc,tag,"bottommargin");
+	EmitAttribute(htc,tag,"rightmargin");
+	EmitAttribute(htc,tag,"scroll");
+	EmitAttribute(htc,tag,"dir");
+	EmitAttribute(htc,tag,"lang");
+	EmitAttribute(htc,tag,"title");
+	Style(htc,tag);
+	LBS_EmitString(htc->code,">\n");
+LEAVE_FUNC;
+}
 
 static	void
 _eBody(
@@ -740,7 +816,7 @@ ENTER_FUNC;
 		} else {
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(from));
-			EmitCode(htc,OPC_HINAME);
+			EmitCode(htc,OPC_PHINT);
 		}
 	} else {
 		EmitCode(htc,OPC_ICONST);
@@ -755,7 +831,7 @@ ENTER_FUNC;
 		} else {
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(to));
-			EmitCode(htc,OPC_HINAME);
+			EmitCode(htc,OPC_PHINT);
 		}
 	} else {
 		EmitCode(htc,OPC_ICONST);
@@ -768,7 +844,7 @@ ENTER_FUNC;
 		} else {
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(step));
-			EmitCode(htc,OPC_HINAME);
+			EmitCode(htc,OPC_PHINT);
 		}
 	} else {
 		EmitCode(htc,OPC_ICONST);
@@ -801,6 +877,24 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+_If(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+ENTER_FUNC;
+LEAVE_FUNC;
+}
+
+static	void
+_eIf(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+ENTER_FUNC;
+LEAVE_FUNC;
+}
+
 static	Bool	fButton;
 static	void
 _Button(
@@ -819,7 +913,7 @@ ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(state));
-		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_PHINT);
 	} else {
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,0);
@@ -868,7 +962,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code," size=");
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(size));
-			EmitCode(htc,OPC_REFSTR);
+			EmitCode(htc,OPC_EMITSTR);
 		}
 #else
 		if		(  fJavaScript  ) {
@@ -892,7 +986,7 @@ ENTER_FUNC;
 				LBS_EmitString(htc->code," size=");
 				EmitCode(htc,OPC_NAME);
 				LBS_EmitPointer(htc->code,StrDup(size));
-				EmitCode(htc,OPC_REFSTR);
+				EmitCode(htc,OPC_EMITSTR);
 			}
 		}
 #endif
@@ -912,9 +1006,11 @@ _eButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
+#ifndef	USE_IE5
 	if		(  fButton  ) {
 		LBS_EmitString(htc->code,"</button>\n");
 	}
+#endif
 }
 
 static	void
@@ -930,7 +1026,7 @@ ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(state));
-		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_PHINT);
 	} else {
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,0);
@@ -977,7 +1073,7 @@ ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(state));
-		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_PHINT);
 	} else {
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,0);
@@ -1035,7 +1131,7 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-	EmitCode(htc,OPC_REFSTR);
+	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\" ");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
@@ -1048,7 +1144,8 @@ ENTER_FUNC;
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(label));
-		EmitCode(htc,OPC_EHSNAME);
+		EmitCode(htc,OPC_PHSTR);
+		EmitCode(htc,OPC_EMITSTR);
 	}
 LEAVE_FUNC;
 }
@@ -1064,7 +1161,7 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-	EmitCode(htc,OPC_REFSTR);
+	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\" ");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
@@ -1078,7 +1175,8 @@ ENTER_FUNC;
 		if		(  *label  ==  '$'  ) {
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(label+1));
-			EmitCode(htc,OPC_EHSNAME);
+			EmitCode(htc,OPC_PHSTR);
+			EmitCode(htc,OPC_EMITSTR);
 		} else {
 			LBS_EmitString(htc->code,label);
 		}
@@ -1101,7 +1199,7 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"radio\" name=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(group));
-	EmitCode(htc,OPC_REFSTR);
+	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\" ");
 
 	EmitCode(htc,OPC_NAME);
@@ -1112,7 +1210,7 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code," value=\"");
 	EmitCode(htc,OPC_NAME);
 	LBS_EmitPointer(htc->code,StrDup(name));
-	EmitCode(htc,OPC_REFSTR);
+	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\"");
 	JavaScriptEvent(htc, tag, "onclick");
 
@@ -1122,7 +1220,8 @@ ENTER_FUNC;
 		if		(  *label  ==  '$'  ) {
 			EmitCode(htc,OPC_NAME);
 			LBS_EmitPointer(htc->code,StrDup(label+1));
-			EmitCode(htc,OPC_EHSNAME);
+			EmitCode(htc,OPC_PHSTR);
+			EmitCode(htc,OPC_EMITSTR);
 		} else {
 			LBS_EmitString(htc->code,label);
 		}
@@ -1146,13 +1245,13 @@ ENTER_FUNC;
         LBS_EmitString(htc->code,"<select name=\"");
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-        EmitCode(htc,OPC_REFSTR);
+        EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"\"");
         if ((size = GetArg(tag,"size",0)) != NULL) {
             LBS_EmitString(htc->code," size=\"");
             EmitCode(htc,OPC_NAME);
             LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
-            EmitCode(htc,OPC_REFSTR);
+            EmitCode(htc,OPC_EMITSTR);
             LBS_EmitString(htc->code,"\"");
         }
         if ((multiple = GetArg(tag,"multiple",0)) != NULL &&
@@ -1180,7 +1279,8 @@ ENTER_FUNC;
 			EmitCode(htc,OPC_NAME);
 			sprintf(buf,"%s[#]",value);
 			LBS_EmitPointer(htc->code,StrDup(buf));
-			EmitCode(htc,OPC_EHSNAME);
+			EmitCode(htc,OPC_PHSTR);
+			EmitCode(htc,OPC_EMITSTR);
 		} else {
 			EmitCode(htc,OPC_LDVAR);
 			LBS_EmitPointer(htc->code,"");
@@ -1198,7 +1298,8 @@ ENTER_FUNC;
         EmitCode(htc,OPC_NAME);
         sprintf(buf,"%s[#]",label);
         LBS_EmitPointer(htc->code,StrDup(buf));
-        EmitCode(htc,OPC_EHSNAME);
+		EmitCode(htc,OPC_PHSTR);
+		EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"</option>\n");
 
         EmitCode(htc,OPC_LEND);
@@ -1227,7 +1328,7 @@ ENTER_FUNC;
         LBS_EmitString(htc->code,"<select name=\"");
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(sel));
-        EmitCode(htc,OPC_REFSTR);
+        EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"\" size=\"1\"");
         Style(htc,tag);
         LBS_EmitString(htc->code,">\n");
@@ -1256,7 +1357,7 @@ ENTER_FUNC;
 		LBS_EmitPointer(htc->code,NULL);
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(sel));
-		EmitCode(htc,OPC_HSNAME);
+		EmitCode(htc,OPC_PHSTR);
 		EmitCode(htc,OPC_TOINT);
 		EmitCode(htc,OPC_SUB);
 		EmitCode(htc,OPC_JNZNP);
@@ -1265,7 +1366,7 @@ ENTER_FUNC;
 
 		EmitCode(htc,OPC_SCONST);
         LBS_EmitPointer(htc->code,"selected");
-		EmitCode(htc,OPC_REFSTR);
+		EmitCode(htc,OPC_EMITSTR);
 
 		pos = LBS_GetPos(htc->code);
 		LBS_SetPos(htc->code,Pop);
@@ -1277,7 +1378,8 @@ ENTER_FUNC;
         EmitCode(htc,OPC_NAME);
         sprintf(buf,"%s[#]",item);
         LBS_EmitPointer(htc->code,StrDup(buf));
-        EmitCode(htc,OPC_EHSNAME);
+		EmitCode(htc,OPC_PHSTR);
+		EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"</option>\n");
 
         EmitCode(htc,OPC_LEND);
@@ -1308,13 +1410,13 @@ ENTER_FUNC;
         LBS_EmitString(htc->code,"<select name=\"");
         EmitCode(htc,OPC_NAME);
         LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
-        EmitCode(htc,OPC_REFSTR);
+        EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"\"");
         if ((size = GetArg(tag,"size",0)) != NULL) {
             LBS_EmitString(htc->code," size=\"");
             EmitCode(htc,OPC_NAME);
             LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
-            EmitCode(htc,OPC_REFSTR);
+            EmitCode(htc,OPC_EMITSTR);
             LBS_EmitString(htc->code,"\"");
         }
         if ((multiple = GetArg(tag,"multiple",0)) != NULL &&
@@ -1378,19 +1480,20 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code, "<input type=\"file\" name=\"");
 		EmitCode(htc, OPC_NAME);
 		LBS_EmitPointer(htc->code, StrDup(name));
-		EmitCode(htc, OPC_REFSTR);
+		EmitCode(htc, OPC_EMITSTR);
 
 		LBS_EmitString(htc->code, "\" value=\"");
 		EmitCode(htc, OPC_NAME);
 		LBS_EmitPointer(htc->code, StrDup(filename));
-		EmitCode(htc, OPC_EHSNAME);
+		EmitCode(htc,OPC_PHSTR);
+		EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code, "\"");
 
 		if ((size = GetArg(tag, "size", 0)) != NULL) {
 			LBS_EmitString(htc->code, " size=\"");
 			EmitCode(htc, OPC_NAME);
 			LBS_EmitPointer(htc->code, StrDup(size));
-			EmitCode(htc, OPC_REFSTR);
+			EmitCode(htc, OPC_EMITSTR);
 			LBS_EmitString(htc->code, "\"");
 		}
 
@@ -1398,7 +1501,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code, " maxlength=\"");
 			EmitCode(htc, OPC_NAME);
 			LBS_EmitPointer(htc->code, StrDup(maxlength));
-			EmitCode(htc, OPC_REFSTR);
+			EmitCode(htc, OPC_EMITSTR);
 			LBS_EmitString(htc->code, "\"");
 		}
 
@@ -1449,7 +1552,7 @@ ENTER_FUNC;
             EmitCode(htc, OPC_NAME);
             LBS_EmitPointer(htc->code, StrDup(event));
             EmitCode(htc, OPC_ESCJSS);
-            EmitCode(htc, OPC_REFSTR);
+            EmitCode(htc, OPC_EMITSTR);
             LBS_EmitString(htc->code, "';");
 
             if ((name = GetArg(tag, "name", 0)) != NULL &&
@@ -1460,7 +1563,7 @@ ENTER_FUNC;
                 EmitCode(htc, OPC_NAME);
                 LBS_EmitPointer(htc->code, StrDup(name));
                 EmitCode(htc, OPC_ESCJSS);
-                EmitCode(htc, OPC_REFSTR);
+                EmitCode(htc, OPC_EMITSTR);
                 LBS_EmitString(htc->code, "';");
                 snprintf(buf, SIZE_BUFF,
                          "document.forms[%d].elements[1].value='", htc->FormNo);
@@ -1480,16 +1583,16 @@ ENTER_FUNC;
                 LBS_EmitChar(htc->code, '/');
                 EmitCode(htc, OPC_NAME);
                 LBS_EmitPointer(htc->code, StrDup(filename));
-                EmitCode(htc, OPC_HSNAME);
+                EmitCode(htc, OPC_PHSTR);
                 EmitCode(htc, OPC_UTF8URI);
-                EmitCode(htc, OPC_REFSTR);
+                EmitCode(htc, OPC_EMITSTR);
             }
             LBS_EmitString(htc->code, "?_name=");
             EmitGetValue(htc,"_name");
             LBS_EmitString(htc->code, "&amp;_event=");
             EmitCode(htc, OPC_NAME);
             LBS_EmitPointer(htc->code, StrDup(event));
-            EmitCode(htc, OPC_REFSTR);
+            EmitCode(htc, OPC_EMITSTR);
             if (!fCookie) {
                 LBS_EmitString(htc->code, "&amp;_sesid=");
                 EmitGetValue(htc,"_sesid");
@@ -1499,7 +1602,7 @@ ENTER_FUNC;
                 LBS_EmitString(htc->code,"&amp;");
                 EmitCode(htc, OPC_NAME);
                 LBS_EmitPointer(htc->code,StrDup(name));
-                EmitCode(htc, OPC_REFSTR);
+                EmitCode(htc, OPC_EMITSTR);
                 LBS_EmitString(htc->code,"=");
                 EmitAttributeValue(htc, value, FALSE, TRUE, FALSE); 
             }
@@ -1507,25 +1610,25 @@ ENTER_FUNC;
                 LBS_EmitString(htc->code, "&amp;_file=");
                 EmitCode(htc, OPC_NAME);
                 LBS_EmitPointer(htc->code, StrDup(file));
-                EmitCode(htc, OPC_REFSTR);
+                EmitCode(htc, OPC_EMITSTR);
             }
             if (filename != NULL) {
                 LBS_EmitString(htc->code, "&amp;_filename=");
                 EmitCode(htc, OPC_NAME);
                 LBS_EmitPointer(htc->code, StrDup(filename));
-                EmitCode(htc, OPC_REFSTR);
+                EmitCode(htc, OPC_EMITSTR);
             }
             if ((contenttype = GetArg(tag, "contenttype", 0)) != NULL) {
                 LBS_EmitString(htc->code, "&amp;_contenttype=");
                 EmitCode(htc, OPC_NAME);
                 LBS_EmitPointer(htc->code, StrDup(contenttype));
-                EmitCode(htc, OPC_REFSTR);
+                EmitCode(htc, OPC_EMITSTR);
             }
             if ((disposition = GetArg(tag, "disposition", 0)) != NULL) {
                 LBS_EmitString(htc->code, "&amp;_disposition=");
                 EmitCode(htc, OPC_NAME);
                 LBS_EmitPointer(htc->code, StrDup(disposition));
-                EmitCode(htc, OPC_REFSTR);
+                EmitCode(htc, OPC_EMITSTR);
             }
         }
 		LBS_EmitString(htc->code,"\"");
@@ -1563,7 +1666,7 @@ ENTER_FUNC;
     else {
         EmitCode(htc, OPC_NAME);
         LBS_EmitPointer(htc->code, StrDup(visible));
-        EmitCode(htc, OPC_HBNAME);
+        EmitCode(htc, OPC_PHBOOL);
         EmitCode(htc, OPC_JNZP);
         Push(LBS_GetPos(htc->code));
         LBS_EmitInt(htc->code, 0);
@@ -1640,7 +1743,7 @@ ENTER_FUNC;
 		year = StrDup(year);
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,year);
-		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_PHINT);
 		EmitCode(htc,OPC_JNZNP);
 		Push(LBS_GetPos(htc->code));
 		LBS_EmitInt(htc->code,0);
@@ -1658,7 +1761,7 @@ ENTER_FUNC;
 		month = StrDup(month);
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,month);
-		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_PHINT);
 		EmitCode(htc,OPC_JNZNP);
 		Push(LBS_GetPos(htc->code));
 		LBS_EmitInt(htc->code,0);
@@ -1676,7 +1779,7 @@ ENTER_FUNC;
 		day = StrDup(day);
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,day);
-		EmitCode(htc,OPC_HINAME);
+		EmitCode(htc,OPC_PHINT);
 		EmitCode(htc,OPC_JNZNP);
 		Push(LBS_GetPos(htc->code));
 		LBS_EmitInt(htc->code,0);
@@ -1770,6 +1873,24 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }	
 
+static	void
+AddArg(
+	Tag		*tag,
+	char	*name,
+	Bool	fPara)
+{
+	TagType	*type;
+
+	if		(  ( type = g_hash_table_lookup(tag->args,name) )  ==  NULL  ) {
+		type = New(TagType);
+		type->name = StrDup(name);
+		g_hash_table_insert(tag->args,type->name,type);
+	}
+	type->fPara = fPara;
+	type->nPara = 0;
+	type->Para = NULL;
+}
+
 static	Tag		*
 NewTag(
 	char	*name,
@@ -1782,23 +1903,12 @@ NewTag(
 	tag->emit = emit;
 	tag->args = NewNameiHash();
 	g_hash_table_insert(Tags,tag->name,tag);
+	if		(  *name  !=  '/'  ) {
+		AddArg(tag,"id",TRUE);
+		AddArg(tag,"class",TRUE);
+		AddArg(tag,"style",TRUE);
+	}
 	return	(tag);
-}
-
-static	void
-AddArg(
-	Tag		*tag,
-	char	*name,
-	Bool	fPara)
-{
-	TagType	*type;
-
-	type = New(TagType);
-	type->name = name;
-	type->fPara = fPara;
-	type->nPara = 0;
-	type->Para = NULL;
-	g_hash_table_insert(tag->args,type->name,type);
 }
 
 extern	void
@@ -1808,7 +1918,7 @@ TagsInit(char *script_name)
 
 ENTER_FUNC;
     ScriptName = script_name; 
- 
+
 	pAStack = 0; 
 	Tags = NewNameiHash();
 
@@ -1820,9 +1930,6 @@ ENTER_FUNC;
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"onkeydown",TRUE);
 	AddArg(tag,"onkeyup",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/ENTRY",NULL);
 
 	tag = NewTag("COMBO",_Combo);
@@ -1831,9 +1938,6 @@ ENTER_FUNC;
 	AddArg(tag,"item",TRUE);
 	AddArg(tag,"count",TRUE);
 	AddArg(tag,"onchange",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/COMBO",NULL);
 
 	tag = NewTag("FIXED",_Fixed);
@@ -1843,9 +1947,6 @@ ENTER_FUNC;
 	AddArg(tag,"link",TRUE);
 	AddArg(tag,"target",TRUE);
 	AddArg(tag,"value",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/FIXED",NULL);
 
 	tag = NewTag("SPAN",_Span);
@@ -1859,9 +1960,6 @@ ENTER_FUNC;
 	AddArg(tag,"onmouseout",TRUE);
 	AddArg(tag,"onmouseover",TRUE);
 	AddArg(tag,"onmousesetup",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	//	tag = NewTag("/SPAN",NULL);
 
 	tag = NewTag("A",_A);
@@ -1877,9 +1975,6 @@ ENTER_FUNC;
 	AddArg(tag,"onmousesetup",TRUE);
 	AddArg(tag,"href",TRUE);
 	AddArg(tag,"name",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	AddArg(tag,"target",TRUE);
 
 	tag = NewTag("COUNT",_Count);
@@ -1897,9 +1992,6 @@ ENTER_FUNC;
 	AddArg(tag,"onchange",TRUE);
 	AddArg(tag,"onkeydown",TRUE);
 	AddArg(tag,"onkeyup",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/TEXT",NULL);
 
 	tag = NewTag("BUTTON",_Button);
@@ -1908,26 +2000,17 @@ ENTER_FUNC;
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"onclick",TRUE);
 	AddArg(tag,"state",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/BUTTON",_eButton);
 
 	tag = NewTag("TOGGLEBUTTON",_ToggleButton);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"label",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	AddArg(tag,"onclick",TRUE);
 	tag = NewTag("/TOGGLEBUTTON",NULL);
 
 	tag = NewTag("CHECKBUTTON",_CheckButton);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"label",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	AddArg(tag,"onclick",TRUE);
 	tag = NewTag("/CHECKBUTTON",NULL);
 
@@ -1935,9 +2018,6 @@ ENTER_FUNC;
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"group",TRUE);
 	AddArg(tag,"label",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	AddArg(tag,"onclick",TRUE);
 	tag = NewTag("/RADIOBUTTON",NULL);
 
@@ -1949,9 +2029,6 @@ ENTER_FUNC;
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"multiple",TRUE);
 	AddArg(tag,"onchange",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"style",TRUE);
-	AddArg(tag,"class",TRUE);
 	tag = NewTag("/LIST",NULL);
 
 	tag = NewTag("SELECT",_Select);
@@ -1960,9 +2037,6 @@ ENTER_FUNC;
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"multiple",TRUE);
 	AddArg(tag,"onchange",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/SELECT",NULL);
 
 	tag = NewTag("FILESELECTION",_FileSelection);
@@ -1970,9 +2044,6 @@ ENTER_FUNC;
 	AddArg(tag,"filename",TRUE);
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"maxlength",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/FILESELECTION",NULL);
 
 	tag = NewTag("HYPERLINK",_HyperLink);
@@ -1984,16 +2055,10 @@ ENTER_FUNC;
 	AddArg(tag,"contenttype",TRUE);
 	AddArg(tag,"disposition",TRUE);
     AddArg(tag,"target",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/HYPERLINK",_eHyperLink);
 
 	tag = NewTag("PANEL", _Panel);
 	AddArg(tag, "visible", TRUE);
-	AddArg(tag, "id", TRUE);
-	AddArg(tag, "class", TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/PANEL", _ePanel);
 
 	tag = NewTag("CALENDAR",_Calendar);
@@ -2015,9 +2080,6 @@ ENTER_FUNC;
 	tag = NewTag("/CALENDAR",NULL);
 
 	tag = NewTag("OPTION", _Option);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	AddArg(tag,"select",TRUE);
 	AddArg(tag,"value",TRUE);
 	tag = NewTag("/OPTION", NULL);
@@ -2026,9 +2088,6 @@ ENTER_FUNC;
 	AddArg(tag,"count",TRUE);
 	AddArg(tag,"select",TRUE);
 	AddArg(tag,"item",TRUE);
-	AddArg(tag,"id",TRUE);
-	AddArg(tag,"class",TRUE);
-	AddArg(tag,"style",TRUE);
 	tag = NewTag("/OPTIONMENU",NULL);
 
 	tag = NewTag("HTC",_Htc);
@@ -2041,6 +2100,30 @@ ENTER_FUNC;
 	AddArg(tag,"target",TRUE);
 
 	tag = NewTag("HEAD",_Head);
+	AddArg(tag,"profile",TRUE);
+	AddArg(tag,"dir",TRUE);
+	AddArg(tag,"lang",TRUE);
+	AddArg(tag,"title",TRUE);
+
+	tag = NewTag("BODY",_Body);
+	AddArg(tag,"text",TRUE);
+	AddArg(tag,"link",TRUE);
+	AddArg(tag,"vlink",TRUE);
+	AddArg(tag,"alink",TRUE);
+	AddArg(tag,"bgcolor",TRUE);
+	AddArg(tag,"background",TRUE);
+	AddArg(tag,"bgproperties",TRUE);
+	AddArg(tag,"marginheight",TRUE);
+	AddArg(tag,"marginhwidth",TRUE);
+	AddArg(tag,"topmargin",TRUE);
+	AddArg(tag,"leftmargin",TRUE);
+	AddArg(tag,"bottommargin",TRUE);
+	AddArg(tag,"rightmargin",TRUE);
+	AddArg(tag,"scroll",TRUE);
+	AddArg(tag,"dir",TRUE);
+	AddArg(tag,"lang",TRUE);
+	AddArg(tag,"title",TRUE);
+
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);
 LEAVE_FUNC;
