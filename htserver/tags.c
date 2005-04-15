@@ -64,6 +64,8 @@ static char *enctype_urlencoded = "application/x-www-form-urlencoded";
 static char *enctype_multipart = "multipart/form-data";
 
 static char *ScriptName;
+static	Bool	fButton;
+static	Bool	fHead;
 
 #define IsTrue(s)  (*(s) == 'T' || *(s) == 't')
 
@@ -144,6 +146,9 @@ EmitAttributeValue(
 		EmitCode(htc,OPC_EMITSTR);
 		break;
 	  default:
+#if	1
+		LBS_EmitString(htc->code,str);
+#else
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(str));
 		if (fEncodeURL) {
@@ -156,6 +161,7 @@ EmitAttributeValue(
 		} else {
 			EmitCode(htc,OPC_EMITRAW);
 		}
+#endif
 		break;
 	}
 	if		(  fQuote  ) {
@@ -707,7 +713,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	Bool	fHead;
 static	void
 _Head(
 	HTCInfo	*htc,
@@ -760,6 +765,7 @@ ENTER_FUNC;
 	EmitAttribute(htc,tag,"dir");
 	EmitAttribute(htc,tag,"lang");
 	EmitAttribute(htc,tag,"title");
+	JavaScriptEvent(htc,tag,"oncontextmenu");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 LEAVE_FUNC;
@@ -877,6 +883,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+#if	0
 static	void
 _If(
 	HTCInfo	*htc,
@@ -894,8 +901,8 @@ _eIf(
 ENTER_FUNC;
 LEAVE_FUNC;
 }
+#endif
 
-static	Bool	fButton;
 static	void
 _Button(
 	HTCInfo	*htc,
@@ -1870,6 +1877,8 @@ _Htc(
 ENTER_FUNC;
 	Codeset = GetArg(tag,"coding",0); 
 	HTCSetCodeset(Codeset);
+	fButton = FALSE;
+	fHead = FALSE;
 LEAVE_FUNC;
 }	
 
@@ -2123,6 +2132,7 @@ ENTER_FUNC;
 	AddArg(tag,"dir",TRUE);
 	AddArg(tag,"lang",TRUE);
 	AddArg(tag,"title",TRUE);
+	AddArg(tag,"oncontextmenu",TRUE);
 
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);
