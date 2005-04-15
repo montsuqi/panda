@@ -1,4 +1,13 @@
+2005-04-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/exec.c (ExecCode): OPC_EMITSTRで空文字列の時に&nbsp;を
+	出力しないようにした
+
+	* htserver/exec.h: ValTypeをExprに統合
+
 2005-04-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/exec.h : 冗長な命令を廃止
 
 	* htserver/tags.c (ExpandAttributeString): 'で括った文字列に対応
 

@@ -83,6 +83,7 @@ RecvPanda(
 	int		type;
 	int		i;
 	WindowControl	ctl;
+	char	msg[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
@@ -130,6 +131,8 @@ ENTER_FUNC;
 		strcpy(ThisWidget,widget);
 		strcpy(ThisUser,user);
 	} else {
+		snprintf(msg,SIZE_LONGNAME,"window = [%s]",window);
+		MessageLog(msg);
 		Error("invalid LD");
 	}
 LEAVE_FUNC;
