@@ -2123,7 +2123,7 @@ ENTER_FUNC;
 	AddArg(tag,"background",TRUE);
 	AddArg(tag,"bgproperties",TRUE);
 	AddArg(tag,"marginheight",TRUE);
-	AddArg(tag,"marginhwidth",TRUE);
+	AddArg(tag,"marginwidth",TRUE);
 	AddArg(tag,"topmargin",TRUE);
 	AddArg(tag,"leftmargin",TRUE);
 	AddArg(tag,"bottommargin",TRUE);
