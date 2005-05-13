@@ -51,6 +51,7 @@ GLOBAL	Bool		fJavaScriptLink;
 GLOBAL	char		*SesDir;
 GLOBAL	char		*CommandLine;
 GLOBAL	time_t		SesExpire;
+GLOBAL	char		*ScreenDir;
 #undef	GLOBAL
 
 extern  void	CGI_InitValues(void);

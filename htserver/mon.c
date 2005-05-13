@@ -333,13 +333,11 @@ SendEvent(void)
 	char	*event;
 	HTCInfo	*htc;
 	char	*name;
-	char	htcname[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
     if		(  ( name = LoadValue("_name") )  !=  NULL  ) {
-		sprintf(htcname,"%s/%s.htc",ScreenDir,name);
 		fComm = FALSE;
-		if		(  ( htc = HTCParserFile(htcname) )  ==  NULL  ) {
+		if		(  ( htc = HTCParseFile(name) )  ==  NULL  ) {
 			exit(1);
 		}
 	} else {
@@ -369,15 +367,13 @@ static	LargeByteString	*
 Expired(void)
 {
 	LargeByteString	*html;
-	char	buff[SIZE_BUFF];
 	HTCInfo	*htc;
 
 ENTER_FUNC;
 	Codeset = SRC_CODESET;
 	html = NewLBS();
 	LBS_EmitStart(html);
-    sprintf(buff,"%s/expired.htc",ScreenDir);
-    if      (  ( htc = HTCParserFile(buff) )  ==  NULL  ) {
+    if      (  ( htc = HTCParseFile("expired") )  ==  NULL  ) {
         LBS_EmitUTF8(html,
                      "<html><head>"
                      "<title>htserver error</title>"
@@ -455,11 +451,10 @@ ENTER_FUNC;
                         return;
                     }
                 }
-				sprintf(buff,"%s/%s.htc",ScreenDir,name);
 				fComm = TRUE;
-                htc = HTCParserFile(buff);
-                if (htc == NULL)
+                if		(  ( htc = HTCParseFile(name) )  ==  NULL  ) {
                     exit(1);
+				}
 				html = NewLBS();
 				LBS_EmitStart(html);
                 ExecCode(html,htc);

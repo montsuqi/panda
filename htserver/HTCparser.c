@@ -311,28 +311,44 @@ HTCParserCore(
 }
 
 extern	HTCInfo	*
-HTCParserFile(
+HTCParseFile(
 	char	*name)
 {
 	FILE	*fp;
 	HTCInfo	*ret;
+	char	buff[SIZE_LONGNAME+1];
+	char	fname[SIZE_LONGNAME+1];
+	char	*p
+		,	*q;
 
 ENTER_FUNC;
-	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
-		fError = FALSE;
-		HTC_FileName = name;
-		HTC_cLine = 1;
-		HTC_File = fp;
-		HTC_Memory = NULL;
-		ret = HTCParserCore(GetCharFile,UnGetCharFile);
-		fclose(HTC_File);
-		if		(  fError  ) {
-			ret = NULL;
+	strcpy(buff,ScreenDir);
+	p = buff;
+	ret = NULL;
+	do {
+		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+			*q = 0;
 		}
-	} else {
-        fprintf(stderr, "HTC file not found: %s\n", name);
-        dbgprintf("HTC file not found: %s\n", name);
-		ret = NULL;
+		sprintf(fname,"%s/%s.htc",p,name);
+		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
+			fError = FALSE;
+			HTC_FileName = fname;
+			HTC_cLine = 1;
+			HTC_File = fp;
+			HTC_Memory = NULL;
+			ret = HTCParserCore(GetCharFile,UnGetCharFile);
+			fclose(HTC_File);
+			if		(  fError  ) {
+				ret = NULL;
+			} else
+				break;
+		}
+		p = q + 1;
+	}	while	(  q  !=  NULL  );
+
+	if		(  ret  ==  NULL  ) {
+        fprintf(stderr, "HTC file not found: %s\n", fname);
+        dbgprintf("HTC file not found: %s\n", fname);
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -360,7 +376,7 @@ UnGetCharMemory(
 }
 
 extern	HTCInfo	*
-HTCParserMemory(
+HTCParseMemory(
 	char	*buff)
 {
 	HTCInfo	*ret;

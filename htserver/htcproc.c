@@ -124,7 +124,7 @@ Session(
 	LargeByteString	*html;
 
 ENTER_FUNC;
-	htc = HTCParserFile(name);
+	htc = HTCParseFile(name);
 	if (htc == NULL)
 		exit(1);
 	html = NewLBS();

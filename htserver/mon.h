@@ -28,7 +28,6 @@ copies.
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	char		*ScreenDir;
 GLOBAL	char		*RecordDir;
 
 #undef	GLOBAL
