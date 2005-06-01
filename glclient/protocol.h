@@ -49,7 +49,7 @@ extern	PacketDataType	GL_RecvDataType(NETFILE *fp);
 extern	void			GL_SendInt(NETFILE *fp, int data);
 extern	int				GL_RecvInt(NETFILE *fp);
 extern	void			GL_SendDataType(NETFILE *fp, PacketClass c);
-extern	void			GL_RecvName(NETFILE *fp, char *name);
+extern	void			GL_RecvName(NETFILE *fp, size_t size, char *name);
 extern	void			GL_SendName(NETFILE *fp, char *name);
 
 extern	PacketDataType	RecvPacketDataType(NETFILE *fp);

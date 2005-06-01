@@ -213,7 +213,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			if		(  !stricmp(name,"state")  ) {
 				RecvIntegerData(fp,&state);
 				SetState(widget,(GtkStateType)state);
@@ -308,7 +308,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
 			LoadPS(widget, binary);
@@ -391,7 +391,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
 			LoadImage(widget, binary); 
@@ -418,7 +418,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			if		(  !stricmp(name,"objectdata")  ) {
 				binary = NewLBS();
 				RecvBinaryData(fp, binary);
@@ -465,7 +465,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			if		(  !stricmp(name,"duration")  ) {
 				RecvIntegerData(fp,&duration);
 				gtk_panda_timer_set(GTK_PANDA_TIMER(widget),
@@ -516,7 +516,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			if		(  !stricmp(name,"state")  ) {
 				RecvIntegerData(fp,&state);
 				SetState(widget,(GtkStateType)state);
@@ -584,7 +584,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			if		(  !stricmp(name,"style")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				gtk_widget_set_style(widget,GetStyle(buff));
@@ -636,7 +636,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			if		(  !stricmp(name,"state")  ) {
 				RecvIntegerData(fp,&state);
 				SetState(widget,(GtkStateType)state);
@@ -721,7 +721,7 @@ ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp,name);
+			GL_RecvName(fp, sizeof(name), name);
 			if		(  !stricmp(name,"state")  ) {
 				RecvIntegerData(fp,&state);
 				SetState(widget,(GtkStateType)state);
@@ -769,7 +769,7 @@ ENTER_FUNC;
 	nitem = GL_RecvInt(fp);
 	count = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -836,7 +836,7 @@ ENTER_FUNC;
 	nitem = GL_RecvInt(fp);
 	count = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -959,7 +959,7 @@ ENTER_FUNC;
 	row = 0;
 	rowattrw = 0.0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		sprintf(longname,".%s",name);
 		if		(  ( subWidget = glade_xml_get_widget_by_long_name(ThisXML,label) )
 				   !=  NULL  ) {
@@ -1013,7 +1013,7 @@ ENTER_FUNC;
 					rdata = (char **)xmalloc(sizeof(char *)*rnum);
 				}
 				for	( k = 0 ; k < rnum ; k ++ ) {
-					GL_RecvName(fp,iname);
+					GL_RecvName(fp, sizeof(iname), iname);
 					(void)RecvStringData(fp,buff,SIZE_BUFF);
 					rdata[k] = StrDup(buff);
 				}
@@ -1121,7 +1121,7 @@ ENTER_FUNC;
 	rdata = NULL;
 	from = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		sprintf(longname,".%s",name);
 		if		(  ( subWidget = glade_xml_get_widget_by_long_name(ThisXML,label) )
 			   !=  NULL  ) {
@@ -1162,7 +1162,7 @@ ENTER_FUNC;
 					rdata = (char **)xmalloc(sizeof(char *)*rnum);
 				}
 				for	( k = 0 ; k < rnum ; k ++ ) {
-					GL_RecvName(fp,iname);
+					GL_RecvName(fp, sizeof(iname), iname);
 					(void)RecvStringData(fp,buff,SIZE_BUFF);
 					rdata[k] = StrDup(buff);
 				}
@@ -1257,7 +1257,7 @@ ENTER_FUNC;
 	count = -1;
 	from = 0;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1372,7 +1372,7 @@ ENTER_FUNC;
 	RegistValue(widget,"",OPT_TYPE_NULL,NULL);
 	nitem = GL_RecvInt(fp);
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1444,7 +1444,7 @@ ENTER_FUNC;
 	nitem = GL_RecvInt(fp);
 	longname = WidgetName + strlen(WidgetName);
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1509,7 +1509,7 @@ ENTER_FUNC;
 	nitem = GL_RecvInt(fp);
 	longname = WidgetName + strlen(WidgetName);
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1545,7 +1545,7 @@ ENTER_FUNC;
 	nitem = GL_RecvInt(fp);
 	longname = WidgetName + strlen(WidgetName);
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1616,7 +1616,7 @@ ENTER_FUNC;
 	nitem = GL_RecvInt(fp);
 	count = -1;
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);
@@ -1721,7 +1721,7 @@ ENTER_FUNC;
 	nitem = GL_RecvInt(fp);
 	longname = WidgetName + strlen(WidgetName);
 	for	( i = 0 ; i < nitem ; i ++ ) {
-		GL_RecvName(fp,name);
+		GL_RecvName(fp, sizeof(name), name);
 		if		(  !stricmp(name,"state")  ) {
 			RecvIntegerData(fp,&state);
 			SetState(widget,(GtkStateType)state);

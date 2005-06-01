@@ -291,17 +291,11 @@ LEAVE_FUNC;
 extern	void
 GL_RecvName(
 	NETFILE	*fp,
+	size_t  size,
 	char	*name)
 {
-	size_t	size;
-
 ENTER_FUNC;
-	size = GL_RecvLength(fp);
-	Recv(fp,name,size);
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
-	name[size] = 0;
+	GL_RecvString( fp, size, name);
 LEAVE_FUNC;
 }
 
@@ -1099,6 +1093,8 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		GL_RecvString(fp, size, str);
+		printf("data %s\n", str);
+		
 		ret = str;
 		break;
 	  case	GL_TYPE_BINARY:

@@ -1,3 +1,8 @@
+2005-06-01  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/protocol.c, glclient/widgetOPS.c (GL_RecvName): サイズを
+	  指定するように変更
+	
 2005-04-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/exec.c (ExecCode): OPC_EMITSTRで空文字列の時に&nbsp;を
