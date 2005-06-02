@@ -27,12 +27,14 @@ INCLUDES 			= 		\
 	$(MONDAI_CFLAGS)
 
 enum_LDADD	= 	\
+	 -lm	\
 	$(GLADE_LIBS)			\
-	-L/usr/lib -lglib -lm	\
+	$(GLIB_LIBS)			\
 	$(MONDAI_LIBS)
 
 testnet_LDADD	= 	\
-	-L/usr/lib -lglib -lm	\
+	-lm		\
+	$(GLIB_LIBS) \
 	$(top_builddir)/libs/libpandamisc.la	\
 	$(top_builddir)/libs/libpandacom.la	\
 	$(MONDAI_LIBS)			\
