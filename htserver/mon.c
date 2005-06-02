@@ -337,7 +337,7 @@ SendEvent(void)
 ENTER_FUNC;
     if		(  ( name = LoadValue("_name") )  !=  NULL  ) {
 		fComm = FALSE;
-		if		(  ( htc = HTCParseFile(name) )  ==  NULL  ) {
+		if		(  ( htc = HTCParseScreen(name) )  ==  NULL  ) {
 			exit(1);
 		}
 	} else {
@@ -373,7 +373,7 @@ ENTER_FUNC;
 	Codeset = SRC_CODESET;
 	html = NewLBS();
 	LBS_EmitStart(html);
-    if      (  ( htc = HTCParseFile("expired") )  ==  NULL  ) {
+    if      (  ( htc = HTCParseScreen("expired") )  ==  NULL  ) {
         LBS_EmitUTF8(html,
                      "<html><head>"
                      "<title>htserver error</title>"
@@ -452,7 +452,7 @@ ENTER_FUNC;
                     }
                 }
 				fComm = TRUE;
-                if		(  ( htc = HTCParseFile(name) )  ==  NULL  ) {
+                if		(  ( htc = HTCParseScreen(name) )  ==  NULL  ) {
                     exit(1);
 				}
 				html = NewLBS();

@@ -32,14 +32,14 @@ path	mail	{
 #				*
 				name,
 				tel,
-				mail.home,
-				mail.office,
+				mail_home,
+				mail_office,
 				toll,
 				weight,
 				address
 			FROM adrs
 			WHERE
-				mail.home like :mail.home
+				mail_home like :mail.home
 			ORDER BY
 				name
 		;
@@ -67,18 +67,18 @@ path	mail	{
 				weight = :weight,
 				address = :address
 			WHERE
-				adrs.name = :name;
+				adrs_name = :name;
 	};
 	DBDELETEINSERT	{
 		DELETE	FROM	adrs
 			WHERE
-				adrs.name = :name
+				adrs_name = :name
 		;
 		INSERT	INTO	adrs
 			(
 				name,
-				mail.home,
-				mail.office,
+				mail_home,
+				mail_office,
 				toll,
 				weight,
 				address
@@ -97,8 +97,8 @@ path	mail	{
 		INSERT	INTO	adrs
 			(
 				name,
-				mail.home,
-				mail.office,
+				mail_home,
+				mail_office,
 				toll,
 				weight,
 				address
@@ -116,7 +116,7 @@ path	mail	{
 	DBDELETE	{
 		DELETE	FROM	adrs
 			WHERE
-				adrs.name = :name
+				adrs_name = :name
 		;
 	};
 };

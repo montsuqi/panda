@@ -22,6 +22,8 @@ copies.
 #ifndef	_INC_CGI_H
 #define	_INC_CGI_H
 
+#include	"value.h"
+
 #define	CGIV_NULL		0x00
 #define	CGIV_SAVE		0x01
 

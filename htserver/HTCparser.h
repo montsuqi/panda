@@ -26,7 +26,8 @@ copies.
 #include	"libmondai.h"
 #include	"htc.h"
 
-extern	HTCInfo		*HTCParseFile(char *name);
+extern	HTCInfo		*HTCParseFile(char *fname);
+extern	HTCInfo		*HTCParseScreen(char *name);
 extern	HTCInfo		*HTCParseMemory(char *buff);
 extern	void		DestroyHTC(HTCInfo *htc);
 extern	void		HTC_Error(char *msg, ...);

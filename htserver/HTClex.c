@@ -77,7 +77,12 @@ CheckReserved(
 	int		ret;
 
 	if		(  ( p = g_hash_table_lookup(Reserved,str) ) !=  NULL  ) {
+#ifndef __alpha__ 	  
 		ret = (int)p;
+#else
+		long tmp =(long)p;
+		ret = (int)tmp;
+#endif
 	} else {
 		ret = T_SYMBOL;
 	}

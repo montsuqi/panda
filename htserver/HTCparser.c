@@ -101,6 +101,15 @@ ENTER_FUNC;
 					break;
 				}
 				GetName;
+			} else {
+				switch( HTC_Token ){
+				  case T_SYMBOL:
+					LBS_EmitChar( htc->code, ' ' );
+					LBS_EmitString(htc->code,HTC_ComSymbol);
+					break;
+				  default:
+					break;
+				}
 			}
 			break;
 		  case	T_SCONST:
@@ -312,6 +321,37 @@ HTCParserCore(
 
 extern	HTCInfo	*
 HTCParseFile(
+	char	*fname)
+{
+	FILE	*fp;
+	HTCInfo	*ret;
+
+ENTER_FUNC;
+	if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
+		fError = FALSE;
+		HTC_FileName = fname;
+		HTC_cLine = 1;
+		HTC_File = fp;
+		HTC_Memory = NULL;
+		ret = HTCParserCore(GetCharFile,UnGetCharFile);
+		fclose(HTC_File);
+		if		(  fError  ) {
+			ret = NULL;
+		}
+	} else {
+		ret = NULL;
+	}
+
+	if		(  ret  ==  NULL  ) {
+        fprintf(stderr, "HTC file not found: %s\n", fname);
+        dbgprintf("HTC file not found: %s\n", fname);
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+extern	HTCInfo	*
+HTCParseScreen(
 	char	*name)
 {
 	FILE	*fp;

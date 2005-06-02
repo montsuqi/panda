@@ -37,7 +37,6 @@ copies.
 #include	<sys/time.h>
 #include	"const.h"
 #include	"types.h"
-#include	"libmondai.h"
 #include	"Lex.h"
 #include	"cgi.h"
 extern	void	HTCLexInit(void);
@@ -130,7 +129,7 @@ ENTER_FUNC;
 		GetSymbol;
 		break;
 	  default:
-		Error("? token = %d\n",ComToken);
+		fprintf(stderr,"? token = %d\n",ComToken);
 		expr = NULL;
 		break;
 	}
