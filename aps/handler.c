@@ -362,7 +362,9 @@ ENTER_FUNC;
 		break;
 	}
 	SetValueInteger(mcp_pputtype,(int)PutType);
-	SetValueInteger(mcp_sindex,sindex);
+	if (strcmp(ValueStringPointer(mcp_dcwindow), node->window) != 0){
+		SetValueInteger(mcp_sindex,sindex);
+	}
 #ifdef	DEBUG
 	dbgprintf("mcp_sindex = %d",sindex);
 	dbgprintf("mcp->dc.window = [%s]",ValueStringPointer(mcp_dcwindow));
