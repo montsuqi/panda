@@ -1093,8 +1093,6 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		GL_RecvString(fp, size, str);
-		printf("data %s\n", str);
-		
 		ret = str;
 		break;
 	  case	GL_TYPE_BINARY:
