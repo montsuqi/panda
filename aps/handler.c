@@ -362,7 +362,7 @@ ENTER_FUNC;
 		break;
 	}
 	SetValueInteger(mcp_pputtype,(int)PutType);
-	if (strcmp(ValueStringPointer(mcp_dcwindow), node->window) != 0){
+	if		(  strcmp(ValueStringPointer(mcp_dcwindow), node->window)  !=  0  )	{
 		SetValueInteger(mcp_sindex,sindex);
 	}
 #ifdef	DEBUG

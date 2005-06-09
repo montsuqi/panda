@@ -464,11 +464,14 @@ ENTER_FUNC;
 			  case	SCREEN_CHANGE_WINDOW:
 			  case	SCREEN_JOIN_WINDOW:
 			  case	SCREEN_FORK_WINDOW:
-				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-				if		(  newld  !=  ld  ) {
+			  case	SCREEN_NEW_WINDOW:
+				if		(  newld  ==  ld  ) {
+					TermEnqueue(data->term,data);
+				} else {
+					data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 					ChangeLD(data);
+					CoreEnqueue(data);
 				}
-				CoreEnqueue(data);
 				break;
 			  case	SCREEN_CURRENT_WINDOW:
 				data->hdr->puttype = puttype;
