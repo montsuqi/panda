@@ -18,8 +18,9 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
-
+/*
 #define	APS_STICK
+*/
 
 /*
 #define	DEBUG
