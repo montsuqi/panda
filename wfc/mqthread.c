@@ -19,8 +19,8 @@ things, the copyright notice and this notice must be preserved on all
 copies. 
 */
 /*
-#define	APS_STICK
 */
+#define	APS_STICK
 
 /*
 #define	DEBUG
@@ -348,7 +348,9 @@ SelectData(
 	int		ix)
 {
 	SessionData	*data;
+#ifdef	APS_STICK
 	LD_Node		*ld;
+#endif
 
 ENTER_FUNC;
 #ifndef	APS_STICK

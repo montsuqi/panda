@@ -155,24 +155,27 @@ WithdrawQueue(
 	QueueElement	*el;
 	void			*ret;
 
-dbgmsg(">WithdrawQueue");
-	el = que->curr;
-	if		(  el->next  !=  NULL  ) {
-		el->next->prev = el->prev;
+ENTER_FUNC;
+	if		(  ( el = que->curr )  !=  NULL  ) {
+		que->curr = que->curr->next;
+		if		(  el->next  !=  NULL  ) {
+			el->next->prev = el->prev;
+		}
+		if		(  el->prev  !=  NULL  ) {
+			el->prev->next = el->next;
+		}
+		if		(  el  ==  que->tail  ) {
+			que->tail = el->prev;
+		}
+		if		(  el  ==  que->head  ) {
+			que->head = el->next;
+		}
+		ret = el->data;
+		xfree(el);
+	} else {
+		ret = NULL;
 	}
-	if		(  el->prev  !=  NULL  ) {
-		el->prev->next = el->next;
-	}
-	if		(  el  ==  que->tail  ) {
-		que->tail = el->prev;
-	}
-	if		(  el  ==  que->head  ) {
-		que->head = el->next;
-	}
-
-	ret = el->data;
-	xfree(el);
-dbgmsg("<WithdrawQueue");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -183,7 +186,7 @@ PeekQueue(
 	QueueElement	*el;
 	void			*ret;
 
-dbgmsg(">PeekQueue");
+ENTER_FUNC;
 	pthread_mutex_lock(&que->qlock);
 	if		(  ( el = que->head )  ==  NULL  ) {
 		ret = NULL;
@@ -191,7 +194,7 @@ dbgmsg(">PeekQueue");
 		ret = el->data;
 	}
 	pthread_mutex_unlock(&que->qlock);
-dbgmsg("<PeekQueue");
+LEAVE_FUNC;
 	return	(ret);
 }
 
