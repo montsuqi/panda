@@ -1,3 +1,7 @@
+2005-06-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c (_Entry): 文字列を出力する時のエスケープをやめた
+
 2005-06-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/mqthread.c (MessageThread): LDにまたがったウィンドウの時に正
