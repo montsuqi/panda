@@ -367,7 +367,7 @@ ENTER_FUNC;
 		EmitCode(htc,OPC_NAME);
 		LBS_EmitPointer(htc->code,StrDup(name));
 		EmitCode(htc,OPC_PHSTR);
-		EmitCode(htc,OPC_EMITSTR);
+		EmitCode(htc,OPC_EMITRAW);
 
 		LBS_EmitString(htc->code,"\"");
 		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {

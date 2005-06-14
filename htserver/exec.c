@@ -730,16 +730,7 @@ ENTER_FUNC;
               case OPC_EMITSTR:
 				dbgmsg("OPC_EMITSTR");
 				vval = Pop;
-#if	0
-                if (strlen(vval.body.sval) == 0) {
-                    LBS_EmitString(html, "&nbsp;");
-                }
-                else {
-                    EmitWithEscape(html,vval.body.sval);
-                }
-#else
 				EmitWithEscape(html,vval.body.sval);
-#endif
 				break;
               case OPC_EMITRAW:
 				dbgmsg("OPC_EMITRAW");
