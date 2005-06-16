@@ -233,7 +233,7 @@ MakeFromRecord(
 	} else {
 		level = 1;
 	}
-	DD_ParserInit();
+	RecParserInit();
 	if		(  ( rec = DD_ParserDataDefines(name) )  !=  NULL  ) {
 		PutLevel(level);
 		if		(  *RecName  ==  0  ) {

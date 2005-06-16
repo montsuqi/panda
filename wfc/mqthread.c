@@ -18,8 +18,7 @@ responsibilities.  It should be in a file named COPYING.  Among other
 things, the copyright notice and this notice must be preserved on all
 copies. 
 */
-/*
-*/
+
 #define	APS_STICK
 
 /*
@@ -467,6 +466,12 @@ ENTER_FUNC;
 			  case	SCREEN_CHANGE_WINDOW:
 			  case	SCREEN_JOIN_WINDOW:
 			  case	SCREEN_FORK_WINDOW:
+				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+				if		(  newld  !=  ld  ) {
+					ChangeLD(data);
+				}
+				CoreEnqueue(data);
+				break;
 			  case	SCREEN_NEW_WINDOW:
 				if		(  newld  ==  ld  ) {
 					TermEnqueue(data->term,data);
