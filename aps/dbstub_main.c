@@ -53,8 +53,6 @@ copies.
 #include	"message.h"
 #include	"debug.h"
 
-#include	"directory.h"
-
 static	char	*Directory;
 static	char	*CommandParameter;
 static	char	*BD_Name;
