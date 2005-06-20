@@ -83,18 +83,6 @@ copies.
 #define	T_AUTH			(T_YYBASE +30)
 #define	T_SPACE			(T_YYBASE +31)
 
-#undef	Error
-#define	Error(msg)		{in->fError=TRUE;_Error((msg),in->fn,in->cLine);}
-
-static	void
-_Error(
-	char	*msg,
-	char	*fn,
-	int		line)
-{
-	printf("%s:%d:%s\n",fn,line,msg);
-}
-
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
 	{	"bd"				,T_BD		},
@@ -1080,7 +1068,7 @@ ENTER_FUNC;
 		}
 	} else {
         fprintf(stderr, "DI file not found\n");
-        exit(1);
+		Error("DI file not found %s", name);
 	}
 LEAVE_FUNC;
 	return	(ret);
