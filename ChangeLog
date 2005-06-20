@@ -1,3 +1,7 @@
+2005-06-20  Noboru Saitou  <noborus@netlab.jp>
+
+        * Ver 1.2.4 release
+
 2005-06-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/tags.c (_Entry): 文字列を出力する時のエスケープをやめた
