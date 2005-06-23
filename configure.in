@@ -1,3 +1,21 @@
+# PANDA -- a simple transaction monitor
+# Copyright (C) 2005  ogochan
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA
+
 AC_INIT(configure.in)
 
 dnl AM_INIT_AUTOMAKE is in aclocal.m4
@@ -7,7 +25,7 @@ PACKAGE=panda
 # make version
 MAJOR_VERSION=1
 MINOR_VERSION=2
-MICRO_VERSION=4
+MICRO_VERSION=5
 
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
 LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -410,23 +428,6 @@ AC_ARG_ENABLE(mce,
 if test "x$enable_mce" = "xyes"; then
     AC_DEFINE(USE_MCE,1,"")
 fi
-AC_PATH_PROG(XML2_CONFIG,xml2-config,no)
-if test x$XML2_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find xml2-config)
-fi
-XML2_LIBS=`xml2-config --libs`
-XML2_CFLAGS=`xml2-config --cflags`
-AC_SUBST(XML2_LIBS)
-AC_SUBST(XML2_CFLAGS)
-
-AC_PATH_PROG(XSLT_CONFIG,xslt-config,no)
-if test x$XSLT_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find xslt-config)
-fi
-XSLT_LIBS=`xslt-config --libs`' -lexslt'
-XSLT_CFLAGS=`xslt-config --cflags`' -I /usr/include/libexslt'
-AC_SUBST(XSLT_LIBS)
-AC_SUBST(XSLT_CFLAGS)
 
 dnl ***************************************************************************
 dnl IE5.x support
@@ -483,6 +484,15 @@ XML2_LIBS=`xml2-config --libs`
 XML2_CFLAGS=`xml2-config --cflags`
 AC_SUBST(XML2_LIBS)
 AC_SUBST(XML2_CFLAGS)
+
+AC_PATH_PROG(XSLT_CONFIG,xslt-config,no)
+if test x$XSLT_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find xslt-config)
+fi
+XSLT_LIBS=`xslt-config --libs`' -lexslt'
+XSLT_CFLAGS=`xslt-config --cflags`' -I /usr/include/libexslt'
+AC_SUBST(XSLT_LIBS)
+AC_SUBST(XSLT_CFLAGS)
 
 dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the libmondai modules.

@@ -1,3 +1,7 @@
+2005-06-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* COPYING: 著作権表示を直す
+
 2005-06-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/tags.c (_Entry): 文字列を出力する時のエスケープをやめた
