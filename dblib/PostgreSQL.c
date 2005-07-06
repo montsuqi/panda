@@ -896,6 +896,25 @@ LEAVE_FUNC;
 	return	(res);
 }
 
+static int
+CheckResult(
+	DBG_Struct	*dbg,
+	PGresult	*res,
+	int status)
+{
+	int rc;
+		
+	if ( res && (PQresultStatus(res) == status)) {
+		dbgmsg("OK");
+		rc = MCP_OK;
+	} else {
+		dbgmsg("NG");
+		Warning("%s",PQerrorMessage(PGCONN(dbg)));
+		rc = MCP_BAD_OTHER;
+	}
+	return rc;
+}
+
 static	void
 GetValue(
 	DBG_Struct	*dbg,
@@ -1054,6 +1073,7 @@ ENTER_FUNC;
 						||	(  status  ==  PGRES_FATAL_ERROR     )
 						||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
 					dbgmsg("NG");
+					Warning("%s",PQerrorMessage(PGCONN(dbg)));
 					ctrl->rc = - status;
 					_PQclear(res);
 					break;
@@ -1248,14 +1268,7 @@ _DBSTART(
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
 	res = _PQexec(dbg,"begin",FALSE);
-	if		(	(  res ==  NULL  )
-			||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
-		dbgmsg("NG");
-		rc = MCP_BAD_OTHER;
-	} else {
-		dbgmsg("OK");
-		rc = MCP_OK;
-	}
+	rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 	_PQclear(res);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
@@ -1274,14 +1287,7 @@ _DBCOMMIT(
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
 	res = _PQexec(dbg,"commit work",FALSE);
-	if		(	(  res ==  NULL  )
-			||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
-		dbgmsg("NG");
-		rc = MCP_BAD_OTHER;
-	} else {
-		dbgmsg("OK");
-		rc = MCP_OK;
-	}
+	rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 	_PQclear(res);
 	CommitDB_Redirect(dbg);
 	if		(  ctrl  !=  NULL  ) {
@@ -1344,14 +1350,9 @@ ENTER_FUNC;
 			p = sql;
 			p += sprintf(p,"fetch from %s_%s_csr",rec->name,path->name);
 			res = _PQexec(dbg,sql,TRUE);
-			if		(	(  res ==  NULL  )
-					||	(  PQresultStatus(res)  !=  PGRES_TUPLES_OK  ) ) {
-				dbgmsg("NG");
-				ctrl->rc = MCP_BAD_OTHER;
-			} else {
-				ctrl->rc = MCP_OK;
+			ctrl->rc = CheckResult(dbg, res, PGRES_TUPLES_OK);
+			if ( ctrl->rc == MCP_OK ) {
 				if		(  ( n = PQntuples(res) )  >  0  ) {
-					dbgmsg("OK");
 					level = 0;
 					alevel = 0;
 					GetTable(dbg,res,args);
@@ -1395,14 +1396,7 @@ ENTER_FUNC;
 			p = sql;
 			p += sprintf(p,"close %s_%s_csr",rec->name,path->name);
 			res = _PQexec(dbg,sql,TRUE);
-			if		(	(  res ==  NULL  )
-					||	(  PQresultStatus(res)  !=  PGRES_TUPLES_OK  ) ) {
-				dbgmsg("NG");
-				ctrl->rc = MCP_BAD_OTHER;
-			} else {
-				ctrl->rc = MCP_OK;
-				dbgmsg("OK");
-			}
+			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 			_PQclear(res);
 		}
 	}
@@ -1467,14 +1461,7 @@ ENTER_FUNC;
 			}
             LBS_EmitEnd(sql);
 			res = _PQexec(dbg,LBS_Body(sql),TRUE);
-			if		(	(  res ==  NULL  )
-						||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
-				dbgmsg("NG");
-				ctrl->rc = MCP_BAD_OTHER;
-			} else {
-				dbgmsg("OK");
-				ctrl->rc = MCP_OK;
-			}
+			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
 		}
@@ -1534,14 +1521,7 @@ ENTER_FUNC;
 			}
             LBS_EmitEnd(sql);
 			res = _PQexec(dbg,LBS_Body(sql),TRUE);
-			if		(	(  res ==  NULL  )
-					||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
-				dbgmsg("NG");
-				ctrl->rc = MCP_BAD_OTHER;
-			} else {
-				dbgmsg("OK");
-				ctrl->rc = MCP_OK;
-			}
+			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
 		}
@@ -1587,14 +1567,7 @@ ENTER_FUNC;
 			LBS_EmitString(sql,") ");
             LBS_EmitEnd(sql);
 			res = _PQexec(dbg,LBS_Body(sql),TRUE);
-			if		(	(  res ==  NULL  )
-					||	(  PQresultStatus(res)  !=  PGRES_COMMAND_OK  ) ) {
-				dbgmsg("NG");
-				ctrl->rc = MCP_BAD_OTHER;
-			} else {
-				dbgmsg("OK");
-				ctrl->rc = MCP_OK;
-			}
+			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
 		}

@@ -1,3 +1,8 @@
+2005-07-06  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c (CheckResult): エラー時に PQerrorMessage の
+	メッセージを表示するようにした
+
 2005-06-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* COPYING: 著作権表示を直す
