@@ -498,9 +498,7 @@ ENTER_FUNC;
 
 						if ( parse_ld ) {
 							bd = BD_Parser(name);
-							if		(  bd  ==  NULL  ) {
-									Error("bd not found");
-							} else {
+							if		(  bd  !=  NULL  ) {
 									if		(  g_hash_table_lookup(ThisEnv->BD_Table,ComSymbol)  ==  NULL  ) {
 											btmp = (BD_Struct **)xmalloc(sizeof(BD_Struct *)
 																		 * ( ThisEnv->cBD + 1));
