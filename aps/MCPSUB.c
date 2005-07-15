@@ -51,12 +51,12 @@ CheckArg(
 {
 	if		(	(  ctrl->rno  !=  0  )
 			||	(  ctrl->pno  !=  0  ) ) {
-		Error("argument invalid on %s\n",func);
+		Warning("argument invalid on %s\n",func);
 	}
 }
 
 static	void
-CheckArgPATH(
+CheckArgTable(
 	char		*func,
 	DBCOMM_CTRL	*ctrl)
 {
@@ -111,7 +111,7 @@ ENTER_FUNC;
 			CheckArg(mcp_func,&ctrl);
 			rec = NULL;
 		} else {
-			CheckArgPATH(mcp_func,&ctrl);
+			CheckArgTable(mcp_func,&ctrl);
 			rec = ThisDB[ctrl.rno];
 			value = rec->value;
 			path = rec->opt.db->path[ctrl.pno];
