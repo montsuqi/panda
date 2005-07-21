@@ -458,7 +458,7 @@ ENTER_FUNC;
 				}
 			}
 			if		(  ComToken  !=  ';'  ) {
-				printf("[%s]\n",ComSymbol);
+				Message("[%s]\n",ComSymbol);
 				Error("syntax error 2");
 			}
 		}
@@ -723,8 +723,7 @@ ENTER_FUNC;
 			}
 			break;
 		  default:
-			Error("other syntax error in db_group");
-			printf("[%s]\n",ComSymbol);
+			Error("other syntax error in db_group [%s]\n",ComSymbol);
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
@@ -1024,8 +1023,7 @@ ENTER_FUNC;
 			ParDBGROUP(in,gname);
 			break;
 		  default:
-			printf("[%X][%s]\n",ComToken,ComSymbol);
-			Error("misc syntax error");
+			Error("misc syntax error [%X][%s]\n",ComToken,ComSymbol);
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
@@ -1064,7 +1062,6 @@ ENTER_FUNC;
 			ret = NULL;
 		}
 	} else {
-        fprintf(stderr, "DI file not found\n");
 		Error("DI file not found %s", name);
 	}
 LEAVE_FUNC;
