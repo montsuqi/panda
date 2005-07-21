@@ -294,6 +294,78 @@ EscapeByteaInArray(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
     LBS_SetPos(lbs, old_size + len);
 }
 
+char *
+GetDB_Host(
+	DBG_Struct	*dbg)
+{
+	char	*host;
+
+	if		(  DB_Host  !=  NULL  ) {
+		host = DB_Host;
+	} else {
+		if		(  dbg->port  ==  NULL  ) {
+			host = NULL;
+		} else {
+			host = IP_HOST(dbg->port);
+		}
+	}
+	return (host);
+}
+
+char *
+GetDB_Port(
+	DBG_Struct	*dbg)
+{
+	char	*port;
+
+	if		(  DB_Port  !=  NULL  ) {
+		port = DB_Port;
+	} else {
+		if		(  dbg->port  ==  NULL  ) {
+			port = NULL;
+		} else {
+			port = IP_PORT(dbg->port);
+		}
+	}
+	return (port);
+}
+
+char *
+GetDB_DBname(
+	DBG_Struct	*dbg)
+{
+	return (( DB_Name != NULL ) ? DB_Name : dbg->dbname);
+}
+
+char *
+GetDB_User(
+	DBG_Struct	*dbg)
+{
+	return (( DB_User != NULL ) ? DB_User : dbg->user);
+}
+
+char *
+GetDB_Pass(
+	DBG_Struct	*dbg)
+{
+	return (( DB_Pass != NULL ) ? DB_Pass : dbg->pass);
+}
+
+void
+AddConninfo(
+	LargeByteString *conninfo,
+	char *item,
+	char *value)
+{
+	if ( value ) {
+		LBS_EmitString(conninfo, item);
+		LBS_EmitString(conninfo, "='");
+		LBS_EmitString(conninfo, value);
+		LBS_EmitString(conninfo, "'");
+		LBS_EmitString(conninfo, " ");
+	}
+}
+
 static	void
 ValueToSQL(
 	DBG_Struct	*dbg,
@@ -1191,46 +1263,33 @@ _EXEC(
 	return	(rc);
 }
 
+
 static	void
 _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-	char	*host;
-	char	*port
-	,		*user
-	,		*dbname
-	,		*pass;
+	LargeByteString *lbs;
 	PGconn	*conn;
-
+	
 ENTER_FUNC;
-	if		(  DB_Host  !=  NULL  ) {
-		host = DB_Host;
-	} else {
-		if		(  dbg->port  ==  NULL  ) {
-			host = NULL;
-		} else {
-			host = IP_HOST(dbg->port);
-		}
+	if ( dbg->fConnect == TRUE){
+		Warning("database is already connected.");
 	}
-	if		(  DB_Port  !=  NULL  ) {
-		port = DB_Port;
-	} else {
-		if		(  dbg->port  ==  NULL  ) {
-			port = NULL;
-		} else {
-			port = IP_PORT(dbg->port);
-		}
-	}
-	user =  ( DB_User != NULL ) ? DB_User : dbg->user;
-	dbname = ( DB_Name != NULL ) ? DB_Name : dbg->dbname;
-	pass = ( DB_Pass != NULL ) ? DB_Pass : dbg->pass;
+	lbs = NewLBS();
+	AddConninfo(lbs, "host", GetDB_Host(dbg));
+	AddConninfo(lbs, "port", GetDB_Port(dbg));
+	AddConninfo(lbs, "dbname", GetDB_DBname(dbg));
+	AddConninfo(lbs, "user", GetDB_User(dbg));
+	AddConninfo(lbs, "password", GetDB_Pass(dbg));
+	LBS_EmitEnd(lbs);
 
-	conn = PQsetdbLogin(host,port,NULL,NULL,dbname,user,pass);
+	conn = PQconnectdb(LBS_Body(lbs));
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
-		Message("Connection to database \"%s\" failed.",dbname);
-		Error("%s",PQerrorMessage(conn));
+		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
+		Error("%s", PQerrorMessage(conn));
 	}
+
 	OpenDB_RedirectPort(dbg);
 	dbg->conn = (void *)conn;
 	dbg->fConnect = TRUE;
