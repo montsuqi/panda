@@ -786,9 +786,9 @@ BuildMcpArea(
 	size_t	stacksize)
 {
 	RecordStruct	*rec;
-	char	buff[SIZE_BUFF];
-	char	*p;
+	char    *buff, *p;
 
+	buff = (char *)xmalloc(SIZE_BUFF);
 	p = buff;
 	p += sprintf(p,	"mcparea	{");
 	p += sprintf(p,		"func varchar(%d);",SIZE_FUNC);
