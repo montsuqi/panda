@@ -1285,6 +1285,8 @@ ENTER_FUNC;
 	LBS_EmitEnd(lbs);
 
 	conn = PQconnectdb(LBS_Body(lbs));
+	FreeLBS(lbs);
+	
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
 		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
 		Error("%s", PQerrorMessage(conn));
