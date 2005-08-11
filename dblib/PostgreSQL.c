@@ -362,7 +362,7 @@ AddConninfo(
 		LBS_EmitString(conninfo, "='");
 		LBS_EmitString(conninfo, value);
 		LBS_EmitString(conninfo, "'");
-		LBS_EmitString(conninfo, " ");
+		LBS_EmitSpace(conninfo);
 	}
 }
 
@@ -1269,23 +1269,23 @@ _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-	LargeByteString *lbs;
+	LargeByteString *conninfo;
 	PGconn	*conn;
 	
 ENTER_FUNC;
 	if ( dbg->fConnect == TRUE){
 		Warning("database is already connected.");
 	}
-	lbs = NewLBS();
-	AddConninfo(lbs, "host", GetDB_Host(dbg));
-	AddConninfo(lbs, "port", GetDB_Port(dbg));
-	AddConninfo(lbs, "dbname", GetDB_DBname(dbg));
-	AddConninfo(lbs, "user", GetDB_User(dbg));
-	AddConninfo(lbs, "password", GetDB_Pass(dbg));
-	LBS_EmitEnd(lbs);
+	conninfo = NewLBS();
+	AddConninfo(conninfo, "host", GetDB_Host(dbg));
+	AddConninfo(conninfo, "port", GetDB_Port(dbg));
+	AddConninfo(conninfo, "dbname", GetDB_DBname(dbg));
+	AddConninfo(conninfo, "user", GetDB_User(dbg));
+	AddConninfo(conninfo, "password", GetDB_Pass(dbg));
+	LBS_EmitEnd(conninfo);
 
-	conn = PQconnectdb(LBS_Body(lbs));
-	FreeLBS(lbs);
+	conn = PQconnectdb(LBS_Body(conninfo));
+	FreeLBS(conninfo);
 	
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
 		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
