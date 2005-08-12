@@ -48,7 +48,6 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"BDparser.h"
 #include	"DBDparser.h"
 #include	"DIparser.h"
-#include	"dirs.h"
 #define		_DIRECTORY
 #include	"directory.h"
 #include	"debug.h"

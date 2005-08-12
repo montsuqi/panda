@@ -39,7 +39,6 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include	"dirs.h"
 #include	"option.h"
-#include	"dirs.h"
 #include	"auth.h"
 #include	"message.h"
 #include	"debug.h"

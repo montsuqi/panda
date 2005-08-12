@@ -37,7 +37,6 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	<sys/wait.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
-#include	<signal.h>
 #include	<glib.h>
 
 #include	"types.h"
