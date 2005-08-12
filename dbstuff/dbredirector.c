@@ -77,7 +77,7 @@ LogThread(
 	PacketClass	c;
 	Bool	fSuc;
 
-dbgmsg(">LogThread");
+ENTER_FUNC;
 	fpLog = SocketToNet(fhLog);
 	do {
 		switch	( c = RecvPacketClass(fpLog) ) {
@@ -103,7 +103,7 @@ dbgmsg(">LogThread");
 		}
 	}	while	(  fSuc  );
 	CloseNet(fpLog);
-dbgmsg("<LogThread");
+LEAVE_FUNC;
 }
 
 extern	pthread_t
@@ -113,14 +113,14 @@ ConnectLog(
 	int		fhLog;
 	pthread_t	thr;
 
-dbgmsg(">ConnectLog");
+ENTER_FUNC;
 	if		(  ( fhLog = accept(_fhLog,0,0) )  <  0  )	{
 		printf("_fhLog = %d\n",_fhLog);
 		Error("INET Domain Accept");
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)fhLog);
 	pthread_detach(thr);
-dbgmsg("<ConnectLog");
+LEAVE_FUNC;
 	return	(thr); 
 }
 
@@ -135,7 +135,7 @@ FileThread(
 	struct	tm	*Now;
 	int		count;
 
-dbgmsg(">FileThread");
+ENTER_FUNC;
 	if		(  ThisDBG->dbname  !=  NULL  ) {
 		OpenRedirectDB(ThisDBG);
 	} else {
@@ -144,7 +144,7 @@ dbgmsg(">FileThread");
 	if		(  ThisDBG->file  !=  NULL  ) {
 		umask((mode_t) 0077);
 		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
-			Error("log file can not open");
+			Error("log file can not open :%s", ThisDBG->file);
 		}
 	} else {
 		fp = NULL;
@@ -183,7 +183,7 @@ dbgmsg(">FileThread");
 		CloseDB_RedirectPort(ThisDBG);
 	}
 	//	pthread_exit(NULL);
-dbgmsg("<FileThread");
+LEAVE_FUNC;
 }
 
 
@@ -194,13 +194,12 @@ ExecuteServer(void)
 	fd_set	ready;
 	int		maxfd;
 
-dbgmsg(">ExecuteServer");
+ENTER_FUNC;
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL); 
 	_fhLog = InitServerPort(RedirectPort,Back);
 	maxfd = _fhLog;
 
 	while	(TRUE)	{
-dbgmsg("loop");
 		FD_ZERO(&ready);
 		FD_SET(_fhLog,&ready);
 		select(maxfd+1,&ready,NULL,NULL,NULL);
@@ -208,7 +207,7 @@ dbgmsg("loop");
 			ConnectLog(_fhLog);
 		}
 	}
-dbgmsg("<ExecuteServer");
+LEAVE_FUNC;
 }
 
 #ifdef	DEBUG
@@ -262,7 +261,7 @@ ENTER_FUNC;
 		RedirectPort = ParPortName(PortNumber);
 	}
 	FileQueue = NewQueue();
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }
 
 static	ARG_TABLE	option[] = {
