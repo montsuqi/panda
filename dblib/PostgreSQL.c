@@ -1147,7 +1147,6 @@ ENTER_FUNC;
 					dbgmsg("NG");
 					Warning("%s",PQerrorMessage(PGCONN(dbg)));
 					ctrl->rc = - status;
-					_PQclear(res);
 					break;
 				} else {
 					switch	(status) {
@@ -1199,8 +1198,8 @@ ENTER_FUNC;
 						ctrl->rc =+ MCP_NONFATAL;
 						break;
 					}
-					_PQclear(res);
 				}
+				_PQclear(res);
 				break;
 			  default:
 				dbgprintf("[%X]\n",c);
@@ -1226,7 +1225,6 @@ _EXEC(
 	ExecStatusType	status;
 	int			rc
 	,			n;
-
 	res = _PQexec(dbg,sql,fRed);
 	if		(	(  res ==  NULL  )
 			||	(  ( status = PQresultStatus(res) )
@@ -1236,7 +1234,6 @@ _EXEC(
 		Warning("%s",PQerrorMessage(PGCONN(dbg)));
 		dbgmsg("NG");
 		rc = MCP_BAD_OTHER;
-		_PQclear(res);
 	} else {
 		switch	(status) {
 		  case	PGRES_TUPLES_OK:
@@ -1244,7 +1241,6 @@ _EXEC(
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
-				_PQclear(res);
 			}
 			break;
 		  case	PGRES_COMMAND_OK:
@@ -1256,10 +1252,10 @@ _EXEC(
 		  case	PGRES_NONFATAL_ERROR:
 		  default:
 			rc = MCP_NONFATAL;
-			_PQclear(res);
 			break;
 		}
 	}
+	_PQclear(res);
 	return	(rc);
 }
 
