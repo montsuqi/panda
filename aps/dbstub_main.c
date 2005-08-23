@@ -75,8 +75,8 @@ dbgmsg(">InitSystem");
 	if		(  ( ThisBD = GetBD(BD_Name) )  ==  NULL  ) {
 		Error("BD file not found.");
 	}
-	if		(  ThisLD->home  !=  NULL  ) {
-		chdir(ThisLD->home);
+	if		(  ThisBD->home  !=  NULL  ) {
+		chdir(ThisBD->home);
 	}
 	ThisLD = NULL;
 	ThisDBD = NULL;
