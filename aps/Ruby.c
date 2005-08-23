@@ -62,6 +62,12 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include    "apslib.h"
 #include    "debug.h"
 
+static VALUE aryval_new(ValueStruct *val, int need_free);
+static VALUE recval_new(ValueStruct *val, int need_free);
+static VALUE recval_get_field(VALUE self);
+static VALUE recval_set_field(VALUE self, VALUE obj);
+static VALUE table_path(VALUE self, VALUE name);
+
 EXTERN VALUE rb_load_path;
 
 static VALUE application_classes;
@@ -312,12 +318,10 @@ bigdecimal_new(ValueStruct *val)
                       INT2NUM((ValueFixedLength(val))));
 }
 
+
 static VALUE
 get_value(ValueStruct *val)
 {
-    static VALUE aryval_new(ValueStruct *val, int need_free);
-    static VALUE recval_new(ValueStruct *val, int need_free);
-
     if (val == NULL)
         return Qnil;
     if (IS_VALUE_NIL(val))
@@ -556,8 +560,6 @@ recval_new(ValueStruct *val, int need_free)
     value_struct_data *data;
     int i;
     VALUE name;
-    static VALUE recval_get_field(VALUE self);
-    static VALUE recval_set_field(VALUE self, VALUE obj);
 
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
                            value_struct_mark,
@@ -673,6 +675,9 @@ rec_mark(record_struct_data *data)
     rb_gc_mark(data->value);
 }
 
+static VALUE rec_get_field(VALUE self);
+static VALUE rec_set_field(VALUE self, VALUE obj);
+
 static VALUE
 rec_new(RecordStruct *rec)
 {
@@ -680,8 +685,6 @@ rec_new(RecordStruct *rec)
     record_struct_data *data;
     int i;
     VALUE name;
-    static VALUE rec_get_field(VALUE self);
-    static VALUE rec_set_field(VALUE self, VALUE obj);
 
     if (rec == NULL || rec->value == NULL)
         return Qnil;
@@ -893,6 +896,9 @@ path_mark(path_data *data)
     rb_gc_mark(data->args);
 }
 
+static VALUE rec_get_field(VALUE self);
+static VALUE rec_set_field(VALUE self, VALUE obj);
+
 static VALUE
 path_new(PathStruct *path)
 {
@@ -900,8 +906,6 @@ path_new(PathStruct *path)
     path_data *data;
     int i;
     VALUE name;
-    static VALUE rec_get_field(VALUE self);
-    static VALUE rec_set_field(VALUE self, VALUE obj);
 
     obj = Data_Make_Struct(cPath, path_data,
                            path_mark, free, data);
@@ -1076,6 +1080,8 @@ set_param(VALUE key, VALUE value, set_param_arg *arg)
     return ST_CONTINUE;
 }
 
+static VALUE table_path(VALUE self, VALUE name);
+
 static VALUE
 table_exec(int argc, VALUE *argv, VALUE self)
 {
@@ -1086,7 +1092,6 @@ table_exec(int argc, VALUE *argv, VALUE self)
     int no;
     size_t size;
     ValueStruct *value;
-    static VALUE table_path(VALUE self, VALUE name);
 
     Data_Get_Struct(self, table_data, data);
     rb_scan_args(argc, argv, "12", &funcname, &pathname, &params);
@@ -1313,7 +1318,6 @@ database_exec(VALUE self, VALUE funcname)
     table_data *data;
     char *func;
     DBCOMM_CTRL ctrl;
-    static VALUE table_path(VALUE self, VALUE name);
 
     Data_Get_Struct(self, table_data, data);
     func = StringValuePtr(funcname);

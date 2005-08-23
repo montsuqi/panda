@@ -376,6 +376,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+#ifdef	DEBUG
 static	void
 DumpProcessNode(
 	ProcessNode	*node)
@@ -416,6 +417,7 @@ DumpProcessNode(
 	}
 #endif
 }
+#endif
 
 extern	void
 ExecuteProcess(

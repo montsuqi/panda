@@ -52,7 +52,6 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"message.h"
 #include	"debug.h"
 
-static	char	*Directory;
 static	char	*CommandParameter;
 static	char	*BD_Name;
 static	BatchBind	*Bind;
@@ -75,6 +74,9 @@ dbgmsg(">InitSystem");
 	InitData(BD_Name);
 	if		(  ( ThisBD = GetBD(BD_Name) )  ==  NULL  ) {
 		Error("BD file not found.");
+	}
+	if		(  ThisLD->home  !=  NULL  ) {
+		chdir(ThisLD->home);
 	}
 	ThisLD = NULL;
 	ThisDBD = NULL;

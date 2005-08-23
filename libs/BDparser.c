@@ -47,6 +47,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"mhandler.h"
 #include	"DBparser.h"
 #include	"BDparser.h"
+#include	"directory.h"
 #include	"Dlex.h"
 #include	"dirs.h"
 #include	"debug.h"
@@ -217,6 +218,13 @@ ENTER_FUNC;
 				Error("syntax error 4");
 			}
 			ParDB(in,ret,gname);
+			break;
+		  case	T_HOME:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ret->home = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
+			} else {
+				Error("home directory invalid");
+			}
 			break;
 		  case	T_BIND:
 			ParBIND(in,ret);

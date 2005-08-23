@@ -231,6 +231,7 @@ typedef	struct {
 
 typedef	struct {
 	char		*name;
+	char		*home;
 	size_t		arraysize
 	,			textsize;
 	size_t		cDB;

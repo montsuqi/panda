@@ -45,7 +45,7 @@ extern	void
 Flush(
 	NETFILE	*fp)
 {
-	char	*p = fp->buff;
+	byte	*p = fp->buff;
 	ssize_t	count;
 
 	while	(  fp->ptr  >  0  ) {
