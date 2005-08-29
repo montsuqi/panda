@@ -517,7 +517,6 @@ AC_OUTPUT([
 	include/Makefile
 	libs/Makefile
 	dblib/Makefile
-	blob/Makefile
 	dbstuff/Makefile
 	cobol/Makefile
 	glclient/Makefile

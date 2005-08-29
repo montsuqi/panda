@@ -16,13 +16,10 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-lib_LTLIBRARIES = libpandadb.la $(DB_OBJECTS)
+noinst_LIBRARIES	=	libpandadb.a 
+lib_LTLIBRARIES 	=	$(DB_OBJECTS)
 
-libpandadb_la_LDFLAGS	=	\
-	-version-info $(LTVERSION)	\
-	-export-dynamic
-
-libpandadb_la_LIBADD	=
+libpandadb_a_LIBADD	=
 
 libpandadbincludedir = $(includedir)/panda
 libpandadbinclude_HEADERS =	\
@@ -38,7 +35,7 @@ INCLUDES 			=		\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
-libpandadb_la_SOURCES	=	\
+libpandadb_a_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h
 
@@ -52,19 +49,28 @@ DB_OBJECTS			=		\
 PostgreSQL_la_LDFLAGS	=	-module -export-dynamic
 PostgreSQL_la_SOURCES	=	PostgreSQL.c
 PostgreSQL_la_LIBADD	=	\
+	libpandadb.a		\
 	$(POSTGRES_LIBS)
 PostgreSQL_la_DEPENDENCIES	=		\
 	$(top_srcdir)/defaults.h
 
 Shell_la_LDFLAGS		=	-module -export-dynamic
 Shell_la_SOURCES		=	Shell.c
+Shell_la_LIBADD	=	\
+	libpandadb.a
 
 System_la_LDFLAGS		=	-module -export-dynamic
 System_la_SOURCES		=	System.c
+System_la_LIBADD	=	\
+	libpandadb.a
 
 NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
 NativeBLOB_la_SOURCES	=	NativeBLOB.c
+NativeBLOB_la_LIBADD	=	\
+	libpandadb.a
 
 Oseki_la_LDFLAGS	=	-module -export-dynamic
 Oseki_la_SOURCES	=	Oseki.c
-Oseki_la_LIBADD		=	$(OSEKI_LIBS)
+Oseki_la_LIBADD		=	\
+	libpandadb.a	\
+	$(OSEKI_LIBS)

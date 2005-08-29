@@ -1,3 +1,14 @@
+2005-08-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* spa, link等のない場合への対応開始(テストはこれから)
+
+	* libs/DDparser.c (ReadRecordDefine): 定義ファイルが存在しない時に
+	は、NULLを返却するようにした
+
+	* libs/Makefile.am: blob/を廃止してlibs/に統合した
+
+	* ダイナミックライブラリをやめた
+
 2005-07-06  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/PostgreSQL.c (CheckResult): エラー時に PQerrorMessage の

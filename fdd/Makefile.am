@@ -23,8 +23,8 @@ sbin_PROGRAMS = fdd
 
 LDADD 		=							\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)

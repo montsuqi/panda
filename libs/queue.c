@@ -54,7 +54,7 @@ EnQueue(
 {
 	QueueElement	*el;
 
-dbgmsg(">EnQueue");
+ENTER_FUNC;
 	el = New(QueueElement);
 	el->data = data;
 	LockQueue(que);
@@ -68,7 +68,7 @@ dbgmsg(">EnQueue");
 	que->tail = el;
 	UnLockQueue(que);
 	ReleaseQueue(que);
-dbgmsg("<EnQueue");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -88,7 +88,7 @@ DeQueue(
 	QueueElement	*el;
 	void			*ret;
 
-dbgmsg(">DeQueue");
+ENTER_FUNC;
 	LockQueue(que);
 	WaitQueue(que);
 	el = que->head;
@@ -101,7 +101,7 @@ dbgmsg(">DeQueue");
 	ret = el->data;
 	UnLockQueue(que);
 	xfree(el);
-dbgmsg("<DeQueue");
+LEAVE_FUNC;
 	return	(ret);
 }
 

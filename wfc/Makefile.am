@@ -25,26 +25,25 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
-	-I$(top_srcdir)/blob	\
 	$(SSL_CFLAGS)			\
 	$(GLIB_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
 LDADD 			=						\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/blob/libpandablob.la	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpandablob.a	\
 	$(SSL_LIBS)							\
 	$(GLIB_LIBS)						\
 	$(MONDAI_LIBS)						
 DEPENDENCIES	=						\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/blob/libpandablob.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpandablob.a
 
 
 wfc_SOURCES	=							\

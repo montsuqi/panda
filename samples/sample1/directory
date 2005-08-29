@@ -31,7 +31,7 @@ ld	{
 #	demo1	"localhost" * 1, "localhost:9001" * 1;
 #	demo1	"localhost" * 1;
 #	demo1	"/tmp/sample1demo1" * 1;
-	demo1	3;
+	demo1	1;
 #	demo1	"192.168.2.10" * 1;
 #	demo2	"[192.168.2.10]" * 1;
 #	demo2	"localhost" * 1;

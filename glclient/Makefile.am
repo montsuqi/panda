@@ -33,8 +33,8 @@ glclient_SOURCES =				\
 	fileEntry.c	fileEntry.h
 
 glclient_DEPENDENCIES =				\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandagl.la
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandagl.a
 
 INCLUDES =					\
 	-I$(top_srcdir)				\
@@ -50,8 +50,8 @@ INCLUDES =					\
 
 glclient_LDADD =				\
 	-lm					\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandagl.la	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandagl.a	\
 	$(GLIB_LIBS)				\
 	$(GTK_LIBS)				\
 	$(GLADE_LIBS)				\

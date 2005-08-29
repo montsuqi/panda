@@ -72,6 +72,7 @@ ParseRecordFile(
 	char			*ValueName;
 
 ENTER_FUNC;
+ printf("name = [%s]\n",name);
 	if		(  ( value = RecParseValue(name,&ValueName) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
@@ -133,12 +134,14 @@ ENTER_FUNC;
 		}
 		p = q + 1;
 	}	while	(  !fExit  );
+#if	0
 	if		(  rec  ==  NULL  ) {
 		rec = New(RecordStruct);
 		rec->name = StrDup(name);
 		rec->value = NULL;
 		rec->type = RECORD_NULL;
 	}
+#endif
 LEAVE_FUNC;
 	return	(rec);
 }

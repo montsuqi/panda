@@ -332,7 +332,7 @@ dbgmsg(">StartWfc");
 		}
 		proc = New(Process);
 		proc->type = PTYPE_WFC;
-		argv = (char **)xmalloc(sizeof(char *) * 18);
+		argv = (char **)xmalloc(sizeof(char *) * 19);
 		proc->argv = argv;
 		argc = 0;
 		argv[argc ++] = WfcPath;

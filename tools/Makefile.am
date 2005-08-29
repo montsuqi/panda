@@ -24,44 +24,44 @@ noinst_SCRIPTS = copy
 
 copygen_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
 dbgen_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
 checkdir_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
 monitor_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
 msgd_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
@@ -78,9 +78,9 @@ INCLUDES 			= 		\
 
 monitor_DEPENDENCIES	=				\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a
 
 copygen_SOURCES		=	\
 	copygen.c

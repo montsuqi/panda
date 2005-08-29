@@ -1,6 +1,5 @@
 /*
 PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
 Copyright (C) 2004-2005 Ogochan.
 
 This program is free software; you can redistribute it and/or modify
@@ -18,26 +17,22 @@ along with this program; if not, write to the Free Software
 Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#ifndef	_INC_WFC_H
-#define	_INC_WFC_H
-#include	"queue.h"
-#include	"struct.h"
+#ifndef	_INC_BLOB_H
+#define	_INC_BLOB_H
 #include	"net.h"
-#include	"blob.h"
 
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
+//#define	BLOB_VERSION	2
+#define	BLOB_VERSION	1
+
+#define	SIZE_BLOB_HEADER	4
+
+#if	BLOB_VERSION == 1
+#include	"blob_v1.h"
+#endif
+#if	BLOB_VERSION == 2
+#include	"blob_v2.h"
 #endif
 
-GLOBAL	GHashTable	*WindowHash;
-GLOBAL	GHashTable	*APS_Hash;
-GLOBAL	GHashTable	*MQ_Hash;
-GLOBAL	Bool		fShutdown;
-GLOBAL	int			MaxRetry;
-GLOBAL	BLOB_State	*BlobState;
-GLOBAL	Bool		fLoopBack;
+extern	int			VersionBLOB(char *space);
 
 #endif

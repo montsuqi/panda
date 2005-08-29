@@ -1516,8 +1516,10 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
     int state;
     ID handler_method;
 
+ENTER_FUNC;
     if (handler->loadpath == NULL) {
         fprintf(stderr, "loadpath is required\n");
+LEAVE_FUNC;
         return FALSE;
     }
     setup(handler);
@@ -1526,6 +1528,7 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
     app_class = load_application(handler->loadpath, dc_module);
     if (NIL_P(app_class)) {
         fprintf(stderr, "%s is not found\n", dc_module);
+LEAVE_FUNC;
         return FALSE;
     }
     dc_status_value = GetItemLongName(node->mcprec->value, "dc.status");
@@ -1544,15 +1547,21 @@ execute_dc(MessageHandler *handler, ProcessNode *node)
 		handler_method = rb_intern(StringValuePtr(s));
     }
     app = rb_protect_funcall(app_class, rb_intern("new"), &state, 0);
-    if (state && error_handle(state))
+    if (state && error_handle(state)) {
+LEAVE_FUNC;
         return FALSE;
+	}
     rb_protect_funcall(app, handler_method, &state,
                        2, procnode_new(node), database_new(DB_Table, ThisDB));
-    if (state && error_handle(state))
+    if (state && error_handle(state)) {
+LEAVE_FUNC;
         return FALSE;
+	}
     if (ValueInteger(GetItemLongName(node->mcprec->value, "rc")) < 0) {
+LEAVE_FUNC;
         return FALSE;
     } else {
+LEAVE_FUNC;
         return TRUE;
     }
 }

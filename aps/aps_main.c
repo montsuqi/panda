@@ -94,8 +94,11 @@ dbgmsg(">InitSystem");
 	InitializeValue(ThisLD->sparec->value);
 
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		dbgprintf("[%s]",ThisLD->window[i]->rec->name);
-		InitializeValue(ThisLD->window[i]->rec->value);
+		if		(	(  ThisLD->window[i]  !=  NULL  )
+				&&	(  ThisLD->window[i]->rec  !=  NULL  ) ) {
+			dbgprintf("[%s]",ThisLD->window[i]->rec->name);
+			InitializeValue(ThisLD->window[i]->rec->value);
+		}
 	}
 	ReadyDC();
 dbgmsg("<InitSystem");
@@ -107,7 +110,7 @@ MakeProcessNode(void)
 	ProcessNode	*node;
 	int			i;
 
-dbgmsg(">MakeProcessNode");
+ENTER_FUNC;
 	node = New(ProcessNode);
 	node->mcprec = ThisEnv->mcprec;
 	node->linkrec = ThisEnv->linkrec;
@@ -125,7 +128,7 @@ dbgmsg(">MakeProcessNode");
 	SetValueInteger(GetItemLongName(node->mcprec->value,"private.pstatus"),APL_SESSION_LINK);
 	SetValueInteger(GetItemLongName(node->mcprec->value,"private.pputtype"),0);
 	SetValueInteger(GetItemLongName(node->mcprec->value,"private.prc"),0);
-dbgmsg("<MakeProcessNode");
+LEAVE_FUNC;
 	return	(node);
 }
 
@@ -133,10 +136,10 @@ static	void
 FinishSession(
 	ProcessNode	*node)
 {
-dbgmsg(">FinishSession");
+ENTER_FUNC;
 	xfree(node->scrrec); 
 	xfree(node);
-dbgmsg("<FinishSession");
+LEAVE_FUNC;
 }
 
 static	void

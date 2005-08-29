@@ -205,9 +205,11 @@ ENTER_FUNC;
 		RecvnString(fp, SIZE_NAME+1, widget);
 		*type = TO_INT(RecvChar(fp));
 		ctl->n = RecvInt(fp);
+		dbgprintf("ctl->n = %d\n",ctl->n);
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
 			ctl->control[i].PutType = (byte)RecvInt(fp);
 			RecvnString(fp, SIZE_NAME+1, ctl->control[i].window);
+			dbgprintf("wname = [%s]\n",ctl->control[i].window);
 		}
 		rc = TRUE;
 		break;
@@ -303,9 +305,11 @@ _RecvWindow(
 		SendPacketClass(fp,WFC_DATA);
 		SendString(fp,wname);
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
-			RecvLBS(fp,buff);
-			NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
-			FeedBLOB(fp,win->rec->value);
+			if		(  win->rec  !=  NULL  ) {
+				RecvLBS(fp,buff);
+				NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
+				FeedBLOB(fp,win->rec->value);
+			}
 		}
 	}
 }

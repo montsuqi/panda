@@ -84,7 +84,7 @@ CheckCache(
 	Bool	ret;
 	SessionCache	*ent;
 
-dbgmsg(">CheckCache");
+ENTER_FUNC;
 	if		(  ( ent = g_hash_table_lookup(CacheTable,term) )  !=  NULL  ) {
 		NativeUnPackValue(NULL,ent->linkdata->body,node->linkrec->value);
 		NativeUnPackValue(NULL,ent->spadata->body,node->sparec->value);
@@ -92,7 +92,7 @@ dbgmsg(">CheckCache");
 	} else {
 		ret = FALSE;
 	}
-dbgmsg("<CheckCache");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -104,7 +104,7 @@ SaveCache(
 	SessionCache	*ent;
 	size_t		size;
 
-dbgmsg(">SaveCache");
+ENTER_FUNC;
 	flag = 0;
 	dbgprintf("node->term = [%s]\n",node->term);
 	if		(  ( ent = g_hash_table_lookup(CacheTable,node->term) )  ==  NULL  ) {
@@ -196,7 +196,7 @@ dbgmsg(">SaveCache");
 			}
 			ent->spadata = LBS_Duplicate(buff);
 	}
-dbgmsg("<SaveCache");
+LEAVE_FUNC;
 	return	(flag);
 }
 
@@ -223,6 +223,7 @@ ENTER_FUNC;
 	if		(  RecvPacketClass(fp)  ==  APS_REQ  ) {
 		dbgmsg("REQ");
 		RecvnString(fp, sizeof(term), term);			ON_IO_ERROR(fp,badio2);
+printf("term = [%s]\n",term);
 		if		(  nCache  >  0  ) {
 			if		(  !CheckCache(node,term)  ) {
 				flag |= APS_SPADATA;
@@ -285,8 +286,8 @@ ENTER_FUNC;
 			  case	APS_SCRDATA:
 				dbgmsg("SCRDATA");
 				for	( i = 0 ; i < node->cWindow ; i ++ ) {
-					RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-					if		(  node->scrrec[i]->value  !=  NULL  ) {
+					if		(  node->scrrec[i]  !=  NULL  ) {
+						RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
 						NativeUnPackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
 					}
 				}
@@ -333,7 +334,7 @@ PutWFC(
 	byte		flag;
 	ValueStruct	*e;
 
-dbgmsg(">PutWFC");
+ENTER_FUNC;
 	flag = APS_MCPDATA | APS_SCRDATA;
 	flag |= ( node->w.n > 0 ) ? APS_WINCTRL : 0;
 	if		(  nCache  >  0  ) {
@@ -355,12 +356,20 @@ dbgmsg(">PutWFC");
 	ON_IO_ERROR(fp,badio);
 	fEnd = FALSE; 
 	while	(  !fEnd  ) {
-		dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
-		dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
-		dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
+		if		(  node->mcprec  !=  NULL  ) {
+			dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
+		}
+		if		(  node->linkrec  !=  NULL  ) {
+			dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
+		}
+		if		(  node->sparec  !=  NULL  ) {
+			dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
+		}
 		for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-			dbgprintf("scr[%s]  = %d\n",node->scrrec[i]->name,
-					  NativeSizeValue(NULL,node->scrrec[i]->value));
+			if		(  node->scrrec[i]  !=  NULL  ) {
+				dbgprintf("scr[%s]  = %d\n",node->scrrec[i]->name,
+						  NativeSizeValue(NULL,node->scrrec[i]->value));
+			}
 		}
 		switch	(c = RecvPacketClass(fp)) {
 		  case	APS_WINCTRL:
@@ -373,29 +382,43 @@ dbgmsg(">PutWFC");
 			break;
 		  case	APS_MCPDATA:
 			dbgmsg("MCPDATA");
-			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->mcprec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(buff),node->mcprec->value);
+			if		(  node->mcprec  !=  NULL  ) {
+				LBS_ReserveSize(buff,NativeSizeValue(NULL,node->mcprec->value),FALSE);
+				NativePackValue(NULL,LBS_Body(buff),node->mcprec->value);
+			} else {
+				RewindLBS(buff);
+			}
 			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			break;
 		  case	APS_LINKDATA:
 			dbgmsg("LINKDATA");
-			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->linkrec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(buff),node->linkrec->value);
+			if		(  node->linkrec  !=  NULL  ) {
+				LBS_ReserveSize(buff,NativeSizeValue(NULL,node->linkrec->value),FALSE);
+				NativePackValue(NULL,LBS_Body(buff),node->linkrec->value);
+			} else {
+				RewindLBS(buff);
+			}
 			SendLBS(fp,buff);
 			break;
 		  case	APS_SPADATA:
 			dbgmsg("SPADATA");
-			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->sparec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(buff),node->sparec->value);
+			if		(  node->sparec  !=  NULL  ) {
+				LBS_ReserveSize(buff,NativeSizeValue(NULL,node->sparec->value),FALSE);
+				NativePackValue(NULL,LBS_Body(buff),node->sparec->value);
+			} else {
+				RewindLBS(buff);
+			}
 			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			break;
 		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
 			for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-				LBS_ReserveSize(buff,
-								NativeSizeValue(NULL,node->scrrec[i]->value),FALSE);
-				NativePackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
-				SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
+				if		(  node->scrrec[i]  !=  NULL  ) {
+					LBS_ReserveSize(buff,
+									NativeSizeValue(NULL,node->scrrec[i]->value),FALSE);
+					NativePackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
+					SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
+				}
 			}
 			break;
 		  case	APS_END:
@@ -417,6 +440,6 @@ dbgmsg(">PutWFC");
 			break;
 		}
 	}
-dbgmsg("<PutWFC");
+LEAVE_FUNC;
 }
 

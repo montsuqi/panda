@@ -96,8 +96,12 @@ FinishSession(
 		LargeByteString	*spa,
 		void		*dummy)
 	{
-		xfree(name);
-		FreeLBS(spa);
+		if		(  name  !=  NULL  ) {
+			xfree(name);
+		}
+		if		(  spa  !=  NULL  ) {
+			FreeLBS(spa);
+		}
 	}
 
 ENTER_FUNC;
@@ -108,12 +112,18 @@ ENTER_FUNC;
 		strcpy(name,data->name);
 		g_hash_table_remove(TermHash,data->name);
 		xfree(data->name);
-		FreeLBS(data->mcpdata);
+		if		(  data->mcpdata  !=  NULL  ) {
+			FreeLBS(data->mcpdata);
+		}
 		g_hash_table_foreach(data->spadata,(GHFunc)FreeSpa,NULL);
 		g_hash_table_destroy(data->spadata);
-		FreeLBS(data->linkdata);
+		if		(  data->linkdata  !=  NULL  ) {
+			FreeLBS(data->linkdata);
+		}
 		for	( i = 0 ; i < data->cWindow ; i ++ ) {
-			FreeLBS(data->scrdata[i]);
+			if		(  data->scrdata[i]  !=  NULL  ) {
+				FreeLBS(data->scrdata[i]);
+			}
 		}
 	}
 	xfree(data);
@@ -148,25 +158,35 @@ ENTER_FUNC;
 	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )
 			   !=  NULL  ) {
 		data->ld = ld;
-		data->mcpdata = NewLBS();
-		InitializeValue(ThisEnv->mcprec->value);
-		LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
-		NativePackValue(NULL,data->mcpdata->body,ThisEnv->mcprec->value);
-
+		if		(  ThisEnv->mcprec  !=  NULL  ) {
+			data->mcpdata = NewLBS();
+			InitializeValue(ThisEnv->mcprec->value);
+			LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
+			NativePackValue(NULL,data->mcpdata->body,ThisEnv->mcprec->value);
+		}
 		data->spadata = NewNameHash();
-		data->linkdata = NewLBS();
-		InitializeValue(ThisEnv->linkrec->value);
-		LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
-		NativePackValue(NULL,data->linkdata->body,ThisEnv->linkrec->value);
+		if		(  ThisEnv->linkrec  !=  NULL  ) {
+			data->linkdata = NewLBS();
+			InitializeValue(ThisEnv->linkrec->value);
+			LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
+			NativePackValue(NULL,data->linkdata->body,ThisEnv->linkrec->value);
+		} else {
+			data->linkdata = NULL;
+		}
+
 		data->cWindow = ld->info->cWindow;
 		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 													* data->cWindow);
 		for	( i = 0 ; i < data->cWindow ; i ++ ) {
-			data->scrdata[i] = NewLBS();
-			InitializeValue(data->ld->info->window[i]->rec->value);
-			LBS_ReserveSize(data->scrdata[i],
-							NativeSizeValue(NULL,ld->info->window[i]->rec->value),FALSE);
-			NativePackValue(NULL,data->scrdata[i]->body,ld->info->window[i]->rec->value);
+			if		(  data->ld->info->window[i]->rec  !=  NULL  ) {
+				data->scrdata[i] = NewLBS();
+				InitializeValue(data->ld->info->window[i]->rec->value);
+				LBS_ReserveSize(data->scrdata[i],
+								NativeSizeValue(NULL,ld->info->window[i]->rec->value),FALSE);
+				NativePackValue(NULL,data->scrdata[i]->body,ld->info->window[i]->rec->value);
+			} else {
+				data->scrdata[i] = NULL;
+			}
 		}
 		data->name = StrDup(data->hdr->term);
 		g_hash_table_insert(TermHash,data->name,data);
@@ -192,12 +212,14 @@ ReadTerminal(
 	LD_Node	*ld;
 	WindowBind	*bind;
 	Bool		fExit;
+	int			c;
 
 ENTER_FUNC;
 	ld = NULL;
 	fExit = FALSE;
 	do {
-		switch	(RecvPacketClass(fp)) {
+dbgmsg("*");
+		switch	(c = RecvPacketClass(fp)) {
 		  case	WFC_DATA:
 			dbgmsg("recv DATA");
 			RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
@@ -217,7 +239,9 @@ ENTER_FUNC;
 					if		(  bind->ix  >=  0  ) {
 						SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
 						dbgmsg("send OK");
-						RecvLBS(fp,data->scrdata[bind->ix]);	ON_IO_ERROR(fp,badio);
+						if		(  data->scrdata[bind->ix]  !=  NULL  ) {
+							RecvLBS(fp,data->scrdata[bind->ix]);	ON_IO_ERROR(fp,badio);
+						}
 						data->hdr->rc = TO_CHAR(0);
 						data->hdr->status = TO_CHAR(APL_SESSION_GET);
 						data->hdr->puttype = TO_CHAR(SCREEN_NULL);
@@ -239,6 +263,8 @@ ENTER_FUNC;
 			fExit = TRUE;
 			break;
 		  default:
+			dbgmsg("default");
+			printf("c = [%X]\n",c);
 			ON_IO_ERROR(fp,badio);
 			fExit = TRUE;
 			dbgmsg("recv default");
@@ -259,7 +285,8 @@ SendTerminal(
 	SessionData	*data)
 {
 	MessageHeader	*hdr;
-	int			i;
+	int			i
+		,		c;
 	Bool		rc;
 	WindowBind	*bind;
 	Bool		fExit;
@@ -280,6 +307,7 @@ ENTER_FUNC;
 		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
 		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
 		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
+		dbgprintf("data->w.n = %d\n",data->w.n);
 		for	( i = 0 ; i < data->w.n ; i ++ ) {
 			SendInt(fp,data->w.control[i].PutType);			ON_IO_ERROR(fp,badio);
 			SendString(fp,data->w.control[i].window);		ON_IO_ERROR(fp,badio);
@@ -287,7 +315,7 @@ ENTER_FUNC;
 		data->w.n = 0;
 		fExit = FALSE;
 		do {
-			switch	(RecvPacketClass(fp))	{
+			switch	(c = RecvPacketClass(fp))	{
 			  case	WFC_PING:
 				dbgmsg("PING");
 				SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
@@ -295,9 +323,11 @@ ENTER_FUNC;
 			  case	WFC_DATA:
 				dbgmsg("DATA");
 				RecvnString(fp,SIZE_NAME,wname);				ON_IO_ERROR(fp,badio);
+				dbgprintf("wname = [%s]\n",wname);
 				bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,wname);
 				if		(	(  bind      !=  NULL  )
-						&&	(  bind->ix  >=  0     ) )	{
+						&&	(  bind->ix  >=  0     )
+						&&	(  data->scrdata[bind->ix]  !=  NULL  ) ) {
 					SendPacketClass(fp,WFC_OK);					ON_IO_ERROR(fp,badio);
 					SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
 				} else {
@@ -313,6 +343,8 @@ ENTER_FUNC;
 				fExit = TRUE;
 				break;
 			  default:
+				dbgmsg("default");
+				printf("c = [%X]\n",c);
 				fExit = TRUE;
 				break;
 			}
@@ -345,8 +377,12 @@ ENTER_FUNC;
 			data->term = term;
 			data->retry = 0;
 			data->fAbort = FALSE;
-			CoreEnqueue(data);
-			dbgmsg("process !!");
+			if		(  !fLoopBack  ) {
+				CoreEnqueue(data);
+				dbgmsg("process !!");
+			} else {
+				EnQueue(term->que,data);
+			}
 			data = DeQueue(term->que);
 			if		(  data->fAbort  )	break;
 			if		(  SendTerminal(term->fp,data)  ) {

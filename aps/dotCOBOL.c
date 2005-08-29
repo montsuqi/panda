@@ -109,11 +109,19 @@ dbgmsg(">PutApplication");
 
 	DumpNode(node); 
 
-	dotCOBOL_PackValue(dotCOBOL_Conv,McpData,node->mcprec->value);
-	dotCOBOL_PackValue(dotCOBOL_Conv,LinkData,node->linkrec->value);
-	dotCOBOL_PackValue(dotCOBOL_Conv,SpaData,node->sparec->value);
+	if		(  node->mcprec  !=  NULL  ) {
+		dotCOBOL_PackValue(dotCOBOL_Conv,McpData,node->mcprec->value);
+	}
+	if		(  node->linkrec  !=  NULL  ) {
+		dotCOBOL_PackValue(dotCOBOL_Conv,LinkData,node->linkrec->value);
+	}
+	if		(  node->sparec  !=  NULL  ) {
+		dotCOBOL_PackValue(dotCOBOL_Conv,SpaData,node->sparec->value);
+	}
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = dotCOBOL_PackValue(dotCOBOL_Conv,p,node->scrrec[i]->value);
+		if		(  node->scrrec[i]  !=  NULL  ) {
+			p = dotCOBOL_PackValue(dotCOBOL_Conv,p,node->scrrec[i]->value);
+		}
 	}
 
 	size  = fwrite(McpData,1,McpSize,fp);
@@ -167,11 +175,19 @@ dbgmsg(">GetApplication");
 		(void)getc(fp);
 	}
 
-	dotCOBOL_UnPackValue(dotCOBOL_Conv,McpData,node->mcprec->value);
-	dotCOBOL_UnPackValue(dotCOBOL_Conv,LinkData,node->linkrec->value);
-	dotCOBOL_UnPackValue(dotCOBOL_Conv,SpaData,node->sparec->value);
+	if		(  node->mcprec  !=  NULL  ) {
+		dotCOBOL_UnPackValue(dotCOBOL_Conv,McpData,node->mcprec->value);
+	}
+	if		(  node->linkrec  !=  NULL  ) {
+		dotCOBOL_UnPackValue(dotCOBOL_Conv,LinkData,node->linkrec->value);
+	}
+	if		(  node->sparec  !=  NULL  ) {
+		dotCOBOL_UnPackValue(dotCOBOL_Conv,SpaData,node->sparec->value);
+	}
 	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p = dotCOBOL_UnPackValue(dotCOBOL_Conv,p,node->scrrec[i]->value);
+		if		(  node->scrrec[i]  !=  NULL  ) {
+			p = dotCOBOL_UnPackValue(dotCOBOL_Conv,p,node->scrrec[i]->value);
+		}
 	}
 
 

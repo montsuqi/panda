@@ -109,8 +109,9 @@ ENTER_FUNC;
 				   ==  NULL  ) {
 			wname = StrDup(name);
 			sprintf(buff,"%s.rec",name);
-			rec = ReadRecordDefine(buff);
-			g_hash_table_insert(Windows,wname,rec);
+			if		(  ( rec = ReadRecordDefine(buff) )  !=  NULL  ) {
+				g_hash_table_insert(Windows,wname,rec);
+			}
 		}
 	} else {
 		rec = NULL;

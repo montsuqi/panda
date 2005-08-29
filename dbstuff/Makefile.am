@@ -20,10 +20,10 @@ sbin_PROGRAMS =  dbredirector dbs
 
 dbredirector_LDADD 		=				\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpandamisc.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\
@@ -31,11 +31,11 @@ dbredirector_LDADD 		=				\
 
 dbs_LDADD 		=						\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandas.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandas.a	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						
@@ -57,9 +57,9 @@ dbs_SOURCES	=	\
 
 dbs_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/dblib/libpandadb.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/libs/libpandamisc.a
 
 dbredirector_LDFLAGS	=	-export-dynamic
 dbredirector_SOURCES	=	\
@@ -67,7 +67,7 @@ dbredirector_SOURCES	=	\
 
 dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/dblib/libpandadb.la
+	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a
 

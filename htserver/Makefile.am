@@ -23,25 +23,25 @@ sbin_PROGRAMS = htserver
 htserver_LDFLAGS	=	-export-dynamic
 htserver_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpandas.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandas.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(SSL_LIBS)							\
 	$(GLIB_LIBS)						\
 	$(MONDAI_LIBS)
 
 mon_LDADD 		=						\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
 htcproc_LDADD 	=						\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
@@ -60,9 +60,9 @@ htserver_SOURCES	=	\
 	server.c	\
 	trid.c		trid.h
 htserver_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpandas.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandas.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a
 
 mon_SOURCES	=	\
 	cgi.c		cgi.h		\
@@ -75,8 +75,8 @@ mon_SOURCES	=	\
 	mon.c		mon.h
 
 mon_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a
 
 htcproc_SOURCES	=	\
 	cgi.c		cgi.h		\
@@ -89,13 +89,13 @@ htcproc_SOURCES	=	\
 	htcproc.c
 
 htcproc_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a
 
 mce_LDADD 		=						\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\

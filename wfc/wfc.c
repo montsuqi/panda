@@ -254,6 +254,9 @@ static	ARG_TABLE	option[] = {
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
 		"トランザクションを再試行する時の上限数"		},
 
+	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
+		"loopback test"									},
+
 	{	NULL,		0,			TRUE,	NULL		 	}
 };
 
@@ -270,6 +273,7 @@ ENTER_FUNC;
 	Directory = "./directory";
 	MaxRetry = 0;
 	ControlPort = NULL;
+	fLoopBack = FALSE;
 LEAVE_FUNC;
 }
 

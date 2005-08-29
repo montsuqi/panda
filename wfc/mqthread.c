@@ -166,13 +166,17 @@ ENTER_FUNC;
 		dbgmsg("SCRDATA");
 		SendPacketClass(fp,APS_SCRDATA);	ON_IO_ERROR(fp,badio);
 		for	( i = 0 ; i < data->ld->info->cWindow ; i ++ ) {
-			SendLBS(fp,data->scrdata[i]);		ON_IO_ERROR(fp,badio);
+			if		(  data->scrdata[i]  !=  NULL  ) {
+				SendLBS(fp,data->scrdata[i]);		ON_IO_ERROR(fp,badio);
+			}
 		}
 	}
 	if		(  ( flag & APS_LINKDATA )  !=  0  ) {
 		dbgmsg("LINKDATA");
-		SendPacketClass(fp,APS_LINKDATA);	ON_IO_ERROR(fp,badio);
-		SendLBS(fp,data->linkdata);			ON_IO_ERROR(fp,badio);
+		if		(  data->linkdata  !=  NULL  ) {
+			SendPacketClass(fp,APS_LINKDATA);	ON_IO_ERROR(fp,badio);
+			SendLBS(fp,data->linkdata);			ON_IO_ERROR(fp,badio);
+		}
 	}
 	if		(  ( flag & APS_SPADATA )  !=  0  ) {
 		dbgmsg("SPADATA");
@@ -280,7 +284,9 @@ ENTER_FUNC;
 		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
 			for	( i = 0 ; i < data->cWindow ; i ++ ) {
-				RecvLBS(fpLD,data->scrdata[i]);	ON_IO_ERROR(fpLD,badio);
+				if		(  data->scrdata[i]  !=  NULL  ) {
+					RecvLBS(fpLD,data->scrdata[i]);	ON_IO_ERROR(fpLD,badio);
+				}
 			}
 			break;
 		  default:
@@ -309,30 +315,40 @@ ChangeLD(
 {
 	int		i;
 
+ENTER_FUNC;
 	if		(  ( data->spa = g_hash_table_lookup(data->spadata,data->ld->info->name) )
 			   ==  NULL  ) {
-		data->spa = NewLBS();
-		g_hash_table_insert(data->spadata,StrDup(data->ld->info->name),data->spa);
-		InitializeValue(data->ld->info->sparec->value);
-		LBS_ReserveSize(data->spa,
-						NativeSizeValue(NULL,data->ld->info->sparec->value),FALSE);
-		NativePackValue(NULL,LBS_Body(data->spa),data->ld->info->sparec->value);
+		if		(  data->ld->info->sparec  !=  NULL  ) {
+			data->spa = NewLBS();
+			g_hash_table_insert(data->spadata,StrDup(data->ld->info->name),data->spa);
+			InitializeValue(data->ld->info->sparec->value);
+			LBS_ReserveSize(data->spa,
+							NativeSizeValue(NULL,data->ld->info->sparec->value),FALSE);
+			NativePackValue(NULL,LBS_Body(data->spa),data->ld->info->sparec->value);
+		}
 	}
 	for	( i = 0 ; i < data->cWindow ; i ++ ) {
-		FreeLBS(data->scrdata[i]);
+		if		(  data->scrdata[i]  !=  NULL  ) {
+			FreeLBS(data->scrdata[i]);
+		}
 	}
 	xfree(data->scrdata);
 	data->cWindow = data->ld->info->cWindow;
 	data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 												* data->cWindow);
 	for	( i = 0 ; i < data->cWindow ; i ++ ) {
-		data->scrdata[i] = NewLBS();
-		InitializeValue(data->ld->info->window[i]->rec->value);
-		LBS_ReserveSize(data->scrdata[i],
-						NativeSizeValue(NULL,data->ld->info->window[i]->rec->value),FALSE);
-		NativePackValue(NULL,data->scrdata[i]->body,data->ld->info->window[i]->rec->value);
+		if		(  data->ld->info->window[i]->rec  !=  NULL  ) {
+			data->scrdata[i] = NewLBS();
+			InitializeValue(data->ld->info->window[i]->rec->value);
+			LBS_ReserveSize(data->scrdata[i],
+							NativeSizeValue(NULL,data->ld->info->window[i]->rec->value),FALSE);
+			NativePackValue(NULL,data->scrdata[i]->body,data->ld->info->window[i]->rec->value);
+		} else {
+			data->scrdata[i] = NULL;
+		}
 	}
 	data->apsid = -1;
+LEAVE_FUNC;
 }
 
 typedef	struct {
@@ -465,6 +481,7 @@ ENTER_FUNC;
 			  case	SCREEN_CHANGE_WINDOW:
 			  case	SCREEN_JOIN_WINDOW:
 			  case	SCREEN_FORK_WINDOW:
+				dbgmsg("transition");
 				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 				if		(  newld  !=  ld  ) {
 					ChangeLD(data);
@@ -472,6 +489,7 @@ ENTER_FUNC;
 				CoreEnqueue(data);
 				break;
 			  case	SCREEN_NEW_WINDOW:
+				dbgmsg("new");
 				if		(  newld  ==  ld  ) {
 					TermEnqueue(data->term,data);
 				} else {
@@ -481,10 +499,12 @@ ENTER_FUNC;
 				}
 				break;
 			  case	SCREEN_CURRENT_WINDOW:
+				dbgmsg("current");
 				data->hdr->puttype = puttype;
 				TermEnqueue(data->term,data);
 				break;
 			  case	SCREEN_CLOSE_WINDOW:
+				dbgmsg("close");
 			  default:
 				TermEnqueue(data->term,data);
 				break;

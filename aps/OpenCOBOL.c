@@ -63,14 +63,22 @@ PutApplication(
 	int		i;
 	char	*p;
 
-dbgmsg(">PutApplication");
-	OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
-	OpenCOBOL_PackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
-	OpenCOBOL_PackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
-	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p += OpenCOBOL_PackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
+ENTER_FUNC;
+	if		(  node->mcprec  !=  NULL  ) {
+		OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
 	}
-dbgmsg("<PutApplication");
+	if		(  node->linkrec  !=  NULL  ) {
+		OpenCOBOL_PackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
+	}
+	if		(  node->sparec  !=  NULL  ) {
+		OpenCOBOL_PackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
+	}
+	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
+		if		(  node->scrrec[i]  !=  NULL  ) {
+			p += OpenCOBOL_PackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
+		}
+	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -80,14 +88,22 @@ GetApplication(
 	char	*p;
 	int		i;
 
-dbgmsg(">GetApplication");
-	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
-	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
-	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
-	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
-		p += OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
+ENTER_FUNC;
+	if		(  node->mcprec  !=  NULL  ) {
+		OpenCOBOL_UnPackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
 	}
-dbgmsg("<GetApplication");
+	if		(  node->linkrec  !=  NULL  ) {
+		OpenCOBOL_UnPackValue(OpenCOBOL_Conv,LinkData,node->linkrec->value);
+	}
+	if		(  node->sparec  !=  NULL  ) {
+		OpenCOBOL_UnPackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
+	}
+	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
+		if		(  node->scrrec[i]  !=  NULL  ) {
+			p += OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
+		}
+	}
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -99,7 +115,7 @@ _ExecuteProcess(
 	char	*module;
 	Bool	rc;
 
-dbgmsg(">_ExecuteProcess");
+ENTER_FUNC;
 	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
 		PutApplication(node);
@@ -116,7 +132,7 @@ dbgmsg(">_ExecuteProcess");
 		Warning("%s - %s is not found.",cob_resolve_error(),module);
 		rc = FALSE;
 	}
-dbgmsg("<_ExecuteProcess");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -127,20 +143,32 @@ _ReadyDC(
 	int		i;
 	size_t	scrsize;
 
-dbgmsg(">ReadyDC");
+ENTER_FUNC;
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
 	ConvSetCodeset(OpenCOBOL_Conv,ConvCodeset(handler->conv));
 
-	McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec->value));
-	LinkData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->linkrec->value));
-	SpaData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->sparec->value));
+	if		(  ThisEnv->mcprec  !=  NULL  ) {
+		McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec->value));
+	} else {
+		McpData = NULL;
+	}
+	if		(  ThisEnv->linkrec  !=  NULL  ) {
+		LinkData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->linkrec->value));
+	} else {
+		LinkData = NULL;
+	}
+	if		(  ThisLD->sparec  !=  NULL  ) {
+		SpaData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->sparec->value));
+	}
 	scrsize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->window[i]->rec->value);
+		if		(  ThisLD->window[i]->rec  !=  NULL  ) {
+			scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->window[i]->rec->value);
+		}
 	}
 	ScrData = xmalloc(scrsize);
-dbgmsg("<ReadyDC");
+LEAVE_FUNC;
 }
 
 static	void

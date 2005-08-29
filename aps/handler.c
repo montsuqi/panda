@@ -190,6 +190,7 @@ ENTER_FUNC;
 			handler->klass->ReadyExecute(handler);
 		}
 	}
+dbgmsg("*");
 	if		(  ( handler->fInit & INIT_READYDC )  ==  0  ) {
 		handler->fInit |= INIT_READYDC;
 		if		(  handler->klass->ReadyDC  !=  NULL  ) {

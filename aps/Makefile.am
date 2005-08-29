@@ -39,10 +39,10 @@ MONFUNC_la_LDFLAGS	=			\
 
 LDADD 		=							\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/dblib/libpandadb.la     \
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/dblib/libpandadb.a  \
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\
@@ -56,7 +56,6 @@ INCLUDES 			= \
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/blob	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
 	$(RUBY_CFLAGS)		\
@@ -96,10 +95,10 @@ aps_SOURCES	=	\
 
 aps_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/dblib/libpandadb.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/dblib/libpandadb.a
 
 dbstub_SOURCES	=	\
 	dbstub_main.c						\
@@ -108,10 +107,10 @@ dbstub_SOURCES	=	\
 dbstub_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	MCPSUB.la							\
-	$(top_builddir)/libs/libpanda.la		\
-	$(top_builddir)/libs/libpandamisc.la	\
-	$(top_builddir)/libs/libpandacom.la	\
-	$(top_builddir)/dblib/libpandadb.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/dblib/libpandadb.a
 
 MCPSUB_la_SOURCES	=			\
 	MCPSUB.c					\

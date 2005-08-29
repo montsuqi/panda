@@ -1,6 +1,5 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+OSEKI -- Object Store Engine Kernel Infrastructure
 Copyright (C) 2004-2005 Ogochan.
 
 This program is free software; you can redistribute it and/or modify
@@ -18,26 +17,11 @@ along with this program; if not, write to the Free Software
 Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
-#ifndef	_INC_WFC_H
-#define	_INC_WFC_H
-#include	"queue.h"
-#include	"struct.h"
-#include	"net.h"
-#include	"blob.h"
+#ifndef	_INC_TABLE_H
+#define	_INC_TABLE_H
+#include	<stdint.h>
 
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
-
-GLOBAL	GHashTable	*WindowHash;
-GLOBAL	GHashTable	*APS_Hash;
-GLOBAL	GHashTable	*MQ_Hash;
-GLOBAL	Bool		fShutdown;
-GLOBAL	int			MaxRetry;
-GLOBAL	BLOB_State	*BlobState;
-GLOBAL	Bool		fLoopBack;
+extern	GHashTable	*NewLLHash(void);
+extern	GTree		*NewIntTree(void);
 
 #endif

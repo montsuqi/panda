@@ -46,6 +46,7 @@ SetWindowName(
 	char		*name)
 {
 	WindowData	*entry;
+	RecordStruct	*rec;
 	char		buff[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
@@ -59,12 +60,14 @@ ENTER_FUNC;
 		if		(  ( entry = 
 					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,name) )
 				   ==  NULL  ) {
-			entry = New(WindowData);
-			entry->PutType = SCREEN_NULL;
-			entry->fNew = FALSE;
 			sprintf(buff,"%s.rec",name);
-			entry->rec = ReadRecordDefine(buff);
-			g_hash_table_insert(ThisScreen->Windows,entry->rec->name,entry);
+			if		(  ( rec = ReadRecordDefine(buff) )  !=  NULL  ) {
+				entry = New(WindowData);
+				entry->PutType = SCREEN_NULL;
+				entry->fNew = FALSE;
+				entry->rec = rec;
+				g_hash_table_insert(ThisScreen->Windows,entry->rec->name,entry);
+			}
 		}
 	} else {
 		entry = NULL;

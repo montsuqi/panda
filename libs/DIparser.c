@@ -1029,9 +1029,7 @@ ENTER_FUNC;
 			Error("; missing");
 		}
 	}
-dbgmsg("*");
 	ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
-dbgmsg("*");
 	AssignDBG(in);
 LEAVE_FUNC;
 	return	(ThisEnv);

@@ -18,10 +18,23 @@
 
 bin_SCRIPTS = panda-config
 
-SUBDIRS		= 	libs dblib blob include 	\
-	dbstuff monpls_demo fdd tools auth 		\
-	glserver @GLCLIENT@ htserver pgserver	\
-	wfc aps  cobol Doc
+SUBDIRS		=	\
+	libs		\
+	dblib		\
+	include 	\
+	dbstuff		\
+	monpls_demo	\
+	fdd			\
+	tools		\
+	auth 		\
+	glserver	\
+	@GLCLIENT@	\
+	htserver	\
+	pgserver	\
+	wfc			\
+	aps			\
+	cobol		\
+	Doc
 
 BUILT_SOURCES = defaults.h
 
