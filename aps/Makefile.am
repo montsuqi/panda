@@ -39,6 +39,7 @@ MONFUNC_la_LDFLAGS	=			\
 
 LDADD 		=							\
 	-lm									\
+	$(top_builddir)/libs/libpandablob.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
