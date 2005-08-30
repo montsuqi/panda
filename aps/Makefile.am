@@ -39,11 +39,10 @@ MONFUNC_la_LDFLAGS	=			\
 
 LDADD 		=							\
 	-lm									\
-	$(top_builddir)/libs/libpandablob.a	\
+	$(top_builddir)/dblib/libpandadb.a  \
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(top_builddir)/dblib/libpandadb.a  \
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\
@@ -96,11 +95,10 @@ aps_SOURCES	=	\
 
 aps_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpandablob.a	\
+	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
-	$(top_builddir)/dblib/libpandadb.a
+	$(top_builddir)/libs/libpandacom.a
 
 dbstub_SOURCES	=	\
 	dbstub_main.c						\
@@ -109,11 +107,10 @@ dbstub_SOURCES	=	\
 dbstub_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	MCPSUB.la							\
-	$(top_builddir)/libs/libpandablob.a	\
+	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
-	$(top_builddir)/dblib/libpandadb.a
+	$(top_builddir)/libs/libpandacom.a
 
 MCPSUB_la_SOURCES	=			\
 	MCPSUB.c					\
