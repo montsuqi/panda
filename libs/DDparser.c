@@ -72,7 +72,6 @@ ParseRecordFile(
 	char			*ValueName;
 
 ENTER_FUNC;
- printf("name = [%s]\n",name);
 	if		(  ( value = RecParseValue(name,&ValueName) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
