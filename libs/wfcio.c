@@ -304,12 +304,18 @@ _RecvWindow(
 	  default:
 		SendPacketClass(fp,WFC_DATA);
 		SendString(fp,wname);
-		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+		switch	(RecvPacketClass(fp))	{
+		  case	WFC_OK:
+			RecvLBS(fp,buff);
 			if		(  win->rec  !=  NULL  ) {
-				RecvLBS(fp,buff);
 				NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
 				FeedBLOB(fp,win->rec->value);
 			}
+			break;
+		  case	WFC_NODATA:
+			break;
+		  case	WFC_NOT:
+			break;
 		}
 	}
 }

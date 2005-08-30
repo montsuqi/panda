@@ -47,30 +47,40 @@ DB_OBJECTS			=		\
 	NativeBLOB.la
 
 PostgreSQL_la_LDFLAGS	=	-module -export-dynamic
-PostgreSQL_la_SOURCES	=	PostgreSQL.c
+PostgreSQL_la_SOURCES	=	\
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	PostgreSQL.c
 PostgreSQL_la_LIBADD	=	\
-	libpandadb.a		\
 	$(POSTGRES_LIBS)
 PostgreSQL_la_DEPENDENCIES	=		\
 	$(top_srcdir)/defaults.h
 
 Shell_la_LDFLAGS		=	-module -export-dynamic
-Shell_la_SOURCES		=	Shell.c
-Shell_la_LIBADD	=	\
-	libpandadb.a
+Shell_la_SOURCES		=	\
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	Shell.c
+Shell_la_LIBADD	=
 
 System_la_LDFLAGS		=	-module -export-dynamic
-System_la_SOURCES		=	System.c
-System_la_LIBADD	=	\
-	libpandadb.a
+System_la_SOURCES		=	\
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	System.c
+System_la_LIBADD	=
 
 NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
-NativeBLOB_la_SOURCES	=	NativeBLOB.c
-NativeBLOB_la_LIBADD	=	\
-	libpandadb.a
+NativeBLOB_la_SOURCES	=	\
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	NativeBLOB.c
+NativeBLOB_la_LIBADD	=
 
 Oseki_la_LDFLAGS	=	-module -export-dynamic
-Oseki_la_SOURCES	=	Oseki.c
+Oseki_la_SOURCES	=	\
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	Oseki.c
 Oseki_la_LIBADD		=	\
-	libpandadb.a	\
 	$(OSEKI_LIBS)

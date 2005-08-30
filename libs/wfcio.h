@@ -40,6 +40,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define	WFC_TRUE		(PacketClass)0xE1
 #define	WFC_NOT			(PacketClass)0xF0
 #define	WFC_PONG		(PacketClass)0xF2
+#define	WFC_NODATA		(PacketClass)0xFC
 #define	WFC_DONE		(PacketClass)0xFD
 #define	WFC_OK			(PacketClass)0xFE
 #define	WFC_END			(PacketClass)0xFF

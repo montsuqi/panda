@@ -1,3 +1,7 @@
+2005-08-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* リンク時のワーニングを消した
+
 2005-08-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* spa, link等のない場合への対応開始(テストはこれから)

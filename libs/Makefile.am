@@ -34,19 +34,34 @@ lib_LTLIBRARIES		=	panda.la
 panda_la_LDFLAGS	=	-module -export-dynamic
 
 panda_la_SOURCES	=		\
-	wfcio.c		wfcio.h		\
+	Dlex.h							\
+	mhandler.c	mhandler.h			\
+	DDparser.c	DDparser.h			\
+	BDparser.c	BDparser.h			\
+	LDparser.c	LDparser.h			\
+	DBDparser.c	DBDparser.h			\
+	DIparser.c	DIparser.h			\
+	DBparser.c	DBparser.h			\
+	SQLlex.c	SQLlex.h			\
+	SQLparser.c	SQLparser.h			\
+	blobreq.c	blobreq.h			\
+	directory.c	directory.h			\
+	driver.c	driver.h	enum.h	\
+	load.c		load.h				\
+	blobcom.h						\
+	applications.c applications.h	\
+	comm.c		comm.h				\
+	net.c		net.h				\
+	socket.c	socket.h			\
+	port.c		port.h				\
+	pty.c		pty.h				\
+	wfcio.c		wfcio.h				\
 	panda.c
 
-panda_la_DEPENDENCIES = 	\
-	wfcio.c		wfcio.h		\
-	libpanda.a
+panda_la_DEPENDENCIES =
 
 panda_la_LIBADD		=	\
 	-lm									\
-	$(top_builddir)/libs/libpanda.a		\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
-	$(top_builddir)/libs/libpandablob.a	\
 	$(SSL_LIBS)							\
 	$(GLIB_LIBS)						\
 	$(MONDAI_LIBS)						

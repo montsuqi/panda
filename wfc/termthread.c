@@ -19,9 +19,9 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -326,10 +326,13 @@ ENTER_FUNC;
 				dbgprintf("wname = [%s]\n",wname);
 				bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,wname);
 				if		(	(  bind      !=  NULL  )
-						&&	(  bind->ix  >=  0     )
-						&&	(  data->scrdata[bind->ix]  !=  NULL  ) ) {
-					SendPacketClass(fp,WFC_OK);					ON_IO_ERROR(fp,badio);
-					SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
+						&&	(  bind->ix  >=  0     ) ) {
+					if		(  data->scrdata[bind->ix]  !=  NULL  ) {
+						SendPacketClass(fp,WFC_OK);					ON_IO_ERROR(fp,badio);
+						SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
+					} else {
+						SendPacketClass(fp,WFC_NODATA);				ON_IO_ERROR(fp,badio);
+					}
 				} else {
 					SendPacketClass(fp,WFC_NOT);				ON_IO_ERROR(fp,badio);
 				}
@@ -344,7 +347,7 @@ ENTER_FUNC;
 				break;
 			  default:
 				dbgmsg("default");
-				printf("c = [%X]\n",c);
+				dbgprintf("c = [%X]\n",c);
 				fExit = TRUE;
 				break;
 			}
