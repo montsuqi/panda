@@ -51,6 +51,7 @@ panda_la_SOURCES	=		\
 	blobcom.h						\
 	applications.c applications.h	\
 	comm.c		comm.h				\
+	comms.c		comms.h				\
 	net.c		net.h				\
 	socket.c	socket.h			\
 	port.c		port.h				\
