@@ -220,6 +220,7 @@ ENTER_FUNC;
 		}
 		UnblockChangedHanders();
 		/* clear busy cursor */
+		gdk_cursor_destroy(attr.cursor);
 		gdk_window_destroy (pane);
 	}
 LEAVE_FUNC;
