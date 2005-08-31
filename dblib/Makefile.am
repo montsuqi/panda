@@ -70,11 +70,13 @@ System_la_SOURCES		=	\
 System_la_LIBADD	=
 
 NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
-NativeBLOB_la_SOURCES	=	\
-	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h	\
+NativeBLOB_la_SOURCES	=		\
+	dbgroup.c	dbgroup.h		\
+	redirect.c	redirect.h		\
 	NativeBLOB.c
-NativeBLOB_la_LIBADD	=
+NativeBLOB_la_LIBADD	=		\
+	$(top_builddir)/libs/blobreq.lo
+
 
 Oseki_la_LDFLAGS	=	-module -export-dynamic
 Oseki_la_SOURCES	=	\
