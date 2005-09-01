@@ -51,6 +51,8 @@ PostgreSQL_la_SOURCES	=	\
 	redirect.c	redirect.h	\
 	PostgreSQL.c
 PostgreSQL_la_LIBADD	=	\
+	$(top_builddir)/libs/net.lo		\
+	$(top_builddir)/libs/socket.lo	\
 	$(POSTGRES_LIBS)
 PostgreSQL_la_DEPENDENCIES	=		\
 	$(top_srcdir)/defaults.h
