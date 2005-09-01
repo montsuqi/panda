@@ -41,7 +41,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"types.h"
 #include	"option.h"
 
-#define	MAX_LINE 256
+#define	MAX_LINE 8192
 
 extern	char	*
 GetExt(
@@ -78,9 +78,17 @@ static	char	*
 CheckParam(
 	char	*line,
 	char	*token)
-{	char	*ret;
+{
+	char	*ret
+		,	*p;
+	char	buf[MAX_LINE+1];
 
-	if		(  strncmp(line,token,strlen(token))  ==  0  )	{
+	strcpy(buf,line);
+	p = buf;
+	while	(	( *p  !=  0  )
+			&&	(  !isspace(*p)  ) )	p ++;
+	*p = 0;
+	if		(  strcmp(buf,token)  ==  0  )	{
 		ret = line + strlen(token);
 		while	(  isspace(*ret)  )	ret ++;
 		if		(  *ret  ==  '='  ) {
@@ -230,7 +238,7 @@ GetOption(
 	char	*p
 	,		*q
 	,		*cmd;
-	char	buff[MAX_LINE];
+	char	buff[MAX_LINE+1];
 	FILE	*fpParam;
 	FILE_LIST	*fl
 	,			*next

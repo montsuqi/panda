@@ -91,6 +91,8 @@ static	ARG_TABLE	option[] = {
 		"文字コードセット名"							},
 	{	"js",		BOOLEAN,	TRUE,	(void*)&fJavaScript,
 		"JavaScriptを使ったHTML生成を行う"	},
+	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
+		"データ定義格納ディレクトリ"	 				},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -108,6 +110,7 @@ SetDefault(void)
 	Code = NULL;
 	fJavaScript = TRUE;
 
+	RecordDir = NULL;
 	ArraySize = -1;
 	TextSize = -1;
 	RecName = NULL;
@@ -150,6 +153,39 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return value;
+}
+
+static	ValueStruct	*
+ReadValueDefine(
+	char	*name,
+	char	**ValueName)
+{
+	ValueStruct	*value;
+	char		buf[SIZE_LONGNAME+1]
+	,			dir[SIZE_LONGNAME+1];
+	char		*p
+	,			*q;
+	Bool		fExit;
+
+ENTER_FUNC;
+	strcpy(dir,RecordDir);
+	p = dir;
+	value = NULL;
+	do {
+		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+			*q = 0;
+			fExit = FALSE;
+		} else {
+			fExit = TRUE;
+		}
+		sprintf(buf,"%s/%s",p,name);
+		if		(  ( value = RecParseValue(buf,ValueName) )  !=  NULL  ) {
+			break;
+		}
+		p = q + 1;
+	}	while	(  !fExit  );
+LEAVE_FUNC;
+	return	(value);
 }
 
 extern	int
@@ -215,7 +251,11 @@ main(
 		ConvSetEncoding(Conv,STRING_ENCODING_NULL);
 		ConvSetUseName(Conv,TRUE);
 		RecParserInit();
-		Value = RecParseValue(RecName,&ValueName);
+		if		(  RecordDir  !=  NULL  ) {
+			Value = ReadValueDefine(RecName,&ValueName);
+		} else {
+			Value = RecParseValue(RecName,&ValueName);
+		}
 		ConvSetRecName(Conv,StrDup(ValueName));
 		if		(  dataname  ==  NULL  ) {
 			file = stdin;

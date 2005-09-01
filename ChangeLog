@@ -1,3 +1,7 @@
+2005-09-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/htcproc.c: -recordでrecの格納パスを指定できるようにした
+
 2005-08-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* リンク時のワーニングを消した
