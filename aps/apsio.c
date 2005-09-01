@@ -223,7 +223,7 @@ ENTER_FUNC;
 	if		(  RecvPacketClass(fp)  ==  APS_REQ  ) {
 		dbgmsg("REQ");
 		RecvnString(fp, sizeof(term), term);			ON_IO_ERROR(fp,badio2);
-printf("term = [%s]\n",term);
+		dbgprintf("term = [%s]\n",term);
 		if		(  nCache  >  0  ) {
 			if		(  !CheckCache(node,term)  ) {
 				flag |= APS_SPADATA;

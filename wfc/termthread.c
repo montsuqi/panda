@@ -264,7 +264,7 @@ dbgmsg("*");
 			break;
 		  default:
 			dbgmsg("default");
-			printf("c = [%X]\n",c);
+			dbgprintf("c = [%X]\n",c);
 			ON_IO_ERROR(fp,badio);
 			fExit = TRUE;
 			dbgmsg("recv default");
