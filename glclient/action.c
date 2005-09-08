@@ -136,9 +136,11 @@ UpdateWidget(
 	GtkWidget	*widget,
 	void		*user_data)
 {
+ENTER_FUNC;
 	if		(  !fInRecv  ) {
 		_UpdateWidget(widget,user_data);
 	}
+LEAVE_FUNC;
 }
 
 extern	XML_Node	*
@@ -148,7 +150,7 @@ ShowWindow(
 {
 	char		*fname;
 	XML_Node	*node;
-	GdkEvent	*event; 
+
 ENTER_FUNC;
 	dbgprintf("ShowWindow [%s][%d]",wname,type);
 	fname = CacheFileName(wname);
@@ -175,13 +177,6 @@ ENTER_FUNC;
 			gtk_widget_show_all(GTK_WIDGET(node->window));
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
-			while( event = gdk_event_get()) {
-				if ( event->type == GDK_KEY_PRESS ) {
-					gdk_event_free(event);
-				} else {
-					gtk_main_do_event(event);
-				}
-			}
 			gtk_widget_hide_all(GTK_WIDGET(node->window));
 			/* fall through */
 		  default:
