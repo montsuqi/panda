@@ -57,12 +57,12 @@ ClearWindowData(
 	XML_Node	*node,
 	gpointer	user_data)
 {
-dbgmsg(">ClearWindowData");
+ENTER_FUNC;
 	if		(  node->UpdateWidget  !=  NULL  ) { 
 		g_hash_table_destroy(node->UpdateWidget);
 	}
 	node->UpdateWidget = NewNameHash();
-dbgmsg("<ClearWindowData");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -85,7 +85,9 @@ _GrabFocus(gpointer data)
 extern	void
 GrabFocus(GtkWidget *widget)
 {
+ENTER_FUNC;
 	gtk_idle_add(_GrabFocus, widget);
+LEAVE_FUNC;
 }
 
 static	void

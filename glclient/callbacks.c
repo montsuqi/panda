@@ -375,9 +375,7 @@ map_event(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-dbgmsg(">map_event");
 	ClearWindowTable();
-dbgmsg("<map_event");
 }
 
 extern	void
@@ -388,13 +386,13 @@ set_focus(
 	XML_Node	*node;
 	char		*name;
 
-dbgmsg(">set_focus");
+ENTER_FUNC;
 	name = gtk_widget_get_name(widget);
 
 	if		(  ( node = g_hash_table_lookup(WindowTable,name) )  !=  NULL  ) {
 		FocusedScreen = node;
 	}
-dbgmsg("<set_focus");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -457,10 +455,8 @@ window_destroy(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-dbgmsg(">window_destroy");
 	fInRecv = TRUE;
 	gtk_main_quit();
-dbgmsg("<window_destroy");
 }
 
 #ifdef	GTK_PANDA_TYPE_HTML
@@ -475,6 +471,7 @@ open_browser(
 	char	*p;
 	char	buff[SIZE_BUFF];
 
+ENTER_FUNC;
 	if		(strncmp (cbs->href, "http:", 5) == 0)	{
 		/* full URI */
 		strcpy (uri, cbs->href);
@@ -507,5 +504,6 @@ open_browser(
 		sprintf (buff, "gnome-moz-remote %s", uri);
 		system (buff);
 	}
+LEAVE_FUNC;
 }
 #endif
