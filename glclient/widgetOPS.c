@@ -1348,7 +1348,7 @@ ENTER_FUNC;
 	sprintf(iname,"%s.day",v->ValueName);
 	GL_SendName(fp,(char *)iname);
 	SendIntegerData(fp,GL_TYPE_INT,day);
-dbgmsg("<SendCaleandar");
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
