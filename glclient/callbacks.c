@@ -60,9 +60,11 @@ select_all(
 	GdkEventFocus	*event,
 	gpointer		user_data)
 {
+ENTER_FUNC;
 	GtkEntry *entry = GTK_ENTRY (widget);
 	gtk_entry_select_region(entry, 0, entry->text_length);
 	GTK_EDITABLE (entry)->current_pos = 0;
+LEAVE_FUNC;
 	return (TRUE);
 }
 
@@ -72,8 +74,10 @@ unselect_all(
 	GdkEventFocus	*event,
 	gpointer		user_data)
 {
+ENTER_FUNC;
 	GtkEntry *entry = GTK_ENTRY (widget);
 	gtk_entry_select_region (entry, 0, 0);
+LEAVE_FUNC;
 	return (TRUE);
 }
 
@@ -87,7 +91,7 @@ keypress_filter(
 	GtkWidget	*window;
 	char		*wname;
 	XML_Node	*node;
-
+ENTER_FUNC;
 	if		(event->keyval == GDK_KP_Enter) {
 		window = gtk_widget_get_toplevel(widget);
 		wname = gtk_widget_get_name(window);
@@ -97,6 +101,7 @@ keypress_filter(
 		}
 		gtk_signal_emit_stop_by_name(GTK_OBJECT(widget),"key_press_event");
 	}
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -107,7 +112,7 @@ press_filter(
 	gpointer		user_data)
 {
 	gboolean	rc;
-
+ENTER_FUNC;
 	/* If WIDGET already has focus, do the default action */
 	if		(GTK_WIDGET_HAS_FOCUS (widget)) {
 		rc = FALSE;
@@ -117,6 +122,7 @@ press_filter(
 		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "button_press_event");
 		rc = TRUE;
 	}
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -134,17 +140,21 @@ RegisterChangedHander(
 	gpointer data)
 {
   struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
+
+ENTER_FUNC;
   p->object = object;
   p->func = func;
   p->data = data;
   p->next = changed_hander_list;
   changed_hander_list = p;
+LEAVE_FUNC;
 }
 
 static void
 BlockChangedHanders(void)
 {
   struct changed_hander *p;
+
 ENTER_FUNC;
   for (p = changed_hander_list; p != NULL; p = p->next)
     gtk_signal_handler_block_by_func (p->object, p->func, p->data);
@@ -213,7 +223,7 @@ ENTER_FUNC;
 		BlockChangedHanders();
 		if		(  GetScreenData(fpComm)  ) {
 			ignore_event = TRUE;
-			while	(  gtk_events_pending()  ) {
+			while	(	gtk_events_pending() ) {
 				gtk_main_iteration();
 			}
 			ignore_event = FALSE;
@@ -239,6 +249,7 @@ static gint
 send_event_if_kana (gpointer widget)
 {
   guchar *text = gtk_entry_get_text (GTK_ENTRY (widget));
+ENTER_FUNC;
   int len = strlen (text);
   if (len == 0 || text[len - 1] >= 0x80)
     {
@@ -246,6 +257,7 @@ send_event_if_kana (gpointer widget)
       send_event (widget, timeout_event);
     }
   timeout_hander_id = 0;
+LEAVE_FUNC;
   return FALSE;
 }
 
@@ -256,7 +268,7 @@ send_event_when_idle(
 {
 	static int registed = 0;
 	static int timeout = -1;
-
+ENTER_FUNC;
 	if (timeout_hander_id)
 		gtk_timeout_remove (timeout_hander_id);
 
@@ -278,6 +290,7 @@ send_event_when_idle(
 	} else {
 		entry_changed (widget, event);
 	}
+LEAVE_FUNC;
 }
 
 extern void
@@ -305,13 +318,14 @@ entry_next_focus(
 	GtkWidget	*window;
 	char		*wname;
 	XML_Node	*node;
-
+ENTER_FUNC;
 	window = gtk_widget_get_toplevel(GTK_WIDGET(entry));
 	wname = gtk_widget_get_name(window);
 	if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )       !=  NULL  )
 			&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
 		gtk_widget_grab_focus(nextWidget);
 	}
+LEAVE_FUNC;
 }
 
 extern	void
@@ -437,6 +451,7 @@ window_close(
 	char		*name;
 	Bool		fOpen;
 
+ENTER_FUNC;
 	name = gtk_widget_get_name(widget);
 	if		(  ( node = g_hash_table_lookup(WindowTable,name) )  !=  NULL  ) {
 		gtk_widget_hide(GTK_WIDGET(node->window));
@@ -448,6 +463,7 @@ window_close(
 			}
 		}
 	}
+LEAVE_FUNC;
 }
 
 extern	void
