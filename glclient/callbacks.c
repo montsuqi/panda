@@ -60,8 +60,8 @@ select_all(
 	GdkEventFocus	*event,
 	gpointer		user_data)
 {
-ENTER_FUNC;
 	GtkEntry *entry = GTK_ENTRY (widget);
+ENTER_FUNC;
 	gtk_entry_select_region(entry, 0, entry->text_length);
 	GTK_EDITABLE (entry)->current_pos = 0;
 LEAVE_FUNC;
@@ -74,8 +74,8 @@ unselect_all(
 	GdkEventFocus	*event,
 	gpointer		user_data)
 {
-ENTER_FUNC;
 	GtkEntry *entry = GTK_ENTRY (widget);
+ENTER_FUNC;
 	gtk_entry_select_region (entry, 0, 0);
 LEAVE_FUNC;
 	return (TRUE);
@@ -249,8 +249,8 @@ static gint
 send_event_if_kana (gpointer widget)
 {
   guchar *text = gtk_entry_get_text (GTK_ENTRY (widget));
-ENTER_FUNC;
   int len = strlen (text);
+ENTER_FUNC;
   if (len == 0 || text[len - 1] >= 0x80)
     {
       entry_changed (widget, timeout_event);
