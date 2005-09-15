@@ -33,14 +33,12 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define	PASS(s)				MessageDebug(s)
 #define	ENTER_FUNC			MessageDebugPrintf(">%s", __func__)
 #define	LEAVE_FUNC			MessageDebugPrintf("<%s", __func__)
-#define	RETURN(v)			MessageDebugPrintf("<%s", __func__),return(v)
 #else
 #define	dbgmsg(s)			/*	*/
 #define	dbgprintf(fmt,...)	/*	*/
 #define	PASS(s)				/*	*/
 #define	ENTER_FUNC			/*	*/
 #define	LEAVE_FUNC			/*	*/
-#define	RETURN(v)			return(v)
 #endif
 
 #define	EXIT(c)	{ printf("exit at %s(%d) %s\n",__FILE__,__LINE__, __func__);exit(c);}

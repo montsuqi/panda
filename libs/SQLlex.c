@@ -38,8 +38,14 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"SQLlex.h"
 #include	"debug.h"
 
-#define	UnGetChar(in,c)	(in)->body[-- (in)->pos] =(c)
-#define	GetPos(in)			&(in)->body[(in)->pos]
+static	void
+UnGetChar(
+	CURFILE	*in,
+	int		c)
+{
+	in->pos --;
+	in->back = c;
+}
 
 static	int
 GetChar(
@@ -47,15 +53,27 @@ GetChar(
 {
 	int		c;
 
-	if		(  in->body  ==  NULL  ) {
-		fprintf(stderr,"nulpo!\n");
+	if		(  in->back  >=  0  ) {
+		c = in->back;
+		in->back = -1;
+	} else {
+		if		(  in->pos  ==  in->size  ) {
+			c = 0;
+		} else
+		if		(  in->fp  !=  NULL  ) {
+			if		(  ( c = fgetc(in->fp) )  <  0  ) {
+				c = 0;
+			}
+		} else {
+			if		(  in->body  ==  NULL  ) {
+				fprintf(stderr,"nulpo!\n");
+			}
+			if		(  ( c = in->body[in->pos] )  ==  0  ) {
+				c = 0;
+			}
+		}
 	}
-	if		(  in->pos  ==  in->size  ) {
-		c = EOF;
-	} else
-	if		(  ( c = in->body[in->pos ++] )  ==  0  ) {
-		c = EOF;
-	}
+	in->pos ++;
 	return	(c);
 }
 
@@ -365,67 +383,69 @@ SQL_Lex(
 	Bool	fName)
 {
 	int		c;
-	char	*p
-		,	*q;
+	char	*p;
+	char	buff[SIZE_BUFF];
 
 ENTER_FUNC;
   retry: 
-	while	(  isspace( c = GetChar(in) ) ) {
+	if		(  in->Symbol  !=  NULL  ) {
+		xfree(in->Symbol);
+		in->Symbol = NULL;
+	}
+	while	(	(  ( c = GetChar(in) )  !=  0  )
+			&&	(  isspace(c)                  ) )	{
 		if		(  c  ==  '\n'  ) {
 			c = ' ';
 			in->cLine ++;
 		}
 	}
 	if		(  c  ==  '#'  ) {
-		while	(  ( c = GetChar(in) )  !=  '\n'  );
+		while	(	(  ( c = GetChar(in) )  !=  0    )
+				&&	(  ( c = GetChar(in) )  !=  '\n' ) );
 		in->cLine ++;
 		goto	retry;
 	}
-	if		(  in->Symbol  !=  NULL  ) {
-		xfree(in->Symbol);
-		in->Symbol = NULL;
-	}
 	switch	(c) {
 	  case	'"':
-		p = GetPos(in);
+		p = buff;
 		while	(  ( c = GetChar(in) )  !=  '"'  ) {
 			if		(  c  ==  '\\'  ) {
-				GetChar(in);
+				c = GetChar(in);
 			}
+			*p ++ = c;
 		}
-		q = GetPos(in)-1;
-		in->Symbol = (char *)xmalloc(q-p+1);
-		memcpy(in->Symbol,p,q-p);
-		in->Symbol[q-p] = 0;
+		*p = 0;
+		in->Symbol = (char *)xmalloc(strlen(buff)+1);
+		strcpy(in->Symbol,buff);
 		in->Token = T_SCONST;
 		break;
 	  case	'\'':
-		p = GetPos(in);
+		p = buff;
 		while	(  ( c = GetChar(in) )  !=  '\''  ) {
 			if		(  c  ==  '\\'  ) {
-				GetChar(in);
+				c = GetChar(in);
 			}
+			*p ++ = c;
 		}
-		q = GetPos(in)-1;
-		in->Symbol = (char *)xmalloc(q-p+1);
-		memcpy(in->Symbol,p,q-p);
-		in->Symbol[q-p] = 0;
+		*p = 0;
+		in->Symbol = (char *)xmalloc(strlen(buff)+1);
+		strcpy(in->Symbol,buff);
 		in->Token = T_SCONST;
 		break;
 	  default:
+		p = buff;
 		if		(	(  isalpha(c)  )
 				||	(  isdigit(c) ) )	{
-			p = GetPos(in)-1;
 			do {
+				*p ++ = c;
 				c = GetChar(in);
 			}	while	(	(  isalpha(c)  )
 						||	(  isdigit(c)  )
 						||	(  c  ==  '_'  ) );
 			UnGetChar(in,c);
-			q = GetPos(in);
-			in->Symbol = (char *)xmalloc(q-p+1);
-			memcpy(in->Symbol,p,q-p);
-			in->Symbol[q-p] = 0;
+			*p = 0;
+			in->Symbol = (char *)xmalloc(strlen(buff)+1);
+			strcpy(in->Symbol,buff);
 			if		(  fName  ) {
 				in->Token = T_SYMBOL;
 			} else {
