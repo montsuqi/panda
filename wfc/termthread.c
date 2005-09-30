@@ -230,10 +230,6 @@ dbgmsg("*");
 			dbgprintf("event  = [%s]",data->hdr->event);
 			if		(  ( ld = g_hash_table_lookup(WindowHash,data->hdr->window) )
 					   !=  NULL  ) {
-				if		(  data->ld  !=  ld  ) {
-					data->ld = ld;
-					data->apsid = -1;
-				}
 				bind = (WindowBind *)g_hash_table_lookup(ld->info->whash,data->hdr->window);
 				if		(  bind  !=  NULL  ) {
 					if		(  bind->ix  >=  0  ) {
