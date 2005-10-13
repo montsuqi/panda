@@ -118,19 +118,19 @@ dbgmsg(">ParDB");
 							bd->cDB ++;
 							g_hash_table_insert(bd->DB_Table, StrDup(ComSymbol),(void *)bd->cDB);
 						} else {
-							Error("same db appier");
+							ParError("same db appier");
 						}
 					}
 					p = q + 1;
 				}	while	(	(  q   !=  NULL  )
 								&&	(  db  ==  NULL  ) );
 				if		(  db  ==  NULL  ) {
-					Error("db not found");
+					ParError("db not found");
 				}
 			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("DB ; missing");
+			ParError("DB ; missing");
 		}
 	}
 	xfree(gname);
@@ -156,10 +156,10 @@ ENTER_FUNC;
 				||	(  ComToken   ==  T_SYMBOL  ) ) {
 			bind->handler = (void *)StrDup(ComSymbol);
 		} else {
-			Error("handler name error");
+			ParError("handler name error");
 		}
 	} else {
-		Error("module name error");
+		ParError("module name error");
 	}
 LEAVE_FUNC;
 }
@@ -177,7 +177,7 @@ ENTER_FUNC;
 		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
-				Error("no name");
+				ParError("no name");
 			} else {
 				ret = New(BD_Struct);
 				ret->name = StrDup(ComSymbol);
@@ -194,28 +194,28 @@ ENTER_FUNC;
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ret->arraysize = ComInt;
 			} else {
-				Error("invalid array size");
+				ParError("invalid array size");
 			}
 			break;
 		  case	T_TEXTSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ret->textsize = ComInt;
 			} else {
-				Error("invalid text size");
+				ParError("invalid text size");
 			}
 			break;
 		  case	T_DB:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
-					Error("syntax error 3");
+					ParError("syntax error 3");
 				}
 			} else
 			if		(  ComToken  ==  '{'  ) {
 				gname = StrDup("");
 			} else {
 				gname = NULL;
-				Error("syntax error 4");
+				ParError("syntax error 4");
 			}
 			ParDB(in,ret,gname);
 			break;
@@ -223,7 +223,7 @@ ENTER_FUNC;
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				ret->home = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
-				Error("home directory invalid");
+				ParError("home directory invalid");
 			}
 			break;
 		  case	T_BIND:
@@ -233,11 +233,11 @@ ENTER_FUNC;
 			ParHANDLER(in);
 			break;
 		  default:
-			Error("syntax error 3");
+			ParError("syntax error 3");
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("; missing");
+			ParError("; missing");
 		}
 	}
 dbgmsg("<ParBD");
@@ -277,7 +277,7 @@ ENTER_FUNC;
 			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {
-			Error("BD file not found");
+			ParError("BD file not found");
 			ret = NULL;
 		}
 	} else {

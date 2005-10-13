@@ -132,7 +132,7 @@ ENTER_FUNC;
 				ThisEnv->WfcApsPort = ParPort(ComSymbol,PORT_WFC_APS);
 				break;
 			  default:
-				Error("invalid port number");
+				ParError("invalid port number");
 				break;
 			}
 			GetSymbol;
@@ -146,17 +146,17 @@ ENTER_FUNC;
 				ThisEnv->TermPort = ParPort(ComSymbol,PORT_WFC);
 				break;
 			  default:
-				Error("invalid port number");
+				ParError("invalid port number");
 				break;
 			}
 			GetSymbol;
 			break;
 		  default:
-			Error("wfc keyword error");
+			ParError("wfc keyword error");
 			break;
 		}
 		if		(  ComToken  !=  ';'  ) {		
-			Error("missing ; in wfc directive");
+			ParError("missing ; in wfc directive");
 		}
 	}
 LEAVE_FUNC;
@@ -183,16 +183,16 @@ ENTER_FUNC;
 				ThisEnv->ControlPort = NULL;
 				break;
 			  default:
-				Error("invalid port number");
+				ParError("invalid port number");
 				break;
 			}
 			break;
 		  default:
-			Error("control keyword error");
+			ParError("control keyword error");
 			break;
 		}
 		if		(  ComToken  !=  ';'  ) {		
-			Error("missing ; in control directive");
+			ParError("missing ; in control directive");
 		}
 	}
 LEAVE_FUNC;
@@ -242,7 +242,7 @@ ENTER_FUNC;
 				blob->auth = NULL;
 				break;
 			  default:
-				Error("invalid auth URL");
+				ParError("invalid auth URL");
 				break;
 			}
 			break;
@@ -260,7 +260,7 @@ ENTER_FUNC;
 				blob->port = NULL;
 				break;
 			  default:
-				Error("invalid port number");
+				ParError("invalid port number");
 				break;
 			}
 			break;
@@ -274,16 +274,16 @@ ENTER_FUNC;
 				blob->dir = NULL;
 				break;
 			  default:
-				Error("invalid blob space");
+				ParError("invalid blob space");
 				break;
 			}
 			break;
 		  default:
-			Error("blob keyword error");
+			ParError("blob keyword error");
 			break;
 		}
 		if		(  ComToken  !=  ';'  ) {		
-			Error("missing ; in blob directive");
+			ParError("missing ; in blob directive");
 		}
 	}
 LEAVE_FUNC;
@@ -321,7 +321,7 @@ ENTER_FUNC;
 		if		(  ld !=  NULL  ) {
 			if		(  g_hash_table_lookup(ThisEnv->LD_Table,ComSymbol)
 					   !=  NULL  ) {
-				Error("same ld appier");
+				ParError("same ld appier");
 			}
 			tmp = (LD_Struct **)xmalloc(sizeof(LD_Struct *) * ( ThisEnv->cLD + 1));
 			if		(  ThisEnv->cLD  >  0  ) {
@@ -346,14 +346,14 @@ ENTER_FUNC;
 							n = ComInt;
 							GetSymbol;
 						} else {
-							Error("invalid number");
+							ParError("invalid number");
 						}
 						break;
 					  case	';':
 						n = 1;
 						break;
 					  default:
-						Error("invalid operator");
+						ParError("invalid operator");
 						break;
 					}
 					tports = (Port **)xmalloc(sizeof(Port *) * ( ld->nports + n));
@@ -388,7 +388,7 @@ ENTER_FUNC;
 	}	while	(	(  q   !=  NULL  )
 				&&	(  ld  ==  NULL  ) );
 	if		(  ld  ==  NULL  ) {
-		Error("ld not found");
+		ParError("ld not found");
 	}
 LEAVE_FUNC;
 }
@@ -408,7 +408,7 @@ ENTER_FUNC;
 				if		(  GetSymbol  ==  T_ICONST  ) {
 					GetSymbol;
 				} else {
-					Error("invalid number");
+					ParError("invalid number");
 				}
 				break;
 			  case	T_ICONST:
@@ -458,7 +458,7 @@ ENTER_FUNC;
 			}
 			if		(  ComToken  !=  ';'  ) {
 				Message("[%s]\n",ComSymbol);
-				Error("syntax error 2");
+				ParError("syntax error 2");
 			}
 		}
 	}
@@ -512,7 +512,7 @@ ENTER_FUNC;
 											g_hash_table_insert(ThisEnv->BD_Table,
 																StrDup(ComSymbol),bd);
 									} else {
-											Error("same bd appier");
+											ParError("same bd appier");
 									}
 							}
 							p = q + 1;
@@ -523,7 +523,7 @@ ENTER_FUNC;
 			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("syntax error 1");
+			ParError("syntax error 1");
 		}
 	}
 LEAVE_FUNC;
@@ -570,20 +570,20 @@ ENTER_FUNC;
 								g_hash_table_insert(ThisEnv->DBD_Table,
 													StrDup(ComSymbol),dbd);
 							} else {
-								Error("same db appier");
+								ParError("same db appier");
 							}
 						}
 						p = q + 1;
 					}	while	(	(  q   !=  NULL  )
 								&&	(  dbd  ==  NULL  ) );
 					if		(  dbd  ==  NULL  ) {
-						Error("dbd not found");
+						ParError("dbd not found");
 					}
 				}
 			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("syntax error 1");
+			ParError("syntax error 1");
 		}
 	}
 LEAVE_FUNC;
@@ -620,7 +620,7 @@ ParDBGROUP(
 
 ENTER_FUNC;
 	if		(  g_hash_table_lookup(ThisEnv->DBG_Table,name)  !=  NULL  ) {
-		Error("DB group name duplicate");
+		ParError("DB group name duplicate");
 	}
 	dbg = New(DBG_Struct);
 	dbg->name = name;
@@ -651,49 +651,49 @@ ENTER_FUNC;
 					||	(  ComToken  ==  T_SCONST  ) ) {
 				dbg->type = StrDup(ComSymbol);
 			} else {
-				Error("invalid DBMS type");
+				ParError("invalid DBMS type");
 			}
 			break;
 		  case	T_PORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->port = ParPort(ComSymbol,NULL);
 			} else {
-				Error("invalid port");
+				ParError("invalid port");
 			}
 			break;
 		  case	T_REDIRECTPORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->redirectPort = ParPort(ComSymbol,PORT_REDIRECT);
 			} else {
-				Error("invalid port");
+				ParError("invalid port");
 			}
 			break;
 		  case	T_NAME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->dbname = StrDup(ComSymbol);
 			} else {
-				Error("invalid DB name");
+				ParError("invalid DB name");
 			}
 			break;
 		  case	T_USER:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->user = StrDup(ComSymbol);
 			} else {
-				Error("invalid DB user");
+				ParError("invalid DB user");
 			}
 			break;
 		  case	T_PASS:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->pass = StrDup(ComSymbol);
 			} else {
-				Error("invalid DB password");
+				ParError("invalid DB password");
 			}
 			break;
 		  case	T_FILE:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->file = StrDup(ComSymbol);
 			} else {
-				Error("invalid logging file name");
+				ParError("invalid logging file name");
 			}
 			break;
 		  case	T_ENCODING:
@@ -704,29 +704,29 @@ ENTER_FUNC;
 					dbg->coding = StrDup(ComSymbol);
 				}
 			} else {
-				Error("invalid logging file name");
+				ParError("invalid logging file name");
 			}
 			break;
 		  case	T_REDIRECT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->redirect = (DBG_Struct *)StrDup(ComSymbol);
 			} else {
-				Error("invalid redirect group");
+				ParError("invalid redirect group");
 			}
 			break;
 		  case	T_PRIORITY:
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				dbg->priority = atoi(ComSymbol);
 			} else {
-				Error("priority invalid");
+				ParError("priority invalid");
 			}
 			break;
 		  default:
-			Error("other syntax error in db_group [%s]\n",ComSymbol);
+			ParErrorPrintf("other syntax error in db_group [%s]\n",ComSymbol);
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("; not found in db_group");
+			ParError("; not found in db_group");
 		}
 	}
 	AppendDBG(dbg);
@@ -746,7 +746,7 @@ ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL  ) {
 		red = g_hash_table_lookup(ThisEnv->DBG_Table,(char *)dbg->redirect);
 		if		(  red  ==  NULL  ) {
-			Error("redirect DB group not found");
+			ParError("redirect DB group not found");
 		}
 		xfree(dbg->redirect);
 		dbg->redirect = red;
@@ -844,7 +844,7 @@ ENTER_FUNC;
 		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
-				Error("no name");
+				ParError("no name");
 			} else {
 				ThisEnv = New(DI_Struct);
 				ThisEnv->name = StrDup(ComSymbol);
@@ -874,14 +874,14 @@ ENTER_FUNC;
 					ThisEnv->stacksize = ComInt;
 				}
 			} else {
-				Error("stacksize must be integer");
+				ParError("stacksize must be integer");
 			}
 			break;
 		  case	T_LINKSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ThisEnv->linksize = ComInt;
 			} else {
-				Error("linksize must be integer");
+				ParError("linksize must be integer");
 			}
 			break;
 		  case	T_LINKAGE:
@@ -893,12 +893,12 @@ ENTER_FUNC;
 					break;
 				}
 				if		(  ThisEnv->linkrec ==  NULL  ) {
-					Error("linkage record not found");
+					ParError("linkage record not found");
 				} else {
 					ThisEnv->linksize = NativeSizeValue(NULL,ThisEnv->linkrec->value);
 				}
 			} else {
-				Error("linkage invalid");
+				ParError("linkage invalid");
 			}
 			break;
 		  case	T_BASEDIR:
@@ -912,7 +912,7 @@ ENTER_FUNC;
 					}
 				}
 			} else {
-				Error("base directory invalid");
+				ParError("base directory invalid");
 			}
 			break;
 		  case	T_RECDIR:
@@ -927,7 +927,7 @@ ENTER_FUNC;
 					RecordDir = ThisEnv->RecordDir;
 				}
 			} else {
-				Error("recored directory invalid");
+				ParError("recored directory invalid");
 			}
 			break;
 		  case	T_DDIR:
@@ -941,7 +941,7 @@ ENTER_FUNC;
 					}
 				}
 			} else {
-				Error("DDIR directory invalid");
+				ParError("DDIR directory invalid");
 			}
 			break;
 		  case	T_MULTI:
@@ -961,72 +961,72 @@ ENTER_FUNC;
 			if		(  stricmp(ComSymbol,"aps")  ==  0  ) {
 				ThisEnv->mlevel = MULTI_APS;
 			} else {
-				Error("invalid multiplex level");
+				ParError("invalid multiplex level");
 			}
 			break;
 		  case	T_BLOB:
 			if		(  GetSymbol  ==  '{'  ) {
 				ThisEnv->blob = ParBLOB(in);
 			} else {
-				Error("syntax error in blob directive");
+				ParError("syntax error in blob directive");
 			}
 			break;
 		  case	T_CONTROL:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParCONTROL(in);
 			} else {
-				Error("syntax error in control directive");
+				ParError("syntax error in control directive");
 			}
 			break;
 		  case	T_WFC:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParWFC(in);
 			} else {
-				Error("syntax error in wfc directive");
+				ParError("syntax error in wfc directive");
 			}
 			break;
 		  case	T_LD:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParLD(in,ld, parse_ld);
 			} else {
-				Error("syntax error in ld directive");
+				ParError("syntax error in ld directive");
 			}
 			break;
 		  case	T_BD:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParBD(in,bd, parse_ld);
 			} else {
-				Error("syntax error in bd directive");
+				ParError("syntax error in bd directive");
 			}
 			break;
 		  case	T_DB:
 			if		(  GetSymbol  ==  '{'  ) {
 				ParDBD(in,db);
 			} else {
-				Error("syntax error in db directive");
+				ParError("syntax error in db directive");
 			}
 			break;
 		  case	T_DBGROUP:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
-					Error("syntax error in db names");
+					ParError("syntax error in db names");
 				}
 			} else
 			if		(  ComToken  ==  '{'  ) {
 				gname = "";
 			} else {
 				gname = NULL;
-				Error("syntax error dbgroup directive");
+				ParError("syntax error dbgroup directive");
 			}
 			ParDBGROUP(in,gname);
 			break;
 		  default:
-			Error("misc syntax error [%X][%s]\n",ComToken,ComSymbol);
+			ParErrorPrintf("misc syntax error [%X][%s]\n",ComToken,ComSymbol);
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("; missing");
+			ParError("; missing");
 		}
 	}
 	ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
@@ -1059,7 +1059,7 @@ ENTER_FUNC;
 			ret = NULL;
 		}
 	} else {
-		Error("DI file not found %s", name);
+		ParErrorPrintf("DI file not found %s", name);
 	}
 LEAVE_FUNC;
 	return	(ret);

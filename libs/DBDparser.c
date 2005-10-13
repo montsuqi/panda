@@ -112,19 +112,19 @@ dbgmsg(">ParDBDB");
 							dbd->cDB ++;
 							g_hash_table_insert(dbd->DBD_Table, StrDup(ComSymbol),(void *)dbd->cDB);
 						} else {
-							Error("same db appier");
+							ParError("same db appier");
 						}
 					}
 					p = q + 1;
 				}	while	(	(  q   !=  NULL  )
 								&&	(  db  ==  NULL  ) );
 				if		(  db  ==  NULL  ) {
-					Error("db not found");
+					ParError("db not found");
 				}
 			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("DB ; missing");
+			ParError("DB ; missing");
 		}
 	}
 	xfree(gname);
@@ -144,7 +144,7 @@ dbgmsg(">ParDB");
 		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
-				Error("no name");
+				ParError("no name");
 			} else {
 				ret = New(DBD_Struct);
 				ret->name = StrDup(ComSymbol);
@@ -160,37 +160,37 @@ dbgmsg(">ParDB");
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ret->arraysize = ComInt;
 			} else {
-				Error("invalid array size");
+				ParError("invalid array size");
 			}
 			break;
 		  case	T_TEXTSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ret->textsize = ComInt;
 			} else {
-				Error("invalid text size");
+				ParError("invalid text size");
 			}
 			break;
 		  case	T_DB:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
-					Error("syntax error 3");
+					ParError("syntax error 3");
 				}
 			} else
 			if		(  ComToken  ==  '{'  ) {
 				gname = StrDup("");
 			} else {
 				gname = NULL;
-				Error("syntax error 4");
+				ParError("syntax error 4");
 			}
 			ParDBDB(in,ret,gname);
 			break;
 		  default:
-			Error("syntax error 3");
+			ParError("syntax error 3");
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("; missing");
+			ParError("; missing");
 		}
 	}
 dbgmsg("<ParDB");
@@ -213,7 +213,7 @@ dbgmsg(">DBD_Parser");
 			ret = ParDB(in);
 			DropLexInfo(&in);
 		} else {
-			Error("DBD file not found");
+			ParError("DBD file not found");
 			ret = NULL;
 		}
 	} else {

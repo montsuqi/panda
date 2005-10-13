@@ -61,18 +61,6 @@ static	TokenTable	tokentable[] = {
 	{	""			,0				}
 };
 
-static	void
-_Error(
-	char	*msg,
-	char	*fn,
-	int		line)
-{
-	printf("%s:%d:%s\n",fn,line,msg);
-}
-
-#undef	Error
-#define	Error(msg)		{in->fError=TRUE;_Error((msg),in->fn,in->cLine);}
-
 extern	void
 DB_ParserInit(void)
 {
@@ -128,7 +116,7 @@ ENTER_FUNC;
 				break;
 			} else
 			if		(  ComToken  !=  ';'  ) {
-					Error("; not found");
+					ParError("; not found");
 			}
 		}	while	(  ComToken  ==  T_SYMBOL  );
 		r = (char ***)xmalloc(sizeof(char **) * ( rcount + 2 ));
@@ -142,7 +130,7 @@ ENTER_FUNC;
 		rcount ++;
 	}
 	if		(  ComToken  !=  '}'  ) {
-		Error("} not found");
+		ParError("} not found");
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -282,7 +270,7 @@ ENTER_FUNC;
 		if		(  ComToken  ==  ')'  ) {
 			GetSymbol;
 		} else {
-			Error(") missing");
+			ParError(") missing");
 		}
 		SetReserved(in,Reserved); 
 	}
@@ -290,13 +278,13 @@ ENTER_FUNC;
 		if		(  op->proc  ==  NULL  ) {
 			op->proc = ParSQL(in,rec,path->args,op->args);
 			if		(  GetSymbol  !=  ';'  ) {
-				Error("; missing");
+				ParError("; missing");
 			}
 		} else {
-			Error("function duplicate");
+			ParError("function duplicate");
 		}
 	} else {
-		Error("{ missing");
+		ParError("{ missing");
 	}
 LEAVE_FUNC;
 }
@@ -340,33 +328,33 @@ ENTER_FUNC;
 		if		(  ComToken  ==  ')'  ) {
 			GetSymbol;
 		} else {
-			Error(") missing");
+			ParError(") missing");
 		}
 		SetReserved(in,Reserved);
 	}
 	if		(  ComToken  !=  '{'  ) {
-		Error("{ missing");
+		ParError("{ missing");
 	}
 	while	(  GetSymbol  !=  '}'  ) {
 		switch	(ComToken) {
 		  case	T_PROCEDURE:
-			Error("not implemented");
+			ParError("not implemented");
 			break;
 		  case	T_OPERATION:
 			if		(  GetName  !=  T_SYMBOL  ) {
-				Error("invalid operation name");
+				ParError("invalid operation name");
 			}
 			/*	path thrue	*/
 		  case	T_SYMBOL:
 			ParOperation(in,rec,path);
 			break;
 		  default:
-			Error("invalid token");
+			ParError("invalid token");
 			break;
 		}
 	}
 	if		(  GetSymbol  !=  ';'  ) {
-		Error("; missing");
+		ParError("; missing");
 	}
 LEAVE_FUNC;
 }
@@ -401,16 +389,16 @@ ENTER_FUNC;
 				sprintf(buff,"%s.db",ComSymbol);
 				use = ReadRecordDefine(buff);
 				if		(  use  ==  NULL  ) {
-					Error("define not found");
+					ParError("define not found");
 				} else {
 					EnterUse(ret,use->name,use);
 				}
 				if		(  GetSymbol  !=  ';'  ) {
-					Error("use statement error");
+					ParError("use statement error");
 				}
 				break;
 			  default:
-				Error("use invalid symbol");
+				ParError("use invalid symbol");
 				break;
 			}
 			break;
@@ -422,21 +410,21 @@ ENTER_FUNC;
 			if		(  GetSymbol  == '{'  ) {
 				ParKey(in,ret);
 				if		(  GetSymbol  !=  ';'  ) {
-					Error("; missing");
+					ParError("; missing");
 				}
 			} else {
-				Error("syntax error(PRIMARY)");
+				ParError("syntax error(PRIMARY)");
 			}
 			break;
 		  case	T_PATH:
 			if		(  GetName  !=  T_SYMBOL  ) {
-				Error("path name invalid");
+				ParError("path name invalid");
 			} else {
 				ParPath(in,ret);
 			}
 			break;
 		  default:
-			Error("syntax error(other)");
+			ParError("syntax error(other)");
 			printf("token = [%X]\n",ComToken);
 			exit(1);
 			break;

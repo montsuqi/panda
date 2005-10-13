@@ -43,14 +43,6 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define	MarkCode(lbs)		((lbs)->ptr)
 #define	SeekCode(lbs,pos)	((lbs)->ptr = (pos))
 
-#define SQL_Error(...)                              \
-do {                                                \
-    in->fError = TRUE;                              \
-    fprintf(stderr, "%s:%d:", in->fn, in->cLine);   \
-    fprintf(stderr, __VA_ARGS__);                   \
-    fprintf(stderr, "\n");                          \
-    exit(1);                                        \
-} while (0)
 #undef	GetSymbol
 #define	GetSymbol	(ComToken = SQL_Lex(in,FALSE))
 #undef	GetName
@@ -210,17 +202,17 @@ ENTER_FUNC;
 						break;
 					  case	'[':
 						if (GetSymbol != T_SYMBOL) {
-                            SQL_Error("parse error missing symbol after `['");
+                            ParError("parse error missing symbol after `['");
                         }
                         str = g_string_append_c(str, '[');
                         str = g_string_append(str, ComSymbol);
                         str = g_string_append_c(str, ']');
                         n = atoi(ComSymbol) - 1;
                         if (n < 0) {
-                            SQL_Error("invalid array index: %s", ComSymbol);
+                            ParErrorPrintf("invalid array index: %s", ComSymbol);
                         }
                         if		(  GetSymbol  !=  ']'  ) {
-                            SQL_Error("parse error missing symbol: `]'");
+                            ParError("parse error missing symbol: `]'");
                         }
                         GetSymbol;
 						valr = TraceArray(valr,n);
@@ -234,7 +226,7 @@ ENTER_FUNC;
 				val = (  valp  !=  NULL  ) ? valp : valr;
 				val = (  valf  !=  NULL  ) ? valf : val;
 				if		(  val  ==  NULL  ) {
-					SQL_Error("undeclared (first in use this file): `%s'", str->str);
+					ParErrorPrintf("undeclared (first in use this file): `%s'", str->str);
 				}
 				LBS_EmitPointer(sql,(void *)TraceAlias(rec,val));
                 g_string_free(str, TRUE);

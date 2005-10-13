@@ -131,7 +131,7 @@ ParWindow(
 
 ENTER_FUNC;
 	if		(  GetSymbol  !=  '{'  ) { 
-		Error("syntax error");
+		ParError("syntax error");
 	} else {
 		while	(  GetName  !=  '}'  ) {
 			if		(  ComToken  ==  T_SYMBOL  ) {
@@ -155,13 +155,13 @@ ENTER_FUNC;
 				if		(  g_hash_table_lookup(LD_Table,wname)  ==  NULL  ) {
 					g_hash_table_insert(LD_Table,strdup(wname),ld);
 				} else {
-					Error("window is already registered.: %s", wname);
+					ParErrorPrintf("window is already registered.: %s", wname);
 				}
 			} else {
-				Error("record name not found");
+				ParError("record name not found");
 			}
 			if		(  GetSymbol  !=  ';'  ) {
-				Error("Window ; missing");
+				ParError("Window ; missing");
 			}
 		}
 	}
@@ -205,18 +205,18 @@ ENTER_FUNC;
 						ld->cDB ++;
 						g_hash_table_insert(ld->DB_Table,StrDup(ComSymbol),(void *)ld->cDB);
 					} else {
-						Error("same db appier");
+						ParError("same db appier");
 					}
 				}
 				p = q + 1;
 			}	while	(	(  q   !=  NULL  )
 						&&	(  db  ==  NULL  ) );
 			if		(  db  ==  NULL  ) {
-				Error("db not found");
+				ParError("db not found");
 			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("DB ; missing");
+			ParError("DB ; missing");
 		}
 	}
 	xfree(gname);
@@ -240,25 +240,25 @@ ENTER_FUNC;
 					sprintf(buff,"%s.rec",ComSymbol);
 					if		(  ( ld->sparec = ReadRecordDefine(buff) )
 							   ==  NULL  ) {
-						Error("spa record not found");
+						ParError("spa record not found");
 					}
 				} else {
-					Error("spa must be integer");
+					ParError("spa must be integer");
 				}
 				break;
 			  case	T_WINDOW:
 				ParWindow(in,ld);
 				break;
 			  default:
-				Error("syntax error 1");
+				ParError("syntax error 1");
 				break;
 			}
 			if		(  GetSymbol  !=  ';'  ) {
-				Error("DATA ; missing");
+				ParError("DATA ; missing");
 			}
 		}
 	} else {
-		Error("DATA syntax error");
+		ParError("DATA syntax error");
 	}
 LEAVE_FUNC;
 }
@@ -281,16 +281,16 @@ ENTER_FUNC;
 				||	(  ComToken    ==  T_SYMBOL  ) ) {
 			bind->handler = (void *)StrDup(ComSymbol);
 		} else {
-			Error("handler name error");
+			ParError("handler name error");
 		}
 		if		(	(  GetSymbol  ==  T_SCONST  )
 				||	(  ComToken    ==  T_SYMBOL  ) ) {
 			bind->module = StrDup(ComSymbol);
 		} else {
-			Error("module name error");
+			ParError("module name error");
 		}
 	} else {
-		Error("window name error");
+		ParError("window name error");
 	}
 LEAVE_FUNC;
 }
@@ -321,7 +321,7 @@ ENTER_FUNC;
 		switch	(ComToken) {
 		  case	T_NAME:
 			if		(  GetName  !=  T_SYMBOL  ) {
-				Error("no name");
+				ParError("no name");
 			} else {
                 ret->name = StrDup(ComSymbol);
 			}
@@ -330,21 +330,21 @@ ENTER_FUNC;
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ret->arraysize = ComInt;
 			} else {
-				Error("invalid array size");
+				ParError("invalid array size");
 			}
 			break;
 		  case	T_TEXTSIZE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ret->textsize = ComInt;
 			} else {
-				Error("invalid text size");
+				ParError("invalid text size");
 			}
 			break;
 		  case	T_CACHE:
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ret->nCache = ComInt;
 			} else {
-				Error("invalid cache size");
+				ParError("invalid cache size");
 			}
 			break;
 		  case	T_MGROUP:
@@ -356,20 +356,20 @@ ENTER_FUNC;
 					||	(  ComToken    ==  T_SYMBOL   ) ) {
 				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
-					Error("DB { missing");
+					ParError("DB { missing");
 				}
 			} else
 			if		(  ComToken  ==  '{'  ) {
 				gname = StrDup("");
 			} else {
 				gname = NULL;
-				Error("DB error");
+				ParError("DB error");
 			}
 			ParDB(in,ret,gname);
 			break;
 		  case	T_DATA:
             if (ret->name == NULL) {
-                Error("name directive is required");
+                ParError("name directive is required");
             }
 			ParDATA(in,ret);
 			break;
@@ -377,7 +377,7 @@ ENTER_FUNC;
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				ret->home = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
-				Error("home directory invalid");
+				ParError("home directory invalid");
 			}
 			break;
 		  case	T_BIND:
@@ -388,15 +388,15 @@ ENTER_FUNC;
 			break;
 		  default:
 			printf("[%s]\n",ComSymbol);
-			Error("invalid directive");
+			ParError("invalid directive");
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			Error("%s:%d: missing ;(semicolon).", in->fn, in->cLine);
+			ParErrorPrintf("missing ;(semicolon).");
 		}
 	}
     if (ret->name == NULL) {
-        Error("name directive is required");
+        ParError("name directive is required");
     }
 LEAVE_FUNC;
 	return	(ret);
@@ -437,7 +437,7 @@ dbgmsg(name);
 			BindHandler(ret);
 		} else {
 			printf("[%s]\n",name);
-			Error("LD file not found");
+			ParError("LD file not found");
 			ret = NULL;
 		}
 	} else {
