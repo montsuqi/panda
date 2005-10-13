@@ -1,3 +1,7 @@
+2005-10-13  Noboru Saitou  <noborus@netlab.jp>
+
+        * Ver 1.2.5 release
+
 2005-09-30  Noboru Saitou  <noborus@netlab.jp>
 
 	* wfc/termthread.c (ReadTerminal): ReadTerminal では data->ld を変更
