@@ -295,6 +295,9 @@ ENTER_FUNC;
 			}
 		}
 	}
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = rc ? MCP_OK : MCP_BAD_FUNC;
+	}
 LEAVE_FUNC;
 	return	(rc);
 }
