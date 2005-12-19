@@ -84,6 +84,9 @@ OpenCOBOL_la_SOURCES	=	OpenCOBOL.c
 OpenCOBOL_la_LIBADD		=	\
 	$(OPENCOBOL_LIBS)
 Exec_la_SOURCES			=	Exec.c
+Exec_la_LIBADD			=	\
+	$(top_builddir)/libs/comm.lo \
+	$(top_builddir)/libs/comms.lo
 Resident_la_SOURCES		=	Resident.c
 Ruby_la_SOURCES			=	Ruby.c
 Ruby_la_LIBADD			=	$(RUBY_LIBS)
