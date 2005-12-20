@@ -71,6 +71,7 @@ struct _EditDialog {
   GtkWidget *gtkrc;
   GtkWidget *user;
   GtkWidget *password;
+  GtkWidget *keybuff;
 #ifdef	USE_SSL
   GtkWidget *ssl;
   GtkWidget *key;
@@ -97,6 +98,7 @@ edit_dialog_set_value (EditDialog * self)
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1), TRUE);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), FALSE);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog), TRUE);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff), FALSE);
       return;
     }
 
@@ -123,7 +125,9 @@ edit_dialog_set_value (EditDialog * self)
   gtk_entry_set_text (GTK_ENTRY (self->gtkrc),
                       bd_config_section_get_string (section, "gtkrc"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
-                                bd_config_section_get_bool (section, "mlog"));
+                      bd_config_section_get_bool (section, "mlog"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
+                      bd_config_section_get_bool (section, "keybuff"));
   gtk_entry_set_text (GTK_ENTRY (self->user),
                       bd_config_section_get_string (section, "user"));
   gtk_entry_set_text (GTK_ENTRY (self->password),
@@ -196,6 +200,9 @@ edit_dialog_value_to_config (EditDialog * self)
   bd_config_section_set_bool
     (section, "mlog",
      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
+  bd_config_section_set_bool
+    (section, "keybuff",
+     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
   bd_config_section_set_string (section, "user",
                                 gtk_entry_get_text (GTK_ENTRY (self->user)));
   password = gtk_entry_get_text (GTK_ENTRY (self->password));
@@ -410,6 +417,13 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
 
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
   self->mlog = check = gtk_check_button_new_with_label ("ログ出力");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  self->keybuff = check = gtk_check_button_new_with_label ("キーバッファを有効にする");
   gtk_container_add (GTK_CONTAINER (alignment), check);
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
@@ -838,6 +852,7 @@ boot_dialog_create_conf (BDConfig *config)
       bd_config_section_append_value (section, "style", "");
       bd_config_section_append_value (section, "gtkrc", "");
       bd_config_section_append_value (section, "mlog", "false");
+      bd_config_section_append_value (section, "keybuff", "false");
       bd_config_section_append_value (section, "user", "");
       bd_config_section_append_value (section, "password", "");
       bd_config_section_append_value (section, "savepassword", "false");
@@ -914,6 +929,7 @@ struct _BootDialog
   GtkWidget *style;
   GtkWidget *gtkrc;
   GtkWidget *mlog;
+  GtkWidget *keybuff;
 #ifdef	USE_SSL
   GtkWidget *ssl;
   GtkWidget *ssllabel;
@@ -990,7 +1006,9 @@ boot_dialog_set_value (BootDialog *self, BDConfig *config)
   gtk_entry_set_text (GTK_ENTRY (self->user),
                       bd_config_section_get_string (section, "user"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
-                                bd_config_section_get_bool (section, "mlog"));
+                      bd_config_section_get_bool (section, "mlog"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
+                      bd_config_section_get_bool (section, "keybuff"));
   gtk_entry_set_text (GTK_ENTRY (self->password), password_->str);
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->savepassword),
                                 bd_config_section_get_bool (section, "savepassword"));
@@ -1045,6 +1063,9 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
   bd_config_section_set_bool
     (section, "mlog",
      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
+  bd_config_section_set_bool
+    (section, "keybuff",
+     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
   bd_config_section_set_string (section, "user",
                                 gtk_entry_get_text (GTK_ENTRY (self->user)));
   g_string_assign (password_, gtk_entry_get_text (GTK_ENTRY (self->password)));
@@ -1484,6 +1505,14 @@ boot_dialog_new ()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label ("キーバッファを有効にする");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->keybuff = check;
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
   action_area = GTK_DIALOG (dialog)->action_area;
 
   button = gtk_button_new_with_label ("接続");
@@ -1577,6 +1606,7 @@ boot_property_config_to_property (BootProperty *self)
   self->style = bd_config_section_get_string (section, "style");
   self->gtkrc = bd_config_section_get_string (section, "gtkrc");
   self->mlog = bd_config_section_get_bool (section, "mlog");
+  self->keybuff = bd_config_section_get_bool (section, "keybuff");
   self->user = bd_config_section_get_string (section, "user");
   self->password = password_->str;
 #ifdef	USE_SSL
@@ -1602,6 +1632,7 @@ boot_property_inspect (BootProperty * self, FILE *fp)
   fprintf (fp, "style       : %s\n", self->style);
   fprintf (fp, "gtkrc       : %s\n", self->gtkrc);
   fprintf (fp, "mlog        : %s\n", self->mlog ? "TRUE" : "FALSE");
+  fprintf (fp, "keybuff     : %s\n", self->keybuff ? "TRUE" : "FALSE");
   fprintf (fp, "user        : %s\n", self->user);
   fprintf (fp, "password    : %s\n", self->password);
 #ifdef	USE_SSL

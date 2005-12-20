@@ -110,6 +110,8 @@ static	ARG_TABLE	option[] = {
 		"データ処理プロトコルバージョン 2 を使う"		},
 	{	"mlog",		BOOLEAN,	TRUE,	(void*)&fMlog,
 		"実行ログの取得を行う"							},
+	{	"keybuff",	BOOLEAN,	TRUE,	(void*)&fKeyBuff,
+		"キーバッファを有効にする"						},
 	{	"dialog",	BOOLEAN,	TRUE,	(void*)&fDialog,
 		"起動ダイアログを表示する"						},
 #ifdef	USE_SSL
@@ -140,6 +142,7 @@ SetDefault(void)
 	Protocol1 = TRUE;
 	Protocol2 = FALSE;
 	fMlog = FALSE;
+	fKeyBuff = FALSE;
 	fDialog = FALSE;
 #ifdef	USE_SSL
 	fSsl = FALSE;
@@ -199,6 +202,7 @@ show_boot_dialog ()
     Style = prop.style;
     Gtkrc = prop.gtkrc;
     fMlog = prop.mlog;
+    fKeyBuff = prop.keybuff;
     User = prop.user;
     Pass = prop.password;
 #ifdef	USE_SSL

@@ -1,3 +1,12 @@
+2005-12-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* rkey_buffer_branch をマージ
+	* glclient/action.[ch], glclient/callbacks.c: タイマーイベントの
+	ストップを画面遷移時に変更
+	* glclient/action.c, glclient/callbacks.c: キーバッファクリアを
+	再実装して、同一画面内ではキーバッファが効くようにした。
+	* glclient/bootdialog.c: 「キーバッファを有効にする」項目の追加
+
 2005-10-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/LDparser.c, libs/SQLparser.c, libs/BDparser.c, libs/DBparser.c, 

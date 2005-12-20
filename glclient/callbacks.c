@@ -51,9 +51,6 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"glterm.h"
 #include	"debug.h"
 
-static char *timeout_event;
-static gint timeout_hander_id = 0;
-
 extern	gboolean
 select_all(
 	GtkWidget	*widget,
@@ -126,87 +123,18 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
-struct changed_hander {
-	GtkObject       *object;
-	GtkSignalFunc	func;
-	gpointer	data;
-	struct changed_hander *next;
-} *changed_hander_list = NULL;
-
-static	void
-RegisterChangedHander(
-	GtkObject *object,
-	GtkSignalFunc func,
-	gpointer data)
-{
-  struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
-
-ENTER_FUNC;
-  p->object = object;
-  p->func = func;
-  p->data = data;
-  p->next = changed_hander_list;
-  changed_hander_list = p;
-LEAVE_FUNC;
-}
-
-static void
-BlockChangedHanders(void)
-{
-  struct changed_hander *p;
-
-ENTER_FUNC;
-  for (p = changed_hander_list; p != NULL; p = p->next)
-    gtk_signal_handler_block_by_func (p->object, p->func, p->data);
-LEAVE_FUNC;
-}
-
-static void
-UnblockChangedHanders(void)
-{
-  struct changed_hander *p;
-ENTER_FUNC;
-  for (p = changed_hander_list; p != NULL; p = p->next)
-    gtk_signal_handler_unblock_by_func (p->object, p->func, p->data);
-LEAVE_FUNC;
-}
-
 extern	void
 send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	GtkWidget	*window;
 	GdkWindow	*pane;
-	GdkWindowAttr	attr;
-	static int	ignore_event = FALSE;
-	char	wname[SIZE_LONGNAME];
-
+	char		*wname;
 ENTER_FUNC;
-	memset (&attr, 0, sizeof (GdkWindowAttr));
-	attr.wclass = GDK_INPUT_ONLY;
-	attr.window_type = GDK_WINDOW_CHILD;
-	attr.cursor = gdk_cursor_new (GDK_WATCH);
-	attr.x = attr.y = 0;
-	attr.width = attr.height = 32767;
+	if		(  !fInRecv ) {
+		pane = ShowBusyCursor(widget);
 
-	if		(  !fInRecv  &&  !ignore_event ) {
-		/* remove timer */
-		if (timeout_hander_id != 0) {
-			gtk_timeout_remove(timeout_hander_id);
-			timeout_hander_id = 0;
-		}
-		/* show busy cursor */
-		window = gtk_widget_get_toplevel(widget);
-#if	1	/*	This logic is escape code for GTK bug.	*/
-		strcpy(wname,glade_get_widget_long_name(widget));
-		*(strchr(wname,'.')) = 0;
-#else
-		strcpy(wname,gtk_widget_get_name(window));
-#endif
-		pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
-		gdk_window_show (pane);
-		gdk_flush ();
+		wname = GetWindowName(widget);
 		/* send event */
 		if		(  event  !=  NULL  ) {
 			SendEvent(fpComm,
@@ -220,18 +148,13 @@ ENTER_FUNC;
 					  gtk_widget_get_name(widget));
 		}
 		SendWindowData();
-		BlockChangedHanders();
-		if		(  GetScreenData(fpComm)  ) {
-			ignore_event = TRUE;
-			while	(	gtk_events_pending() ) {
-				gtk_main_iteration();
-			}
-			ignore_event = FALSE;
+		BlockChangedHandlers();
+		GetScreenData(fpComm);
+		UnblockChangedHandlers();
+		if	( ! fKeyBuff  ) {
+			ClearKeyBuffer();
 		}
-		UnblockChangedHanders();
-		/* clear busy cursor */
-		gdk_cursor_destroy(attr.cursor);
-		gdk_window_destroy (pane);
+		HideBusyCursor(pane); 
 	}
 LEAVE_FUNC;
 }
@@ -248,15 +171,19 @@ send_event_on_focus_out(
 static gint
 send_event_if_kana (gpointer widget)
 {
-  guchar *text = gtk_entry_get_text (GTK_ENTRY (widget));
-  int len = strlen (text);
+	GtkWidget	*window;
+	char *timeout_event;
+	guchar *text = gtk_entry_get_text (GTK_ENTRY (widget));
+	int len = strlen (text);
 ENTER_FUNC;
-  if (len == 0 || text[len - 1] >= 0x80)
-    {
-      entry_changed (widget, timeout_event);
-      send_event (widget, timeout_event);
-    }
-  timeout_hander_id = 0;
+	window = gtk_widget_get_toplevel(widget);
+	if (len == 0 || text[len - 1] >= 0x80)
+	{
+		timeout_event = GetTimerEvent(GTK_WINDOW(window));
+		entry_changed (widget, timeout_event);
+		send_event (widget, timeout_event);
+	}
+	StopTimer(GTK_WINDOW(window));
 LEAVE_FUNC;
   return FALSE;
 }
@@ -269,11 +196,9 @@ send_event_when_idle(
 	static int registed = 0;
 	static int timeout = -1;
 ENTER_FUNC;
-	if (timeout_hander_id)
-		gtk_timeout_remove (timeout_hander_id);
-
+	StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
 	if (!registed) {
-		RegisterChangedHander (GTK_OBJECT (widget), send_event_when_idle, event);
+		RegisterChangedHandler (GTK_OBJECT (widget), send_event_when_idle, event);
 		registed = 1;
 	}
 	if (timeout == -1) {
@@ -285,8 +210,7 @@ ENTER_FUNC;
 	}
 
 	if (timeout > 0) {
-		timeout_event = event;
-		timeout_hander_id = gtk_timeout_add (timeout, send_event_if_kana, widget);
+		StartTimer(event, timeout, send_event_if_kana, widget);
 	} else {
 		entry_changed (widget, event);
 	}
@@ -440,6 +364,7 @@ CheckWindow(
 	if		(  node->window  !=  NULL  ) {
 		*fOpen = TRUE;
 	}
+LEAVE_FUNC;
 }
 
 extern	void

@@ -51,6 +51,87 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"message.h"
 #include	"debug.h"
 
+static struct changed_hander {
+	GtkObject       *object;
+	GtkSignalFunc	func;
+	gpointer	data;
+	gint		block_flag;
+	struct changed_hander *next;
+} *changed_hander_list = NULL;
+
+extern	void
+RegisterChangedHandler(
+	GtkObject *object,
+	GtkSignalFunc func,
+	gpointer data)
+{
+  struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
+ENTER_FUNC;
+	p->object = object;
+	p->func = func;
+	p->data = data;
+	p->next = changed_hander_list;
+	p->block_flag = FALSE;
+	changed_hander_list = p;
+LEAVE_FUNC;
+}
+
+extern void
+BlockChangedHandlers(void)
+{
+  struct changed_hander *p;
+
+ENTER_FUNC;
+	for (p = changed_hander_list; p != NULL; p = p->next) {
+		p->block_flag = TRUE;		 
+		gtk_signal_handler_block_by_func (p->object, p->func, p->data);
+	}
+LEAVE_FUNC;
+}
+
+extern void
+UnblockChangedHandlers(void)
+{
+  struct changed_hander *p;
+ENTER_FUNC;
+	for (p = changed_hander_list; p != NULL; p = p->next) {
+		if (p->block_flag) {
+			gtk_signal_handler_unblock_by_func (p->object, p->func, p->data);
+		}
+	}
+LEAVE_FUNC;
+}
+
+extern	GtkWidget	*
+GetWindow(
+	GtkWidget	*widget)
+{
+	GtkWidget	*window;
+ENTER_FUNC;
+	window = gtk_widget_get_toplevel(widget);
+LEAVE_FUNC;
+	return (window);
+}
+
+extern	char	*
+GetWindowName(
+	GtkWidget	*widget)
+{
+	GtkWidget	*window;
+	static char	wname[SIZE_LONGNAME];
+
+ENTER_FUNC;
+	window = GetWindow(widget);
+#if	1	/*	This logic is escape code for GTK bug.	*/
+	strcpy(wname,glade_get_widget_long_name(widget));
+	*(strchr(wname,'.')) = 0;
+#else
+	strcpy(wname,gtk_widget_get_name(window));
+#endif
+LEAVE_FUNC;
+	return (wname);
+}
+
 static	void
 ClearWindowData(
 	char		*wname,
@@ -75,18 +156,11 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	gint
-_GrabFocus(gpointer data)
-{
-	gtk_widget_grab_focus(data);
-	return FALSE;
-}
-
 extern	void
 GrabFocus(GtkWidget *widget)
 {
 ENTER_FUNC;
-	gtk_idle_add(_GrabFocus, widget);
+	gtk_widget_grab_focus(widget);
 LEAVE_FUNC;
 }
 
@@ -95,17 +169,12 @@ _ResetTimer(
 	    GtkWidget	*widget,
 	    gpointer	data)
 {
+ENTER_FUNC;
 	if (GTK_IS_CONTAINER (widget))
 		gtk_container_forall (GTK_CONTAINER (widget), _ResetTimer, NULL);
 	else if (GTK_IS_PANDA_TIMER (widget))
 		gtk_panda_timer_reset (GTK_PANDA_TIMER (widget));
-}
-
-extern	void
-ResetTimer(
-	GtkWindow	*window)
-{
-	gtk_container_forall (GTK_CONTAINER (window), _ResetTimer, NULL);
+LEAVE_FUNC;
 }
 
 extern	void
@@ -136,11 +205,94 @@ UpdateWidget(
 	GtkWidget	*widget,
 	void		*user_data)
 {
-ENTER_FUNC;
 	if		(  !fInRecv  ) {
 		_UpdateWidget(widget,user_data);
 	}
+}
+
+extern	void
+ClearKeyBuffer(void)
+{
+	GdkEvent	*event; 
+ENTER_FUNC;
+	while( (event = gdk_event_get()) != NULL) {
+		if ( (event->type == GDK_KEY_PRESS ||
+			  event->type == GDK_KEY_RELEASE) ) {
+ 			gdk_event_free(event); 
+		} else {
+			gtk_main_do_event(event);
+		}
+	}
 LEAVE_FUNC;
+}
+
+extern	void
+StartTimer(
+	char		*event,
+	int			timeout,
+	GtkFunction function,
+	GtkWidget	*widget)
+{
+	GtkWidget	*window;
+	static gint timeout_handler_id;
+ENTER_FUNC;
+	window = gtk_widget_get_toplevel(widget);
+	gtk_object_set_data(GTK_OBJECT(window), "timeout_event", event);
+	timeout_handler_id = gtk_timeout_add (timeout, function, widget);
+	gtk_object_set_data(GTK_OBJECT(window), "timeout_handler_id", &timeout_handler_id);
+LEAVE_FUNC;
+}
+
+extern	char	*
+GetTimerEvent(
+	GtkWindow	*window)
+{
+	static char *timeout_event;
+ENTER_FUNC;
+	timeout_event = (char *)gtk_object_get_data(GTK_OBJECT(window), "timeout_event");
+LEAVE_FUNC;	
+	return (timeout_event);
+}
+
+extern	void
+ResetTimer(
+	GtkWindow	*window)
+{
+	gtk_container_forall (GTK_CONTAINER (window), _ResetTimer, NULL);
+}
+
+extern void
+StopTimer(
+		GtkWindow	*window)
+{
+	gint *timeout_handler_id;
+ENTER_FUNC;	
+	timeout_handler_id = gtk_object_get_data(GTK_OBJECT(window), "timeout_handler_id");
+	if ((timeout_handler_id) && (*timeout_handler_id != 0)) {
+		gtk_timeout_remove(*timeout_handler_id);
+		*timeout_handler_id = 0;
+	}
+	gtk_object_set_data(GTK_OBJECT(window), "timeout_handler_id", timeout_handler_id);
+LEAVE_FUNC;
+}
+
+static	XML_Node	*
+CreateNewNode(
+	char	*wname)
+{
+	char	*fname;
+	XML_Node	*node;
+ENTER_FUNC;
+	fname = CacheFileName(wname);
+	node = New(XML_Node);
+	node->xml = glade_xml_new(fname, NULL);
+	node->window = GTK_WINDOW(glade_xml_get_widget(node->xml, wname));
+	node->name = StrDup(wname);
+	node->UpdateWidget = NewNameHash();
+	glade_xml_signal_autoconnect(node->xml);
+	g_hash_table_insert(WindowTable,node->name,node);
+LEAVE_FUNC;
+	return (node);
 }
 
 extern	XML_Node	*
@@ -150,23 +302,14 @@ ShowWindow(
 {
 	char		*fname;
 	XML_Node	*node;
-
 ENTER_FUNC;
 	dbgprintf("ShowWindow [%s][%d]",wname,type);
 	fname = CacheFileName(wname);
 
 	if		(  ( node = g_hash_table_lookup(WindowTable,wname) )  ==  NULL  ) {
-		/* Create new node */
-		switch	(type) {
-		  case	SCREEN_NEW_WINDOW:
-		  case	SCREEN_CURRENT_WINDOW:
-			node = New(XML_Node);
-			node->xml = glade_xml_new(fname, NULL);
-			node->window = GTK_WINDOW(glade_xml_get_widget(node->xml, wname));
-			node->name = StrDup(wname);
-			node->UpdateWidget = NewNameHash();
-			glade_xml_signal_autoconnect(node->xml);
-			g_hash_table_insert(WindowTable,node->name,node);
+		if ( type == SCREEN_NEW_WINDOW ||
+			 type == SCREEN_CURRENT_WINDOW ){
+			node = CreateNewNode(wname);
 		}
 	}
 
@@ -177,6 +320,8 @@ ENTER_FUNC;
 			gtk_widget_show_all(GTK_WIDGET(node->window));
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
+			ClearKeyBuffer();
+			StopTimer(node->window);
 			gtk_widget_hide_all(GTK_WIDGET(node->window));
 			/* fall through */
 		  default:
@@ -220,3 +365,39 @@ DestroyWindowAll()
 {
     g_hash_table_foreach(WindowTable, (GHFunc)destroy_window_one, NULL);
 }
+
+static	GdkCursor *Busycursor;
+
+extern	GdkWindow	*
+ShowBusyCursor(
+	GtkWidget	*widget)
+{
+	static GdkWindow	*pane;
+	GtkWidget	*window;
+	GdkWindowAttr	attr;
+ENTER_FUNC;
+	memset (&attr, 0, sizeof (GdkWindowAttr));
+	attr.wclass = GDK_INPUT_ONLY;
+	attr.window_type = GDK_WINDOW_CHILD;
+	Busycursor = gdk_cursor_new (GDK_WATCH);
+	attr.cursor = Busycursor;
+	attr.x = attr.y = 0;
+	attr.width = attr.height = 32767;
+
+	window = gtk_widget_get_toplevel(widget);
+	pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
+	gdk_window_show (pane);
+	gdk_flush ();
+LEAVE_FUNC;
+	return	(pane); 
+}
+
+extern	void
+HideBusyCursor(GdkWindow *pane)
+{
+ENTER_FUNC;
+	gdk_cursor_destroy (Busycursor);
+	gdk_window_destroy (pane);
+LEAVE_FUNC;
+}
+
