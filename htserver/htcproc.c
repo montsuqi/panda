@@ -277,7 +277,7 @@ main(
 						i --;
 					}
 				}
-				UnPackValue(Conv,q,Value);
+				UnPackValue(Conv,(byte *)q,Value);
 			} else {
 				Value = NULL;
 			}

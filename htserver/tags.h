@@ -50,7 +50,6 @@ typedef	struct {
 
 GLOBAL	GHashTable	*Tags;
 GLOBAL	GHashTable	*Jslib;
-GLOBAL	Bool		fJavaScript;
 
 #undef	GLOBAL
 

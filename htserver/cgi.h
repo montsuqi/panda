@@ -20,10 +20,25 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #ifndef	_INC_CGI_H
 #define	_INC_CGI_H
 
-#include	"value.h"
+#include	"LBSfunc.h"
 
 #define	CGIV_NULL		0x00
 #define	CGIV_SAVE		0x01
+
+#define	AGENT_TYPE	word
+#define	AGENT_TYPE_NULL		(AGENT_TYPE)0x0000
+#define	AGENT_TYPE_MSIE		(AGENT_TYPE)0x8000
+#define	AGENT_TYPE_MSIE_OLD	(AGENT_TYPE)0x8100
+#define	AGENT_TYPE_GECKO	(AGENT_TYPE)0x4000
+#define	AGENT_TYPE_MOZILLA	(AGENT_TYPE)0x4100
+#define	AGENT_TYPE_FF		(AGENT_TYPE)0x4200
+#define	AGENT_TYPE_NS6		(AGENT_TYPE)0x4400
+#define	AGENT_TYPE_OPERA	(AGENT_TYPE)0x2000
+#define	AGENT_TYPE_NN		(AGENT_TYPE)0x1010
+#define	AGENT_TYPE_TEXT		(AGENT_TYPE)0x0800
+
+#define	AGENT_TYPE_JS		(AGENT_TYPE)0x0001
+#define	AGENT_TYPE_OLD		(AGENT_TYPE)0x0002
 
 typedef	struct {
 	char	*name;
@@ -40,6 +55,7 @@ typedef	struct {
 #define	GLOBAL		extern
 #endif
 
+GLOBAL	AGENT_TYPE	AgentType;
 GLOBAL	GHashTable	*Values;
 GLOBAL	GHashTable	*Files;
 GLOBAL	char		*Codeset;
@@ -48,6 +64,7 @@ GLOBAL	Bool		fCookie;
 GLOBAL	Bool		fDump;
 GLOBAL	Bool		fDebug;
 GLOBAL	Bool		fJavaScriptLink;
+GLOBAL	Bool		fJavaScript;
 GLOBAL	char		*SesDir;
 GLOBAL	char		*CommandLine;
 GLOBAL	time_t		SesExpire;

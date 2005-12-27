@@ -62,7 +62,7 @@ static	GHashTable	*VarArea;
 #ifdef	DEBUG
 static	void
 Push(
-	VarType	v)
+	Expr	v)
 {
 	dbgprintf("pStack = %d\n",pStack);
 	dbgprintf("val = %d\n",v.body.ival);
@@ -705,7 +705,7 @@ ENTER_FUNC;
                     local = ConvLocal(vval.body.sval);
                     len = EncodeLengthURI(local);
                     encoded = (char *) xmalloc(len + 1);
-                    EncodeURI(encoded, local);
+                    EncodeURI(encoded, (byte *)local);
                     vval.body.sval = encoded;
 					vval.type = VAR_STR;
                     Push(vval);
@@ -839,7 +839,7 @@ ParseInput(
 		char	*u8;
 
 		if		(  val->body  !=  NULL  ) {
-			u8 = ConvUTF8(val->body,Codeset);
+			u8 = ConvUTF8((byte *)val->body,Codeset);
 			xfree(val->body);
 			val->body = StrDup(u8);
 		}
@@ -851,7 +851,7 @@ ParseInput(
 		char	*u8;
 
 		if		(  file->filename  !=  NULL  ) {
-			u8 = ConvUTF8(file->filename,Codeset);
+			u8 = ConvUTF8((byte *)file->filename,Codeset);
 			xfree(file->filename);
 			file->filename = StrDup(u8);
 		}

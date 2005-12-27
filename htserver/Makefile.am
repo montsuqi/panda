@@ -53,6 +53,7 @@ INCLUDES 			= \
 	$(POSTGRES_CFLAGS)	\
 	$(SSL_CFLAGS)		\
 	$(MONDAI_CFLAGS)	\
+	$(XSLT_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
 htserver_SOURCES	=	\

@@ -184,8 +184,8 @@ ParPortName(
 			}
 			ret = NewUNIX_Port(str+1,mode);
 		} else
-			if		(	(  *str  ==  '/'  )
-					||	(  *str  ==  '.'  ) ) {
+		if		(	(  *str  ==  '/'  )
+				||	(  *str  ==  '.'  ) ) {
 			if		(  ( p = strchr(str,':') )  !=  NULL  ) {
 				*p = 0;
 				mode = otoi(p+1);

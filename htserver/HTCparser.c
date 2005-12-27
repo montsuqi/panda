@@ -246,14 +246,14 @@ ENTER_FUNC;
                 buf[0] = '/';
                 strcpy(buf + 1, HTC_ComSymbol + 5);
                 tag = g_hash_table_lookup(Tags, buf);
-            }
-            else if (strnicmp(HTC_ComSymbol, "HTC:", 4) == 0) {
+            } else
+			if (strnicmp(HTC_ComSymbol, "HTC:", 4) == 0) {
                 tag = g_hash_table_lookup(Tags, HTC_ComSymbol + 4);
             }
         }
 		if		(  tag  !=  NULL  ) {
-			ParMacroTag(htc,tag);
 			if		(  tag->emit  !=  NULL  ) {
+				ParMacroTag(htc,tag);
 				tag->emit(htc,tag);
 			}
 		} else {
@@ -426,7 +426,7 @@ ENTER_FUNC;
 		HTC_FileName = "*memory*";
 		HTC_cLine = 1;
 		HTC_File = NULL;
-		HTC_Memory = buff;
+		HTC_Memory = (byte *)buff;
 		ret = HTCParserCore(GetCharMemory,UnGetCharMemory);
 		if		(  fError  ) {
 			ret = NULL;

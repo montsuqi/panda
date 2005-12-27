@@ -275,17 +275,16 @@ PutFile(ValueStruct *file)
                 disposition = tmp;
         }
         if (*filename != '\0') {
-            char *user_agent = getenv("HTTP_USER_AGENT");
-            if (user_agent && strstr(user_agent, "MSIE") != NULL) {
+			if		(  ( AgentType & AGENT_TYPE_MSIE )  ==  AGENT_TYPE_MSIE  ) {
                 printf("Content-Disposition: %s;"
                        " filename=%s\r\n",
                        disposition,
                        ConvShiftJIS(filename));
             }
             else {
-                int len = EncodeLengthRFC2231(filename);
+                int len = EncodeLengthRFC2231((byte *)filename);
                 char *encoded = (char *) xmalloc(len + 1);
-                EncodeRFC2231(encoded, filename);
+                EncodeRFC2231(encoded, (byte *)filename);
                 printf("Content-Disposition: %s;"
                        " filename*=utf-8''%s\r\n",
                        disposition,
@@ -362,11 +361,77 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+ParseUserAgent(void)
+{
+	char	*agent
+		,	*p;
+
+#define	SKIP_SPACE	while	(	(  *agent  !=  0  )		\
+							&&	(  isspace(*agent)  ) )	agent ++
+
+	AgentType = AGENT_TYPE_NULL | AGENT_TYPE_JS;
+
+	if		(  ( agent = getenv("HTTP_USER_AGENT") )  !=  NULL  ) {
+		if		(  strlicmp(agent,"w3m")  ==  0  ) {
+			AgentType &= ~AGENT_TYPE_JS;
+			AgentType |= AGENT_TYPE_TEXT;
+		} else
+		if		(  strlcmp(agent,"Mozilla/")  !=  0  ) {
+			agent += 8;
+			if		(  strstr(agent,"compatible;")  !=  NULL  ) {
+				agent += 11;
+				SKIP_SPACE;
+				if		(  strlcmp(agent,"MSIE")  !=  0  ) {
+					AgentType |= AGENT_TYPE_MSIE;
+					agent += 4;
+					SKIP_SPACE;
+					if		(	(  *agent  ==  '5'  )
+							||	(  *agent  ==  '4' ) ) {
+						AgentType |= AGENT_TYPE_MSIE_OLD;
+					}
+				}
+			} else {
+				if		(  strstr(agent,"Gecko")  !=  NULL  ) {
+					if		(  strstr(agent,"Netscape6")  !=  NULL  ) {
+						AgentType |= AGENT_TYPE_NS6;
+					} else
+					if		(  strstr(agent,"Firefox")  !=  NULL  ) {
+						AgentType |= AGENT_TYPE_FF;
+					} else {
+						AgentType |= AGENT_TYPE_MOZILLA;
+					}
+				} else {
+					AgentType |= AGENT_TYPE_NN;
+				}
+			}
+			if		(  ( p = strstr(agent,"Opera") )  !=  NULL  ) {
+				AgentType |= AGENT_TYPE_OPERA;
+			}
+		} else
+		if		(  strlcmp(agent,"Opera/")  ==  0  ) {	/*	pure Opera	*/
+			AgentType |= AGENT_TYPE_OPERA;
+		}
+	}
+
+	if		(  ( AgentType & AGENT_TYPE_JS )  ==  0  ) {
+		fJavaScript = FALSE;
+		fJavaScriptLink = FALSE;
+	}
+
+#ifdef	DEBUG
+	SaveValue("_js",(fJavaScript ? "true" : "false"),FALSE);
+	SaveValue("_agent",agent,FALSE);
+#endif
+}
+
 static	LargeByteString	*
-Expired(void)
+Expired(
+	int		code)
 {
 	LargeByteString	*html;
 	HTCInfo	*htc;
+	char	buff[SIZE_BUFF];
 
 ENTER_FUNC;
 	Codeset = SRC_CODESET;
@@ -381,7 +446,10 @@ ENTER_FUNC;
                      "<p>maybe session was expired. please retry.</p>\n"
                      "<p>おそらくセション変数の保持時間切れでしょう。"
                      "もう一度最初からやり直して下さい。</p>\n"
-                     "</body></html>\n",SRC_CODESET);
+					 ,SRC_CODESET);
+		sprintf(buff,"<p>end code = %d</p>",code);
+		LBS_EmitUTF8(html,buff,SRC_CODESET);
+		LBS_EmitUTF8(html,"</body></html>\n",SRC_CODESET);
     } else {
         ExecCode(html,htc);
     }
@@ -405,6 +473,7 @@ ENTER_FUNC;
   retry:
 	fError = FALSE;
 	if		(  ( fpServ = OpenPort(ServerPort,PORT_HTSERV) )  !=  NULL  ) {
+		ParseUserAgent();
 		if		(  ( sesid = LoadValue("_sesid") )  ==  NULL  ) {
 			if		(  ( user = getenv("REMOTE_USER") )  ==  NULL  ) {
 				if		(  ( user = getenv("USER") )  ==  NULL  ) {
@@ -459,10 +528,10 @@ ENTER_FUNC;
                 ExecCode(html,htc);
 				HT_SendString("\n");
 			} else {
-				html = Expired();
+				html = Expired(1);
 			}
 		} else {
-			html = Expired();
+			html = Expired(2);
 		}
 		PutHTML(html);
 	} else {

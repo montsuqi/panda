@@ -55,19 +55,20 @@ EnQueue(
 	QueueElement	*el;
 
 ENTER_FUNC;
-	el = New(QueueElement);
-	el->data = data;
-	LockQueue(que);
-	el->prev = que->tail;
-	el->next = NULL;
-	if		(  que->tail  ==  NULL  ) {
-		que->head = el;
-	} else {
-		que->tail->next = el;
+	if		(  LockQueue(que)  ==  0  ) {
+		el = New(QueueElement);
+		el->data = data;
+		el->prev = que->tail;
+		el->next = NULL;
+		if		(  que->tail  ==  NULL  ) {
+			que->head = el;
+		} else {
+			que->tail->next = el;
+		}
+		que->tail = el;
+		UnLockQueue(que);
+		ReleaseQueue(que);
 	}
-	que->tail = el;
-	UnLockQueue(que);
-	ReleaseQueue(que);
 LEAVE_FUNC;
 }
 

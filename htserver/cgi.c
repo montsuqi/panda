@@ -108,7 +108,9 @@ LEAVE_FUNC;
 
 extern  char    *
 SaveArgValue(
-    char *name, char *value, Bool fSave)
+    char    *name,
+    char    *value,
+    Bool fSave)
 {
     char    *val
         ,   *ret;
@@ -254,9 +256,9 @@ ConvUTF8(
 	static	char	cbuff[SIZE_BUFF];
 
 	cd = iconv_open("utf8",code);
-	istr = str;
+	istr = (char *)str;
 dbgprintf("size = %d\n",strlen(str));
-	if		(  ( sib = strlen(str)  )  >  0  ) {
+ if		(  ( sib = strlen((char *)str)  )  >  0  ) {
 		ostr = cbuff;
 		sob = SIZE_BUFF;
 		if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
@@ -360,10 +362,10 @@ StartScanEnv(
 static	Bool
 ScanEnv(
 	char	*name,
-	byte	*value)
+	char	*value)
 {
-	byte	buff[SIZE_BUFF];
-	byte	*p;
+	char	buff[SIZE_BUFF];
+	char	*p;
 	int		c;
 	Bool	rc;
 
@@ -396,9 +398,9 @@ ScanEnv(
 	}
 	*p = 0;
 	if		(  p  !=  buff  ) {
-		if		(  ( p = strchr(buff,'=') )  !=  NULL  ) {
+		if		(  ( p = strchr((char *)buff,'=') )  !=  NULL  ) {
 			*p = 0;
-			strcpy(name,buff);
+			strcpy(name,(char *)buff);
 			p ++;
 			while	(  *p  !=  0  ) {
 				if		(  *p  !=  '\r'  ) {
@@ -409,7 +411,7 @@ ScanEnv(
 			*value = 0;
 		} else {
 			*name = 0;
-			strcpy(value,buff);
+			strcpy((char *)value,buff);
 		}
 		rc = TRUE;
 	} else {
@@ -421,7 +423,7 @@ ScanEnv(
 static	Bool
 ScanPost(
 	char	*name,
-	byte	*value)
+	char	*value)
 {
 	char	buff[SIZE_BUFF];
 	char	*p;
@@ -459,7 +461,7 @@ ScanPost(
 			*value = 0;
 		} else {
 			*name = 0;
-			strcpy(value,buff);
+			strcpy((char *)value,buff);
 		}
 		rc = TRUE;
 	} else {
@@ -479,7 +481,7 @@ extern	void
 GetArgs(void)
 {
 	char	name[SIZE_LONGNAME+1];
-	byte	value[SIZE_BUFF]
+	char	value[SIZE_BUFF]
 		,	buff[SIZE_BUFF];
     char	*boundary;
 	char	*env;
@@ -510,14 +512,14 @@ ENTER_FUNC;
 		}
 		if		(  fCookie  ) {
 			if		(  ( env = getenv("HTTP_COOKIE") )  !=  NULL  ) {
-				strcpy(buff,env);
-				if      (  ( p = strrchr(buff,';') )  !=  NULL  )   *p = 0;
-                StartScanEnv(buff);
+				strcpy((char *)buff,env);
+				if      (  ( p = strrchr((char *)buff,';') )  !=  NULL  )   *p = 0;
+                StartScanEnv((char *)buff);
 				while	(  ScanEnv(name,value)  ) {
 					dbgprintf("var name = [%s]\n",name);
                     if      (  *name  ==  0  ) {
                         RemoveValue(name);
-						SaveValue(name, value,FALSE);
+						SaveValue(name, (char *)value,FALSE);
                     } else
 					if		(  ( val = LoadValue(name) )  !=  NULL  ) {
 						str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
@@ -540,7 +542,7 @@ GetSessionValues(void)
 	char	*sesid;
 	char	fname[SIZE_LONGNAME+1];
 	char	name[SIZE_BUFF];
-	byte	value[SIZE_BUFF];
+	char	value[SIZE_BUFF];
 	int		fd;
 	Bool	ret;
 	struct	stat	sb;
@@ -590,7 +592,7 @@ PutValue(
 	if		(	(  value->fSave  )
 			&&	(  *name  !=  0  ) ) {
 		fprintf(fp,"%s=",name);
-		if		(  ( p = value->body )  !=  NULL  ) {
+		if		(  ( p = (byte *)value->body )  !=  NULL  ) {
 			while	(  *p  !=  0  ) {
 				if		(  *p  ==  0x20  ) {
 					fputc('+',fp);
@@ -847,8 +849,10 @@ Dump(void)
 extern	void
 InitCGI(void)
 {
+ENTER_FUNC;
     CGI_InitValues();
 	GetArgs();
+LEAVE_FUNC;
 }
 
 /*

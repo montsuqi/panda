@@ -2045,7 +2045,7 @@ ENTER_FUNC;
 	AddArg(tag,"size",TRUE);
 	AddArg(tag,"multiple",TRUE);
 	AddArg(tag,"onchange",TRUE);
-	tag = NewTag("/SELECT",NULL);
+	//tag = NewTag("/SELECT",NULL);
 
 	tag = NewTag("FILESELECTION",_FileSelection);
 	AddArg(tag,"name",TRUE);
