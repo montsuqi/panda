@@ -174,37 +174,58 @@ AuthGetUser(
 	return	(g_hash_table_lookup(PasswdTable,name));
 }
 
-extern	void
-AuthLoadPasswd(
-	char	*fname)
+static Bool
+scan_passwd_entry(const char *buf, PassWord *pw)
 {
-	char	buff[SIZE_BUFF];
-	FILE	*fp;
-	PassWord	*pw;
-	char	*p
-	,		*q;
+    int fields;
+    static char *format = NULL;
 
-	AuthClearEntry();
-	if		(  ( fp = fopen(fname,"r") )  ==  NULL  ) {
-		Error("can not open password file");
-		return;
-	}
-	while	(  fgets(buff, SIZE_BUFF, fp)  !=  NULL  ) {
+    if (format == NULL){
+        asprintf(&format, "%%%d[^:]:%%%d[^:]:%%d:%%d:%%%dc",
+                 SIZE_USER, SIZE_PASS, SIZE_OTHER);
+        if (format == NULL){
+            Warning("can not make passwd format string");
+            return FALSE;
+        }
+    }
+    memset(pw, 0, sizeof(PassWord));
+    fields = sscanf(buf, format,
+        pw->name, pw->pass, &(pw->uid), &(pw->gid), pw->other);
+    if (fields < 4) return FALSE;
+
+    return TRUE;
+}
+
+extern	void
+AuthLoadPasswd(char *fname)
+{
+	char        buff[SIZE_BUFF];
+	FILE        *fp;
+	PassWord    *pw;
+	char        *p;
+	int         line = 1;
+
+    AuthClearEntry();
+    if ((fp = fopen(fname,"r")) == NULL){
+        Warning("[%s] can not open password file", fname);
+        return;
+    }
+    while (fgets(buff, SIZE_BUFF, fp) != NULL){
+        if ((p = strchr(buff, '\n')) == NULL){
+            Warning("[%s:%d] input line is too long", fname, line);
+            break;
+        }
+        *p = 0;
 		pw = New(PassWord);
-		p = buff;
-		q = strchr(p,':');	*q = 0;
-		strcpy(pw->name,p);
-		p = q + 1;	q = strchr(p,':');	*q = 0;
-		strcpy(pw->pass,p);
-		p = q + 1;	q = strchr(p,':');	*q = 0;
-		pw->uid = atoi(p);
-		p = q + 1;	q = strchr(p,':');	*q = 0;
-		pw->gid = atoi(p);
-		p = q + 1;	q = strchr(p,'\n');	*q = 0;
-		strcpy(pw->other,p);
-		AuthAddEntry(pw);
-	}
-	fclose(fp);
+        if (scan_passwd_entry(buff, pw) != TRUE){
+            Warning("[%s:%d] invalid format", fname, line);
+            xfree(pw);
+            break;
+        }
+        AuthAddEntry(pw);
+        line++;
+    }
+    fclose(fp);
 }
 
 extern	Bool
@@ -216,36 +237,36 @@ AuthSingle(
 {
 	char	buff[SIZE_BUFF];
 	FILE	*fp;
-	char	*p
-	,		*q;
-	Bool	rc;
+	char	*p;
+	Bool	rc = FALSE;
+	int		line = 1;
+	PassWord	pw;
 
-	if		(  ( fp = fopen(fname,"r") )  ==  NULL  ) {
-		printf("[%s]",fname);
-		Error("can not open password file");
-		rc = FALSE;
-	} else {
-		rc = FALSE;
-		while	(  fgets(buff, SIZE_BUFF, fp)  !=  NULL  ) {
-			p = buff;
-			q = strchr(p,':');	*q = 0;
-			if		(  strcmp(p,name)  ==  0  ) {
-				p = q + 1;	q = strchr(p,':');	*q = 0;
-				if		(  strcmp(p, crypt(pass,p))  ==  0  ) {
-					p = q + 1;	q = strchr(p,':');	*q = 0;
-					p = q + 1;	q = strchr(p,':');	*q = 0;
-					p = q + 1;	q = strchr(p,'\n');	*q = 0;
-					if		(  other  !=  NULL  ) {
-						strcpy(other,p);
-					}
-					rc = TRUE;
-				}
-				break;
-			}
-		}
-		fclose(fp);
-	}
-	return	(rc);
+    if ((fp = fopen(fname,"r")) == NULL){
+        Warning("[%s] can not open password file: %s", fname,strerror(errno));
+        return FALSE;
+    }
+
+    while (fgets(buff, SIZE_BUFF, fp) != NULL){
+        if ((p = strchr(buff, '\n')) == NULL){
+            Warning("[%s:%d] input line is too long", fname, line);
+            break;
+        }
+        *p = 0;
+        if (scan_passwd_entry(buff, &pw) != TRUE){
+            Warning("[%s:%d] invalid format", fname, line);
+            break;
+        }
+        line++;
+		if (strcmp(pw.name, name) != 0) continue;
+        if (strcmp(pw.pass, crypt(pass, pw.pass)) != 0) continue;
+		if (other != NULL) strcpy(other, pw.other);
+        rc = TRUE;
+        break;
+    }
+    fclose(fp);
+
+    return rc;
 }
 
 extern	void

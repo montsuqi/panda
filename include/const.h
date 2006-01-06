@@ -44,7 +44,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define	CONTROL_PORT	"/tmp/wfc.control:0600"
 #define	BLOB_PORT		"/tmp/blob:0600"
 
-#define	SIZE_PASS		3+8+22
+#define	SIZE_PASS		(3+8+1+22)
 #define	SIZE_OTHER		128
 
 #define	SIZE_BLOCK		1024

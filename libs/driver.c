@@ -188,9 +188,9 @@ ENTER_FUNC;
 	memclear(scr->other,SIZE_OTHER+1);
 	scr->Windows = NULL;
 	if		(  libmondai_i18n  ) {
-		if		(  ( lang = getenv("LANG") )  !=  NULL  ) {
-			encoding = strchr(lang,'.') + 1;
-			scr->encoding = StrDup(encoding);
+		if		(  ( lang = getenv("LANG") )  !=  NULL  &&
+				   ( encoding = strchr(lang,'.') )  !=  NULL  ){
+			scr->encoding = StrDup(++encoding);
 		} else {
 			scr->encoding = NULL;
 		}
