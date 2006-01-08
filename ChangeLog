@@ -1,3 +1,7 @@
+2006-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* net.c (Send): バッファ処理の誤りを直した。通信エラー時の回収を確実にした
+
 2006-01-06  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
 	* include/const.h: SIZE_PASSの不足を修正

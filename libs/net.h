@@ -50,7 +50,7 @@ typedef	struct _NETFILE	{
 	void	(*close)(struct _NETFILE *fp);
 }	NETFILE;
 
-extern	void		Flush(NETFILE *fp);
+extern	Bool		Flush(NETFILE *fp);
 extern	int			Send(NETFILE *fp, void *buff, size_t size);
 extern	int			Recv(NETFILE *fp, void *buff, size_t size);
 extern	int			nputc(int c, NETFILE *fp);

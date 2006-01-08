@@ -41,21 +41,24 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"port.h"
 #include	"debug.h"
 
-extern	void
+extern	Bool
 Flush(
 	NETFILE	*fp)
 {
 	byte	*p = fp->buff;
 	ssize_t	count;
 
-	while	(  fp->ptr  >  0  ) {
+	while	(	(  fp->fOK  )
+			&&	(  fp->ptr  >  0  ) ) {
 		if		(  ( count = fp->write(fp,p,fp->ptr) )  >  0  ) {
 			fp->ptr -= count;
 			p += count;
 		} else {
+			fp->fOK = FALSE;
 			break;
 		}
 	}
+	return	(fp->fOK);
 }
 
 extern	int
@@ -73,15 +76,18 @@ Send(
 		ret = size;
 		if		(	(  fp->buff  !=  NULL  )
 				&&	(  fp->size  >  size  ) ) {
-			if		(  size + fp->ptr  >  fp->size  ) {
+			while	(  size + fp->ptr  >  fp->size  ) {
 				left = fp->size - fp->ptr;
-				memcpy((fp->buff + fp->ptr),buff,left);
+				memcpy((fp->buff + fp->ptr),p,left);
 				fp->ptr = fp->size;
-				Flush(fp);
-				buff += left;
+				if		(  !Flush(fp)  )	{
+					ret = -1;
+					goto	quit;
+				}
+				p += left;
 				size -= left;
 			}
-			memcpy((fp->buff + fp->ptr),buff,size);
+			memcpy((fp->buff + fp->ptr),p,size);
 			fp->ptr += size;
 			fp->fSent = TRUE;
 		} else {
@@ -92,6 +98,7 @@ Send(
 					p += count;
 				} else {
 					ret = -1;
+					fp->fOK = FALSE;
 					break;
 				}
 			}
@@ -100,6 +107,7 @@ Send(
 	} else {
 		ret = -1;
 	}
+ quit:
 	return	(ret);
 }
 
@@ -109,7 +117,7 @@ Recv(
 	void	*buff,
 	size_t	size)
 {
-	char	*p;
+	char	*p = buff;
 	ssize_t	count;
 	int		ret;
 
@@ -118,7 +126,6 @@ Recv(
 			Flush(fp);
 		}
 		ret = size;
-		p = buff;
 		while	(  size  >  0  ) {
 			if		(  ( count = fp->read(fp,p,size) )  >  0  ) {
 				size -= count;
