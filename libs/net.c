@@ -498,9 +498,12 @@ OpenPort(
 	NETFILE	*fp;
 
 	port = ParPort(url,defport);
-	fd = ConnectSocket(port,SOCK_STREAM);
+	if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  >  0  ) {
+		fp = SocketToNet(fd);
+	} else {
+		fp = NULL;
+	}
 	DestroyPort(port);
-	fp = SocketToNet(fd);
 	return	(fp);
 }
 
