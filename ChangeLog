@@ -1,3 +1,8 @@
+2006-01-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/gnumerictodb.c: Gnumericの表に書かれたDB設計書から、.dbを
+	作るコマンドを作った(例はsamplesに置かれたgnumericファイル)
+
 2006-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* net.c (Send): バッファ処理の誤りを直した。通信エラー時の回収を確実にした
