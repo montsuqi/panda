@@ -242,6 +242,9 @@ ENTER_FUNC;
 	sigaddset(&hupset,SIGHUP);
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
+    if		( ThisEnv == NULL ) {
+		Error("DI file parse error.");
+	}
 	InitDB_Process(NULL);
 #ifdef	DEBUG
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)DumpDBG,NULL);
