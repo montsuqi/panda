@@ -156,9 +156,10 @@ extern	BD_Struct	*
 GetBD(
 	char	*name)
 {
-	BD_Struct	*ret;
-
-	ret = g_hash_table_lookup(ThisEnv->BD_Table,name);
+	BD_Struct	*ret = NULL;
+	if (ThisEnv) {
+		ret = g_hash_table_lookup(ThisEnv->BD_Table,name);
+	}
 	return	(ret);
 }
 
@@ -166,9 +167,10 @@ extern	DBD_Struct	*
 GetDBD(
 	char	*name)
 {
-	DBD_Struct	*ret;
-
-	ret = g_hash_table_lookup(ThisEnv->DBD_Table,name);
+	DBD_Struct	*ret = NULL;
+	if (ThisEnv) {
+		ret = g_hash_table_lookup(ThisEnv->DBD_Table,name);
+	}
 	return	(ret);
 }
 
