@@ -70,7 +70,7 @@ LoadGnumeric(
 		,		*type;
 	char		**primary
 		,		**pr;
-	char		*buff;
+	char		*rname;
 	char		*p;
 
 	doc = xmlReadFile(fname,NULL,XML_PARSE_NOBLANKS);
@@ -83,11 +83,11 @@ LoadGnumeric(
 	pr = primary;
 	Cells = SearchNode(Sheet,GNUMERIC_NS,"Cells",NULL,NULL);
 	Cell = XMLNodeChildren(Cells);
-	buff = StrDup(basename(fname));
-	if		(  ( p = strstr(buff,".gnumeric") )  !=  NULL  ) {
+	rname = StrDup(basename(fname));
+	if		(  ( p = strstr(rname,".gnumeric") )  !=  NULL  ) {
 		*p = 0;
 	}
-	printf("%s\t{\n",buff);
+	printf("%s\t{\n",rname);
 	for	( r = 1 ;(	(  r     <   MaxRow  )
 				&&	(  Cell  !=  NULL    ) ); ) {
 		if		(	(  strcmp(XMLNsBody(Cell),GNUMERIC_NS)  ==  0  )
@@ -112,7 +112,8 @@ LoadGnumeric(
 					printf("\t%s\t%s;\t\t#\t%s\n",name,type,jname);
 					break;
 				  case	3:
-					if		(  toupper(*text)  ==  'P'  ) {
+					if		(	(  text            !=  NULL  )
+							&&	(  toupper(*text)  ==  'P'   ) ) {
 						*pr = name;
 						pr ++;
 					}
@@ -135,6 +136,25 @@ LoadGnumeric(
 		printf("\t%s;\n",*pr);
 	}
 	printf("};\n");
+	printf("path\tprimary\t{\n");
+	printf("\tDBSELECT\t{\n");
+	printf("\t\tDECLARE\t%s_primary_csr\tCURSOR\tFOR\n",rname);
+	printf("\t\tSELECT\t*\n");
+	printf("\t\t\tWHERE\n");
+	for	( pr = primary ; *pr != NULL ;  ) {
+		printf("\t\t\t\t%s = :%s",*pr,*pr);
+		pr ++;
+		if		(  *pr  !=  NULL  ) {
+			printf(",\n");
+		} else {
+			printf("\n");
+		}
+	}
+	printf("\t\t;\n");
+	printf("\t};\n");
+	printf("};\n");
+
+	xfree(rname);
 	xmlFreeDoc(doc);
 }
 

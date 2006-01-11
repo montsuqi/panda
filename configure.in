@@ -112,6 +112,7 @@ if test "x$enable_client" = "xyes"; then
 	AC_SUBST(GTK_PANDA_LIBS)
 	AC_SUBST(GTK_PANDA_CFLAGS)
 	AC_DEFINE(USE_PANDA,1,"")
+	AC_DEFINE(USE_GTK,1,"")
 
 	AC_PATH_PROG(GLADE_PANDA_CONFIG,libglade-panda-config,no)
 	if test x$GLADE_PANDA_CONFIG = xno; then

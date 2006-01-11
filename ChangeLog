@@ -1,3 +1,7 @@
+2006-01-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/enum.c: --disable-clientの時の誤りを直した
+
 2006-01-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/gnumerictodb.c: Gnumericの表に書かれたDB設計書から、.dbを

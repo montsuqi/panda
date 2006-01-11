@@ -223,20 +223,22 @@ LEAVE_FUNC;
 
 ENTER_FUNC;
 	if		(  ( ld = socket(PF_INET,type,0) )  <  0  )	{
-		Error("error socket");
-	}
-	iport = atoi(port);
-	name.sin_family = AF_INET;
-	name.sin_port = htons(iport);
+		//fprintf(stderr,"error socket");
+		ld = -1;
+	} else {
+		iport = atoi(port);
+		name.sin_family = AF_INET;
+		name.sin_port = htons(iport);
 
-	if		(  ( hp = gethostbyname(host) )  !=  NULL  ) {
-		ptr = (struct sockaddr_in *)&addr;
-		memcpy(&name.sin_addr.s_addr,hp->h_addr,hp->h_length);
-		if		(  connect(ld,(struct sockaddr *)&name,sizeof(name))  <  0  )	{
+		if		(  ( hp = gethostbyname(host) )  !=  NULL  ) {
+			ptr = (struct sockaddr_in *)&addr;
+			memcpy(&name.sin_addr.s_addr,hp->h_addr,hp->h_length);
+			if		(  connect(ld,(struct sockaddr *)&name,sizeof(name))  <  0  )	{
+				ld = -1;
+			}
+		} else {
 			ld = -1;
 		}
-	} else {
-		ld = -1;
 	}
 LEAVE_FUNC;
 	return	(ld);

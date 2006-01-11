@@ -1,28 +1,35 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
-
+#ifdef	USE_GTK
 #include	<stdio.h>
 #ifdef USE_GNOME
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
+#endif
 #endif
 
 static	void
@@ -42,11 +49,19 @@ static	void
 gtkenums_h(void)
 {
 	printf("\n");
+#ifndef	USE_GTK
+	printf("#define\tWIDGET_STATE_NORMAL\t\t\t%d\n",0);
+	printf("#define\tWIDGET_STATE_ACTIVE\t\t\t%d\n",1);
+	printf("#define\tWIDGET_STATE_PRELIGHT\t\t%d\n",2);
+	printf("#define\tWIDGET_STATE_SELECTED\t\t%d\n",3);
+	printf("#define\tWIDGET_STATE_INSENSITIVE\t%d\n",4);
+#else
 	printf("#define\tWIDGET_STATE_NORMAL\t\t\t%d\n",GTK_STATE_NORMAL);
 	printf("#define\tWIDGET_STATE_ACTIVE\t\t\t%d\n",GTK_STATE_ACTIVE);
 	printf("#define\tWIDGET_STATE_PRELIGHT\t\t%d\n",GTK_STATE_PRELIGHT);
 	printf("#define\tWIDGET_STATE_SELECTED\t\t%d\n",GTK_STATE_SELECTED);
 	printf("#define\tWIDGET_STATE_INSENSITIVE\t%d\n",GTK_STATE_INSENSITIVE);
+#endif
 	printf("\n");
 }
 
