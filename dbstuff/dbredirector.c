@@ -241,8 +241,8 @@ ENTER_FUNC;
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
-    if		( ThisEnv == NULL ) {
+	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
+	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
 	InitDB_Process(NULL);
