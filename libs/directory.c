@@ -125,7 +125,7 @@ SetUpDirectory(
 	DI_Struct	*di;
 dbgmsg(">SetUpDirectory");
 	di = DI_Parser(name,ld,bd,db,parse_ld);
-	if ( parse_ld ) {
+	if ( parse_ld && di ) {
 		AssignDBG(di); 
 	}
 dbgmsg("<SetUpDirectory");
@@ -145,9 +145,10 @@ extern	LD_Struct	*
 GetLD(
 	char	*name)
 {
-	LD_Struct	*ret;
-
-	ret = g_hash_table_lookup(ThisEnv->LD_Table,name);
+	LD_Struct	*ret = NULL;
+	if (ThisEnv) {
+		ret = g_hash_table_lookup(ThisEnv->LD_Table,name);
+	}
 	return	(ret);
 }
 

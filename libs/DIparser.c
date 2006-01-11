@@ -1049,14 +1049,13 @@ DI_Parser(
 		,		root;
 
 ENTER_FUNC;
+	ret = NULL;
 	root.next = NULL;
 	DirectoryDir = dirname(StrDup(name));
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,DirectoryDir,Reserved) )  !=  NULL  ) {
 			ret = ParDI(in,ld,bd,db,parse_ld);
 			DropLexInfo(&in);
-		} else {
-			ret = NULL;
 		}
 	} else {
 		ParErrorPrintf("DI file not found %s\n", name);
