@@ -1059,7 +1059,7 @@ ENTER_FUNC;
 			ret = NULL;
 		}
 	} else {
-		ParErrorPrintf("DI file not found %s", name);
+		ParErrorPrintf("DI file not found %s\n", name);
 	}
 LEAVE_FUNC;
 	return	(ret);

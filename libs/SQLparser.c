@@ -209,7 +209,7 @@ ENTER_FUNC;
                         str = g_string_append_c(str, ']');
                         n = atoi(ComSymbol) - 1;
                         if (n < 0) {
-                            ParErrorPrintf("invalid array index: %s", ComSymbol);
+                            ParErrorPrintf("invalid array index: %s\n", ComSymbol);
                         }
                         if		(  GetSymbol  !=  ']'  ) {
                             ParError("parse error missing symbol: `]'");
@@ -226,7 +226,7 @@ ENTER_FUNC;
 				val = (  valp  !=  NULL  ) ? valp : valr;
 				val = (  valf  !=  NULL  ) ? valf : val;
 				if		(  val  ==  NULL  ) {
-					ParErrorPrintf("undeclared (first in use this file): `%s'", str->str);
+					ParErrorPrintf("undeclared (first in use this file): `%s'\n", str->str);
 				}
 				LBS_EmitPointer(sql,(void *)TraceAlias(rec,val));
                 g_string_free(str, TRUE);

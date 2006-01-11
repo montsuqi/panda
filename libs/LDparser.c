@@ -155,7 +155,7 @@ ENTER_FUNC;
 				if		(  g_hash_table_lookup(LD_Table,wname)  ==  NULL  ) {
 					g_hash_table_insert(LD_Table,strdup(wname),ld);
 				} else {
-					ParErrorPrintf("window is already registered.: %s", wname);
+					ParErrorPrintf("window is already registered.: %s\n", wname);
 				}
 			} else {
 				ParError("record name not found");
@@ -392,7 +392,7 @@ ENTER_FUNC;
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			ParErrorPrintf("missing ;(semicolon).");
+			ParErrorPrintf("missing ;(semicolon).\n");
 		}
 	}
     if (ret->name == NULL) {
