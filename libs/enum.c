@@ -23,13 +23,10 @@
 #  include <config.h>
 #endif
 
-#ifdef	USE_GTK
 #include	<stdio.h>
-#ifdef USE_GNOME
-#    include <gnome.h>
-#else
-#    include <gtk/gtk.h>
-#endif
+
+#ifdef	USE_GTK
+#include <gtk/gtk.h>
 #endif
 
 static	void

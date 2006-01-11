@@ -49,6 +49,8 @@
 #include	"option.h"
 #include	"debug.h"
 
+static	Bool	fComment;
+
 #define	GNUMERIC_NS			"http://www.gnumeric.org/v10.dtd"
 
 static	void
@@ -109,7 +111,11 @@ LoadGnumeric(
 					break;
 				  case	2:
 					type = text;
-					printf("\t%s\t%s;\t\t#\t%s\n",name,type,jname);
+					if		(  fComment  ) {
+						printf("\t%s\t%s;\t\t#\t%s\n",name,type,jname);
+					} else {
+						printf("\t%s\t%s;\n",name,type);
+					}
 					break;
 				  case	3:
 					if		(	(  text            !=  NULL  )
@@ -159,12 +165,16 @@ LoadGnumeric(
 }
 
 static	ARG_TABLE	option[] = {
+	{	"comment",	BOOLEAN,	TRUE,	(void*)&fComment,
+		"項目の説明を入れる"							},
+
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
 static	void
 SetDefault(void)
 {
+	fComment = FALSE;
 }
 
 extern	int

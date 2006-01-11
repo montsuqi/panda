@@ -1,11 +1,14 @@
 2006-01-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
+	* tools/gnumerictorec.c: Gnumericの表に書かれたレコード設計書から、.
+	recを生成するコマンドを作った(例はsamplesに置かれたgnumericファイル)
+
 	* libs/enum.c: --disable-clientの時の誤りを直した
 
 2006-01-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/gnumerictodb.c: Gnumericの表に書かれたDB設計書から、.dbを
-	作るコマンドを作った(例はsamplesに置かれたgnumericファイル)
+	生成するコマンドを作った(例はsamplesに置かれたgnumericファイル)
 
 2006-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 

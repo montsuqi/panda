@@ -17,7 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = copygen dbgen checkdir gnumerictodb
+bin_PROGRAMS = copygen dbgen checkdir gnumerictodb gnumerictorec
 sbin_PROGRAMS = monitor msgd
 bin_SCRIPTS = recdefgen.rb recgen.rb
 noinst_SCRIPTS = copy
@@ -72,6 +72,12 @@ gnumerictodb_LDADD 		=				\
 	$(GLIB_LIBS)						\
 	$(XML2_LIBS)						\
 	$(MONDAI_LIBS)
+gnumerictorec_LDADD 	=				\
+	-lm									\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(GLIB_LIBS)						\
+	$(XML2_LIBS)						\
+	$(MONDAI_LIBS)
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
@@ -109,6 +115,9 @@ msgd_SOURCES		=	\
 gnumerictodb_SOURCES	=	\
 	xxml.c	xxml.h			\
 	gnumerictodb.c
+gnumerictorec_SOURCES	=	\
+	xxml.c	xxml.h			\
+	gnumerictorec.c
 
 install-exec-hook:
 	$(LN_S) -f user $(bindir)/gluseradd
