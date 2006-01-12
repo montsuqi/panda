@@ -418,9 +418,11 @@ DumpDirectory(void)
 {
 	int		i;
 
-dbgmsg(">DumpDirectory");
+ENTER_FUNC;
 	InitDirectory();
+dbgmsg("*");
 	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
+dbgmsg("*");
 
 	printf("name     = [%s]\n",ThisEnv->name);
 	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);

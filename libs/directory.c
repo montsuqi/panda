@@ -1,22 +1,23 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
 
 /*
 #define	DEBUG
@@ -67,7 +68,7 @@ _AssignDBG(
 	char	*gname;
 	DBG_Struct	*dbg;
 
-dbgmsg(">_AssignDBG");
+ENTER_FUNC;
 	for	( i = 1 ; i < n ; i ++ ) {
 		gname = (char *)db[i]->opt.db->dbg;
 		if		(  ( dbg = (DBG_Struct *)g_hash_table_lookup(DBG_Table,gname) )
@@ -84,7 +85,7 @@ dbgmsg(">_AssignDBG");
 		}
 		xfree(gname);
 	}
-dbgmsg("<_AssignDBG");
+LEAVE_FUNC;
 }
 
 static	void
@@ -93,7 +94,7 @@ AssignDBG(
 {
 	int		i;
 
-dbgmsg(">AssignDBG");
+ENTER_FUNC;
 	if		(  di->DBG_Table  !=  NULL  ) {
 		for	( i = 0 ; i < di->cLD ; i ++ ) {
 			if		(  di->ld[i]->db  !=  NULL  ) {
@@ -111,7 +112,7 @@ dbgmsg(">AssignDBG");
 			}
 		}
 	}
-dbgmsg("<AssignDBG");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -123,12 +124,12 @@ SetUpDirectory(
 	Bool    parse_ld)
 {
 	DI_Struct	*di;
-dbgmsg(">SetUpDirectory");
+ENTER_FUNC;
 	di = DI_Parser(name,ld,bd,db,parse_ld);
 	if ( parse_ld && di ) {
 		AssignDBG(di); 
 	}
-dbgmsg("<SetUpDirectory");
+LEAVE_FUNC;
 }
 
 extern	LD_Struct	*

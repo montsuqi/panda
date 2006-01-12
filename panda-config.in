@@ -67,9 +67,6 @@ while test $# -gt 0; do
   shift
 done
 
-if test "$echo_topdir" = "yes"; then
-fi
-
 if test "$echo_prefix" = "yes"; then
         echo $prefix
 fi
