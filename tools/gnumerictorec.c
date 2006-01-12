@@ -50,8 +50,10 @@
 #include	"debug.h"
 
 static	Bool	fComment;
+static	int		Level;
 
 #define	GNUMERIC_NS			"http://www.gnumeric.org/v10.dtd"
+#define	DEFAULT_LEVEL		5
 
 typedef	struct {
 	char	*text;
@@ -61,6 +63,24 @@ typedef	struct {
 static	int		_MaxRow;
 static	int		_MaxCol;
 #define	INDEX(i,j)	((i)*_MaxCol+(j))
+
+static	CellAttribute	*
+NewCellTable(void)
+{
+	CellAttribute	**table;
+	int			i
+		,		j;
+
+	table = (CellAttribute **)xmalloc(sizeof(CellAttribute *) * _MaxRow * _MaxCol);
+	for	( i = 0 ; i < _MaxRow ; i ++ ) {
+		for	( j = 0 ; j < _MaxCol ; j ++ ) {
+			table[INDEX(i,j)] = New(CellAttribute);
+			table[INDEX(i,j)]->text = NULL;
+			table[INDEX(i,j)]->id = -1;
+		}
+	}
+	return	(table);
+}
 
 static	void
 ReadCells(
@@ -142,7 +162,7 @@ ReadRegions(
 		,		y1
 		,		x2
 		,		y2;
-	char		buff[2+5+1+2+5+1]
+	char		buff[16]	/*	XXnnnnn:XXnnnnn		*/
 		,		*p;
 
 ENTER_FUNC;
@@ -177,59 +197,22 @@ PutTab(
 	}
 }
 
-#define	LEVEL		5
-
 static	void
-LoadGnumeric(
-	char	*fname)
+WriteDefines(
+	CellAttribute	**table)
 {
-	xmlDocPtr	doc;
-	xmlNodePtr	Sheet;
-	char		*rname;
-	char		*p;
-	int			i
-		,		j
-		,		last
-		,		dim[LEVEL];
+	int		last
+		,	i
+		,	j
+		,	dim[Level];
+
 	char		buff[SIZE_BUFF];
-	CellAttribute	**table;
-
-ENTER_FUNC;
-	doc = xmlReadFile(fname,NULL,XML_PARSE_NOBLANKS);
-	rname = StrDup(basename(fname));
-	if		(  ( p = strstr(rname,".gnumeric") )  !=  NULL  ) {
-		*p = 0;
-	}
-	printf("%s\t{\n",rname);
-
-	Sheet = SearchNode(xmlDocGetRootElement(doc),GNUMERIC_NS,"Sheet",NULL,NULL);
-	_MaxRow = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxRow",NULL,NULL))) + 1;
-	_MaxCol = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxCol",NULL,NULL))) + 1;
-
-	table = (CellAttribute **)xmalloc(sizeof(CellAttribute *) * _MaxRow * _MaxCol);
-	for	( i = 0 ; i < _MaxRow ; i ++ ) {
-		for	( j = 0 ; j < _MaxCol ; j ++ ) {
-			table[INDEX(i,j)] = New(CellAttribute);
-			table[INDEX(i,j)]->text = NULL;
-			table[INDEX(i,j)]->id = -1;
-		}
-	}
-
-	ReadCells(Sheet,table);
-	ReadRegions(Sheet,table);
-#ifdef	DEBUG
-	for	( i = 0 ; i < _MaxRow ; i ++ ) {
-		printf("%4d:",i+1);
-		for	( j = 0 ; j < _MaxCol ; j ++ ) {
-			printf("%2d  ",table[INDEX(i,j)]->id);
-		}
-		printf("\n");
-	}
-#endif
+	char	*p;
+	
 	last = 0;
 	for	( i = 2 ; i < _MaxRow ; i ++ ) {
 		if		(  table[INDEX(i,0)]->id  >=  0  ) {
-			for	( j = 0 ; j < LEVEL ; j ++ ) {
+			for	( j = 0 ; j < Level ; j ++ ) {
 				if		(  table[INDEX(i,j)]->text  !=  NULL  ) {
 					while	(  j  <  last  ) {
 						last --;
@@ -249,7 +232,7 @@ ENTER_FUNC;
 						dim[j] = 0;
 					}
 					printf("%s",buff);
-					if		(	(  j  ==  LEVEL - 1  )
+					if		(	(  j  ==  Level - 1  )
 							||	(  table[INDEX(i,j+1)]->text  ==  NULL  ) ) {
 						printf("\t");
 						last = j;
@@ -259,12 +242,12 @@ ENTER_FUNC;
 					}
 				}
 			}
-			printf("%s;",table[INDEX(i,LEVEL)]->text);
+			printf("%s;",table[INDEX(i,Level)]->text);
 			if		(	(  !fComment  )
-					||	(  table[INDEX(i,LEVEL+1)]->text  ==  NULL  ) ) {
+					||	(  table[INDEX(i,Level+1)]->text  ==  NULL  ) ) {
 				printf("\n");
 			} else {
-				printf("\t#\t%s\n",table[INDEX(i,LEVEL+1)]->text);
+				printf("\t#\t%s\n",table[INDEX(i,Level+1)]->text);
 			}
 		}
 	}
@@ -277,6 +260,53 @@ ENTER_FUNC;
 			printf("};\n");
 		}
 	}
+}
+
+#ifdef	DEBUG
+static	void
+DumpTable(table)
+{
+	int		i
+		,	j;
+
+	for	( i = 0 ; i < _MaxRow ; i ++ ) {
+		printf("%4d:",i+1);
+		for	( j = 0 ; j < _MaxCol ; j ++ ) {
+			printf("%2d  ",table[INDEX(i,j)]->id);
+		}
+		printf("\n");
+	}
+}
+#endif
+
+static	void
+LoadGnumeric(
+	char	*fname)
+{
+	xmlDocPtr	doc;
+	xmlNodePtr	Sheet;
+	char		*rname;
+	char		*p;
+	CellAttribute	**table;
+
+ENTER_FUNC;
+	doc = xmlReadFile(fname,NULL,XML_PARSE_NOBLANKS);
+	rname = StrDup(basename(fname));
+	if		(  ( p = strstr(rname,".gnumeric") )  !=  NULL  ) {
+		*p = 0;
+	}
+	printf("%s\t{\n",rname);
+
+	Sheet = SearchNode(xmlDocGetRootElement(doc),GNUMERIC_NS,"Sheet",NULL,NULL);
+	_MaxRow = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxRow",NULL,NULL))) + 1;
+	_MaxCol = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxCol",NULL,NULL))) + 1;
+	table = NewCellTable();
+	ReadCells(Sheet,table);
+	ReadRegions(Sheet,table);
+#ifdef	DEBUG
+	DumpTable(table);
+#endif
+	WriteDefines(table);
 	printf("};\n");
 LEAVE_FUNC;
 	xmlFreeDoc(doc);
@@ -285,6 +315,8 @@ LEAVE_FUNC;
 static	ARG_TABLE	option[] = {
 	{	"comment",	BOOLEAN,	TRUE,	(void*)&fComment,
 		"項目の説明を入れる"							},
+	{	"level",	INTEGER,	TRUE,	(void*)&Level,
+		"階層の数" 										},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -293,6 +325,7 @@ static	void
 SetDefault(void)
 {
 	fComment = FALSE;
+	Level = DEFAULT_LEVEL;
 }
 
 extern	int

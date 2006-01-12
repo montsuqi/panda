@@ -117,6 +117,7 @@ _DumpItems(
 	  default:
 		break;
 	}
+	fflush(stdout);
 }
 
 static	void
@@ -323,7 +324,7 @@ DumpLD(
 {
 	int		i;
 
-dbgmsg(">DumpLD");
+ENTER_FUNC;
 	printf("name      = [%s]\n",ld->name);
 	printf("\tgroup     = [%s]\n",ld->group);
 	printf("\tarraysize = %d\n",ld->arraysize);
@@ -335,15 +336,21 @@ dbgmsg(">DumpLD");
 	DumpItems(1,ld->sparec->value);
 	printf(";\n");
 	for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-		printf("\t%s\t",ld->window[i]->name);
-		DumpItems(1,ld->window[i]->rec->value);
-		printf(";\n");
+		if		(  ld->window[i]  !=  NULL  ) {
+			printf("\t%s\t",ld->window[i]->name);
+			if		(  ld->window[i]->rec  !=  NULL  ) {
+				DumpItems(1,ld->window[i]->rec->value);
+			} else {
+				printf("{}");
+			}
+			printf(";\n");
+		}
 	}
 	printf("\tcDB       = %d\n",ld->cDB);
 	for	( i = 1 ; i < ld->cDB ; i ++ ) {
 		DumpRecord(ld->db[i]);
 	}
-dbgmsg("<DumpLD");
+LEAVE_FUNC;
 }
 
 static	void
