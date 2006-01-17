@@ -255,6 +255,8 @@ ENTER_FUNC;
 			if		(  tag->emit  !=  NULL  ) {
 				ParMacroTag(htc,tag);
 				tag->emit(htc,tag);
+			} else {
+				while	(  GetSymbol  !=  '>'  );
 			}
 		} else {
 			CopyTag(htc);

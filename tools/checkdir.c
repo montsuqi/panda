@@ -243,6 +243,7 @@ static	void
 DumpPath(
 	PathStruct	*path)
 {
+ENTER_FUNC;
 	printf("\t\tname     = [%s]\n",path->name);
 	if		(  path->args  !=  NULL  ) {
 		printf("** args\n\t\t");
@@ -250,6 +251,7 @@ DumpPath(
 		printf("\n");
 	}
 	g_hash_table_foreach(path->opHash,(GHFunc)DumpOps,path);
+LEAVE_FUNC;
 }
 
 static	void
@@ -258,7 +260,7 @@ DumpDB(
 {
 	int		i;
 
-dbgmsg(">DumpDB");
+ENTER_FUNC;
 	printf("\t\tDB group = [%s]\n",((DBG_Struct *)db->dbg)->name);
 	DumpKey(db->pkey);
 	if		(  db->pcount  >  0  ) {
@@ -267,7 +269,7 @@ dbgmsg(">DumpDB");
 			DumpPath(db->path[i]);
 		}
 	}
-dbgmsg("<DumpDB");
+LEAVE_FUNC;
 }
 
 static	void

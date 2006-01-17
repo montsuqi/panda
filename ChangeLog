@@ -1,3 +1,7 @@
+2006-01-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/HTCparser.c (ParTag): パーズのゴミを消した
+
 2006-01-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/gnumerictorec.c: Gnumericの表に書かれたレコード設計書から、.

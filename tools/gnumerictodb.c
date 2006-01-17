@@ -136,16 +136,17 @@ LoadGnumeric(
 		}
 		Cell = XMLNodeNext(Cell);
 	}
-	printf("};\n");
+	printf("};\n\n");
 	printf("primary\t{\n");
 	for	( pr = primary ; *pr != NULL ; pr ++ ) {
 		printf("\t%s;\n",*pr);
 	}
-	printf("};\n");
+	printf("};\n\n");
 	printf("path\tprimary\t{\n");
 	printf("\tDBSELECT\t{\n");
 	printf("\t\tDECLARE\t%s_primary_csr\tCURSOR\tFOR\n",rname);
 	printf("\t\tSELECT\t*\n");
+	printf("\t\t\tFROM\t%s\n",rname);
 	printf("\t\t\tWHERE\n");
 	for	( pr = primary ; *pr != NULL ;  ) {
 		printf("\t\t\t\t%s = :%s",*pr,*pr);

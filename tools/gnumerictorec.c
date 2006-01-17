@@ -18,9 +18,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -60,32 +60,71 @@ typedef	struct {
 	int		id;
 }	CellAttribute;
 
-static	int		_MaxRow;
-static	int		_MaxCol;
-#define	INDEX(i,j)	((i)*_MaxCol+(j))
+typedef	struct {
+	int		cId;
+	int		maxrow;
+	int		maxcol;
+	CellAttribute	**cell;
+	int		*horizontal;
+	int		*virtical;
+}	Table;
 
-static	CellAttribute	*
-NewCellTable(void)
+extern	Table	*
+NewTable(
+	int		maxrow,
+	int		maxcol)
 {
-	CellAttribute	**table;
+	Table	*table;
+	CellAttribute	*cell;
+	size_t	size;
 	int			i
 		,		j;
 
-	table = (CellAttribute **)xmalloc(sizeof(CellAttribute *) * _MaxRow * _MaxCol);
-	for	( i = 0 ; i < _MaxRow ; i ++ ) {
-		for	( j = 0 ; j < _MaxCol ; j ++ ) {
-			table[INDEX(i,j)] = New(CellAttribute);
-			table[INDEX(i,j)]->text = NULL;
-			table[INDEX(i,j)]->id = -1;
-		}
+	table = New(Table);
+	size = ( maxrow + 1 ) * ( maxcol + 1 );
+	table->maxcol = maxcol;
+	table->maxrow = maxrow;
+	table->cell = (CellAttribute **)xmalloc(sizeof(CellAttribute *) * size);
+	for	( i = 0 ; i < size ; i ++ ) {
+		cell = New(CellAttribute);
+		cell->text = NULL;
+		cell->id = -1;
+		table->cell[i] = cell;
 	}
+	size = ( maxrow + 2 ) * ( maxcol + 2 );
+	table->horizontal = (int *)xmalloc(sizeof(int) * size);
+	table->virtical = (int *)xmalloc(sizeof(int) * size);
+	for	( i = 0 ; i < size ; i ++ ) {
+		table->horizontal[i] = 0;
+		table->virtical[i] = 0;
+	}
+	table->cId = 0;
 	return	(table);
+}
+
+extern	CellAttribute	*
+GetCell(
+	Table	*table,
+	int		row,
+	int		col)
+{
+	CellAttribute	*ret;
+
+	if		(	(  row  >=  0  )
+			&&	(  col  >=  0  )
+			&&	(  row  <=  table->maxrow  )
+			&&	(  col  <=  table->maxcol  ) ) {
+		ret = table->cell[(table->maxcol + 1) * row + col];
+	} else {
+		ret = NULL;
+	}
+	return	(ret);
 }
 
 static	void
 ReadCells(
 	xmlNodePtr	Sheet,
-	CellAttribute	**table)
+	Table		*table)
 {
 	xmlNodePtr	Cells
 		,		Cell
@@ -93,6 +132,7 @@ ReadCells(
 	int			row
 		,		col;
 	char		*text;
+	CellAttribute	*cell;
 
 ENTER_FUNC;
 	Cells = SearchNode(Sheet,GNUMERIC_NS,"Cells",NULL,NULL);
@@ -107,8 +147,10 @@ ENTER_FUNC;
 			} else {
 				text = NULL;
 			}
-			table[INDEX(row,col)]->text = text;
-			table[INDEX(row,col)]->id = 0;
+			if		(  ( cell = GetCell(table,row,col) )  !=  NULL  ) {
+				cell->text = text;
+				cell->id = table->cId ++;
+			}
 		} else {
 			fprintf(stderr,"<%s:%s>\n",XMLNsBody(Cell),XMLName(Cell));
 		}
@@ -150,12 +192,12 @@ ParseCellName(
 static	void
 ReadRegions(
 	xmlNodePtr	Sheet,
-	CellAttribute	**table)
+	Table		*table)
 {
 	xmlNodePtr	MergedRegions
 		,		Merge
 		,		Text;
-	int			id;
+	CellAttribute	*cell;
 	int			row
 		,		col
 		,		x1
@@ -168,7 +210,6 @@ ReadRegions(
 ENTER_FUNC;
 	MergedRegions = SearchNode(Sheet,GNUMERIC_NS,"MergedRegions",NULL,NULL);
 	Merge = XMLNodeChildren(MergedRegions);
-	id = 1;
 	while	(  Merge  !=  NULL  ) {
 		if		(  ( Text = XMLNodeChildren(Merge) )  !=  NULL  ) {
 			strcpy(buff,XMLNodeContent(Text));
@@ -178,12 +219,118 @@ ENTER_FUNC;
 			ParseCellName(p + 1,&x2,&y2);
 			for	( row = y1 ; row <= y2 ; row ++ ) {
 				for	( col = x1 ; col <= x2 ; col ++ ) {
-					table[INDEX(row,col)]->id = id;
+					if		(  ( cell = GetCell(table,row,col) )  !=  NULL  ) {
+						cell->id = table->cId;
+					}
 				}
 			}
-			id ++;
+			table->cId ++;
 		}
 		Merge = XMLNodeNext(Merge);
+	}
+LEAVE_FUNC;
+}
+
+#define	RULE_INDEX(table,row,col)	(((table)->maxcol + 2) * (row) + (col))
+static	void
+SetRule(
+	Table	*table,
+	int		row,
+	int		col,
+	int		top,
+	int		bottom,
+	int		left,
+	int		right)
+{
+	if		(	(  row  >=  0  )
+			&&	(  col  >=  0  )
+			&&	(  row  <=  table->maxrow  )
+			&&	(  col  <=  table->maxcol  ) ) {
+		table->virtical[RULE_INDEX(table,row,col)] = top;
+		table->virtical[RULE_INDEX(table,( row + 1 ),col)] = bottom;
+		table->horizontal[RULE_INDEX(table,row,col)] = left;
+		table->horizontal[RULE_INDEX(table,row,( col + 1 ))] = right;
+	}
+}
+
+static	void
+ReadStyles(
+	xmlNodePtr	Sheet,
+	Table		*table)
+{
+	xmlNodePtr	StyleRegion
+		,		Styles
+		,		Style
+		,		StyleBorder
+		,		pos;
+	int			row
+		,		col
+		,		x1
+		,		y1
+		,		x2
+		,		y2
+		,		st;
+	int			top
+		,		bottom
+		,		left
+		,		right;
+
+ENTER_FUNC;
+	Styles = SearchNode(Sheet,GNUMERIC_NS,"Styles",NULL,NULL);
+	StyleRegion = XMLNodeChildren(Styles);
+	while	(  StyleRegion  !=  NULL  ) {
+		x1 = atoi(XMLGetProp(StyleRegion,"startCol"));
+		y1 = atoi(XMLGetProp(StyleRegion,"startRow"));
+		x2 = atoi(XMLGetProp(StyleRegion,"endCol"));
+		y2 = atoi(XMLGetProp(StyleRegion,"endRow"));
+		if		(  ( Style = XMLNodeChildren(StyleRegion) )  !=  NULL  ) {
+			StyleBorder = SearchNode(Style,GNUMERIC_NS,"StyleBorder",NULL,NULL);
+			pos = XMLNodeChildren(StyleBorder);
+			top = 0;
+			bottom = 0;
+			left = 0;
+			right = 0;
+			while	(  pos  !=  NULL  ) {
+				if		(  strcmp(XMLName(pos),"Top")  ==  0  ) {
+					top = atoi(XMLGetProp(pos,"Style"));
+				}
+				if		(  strcmp(XMLName(pos),"Bottom")  ==  0  ) {
+					bottom = atoi(XMLGetProp(pos,"Style"));
+				}
+				if		(  strcmp(XMLName(pos),"Left")  ==  0  ) {
+					left = atoi(XMLGetProp(pos,"Style"));
+				}
+				if		(  strcmp(XMLName(pos),"Right")  ==  0  ) {
+					right = atoi(XMLGetProp(pos,"Style"));
+				}
+				pos = XMLNodeNext(pos);
+			}
+#if	0
+			for	(  col = x1 ; col <= x2 ; col ++ ) {
+				if		(  top  >  0  ) {
+					table->virtical[RULE_INDEX(table,y1,col)] = top;
+				}
+				if		(  bottom  >  0  ) {
+					table->virtical[RULE_INDEX(table,y2+1,col)] = bottom;
+				}
+			}
+			for	(  row = y1 ; row <= y2 ; row ++ ) {
+				if		(  left  >  0  ) {
+					table->horizontal[RULE_INDEX(table,row,x1)] = left;
+				}
+				if		(  right  >  0  ) {
+					table->horizontal[RULE_INDEX(table,row,x2+1)] = right;
+				}
+			}
+#else
+			for	( row = y1 ; row <= y2 ; row ++ ) {
+				for	(  col = x1 ; col <= x2 ; col ++ ) {
+					SetRule(table,row,col,top,bottom,left,right);
+				}
+			}
+#endif
+		}
+		StyleRegion = XMLNodeNext(StyleRegion);
 	}
 LEAVE_FUNC;
 }
@@ -199,21 +346,22 @@ PutTab(
 
 static	void
 WriteDefines(
-	CellAttribute	**table)
+	Table	*table)
 {
 	int		last
 		,	i
 		,	j
 		,	dim[Level];
-
+	CellAttribute	*cell;
 	char		buff[SIZE_BUFF];
 	char	*p;
 	
 	last = 0;
-	for	( i = 2 ; i < _MaxRow ; i ++ ) {
-		if		(  table[INDEX(i,0)]->id  >=  0  ) {
+	for	( i = 2 ; i < table->maxrow ; i ++ ) {
+		if		(  GetCell(table,i,0)->id  >=  0  ) {
 			for	( j = 0 ; j < Level ; j ++ ) {
-				if		(  table[INDEX(i,j)]->text  !=  NULL  ) {
+				cell = GetCell(table,i,j);
+				if		(  cell->text  !=  NULL  ) {
 					while	(  j  <  last  ) {
 						last --;
 						PutTab(last);
@@ -224,7 +372,7 @@ WriteDefines(
 						}
 					}
 					PutTab(j);
-					strcpy(buff,table[INDEX(i,j)]->text);
+					strcpy(buff,cell->text);
 					if		(  ( p = strchr(buff,'[') )  !=  NULL  ) {
 						*p = 0;
 						dim[j] = atoi(p+1);
@@ -233,7 +381,7 @@ WriteDefines(
 					}
 					printf("%s",buff);
 					if		(	(  j  ==  Level - 1  )
-							||	(  table[INDEX(i,j+1)]->text  ==  NULL  ) ) {
+							||	(  GetCell(table,i,j+1)->text  ==  NULL  ) ) {
 						printf("\t");
 						last = j;
 						break;
@@ -242,12 +390,16 @@ WriteDefines(
 					}
 				}
 			}
-			printf("%s;",table[INDEX(i,Level)]->text);
+			if		(  dim[last]  >  0  ) {
+				printf("%s[%d];",GetCell(table,i,Level)->text,dim[last]);
+			} else {
+				printf("%s;",GetCell(table,i,Level)->text);
+			}
 			if		(	(  !fComment  )
-					||	(  table[INDEX(i,Level+1)]->text  ==  NULL  ) ) {
+					||	(  GetCell(table,i,Level+1)->text  ==  NULL  ) ) {
 				printf("\n");
 			} else {
-				printf("\t#\t%s\n",table[INDEX(i,Level+1)]->text);
+				printf("\t#\t%s\n",GetCell(table,i,Level+1)->text);
 			}
 		}
 	}
@@ -264,15 +416,57 @@ WriteDefines(
 
 #ifdef	DEBUG
 static	void
-DumpTable(table)
+DumpTable(
+	Table	*table)
 {
 	int		i
 		,	j;
+	CellAttribute	*cell
+		,			*cell1
+		,			*cell2;
 
-	for	( i = 0 ; i < _MaxRow ; i ++ ) {
+	for	( i = 0 ; i <= table->maxrow + 1; i ++ ) {
 		printf("%4d:",i+1);
-		for	( j = 0 ; j < _MaxCol ; j ++ ) {
-			printf("%2d  ",table[INDEX(i,j)]->id);
+		for	( j = 0 ; j < table->maxcol ; j ++ ) {
+			if		(  table->virtical[RULE_INDEX(table,i,j)]  >  0  ) {
+#if	1
+				printf("-----");
+#else
+				if		(	(  i  ==  0  )
+						||	(  ( cell1 = GetCell(table,i-1,j)   )  ==  NULL  )
+						||	(  ( cell2 = GetCell(table,i,j) )  ==  NULL  )
+						||	(  cell1->id  !=  cell2->id  ) ) {
+					printf("-----");
+				} else {
+					printf("     ");
+				}
+#endif
+			} else {
+				printf("     ");
+			}
+		}
+		printf("\n");
+		printf("%4d:",i+1);
+		for	( j = 0 ; j <= table->maxcol + 1 ; j ++ ) {
+			if		(  table->horizontal[RULE_INDEX(table,i,j)]  >  0  ) {
+#if	1
+				printf("|");
+#else
+				if		(	(  j  ==  0  )
+						||	(  ( cell1 = GetCell(table,i,j-1)   )  ==  NULL  )
+						||	(  ( cell2 = GetCell(table,i,j) )  ==  NULL  )
+						||	(  cell1->id  !=  cell2->id  ) ) {
+					printf("|");
+				} else {
+					printf(" ");
+				}
+#endif
+			} else {
+				printf(" ");
+			}
+			if		(  ( cell = GetCell(table,i,j) )  !=  NULL  ) {
+				printf("%4d",cell->id);
+			}
 		}
 		printf("\n");
 	}
@@ -287,25 +481,27 @@ LoadGnumeric(
 	xmlNodePtr	Sheet;
 	char		*rname;
 	char		*p;
-	CellAttribute	**table;
+	Table		*table;
+	int			maxcol
+		,		maxrow;
 
 ENTER_FUNC;
 	doc = xmlReadFile(fname,NULL,XML_PARSE_NOBLANKS);
+	Sheet = SearchNode(xmlDocGetRootElement(doc),GNUMERIC_NS,"Sheet",NULL,NULL);
+	maxrow = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxRow",NULL,NULL)));
+	maxcol = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxCol",NULL,NULL)));
+	table = NewTable(maxrow,maxcol);
+	ReadCells(Sheet,table);
+	ReadRegions(Sheet,table);
+	ReadStyles(Sheet,table);
+#ifdef	DEBUG
+	DumpTable(table);
+#endif
 	rname = StrDup(basename(fname));
 	if		(  ( p = strstr(rname,".gnumeric") )  !=  NULL  ) {
 		*p = 0;
 	}
 	printf("%s\t{\n",rname);
-
-	Sheet = SearchNode(xmlDocGetRootElement(doc),GNUMERIC_NS,"Sheet",NULL,NULL);
-	_MaxRow = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxRow",NULL,NULL))) + 1;
-	_MaxCol = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxCol",NULL,NULL))) + 1;
-	table = NewCellTable();
-	ReadCells(Sheet,table);
-	ReadRegions(Sheet,table);
-#ifdef	DEBUG
-	DumpTable(table);
-#endif
 	WriteDefines(table);
 	printf("};\n");
 LEAVE_FUNC;
