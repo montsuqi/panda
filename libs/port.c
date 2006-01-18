@@ -117,7 +117,7 @@ ParPort(
 	int		mode;
 	char	dup[SIZE_LONGNAME+1];
 
-	if		(  str  ==  NULL  ) {
+	if		( (str == NULL) || (strlen(str) == 0) ) {
 		ret = NULL;
 	} else {
 		strncpy(dup,str,SIZE_LONGNAME);
@@ -209,25 +209,29 @@ StringPort(
 {
 	static	char	buff[SIZE_LONGNAME];
 
-	switch	(port->type) {
-	  case	PORT_IP:
-		if		(  IP_HOST(port)  !=  NULL  ) {
-			sprintf(buff,"%s:%s",IP_HOST(port),IP_PORT(port));
-		} else {
-			sprintf(buff,":%s",IP_PORT(port));
+	if ( port != NULL) {
+		switch	(port->type) {
+		  case	PORT_IP:
+			if		(  IP_HOST(port)  !=  NULL  ) {
+				sprintf(buff,"%s:%s",IP_HOST(port),IP_PORT(port));
+			} else {
+				sprintf(buff,":%s",IP_PORT(port));
+			}
+			break;
+		  case	PORT_UNIX:
+			if		(	(  *UNIX_NAME(port)  ==  '/'  )
+					||	(  *UNIX_NAME(port)  ==  '.'  ) ) {
+				sprintf(buff,"%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+			} else {
+				sprintf(buff,"#%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
+			}
+			break;
+		  default:
+			*buff = 0;
+			break;
 		}
-		break;
-	  case	PORT_UNIX:
-		if		(	(  *UNIX_NAME(port)  ==  '/'  )
-				||	(  *UNIX_NAME(port)  ==  '.'  ) ) {
-			sprintf(buff,"%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
-		} else {
-			sprintf(buff,"#%s:0%o",UNIX_NAME(port),UNIX_MODE(port));
-		}
-		break;
-	  default:
+	} else {
 		*buff = 0;
-		break;
 	}
 	return	(buff);
 }
