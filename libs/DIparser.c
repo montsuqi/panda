@@ -1059,7 +1059,7 @@ ENTER_FUNC;
 			DropLexInfo(&in);
 		}
 	} else {
-		ParErrorPrintf("DI file not found %s\n", name);
+		Error("DI file not found %s\n", name);
 	}
 LEAVE_FUNC;
 	return	(ret);
