@@ -26,7 +26,7 @@ fi
 tmpfile=`mktemp ${TMPDIR}/glserver.pnmXXXXXX` || exit 1
 trap 'rm -f $tmpfile' 0
 
-gs -q -dBATCH -dMaxBitmap=300000000 -dNOPAUSE -dSAFER -sDEVICE=ppmraw -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -g612x836 -r72x72 -sOutputFile=$tmpfile $1
+gs -q -dBATCH -dMaxBitmap=300000000 -dNOPAUSE -dSAFER -sDEVICE=ppmraw -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -g612x836 -r72x72 -sOutputFile=$tmpfile $1 > /dev/null
 
 if egrep '^%%Orientation: Landscape$' $1 > /dev/null 2>&1; then
     pnmflip -rotate270 $tmpfile | pnmtopng
