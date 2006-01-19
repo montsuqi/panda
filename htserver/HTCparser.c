@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -35,7 +35,9 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	<ctype.h>
 #include	<glib.h>
 #include	<unistd.h>
+#include	<sys/mman.h>
 #include	<sys/stat.h>
+#include	<fcntl.h>
 #include	"types.h"
 #include	"libmondai.h"
 #include	"HTCparser.h"
@@ -50,7 +52,6 @@ static	Bool	fError;
 
 #define	GetSymbol	(HTC_Token = HTCLex(FALSE))
 #define	GetName		(HTC_Token = HTCLex(TRUE))
-#define	GetChar		(HTC_Token = _HTCGetChar())
 
 void
 HTC_Error(char *msg, ...)
@@ -136,7 +137,7 @@ CopyCommentTag(
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<!-- ");
 	for	( i = 0 , p = cbuff ; i < 3 ; i ++ , p ++ ) {
-		if		(  ( *p = _HTCGetChar() )  ==  EOF  )	return;
+		if		(  ( *p = GetChar() )  ==  EOF  )	return;
 	}
 	*p = 0;
 	while	(  strcmp(cbuff,"-->")  !=  0  ) {
@@ -144,7 +145,7 @@ ENTER_FUNC;
 		for	( i = 0 ; i < 2 ; i ++ ) {
 			cbuff[i] = cbuff[i+1];
 		}
-		if		(  ( cbuff[2] = _HTCGetChar() )  ==  EOF  )	return;
+		if		(  ( cbuff[2] = GetChar() )  ==  EOF  )	return;
 		cbuff[3] = 0;
 	}
 	LBS_EmitString(htc->code," -->");
@@ -279,16 +280,14 @@ ParHTC(
 	int		c;
 
 ENTER_FUNC;
-	while	(  GetChar  >= 0  ) {
-		switch	(HTC_Token) {
+	while	(  ( c = GetChar() )  >= 0  ) {
+		switch	(c)	{
 		  case	'<':
 			ParTag(htc);
 			break;
 		  default:
-			if		(  HTC_Token  ==  0x01  ) {	/*	change for compile	*/
+			if		(  c  ==  0x01  ) {	/*	change for compile	*/
 				c = 0x20;
-			} else {
-				c = HTC_Token;
 			}
 			LBS_Emit(htc->code,c);
 			break;
@@ -299,14 +298,10 @@ LEAVE_FUNC;
 }
 
 static	HTCInfo	*
-HTCParserCore(
-	int		(*getfunc)(void),
-	void	(*ungetfunc)(int c))
+HTCParserCore(void)
 {
 	HTCInfo	*ret;
 
-	_HTCGetChar = getfunc;
-	_HTCUnGetChar = ungetfunc;
 	ret = New(HTCInfo);
 	ret->code = NewLBS();
 	ret->Trans = NewNameHash();
@@ -317,6 +312,9 @@ HTCParserCore(
 	ret->FormNo = -1;
 	LBS_EmitStart(ret->code);
 	ParHTC(ret);
+	if		(  fError  ) {
+		ret = NULL;
+	}
 	return	(ret);
 }
 
@@ -324,28 +322,29 @@ extern	HTCInfo	*
 HTCParseFile(
 	char	*fname)
 {
-	FILE	*fp;
 	HTCInfo	*ret;
+	char	*p
+		,	*q;
+	char	*str
+		,	*m;
+	struct	stat	sb;
+	int		fd;
 
 ENTER_FUNC;
-	if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
+	if		(  ( fd = open(fname,O_RDONLY ) )  >=  0  ) {
+		fstat(fd,&sb);
+		m = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0);
+		str = (char *)xmalloc(sb.st_size+1);
+		memcpy(str,m,sb.st_size);
+		munmap(m,sb.st_size);
+		str[sb.st_size] = 0;
+		close(fd);
 		fError = FALSE;
 		HTC_FileName = fname;
 		HTC_cLine = 1;
-		HTC_File = fp;
-		HTC_Memory = NULL;
-		ret = HTCParserCore(GetCharFile,UnGetCharFile);
-		fclose(HTC_File);
-		if		(  fError  ) {
-			ret = NULL;
-		}
-	} else {
-		ret = NULL;
-	}
-
-	if		(  ret  ==  NULL  ) {
-        fprintf(stderr, "HTC file not found: %s\n", fname);
-        dbgprintf("HTC file not found: %s\n", fname);
+		HTC_Memory = str;
+		_HTC_Memory = str;
+		ret = HTCParserCore();
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -355,7 +354,6 @@ extern	HTCInfo	*
 HTCParseScreen(
 	char	*name)
 {
-	FILE	*fp;
 	HTCInfo	*ret;
 	char	buff[SIZE_LONGNAME+1];
 	char	fname[SIZE_LONGNAME+1];
@@ -371,19 +369,7 @@ ENTER_FUNC;
 			*q = 0;
 		}
 		sprintf(fname,"%s/%s.htc",p,name);
-		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
-			fError = FALSE;
-			HTC_FileName = fname;
-			HTC_cLine = 1;
-			HTC_File = fp;
-			HTC_Memory = NULL;
-			ret = HTCParserCore(GetCharFile,UnGetCharFile);
-			fclose(HTC_File);
-			if		(  fError  ) {
-				ret = NULL;
-			} else
-				break;
-		}
+		if		(  ( ret = HTCParseFile(fname) )  !=  NULL  )	break;
 		p = q + 1;
 	}	while	(  q  !=  NULL  );
 
@@ -393,27 +379,6 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return	(ret);
-}
-
-static	int
-GetCharMemory(void)
-{
-	int		c;
-
-	if		(  ( c = *HTC_Memory )  ==  0  ) {
-		c = -1;
-	} else {
-		HTC_Memory ++;
-	}
-	return	(c);
-}
-
-static	void
-UnGetCharMemory(
-	int		c)
-{
-	HTC_Memory --;
-	*HTC_Memory = c;
 }
 
 extern	HTCInfo	*
@@ -427,9 +392,9 @@ ENTER_FUNC;
 		fError = FALSE;
 		HTC_FileName = "*memory*";
 		HTC_cLine = 1;
-		HTC_File = NULL;
 		HTC_Memory = (byte *)buff;
-		ret = HTCParserCore(GetCharMemory,UnGetCharMemory);
+		_HTC_Memory = NULL;
+		ret = HTCParserCore();
 		if		(  fError  ) {
 			ret = NULL;
 		}

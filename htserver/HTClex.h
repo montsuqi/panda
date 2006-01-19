@@ -41,12 +41,9 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 GLOBAL	char	HTC_ComSymbol[SIZE_SYMBOL+1];
 GLOBAL	char	*HTC_FileName;
 GLOBAL	int		HTC_Token;
-GLOBAL	FILE	*HTC_File;
 GLOBAL	int		HTC_cLine;
 GLOBAL	byte	*HTC_Memory;
-
-GLOBAL	int		(*_HTCGetChar)(void);
-GLOBAL	void	(*_HTCUnGetChar)(int c);
+GLOBAL	byte	*_HTC_Memory;
 
 #undef	GLOBAL
 

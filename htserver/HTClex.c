@@ -30,6 +30,7 @@
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
+#include	<errno.h>
 #include	<iconv.h>
 
 #include	"types.h"
@@ -47,11 +48,6 @@ static	struct	{
 	{	""			,0			}
 };
 
-static	iconv_t			ReadCd;
-static	byte	obuff[SIZE_CHARS];
-static	size_t	sob
-		,		op;
-
 static	GHashTable	*Reserved;
 extern	void
 HTCLexInit(void)
@@ -62,9 +58,6 @@ HTCLexInit(void)
 	for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
 		g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
 	}
-	ReadCd = (iconv_t)0;
-	op = 0;
-	sob = SIZE_CHARS;
 }
 
 static	int
@@ -91,16 +84,46 @@ extern	void
 HTCSetCodeset(
 	char	*codeset)
 {
+	iconv_t		cd;
+	size_t		sbuff;
+	size_t	sib
+		,	sibo
+		,	sob;
+	char	*buff
+		,	*istr
+		,	*ostr;
+
 	if		(  libmondai_i18n  ) {
-		if		(  ReadCd  !=  (iconv_t)0  ) {
-			iconv_close(ReadCd);
+		cd = iconv_open("utf8",codeset);
+		sbuff = SIZE_BUFF;
+		sibo = strlen(HTC_Memory);
+		while	(TRUE) {
+			buff = (char *)xmalloc(sbuff);
+			sib = sibo;
+			istr = HTC_Memory;
+			ostr = buff;
+			sob = sbuff;
+			if		(  iconv(cd,&istr,&sib,&ostr,&sob)  ==  0  ) break;
+			if		(  errno  ==  E2BIG  ) {
+				xfree(buff);
+				sbuff *= 2;
+			} else {
+				dbgprintf("error = %d\n",errno);
+				break;
+			}
 		}
-		ReadCd = iconv_open("utf8",codeset);
+		*ostr = 0;
+		iconv_close(cd);
+		if		(  _HTC_Memory  !=  NULL  ) {
+			xfree(_HTC_Memory);
+		}
+		HTC_Memory = buff;
+		_HTC_Memory = buff;
 	}
 }
 
 extern	int
-GetCharFile(void)
+GetChar(void)
 {
 	int		c;
 	byte	ibuff[SIZE_CHARS]
@@ -112,36 +135,8 @@ GetCharFile(void)
 	int		rc;
 
 ENTER_FUNC;
-  retry:
-	if		(  op  <  ( SIZE_CHARS - sob )  ) {
-		ret = obuff[op];
-		op ++;
-	} else {
-		op = 0;
-		if		(  ( c = fgetc(HTC_File) )  !=  EOF  ) {
-			if		(	(  libmondai_i18n  )
-					&&	(  ReadCd  !=  (iconv_t)0  ) ) {
-				ic = ibuff;
-				do {
-					*ic ++ = c;
-					istr = ibuff;
-					count = (size_t)(ic - ibuff);
-					oc = obuff;
-					sob = SIZE_CHARS;
-					if		(  ( rc = iconv(ReadCd,&istr,&count,&oc,&sob) )  !=  0  ) {
-						if		(  ( c = fgetc(HTC_File) )  ==  EOF  )	break;
-					}
-				}	while	(  rc  !=  0  );
-				if		(  c  ==  EOF  ) {
-					ret = -1;
-				} else goto	retry;
-			} else {
-				sob = SIZE_CHARS;
-				ret = c;
-			}
-		} else {
-			ret = -1;
-		}
+	if		(  ( ret = *HTC_Memory ++ )  ==  0  ) {
+		ret = -1;
 	}
     if (ret == '\n')
         HTC_cLine++;
@@ -150,13 +145,14 @@ LEAVE_FUNC;
 }
 
 extern	void
-UnGetCharFile(
+UnGetChar(
 	int		c)
 {
-	ungetc(c,HTC_File);
+	HTC_Memory --;
+	*HTC_Memory = c;
 }
 
-#define	SKIP_SPACE	while	(  isspace( c = _HTCGetChar() ) ) {	\
+#define	SKIP_SPACE	while	(  isspace( c = GetChar() ) ) {	\
 						if		(  c  ==  '\n'  ) {	\
 							c = ' ';\
 						}	\
@@ -172,19 +168,19 @@ HTCLex(
 	int		token;
 	char	*s;
 
-dbgmsg(">HTCLex");
+ENTER_FUNC;
   retry:
 	SKIP_SPACE; 
 	if		(  c  ==  '#'  ) {
-		while	(  ( c = _HTCGetChar() )  !=  '\n'  );
+		while	(  ( c = GetChar() )  !=  '\n'  );
 		goto	retry;
 	}
 	if		(  c  ==  '"'  ) {
 		s = HTC_ComSymbol;
 		len = 0;
-		while	(  ( c = _HTCGetChar() )  !=  '"'  ) {
+		while	(  ( c = GetChar() )  !=  '"'  ) {
 			if		(  c  ==  '\\'  ) {
-				switch	(c2 = _HTCGetChar()) {
+				switch	(c2 = GetChar()) {
 				  case	'"':
 					c = '"';
 					break;
@@ -195,7 +191,7 @@ dbgmsg(">HTCLex");
 					c = '\t';
 					break;
 				  default:
-					_HTCUnGetChar(c2);
+					UnGetChar(c2);
 					break;
 				}
 			}
@@ -211,9 +207,9 @@ dbgmsg(">HTCLex");
 	if		(  c  ==  '\''  ) {
 		s = HTC_ComSymbol;
 		len = 0;
-		while	(  ( c = _HTCGetChar() )  !=  '\''  ) {
+		while	(  ( c = GetChar() )  !=  '\''  ) {
 			if		(  c  ==  '\\'  ) {
-				switch	(c2 = _HTCGetChar()) {
+				switch	(c2 = GetChar()) {
 				  case	'\'':
 					c = '\'';
 					break;
@@ -224,7 +220,7 @@ dbgmsg(">HTCLex");
 					c = '\t';
 					break;
 				  default:
-					_HTCUnGetChar(c2);
+					UnGetChar(c2);
 					break;
 				}
 			}
@@ -246,18 +242,18 @@ dbgmsg(">HTCLex");
 				s ++;
 				len ++;
 			}
-			c = _HTCGetChar();
+			c = GetChar();
 		}	while	(  c  ==  '-'  );
 		*s = 0;
 		if		(  c  ==  '>'  ) {
 			if		(  len  >  1  ) {
 				token = T_COMMENTE;
 			} else {
-				_HTCUnGetChar(c);
+				UnGetChar(c);
 				token = T_SYMBOL;
 			}
 		} else {
-			_HTCUnGetChar(c);
+			UnGetChar(c);
 			token = T_SYMBOL;
 		}
 	} else
@@ -273,7 +269,7 @@ dbgmsg(">HTCLex");
 				s ++;
 				len ++;
 			}
-			c = _HTCGetChar();
+			c = GetChar();
 		}	while	(	(  isalpha(c) )
 					 ||	(  isdigit(c) )
 					 ||	(  c  ==  '.' )
@@ -281,7 +277,7 @@ dbgmsg(">HTCLex");
 					 ||	(  c  ==  '-' )
 					 ||	(  c  ==  ':' ) );
 		*s = 0;
-		_HTCUnGetChar(c);
+		UnGetChar(c);
 		if		(  fSymbol  ) {
 			token = T_SYMBOL;
 		} else {
@@ -297,7 +293,7 @@ dbgmsg(">HTCLex");
 			break;
 		}
 	}
-dbgmsg("<HTCLex");
+LEAVE_FUNC;
 	return	(token);
 }
 

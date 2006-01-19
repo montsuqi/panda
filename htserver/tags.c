@@ -2112,6 +2112,7 @@ ENTER_FUNC;
 	AddArg(tag,"dir",TRUE);
 	AddArg(tag,"lang",TRUE);
 	AddArg(tag,"title",TRUE);
+	tag = NewTag("/HEAD",NULL);
 
 	tag = NewTag("BODY",_Body);
 	AddArg(tag,"text",TRUE);

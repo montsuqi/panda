@@ -22,6 +22,7 @@
 #define	DEBUG
 #define	TRACE
 
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -148,7 +149,11 @@ ENTER_FUNC;
 				text = NULL;
 			}
 			if		(  ( cell = GetCell(table,row,col) )  !=  NULL  ) {
-				cell->text = text;
+				if		(  text  !=  NULL  ) {
+					cell->text = StrDup(text);
+				} else {
+					cell->text = NULL;
+				}
 				cell->id = table->cId ++;
 			}
 		} else {
@@ -208,25 +213,27 @@ ReadRegions(
 		,		*p;
 
 ENTER_FUNC;
-	MergedRegions = SearchNode(Sheet,GNUMERIC_NS,"MergedRegions",NULL,NULL);
-	Merge = XMLNodeChildren(MergedRegions);
-	while	(  Merge  !=  NULL  ) {
-		if		(  ( Text = XMLNodeChildren(Merge) )  !=  NULL  ) {
-			strcpy(buff,XMLNodeContent(Text));
-			p = strchr(buff,':');
-			*p = 0;
-			ParseCellName(buff,&x1,&y1);
-			ParseCellName(p + 1,&x2,&y2);
-			for	( row = y1 ; row <= y2 ; row ++ ) {
-				for	( col = x1 ; col <= x2 ; col ++ ) {
-					if		(  ( cell = GetCell(table,row,col) )  !=  NULL  ) {
-						cell->id = table->cId;
+	if		(  ( MergedRegions = SearchNode(Sheet,GNUMERIC_NS,"MergedRegions",NULL,NULL) )
+			   !=  NULL  ) {
+		Merge = XMLNodeChildren(MergedRegions);
+		while	(  Merge  !=  NULL  ) {
+			if		(  ( Text = XMLNodeChildren(Merge) )  !=  NULL  ) {
+				strcpy(buff,XMLNodeContent(Text));
+				p = strchr(buff,':');
+				*p = 0;
+				ParseCellName(buff,&x1,&y1);
+				ParseCellName(p + 1,&x2,&y2);
+				for	( row = y1 ; row <= y2 ; row ++ ) {
+					for	( col = x1 ; col <= x2 ; col ++ ) {
+						if		(  ( cell = GetCell(table,row,col) )  !=  NULL  ) {
+							cell->id = table->cId;
+						}
 					}
 				}
+				table->cId ++;
 			}
-			table->cId ++;
+			Merge = XMLNodeNext(Merge);
 		}
-		Merge = XMLNodeNext(Merge);
 	}
 LEAVE_FUNC;
 }
@@ -246,10 +253,18 @@ SetRule(
 			&&	(  col  >=  0  )
 			&&	(  row  <=  table->maxrow  )
 			&&	(  col  <=  table->maxcol  ) ) {
-		table->virtical[RULE_INDEX(table,row,col)] = top;
-		table->virtical[RULE_INDEX(table,( row + 1 ),col)] = bottom;
-		table->horizontal[RULE_INDEX(table,row,col)] = left;
-		table->horizontal[RULE_INDEX(table,row,( col + 1 ))] = right;
+		if		(  top  >  0  ) {
+			table->virtical[RULE_INDEX(table,row,col)] = top;
+		}
+		if		(  bottom  >  0  ) {
+			table->virtical[RULE_INDEX(table,( row + 1 ),col)] = bottom;
+		}
+		if		(  left  >  0  ) {
+			table->horizontal[RULE_INDEX(table,row,col)] = left;
+		}
+		if		(  right  >  0  ) {
+			table->horizontal[RULE_INDEX(table,row,( col + 1 ))] = right;
+		}
 	}
 }
 
@@ -274,6 +289,9 @@ ReadStyles(
 		,		bottom
 		,		left
 		,		right;
+	CellAttribute	*cell
+		,			*cell1
+		,			*cell2;
 
 ENTER_FUNC;
 	Styles = SearchNode(Sheet,GNUMERIC_NS,"Styles",NULL,NULL);
@@ -305,34 +323,112 @@ ENTER_FUNC;
 				}
 				pos = XMLNodeNext(pos);
 			}
-#if	0
-			for	(  col = x1 ; col <= x2 ; col ++ ) {
-				if		(  top  >  0  ) {
-					table->virtical[RULE_INDEX(table,y1,col)] = top;
-				}
-				if		(  bottom  >  0  ) {
-					table->virtical[RULE_INDEX(table,y2+1,col)] = bottom;
-				}
-			}
-			for	(  row = y1 ; row <= y2 ; row ++ ) {
-				if		(  left  >  0  ) {
-					table->horizontal[RULE_INDEX(table,row,x1)] = left;
-				}
-				if		(  right  >  0  ) {
-					table->horizontal[RULE_INDEX(table,row,x2+1)] = right;
-				}
-			}
-#else
 			for	( row = y1 ; row <= y2 ; row ++ ) {
 				for	(  col = x1 ; col <= x2 ; col ++ ) {
 					SetRule(table,row,col,top,bottom,left,right);
 				}
 			}
-#endif
 		}
 		StyleRegion = XMLNodeNext(StyleRegion);
 	}
+	/*	clean up rule	*/
+	for	( row = 0 ; row <= table->maxrow + 1; row ++ ) {
+		for	( col = 0 ; col <= table->maxcol + 1 ; col ++ ) {
+			if		(  table->virtical[RULE_INDEX(table,row,col)]  >  0  ) {
+				if		(	(  row  ==  0  )
+						||	(  ( cell1 = GetCell(table,row-1,col) )  ==  NULL  )
+						||	(  ( cell2 = GetCell(table,row  ,col) )  ==  NULL  )
+						||	(  cell1->id  !=  cell2->id  )
+						||	(  cell1->id  ==  -1         )
+						||	(  cell2->id  ==  -1         ) ) {
+					/*	nop	*/
+				} else {
+					table->virtical[RULE_INDEX(table,row,col)] = 0;
+				}
+			}
+		}
+		for	( col = 0 ; col <= table->maxcol + 1 ; col ++ ) {
+			if		(  table->horizontal[RULE_INDEX(table,row,col)]  >  0  ) {
+				if		(	(  col  ==  0  )
+						||	(  ( cell1 = GetCell(table,row,col-1) )  ==  NULL  )
+						||	(  ( cell2 = GetCell(table,row,col  ) )  ==  NULL  )
+						||	(  cell1->id  !=  cell2->id  )
+						||	(  cell1->id  ==  -1         )
+						||	(  cell2->id  ==  -1         ) ) {
+					/*	nop	*/
+				} else {
+					table->horizontal[RULE_INDEX(table,row,col)] = 0;
+				}
+			}
+		}
+	}
 LEAVE_FUNC;
+}
+
+#ifdef	DEBUG
+static	void
+DumpTable(
+	Table	*table)
+{
+	int		row
+		,	col;
+	CellAttribute	*cell
+		,			*cell1
+		,			*cell2;
+
+	for	( row = 0 ; row <= table->maxrow + 1; row ++ ) {
+		printf("%4d:",row);
+		for	( col = 0 ; col <= table->maxcol + 1 ; col ++ ) {
+			if		(  table->virtical[RULE_INDEX(table,row,col)]  >  0  ) {
+				printf(" ----");
+			} else {
+				printf("     ");
+			}
+		}
+		printf("\n");
+		printf("%4d:",row);
+		for	( col = 0 ; col <= table->maxcol + 1 ; col ++ ) {
+			if		(  table->horizontal[RULE_INDEX(table,row,col)]  >  0  ) {
+				printf("|");
+			} else {
+				printf(" ");
+			}
+			if		(  ( cell = GetCell(table,row,col) )  !=  NULL  ) {
+				printf("%4d",cell->id);
+			}
+		}
+		printf("\n");
+	}
+}
+#endif
+
+extern	Table	*
+LoadGnumeric(
+	char	*fname)
+{
+	xmlDocPtr	doc;
+	xmlNodePtr	Sheet;
+	char		*rname;
+	char		*p;
+	Table		*table;
+	int			maxcol
+		,		maxrow;
+
+ENTER_FUNC;
+	doc = xmlReadFile(fname,NULL,XML_PARSE_NOBLANKS);
+	Sheet = SearchNode(xmlDocGetRootElement(doc),GNUMERIC_NS,"Sheet",NULL,NULL);
+	maxrow = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxRow",NULL,NULL)));
+	maxcol = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxCol",NULL,NULL)));
+	table = NewTable(maxrow,maxcol);
+	ReadCells(Sheet,table);
+	ReadRegions(Sheet,table);
+	ReadStyles(Sheet,table);
+#ifdef	DEBUG
+	DumpTable(table);
+#endif
+	xmlFreeDoc(doc);
+LEAVE_FUNC;
+	return	(table);
 }
 
 static	void
@@ -414,67 +510,8 @@ WriteDefines(
 	}
 }
 
-#ifdef	DEBUG
 static	void
-DumpTable(
-	Table	*table)
-{
-	int		i
-		,	j;
-	CellAttribute	*cell
-		,			*cell1
-		,			*cell2;
-
-	for	( i = 0 ; i <= table->maxrow + 1; i ++ ) {
-		printf("%4d:",i+1);
-		for	( j = 0 ; j < table->maxcol ; j ++ ) {
-			if		(  table->virtical[RULE_INDEX(table,i,j)]  >  0  ) {
-#if	1
-				printf("-----");
-#else
-				if		(	(  i  ==  0  )
-						||	(  ( cell1 = GetCell(table,i-1,j)   )  ==  NULL  )
-						||	(  ( cell2 = GetCell(table,i,j) )  ==  NULL  )
-						||	(  cell1->id  !=  cell2->id  ) ) {
-					printf("-----");
-				} else {
-					printf("     ");
-				}
-#endif
-			} else {
-				printf("     ");
-			}
-		}
-		printf("\n");
-		printf("%4d:",i+1);
-		for	( j = 0 ; j <= table->maxcol + 1 ; j ++ ) {
-			if		(  table->horizontal[RULE_INDEX(table,i,j)]  >  0  ) {
-#if	1
-				printf("|");
-#else
-				if		(	(  j  ==  0  )
-						||	(  ( cell1 = GetCell(table,i,j-1)   )  ==  NULL  )
-						||	(  ( cell2 = GetCell(table,i,j) )  ==  NULL  )
-						||	(  cell1->id  !=  cell2->id  ) ) {
-					printf("|");
-				} else {
-					printf(" ");
-				}
-#endif
-			} else {
-				printf(" ");
-			}
-			if		(  ( cell = GetCell(table,i,j) )  !=  NULL  ) {
-				printf("%4d",cell->id);
-			}
-		}
-		printf("\n");
-	}
-}
-#endif
-
-static	void
-LoadGnumeric(
+ProcessOne(
 	char	*fname)
 {
 	xmlDocPtr	doc;
@@ -486,23 +523,12 @@ LoadGnumeric(
 		,		maxrow;
 
 ENTER_FUNC;
-	doc = xmlReadFile(fname,NULL,XML_PARSE_NOBLANKS);
-	Sheet = SearchNode(xmlDocGetRootElement(doc),GNUMERIC_NS,"Sheet",NULL,NULL);
-	maxrow = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxRow",NULL,NULL)));
-	maxcol = atoi(XMLGetPureText(SearchNode(Sheet,GNUMERIC_NS,"MaxCol",NULL,NULL)));
-	table = NewTable(maxrow,maxcol);
-	ReadCells(Sheet,table);
-	ReadRegions(Sheet,table);
-	ReadStyles(Sheet,table);
-#ifdef	DEBUG
-	DumpTable(table);
-#endif
 	rname = StrDup(basename(fname));
 	if		(  ( p = strstr(rname,".gnumeric") )  !=  NULL  ) {
 		*p = 0;
 	}
 	printf("%s\t{\n",rname);
-	WriteDefines(table);
+	WriteDefines(LoadGnumeric(fname));
 	printf("};\n");
 LEAVE_FUNC;
 	xmlFreeDoc(doc);
@@ -535,7 +561,7 @@ main(
 	fl = GetOption(option,argc,argv);
 	InitMessage("checkdir",NULL);
 
-	LoadGnumeric(fl->name);
+	ProcessOne(fl->name);
 
 	return	(0);
 }
