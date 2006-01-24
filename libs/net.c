@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -41,8 +41,18 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"port.h"
 #include	"debug.h"
 
-extern	Bool
-Flush(
+#if	1
+#define	LockNet(fp)		pthread_mutex_lock(&(fp)->lock)
+#define	UnLockNet(fp)	pthread_mutex_unlock(&(fp)->lock)
+#define	ReleaseNet(fp)	pthread_cond_signal(&(fp)->isdata)
+#else
+#define	LockNet(fp)
+#define	UnLockNet(fp)
+#define	ReleaseNet(fp)
+#endif
+
+static	Bool
+_Flush(
 	NETFILE	*fp)
 {
 	byte	*p = fp->buff;
@@ -61,6 +71,17 @@ Flush(
 	return	(fp->fOK);
 }
 
+extern	Bool
+Flush(
+	NETFILE	*fp)
+{
+	LockNet(fp);
+	_Flush(fp);
+	UnLockNet(fp);
+	ReleaseNet(fp);
+	return	(fp->fOK);
+}
+
 extern	int
 Send(
 	NETFILE	*fp,
@@ -72,7 +93,9 @@ Send(
 		,	left;
 	int		ret;
 
-	if		(  fp->fOK  ) {
+	if		(	(  fp  !=  NULL  )
+			&&	(  fp->fOK       ) ) {
+		LockNet(fp);
 		ret = size;
 		if		(	(  fp->buff  !=  NULL  )
 				&&	(  fp->size  >  size  ) ) {
@@ -80,7 +103,7 @@ Send(
 				left = fp->size - fp->ptr;
 				memcpy((fp->buff + fp->ptr),p,left);
 				fp->ptr = fp->size;
-				if		(  !Flush(fp)  )	{
+				if		(  !_Flush(fp)  )	{
 					ret = -1;
 					goto	quit;
 				}
@@ -91,7 +114,7 @@ Send(
 			fp->ptr += size;
 			fp->fSent = TRUE;
 		} else {
-			Flush(fp);
+			_Flush(fp);
 			while	(  size  >  0  ) {
 				if		(  ( count = fp->write(fp,p,size) )  >  0  ) {
 					size -= count;
@@ -104,6 +127,8 @@ Send(
 			}
 			fp->fSent = FALSE;
 		}
+		UnLockNet(fp);
+		ReleaseNet(fp);
 	} else {
 		ret = -1;
 	}
@@ -121,9 +146,11 @@ Recv(
 	ssize_t	count;
 	int		ret;
 
-	if		(  fp->fOK  ) {
+	if		(	(  fp  !=  NULL  )
+			&&	(  fp->fOK       ) ) {
+		LockNet(fp);
 		if		(  fp->fSent  ) {
-			Flush(fp);
+			_Flush(fp);
 		}
 		ret = size;
 		while	(  size  >  0  ) {
@@ -135,6 +162,8 @@ Recv(
 				break;
 			}
 		}
+		UnLockNet(fp);
+		ReleaseNet(fp);
 	} else {
 		ret = -1;
 	}
@@ -176,6 +205,8 @@ FreeNet(
 	if		(  fp->buff  !=  NULL  ) {
 		xfree(fp->buff);
 	}
+	pthread_mutex_destroy(&fp->lock);
+	pthread_cond_destroy(&fp->isdata);
 	xfree(fp);
 }
 
@@ -183,7 +214,7 @@ extern	void
 CloseNet(
 	NETFILE	*fp)
 {
-	Flush(fp);
+	_Flush(fp);
 	fp->close(fp);
 	FreeNet(fp);
 }
@@ -260,6 +291,8 @@ NewNet(void)
 	fp->size = 0;
 	fp->ptr = 0;
 	fp->buff = NULL;
+	pthread_cond_init(&fp->isdata,NULL);
+	pthread_mutex_init(&fp->lock,NULL);
 	return	(fp);
 }
 

@@ -290,8 +290,8 @@ ParseURL(
 		url->file = StrDup(str);
 	} else {
 		if		(  ( p = strchr(str,'/') )  !=  NULL  ) {
+			url->file = StrDup(p);
 			*p = 0;
-			url->file = StrDup(p+1);
 		} else {
 			url->file = NULL;
 		}			
