@@ -390,7 +390,9 @@ StartPrograms(void)
 ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
-
+	if		( ThisEnv == NULL ) {
+		Error("DI file parse error.");
+	}
 	StartServers();
 #ifdef	DEBUG
 	DumpProcess();

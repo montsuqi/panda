@@ -302,7 +302,7 @@ main(
 	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
-		sprintf(id,"aps-%s",fl->name);
+		snprintf(id, sizeof(id), "aps-%s",fl->name);
 		InitMessage(id,NULL);
 		InitNET();
 		InitSystem(fl->name);
@@ -311,7 +311,7 @@ main(
 		rc = 0;
 	} else {
 		rc = -1;
-		Error("LD name is not specified.");
+		fprintf(stderr, "LD name is not specified.\n");
 	}
 	exit(rc);
 }

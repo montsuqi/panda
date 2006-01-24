@@ -1030,8 +1030,10 @@ ENTER_FUNC;
 			ParError("; missing");
 		}
 	}
-	ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
-	AssignDBG(in);
+	if ( ThisEnv) {
+		ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
+		AssignDBG(in);
+	}
 LEAVE_FUNC;
 	return	(ThisEnv);
 }

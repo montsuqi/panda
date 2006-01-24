@@ -183,6 +183,9 @@ InitSystem(void)
 ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","",TRUE);
+	if		( ThisEnv == NULL ) {
+		Error("DI file parse error.");
+	}
 	if		(  ApsPortNumber  ==  NULL  ) {
 		ApsPort = ThisEnv->WfcApsPort;
 	} else {
