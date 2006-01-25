@@ -537,6 +537,7 @@ ExecCode(
 
 ENTER_FUNC;
 	RewindLBS(htc->code);
+	dbgprintf("code size = %d\n",LBS_Size(htc->code));
 	VarArea = NewNameHash();
 	pStack = 0;
 	while	(  ( c = LBS_FetchChar(htc->code) )  !=  0  ) {

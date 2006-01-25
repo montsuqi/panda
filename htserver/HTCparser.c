@@ -323,8 +323,6 @@ HTCParseFile(
 	char	*fname)
 {
 	HTCInfo	*ret;
-	char	*p
-		,	*q;
 	char	*str
 		,	*m;
 	struct	stat	sb;
@@ -345,6 +343,8 @@ ENTER_FUNC;
 		HTC_Memory = str;
 		_HTC_Memory = str;
 		ret = HTCParserCore();
+	} else {
+		ret = NULL;
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -395,9 +395,6 @@ ENTER_FUNC;
 		HTC_Memory = (byte *)buff;
 		_HTC_Memory = NULL;
 		ret = HTCParserCore();
-		if		(  fError  ) {
-			ret = NULL;
-		}
 	} else {
         dbgprintf("HTC memory is null\n",NULL);
 		ret = NULL;

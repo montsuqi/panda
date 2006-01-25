@@ -78,8 +78,7 @@ NewTable(
 	Table	*table;
 	CellAttribute	*cell;
 	size_t	size;
-	int			i
-		,		j;
+	int			i;
 
 	table = New(Table);
 	size = ( maxrow + 1 ) * ( maxcol + 1 );
@@ -101,6 +100,26 @@ NewTable(
 	}
 	table->cId = 0;
 	return	(table);
+}
+
+extern	void
+FreeTable(
+	Table	*table)
+{
+	int		size
+		,	i;
+
+	size = ( table->maxrow + 1 ) * ( table->maxcol + 1 );
+	for	( i = 0 ; i < size ; i ++ ) {
+		if		(  table->cell[i]->text  !=  NULL  ) {
+			xfree(table->cell[i]->text);
+		}
+		xfree(table->cell[i]);
+	}
+	xfree(table->cell);
+	xfree(table->horizontal);
+	xfree(table->virtical);
+	xfree(table);
 }
 
 extern	CellAttribute	*
@@ -283,14 +302,12 @@ ReadStyles(
 		,		x1
 		,		y1
 		,		x2
-		,		y2
-		,		st;
+		,		y2;
 	int			top
 		,		bottom
 		,		left
 		,		right;
-	CellAttribute	*cell
-		,			*cell1
+	CellAttribute	*cell1
 		,			*cell2;
 
 ENTER_FUNC;
@@ -372,9 +389,7 @@ DumpTable(
 {
 	int		row
 		,	col;
-	CellAttribute	*cell
-		,			*cell1
-		,			*cell2;
+	CellAttribute	*cell;
 
 	for	( row = 0 ; row <= table->maxrow + 1; row ++ ) {
 		printf("%4d:",row);
@@ -408,8 +423,6 @@ LoadGnumeric(
 {
 	xmlDocPtr	doc;
 	xmlNodePtr	Sheet;
-	char		*rname;
-	char		*p;
 	Table		*table;
 	int			maxcol
 		,		maxrow;
@@ -514,13 +527,8 @@ static	void
 ProcessOne(
 	char	*fname)
 {
-	xmlDocPtr	doc;
-	xmlNodePtr	Sheet;
 	char		*rname;
 	char		*p;
-	Table		*table;
-	int			maxcol
-		,		maxrow;
 
 ENTER_FUNC;
 	rname = StrDup(basename(fname));
@@ -531,7 +539,6 @@ ENTER_FUNC;
 	WriteDefines(LoadGnumeric(fname));
 	printf("};\n");
 LEAVE_FUNC;
-	xmlFreeDoc(doc);
 }
 
 static	ARG_TABLE	option[] = {

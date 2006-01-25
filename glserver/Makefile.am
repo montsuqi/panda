@@ -22,10 +22,11 @@ bin_SCRIPTS = pstopng
 
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\
-	-lm -lmagic							\
-	$(top_builddir)/libs/libpandas.a		\
+	-lm 								\
+	$(top_builddir)/libs/libpandas.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandagl.a	\
+	$(MAGIC_LIBS)						\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						

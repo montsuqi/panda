@@ -1,21 +1,21 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -29,7 +29,9 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<errno.h>
+#ifdef	HAVE_LIBMAGIC
 #include	<magic.h>
+#endif
 #include	<string.h>
 #include	<strings.h>
 #include	<netinet/in.h>
@@ -66,7 +68,9 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 static	LargeByteString	*Buff;
 
+#ifdef	HAVE_LIBMAGIC
 static	struct	magic_set	*Magic;
+#endif
 
 static	PacketDataType	ToOldType[256];
 static	PacketDataType	ToNewType[256];
@@ -417,6 +421,7 @@ ExpandFile(
 
 ENTER_FUNC;
 	strcpy(fname,cname);
+#ifdef	HAVA_LIBMAGIC
 	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  ) {
 		if		(  !strlcmp(type,"PostScript")  ) {
 			if	(  !fFeturePS  ) {
@@ -452,6 +457,7 @@ ENTER_FUNC;
 			}
         }
 	}
+#endif
 LEAVE_FUNC;
 	return	(fname);
 }
@@ -667,7 +673,7 @@ InitGL_Comm(void)
 	TO_NEWTYPE(DBCODE);
 	TO_NEWTYPE(ARRAY);
 	TO_NEWTYPE(RECORD);
-
+#ifdef	HAVE_LIBMAGIC
 	if		(  ( Magic = magic_open(MAGIC_SYMLINK|MAGIC_COMPRESS|MAGIC_PRESERVE_ATIME) )
 			   ==  NULL  ) {
 		Error("magic: %s", strerror(errno));
@@ -675,4 +681,5 @@ InitGL_Comm(void)
 	if		(  magic_load(Magic, NULL)  <  0  )	{
 		Error("magic: %s", magic_error(Magic));
 	}
+#endif
 }

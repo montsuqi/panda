@@ -76,8 +76,13 @@ dnl ***************************************************************************
 have_libmagic=false
 AC_CHECK_HEADERS(magic.h,[AC_CHECK_LIB(magic, magic_open, have_libmagic=true)])
 if ! ${have_libmagic}; then
-   AC_MSG_ERROR([libmagic in 'file' is required. if you use Debian GNU/Linux, libmagic is contained 'libmagic-dev' package.])
+   AC_MSG_WARN([libmagic in 'file' is required. if you use Debian GNU/Linux, libmagic is contained 'libmagic-dev' package.])
+  MAGIC_LIBS=""
+else
+  MAGIC_LIBS="-lmagic"
+  AC_DEFINE(HAVE_LIBMAGIC,1,"")
 fi
+AC_SUBST(MAGIC_LIBS)
 
 dnl ***************************************************************************
 dnl Gnome Support (use --disable-gnome to disable).

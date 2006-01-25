@@ -1,3 +1,7 @@
+2006-01-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: libmagicがない時にはそれなりの処理にするようにした
+
 2006-01-18  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/port.c (ParPort): 空文字はNULLとみなす
