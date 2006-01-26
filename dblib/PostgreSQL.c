@@ -1265,6 +1265,7 @@ _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
+	int		rc;
 	LargeByteString *conninfo;
 	PGconn	*conn;
 	
@@ -1283,16 +1284,18 @@ ENTER_FUNC;
 	conn = PQconnectdb(LBS_Body(conninfo));
 	FreeLBS(conninfo);
 	
-	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
+	if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
+		OpenDB_RedirectPort(dbg);
+		dbg->conn = (void *)conn;
+		dbg->fConnect = TRUE;
+		rc = MCP_OK;
+	} else {
 		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
-		Error("%s", PQerrorMessage(conn));
+		Message("%s", PQerrorMessage(conn));
+		rc = MCP_BAD_OTHER;
 	}
-
-	OpenDB_RedirectPort(dbg);
-	dbg->conn = (void *)conn;
-	dbg->fConnect = TRUE;
 	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
+		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
 }

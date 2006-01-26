@@ -126,16 +126,10 @@ ENTER_FUNC;
 						   !=  NULL  ) {
 					func = (*f_init)();
 				} else {
-					fprintf(stderr,
-							"DB group type [%s] not found.(can not initialize)\n",
-							dbg->type);
-					exit(1);
+					Error("DB group type [%s] not found.(can not initialize)\n",dbg->type);
 				}
 			} else {
-				fprintf(stderr,
-						"DB group type [%s] not found.(module not exist)\n",
-						dbg->type);
-				exit(1);
+				Error("DB group type [%s] not found.(module not exist)\n", dbg->type);
 			}
 		}
 		dbg->func = func;
@@ -175,6 +169,7 @@ ENTER_FUNC;
 	printf("fAll = [%s]\n",fAll?"TRUE":"FALSE");
 #endif
 	if		(  dbg  ==  NULL  ) {
+		ctrl.rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
 			ctrl.rc += ExecFunction(dbg,name,fAll);
@@ -186,7 +181,7 @@ ENTER_FUNC;
 					   !=  NULL  ) {
 				(*func)(dbg,&ctrl);
 			} else {
-				printf("function not found [%s]\n",name);
+				Warning("function not found [%s]\n",name);
 				ctrl.rc = MCP_BAD_FUNC;
 			}
 		}
@@ -203,12 +198,12 @@ ExecDBOP(
 	dbg->func->primitive->exec(dbg,sql,TRUE);
 }
 
-extern	void
+extern	int
 ExecRedirectDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
 {
-	dbg->func->primitive->exec(dbg,sql,FALSE);
+	return dbg->func->primitive->exec(dbg,sql,FALSE);
 }
 
 extern	void
@@ -236,7 +231,7 @@ ENTER_FUNC;
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl->func) )
 				   ==  NULL  ) {
 			if		(  !(*dbg->func->primitive->access)(dbg,ctrl->func,ctrl,rec,args)  ) {
-				printf("function not found [%s]\n",ctrl->func);
+				Warning("function not found [%s]\n",ctrl->func);
 				ctrl->rc = MCP_BAD_FUNC;
 			}
 		} else {
@@ -246,12 +241,12 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	void
+static	int
 ExecDBG_Operation(
 	DBG_Struct	*dbg,
 	char		*name)
 {
-	ExecFunction(dbg,name,FALSE);
+	return ExecFunction(dbg,name,FALSE);
 }
 
 extern	void
@@ -287,40 +282,51 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	void
+extern	int
 OpenDB(
 	DBG_Struct *dbg)
 {
-	ExecDBG_Operation(dbg,"DBOPEN");
+	return ExecDBG_Operation(dbg,"DBOPEN");
 }
 
-extern	void
+extern	int
 OpenRedirectDB(
 	DBG_Struct *dbg)
 {
-	ExecFunction(dbg,"DBOPEN",TRUE);
+	return ExecFunction(dbg,"DBOPEN",TRUE);
 }
 
-extern	void
+extern	int
+CloseRedirectDB(
+	DBG_Struct *dbg)
+{
+	return ExecFunction(dbg,"DBDISCONNECT",TRUE);
+}
+
+extern	int
 TransactionRedirectStart(
 	DBG_Struct *dbg)
 {
 	NewPool("Transaction");
-	ExecFunction(dbg,"DBSTART",TRUE);
+	return ExecFunction(dbg,"DBSTART",TRUE);
 }
 
-extern	void
+extern	int
 TransactionRedirectEnd(
 	DBG_Struct *dbg)
 {
-	ExecFunction(dbg,"DBCOMMIT",TRUE);
+	int rc;
+
+	rc = ExecFunction(dbg,"DBCOMMIT",TRUE);
 	ReleasePoolByName("Transaction");
+
+	return rc;
 }
 
-extern	void
+extern	int
 CloseDB(
 	DBG_Struct *dbg)
 {
-	ExecDBG_Operation(dbg,"DBDISCONNECT");
+	return ExecDBG_Operation(dbg,"DBDISCONNECT");
 }
 

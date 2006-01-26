@@ -173,7 +173,9 @@ ENTER_FUNC;
 	}
 	InitAPSIO(fpWFC);
 	if		(  ThisLD->cDB  >  0  ) {
-		ReadyOnlineDB(fpWFC);
+		if ( ReadyOnlineDB(fpWFC) < 0 ){
+			Error("Online DB is not ready");
+		}
 	}
 	node = MakeProcessNode();
 	for	( tran = MaxTran;(	(  MaxTran  ==  0  )

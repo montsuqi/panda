@@ -2,6 +2,12 @@
 
 	* libs/panda.c: windowData のチェックを追加
 
+	* dblib/PostgreSQL.c, dblib/Oseki.c: DBハンドラでは exit しないように
+	変更
+
+	* dblib/dbgroup.[ch], dblib/dblib.h, aps/aps_main.c aps/handler.[ch]:
+	DBOPENのチェックを追加	
+
 2006-01-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* configure.in: libmagicがない時にはそれなりの処理にするようにした

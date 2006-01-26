@@ -229,15 +229,17 @@ _ReadyOnlineDB(
 	ReadyHandlerDB(bind->handler);
 }
 
-extern	void
+extern	int
 ReadyOnlineDB(
 	NETFILE	*fp)
 {
+	int	rc;
 ENTER_FUNC;
 	InitDB_Process(fp);
-	OpenDB(NULL);
+	rc = OpenDB(NULL);
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyOnlineDB,NULL);
 LEAVE_FUNC;
+	return	rc;
 }
 
 static	void

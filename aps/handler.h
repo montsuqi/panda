@@ -29,7 +29,7 @@ extern	void	InitiateHandler(void);
 extern	void	InitiateBatchHandler(void);
 extern	void	ReadyDC(void);
 extern	void	ReadyHandlerDB(MessageHandler *handler);
-extern	void	ReadyOnlineDB(NETFILE *fp);
+extern	int		ReadyOnlineDB(NETFILE *fp);
 extern	void	ExecuteProcess(ProcessNode *node);
 extern	void	StopDC(void);
 extern	void	StopHandlerDB(MessageHandler *handler);

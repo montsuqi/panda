@@ -437,13 +437,15 @@ ENTER_FUNC;
 	pass = ( DB_Pass != NULL ) ? DB_Pass : dbg->pass;
 
 	ses = ConnectOseki(host,port,user,pass,"SQL");
-	if		(  ses  ==  NULL  ) {
-		fprintf(stderr,"Connection to database failed.\n");
-		exit(1);
+	if		(  ses  !=  NULL  ) {
+		OpenDB_RedirectPort(dbg);
+		dbg->conn = (void *)ses;
+		dbg->fConnect = TRUE;
+		rc = MCP_OK;
+	} else {
+		Message("Connection to database failed.\n");
+		rc = MCP_BAD_OTHER;
 	}
-	OpenDB_RedirectPort(dbg);
-	dbg->conn = (void *)ses;
-	dbg->fConnect = TRUE;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
