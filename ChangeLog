@@ -35,10 +35,6 @@
 	ファイル読み込み時におけるbuffer overrunを修正
 	* libs/driver.c (NewScreenData): strchrの戻り値を検査するように修正
 	
-2005-11-04  Masami Ogoshi  <ogochan@nurs.or.jp>
-
-	* htserver/mon.c (ParseUserAgent): w3mの場合、Javascriptを無効にする
-
 2005-12-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* rkey_buffer_branch をマージ
@@ -47,6 +43,10 @@
 	* glclient/action.c, glclient/callbacks.c: キーバッファクリアを
 	再実装して、同一画面内ではキーバッファが効くようにした。
 	* glclient/bootdialog.c: 「キーバッファを有効にする」項目の追加
+
+2005-11-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/mon.c (ParseUserAgent): w3mの場合、Javascriptを無効にする
 
 2005-10-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
