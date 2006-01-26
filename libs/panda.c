@@ -81,6 +81,7 @@ RecvPanda(
 	int		type;
 	int		i;
 	WindowControl	ctl;
+	WindowData		*win;
 	char	msg[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
@@ -90,18 +91,18 @@ ENTER_FUNC;
 			type = ctl.control[i].PutType;
 			switch	(type) {
 			  case	SCREEN_CHANGE_WINDOW:
-				(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
+				win = PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
 				type = SCREEN_NEW_WINDOW;
 				break;
 			  default:
 				break;
 			}
-			PutWindowByName(ctl.control[i].window,type);
+			win = PutWindowByName(ctl.control[i].window,type);
 		}
 #else
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
 			if		(  ctl.control[i].PutType  ==  SCREEN_CLOSE_WINDOW  ) {
-				PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
+				win = PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
 			}
 		}
 #endif
@@ -112,7 +113,7 @@ ENTER_FUNC;
 #ifndef	NEW_SEQUENCE
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:
-			(void)PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
+			win = PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
 			type = SCREEN_NEW_WINDOW;
 			break;
 		  case	SCREEN_JOIN_WINDOW:
@@ -122,12 +123,16 @@ ENTER_FUNC;
 			break;
 		}
 		(void)SetWindowName(window);
-		(void)PutWindowByName(window,type);
+		win = PutWindowByName(window,type);
 #endif
-		RecvTermServerData(fpPanda,ThisScreen);
-		strcpy(ThisWindow,window);
-		strcpy(ThisWidget,widget);
-		strcpy(ThisUser,user);
+		if ( win ) {
+			RecvTermServerData(fpPanda,ThisScreen);
+			strcpy(ThisWindow,window);
+			strcpy(ThisWidget,widget);
+			strcpy(ThisUser,user);
+		} else {
+			Error("Illegal windowData");
+		}
 	} else {
 		snprintf(msg,SIZE_LONGNAME,"window = [%s]",window);
 		MessageLog(msg);

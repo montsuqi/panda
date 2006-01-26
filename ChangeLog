@@ -1,3 +1,7 @@
+2006-01-27  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/panda.c: windowData のチェックを追加
+
 2006-01-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* configure.in: libmagicがない時にはそれなりの処理にするようにした
