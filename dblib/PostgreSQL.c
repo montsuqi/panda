@@ -1327,7 +1327,7 @@ _DBSTART(
 
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
-	res = _PQexec(dbg,"begin",FALSE);
+	res = _PQexec(dbg,"BEGIN",FALSE);
 	rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 	_PQclear(res);
 	if		(  ctrl  !=  NULL  ) {
@@ -1346,7 +1346,7 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	res = _PQexec(dbg,"commit work",FALSE);
+	res = _PQexec(dbg,"COMMIT WORK",FALSE);
 	rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 	_PQclear(res);
 	CommitDB_Redirect(dbg);
@@ -1408,7 +1408,7 @@ ENTER_FUNC;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
-			p += sprintf(p,"fetch from %s_%s_csr",rec->name,path->name);
+			p += sprintf(p,"FETCH FROM %s_%s_csr",rec->name,path->name);
 			res = _PQexec(dbg,sql,TRUE);
 			ctrl->rc = CheckResult(dbg, res, PGRES_TUPLES_OK);
 			if ( ctrl->rc == MCP_OK ) {
@@ -1454,7 +1454,7 @@ ENTER_FUNC;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
-			p += sprintf(p,"close %s_%s_csr",rec->name,path->name);
+			p += sprintf(p,"CLOSE %s_%s_csr",rec->name,path->name);
 			res = _PQexec(dbg,sql,TRUE);
 			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
 			_PQclear(res);
@@ -1516,7 +1516,7 @@ ENTER_FUNC;
                 LBS_EmitChar(sql,' ');
 				item ++;
 				if		(  *item  !=  NULL  ) {
-                    LBS_EmitString(sql,"and\t");
+                    LBS_EmitString(sql,"AND\t");
 				}
 			}
             LBS_EmitEnd(sql);
@@ -1555,10 +1555,10 @@ ENTER_FUNC;
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
-            sql = NewLBS();
-			LBS_EmitString(sql,"delete\tfrom\t");
-            LBS_EmitString(sql,rec->name);
-            LBS_EmitString(sql," where\t");
+			sql = NewLBS();
+			LBS_EmitString(sql,"DELETE\tFROM\t");
+			LBS_EmitString(sql,rec->name);
+			LBS_EmitString(sql," WHERE\t");
 			item = db->pkey->item;
 			while	(  *item  !=  NULL  ) {
 				pk = *item;
@@ -1576,7 +1576,7 @@ ENTER_FUNC;
                 LBS_EmitChar(sql,' ');
 				item ++;
 				if		(  *item  !=  NULL  ) {
-                    LBS_EmitString(sql,"and\t");
+                    LBS_EmitString(sql,"AND\t");
 				}
 			}
             LBS_EmitEnd(sql);
@@ -1613,8 +1613,8 @@ ENTER_FUNC;
 			ctrl->rc = MCP_OK;
 			ExecPGSQL(dbg,ctrl,rec,src,args);
 		} else {
-            sql = NewLBS();
-			LBS_EmitString(sql,"insert\tinto\t");
+			sql = NewLBS();
+			LBS_EmitString(sql,"INSERT\tINTO\t");
 			LBS_EmitString(sql,rec->name);
 			LBS_EmitString(sql," (");
 

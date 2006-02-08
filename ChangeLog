@@ -1,3 +1,7 @@
+2006-02-08  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c: SQLキーワードを大文字に統一
+
 2006-01-27  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/panda.c: windowData のチェックを追加
