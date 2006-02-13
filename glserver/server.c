@@ -125,7 +125,8 @@ ENTER_FUNC;
 						  wname,
 						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
 		rc = FALSE;
-		GL_RecvString(fpComm, SIZE_NAME, wname,fFetureNetwork);	/*	dummy	*/
+		GL_RecvString(fpComm, SIZE_NAME, wname,fFetureNetwork);	/*	dummy	*/ 
+		ON_IO_ERROR(fpComm,badio);
 		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
 			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFetureNetwork);
 			ON_IO_ERROR(fpComm,badio);
@@ -490,7 +491,7 @@ ENTER_FUNC;
 				}
 			}
 		} else {
-			Error("invalid wind name [%s]\n",wname);
+			Error("invalid window name [%s]\n",wname);
 		}
 	}
 	rc = TRUE;
