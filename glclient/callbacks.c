@@ -134,6 +134,8 @@ ENTER_FUNC;
 	if		(  !fInRecv ) {
 		pane = ShowBusyCursor(widget);
 
+		StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
+
 		wname = GetWindowName(widget);
 		/* send event */
 		if		(  event  !=  NULL  ) {
@@ -183,7 +185,6 @@ ENTER_FUNC;
 		entry_changed (widget, timeout_event);
 		send_event (widget, timeout_event);
 	}
-	StopTimer(GTK_WINDOW(window));
 LEAVE_FUNC;
   return FALSE;
 }
