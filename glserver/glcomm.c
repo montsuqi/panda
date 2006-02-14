@@ -421,7 +421,7 @@ ExpandFile(
 
 ENTER_FUNC;
 	strcpy(fname,cname);
-#ifdef	HAVA_LIBMAGIC
+#ifdef	HAVE_LIBMAGIC
 	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  ) {
 		if		(  !strlcmp(type,"PostScript")  ) {
 			if	(  !fFeturePS  ) {
