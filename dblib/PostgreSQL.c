@@ -1270,7 +1270,7 @@ _DBOPEN(
 	PGconn	*conn;
 	
 ENTER_FUNC;
-	if ( dbg->fConnect == TRUE){
+	if ( dbg->fConnect == CONNECT){
 		Warning("database is already connected.");
 	}
 	conninfo = NewLBS();
@@ -1287,7 +1287,7 @@ ENTER_FUNC;
 	if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
 		OpenDB_RedirectPort(dbg);
 		dbg->conn = (void *)conn;
-		dbg->fConnect = TRUE;
+		dbg->fConnect = CONNECT;
 		rc = MCP_OK;
 	} else {
 		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
@@ -1306,10 +1306,10 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect  ) { 
+	if		(  dbg->fConnect == CONNECT ) { 
 		PQfinish(PGCONN(dbg));
 		CloseDB_RedirectPort(dbg);
-		dbg->fConnect = FALSE;
+		dbg->fConnect = DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}

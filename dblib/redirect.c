@@ -72,7 +72,7 @@ ENTER_FUNC;
 			dbg->redirectData = NewLBS();
 		}
 	}
-	dbg->fConnect = FALSE;
+	dbg->fConnect = DISCONNECT;
 LEAVE_FUNC;
 }
 

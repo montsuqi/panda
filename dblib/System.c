@@ -60,7 +60,7 @@ _DBOPEN(
 dbgmsg(">_DBOPEN");
 	dbg->conn = (void *)NULL;
 	OpenDB_RedirectPort(dbg);
-	dbg->fConnect = TRUE;
+	dbg->fConnect = CONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -73,9 +73,9 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 dbgmsg(">_DBDISCONNECT");
-	if		(  dbg->fConnect  ) { 
+	if		(  dbg->fConnect == CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
-		dbg->fConnect = FALSE;
+		dbg->fConnect = DISCONNECT;
 		ctrl->rc = MCP_OK;
 	}
 dbgmsg("<_DBDISCONNECT");

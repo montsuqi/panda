@@ -83,7 +83,7 @@ ENTER_FUNC;
 	OpenDB_RedirectPort(dbg);
 	dbg->conn = (void *)fpBlob;
 	if		(  fpBlob  !=  NULL  ) {
-		dbg->fConnect = TRUE;
+		dbg->fConnect = CONNECT;
 		rc = MCP_OK;
 	} else {
 		rc = MCP_BAD_OTHER;
@@ -100,11 +100,11 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect  ) { 
+	if		(  dbg->fConnect == CONNECT ) { 
 		SendPacketClass(fpBlob,APS_END);
 		CloseNet((NETFILE *)dbg->conn);
 		CloseDB_RedirectPort(dbg);
-		dbg->fConnect = FALSE;
+		dbg->fConnect = DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}
@@ -121,7 +121,7 @@ _DBSTART(
 
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
-	if		(  !dbg->fConnect  ) {
+	if		(  dbg->fConnect != CONNECT ) {
 		rc = MCP_OK;
 	} else
 	if		(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) {
@@ -146,7 +146,7 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	if		(  !dbg->fConnect  ) {
+	if		(  dbg->fConnect != CONNECT ) {
 		rc = MCP_OK;
 	} else
 	if		(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) {

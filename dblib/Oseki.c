@@ -440,7 +440,7 @@ ENTER_FUNC;
 	if		(  ses  !=  NULL  ) {
 		OpenDB_RedirectPort(dbg);
 		dbg->conn = (void *)ses;
-		dbg->fConnect = TRUE;
+		dbg->fConnect = CONNECT;
 		rc = MCP_OK;
 	} else {
 		Message("Connection to database failed.\n");
@@ -458,10 +458,10 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect  ) { 
+	if		(  dbg->fConnect == CONNECT ) { 
 		DisConnectOseki(OS_CONN(dbg));
 		CloseDB_RedirectPort(dbg);
-		dbg->fConnect = FALSE;
+		dbg->fConnect = DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}

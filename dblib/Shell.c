@@ -64,7 +64,7 @@ _DBOPEN(
 ENTER_FUNC;
 	dbg->conn = NewLBS();
 	OpenDB_RedirectPort(dbg);
-	dbg->fConnect = TRUE;
+	dbg->fConnect = CONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -77,10 +77,10 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect  ) { 
+	if		(  dbg->fConnect == CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
 		FreeLBS(dbg->conn);
-		dbg->fConnect = FALSE;
+		dbg->fConnect = DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}

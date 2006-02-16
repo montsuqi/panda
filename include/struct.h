@@ -86,6 +86,13 @@ typedef	struct {
 	int		pno;
 }	DBCOMM_CTRL;
 
+#define NOCONNECT   0x00
+#define CONNECT     0x01
+#define UNCONNECT   0x02
+#define FAILURE     0x03
+#define DISCONNECT  0x04
+#define REDFAILURE  0x05
+
 typedef	struct _DBG_Struct	{
 	int			id;
 	char		*name;					/*	group name				*/
@@ -100,8 +107,9 @@ typedef	struct _DBG_Struct	{
 	char		*user;
 	char		*pass;
 	/*	DB connection variable	*/
-	Bool		fConnect;
+	int			fConnect;
 	void		*conn;
+	int			dbstatus;
 	/*	DB redirect variable	*/
 	Port		*redirectPort;
 	struct	_DBG_Struct	*redirect;
