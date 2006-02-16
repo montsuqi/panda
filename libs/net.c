@@ -563,7 +563,7 @@ CheckNetFile(
 {
 	Bool	ret;
 
-	if		(  fp->fOK  ) {
+	if		(  fp && fp->fOK  ) {
 		ret = TRUE;
 	} else {
 		dbgmsg("bad net file");

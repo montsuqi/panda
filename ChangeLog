@@ -1,3 +1,7 @@
+2006-02-16  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/net.c (ChecknetFile): fpのチェック追加
+	
 2006-02-13  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/callbacks.c: send_event のときに常に Timer を止める
