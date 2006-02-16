@@ -1,5 +1,7 @@
 2006-02-16  Noboru Saitou  <noborus@netlab.jp>
 
+	* dblib/PostgreSQL.c : CreateConninfo を_DBOPENから分けた
+
 	* glclient/action.c (GrabFocus): 誤って消した _GrabFocus を戻した
 
 	* include/struct.h, dblib/NativeBLOB.c, dblib/Oseki.c, 

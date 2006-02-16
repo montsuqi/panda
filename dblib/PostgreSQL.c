@@ -366,6 +366,23 @@ AddConninfo(
 	}
 }
 
+LargeByteString *
+CreateConninfo(
+	DBG_Struct	*dbg)
+{
+	static LargeByteString *conninfo;
+
+	conninfo = NewLBS();
+	AddConninfo(conninfo, "host", GetDB_Host(dbg));
+	AddConninfo(conninfo, "port", GetDB_Port(dbg));
+	AddConninfo(conninfo, "dbname", GetDB_DBname(dbg));
+	AddConninfo(conninfo, "user", GetDB_User(dbg));
+	AddConninfo(conninfo, "password", GetDB_Pass(dbg));
+	LBS_EmitEnd(conninfo);
+
+	return conninfo;
+}
+
 static	void
 ValueToSQL(
 	DBG_Struct	*dbg,
@@ -1270,17 +1287,10 @@ _DBOPEN(
 	PGconn	*conn;
 	
 ENTER_FUNC;
-	if ( dbg->fConnect == CONNECT){
+	if ( dbg->fConnect == CONNECT ){
 		Warning("database is already connected.");
 	}
-	conninfo = NewLBS();
-	AddConninfo(conninfo, "host", GetDB_Host(dbg));
-	AddConninfo(conninfo, "port", GetDB_Port(dbg));
-	AddConninfo(conninfo, "dbname", GetDB_DBname(dbg));
-	AddConninfo(conninfo, "user", GetDB_User(dbg));
-	AddConninfo(conninfo, "password", GetDB_Pass(dbg));
-	LBS_EmitEnd(conninfo);
-
+	conninfo = CreateConninfo(dbg);
 	conn = PQconnectdb(LBS_Body(conninfo));
 	FreeLBS(conninfo);
 	
