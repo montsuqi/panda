@@ -156,12 +156,17 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	gint
+_GrabFocus(gpointer data)
+{
+	gtk_widget_grab_focus(data);
+	return FALSE;
+}
+/* Do not erase.  The interval is necessary in GtkCombo. */
 extern	void
 GrabFocus(GtkWidget *widget)
 {
-ENTER_FUNC;
-	gtk_widget_grab_focus(widget);
-LEAVE_FUNC;
+	gtk_idle_add(_GrabFocus, widget);
 }
 
 static	void
@@ -169,12 +174,10 @@ _ResetTimer(
 	    GtkWidget	*widget,
 	    gpointer	data)
 {
-ENTER_FUNC;
 	if (GTK_IS_CONTAINER (widget))
 		gtk_container_forall (GTK_CONTAINER (widget), _ResetTimer, NULL);
 	else if (GTK_IS_PANDA_TIMER (widget))
 		gtk_panda_timer_reset (GTK_PANDA_TIMER (widget));
-LEAVE_FUNC;
 }
 
 extern	void

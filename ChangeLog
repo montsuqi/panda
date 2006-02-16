@@ -1,5 +1,7 @@
 2006-02-16  Noboru Saitou  <noborus@netlab.jp>
 
+	* glclient/action.c (GrabFocus): 誤って消した _GrabFocus を戻した
+
 	* include/struct.h, dblib/NativeBLOB.c, dblib/Oseki.c, 
 	dblib/PostgreSQL.c, dblib/Shell.c, dblib/System.c,
 	dblib/redirect.c, tools/monitor.c:  dbg->fConnectが状態を表すようにした
