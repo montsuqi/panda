@@ -243,6 +243,7 @@ ENTER_FUNC;
 				RecvnString(fp, SIZE_NAME+1, hdr.window);	ON_IO_ERROR(fp,badio);
 				RecvnString(fp, SIZE_NAME+1, hdr.widget);	ON_IO_ERROR(fp,badio);
 				RecvnString(fp, SIZE_EVENT+1, hdr.event);	ON_IO_ERROR(fp,badio);
+				hdr.dbstatus = RecvChar(fp);				ON_IO_ERROR(fp,badio);
 #ifdef	DEBUG
 				dbgprintf("status = [%c]\n",hdr.status);
 				dbgprintf("term   = [%s]\n",hdr.term);
@@ -250,6 +251,7 @@ ENTER_FUNC;
 				dbgprintf("window = [%s]\n",hdr.window);
 				dbgprintf("widget = [%s]\n",hdr.widget);
 				dbgprintf("event  = [%s]\n",hdr.event);
+				dbgprintf("dbstatus=[%c]\n",hdr.dbstatus);
 #endif
 				fSuc = TRUE;
 				break;
@@ -265,8 +267,10 @@ ENTER_FUNC;
 				SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
 				SetValueString(GetItemLongName(e,"dc.widget"),hdr.widget,NULL);
 				SetValueString(GetItemLongName(e,"dc.event"),hdr.event,NULL);
+				SetValueChar(GetItemLongName(e,"dc.dbstatus"),hdr.dbstatus);
 
 				node->pstatus = hdr.status;
+				node->dbstatus = hdr.dbstatus;
 				strcpy(node->term,hdr.term);
 				strcpy(node->user,hdr.user);
 				strcpy(node->window,hdr.window);
@@ -351,6 +355,8 @@ ENTER_FUNC;
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.window")));
 	ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));
+	ON_IO_ERROR(fp,badio);
+	SendChar(fp,node->dbstatus);
 	ON_IO_ERROR(fp,badio);
 	SendChar(fp,*ValueStringPointer(GetItemLongName(e,"private.pputtype")));
 	ON_IO_ERROR(fp,badio);

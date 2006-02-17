@@ -30,6 +30,8 @@ extern	void	ExecDBOP(DBG_Struct *dbg, char *sql);
 extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec, ValueStruct *args);
 extern	void	TransactionStart(DBG_Struct *dbg);
 extern	void	TransactionEnd(DBG_Struct *dbg);
+extern	int		GetDBStatus(void);
+extern	void	RedirectError(void);
 extern	int		OpenDB(DBG_Struct *dbg);
 extern	int		CloseDB(DBG_Struct *dbg);
 

@@ -115,6 +115,7 @@ typedef	struct _DBG_Struct	{
 	struct	_DBG_Struct	*redirect;
 	NETFILE		*fpLog;
 	LargeByteString	*redirectData;
+	LargeByteString	*checkData;
 	char		*file;
 }	DBG_Struct;
 
@@ -151,7 +152,8 @@ typedef	struct _ProcessNode	{
 	char		window[SIZE_NAME+1]
 	,			widget[SIZE_NAME+1]
 	,			event[SIZE_EVENT]
-	,			pstatus;
+	,			pstatus
+	,			dbstatus;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
 	RecordStruct	*sparec;

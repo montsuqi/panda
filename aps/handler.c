@@ -59,6 +59,14 @@ static	char	*STATUS[4] = {
 	"RSND"
 };
 
+static	char	*DBSTATUS[6] = {
+	"NORE",
+	"CONN",
+	"WAIT",
+	"FAIL",
+	"DISC",
+	"RERR"
+};
 static	char	*APS_HandlerLoadPath;
 
 static	GHashTable	*HandlerClassTable;
@@ -254,6 +262,9 @@ ENTER_FUNC;
 		   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
 		   SIZE_STATUS);
 	ValueIsNonNil(GetItemLongName(mcp,"dc.status"));
+	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.dbstatus")),
+		   DBSTATUS[node->dbstatus], SIZE_STATUS);
+	ValueIsNonNil(GetItemLongName(mcp,"dc.dbstatus"));
 	node->w.n = 0;
 	CurrentProcess = node; 
 LEAVE_FUNC;

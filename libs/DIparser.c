@@ -633,6 +633,8 @@ ENTER_FUNC;
 	dbg->port = NULL;
 	dbg->pass = NULL;
 	dbg->file = NULL;
+	dbg->fConnect = UNCONNECT;
+	dbg->dbstatus = 0;
 	dbg->redirect = NULL;
 	dbg->redirectPort = NULL;
 	dbg->fpLog = NULL;
@@ -800,6 +802,7 @@ BuildMcpArea(
 	p += sprintf(p,			"module	 varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"fromwin varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"status	 varchar(%d);",SIZE_STATUS);
+	p += sprintf(p,			"dbstatus varchar(%d);",SIZE_STATUS);
 	p += sprintf(p,			"puttype varchar(%d);",SIZE_PUTTYPE);
 	p += sprintf(p,			"term	 varchar(%d);",SIZE_TERM);
 	p += sprintf(p,			"user	 varchar(%d);",SIZE_USER);

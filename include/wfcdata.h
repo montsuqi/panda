@@ -80,6 +80,7 @@ typedef	struct {
 	,		term[SIZE_TERM+1]
 	,		user[SIZE_USER+1]
 	,		status
+	,		dbstatus
 	,		puttype
 	,		rc;
 }	MessageHeader;

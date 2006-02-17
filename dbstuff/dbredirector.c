@@ -32,11 +32,11 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
-#include    <sys/types.h>
-#include    <sys/stat.h>
-#include    <sys/time.h>
-#include    <sys/socket.h>
-#include    <sys/select.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<sys/time.h>
+#include	<sys/socket.h>
+#include	<sys/select.h>
 #include	<time.h>
 #include	<unistd.h>
 #include	<pthread.h>
@@ -64,6 +64,7 @@ static	sigset_t	hupset;
 static	DBG_Struct	*ThisDBG;
 static	pthread_t	_FileThread;
 static	Queue		*FileQueue;
+static	Queue		*CheckQueue;
 static	Port		*RedirectPort;
 
 static	void
@@ -71,12 +72,13 @@ LogThread(
 	void	*para)
 {
 	int		fhLog = (int)para;
-	LargeByteString	*data;
+	LargeByteString	*data, *cdata;
 	NETFILE	*fpLog;
 	PacketClass	c;
-	Bool	fSuc;
+	Bool	fSuc = TRUE;
 
 ENTER_FUNC;
+	dbgmsg("log thread!\n");
 	fpLog = SocketToNet(fhLog);
 	do {
 		switch	( c = RecvPacketClass(fpLog) ) {
@@ -84,12 +86,26 @@ ENTER_FUNC;
 			data = NewLBS();
 			LBS_EmitStart(data);
 			RecvLBS(fpLog,data);
+			LBS_EmitEnd(data);
 			SendPacketClass(fpLog,RED_OK);
 			EnQueue(FileQueue,data);
 			fSuc = TRUE;
 			break;
+		  case	RED_CHECK:
+			cdata = NewLBS();
+			LBS_EmitStart(cdata);
+			RecvLBS(fpLog,cdata);
+			LBS_EmitEnd(cdata);
+			SendPacketClass(fpLog,RED_OK);
+			EnQueue(CheckQueue,cdata);
+			fSuc = TRUE;
+			break;
 		  case	RED_PING:
 			SendPacketClass(fpLog,RED_PONG);
+			fSuc = TRUE;
+			break;
+		  case	RED_STATUS:
+			SendChar(fpLog, ThisDBG->fConnect);
 			fSuc = TRUE;
 			break;
 		  case	RED_END:
@@ -102,6 +118,7 @@ ENTER_FUNC;
 		}
 	}	while	(  fSuc  );
 	CloseNet(fpLog);
+	dbgmsg("log thread close!\n");
 LEAVE_FUNC;
 }
 
@@ -123,65 +140,200 @@ LEAVE_FUNC;
 	return	(thr); 
 }
 
+static  FILE	*
+OpenLogFile(
+	char	*file)
+{
+	FILE	*fp = NULL;
+
+	if		(  ThisDBG->file  !=  NULL  ) {
+		umask((mode_t) 0077);
+		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
+			Error("can not open log file :%s", ThisDBG->file);
+		}
+	}
+	return fp;
+}
+
+static  void
+WriteLog(
+	FILE	*fp,
+	char	*state)
+{
+	time_t	nowtime;
+	struct	tm	*Now;
+ENTER_FUNC;
+	if		(  fp  !=  NULL  ) {
+		time(&nowtime);
+		Now = localtime(&nowtime);
+		fprintf(fp, "%s %04d/%02d/%02d/%02d:%02d:%02d/ ========== %s ========== %s\n"
+				,ThisDBG->func->commentStart
+				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
+				, Now->tm_hour,Now->tm_min,Now->tm_sec,state
+				,ThisDBG->func->commentEnd);
+		fflush(fp);
+	}
+LEAVE_FUNC;
+}
+
+static  void
+WriteLogQuery(
+	FILE	*fp,
+	char	*query)
+{
+	static  int count = 0;
+	time_t	nowtime;
+	struct	tm	*Now;
+
+ENTER_FUNC;
+	if		(  fp  !=  NULL  ) {
+		time(&nowtime);
+		Now = localtime(&nowtime);
+		fprintf(fp,"%s %04d/%02d/%02d/%02d:%02d:%02d/%08d %s"
+				,ThisDBG->func->commentStart
+				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
+				, Now->tm_hour,Now->tm_min,Now->tm_sec,count
+				,ThisDBG->func->commentEnd);
+		fprintf(fp,"%s\n", query);
+		fflush(fp);
+		count ++;
+	}
+LEAVE_FUNC;
+}
+
+static  Bool
+ConnectDB(void)
+{
+	Bool rc = TRUE;
+ENTER_FUNC;
+	if ( OpenRedirectDB(ThisDBG) == MCP_OK ) {
+		Message("connect to database successed");
+		ThisDBG->checkData = NewLBS();
+	} else {
+		Message("connect to database failed");
+		rc = FALSE;
+	}
+LEAVE_FUNC;
+	return rc;
+}
+
+void
+ReConnectDB(void)
+{
+	int	retry = 0;
+ENTER_FUNC;
+	while ( !ConnectDB() ){
+		retry ++;
+		if ( retry > MaxRetry ){
+			break;
+		}
+		sleep (60);
+	}
+	if ( ThisDBG->fConnect == UNCONNECT ){
+		ThisDBG->fConnect = FAILURE;
+	}
+LEAVE_FUNC;
+}
+
+static int
+CheckRedirectData(
+	LargeByteString	*src,
+	LargeByteString	*dsc)
+{
+	int rc = MCP_OK;
+ENTER_FUNC;
+	if ( strcmp(LBS_Body(src), LBS_Body(dsc)) == 0){
+		rc = MCP_OK;
+	} else {
+		Warning("DB synchronous failure");
+		rc = MCP_BAD_OTHER;
+	}
+LEAVE_FUNC;
+	return	rc;
+}
+
+static	void
+WriteDB(
+	char	*query,
+	LargeByteString	*orgcheck)
+{
+	int rc;
+	LargeByteString	*redcheck;
+	
+ENTER_FUNC;
+	rc = TransactionRedirectStart(ThisDBG);
+	if ( rc == MCP_OK ) {
+		rc = ExecRedirectDBOP(ThisDBG, query);
+		redcheck = ThisDBG->checkData;
+	}
+	if ( rc == MCP_OK ){
+		rc = CheckRedirectData(orgcheck, redcheck);
+	}
+	if ( rc == MCP_OK ) {
+		rc = TransactionRedirectEnd(ThisDBG);
+	}
+	if ( rc != MCP_OK ){
+		ThisDBG->fConnect = FAILURE;
+		CloseRedirectDB(ThisDBG);
+	}
+LEAVE_FUNC;
+}
+
+static  void
+ReRedirect(
+	char	*query)
+{
+ENTER_FUNC;
+	BeginDB_Redirect(ThisDBG);
+	PutDB_Redirect(ThisDBG, query);
+	CommitDB_Redirect(ThisDBG);
+LEAVE_FUNC;
+}
+
 static	void
 FileThread(
 	void	*dummy)
 {
-	LargeByteString	*data;
-	char	*p;
+	LargeByteString	*data, *orgcheck;
+	char	*query;
 	FILE	*fp;
-	time_t	nowtime;
-	struct	tm	*Now;
-	int		count;
 
 ENTER_FUNC;
+	fp = OpenLogFile(ThisDBG->file);
 	if		(  ThisDBG->dbname  !=  NULL  ) {
-		OpenRedirectDB(ThisDBG);
+		WriteLog(fp, "dbredirector start");
+		ConnectDB();
 	} else {
+		WriteLog(fp, "dbredirector start(No database)");
 		OpenDB_RedirectPort(ThisDBG);
+		ThisDBG->fConnect = NOCONNECT;
 	}
-	if		(  ThisDBG->file  !=  NULL  ) {
-		umask((mode_t) 0077);
-		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
-			Error("log file can not open :%s", ThisDBG->file);
-		}
-	} else {
-		fp = NULL;
-	}
-	count = 0;
-	while	(TRUE)	{
+	while	( TRUE )	{
+		orgcheck= (LargeByteString *)DeQueue(CheckQueue);
 		data = (LargeByteString *)DeQueue(FileQueue);
-		dbgmsg("de queue");
-		LBS_EmitEnd(data);
-		p = LBS_Body(data);
-		if		(  *p  !=  0  ) {
-			if		(  ThisDBG->fConnect  )	{
-				TransactionRedirectStart(ThisDBG);
-				ExecRedirectDBOP(ThisDBG,p);
-				TransactionRedirectEnd(ThisDBG);
+		query = LBS_Body(data);
+		if		(  *query  !=  0  ) {
+			if ( ThisDBG->fConnect == UNCONNECT ) {
+				ReConnectDB();
 			}
-			BeginDB_Redirect(ThisDBG);
-			PutDB_Redirect(ThisDBG,p);
-			CommitDB_Redirect(ThisDBG);
-			if		(  fp  !=  NULL  ) {
-				time(&nowtime);
-				Now = localtime(&nowtime);
-				fprintf(fp,"%s%04d/%02d/%02d/%02d:%02d:%02d/%08d%s"
-						,ThisDBG->func->commentStart
-						, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-						, Now->tm_hour,Now->tm_min,Now->tm_sec,count
-						,ThisDBG->func->commentEnd);
-				fprintf(fp,"%s\n",p);
-				fflush(fp);
+			if ( ThisDBG->fConnect == CONNECT ){
+				WriteDB(query, orgcheck);
 			}
-			count ++;
+			if ( ThisDBG->fConnect == FAILURE ){
+				WriteLog(fp, "DB synchronous failure");
+				ThisDBG->fConnect = DISCONNECT;
+			}
+			ReRedirect(query);
+			WriteLogQuery(fp, query);
 		}
 		FreeLBS(data);
+		FreeLBS(orgcheck);
 	}
 	if		(  ThisDBG->dbname  ==  NULL  ) {
 		CloseDB_RedirectPort(ThisDBG);
 	}
-	//	pthread_exit(NULL);
+	WriteLog(fp, "dbredirector stop");
+	exit(0);
 LEAVE_FUNC;
 }
 
@@ -231,6 +383,47 @@ DumpDBG(
 }
 #endif
 
+static	void
+_CheckDBG(
+	char		*name,
+	DBG_Struct	*dbg,
+	char		*red_name)
+{
+	DBG_Struct	*red_dbg;
+	char *src_port, *dsc_port;
+	char *dbg_dbname = "", *red_dbg_dbname = "";
+ENTER_FUNC;		
+	if		(  dbg->redirect  !=  NULL  ) {
+		red_dbg = dbg->redirect;
+		if ( strcmp(red_dbg->name, red_name ) == 0 ){
+			src_port = StrDup(StringPort(dbg->port));
+			dsc_port = StrDup(StringPort(red_dbg->port));
+			if ( dbg->dbname != NULL){
+				dbg_dbname = dbg->dbname;
+			}
+			if ( red_dbg->dbname != NULL){
+				red_dbg_dbname = red_dbg->dbname;
+			}
+			if ( strcmp(dbg->type, red_dbg->type ) == 0
+			  && strcmp(dbg_dbname, red_dbg_dbname ) == 0 
+			  && strcmp(src_port, dsc_port) == 0 ) {
+				Error("The connection destination is same DB");
+			}
+			xfree(src_port);
+			xfree(dsc_port);
+		}
+	}
+LEAVE_FUNC;
+}
+
+static	void
+CheckDBG(
+	char		*name)
+{
+	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)_CheckDBG,name);
+}
+
+
 extern	void
 InitSystem(
 	char	*name)
@@ -253,8 +446,12 @@ ENTER_FUNC;
 			   ==  NULL  ) {
 		Error("DB group not found");
 	}
+
+	CheckDBG(name);
+
 	if		(  PortNumber  ==  NULL  ) {
-		if		(  ThisDBG->redirectPort  !=  NULL  ) {
+		if		(  ( ThisDBG != NULL) 
+				   && (ThisDBG->redirectPort  !=  NULL )) {
 			RedirectPort = ThisDBG->redirectPort;
 		} else {
 			RedirectPort = ParPortName(PORT_REDIRECT);
@@ -263,6 +460,7 @@ ENTER_FUNC;
 		RedirectPort = ParPortName(PortNumber);
 	}
 	FileQueue = NewQueue();
+	CheckQueue = NewQueue();
 LEAVE_FUNC;
 }
 
@@ -338,8 +536,7 @@ main(
 	fl = GetOption(option,argc,argv);
 	InitMessage("dbredirector",NULL);
 
-	if		(	(  fl  !=  NULL  )
-			&&	(  fl->name  !=  NULL  ) ) {
+	if		(	fl	&&	fl->name  ) {
 		name = fl->name;
 	} else {
 		name = "";

@@ -964,6 +964,20 @@ _PQclear(
 	}
 }
 
+static Bool
+IsRedirectQuery(
+	PGresult	*res)
+{
+	Bool rc = FALSE;
+
+	if ( (strncmp(PQcmdStatus(res), "INSERT ", 7) == 0)
+		 ||(strncmp(PQcmdStatus(res), "UPDATE ", 7) == 0)
+		 ||(strncmp(PQcmdStatus(res), "DELETE ", 7) == 0) ){
+		rc = TRUE;
+	}
+	return rc;
+}
+
 static	PGresult	*
 _PQexec(
 	DBG_Struct	*dbg,
@@ -977,12 +991,32 @@ ENTER_FUNC;
 	printf("%s;\n",sql);fflush(stdout);
 #endif
 	res = PQexec(PGCONN(dbg),sql);
-	if		(  fRed  ) {
+	if		(  fRed  && IsRedirectQuery(res) ){
 		PutDB_Redirect(dbg,sql);
 		PutDB_Redirect(dbg,";");
+		PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
+		PutCheckDataDB_Redirect(dbg, ":");
 	}
 LEAVE_FUNC;
 	return	(res);
+}
+
+static int
+_PQsendQuery(
+	DBG_Struct	*dbg,
+	char	*sql)
+{
+#ifdef	TRACE
+	printf("%s;\n",sql);fflush(stdout);
+#endif
+	return PQsendQuery(PGCONN(dbg),sql);
+}
+
+static	PGresult	*
+_PQgetResult(
+	DBG_Struct	*dbg)
+{
+	return PQgetResult(PGCONN(dbg));
 }
 
 static int
@@ -1000,6 +1034,7 @@ CheckResult(
 		dbgmsg("NG");
 		Warning("%s",PQerrorMessage(PGCONN(dbg)));
 		rc = MCP_BAD_OTHER;
+		AbortDB_Redirect(dbg); 
 	}
 	return rc;
 }
@@ -1239,43 +1274,28 @@ _EXEC(
 	Bool		fRed)
 {
 	PGresult	*res;
-	ExecStatusType	status;
-	int			rc
-	,			n;
-	res = _PQexec(dbg,sql,fRed);
-	if		(	(  res ==  NULL  )
-			||	(  ( status = PQresultStatus(res) )
-				   ==  PGRES_BAD_RESPONSE    )
-			||	(  status  ==  PGRES_FATAL_ERROR     )
-			||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
-		Warning("%s",PQerrorMessage(PGCONN(dbg)));
-		dbgmsg("NG");
-		rc = MCP_BAD_OTHER;
-	} else {
-		switch	(status) {
-		  case	PGRES_TUPLES_OK:
-			if		(  ( n = PQntuples(res) )  >  0  ) {
-				rc = MCP_OK;
-			} else {
-				rc = MCP_EOF;
-			}
-			break;
-		  case	PGRES_COMMAND_OK:
-		  case	PGRES_COPY_OUT:
-		  case	PGRES_COPY_IN:
-			rc = MCP_OK;
-			break;
-		  case	PGRES_EMPTY_QUERY:
-		  case	PGRES_NONFATAL_ERROR:
-		  default:
-			rc = MCP_NONFATAL;
-			break;
-		}
-	}
-	_PQclear(res);
-	return	(rc);
-}
+	int			rc;
+	int			ret = MCP_OK;
 
+	LBS_EmitStart(dbg->checkData);
+	if	( _PQsendQuery(dbg,sql) == TRUE ) {
+		while ( (res = _PQgetResult(dbg)) != NULL ){
+			rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
+			if ( rc == MCP_OK ) {
+				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
+				PutCheckDataDB_Redirect(dbg, ":");
+			} else {
+				ret = rc;
+			}
+			_PQclear(res);
+		}
+	} else {
+		Warning("%s",PQerrorMessage(PGCONN(dbg)));
+		ret = MCP_BAD_OTHER;
+	}
+	LBS_EmitEnd(dbg->checkData);
+	return	ret;
+}
 
 static	void
 _DBOPEN(

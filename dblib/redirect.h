@@ -28,6 +28,8 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #define	RED_PING		(PacketClass)0x01
 #define	RED_DATA		(PacketClass)0x02
+#define	RED_CHECK		(PacketClass)0x03
+#define	RED_STATUS		(PacketClass)0x04
 #define	RED_NOT			(PacketClass)0xF0
 #define	RED_PONG		(PacketClass)0xF1
 #define	RED_OK			(PacketClass)0xFE
@@ -36,6 +38,8 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 extern	void	OpenDB_RedirectPort(DBG_Struct *dbg);
 extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
 extern	void	PutDB_Redirect(DBG_Struct *dbg, char *data);
+extern	void	PutCheckDataDB_Redirect(DBG_Struct	*dbg, char	*data);
+extern	void	AbortDB_Redirect(DBG_Struct *dbg);
 extern	void	BeginDB_Redirect(DBG_Struct *dbg);
 extern	void	CommitDB_Redirect(DBG_Struct *dbg);
 extern	Bool	CheckDB_Redirect(DBG_Struct *dbg);

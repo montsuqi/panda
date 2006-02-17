@@ -186,6 +186,11 @@ ENTER_FUNC;
 															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
 			if		(  bind->module  ==  NULL  )	break;
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
+			if ( node->dbstatus == REDFAILURE ) {
+				RedirectError();
+			} else {
+				node->dbstatus = GetDBStatus();
+			}
 			TransactionStart(NULL);
 			ExecuteProcess(node);
 			if		(  Sleep  >  0  ) {

@@ -1,11 +1,27 @@
 2006-02-17  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/action.c (GrabFocus): GtkComboのためにもう一度 GrabFocus が動作するようにした
+	* libs/DIparser.c, wfc/mqthread.c, aps/aps_main.c, apsio.c, handler.c:
+	dbstatus の追加
+
+	* dbstuff/dbredirector.c (CheckDBG, _CheckDBG): dbgroupのチェック追加
+	(LogThread, FileThread, CheckRedirectData, WriteDB): 不整合チェック
+	の追加
+	(WriteLog, WriteLogQuery): ログフォーマットの変更
+	(ReConnectDB, ConnectDB): DB再接続の仕様変更。DBに一定期間接続できな
+	くてもよいようにした
+	
+	* dblib/PostgreSQL.c (_PQexec, IsRedirectQuery): 更新系のみ redirect
+	するように変更
+	(_PQsendQuery, _Exec): redirector は PQsendQuery,PQgetResult で
+	処理するように変更
+
+	* glclient/action.c (GrabFocus): GtkComboのためにもう一度 GrabFocus 
+	が動作するようにした
 	* glclient/action.c (StopTimer): 処理が重いのでフラグ制御にした
 	
 2006-02-16  Noboru Saitou  <noborus@netlab.jp>
 
-	* dblib/PostgreSQL.c : CreateConninfo を_DBOPENから分けた
+	* dblib/PostgreSQL.c: CreateConninfo を_DBOPENから分けた
 
 	* glclient/action.c (GrabFocus): 誤って消した _GrabFocus を戻した
 

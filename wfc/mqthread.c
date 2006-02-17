@@ -156,6 +156,7 @@ ENTER_FUNC;
 		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->event);			ON_IO_ERROR(fp,badio);
+		SendChar(fp,hdr->dbstatus);			ON_IO_ERROR(fp,badio);
 	}
 	if		(  ( flag & APS_MCPDATA )  !=  0  ) {
 		dbgmsg("MCPDATA");
@@ -223,6 +224,7 @@ ENTER_FUNC;
 			RecvnString(fp,SIZE_NAME,hdr->user);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->window);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->widget);			ON_IO_ERROR(fp,badio);
+			hdr->dbstatus = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
 			hdr->puttype = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
 			done = TRUE;
 			break;

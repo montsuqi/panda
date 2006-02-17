@@ -56,23 +56,24 @@ ENTER_FUNC;
 			||	(  dbg->redirect  ==  NULL  ) ) {
 		dbg->fpLog = NULL;
 		dbg->redirectData = NULL;
+		dbg->checkData = NULL;
 	} else {
 		rdbg = dbg->redirect;
-		dbgprintf("redirect [%s] -> [%s]\n",dbg->name,rdbg->name);
-		if		(  ( fh = ConnectSocket(rdbg->redirectPort,SOCK_STREAM) )  <  0  ) {
+		if		( ( rdbg->redirectPort  ==  NULL ) 
+		 || (( fh = ConnectSocket(rdbg->redirectPort,SOCK_STREAM) )  <  0 ) ) {
 			Warning("loging server not ready");
-			if		(  !fNoCheck  ) {
-				exit(1);
-			} else {
-				dbg->fpLog = NULL;
-				dbg->redirectData = NULL;
-			}
+			dbg->fpLog = NULL;
+			dbg->redirectData = NULL;
+			dbg->checkData = NULL;
+			dbg->dbstatus = REDFAILURE;
 		} else {
 			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
+			dbg->checkData = NewLBS();
+			SendPacketClass(dbg->fpLog, RED_STATUS);
+			dbg->dbstatus = RecvChar(dbg->fpLog);
 		}
 	}
-	dbg->fConnect = DISCONNECT;
 LEAVE_FUNC;
 }
 
@@ -88,6 +89,8 @@ ENTER_FUNC;
 	if		(  dbg->redirectData  !=  NULL  ) {
 		FreeLBS(dbg->redirectData);
 		dbg->redirectData = NULL;
+		FreeLBS(dbg->checkData);
+		dbg->checkData = NULL;
 	}
 LEAVE_FUNC;
 }
@@ -97,75 +100,87 @@ PutDB_Redirect(
 	DBG_Struct	*dbg,
 	char		*data)
 {
-dbgmsg(">PutDB_Redirect");
+ENTER_FUNC;
 	if		(  dbg->redirectData  !=  NULL  ) {
 		LBS_EmitString(dbg->redirectData,data);
 	}
-dbgmsg("<PutDB_Redirect");
+LEAVE_FUNC;
+}
+
+extern	void
+PutCheckDataDB_Redirect(
+	DBG_Struct	*dbg,
+	char		*data)
+{
+ENTER_FUNC;
+	if		(  dbg->checkData  !=  NULL  ) {
+		LBS_EmitString(dbg->checkData,data);
+	}
+LEAVE_FUNC;
 }
 
 extern	void
 BeginDB_Redirect(
 	DBG_Struct	*dbg)
 {
-dbgmsg(">BeginDB_Redirect");
+ENTER_FUNC;
 	if		(  dbg->redirectData  !=  NULL  ) { 
 		LBS_EmitStart(dbg->redirectData);
+		LBS_EmitStart(dbg->checkData);
 	}
-dbgmsg("<BeginDB_Redirect");
+LEAVE_FUNC;
 }
 
 extern	Bool
 CheckDB_Redirect(
 	DBG_Struct	*dbg)
 {
-	Bool	rc;
-	int		i;
-
+	Bool	rc = TRUE;
+ENTER_FUNC;
 	if		(  dbg->redirectData  !=  NULL  ) {
-		i = 0;
-		do {
-			SendPacketClass(dbg->fpLog,RED_PING);
-			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
-				Warning("log server down?");
-				CloseDB_RedirectPort(dbg);
-				sleep(RetryInterval);
-				OpenDB_RedirectPort(dbg);
-				rc = FALSE;
-				i ++;
-			} else {
-				rc = TRUE;
-			}
-		}	while	(	(  rc  ==  FALSE  )
-					&&	(  i  <  MaxRetry  ) );
-		if		(	(  !rc  )
-				&&	(  !fNoCheck  ) ) {
-			exit(1);
+		SendPacketClass(dbg->fpLog,RED_PING);
+		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
+			Warning("log server down?");
+			dbg->dbstatus = REDFAILURE;
+			CloseDB_RedirectPort(dbg);
+			rc = FALSE;
 		}
-	} else {
-		rc = TRUE;
 	}
+LEAVE_FUNC;
 	return	(rc);
+}
+
+extern	void
+AbortDB_Redirect(
+	DBG_Struct	*dbg)
+{
+ENTER_FUNC;
+	if	(  dbg->redirectData  !=  NULL  ) {
+		LBS_EmitStart(dbg->redirectData);
+		LBS_EmitStart(dbg->checkData);
+	}
+LEAVE_FUNC;
 }
 
 extern	void
 CommitDB_Redirect(
 	DBG_Struct	*dbg)
 {
-dbgmsg(">CommitDB_Redirect");
+ENTER_FUNC;
 	if		(  dbg->redirectData  !=  NULL  ) {
+		SendPacketClass(dbg->fpLog,RED_CHECK);
+		SendLBS(dbg->fpLog,dbg->checkData);
+		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
+			CloseDB_RedirectPort(dbg);
+		} 
 		SendPacketClass(dbg->fpLog,RED_DATA);
 		SendLBS(dbg->fpLog,dbg->redirectData);
 		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
-			Warning("log server down?");
-			if		(  !fNoCheck  ) {
-				exit(1);
-			}
-			CloseNet(dbg->fpLog);
-			dbg->fpLog = NULL;
-			FreeLBS(dbg->redirectData);
-			dbg->redirectData = NULL;
+			CloseDB_RedirectPort(dbg);
 		}
+		SendPacketClass(dbg->fpLog, RED_STATUS);
+		dbg->dbstatus = RecvChar(dbg->fpLog);
 	}
-dbgmsg("<CommitDB_Redirect");
+LEAVE_FUNC;
 }
+

@@ -270,7 +270,6 @@ TransactionEnd(
 	DBG_Struct *dbg)
 {
 	int		i;
-
 ENTER_FUNC;
 	ExecDBG_Operation(dbg,"DBCOMMIT");
 	if		(  dbg  ==  NULL  ) {
@@ -279,6 +278,36 @@ ENTER_FUNC;
 		}
 	}
 	ReleasePoolByName("Transaction");
+LEAVE_FUNC;
+}
+
+extern	int
+GetDBStatus(void)
+{
+	DBG_Struct	*dbg;
+	int		i;
+	int     rc = 0;
+ENTER_FUNC;
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		dbg = ThisEnv->DBG[i];
+		if ( rc < dbg->dbstatus ){
+			rc = dbg->dbstatus;
+		}
+	}
+LEAVE_FUNC;
+	return rc;
+}
+
+extern	void
+RedirectError(void)
+{
+	DBG_Struct	*dbg;
+	int		i;
+ENTER_FUNC;
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		dbg = ThisEnv->DBG[i];
+		CloseDB_RedirectPort(dbg);
+	}
 LEAVE_FUNC;
 }
 
