@@ -65,7 +65,9 @@ ENTER_FUNC;
 			dbg->fpLog = NULL;
 			dbg->redirectData = NULL;
 			dbg->checkData = NULL;
-			dbg->dbstatus = REDFAILURE;
+			if ( !fNoCheck ){
+				dbg->dbstatus = REDFAILURE;	
+			}
 		} else {
 			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
@@ -89,6 +91,8 @@ ENTER_FUNC;
 	if		(  dbg->redirectData  !=  NULL  ) {
 		FreeLBS(dbg->redirectData);
 		dbg->redirectData = NULL;
+	}
+	if		(  dbg->checkData  !=  NULL  ) {
 		FreeLBS(dbg->checkData);
 		dbg->checkData = NULL;
 	}
