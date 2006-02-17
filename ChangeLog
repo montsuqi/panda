@@ -1,3 +1,8 @@
+2006-02-17  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c (GrabFocus): GtkComboのためにもう一度 GrabFocus が動作するようにした
+	* glclient/action.c (StopTimer): 処理が重いのでフラグ制御にした
+	
 2006-02-16  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/PostgreSQL.c : CreateConninfo を_DBOPENから分けた

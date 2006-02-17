@@ -59,6 +59,8 @@ static struct changed_hander {
 	struct changed_hander *next;
 } *changed_hander_list = NULL;
 
+static Bool TimerFlag = FALSE;
+
 extern	void
 RegisterChangedHandler(
 	GtkObject *object,
@@ -162,10 +164,12 @@ _GrabFocus(gpointer data)
 	gtk_widget_grab_focus(data);
 	return FALSE;
 }
-/* Do not erase.  The interval is necessary in GtkCombo. */
+
 extern	void
 GrabFocus(GtkWidget *widget)
 {
+	gtk_widget_grab_focus(widget);
+	/* Do not erase.  The interval is necessary in GtkCombo. */
 	gtk_idle_add(_GrabFocus, widget);
 }
 
@@ -243,6 +247,7 @@ ENTER_FUNC;
 	gtk_object_set_data(GTK_OBJECT(window), "timeout_event", event);
 	timeout_handler_id = gtk_timeout_add (timeout, function, widget);
 	gtk_object_set_data(GTK_OBJECT(window), "timeout_handler_id", &timeout_handler_id);
+	TimerFlag = TRUE;
 LEAVE_FUNC;
 }
 
@@ -270,12 +275,17 @@ StopTimer(
 {
 	gint *timeout_handler_id;
 ENTER_FUNC;	
-	timeout_handler_id = gtk_object_get_data(GTK_OBJECT(window), "timeout_handler_id");
-	if ((timeout_handler_id) && (*timeout_handler_id != 0)) {
-		gtk_timeout_remove(*timeout_handler_id);
-		*timeout_handler_id = 0;
+	if (TimerFlag) {
+		timeout_handler_id = gtk_object_get_data(GTK_OBJECT(window), 
+												 "timeout_handler_id");
+		if ((timeout_handler_id) && (*timeout_handler_id != 0)) {
+			gtk_timeout_remove(*timeout_handler_id);
+			*timeout_handler_id = 0;
+		}
+		gtk_object_set_data(GTK_OBJECT(window), "timeout_handler_id", 
+							timeout_handler_id);
+		TimerFlag = FALSE;
 	}
-	gtk_object_set_data(GTK_OBJECT(window), "timeout_handler_id", timeout_handler_id);
 LEAVE_FUNC;
 }
 
