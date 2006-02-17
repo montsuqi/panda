@@ -1,5 +1,12 @@
 2006-02-17  Noboru Saitou  <noborus@netlab.jp>
 
+	* tools/monitor.c (ProcessMonitor): dbredirector は再起動しないように
+	変更
+
+	* dblib/redirect.c (CommitDB_Redirect, SendCheckData_Redirect,
+	SendQueryData_Redirect, RecvSTATUS_Redirect): dbredirector との
+	接続チェックを追加
+
 	* libs/DIparser.c, wfc/mqthread.c, aps/aps_main.c, apsio.c, handler.c:
 	dbstatus の追加
 

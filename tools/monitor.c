@@ -449,7 +449,7 @@ ProcessMonitor(void)
 				StopSystem();
 			}
 			if		(  fRestart  ) {
-				if		(  proc->type  !=  PTYPE_WFC  ) {
+				if		(  proc->type  ==  PTYPE_APS  ) {
 					if		(	(  WIFEXITED(status)  )
 							&&	(  WEXITSTATUS(status)  <  2  )	) {
 						StopSystem();

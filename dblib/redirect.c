@@ -72,8 +72,9 @@ ENTER_FUNC;
 			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
 			dbg->checkData = NewLBS();
-			SendPacketClass(dbg->fpLog, RED_STATUS);
-			dbg->dbstatus = RecvChar(dbg->fpLog);
+			if ( !RecvSTATUS_Redirect(dbg) ){
+				CloseDB_RedirectPort(dbg);
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -166,24 +167,66 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static Bool
+SendCheckData_Redirect(
+	DBG_Struct	*dbg)
+{
+	int rc = FALSE;
+		
+	SendPacketClass(dbg->fpLog,RED_CHECK);	ON_IO_ERROR(dbg->fpLog,badio);
+	SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
+	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
+		rc = TRUE;
+	}
+badio:
+	return rc;
+}
+
+static Bool
+SendQueryData_Redirect(
+	DBG_Struct	*dbg)
+{
+	int rc = FALSE;
+		
+	SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
+	SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
+	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
+		rc = TRUE;
+	}
+badio:
+	return rc;
+}
+
+static Bool
+RecvSTATUS_Redirect(
+	DBG_Struct	*dbg)
+{
+	int rc = FALSE;
+
+	SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
+	dbg->dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
+	rc = TRUE;
+badio:
+	return rc;
+}
+
 extern	void
 CommitDB_Redirect(
 	DBG_Struct	*dbg)
 {
+	Bool rc = TRUE;
 ENTER_FUNC;
 	if		(  dbg->redirectData  !=  NULL  ) {
-		SendPacketClass(dbg->fpLog,RED_CHECK);
-		SendLBS(dbg->fpLog,dbg->checkData);
-		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
-			CloseDB_RedirectPort(dbg);
-		} 
-		SendPacketClass(dbg->fpLog,RED_DATA);
-		SendLBS(dbg->fpLog,dbg->redirectData);
-		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
+		rc = SendCheckData_Redirect(dbg);
+		if ( rc ){
+			rc = SendQueryData_Redirect(dbg);
+		}
+		if ( rc ){
+			rc = RecvSTATUS_Redirect(dbg);
+		}
+		if ( !rc ){
 			CloseDB_RedirectPort(dbg);
 		}
-		SendPacketClass(dbg->fpLog, RED_STATUS);
-		dbg->dbstatus = RecvChar(dbg->fpLog);
 	}
 LEAVE_FUNC;
 }
