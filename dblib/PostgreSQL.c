@@ -1322,6 +1322,7 @@ ENTER_FUNC;
 	} else {
 		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
 		Message("%s", PQerrorMessage(conn));
+		PQfinish(conn);
 		rc = MCP_BAD_OTHER;
 	}
 	if		(  ctrl  !=  NULL  ) {
