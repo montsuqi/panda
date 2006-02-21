@@ -1,5 +1,7 @@
 2006-02-21  Noboru Saitou  <noborus@netlab.jp>
 
+	* Ver 1.2.6 release
+
 	* libs/enum.c, libs/enum.h, dblib/PostgreSQL.c : 接続エラー
 	(MCP_BAD_CONN)の追加
 
