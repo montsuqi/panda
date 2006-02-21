@@ -56,6 +56,8 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"message.h"
 #include	"debug.h"
 
+#define		CONNECT_INTERVAL		60
+
 static	char	*PortNumber;
 static	int		Back;
 static	char	*Directory;
@@ -227,7 +229,7 @@ ENTER_FUNC;
 		if ( retry > MaxRetry ){
 			break;
 		}
-		sleep (60);
+		sleep (CONNECT_INTERVAL);
 	}
 	if ( ThisDBG->fConnect == UNCONNECT ){
 		ThisDBG->fConnect = FAILURE;
@@ -252,7 +254,7 @@ LEAVE_FUNC;
 	return	rc;
 }
 
-static	void
+static	int
 WriteDB(
 	char	*query,
 	LargeByteString	*orgcheck)
@@ -272,7 +274,29 @@ ENTER_FUNC;
 	if ( rc == MCP_OK ) {
 		rc = TransactionRedirectEnd(ThisDBG);
 	}
-	if ( rc != MCP_OK ){
+LEAVE_FUNC;
+	return rc;
+}
+
+
+static	void
+ExecDB(
+	char	*query,
+	LargeByteString	*orgcheck)
+{
+	int rc;
+	
+ENTER_FUNC;
+	rc = WriteDB(query, orgcheck);
+	if ( rc == MCP_BAD_CONN ) {
+		CloseRedirectDB(ThisDBG);
+		ThisDBG->fConnect = UNCONNECT;
+		ReConnectDB();
+		if ( ThisDBG->fConnect == CONNECT ){
+			rc = WriteDB(query, orgcheck);
+		}
+	} else
+	if ( rc != MCP_OK ) {
 		ThisDBG->fConnect = FAILURE;
 		CloseRedirectDB(ThisDBG);
 	}
@@ -317,7 +341,7 @@ ENTER_FUNC;
 				ReConnectDB();
 			}
 			if ( ThisDBG->fConnect == CONNECT ){
-				WriteDB(query, orgcheck);
+				ExecDB(query, orgcheck);
 			}
 			if ( ThisDBG->fConnect == FAILURE ){
 				WriteLog(fp, "DB synchronous failure");

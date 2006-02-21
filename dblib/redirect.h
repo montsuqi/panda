@@ -36,7 +36,6 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #define	RED_END			(PacketClass)0xFF
 
 extern	void	OpenDB_RedirectPort(DBG_Struct *dbg);
-extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
 extern	void	PutDB_Redirect(DBG_Struct *dbg, char *data);
 extern	void	PutCheckDataDB_Redirect(DBG_Struct	*dbg, char	*data);
 extern	void	AbortDB_Redirect(DBG_Struct *dbg);

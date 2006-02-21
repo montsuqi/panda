@@ -1,3 +1,12 @@
+2006-02-21  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/enum.c, libs/enum.h, dblib/PostgreSQL.c : 接続エラー
+	(MCP_BAD_CONN)の追加
+
+	* dblib/dbroup.h: redirect.h からCloseDB_RedirectPort を移動
+
+	* dbstuff/dbredirecor.c (ExecDB): 接続エラーの場合に再接続機能の追加
+
 2006-02-17  Noboru Saitou  <noborus@netlab.jp>
 
 	* tools/monitor.c (ProcessMonitor): dbredirector は再起動しないように

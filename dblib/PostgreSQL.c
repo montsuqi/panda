@@ -1026,7 +1026,11 @@ CheckResult(
 	int status)
 {
 	int rc;
-		
+
+	if ( PQstatus(PGCONN(dbg)) != CONNECTION_OK ){
+		dbgmsg("NG");
+		rc = MCP_BAD_CONN;
+	} else 
 	if ( res && (PQresultStatus(res) == status)) {
 		dbgmsg("OK");
 		rc = MCP_OK;
@@ -1274,8 +1278,7 @@ _EXEC(
 	Bool		fRed)
 {
 	PGresult	*res;
-	int			rc;
-	int			ret = MCP_OK;
+	int			rc = MCP_OK;
 
 	LBS_EmitStart(dbg->checkData);
 	if	( _PQsendQuery(dbg,sql) == TRUE ) {
@@ -1285,16 +1288,17 @@ _EXEC(
 				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 				PutCheckDataDB_Redirect(dbg, ":");
 			} else {
-				ret = rc;
+				_PQclear(res);
+				break;
 			}
 			_PQclear(res);
 		}
 	} else {
 		Warning("%s",PQerrorMessage(PGCONN(dbg)));
-		ret = MCP_BAD_OTHER;
+		rc = MCP_BAD_OTHER;
 	}
 	LBS_EmitEnd(dbg->checkData);
-	return	ret;
+	return	rc;
 }
 
 static	void
@@ -1323,7 +1327,7 @@ ENTER_FUNC;
 		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
 		Message("%s", PQerrorMessage(conn));
 		PQfinish(conn);
-		rc = MCP_BAD_OTHER;
+		rc = MCP_BAD_CONN;
 	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;

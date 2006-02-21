@@ -43,6 +43,49 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"comm.h"
 #include	"debug.h"
 
+static Bool
+SendCheckData_Redirect(
+	DBG_Struct	*dbg)
+{
+	int rc = FALSE;
+		
+	SendPacketClass(dbg->fpLog,RED_CHECK);	ON_IO_ERROR(dbg->fpLog,badio);
+	SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
+	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
+		rc = TRUE;
+	}
+badio:
+	return rc;
+}
+
+static Bool
+SendQueryData_Redirect(
+	DBG_Struct	*dbg)
+{
+	int rc = FALSE;
+		
+	SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
+	SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
+	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
+		rc = TRUE;
+	}
+badio:
+	return rc;
+}
+
+static Bool
+RecvSTATUS_Redirect(
+	DBG_Struct	*dbg)
+{
+	int rc = FALSE;
+
+	SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
+	dbg->dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
+	rc = TRUE;
+badio:
+	return rc;
+}
+
 extern	void
 OpenDB_RedirectPort(
 	DBG_Struct	*dbg)
@@ -165,49 +208,6 @@ ENTER_FUNC;
 		LBS_EmitStart(dbg->checkData);
 	}
 LEAVE_FUNC;
-}
-
-static Bool
-SendCheckData_Redirect(
-	DBG_Struct	*dbg)
-{
-	int rc = FALSE;
-		
-	SendPacketClass(dbg->fpLog,RED_CHECK);	ON_IO_ERROR(dbg->fpLog,badio);
-	SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
-	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
-		rc = TRUE;
-	}
-badio:
-	return rc;
-}
-
-static Bool
-SendQueryData_Redirect(
-	DBG_Struct	*dbg)
-{
-	int rc = FALSE;
-		
-	SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
-	SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
-	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
-		rc = TRUE;
-	}
-badio:
-	return rc;
-}
-
-static Bool
-RecvSTATUS_Redirect(
-	DBG_Struct	*dbg)
-{
-	int rc = FALSE;
-
-	SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
-	dbg->dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
-	rc = TRUE;
-badio:
-	return rc;
 }
 
 extern	void

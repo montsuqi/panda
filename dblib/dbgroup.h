@@ -35,6 +35,8 @@ extern	int		ExecRedirectDBOP(DBG_Struct *dbg, char *sql);
 extern	int		TransactionRedirectStart(DBG_Struct *dbg);
 extern	int		TransactionRedirectEnd(DBG_Struct *dbg);
 
+extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
+
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/

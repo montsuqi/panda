@@ -73,6 +73,7 @@ mcpenums_h(void)
 	printf("#define\tMCP_BAD_FUNC\t\t\t\t%d\n",-2);
 	printf("#define\tMCP_BAD_SQL\t\t\t\t\t%d\n",-3);
 	printf("#define\tMCP_BAD_OTHER\t\t\t\t%d\n",-4);
+	printf("#define\tMCP_BAD_CONN\t\t\t\t%d\n",-5);
 	printf("\n");
 }
 

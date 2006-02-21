@@ -24,5 +24,6 @@
 #define	MCP_BAD_FUNC				-2
 #define	MCP_BAD_SQL					-3
 #define	MCP_BAD_OTHER				-4
+#define	MCP_BAD_CONN				-5
 
 #endif
