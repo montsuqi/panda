@@ -593,8 +593,7 @@ StartBatch(
 
 ENTER_FUNC;
 	if		(  ( bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
-		fprintf(stderr,"%s application is not in BD.\n",name);
-		exit(1);
+		Error("%s application is not in BD.\n",name);
 	}
 	CurrentProcess = NULL;
 	handler = bind->handler;
@@ -605,7 +604,7 @@ ENTER_FUNC;
 		rc = handler->klass->ExecuteBatch(handler,name,para);
 	} else {
 		rc = -1;
-		fprintf(stderr,"%s is handler not support batch.\n",name);
+		Warning("%s is handler not support batch.\n",name);
 	}
 LEAVE_FUNC;
 	return	(rc);

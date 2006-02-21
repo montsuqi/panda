@@ -51,7 +51,7 @@ CheckArg(
 {
 	if		(	(  ctrl->rno  !=  0  )
 			||	(  ctrl->pno  !=  0  ) ) {
-		fprintf(stderr,"argument invalid on %s\n",func);
+		Warning("argument invalid on %s\n",func);
 	}
 }
 
