@@ -263,7 +263,7 @@ ENTER_FUNC;
 		   SIZE_STATUS);
 	ValueIsNonNil(GetItemLongName(mcp,"dc.status"));
 	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.dbstatus")),
-		   DBSTATUS[node->dbstatus], SIZE_STATUS);
+		   DBSTATUS[(unsigned char)node->dbstatus], SIZE_STATUS);
 	ValueIsNonNil(GetItemLongName(mcp,"dc.dbstatus"));
 	node->w.n = 0;
 	CurrentProcess = node; 
