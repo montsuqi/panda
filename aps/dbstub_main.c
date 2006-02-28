@@ -1,24 +1,24 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
-
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 #define	MAIN
+
 /*
 #define	DEBUG
 #define	TRACE
@@ -60,17 +60,17 @@ static	void
 InitData(
 	char	*name)
 {
-dbgmsg(">InitData");
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,"",name,"",TRUE);
-dbgmsg("<InitData");
+LEAVE_FUNC;
 }
 
 extern	void
 InitSystem(
 	char	*name)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	InitData(BD_Name);
 	if		(  ( ThisBD = GetBD(BD_Name) )  ==  NULL  ) {
 		Error("BD file not found.");
@@ -91,7 +91,7 @@ dbgmsg(">InitSystem");
 		InitDB_Process(NULL);
 		ReadyHandlerDB(Bind->handler);
 	}
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }
 
 static	int
@@ -99,10 +99,10 @@ ExecuteSubProcess(
 	char	*name)
 {
 	int		rc;
-dbgmsg(">ExecuteSubProcess");
+ENTER_FUNC;
 	printf("[%s][%s]\n",name,CommandParameter);
 	rc = StartBatch(name,CommandParameter);
-dbgmsg("<ExecuteSubProcess");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -110,12 +110,12 @@ static	void
 StopProcess(
 	int		ec)
 {
-dbgmsg(">StopProcess");
+ENTER_FUNC;
 	if		(  ThisBD->cDB  >  0  ) {
 		StopHandlerDB(Bind->handler);
 		CleanUpHandlerDB(Bind->handler);
 	}
-dbgmsg("<StopProcess");
+LEAVE_FUNC;
 	exit(ec);
 }
 static	ARG_TABLE	option[] = {

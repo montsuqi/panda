@@ -42,8 +42,8 @@
 #include	"debug.h"
 
 #if	1
-#define	LockNet(fp)		pthread_mutex_lock(&(fp)->lock)
-#define	UnLockNet(fp)	pthread_mutex_unlock(&(fp)->lock)
+#define	LockNet(fp)		{ dbgmsg("lock"); pthread_mutex_lock(&(fp)->lock); }
+#define	UnLockNet(fp)	{ dbgmsg("unlock"); pthread_mutex_unlock(&(fp)->lock); }
 #define	ReleaseNet(fp)	pthread_cond_signal(&(fp)->isdata)
 #else
 #define	LockNet(fp)
@@ -58,6 +58,7 @@ _Flush(
 	byte	*p = fp->buff;
 	ssize_t	count;
 
+ENTER_FUNC;
 	while	(	(  fp->fOK  )
 			&&	(  fp->ptr  >  0  ) ) {
 		if		(  ( count = fp->write(fp,p,fp->ptr) )  >  0  ) {
@@ -68,6 +69,7 @@ _Flush(
 			break;
 		}
 	}
+LEAVE_FUNC;
 	return	(fp->fOK);
 }
 
@@ -214,9 +216,16 @@ extern	void
 CloseNet(
 	NETFILE	*fp)
 {
-	_Flush(fp);
-	fp->close(fp);
-	FreeNet(fp);
+ENTER_FUNC;
+	if		(  fp  !=  NULL  ) {
+		LockNet(fp);
+		if		(  fp->fOK  ) {
+			_Flush(fp);
+		}
+		fp->close(fp);
+		FreeNet(fp);
+	}
+LEAVE_FUNC;
 }
 
 extern	void

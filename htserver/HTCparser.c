@@ -412,7 +412,9 @@ DestroyHTC(
 		char	*event)
 		{
 			xfree(face);
-			xfree(event);
+			if		(  event  !=  NULL  ) {
+				xfree(event);
+			}
 		}
 
 ENTER_FUNC;
