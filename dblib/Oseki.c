@@ -441,10 +441,10 @@ ENTER_FUNC;
 		OpenDB_RedirectPort(dbg);
 		dbg->conn = (void *)ses;
 		dbg->fConnect = CONNECT;
-		rc = MCP_OK;
+		ctrl->rc = MCP_OK;
 	} else {
 		Message("Connection to database failed.\n");
-		rc = MCP_BAD_OTHER;
+		ctrl->rc = MCP_BAD_OTHER;
 	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;

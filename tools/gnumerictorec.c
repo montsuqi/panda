@@ -18,9 +18,9 @@
  */
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 
 #ifdef HAVE_CONFIG_H
@@ -466,7 +466,7 @@ WriteDefines(
 	char	*p;
 	
 	last = 0;
-	for	( i = 2 ; i < table->maxrow ; i ++ ) {
+	for	( i = 2 ; i <= table->maxrow ; i ++ ) {
 		if		(  GetCell(table,i,0)->id  >=  0  ) {
 			for	( j = 0 ; j < Level ; j ++ ) {
 				cell = GetCell(table,i,j);

@@ -42,13 +42,18 @@
 #include	"debug.h"
 
 #if	1
-#define	LockNet(fp)		{ dbgmsg("lock"); pthread_mutex_lock(&(fp)->lock); }
-#define	UnLockNet(fp)	{ dbgmsg("unlock"); pthread_mutex_unlock(&(fp)->lock); }
-#define	ReleaseNet(fp)	pthread_cond_signal(&(fp)->isdata)
+#define	LockNet(fp)		{				\
+	dbgmsg("lock");						\
+	pthread_mutex_lock(&(fp)->lock);	\
+}
+#define	UnLockNet(fp)	{				\
+	dbgmsg("unlock");					\
+	pthread_mutex_unlock(&(fp)->lock);	\
+	pthread_cond_signal(&(fp)->isdata);	\
+}
 #else
 #define	LockNet(fp)
 #define	UnLockNet(fp)
-#define	ReleaseNet(fp)
 #endif
 
 static	Bool
@@ -80,7 +85,6 @@ Flush(
 	LockNet(fp);
 	_Flush(fp);
 	UnLockNet(fp);
-	ReleaseNet(fp);
 	return	(fp->fOK);
 }
 
@@ -130,7 +134,6 @@ Send(
 			fp->fSent = FALSE;
 		}
 		UnLockNet(fp);
-		ReleaseNet(fp);
 	} else {
 		ret = -1;
 	}
@@ -165,7 +168,6 @@ Recv(
 			}
 		}
 		UnLockNet(fp);
-		ReleaseNet(fp);
 	} else {
 		ret = -1;
 	}
