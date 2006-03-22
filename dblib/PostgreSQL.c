@@ -294,6 +294,14 @@ EscapeByteaInArray(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
     LBS_SetPos(lbs, old_size + len);
 }
 
+static void
+NoticeMessage(
+	void * arg,
+	const char * message)
+{
+	Warning("%s", message);
+}
+
 char *
 GetDB_Host(
 	DBG_Struct	*dbg)
@@ -1319,6 +1327,7 @@ ENTER_FUNC;
 	FreeLBS(conninfo);
 	
 	if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
+		PQsetNoticeProcessor((conn), NoticeMessage, NULL);
 		OpenDB_RedirectPort(dbg);
 		dbg->conn = (void *)conn;
 		dbg->fConnect = CONNECT;

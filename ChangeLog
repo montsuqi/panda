@@ -1,3 +1,11 @@
+2006-03-22  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c (NoticeMessage): Notice メッセージをログに出す
+	ようにした
+
+	* dblib/dbgroup.h, dbstuff/dbredirector.c, tools/monitor.c: fNoSumCheck
+	オプションの追加
+
 2006-02-21  Noboru Saitou  <noborus@netlab.jp>
 
 	* Ver 1.2.6 release

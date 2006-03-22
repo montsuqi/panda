@@ -247,7 +247,6 @@ ENTER_FUNC;
 	if ( strcmp(LBS_Body(src), LBS_Body(dsc)) == 0){
 		rc = MCP_OK;
 	} else {
-		Warning("DB synchronous failure");
 		rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
@@ -269,10 +268,14 @@ ENTER_FUNC;
 		redcheck = ThisDBG->checkData;
 	}
 	if ( rc == MCP_OK ){
-		rc = CheckRedirectData(orgcheck, redcheck);
+		if (!fNoSumCheck) {
+			rc = CheckRedirectData(orgcheck, redcheck);
+		}
 	}
 	if ( rc == MCP_OK ) {
 		rc = TransactionRedirectEnd(ThisDBG);
+	} else {
+		Warning("DB synchronous failure")
 	}
 LEAVE_FUNC;
 	return rc;
@@ -325,7 +328,11 @@ FileThread(
 ENTER_FUNC;
 	fp = OpenLogFile(ThisDBG->file);
 	if		(  ThisDBG->dbname  !=  NULL  ) {
-		WriteLog(fp, "dbredirector start");
+		if (!fNoSumCheck) {
+			WriteLog(fp, "dbredirector start");
+		} else {
+			WriteLog(fp, "dbredirector start(No sum check)");
+		}
 		ConnectDB();
 	} else {
 		WriteLog(fp, "dbredirector start(No database)");
@@ -428,9 +435,9 @@ ENTER_FUNC;
 			if ( red_dbg->dbname != NULL){
 				red_dbg_dbname = red_dbg->dbname;
 			}
-			if ( strcmp(dbg->type, red_dbg->type ) == 0
-			  && strcmp(dbg_dbname, red_dbg_dbname ) == 0 
-			  && strcmp(src_port, dsc_port) == 0 ) {
+			if ( ( strcmp(dbg->type, red_dbg->type ) == 0 )
+				 && ( strcmp(dbg_dbname, red_dbg_dbname ) == 0 )
+				 && ( strcmp(src_port, dsc_port) == 0 ) ) {
 				Error("The connection destination is same DB");
 			}
 			xfree(src_port);
@@ -444,6 +451,13 @@ static	void
 CheckDBG(
 	char		*name)
 {
+#ifdef	DEBUG
+	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)DumpDBG,NULL);
+#endif
+	if		(  ( ThisDBG = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name) )
+			   ==  NULL  ) {
+		Error("DB group not found");
+	}
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)_CheckDBG,name);
 }
 
@@ -463,13 +477,6 @@ ENTER_FUNC;
 		Error("DI file parse error.");
 	}
 	InitDB_Process(NULL);
-#ifdef	DEBUG
-	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)DumpDBG,NULL);
-#endif
-	if		(  ( ThisDBG = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name) )
-			   ==  NULL  ) {
-		Error("DB group not found");
-	}
 
 	CheckDBG(name);
 
@@ -518,6 +525,8 @@ static	ARG_TABLE	option[] = {
 		"dbredirectorの起動をチェックしない"			},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
 		"dbredirectorを使わない"						},
+	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
+		"dbredirectorで更新数をチェックしない"			},
 	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxRetry,
 		"dbredirector送信の再試行数を指定する"			},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
@@ -543,6 +552,7 @@ SetDefault(void)
 	DB_Name = DB_User;
 
 	fNoCheck = FALSE;
+	fNoSumCheck = FALSE;
 	fNoRedirect = FALSE;
 	MaxRetry = 3;
 	RetryInterval = 5;

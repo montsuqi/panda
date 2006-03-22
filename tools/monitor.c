@@ -56,6 +56,7 @@ static	char	*Log;
 static	Bool	fQ;
 static	Bool	fRedirector;
 static	Bool	fNoCheck;
+static	Bool	fNoSumCheck;
 static	Bool	fRestart;
 static	int		interval;
 static	int		wfcinterval;
@@ -176,6 +177,9 @@ dbgmsg(">StartRedirector");
 	if		(  RecDir  !=  NULL  ) {
 		argv[argc ++] = "-record";
 		argv[argc ++] = RecDir;
+	}
+	if		(  fNoSumCheck  ) {
+		argv[argc ++] = "-nosumcheck";
 	}
 	argv[argc ++] = dbg->name;
 	if		(  fQ  ) {
@@ -520,6 +524,8 @@ static	ARG_TABLE	option[] = {
 		"dbredirectorを起動する"	 					},
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"dbredirectorの起動をチェックしない"			},
+	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
+		"dbredirectorで更新数をチェックしない"			},
 
 	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
 		"aps異常終了時に再起動する"	 					},
@@ -568,6 +574,7 @@ SetDefault(void)
 
 	fRedirector = FALSE;
 	fNoCheck = FALSE;
+	fNoSumCheck = FALSE;
 	fRestart = FALSE;
 	fQ = FALSE;
 }
