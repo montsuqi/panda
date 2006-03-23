@@ -1,3 +1,112 @@
+2006-03-23  Noboru Saitou  <noborus@netlab.jp>
+
+	* Merge from ssl_client_branch.
+	
+	2006-03-06  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* glserver/server.c (ExecuteServer): 認証スキームがSSLでないときは、
+		クライアント証明書を要求しないように修正。
+
+	2006-03-06  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+	
+	* libs/net.c (MakeSSL_CTX): 証明書をPKCS#12として読み込むことを試みる。
+		失敗した場合は従来通りPEMとして読み込む。
+
+	2006-02-18  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* libs/auth.c (AuthAddX509): 追加するサブジェクトのフォーマットの
+	チェックを追加。
+
+	2006-02-18  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* libs/auth.c (AuthLoadX509): ファイル中に形式の不正なレコードが
+		あるときはFALSEを返す。
+
+	* auth/user.c (ssl_main): ファイルの読み込みがエラーになったときは、
+		ファイルを変更せずに終了する。
+
+	2006-02-15  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* libs/net.c (MakeSSL_CTX): 引数fVerifyを削除。SSL_VERIRY_PEERは
+	必ずセットし、SSL_VERIFY_FAIL_IF_NO_PEER_CERTは使用しない。
+
+	* glserver/server.c (ThisAuth): 認証スキームがsslのときに、
+	クライアント証明書が送られていなければ、認証エラーとする。
+
+	* fdd/fdd.c, fdd/fdw.c, glclient/client.c, glserver/glserver.c:
+	-verifypeerオプションを削除。
+	
+	2006-02-10  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* libs/net.c (MakeSSL_CTX): CApathとCAfileが指定されていない時は、
+	SSL_CTX_set_default_verify_pathsを呼ぶ。
+
+	2006-01-17  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* libs/net.c (MakeSSL_CTX): 私有鍵が暗号化されていた場合に、入力された
+	パスフレーズが誤っていたら、問い合わせる処理を追加。
+
+	* libs/net.c (MakeSSL_CTX, passphrase_callback): 環境変数
+	PANDA_ASKPASS にコマンドが指定されていたら、これを使ってパスワード
+	を問い合わせる。指定するコマンドとしてssh-askpass(1)を想定する。
+
+	2006-01-06  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* include/const.h: SIZE_PASSの不足を修正
+	* libs/auth.c (AuthLoadPasswd, AuthSingle): 不正な形式のパスワード
+	ファイルの読み込み時におけるbuffer overrunを修正
+	* libs/driver.c (NewScreenData): strchrの戻り値を検査するように修正
+
+	2005-12-21  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* auth/user.c: クライアント認証時のユーザ情報用オプションの追加
+
+		-ssl          SSL認証用のパスワードファイルを作成する
+		-subject      サブジェクトを指定する
+		-cert         -subjectを指定しない場合に、
+		              指定した証明書からサブジェクトを取り出す
+
+	* glserver/srever.c (ThisAuth): クライアント認証が有効でかつ、
+	"-auth ssl:/path/to/passwd" が指定されている場合に、証明書のサブジェ
+	クトからユーザ?を取り出す処理を追加
+
+	* libs/auth.c: クライアント認証時のユーザ情報を操作する関数を追加
+	
+		void AuthAddX509(const char *user, const char *subject);
+		void AuthDelX509BySubject(const char *subject);
+		void AuthDelX509(const char *user);
+		void AuthClearX509(void);
+		void AuthLoadX509(const char *file);
+		void AuthSaveX509(const char *file);
+		void AuthDumpX509(FILE *fp);
+		Bool AuthX509(const char *subject, char *user);
+
+	* libs/net.c (StartSSLClientSession): プロトタイプを変更
+	
+	* libs/net.c (GetSubjectFromCertificate): 証明書からサブジェクトを
+	取り出す関数を追加
+	
+	* libs/net.c (CheckHostnameInCertificate): 接続先ホスト名が、
+	localhost、127.0.0.1、::1 のいずれかの場合は常にTRUEを返すよう
+	に修正
+
+	2005-12-19  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
+
+	* libs/net.c: SSL周りを再実装し以下の関数を追加
+	
+		SSL_CTX *MakeSSL_CTX(char *key, char *cert, char *cafile,
+			char *capath, char *ciphers, Bool fVeri);
+		char *GetCommonNameFromCertificate(X509 *cert);
+		Bool CheckHostnameInCertificate(X509 *cert, const char *host);
+		Bool StartSSLClientSession(NETFILE *fp, Port *port);
+		Bool StartSSLServerSession(NETFILE *fp);
+	
+	* glclient/bootdialog.c: 証明書等のパスを gtk_file_selectionで選択
+	できるようにした
+
+	* glclient/client.c, glserver/glserver.c, fdd/fdd.c, fdd/fwd.c: 
+	-ciphertsオプションを追加
+
 2006-03-22  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/PostgreSQL.c (NoticeMessage): Notice メッセージをログに出す

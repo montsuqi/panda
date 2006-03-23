@@ -125,6 +125,8 @@ static	ARG_TABLE	option[] = {
 		"CA証明書へのパス"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
 		"CA証明書ファイル"								},
+	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
+		"SSLで使用する暗号スイート"						},
 #endif
 	{	NULL,		0,			FALSE,	NULL,	NULL	},
 };
@@ -148,9 +150,9 @@ SetDefault(void)
 	fSsl = FALSE;
 	KeyFile = NULL;
 	CertFile = NULL;
-	fVerify = TRUE;
 	CA_Path = NULL;
 	CA_File = NULL;
+	Ciphers = "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH";
 #endif	
 }
 
@@ -219,6 +221,9 @@ show_boot_dialog ()
 	if ( strlen(prop.CAfile) != 0 ){	
 		CA_File = prop.CAfile;
 	}
+	if ( strlen(prop.ciphers) != 0 ){	
+		Ciphers = prop.ciphers;
+	}
 #endif
     return TRUE;
 }
@@ -254,16 +259,23 @@ start_client ()
 		return;
 	}
 #ifdef	USE_SSL
-	if		(  fSsl  ) {
-		if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
-				   ==  NULL  ) {
-			exit(1);
-		}
-		fpComm = MakeSSL_Net(ctx,fd);
-		SSL_connect(NETFILE_SSL(fpComm));
-	} else {
-		fpComm = SocketToNet(fd);
-	}
+    if (!fSsl)
+        fpComm = SocketToNet(fd);
+    else {
+        ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
+        if (ctx == NULL){
+            g_warning("MakeSSL_CTX failure");
+            return;
+        }
+        if ((fpComm = MakeSSL_Net(ctx,fd)) != NULL){
+            if (StartSSLClientSession(fpComm, IP_HOST(port)) != TRUE){
+                g_warning("could not start SSL session");
+                CloseNet(fpComm);
+                SSL_CTX_free(ctx);
+                return;
+            }
+        }
+    }
 #else
 	fpComm = SocketToNet(fd);
 #endif
@@ -275,7 +287,7 @@ start_client ()
 		gtk_main();  
 		ExitSystem();
 	}
-    CloseNet (fpComm);
+    CloseNet(fpComm);
 #ifdef	USE_SSL
     if (ctx != NULL)
         SSL_CTX_free (ctx);

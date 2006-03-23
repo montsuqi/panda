@@ -50,6 +50,7 @@ struct _BootProperty
   gchar *verifypeer;
   gchar *CApath;
   gchar *CAfile;
+  gchar *ciphers;
 #endif
 };
 

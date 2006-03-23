@@ -34,11 +34,11 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
-GLOBAL	Bool	fVerify;
 GLOBAL	char	*KeyFile;
 GLOBAL	char	*CertFile;
 GLOBAL	char	*CA_Path;
 GLOBAL	char	*CA_File;
+GLOBAL	char	*Ciphers;
 #endif
 
 #endif

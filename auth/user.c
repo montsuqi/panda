@@ -43,10 +43,21 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"message.h"
 #include	"debug.h"
 
+#ifdef USE_SSL
+#include <openssl/x509.h>
+#include <openssl/pem.h>
+#include "net.h"
+#endif
+
 static	int		Uid;
 static	int		Gid;
 static	char	*Other;
 static	char	*Pass;
+#ifdef USE_SSL
+static	Bool	fSsl;
+static	char	*Subject;
+static	char	*CertFile;
+#endif
 
 static	ARG_TABLE	option[] = {
 	{	"file",		STRING,		TRUE,	(void*)&PasswordFile,
@@ -59,6 +70,14 @@ static	ARG_TABLE	option[] = {
 		"other options"									},
 	{	"p",		STRING,		FALSE,	(void*)&Pass,
 		"password"										},
+#ifdef USE_SSL
+	{	"ssl",		BOOLEAN,	FALSE,	(void*)&fSsl,
+		"create for SSL client authentication"			},
+	{	"subject",	STRING,		FALSE,	(void*)&Subject,
+		"subject name of client certificate"			},
+	{	"cert",		STRING,		FALSE,	(void*)&CertFile,
+		"client certificate file"						},
+#endif /* USE_SSL */
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -70,7 +89,60 @@ SetDefault(void)
 	Gid = 0;
 	Pass = "";
 	Other = "";
+#ifdef USE_SSL
+    fSsl = FALSE;
+    Subject = "";
+    CertFile = "";
+#endif /* USE_SSL */
 }
+
+#ifdef USE_SSL
+static void
+ssl_main(int argc, char **argv, FILE_LIST *fl)
+{
+    X509 *cert;
+    FILE *fp;
+
+    if (!AuthLoadX509(PasswordFile)){
+        printf("the specified file was not modified.\n");
+        exit(1);
+    }
+    if (!stricmp(g_basename(argv[0]),"gluseradd")){
+        if (Subject == NULL || strlen(Subject) == 0){
+            if (CertFile == NULL || strlen(CertFile) == 0){
+                printf("must specify -subject or -cert option\n");
+                exit(1);
+            }
+            if ((fp = fopen(CertFile, "r")) == NULL){
+                printf("cannot open certificate file: %s\n", CertFile);
+                exit(1);
+            }
+            if ((cert = PEM_read_X509(fp, NULL, NULL, NULL)) == NULL){
+                ERR_clear_error();
+                rewind(fp);
+                if ((cert = d2i_X509_fp(fp, NULL)) == NULL){
+                    printf("cannot load certificate file: %s\n", CertFile);
+                }
+            }
+            fclose(fp);
+            if (cert == NULL) exit(1);
+            if ((Subject = GetSubjectFromCertificate(cert)) == NULL){
+                printf("cannot get subject from certificate\n");
+                exit(1);
+            }
+        }
+        AuthAddX509(fl->name, Subject);
+    }
+    else if (!stricmp(g_basename(argv[0]),"gluserdel")){
+        AuthDelX509(fl->name);
+    }
+    else {
+        fprintf(stderr, "this command is not implemented for -ssl\n");
+        exit(1);
+    }
+    AuthSaveX509(PasswordFile);
+}
+#endif /* USE_SSL */
 
 extern	int
 main(
@@ -85,6 +157,18 @@ main(
 	SetDefault();
 	fl = GetOption(option,argc,argv);
 	
+    if (fl == NULL || fl->name == NULL || strlen(fl->name) == 0){
+        printf("must specify username.\n");
+        exit(1);
+    }
+
+#ifdef USE_SSL
+    if (fSsl == TRUE){
+        ssl_main(argc, argv, fl);
+        return 0;
+    }
+#endif /* USE_SSL */
+
 	AuthLoadPasswd(PasswordFile);
 	if		(  !stricmp(g_basename(argv[0]),"gluseradd")  ) {
 		if		(  Uid  ==  0  ) {

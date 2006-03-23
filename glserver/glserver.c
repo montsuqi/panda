@@ -71,12 +71,12 @@ static	ARG_TABLE	option[] = {
 		"鍵ファイル名(pem)"		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
 		"証明書ファイル名(pem)"	 						},
-	{	"verifypeer",BOOLEAN,	TRUE,	(void*)&fVerify,
-		"クライアント証明書の検証を行う"				},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
 		"CA証明書へのパス"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
 		"CA証明書ファイル"								},
+	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
+		"SSLで使用する暗号スイート"						},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -95,9 +95,9 @@ SetDefault(void)
 	fSsl = FALSE;
 	KeyFile = NULL;
 	CertFile = NULL;
-	fVerify = FALSE;
 	CA_Path = NULL;
 	CA_File = NULL;
+	Ciphers = "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH";
 #endif	
 }
 

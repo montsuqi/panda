@@ -199,7 +199,7 @@ ENTER_FUNC;
 #ifdef	USE_SSL
 	ctx = NULL;
 	if		(  fSsl  ) {
-		if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
+		if		(  ( ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers) )
 				   ==  NULL  ) {
 			fprintf(stderr,"CTX make error\n");
 			exit(1);
@@ -218,7 +218,10 @@ ENTER_FUNC;
 #ifdef	USE_SSL
 			if		(  fSsl  ) {
 				fpComm = MakeSSL_Net(ctx,fd);
-				SSL_accept(NETFILE_SSL(fpComm));
+				if (StartSSLServerSession(fpComm) != TRUE){
+                    CloseNet(fpComm);
+                    exit(0);
+                }
 			} else {
 				fpComm = SocketToNet(fd);
 			}
@@ -259,12 +262,12 @@ static	ARG_TABLE	option[] = {
 		"鍵ファイル名(pem)"		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
 		"証明書ファイル名(pem)"	 						},
-	{	"verifypeer",BOOLEAN,	TRUE,	(void*)&fVerify,
-		"クライアント証明書の検証を行う"				},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
 		"CA証明書へのパス"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
 		"CA証明書ファイル"								},
+	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
+		"SSLで使用する暗号スイート"						},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -281,9 +284,9 @@ SetDefault(void)
 	fSsl = FALSE;
 	KeyFile = NULL;
 	CertFile = NULL;
-	fVerify = FALSE;
 	CA_Path = NULL;
 	CA_File = NULL;
+	Ciphers = "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH";
 #endif	
 }
 

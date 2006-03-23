@@ -40,6 +40,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	<ctype.h>
 #include	<glib.h>
 #include	<errno.h>
+#include	<assert.h>
 
 #include	"types.h"
 #include	"libmondai.h"
@@ -312,3 +313,163 @@ AuthMaxUID(void)
 	g_hash_table_foreach(PasswdTable,(GHFunc)CheckMax,NULL);
 	return	(MaxUID);
 }
+
+#ifdef USE_SSL
+/*
+ * mapping X.509 subject to user name.
+ */
+static	GHashTable		*X509Table;
+
+extern void
+AuthAddX509(const char *user, const char *subject)
+{
+    if (!subject || subject[0] != '/'){
+        Warning("invalid subject format: %s", subject);
+        return;
+    }
+    assert(X509Table);
+    AuthDelX509(user);
+    AuthDelX509BySubject(subject);
+    g_hash_table_insert(X509Table, g_strdup(subject), g_strdup(user));
+}
+
+extern void
+AuthDelX509BySubject(const char *subject)
+{
+    char *u, *s;
+
+    assert(X509Table);
+    if (g_hash_table_lookup_extended(X509Table, subject, (gpointer*)&s,
+                (gpointer*)&u)){
+        g_hash_table_remove(X509Table, s);
+        g_free(u);
+        g_free(s);
+    }
+}
+
+struct x509_copy_info {
+    GHashTable  *table;
+    const char *user;
+};
+
+static void
+copy_except_one_user(gpointer key, gpointer value, gpointer user_data)
+{
+    struct x509_copy_info *tmp = (struct x509_copy_info*)user_data;
+
+    if (strcmp(tmp->user, (char*)value) == 0){
+        g_free(key);
+        g_free(value);
+        return;
+    }
+    g_hash_table_insert(tmp->table, key, value);
+}
+
+extern void
+AuthDelX509(const char *user)
+{
+    struct x509_copy_info tmp;
+
+    assert(X509Table);
+    tmp.table = g_hash_table_new(g_str_hash, g_str_equal);
+    tmp.user = user;
+    g_hash_table_foreach(X509Table, copy_except_one_user, &tmp);
+    g_hash_table_destroy(X509Table);
+    X509Table = tmp.table;
+}
+
+static void
+free_key_and_value(gpointer key, gpointer value, gpointer user_data)
+{
+    g_free(key);
+    g_free(value);
+}
+
+extern void
+AuthClearX509()
+{
+    assert(X509Table);
+    g_hash_table_foreach_remove(X509Table, free_key_and_value, NULL);
+}
+
+extern  Bool
+AuthLoadX509(const char *file)
+{
+    char buf[1000], user[SIZE_USER+1], subject[1000];
+    char format[64], *p;
+    int line = 1;
+    FILE *fp;
+    Bool result = TRUE;
+
+    if (X509Table == NULL)
+        X509Table = g_hash_table_new(g_str_hash, g_str_equal);
+    AuthClearX509();
+    if ((fp = fopen(file, "r")) == NULL){
+        Warning("[%s] can not open password file: %s", file, strerror(errno));
+        return TRUE;
+    }
+    snprintf(format, sizeof(format),
+             "%%%ds %%%dc", sizeof(user)-1, sizeof(subject)-1);
+    while (fgets(buf, sizeof(buf), fp) != NULL){
+        if ((p = strchr(buf, '\n')) == NULL){
+            Warning("[%s:%d] input line is too long", file, line);
+            result = FALSE;
+            break;
+        }
+        *p = '\0';
+        memset(user, 0, sizeof(user));
+        memset(subject, 0, sizeof(subject));
+        if (sscanf(buf, format, user, subject) != 2 || subject[0] != '/'){
+            Warning("[%s:%d] invalid format", file, line);
+            result = FALSE;
+            break;
+        }
+        AuthAddX509(user, subject);
+        line++;
+    }
+    fclose(fp);
+
+    return result;
+}
+
+extern void
+AuthSaveX509(const char *file)
+{
+    FILE *fp;
+
+    if ((fp = fopen(file, "w")) == NULL){
+        Warning("can not open password file: %s", strerror(errno));
+        return;
+    }
+    AuthDumpX509(fp);
+    fclose(fp);
+}
+
+static void
+print_key_and_value(gpointer key, gpointer value, gpointer fp)
+{
+    fprintf((FILE*)fp, "%s\t%s\n", value, key);
+}
+
+extern  void
+AuthDumpX509(FILE *fp)
+{
+    assert(X509Table);
+    g_hash_table_foreach(X509Table, print_key_and_value, fp);
+}
+
+extern  Bool
+AuthX509(const char *subject, char *user)
+{
+    const char *tmp;
+
+    assert(X509Table);
+    if ((tmp = (const char*)g_hash_table_lookup(X509Table, subject)) == NULL){
+        Warning("invalid subject: %s", subject);
+        return FALSE;
+    }
+    snprintf(user, SIZE_USER, "%s", tmp);
+
+    return TRUE;
+}
+#endif /* USE_SSL */

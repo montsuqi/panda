@@ -53,11 +53,11 @@ GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
-GLOBAL	Bool	fVerify;
 GLOBAL	char	*KeyFile;
 GLOBAL	char	*CertFile;
 GLOBAL	char	*CA_Path;
 GLOBAL	char	*CA_File;
+GLOBAL	char	*Ciphers;
 #endif
 GLOBAL	URL		Auth;
 GLOBAL	byte	TermFeture;

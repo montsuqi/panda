@@ -31,6 +31,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
+#include	<signal.h>
 
 #include	"const.h"
 #include	"types.h"
@@ -101,7 +102,8 @@ _DBDISCONNECT(
 {
 ENTER_FUNC;
 	if		(  dbg->fConnect == CONNECT ) { 
-		SendPacketClass(fpBlob,APS_END);
+		SendPacketClass((NETFILE *)dbg->conn,APS_END);	ON_IO_ERROR((NETFILE *)dbg->conn,badio);
+	badio:
 		CloseNet((NETFILE *)dbg->conn);
 		CloseDB_RedirectPort(dbg);
 		dbg->fConnect = DISCONNECT;

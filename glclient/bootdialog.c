@@ -78,6 +78,7 @@ struct _EditDialog {
   GtkWidget *cert;
   GtkWidget *CApath;
   GtkWidget *CAfile;
+  GtkWidget *ciphers;
 #endif
 
   BDConfig *config;
@@ -143,6 +144,8 @@ edit_dialog_set_value (EditDialog * self)
                       bd_config_section_get_string (section, "key"));
   gtk_entry_set_text (GTK_ENTRY (self->cert),
                       bd_config_section_get_string (section, "cert"));
+  gtk_entry_set_text (GTK_ENTRY (self->ciphers),
+		      bd_config_section_get_string (section, "ciphers"));
 #endif
 }
 
@@ -224,6 +227,8 @@ edit_dialog_value_to_config (EditDialog * self)
                                 gtk_entry_get_text (GTK_ENTRY (self->key)));
   bd_config_section_set_string (section, "cert",
                                 gtk_entry_get_text (GTK_ENTRY (self->cert)));
+  bd_config_section_set_string (section, "ciphers",
+                                gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
 #endif
 }
 
@@ -265,6 +270,52 @@ edit_dialog_on_delete_event (GtkWidget * widget, EditDialog * self)
   self->is_update = FALSE;
   gtk_main_quit ();
   return TRUE;
+}
+
+typedef struct {
+  GtkWidget *entry, *filesel;
+} file_selection_data;
+
+
+static void
+destroy(GtkWidget *w, gpointer data)
+{
+  gtk_grab_remove(w);
+  g_free(data);
+}
+
+static void
+file_ok(GtkWidget *w, gpointer data)
+{
+  file_selection_data *localdata;
+  char *tmp;
+
+  localdata = (file_selection_data*)data;
+  tmp = gtk_file_selection_get_filename(GTK_FILE_SELECTION(localdata->filesel));
+  gtk_entry_set_text(GTK_ENTRY(localdata->entry), tmp);
+  gtk_widget_destroy(localdata->filesel);
+
+  return;
+}
+
+static void
+open_file_selection(GtkWidget *w, gpointer entry)
+{
+  file_selection_data *data;
+  GtkFileSelection *filew = NULL;
+
+  filew = GTK_FILE_SELECTION(gtk_file_selection_new(""));
+  data = g_malloc(sizeof(file_selection_data));
+  data->entry = entry;
+  data->filesel = GTK_WIDGET(filew);
+  gtk_signal_connect(GTK_OBJECT(filew), "destroy",
+		     (GtkSignalFunc)destroy, data);
+  gtk_signal_connect(GTK_OBJECT(filew->ok_button), "clicked",
+		     (GtkSignalFunc)file_ok, data);
+  gtk_signal_connect(GTK_OBJECT(filew->cancel_button), "clicked",
+		     (GtkSignalFunc)gtk_widget_destroy, (gpointer)filew);
+  gtk_widget_show(GTK_WIDGET(filew));
+  gtk_grab_add(GTK_WIDGET(filew));
 }
 
 static void
@@ -459,30 +510,66 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("CA証明書へのパス");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CApath = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("Brows");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
+
   label = gtk_label_new ("CA証明書ファイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CAfile = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("Brows");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
+
   label = gtk_label_new ("鍵ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("Brows");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
+
   label = gtk_label_new ("証明書ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cert = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("Brows");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
+  ypos++;
+
+  label = gtk_label_new ("暗号スイート");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->ciphers = entry = gtk_entry_new ();
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
@@ -862,6 +949,7 @@ boot_dialog_create_conf (BDConfig *config)
       bd_config_section_append_value (section, "CAfile", "");
       bd_config_section_append_value (section, "key", "");
       bd_config_section_append_value (section, "cert", "");
+      bd_config_section_append_value (section, "ciphers", "");
 #endif      
       is_create = TRUE;
     }
@@ -938,6 +1026,7 @@ struct _BootDialog
   GtkWidget *CAfile;
   GtkWidget *key;
   GtkWidget *cert;
+  GtkWidget *ciphers;
 #endif
   gboolean is_connect;
 };
@@ -1027,6 +1116,8 @@ boot_dialog_set_value (BootDialog *self, BDConfig *config)
                       bd_config_section_get_string (section, "key"));
   gtk_entry_set_text (GTK_ENTRY (self->cert),
                       bd_config_section_get_string (section, "cert"));
+  gtk_entry_set_text (GTK_ENTRY (self->ciphers),
+                      bd_config_section_get_string (section, "ciphers"));
 #endif
 }
 
@@ -1089,6 +1180,8 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
                                 gtk_entry_get_text (GTK_ENTRY (self->key)));
   bd_config_section_set_string (section, "cert",
                                 gtk_entry_get_text (GTK_ENTRY (self->cert)));
+  bd_config_section_set_string (section, "ciphers",
+                                gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
 #endif
 }
 
@@ -1158,6 +1251,8 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean forc
                             bd_config_section_get_string (section, "key"));
   bd_config_section_set_string (global, "cert",
                             bd_config_section_get_string (section, "cert"));
+  bd_config_section_set_string (global, "ciphers",
+                            bd_config_section_get_string (section, "ciphers"));
 #endif
   boot_dialog_set_value (self, config);
 }
@@ -1407,7 +1502,7 @@ boot_dialog_new ()
 
 #ifdef	USE_SSL
   /* SSL options */
-  table = gtk_table_new (2, 1, FALSE);
+  table = gtk_table_new (3, 1, FALSE);
   gtk_container_set_border_width (GTK_CONTAINER (table), 5);
   gtk_table_set_row_spacings (GTK_TABLE (table), 4);
   label = gtk_label_new ("SSL");
@@ -1419,38 +1514,67 @@ boot_dialog_new ()
 
   label = gtk_label_new ("CA証明書へのパス");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->CApath = entry;
+  self->CApath = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("Brows");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("CA証明書ファイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->CAfile = entry;
+  self->CAfile = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("Brows");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("鍵ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->key = entry;
+  self->key = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("Brows");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("証明書ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->cert = entry;
+  self->cert = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("Brows");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
+  ypos++;
+
+  label = gtk_label_new ("暗号スイート");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->ciphers = entry = gtk_entry_new ();
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
@@ -1615,6 +1739,7 @@ boot_property_config_to_property (BootProperty *self)
   self->CAfile = bd_config_section_get_string (section, "CAfile");
   self->key = bd_config_section_get_string (section, "key");
   self->cert = bd_config_section_get_string (section, "cert");
+  self->ciphers = bd_config_section_get_string (section, "ciphers");
 #endif
 }
 
@@ -1641,6 +1766,7 @@ boot_property_inspect (BootProperty * self, FILE *fp)
   fprintf (fp, "CAfile      : %s\n", self->CAfile);
   fprintf (fp, "key         : %s\n", self->key);
   fprintf (fp, "cert        : %s\n", self->cert);
+  fprintf (fp, "ciphers     : %s\n", self->ciphers);
 #endif
 }
 

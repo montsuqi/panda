@@ -90,12 +90,16 @@ ExecuteClient(
 		} else {
 #ifdef	USE_SSL
 			if		(  fSsl  ) {
-				if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
+				if		(  ( ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers) )
 						   ==  NULL  ) {
 					exit(1);
 				}
 				net = MakeSSL_Net(ctx,fd);
-				SSL_connect(NETFILE_SSL(net));
+				if (StartSSLClientSession(net, remotename) != TRUE){
+                    CloseNet(net);
+                    SSL_CTX_free(ctx);
+                    return ERROR_FILE_NOT_FOUND;
+                }
 			} else {
 				net = SocketToNet(fd);
 			}
@@ -155,12 +159,12 @@ static	ARG_TABLE	option[] = {
 		"証明書ファイル名(pem)"	 						},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
 		"SSLを使う"				 						},
-	{	"verifypeer",BOOLEAN,	TRUE,	(void*)&fVerify,
-		"クライアント証明書の検証を行う"				},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
 		"CA証明書へのパス"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
 		"CA証明書ファイル"								},
+	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
+		"SSLで使用する暗号スイート"						},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -172,6 +176,14 @@ SetDefault(void)
 	Command = "default";
 	Host = "localhost";
 	PortNumber = PORT_FDD;
+#ifdef  USE_SSL
+    fSsl = FALSE;
+    KeyFile = NULL;
+    CertFile = NULL;
+    CA_Path = NULL;
+    CA_File = NULL;
+    Ciphers = "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH";
+#endif
 }
 
 extern	int

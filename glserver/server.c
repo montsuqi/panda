@@ -334,22 +334,31 @@ LEAVE_FUNC;
 #ifdef	USE_SSL
 static	Bool
 ThisAuth(
+    NETFILE *fpComm,
 	char	*user,
 	char	*pass,
 	char	*other)
 {
 	Bool	ret;
 
-	if		(	(  fSsl     )
-			&&	(  fVerify  ) ) {
-		ret = TRUE;
-	} else {
-		ret = AuthUser(&Auth,user,pass,other);
+	if (fSsl && !strcasecmp(Auth.protocol,"ssl")){
+        char *subject;
+        char tmp[SIZE_USER+1];
+        if (!fpComm->peer_cert) return FALSE;
+        subject = GetSubjectFromCertificate(fpComm->peer_cert);
+        AuthLoadX509(Auth.file);
+        ret = AuthX509(subject, tmp);
+        xfree(subject);
+        if (ret == TRUE) strcpy(user, tmp);
 	}
+    else {
+		ret = AuthUser(&Auth, user, pass, other);
+	}
+
 	return	(ret);
 }
 #else
-#define	ThisAuth(user,pass,other)	AuthUser(&Auth,(user),(pass),(other))
+#define	ThisAuth(fp,user,pass,other)	AuthUser(&Auth,(user),(pass),(other))
 #endif
 
 static	void
@@ -420,6 +429,7 @@ Connect(
 {
 	char	pass[SIZE_PASS+1];
 	char	ver[SIZE_BUFF];
+    Bool    auth_ok = FALSE;
 
 	Bool	rc = FALSE;
 	GL_RecvString(fpComm, sizeof(ver), ver, FALSE);	ON_IO_ERROR(fpComm,badio);
@@ -433,8 +443,13 @@ Connect(
 		GL_SendPacketClass(fpComm,GL_E_VERSION,fFetureNetwork);
 		ON_IO_ERROR(fpComm,badio);
 		Warning("[%s@%s] reject client(invalid version)",scr->user,TermToHost(scr->term));
-	} else
-	if		(  ThisAuth(scr->user,pass,scr->other)  ) {
+	}
+    else {
+	    auth_ok = ThisAuth(fpComm, scr->user, pass, scr->other);
+    }
+
+	if (auth_ok){
+		Message("[%s@%s] client authenticated", scr->user,TermToHost(scr->term));
 		scr->Windows = NULL;
 		ApplicationsCall(APL_SESSION_LINK,scr);
 		if		(  scr->status  ==  APL_SESSION_NULL  ) {
@@ -592,10 +607,13 @@ ENTER_FUNC;
 #ifdef	USE_SSL
 	ctx = NULL;
 	if		(  fSsl  ) {
-		if		(  ( ctx = MakeCTX(KeyFile,CertFile,CA_File,CA_Path,fVerify) )
+		if		(  ( ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers) )
 				   ==  NULL  ) {
 			Error("CTX make error");
 		}
+	    if (strcasecmp(Auth.protocol, "ssl") != 0){
+            SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+        }
 	}
 #endif
 	while	(TRUE)	{
@@ -610,8 +628,11 @@ ENTER_FUNC;
 		if		(  pid  ==  0  )	{	/*	child	*/
 #ifdef	USE_SSL
 			if		(  fSsl  ) {
-				fpComm = MakeSSL_Net(ctx,fd);
-				SSL_accept(NETFILE_SSL(fpComm));
+				fpComm = MakeSSL_Net(ctx, fd);
+				if (StartSSLServerSession(fpComm) != TRUE){
+			        CloseNet(fpComm);
+                    exit(0);
+                }
 			} else {
 				fpComm = SocketToNet(fd);
 			}

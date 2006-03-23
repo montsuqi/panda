@@ -25,9 +25,11 @@
 #ifdef	USE_SSL
 #include	<openssl/crypto.h>
 #include	<openssl/x509.h>
+#include	<openssl/x509v3.h>
 #include	<openssl/pem.h>
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
+#include	<openssl/pkcs12.h>
 #endif
 
 #include	"socket.h"
@@ -40,6 +42,9 @@ typedef	struct _NETFILE	{
 		SSL		*ssl;
 #endif
 	}	net;
+#ifdef	USE_SSL
+	X509	*peer_cert;
+#endif
 	Bool	fOK
 	,		fSent;
 	int		err;
@@ -69,7 +74,12 @@ extern	void		InitNET(void);
 #define	NetGetFD(fp)	((fp)->fd)
 #ifdef	USE_SSL
 extern	NETFILE		*MakeSSL_Net(SSL_CTX *ctx, int fd);
-extern	SSL_CTX		*MakeCTX(char *key, char *cert, char *cafile, char *capath, Bool fVeri);
+extern	SSL_CTX		*MakeSSL_CTX(char *key, char *cert, char *cafile, char *capath, char *ciphers);
+extern	char		*GetSubjectFromCertificate(X509 *cert);
+extern	char 		*GetCommonNameFromCertificate(X509 *cert);
+extern	Bool		CheckHostnameInCertificate(X509 *cert, const char *host);
+extern	Bool		StartSSLClientSession(NETFILE *fp, const char *host);
+extern	Bool		StartSSLServerSession(NETFILE *fp);
 #define	NETFILE_SSL(fp)		((fp)->net.ssl)
 #endif
 extern	NETFILE		*OpenPort(char *url, char *defport);

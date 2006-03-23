@@ -33,6 +33,7 @@
 #include	<errno.h>
 #include	<string.h>
 #include    <sys/socket.h>
+#include	<sys/wait.h>
 
 #include	"types.h"
 #include	"socket.h"
@@ -349,6 +350,70 @@ FileToNet(
  *	SSL
  */
 #ifdef	USE_SSL
+static int
+askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
+{
+    int ret, len, status;
+    int p[2];
+    pid_t pid;
+
+    if (pipe(p) < 0) {
+        fprintf(stderr, "pipe: %s\n", strerror(errno));
+        return -1;
+    }       
+    if ((pid = fork()) < 0){
+        close(p[0]);
+        close(p[1]);
+        fprintf(stderr, "fork: %s\n", strerror(errno));
+        return -1;
+    }
+    else if (pid == 0){
+        seteuid(getuid());
+        setuid(getuid());
+        close(p[0]);
+        if (dup2(p[1], STDOUT_FILENO) < 0){
+            fprintf(stderr, "dup2: %s\n", strerror(errno));
+            exit(1);
+        }
+        if (p[1] != STDOUT_FILENO) close(p[1]);
+        execlp(askpass_command, askpass_command, prompt, (char *) 0);
+        fprintf(stderr, "exec(%s): %s\n", askpass_command, strerror(errno));
+        exit(1);
+    }
+    close(p[1]);
+    len = ret = 0;
+    do {
+        ret = read(p[0], buf + len, buflen - 1 - len);
+        if (ret == -1 && errno == EINTR) continue;
+        if (ret <= 0) break;
+        len += ret;
+    } while (buflen - 1 - len > 0);
+    buf[len] = '\0';
+    buf[strcspn(buf, "\r\n")] = '\0';
+
+    close(p[0]);
+    while (waitpid(pid, &status, 0) < 0){
+        fprintf(stderr, "waitpid: %s\n", strerror(errno));
+        if (errno != EINTR) break;
+    }
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        memset(buf, 0, sizeof(buf));
+        return -1;
+    }
+
+    return strlen(buf);
+}
+
+#define ASKPASS_ENV "PANDA_ASKPASS"
+#define ASKPASS_PROMPT "Please input key passphrase:"
+
+static int
+passphrase_callback(char *buf, int buflen, int flag, void *userdata)
+{
+    const char *askpass_command = (const char *)userdata;
+    return askpass(askpass_command, ASKPASS_PROMPT, buf, buflen);
+}
+
 static	ssize_t
 SSL_Read(
 	NETFILE	*fp,
@@ -395,30 +460,261 @@ static	void
 SSL_Close(
 	NETFILE	*fp)
 {
-	SSL_shutdown(fp->net.ssl);
-	close(SSL_get_fd(fp->net.ssl));
-	SSL_free(fp->net.ssl); 
+    if (fp->peer_cert)
+        X509_free(fp->peer_cert);
+    SSL_shutdown(fp->net.ssl);
+    SSL_free(fp->net.ssl); 
+    close(fp->fd);
 }
+
+static const char*
+GetSSLErrorString()
+{
+    const char *msg;
+    int e;
+
+    e = ERR_get_error();
+    msg = ERR_error_string(e, NULL);
+    ERR_clear_error();
+
+    return msg;
+}
+
+static char*
+GetSubjectFromCertificate_X509_NAME_print_ex(X509 *cert)
+{
+    X509_NAME *subject;
+    char *ret = NULL;
+    BIO *out = NULL;
+    BUF_MEM *buf;
+    unsigned long flags = XN_FLAG_ONELINE;
+
+    if ((subject = X509_get_subject_name(cert)) == NULL){
+        return NULL;
+    }
+
+    if ((out = BIO_new(BIO_s_mem())) == NULL){
+        fprintf(stderr, "BIO_new failure: %s\n", GetSSLErrorString());
+        goto err;
+    }
+    if (!X509_NAME_print_ex(out, subject, 0, flags)){
+        fprintf(stderr,"X509_NAME_print_ex failure: %s\n",GetSSLErrorString());
+        goto err;
+    }
+    BIO_write(out, "\0", 1);
+    BIO_get_mem_ptr(out, &buf);
+    if ((ret = xmalloc(buf->length)) == NULL){
+        goto err;
+    }
+    memcpy(ret, buf->data, buf->length);
+
+err:
+    BIO_free(out);
+
+    return ret;
+}
+
+static char*
+GetSubjectFromCertificate_X509_NAME_online(X509 *cert)
+{
+    X509_NAME *subject;
+    char *ret = NULL;
+
+    if ((subject = X509_get_subject_name(cert)) == NULL){
+        return NULL;
+    }
+    if ((ret = xmalloc(1000)) == NULL){
+        fprintf(stderr,"xmalloc failure: %s\n",strerror(errno));
+        return NULL;
+    }
+    if (!X509_NAME_oneline(subject, ret, 1000)){
+        fprintf(stderr,"X509_NAME_oneline failure: %s\n",GetSSLErrorString());
+        xfree(ret);
+        ret = NULL;
+    }
+
+    return ret;
+}
+
+extern char*
+GetSubjectFromCertificate(X509 *cert)
+{
+    //return GetSubjectFromCertificate_X509_NAME_print_ex(cert);
+    return GetSubjectFromCertificate_X509_NAME_online(cert);
+}
+
+static int
+GetCommonNameFromCertificate__(X509 *cert, char *name, size_t len)
+{
+    X509_NAME *subject;
+    X509_NAME_ENTRY *entry;
+    char oid[16];
+    int count, i;
+
+    if ((subject = X509_get_subject_name(cert)) == NULL)
+        return -1;
+    count = X509_NAME_entry_count(subject);
+    for (i = 0; i < count; i++){
+        if ((entry = X509_NAME_get_entry(subject, i)) == NULL) break;
+        if (OBJ_obj2nid(entry->object) != NID_commonName) continue;
+        if (name != NULL && len > 0)
+            snprintf(name, len, "%s", entry->value->data);
+        return entry->value->length;
+    }
+
+    return -1;
+}
+
+char *
+GetCommonNameFromCertificate(X509 *cert)
+{
+    char *name;
+    int len;
+
+    if (cert == NULL)
+        return NULL;
+    if ((len = GetCommonNameFromCertificate__(cert, NULL, 0)) < 0)
+        return NULL;
+    if ((name = xmalloc(len+1)) == NULL)
+        return NULL;
+    if ((len = GetCommonNameFromCertificate__(cert, name, len+1)) < 0){
+        xfree(name);
+        return NULL;
+    }
+
+    return name;
+}
+
+static int
+CheckSubjectAltName(X509_EXTENSION *ext, const char *hostname)
+{
+    STACK_OF(CONF_VALUE) *values;
+    CONF_VALUE *value;
+    X509V3_EXT_METHOD *meth;
+    unsigned char *data;
+    int ok = FALSE;
+    int i;
+
+    data = ext->value->data;
+    if ((meth = X509V3_EXT_get(ext)) == NULL) return FALSE;
+    values = meth->i2v(meth, meth->d2i(NULL, &data, ext->value->length), NULL);
+    if (values == NULL) return FALSE;
+    for (i = 0; i < sk_CONF_VALUE_num(values); i++){
+        value = sk_CONF_VALUE_value(values, i);
+        if (strcmp(value->name, "DNS") != 0) continue;
+        if (strcasecmp(value->value, hostname) != 0) continue;
+		ok = TRUE;
+        break;
+    }
+    sk_CONF_VALUE_free(values);
+
+    return ok;
+}
+
+Bool
+CheckHostnameInCertificate(X509 *cert, const char *hostname)
+{
+    X509_EXTENSION *ext;
+    ASN1_OBJECT *extobj;
+    int ext_count, i, oid;
+    Bool should_check_cn = TRUE;
+	Bool ok = FALSE;
+    char *cn;
+
+    if (cert == NULL) return FALSE;
+    if (strcasecmp(hostname, "localhost") == 0) return TRUE;
+    if (strcasecmp(hostname, "127.0.0.1") == 0) return TRUE;
+    if (strcasecmp(hostname, "::1") == 0) return TRUE;
+
+    /* check dNSName in subjectAltName extension */
+    if ((ext_count = X509_get_ext_count(cert)) > 0){
+        for (i = 0; i < ext_count; i++){
+            if ((ext = X509_get_ext(cert, i)) == NULL) break;
+        if ((extobj = X509_EXTENSION_get_object(ext)) == NULL) break;
+            if ((oid = OBJ_obj2nid(extobj)) == NID_subject_alt_name){
+                ok = CheckSubjectAltName(ext, hostname);
+            }
+        }
+    }
+    /* check commonName */
+    if (ok != TRUE && should_check_cn == TRUE){
+        if ((cn = GetCommonNameFromCertificate(cert)) != NULL){
+            if (strcasecmp(cn, hostname) == 0) ok = TRUE;
+            xfree(cn);
+        }
+    }
+
+    return ok;
+}
+
+Bool
+StartSSLClientSession(NETFILE *fp, const char *hostname)
+{
+    X509 *cert;
+    Bool id_ok = FALSE;
+
+    if (SSL_connect(fp->net.ssl) <= 0){
+        fprintf(stderr, "SSL_connect failure: %s\n", GetSSLErrorString());
+        return FALSE;
+    }
+    if ((cert = SSL_get_peer_certificate(fp->net.ssl)) != NULL){
+        fp->peer_cert = cert;
+        id_ok = CheckHostnameInCertificate(cert, hostname);
+        if (id_ok != TRUE){
+            fprintf(stderr, "hostname don't match %s\n", hostname);
+            if (SSL_get_verify_mode(fp->net.ssl) & SSL_VERIFY_PEER){
+                return FALSE;
+            }
+        }
+    }
+
+    return TRUE;
+}
+
+Bool
+StartSSLServerSession(NETFILE *fp)
+{
+    X509 *cert;
+
+    if (SSL_accept(fp->net.ssl) <= 0){
+        fprintf(stderr, "SSL_accept failure: %s\n", GetSSLErrorString());
+        return FALSE;
+    }
+    if ((cert = SSL_get_peer_certificate(fp->net.ssl)) != NULL){
+        fp->peer_cert = cert;
+    }
+
+    return TRUE;
+}
+
 extern	NETFILE	*
 MakeSSL_Net(
 	SSL_CTX	*ctx,
 	int		fd)
 {
-	NETFILE	*fp;
-	SSL		*ssl;
+    NETFILE	*fp;
+    SSL		*ssl;
 
-	if		(  ( ssl = SSL_new(ctx)  )  !=  NULL  ) {
-		SSL_set_fd(ssl,fd);
-		fp = NewNet();
-		fp->fd = fd;
-		fp->net.ssl = ssl;
-		fp->read = SSL_Read;
-		fp->write = SSL_Write;
-		fp->close = SSL_Close;
-	} else {
-		fp = NULL;
-	}
-	return	(fp);
+    if ((fp = NewNet()) == NULL) return NULL;
+    fp->read = SSL_Read;
+    fp->write = SSL_Write;
+    fp->close = SSL_Close;
+    fp->peer_cert = NULL;
+    fp->fd = fd;
+
+    if ((fp->net.ssl = SSL_new(ctx)) == NULL){
+        fprintf(stderr, "SSL_new failure: %s\n", GetSSLErrorString());
+        FreeNet(fp);
+        return NULL;
+    }
+    if (!SSL_set_fd(fp->net.ssl, fd)){
+        fprintf(stderr, "SSL_set_fd failure: %s\n", GetSSLErrorString());
+        SSL_free(fp->net.ssl);
+        FreeNet(fp);
+        return NULL;
+    }
+
+    return fp;
 }
 
 static	int
@@ -438,9 +734,7 @@ VerifyCallBack(
 
 	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
 	if	(!ok) {
-#ifdef	DEBUG
 		BIO_printf(bio_err,"depth=%d\n",depth);
-#endif
 		BIO_printf(bio_err,"verify error:%s:%s\n",
 				   X509_verify_cert_error_string(err),buf);
 	}
@@ -466,60 +760,168 @@ VerifyCallBack(
 	return(ok);
 }
 
+static char *
+GetPasswordString(char *buf, size_t sz)
+{
+    const char *cmd;
+
+    if ((cmd = getenv(ASKPASS_ENV)) != NULL){
+        if (askpass(cmd, ASKPASS_PROMPT, buf, sz) >= 0){
+            return buf;
+        }
+    }
+    else if (isatty(STDIN_FILENO)){
+        if (EVP_read_pw_string(buf, sz, ASKPASS_PROMPT, 0) == 0){
+            return buf;
+        }
+    }
+
+    return NULL;
+}
+
+
+static Bool
+LoadPKCS12(SSL_CTX *ctx, const char *file)
+{
+    char passbuf[256];
+    char *pass = NULL;
+    const char *message;
+    const char *cmd;
+    PKCS12 *p12;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    BIO *input;
+    int err_reason;
+
+    /* read PKCS #12 from specified file */
+    if ((input = BIO_new_file(file, "r")) == NULL){
+        if (d2i_PKCS12_bio(input, &p12) == NULL) return FALSE;
+    }
+    p12 = d2i_PKCS12_bio(input, NULL);
+    BIO_free(input);
+    if (p12 == NULL) return FALSE;
+
+    /* get key and cert from  PKCS #12 */
+    for (;;){
+        if (PKCS12_parse(p12, pass, &key, &cert, NULL))
+            break;
+        err_reason = ERR_GET_REASON(ERR_peek_error());
+        if (cert){ X509_free(cert); cert = NULL; }
+        if (key){ EVP_PKEY_free(key); key = NULL; }
+        if (err_reason != PKCS12_R_MAC_VERIFY_FAILURE){
+            message = "PKCS12_parse failure: %s\n";
+            fprintf(stderr, message, GetSSLErrorString());
+            break;
+        }
+        if ((pass = GetPasswordString(passbuf, sizeof(passbuf))) == NULL){
+            fprintf(stderr, "cannot read password\n");
+            break;
+        }
+    }
+    //OPENSSL_cleanse(passbuf, sizeof(passbuf));
+    memset(passbuf, 0, sizeof(passbuf));
+    PKCS12_free(p12);
+
+    /* set key and cert to SSL_CTX */
+    if (cert && key){
+        if (!SSL_CTX_use_certificate(ctx, cert)){
+            message = "SSL_CTX_use_certificate failure: %s\n";
+            fprintf(stderr, message, GetSSLErrorString());
+            return FALSE;
+        }
+        if (!SSL_CTX_use_PrivateKey(ctx, key)){
+            message = "SSL_CTX_use_PrivateKey failure: %s\n";
+            fprintf(stderr, message, GetSSLErrorString());
+            return FALSE;
+        }
+        if (!SSL_CTX_check_private_key(ctx)){
+            fprintf(stderr, "SSL_CTX_check_private_key failure: %s\n",
+                    GetSSLErrorString());
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 extern	SSL_CTX	*
-MakeCTX(
+MakeSSL_CTX(
 	char	*key,
 	char	*cert,
 	char	*cafile,
 	char	*capath,
-	Bool	fVeri)
+	char	*ciphers)
 {
-	SSL_CTX	*ctx;
-	int		mode;
+    SSL_CTX *ctx;
+    int     mode = SSL_VERIFY_NONE;
+    const char *askpass_command;
 
-	if		(  key  ==  NULL  ) {
-		key = cert;
-	}
-	if		(  ( ctx = SSL_CTX_new(SSLv23_method()) )  !=  NULL  ) {
-		if		(  fVeri  ) {
-			mode = SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
-		} else {
-			mode = SSL_VERIFY_NONE;
-		}
-		SSL_CTX_set_verify(ctx,mode,VerifyCallBack);
-		if		(	(  cafile  !=  NULL  )
-				||	(  capath  !=  NULL  ) )	{
-			if		(  !SSL_CTX_load_verify_locations(ctx,cafile,capath)  ) {
-				fprintf(stderr,"verify location error\n");
-				SSL_CTX_free(ctx);
-				ctx = NULL;
-			}
-		} else {
-			fprintf(stderr,"not verify\n");
-		}
-		if		(  cert  !=  NULL  ) {
-			if		(  SSL_CTX_use_certificate_file(ctx,cert,SSL_FILETYPE_PEM)  <=  0  ) {
-				fprintf(stderr,"unable to get certificate from '%s'\n",cert);
-				SSL_CTX_free(ctx);
-				ctx = NULL;
-			}
-			if		(  SSL_CTX_use_PrivateKey_file(ctx,key,SSL_FILETYPE_PEM)  <=  0  ) {
-				fprintf(stderr,"unable to get private key from '%s'\n",key);
-				SSL_CTX_free(ctx);
-				ctx = NULL;
-			}
-			if		(  !SSL_CTX_check_private_key(ctx)  ) {
-				fprintf(stderr,"Private key does not match the certificate public key\n");
-				SSL_CTX_free(ctx);
-				ctx = NULL;
-			}
-		} else {
-			fprintf(stderr,"certificate is not defined.\n");
-		}
-	} else {
-		fprintf(stderr,"SSL error.\n");
-	}
-	return	(ctx);
+    if ((ctx = SSL_CTX_new(SSLv23_method())) == NULL){
+        fprintf(stderr,"SSL_CTX_new failue: %s\n", GetSSLErrorString());
+        return NULL;
+    }
+
+    if ((askpass_command = getenv(ASKPASS_ENV)) != NULL){
+        SSL_CTX_set_default_passwd_cb(ctx, passphrase_callback);
+        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)askpass_command);
+    }
+
+    if (!SSL_CTX_set_cipher_list(ctx, ciphers)){
+        fprintf(stderr,"SSL_CTX_set_cipher_list(%s) failue: %s\n",
+                ciphers, GetSSLErrorString());
+        SSL_CTX_free(ctx);
+        return NULL;
+    }
+
+    mode = SSL_VERIFY_PEER;
+    mode |= SSL_VERIFY_CLIENT_ONCE;
+    SSL_CTX_set_verify(ctx, mode, VerifyCallBack);
+    SSL_CTX_set_options(ctx, SSL_OP_ALL);
+
+    if ((cafile == NULL) && (capath == NULL)){
+        if (!SSL_CTX_set_default_verify_paths(ctx)){
+            fprintf(stderr, "SSL_CTX_set_default_verify_paths error: %s\n",
+                    GetSSLErrorString());
+        }
+    }
+    else if (!SSL_CTX_load_verify_locations(ctx, cafile, capath)){
+        fprintf(stderr,"SSL_CTX_load_verify_locations(%s, %s) error: %s\n",
+                cafile, capath, GetSSLErrorString());
+        SSL_CTX_free(ctx);
+        return NULL;
+    }
+
+    if (cert != NULL){
+        if (LoadPKCS12(ctx, cert)) return ctx;
+        if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0){
+            fprintf(stderr,"SSL_CTX_use_certificate_file(%s) failure: %s\n",
+                    cert, GetSSLErrorString());
+            SSL_CTX_free(ctx);
+            return NULL;
+        }
+        if (key == NULL) key = cert;
+        for (;;){ 
+            if (SSL_CTX_use_PrivateKey_file(ctx, key, SSL_FILETYPE_PEM) <= 0){
+                int err_reason;
+                err_reason = ERR_GET_REASON(ERR_peek_error());
+                fprintf(stderr,"SSL_CTX_use_PrivateKey_file(%s) failure: %s\n",
+                        key, GetSSLErrorString());
+                if (err_reason == PEM_R_BAD_DECRYPT ||
+                    err_reason == EVP_R_BAD_DECRYPT) continue;
+                SSL_CTX_free(ctx);
+                return NULL;
+            }
+            break;
+        }
+        if (!SSL_CTX_check_private_key(ctx)){
+            fprintf(stderr, "SSL_CTX_check_private_key failure: %s\n",
+                    GetSSLErrorString());
+            SSL_CTX_free(ctx);
+            return NULL;
+        }
+    }
+
+    return ctx;
 }
 #endif	/*	USE_SSL	*/
 
@@ -527,8 +929,10 @@ extern	void
 InitNET(void)
 {
 #ifdef	USE_SSL
-	SSL_load_error_strings(); 
-	SSL_library_init(); 
+	OpenSSL_add_ssl_algorithms();
+	OpenSSL_add_all_algorithms();	
+	ERR_load_crypto_strings();
+	SSL_load_error_strings();	
 #endif
 }
 

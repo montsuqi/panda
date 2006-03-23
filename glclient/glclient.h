@@ -56,11 +56,11 @@ GLOBAL	Bool	fMlog;
 GLOBAL	Bool	fKeyBuff;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
-GLOBAL	Bool	fVerify;
 GLOBAL	char	*KeyFile;
 GLOBAL	char	*CertFile;
 GLOBAL	char	*CA_Path;
 GLOBAL	char	*CA_File;
+GLOBAL	char	*Ciphers;
 #endif
 
 #endif

@@ -57,4 +57,15 @@ extern	void	AuthSavePasswd(char *fname);
 extern	int		AuthMaxUID(void);
 extern	Bool	AuthSingle(char *fname, char *name, char *pass, char *other);
 
+#ifdef USE_SSL
+extern	void	AuthAddX509(const char *user, const char *subject);
+extern	void	AuthDelX509BySubject(const char *subject);
+extern	void	AuthDelX509(const char *user);
+extern	void	AuthClearX509(void);
+extern	Bool	AuthLoadX509(const char *file);
+extern	void	AuthSaveX509(const char *file);
+extern	void	AuthDumpX509(FILE *fp);
+extern	Bool	AuthX509(const char *subject, char *user);
+#endif
+
 #endif
