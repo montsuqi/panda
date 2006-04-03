@@ -386,7 +386,7 @@ GL_SendDataType(
 #ifdef	DEBUG
 	printf("SendDataType = %X\n",c);
 #endif
-	if		(  fFetureOld  ) {
+	if		(  fFeatureOld  ) {
 		c = ToOldType[c];
 	}
 	nputc(c,fp);
@@ -400,7 +400,7 @@ GL_RecvDataType(
 	PacketClass	c;
 
 	c = ngetc(fp);
-	if		(  fFetureOld  ) {
+	if		(  fFeatureOld  ) {
 		c = ToNewType[c];
 	}
 	return	(c);
@@ -424,14 +424,14 @@ ENTER_FUNC;
 #ifdef	HAVE_LIBMAGIC
 	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  ) {
 		if		(  !strlcmp(type,"PostScript")  ) {
-			if	(  !fFeturePS  ) {
+			if	(  !fFeaturePS  ) {
 				if		(	(  stat(cname,&sb)  ==  0   )
 						&&	(  S_ISREG(sb.st_mode)      ) )	{
 					ps_mtime = sb.st_mtime;
 				} else {
 					ps_mtime = 0;
 				}
-				if		(  fFeturePDF ) {
+				if		(  fFeaturePDF ) {
 					sprintf(fname,"%s.pdf",cname); 
 				} else {
 					sprintf(fname,"%s.png",cname);
@@ -447,7 +447,7 @@ ENTER_FUNC;
 					}
 				}
 				if		(  ps_mtime  >  tmp_mtime  ) {
-					if		(  fFeturePDF ) {
+					if		(  fFeaturePDF ) {
 						sprintf(buff,"ps2pdf13 %s %s", cname,fname);
 					} else {
 						sprintf(buff,"%s %s > %s",PSTOPNGPath, cname,fname);
@@ -535,7 +535,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_RECORD:
 		GL_SendInt(fp,ValueRecordSize(value),fNetwork);
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			if		(  fFetureOld  ) {
+			if		(  fFeatureOld  ) {
 				if		(	(  stricmp(ValueRecordName(value,i),"row")      ==  0  )
 						||	(  stricmp(ValueRecordName(value,i),"column")   ==  0  ) )	{
 					GL_SendString(fp,ValueRecordName(value,i),fNetwork);
@@ -590,7 +590,7 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_NUMBER:
 		dbgmsg("NUMBER");
-		xval = GL_RecvFixed(fp,fFetureNetwork);
+		xval = GL_RecvFixed(fp,fFeatureNetwork);
 		ON_IO_ERROR(fp,badio);
 		SetValueFixed(value,xval);
 		xfree(xval->sval);
@@ -612,19 +612,19 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_INT:
 		dbgmsg("INT");
-		ival = GL_RecvInt(fp,fFetureNetwork);
+		ival = GL_RecvInt(fp,fFeatureNetwork);
 		ON_IO_ERROR(fp,badio);
 		SetValueInteger(value,ival);
 		break;
 	  case	GL_TYPE_FLOAT:
 		dbgmsg("FLOAT");
-		fval = GL_RecvFloat(fp,fFetureNetwork);
+		fval = GL_RecvFloat(fp,fFeatureNetwork);
 		ON_IO_ERROR(fp,badio);
 		SetValueFloat(value,fval);
 		break;
 	  case	GL_TYPE_BOOL:
 		dbgmsg("BOOL");
-		bval = GL_RecvBool(fp,fFetureNetwork);
+		bval = GL_RecvBool(fp,fFeatureNetwork);
 		ON_IO_ERROR(fp,badio);
 		SetValueBool(value,bval);
 		break;

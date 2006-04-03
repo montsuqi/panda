@@ -1,23 +1,23 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 1998-1999 Ogochan.
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 1998-1999 Ogochan.
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -80,13 +80,13 @@ CheckCache(
 	int		klass;
 
 ENTER_FUNC;
-	GL_SendPacketClass(fpComm,GL_QueryScreen,fFetureNetwork);
+	GL_SendPacketClass(fpComm,GL_QueryScreen,fFeatureNetwork);
 	ON_IO_ERROR(fpComm,badio);
-	GL_SendString(fpComm,name,fFetureNetwork);			ON_IO_ERROR(fpComm,badio);
-	GL_SendLong(fpComm,(long)stsize,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-	GL_SendLong(fpComm,(long)stmtime,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-	GL_SendLong(fpComm,(long)stctime,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-	switch	(  klass = GL_RecvPacketClass(fpComm,fFetureNetwork)  ) {
+	GL_SendString(fpComm,name,fFeatureNetwork);			ON_IO_ERROR(fpComm,badio);
+	GL_SendLong(fpComm,(long)stsize,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_SendLong(fpComm,(long)stmtime,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_SendLong(fpComm,(long)stctime,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	switch	(  klass = GL_RecvPacketClass(fpComm,fFeatureNetwork)  ) {
 	  case	GL_GetScreen:
 		dbgmsg("GetScreen");
 		ret = TRUE;
@@ -125,12 +125,12 @@ ENTER_FUNC;
 						  wname,
 						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
 		rc = FALSE;
-		GL_RecvString(fpComm, SIZE_NAME, wname,fFetureNetwork);	/*	dummy	*/ 
+		GL_RecvString(fpComm, SIZE_NAME, wname,fFeatureNetwork);	/*	dummy	*/ 
 		ON_IO_ERROR(fpComm,badio);
 		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
-			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFetureNetwork);
+			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
-			GL_SendLong(fpComm,(long)stbuf.st_size,fFetureNetwork);
+			GL_SendLong(fpComm,(long)stbuf.st_size,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			left = stbuf.st_size;
 			do {
@@ -207,7 +207,7 @@ ENTER_FUNC;
 	if		(  setjmp(envCheckScreen)  ==  0  ) {
 		g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
 	}
-	GL_SendPacketClass(fpComm,GL_END,fFetureNetwork);
+	GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
 LEAVE_FUNC;
 }
 
@@ -223,34 +223,34 @@ ENTER_FUNC;
 
 	rc = FALSE; 
 	if		(  win->PutType  !=  SCREEN_NULL  ) {
-		GL_SendPacketClass(fpComm,GL_WindowName,fFetureNetwork);
+		GL_SendPacketClass(fpComm,GL_WindowName,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
-		GL_SendString(fpComm,wname,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,wname,fFeatureNetwork);		ON_IO_ERROR(fpComm,badio);
 		dbgprintf("wname = [%s]\n",wname);
-		GL_SendInt(fpComm,win->PutType,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+		GL_SendInt(fpComm,win->PutType,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 		switch	(win->PutType) {
 		  case	SCREEN_CURRENT_WINDOW:
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
 			if		(  win->rec->value  !=  NULL  ) {
-				GL_SendPacketClass(fpComm,GL_ScreenData,fFetureNetwork);
+				GL_SendPacketClass(fpComm,GL_ScreenData,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
-				if		(  fFetureI18N  ) {
+				if		(  fFeatureI18N  ) {
 					GL_SendValue(fpComm,win->rec->value,NULL,
-								 fFetureBlob,fFetureExpand,fFetureNetwork);
+								 fFeatureBlob,fFeatureExpand,fFeatureNetwork);
 					ON_IO_ERROR(fpComm,badio);
 				} else {
 					GL_SendValue(fpComm,win->rec->value,"euc-jp",
-								 fFetureBlob,fFetureExpand,fFetureNetwork);
+								 fFeatureBlob,fFeatureExpand,fFeatureNetwork);
 					ON_IO_ERROR(fpComm,badio);
 				}
 			} else {
-				GL_SendPacketClass(fpComm,GL_NOT,fFetureNetwork);
+				GL_SendPacketClass(fpComm,GL_NOT,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
 			}
 			break;
 		  default:
-			GL_SendPacketClass(fpComm,GL_NOT,fFetureNetwork);
+			GL_SendPacketClass(fpComm,GL_NOT,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			break;
 		}
@@ -277,12 +277,12 @@ ENTER_FUNC;
 	}
 	if		(	(  *scr->window  !=  0  )
 			&&	(  *scr->widget  !=  0  ) ) {
-		GL_SendPacketClass(fpComm,GL_FocusName,fFetureNetwork);
+		GL_SendPacketClass(fpComm,GL_FocusName,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
-		GL_SendString(fpComm,scr->window,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-		GL_SendString(fpComm,scr->widget,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,scr->window,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,scr->widget,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 	}
-	GL_SendPacketClass(fpComm,GL_END,fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
+	GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);		ON_IO_ERROR(fpComm,badio);
 	rc = TRUE;
   badio:
 LEAVE_FUNC;
@@ -297,8 +297,8 @@ SendScreenData(
 	Bool	rc;
 
 ENTER_FUNC;
-	if		(  GL_RecvPacketClass(fpComm,fFetureNetwork)  ==  GL_GetData  ) {
-		if		(  GL_RecvInt(fpComm,fFetureNetwork)  ==  0  ) {	/*	get all data	*/
+	if		(  GL_RecvPacketClass(fpComm,fFeatureNetwork)  ==  GL_GetData  ) {
+		if		(  GL_RecvInt(fpComm,fFeatureNetwork)  ==  0  ) {	/*	get all data	*/
 			dbgmsg("get all data");
 			rc = SendScreenAll(fpComm,scr);
 		} else {
@@ -369,16 +369,16 @@ CheckFeture(
 		,	*q
 		,	*n;
 
-	TermFeture = FETURE_NULL;
+	TermFeture = FEATURE_NULL;
 	if		(  strlcmp(ver,"1.2")    ==  0  ) {
-		TermFeture |= FETURE_CORE;
+		TermFeture |= FEATURE_CORE;
 	} else
 	  if	(	(  strlcmp(ver,"1.1.1")  ==  0  )
 			||	(  strlcmp(ver,"1.1.2")  ==  0  ) ) {
-		TermFeture |= FETURE_CORE;
-		TermFeture |= FETURE_OLD;
+		TermFeture |= FEATURE_CORE;
+		TermFeture |= FEATURE_OLD;
 	} else {
-		TermFeture = FETURE_CORE;
+		TermFeture = FEATURE_CORE;
 		if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
 			p ++;
 			while	(  *p  !=  0  ) {
@@ -389,22 +389,22 @@ CheckFeture(
 					n = p + strlen(p);
 				}
 				if		(  !strlicmp(p,"blob")  ) {
-					TermFeture |= FETURE_BLOB;
+					TermFeture |= FEATURE_BLOB;
 				}
 				if		(  !strlicmp(p,"expand")  ) {
-					TermFeture |= FETURE_EXPAND;
+					TermFeture |= FEATURE_EXPAND;
 				}
 				if		(  !strlicmp(p,"i18n")  ) {
-					TermFeture |= FETURE_I18N;
+					TermFeture |= FEATURE_I18N;
 				}
 				if		(  !strlicmp(p,"no")  ) {
-					TermFeture |= FETURE_NETWORK;
+					TermFeture |= FEATURE_NETWORK;
 				}
 				if		(  !strlicmp(p,"ps")  ) {
-					TermFeture |= FETURE_PS;
+					TermFeture |= FEATURE_PS;
 				}
 				if		(  !strlicmp(p,"pdf")  ) {
-					TermFeture |= FETURE_PDF;
+					TermFeture |= FEATURE_PDF;
 				}
 				p = n;
 			}
@@ -434,13 +434,13 @@ Connect(
 	Bool	rc = FALSE;
 	GL_RecvString(fpComm, sizeof(ver), ver, FALSE);	ON_IO_ERROR(fpComm,badio);
 	CheckFeture(ver);
-	GL_RecvString(fpComm, sizeof(scr->user), scr->user,fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
-	GL_RecvString(fpComm, sizeof(pass), pass, fFetureNetwork);		ON_IO_ERROR(fpComm,badio);
-	GL_RecvString(fpComm, sizeof(scr->cmd), scr->cmd, fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->user), scr->user,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(pass), pass, fFeatureNetwork);		ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->cmd), scr->cmd, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 	Message("[%s@%s] session start",scr->user, TermToHost(scr->term));
 
-	if		(  TermFeture  ==  FETURE_NULL  ) {
-		GL_SendPacketClass(fpComm,GL_E_VERSION,fFetureNetwork);
+	if		(  TermFeture  ==  FEATURE_NULL  ) {
+		GL_SendPacketClass(fpComm,GL_E_VERSION,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
 		Warning("[%s@%s] reject client(invalid version)",scr->user,TermToHost(scr->term));
 	}
@@ -453,16 +453,16 @@ Connect(
 		scr->Windows = NULL;
 		ApplicationsCall(APL_SESSION_LINK,scr);
 		if		(  scr->status  ==  APL_SESSION_NULL  ) {
-			GL_SendPacketClass(fpComm,GL_E_APPL,fFetureNetwork);
+			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 		} else {
-			GL_SendPacketClass(fpComm,GL_OK,fFetureNetwork);
+			GL_SendPacketClass(fpComm,GL_OK,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			CheckScreens(fpComm,scr);
 			rc = TRUE;
 		}
 	} else {
-		GL_SendPacketClass(fpComm,GL_E_AUTH,fFetureNetwork);
+		GL_SendPacketClass(fpComm,GL_E_AUTH,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
 		Warning("[%s@%s] reject client(authentication error)",scr->user,TermToHost(scr->term));
 	}
@@ -485,22 +485,22 @@ RecvScreenData(
 
 ENTER_FUNC;
 	rc = FALSE;
-	if		(  fFetureI18N  ) {
+	if		(  fFeatureI18N  ) {
 		coding = NULL;
 	} else {
 		coding = "euc-jp";
 	}
-	while	(  GL_RecvPacketClass(fpComm,fFetureNetwork)  ==  GL_WindowName  ) {
+	while	(  GL_RecvPacketClass(fpComm,fFeatureNetwork)  ==  GL_WindowName  ) {
 		ON_IO_ERROR(fpComm,badio);
-		GL_RecvString(fpComm, sizeof(wname), wname, fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+		GL_RecvString(fpComm, sizeof(wname), wname, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-			while	(  ( c = GL_RecvPacketClass(fpComm,fFetureNetwork) )
+			while	(  ( c = GL_RecvPacketClass(fpComm,fFeatureNetwork) )
 					   ==  GL_ScreenData  ) {
 				ON_IO_ERROR(fpComm,badio);
-				GL_RecvString(fpComm, sizeof(name), name, fFetureNetwork);	ON_IO_ERROR(fpComm,badio);
+				GL_RecvString(fpComm, sizeof(name), name, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
-					GL_RecvValue(fpComm,value,coding,fFetureBlob,fFetureExpand,fFetureNetwork);
+					GL_RecvValue(fpComm,value,coding,fFeatureBlob,fFeatureExpand,fFeatureNetwork);
 				} else {
 					Error("invalid item name [%s]\n",name);
 				}
@@ -525,7 +525,7 @@ MainLoop(
 	PacketClass	klass;
 
 ENTER_FUNC;
-	klass = GL_RecvPacketClass(fpComm,fFetureNetwork); ON_IO_ERROR(fpComm,badio);
+	klass = GL_RecvPacketClass(fpComm,fFeatureNetwork); ON_IO_ERROR(fpComm,badio);
 	dbgprintf("class = %d",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
@@ -536,15 +536,15 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Name:
-			GL_RecvString(fpComm, sizeof(scr->term), scr->term,fFetureNetwork);
+			GL_RecvString(fpComm, sizeof(scr->term), scr->term,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Event:
-			GL_RecvString(fpComm, sizeof(scr->window), scr->window, fFetureNetwork);
+			GL_RecvString(fpComm, sizeof(scr->window), scr->window, fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
-			GL_RecvString(fpComm, sizeof(scr->widget), scr->widget, fFetureNetwork);
+			GL_RecvString(fpComm, sizeof(scr->widget), scr->widget, fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
-			GL_RecvString(fpComm, sizeof(scr->event), scr->event, fFetureNetwork);
+			GL_RecvString(fpComm, sizeof(scr->event), scr->event, fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			dbgprintf("window = [%s]\n",scr->window);
 			dbgprintf("event  = [%s]\n",scr->event);
