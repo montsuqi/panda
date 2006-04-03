@@ -23,25 +23,6 @@
 #define	_SERVER_H
 #include	"port.h"
 
-#define	FEATURE_NULL		(byte)0x0000
-#define	FEATURE_CORE		(byte)0x0001
-#define	FEATURE_I18N		(byte)0x0002
-#define	FEATURE_BLOB		(byte)0x0004
-#define	FEATURE_EXPAND		(byte)0x0008
-#define	FEATURE_NETWORK		(byte)0x0010
-#define	FEATURE_PS			(byte)0x0020
-#define	FEATURE_OLD			(byte)0x0040
-#define	FEATURE_PDF			(byte)0x0080
-
-#define	fFeatureCore		(((TermFeture & FEATURE_CORE) != 0) ? TRUE : FALSE)
-#define	fFeatureBlob		(((TermFeture & FEATURE_BLOB) != 0) ? TRUE : FALSE)
-#define	fFeatureExpand		(((TermFeture & FEATURE_EXPAND) != 0) ? TRUE : FALSE)
-#define	fFeatureI18N		(((TermFeture & FEATURE_I18N) != 0) ? TRUE : FALSE)
-#define	fFeatureNetwork		(((TermFeture & FEATURE_NETWORK) != 0) ? TRUE : FALSE)
-#define	fFeaturePS			(((TermFeture & FEATURE_PS) != 0) ? TRUE : FALSE)
-#define	fFeatureOld			(((TermFeture & FEATURE_OLD) != 0) ? TRUE : FALSE)
-#define	fFeaturePDF			(((TermFeture & FEATURE_PDF) != 0) ? TRUE : FALSE)
-
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -60,7 +41,6 @@ GLOBAL	char	*CA_File;
 GLOBAL	char	*Ciphers;
 #endif
 GLOBAL	URL		Auth;
-GLOBAL	byte	TermFeture;
 
 extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);

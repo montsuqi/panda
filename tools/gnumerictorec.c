@@ -499,16 +499,18 @@ WriteDefines(
 					}
 				}
 			}
-			if		(  dim[last]  >  0  ) {
-				printf("%s[%d];",GetCell(table,i,Level)->text,dim[last]);
-			} else {
-				printf("%s;",GetCell(table,i,Level)->text);
-			}
-			if		(	(  !fComment  )
-					||	(  GetCell(table,i,Level+1)->text  ==  NULL  ) ) {
-				printf("\n");
-			} else {
-				printf("\t#\t%s\n",GetCell(table,i,Level+1)->text);
+			if		(  GetCell(table,i,Level)->text  !=  NULL  ) {
+				if		(  dim[last]  >  0  ) {
+					printf("%s[%d];",GetCell(table,i,Level)->text,dim[last]);
+				} else {
+					printf("%s;",GetCell(table,i,Level)->text);
+				}
+				if		(	(  !fComment  )
+						||	(  GetCell(table,i,Level+1)->text  ==  NULL  ) ) {
+					printf("\n");
+				} else {
+					printf("\t#\t%s\n",GetCell(table,i,Level+1)->text);
+				}
 			}
 		}
 	}

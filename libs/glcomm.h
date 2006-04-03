@@ -21,6 +21,25 @@
 #define	_GLCOMM_H
 #include	"net.h"
 
+#define	FEATURE_NULL		(byte)0x0000
+#define	FEATURE_CORE		(byte)0x0001
+#define	FEATURE_I18N		(byte)0x0002
+#define	FEATURE_BLOB		(byte)0x0004
+#define	FEATURE_EXPAND		(byte)0x0008
+#define	FEATURE_NETWORK		(byte)0x0010
+#define	FEATURE_PS			(byte)0x0020
+#define	FEATURE_OLD			(byte)0x0040
+#define	FEATURE_PDF			(byte)0x0080
+
+#define	fFeatureCore		(((TermFeature & FEATURE_CORE) != 0) ? TRUE : FALSE)
+#define	fFeatureBlob		(((TermFeature & FEATURE_BLOB) != 0) ? TRUE : FALSE)
+#define	fFeatureExpand		(((TermFeature & FEATURE_EXPAND) != 0) ? TRUE : FALSE)
+#define	fFeatureI18N		(((TermFeature & FEATURE_I18N) != 0) ? TRUE : FALSE)
+#define	fFeatureNetwork		(((TermFeature & FEATURE_NETWORK) != 0) ? TRUE : FALSE)
+#define	fFeaturePS			(((TermFeature & FEATURE_PS) != 0) ? TRUE : FALSE)
+#define	fFeatureOld			(((TermFeature & FEATURE_OLD) != 0) ? TRUE : FALSE)
+#define	fFeaturePDF			(((TermFeature & FEATURE_PDF) != 0) ? TRUE : FALSE)
+
 extern	void	GL_SendPacketClass(NETFILE *fp, PacketClass c, Bool fNetwork);
 extern	PacketClass	GL_RecvPacketClass(NETFILE *fp, Bool fNetwork);
 
@@ -39,4 +58,13 @@ extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, char *coding,
 							 Bool fBlob, Bool fExpand, Bool fNetwork);
 
 extern	void	InitGL_Comm(void);
+
+#undef	GLOBAL
+#ifdef	MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+GLOBAL	byte	TermFeature;
+
 #endif

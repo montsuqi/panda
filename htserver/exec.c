@@ -35,7 +35,6 @@
 
 #include	"const.h"
 #include	"types.h"
-#include	"libmondai.h"
 #include	"htc.h"
 #include	"cgi.h"
 #include	"multipart.h"
@@ -570,8 +569,8 @@ ENTER_FUNC;
 				vval.type = VAR_PTR;
 				Push(vval);
 				break;
-			  case	OPC_NAME:
-				dbgmsg("OPC_NAME");
+			  case	OPC_EVAL:
+				dbgmsg("OPC_EVAL");
 				str = LBS_FetchPointer(htc->code);
 				name = ParseName(str);
 				vval.body.sval = StrDup(name);

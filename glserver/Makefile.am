@@ -40,10 +40,8 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/libs	\
 	$(GLIB_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(MONDAI_CFLAGS)		\
-	-DBIN_DIR=\"$(bindir)\"
+	$(MONDAI_CFLAGS)
 
 glserver_SOURCES	=		\
 	glserver.c	glserver.h	\
-	glcomm.c	glcomm.h	\
 	server.c

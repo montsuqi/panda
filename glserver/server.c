@@ -362,23 +362,23 @@ ThisAuth(
 #endif
 
 static	void
-CheckFeture(
+CheckFeature(
 	char	*ver)
 {
 	char	*p
 		,	*q
 		,	*n;
 
-	TermFeture = FEATURE_NULL;
+	TermFeature = FEATURE_NULL;
 	if		(  strlcmp(ver,"1.2")    ==  0  ) {
-		TermFeture |= FEATURE_CORE;
+		TermFeature |= FEATURE_CORE;
 	} else
 	  if	(	(  strlcmp(ver,"1.1.1")  ==  0  )
 			||	(  strlcmp(ver,"1.1.2")  ==  0  ) ) {
-		TermFeture |= FEATURE_CORE;
-		TermFeture |= FEATURE_OLD;
+		TermFeature |= FEATURE_CORE;
+		TermFeature |= FEATURE_OLD;
 	} else {
-		TermFeture = FEATURE_CORE;
+		TermFeature = FEATURE_CORE;
 		if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
 			p ++;
 			while	(  *p  !=  0  ) {
@@ -389,36 +389,36 @@ CheckFeture(
 					n = p + strlen(p);
 				}
 				if		(  !strlicmp(p,"blob")  ) {
-					TermFeture |= FEATURE_BLOB;
+					TermFeature |= FEATURE_BLOB;
 				}
 				if		(  !strlicmp(p,"expand")  ) {
-					TermFeture |= FEATURE_EXPAND;
+					TermFeature |= FEATURE_EXPAND;
 				}
 				if		(  !strlicmp(p,"i18n")  ) {
-					TermFeture |= FEATURE_I18N;
+					TermFeature |= FEATURE_I18N;
 				}
 				if		(  !strlicmp(p,"no")  ) {
-					TermFeture |= FEATURE_NETWORK;
+					TermFeature |= FEATURE_NETWORK;
 				}
 				if		(  !strlicmp(p,"ps")  ) {
-					TermFeture |= FEATURE_PS;
+					TermFeature |= FEATURE_PS;
 				}
 				if		(  !strlicmp(p,"pdf")  ) {
-					TermFeture |= FEATURE_PDF;
+					TermFeature |= FEATURE_PDF;
 				}
 				p = n;
 			}
 		}
 	}
 #ifdef	DEBUG
-	printf("core      = %s\n",fFetureCore ? "YES" : "NO");
-	printf("i18n      = %s\n",fFetureI18N ? "YES" : "NO");
-	printf("blob      = %s\n",fFetureBlob ? "YES" : "NO");
-	printf("expand    = %s\n",fFetureExpand ? "YES" : "NO");
-	printf("network   = %s\n",fFetureNetwork ? "YES" : "NO");
-	printf("ps        = %s\n",fFeturePS ? "YES" : "NO");
-	printf("old       = %s\n",fFetureOld ? "YES" : "NO");
-	printf("pdf       = %s\n",fFeturePDF ? "YES" : "NO");
+	printf("core      = %s\n",fFeatureCore ? "YES" : "NO");
+	printf("i18n      = %s\n",fFeatureI18N ? "YES" : "NO");
+	printf("blob      = %s\n",fFeatureBlob ? "YES" : "NO");
+	printf("expand    = %s\n",fFeatureExpand ? "YES" : "NO");
+	printf("network   = %s\n",fFeatureNetwork ? "YES" : "NO");
+	printf("ps        = %s\n",fFeaturePS ? "YES" : "NO");
+	printf("old       = %s\n",fFeatureOld ? "YES" : "NO");
+	printf("pdf       = %s\n",fFeaturePDF ? "YES" : "NO");
 #endif
 }
 
@@ -433,13 +433,13 @@ Connect(
 
 	Bool	rc = FALSE;
 	GL_RecvString(fpComm, sizeof(ver), ver, FALSE);	ON_IO_ERROR(fpComm,badio);
-	CheckFeture(ver);
+	CheckFeature(ver);
 	GL_RecvString(fpComm, sizeof(scr->user), scr->user,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm, sizeof(pass), pass, fFeatureNetwork);		ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm, sizeof(scr->cmd), scr->cmd, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 	Message("[%s@%s] session start",scr->user, TermToHost(scr->term));
 
-	if		(  TermFeture  ==  FEATURE_NULL  ) {
+	if		(  TermFeature  ==  FEATURE_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_E_VERSION,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
 		Warning("[%s@%s] reject client(invalid version)",scr->user,TermToHost(scr->term));

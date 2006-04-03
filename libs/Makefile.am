@@ -80,7 +80,8 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/dblib	\
 	$(GTK_CFLAGS)			\
 	$(GLIB_CFLAGS)			\
-	$(MONDAI_CFLAGS)
+	$(MONDAI_CFLAGS)		\
+	-DBIN_DIR=\"$(bindir)\"
 
 enum_LDADD	= 	\
 	 -lm	\
@@ -127,6 +128,7 @@ libpandas_a_SOURCES	=			\
 	front.c		front.h				\
 	comm.c		comm.h				\
 	comms.c		comms.h				\
+	glcomm.c	glcomm.h			\
 	auth.c		auth.h				\
 	authstub.c	authstub.h			\
 	load.c		load.h

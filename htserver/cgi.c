@@ -335,28 +335,6 @@ StartScanEnv(
 	char	*env)
 {
 	ScanArgValue = env;
-
-#if	0
-	if		(  *env  !=  0  ) {
-		while	(  *env  !=  0  ) {
-			switch	(*env) {
-			  case	'%':
-				env ++;
-				c = ( HexCharToInt(*env) << 4) ;
-				env ++;
-				c |= HexCharToInt(*env);
-				break;
-			  case	'+':
-				c = ' ';
-				break;
-			  default:
-				c = *env;
-				break;
-			}
-			env ++;
-		}
-	}
-#endif
 }
 
 static	Bool

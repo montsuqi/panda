@@ -512,7 +512,6 @@ ENTER_FUNC;
 				SaveValue("_name",name,FALSE);
                 if ((file = LoadValue("_file")) != NULL) {
                     ValueStruct *value = HT_GetValue(file, TRUE);
-
                     if (value != NULL && !IS_VALUE_NIL(value)) {
                         PutFile(value);
                         HT_SendString("\n");

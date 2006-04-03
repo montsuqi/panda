@@ -132,7 +132,7 @@ EmitAttributeValue(
 	}
 	switch	(*str) {
 	  case '$':
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(str+1));
 		EmitCode(htc,OPC_PHSTR);
 		if (fEncodeURL) {
@@ -144,22 +144,7 @@ EmitAttributeValue(
 		EmitCode(htc,OPC_EMITSTR);
 		break;
 	  default:
-#if	1
 		LBS_EmitString(htc->code,str);
-#else
-		EmitCode(htc,OPC_NAME);
-		LBS_EmitPointer(htc->code,StrDup(str));
-		if (fEncodeURL) {
-			EmitCode(htc,OPC_LOCURI);
-			EmitCode(htc,OPC_EMITSTR);
-		} else
-		if (fEscapeJavaScriptString) {
-			EmitCode(htc,OPC_ESCJSS);
-			EmitCode(htc,OPC_EMITSTR);
-		} else {
-			EmitCode(htc,OPC_EMITRAW);
-		}
-#endif
 		break;
 	}
 	if		(  fQuote  ) {
@@ -198,7 +183,7 @@ ExpandAttributeString(
 	}
 	switch	(*para) {
 	  case	'$':
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(para+1));
 		EmitCode(htc,OPC_PHSTR);
 		EmitCode(htc,OPC_EMITSTR);
@@ -267,11 +252,11 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
 				*p = 0;
 				if		(	(  buf[0]  ==  '$'  )
 						||	(  buf[0]  ==  '#'  ) ) {
-					EmitCode(htc,OPC_NAME);
+					EmitCode(htc,OPC_EVAL);
 					LBS_EmitPointer(htc->code,StrDup(buf));
 					EmitCode(htc,OPC_EMITSTR);
 				} else {
-					EmitCode(htc,OPC_NAME);
+					EmitCode(htc,OPC_EVAL);
 					LBS_EmitPointer(htc->code,StrDup(buf));
 					EmitCode(htc,OPC_PHSTR);
 					EmitCode(htc,OPC_EMITSTR);
@@ -356,13 +341,13 @@ ENTER_FUNC;
             LBS_EmitString(htc->code,"<input type=\"text\" name=\"");
         }
 
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(name));
 		EmitCode(htc,OPC_EMITSTR);
 
 		LBS_EmitString(htc->code,"\" value=\"");
 
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(name));
 		EmitCode(htc,OPC_PHSTR);
 		EmitCode(htc,OPC_EMITRAW);
@@ -370,7 +355,7 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,"\"");
 		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code," size=\"");
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(size));
 			EmitCode(htc,OPC_EMITSTR);
 			LBS_EmitString(htc->code,"\"");
@@ -379,7 +364,7 @@ ENTER_FUNC;
 		if		(  ( maxlength = GetArg(tag,"maxlength",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code," maxlength=\"");
 
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(maxlength));
 			EmitCode(htc,OPC_EMITSTR);
 			LBS_EmitString(htc->code,"\"");
@@ -447,7 +432,7 @@ ENTER_FUNC;
 		if		(  ( link = GetArg(tag,"link",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code,"<a href=\"");
 
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(link));
 			EmitCode(htc,OPC_PHSTR);
 			EmitCode(htc,OPC_EMITSTR);
@@ -465,10 +450,10 @@ ENTER_FUNC;
 		} else {
 			if		(	(  name[0]  ==  '$'  )
 					||	(  name[0]  ==  '#'  ) ) {
-				EmitCode(htc,OPC_NAME);
+				EmitCode(htc,OPC_EVAL);
 				LBS_EmitPointer(htc->code,StrDup(name));
 			} else {
-				EmitCode(htc,OPC_NAME);
+				EmitCode(htc,OPC_EVAL);
 				LBS_EmitPointer(htc->code,StrDup(name));
 				EmitCode(htc,OPC_PHSTR);
 			}
@@ -516,7 +501,7 @@ _Combo(
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<select name=\"");
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	vname = StrDup(GetArg(tag,"name",0));
 	LBS_EmitPointer(htc->code,vname);
 	EmitCode(htc,OPC_EMITSTR);
@@ -525,7 +510,7 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,"\"");
 	} else {
 		LBS_EmitString(htc->code,"\" size=");
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
 		EmitCode(htc,OPC_EMITSTR);
 		LBS_EmitString(htc->code,"\"");
@@ -549,10 +534,10 @@ ENTER_FUNC;
 
 	LBS_EmitString(htc->code,"<option ");
 	/*	selected	*/
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,vname);
 	EmitCode(htc,OPC_PHSTR);
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	sprintf(name,"%s[#]",GetArg(tag,"item",0));
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_PHSTR);
@@ -570,7 +555,7 @@ ENTER_FUNC;
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	sprintf(name,"%s[#]",GetArg(tag,"item",0));
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_PHSTR);
@@ -681,7 +666,7 @@ ENTER_FUNC;
 #endif
 
 	LBS_EmitString(htc->code," name=\"");
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	name = StrDup(GetArg(tag,"name",0));
 	LBS_EmitPointer(htc->code,name);
 	EmitCode(htc,OPC_EMITSTR);
@@ -700,7 +685,7 @@ ENTER_FUNC;
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,name);
 	EmitCode(htc,OPC_PHSTR);
 	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
@@ -820,7 +805,7 @@ ENTER_FUNC;
 			EmitCode(htc,OPC_ICONST);
 			LBS_EmitInt(htc->code,atoi(from));
 		} else {
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(from));
 			EmitCode(htc,OPC_PHINT);
 		}
@@ -835,7 +820,7 @@ ENTER_FUNC;
 			EmitCode(htc,OPC_ICONST);
 			LBS_EmitInt(htc->code,atoi(to));
 		} else {
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(to));
 			EmitCode(htc,OPC_PHINT);
 		}
@@ -848,7 +833,7 @@ ENTER_FUNC;
 			EmitCode(htc,OPC_ICONST);
 			LBS_EmitInt(htc->code,atoi(step));
 		} else {
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(step));
 			EmitCode(htc,OPC_PHINT);
 		}
@@ -918,7 +903,7 @@ _Button(
 
 ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(state));
 		EmitCode(htc,OPC_PHINT);
 	} else {
@@ -967,7 +952,7 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,"\"");
 		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code," size=");
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(size));
 			EmitCode(htc,OPC_EMITSTR);
 		}
@@ -991,7 +976,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code,"\"");
 			if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
 				LBS_EmitString(htc->code," size=");
-				EmitCode(htc,OPC_NAME);
+				EmitCode(htc,OPC_EVAL);
 				LBS_EmitPointer(htc->code,StrDup(size));
 				EmitCode(htc,OPC_EMITSTR);
 			}
@@ -1031,7 +1016,7 @@ _Span(
 
 ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(state));
 		EmitCode(htc,OPC_PHINT);
 	} else {
@@ -1078,7 +1063,7 @@ _A(
 
 ENTER_FUNC;
 	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(state));
 		EmitCode(htc,OPC_PHINT);
 	} else {
@@ -1136,11 +1121,11 @@ _ToggleButton(
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\" ");
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code,"checked ");
@@ -1149,7 +1134,7 @@ ENTER_FUNC;
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(label));
 		EmitCode(htc,OPC_PHSTR);
 		EmitCode(htc,OPC_EMITSTR);
@@ -1166,11 +1151,11 @@ _CheckButton(
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\" ");
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code,"checked");
@@ -1180,7 +1165,7 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
 		if		(  *label  ==  '$'  ) {
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(label+1));
 			EmitCode(htc,OPC_PHSTR);
 			EmitCode(htc,OPC_EMITSTR);
@@ -1204,18 +1189,18 @@ ENTER_FUNC;
 	group = GetArg(tag,"group",0); 
 	name = GetArg(tag,"name",0); 
 	LBS_EmitString(htc->code,"<input type=\"radio\" name=\"");
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(group));
 	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\" ");
 
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code,"checked");
 
 	LBS_EmitString(htc->code," value=\"");
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\"");
@@ -1225,7 +1210,7 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,">");
 	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
 		if		(  *label  ==  '$'  ) {
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(label+1));
 			EmitCode(htc,OPC_PHSTR);
 			EmitCode(htc,OPC_EMITSTR);
@@ -1250,13 +1235,13 @@ ENTER_FUNC;
         (label = GetArg(tag,"label",0)) != NULL &&
         (count = GetArg(tag,"count",0)) != NULL) {
         LBS_EmitString(htc->code,"<select name=\"");
-        EmitCode(htc,OPC_NAME);
+        EmitCode(htc,OPC_EVAL);
         LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
         EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"\"");
         if ((size = GetArg(tag,"size",0)) != NULL) {
             LBS_EmitString(htc->code," size=\"");
-            EmitCode(htc,OPC_NAME);
+            EmitCode(htc,OPC_EVAL);
             LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
             EmitCode(htc,OPC_EMITSTR);
             LBS_EmitString(htc->code,"\"");
@@ -1283,7 +1268,7 @@ ENTER_FUNC;
 
         LBS_EmitString(htc->code,"<option value=\"");
         if ((value = GetArg(tag,"value",0)) != NULL) {
-			EmitCode(htc,OPC_NAME);
+			EmitCode(htc,OPC_EVAL);
 			sprintf(buf,"%s[#]",value);
 			LBS_EmitPointer(htc->code,StrDup(buf));
 			EmitCode(htc,OPC_PHSTR);
@@ -1295,14 +1280,14 @@ ENTER_FUNC;
 		}
         LBS_EmitString(htc->code,"\"");
 
-        EmitCode(htc,OPC_NAME);
+        EmitCode(htc,OPC_EVAL);
         sprintf(buf,"%s[#] ",name);
         LBS_EmitPointer(htc->code,StrDup(buf));
         EmitCode(htc,OPC_HBES);
         LBS_EmitPointer(htc->code,"selected");
         LBS_EmitString(htc->code,">");
 
-        EmitCode(htc,OPC_NAME);
+        EmitCode(htc,OPC_EVAL);
         sprintf(buf,"%s[#]",label);
         LBS_EmitPointer(htc->code,StrDup(buf));
 		EmitCode(htc,OPC_PHSTR);
@@ -1333,7 +1318,7 @@ ENTER_FUNC;
 			&&	(  ( sel   = GetArg(tag,"select",0) )  !=  NULL  )
 			&&	(  ( count = GetArg(tag,"count",0) )   !=  NULL  ) ) {
         LBS_EmitString(htc->code,"<select name=\"");
-        EmitCode(htc,OPC_NAME);
+        EmitCode(htc,OPC_EVAL);
         LBS_EmitPointer(htc->code,StrDup(sel));
         EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"\" size=\"1\"");
@@ -1362,7 +1347,7 @@ ENTER_FUNC;
 
 		EmitCode(htc,OPC_LDVAR);
 		LBS_EmitPointer(htc->code,NULL);
-        EmitCode(htc,OPC_NAME);
+        EmitCode(htc,OPC_EVAL);
         LBS_EmitPointer(htc->code,StrDup(sel));
 		EmitCode(htc,OPC_PHSTR);
 		EmitCode(htc,OPC_TOINT);
@@ -1382,7 +1367,7 @@ ENTER_FUNC;
 
         LBS_EmitString(htc->code,">");
 
-        EmitCode(htc,OPC_NAME);
+        EmitCode(htc,OPC_EVAL);
         sprintf(buf,"%s[#]",item);
         LBS_EmitPointer(htc->code,StrDup(buf));
 		EmitCode(htc,OPC_PHSTR);
@@ -1415,13 +1400,13 @@ _Select(
 ENTER_FUNC;
 	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
         LBS_EmitString(htc->code,"<select name=\"");
-        EmitCode(htc,OPC_NAME);
+        EmitCode(htc,OPC_EVAL);
         LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
         EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"\"");
         if ((size = GetArg(tag,"size",0)) != NULL) {
             LBS_EmitString(htc->code," size=\"");
-            EmitCode(htc,OPC_NAME);
+            EmitCode(htc,OPC_EVAL);
             LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
             EmitCode(htc,OPC_EMITSTR);
             LBS_EmitString(htc->code,"\"");
@@ -1466,7 +1451,7 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,"\" ");
 	}
 	if		(  ( select = GetArg(tag,"select",0) )  !=  NULL  ) {
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(select));
 		EmitCode(htc,OPC_HBES);
 		LBS_EmitPointer(htc->code,"selected");
@@ -1485,12 +1470,12 @@ ENTER_FUNC;
     if ((name = GetArg(tag, "name", 0)) != NULL &&
         (filename = GetArg(tag, "filename", 0)) != NULL) {
 		LBS_EmitString(htc->code, "<input type=\"file\" name=\"");
-		EmitCode(htc, OPC_NAME);
+		EmitCode(htc, OPC_EVAL);
 		LBS_EmitPointer(htc->code, StrDup(name));
 		EmitCode(htc, OPC_EMITSTR);
 
 		LBS_EmitString(htc->code, "\" value=\"");
-		EmitCode(htc, OPC_NAME);
+		EmitCode(htc, OPC_EVAL);
 		LBS_EmitPointer(htc->code, StrDup(filename));
 		EmitCode(htc,OPC_PHSTR);
 		EmitCode(htc,OPC_EMITSTR);
@@ -1498,7 +1483,7 @@ ENTER_FUNC;
 
 		if ((size = GetArg(tag, "size", 0)) != NULL) {
 			LBS_EmitString(htc->code, " size=\"");
-			EmitCode(htc, OPC_NAME);
+			EmitCode(htc, OPC_EVAL);
 			LBS_EmitPointer(htc->code, StrDup(size));
 			EmitCode(htc, OPC_EMITSTR);
 			LBS_EmitString(htc->code, "\"");
@@ -1506,7 +1491,7 @@ ENTER_FUNC;
 
         if ((maxlength = GetArg(tag, "maxlength", 0)) != NULL) {
 			LBS_EmitString(htc->code, " maxlength=\"");
-			EmitCode(htc, OPC_NAME);
+			EmitCode(htc, OPC_EVAL);
 			LBS_EmitPointer(htc->code, StrDup(maxlength));
 			EmitCode(htc, OPC_EMITSTR);
 			LBS_EmitString(htc->code, "\"");
@@ -1556,7 +1541,7 @@ ENTER_FUNC;
                      "document.forms[%d].elements[0].value='",
                      htc->FormNo, htc->FormNo);
             LBS_EmitString(htc->code, buf);
-            EmitCode(htc, OPC_NAME);
+            EmitCode(htc, OPC_EVAL);
             LBS_EmitPointer(htc->code, StrDup(event));
             EmitCode(htc, OPC_ESCJSS);
             EmitCode(htc, OPC_EMITSTR);
@@ -1567,7 +1552,7 @@ ENTER_FUNC;
                 snprintf(buf, SIZE_BUFF,
                          "document.forms[%d].elements[1].name='", htc->FormNo);
                 LBS_EmitString(htc->code, buf);
-                EmitCode(htc, OPC_NAME);
+                EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(name));
                 EmitCode(htc, OPC_ESCJSS);
                 EmitCode(htc, OPC_EMITSTR);
@@ -1588,7 +1573,7 @@ ENTER_FUNC;
             LBS_EmitString(htc->code,ScriptName);
             if ((filename = GetArg(tag, "filename", 0)) != NULL) {
                 LBS_EmitChar(htc->code, '/');
-                EmitCode(htc, OPC_NAME);
+                EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(filename));
                 EmitCode(htc, OPC_PHSTR);
                 EmitCode(htc, OPC_UTF8URI);
@@ -1597,7 +1582,7 @@ ENTER_FUNC;
             LBS_EmitString(htc->code, "?_name=");
             EmitGetValue(htc,"_name");
             LBS_EmitString(htc->code, "&amp;_event=");
-            EmitCode(htc, OPC_NAME);
+            EmitCode(htc, OPC_EVAL);
             LBS_EmitPointer(htc->code, StrDup(event));
             EmitCode(htc, OPC_EMITSTR);
             if (!fCookie) {
@@ -1607,7 +1592,7 @@ ENTER_FUNC;
             if ((name = GetArg(tag, "name", 0)) != NULL &&
                 (value = GetArg(tag, "value", 0)) != NULL) {
                 LBS_EmitString(htc->code,"&amp;");
-                EmitCode(htc, OPC_NAME);
+                EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code,StrDup(name));
                 EmitCode(htc, OPC_EMITSTR);
                 LBS_EmitString(htc->code,"=");
@@ -1615,25 +1600,25 @@ ENTER_FUNC;
             }
             if ((file = GetArg(tag, "file", 0)) != NULL) {
                 LBS_EmitString(htc->code, "&amp;_file=");
-                EmitCode(htc, OPC_NAME);
+                EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(file));
                 EmitCode(htc, OPC_EMITSTR);
             }
             if (filename != NULL) {
                 LBS_EmitString(htc->code, "&amp;_filename=");
-                EmitCode(htc, OPC_NAME);
+                EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(filename));
                 EmitCode(htc, OPC_EMITSTR);
             }
             if ((contenttype = GetArg(tag, "contenttype", 0)) != NULL) {
                 LBS_EmitString(htc->code, "&amp;_contenttype=");
-                EmitCode(htc, OPC_NAME);
+                EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(contenttype));
                 EmitCode(htc, OPC_EMITSTR);
             }
             if ((disposition = GetArg(tag, "disposition", 0)) != NULL) {
                 LBS_EmitString(htc->code, "&amp;_disposition=");
-                EmitCode(htc, OPC_NAME);
+                EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(disposition));
                 EmitCode(htc, OPC_EMITSTR);
             }
@@ -1671,7 +1656,7 @@ ENTER_FUNC;
         Push(0);
     }
     else {
-        EmitCode(htc, OPC_NAME);
+        EmitCode(htc, OPC_EVAL);
         LBS_EmitPointer(htc->code, StrDup(visible));
         EmitCode(htc, OPC_PHBOOL);
         EmitCode(htc, OPC_JNZP);
@@ -1748,7 +1733,7 @@ ENTER_FUNC;
 		LBS_EmitInt(htc->code,this_yy);
 	} else {
 		year = StrDup(year);
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,year);
 		EmitCode(htc,OPC_PHINT);
 		EmitCode(htc,OPC_JNZNP);
@@ -1766,7 +1751,7 @@ ENTER_FUNC;
 		LBS_EmitInt(htc->code,this_mm);
 	} else {
 		month = StrDup(month);
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,month);
 		EmitCode(htc,OPC_PHINT);
 		EmitCode(htc,OPC_JNZNP);
@@ -1784,7 +1769,7 @@ ENTER_FUNC;
 		LBS_EmitInt(htc->code,this_dd);
 	} else {
 		day = StrDup(day);
-		EmitCode(htc,OPC_NAME);
+		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,day);
 		EmitCode(htc,OPC_PHINT);
 		EmitCode(htc,OPC_JNZNP);
@@ -1797,11 +1782,11 @@ ENTER_FUNC;
 		LBS_EmitInt(htc->code,pos);
 		LBS_SetPos(htc->code,pos);
 	}
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,year);
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,month);
-	EmitCode(htc,OPC_NAME);
+	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,day);
 	EmitCode(htc,OPC_CALENDAR);
 	if		(  ( lborder = GetArg(tag,"lborder",0) )  ==  NULL  ) {

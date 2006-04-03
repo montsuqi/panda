@@ -42,7 +42,6 @@
 
 #include	"types.h"
 #include	"libmondai.h"
-#include	"glserver.h"
 #include	"glcomm.h"
 #include	"front.h"
 #include	"debug.h"
