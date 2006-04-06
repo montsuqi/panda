@@ -751,6 +751,7 @@ ENTER_FUNC;
 	EmitAttribute(htc,tag,"lang");
 	EmitAttribute(htc,tag,"title");
 	JavaScriptEvent(htc,tag,"oncontextmenu");
+	JavaScriptEvent(htc,tag,"onload");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">\n");
 LEAVE_FUNC;
@@ -2119,6 +2120,7 @@ ENTER_FUNC;
 	AddArg(tag,"lang",TRUE);
 	AddArg(tag,"title",TRUE);
 	AddArg(tag,"oncontextmenu",TRUE);
+	AddArg(tag,"onload",TRUE);
 
 	tag = NewTag("/BODY",_eBody);
 	tag = NewTag("/HTML",_eHtml);

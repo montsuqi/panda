@@ -105,7 +105,6 @@ ENTER_FUNC;
 					LBS_EmitChar(htc->code,HTC_Token);
 					break;
 				}
-				GetName;
 			} else {
 				switch( HTC_Token ){
 				  case T_SYMBOL:
@@ -120,12 +119,11 @@ ENTER_FUNC;
 		  case	T_SCONST:
 			para = HTC_ComSymbol;
 			ExpandAttributeString(htc,para);
-			GetName;
 			break;
 		  default:
-			GetName;
 			break;
 		}
+		GetName;
 	}
 	LBS_EmitChar(htc->code,HTC_Token);
 LEAVE_FUNC;
@@ -654,7 +652,7 @@ ENTER_FUNC;
 			lbs = NewLBS();
 			RecordData(lbs);
 			write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
-#if	0
+#ifdef	DEBUG
 			printf("code:-------\n");
 			printf("%s",(char *)LBS_Body(lbs));
 			printf("%s",str);
