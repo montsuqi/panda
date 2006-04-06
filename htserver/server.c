@@ -1,27 +1,27 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
-#define	TRACE
 */
+#define	TRACE
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -109,20 +109,28 @@ SendWindowName(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
+    LargeByteString	*lbs;
 	void
 	SendWindow(
 		char		*wname,
 		WindowData	*win,
 		NETFILE		*fp)
 	{
+		int		size;
+
 		if		(  win->PutType  !=  SCREEN_NULL  ) {
 			switch	(win->PutType) {
 			  case	SCREEN_CURRENT_WINDOW:
 			  case	SCREEN_NEW_WINDOW:
 			  case	SCREEN_CHANGE_WINDOW:
-				SendStringDelim(fp,"Window: ");
-				SendStringDelim(fp,wname);
-				SendStringDelim(fp,"\n");
+				SendPacketClass(fp,GL_WindowName);
+				dbgprintf("window = [%s]",wname);
+				SendString(fp,wname);
+				size = NativeSaveSize(win->rec->value,TRUE);
+				LBS_ReserveSize(lbs,size,FALSE);
+				RewindLBS(lbs);
+				NativeSaveValue(LBS_Body(lbs),win->rec->value,TRUE);
+				SendLBS(fp,lbs);
 				break;
 			  default:
 				break;
@@ -131,8 +139,10 @@ SendWindowName(
 		}
 	}
 ENTER_FUNC;
+    lbs = NewLBS();
 	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fp);
-	SendStringDelim(fp,"\n");
+    FreeLBS(lbs);
+	SendPacketClass(fp,GL_END);
 LEAVE_FUNC;
 }
 
@@ -141,6 +151,7 @@ WriteClient(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
+#if	0
 	char	buff[SIZE_BUFF+1];
 	char	*vname
 	,		*wname;
@@ -149,9 +160,10 @@ WriteClient(
 	char	*p;
     LargeByteString	*lbs;
 	size_t	size;
-
+#endif
 ENTER_FUNC;
 	SendWindowName(fp,scr);
+#if	0
     lbs = NewLBS();
 	do {
 		if		(  !RecvStringDelim(fp,SIZE_BUFF,buff)  )	break;
@@ -185,6 +197,7 @@ ENTER_FUNC;
 		}
 	}	while	(  *buff  !=  0  );
     FreeLBS(lbs);
+#endif
 LEAVE_FUNC;
 }
 
@@ -203,13 +216,17 @@ RecvScreenData(
 	ValueStruct	*v;
 	char		*p
 		,		*pend;
+	PacketClass	klass;
 
 ENTER_FUNC;
     lbs = NewLBS();
-    while (RecvStringDelim(fp, SIZE_BUFF, buff) && *buff != '\0') {
+	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_ScreenData  ) {
+		RecvString(fp,buff);
+dbgprintf("name = [%s]",buff);
         DecodeName(&wname, &vname, buff);
         LBS_EmitStart(lbs);
         RecvLBS(fp, lbs);
+dbgprintf("value = [%s]",LBS_Body(lbs));
         if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
 			if		(  ( value = GetItemLongName(win->rec->value, vname) )  ==  NULL  ) {
 				fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
@@ -303,6 +320,7 @@ SesServer(
 	fd_set		ready;
 	struct	timeval	timeout;
 	int		sts;
+	PacketClass	klass;
 
 ENTER_FUNC;
 	do {
@@ -319,32 +337,34 @@ ENTER_FUNC;
 			dbgmsg("session");
             fp = SocketToNet(fd);
 			EncodeTRID(trid,htc.ses,0);
-			SendStringDelim(fp,trid);
-			SendStringDelim(fp,"\n");
-			RecvStringDelim(fp,SIZE_BUFF,buff);
-			dbgprintf("buff = [%s]\n",buff);
-			if		(  *buff  ==  0  ) {
-				strcpy(scr->event,"");
-				strcpy(scr->widget,"");
-			} else
-			if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
-				*p = 0;
-				strcpy(scr->event,buff);
-				strcpy(scr->widget,p+1);
-			} else {
-				strcpy(scr->widget,"");
-				strcpy(scr->event,buff);
-			}
-			sts = APL_SESSION_GET;
-			RecvScreenData(fp,scr);
-			dbgprintf("user = [%s]\n",scr->user);
-			dbgprintf("cmd  = [%s]\n",scr->cmd);
-			ApplicationsCall(sts,scr);
-			while	(  scr->status  ==  APL_SESSION_LINK  ) {
-				ApplicationsCall(scr->status,scr);
-			}
-			if		(  scr->status  !=  APL_SESSION_NULL  ) {
-				WriteClient(fp,scr);
+			SendPacketClass(fp,GL_Session);
+			SendString(fp,trid);
+			if		(  ( klass = RecvPacketClass(fp) )  ==  GL_Event  ) {
+				RecvString(fp,buff);
+				dbgprintf("event = [%s]\n",buff);
+				if		(  *buff  ==  0  ) {
+					strcpy(scr->event,"");
+					strcpy(scr->widget,"");
+				} else
+				if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
+					*p = 0;
+					strcpy(scr->event,buff);
+					strcpy(scr->widget,p+1);
+				} else {
+					strcpy(scr->widget,"");
+					strcpy(scr->event,buff);
+				}
+				sts = APL_SESSION_GET;
+				RecvScreenData(fp,scr);
+				dbgprintf("user = [%s]\n",scr->user);
+				dbgprintf("cmd  = [%s]\n",scr->cmd);
+				ApplicationsCall(sts,scr);
+				while	(  scr->status  ==  APL_SESSION_LINK  ) {
+					ApplicationsCall(scr->status,scr);
+				}
+				if		(  scr->status  !=  APL_SESSION_NULL  ) {
+					WriteClient(fp,scr);
+				}
 			}
 			CloseNet(fp);
 		}
@@ -385,8 +405,8 @@ ENTER_FUNC;
 	}
 	if		(  fOk  ) {
 		EncodeTRID(trid,sesid,0);
-		SendStringDelim(fp,trid);
-		SendStringDelim(fp,"\n");
+		SendPacketClass(fp,GL_Session);
+		SendString(fp,trid);
 		WriteClient(fp,scr);
 		CloseNet(fp);
 		SesServer(scr,sock);
@@ -452,7 +472,9 @@ ENTER_FUNC;
 		htc->ses = cSession;
 		htc->count = 0;
 		g_int_hash_table_insert(SesHash,htc->ses,htc);
+#ifndef	DEBUG
 		cSession += (rand()>>16)+1;		/*	some random number	*/
+#endif
 	}
 LEAVE_FUNC;
 }
@@ -498,6 +520,7 @@ ExecuteServer(void)
 	,			count;
 	HTC_Node	*htc;
 	Port	*port;
+	PacketClass	klass;
 
 ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
@@ -511,24 +534,28 @@ ENTER_FUNC;
 			Error("INET Domain Accept");
 		}
 		fp = SocketToNet(fd);
-		RecvStringDelim(fp,SIZE_BUFF,buff);
-		dbgprintf(">> [%s]\n",buff);
-		if		(  strncmp(buff,"Start:",6)  ==  0  ) {
-			NewSession(fp,buff+7);
-		} else
-		if		(  strncmp(buff,"Session:",8)  ==  0  ) {
-			DecodeTRID(&ses,&count,buff+9);
+		klass = RecvPacketClass(fp);
+		RecvString(fp,buff);
+		switch	(klass) {
+		  case	GL_Connect:
+			NewSession(fp,buff);
+			break;
+		  case	GL_Session:
+			DecodeTRID(&ses,&count,buff);
 			if		(  (  htc = g_int_hash_table_lookup(SesHash,ses) )  !=  NULL  ) {
 				htc->count = count;
 				if		(  SendMessage(htc->sock,fd,htc,sizeof(HTC_Node))  <  0  ) {
 					EncodeTRID(buff,0,0);
-					SendStringDelim(fp,buff);
-					SendStringDelim(fp,"\n");
+					SendPacketClass(fp,GL_Session);
+					SendString(fp,buff);
 					dbgprintf("<< [%s]\n",buff);
 					xfree(htc);
 					g_hash_table_remove(SesHash,(void *)ses);
 				}
 			}
+			break;
+		  default:
+			break;
 		}
 		CloseNet(fp);
 	}
@@ -543,7 +570,11 @@ ENTER_FUNC;
 	RecParserInit();
 	BlobCacheCleanUp();
 	SesHash = NewIntHash();
+#ifdef	DEBUG
+	cSession = 0;
+#else
 	cSession = abs(rand());	/*	set some random number	*/
+#endif
 LEAVE_FUNC;
 }
 

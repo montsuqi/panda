@@ -1,3 +1,11 @@
+2006-04-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/HTCparser.c (HTCParseRHTCFile): erubyを組み込んだ
+
+2006-04-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/htc.c: Lex.cを使うのをやめた
+
 2006-03-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/exec.h (OPC_EVAL): OPC_NAMEから名称変更(実際に動作に合わせた)

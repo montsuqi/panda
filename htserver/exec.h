@@ -99,6 +99,8 @@ typedef	struct	_Expr	{
 #define	GLOBAL		extern
 #endif
 
+GLOBAL	GHashTable	*Records;
+
 #undef	GLOBAL
 
 extern	void	ExecCode(LargeByteString *html, HTCInfo *htc);

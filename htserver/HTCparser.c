@@ -35,8 +35,11 @@
 #include	<ctype.h>
 #include	<glib.h>
 #include	<unistd.h>
+#include	<iconv.h>
 #include	<sys/mman.h>
 #include	<sys/stat.h>
+#include	<sys/types.h>
+#include	<sys/wait.h>
 #include	<fcntl.h>
 #include	"types.h"
 #include	"libmondai.h"
@@ -47,6 +50,8 @@
 #include	"exec.h"
 #include	"tags.h"
 #include	"debug.h"
+
+#define		ERUBY_PATH		"/usr/bin/eruby"
 
 static	Bool	fError;
 
@@ -319,7 +324,7 @@ HTCParserCore(void)
 }
 
 extern	HTCInfo	*
-HTCParseFile(
+HTCParseHTCFile(
 	char	*fname)
 {
 	HTCInfo	*ret;
@@ -350,6 +355,351 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+static	char	*
+CheckCoding(
+	char	**sstr)
+{
+	char	*str = *sstr;
+	int		blace;
+	Bool	fMeta
+		,	fHTC
+		,	fXML
+		,	quote;
+	char	*p;
+	static	char	coding[SIZE_NAME+1];
+
+ENTER_FUNC;
+	blace = 0;
+	quote = FALSE;
+	fMeta = FALSE;
+	fHTC = FALSE;
+	fXML = FALSE;
+	strcpy(coding,"iso-2022-jp");
+	while	(  *str  !=  0  ) {
+		switch	(*str) {
+		  case	'<':
+			if		(  !strlicmp(str,"<HTC")  ) {
+				fHTC = TRUE;
+				str += strlen("<HTC");
+			} else
+			if		(  !strlicmp(str,"<?xml")  ) {
+				fXML = TRUE;
+				str += strlen("<?xml");
+			}
+			blace ++;
+			break;
+		  case	'>':
+			blace --;
+			if		(  blace  ==  0  ) {
+				fMeta = FALSE;
+			}
+			break;
+		  case	'm':
+		  case	'M':
+			if		(	(  blace  >   0  )
+					&&	(  !strlicmp(str,"meta")  ) ) {
+				fMeta = TRUE;
+				str += strlen("meta");
+			}
+			break;
+		  default:
+			break;
+		}
+		if		(  fMeta  ) {
+			if		(  !strlicmp(str,"charset")  ) {
+				str += strlen("charset");
+				p = coding;
+				while	(  isspace(*str)  )	str ++;
+				if		(  *str  ==  '='  )	str ++;
+				while	(  isspace(*str)  )	str ++;
+				while	(	(  !isspace(*str)  )
+						&&	(  *str  !=  '"'   ) ) {
+					*p ++ = *str ++;
+				}
+				*p = 0;
+				str --;
+				goto	quit;
+			}
+		} else
+		if		(  fHTC  ) {
+			while	(  isspace(*str)  )	str ++;
+			while	(  *str  !=  '>'  ) {
+				if		(  !strlicmp(str,"coding")  ) {
+					str += strlen("coding");
+					while	(  isspace(*str)  )	str ++;
+					if		(  *str  ==  '='  )	str ++;
+					while	(  isspace(*str)  )	str ++;
+					if		(  *str  ==  '"'  )	str ++;
+					p = coding;
+					while	(	(  !isspace(*str)  )
+								&&	(  *str  !=  '"'   ) ) {
+						*p ++ = *str ++;
+					}
+					*p = 0;
+				}
+				str ++;
+			}
+			str ++;
+			goto	quit;
+		} else
+		if		(  fXML  ) {
+			while	(  *str  !=  '>'  ) {
+				if		(  !strlicmp(str,"encoding")  ) {
+					str += strlen("encoding");
+					while	(  isspace(*str)  )	str ++;
+					if		(  *str  ==  '='  )	str ++;
+					while	(  isspace(*str)  )	str ++;
+					if		(  *str  ==  '"'  )	str ++;
+					p = coding;
+					while	(	(  !isspace(*str)  )
+							&&	(  *str  !=  '"'   ) ) {
+						*p ++ = *str ++;
+					}
+					*p = 0;
+				}
+				str ++;
+			}
+			str ++;
+			goto	quit;
+		}
+		str ++;
+	}
+  quit:
+	*sstr = str;
+LEAVE_FUNC;
+	return	(coding);
+}
+
+static	char	*
+ConvertEncoding(
+	char	*tcoding,
+	char	*coding,
+	char	*istr)
+{
+	iconv_t	cd;
+	size_t	sib
+		,	sob;
+	char	*ostr;
+	char	*cbuff;
+
+	cd = iconv_open(tcoding,coding);
+	sib = strlen(istr);
+	sob = sib * 2;
+	cbuff = (char *)xmalloc(sob);
+	ostr = cbuff;
+	iconv(cd,&istr,&sib,&ostr,&sob);
+	*ostr = 0;
+	iconv_close(cd);
+	return	(cbuff);
+}
+
+static	void
+_OutValue(
+	LargeByteString	*lbs,
+	ValueStruct	*value,
+	char		*name,
+	char		*longname)
+{
+	int		i;
+
+	if		(  value  ==  NULL  )	{
+	} else {
+		switch	(ValueType(value)) {
+		  case	GL_TYPE_INT:
+		  case	GL_TYPE_FLOAT:
+		  case	GL_TYPE_BOOL:
+		  case	GL_TYPE_NUMBER:
+			LBS_EmitString(lbs,"hostvalue['");
+			LBS_EmitString(lbs,longname);
+			LBS_EmitString(lbs,"'] = ");
+			if		(  IS_VALUE_NIL(value)  ) {
+				LBS_EmitString(lbs,"nil");
+			} else {
+				LBS_EmitString(lbs,ValueToString(value,NULL));
+			}
+			LBS_EmitString(lbs,"\n");
+			break;
+		  case	GL_TYPE_CHAR:
+		  case	GL_TYPE_VARCHAR:
+		  case	GL_TYPE_DBCODE:
+		  case	GL_TYPE_TEXT:
+		  case	GL_TYPE_SYMBOL:
+		  case	GL_TYPE_BINARY:
+			LBS_EmitString(lbs,"hostvalue['");
+			LBS_EmitString(lbs,longname);
+			LBS_EmitString(lbs,"'] = ");
+			if		(  IS_VALUE_NIL(value)  ) {
+				LBS_EmitString(lbs,"nil");
+			} else {
+				LBS_EmitString(lbs,"'");
+				LBS_EmitString(lbs,ValueToString(value,NULL));
+				LBS_EmitString(lbs,"'");
+			}
+			LBS_EmitString(lbs,"\n");
+			break;
+		  case	GL_TYPE_ARRAY:
+			for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
+				sprintf(name,"[%d]",i);
+				_OutValue(lbs,ValueArrayItem(value,i),(name+strlen(name)),longname);
+			}
+			break;
+		  case	GL_TYPE_VALUES:
+			for	( i = 0 ; i < ValueValuesSize(value) ; i ++ ) {
+			}
+			break;
+		  case	GL_TYPE_RECORD:
+			for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
+				sprintf(name,".%s",ValueRecordName(value,i));
+				_OutValue(lbs,ValueRecordItem(value,i),(name+strlen(name)),longname);
+			}
+			break;
+		  case	GL_TYPE_OBJECT:
+		  case	GL_TYPE_ALIAS:
+			break;
+		  default:
+			break;
+		}
+	}
+}
+	
+
+static	void
+_OutValues(
+	char	*name,
+	ValueStruct	*value,
+	LargeByteString	*lbs)
+{
+	char	longname[SIZE_LONGNAME+1];
+
+	strcpy(longname,name);
+	_OutValue(lbs,value,(longname + strlen(longname)),longname);
+}
+
+static	void
+RecordData(
+	LargeByteString	*lbs)
+{
+	LBS_EmitString(lbs,"<%\n");
+	LBS_EmitString(lbs,"hostvalue = Hash.new\n");
+	g_hash_table_foreach(Records,(GHFunc)_OutValues,lbs);
+	LBS_EmitString(lbs,"%>\n");
+}
+
+extern	HTCInfo	*
+HTCParseRHTCFile(
+	char	*fname)
+{
+	HTCInfo	*ret;
+	char	*str
+		,	*m;
+	struct	stat	sb;
+	int		fd
+		,	pid
+		,	i;
+	int		pSource[2]
+		,	pResult[2];
+	LargeByteString	*lbs;
+	char	buff[SIZE_BUFF];
+	size_t	size;
+
+	Bool	fChange;
+	char	*coding
+		,	*istr
+		,	*ostr;
+
+ENTER_FUNC;
+	if		(  stat(fname,&sb)  ==  0  ) {
+		if		(  pipe(pSource)  <  0  ) {
+			perror("pipe");
+			ret = NULL;
+		}
+		if		(  pipe(pResult)  <  0  ) {
+			perror("pipe");
+			ret = NULL;
+		}
+		if		(  ( pid = fork() )  ==  0  ) {
+			dup2(pSource[0],STDIN_FILENO);
+			dup2(pResult[1],STDOUT_FILENO);
+
+			close(pSource[0]);
+			close(pSource[1]);
+			close(pResult[0]);
+			close(pResult[1]);
+#if	1
+			execl(ERUBY_PATH,"eruby","-Mf","-Ku",NULL);
+#else
+			execl("/usr/bin/tee","eruby","aa",NULL);
+#endif
+		}
+		close(pSource[0]);
+		close(pResult[1]);
+		if		(  ( fd = open(fname,O_RDONLY ) )  >=  0  ) {
+			m = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0);
+			str = (char *)xmalloc(sb.st_size+1);
+			memcpy(str,m,sb.st_size);
+			munmap(m,sb.st_size);
+			str[sb.st_size] = 0;
+			close(fd);
+			istr = str;
+			coding = CheckCoding(&istr);
+			if		(	(  strcmp(coding,"utf-8")  !=  0  )
+					&&	(  strcmp(coding,"utf8")   !=  0  ) ) {
+				ostr = ConvertEncoding("utf-8",coding,istr);
+				xfree(str);
+				str = ostr;
+				fChange = TRUE;
+			} else {
+				fChange = FALSE;
+			}
+			lbs = NewLBS();
+			RecordData(lbs);
+			write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
+#if	0
+			printf("code:-------\n");
+			printf("%s",(char *)LBS_Body(lbs));
+			printf("%s",str);
+			printf("------------\n");
+#endif
+			FreeLBS(lbs);
+			write(pSource[1],str,strlen(str)+1);
+			close(pSource[1]);
+			(void)wait(&pid);
+			xfree(str);
+			fd = pResult[0];
+			lbs = NewLBS();
+			if		(  fChange  ) {
+				sprintf(buff,"<htc coding=\"%s\">",coding);
+				LBS_EmitString(lbs,buff);
+			}
+			while	(  ( size = read(fd,buff,SIZE_BUFF) )  >  0  ) {
+				for	( i = 0 ; i < size ; i ++ ) {
+					LBS_Emit(lbs,buff[i]);
+				}
+			}
+			close(fd);
+			str = LBS_ToString(lbs);
+			FreeLBS(lbs);
+			if		(  fChange  ) {
+				ostr = ConvertEncoding(coding,"utf-8",str);
+				xfree(str);
+				str = ostr;
+			}				
+			fError = FALSE;
+			HTC_FileName = fname;
+			HTC_cLine = 1;
+			HTC_Memory = str;
+			_HTC_Memory = str;
+			ret = HTCParserCore();
+		} else {
+			ret = NULL;
+		}
+	} else {
+		ret = NULL;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
 extern	HTCInfo	*
 HTCParseScreen(
 	char	*name)
@@ -368,8 +718,10 @@ ENTER_FUNC;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
+		sprintf(fname,"%s/%s.rhtc",p,name);
+		if		(  ( ret = HTCParseRHTCFile(fname) )  !=  NULL  )	break;
 		sprintf(fname,"%s/%s.htc",p,name);
-		if		(  ( ret = HTCParseFile(fname) )  !=  NULL  )	break;
+		if		(  ( ret = HTCParseHTCFile(fname) )  !=  NULL  )	break;
 		p = q + 1;
 	}	while	(  q  !=  NULL  );
 

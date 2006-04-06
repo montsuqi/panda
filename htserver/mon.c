@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 #define	MAIN
 /*
@@ -43,6 +43,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"net.h"
 #include	"comm.h"
 #include	"comms.h"
+#include	"glterm.h"
 #include	"HTCparser.h"
 #include	"cgi.h"
 #include	"mon.h"
@@ -101,33 +102,32 @@ SetDefault(void)
 	CommandLine = NULL;
 }
 
-static	void
-HT_SendString(
-	char	*str)
-{
-	SendStringDelim(fpServ,str);
-}
-
-static	Bool
-HT_RecvString(
-	size_t	size,
-	char	*str)
-{
-	Bool	rc;
-
-	rc = RecvStringDelim(fpServ,size,str);
-	dbgprintf("recv [%s]\n",str);
-	return	(rc);
-}
-
 static	ValueStruct	*
-HT_GetValue(char *name, Bool fClear)
+HT_GetValue(
+	char	*name,
+	Bool	fClear)
 {
 	char	buff[SIZE_BUFF+1];
+	char	*p;
 	PacketDataType	type;
-    ValueStruct *value;
+    ValueStruct *value
+		,		*item;
 
 ENTER_FUNC;
+#if	1
+	if		(  fComm  ) {
+		strcpy(buff,name);
+		p = strchr(buff,'.');
+		*p = 0;
+		if		(  ( value = (ValueStruct *)g_hash_table_lookup(Records,buff) )  !=  NULL  ) {
+			item = GetItemLongName(value,p+1);
+		} else {
+			item = NULL;
+		}
+	} else {
+		item = NULL;
+	}
+#else
 	if		(  fComm  ) {
 		LBS_EmitStart(lbs);
 		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
@@ -135,17 +135,18 @@ ENTER_FUNC;
 		RecvLBS(fpServ, lbs);
 		LBS_EmitEnd(lbs);
 		if (LBS_Size(lbs) == 0) {
-			value = NULL;
+			item = NULL;
 		} else {
 			type = *(PacketDataType *) LBS_Body(lbs);
-			value = NewValue(type);
+			item = NewValue(type);
 			NativeUnPackValue(NULL, LBS_Body(lbs), value);
 		}
 	} else {
-		value = NULL;
+		item = NULL;
 	}
+#endif
 LEAVE_FUNC;
-	return value;
+	return	item;
 }
 
 static	void
@@ -156,15 +157,15 @@ SendValueDelim(
     size_t len;
 
 ENTER_FUNC;
-	dbgprintf("send value = [%s:\n",name);
+	dbgprintf("send value name = [%s]",name);
+	dbgprintf("value =[%s]",value->body);
 	if		(	(  *name  !=  0  )
 			&&	(  value->body  !=  NULL  ) ) {
-		HT_SendString(name);
-		HT_SendString("\n");
+		SendPacketClass(fpServ,GL_ScreenData);
+		SendString(fpServ,name);
 		len = strlen(value->body);
 		SendLength(fpServ, len);
 		Send(fpServ, value->body, len);
-		dbgprintf(" %s]\n",value->body);
 	} else {
 		dbgmsg(" ]");
 	}
@@ -250,6 +251,7 @@ ConvShiftJIS(
 	return	(cbuff);
 }
 
+#if	0
 extern	void
 PutFile(ValueStruct *file)
 {
@@ -305,7 +307,6 @@ PutFile(ValueStruct *file)
     }
     fDump = FALSE;
 }
-
 static	void
 SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 {
@@ -324,7 +325,7 @@ SendFile(char *name, MultipartFile *file, HTCInfo *htc)
         SendValueDelim(filename, &cgivalue);
     }
 }
-
+#endif
 static	void
 SendEvent(void)
 {
@@ -344,12 +345,12 @@ ENTER_FUNC;
 	fComm = TRUE;
 	event = ParseInput(htc);
 
-	HT_SendString(event);
-	HT_SendString("\n");
+	SendPacketClass(fpServ,GL_Event);
+	SendString(fpServ,event);
 
 	g_hash_table_foreach(Values,(GHFunc)SendValueDelim,NULL);
-	g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
-	HT_SendString("\n");
+	SendPacketClass(fpServ,GL_END);
+	//g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
 
 	SetSave("_sesid",TRUE);
     SetSave("_file",TRUE);
@@ -468,8 +469,11 @@ Session(void)
 	HTCInfo	*htc;
 	LargeByteString	*html;
 	Bool	fError;
+	PacketClass	klass;
+	ValueStruct	*value;
 
 ENTER_FUNC;
+	Records = NewNameHash();
   retry:
 	fError = FALSE;
 	if		(  ( fpServ = OpenPort(ServerPort,PORT_HTSERV) )  !=  NULL  ) {
@@ -480,17 +484,21 @@ ENTER_FUNC;
 					user = "anonymous";
 				}
 			}
-			sprintf(buff,"Start: %s\t%s\n",Command,user);
-			HT_SendString(buff);
-			HT_RecvString(SIZE_BUFF,buff);
+			SendPacketClass(fpServ,GL_Connect);
+			sprintf(buff,"%s\t%s",Command,user);
+			SendString(fpServ,buff);
+			RecvPacketClass(fpServ);	/*	session	*/
+			RecvString(fpServ,buff);
 			sesid = (char *)xmalloc(SIZE_SESID+1);
 			strncpy(sesid,buff,SIZE_SESID);
             sesid[SIZE_SESID] = '\0';
 			SaveValue("_sesid",sesid,FALSE);
 		} else {
-			sprintf(buff,"Session: %s\n",sesid);
-			HT_SendString(buff);
-			if		(  HT_RecvString(SIZE_BUFF,buff)  ) {
+			SendPacketClass(fpServ,GL_Session);
+			SendString(fpServ,sesid);
+			if		(  ( klass = RecvPacketClass(fpServ) )  ==  GL_Session  ) {
+				RecvString(fpServ,buff);
+				dbgprintf("ses = [%s]",buff);
 				if		(  *buff  !=  0  ) {
 					strncpy(sesid,buff,SIZE_SESID);
 					SendEvent();
@@ -505,11 +513,16 @@ ENTER_FUNC;
 			}
 		}
 		if		(  !fError  ) {
-			HT_RecvString(SIZE_BUFF,buff);
-			if		(  strncmp(buff,"Window: ",8)  ==  0  ) {
-				name = StrDup(buff+8);
-				HT_RecvString(SIZE_BUFF,buff);	/*	\n	*/
+			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
+				RecvString(fpServ,buff);
+				name = StrDup(buff);
+				lbs = NewLBS();
+				RecvLBS(fpServ,lbs);
+				value = NativeRestoreValue(LBS_Body(lbs),TRUE);
+				g_hash_table_insert(Records,name,value);
+				FreeLBS(lbs);
 				SaveValue("_name",name,FALSE);
+#if	0
                 if ((file = LoadValue("_file")) != NULL) {
                     ValueStruct *value = HT_GetValue(file, TRUE);
                     if (value != NULL && !IS_VALUE_NIL(value)) {
@@ -518,16 +531,18 @@ ENTER_FUNC;
                         return;
                     }
                 }
+#endif
 				fComm = TRUE;
-                if		(  ( htc = HTCParseScreen(name) )  ==  NULL  ) {
-                    exit(1);
+			}
+			if		(  !fComm  ) {
+				html = Expired(1);
+			} else {
+				if		(  ( htc = HTCParseScreen(name) )  ==  NULL  ) {
+					exit(1);
 				}
 				html = NewLBS();
 				LBS_EmitStart(html);
-                ExecCode(html,htc);
-				HT_SendString("\n");
-			} else {
-				html = Expired(1);
+				ExecCode(html,htc);
 			}
 		} else {
 			html = Expired(2);
@@ -570,6 +585,7 @@ main(
     lbs = NewLBS();
 	InitCGI();
 	InitHTC(getenv("SCRIPT_NAME"),HT_GetValue);
+	//InitHTC(getenv("SCRIPT_NAME"),NULL);
 DumpV();
 	Session();
 	Dump();

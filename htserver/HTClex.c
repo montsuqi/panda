@@ -125,14 +125,7 @@ HTCSetCodeset(
 extern	int
 GetChar(void)
 {
-	int		c;
-	byte	ibuff[SIZE_CHARS]
-	,		*ic;
-	char	*oc
-	,		*istr;
 	int		ret;
-	size_t	count;
-	int		rc;
 
 ENTER_FUNC;
 	if		(  ( ret = *HTC_Memory ++ )  ==  0  ) {

@@ -1,21 +1,21 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -35,382 +35,39 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	<sys/time.h>
 #include	"const.h"
 #include	"types.h"
-#include	"Lex.h"
 #include	"cgi.h"
-extern	void	HTCLexInit(void);
 #include	"htc.h"
+#include	"HTClex.h"
 #include	"exec.h"
 #include	"debug.h"
 
-static	GHashTable			*Reserved;
 static	GET_VALUE	_GetValue;
 static	Bool		fClear;
-
-static	TokenTable	tokentable[] = {
-	{	""				,0			}
-};
-
-static	Expr	*ParSequence(CURFILE *in);
-static	Expr	*ParExpr(CURFILE *in);
-
-static	Expr	*
-NewCons(
-	int		type,
-	Expr	*left,
-	Expr	*right)
-{
-	Expr	*expr;
-
-	expr = New(Expr);
-	expr->type = type;
-	expr->body.cons.left = left;
-	expr->body.cons.right = right;
-	return	(expr);
-}
-
-static	Expr	*
-ParFactor(
-	CURFILE			*in)
-{
-	Expr	*expr
-		,	*arg
-		,	**exprw;
-
-ENTER_FUNC;
-	switch	(ComToken) {
-	  case	T_SYMBOL:
-		exprw = &expr;
-		do {
-			switch	(ComToken) {
-			  case	T_SYMBOL:
-				arg = New(Expr);
-				arg->type = EXPR_SYMBOL;
-				arg->body.name = StrDup(ComSymbol);
-				GetName;
-				break;
-			  case	'[':
-				GetSymbol;
-				arg = ParExpr(in);
-				if		(  ComToken  ==  ']'  ) {
-					GetName;
-				} else {
-					printf("[%s]\n",ComSymbol);
-					Error("factor invalid symbol");
-				}
-				break;
-			  default:
-				break;
-			}
-			*exprw = NewCons(EXPR_ITEM,arg,NULL);
-			exprw = &(*exprw)->body.cons.right;
-			if		(  ComToken  ==  '.'  ) {
-				GetName;
-			}
-		}	while	(	(  ComToken  ==  T_SYMBOL  )
-					||	(  ComToken  ==  '['       ) );
-		expr = NewCons(EXPR_VREF,expr,NULL);
-		break;
-	  case	'(':
-		GetSymbol;
-		expr = ParExpr(in);
-		if		(  ComToken  ==  ')'  ) {
-			GetSymbol;
-		} else {
-			Error("factor invalid (");
-		}
-		break;
-	  case	T_SCONST:
-	  case	T_ICONST:
-		expr = New(Expr);
-		expr->type = EXPR_VALUE;
-		expr->body.sval = StrDup(ComSymbol);
-		GetSymbol;
-		break;
-	  default:
-		fprintf(stderr,"? token = %d\n",ComToken);
-		expr = NULL;
-		break;
-	}
-LEAVE_FUNC;
-	return	(expr);
-}
-
-static	Expr	*
-ParTerm(
-	CURFILE			*in)
-{
-	Expr	*expr;
-	int		op;
-
-ENTER_FUNC;
-	expr = ParFactor(in);
-	while	(	(  ComToken  ==  '*'  )
-			 ||	(  ComToken  ==  '/'  )
-			 ||	(  ComToken  ==  '%'  ) ) {
-		switch	( ComToken)	{
-		  case	'*':
-			op = EXPR_MUL;
-			break;
-		  case	'/':
-			op = EXPR_DIV;
-			break;
-		  case	'%':
-			op = EXPR_MOD;
-			break;
-		}
-		GetSymbol;
-		expr = NewCons(op,expr,ParFactor(in));
-	}
-LEAVE_FUNC;
-	return	(expr);
-}
-
-static	Expr	*
-ParExpr(
-	CURFILE			*in)
-{
-	Expr	*expr;
-	int		op;
-	Bool	fMinus;
-
-ENTER_FUNC;
-	if		(	(  ComToken  ==  '+'  )
-			 ||	(  ComToken  ==  '-'  ) )	{
-		fMinus = ( ComToken  ==  '-'  );
-		GetSymbol;
-	} else {
-		fMinus = FALSE;
-	}
-	expr = ParTerm(in);
-	if		(  fMinus  ) {
-		expr = NewCons(EXPR_NEG,expr,NULL);
-	}
-	while	(	(  ComToken  ==  '+'  )
-			||	(  ComToken  ==  '-'  )
-			||	(  ComToken  ==  '&'  ) )	{
-		switch	(ComToken) {
-		  case	'&':
-			op = EXPR_CAT;
-			break;
-		  case	'+':
-			op = EXPR_ADD;
-			break;
-		  case	'-':
-			op = EXPR_SUB;
-			break;
-		}
-		GetSymbol;
-		expr = NewCons(op,expr,ParTerm(in));
-	}
-LEAVE_FUNC;
-	return	(expr);
-}
-
-static	Expr	*
-ParSequence(
-	CURFILE			*in)
-{
-	Expr	**expr
-		,	*expr2
-		,	*ret;
-	Bool	fExit;
-
-ENTER_FUNC;
-	fExit = FALSE;
-	expr = &ret;
-	do {
-		expr2 = ParExpr(in);
-		*expr = NewCons(EXPR_SEQ,expr2,NULL);
-		switch	(ComToken) {
-		  case	',':
-		  case	')':
-			expr = (Expr **)&((*expr)->body.cons.right);
-			if		(  ComToken  ==  ')'  ) {
-				fExit = TRUE;
-			} else {
-				GetSymbol;
-			}
-			break;
-		  default:
-			fExit = TRUE;
-			break;
-		}
-	}	while	(  !fExit  );
-LEAVE_FUNC;
-	return	(ret);
-}
-
-static	Expr	*
-ParseMem(
-	char	*mem)
-{
-	CURFILE		*in
-		,		root;
-	Expr		*expr;
-
-ENTER_FUNC;
-	root.next = NULL;
-	if		(  ( in = PushLexInfoMem(&root,mem,NULL,Reserved) )  !=  NULL  ) {
-		GetSymbol;
-		expr = ParExpr(in);
-		DropLexInfo(&in);
-	} else {
-		expr = NULL;
-	}
-LEAVE_FUNC;
-	return	(expr);
-}
 
 static	char	*
 ValueSymbol(
 	char	*name)
 {
-	ValueStruct			*item;
 	char	*value;
+	ValueStruct			*item;
 
 	dbgprintf("name = [%s]\n",name);
 	if		(  ( value = LoadValue(name) )  ==  NULL  )	{
 		if		(  _GetValue  !=  NULL  ) {
-			if		(  ( item = (_GetValue)(name, fClear) )  ==  NULL  ) {
-				value = "";
-			} else {
+			item = (_GetValue)(name, fClear);
+			if		(  item  !=  NULL  ) {
 				value = ValueToString(item, NULL);
+			} else {
+				value ="";
 			}
-			value = SaveValue(name,value,FALSE);
+			SaveValue(name,value,FALSE);
+		} else {
+			fprintf(stderr,"mon bug\n");
+			exit(1);
 		}
 	}
 	dbgprintf("value = [%s]\n",value);
 	return	(value);
-}
-
-static	Expr	*
-EvalExpr(
-	Expr	*expr)
-{
-	char	buff[SIZE_LONGNAME+1];
-	Expr	*temp
-		,	*ix
-		,	*result
-		,	*left
-		,	*right
-		,	**res;
-	char	*p;
-
-ENTER_FUNC;
-	if		(  expr  !=  NULL  ) {
-		dbgprintf("expr->type = %d\n",expr->type);
-		switch	(expr->type) {
-		  case	EXPR_ITEM:
-			dbgmsg("ITEM");
-			p = buff;
-			temp = expr;
-			while	(  temp  !=  NULL  ) {
-				left = temp->body.cons.left;
-				switch	(left->type) {
-				  case	EXPR_SYMBOL:
-					p += sprintf(p,"%s",left->body.name);
-					break;
-				  default:
-					ix = EvalExpr(left);
-					p += sprintf(p,"[%d]",atoi(ix->body.sval));
-				}
-				temp = temp->body.cons.right;
-				if		(  temp  !=  NULL  ) {
-					p += sprintf(p,".");
-				}
-			}
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(buff);
-			break;
-		  case	EXPR_VREF:
-			dbgmsg("VREF");
-			left = EvalExpr(expr->body.cons.left);
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(ValueSymbol(left->body.sval));
-			break;
-		  case	EXPR_SEQ:
-			dbgmsg(">SEQ");
-			temp = expr;
-			res = &result;
-			do {
-				*res = New(Expr);
-				(*res)->type = EXPR_SEQ;
-				(*res)->body.cons.left = EvalExpr(temp->body.cons.left);
-				(*res)->body.cons.right = NULL;
-				res = (Expr **)&((*res)->body.cons.right);
-				temp = temp->body.cons.right;
-			}	while	(  temp  !=  NULL  );
-			dbgmsg("<SEQ");
-			break;
-		  case	EXPR_CAT:
-			dbgmsg("CAT");
-			left = EvalExpr(expr->body.cons.left);
-			right = EvalExpr(expr->body.cons.right);
-			sprintf(buff,"%s%s",left->body.sval,right->body.sval);
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(buff);
-			break;
-		  case	EXPR_ADD:
-			dbgmsg("ADD");
-			left = EvalExpr(expr->body.cons.left);
-			right = EvalExpr(expr->body.cons.right);
-			sprintf(buff,"%d",atoi(left->body.sval)+atoi(right->body.sval));
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(buff);
-			break;
-		  case	EXPR_SUB:
-			dbgmsg("SUB");
-			left = EvalExpr(expr->body.cons.left);
-			right = EvalExpr(expr->body.cons.right);
-			sprintf(buff,"%d",atoi(left->body.sval)-atoi(right->body.sval));
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(buff);
-			break;
-		  case	EXPR_MUL:
-			dbgmsg("MUL");
-			left = EvalExpr(expr->body.cons.left);
-			right = EvalExpr(expr->body.cons.right);
-			sprintf(buff,"%d",atoi(left->body.sval)*atoi(right->body.sval));
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(buff);
-			break;
-		  case	EXPR_DIV:
-			dbgmsg("DIV");
-			left = EvalExpr(expr->body.cons.left);
-			right = EvalExpr(expr->body.cons.right);
-			sprintf(buff,"%d",atoi(left->body.sval)/atoi(right->body.sval));
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(buff);
-			break;
-		  case	EXPR_MOD:
-			dbgmsg("MOD");
-			left = EvalExpr(expr->body.cons.left);
-			right = EvalExpr(expr->body.cons.right);
-			sprintf(buff,"%d",atoi(left->body.sval)%atoi(right->body.sval));
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(buff);
-			break;
-		  case	EXPR_VALUE:
-			dbgmsg("VALUE");
-			result = New(Expr);
-			result->type = EXPR_VALUE;
-			result->body.sval = StrDup(expr->body.sval);
-			break;
-		  default:
-			Error("not support expression");
-			break;
-		}
-	}
-LEAVE_FUNC;
-	return	(result);
 }
 
 extern	char	*
@@ -418,16 +75,12 @@ GetHostValue(
 	char	*name,
 	Bool	_fClear)
 {
-	Expr	*expr;
 	char	*value;
 
 ENTER_FUNC;
 dbgprintf("name = [%s]\n",name);
 	fClear = _fClear;
-	expr = ParseMem(name);
-	expr = EvalExpr(expr);
-	dbgprintf("type = %d\n",expr->type);
-	value = expr->body.sval;
+	value = ValueSymbol(name);
 dbgprintf("value = [%s]\n",value);
 LEAVE_FUNC;
 	return	(value);
@@ -444,7 +97,6 @@ ENTER_FUNC;
     }
 	HTCLexInit();
 	JslibInit();
-	Reserved = MakeReservedTable(tokentable);
 
 	TagsInit(script_name);
 	Codeset = "utf-8";
