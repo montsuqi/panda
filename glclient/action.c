@@ -333,8 +333,8 @@ ENTER_FUNC;
 			gtk_widget_show_all(GTK_WIDGET(node->window));
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
-			ClearKeyBuffer();
 			StopTimer(node->window);
+			ClearKeyBuffer();
 			gtk_widget_hide_all(GTK_WIDGET(node->window));
 			/* fall through */
 		  default:
