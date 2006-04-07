@@ -35,8 +35,11 @@
 
 #include	"const.h"
 #include	"types.h"
-#include	"htc.h"
+#include	"libmondai.h"
+#include	"HTCparser.h"
+//#include	"htc.h"
 #include	"cgi.h"
+#include	"tags.h"
 #include	"multipart.h"
 #include	"exec.h"
 #include	"debug.h"

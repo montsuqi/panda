@@ -72,7 +72,6 @@ mon_SOURCES	=	\
 	HTCparser.c	HTCparser.h	\
 	tags.c		tags.h		\
 	exec.c		exec.h		\
-	htc.c		htc.h		\
 	mon.c		mon.h
 
 mon_DEPENDENCIES	=				\
@@ -86,7 +85,6 @@ htcproc_SOURCES	=	\
 	HTCparser.c	HTCparser.h	\
 	tags.c		tags.h		\
 	exec.c		exec.h		\
-	htc.c		htc.h		\
 	htcproc.c
 
 htcproc_DEPENDENCIES	=				\

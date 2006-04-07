@@ -45,11 +45,44 @@
 #include	"libmondai.h"
 #include	"multipart.h"
 #include	"cgi.h"
+#include    "HTClex.h"
+#include    "tags.h"
 #include	"debug.h"
 
 #define	SRC_CODESET		"euc-jp"
 
 #define	SIZE_CHARS		16
+
+extern	char	*
+GetHostValue(
+	char	*name,
+	Bool	fClear)
+{
+	char	*value;
+	ValueStruct			*item;
+
+	dbgprintf("name = [%s]\n",name);
+	if		(  ( value = LoadValue(name) )  ==  NULL  )	{
+		if		(  _GetValue  !=  NULL  ) {
+			item = (_GetValue)(name, fClear);
+			if		(  item  !=  NULL  ) {
+				value = ValueToString(item, NULL);
+			} else {
+				value = "";
+			}
+			if		(  fClear  ) {
+				SaveValue(name,"FALSE",FALSE);
+			} else {
+				SaveValue(name,value,FALSE);
+			}
+		} else {
+			fprintf(stderr,"mon bug\n");
+			exit(1);
+		}
+	}
+	dbgprintf("value = [%s]\n",value);
+	return	(value);
+}
 
 extern	char	*
 SaveValue(
@@ -823,6 +856,24 @@ Dump(void)
     }
 	LBS_EmitEnd(html);
 	WriteLargeString(stdout,html,Codeset);
+}
+
+extern	void
+InitHTC(
+	char	*script_name,
+	GET_VALUE	func)
+{
+ENTER_FUNC;
+    if (script_name == NULL) {
+        script_name = "mon.cgi";
+    }
+	HTCLexInit();
+	JslibInit();
+
+	TagsInit(script_name);
+	Codeset = "utf-8";
+	_GetValue = func;
+LEAVE_FUNC;
 }
 
 extern	void

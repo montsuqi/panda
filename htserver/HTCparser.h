@@ -23,7 +23,7 @@
 #include	<glib.h>
 #include	"const.h"
 #include	"libmondai.h"
-#include	"htc.h"
+#include	"cgi.h"
 
 extern	HTCInfo		*HTCParseHTCFile(char *fname);
 extern	HTCInfo		*HTCParseScreen(char *name);

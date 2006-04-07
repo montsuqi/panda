@@ -316,9 +316,12 @@ Style(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	EmitAttribute(htc,tag,"id");
 	EmitAttribute(htc,tag,"class");
+	EmitAttribute(htc,tag,"dir");
+	EmitAttribute(htc,tag,"id");
+	EmitAttribute(htc,tag,"lang");
 	EmitAttribute(htc,tag,"style");
+	EmitAttribute(htc,tag,"title");
 }
 
 static	void
@@ -710,7 +713,6 @@ ENTER_FUNC;
 	EmitAttribute(htc,tag,"id");
 	EmitAttribute(htc,tag,"dir");
 	EmitAttribute(htc,tag,"lang");
-	EmitAttribute(htc,tag,"title");
 	LBS_EmitString(htc->code,">\n");
 	LBS_EmitString(htc->code,
 				   "<meta http-equiv=\"Pragma\" content=\"no-cache\">\n");
@@ -749,7 +751,6 @@ ENTER_FUNC;
 	EmitAttribute(htc,tag,"scroll");
 	EmitAttribute(htc,tag,"dir");
 	EmitAttribute(htc,tag,"lang");
-	EmitAttribute(htc,tag,"title");
 	JavaScriptEvent(htc,tag,"oncontextmenu");
 	JavaScriptEvent(htc,tag,"onload");
 	Style(htc,tag);
@@ -1449,7 +1450,7 @@ ENTER_FUNC;
 	if		(  ( value = GetArg(tag,"value",0) )  !=  NULL  )	{
 		LBS_EmitString(htc->code," value=");
 		ExpandAttributeString(htc,value);
-		LBS_EmitString(htc->code,"\" ");
+		LBS_EmitString(htc->code," ");
 	}
 	if		(  ( select = GetArg(tag,"select",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_EVAL);
@@ -1899,9 +1900,12 @@ NewTag(
 	tag->args = NewNameiHash();
 	g_hash_table_insert(Tags,tag->name,tag);
 	if		(  *name  !=  '/'  ) {
-		AddArg(tag,"id",TRUE);
 		AddArg(tag,"class",TRUE);
+		AddArg(tag,"dir",TRUE);
+		AddArg(tag,"id",TRUE);
+		AddArg(tag,"lang",TRUE);
 		AddArg(tag,"style",TRUE);
+		AddArg(tag,"title",TRUE);
 	}
 	return	(tag);
 }
@@ -1955,7 +1959,6 @@ ENTER_FUNC;
 	AddArg(tag,"onmouseout",TRUE);
 	AddArg(tag,"onmouseover",TRUE);
 	AddArg(tag,"onmousesetup",TRUE);
-	//	tag = NewTag("/SPAN",NULL);
 
 	tag = NewTag("A",_A);
 	AddArg(tag,"onclick",TRUE);
@@ -2077,7 +2080,6 @@ ENTER_FUNC;
 	tag = NewTag("OPTION", _Option);
 	AddArg(tag,"select",TRUE);
 	AddArg(tag,"value",TRUE);
-	tag = NewTag("/OPTION", NULL);
 
 	tag = NewTag("OPTIONMENU",_Optionmenu);
 	AddArg(tag,"count",TRUE);
@@ -2098,7 +2100,6 @@ ENTER_FUNC;
 	AddArg(tag,"profile",TRUE);
 	AddArg(tag,"dir",TRUE);
 	AddArg(tag,"lang",TRUE);
-	AddArg(tag,"title",TRUE);
 	tag = NewTag("/HEAD",NULL);
 
 	tag = NewTag("BODY",_Body);
@@ -2118,7 +2119,6 @@ ENTER_FUNC;
 	AddArg(tag,"scroll",TRUE);
 	AddArg(tag,"dir",TRUE);
 	AddArg(tag,"lang",TRUE);
-	AddArg(tag,"title",TRUE);
 	AddArg(tag,"oncontextmenu",TRUE);
 	AddArg(tag,"onload",TRUE);
 

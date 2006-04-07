@@ -150,7 +150,7 @@ LEAVE_FUNC;
 }
 
 static	void
-SendValueDelim(
+SendValue(
 	char		*name,
 	CGIValue	*value)
 {
@@ -348,7 +348,7 @@ ENTER_FUNC;
 	SendPacketClass(fpServ,GL_Event);
 	SendString(fpServ,event);
 
-	g_hash_table_foreach(Values,(GHFunc)SendValueDelim,NULL);
+	g_hash_table_foreach(Values,(GHFunc)SendValue,NULL);
 	SendPacketClass(fpServ,GL_END);
 	//g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
 

@@ -19,7 +19,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #ifndef	_INC_CGI_H
 #define	_INC_CGI_H
-
+#include	"libmondai.h"
 #include	"LBSfunc.h"
 
 #define	CGIV_NULL		0x00
@@ -48,6 +48,23 @@ typedef	struct {
 	Bool	fSave;
 }	CGIValue;
 
+typedef	struct {
+	LargeByteString	*code;
+	GHashTable	*Trans;
+	GHashTable	*Radio;
+	GHashTable	*FileSelection;
+    char *DefaultEvent;
+    size_t EnctypePos;
+    int FormNo;
+}	HTCInfo;
+
+typedef	struct {
+    char *filename;
+    char *filesize;
+}	FileSelectionInfo;
+
+typedef	ValueStruct	*(*GET_VALUE)(char *name, Bool fClear);
+
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -69,10 +86,13 @@ GLOBAL	char		*SesDir;
 GLOBAL	char		*CommandLine;
 GLOBAL	time_t		SesExpire;
 GLOBAL	char		*ScreenDir;
+GLOBAL	GET_VALUE	_GetValue;
+
 #undef	GLOBAL
 
 extern  void	CGI_InitValues(void);
 extern	void	InitCGI(void);
+extern	void	InitHTC(char *script_name, GET_VALUE func);
 
 extern	char	*ConvUTF8(unsigned char *istr, char *code);
 extern	char	*ConvLocal(char *istr);
@@ -82,6 +102,7 @@ extern	void	GetArgs(void);
 extern	void	PutHTML(LargeByteString *html);
 extern	void	DumpValues(LargeByteString *html, GHashTable *args);
 extern	void	Dump(void);
+extern	char	*GetHostValue(char *name, Bool fClear);
 extern	char	*SaveValue(char *name, char *value, Bool fSave);
 extern	char	*SaveArgValue(char *name, char *value, Bool fSave);
 extern	char	*LoadValue(char *name);

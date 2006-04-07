@@ -46,7 +46,6 @@
 #include	"HTCparser.h"
 #include	"HTClex.h"
 #include	"cgi.h"
-#include	"htc.h"
 #include	"exec.h"
 #include	"tags.h"
 #include	"debug.h"
