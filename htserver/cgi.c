@@ -47,42 +47,12 @@
 #include	"cgi.h"
 #include    "HTClex.h"
 #include    "tags.h"
+#include    "exec.h"
 #include	"debug.h"
 
-#define	SRC_CODESET		"euc-jp"
+static	GET_VALUE	_GetValue;
 
 #define	SIZE_CHARS		16
-
-extern	char	*
-GetHostValue(
-	char	*name,
-	Bool	fClear)
-{
-	char	*value;
-	ValueStruct			*item;
-
-	dbgprintf("name = [%s]\n",name);
-	if		(  ( value = LoadValue(name) )  ==  NULL  )	{
-		if		(  _GetValue  !=  NULL  ) {
-			item = (_GetValue)(name, fClear);
-			if		(  item  !=  NULL  ) {
-				value = ValueToString(item, NULL);
-			} else {
-				value = "";
-			}
-			if		(  fClear  ) {
-				SaveValue(name,"FALSE",FALSE);
-			} else {
-				SaveValue(name,value,FALSE);
-			}
-		} else {
-			fprintf(stderr,"mon bug\n");
-			exit(1);
-		}
-	}
-	dbgprintf("value = [%s]\n",value);
-	return	(value);
-}
 
 extern	char	*
 SaveValue(
@@ -368,6 +338,28 @@ StartScanEnv(
 	char	*env)
 {
 	ScanArgValue = env;
+
+#if	0
+	if		(  *env  !=  0  ) {
+		while	(  *env  !=  0  ) {
+			switch	(*env) {
+			  case	'%':
+				env ++;
+				c = ( HexCharToInt(*env) << 4) ;
+				env ++;
+				c |= HexCharToInt(*env);
+				break;
+			  case	'+':
+				c = ' ';
+				break;
+			  default:
+				c = *env;
+				break;
+			}
+			env ++;
+		}
+	}
+#endif
 }
 
 static	Bool
@@ -779,14 +771,14 @@ DumpValues(
 
 	LBS_EmitUTF8(html,
 				 "<HR>\n"
-				 "<H2>引数</H2>"
+				 "<H2>args</H2>"
 				 "<TABLE BORDER>\n"
-				 "<TR><TD width=\"150\">名前<TD width=\"150\">値\n"
-				 ,SRC_CODESET);
+				 "<TR><TD width=\"150\">name<TD width=\"150\">value\n"
+				 ,NULL);
 	g_hash_table_foreach(args,(GHFunc)DumpValue,NULL);
 	LBS_EmitUTF8(html,
 				 "</TABLE>\n"
-				 ,SRC_CODESET);
+				 ,NULL);
 }
 
 extern	void
@@ -807,14 +799,14 @@ DumpFiles(
 
 	LBS_EmitUTF8(html,
 				 "<HR>\n"
-				 "<H2>ファイル</H2>"
+				 "<H2>files</H2>"
 				 "<TABLE BORDER>\n"
-				 "<TR><TD width=\"150\">ファイル名<TD width=\"150\">大きさ\n"
-				 ,SRC_CODESET);
+				 "<TR><TD width=\"150\">file name<TD width=\"150\">size\n"
+				 ,NULL);
 	g_hash_table_foreach(args,(GHFunc)DumpFile,NULL);
 	LBS_EmitUTF8(html,
 				 "</TABLE>\n"
-				 ,SRC_CODESET);
+				 ,NULL);
 }
 
 static	void
@@ -827,13 +819,13 @@ PutEnv(
 	env = environ;
 	LBS_EmitUTF8(html,
 				 "<HR>\n"
-				 "<H2>環境変数</H2>\n",SRC_CODESET);
+				 "<H2>environments</H2>\n",NULL);
 	while	(  *env  !=  NULL  ) {
-		LBS_EmitUTF8(html,"[",SRC_CODESET);
-		LBS_EmitUTF8(html,*env,SRC_CODESET);
+		LBS_EmitUTF8(html,"[",NULL);
+		LBS_EmitUTF8(html,*env,NULL);
 		env ++;
 		LBS_EmitUTF8(html,
-					 "]<BR>\n",SRC_CODESET);
+					 "]<BR>\n",NULL);
 	}
 }
 
@@ -846,16 +838,39 @@ Dump(void)
 	LBS_EmitStart(html);
     if (fDump) {
         LBS_EmitUTF8(html,
-                     "<HR>\n",SRC_CODESET);
+                     "<HR>\n",NULL);
         PutEnv(html);
         DumpValues(html,Values);
         DumpFiles(html,Files);
         LBS_EmitUTF8(html,
                      "</BODY>\n"
-                     "</HTML>\n",SRC_CODESET);
+                     "</HTML>\n",NULL);
     }
 	LBS_EmitEnd(html);
 	WriteLargeString(stdout,html,Codeset);
+}
+
+extern	char	*
+GetHostValue(
+	char	*name,
+	Bool	fClear)
+{
+	ValueStruct			*item;
+	char	*value;
+
+	dbgprintf("name = [%s]\n",name);
+	if		(  ( value = LoadValue(name) )  ==  NULL  )	{
+		if		(  _GetValue  !=  NULL  ) {
+			if		(  ( item = (_GetValue)(name, fClear) )  ==  NULL  ) {
+				value = "";
+			} else {
+				value = ValueToString(item, NULL);
+			}
+			value = SaveValue(name,value,FALSE);
+		}
+	}
+	dbgprintf("value = [%s]\n",value);
+	return	(value);
 }
 
 extern	void
@@ -887,7 +902,6 @@ LEAVE_FUNC;
 
 /*
  * Local variables:
- * indent-tabs-mode: nil
  * tab-width: 4
  * End:
  */

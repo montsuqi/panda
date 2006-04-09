@@ -25,6 +25,8 @@
 #include	"libmondai.h"
 #include	"cgi.h"
 
+extern	HTCInfo		*NewHTCInfo(void);
+extern	HTCInfo		*HTCParserCore(void);
 extern	HTCInfo		*HTCParseHTCFile(char *fname);
 extern	HTCInfo		*HTCParseScreen(char *name);
 extern	HTCInfo		*HTCParseMemory(char *buff);

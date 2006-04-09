@@ -1,4 +1,14 @@
+2006-04-09  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/rhtc.c: erubyの論理を変えた。別ファイルにした
+
+2006-04-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c (Style): スタイル系属性全部が使えるようにした(ただしnameは除く)
+
 2006-04-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c (TagsInit): bodyタグにonLoad
 
 	* htserver/HTCparser.c (HTCParseRHTCFile): erubyを組み込んだ
 

@@ -70,6 +70,7 @@ mon_SOURCES	=	\
 	multipart.c	multipart.h	\
 	HTClex.c	HTClex.h	\
 	HTCparser.c	HTCparser.h	\
+	rhtc.c		rhtc.h		\
 	tags.c		tags.h		\
 	exec.c		exec.h		\
 	mon.c		mon.h
@@ -83,6 +84,7 @@ htcproc_SOURCES	=	\
 	multipart.c	multipart.h	\
 	HTClex.c	HTClex.h	\
 	HTCparser.c	HTCparser.h	\
+	rhtc.c		rhtc.h		\
 	tags.c		tags.h		\
 	exec.c		exec.h		\
 	htcproc.c

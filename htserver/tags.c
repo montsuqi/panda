@@ -316,7 +316,7 @@ Style(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	EmitAttribute(htc,tag,"class");
+  	EmitAttribute(htc,tag,"class");
 	EmitAttribute(htc,tag,"dir");
 	EmitAttribute(htc,tag,"id");
 	EmitAttribute(htc,tag,"lang");
@@ -751,6 +751,7 @@ ENTER_FUNC;
 	EmitAttribute(htc,tag,"scroll");
 	EmitAttribute(htc,tag,"dir");
 	EmitAttribute(htc,tag,"lang");
+	EmitAttribute(htc,tag,"title");
 	JavaScriptEvent(htc,tag,"oncontextmenu");
 	JavaScriptEvent(htc,tag,"onload");
 	Style(htc,tag);

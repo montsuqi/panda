@@ -103,50 +103,28 @@ SetDefault(void)
 }
 
 static	ValueStruct	*
-HT_GetValue(
-	char	*name,
-	Bool	fClear)
+HT_GetValue(char *name, Bool fClear)
 {
-	char	buff[SIZE_BUFF+1];
-	char	*p;
-	PacketDataType	type;
-    ValueStruct *value
-		,		*item;
+    ValueStruct *value;
 
 ENTER_FUNC;
-#if	1
 	if		(  fComm  ) {
-		strcpy(buff,name);
-		p = strchr(buff,'.');
-		*p = 0;
-		if		(  ( value = (ValueStruct *)g_hash_table_lookup(Records,buff) )  !=  NULL  ) {
-			item = GetItemLongName(value,p+1);
-		} else {
-			item = NULL;
-		}
-	} else {
-		item = NULL;
-	}
-#else
-	if		(  fComm  ) {
+		SendPacketClass(fpServ,GL_GetData);
+		SendString(fpServ,name);
+		SendBool(fpServ,fClear);
 		LBS_EmitStart(lbs);
-		sprintf(buff,"%s%s\n",name,(fClear ? " clear" : "" ));
-		HT_SendString(buff);
 		RecvLBS(fpServ, lbs);
 		LBS_EmitEnd(lbs);
 		if (LBS_Size(lbs) == 0) {
-			item = NULL;
+			value = NULL;
 		} else {
-			type = *(PacketDataType *) LBS_Body(lbs);
-			item = NewValue(type);
-			NativeUnPackValue(NULL, LBS_Body(lbs), value);
+			value = NativeRestoreValue(LBS_Body(lbs),TRUE);
 		}
 	} else {
-		item = NULL;
+		value = NULL;
 	}
-#endif
 LEAVE_FUNC;
-	return	item;
+	return value;
 }
 
 static	void
@@ -157,8 +135,7 @@ SendValue(
     size_t len;
 
 ENTER_FUNC;
-	dbgprintf("send value name = [%s]",name);
-	dbgprintf("value =[%s]",value->body);
+	dbgprintf("send value = [%s:\n",name);
 	if		(	(  *name  !=  0  )
 			&&	(  value->body  !=  NULL  ) ) {
 		SendPacketClass(fpServ,GL_ScreenData);
@@ -166,6 +143,7 @@ ENTER_FUNC;
 		len = strlen(value->body);
 		SendLength(fpServ, len);
 		Send(fpServ, value->body, len);
+		dbgprintf(" %s]\n",value->body);
 	} else {
 		dbgmsg(" ]");
 	}
@@ -251,7 +229,6 @@ ConvShiftJIS(
 	return	(cbuff);
 }
 
-#if	0
 extern	void
 PutFile(ValueStruct *file)
 {
@@ -307,6 +284,7 @@ PutFile(ValueStruct *file)
     }
     fDump = FALSE;
 }
+
 static	void
 SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 {
@@ -315,17 +293,16 @@ SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 
     filename = (char *) g_hash_table_lookup(htc->FileSelection, name);
     if (filename != NULL) {
-        HT_SendString(name);
-        HT_SendString("\n");
+        SendString(fpServ,name);
         SendLength(fpServ, file->length);
         Send(fpServ, file->value, file->length);
         dbgprintf("send value = [%s]\n", name);
 
 		cgivalue.body = file->filename;
-        SendValueDelim(filename, &cgivalue);
+        SendValue(filename, &cgivalue);
     }
 }
-#endif
+
 static	void
 SendEvent(void)
 {
@@ -349,8 +326,8 @@ ENTER_FUNC;
 	SendString(fpServ,event);
 
 	g_hash_table_foreach(Values,(GHFunc)SendValue,NULL);
+	g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
 	SendPacketClass(fpServ,GL_END);
-	//g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
 
 	SetSave("_sesid",TRUE);
     SetSave("_file",TRUE);
@@ -470,10 +447,8 @@ Session(void)
 	LargeByteString	*html;
 	Bool	fError;
 	PacketClass	klass;
-	ValueStruct	*value;
 
 ENTER_FUNC;
-	Records = NewNameHash();
   retry:
 	fError = FALSE;
 	if		(  ( fpServ = OpenPort(ServerPort,PORT_HTSERV) )  !=  NULL  ) {
@@ -516,22 +491,15 @@ ENTER_FUNC;
 			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
 				RecvString(fpServ,buff);
 				name = StrDup(buff);
-				lbs = NewLBS();
-				RecvLBS(fpServ,lbs);
-				value = NativeRestoreValue(LBS_Body(lbs),TRUE);
-				g_hash_table_insert(Records,name,value);
-				FreeLBS(lbs);
 				SaveValue("_name",name,FALSE);
-#if	0
                 if ((file = LoadValue("_file")) != NULL) {
                     ValueStruct *value = HT_GetValue(file, TRUE);
+
                     if (value != NULL && !IS_VALUE_NIL(value)) {
                         PutFile(value);
-                        HT_SendString("\n");
                         return;
                     }
                 }
-#endif
 				fComm = TRUE;
 			}
 			if		(  !fComm  ) {
@@ -540,9 +508,14 @@ ENTER_FUNC;
 				if		(  ( htc = HTCParseScreen(name) )  ==  NULL  ) {
 					exit(1);
 				}
-				html = NewLBS();
-				LBS_EmitStart(html);
-				ExecCode(html,htc);
+				if		(  htc->fCompiled  ) {
+					html = NewLBS();
+					LBS_EmitStart(html);
+					ExecCode(html,htc);
+					SendPacketClass(fpServ,GL_END);
+				} else {
+					html = htc->code;
+				}
 			}
 		} else {
 			html = Expired(2);
@@ -585,7 +558,6 @@ main(
     lbs = NewLBS();
 	InitCGI();
 	InitHTC(getenv("SCRIPT_NAME"),HT_GetValue);
-	//InitHTC(getenv("SCRIPT_NAME"),NULL);
 DumpV();
 	Session();
 	Dump();

@@ -37,7 +37,6 @@
 #include	"types.h"
 #include	"libmondai.h"
 #include	"HTCparser.h"
-//#include	"htc.h"
 #include	"cgi.h"
 #include	"tags.h"
 #include	"multipart.h"
@@ -449,8 +448,10 @@ EscapeJavaScriptString(char *str)
     return result;
 }
 
-static void
-EmitWithEscape(LargeByteString *lbs, char *str)
+extern	void
+EmitWithEscape(
+	LargeByteString	*lbs,
+	char			*str)
 {
     char *p;
 
@@ -552,7 +553,9 @@ ENTER_FUNC;
 				dbgmsg("OPC_REF");
 				name = LBS_FetchPointer(htc->code);
 				value = GetHostValue(name,FALSE);
-                EmitWithEscape(html,value);
+				if		(  ( value = GetHostValue(name,FALSE) )  !=  NULL  ) {
+					EmitWithEscape(html,value);
+				}
 				break;
 			  case	OPC_REFINT:
 				dbgmsg("OPC_REFINT");
@@ -582,7 +585,11 @@ ENTER_FUNC;
 				break;
 			  case	OPC_TOINT:
 				dbgmsg("OPC_TOINT");
-				TOP(1).body.ival = atoi(TOP(1).body.sval);
+				if		(  TOP(1).body.sval  !=  NULL  ) {
+					TOP(1).body.ival = atoi(TOP(1).body.sval);
+				} else {
+					TOP(1).body.ival = 0;
+				}
 				TOP(1).type = VAR_INT;
 				break;
 			  case	OPC_PHSTR:

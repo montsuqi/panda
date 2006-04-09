@@ -35,7 +35,7 @@
 #define	T_GT			'>'
 #define	T_NE			(YYBASE +14)
 #define	T_YYBASE		(YYBASE +20)
-
+  
 #define	T_COMMENT		(T_YYBASE +5)
 #define	T_COMMENTE		(T_YYBASE +6)
 
@@ -49,7 +49,6 @@
 #else
 #define	GLOBAL	extern
 #endif
-
 GLOBAL	char	HTC_ComSymbol[SIZE_SYMBOL+1];
 GLOBAL	char	*HTC_FileName;
 GLOBAL	int		HTC_Token;

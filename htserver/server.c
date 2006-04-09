@@ -109,28 +109,19 @@ SendWindowName(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
-    LargeByteString	*lbs;
 	void
 	SendWindow(
 		char		*wname,
 		WindowData	*win,
 		NETFILE		*fp)
 	{
-		int		size;
-
 		if		(  win->PutType  !=  SCREEN_NULL  ) {
 			switch	(win->PutType) {
 			  case	SCREEN_CURRENT_WINDOW:
 			  case	SCREEN_NEW_WINDOW:
 			  case	SCREEN_CHANGE_WINDOW:
 				SendPacketClass(fp,GL_WindowName);
-				dbgprintf("window = [%s]",wname);
 				SendString(fp,wname);
-				size = NativeSaveSize(win->rec->value,TRUE);
-				LBS_ReserveSize(lbs,size,FALSE);
-				RewindLBS(lbs);
-				NativeSaveValue(LBS_Body(lbs),win->rec->value,TRUE);
-				SendLBS(fp,lbs);
 				break;
 			  default:
 				break;
@@ -139,9 +130,7 @@ SendWindowName(
 		}
 	}
 ENTER_FUNC;
-    lbs = NewLBS();
 	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fp);
-    FreeLBS(lbs);
 	SendPacketClass(fp,GL_END);
 LEAVE_FUNC;
 }
@@ -151,53 +140,48 @@ WriteClient(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
-#if	0
 	char	buff[SIZE_BUFF+1];
 	char	*vname
 	,		*wname;
 	WindowData	*win;
 	ValueStruct	*value;
-	char	*p;
+	Bool	fClear;
     LargeByteString	*lbs;
 	size_t	size;
-#endif
+	PacketClass	klass;
+
 ENTER_FUNC;
 	SendWindowName(fp,scr);
-#if	0
     lbs = NewLBS();
-	do {
-		if		(  !RecvStringDelim(fp,SIZE_BUFF,buff)  )	break;
-		if		(  ( p = strchr(buff,' ') )  !=  NULL  ) {
-			*p = 0;
-		}
+	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_GetData  ) {
+		RecvString(fp,buff);
+dbgprintf("name = [%s]",buff);
+		fClear = RecvBool(fp);
 		if		(  *buff  !=  0  ) {
 			DecodeName(&wname,&vname,buff);
-            LBS_ReserveSize(lbs, 0, FALSE);
+			LBS_EmitStart(lbs);
 			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-				value = GetItemLongName(win->rec->value,vname);
+				if		(  *vname  ==  0  ) {
+					value = win->rec->value;
+				} else {
+					value = GetItemLongName(win->rec->value,vname);
+				}
                 if (value == NULL) {
                     fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
-                }
-                else if (ValueType(value) == GL_TYPE_ARRAY ||
-                         ValueType(value) == GL_TYPE_RECORD) {
-                    fprintf(stderr, "can't send array or record: %s.%s\n",
-                            wname, vname);
-                }
-                else {
-                    size = NativeSizeValue(NULL, value);
-                    LBS_ReserveSize(lbs, size, FALSE);
-                    NativePackValue(NULL, LBS_Body(lbs), value);
-                    if		(	(  p  !=  NULL            )
-							&&	(  !stricmp(p+1,"clear")  ) ) {
+                } else {
+					size = NativeSaveSize(value,TRUE);
+					LBS_ReserveSize(lbs,size,FALSE);
+					RewindLBS(lbs);
+					NativeSaveValue(LBS_Body(lbs),value,TRUE);
+					if		(  fClear  ) {
                         InitializeValue(value);
                     }
                 }
             }
             SendLBS(fp, lbs);
 		}
-	}	while	(  *buff  !=  0  );
+	}
     FreeLBS(lbs);
-#endif
 LEAVE_FUNC;
 }
 
@@ -226,7 +210,6 @@ dbgprintf("name = [%s]",buff);
         DecodeName(&wname, &vname, buff);
         LBS_EmitStart(lbs);
         RecvLBS(fp, lbs);
-dbgprintf("value = [%s]",LBS_Body(lbs));
         if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
 			if		(  ( value = GetItemLongName(win->rec->value, vname) )  ==  NULL  ) {
 				fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
@@ -536,6 +519,7 @@ ENTER_FUNC;
 		fp = SocketToNet(fd);
 		klass = RecvPacketClass(fp);
 		RecvString(fp,buff);
+		dbgprintf(">> [%s]\n",buff);
 		switch	(klass) {
 		  case	GL_Connect:
 			NewSession(fp,buff);
@@ -570,9 +554,7 @@ ENTER_FUNC;
 	RecParserInit();
 	BlobCacheCleanUp();
 	SesHash = NewIntHash();
-#ifdef	DEBUG
-	cSession = 0;
-#else
+#ifndef	DEBUG
 	cSession = abs(rand());	/*	set some random number	*/
 #endif
 LEAVE_FUNC;
