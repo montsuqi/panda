@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2006 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +26,6 @@
 #  include <config.h>
 #endif
 
-#define	_HTC_PARSER
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<stdarg.h>
@@ -47,7 +45,7 @@
 #include	"HTClex.h"
 #include	"cgi.h"
 #include	"exec.h"
-#include	"rhtc.h"
+#include	"eruby.h"
 #include	"debug.h"
 
 #define	DBIN_FILENO		3
@@ -282,9 +280,57 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	HTCInfo	*
-HTCParseRHTCFile(
-	char	*fname)
+static	HTCInfo	*
+MakeErrorReport(
+	char	*str)
+{
+	HTCInfo	*ret;
+	char	buff[SIZE_BUFF];
+	char	*p
+		,	*q;
+	Bool	fBody;
+	int		i;
+
+ENTER_FUNC;
+	ret = NewHTCInfo();
+	ret->code = NewLBS();
+	LBS_EmitString(ret->code,
+				   "<html><head>\n"
+				   "<meta http-equiv=\"Content-Type\" content=\"text/html;"
+				   "charset=utf-8\">"
+				   "<title>htserver error</title>"
+				   "</head><body>\n"
+				   "<H1>eRuby error</H1>\n"
+				   "<hr>\n"
+				   "<pre>\n");
+	p = str;
+	fBody = FALSE;
+	while	(  *p  !=  0  ) {
+		if		(  ( q = strchr(p,'\n') )  !=  NULL  ) {
+			*q = 0;
+		}
+		if		(  fBody  ) {
+			sprintf(buff,"%5d:%s\n",i,p);
+		} else {
+			if		(  strlcmp(p,"---")  ==  0  )	fBody = TRUE;
+			sprintf(buff,"%s\n",p);
+			i = 0;
+		}
+		EmitWithEscape(ret->code,buff);
+		if		(  q  ==  NULL  )	break;
+		p = q + 1;
+		i ++;
+	}
+	LBS_EmitString(ret->code,
+				   "</pre>\n");
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	HTCInfo	*
+ParseFile(
+	char	*fname,
+	Bool	fHTC)
 {
 	HTCInfo	*ret;
 	char	*str
@@ -301,15 +347,11 @@ HTCParseRHTCFile(
 	LargeByteString	*lbs;
 	char	buff[SIZE_BUFF];
 	size_t	size;
-
 	Bool	fChange
-		,	fError
-		,	fBody;
+		,	fError;
 	char	*coding
 		,	*istr
-		,	*ostr
-		,	*p
-		,	*q;
+		,	*ostr;
 	int		status;
 
 ENTER_FUNC;
@@ -335,11 +377,7 @@ ENTER_FUNC;
 			close(pDBW[1]);
 			close(pDBR[0]);
 			close(pDBR[1]);
-#if	1
 			execl(ERUBY_PATH,"eruby","-Mf","-Ku",NULL);
-#else
-			execl("/usr/bin/tee","eruby","aa",NULL);
-#endif
 		}
 		close(pSource[0]);
 		close(pResult[1]);
@@ -355,8 +393,8 @@ ENTER_FUNC;
 			close(fd);
 			istr = str;
 			coding = CheckCoding(&istr);
-			if		(	(  strcmp(coding,"utf-8")  !=  0  )
-					&&	(  strcmp(coding,"utf8")   !=  0  ) ) {
+			if		(	(  stricmp(coding,"utf-8")  !=  0  )
+					&&	(  stricmp(coding,"utf8")   !=  0  ) ) {
 				ostr = ConvertEncoding("utf-8",coding,istr);
 				xfree(str);
 				str = ostr;
@@ -383,7 +421,8 @@ ENTER_FUNC;
 			if		(  WEXITSTATUS(status)  ==  0  ) {
 				fd = pResult[0];
 				fError = FALSE;
-				if		(  fChange  ) {
+				if		(	(  fHTC     )
+						&&	(  fChange  ) ) {
 					sprintf(buff,"<htc coding=\"%s\">",coding);
 					LBS_EmitString(lbs,buff);
 				}
@@ -401,49 +440,24 @@ ENTER_FUNC;
 			str = LBS_ToString(lbs);
 			FreeLBS(lbs);
 			if		(  fError  ) {
-				ret = NewHTCInfo();
-				ret->code = NewLBS();
-				LBS_EmitString(ret->code,
-							   "<html><head>\n"
-							   "<meta http-equiv=\"Content-Type\" content=\"text/html;"
-							   "charset=utf-8\">"
-							   "<title>htserver error</title>"
-							   "</head><body>\n"
-							   "<H1>eRuby error</H1>\n"
-							   "<hr>\n"
-							   "<pre>\n");
-				p = str;
-				fBody = FALSE;
-				while	(  *p  !=  0  ) {
-					if		(  ( q = strchr(p,'\n') )  !=  NULL  ) {
-						*q = 0;
-					}
-					if		(  fBody  ) {
-						sprintf(buff,"%5d:%s\n",i,p);
-					} else {
-						if		(  strlcmp(p,"---")  ==  0  )	fBody = TRUE;
-						sprintf(buff,"%s\n",p);
-						i = 0;
-					}
-					EmitWithEscape(ret->code,buff);
-					if		(  q  ==  NULL  )	break;
-					p = q + 1;
-					i ++;
-				}
-				LBS_EmitString(ret->code,
-							   "</pre>\n");
-							   
+				ret = MakeErrorReport(str);
 			} else {
 				if		(  fChange  ) {
 					ostr = ConvertEncoding(coding,"utf-8",str);
 					xfree(str);
 					str = ostr;
 				}
-				HTC_FileName = fname;
-				HTC_cLine = 1;
-				HTC_Memory = str;
-				_HTC_Memory = str;
-				ret = HTCParserCore();
+				if		(  fHTC  ) {
+					HTC_FileName = fname;
+					HTC_cLine = 1;
+					HTC_Memory = str;
+					_HTC_Memory = str;
+					ret = HTCParserCore();
+				} else {
+					ret = NewHTCInfo();
+					ret->code = NewLBS();
+					LBS_EmitString(ret->code,str);
+				}
 			}
 		} else {
 			ret = NULL;
@@ -455,3 +469,16 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+extern	HTCInfo	*
+RHTMLParseFile(
+	char	*fname)
+{
+	return	(ParseFile(fname,FALSE));
+}
+
+extern	HTCInfo	*
+RHTCParseFile(
+	char	*fname)
+{
+	return	(ParseFile(fname,TRUE));
+}

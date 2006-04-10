@@ -325,6 +325,17 @@ Style(
 }
 
 static	void
+_Include(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*src
+		,	*type;
+ENTER_FUNC;
+LEAVE_FUNC;
+}
+
+static	void
 _Entry(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -1921,6 +1932,10 @@ ENTER_FUNC;
 
 	pAStack = 0; 
 	Tags = NewNameiHash();
+
+	tag = NewTag("INCLUDE",_Include);
+	AddArg(tag,"src",TRUE);
+	AddArg(tag,"type",TRUE);
 
 	tag = NewTag("ENTRY",_Entry);
 	AddArg(tag,"name",TRUE);

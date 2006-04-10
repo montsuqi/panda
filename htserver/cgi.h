@@ -57,7 +57,7 @@ typedef	struct {
 	char		*DefaultEvent;
 	size_t		EnctypePos;
 	int			FormNo;
-	Bool		fCompiled;
+	Bool		fHTML;
 }	HTCInfo;
 
 typedef	struct {

@@ -125,7 +125,7 @@ Session(
 	LargeByteString	*html;
 
 ENTER_FUNC;
-	htc = HTCParseHTCFile(name);
+	htc = ParseScreen(name);
 	if		(  htc  ==  NULL  ) {
         fprintf(stderr, "HTC file not found: %s\n", name);
         dbgprintf("HTC file not found: %s\n", name);

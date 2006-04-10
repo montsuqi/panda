@@ -45,6 +45,7 @@
 #include	"comms.h"
 #include	"glterm.h"
 #include	"HTCparser.h"
+#include	"eruby.h"
 #include	"cgi.h"
 #include	"mon.h"
 #include	"tags.h"
@@ -103,7 +104,7 @@ SetDefault(void)
 }
 
 static	ValueStruct	*
-HT_GetValue(char *name, Bool fClear)
+GetValue(char *name, Bool fClear)
 {
     ValueStruct *value;
 
@@ -313,7 +314,7 @@ SendEvent(void)
 ENTER_FUNC;
     if		(  ( name = LoadValue("_name") )  !=  NULL  ) {
 		fComm = FALSE;
-		if		(  ( htc = HTCParseScreen(name) )  ==  NULL  ) {
+		if		(  ( htc = ParseScreen(name) )  ==  NULL  ) {
 			exit(1);
 		}
 	} else {
@@ -415,19 +416,17 @@ ENTER_FUNC;
 	Codeset = SRC_CODESET;
 	html = NewLBS();
 	LBS_EmitStart(html);
-    if      (  ( htc = HTCParseScreen("expired") )  ==  NULL  ) {
+    if      (  ( htc = ParseScreen("expired") )  ==  NULL  ) {
         LBS_EmitUTF8(html,
                      "<html><head>"
                      "<title>htserver error</title>"
                      "</head><body>\n"
                      "<H1>htserver error</H1>\n"
                      "<p>maybe session was expired. please retry.</p>\n"
-                     "<p>おそらくセション変数の保持時間切れでしょう。"
-                     "もう一度最初からやり直して下さい。</p>\n"
-					 ,SRC_CODESET);
+					 ,NULL);
 		sprintf(buff,"<p>end code = %d</p>",code);
-		LBS_EmitUTF8(html,buff,SRC_CODESET);
-		LBS_EmitUTF8(html,"</body></html>\n",SRC_CODESET);
+		LBS_EmitUTF8(html,buff,NULL);
+		LBS_EmitUTF8(html,"</body></html>\n",NULL);
     } else {
         ExecCode(html,htc);
     }
@@ -482,8 +481,7 @@ ENTER_FUNC;
 				}
 			} else {
 				CloseNet(fpServ);
-				Values = NewNameHash();
-				Files = NewNameHash();
+				CGI_InitValues();
 				goto	retry;
 			}
 		}
@@ -493,7 +491,7 @@ ENTER_FUNC;
 				name = StrDup(buff);
 				SaveValue("_name",name,FALSE);
                 if ((file = LoadValue("_file")) != NULL) {
-                    ValueStruct *value = HT_GetValue(file, TRUE);
+                    ValueStruct *value = GetValue(file, TRUE);
 
                     if (value != NULL && !IS_VALUE_NIL(value)) {
                         PutFile(value);
@@ -505,17 +503,17 @@ ENTER_FUNC;
 			if		(  !fComm  ) {
 				html = Expired(1);
 			} else {
-				if		(  ( htc = HTCParseScreen(name) )  ==  NULL  ) {
+				if		(  ( htc = ParseScreen(name) )  ==  NULL  ) {
 					exit(1);
 				}
-				if		(  htc->fCompiled  ) {
+				if		(  htc->fHTML  ) {
+					html = htc->code;
+				} else {
 					html = NewLBS();
 					LBS_EmitStart(html);
 					ExecCode(html,htc);
-					SendPacketClass(fpServ,GL_END);
-				} else {
-					html = htc->code;
 				}
+				SendPacketClass(fpServ,GL_END);
 			}
 		} else {
 			html = Expired(2);
@@ -557,7 +555,7 @@ main(
 	InitNET();
     lbs = NewLBS();
 	InitCGI();
-	InitHTC(getenv("SCRIPT_NAME"),HT_GetValue);
+	InitHTC(getenv("SCRIPT_NAME"),GetValue);
 DumpV();
 	Session();
 	Dump();

@@ -47,7 +47,7 @@
 #include	"HTClex.h"
 #include	"cgi.h"
 #include	"exec.h"
-#include	"rhtc.h"
+#include	"eruby.h"
 #include	"tags.h"
 #include	"debug.h"
 
@@ -93,8 +93,7 @@ ENTER_FUNC;
 				LBS_EmitChar(htc->code,HTC_Token);
 				switch	(GetName) {
 				  case	T_SCONST:
-					para = HTC_ComSymbol;
-					ExpandAttributeString(htc,para);
+					ExpandAttributeString(htc,HTC_ComSymbol);
 					break;
 				  case	T_SYMBOL:
 					LBS_EmitString(htc->code,HTC_ComSymbol);
@@ -311,7 +310,7 @@ NewHTCInfo(void)
 	ret->DefaultEvent = NULL;
 	ret->EnctypePos = 0;
 	ret->FormNo = -1;
-	ret->fCompiled = FALSE;
+	ret->fHTML = TRUE;
 
 	return	(ret);
 }
@@ -332,12 +331,12 @@ HTCParserCore(void)
 	if		(  fError  ) {
 		ret = NULL;
 	}
-	ret->fCompiled = TRUE;
+	ret->fHTML = FALSE;
 	return	(ret);
 }
 
 extern	HTCInfo	*
-HTCParseHTCFile(
+HTCParseFile(
 	char	*fname)
 {
 	HTCInfo	*ret;
@@ -363,39 +362,6 @@ ENTER_FUNC;
 		ret = HTCParserCore();
 	} else {
 		ret = NULL;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-extern	HTCInfo	*
-HTCParseScreen(
-	char	*name)
-{
-	HTCInfo	*ret;
-	char	buff[SIZE_LONGNAME+1];
-	char	fname[SIZE_LONGNAME+1];
-	char	*p
-		,	*q;
-
-ENTER_FUNC;
-	strcpy(buff,ScreenDir);
-	p = buff;
-	ret = NULL;
-	do {
-		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-			*q = 0;
-		}
-		sprintf(fname,"%s/%s.rhtc",p,name);
-		if		(  ( ret = HTCParseRHTCFile(fname) )  !=  NULL  )	break;
-		sprintf(fname,"%s/%s.htc",p,name);
-		if		(  ( ret = HTCParseHTCFile(fname) )  !=  NULL  )	break;
-		p = q + 1;
-	}	while	(  q  !=  NULL  );
-
-	if		(  ret  ==  NULL  ) {
-        fprintf(stderr, "HTC file not found: %s\n", fname);
-        dbgprintf("HTC file not found: %s\n", fname);
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -445,3 +411,39 @@ ENTER_FUNC;
 	xfree(htc);
 LEAVE_FUNC;
 }
+
+extern	HTCInfo	*
+ParseScreen(
+	char	*name)
+{
+	HTCInfo	*ret;
+	char	buff[SIZE_LONGNAME+1];
+	char	fname[SIZE_LONGNAME+1];
+	char	*p
+		,	*q;
+
+ENTER_FUNC;
+	strcpy(buff,ScreenDir);
+	p = buff;
+	ret = NULL;
+	do {
+		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+			*q = 0;
+		}
+		sprintf(fname,"%s/%s.rhml",p,name);
+		if		(  ( ret = RHTMLParseFile(fname) )  !=  NULL  )	break;
+		sprintf(fname,"%s/%s.rhtc",p,name);
+		if		(  ( ret = RHTCParseFile(fname) )  !=  NULL  )	break;
+		sprintf(fname,"%s/%s.htc",p,name);
+		if		(  ( ret = HTCParseFile(fname) )  !=  NULL  )	break;
+		p = q + 1;
+	}	while	(  q  !=  NULL  );
+
+	if		(  ret  ==  NULL  ) {
+        fprintf(stderr, "HTC file not found: %s\n", fname);
+        dbgprintf("HTC file not found: %s\n", fname);
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
