@@ -1,3 +1,9 @@
+2006-04-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/cgi.c (GetHostValue): ホストに変数がない時は変数名を値
+	にするようにした(基本的には安全網。また内部変数の参照の時はこうなっ
+	ていないと困る)
+
 2006-04-10  Noboru Saitou  <noborus@netlab.jp>
 
  	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c: 
