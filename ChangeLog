@@ -1,5 +1,7 @@
 2006-04-11  Noboru Saitou  <noborus@netlab.jp>
 
+	* Ver 1.2.6p2 release
+
 	* backport from HEAD.
 	
 	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c: 
