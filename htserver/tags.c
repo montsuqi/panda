@@ -332,6 +332,9 @@ _Include(
 	char	*src
 		,	*type;
 ENTER_FUNC;
+	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
+			||	(  strlicmp(type,"html")          ==  0     ) ) {
+	}
 LEAVE_FUNC;
 }
 

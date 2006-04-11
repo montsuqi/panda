@@ -271,6 +271,7 @@ ParseName(
 			pp += sprintf(pp,"%s",val->body.sval);
 			break;
 		  default:
+			pp += sprintf(pp,"(%d)",val->type);
 			break;
 		}
 		return	(pp);
@@ -295,6 +296,8 @@ dbgprintf("name = [%s]\n",str);
 				*q = 0;
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
+				} else {
+					p += sprintf(p,"not found [%s]",name);
 				}
 			} else {
 				q = name;
@@ -304,6 +307,8 @@ dbgprintf("name = [%s]\n",str);
 				*q = 0;
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
+				} else {
+					p += sprintf(p,"not found [%s]",name);
 				}
 			}
 			break;
@@ -319,6 +324,8 @@ dbgprintf("name = [%s]\n",str);
 				*q = 0;
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
+				} else {
+					p += sprintf(p,"not found [%s]",name);
 				}
 			} else {
 				q = name;
@@ -328,6 +335,8 @@ dbgprintf("name = [%s]\n",str);
 				*q = 0;
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
+				} else {
+					p += sprintf(p,"not found [%s]",name);
 				}
 			}
 			break;
@@ -596,6 +605,7 @@ ENTER_FUNC;
 				dbgmsg("OPC_PHSTR");
 				vval = Pop;
 				vval.body.sval = GetHostValue(vval.body.sval,FALSE);
+				dbgprintf("%s",vval.body.sval);
 				vval.type = VAR_STR;
 				Push(vval);
 				break;

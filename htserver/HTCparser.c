@@ -414,7 +414,8 @@ LEAVE_FUNC;
 
 extern	HTCInfo	*
 ParseScreen(
-	char	*name)
+	char	*name,
+	Bool	fBody)
 {
 	HTCInfo	*ret;
 	char	buff[SIZE_LONGNAME+1];
@@ -430,7 +431,11 @@ ENTER_FUNC;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
-		sprintf(fname,"%s/%s.rhml",p,name);
+#if	0
+		sprintf(fname,"%s/%s.html",p,name);
+		if		(  ( ret = HTMLParseFile(fname) )  !=  NULL  )	break;
+#endif
+		sprintf(fname,"%s/%s.rhtml",p,name);
 		if		(  ( ret = RHTMLParseFile(fname) )  !=  NULL  )	break;
 		sprintf(fname,"%s/%s.rhtc",p,name);
 		if		(  ( ret = RHTCParseFile(fname) )  !=  NULL  )	break;

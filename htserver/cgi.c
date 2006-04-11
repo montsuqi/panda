@@ -862,7 +862,7 @@ GetHostValue(
 	if		(  ( value = LoadValue(name) )  ==  NULL  )	{
 		if		(  _GetValue  !=  NULL  ) {
 			if		(  ( item = (_GetValue)(name, fClear) )  ==  NULL  ) {
-				value = "";
+				value = StrDup(name);
 			} else {
 				value = ValueToString(item, NULL);
 			}

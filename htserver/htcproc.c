@@ -125,15 +125,19 @@ Session(
 	LargeByteString	*html;
 
 ENTER_FUNC;
-	htc = ParseScreen(name);
+	htc = ParseScreen(name,FALSE);
 	if		(  htc  ==  NULL  ) {
         fprintf(stderr, "HTC file not found: %s\n", name);
         dbgprintf("HTC file not found: %s\n", name);
 		exit(1);
 	}
-	html = NewLBS();
-	LBS_EmitStart(html);
-	ExecCode(html,htc);
+	if		(  htc->fHTML  ) {
+		html = htc->code;
+	} else {
+		html = NewLBS();
+		LBS_EmitStart(html);
+		ExecCode(html,htc);
+	}
 	WriteLargeString(stdout,html,Codeset);
 LEAVE_FUNC;
 }
