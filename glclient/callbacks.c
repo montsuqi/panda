@@ -130,8 +130,10 @@ send_event(
 {
 	GdkWindow	*pane;
 	char		*wname;
+	static Bool	ignore_event = FALSE;
+
 ENTER_FUNC;
-	if		(  !fInRecv ) {
+	if		(  !fInRecv &&  !ignore_event ) {
 		pane = ShowBusyCursor(widget);
 
 		StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
@@ -154,7 +156,9 @@ ENTER_FUNC;
 		GetScreenData(fpComm);
 		UnblockChangedHandlers();
 		if	( ! fKeyBuff  ) {
+			ignore_event = TRUE;
 			ClearKeyBuffer();
+			ignore_event = FALSE;
 		}
 		HideBusyCursor(pane); 
 	}

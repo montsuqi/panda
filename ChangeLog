@@ -1,3 +1,11 @@
+2006-04-11  Noboru Saitou  <noborus@netlab.jp>
+
+	* backport from HEAD.
+	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c: 
+	チェックデータの送信方法の変更
+	* glclient/action.c, glclient/callbacks.c: イベントクリア時にイベント
+	を受け取らないように変更
+
 2006-03-23  Noboru Saitou  <noborus@netlab.jp>
 
 	* Ver 1.2.6p1 release

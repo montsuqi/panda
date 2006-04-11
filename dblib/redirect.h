@@ -28,7 +28,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #define	RED_PING		(PacketClass)0x01
 #define	RED_DATA		(PacketClass)0x02
-#define	RED_CHECK		(PacketClass)0x03
+#define	RED_LOCK		(PacketClass)0x03
 #define	RED_STATUS		(PacketClass)0x04
 #define	RED_NOT			(PacketClass)0xF0
 #define	RED_PONG		(PacketClass)0xF1

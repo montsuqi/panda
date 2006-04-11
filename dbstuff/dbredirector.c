@@ -66,8 +66,24 @@ static	sigset_t	hupset;
 static	DBG_Struct	*ThisDBG;
 static	pthread_t	_FileThread;
 static	Queue		*FileQueue;
-static	Queue		*CheckQueue;
+
+typedef	struct {
+	LargeByteString	*CheckData;
+	LargeByteString	*RedirectData;
+}	VeryfyData;
+
 static	Port		*RedirectPort;
+static  pthread_mutex_t redlock;
+
+
+static	void
+FreeVeryfyData(
+	VeryfyData	*vdata)
+{
+	FreeLBS(vdata->CheckData);
+	FreeLBS(vdata->RedirectData);
+	xfree(vdata);
+}
 
 static	void
 LogThread(
@@ -75,6 +91,7 @@ LogThread(
 {
 	int		fhLog = (int)para;
 	LargeByteString	*data, *cdata;
+	VeryfyData *vdata;
 	NETFILE	*fpLog;
 	PacketClass	c;
 	Bool	fSuc = TRUE;
@@ -85,21 +102,23 @@ ENTER_FUNC;
 	do {
 		switch	( c = RecvPacketClass(fpLog) ) {
 		  case	RED_DATA:
-			data = NewLBS();
-			LBS_EmitStart(data);
-			RecvLBS(fpLog,data);
-			LBS_EmitEnd(data);
-			SendPacketClass(fpLog,RED_OK);
-			EnQueue(FileQueue,data);
-			fSuc = TRUE;
-			break;
-		  case	RED_CHECK:
+			pthread_mutex_lock(&redlock);
+			vdata = New(VeryfyData);
 			cdata = NewLBS();
 			LBS_EmitStart(cdata);
 			RecvLBS(fpLog,cdata);
 			LBS_EmitEnd(cdata);
+			vdata->CheckData = cdata;
+
+			data = NewLBS();
+			LBS_EmitStart(data);
+			RecvLBS(fpLog,data);
+			LBS_EmitEnd(data);
+			vdata->RedirectData = data;
+
+			EnQueue(FileQueue, vdata);
 			SendPacketClass(fpLog,RED_OK);
-			EnQueue(CheckQueue,cdata);
+			pthread_mutex_unlock(&redlock);
 			fSuc = TRUE;
 			break;
 		  case	RED_PING:
@@ -259,23 +278,25 @@ WriteDB(
 	LargeByteString	*orgcheck)
 {
 	int rc;
+	char buff[SIZE_BUFF];
 	LargeByteString	*redcheck;
-	
 ENTER_FUNC;
 	rc = TransactionRedirectStart(ThisDBG);
 	if ( rc == MCP_OK ) {
 		rc = ExecRedirectDBOP(ThisDBG, query);
 		redcheck = ThisDBG->checkData;
 	}
-	if ( rc == MCP_OK ){
-		if (!fNoSumCheck) {
+	if ( rc == MCP_OK ) {
+		if ( ( !fNoSumCheck) &&  ( LBS_Size(orgcheck) > 0 ) ){
 			rc = CheckRedirectData(orgcheck, redcheck);
+			if ( rc != MCP_OK ) {
+				snprintf(buff, 60, "Difference for the update check %s...", query);
+				Warning(buff);
+			}
 		}
 	}
 	if ( rc == MCP_OK ) {
 		rc = TransactionRedirectEnd(ThisDBG);
-	} else {
-		Warning("DB synchronous failure")
 	}
 LEAVE_FUNC;
 	return rc;
@@ -321,7 +342,7 @@ static	void
 FileThread(
 	void	*dummy)
 {
-	LargeByteString	*data, *orgcheck;
+	VeryfyData *vdata;
 	char	*query;
 	FILE	*fp;
 
@@ -340,25 +361,24 @@ ENTER_FUNC;
 		ThisDBG->fConnect = NOCONNECT;
 	}
 	while	( TRUE )	{
-		orgcheck= (LargeByteString *)DeQueue(CheckQueue);
-		data = (LargeByteString *)DeQueue(FileQueue);
-		query = LBS_Body(data);
-		if		(  *query  !=  0  ) {
+		vdata = (VeryfyData *)DeQueue(FileQueue);
+		query = LBS_Body(vdata->RedirectData);
+		if		(  *query  !=  0 ) {
 			if ( ThisDBG->fConnect == UNCONNECT ) {
 				ReConnectDB();
 			}
 			if ( ThisDBG->fConnect == CONNECT ){
-				ExecDB(query, orgcheck);
+				ExecDB(query, vdata->CheckData);
 			}
 			if ( ThisDBG->fConnect == FAILURE ){
+				Warning("DB synchronous failure");
 				WriteLog(fp, "DB synchronous failure");
 				ThisDBG->fConnect = DISCONNECT;
 			}
 			ReRedirect(query);
 			WriteLogQuery(fp, query);
 		}
-		FreeLBS(data);
-		FreeLBS(orgcheck);
+		FreeVeryfyData(vdata);
 	}
 	if		(  ThisDBG->dbname  ==  NULL  ) {
 		CloseDB_RedirectPort(ThisDBG);
@@ -377,6 +397,7 @@ ExecuteServer(void)
 	int		maxfd;
 
 ENTER_FUNC;
+	pthread_mutex_init(&redlock,NULL);
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL); 
 	_fhLog = InitServerPort(RedirectPort,Back);
 	maxfd = _fhLog;
@@ -491,7 +512,6 @@ ENTER_FUNC;
 		RedirectPort = ParPortName(PortNumber);
 	}
 	FileQueue = NewQueue();
-	CheckQueue = NewQueue();
 LEAVE_FUNC;
 }
 

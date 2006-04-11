@@ -44,13 +44,13 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"debug.h"
 
 static Bool
-SendCheckData_Redirect(
+SendQueryData_Redirect(
 	DBG_Struct	*dbg)
 {
 	int rc = FALSE;
 		
-	SendPacketClass(dbg->fpLog,RED_CHECK);	ON_IO_ERROR(dbg->fpLog,badio);
-	SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
+	SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
+	SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
 	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
 		rc = TRUE;
 	}
@@ -59,12 +59,13 @@ badio:
 }
 
 static Bool
-SendQueryData_Redirect(
+SendVeryfyData_Redirect(
 	DBG_Struct	*dbg)
 {
 	int rc = FALSE;
 		
 	SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
+	SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
 	SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
 	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
 		rc = TRUE;
@@ -215,11 +216,11 @@ CommitDB_Redirect(
 	DBG_Struct	*dbg)
 {
 	Bool rc = TRUE;
+
 ENTER_FUNC;
-	if		(  dbg->redirectData  !=  NULL  ) {
-		rc = SendCheckData_Redirect(dbg);
-		if ( rc ){
-			rc = SendQueryData_Redirect(dbg);
+	if	( dbg->redirectData !=  NULL) {
+		if ( LBS_Size(dbg->redirectData) > 0 ) {
+			rc = SendVeryfyData_Redirect(dbg);
 		}
 		if ( rc ){
 			rc = RecvSTATUS_Redirect(dbg);
