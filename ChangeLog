@@ -1,10 +1,14 @@
 2006-04-11  Noboru Saitou  <noborus@netlab.jp>
 
 	* backport from HEAD.
+	
 	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c: 
 	チェックデータの送信方法の変更
+	
 	* glclient/action.c, glclient/callbacks.c: イベントクリア時にイベント
 	を受け取らないように変更
+
+	* aps/aps_main.c (ExecuteServer): Window not found のときは異常終了にする
 
 2006-03-23  Noboru Saitou  <noborus@netlab.jp>
 

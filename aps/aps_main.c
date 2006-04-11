@@ -199,9 +199,8 @@ ENTER_FUNC;
 			TransactionEnd(NULL);
 			PutWFC(fpWFC,node);
 		} else {
-			Message("window [%s] not found.",
+			Error("window [%s] not found.",
 						  ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL));
-			break;
 		}
 	}
 	CloseNet(fpWFC);
