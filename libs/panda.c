@@ -54,7 +54,11 @@ OpenPanda(
 	char	*arg)
 {
 ENTER_FUNC;
-	fpPanda = ConnectTermServer(PandaPort,ThisTerm,ThisUser,TRUE,arg); 
+	fpPanda = ConnectTermServer(PandaPort,ThisTerm,ThisUser,TRUE,arg);
+	if		(  fpPanda  ==  NULL  ) {
+		fprintf(stderr,"can't connect wfc\n");
+		exit(1);
+	}
 LEAVE_FUNC;
 }
 

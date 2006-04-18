@@ -416,6 +416,25 @@ AC_ARG_WITH(ssl,
 ])		
 
 dnl ***************************************************************************
+dnl eRuby
+dnl ***************************************************************************
+
+enable_eruby="no"
+AC_ARG_WITH(eruby,
+	[  --with-eruby=<path>  use ERuby in <path>],[
+    if test "x$withval" = "xyes"; then
+      ERUBY_PATH="/usr/bin/eruby";
+    else
+      AC_MSG_CHECKING(for ruby)
+      ERUBY_PATH="$withval"
+    fi
+    enable_eruby="yes"
+    AC_SUBST(ERUBY_PATH)
+    AC_DEFINE_UNQUOTED(ERUBY_PATH,"$ERUBY_PATH","")
+    AC_DEFINE(USE_ERUBY,1,"")
+])		
+
+dnl ***************************************************************************
 dnl dorobune wo oki de shizumeru
 dnl ***************************************************************************
 
@@ -562,4 +581,5 @@ echo "  msgd support:          $enable_msgd"
 echo "  syslog support:        $enable_syslog"
 echo "  IE5 support:           $enable_ie5"
 echo "  MCE support:           $enable_mce"
+echo "  ERUBY support:         $enable_eruby"
 echo ""

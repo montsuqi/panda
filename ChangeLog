@@ -1,3 +1,39 @@
+2006-04-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/HTCparser.c: '/'の処理を正しくした
+
+2006-04-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: ERubyの使用をフラグにした
+
+	* aps/OpenCOBOL.c (_ReadyExecute), aps/Ruby.c (ready_execute),
+	aps/Exec.c (_ReadyExecute): アプリケーションのロードパスのデ
+	フォルト設定に対応した
+
+	* aps/handler.c, libs/BDparser.c: アプリケーションのロードパスのデ
+	フォルトと、アプリケーションハンドラのパスをBD中で設定可能にした
+
+	* aps/handler.c, libs/LDparser.c: アプリケーションのロードパスのデ
+	フォルトと、アプリケーションハンドラのパスをLD中で設定可能にした
+
+	* aps/C.c (_ReadyExecute): アプリケーションのロードパスのデフォル
+	トを設定可能にした
+
+	* libs/DIparser.c, dblib/dbgroup.c (InitDBG): DBハンドラモジュール
+	のパスをdirectory中で設定可能にした
+
+	* libs/DIparser.c, tools/monitor.c: aps, wfc, dbredirectorのパスを
+	directory中で定義設定にした
+
+2006-04-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/driver.h, libs/driver.c (NewScreenData): cmdが無駄に大きい
+	ので小さくした
+
+2006-04-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/eruby.c (DataProcess): 終了処理を正しくした
+
 2006-04-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/cgi.c (GetHostValue): ホストに変数がない時は変数名を値

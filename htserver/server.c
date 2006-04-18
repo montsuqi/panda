@@ -19,9 +19,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -135,27 +135,87 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+#if	1
 static	void
-WriteClient(
+SendScreenItem(
 	NETFILE		*fp,
-	ScreenData	*scr)
+	ScreenData	*scr,
+    LargeByteString	*lbs)
 {
-	char	buff[SIZE_BUFF+1];
 	char	*vname
 	,		*wname;
 	WindowData	*win;
 	ValueStruct	*value;
 	Bool	fClear;
-    LargeByteString	*lbs;
 	size_t	size;
+	char	buff[SIZE_BUFF+1];
+
+	RecvString(fp,buff);
+	fClear = RecvBool(fp);
+	dbgprintf("name = [%s]",buff);
+	if		(  *buff  !=  0  ) {
+		DecodeName(&wname,&vname,buff);
+		LBS_EmitStart(lbs);
+		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
+			if		(  *vname  ==  0  ) {
+				value = win->rec->value;
+			} else {
+				value = GetItemLongName(win->rec->value,vname);
+			}
+			if (value == NULL) {
+				fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
+			} else {
+				size = NativeSaveSize(value,TRUE);
+				LBS_ReserveSize(lbs,size,FALSE);
+				NativeSaveValue(LBS_Body(lbs),value,TRUE);
+				if		(  fClear  ) {
+					InitializeValue(value);
+				}
+			}
+		}
+		SendLBS(fp, lbs);
+	}
+}
+
+static	void
+WriteClient(
+	NETFILE		*fp,
+	ScreenData	*scr)
+{
+    LargeByteString	*lbs;
 	PacketClass	klass;
 
 ENTER_FUNC;
 	SendWindowName(fp,scr);
     lbs = NewLBS();
 	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_GetData  ) {
+		SendScreenItem(fp,scr,lbs);
+	}
+    FreeLBS(lbs);
+LEAVE_FUNC;
+}
+#else
+static	void
+WriteClient(
+	NETFILE		*fp,
+	ScreenData	*scr)
+{
+    LargeByteString	*lbs;
+	PacketClass	klass;
+	char	buff[SIZE_BUFF+1];
+	char	*vname
+	,		*wname;
+	WindowData	*win;
+	ValueStruct	*value;
+	Bool	fClear;
+	size_t	size;
+
+ENTER_FUNC;
+	SendWindowName(fp,scr);
+    lbs = NewLBS();
+	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_GetData  ) {
 		RecvString(fp,buff);
-dbgprintf("name = [%s]",buff);
+		dbgprintf("name = [%s]",buff);
 		fClear = RecvBool(fp);
 		if		(  *buff  !=  0  ) {
 			DecodeName(&wname,&vname,buff);
@@ -166,25 +226,24 @@ dbgprintf("name = [%s]",buff);
 				} else {
 					value = GetItemLongName(win->rec->value,vname);
 				}
-                if (value == NULL) {
-                    fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
-                } else {
+				if (value == NULL) {
+					fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
+				} else {
 					size = NativeSaveSize(value,TRUE);
 					LBS_ReserveSize(lbs,size,FALSE);
-					RewindLBS(lbs);
 					NativeSaveValue(LBS_Body(lbs),value,TRUE);
 					if		(  fClear  ) {
-                        InitializeValue(value);
-                    }
-                }
-            }
-            SendLBS(fp, lbs);
+						InitializeValue(value);
+					}
+				}
+			}
+			SendLBS(fp, lbs);
 		}
 	}
     FreeLBS(lbs);
 LEAVE_FUNC;
 }
-
+#endif
 static	void
 RecvScreenData(
 	NETFILE		*fp,
@@ -292,13 +351,12 @@ RecvMessage(int sock, int *fd, void *data, size_t datalen)
 static	void
 SesServer(
 	ScreenData	*scr,
-	int		sock)
+	int			sock)
 {
 	int		fd;
 	NETFILE	*fp;
-	char	buff[SIZE_BUFF+1];
+	char	buff[SIZE_BUFF];
 	char	trid[SIZE_SESID+1];
-	char	*p;
 	HTC_Node	htc;
 	fd_set		ready;
 	struct	timeval	timeout;
@@ -323,20 +381,12 @@ ENTER_FUNC;
 			SendPacketClass(fp,GL_Session);
 			SendString(fp,trid);
 			if		(  ( klass = RecvPacketClass(fp) )  ==  GL_Event  ) {
-				RecvString(fp,buff);
-				dbgprintf("event = [%s]\n",buff);
-				if		(  *buff  ==  0  ) {
-					strcpy(scr->event,"");
-					strcpy(scr->widget,"");
-				} else
-				if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
-					*p = 0;
-					strcpy(scr->event,buff);
-					strcpy(scr->widget,p+1);
-				} else {
-					strcpy(scr->widget,"");
-					strcpy(scr->event,buff);
-				}
+				RecvString(fp,buff);	/*	window	*/
+				strncpy(scr->window,buff,SIZE_NAME);
+				RecvString(fp,buff);	/*	widget	*/
+				strncpy(scr->widget,buff,SIZE_NAME);
+				RecvString(fp,buff);	/*	widget	*/
+				strncpy(scr->event,buff,SIZE_EVENT);
 				sts = APL_SESSION_GET;
 				RecvScreenData(fp,scr);
 				dbgprintf("user = [%s]\n",scr->user);
@@ -364,7 +414,6 @@ ChildProcess(
 	char	*user,
 	char	*cmd)
 {
-	Bool	fOk;
 	ScreenData	*scr;
 	char	trid[SIZE_SESID+1];
 
@@ -380,13 +429,10 @@ ENTER_FUNC;
 	strcpy(scr->term,TermName(0));
 	ApplicationsCall(APL_SESSION_LINK,scr);
 	if		(  scr->status  ==  APL_SESSION_NULL  ) {
-		SendStringDelim(fp,"900 invalid program\n");
+		SendPacketClass(fp,GL_E_APPL);
 		printf("reject client(program name error)\n");
-		fOk = FALSE;
+		CloseNet(fp);
 	} else {
-		fOk = TRUE;
-	}
-	if		(  fOk  ) {
 		EncodeTRID(trid,sesid,0);
 		SendPacketClass(fp,GL_Session);
 		SendString(fp,trid);
@@ -394,8 +440,6 @@ ENTER_FUNC;
 		CloseNet(fp);
 		SesServer(scr,sock);
 		FinishSession(scr);
-	} else {
-		CloseNet(fp);
 	}
 LEAVE_FUNC;
 }
@@ -412,84 +456,83 @@ PutLog(
 	MessageLog(buff);
 }
 
-static	void
+static	Bool
 NewSession(
-	NETFILE	*fp,
-	char	*arg)
+	NETFILE	*fp)
 {
+	char	buff[SIZE_BUFF];
 	HTC_Node	*htc;
 	int		pid;
 	int		socks[2];
-	char	*user
-	,		*cmd;
+	char	user[SIZE_USER+1]
+		,	cmd[SIZE_LONGNAME+1];
 	char	*p;
+	PacketClass	klass;
+	Bool	rc;
 
 ENTER_FUNC;
 	if		(  socketpair(PF_UNIX, SOCK_STREAM, 0, socks)  !=  0  ) {
 		fprintf(stderr,"make unix domain socket fail.\n");
 		exit(1);
 	}
-	if		(  *arg  ==  0  ) {
-		user = "";
-		cmd = "";
-	} else 
-	if		(  ( p = strchr(arg,'\t') )  !=  NULL  ) {
-		*p = 0;
-		cmd = arg;
-		p ++;
-		user = p;
-	} else {
-		cmd = arg;
-		user = "";
-	}
-	PutLog(user,cmd,cSession);
-	if		(  ( pid = fork() )  ==  0  ) {
-		close(socks[0]);
-		ChildProcess(fp,socks[1],cSession,user,cmd);
-		exit(0);
-	} else {
-		close(socks[1]);
-		htc = New(HTC_Node);
-		htc->sock = socks[0];
-		htc->pid = pid;
-		htc->ses = cSession;
-		htc->count = 0;
-		g_int_hash_table_insert(SesHash,htc->ses,htc);
+	RecvString(fp,buff);	/*	command		*/
+	strncpy(cmd,buff,SIZE_LONGNAME);
+	if		(  ( klass = RecvPacketClass(fp) )  ==  GL_Name  ) {
+		RecvString(fp,buff);	/*	user	*/
+		strncpy(user,buff,SIZE_USER);
+		PutLog(user,cmd,cSession);
+		rc = TRUE;
+		if		(  ( pid = fork() )  ==  0  ) {
+			close(socks[0]);
+			ChildProcess(fp,socks[1],cSession,user,cmd);
+			exit(0);
+		} else {
+			close(socks[1]);
+			htc = New(HTC_Node);
+			htc->sock = socks[0];
+			htc->pid = pid;
+			htc->ses = cSession;
+			htc->count = 0;
+			g_int_hash_table_insert(SesHash,htc->ses,htc);
 #ifndef	DEBUG
-		cSession += (rand()>>16)+1;		/*	some random number	*/
+			cSession += (rand()>>16)+1;		/*	some random number	*/
 #endif
+		}
+	} else {
+		rc = FALSE;
 	}
 LEAVE_FUNC;
+	return	(rc);
 }
 
 static int
 SendMessage(int sock, int fd, void *data, size_t datalen)
 {
-    struct msghdr msg;
-    struct iovec vec[1];
+	struct msghdr msg;
+	struct iovec vec[1];
 
-    struct {
-	struct cmsghdr hdr;
-	int fd;
-    } cmsg;
+	struct {
+		struct cmsghdr hdr;
+		int fd;
+	}	cmsg;
 
-    msg.msg_name = NULL;
-    msg.msg_namelen = 0;
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
 
-    vec[0].iov_base = data;
-    vec[0].iov_len = datalen;
-    msg.msg_iov = vec;
-    msg.msg_iovlen = 1;
+	vec[0].iov_base = data;
+	vec[0].iov_len = datalen;
+	msg.msg_iov = vec;
+	msg.msg_iovlen = 1;
 
-    msg.msg_control = (caddr_t)&cmsg;
-    msg.msg_controllen = sizeof(struct cmsghdr) + sizeof(int);
-    msg.msg_flags = 0;
-    cmsg.hdr.cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
-    cmsg.hdr.cmsg_level = SOL_SOCKET;
-    cmsg.hdr.cmsg_type = SCM_RIGHTS;
-    cmsg.fd = fd;
+	msg.msg_control = (caddr_t)&cmsg;
+	msg.msg_controllen = sizeof(struct cmsghdr) + sizeof(int);
+	msg.msg_flags = 0;
+	cmsg.hdr.cmsg_len = sizeof(struct cmsghdr) + sizeof(int);
+	cmsg.hdr.cmsg_level = SOL_SOCKET;
+	cmsg.hdr.cmsg_type = SCM_RIGHTS;
+	cmsg.fd = fd;
 
-    return sendmsg(sock, &msg, 0);
+	return sendmsg(sock, &msg, 0);
 }
 
 extern	void
@@ -504,6 +547,7 @@ ExecuteServer(void)
 	HTC_Node	*htc;
 	Port	*port;
 	PacketClass	klass;
+	Bool	fExit;
 
 ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
@@ -511,20 +555,21 @@ ENTER_FUNC;
 
 	port = ParPortName(PortNumber);
 	_fd = InitServerPort(port,Back);
-	while	(TRUE)	{
+	fExit = FALSE;
+	while	(!fExit)	{
 		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
 			printf("_fd = %d\n",_fd);
 			Error("INET Domain Accept");
 		}
 		fp = SocketToNet(fd);
 		klass = RecvPacketClass(fp);
-		RecvString(fp,buff);
-		dbgprintf(">> [%s]\n",buff);
 		switch	(klass) {
 		  case	GL_Connect:
-			NewSession(fp,buff);
+			if		(  !NewSession(fp)  )	fExit = TRUE;
 			break;
 		  case	GL_Session:
+			RecvString(fp,buff);
+			dbgprintf("recv trid [%s]\n",buff);
 			DecodeTRID(&ses,&count,buff);
 			if		(  (  htc = g_int_hash_table_lookup(SesHash,ses) )  !=  NULL  ) {
 				htc->count = count;
@@ -532,13 +577,14 @@ ENTER_FUNC;
 					EncodeTRID(buff,0,0);
 					SendPacketClass(fp,GL_Session);
 					SendString(fp,buff);
-					dbgprintf("<< [%s]\n",buff);
+					dbgprintf("send trid [%s]\n",buff);
 					xfree(htc);
 					g_hash_table_remove(SesHash,(void *)ses);
 				}
 			}
 			break;
 		  default:
+			fExit = TRUE;
 			break;
 		}
 		CloseNet(fp);

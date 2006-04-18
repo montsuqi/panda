@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -67,6 +67,7 @@ static	char	*DBSTATUS[6] = {
 	"DISC",
 	"RERR"
 };
+
 static	char	*APS_HandlerLoadPath;
 
 static	GHashTable	*HandlerClassTable;
@@ -108,11 +109,6 @@ static	void
 InitHandler(void)
 {
 ENTER_FUNC;
-
-	if		(  ( APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH") )
-			   ==  NULL  ) {
-		APS_HandlerLoadPath = MONTSUQI_LIBRARY_PATH;
-	}
 	HandlerClassTable = NewNameHash();
 }
 
@@ -148,6 +144,14 @@ extern	void
 InitiateHandler(void)
 {
 ENTER_FUNC;
+	if		(  ( APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH") )
+			   ==  NULL  ) {
+		if		(  ThisLD->handlerpath  !=  NULL  ) {
+			APS_HandlerLoadPath = ThisLD->handlerpath;
+		} else {
+			APS_HandlerLoadPath = MONTSUQI_LIBRARY_PATH;
+		}
+	}
 	InitHandler();
 	dbgprintf("LD = [%s]",ThisLD->name);
 	g_hash_table_foreach(ThisLD->whash,(GHFunc)_OnlineInit,NULL);
@@ -177,6 +181,14 @@ extern	void
 InitiateBatchHandler(void)
 {
 ENTER_FUNC;
+	if		(  ( APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH") )
+			   ==  NULL  ) {
+		if		(  ThisLD->handlerpath  !=  NULL  ) {
+			APS_HandlerLoadPath = ThisLD->handlerpath;
+		} else {
+			APS_HandlerLoadPath = MONTSUQI_LIBRARY_PATH;
+		}
+	}
 	InitHandler();
 	g_hash_table_foreach(ThisBD->BatchTable,(GHFunc)_BatchInit,NULL);
 LEAVE_FUNC;
@@ -195,7 +207,7 @@ ENTER_FUNC;
 	if		(  ( handler->fInit & INIT_EXECUTE )  ==  0  ) {
 		handler->fInit |= INIT_EXECUTE;
 		if		(  handler->klass->ReadyExecute  !=  NULL  ) {
-			handler->klass->ReadyExecute(handler);
+			handler->klass->ReadyExecute(handler,ThisLD->loadpath);
 		}
 	}
 dbgmsg("*");
@@ -598,7 +610,7 @@ ENTER_FUNC;
 	CurrentProcess = NULL;
 	handler = bind->handler;
 	if		(  handler->klass->ReadyExecute  !=  NULL  ) {
-		handler->klass->ReadyExecute(handler);
+		handler->klass->ReadyExecute(handler,ThisBD->loadpath);
 	}
 	if		(  handler->klass->ExecuteBatch  !=  NULL  ) {
 		rc = handler->klass->ExecuteBatch(handler,name,para);

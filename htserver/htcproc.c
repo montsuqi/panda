@@ -58,6 +58,7 @@
 #define	SRC_CODESET		"euc-jp"
 
 static	Bool		fComm;
+static	Bool		fDdump;
 static	ValueStruct	*Value;
 static	char		*Type;
 static	size_t		ArraySize;
@@ -74,6 +75,8 @@ static	ARG_TABLE	option[] = {
 		"actionをgetで処理する"	 						},
 	{	"dump",		BOOLEAN,	TRUE,	(void*)&fDump,
 		"変数のダンプを行う"	 						},
+	{	"ddump",	BOOLEAN,	TRUE,	(void*)&fDdump,
+		"入力変数のダンプを行う"	 					},
 	{	"cookie",	BOOLEAN,	TRUE,	(void*)&fCookie,
 		"セション変数をcookieで行う"					},
 	{	"jslink",	BOOLEAN,	TRUE,	(void*)&fJavaScriptLink,
@@ -103,6 +106,7 @@ SetDefault(void)
 	ScreenDir = getcwd(NULL,0);
 	SesDir = NULL;
 	fDump = FALSE;
+	fDump = FALSE;
 	fGet = FALSE;
 	fComm = FALSE;
 	fCookie = FALSE;
@@ -125,7 +129,7 @@ Session(
 	LargeByteString	*html;
 
 ENTER_FUNC;
-	htc = ParseScreen(name,FALSE);
+	htc = ParseScreen(name,TRUE,FALSE);
 	if		(  htc  ==  NULL  ) {
         fprintf(stderr, "HTC file not found: %s\n", name);
         dbgprintf("HTC file not found: %s\n", name);
@@ -148,6 +152,7 @@ TestGetValue(char *name, Bool fClear)
     ValueStruct *value;
 
 ENTER_FUNC;
+	dbgprintf("name = [%s]",name);
 	if		(  Value  ==  NULL  ) {
 		value = NULL;
 	} else {
@@ -158,6 +163,9 @@ ENTER_FUNC;
 			value = NULL;
 		}
 	}
+#ifdef	DEBUG
+	DumpValueStruct(value);
+#endif
 LEAVE_FUNC;
 	return value;
 }
@@ -285,6 +293,9 @@ main(
 					}
 				}
 				UnPackValue(Conv,(byte *)q,Value);
+				if		(  fDdump  ) {
+					DumpValueStruct(Value);
+				}
 			} else {
 				Value = NULL;
 			}

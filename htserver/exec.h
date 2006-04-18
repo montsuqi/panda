@@ -21,6 +21,7 @@
 #ifndef	_INC_EXEC_H
 #define	_INC_EXEC_H
 #include	"LBSfunc.h"
+#include	"cgi.h"
 
 #define	OPC_REF			0x01
 #define	OPC_VAR			0x02

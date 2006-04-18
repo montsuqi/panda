@@ -95,7 +95,11 @@ InitDBG(void)
 ENTER_FUNC;
 	DBMS_Table = NewNameHash();
 	if		(  ( MONDB_LoadPath = getenv("MONDB_LOAD_PATH") )  ==  NULL  ) {
-		MONDB_LoadPath = MONTSUQI_LIBRARY_PATH;
+		if		(  ThisEnv->DbPath  !=  NULL  ) {
+			MONDB_LoadPath = ThisEnv->DbPath;
+		} else {
+			MONDB_LoadPath = MONTSUQI_LIBRARY_PATH;
+		}
 	}
 LEAVE_FUNC;
 }

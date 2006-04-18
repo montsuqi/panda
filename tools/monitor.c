@@ -165,7 +165,14 @@ dbgmsg(">StartRedirector");
 	proc->argv = argv;
 	proc->type = PTYPE_RED;
 	argc = 0;
-	argv[argc ++] = RedirectorPath;
+	if		(  RedirectorPath  !=  NULL  ) {
+		argv[argc ++] = RedirectorPath;
+	} else
+	if		(  ThisEnv->RedPath  !=  NULL  ) {
+		argv[argc ++] = ThisEnv->RedPath;
+	} else {
+		argv[argc ++] = SERVER_DIR "/dbredirector";
+	}
 	if		(  Directory  !=  NULL  ) {
 		argv[argc ++] = "-dir";
 		argv[argc ++] = Directory;
@@ -270,7 +277,14 @@ dbgmsg(">_StartAps");
 			proc->argv = argv;
 			proc->type = PTYPE_APS;
 			argc = 0;
-			argv[argc ++] = ApsPath;
+			if		(  ApsPath  !=  NULL  ) {
+				argv[argc ++] = ApsPath;
+			} else
+			if		(  ThisEnv->ApsPath  !=  NULL  ) {
+				argv[argc ++] = ThisEnv->ApsPath;
+			} else {
+				argv[argc ++] = SERVER_DIR "/aps";
+			}
 			argv[argc ++] = "-wfcport";
 			argv[argc ++] = StrDup(StringPortName(ThisEnv->WfcApsPort));
 			if		(  Directory  !=  NULL  ) {
@@ -339,7 +353,14 @@ dbgmsg(">StartWfc");
 		argv = (char **)xmalloc(sizeof(char *) * 19);
 		proc->argv = argv;
 		argc = 0;
-		argv[argc ++] = WfcPath;
+		if		(  WfcPath  !=  NULL  ) {
+			argv[argc ++] = WfcPath;
+		} else
+		if		(  ThisEnv->WfcPath  !=  NULL  ) {
+			argv[argc ++] = ThisEnv->WfcPath;
+		} else {
+			argv[argc ++] = SERVER_DIR "/wfc";
+		}
 		argv[argc ++] = "-back";
 		argv[argc ++] = IntStrDup(back+1);
 		argv[argc ++] = "-port";
@@ -556,9 +577,9 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	ApsPath = SERVER_DIR "/aps";
-	WfcPath = SERVER_DIR "/wfc";
-	RedirectorPath = SERVER_DIR "/dbredirector";
+	ApsPath = NULL;
+	WfcPath = NULL;
+	RedirectorPath = NULL;
 
 	Directory = "./directory";
 	DDir = NULL;

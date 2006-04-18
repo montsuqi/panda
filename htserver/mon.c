@@ -113,9 +113,7 @@ ENTER_FUNC;
 		SendPacketClass(fpServ,GL_GetData);
 		SendString(fpServ,name);
 		SendBool(fpServ,fClear);
-		LBS_EmitStart(lbs);
 		RecvLBS(fpServ, lbs);
-		LBS_EmitEnd(lbs);
 		if (LBS_Size(lbs) == 0) {
 			value = NULL;
 		} else {
@@ -307,23 +305,40 @@ SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 static	void
 SendEvent(void)
 {
-	char	*event;
+	char	*input;
 	HTCInfo	*htc;
-	char	*name;
+	char	*name
+		,	*widget
+		,	*event
+		,	*p;
 
 ENTER_FUNC;
     if		(  ( name = LoadValue("_name") )  !=  NULL  ) {
 		fComm = FALSE;
-		if		(  ( htc = ParseScreen(name,FALSE) )  ==  NULL  ) {
+		if		(  ( htc = ParseScreen(name,fComm,FALSE) )  ==  NULL  ) {
 			exit(1);
 		}
 	} else {
 		exit(1);
 	}
 	fComm = TRUE;
-	event = ParseInput(htc);
+	input = StrDup(ParseInput(htc));
+	if		(  *input  ==  0  ) {
+		event = "";
+		widget = "";
+	} else
+	if		(  ( p = strchr(input,':') )  !=  NULL  ) {
+		*p = 0;
+		event = input;
+		widget = p + 1;
+	} else {
+		event = input;
+		widget = "";
+	}
 
 	SendPacketClass(fpServ,GL_Event);
+	SendString(fpServ,name);
+	SendString(fpServ,widget);
 	SendString(fpServ,event);
 
 	g_hash_table_foreach(Values,(GHFunc)SendValue,NULL);
@@ -335,6 +350,7 @@ ENTER_FUNC;
     SetSave("_filename",TRUE);
     SetSave("_contenttype",TRUE);
     SetSave("_disposition",TRUE);
+	//CGI_InitValues();
 	ClearValues();
 	Files = NewNameHash();
 LEAVE_FUNC;
@@ -416,7 +432,7 @@ ENTER_FUNC;
 	Codeset = SRC_CODESET;
 	html = NewLBS();
 	LBS_EmitStart(html);
-    if      (  ( htc = ParseScreen("expired",FALSE) )  ==  NULL  ) {
+    if      (  ( htc = ParseScreen("expired",FALSE,FALSE) )  ==  NULL  ) {
         LBS_EmitUTF8(html,
                      "<html><head>"
                      "<title>htserver error</title>"
@@ -458,16 +474,20 @@ ENTER_FUNC;
 					user = "anonymous";
 				}
 			}
+		dbgmsg("*");
 			SendPacketClass(fpServ,GL_Connect);
-			sprintf(buff,"%s\t%s",Command,user);
-			SendString(fpServ,buff);
+			SendString(fpServ,Command);
+			SendPacketClass(fpServ,GL_Name);
+			SendString(fpServ,user);
 			RecvPacketClass(fpServ);	/*	session	*/
+		dbgmsg("*");
 			RecvString(fpServ,buff);
-			sesid = (char *)xmalloc(SIZE_SESID+1);
-			strncpy(sesid,buff,SIZE_SESID);
-            sesid[SIZE_SESID] = '\0';
+		dbgprintf("[%s]",buff);
+			sesid = StrDup(buff);
 			SaveValue("_sesid",sesid,FALSE);
+		dbgmsg("*");
 		} else {
+		dbgmsg("*");
 			SendPacketClass(fpServ,GL_Session);
 			SendString(fpServ,sesid);
 			if		(  ( klass = RecvPacketClass(fpServ) )  ==  GL_Session  ) {
@@ -485,6 +505,7 @@ ENTER_FUNC;
 				goto	retry;
 			}
 		}
+		dbgmsg("*");
 		if		(  !fError  ) {
 			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
 				RecvString(fpServ,buff);
@@ -503,7 +524,7 @@ ENTER_FUNC;
 			if		(  !fComm  ) {
 				html = Expired(1);
 			} else {
-				if		(  ( htc = ParseScreen(name,FALSE) )  ==  NULL  ) {
+				if		(  ( htc = ParseScreen(name,TRUE,FALSE) )  ==  NULL  ) {
 					exit(1);
 				}
 				if		(  htc->fHTML  ) {

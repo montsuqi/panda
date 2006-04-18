@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -54,7 +54,7 @@ static	void	*LinkData;
 static	void	*SpaData;
 static	void	*ScrData;
 
-static	char	*LoadPath;
+static	char	*ModuleLoadPath;
 
 static	void
 PutApplication(
@@ -185,16 +185,16 @@ static	void
 _StopDB(
 	MessageHandler	*handler)
 {
-dbgmsg(">_StopDB");
-dbgmsg("<_StopDB");
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	void
 _ReadyDB(
 	MessageHandler	*handler)
 {
-dbgmsg(">_ReadyDB");
-dbgmsg("<_ReadyDB");
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	int
@@ -207,7 +207,7 @@ _StartBatch(
 	int		rc;
 	char	*arg;
 
-dbgmsg(">_StartBatch");
+ENTER_FUNC;
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisBD->textsize,ThisBD->arraysize);
 	ConvSetCodeset(OpenCOBOL_Conv,ConvCodeset(handler->conv));
@@ -222,27 +222,40 @@ dbgmsg(">_StartBatch");
 		arg[ThisBD->textsize] = 0;
 		StringC2Cobol(arg,ThisBD->textsize);
 		rc = apl(arg);
-dbgmsg("ret");
 	} else {
 		Warning( "%s - %s is not found.", cob_resolve_error(),name);
 		rc = -1;
 	}
-dbgmsg("<_StartBatch");
- return	(rc); 
+LEAVE_FUNC;
+	return	(rc); 
 }
 
 static	void
 _ReadyExecute(
-	MessageHandler	*handler)
+	MessageHandler	*handler,
+	char	*loadpath)
 {
+ENTER_FUNC;
+
+	if		(  LibPath  ==  NULL  ) { 
+		if		(  ( ModuleLoadPath = getenv("COB_LIBRARY_PATH") )  ==  NULL  ) {
+			if		(  loadpath  !=  NULL  ) {
+				ModuleLoadPath = loadpath;
+			} else {
+				ModuleLoadPath = MONTSUQI_LOAD_PATH;
+			}
+		}
+	} else {
+		ModuleLoadPath = LibPath;
+	}
 	if		(  handler->loadpath  ==  NULL  ) {
-		handler->loadpath = LoadPath;
+		handler->loadpath = ModuleLoadPath;
 	}
 	cob_init(0,NULL);
 	if		(  handler->loadpath  !=  NULL  ) {
 		cob_set_library_path(handler->loadpath);
 	}
-	
+LEAVE_FUNC;
 }
 
 static	MessageHandlerClass	Handler = {
@@ -261,13 +274,8 @@ static	MessageHandlerClass	Handler = {
 extern	MessageHandlerClass	*
 OpenCOBOL(void)
 {
-dbgmsg(">OpenCOBOL");
-	if		(  LibPath  ==  NULL  ) { 
-		LoadPath = getenv("COB_LIBRARY_PATH");
-	} else {
-		LoadPath = LibPath;
-	}
-dbgmsg("<OpenCOBOL");
+ENTER_FUNC;
+LEAVE_FUNC;
 	return	(&Handler);
 }
 #endif

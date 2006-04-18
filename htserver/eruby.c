@@ -25,7 +25,7 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-
+#ifdef	USE_ERUBY
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<stdarg.h>
@@ -50,7 +50,6 @@
 
 #define	DBIN_FILENO		3
 #define	DBOUT_FILENO	4
-#define	ERUBY_PATH		"/usr/bin/eruby"
 
 static	char	*
 CheckCoding(
@@ -191,7 +190,7 @@ ConvertEncoding(
 }
 
 static	void
-RecordData(
+ERubyPreambre(
 	LargeByteString	*lbs)
 {
 	LBS_EmitString(lbs,
@@ -241,8 +240,22 @@ RecordData(
 				   "      @values[name] = value\n"
 				   "    end\n"
 				   "  end\n"
+				   "  def close\n"
+				   "    @fpDBW.printf(\"\")\n"
+				   "    @fpDBW.close\n"
+				   "  end\n"
 				   "end\n"
 				   "hostvalue = MonCore.new\n"
+				   "%>\n");
+}
+
+static	void
+ERubyPostambre(
+	LargeByteString	*lbs)
+{
+	LBS_EmitString(lbs,
+				   "<%\n"
+				   "hostvalue.close\n"
 				   "%>\n");
 }
 
@@ -263,15 +276,19 @@ ENTER_FUNC;
 	fpR = fdopen(ifd,"r");
 	fpW = fdopen(ofd,"w");
 	while	(  fgets(name,SIZE_LONGNAME,fpR)  !=  NULL  ) {
+		StringChop(name);
+		if		(  strlen(name)  ==  0  )	break;
 		if		(  ( p = strchr(name,':') )  !=  NULL  ) {
 			*p = 0;
 			fgets(data,SIZE_BUFF,fpR);
 			DecodeStringURL(value,data);
 			SaveValue(name,value,FALSE);
 		} else {
+			dbgprintf("request [%s]",name);
 			got = GetHostValue(name,FALSE);
 			EncodeStringURL(data,got);
 			fprintf(fpW,"%s\n",data);
+			dbgprintf("reply [%s]",data);
 			fflush(fpW);
 		}
 	}
@@ -280,16 +297,40 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+MakeErrorBody(
+	LargeByteString	*lbs,
+	char	*p)
+{
+	char	buff[SIZE_BUFF];
+	char	*q;
+	Bool	fBody;
+	int		i;
+
+	fBody = FALSE;
+	while	(  *p  !=  0  ) {
+		if		(  ( q = strchr(p,'\n') )  !=  NULL  ) {
+			*q = 0;
+		}
+		if		(  fBody  ) {
+			sprintf(buff,"%5d:%s\n",i,p);
+		} else {
+			if		(  strlcmp(p,"---")  ==  0  )	fBody = TRUE;
+			sprintf(buff,"%s\n",p);
+			i = 0;
+		}
+		EmitWithEscape(lbs,buff);
+		if		(  q  ==  NULL  )	break;
+		p = q + 1;
+		i ++;
+	}
+}
+
 static	HTCInfo	*
 MakeErrorReport(
 	char	*str)
 {
 	HTCInfo	*ret;
-	char	buff[SIZE_BUFF];
-	char	*p
-		,	*q;
-	Bool	fBody;
-	int		i;
 
 ENTER_FUNC;
 	ret = NewHTCInfo();
@@ -303,24 +344,7 @@ ENTER_FUNC;
 				   "<H1>eRuby error</H1>\n"
 				   "<hr>\n"
 				   "<pre>\n");
-	p = str;
-	fBody = FALSE;
-	while	(  *p  !=  0  ) {
-		if		(  ( q = strchr(p,'\n') )  !=  NULL  ) {
-			*q = 0;
-		}
-		if		(  fBody  ) {
-			sprintf(buff,"%5d:%s\n",i,p);
-		} else {
-			if		(  strlcmp(p,"---")  ==  0  )	fBody = TRUE;
-			sprintf(buff,"%s\n",p);
-			i = 0;
-		}
-		EmitWithEscape(ret->code,buff);
-		if		(  q  ==  NULL  )	break;
-		p = q + 1;
-		i ++;
-	}
+	MakeErrorBody(ret->code,str);
 	LBS_EmitString(ret->code,
 				   "</pre>\n");
 LEAVE_FUNC;
@@ -403,7 +427,7 @@ ENTER_FUNC;
 				fChange = FALSE;
 			}
 			lbs = NewLBS();
-			RecordData(lbs);
+			ERubyPreambre(lbs);
 			write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
 #ifdef	DEBUG
 			printf("code:-------\n");
@@ -411,12 +435,16 @@ ENTER_FUNC;
 			printf("%s",str);
 			printf("------------\n");
 #endif
-			FreeLBS(lbs);
 			write(pSource[1],str,strlen(str));
+			LBS_EmitStart(lbs);
+			ERubyPostambre(lbs);
+			write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
+			FreeLBS(lbs);
 			close(pSource[1]);
 			DataProcess(pDBR[0],pDBW[1]);
-			(void)wait(&status);
+			while( waitpid(-1, &status, WNOHANG) > 0 );
 			xfree(str);
+
 			lbs = NewLBS();
 			if		(  WEXITSTATUS(status)  ==  0  ) {
 				fd = pResult[0];
@@ -452,6 +480,9 @@ ENTER_FUNC;
 					HTC_cLine = 1;
 					HTC_Memory = str;
 					_HTC_Memory = str;
+					if		(  fDump  ) {
+						SaveValue("_eruby_output",str,FALSE);
+					}
 					ret = HTCParserCore();
 				} else {
 					ret = NewHTCInfo();
@@ -473,12 +504,24 @@ extern	HTCInfo	*
 RHTMLParseFile(
 	char	*fname)
 {
-	return	(ParseFile(fname,FALSE));
+	HTCInfo	*ret;
+
+ENTER_FUNC;
+	ret = ParseFile(fname,FALSE);
+LEAVE_FUNC;
+	return	(ret);
 }
 
 extern	HTCInfo	*
 RHTCParseFile(
 	char	*fname)
 {
-	return	(ParseFile(fname,TRUE));
+	HTCInfo	*ret;
+
+ENTER_FUNC;
+	ret = ParseFile(fname,TRUE);
+LEAVE_FUNC;
+	return	(ret);
 }
+
+#endif

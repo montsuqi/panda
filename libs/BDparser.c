@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	MAIN
@@ -73,6 +73,7 @@ static	TokenTable	tokentable[] = {
 	{	"start"		,T_START	},
 	{	"locale"	,T_LOCALE	},
 	{	"encoding"	,T_ENCODING	},
+	{	"handlerpath"	,T_HANDLERPATH	},
 	{	"loadpath"	,T_LOADPATH	},
 
 	{	""			,0	}
@@ -188,6 +189,8 @@ ENTER_FUNC;
 				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
 				ret->DB_Table = NewNameHash();
 				ret->BatchTable = NewNameHash();
+				ret->loadpath = NULL;
+				ret->handlerpath = NULL;
 			}
 			break;
 		  case	T_ARRAYSIZE:
@@ -224,6 +227,20 @@ ENTER_FUNC;
 				ret->home = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("home directory invalid");
+			}
+			break;
+		  case	T_LOADPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ret->loadpath = StrDup(ComSymbol);
+			} else {
+				ParError("load path invalid");
+			}
+			break;
+		  case	T_HANDLERPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ret->handlerpath = StrDup(ComSymbol);
+			} else {
+				ParError("handler path invalid");
 			}
 			break;
 		  case	T_BIND:

@@ -81,6 +81,10 @@
 #define	T_BLOB			(T_YYBASE +29)
 #define	T_AUTH			(T_YYBASE +30)
 #define	T_SPACE			(T_YYBASE +31)
+#define	T_APSPATH		(T_YYBASE +32)
+#define	T_WFCPATH		(T_YYBASE +33)
+#define	T_REDPATH		(T_YYBASE +34)
+#define	T_DBPATH		(T_YYBASE +35)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -112,6 +116,10 @@ static	TokenTable	tokentable[] = {
 	{	"blob"				,T_BLOB		},
 	{	"auth"				,T_AUTH		},
 	{	"space"				,T_SPACE	},
+	{	"apspath"			,T_APSPATH	},
+	{	"wfcpath"			,T_WFCPATH	},
+	{	"redpath"			,T_REDPATH	},
+	{	"dbpath"			,T_DBPATH	},
 	{	""					,0			}
 };
 
@@ -870,6 +878,10 @@ ENTER_FUNC;
 				ThisEnv->DBG = NULL;
 				ThisEnv->DBG_Table = NewNameHash();
 				ThisEnv->blob = NULL;
+				ThisEnv->ApsPath = NULL;
+				ThisEnv->WfcPath = NULL;
+				ThisEnv->RedPath = NULL;
+				ThisEnv->DbPath = NULL;
 			}
 			break;
 		  case	T_STACKSIZE:
@@ -946,6 +958,49 @@ ENTER_FUNC;
 				}
 			} else {
 				ParError("DDIR directory invalid");
+			}
+			break;
+		  case	T_APSPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->ApsPath  ==  NULL  ) {
+					ThisEnv->ApsPath = StrDup(ExpandPath(ComSymbol
+														 ,ThisEnv->BaseDir));
+				} else {
+					ParError("APS path definision duplicate");
+				}
+			} else {
+				ParError("APS path invalid");
+			}
+			break;
+		  case	T_WFCPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->WfcPath  ==  NULL  ) {
+					ThisEnv->WfcPath = StrDup(ExpandPath(ComSymbol
+														 ,ThisEnv->BaseDir));
+				} else {
+					ParError("WFC path definision duplicate");
+				}
+			} else {
+				ParError("WFC path invalid");
+			}
+			break;
+		  case	T_REDPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->RedPath  ==  NULL  ) {
+					ThisEnv->RedPath = StrDup(ExpandPath(ComSymbol
+														 ,ThisEnv->BaseDir));
+				} else {
+					ParError("DBREDIRECTOR path definision duplicate");
+				}
+			} else {
+				ParError("DBREDIRECTOR path invalid");
+			}
+			break;
+		  case	T_DBPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ThisEnv->DbPath = StrDup(ComSymbol);
+			} else {
+				ParError("db handler load path invalid");
 			}
 			break;
 		  case	T_MULTI:

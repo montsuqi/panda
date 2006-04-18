@@ -271,6 +271,10 @@ ENTER_FUNC;
 					 ||	(  c  ==  ':' ) );
 		*s = 0;
 		UnGetChar(c);
+		if		(	(  len  ==  1  )
+				&&	(  *HTC_ComSymbol  ==  '/'  ) ) {
+			token = '/';
+		} else
 		if		(  fSymbol  ) {
 			token = T_SYMBOL;
 		} else {

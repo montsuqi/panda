@@ -502,8 +502,20 @@ dbgmsg("<StartBatch");
 
 static	void
 _ReadyExecute(
-	MessageHandler	*handler)
+	MessageHandler	*handler,
+	char			*loadpath)
 {
+	if		(  LibPath  ==  NULL  ) { 
+		if		(  ( ExecPath = getenv("APS_EXEC_PATH") )  ==  NULL  ) {
+			if		(  loadpath  !=  NULL  ) {
+				ExecPath = loadpath;
+			} else {
+				ExecPath = MONTSUQI_LOAD_PATH;
+			}
+		}
+	} else {
+		ExecPath = LibPath;
+	}
 	if		(  handler->loadpath  ==  NULL  ) {
 		handler->loadpath = ExecPath;
 	}

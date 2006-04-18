@@ -69,6 +69,7 @@ static	TokenTable	tokentable[] = {
 	{	"locale"	,T_CODING	},
 	{	"coding"	,T_CODING	},
 	{	"encoding"	,T_ENCODING	},
+	{	"handlerpath"	,T_HANDLERPATH	},
 	{	"loadpath"	,T_LOADPATH	},
 
 	{	""			,0	}
@@ -318,6 +319,8 @@ ENTER_FUNC;
     ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
     ret->DB_Table = NewNameHash();
     ret->home = NULL;
+	ret->loadpath = NULL;
+	ret->handlerpath = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
 		  case	T_NAME:
@@ -379,6 +382,20 @@ ENTER_FUNC;
 				ret->home = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("home directory invalid");
+			}
+			break;
+		  case	T_LOADPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ret->loadpath = StrDup(ComSymbol);
+			} else {
+				ParError("load path invalid");
+			}
+			break;
+		  case	T_HANDLERPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ret->handlerpath = StrDup(ComSymbol);
+			} else {
+				ParError("handler path invalid");
 			}
 			break;
 		  case	T_BIND:

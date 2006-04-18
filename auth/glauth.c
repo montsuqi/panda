@@ -1,23 +1,23 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 1998-1999 Ogochan.
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 1998-1999 Ogochan.
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -62,7 +62,7 @@ Session(
 	,		pass[SIZE_PASS+1];
 	PassWord	*pw;
 
-dbgmsg(">Session");
+ENTER_FUNC;
 	if		(  Recv(fp,&size,sizeof(size))  >  0  ) {
 		Recv(fp,user,size);
 		user[size] = 0;
@@ -75,7 +75,7 @@ dbgmsg(">Session");
 		}
 	}
   badio:
-dbgmsg("<Session");
+LEAVE_FUNC;
 }
 
 extern	void
@@ -87,7 +87,7 @@ ExecuteServer(void)
 	NETFILE	*fp;
 	Port	*port;
 
-dbgmsg(">ExecuteServer");
+ENTER_FUNC;
 	port = ParPortName(PortNumber);
 	_fd = InitServerPort(port,Back);
 
@@ -107,38 +107,42 @@ dbgmsg(">ExecuteServer");
 			exit(1);
 		}
 	}
-dbgmsg("<ExecuteServer");
+LEAVE_FUNC;
 }
 
 static	void
 InitData(void)
 {
-dbgmsg(">InitData");
-dbgmsg("<InitData");
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 static	void
 InitPasswd(
 	int		dummy)
 {
+ENTER_FUNC;
 	AuthLoadPasswd(PasswordFile);
+LEAVE_FUNC;
 }
 
 static	void
 InitSystem(void)
 {
+ENTER_FUNC;
 	InitPasswd(0);
 	InitData();
+LEAVE_FUNC;
 }
 
 static	void
 OnChildExit(
 	int		ec)
 {
-dbgmsg(">OnChildExit");
+ENTER_FUNC;
 	while( waitpid(-1, NULL, WNOHANG) > 0 );
 	(void)signal(SIGCHLD, (void *)OnChildExit);
-dbgmsg("<OnChildExit");
+LEAVE_FUNC;
 }
 
 static	ARG_TABLE	option[] = {

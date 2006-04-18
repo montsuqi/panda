@@ -338,28 +338,6 @@ StartScanEnv(
 	char	*env)
 {
 	ScanArgValue = env;
-
-#if	0
-	if		(  *env  !=  0  ) {
-		while	(  *env  !=  0  ) {
-			switch	(*env) {
-			  case	'%':
-				env ++;
-				c = ( HexCharToInt(*env) << 4) ;
-				env ++;
-				c |= HexCharToInt(*env);
-				break;
-			  case	'+':
-				c = ' ';
-				break;
-			  default:
-				c = *env;
-				break;
-			}
-			env ++;
-		}
-	}
-#endif
 }
 
 static	Bool
@@ -764,20 +742,22 @@ DumpValues(
 			gpointer	user_data)
 	{
 		if		(  value->body  !=  NULL  ) {
-			sprintf(buff,"<TR><TD>%s<TD>%s\n",name,value->body);
-			LBS_EmitString(html,buff);
+			sprintf(buff,"<tr><td>%s</td><td>",name);
+			LBS_EmitUTF8(html,buff,NULL);
+			EmitWithEscape(html,value->body);
+			LBS_EmitUTF8(html,"</td></tr>\n",NULL);
 		}
 	}
 
 	LBS_EmitUTF8(html,
 				 "<HR>\n"
 				 "<H2>args</H2>"
-				 "<TABLE BORDER>\n"
-				 "<TR><TD width=\"150\">name<TD width=\"150\">value\n"
+				 "<table border>\n"
+				 "<tr><td width=\"150\">name<td width=\"150\">value</tr>\n"
 				 ,NULL);
 	g_hash_table_foreach(args,(GHFunc)DumpValue,NULL);
 	LBS_EmitUTF8(html,
-				 "</TABLE>\n"
+				 "</table>\n"
 				 ,NULL);
 }
 

@@ -47,7 +47,9 @@
 #include	"HTClex.h"
 #include	"cgi.h"
 #include	"exec.h"
+#ifdef	USE_ERUBY
 #include	"eruby.h"
+#endif
 #include	"tags.h"
 #include	"debug.h"
 
@@ -116,6 +118,9 @@ ENTER_FUNC;
 		  case	T_SCONST:
 			para = HTC_ComSymbol;
 			ExpandAttributeString(htc,para);
+			break;
+		  case	'/':
+			LBS_EmitChar(htc->code,'/');
 			break;
 		  default:
 			break;
@@ -191,17 +196,20 @@ AddPara(
 	type->nPara ++;
 }
 
-static	void
+static	Bool
 ParMacroTag(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
 	TagType	*type;
+	int		lt;
+	Bool	single;
 
 ENTER_FUNC;
 	ClearTagValue(tag);
 	while	(  GetSymbol  !=  '>'  ) {
-		if		(  HTC_Token  ==  T_SYMBOL  ) {
+		switch	(HTC_Token) {
+		  case	T_SYMBOL:
 			if		(  ( type = g_hash_table_lookup(tag->args,HTC_ComSymbol) )  !=  NULL  ) {
 				if		(  type->fPara  ) {
 					if		(  GetSymbol  ==  '='  ) {
@@ -223,11 +231,39 @@ ENTER_FUNC;
                 if (  GetSymbol  ==  '='  )
                     GetSymbol;
 			}
-		} else {
+			break;
+		  case	'/':
+			break;
+		  default:
 			HTC_Error("invalid tag: <%s>", tag->name);
+			break;
+		}
+		lt = HTC_Token;
+	}
+	single = ( lt == '/' );
+LEAVE_FUNC;
+	return	(single);
+}
+
+static	Tag	*
+LookupTag(
+	char	*name)
+{
+	Tag		*tag;
+	char buf[SIZE_SYMBOL + 1];
+
+	tag = g_hash_table_lookup(Tags, name);
+	if (tag == NULL) {
+		if (strnicmp(HTC_ComSymbol, "/HTC:", 5) == 0) {
+			buf[0] = '/';
+			strcpy(buf + 1, HTC_ComSymbol + 5);
+			tag = g_hash_table_lookup(Tags, buf);
+		} else
+		if (strnicmp(HTC_ComSymbol, "HTC:", 4) == 0) {
+			tag = g_hash_table_lookup(Tags, HTC_ComSymbol + 4);
 		}
 	}
-LEAVE_FUNC;
+	return	(tag);
 }
 
 static	void
@@ -235,27 +271,24 @@ ParTag(
 	HTCInfo	*htc)
 {
 	Tag		*tag;
+	Bool	again;
+	char	buff[SIZE_SYMBOL+1];
 
 ENTER_FUNC;
 	switch	(GetSymbol) {
 	  case	T_SYMBOL:
 		dbgprintf("tag = [%s]\n",HTC_ComSymbol);
-		tag = g_hash_table_lookup(Tags, HTC_ComSymbol);
-        if (tag == NULL) {
-            if (strnicmp(HTC_ComSymbol, "/HTC:", 5) == 0) {
-                char buf[SIZE_SYMBOL + 1];
-                buf[0] = '/';
-                strcpy(buf + 1, HTC_ComSymbol + 5);
-                tag = g_hash_table_lookup(Tags, buf);
-            } else
-			if (strnicmp(HTC_ComSymbol, "HTC:", 4) == 0) {
-                tag = g_hash_table_lookup(Tags, HTC_ComSymbol + 4);
-            }
-        }
-		if		(  tag  !=  NULL  ) {
+		if		(  ( tag = LookupTag(HTC_ComSymbol) )  !=  NULL  ) {
+			sprintf(buff,"/%s",HTC_ComSymbol);
 			if		(  tag->emit  !=  NULL  ) {
-				ParMacroTag(htc,tag);
+				again = ParMacroTag(htc,tag);
 				tag->emit(htc,tag);
+				if		(  again  ) {
+					if		(	(  ( tag = LookupTag(buff) )  !=  NULL  )
+							&&	(  tag->emit                  !=  NULL  ) ) {
+						tag->emit(htc,tag);
+					}
+				}
 			} else {
 				while	(  GetSymbol  !=  '>'  );
 			}
@@ -415,6 +448,7 @@ LEAVE_FUNC;
 extern	HTCInfo	*
 ParseScreen(
 	char	*name,
+	Bool	fComm,
 	Bool	fBody)
 {
 	HTCInfo	*ret;
@@ -427,20 +461,35 @@ ENTER_FUNC;
 	strcpy(buff,ScreenDir);
 	p = buff;
 	ret = NULL;
+	dbgprintf("buff = [%s]",buff);
+	dbgprintf("name = [%s]",name);
+dbgmsg("*");
 	do {
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
+		dbgprintf("[%s/%s]",p,name);
 #if	0
 		sprintf(fname,"%s/%s.html",p,name);
 		if		(  ( ret = HTMLParseFile(fname) )  !=  NULL  )	break;
 #endif
-		sprintf(fname,"%s/%s.rhtml",p,name);
-		if		(  ( ret = RHTMLParseFile(fname) )  !=  NULL  )	break;
-		sprintf(fname,"%s/%s.rhtc",p,name);
-		if		(  ( ret = RHTCParseFile(fname) )  !=  NULL  )	break;
-		sprintf(fname,"%s/%s.htc",p,name);
-		if		(  ( ret = HTCParseFile(fname) )  !=  NULL  )	break;
+		if		(  fComm  ) {
+#ifdef	USE_ERUBY
+			sprintf(fname,"%s/%s.rhtml",p,name);
+			if		(  ( ret = RHTMLParseFile(fname) )  !=  NULL  )	break;
+			sprintf(fname,"%s/%s.rhtc",p,name);
+			if		(  ( ret = RHTCParseFile(fname) )  !=  NULL  )	break;
+#endif
+			sprintf(fname,"%s/%s.htc",p,name);
+			if		(  ( ret = HTCParseFile(fname) )  !=  NULL  )	break;
+		} else {
+#ifdef	USE_ERUBY
+			sprintf(fname,"%s/%s.rhtc",p,name);
+			if		(  ( ret = HTCParseFile(fname) )  !=  NULL  )	break;
+#endif
+			sprintf(fname,"%s/%s.htc",p,name);
+			if		(  ( ret = HTCParseFile(fname) )  !=  NULL  )	break;
+		}
 		p = q + 1;
 	}	while	(  q  !=  NULL  );
 
