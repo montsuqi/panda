@@ -1,3 +1,9 @@
+2006-04-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.6p3 release
+	
+	* aps/aps_main.c: 異常終了時に再起動するように終了コードの変更
+
 2006-04-11  Noboru Saitou  <noborus@netlab.jp>
 
 	* Ver 1.2.6p2 release
