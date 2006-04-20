@@ -180,11 +180,17 @@ ENTER_FUNC;
 	node = MakeProcessNode();
 	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
 						||	(  tran     >   0  ) ); tran -- ) {
-		if		(  !GetWFC(fpWFC,node)  )	break;
+		if		(  !GetWFC(fpWFC,node)	) {
+			Message("GetWFC failure");
+			break;
+		}
 		dbgprintf("[%s]",ThisLD->name);
 		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,
 															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
-			if		(  bind->module  ==  NULL  )	break;
+			if		(  bind->module  ==  NULL  ){
+				Message("bind->module not found");
+				break;
+			}
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
 			if ( node->dbstatus == REDFAILURE ) {
 				RedirectError();
@@ -199,11 +205,11 @@ ENTER_FUNC;
 			TransactionEnd(NULL);
 			PutWFC(fpWFC,node);
 		} else {
-			Error("window [%s] not found.",
+			Message("window [%s] not found.",
 						  ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL));
+			break;
 		}
 	}
-	CloseNet(fpWFC);
 	MessageLog("exiting DC_Thread");
 	FinishSession(node);
 LEAVE_FUNC;
@@ -315,8 +321,8 @@ main(
 		InitNET();
 		InitSystem(fl->name);
 		ExecuteServer();
-		StopProcess(0);
-		rc = 0;
+		rc = 2;
+		StopProcess(rc);
 	} else {
 		rc = -1;
 		fprintf(stderr, "LD name is not specified.\n");

@@ -1,3 +1,7 @@
+2006-04-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/aps_main.c: 異常終了時に再起動するように終了コードの変更
+
 2006-04-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/HTCparser.c: '/'の処理を正しくした
