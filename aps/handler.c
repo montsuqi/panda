@@ -18,9 +18,9 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-/*
 #define	DEBUG
 #define	TRACE
+/*
 #define	NEW_SEQUENCT
 */
 
@@ -110,6 +110,7 @@ InitHandler(void)
 {
 ENTER_FUNC;
 	HandlerClassTable = NewNameHash();
+LEAVE_FUNC;
 }
 
 static	void
@@ -154,7 +155,7 @@ ENTER_FUNC;
 	}
 	InitHandler();
 	dbgprintf("LD = [%s]",ThisLD->name);
-	g_hash_table_foreach(ThisLD->whash,(GHFunc)_OnlineInit,NULL);
+	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_OnlineInit,NULL);
 
 	TypeHash = NewNameiHash();
 	g_hash_table_insert(TypeHash,"CURRENT",(gpointer)SCREEN_CURRENT_WINDOW);
@@ -165,6 +166,9 @@ ENTER_FUNC;
 	g_hash_table_insert(TypeHash,"FORK",(gpointer)SCREEN_FORK_WINDOW);
 	g_hash_table_insert(TypeHash,"EXIT",(gpointer)SCREEN_END_SESSION);
 	g_hash_table_insert(TypeHash,"BACK",(gpointer)SCREEN_BACK_WINDOW);
+
+	g_hash_table_insert(TypeHash,"CALL",(gpointer)SCREEN_CALL_COMPONENT);
+	g_hash_table_insert(TypeHash,"RETURN",(gpointer)SCREEN_RETURN_COMPONENT);
 LEAVE_FUNC;
 }
 
@@ -224,7 +228,7 @@ extern	void
 ReadyDC(void)
 {
 ENTER_FUNC;
-	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyDC,NULL);
+	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_ReadyDC,NULL);
 LEAVE_FUNC;
 }
 
@@ -257,14 +261,15 @@ ReadyOnlineDB(
 ENTER_FUNC;
 	InitDB_Process(fp);
 	rc = OpenDB(NULL);
-	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyOnlineDB,NULL);
+	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_ReadyOnlineDB,NULL);
 LEAVE_FUNC;
 	return	rc;
 }
 
 static	void
 CallBefore(
-	ProcessNode	*node)
+	WindowBind		*bind,
+	ProcessNode		*node)
 {
 	ValueStruct	*mcp;
 
@@ -278,7 +283,8 @@ ENTER_FUNC;
 		   DBSTATUS[(unsigned char)node->dbstatus], SIZE_STATUS);
 	ValueIsNonNil(GetItemLongName(mcp,"dc.dbstatus"));
 	node->w.n = 0;
-	CurrentProcess = node; 
+	node->thisscrrec = bind->rec;
+	CurrentProcess = node;
 LEAVE_FUNC;
 }
 
@@ -301,6 +307,8 @@ CallAfter(
 		,	winfrom
 		,	winend
 		,	sindex;	/*	sindex orgine is 1	*/
+	char	buff[SIZE_LONGNAME+1]
+		,	*p;
 	byte	PutType;
 
 	ValueStruct	*mcp_swindow;
@@ -338,7 +346,9 @@ ENTER_FUNC;
 			   "");
 	}
 	ValueIsNonNil(GetItemLongName(mcp,"dc.fromwin"));
-	if		(  PutType  ==  SCREEN_BACK_WINDOW  ) {
+	switch	(PutType) {
+	  case	SCREEN_BACK_WINDOW:
+		dbgmsg("back");
 		sindex --;
 		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
 			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 1)),
@@ -346,26 +356,41 @@ ENTER_FUNC;
 		ValueIsNonNil(GetItemLongName(mcp,"dc.window"));
 		PutType = SCREEN_CHANGE_WINDOW;
 		SetValueString(GetItemLongName(mcp,"dc.puttype"),"CHANGE",NULL);
-	} else
-	if		(  strcmp(ValueStringPointer(
-						  GetArrayItem(mcp_swindow,sindex - 1)),
-					  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
-		for	( i = 0 ; i < sindex ; i ++ ) {
-			if		(  strcmp(ValueStringPointer(
-								  GetArrayItem(mcp_swindow,i)),
-							  ValueStringPointer(mcp_dcwindow))  ==  0  )
-				break;
+		break;
+	  case	SCREEN_RETURN_COMPONENT:
+		dbgmsg("return");
+		sindex --;
+		strcpy(buff,ValueStringPointer(GetItemLongName(mcp,"dc.window")));
+		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
+			*p = 0;
 		}
-		if		(  i  <  sindex  ) {
-			winfrom = i + 1;
-		} else {
-			winfrom = 0;
-			strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,i)),
-				   ValueStringPointer(mcp_dcwindow));
-			ValueIsNonNil(GetArrayItem(mcp_swindow,i));
+		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
+			   buff,SIZE_NAME);
+		ValueIsNonNil(GetItemLongName(mcp,"dc.window"));
+		break;
+	  default:
+		dbgmsg("other");
+		if		(  strcmp(ValueStringPointer(
+							  GetArrayItem(mcp_swindow,sindex - 1)),
+						  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
+			for	( i = 0 ; i < sindex ; i ++ ) {
+				if		(  strcmp(ValueStringPointer(
+									  GetArrayItem(mcp_swindow,i)),
+								  ValueStringPointer(mcp_dcwindow))  ==  0  )
+					break;
+			}
+			if		(  i  <  sindex  ) {
+				winfrom = i + 1;
+			} else {
+				winfrom = 0;
+				strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,i)),
+					   ValueStringPointer(mcp_dcwindow));
+				ValueIsNonNil(GetArrayItem(mcp_swindow,i));
+			}
+			winend  = sindex;
+			sindex = i + 1;
 		}
-		winend  = sindex;
-		sindex = i + 1;
+		break;
 	}
 
 	switch	(PutType) {
@@ -385,6 +410,7 @@ ENTER_FUNC;
 #endif
 		break;
 	}
+	dbgprintf("PutType = %d",(int)PutType);
 	SetValueInteger(mcp_pputtype,(int)PutType);
 	if		(  strcmp(ValueStringPointer(mcp_dcwindow), node->window)  !=  0  )	{
 		SetValueInteger(mcp_sindex,sindex);
@@ -455,10 +481,10 @@ ExecuteProcess(
 
 ENTER_FUNC;
 	window = ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL);
-	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
+	bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,window);
 	handler = bind->handler;
 	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
-		CallBefore(node);
+		CallBefore(bind,node);
 		if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
 			MessageLog("application process illegular execution");
 			exit(2);
@@ -493,7 +519,7 @@ _StopDC(
 extern	void
 StopDC(void)
 {
-	g_hash_table_foreach(ThisLD->whash,(GHFunc)_StopDC,NULL);
+	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopDC,NULL);
 }
 
 static	void
@@ -521,7 +547,7 @@ _CleanUpOnlineDC(
 extern	void
 CleanUpOnlineDC(void)
 {
-	g_hash_table_foreach(ThisLD->whash,(GHFunc)_CleanUpOnlineDC,NULL);
+	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_CleanUpOnlineDC,NULL);
 }
 
 extern	void
@@ -549,7 +575,7 @@ _CleanUpOnlineDB(
 extern	void
 CleanUpOnlineDB(void)
 {
-	g_hash_table_foreach(ThisLD->whash,(GHFunc)_CleanUpOnlineDB,NULL);
+	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_CleanUpOnlineDB,NULL);
 }
 
 extern	void
@@ -578,7 +604,7 @@ extern	void
 StopOnlineDB(void)
 {
 	CloseDB(NULL);
-	g_hash_table_foreach(ThisLD->whash,(GHFunc)_StopOnlineDB,NULL);
+	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopOnlineDB,NULL);
 }
 
 static	void

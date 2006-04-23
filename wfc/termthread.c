@@ -19,9 +19,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -178,12 +178,12 @@ ENTER_FUNC;
 		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 													* data->cWindow);
 		for	( i = 0 ; i < data->cWindow ; i ++ ) {
-			if		(  data->ld->info->window[i]->rec  !=  NULL  ) {
+			if		(  data->ld->info->windows[i]  !=  NULL  ) {
 				data->scrdata[i] = NewLBS();
-				InitializeValue(data->ld->info->window[i]->rec->value);
+				InitializeValue(data->ld->info->windows[i]->value);
 				LBS_ReserveSize(data->scrdata[i],
-								NativeSizeValue(NULL,ld->info->window[i]->rec->value),FALSE);
-				NativePackValue(NULL,data->scrdata[i]->body,ld->info->window[i]->rec->value);
+								NativeSizeValue(NULL,ld->info->windows[i]->value),FALSE);
+				NativePackValue(NULL,data->scrdata[i]->body,ld->info->windows[i]->value);
 			} else {
 				data->scrdata[i] = NULL;
 			}
@@ -210,9 +210,11 @@ ReadTerminal(
 	SessionData	*data)
 {
 	LD_Node	*ld;
-	WindowBind	*bind;
+	int			ix;
 	Bool		fExit;
 	int			c;
+	char		window[SIZE_LONGNAME+1]
+		,		*p;
 
 ENTER_FUNC;
 	ld = NULL;
@@ -224,24 +226,27 @@ dbgmsg("*");
 			dbgmsg("recv DATA");
 			RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
-			RecvnString(fp,SIZE_NAME,data->hdr->event);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,data->hdr->event);		ON_IO_ERROR(fp,badio);
 			dbgprintf("window = [%s]",data->hdr->window);
 			dbgprintf("widget = [%s]",data->hdr->widget);
 			dbgprintf("event  = [%s]",data->hdr->event);
-			if		(  ( ld = g_hash_table_lookup(WindowHash,data->hdr->window) )
+			if		(  ( ld = g_hash_table_lookup(ComponentHash,data->hdr->window) )
 					   !=  NULL  ) {
-				bind = (WindowBind *)g_hash_table_lookup(ld->info->whash,data->hdr->window);
-				if		(  bind  !=  NULL  ) {
-					if		(  bind->ix  >=  0  ) {
-						SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
-						dbgmsg("send OK");
-						if		(  data->scrdata[bind->ix]  !=  NULL  ) {
-							RecvLBS(fp,data->scrdata[bind->ix]);	ON_IO_ERROR(fp,badio);
-						}
-						data->hdr->rc = TO_CHAR(0);
-						data->hdr->status = TO_CHAR(APL_SESSION_GET);
-						data->hdr->puttype = TO_CHAR(SCREEN_NULL);
+				strcpy(window,data->hdr->window);
+				if		(  ( p = strchr(window,'.') )  !=  NULL  ) {
+					*p = 0;
+				}
+				dbgprintf("compo = [%s]",window);
+				ix = (int)g_hash_table_lookup(ld->info->whash,window);
+				if		(  ix  >  0  ) {
+					SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
+					dbgmsg("send OK");
+					if		(  data->scrdata[ix-1]  !=  NULL  ) {
+						RecvLBS(fp,data->scrdata[ix-1]);	ON_IO_ERROR(fp,badio);
 					}
+					data->hdr->rc = TO_CHAR(0);
+					data->hdr->status = TO_CHAR(APL_SESSION_GET);
+					data->hdr->puttype = TO_CHAR(SCREEN_NULL);
 				}
 			}
 			break;
@@ -282,11 +287,12 @@ SendTerminal(
 {
 	MessageHeader	*hdr;
 	int			i
-		,		c;
+		,		c
+		,		ix;
 	Bool		rc;
-	WindowBind	*bind;
 	Bool		fExit;
 	char		wname[SIZE_LONGNAME+1];
+	char		*p;
 
 ENTER_FUNC;
 	rc = FALSE;
@@ -311,27 +317,35 @@ ENTER_FUNC;
 		data->w.n = 0;
 		fExit = FALSE;
 		do {
+			dbgmsg("*");
 			switch	(c = RecvPacketClass(fp))	{
 			  case	WFC_PING:
 				dbgmsg("PING");
 				SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
 				break;
 			  case	WFC_DATA:
-				dbgmsg("DATA");
+				dbgmsg(">DATA");
 				RecvnString(fp,SIZE_NAME,wname);				ON_IO_ERROR(fp,badio);
 				dbgprintf("wname = [%s]\n",wname);
-				bind = (WindowBind *)g_hash_table_lookup(data->ld->info->whash,wname);
-				if		(	(  bind      !=  NULL  )
-						&&	(  bind->ix  >=  0     ) ) {
-					if		(  data->scrdata[bind->ix]  !=  NULL  ) {
-						SendPacketClass(fp,WFC_OK);					ON_IO_ERROR(fp,badio);
-						SendLBS(fp,data->scrdata[bind->ix]);		ON_IO_ERROR(fp,badio);
+				if		(  ( p = strchr(wname,'.') )  !=  NULL  ) {
+					*p = 0;
+				}
+				ix = (int)g_hash_table_lookup(data->ld->info->whash,wname);
+				dbgprintf("ix = %d",ix);
+				if		(  ix  >  0  ) {
+					if		(  data->scrdata[ix-1]  !=  NULL  ) {
+						dbgmsg("send OK");
+						SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
+						SendLBS(fp,data->scrdata[ix-1]);		ON_IO_ERROR(fp,badio);
 					} else {
-						SendPacketClass(fp,WFC_NODATA);				ON_IO_ERROR(fp,badio);
+						dbgmsg("send NODATA");
+						SendPacketClass(fp,WFC_NODATA);			ON_IO_ERROR(fp,badio);
 					}
 				} else {
+					dbgmsg("send NOT");
 					SendPacketClass(fp,WFC_NOT);				ON_IO_ERROR(fp,badio);
 				}
+				dbgmsg("<DATA");
 				break;
 			  case	WFC_BLOB:
 				dbgmsg("send BLOB");
@@ -347,6 +361,7 @@ ENTER_FUNC;
 				fExit = TRUE;
 				break;
 			}
+			dbgmsg("*");
 		}	while	(  !fExit  );
 		rc = TRUE;
 	} else {

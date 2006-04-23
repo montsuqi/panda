@@ -158,8 +158,10 @@ typedef	struct _ProcessNode	{
 	RecordStruct	*linkrec;
 	RecordStruct	*sparec;
 	RecordStruct	**scrrec;
+	RecordStruct	*thisscrrec;
 	size_t		cWindow;
-	GHashTable	*whash;
+	GHashTable	*bhash;
+	size_t		cBind;
 	size_t		textsize;
 	WindowControl	w;
 }	ProcessNode;
@@ -203,7 +205,6 @@ typedef	struct {
 	char			*name;
 	MessageHandler	*handler;
 	char			*module;
-	int				ix;
 	RecordStruct	*rec;
 }	WindowBind;
 
@@ -220,9 +221,12 @@ typedef	struct {
 	size_t		nports;
 	Port		**ports;
 	RecordStruct	*sparec;
-	size_t		cWindow;
-	WindowBind	**window;
-	GHashTable	*whash;
+	RecordStruct	**windows;
+	size_t			cWindow;
+	GHashTable		*whash;
+	WindowBind		**binds;
+	size_t			cBind;
+	GHashTable		*bhash;
 	char		*loadpath
 	,			*handlerpath;
 }	LD_Struct;

@@ -35,6 +35,9 @@
 #define	SCREEN_FORK_WINDOW			(byte)0x06
 #define	SCREEN_END_SESSION			(byte)0x07
 #define	SCREEN_BACK_WINDOW			(byte)0x08
+#define	SCREEN_RETURN_COMPONENT		(byte)0x09
+
+#define	SCREEN_CALL_COMPONENT		(byte)0x10
 
 #define	GL_Null						(PacketClass)0x00
 #define	GL_Connect					(PacketClass)0x01

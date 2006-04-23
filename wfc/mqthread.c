@@ -21,9 +21,9 @@
 #define	APS_STICK
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -224,8 +224,10 @@ ENTER_FUNC;
 			RecvnString(fp,SIZE_NAME,hdr->user);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->window);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->widget);			ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,hdr->event);			ON_IO_ERROR(fp,badio);
 			hdr->dbstatus = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
 			hdr->puttype = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
+dbgprintf("hdr->puttype = %02X",hdr->puttype);
 			done = TRUE;
 			break;
 		  case	APS_BLOB:
@@ -339,12 +341,12 @@ ENTER_FUNC;
 	data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 												* data->cWindow);
 	for	( i = 0 ; i < data->cWindow ; i ++ ) {
-		if		(  data->ld->info->window[i]->rec  !=  NULL  ) {
+		if		(  data->ld->info->windows[i]  !=  NULL  ) {
 			data->scrdata[i] = NewLBS();
-			InitializeValue(data->ld->info->window[i]->rec->value);
+			InitializeValue(data->ld->info->windows[i]->value);
 			LBS_ReserveSize(data->scrdata[i],
-							NativeSizeValue(NULL,data->ld->info->window[i]->rec->value),FALSE);
-			NativePackValue(NULL,data->scrdata[i]->body,data->ld->info->window[i]->rec->value);
+							NativeSizeValue(NULL,data->ld->info->windows[i]->value),FALSE);
+			NativePackValue(NULL,data->scrdata[i]->body,data->ld->info->windows[i]->value);
 		} else {
 			data->scrdata[i] = NULL;
 		}
@@ -466,7 +468,7 @@ ENTER_FUNC;
 			}
 		}	while	(  fp  ==  NULL  );
 		memcpy(data->hdr,&hdr,sizeof(MessageHeader));
-		if		(  ( newld = g_hash_table_lookup(WindowHash,hdr.window) )  !=  NULL  ) {
+		if		(  ( newld = g_hash_table_lookup(ComponentHash,hdr.window) )  !=  NULL  ) {
 			GetAPS_Value(fp,data,APS_WINCTRL,flag);
 			GetAPS_Value(fp,data,APS_MCPDATA,flag);
 			GetAPS_Value(fp,data,APS_LINKDATA,flag);
@@ -476,15 +478,26 @@ ENTER_FUNC;
 			}
 			data->ld = newld;
 			SendPacketClass(fp,APS_END);
+dbgprintf("           puttype = %02X",puttype);
 			if		(  puttype  ==  TO_CHAR(SCREEN_NULL)  ) {
 				puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
 			}
+dbgprintf("data->hdr->puttype = %02X",data->hdr->puttype);
 			switch	(TO_INT(data->hdr->puttype)) {
 			  case	SCREEN_CHANGE_WINDOW:
 			  case	SCREEN_JOIN_WINDOW:
 			  case	SCREEN_FORK_WINDOW:
 				dbgmsg("transition");
 				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+				if		(  newld  !=  ld  ) {
+					ChangeLD(data);
+				}
+				CoreEnqueue(data);
+				break;
+			  case	SCREEN_RETURN_COMPONENT:
+				dbgmsg("return");
+				data->hdr->status = TO_CHAR(APL_SESSION_GET);
+				data->hdr->puttype = TO_CHAR(SCREEN_NULL);
 				if		(  newld  !=  ld  ) {
 					ChangeLD(data);
 				}
@@ -507,8 +520,10 @@ ENTER_FUNC;
 				break;
 			  case	SCREEN_CLOSE_WINDOW:
 				dbgmsg("close");
-			  default:
 				TermEnqueue(data->term,data);
+				break;
+			  default:
+				/*	don't reach here	*/
 				break;
 			}
 		} else {
@@ -652,9 +667,12 @@ ENTER_FUNC;
 		if		(  g_hash_table_lookup(APS_Hash,info->name)  ==  NULL  ) {
 			g_hash_table_insert(APS_Hash,info->name,ld);
 		}
-		for	( j = 0 ; j < info->cWindow ; j ++ ) {
-			if		(  g_hash_table_lookup(WindowHash,info->window[j]->name)  ==  NULL  ) {
-				g_hash_table_insert(WindowHash,info->window[j]->name,ld);
+		dbgprintf("info->cBind = %d",info->cBind);
+		for	( j = 0 ; j < info->cBind ; j ++ ) {
+			dbgprintf("component [%s]",info->binds[j]->name);
+			if		(  g_hash_table_lookup(ComponentHash,info->binds[j]->name)  ==  NULL  ) {
+				dbgmsg("add");
+				g_hash_table_insert(ComponentHash,info->binds[j]->name,ld);
 			}
 		}
 	}
@@ -722,7 +740,7 @@ LEAVE_FUNC;
 extern	void
 InitMessageQueue(void)
 {
-	WindowHash = NewNameHash();
+	ComponentHash = NewNameHash();
 	APS_Hash = NewNameHash();
 	LDs = (LD_Node **)xmalloc(sizeof(LD_Node *) * ThisEnv->cLD);
 	ApsId = 0;

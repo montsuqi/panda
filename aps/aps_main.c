@@ -93,11 +93,11 @@ ENTER_FUNC;
 	InitializeValue(ThisEnv->linkrec->value);
 	InitializeValue(ThisLD->sparec->value);
 
-	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		if		(	(  ThisLD->window[i]  !=  NULL  )
-				&&	(  ThisLD->window[i]->rec  !=  NULL  ) ) {
-			dbgprintf("[%s]",ThisLD->window[i]->rec->name);
-			InitializeValue(ThisLD->window[i]->rec->value);
+	for	( i = 0 ; i < ThisLD->cBind ; i ++ ) {
+		if		(	(  ThisLD->binds[i]  !=  NULL  )
+				&&	(  ThisLD->binds[i]->rec  !=  NULL  ) ) {
+			dbgprintf("[%s]",ThisLD->binds[i]->rec->name);
+			InitializeValue(ThisLD->binds[i]->rec->value);
 		}
 	}
 	ReadyDC();
@@ -116,11 +116,12 @@ ENTER_FUNC;
 	node->linkrec = ThisEnv->linkrec;
 	node->sparec = ThisLD->sparec;
 	node->cWindow = ThisLD->cWindow;
-	node->whash = ThisLD->whash;
+	node->cBind = ThisLD->cBind;
+	node->bhash = ThisLD->bhash;
 	node->textsize = ThisLD->textsize;
 	node->scrrec = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * node->cWindow);
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
-		node->scrrec[i] = ThisLD->window[i]->rec;
+		node->scrrec[i] = ThisLD->windows[i];
 	}
 
 	/*	get initialize memory area	*/
@@ -185,7 +186,7 @@ ENTER_FUNC;
 			break;
 		}
 		dbgprintf("[%s]",ThisLD->name);
-		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,
+		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,
 															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
 			if		(  bind->module  ==  NULL  ){
 				Message("bind->module not found");

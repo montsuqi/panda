@@ -163,8 +163,8 @@ ENTER_FUNC;
 	}
 	scrsize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		if		(  ThisLD->window[i]->rec  !=  NULL  ) {
-			scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->window[i]->rec->value);
+		if		(  ThisLD->windows[i]  !=  NULL  ) {
+			scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->windows[i]->value);
 		}
 	}
 	ScrData = xmalloc(scrsize);

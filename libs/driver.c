@@ -19,9 +19,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -47,7 +47,9 @@ SetWindowName(
 {
 	WindowData	*entry;
 	RecordStruct	*rec;
-	char		buff[SIZE_LONGNAME+1];
+	char		fname[SIZE_LONGNAME+1]
+		,		wname[SIZE_LONGNAME+1]
+		,		*p;
 
 ENTER_FUNC;
 #ifdef	TRACE
@@ -57,11 +59,15 @@ ENTER_FUNC;
 		if		(  ThisScreen->Windows  ==  NULL  ) {
 			ThisScreen->Windows = NewNameHash();
 		}
+		strcpy(wname,name);
+		if		(  ( p = strchr(wname,'.') )  !=  NULL  ) {
+			*p = 0;
+		}
 		if		(  ( entry = 
-					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,name) )
+					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,wname) )
 				   ==  NULL  ) {
-			sprintf(buff,"%s.rec",name);
-			if		(  ( rec = ReadRecordDefine(buff) )  !=  NULL  ) {
+			sprintf(fname,"%s.rec",wname);
+			if		(  ( rec = ReadRecordDefine(fname) )  !=  NULL  ) {
 				entry = New(WindowData);
 				entry->PutType = SCREEN_NULL;
 				entry->fNew = FALSE;

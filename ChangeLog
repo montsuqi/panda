@@ -1,6 +1,21 @@
+2006-04-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/struct.h, libs/DIparser.c : windowとbindの兼用をやめた
+	(コンポーネント化によって1対1対応が仮定できなくなるため)
+
+	* aps/Ruby.c, aps/C.c: コンポーネント化に対応
+
 2006-04-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/aps_main.c: 異常終了時に再起動するように終了コードの変更
+
+2006-04-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (MessageThread), aps/handler.c (CallAfter): コン
+	ポーネント用の処理
+
+	* include/glterm.h (SCREEN_RETURN_COMPONENT): コンポーネント用のフラ
+	グ追加
 
 2006-04-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 

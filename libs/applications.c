@@ -20,9 +20,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -120,9 +120,7 @@ ApplicationsCall(
 
 ENTER_FUNC;
 	ThisScreen = scr;
-#ifdef	DEBUG
-	printf("sts = %d\n",sts);
-#endif
+	dbgprintf("sts = %d",sts);
 	for	( p = ThisScreen->cmd , q = name ;
 			(	(  *p  !=  0     )
 			&&	(  !isspace(*p)  )
@@ -132,6 +130,7 @@ ENTER_FUNC;
 	*q = 0;
 	p ++;
 	while	(  *p && isspace(*p)  )	p ++;
+	dbgprintf("name = [%s]",name);
 	apl = ApplicationLoad(name);
 	if		(  apl  ==  NULL  ) {
 		Warning("application not found [%s]\n",ThisScreen->cmd);

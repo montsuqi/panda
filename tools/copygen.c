@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 #define	MAIN
 /*
@@ -392,7 +392,7 @@ dbgmsg(">MakeLD");
 			+	ThisEnv->linksize
 			+	SizeValue(Conv,ld->sparec->value);
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-			size += SizeValue(Conv,ld->window[i]->rec->value);
+			size += SizeValue(Conv,ld->windows[i]->value);
 		}
 		num = ( size / SIZE_BLOCK ) + 1;
 
@@ -492,13 +492,13 @@ dbgmsg(">MakeLD");
 		printf(".\n");
 		_prefix = Prefix;
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-			if		(  SizeValue(Conv,ld->window[i]->rec->value)  >  0  ) {
+			if		(  SizeValue(Conv,ld->windows[i]->value)  >  0  ) {
 				Prefix = _prefix;
 				PutLevel(base+1,TRUE);
-				sprintf(buff,"%s",ld->window[i]->name);
+				sprintf(buff,"%s",ld->windows[i]->name);
 				PutName(buff);
 				if		(  fWindowPrefix  ) {
-					sprintf(buff,"%s-",ld->window[i]->name);
+					sprintf(buff,"%s-",ld->windows[i]->name);
 					Prefix = StrDup(buff);
 				}
 				level = base+1;
@@ -506,9 +506,9 @@ dbgmsg(">MakeLD");
 						||	(  fLDR     )
 						||	(  fLDW     ) ) {
 					printf(".\n");
-					SIZE(Conv,ld->window[i]->rec->value);
+					SIZE(Conv,ld->windows[i]->value);
 				} else {
-					COBOL(Conv,ld->window[i]->rec->value);
+					COBOL(Conv,ld->windows[i]->value);
 				}
 				printf(".\n");
 				if		(  fWindowPrefix  ) {

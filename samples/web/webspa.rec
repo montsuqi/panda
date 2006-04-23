@@ -1,0 +1,5 @@
+samplespa	{
+    user    varchar(64);
+    pass    varchar(64);
+};
+

@@ -235,8 +235,7 @@ dbgmsg(">PutApplication");
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		LBS_EmitStart(iobuff);
-		if		(	(  node->scrrec[i]         !=  NULL  )
-				&&	(  node->scrrec[i]->value  !=  NULL  ) ) {
+		if		(  node->scrrec[i]  !=  NULL  ) {
 			ConvSetRecName(handler->conv,node->scrrec[i]->name);
 			size = conv->SizeValue(handler->conv,node->scrrec[i]->value);
 			if		(  size  >  0  ) {

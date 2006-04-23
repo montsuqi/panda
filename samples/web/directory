@@ -1,0 +1,33 @@
+name	demo;
+
+#	"~" will be expanded to home directory
+base	"~/MONTSUQI/panda-current/samples";
+
+#	"=" will be expanded to base
+
+ddir	"=/web";
+Record	"=/web";
+
+DBPath	"/home/ogochan/MONTSUQI/panda/dblib/.libs";
+APSPath	"/home/ogochan/MONTSUQI/panda/aps/aps";
+WFCPath	"/home/ogochan/MONTSUQI/panda/wfc/wfc";
+REDPath	"/home/ogochan/MONTSUQI/panda/dbstuff/dbredirector";
+
+multiplex_level	no;
+
+#linksize	1024;
+linkage		link;
+
+control	{
+	port		"/tmp/wfc.web";
+};
+
+wfc	{
+	port		"/tmp/web";
+	termport	"/tmp/web.term";
+};
+
+ld	{
+	web		1;
+};
+

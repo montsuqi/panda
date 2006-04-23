@@ -134,7 +134,7 @@ SendValue(
     size_t len;
 
 ENTER_FUNC;
-	dbgprintf("send value = [%s:\n",name);
+	dbgprintf("send value = [%s:",name);
 	if		(	(  *name  !=  0  )
 			&&	(  value->body  !=  NULL  ) ) {
 		SendPacketClass(fpServ,GL_ScreenData);
@@ -142,9 +142,9 @@ ENTER_FUNC;
 		len = strlen(value->body);
 		SendLength(fpServ, len);
 		Send(fpServ, value->body, len);
-		dbgprintf(" %s]\n",value->body);
+		dbgprintf("%s]\n",value->body);
 	} else {
-		dbgmsg(" ]");
+		dbgmsg("]");
 	}
 LEAVE_FUNC;
 }
@@ -308,14 +308,16 @@ SendEvent(void)
 	char	*input;
 	HTCInfo	*htc;
 	char	*name
+		,	*window
 		,	*widget
 		,	*event
 		,	*p;
+	char	buff[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-    if		(  ( name = LoadValue("_name") )  !=  NULL  ) {
+    if		(  ( window = LoadValue("_name") )  !=  NULL  ) {
 		fComm = FALSE;
-		if		(  ( htc = ParseScreen(name,fComm,FALSE) )  ==  NULL  ) {
+		if		(  ( htc = ParseScreen(window,fComm,FALSE) )  ==  NULL  ) {
 			exit(1);
 		}
 	} else {
@@ -334,6 +336,26 @@ ENTER_FUNC;
 	} else {
 		event = input;
 		widget = "";
+	}
+	if		(  *event  ==  '.'  ) {
+		strcpy(buff,event+1);
+		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
+			*p = 0;
+			name = buff;
+			event = p + 1;
+		} else {
+			name = window;
+		}
+	} else
+	if		(  *event  !=  0  ) {
+		sprintf(buff,"%s.%s",window,event);
+		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
+			*p = 0;
+			name = buff;
+			event = p + 1;
+		} else {
+			name = window;
+		}
 	}
 
 	SendPacketClass(fpServ,GL_Event);
@@ -474,20 +496,15 @@ ENTER_FUNC;
 					user = "anonymous";
 				}
 			}
-		dbgmsg("*");
 			SendPacketClass(fpServ,GL_Connect);
 			SendString(fpServ,Command);
 			SendPacketClass(fpServ,GL_Name);
 			SendString(fpServ,user);
 			RecvPacketClass(fpServ);	/*	session	*/
-		dbgmsg("*");
 			RecvString(fpServ,buff);
-		dbgprintf("[%s]",buff);
 			sesid = StrDup(buff);
 			SaveValue("_sesid",sesid,FALSE);
-		dbgmsg("*");
 		} else {
-		dbgmsg("*");
 			SendPacketClass(fpServ,GL_Session);
 			SendString(fpServ,sesid);
 			if		(  ( klass = RecvPacketClass(fpServ) )  ==  GL_Session  ) {
@@ -510,6 +527,7 @@ ENTER_FUNC;
 			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
 				RecvString(fpServ,buff);
 				name = StrDup(buff);
+				dbgprintf("name = [%s]",name);
 				SaveValue("_name",name,FALSE);
                 if ((file = LoadValue("_file")) != NULL) {
                     ValueStruct *value = GetValue(file, TRUE);

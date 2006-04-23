@@ -763,6 +763,7 @@ typedef struct _procnode_data {
     VALUE link;
     VALUE spa;
     VALUE windows;
+    VALUE thisscr;
 } procnode_data;
 
 static void
@@ -773,6 +774,7 @@ procnode_mark(procnode_data *data)
     rb_gc_mark(data->link);
     rb_gc_mark(data->spa);
     rb_gc_mark(data->windows);
+    rb_gc_mark(data->thisscr);
 }
 
 static VALUE
@@ -788,6 +790,7 @@ procnode_new(ProcessNode *node)
     data->mcp = rec_new(node->mcprec);
     data->link = rec_new(node->linkrec);
     data->spa = rec_new(node->sparec);
+    data->thisscr = rec_new(node->thisscrrec);
     data->windows = rb_hash_new();
     for (i = 0; i < node->cWindow; i++) {
         if (node->scrrec[i] != NULL &&
@@ -855,6 +858,15 @@ procnode_windows(VALUE self)
 }
 
 static VALUE
+procnode_thisscreen(VALUE self)
+{
+    procnode_data *data;
+
+    Data_Get_Struct(self, procnode_data, data);
+    return data->thisscr;
+}
+
+static VALUE
 procnode_put_window(int argc, VALUE *argv, VALUE self)
 {
     procnode_data *data;
@@ -878,6 +890,30 @@ procnode_put_window(int argc, VALUE *argv, VALUE self)
     else {
         SetValueString(puttype, StringValuePtr(type), codeset);
     }
+    status = GetRecordItem(dc, "status");
+    SetValueString(status, "PUTG", codeset);
+    rc = GetRecordItem(data->node->mcprec->value, "rc");
+    SetValueInteger(rc, 0);
+    return Qnil;
+}
+
+static VALUE
+procnode_exit(int argc, VALUE *argv, VALUE self)
+{
+    procnode_data *data;
+    VALUE eve;
+    ValueStruct *dc, *event, *puttype, *status, *rc;
+
+    Data_Get_Struct(self, procnode_data, data);
+    rb_scan_args(argc, argv, "01", &eve);
+
+    dc = GetRecordItem(data->node->mcprec->value, "dc");
+    event = GetRecordItem(dc, "event");
+    if (!NIL_P(eve)) {
+        SetValueString(event, StringValuePtr(eve), codeset);
+    }
+    puttype = GetRecordItem(dc, "puttype");
+	SetValueString(puttype, "RETURN", codeset);
     status = GetRecordItem(dc, "status");
     SetValueString(status, "PUTG", codeset);
     rc = GetRecordItem(data->node->mcprec->value, "rc");
@@ -1401,8 +1437,10 @@ init()
     rb_define_method(cProcessNode, "mcp", procnode_mcp, 0);
     rb_define_method(cProcessNode, "link", procnode_link, 0);
     rb_define_method(cProcessNode, "spa", procnode_spa, 0);
+    rb_define_method(cProcessNode, "thisscreen", procnode_thisscreen, 0);
     rb_define_method(cProcessNode, "windows", procnode_windows, 0);
     rb_define_method(cProcessNode, "put_window", procnode_put_window, -1);
+    rb_define_method(cProcessNode, "exit", procnode_exit, -1);
     cPath = rb_define_class_under(mPanda, "Path", rb_cObject);
     rb_define_method(cPath, "name", path_name, 0);
     rb_define_method(cPath, "args", path_args, 0);

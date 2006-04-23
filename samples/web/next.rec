@@ -1,0 +1,13 @@
+next	{
+	area1	{
+		color	varchar(64);
+	};
+	area2	{
+		color	varchar(64);
+	};
+	area3	{
+		color	varchar(64);
+	};
+    user	varchar(64);
+	message	varchar(250);
+};

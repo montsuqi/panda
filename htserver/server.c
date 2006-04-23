@@ -122,8 +122,10 @@ SendWindowName(
 			  case	SCREEN_CHANGE_WINDOW:
 				SendPacketClass(fp,GL_WindowName);
 				SendString(fp,wname);
+				dbgprintf("window = [%s]",wname);
 				break;
 			  default:
+				dbgprintf("win->PutType = %02X",win->PutType);
 				break;
 			}
 			win->PutType = SCREEN_NULL;
@@ -304,9 +306,11 @@ dbgprintf("name = [%s]",buff);
 					break;
 				}
 #ifdef	DEBUG
+#if	0
 				printf("--\n");
 				DumpValueStruct(value);
 				printf("--\n");
+#endif
 #endif
 			}
         }
@@ -466,7 +470,6 @@ NewSession(
 	int		socks[2];
 	char	user[SIZE_USER+1]
 		,	cmd[SIZE_LONGNAME+1];
-	char	*p;
 	PacketClass	klass;
 	Bool	rc;
 
@@ -494,7 +497,7 @@ ENTER_FUNC;
 			htc->ses = cSession;
 			htc->count = 0;
 			g_int_hash_table_insert(SesHash,htc->ses,htc);
-#ifndef	DEBUG
+#if	0	/*	これで一応「戻る」は可能になる	*/
 			cSession += (rand()>>16)+1;		/*	some random number	*/
 #endif
 		}

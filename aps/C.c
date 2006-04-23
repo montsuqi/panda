@@ -98,7 +98,10 @@ static	void
 PutApplication(
 	ProcessNode	*node)
 {
+	ValueStruct	*mcp;
 ENTER_FUNC;
+	mcp = node->mcprec->value;
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.puttype")),MCP_PUT_RETURN);
 LEAVE_FUNC;
 }
 
@@ -245,30 +248,39 @@ LEAVE_FUNC;
  *	MCP functions
  */
 
-static	char	*ptype[] = {
-	"NULL",
-	"CURRENT",
-	"NEW",
-	"CLOSE",
-	"CHANGE",
-	"BACK",
-	"JOIN",
-	"FORK",
-	"EXIT"
-};
-
 extern	int
 MCP_PutWindow(
 	ProcessNode	*node,
 	char		*wname,
-	int			type)
+	char		*type)
 {
 	ValueStruct	*mcp;
 
 ENTER_FUNC;
 	mcp = node->mcprec->value;
-	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),wname);
-	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.puttype")),ptype[type]);
+	if		(  wname  !=  NULL  ) {
+		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),wname);
+	}
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.puttype")),type);
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),"PUTG");
+	ValueInteger(GetItemLongName(mcp,"rc")) = 0;
+LEAVE_FUNC;
+	return	(0);
+}
+
+extern	int
+MCP_ReturnComponent(
+	ProcessNode	*node,
+	char		*event)
+{
+	ValueStruct	*mcp;
+
+ENTER_FUNC;
+	mcp = node->mcprec->value;
+	if		(  event  !=  NULL  ) {
+		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.event")),event);
+	}
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.puttype")),MCP_PUT_RETURN);
 	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),"PUTG");
 	ValueInteger(GetItemLongName(mcp,"rc")) = 0;
 LEAVE_FUNC;
@@ -284,7 +296,7 @@ MCP_GetWindowRecord(
 	RecordStruct	*ret;
 
 ENTER_FUNC;
-	bind = (WindowBind *)g_hash_table_lookup(node->whash,name);
+	bind = (WindowBind *)g_hash_table_lookup(node->bhash,name);
 	ret = bind->rec;
 LEAVE_FUNC;
 	return	(ret);

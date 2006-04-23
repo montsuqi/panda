@@ -77,42 +77,53 @@ static	TokenTable	tokentable[] = {
 
 static	GHashTable	*Reserved;
 
-static	GHashTable	*Windows;
-
-static	WindowBind	*
-AddWindow(
-	LD_Struct	*ld,
-	char	*name)
-{
-	WindowBind	*bind;
-
-ENTER_FUNC;
-	bind = New(WindowBind);
-	bind->name = StrDup(name);
-	bind->ix = -1;
-	g_hash_table_insert(ld->whash,bind->name,bind);
-LEAVE_FUNC;
-	return	(bind);
-}
+static	GHashTable	*Records;
 
 static	RecordStruct	*
 GetWindow(
 	char		*name)
 {
-	RecordStruct	*rec;
-	char		*wname;
-	char		buff[SIZE_LONGNAME+1];
+	RecordStruct	*rec
+		,			*rec2;
+	ValueStruct		*value;
+	char		fname[SIZE_LONGNAME+1]
+		,		buff[SIZE_LONGNAME+1];
+	char		*p
+		,		*iname
+		,		*wname;
 
 ENTER_FUNC;
 	dbgprintf("GetWindow(%s)",name);
+	strcpy(buff,name);
+	if		(  ( p = strchr(buff,'.') )  !=  NULL  ) {
+		*p = 0;
+		iname = p + 1;
+	} else {
+		iname = NULL;
+	}
+	wname = buff;
+		
 	if		(  name  !=  NULL  ) {
 		if		(  ( rec = 
-					 (RecordStruct *)g_hash_table_lookup(Windows,name) )
+					 (RecordStruct *)g_hash_table_lookup(Records,name) )
 				   ==  NULL  ) {
-			wname = StrDup(name);
-			sprintf(buff,"%s.rec",name);
-			if		(  ( rec = ReadRecordDefine(buff) )  !=  NULL  ) {
-				g_hash_table_insert(Windows,wname,rec);
+			if		(  ( rec2 = 
+						 (RecordStruct *)g_hash_table_lookup(Records,wname) )
+					   ==  NULL  ) {
+				sprintf(fname,"%s.rec",wname);
+				if		(  ( rec2 = ReadRecordDefine(fname) )  !=  NULL  ) {
+					g_hash_table_insert(Records,rec2->name,rec2);
+				}
+			}
+			if		(  iname  ==  NULL  ) {
+				rec = rec2;
+			} else {
+				value = GetItemLongName(rec2->value,iname);
+				rec = New(RecordStruct);
+				rec->name = StrDup(name);
+				rec->type = RECORD_NULL;
+				rec->value = value;
+				g_hash_table_insert(Records,rec->name,rec);
 			}
 		}
 	} else {
@@ -127,8 +138,9 @@ ParWindow(
 	CURFILE		*in,
 	LD_Struct	*ld)
 {
-	WindowBind	*bind;
-	WindowBind	**wnb;
+	int		ix;
+	RecordStruct	*window;
+	RecordStruct	**wn;
 	char		wname[SIZE_NAME+1];
 
 ENTER_FUNC;
@@ -138,22 +150,20 @@ ENTER_FUNC;
 		while	(  GetName  !=  '}'  ) {
 			if		(  ComToken  ==  T_SYMBOL  ) {
 				strcpy(wname,ComSymbol);
-				if		(  ( bind = (WindowBind *)g_hash_table_lookup(ld->whash,wname) )
-						   ==  NULL  ) {
-					bind = AddWindow(ld,wname);
-					bind->handler = NULL;
-					bind->module = NULL;
+				if		(  ( ix = (int)g_hash_table_lookup(ld->whash,wname) )  >  0  ) {
+					ParError("duplicate window name");
+				} else {
+					window = GetWindow(wname);
 				}
-				bind->rec = GetWindow(wname);
-				bind->ix = ld->cWindow;
-				wnb = (WindowBind **)xmalloc(sizeof(WindowBind *) * ( ld->cWindow + 1));
+				wn = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cWindow + 1));
 				if		(  ld->cWindow  >  0  ) {
-					memcpy(wnb,ld->window,sizeof(WindowBind *) * ld->cWindow);
-					xfree(ld->window);
+					memcpy(wn,ld->windows,sizeof(RecordStruct *) * ld->cWindow);
+					xfree(ld->windows);
 				}
-				ld->window = wnb;
-				ld->window[ld->cWindow] = bind;
+				ld->windows = wn;
+				ld->windows[ld->cWindow] = window;
 				ld->cWindow ++;
+				g_hash_table_insert(ld->whash,window->name,(void *)ld->cWindow);
 				if		(  g_hash_table_lookup(LD_Table,wname)  ==  NULL  ) {
 					g_hash_table_insert(LD_Table,strdup(wname),ld);
 				} else {
@@ -270,14 +280,27 @@ ParBIND(
 	CURFILE		*in,
 	LD_Struct	*ret)
 {
-	WindowBind	*bind;
+	WindowBind	*bind
+		,		**binds;
+	char		*name;
 
 ENTER_FUNC;
 	if		(	(  GetSymbol  ==  T_SCONST  )
 			||	(  ComToken    ==  T_SYMBOL  ) ) {
-		if		(  ( bind = g_hash_table_lookup(ret->whash,ComSymbol) )  ==  NULL  ) {
-			bind = AddWindow(ret,ComSymbol);
-			bind->rec = NULL;
+		name = ComSymbol;
+		if		(  ( bind = g_hash_table_lookup(ret->bhash,name) )  ==  NULL  ) {
+			bind = New(WindowBind);
+			bind->name = StrDup(name);
+			bind->rec = GetWindow(name);
+			g_hash_table_insert(ret->bhash,bind->name,bind);
+			binds = (WindowBind **)xmalloc(sizeof(WindowBind *) * ( ret->cBind + 1 ));
+			if		(  ret->cBind  >  0  ) {
+				memcpy(binds,ret->binds,sizeof(WindowBind *) * ret->cBind);
+				xfree(ret->binds);
+			}
+			ret->binds = binds;
+			ret->binds[ret->cBind] = bind;
+			ret->cBind ++;
 		}
 		if		(	(  GetSymbol  ==  T_SCONST  )
 				||	(  ComToken    ==  T_SYMBOL  ) ) {
@@ -310,11 +333,13 @@ ENTER_FUNC;
     ret->group = "";
     ret->ports = NULL;
     ret->whash = NewNameHash();
+    ret->bhash = NewNameHash();
     ret->nCache = 0;
     ret->cDB = 1;
     ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
     ret->db[0] = NULL;
     ret->cWindow = 0;
+    ret->cBind = 0;
     ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
     ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
     ret->DB_Table = NewNameHash();
@@ -434,7 +459,7 @@ BindHandler(
 	LD_Struct	*ld)
 {
 ENTER_FUNC;
-	g_hash_table_foreach(ld->whash,(GHFunc)_BindHandler,NULL);
+	g_hash_table_foreach(ld->bhash,(GHFunc)_BindHandler,NULL);
 LEAVE_FUNC;
 }
 
@@ -474,6 +499,6 @@ LD_ParserInit(void)
 	Reserved = MakeReservedTable(tokentable);
 
 	LD_Table = NewNameHash();
-	Windows = NewNameHash();
+	Records = NewNameHash();
 	MessageHandlerInit();
 }

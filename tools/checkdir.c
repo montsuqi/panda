@@ -321,6 +321,22 @@ _DumpHandler(
 }
 
 static	void
+_DumpBind(
+	char	*name,
+	WindowBind	*bind,
+	void	*dummy)
+{
+	MessageHandler		*handler;
+
+	handler = bind->handler;
+
+	printf("\tbind\t\"%s\"",name);
+	printf("\t\"%s\"",handler->name);
+	printf("\t\"%s\"",(char *)bind->module);
+	printf(";\n");
+}
+
+static	void
 DumpLD(
 	LD_Struct	*ld)
 {
@@ -332,16 +348,19 @@ ENTER_FUNC;
 	printf("\tarraysize = %d\n",ld->arraysize);
 	printf("\ttextsize  = %d\n",ld->textsize);
 
-	g_hash_table_foreach(ld->whash,(GHFunc)_DumpHandler,NULL);
+	printf("ld->cBind = %d\n",ld->cBind);
+
+	g_hash_table_foreach(ld->bhash,(GHFunc)_DumpHandler,NULL);
+	g_hash_table_foreach(ld->bhash,(GHFunc)_DumpBind,NULL);
 
 	printf("\t%s\t",ld->sparec->name);
 	DumpItems(1,ld->sparec->value);
 	printf(";\n");
 	for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-		if		(  ld->window[i]  !=  NULL  ) {
-			printf("\t%s\t",ld->window[i]->name);
-			if		(  ld->window[i]->rec  !=  NULL  ) {
-				DumpItems(1,ld->window[i]->rec->value);
+		if		(  ld->windows[i]  !=  NULL  ) {
+			printf("\t%s\t",ld->windows[i]->name);
+			if		(  ld->windows[i]  !=  NULL  ) {
+				DumpItems(1,ld->windows[i]->value);
 			} else {
 				printf("{}");
 			}

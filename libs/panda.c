@@ -20,9 +20,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 /*
 #define	NEW_SEQUENCE
@@ -67,10 +67,24 @@ SendPanda(void)
 {
 	RecordStruct	*rec;
 	Bool		rc;
+	char	buff[SIZE_LONGNAME+1];
+	char	*p;
 
 ENTER_FUNC;
-	rec = GetWindowRecord(ThisWindow);
-	rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,rec->value);
+	dbgprintf("ThisWindow = [%s]",ThisWindow);
+	strcpy(buff,ThisWindow);
+	while	(  strlen(buff)  >  0  ) {
+		if		(  ( rec = GetWindowRecord(buff) )  !=  NULL  )	break;
+		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
+			*p = 0;
+		}
+	}
+	dbgprintf("Window = [%s]",buff);
+	if		(  rec  !=  NULL  ) {
+		rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,rec->value);
+	} else {
+		rc = FALSE;
+	}
 LEAVE_FUNC;
 	return	(rc); 
 }

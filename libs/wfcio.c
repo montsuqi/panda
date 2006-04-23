@@ -1,27 +1,27 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -199,10 +199,11 @@ ENTER_FUNC;
   top: 
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_HEADER:
-		dbgmsg("recv HEADER");
+		dbgmsg(">recv HEADER");
 		RecvnString(fp, SIZE_NAME+1, user);
 		RecvnString(fp, SIZE_NAME+1, window);
 		RecvnString(fp, SIZE_NAME+1, widget);
+		dbgprintf("window = [%s]",window);
 		*type = TO_INT(RecvChar(fp));
 		ctl->n = RecvInt(fp);
 		dbgprintf("ctl->n = %d\n",ctl->n);
@@ -212,6 +213,7 @@ ENTER_FUNC;
 			dbgprintf("wname = [%s]\n",ctl->control[i].window);
 		}
 		rc = TRUE;
+		dbgmsg("<recv HEADER");
 		break;
 	  case	WFC_PING:
 		dbgmsg("recv PING");
@@ -297,9 +299,12 @@ _RecvWindow(
 	WindowData	*win,
 	NETFILE		*fp)
 {
+ENTER_FUNC;
+	dbgprintf("name = [%s]",wname);
 	switch	(win->PutType) {
 	  case	SCREEN_NULL:
 	  case	SCREEN_CLOSE_WINDOW:
+		dbgprintf("puttype = %02X",win->PutType);
 		break;
 	  default:
 		SendPacketClass(fp,WFC_DATA);
@@ -318,6 +323,7 @@ _RecvWindow(
 			break;
 		}
 	}
+LEAVE_FUNC;
 }
 
 extern	void

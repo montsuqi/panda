@@ -1,0 +1,11 @@
+login	{
+	id	{
+		value	varchar(250);
+	};
+	password	{
+		value	varchar(250);
+	};
+	message	{
+		value	varchar(250);
+	};
+};
