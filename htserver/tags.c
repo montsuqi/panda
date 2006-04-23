@@ -68,7 +68,7 @@ static	Bool	fHead;
 #define IsTrue(s)  (*(s) == 'T' || *(s) == 't')
 
 static	char	*
-GetArg(
+HTCGetProp(
 	Tag		*tag,
 	char	*name,
 	int		i)
@@ -160,7 +160,7 @@ EmitAttribute(
 {
 	char	*attr;
 
-	if		(  ( attr = GetArg(tag,name,0) )  !=  NULL  ) {
+	if		(  ( attr = HTCGetProp(tag,name,0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," ");
 		LBS_EmitString(htc->code,name);
 		LBS_EmitString(htc->code,"=");
@@ -212,7 +212,7 @@ JavaScriptEvent(HTCInfo *htc, Tag *tag, char *event)
 
 	if		(  !fJavaScript  )
 		return;
-    if ((value = GetArg(tag, event, 0)) == NULL)
+    if ((value = HTCGetProp(tag, event, 0)) == NULL)
         return;
 
     LBS_EmitChar(htc->code, ' ');
@@ -285,7 +285,7 @@ JavaScriptKeyEvent(HTCInfo *htc, Tag *tag, char *event)
     char *key, *p;
 
 	if		(  !fJavaScript  )	return;
-    if ((value = GetArg(tag, event, 0)) == NULL)
+    if ((value = HTCGetProp(tag, event, 0)) == NULL)
         return;
     p = value;
     while (isspace(*p)) p++;
@@ -329,10 +329,9 @@ _Include(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*src
-		,	*type;
+	char	*type;
 ENTER_FUNC;
-	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
+	if		(	(  ( type = HTCGetProp(tag,"type",0) )  ==  NULL  )
 			||	(  strlicmp(type,"html")          ==  0     ) ) {
 	}
 LEAVE_FUNC;
@@ -349,8 +348,8 @@ _Entry(
 	,		*visible;
 
 ENTER_FUNC;
-	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
-        if ((visible = GetArg(tag, "visible", 0)) != NULL &&
+	if		(  ( name = HTCGetProp(tag,"name",0) )  !=  NULL  ) {
+        if ((visible = HTCGetProp(tag, "visible", 0)) != NULL &&
             !IsTrue(visible)) {
             LBS_EmitString(htc->code,"<input type=\"password\" name=\"");
         }
@@ -370,7 +369,7 @@ ENTER_FUNC;
 		EmitCode(htc,OPC_EMITRAW);
 
 		LBS_EmitString(htc->code,"\"");
-		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+		if		(  ( size = HTCGetProp(tag,"size",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code," size=\"");
 			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(size));
@@ -378,7 +377,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code,"\"");
 
 		}
-		if		(  ( maxlength = GetArg(tag,"maxlength",0) )  !=  NULL  ) {
+		if		(  ( maxlength = HTCGetProp(tag,"maxlength",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code," maxlength=\"");
 
 			EmitCode(htc,OPC_EVAL);
@@ -414,9 +413,9 @@ _Fixed(
 #define	DTYPE_PRE		3
 
 ENTER_FUNC;
-	value = GetArg(tag,"value",0);
-	name = GetArg(tag,"name",0);
-	type = GetArg(tag,"type",0);
+	value = HTCGetProp(tag,"value",0);
+	name = HTCGetProp(tag,"name",0);
+	type = HTCGetProp(tag,"type",0);
 	if		(	(  value  !=  NULL  )
 			||	(  name   !=  NULL  ) ) {
 		if		(  type  !=  NULL  ) {
@@ -446,7 +445,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code,">");
 			dtype = DTYPE_SPAN;
 		}
-		if		(  ( link = GetArg(tag,"link",0) )  !=  NULL  ) {
+		if		(  ( link = HTCGetProp(tag,"link",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code,"<a href=\"");
 
 			EmitCode(htc,OPC_EVAL);
@@ -455,7 +454,7 @@ ENTER_FUNC;
 			EmitCode(htc,OPC_EMITSTR);
 
 			LBS_EmitString(htc->code,"\"");
-			if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
+			if		(  ( target = HTCGetProp(tag,"target",0) )  !=  NULL  ) {
 				LBS_EmitString(htc->code," target=\"");
 				LBS_EmitString(htc->code,target);
 				LBS_EmitString(htc->code,"\"");
@@ -519,16 +518,16 @@ _Combo(
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<select name=\"");
 	EmitCode(htc,OPC_EVAL);
-	vname = StrDup(GetArg(tag,"name",0));
+	vname = StrDup(HTCGetProp(tag,"name",0));
 	LBS_EmitPointer(htc->code,vname);
 	EmitCode(htc,OPC_EMITSTR);
-	size = GetArg(tag,"size",0);
+	size = HTCGetProp(tag,"size",0);
 	if		(  size  ==  NULL  ) {
 		LBS_EmitString(htc->code,"\"");
 	} else {
 		LBS_EmitString(htc->code,"\" size=");
 		EmitCode(htc,OPC_EVAL);
-		LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
+		LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"size",0)));
 		EmitCode(htc,OPC_EMITSTR);
 		LBS_EmitString(htc->code,"\"");
 	}
@@ -542,7 +541,7 @@ ENTER_FUNC;
 	LBS_EmitInt(htc->code,0);
 	EmitCode(htc,OPC_STORE);
 	EmitCode(htc,OPC_HIVAR);							/*	2	limit	*/
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"count",0)));
+	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"count",0)));
 	EmitCode(htc,OPC_ICONST);							/*	1	step	*/
 	LBS_EmitInt(htc->code,1);
 	Push(LBS_GetPos(htc->code));
@@ -555,7 +554,7 @@ ENTER_FUNC;
 	LBS_EmitPointer(htc->code,vname);
 	EmitCode(htc,OPC_PHSTR);
 	EmitCode(htc,OPC_EVAL);
-	sprintf(name,"%s[#]",GetArg(tag,"item",0));
+	sprintf(name,"%s[#]",HTCGetProp(tag,"item",0));
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_PHSTR);
 	EmitCode(htc,OPC_SCMP);
@@ -573,7 +572,7 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,">");
 
 	EmitCode(htc,OPC_EVAL);
-	sprintf(name,"%s[#]",GetArg(tag,"item",0));
+	sprintf(name,"%s[#]",HTCGetProp(tag,"item",0));
 	LBS_EmitPointer(htc->code,StrDup(name));
 	EmitCode(htc,OPC_PHSTR);
 	EmitCode(htc,OPC_EMITSTR);
@@ -617,12 +616,12 @@ ENTER_FUNC;
     EmitCode(htc, OPC_EMITSTR);
     LBS_EmitString(htc->code, "\"");
 	Style(htc,tag);
-	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+	if		(  ( name = HTCGetProp(tag,"name",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," name=\"");
 		LBS_EmitString(htc->code,name);
 		LBS_EmitString(htc->code,"\"");
 	}
-	if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
+	if		(  ( target = HTCGetProp(tag,"target",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," target=\"");
 		LBS_EmitString(htc->code,target);
 		LBS_EmitString(htc->code,"\"");
@@ -648,7 +647,7 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,"\">");
 	}
 
-    if ((defaultevent = GetArg(tag, "defaultevent", 0)) != NULL) {
+    if ((defaultevent = HTCGetProp(tag, "defaultevent", 0)) != NULL) {
         htc->DefaultEvent = StrDup(defaultevent);
 	}
 LEAVE_FUNC;
@@ -666,7 +665,7 @@ _Text(
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<textarea");
 #ifdef	USE_MCE
-	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
+	if		(	(  ( type = HTCGetProp(tag,"type",0) )  ==  NULL  )
 			||	(  !stricmp(type,"text")                      ) ) {
 	} else {
 		if		(  fJavaScript  ) {
@@ -676,7 +675,7 @@ ENTER_FUNC;
 #endif
 			LBS_EmitString(htc->code," mce_editable=\"true\"");
 			if		(  !stricmp(type,"xml")  ) {
-				SetFilter(GetArg(tag,"name",0),StrDup,NULL);
+				SetFilter(HTCGetProp(tag,"name",0),StrDup,NULL);
 			}
 		}
 	}
@@ -684,15 +683,15 @@ ENTER_FUNC;
 
 	LBS_EmitString(htc->code," name=\"");
 	EmitCode(htc,OPC_EVAL);
-	name = StrDup(GetArg(tag,"name",0));
+	name = StrDup(HTCGetProp(tag,"name",0));
 	LBS_EmitPointer(htc->code,name);
 	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\"");
-	if		(  ( cols = GetArg(tag,"cols",0) )  !=  NULL  ) {
+	if		(  ( cols = HTCGetProp(tag,"cols",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," cols=");
 		EmitAttributeValue(htc,cols,TRUE,FALSE,FALSE);
 	}
-	if		(  ( rows = GetArg(tag,"rows",0) )  !=  NULL  ) {
+	if		(  ( rows = HTCGetProp(tag,"rows",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," rows=");
 		EmitAttributeValue(htc,rows,TRUE,FALSE,FALSE);
 	}
@@ -705,7 +704,7 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,name);
 	EmitCode(htc,OPC_PHSTR);
-	if		(	(  ( type = GetArg(tag,"type",0) )  ==  NULL  )
+	if		(	(  ( type = HTCGetProp(tag,"type",0) )  ==  NULL  )
 			||	(  !stricmp(type,"text")                      ) ) {
 		EmitCode(htc,OPC_EMITSTR);
 	} else {
@@ -816,8 +815,8 @@ _Count(
 
 ENTER_FUNC;
 	EmitCode(htc,OPC_VAR);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"var",0)));		/*	3	var		*/
-	if		(  ( from = GetArg(tag,"from",0) )  !=  NULL  ) {
+	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"var",0)));		/*	3	var		*/
+	if		(  ( from = HTCGetProp(tag,"from",0) )  !=  NULL  ) {
 		if		(  isdigit(*from)  ) {
 			EmitCode(htc,OPC_ICONST);
 			LBS_EmitInt(htc->code,atoi(from));
@@ -832,7 +831,7 @@ ENTER_FUNC;
 	}
 	EmitCode(htc,OPC_STORE);
 
-	if		(  ( to = GetArg(tag,"to",0) )  !=  NULL  ) {
+	if		(  ( to = HTCGetProp(tag,"to",0) )  !=  NULL  ) {
 		if		(  isdigit(*to)  ) {
 			EmitCode(htc,OPC_ICONST);
 			LBS_EmitInt(htc->code,atoi(to));
@@ -845,7 +844,7 @@ ENTER_FUNC;
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,0);
 	}													/*	2	limit	*/
-	if		(  ( step = GetArg(tag,"step",0) )  !=  NULL  ) {
+	if		(  ( step = HTCGetProp(tag,"step",0) )  !=  NULL  ) {
 		if		(  isdigit(*step)  ) {
 			EmitCode(htc,OPC_ICONST);
 			LBS_EmitInt(htc->code,atoi(step));
@@ -919,7 +918,7 @@ _Button(
 		,	pos;
 
 ENTER_FUNC;
-	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
+	if		(  ( state = HTCGetProp(tag,"state",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(state));
 		EmitCode(htc,OPC_PHINT);
@@ -934,24 +933,24 @@ ENTER_FUNC;
 	arg = LBS_GetPos(htc->code);
 	LBS_EmitInt(htc->code,0);
 
-	if		(  GetArg(tag,"onclick",0)  !=  NULL  ) {
+	if		(  HTCGetProp(tag,"onclick",0)  !=  NULL  ) {
 		fButton = TRUE;
 		LBS_EmitString(htc->code,"<button");
         JavaScriptEvent(htc, tag, "onclick");
 		Style(htc,tag);
 		LBS_EmitString(htc->code,">");
-		if ((face = GetArg(tag, "face", 0)) == NULL) {
+		if ((face = HTCGetProp(tag, "face", 0)) == NULL) {
 			face = "click";
 		}
 		LBS_EmitString(htc->code,face);
 	} else {
 		fButton = FALSE;
-		event = GetArg(tag, "event", 0);
+		event = HTCGetProp(tag, "event", 0);
 		if		(  event  ==  NULL  ) {
 			HTC_Error("`event' or `on' attribute is required for <%s>\n", tag->name);
 			return;
 		}
-		if ((face = GetArg(tag, "face", 0)) == NULL) {
+		if ((face = HTCGetProp(tag, "face", 0)) == NULL) {
 			face = event;
 		}
 		if (htc->DefaultEvent == NULL)
@@ -967,7 +966,7 @@ ENTER_FUNC;
 		}
 		LBS_EmitString(htc->code,face);
 		LBS_EmitString(htc->code,"\"");
-		if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+		if		(  ( size = HTCGetProp(tag,"size",0) )  !=  NULL  ) {
 			LBS_EmitString(htc->code," size=");
 			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(size));
@@ -991,7 +990,7 @@ ENTER_FUNC;
 						   "<input type=\"submit\" name=\"_event\" value=\"");
 			LBS_EmitString(htc->code,face);
 			LBS_EmitString(htc->code,"\"");
-			if		(  ( size = GetArg(tag,"size",0) )  !=  NULL  ) {
+			if		(  ( size = HTCGetProp(tag,"size",0) )  !=  NULL  ) {
 				LBS_EmitString(htc->code," size=");
 				EmitCode(htc,OPC_EVAL);
 				LBS_EmitPointer(htc->code,StrDup(size));
@@ -1032,7 +1031,7 @@ _Span(
 		,	pos;
 
 ENTER_FUNC;
-	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
+	if		(  ( state = HTCGetProp(tag,"state",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(state));
 		EmitCode(htc,OPC_PHINT);
@@ -1079,7 +1078,7 @@ _A(
 		,	pos;
 
 ENTER_FUNC;
-	if		(  ( state = GetArg(tag,"state",0) )  !=  NULL  ) {
+	if		(  ( state = HTCGetProp(tag,"state",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(state));
 		EmitCode(htc,OPC_PHINT);
@@ -1105,11 +1104,11 @@ ENTER_FUNC;
 	JavaScriptEvent(htc, tag, "onmouseout");
 	JavaScriptEvent(htc, tag, "onmousesetup");
 	Style(htc,tag);
-	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+	if		(  ( name = HTCGetProp(tag,"name",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," name=");
 		ExpandAttributeString(htc,name);
 	}
-	if		(  ( href = GetArg(tag,"href",0) )  !=  NULL  ) {
+	if		(  ( href = HTCGetProp(tag,"href",0) )  !=  NULL  ) {
 		if		(  strlicmp(href,"javascript:")  ==  0  ) {
 			JavaScriptEvent(htc, tag, "href");
 		} else {
@@ -1117,7 +1116,7 @@ ENTER_FUNC;
 			ExpandAttributeString(htc,href);
 		}
 	}
-	if		(  ( target = GetArg(tag,"target",0) )  !=  NULL  ) {
+	if		(  ( target = HTCGetProp(tag,"target",0) )  !=  NULL  ) {
 		LBS_EmitString(htc->code," target=");
 		ExpandAttributeString(htc,target);
 	}
@@ -1139,18 +1138,18 @@ _ToggleButton(
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
 	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\" ");
 	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code,"checked ");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
 	JavaScriptEvent(htc, tag, "onclick");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
-	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
+	if		(  ( label = HTCGetProp(tag,"label",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(label));
 		EmitCode(htc,OPC_PHSTR);
@@ -1169,18 +1168,18 @@ _CheckButton(
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
 	EmitCode(htc,OPC_EMITSTR);
 	LBS_EmitString(htc->code,"\" ");
 	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code,"checked");
 	LBS_EmitString(htc->code," value=\"TRUE\"");
 	JavaScriptEvent(htc, tag, "onclick");
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
-	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
+	if		(  ( label = HTCGetProp(tag,"label",0) )  !=  NULL  ) {
 		if		(  *label  ==  '$'  ) {
 			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(label+1));
@@ -1203,8 +1202,8 @@ _RadioButton(
 		,	*label;
 
 ENTER_FUNC;
-	group = GetArg(tag,"group",0); 
-	name = GetArg(tag,"name",0); 
+	group = HTCGetProp(tag,"group",0); 
+	name = HTCGetProp(tag,"name",0); 
 	LBS_EmitString(htc->code,"<input type=\"radio\" name=\"");
 	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(group));
@@ -1212,7 +1211,7 @@ ENTER_FUNC;
 	LBS_EmitString(htc->code,"\" ");
 
 	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
 	EmitCode(htc,OPC_HBES);
 	LBS_EmitPointer(htc->code,"checked");
 
@@ -1225,7 +1224,7 @@ ENTER_FUNC;
 
 	Style(htc,tag);
 	LBS_EmitString(htc->code,">");
-	if		(  ( label = GetArg(tag,"label",0) )  !=  NULL  ) {
+	if		(  ( label = HTCGetProp(tag,"label",0) )  !=  NULL  ) {
 		if		(  *label  ==  '$'  ) {
 			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(label+1));
@@ -1248,22 +1247,22 @@ _List(HTCInfo *htc, Tag *tag)
 	size_t	pos;
 
 ENTER_FUNC;
-    if ((name = GetArg(tag,"name",0)) != NULL &&
-        (label = GetArg(tag,"label",0)) != NULL &&
-        (count = GetArg(tag,"count",0)) != NULL) {
+    if ((name = HTCGetProp(tag,"name",0)) != NULL &&
+        (label = HTCGetProp(tag,"label",0)) != NULL &&
+        (count = HTCGetProp(tag,"count",0)) != NULL) {
         LBS_EmitString(htc->code,"<select name=\"");
         EmitCode(htc,OPC_EVAL);
-        LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+        LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
         EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"\"");
-        if ((size = GetArg(tag,"size",0)) != NULL) {
+        if ((size = HTCGetProp(tag,"size",0)) != NULL) {
             LBS_EmitString(htc->code," size=\"");
             EmitCode(htc,OPC_EVAL);
-            LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
+            LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"size",0)));
             EmitCode(htc,OPC_EMITSTR);
             LBS_EmitString(htc->code,"\"");
         }
-        if ((multiple = GetArg(tag,"multiple",0)) != NULL &&
+        if ((multiple = HTCGetProp(tag,"multiple",0)) != NULL &&
             IsTrue(multiple)) {
             LBS_EmitString(htc->code," multiple");
         }
@@ -1284,7 +1283,7 @@ ENTER_FUNC;
         LBS_EmitInt(htc->code,0);
 
         LBS_EmitString(htc->code,"<option value=\"");
-        if ((value = GetArg(tag,"value",0)) != NULL) {
+        if ((value = HTCGetProp(tag,"value",0)) != NULL) {
 			EmitCode(htc,OPC_EVAL);
 			sprintf(buf,"%s[#]",value);
 			LBS_EmitPointer(htc->code,StrDup(buf));
@@ -1331,9 +1330,9 @@ _Optionmenu(HTCInfo *htc, Tag *tag)
 	size_t	pos;
 
 ENTER_FUNC;
-	if		(	(  ( item  = GetArg(tag,"item",0) )    !=  NULL  )
-			&&	(  ( sel   = GetArg(tag,"select",0) )  !=  NULL  )
-			&&	(  ( count = GetArg(tag,"count",0) )   !=  NULL  ) ) {
+	if		(	(  ( item  = HTCGetProp(tag,"item",0) )    !=  NULL  )
+			&&	(  ( sel   = HTCGetProp(tag,"select",0) )  !=  NULL  )
+			&&	(  ( count = HTCGetProp(tag,"count",0) )   !=  NULL  ) ) {
         LBS_EmitString(htc->code,"<select name=\"");
         EmitCode(htc,OPC_EVAL);
         LBS_EmitPointer(htc->code,StrDup(sel));
@@ -1415,24 +1414,24 @@ _Select(
 	char	buf[SIZE_BUFF];
 
 ENTER_FUNC;
-	if		(  ( name = GetArg(tag,"name",0) )  !=  NULL  ) {
+	if		(  ( name = HTCGetProp(tag,"name",0) )  !=  NULL  ) {
         LBS_EmitString(htc->code,"<select name=\"");
         EmitCode(htc,OPC_EVAL);
-        LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"name",0)));
+        LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
         EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code,"\"");
-        if ((size = GetArg(tag,"size",0)) != NULL) {
+        if ((size = HTCGetProp(tag,"size",0)) != NULL) {
             LBS_EmitString(htc->code," size=\"");
             EmitCode(htc,OPC_EVAL);
-            LBS_EmitPointer(htc->code,StrDup(GetArg(tag,"size",0)));
+            LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"size",0)));
             EmitCode(htc,OPC_EMITSTR);
             LBS_EmitString(htc->code,"\"");
         }
-        if ((multiple = GetArg(tag,"multiple",0)) != NULL &&
+        if ((multiple = HTCGetProp(tag,"multiple",0)) != NULL &&
             IsTrue(multiple)) {
             LBS_EmitString(htc->code," multiple");
         }
-		if		(	(  ( type = GetArg(tag,"type",0) )  !=  NULL  )
+		if		(	(  ( type = HTCGetProp(tag,"type",0) )  !=  NULL  )
 				&&	(  !stricmp(type,"menu")                      ) ) {
 			if		(  fJavaScript  ) {
 				InvokeJs("send_event");
@@ -1462,12 +1461,12 @@ _Option(
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<option");
-	if		(  ( value = GetArg(tag,"value",0) )  !=  NULL  )	{
+	if		(  ( value = HTCGetProp(tag,"value",0) )  !=  NULL  )	{
 		LBS_EmitString(htc->code," value=");
 		ExpandAttributeString(htc,value);
 		LBS_EmitString(htc->code," ");
 	}
-	if		(  ( select = GetArg(tag,"select",0) )  !=  NULL  ) {
+	if		(  ( select = HTCGetProp(tag,"select",0) )  !=  NULL  ) {
 		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(select));
 		EmitCode(htc,OPC_HBES);
@@ -1484,8 +1483,8 @@ _FileSelection(HTCInfo *htc, Tag *tag)
 	char *name, *filename, *size, *maxlength;
 
 ENTER_FUNC;
-    if ((name = GetArg(tag, "name", 0)) != NULL &&
-        (filename = GetArg(tag, "filename", 0)) != NULL) {
+    if ((name = HTCGetProp(tag, "name", 0)) != NULL &&
+        (filename = HTCGetProp(tag, "filename", 0)) != NULL) {
 		LBS_EmitString(htc->code, "<input type=\"file\" name=\"");
 		EmitCode(htc, OPC_EVAL);
 		LBS_EmitPointer(htc->code, StrDup(name));
@@ -1498,7 +1497,7 @@ ENTER_FUNC;
 		EmitCode(htc,OPC_EMITSTR);
         LBS_EmitString(htc->code, "\"");
 
-		if ((size = GetArg(tag, "size", 0)) != NULL) {
+		if ((size = HTCGetProp(tag, "size", 0)) != NULL) {
 			LBS_EmitString(htc->code, " size=\"");
 			EmitCode(htc, OPC_EVAL);
 			LBS_EmitPointer(htc->code, StrDup(size));
@@ -1506,7 +1505,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code, "\"");
 		}
 
-        if ((maxlength = GetArg(tag, "maxlength", 0)) != NULL) {
+        if ((maxlength = HTCGetProp(tag, "maxlength", 0)) != NULL) {
 			LBS_EmitString(htc->code, " maxlength=\"");
 			EmitCode(htc, OPC_EVAL);
 			LBS_EmitPointer(htc->code, StrDup(maxlength));
@@ -1544,14 +1543,14 @@ _HyperLink(HTCInfo *htc, Tag *tag)
     char buf[SIZE_BUFF];
 
 ENTER_FUNC;
-	if ((event = GetArg(tag, "event", 0)) != NULL) {
+	if ((event = HTCGetProp(tag, "event", 0)) != NULL) {
 		LBS_EmitString(htc->code, "<a");
 		Style(htc,tag);
 
 		LBS_EmitString(htc->code, " href=\"");
 
 		if (fJavaScriptLink && fJavaScript && htc->FormNo >= 0 &&
-            (file = GetArg(tag, "file", 0)) == NULL) {
+            (file = HTCGetProp(tag, "file", 0)) == NULL) {
             LBS_EmitString(htc->code, "javascript:");
             snprintf(buf, SIZE_BUFF,
                      "document.forms[%d].elements[0].name='_event';"
@@ -1564,8 +1563,8 @@ ENTER_FUNC;
             EmitCode(htc, OPC_EMITSTR);
             LBS_EmitString(htc->code, "';");
 
-            if ((name = GetArg(tag, "name", 0)) != NULL &&
-                (value = GetArg(tag, "value", 0)) != NULL) {
+            if ((name = HTCGetProp(tag, "name", 0)) != NULL &&
+                (value = HTCGetProp(tag, "value", 0)) != NULL) {
                 snprintf(buf, SIZE_BUFF,
                          "document.forms[%d].elements[1].name='", htc->FormNo);
                 LBS_EmitString(htc->code, buf);
@@ -1588,7 +1587,7 @@ ENTER_FUNC;
         }
         else {
             LBS_EmitString(htc->code,ScriptName);
-            if ((filename = GetArg(tag, "filename", 0)) != NULL) {
+            if ((filename = HTCGetProp(tag, "filename", 0)) != NULL) {
                 LBS_EmitChar(htc->code, '/');
                 EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(filename));
@@ -1606,8 +1605,8 @@ ENTER_FUNC;
                 LBS_EmitString(htc->code, "&amp;_sesid=");
                 EmitGetValue(htc,"_sesid");
             }
-            if ((name = GetArg(tag, "name", 0)) != NULL &&
-                (value = GetArg(tag, "value", 0)) != NULL) {
+            if ((name = HTCGetProp(tag, "name", 0)) != NULL &&
+                (value = HTCGetProp(tag, "value", 0)) != NULL) {
                 LBS_EmitString(htc->code,"&amp;");
                 EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code,StrDup(name));
@@ -1615,7 +1614,7 @@ ENTER_FUNC;
                 LBS_EmitString(htc->code,"=");
                 EmitAttributeValue(htc, value, FALSE, TRUE, FALSE); 
             }
-            if ((file = GetArg(tag, "file", 0)) != NULL) {
+            if ((file = HTCGetProp(tag, "file", 0)) != NULL) {
                 LBS_EmitString(htc->code, "&amp;_file=");
                 EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(file));
@@ -1627,13 +1626,13 @@ ENTER_FUNC;
                 LBS_EmitPointer(htc->code, StrDup(filename));
                 EmitCode(htc, OPC_EMITSTR);
             }
-            if ((contenttype = GetArg(tag, "contenttype", 0)) != NULL) {
+            if ((contenttype = HTCGetProp(tag, "contenttype", 0)) != NULL) {
                 LBS_EmitString(htc->code, "&amp;_contenttype=");
                 EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(contenttype));
                 EmitCode(htc, OPC_EMITSTR);
             }
-            if ((disposition = GetArg(tag, "disposition", 0)) != NULL) {
+            if ((disposition = HTCGetProp(tag, "disposition", 0)) != NULL) {
                 LBS_EmitString(htc->code, "&amp;_disposition=");
                 EmitCode(htc, OPC_EVAL);
                 LBS_EmitPointer(htc->code, StrDup(disposition));
@@ -1642,7 +1641,7 @@ ENTER_FUNC;
         }
 		LBS_EmitString(htc->code,"\"");
 
-        if ((target = GetArg(tag, "target", 0)) != NULL) {
+        if ((target = HTCGetProp(tag, "target", 0)) != NULL) {
             LBS_EmitString(htc->code, " target=\"");
             LBS_EmitString(htc->code, target);
             LBS_EmitString(htc->code, "\"");
@@ -1669,7 +1668,7 @@ _Panel(
     int		has_style;
 
 ENTER_FUNC;
-    if ((visible = GetArg(tag, "visible", 0)) == NULL) {
+    if ((visible = HTCGetProp(tag, "visible", 0)) == NULL) {
         Push(0);
     }
     else {
@@ -1681,8 +1680,8 @@ ENTER_FUNC;
         LBS_EmitInt(htc->code, 0);
     }
     has_style =
-        GetArg(tag, "id", 0) !=  NULL ||
-        GetArg(tag, "class", 0) !=  NULL;
+        HTCGetProp(tag, "id", 0) !=  NULL ||
+        HTCGetProp(tag, "class", 0) !=  NULL;
     if (has_style) {
         LBS_EmitString(htc->code,"<div");
     }
@@ -1745,7 +1744,7 @@ ENTER_FUNC;
 	this_yy = Now->tm_year + 1900;
 	this_mm = Now->tm_mon + 1;
 	this_dd = Now->tm_mday;
-	if		(  ( year = GetArg(tag,"year",0) )  ==  NULL  ) {
+	if		(  ( year = HTCGetProp(tag,"year",0) )  ==  NULL  ) {
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,this_yy);
 	} else {
@@ -1763,7 +1762,7 @@ ENTER_FUNC;
 		LBS_EmitInt(htc->code,pos);
 		LBS_SetPos(htc->code,pos);
 	}
-	if		(  ( month = GetArg(tag,"month",0) )  ==  NULL  ) {
+	if		(  ( month = HTCGetProp(tag,"month",0) )  ==  NULL  ) {
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,this_mm);
 	} else {
@@ -1781,7 +1780,7 @@ ENTER_FUNC;
 		LBS_EmitInt(htc->code,pos);
 		LBS_SetPos(htc->code,pos);
 	}
-	if		(  ( day = GetArg(tag,"day",0) )  ==  NULL  ) {
+	if		(  ( day = HTCGetProp(tag,"day",0) )  ==  NULL  ) {
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,this_dd);
 	} else {
@@ -1806,62 +1805,62 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,day);
 	EmitCode(htc,OPC_CALENDAR);
-	if		(  ( lborder = GetArg(tag,"lborder",0) )  ==  NULL  ) {
+	if		(  ( lborder = HTCGetProp(tag,"lborder",0) )  ==  NULL  ) {
 		LBS_EmitInt(htc->code,1);
 	} else {
 		LBS_EmitInt(htc->code,atoi(lborder));
 	}
-	if		(  ( lcellspacing = GetArg(tag,"lcellspacing",0) )  ==  NULL  ) {
+	if		(  ( lcellspacing = HTCGetProp(tag,"lcellspacing",0) )  ==  NULL  ) {
 		LBS_EmitInt(htc->code,0);
 	} else {
 		LBS_EmitInt(htc->code,atoi(lcellspacing));
 	}
-	if		(  ( lcellpadding = GetArg(tag,"lcellpadding",0) )  ==  NULL  ) {
+	if		(  ( lcellpadding = HTCGetProp(tag,"lcellpadding",0) )  ==  NULL  ) {
 		LBS_EmitInt(htc->code,0);
 	} else {
 		LBS_EmitInt(htc->code,atoi(lcellpadding));
 	}
-	if		(  ( lfontsize = GetArg(tag,"lfontsize",0) )  ==  NULL  ) {
+	if		(  ( lfontsize = HTCGetProp(tag,"lfontsize",0) )  ==  NULL  ) {
 		LBS_EmitInt(htc->code,4);
 	} else {
 		LBS_EmitInt(htc->code,atoi(lfontsize));
 	}
-	if		(  ( sborder = GetArg(tag,"sborder",0) )  ==  NULL  ) {
+	if		(  ( sborder = HTCGetProp(tag,"sborder",0) )  ==  NULL  ) {
 		LBS_EmitInt(htc->code,0);
 	} else {
 		LBS_EmitInt(htc->code,atoi(sborder));
 	}
-	if		(  ( scellspacing = GetArg(tag,"scellspacing",0) )  ==  NULL  ) {
+	if		(  ( scellspacing = HTCGetProp(tag,"scellspacing",0) )  ==  NULL  ) {
 		LBS_EmitInt(htc->code,0);
 	} else {
 		LBS_EmitInt(htc->code,atoi(scellspacing));
 	}
-	if		(  ( scellpadding = GetArg(tag,"scellpadding",0) )  ==  NULL  ) {
+	if		(  ( scellpadding = HTCGetProp(tag,"scellpadding",0) )  ==  NULL  ) {
 		LBS_EmitInt(htc->code,0);
 	} else {
 		LBS_EmitInt(htc->code,atoi(scellpadding));
 	}
-	if		(  ( sfontsize = GetArg(tag,"sfontsize",0) )  ==  NULL  ) {
+	if		(  ( sfontsize = HTCGetProp(tag,"sfontsize",0) )  ==  NULL  ) {
 		LBS_EmitInt(htc->code,3);
 	} else {
 		LBS_EmitInt(htc->code,atoi(sfontsize));
 	}
-	if		(  ( lbgcolor = GetArg(tag,"lbgcolor",0) )  ==  NULL  ) {
+	if		(  ( lbgcolor = HTCGetProp(tag,"lbgcolor",0) )  ==  NULL  ) {
 		LBS_EmitPointer(htc->code,"#F0F0F0");
 	} else {
 		LBS_EmitPointer(htc->code,StrDup(lbgcolor));
 	}
-	if		(  ( lfontcolor = GetArg(tag,"lfontcolor",0) )  ==  NULL  ) {
+	if		(  ( lfontcolor = HTCGetProp(tag,"lfontcolor",0) )  ==  NULL  ) {
 		LBS_EmitPointer(htc->code,"#000000");
 	} else {
 		LBS_EmitPointer(htc->code,StrDup(lfontcolor));
 	}
-	if		(  ( sbgcolor = GetArg(tag,"sbgcolor",0) )  ==  NULL  ) {
+	if		(  ( sbgcolor = HTCGetProp(tag,"sbgcolor",0) )  ==  NULL  ) {
 		LBS_EmitPointer(htc->code,"#FFFFFF");
 	} else {
 		LBS_EmitPointer(htc->code,StrDup(sbgcolor));
 	}
-	if		(  ( sfontcolor = GetArg(tag,"sfontcolor",0) )  ==  NULL  ) {
+	if		(  ( sfontcolor = HTCGetProp(tag,"sfontcolor",0) )  ==  NULL  ) {
 		LBS_EmitPointer(htc->code,"#FF0000");
 	} else {
 		LBS_EmitPointer(htc->code,StrDup(sfontcolor));
@@ -1877,7 +1876,7 @@ _Htc(
 	Tag		*tag)
 {
 ENTER_FUNC;
-	Codeset = GetArg(tag,"coding",0); 
+	Codeset = HTCGetProp(tag,"coding",0); 
 	HTCSetCodeset(Codeset);
 	fButton = FALSE;
 	fHead = FALSE;

@@ -1,27 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
-
-/*
-  TODO
-	wfc´ÖÄÌ¿®
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 #define	MAIN
 
@@ -237,25 +232,25 @@ StopSystem(void)
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"¥İ¡¼¥ÈÈÖ¹æ"	 								},
+		"Å|Åˆ??"	 								},
 	{	"apsport",	STRING,		TRUE,	(void*)&ApsPortNumber,
-		"APSÀÜÂ³ÂÔ¤Á¥İ¡¼¥È"								},
+		"APSÂ³?ÄÅ|Åˆ"								},
 	{	"control",	STRING,		TRUE,	(void*)&ControlPortNumber,
-		"À©¸æÂÔ¤Á¥İ¡¼¥È"								},
+		")??ÄÅ|Åˆ"								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"ÀÜÂ³ÂÔ¤Á¥­¥å¡¼¤Î¿ô" 							},
+		"Â³?ÄÅ­Å¥|Ä?" 							},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"´Ä¶­¤Î¥Ù¡¼¥¹¥Ç¥£¥ì¥¯¥È¥ê"		 				},
+		"??ÄÅ™|Å¹Å‡Å£Å¬Å¯ÅˆÅª"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"¥Ç¡¼¥¿ÄêµÁ³ÊÇ¼¥Ç¥£¥ì¥¯¥È¥ê"	 				},
+		"Å‡|?Äª???Å‡Å£Å¬Å¯ÅˆÅª"	 				},
 	{	"lddir",	STRING,		TRUE,	(void*)&D_Dir,
-		"LDÄêµÁ³ÊÇ¼¥Ç¥£¥ì¥¯¥È¥ê"		 				},
+		"LDÄª???Å‡Å£Å¬Å¯ÅˆÅª"		 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"¥Ç¥£¥ì¥¯¥È¥ê¥Õ¥¡¥¤¥ë"	 						},
+		"Å‡Å£Å¬Å¯ÅˆÅªÅ•Å¡Å¤Å«"	 						},
 
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
-		"¥È¥é¥ó¥¶¥¯¥·¥ç¥ó¤òºÆ»î¹Ô¤¹¤ë»ş¤Î¾å¸Â¿ô"		},
+		"ÅˆÅ©Å³Å¶Å¯Å·Å§Å³Ä²???Ä¹Ä«?Ä???"		},
 
 	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
 		"loopback test"									},

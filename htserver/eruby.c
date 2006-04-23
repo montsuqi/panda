@@ -52,121 +52,6 @@
 #define	DBOUT_FILENO	4
 
 static	char	*
-CheckCoding(
-	char	**sstr)
-{
-	char	*str = *sstr;
-	int		blace;
-	Bool	fMeta
-		,	fHTC
-		,	fXML
-		,	quote;
-	char	*p;
-	static	char	coding[SIZE_NAME+1];
-
-ENTER_FUNC;
-	blace = 0;
-	quote = FALSE;
-	fMeta = FALSE;
-	fHTC = FALSE;
-	fXML = FALSE;
-	strcpy(coding,"iso-2022-jp");
-	while	(  *str  !=  0  ) {
-		switch	(*str) {
-		  case	'<':
-			if		(  !strlicmp(str,"<HTC")  ) {
-				fHTC = TRUE;
-				str += strlen("<HTC");
-			} else
-			if		(  !strlicmp(str,"<?xml")  ) {
-				fXML = TRUE;
-				str += strlen("<?xml");
-			}
-			blace ++;
-			break;
-		  case	'>':
-			blace --;
-			if		(  blace  ==  0  ) {
-				fMeta = FALSE;
-			}
-			break;
-		  case	'm':
-		  case	'M':
-			if		(	(  blace  >   0  )
-					&&	(  !strlicmp(str,"meta")  ) ) {
-				fMeta = TRUE;
-				str += strlen("meta");
-			}
-			break;
-		  default:
-			break;
-		}
-		if		(  fMeta  ) {
-			if		(  !strlicmp(str,"charset")  ) {
-				str += strlen("charset");
-				p = coding;
-				while	(  isspace(*str)  )	str ++;
-				if		(  *str  ==  '='  )	str ++;
-				while	(  isspace(*str)  )	str ++;
-				while	(	(  !isspace(*str)  )
-						&&	(  *str  !=  '"'   ) ) {
-					*p ++ = *str ++;
-				}
-				*p = 0;
-				str --;
-				goto	quit;
-			}
-		} else
-		if		(  fHTC  ) {
-			while	(  isspace(*str)  )	str ++;
-			while	(  *str  !=  '>'  ) {
-				if		(  !strlicmp(str,"coding")  ) {
-					str += strlen("coding");
-					while	(  isspace(*str)  )	str ++;
-					if		(  *str  ==  '='  )	str ++;
-					while	(  isspace(*str)  )	str ++;
-					if		(  *str  ==  '"'  )	str ++;
-					p = coding;
-					while	(	(  !isspace(*str)  )
-								&&	(  *str  !=  '"'   ) ) {
-						*p ++ = *str ++;
-					}
-					*p = 0;
-				}
-				str ++;
-			}
-			str ++;
-			goto	quit;
-		} else
-		if		(  fXML  ) {
-			while	(  *str  !=  '>'  ) {
-				if		(  !strlicmp(str,"encoding")  ) {
-					str += strlen("encoding");
-					while	(  isspace(*str)  )	str ++;
-					if		(  *str  ==  '='  )	str ++;
-					while	(  isspace(*str)  )	str ++;
-					if		(  *str  ==  '"'  )	str ++;
-					p = coding;
-					while	(	(  !isspace(*str)  )
-							&&	(  *str  !=  '"'   ) ) {
-						*p ++ = *str ++;
-					}
-					*p = 0;
-				}
-				str ++;
-			}
-			str ++;
-			goto	quit;
-		}
-		str ++;
-	}
-  quit:
-	*sstr = str;
-LEAVE_FUNC;
-	return	(coding);
-}
-
-static	char	*
 ConvertEncoding(
 	char	*tcoding,
 	char	*coding,
@@ -357,9 +242,7 @@ ParseFile(
 	Bool	fHTC)
 {
 	HTCInfo	*ret;
-	char	*str
-		,	*m;
-	struct	stat	sb;
+	char	*str;
 	int		fd
 		,	pid
 		,	i;
@@ -379,7 +262,7 @@ ParseFile(
 	int		status;
 
 ENTER_FUNC;
-	if		(  stat(fname,&sb)  ==  0  ) {
+	if		(  ( str = GetFileBody(fname) )  !=  NULL  ) {
 		pipe(pSource);
 		pipe(pResult);
 		pipe(pError);
@@ -408,90 +291,80 @@ ENTER_FUNC;
 		close(pError[1]);
 		close(pDBR[1]);
 		close(pDBW[0]);
-		if		(  ( fd = open(fname,O_RDONLY ) )  >=  0  ) {
-			m = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0);
-			str = (char *)xmalloc(sb.st_size+1);
-			memcpy(str,m,sb.st_size);
-			munmap(m,sb.st_size);
-			str[sb.st_size] = 0;
-			close(fd);
-			istr = str;
-			coding = CheckCoding(&istr);
-			if		(	(  stricmp(coding,"utf-8")  !=  0  )
-					&&	(  stricmp(coding,"utf8")   !=  0  ) ) {
-				ostr = ConvertEncoding("utf-8",coding,istr);
-				xfree(str);
-				str = ostr;
-				fChange = TRUE;
-			} else {
-				fChange = FALSE;
-			}
-			lbs = NewLBS();
-			ERubyPreambre(lbs);
-			write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
-#ifdef	DEBUG
-			printf("code:-------\n");
-			printf("%s",(char *)LBS_Body(lbs));
-			printf("%s",str);
-			printf("------------\n");
-#endif
-			write(pSource[1],str,strlen(str));
-			LBS_EmitStart(lbs);
-			ERubyPostambre(lbs);
-			write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
-			FreeLBS(lbs);
-			close(pSource[1]);
-			DataProcess(pDBR[0],pDBW[1]);
-			while( waitpid(-1, &status, WNOHANG) > 0 );
+		istr = str;
+		coding = CheckCoding(&istr);
+		if		(	(  stricmp(coding,"utf-8")  !=  0  )
+				&&	(  stricmp(coding,"utf8")   !=  0  ) ) {
+			ostr = ConvertEncoding("utf-8",coding,istr);
 			xfree(str);
+			str = ostr;
+			fChange = TRUE;
+		} else {
+			fChange = FALSE;
+		}
+		lbs = NewLBS();
+		ERubyPreambre(lbs);
+		write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
+#ifdef	DEBUG
+		printf("code:-------\n");
+		printf("%s",(char *)LBS_Body(lbs));
+		printf("%s",str);
+		printf("------------\n");
+#endif
+		write(pSource[1],str,strlen(str));
+		LBS_EmitStart(lbs);
+		ERubyPostambre(lbs);
+		write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
+		FreeLBS(lbs);
+		close(pSource[1]);
+		DataProcess(pDBR[0],pDBW[1]);
+		while( waitpid(-1, &status, WNOHANG) > 0 );
+		xfree(str);
 
-			lbs = NewLBS();
-			if		(  WEXITSTATUS(status)  ==  0  ) {
-				fd = pResult[0];
-				fError = FALSE;
-				if		(	(  fHTC     )
-						&&	(  fChange  ) ) {
-					sprintf(buff,"<htc coding=\"%s\">",coding);
-					LBS_EmitString(lbs,buff);
-				}
-			} else {
-				fError = TRUE;
-				fd = pError[0];
-			}
-			while	(  ( size = read(fd,buff,SIZE_BUFF) )  >  0  ) {
-				for	( i = 0 ; i < size ; i ++ ) {
-					LBS_Emit(lbs,buff[i]);
-				}
-			}
-			close(pResult[0]);
-			close(pError[0]);
-			str = LBS_ToString(lbs);
-			FreeLBS(lbs);
-			if		(  fError  ) {
-				ret = MakeErrorReport(str);
-			} else {
-				if		(  fChange  ) {
-					ostr = ConvertEncoding(coding,"utf-8",str);
-					xfree(str);
-					str = ostr;
-				}
-				if		(  fHTC  ) {
-					HTC_FileName = fname;
-					HTC_cLine = 1;
-					HTC_Memory = str;
-					_HTC_Memory = str;
-					if		(  fDump  ) {
-						SaveValue("_eruby_output",str,FALSE);
-					}
-					ret = HTCParserCore();
-				} else {
-					ret = NewHTCInfo();
-					ret->code = NewLBS();
-					LBS_EmitString(ret->code,str);
-				}
+		lbs = NewLBS();
+		if		(  WEXITSTATUS(status)  ==  0  ) {
+			fd = pResult[0];
+			fError = FALSE;
+			if		(	(  fHTC     )
+					&&	(  fChange  ) ) {
+				sprintf(buff,"<htc coding=\"%s\">",coding);
+				LBS_EmitString(lbs,buff);
 			}
 		} else {
-			ret = NULL;
+			fError = TRUE;
+			fd = pError[0];
+		}
+		while	(  ( size = read(fd,buff,SIZE_BUFF) )  >  0  ) {
+			for	( i = 0 ; i < size ; i ++ ) {
+				LBS_Emit(lbs,buff[i]);
+			}
+		}
+		close(pResult[0]);
+		close(pError[0]);
+		str = LBS_ToString(lbs);
+		FreeLBS(lbs);
+		if		(  fError  ) {
+			ret = MakeErrorReport(str);
+		} else {
+			if		(  fChange  ) {
+				ostr = ConvertEncoding(coding,"utf-8",str);
+				xfree(str);
+				str = ostr;
+			}
+			if		(  fHTC  ) {
+				HTC_FileName = fname;
+				HTC_cLine = 1;
+				HTC_Memory = str;
+				_HTC_Memory = str;
+				if		(  fDump  ) {
+					SaveValue("_eruby_output",str,FALSE);
+				}
+				ret = HTCParserCore();
+			} else {
+				ret = NewHTCInfo();
+				ret->code = NewLBS();
+				LBS_EmitString(ret->code,str);
+			}
 		}
 	} else {
 		ret = NULL;

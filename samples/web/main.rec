@@ -1,13 +1,10 @@
 main	{
-	area1	{
+	area	{
 		color	varchar(64);
 	};
-	area2	{
-		color	varchar(64);
-	};
-	area3	{
-		color	varchar(64);
-	};
+	area1 = area;
+	area2 = area;
+	area3 = area;
     user	varchar(64);
 	message	varchar(250);
 };

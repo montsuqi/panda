@@ -32,5 +32,7 @@ extern	HTCInfo		*HTCParseMemory(char *buff);
 extern	void		DestroyHTC(HTCInfo *htc);
 extern	void		HTC_Error(char *msg, ...);
 extern	HTCInfo		*ParseScreen(char *name, Bool fComm, Bool fBody);
+extern	char		*CheckCoding(char **sstr);
+extern	char		*GetFileBody(char *fname);
 
 #endif
