@@ -105,40 +105,6 @@ DecodeName(
 }
 
 static	void
-SendWindowName(
-	NETFILE		*fp,
-	ScreenData	*scr)
-{
-	void
-	SendWindow(
-		char		*wname,
-		WindowData	*win,
-		NETFILE		*fp)
-	{
-		if		(  win->PutType  !=  SCREEN_NULL  ) {
-			switch	(win->PutType) {
-			  case	SCREEN_CURRENT_WINDOW:
-			  case	SCREEN_NEW_WINDOW:
-			  case	SCREEN_CHANGE_WINDOW:
-				SendPacketClass(fp,GL_WindowName);
-				SendString(fp,wname);
-				dbgprintf("window = [%s]",wname);
-				break;
-			  default:
-				dbgprintf("win->PutType = %02X",win->PutType);
-				break;
-			}
-			win->PutType = SCREEN_NULL;
-		}
-	}
-ENTER_FUNC;
-	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fp);
-	SendPacketClass(fp,GL_END);
-LEAVE_FUNC;
-}
-
-#if	1
-static	void
 SendScreenItem(
 	NETFILE		*fp,
 	ScreenData	*scr,
@@ -180,6 +146,39 @@ SendScreenItem(
 }
 
 static	void
+SendWindowName(
+	NETFILE		*fp,
+	ScreenData	*scr)
+{
+	void
+	SendWindow(
+		char		*wname,
+		WindowData	*win,
+		NETFILE		*fp)
+	{
+		if		(  win->PutType  !=  SCREEN_NULL  ) {
+			switch	(win->PutType) {
+			  case	SCREEN_CURRENT_WINDOW:
+			  case	SCREEN_NEW_WINDOW:
+			  case	SCREEN_CHANGE_WINDOW:
+				SendPacketClass(fp,GL_WindowName);
+				SendString(fp,wname);
+				dbgprintf("window = [%s]",wname);
+				break;
+			  default:
+				dbgprintf("win->PutType = %02X",win->PutType);
+				break;
+			}
+			win->PutType = SCREEN_NULL;
+		}
+	}
+ENTER_FUNC;
+	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fp);
+	SendPacketClass(fp,GL_END);
+LEAVE_FUNC;
+}
+
+static	void
 WriteClient(
 	NETFILE		*fp,
 	ScreenData	*scr)
@@ -196,56 +195,7 @@ ENTER_FUNC;
     FreeLBS(lbs);
 LEAVE_FUNC;
 }
-#else
-static	void
-WriteClient(
-	NETFILE		*fp,
-	ScreenData	*scr)
-{
-    LargeByteString	*lbs;
-	PacketClass	klass;
-	char	buff[SIZE_BUFF+1];
-	char	*vname
-	,		*wname;
-	WindowData	*win;
-	ValueStruct	*value;
-	Bool	fClear;
-	size_t	size;
 
-ENTER_FUNC;
-	SendWindowName(fp,scr);
-    lbs = NewLBS();
-	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_GetData  ) {
-		RecvString(fp,buff);
-		dbgprintf("name = [%s]",buff);
-		fClear = RecvBool(fp);
-		if		(  *buff  !=  0  ) {
-			DecodeName(&wname,&vname,buff);
-			LBS_EmitStart(lbs);
-			if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-				if		(  *vname  ==  0  ) {
-					value = win->rec->value;
-				} else {
-					value = GetItemLongName(win->rec->value,vname);
-				}
-				if (value == NULL) {
-					fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
-				} else {
-					size = NativeSaveSize(value,TRUE);
-					LBS_ReserveSize(lbs,size,FALSE);
-					NativeSaveValue(LBS_Body(lbs),value,TRUE);
-					if		(  fClear  ) {
-						InitializeValue(value);
-					}
-				}
-			}
-			SendLBS(fp, lbs);
-		}
-	}
-    FreeLBS(lbs);
-LEAVE_FUNC;
-}
-#endif
 static	void
 RecvScreenData(
 	NETFILE		*fp,

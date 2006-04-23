@@ -524,24 +524,23 @@ ENTER_FUNC;
 		}
 		dbgmsg("*");
 		if		(  !fError  ) {
+			name = NULL;
 			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
 				RecvString(fpServ,buff);
 				name = StrDup(buff);
 				dbgprintf("name = [%s]",name);
 				SaveValue("_name",name,FALSE);
-                if ((file = LoadValue("_file")) != NULL) {
-                    ValueStruct *value = GetValue(file, TRUE);
-
-                    if (value != NULL && !IS_VALUE_NIL(value)) {
-                        PutFile(value);
-                        return;
-                    }
-                }
-				fComm = TRUE;
 			}
-			if		(  !fComm  ) {
+			if		(  name  ==  NULL  ) {
 				html = Expired(1);
 			} else {
+				if ((file = LoadValue("_file")) != NULL) {
+					ValueStruct *value = GetValue(file, TRUE);
+					if (value != NULL && !IS_VALUE_NIL(value)) {
+						PutFile(value);
+						return;
+					}
+				}
 				if		(  ( htc = ParseScreen(name,TRUE,FALSE) )  ==  NULL  ) {
 					exit(1);
 				}
