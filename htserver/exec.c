@@ -473,7 +473,8 @@ EmitChar(
 		code[0] |= ( 0x3C & p[1] ) >> 2;
 		code[1]  = ( 0x03 & p[1] ) << 6;
 		code[1] |= ( 0x3F & p[2] );
-		if		(  code[0] >= 0xE0  ) {
+		if		(	(  code[0]  >=  0xE0  )
+				&&	(  code[0]  <   0xF8  ) ) {
 			sprintf(format,"<img src=\"%s\">",FontTemplate);
 			sprintf(buff,format,(int)code[0],(int)code[1]);
 			LBS_EmitString(lbs,buff);

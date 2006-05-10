@@ -70,6 +70,8 @@ static	ARG_TABLE	option[] = {
 		"サーバポート"	 								},
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
 		"画面格納ディレクトリ"	 						},
+	{	"font",		STRING,		TRUE,	(void*)&FontTemplate,
+		"フォント代替イメージ生成テンプレート"			},
 	{	"command",	STRING,		TRUE,	(void*)&Command,
 		"サーバコマンドライン"	 						},
 	{	"get",		BOOLEAN,	TRUE,	(void*)&fGet,
@@ -101,6 +103,7 @@ SetDefault(void)
 	fJavaScript = TRUE;
 	fDebug = FALSE;
 	CommandLine = NULL;
+	FontTemplate = "font/%02X%02X";
 }
 
 static	ValueStruct	*
