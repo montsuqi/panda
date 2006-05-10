@@ -41,10 +41,12 @@
 #include	"Lex.h"
 #include	"DBparser.h"
 #include	"DDparser.h"
+#include	"SQLlex.h"
 #include	"SQLparser.h"
+#include	"directory.h"
 #include	"debug.h"
 
-static	GHashTable	*Reserved;
+static	GHashTable	*DB_Reserved;
 
 #define	T_PRIMARY		(T_YYBASE +1)
 #define	T_PATH			(T_YYBASE +2)
@@ -52,7 +54,7 @@ static	GHashTable	*Reserved;
 #define	T_OPERATION		(T_YYBASE +4)
 #define	T_PROCEDURE		(T_YYBASE +5)
 
-static	TokenTable	tokentable[] = {
+static	TokenTable	DB_Tokentable[] = {
 	{	"primary"	,T_PRIMARY		},
 	{	"path"		,T_PATH			},
 	{	"use"		,T_USE			},
@@ -65,7 +67,7 @@ extern	void
 DB_ParserInit(void)
 {
 	LexInit();
-	Reserved = MakeReservedTable(tokentable);
+	DB_Reserved = MakeReservedTable(DB_Tokentable);
 
 	SQL_ParserInit();
 }
@@ -153,7 +155,8 @@ LEAVE_FUNC;
 }
 
 static	DB_Struct	*
-InitDB_Struct(void)
+InitDB_Struct(
+	char	*gname)
 {
 	DB_Struct	*ret;
 
@@ -161,9 +164,20 @@ ENTER_FUNC;
 	ret = New(DB_Struct);
 	ret->paths = NewNameHash();
 	ret->use = NewNameHash();
+	ret->opHash = NewNameHash();
+	ret->ocount = 0;
+	ret->ops = NULL;
 	ret->pkey = NULL;
 	ret->path = NULL;
 	ret->dbg = NULL;
+	if		(  gname  ==  NULL  ) {
+		ret->gname = NULL;
+	} else
+	if		(  ( ret->dbg = GetDBG(gname) )  ==  NULL  ) {
+		ret->gname = StrDup(gname);
+	} else {
+		ret->gname = NULL;
+	}
 	ret->pcount = 0;
 LEAVE_FUNC;
 	return	(ret);
@@ -227,8 +241,103 @@ EnterUse(
 	}
 }
 
+static	Bool	fTop;
+static	int
+SCRIPT_Lex(
+	CURFILE	*in)
+{
+	int		c;
+
+  retry: 
+	c = GetChar(in);
+	if		(  c  ==  '\n'  ) {
+		in->cLine ++;
+	}
+	if		(	(  fTop  )
+			&&	(  c  ==  '#'  ) ) {
+		while	(	(  ( c = GetChar(in) )  !=  0    )
+				&&	(  c                    !=  '\n' ) );
+		in->cLine ++;
+		fTop = TRUE;
+		goto	retry;
+	}
+	return	(c);
+}
+
+static	LargeByteString	*
+ParSCRIPT(
+	CURFILE			*in,
+	RecordStruct	*rec,
+	ValueStruct		*argp,
+	ValueStruct		*argf)
+{
+	LargeByteString	*scr;
+	int		pc
+		,	c;
+
+ENTER_FUNC;
+	scr = NewLBS();
+	pc = 1;
+	while	(  ( c = SCRIPT_Lex(in) )  !=  EOF ) {
+		//printf("%c",c);
+		fTop = FALSE;
+		switch	(c) {
+		  case	'{':
+			pc ++;
+			break;
+		  case	'}':
+			pc --;
+			break;
+		  case	'\n':
+			fTop = TRUE;
+			break;
+		  default:
+			break;
+		}
+		if		(  pc  >  0  ) {
+			LBS_Emit(scr,c);
+		} else
+			break;
+	}
+	LBS_EmitEnd(scr);
+	LBS_EmitFix(scr);
+LEAVE_FUNC;
+	return	(scr);
+}
+
+static	LargeByteString	*
+ParScript(
+	CURFILE			*in,
+	RecordStruct	*rec,
+	ValueStruct		*argp,
+	ValueStruct		*argf)
+{
+	LargeByteString	*ret;
+	DB_Struct		*db = rec->opt.db;
+
+ENTER_FUNC;
+	if		(  db->dbg  ==  NULL  ) {
+		Error("'db_group' must be before LD and BD, in directory.");
+	}
+	switch	(db->dbg->func->type) {
+	  case	DB_PARSER_SCRIPT:
+		ret = ParSCRIPT(in,rec,argp,argf);
+		dbgprintf("ret = [%s]",(char *)LBS_Body(ret));
+		break;
+	  case	DB_PARSER_SQL:
+		ret = ParSQL(in,rec,argp,argf);
+		break;
+	  case	DB_PARSER_NULL:
+	  default:
+		ret = NULL;
+		break;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
 static	void
-ParOperation(
+ParTableOperation(
 	CURFILE			*in,
 	RecordStruct	*rec,
 	PathStruct		*path)
@@ -272,11 +381,11 @@ ENTER_FUNC;
 		} else {
 			ParError(") missing");
 		}
-		SetReserved(in,Reserved); 
+		SetReserved(in,DB_Reserved); 
 	}
 	if		(  ComToken  == '{'  ) {
 		if		(  op->proc  ==  NULL  ) {
-			op->proc = ParSQL(in,rec,path->args,op->args);
+			op->proc = ParScript(in,rec,path->args,op->args);
 			if		(  GetSymbol  !=  ';'  ) {
 				ParError("; missing");
 			}
@@ -330,7 +439,7 @@ ENTER_FUNC;
 		} else {
 			ParError(") missing");
 		}
-		SetReserved(in,Reserved);
+		SetReserved(in,DB_Reserved);
 	}
 	if		(  ComToken  !=  '{'  ) {
 		ParError("{ missing");
@@ -346,7 +455,7 @@ ENTER_FUNC;
 			}
 			/*	path thrue	*/
 		  case	T_SYMBOL:
-			ParOperation(in,rec,path);
+			ParTableOperation(in,rec,path);
 			break;
 		  default:
 			ParError("invalid token");
@@ -359,10 +468,53 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+ParDBOperation(
+	CURFILE			*in,
+	RecordStruct	*rec)
+{
+	DB_Struct	*db = rec->opt.db;
+	int		ix;
+	DB_Operation	**ops
+	,				*op;
+
+ENTER_FUNC;
+	if		(  ( ix = (int)g_hash_table_lookup(db->opHash,ComSymbol) )  ==  0  ) {
+		ix = db->ocount;
+		ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * ( ix + 1 ));
+		if		(  db->ops  !=  NULL  ) {
+			memcpy(ops,db->ops,(sizeof(DB_Operation *) * ix));
+			xfree(db->ops);
+		}
+		db->ops = ops;
+		op = NewOperation(ComSymbol);
+		g_hash_table_insert(db->opHash, op->name, (gpointer)(ix + 1));
+		db->ops[db->ocount] = op;
+		db->ocount ++;
+	} else {
+		op = NewOperation(ComSymbol);
+		db->ops[ix-1] = op;
+	}
+	if		(  GetSymbol  == '{'  ) {
+		if		(  op->proc  ==  NULL  ) {
+			op->proc = ParScript(in,rec,NULL,NULL);
+			if		(  GetSymbol  !=  ';'  ) {
+				ParError("; missing");
+			}
+		} else {
+			ParError("function duplicate");
+		}
+	} else {
+		ParError("{ missing");
+	}
+LEAVE_FUNC;
+}
+
 static	RecordStruct	*
 DB_Parse(
 	CURFILE	*in,
-	char	*name)
+	char	*name,
+	char	*gname)
 {
 	RecordStruct	*ret
 	,				*use;
@@ -376,11 +528,11 @@ ENTER_FUNC;
     }
 	if		(  !stricmp(strrchr(name,'.'),".db")  ) {
 		ret->type = RECORD_DB;
-		ret->opt.db = InitDB_Struct();
+		ret->opt.db = InitDB_Struct(gname);
 	} else {
 		ret->type = RECORD_NULL;
 	}
-	SetReserved(in,Reserved); 
+	SetReserved(in,DB_Reserved); 
 	while	(  	GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
 		  case	T_USE:
@@ -405,7 +557,7 @@ ENTER_FUNC;
 		  case	T_PRIMARY:
 			if		(  ret->type  ==  RECORD_NULL  ) {
 				ret->type = RECORD_DB;
-				ret->opt.db = InitDB_Struct();
+				ret->opt.db = InitDB_Struct(gname);
 			}
 			if		(  GetSymbol  == '{'  ) {
 				ParKey(in,ret);
@@ -421,6 +573,13 @@ ENTER_FUNC;
 				ParError("path name invalid");
 			} else {
 				ParPath(in,ret);
+			}
+			break;
+		  case	T_OPERATION:
+			if		(  GetName  !=  T_SYMBOL  ) {
+				ParError("operation name invalid");
+			} else {
+				ParDBOperation(in,ret);
 			}
 			break;
 		  default:
@@ -503,6 +662,7 @@ LEAVE_FUNC;
 extern	RecordStruct	*
 DB_Parser(
 	char	*name,
+	char	*gname,
 	char	**ValueName)
 {
 	struct	stat	stbuf;
@@ -513,8 +673,8 @@ DB_Parser(
 ENTER_FUNC;
 	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  ( in = PushLexInfo(&root,name,RecordDir,Reserved) )  !=  NULL  ) {
-			ret = DB_Parse(in,name);
+		if		(  ( in = PushLexInfo(&root,name,RecordDir,DB_Reserved) )  !=  NULL  ) {
+			ret = DB_Parse(in,name,gname);
 			if		(  ValueName  !=  NULL  ) {
 				*ValueName = StrDup(in->ValueName);
 			}

@@ -37,12 +37,14 @@ typedef	struct {
 	char		other[SIZE_OTHER+1];
 	int			status;
 	GHashTable	*Windows;
+	GHashTable	*Records;
 	char		*encoding;
 }	ScreenData;
 
 typedef	struct {
 	Bool			fNew;
 	byte			PutType;
+	char			*name;
 	RecordStruct	*rec;
 }	WindowData;
 
@@ -51,6 +53,8 @@ extern	Bool			PutWindow(WindowData *win, byte type);
 extern	RecordStruct	*GetWindowRecord(char *wname);
 extern	void			LinkModule(char *name);
 extern	ScreenData		*NewScreenData(void);
+extern	char			*PureWindowName(char *comp, char *buff);
+extern	char			*PureComponentName(char *comp, char *buff);
 
 /*	for easy C programing	*/
 extern	ValueStruct	*GetWindowValue(char *name);

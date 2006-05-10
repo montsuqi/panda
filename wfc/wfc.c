@@ -47,6 +47,7 @@
 
 #include	"libmondai.h"
 #include	"RecParser.h"
+#include	"dbgroup.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"dirs.h"
@@ -93,15 +94,73 @@ extern	void
 DumpNode(
 	SessionData	*data)
 {
-dbgmsg(">DumpNode");
+ENTER_FUNC;
 	printf("window   = [%s]\n",data->hdr->window);
 	printf("widget   = [%s]\n",data->hdr->widget);
 	printf("event    = [%s]\n",data->hdr->event);
 	printf("term     = [%s]\n",data->hdr->term);
 	printf("user     = [%s]\n",data->hdr->user);
-dbgmsg("<DumpNode");
+LEAVE_FUNC;
 }
 #endif
+
+extern	LargeByteString	*
+GetScreenData(
+	SessionData	*data,
+	char		*name)
+{
+	LargeByteString	*scrdata;
+	RecordStruct	*rec;
+
+	if		(  ( scrdata = (LargeByteString *)g_hash_table_lookup(data->scrpool,name) )
+			   ==  NULL  ) {
+		if		(  ( rec = GetWindow(name) )  !=  NULL  ) {
+			scrdata = NewLBS();
+			InitializeValue(rec->value);
+			LBS_ReserveSize(scrdata,
+							NativeSizeValue(NULL,rec->value),FALSE);
+			NativePackValue(NULL,scrdata->body,rec->value);
+			g_hash_table_insert(data->scrpool,rec->name,scrdata);
+		} else {
+			scrdata = NULL;
+		}
+	}
+	return	(scrdata);
+}
+
+
+extern	void
+ChangeLD(
+	SessionData	*data,
+	LD_Node		*newld)
+{
+	int		i;
+	LargeByteString	**scrdata;
+
+ENTER_FUNC;
+	if		(  ( data->spa = g_hash_table_lookup(data->spadata,newld->info->name) )
+			   ==  NULL  ) {
+		if		(  newld->info->sparec  !=  NULL  ) {
+			data->spa = NewLBS();
+			g_hash_table_insert(data->spadata,StrDup(newld->info->name),data->spa);
+			InitializeValue(newld->info->sparec->value);
+			LBS_ReserveSize(data->spa,
+							NativeSizeValue(NULL,newld->info->sparec->value),FALSE);
+			NativePackValue(NULL,LBS_Body(data->spa),newld->info->sparec->value);
+		}
+	}
+	xfree(data->scrdata);
+	scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
+										  * newld->info->cWindow);
+	for	( i = 0 ; i < newld->info->cWindow ; i ++ ) {
+		scrdata[i] = GetScreenData(data,newld->info->windows[i]->name);
+	}
+	data->cWindow = newld->info->cWindow;
+	data->scrdata = scrdata;
+	data->ld = newld;
+	data->apsid = -1;
+LEAVE_FUNC;
+}
 
 extern	void
 ExecuteServer(void)

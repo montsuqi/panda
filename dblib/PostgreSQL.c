@@ -44,6 +44,7 @@
 #include	"SQLparser.h"
 #include	"libmondai.h"
 #include	"dbgroup.h"
+#include	"directory.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -62,7 +63,7 @@ SetValueOid(
 	DBG_Struct	*dbg,
 	Oid			id)
 {
-	ValueObject(value) = (uint64_t)id;
+	ValueObjectId(value) = (uint64_t)id;
 }
 
 static	Oid
@@ -451,7 +452,7 @@ ValueToSQL(
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_OBJECT:
-		id = ValueOid(ValueObject(val));
+		id = ValueOid(ValueObjectId(val));
 		sprintf(buff,"%u",id);
 		LBS_EmitString(lbs,buff);
 		break;
@@ -1114,7 +1115,6 @@ static	void
 ExecPGSQL(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
 	LargeByteString	*src,
 	ValueStruct		*args)
 {
@@ -1136,7 +1136,6 @@ ExecPGSQL(
 		,	*q;
 
 ENTER_FUNC;
-	dbg =  rec->opt.db->dbg;
 	sql = NewLBS();
 	if	(  src  ==  NULL )	{
 		Error("function \"%s\" is not found.",ctrl->func);
@@ -1420,7 +1419,7 @@ ENTER_FUNC;
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_SELECT]->proc;
-		ExecPGSQL(dbg,ctrl,rec,src,args);
+		ExecPGSQL(dbg,ctrl,src,args);
 	}
 LEAVE_FUNC;
 }
@@ -1449,7 +1448,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_FETCH]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src,args);
+			ExecPGSQL(dbg,ctrl,src,args);
 		} else {
 			p = sql;
 			p += sprintf(p,"FETCH FROM %s_%s_csr",rec->name,path->name);
@@ -1495,7 +1494,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_CLOSE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src,args);
+			ExecPGSQL(dbg,ctrl,src,args);
 		} else {
 			p = sql;
 			p += sprintf(p,"CLOSE %s_%s_csr",rec->name,path->name);
@@ -1531,7 +1530,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_UPDATE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src,args);
+			ExecPGSQL(dbg,ctrl,src,args);
 		} else {
             sql = NewLBS();
             LBS_EmitString(sql,"UPDATE ");
@@ -1597,7 +1596,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_DELETE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src,args);
+			ExecPGSQL(dbg,ctrl,src,args);
 		} else {
 			sql = NewLBS();
 			LBS_EmitString(sql,"DELETE\tFROM\t");
@@ -1655,7 +1654,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_INSERT]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecPGSQL(dbg,ctrl,rec,src,args);
+			ExecPGSQL(dbg,ctrl,src,args);
 		} else {
 			sql = NewLBS();
 			LBS_EmitString(sql,"INSERT\tINTO\t");
@@ -1710,7 +1709,7 @@ ENTER_FUNC;
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
 				ctrl->rc = MCP_OK;
-				ExecPGSQL(dbg,ctrl,rec,src,args);
+				ExecPGSQL(dbg,ctrl,src,args);
 				rc = TRUE;
 			} else {
 				ctrl->rc = MCP_BAD_OTHER;
@@ -1742,12 +1741,13 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	NULL,
 };
 
 extern	DB_Func	*
 InitPostgreSQL(void)
 {
-	return	(EnterDB_Function("PostgreSQL",Operations,&Core,"/*","*/\t"));
+	return	(EnterDB_Function("PostgreSQL",Operations,DB_PARSER_SQL,&Core,"/*","*/\t"));
 }
 
 #endif /* #ifdef HAVE_POSTGRES */

@@ -297,7 +297,7 @@ dbgprintf("name = [%s]\n",str);
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
 				} else {
-					p += sprintf(p,"not found [%s]",name);
+					p += sprintf(p,"$%s",name);
 				}
 			} else {
 				q = name;
@@ -308,7 +308,7 @@ dbgprintf("name = [%s]\n",str);
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
 				} else {
-					p += sprintf(p,"not found [%s]",name);
+					p += sprintf(p,"$%s",name);
 				}
 			}
 			break;
@@ -325,7 +325,7 @@ dbgprintf("name = [%s]\n",str);
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
 				} else {
-					p += sprintf(p,"not found [%s]",name);
+					p += sprintf(p,"#%s",name);
 				}
 			} else {
 				q = name;
@@ -336,7 +336,7 @@ dbgprintf("name = [%s]\n",str);
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
 				} else {
-					p += sprintf(p,"not found [%s]",name);
+					p += sprintf(p,"#%s",name);
 				}
 			}
 			break;
@@ -457,37 +457,93 @@ EscapeJavaScriptString(char *str)
     return result;
 }
 
+static	size_t
+EmitChar(
+	LargeByteString	*lbs,
+	unsigned char	*str)
+{
+	size_t	len;
+	byte	code[2]
+		,	*p = str;
+	char	buff[SIZE_BUFF]
+		,	format[SIZE_BUFF];
+
+	if		(  ( p[0] & 0xE0 )  ==  0xE0  ) {	/*	3byte code	*/
+		code[0]  = ( 0x0F & p[0] ) << 4;
+		code[0] |= ( 0x3C & p[1] ) >> 2;
+		code[1]  = ( 0x03 & p[1] ) << 6;
+		code[1] |= ( 0x3F & p[2] );
+		if		(  code[0] >= 0xE0  ) {
+			sprintf(format,"<img src=\"%s\">",FontTemplate);
+			sprintf(buff,format,(int)code[0],(int)code[1]);
+			LBS_EmitString(lbs,buff);
+		} else {
+			LBS_EmitChar(lbs,p[0]);
+			LBS_EmitChar(lbs,p[1]);
+			LBS_EmitChar(lbs,p[2]);
+		}
+		len = 3;
+	} else
+	if		(  ( p[0] & 0xC0 )  ==  0xC0  ) {	/*	2byte code	*/
+		LBS_EmitChar(lbs,p[0]);
+		LBS_EmitChar(lbs,p[1]);
+		len = 2;
+	} else {
+		LBS_EmitChar(lbs,p[0]);
+		len = 1;
+	}
+	return	(len);
+}
+
 extern	void
 EmitWithEscape(
 	LargeByteString	*lbs,
-	char			*str)
+	unsigned char	*str)
 {
-    char *p;
-
-    for (p = str; *p != '\0'; p++) {
-        switch (*p) {
-        case CHAR_NIL:
-            break;
-        case '<':
-            LBS_EmitString(lbs, "&lt;");
-            break;
-        case '>':
-            LBS_EmitString(lbs, "&gt;");
-            break;
-        case '&':
-            LBS_EmitString(lbs, "&amp;");
-            break;
-        case '"':
-            LBS_EmitString(lbs, "&quot;");
-            break;
-        case ' ':
-            LBS_EmitString(lbs, "&nbsp;");
-            break;
-        default:
-            LBS_EmitChar(lbs, *p);
-            break;
+	while	(  *str  !=  0  ) {
+        switch (*str) {
+		  case CHAR_NIL:
+			str ++;
+			break;
+		  case '<':
+			LBS_EmitString(lbs, "&lt;");
+			str ++;
+			break;
+		  case '>':
+			LBS_EmitString(lbs, "&gt;");
+			str ++;
+			break;
+		  case '&':
+			LBS_EmitString(lbs, "&amp;");
+			str ++;
+			break;
+		  case '"':
+			LBS_EmitString(lbs, "&quot;");
+			str ++;
+			break;
+		  case ' ':
+			LBS_EmitString(lbs, "&nbsp;");
+			str ++;
+			break;
+		  default:
+			str += EmitChar(lbs, str);
+			break;
         }
 	}
+}
+
+extern	void
+EmitStringRaw(
+	LargeByteString	*lbs,
+	unsigned char	*str)
+{
+#if	0
+	LBS_EmitString(lbs,str);
+#else
+	while	(  *str  !=  0  ) {
+		str += EmitChar(lbs, str);
+	}
+#endif
 }
 
 static	void
@@ -754,7 +810,7 @@ ENTER_FUNC;
 				dbgmsg("OPC_EMITRAW");
 				vval = Pop;
                 if (strlen(vval.body.sval) > 0) {
-					LBS_EmitString(html,vval.body.sval);
+					EmitStringRaw(html,vval.body.sval);
                 }
 				break;
 			  case OPC_ESCJSS:
@@ -919,7 +975,9 @@ ENTER_FUNC;
 #endif
 		dbgprintf("event  = [%s]\n",event);
 	}
-	g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
+	if		(  htc  !=  NULL  ) {
+		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
+	}
 LEAVE_FUNC;
 	return	(event);
 }

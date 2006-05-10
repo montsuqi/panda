@@ -63,7 +63,11 @@ typedef	struct {
 	GHashTable	*paths;
 	GHashTable	*use;
 	int			pcount;
-	void		*dbg;
+	GHashTable		*opHash;
+	int				ocount;
+	DB_Operation	**ops;
+	struct	_DBG_Struct	*dbg;
+	char		*gname;
 }	DB_Struct;
 
 #define	RECORD_NULL		0
@@ -98,7 +102,8 @@ typedef	struct _DBG_Struct	{
 	char		*name;					/*	group name				*/
 	char		*type;					/*	DBMS type name			*/
 	struct	_DB_Func		*func;
-	GHashTable	*dbt;
+	GHashTable	*dbt;					/*	DBs in this DBG, if this
+										  value is NULL, this DBG has no DB	*/
 	int			priority;				/*	commit priority			*/
 	char		*coding;				/*	DB backend coding		*/
 	/*	DB depend	*/
@@ -124,9 +129,15 @@ typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct
 typedef struct	{
 	int		(*exec)(DBG_Struct *, char *, Bool);
 	Bool	(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
 }	DB_Primitives;
 
+#define	DB_PARSER_NULL		0
+#define	DB_PARSER_SQL		1
+#define	DB_PARSER_SCRIPT	2
+
 typedef	struct _DB_Func	{
+	int				type;
 	DB_Primitives	*primitive;
 	GHashTable		*table;
 	char			*commentStart

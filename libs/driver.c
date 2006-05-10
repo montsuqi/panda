@@ -41,6 +41,41 @@
 #include	"dirs.h"
 #include	"debug.h"
 
+extern	char	*
+PureWindowName(
+	char	*comp,
+	char	*buff)
+{
+	char	*p;
+
+	if		(  ( p = strrchr(comp,'/') )  ==  NULL  ) {
+		p = comp;
+	} else {
+		p ++;
+	}
+	strcpy(buff,p);
+	if		(  ( p = strchr(buff,'.') )  !=  NULL  ) {
+		*p = 0;
+	}
+	return	(buff);
+}
+
+extern	char	*
+PureComponentName(
+	char	*comp,
+	char	*buff)
+{
+	char	*p;
+
+	if		(  ( p = strrchr(comp,'/') )  ==  NULL  ) {
+		p = comp;
+	} else {
+		p ++;
+	}
+	strcpy(buff,p);
+	return	(buff);
+}
+
 extern	WindowData	*
 SetWindowName(
 	char		*name)
@@ -49,30 +84,37 @@ SetWindowName(
 	RecordStruct	*rec;
 	char		fname[SIZE_LONGNAME+1]
 		,		wname[SIZE_LONGNAME+1]
-		,		*p;
+		,		msg[SIZE_BUFF];
 
 ENTER_FUNC;
-#ifdef	TRACE
-	printf("SetWindowName(%s)\n",name);
-#endif
+	dbgprintf("SetWindowName(%s)",name);
 	if		(  name  !=  NULL  ) {
 		if		(  ThisScreen->Windows  ==  NULL  ) {
 			ThisScreen->Windows = NewNameHash();
 		}
-		strcpy(wname,name);
-		if		(  ( p = strchr(wname,'.') )  !=  NULL  ) {
-			*p = 0;
+		if		(  ThisScreen->Records  ==  NULL  ) {
+			ThisScreen->Records = NewNameHash();
 		}
-		if		(  ( entry = 
-					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,wname) )
+		PureWindowName(name,wname);
+		if		(  ( rec = (RecordStruct *)g_hash_table_lookup(ThisScreen->Records,wname) )
 				   ==  NULL  ) {
 			sprintf(fname,"%s.rec",wname);
-			if		(  ( rec = ReadRecordDefine(fname) )  !=  NULL  ) {
+			rec = ReadRecordDefine(fname);
+			g_hash_table_insert(ThisScreen->Records,rec->name,rec);
+		}
+		if		(  ( entry = 
+					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,name) )
+				   ==  NULL  ) {
+			if		(  rec  !=  NULL  ) {
 				entry = New(WindowData);
 				entry->PutType = SCREEN_NULL;
 				entry->fNew = FALSE;
+				entry->name = StrDup(name);
 				entry->rec = rec;
-				g_hash_table_insert(ThisScreen->Windows,entry->rec->name,entry);
+				g_hash_table_insert(ThisScreen->Windows,entry->name,entry);
+			} else {
+				sprintf(msg,"window not found [%s:%s]\n", name, wname);
+				MessageLog(msg);
 			}
 		}
 	} else {
@@ -84,13 +126,13 @@ LEAVE_FUNC;
 
 extern	RecordStruct	*
 GetWindowRecord(
-	char		*wname)
+	char		*name)
 {
 	WindowData	*win;
 	RecordStruct	*rec;
 
 ENTER_FUNC;
-	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,wname) )  !=  NULL  ) {
+	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,name) )  !=  NULL  ) {
 		rec = win->rec;
 	} else {
 		rec = NULL;
@@ -109,6 +151,8 @@ PutWindow(
 ENTER_FUNC;
 	if		(  win  !=  NULL  ) {
 		win->PutType = type;
+		dbgprintf("window  = [%s]",win->name);
+		dbgprintf("PutType = %02X",type);
 		win->fNew = TRUE;
 		ThisScreen->status = APL_SESSION_GET;
 		rc = TRUE;
@@ -163,8 +207,12 @@ PutWindowByName(
 {
 	WindowData	*win;
 
+ENTER_FUNC;
+	dbgprintf("window = [%s]",wname);
+	dbgprintf("type   = %02X",(int)type);
 	win = SetWindowName(wname);
 	PutWindow(win,type);
+LEAVE_FUNC;
 	return	(win);
 }
 
@@ -193,6 +241,7 @@ ENTER_FUNC;
 	memclear(scr->user,SIZE_USER+1);
 	memclear(scr->other,SIZE_OTHER+1);
 	scr->Windows = NULL;
+	scr->Records = NULL;
 	if		(  libmondai_i18n  ) {
 		if		(  ( lang = getenv("LANG") )  !=  NULL  &&
 				   ( encoding = strchr(lang,'.') )  !=  NULL  ){

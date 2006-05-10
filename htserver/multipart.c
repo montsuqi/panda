@@ -309,8 +309,9 @@ ENTER_FUNC;
     else {
         MultipartFile *file = New(MultipartFile);
         file->filename = filename;
-        file->value = value;
-        file->length = value_len;
+        file->body = NewLBS();
+        LBS_ReserveSize(file->body,value_len,FALSE);
+        memcpy(LBS_Body(file->body),value,value_len);
         g_hash_table_insert(files, name, file);
 dbgprintf("filename = [%s]\n",file->filename);
 dbgprintf("length   = [%d]\n",file->length);

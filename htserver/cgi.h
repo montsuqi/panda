@@ -100,7 +100,7 @@ extern	char	*ConvLocal(char *istr);
 
 extern	void	LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
 extern	void	GetArgs(void);
-extern	void	PutHTML(LargeByteString *html);
+extern	void	PutHTML(LargeByteString *header, LargeByteString *html);
 extern	void	DumpValues(LargeByteString *html, GHashTable *args);
 extern	void	Dump(void);
 extern	char	*GetHostValue(char *name, Bool fClear);

@@ -32,6 +32,11 @@
 #define	GLOBAL		extern
 #endif
 
+extern	void	ChangeLD(SessionData *data, LD_Node *newld);
+extern	LargeByteString	*GetScreenData(SessionData *data, char *name);
+
+GLOBAL	char		**BindTable;
+GLOBAL	int			cBind;
 GLOBAL	GHashTable	*ComponentHash;
 GLOBAL	GHashTable	*APS_Hash;
 GLOBAL	GHashTable	*MQ_Hash;

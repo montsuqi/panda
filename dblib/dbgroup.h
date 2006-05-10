@@ -25,10 +25,6 @@
 #include	"net.h"
 #include	"dblib.h"
 
-extern	DB_Func	*NewDB_Func(void);
-extern	DB_Func	*EnterDB_Function(char *name, DB_OPS *ops, DB_Primitives *primitive,
-								  char *commentStart, char *commentEnd);
-
 extern	int		OpenRedirectDB(DBG_Struct *dbg);
 extern	int		CloseRedirectDB(DBG_Struct *dbg);
 extern	int		ExecRedirectDBOP(DBG_Struct *dbg, char *sql);

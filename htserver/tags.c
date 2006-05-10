@@ -61,7 +61,6 @@ static	size_t	pAStack;
 static char *enctype_urlencoded = "application/x-www-form-urlencoded";
 static char *enctype_multipart = "multipart/form-data";
 
-static char *ScriptName;
 static	Bool	fButton;
 static	Bool	fHead;
 
@@ -186,6 +185,11 @@ ExpandAttributeString(
 		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(para+1));
 		EmitCode(htc,OPC_PHSTR);
+		EmitCode(htc,OPC_EMITSTR);
+		break;
+	  case	'#':
+		EmitCode(htc,OPC_EVAL);
+		LBS_EmitPointer(htc->code,StrDup(para));
 		EmitCode(htc,OPC_EMITSTR);
 		break;
 	  case	'\\':
@@ -954,7 +958,7 @@ ENTER_FUNC;
 			face = event;
 		}
 		if (htc->DefaultEvent == NULL)
-			htc->DefaultEvent = event;
+			//htc->DefaultEvent = event;
 #ifdef	USE_IE5
 		if (event != NULL) {
 			g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));
@@ -1553,9 +1557,7 @@ ENTER_FUNC;
             (file = HTCGetProp(tag, "file", 0)) == NULL) {
             LBS_EmitString(htc->code, "javascript:");
             snprintf(buf, SIZE_BUFF,
-                     "document.forms[%d].elements[0].name='_event';"
-                     "document.forms[%d].elements[0].value='",
-                     htc->FormNo, htc->FormNo);
+					 "send_event(%d,'",htc->FormNo);
             LBS_EmitString(htc->code, buf);
             EmitCode(htc, OPC_EVAL);
             LBS_EmitPointer(htc->code, StrDup(event));
@@ -2204,6 +2206,7 @@ ENTER_FUNC;
 		  "    document.forms[no].elements[0].name='_event';\n"
 		  "    document.forms[no].elements[0].value=event;\n"
 		  "    document.forms[no].submit();\n"
+		  "    sent_event = 0;\n"
 		  "  }\n"
 		  "}\n",FALSE);
 		  

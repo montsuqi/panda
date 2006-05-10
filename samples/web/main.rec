@@ -8,6 +8,11 @@ main	{
 	area3	{
 		color	varchar(64);
 	};
+	list	{
+		count	int;
+		select	bool[100];
+		value	text[100];
+	};
     user	varchar(64);
-	message	varchar(250);
+	message	text;
 };

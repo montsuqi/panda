@@ -100,7 +100,7 @@ ExecuteSubProcess(
 {
 	int		rc;
 ENTER_FUNC;
-	printf("[%s][%s]\n",name,CommandParameter);
+	dbgprintf("[%s][%s]\n",name,CommandParameter);
 	rc = StartBatch(name,CommandParameter);
 LEAVE_FUNC;
 	return	(rc); 

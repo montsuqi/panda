@@ -1,8 +1,8 @@
-<htc coding="iso-2022-jp">
+<htc coding="utf-8">
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
   "http://www.w3.org/TR/html4/strict.dtd">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-2022-jp">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <style type="text/css">
 <!--
 .white { background-color: #FFFFFF; }
@@ -12,34 +12,47 @@
 
 -->
 </style>
-<title>$B%a%$%s(B</title>
+<title>メイン</title>
 </head>
 <html>
 <body>
 <form>
 <div id="body">
   <div id="area1" class="$main.area1.color">
-    <fixed name="main.message"><br/>
     <fixed name="main.user"><br/>
     <fixed name="main.area1.color"><br/>
-    <button event="area1.red" face="$B@V(B"/>
-    <button event="area1.blue" face="$B@D(B"/>
-    <button event="area1.yellow" face="$B2+(B"/>
+    <button event="area1.red" face="赤"/>
+    <button event="area1.blue" face="青"/>
+    <button event="area1.yellow" face="黄"/>
   </div>
   <div id="area2" class="$main.area2.color">
-    <fixed name="main.message"><br/>
     <fixed name="main.user"><br/>
     <fixed name="main.area2.color"><br/>
-    <button event="area2.red" face="$B@V(B"/>
-    <button event="area2.blue" face="$B@D(B"/>
-    <button event="area2.yellow" face="$B2+(B"/>
+    <button event="area2.red" face="赤"/>
+    <button event="area2.blue" face="青"/>
+    <button event="area2.yellow" face="黄"/>
   </div>
   <div id="area3" class="$main.area3.color">
-    <fixed name="main.message"><br/>
     <fixed name="main.user"><br/>
     <fixed name="main.area3.color"><br/>
   </div>
-  <button event="next" face="$B<!(B"/>
+  <button event="next" face="次"/>
+  <button event="file" face="ファイル"/>
+  <div id="area4" class="white">
+    <select
+        name="main.list.select" 
+        size="4" 
+        style="width:200px">
+      <count var="i" from="0" to="main.list.count">
+        <option value="#i" select="main.list.select[#i]">
+          <fixed name="main.list.value[#i]"/>
+        </option>
+      </count>
+    </select>
+  </div>
+  <div id="area5" class="blue">
+    <fixed name="main.message" type="raw">
+  </div>
 </div>
 
 </form>

@@ -30,10 +30,10 @@
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	GHashTable	*LD_Table;
-
 #undef	GLOBAL
 
-extern	void		LD_ParserInit(void);
-extern	LD_Struct	*LD_Parser(char *name);
+extern	void			LD_ParserInit(void);
+extern	LD_Struct		*LD_Parser(char *name);
+extern	RecordStruct	*GetWindow(char *name);
+
 #endif

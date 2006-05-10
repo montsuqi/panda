@@ -46,6 +46,8 @@ DEPENDENCIES	=						\
 	$(top_builddir)/libs/libpandablob.a
 
 
+wfc_LDFLAGS	=			\
+	-export-dynamic
 wfc_SOURCES	=							\
 	wfc.c		wfc.h						\
 	mqthread.c		mqthread.h			\
@@ -55,6 +57,8 @@ wfc_SOURCES	=							\
 	blobserv.c		blobserv.h			\
 	termthread.c	termthread.h
 
+wfccontrol_LDFLAGS	=			\
+	-export-dynamic
 wfccontrol_SOURCES	=					\
 	wfccontrol.c						\
 	controlthread.h

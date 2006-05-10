@@ -100,10 +100,13 @@ typedef	struct	_Expr	{
 #define	GLOBAL		extern
 #endif
 
+GLOBAL	char	*FontTemplate;
+GLOBAL	char	*ScriptName;
+
 #undef	GLOBAL
 
 extern	void	ExecCode(LargeByteString *html, HTCInfo *htc);
 extern	char	*ParseInput(HTCInfo *htc);
-extern	void	EmitWithEscape(LargeByteString *lbs, char *str);
+extern	void	EmitWithEscape(LargeByteString *lbs, unsigned char *str);
 
 #endif

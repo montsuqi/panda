@@ -70,7 +70,7 @@ OpenEntry(
 
 ENTER_FUNC;
 	snprintf(longname,SIZE_LONGNAME+1,"%s/%lld",ent->blob->space,ent->oid);
-
+dbgmsg(longname);
 	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
 #if	1
 		flag = O_CREAT | O_APPEND | O_TRUNC;

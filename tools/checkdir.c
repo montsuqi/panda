@@ -38,6 +38,7 @@
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"directory.h"
+#include	"dbgroup.h"
 #include	"dirs.h"
 #include	"option.h"
 #include	"message.h"

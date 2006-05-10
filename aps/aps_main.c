@@ -152,6 +152,7 @@ ExecuteServer(void)
 	ProcessNode	*node;
 	WindowBind	*bind;
 	int		tran;
+	char	wname[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	if		(  WfcPortNumber  ==  NULL  ) {
@@ -185,9 +186,12 @@ ENTER_FUNC;
 			Message("GetWFC failure");
 			break;
 		}
-		dbgprintf("[%s]",ThisLD->name);
-		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,
-															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
+		dbgprintf("ld     = [%s]",ThisLD->name);
+		dbgprintf("window = [%s]",ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
+		PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
+					   wname);
+		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname) )
+				   !=  NULL  ) {
 			if		(  bind->module  ==  NULL  ){
 				Message("bind->module not found");
 				break;
@@ -206,8 +210,7 @@ ENTER_FUNC;
 			TransactionEnd(NULL);
 			PutWFC(fpWFC,node);
 		} else {
-			Message("window [%s] not found.",
-						  ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL));
+			Message("window [%s] not found.",wname);
 			break;
 		}
 	}

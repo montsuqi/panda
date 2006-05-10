@@ -79,7 +79,7 @@ static	GHashTable	*Reserved;
 
 static	GHashTable	*Records;
 
-static	RecordStruct	*
+extern	RecordStruct	*
 GetWindow(
 	char		*name)
 {
@@ -138,7 +138,6 @@ ParWindow(
 	CURFILE		*in,
 	LD_Struct	*ld)
 {
-	int		ix;
 	RecordStruct	*window;
 	RecordStruct	**wn;
 	char		wname[SIZE_NAME+1];
@@ -150,7 +149,7 @@ ENTER_FUNC;
 		while	(  GetName  !=  '}'  ) {
 			if		(  ComToken  ==  T_SYMBOL  ) {
 				strcpy(wname,ComSymbol);
-				if		(  ( ix = (int)g_hash_table_lookup(ld->whash,wname) )  >  0  ) {
+				if		(  (int)g_hash_table_lookup(ld->whash,wname)  >  0  ) {
 					ParError("duplicate window name");
 				} else {
 					window = GetWindow(wname);
@@ -164,11 +163,6 @@ ENTER_FUNC;
 				ld->windows[ld->cWindow] = window;
 				ld->cWindow ++;
 				g_hash_table_insert(ld->whash,window->name,(void *)ld->cWindow);
-				if		(  g_hash_table_lookup(LD_Table,wname)  ==  NULL  ) {
-					g_hash_table_insert(LD_Table,strdup(wname),ld);
-				} else {
-					ParErrorPrintf("window is already registered.: %s\n", wname);
-				}
 			} else {
 				ParError("record name not found");
 			}
@@ -204,13 +198,12 @@ ENTER_FUNC;
 					*q = 0;
 				}
 				sprintf(name,"%s/%s.db",p,ComSymbol);
-				if		(  (  db = DB_Parser(name,NULL) )  !=  NULL  ) {
+				if		(  (  db = DB_Parser(name,gname,NULL) )  !=  NULL  ) {
 					if		(  g_hash_table_lookup(ld->DB_Table,ComSymbol)  ==  NULL  ) {
 						rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
 						memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
-						xfree(ld->db);
-						if		(  db->opt.db->dbg  ==  NULL  ) {
-							db->opt.db->dbg = (DBG_Struct *)StrDup(gname);
+						if		(  ld->db  !=  NULL  ) {
+							xfree(ld->db);
 						}
 						ld->db = rtmp;
 						ld->db[ld->cDB] = db;
@@ -291,7 +284,11 @@ ENTER_FUNC;
 		if		(  ( bind = g_hash_table_lookup(ret->bhash,name) )  ==  NULL  ) {
 			bind = New(WindowBind);
 			bind->name = StrDup(name);
-			bind->rec = GetWindow(name);
+			if		(  *name  !=  0  ) {
+				bind->rec = GetWindow(name);
+			} else {
+				bind->rec = NULL;
+			}
 			g_hash_table_insert(ret->bhash,bind->name,bind);
 			binds = (WindowBind **)xmalloc(sizeof(WindowBind *) * ( ret->cBind + 1 ));
 			if		(  ret->cBind  >  0  ) {
@@ -498,7 +495,6 @@ LD_ParserInit(void)
 	LexInit();
 	Reserved = MakeReservedTable(tokentable);
 
-	LD_Table = NewNameHash();
 	Records = NewNameHash();
 	MessageHandlerInit();
 }

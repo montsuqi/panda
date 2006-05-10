@@ -25,7 +25,7 @@
 #include	"Lex.h"
 
 extern	void			 DB_ParserInit(void);
-extern	RecordStruct	*DB_Parser(char *name, char **ValueName);
+extern	RecordStruct	*DB_Parser(char *name, char *gname, char **ValueName);
 
 #undef	GLOBAL
 #ifdef	_DB_PARSER

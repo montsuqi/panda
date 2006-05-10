@@ -40,6 +40,7 @@
 #include	"types.h"
 #include	"libmondai.h"
 #include	"directory.h"
+#include	"dbgroup.h"
 #include	"dirs.h"
 #include	"option.h"
 #include	"message.h"
@@ -55,13 +56,10 @@ static	char	*MyHost;
 static	char	*Log;
 static	Bool	fQ;
 static	Bool	fRedirector;
-static	Bool	fNoCheck;
-static	Bool	fNoSumCheck;
 static	Bool	fRestart;
 static	int		interval;
 static	int		wfcinterval;
 static	int		MaxTran;
-static	int		MaxRetry;
 static	int		Sleep;
 
 static	FILE		*fpLog;

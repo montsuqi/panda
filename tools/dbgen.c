@@ -442,11 +442,11 @@ main(
 		RecParserInit();
 		DB_ParserInit();
 		if		(  fCreate  ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,NULL) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
 		} else if		( fInsert ) {
-            if		(  ( rec = DB_Parser(fl->name,NULL) )  !=  NULL  ) {
+            if		(  ( rec = DB_Parser(fl->name,NULL,NULL) )  !=  NULL  ) {
                 MakeInsert(rec);
             }
         }

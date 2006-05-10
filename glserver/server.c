@@ -225,8 +225,8 @@ ENTER_FUNC;
 	if		(  win->PutType  !=  SCREEN_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_WindowName,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
-		GL_SendString(fpComm,wname,fFeatureNetwork);		ON_IO_ERROR(fpComm,badio);
-		dbgprintf("wname = [%s]\n",wname);
+		GL_SendString(fpComm,win->name,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+		dbgprintf("wname = [%s]\n",win->name);
 		GL_SendInt(fpComm,win->PutType,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 		switch	(win->PutType) {
 		  case	SCREEN_CURRENT_WINDOW:
@@ -477,7 +477,8 @@ RecvScreenData(
 {
 	int		c;
 	char		wname[SIZE_NAME+1]
-	,			name[SIZE_NAME+1];
+		,		name[SIZE_NAME+1]
+		,		buff[SIZE_BUFF];
 	WindowData	*win;
 	ValueStruct	*value;
 	Bool		rc;
@@ -492,7 +493,8 @@ ENTER_FUNC;
 	}
 	while	(  GL_RecvPacketClass(fpComm,fFeatureNetwork)  ==  GL_WindowName  ) {
 		ON_IO_ERROR(fpComm,badio);
-		GL_RecvString(fpComm, sizeof(wname), wname, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+		GL_RecvString(fpComm, sizeof(buff), buff, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+		PureWindowName(buff,wname);
 		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
 			while	(  ( c = GL_RecvPacketClass(fpComm,fFeatureNetwork) )
 					   ==  GL_ScreenData  ) {

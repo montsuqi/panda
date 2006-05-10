@@ -2,6 +2,10 @@ name	sample;
 
 # bind <window name> <hander name> <module name> ;
 
+HandlerPath	".:/home/ogochan/MONTSUQI/panda-20060423/aps/.libs";
+
+home	"=/sample2";
+
 handler	"RubyExec"	{
 	class		"Exec";
 	serialize	"CGI";
@@ -31,8 +35,6 @@ bind	"list"		"Ruby"		"Sample1";
 arraysize	20;
 textsize	200;
 cache		5;
-
-home	"=/sample2";
 
 data	{
 	spa		samplespa;

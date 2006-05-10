@@ -709,13 +709,13 @@ LEAVE_FUNC;
 
 extern	void
 PutHTML(
+	LargeByteString	*header,
 	LargeByteString	*html)
 {
 	char	*sesid;
 
 ENTER_FUNC;
 	printf("Content-Type: text/html; charset=%s\r\n", Codeset);
-	LBS_EmitEnd(html);
 	if		(  fCookie  ) {
 		if		(  ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
             printf("Set-Cookie: _sesid=%s;\r\n",sesid);
@@ -724,8 +724,15 @@ ENTER_FUNC;
 		}
 	}
 	printf("Cache-Control: no-cache\r\n");
+	if		(  header  !=  NULL  ) {
+		LBS_EmitEnd(header);
+		WriteLargeString(stdout,header,Codeset);
+	}
 	printf("\r\n");
-	WriteLargeString(stdout,html,Codeset);
+	if		(  html  !=  NULL  ) {
+		LBS_EmitEnd(html);
+		WriteLargeString(stdout,html,Codeset);
+	}
 LEAVE_FUNC;
 }
 
@@ -773,7 +780,7 @@ DumpFiles(
 			MultipartFile	*value,
 			gpointer	user_data)
 	{
-		sprintf(buff,"<TR><TD>%s<TD>%-10d\n",value->filename,value->length);
+		sprintf(buff,"<TR><TD>%s<TD>%-10d\n",value->filename,LBS_Size(value->body));
 		LBS_EmitString(html,buff);
 	}
 

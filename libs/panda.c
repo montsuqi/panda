@@ -24,10 +24,6 @@
 #define	TRACE
 */
 
-/*
-#define	NEW_SEQUENCE
-*/
-
 #define	_PANDA
 
 #ifdef HAVE_CONFIG_H
@@ -104,31 +100,15 @@ RecvPanda(
 
 ENTER_FUNC;
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
-#ifdef	NEW_SEQUENCE
-		for	( i = 0 ; i < ctl.n ; i ++ ) {
-			type = ctl.control[i].PutType;
-			switch	(type) {
-			  case	SCREEN_CHANGE_WINDOW:
-				win = PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
-				type = SCREEN_NEW_WINDOW;
-				break;
-			  default:
-				break;
-			}
-			win = PutWindowByName(ctl.control[i].window,type);
-		}
-#else
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
 			if		(  ctl.control[i].PutType  ==  SCREEN_CLOSE_WINDOW  ) {
 				win = PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
 			}
 		}
-#endif
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
 		dbgprintf("user =     [%s]",user);
-#ifndef	NEW_SEQUENCE
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:
 			win = PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
@@ -142,7 +122,6 @@ ENTER_FUNC;
 		}
 		(void)SetWindowName(window);
 		win = PutWindowByName(window,type);
-#endif
 		if ( win ) {
 			RecvTermServerData(fpPanda,ThisScreen);
 			strcpy(ThisWindow,window);

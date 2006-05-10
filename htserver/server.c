@@ -105,47 +105,6 @@ DecodeName(
 }
 
 static	void
-SendScreenItem(
-	NETFILE		*fp,
-	ScreenData	*scr,
-    LargeByteString	*lbs)
-{
-	char	*vname
-	,		*wname;
-	WindowData	*win;
-	ValueStruct	*value;
-	Bool	fClear;
-	size_t	size;
-	char	buff[SIZE_BUFF+1];
-
-	RecvString(fp,buff);
-	fClear = RecvBool(fp);
-	dbgprintf("name = [%s]",buff);
-	if		(  *buff  !=  0  ) {
-		DecodeName(&wname,&vname,buff);
-		LBS_EmitStart(lbs);
-		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-			if		(  *vname  ==  0  ) {
-				value = win->rec->value;
-			} else {
-				value = GetItemLongName(win->rec->value,vname);
-			}
-			if (value == NULL) {
-				fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
-			} else {
-				size = NativeSaveSize(value,TRUE);
-				LBS_ReserveSize(lbs,size,FALSE);
-				NativeSaveValue(LBS_Body(lbs),value,TRUE);
-				if		(  fClear  ) {
-					InitializeValue(value);
-				}
-			}
-		}
-		SendLBS(fp, lbs);
-	}
-}
-
-static	void
 SendWindowName(
 	NETFILE		*fp,
 	ScreenData	*scr)
@@ -153,27 +112,26 @@ SendWindowName(
 	void
 	SendWindow(
 		char		*wname,
-		WindowData	*win,
-		NETFILE		*fp)
+		WindowData	*win)
 	{
 		if		(  win->PutType  !=  SCREEN_NULL  ) {
+			dbgprintf("window       = [%s]",win->name);
+			dbgprintf("win->PutType = %02X",win->PutType);
 			switch	(win->PutType) {
 			  case	SCREEN_CURRENT_WINDOW:
 			  case	SCREEN_NEW_WINDOW:
 			  case	SCREEN_CHANGE_WINDOW:
 				SendPacketClass(fp,GL_WindowName);
-				SendString(fp,wname);
-				dbgprintf("window = [%s]",wname);
+				SendString(fp,win->name);
 				break;
 			  default:
-				dbgprintf("win->PutType = %02X",win->PutType);
 				break;
 			}
 			win->PutType = SCREEN_NULL;
 		}
 	}
 ENTER_FUNC;
-	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,(void *)fp);
+	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,NULL);
 	SendPacketClass(fp,GL_END);
 LEAVE_FUNC;
 }
@@ -185,12 +143,63 @@ WriteClient(
 {
     LargeByteString	*lbs;
 	PacketClass	klass;
+	char	buff[SIZE_BUFF+1]
+		,	window[SIZE_LONGNAME+1];
+	char	*vname
+	,		*wname;
+	RecordStruct	*rec;
+	ValueStruct	*value;
+	Bool	fClear;
+	size_t	size;
+	struct	stat	sb;
+	FILE	*fpf;
 
 ENTER_FUNC;
 	SendWindowName(fp,scr);
     lbs = NewLBS();
 	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_GetData  ) {
-		SendScreenItem(fp,scr,lbs);
+		RecvString(fp,buff);
+		dbgprintf("name = [%s]",buff);
+		fClear = RecvBool(fp);
+		if		(  *buff  !=  0  ) {
+			DecodeName(&wname,&vname,buff);
+			LBS_EmitStart(lbs);
+			PureWindowName(wname,window);
+			dbgprintf("window = [%s]",window);
+			dbgprintf("wname  = [%s]",wname);
+			dbgprintf("vname  = [%s]",vname);
+			if		(  ( rec = g_hash_table_lookup(scr->Records,window) )  !=  NULL  ) {
+				if		(  *vname  ==  0  ) {
+					value = rec->value;
+				} else {
+					value = GetItemLongName(rec->value,vname);
+				}
+				if (value == NULL) {
+					fprintf(stderr, "no ValueStruct: %s.%s\n", window, vname);
+				} else {
+					size = NativeSaveSize(value,TRUE);
+					LBS_ReserveSize(lbs,size,FALSE);
+					NativeSaveValue(LBS_Body(lbs),value,TRUE);
+					if		(  ValueType(value)  ==  GL_TYPE_OBJECT  ) {
+						if		(  ( fpf = Fopen(BlobCacheFileName(value),"r") )
+								   !=  NULL  ) {
+							dbgmsg("blob body");
+							SendLBS(fp,lbs);
+							fstat(fileno(fpf),&sb);
+							LBS_ReserveSize(lbs,sb.st_size,FALSE);
+							fread(LBS_Body(lbs),LBS_Size(lbs),1,fpf);
+							fclose(fpf);
+						}
+					}
+					if		(  fClear  ) {
+						InitializeValue(value);
+					}
+				}
+			} else {
+				fprintf(stderr, "window [%s] not found\n", window);
+			}
+			SendLBS(fp, lbs);
+		}
 	}
     FreeLBS(lbs);
 LEAVE_FUNC;
@@ -203,7 +212,7 @@ RecvScreenData(
 {
     char buff[SIZE_BUFF + 1];
 	char *vname, *wname;
-	WindowData	*win;
+	RecordStruct	*rec;
 	ValueStruct	*value;
     LargeByteString *lbs;
 	int			i
@@ -212,17 +221,18 @@ RecvScreenData(
 	char		*p
 		,		*pend;
 	PacketClass	klass;
+	FILE		*fpf;
 
 ENTER_FUNC;
     lbs = NewLBS();
 	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_ScreenData  ) {
 		RecvString(fp,buff);
-dbgprintf("name = [%s]",buff);
+		dbgprintf("name = [%s]",buff);
         DecodeName(&wname, &vname, buff);
         LBS_EmitStart(lbs);
         RecvLBS(fp, lbs);
-        if ((win = g_hash_table_lookup(scr->Windows, wname))  !=  NULL) {
-			if		(  ( value = GetItemLongName(win->rec->value, vname) )  ==  NULL  ) {
+        if		(  ( rec = g_hash_table_lookup(scr->Records, wname))  !=  NULL) {
+			if		(  ( value = GetItemLongName(rec->value, vname) )  ==  NULL  ) {
 				fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
 			} else {				
 				ValueIsUpdate(value);
@@ -250,17 +260,23 @@ dbgprintf("name = [%s]",buff);
 				  case GL_TYPE_BINARY:
 					SetValueBinary(value, LBS_Body(lbs), LBS_Size(lbs));
 					break;
+				  case	GL_TYPE_OBJECT:
+					if		(	(  LBS_Body(lbs)  >  0  )
+							&&	(  ( fpf = Fopen(BlobCacheFileName(value),"w") ) 
+								   !=  NULL  ) ) {
+						fwrite(LBS_Body(lbs),LBS_Size(lbs),1,fpf);
+						fclose(fpf);	
+					}
+					break;
 				  default:
 					LBS_EmitEnd(lbs);
 					SetValueString(value, LBS_Body(lbs), "utf8");
 					break;
 				}
 #ifdef	DEBUG
-#if	0
 				printf("--\n");
 				DumpValueStruct(value);
 				printf("--\n");
-#endif
 #endif
 			}
         }
@@ -447,9 +463,7 @@ ENTER_FUNC;
 			htc->ses = cSession;
 			htc->count = 0;
 			g_int_hash_table_insert(SesHash,htc->ses,htc);
-#if	0	/*	これで一応「戻る」は可能になる	*/
 			cSession += (rand()>>16)+1;		/*	some random number	*/
-#endif
 		}
 	} else {
 		rc = FALSE;

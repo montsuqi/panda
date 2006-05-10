@@ -18,6 +18,23 @@ multiplex_level	no;
 #linksize	1024;
 linkage		link;
 
+db_group	"DBRUBY"	{
+	type	"DBRuby";
+	name	"WEB";
+};
+
+db_group	"BLOB"	{
+	type		"NativeBLOB";
+	user		"ogochan";
+	password	"ogochan";
+};
+
+blob	{
+	space	"=/web/blob";
+	port	"/tmp/web.blob";
+	auth	"=/web/blog/passwd";
+};
+
 control	{
 	port		"/tmp/wfc.web";
 };
@@ -29,5 +46,10 @@ wfc	{
 
 ld	{
 	web		1;
+	color	1;
+};
+
+bd	{
+	web;
 };
 

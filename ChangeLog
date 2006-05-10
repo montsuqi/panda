@@ -1,3 +1,70 @@
+2006-05-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c (BuildMcpArea): private.indexが不要そうなので消
+	した(もしかしたら必要かも知れないので、コメントアウトのみ)
+
+2006-05-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/wfcdata.h: puttypeをbyteにした。0〜9では値が足りなくなっ
+	たため
+
+	* libs/DIparser.c (BuildMcpArea): mcp.private.pputtypeの型をintに
+	した。↑のため。
+
+	* htserver/tags.c (JslibInit): 「戻る」後のイベント送信を可能にした
+
+2006-05-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/exec.c (EmitChar): 外字をグラフィックに変換する処理を追
+	加(テスト未)
+
+2006-05-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/driver.h: WindowDataで画面名とレコード名が同じという仮定を
+	やめた
+
+2006-05-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DBparser.c (ParDBOperation), dblib/dbgroup.c: .dbにデータベー
+	ス処理のoperationが登録できるようにした
+
+2006-04-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/DBRuby.c: DBハンドラとしてRubyの手続きが呼び出せるようにし
+	た
+
+2006-04-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c (ExecPGSQL): 余分な引数を削った
+
+2006-04-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* samples/web/file.htc: ファイルのアップ／ダウンのサンプル追加
+
+2006-04-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/wfcdata.h: 画面領域をハッシュに保存するようにした。この
+	ため、LDが変わっても画面データが消失することがなくなる(代わりにメ
+	モリを食うが結局は同じこと)
+
+2006-04-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/directory.c (RegistDBG): DBスクリプトの制御のため、dbgroup
+	処理時にDBハンドラを読み込むようにした。このためdirectory処理する
+	全てのプログラムがexport-dynamicが必要となった
+	(EnterDB_Function): DBスクリプトの種別を指定するようにした
+
+	* libs/LDparser.c (GetWindow): 画面用レコード域はシステムで単一に
+	した(コンポーネント化とメモリ節約のため)
+
+	* wfc/termthread.c (ReadTerminal): 同一画面でLDが混在する場合、発
+	生するイベントによってイベントを配送するLDを切り替えるようにした
+
+	* wfc/corethread.c (ChangeLD): LDが変わっても画面データは極力保持
+	するようにした
+
+	* libs/LDparser.h: LD_Tableを消した(不要になった)
+
 2006-04-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* include/struct.h, libs/DIparser.c : windowとbindの兼用をやめた

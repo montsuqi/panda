@@ -120,10 +120,10 @@ ENTER_FUNC;
 	  case	GL_TYPE_NUMBER:
 		break;
 	  case	GL_TYPE_OBJECT:
-		if		(  IS_OBJECT_NULL(ValueObject(value))  ) {
-			ValueObject(value) = RequestImportBLOB(fp,WFC_BLOB,BlobCacheFileName(value));
+		if		(  IS_OBJECT_NULL(ValueObjectId(value))  ) {
+			ValueObjectId(value) = RequestImportBLOB(fp,WFC_BLOB,BlobCacheFileName(value));
 		} else {
-			RequestSaveBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
+			RequestSaveBLOB(fp,WFC_BLOB,ValueObjectId(value),BlobCacheFileName(value));
 		}
 		break;
 	  case	GL_TYPE_ALIAS:
@@ -204,7 +204,7 @@ ENTER_FUNC;
 		RecvnString(fp, SIZE_NAME+1, window);
 		RecvnString(fp, SIZE_NAME+1, widget);
 		dbgprintf("window = [%s]",window);
-		*type = TO_INT(RecvChar(fp));
+		*type = RecvChar(fp);
 		ctl->n = RecvInt(fp);
 		dbgprintf("ctl->n = %d\n",ctl->n);
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
@@ -271,11 +271,11 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_OBJECT:
 		ValueIsNonNil(value);
-		if		(  IS_OBJECT_NULL(ValueObject(value))  ) {
-			ValueObject(value) = RequestNewBLOB(fp,WFC_BLOB,BLOB_OPEN_WRITE);
-			RequestCloseBLOB(fp,WFC_BLOB,ValueObject(value));
+		if		(  IS_OBJECT_NULL(ValueObjectId(value))  ) {
+			ValueObjectId(value) = RequestNewBLOB(fp,WFC_BLOB,BLOB_OPEN_WRITE);
+			RequestCloseBLOB(fp,WFC_BLOB,ValueObjectId(value));
 		} else {
-			RequestExportBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
+			RequestExportBLOB(fp,WFC_BLOB,ValueObjectId(value),BlobCacheFileName(value));
 		}
 		break;
 	  case	GL_TYPE_ALIAS:
@@ -301,10 +301,10 @@ _RecvWindow(
 {
 ENTER_FUNC;
 	dbgprintf("name = [%s]",wname);
+	dbgprintf("puttype = %02X",win->PutType);
 	switch	(win->PutType) {
 	  case	SCREEN_NULL:
 	  case	SCREEN_CLOSE_WINDOW:
-		dbgprintf("puttype = %02X",win->PutType);
 		break;
 	  default:
 		SendPacketClass(fp,WFC_DATA);

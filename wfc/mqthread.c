@@ -138,6 +138,7 @@ ENTER_FUNC;
 	printf("user = [%s]\n",data->hdr->user);
 #endif
 
+	dbgprintf("ld = [%s]",data->ld->info->name);
 	aps = &ld->aps[ix];
 	fp = aps->fp;
 	hdr = data->hdr;
@@ -168,6 +169,7 @@ ENTER_FUNC;
 		SendPacketClass(fp,APS_SCRDATA);	ON_IO_ERROR(fp,badio);
 		for	( i = 0 ; i < data->ld->info->cWindow ; i ++ ) {
 			if		(  data->scrdata[i]  !=  NULL  ) {
+				dbgprintf("[%s]",data->ld->info->windows[i]->name);
 				SendLBS(fp,data->scrdata[i]);		ON_IO_ERROR(fp,badio);
 			}
 		}
@@ -225,9 +227,10 @@ ENTER_FUNC;
 			RecvnString(fp,SIZE_NAME,hdr->window);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->widget);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->event);			ON_IO_ERROR(fp,badio);
-			hdr->dbstatus = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
-			hdr->puttype = (char)RecvChar(fp);	ON_IO_ERROR(fp,badio);
-dbgprintf("hdr->puttype = %02X",hdr->puttype);
+			hdr->dbstatus = (char)RecvChar(fp);				ON_IO_ERROR(fp,badio);
+			hdr->puttype = (byte)RecvInt(fp);				ON_IO_ERROR(fp,badio);
+			dbgprintf("hdr->window  = [%s]",hdr->window);
+			dbgprintf("hdr->puttype = %02X",(int)hdr->puttype);
 			done = TRUE;
 			break;
 		  case	APS_BLOB:
@@ -245,6 +248,26 @@ dbgprintf("hdr->puttype = %02X",hdr->puttype);
 LEAVE_FUNC;
 	return	(flag); 
 }
+
+#ifdef	DEBUG
+#include	<ctype.h>
+static	void
+DumpLBS(
+	LargeByteString	*lbs)
+{
+	int		i;
+	byte	*p;
+
+	p = LBS_Body(lbs);
+	for	( i = 0 ; i < LBS_Size(lbs) ; i ++ , p ++ ) {
+		if		(  isprint(*p)  ) {
+			printf("%c",*p);
+		} else {
+			printf("(0x%02X)",(int)*p);
+		}
+	}
+}
+#endif
 
 static	void
 GetAPS_Value(
@@ -310,48 +333,6 @@ MessageEnqueue(
 {
 ENTER_FUNC;
 	EnQueue(mq->que,data);
-LEAVE_FUNC;
-}
-
-static	void
-ChangeLD(
-	SessionData	*data)
-{
-	int		i;
-
-ENTER_FUNC;
-	if		(  ( data->spa = g_hash_table_lookup(data->spadata,data->ld->info->name) )
-			   ==  NULL  ) {
-		if		(  data->ld->info->sparec  !=  NULL  ) {
-			data->spa = NewLBS();
-			g_hash_table_insert(data->spadata,StrDup(data->ld->info->name),data->spa);
-			InitializeValue(data->ld->info->sparec->value);
-			LBS_ReserveSize(data->spa,
-							NativeSizeValue(NULL,data->ld->info->sparec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(data->spa),data->ld->info->sparec->value);
-		}
-	}
-	for	( i = 0 ; i < data->cWindow ; i ++ ) {
-		if		(  data->scrdata[i]  !=  NULL  ) {
-			FreeLBS(data->scrdata[i]);
-		}
-	}
-	xfree(data->scrdata);
-	data->cWindow = data->ld->info->cWindow;
-	data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
-												* data->cWindow);
-	for	( i = 0 ; i < data->cWindow ; i ++ ) {
-		if		(  data->ld->info->windows[i]  !=  NULL  ) {
-			data->scrdata[i] = NewLBS();
-			InitializeValue(data->ld->info->windows[i]->value);
-			LBS_ReserveSize(data->scrdata[i],
-							NativeSizeValue(NULL,data->ld->info->windows[i]->value),FALSE);
-			NativePackValue(NULL,data->scrdata[i]->body,data->ld->info->windows[i]->value);
-		} else {
-			data->scrdata[i] = NULL;
-		}
-	}
-	data->apsid = -1;
 LEAVE_FUNC;
 }
 
@@ -421,11 +402,12 @@ MessageThread(
 	LD_Node		*ld
 	,			*newld;
 	NETFILE		*fp;
-	char		puttype;
+	byte		puttype;
 	int			ix;
 	MQ_Node		*mq;
 	byte		flag;
-	char		msg[SIZE_BUFF];
+	char		msg[SIZE_BUFF]
+		,		buff[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	mq = aps->mq; 
@@ -468,38 +450,36 @@ ENTER_FUNC;
 			}
 		}	while	(  fp  ==  NULL  );
 		memcpy(data->hdr,&hdr,sizeof(MessageHeader));
-		if		(  ( newld = g_hash_table_lookup(ComponentHash,hdr.window) )  !=  NULL  ) {
+		PureComponentName(hdr.window,buff);
+		if		(  ( newld = g_hash_table_lookup(ComponentHash,buff) )  !=  NULL  ) {
 			GetAPS_Value(fp,data,APS_WINCTRL,flag);
 			GetAPS_Value(fp,data,APS_MCPDATA,flag);
 			GetAPS_Value(fp,data,APS_LINKDATA,flag);
 			GetAPS_Value(fp,data,APS_SPADATA,flag);
-			if		(  newld  ==  ld  ) {
-				GetAPS_Value(fp,data,APS_SCRDATA,flag);
-			}
-			data->ld = newld;
+			GetAPS_Value(fp,data,APS_SCRDATA,flag);
 			SendPacketClass(fp,APS_END);
-dbgprintf("           puttype = %02X",puttype);
-			if		(  puttype  ==  TO_CHAR(SCREEN_NULL)  ) {
-				puttype = TO_CHAR(SCREEN_CURRENT_WINDOW);
+			if		(  puttype  ==  SCREEN_NULL  ) {
+				puttype = SCREEN_CURRENT_WINDOW;
 			}
-dbgprintf("data->hdr->puttype = %02X",data->hdr->puttype);
-			switch	(TO_INT(data->hdr->puttype)) {
+			dbgprintf("           puttype = %02X",puttype);
+			dbgprintf("data->hdr->puttype = %02X",data->hdr->puttype);
+			switch	(data->hdr->puttype) {
 			  case	SCREEN_CHANGE_WINDOW:
 			  case	SCREEN_JOIN_WINDOW:
 			  case	SCREEN_FORK_WINDOW:
 				dbgmsg("transition");
 				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 				if		(  newld  !=  ld  ) {
-					ChangeLD(data);
+					ChangeLD(data,newld);
 				}
 				CoreEnqueue(data);
 				break;
 			  case	SCREEN_RETURN_COMPONENT:
 				dbgmsg("return");
 				data->hdr->status = TO_CHAR(APL_SESSION_GET);
-				data->hdr->puttype = TO_CHAR(SCREEN_NULL);
+				data->hdr->puttype = SCREEN_NULL;
 				if		(  newld  !=  ld  ) {
-					ChangeLD(data);
+					ChangeLD(data,newld);
 				}
 				CoreEnqueue(data);
 				break;
@@ -509,7 +489,7 @@ dbgprintf("data->hdr->puttype = %02X",data->hdr->puttype);
 					TermEnqueue(data->term,data);
 				} else {
 					data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-					ChangeLD(data);
+					ChangeLD(data,newld);
 					CoreEnqueue(data);
 				}
 				break;
@@ -527,8 +507,8 @@ dbgprintf("data->hdr->puttype = %02X",data->hdr->puttype);
 				break;
 			}
 		} else {
-			sprintf(msg,"window not found [%s] [%s:%s]\n",
-					hdr.window,hdr.term,hdr.user);
+			sprintf(msg,"window not found [%s:%s] [%s:%s]\n",
+					hdr.window,buff,hdr.term,hdr.user);
 			MessageLog(msg);
 			ClearAPS_Node(ld,ix);
 		}
@@ -636,15 +616,26 @@ LEAVE_FUNC;
 static	LD_Node	**LDs;
 static	int		ApsId;
 
+static	int
+TableComp(
+	char	**x,
+	char	**y)
+{
+	return	(strcmp(*y,*x));	/*	down	*/
+}
+
 extern	void
 ReadyAPS(void)
 {
 	int		i
-	,		j;
+		,	j
+		,	k;
 	LD_Struct	*info;
 	LD_Node	*ld;
+	char	cname[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
+	k = 0;
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 		info = ThisEnv->ld[i];
 		ld = New(LD_Node);
@@ -668,14 +659,24 @@ ENTER_FUNC;
 			g_hash_table_insert(APS_Hash,info->name,ld);
 		}
 		dbgprintf("info->cBind = %d",info->cBind);
+		dbgprintf("LD [%s]",info->name);
 		for	( j = 0 ; j < info->cBind ; j ++ ) {
-			dbgprintf("component [%s]",info->binds[j]->name);
-			if		(  g_hash_table_lookup(ComponentHash,info->binds[j]->name)  ==  NULL  ) {
-				dbgmsg("add");
-				g_hash_table_insert(ComponentHash,info->binds[j]->name,ld);
+			PureComponentName(info->binds[j]->name,cname);
+			dbgprintf("add component [%s]",cname);
+			if		(  g_hash_table_lookup(ComponentHash,cname)  ==  NULL  ) {
+				BindTable[k] = info->binds[j]->name;
+				k ++;
+				g_hash_table_insert(ComponentHash,StrDup(cname),ld);
 			}
 		}
 	}
+	qsort(BindTable,k,sizeof(char *),
+		  (int (*)(const void *,const void *))TableComp);
+#ifdef	DEBUG
+	for	( i = 0 ; i < k ; i ++ ) {
+		printf("[%s]\n",BindTable[i]);
+	}
+#endif
 LEAVE_FUNC;
 }
 
@@ -740,8 +741,20 @@ LEAVE_FUNC;
 extern	void
 InitMessageQueue(void)
 {
+	int		i
+		,	cBind;
+
 	ComponentHash = NewNameHash();
 	APS_Hash = NewNameHash();
 	LDs = (LD_Node **)xmalloc(sizeof(LD_Node *) * ThisEnv->cLD);
 	ApsId = 0;
+	cBind = 0;
+	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
+		cBind += ThisEnv->ld[i]->cBind;
+	}
+	if		(  cBind  >  0  ) {
+		BindTable = (char **)xmalloc(cBind * sizeof(char *));
+	} else {
+		Error("no binds.");
+	}
 }

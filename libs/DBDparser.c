@@ -99,14 +99,11 @@ dbgmsg(">ParDBDB");
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,ComSymbol);
-					if		(  (  db = DB_Parser(name,NULL) )  !=  NULL  ) {
+					if		(  (  db = DB_Parser(name,gname,NULL) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(dbd->DBD_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( dbd->cDB + 1));
 							memcpy(rtmp,dbd->db,sizeof(RecordStruct *) * dbd->cDB);
 							xfree(dbd->db);
-							if		(  db->opt.db->dbg  ==  NULL  ) {
-								db->opt.db->dbg = (DBG_Struct *)StrDup(gname);
-							}
 							dbd->db = rtmp;
 							dbd->db[dbd->cDB] = db;
 							dbd->cDB ++;

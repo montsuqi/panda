@@ -13,14 +13,10 @@ handler	"Ruby"	{
 bind	""				"Ruby"	"Login";
 bind	"login"			"Ruby"	"Login";
 bind	"main"			"Ruby"	"Main";
-#bind	"main.area1"	"C"		"mainColor";
-#bind	"main"			"C"		"main";
-bind	"main.area1"	"Ruby"	"MainColor";
-bind	"main.area2"	"C"		"mainColor";
+#bind	"main"			"C"	"main";
 
 bind	"next"			"Ruby"	"Main";
-bind	"next.area1"	"Ruby"	"MainColor";
-bind	"next.area2"	"C"		"mainColor";
+bind	"file"			"Ruby"	"FileUp";
 
 home	"=/web";
 
@@ -30,5 +26,10 @@ data	{
 		login;
 		main;
 		next;
+		file;
 	};
+};
+
+db	"BLOB"	{
+	blob;
 };

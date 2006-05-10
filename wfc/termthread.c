@@ -90,7 +90,6 @@ FinishSession(
 {
 	char	name[SIZE_NAME+1];
 	char	msg[SIZE_LONGNAME+1];
-	int		i;
 	void	FreeSpa(
 		char	*name,
 		LargeByteString	*spa,
@@ -101,6 +100,15 @@ FinishSession(
 		}
 		if		(  spa  !=  NULL  ) {
 			FreeLBS(spa);
+		}
+	}
+	void	FreeScr(
+		char	*name,
+		LargeByteString	*scr,
+		void		*dummy)
+	{
+		if		(  scr  !=  NULL  ) {
+			FreeLBS(scr);
 		}
 	}
 
@@ -117,14 +125,12 @@ ENTER_FUNC;
 		}
 		g_hash_table_foreach(data->spadata,(GHFunc)FreeSpa,NULL);
 		g_hash_table_destroy(data->spadata);
+		g_hash_table_foreach(data->scrpool,(GHFunc)FreeScr,NULL);
+		g_hash_table_destroy(data->scrpool);
 		if		(  data->linkdata  !=  NULL  ) {
 			FreeLBS(data->linkdata);
 		}
-		for	( i = 0 ; i < data->cWindow ; i ++ ) {
-			if		(  data->scrdata[i]  !=  NULL  ) {
-				FreeLBS(data->scrdata[i]);
-			}
-		}
+		xfree(data->scrdata);
 	}
 	xfree(data);
 LEAVE_FUNC;
@@ -165,6 +171,7 @@ ENTER_FUNC;
 			NativePackValue(NULL,data->mcpdata->body,ThisEnv->mcprec->value);
 		}
 		data->spadata = NewNameHash();
+		data->scrpool = NewNameHash();
 		if		(  ThisEnv->linkrec  !=  NULL  ) {
 			data->linkdata = NewLBS();
 			InitializeValue(ThisEnv->linkrec->value);
@@ -179,11 +186,7 @@ ENTER_FUNC;
 													* data->cWindow);
 		for	( i = 0 ; i < data->cWindow ; i ++ ) {
 			if		(  data->ld->info->windows[i]  !=  NULL  ) {
-				data->scrdata[i] = NewLBS();
-				InitializeValue(data->ld->info->windows[i]->value);
-				LBS_ReserveSize(data->scrdata[i],
-								NativeSizeValue(NULL,ld->info->windows[i]->value),FALSE);
-				NativePackValue(NULL,data->scrdata[i]->body,ld->info->windows[i]->value);
+				data->scrdata[i] = GetScreenData(data,data->ld->info->windows[i]->name);
 			} else {
 				data->scrdata[i] = NULL;
 			}
@@ -191,7 +194,7 @@ ENTER_FUNC;
 		data->name = StrDup(data->hdr->term);
 		g_hash_table_insert(TermHash,data->name,data);
 		data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-		data->hdr->puttype = TO_CHAR(SCREEN_NULL);
+		data->hdr->puttype = SCREEN_NULL;
 		data->w.n = 0;
 	} else {
 		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
@@ -210,17 +213,16 @@ ReadTerminal(
 	SessionData	*data)
 {
 	LD_Node	*ld;
-	int			ix;
 	Bool		fExit;
 	int			c;
+	LargeByteString	*scrdata;
 	char		window[SIZE_LONGNAME+1]
-		,		*p;
+		,		comp[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	ld = NULL;
 	fExit = FALSE;
 	do {
-dbgmsg("*");
 		switch	(c = RecvPacketClass(fp)) {
 		  case	WFC_DATA:
 			dbgmsg("recv DATA");
@@ -230,24 +232,27 @@ dbgmsg("*");
 			dbgprintf("window = [%s]",data->hdr->window);
 			dbgprintf("widget = [%s]",data->hdr->widget);
 			dbgprintf("event  = [%s]",data->hdr->event);
-			if		(  ( ld = g_hash_table_lookup(ComponentHash,data->hdr->window) )
+			PureComponentName(data->hdr->window,comp);
+			if		(  ( ld = g_hash_table_lookup(ComponentHash,comp) )
 					   !=  NULL  ) {
-				strcpy(window,data->hdr->window);
-				if		(  ( p = strchr(window,'.') )  !=  NULL  ) {
-					*p = 0;
-				}
-				dbgprintf("compo = [%s]",window);
-				ix = (int)g_hash_table_lookup(ld->info->whash,window);
-				if		(  ix  >  0  ) {
+				dbgprintf("ld = [%s]",ld->info->name);
+				PureWindowName(data->hdr->window,window);
+				dbgprintf("window = [%s]",window);
+				if		(  ( scrdata = GetScreenData(data,window) )  !=  NULL  ) {
 					SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
 					dbgmsg("send OK");
-					if		(  data->scrdata[ix-1]  !=  NULL  ) {
-						RecvLBS(fp,data->scrdata[ix-1]);	ON_IO_ERROR(fp,badio);
-					}
+					RecvLBS(fp,scrdata);					ON_IO_ERROR(fp,badio);
 					data->hdr->rc = TO_CHAR(0);
 					data->hdr->status = TO_CHAR(APL_SESSION_GET);
-					data->hdr->puttype = TO_CHAR(SCREEN_NULL);
+					data->hdr->puttype = SCREEN_NULL;
+				} else {
+					Error("invalid window [%s]",window);
 				}
+				if		(  data->ld  !=  ld  ) {
+					ChangeLD(data,ld);
+				}
+			} else {
+				Error("component [%s] not found.",data->hdr->window);
 			}
 			break;
 		  case	WFC_BLOB:
@@ -287,12 +292,12 @@ SendTerminal(
 {
 	MessageHeader	*hdr;
 	int			i
-		,		c
-		,		ix;
+		,		c;
 	Bool		rc;
 	Bool		fExit;
-	char		wname[SIZE_LONGNAME+1];
-	char		*p;
+	char		wname[SIZE_LONGNAME+1]
+		,		buff[SIZE_LONGNAME+1];
+	LargeByteString	*scrdata;
 
 ENTER_FUNC;
 	rc = FALSE;
@@ -317,7 +322,6 @@ ENTER_FUNC;
 		data->w.n = 0;
 		fExit = FALSE;
 		do {
-			dbgmsg("*");
 			switch	(c = RecvPacketClass(fp))	{
 			  case	WFC_PING:
 				dbgmsg("PING");
@@ -325,25 +329,15 @@ ENTER_FUNC;
 				break;
 			  case	WFC_DATA:
 				dbgmsg(">DATA");
-				RecvnString(fp,SIZE_NAME,wname);				ON_IO_ERROR(fp,badio);
-				dbgprintf("wname = [%s]\n",wname);
-				if		(  ( p = strchr(wname,'.') )  !=  NULL  ) {
-					*p = 0;
-				}
-				ix = (int)g_hash_table_lookup(data->ld->info->whash,wname);
-				dbgprintf("ix = %d",ix);
-				if		(  ix  >  0  ) {
-					if		(  data->scrdata[ix-1]  !=  NULL  ) {
-						dbgmsg("send OK");
-						SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
-						SendLBS(fp,data->scrdata[ix-1]);		ON_IO_ERROR(fp,badio);
-					} else {
-						dbgmsg("send NODATA");
-						SendPacketClass(fp,WFC_NODATA);			ON_IO_ERROR(fp,badio);
-					}
+				RecvnString(fp,SIZE_NAME,buff);				ON_IO_ERROR(fp,badio);
+				PureWindowName(buff,wname);
+				if		(  ( scrdata = GetScreenData(data,wname) )  !=  NULL  ) {
+					dbgmsg("send OK");
+					SendPacketClass(fp,WFC_OK);			ON_IO_ERROR(fp,badio);
+					SendLBS(fp,scrdata);				ON_IO_ERROR(fp,badio);
 				} else {
-					dbgmsg("send NOT");
-					SendPacketClass(fp,WFC_NOT);				ON_IO_ERROR(fp,badio);
+					dbgmsg("send NODATA");
+					SendPacketClass(fp,WFC_NODATA);			ON_IO_ERROR(fp,badio);
 				}
 				dbgmsg("<DATA");
 				break;
@@ -361,7 +355,6 @@ ENTER_FUNC;
 				fExit = TRUE;
 				break;
 			}
-			dbgmsg("*");
 		}	while	(  !fExit  );
 		rc = TRUE;
 	} else {

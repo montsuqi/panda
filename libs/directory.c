@@ -31,8 +31,10 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<unistd.h>
+#include	<dlfcn.h>
 #include	<glib.h>
 #include	"types.h"
+#include	"defaults.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"DDparser.h"
@@ -42,7 +44,53 @@
 #include	"BDparser.h"
 #include	"DBDparser.h"
 #include	"directory.h"
+#include	"load.h"
 #include	"debug.h"
+
+static	GHashTable	*DBMS_Table;
+static	char		*MONDB_LoadPath;
+
+static	DB_Func	*
+NewDB_Func(void)
+{
+	DB_Func	*ret;
+
+	ret = New(DB_Func);
+	ret->primitive = NULL;
+	ret->table = NewNameHash();
+	return	(ret);
+}
+
+extern	DB_Func	*
+EnterDB_Function(
+	char	*name,
+	DB_OPS	*ops,
+	int		type,
+	DB_Primitives	*primitive,
+	char	*commentStart,
+	char	*commentEnd)
+{
+	DB_Func	*func;
+	int		i;
+
+ENTER_FUNC;
+	dbgprintf("Enter [%s]\n",name); 
+	if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,name) )
+			   ==  NULL  ) {
+		func = NewDB_Func();
+		func->commentStart = commentStart;
+		func->commentEnd = commentEnd;
+		func->primitive = primitive;
+		func->type = type;
+		for	( i = 0 ; ops[i].name != NULL ; i ++ ) {
+			if		(  g_hash_table_lookup(func->table,ops[i].name)  ==  NULL  ) {
+				g_hash_table_insert(func->table,ops[i].name,ops[i].func);
+			}
+		}
+	}
+LEAVE_FUNC;
+	return	(func); 
+}
 
 extern	void
 InitDirectory(void)
@@ -58,11 +106,81 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+extern	DBG_Struct	*
+GetDBG(
+	char	*name)
+{
+	DBG_Struct	*dbg;
+
+	dbg = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name);
+	return	(dbg);
+}
+
+static	void
+LoadDBG(
+	DBG_Struct	*dbg)
+{
+	DB_Func	*func;
+	char		funcname[SIZE_BUFF]
+	,			filename[SIZE_BUFF];
+	void		*handle;
+	DB_Func		*(*f_init)(void);
+
+ENTER_FUNC;
+	dbgprintf("Entering [%s]\n",dbg->type);
+	if		(  dbg->func  ==  NULL  ) {
+		if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,dbg->type) )
+				   ==  NULL  ) {
+			sprintf(filename,"%s.so",dbg->type);
+			dbgprintf("[%s][%s]",MONDB_LoadPath,filename);
+			if		(  ( handle = LoadFile(MONDB_LoadPath,filename) )  !=  NULL  ) {
+				sprintf(funcname,"Init%s",dbg->type);
+				if		(  ( f_init = dlsym(handle,funcname) )
+						   !=  NULL  ) {
+					func = (*f_init)();
+					g_hash_table_insert(DBMS_Table,dbg->type,func);
+				} else {
+					Error("DB group type [%s] not found.(can not initialize)\n",
+						  dbg->type);
+				}
+			} else {
+				printf("%s\n",dlerror());
+				perror("LoadFile");
+				Error("DB group type [%s] not found.(module not exist)\n", dbg->type);
+			}
+		}
+		dbg->func = func;
+	}
+LEAVE_FUNC;
+}
+
+extern	void
+RegistDBG(
+	DBG_Struct	*dbg)
+{
+	DBG_Struct	**dbga;
+
+ENTER_FUNC;
+	dbga = (DBG_Struct **)xmalloc(sizeof(DBG_Struct *) *
+										  ( ThisEnv->cDBG + 1 ));
+	if		(  ThisEnv->cDBG  >  0  ) {
+		memcpy(dbga,ThisEnv->DBG,sizeof(DBG_Struct *) * ThisEnv->cDBG);
+		xfree(ThisEnv->DBG);
+	}
+	ThisEnv->DBG = dbga;
+	ThisEnv->DBG[ThisEnv->cDBG] = dbg;
+	dbg->id = ThisEnv->cDBG;
+	ThisEnv->cDBG ++;
+	dbgprintf("dbg = [%s]\n",dbg->name);
+	LoadDBG(dbg);
+	g_hash_table_insert(ThisEnv->DBG_Table,dbg->name,dbg);
+LEAVE_FUNC;
+}
+
 static	void
 _AssignDBG(
 	RecordStruct	**db,
-	int				n,
-	GHashTable		*DBG_Table)
+	int				n)
 {
 	int		i;
 	char	*gname;
@@ -70,20 +188,23 @@ _AssignDBG(
 
 ENTER_FUNC;
 	for	( i = 1 ; i < n ; i ++ ) {
-		gname = (char *)db[i]->opt.db->dbg;
-		if		(  ( dbg = (DBG_Struct *)g_hash_table_lookup(DBG_Table,gname) )
-				   ==  NULL  ) {
-			fprintf(stderr,"[%s]\n",gname);
-			Error("DB group not found");
+		if		(  ( gname = db[i]->opt.db->gname )  !=  NULL  ) {
+			if		(  ( dbg = GetDBG(gname) )  ==  NULL  )	{
+				fprintf(stderr,"[%s]\n",gname);
+				Error("DB group not found");
+			}
+			db[i]->opt.db->dbg = dbg;
+			xfree(gname);
+			db[i]->opt.db->gname = NULL;
+		} else {
+			dbg = db[i]->opt.db->dbg;
 		}
 		if		(  dbg->dbt  ==  NULL  ) {
 			dbg->dbt = NewNameHash();
 		}
-		db[i]->opt.db->dbg = dbg;
 		if		(  g_hash_table_lookup(dbg->dbt,db[i]->name)  ==  NULL  ) {
 			g_hash_table_insert(dbg->dbt,db[i]->name,db[i]);
 		}
-		xfree(gname);
 	}
 LEAVE_FUNC;
 }
@@ -98,19 +219,37 @@ ENTER_FUNC;
 	if		(  di->DBG_Table  !=  NULL  ) {
 		for	( i = 0 ; i < di->cLD ; i ++ ) {
 			if		(  di->ld[i]->db  !=  NULL  ) {
-				_AssignDBG(di->ld[i]->db,di->ld[i]->cDB,di->DBG_Table);
+				_AssignDBG(di->ld[i]->db,di->ld[i]->cDB);
 			}
 		}
 		for	( i = 0 ; i < di->cBD ; i ++ ) {
 			if		(  di->bd[i]->db  !=  NULL  ) {
-				_AssignDBG(di->bd[i]->db,di->bd[i]->cDB,di->DBG_Table);
+				_AssignDBG(di->bd[i]->db,di->bd[i]->cDB);
 			}
 		}
 		for	( i = 0 ; i < di->cDBD ; i ++ ) {
 			if		(  di->db[i]->db  !=  NULL  ) {
-				_AssignDBG(di->db[i]->db,di->db[i]->cDB,di->DBG_Table);
+				_AssignDBG(di->db[i]->db,di->db[i]->cDB);
 			}
 		}
+	}
+LEAVE_FUNC;
+}
+
+extern	void
+SetDBGPath(
+	char	*path)
+{
+	MONDB_LoadPath = path;
+}
+
+static	void
+InitDBG(void)
+{
+ENTER_FUNC;
+	DBMS_Table = NewNameHash();
+	if		(  ( MONDB_LoadPath = getenv("MONDB_LOAD_PATH") )  ==  NULL  ) {
+		MONDB_LoadPath = MONTSUQI_LIBRARY_PATH;
 	}
 LEAVE_FUNC;
 }
@@ -125,21 +264,12 @@ SetUpDirectory(
 {
 	DI_Struct	*di;
 ENTER_FUNC;
+	InitDBG();
 	di = DI_Parser(name,ld,bd,db,parse_ld);
 	if ( parse_ld && di ) {
 		AssignDBG(di); 
 	}
 LEAVE_FUNC;
-}
-
-extern	LD_Struct	*
-SearchWindowToLD(
-	char	*wname)
-{
-	LD_Struct	*ret;
-
-	ret = g_hash_table_lookup(LD_Table,wname);
-	return	(ret);
 }
 
 extern	LD_Struct	*

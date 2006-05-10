@@ -180,8 +180,8 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( e = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
-			if		(  ( ValueObject(e) = RequestNewBLOB((NETFILE*)dbg->conn,APS_BLOB,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
-				RequestCloseBLOB((NETFILE*)dbg->conn,APS_BLOB,ValueObject(e));
+			if		(  ( ValueObjectId(e) = RequestNewBLOB((NETFILE*)dbg->conn,APS_BLOB,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
+				RequestCloseBLOB((NETFILE*)dbg->conn,APS_BLOB,ValueObjectId(e));
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;
@@ -219,7 +219,7 @@ ENTER_FUNC;
 		}
 		if		(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
 			if		(  RequestOpenBLOB((NETFILE*)dbg->conn,APS_BLOB,mode,
-									  ValueObject(obj))  ) {
+									  ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;
@@ -250,7 +250,7 @@ ENTER_FUNC;
 	} else {
 		if		(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
 			if		(  RequestCloseBLOB((NETFILE*)dbg->conn,APS_BLOB,
-									  ValueObject(obj))  ) {
+									  ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;
@@ -301,7 +301,7 @@ ENTER_FUNC;
 			if		(  value  !=  NULL  ) {
 				NativePackValue(NULL,value,v);
 				if		(  RequestWriteBLOB((NETFILE*)dbg->conn,APS_BLOB,
-											ValueObject(obj),value,size)  ==  size  ) {
+											ValueObjectId(obj),value,size)  ==  size  ) {
 					rc = MCP_OK;
 				} else {
 					rc = MCP_BAD_OTHER;
@@ -357,7 +357,7 @@ ENTER_FUNC;
 		if		(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
 			if		(  value  !=  NULL  ) {
 				if		(  RequestReadBLOB((NETFILE*)dbg->conn,APS_BLOB,
-											ValueObject(obj),value,size)  ==  size  ) {
+											ValueObjectId(obj),value,size)  ==  size  ) {
 					NativeUnPackValue(NULL,value,v);
 					rc = MCP_OK;
 				} else {
@@ -397,7 +397,7 @@ ENTER_FUNC;
 		if		(	(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(rec->value,"file") )    !=  NULL  ) ) {
 			if		(  RequestExportBLOB((NETFILE*)dbg->conn,APS_BLOB,
-										 ValueObject(obj),ValueToString(f,NULL))  ) {
+										 ValueObjectId(obj),ValueToString(f,NULL))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;
@@ -429,7 +429,7 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(rec->value,"file") )    !=  NULL  ) ) {
-			if		(  ( ValueObject(obj) = RequestImportBLOB((NETFILE*)dbg->conn,APS_BLOB,
+			if		(  ( ValueObjectId(obj) = RequestImportBLOB((NETFILE*)dbg->conn,APS_BLOB,
 															  ValueToString(f,NULL)) )  !=  GL_OBJ_NULL  ) {
                 ValueIsNonNil(obj);
 				rc = MCP_OK;
@@ -464,7 +464,7 @@ ENTER_FUNC;
 		if		(	(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(rec->value,"file") )    !=  NULL  ) ) {
 			if		(  RequestSaveBLOB((NETFILE*)dbg->conn,APS_BLOB,
-									   ValueObject(obj),ValueToString(f,NULL))  ) {
+									   ValueObjectId(obj),ValueToString(f,NULL))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;
@@ -495,7 +495,7 @@ ENTER_FUNC;
 	} else {
 		if		(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
 			if		(  RequestCheckBLOB((NETFILE*)dbg->conn,APS_BLOB,
-										ValueObject(obj))  ) {
+										ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
@@ -526,7 +526,7 @@ ENTER_FUNC;
 	} else {
 		if		(  ( obj = GetItemLongName(rec->value,"object") )  !=  NULL  ) {
 			if		(  RequestDestroyBLOB((NETFILE*)dbg->conn,APS_BLOB,
-									   ValueObject(obj))  ) {
+									   ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
@@ -587,11 +587,12 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	NULL,
 };
 
 extern	DB_Func	*
 InitNativeBLOB(void)
 {
-	return	(EnterDB_Function("NativeBLOB",Operations,&Core,"",""));
+	return	(EnterDB_Function("NativeBLOB",Operations,DB_PARSER_NULL,&Core,"",""));
 }
 

@@ -599,27 +599,6 @@ LEAVE_FUNC;
 }
 
 static	void
-AppendDBG(
-	DBG_Struct	*dbg)
-{
-	DBG_Struct	**dbga;
-
-ENTER_FUNC;
-	dbga = (DBG_Struct **)xmalloc(sizeof(DBG_Struct *) *
-										  ( ThisEnv->cDBG + 1 ));
-	if		(  ThisEnv->cDBG  >  0  ) {
-		memcpy(dbga,ThisEnv->DBG,sizeof(DBG_Struct *) * ThisEnv->cDBG);
-		xfree(ThisEnv->DBG);
-	}
-	ThisEnv->DBG = dbga;
-	ThisEnv->DBG[ThisEnv->cDBG] = dbg;
-	ThisEnv->cDBG ++;
-	dbgprintf("dbg = [%s]\n",dbg->name);
-	g_hash_table_insert(ThisEnv->DBG_Table,dbg->name,dbg);
-LEAVE_FUNC;
-}
-
-static	void
 ParDBGROUP(
 	CURFILE	*in,
 	char	*name)
@@ -709,7 +688,8 @@ ENTER_FUNC;
 			break;
 		  case	T_ENCODING:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				if		(  stricmp(ComSymbol,"utf8")  ==  0  ) {
+				if		(	(  stricmp(ComSymbol,"utf8")   ==  0  )
+						||	(  stricmp(ComSymbol,"utf-8")  ==  0  ) ) {
 					dbg->coding = NULL;
 				} else {
 					dbg->coding = StrDup(ComSymbol);
@@ -740,7 +720,7 @@ ENTER_FUNC;
 			ParError("; not found in db_group");
 		}
 	}
-	AppendDBG(dbg);
+	RegistDBG(dbg);
 LEAVE_FUNC;
 }
 
@@ -748,8 +728,7 @@ static	void
 _AssignDBG(
 	CURFILE	*in,
 	char	*name,
-	DBG_Struct	*dbg,
-	void	*dummy)
+	DBG_Struct	*dbg)
 {
 	DBG_Struct	*red;
 
@@ -786,7 +765,7 @@ ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		dbgprintf("%d DB group name = [%s]\n",dbg->priority,dbg->name);
-		_AssignDBG(in,dbg->name,dbg,NULL);
+		_AssignDBG(in,dbg->name,dbg);
 	}
 LEAVE_FUNC;
 }
@@ -828,9 +807,9 @@ BuildMcpArea(
 	p += sprintf(p,			"count	int;");
 	p += sprintf(p,			"swindow	char(%d)[%d];",SIZE_NAME,stacksize);
 	p += sprintf(p,			"state		char(1)[%d];",stacksize);
-	p += sprintf(p,			"index		int[%d];",stacksize);
+	//p += sprintf(p,			"index		int[%d];",stacksize);
 	p += sprintf(p,			"pstatus	char(1);");
-	p += sprintf(p,			"pputtype 	char(1);");
+	p += sprintf(p,			"pputtype 	int;");
 	p += sprintf(p,			"prc		char(1);");
 	p += sprintf(p,		"};");
 	p += sprintf(p,	"};");
@@ -999,6 +978,7 @@ ENTER_FUNC;
 		  case	T_DBPATH:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				ThisEnv->DbPath = StrDup(ComSymbol);
+				SetDBGPath(ThisEnv->DbPath);
 			} else {
 				ParError("db handler load path invalid");
 			}
@@ -1088,7 +1068,7 @@ ENTER_FUNC;
 			ParError("; missing");
 		}
 	}
-	if ( ThisEnv) {
+	if		(  ThisEnv  !=  NULL  )	{
 		ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
 		AssignDBG(in);
 	}

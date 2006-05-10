@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005  ogochan
+# Copyright (C) 2005-2006  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,8 @@ INCLUDES 			=		\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
-	$(OSEKI_CFLAGS)		\
+	$(RUBY_CFLAGS)			\
+	$(OSEKI_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
@@ -43,7 +44,8 @@ DB_OBJECTS			=		\
 	Shell.la				\
 	System.la				\
 	Oseki.la				\
-	NativeBLOB.la
+	NativeBLOB.la			\
+	DBRuby.la
 
 PostgreSQL_la_LDFLAGS	=	-module -export-dynamic
 PostgreSQL_la_SOURCES	=	\
@@ -88,3 +90,12 @@ Oseki_la_SOURCES	=	\
 	Oseki.c
 Oseki_la_LIBADD		=	\
 	$(OSEKI_LIBS)
+
+DBRuby_la_LDFLAGS	=	-module -export-dynamic
+DBRuby_la_SOURCES	=	\
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	DBRuby.c
+DBRuby_la_LIBADD		=	\
+	$(RUBY_LIBS)
+

@@ -22,6 +22,8 @@ sbin_PROGRAMS = monitor msgd
 bin_SCRIPTS = recdefgen.rb recgen.rb
 noinst_SCRIPTS = copy
 
+copygen_LDFLAGS	=			\
+	-export-dynamic
 copygen_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpanda.a		\
@@ -31,6 +33,8 @@ copygen_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
+dbgen_LDFLAGS	=			\
+	-export-dynamic
 dbgen_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpanda.a		\
@@ -40,6 +44,8 @@ dbgen_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
+checkdir_LDFLAGS	=			\
+	-export-dynamic
 checkdir_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpanda.a		\
@@ -49,6 +55,8 @@ checkdir_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
+monitor_LDFLAGS	=			\
+	-export-dynamic
 monitor_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpanda.a		\

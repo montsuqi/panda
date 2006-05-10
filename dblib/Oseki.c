@@ -41,6 +41,7 @@
 #include	"libmondai.h"
 #include	"dbgroup.h"
 #include	"client.h"
+#include	"directory.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -802,12 +803,13 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	NULL,
 };
 
 extern	DB_Func	*
 InitOseki(void)
 {
-	return	(EnterDB_Function("Oseki",Operations,&Core,"/*","*/\t"));
+	return	(EnterDB_Function("Oseki",Operations,DB_PARSER_SQL,&Core,"/*","*/\t"));
 }
 
 #endif /* #ifdef HAVE_OSEKI */

@@ -20,10 +20,11 @@
 #ifndef	_INC_MULTIPART_H
 #define	_INC_MULTIPART_H
 
+#include	"LBSfunc.h"
+
 typedef struct _MultipartFile {
-    char *filename;
-    char *value;
-    int length;
+	char *filename;
+	LargeByteString	*body;
 } MultipartFile;
 
 char *GetMultipartBoundary(char *content_type);

@@ -23,6 +23,7 @@
 #define	TRACE
 */
 
+#define	DBGROUP
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -32,7 +33,6 @@
 #include	<signal.h>
 #include	<fcntl.h>
 #include	<unistd.h>
-#include	<dlfcn.h>
 #include	<glib.h>
 
 #include	"defaults.h"
@@ -40,106 +40,9 @@
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"directory.h"
-#include	"load.h"
 #include	"dbgroup.h"
 #include	"blobreq.h"
 #include	"debug.h"
-
-static	GHashTable	*DBMS_Table;
-static	char		*MONDB_LoadPath;
-
-extern	DB_Func	*
-NewDB_Func(void)
-{
-	DB_Func	*ret;
-
-	ret = New(DB_Func);
-	ret->primitive = NULL;
-	ret->table = NewNameHash();
-	return	(ret);
-}
-
-extern	DB_Func	*
-EnterDB_Function(
-	char	*name,
-	DB_OPS	*ops,
-	DB_Primitives	*primitive,
-	char	*commentStart,
-	char	*commentEnd)
-{
-	DB_Func	*func;
-	int		i;
-
-ENTER_FUNC;
-	dbgprintf("Enter [%s]\n",name); 
-	if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,name) )
-			   ==  NULL  ) {
-		func = NewDB_Func();
-		g_hash_table_insert(DBMS_Table,name,func);
-		func->commentStart = commentStart;
-		func->commentEnd = commentEnd;
-		func->primitive = primitive;
-	}
-	for	( i = 0 ; ops[i].name != NULL ; i ++ ) {
-		if		(  g_hash_table_lookup(func->table,ops[i].name)  ==  NULL  ) {
-			g_hash_table_insert(func->table,ops[i].name,ops[i].func);
-		}
-	}
-LEAVE_FUNC;
-	return	(func); 
-}
-
-static	void
-InitDBG(void)
-{
-ENTER_FUNC;
-	DBMS_Table = NewNameHash();
-	if		(  ( MONDB_LoadPath = getenv("MONDB_LOAD_PATH") )  ==  NULL  ) {
-		if		(  ThisEnv->DbPath  !=  NULL  ) {
-			MONDB_LoadPath = ThisEnv->DbPath;
-		} else {
-			MONDB_LoadPath = MONTSUQI_LIBRARY_PATH;
-		}
-	}
-LEAVE_FUNC;
-}
-
-static	void
-SetUpDBG(void)
-{
-	DBG_Struct	*dbg;
-	int		i;
-	DB_Func	*func;
-	char		funcname[SIZE_BUFF]
-	,			filename[SIZE_BUFF];
-	void		*handle;
-	DB_Func		*(*f_init)(void);
-
-ENTER_FUNC;
-	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		dbg = ThisEnv->DBG[i];
-		dbg->id = i;
-		dbgprintf("Entering [%s]\n",dbg->type);
-		if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,dbg->type) )
-				   ==  NULL  ) {
-			sprintf(filename,"%s.so",dbg->type);
-			dbgprintf("[%s][%s]",MONDB_LoadPath,filename);
-			if		(  ( handle = LoadFile(MONDB_LoadPath,filename) )  !=  NULL  ) {
-				sprintf(funcname,"Init%s",dbg->type);
-				if		(  ( f_init = dlsym(handle,funcname) )
-						   !=  NULL  ) {
-					func = (*f_init)();
-				} else {
-					Error("DB group type [%s] not found.(can not initialize)\n",dbg->type);
-				}
-			} else {
-				Error("DB group type [%s] not found.(module not exist)\n", dbg->type);
-			}
-		}
-		dbg->func = func;
-	}
-LEAVE_FUNC;
-}
 
 extern	void
 InitDB_Process(
@@ -147,12 +50,34 @@ InitDB_Process(
 {
 ENTER_FUNC;
 	fpBlob = fp;
-	InitDBG();
-	SetUpDBG();
 LEAVE_FUNC;
 }
 
 typedef	void	(*DB_FUNC2)(DBG_Struct *, DBCOMM_CTRL *);
+
+static	void
+_ExecDBFunc(
+	char	*rname,
+	RecordStruct	*rec,
+	char	*fname)
+{
+	DB_Struct	*db = rec->opt.db;
+	DBG_Struct	*dbg = db->dbg;
+	int			ix;
+	DB_Operation	*op;
+
+ENTER_FUNC;
+	if		(  ( ix = (int)g_hash_table_lookup(db->opHash,fname) )  >  0  ) {
+		if		(  ( op = db->ops[ix-1] )  !=  NULL  ) {
+			if		(  dbg->func->primitive->record  !=  NULL  ) {
+				if		(  !(*dbg->func->primitive->record)(dbg,fname,rec)  ) {
+					Warning("function not found [%s]\n",fname);
+				}
+			}
+		}
+	}
+LEAVE_FUNC;
+}
 
 static	int
 ExecFunction(
@@ -184,6 +109,9 @@ ENTER_FUNC;
 			if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
 					   !=  NULL  ) {
 				(*func)(dbg,&ctrl);
+				if		(  dbg->dbt  !=  NULL  ) {
+					g_hash_table_foreach(dbg->dbt,(GHFunc)_ExecDBFunc,name);
+				}
 			} else {
 				Warning("function not found [%s]\n",name);
 				ctrl.rc = MCP_BAD_FUNC;

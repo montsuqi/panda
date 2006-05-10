@@ -8,6 +8,11 @@ ddir	"=/sample2";
 record	"=/sample2";
 #blob	"=/sample2";
 
+DBPath	"/home/ogochan/MONTSUQI/panda/dblib/.libs";
+APSPath	"/home/ogochan/MONTSUQI/panda/aps/aps";
+WFCPath	"/home/ogochan/MONTSUQI/panda/wfc/wfc";
+REDPath	"/home/ogochan/MONTSUQI/panda/dbstuff/dbredirector";
+
 #linksize	1024;
 linkage		link;
 
@@ -15,6 +20,8 @@ multiplex_level	no;
 #multiplex_level	ld;
 #multiplex_level	id;
 #multiplex_level	aps;
+
+#include	<dbgroup.inc>
 
 control {
 	port	"/tmp/sample2.control";
@@ -40,6 +47,3 @@ db	{
 	sample;
 };
 
-#hander	"dotCOBOL";
-
-#include	<dbgroup.inc>

@@ -350,7 +350,7 @@ get_value(ValueStruct *val)
             return rb_str_new(ValueByte(val), ValueByteLength(val));
         }
     case GL_TYPE_OBJECT:
-        return INT2NUM(ValueObject(val));
+	    return INT2NUM(ValueObjectId(val));
     case GL_TYPE_ARRAY:
         return aryval_new(val, 0);
     case GL_TYPE_RECORD:
@@ -871,29 +871,22 @@ procnode_put_window(int argc, VALUE *argv, VALUE self)
 {
     procnode_data *data;
     VALUE win, type;
-    ValueStruct *dc, *window, *widget, *puttype, *status, *rc;
+	char *wname, *ptype;
 
     Data_Get_Struct(self, procnode_data, data);
     rb_scan_args(argc, argv, "02", &type, &win);
 
-    dc = GetRecordItem(data->node->mcprec->value, "dc");
-    window = GetRecordItem(dc, "window");
     if (!NIL_P(win)) {
-        SetValueString(window, StringValuePtr(win), codeset);
-    }
-    widget = GetRecordItem(dc, "widget");
-    SetValueString(widget, "", codeset);
-    puttype = GetRecordItem(dc, "puttype");
+		wname = StringValuePtr(win);
+    } else {
+		wname = NULL;
+	}
     if (NIL_P(type)) {
-        SetValueString(puttype, "CURRENT", codeset);
+        ptype = "CURRENT";
+    } else {
+		ptype = StringValuePtr(type);
     }
-    else {
-        SetValueString(puttype, StringValuePtr(type), codeset);
-    }
-    status = GetRecordItem(dc, "status");
-    SetValueString(status, "PUTG", codeset);
-    rc = GetRecordItem(data->node->mcprec->value, "rc");
-    SetValueInteger(rc, 0);
+	MCP_PutWindow(data->node,wname,ptype);
     return Qnil;
 }
 
@@ -902,22 +895,17 @@ procnode_exit(int argc, VALUE *argv, VALUE self)
 {
     procnode_data *data;
     VALUE eve;
-    ValueStruct *dc, *event, *puttype, *status, *rc;
+	char *event;
 
     Data_Get_Struct(self, procnode_data, data);
     rb_scan_args(argc, argv, "01", &eve);
 
-    dc = GetRecordItem(data->node->mcprec->value, "dc");
-    event = GetRecordItem(dc, "event");
     if (!NIL_P(eve)) {
-        SetValueString(event, StringValuePtr(eve), codeset);
-    }
-    puttype = GetRecordItem(dc, "puttype");
-	SetValueString(puttype, "RETURN", codeset);
-    status = GetRecordItem(dc, "status");
-    SetValueString(status, "PUTG", codeset);
-    rc = GetRecordItem(data->node->mcprec->value, "rc");
-    SetValueInteger(rc, 0);
+        event = StringValuePtr(eve);
+    } else {
+		event = NULL;
+	}
+	MCP_ReturnComponent(data->node,event);
     return Qnil;
 }
 

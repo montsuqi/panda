@@ -39,6 +39,7 @@
 #include	"types.h"
 
 #include	"libmondai.h"
+#include	"LDparser.h"
 #include	"queue.h"
 #include	"wfcdata.h"
 #include	"wfc.h"
@@ -46,6 +47,7 @@
 #include	"debug.h"
 
 static	Queue	*CoreQueue;
+
 extern	void
 CoreEnqueue(
 	SessionData	*data)

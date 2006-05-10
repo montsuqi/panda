@@ -81,8 +81,8 @@ typedef	struct {
 	,		user[SIZE_USER+1]
 	,		status
 	,		dbstatus
-	,		puttype
 	,		rc;
+	byte	puttype;
 }	MessageHeader;
 
 typedef	struct {
@@ -93,10 +93,11 @@ typedef	struct {
 	LD_Node		*ld;
 	WindowControl	w;
 	size_t			cWindow;
-	int			retry;
-	Bool		fAbort;
+	int				retry;
+	Bool			fAbort;
 	MessageHeader	*hdr;
 	GHashTable		*spadata;
+	GHashTable		*scrpool;
 	LargeByteString	*spa;
 	LargeByteString	*mcpdata;
 	LargeByteString	*linkdata;

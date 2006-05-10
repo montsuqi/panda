@@ -79,18 +79,26 @@ Resident_la_LDFLAGS		=	-module -export-dynamic
 Ruby_la_LDFLAGS			=   -module -export-dynamic
 
 dotCOBOL_la_SOURCES		=	dotCOBOL.c
-C_la_SOURCES			=	C.c
-OpenCOBOL_la_SOURCES	=	OpenCOBOL.c
-OpenCOBOL_la_LIBADD		=	\
-	$(OPENCOBOL_LIBS)
+C_la_SOURCES			=	\
+	C.c						\
+	apslib.c
+OpenCOBOL_la_SOURCES	=	\
+	OpenCOBOL.c
+Ruby_la_SOURCES			=	\
+	Ruby.c					\
+	apslib.c
+
+OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
+Ruby_la_LIBADD			=	$(RUBY_LIBS)
+
 Exec_la_SOURCES			=	Exec.c
 Exec_la_LIBADD			=	\
 	$(top_builddir)/libs/comm.lo \
 	$(top_builddir)/libs/comms.lo
 Resident_la_SOURCES		=	Resident.c
-Ruby_la_SOURCES			=	Ruby.c
-Ruby_la_LIBADD			=	$(RUBY_LIBS)
 
+aps_LDFLAGS	=			\
+	-export-dynamic
 aps_SOURCES	=	\
 	aps_main.c	aps_main.h				\
 	apsio.c		apsio.h					\
@@ -103,6 +111,8 @@ aps_DEPENDENCIES	=					\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
+dbstub_LDFLAGS	=			\
+	-export-dynamic
 dbstub_SOURCES	=	\
 	dbstub_main.c						\
 	handler.c		handler.h
@@ -117,7 +127,9 @@ dbstub_DEPENDENCIES	=					\
 
 MCPSUB_la_SOURCES	=			\
 	MCPSUB.c					\
-	OpenCOBOL.h
+	OpenCOBOL.h					\
+	apslib.c
 MONFUNC_la_SOURCES	=			\
 	MONFUNC.c					\
-	OpenCOBOL.h
+	OpenCOBOL.h					\
+	apslib.c

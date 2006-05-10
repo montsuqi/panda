@@ -118,6 +118,14 @@ ENTER_FUNC;
 			value = NULL;
 		} else {
 			value = NativeRestoreValue(LBS_Body(lbs),TRUE);
+			if		(  ValueType(value)  ==  GL_TYPE_OBJECT  ) {
+				RecvLBS(fpServ,lbs);
+				value = NewValue(GL_TYPE_BINARY);
+				ValueByteLength(value) = LBS_Size(lbs);
+				ValueByteSize(value) = LBS_Size(lbs);
+				ValueByte(value) = LBS_ToByte(lbs);
+				ValueIsNonNil(value);
+			}
 		}
 	} else {
 		value = NULL;
@@ -129,20 +137,18 @@ LEAVE_FUNC;
 static	void
 SendValue(
 	char		*name,
-	CGIValue	*value)
+	char		*value,
+	size_t		size)
 {
-    size_t len;
-
 ENTER_FUNC;
 	dbgprintf("send value = [%s:",name);
-	if		(	(  *name  !=  0  )
-			&&	(  value->body  !=  NULL  ) ) {
+	if		(	(  name   !=  NULL  )
+			&&	(  value  !=  NULL  ) ) {
 		SendPacketClass(fpServ,GL_ScreenData);
 		SendString(fpServ,name);
-		len = strlen(value->body);
-		SendLength(fpServ, len);
-		Send(fpServ, value->body, len);
-		dbgprintf("%s]\n",value->body);
+		SendLength(fpServ,size);
+		Send(fpServ, value, size);
+		dbgprintf("%s]\n",value);
 	} else {
 		dbgmsg("]");
 	}
@@ -273,11 +279,13 @@ PutFile(ValueStruct *file)
     }
 	printf("\r\n");
     switch (ValueType(file)) {
-    case GL_TYPE_BYTE:
-    case GL_TYPE_BINARY:
+	  case GL_TYPE_BYTE:
+	  case GL_TYPE_BINARY:
         fwrite(ValueByte(file), 1, ValueByteLength(file), stdout);
         break;
-    default:
+	  case	GL_TYPE_OBJECT:
+		break;
+	  default:
         fputs(ValueToString(file, Codeset), stdout);
         break;
     }
@@ -287,19 +295,41 @@ PutFile(ValueStruct *file)
 static	void
 SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 {
-    char *filename;
-	CGIValue	cgivalue;
+	char	*filename
+		,	*sendname
+		,	*p;
+	char	buff[SIZE_LONGNAME+1];
 
-    filename = (char *) g_hash_table_lookup(htc->FileSelection, name);
-    if (filename != NULL) {
-        SendString(fpServ,name);
-        SendLength(fpServ, file->length);
-        Send(fpServ, file->value, file->length);
-        dbgprintf("send value = [%s]\n", name);
+ENTER_FUNC;
+	if		(  ( filename = (char *) g_hash_table_lookup(htc->FileSelection, name) )
+			   !=  NULL  ) {
+		dbgprintf("name           = [%s]",name);
+		dbgprintf("file->filename = [%s]",file->filename);
+		dbgprintf("filename       = [%s]",filename);
 
-		cgivalue.body = file->filename;
-        SendValue(filename, &cgivalue);
+		strcpy(buff,file->filename);
+		if		(	(  ( p = strrchr(buff,'\\') )  !=  NULL  )
+				||	(  ( p = strrchr(buff,'/') )   !=  NULL  ) ) {
+			sendname = p + 1;
+		} else {
+			sendname = buff;
+		}
+		SendValue(filename,sendname,strlen(sendname));
+		SendValue(name,LBS_Body(file->body),LBS_Size(file->body));
     }
+LEAVE_FUNC;
+}
+
+static	void
+_SendValue(
+	char		*name,
+	CGIValue	*value)
+{
+ENTER_FUNC;
+	if		(  value->body  !=  NULL  ) {
+		SendValue(value->name,value->body,strlen(value->body));
+	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -315,12 +345,11 @@ SendEvent(void)
 	char	buff[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-    if		(  ( window = LoadValue("_name") )  !=  NULL  ) {
-		fComm = FALSE;
-		if		(  ( htc = ParseScreen(window,fComm,FALSE) )  ==  NULL  ) {
-			exit(1);
-		}
-	} else {
+    if		(  ( window = LoadValue("_name") )  ==  NULL  ) {
+		exit(1);
+	}
+	fComm = FALSE;
+	if		(  ( htc = ParseScreen(window,fComm,FALSE) )  ==  NULL  ) {
 		exit(1);
 	}
 	fComm = TRUE;
@@ -363,7 +392,7 @@ ENTER_FUNC;
 	SendString(fpServ,widget);
 	SendString(fpServ,event);
 
-	g_hash_table_foreach(Values,(GHFunc)SendValue,NULL);
+	g_hash_table_foreach(Values,(GHFunc)_SendValue,NULL);
 	g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
 	SendPacketClass(fpServ,GL_END);
 
@@ -372,7 +401,6 @@ ENTER_FUNC;
     SetSave("_filename",TRUE);
     SetSave("_contenttype",TRUE);
     SetSave("_disposition",TRUE);
-	//CGI_InitValues();
 	ClearValues();
 	Files = NewNameHash();
 LEAVE_FUNC;
@@ -482,7 +510,8 @@ Session(void)
 	char	buff[SIZE_BUFF];
 	HTCInfo	*htc;
 	LargeByteString	*html;
-	Bool	fError;
+	Bool	fError
+		,	fInit;
 	PacketClass	klass;
 
 ENTER_FUNC;
@@ -504,7 +533,9 @@ ENTER_FUNC;
 			RecvString(fpServ,buff);
 			sesid = StrDup(buff);
 			SaveValue("_sesid",sesid,FALSE);
+			fInit = TRUE;
 		} else {
+			fInit = FALSE;
 			SendPacketClass(fpServ,GL_Session);
 			SendString(fpServ,sesid);
 			if		(  ( klass = RecvPacketClass(fpServ) )  ==  GL_Session  ) {
@@ -525,6 +556,7 @@ ENTER_FUNC;
 		dbgmsg("*");
 		if		(  !fError  ) {
 			name = NULL;
+			fComm = TRUE;
 			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
 				RecvString(fpServ,buff);
 				name = StrDup(buff);
@@ -534,7 +566,7 @@ ENTER_FUNC;
 			if		(  name  ==  NULL  ) {
 				html = Expired(1);
 			} else {
-				if ((file = LoadValue("_file")) != NULL) {
+				if		(  ( file = LoadValue("_file") )  !=  NULL  )	{
 					ValueStruct *value = GetValue(file, TRUE);
 					if (value != NULL && !IS_VALUE_NIL(value)) {
 						PutFile(value);
@@ -556,7 +588,7 @@ ENTER_FUNC;
 		} else {
 			html = Expired(2);
 		}
-		PutHTML(html);
+		PutHTML(NULL,html);
 	} else {
 		fprintf(stderr,"htserver down??\n");
 	}

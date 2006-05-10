@@ -25,4 +25,5 @@
 
 extern	void	CoreEnqueue(SessionData *data);
 extern	void	StartCoreThread(void);
+
 #endif
