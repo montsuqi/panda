@@ -1,0 +1,32 @@
+<htc coding="utf-8">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+  "http://www.w3.org/TR/html4/strict.dtd">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-2022-jp">
+<style type="text/css">
+<!--
+.white { background-color: #FFFFFF; }
+.red { background-color: #FF0000; }
+.blue { background-color: #0000FF; }
+.yellow { background-color: #FFFF00; }
+
+-->
+</style>
+<title>ファイル</title>
+</head>
+<html>
+<body>
+<form>
+<div id="body">
+  <p>これが出ちゃダメ</p>
+  <div id="area1" class="red">
+   <fileselection name="file.body1" filename="file.filename1" maxlength="20" size="15"/>
+   <button event="up" face="うp"/>
+  </div>
+   <hyperlink filename="file.filename2" file="file.body2" event="down">ダウンロード</hyperlink>
+</div>
+
+</form>
+</body>
+</html>
+</htc>

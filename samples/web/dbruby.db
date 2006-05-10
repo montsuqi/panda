@@ -1,0 +1,24 @@
+dbruby	{
+	arg	int;
+	ret	text;
+};
+
+operation	DBOPEN	{
+	puts("aaa")
+};
+operation	DBSTART	{
+	puts("start")
+};
+operation	DBCOMMIT	{
+	puts("commit")
+};
+
+path	cal	{
+	operation	fact	{
+		fact = 1
+		for i in 1..dbruby.arg do
+			fact *= i
+		end
+		dbruby.ret = fact.to_s
+	};
+};

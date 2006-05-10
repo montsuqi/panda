@@ -1,0 +1,19 @@
+name	web;
+
+# bind <module name> <hander name> ;
+
+HandlerPath	".:/home/ogochan/MONTSUQI/panda/aps/.libs";
+
+handler	"Ruby"	{
+	class		"Ruby";
+    loadpath	"=/web";
+	locale		"utf-8";
+};
+
+bind	"TestDB"	"Ruby";
+
+home	"=/web";
+
+db	"DBRUBY"	{
+	dbruby;
+};
