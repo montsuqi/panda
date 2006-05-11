@@ -143,10 +143,11 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	void
+static	int
 ExecuteServer(void)
 {
-	int		fhWFC;
+	int		fhWFC
+		,	rc;
 	Port	*port;
 	NETFILE		*fpWFC;
 	ProcessNode	*node;
@@ -184,6 +185,7 @@ ENTER_FUNC;
 						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)	) {
 			Message("GetWFC failure");
+			rc = 0;
 			break;
 		}
 		dbgprintf("ld     = [%s]",ThisLD->name);
@@ -194,6 +196,7 @@ ENTER_FUNC;
 				   !=  NULL  ) {
 			if		(  bind->module  ==  NULL  ){
 				Message("bind->module not found");
+				rc = 2;
 				break;
 			}
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
@@ -211,17 +214,18 @@ ENTER_FUNC;
 			PutWFC(fpWFC,node);
 		} else {
 			Message("window [%s] not found.",wname);
+			rc = 2;
 			break;
 		}
 	}
 	MessageLog("exiting DC_Thread");
 	FinishSession(node);
 LEAVE_FUNC;
+	return	(rc);
 }
 
 static	void
-StopProcess(
-	int		ec)
+StopProcess(void)
 {
 ENTER_FUNC;
 	StopOnlineDB(); 
@@ -229,7 +233,6 @@ ENTER_FUNC;
 	StopDC();
 	CleanUpOnlineDC();
 LEAVE_FUNC;
-	exit(ec);
 }
 
 static	ARG_TABLE	option[] = {
@@ -324,9 +327,8 @@ main(
 		InitMessage(id,NULL);
 		InitNET();
 		InitSystem(fl->name);
-		ExecuteServer();
-		rc = 2;
-		StopProcess(rc);
+		rc = ExecuteServer();
+		StopProcess();
 	} else {
 		rc = -1;
 		fprintf(stderr, "LD name is not specified.\n");
