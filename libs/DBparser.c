@@ -514,7 +514,8 @@ static	RecordStruct	*
 DB_Parse(
 	CURFILE	*in,
 	char	*name,
-	char	*gname)
+	char	*gname,
+	Bool	fScript)
 {
 	RecordStruct	*ret
 	,				*use;
@@ -522,6 +523,7 @@ DB_Parse(
 	PathStruct		*path;
 
 ENTER_FUNC;
+ dbgprintf("fScript = %d",fScript);
 	ret = DD_Parse(in);
 	if		(  ret  ==  NULL  ) {
 		exit(1);
@@ -569,6 +571,7 @@ ENTER_FUNC;
 			}
 			break;
 		  case	T_PATH:
+			if		(  !fScript  )	goto	quit;
 			if		(  GetName  !=  T_SYMBOL  ) {
 				ParError("path name invalid");
 			} else {
@@ -589,6 +592,7 @@ ENTER_FUNC;
 			break;
 		}
 	}
+  quit:
 	if		(	(  ret->type            ==  RECORD_DB  )
 			&&	(  ret->opt.db->pcount  ==  0          ) ) {
 		ret->opt.db->path = (PathStruct **)xmalloc(sizeof(PathStruct *) * 1);
@@ -663,7 +667,8 @@ extern	RecordStruct	*
 DB_Parser(
 	char	*name,
 	char	*gname,
-	char	**ValueName)
+	char	**ValueName,
+	Bool	fScript)
 {
 	struct	stat	stbuf;
 	RecordStruct	*ret;
@@ -674,7 +679,7 @@ ENTER_FUNC;
 	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,RecordDir,DB_Reserved) )  !=  NULL  ) {
-			ret = DB_Parse(in,name,gname);
+			ret = DB_Parse(in,name,gname,fScript);
 			if		(  ValueName  !=  NULL  ) {
 				*ValueName = StrDup(in->ValueName);
 			}

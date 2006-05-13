@@ -336,7 +336,7 @@ ENTER_FUNC;
 	level = 1;
 	RecParserInit();
 	DB_ParserInit();
-	if		(  ( rec = DB_Parser(name,NULL,&ValueName) )  !=  NULL  ) {
+	if		(  ( rec = DB_Parser(name,NULL,&ValueName,FALSE) )  !=  NULL  ) {
 		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
 			PutString(ValueName);

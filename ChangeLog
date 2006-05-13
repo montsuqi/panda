@@ -1,3 +1,8 @@
+2006-05-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DBparser.c (DB_Parser): PathやOperationをparseするかどうか
+	フラグを定義した
+
 2006-05-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/DIparser.c (BuildMcpArea): private.indexが不要そうなので消

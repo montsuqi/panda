@@ -198,7 +198,7 @@ ENTER_FUNC;
 					*q = 0;
 				}
 				sprintf(name,"%s/%s.db",p,ComSymbol);
-				if		(  (  db = DB_Parser(name,gname,NULL) )  !=  NULL  ) {
+				if		(  (  db = DB_Parser(name,gname,NULL,TRUE) )  !=  NULL  ) {
 					if		(  g_hash_table_lookup(ld->DB_Table,ComSymbol)  ==  NULL  ) {
 						rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
 						memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);

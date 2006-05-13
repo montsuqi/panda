@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2006 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 #define	MAIN
 /*
@@ -38,6 +38,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"DBparser.h"
+//#include	"dbgroup.h"
 #include	"dirs.h"
 #include	"const.h"
 #include	"enum.h"
@@ -51,7 +52,6 @@ static	Bool	fInsert;
 
 static	int		TextSize;
 static	int		ArraySize;
-static	char	*DB_Name;
 
 static	int		level;
 static	char	*rname[SIZE_RNAME];
@@ -423,7 +423,6 @@ SetDefault(void)
 	ArraySize = SIZE_DEFAULT_ARRAY_SIZE;
 	TextSize = SIZE_DEFAULT_TEXT_SIZE;
 	RecordDir = ".";
-	DB_Name = "";
 }
 
 extern	int
@@ -442,11 +441,11 @@ main(
 		RecParserInit();
 		DB_ParserInit();
 		if		(  fCreate  ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL,NULL) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
 		} else if		( fInsert ) {
-            if		(  ( rec = DB_Parser(fl->name,NULL,NULL) )  !=  NULL  ) {
+            if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
                 MakeInsert(rec);
             }
         }

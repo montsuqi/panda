@@ -42,6 +42,20 @@
 #include	"debug.h"
 
 extern	char	*
+PathWindowName(
+	char	*comp,
+	char	*buff)
+{
+	char	*p;
+
+	strcpy(buff,comp);
+	if		(  ( p = strchr(buff,'.') )  !=  NULL  ) {
+		*p = 0;
+	}
+	return	(buff);
+}
+
+extern	char	*
 PureWindowName(
 	char	*comp,
 	char	*buff)
@@ -84,6 +98,7 @@ SetWindowName(
 	RecordStruct	*rec;
 	char		fname[SIZE_LONGNAME+1]
 		,		wname[SIZE_LONGNAME+1]
+		,		path[SIZE_LONGNAME+1]
 		,		msg[SIZE_BUFF];
 
 ENTER_FUNC;
@@ -96,6 +111,7 @@ ENTER_FUNC;
 			ThisScreen->Records = NewNameHash();
 		}
 		PureWindowName(name,wname);
+		PathWindowName(name,path);
 		if		(  ( rec = (RecordStruct *)g_hash_table_lookup(ThisScreen->Records,wname) )
 				   ==  NULL  ) {
 			sprintf(fname,"%s.rec",wname);
@@ -103,13 +119,13 @@ ENTER_FUNC;
 			g_hash_table_insert(ThisScreen->Records,rec->name,rec);
 		}
 		if		(  ( entry = 
-					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,name) )
+					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,path) )
 				   ==  NULL  ) {
 			if		(  rec  !=  NULL  ) {
 				entry = New(WindowData);
 				entry->PutType = SCREEN_NULL;
 				entry->fNew = FALSE;
-				entry->name = StrDup(name);
+				entry->name = StrDup(path);
 				entry->rec = rec;
 				g_hash_table_insert(ThisScreen->Windows,entry->name,entry);
 			} else {
@@ -130,9 +146,11 @@ GetWindowRecord(
 {
 	WindowData	*win;
 	RecordStruct	*rec;
+	char	path[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,name) )  !=  NULL  ) {
+	PathWindowName(name,path);
+	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,path) )  !=  NULL  ) {
 		rec = win->rec;
 	} else {
 		rec = NULL;
