@@ -10,10 +10,15 @@ handler	"Ruby"	{
 	locale		"utf-8";
 };
 
-bind	"TestDB"	"Ruby";
+bind	"TestDB"		"Ruby";
+bind	"TestSearch"	"Ruby";
 
 home	"=/web";
 
 db	"DBRUBY"	{
 	dbruby;
+};
+
+db	"Oseki"	{
+	memo;
 };

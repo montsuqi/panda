@@ -33,6 +33,12 @@ extern	int		TransactionRedirectEnd(DBG_Struct *dbg);
 
 extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
 
+extern	char	*GetDB_Host(DBG_Struct *dbg);
+extern	char	*GetDB_Port(DBG_Struct *dbg);
+extern	char	*GetDB_DBname(DBG_Struct *dbg);
+extern	char	*GetDB_User(DBG_Struct *dbg);
+extern	char	*GetDB_Pass(DBG_Struct *dbg);
+
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/

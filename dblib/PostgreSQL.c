@@ -303,63 +303,6 @@ NoticeMessage(
 	Warning("%s", message);
 }
 
-char *
-GetDB_Host(
-	DBG_Struct	*dbg)
-{
-	char	*host;
-
-	if		(  DB_Host  !=  NULL  ) {
-		host = DB_Host;
-	} else {
-		if		(  dbg->port  ==  NULL  ) {
-			host = NULL;
-		} else {
-			host = IP_HOST(dbg->port);
-		}
-	}
-	return (host);
-}
-
-char *
-GetDB_Port(
-	DBG_Struct	*dbg)
-{
-	char	*port;
-
-	if		(  DB_Port  !=  NULL  ) {
-		port = DB_Port;
-	} else {
-		if		(  dbg->port  ==  NULL  ) {
-			port = NULL;
-		} else {
-			port = IP_PORT(dbg->port);
-		}
-	}
-	return (port);
-}
-
-char *
-GetDB_DBname(
-	DBG_Struct	*dbg)
-{
-	return (( DB_Name != NULL ) ? DB_Name : dbg->dbname);
-}
-
-char *
-GetDB_User(
-	DBG_Struct	*dbg)
-{
-	return (( DB_User != NULL ) ? DB_User : dbg->user);
-}
-
-char *
-GetDB_Pass(
-	DBG_Struct	*dbg)
-{
-	return (( DB_Pass != NULL ) ? DB_Pass : dbg->pass);
-}
-
 void
 AddConninfo(
 	LargeByteString *conninfo,

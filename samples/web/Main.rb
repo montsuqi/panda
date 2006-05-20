@@ -13,8 +13,8 @@ class Main
     main.list.count = 100
 #    node.start("main.area1");
 #    node.start("main.area2");
-    main.message="ñｸ本"
-    #main.message="aa漢字"
+#    main.message="ñｸ本"
+    main.message="aa漢字"
     node.put_window
   end
   def do_red(node, db)
@@ -41,5 +41,9 @@ class Main
   def do_file(node, db)
     puts("link to File")
     node.put_window("CHANGE","file/file")
+  end
+  def do_search(node, db)
+    puts("link to Search")
+    node.put_window("CHANGE","search")
   end
 end

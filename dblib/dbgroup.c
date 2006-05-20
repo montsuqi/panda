@@ -97,8 +97,8 @@ ENTER_FUNC;
 	}
 	printf("fAll = [%s]\n",fAll?"TRUE":"FALSE");
 #endif
+	ctrl.rc = 0;
 	if		(  dbg  ==  NULL  ) {
-		ctrl.rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
 			ctrl.rc += ExecFunction(dbg,name,fAll);
@@ -109,6 +109,7 @@ ENTER_FUNC;
 			if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
 					   !=  NULL  ) {
 				(*func)(dbg,&ctrl);
+				dbgprintf("ctrl.rc   = [%d]",ctrl.rc);
 				if		(  dbg->dbt  !=  NULL  ) {
 					g_hash_table_foreach(dbg->dbt,(GHFunc)_ExecDBFunc,name);
 				}
@@ -149,14 +150,14 @@ ExecDB_Process(
 	int				i;
 
 ENTER_FUNC;
-#ifdef	DEBUG	
-	printf("func = [%s] %s\n",ctrl->func,(rec == NULL)?"NULL":"rec");
-#endif
+	dbgprintf("func = [%s] %s",ctrl->func,(rec == NULL)?"NULL":"rec");
 	if		(  rec  ==  NULL  ) { 
 		ctrl->rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
 			ctrl->rc += ExecFunction(dbg,ctrl->func,FALSE);
+			dbgprintf("dbg->name = [%s]",dbg->name);
+			dbgprintf("ctrl->rc  = [%d]",ctrl->rc);
 		}
 	} else {
 		dbg = rec->opt.db->dbg;
@@ -168,6 +169,8 @@ ENTER_FUNC;
 			}
 		} else {
 			(*func)(dbg,ctrl,rec,args);
+			dbgprintf("dbg->name = [%s]",dbg->name);
+			dbgprintf("ctrl->rc  = [%d]",ctrl->rc);
 		}
 	}
 LEAVE_FUNC;
@@ -289,5 +292,64 @@ CloseDB(
 	DBG_Struct *dbg)
 {
 	return ExecDBG_Operation(dbg,"DBDISCONNECT");
+}
+
+/*	utility	*/
+
+extern	char	*
+GetDB_Host(
+	DBG_Struct	*dbg)
+{
+	char	*host;
+
+	if		(  DB_Host  !=  NULL  ) {
+		host = DB_Host;
+	} else {
+		if		(  dbg->port  ==  NULL  ) {
+			host = NULL;
+		} else {
+			host = IP_HOST(dbg->port);
+		}
+	}
+	return (host);
+}
+
+extern	char	*
+GetDB_Port(
+	DBG_Struct	*dbg)
+{
+	char	*port;
+
+	if		(  DB_Port  !=  NULL  ) {
+		port = DB_Port;
+	} else {
+		if		(  dbg->port  ==  NULL  ) {
+			port = NULL;
+		} else {
+			port = IP_PORT(dbg->port);
+		}
+	}
+	return (port);
+}
+
+extern	char	*
+GetDB_DBname(
+	DBG_Struct	*dbg)
+{
+	return (( DB_Name != NULL ) ? DB_Name : dbg->dbname);
+}
+
+extern	char	*
+GetDB_User(
+	DBG_Struct	*dbg)
+{
+	return (( DB_User != NULL ) ? DB_User : dbg->user);
+}
+
+extern	char	*
+GetDB_Pass(
+	DBG_Struct	*dbg)
+{
+	return (( DB_Pass != NULL ) ? DB_Pass : dbg->pass);
 }
 

@@ -1,3 +1,16 @@
+2006-05-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c (ExecFunction): ハンドラの初期化を直した
+
+2006-05-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/Oseki.c: 全文検索エンジンOseki/Search用のハンドラを正しく
+	動くようにした
+
+2006-05-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c (GetDB_Host): PostgreSQL.cからここに(汎用なので)
+
 2006-05-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/DBparser.c (DB_Parser): PathやOperationをparseするかどうか

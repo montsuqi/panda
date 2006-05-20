@@ -946,7 +946,6 @@ _DBOPEN(
 		,	pError[2]
 		,	pDBR[2]
 		,	pDBW[2];
-	int		rc;
 	DBRubyConn	*conn;
 
 ENTER_FUNC;
@@ -996,10 +995,8 @@ ENTER_FUNC;
 	conn->rhash = NewNameHash();
 	dbg->conn = (void *)conn;
 	dbg->fConnect = CONNECT;
-	rc = MCP_OK;
-
 	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
+		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
 }
@@ -1161,8 +1158,8 @@ ENTER_FUNC;
 			rc = FALSE;
 		} else {
 			rc = TRUE;
-				ExecRuby(dbg,NULL,fname,rec->name,NULL,NULL);
 			if		(  strcmp(fname,"DBOPEN")  !=  0  ) {
+				ExecRuby(dbg,NULL,fname,rec->name,NULL,NULL);
 			}
 		}
 	}

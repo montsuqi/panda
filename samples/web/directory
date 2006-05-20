@@ -29,6 +29,14 @@ db_group	"BLOB"	{
 	password	"ogochan";
 };
 
+db_group	"Oseki"	{
+	type		"Oseki";
+	port		"/tmp/oseki";
+	name		"test";
+	user		"ogochan";
+	password	"ogochan";
+};
+
 blob	{
 	space	"=/web/blob";
 	port	"/tmp/web.blob";
