@@ -9,6 +9,7 @@
 .red { background-color: #FF0000; }
 .blue { background-color: #0000FF; }
 .yellow { background-color: #FFFF00; }
+.message { background-color: #C0C0C0; forground-color: #000000 }
 
 -->
 </style>
@@ -50,8 +51,8 @@
       </count>
     </select>
   </div>
-  <div id="area5" class="blue">
-    <fixed name="main.message" type="raw">
+  <div id="area5" class="message">
+    <fixed name="main.message" type="span">
   </div>
 </div>
 

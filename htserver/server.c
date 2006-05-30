@@ -177,6 +177,11 @@ ENTER_FUNC;
 				if (value == NULL) {
 					fprintf(stderr, "no ValueStruct: %s.%s\n", window, vname);
 				} else {
+#ifdef	DEBUG
+					printf("htserver -> mon\n");
+					DumpValueStruct(value);
+					printf("--\n");
+#endif
 					size = NativeSaveSize(value,TRUE);
 					LBS_ReserveSize(lbs,size,FALSE);
 					NativeSaveValue(LBS_Body(lbs),value,TRUE);
@@ -341,7 +346,7 @@ ENTER_FUNC;
 		timeout.tv_usec = 0;
 		select(sock+1,&ready,NULL,NULL,&timeout);
 		if		(  FD_ISSET(sock,&ready)  ) {
-            if (RecvMessage(sock, &fd, &htc, sizeof(HTC_Node)) == -1) {
+            if		(  RecvMessage(sock, &fd, &htc, sizeof(HTC_Node))  <=  0  )	{
                 Error("recvmsg(2) failed");
                 exit(1);
             }
@@ -368,10 +373,12 @@ ENTER_FUNC;
 				if		(  scr->status  !=  APL_SESSION_NULL  ) {
 					WriteClient(fp,scr);
 				}
-			}
+			} else
+				goto badio;
 			CloseNet(fp);
 		}
 	}	while	(  FD_ISSET(sock,&ready)  );
+  badio:
 	close(sock);
 LEAVE_FUNC;
 }
@@ -529,22 +536,26 @@ ENTER_FUNC;
 			Error("INET Domain Accept");
 		}
 		fp = SocketToNet(fd);
-		klass = RecvPacketClass(fp);
+		klass = RecvPacketClass(fp);	ON_IO_ERROR(fp,badio);
 		switch	(klass) {
 		  case	GL_Connect:
 			if		(  !NewSession(fp)  )	fExit = TRUE;
 			break;
 		  case	GL_Session:
-			RecvString(fp,buff);
+			RecvString(fp,buff);			ON_IO_ERROR(fp,badio);
 			dbgprintf("recv trid [%s]\n",buff);
 			DecodeTRID(&ses,&count,buff);
 			if		(  (  htc = g_int_hash_table_lookup(SesHash,ses) )  !=  NULL  ) {
 				htc->count = count;
 				if		(  SendMessage(htc->sock,fd,htc,sizeof(HTC_Node))  <  0  ) {
+#if	0
 					EncodeTRID(buff,0,0);
 					SendPacketClass(fp,GL_Session);
 					SendString(fp,buff);
 					dbgprintf("send trid [%s]\n",buff);
+#else
+					SendPacketClass(fp,GL_E_Session);
+#endif
 					xfree(htc);
 					g_hash_table_remove(SesHash,(void *)ses);
 				}
@@ -554,6 +565,7 @@ ENTER_FUNC;
 			fExit = TRUE;
 			break;
 		}
+	  badio:
 		CloseNet(fp);
 	}
 	DestroyPort(port);

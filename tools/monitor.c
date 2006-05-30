@@ -57,6 +57,7 @@ static	char	*Log;
 static	Bool	fQ;
 static	Bool	fRedirector;
 static	Bool	fRestart;
+static	Bool	fTimer;
 static	int		interval;
 static	int		wfcinterval;
 static	int		MaxTran;
@@ -159,7 +160,7 @@ StartRedirector(
 
 dbgmsg(">StartRedirector");
 	proc = New(Process);
-	argv = (char **)xmalloc(sizeof(char *) * 12);
+	argv = (char **)xmalloc(sizeof(char *) * 13);
 	proc->argv = argv;
 	proc->type = PTYPE_RED;
 	argc = 0;
@@ -183,6 +184,9 @@ dbgmsg(">StartRedirector");
 		argv[argc ++] = "-record";
 		argv[argc ++] = RecDir;
 	}
+	if		(  fTimer  ) {
+		argv[argc ++] = "-timer";
+	}		
 	if		(  fNoSumCheck  ) {
 		argv[argc ++] = "-nosumcheck";
 	}
@@ -203,6 +207,7 @@ HerePort(
 {
 	Bool	ret;
 
+ENTER_FUNC;
 	if		(  port  ==  NULL  ) {
 		ret = FALSE;
 	} else {
@@ -217,6 +222,7 @@ HerePort(
 			ret = FALSE;
 		}
 	}
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -263,7 +269,7 @@ _StartAps(
 	Process	*proc;
 	int		n;
 
-dbgmsg(">_StartAps");
+ENTER_FUNC;
 	if		(  ThisEnv->mlevel  !=  MULTI_APS  ) {
 		ld->nports = 1;
 	}
@@ -271,7 +277,7 @@ dbgmsg(">_StartAps");
 		if		(	(  ld->ports[n]  ==  NULL  )
 				||	(  HerePort(ld->ports[n])  ) )	{
 			proc = New(Process);
-			argv = (char **)xmalloc(sizeof(char *) * 20);
+			argv = (char **)xmalloc(sizeof(char *) * 21);
 			proc->argv = argv;
 			proc->type = PTYPE_APS;
 			argc = 0;
@@ -297,6 +303,9 @@ dbgmsg(">_StartAps");
 				argv[argc ++] = "-record";
 				argv[argc ++] = RecDir;
 			}
+			if		(  fTimer  ) {
+				argv[argc ++] = "-timer";
+			}		
 			argv[argc ++] = ld->name;
 			argv[argc ++] = "-connect";
 			argv[argc ++] = "-maxtran";
@@ -316,7 +325,7 @@ dbgmsg(">_StartAps");
 			StartProcess(proc);
 		}
 	}
-dbgmsg("<_StartAps");
+LEAVE_FUNC;
 }
 
 static	void
@@ -324,11 +333,11 @@ StartApss(void)
 {
 	int		i;
 
-dbgmsg(">StartApss");
+ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 		_StartAps(ThisEnv->ld[i]);
 	}
-dbgmsg("<StartApss");
+LEAVE_FUNC;
 }
 
 static	void
@@ -340,7 +349,7 @@ StartWfc(void)
 	int		back;
 	int		i;
 
-dbgmsg(">StartWfc");
+ENTER_FUNC;
 	if		(  HerePort(ThisEnv->WfcApsPort)  ) {
 		back = 0;
 		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
@@ -348,7 +357,7 @@ dbgmsg(">StartWfc");
 		}
 		proc = New(Process);
 		proc->type = PTYPE_WFC;
-		argv = (char **)xmalloc(sizeof(char *) * 19);
+		argv = (char **)xmalloc(sizeof(char *) * 20);
 		proc->argv = argv;
 		argc = 0;
 		if		(  WfcPath  !=  NULL  ) {
@@ -359,6 +368,9 @@ dbgmsg(">StartWfc");
 		} else {
 			argv[argc ++] = SERVER_DIR "/wfc";
 		}
+		if		(  fTimer  ) {
+			argv[argc ++] = "-timer";
+		}		
 		argv[argc ++] = "-back";
 		argv[argc ++] = IntStrDup(back+1);
 		argv[argc ++] = "-port";
@@ -390,21 +402,21 @@ dbgmsg(">StartWfc");
 		StartProcess(proc);
 		sleep(wfcinterval);
 	}
-dbgmsg("<StartWfc");
+LEAVE_FUNC;
 }
 
 
 static	void
 StartServers(void)
 {
-dbgmsg(">StartServers");
+ENTER_FUNC;
 	ProcessTable = NewIntHash();
 	if		(  fRedirector  ) {
 		StartRedirectors();
 	}
 	StartWfc();
 	StartApss();
-dbgmsg("<StartServers");
+LEAVE_FUNC;
 }
 
 static	void
@@ -564,6 +576,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
 		"-?を指定する"				 					},
+	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
+		"時間計測を行う"								},
 	{	"log",		STRING,		TRUE,	(void*)&Log,
 		"実行ログを取るファイル名を指定する"			},
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
@@ -596,6 +610,7 @@ SetDefault(void)
 	fNoSumCheck = FALSE;
 	fRestart = FALSE;
 	fQ = FALSE;
+	fTimer = FALSE;
 }
 
 extern	int

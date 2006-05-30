@@ -75,7 +75,6 @@ typedef	struct {
 static	Port		*RedirectPort;
 static  pthread_mutex_t redlock;
 
-
 static	void
 FreeVeryfyData(
 	VeryfyData	*vdata)

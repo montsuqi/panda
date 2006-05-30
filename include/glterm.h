@@ -59,6 +59,7 @@
 #define	GL_E_VERSION				(PacketClass)0xF1
 #define	GL_E_AUTH					(PacketClass)0xF2
 #define	GL_E_APPL					(PacketClass)0xF3
+#define	GL_E_Session				(PacketClass)0xF4
 
 
 #endif

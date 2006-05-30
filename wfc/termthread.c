@@ -373,6 +373,9 @@ TermThread(
 	LD_Node	*ld;
 	TermNode	*term;
 	SessionData	*data;
+	struct	timeval	tv;
+	long	ever
+		,	now;
 
 ENTER_FUNC;
 	term = New(TermNode);
@@ -384,6 +387,8 @@ ENTER_FUNC;
 			data->term = term;
 			data->retry = 0;
 			data->fAbort = FALSE;
+			gettimeofday(&tv,NULL);
+			ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
 			if		(  !fLoopBack  ) {
 				CoreEnqueue(data);
 				dbgmsg("process !!");
@@ -391,6 +396,12 @@ ENTER_FUNC;
 				EnQueue(term->que,data);
 			}
 			data = DeQueue(term->que);
+			if		(  fTimer  ) {
+				gettimeofday(&tv,NULL);
+				now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+				printf("wfc %s@%s:%s process time %6ld(ms)\n",
+					   data->hdr->user,data->hdr->term,data->hdr->window,(now - ever));
+			}
 			if		(  data->fAbort  )	break;
 			if		(  SendTerminal(term->fp,data)  ) {
 				ld = ReadTerminal(term->fp,data);

@@ -13,8 +13,7 @@ class Main
     main.list.count = 100
 #    node.start("main.area1");
 #    node.start("main.area2");
-#    main.message="ñｸ本"
-    main.message="aa漢字"
+    main.message="漢本"
     node.put_window
   end
   def do_red(node, db)
@@ -36,6 +35,7 @@ class Main
     node.put_window
   end
   def do_next(node, db)
+    sleep(10)
     node.put_window("CHANGE","next")
   end
   def do_file(node, db)

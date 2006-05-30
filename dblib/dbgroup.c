@@ -18,6 +18,7 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#define	TIMER
 /*
 #define	DEBUG
 #define	TRACE
@@ -34,6 +35,7 @@
 #include	<fcntl.h>
 #include	<unistd.h>
 #include	<glib.h>
+#include	<sys/time.h>
 
 #include	"defaults.h"
 #include	"types.h"
@@ -148,11 +150,20 @@ ExecDB_Process(
 	DB_FUNC	func;
 	DBG_Struct		*dbg;
 	int				i;
+#ifdef	TIMER
+	struct	timeval	tv;
+	long	ever
+		,	now;
+#endif
 
 ENTER_FUNC;
 	dbgprintf("func = [%s] %s",ctrl->func,(rec == NULL)?"NULL":"rec");
+	ctrl->rc = 0;
+#ifdef	TIMER
+	gettimeofday(&tv,NULL);
+	ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+#endif
 	if		(  rec  ==  NULL  ) { 
-		ctrl->rc = 0;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
 			ctrl->rc += ExecFunction(dbg,ctrl->func,FALSE);
@@ -173,6 +184,17 @@ ENTER_FUNC;
 			dbgprintf("ctrl->rc  = [%d]",ctrl->rc);
 		}
 	}
+#ifdef	TIMER
+	gettimeofday(&tv,NULL);
+	now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+	if		(  rec  !=  NULL  ) {
+		printf("DB  %s:%s process time %6ld(ms)\n",
+			   ctrl->func,rec->name,(now - ever));
+	} else {
+		printf("DB  %s    process time %6ld(ms)\n",
+			   ctrl->func,(now - ever));
+	}
+#endif
 LEAVE_FUNC;
 }
 

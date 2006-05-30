@@ -36,6 +36,7 @@
 #include	<dlfcn.h>
 #include	<glib.h>
 #include	<unistd.h>
+#include	<sys/time.h>
 
 #include	"defaults.h"
 #include	"types.h"
@@ -49,6 +50,7 @@
 #include	"dbgroup.h"
 #include	"driver.h"
 #include	"handler.h"
+#include	"aps_main.h"
 #include	"apsio.h"
 #include	"dblib.h"
 #include	"glterm.h"
@@ -464,6 +466,9 @@ ExecuteProcess(
 	WindowBind	*bind;
 	MessageHandler	*handler;
 	char		compo[SIZE_LONGNAME+1];
+	struct	timeval	tv;
+	long	ever
+		,	now;
 
 ENTER_FUNC;
 	PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
@@ -473,9 +478,17 @@ ENTER_FUNC;
 		handler = bind->handler;
 		if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
 			CallBefore(bind,node);
+			gettimeofday(&tv,NULL);
+			ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
 			if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
 				MessageLog("application process illegular execution");
 				exit(2);
+			}
+			if		(  fTimer  ) {
+				gettimeofday(&tv,NULL);
+				now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+				printf("aps %s@%s:%s process time %6ld(ms)\n",
+					   node->user,node->term,compo,(now - ever));
 			}
 			CallAfter(node);
 		}

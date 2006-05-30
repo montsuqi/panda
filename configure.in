@@ -498,6 +498,21 @@ AC_SUBST(GLIB_LIBS)
 AC_SUBST(GLIB_CFLAGS)
 
 dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the GD modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(GD_CONFIG,gdlib-config,no)
+if test x$GLIB_CONFIG = xno; then
+  AC_MSG_WARN(Couldn't find gdlib-config)
+ else
+  GDLIB_LDFLAGS=`gdlib-config --ldflags`
+  GDLIB_CFLAGS=`gdlib-config --cflags`
+  AC_DEFINE(HAVE_GD,1,"")
+fi
+AC_SUBST(GDLIB_LDFLAGS)
+AC_SUBST(GDLIB_CFLAGS)
+
+dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the XML2 modules.
 dnl ***************************************************************************
 

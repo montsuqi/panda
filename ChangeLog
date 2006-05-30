@@ -1,3 +1,19 @@
+2006-05-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/aps_main.c: 処理時間計測
+
+2006-05-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Makefile.am (defaults.h): デフォルトのプラグインロードパスを変更
+	した(debの生成に合わせやすくした)
+
+2006-05-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/makefont.c: フォント代替画像を生成するプログラムを作っ
+	た
+
+	* htserver/exec.c (EmitChar): 代替画像の位置を文字の高さに合わせた
+
 2006-05-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/dbgroup.c (ExecFunction): ハンドラの初期化を直した

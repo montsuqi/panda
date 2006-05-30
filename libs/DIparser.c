@@ -501,28 +501,26 @@ ENTER_FUNC;
 						if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 							*q = 0;
 						}
-
 						sprintf(name,"%s/%s.bd",p,ComSymbol);
-
 						if ( parse_ld ) {
 							bd = BD_Parser(name);
 							if		(  bd  !=  NULL  ) {
-									if		(  g_hash_table_lookup(ThisEnv->BD_Table,ComSymbol)  ==  NULL  ) {
-											btmp = (BD_Struct **)xmalloc(sizeof(BD_Struct *)
-																		 * ( ThisEnv->cBD + 1));
-											if		(  ThisEnv->cBD  >  0  ) {
-													memcpy(btmp,ThisEnv->bd,sizeof(BD_Struct *)
-														   * ThisEnv->cBD);
-													xfree(ThisEnv->bd);
-											}
-											ThisEnv->bd = btmp;
-											ThisEnv->bd[ThisEnv->cBD] = bd;
-											ThisEnv->cBD ++;
-											g_hash_table_insert(ThisEnv->BD_Table,
-																StrDup(ComSymbol),bd);
-									} else {
-											ParError("same bd appier");
+								if		(  g_hash_table_lookup(ThisEnv->BD_Table,ComSymbol)  ==  NULL  ) {
+									btmp = (BD_Struct **)xmalloc(sizeof(BD_Struct *)
+																 * ( ThisEnv->cBD + 1));
+									if		(  ThisEnv->cBD  >  0  ) {
+										memcpy(btmp,ThisEnv->bd,sizeof(BD_Struct *)
+											   * ThisEnv->cBD);
+										xfree(ThisEnv->bd);
 									}
+									ThisEnv->bd = btmp;
+									ThisEnv->bd[ThisEnv->cBD] = bd;
+									ThisEnv->cBD ++;
+									g_hash_table_insert(ThisEnv->BD_Table,
+														StrDup(ComSymbol),bd);
+								} else {
+									ParError("same bd appier");
+								}
 							}
 							p = q + 1;
 						}

@@ -19,6 +19,6 @@ db	"DBRUBY"	{
 	dbruby;
 };
 
-db	"Oseki"	{
-	memo;
-};
+#db	"Oseki"	{
+#	memo;
+#};

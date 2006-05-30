@@ -475,8 +475,10 @@ EmitChar(
 		code[1] |= ( 0x3F & p[2] );
 		if		(	(  code[0]  >=  0xE0  )
 				&&	(  code[0]  <   0xF8  ) ) {
-			sprintf(format,"<img src=\"%s\">",FontTemplate);
-			sprintf(buff,format,(int)code[0],(int)code[1]);
+			sprintf(format,
+					"<img src=\"%s\" alt=\"%%02X%%02X\""
+					" style=\"vertical-align:text-bottom\">",FontTemplate);
+			sprintf(buff,format,(int)code[0],(int)code[1],(int)code[0],(int)code[1]);
 			LBS_EmitString(lbs,buff);
 		} else {
 			LBS_EmitChar(lbs,p[0]);

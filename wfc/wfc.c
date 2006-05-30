@@ -291,28 +291,30 @@ StopSystem(void)
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ŝ|ň??"	 								},
+		"waiting port name"	 							},
 	{	"apsport",	STRING,		TRUE,	(void*)&ApsPortNumber,
-		"APS³?āŝ|ň"								},
+		"APS port name"									},
 	{	"control",	STRING,		TRUE,	(void*)&ControlPortNumber,
-		")??āŝ|ň"								},
+		"control port name"								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"³?āŭť|Ď?" 							},
+		"connection waiting queue number"				},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"??Ďř|ŹŇţŬůňŪ"		 				},
+		"base directory"			 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"Ň|?Ī???ŇţŬůňŪ"	 				},
+		"record directory"			 					},
 	{	"lddir",	STRING,		TRUE,	(void*)&D_Dir,
-		"LDĪ???ŇţŬůňŪ"		 				},
+		"LD directory"				 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ŇţŬůňŪŕšŤū"	 						},
+		"environment file name"							},
 
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
-		"ňũųŶůŷŧųĲ???Ĺī?Ď???"		},
+		"maximun retry count"							},
 
 	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
 		"loopback test"									},
+	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
+		"timer"											},
 
 	{	NULL,		0,			TRUE,	NULL		 	}
 };

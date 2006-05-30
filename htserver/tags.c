@@ -748,9 +748,9 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,
 					   "<head>\n<meta http-equiv=\"Pragma\" content=\"no-cache\">\n");
 		EmitCode(htc,OPC_FLJS);
-		LBS_EmitString(htc->code,"</head>\n");
 		fHead = TRUE;
 	}
+	LBS_EmitString(htc->code,"</head>\n");
 	LBS_EmitString(htc->code,"<body");
 	EmitAttribute(htc,tag,"text");
 	EmitAttribute(htc,tag,"link");
@@ -957,8 +957,11 @@ ENTER_FUNC;
 		if ((face = HTCGetProp(tag, "face", 0)) == NULL) {
 			face = event;
 		}
-		if (htc->DefaultEvent == NULL)
-			//htc->DefaultEvent = event;
+#if	0
+		if (htc->DefaultEvent == NULL) {
+			htc->DefaultEvent = event;
+		}
+#endif
 #ifdef	USE_IE5
 		if (event != NULL) {
 			g_hash_table_insert(htc->Trans,StrDup(face),StrDup(event));

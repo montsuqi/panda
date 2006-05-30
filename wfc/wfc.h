@@ -44,5 +44,6 @@ GLOBAL	Bool		fShutdown;
 GLOBAL	int			MaxRetry;
 GLOBAL	BLOB_State	*BlobState;
 GLOBAL	Bool		fLoopBack;
+GLOBAL	Bool		fTimer;
 
 #endif

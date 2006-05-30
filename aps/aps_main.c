@@ -268,6 +268,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
 		"実行時間に足す処理時間(for debug)"				},
+	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
+		"時間計測を行う"								},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"dbredirectorの起動をチェックしない"			},
@@ -306,6 +308,8 @@ ENTER_FUNC;
 
 	MaxRetry = 3;
 	RetryInterval = 5;
+
+	fTimer = FALSE;
 LEAVE_FUNC;
 }
 

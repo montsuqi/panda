@@ -51,7 +51,7 @@ ENTER_FUNC;
 	SetValueString(item,"white",NULL);
 
 	item = GetItemLongName(mainc->value,"message");
-	SetValueString(item,"",NULL);
+	SetValueString(item,"漢本\xEE\xC0\xC0漢本",NULL);
 
 	item = GetItemLongName(mainc->value,"user");
 	SetValueString(item,"user",NULL);

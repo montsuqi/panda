@@ -103,7 +103,7 @@ SetDefault(void)
 	fJavaScript = TRUE;
 	fDebug = FALSE;
 	CommandLine = NULL;
-	FontTemplate = "font/%02X%02X";
+	FontTemplate = "font/%02X%02X.png";
 }
 
 static	ValueStruct	*

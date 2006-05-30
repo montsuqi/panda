@@ -49,6 +49,7 @@
 #include	"directory.h"
 #include	"handler.h"
 #include	"option.h"
+#include	"aps_main.h"
 #include	"message.h"
 #include	"debug.h"
 
