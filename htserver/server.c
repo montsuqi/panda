@@ -42,6 +42,7 @@
 #include	<unistd.h>
 #include	<errno.h>
 #include	<glib.h>
+#include	<pthread.h>
 
 #include	"types.h"
 #include	"enum.h"
@@ -52,6 +53,7 @@
 #include	"comm.h"
 #include	"comms.h"
 #include	"authstub.h"
+#include	"queue.h"
 #include	"applications.h"
 #include	"driver.h"
 #include	"htserver.h"
@@ -64,23 +66,43 @@
 
 static	GHashTable	*SesHash;
 static	int			cSession;
+static	int			cServer;
+
+typedef	struct {
+	int			ses;
+	ScreenData	*scr;
+	Queue		*que;
+}	SessionParameter;
 
 typedef	struct	{
 	int		sock;
 	int		ses;
 	int		count;
 	int		pid;
+	pthread_t	thr;
+	Queue		*que;
 }	HTC_Node;
 
 static	void
-FinishSession(
+_FinishSession(
 	ScreenData	*scr)
 {
 	char	msg[128];
 ENTER_FUNC;
 	sprintf(msg,"[%s] session end",scr->user);
 	MessageLog(msg);
+	cServer --;
 LEAVE_FUNC;
+}
+
+static	void
+FinishSession(
+	ScreenData	*scr)
+{
+ENTER_FUNC;
+	_FinishSession(scr);
+LEAVE_FUNC;
+	exit(0);
 }
 
 static	void
@@ -124,6 +146,9 @@ SendWindowName(
 				SendPacketClass(fp,GL_WindowName);
 				SendString(fp,win->name);
 				break;
+			  case	SCREEN_END_SESSION:
+				SendPacketClass(fp,GL_RedirectName);
+				SendString(fp,win->name);
 			  default:
 				break;
 			}
@@ -133,6 +158,7 @@ SendWindowName(
 ENTER_FUNC;
 	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,NULL);
 	SendPacketClass(fp,GL_END);
+	if		(  !CheckNetFile(fp)  )		FinishSession(scr);
 LEAVE_FUNC;
 }
 
@@ -158,16 +184,22 @@ ENTER_FUNC;
 	SendWindowName(fp,scr);
     lbs = NewLBS();
 	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_GetData  ) {
+		ON_IO_ERROR(fp,badio);
 		RecvString(fp,buff);
+		ON_IO_ERROR(fp,badio);
+#ifdef	DEBUG
 		dbgprintf("name = [%s]",buff);
-		fClear = RecvBool(fp);
+#endif
+		fClear = RecvBool(fp);		ON_IO_ERROR(fp,badio);
 		if		(  *buff  !=  0  ) {
 			DecodeName(&wname,&vname,buff);
 			LBS_EmitStart(lbs);
 			PureWindowName(wname,window);
+#ifdef	DEBUG
 			dbgprintf("window = [%s]",window);
 			dbgprintf("wname  = [%s]",wname);
 			dbgprintf("vname  = [%s]",vname);
+#endif
 			if		(  ( rec = g_hash_table_lookup(scr->Records,window) )  !=  NULL  ) {
 				if		(  *vname  ==  0  ) {
 					value = rec->value;
@@ -189,7 +221,7 @@ ENTER_FUNC;
 						if		(  ( fpf = Fopen(BlobCacheFileName(value),"r") )
 								   !=  NULL  ) {
 							dbgmsg("blob body");
-							SendLBS(fp,lbs);
+							SendLBS(fp,lbs);	ON_IO_ERROR(fp,badio);
 							fstat(fileno(fpf),&sb);
 							LBS_ReserveSize(lbs,sb.st_size,FALSE);
 							fread(LBS_Body(lbs),LBS_Size(lbs),1,fpf);
@@ -203,9 +235,10 @@ ENTER_FUNC;
 			} else {
 				fprintf(stderr, "window [%s] not found\n", window);
 			}
-			SendLBS(fp, lbs);
+			SendLBS(fp, lbs);	ON_IO_ERROR(fp,badio);
 		}
 	}
+  badio:
     FreeLBS(lbs);
 LEAVE_FUNC;
 }
@@ -231,7 +264,8 @@ RecvScreenData(
 ENTER_FUNC;
     lbs = NewLBS();
 	while	(  ( klass = RecvPacketClass(fp) )  ==  GL_ScreenData  ) {
-		RecvString(fp,buff);
+		ON_IO_ERROR(fp,badio);
+		RecvString(fp,buff);	ON_IO_ERROR(fp,badio);
 		dbgprintf("name = [%s]",buff);
         DecodeName(&wname, &vname, buff);
         LBS_EmitStart(lbs);
@@ -286,7 +320,111 @@ ENTER_FUNC;
 			}
         }
     }
+  badio:
     FreeLBS(lbs);
+	if		(  !CheckNetFile(fp)  )		FinishSession(scr);
+LEAVE_FUNC;
+}
+
+static	Bool
+ExecSingle(
+	NETFILE	*fp,
+	ScreenData	*scr,
+	HTC_Node	*htc)
+{
+	char	trid[SIZE_SESID+1];
+	PacketClass	klass;
+	char	buff[SIZE_BUFF];
+	Bool	fCont;
+
+ENTER_FUNC;
+	fCont = TRUE;
+	EncodeTRID(trid,htc->ses,0);
+	SendPacketClass(fp,GL_Session);		ON_IO_ERROR(fp,badio);
+	SendString(fp,trid);				ON_IO_ERROR(fp,badio);
+	switch	(klass = RecvPacketClass(fp)) {
+	  case	GL_Event:
+		RecvString(fp,buff);	/*	window	*/
+		ON_IO_ERROR(fp,badio);
+		strncpy(scr->window,buff,SIZE_NAME);
+		RecvString(fp,buff);	/*	widget	*/
+		ON_IO_ERROR(fp,badio);
+		strncpy(scr->widget,buff,SIZE_NAME);
+		RecvString(fp,buff);	/*	event	*/
+		ON_IO_ERROR(fp,badio);
+		strncpy(scr->event,buff,SIZE_EVENT);
+		dbgprintf("window = [%s]\n",scr->window);
+		dbgprintf("event  = [%s]\n",scr->event);
+		dbgprintf("user   = [%s]\n",scr->user);
+		dbgprintf("cmd    = [%s]\n",scr->cmd);
+		RecvScreenData(fp,scr);				ON_IO_ERROR(fp,badio);
+		ApplicationsCall(APL_SESSION_GET,scr);
+		break;
+	  case	GL_ScreenData:
+		/*	fatal error	*/
+		scr->status = APL_SESSION_RESEND;
+		break;
+	  case	GL_END:
+		scr->status = APL_SESSION_NULL;
+		break;
+	  default:
+		Warning("invalid class = %X\n",klass);
+		scr->status = APL_SESSION_NULL;
+		break;
+	}
+	while	(  scr->status  ==  APL_SESSION_LINK  ) {
+		ApplicationsCall(scr->status,scr);
+	}
+	dbgprintf("scr->status = %d",scr->status);
+	switch	(scr->status) {
+	  case	APL_SESSION_NULL:
+		fCont = FALSE;
+		break;
+	  case	APL_SESSION_RESEND:
+		fCont = TRUE;
+		break;
+	  case	APL_SESSION_END:
+		WriteClient(fp,scr);
+		fCont = FALSE;
+		break;
+	  default:
+		WriteClient(fp,scr);
+		break;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(fCont);
+}
+
+static	void
+SesThread(
+	SessionParameter	*ses)
+{
+	ScreenData	*scr = ses->scr;
+	NETFILE	*fp;
+	Bool	fCont;
+	HTC_Node	*htc;
+
+ENTER_FUNC;
+	if		(  (  htc = g_int_hash_table_lookup(SesHash,ses->ses) )  !=  NULL  ) {
+		htc->ses = ses->ses;
+		do {
+			if		(  ( fp = (NETFILE *)DeQueueTime(ses->que,Expire*1000) )  !=  NULL  ) {
+				dbgmsg("*");
+				fCont = ExecSingle(fp,scr,htc);
+				dbgmsg("*");
+				CloseNet(fp);
+			} else {
+				dbgmsg("*");
+				fCont = FALSE;
+			}
+		}	while	(  fCont  );
+		FreeQueue(ses->que);
+		_FinishSession(scr);
+		g_hash_table_remove(SesHash,(void *)ses->ses);
+		xfree(htc);
+		xfree(ses);
+	}
 LEAVE_FUNC;
 }
 
@@ -330,13 +468,10 @@ SesServer(
 {
 	int		fd;
 	NETFILE	*fp;
-	char	buff[SIZE_BUFF];
-	char	trid[SIZE_SESID+1];
-	HTC_Node	htc;
 	fd_set		ready;
 	struct	timeval	timeout;
-	int		sts;
-	PacketClass	klass;
+	Bool	fCont;
+	HTC_Node	htc;
 
 ENTER_FUNC;
 	do {
@@ -346,63 +481,33 @@ ENTER_FUNC;
 		timeout.tv_usec = 0;
 		select(sock+1,&ready,NULL,NULL,&timeout);
 		if		(  FD_ISSET(sock,&ready)  ) {
-            if		(  RecvMessage(sock, &fd, &htc, sizeof(HTC_Node))  <=  0  )	{
+			if		(  RecvMessage(sock, &fd, &htc, sizeof(HTC_Node))  <=  0  )	{
                 Error("recvmsg(2) failed");
                 exit(1);
             }
 			dbgmsg("session");
             fp = SocketToNet(fd);
-			EncodeTRID(trid,htc.ses,0);
-			SendPacketClass(fp,GL_Session);
-			SendString(fp,trid);
-			if		(  ( klass = RecvPacketClass(fp) )  ==  GL_Event  ) {
-				RecvString(fp,buff);	/*	window	*/
-				strncpy(scr->window,buff,SIZE_NAME);
-				RecvString(fp,buff);	/*	widget	*/
-				strncpy(scr->widget,buff,SIZE_NAME);
-				RecvString(fp,buff);	/*	widget	*/
-				strncpy(scr->event,buff,SIZE_EVENT);
-				sts = APL_SESSION_GET;
-				RecvScreenData(fp,scr);
-				dbgprintf("user = [%s]\n",scr->user);
-				dbgprintf("cmd  = [%s]\n",scr->cmd);
-				ApplicationsCall(sts,scr);
-				while	(  scr->status  ==  APL_SESSION_LINK  ) {
-					ApplicationsCall(scr->status,scr);
-				}
-				if		(  scr->status  !=  APL_SESSION_NULL  ) {
-					WriteClient(fp,scr);
-				}
-			} else
-				goto badio;
+			fCont = ExecSingle(fp,scr,&htc);
 			CloseNet(fp);
+		} else {
+			fCont = FALSE;
 		}
-	}	while	(  FD_ISSET(sock,&ready)  );
-  badio:
+	}	while	(  fCont  );
 	close(sock);
 LEAVE_FUNC;
 }
 
 static	void
 ChildProcess(
-	NETFILE	*fp,
-	int		sock,
-	int		sesid,
-	char	*user,
-	char	*cmd)
+	NETFILE				*fp,
+	int					sock,
+	SessionParameter	*ses)
 {
-	ScreenData	*scr;
+	int		sesid = ses->ses;
+	ScreenData	*scr = ses->scr;
 	char	trid[SIZE_SESID+1];
 
 ENTER_FUNC;
-	scr = InitSession();
-	strcpy(scr->cmd,cmd);
-	strcpy(scr->user,user);
-#ifdef	DEBUG
-	printf("user = [%s]\n",user);
-	printf("cmd  = [%s]\n",cmd);
-#endif
-	scr->Windows = NULL;
 	strcpy(scr->term,TermName(0));
 	ApplicationsCall(APL_SESSION_LINK,scr);
 	if		(  scr->status  ==  APL_SESSION_NULL  ) {
@@ -416,8 +521,8 @@ ENTER_FUNC;
 		WriteClient(fp,scr);
 		CloseNet(fp);
 		SesServer(scr,sock);
-		FinishSession(scr);
 	}
+	FinishSession(scr);
 LEAVE_FUNC;
 }
 
@@ -429,7 +534,7 @@ PutLog(
 {
 	char	buff[128];
 
-	sprintf(buff,"%08d [%s] [%s] session start",sesno,user,cmd);
+	sprintf(buff,"%08d [%s] [%s] session start(%d)",sesno,user,cmd,cServer);
 	MessageLog(buff);
 }
 
@@ -445,33 +550,75 @@ NewSession(
 		,	cmd[SIZE_LONGNAME+1];
 	PacketClass	klass;
 	Bool	rc;
+	ScreenData	*scr;
+	SessionParameter	*ses;
+	pthread_t	thr;
+	char	trid[SIZE_SESID+1];
+	pthread_attr_t	attr;
+	size_t	ssize;
 
 ENTER_FUNC;
-	if		(  socketpair(PF_UNIX, SOCK_STREAM, 0, socks)  !=  0  ) {
-		fprintf(stderr,"make unix domain socket fail.\n");
-		exit(1);
-	}
 	RecvString(fp,buff);	/*	command		*/
 	strncpy(cmd,buff,SIZE_LONGNAME);
 	if		(  ( klass = RecvPacketClass(fp) )  ==  GL_Name  ) {
 		RecvString(fp,buff);	/*	user	*/
 		strncpy(user,buff,SIZE_USER);
 		PutLog(user,cmd,cSession);
+		cServer ++;
 		rc = TRUE;
-		if		(  ( pid = fork() )  ==  0  ) {
-			close(socks[0]);
-			ChildProcess(fp,socks[1],cSession,user,cmd);
-			exit(0);
+		scr = InitSession();
+		strcpy(scr->cmd,cmd);
+		strcpy(scr->user,user);
+#ifdef	DEBUG
+		printf("user = [%s]\n",user);
+		printf("cmd  = [%s]\n",cmd);
+#endif
+		scr->Windows = NULL;
+		ses = New(SessionParameter);
+		ses->ses = cSession;
+		ses->scr = scr;
+		htc = New(HTC_Node);
+		htc->count = 0;
+		htc->ses = cSession;
+
+		if		(  fThread  ) {
+			ApplicationsCall(APL_SESSION_LINK,scr);
+			if		(  scr->status  ==  APL_SESSION_NULL  ) {
+				SendPacketClass(fp,GL_E_APPL);
+			} else {
+				strcpy(scr->term,TermName(0));
+				EncodeTRID(trid,ses->ses,0);
+				SendPacketClass(fp,GL_Session);
+				SendString(fp,trid);
+				WriteClient(fp,scr);
+				ses->que = NewQueue();
+				pthread_attr_init(&attr);
+				pthread_attr_setstacksize(&attr,1024*1024);
+				pthread_create(&thr,&attr,(void *(*)(void *))SesThread,ses);
+				pthread_detach(thr);
+				htc->thr = thr;
+				htc->que = ses->que;
+				htc->sock = 0;
+				htc->pid = pid;
+			}
 		} else {
-			close(socks[1]);
-			htc = New(HTC_Node);
-			htc->sock = socks[0];
-			htc->pid = pid;
-			htc->ses = cSession;
-			htc->count = 0;
-			g_int_hash_table_insert(SesHash,htc->ses,htc);
-			cSession += (rand()>>16)+1;		/*	some random number	*/
+			if		(  socketpair(PF_UNIX, SOCK_STREAM, 0, socks)  !=  0  ) {
+				fprintf(stderr,"make unix domain socket fail.\n");
+				exit(1);
+			}
+			if		(  ( pid = fork() )  ==  0  ) {
+				close(socks[0]);
+				ChildProcess(fp,socks[1],ses);
+			} else {
+				close(socks[1]);
+				htc->sock = socks[0];
+				htc->pid = pid;
+				htc->thr = (pthread_t)0;
+				htc->que = NULL;
+			}
 		}
+		g_int_hash_table_insert(SesHash,htc->ses,htc);
+		cSession += (rand()>>16)+1;		/*	some random number	*/
 	} else {
 		rc = FALSE;
 	}
@@ -509,6 +656,17 @@ SendMessage(int sock, int fd, void *data, size_t datalen)
 	return sendmsg(sock, &msg, 0);
 }
 
+static	void
+CountDown(void)
+{
+	int		status;
+ENTER_FUNC;
+	wait(&status);
+	cServer --;
+	printf("server count = %d\n",cServer);
+LEAVE_FUNC;
+}
+
 extern	void
 ExecuteServer(void)
 {
@@ -522,9 +680,10 @@ ExecuteServer(void)
 	Port	*port;
 	PacketClass	klass;
 	Bool	fExit;
+	int		rc;
 
 ENTER_FUNC;
-	signal(SIGCHLD,SIG_IGN);
+	signal(SIGCHLD,(void *)CountDown);
 	signal(SIGPIPE,SIG_IGN);
 
 	port = ParPortName(PortNumber);
@@ -539,34 +698,45 @@ ENTER_FUNC;
 		klass = RecvPacketClass(fp);	ON_IO_ERROR(fp,badio);
 		switch	(klass) {
 		  case	GL_Connect:
-			if		(  !NewSession(fp)  )	fExit = TRUE;
+			dbgmsg("GL_Connect");
+			NewSession(fp);
 			break;
 		  case	GL_Session:
+			dbgmsg("GL_Session");
 			RecvString(fp,buff);			ON_IO_ERROR(fp,badio);
 			dbgprintf("recv trid [%s]\n",buff);
 			DecodeTRID(&ses,&count,buff);
 			if		(  (  htc = g_int_hash_table_lookup(SesHash,ses) )  !=  NULL  ) {
 				htc->count = count;
-				if		(  SendMessage(htc->sock,fd,htc,sizeof(HTC_Node))  <  0  ) {
-#if	0
-					EncodeTRID(buff,0,0);
-					SendPacketClass(fp,GL_Session);
-					SendString(fp,buff);
-					dbgprintf("send trid [%s]\n",buff);
-#else
-					SendPacketClass(fp,GL_E_Session);
-#endif
-					xfree(htc);
+				if		(  fThread  ) {
+					if		(  EnQueue(htc->que,fp)  ) {
+						fp = NULL;
+						rc = 1;
+					} else {
+						rc = -1;
+					}
+				} else {
+					rc = SendMessage(htc->sock,fd,htc,sizeof(HTC_Node));
+				}
+				if		(  rc  <  0  ) {
+					if		(  htc->que  !=  NULL  ) {
+						FreeQueue(htc->que);
+					}
 					g_hash_table_remove(SesHash,(void *)ses);
+					xfree(htc);
+					SendPacketClass(fp,GL_E_Session);	ON_IO_ERROR(fp,badio);
 				}
 			}
 			break;
 		  default:
-			fExit = TRUE;
+			dbgprintf("klass = %02X",klass);
+			dbgmsg("*");
 			break;
 		}
 	  badio:
-		CloseNet(fp);
+		if		(  fp  !=  NULL  ) {
+			CloseNet(fp);
+		}
 	}
 	DestroyPort(port);
 LEAVE_FUNC;
@@ -579,6 +749,7 @@ ENTER_FUNC;
 	RecParserInit();
 	BlobCacheCleanUp();
 	SesHash = NewIntHash();
+	cServer = 1;
 #ifndef	DEBUG
 	cSession = abs(rand());	/*	set some random number	*/
 #endif

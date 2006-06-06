@@ -45,8 +45,9 @@ typedef	struct {
 #endif
 
 extern	Queue	*NewQueue(void);
-extern	void	EnQueue(Queue *que, void *data);
+extern	Bool	EnQueue(Queue *que, void *data);
 extern	void	*DeQueue(Queue *que);
+extern	void	*DeQueueTime(Queue *que, int ms);
 extern	void	*PeekQueue(Queue *que);
 extern	Bool	IsQueue(Queue *que);
 extern	void	FreeQueue(Queue *que);
@@ -56,6 +57,7 @@ extern	void	CloseQueue(Queue *que);
 extern	void	RewindQueue(Queue *que);
 extern	void	*WithdrawQueue(Queue *que);
 extern	void	WaitQueue(Queue *que);
+extern	void	WaitQueueTime(Queue *que, int ms);
 
 #define	LockQueue(que)		pthread_mutex_lock(&(que)->qlock)
 #define	UnLockQueue(que)	pthread_mutex_unlock(&(que)->qlock)

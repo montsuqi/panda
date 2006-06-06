@@ -83,6 +83,7 @@ GLOBAL	Bool		fCookie;
 GLOBAL	Bool		fDump;
 GLOBAL	Bool		fDebug;
 GLOBAL	Bool		fJavaScriptLink;
+GLOBAL	Bool		fNoJavaScript;
 GLOBAL	Bool		fJavaScript;
 GLOBAL	char		*SesDir;
 GLOBAL	char		*CommandLine;

@@ -36,8 +36,8 @@ typedef	struct {
 	char		term[SIZE_TERM+1];
 	char		other[SIZE_OTHER+1];
 	int			status;
-	GHashTable	*Windows;
-	GHashTable	*Records;
+	GHashTable	*Windows;			/*	for WindowData		*/
+	GHashTable	*Records;			/*	for	RecordStruct	*/
 	char		*encoding;
 }	ScreenData;
 
@@ -55,8 +55,9 @@ extern	void			LinkModule(char *name);
 extern	ScreenData		*NewScreenData(void);
 extern	char			*PureWindowName(char *comp, char *buff);
 extern	char			*PureComponentName(char *comp, char *buff);
+extern	void			RemoveWindowRecord(char *name);
 
-/*	for easy C programing	*/
+/*	C API	*/
 extern	ValueStruct	*GetWindowValue(char *name);
 extern	WindowData	*PutWindowByName(char *wname, byte type);
 

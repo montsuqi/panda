@@ -288,7 +288,8 @@ JavaScriptKeyEvent(HTCInfo *htc, Tag *tag, char *event)
     char buf[SIZE_BUFF];
     char *key, *p;
 
-	if		(  !fJavaScript  )	return;
+	if		(  !fJavaScript  )
+		return;
     if ((value = HTCGetProp(tag, event, 0)) == NULL)
         return;
     p = value;
@@ -723,7 +724,16 @@ _Head(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
+	char	*js;
+
 ENTER_FUNC;
+	if		(  ( js = HTCGetProp(tag,"javascript",0) )  !=  NULL  ) {
+		if		(	(  stricmp(js,"no")     ==  0  )
+				||	(  stricmp(js,"off")    ==  0  )
+				||	(  stricmp(js,"false")  ==  0  ) ) {
+			fNoJavaScript = TRUE;
+		}
+	}
 	LBS_EmitString(htc->code,"<head");
 	EmitAttribute(htc,tag,"profile");
 	EmitAttribute(htc,tag,"class");
@@ -980,7 +990,8 @@ ENTER_FUNC;
 			EmitCode(htc,OPC_EMITSTR);
 		}
 #else
-		if		(  fJavaScript  ) {
+		if		(	(  fJavaScript     )
+				&&	(  !fNoJavaScript  ) ) {
 			LBS_EmitString(htc->code,"<input type=\"button\" value=\"");
 			LBS_EmitString(htc->code,face);
 			LBS_EmitString(htc->code,"\"");
@@ -1440,7 +1451,8 @@ ENTER_FUNC;
         }
 		if		(	(  ( type = HTCGetProp(tag,"type",0) )  !=  NULL  )
 				&&	(  !stricmp(type,"menu")                      ) ) {
-			if		(  fJavaScript  ) {
+			if		(	(  fJavaScript     )
+					&&	(  !fNoJavaScript  ) ) {
 				InvokeJs("send_event");
 				LBS_EmitString(htc->code, "onchange");
 				snprintf(buf, SIZE_BUFF,
@@ -1880,11 +1892,21 @@ _Htc(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
+	char	*js;
+
 ENTER_FUNC;
 	Codeset = HTCGetProp(tag,"coding",0); 
 	HTCSetCodeset(Codeset);
 	fButton = FALSE;
 	fHead = FALSE;
+	fNoJavaScript = FALSE;
+	if		(  ( js = HTCGetProp(tag,"javascript",0) )  !=  NULL  ) {
+		if		(	(  stricmp(js,"no")     ==  0  )
+				||	(  stricmp(js,"off")    ==  0  )
+				||	(  stricmp(js,"false")  ==  0  ) ) {
+			fNoJavaScript = TRUE;
+		}
+	}
 LEAVE_FUNC;
 }	
 
@@ -1896,6 +1918,7 @@ AddArg(
 {
 	TagType	*type;
 
+	dbgprintf("install %s:%s",tag->name,name);
 	if		(  ( type = g_hash_table_lookup(tag->args,name) )  ==  NULL  ) {
 		type = New(TagType);
 		type->name = StrDup(name);
@@ -2112,6 +2135,7 @@ ENTER_FUNC;
 
 	tag = NewTag("HTC",_Htc);
 	AddArg(tag,"coding",TRUE);
+	AddArg(tag,"javascript",TRUE);
 	tag = NewTag("/HTC",NULL);
 
 	tag = NewTag("FORM",_Form);
@@ -2123,6 +2147,7 @@ ENTER_FUNC;
 	AddArg(tag,"profile",TRUE);
 	AddArg(tag,"dir",TRUE);
 	AddArg(tag,"lang",TRUE);
+	AddArg(tag,"javascript",TRUE);
 	tag = NewTag("/HEAD",NULL);
 
 	tag = NewTag("BODY",_Body);
@@ -2183,7 +2208,8 @@ extern	void
 JslibInit(void)
 {
 ENTER_FUNC;
-	if		(  !fJavaScript  )	return;
+	if		(  !fJavaScript  )
+		return;
 	Jslib = NewNameiHash();
 #ifdef	USE_MCE
 	NewJs("html_edit","./jscripts/tiny_mce/tiny_mce.js",TRUE);
@@ -2213,5 +2239,6 @@ ENTER_FUNC;
 		  "  }\n"
 		  "}\n",FALSE);
 		  
+	InvokeJs("send_event");
 LEAVE_FUNC;
 }

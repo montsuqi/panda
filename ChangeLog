@@ -1,3 +1,30 @@
+2006-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/server.c: multi thread worker
+
+2006-06-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (MessageThread): LDを持たない画面に遷移した時はセ
+	ションを終了させる
+
+	* htserver/mon.c (Session): htserverに接続できない時はbusy画面を出
+	力する
+
+	* htserver/tags.c (_Htc): Javascriptを明示的に止める機能
+
+2006-06-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/mon.c (Session): 明示的にアプリケーションを脱ける処理
+
+	* aps/aps_main.c (ExecuteServer): connection lost時の再接続
+
+	* libs/wfcio.c: wfcとの通信エラーを正しく回収するようにした
+
+2006-05-31  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c (ProcessMonitor): wfcやdbredirectorが落ちても再
+	起動する機能をつけた
+
 2006-05-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* aps/aps_main.c: 処理時間計測

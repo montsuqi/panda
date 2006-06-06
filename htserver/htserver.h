@@ -32,6 +32,7 @@
 #endif
 
 GLOBAL	char	*PortNumber;
+GLOBAL	Bool	fThread;
 GLOBAL	int		Back;
 GLOBAL	char	*Directory;
 GLOBAL	Queue	*DistQueue;

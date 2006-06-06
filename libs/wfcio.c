@@ -156,26 +156,28 @@ ENTER_FUNC;
 	size = NativeSizeValue(NULL,value);
 	LBS_ReserveSize(buff,size,FALSE);
 	NativePackValue(NULL,LBS_Body(buff),value);
-	SendPacketClass(fp,WFC_PING);
+	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
 	dbgmsg("send PING");
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
 		dbgmsg("recv PONG");
-		SendPacketClass(fp,WFC_DATA);
+		SendPacketClass(fp,WFC_DATA);	ON_IO_ERROR(fp,badio);
 		dbgmsg("send DATA");
-		SendString(fp,window);
-		SendString(fp,widget);
-		SendString(fp,event);
+		SendString(fp,window);			ON_IO_ERROR(fp,badio);
+		SendString(fp,widget);			ON_IO_ERROR(fp,badio);
+		SendString(fp,event);			ON_IO_ERROR(fp,badio);
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+			ON_IO_ERROR(fp,badio);
 			dbgmsg("recv OK");
 			SendLBS(fp,buff);
 			ForwardBLOB(fp,value);
-			SendPacketClass(fp,WFC_OK);
+			SendPacketClass(fp,WFC_OK);		ON_IO_ERROR(fp,badio);
 			rc = TRUE;
 		} else {
 			/*	window not found	*/
 			rc = FALSE;
 		}
 	} else {
+	  badio:
 		rc = FALSE;
 	}
 LEAVE_FUNC;
@@ -197,19 +199,22 @@ RecvTermServerHeader(
 
 ENTER_FUNC;
   top: 
+	rc = FALSE;
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_HEADER:
 		dbgmsg(">recv HEADER");
-		RecvnString(fp, SIZE_NAME+1, user);
-		RecvnString(fp, SIZE_NAME+1, window);
-		RecvnString(fp, SIZE_NAME+1, widget);
+		RecvnString(fp, SIZE_NAME+1, user);		ON_IO_ERROR(fp,badio);
+		RecvnString(fp, SIZE_NAME+1, window);	ON_IO_ERROR(fp,badio);
+		RecvnString(fp, SIZE_NAME+1, widget);	ON_IO_ERROR(fp,badio);
 		dbgprintf("window = [%s]",window);
-		*type = RecvChar(fp);
-		ctl->n = RecvInt(fp);
+		*type = RecvChar(fp);					ON_IO_ERROR(fp,badio);
+		ctl->n = RecvInt(fp);					ON_IO_ERROR(fp,badio);
 		dbgprintf("ctl->n = %d\n",ctl->n);
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
 			ctl->control[i].PutType = (byte)RecvInt(fp);
+			ON_IO_ERROR(fp,badio);
 			RecvnString(fp, SIZE_NAME+1, ctl->control[i].window);
+			ON_IO_ERROR(fp,badio);
 			dbgprintf("wname = [%s]\n",ctl->control[i].window);
 		}
 		rc = TRUE;
@@ -225,9 +230,9 @@ ENTER_FUNC;
 		dbgmsg("recv default");
 		SendPacketClass(fp,WFC_NOT);
 		dbgmsg("send NOT");
-		rc = FALSE;
 		break;
 	}
+  badio:
 LEAVE_FUNC;
 	return	(rc);
 }

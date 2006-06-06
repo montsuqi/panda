@@ -161,6 +161,7 @@ ENTER_FUNC;
 	} else {
 		port = ParPortName(WfcPortNumber);
 	}
+  retry:
 	while	(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
 		Warning("WFC connection retry");
 		sleep(1);
@@ -170,7 +171,8 @@ ENTER_FUNC;
 	SendStringDelim(fpWFC,"\n");
 	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
 		if		(  !CheckNetFile(fpWFC) ) {
-			Error("WFC connection lost");
+			Warning("WFC connection lost");
+			goto	retry;
 		}
 		Error("invalid LD name");
 	}

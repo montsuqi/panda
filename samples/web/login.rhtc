@@ -1,7 +1,7 @@
 <htc coding="iso-2022-jp">
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
   "http://www.w3.org/TR/html4/strict.dtd">
-<head>
+<head javascript="false">
 <meta http-equiv="Content-Type" content="text/html; charset=iso-2022-jp">
 <title>ログイン</title>
 </head>

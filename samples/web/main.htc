@@ -39,6 +39,7 @@
   </div>
   <button event="next" face="次"/>
   <button event="file" face="ファイル"/>
+  <button event="exit" face="終了"/>
   <div id="area4" class="white">
     <select
         name="main.list.select" 
@@ -53,6 +54,10 @@
   </div>
   <div id="area5" class="message">
     <fixed name="main.message" type="span">
+    <img src="font/E6A4.png">
+    <img src="font/E6A5.png">
+    <img src="font/E000.png">
+    <img src="font/E6A5.png">
   </div>
 </div>
 

@@ -966,7 +966,8 @@ ENTER_FUNC;
 			event = button;
 		}
 #else
-		if		(  fJavaScript  ) {
+		if		(	(  fJavaScript     )
+				&&	(  !fNoJavaScript  ) ) {
 			event = button;
 		} else {
 			dbgprintf("button = [%s]\n",button);

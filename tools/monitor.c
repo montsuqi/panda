@@ -57,8 +57,9 @@ static	char	*Log;
 static	Bool	fQ;
 static	Bool	fRedirector;
 static	Bool	fRestart;
+static	Bool	fAllRestart;
 static	Bool	fTimer;
-static	int		interval;
+static	int		Interval;
 static	int		wfcinterval;
 static	int		MaxTran;
 static	int		Sleep;
@@ -89,10 +90,10 @@ DumpCommand(
 {
 	int		i;
 
-	printf("command = [%s]\n",argv[0]);
-	for	( i = 0 ; argv[i] != NULL ; i ++ ) {
-		printf("\targ[%d] = [%s]\n",i,argv[i]);
+	for	( i = 0 ; argv[i]  !=  NULL ; i ++ ) {
+		fprintf(fpLog,"%s ",argv[i]);
 	}
+	fprintf(fpLog,"\n");
 }
 
 static	void
@@ -127,12 +128,17 @@ _execv(
 
 static	int
 StartProcess(
-	Process	*proc)
+	Process	*proc,
+	int		interval)
 {
 	pid_t	pid;
 	int		i;
 
-dbgmsg(">StartProcess");
+ENTER_FUNC;
+  retry:
+	if		(  interval  >  0  ) {
+		sleep(interval);
+	}
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
 		g_int_hash_table_insert(ProcessTable,pid,proc);
@@ -141,11 +147,14 @@ dbgmsg(">StartProcess");
 		}
 		fprintf(fpLog,"(%d)\n",pid);
 		fflush(fpLog);
-	} else {
+	} else
+	if		(  pid  ==  0  ) {
 		_execv(proc->argv[0],proc->argv);
+	} else {
+		fprintf(fpLog,"can't start process\n");
+		goto	retry;
 	}
-	sleep(interval);
-dbgmsg("<StartProcess");
+LEAVE_FUNC;
 	return	(pid);
 }
 
@@ -158,7 +167,7 @@ StartRedirector(
 	char	**argv;
 	Process	*proc;
 
-dbgmsg(">StartRedirector");
+ENTER_FUNC;
 	proc = New(Process);
 	argv = (char **)xmalloc(sizeof(char *) * 13);
 	proc->argv = argv;
@@ -196,9 +205,9 @@ dbgmsg(">StartRedirector");
 	}
 	proc->argc = argc;
 	argv[argc ++] = NULL;
-	pid = StartProcess(proc);
+	pid = StartProcess(proc,Interval);
 	dbg->fConnect = CONNECT;
-dbgmsg("<StartRedirector");
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -273,6 +282,7 @@ ENTER_FUNC;
 	if		(  ThisEnv->mlevel  !=  MULTI_APS  ) {
 		ld->nports = 1;
 	}
+	dbgprintf("start %d servers",ld->nports);
 	for	( n = 0 ; n < ld->nports ; n ++ ) {
 		if		(	(  ld->ports[n]  ==  NULL  )
 				||	(  HerePort(ld->ports[n])  ) )	{
@@ -322,7 +332,7 @@ ENTER_FUNC;
 			}
 			proc->argc = argc;
 			argv[argc ++] = NULL;
-			StartProcess(proc);
+			StartProcess(proc,Interval);
 		}
 	}
 LEAVE_FUNC;
@@ -399,8 +409,7 @@ ENTER_FUNC;
 		}
 		proc->argc = argc;
 		argv[argc ++] = NULL;
-		StartProcess(proc);
-		sleep(wfcinterval);
+		StartProcess(proc,wfcinterval);
 	}
 LEAVE_FUNC;
 }
@@ -459,9 +468,11 @@ KillAllProcess(
 {
 	KILLALL	kills;
 
+ENTER_FUNC;
 	kills.type = type;
 	kills.sig = sig;
 	g_int_hash_table_foreach(ProcessTable,(GHFunc)_KillProcess,(void *)&kills);
+LEAVE_FUNC;
 }
 
 static	void
@@ -470,38 +481,60 @@ ProcessMonitor(void)
 	pid_t	pid;
 	int		status;
 	Process	*proc;
+	Bool	fStop;
 
+ENTER_FUNC;
 	do {
-		pid = wait(&status);
-		if		(  pid  >  0  ) {
-			proc = g_int_hash_table_lookup(ProcessTable,pid);
-			fprintf(fpLog,"process down pid = %d(%d) Command =[%s]\n"
-					,(int)pid,WEXITSTATUS(status),proc->argv[0]);
-#ifdef	DEBUG
-			DumpCommand(proc->argv);
-#endif
-			if		(  proc->type  ==  PTYPE_WFC  ) {
-				StopSystem();
-			}
-			if		(  fRestart  ) {
-				if		(  proc->type  ==  PTYPE_APS  ) {
-					if		(	(  WIFEXITED(status)  )
-							&&	(  WEXITSTATUS(status)  <  2  )	) {
-						StopSystem();
+		while	(  ( pid = waitpid(-1,&status,0) )  !=  -1  ) {
+			dbgprintf("pid = %d is down",pid);
+			if		(  ( proc = g_int_hash_table_lookup(ProcessTable,pid) )  !=  NULL  ) {
+				fprintf(fpLog,"process down pid = %d(%d) Command =[%s]\n"
+						,(int)pid,WEXITSTATUS(status),proc->argv[0]);
+				switch	(proc->type) {
+				  case	PTYPE_APS:
+					if		(	(  fRestart     )
+							||	(  fAllRestart  ) ) {
+						if		(	(  WIFEXITED(status)  )
+								&&	(  WEXITSTATUS(status)  <  2  )	) {
+							if		(  fAllRestart  ) {
+								fStop = FALSE;
+							} else {
+								fStop = TRUE;
+							}
+						} else {
+							fStop = FALSE;
+						}
 					} else {
-						g_int_hash_table_remove(ProcessTable,pid);
-						StartProcess(proc);
+						fStop = TRUE;
 					}
+					break;
+				  default:
+					if		(  fAllRestart  ) {
+						fStop = FALSE;
+					} else {
+						fStop = TRUE;
+					}
+					break;
 				}
+				if		(  fStop  ) {
+					StopSystem();
+				} else {
+					g_int_hash_table_remove(ProcessTable,pid);
+					StartProcess(proc,Interval);
+				}
+			} else {
+				fprintf(fpLog,"unknown process down pid = %d(%d)\n"
+						,(int)pid,WEXITSTATUS(status));
 			}
 		}
 	}	while	(TRUE);
+LEAVE_FUNC;
 }
 
 static	void
 InitSystem(void)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	if		(  Log  !=  NULL  ) {
 		if		(  ( fpLog = fopen(Log,"a+") )  ==  NULL  ) {
 			fpLog = stdout;
@@ -509,7 +542,7 @@ dbgmsg(">InitSystem");
 	} else {
 		fpLog = stdout;
 	}
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }
 
 static	void
@@ -522,18 +555,23 @@ WaitStop(void)
 static	void
 StopSystem(void)
 {
+ENTER_FUNC;
 	fRestart = FALSE;
+	fAllRestart = FALSE;
 	signal(SIGCHLD,(void *)WaitStop);
 	KillAllProcess((PTYPE_APS | PTYPE_RED ),SIGKILL);
 	KillAllProcess(PTYPE_WFC,SIGUSR1);
+LEAVE_FUNC;
 	exit(0);
 }
 
 static	void
 StopApss(void)
 {
-	sleep(interval);
+ENTER_FUNC;
+	sleep(Interval);
 	KillAllProcess(PTYPE_APS,SIGKILL);
+LEAVE_FUNC;
 }
 
 static	ARG_TABLE	option[] = {
@@ -560,8 +598,10 @@ static	ARG_TABLE	option[] = {
 
 	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
 		"aps異常終了時に再起動する"	 					},
+	{	"allrestart",BOOLEAN,	TRUE,	(void*)&fAllRestart,
+		"全ての子プロセス異常終了時に再起動する"	 	},
 
-	{	"wait",		INTEGER,	TRUE,	(void*)&interval,
+	{	"wait",		INTEGER,	TRUE,	(void*)&Interval,
 		"プロセス操作時の待ち時間"	 					},
 	{	"wfcwait",	INTEGER,	TRUE,	(void*)&wfcinterval,
 		"wfc起動後の待ち時間(遅いCPU用)"				},
@@ -597,7 +637,7 @@ SetDefault(void)
 	DDir = NULL;
 	RecDir = NULL;
 	Log = NULL;
-	interval = 0;
+	Interval = 0;
 	wfcinterval = 0;
 	MaxTran = 0;
 	MaxRetry = 0;
@@ -609,6 +649,7 @@ SetDefault(void)
 	fNoCheck = FALSE;
 	fNoSumCheck = FALSE;
 	fRestart = FALSE;
+	fAllRestart = FALSE;
 	fQ = FALSE;
 	fTimer = FALSE;
 }
@@ -623,6 +664,9 @@ main(
 	SetDefault();
 	fl = GetOption(option,argc,argv);
 	InitMessage("monitor",NULL);
+	if		(  fAllRestart  ) {
+		fRestart = TRUE;
+	}
 
 	signal(SIGUSR1,(void *)StopSystem);
 	signal(SIGHUP,(void *)StopApss);

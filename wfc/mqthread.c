@@ -451,66 +451,69 @@ ENTER_FUNC;
 		}	while	(  fp  ==  NULL  );
 		memcpy(data->hdr,&hdr,sizeof(MessageHeader));
 		PureComponentName(hdr.window,buff);
-		if		(  ( newld = g_hash_table_lookup(ComponentHash,buff) )  !=  NULL  ) {
-			GetAPS_Value(fp,data,APS_WINCTRL,flag);
-			GetAPS_Value(fp,data,APS_MCPDATA,flag);
-			GetAPS_Value(fp,data,APS_LINKDATA,flag);
-			GetAPS_Value(fp,data,APS_SPADATA,flag);
-			GetAPS_Value(fp,data,APS_SCRDATA,flag);
-			SendPacketClass(fp,APS_END);
-			if		(  puttype  ==  SCREEN_NULL  ) {
-				puttype = SCREEN_CURRENT_WINDOW;
+		newld = g_hash_table_lookup(ComponentHash,buff);
+		GetAPS_Value(fp,data,APS_WINCTRL,flag);
+		GetAPS_Value(fp,data,APS_MCPDATA,flag);
+		GetAPS_Value(fp,data,APS_LINKDATA,flag);
+		GetAPS_Value(fp,data,APS_SPADATA,flag);
+		GetAPS_Value(fp,data,APS_SCRDATA,flag);
+		SendPacketClass(fp,APS_END);
+		if		(  puttype  ==  SCREEN_NULL  ) {
+			puttype = SCREEN_CURRENT_WINDOW;
+		}
+		dbgprintf("           puttype = %02X",puttype);
+		dbgprintf("data->hdr->puttype = %02X",data->hdr->puttype);
+		switch	(data->hdr->puttype) {
+		  case	SCREEN_CHANGE_WINDOW:
+		  case	SCREEN_JOIN_WINDOW:
+		  case	SCREEN_FORK_WINDOW:
+			dbgmsg("transition");
+			data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+			if		(  newld  !=  ld  ) {
+					ChangeLD(data,newld);
 			}
-			dbgprintf("           puttype = %02X",puttype);
-			dbgprintf("data->hdr->puttype = %02X",data->hdr->puttype);
-			switch	(data->hdr->puttype) {
-			  case	SCREEN_CHANGE_WINDOW:
-			  case	SCREEN_JOIN_WINDOW:
-			  case	SCREEN_FORK_WINDOW:
-				dbgmsg("transition");
+			CoreEnqueue(data);
+			break;
+		  case	SCREEN_RETURN_COMPONENT:
+			dbgmsg("return");
+			data->hdr->status = TO_CHAR(APL_SESSION_GET);
+			data->hdr->puttype = SCREEN_NULL;
+			if		(  newld  !=  ld  ) {
+				ChangeLD(data,newld);
+			}
+			CoreEnqueue(data);
+			break;
+		  case	SCREEN_NEW_WINDOW:
+			dbgmsg("new");
+			if		(  newld  ==  ld  ) {
+				TermEnqueue(data->term,data);
+			} else {
 				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-				if		(  newld  !=  ld  ) {
-					ChangeLD(data,newld);
-				}
+				ChangeLD(data,newld);
 				CoreEnqueue(data);
-				break;
-			  case	SCREEN_RETURN_COMPONENT:
-				dbgmsg("return");
-				data->hdr->status = TO_CHAR(APL_SESSION_GET);
-				data->hdr->puttype = SCREEN_NULL;
-				if		(  newld  !=  ld  ) {
-					ChangeLD(data,newld);
-				}
-				CoreEnqueue(data);
-				break;
-			  case	SCREEN_NEW_WINDOW:
-				dbgmsg("new");
-				if		(  newld  ==  ld  ) {
-					TermEnqueue(data->term,data);
-				} else {
-					data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-					ChangeLD(data,newld);
-					CoreEnqueue(data);
-				}
-				break;
-			  case	SCREEN_CURRENT_WINDOW:
-				dbgmsg("current");
-				data->hdr->puttype = puttype;
-				TermEnqueue(data->term,data);
-				break;
-			  case	SCREEN_CLOSE_WINDOW:
-				dbgmsg("close");
-				TermEnqueue(data->term,data);
-				break;
-			  default:
-				/*	don't reach here	*/
-				break;
 			}
-		} else {
-			sprintf(msg,"window not found [%s:%s] [%s:%s]\n",
-					hdr.window,buff,hdr.term,hdr.user);
+			break;
+		  case	SCREEN_CURRENT_WINDOW:
+			dbgmsg("current");
+			data->hdr->puttype = puttype;
+			TermEnqueue(data->term,data);
+			break;
+		  case	SCREEN_CLOSE_WINDOW:
+			dbgmsg("close");
+			TermEnqueue(data->term,data);
+			break;
+		  case	SCREEN_END_SESSION:
+			dbgmsg("end");
+			TermEnqueue(data->term,data);
+			break;
+		  default:
+			/*	don't reach here	*/
+			break;
+		}
+		if		(  newld  ==  NULL  ) {
+			sprintf(msg,"exititting panda [%s@%s] change to [%s]\n",
+					hdr.user,hdr.term,hdr.window);
 			MessageLog(msg);
-			ClearAPS_Node(ld,ix);
 		}
 	}	while	(TRUE);
 LEAVE_FUNC;

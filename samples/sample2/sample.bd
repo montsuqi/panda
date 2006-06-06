@@ -1,11 +1,17 @@
 name	sample;
 
-HandlerPath	".:/home/ogochan/MONTSUQI/panda/aps/.libs";
+HandlerPath	".:/home/ogochan/MONTSUQI/panda-current/aps/.libs";
 
 arraysize	20;
 textsize	200;
 
 handler	"Ruby"	{
+	class		"Ruby";
+    loadpath	"=/sample2";
+	locale		"euc-jp";
+};
+
+handler	"RubyExec"	{
 	class	"Exec";
 	serialize	"CGI";
 	start		"/usr/bin/ruby -Ke %p/%m.rb";
@@ -16,10 +22,11 @@ handler	"Ruby"	{
 # bind <module name> <hander name> ;
 
 #bind	"SAMPLEB"		"dotCOBOL";
-bind	"SAMPLEB"		"OpenCOBOL";
-bind	"say"			"OpenCOBOL";
-bind	"sampleb"		"OpenCOBOL";
+#bind	"SAMPLEB"		"OpenCOBOL";
+#bind	"say"			"OpenCOBOL";
+#bind	"sampleb"		"OpenCOBOL";
 #bind	"SAMPLEB"		"Ruby";
+bind	"SampleB"		"Ruby";
 
 db	"ORCA"	{
 	metadb;

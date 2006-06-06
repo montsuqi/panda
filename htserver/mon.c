@@ -390,20 +390,21 @@ ENTER_FUNC;
 		}
 	}
 
-	SendPacketClass(fpServ,GL_Event);
-	SendString(fpServ,name);
-	SendString(fpServ,widget);
-	SendString(fpServ,event);
+	SendPacketClass(fpServ,GL_Event);		ON_IO_ERROR(fpServ,badio);
+	SendString(fpServ,name);				ON_IO_ERROR(fpServ,badio);
+	SendString(fpServ,widget);				ON_IO_ERROR(fpServ,badio);
+	SendString(fpServ,event);				ON_IO_ERROR(fpServ,badio);
 
 	g_hash_table_foreach(Values,(GHFunc)_SendValue,NULL);
 	g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
-	SendPacketClass(fpServ,GL_END);
+	SendPacketClass(fpServ,GL_END);			ON_IO_ERROR(fpServ,badio);
 
 	SetSave("_sesid",TRUE);
     SetSave("_file",TRUE);
     SetSave("_filename",TRUE);
     SetSave("_contenttype",TRUE);
     SetSave("_disposition",TRUE);
+  badio:
 	ClearValues();
 	Files = NewNameHash();
 LEAVE_FUNC;
@@ -474,27 +475,25 @@ ParseUserAgent(void)
 }
 
 static	LargeByteString	*
-Expired(
-	int		code)
+InfomationPage(
+	char	*name,
+	char	*msg)
 {
 	LargeByteString	*html;
 	HTCInfo	*htc;
-	char	buff[SIZE_BUFF];
 
 ENTER_FUNC;
 	Codeset = SRC_CODESET;
 	html = NewLBS();
 	LBS_EmitStart(html);
-    if      (  ( htc = ParseScreen("expired",FALSE,FALSE) )  ==  NULL  ) {
+    if      (  ( htc = ParseScreen(name,FALSE,FALSE) )  ==  NULL  ) {
         LBS_EmitUTF8(html,
                      "<html><head>"
-                     "<title>htserver error</title>"
-                     "</head><body>\n"
-                     "<H1>htserver error</H1>\n"
-                     "<p>maybe session was expired. please retry.</p>\n"
-					 ,NULL);
-		sprintf(buff,"<p>end code = %d</p>",code);
-		LBS_EmitUTF8(html,buff,NULL);
+                     "<title>Infomation</title>"
+                     "</head><body>\n",NULL);
+		if		(  msg  !=  NULL  ) {
+			LBS_EmitUTF8(html,msg,NULL);
+		}
 		LBS_EmitUTF8(html,"</body></html>\n",NULL);
     } else {
         ExecCode(html,htc);
@@ -512,14 +511,15 @@ Session(void)
 	,		*file;
 	char	buff[SIZE_BUFF];
 	HTCInfo	*htc;
-	LargeByteString	*html;
+	LargeByteString	*html
+		,			*header;
 	Bool	fError
 		,	fInit;
 	PacketClass	klass;
 
 ENTER_FUNC;
-  retry:
 	fError = FALSE;
+  retry:
 	if		(  ( fpServ = OpenPort(ServerPort,PORT_HTSERV) )  !=  NULL  ) {
 		ParseUserAgent();
 		if		(  ( sesid = LoadValue("_sesid") )  ==  NULL  ) {
@@ -528,25 +528,26 @@ ENTER_FUNC;
 					user = "anonymous";
 				}
 			}
-			SendPacketClass(fpServ,GL_Connect);
-			SendString(fpServ,Command);
-			SendPacketClass(fpServ,GL_Name);
-			SendString(fpServ,user);
-			RecvPacketClass(fpServ);	/*	session	*/
-			RecvString(fpServ,buff);
+			SendPacketClass(fpServ,GL_Connect);			ON_IO_ERROR(fpServ,busy);
+			SendString(fpServ,Command);					ON_IO_ERROR(fpServ,busy);
+			SendPacketClass(fpServ,GL_Name);			ON_IO_ERROR(fpServ,busy);
+			SendString(fpServ,user);					ON_IO_ERROR(fpServ,busy);
+			RecvPacketClass(fpServ);	/*	session	*/	ON_IO_ERROR(fpServ,busy);
+			RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
 			sesid = StrDup(buff);
 			SaveValue("_sesid",sesid,FALSE);
 			fInit = TRUE;
 		} else {
 			fInit = FALSE;
-			SendPacketClass(fpServ,GL_Session);
-			SendString(fpServ,sesid);
+			SendPacketClass(fpServ,GL_Session);			ON_IO_ERROR(fpServ,busy);
+			SendString(fpServ,sesid);					ON_IO_ERROR(fpServ,busy);
 			if		(  ( klass = RecvPacketClass(fpServ) )  ==  GL_Session  ) {
-				RecvString(fpServ,buff);
+				ON_IO_ERROR(fpServ,busy);
+				RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
 				dbgprintf("ses = [%s]",buff);
 				if		(  *buff  !=  0  ) {
 					strncpy(sesid,buff,SIZE_SESID);
-					SendEvent();
+					SendEvent();								ON_IO_ERROR(fpServ,busy);
 				} else {
 					fError = TRUE;
 				}
@@ -556,44 +557,72 @@ ENTER_FUNC;
 				goto	retry;
 			}
 		}
-		dbgmsg("*");
 		if		(  !fError  ) {
 			name = NULL;
 			fComm = TRUE;
 			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
-				RecvString(fpServ,buff);
+				ON_IO_ERROR(fpServ,busy);
+				RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
 				name = StrDup(buff);
 				dbgprintf("name = [%s]",name);
 				SaveValue("_name",name,FALSE);
 			}
-			if		(  name  ==  NULL  ) {
-				html = Expired(1);
-			} else {
-				if		(  ( file = LoadValue("_file") )  !=  NULL  )	{
-					ValueStruct *value = GetValue(file, TRUE);
-					if (value != NULL && !IS_VALUE_NIL(value)) {
-						PutFile(value);
-						return;
-					}
-				}
-				if		(  ( htc = ParseScreen(name,TRUE,FALSE) )  ==  NULL  ) {
-					exit(1);
-				}
-				if		(  htc->fHTML  ) {
-					html = htc->code;
+			if		(  klass  ==  GL_RedirectName  ) {
+				CGI_InitValues();
+				RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
+				if		(  *buff  ==  0  ) {
+					html = InfomationPage("exited",
+										  "<H1>session exited</H1>\n"
+										  "<p>left MONTSUQI session.</p>");
+					PutHTML(NULL,html);
 				} else {
-					html = NewLBS();
-					LBS_EmitStart(html);
-					ExecCode(html,htc);
+					header = NewLBS();
+					LBS_EmitStart(header);
+					name = StrDup(buff);
+					dbgprintf("name = [%s]",name);
+					sprintf(buff,"Location: %s\r\n",name);
+					LBS_EmitString(header,buff);
+					PutHTML(header,NULL);
 				}
-				SendPacketClass(fpServ,GL_END);
+			} else {
+				if		(  name  ==  NULL  ) {
+					html = InfomationPage("expired",
+										  "<H1>htserver error</H1>\n"
+										  "<p>null screen name.</p>");
+				} else {
+					if		(  ( file = LoadValue("_file") )  !=  NULL  )	{
+						ValueStruct *value = GetValue(file, TRUE);
+						if (value != NULL && !IS_VALUE_NIL(value)) {
+							PutFile(value);
+							return;
+						}
+					}
+					if		(  ( htc = ParseScreen(name,TRUE,FALSE) )  ==  NULL  ) {
+						exit(1);
+					}
+					if		(  htc->fHTML  ) {
+						html = htc->code;
+					} else {
+						html = NewLBS();
+						LBS_EmitStart(html);
+						ExecCode(html,htc);
+					}
+					SendPacketClass(fpServ,GL_END);
+				}
+				PutHTML(NULL,html);
 			}
 		} else {
-			html = Expired(2);
+			html = InfomationPage("expired",
+								  "<H1>htserver error</H1>\n"
+								  "<p>session expired.</p>\n");
+			PutHTML(NULL,html);
 		}
-		PutHTML(NULL,html);
 	} else {
-		fprintf(stderr,"htserver down??\n");
+	  busy:
+		html = InfomationPage("busy",
+							  "<H1>session open error</H1>\n"
+							  "<p>can't start application session.(busy)</p>\n");
+		PutHTML(NULL,html);
 	}
 LEAVE_FUNC;
 }

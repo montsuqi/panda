@@ -56,6 +56,8 @@ static	ARG_TABLE	option[] = {
 		"BLOBキャッシュディレクトリ名"					},
 	{	"expire",	INTEGER,	TRUE,	(void*)&Expire,
 		"セション変数保持時間(秒)" 						},
+	{	"thread",	BOOLEAN,	TRUE,	(void*)&fThread,
+		"サーバをマルチスレッドにする"					},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -68,6 +70,7 @@ SetDefault(void)
 	CacheDir = "cache";
 	Expire = 60 * 60;
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
+	fThread = FALSE;
 }
 
 extern	int

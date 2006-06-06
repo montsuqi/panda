@@ -321,12 +321,14 @@ ENTER_FUNC;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
+		dbgprintf("*[%s]",ComSymbol);
 		sprintf(name,"%s/%s.ld",p,ComSymbol);
 		if ( parse_ld ) {
 			ld = LD_Parser(name); 
 		} else {
 			ld = LD_DummyParser(in);
 		}
+		dbgprintf("**[%s]",ComSymbol);
 		if		(  ld !=  NULL  ) {
 			if		(  g_hash_table_lookup(ThisEnv->LD_Table,ComSymbol)
 					   !=  NULL  ) {
@@ -341,9 +343,14 @@ ENTER_FUNC;
 			ThisEnv->ld[ThisEnv->cLD] = ld;
 			ThisEnv->cLD ++;
 			g_hash_table_insert(ThisEnv->LD_Table, StrDup(ComSymbol),ld);
-			if		(  GetSymbol  ==  T_SCONST  ) {
+			switch	(ComToken)	{
+			  case	T_SYMBOL:
+			  case	T_SCONST:
+				dbgprintf("[%s]",ComSymbol);
+				dbgmsg("symbol");
 				ld->nports = 0;
-				while	(  ComToken  ==  T_SCONST  ) {
+				while	(	(  ComToken  ==  T_SCONST  )
+						||	(  ComToken  ==  T_SYMBOL  ) ) {
 					strcpy(buff,ComSymbol);
 					n = 0;
 					switch	(GetSymbol) {
@@ -379,15 +386,18 @@ ENTER_FUNC;
 						GetSymbol;
 					}
 				}
-			} else
-			if		(  ComToken  ==  T_ICONST  ) {
+				break;
+			  case	T_ICONST:
+				dbgmsg("iconst");
 				ld->nports = ComInt;
 				ld->ports = (Port **)xmalloc(sizeof(Port *) * ld->nports);
 				for	( i = 0 ; i < ld->nports ; i ++ ) {
 					ld->ports[i] = NULL;
 				}
 				GetSymbol;
-			} else {
+				break;
+			  default:
+				dbgmsg("else");
 				ld->ports = (Port **)xmalloc(sizeof(Port *));
 				ld->ports[0] = ParPort("localhost",NULL);
 				ld->nports = 1;
@@ -409,6 +419,7 @@ SkipLD(
 ENTER_FUNC;
 	while	(  ComToken  !=  ';'  ) {
 		switch	(ComToken) {
+		  case	T_SYMBOL:
 		  case	T_SCONST:
 			switch	(GetSymbol)	{
 			  case	',':
@@ -450,22 +461,17 @@ ENTER_FUNC;
 				||	(  ComToken  ==  T_SCONST  )
 				||	(  ComToken  ==  T_EXIT    ) ) {
 			if		(  ThisEnv->D_Dir  ==  NULL  ) {
-				if		(	(  GetSymbol  ==  T_SCONST  )
-						||	(  ComToken   ==  T_ICONST  ) ) {
-					SkipLD(in);
-				}
+				SkipLD(in);
 			} else {
 				if		(	(  dname  ==  NULL  )
 						||	(  !strcmp(ComSymbol,dname)  ) ) {
 					ParLD_Elements(in,parse_ld);
 				} else {
-					if		(	(  GetSymbol  ==  T_SCONST  )
-							||	(  ComToken   ==  T_ICONST  ) ) {
-						SkipLD(in);
-					}
+					SkipLD(in);
 				}
 			}
 			if		(  ComToken  !=  ';'  ) {
+				Message("[%c]\n",ComToken);
 				Message("[%s]\n",ComSymbol);
 				ParError("syntax error 2");
 			}

@@ -78,6 +78,7 @@ ENTER_FUNC;
 	dbgprintf("Window = [%s]",buff);
 	if		(  rec  !=  NULL  ) {
 		rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,rec->value);
+		RemoveWindowRecord(ThisWindow);
 	} else {
 		rc = FALSE;
 	}
@@ -122,13 +123,17 @@ ENTER_FUNC;
 		}
 		(void)SetWindowName(window);
 		win = PutWindowByName(window,type);
-		if ( win ) {
+		if		(  win  !=  NULL  )	{
 			RecvTermServerData(fpPanda,ThisScreen);
 			strcpy(ThisWindow,window);
 			strcpy(ThisWidget,widget);
 			strcpy(ThisUser,user);
+			if		(  win->rec  ==  NULL  ) {
+				ThisScreen->status = APL_SESSION_END;
+			}
 		} else {
-			Error("Illegal windowData");
+			ThisScreen->status = APL_SESSION_END;
+			//Error("Illegal windowData");
 		}
 	} else {
 		snprintf(msg,SIZE_LONGNAME,"window = [%s]",window);

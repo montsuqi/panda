@@ -46,4 +46,8 @@ class Main
     puts("link to Search")
     node.put_window("CHANGE","search")
   end
+  def do_exit(node, db)
+    puts("exit")
+    node.put_window("EXIT","http://www.nichibenren.or.jp/index.html")
+  end
 end

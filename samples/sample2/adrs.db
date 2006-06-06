@@ -9,6 +9,7 @@ adrs	{
 	weight	number(5,1);
 	address	varchar(80)[3];
 	info	varchar(2000);
+	count	int;
 };
 
 primary	{
@@ -22,6 +23,25 @@ path	tel	{
 			WHERE
 				tel = :tel
 		;
+	};
+};
+
+path	count	{
+	DBSELECT	{
+		DECLARE adrs_count_csr CURSOR FOR
+		SELECT
+				COUNT(*)
+			FROM adrs
+		;
+	};
+	DBFETCH	{
+		FETCH FROM adrs_count_csr
+			INTO
+				:count
+		;
+	};
+	DBCLOSECURSOR	{
+		CLOSE adrs_count_csr;
 	};
 };
 

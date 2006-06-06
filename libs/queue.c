@@ -27,6 +27,7 @@
 #  include <config.h>
 #endif
 #include	<sys/types.h>
+#include	<sys/time.h>
 #include	<pthread.h>
 #include	<stdio.h>
 #include	"libmondai.h"
@@ -47,15 +48,17 @@ NewQueue(void)
 	return	(que);
 }
 
-extern	void
+extern	Bool
 EnQueue(
 	Queue	*que,
 	void	*data)
 {
 	QueueElement	*el;
+	Bool	rc;
 
 ENTER_FUNC;
-	if		(  LockQueue(que)  ==  0  ) {
+	if		(	(  que             !=  NULL  )
+			&&	(  LockQueue(que)  ==  0     ) ) {
 		el = New(QueueElement);
 		el->data = data;
 		el->prev = que->tail;
@@ -68,8 +71,12 @@ ENTER_FUNC;
 		que->tail = el;
 		UnLockQueue(que);
 		ReleaseQueue(que);
+		rc = TRUE;
+	} else {
+		rc = FALSE;
 	}
 LEAVE_FUNC;
+	return	(rc);
 }
 
 extern	void
@@ -82,6 +89,27 @@ WaitQueue(
 	}
 }
 
+extern	void
+WaitQueueTime(
+	Queue	*que,
+	int		ms)
+{
+	struct	timespec	wtime;
+	struct	timeval	tv;
+
+	if		(  ms  ==  0  ) {
+		WaitQueue(que);
+	} else {
+		if	(  que->head  ==  NULL  ) {
+			dbgmsg("wait");
+			gettimeofday(&tv,NULL);
+			wtime.tv_sec = tv.tv_sec + ms / 1000;
+			wtime.tv_nsec = tv.tv_usec * 1000 + ( ms % 1000 ) * 1000000;
+			pthread_cond_timedwait(&que->isdata,&que->qlock,&wtime);
+		}
+	}
+}
+
 extern	void	*
 DeQueue(
 	Queue	*que)
@@ -90,18 +118,54 @@ DeQueue(
 	void			*ret;
 
 ENTER_FUNC;
-	LockQueue(que);
-	WaitQueue(que);
-	el = que->head;
-	if		(  el->next  ==  NULL  ) {
-		que->tail = NULL;
+	if		(	(  que             !=  NULL  )
+			&&	(  LockQueue(que)  ==  0     ) ) {
+		WaitQueue(que);
+		el = que->head;
+		if		(  el->next  ==  NULL  ) {
+			que->tail = NULL;
+		} else {
+			el->next->prev = NULL;
+		}
+		que->head = el->next;
+		ret = el->data;
+		UnLockQueue(que);
+		xfree(el);
 	} else {
-		el->next->prev = NULL;
+		ret = NULL;
 	}
-	que->head = el->next;
-	ret = el->data;
-	UnLockQueue(que);
-	xfree(el);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+extern	void	*
+DeQueueTime(
+	Queue	*que,
+	int		ms)
+{
+	QueueElement	*el;
+	void			*ret;
+
+ENTER_FUNC;
+	if		(	(  que             !=  NULL  )
+			&&	(  LockQueue(que)  ==  0     ) ) {
+		WaitQueueTime(que,ms);
+		if		(  ( el = que->head )  !=  NULL  ) {
+			if		(  el->next  ==  NULL  ) {
+				que->tail = NULL;
+			} else {
+				el->next->prev = NULL;
+			}
+			que->head = el->next;
+			ret = el->data;
+			xfree(el);
+		} else {
+			ret = NULL;
+		}
+		UnLockQueue(que);
+	} else {
+		ret = NULL;
+	}
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -127,13 +191,17 @@ GetElement(
 {
 	void	*data;
 
-	if		(  que->curr  ==  NULL  ) {
-		que->curr = que->head;
-	} else {
-		que->curr = que->curr->next;
-	}
-	if		(  que->curr  !=  NULL  ) {
-		data = que->curr->data;
+	if		(  que  !=  NULL  ) {
+		if		(  que->curr  ==  NULL  ) {
+			que->curr = que->head;
+		} else {
+			que->curr = que->curr->next;
+		}
+		if		(  que->curr  !=  NULL  ) {
+			data = que->curr->data;
+		} else {
+			data = NULL;
+		}
 	} else {
 		data = NULL;
 	}
@@ -156,22 +224,26 @@ WithdrawQueue(
 	void			*ret;
 
 ENTER_FUNC;
-	if		(  ( el = que->curr )  !=  NULL  ) {
-		que->curr = que->curr->next;
-		if		(  el->next  !=  NULL  ) {
-			el->next->prev = el->prev;
+	if		(  que  !=  NULL  ) {
+		if		(  ( el = que->curr )  !=  NULL  ) {
+			que->curr = que->curr->next;
+			if		(  el->next  !=  NULL  ) {
+				el->next->prev = el->prev;
+			}
+			if		(  el->prev  !=  NULL  ) {
+				el->prev->next = el->next;
+			}
+			if		(  el  ==  que->tail  ) {
+				que->tail = el->prev;
+			}
+			if		(  el  ==  que->head  ) {
+				que->head = el->next;
+			}
+			ret = el->data;
+			xfree(el);
+		} else {
+			ret = NULL;
 		}
-		if		(  el->prev  !=  NULL  ) {
-			el->prev->next = el->next;
-		}
-		if		(  el  ==  que->tail  ) {
-			que->tail = el->prev;
-		}
-		if		(  el  ==  que->head  ) {
-			que->head = el->next;
-		}
-		ret = el->data;
-		xfree(el);
 	} else {
 		ret = NULL;
 	}
@@ -187,13 +259,15 @@ PeekQueue(
 	void			*ret;
 
 ENTER_FUNC;
-	pthread_mutex_lock(&que->qlock);
-	if		(  ( el = que->head )  ==  NULL  ) {
-		ret = NULL;
+	if		(  que  !=  NULL  ) {
+		if		(  ( el = que->head )  ==  NULL  ) {
+			ret = NULL;
+		} else {
+			ret = el->data;
+		}
 	} else {
-		ret = el->data;
+		ret = NULL;
 	}
-	pthread_mutex_unlock(&que->qlock);
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -204,9 +278,11 @@ IsQueue(
 {
 	Bool	rc;
 
-	pthread_mutex_lock(&que->qlock);
-	rc = (  que->head  ==  NULL  ) ? FALSE : TRUE;
-	pthread_mutex_unlock(&que->qlock);
+	if		(  que  !=  NULL  ) {
+		rc = (  que->head  ==  NULL  ) ? FALSE : TRUE;
+	} else {
+		rc = FALSE;
+	}
 	return	(rc);
 }
 
@@ -214,10 +290,14 @@ extern	void
 FreeQueue(
 	Queue	*que)
 {
-	while	(  IsQueue(que)  ) {
-		DeQueue(que);
+ENTER_FUNC;
+	if		(  que  !=  NULL  ) {
+		while	(  IsQueue(que)  ) {
+			WithdrawQueue(que);
+		}
+		pthread_mutex_destroy(&que->qlock);
+		pthread_cond_destroy(&que->isdata);
+		xfree(que);
 	}
-	pthread_mutex_destroy(&que->qlock);
-	pthread_cond_destroy(&que->isdata);
-	xfree(que);
+LEAVE_FUNC;
 }

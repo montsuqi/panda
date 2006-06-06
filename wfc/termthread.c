@@ -60,6 +60,8 @@
 #include	"debug.h"
 
 static	GHashTable	*TermHash;
+static	pthread_mutex_t	TermLock;
+static	pthread_cond_t	TermCond;
 
 extern	void
 TermEnqueue(
@@ -76,6 +78,7 @@ MakeSessionData(void)
 
 ENTER_FUNC;
 	data = New(SessionData);
+	memclear(data,sizeof(SessionData));
 	data->hdr = New(MessageHeader);
 	data->name = NULL;
 	memclear(data->hdr,sizeof(MessageHeader));
@@ -88,21 +91,22 @@ static	void
 FinishSession(
 	SessionData	*data)
 {
-	char	name[SIZE_NAME+1];
 	char	msg[SIZE_LONGNAME+1];
-	void	FreeSpa(
+	int		i;
+	guint	FreeSpa(
 		char	*name,
 		LargeByteString	*spa,
 		void		*dummy)
 	{
 		if		(  name  !=  NULL  ) {
-			xfree(name);
+			//xfree(name);
 		}
 		if		(  spa  !=  NULL  ) {
 			FreeLBS(spa);
 		}
+		return	(TRUE);
 	}
-	void	FreeScr(
+	guint	FreeScr(
 		char	*name,
 		LargeByteString	*scr,
 		void		*dummy)
@@ -110,28 +114,35 @@ FinishSession(
 		if		(  scr  !=  NULL  ) {
 			FreeLBS(scr);
 		}
+		return	(TRUE);
 	}
 
 ENTER_FUNC;
-	snprintf(msg,SIZE_LONGNAME,"[%s:%s] session end",data->hdr->term,data->hdr->user);
+	snprintf(msg,SIZE_LONGNAME,"[%s@%s] session end",data->hdr->user,data->hdr->term);
 	MessageLog(msg);
-	xfree(data->hdr);
 	if		(  data->name  !=  NULL  ) {
-		strcpy(name,data->name);
+		pthread_mutex_lock(&TermLock);
 		g_hash_table_remove(TermHash,data->name);
+		pthread_mutex_unlock(&TermLock);
+		pthread_cond_signal(&TermCond);
 		xfree(data->name);
-		if		(  data->mcpdata  !=  NULL  ) {
-			FreeLBS(data->mcpdata);
-		}
-		g_hash_table_foreach(data->spadata,(GHFunc)FreeSpa,NULL);
-		g_hash_table_destroy(data->spadata);
-		g_hash_table_foreach(data->scrpool,(GHFunc)FreeScr,NULL);
-		g_hash_table_destroy(data->scrpool);
-		if		(  data->linkdata  !=  NULL  ) {
-			FreeLBS(data->linkdata);
-		}
-		xfree(data->scrdata);
 	}
+	xfree(data->hdr);
+	g_hash_table_foreach_remove(data->spadata,(GHRFunc)FreeSpa,NULL);
+	g_hash_table_destroy(data->spadata);
+	if		(  data->mcpdata  !=  NULL  ) {
+		FreeLBS(data->mcpdata);
+	}
+	if		(  data->linkdata  !=  NULL  ) {
+		FreeLBS(data->linkdata);
+	}
+	for	( i = 0 ; i < data->cWindow ; i ++ ) {
+		if		(  data->scrdata[i]  !=  NULL  ) {
+			FreeLBS(data->scrdata[i]);
+		}
+	}
+	g_hash_table_destroy(data->scrpool);
+	xfree(data->scrdata);
 	xfree(data);
 LEAVE_FUNC;
 }
@@ -156,27 +167,27 @@ ENTER_FUNC;
 	ON_IO_ERROR(fp,badio);
 	RecvStringDelim(fp,SIZE_NAME,data->hdr->term);		ON_IO_ERROR(fp,badio);
 	RecvStringDelim(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
-	snprintf(msg,SIZE_LONGNAME,"[%s:%s] session start",data->hdr->term,data->hdr->user);
+	snprintf(msg,SIZE_LONGNAME,"[%s@%s] session start",data->hdr->user,data->hdr->term);
 	MessageLog(msg);
 	dbgprintf("term = [%s]",data->hdr->term);
 	dbgprintf("user = [%s]",data->hdr->user);
 	RecvStringDelim(fp,SIZE_NAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
-	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )
-			   !=  NULL  ) {
+	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )  !=  NULL  ) {
+		pthread_mutex_lock(&TermLock);
 		data->ld = ld;
 		if		(  ThisEnv->mcprec  !=  NULL  ) {
 			data->mcpdata = NewLBS();
-			InitializeValue(ThisEnv->mcprec->value);
+			//InitializeValue(ThisEnv->mcprec->value);
 			LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
-			NativePackValue(NULL,data->mcpdata->body,ThisEnv->mcprec->value);
+			NativePackValue(NULL,LBS_Body(data->mcpdata),ThisEnv->mcprec->value);
 		}
 		data->spadata = NewNameHash();
 		data->scrpool = NewNameHash();
 		if		(  ThisEnv->linkrec  !=  NULL  ) {
 			data->linkdata = NewLBS();
-			InitializeValue(ThisEnv->linkrec->value);
+			//InitializeValue(ThisEnv->linkrec->value);
 			LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
-			NativePackValue(NULL,data->linkdata->body,ThisEnv->linkrec->value);
+			NativePackValue(NULL,LBS_Body(data->linkdata),ThisEnv->linkrec->value);
 		} else {
 			data->linkdata = NULL;
 		}
@@ -186,6 +197,7 @@ ENTER_FUNC;
 													* data->cWindow);
 		for	( i = 0 ; i < data->cWindow ; i ++ ) {
 			if		(  data->ld->info->windows[i]  !=  NULL  ) {
+				dbgprintf("[%s]",data->ld->info->windows[i]->name);
 				data->scrdata[i] = GetScreenData(data,data->ld->info->windows[i]->name);
 			} else {
 				data->scrdata[i] = NULL;
@@ -196,6 +208,8 @@ ENTER_FUNC;
 		data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 		data->hdr->puttype = SCREEN_NULL;
 		data->w.n = 0;
+		pthread_mutex_unlock(&TermLock);
+		pthread_cond_signal(&TermCond);
 	} else {
 		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
 	  badio:
@@ -404,7 +418,11 @@ ENTER_FUNC;
 			}
 			if		(  data->fAbort  )	break;
 			if		(  SendTerminal(term->fp,data)  ) {
-				ld = ReadTerminal(term->fp,data);
+				if		(  data->ld  !=  NULL  ) {
+					ld = ReadTerminal(term->fp,data);
+				} else {
+					ld = NULL;
+				}
 			} else {
 				ld = NULL;
 			}
@@ -424,13 +442,16 @@ ConnectTerm(
 {
 	int		fhTerm;
 	pthread_t	thr;
+	pthread_attr_t	attr;
 
 ENTER_FUNC;
+	pthread_attr_init(&attr);
+	pthread_attr_setstacksize(&attr,1024*1024);
 	if		(  ( fhTerm = accept(_fhTerm,0,0) )  <  0  )	{
 		Message("_fhTerm = %d INET Domain Accept",_fhTerm);
 		exit(1);
 	}
-	pthread_create(&thr,NULL,(void *(*)(void *))TermThread,(void *)fhTerm);
+	pthread_create(&thr,&attr,(void *(*)(void *))TermThread,(void *)fhTerm);
 	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(thr); 
@@ -440,6 +461,14 @@ extern	void
 InitTerm(void)
 {
 ENTER_FUNC;
+	pthread_cond_init(&TermCond,NULL);
+	pthread_mutex_init(&TermLock,NULL);
 	TermHash = NewNameHash();
+	if		(  ThisEnv->mcprec  !=  NULL  ) {
+		InitializeValue(ThisEnv->mcprec->value);
+	}
+	if		(  ThisEnv->linkrec  !=  NULL  ) {
+		InitializeValue(ThisEnv->linkrec->value);
+	}
 LEAVE_FUNC;
 }

@@ -13,7 +13,8 @@ APSPath	"/home/ogochan/MONTSUQI/panda/aps/aps";
 WFCPath	"/home/ogochan/MONTSUQI/panda/wfc/wfc";
 REDPath	"/home/ogochan/MONTSUQI/panda/dbstuff/dbredirector";
 
-multiplex_level	no;
+#multiplex_level	no;
+multiplex_level	aps;
 
 #linksize	1024;
 linkage		link;
@@ -53,8 +54,10 @@ wfc	{
 };
 
 ld	{
-	web		1;
-	color	1;
+	web;
+	color;
+#	web * 10;
+#	color * 1;
 };
 
 bd	{

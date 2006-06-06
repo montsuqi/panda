@@ -115,20 +115,23 @@ ENTER_FUNC;
 		if		(  ( rec = (RecordStruct *)g_hash_table_lookup(ThisScreen->Records,wname) )
 				   ==  NULL  ) {
 			sprintf(fname,"%s.rec",wname);
-			rec = ReadRecordDefine(fname);
-			g_hash_table_insert(ThisScreen->Records,rec->name,rec);
+			if		(  ( rec = ReadRecordDefine(fname) )  !=  NULL  ) {
+				g_hash_table_insert(ThisScreen->Records,rec->name,rec);
+			} else {
+				strcpy(path,name);	/*	exitting system	*/
+			}
 		}
 		if		(  ( entry = 
 					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,path) )
 				   ==  NULL  ) {
-			if		(  rec  !=  NULL  ) {
-				entry = New(WindowData);
-				entry->PutType = SCREEN_NULL;
-				entry->fNew = FALSE;
-				entry->name = StrDup(path);
-				entry->rec = rec;
-				g_hash_table_insert(ThisScreen->Windows,entry->name,entry);
-			} else {
+			entry = New(WindowData);
+			entry->PutType = SCREEN_NULL;
+			entry->fNew = FALSE;
+			entry->name = StrDup(path);
+			entry->rec = rec;
+			g_hash_table_insert(ThisScreen->Windows,entry->name,entry);
+			if		(  rec  ==  NULL  ) {
+				entry->PutType = SCREEN_END_SESSION;
 				sprintf(msg,"window not found [%s:%s]\n", name, wname);
 				MessageLog(msg);
 			}
@@ -157,6 +160,31 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return	(rec); 
+}
+
+extern	void
+RemoveWindowRecord(
+	char		*name)
+{
+	WindowData	*win;
+	RecordStruct	*rec;
+	char	path[SIZE_LONGNAME+1];
+	char	wname[SIZE_LONGNAME+1];
+
+ENTER_FUNC;
+	PureWindowName(name,wname);
+	PathWindowName(name,path);
+	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,path) )  !=  NULL  ) {
+		g_hash_table_remove(ThisScreen->Windows,path);
+		g_hash_table_remove(ThisScreen->Records,wname);
+		xfree(win->name);
+		rec = win->rec;
+		xfree(rec->name);
+		FreeValueStruct(rec->value);
+		xfree(rec);
+		xfree(win);
+	}
+LEAVE_FUNC;
 }
 
 extern	Bool
