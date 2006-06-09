@@ -1756,6 +1756,31 @@ LEAVE_FUNC;
 	return	(TRUE);
 }
 
+#ifdef	USE_PANDA
+static	Bool
+RecvURI(
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+	char	name[SIZE_BUFF]
+	,		buff[SIZE_BUFF];
+	int		nitem
+	,		i;
+ENTER_FUNC;
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			RecvStringData(fp,buff,SIZE_BUFF);
+			printf("URI %s\n", buff);
+			gtk_panda_html_set_uri (GTK_PANDA_HTML(widget), buff);
+		}
+	}
+LEAVE_FUNC;
+	return	(TRUE);
+}
+#endif
+
 extern	void
 InitWidgetOperations(void)
 {
@@ -1776,6 +1801,7 @@ InitWidgetOperations(void)
 	AddClass(GTK_PANDA_TYPE_TEXT,RecvText,SendText);
 	AddClass(GTK_PANDA_TYPE_PS,RecvPS,SendPS);
 	AddClass(GTK_PANDA_TYPE_TIMER,RecvTimer,SendTimer);
+	AddClass(GTK_PANDA_TYPE_HTML,RecvURI,NULL);
 #endif
 	AddClass(GTK_TYPE_ENTRY,RecvEntry,SendEntry);
 	AddClass(GTK_TYPE_TEXT,RecvText,SendText);
