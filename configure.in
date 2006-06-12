@@ -24,8 +24,8 @@ PACKAGE=panda
 
 # make version
 MAJOR_VERSION=1
-MINOR_VERSION=3
-MICRO_VERSION=0
+MINOR_VERSION=2
+MICRO_VERSION=7
 
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
 LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
@@ -496,21 +496,6 @@ GLIB_LIBS=`glib-config --libs`
 GLIB_CFLAGS=`glib-config --cflags`
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GLIB_CFLAGS)
-
-dnl ***************************************************************************
-dnl Add all the cflags & libs needed for the GD modules.
-dnl ***************************************************************************
-
-AC_PATH_PROG(GD_CONFIG,gdlib-config,no)
-if test x$GLIB_CONFIG = xno; then
-  AC_MSG_WARN(Couldn't find gdlib-config)
- else
-  GDLIB_LDFLAGS=`gdlib-config --ldflags`
-  GDLIB_CFLAGS=`gdlib-config --cflags`
-  AC_DEFINE(HAVE_GD,1,"")
-fi
-AC_SUBST(GDLIB_LDFLAGS)
-AC_SUBST(GDLIB_CFLAGS)
 
 dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the XML2 modules.
