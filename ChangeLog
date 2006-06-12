@@ -6,6 +6,8 @@
 
 	* aps/aps_main.c (ExecuteServer): 終了コード処理をHEADにあわせた
 
+	* tools/monitor.c: libs/message.c に対応(syslog含む)
+
 2006-04-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/aps_main.c: 異常終了時に再起動するように終了コードの変更
