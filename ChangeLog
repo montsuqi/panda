@@ -4,6 +4,8 @@
 
 	* glclient/widgetOPS.c (RecvURI): pandahtmlにURIを指定できるようにした
 
+	* aps/aps_main.c (ExecuteServer): 終了コード処理をHEADにあわせた
+
 2006-04-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/aps_main.c: 異常終了時に再起動するように終了コードの変更

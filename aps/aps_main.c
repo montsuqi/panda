@@ -93,11 +93,11 @@ ENTER_FUNC;
 	InitializeValue(ThisEnv->linkrec->value);
 	InitializeValue(ThisLD->sparec->value);
 
-	for	( i = 0 ; i < ThisLD->cBind ; i ++ ) {
-		if		(	(  ThisLD->binds[i]  !=  NULL  )
-				&&	(  ThisLD->binds[i]->rec  !=  NULL  ) ) {
-			dbgprintf("[%s]",ThisLD->binds[i]->rec->name);
-			InitializeValue(ThisLD->binds[i]->rec->value);
+	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
+		if		(	(  ThisLD->window[i]  !=  NULL  )
+				&&	(  ThisLD->window[i]->rec  !=  NULL  ) ) {
+			dbgprintf("[%s]",ThisLD->window[i]->rec->name);
+			InitializeValue(ThisLD->window[i]->rec->value);
 		}
 	}
 	ReadyDC();
@@ -116,12 +116,11 @@ ENTER_FUNC;
 	node->linkrec = ThisEnv->linkrec;
 	node->sparec = ThisLD->sparec;
 	node->cWindow = ThisLD->cWindow;
-	node->cBind = ThisLD->cBind;
-	node->bhash = ThisLD->bhash;
+	node->whash = ThisLD->whash;
 	node->textsize = ThisLD->textsize;
 	node->scrrec = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * node->cWindow);
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
-		node->scrrec[i] = ThisLD->windows[i];
+		node->scrrec[i] = ThisLD->window[i]->rec;
 	}
 
 	/*	get initialize memory area	*/
@@ -153,7 +152,6 @@ ExecuteServer(void)
 	ProcessNode	*node;
 	WindowBind	*bind;
 	int		tran;
-	char	wname[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	if		(  WfcPortNumber  ==  NULL  ) {
@@ -161,7 +159,6 @@ ENTER_FUNC;
 	} else {
 		port = ParPortName(WfcPortNumber);
 	}
-  retry:
 	while	(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
 		Warning("WFC connection retry");
 		sleep(1);
@@ -171,8 +168,7 @@ ENTER_FUNC;
 	SendStringDelim(fpWFC,"\n");
 	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
 		if		(  !CheckNetFile(fpWFC) ) {
-			Warning("WFC connection lost");
-			goto	retry;
+			Error("WFC connection lost");
 		}
 		Error("invalid LD name");
 	}
@@ -187,18 +183,13 @@ ENTER_FUNC;
 						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)	) {
 			Message("GetWFC failure");
-			rc = 0;
 			break;
 		}
-		dbgprintf("ld     = [%s]",ThisLD->name);
-		dbgprintf("window = [%s]",ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
-		PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
-					   wname);
-		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname) )
-				   !=  NULL  ) {
+		dbgprintf("[%s]",ThisLD->name);
+		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,
+															  ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"))))  !=  NULL  ) {
 			if		(  bind->module  ==  NULL  ){
 				Message("bind->module not found");
-				rc = 2;
 				break;
 			}
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
@@ -215,7 +206,8 @@ ENTER_FUNC;
 			TransactionEnd(NULL);
 			PutWFC(fpWFC,node);
 		} else {
-			Message("window [%s] not found.",wname);
+			Message("window [%s] not found.",
+						  ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL));
 			rc = 2;
 			break;
 		}
@@ -227,7 +219,8 @@ LEAVE_FUNC;
 }
 
 static	void
-StopProcess(void)
+StopProcess(
+	int		ec)
 {
 ENTER_FUNC;
 	StopOnlineDB(); 
@@ -235,6 +228,7 @@ ENTER_FUNC;
 	StopDC();
 	CleanUpOnlineDC();
 LEAVE_FUNC;
+	exit(ec);
 }
 
 static	ARG_TABLE	option[] = {
@@ -270,8 +264,6 @@ static	ARG_TABLE	option[] = {
 
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
 		"実行時間に足す処理時間(for debug)"				},
-	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"時間計測を行う"								},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"dbredirectorの起動をチェックしない"			},
@@ -310,8 +302,6 @@ ENTER_FUNC;
 
 	MaxRetry = 3;
 	RetryInterval = 5;
-
-	fTimer = FALSE;
 LEAVE_FUNC;
 }
 
@@ -334,7 +324,7 @@ main(
 		InitNET();
 		InitSystem(fl->name);
 		rc = ExecuteServer();
-		StopProcess();
+		StopProcess(rc);
 	} else {
 		rc = -1;
 		fprintf(stderr, "LD name is not specified.\n");
