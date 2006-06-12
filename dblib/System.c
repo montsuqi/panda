@@ -40,7 +40,6 @@
 #include	"libmondai.h"
 #include	"dbgroup.h"
 #include	"term.h"
-#include	"directory.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -246,12 +245,11 @@ static	DB_OPS	Operations[] = {
 
 static	DB_Primitives	Core = {
 	_EXEC,
-	_DBACCESS,
-	NULL
+	_DBACCESS
 };
 
 extern	DB_Func	*
 InitSystem(void)
 {
-	return	(EnterDB_Function("System",Operations,DB_PARSER_NULL,&Core,"/*","*/\t"));
+	return	(EnterDB_Function("System",Operations,&Core,"/*","*/\t"));
 }

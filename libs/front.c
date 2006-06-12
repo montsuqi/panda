@@ -37,29 +37,20 @@
 #include	"front.h"
 #include	"debug.h"
 
-static	unsigned int	rseed;
 extern	char	*
 BlobCacheFileName(
 	ValueStruct	*value)
 {
-	char	buf[SIZE_BUFF];
+	static	char	buf[SIZE_BUFF];
 
-	if		(  ValueObjectFile(value)  ==  NULL  ) {
-		if		(  IS_OBJECT_NULL(ValueObjectId(value))  ) {
-			srand(rseed);
-			sprintf(buf,"%s/%d",CacheDir,rand());
-		} else {
-			sprintf(buf,"%s/%s",CacheDir,ValueToString(value,NULL));
-		}
-		ValueObjectFile(value) = StrDup(buf);
-	}
-	return	(ValueObjectFile(value));
+	sprintf(buf,"%s/%s",CacheDir,ValueToString(value,NULL));
+	return	(buf);
 }
 
 extern	void
 BlobCacheCleanUp(void)
 {
-	char	buf[SIZE_BUFF];
+	static	char	buf[SIZE_BUFF];
 
 	sprintf(buf,"rm -f %s/*",CacheDir);
 	system(buf);
@@ -70,12 +61,11 @@ InitSession(void)
 {
 	ScreenData	*scr;
 
-ENTER_FUNC;
+dbgmsg(">InitSession");
 	InitPool();
 	scr = NewScreenData();
 	scr->status = APL_SESSION_LINK;
-	rseed = (int)scr;
-LEAVE_FUNC;
+dbgmsg("<InitSession");
 	return	(scr); 
 }
 

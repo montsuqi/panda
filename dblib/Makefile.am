@@ -30,8 +30,7 @@ INCLUDES 			=		\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
-	$(RUBY_CFLAGS)			\
-	$(OSEKI_CFLAGS)			\
+	$(OSEKI_CFLAGS)		\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
@@ -44,8 +43,7 @@ DB_OBJECTS			=		\
 	Shell.la				\
 	System.la				\
 	Oseki.la				\
-	NativeBLOB.la			\
-	DBRuby.la
+	NativeBLOB.la
 
 PostgreSQL_la_LDFLAGS	=	-module -export-dynamic
 PostgreSQL_la_SOURCES	=	\
@@ -90,12 +88,3 @@ Oseki_la_SOURCES	=	\
 	Oseki.c
 Oseki_la_LIBADD		=	\
 	$(OSEKI_LIBS)
-
-DBRuby_la_LDFLAGS	=	-module -export-dynamic
-DBRuby_la_SOURCES	=	\
-	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h	\
-	DBRuby.c
-DBRuby_la_LIBADD		=	\
-	$(RUBY_LIBS)
-

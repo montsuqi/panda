@@ -29,6 +29,4 @@
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	Bool	fTimer;
-
 #endif

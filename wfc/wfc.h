@@ -32,18 +32,12 @@
 #define	GLOBAL		extern
 #endif
 
-extern	void	ChangeLD(SessionData *data, LD_Node *newld);
-extern	LargeByteString	*GetScreenData(SessionData *data, char *name);
-
-GLOBAL	char		**BindTable;
-GLOBAL	int			cBind;
-GLOBAL	GHashTable	*ComponentHash;
+GLOBAL	GHashTable	*WindowHash;
 GLOBAL	GHashTable	*APS_Hash;
 GLOBAL	GHashTable	*MQ_Hash;
 GLOBAL	Bool		fShutdown;
 GLOBAL	int			MaxRetry;
 GLOBAL	BLOB_State	*BlobState;
 GLOBAL	Bool		fLoopBack;
-GLOBAL	Bool		fTimer;
 
 #endif

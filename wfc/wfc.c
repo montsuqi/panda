@@ -18,9 +18,12 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*
+  TODO
+	wfc間通信
+*/
+
 #define	MAIN
-#define __FD_SETSIZE	8192
-#define SOMAXCONN		1024
 
 /*
 #define	DEBUG
@@ -49,7 +52,6 @@
 
 #include	"libmondai.h"
 #include	"RecParser.h"
-#include	"dbgroup.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"dirs.h"
@@ -96,78 +98,15 @@ extern	void
 DumpNode(
 	SessionData	*data)
 {
-ENTER_FUNC;
+dbgmsg(">DumpNode");
 	printf("window   = [%s]\n",data->hdr->window);
 	printf("widget   = [%s]\n",data->hdr->widget);
 	printf("event    = [%s]\n",data->hdr->event);
 	printf("term     = [%s]\n",data->hdr->term);
 	printf("user     = [%s]\n",data->hdr->user);
-LEAVE_FUNC;
+dbgmsg("<DumpNode");
 }
 #endif
-
-extern	LargeByteString	*
-GetScreenData(
-	SessionData	*data,
-	char		*name)
-{
-	LargeByteString	*scrdata;
-	RecordStruct	*rec;
-
-	if		(  ( scrdata = (LargeByteString *)g_hash_table_lookup(data->scrpool,name) )
-			   ==  NULL  ) {
-		if		(  ( rec = GetWindow(name) )  !=  NULL  ) {
-			scrdata = NewLBS();
-#if	0
-			InitializeValue(rec->value);
-#endif
-			LBS_ReserveSize(scrdata,
-							NativeSizeValue(NULL,rec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(scrdata),rec->value);
-			g_hash_table_insert(data->scrpool,rec->name,scrdata);
-		} else {
-			scrdata = NULL;
-		}
-	}
-	return	(scrdata);
-}
-
-
-extern	void
-ChangeLD(
-	SessionData	*data,
-	LD_Node		*newld)
-{
-	int		i;
-	LargeByteString	**scrdata;
-
-ENTER_FUNC;
-	if		(  newld  !=  NULL  ) {
-		if		(  ( data->spa = g_hash_table_lookup(data->spadata,newld->info->name) )
-				   ==  NULL  ) {
-			if		(  newld->info->sparec  !=  NULL  ) {
-				data->spa = NewLBS();
-				//g_hash_table_insert(data->spadata,StrDup(newld->info->name),data->spa);
-				g_hash_table_insert(data->spadata,newld->info->name,data->spa);
-				//InitializeValue(newld->info->sparec->value);
-				LBS_ReserveSize(data->spa,
-								NativeSizeValue(NULL,newld->info->sparec->value),FALSE);
-				NativePackValue(NULL,LBS_Body(data->spa),newld->info->sparec->value);
-			}
-		}
-		xfree(data->scrdata);
-		scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
-											  * newld->info->cWindow);
-		for	( i = 0 ; i < newld->info->cWindow ; i ++ ) {
-			scrdata[i] = GetScreenData(data,newld->info->windows[i]->name);
-		}
-		data->cWindow = newld->info->cWindow;
-		data->scrdata = scrdata;
-	}
-	data->ld = newld;
-	data->apsid = -1;
-LEAVE_FUNC;
-}
 
 extern	void
 ExecuteServer(void)
@@ -298,30 +237,28 @@ StopSystem(void)
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"waiting port name"	 							},
+		"ポート番号"	 								},
 	{	"apsport",	STRING,		TRUE,	(void*)&ApsPortNumber,
-		"APS port name"									},
+		"APS接続待ちポート"								},
 	{	"control",	STRING,		TRUE,	(void*)&ControlPortNumber,
-		"control port name"								},
+		"制御待ちポート"								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"connection waiting queue number"				},
+		"接続待ちキューの数" 							},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"base directory"			 					},
+		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"record directory"			 					},
+		"データ定義格納ディレクトリ"	 				},
 	{	"lddir",	STRING,		TRUE,	(void*)&D_Dir,
-		"LD directory"				 					},
+		"LD定義格納ディレクトリ"		 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"environment file name"							},
+		"ディレクトリファイル"	 						},
 
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
-		"maximun retry count"							},
+		"トランザクションを再試行する時の上限数"		},
 
 	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
 		"loopback test"									},
-	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"timer"											},
 
 	{	NULL,		0,			TRUE,	NULL		 	}
 };

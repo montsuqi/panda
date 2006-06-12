@@ -332,11 +332,11 @@ MakeFromRecord(
 	RecordStruct	*rec;
 	char			*ValueName;
 
-ENTER_FUNC;
+dbgmsg(">MakeFromRecord");
 	level = 1;
 	RecParserInit();
 	DB_ParserInit();
-	if		(  ( rec = DB_Parser(name,NULL,&ValueName,FALSE) )  !=  NULL  ) {
+	if		(  ( rec = DB_Parser(name,&ValueName) )  !=  NULL  ) {
 		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
 			PutString(ValueName);
@@ -351,7 +351,7 @@ ENTER_FUNC;
 		}
 		printf(".\n");
 	}
-LEAVE_FUNC;
+dbgmsg("<MakeFromRecord");
 }
 
 static	void
@@ -392,7 +392,7 @@ dbgmsg(">MakeLD");
 			+	ThisEnv->linksize
 			+	SizeValue(Conv,ld->sparec->value);
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-			size += SizeValue(Conv,ld->windows[i]->value);
+			size += SizeValue(Conv,ld->window[i]->rec->value);
 		}
 		num = ( size / SIZE_BLOCK ) + 1;
 
@@ -492,13 +492,13 @@ dbgmsg(">MakeLD");
 		printf(".\n");
 		_prefix = Prefix;
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
-			if		(  SizeValue(Conv,ld->windows[i]->value)  >  0  ) {
+			if		(  SizeValue(Conv,ld->window[i]->rec->value)  >  0  ) {
 				Prefix = _prefix;
 				PutLevel(base+1,TRUE);
-				sprintf(buff,"%s",ld->windows[i]->name);
+				sprintf(buff,"%s",ld->window[i]->name);
 				PutName(buff);
 				if		(  fWindowPrefix  ) {
-					sprintf(buff,"%s-",ld->windows[i]->name);
+					sprintf(buff,"%s-",ld->window[i]->name);
 					Prefix = StrDup(buff);
 				}
 				level = base+1;
@@ -506,9 +506,9 @@ dbgmsg(">MakeLD");
 						||	(  fLDR     )
 						||	(  fLDW     ) ) {
 					printf(".\n");
-					SIZE(Conv,ld->windows[i]->value);
+					SIZE(Conv,ld->window[i]->rec->value);
 				} else {
-					COBOL(Conv,ld->windows[i]->value);
+					COBOL(Conv,ld->window[i]->rec->value);
 				}
 				printf(".\n");
 				if		(  fWindowPrefix  ) {

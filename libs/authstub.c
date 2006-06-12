@@ -61,10 +61,7 @@ AuthUser(
 	Bool	rc;
 	char	buff[SIZE_OTHER+1];
 
-ENTER_FUNC;
-	if		(  strcmp(auth->protocol,"trust")  ==  0  ) {
-		rc = TRUE;
-	} else
+dbgmsg(">AuthUser");
 	if		(  !stricmp(auth->protocol,"glauth")  ) {
 		fh = ConnectIP_Socket(auth->port,SOCK_STREAM,auth->host);
 		if	( fh > 0) {
@@ -95,7 +92,7 @@ ENTER_FUNC;
 		printf("NG\n");
 	}
 #endif
-LEAVE_FUNC;
+dbgmsg("<AuthUser");
 	return	(rc);
 }
 

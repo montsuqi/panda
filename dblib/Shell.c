@@ -336,8 +336,7 @@ static	DB_OPS	Operations[] = {
 
 static	DB_Primitives	Core = {
 	_EXEC,
-	_DBACCESS,
-	NULL,
+	_DBACCESS
 };
 
 static	void
@@ -357,7 +356,7 @@ InitShell(void)
 ENTER_FUNC;
 	(void)signal(SIGCHLD, (void *)OnChildExit);
 
-	ret = EnterDB_Function("Shell",Operations,DB_PARSER_SQL,&Core,"# ","\n");
+	ret = EnterDB_Function("Shell",Operations,&Core,"# ","\n");
 LEAVE_FUNC;
 	return	(ret); 
 }

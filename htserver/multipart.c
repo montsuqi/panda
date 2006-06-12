@@ -11,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * General Public License for more details.
- * 
+ *  
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
@@ -309,9 +309,8 @@ ENTER_FUNC;
     else {
         MultipartFile *file = New(MultipartFile);
         file->filename = filename;
-        file->body = NewLBS();
-        LBS_ReserveSize(file->body,value_len,FALSE);
-        memcpy(LBS_Body(file->body),value,value_len);
+        file->value = value;
+        file->length = value_len;
         g_hash_table_insert(files, name, file);
 dbgprintf("filename = [%s]\n",file->filename);
 dbgprintf("length   = [%d]\n",file->length);

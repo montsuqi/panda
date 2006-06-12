@@ -38,7 +38,7 @@
 #include	"SQLlex.h"
 #include	"debug.h"
 
-extern	void
+static	void
 UnGetChar(
 	CURFILE	*in,
 	int		c)
@@ -47,7 +47,7 @@ UnGetChar(
 	in->back = c;
 }
 
-extern	int
+static	int
 GetChar(
 	CURFILE	*in)
 {

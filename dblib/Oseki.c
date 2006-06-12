@@ -41,7 +41,6 @@
 #include	"libmondai.h"
 #include	"dbgroup.h"
 #include	"client.h"
-#include	"directory.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -235,35 +234,12 @@ ENTER_FUNC;
 	buff = (byte *)xmalloc(size);
 	SQL_PackValue(NULL,buff,val);
 	p = buff;
+	//while	(  *p  !=  0  )		{
 	for	( i = 0 ; i < size ; i ++ ) {
 		LBS_Emit(lbs,*p);
 		p ++;
 	}
 	xfree(buff);
-LEAVE_FUNC;
-}
-
-static	void
-ReadTuple(
-	ValueStruct	*args,
-	ValueStruct	*tuple)
-{
-	ValueStruct	*value
-		,		*arg;
-	char		*name;
-	int			i;
-
-ENTER_FUNC;
-	if		(	(  args   !=  NULL  )
-			&&	(  tuple  !=  NULL  ) ) {
-		for	( i = 0 ; i < ValueRecordSize(tuple) ; i ++ ) {
-			value = ValueRecordItem(tuple,i);
-			name = ValueRecordName(tuple,i);
-			dbgprintf("name = [%s]",name);
-			arg = GetRecordItem(args,name);
-			CopyValue(arg,value);
-		}
-	}
 LEAVE_FUNC;
 }
 
@@ -277,7 +253,7 @@ _SendCommand(
 
 ENTER_FUNC;
 #ifdef	TRACE
-	printf("[%s]\n",sql);fflush(stdout);
+	printf("%s\n",sql);fflush(stdout);
 #endif
 	res = OsekiSendCommand(OS_CONN(dbg),sql);
 	if		(  fRed  ) {
@@ -288,6 +264,26 @@ LEAVE_FUNC;
 }
 
 static	void
+GetTable(
+	DBG_Struct	*dbg,
+	ValueStruct	**tuple,
+	int			items)
+{
+	byte	*p;
+	int		i;
+	OsekiClientSession	*ses = OS_CONN(dbg);
+
+ENTER_FUNC;
+	if		(  OsekiReadData(ses,OsekiResult(ses),NULL,NULL)  ==  0  ) {
+		p = LBS_Body(OsekiBuff(ses));
+		for	( i = 0 ; i < items ; i ++ ) {
+			p += SQL_UnPackValue(NULL,p,tuple[i]);
+		}
+	}
+LEAVE_FUNC;
+}
+
+static	void
 ExecOseki(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -295,15 +291,12 @@ ExecOseki(
 	LargeByteString	*src,
 	ValueStruct		*args)
 {
-	OsekiClientSession	*ses = OS_CONN(dbg);
     LargeByteString *sql;
 	int		c;
 	ValueStruct	*val;
 	int			res;
-	ValueStruct	**tuple
-		,		**input;
-	int			n
-		,		j
+	ValueStruct	**tuple;
+	int		n
 		,		items;
 	Bool	fIntoAster;
 
@@ -356,49 +349,20 @@ ENTER_FUNC;
 			  case	SQL_OP_VCHAR:
 				break;
 			  case	SQL_OP_EOL:
+				LBS_EmitChar(sql,';');
                 LBS_EmitEnd(sql);
 				res = _SendCommand(dbg,LBS_Body(sql),TRUE);
                 LBS_Clear(sql);
 				if		(  res <  0  ) {
 					dbgmsg("NG");
 					ctrl->rc = res;
+					break;
 				} else {
-					if		(  OsekiIsData(dbg->conn)  ) {
-						dbgmsg("OK");
-						if		(  fIntoAster  ) {
-							if		(  ( input = OsekiReadData(ses,OsekiResult(ses)) )
-									   !=  NULL  ) {
-								ReadTuple(val,input[0]);
-								OsekiFreeTuple(input);
-								ctrl->rc += MCP_OK;
-							} else {
-								ctrl->rc += MCP_EOF;
-							}
-						} else
-						if		(	(  items  ==  0     )
-								||	(  tuple  ==  NULL  ) ) {
-							dbgmsg("SQL error");
-							ctrl->rc = MCP_BAD_SQL;
-						} else {
-							dbgmsg("+");
-							if		(  ( input = OsekiReadData(ses,OsekiResult(ses)) )
-									   !=  NULL  ) {
-								for	( j = 0 ; j < items ; j ++ ) {
-									ReadTuple(tuple[j],input[j]);
-								}
-								OsekiFreeTuple(input);
-								ctrl->rc += MCP_OK;
-							} else {
-								ctrl->rc += MCP_EOF;
-							}
-						}
-						if		(  tuple  !=  NULL  ) {
-							xfree(tuple);
-							tuple = NULL;
-						}
+					dbgmsg("OK");
+					if		(  OsekiIsData(OS_CONN(dbg))  )	{
+						GetTable(dbg,tuple,items);
 						ctrl->rc += MCP_OK;
 					} else {
-						dbgmsg("EOF");
 						ctrl->rc += MCP_EOF;
 					}
 				}
@@ -446,6 +410,7 @@ _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
+	char	*host;
 	char	*port
 	,		*user
 	,		*dbname
@@ -453,20 +418,25 @@ _DBOPEN(
 	OsekiClientSession	*ses;
 
 ENTER_FUNC;
-	if ( dbg->fConnect == CONNECT ){
-		Warning("database is already connected.");
+	if		(  DB_Host  !=  NULL  ) {
+		host = DB_Host;
+	} else {
+		if		(  dbg->port  ==  NULL  ) {
+			host = NULL;
+		} else {
+			host = IP_HOST(dbg->port);
+		}
 	}
+	if		(  DB_Port  !=  NULL  ) {
+		port = DB_Port;
+	} else {
+		port = IP_PORT(dbg->port);
+	}
+	user =  ( DB_User != NULL ) ? DB_User : dbg->user;
+	dbname = ( DB_Name != NULL ) ? DB_Name : dbg->dbname;
+	pass = ( DB_Pass != NULL ) ? DB_Pass : dbg->pass;
 
-	port = StringPort(dbg->port);
-	user =  GetDB_User(dbg);
-	dbname = GetDB_DBname(dbg);
-	pass = GetDB_Pass(dbg);
-
-	dbgprintf("port = [%s]\n",port);
-	dbgprintf("user = [%s]\n",user);
-	dbgprintf("pass = [%s]\n",pass);
-
-	ses = ConnectOseki(NULL,port,user,pass);
+	ses = ConnectOseki(host,port,user,pass,"SQL");
 	if		(  ses  !=  NULL  ) {
 		OpenDB_RedirectPort(dbg);
 		dbg->conn = (void *)ses;
@@ -585,7 +555,6 @@ _DBFETCH(
 	PathStruct	*path;
 	int			res;
 	LargeByteString	*src;
-	ValueStruct		**input;
 
 ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
@@ -607,9 +576,8 @@ ENTER_FUNC;
 			} else {
 				if		(  OsekiIsData(ses)  ) {
 					dbgmsg("OK");
-					if		(  ( input = OsekiReadData(ses,OsekiResult(ses)) )  !=  NULL  ) {
-						ReadTuple(args,input[0]);
-						OsekiFreeTuple(input);
+					if		(  OsekiReadData(ses,OsekiResult(ses),NULL,NULL)  ==  0  ) {
+						SQL_UnPackValue(NULL,LBS_Body(OsekiBuff(ses)),args);
 						ctrl->rc = MCP_OK;
 					} else {
 						ctrl->rc = MCP_EOF;
@@ -834,13 +802,12 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
-	NULL,
 };
 
 extern	DB_Func	*
 InitOseki(void)
 {
-	return	(EnterDB_Function("Oseki",Operations,DB_PARSER_SQL,&Core,"/*","*/\t"));
+	return	(EnterDB_Function("Oseki",Operations,&Core,"/*","*/\t"));
 }
 
 #endif /* #ifdef HAVE_OSEKI */

@@ -25,21 +25,17 @@
 #include	"struct.h"
 #include	"enum.h"
 
-#define	MCP_PUT_NULL		"NULL"
-#define	MCP_PUT_CURRENT		"CURRENT"
-#define	MCP_PUT_NEW			"NEW"
-#define	MCP_PUT_CLOSE		"CLOSE"
-#define	MCP_PUT_CHANGE		"CHANGE"
-#define	MCP_PUT_JOIN		"JOIN"
-#define	MCP_PUT_FORK		"FORK"
-#define	MCP_PUT_END			"EXIT"
-#define	MCP_PUT_EXIT		MCP_PUT_END
-#define	MCP_PUT_BACK		"BACK"
-#define	MCP_PUT_CALL		"CALL"
-#define	MCP_PUT_RETURN		"RETURN"
+#define	MCP_PUT_NULL		0
+#define	MCP_PUT_CURRENT		1
+#define	MCP_PUT_NEW			2
+#define	MCP_PUT_CLOSE		3
+#define	MCP_PUT_CHANGE		4
+#define	MCP_PUT_BACK		5
+#define	MCP_PUT_JOIN		6
+#define	MCP_PUT_FORK		7
+#define	MCP_PUT_EXIT		8
 
-extern	int			MCP_PutWindow(ProcessNode *node, char *wname, char *type);
-extern	int			MCP_ReturnComponent(ProcessNode *node, char *event);
+extern	int			MCP_PutWindow(ProcessNode *node, char *wname, int type);
 extern	RecordStruct	*MCP_GetWindowRecord(ProcessNode *node, char *name);
 extern	int			MCP_ExecFunction(ProcessNode *node, char *rname,
 									 char *pname, char *func, ValueStruct *data);

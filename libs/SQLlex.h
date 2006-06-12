@@ -41,7 +41,5 @@
 
 extern	int		SQL_Lex(CURFILE *in, Bool fName);
 extern	void	SQL_LexInit(void);
-extern	void	UnGetChar(CURFILE *in, int c);
-extern	int		GetChar(CURFILE *in);
 
 #endif

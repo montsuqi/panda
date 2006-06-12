@@ -17,7 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = mon htcproc mce makefont
+bin_PROGRAMS = mon htcproc mce
 sbin_PROGRAMS = htserver
 
 htserver_LDFLAGS	=	-export-dynamic
@@ -88,16 +88,6 @@ htcproc_SOURCES	=	\
 	tags.c		tags.h		\
 	exec.c		exec.h		\
 	htcproc.c
-
-makefont_SOURCES	=	\
-	makefont.c
-makefont_DEPENDENCIES	=
-makefont_LDADD 		=					\
-	-lm									\
-	$(GLIB_LIBS)						\
-	$(MONDAI_LIBS)						\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(GDLIB_LDFLAGS) -lgd
 
 htcproc_DEPENDENCIES	=				\
 	$(top_builddir)/libs/libpandamisc.a	\

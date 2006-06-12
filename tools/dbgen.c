@@ -38,7 +38,6 @@
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"DBparser.h"
-//#include	"dbgroup.h"
 #include	"dirs.h"
 #include	"const.h"
 #include	"enum.h"
@@ -52,6 +51,7 @@ static	Bool	fInsert;
 
 static	int		TextSize;
 static	int		ArraySize;
+static	char	*DB_Name;
 
 static	int		level;
 static	char	*rname[SIZE_RNAME];
@@ -423,6 +423,7 @@ SetDefault(void)
 	ArraySize = SIZE_DEFAULT_ARRAY_SIZE;
 	TextSize = SIZE_DEFAULT_TEXT_SIZE;
 	RecordDir = ".";
+	DB_Name = "";
 }
 
 extern	int
@@ -441,11 +442,11 @@ main(
 		RecParserInit();
 		DB_ParserInit();
 		if		(  fCreate  ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
 		} else if		( fInsert ) {
-            if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
+            if		(  ( rec = DB_Parser(fl->name,NULL) )  !=  NULL  ) {
                 MakeInsert(rec);
             }
         }

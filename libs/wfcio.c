@@ -120,10 +120,10 @@ ENTER_FUNC;
 	  case	GL_TYPE_NUMBER:
 		break;
 	  case	GL_TYPE_OBJECT:
-		if		(  IS_OBJECT_NULL(ValueObjectId(value))  ) {
-			ValueObjectId(value) = RequestImportBLOB(fp,WFC_BLOB,BlobCacheFileName(value));
+		if		(  IS_OBJECT_NULL(ValueObject(value))  ) {
+			ValueObject(value) = RequestImportBLOB(fp,WFC_BLOB,BlobCacheFileName(value));
 		} else {
-			RequestSaveBLOB(fp,WFC_BLOB,ValueObjectId(value),BlobCacheFileName(value));
+			RequestSaveBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
 		}
 		break;
 	  case	GL_TYPE_ALIAS:
@@ -156,28 +156,26 @@ ENTER_FUNC;
 	size = NativeSizeValue(NULL,value);
 	LBS_ReserveSize(buff,size,FALSE);
 	NativePackValue(NULL,LBS_Body(buff),value);
-	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
+	SendPacketClass(fp,WFC_PING);
 	dbgmsg("send PING");
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
 		dbgmsg("recv PONG");
-		SendPacketClass(fp,WFC_DATA);	ON_IO_ERROR(fp,badio);
+		SendPacketClass(fp,WFC_DATA);
 		dbgmsg("send DATA");
-		SendString(fp,window);			ON_IO_ERROR(fp,badio);
-		SendString(fp,widget);			ON_IO_ERROR(fp,badio);
-		SendString(fp,event);			ON_IO_ERROR(fp,badio);
+		SendString(fp,window);
+		SendString(fp,widget);
+		SendString(fp,event);
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
-			ON_IO_ERROR(fp,badio);
 			dbgmsg("recv OK");
 			SendLBS(fp,buff);
 			ForwardBLOB(fp,value);
-			SendPacketClass(fp,WFC_OK);		ON_IO_ERROR(fp,badio);
+			SendPacketClass(fp,WFC_OK);
 			rc = TRUE;
 		} else {
 			/*	window not found	*/
 			rc = FALSE;
 		}
 	} else {
-	  badio:
 		rc = FALSE;
 	}
 LEAVE_FUNC;
@@ -199,26 +197,21 @@ RecvTermServerHeader(
 
 ENTER_FUNC;
   top: 
-	rc = FALSE;
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_HEADER:
-		dbgmsg(">recv HEADER");
-		RecvnString(fp, SIZE_NAME+1, user);		ON_IO_ERROR(fp,badio);
-		RecvnString(fp, SIZE_NAME+1, window);	ON_IO_ERROR(fp,badio);
-		RecvnString(fp, SIZE_NAME+1, widget);	ON_IO_ERROR(fp,badio);
-		dbgprintf("window = [%s]",window);
-		*type = RecvChar(fp);					ON_IO_ERROR(fp,badio);
-		ctl->n = RecvInt(fp);					ON_IO_ERROR(fp,badio);
+		dbgmsg("recv HEADER");
+		RecvnString(fp, SIZE_NAME+1, user);
+		RecvnString(fp, SIZE_NAME+1, window);
+		RecvnString(fp, SIZE_NAME+1, widget);
+		*type = TO_INT(RecvChar(fp));
+		ctl->n = RecvInt(fp);
 		dbgprintf("ctl->n = %d\n",ctl->n);
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
 			ctl->control[i].PutType = (byte)RecvInt(fp);
-			ON_IO_ERROR(fp,badio);
 			RecvnString(fp, SIZE_NAME+1, ctl->control[i].window);
-			ON_IO_ERROR(fp,badio);
 			dbgprintf("wname = [%s]\n",ctl->control[i].window);
 		}
 		rc = TRUE;
-		dbgmsg("<recv HEADER");
 		break;
 	  case	WFC_PING:
 		dbgmsg("recv PING");
@@ -230,9 +223,9 @@ ENTER_FUNC;
 		dbgmsg("recv default");
 		SendPacketClass(fp,WFC_NOT);
 		dbgmsg("send NOT");
+		rc = FALSE;
 		break;
 	}
-  badio:
 LEAVE_FUNC;
 	return	(rc);
 }
@@ -276,11 +269,11 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_OBJECT:
 		ValueIsNonNil(value);
-		if		(  IS_OBJECT_NULL(ValueObjectId(value))  ) {
-			ValueObjectId(value) = RequestNewBLOB(fp,WFC_BLOB,BLOB_OPEN_WRITE);
-			RequestCloseBLOB(fp,WFC_BLOB,ValueObjectId(value));
+		if		(  IS_OBJECT_NULL(ValueObject(value))  ) {
+			ValueObject(value) = RequestNewBLOB(fp,WFC_BLOB,BLOB_OPEN_WRITE);
+			RequestCloseBLOB(fp,WFC_BLOB,ValueObject(value));
 		} else {
-			RequestExportBLOB(fp,WFC_BLOB,ValueObjectId(value),BlobCacheFileName(value));
+			RequestExportBLOB(fp,WFC_BLOB,ValueObject(value),BlobCacheFileName(value));
 		}
 		break;
 	  case	GL_TYPE_ALIAS:
@@ -304,9 +297,6 @@ _RecvWindow(
 	WindowData	*win,
 	NETFILE		*fp)
 {
-ENTER_FUNC;
-	dbgprintf("name = [%s]",wname);
-	dbgprintf("puttype = %02X",win->PutType);
 	switch	(win->PutType) {
 	  case	SCREEN_NULL:
 	  case	SCREEN_CLOSE_WINDOW:
@@ -328,7 +318,6 @@ ENTER_FUNC;
 			break;
 		}
 	}
-LEAVE_FUNC;
 }
 
 extern	void

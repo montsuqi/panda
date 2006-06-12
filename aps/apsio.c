@@ -288,19 +288,13 @@ ENTER_FUNC;
 				NativeUnPackValue(NULL,LBS_Body(buff),node->sparec->value);
 				break;
 			  case	APS_SCRDATA:
-				dbgmsg(">SCRDATA");
+				dbgmsg("SCRDATA");
 				for	( i = 0 ; i < node->cWindow ; i ++ ) {
 					if		(  node->scrrec[i]  !=  NULL  ) {
-						dbgmsg("*");
 						RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-						dbgprintf("rec = [%s]\n",node->scrrec[i]->name);
 						NativeUnPackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
-#ifdef	DEBUG
-						DumpValueStruct(node->scrrec[i]->value);
-#endif
 					}
 				}
-				dbgmsg("<SCRDATA");
 				break;
 			  case	APS_END:
 				dbgmsg("END");
@@ -362,15 +356,27 @@ ENTER_FUNC;
 	ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));
 	ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.event")));
-	ON_IO_ERROR(fp,badio);
 	SendChar(fp,node->dbstatus);
 	ON_IO_ERROR(fp,badio);
-	dbgprintf("private.pputtype = %02X",ValueInteger(GetItemLongName(e,"private.pputtype")));
-	SendInt(fp,ValueInteger(GetItemLongName(e,"private.pputtype")));
+	SendChar(fp,*ValueStringPointer(GetItemLongName(e,"private.pputtype")));
 	ON_IO_ERROR(fp,badio);
 	fEnd = FALSE; 
 	while	(  !fEnd  ) {
+		if		(  node->mcprec  !=  NULL  ) {
+			dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
+		}
+		if		(  node->linkrec  !=  NULL  ) {
+			dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
+		}
+		if		(  node->sparec  !=  NULL  ) {
+			dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
+		}
+		for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
+			if		(  node->scrrec[i]  !=  NULL  ) {
+				dbgprintf("scr[%s]  = %d\n",node->scrrec[i]->name,
+						  NativeSizeValue(NULL,node->scrrec[i]->value));
+			}
+		}
 		switch	(c = RecvPacketClass(fp)) {
 		  case	APS_WINCTRL:
 			dbgmsg("WINCTRL");
@@ -383,7 +389,6 @@ ENTER_FUNC;
 		  case	APS_MCPDATA:
 			dbgmsg("MCPDATA");
 			if		(  node->mcprec  !=  NULL  ) {
-				dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
 				LBS_ReserveSize(buff,NativeSizeValue(NULL,node->mcprec->value),FALSE);
 				NativePackValue(NULL,LBS_Body(buff),node->mcprec->value);
 			} else {
@@ -394,7 +399,6 @@ ENTER_FUNC;
 		  case	APS_LINKDATA:
 			dbgmsg("LINKDATA");
 			if		(  node->linkrec  !=  NULL  ) {
-				dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
 				LBS_ReserveSize(buff,NativeSizeValue(NULL,node->linkrec->value),FALSE);
 				NativePackValue(NULL,LBS_Body(buff),node->linkrec->value);
 			} else {
@@ -405,7 +409,6 @@ ENTER_FUNC;
 		  case	APS_SPADATA:
 			dbgmsg("SPADATA");
 			if		(  node->sparec  !=  NULL  ) {
-				dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
 				LBS_ReserveSize(buff,NativeSizeValue(NULL,node->sparec->value),FALSE);
 				NativePackValue(NULL,LBS_Body(buff),node->sparec->value);
 			} else {
@@ -417,8 +420,6 @@ ENTER_FUNC;
 			dbgmsg("SCRDATA");
 			for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 				if		(  node->scrrec[i]  !=  NULL  ) {
-					dbgprintf("scr[%s]  = %d\n",node->scrrec[i]->name,
-							  NativeSizeValue(NULL,node->scrrec[i]->value));
 					LBS_ReserveSize(buff,
 									NativeSizeValue(NULL,node->scrrec[i]->value),FALSE);
 					NativePackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
