@@ -58,7 +58,6 @@ static	Bool	fQ;
 static	Bool	fRedirector;
 static	Bool	fRestart;
 static	Bool	fAllRestart;
-static	Bool	fTimer;
 static	int		Interval;
 static	int		wfcinterval;
 static	int		MaxTran;
@@ -660,7 +659,6 @@ SetDefault(void)
 	fRestart = FALSE;
 	fAllRestart = FALSE;
 	fQ = FALSE;
-	fTimer = FALSE;
 }
 
 extern	int
