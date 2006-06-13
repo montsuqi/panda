@@ -505,10 +505,6 @@ ENTER_FUNC;
 		while	(  ( pid = waitpid(-1,&status,0) )  !=  -1  ) {
 			dbgprintf("pid = %d is down",pid);
 			if		(  ( proc = g_int_hash_table_lookup(ProcessTable,pid) )  !=  NULL  ) {
-#if	0
-				fprintf(fpLog,"process down pid = %d(%d) Command =[%s]\n"
-						,(int)pid,WEXITSTATUS(status),proc->argv[0]);
-#else
 				if (WIFSIGNALED(status) ) {
 					Message("%s(%d) killed by signal %d"
 							,proc->argv[0], (int)pid, WTERMSIG(status));
@@ -516,7 +512,6 @@ ENTER_FUNC;
 					Message("process down pid = %d(%d) Command =[%s]\n"
 							,(int)pid, WEXITSTATUS(status),proc->argv[0]);
 				}
-#endif
 				switch	(proc->type) {
 				  case	PTYPE_APS:
 					if		(	(  fRestart     )
@@ -550,13 +545,8 @@ ENTER_FUNC;
 					StartProcess(proc,Interval);
 				}
 			} else {
-#if	0
-				fprintf(fpLog,"unknown process down pid = %d(%d)\n"
-						,(int)pid,WEXITSTATUS(status));
-#else
 				Message("unknown process down pid = %d(%d)\n"
  						,(int)pid,WEXITSTATUS(status));
-#endif
 			}
 		}
 	}	while	(TRUE);
@@ -699,6 +689,11 @@ main(
 		fRestart = TRUE;
 	}
 	InitMessage("monitor",Log);
+
+	if		(  !fRedirector  ) {
+		fNoCheck = TRUE;
+	}
+
 	InitSystem();
 	signal(SIGUSR1,(void *)StopSystem);
 	signal(SIGHUP,(void *)StopApss);
