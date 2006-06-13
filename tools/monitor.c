@@ -139,8 +139,10 @@ StartProcess(
 
 ENTER_FUNC;
   retry:
-	if		(  interval  >  0  ) {
-		sleep(interval);
+	if		(  ( proc->type & PTYPE_WFC )  ==  0  ) {
+		if		(  interval  >  0  ) {
+			sleep(interval);
+		}
 	}
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
@@ -159,6 +161,11 @@ ENTER_FUNC;
 	} else {
 		Message("can't start process\n");
 		goto	retry;
+	}
+	if		(  ( proc->type & PTYPE_WFC )  !=  0  ) {
+		if		(  interval  >  0  ) {
+			sleep(interval);
+		}
 	}
 LEAVE_FUNC;
 	return	(pid);
