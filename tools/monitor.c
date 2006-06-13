@@ -674,6 +674,11 @@ main(
 		fRestart = TRUE;
 	}
 	InitMessage("monitor",Log);
+
+	if		(  !fRedirector  ) {
+		fNoCheck = TRUE;
+	}
+
 	InitSystem();
 	signal(SIGUSR1,(void *)StopSystem);
 	signal(SIGHUP,(void *)StopApss);

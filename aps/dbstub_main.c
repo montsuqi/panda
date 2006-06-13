@@ -49,7 +49,6 @@
 #include	"directory.h"
 #include	"handler.h"
 #include	"option.h"
-#include	"aps_main.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -101,7 +100,7 @@ ExecuteSubProcess(
 {
 	int		rc;
 ENTER_FUNC;
-	dbgprintf("[%s][%s]\n",name,CommandParameter);
+	printf("[%s][%s]\n",name,CommandParameter);
 	rc = StartBatch(name,CommandParameter);
 LEAVE_FUNC;
 	return	(rc); 
@@ -129,8 +128,8 @@ static	ARG_TABLE	option[] = {
 		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
-	{	"bddir",	STRING,		TRUE,	(void*)&D_Dir,
-		"バッチ定義格納ディレクトリ"	 				},
+	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
+		"定義格納ディレクトリ"			 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"ディレクトリファイル"	 						},
 	{	"path",		STRING,		TRUE,	(void*)&LibPath,
