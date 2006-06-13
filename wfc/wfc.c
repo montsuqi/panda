@@ -310,7 +310,7 @@ static	ARG_TABLE	option[] = {
 		"base directory"			 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"record directory"			 					},
-	{	"lddir",	STRING,		TRUE,	(void*)&D_Dir,
+	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
 		"LD directory"				 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"environment file name"							},
