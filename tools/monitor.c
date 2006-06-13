@@ -63,8 +63,8 @@ static	int		Interval;
 static	int		wfcinterval;
 static	int		MaxTran;
 static	int		Sleep;
-
-static	FILE		*fpLog;
+static	int		nCache;
+static	char	*SesDir;
 
 static	GHashTable	*ProcessTable;
 
@@ -73,11 +73,15 @@ static	GHashTable	*ProcessTable;
 #define	PTYPE_WFC	(byte)0x02
 #define	PTYPE_RED	(byte)0x04
 
+#define	STATE_RUN	1
+#define	STATE_DOWN	2
+
 typedef	struct {
 	pid_t	pid;
+	int		state;
 	byte	type;
-	int		argc;
 	int		count;
+	int		argc;
 	char	**argv;
 }	Process;
 
@@ -132,7 +136,6 @@ StartProcess(
 	int		interval)
 {
 	pid_t	pid;
-	int		i;
 
 ENTER_FUNC;
   retry:
@@ -141,17 +144,20 @@ ENTER_FUNC;
 	}
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
+		proc->state = STATE_RUN;
 		g_int_hash_table_insert(ProcessTable,pid,proc);
+#if	0
 		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
 			fprintf(fpLog,"%s ",proc->argv[i]);
 		}
 		fprintf(fpLog,"(%d)\n",pid);
 		fflush(fpLog);
+#endif
 	} else
 	if		(  pid  ==  0  ) {
 		_execv(proc->argv[0],proc->argv);
 	} else {
-		fprintf(fpLog,"can't start process\n");
+		Message("can't start process\n");
 		goto	retry;
 	}
 LEAVE_FUNC;
@@ -367,7 +373,7 @@ ENTER_FUNC;
 		}
 		proc = New(Process);
 		proc->type = PTYPE_WFC;
-		argv = (char **)xmalloc(sizeof(char *) * 20);
+		argv = (char **)xmalloc(sizeof(char *) * 24);
 		proc->argv = argv;
 		argc = 0;
 		if		(  WfcPath  !=  NULL  ) {
@@ -387,6 +393,10 @@ ENTER_FUNC;
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->TermPort));
 		argv[argc ++] = "-apsport";
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->WfcApsPort));
+		argv[argc ++] = "-cache";
+		argv[argc ++] = IntStrDup(nCache);
+		argv[argc ++] = "-sesdir";
+		argv[argc ++] = SesDir;
 
 		if		(  Directory  !=  NULL  ) {
 			argv[argc ++] = "-dir";
@@ -488,8 +498,18 @@ ENTER_FUNC;
 		while	(  ( pid = waitpid(-1,&status,0) )  !=  -1  ) {
 			dbgprintf("pid = %d is down",pid);
 			if		(  ( proc = g_int_hash_table_lookup(ProcessTable,pid) )  !=  NULL  ) {
+#if	0
 				fprintf(fpLog,"process down pid = %d(%d) Command =[%s]\n"
 						,(int)pid,WEXITSTATUS(status),proc->argv[0]);
+#else
+				if (WIFSIGNALED(status) ) {
+					Message("%s(%d) killed by signal %d"
+							,proc->argv[0], (int)pid, WTERMSIG(status));
+				} else {
+					Message("process down pid = %d(%d) Command =[%s]\n"
+							,(int)pid, WEXITSTATUS(status),proc->argv[0]);
+				}
+#endif
 				switch	(proc->type) {
 				  case	PTYPE_APS:
 					if		(	(  fRestart     )
@@ -523,8 +543,13 @@ ENTER_FUNC;
 					StartProcess(proc,Interval);
 				}
 			} else {
+#if	0
 				fprintf(fpLog,"unknown process down pid = %d(%d)\n"
 						,(int)pid,WEXITSTATUS(status));
+#else
+				Message("unknown process down pid = %d(%d)\n"
+ 						,(int)pid,WEXITSTATUS(status));
+#endif
 			}
 		}
 	}	while	(TRUE);
@@ -535,13 +560,6 @@ static	void
 InitSystem(void)
 {
 ENTER_FUNC;
-	if		(  Log  !=  NULL  ) {
-		if		(  ( fpLog = fopen(Log,"a+") )  ==  NULL  ) {
-			fpLog = stdout;
-		}
-	} else {
-		fpLog = stdout;
-	}
 LEAVE_FUNC;
 }
 
@@ -558,6 +576,7 @@ StopSystem(void)
 ENTER_FUNC;
 	fRestart = FALSE;
 	fAllRestart = FALSE;
+	Message("Stop system");
 	signal(SIGCHLD,(void *)WaitStop);
 	KillAllProcess((PTYPE_APS | PTYPE_RED ),SIGKILL);
 	KillAllProcess(PTYPE_WFC,SIGUSR1);
@@ -605,6 +624,10 @@ static	ARG_TABLE	option[] = {
 		"プロセス操作時の待ち時間"	 					},
 	{	"wfcwait",	INTEGER,	TRUE,	(void*)&wfcinterval,
 		"wfc起動後の待ち時間(遅いCPU用)"				},
+	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
+		"terminal cache number"							},
+	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
+		"セション変数保持ディレクトリ" 					},
 
 	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
 		"自分のホスト名を指定する"	 					},
@@ -652,6 +675,8 @@ SetDefault(void)
 	fAllRestart = FALSE;
 	fQ = FALSE;
 	fTimer = FALSE;
+	nCache = 100;
+	SesDir = ".";
 }
 
 extern	int
@@ -663,19 +688,17 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv);
-	InitMessage("monitor",NULL);
 	if		(  fAllRestart  ) {
 		fRestart = TRUE;
 	}
-
+	InitMessage("monitor",Log);
+	InitSystem();
 	signal(SIGUSR1,(void *)StopSystem);
 	signal(SIGHUP,(void *)StopApss);
+	Message("Start system");
+ 	StartPrograms();
 
-	if		(  !fRedirector  ) {
-		fNoCheck = TRUE;
-	}
-	InitSystem();
-	StartPrograms();
 	ProcessMonitor();
+
 	return	(0);
 }
