@@ -2,9 +2,13 @@
 
 	* aps/MCPSUB, aps/MONFUNC: ctrl.rcを返すように変更
 
+	* glclient/action.c (_UpdateWidget): 必要なときのみResetTimerが掛
+	かるようにした
+
 2006-06-09  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/widgetOPS.c (RecvURI): pandahtmlにURIを指定できるようにした
+	* glclient/widgetOPS.c (RecvURI): pandahtmlにURIを指定できるように
+	した
 
 2006-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
