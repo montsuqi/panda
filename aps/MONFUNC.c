@@ -55,7 +55,7 @@ CheckArg(
 	}
 }
 
-extern	void
+extern	int
 MONFUNC(
 	char	*mcpdata,
 	char	*data)
@@ -113,6 +113,7 @@ ENTER_FUNC;
 	}
 	OpenCOBOL_PackValue(OpenCOBOL_Conv, mcpdata,mcp);
 LEAVE_FUNC;
+	return ctrl.rc;
 }
 
 #endif

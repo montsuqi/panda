@@ -1,3 +1,7 @@
+2006-06-14  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/MCPSUB, aps/MONFUNC: ctrl.rcを返すように変更
+
 2006-06-09  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/widgetOPS.c (RecvURI): pandahtmlにURIを指定できるようにした
