@@ -65,7 +65,7 @@ CheckArgTable(
 	}
 }
 
-extern	void
+extern	int
 MCPSUB(
 	char	*mcpdata,
 	char	*data)
@@ -131,6 +131,7 @@ ENTER_FUNC;
 	}
 	OpenCOBOL_PackValue(OpenCOBOL_Conv, mcpdata,mcp);
 LEAVE_FUNC;
+	return ctrl.rc;
 }
 
 #endif

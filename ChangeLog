@@ -1,3 +1,11 @@
+2006-06-14  Noboru Saitou  <noborus@netlab.jp>
+	[ Backport from HEAD ]
+
+	* aps/MCPSUB, aps/MONFUNC: ctrl.rcを返すように変更
+
+	* glclient/action.c (_UpdateWidget): 必要なときのみResetTimerが掛
+	かるようにした
+
 2006-06-12  Noboru Saitou  <noborus@netlab.jp>
 	
 	[ Backport from HEAD ]

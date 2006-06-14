@@ -196,7 +196,9 @@ _UpdateWidget(
 
 ENTER_FUNC;
 	window = gtk_widget_get_toplevel(widget);
-	ResetTimer(GTK_WINDOW (window));
+	if (TimerFlag) {  
+		ResetTimer(GTK_WINDOW (window));
+	} 
 	name = glade_get_widget_long_name(widget);
 	wname = gtk_widget_get_name(window);
 	if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
