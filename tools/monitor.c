@@ -330,7 +330,6 @@ ENTER_FUNC;
 				argv[argc ++] = "-timer";
 			}		
 			argv[argc ++] = ld->name;
-			argv[argc ++] = "-connect";
 			argv[argc ++] = "-maxtran";
 			argv[argc ++] = IntStrDup(MaxTran);
 			argv[argc ++] = "-sleep";
