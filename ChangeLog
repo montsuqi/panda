@@ -1,4 +1,5 @@
 2006-06-14  Noboru Saitou  <noborus@netlab.jp>
+
 	[ Backport from HEAD ]
 
 	* aps/MCPSUB, aps/MONFUNC: ctrl.rcを返すように変更
@@ -17,6 +18,8 @@
 	* tools/monitor.c: libs/message.c に対応(syslog含む)
 
 2006-04-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.6p3 release
 
 	* aps/aps_main.c: 異常終了時に再起動するように終了コードの変更
 
@@ -62,6 +65,10 @@
 	にするようにした(基本的には安全網。また内部変数の参照の時はこうなっ
 	ていないと困る)
 
+2006-04-11  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.6p2 release
+
 2006-04-10  Noboru Saitou  <noborus@netlab.jp>
 
  	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c: 
@@ -95,7 +102,6 @@
 2006-03-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/exec.h (OPC_EVAL): OPC_NAMEから名称変更(実際に動作に合わせた)
-
 2006-03-23  Noboru Saitou  <noborus@netlab.jp>
 
 	* Merge from ssl_client_branch.
@@ -204,6 +210,8 @@
 
 	* glclient/client.c, glserver/glserver.c, fdd/fdd.c, fdd/fwd.c: 
 	-ciphertsオプションを追加
+
+	* Ver 1.2.6p1 release
 
 2006-03-22  Noboru Saitou  <noborus@netlab.jp>
 

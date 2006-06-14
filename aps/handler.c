@@ -17,12 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
+
 /*
 #define	DEBUG
 #define	TRACE
-*/
-
-/*
 #define	NEW_SEQUENCT
 */
 
@@ -36,7 +34,6 @@
 #include	<dlfcn.h>
 #include	<glib.h>
 #include	<unistd.h>
-#include	<sys/time.h>
 
 #include	"defaults.h"
 #include	"types.h"
@@ -48,9 +45,7 @@
 #include	"load.h"
 #define		_HANDLER
 #include	"dbgroup.h"
-#include	"driver.h"
 #include	"handler.h"
-#include	"aps_main.h"
 #include	"apsio.h"
 #include	"dblib.h"
 #include	"glterm.h"
@@ -160,7 +155,7 @@ ENTER_FUNC;
 	}
 	InitHandler();
 	dbgprintf("LD = [%s]",ThisLD->name);
-	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_OnlineInit,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_OnlineInit,NULL);
 
 	TypeHash = NewNameiHash();
 	g_hash_table_insert(TypeHash,"CURRENT",(gpointer)SCREEN_CURRENT_WINDOW);
@@ -171,9 +166,6 @@ ENTER_FUNC;
 	g_hash_table_insert(TypeHash,"FORK",(gpointer)SCREEN_FORK_WINDOW);
 	g_hash_table_insert(TypeHash,"EXIT",(gpointer)SCREEN_END_SESSION);
 	g_hash_table_insert(TypeHash,"BACK",(gpointer)SCREEN_BACK_WINDOW);
-
-	g_hash_table_insert(TypeHash,"CALL",(gpointer)SCREEN_CALL_COMPONENT);
-	g_hash_table_insert(TypeHash,"RETURN",(gpointer)SCREEN_RETURN_COMPONENT);
 LEAVE_FUNC;
 }
 
@@ -219,6 +211,7 @@ ENTER_FUNC;
 			handler->klass->ReadyExecute(handler,ThisLD->loadpath);
 		}
 	}
+dbgmsg("*");
 	if		(  ( handler->fInit & INIT_READYDC )  ==  0  ) {
 		handler->fInit |= INIT_READYDC;
 		if		(  handler->klass->ReadyDC  !=  NULL  ) {
@@ -232,7 +225,7 @@ extern	void
 ReadyDC(void)
 {
 ENTER_FUNC;
-	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_ReadyDC,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyDC,NULL);
 LEAVE_FUNC;
 }
 
@@ -265,28 +258,28 @@ ReadyOnlineDB(
 ENTER_FUNC;
 	InitDB_Process(fp);
 	rc = OpenDB(NULL);
-	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_ReadyOnlineDB,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_ReadyOnlineDB,NULL);
 LEAVE_FUNC;
 	return	rc;
 }
 
 static	void
 CallBefore(
-	WindowBind		*bind,
-	ProcessNode		*node)
+	ProcessNode	*node)
 {
 	ValueStruct	*mcp;
 
 ENTER_FUNC;
 	mcp = node->mcprec->value; 
-	SetValueString(GetItemLongName(mcp,"dc.status"),
-				   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
-				   NULL);
-	SetValueString(GetItemLongName(mcp,"dc.dbstatus"),
-				   DBSTATUS[(unsigned char)node->dbstatus],NULL);
+	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),
+		   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
+		   SIZE_STATUS);
+	ValueIsNonNil(GetItemLongName(mcp,"dc.status"));
+	memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.dbstatus")),
+		   DBSTATUS[(unsigned char)node->dbstatus], SIZE_STATUS);
+	ValueIsNonNil(GetItemLongName(mcp,"dc.dbstatus"));
 	node->w.n = 0;
-	node->thisscrrec = bind->rec;
-	CurrentProcess = node;
+	CurrentProcess = node; 
 LEAVE_FUNC;
 }
 
@@ -309,9 +302,7 @@ CallAfter(
 		,	winfrom
 		,	winend
 		,	sindex;	/*	sindex orgine is 1	*/
-	char	buff[SIZE_LONGNAME+1]
-		,	*p;
-	int		PutType;
+	byte	PutType;
 
 	ValueStruct	*mcp_swindow;
 	ValueStruct	*mcp_sindex;
@@ -330,61 +321,52 @@ ENTER_FUNC;
 
 	winfrom = 0;
 	winend = 0;
-	if		(  ( PutType = (int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
+	if		(  ( PutType = (byte)(int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
 		PutType = SCREEN_CURRENT_WINDOW;
 	}
 	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
-		SetValueString(GetArrayItem(mcp_swindow,0),ValueStringPointer(mcp_dcwindow),NULL);
+		strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,0)),
+			   ValueStringPointer(mcp_dcwindow));
+		ValueIsNonNil(GetArrayItem(mcp_swindow,0));
 		sindex = 1;
 	}
-
 	if		(  sindex  >  1  ) {
-		SetValueString(GetItemLongName(mcp,"dc.fromwin"),
-					   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 2)),NULL);
+		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
+			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 2)),
+			   SIZE_NAME);
 	} else {
-		SetValueString(GetItemLongName(mcp,"dc.fromwin"),"",NULL);
+		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.fromwin")),
+			   "");
 	}
-
-	switch	(PutType) {
-	  case	SCREEN_BACK_WINDOW:
-		dbgmsg("back");
+	ValueIsNonNil(GetItemLongName(mcp,"dc.fromwin"));
+	if		(  PutType  ==  SCREEN_BACK_WINDOW  ) {
 		sindex --;
-		SetValueString(GetItemLongName(mcp,"dc.window"),
-					   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 1)),NULL);
+		memcpy(ValueStringPointer(GetItemLongName(mcp,"dc.window")),
+			   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 1)),
+			   SIZE_NAME);
+		ValueIsNonNil(GetItemLongName(mcp,"dc.window"));
 		PutType = SCREEN_CHANGE_WINDOW;
 		SetValueString(GetItemLongName(mcp,"dc.puttype"),"CHANGE",NULL);
-		break;
-	  case	SCREEN_RETURN_COMPONENT:
-		dbgmsg("return");
-		sindex --;
-		strcpy(buff,ValueStringPointer(GetItemLongName(mcp,"dc.window")));
-		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
-			*p = 0;
+	} else
+	if		(  strcmp(ValueStringPointer(
+						  GetArrayItem(mcp_swindow,sindex - 1)),
+					  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
+		for	( i = 0 ; i < sindex ; i ++ ) {
+			if		(  strcmp(ValueStringPointer(
+								  GetArrayItem(mcp_swindow,i)),
+							  ValueStringPointer(mcp_dcwindow))  ==  0  )
+				break;
 		}
-		SetValueString(GetItemLongName(mcp,"dc.window"),buff,NULL);
-		break;
-	  default:
-		dbgmsg("other");
-		if		(  strcmp(ValueStringPointer(
-							  GetArrayItem(mcp_swindow,sindex - 1)),
-						  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
-			for	( i = 0 ; i < sindex ; i ++ ) {
-				if		(  strcmp(ValueStringPointer(
-									  GetArrayItem(mcp_swindow,i)),
-								  ValueStringPointer(mcp_dcwindow))  ==  0  )
-					break;
-			}
-			if		(  i  <  sindex  ) {
-				winfrom = i + 1;
-			} else {
-				winfrom = 0;
-				SetValueString(GetArrayItem(mcp_swindow,i),
-							   ValueStringPointer(mcp_dcwindow),NULL);
-			}
-			winend  = sindex;
-			sindex = i + 1;
+		if		(  i  <  sindex  ) {
+			winfrom = i + 1;
+		} else {
+			winfrom = 0;
+			strcpy(ValueStringPointer(GetArrayItem(mcp_swindow,i)),
+				   ValueStringPointer(mcp_dcwindow));
+			ValueIsNonNil(GetArrayItem(mcp_swindow,i));
 		}
-		break;
+		winend  = sindex;
+		sindex = i + 1;
 	}
 
 	switch	(PutType) {
@@ -394,12 +376,17 @@ ENTER_FUNC;
 					   ValueStringPointer(GetArrayItem(mcp_swindow,i)),
 					   SCREEN_CLOSE_WINDOW);
 		}
+#ifdef	NEW_SEQUENCE
+		SetPutType(node,ValueStringPointer(mcp_dcwindow),SCREEN_CURRENT_WINDOW);
+#endif
 		break;
 	  default:
+#ifdef	NEW_SEQUENCE
+		SetPutType(node,ValueStringPointer(mcp_dcwindow),PutType);
+#endif
 		break;
 	}
-	dbgprintf("PutType = %d",PutType);
-	SetValueInteger(mcp_pputtype,PutType);
+	SetValueInteger(mcp_pputtype,(int)PutType);
 	if		(  strcmp(ValueStringPointer(mcp_dcwindow), node->window)  !=  0  )	{
 		SetValueInteger(mcp_sindex,sindex);
 	}
@@ -465,35 +452,19 @@ ExecuteProcess(
 {
 	WindowBind	*bind;
 	MessageHandler	*handler;
-	char		compo[SIZE_LONGNAME+1];
-	struct	timeval	tv;
-	long	ever
-		,	now;
+	char		*window;
 
 ENTER_FUNC;
-	PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
-					  compo);
-	if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,compo) )
-			   !=  NULL  ) {
-		handler = bind->handler;
-		if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
-			CallBefore(bind,node);
-			gettimeofday(&tv,NULL);
-			ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
-			if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
-				MessageLog("application process illegular execution");
-				exit(2);
-			}
-			if		(  fTimer  ) {
-				gettimeofday(&tv,NULL);
-				now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
-				printf("aps %s@%s:%s process time %6ld(ms)\n",
-					   node->user,node->term,compo,(now - ever));
-			}
-			CallAfter(node);
+	window = ValueToString(GetItemLongName(node->mcprec->value,"dc.window"),NULL);
+	bind = (WindowBind *)g_hash_table_lookup(ThisLD->whash,window);
+	handler = bind->handler;
+	if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
+		CallBefore(node);
+		if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
+			MessageLog("application process illegular execution");
+			exit(2);
 		}
-	} else {
-		Error("invalid event request [%s]",compo);
+		CallAfter(node);
 	}
 LEAVE_FUNC;
 }
@@ -523,7 +494,7 @@ _StopDC(
 extern	void
 StopDC(void)
 {
-	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopDC,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_StopDC,NULL);
 }
 
 static	void
@@ -551,7 +522,7 @@ _CleanUpOnlineDC(
 extern	void
 CleanUpOnlineDC(void)
 {
-	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_CleanUpOnlineDC,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_CleanUpOnlineDC,NULL);
 }
 
 extern	void
@@ -579,7 +550,7 @@ _CleanUpOnlineDB(
 extern	void
 CleanUpOnlineDB(void)
 {
-	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_CleanUpOnlineDB,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_CleanUpOnlineDB,NULL);
 }
 
 extern	void
@@ -608,7 +579,7 @@ extern	void
 StopOnlineDB(void)
 {
 	CloseDB(NULL);
-	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopOnlineDB,NULL);
+	g_hash_table_foreach(ThisLD->whash,(GHFunc)_StopOnlineDB,NULL);
 }
 
 static	void
@@ -673,12 +644,11 @@ MakeCTRL(
 extern	RecordStruct	*
 MakeCTRLbyName(
 	ValueStruct		**value,
-	DBCOMM_CTRL	*rctrl,
+	DBCOMM_CTRL	*ctrl,
 	char	*rname,
 	char	*pname,
 	char	*func)
 {
-	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
 	PathStruct		*path;
 	DB_Operation	*op;
@@ -686,20 +656,20 @@ MakeCTRLbyName(
 		,		pno
 		,		ono;
 
-	ctrl.rno = 0;
-	ctrl.pno = 0;
-	ctrl.blocks = 0;
+	ctrl->rno = 0;
+	ctrl->pno = 0;
+	ctrl->blocks = 0;
 
 	*value = NULL;
 	if		(	(  rname  !=  NULL  )
 			&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
-		ctrl.rno = rno - 1;
-		rec = ThisDB[rno-1];
+		ctrl->rno = rno - 1;
+		rec = ThisDB[ctrl->rno];
 		*value = rec->value;
 		if		(	(  pname  !=  NULL  )
 				&&	(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
 														pname) )  !=  0  ) ) {
-			ctrl.pno = pno - 1;
+			ctrl->pno = pno - 1;
 			path = rec->opt.db->path[pno-1];
 			*value = ( path->args != NULL ) ? path->args : *value;
 			if		(	(  func  !=  NULL  )
@@ -708,17 +678,14 @@ MakeCTRLbyName(
 				*value = ( op->args != NULL ) ? op->args : *value;
 			}
 		} else {
-			ctrl.pno = 0;
+			ctrl->pno = 0;
 		}
 	} else {
 		rec = NULL;
 	}
-	if		(  rctrl  !=  NULL  ) {
-		strcpy(ctrl.func,func);
-		*rctrl = ctrl;
-	}
+	strcpy(ctrl->func,func);
 #ifdef	DEBUG
-	DumpDB_Node(&ctrl);
+	DumpDB_Node(ctrl);
 #endif
 	return	(rec);
 }
