@@ -259,7 +259,7 @@ ENTER_FUNC;
 		str[size] = 0;
 	} else {
 		CloseNet(fp);
-		Warning("Error: recive size to large [%d]. defined size [%d]", lsize, size);
+		Warning("Error: receive size to large [%d]. defined size [%d]", lsize, size);
 	}
 LEAVE_FUNC;
 }
@@ -521,7 +521,7 @@ ENTER_FUNC;
 				}
 				GL_SendLBS(fp,Buff,fNetwork);
 			} else {
-				GL_SendObject(fp,ValueObjectId(value),fNetwork);
+				GL_SendObject(fp,ValueObject(value),fNetwork);
 			}
 		}
 		break;
@@ -605,7 +605,7 @@ ENTER_FUNC;
 					fclose(fpf);	
 				}
 			} else {
-				ValueObjectId(value) = GL_RecvObject(fp,fNetwork);
+				ValueObject(value) = GL_RecvObject(fp,fNetwork);
 			}
 		}
 		break;
