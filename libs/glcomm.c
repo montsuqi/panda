@@ -259,7 +259,7 @@ ENTER_FUNC;
 		str[size] = 0;
 	} else {
 		CloseNet(fp);
-		Warning("Error: recive size to large [%d]. defined size [%d]", lsize, size);
+		Warning("Error: receive size to large [%d]. defined size [%d]", lsize, size);
 	}
 LEAVE_FUNC;
 }
