@@ -292,10 +292,11 @@ ParseURL(
 		} else {
 			url->file = NULL;
 		}			
-		port = ParPort(str,NULL);
-		url->host = StrDup(port->adrs.a_ip.host);
-		url->port = StrDup(port->adrs.a_ip.port);
-		DestroyPort(port);
+		if		(  ( port = ParPort(str,NULL) ) != NULL ) {
+			url->host = StrDup(port->adrs.a_ip.host);
+			url->port = StrDup(port->adrs.a_ip.port);
+			DestroyPort(port);
+		}
 	}
 }
 
