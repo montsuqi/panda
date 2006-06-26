@@ -128,6 +128,8 @@ static	ARG_TABLE	option[] = {
 		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
 		"データ定義格納ディレクトリ"	 				},
+	{	"bddir",	STRING,		TRUE,	(void*)&D_Dir,
+		"定義格納ディレクトリ(obsolete)" 				},
 	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
 		"定義格納ディレクトリ"			 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
