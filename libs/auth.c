@@ -405,7 +405,6 @@ AuthLoadX509(const char *file)
         X509Table = g_hash_table_new(g_str_hash, g_str_equal);
     AuthClearX509();
     if ((fp = fopen(file, "r")) == NULL){
-        Warning("[%s] can not open password file: %s", file, strerror(errno));
         return TRUE;
     }
     snprintf(format, sizeof(format),
