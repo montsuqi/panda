@@ -813,6 +813,7 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
             fprintf(stderr, message, GetSSLErrorString());
             break;
         }
+		ERR_clear_error();		
         if ((pass = GetPasswordString(passbuf, sizeof(passbuf))) == NULL){
             fprintf(stderr, "cannot read password\n");
             break;
