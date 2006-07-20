@@ -221,7 +221,6 @@ CloseNet(
 {
 ENTER_FUNC;
 	if		(  fp  !=  NULL  ) {
-		LockNet(fp);
 		if		(  fp->fOK  ) {
 			_Flush(fp);
 		}
