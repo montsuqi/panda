@@ -23,6 +23,10 @@
 #define	TRACE
 */
 
+/*
+#define	MT_NET
+*/
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -42,7 +46,7 @@
 #include	"port.h"
 #include	"debug.h"
 
-#if	1
+#ifdef	MT_NET
 #define	LockNet(fp)		{				\
 	dbgmsg("lock");						\
 	pthread_mutex_lock(&(fp)->lock);	\
@@ -170,6 +174,7 @@ Recv(
 		}
 		UnLockNet(fp);
 	} else {
+		memclear(buff,size);
 		ret = -1;
 	}
 	fp->fSent = FALSE;
@@ -192,10 +197,9 @@ ngetc(
 	NETFILE	*fp)
 {
 	unsigned char	ch;
-	size_t	s;
 	int		ret;
 
-	if		(  ( s = Recv(fp,&ch,1) )  >=  0  ) {
+	if		(  Recv(fp,&ch,1)  ==  1  ) {
 		ret = ch;
 	} else {
 		ret = -1;
@@ -210,8 +214,10 @@ FreeNet(
 	if		(  fp->buff  !=  NULL  ) {
 		xfree(fp->buff);
 	}
+#ifdef	MT_NET
 	pthread_mutex_destroy(&fp->lock);
 	pthread_cond_destroy(&fp->isdata);
+#endif
 	xfree(fp);
 }
 
@@ -303,8 +309,10 @@ NewNet(void)
 	fp->size = 0;
 	fp->ptr = 0;
 	fp->buff = NULL;
+#ifdef	MT_NET
 	pthread_cond_init(&fp->isdata,NULL);
 	pthread_mutex_init(&fp->lock,NULL);
+#endif
 	return	(fp);
 }
 

@@ -51,8 +51,10 @@ typedef	struct _NETFILE	{
 	size_t	size
 	,		ptr;
 	byte	*buff;
+#ifdef	MT_NET
 	pthread_mutex_t	lock;
 	pthread_cond_t	isdata;
+#endif
 	ssize_t	(*read)(struct _NETFILE *fp, void *buf, size_t count);
 	ssize_t	(*write)(struct _NETFILE *fp, void *buf, size_t count);
 	void	(*close)(struct _NETFILE *fp);
@@ -86,6 +88,7 @@ extern	NETFILE		*OpenPort(char *url, char *defport);
 extern	int			InitServerPort(Port *port, int back);
 
 extern	Bool		CheckNetFile(NETFILE *fp);
+#define	SetErrorNetFile(fp)		(fp)->fOK = FALSE
 
 #define	ON_IO_ERROR(fp,label)	if (!CheckNetFile(fp)) goto label
 
