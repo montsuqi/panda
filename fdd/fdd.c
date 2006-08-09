@@ -192,8 +192,6 @@ ExecuteServer(void)
 #endif
 
 ENTER_FUNC;
-	signal(SIGCHLD,SIG_IGN);
-
 	port = ParPortName(PortNumber);
 	_fd = InitServerPort(port,Back);
 #ifdef	USE_SSL
