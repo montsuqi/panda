@@ -410,6 +410,9 @@ AuthLoadX509(const char *file)
     snprintf(format, sizeof(format),
              "%%%ds %%%dc", sizeof(user)-1, sizeof(subject)-1);
     while (fgets(buf, sizeof(buf), fp) != NULL){
+		if ( ( buf[0] == '\n' ) || (buf[0] == '#') ) {
+			continue;
+		}
         if ((p = strchr(buf, '\n')) == NULL){
             Warning("[%s:%d] input line is too long", file, line);
             result = FALSE;
