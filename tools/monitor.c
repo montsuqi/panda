@@ -92,9 +92,9 @@ DumpCommand(
 	int		i;
 
 	for	( i = 0 ; argv[i]  !=  NULL ; i ++ ) {
-		fprintf(fpLog,"%s ",argv[i]);
+		printf("%s ",argv[i]);
 	}
-	fprintf(fpLog,"\n");
+	printf("\n");
 }
 
 static	void
