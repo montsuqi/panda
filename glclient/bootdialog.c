@@ -510,7 +510,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("CA証明書へのパス");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CApath = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -525,7 +525,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("CA証明書ファイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CAfile = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -540,7 +540,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("鍵ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -555,7 +555,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("証明書ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cert = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -949,7 +949,7 @@ boot_dialog_create_conf (BDConfig *config)
       bd_config_section_append_value (section, "CAfile", "");
       bd_config_section_append_value (section, "key", "");
       bd_config_section_append_value (section, "cert", "");
-      bd_config_section_append_value (section, "ciphers", "");
+      bd_config_section_append_value (section, "ciphers", "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH");
 #endif      
       is_create = TRUE;
     }
@@ -1515,7 +1515,7 @@ boot_dialog_new ()
   label = gtk_label_new ("CA証明書へのパス");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CApath = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -1530,7 +1530,7 @@ boot_dialog_new ()
   label = gtk_label_new ("CA証明書ファイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CAfile = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -1545,7 +1545,7 @@ boot_dialog_new ()
   label = gtk_label_new ("鍵ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -1560,7 +1560,7 @@ boot_dialog_new ()
   label = gtk_label_new ("証明書ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cert = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
