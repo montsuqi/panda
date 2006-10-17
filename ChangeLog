@@ -1,3 +1,9 @@
+2006-10-17  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/dbstub_main.c(main): dbstubのモジュール名を出力するようにした
+
+	* pgserver/pgserver.c, pgserver/server.c: syslog対応
+
 2006-08-09  Noboru Saitou  <noborus@netlab.jp>
 
 	* fdd/fdd.c: SIGCHLD が SIG_IGNされていたのを削除
