@@ -83,6 +83,8 @@ main(
 
 	ParseURL(&Auth,AuthURL,"file");
 	InitSystem(argc,argv);
+	Message("pgserver start");
 	ExecuteServer();
+	Message("pgserver end");
 	return	(0);
 }
