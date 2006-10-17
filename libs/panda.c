@@ -24,6 +24,10 @@
 #define	TRACE
 */
 
+/*
+#define	NEW_SEQUENCE
+*/
+
 #define	_PANDA
 
 #ifdef HAVE_CONFIG_H
@@ -52,8 +56,7 @@ OpenPanda(
 ENTER_FUNC;
 	fpPanda = ConnectTermServer(PandaPort,ThisTerm,ThisUser,TRUE,arg);
 	if		(  fpPanda  ==  NULL  ) {
-		fprintf(stderr,"can't connect wfc\n");
-		exit(1);
+		Error("can't connect wfc\n");
 	}
 LEAVE_FUNC;
 }
@@ -63,25 +66,10 @@ SendPanda(void)
 {
 	RecordStruct	*rec;
 	Bool		rc;
-	char	buff[SIZE_LONGNAME+1];
-	char	*p;
 
 ENTER_FUNC;
-	dbgprintf("ThisWindow = [%s]",ThisWindow);
-	strcpy(buff,ThisWindow);
-	while	(  strlen(buff)  >  0  ) {
-		if		(  ( rec = GetWindowRecord(buff) )  !=  NULL  )	break;
-		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
-			*p = 0;
-		}
-	}
-	dbgprintf("Window = [%s]",buff);
-	if		(  rec  !=  NULL  ) {
-		rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,rec->value);
-		RemoveWindowRecord(ThisWindow);
-	} else {
-		rc = FALSE;
-	}
+	rec = GetWindowRecord(ThisWindow);
+	rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,rec->value);
 LEAVE_FUNC;
 	return	(rc); 
 }
@@ -101,15 +89,31 @@ RecvPanda(
 
 ENTER_FUNC;
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
+#ifdef	NEW_SEQUENCE
+		for	( i = 0 ; i < ctl.n ; i ++ ) {
+			type = ctl.control[i].PutType;
+			switch	(type) {
+			  case	SCREEN_CHANGE_WINDOW:
+				win = PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
+				type = SCREEN_NEW_WINDOW;
+				break;
+			  default:
+				break;
+			}
+			win = PutWindowByName(ctl.control[i].window,type);
+		}
+#else
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
 			if		(  ctl.control[i].PutType  ==  SCREEN_CLOSE_WINDOW  ) {
 				win = PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
 			}
 		}
+#endif
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
 		dbgprintf("user =     [%s]",user);
+#ifndef	NEW_SEQUENCE
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:
 			win = PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
@@ -123,17 +127,14 @@ ENTER_FUNC;
 		}
 		(void)SetWindowName(window);
 		win = PutWindowByName(window,type);
-		if		(  win  !=  NULL  )	{
+#endif
+		if ( win ) {
 			RecvTermServerData(fpPanda,ThisScreen);
 			strcpy(ThisWindow,window);
 			strcpy(ThisWidget,widget);
 			strcpy(ThisUser,user);
-			if		(  win->rec  ==  NULL  ) {
-				ThisScreen->status = APL_SESSION_END;
-			}
 		} else {
-			ThisScreen->status = APL_SESSION_END;
-			//Error("Illegal windowData");
+			Error("Illegal windowData");
 		}
 	} else {
 		snprintf(msg,SIZE_LONGNAME,"window = [%s]",window);

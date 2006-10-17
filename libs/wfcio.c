@@ -73,11 +73,10 @@ ENTER_FUNC;
 		SendStringDelim(fp,"\n");
 		SendStringDelim(fp,arg);
 		SendStringDelim(fp,"\n");
+		buff = NewLBS();
 	} else {
-		Warning("can not connect wfc server");
 		fp = NULL;
 	}
-	buff = NewLBS();
 LEAVE_FUNC;
 	return	(fp); 
 }
