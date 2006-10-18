@@ -2,8 +2,7 @@
 
 	* glclient/bootdialog.c, glclient/client.c: pkcs12形式も使用できるので
 	表示修正
-	
-
+	* glclient/bootdialog.c: file_selection のキャンセルの動作の追加	
 2006-10-17  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/blob_v1.c, libs/blobup.c: syslog対応

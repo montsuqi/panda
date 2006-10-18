@@ -299,6 +299,16 @@ file_ok(GtkWidget *w, gpointer data)
 }
 
 static void
+file_cancel(GtkWidget *w, gpointer data)
+{
+  file_selection_data *localdata;
+
+  localdata = (file_selection_data*)data;
+  gtk_widget_destroy(localdata->filesel);
+  return;
+}
+
+static void
 open_file_selection(GtkWidget *w, gpointer entry)
 {
   file_selection_data *data;
@@ -313,7 +323,7 @@ open_file_selection(GtkWidget *w, gpointer entry)
   gtk_signal_connect(GTK_OBJECT(filew->ok_button), "clicked",
 		     (GtkSignalFunc)file_ok, data);
   gtk_signal_connect(GTK_OBJECT(filew->cancel_button), "clicked",
-		     (GtkSignalFunc)gtk_widget_destroy, (gpointer)filew);
+		     (GtkSignalFunc)file_cancel, data);
   gtk_widget_show(GTK_WIDGET(filew));
   gtk_grab_add(GTK_WIDGET(filew));
 }
@@ -442,28 +452,46 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("キャッシュ");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cache = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                    (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("スタイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->style = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("Gtkrc");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->gtkrc = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
@@ -537,7 +565,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("鍵ファイル名(pem/p12)");
+  label = gtk_label_new ("鍵ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
   button = gtk_button_new_with_label("参照");
@@ -1542,7 +1570,7 @@ boot_dialog_new ()
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("鍵ファイル名(pem/p12)");
+  label = gtk_label_new ("鍵ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
   button = gtk_button_new_with_label("参照");
@@ -1595,30 +1623,48 @@ boot_dialog_new ()
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
   self->cache = entry;
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("スタイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
   self->style = entry;
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("Gtkrc");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
   self->gtkrc = entry;
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
