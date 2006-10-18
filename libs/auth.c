@@ -378,18 +378,19 @@ AuthDelX509(const char *user)
     X509Table = tmp.table;
 }
 
-static void
+static gboolean 
 free_key_and_value(gpointer key, gpointer value, gpointer user_data)
 {
     g_free(key);
     g_free(value);
+	return TRUE;
 }
 
 extern void
 AuthClearX509()
 {
     assert(X509Table);
-    g_hash_table_foreach_remove(X509Table, free_key_and_value, NULL);
+    g_hash_table_foreach_remove(X509Table,(GHRFunc)free_key_and_value, NULL);
 }
 
 extern  Bool

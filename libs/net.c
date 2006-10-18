@@ -692,7 +692,6 @@ MakeSSL_Net(
 	int		fd)
 {
     NETFILE	*fp;
-    SSL		*ssl;
 
     if ((fp = NewNet()) == NULL) return NULL;
     fp->read = SSL_Read;
