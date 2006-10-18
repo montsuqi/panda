@@ -145,7 +145,7 @@ ENTER_FUNC;
 	}
 	if		(  strcmp(ver,VERSION)  ) {
 		SendStringDelim(fpComm,"Error: version\n");
-		g_warning("reject client(invalid version)");
+		Warning("reject client(invalid version)");
 		xfree(ses);
 		ses = NULL;
 	} else
@@ -153,7 +153,7 @@ ENTER_FUNC;
 		SendStringDelim(fpComm,"Connect: OK\n");
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
-		g_warning("reject client(authentication error)");
+		Warning("reject client(authentication error)");
 		xfree(ses);
 		ses = NULL;
 	}
