@@ -116,9 +116,9 @@ static	ARG_TABLE	option[] = {
 		"起動ダイアログを表示する"						},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"鍵ファイル名(pem)"		 						},
+		"鍵ファイル名(pem/p12)"		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"証明書ファイル名(pem)"	 						},
+		"証明書ファイル名(pem/p12)"	 						},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
 		"SSLを使う"				 						},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,

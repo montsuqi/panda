@@ -537,7 +537,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("鍵ファイル名(pem)");
+  label = gtk_label_new ("鍵ファイル名(pem/p12)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
   button = gtk_button_new_with_label("参照");
@@ -552,7 +552,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("証明書ファイル名(pem)");
+  label = gtk_label_new ("証明書ファイル名(pem/p12)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cert = entry = gtk_entry_new ();
   button = gtk_button_new_with_label("参照");
@@ -1542,7 +1542,7 @@ boot_dialog_new ()
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("鍵ファイル名(pem)");
+  label = gtk_label_new ("鍵ファイル名(pem/p12)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
   button = gtk_button_new_with_label("参照");
@@ -1557,7 +1557,7 @@ boot_dialog_new ()
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("証明書ファイル名(pem)");
+  label = gtk_label_new ("証明書ファイル名(pem/p12)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cert = entry = gtk_entry_new ();
   button = gtk_button_new_with_label("参照");

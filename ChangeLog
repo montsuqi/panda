@@ -1,4 +1,12 @@
+2006-10-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/bootdialog.c, glclient/client.c: pkcs12形式も使用できるので
+	表示修正
+	
+
 2006-10-17  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/blob_v1.c, libs/blobup.c: syslog対応
 
 	* aps/dbstub_main.c(main): dbstubのモジュール名を出力するようにした
 
