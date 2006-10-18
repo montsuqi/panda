@@ -92,3 +92,18 @@ question_dialog(
 	return (dialog);
 }
 #endif
+
+extern void
+GLError( const char *message)
+{
+	GtkWidget *dialog;
+		
+	dialog = message_dialog(message, FALSE);
+	g_warning(message);
+	gtk_signal_connect (GTK_OBJECT (dialog), "destroy",
+						GTK_SIGNAL_FUNC(gtk_main_quit),
+						NULL);
+	gtk_widget_show (dialog);
+	gtk_main();
+}
+

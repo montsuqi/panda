@@ -21,6 +21,8 @@
 #define	_INC_DIALOGS_H
 
 GtkWidget* message_dialog( const char *message, gboolean message_type);
+void GLError( const char *message);
+
 #ifdef USE_GNOME
 GtkWidget* question_dialog(	const char *message, GtkSignalFunc clicked_handler,
 							GtkWidget	*widget, GtkWindow	*window);
