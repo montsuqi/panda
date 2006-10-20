@@ -1,3 +1,7 @@
+2006-10-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/bd_config.c, bootdialog.c: '~/'を HOME に変換するようにした
+
 2006-10-18  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/dialogs.c, glclient/client.c, glclient/protocol.c: 

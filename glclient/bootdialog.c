@@ -194,11 +194,11 @@ edit_dialog_value_to_config (EditDialog * self)
   bd_config_section_set_bool
     (section, "protocol_v2",
      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
-  bd_config_section_set_string (section, "cache",
-                                gtk_entry_get_text (GTK_ENTRY (self->cache)));
-  bd_config_section_set_string (section, "style",
+  bd_config_section_set_path (section, "cache",
+                              gtk_entry_get_text (GTK_ENTRY (self->cache)));
+  bd_config_section_set_path (section, "style",
                                 gtk_entry_get_text (GTK_ENTRY (self->style)));
-  bd_config_section_set_string (section, "gtkrc",
+  bd_config_section_set_path (section, "gtkrc",
                                 gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
   bd_config_section_set_bool
     (section, "mlog",
@@ -1173,11 +1173,11 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
   bd_config_section_set_bool
     (section, "protocol_v2",
      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
-  bd_config_section_set_string (section, "cache",
+  bd_config_section_set_path (section, "cache",
                                 gtk_entry_get_text (GTK_ENTRY (self->cache)));
-  bd_config_section_set_string (section, "style",
+  bd_config_section_set_path (section, "style",
                                 gtk_entry_get_text (GTK_ENTRY (self->style)));
-  bd_config_section_set_string (section, "gtkrc",
+  bd_config_section_set_path (section, "gtkrc",
                                 gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
   bd_config_section_set_bool
     (section, "mlog",
@@ -1253,11 +1253,11 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean forc
                               bd_config_section_get_bool (section, "protocol_v1"));
   bd_config_section_set_bool (global, "protocol_v2",
                               bd_config_section_get_bool (section, "protocol_v2"));
-  bd_config_section_set_string (global, "cache",
+  bd_config_section_set_path (global, "cache",
                                 bd_config_section_get_string (section, "cache"));
-  bd_config_section_set_string (global, "style",
+  bd_config_section_set_path (global, "style",
                                 bd_config_section_get_string (section, "style"));
-  bd_config_section_set_string (global, "gtkrc",
+  bd_config_section_set_path (global, "gtkrc",
                                 bd_config_section_get_string (section, "gtkrc"));
   bd_config_section_set_bool (global, "mlog",
                               bd_config_section_get_bool (section, "mlog"));
