@@ -32,11 +32,11 @@
 #endif
 
 GLOBAL	char	*PortNumber;
-GLOBAL	Bool	fThread;
 GLOBAL	int		Back;
 GLOBAL	char	*Directory;
 GLOBAL	Queue	*DistQueue;
 GLOBAL	int		Expire;
+GLOBAL	int		nFork;
 
 extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);

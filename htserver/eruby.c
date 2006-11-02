@@ -34,6 +34,7 @@
 #include	<glib.h>
 #include	<unistd.h>
 #include	<iconv.h>
+#include	<errno.h>
 #include	<sys/mman.h>
 #include	<sys/stat.h>
 #include	<sys/types.h>
@@ -47,6 +48,8 @@
 #include	"exec.h"
 #include	"eruby.h"
 #include	"debug.h"
+
+#define	ERUBY_TIMEOUT		60
 
 #define	DBIN_FILENO		3
 #define	DBOUT_FILENO	4
@@ -144,37 +147,61 @@ ERubyPostambre(
 				   "%>\n");
 }
 
+#define	SIZE_LARGE_BUFF		1024*1024
+
 static	void
 DataProcess(
 	int		ifd,
-	int		ofd)
+	int		ofd,
+	pid_t	pid)
 {
 	char	name[SIZE_LONGNAME+1]
-		,	data[SIZE_BUFF];
-	byte	value[SIZE_BUFF];
+		,	data[SIZE_LARGE_BUFF];
+	byte	value[SIZE_LARGE_BUFF];
 	char	*got
 		,	*p;
 	FILE	*fpR
 		,	*fpW;
+	fd_set	ready;
+	int		maxfd;
+	int		ret;
+	struct	timeval	timeout;
 
 ENTER_FUNC;
 	fpR = fdopen(ifd,"r");
 	fpW = fdopen(ofd,"w");
-	while	(  fgets(name,SIZE_LONGNAME,fpR)  !=  NULL  ) {
-		StringChop(name);
-		if		(  strlen(name)  ==  0  )	break;
-		if		(  ( p = strchr(name,':') )  !=  NULL  ) {
-			*p = 0;
-			fgets(data,SIZE_BUFF,fpR);
-			DecodeStringURL(value,data);
-			SaveValue(name,value,FALSE);
+	maxfd = ifd;
+	while	(  TRUE  )	{
+		timeout.tv_sec = ERUBY_TIMEOUT;
+		timeout.tv_usec = 0;
+		FD_ZERO(&ready);
+		FD_SET(ifd,&ready);
+		ret = select(maxfd+1,&ready,NULL,NULL,&timeout);
+        if		(  ret  <  0  )	{
+            if (errno == EINTR)
+                continue;
+            Error("select: ", strerror(errno));
+        }
+		if		(  FD_ISSET(ifd,&ready)  ) {
+			if		(  fgets(name,SIZE_LONGNAME,fpR)  ==  NULL  )	break;
+			StringChop(name);
+			if		(  strlen(name)  ==  0  )	break;
+			if		(  ( p = strchr(name,':') )  !=  NULL  ) {
+				*p = 0;
+				fgets(data,SIZE_LARGE_BUFF,fpR);
+				DecodeStringURL(value,data);
+				SaveValue(name,value,FALSE);
+			} else {
+				dbgprintf("request [%s]",name);
+				got = GetHostValue(name,FALSE);
+				EncodeStringURL(data,got);
+				fprintf(fpW,"%s\n",data);
+				dbgprintf("reply [%s]",data);
+				fflush(fpW);
+			}
 		} else {
-			dbgprintf("request [%s]",name);
-			got = GetHostValue(name,FALSE);
-			EncodeStringURL(data,got);
-			fprintf(fpW,"%s\n",data);
-			dbgprintf("reply [%s]",data);
-			fflush(fpW);
+			kill(pid,SIGKILL);
+			break;
 		}
 	}
 	fclose(fpR);
@@ -187,7 +214,7 @@ MakeErrorBody(
 	LargeByteString	*lbs,
 	char	*p)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LARGE_BUFF];
 	char	*q;
 	Bool	fBody;
 	int		i;
@@ -244,7 +271,6 @@ ParseFile(
 	HTCInfo	*ret;
 	char	*str;
 	int		fd
-		,	pid
 		,	i;
 	int		pSource[2]
 		,	pResult[2]
@@ -252,7 +278,7 @@ ParseFile(
 		,	pDBR[2]
 		,	pDBW[2];
 	LargeByteString	*lbs;
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LARGE_BUFF];
 	size_t	size;
 	Bool	fChange
 		,	fError;
@@ -260,6 +286,7 @@ ParseFile(
 		,	*istr
 		,	*ostr;
 	int		status;
+	pid_t	pid;
 
 ENTER_FUNC;
 	if		(  ( str = GetFileBody(fname) )  !=  NULL  ) {
@@ -317,9 +344,9 @@ ENTER_FUNC;
 		write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
 		FreeLBS(lbs);
 		close(pSource[1]);
-		DataProcess(pDBR[0],pDBW[1]);
-		while( waitpid(-1, &status, WNOHANG) > 0 );
+		DataProcess(pDBR[0],pDBW[1],pid);
 		xfree(str);
+		while( waitpid(-1, &status, WNOHANG) > 0 );
 
 		lbs = NewLBS();
 		if		(  WEXITSTATUS(status)  ==  0  ) {
@@ -334,7 +361,7 @@ ENTER_FUNC;
 			fError = TRUE;
 			fd = pError[0];
 		}
-		while	(  ( size = read(fd,buff,SIZE_BUFF) )  >  0  ) {
+		while	(  ( size = read(fd,buff,SIZE_LARGE_BUFF) )  >  0  ) {
 			for	( i = 0 ; i < size ; i ++ ) {
 				LBS_Emit(lbs,buff[i]);
 			}

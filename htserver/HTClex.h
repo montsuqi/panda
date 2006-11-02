@@ -39,9 +39,11 @@
 #define	T_COMMENT		(T_YYBASE +5)
 #define	T_COMMENTE		(T_YYBASE +6)
 
-#ifndef	SIZE_SYMBOL
-#define	SIZE_SYMBOL			1024
+#ifdef	SIZE_SYMBOL
+#undef	SIZE_SYMBOL
 #endif
+
+#define	SIZE_SYMBOL			1024
 
 #undef	GLOBAL
 #ifdef	_HTC_PARSER

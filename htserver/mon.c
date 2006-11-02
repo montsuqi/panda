@@ -67,25 +67,25 @@ static	Bool		fComm;
 
 static	ARG_TABLE	option[] = {
 	{	"server",	STRING,		TRUE,	(void*)&ServerPort,
-		"サーバポート"	 								},
+		"htserver port name"							},
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
-		"画面格納ディレクトリ"	 						},
+		"template directory"	 						},
 	{	"font",		STRING,		TRUE,	(void*)&FontTemplate,
-		"フォント代替イメージ生成テンプレート"			},
+		"alternate font image converting template"		},
 	{	"command",	STRING,		TRUE,	(void*)&Command,
-		"サーバコマンドライン"	 						},
+		"command name"	 								},
 	{	"get",		BOOLEAN,	TRUE,	(void*)&fGet,
-		"actionをgetで処理する"	 						},
+		"action by GET"			 						},
 	{	"dump",		BOOLEAN,	TRUE,	(void*)&fDump,
-		"変数のダンプを行う"	 						},
+		"dump variables"		 						},
 	{	"debug",	BOOLEAN,	TRUE,	(void*)&fDebug,
-		"デバッグモード"		 						},
+		"debug mode"			 						},
 	{	"cookie",	BOOLEAN,	TRUE,	(void*)&fCookie,
-		"セション変数をcookieで行う"					},
+		"session keeps by cookie"						},
 	{	"jslink",	BOOLEAN,	TRUE,	(void*)&fJavaScriptLink,
-		"<htc:hyperlink>によるリンクをJavaScriptで行う"	},
+		"<htc:hyperlink> links by JavaScript"			},
 	{	"js",		BOOLEAN,	TRUE,	(void*)&fJavaScript,
-		"JavaScriptを使ったHTML生成を行う"	},
+		"use JavaScript"								},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -144,16 +144,16 @@ SendValue(
 	size_t		size)
 {
 ENTER_FUNC;
-	dbgprintf("send value = [%s:",name);
 	if		(	(  name   !=  NULL  )
 			&&	(  value  !=  NULL  ) ) {
+		dbgprintf("send value = [%s:%s]",name,value);
 		SendPacketClass(fpServ,GL_ScreenData);
 		SendString(fpServ,name);
 		SendLength(fpServ,size);
 		Send(fpServ, value, size);
-		dbgprintf("%s]\n",value);
+		dbgprintf(":%s]\n",value);
 	} else {
-		dbgmsg("]");
+		dbgprintf("send value = [%s]",name);
 	}
 LEAVE_FUNC;
 }
@@ -225,12 +225,12 @@ ConvShiftJIS(
 	size_t	sib
 	,		sob;
 	char	*ostr;
-	static	char	cbuff[SIZE_BUFF];
+	static	char	cbuff[SIZE_LARGE_BUFF];
 
 	cd = iconv_open("sjis","utf8");
 	sib = strlen(istr);
 	ostr = cbuff;
-	sob = SIZE_BUFF;
+	sob = SIZE_LARGE_BUFF;
 	iconv(cd,&istr,&sib,&ostr,&sob);
 	*ostr = 0;
 	iconv_close(cd);
@@ -240,59 +240,58 @@ ConvShiftJIS(
 extern	void
 PutFile(ValueStruct *file)
 {
-    char *ctype_field;
-    char *filename_field;
+	char *ctype_field;
+	char *filename_field;
 
-    if ((ctype_field = LoadValue("_contenttype")) != NULL) {
-        char *ctype = GetHostValue(ctype_field, FALSE);
-        if (*ctype != '\0')
-            printf("Content-Type: %s\r\n", ctype);
+	if		((ctype_field = LoadValue("_contenttype")) != NULL) {
+		char *ctype = GetHostValue(ctype_field, FALSE);
+		if (*ctype != '\0')
+			printf("Content-Type: %s\r\n", ctype);
     }
     else {
-        printf("Content-Type: application/octet-stream\r\n");
+		printf("Content-Type: application/octet-stream\r\n");
     }
-    if ((filename_field = LoadValue("_filename")) != NULL) {
-        char *filename = GetHostValue(filename_field, FALSE);
-        char *disposition_field = LoadValue("_disposition");
-        char *disposition = "attachment";
+	if ((filename_field = LoadValue("_filename")) != NULL) {
+		char *filename = GetHostValue(filename_field, FALSE);
+		char *disposition_field = LoadValue("_disposition");
+		char *disposition = "attachment";
 
-        if (disposition_field != NULL) {
-            char *tmp = GetHostValue(disposition_field, FALSE);
-            if (*tmp != '\0')
-                disposition = tmp;
-        }
-        if (*filename != '\0') {
+		if (disposition_field != NULL) {
+			char *tmp = GetHostValue(disposition_field, FALSE);
+			if (*tmp != '\0')
+				disposition = tmp;
+		}
+		if (*filename != '\0') {
 			if		(  ( AgentType & AGENT_TYPE_MSIE )  ==  AGENT_TYPE_MSIE  ) {
-                printf("Content-Disposition: %s;"
-                       " filename=%s\r\n",
-                       disposition,
-                       ConvShiftJIS(filename));
-            }
-            else {
-                int len = EncodeLengthRFC2231((byte *)filename);
-                char *encoded = (char *) xmalloc(len + 1);
-                EncodeRFC2231(encoded, (byte *)filename);
-                printf("Content-Disposition: %s;"
-                       " filename*=utf-8''%s\r\n",
-                       disposition,
-                       encoded);
-                xfree(encoded);
-            }
-        }
-    }
+				printf("Content-Disposition: %s;"
+					   " filename=%s\r\n",
+					   disposition,
+					   ConvShiftJIS(filename));
+			} else {
+				int len = EncodeLengthRFC2231((byte *)filename);
+				char *encoded = (char *) xmalloc(len + 1);
+				EncodeRFC2231(encoded, (byte *)filename);
+				printf("Content-Disposition: %s;"
+					   " filename*=utf-8''%s\r\n",
+					   disposition,
+					   encoded);
+				xfree(encoded);
+			}
+		}
+	}
 	printf("\r\n");
-    switch (ValueType(file)) {
+	switch (ValueType(file)) {
 	  case GL_TYPE_BYTE:
 	  case GL_TYPE_BINARY:
-        fwrite(ValueByte(file), 1, ValueByteLength(file), stdout);
-        break;
+		fwrite(ValueByte(file), 1, ValueByteLength(file), stdout);
+		break;
 	  case	GL_TYPE_OBJECT:
 		break;
 	  default:
-        fputs(ValueToString(file, Codeset), stdout);
-        break;
-    }
-    fDump = FALSE;
+		fputs(ValueToString(file, Codeset), stdout);
+		break;
+	}
+	fDump = FALSE;
 }
 
 static	void
@@ -351,11 +350,11 @@ ENTER_FUNC;
     if		(  ( window = LoadValue("_name") )  ==  NULL  ) {
 		exit(1);
 	}
-	fComm = FALSE;
+	SendPacketClass(fpServ,GL_GetData);
 	if		(  ( htc = ParseScreen(window,fComm,FALSE) )  ==  NULL  ) {
 		exit(1);
 	}
-	fComm = TRUE;
+	SendPacketClass(fpServ,GL_END);
 	input = StrDup(ParseInput(htc));
 	if		(  *input  ==  0  ) {
 		event = "";
@@ -509,7 +508,7 @@ Session(void)
 	,		*sesid
 	,		*name
 	,		*file;
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LARGE_BUFF];
 	HTCInfo	*htc;
 	LargeByteString	*html
 		,			*header;
@@ -522,6 +521,7 @@ ENTER_FUNC;
   retry:
 	if		(  ( fpServ = OpenPort(ServerPort,PORT_HTSERV) )  !=  NULL  ) {
 		ParseUserAgent();
+		fComm = TRUE;
 		if		(  ( sesid = LoadValue("_sesid") )  ==  NULL  ) {
 			if		(  ( user = getenv("REMOTE_USER") )  ==  NULL  ) {
 				if		(  ( user = getenv("USER") )  ==  NULL  ) {
@@ -530,7 +530,6 @@ ENTER_FUNC;
 			}
 			SendPacketClass(fpServ,GL_Connect);			ON_IO_ERROR(fpServ,busy);
 			SendString(fpServ,Command);					ON_IO_ERROR(fpServ,busy);
-			SendPacketClass(fpServ,GL_Name);			ON_IO_ERROR(fpServ,busy);
 			SendString(fpServ,user);					ON_IO_ERROR(fpServ,busy);
 			RecvPacketClass(fpServ);	/*	session	*/	ON_IO_ERROR(fpServ,busy);
 			RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
@@ -559,7 +558,6 @@ ENTER_FUNC;
 		}
 		if		(  !fError  ) {
 			name = NULL;
-			fComm = TRUE;
 			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
 				ON_IO_ERROR(fpServ,busy);
 				RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
@@ -574,7 +572,7 @@ ENTER_FUNC;
 					html = InfomationPage("exited",
 										  "<H1>session exited</H1>\n"
 										  "<p>left MONTSUQI session.</p>");
-					PutHTML(NULL,html);
+					PutHTML(NULL,html,500);
 				} else {
 					header = NewLBS();
 					LBS_EmitStart(header);
@@ -582,7 +580,7 @@ ENTER_FUNC;
 					dbgprintf("name = [%s]",name);
 					sprintf(buff,"Location: %s\r\n",name);
 					LBS_EmitString(header,buff);
-					PutHTML(header,NULL);
+					PutHTML(header,NULL,200);
 				}
 			} else {
 				if		(  name  ==  NULL  ) {
@@ -591,7 +589,8 @@ ENTER_FUNC;
 										  "<p>null screen name.</p>");
 				} else {
 					if		(  ( file = LoadValue("_file") )  !=  NULL  )	{
-						ValueStruct *value = GetValue(file, TRUE);
+						ValueStruct *value;
+						value = GetValue(file, TRUE);
 						if (value != NULL && !IS_VALUE_NIL(value)) {
 							PutFile(value);
 							return;
@@ -609,20 +608,21 @@ ENTER_FUNC;
 					}
 					SendPacketClass(fpServ,GL_END);
 				}
-				PutHTML(NULL,html);
+				PutHTML(NULL,html,200);
 			}
 		} else {
 			html = InfomationPage("expired",
 								  "<H1>htserver error</H1>\n"
 								  "<p>session expired.</p>\n");
-			PutHTML(NULL,html);
+			PutHTML(NULL,html,500);
 		}
+		CloseNet(fpServ);
 	} else {
 	  busy:
 		html = InfomationPage("busy",
 							  "<H1>session open error</H1>\n"
 							  "<p>can't start application session.(busy)</p>\n");
-		PutHTML(NULL,html);
+		PutHTML(NULL,html,500);
 	}
 LEAVE_FUNC;
 }

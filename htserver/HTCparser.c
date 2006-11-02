@@ -92,7 +92,7 @@ ENTER_FUNC;
 		  case	T_SYMBOL:
 			LBS_EmitString(htc->code,HTC_ComSymbol);
 			if		(  GetName  ==  '='  ) {
-				LBS_EmitChar(htc->code,HTC_Token);
+				LBS_EmitChar(htc->code,'=');
 				switch	(GetName) {
 				  case	T_SCONST:
 					ExpandAttributeString(htc,HTC_ComSymbol);
@@ -104,28 +104,22 @@ ENTER_FUNC;
 					LBS_EmitChar(htc->code,HTC_Token);
 					break;
 				}
-			} else {
-				switch( HTC_Token ){
-				  case T_SYMBOL:
-					LBS_EmitChar( htc->code, ' ' );
-					LBS_EmitString(htc->code,HTC_ComSymbol);
-					break;
-				  default:
-					break;
-				}
+				GetName;
 			}
 			break;
 		  case	T_SCONST:
 			para = HTC_ComSymbol;
 			ExpandAttributeString(htc,para);
+			GetName;
 			break;
 		  case	'/':
 			LBS_EmitChar(htc->code,'/');
+			GetName;
 			break;
 		  default:
+			GetName;
 			break;
 		}
-		GetName;
 	}
 	LBS_EmitChar(htc->code,HTC_Token);
 LEAVE_FUNC;
@@ -357,6 +351,8 @@ HTCParserCore(void)
 	ret->code = NewLBS();
 	ret->Trans = NewNameHash();
 	ret->Radio = NewNameHash();
+	ret->Toggle = NewNameHash();
+	ret->Check = NewNameHash();
 	ret->FileSelection = NewNameHash();
 	LBS_EmitStart(ret->code);
 	fError = FALSE;

@@ -23,6 +23,8 @@
 #include	"libmondai.h"
 #include	"LBSfunc.h"
 
+#define	SIZE_LARGE_BUFF			1024*1024
+
 #define	CGIV_NULL		0x00
 #define	CGIV_SAVE		0x01
 
@@ -53,6 +55,8 @@ typedef	struct {
 	LargeByteString	*code;
 	GHashTable	*Trans;
 	GHashTable	*Radio;
+	GHashTable	*Toggle;
+	GHashTable	*Check;
 	GHashTable	*FileSelection;
 	char		*DefaultEvent;
 	size_t		EnctypePos;
@@ -101,7 +105,7 @@ extern	char	*ConvLocal(char *istr);
 
 extern	void	LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
 extern	void	GetArgs(void);
-extern	void	PutHTML(LargeByteString *header, LargeByteString *html);
+extern	void	PutHTML(LargeByteString *header, LargeByteString *html, int code);
 extern	void	DumpValues(LargeByteString *html, GHashTable *args);
 extern	void	Dump(void);
 extern	char	*GetHostValue(char *name, Bool fClear);

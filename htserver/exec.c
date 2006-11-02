@@ -43,11 +43,11 @@
 #include	"exec.h"
 #include	"debug.h"
 
-#define	SRC_CODESET		"euc-jp"
-#define	NEN		"Ç¯"
-#define	TSUKI	"·î"
-#define	HI		"Æü"
-#define	ATAMA	"<TH>·î</TH><TH>²Ğ</TH><TH>¿å</TH><TH>ÌÚ</TH><TH>¶â</TH><TH>ÅÚ</TH></TR>\n"
+#define	SRC_CODESET		"utf-8"
+#define	NEN		"å¹´"
+#define	TSUKI	"æœˆ"
+#define	HI		"æ—¥"
+#define	ATAMA	"<TH>æ—¥</TH><TH>æœˆ</TH><TH>ç«</TH><TH>æ°´</TH><TH>æœ¨</TH><TH>é‡‘</TH><TH>åœŸ</TH></TR>\n"
 
 #define	SIZE_RSTACK		100
 
@@ -254,8 +254,8 @@ static	char	*
 ParseName(
 	char	*str)
 {
-	static	char	buff[SIZE_ARG]
-			,		name[SIZE_ARG];
+	static	char	buff[SIZE_BUFF]
+			,		name[SIZE_BUFF];
 	char	*p
 	,		*q;
 	Expr	*var;
@@ -692,7 +692,11 @@ ENTER_FUNC;
 			  case	OPC_HBES:
 				dbgmsg("OPC_HBES");
 				vval = Pop;
+#if	1
 				value = GetHostValue(vval.body.sval,TRUE);
+#else
+				value = GetHostValue(vval.body.sval,FALSE);
+#endif
 				str = LBS_FetchPointer(htc->code);
 				if		(  stricmp(value,"TRUE")  ==  0 ) {
 					EmitWithEscape(html,str);
@@ -893,6 +897,38 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+_RadioReset(
+	char	*name)
+{
+	SaveValue(name,"FALSE",FALSE);
+}
+
+static	void
+GetRadio(
+	char	*name,
+	GHashTable	*ritem)
+{
+	char	*rname;
+
+	g_hash_table_foreach(ritem,(GHFunc)_RadioReset,NULL);
+	if		(  ( rname = LoadValue(name) )  !=  NULL  ) {
+		SaveValue(rname,"TRUE",FALSE);
+		RemoveValue(name);
+	}
+}
+
+static	void
+GetToggle(
+	char	*name)
+{
+	if		(  LoadValue(name)  ==  NULL  ) {
+		SaveValue(name,"FALSE",FALSE);
+	} else {
+		SaveValue(name,"TRUE",FALSE);
+	}
+}
+
 extern	char	*
 ParseInput(
 	HTCInfo	*htc)
@@ -900,16 +936,6 @@ ParseInput(
 	char	*button;
 	char	*event;
 
-	void	GetRadio(
-		char	*name)
-	{
-		char	*rname;
-
-		if		(  ( rname = LoadValue(name) )  !=  NULL  ) {
-			SaveValue(rname,"TRUE",FALSE);
-			RemoveValue(name);
-		}
-	}
 	void	ToUTF8(
 		char	*name,
 		CGIValue	*val)
@@ -981,6 +1007,12 @@ ENTER_FUNC;
 	}
 	if		(  htc  !=  NULL  ) {
 		g_hash_table_foreach(htc->Radio,(GHFunc)GetRadio,NULL);
+	}
+	if		(  htc  !=  NULL  ) {
+		g_hash_table_foreach(htc->Toggle,(GHFunc)GetToggle,NULL);
+	}
+	if		(  htc  !=  NULL  ) {
+		g_hash_table_foreach(htc->Check,(GHFunc)GetToggle,NULL);
 	}
 LEAVE_FUNC;
 	return	(event);

@@ -401,6 +401,32 @@ LEAVE_FUNC;
 }
 
 static	void
+_Variable(
+	HTCInfo	*htc,
+	Tag		*tag)
+{
+	char	*name;
+
+ENTER_FUNC;
+	if		(  ( name = HTCGetProp(tag,"name",0) )  !=  NULL  ) {
+		LBS_EmitString(htc->code,"<input type=\"hidden\" name=\"");
+		EmitCode(htc,OPC_EVAL);
+		LBS_EmitPointer(htc->code,StrDup(name));
+		EmitCode(htc,OPC_EMITSTR);
+
+		LBS_EmitString(htc->code,"\" value=\"");
+
+		EmitCode(htc,OPC_EVAL);
+		LBS_EmitPointer(htc->code,StrDup(name));
+		EmitCode(htc,OPC_PHSTR);
+		EmitCode(htc,OPC_EMITRAW);
+
+		LBS_EmitString(htc->code,"\">\n");
+	}
+LEAVE_FUNC;
+}
+
+static	void
 _Fixed(
 	HTCInfo	*htc,
 	Tag		*tag)
@@ -514,7 +540,7 @@ _Combo(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	name[SIZE_ARG];
+	char	name[SIZE_LONGNAME+1];
 	char	*size
 		,	*vname;
 	size_t	pos;
@@ -898,26 +924,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-#if	0
-static	void
-_If(
-	HTCInfo	*htc,
-	Tag		*tag)
-{
-ENTER_FUNC;
-LEAVE_FUNC;
-}
-
-static	void
-_eIf(
-	HTCInfo	*htc,
-	Tag		*tag)
-{
-ENTER_FUNC;
-LEAVE_FUNC;
-}
-#endif
-
 static	void
 _Button(
 	HTCInfo	*htc,
@@ -1151,27 +1157,39 @@ _ToggleButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*label;
+	char	*label
+		,	*name;
 
 ENTER_FUNC;
-	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
-	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
-	EmitCode(htc,OPC_EMITSTR);
-	LBS_EmitString(htc->code,"\" ");
-	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
-	EmitCode(htc,OPC_HBES);
-	LBS_EmitPointer(htc->code,"checked ");
-	LBS_EmitString(htc->code," value=\"TRUE\"");
-	JavaScriptEvent(htc, tag, "onclick");
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">");
-	if		(  ( label = HTCGetProp(tag,"label",0) )  !=  NULL  ) {
+	if		(  ( name = HTCGetProp(tag,"name",0) )  !=  NULL  ) {
+		if		(  g_hash_table_lookup(htc->Toggle,name)  ==  NULL  ) {
+			g_hash_table_insert(htc->Toggle,StrDup(name),(void *)1);
+		}
+		LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
 		EmitCode(htc,OPC_EVAL);
-		LBS_EmitPointer(htc->code,StrDup(label));
-		EmitCode(htc,OPC_PHSTR);
+		LBS_EmitPointer(htc->code,StrDup(name));
 		EmitCode(htc,OPC_EMITSTR);
+		LBS_EmitString(htc->code,"\" ");
+
+		EmitCode(htc,OPC_EVAL);
+		LBS_EmitPointer(htc->code,StrDup(name));
+		EmitCode(htc,OPC_HBES);
+		LBS_EmitPointer(htc->code,"checked");
+
+		LBS_EmitString(htc->code," value=\"TRUE\"");
+		JavaScriptEvent(htc, tag, "onclick");
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">");
+		if		(  ( label = HTCGetProp(tag,"label",0) )  !=  NULL  ) {
+			if		(  *label  ==  '$'  ) {
+				EmitCode(htc,OPC_EVAL);
+				LBS_EmitPointer(htc->code,StrDup(label+1));
+				EmitCode(htc,OPC_PHSTR);
+				EmitCode(htc,OPC_EMITSTR);
+			} else {
+				LBS_EmitString(htc->code,label);
+			}
+		}
 	}
 LEAVE_FUNC;
 }
@@ -1181,30 +1199,36 @@ _CheckButton(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*label;
+	char	*label
+		,	*name;
 
 ENTER_FUNC;
-	LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
-	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
-	EmitCode(htc,OPC_EMITSTR);
-	LBS_EmitString(htc->code,"\" ");
-	EmitCode(htc,OPC_EVAL);
-	LBS_EmitPointer(htc->code,StrDup(HTCGetProp(tag,"name",0)));
-	EmitCode(htc,OPC_HBES);
-	LBS_EmitPointer(htc->code,"checked");
-	LBS_EmitString(htc->code," value=\"TRUE\"");
-	JavaScriptEvent(htc, tag, "onclick");
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">");
-	if		(  ( label = HTCGetProp(tag,"label",0) )  !=  NULL  ) {
-		if		(  *label  ==  '$'  ) {
-			EmitCode(htc,OPC_EVAL);
-			LBS_EmitPointer(htc->code,StrDup(label+1));
-			EmitCode(htc,OPC_PHSTR);
-			EmitCode(htc,OPC_EMITSTR);
-		} else {
-			LBS_EmitString(htc->code,label);
+	if		(  ( name = HTCGetProp(tag,"name",0) )  !=  NULL  ) {
+		if		(  g_hash_table_lookup(htc->Check,name)  ==  NULL  ) {
+			g_hash_table_insert(htc->Check,StrDup(name),(void *)1);
+		}
+		LBS_EmitString(htc->code,"<input type=\"checkbox\" name=\"");
+		EmitCode(htc,OPC_EVAL);
+		LBS_EmitPointer(htc->code,StrDup(name));
+		EmitCode(htc,OPC_EMITSTR);
+		LBS_EmitString(htc->code,"\" ");
+		EmitCode(htc,OPC_EVAL);
+		LBS_EmitPointer(htc->code,StrDup(name));
+		EmitCode(htc,OPC_HBES);
+		LBS_EmitPointer(htc->code,"checked");
+		LBS_EmitString(htc->code," value=\"TRUE\"");
+		JavaScriptEvent(htc, tag, "onclick");
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">");
+		if		(  ( label = HTCGetProp(tag,"label",0) )  !=  NULL  ) {
+			if		(  *label  ==  '$'  ) {
+				EmitCode(htc,OPC_EVAL);
+				LBS_EmitPointer(htc->code,StrDup(label+1));
+				EmitCode(htc,OPC_PHSTR);
+				EmitCode(htc,OPC_EMITSTR);
+			} else {
+				LBS_EmitString(htc->code,label);
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -1218,10 +1242,19 @@ _RadioButton(
 	char	*group
 		,	*name
 		,	*label;
+	GHashTable	*ritem;
 
 ENTER_FUNC;
 	group = HTCGetProp(tag,"group",0); 
 	name = HTCGetProp(tag,"name",0); 
+	if		(  ( ritem = g_hash_table_lookup(htc->Radio,group) )  ==  NULL  ) {
+		ritem = NewNameHash();
+		g_hash_table_insert(htc->Radio,StrDup(group),ritem);
+	}
+	if		(  g_hash_table_lookup(ritem,name)  ==  NULL  ) {
+		g_hash_table_insert(ritem,StrDup(name),(void *)1);
+	}
+
 	LBS_EmitString(htc->code,"<input type=\"radio\" name=\"");
 	EmitCode(htc,OPC_EVAL);
 	LBS_EmitPointer(htc->code,StrDup(group));
@@ -1253,14 +1286,13 @@ ENTER_FUNC;
 		}
 	}
 
-	g_hash_table_insert(htc->Radio,StrDup(group),(void*)1);
 LEAVE_FUNC;
 }
 
 static void
 _List(HTCInfo *htc, Tag *tag)
 {
-	char	buf[SIZE_ARG];
+	char	buf[SIZE_LONGNAME+1];
 	char	*name, *label, *count, *size, *multiple, *value;
 	size_t	pos;
 
@@ -1343,7 +1375,7 @@ LEAVE_FUNC;
 static void
 _Optionmenu(HTCInfo *htc, Tag *tag)
 {
-	char	buf[SIZE_ARG];
+	char	buf[SIZE_LONGNAME+1];
 	char	*item, *count, *sel;
 	size_t	pos;
 
@@ -1601,8 +1633,7 @@ ENTER_FUNC;
             snprintf(buf, SIZE_BUFF,
                      "document.forms[%d].submit();\"", htc->FormNo);
             LBS_EmitString(htc->code, buf);
-        }
-        else {
+        } else {
             LBS_EmitString(htc->code,ScriptName);
             if ((filename = HTCGetProp(tag, "filename", 0)) != NULL) {
                 LBS_EmitChar(htc->code, '/');
@@ -1977,6 +2008,10 @@ ENTER_FUNC;
 	AddArg(tag,"onkeyup",TRUE);
 	tag = NewTag("/ENTRY",NULL);
 
+	tag = NewTag("VAR",_Variable);
+	AddArg(tag,"name",TRUE);
+	tag = NewTag("/VAR",NULL);
+
 	tag = NewTag("COMBO",_Combo);
 	AddArg(tag,"name",TRUE);
 	AddArg(tag,"size",TRUE);
@@ -2223,19 +2258,18 @@ ENTER_FUNC;
 		  ,FALSE);
 #endif
 	NewJs("send_event",
-		  "sent_event = 0;\n"
+		  "var sent_event = 0;\n"
 		  "function send_event(no,event){\n"
 #ifdef	USE_MCE
 		  "  if (typeof(tinyMCE) != \"undefined\") {\n"
 		  "    tinyMCE.triggerSave();\n"
 		  "  }\n"
 #endif
-		  "  if  (sent_event == 0) {\n"
+		  "  if  ( sent_event == 0 ) {\n"
 		  "    sent_event = 1;\n"
 		  "    document.forms[no].elements[0].name='_event';\n"
 		  "    document.forms[no].elements[0].value=event;\n"
 		  "    document.forms[no].submit();\n"
-		  "    sent_event = 0;\n"
 		  "  }\n"
 		  "}\n",FALSE);
 		  

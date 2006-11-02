@@ -234,12 +234,12 @@ ConvLocal(
 	size_t	sib
 	,		sob;
 	char	*ostr;
-	static	char	cbuff[SIZE_BUFF];
+	static	char	cbuff[SIZE_LARGE_BUFF];
 
 	cd = iconv_open(Codeset,"utf8");
 	sib = strlen(istr);
 	ostr = cbuff;
-	sob = SIZE_BUFF;
+	sob = SIZE_LARGE_BUFF;
 	iconv(cd,&istr,&sib,&ostr,&sob);
 	*ostr = 0;
 	iconv_close(cd);
@@ -256,14 +256,14 @@ ConvUTF8(
 	size_t	sib
 	,		sob;
 	char	*ostr;
-	static	char	cbuff[SIZE_BUFF];
+	static	char	cbuff[SIZE_LARGE_BUFF];
 
 	cd = iconv_open("utf8",code);
 	istr = (char *)str;
 dbgprintf("size = %d\n",strlen(str));
  if		(  ( sib = strlen((char *)str)  )  >  0  ) {
 		ostr = cbuff;
-		sob = SIZE_BUFF;
+		sob = SIZE_LARGE_BUFF;
 		if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
 			dbgprintf("error = %d\n",errno);
 		}
@@ -345,7 +345,7 @@ ScanEnv(
 	char	*name,
 	char	*value)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LARGE_BUFF];
 	char	*p;
 	int		c;
 	Bool	rc;
@@ -406,7 +406,7 @@ ScanPost(
 	char	*name,
 	char	*value)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LARGE_BUFF];
 	char	*p;
 	int		c;
 	Bool	rc;
@@ -462,8 +462,8 @@ extern	void
 GetArgs(void)
 {
 	char	name[SIZE_LONGNAME+1];
-	char	value[SIZE_BUFF]
-		,	buff[SIZE_BUFF];
+	char	value[SIZE_LARGE_BUFF]
+		,	buff[SIZE_LARGE_BUFF];
     char	*boundary;
 	char	*env;
 	char	*val
@@ -522,8 +522,8 @@ GetSessionValues(void)
 {
 	char	*sesid;
 	char	fname[SIZE_LONGNAME+1];
-	char	name[SIZE_BUFF];
-	char	value[SIZE_BUFF];
+	char	name[SIZE_LARGE_BUFF];
+	char	value[SIZE_LARGE_BUFF];
 	int		fd;
 	Bool	ret;
 	struct	stat	sb;
@@ -710,11 +710,16 @@ LEAVE_FUNC;
 extern	void
 PutHTML(
 	LargeByteString	*header,
-	LargeByteString	*html)
+	LargeByteString	*html,
+	int				code)
 {
 	char	*sesid;
 
 ENTER_FUNC;
+	if		(  code  ==  0  ) {
+		code = 200;
+	}
+	printf("Status: %d\r\n",code);
 	printf("Content-Type: text/html; charset=%s\r\n", Codeset);
 	if		(  fCookie  ) {
 		if		(  ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
@@ -723,13 +728,15 @@ ENTER_FUNC;
 			printf("Set-Cookie: _sesid=;\r\n");
 		}
 	}
+#if	0
 	printf("Cache-Control: no-cache\r\n");
+#endif
 	if		(  header  !=  NULL  ) {
 		LBS_EmitEnd(header);
 		WriteLargeString(stdout,header,Codeset);
 	}
-	printf("\r\n");
 	if		(  html  !=  NULL  ) {
+		printf("\r\n");
 		LBS_EmitEnd(html);
 		WriteLargeString(stdout,html,Codeset);
 	}
@@ -741,7 +748,7 @@ DumpValues(
 	LargeByteString	*html,
 	GHashTable	*args)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LARGE_BUFF];
 	void
 	DumpValue(
 			char		*name,
@@ -773,7 +780,7 @@ DumpFiles(
 	LargeByteString	*html,
 	GHashTable	*args)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LARGE_BUFF];
 	void
 	DumpFile(
 			char		*name,

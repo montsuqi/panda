@@ -54,10 +54,12 @@ static	ARG_TABLE	option[] = {
 		"データ定義格納ディレクトリ"	 				},
 	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
 		"BLOBキャッシュディレクトリ名"					},
+	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
+		"セション変数保持ディレクトリ" 					},
 	{	"expire",	INTEGER,	TRUE,	(void*)&Expire,
 		"セション変数保持時間(秒)" 						},
-	{	"thread",	BOOLEAN,	TRUE,	(void*)&fThread,
-		"サーバをマルチスレッドにする"					},
+	{	"fork",		INTEGER,	TRUE,	(void*)&nFork,
+		"プレフォークするサーバ数" 						},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -67,10 +69,11 @@ SetDefault(void)
 	PortNumber = PORT_HTSERV;
 	Back = 5;
 	RecordDir = ".";
+	SesDir = ".";
 	CacheDir = "cache";
 	Expire = 60 * 60;
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
-	fThread = FALSE;
+	nFork = 10;
 }
 
 extern	int
