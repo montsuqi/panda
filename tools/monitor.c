@@ -66,7 +66,6 @@ static	int		wfcinterval;
 static	int		MaxTran;
 static	int		Sleep;
 static	int		nCache;
-static	char	*SesDir;
 
 static	GHashTable	*ProcessTable;
 
