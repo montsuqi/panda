@@ -378,18 +378,19 @@ AuthDelX509(const char *user)
     X509Table = tmp.table;
 }
 
-static void
+static gboolean 
 free_key_and_value(gpointer key, gpointer value, gpointer user_data)
 {
     g_free(key);
     g_free(value);
+    return TRUE;
 }
 
 extern void
 AuthClearX509()
 {
     assert(X509Table);
-    g_hash_table_foreach_remove(X509Table, free_key_and_value, NULL);
+    g_hash_table_foreach_remove(X509Table,(GHRFunc)free_key_and_value, NULL);
 }
 
 extern  Bool
@@ -405,11 +406,15 @@ AuthLoadX509(const char *file)
         X509Table = g_hash_table_new(g_str_hash, g_str_equal);
     AuthClearX509();
     if ((fp = fopen(file, "r")) == NULL){
+        Warning("[%s] can not open password file: %s", file, strerror(errno));
         return TRUE;
     }
     snprintf(format, sizeof(format),
              "%%%ds %%%dc", sizeof(user)-1, sizeof(subject)-1);
     while (fgets(buf, sizeof(buf), fp) != NULL){
+        if ( ( buf[0] == '\n' ) || (buf[0] == '#') ) {
+            continue;
+        }
         if ((p = strchr(buf, '\n')) == NULL){
             Warning("[%s:%d] input line is too long", file, line);
             result = FALSE;

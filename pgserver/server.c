@@ -56,7 +56,7 @@ static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	printf("session end\n");
+	Message("[%s@%s] session end",scr->user, TermToHost(scr->term));
 }
 
 static	void
@@ -190,19 +190,20 @@ ENTER_FUNC;
 		strcpy(scr->cmd,q+1);
 		if		(  strcmp(ver,VERSION)  ) {
 			SendStringDelim(fpComm,"Error: version\n");
-			g_warning("reject client(invalid version)");
-		} else
+			Message("reject client(invalid version)");
+		} else 
 		if		(  AuthUser(&Auth,scr->user,pass,scr->other)  ) {
 			scr->Windows = NULL;
 			ApplicationsCall(APL_SESSION_LINK,scr);
 			if		(  scr->status  ==  APL_SESSION_NULL  ) {
 				SendStringDelim(fpComm,"Error: application\n");
+				Message("Error: application");
 			} else {
 				SendStringDelim(fpComm,"Connect: OK\n");
 			}
 		} else {
 			SendStringDelim(fpComm,"Error: authentication\n");
-			g_warning("reject client(authentication error)");
+			Message("reject client(authentication error)");
 		}
 	} else
 	if		(  strncmp(buff,"Event: ",7)  ==  0  ) {
@@ -231,7 +232,9 @@ ENTER_FUNC;
 		dbgmsg("end");
 		scr->status = APL_SESSION_NULL;
 	} else {
-		printf("invalid message [%s]\n",buff);
+		if ( strlen(buff) > 0) {
+			Warning("invalid message [%s]\n",buff);
+		}
 		scr->status = APL_SESSION_NULL;
 	}
 	while	(  scr->status  ==  APL_SESSION_LINK  ) {
@@ -282,6 +285,7 @@ ExecuteServer(void)
 			close(_fh);
 			scr = InitSession();
 			strcpy(scr->term,TermName(fh));
+			Message("[%s@%s] session start",scr->user, TermToHost(scr->term));
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
 			CloseNet(fpComm);

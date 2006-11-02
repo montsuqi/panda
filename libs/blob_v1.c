@@ -222,8 +222,7 @@ ENTER_FUNC;
 			int pid = atoi(buff);
 			if		(	(  getpid() != pid  )
 					&&	(  kill(pid, 0) == 0 || errno == EPERM  ) ) {
-				fprintf(	stderr,"another process uses libpandablob. (%d)\n",atoi(buff));
-				exit(1);
+				Error("blob: another process uses libpandablob. (%d)\n",atoi(buff));
 			}
 		}
 		fclose(fp);
@@ -232,8 +231,7 @@ ENTER_FUNC;
 			fprintf(fp,"%d\n",getpid());
 			fclose(fp);
 		} else {
-			fprintf(stderr,"can not make lock file(directory not writable?)\n");
-			exit(1);
+			Error("blob: can not make lock file(directory not writable?)");
 		}
 	}
 
@@ -245,8 +243,7 @@ ENTER_FUNC;
 			fwrite(&head,sizeof(head),1,fp);
 			fclose(fp);
 		} else {
-			fprintf(stderr,"can not open BLOB space(disk full?)\n");
-			exit(1);
+			Error("blob: can not open BLOB space(disk full?)");
 		}
 	} else {
 		fclose(fp);
@@ -254,8 +251,7 @@ ENTER_FUNC;
 	if		(  ( fp = fopen(name,"r+") )  !=  NULL  ) {
 		fread(&head,sizeof(head),1,fp);
 		if		(  memcmp(head.magic,BLOB_V1_HEADER,SIZE_BLOB_HEADER)  !=  0  ) {
-			fprintf(stderr,"version mismatch\n");
-			exit(1);
+			Error("blob: version mismatch");
 		}
 		fchmod(fileno(fp),0600);
 		blob = New(BLOB_V1_Space);

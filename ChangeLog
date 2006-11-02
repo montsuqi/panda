@@ -1,3 +1,31 @@
+2006-11-02  Noboru Saitou  <noborus@netlab.jp>
+
+	* Merge from r_1_2_branch.
+
+2006-10-24  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.8 release
+
+2006-10-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/bd_config.c, bootdialog.c: '~/'を HOME に変換するようにした
+
+2006-10-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/dialogs.c, glclient/client.c, glclient/protocol.c: 
+	エラーダイアログのサポート
+
+	* glclient/bootdialog.c, glclient/client.c: pkcs12形式も使用できるので
+	表示修正
+	* glclient/bootdialog.c: file_selection のキャンセルの動作の追加	
+2006-10-17  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/blob_v1.c, libs/blobup.c: syslog対応
+
+	* aps/dbstub_main.c(main): dbstubのモジュール名を出力するようにした
+
+	* pgserver/pgserver.c, pgserver/server.c: syslog対応
+
 2006-08-09  Noboru Saitou  <noborus@netlab.jp>
 
 	* fdd/fdd.c: SIGCHLD が SIG_IGNされていたのを削除

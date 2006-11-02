@@ -203,6 +203,7 @@ main(
 		Error("module name is not specified.");
 	}
 	InitSystem(fl->name);
+	Message("module %s: %.20s", fl->name, CommandParameter);
 	rc = ExecuteSubProcess(fl->name);
 	StopProcess(rc);
 	return	(rc);

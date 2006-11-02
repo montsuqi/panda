@@ -59,6 +59,7 @@
 #include	"action.h"
 #include	"callbacks.h"
 #include	"widgetOPS.h"
+#include	"dialogs.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -126,8 +127,8 @@ PopScreenStack(void)
 static void
 GL_Error(void)
 {
-	MessageLog("Connection lost\n");
-	exit(1);
+	GLError("Connection lost\n");
+	gtk_main_quit();
 }
 
 extern	void
@@ -282,7 +283,8 @@ ENTER_FUNC;
 		}
 		str[size] = 0;
 	} else {
-		Error("error size mismatch !");
+		GLError("error size mismatch !");
+		exit(1);
 	}
 LEAVE_FUNC;
 }
@@ -507,7 +509,8 @@ ENTER_FUNC;
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		if	((fp = Fopen(fname,"w")) == NULL) {
-			Error("could not write cache file");
+			GLError("could not write cache file");
+			exit(1);
 		}
 		fchmod(fileno(fp), 0600);
 		left = (size_t)GL_RecvLong(fpC);
@@ -526,7 +529,7 @@ ENTER_FUNC;
 		fclose(fp);
 		ret = TRUE;
 	} else {
-		g_warning("invalid protocol sequence");
+		GLError("invalid protocol sequence");
 		ret = FALSE;
 	}
 LEAVE_FUNC;
@@ -883,20 +886,20 @@ ENTER_FUNC;
 		rc = FALSE;
 		switch	(pc) {
 		  case	GL_NOT:
-			g_warning("can not connect server");
+			GLError("can not connect server");
 			break;
 		  case	GL_E_VERSION:
-			g_warning("can not connect server(version not match)");
+			GLError("can not connect server(version not match)");
 			break;
 		  case	GL_E_AUTH:
-			g_warning("can not connect server(authentication error)");
+			GLError("can not connect server(authentication error)");
 			break;
 		  case	GL_E_APPL:
-			g_warning("can not connect server(application name invalid)");
+			GLError("can not connect server(application name invalid)");
 			break;
 		  default:
 			dbgprintf("[%X]\n",pc);
-			g_warning("can not connect server(other protocol error)");
+			GLError("can not connect server(other protocol error)");
 			break;
 		}
 	}

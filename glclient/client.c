@@ -61,6 +61,7 @@
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"styleParser.h"
+#include	"dialogs.h"
 #include	"comm.h"
 #include	"protocol.h"
 #include	"message.h"
@@ -116,9 +117,9 @@ static	ARG_TABLE	option[] = {
 		"起動ダイアログを表示する"						},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"鍵ファイル名(pem)"		 						},
+		"鍵ファイル名(pem/p12)"		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"証明書ファイル名(pem)"	 						},
+		"証明書ファイル名(pem/p12)"	 						},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
 		"SSLを使う"				 						},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
@@ -252,11 +253,11 @@ start_client ()
 
     port = ParPort(PortNumber,PORT_GLTERM);
 	if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
-		g_warning("can not connect server(server port not found)");
-        DestroyPort (port);
-        gtk_rc_reparse_all ();
-        StyleParserTerm ();
-		return;
+		GLError("can not connect server(server port not found)");
+		DestroyPort (port);
+		gtk_rc_reparse_all ();
+		StyleParserTerm ();
+        return;
 	}
 #ifdef	USE_SSL
     if (!fSsl)
@@ -264,12 +265,12 @@ start_client ()
     else {
         ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
         if (ctx == NULL){
-            g_warning("MakeSSL_CTX failure");
-            return;
+            GLError("MakeSSL_CTX failure");
+			return;
         }
         if ((fpComm = MakeSSL_Net(ctx,fd)) != NULL){
             if (StartSSLClientSession(fpComm, IP_HOST(port)) != TRUE){
-                g_warning("could not start SSL session");
+                GLError("could not start SSL session");
                 CloseNet(fpComm);
                 SSL_CTX_free(ctx);
                 return;
@@ -284,9 +285,10 @@ start_client ()
 	if (SendConnect(fpComm,CurrentApplication)) {
 		CheckScreens(fpComm,TRUE);
 		(void)GetScreenData(fpComm);
-		gtk_main();  
-		ExitSystem();
 	}
+	gtk_main();  
+	
+	ExitSystem(); 
     CloseNet(fpComm);
 #ifdef	USE_SSL
     if (ctx != NULL)

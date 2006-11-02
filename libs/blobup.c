@@ -75,12 +75,10 @@ main(
 		tv = VersionBLOB(NULL);
 		fv = VersionBLOB(Space);
 		if		(  fv  ==  0  ) {
-			fprintf(stderr,"invalid BLOB space\n");
-			exit(1);
+			Error("invalid BLOB space");
 		}
 		if		(  fv  ==  tv  ) {
-			fprintf(stderr,"needress BLOB space upgrade\n");
-			exit(1);
+			Error("needress BLOB space upgrade");
 		}
 	}
 

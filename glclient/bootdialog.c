@@ -194,11 +194,11 @@ edit_dialog_value_to_config (EditDialog * self)
   bd_config_section_set_bool
     (section, "protocol_v2",
      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
-  bd_config_section_set_string (section, "cache",
-                                gtk_entry_get_text (GTK_ENTRY (self->cache)));
-  bd_config_section_set_string (section, "style",
+  bd_config_section_set_path (section, "cache",
+                              gtk_entry_get_text (GTK_ENTRY (self->cache)));
+  bd_config_section_set_path (section, "style",
                                 gtk_entry_get_text (GTK_ENTRY (self->style)));
-  bd_config_section_set_string (section, "gtkrc",
+  bd_config_section_set_path (section, "gtkrc",
                                 gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
   bd_config_section_set_bool
     (section, "mlog",
@@ -299,6 +299,16 @@ file_ok(GtkWidget *w, gpointer data)
 }
 
 static void
+file_cancel(GtkWidget *w, gpointer data)
+{
+  file_selection_data *localdata;
+
+  localdata = (file_selection_data*)data;
+  gtk_widget_destroy(localdata->filesel);
+  return;
+}
+
+static void
 open_file_selection(GtkWidget *w, gpointer entry)
 {
   file_selection_data *data;
@@ -313,7 +323,7 @@ open_file_selection(GtkWidget *w, gpointer entry)
   gtk_signal_connect(GTK_OBJECT(filew->ok_button), "clicked",
 		     (GtkSignalFunc)file_ok, data);
   gtk_signal_connect(GTK_OBJECT(filew->cancel_button), "clicked",
-		     (GtkSignalFunc)gtk_widget_destroy, (gpointer)filew);
+		     (GtkSignalFunc)file_cancel, data);
   gtk_widget_show(GTK_WIDGET(filew));
   gtk_grab_add(GTK_WIDGET(filew));
 }
@@ -442,28 +452,46 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("キャッシュ");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cache = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                    (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("スタイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->style = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("Gtkrc");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->gtkrc = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
@@ -510,7 +538,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("CA証明書へのパス");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CApath = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -525,7 +553,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("CA証明書ファイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CAfile = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -540,7 +568,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   label = gtk_label_new ("鍵ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -552,10 +580,10 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("証明書ファイル名(pem)");
+  label = gtk_label_new ("証明書ファイル名(pem/p12)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cert = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -949,7 +977,7 @@ boot_dialog_create_conf (BDConfig *config)
       bd_config_section_append_value (section, "CAfile", "");
       bd_config_section_append_value (section, "key", "");
       bd_config_section_append_value (section, "cert", "");
-      bd_config_section_append_value (section, "ciphers", "");
+      bd_config_section_append_value (section, "ciphers", "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH");
 #endif      
       is_create = TRUE;
     }
@@ -1145,11 +1173,11 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
   bd_config_section_set_bool
     (section, "protocol_v2",
      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
-  bd_config_section_set_string (section, "cache",
+  bd_config_section_set_path (section, "cache",
                                 gtk_entry_get_text (GTK_ENTRY (self->cache)));
-  bd_config_section_set_string (section, "style",
+  bd_config_section_set_path (section, "style",
                                 gtk_entry_get_text (GTK_ENTRY (self->style)));
-  bd_config_section_set_string (section, "gtkrc",
+  bd_config_section_set_path (section, "gtkrc",
                                 gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
   bd_config_section_set_bool
     (section, "mlog",
@@ -1225,11 +1253,11 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean forc
                               bd_config_section_get_bool (section, "protocol_v1"));
   bd_config_section_set_bool (global, "protocol_v2",
                               bd_config_section_get_bool (section, "protocol_v2"));
-  bd_config_section_set_string (global, "cache",
+  bd_config_section_set_path (global, "cache",
                                 bd_config_section_get_string (section, "cache"));
-  bd_config_section_set_string (global, "style",
+  bd_config_section_set_path (global, "style",
                                 bd_config_section_get_string (section, "style"));
-  bd_config_section_set_string (global, "gtkrc",
+  bd_config_section_set_path (global, "gtkrc",
                                 bd_config_section_get_string (section, "gtkrc"));
   bd_config_section_set_bool (global, "mlog",
                               bd_config_section_get_bool (section, "mlog"));
@@ -1515,7 +1543,7 @@ boot_dialog_new ()
   label = gtk_label_new ("CA証明書へのパス");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CApath = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -1530,7 +1558,7 @@ boot_dialog_new ()
   label = gtk_label_new ("CA証明書ファイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CAfile = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -1545,7 +1573,7 @@ boot_dialog_new ()
   label = gtk_label_new ("鍵ファイル名(pem)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->key = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -1557,10 +1585,10 @@ boot_dialog_new ()
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("証明書ファイル名(pem)");
+  label = gtk_label_new ("証明書ファイル名(pem/p12)");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cert = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label("Brows");
+  button = gtk_button_new_with_label("参照");
   gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
   hbox = gtk_hbox_new (FALSE, 5);
@@ -1595,30 +1623,48 @@ boot_dialog_new ()
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
   self->cache = entry;
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("スタイル");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
   self->style = entry;
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   label = gtk_label_new ("Gtkrc");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
   self->gtkrc = entry;
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);

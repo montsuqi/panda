@@ -35,6 +35,23 @@
 
 typedef struct _BDConfigValue BDConfigValue;
 
+GString *
+get_path(gchar *str, GString *path)
+{
+  char *p;
+  p = str;
+  if (str[0] == '~') {
+    p ++;
+    if (str[1] == '/') {
+      p ++;
+    }
+    g_string_sprintf (path, "%s/%s", g_get_home_dir (), p);
+  } else {
+    g_string_sprintf (path, "%s", str);
+  }
+  return path;
+}
+
 /*********************************************************************
  * BDConfigValue
  ********************************************************************/
@@ -174,6 +191,17 @@ bd_config_section_get_string (BDConfigSection *self, gchar *name)
   } else {
     return "";
   }
+}
+
+gboolean
+bd_config_section_set_path (BDConfigSection *self, gchar *name, gchar *str)
+{
+  GString *path = g_string_new (NULL);
+  gboolean ret;
+  path = get_path(str, path);
+  ret = bd_config_section_set_string (self, name, path->str);
+  g_string_free (path, TRUE);
+  return ret;
 }
 
 gboolean
