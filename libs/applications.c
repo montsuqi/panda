@@ -59,7 +59,8 @@ static	ApplicationStruct	*
 ApplicationsRegist(
 	char	*name,
 	APL_FUNC	link,
-	APL_FUNC	main)
+	APL_FUNC	main,
+	APL_FUNC	f_exit)
 {
 	ApplicationStruct	*func;
 
@@ -69,6 +70,7 @@ ENTER_FUNC;
 		func->name = StrDup(name);
 		func->main = main;
 		func->link = link;
+		func->exit = f_exit;
 		g_hash_table_insert(ApplicationTable,name,func);
 	}
 LEAVE_FUNC;
@@ -82,7 +84,8 @@ ApplicationLoad(
 	char		funcname[SIZE_BUFF]
 	,			filename[SIZE_BUFF];
 	APL_FUNC	f_link
-	,			f_main;
+		,		f_main
+		,		f_exit;
 	APL_INIT	f_init;
 	void		*handle;
 	ApplicationStruct	*func;
@@ -101,7 +104,9 @@ ENTER_FUNC;
 			f_link = dlsym(handle,funcname);
 			sprintf(funcname,"%sMain",name);
 			f_main = dlsym(handle,funcname);
-			func = ApplicationsRegist(StrDup(name),f_link,f_main);
+			sprintf(funcname,"%sExit",name);
+			f_exit = dlsym(handle,funcname);
+			func = ApplicationsRegist(StrDup(name),f_link,f_main,f_exit);
 		}
 	}
 LEAVE_FUNC;
@@ -138,13 +143,29 @@ ENTER_FUNC;
 	} else {
 		switch	(sts) {
 		  case	APL_SESSION_LINK:
-			apl->link(p);
+			if		(  apl->link  !=  NULL  ) {
+				if		(  !apl->link(p)  ) {
+					scr->status = APL_SESSION_NULL;
+				}
+			}
 			break;
 		  case	APL_SESSION_GET:
-			apl->main(p);
+			if		(  apl->main  !=  NULL  ) {
+				if		(  !apl->main(p)  ) {
+					scr->status = APL_SESSION_RESEND;
+				}
+			}
+			break;
+		  case	APL_SESSION_END:
+			if		(  apl->exit  !=  NULL  ) {
+				if		(  !apl->exit(p)  ) {
+					scr->status = APL_SESSION_NULL;
+				}
+			}
 			break;
 		  default:
 			Warning("invalid status [%s] %d\n",name,sts);
+			scr->status = APL_SESSION_NULL;
 			break;
 		}
 	}

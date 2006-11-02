@@ -8,11 +8,21 @@ main	{
 	area3	{
 		color	varchar(64);
 	};
+	entry	varchar(64);
+	toggle	bool;
 	list	{
 		count	int;
 		select	bool[100];
 		value	text[100];
 	};
+	optionmenu	{
+		count	int;
+		select	int;
+		item	text[100];
+	};
+	state	int;
+	check	bool;
+	radio	bool[3];
     user	varchar(64);
 	message	text;
 };

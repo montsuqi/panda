@@ -42,6 +42,7 @@ GLOBAL	GHashTable	*APS_Hash;
 GLOBAL	GHashTable	*MQ_Hash;
 GLOBAL	Bool		fShutdown;
 GLOBAL	int			MaxRetry;
+GLOBAL	int			nCache;
 GLOBAL	BLOB_State	*BlobState;
 GLOBAL	Bool		fLoopBack;
 GLOBAL	Bool		fTimer;

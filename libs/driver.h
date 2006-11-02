@@ -51,11 +51,16 @@ typedef	struct {
 extern	WindowData		*SetWindowName(char *name);
 extern	Bool			PutWindow(WindowData *win, byte type);
 extern	RecordStruct	*GetWindowRecord(char *wname);
+extern	RecordStruct	*SetWindowRecord(char *wname);
 extern	void			LinkModule(char *name);
 extern	ScreenData		*NewScreenData(void);
 extern	char			*PureWindowName(char *comp, char *buff);
 extern	char			*PureComponentName(char *comp, char *buff);
 extern	void			RemoveWindowRecord(char *name);
+extern	void			SaveScreenData(ScreenData *scr, Bool fSaveRecords);
+extern	ScreenData		*LoadScreenData(char *term);
+extern	void			FreeScreenData(ScreenData *scr);
+extern	void			PargeScreenData(ScreenData *scr);
 
 /*	C API	*/
 extern	ValueStruct	*GetWindowValue(char *name);
@@ -74,5 +79,6 @@ extern	WindowData	*PutWindowByName(char *wname, byte type);
 #define	GLOBAL	extern
 #endif
 GLOBAL	ScreenData	*ThisScreen;	/*	current applications ScreenData		*/
+GLOBAL	char		*SesDir;
 #undef	GLOBAL
 #endif

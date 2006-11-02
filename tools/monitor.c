@@ -36,7 +36,9 @@
 #include	<glib.h>
 #include	<sys/types.h>
 #include	<sys/wait.h>
+#include    <sys/socket.h>
 #include	<signal.h>
+#include	<errno.h>
 #include	"types.h"
 #include	"libmondai.h"
 #include	"directory.h"
@@ -80,7 +82,6 @@ typedef	struct {
 	pid_t	pid;
 	int		state;
 	byte	type;
-	int		count;
 	int		argc;
 	char	**argv;
 }	Process;
@@ -139,16 +140,11 @@ StartProcess(
 
 ENTER_FUNC;
   retry:
-	if		(  ( proc->type & PTYPE_WFC )  ==  0  ) {
-		if		(  interval  >  0  ) {
-			sleep(interval);
-		}
-	}
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
 		proc->state = STATE_RUN;
 		g_int_hash_table_insert(ProcessTable,pid,proc);
-#if	0
+#ifdef	DEBUG
 		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
 			fprintf(fpLog,"%s ",proc->argv[i]);
 		}
@@ -157,15 +153,13 @@ ENTER_FUNC;
 #endif
 	} else
 	if		(  pid  ==  0  ) {
+		if		(  interval  >  0  ) {
+			sleep(interval);
+		}
 		_execv(proc->argv[0],proc->argv);
 	} else {
 		Message("can't start process\n");
 		goto	retry;
-	}
-	if		(  ( proc->type & PTYPE_WFC )  !=  0  ) {
-		if		(  interval  >  0  ) {
-			sleep(interval);
-		}
 	}
 LEAVE_FUNC;
 	return	(pid);
@@ -492,62 +486,104 @@ LEAVE_FUNC;
 }
 
 static	void
-ProcessMonitor(void)
+WaitProcess(void)
 {
-	pid_t	pid;
 	int		status;
 	Process	*proc;
 	Bool	fStop;
+	pid_t	pid;
+	GSList	*plist
+		,	*p;
+
+	plist = NULL;
+	fStop = FALSE;
+	while	(  ( pid = waitpid(-1,&status,WNOHANG) )  >  0  ) {
+		dbgprintf("pid = %d is down",pid);
+		if		(  ( proc = g_int_hash_table_lookup(ProcessTable,pid) )  !=  NULL  ) {
+			if (WIFSIGNALED(status) ) {
+				Message("%s(%d) killed by signal %d"
+						,proc->argv[0], (int)pid, WTERMSIG(status));
+			} else {
+				Message("process down pid = %d(%d) Command =[%s]\n"
+						,(int)pid, WEXITSTATUS(status),proc->argv[0]);
+			}
+			proc->state = STATE_DOWN;
+			switch	(proc->type) {
+			  case	PTYPE_APS:
+				if		(	(  fRestart     )
+						||	(  fAllRestart  ) ) {
+					if		(	(  WIFEXITED(status)  )
+							&&	(  WEXITSTATUS(status)  <  2  )	) {
+						if		(  !fAllRestart  ) {
+							fStop = TRUE;
+						}
+					}
+				} else {
+					fStop = TRUE;
+				}
+				break;
+			  default:
+				if		(  !fAllRestart  ) {
+					fStop = TRUE;
+				}
+				break;
+			}
+			if		(  !fStop  ) {
+				plist = g_slist_append(plist,(gpointer)pid);
+			}
+		} else {
+			Message("unknown process down pid = %d(%d)\n"
+						,(int)pid,WEXITSTATUS(status));
+		}
+	}
+	if		(  fStop  ) {
+		StopSystem();
+	} else
+	if		(  plist  !=  NULL  ) {
+		for	( p = plist ; p != NULL ; p = p->next ) {
+			pid = (pid_t)p->data;
+			proc = g_int_hash_table_lookup(ProcessTable,pid);
+			g_int_hash_table_remove(ProcessTable,pid);
+			StartProcess(proc,Interval);
+		}
+		g_slist_free(plist);
+	}
+}
+
+static	void
+ProcessMonitor(void)
+{
+	GSList	*plist
+		,	*p;
+	pid_t	pid;
+	Process	*proc;
+	void	_CheckProcess(
+		pid_t	pid)
+	{
+		if		(  kill(pid,SIGUSR2)  !=  0  ) {
+			plist = g_slist_append(plist,(gpointer)pid);
+		}
+	}
 
 ENTER_FUNC;
 	do {
-		while	(  ( pid = waitpid(-1,&status,0) )  !=  -1  ) {
-			dbgprintf("pid = %d is down",pid);
-			if		(  ( proc = g_int_hash_table_lookup(ProcessTable,pid) )  !=  NULL  ) {
-				if (WIFSIGNALED(status) ) {
-					Message("%s(%d) killed by signal %d"
-							,proc->argv[0], (int)pid, WTERMSIG(status));
-				} else {
-					Message("process down pid = %d(%d) Command =[%s]\n"
-							,(int)pid, WEXITSTATUS(status),proc->argv[0]);
-				}
-				switch	(proc->type) {
-				  case	PTYPE_APS:
-					if		(	(  fRestart     )
-							||	(  fAllRestart  ) ) {
-						if		(	(  WIFEXITED(status)  )
-								&&	(  WEXITSTATUS(status)  <  2  )	) {
-							if		(  fAllRestart  ) {
-								fStop = FALSE;
-							} else {
-								fStop = TRUE;
-							}
-						} else {
-							fStop = FALSE;
-						}
-					} else {
-						fStop = TRUE;
-					}
-					break;
-				  default:
-					if		(  fAllRestart  ) {
-						fStop = FALSE;
-					} else {
-						fStop = TRUE;
-					}
-					break;
-				}
-				if		(  fStop  ) {
-					StopSystem();
-				} else {
-					g_int_hash_table_remove(ProcessTable,pid);
-					StartProcess(proc,Interval);
-				}
-			} else {
-				Message("unknown process down pid = %d(%d)\n"
- 						,(int)pid,WEXITSTATUS(status));
+#if	1
+		WaitProcess();
+#else
+		plist = NULL;
+		while	(  waitpid(-1,0,WNOHANG)  >  0  );
+		g_int_hash_table_foreach(ProcessTable,(GHFunc)_CheckProcess,NULL);
+		if		(  plist  !=  NULL  ) {
+			for	( p = plist ; p != NULL ; p = p->next ) {
+				pid = (pid_t)p->data;
+				proc = g_int_hash_table_lookup(ProcessTable,pid);
+				g_int_hash_table_remove(ProcessTable,pid);
+				StartProcess(proc,Interval);
 			}
+			g_slist_free(plist);
 		}
+#endif
+		sleep(1);
 	}	while	(TRUE);
 LEAVE_FUNC;
 }
@@ -563,7 +599,6 @@ static	void
 WaitStop(void)
 {
 	while	(  waitpid(-1,0,WNOHANG)  >  0  );
-	exit(0);
 }
 
 static	void
@@ -616,7 +651,7 @@ static	ARG_TABLE	option[] = {
 	{	"allrestart",BOOLEAN,	TRUE,	(void*)&fAllRestart,
 		"全ての子プロセス異常終了時に再起動する"	 	},
 
-	{	"wait",		INTEGER,	TRUE,	(void*)&Interval,
+	{	"interval",	INTEGER,	TRUE,	(void*)&Interval,
 		"プロセス操作時の待ち時間"	 					},
 	{	"wfcwait",	INTEGER,	TRUE,	(void*)&wfcinterval,
 		"wfc起動後の待ち時間(遅いCPU用)"				},
@@ -696,9 +731,10 @@ main(
 	InitSystem();
 	signal(SIGUSR1,(void *)StopSystem);
 	signal(SIGHUP,(void *)StopApss);
+
 	Message("Start system");
  	StartPrograms();
-
+	signal(SIGCHLD,(void *)WaitProcess);
 	ProcessMonitor();
 
 	return	(0);

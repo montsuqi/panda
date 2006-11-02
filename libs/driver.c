@@ -90,36 +90,60 @@ PureComponentName(
 	return	(buff);
 }
 
+extern	RecordStruct	*
+SetWindowRecord(
+	char	*wname)
+{
+	RecordStruct	*rec;
+	char		fname[SIZE_LONGNAME+1];
+
+	if		(  ThisScreen->Records  ==  NULL  ) {
+		ThisScreen->Records = NewNameHash();
+	}
+	if		(  ( rec = (RecordStruct *)g_hash_table_lookup(ThisScreen->Records,wname) )
+			   ==  NULL  ) {
+		sprintf(fname,"%s.rec",wname);
+		if		(  ( rec = ReadRecordDefine(fname) )  !=  NULL  ) {
+			g_hash_table_insert(ThisScreen->Records,rec->name,rec);
+		}
+	}
+	return	(rec);
+}
+
+extern	RecordStruct	*
+GetWindowRecord(
+	char		*name)
+{
+	RecordStruct	*rec;
+	char	wname[SIZE_LONGNAME+1];
+
+ENTER_FUNC;
+	PureWindowName(name,wname);
+	rec = (RecordStruct *)g_hash_table_lookup(ThisScreen->Records,wname);
+LEAVE_FUNC;
+	return	(rec); 
+}
+
 extern	WindowData	*
 SetWindowName(
 	char		*name)
 {
 	WindowData	*entry;
 	RecordStruct	*rec;
-	char		fname[SIZE_LONGNAME+1]
-		,		wname[SIZE_LONGNAME+1]
+	char		wname[SIZE_LONGNAME+1]
 		,		path[SIZE_LONGNAME+1]
 		,		msg[SIZE_BUFF];
 
 ENTER_FUNC;
 	dbgprintf("SetWindowName(%s)",name);
 	if		(  name  !=  NULL  ) {
+		PureWindowName(name,wname);
+		if		(  ( rec = SetWindowRecord(wname) )  ==  NULL  ) {
+			strcpy(path,name);	/*	exitting system	*/
+		}
+		PathWindowName(name,path);
 		if		(  ThisScreen->Windows  ==  NULL  ) {
 			ThisScreen->Windows = NewNameHash();
-		}
-		if		(  ThisScreen->Records  ==  NULL  ) {
-			ThisScreen->Records = NewNameHash();
-		}
-		PureWindowName(name,wname);
-		PathWindowName(name,path);
-		if		(  ( rec = (RecordStruct *)g_hash_table_lookup(ThisScreen->Records,wname) )
-				   ==  NULL  ) {
-			sprintf(fname,"%s.rec",wname);
-			if		(  ( rec = ReadRecordDefine(fname) )  !=  NULL  ) {
-				g_hash_table_insert(ThisScreen->Records,rec->name,rec);
-			} else {
-				strcpy(path,name);	/*	exitting system	*/
-			}
 		}
 		if		(  ( entry = 
 					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,path) )
@@ -143,25 +167,6 @@ LEAVE_FUNC;
 	return	(entry);
 }
 
-extern	RecordStruct	*
-GetWindowRecord(
-	char		*name)
-{
-	WindowData	*win;
-	RecordStruct	*rec;
-	char	path[SIZE_LONGNAME+1];
-
-ENTER_FUNC;
-	PathWindowName(name,path);
-	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,path) )  !=  NULL  ) {
-		rec = win->rec;
-	} else {
-		rec = NULL;
-	}
-LEAVE_FUNC;
-	return	(rec); 
-}
-
 extern	void
 RemoveWindowRecord(
 	char		*name)
@@ -172,17 +177,19 @@ RemoveWindowRecord(
 	char	wname[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-	PureWindowName(name,wname);
-	PathWindowName(name,path);
-	if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,path) )  !=  NULL  ) {
-		g_hash_table_remove(ThisScreen->Windows,path);
-		g_hash_table_remove(ThisScreen->Records,wname);
-		xfree(win->name);
-		rec = win->rec;
-		xfree(rec->name);
-		FreeValueStruct(rec->value);
-		xfree(rec);
-		xfree(win);
+	if		(  ThisScreen->Windows  !=  NULL  ) {
+		PureWindowName(name,wname);
+		PathWindowName(name,path);
+		if		(  ( win = g_hash_table_lookup(ThisScreen->Windows,path) )  !=  NULL  ) {
+			g_hash_table_remove(ThisScreen->Windows,path);
+			g_hash_table_remove(ThisScreen->Records,wname);
+			xfree(win->name);
+			rec = win->rec;
+			xfree(rec->name);
+			FreeValueStruct(rec->value);
+			xfree(rec);
+			xfree(win);
+		}
 	}
 LEAVE_FUNC;
 }
@@ -213,7 +220,7 @@ extern	ValueStruct	*
 GetWindowValue(
 	char		*name)
 {
-	char	wname[SIZE_NAME+1];
+	char	wname[SIZE_LONGNAME+1];
 	char	*p
 	,		*q;
 	RecordStruct	*rec;
@@ -300,4 +307,192 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return	(scr); 
+}
+
+#define	RECORD_WINDOW_NAME	1
+#define	RECORD_RECORD		2
+
+static	void
+_SaveWindowName(
+	char	*name,
+	WindowData	*win,
+	FILE	*fp)
+{
+	size_t	size;
+
+	fputc(RECORD_WINDOW_NAME,fp);
+
+	size = strlen(name) + 1;
+	fwrite(&size,sizeof(size_t),1,fp);
+	fwrite(name,size,1,fp);
+	fwrite(&win->PutType,sizeof(byte),1,fp);
+}
+
+static	void
+_SaveRecords(
+	char	*name,
+	RecordStruct	*rec,
+	FILE	*fp)
+{
+	LargeByteString	*buff;
+	size_t	size;
+
+	fputc(RECORD_RECORD,fp);
+
+	size = strlen(name) + 1;
+	fwrite(&size,sizeof(size_t),1,fp);
+	fwrite(name,size,1,fp);
+
+	size = NativeSizeValue(NULL,rec->value);
+	buff = NewLBS();
+	LBS_ReserveSize(buff,size,FALSE);
+	NativePackValue(NULL,LBS_Body(buff),rec->value);
+	fwrite(&size,sizeof(size_t),1,fp);
+	fwrite(LBS_Body(buff),size,1,fp);
+	FreeLBS(buff);
+}
+
+extern	void
+SaveScreenData(
+	ScreenData	*scr,
+	Bool		fSaveRecords)
+{
+	FILE	*fp;
+	char	fname[SIZE_LONGNAME+1];
+
+	sprintf(fname,"%s/%s.d",SesDir,scr->term);
+	if		(  ( fp = Fopen(fname,"w") )  !=  NULL  ) {
+		fwrite(&fSaveRecords,sizeof(Bool),1,fp);
+		fwrite(scr->cmd,SIZE_LONGNAME+1,1,fp);
+		fwrite(scr->user,SIZE_USER+1,1,fp);
+		if		(  fSaveRecords  ) {
+			g_hash_table_foreach(scr->Records,(GHFunc)_SaveRecords,fp);
+			g_hash_table_foreach(scr->Windows,(GHFunc)_SaveWindowName,fp);
+		}
+		fclose(fp);
+	}
+}
+
+extern	void
+PargeScreenData(
+	ScreenData	*scr)
+{
+	char	fname[SIZE_LONGNAME+1];
+
+	sprintf(fname,"%s/%s.d",SesDir,scr->term);
+	remove(fname);
+}
+
+static	void
+LoadRecords(
+	ScreenData	*scr,
+	FILE		*fp)
+{
+	size_t	size;
+	int		flag;
+	char	name[SIZE_LONGNAME+1];
+	RecordStruct	*rec;
+	byte	*buff;
+
+	while	(  ( flag = fgetc(fp) )  ==  RECORD_RECORD  ) {
+		fread(&size,sizeof(size_t),1,fp);
+		fread(name,size,1,fp);
+		rec  = SetWindowRecord(name);
+
+		fread(&size,sizeof(size_t),1,fp);
+		buff = (byte *)xmalloc(size);
+		fread(buff,size,1,fp);
+		NativeUnPackValue(NULL,buff,rec->value);
+		xfree(buff);
+	}
+	ungetc(flag,fp);
+}
+
+static	void
+LoadWindows(
+	ScreenData	*scr,
+	FILE		*fp)
+{
+	size_t	size;
+	char	name[SIZE_LONGNAME+1];
+	int		flag;
+	byte	PutType;
+	WindowData	*win;
+
+	while	(  ( flag = fgetc(fp) )  ==  RECORD_WINDOW_NAME  ) {
+		fread(&size,sizeof(size_t),1,fp);
+		fread(name,size,1,fp);
+		fread(&PutType,sizeof(byte),1,fp);
+		win = SetWindowName(name);
+		win->PutType = PutType;
+	}
+	ungetc(flag,fp);
+}
+
+extern	ScreenData	*
+LoadScreenData(
+	char	*term)
+{
+	FILE	*fp;
+	char	fname[SIZE_LONGNAME+1];
+	ScreenData	*scr;
+	Bool		fSaveRecords;
+
+ENTER_FUNC;
+	sprintf(fname,"%s/%s.d",SesDir,term);
+	if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
+		scr = NewScreenData();
+		ThisScreen = scr;
+		strcpy(scr->term,term);
+		fread(&fSaveRecords,sizeof(Bool),1,fp);
+		fread(scr->cmd,SIZE_LONGNAME+1,1,fp);
+		fread(scr->user,SIZE_USER+1,1,fp);
+		if		(  fSaveRecords  ) {
+			LoadRecords(scr,fp);
+			LoadWindows(scr,fp);
+		}
+		fclose(fp);
+	} else {
+		scr = NULL;
+	}
+LEAVE_FUNC;
+	return	(scr);
+}
+
+extern	void
+FreeScreenData(
+	ScreenData	*scr)
+{
+	guint	FreeWindows(
+		char	*name,
+		WindowData	*entry,
+		void		*dummy)
+	{
+		xfree(entry->name);
+		return	(TRUE);
+	}
+	guint	FreeRecords(
+		char	*name,
+		RecordStruct	*rec,
+		void		*dummy)
+	{
+		xfree(rec->name);
+		FreeValueStruct(rec->value);
+		return	(TRUE);
+	}
+
+ENTER_FUNC;
+	if		(  scr->encoding  !=  NULL  ) {
+		xfree(scr->encoding);
+	}
+	if		(  scr->Windows  !=  NULL  ) {
+		g_hash_table_foreach_remove(scr->Windows,(GHRFunc)FreeWindows,NULL);
+		g_hash_table_destroy(scr->Windows);
+	}
+	if		(  scr->Records  !=  NULL  ) {
+		g_hash_table_foreach_remove(scr->Records,(GHRFunc)FreeRecords,NULL);
+		g_hash_table_destroy(scr->Records);
+	}
+	xfree(scr);
+LEAVE_FUNC;
 }

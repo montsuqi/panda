@@ -3,6 +3,7 @@ Makefile.in
 aclocal.m4
 config.*
 configure
+debian
 libtool
 stamp-h
 stamp-h.in

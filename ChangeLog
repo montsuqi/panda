@@ -2,45 +2,117 @@
 
 	* Merge from r_1_2_branch.
 
+2006-10-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/HTClex.h (SIZE_SYMBOL): Ê¸»úÎóÄ¹¤ò1024byte¤Ë¤·¤¿
+
 2006-10-24  Noboru Saitou  <noborus@netlab.jp>
 
 	* Ver 1.2.8 release
 
 2006-10-20  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/bd_config.c, bootdialog.c: '~/'$B$r(B HOME $B$KJQ49$9$k$h$&$K$7$?(B
+	* glclient/bd_config.c, bootdialog.c: '~/'¤ò HOME ¤ËÊÑ´¹¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2006-10-18  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/dialogs.c, glclient/client.c, glclient/protocol.c: 
-	$B%(%i!<%@%$%"%m%0$N%5%]!<%H(B
+	¥¨¥é¡¼¥À¥¤¥¢¥í¥°¤Î¥µ¥Ý¡¼¥È
 
-	* glclient/bootdialog.c, glclient/client.c: pkcs12$B7A<0$b;HMQ$G$-$k$N$G(B
-	$BI=<(=$@5(B
-	* glclient/bootdialog.c: file_selection $B$N%-%c%s%;%k$NF0:n$NDI2C(B	
+	* glclient/bootdialog.c, glclient/client.c: pkcs12·Á¼°¤â»ÈÍÑ¤Ç¤­¤ë¤Î¤Ç
+	É½¼¨½¤Àµ
+	* glclient/bootdialog.c: file_selection ¤Î¥­¥ã¥ó¥»¥ë¤ÎÆ°ºî¤ÎÄÉ²Ã	
 2006-10-17  Noboru Saitou  <noborus@netlab.jp>
 
-	* libs/blob_v1.c, libs/blobup.c: syslog$BBP1~(B
+	* libs/blob_v1.c, libs/blobup.c: syslogÂÐ±þ
 
-	* aps/dbstub_main.c(main): dbstub$B$N%b%8%e!<%kL>$r=PNO$9$k$h$&$K$7$?(B
+	* aps/dbstub_main.c(main): dbstub¤Î¥â¥¸¥å¡¼¥ëÌ¾¤ò½ÐÎÏ¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* pgserver/pgserver.c, pgserver/server.c: syslog$BBP1~(B
+	* pgserver/pgserver.c, pgserver/server.c: syslogÂÐ±þ
 
 2006-08-09  Noboru Saitou  <noborus@netlab.jp>
 
-	* fdd/fdd.c: SIGCHLD $B$,(B SIG_IGN$B$5$l$F$$$?$N$r:o=|(B
+	* fdd/fdd.c: SIGCHLD ¤¬ SIG_IGN¤µ¤ì¤Æ¤¤¤¿¤Î¤òºï½ü
+
+2006-08-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/cgi.h (SIZE_LARGE_BUFF): ¸ÇÄêÄ¹¥Ð¥Ã¥Õ¥¡¤ÎÂç¤­¤¯¤·¤¿
+
+2006-06-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/eruby.c (DataProcess): eRuby¥×¥í¥»¥¹¤Î¥¿¥¤¥à¥¢¥¦¥ÈÀßÄê
+
+	* aps/aps_main.c (main): SIGUSR2¤ò¥×¥í¥»¥¹¤ÎÀ¸Â¸³ÎÇ§¤Ë»È¤¨¤ë¤è¤¦¤Ë¡¢
+	ÌÀ¼¨Åª¤ËSIG_IGN¤Ë¤·¤¿
+
+	* dbstuff/dbredirector.c (InitSystem): SIGUSR2¤ò¥×¥í¥»¥¹¤ÎÀ¸Â¸³ÎÇ§
+	¤Ë»È¤¨¤ë¤è¤¦¤Ë¡¢ÌÀ¼¨Åª¤ËSIG_IGN¤Ë¤·¤¿
+
+	* libs/applications.c (ApplicationsCall): ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤¬½èÍý¼º
+	ÇÔ¤·¤¿»þ¤Ë¤Ï¡ÖºÆÁ÷¡×¤Ë¤¹¤ë
+
+	* htserver/server.c (SendWindowName): WindowData¤Î½é´ü²½¤ò¤³¤³¤Ç¹Ô
+	¤¦¤³¤È¤ò¤ä¤á¤¿
+
+	* libs/panda.c (RecvPanda): wfc¤«¤é¥Ç¡¼¥¿¼õ¿®¤ÎÁ°¤ËWindowData¤ò½é
+	´ü²½¤¹¤ë¤è¤¦¤Ë¤·¤¿¡£¤³¤ì¤Ï¡ÖºÆÁ÷¡×¤òÀµ¤·¤¯Æ°ºî¤µ¤»¤ë¤¿¤á
+
+2006-06-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c: '-wait'¤ò¤ä¤á'-interval'¤Ë¤·¤¿¡£´Ä¶­¤Ë¤è¤Ã¤Æ¤Ï
+	'-wait'¤ò²¿¤«¤¬¿©¤¦¤¿¤á
+
+2006-06-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/mon.c (SendEvent): ¥¤¥Ù¥ó¥È²òÀÏÁ°¤ËeRuby¤ò¼Â¹Ô¤¹¤ë¤è¤¦¤Ë¤·¤¿
+
+	* wfc/termthread.c (RemoveThread): ÎÎ°è³«Êü¤òÊÌ¥¹¥ì¥Ã¥É¤Ë¤·¤¿
+
+2006-06-16  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/tags.c (_Variable): ²èÌÌ¤ËÃÍ¤òÊÝÂ¸¤¹¤ë¥¿¥°(VAR)
 
 2006-06-14  Noboru Saitou  <noborus@netlab.jp>
 
-	* aps/MCPSUB, aps/MONFUNC: ctrl.rc$B$rJV$9$h$&$KJQ99(B
+	* aps/MCPSUB, aps/MONFUNC: ctrl.rc¤òÊÖ¤¹¤è¤¦¤ËÊÑ¹¹
 
-	* glclient/action.c (_UpdateWidget): $BI,MW$J$H$-$N$_(BResetTimer$B$,3](B
-	$B$+$k$h$&$K$7$?(B
+	* glclient/action.c (_UpdateWidget): É¬Í×¤Ê¤È¤­¤Î¤ßResetTimer¤¬³Ý
+	¤«¤ë¤è¤¦¤Ë¤·¤¿
+
+2006-06-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/cgi.c (PutHTML): ¥á¥Ã¥»¡¼¥¸¥³¡¼¥É¤ÎÁ÷¿®
+
+	* htserver/mon.c (Session): ¥á¥Ã¥»¡¼¥¸¥³¡¼¥É¤ÎÀßÄê
+
+2006-06-12  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.in: current version¤ò1.3.0¤Ë¤·¤¿(¤Þ¤À¥ê¥ê¡¼¥¹¤·¤Ê¤¤)
+
+2006-06-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c : SessionData¤ò¥Õ¥¡¥¤¥ë¤ËÃÖ¤¯¤è¤¦¤Ë¤·¡¢¥á¥â¥ê¤Ï
+	¥­¥ã¥Ã¥·¥å¤Ë¤Ê¤ë¤è¤¦¤Ë¤·¤¿¡£¤Þ¤¿¥»¥·¥ç¥ó¤È¥³¥Í¥¯¥·¥ç¥ó¤òÊ¬Î¥¤·¤¿
+
+	* libs/driver.c (SaveScreenData): ¥»¥·¥ç¥óÊÑ¿ô¤ò¥Õ¥¡¥¤¥ë¤ËÊÝÂ¸¤¹¤ë¤è¤¦¤Ë¤·¤¿
+
+	* libs/panda.c (pandaMain): ¥»¥·¥ç¥ó¤È¥³¥Í¥¯¥·¥ç¥ó¤òÊ¬Î¥¤·¤¿
+
+2006-06-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/applications.c (ApplicationsCall): ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó½ªÎ»»þ¤Î
+	½èÍý¤òµ­½Ò¤Ç¤­¤ë¤è¤¦¤Ë¤·¤¿
+
+	* htserver/server.c: multi thread worker¤ò¤ä¤á¤¿(ÌµÍý)
+
+	* libs/wfcio.c (SendTermServer): Ã¼ËöÌ¾¤òÁ÷¤ë¤è¤¦¤Ë¤·¤¿
+
+	* wfc/termthread.c (ReadTerminal): Ã¼Ëö¥Ç¡¼¥¿¥Ù¡¼¥¹¤ò»È¤¦¤è¤¦¤Ë¤·¤¿
 
 2006-06-09  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/widgetOPS.c (RecvURI): pandahtml$B$K(BURI$B$r;XDj$G$-$k$h$&$K(B
-	$B$7$?(B
+	* glclient/widgetOPS.c (RecvURI): pandahtml¤ËURI¤ò»ØÄê¤Ç¤­¤ë¤è¤¦¤Ë
+	¤·¤¿
 
 2006-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -48,222 +120,222 @@
 
 2006-06-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (MessageThread): LD$B$r;}$?$J$$2hLL$KA+0\$7$?;~$O%;(B
-	$B%7%g%s$r=*N;$5$;$k(B
+	* wfc/mqthread.c (MessageThread): LD¤ò»ý¤¿¤Ê¤¤²èÌÌ¤ËÁ«°Ü¤·¤¿»þ¤Ï¥»
+	¥·¥ç¥ó¤ò½ªÎ»¤µ¤»¤ë
 
-	* htserver/mon.c (Session): htserver$B$K@\B3$G$-$J$$;~$O(Bbusy$B2hLL$r=P(B
-	$BNO$9$k(B
+	* htserver/mon.c (Session): htserver¤ËÀÜÂ³¤Ç¤­¤Ê¤¤»þ¤Ïbusy²èÌÌ¤ò½Ð
+	ÎÏ¤¹¤ë
 
-	* htserver/tags.c (_Htc): Javascript$B$rL@<(E*$K;_$a$k5!G=(B
+	* htserver/tags.c (_Htc): Javascript¤òÌÀ¼¨Åª¤Ë»ß¤á¤ëµ¡Ç½
 
 2006-06-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/mon.c (Session): $BL@<(E*$K%"%W%j%1!<%7%g%s$rC&$1$k=hM}(B
+	* htserver/mon.c (Session): ÌÀ¼¨Åª¤Ë¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤òÃ¦¤±¤ë½èÍý
 
-	* aps/aps_main.c (ExecuteServer): connection lost$B;~$N:F@\B3(B
+	* aps/aps_main.c (ExecuteServer): connection lost»þ¤ÎºÆÀÜÂ³
 
-	* libs/wfcio.c: wfc$B$H$NDL?.%(%i!<$r@5$7$/2s<}$9$k$h$&$K$7$?(B
+	* libs/wfcio.c: wfc¤È¤ÎÄÌ¿®¥¨¥é¡¼¤òÀµ¤·¤¯²ó¼ý¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2006-05-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/monitor.c (ProcessMonitor): wfc$B$d(Bdbredirector$B$,Mn$A$F$b:F(B
-	$B5/F0$9$k5!G=$r$D$1$?(B
+	* tools/monitor.c (ProcessMonitor): wfc¤ädbredirector¤¬Íî¤Á¤Æ¤âºÆ
+	µ¯Æ°¤¹¤ëµ¡Ç½¤ò¤Ä¤±¤¿
 
 2006-05-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/aps_main.c: $B=hM};~4V7WB,(B
+	* aps/aps_main.c: ½èÍý»þ´Ö·×Â¬
 
 2006-05-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Makefile.am (defaults.h): $B%G%U%)%k%H$N%W%i%0%$%s%m!<%I%Q%9$rJQ99(B
-	$B$7$?(B(deb$B$N@8@.$K9g$o$;$d$9$/$7$?(B)
+	* Makefile.am (defaults.h): ¥Ç¥Õ¥©¥ë¥È¤Î¥×¥é¥°¥¤¥ó¥í¡¼¥É¥Ñ¥¹¤òÊÑ¹¹
+	¤·¤¿(deb¤ÎÀ¸À®¤Ë¹ç¤ï¤»¤ä¤¹¤¯¤·¤¿)
 
 2006-05-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/makefont.c: $B%U%)%s%HBeBX2hA|$r@8@.$9$k%W%m%0%i%`$r:n$C(B
-	$B$?(B
+	* htserver/makefont.c: ¥Õ¥©¥ó¥ÈÂåÂØ²èÁü¤òÀ¸À®¤¹¤ë¥×¥í¥°¥é¥à¤òºî¤Ã
+	¤¿
 
-	* htserver/exec.c (EmitChar): $BBeBX2hA|$N0LCV$rJ8;z$N9b$5$K9g$o$;$?(B
+	* htserver/exec.c (EmitChar): ÂåÂØ²èÁü¤Î°ÌÃÖ¤òÊ¸»ú¤Î¹â¤µ¤Ë¹ç¤ï¤»¤¿
 
 2006-05-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/dbgroup.c (ExecFunction): $B%O%s%I%i$N=i4|2=$rD>$7$?(B
+	* dblib/dbgroup.c (ExecFunction): ¥Ï¥ó¥É¥é¤Î½é´ü²½¤òÄ¾¤·¤¿
 
 2006-05-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/Oseki.c: $BA4J88!:w%(%s%8%s(BOseki/Search$BMQ$N%O%s%I%i$r@5$7$/(B
-	$BF0$/$h$&$K$7$?(B
+	* dblib/Oseki.c: Á´Ê¸¸¡º÷¥¨¥ó¥¸¥óOseki/SearchÍÑ¤Î¥Ï¥ó¥É¥é¤òÀµ¤·¤¯
+	Æ°¤¯¤è¤¦¤Ë¤·¤¿
 
 2006-05-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/dbgroup.c (GetDB_Host): PostgreSQL.c$B$+$i$3$3$K(B($BHFMQ$J$N$G(B)
+	* dblib/dbgroup.c (GetDB_Host): PostgreSQL.c¤«¤é¤³¤³¤Ë(ÈÆÍÑ¤Ê¤Î¤Ç)
 
 2006-05-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DBparser.c (DB_Parser): Path$B$d(BOperation$B$r(Bparse$B$9$k$+$I$&$+(B
-	$B%U%i%0$rDj5A$7$?(B
+	* libs/DBparser.c (DB_Parser): Path¤äOperation¤òparse¤¹¤ë¤«¤É¤¦¤«
+	¥Õ¥é¥°¤òÄêµÁ¤·¤¿
 
 2006-05-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DIparser.c (BuildMcpArea): private.index$B$,ITMW$=$&$J$N$G>C(B
-	$B$7$?(B($B$b$7$+$7$?$iI,MW$+$bCN$l$J$$$N$G!"%3%a%s%H%"%&%H$N$_(B)
+	* libs/DIparser.c (BuildMcpArea): private.index¤¬ÉÔÍ×¤½¤¦¤Ê¤Î¤Ç¾Ã
+	¤·¤¿(¤â¤·¤«¤·¤¿¤éÉ¬Í×¤«¤âÃÎ¤ì¤Ê¤¤¤Î¤Ç¡¢¥³¥á¥ó¥È¥¢¥¦¥È¤Î¤ß)
 
 2006-05-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* include/wfcdata.h: puttype$B$r(Bbyte$B$K$7$?!#(B0$B!A(B9$B$G$OCM$,B-$j$J$/$J$C(B
-	$B$?$?$a(B
+	* include/wfcdata.h: puttype¤òbyte¤Ë¤·¤¿¡£0¡Á9¤Ç¤ÏÃÍ¤¬Â­¤ê¤Ê¤¯¤Ê¤Ã
+	¤¿¤¿¤á
 
-	* libs/DIparser.c (BuildMcpArea): mcp.private.pputtype$B$N7?$r(Bint$B$K(B
-	$B$7$?!#",$N$?$a!#(B
+	* libs/DIparser.c (BuildMcpArea): mcp.private.pputtype¤Î·¿¤òint¤Ë
+	¤·¤¿¡£¢¬¤Î¤¿¤á¡£
 
-	* htserver/tags.c (JslibInit): $B!VLa$k!W8e$N%$%Y%s%HAw?.$r2DG=$K$7$?(B
+	* htserver/tags.c (JslibInit): ¡ÖÌá¤ë¡×¸å¤Î¥¤¥Ù¥ó¥ÈÁ÷¿®¤ò²ÄÇ½¤Ë¤·¤¿
 
 2006-05-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/exec.c (EmitChar): $B30;z$r%0%i%U%#%C%/$KJQ49$9$k=hM}$rDI(B
-	$B2C(B($B%F%9%HL$(B)
+	* htserver/exec.c (EmitChar): ³°»ú¤ò¥°¥é¥Õ¥£¥Ã¥¯¤ËÊÑ´¹¤¹¤ë½èÍý¤òÄÉ
+	²Ã(¥Æ¥¹¥ÈÌ¤)
 
 2006-05-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/driver.h: WindowData$B$G2hLLL>$H%l%3!<%IL>$,F1$8$H$$$&2>Dj$r(B
-	$B$d$a$?(B
+	* libs/driver.h: WindowData¤Ç²èÌÌÌ¾¤È¥ì¥³¡¼¥ÉÌ¾¤¬Æ±¤¸¤È¤¤¤¦²¾Äê¤ò
+	¤ä¤á¤¿
 
 2006-05-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DBparser.c (ParDBOperation), dblib/dbgroup.c: .db$B$K%G!<%?%Y!<(B
-	$B%9=hM}$N(Boperation$B$,EPO?$G$-$k$h$&$K$7$?(B
+	* libs/DBparser.c (ParDBOperation), dblib/dbgroup.c: .db¤Ë¥Ç¡¼¥¿¥Ù¡¼
+	¥¹½èÍý¤Îoperation¤¬ÅÐÏ¿¤Ç¤­¤ë¤è¤¦¤Ë¤·¤¿
 
 2006-04-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/DBRuby.c: DB$B%O%s%I%i$H$7$F(BRuby$B$N<jB3$-$,8F$S=P$;$k$h$&$K$7(B
-	$B$?(B
+	* dblib/DBRuby.c: DB¥Ï¥ó¥É¥é¤È¤·¤ÆRuby¤Î¼êÂ³¤­¤¬¸Æ¤Ó½Ð¤»¤ë¤è¤¦¤Ë¤·
+	¤¿
 
 2006-04-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/PostgreSQL.c (ExecPGSQL): $BM>J,$J0z?t$r:o$C$?(B
+	* dblib/PostgreSQL.c (ExecPGSQL): Í¾Ê¬¤Ê°ú¿ô¤òºï¤Ã¤¿
 
 2006-04-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* samples/web/file.htc: $B%U%!%$%k$N%"%C%W!?%@%&%s$N%5%s%W%kDI2C(B
+	* samples/web/file.htc: ¥Õ¥¡¥¤¥ë¤Î¥¢¥Ã¥×¡¿¥À¥¦¥ó¤Î¥µ¥ó¥×¥ëÄÉ²Ã
 
 2006-04-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* include/wfcdata.h: $B2hLLNN0h$r%O%C%7%e$KJ]B8$9$k$h$&$K$7$?!#$3$N(B
-	$B$?$a!"(BLD$B$,JQ$o$C$F$b2hLL%G!<%?$,>C<:$9$k$3$H$,$J$/$J$k(B($BBe$o$j$K%a(B
-	$B%b%j$r?)$&$,7k6I$OF1$8$3$H(B)
+	* include/wfcdata.h: ²èÌÌÎÎ°è¤ò¥Ï¥Ã¥·¥å¤ËÊÝÂ¸¤¹¤ë¤è¤¦¤Ë¤·¤¿¡£¤³¤Î
+	¤¿¤á¡¢LD¤¬ÊÑ¤ï¤Ã¤Æ¤â²èÌÌ¥Ç¡¼¥¿¤¬¾Ã¼º¤¹¤ë¤³¤È¤¬¤Ê¤¯¤Ê¤ë(Âå¤ï¤ê¤Ë¥á
+	¥â¥ê¤ò¿©¤¦¤¬·ë¶É¤ÏÆ±¤¸¤³¤È)
 
 2006-04-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/directory.c (RegistDBG): DB$B%9%/%j%W%H$N@)8f$N$?$a!"(Bdbgroup
-	$B=hM};~$K(BDB$B%O%s%I%i$rFI$_9~$`$h$&$K$7$?!#$3$N$?$a(Bdirectory$B=hM}$9$k(B
-	$BA4$F$N%W%m%0%i%`$,(Bexport-dynamic$B$,I,MW$H$J$C$?(B
-	(EnterDB_Function): DB$B%9%/%j%W%H$N<oJL$r;XDj$9$k$h$&$K$7$?(B
+	* libs/directory.c (RegistDBG): DB¥¹¥¯¥ê¥×¥È¤ÎÀ©¸æ¤Î¤¿¤á¡¢dbgroup
+	½èÍý»þ¤ËDB¥Ï¥ó¥É¥é¤òÆÉ¤ß¹þ¤à¤è¤¦¤Ë¤·¤¿¡£¤³¤Î¤¿¤ádirectory½èÍý¤¹¤ë
+	Á´¤Æ¤Î¥×¥í¥°¥é¥à¤¬export-dynamic¤¬É¬Í×¤È¤Ê¤Ã¤¿
+	(EnterDB_Function): DB¥¹¥¯¥ê¥×¥È¤Î¼ïÊÌ¤ò»ØÄê¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* libs/LDparser.c (GetWindow): $B2hLLMQ%l%3!<%I0h$O%7%9%F%`$GC10l$K(B
-	$B$7$?(B($B%3%s%]!<%M%s%H2=$H%a%b%j@aLs$N$?$a(B)
+	* libs/LDparser.c (GetWindow): ²èÌÌÍÑ¥ì¥³¡¼¥É°è¤Ï¥·¥¹¥Æ¥à¤ÇÃ±°ì¤Ë
+	¤·¤¿(¥³¥ó¥Ý¡¼¥Í¥ó¥È²½¤È¥á¥â¥êÀáÌó¤Î¤¿¤á)
 
-	* wfc/termthread.c (ReadTerminal): $BF10l2hLL$G(BLD$B$,:.:_$9$k>l9g!"H/(B
-	$B@8$9$k%$%Y%s%H$K$h$C$F%$%Y%s%H$rG[Aw$9$k(BLD$B$r@Z$jBX$($k$h$&$K$7$?(B
+	* wfc/termthread.c (ReadTerminal): Æ±°ì²èÌÌ¤ÇLD¤¬º®ºß¤¹¤ë¾ì¹ç¡¢È¯
+	À¸¤¹¤ë¥¤¥Ù¥ó¥È¤Ë¤è¤Ã¤Æ¥¤¥Ù¥ó¥È¤òÇÛÁ÷¤¹¤ëLD¤òÀÚ¤êÂØ¤¨¤ë¤è¤¦¤Ë¤·¤¿
 
-	* wfc/corethread.c (ChangeLD): LD$B$,JQ$o$C$F$b2hLL%G!<%?$O6KNOJ];}(B
-	$B$9$k$h$&$K$7$?(B
+	* wfc/corethread.c (ChangeLD): LD¤¬ÊÑ¤ï¤Ã¤Æ¤â²èÌÌ¥Ç¡¼¥¿¤Ï¶ËÎÏÊÝ»ý
+	¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* libs/LDparser.h: LD_Table$B$r>C$7$?(B($BITMW$K$J$C$?(B)
+	* libs/LDparser.h: LD_Table¤ò¾Ã¤·¤¿(ÉÔÍ×¤Ë¤Ê¤Ã¤¿)
 
 2006-04-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* include/struct.h, libs/DIparser.c : window$B$H(Bbind$B$N7sMQ$r$d$a$?(B
-	($B%3%s%]!<%M%s%H2=$K$h$C$F(B1$BBP(B1$BBP1~$,2>Dj$G$-$J$/$J$k$?$a(B)
+	* include/struct.h, libs/DIparser.c : window¤Èbind¤Î·óÍÑ¤ò¤ä¤á¤¿
+	(¥³¥ó¥Ý¡¼¥Í¥ó¥È²½¤Ë¤è¤Ã¤Æ1ÂÐ1ÂÐ±þ¤¬²¾Äê¤Ç¤­¤Ê¤¯¤Ê¤ë¤¿¤á)
 
-	* aps/Ruby.c, aps/C.c: $B%3%s%]!<%M%s%H2=$KBP1~(B
+	* aps/Ruby.c, aps/C.c: ¥³¥ó¥Ý¡¼¥Í¥ó¥È²½¤ËÂÐ±þ
 
 2006-04-20  Noboru Saitou  <noborus@netlab.jp>
 
-	* aps/aps_main.c: $B0[>o=*N;;~$K:F5/F0$9$k$h$&$K=*N;%3!<%I$NJQ99(B
+	* aps/aps_main.c: °Û¾ï½ªÎ»»þ¤ËºÆµ¯Æ°¤¹¤ë¤è¤¦¤Ë½ªÎ»¥³¡¼¥É¤ÎÊÑ¹¹
 
 2006-04-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (MessageThread), aps/handler.c (CallAfter): $B%3%s(B
-	$B%]!<%M%s%HMQ$N=hM}(B
+	* wfc/mqthread.c (MessageThread), aps/handler.c (CallAfter): ¥³¥ó
+	¥Ý¡¼¥Í¥ó¥ÈÍÑ¤Î½èÍý
 
-	* include/glterm.h (SCREEN_RETURN_COMPONENT): $B%3%s%]!<%M%s%HMQ$N%U%i(B
-	$B%0DI2C(B
+	* include/glterm.h (SCREEN_RETURN_COMPONENT): ¥³¥ó¥Ý¡¼¥Í¥ó¥ÈÍÑ¤Î¥Õ¥é
+	¥°ÄÉ²Ã
 
 2006-04-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/HTCparser.c: '/'$B$N=hM}$r@5$7$/$7$?(B
+	* htserver/HTCparser.c: '/'¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿
 
 2006-04-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* configure.in: ERuby$B$N;HMQ$r%U%i%0$K$7$?(B
+	* configure.in: ERuby¤Î»ÈÍÑ¤ò¥Õ¥é¥°¤Ë¤·¤¿
 
 	* aps/OpenCOBOL.c (_ReadyExecute), aps/Ruby.c (ready_execute),
-	aps/Exec.c (_ReadyExecute): $B%"%W%j%1!<%7%g%s$N%m!<%I%Q%9$N%G(B
-	$B%U%)%k%H@_Dj$KBP1~$7$?(B
+	aps/Exec.c (_ReadyExecute): ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤Î¥í¡¼¥É¥Ñ¥¹¤Î¥Ç
+	¥Õ¥©¥ë¥ÈÀßÄê¤ËÂÐ±þ¤·¤¿
 
-	* aps/handler.c, libs/BDparser.c: $B%"%W%j%1!<%7%g%s$N%m!<%I%Q%9$N%G(B
-	$B%U%)%k%H$H!"%"%W%j%1!<%7%g%s%O%s%I%i$N%Q%9$r(BBD$BCf$G@_Dj2DG=$K$7$?(B
+	* aps/handler.c, libs/BDparser.c: ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤Î¥í¡¼¥É¥Ñ¥¹¤Î¥Ç
+	¥Õ¥©¥ë¥È¤È¡¢¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¥Ï¥ó¥É¥é¤Î¥Ñ¥¹¤òBDÃæ¤ÇÀßÄê²ÄÇ½¤Ë¤·¤¿
 
-	* aps/handler.c, libs/LDparser.c: $B%"%W%j%1!<%7%g%s$N%m!<%I%Q%9$N%G(B
-	$B%U%)%k%H$H!"%"%W%j%1!<%7%g%s%O%s%I%i$N%Q%9$r(BLD$BCf$G@_Dj2DG=$K$7$?(B
+	* aps/handler.c, libs/LDparser.c: ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤Î¥í¡¼¥É¥Ñ¥¹¤Î¥Ç
+	¥Õ¥©¥ë¥È¤È¡¢¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¥Ï¥ó¥É¥é¤Î¥Ñ¥¹¤òLDÃæ¤ÇÀßÄê²ÄÇ½¤Ë¤·¤¿
 
-	* aps/C.c (_ReadyExecute): $B%"%W%j%1!<%7%g%s$N%m!<%I%Q%9$N%G%U%)%k(B
-	$B%H$r@_Dj2DG=$K$7$?(B
+	* aps/C.c (_ReadyExecute): ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤Î¥í¡¼¥É¥Ñ¥¹¤Î¥Ç¥Õ¥©¥ë
+	¥È¤òÀßÄê²ÄÇ½¤Ë¤·¤¿
 
-	* libs/DIparser.c, dblib/dbgroup.c (InitDBG): DB$B%O%s%I%i%b%8%e!<%k(B
-	$B$N%Q%9$r(Bdirectory$BCf$G@_Dj2DG=$K$7$?(B
+	* libs/DIparser.c, dblib/dbgroup.c (InitDBG): DB¥Ï¥ó¥É¥é¥â¥¸¥å¡¼¥ë
+	¤Î¥Ñ¥¹¤òdirectoryÃæ¤ÇÀßÄê²ÄÇ½¤Ë¤·¤¿
 
-	* libs/DIparser.c, tools/monitor.c: aps, wfc, dbredirector$B$N%Q%9$r(B
-	directory$BCf$GDj5A@_Dj$K$7$?(B
+	* libs/DIparser.c, tools/monitor.c: aps, wfc, dbredirector¤Î¥Ñ¥¹¤ò
+	directoryÃæ¤ÇÄêµÁÀßÄê¤Ë¤·¤¿
 
 2006-04-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/driver.h, libs/driver.c (NewScreenData): cmd$B$,L5BL$KBg$-$$(B
-	$B$N$G>.$5$/$7$?(B
+	* libs/driver.h, libs/driver.c (NewScreenData): cmd¤¬ÌµÂÌ¤ËÂç¤­¤¤
+	¤Î¤Ç¾®¤µ¤¯¤·¤¿
 
 2006-04-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/eruby.c (DataProcess): $B=*N;=hM}$r@5$7$/$7$?(B
+	* htserver/eruby.c (DataProcess): ½ªÎ»½èÍý¤òÀµ¤·¤¯¤·¤¿
 
 2006-04-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/cgi.c (GetHostValue): $B%[%9%H$KJQ?t$,$J$$;~$OJQ?tL>$rCM(B
-	$B$K$9$k$h$&$K$7$?(B($B4pK\E*$K$O0BA4LV!#$^$?FbItJQ?t$N;2>H$N;~$O$3$&$J$C(B
-	$B$F$$$J$$$H:$$k(B)
+	* htserver/cgi.c (GetHostValue): ¥Û¥¹¥È¤ËÊÑ¿ô¤¬¤Ê¤¤»þ¤ÏÊÑ¿ôÌ¾¤òÃÍ
+	¤Ë¤¹¤ë¤è¤¦¤Ë¤·¤¿(´ðËÜÅª¤Ë¤Ï°ÂÁ´ÌÖ¡£¤Þ¤¿ÆâÉôÊÑ¿ô¤Î»²¾È¤Î»þ¤Ï¤³¤¦¤Ê¤Ã
+	¤Æ¤¤¤Ê¤¤¤Èº¤¤ë)
 
 2006-04-10  Noboru Saitou  <noborus@netlab.jp>
 
  	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c: 
-	$B%A%'%C%/%G!<%?$NAw?.J}K!$NJQ99(B
+	¥Á¥§¥Ã¥¯¥Ç¡¼¥¿¤ÎÁ÷¿®ÊýË¡¤ÎÊÑ¹¹
 
 2006-04-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/rhtc.c: eruby$B$NO@M}$rJQ$($?!#JL%U%!%$%k$K$7$?(B
+	* htserver/rhtc.c: eruby¤ÎÏÀÍý¤òÊÑ¤¨¤¿¡£ÊÌ¥Õ¥¡¥¤¥ë¤Ë¤·¤¿
 
 2006-04-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c (Style): $B%9%?%$%k7OB0@-A4It$,;H$($k$h$&$K$7$?(B($B$?$@$7(Bname$B$O=|$/(B)
+	* htserver/tags.c (Style): ¥¹¥¿¥¤¥ë·ÏÂ°À­Á´Éô¤¬»È¤¨¤ë¤è¤¦¤Ë¤·¤¿(¤¿¤À¤·name¤Ï½ü¤¯)
 
 2006-04-07  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/action.c, glclient/callbacks.c: $B%$%Y%s%H%/%j%";~$K%$%Y%s%H(B
-	$B$r<u$1<h$i$J$$$h$&$KJQ99(B
+	* glclient/action.c, glclient/callbacks.c: ¥¤¥Ù¥ó¥È¥¯¥ê¥¢»þ¤Ë¥¤¥Ù¥ó¥È
+	¤ò¼õ¤±¼è¤é¤Ê¤¤¤è¤¦¤ËÊÑ¹¹
 
-	* aps/aps_main.c: Window not found $B$N$H$-$O0[>o=*N;$K$9$k(B
+	* aps/aps_main.c: Window not found ¤Î¤È¤­¤Ï°Û¾ï½ªÎ»¤Ë¤¹¤ë
 
 2006-04-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c (TagsInit): body$B%?%0$K(BonLoad
+	* htserver/tags.c (TagsInit): body¥¿¥°¤ËonLoad
 
-	* htserver/HTCparser.c (HTCParseRHTCFile): eruby$B$rAH$_9~$s$@(B
+	* htserver/HTCparser.c (HTCParseRHTCFile): eruby¤òÁÈ¤ß¹þ¤ó¤À
 
 2006-04-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/htc.c: Lex.c$B$r;H$&$N$r$d$a$?(B
+	* htserver/htc.c: Lex.c¤ò»È¤¦¤Î¤ò¤ä¤á¤¿
 
 2006-03-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/exec.h (OPC_EVAL): OPC_NAME$B$+$iL>>NJQ99(B($B<B:]$KF0:n$K9g$o$;$?(B)
+	* htserver/exec.h (OPC_EVAL): OPC_NAME¤«¤éÌ¾¾ÎÊÑ¹¹(¼ÂºÝ¤ËÆ°ºî¤Ë¹ç¤ï¤»¤¿)
 
 2006-03-23  Noboru Saitou  <noborus@netlab.jp>
 
@@ -271,73 +343,73 @@
 	
 	2006-03-06  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* glserver/server.c (ExecuteServer): $BG'>Z%9%-!<%`$,(BSSL$B$G$J$$$H$-$O!"(B
-		$B%/%i%$%"%s%H>ZL@=q$rMW5a$7$J$$$h$&$K=$@5!#(B
+	* glserver/server.c (ExecuteServer): Ç§¾Ú¥¹¥­¡¼¥à¤¬SSL¤Ç¤Ê¤¤¤È¤­¤Ï¡¢
+		¥¯¥é¥¤¥¢¥ó¥È¾ÚÌÀ½ñ¤òÍ×µá¤·¤Ê¤¤¤è¤¦¤Ë½¤Àµ¡£
 
 	2006-03-06  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 	
-	* libs/net.c (MakeSSL_CTX): $B>ZL@=q$r(BPKCS#12$B$H$7$FFI$_9~$`$3$H$r;n$_$k!#(B
-		$B<:GT$7$?>l9g$O=>MhDL$j(BPEM$B$H$7$FFI$_9~$`!#(B
+	* libs/net.c (MakeSSL_CTX): ¾ÚÌÀ½ñ¤òPKCS#12¤È¤·¤ÆÆÉ¤ß¹þ¤à¤³¤È¤ò»î¤ß¤ë¡£
+		¼ºÇÔ¤·¤¿¾ì¹ç¤Ï½¾ÍèÄÌ¤êPEM¤È¤·¤ÆÆÉ¤ß¹þ¤à¡£
 
 	2006-02-18  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* libs/auth.c (AuthAddX509): $BDI2C$9$k%5%V%8%'%/%H$N%U%)!<%^%C%H$N(B
-	$B%A%'%C%/$rDI2C!#(B
+	* libs/auth.c (AuthAddX509): ÄÉ²Ã¤¹¤ë¥µ¥Ö¥¸¥§¥¯¥È¤Î¥Õ¥©¡¼¥Þ¥Ã¥È¤Î
+	¥Á¥§¥Ã¥¯¤òÄÉ²Ã¡£
 
 	2006-02-18  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* libs/auth.c (AuthLoadX509): $B%U%!%$%kCf$K7A<0$NIT@5$J%l%3!<%I$,(B
-		$B$"$k$H$-$O(BFALSE$B$rJV$9!#(B
+	* libs/auth.c (AuthLoadX509): ¥Õ¥¡¥¤¥ëÃæ¤Ë·Á¼°¤ÎÉÔÀµ¤Ê¥ì¥³¡¼¥É¤¬
+		¤¢¤ë¤È¤­¤ÏFALSE¤òÊÖ¤¹¡£
 
-	* auth/user.c (ssl_main): $B%U%!%$%k$NFI$_9~$_$,%(%i!<$K$J$C$?$H$-$O!"(B
-		$B%U%!%$%k$rJQ99$;$:$K=*N;$9$k!#(B
+	* auth/user.c (ssl_main): ¥Õ¥¡¥¤¥ë¤ÎÆÉ¤ß¹þ¤ß¤¬¥¨¥é¡¼¤Ë¤Ê¤Ã¤¿¤È¤­¤Ï¡¢
+		¥Õ¥¡¥¤¥ë¤òÊÑ¹¹¤»¤º¤Ë½ªÎ»¤¹¤ë¡£
 
 	2006-02-15  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* libs/net.c (MakeSSL_CTX): $B0z?t(BfVerify$B$r:o=|!#(BSSL_VERIRY_PEER$B$O(B
-	$BI,$:%;%C%H$7!"(BSSL_VERIFY_FAIL_IF_NO_PEER_CERT$B$O;HMQ$7$J$$!#(B
+	* libs/net.c (MakeSSL_CTX): °ú¿ôfVerify¤òºï½ü¡£SSL_VERIRY_PEER¤Ï
+	É¬¤º¥»¥Ã¥È¤·¡¢SSL_VERIFY_FAIL_IF_NO_PEER_CERT¤Ï»ÈÍÑ¤·¤Ê¤¤¡£
 
-	* glserver/server.c (ThisAuth): $BG'>Z%9%-!<%`$,(Bssl$B$N$H$-$K!"(B
-	$B%/%i%$%"%s%H>ZL@=q$,Aw$i$l$F$$$J$1$l$P!"G'>Z%(%i!<$H$9$k!#(B
+	* glserver/server.c (ThisAuth): Ç§¾Ú¥¹¥­¡¼¥à¤¬ssl¤Î¤È¤­¤Ë¡¢
+	¥¯¥é¥¤¥¢¥ó¥È¾ÚÌÀ½ñ¤¬Á÷¤é¤ì¤Æ¤¤¤Ê¤±¤ì¤Ð¡¢Ç§¾Ú¥¨¥é¡¼¤È¤¹¤ë¡£
 
 	* fdd/fdd.c, fdd/fdw.c, glclient/client.c, glserver/glserver.c:
-	-verifypeer$B%*%W%7%g%s$r:o=|!#(B
+	-verifypeer¥ª¥×¥·¥ç¥ó¤òºï½ü¡£
 	
 	2006-02-10  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* libs/net.c (MakeSSL_CTX): CApath$B$H(BCAfile$B$,;XDj$5$l$F$$$J$$;~$O!"(B
-	SSL_CTX_set_default_verify_paths$B$r8F$V!#(B
+	* libs/net.c (MakeSSL_CTX): CApath¤ÈCAfile¤¬»ØÄê¤µ¤ì¤Æ¤¤¤Ê¤¤»þ¤Ï¡¢
+	SSL_CTX_set_default_verify_paths¤ò¸Æ¤Ö¡£
 
 	2006-01-17  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* libs/net.c (MakeSSL_CTX): $B;dM-80$,0E9f2=$5$l$F$$$?>l9g$K!"F~NO$5$l$?(B
-	$B%Q%9%U%l!<%:$,8m$C$F$$$?$i!"Ld$$9g$o$;$k=hM}$rDI2C!#(B
+	* libs/net.c (MakeSSL_CTX): »äÍ­¸°¤¬°Å¹æ²½¤µ¤ì¤Æ¤¤¤¿¾ì¹ç¤Ë¡¢ÆþÎÏ¤µ¤ì¤¿
+	¥Ñ¥¹¥Õ¥ì¡¼¥º¤¬¸í¤Ã¤Æ¤¤¤¿¤é¡¢Ìä¤¤¹ç¤ï¤»¤ë½èÍý¤òÄÉ²Ã¡£
 
-	* libs/net.c (MakeSSL_CTX, passphrase_callback): $B4D6-JQ?t(B
-	PANDA_ASKPASS $B$K%3%^%s%I$,;XDj$5$l$F$$$?$i!"$3$l$r;H$C$F%Q%9%o!<%I(B
-	$B$rLd$$9g$o$;$k!#;XDj$9$k%3%^%s%I$H$7$F(Bssh-askpass(1)$B$rA[Dj$9$k!#(B
+	* libs/net.c (MakeSSL_CTX, passphrase_callback): ´Ä¶­ÊÑ¿ô
+	PANDA_ASKPASS ¤Ë¥³¥Þ¥ó¥É¤¬»ØÄê¤µ¤ì¤Æ¤¤¤¿¤é¡¢¤³¤ì¤ò»È¤Ã¤Æ¥Ñ¥¹¥ï¡¼¥É
+	¤òÌä¤¤¹ç¤ï¤»¤ë¡£»ØÄê¤¹¤ë¥³¥Þ¥ó¥É¤È¤·¤Æssh-askpass(1)¤òÁÛÄê¤¹¤ë¡£
 
 	2006-01-06  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* include/const.h: SIZE_PASS$B$NITB-$r=$@5(B
-	* libs/auth.c (AuthLoadPasswd, AuthSingle): $BIT@5$J7A<0$N%Q%9%o!<%I(B
-	$B%U%!%$%k$NFI$_9~$_;~$K$*$1$k(Bbuffer overrun$B$r=$@5(B
-	* libs/driver.c (NewScreenData): strchr$B$NLa$jCM$r8!::$9$k$h$&$K=$@5(B
+	* include/const.h: SIZE_PASS¤ÎÉÔÂ­¤ò½¤Àµ
+	* libs/auth.c (AuthLoadPasswd, AuthSingle): ÉÔÀµ¤Ê·Á¼°¤Î¥Ñ¥¹¥ï¡¼¥É
+	¥Õ¥¡¥¤¥ë¤ÎÆÉ¤ß¹þ¤ß»þ¤Ë¤ª¤±¤ëbuffer overrun¤ò½¤Àµ
+	* libs/driver.c (NewScreenData): strchr¤ÎÌá¤êÃÍ¤ò¸¡ºº¤¹¤ë¤è¤¦¤Ë½¤Àµ
 
 	2005-12-21  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* auth/user.c: $B%/%i%$%"%s%HG'>Z;~$N%f!<%6>pJsMQ%*%W%7%g%s$NDI2C(B
+	* auth/user.c: ¥¯¥é¥¤¥¢¥ó¥ÈÇ§¾Ú»þ¤Î¥æ¡¼¥¶¾ðÊóÍÑ¥ª¥×¥·¥ç¥ó¤ÎÄÉ²Ã
 
-		-ssl          SSL$BG'>ZMQ$N%Q%9%o!<%I%U%!%$%k$r:n@.$9$k(B
-		-subject      $B%5%V%8%'%/%H$r;XDj$9$k(B
-		-cert         -subject$B$r;XDj$7$J$$>l9g$K!"(B
-		              $B;XDj$7$?>ZL@=q$+$i%5%V%8%'%/%H$r<h$j=P$9(B
+		-ssl          SSLÇ§¾ÚÍÑ¤Î¥Ñ¥¹¥ï¡¼¥É¥Õ¥¡¥¤¥ë¤òºîÀ®¤¹¤ë
+		-subject      ¥µ¥Ö¥¸¥§¥¯¥È¤ò»ØÄê¤¹¤ë
+		-cert         -subject¤ò»ØÄê¤·¤Ê¤¤¾ì¹ç¤Ë¡¢
+		              »ØÄê¤·¤¿¾ÚÌÀ½ñ¤«¤é¥µ¥Ö¥¸¥§¥¯¥È¤ò¼è¤ê½Ð¤¹
 
-	* glserver/srever.c (ThisAuth): $B%/%i%$%"%s%HG'>Z$,M-8z$G$+$D!"(B
-	"-auth ssl:/path/to/passwd" $B$,;XDj$5$l$F$$$k>l9g$K!">ZL@=q$N%5%V%8%'(B
-	$B%/%H$+$i%f!<%6(B?$B$r<h$j=P$9=hM}$rDI2C(B
+	* glserver/srever.c (ThisAuth): ¥¯¥é¥¤¥¢¥ó¥ÈÇ§¾Ú¤¬Í­¸ú¤Ç¤«¤Ä¡¢
+	"-auth ssl:/path/to/passwd" ¤¬»ØÄê¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¤Ë¡¢¾ÚÌÀ½ñ¤Î¥µ¥Ö¥¸¥§
+	¥¯¥È¤«¤é¥æ¡¼¥¶?¤ò¼è¤ê½Ð¤¹½èÍý¤òÄÉ²Ã
 
-	* libs/auth.c: $B%/%i%$%"%s%HG'>Z;~$N%f!<%6>pJs$rA`:n$9$k4X?t$rDI2C(B
+	* libs/auth.c: ¥¯¥é¥¤¥¢¥ó¥ÈÇ§¾Ú»þ¤Î¥æ¡¼¥¶¾ðÊó¤òÁàºî¤¹¤ë´Ø¿ô¤òÄÉ²Ã
 	
 		void AuthAddX509(const char *user, const char *subject);
 		void AuthDelX509BySubject(const char *subject);
@@ -348,18 +420,18 @@
 		void AuthDumpX509(FILE *fp);
 		Bool AuthX509(const char *subject, char *user);
 
-	* libs/net.c (StartSSLClientSession): $B%W%m%H%?%$%W$rJQ99(B
+	* libs/net.c (StartSSLClientSession): ¥×¥í¥È¥¿¥¤¥×¤òÊÑ¹¹
 	
-	* libs/net.c (GetSubjectFromCertificate): $B>ZL@=q$+$i%5%V%8%'%/%H$r(B
-	$B<h$j=P$94X?t$rDI2C(B
+	* libs/net.c (GetSubjectFromCertificate): ¾ÚÌÀ½ñ¤«¤é¥µ¥Ö¥¸¥§¥¯¥È¤ò
+	¼è¤ê½Ð¤¹´Ø¿ô¤òÄÉ²Ã
 	
-	* libs/net.c (CheckHostnameInCertificate): $B@\B3@h%[%9%HL>$,!"(B
-	localhost$B!"(B127.0.0.1$B!"(B::1 $B$N$$$:$l$+$N>l9g$O>o$K(BTRUE$B$rJV$9$h$&(B
-	$B$K=$@5(B
+	* libs/net.c (CheckHostnameInCertificate): ÀÜÂ³Àè¥Û¥¹¥ÈÌ¾¤¬¡¢
+	localhost¡¢127.0.0.1¡¢::1 ¤Î¤¤¤º¤ì¤«¤Î¾ì¹ç¤Ï¾ï¤ËTRUE¤òÊÖ¤¹¤è¤¦
+	¤Ë½¤Àµ
 
 	2005-12-19  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* libs/net.c: SSL$B<~$j$r:F<BAu$70J2<$N4X?t$rDI2C(B
+	* libs/net.c: SSL¼þ¤ê¤òºÆ¼ÂÁõ¤·°Ê²¼¤Î´Ø¿ô¤òÄÉ²Ã
 	
 		SSL_CTX *MakeSSL_CTX(char *key, char *cert, char *cafile,
 			char *capath, char *ciphers, Bool fVeri);
@@ -368,143 +440,143 @@
 		Bool StartSSLClientSession(NETFILE *fp, Port *port);
 		Bool StartSSLServerSession(NETFILE *fp);
 	
-	* glclient/bootdialog.c: $B>ZL@=qEy$N%Q%9$r(B gtk_file_selection$B$GA*Br(B
-	$B$G$-$k$h$&$K$7$?(B
+	* glclient/bootdialog.c: ¾ÚÌÀ½ñÅù¤Î¥Ñ¥¹¤ò gtk_file_selection¤ÇÁªÂò
+	¤Ç¤­¤ë¤è¤¦¤Ë¤·¤¿
 
 	* glclient/client.c, glserver/glserver.c, fdd/fdd.c, fdd/fwd.c: 
-	-cipherts$B%*%W%7%g%s$rDI2C(B
+	-cipherts¥ª¥×¥·¥ç¥ó¤òÄÉ²Ã
 
 2006-03-22  Noboru Saitou  <noborus@netlab.jp>
 
-	* dblib/PostgreSQL.c (NoticeMessage): Notice $B%a%C%;!<%8$r%m%0$K=P$9(B
-	$B$h$&$K$7$?(B
+	* dblib/PostgreSQL.c (NoticeMessage): Notice ¥á¥Ã¥»¡¼¥¸¤ò¥í¥°¤Ë½Ð¤¹
+	¤è¤¦¤Ë¤·¤¿
 
 	* dblib/dbgroup.h, dbstuff/dbredirector.c, tools/monitor.c: fNoSumCheck
-	$B%*%W%7%g%s$NDI2C(B
+	¥ª¥×¥·¥ç¥ó¤ÎÄÉ²Ã
 
 2006-02-21  Noboru Saitou  <noborus@netlab.jp>
 
 	* Ver 1.2.6 release
 
-	* libs/enum.c, libs/enum.h, dblib/PostgreSQL.c : $B@\B3%(%i!<(B
-	(MCP_BAD_CONN)$B$NDI2C(B
+	* libs/enum.c, libs/enum.h, dblib/PostgreSQL.c : ÀÜÂ³¥¨¥é¡¼
+	(MCP_BAD_CONN)¤ÎÄÉ²Ã
 
-	* dblib/dbroup.h: redirect.h $B$+$i(BCloseDB_RedirectPort $B$r0\F0(B
+	* dblib/dbroup.h: redirect.h ¤«¤éCloseDB_RedirectPort ¤ò°ÜÆ°
 
-	* dbstuff/dbredirecor.c (ExecDB): $B@\B3%(%i!<$N>l9g$K:F@\B35!G=$NDI2C(B
+	* dbstuff/dbredirecor.c (ExecDB): ÀÜÂ³¥¨¥é¡¼¤Î¾ì¹ç¤ËºÆÀÜÂ³µ¡Ç½¤ÎÄÉ²Ã
 
 2006-02-17  Noboru Saitou  <noborus@netlab.jp>
 
-	* tools/monitor.c (ProcessMonitor): dbredirector $B$O:F5/F0$7$J$$$h$&$K(B
-	$BJQ99(B
+	* tools/monitor.c (ProcessMonitor): dbredirector ¤ÏºÆµ¯Æ°¤·¤Ê¤¤¤è¤¦¤Ë
+	ÊÑ¹¹
 
 	* dblib/redirect.c (CommitDB_Redirect, SendCheckData_Redirect,
-	SendQueryData_Redirect, RecvSTATUS_Redirect): dbredirector $B$H$N(B
-	$B@\B3%A%'%C%/$rDI2C(B
+	SendQueryData_Redirect, RecvSTATUS_Redirect): dbredirector ¤È¤Î
+	ÀÜÂ³¥Á¥§¥Ã¥¯¤òÄÉ²Ã
 
 	* libs/DIparser.c, wfc/mqthread.c, aps/aps_main.c, apsio.c, handler.c:
-	dbstatus $B$NDI2C(B
+	dbstatus ¤ÎÄÉ²Ã
 
-	* dbstuff/dbredirector.c (CheckDBG, _CheckDBG): dbgroup$B$N%A%'%C%/DI2C(B
-	(LogThread, FileThread, CheckRedirectData, WriteDB): $BIT@09g%A%'%C%/(B
-	$B$NDI2C(B
-	(WriteLog, WriteLogQuery): $B%m%0%U%)!<%^%C%H$NJQ99(B
-	(ReConnectDB, ConnectDB): DB$B:F@\B3$N;EMMJQ99!#(BDB$B$K0lDj4|4V@\B3$G$-$J(B
-	$B$/$F$b$h$$$h$&$K$7$?(B
+	* dbstuff/dbredirector.c (CheckDBG, _CheckDBG): dbgroup¤Î¥Á¥§¥Ã¥¯ÄÉ²Ã
+	(LogThread, FileThread, CheckRedirectData, WriteDB): ÉÔÀ°¹ç¥Á¥§¥Ã¥¯
+	¤ÎÄÉ²Ã
+	(WriteLog, WriteLogQuery): ¥í¥°¥Õ¥©¡¼¥Þ¥Ã¥È¤ÎÊÑ¹¹
+	(ReConnectDB, ConnectDB): DBºÆÀÜÂ³¤Î»ÅÍÍÊÑ¹¹¡£DB¤Ë°ìÄê´ü´ÖÀÜÂ³¤Ç¤­¤Ê
+	¤¯¤Æ¤â¤è¤¤¤è¤¦¤Ë¤·¤¿
 	
-	* dblib/PostgreSQL.c (_PQexec, IsRedirectQuery): $B99?77O$N$_(B redirect
-	$B$9$k$h$&$KJQ99(B
-	(_PQsendQuery, _Exec): redirector $B$O(B PQsendQuery,PQgetResult $B$G(B
-	$B=hM}$9$k$h$&$KJQ99(B
+	* dblib/PostgreSQL.c (_PQexec, IsRedirectQuery): ¹¹¿··Ï¤Î¤ß redirect
+	¤¹¤ë¤è¤¦¤ËÊÑ¹¹
+	(_PQsendQuery, _Exec): redirector ¤Ï PQsendQuery,PQgetResult ¤Ç
+	½èÍý¤¹¤ë¤è¤¦¤ËÊÑ¹¹
 
-	* glclient/action.c (GrabFocus): GtkCombo$B$N$?$a$K$b$&0lEY(B GrabFocus 
-	$B$,F0:n$9$k$h$&$K$7$?(B
-	* glclient/action.c (StopTimer): $B=hM}$,=E$$$N$G%U%i%0@)8f$K$7$?(B
+	* glclient/action.c (GrabFocus): GtkCombo¤Î¤¿¤á¤Ë¤â¤¦°ìÅÙ GrabFocus 
+	¤¬Æ°ºî¤¹¤ë¤è¤¦¤Ë¤·¤¿
+	* glclient/action.c (StopTimer): ½èÍý¤¬½Å¤¤¤Î¤Ç¥Õ¥é¥°À©¸æ¤Ë¤·¤¿
 	
 2006-02-16  Noboru Saitou  <noborus@netlab.jp>
 
-	* dblib/PostgreSQL.c: CreateConninfo $B$r(B_DBOPEN$B$+$iJ,$1$?(B
+	* dblib/PostgreSQL.c: CreateConninfo ¤ò_DBOPEN¤«¤éÊ¬¤±¤¿
 
-	* glclient/action.c (GrabFocus): $B8m$C$F>C$7$?(B _GrabFocus $B$rLa$7$?(B
+	* glclient/action.c (GrabFocus): ¸í¤Ã¤Æ¾Ã¤·¤¿ _GrabFocus ¤òÌá¤·¤¿
 
 	* include/struct.h, dblib/NativeBLOB.c, dblib/Oseki.c, 
 	dblib/PostgreSQL.c, dblib/Shell.c, dblib/System.c,
-	dblib/redirect.c, tools/monitor.c:  dbg->fConnect$B$,>uBV$rI=$9$h$&$K$7$?(B
+	dblib/redirect.c, tools/monitor.c:  dbg->fConnect¤¬¾õÂÖ¤òÉ½¤¹¤è¤¦¤Ë¤·¤¿
 
-	* libs/net.c (ChecknetFile): fp$B$N%A%'%C%/DI2C(B
+	* libs/net.c (ChecknetFile): fp¤Î¥Á¥§¥Ã¥¯ÄÉ²Ã
 	
 2006-02-13  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/callbacks.c: send_event $B$N$H$-$K>o$K(B Timer $B$r;_$a$k(B
+	* glclient/callbacks.c: send_event ¤Î¤È¤­¤Ë¾ï¤Ë Timer ¤ò»ß¤á¤ë
 
 2006-02-08  Noboru Saitou  <noborus@netlab.jp>
 
-	* dblib/PostgreSQL.c: SQL$B%-!<%o!<%I$rBgJ8;z$KE}0l(B
+	* dblib/PostgreSQL.c: SQL¥­¡¼¥ï¡¼¥É¤òÂçÊ¸»ú¤ËÅý°ì
 
 2006-01-27  Noboru Saitou  <noborus@netlab.jp>
 
-	* libs/panda.c: windowData $B$N%A%'%C%/$rDI2C(B
+	* libs/panda.c: windowData ¤Î¥Á¥§¥Ã¥¯¤òÄÉ²Ã
 
-	* dblib/PostgreSQL.c, dblib/Oseki.c: DB$B%O%s%I%i$G$O(B exit $B$7$J$$$h$&$K(B
-	$BJQ99(B
+	* dblib/PostgreSQL.c, dblib/Oseki.c: DB¥Ï¥ó¥É¥é¤Ç¤Ï exit ¤·¤Ê¤¤¤è¤¦¤Ë
+	ÊÑ¹¹
 
 	* dblib/dbgroup.[ch], dblib/dblib.h, aps/aps_main.c aps/handler.[ch]:
-	DBOPEN$B$N%A%'%C%/$rDI2C(B	
+	DBOPEN¤Î¥Á¥§¥Ã¥¯¤òÄÉ²Ã	
 
 2006-01-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* configure.in: libmagic$B$,$J$$;~$K$O$=$l$J$j$N=hM}$K$9$k$h$&$K$7$?(B
+	* configure.in: libmagic¤¬¤Ê¤¤»þ¤Ë¤Ï¤½¤ì¤Ê¤ê¤Î½èÍý¤Ë¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2006-01-18  Noboru Saitou  <noborus@netlab.jp>
 
-	* libs/port.c (ParPort): $B6uJ8;z$O(BNULL$B$H$_$J$9(B
-	* libs/port.c (StrinPort): port->type $B$,(BNULL$B$K$bBP1~(B
-	* glserver/pstopng: gs $B$,%4%_$r=P$9>l9g$,$"$C$?(B
+	* libs/port.c (ParPort): ¶õÊ¸»ú¤ÏNULL¤È¤ß¤Ê¤¹
+	* libs/port.c (StrinPort): port->type ¤¬NULL¤Ë¤âÂÐ±þ
+	* glserver/pstopng: gs ¤¬¥´¥ß¤ò½Ð¤¹¾ì¹ç¤¬¤¢¤Ã¤¿
 	
 2006-01-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/HTCparser.c (ParTag): $B%Q!<%:$N%4%_$r>C$7$?(B
+	* htserver/HTCparser.c (ParTag): ¥Ñ¡¼¥º¤Î¥´¥ß¤ò¾Ã¤·¤¿
 
 2006-01-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/gnumerictorec.c: Gnumeric$B$NI=$K=q$+$l$?%l%3!<%I@_7W=q$+$i!"(B.
-	rec$B$r@8@.$9$k%3%^%s%I$r:n$C$?(B($BNc$O(Bsamples$B$KCV$+$l$?(Bgnumeric$B%U%!%$%k(B)
+	* tools/gnumerictorec.c: Gnumeric¤ÎÉ½¤Ë½ñ¤«¤ì¤¿¥ì¥³¡¼¥ÉÀß·×½ñ¤«¤é¡¢.
+	rec¤òÀ¸À®¤¹¤ë¥³¥Þ¥ó¥É¤òºî¤Ã¤¿(Îã¤Ïsamples¤ËÃÖ¤«¤ì¤¿gnumeric¥Õ¥¡¥¤¥ë)
 
-	* libs/enum.c: --disable-client$B$N;~$N8m$j$rD>$7$?(B
+	* libs/enum.c: --disable-client¤Î»þ¤Î¸í¤ê¤òÄ¾¤·¤¿
 
 2006-01-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/gnumerictodb.c: Gnumeric$B$NI=$K=q$+$l$?(BDB$B@_7W=q$+$i!"(B.db$B$r(B
-	$B@8@.$9$k%3%^%s%I$r:n$C$?(B($BNc$O(Bsamples$B$KCV$+$l$?(Bgnumeric$B%U%!%$%k(B)
+	* tools/gnumerictodb.c: Gnumeric¤ÎÉ½¤Ë½ñ¤«¤ì¤¿DBÀß·×½ñ¤«¤é¡¢.db¤ò
+	À¸À®¤¹¤ë¥³¥Þ¥ó¥É¤òºî¤Ã¤¿(Îã¤Ïsamples¤ËÃÖ¤«¤ì¤¿gnumeric¥Õ¥¡¥¤¥ë)
 
 2006-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* net.c (Send): $B%P%C%U%!=hM}$N8m$j$rD>$7$?!#DL?.%(%i!<;~$N2s<}$r3N<B$K$7$?(B
+	* net.c (Send): ¥Ð¥Ã¥Õ¥¡½èÍý¤Î¸í¤ê¤òÄ¾¤·¤¿¡£ÄÌ¿®¥¨¥é¡¼»þ¤Î²ó¼ý¤ò³Î¼Â¤Ë¤·¤¿
 
 2006-01-06  GOTOU Yuuzou  <gotoyuzo@netlab.jp>
 
-	* include/const.h: SIZE_PASS$B$NITB-$r=$@5(B
-	* libs/auth.c (AuthLoadPasswd, AuthSingle): $BIT@5$J7A<0$N%Q%9%o!<%I(B
-	$B%U%!%$%kFI$_9~$_;~$K$*$1$k(Bbuffer overrun$B$r=$@5(B
-	* libs/driver.c (NewScreenData): strchr$B$NLa$jCM$r8!::$9$k$h$&$K=$@5(B
+	* include/const.h: SIZE_PASS¤ÎÉÔÂ­¤ò½¤Àµ
+	* libs/auth.c (AuthLoadPasswd, AuthSingle): ÉÔÀµ¤Ê·Á¼°¤Î¥Ñ¥¹¥ï¡¼¥É
+	¥Õ¥¡¥¤¥ëÆÉ¤ß¹þ¤ß»þ¤Ë¤ª¤±¤ëbuffer overrun¤ò½¤Àµ
+	* libs/driver.c (NewScreenData): strchr¤ÎÌá¤êÃÍ¤ò¸¡ºº¤¹¤ë¤è¤¦¤Ë½¤Àµ
 	
 2005-12-20  Noboru Saitou  <noborus@netlab.jp>
 
-	* rkey_buffer_branch $B$r%^!<%8(B
-	* glclient/action.[ch], glclient/callbacks.c: $B%?%$%^!<%$%Y%s%H$N(B
-	$B%9%H%C%W$r2hLLA+0\;~$KJQ99(B
-	* glclient/action.c, glclient/callbacks.c: $B%-!<%P%C%U%!%/%j%"$r(B
-	$B:F<BAu$7$F!"F10l2hLLFb$G$O%-!<%P%C%U%!$,8z$/$h$&$K$7$?!#(B
-	* glclient/bootdialog.c: $B!V%-!<%P%C%U%!$rM-8z$K$9$k!W9`L\$NDI2C(B
+	* rkey_buffer_branch ¤ò¥Þ¡¼¥¸
+	* glclient/action.[ch], glclient/callbacks.c: ¥¿¥¤¥Þ¡¼¥¤¥Ù¥ó¥È¤Î
+	¥¹¥È¥Ã¥×¤ò²èÌÌÁ«°Ü»þ¤ËÊÑ¹¹
+	* glclient/action.c, glclient/callbacks.c: ¥­¡¼¥Ð¥Ã¥Õ¥¡¥¯¥ê¥¢¤ò
+	ºÆ¼ÂÁõ¤·¤Æ¡¢Æ±°ì²èÌÌÆâ¤Ç¤Ï¥­¡¼¥Ð¥Ã¥Õ¥¡¤¬¸ú¤¯¤è¤¦¤Ë¤·¤¿¡£
+	* glclient/bootdialog.c: ¡Ö¥­¡¼¥Ð¥Ã¥Õ¥¡¤òÍ­¸ú¤Ë¤¹¤ë¡×¹àÌÜ¤ÎÄÉ²Ã
 
 2005-11-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/mon.c (ParseUserAgent): w3m$B$N>l9g!"(BJavascript$B$rL58z$K$9$k(B
+	* htserver/mon.c (ParseUserAgent): w3m¤Î¾ì¹ç¡¢Javascript¤òÌµ¸ú¤Ë¤¹¤ë
 
 2005-10-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/LDparser.c, libs/SQLparser.c, libs/BDparser.c, libs/DBparser.c, 
-	  libs/DBDparser.c: $B%(%i!<%a%C%;!<%8$NJQ99(B
+	  libs/DBDparser.c: ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸¤ÎÊÑ¹¹
 
 2005-10-13  Noboru Saitou  <noborus@netlab.jp>
 
@@ -512,36 +584,36 @@
 
 2005-09-30  Noboru Saitou  <noborus@netlab.jp>
 
-	* wfc/termthread.c (ReadTerminal): ReadTerminal $B$G$O(B data->ld $B$rJQ99(B
-	$B$7$J$$$h$&$K=$@5(B
+	* wfc/termthread.c (ReadTerminal): ReadTerminal ¤Ç¤Ï data->ld ¤òÊÑ¹¹
+	¤·¤Ê¤¤¤è¤¦¤Ë½¤Àµ
 
 2005-09-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/htcproc.c: -record$B$G(Brec$B$N3JG<%Q%9$r;XDj$G$-$k$h$&$K$7$?(B
+	* htserver/htcproc.c: -record¤Çrec¤Î³ÊÇ¼¥Ñ¥¹¤ò»ØÄê¤Ç¤­¤ë¤è¤¦¤Ë¤·¤¿
 
 2005-08-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* $B%j%s%/;~$N%o!<%K%s%0$r>C$7$?(B
+	* ¥ê¥ó¥¯»þ¤Î¥ï¡¼¥Ë¥ó¥°¤ò¾Ã¤·¤¿
 
 2005-08-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* spa, link$BEy$N$J$$>l9g$X$NBP1~3+;O(B($B%F%9%H$O$3$l$+$i(B)
+	* spa, linkÅù¤Î¤Ê¤¤¾ì¹ç¤Ø¤ÎÂÐ±þ³«»Ï(¥Æ¥¹¥È¤Ï¤³¤ì¤«¤é)
 
-	* libs/DDparser.c (ReadRecordDefine): $BDj5A%U%!%$%k$,B8:_$7$J$$;~$K(B
-	$B$O!"(BNULL$B$rJV5Q$9$k$h$&$K$7$?(B
+	* libs/DDparser.c (ReadRecordDefine): ÄêµÁ¥Õ¥¡¥¤¥ë¤¬Â¸ºß¤·¤Ê¤¤»þ¤Ë
+	¤Ï¡¢NULL¤òÊÖµÑ¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* libs/Makefile.am: blob/$B$rGQ;_$7$F(Blibs/$B$KE}9g$7$?(B
+	* libs/Makefile.am: blob/¤òÇÑ»ß¤·¤Ælibs/¤ËÅý¹ç¤·¤¿
 
-	* $B%@%$%J%_%C%/%i%$%V%i%j$r$d$a$?(B
+	* ¥À¥¤¥Ê¥ß¥Ã¥¯¥é¥¤¥Ö¥é¥ê¤ò¤ä¤á¤¿
 
 2005-07-06  Noboru Saitou  <noborus@netlab.jp>
 
-	* dblib/PostgreSQL.c (CheckResult): $B%(%i!<;~$K(B PQerrorMessage $B$N(B
-	$B%a%C%;!<%8$rI=<($9$k$h$&$K$7$?(B
+	* dblib/PostgreSQL.c (CheckResult): ¥¨¥é¡¼»þ¤Ë PQerrorMessage ¤Î
+	¥á¥Ã¥»¡¼¥¸¤òÉ½¼¨¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2005-06-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* COPYING: $BCx:n8"I=<($rD>$9(B
+	* COPYING: Ãøºî¸¢É½¼¨¤òÄ¾¤¹
 
 2005-06-20  Noboru Saitou  <noborus@netlab.jp>
 
@@ -549,60 +621,60 @@
 
 2005-06-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c (_Entry): $BJ8;zNs$r=PNO$9$k;~$N%(%9%1!<%W$r$d$a$?(B
+	* htserver/tags.c (_Entry): Ê¸»úÎó¤ò½ÐÎÏ¤¹¤ë»þ¤Î¥¨¥¹¥±¡¼¥×¤ò¤ä¤á¤¿
 
 2005-06-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (MessageThread): LD$B$K$^$?$,$C$?%&%#%s%I%&$N;~$K@5(B
-	$B$7$/F0$/$h$&$K=$@5(B
+	* wfc/mqthread.c (MessageThread): LD¤Ë¤Þ¤¿¤¬¤Ã¤¿¥¦¥£¥ó¥É¥¦¤Î»þ¤ËÀµ
+	¤·¤¯Æ°¤¯¤è¤¦¤Ë½¤Àµ
 
 2005-06-01  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/protocol.c, glclient/widgetOPS.c (GL_RecvName): $B%5%$%:$r(B
-	  $B;XDj$9$k$h$&$KJQ99(B
+	* glclient/protocol.c, glclient/widgetOPS.c (GL_RecvName): ¥µ¥¤¥º¤ò
+	  »ØÄê¤¹¤ë¤è¤¦¤ËÊÑ¹¹
 	
 2005-04-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/exec.c (ExecCode): OPC_EMITSTR$B$G6uJ8;zNs$N;~$K(B&nbsp;$B$r(B
-	$B=PNO$7$J$$$h$&$K$7$?(B
+	* htserver/exec.c (ExecCode): OPC_EMITSTR¤Ç¶õÊ¸»úÎó¤Î»þ¤Ë&nbsp;¤ò
+	½ÐÎÏ¤·¤Ê¤¤¤è¤¦¤Ë¤·¤¿
 
-	* htserver/exec.h: ValType$B$r(BExpr$B$KE}9g(B
+	* htserver/exec.h: ValType¤òExpr¤ËÅý¹ç
 
 2005-04-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/exec.h : $B>iD9$JL?Na$rGQ;_(B
+	* htserver/exec.h : ¾éÄ¹¤ÊÌ¿Îá¤òÇÑ»ß
 
-	* htserver/tags.c (ExpandAttributeString): '$B$G3g$C$?J8;zNs$KBP1~(B
+	* htserver/tags.c (ExpandAttributeString): '¤Ç³ç¤Ã¤¿Ê¸»úÎó¤ËÂÐ±þ
 
-	* tools/htcgen.xsl: GtkList$B$NI}=hM}$r(Bstyle$B$GBP1~$9$k$h$&$K$7$?(B
+	* tools/htcgen.xsl: GtkList¤ÎÉý½èÍý¤òstyle¤ÇÂÐ±þ¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2005-04-07  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/protocol.c (GL_RecvString): $B%5%$%:$r;XDj$9$k$h$&$KJQ99(B
+	* glclient/protocol.c (GL_RecvString): ¥µ¥¤¥º¤ò»ØÄê¤¹¤ë¤è¤¦¤ËÊÑ¹¹
 	* aps/apsio.c, auth/glauth.c, libs/wfcio.c, libs/authstub.c: 
-	  RecvString $B$r(B RecvnString $B$KJQ99(B
+	  RecvString ¤ò RecvnString ¤ËÊÑ¹¹
 	
 2005-03-25  Noboru Saitou  <noborus@netlab.jp>
 
-	* glserver/server.c, glserver/glcomm.c (GL_RecvString): $B%5%$%:$r(B
-	  $B;XDj$9$k$h$&$KJQ99(B
+	* glserver/server.c, glserver/glcomm.c (GL_RecvString): ¥µ¥¤¥º¤ò
+	  »ØÄê¤¹¤ë¤è¤¦¤ËÊÑ¹¹
 
 2005-03-23  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/client.c: SSL$B$N9`L\$,6u$N;~$KCM$rEO$5$J$$$h$&$K=$@5!#(B
-	  -verifypeer $B%*%W%7%g%s$NGQ;_(B
+	* glclient/client.c: SSL¤Î¹àÌÜ¤¬¶õ¤Î»þ¤ËÃÍ¤òÅÏ¤µ¤Ê¤¤¤è¤¦¤Ë½¤Àµ¡£
+	  -verifypeer ¥ª¥×¥·¥ç¥ó¤ÎÇÑ»ß
 
 2005-03-17  Noboru Saitou  <noborus@netlab.jp>
 
-	* libs/message.c: syslog$BBP1~DI2C(B
+	* libs/message.c: syslogÂÐ±þÄÉ²Ã
 
-	* configure.in: --enable-syslog $B$NDI2C(B
+	* configure.in: --enable-syslog ¤ÎÄÉ²Ã
 
 2005-03-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/mon.c: Javascript$B$r;H$o$J$$F0:n$r0lIt2DG=$K$7$?(B
+	* htserver/mon.c: Javascript¤ò»È¤ï¤Ê¤¤Æ°ºî¤ò°ìÉô²ÄÇ½¤Ë¤·¤¿
 
-	* htserver/HTCparser.c (CopyTag): $BCM$r;}$?$J$$B0@-$NF0$/$r@5$7$/$7$?(B
+	* htserver/HTCparser.c (CopyTag): ÃÍ¤ò»ý¤¿¤Ê¤¤Â°À­¤ÎÆ°¤¯¤òÀµ¤·¤¯¤·¤¿
 
 2005-03-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -610,59 +682,59 @@
 
 2005-03-10  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/bootdialog.c: $B5/F0%@%$%"%m%0$K(B SSL$B$N9`L\DI2C(B
+	* glclient/bootdialog.c: µ¯Æ°¥À¥¤¥¢¥í¥°¤Ë SSL¤Î¹àÌÜÄÉ²Ã
 
 2005-03-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* pgserver/server.c (MainLoop): $BJ8;z(Bencoding$B$N@_Dj%3%^%s%I(B
+	* pgserver/server.c (MainLoop): Ê¸»úencoding¤ÎÀßÄê¥³¥Þ¥ó¥É
 
 2005-03-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glclient/widgetOPS.c (SendScrolledWindow), (RecvScrolledWindow)
-	  :  ScrolledWindows$B$N0LCV@_Dj(B
+	  :  ScrolledWindows¤Î°ÌÃÖÀßÄê
 
 2005-03-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/PostgreSQL.c (ExecPGSQL): vitrual DB$B;~$N(Bmangling$B$r@5$7$/$7(B
-	$B$?(B
+	* dblib/PostgreSQL.c (ExecPGSQL): vitrual DB»þ¤Îmangling¤òÀµ¤·¤¯¤·
+	¤¿
 
 2005-03-02  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/fileEntry.c (SaveFile): fopen$B$G$O$J$/(Bopen$B$G3+$/$h$&$KJQ99(B
-	  $B4{$K%U%!%$%k$,$"$C$?>l9g$O%Q!<%_%C%7%g%s$O$=$N$^$^$K$7$?(B
+	* glclient/fileEntry.c (SaveFile): fopen¤Ç¤Ï¤Ê¤¯open¤Ç³«¤¯¤è¤¦¤ËÊÑ¹¹
+	  ´û¤Ë¥Õ¥¡¥¤¥ë¤¬¤¢¤Ã¤¿¾ì¹ç¤Ï¥Ñ¡¼¥ß¥Ã¥·¥ç¥ó¤Ï¤½¤Î¤Þ¤Þ¤Ë¤·¤¿
 	
 2005-03-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/SQLparser.c (ParSQL): $B9=B$$,$"$k>l9g$K>!<j$J(Bmangling$B$r$d$a(B
-	$B$?(B($B3F(BDB$B%O%s%I%i$K$5$;$k(B)
+	* libs/SQLparser.c (ParSQL): ¹½Â¤¤¬¤¢¤ë¾ì¹ç¤Ë¾¡¼ê¤Êmangling¤ò¤ä¤á
+	¤¿(³ÆDB¥Ï¥ó¥É¥é¤Ë¤µ¤»¤ë)
 
 2005-02-24  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/fileEntry.[ch]: GnomeFileEntry $B$NF0:n$rJQ99DI2C!#(B
-	  $B4{$K%U%!%$%k$,$"$C$?>l9g$N3NG'DI2C(B
-	* glclient/widgetOPS.c (RecvFileEntry): $B%U%!%$%k$,Aw$i$l$F$-$?$i(B
-	  FileSelection$B%@%$%"%m%0$r3+$/$h$&$KJQ99(B
-	* glclient/dialogs.c (question_dialog): Yes/No $B$N3NG'%@%$%"%m%0(B
-	  $B$NDI2C(B(GNOME $B%i%$%V%i%j$,I,MW(B)
+	* glclient/fileEntry.[ch]: GnomeFileEntry ¤ÎÆ°ºî¤òÊÑ¹¹ÄÉ²Ã¡£
+	  ´û¤Ë¥Õ¥¡¥¤¥ë¤¬¤¢¤Ã¤¿¾ì¹ç¤Î³ÎÇ§ÄÉ²Ã
+	* glclient/widgetOPS.c (RecvFileEntry): ¥Õ¥¡¥¤¥ë¤¬Á÷¤é¤ì¤Æ¤­¤¿¤é
+	  FileSelection¥À¥¤¥¢¥í¥°¤ò³«¤¯¤è¤¦¤ËÊÑ¹¹
+	* glclient/dialogs.c (question_dialog): Yes/No ¤Î³ÎÇ§¥À¥¤¥¢¥í¥°
+	  ¤ÎÄÉ²Ã(GNOME ¥é¥¤¥Ö¥é¥ê¤¬É¬Í×)
 
 2005-02-21  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/OpenCOBOL.c aps/aps_main.c aps/handler.c glserver/glcomm.c
 	  glserver/server.c libs/applications.c libs/authstub.c libs/load.c
-	  libs/panda.c libs/wfcio.c: $B%a%C%;!<%87A<0$NE}0l(B
+	  libs/panda.c libs/wfcio.c: ¥á¥Ã¥»¡¼¥¸·Á¼°¤ÎÅý°ì
 
 	* libs/debug.h libs/message.c libs/message.h:
-	  debug $B4XO"$N%a%C%;!<%8%l%Y%k$NJQ99(B
+	  debug ´ØÏ¢¤Î¥á¥Ã¥»¡¼¥¸¥ì¥Ù¥ë¤ÎÊÑ¹¹
 
 2005-02-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/term.c (TermToHost): dblib/System.c$B$+$i0\F0$7$F?7@_(B
+	* libs/term.c (TermToHost): dblib/System.c¤«¤é°ÜÆ°¤·¤Æ¿·Àß
 
 2005-02-16  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/dialogs.[ch]: (message_dialog) $B%a%C%;!<%8%@%$%"%m%0DI2C(B
-	* glclient/testdialogs.c: $B%a%C%;!<%8%@%$%"%m%0%F%9%HDI2C(B
-	* glclient/widgetOPS.c (RecvFileEntry): $B7k2L$r%@%$%"%m%0$K=P$9$h$&$K$7$?(B
+	* glclient/dialogs.[ch]: (message_dialog) ¥á¥Ã¥»¡¼¥¸¥À¥¤¥¢¥í¥°ÄÉ²Ã
+	* glclient/testdialogs.c: ¥á¥Ã¥»¡¼¥¸¥À¥¤¥¢¥í¥°¥Æ¥¹¥ÈÄÉ²Ã
+	* glclient/widgetOPS.c (RecvFileEntry): ·ë²Ì¤ò¥À¥¤¥¢¥í¥°¤Ë½Ð¤¹¤è¤¦¤Ë¤·¤¿
 
 2005-02-14  Noboru Saitou  <noborus@netlab.jp>
 
@@ -680,63 +752,63 @@
 
 2005-01-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/htc.c: $BJQ?tL>$@$1$G$J$/<0$,=q$1$k$h$&$K$7$?(B
+	* htserver/htc.c: ÊÑ¿ôÌ¾¤À¤±¤Ç¤Ê¤¯¼°¤¬½ñ¤±¤ë¤è¤¦¤Ë¤·¤¿
 
 2005-01-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c (_Fixed): $B%K%b%K%C%/JQ49$r$7$J$$$G=PNO$9$k%b!<%I(B
+	* htserver/tags.c (_Fixed): ¥Ë¥â¥Ë¥Ã¥¯ÊÑ´¹¤ò¤·¤Ê¤¤¤Ç½ÐÎÏ¤¹¤ë¥â¡¼¥É
 
 2005-01-20  Hiromi Yamazaki  <hiromi@netlab.jp>
 
-	* htserver/tags.c (_Calendar): $B%G%6%$%sJQ99$N%Q%i%a!<%?$rA}$d$7$?(B
+	* htserver/tags.c (_Calendar): ¥Ç¥¶¥¤¥óÊÑ¹¹¤Î¥Ñ¥é¥á¡¼¥¿¤òÁý¤ä¤·¤¿
 
-	* htserver/exec.c (ExecCalendar): $B%G%6%$%sJQ99$N%Q%i%a!<%?$rA}$d$7$?(B
+	* htserver/exec.c (ExecCalendar): ¥Ç¥¶¥¤¥óÊÑ¹¹¤Î¥Ñ¥é¥á¡¼¥¿¤òÁý¤ä¤·¤¿
 
 2005-01-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/Oseki.c: Oseki/search$B%O%s%I%i(B
+	* dblib/Oseki.c: Oseki/search¥Ï¥ó¥É¥é
 
 2004-12-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c: $B%\%?%s7O$N(Bonclick$B$r@5$7$/D>$7$?(B
+	* htserver/tags.c: ¥Ü¥¿¥ó·Ï¤Îonclick¤òÀµ¤·¤¯Ä¾¤·¤¿
 
 2004-12-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c (JavaScriptEvent): $BJQ?t$N;2>H$r2DG=$K$7$?(B, a$B%?%0$b=hM}$9$k$h$&$K$7$?(B
+	* htserver/tags.c (JavaScriptEvent): ÊÑ¿ô¤Î»²¾È¤ò²ÄÇ½¤Ë¤·¤¿, a¥¿¥°¤â½èÍý¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2004-10-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/PostgreSQL.c (_DBCLOSECURSOR): cursor close$B$N(Bdefault
+	* dblib/PostgreSQL.c (_DBCLOSECURSOR): cursor close¤Îdefault
 
-	* libs/DIparser.c (BuildMcpArea): mcprec$B$N9=B$JQ99(B($BJ8;zNs$G$N%Q%9;XDj(B)
+	* libs/DIparser.c (BuildMcpArea): mcprec¤Î¹½Â¤ÊÑ¹¹(Ê¸»úÎó¤Ç¤Î¥Ñ¥¹»ØÄê)
 
-	* aps/C.c (MCP_ExecFunction): MakeCTRLbyName$B$r;H$&$h$&$K(B
+	* aps/C.c (MCP_ExecFunction): MakeCTRLbyName¤ò»È¤¦¤è¤¦¤Ë
 
-	* aps/handler.c (MakeCTRLbyName): $BL>A0$+$i%Q%9$r8!:w$9$k(B
+	* aps/handler.c (MakeCTRLbyName): Ì¾Á°¤«¤é¥Ñ¥¹¤ò¸¡º÷¤¹¤ë
 
-	* aps/MONFUNC.c: $B%Q%9L>$rJ8;zNs$G;XDj$9$k(BCOBOL API
+	* aps/MONFUNC.c: ¥Ñ¥¹Ì¾¤òÊ¸»úÎó¤Ç»ØÄê¤¹¤ëCOBOL API
 
 2004-10-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/handler.c (CallAfter): fromwin$B$r@5$7$/$7$?(B
+	* aps/handler.c (CallAfter): fromwin¤òÀµ¤·¤¯¤·¤¿
 
 2004-10-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/client.c (SetDefault): veryfypeer$B$r%G%U%)%k%H$K$7$?(B
+	* glclient/client.c (SetDefault): veryfypeer¤ò¥Ç¥Õ¥©¥ë¥È¤Ë¤·¤¿
 
-	* htserver/tags.c (_Button): state$B$N=hM}$r@5$7$/$7$?(B
-	(JavaScriptEvent): send_event$B$N07$$J}$rJQ$($?(B
-	(_Text): HTML$B%(%G%#%?$NDI2C(B
-	(EmitAttributeValue): Style$B$+$i8F$S=P$5$l$?;~$N=hM}$r@5$7$/$7$?(B
-	(_Fixed): HTML$B$rL52C9)$G$=$N$^$^=PNO$9$k5!G=$rDI2C(B
+	* htserver/tags.c (_Button): state¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿
+	(JavaScriptEvent): send_event¤Î°·¤¤Êý¤òÊÑ¤¨¤¿
+	(_Text): HTML¥¨¥Ç¥£¥¿¤ÎÄÉ²Ã
+	(EmitAttributeValue): Style¤«¤é¸Æ¤Ó½Ð¤µ¤ì¤¿»þ¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿
+	(_Fixed): HTML¤òÌµ²Ã¹©¤Ç¤½¤Î¤Þ¤Þ½ÐÎÏ¤¹¤ëµ¡Ç½¤òÄÉ²Ã
 
-	* tools/htcgen.xsl: $B%a%K%e!<%P!<BP1~(B
+	* tools/htcgen.xsl: ¥á¥Ë¥å¡¼¥Ð¡¼ÂÐ±þ
 
-	* htserver/exec.c (ExecCode): $BJ8;zNsHf3SL?Na!"(BJavascript$B=PNOL?Na(B
+	* htserver/exec.c (ExecCode): Ê¸»úÎóÈæ³ÓÌ¿Îá¡¢Javascript½ÐÎÏÌ¿Îá
 
 2004-10-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/htctest.c: HTC$B$r%A%'%C%/$9$k%f!<%F%#%j%F%#(B
+	* htserver/htctest.c: HTC¤ò¥Á¥§¥Ã¥¯¤¹¤ë¥æ¡¼¥Æ¥£¥ê¥Æ¥£
 
 2004-10-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -748,8 +820,8 @@
 
 2004-09-27  Noboru Saitou  <noborus@netlab.jp>
 
-	* glserver/glcomm.c $B0u:~%W%l%S%e!<$K(BPDF$B%5%]!<%H$NDI2C(B
-	* glserver/pstopng PS->PNG$BJQ49%9%/%j%W%H$rDI2C(B
+	* glserver/glcomm.c °õºþ¥×¥ì¥Ó¥å¡¼¤ËPDF¥µ¥Ý¡¼¥È¤ÎÄÉ²Ã
+	* glserver/pstopng PS->PNGÊÑ´¹¥¹¥¯¥ê¥×¥È¤òÄÉ²Ã
 
 2004-09-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -761,70 +833,70 @@
 
 2004-09-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* blob/storage.c: $B%j%K%"%"%m%1!<%7%g%s(B(seek$B$N=`Hw(B)
+	* blob/storage.c: ¥ê¥Ë¥¢¥¢¥í¥±¡¼¥·¥ç¥ó(seek¤Î½àÈ÷)
 
 2004-09-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* blob/page.c: $B$h$j(Brobust$B$J%H%i%s%6%/%7%g%s%j%+%P%j(B
+	* blob/page.c: ¤è¤êrobust¤Ê¥È¥é¥ó¥¶¥¯¥·¥ç¥ó¥ê¥«¥Ð¥ê
 
 2004-09-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* blob/storage.c: $B%H%i%s%6%/%7%g%s%j%+%P%j(B
+	* blob/storage.c: ¥È¥é¥ó¥¶¥¯¥·¥ç¥ó¥ê¥«¥Ð¥ê
 
 2004-09-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* blob/page.c: $B%m!<%k%P%C%/(B
+	* blob/page.c: ¥í¡¼¥ë¥Ð¥Ã¥¯
 
 2004-09-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* blob/blob_v2.c: BLOB$BA45!G=<BAu(B
+	* blob/blob_v2.c: BLOBÁ´µ¡Ç½¼ÂÁõ
 
 2004-09-03  Noboru Saitou  <noborus@netlab.jp>
 
-	* glclient/protocol.c: Send/Recv $B$r%A%'%C%/$9$k$h$&$K$7$?(B
+	* glclient/protocol.c: Send/Recv ¤ò¥Á¥§¥Ã¥¯¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2004-09-02  Noboru Saitou  <noborus@netlab.jp>
 
-	* libs/Recv, libs/Send $B<:GT;~$K$O(B -1 $B$rJV$9$h$&$KJQ99(B
+	* libs/Recv, libs/Send ¼ºÇÔ»þ¤Ë¤Ï -1 ¤òÊÖ¤¹¤è¤¦¤ËÊÑ¹¹
 
 2004-08-31  Noboru Saitou  <noborus@netlab.jp>
 
-	* $B%@%$%"%m%0:FI=<($r$7$J$$$h$&$K=$@5!#(B
+	* ¥À¥¤¥¢¥í¥°ºÆÉ½¼¨¤ò¤·¤Ê¤¤¤è¤¦¤Ë½¤Àµ¡£
 
 2004-08-25  Noboru Saitou <noborus@netlab.jp>
 
-	* wfc/mqthread.c: $BL58z$J(Baps$B$r;XDj$5$l$?$H$-$K%j%=!<%9$r2rJ|$7$?(B
+	* wfc/mqthread.c: Ìµ¸ú¤Êaps¤ò»ØÄê¤µ¤ì¤¿¤È¤­¤Ë¥ê¥½¡¼¥¹¤ò²òÊü¤·¤¿
 
 	* wfc/blobthread.c, wfc/controlthread.c, wfc/termthread.c:
-	pthread_exit $B$G%j%=!<%9$,2rJ|$5$l$k$h$&$K(B pthread_detach $B$7$?(B  
+	pthread_exit ¤Ç¥ê¥½¡¼¥¹¤¬²òÊü¤µ¤ì¤ë¤è¤¦¤Ë pthread_detach ¤·¤¿  
 	
 2004-08-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c: LD$B$,JQ$o$C$F$b(BSPA$B$rK:$l$J$$$h$&$K$7$?(B
+	* wfc/mqthread.c: LD¤¬ÊÑ¤ï¤Ã¤Æ¤âSPA¤òËº¤ì¤Ê¤¤¤è¤¦¤Ë¤·¤¿
 
 2004-08-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/blobreq.c, wfc/blobserv.c, blob/blob_v1.c : API$B$N@0M}(B
+	* libs/blobreq.c, wfc/blobserv.c, blob/blob_v1.c : API¤ÎÀ°Íý
 
 2004-08-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc$B$N=i4|2=%7!<%1%s%9$N;~$K$O(BSendStringDelim/RecvStringDelim$B$r;H(B
-	$B$&$h$&$K$7$?(B
+	* wfc¤Î½é´ü²½¥·¡¼¥±¥ó¥¹¤Î»þ¤Ë¤ÏSendStringDelim/RecvStringDelim¤ò»È
+	¤¦¤è¤¦¤Ë¤·¤¿
 
-	* blob/blob_v1.c: $BNN0h4IM}>pJs$rJQ99$7$?(B
+	* blob/blob_v1.c: ÎÎ°è´ÉÍý¾ðÊó¤òÊÑ¹¹¤·¤¿
 
-	* blob/blob.c: BLOB$B$N%P!<%8%g%s$KG[N8$9$k$h$&$K$7$?(B
+	* blob/blob.c: BLOB¤Î¥Ð¡¼¥¸¥ç¥ó¤ËÇÛÎ¸¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2004-08-10  Kouji TAKAO  <kouji@netlab.jp>
 
-	* configure.in (--with-ruby): Ruby-1.8$B$r(B/usr$B$d(B/usr/local$B0J30$K%$%s(B
-	$B%9%H!<%k$7$F$$$k>l9g$KBP1~(B
+	* configure.in (--with-ruby): Ruby-1.8¤ò/usr¤ä/usr/local°Ê³°¤Ë¥¤¥ó
+	¥¹¥È¡¼¥ë¤·¤Æ¤¤¤ë¾ì¹ç¤ËÂÐ±þ
 
-	* tools/copygen.c (_COBOL): object$B7?$r(BPIC X(sizeof(MonObjectType))$B$K=$@5(B
+	* tools/copygen.c (_COBOL): object·¿¤òPIC X(sizeof(MonObjectType))¤Ë½¤Àµ
 
 2004-08-09  Noboru Saitou <noborus@netlab.jp>
 
-	* $BITMW$J(Bld$B$rFI$_9~$^$J$$$h$&$K$7$?(B
+	* ÉÔÍ×¤Êld¤òÆÉ¤ß¹þ¤Þ¤Ê¤¤¤è¤¦¤Ë¤·¤¿
 
 2004-08-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -832,78 +904,78 @@
 
 2004-08-05  Kouji TAKAO  <kouji@netlab.jp>
 
-	* glserver/glcomm.c (ExpandFile): PS$B%U%!%$%k$N>l9g$K@5$7$$%U%!%$%k(B
-	$BL>$rJV$5$J$$$r%P%0=$@5(B
+	* glserver/glcomm.c (ExpandFile): PS¥Õ¥¡¥¤¥ë¤Î¾ì¹ç¤ËÀµ¤·¤¤¥Õ¥¡¥¤¥ë
+	Ì¾¤òÊÖ¤µ¤Ê¤¤¤ò¥Ð¥°½¤Àµ
 
-	* configure.in: libmagic$B$N%A%'%C%/$rDI2C(B
+	* configure.in: libmagic¤Î¥Á¥§¥Ã¥¯¤òÄÉ²Ã
 
 2004-08-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/glcomm.c (ExpandFile): PS$B%U%!%$%k$N(Bon demand$BE83+(B
+	* glserver/glcomm.c (ExpandFile): PS¥Õ¥¡¥¤¥ë¤Îon demandÅ¸³«
 
 2004-08-05  Kouji TAKAO  <kouji@netlab.jp>
 
-	* aps/Ruby.c: $B?7$7$$(Bobject$B7?(B(longlong)$B$KBP1~(B
+	* aps/Ruby.c: ¿·¤·¤¤object·¿(longlong)¤ËÂÐ±þ
 
-	* glclient/widgetOPS.c (RecvPS): $B0l;~%U%!%$%k$r(Bmkstemp(3)$B$G:n@.$7!"(B
-	load$B8e$K:o=|$9$k$h$&$K=$@5(B
+	* glclient/widgetOPS.c (RecvPS): °ì»þ¥Õ¥¡¥¤¥ë¤òmkstemp(3)¤ÇºîÀ®¤·¡¢
+	load¸å¤Ëºï½ü¤¹¤ë¤è¤¦¤Ë½¤Àµ
 
 2004-08-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* blob/blob.c: MonObjectType$B$r(Blonglong$B$K$7$?(B
+	* blob/blob.c: MonObjectType¤òlonglong¤Ë¤·¤¿
 
 2004-08-04  Kouji TAKAO  <kouji@netlab.jp>
 
-	* aps/Ruby.c: object$B7?BP1~(B
+	* aps/Ruby.c: object·¿ÂÐ±þ
 
-	* glclient/protocol.c (RecvBinaryData): $B%P%$%J%j%G!<%?$r<u$1$H$j(B
-	LBS$B$K%Q%C%/$9$k4X?t$rDI2C(B(GtkPandaPS$B$N$?$a(B)
-	* glclient/widgetOPS.c (RecvPS): GtkPandaPS Widget$B$,%5!<%P$+$iAw$i(B
-	$B$l$F$-$?(BPS$B%G!<%?(B(psdata)$B$r=hM}$G$-$k$h$&$K=$@5(B
+	* glclient/protocol.c (RecvBinaryData): ¥Ð¥¤¥Ê¥ê¥Ç¡¼¥¿¤ò¼õ¤±¤È¤ê
+	LBS¤Ë¥Ñ¥Ã¥¯¤¹¤ë´Ø¿ô¤òÄÉ²Ã(GtkPandaPS¤Î¤¿¤á)
+	* glclient/widgetOPS.c (RecvPS): GtkPandaPS Widget¤¬¥µ¡¼¥Ð¤«¤éÁ÷¤é
+	¤ì¤Æ¤­¤¿PS¥Ç¡¼¥¿(psdata)¤ò½èÍý¤Ç¤­¤ë¤è¤¦¤Ë½¤Àµ
 	
-	* dblib/NativeBLOB.c (_ImportBLOB): "object"$B$N99?7$b$l$K$h$k%P%0$r=$@5(B
+	* dblib/NativeBLOB.c (_ImportBLOB): "object"¤Î¹¹¿·¤â¤ì¤Ë¤è¤ë¥Ð¥°¤ò½¤Àµ
 
 2004-08-03  Kouji TAKAO  <kouji@netlab.jp>
 
-	* wfc/wfc.c (ExecuteServer): pselect(2)$B$N0z?t$N%P%0$r=$@5(B
+	* wfc/wfc.c (ExecuteServer): pselect(2)¤Î°ú¿ô¤Î¥Ð¥°¤ò½¤Àµ
 
-	* aps/Ruby.c: $B%3%s%Q%$%k%o!<%K%s%0$N=|5n(B
+	* aps/Ruby.c: ¥³¥ó¥Ñ¥¤¥ë¥ï¡¼¥Ë¥ó¥°¤Î½üµî
 
 2004-08-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/NativeBLOB.c: blob$BMQ$N(BDB$B%O%s%I%i(B
+	* dblib/NativeBLOB.c: blobÍÑ¤ÎDB¥Ï¥ó¥É¥é
 
 2004-07-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (ReadyAPS): wfc -> aps$B@\B3$N%3!<%I$,;D$C$F$$$?$N(B
-	$B$G:o=|(B
+	* wfc/mqthread.c (ReadyAPS): wfc -> apsÀÜÂ³¤Î¥³¡¼¥É¤¬»Ä¤Ã¤Æ¤¤¤¿¤Î
+	¤Çºï½ü
 
 2004-07-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/server.c (ChildProcess): term$B$N@_Dj$N%?%$%_%s%0$r@5$7$/$7$?(B
+	* htserver/server.c (ChildProcess): term¤ÎÀßÄê¤Î¥¿¥¤¥ß¥ó¥°¤òÀµ¤·¤¯¤·¤¿
 
 2004-07-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/dbgroup.c: BLOB$B%5%]!<%H(B
+	* dblib/dbgroup.c: BLOB¥µ¥Ý¡¼¥È
 
 2004-07-18  Kouji TAKAO  <kouji@netlab.jp>
 
-	* glclient/bootdialog.c: $B%i%Y%k$NF|K\8l2=(B
+	* glclient/bootdialog.c: ¥é¥Ù¥ë¤ÎÆüËÜ¸ì²½
 
-	* gettextize$B$r$d$a$?!#(B
+	* gettextize¤ò¤ä¤á¤¿¡£
 	
 2004-07-17  Kouji TAKAO  <kouji@netlab.jp>
 
-	* tools/msgd.c (ExecuteServer): $B%P%0=$@5(B
+	* tools/msgd.c (ExecuteServer): ¥Ð¥°½¤Àµ
 
-	* m4/*: $BDI2C(B
-	* bootstrap.sh: $B:o=|(B
-	* intl/*: $BDI2C(B
-	* Makefile.am: $B$[$\A4$F$N(BMakefile.am$B$rJT=8$7!"(Bmake distcheck$B$,DL$k$h$&$K$7$?!#(B
+	* m4/*: ÄÉ²Ã
+	* bootstrap.sh: ºï½ü
+	* intl/*: ÄÉ²Ã
+	* Makefile.am: ¤Û¤ÜÁ´¤Æ¤ÎMakefile.am¤òÊÔ½¸¤·¡¢make distcheck¤¬ÄÌ¤ë¤è¤¦¤Ë¤·¤¿¡£
 
 2004-07-15  gettextize  <bug-gnu-gettext@gnu.org>
 
-	* glclient$B5/F0%@%$%"%m%0$N(Bgettextize
+	* glclientµ¯Æ°¥À¥¤¥¢¥í¥°¤Îgettextize
 
 2004-07-15  gettextize  <bug-gnu-gettext@gnu.org>
 
@@ -913,72 +985,72 @@
 
 2004-07-15  Kouji TAKAO  <kouji@netlab.jp>
 
-	* glclient/bootdialog.c: $B%5!<%P%W%j%;%C%H0\F05!G=$rDI2C(B
-	* glclient/bd_config.c (bd_config_move_section): $B%;%/%7%g%s0\F04X?t$rDI2C(B
+	* glclient/bootdialog.c: ¥µ¡¼¥Ð¥×¥ê¥»¥Ã¥È°ÜÆ°µ¡Ç½¤òÄÉ²Ã
+	* glclient/bd_config.c (bd_config_move_section): ¥»¥¯¥·¥ç¥ó°ÜÆ°´Ø¿ô¤òÄÉ²Ã
 
 2004-07-14  Kouji TAKAO  <kouji@netlab.jp>
 
-	* glclient/bootdialog.c: $B%5!<%P%W%j%;%C%H:o=|5!G=$rDI2C(B
-	* glclient/bd_config.c (bd_config_remove_section): $B%;%/%7%g%s:o=|4X?t$rDI2C(B
+	* glclient/bootdialog.c: ¥µ¡¼¥Ð¥×¥ê¥»¥Ã¥Èºï½üµ¡Ç½¤òÄÉ²Ã
+	* glclient/bd_config.c (bd_config_remove_section): ¥»¥¯¥·¥ç¥óºï½ü´Ø¿ô¤òÄÉ²Ã
 
-	* glclient/bootdialog.c: $B%5!<%P%W%j%;%C%HJT=85!G=$rDI2C(B
+	* glclient/bootdialog.c: ¥µ¡¼¥Ð¥×¥ê¥»¥Ã¥ÈÊÔ½¸µ¡Ç½¤òÄÉ²Ã
 	
-	* glclient/bootdialog.c: $B%5!<%P%W%j%;%C%H:n@.5!G=$rDI2C(B
+	* glclient/bootdialog.c: ¥µ¡¼¥Ð¥×¥ê¥»¥Ã¥ÈºîÀ®µ¡Ç½¤òÄÉ²Ã
 
-	* glclient/bd_config.c (bd_config_section_set_string): $BA`:nBP>]$N(B
-	$B%(%s%H%j$,B8:_$7$J$1$l$P:n@.$9$k$h$&$KJQ99(B
+	* glclient/bd_config.c (bd_config_section_set_string): ÁàºîÂÐ¾Ý¤Î
+	¥¨¥ó¥È¥ê¤¬Â¸ºß¤·¤Ê¤±¤ì¤ÐºîÀ®¤¹¤ë¤è¤¦¤ËÊÑ¹¹
 
-	* glclient/bootdialog.c: $B%5!<%P%W%j%;%C%H0lMwI=<(5!G=$rDI2C(B
+	* glclient/bootdialog.c: ¥µ¡¼¥Ð¥×¥ê¥»¥Ã¥È°ìÍ÷É½¼¨µ¡Ç½¤òÄÉ²Ã
 
 2004-07-13  Kouji TAKAO  <kouji@netlab.jp>
 
-	$B%5!<%P%W%j%;%C%HA*Br(BGUI$B$rDI2C(B
+	¥µ¡¼¥Ð¥×¥ê¥»¥Ã¥ÈÁªÂòGUI¤òÄÉ²Ã
 	* glclient/bd_config.c
 	* glclient/bd_config.h
 	* glclient/bootdialog.c
 
 2004-07-12  Kouji TAKAO  <kouji@netlab.jp>
 
-	* glclient/bootdialog.c (boot_dialog_run): $B%Q!<%_%C%7%g%s$,(B0600$B$G(B
-	$B$J$1$l$P%@%$%"%m%0$r5/F0$7$J$$$h$&$K=$@5!#$^$?!"%@%$%"%m%0$N@_Dj%U%!(B
-	$B%$%k$N%Q!<%_%C%7%g%s$r(B0600$B$KJQ99!#(B
-	(boot_dialog_create_conf): $B@_Dj%U%!%$%k$,B8:_$7$J$$>l9g$K:n@.$9$k(B
-	$B4X?t$rDI2C(B
-	* glclient/bd_config.c (bd_config_save): $BJ]B8;~$K%Q!<%_%C%7%g%s$r(B
-	$B@_Dj$G$-$k$h$&$K=$@5(B
-	(bd_config_permissions): $B@_Dj%U%!%$%k$N%Q!<%_%C%7%g%s$r<hF@$9$k4X(B
-	$B?t$rDI2C(B
+	* glclient/bootdialog.c (boot_dialog_run): ¥Ñ¡¼¥ß¥Ã¥·¥ç¥ó¤¬0600¤Ç
+	¤Ê¤±¤ì¤Ð¥À¥¤¥¢¥í¥°¤òµ¯Æ°¤·¤Ê¤¤¤è¤¦¤Ë½¤Àµ¡£¤Þ¤¿¡¢¥À¥¤¥¢¥í¥°¤ÎÀßÄê¥Õ¥¡
+	¥¤¥ë¤Î¥Ñ¡¼¥ß¥Ã¥·¥ç¥ó¤ò0600¤ËÊÑ¹¹¡£
+	(boot_dialog_create_conf): ÀßÄê¥Õ¥¡¥¤¥ë¤¬Â¸ºß¤·¤Ê¤¤¾ì¹ç¤ËºîÀ®¤¹¤ë
+	´Ø¿ô¤òÄÉ²Ã
+	* glclient/bd_config.c (bd_config_save): ÊÝÂ¸»þ¤Ë¥Ñ¡¼¥ß¥Ã¥·¥ç¥ó¤ò
+	ÀßÄê¤Ç¤­¤ë¤è¤¦¤Ë½¤Àµ
+	(bd_config_permissions): ÀßÄê¥Õ¥¡¥¤¥ë¤Î¥Ñ¡¼¥ß¥Ã¥·¥ç¥ó¤ò¼èÆÀ¤¹¤ë´Ø
+	¿ô¤òÄÉ²Ã
 
-	* glclient/bootdialog.c (boot_dialog_run): gtk_grab_*$B$r(B
-	gtk_window_set_modal$B$KJQ99(B
+	* glclient/bootdialog.c (boot_dialog_run): gtk_grab_*¤ò
+	gtk_window_set_modal¤ËÊÑ¹¹
 
 2004-07-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/Makefile.am : blob$BDL?.4X?t$r@0M}(B
+	* libs/Makefile.am : blobÄÌ¿®´Ø¿ô¤òÀ°Íý
 
 2004-07-09  Kouji TAKAO  <kouji@netlab.jp>
 
-	* glclient/client.c (main): -dialog$B$r;XDj$5$l$?$H$-$@$17+$jJV$7%;%C(B
-	$B%7%g%s$r@\B3$G$-$k$h$&$K=$@5(B
+	* glclient/client.c (main): -dialog¤ò»ØÄê¤µ¤ì¤¿¤È¤­¤À¤±·«¤êÊÖ¤·¥»¥Ã
+	¥·¥ç¥ó¤òÀÜÂ³¤Ç¤­¤ë¤è¤¦¤Ë½¤Àµ
 
-	glclient$B$rA4$F$N%&%#%s%I%&$rJD$8$?$H$-$K:FEY%@%$%"%m%0$rI=<($G$-$k(B
-	$B$h$&$K=$@5(B
+	glclient¤òÁ´¤Æ¤Î¥¦¥£¥ó¥É¥¦¤òÊÄ¤¸¤¿¤È¤­¤ËºÆÅÙ¥À¥¤¥¢¥í¥°¤òÉ½¼¨¤Ç¤­¤ë
+	¤è¤¦¤Ë½¤Àµ
 	
-	* glclient/widgetOPS.c (InitWidgetOperations): $BJ#?t2s8F$V$3$H$,$G$-$k$h$&$K=$@5(B
+	* glclient/widgetOPS.c (InitWidgetOperations): Ê£¿ô²ó¸Æ¤Ö¤³¤È¤¬¤Ç¤­¤ë¤è¤¦¤Ë½¤Àµ
 	* glclient/styleLex.c (StyleLexInit)
 
-	* glclient/styleParser.c (StyleParserTerm): $B=*N;=hM}$r$*$3$J$&4X?t$rDI2C(B
+	* glclient/styleParser.c (StyleParserTerm): ½ªÎ»½èÍý¤ò¤ª¤³¤Ê¤¦´Ø¿ô¤òÄÉ²Ã
 	* glclient/protocol.c (TermProtocol)
 
-	* glclient/client.c (start_client): $B7+$jJV$7%;%C%7%g%s$r@\B3$9$k$?(B
-	$B$a$K$=$N=hM}$r4X?t$KJQ99!#$^$?!"%0%m!<%P%kJQ?t$N(Bfree$B$r<BAu!#(B
-	(main): $B%@%$%"%m%0$NI=<(!"%;%C%7%g%s$N@\B3$r7+$jJV$9$h$&$K=$@5(B
-	(ExitSystem): exit$B$7$J$$$h$&$K=$@5(B
-	(show_boot_dialog): $B@\B3(B/$B=*N;$rJV$9$h$&$K=$@5(B
+	* glclient/client.c (start_client): ·«¤êÊÖ¤·¥»¥Ã¥·¥ç¥ó¤òÀÜÂ³¤¹¤ë¤¿
+	¤á¤Ë¤½¤Î½èÍý¤ò´Ø¿ô¤ËÊÑ¹¹¡£¤Þ¤¿¡¢¥°¥í¡¼¥Ð¥ëÊÑ¿ô¤Îfree¤ò¼ÂÁõ¡£
+	(main): ¥À¥¤¥¢¥í¥°¤ÎÉ½¼¨¡¢¥»¥Ã¥·¥ç¥ó¤ÎÀÜÂ³¤ò·«¤êÊÖ¤¹¤è¤¦¤Ë½¤Àµ
+	(ExitSystem): exit¤·¤Ê¤¤¤è¤¦¤Ë½¤Àµ
+	(show_boot_dialog): ÀÜÂ³/½ªÎ»¤òÊÖ¤¹¤è¤¦¤Ë½¤Àµ
 
-	* glclient/bootdialog.c (boot_dialog_init): $B%P%0=$@5(B
+	* glclient/bootdialog.c (boot_dialog_init): ¥Ð¥°½¤Àµ
 	
-	$B5/F0%@%$%"%m%0$rDI2C(B
+	µ¯Æ°¥À¥¤¥¢¥í¥°¤òÄÉ²Ã
 	* glclient/client.c (show_boot_dialog, main, SetDefault)
 	* glclient/bd_config.c
 	* glclient/bd_config.h
@@ -989,165 +1061,165 @@
 2004-07-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glclient/styleParser.c (ParStyle): text, base, light, dark, mid
-	$B$KBP1~(B
+	¤ËÂÐ±þ
 
 2004-07-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* HTCparser.c (CopyTag): $B%3%a%s%H$N%3%T!<$r@5$7$/9T$&$h$&$K$7$?(B($B$G(B
-	$B$J$$$H!"(BJavascript$B$d(BCSS$B$G:$$k$+$i(B)
+	* HTCparser.c (CopyTag): ¥³¥á¥ó¥È¤Î¥³¥Ô¡¼¤òÀµ¤·¤¯¹Ô¤¦¤è¤¦¤Ë¤·¤¿(¤Ç
+	¤Ê¤¤¤È¡¢Javascript¤äCSS¤Çº¤¤ë¤«¤é)
 
 2004-07-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/exec.c: VarType$B$K7?>pJs$rIU2C$7$?(B
+	* htserver/exec.c: VarType¤Ë·¿¾ðÊó¤òÉÕ²Ã¤·¤¿
 
-	* htserver/tags.c (_Button): Javascript$B$r;H$&$h$&$K$7$?!#$3$l$G(BIE
-	$B$G$bLdBj$J$/F0$/$O$:!#(B
-	(ExpandAttributeString): $BFbItJQ?t$N;2>H$O(B$$$B$K$7$?(B
+	* htserver/tags.c (_Button): Javascript¤ò»È¤¦¤è¤¦¤Ë¤·¤¿¡£¤³¤ì¤ÇIE
+	¤Ç¤âÌäÂê¤Ê¤¯Æ°¤¯¤Ï¤º¡£
+	(ExpandAttributeString): ÆâÉôÊÑ¿ô¤Î»²¾È¤Ï$$¤Ë¤·¤¿
 
 2004-07-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/HTCparser.c (ParTag): HTC$B%?%0$G$J$$$b$N$bB0@-$KJQ?t$r;X(B
-	$BDj2DG=$K$7$?(B
+	* htserver/HTCparser.c (ParTag): HTC¥¿¥°¤Ç¤Ê¤¤¤â¤Î¤âÂ°À­¤ËÊÑ¿ô¤ò»Ø
+	Äê²ÄÇ½¤Ë¤·¤¿
 
-	* tools/htcgen.xsl: $B6/2=(B($B8\5R4IM}%7%9%F%`$O$[$\(B100%$BJQ492DG=(B)
+	* tools/htcgen.xsl: ¶¯²½(¸ÜµÒ´ÉÍý¥·¥¹¥Æ¥à¤Ï¤Û¤Ü100%ÊÑ´¹²ÄÇ½)
 
-	* htserver/exec.c (ExecCode): $BL?NaDI2C!"(BJNZNP$B$,(Bdrop$B$9$k$h$&$K$7$?(B
+	* htserver/exec.c (ExecCode): Ì¿ÎáÄÉ²Ã¡¢JNZNP¤¬drop¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* htserver/tags.c (TagsInit): optionmenu, option, select$B$NDI2C(B
+	* htserver/tags.c (TagsInit): optionmenu, option, select¤ÎÄÉ²Ã
 
 2004-06-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c (_Button): button$B%?%0$r;H$&$h$&$K$7$?!#(BIE5$B$G$O%5(B
-	$B%]!<%H$,$$$$2C8:$J$N$G!"(BUSE_IE5$B$,$"$k;~$O(Binput$B$N$^$^$K$J$C$F$$$k!#(B
+	* htserver/tags.c (_Button): button¥¿¥°¤ò»È¤¦¤è¤¦¤Ë¤·¤¿¡£IE5¤Ç¤Ï¥µ
+	¥Ý¡¼¥È¤¬¤¤¤¤²Ã¸º¤Ê¤Î¤Ç¡¢USE_IE5¤¬¤¢¤ë»þ¤Ïinput¤Î¤Þ¤Þ¤Ë¤Ê¤Ã¤Æ¤¤¤ë¡£
 
-	* tools/htcgen2: Ver 2.0$BMQ(Bhtcgen
+	* tools/htcgen2: Ver 2.0ÍÑhtcgen
 
 2004-06-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* blob/blob.c: blob$B$N(Bload/store
+	* blob/blob.c: blob¤Îload/store
 
 2004-06-29  Kouji TAKAO  <kouji@netlab.jp>
 
 	* dblib/PostgreSQL.c (EscapeString, EscapeStringInArray) 
-	(EscapeBytea, EscapeByteaInArray): LBS$B$N:G=*A`:n0LCV$rJQ99$7$F$$$J(B
-	$B$$%P%0$r=$@5(B
-	(ExecPGSQL): SQL$B$NH/9T$K;HMQ$7$?(BLBS$B$r%/%j%"$7$F$$$J$$%P%0$r=$@5(B
+	(EscapeBytea, EscapeByteaInArray): LBS¤ÎºÇ½ªÁàºî°ÌÃÖ¤òÊÑ¹¹¤·¤Æ¤¤¤Ê
+	¤¤¥Ð¥°¤ò½¤Àµ
+	(ExecPGSQL): SQL¤ÎÈ¯¹Ô¤Ë»ÈÍÑ¤·¤¿LBS¤ò¥¯¥ê¥¢¤·¤Æ¤¤¤Ê¤¤¥Ð¥°¤ò½¤Àµ
 
-	* libs/SQLparser.c (SQL_Error): Error$B%^%/%m$r2~L>$7!"2DJQD90z?t$r(B
-	$B<h$k$h$&$K=$@5(B
-	(ParSQL): $BJQ?t;2>H(B(:)$B$N%Q!<%9<:GT;~$KJQ?tL>$rI=<($9$k$h$&$K=$@5(B
-	$BE:;z$,(B0$B0J2<$H(B`['$B$@$1$N>l9g$K%(%i!<=*N;$9$k$h$&$K=$@5(B
-	SQL$BJ8$NKvHx$,(B`;'$B$G=*$o$C$F$$$J$$>l9g$K$=$N(BSQL$B$rH/9T$7$J$$%P%0$r=$@5(B
+	* libs/SQLparser.c (SQL_Error): Error¥Þ¥¯¥í¤ò²þÌ¾¤·¡¢²ÄÊÑÄ¹°ú¿ô¤ò
+	¼è¤ë¤è¤¦¤Ë½¤Àµ
+	(ParSQL): ÊÑ¿ô»²¾È(:)¤Î¥Ñ¡¼¥¹¼ºÇÔ»þ¤ËÊÑ¿ôÌ¾¤òÉ½¼¨¤¹¤ë¤è¤¦¤Ë½¤Àµ
+	Åº»ú¤¬0°Ê²¼¤È`['¤À¤±¤Î¾ì¹ç¤Ë¥¨¥é¡¼½ªÎ»¤¹¤ë¤è¤¦¤Ë½¤Àµ
+	SQLÊ¸¤ÎËöÈø¤¬`;'¤Ç½ª¤ï¤Ã¤Æ¤¤¤Ê¤¤¾ì¹ç¤Ë¤½¤ÎSQL¤òÈ¯¹Ô¤·¤Ê¤¤¥Ð¥°¤ò½¤Àµ
 
-	* tools/recgen.rb: $B<!$N%*%W%7%g%s$rDI2C(B
-	  -t, --text   varchar$B7?$r(Btext$B$H$7$F=PNO$9$k(B
-	  -n, --notab  $B%$%s%G%s%H$K(B4$B8D$N6uGr$rMQ$$$k(B
-	  -e, --emacs $B%$%s%G%s%H$K(B4$B8D$N6uGr$rMQ$$!"(BEmacs$BMQ$KKvHx$K(BLocal
-	               Variables$B$rDI2C$9$k(B
-	  -h, --help   $B$3$N%a%C%;!<%8$r=PNO$7$F=*N;$9$k(B
+	* tools/recgen.rb: ¼¡¤Î¥ª¥×¥·¥ç¥ó¤òÄÉ²Ã
+	  -t, --text   varchar·¿¤òtext¤È¤·¤Æ½ÐÎÏ¤¹¤ë
+	  -n, --notab  ¥¤¥ó¥Ç¥ó¥È¤Ë4¸Ä¤Î¶õÇò¤òÍÑ¤¤¤ë
+	  -e, --emacs ¥¤¥ó¥Ç¥ó¥È¤Ë4¸Ä¤Î¶õÇò¤òÍÑ¤¤¡¢EmacsÍÑ¤ËËöÈø¤ËLocal
+	               Variables¤òÄÉ²Ã¤¹¤ë
+	  -h, --help   ¤³¤Î¥á¥Ã¥»¡¼¥¸¤ò½ÐÎÏ¤·¤Æ½ªÎ»¤¹¤ë
 
-	* glclient/callbacks.c (window_destroy): $BA4$F$N%&%#%s%I%&$K(Bdestroy
-	$B%$%Y%s%H$rAw$k$h$&$K=$@5(B
-	* glclient/action.c (DestroyWindowAll): $BA4$F$N%&%#%s%I%&$r(BDestroy
-	$B$9$k4X?t$rDI2C(B
+	* glclient/callbacks.c (window_destroy): Á´¤Æ¤Î¥¦¥£¥ó¥É¥¦¤Ëdestroy
+	¥¤¥Ù¥ó¥È¤òÁ÷¤ë¤è¤¦¤Ë½¤Àµ
+	* glclient/action.c (DestroyWindowAll): Á´¤Æ¤Î¥¦¥£¥ó¥É¥¦¤òDestroy
+	¤¹¤ë´Ø¿ô¤òÄÉ²Ã
 
 2004-06-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/htcgen.xsl: Ver 2.0$BMQ$K?7@_(B
+	* tools/htcgen.xsl: Ver 2.0ÍÑ¤Ë¿·Àß
 
 2004-06-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* warning$B$NA]=|(B
+	* warning¤ÎÁÝ½ü
 
 2004-06-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/PostgreSQL.c (GetTable): $B"-$G:n$C$?%P%0$N=$@5(B
+	* dblib/PostgreSQL.c (GetTable): ¢­¤Çºî¤Ã¤¿¥Ð¥°¤Î½¤Àµ
 
 2004-06-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* cgi.c (CheckSessionExpire): $B%;%7%g%sJQ?t$N(Bexpire
+	* cgi.c (CheckSessionExpire): ¥»¥·¥ç¥óÊÑ¿ô¤Îexpire
 
-	* dblib/PostgreSQL.c (GetTable): dbs$B$G(Bnil$B$K$J$k(Bbug fix
+	* dblib/PostgreSQL.c (GetTable): dbs¤Çnil¤Ë¤Ê¤ëbug fix
 
 2004-06-10  Kouji TAKAO  <shimizu@netlab.jp>
 
-	* libs/mhandler.c (ParHANDLER): $B%(%i!<%a%C%;!<%8$N2~NI(B
+	* libs/mhandler.c (ParHANDLER): ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸¤Î²þÎÉ
 
 2004-06-09  Kouji TAKAO  <shimizu@netlab.jp>
 
 	* blob/blob.c (OpenEntry, NewBLOB, InitBLOB, InitBLOB) 
-	(FinishBLOB): $B%P%C%U%!%*!<%P!<%U%m!<KI;_$N$?$a(Bsprintf$B$r(Bsnprintf$B$X(B
-	$BCV49(B
+	(FinishBLOB): ¥Ð¥Ã¥Õ¥¡¥ª¡¼¥Ð¡¼¥Õ¥í¡¼ËÉ»ß¤Î¤¿¤ásprintf¤òsnprintf¤Ø
+	ÃÖ´¹
 
 2004-06-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/testnet.c: $BDI2C(B
+	* libs/testnet.c: ÄÉ²Ã
 
-	* libs/net.c: $BDL?.$N%V%m%C%/2=(B
+	* libs/net.c: ÄÌ¿®¤Î¥Ö¥í¥Ã¥¯²½
 
 2004-06-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* samples/sample1/demo1: GtkOptionMenu$B$N%5%]!<%H(B
+	* samples/sample1/demo1: GtkOptionMenu¤Î¥µ¥Ý¡¼¥È
 
-	* monpls_demo/demo.c: GtkOptionMenu$B$N%5%]!<%H(B
+	* monpls_demo/demo.c: GtkOptionMenu¤Î¥µ¥Ý¡¼¥È
 
-	* glclient/widgetOPS.c (RecvOption, SendOption): GtkOptionMenu$B$N%5%]!<%H(B
+	* glclient/widgetOPS.c (RecvOption, SendOption): GtkOptionMenu¤Î¥µ¥Ý¡¼¥È
 
-	* tools/recgen.rb: GtkOptionMenu$B$N%5%]!<%H(B
+	* tools/recgen.rb: GtkOptionMenu¤Î¥µ¥Ý¡¼¥È
 
 2004-06-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/recgen.rb: GtkFrame$B$N%i%Y%k%5%]!<%H(B
+	* tools/recgen.rb: GtkFrame¤Î¥é¥Ù¥ë¥µ¥Ý¡¼¥È
 
-	* glclient/widgetOPS.c (RecvFrame): GtkFrame$B$N%i%Y%k%5%]!<%H(B
+	* glclient/widgetOPS.c (RecvFrame): GtkFrame¤Î¥é¥Ù¥ë¥µ¥Ý¡¼¥È
 
 2004-05-26  Kouji SHIMIZU  <shimizu@netlab.jp>
 
-	* glclient/client.c (main): Gtk$B$N%9%?%$%k%U%!%$%k$NFI$_9~$_5!G=$r(B
-	$BDI2C!#%3%^%s%I%i%$%s%*%W%7%g%s(B`-gtkrc'$B$G;XDj$9$k!#(B
+	* glclient/client.c (main): Gtk¤Î¥¹¥¿¥¤¥ë¥Õ¥¡¥¤¥ë¤ÎÆÉ¤ß¹þ¤ßµ¡Ç½¤ò
+	ÄÉ²Ã¡£¥³¥Þ¥ó¥É¥é¥¤¥ó¥ª¥×¥·¥ç¥ó`-gtkrc'¤Ç»ØÄê¤¹¤ë¡£
 
 2004-05-24  Kouji SHIMIZU  <shimizu@netlab.jp>
 
-	* tools/recgen.rb (Widget::_panda): GtkPandaCList$B$N%W%m%Q%F%#$K(Brow(int)$B$rDI2C(B
+	* tools/recgen.rb (Widget::_panda): GtkPandaCList¤Î¥×¥í¥Ñ¥Æ¥£¤Ërow(int)¤òÄÉ²Ã
 	* tools/recdefgen.rb (Widget::_panda): 
 
 2004-05-23  Kouji SHIMIZU  <shimizu@netlab.jp>
 
-	* tools/recgen.rb (Element::out, Element::_append): Widget$B$N%W%m%Q(B
-	$B%F%#$N(Bappend$B=g$rJ];}$9$kG[Ns(B(@item_ary)$B$rF3F~$7!"(Bappend$B=g$K%G!<%?(B
-	$BDj5ABN$r=PNO$9$k$h$&$K=$@5(B
+	* tools/recgen.rb (Element::out, Element::_append): Widget¤Î¥×¥í¥Ñ
+	¥Æ¥£¤Îappend½ç¤òÊÝ»ý¤¹¤ëÇÛÎó(@item_ary)¤òÆ³Æþ¤·¡¢append½ç¤Ë¥Ç¡¼¥¿
+	ÄêµÁÂÎ¤ò½ÐÎÏ¤¹¤ë¤è¤¦¤Ë½¤Àµ
 
 2004-05-21  Kouji SHIMIZU  <shimizu@netlab.jp>
 
-	* libs/DBparser.c (DB_Parse): $B%G!<%?%Y!<%9Dj5ABN$NJ8K!%(%i!<;~$K(B
-	SEGV$B$GMn$A$J$$$h$&$K=$@5(B
+	* libs/DBparser.c (DB_Parse): ¥Ç¡¼¥¿¥Ù¡¼¥¹ÄêµÁÂÎ¤ÎÊ¸Ë¡¥¨¥é¡¼»þ¤Ë
+	SEGV¤ÇÍî¤Á¤Ê¤¤¤è¤¦¤Ë½¤Àµ
 
-	* libs/debug.h (Error, Warning, Message): $B=q<0;XDj$G$-$k$h$&$K=$@5(B
-	(ErrorPrintf): Error$B$G<B8=$G$-$k$h$&$K$7$?$N$G:o=|!#K\%^%/%m$r;HMQ(B
-	$B$7$F$$$k$H$3$m$O(BError$B$KJQ99!#(B
+	* libs/debug.h (Error, Warning, Message): ½ñ¼°»ØÄê¤Ç¤­¤ë¤è¤¦¤Ë½¤Àµ
+	(ErrorPrintf): Error¤Ç¼Â¸½¤Ç¤­¤ë¤è¤¦¤Ë¤·¤¿¤Î¤Çºï½ü¡£ËÜ¥Þ¥¯¥í¤ò»ÈÍÑ
+	¤·¤Æ¤¤¤ë¤È¤³¤í¤ÏError¤ËÊÑ¹¹¡£
 
 2004-05-18  Sho Hashimoto  <sho-h@netlab.jp>
 
-	* libs/LDparser.c (ParWindow, ParLD): $B%(%i!<%a%C%;!<%8$N99?7(B
+	* libs/LDparser.c (ParWindow, ParLD): ¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸¤Î¹¹¿·
 
-	* libs/debug.h (ErrorPrintf): New macro function, $B=q<0;XDj%(%i!<%a%C(B
-	$B%;!<%8=PNO$H(Bexit
-	* libs/message.c (_MessageLevelPrintf): New function, $B%l%Y%kIU$-=q(B
-	$B<0;XDj%a%C%;!<%8=PNO(B
+	* libs/debug.h (ErrorPrintf): New macro function, ½ñ¼°»ØÄê¥¨¥é¡¼¥á¥Ã
+	¥»¡¼¥¸½ÐÎÏ¤Èexit
+	* libs/message.c (_MessageLevelPrintf): New function, ¥ì¥Ù¥ëÉÕ¤­½ñ
+	¼°»ØÄê¥á¥Ã¥»¡¼¥¸½ÐÎÏ
 
-	* libs/LDparser.c (ParWindow): LD_Table$B$K(BWindow$BL>$G$O$J$/(BLD$BL>$rEP(B
-	$BO?$7$F$$$?%P%0$r=$@5!#(B
+	* libs/LDparser.c (ParWindow): LD_Table¤ËWindowÌ¾¤Ç¤Ï¤Ê¤¯LDÌ¾¤òÅÐ
+	Ï¿¤·¤Æ¤¤¤¿¥Ð¥°¤ò½¤Àµ¡£
 
 2004-05-18  Kouji SHIMIZU  <shimizu@netlab.jp>
 
-	GtkLabel$B$H(BGtkButton$B$N%i%Y%k$K(B"X"$B$,4^$^$l$F$$$l$P(B
-	rec$B$r@8@.$7$F$7$^$&%P%0$r=$@5(B
+	GtkLabel¤ÈGtkButton¤Î¥é¥Ù¥ë¤Ë"X"¤¬´Þ¤Þ¤ì¤Æ¤¤¤ì¤Ð
+	rec¤òÀ¸À®¤·¤Æ¤·¤Þ¤¦¥Ð¥°¤ò½¤Àµ
 	* tools/recgen.rb (Widget::isData, Widget::_panda) 
 	(Widget::_panda): 
 	* tools/recdefgen.rb (Widget::isData, Widget::_panda): 
 
-	* tools/dbgen.c: -insert$B%*%W%7%g%s$G(BSQL$B$N(Binsert$BJ8$N%F%s%W%l!<%H$r(B
-	$B=PNO$9$k$h$&$K=$@5!#(B
+	* tools/dbgen.c: -insert¥ª¥×¥·¥ç¥ó¤ÇSQL¤ÎinsertÊ¸¤Î¥Æ¥ó¥×¥ì¡¼¥È¤ò
+	½ÐÎÏ¤¹¤ë¤è¤¦¤Ë½¤Àµ¡£
 
 2004-05-15  Kouji SHIMIZU  <shimizu@netlab.jp>
 
@@ -1176,66 +1248,66 @@
 
 2004-04-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/cgi.c (PutHTML): $B%P!<%A%c%k%[%9%H;~$N(Bcookie$B$N07$$$N8m$j(B
-	$B$rD>$7$?(B
+	* htserver/cgi.c (PutHTML): ¥Ð¡¼¥Á¥ã¥ë¥Û¥¹¥È»þ¤Îcookie¤Î°·¤¤¤Î¸í¤ê
+	¤òÄ¾¤·¤¿
 
 2004-04-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c (_Button): event$B$rH/@8$7$J$$%\%?%s(B, onClick$BB0@-(B
+	* htserver/tags.c (_Button): event¤òÈ¯À¸¤·¤Ê¤¤¥Ü¥¿¥ó, onClickÂ°À­
 
 	* htserver/HTCparser.c: in memory parser
 
 2004-03-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c : <fixed>$B$K(Blink$BB0@-DI2C(B
+	* htserver/tags.c : <fixed>¤ËlinkÂ°À­ÄÉ²Ã
 
 2004-03-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c: <form>$B$K(Btarget$BB0@-IU2C(B
+	* htserver/tags.c: <form>¤ËtargetÂ°À­ÉÕ²Ã
 
 2004-03-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/cgi.c: CGI$B=hM}$rJ,N%$7$?(B
+	* htserver/cgi.c: CGI½èÍý¤òÊ¬Î¥¤·¤¿
 
-	* htserver/htc.c: HTC$B$r%]!<%?%V%k$K$7$?(B($BB>$G$b;H$$$?$$$?$a(B)
+	* htserver/htc.c: HTC¤ò¥Ý¡¼¥¿¥Ö¥ë¤Ë¤·¤¿(Â¾¤Ç¤â»È¤¤¤¿¤¤¤¿¤á)
 
 2004-03-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.c (ParLD) aps/aps_main.c : LD$BDj5ABN$K(Bwfc$B$N@k8@$r=|(B
-	$B$$$?(B($B<BMQE*$J0UL#$,$J$$(B)
+	* libs/LDparser.c (ParLD) aps/aps_main.c : LDÄêµÁÂÎ¤Ëwfc¤ÎÀë¸À¤ò½ü
+	¤¤¤¿(¼ÂÍÑÅª¤Ê°ÕÌ£¤¬¤Ê¤¤)
 
 2004-03-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/wfc.c (StopSystem): SIGUSR1$B$G@5>o=*N;(B
+	* wfc/wfc.c (StopSystem): SIGUSR1¤ÇÀµ¾ï½ªÎ»
 
-	* tools/monitor.c (StopSystem): SIGUSR1$B$G(Bwfc$B$r@5>o=*N;(B
+	* tools/monitor.c (StopSystem): SIGUSR1¤Çwfc¤òÀµ¾ï½ªÎ»
 
 2004-02-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/dbgroup.c: $B%j%@%$%l%/%H@lMQ4X?t(B
+	* dblib/dbgroup.c: ¥ê¥À¥¤¥ì¥¯¥ÈÀìÍÑ´Ø¿ô
 
 2004-02-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/redirect.c , tools/monitor.c: $B%j%@%$%l%/%H$N;EMMJQ99(B
+	* dblib/redirect.c , tools/monitor.c: ¥ê¥À¥¤¥ì¥¯¥È¤Î»ÅÍÍÊÑ¹¹
 
 2004-02-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/aps_main.c: aps -> wfc$B$N@\B3$@$1$K$7$?(B
+	* aps/aps_main.c: aps -> wfc¤ÎÀÜÂ³¤À¤±¤Ë¤·¤¿
 
-	* wfc/wfccontrol.c: $B@)8f@\B3MQ%/%i%$%"%s%H(B
+	* wfc/wfccontrol.c: À©¸æÀÜÂ³ÍÑ¥¯¥é¥¤¥¢¥ó¥È
 
-	* libs/socket.c, libs/net.c : Port$B$N2>A[2=$H(BUNIX domain$B$X$NBP1~(B
+	* libs/socket.c, libs/net.c : Port¤Î²¾ÁÛ²½¤ÈUNIX domain¤Ø¤ÎÂÐ±þ
 
-	* include/const.h: PORT_APS_BASE$BGQ;_(B($BITMW(B), CONTROL_PORT($B@)8f@\B3(B
-	$B$N%G%U%)%k%H$O(BUNIX domain)
+	* include/const.h: PORT_APS_BASEÇÑ»ß(ÉÔÍ×), CONTROL_PORT(À©¸æÀÜÂ³
+	¤Î¥Ç¥Õ¥©¥ë¥È¤ÏUNIX domain)
 
-	* libs/DIparser.c: $B@)8f@\B3$N@k8@;R(B
+	* libs/DIparser.c: À©¸æÀÜÂ³¤ÎÀë¸À»Ò
 
-	* libs/port.c: UNIX domain$B$X$NBP1~(B
+	* libs/port.c: UNIX domain¤Ø¤ÎÂÐ±þ
 
-	* wfc/controlthread.c : $B@)8f@\B3$N=hM}(B($B$^$@;O$a$?$P$+$j(B)
+	* wfc/controlthread.c : À©¸æÀÜÂ³¤Î½èÍý(¤Þ¤À»Ï¤á¤¿¤Ð¤«¤ê)
 
-	* wfc/wfc.c: $B@)8f@\B3(B
+	* wfc/wfc.c: À©¸æÀÜÂ³
 
 2004-02-20  Noboru Saitou  <noborus@netlab.jp>
 
@@ -1243,384 +1315,384 @@
 
 2004-02-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/glcomm.c: glclient Ver 1.1.1$B$X$NBP1~(B(glclient for Win32$BMQ(B)
+	* glserver/glcomm.c: glclient Ver 1.1.1¤Ø¤ÎÂÐ±þ(glclient for Win32ÍÑ)
 
 2004-02-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/server.c: $BJ#?t$N%P%$%H%*!<%@$X$NBP1~(B
+	* glserver/server.c: Ê£¿ô¤Î¥Ð¥¤¥È¥ª¡¼¥À¤Ø¤ÎÂÐ±þ
 
 2004-02-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/glcomm.c: $B?7@_(B($B%P%$%H%*!<%@Ey$r0U<1$9$kDL?.4X?t(B)
+	* glserver/glcomm.c: ¿·Àß(¥Ð¥¤¥È¥ª¡¼¥ÀÅù¤ò°Õ¼±¤¹¤ëÄÌ¿®´Ø¿ô)
 
-	* libs/comm.c: ???Data$B$N4X?t$r(Bglclient/protocol.c$B$K0\F0(B
+	* libs/comm.c: ???Data¤Î´Ø¿ô¤òglclient/protocol.c¤Ë°ÜÆ°
 
 2004-02-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/protocol.c: $B<B9T;~$N%m%0$r<hF@$9$k$h$&$K$7$?(B
+	* glclient/protocol.c: ¼Â¹Ô»þ¤Î¥í¥°¤ò¼èÆÀ¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2004-02-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/wfc.c, wfc/mqthread.c, wfc/termthread.c, tools/monitor.c:
-	$B%H%i%s%6%/%7%g%s$N:F;n9T2s?t$N>e8B$r@_Dj$G$-$k$h$&$K$7$?(B
+	¥È¥é¥ó¥¶¥¯¥·¥ç¥ó¤ÎºÆ»î¹Ô²ó¿ô¤Î¾å¸Â¤òÀßÄê¤Ç¤­¤ë¤è¤¦¤Ë¤·¤¿
 
-	* tools/monitor.c: wfc$B5/F08e$NBT$A;~4V$N;XDj(B
+	* tools/monitor.c: wfcµ¯Æ°¸å¤ÎÂÔ¤Á»þ´Ö¤Î»ØÄê
 
-	* fdd/fdd.c (fdd_system): system()$B$N0BA4@-3NJ](B
+	* fdd/fdd.c (fdd_system): system()¤Î°ÂÁ´À­³ÎÊÝ
 
 2004-02-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/server.c (CheckScreen): $B%9%/%j!<%s%A%'%C%/$N4V0c$$$rD>(B
-	$B$7$?(B
+	* glserver/server.c (CheckScreen): ¥¹¥¯¥ê¡¼¥ó¥Á¥§¥Ã¥¯¤Î´Ö°ã¤¤¤òÄ¾
+	¤·¤¿
 
 2004-02-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* fdd/fdd.c: $B%3%^%s%I$N<B9TO@M}$NJQ99(B
+	* fdd/fdd.c: ¥³¥Þ¥ó¥É¤Î¼Â¹ÔÏÀÍý¤ÎÊÑ¹¹
 
 2004-02-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DIparser.c : wfc$B$NBT5!%]!<%H$r(Bdirectory$B$K5-=R$G$-$k$h$&$K$7$?(B
+	* libs/DIparser.c : wfc¤ÎÂÔµ¡¥Ý¡¼¥È¤òdirectory¤Ëµ­½Ò¤Ç¤­¤ë¤è¤¦¤Ë¤·¤¿
 
 2004-02-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/redirect.c (OpenDB_RedirectPort): dbredirector$B$K@\B3$7$J$$(B
-	$B5!G=(B
+	* dblib/redirect.c (OpenDB_RedirectPort): dbredirector¤ËÀÜÂ³¤·¤Ê¤¤
+	µ¡Ç½
 
 2004-01-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/widgetOPS.c (InitWidgetOperations): gtk+panda$B$N%P%02sHr(B
-	$B%3!<%I(B
+	* glclient/widgetOPS.c (InitWidgetOperations): gtk+panda¤Î¥Ð¥°²óÈò
+	¥³¡¼¥É
 
 2004-01-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* include/struct.h: $BL>>NJQ99(B(SQL_Operation -> DB_Operation)
+	* include/struct.h: Ì¾¾ÎÊÑ¹¹(SQL_Operation -> DB_Operation)
 
-	* glserver/glserver.c: -ignore$B$r=|$/(B($B%P!<%8%g%s%A%'%C%/$NJ}K!$rJQ(B
-	$B$($?$?$a$KITMW$K$J$C$?(B)
+	* glserver/glserver.c: -ignore¤ò½ü¤¯(¥Ð¡¼¥¸¥ç¥ó¥Á¥§¥Ã¥¯¤ÎÊýË¡¤òÊÑ
+	¤¨¤¿¤¿¤á¤ËÉÔÍ×¤Ë¤Ê¤Ã¤¿)
 
 2004-01-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/server.c (CheckFeture): $B%/%i%$%"%s%H$N%P!<%8%g%s%A%'%C(B
-	$B%/J}K!$rJQ$($?(B
+	* glserver/server.c (CheckFeture): ¥¯¥é¥¤¥¢¥ó¥È¤Î¥Ð¡¼¥¸¥ç¥ó¥Á¥§¥Ã
+	¥¯ÊýË¡¤òÊÑ¤¨¤¿
 
-	* dblib/System.c: $B?7$7$$(BDB$B%O%s%I%i(B($B%7%9%F%`JQ?t$rFI$`(B)
+	* dblib/System.c: ¿·¤·¤¤DB¥Ï¥ó¥É¥é(¥·¥¹¥Æ¥àÊÑ¿ô¤òÆÉ¤à)
 
 2004-01-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/server.c (SendValue): libs/comm.c$B$+$i0\$7$?(B($B$3$3$G$7$+;H$o$l$F$J$$(B)
+	* glserver/server.c (SendValue): libs/comm.c¤«¤é°Ü¤·¤¿(¤³¤³¤Ç¤·¤«»È¤ï¤ì¤Æ¤Ê¤¤)
 
 2004-01-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/redirect.c: $B%j%@%$%l%/%?$,0[>o$N;~$KMn$H$95!G=$r$D$1$?(B
+	* dblib/redirect.c: ¥ê¥À¥¤¥ì¥¯¥¿¤¬°Û¾ï¤Î»þ¤ËÍî¤È¤¹µ¡Ç½¤ò¤Ä¤±¤¿
 
 2004-01-15  Shugo Maeda  <shugo@netlab.jp>
 
-	* aps/Ruby.c : Ruby$B%O%s%I%i$N%5%]!<%H(B
+	* aps/Ruby.c : Ruby¥Ï¥ó¥É¥é¤Î¥µ¥Ý¡¼¥È
 
 2004-01-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* fdd/fdd.c, fdd/fdw.c : $B=hM}$N<B9T%9%F!<%?%9$NJV5Q(B
+	* fdd/fdd.c, fdd/fdw.c : ½èÍý¤Î¼Â¹Ô¥¹¥Æ¡¼¥¿¥¹¤ÎÊÖµÑ
 
 2004-01-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/comm.c (SendValueBody, RecvValueBody, SendFixedString): $BITMW$J$N$G:o=|$7$?(B
+	* libs/comm.c (SendValueBody, RecvValueBody, SendFixedString): ÉÔÍ×¤Ê¤Î¤Çºï½ü¤·¤¿
 
 2004-01-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* fdd/ : $B%U%!%$%kA`:n$r%j%b!<%H$G9T$&%W%m%0%i%`DI2C(B
+	* fdd/ : ¥Õ¥¡¥¤¥ëÁàºî¤ò¥ê¥â¡¼¥È¤Ç¹Ô¤¦¥×¥í¥°¥é¥àÄÉ²Ã
 
 2004-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/PostgreSQL.c (ValueToSQL): $B%/%*!<%H$N8m$j$rD>$7$?(B
+	* dblib/PostgreSQL.c (ValueToSQL): ¥¯¥ª¡¼¥È¤Î¸í¤ê¤òÄ¾¤·¤¿
 
 2004-01-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/socket.c : Socket -> IP_Socket(IP$B0J30$N(Bsocket$B$r07$&4X?t$rDI(B
-	$B2C$9$k$?$a(B). UNIX$B%I%a%$%s$N=hM}$NDI2C(B
+	* libs/socket.c : Socket -> IP_Socket(IP°Ê³°¤Îsocket¤ò°·¤¦´Ø¿ô¤òÄÉ
+	²Ã¤¹¤ë¤¿¤á). UNIX¥É¥á¥¤¥ó¤Î½èÍý¤ÎÄÉ²Ã
 
 2003-12-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* include/struct.h: DB_Func$BEy$N9=B$JQ99(B($BL>A0I=$KEPO?$7$J$$4X?t$rA}$d$7$?(B)
+	* include/struct.h: DB_FuncÅù¤Î¹½Â¤ÊÑ¹¹(Ì¾Á°É½¤ËÅÐÏ¿¤·¤Ê¤¤´Ø¿ô¤òÁý¤ä¤·¤¿)
 
-	* aps/Exec.c (ExecuteDB_Server): rc$B$,IiCM$N;~$K$O<B=hM}$r2sHr$9$k$h$&$K$7$?(B
+	* aps/Exec.c (ExecuteDB_Server): rc¤¬ÉéÃÍ¤Î»þ¤Ë¤Ï¼Â½èÍý¤ò²óÈò¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2003-12-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/dbgroup.c (ExecDB_Process): path, func$B$K0z?t$,;H$($k$h$&$K$7$?(B
+	* dblib/dbgroup.c (ExecDB_Process): path, func¤Ë°ú¿ô¤¬»È¤¨¤ë¤è¤¦¤Ë¤·¤¿
 
 2003-12-25  Shugo Maeda  <shugo@netlab.jp>
 
-	* htserver/tags.c: <LINK>$B$N%5%]!<%H(B
+	* htserver/tags.c: <LINK>¤Î¥µ¥Ý¡¼¥È
 
 2003-12-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libmondai$B$,9q:]2=$5$l$F$$$J$$;~$NF0:n$rD>$7$?(B
+	* libmondai¤¬¹ñºÝ²½¤µ¤ì¤Æ¤¤¤Ê¤¤»þ¤ÎÆ°ºî¤òÄ¾¤·¤¿
 
 2003-12-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/dbgroup.c (ExecDBG_Operation): static$B$K$7$?(B($BI,MW$,$J$/$J$C$?(B)
+	* dblib/dbgroup.c (ExecDBG_Operation): static¤Ë¤·¤¿(É¬Í×¤¬¤Ê¤¯¤Ê¤Ã¤¿)
 
 2003-12-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/Dlex.h (T_CODING): $B%G%#%l%/%F%#%V$NL>>N$rD>$7$?(B($B8=:_$N$H$3(B
-	$B$mN>J};H$($k(B)
+	* libs/Dlex.h (T_CODING): ¥Ç¥£¥ì¥¯¥Æ¥£¥Ö¤ÎÌ¾¾Î¤òÄ¾¤·¤¿(¸½ºß¤Î¤È¤³
+	¤íÎ¾Êý»È¤¨¤ë)
 
 2003-12-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c (_Form): name=$B$N%5%]!<%H(B
+	* htserver/tags.c (_Form): name=¤Î¥µ¥Ý¡¼¥È
 
-	* $B%"%W%j%1!<%7%g%s$+$i(Buser$B$rJQ992DG=$K$7$?(B
+	* ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤«¤éuser¤òÊÑ¹¹²ÄÇ½¤Ë¤·¤¿
 
 2003-12-17  Shugo Maeda  <shugo@netlab.jp>
 
-	* htserver/server.c: $B4D6-$K$h$C$F!"(Bsendmsg(2)/recvmsg(2)$B$,>e<j$/F0(B
-	$B$+$J$$LdBj$N=$@5(B
+	* htserver/server.c: ´Ä¶­¤Ë¤è¤Ã¤Æ¡¢sendmsg(2)/recvmsg(2)¤¬¾å¼ê¤¯Æ°
+	¤«¤Ê¤¤ÌäÂê¤Î½¤Àµ
 
 2003-12-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* monpls_demo/demo.c: $BF|%l%;$KI,MW$J%&%#%8%'%C%HA4It$KBP1~(B
+	* monpls_demo/demo.c: Æü¥ì¥»¤ËÉ¬Í×¤Ê¥¦¥£¥¸¥§¥Ã¥ÈÁ´Éô¤ËÂÐ±þ
 
-	* auth/glauth.c (ExecuteServer): fork$B$9$k$h$&$K$7$?(B($B0[>o%/%i%$%"%s(B
-	$B%H$KBP$7$F(Brobust$B$K$9$k$?$a(B)
+	* auth/glauth.c (ExecuteServer): fork¤¹¤ë¤è¤¦¤Ë¤·¤¿(°Û¾ï¥¯¥é¥¤¥¢¥ó
+	¥È¤ËÂÐ¤·¤Ærobust¤Ë¤¹¤ë¤¿¤á)
 
 2003-12-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/SQLparser.h : byte code$B$N;EMM$r0lItJQ99(B
+	* libs/SQLparser.h : byte code¤Î»ÅÍÍ¤ò°ìÉôÊÑ¹¹
 
-	* aps/OpenCOBOL.c (GetApplication): Pack/UnPack$B$N;EMMJQ99$KDI=>(B
+	* aps/OpenCOBOL.c (GetApplication): Pack/UnPack¤Î»ÅÍÍÊÑ¹¹¤ËÄÉ½¾
 
 2003-12-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/Shell.c (ExecShell): 1$B%H%i%s%6%/%7%g%sFb$GJ#?t5/F0$,=PMh$k(B
-	$B$h$&$K(B($B$J$s$G$3$s$J$H$3$m$K(BRewindLBS$B$,$"$k$s$@$h(B(-_-))
+	* dblib/Shell.c (ExecShell): 1¥È¥é¥ó¥¶¥¯¥·¥ç¥óÆâ¤ÇÊ£¿ôµ¯Æ°¤¬½ÐÍè¤ë
+	¤è¤¦¤Ë(¤Ê¤ó¤Ç¤³¤ó¤Ê¤È¤³¤í¤ËRewindLBS¤¬¤¢¤ë¤ó¤À¤è(-_-))
 
-	* glserver/server.c (ThisAuth): AuthUser$B$N0z?tJQ99(B
+	* glserver/server.c (ThisAuth): AuthUser¤Î°ú¿ôÊÑ¹¹
 
 2003-11-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dbstuff/dbs_main.c : $B%9%-!<%^Ld$$9g$o$;%3%^%s%IDI2C(B
+	* dbstuff/dbs_main.c : ¥¹¥­¡¼¥ÞÌä¤¤¹ç¤ï¤»¥³¥Þ¥ó¥ÉÄÉ²Ã
 
 2003-11-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/client.c (SetDefault): $B%G%U%)%k%H$,(Bv2 off$B$K(B
+	* glclient/client.c (SetDefault): ¥Ç¥Õ¥©¥ë¥È¤¬v2 off¤Ë
 
 2003-11-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/monitor.c (StopSystem): SIGHUP$B$G(Baps$B:F5/F0!"(BSIGUSR1$B$GDd;_(B
+	* tools/monitor.c (StopSystem): SIGHUP¤ÇapsºÆµ¯Æ°¡¢SIGUSR1¤ÇÄä»ß
 
 2003-11-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/comms.c (SendValueString): $B7?>pJs$NIU2C%*%W%7%g%sDI2C(B
+	* libs/comms.c (SendValueString): ·¿¾ðÊó¤ÎÉÕ²Ã¥ª¥×¥·¥ç¥óÄÉ²Ã
 
 2003-11-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* configure.in: libmondai$B$N%A%'%C%/%(%i!<;~$NDd;_(B
+	* configure.in: libmondai¤Î¥Á¥§¥Ã¥¯¥¨¥é¡¼»þ¤ÎÄä»ß
 
-	* aps/OpenCOBOL.c (_ReadyExecute): libcob$B$N=i4|2=$r2?EY$b$7$J$$$h$&$K$7$?(B
+	* aps/OpenCOBOL.c (_ReadyExecute): libcob¤Î½é´ü²½¤ò²¿ÅÙ¤â¤·¤Ê¤¤¤è¤¦¤Ë¤·¤¿
 
 2003-11-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/dbgroup.c: ExecDB_Function$B:o=|(B($BITMW$@$7:.Mp$N85(B)
+	* dblib/dbgroup.c: ExecDB_Functionºï½ü(ÉÔÍ×¤À¤·º®Íð¤Î¸µ)
 
 2003-11-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* include/struct.h: change member name
 
-	* dblib/PostgreSQL.c (ValueToSQL): bug fix(quote$BK:$l(B)
+	* dblib/PostgreSQL.c (ValueToSQL): bug fix(quoteËº¤ì)
 
 2003-11-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/: $B9q:]2=(B
+	* htserver/: ¹ñºÝ²½
 
 2003-10-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Ver 1.2.0 $B%j%j!<%9(B($B0BDjHG%V%i%s%A:n@.(B)
+	* Ver 1.2.0 ¥ê¥ê¡¼¥¹(°ÂÄêÈÇ¥Ö¥é¥ó¥ÁºîÀ®)
 
 	* libs/comm.c (SendLBS): bug fix
 
 2003-10-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/recgen.rb: $B%\%?%s$N%"%$%F%`@8@.(B
+	* tools/recgen.rb: ¥Ü¥¿¥ó¤Î¥¢¥¤¥Æ¥àÀ¸À®
 
 2003-10-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/callbacks.c (send_event): gtk_widget_get_toplevel$B$N%P%0(B
-	$B2sHr(B($B$J$<$+L>A0$,>C$($F$$$k$3$H$,$"$k(B)
+	* glclient/callbacks.c (send_event): gtk_widget_get_toplevel¤Î¥Ð¥°
+	²óÈò(¤Ê¤¼¤«Ì¾Á°¤¬¾Ã¤¨¤Æ¤¤¤ë¤³¤È¤¬¤¢¤ë)
 
 2003-10-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/recgen.rb: Signal -> Gsignal(Ruby 1.8$B$G%(%i!<$H$J$C$?$?$a(B)
+	* tools/recgen.rb: Signal -> Gsignal(Ruby 1.8¤Ç¥¨¥é¡¼¤È¤Ê¤Ã¤¿¤¿¤á)
 
 2003-10-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/copygen.c (_COBOL): alias$B$KBP1~(B
+	* tools/copygen.c (_COBOL): alias¤ËÂÐ±þ
 
-	* libs/ : Dlex.[ch], DBlex.[ch], DIlex.[ch]$B$r$d$a$F!"(Blibmondai$BCf$N(B
-	$BHFMQ(BLex$B$r;H$&$h$&$K$7$?(B
+	* libs/ : Dlex.[ch], DBlex.[ch], DIlex.[ch]¤ò¤ä¤á¤Æ¡¢libmondaiÃæ¤Î
+	ÈÆÍÑLex¤ò»È¤¦¤è¤¦¤Ë¤·¤¿
 
 2003-09-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/dbgen.c (main): DB$B$N$"$?$j$NJQ99$KBP1~(B
+	* tools/dbgen.c (main): DB¤Î¤¢¤¿¤ê¤ÎÊÑ¹¹¤ËÂÐ±þ
 
-	* dblib/PostgreSQL.c (GetTable): int$B$N;~$N=hM}$r@5$7$/D>$7$?(B
+	* dblib/PostgreSQL.c (GetTable): int¤Î»þ¤Î½èÍý¤òÀµ¤·¤¯Ä¾¤·¤¿
 
-	* tools/checkdir.c (DumpPath): path$B$N%@%s%W5!G=DI2C(B
+	* tools/checkdir.c (DumpPath): path¤Î¥À¥ó¥×µ¡Ç½ÄÉ²Ã
 
 2003-09-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/PostgreSQL.c: null$BCMBP1~(B
+	* dblib/PostgreSQL.c: nullÃÍÂÐ±þ
 
 2003-09-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/Dlex.c: LDlex.c BDlex.c DBDlex.c$B$rE}9g(B
+	* libs/Dlex.c: LDlex.c BDlex.c DBDlex.c¤òÅý¹ç
 
-	* libs/mhandler.c: LDparser.c BDparser.c$B$N$&$A!"(Bhandler$B$N=hM}ItJ,$rJ,N%(B
+	* libs/mhandler.c: LDparser.c BDparser.c¤Î¤¦¤Á¡¢handler¤Î½èÍýÉôÊ¬¤òÊ¬Î¥
 
 2003-09-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DB*.[ch] : libmondai$B$+$iJ,N%$7$?(B
+	* libs/DB*.[ch] : libmondai¤«¤éÊ¬Î¥¤·¤¿
 
-	* libs/SQL*.[ch]: libmondai$B$+$iLa$7$?(B(libmondai$B$K$"$k$Y$-$G$O$J$$$N$G(B)
+	* libs/SQL*.[ch]: libmondai¤«¤éÌá¤·¤¿(libmondai¤Ë¤¢¤ë¤Ù¤­¤Ç¤Ï¤Ê¤¤¤Î¤Ç)
 
 2003-09-04  OGOSHI  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.c, libs/BDparse.c, aps/handler.c: $B0lIt%O%s%I%i$rDj(B
-	$B5A2DG=$K$7$?(B
+	* libs/LDparser.c, libs/BDparse.c, aps/handler.c: °ìÉô¥Ï¥ó¥É¥é¤òÄê
+	µÁ²ÄÇ½¤Ë¤·¤¿
 
 2003-09-03  OGOSHI  <ogochan@nurs.or.jp>
 
-	* aps/handler.h: $B7?L>JQ99(B(MessageHandler -> MessageHandlerClass)
+	* aps/handler.h: ·¿Ì¾ÊÑ¹¹(MessageHandler -> MessageHandlerClass)
 
 2003-08-31  OGOSHI  <ogochan@nurs.or.jp>
 
-	* dblib/PostgreSQL.c (ExecPGSQL): $BI|5"%3!<%I$N07$$$NJQ99(B($BCWL?E*$G(B
-	$B$J$$I|5"%3!<%I$O@Q;;$9$k$h$&$K$7$?(B
+	* dblib/PostgreSQL.c (ExecPGSQL): Éüµ¢¥³¡¼¥É¤Î°·¤¤¤ÎÊÑ¹¹(Ã×Ì¿Åª¤Ç
+	¤Ê¤¤Éüµ¢¥³¡¼¥É¤ÏÀÑ»»¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2003-08-30  OGOSHI  <ogochan@nurs.or.jp>
 
-	* aps/apslib.rb, aps/Exec.c: $B%G!<%?%Y!<%9%"%/%;%9$r2DG=$K$7$?(B
+	* aps/apslib.rb, aps/Exec.c: ¥Ç¡¼¥¿¥Ù¡¼¥¹¥¢¥¯¥»¥¹¤ò²ÄÇ½¤Ë¤·¤¿
 
 2003-08-19  OGOSHI  <ogochan@nurs.or.jp>
 
-	* aps/apsio.c (CheckCache): $B4V0c$$=$@5(B
+	* aps/apsio.c (CheckCache): ´Ö°ã¤¤½¤Àµ
 
 2003-08-15  OGOSHI  <ogochan@nurs.or.jp>
 
-	* aps/Exec.c: CGI$B%9%?%$%k$KG$0U$N(Bsub process$B$r(Bexec$B$9$k%O%s%I%i(B
+	* aps/Exec.c: CGI¥¹¥¿¥¤¥ë¤ËÇ¤°Õ¤Îsub process¤òexec¤¹¤ë¥Ï¥ó¥É¥é
 
 2003-08-09  OGOSHI  <ogochan@nurs.or.jp>
 
-	* configure.in: GNOME$B$N=hM}$r@5$7$/$7$?!#%5!<%P$N$_(Bbuild$B=PMh$k$h$&(B
-	$B$K$7$?(B
+	* configure.in: GNOME¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿¡£¥µ¡¼¥Ð¤Î¤ßbuild½ÐÍè¤ë¤è¤¦
+	¤Ë¤·¤¿
 
 2003-08-05  OGOSHI  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.h: WindowBind$B$N9=B$$N<c43$NJQ99!"(BcWindows$B$NO@M}$N(B
-	$BJQ99(B($B$3$N$?$a!"%G!<%?$NJB$S$,JQ99$K$J$C$F$$$k(B)
+	* libs/LDparser.h: WindowBind¤Î¹½Â¤¤Î¼ã´³¤ÎÊÑ¹¹¡¢cWindows¤ÎÏÀÍý¤Î
+	ÊÑ¹¹(¤³¤Î¤¿¤á¡¢¥Ç¡¼¥¿¤ÎÊÂ¤Ó¤¬ÊÑ¹¹¤Ë¤Ê¤Ã¤Æ¤¤¤ë)
 
 2003-07-27  OGOSHI  <ogochan@nurs.or.jp>
 
-	* libs/socket.c: tcp.c$B$+$iL>A0JQ99(B(TCP$B0J30$N@\B3$9$k$+$bCN$l$s$+$i$M(B)
+	* libs/socket.c: tcp.c¤«¤éÌ¾Á°ÊÑ¹¹(TCP°Ê³°¤ÎÀÜÂ³¤¹¤ë¤«¤âÃÎ¤ì¤ó¤«¤é¤Í)
 
 2003-06-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* configure.in: msgd$B$r;H$&$+$I$&$+$NA*Br(B
+	* configure.in: msgd¤ò»È¤¦¤«¤É¤¦¤«¤ÎÁªÂò
 
 2003-06-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/message.c (InitMessage): msgd$B$K=PNO$9$k5!G=(B
+	* libs/message.c (InitMessage): msgd¤Ë½ÐÎÏ¤¹¤ëµ¡Ç½
 
-	* tools/msgd.c: $B%a%C%;!<%8%m%0$r<}=8$9$k(Bdaemon$B?75,:n@.(B
+	* tools/msgd.c: ¥á¥Ã¥»¡¼¥¸¥í¥°¤ò¼ý½¸¤¹¤ëdaemon¿·µ¬ºîÀ®
 
 2003-06-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/net.c (Send, Recv): EOF$BH=Dj$rD>$7$?(B
+	* libs/net.c (Send, Recv): EOFÈ½Äê¤òÄ¾¤·¤¿
 
 2003-06-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* auth/glauth.c (ExecuteServer): $BB?=E2=$r$d$a$k(B($BI,MW@-$,$J$$(B)
+	* auth/glauth.c (ExecuteServer): Â¿½Å²½¤ò¤ä¤á¤ë(É¬Í×À­¤¬¤Ê¤¤)
 
-	* libs/tcp.c (SetNodelay): $BDI2C(B(TCP_NODELAY$B$r@_Dj$9$k(B)
+	* libs/tcp.c (SetNodelay): ÄÉ²Ã(TCP_NODELAY¤òÀßÄê¤¹¤ë)
 
 2003-06-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/OpenCOBOL.c (_ReadyDC): preload$B$r$d$a$?(B(if$B$r$$$8$l$P85$KLa$k(B)
+	* aps/OpenCOBOL.c (_ReadyDC): preload¤ò¤ä¤á¤¿(if¤ò¤¤¤¸¤ì¤Ð¸µ¤ËÌá¤ë)
 
 2003-06-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/OpenCOBOL.c (_StartBatch): $B%Q%i%a!<%?$NJ8;zNs$r(BCOBOL$B7A<0$KJQ99(B
+	* aps/OpenCOBOL.c (_StartBatch): ¥Ñ¥é¥á¡¼¥¿¤ÎÊ¸»úÎó¤òCOBOL·Á¼°¤ËÊÑ¹¹
 
 2003-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/PostgreSQL.c (GetValue): bug fix(integer$B$N;~$NCM3MF@$,$*$+(B
-	$B$7$+$C$?(B)
+	* dblib/PostgreSQL.c (GetValue): bug fix(integer¤Î»þ¤ÎÃÍ³ÍÆÀ¤¬¤ª¤«
+	¤·¤«¤Ã¤¿)
 
-	* include/glterm.h (SCREEN_FORK_WINDOW): $B?75,%&%#%s%I%&$r=P$7$F=h(B
-	$BM}$rJ,;^$5$;$k5!G=(B($B%]%C%W%"%C%W$G$O$J$/!"B>$K=hM}$r0\$9$?$a(B)
+	* include/glterm.h (SCREEN_FORK_WINDOW): ¿·µ¬¥¦¥£¥ó¥É¥¦¤ò½Ð¤·¤Æ½è
+	Íý¤òÊ¬»Þ¤µ¤»¤ëµ¡Ç½(¥Ý¥Ã¥×¥¢¥Ã¥×¤Ç¤Ï¤Ê¤¯¡¢Â¾¤Ë½èÍý¤ò°Ü¤¹¤¿¤á)
 
 2003-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (MessageThread): MCP_PUT_NEW$B$N=hM}$K8m$j$,$"$C$?(B
+	* wfc/mqthread.c (MessageThread): MCP_PUT_NEW¤Î½èÍý¤Ë¸í¤ê¤¬¤¢¤Ã¤¿
 
-	* libs/Makefile.am (libpanda_la_DEPENDENCIES): enum.h$B$r%$%s%9%H!<(B
-	$B%kBP>]$K$7$?(B
+	* libs/Makefile.am (libpanda_la_DEPENDENCIES): enum.h¤ò¥¤¥ó¥¹¥È¡¼
+	¥ëÂÐ¾Ý¤Ë¤·¤¿
 
 2003-05-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/server.c (CheckScreen): $B%m%0=P$7$NJQ99(B
-	(MainLoop): $B%/%i%$%"%s%H$N%P!<%8%g%s%A%'%C%/$r$7$J$$%*%W%7%g%s$r:n$C$?(B
+	* glserver/server.c (CheckScreen): ¥í¥°½Ð¤·¤ÎÊÑ¹¹
+	(MainLoop): ¥¯¥é¥¤¥¢¥ó¥È¤Î¥Ð¡¼¥¸¥ç¥ó¥Á¥§¥Ã¥¯¤ò¤·¤Ê¤¤¥ª¥×¥·¥ç¥ó¤òºî¤Ã¤¿
 
 2003-05-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/widgetOPS.c (RegistValue): $BL>A0$N;}$AJ}$rJQ99(B(V2$BBP1~(B)
+	* glclient/widgetOPS.c (RegistValue): Ì¾Á°¤Î»ý¤ÁÊý¤òÊÑ¹¹(V2ÂÐ±þ)
 
-	* glclient/callbacks.c: V2$B%W%m%H%3%k$X$NBP1~$r@5$7$/$7$?(B
+	* glclient/callbacks.c: V2¥×¥í¥È¥³¥ë¤Ø¤ÎÂÐ±þ¤òÀµ¤·¤¯¤·¤¿
 
 2003-05-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/copygen.c (_COBOL): COBOL$BFs<!85G[NsLdBjBP1~(B
+	* tools/copygen.c (_COBOL): COBOLÆó¼¡¸µÇÛÎóÌäÂêÂÐ±þ
 
 2003-05-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (SelectData): aps$B$N%T%s;_$a(B
+	* wfc/mqthread.c (SelectData): aps¤Î¥Ô¥ó»ß¤á
 
 2003-05-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/protocol.c (RecvValue): $B=hM}$9$k%W%m%H%3%k%P!<%8%g%s$r;XDj2DG=$K$7$?(B
+	* glclient/protocol.c (RecvValue): ½èÍý¤¹¤ë¥×¥í¥È¥³¥ë¥Ð¡¼¥¸¥ç¥ó¤ò»ØÄê²ÄÇ½¤Ë¤·¤¿
 
 2003-05-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/load.c: libltdl$B$r;H$&$N$r$d$a$?(B(Woody$B$G$O@5>o$KF0$+$J$$$?$a(B)
+	* libs/load.c: libltdl¤ò»È¤¦¤Î¤ò¤ä¤á¤¿(Woody¤Ç¤ÏÀµ¾ï¤ËÆ°¤«¤Ê¤¤¤¿¤á)
 
 2003-05-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.c (ParLD): $B%-%c%C%7%e?t$NDI2C(B
+	* libs/LDparser.c (ParLD): ¥­¥ã¥Ã¥·¥å¿ô¤ÎÄÉ²Ã
 
-	* aps/apsio.c (CheckCache): spa, link$B$N%-%c%C%7%e5!9=(B
+	* aps/apsio.c (CheckCache): spa, link¤Î¥­¥ã¥Ã¥·¥åµ¡¹½
 
 2003-05-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c: aps$BB?=E2=(B
+	* wfc/mqthread.c: apsÂ¿½Å²½
 
-	* libs/queue.c (PeekQueue): $BDI2C(B
+	* libs/queue.c (PeekQueue): ÄÉ²Ã
 
 2003-05-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/apslib.h: handler.h, wfc.h$B$+$i308~$1(BAPI$BJ,$rJ,N%(B
+	* aps/apslib.h: handler.h, wfc.h¤«¤é³°¸þ¤±APIÊ¬¤òÊ¬Î¥
 
 2003-05-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* panda-config.in: libpandadb$B$N308~$1(BAPI$BMQ$KDI2C(B
+	* panda-config.in: libpandadb¤Î³°¸þ¤±APIÍÑ¤ËÄÉ²Ã
 
-	* dblib/dblib.h: dbgroup.h$B$+$i308~$1(BAPI$BJ,$rJ,N%(B
+	* dblib/dblib.h: dbgroup.h¤«¤é³°¸þ¤±APIÊ¬¤òÊ¬Î¥
 
 	* aps/loader.c: dynamic loader module
 
-	* aps/C.c: C$BMQ8@8l%O%s%I%i(B
+	* aps/C.c: CÍÑ¸À¸ì¥Ï¥ó¥É¥é
 
 2003-04-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/recgen.rb: $BG[Ns$NBg$-$5$N4V0c$$$r=$@5$7$?(B
+	* tools/recgen.rb: ÇÛÎó¤ÎÂç¤­¤µ¤Î´Ö°ã¤¤¤ò½¤Àµ¤·¤¿
 
 2003-04-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1628,36 +1700,36 @@
 
 2003-04-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/Postgres.c: $B%(%i!<;~$N%a%b%j!<%j!<%/BP:v(B
+	* dblib/Postgres.c: ¥¨¥é¡¼»þ¤Î¥á¥â¥ê¡¼¥ê¡¼¥¯ÂÐºö
 
 2003-04-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/termthread.c: $B%$%Y%s%H$NBQ>c32@-8~>e(B
+	* wfc/termthread.c: ¥¤¥Ù¥ó¥È¤ÎÂÑ¾ã³²À­¸þ¾å
 
-	* glserver/server.c: $BDL?.$NBQ>c32@-8~>e(B
+	* glserver/server.c: ÄÌ¿®¤ÎÂÑ¾ã³²À­¸þ¾å
 
 2003-04-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/applications.c (ApplicationsInit): $B%"%W%j%1!<%7%g%s$K=i4|2=(B
-	$B%Q%i%a!<%?$rEO$9$h$&$K$7$?(B
+	* libs/applications.c (ApplicationsInit): ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤Ë½é´ü²½
+	¥Ñ¥é¥á¡¼¥¿¤òÅÏ¤¹¤è¤¦¤Ë¤·¤¿
 
 2003-04-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/server.c,glserver/glserver.c, glclient/client.c: SSL$B2=(B
+	* glserver/server.c,glserver/glserver.c, glclient/client.c: SSL²½
 
-	* libs/net.c: SSL$B%3!<%IDI2C(B
+	* libs/net.c: SSL¥³¡¼¥ÉÄÉ²Ã
 
 2003-04-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* configure.in, acconfig.h: SSL$B2=$N=`Hw(B
+	* configure.in, acconfig.h: SSL²½¤Î½àÈ÷
 
 2003-04-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/net.c: $B%M%C%H%o!<%/%3!<%I$N2~NI(B(SSL$B2=$N=`Hw(B)
+	* libs/net.c: ¥Í¥Ã¥È¥ï¡¼¥¯¥³¡¼¥É¤Î²þÎÉ(SSL²½¤Î½àÈ÷)
 
 2003-04-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/aps_main.c, tools/monitor.c: aps$B$N<wL?$r@_Dj$9$k%Q%i%a!<%?IU2C(B(MaxTran)
+	* aps/aps_main.c, tools/monitor.c: aps¤Î¼÷Ì¿¤òÀßÄê¤¹¤ë¥Ñ¥é¥á¡¼¥¿ÉÕ²Ã(MaxTran)
 
 2003-03-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1665,19 +1737,19 @@
 
 2003-03-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/directory.c (InitDirectory): $B0z?tGQ;_(B($BITMW$@$C$?(B)
+	* libs/directory.c (InitDirectory): °ú¿ôÇÑ»ß(ÉÔÍ×¤À¤Ã¤¿)
 
-	* libs/driver.c (ReadRecordDefine): DDparser.c$B$K0\$7$?(B
+	* libs/driver.c (ReadRecordDefine): DDparser.c¤Ë°Ü¤·¤¿
 
 2003-03-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/dbgroup.c: $B%G!<%?%Y!<%9%O%s%I%i$N%G%^%s%I%m!<%I(B
+	* dblib/dbgroup.c: ¥Ç¡¼¥¿¥Ù¡¼¥¹¥Ï¥ó¥É¥é¤Î¥Ç¥Þ¥ó¥É¥í¡¼¥É
 
-	* tools/copygen.c : $B8@8l$N;XDj$r$9$k$h$&$K$7$?(B
+	* tools/copygen.c : ¸À¸ì¤Î»ØÄê¤ò¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2003-03-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/handler.c (InitiateBatchHandler): $B8@8l%O%s%I%i$N%G%^%s%I%m!<%I(B
+	* aps/handler.c (InitiateBatchHandler): ¸À¸ì¥Ï¥ó¥É¥é¤Î¥Ç¥Þ¥ó¥É¥í¡¼¥É
 
 2003-03-04  Keisuke Nishida  <knishida@netlab.jp>
 
@@ -1685,25 +1757,25 @@
 
 2003-03-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Pack/UnPack$B4X78$N@0M}(B(libmondai$BMm$_(B)
+	* Pack/UnPack´Ø·¸¤ÎÀ°Íý(libmondaiÍí¤ß)
 
 2003-02-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* $B%i%$%V%i%j<~JU$N@0M}$r$7$?(B
+	* ¥é¥¤¥Ö¥é¥ê¼þÊÕ¤ÎÀ°Íý¤ò¤·¤¿
 
-	* datalib/$B$rJ,N%$7$?(B -> libmondai
+	* datalib/¤òÊ¬Î¥¤·¤¿ -> libmondai
 
 2003-02-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/Makefile.am: libi18n$B$NGQ;_(B(iconv$B$r;H$&$h$&$K$7$?(B)
+	* libs/Makefile.am: libi18n¤ÎÇÑ»ß(iconv¤ò»È¤¦¤è¤¦¤Ë¤·¤¿)
 
-	* auth/: $BG'>Z4XO"%W%m%0%i%`$rJL%G%#%l%/%H%j$K(B
+	* auth/: Ç§¾Ú´ØÏ¢¥×¥í¥°¥é¥à¤òÊÌ¥Ç¥£¥ì¥¯¥È¥ê¤Ë
 
-	* libs/applications.c: $B%"%W%j%1!<%7%g%s%b%8%e!<%k$N%@%$%J%_%C%/%j%s%/(B
+	* libs/applications.c: ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¥â¥¸¥å¡¼¥ë¤Î¥À¥¤¥Ê¥ß¥Ã¥¯¥ê¥ó¥¯
 
 2003-02-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Ver 1.0.7-branch$B5[<}(B
+	* Ver 1.0.7-branchµÛ¼ý
 
 2003-01-30  Noboru Saitou  <noborus@netlab.jp>
 	* tools/recdefgen.rb add support GtkFrame and GtkProgressBar.
@@ -1716,8 +1788,8 @@
 
 2002-10-29  Keisuke Nishida  <knishida@netlab.jp>
 
-	* glclient/callbacks.c (send_event): $B%?%$%^!<$K$h$k(B send_event $B$r(B
-	$B%-%c%s%;%k$9$k$h$&$K$7$?(B
+	* glclient/callbacks.c (send_event): ¥¿¥¤¥Þ¡¼¤Ë¤è¤ë send_event ¤ò
+	¥­¥ã¥ó¥»¥ë¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2002-10-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1725,21 +1797,21 @@
 
 2002-10-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/protocol.c (CheckScreens): ctime$B$b%A%'%C%/$b$9$k$h$&$K$7$?(B
+	* glclient/protocol.c (CheckScreens): ctime¤â¥Á¥§¥Ã¥¯¤â¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* glserver/server.c (CheckCache): ctime$B$b%A%'%C%/$b$9$k$h$&$K$7$?(B
+	* glserver/server.c (CheckCache): ctime¤â¥Á¥§¥Ã¥¯¤â¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* libs/tcp.c : $B$D$^$i$J$$%P%0$N=$@5(B
+	* libs/tcp.c : ¤Ä¤Þ¤é¤Ê¤¤¥Ð¥°¤Î½¤Àµ
 
 2002-10-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* datalib/value.c: text$B$N=$@5!"%i!<%8%*%V%8%'%/%HBP1~(B
+	* datalib/value.c: text¤Î½¤Àµ¡¢¥é¡¼¥¸¥ª¥Ö¥¸¥§¥¯¥ÈÂÐ±þ
 
-	* datalib/DDlex.c, datalib/DDparser.c : $B%i!<%8%*%V%8%'%/%HBP1~(B
+	* datalib/DDlex.c, datalib/DDparser.c : ¥é¡¼¥¸¥ª¥Ö¥¸¥§¥¯¥ÈÂÐ±þ
 
 2002-10-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/recdefgen.rb: $B%"%W%j%A!<%`$N=$@5$r5[<}(B($BBP1~%&%#%8%'%C%H$rA}$d$7$?(B)
+	* tools/recdefgen.rb: ¥¢¥×¥ê¥Á¡¼¥à¤Î½¤Àµ¤òµÛ¼ý(ÂÐ±þ¥¦¥£¥¸¥§¥Ã¥È¤òÁý¤ä¤·¤¿)
 
 2002-10-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1747,69 +1819,69 @@
 
 2002-10-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/recdefgen.rb: $BL50UL#$JJ8;z?t(B+1$B$r:o=|!"(Bchar -> varchar
+	* tools/recdefgen.rb: Ìµ°ÕÌ£¤ÊÊ¸»ú¿ô+1¤òºï½ü¡¢char -> varchar
 
-2002-09-29  akira yamada / $B$d$^$@$"$-$i(B <akira@vinecaves.com>
+2002-09-29  akira yamada / ¤ä¤Þ¤À¤¢¤­¤é <akira@vinecaves.com>
 
-	* libs/tcp.c : SO_REUSEADDR$B$ND4@0(B
+	* libs/tcp.c : SO_REUSEADDR¤ÎÄ´À°
 
 2002-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* dblib/Shell.c (OnChildExit): aps_main.c$B$h$j0\F0(B
+	* dblib/Shell.c (OnChildExit): aps_main.c¤è¤ê°ÜÆ°
 
 2002-09-28  Tomohiro 'Tomo-p' KATO <tomop@teamgedoh.net>
 
-	* aps/aps_main.c (OnChildExit): shell$B%O%s%I%i$N(Bzonbee$BBP:v(B
+	* aps/aps_main.c (OnChildExit): shell¥Ï¥ó¥É¥é¤ÎzonbeeÂÐºö
 
 2002-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 	
-	* Doc/glclient.tex: $B4V0c$$=$@5(B
+	* Doc/glclient.tex: ´Ö°ã¤¤½¤Àµ
 
 2002-09-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/monitor.c: $B%W%m%;%9A`:n;~$NBT5!;~4V$r@_Dj2DG=$K$7$?(B
+	* tools/monitor.c: ¥×¥í¥»¥¹Áàºî»þ¤ÎÂÔµ¡»þ´Ö¤òÀßÄê²ÄÇ½¤Ë¤·¤¿
 
 2002-09-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.1.0 release
 
-	* libs/ $B$N$&$A%G!<%?Mm$_$N%i%$%V%i%j$r(B datalib/ $B$K0\$7$?(B
+	* libs/ ¤Î¤¦¤Á¥Ç¡¼¥¿Íí¤ß¤Î¥é¥¤¥Ö¥é¥ê¤ò datalib/ ¤Ë°Ü¤·¤¿
 
 2002-09-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/ $B$N$&$A%G!<%?%Y!<%9Mm$_$N%W%m%0%i%`$r(B dbstuff/ $B$K0\$7$?(B
+	* aps/ ¤Î¤¦¤Á¥Ç¡¼¥¿¥Ù¡¼¥¹Íí¤ß¤Î¥×¥í¥°¥é¥à¤ò dbstuff/ ¤Ë°Ü¤·¤¿
 
 2002-09-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/ $B$N$&$A%G!<%?%Y!<%9Mm$_$N%i%$%V%i%jItJ,$r(B dblib/ $B$K0\$7$?(B
+	* aps/ ¤Î¤¦¤Á¥Ç¡¼¥¿¥Ù¡¼¥¹Íí¤ß¤Î¥é¥¤¥Ö¥é¥êÉôÊ¬¤ò dblib/ ¤Ë°Ü¤·¤¿
 
 2002-09-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* pgserver/monlib.rb : $B%]!<%HHV9fJQ99(B
+	* pgserver/monlib.rb : ¥Ý¡¼¥ÈÈÖ¹æÊÑ¹¹
 
-	* $B%$%s%9%H!<%k%G%#%l%/%H%j$NJQ99(B(ay$B$N=$@5$N5[<}(B)
+	* ¥¤¥ó¥¹¥È¡¼¥ë¥Ç¥£¥ì¥¯¥È¥ê¤ÎÊÑ¹¹(ay¤Î½¤Àµ¤ÎµÛ¼ý)
 
 	* Ver 1.0.8 release
 
-	* aps/dbslib.rb: Ruby$B$+$i%G!<%?%Y!<%9$r%"%/%;%9$9$k%i%$%V%i%j(B
+	* aps/dbslib.rb: Ruby¤«¤é¥Ç¡¼¥¿¥Ù¡¼¥¹¤ò¥¢¥¯¥»¥¹¤¹¤ë¥é¥¤¥Ö¥é¥ê
 
-	* aps/dbs_main.c: $B30It$+$i$N%G!<%?%Y!<%9;2>H%G!<%b%s(B
+	* aps/dbs_main.c: ³°Éô¤«¤é¤Î¥Ç¡¼¥¿¥Ù¡¼¥¹»²¾È¥Ç¡¼¥â¥ó
 
 2002-09-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/MCPSUB.c (CheckArg): $B$A$g$C$H$7$?0z?t%A%'%C%/(B
+	* aps/MCPSUB.c (CheckArg): ¤Á¤ç¤Ã¤È¤·¤¿°ú¿ô¥Á¥§¥Ã¥¯
 
 	* libs/DBparser.c (ParDBDB),libs/LDparser.c (ParDB),libs/BDparser.c (ParDB):
-	metadb$B$N5-=R$rITMW$K$7$?(B($B0l1~2<0L8_49$"$j(B)
+	metadb¤Îµ­½Ò¤òÉÔÍ×¤Ë¤·¤¿(°ì±þ²¼°Ì¸ß´¹¤¢¤ê)
 
 2002-09-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/checkdir.c (DumpKey): $B$D$^$i$J$$%(%i!<$N=$@5(B($B5$$K$9$k$J(B)
+	* tools/checkdir.c (DumpKey): ¤Ä¤Þ¤é¤Ê¤¤¥¨¥é¡¼¤Î½¤Àµ(µ¤¤Ë¤¹¤ë¤Ê)
 
 	* libs/DBparser.c, libs/DBparser.h,
-	libs/DBlex.c, libs/DBlex.h: DB$B%5!<%PMQDj5ABN$N2r@O(B
+	libs/DBlex.c, libs/DBlex.h: DB¥µ¡¼¥ÐÍÑÄêµÁÂÎ¤Î²òÀÏ
 
-	* libs/DIparser.c (ParDBD): DB$B%5!<%PMQDj5A$NDI2C(B
+	* libs/DIparser.c (ParDBD): DB¥µ¡¼¥ÐÍÑÄêµÁ¤ÎÄÉ²Ã
 
 2002-09-06  Keisuke Nishida  <knishida@netlab.jp>
 
@@ -1821,7 +1893,7 @@
 
 	* glclient/protocol.c, glclient/protocol.h,
 	glclient/callbacks.c, glclient/callbacks.h:
-	2002-08-20 $B$N=$@5$r<h$j>C$7!#(B
+	2002-08-20 ¤Î½¤Àµ¤ò¼è¤ê¾Ã¤·¡£
 
 2002-08-25  gettextize  <bug-gnu-gettext@gnu.org>
 
@@ -1832,98 +1904,98 @@
 
 2002-08-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/comms.c (SendValueString): $BJ8;zNs$K$h$kDL?.(B
+	* libs/comms.c (SendValueString): Ê¸»úÎó¤Ë¤è¤ëÄÌ¿®
 
 2002-08-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* pgserver: $B30It%W%m%0%i%`$+$i$N(Bwfc$B%$%s%?!<%U%'%$%9$N%j%j!<%9(B
+	* pgserver: ³°Éô¥×¥í¥°¥é¥à¤«¤é¤Îwfc¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤Î¥ê¥ê¡¼¥¹
 
 2002-08-20  Keisuke Nishida  <knishida@netlab.jp>
 
-	* glclient/protocol.c (ResetTimer): glclient/callbacks.c $B$+$i0\F0!#(B
-	gtk_container_forall $B$r;H$C$F:F<BAu!#(B
-	(ShowWindow): $B?7$7$$(B ResetTimer $B$r8F$S=P$7!#(B
-	* glclient/callbacks.c (UpdateWidget): $B?7$7$$(B ResetTimer $B$r8F$S=P$7!#(B
+	* glclient/protocol.c (ResetTimer): glclient/callbacks.c ¤«¤é°ÜÆ°¡£
+	gtk_container_forall ¤ò»È¤Ã¤ÆºÆ¼ÂÁõ¡£
+	(ShowWindow): ¿·¤·¤¤ ResetTimer ¤ò¸Æ¤Ó½Ð¤·¡£
+	* glclient/callbacks.c (UpdateWidget): ¿·¤·¤¤ ResetTimer ¤ò¸Æ¤Ó½Ð¤·¡£
 
 2002-08-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.7 release
 
-	* pgserver/: $B%"%W%j%1!<%7%g%s$+$i(Bwfc$B$r8F$S=P$9$?$a$N%$%s%?!<%U%'%$%9$r:n$C$?(B
+	* pgserver/: ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤«¤éwfc¤ò¸Æ¤Ó½Ð¤¹¤¿¤á¤Î¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤òºî¤Ã¤¿
 
 2002-07-26  Keisuke Nishida  <knishida@netlab.jp>
 
-	* glclient/callbacks.c (send_event): $B%S%8!<%+!<%=%k(B($B:=;~7W(B)$BBP1~(B
+	* glclient/callbacks.c (send_event): ¥Ó¥¸¡¼¥«¡¼¥½¥ë(º½»þ·×)ÂÐ±þ
 
 2002-07-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/applications.c: termio.h$B$N(Binclude$B$r$d$a$?(B($BITMW$@$C$?(B)
+	* libs/applications.c: termio.h¤Îinclude¤ò¤ä¤á¤¿(ÉÔÍ×¤À¤Ã¤¿)
 
 2002-07-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Ver 1.0.6 release -> CVS$B2=(B
+	* Ver 1.0.6 release -> CVS²½
 
 2002-06-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/callbacks.c: knishida patch$B5[<}(B
+	* glclient/callbacks.c: knishida patchµÛ¼ý
 
 2002-06-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/widgetOPS.c (RecvEntry): knishida patch$B5[<}(B
+	* glclient/widgetOPS.c (RecvEntry): knishida patchµÛ¼ý
 
-	* aps/redirect.c (BeginDB_Redirect): $B%j%@%$%l%/%H@h$,$J$$;~$N4V0c$$$r=$@5(B
+	* aps/redirect.c (BeginDB_Redirect): ¥ê¥À¥¤¥ì¥¯¥ÈÀè¤¬¤Ê¤¤»þ¤Î´Ö°ã¤¤¤ò½¤Àµ
 
 2002-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.5 release
 
-	* aps/redirect.c : $B9bB.2=(B($B%H%i%s%6%/%7%g%s=*7k;~$K%j%@%$%l%/%H=hM}$r$9$k(B)
+	* aps/redirect.c : ¹âÂ®²½(¥È¥é¥ó¥¶¥¯¥·¥ç¥ó½ª·ë»þ¤Ë¥ê¥À¥¤¥ì¥¯¥È½èÍý¤ò¤¹¤ë)
 
-	* aps/dbredirector.c (LogThread): $B",$KBP1~(B
+	* aps/dbredirector.c (LogThread): ¢¬¤ËÂÐ±þ
 
 2002-06-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* configure.in: glib$B$N%k!<%k$rK:$l$F$$$?(B
+	* configure.in: glib¤Î¥ë¡¼¥ë¤òËº¤ì¤Æ¤¤¤¿
 
 2002-05-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/widgetOPS.c (RecvEntry): knishida patch$B5[<}(B
+	* glclient/widgetOPS.c (RecvEntry): knishida patchµÛ¼ý
 
-	* glclient/callbacks.c (send_event): knishida patch$B5[<}(B
+	* glclient/callbacks.c (send_event): knishida patchµÛ¼ý
 
 2002-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.0.4 release
 
-	* aps/dbredirector.c (LogThread): flush$B$rK:$l$F$$$kItJ,$rD>$9(B($B9bB.(B
-	$B2=$9$k$+!)(B)
+	* aps/dbredirector.c (LogThread): flush¤òËº¤ì¤Æ¤¤¤ëÉôÊ¬¤òÄ¾¤¹(¹âÂ®
+	²½¤¹¤ë¤«¡©)
 
-	* include/const.h (SIZE_BUFF): $B%P%C%U%!%5%$%:3HD%(B($B0l;~$7$N$.(B)
+	* include/const.h (SIZE_BUFF): ¥Ð¥Ã¥Õ¥¡¥µ¥¤¥º³ÈÄ¥(°ì»þ¤·¤Î¤®)
 
 2002-05-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/copygen.c: -db$B$@$C$?%Q%i%a!<%?$r(B-dbarea$B$KJQ99$7$?(B
+	* tools/copygen.c: -db¤À¤Ã¤¿¥Ñ¥é¥á¡¼¥¿¤ò-dbarea¤ËÊÑ¹¹¤·¤¿
 
 2002-04-21  Keisuke Nishida <knishida@netlab.jp>
 
-	* glclient/widgetOPS.c (RecvEntry): Gtk(Panda)Entry$B$N=i4|CM$,@hF,(B
-	$B$+$iI=<($5$l$J$$LdBj$r=$@5(B
+	* glclient/widgetOPS.c (RecvEntry): Gtk(Panda)Entry¤Î½é´üÃÍ¤¬ÀèÆ¬
+	¤«¤éÉ½¼¨¤µ¤ì¤Ê¤¤ÌäÂê¤ò½¤Àµ
 
-	* glclient/callbacks.c (send_event_when_idle): $B%$%s%/%j%a%s%?%k8!(B
-	$B:w3+;O$N1dBZ;~4V(B($B%G%U%)%k%H$G(B 1 $BIC(B)$B$r4D6-JQ?t$G%+%9%?%^%$%:=PMh$k(B
-	$B$h$&$K$7$?(B
+	* glclient/callbacks.c (send_event_when_idle): ¥¤¥ó¥¯¥ê¥á¥ó¥¿¥ë¸¡
+	º÷³«»Ï¤Î±äÂÚ»þ´Ö(¥Ç¥Õ¥©¥ë¥È¤Ç 1 ÉÃ)¤ò´Ä¶­ÊÑ¿ô¤Ç¥«¥¹¥¿¥Þ¥¤¥º½ÐÍè¤ë
+	¤è¤¦¤Ë¤·¤¿
 
 2002-04-12  Keisuke Nishida <knishida@netlab.jp>
 
-	* glclient/callbacks.c (send_event): $BFs=E%+!<%=%kLdBj2sHr(B
+	* glclient/callbacks.c (send_event): Æó½Å¥«¡¼¥½¥ëÌäÂê²óÈò
 
 2002-04-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Ver 1.0.3$B8x3+(B
+	* Ver 1.0.3¸ø³«
 
 2002-04-03  Keisuke Nishida <knishida@netlab.jp>
 
-	* glclient/callbacks.c: $BFs=E%+!<%=%kLdBj2sHr(B
+	* glclient/callbacks.c: Æó½Å¥«¡¼¥½¥ëÌäÂê²óÈò
 
 	* glclient/client.c: 
 
@@ -1933,19 +2005,19 @@
 
 2002-04-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Ver 1.0.2$B8x3+(B(1.0.1$B$OLu$"$C$FHs8x3+(B)
+	* Ver 1.0.2¸ø³«(1.0.1¤ÏÌõ¤¢¤Ã¤ÆÈó¸ø³«)
 
 2002-03-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/termthread.c (FinishSession): $B%a%b%j3+J|$NDI2C(B($BK:$l$F$?(B)
+	* wfc/termthread.c (FinishSession): ¥á¥â¥ê³«Êü¤ÎÄÉ²Ã(Ëº¤ì¤Æ¤¿)
 
 2002-03-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LDlex.c (DoInclude): LD_Dir$B$,(BNULL$B$N;~$N=hM}(B
+	* libs/LDlex.c (DoInclude): LD_Dir¤¬NULL¤Î»þ¤Î½èÍý
 
 2002-03-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/value.c (FixedRescale): $BIi?t$N=hM}$r@5$7$/$7$?(B
+	* libs/value.c (FixedRescale): Éé¿ô¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿
 
 2002-03-04  Go Kida <kida@netlab.jp>
 
@@ -1953,73 +2025,73 @@
 
 2002-03-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Ver 1.0.0 release $B!@(B(^o^)$B!?(B
+	* Ver 1.0.0 release ¡À(^o^)¡¿
 
-	* htserver/mon.c (PutHTML): $B%;%7%g%sJ];}$r(Bcookie$B$G$b9T$($k$h$&$K$7$?(B
+	* htserver/mon.c (PutHTML): ¥»¥·¥ç¥óÊÝ»ý¤òcookie¤Ç¤â¹Ô¤¨¤ë¤è¤¦¤Ë¤·¤¿
 
-	* htserver/server.c (SesServer): $B%;%7%g%sJ];};~4V$N@_Dj!#D9;~4VJ|(B
-	$BCV$9$k$H%;%7%g%s$r>C$9$h$&$K$7$?(B
+	* htserver/server.c (SesServer): ¥»¥·¥ç¥óÊÝ»ý»þ´Ö¤ÎÀßÄê¡£Ä¹»þ´ÖÊü
+	ÃÖ¤¹¤ë¤È¥»¥·¥ç¥ó¤ò¾Ã¤¹¤è¤¦¤Ë¤·¤¿
 
 2002-02-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/handler.c (StartBatch): $B=*N;%3!<%I$rJV$9$h$&$K$7$?(B
+	* aps/handler.c (StartBatch): ½ªÎ»¥³¡¼¥É¤òÊÖ¤¹¤è¤¦¤Ë¤·¤¿
 
 2002-02-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* $B$H$j$"$($:(Bhtserver$BF0$/$h$&$K$J$k(B
+	* ¤È¤ê¤¢¤¨¤ºhtserverÆ°¤¯¤è¤¦¤Ë¤Ê¤ë
 
 2002-02-21  hikino <hiki@matsukei.co.jp>
 
-	* libs/front.c (TermName): v6$BBP1~$N=$@5(B
+	* libs/front.c (TermName): v6ÂÐ±þ¤Î½¤Àµ
 
 2002-02-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* configure.in: htserver$BDI2C(B($B$^$@F0$+$8(B)
+	* configure.in: htserverÄÉ²Ã(¤Þ¤ÀÆ°¤«¤¸)
 
-	* aps/OpenCOBOL.c (_ReadyDC): cob_init$B$r8F$V(B
+	* aps/OpenCOBOL.c (_ReadyDC): cob_init¤ò¸Æ¤Ö
 
 2002-02-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/value.h (GL_TYPE_DBCODE): $B2C9)$7$J$$(BSQL$BMQ%G!<%?7?(B
+	* libs/value.h (GL_TYPE_DBCODE): ²Ã¹©¤·¤Ê¤¤SQLÍÑ¥Ç¡¼¥¿·¿
 
 2002-02-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/monitor.c (StartWfc): wfc$B5/F0;~$K(B-back$B$r;XDj$9$k$h$&$K$9$k(B
-	(default$B$G$O>/$J$9$.(B)
+	* tools/monitor.c (StartWfc): wfcµ¯Æ°»þ¤Ë-back¤ò»ØÄê¤¹¤ë¤è¤¦¤Ë¤¹¤ë
+	(default¤Ç¤Ï¾¯¤Ê¤¹¤®)
 
 2002-02-05  Keisuke Nishida <knishida@sky.sannet.ne.jp>
 
-	* glclient/widgetOPS.c (RecvText): $B=$@5(B
+	* glclient/widgetOPS.c (RecvText): ½¤Àµ
 
 2002-02-02  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 0.9.16 release
 
-	* aps/OpenCOBOL.c (GetApplication): $B2hLLA+0\=hM}$N:o=|(B
+	* aps/OpenCOBOL.c (GetApplication): ²èÌÌÁ«°Ü½èÍý¤Îºï½ü
 
-	* cobol/MCPMAIN.CBL.C : $B2hLLA+0\=hM}$N:o=|(B
+	* cobol/MCPMAIN.CBL.C : ²èÌÌÁ«°Ü½èÍý¤Îºï½ü
 
-	* aps/handler.c (ExecuteProcess): $B2hLLA+0\=hM}$N5[<}(B
+	* aps/handler.c (ExecuteProcess): ²èÌÌÁ«°Ü½èÍý¤ÎµÛ¼ý
 
-	* aps/dotCOBOL.c: $B%$%s%?!<%U%'%$%9$N@0M}(B
+	* aps/dotCOBOL.c: ¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤ÎÀ°Íý
 
-	* aps/OpenCOBOL.c: $B%$%s%?!<%U%'%$%9$N@0M}(B
+	* aps/OpenCOBOL.c: ¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤ÎÀ°Íý
 
-	* aps/handler.c: $B%$%s%?!<%U%'%$%9$N@0M}(B
+	* aps/handler.c: ¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤ÎÀ°Íý
 
-	* aps/handler.h: $B%$%s%?!<%U%'%$%9$N@0M}(B
+	* aps/handler.h: ¥¤¥ó¥¿¡¼¥Õ¥§¥¤¥¹¤ÎÀ°Íý
 
 2002-01-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 0.9.15 release
 
-	* $B%I%-%e%a%s%H=<<B(B B)
+	* ¥É¥­¥å¥á¥ó¥È½¼¼Â B)
 
-	* tools/copygen.c: -dbinfo$B$rGQ;_(B($BITMW(B)
+	* tools/copygen.c: -dbinfo¤òÇÑ»ß(ÉÔÍ×)
 
 2002-01-30  Keisuke Nishida <knishida@sky.sannet.ne.jp>
 
-	* glclient/callbacks.c (open_browser): bug$B=$@5(B
+	* glclient/callbacks.c (open_browser): bug½¤Àµ
 
 2002-01-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -2029,51 +2101,51 @@
 
 	* Ver 0.9.14 release
 
-	* configure.in: ENABLE_GNOME$B$rK:$l$F$$$?(B
+	* configure.in: ENABLE_GNOME¤òËº¤ì¤Æ¤¤¤¿
 
 2002-01-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 0.9.13 release
 
-	* aps/OpenCOBOL.c (FixedCobol2C): OpenCOBOL$B$N?tCMI=8=$NJQ99$K9g$o$;$?(B
+	* aps/OpenCOBOL.c (FixedCobol2C): OpenCOBOL¤Î¿ôÃÍÉ½¸½¤ÎÊÑ¹¹¤Ë¹ç¤ï¤»¤¿
 
 	* Ver 0.9.12 release
 
-	* tools/monitor.c (StopSystem): $B;_$a;D$7$?%W%m%;%9$rA4$F(Bkill$B$9$k$h$&$K$7$?(B
+	* tools/monitor.c (StopSystem): »ß¤á»Ä¤·¤¿¥×¥í¥»¥¹¤òÁ´¤Ækill¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2002-01-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DIparser.c (BuildMcpArea): MCPAREA$B$N9=B$$rJQ$($?(B
+	* libs/DIparser.c (BuildMcpArea): MCPAREA¤Î¹½Â¤¤òÊÑ¤¨¤¿
 
-	* libs/DDparser.c (ParValue): GL_TYPE_RECORD$B$N;~$K%a%s%P$,A4$/$J$$;~$N=hM}(B
+	* libs/DDparser.c (ParValue): GL_TYPE_RECORD¤Î»þ¤Ë¥á¥ó¥Ð¤¬Á´¤¯¤Ê¤¤»þ¤Î½èÍý
 
 2002-01-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 0.9.11 release
 
-	* tools/monitor.c (KillWfc): start-stop-daemon$B$X$NBP1~(B
+	* tools/monitor.c (KillWfc): start-stop-daemon¤Ø¤ÎÂÐ±þ
 
 	* Ver 0.9.10 release
 
-	* aps/OpenCOBOL.c (FixedCobol2C): $B?tCMJQ49$N4V0c$$$rD>$7$?(B
+	* aps/OpenCOBOL.c (FixedCobol2C): ¿ôÃÍÊÑ´¹¤Î´Ö°ã¤¤¤òÄ¾¤·¤¿
 
 	* Ver 0.9.9 release
 
-	* aps/OpenCOBOL.c (FixedC2Cobol): $B?tCMJQ49$N4V0c$$$rD>$7$?(B
+	* aps/OpenCOBOL.c (FixedC2Cobol): ¿ôÃÍÊÑ´¹¤Î´Ö°ã¤¤¤òÄ¾¤·¤¿
 
 	* Ver 0.9.8 release
 
-	* aps/OpenCOBOL.c (FixedC2Cobol): $B?tCMJQ49$N4V0c$$$rD>$7$?(B
+	* aps/OpenCOBOL.c (FixedC2Cobol): ¿ôÃÍÊÑ´¹¤Î´Ö°ã¤¤¤òÄ¾¤·¤¿
 
-	* glclient/widgetOPS.c (InitWidgetOperations): $B%^%/%mL>$rD>$9(B
+	* glclient/widgetOPS.c (InitWidgetOperations): ¥Þ¥¯¥íÌ¾¤òÄ¾¤¹
 
 2002-01-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/value.h (g_int_hash_table_foreach): $B@0?tMQ(Bhash($B%-%c%9%H$9$k$@$1$'(B)
+	* libs/value.h (g_int_hash_table_foreach): À°¿ôÍÑhash(¥­¥ã¥¹¥È¤¹¤ë¤À¤±¤§)
 
 	* Ver 0.9.7 release
 
-	* glclient/widgetOPS.c (InitWidgetOperations): $B$A$g$C$H0BA4BP:v(B
+	* glclient/widgetOPS.c (InitWidgetOperations): ¤Á¤ç¤Ã¤È°ÂÁ´ÂÐºö
 
 2002-01-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -2081,42 +2153,42 @@
 
 2002-01-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* configure.in: gtk+panda$B$NB8:_%A%'%C%/$r$A$c$s$H$7$?(B
+	* configure.in: gtk+panda¤ÎÂ¸ºß¥Á¥§¥Ã¥¯¤ò¤Á¤ã¤ó¤È¤·¤¿
 
-	* libs/driver.h: value.h$B$+$i(BScreenData$B$r0z1[$9(B
+	* libs/driver.h: value.h¤«¤éScreenData¤ò°ú±Û¤¹
 
 2002-01-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/termthread.c (InitSession): $B%;%7%g%s$rJ];}$7$J$$%*%W%7%g%sDI(B
-	$B2C(B(DoS$BBP:v(B)
+	* wfc/termthread.c (InitSession): ¥»¥·¥ç¥ó¤òÊÝ»ý¤·¤Ê¤¤¥ª¥×¥·¥ç¥óÄÉ
+	²Ã(DoSÂÐºö)
 
-	* glclient/protocol.c (ShowWindow): $B3+$$$F$J$$(Bwindow$B$rJD$8$h$&$H$7(B
-	$B$?;~$KL5;k$9$k=hM}DI2C(B
+	* glclient/protocol.c (ShowWindow): ³«¤¤¤Æ¤Ê¤¤window¤òÊÄ¤¸¤è¤¦¤È¤·
+	¤¿»þ¤ËÌµ»ë¤¹¤ë½èÍýÄÉ²Ã
 
 2002-01-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 0.9.5 release
 
-	* libs/DIparser.c (BuildMcpArea): window stack$B$NBg$-$5$r(Bdirectory
-	$B$G;XDj2DG=$K$7$?(B
+	* libs/DIparser.c (BuildMcpArea): window stack¤ÎÂç¤­¤µ¤òdirectory
+	¤Ç»ØÄê²ÄÇ½¤Ë¤·¤¿
 
-	* MCPAREA$B$r(Blinkage$B$HF1$84IM}$K$7$?(B
+	* MCPAREA¤òlinkage¤ÈÆ±¤¸´ÉÍý¤Ë¤·¤¿
 
 2002-01-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/copygen.c (MakeMCP): MCPAREA$B$N@8@.$r2DG=$K$9$k(B
+	* tools/copygen.c (MakeMCP): MCPAREA¤ÎÀ¸À®¤ò²ÄÇ½¤Ë¤¹¤ë
 
-	* libs/DIparser.h: mcparea$B$r(BDI_Struct$B$K:n$k(B
+	* libs/DIparser.h: mcparea¤òDI_Struct¤Ëºî¤ë
 
 2002-01-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.h: linkrec$B$r(BLD_Struct$B$+$i(BDI_Struct$B$K0\$9(B
+	* libs/LDparser.h: linkrec¤òLD_Struct¤«¤éDI_Struct¤Ë°Ü¤¹
 
 2002-01-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 0.9.4 release
 
-	* libs/LDparser.c (ParDATA): $B$3$3$G$N(BLINKAGE$B@k8@$rGQ;_$7$F!"(BDDparser.c$B$K0\F0(B
+	* libs/LDparser.c (ParDATA): ¤³¤³¤Ç¤ÎLINKAGEÀë¸À¤òÇÑ»ß¤·¤Æ¡¢DDparser.c¤Ë°ÜÆ°
 
 2002-01-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -2124,11 +2196,11 @@
 
 2002-01-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps : apsio$B$r(Blibs$B$+$i0\$9(B
+	* aps : apsio¤òlibs¤«¤é°Ü¤¹
 
 2002-01-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* tools/monitor.c (_StartAps): aps$B$N5/F0$r<+%[%9%HJ,$N$_$K$7$?(B
+	* tools/monitor.c (_StartAps): aps¤Îµ¯Æ°¤ò¼«¥Û¥¹¥ÈÊ¬¤Î¤ß¤Ë¤·¤¿
 
 2002-01-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -2136,135 +2208,135 @@
 
 2002-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/Shell.c (_DBERROR): $BL$Dj5A5!G=$K%(%i!<$r=P$9$h$&$K$7$?(B
+	* aps/Shell.c (_DBERROR): Ì¤ÄêµÁµ¡Ç½¤Ë¥¨¥é¡¼¤ò½Ð¤¹¤è¤¦¤Ë¤·¤¿
 
-	* glclient/callbacks.c (send_event_if_changed): $B@k8@$N4V0c$$$rD>$9(B
+	* glclient/callbacks.c (send_event_if_changed): Àë¸À¤Î´Ö°ã¤¤¤òÄ¾¤¹
 
 2002-01-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 0.9.1 release
 
-	* libs/Makefile.am (libpanda_la_SOURCES): libpanda$B$+$i(Bauth.c$B$r=|$$$?(B
+	* libs/Makefile.am (libpanda_la_SOURCES): libpanda¤«¤éauth.c¤ò½ü¤¤¤¿
 
 	* Ver 0.9.0 release
 
-	* aps/dbredirector.c (FileThread): $B%m%0$N%?%$%`%9%?%s%W$r@5$7$/$7$?(B
+	* aps/dbredirector.c (FileThread): ¥í¥°¤Î¥¿¥¤¥à¥¹¥¿¥ó¥×¤òÀµ¤·¤¯¤·¤¿
 
-	* tools/monitor.c (StartProcess): $B%m%0$,<hF@=PMh$k$h$&$K$7$?(B
+	* tools/monitor.c (StartProcess): ¥í¥°¤¬¼èÆÀ½ÐÍè¤ë¤è¤¦¤Ë¤·¤¿
 
 2002-01-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (ReadyAPS): $B%9%l%C%I$N=i4|2=$N4V0c$$$rD>$7$?(B(aps
-	$B$+$i(Bwfc$B$K@\B3$9$k;~$KH/3P$9$k(B)
-	(ChangeLD): LD$B$r0\$C$?;~$N=i4|2=K:$l$rD>$9(B(spa, window)
+	* wfc/mqthread.c (ReadyAPS): ¥¹¥ì¥Ã¥É¤Î½é´ü²½¤Î´Ö°ã¤¤¤òÄ¾¤·¤¿(aps
+	¤«¤éwfc¤ËÀÜÂ³¤¹¤ë»þ¤ËÈ¯³Ð¤¹¤ë)
+	(ChangeLD): LD¤ò°Ü¤Ã¤¿»þ¤Î½é´ü²½Ëº¤ì¤òÄ¾¤¹(spa, window)
 
-	* libs/apsio.c (GetWFC): wfc$B@ZCG;~$N=hM}$r@5$7$/$7$?(B
+	* libs/apsio.c (GetWFC): wfcÀÚÃÇ»þ¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿
 
 2002-01-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (MessageThread): aps$B$N0[>o;~$G$b(Bwfc$B$,;`$J$J$$$h$&(B
-	$B$K$7$?(B
+	* wfc/mqthread.c (MessageThread): aps¤Î°Û¾ï»þ¤Ç¤âwfc¤¬»à¤Ê¤Ê¤¤¤è¤¦
+	¤Ë¤·¤¿
 
-	* libs/apsio.c (InitAPSIO): aps$B$+$i(Bwfc$B$X$N@\B3$r3N<B$K$7$?(B
+	* libs/apsio.c (InitAPSIO): aps¤«¤éwfc¤Ø¤ÎÀÜÂ³¤ò³Î¼Â¤Ë¤·¤¿
 
 2002-01-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/termthread.c : $B9NDj1~Ez$r(BAPS_OK, $BH]Dj1~Ez$r(BAPS_NOT$B$K$7$?(B($B0J(B
-	$BA0$O(BTRUE, FALSE$B$@$C$?(B)
+	* wfc/termthread.c : ¹ÎÄê±þÅú¤òAPS_OK, ÈÝÄê±þÅú¤òAPS_NOT¤Ë¤·¤¿(°Ê
+	Á°¤ÏTRUE, FALSE¤À¤Ã¤¿)
 
-	* glclient/protocol.c (ProtocolThread): $BDL?.It$N%^%k%A%9%l%C%I2=(B
+	* glclient/protocol.c (ProtocolThread): ÄÌ¿®Éô¤Î¥Þ¥ë¥Á¥¹¥ì¥Ã¥É²½
 
 2002-01-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LBSfunc.c (LBS_RequireSize): $BDI2C(B
+	* libs/LBSfunc.c (LBS_RequireSize): ÄÉ²Ã
 
-	* libs/comm.c (SendLBS, RecvLBS): LBS$B$NAw<u?.$NDI2C(B
+	* libs/comm.c (SendLBS, RecvLBS): LBS¤ÎÁ÷¼õ¿®¤ÎÄÉ²Ã
 
-	* libs/wfcio.c : $B%G!<%?$r0lEY(Bpack$B$7$F$+$iAw<u?.$9$k$h$&$K$7$?(B
-	(apsio.c, wfc.c$B$bF1MM(B)
+	* libs/wfcio.c : ¥Ç¡¼¥¿¤ò°ìÅÙpack¤·¤Æ¤«¤éÁ÷¼õ¿®¤¹¤ë¤è¤¦¤Ë¤·¤¿
+	(apsio.c, wfc.c¤âÆ±ÍÍ)
 
 2002-01-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/Shell.c: shell$B5/F0MQ%I%i%$%PDI2C(B
+	* aps/Shell.c: shellµ¯Æ°ÍÑ¥É¥é¥¤¥ÐÄÉ²Ã
 
-	* aps/Makefile.am: PostgreSQL$B$N%I%i%$%P$r(B1$B$D$N%=!<%9$K$7$?(B
+	* aps/Makefile.am: PostgreSQL¤Î¥É¥é¥¤¥Ð¤ò1¤Ä¤Î¥½¡¼¥¹¤Ë¤·¤¿
 
-	* libs/LBSfunc.[ch]: $B?7@_(B
+	* libs/LBSfunc.[ch]: ¿·Àß
 
-	* libs/tcp.c: IPv4$B@lMQ%P%$%J%j$r:n$l$k$h$&$K$7$?(B
+	* libs/tcp.c: IPv4ÀìÍÑ¥Ð¥¤¥Ê¥ê¤òºî¤ì¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-12-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/dbgroup.c: MCPSUB$B$N%U%!%s%/%7%g%sL>%A%'%C%/$r$d$a$?(B
+	* aps/dbgroup.c: MCPSUB¤Î¥Õ¥¡¥ó¥¯¥·¥ç¥óÌ¾¥Á¥§¥Ã¥¯¤ò¤ä¤á¤¿
 
-	* libs/value.h: DBG_Struct$B$KM%@h=g0L%Q%i%a!<%?$r2CDI(B
+	* libs/value.h: DBG_Struct¤ËÍ¥Àè½ç°Ì¥Ñ¥é¥á¡¼¥¿¤ò²ÃÄÉ
 
-	* libs/DIparser.c (AppendDBG): DI_Struct$BCf$N(BDBG_Struct$B$N3JG<$r=g=x(B
-	$B$,;}$F$k$h$&$K%F!<%V%k$KJ];}$9$k$h$&$KJQ99!#$?$@$7!"(Bhash$B$b;D$9(B
+	* libs/DIparser.c (AppendDBG): DI_StructÃæ¤ÎDBG_Struct¤Î³ÊÇ¼¤ò½ç½ø
+	¤¬»ý¤Æ¤ë¤è¤¦¤Ë¥Æ¡¼¥Ö¥ë¤ËÊÝ»ý¤¹¤ë¤è¤¦¤ËÊÑ¹¹¡£¤¿¤À¤·¡¢hash¤â»Ä¤¹
 
 2001-12-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/OpenCOBOL.c (OpenCOBOL_UnPackValue): BINARY$B$N;~$N=hM}$r@5$7(B
-	$B$/$7$?(B(PackValue$B$bF1MM(B)
+	* aps/OpenCOBOL.c (OpenCOBOL_UnPackValue): BINARY¤Î»þ¤Î½èÍý¤òÀµ¤·
+	¤¯¤·¤¿(PackValue¤âÆ±ÍÍ)
 
-	* aps/PostgresDB.c (_DBDISCONNECT): DB$B$rFs=E$K(Bdisconnect$B$7$J$$$h$&(B
-	$B$K$7$?!#(B
+	* aps/PostgresDB.c (_DBDISCONNECT): DB¤òÆó½Å¤Ëdisconnect¤·¤Ê¤¤¤è¤¦
+	¤Ë¤·¤¿¡£
 
-	* aps/aps_main.c : $B%b%8%e!<%k$r%m!<%I$9$k%Q%9$r%3%^%s%I%i%$%s$G;X(B
-	$BDj=PMh$k$h$&$K$7$?(B(dbstub_main.c$B$bF1MM(B)
+	* aps/aps_main.c : ¥â¥¸¥å¡¼¥ë¤ò¥í¡¼¥É¤¹¤ë¥Ñ¥¹¤ò¥³¥Þ¥ó¥É¥é¥¤¥ó¤Ç»Ø
+	Äê½ÐÍè¤ë¤è¤¦¤Ë¤·¤¿(dbstub_main.c¤âÆ±ÍÍ)
 
 2001-12-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* sample3/: $BDI2C(B
+	* sample3/: ÄÉ²Ã
 
-	* aps/OpenCOBOL.c (GetApplication): MCPMAIN$B$N5!G=$r%^%H%b$K$7$?(B
+	* aps/OpenCOBOL.c (GetApplication): MCPMAIN¤Îµ¡Ç½¤ò¥Þ¥È¥â¤Ë¤·¤¿
 
 2001-12-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DDparser.c : fclose$B$N4V0c$$=$@5(B(LD, BD, DI$B$N(Bparser$B$OA4$F(B)
+	* libs/DDparser.c : fclose¤Î´Ö°ã¤¤½¤Àµ(LD, BD, DI¤Îparser¤ÏÁ´¤Æ)
 
-	* libs/DDlex.c (ReadyDirective): $B%G%#%l%/%F%#%V$G$J$$;~$N=hM}$r=$(B
-	$B@5(B(LD, BD, DI$B$N(Blex$B$OA4$F(B)
+	* libs/DDlex.c (ReadyDirective): ¥Ç¥£¥ì¥¯¥Æ¥£¥Ö¤Ç¤Ê¤¤»þ¤Î½èÍý¤ò½¤
+	Àµ(LD, BD, DI¤Îlex¤ÏÁ´¤Æ)
 
 2001-12-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/Makefile.am (libpandas_a_SOURCES): glserver$BMQ%i%$%V%i%j$r:n$C$?(B
-	(libpandac_a_SOURCES): glclient$BMQ%i%$%V%i%j$r:n$C$?(B
+	* libs/Makefile.am (libpandas_a_SOURCES): glserverÍÑ¥é¥¤¥Ö¥é¥ê¤òºî¤Ã¤¿
+	(libpandac_a_SOURCES): glclientÍÑ¥é¥¤¥Ö¥é¥ê¤òºî¤Ã¤¿
 
 2001-12-22  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.c (ParLD): home$B;XDj$K(B~$B$rM-8z$K$7$?(B
+	* libs/LDparser.c (ParLD): home»ØÄê¤Ë~¤òÍ­¸ú¤Ë¤·¤¿
 
-	* aps/handler.c (InitiateHandler): $BB8:_$7$J$$8@8l%O%s%I%i$r%(%i!<$K(B
+	* aps/handler.c (InitiateHandler): Â¸ºß¤·¤Ê¤¤¸À¸ì¥Ï¥ó¥É¥é¤ò¥¨¥é¡¼¤Ë
 
 2001-12-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/MCPSUB.c: OpenCOBOL$BMQ(BMCPSUB$B%b%8%e!<%k:n@.(B
+	* aps/MCPSUB.c: OpenCOBOLÍÑMCPSUB¥â¥¸¥å¡¼¥ëºîÀ®
 
-	* aps/OpenCOBOL.c: $B%*%s%i%$%sItJ,:n@.(B
+	* aps/OpenCOBOL.c: ¥ª¥ó¥é¥¤¥óÉôÊ¬ºîÀ®
 
-	* aps/Makefile.am: $B%b%8%e!<%k2=$KBP1~(B
+	* aps/Makefile.am: ¥â¥¸¥å¡¼¥ë²½¤ËÂÐ±þ
 
 2001-12-13  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/dbstub_main.c: $B%5%V%W%m%;%92=(B
+	* aps/dbstub_main.c: ¥µ¥Ö¥×¥í¥»¥¹²½
 
 2001-11-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DIparser.c (ParDI): $B%G%#%l%/%H%j$K(Blddir, bddir, recorddir$B$,(B
-	$B5-=R=PMh$k$h$&$K$7$?(B
+	* libs/DIparser.c (ParDI): ¥Ç¥£¥ì¥¯¥È¥ê¤Ëlddir, bddir, recorddir¤¬
+	µ­½Ò½ÐÍè¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-11-21  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/tcp.c: $B%]!<%H$rJ8;zNs$G;XDj$9$k$h$&$K$7$?(B
+	* libs/tcp.c: ¥Ý¡¼¥È¤òÊ¸»úÎó¤Ç»ØÄê¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-11-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/tcp.c: IPv6$B$r%^%H%b$JBP1~$K$7$?(B($B$D$b$j(B)
+	* libs/tcp.c: IPv6¤ò¥Þ¥È¥â¤ÊÂÐ±þ¤Ë¤·¤¿(¤Ä¤â¤ê)
 
 2001-11-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DIparser.c : LD_Dir, BD_Dir, RecordDir$B$K%Q%935G0$rF~$l$?(B
+	* libs/DIparser.c : LD_Dir, BD_Dir, RecordDir¤Ë¥Ñ¥¹³µÇ°¤òÆþ¤ì¤¿
 
 2001-11-15  Keisuke Nishida <knishida@sky.sannet.ne.jp>
 
@@ -2272,606 +2344,606 @@
 
 2001-11-12  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.c: command$BL?Na$NGQ;_(B($B4D6-JQ?t$G;XDj$9$k$h$&$K$7$?(B)$B!#(B
-	home$BL?Na$NDI2C(B($B<B9T%G%#%l%/%H%j$N;XDj(B)
+	* libs/LDparser.c: commandÌ¿Îá¤ÎÇÑ»ß(´Ä¶­ÊÑ¿ô¤Ç»ØÄê¤¹¤ë¤è¤¦¤Ë¤·¤¿)¡£
+	homeÌ¿Îá¤ÎÄÉ²Ã(¼Â¹Ô¥Ç¥£¥ì¥¯¥È¥ê¤Î»ØÄê)
 
-	* aps/dbstub_main.c : daemon$B7A<0$r$d$a$?(B
+	* aps/dbstub_main.c : daemon·Á¼°¤ò¤ä¤á¤¿
 
-	* aps/PostgresTable.c: COBOL$B0MB8It$NGS=|(B(dotCOBOL.c$B$G5[<}(B)
+	* aps/PostgresTable.c: COBOL°ÍÂ¸Éô¤ÎÇÓ½ü(dotCOBOL.c¤ÇµÛ¼ý)
 
-	* aps/handler.c: $B8@8l0MB8$NItJ,$N=8Ls$N$?$a$K?7@_(B
+	* aps/handler.c: ¸À¸ì°ÍÂ¸¤ÎÉôÊ¬¤Î½¸Ìó¤Î¤¿¤á¤Ë¿·Àß
 
-	* aps/dotCOBOL.c (_CleanUp): $B@5>o=*N;;~$K(Bfcu$B%W%m%;%9$,;D$i$J$$$h$&$K$7$?(B
+	* aps/dotCOBOL.c (_CleanUp): Àµ¾ï½ªÎ»»þ¤Ëfcu¥×¥í¥»¥¹¤¬»Ä¤é¤Ê¤¤¤è¤¦¤Ë¤·¤¿
 
 2001-11-08  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.h: $BAk>pJs$N;}$AJ}$rJQ99(B(bind$B$N$?$a(B)
+	* libs/LDparser.h: Áë¾ðÊó¤Î»ý¤ÁÊý¤òÊÑ¹¹(bind¤Î¤¿¤á)
 
-	* libs/LDparser.c: aps$B$N$?$a$N(Bbind$B9=J8(B
+	* libs/LDparser.c: aps¤Î¤¿¤á¤Îbind¹½Ê¸
 
 2001-11-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/dbstub.c : dbstub$B$rI,MW$H$7$J$$>l9g$KBP1~$7$d$9$/$7$?(B
+	* aps/dbstub.c : dbstub¤òÉ¬Í×¤È¤·¤Ê¤¤¾ì¹ç¤ËÂÐ±þ¤·¤ä¤¹¤¯¤·¤¿
 
-	* aps/aps_main.c: COBOL$B0J30$N8@8l$KBP1~$7$d$9$/$7$?(B
+	* aps/aps_main.c: COBOL°Ê³°¤Î¸À¸ì¤ËÂÐ±þ¤·¤ä¤¹¤¯¤·¤¿
 
-	* aps/COBOL.c: apsCOBOL$B$r@0M}$7$?(B
+	* aps/COBOL.c: apsCOBOL¤òÀ°Íý¤·¤¿
 
 2001-11-02  Keisuke Nishida <knishida@sky.sannet.ne.jp>
 	
-	* glclient/protocol.c (GetScreenData): $B%U%)!<%+%9$,$*$+$7$/$J$k$3$H$N=$@5(B
+	* glclient/protocol.c (GetScreenData): ¥Õ¥©¡¼¥«¥¹¤¬¤ª¤«¤·¤¯¤Ê¤ë¤³¤È¤Î½¤Àµ
 
 2001-11-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/callbacks.c (send_event): $B%$%Y%s%H=hM}Cf$N%$%Y%s%H$rL5;k$9$k(B
+	* glclient/callbacks.c (send_event): ¥¤¥Ù¥ó¥È½èÍýÃæ¤Î¥¤¥Ù¥ó¥È¤òÌµ»ë¤¹¤ë
 
 2001-10-30  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/widgetOPS.c (InitWidgetOperations): GtkPandaEntry$B$X$NBP1~(B
+	* glclient/widgetOPS.c (InitWidgetOperations): GtkPandaEntry¤Ø¤ÎÂÐ±þ
 
 2001-10-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/wfc.c (CatchSEGV): SEGV$B$N;~$KMn$A$J$$$h$&$K$7$?(B($BN>?O$N7u!)(B)
+	* wfc/wfc.c (CatchSEGV): SEGV¤Î»þ¤ËÍî¤Á¤Ê¤¤¤è¤¦¤Ë¤·¤¿(Î¾¿Ï¤Î·õ¡©)
 
-	* aps/dbgroup.c: $B%G!<%?%Y!<%9A`:n7O$N=hM}$H%F!<%V%kA`:n7O$N=hM}$r(B
-	$BJL$K$7$?(B($B%F!<%V%k$N;XDj$NM-L5$,0c$&$?$a(B)
+	* aps/dbgroup.c: ¥Ç¡¼¥¿¥Ù¡¼¥¹Áàºî·Ï¤Î½èÍý¤È¥Æ¡¼¥Ö¥ëÁàºî·Ï¤Î½èÍý¤ò
+	ÊÌ¤Ë¤·¤¿(¥Æ¡¼¥Ö¥ë¤Î»ØÄê¤ÎÍ­Ìµ¤¬°ã¤¦¤¿¤á)
 
 	* cobol/MCPSUB.CBL: DBOPEN, DBDISCONNECT, DBCLOSE, DBSTART,
-	DBCOMMIT$B$N=hM}$rJQ99$7$?(B(dbgroup.c$B$NJQ99$N$?$a(B)
+	DBCOMMIT¤Î½èÍý¤òÊÑ¹¹¤·¤¿(dbgroup.c¤ÎÊÑ¹¹¤Î¤¿¤á)
 
-	* libs/DIlex.c: logport$B$r(Bredirect_port$B$KL>>NJQ99(B
+	* libs/DIlex.c: logport¤òredirect_port¤ËÌ¾¾ÎÊÑ¹¹
 
-	* aps/dbredirector.c: log.c$B$rL>>NJQ99(B, DB$B$N=hM}$rDI2C(B
+	* aps/dbredirector.c: log.c¤òÌ¾¾ÎÊÑ¹¹, DB¤Î½èÍý¤òÄÉ²Ã
 
-	* aps/dbgroup.c: $B=i4|2=$NJ}K!$rJQ99(B($B$3$3$G$^$H$a$F9T$&$N$G$O$J$/!"(B
-	$B3F(BDB$B=hM}%b%8%e!<%k$NCf$G9T$&$h$&$K$7$?(B)
+	* aps/dbgroup.c: ½é´ü²½¤ÎÊýË¡¤òÊÑ¹¹(¤³¤³¤Ç¤Þ¤È¤á¤Æ¹Ô¤¦¤Î¤Ç¤Ï¤Ê¤¯¡¢
+	³ÆDB½èÍý¥â¥¸¥å¡¼¥ë¤ÎÃæ¤Ç¹Ô¤¦¤è¤¦¤Ë¤·¤¿)
 
-	* aps/PostgresTable.c: postgres.c$B$+$iJ,N%(B
+	* aps/PostgresTable.c: postgres.c¤«¤éÊ¬Î¥
 
-	* aps/PostgresDB.c: postgres.c$B$+$iJ,N%(B
+	* aps/PostgresDB.c: postgres.c¤«¤éÊ¬Î¥
 
 2001-10-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/pandalog.c: $B%m%0$r%U%!%$%k$K<h$k(B(forward$B$OL$<BAu(B)
+	* aps/pandalog.c: ¥í¥°¤ò¥Õ¥¡¥¤¥ë¤Ë¼è¤ë(forward¤ÏÌ¤¼ÂÁõ)
 
 	* libs/DIlex.c: include directive
 
 2001-10-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/directory.c (SetUpDirectory): $BM>7W$J(BLD, BD$B$rFI$_9~$^$J$$$h(B
-	$B$&$K$7$?(B($B%a%b%j@aLs$N$?$a(B)
+	* libs/directory.c (SetUpDirectory): Í¾·×¤ÊLD, BD¤òÆÉ¤ß¹þ¤Þ¤Ê¤¤¤è
+	¤¦¤Ë¤·¤¿(¥á¥â¥êÀáÌó¤Î¤¿¤á)
 
-	* aps/apsCOBOL.c: $B%7%0%J%k=hM}$NDI2C(B($B;`$J$J$$%W%m%;%9$K$7$J$$$?$a(B)
+	* aps/apsCOBOL.c: ¥·¥°¥Ê¥ë½èÍý¤ÎÄÉ²Ã(»à¤Ê¤Ê¤¤¥×¥í¥»¥¹¤Ë¤·¤Ê¤¤¤¿¤á)
 
-	* libs/value.h: ValueStruct$B$K(BfUpdate$B$rDI2C(B($BF~NO$5$l$?9`L\$K0u$r$D(B
-	$B$1$k$?$a(B)
+	* libs/value.h: ValueStruct¤ËfUpdate¤òÄÉ²Ã(ÆþÎÏ¤µ¤ì¤¿¹àÌÜ¤Ë°õ¤ò¤Ä
+	¤±¤ë¤¿¤á)
 
-	* libs/DIparser.c (ParDBGROUP): DB GROUP$B$N35G0$rF~$l$k(B(DB$B%^%M!<%8%c(B
-	$B$NJ#?tBP1~$H%j%+%P%j$r3N<B$K$9$k$?$a(B)
+	* libs/DIparser.c (ParDBGROUP): DB GROUP¤Î³µÇ°¤òÆþ¤ì¤ë(DB¥Þ¥Í¡¼¥¸¥ã
+	¤ÎÊ£¿ôÂÐ±þ¤È¥ê¥«¥Ð¥ê¤ò³Î¼Â¤Ë¤¹¤ë¤¿¤á)
 
 2001-09-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/wfcio.c : wfc <-> server$B4VDL?.$N?.Mj@-$r>e$2$?(B($B$D$b$j(B)
+	* libs/wfcio.c : wfc <-> server´ÖÄÌ¿®¤Î¿®ÍêÀ­¤ò¾å¤²¤¿(¤Ä¤â¤ê)
 
-	* libs/queue.c (NewQueue): pthread_cond_wait$B$,(Bblock$B$7$J$$(Bbug fix
+	* libs/queue.c (NewQueue): pthread_cond_wait¤¬block¤·¤Ê¤¤bug fix
 
 2001-09-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/tcp.c (ConnectSocket): $B%[%9%HL>$,0z$1$J$$;~$N=hM}(B(PR#193)
+	* libs/tcp.c (ConnectSocket): ¥Û¥¹¥ÈÌ¾¤¬°ú¤±¤Ê¤¤»þ¤Î½èÍý(PR#193)
 
 2001-09-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* cobol/MCPMAIN.CBL: JOIN$B;~$KESCf$N2hLL$r>C$95!G=DI2C(B
+	* cobol/MCPMAIN.CBL: JOIN»þ¤ËÅÓÃæ¤Î²èÌÌ¤ò¾Ã¤¹µ¡Ç½ÄÉ²Ã
 	
 2001-09-14  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* wfc/mqthread.c (ConnectAPS): aps$B$+$i$N:F@\B3$r3N<B$K$7$?(B
+	* wfc/mqthread.c (ConnectAPS): aps¤«¤é¤ÎºÆÀÜÂ³¤ò³Î¼Â¤Ë¤·¤¿
 
-	* glclient/protocol.c (CreateNewWindow): CURRENT$B$G2hLL$,$J$$;~$K$O!"(B
-	NEW$B$9$k$h$&$K2~NI(B
+	* glclient/protocol.c (CreateNewWindow): CURRENT¤Ç²èÌÌ¤¬¤Ê¤¤»þ¤Ë¤Ï¡¢
+	NEW¤¹¤ë¤è¤¦¤Ë²þÎÉ
 
-	* cobol/MCPMAIN.CBL: $B2hLL$N@Z$j49$(=hM}$N2~NI(B($B2hLL@_Dj$NJQ99(B)
+	* cobol/MCPMAIN.CBL: ²èÌÌ¤ÎÀÚ¤ê´¹¤¨½èÍý¤Î²þÎÉ(²èÌÌÀßÄê¤ÎÊÑ¹¹)
 
-	* wfc/mqthread.c (MessageThread): $B2hLL$N@Z$j49$(=hM}$N2~NI(B
+	* wfc/mqthread.c (MessageThread): ²èÌÌ¤ÎÀÚ¤ê´¹¤¨½èÍý¤Î²þÎÉ
 
 2001-09-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/aps.c : aps <-> wfc$B4VDL?.$N?.Mj@-$r>e$2$?(B($B$D$b$j(B)
+	* libs/aps.c : aps <-> wfc´ÖÄÌ¿®¤Î¿®ÍêÀ­¤ò¾å¤²¤¿(¤Ä¤â¤ê)
 
-	* include/wfc.h: aps$BMQ(Bmutex$B$r(BMQ_Node$B$+$i(BAPS_Node$B$K0\$7$?(B
+	* include/wfc.h: apsÍÑmutex¤òMQ_Node¤«¤éAPS_Node¤Ë°Ü¤·¤¿
 
-	* wfc/mqthread.c (MessageThread): aps$B$+$i$N@\B3$r40A4$K$7$?(B
+	* wfc/mqthread.c (MessageThread): aps¤«¤é¤ÎÀÜÂ³¤ò´°Á´¤Ë¤·¤¿
 
-	* include/const.h: $B9-0hDj?t$r0l$D$N%U%!%$%k$GDj5A$7$?(B
+	* include/const.h: ¹­°èÄê¿ô¤ò°ì¤Ä¤Î¥Õ¥¡¥¤¥ë¤ÇÄêµÁ¤·¤¿
 
 2001-09-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 
-	* tools/copygen.c: BD$B$X$NBP1~(B
+	* tools/copygen.c: BD¤Ø¤ÎÂÐ±þ
 
-	* glserver/pandaIO.c (RecvPanda): put type JOIN$BDI2C(B($B%]%C%W%"%C%W$rJD$8$k$?$a(B)
+	* glserver/pandaIO.c (RecvPanda): put type JOINÄÉ²Ã(¥Ý¥Ã¥×¥¢¥Ã¥×¤òÊÄ¤¸¤ë¤¿¤á)
 	* cobol/MCPMAIN.CBL:
 	* wfc/mqthread.c (MessageThread): 
 
 2001-09-04  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DIparser.c : $B%P%C%A4D6-Dj5A$N(B`BD'$B$r:n$C$?(B(LD$B$H$N7sMQ$O$*$+(B
-	$B$7$$>e$K%9%Z%C%/E*$KLdBj$,$"$k(B)
+	* libs/DIparser.c : ¥Ð¥Ã¥Á´Ä¶­ÄêµÁ¤Î`BD'¤òºî¤Ã¤¿(LD¤È¤Î·óÍÑ¤Ï¤ª¤«
+	¤·¤¤¾å¤Ë¥¹¥Ú¥Ã¥¯Åª¤ËÌäÂê¤¬¤¢¤ë)
 
 2001-09-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/dbstub.c (InitSystem): $BCn<h$j(B(LD$BKh$N(BDB$BDj5A$KBP1~$7$F$J$+$C$?(B)
+	* aps/dbstub.c (InitSystem): Ãî¼è¤ê(LDËè¤ÎDBÄêµÁ¤ËÂÐ±þ¤·¤Æ¤Ê¤«¤Ã¤¿)
 
 2001-08-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* aps/dbstub.c (main): $BCn<h$j(B^^;
+	* aps/dbstub.c (main): Ãî¼è¤ê^^;
 
-	* wfc/mqthread.c (MessageThread): $B2hLL@Z$j49$($N=$@5(B
+	* wfc/mqthread.c (MessageThread): ²èÌÌÀÚ¤ê´¹¤¨¤Î½¤Àµ
 
 2001-08-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* Makefile.am : $B%G%#%l%/%H%j9=@.JQ99(B(glserver$B$rJ,$1$?(B)
+	* Makefile.am : ¥Ç¥£¥ì¥¯¥È¥ê¹½À®ÊÑ¹¹(glserver¤òÊ¬¤±¤¿)
 
-	* glserver/mqthread.c (MessageThread): $B%a%C%;!<%8%-%e!<$N<BAu(B($B%H%i(B
-	$B%s%6%/%7%g%s=g=x$NJ]>Z$N$?$a(B)
+	* glserver/mqthread.c (MessageThread): ¥á¥Ã¥»¡¼¥¸¥­¥å¡¼¤Î¼ÂÁõ(¥È¥é
+	¥ó¥¶¥¯¥·¥ç¥ó½ç½ø¤ÎÊÝ¾Ú¤Î¤¿¤á)
 
-	* glserver/wfc.c: $B%9%l%C%IKh$K%=!<%9J,3d(B
+	* glserver/wfc.c: ¥¹¥ì¥Ã¥ÉËè¤Ë¥½¡¼¥¹Ê¬³ä
 
 2001-08-26  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/apsCOBOL.c : COBOL$B$N<B9T%m%0$r%U%!%$%k$K<h$k$h$&$K$7$?(B
+	* glserver/apsCOBOL.c : COBOL¤Î¼Â¹Ô¥í¥°¤ò¥Õ¥¡¥¤¥ë¤Ë¼è¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-08-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/wfc.c: $B%^%k%A%9%l%C%I2=(B
+	* glserver/wfc.c: ¥Þ¥ë¥Á¥¹¥ì¥Ã¥É²½
 
 2001-08-16  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/tinycobol.c: Tiny COBOL$B0MB8$N%G!<%?JQ49DI2C(B($BL$%F%9%H(B)
+	* glserver/tinycobol.c: Tiny COBOL°ÍÂ¸¤Î¥Ç¡¼¥¿ÊÑ´¹ÄÉ²Ã(Ì¤¥Æ¥¹¥È)
 
-	* glserver/Makefile.am : dot COBOL$BMQ!"(BTiny Cobol$BMQ$N%5!<%P$r@8@.$9$k$h$&$K$7$?(B
+	* glserver/Makefile.am : dot COBOLÍÑ¡¢Tiny CobolÍÑ¤Î¥µ¡¼¥Ð¤òÀ¸À®¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* glserver/cobolvalue.c : $B=hM}7O0MB8$NItJ,$rJ,N%$7$?(B
+	* glserver/cobolvalue.c : ½èÍý·Ï°ÍÂ¸¤ÎÉôÊ¬¤òÊ¬Î¥¤·¤¿
 
-	* glclient/protocol.c (SendConnect): glclient$B$N@\B3%(%i!<$,$o$+$k$h$&$K$7$?(B
+	* glclient/protocol.c (SendConnect): glclient¤ÎÀÜÂ³¥¨¥é¡¼¤¬¤ï¤«¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-08-09  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/dbstub.c: apsCOBOL$B$HF1$8$h$&$JF0:n$K$7$?(B
+	* glserver/dbstub.c: apsCOBOL¤ÈÆ±¤¸¤è¤¦¤ÊÆ°ºî¤Ë¤·¤¿
 
 2001-08-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/apsCOBOL.c (ExecuteServer): aps$B=*N;;~$K(BCOBOL$B$r(BEOF$BDLCN$9$k$h$&$K$7$?(B
+	* glserver/apsCOBOL.c (ExecuteServer): aps½ªÎ»»þ¤ËCOBOL¤òEOFÄÌÃÎ¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* tools/copygen.c: LD$BKh$K(BDB$BDj5A$,$"$k$3$H$KBP1~$7$?(B
+	* tools/copygen.c: LDËè¤ËDBÄêµÁ¤¬¤¢¤ë¤³¤È¤ËÂÐ±þ¤·¤¿
 
-	* cobol/MCPMAIN.CBL: COPY$B6gL>$N@0M}(B($B%=!<%9JQ99$rITMW$K$7$?(B)
+	* cobol/MCPMAIN.CBL: COPY¶çÌ¾¤ÎÀ°Íý(¥½¡¼¥¹ÊÑ¹¹¤òÉÔÍ×¤Ë¤·¤¿)
 
-	* cobol/MCPSUB.CBL: MCPDBSUB.CBL$B$H(BMCPDCSUB.CBL$B$rE}9g$7$?(B
+	* cobol/MCPSUB.CBL: MCPDBSUB.CBL¤ÈMCPDCSUB.CBL¤òÅý¹ç¤·¤¿
 
-	* sample2/Makefile : $B@0M}(B
+	* sample2/Makefile : À°Íý
 
-	* sample1/Makefile : $B@0M}(B
+	* sample1/Makefile : À°Íý
 
-	* glserver/wfc.c : $B%o!<%/%U%m!<%3%s%H%m!<%i$r<BAu$7$O$8$a!"$H$j$"$($:F0$/(B
+	* glserver/wfc.c : ¥ï¡¼¥¯¥Õ¥í¡¼¥³¥ó¥È¥í¡¼¥é¤ò¼ÂÁõ¤·¤Ï¤¸¤á¡¢¤È¤ê¤¢¤¨¤ºÆ°¤¯
 
 2001-08-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/DIparser.c , libs/LDparser.c : DB$BDj5A$N0LCV$r%G%#%l%/%H%j$+$i(BLD$B$KJQ$($?(B
+	* libs/DIparser.c , libs/LDparser.c : DBÄêµÁ¤Î°ÌÃÖ¤ò¥Ç¥£¥ì¥¯¥È¥ê¤«¤éLD¤ËÊÑ¤¨¤¿
 
 2001-07-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver (SetDefault): $B%G%#%l%/%H%j$N%G%U%)%k%H$rJQ$($?(B
+	* glserver (SetDefault): ¥Ç¥£¥ì¥¯¥È¥ê¤Î¥Ç¥Õ¥©¥ë¥È¤òÊÑ¤¨¤¿
 
 2001-07-28  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/apsCOBOL.c: $B5/F0%Q%i%a!<%?$K%]!<%HHV9f$rF~$l$?(B
+	* glserver/apsCOBOL.c: µ¯Æ°¥Ñ¥é¥á¡¼¥¿¤Ë¥Ý¡¼¥ÈÈÖ¹æ¤òÆþ¤ì¤¿
 
-	* libs/DIparser.c : LD$B$N%]!<%HHV9f%[%9%HL>$r%G%#%l%/%H%j$K5-=R$9$k$h$&$K$7$?(B
+	* libs/DIparser.c : LD¤Î¥Ý¡¼¥ÈÈÖ¹æ¥Û¥¹¥ÈÌ¾¤ò¥Ç¥£¥ì¥¯¥È¥ê¤Ëµ­½Ò¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-07-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.c (ParLD): command$B$NJ8K!$rJQ$($?(B
+	* libs/LDparser.c (ParLD): command¤ÎÊ¸Ë¡¤òÊÑ¤¨¤¿
 
 2001-07-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/apsCOBOL.c : LD$BKh$K%"%W%jMQ%G%#%l%/%H%j$r:n$k2>Dj$rF~$l$k(B
+	* glserver/apsCOBOL.c : LDËè¤Ë¥¢¥×¥êÍÑ¥Ç¥£¥ì¥¯¥È¥ê¤òºî¤ë²¾Äê¤òÆþ¤ì¤ë
 
 2001-07-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glserver/postgres.c (ExecSQL): $B%"%H%j%S%e!<%H$N=hM}(B($BK:$l$F$?(B)
+	* glserver/postgres.c (ExecSQL): ¥¢¥È¥ê¥Ó¥å¡¼¥È¤Î½èÍý(Ëº¤ì¤Æ¤¿)
 
 2001-07-15  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/postgres.c (ValueToSQL): like, ~ $B$N=hM}$r@5$7$/$7$?(B
+	* glserver/postgres.c (ValueToSQL): like, ~ ¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿
 
-	* libs/DDparser.c (ParValue): $B%"%H%j%S%e!<%H$N=hM}(B
+	* libs/DDparser.c (ParValue): ¥¢¥È¥ê¥Ó¥å¡¼¥È¤Î½èÍý
 
-	* libs/value.c (RecvValueBody): Fixed$B$N%a%b%j%j!<%/$r2r>C$7$?(B($B$D$b$j(B)
+	* libs/value.c (RecvValueBody): Fixed¤Î¥á¥â¥ê¥ê¡¼¥¯¤ò²ò¾Ã¤·¤¿(¤Ä¤â¤ê)
 
 2001-07-07  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/cobolvalue.c : varchar$B$H(Bchar$B$N07$$$rF1$8$K$7$F$_$?(B
+	* glserver/cobolvalue.c : varchar¤Èchar¤Î°·¤¤¤òÆ±¤¸¤Ë¤·¤Æ¤ß¤¿
 
 2001-07-04  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/dbexec.c (WriteDB_Reply): $B%W%m%C%/?t$N8m$j$rD>$7$?(B
+	* glserver/dbexec.c (WriteDB_Reply): ¥×¥í¥Ã¥¯¿ô¤Î¸í¤ê¤òÄ¾¤·¤¿
 
 2001-06-29  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/apsCOBOL.c (InitSystem): pty$B$N;HMQ$r(Bconfigure$B9`L\$K$7$?(B
+	* glserver/apsCOBOL.c (InitSystem): pty¤Î»ÈÍÑ¤òconfigure¹àÌÜ¤Ë¤·¤¿
 
-	* libs/DDlex.c: varchar$BDI2C(B
+	* libs/DDlex.c: varcharÄÉ²Ã
 
 2001-06-24  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/postgres.c : SQL$B%$%s%?!<%W%j%?DI2C(B
+	* glserver/postgres.c : SQL¥¤¥ó¥¿¡¼¥×¥ê¥¿ÄÉ²Ã
 
-	* libs/SQLparser.c: SQL$B%Q!<%6DI2C(B
+	* libs/SQLparser.c: SQL¥Ñ¡¼¥¶ÄÉ²Ã
 
-	* libs/DDparser.c (DD_ParserDataDefines): path$B$N=hM}$NDI2C(B
+	* libs/DDparser.c (DD_ParserDataDefines): path¤Î½èÍý¤ÎÄÉ²Ã
 
 2001-06-10  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* sample2/MCPMAIN.CBL: $B$H$j$"$($:$N%H%i%s%6%/%7%g%s=hM}$r(BapsCOBOL$B$X0\$9(B
+	* sample2/MCPMAIN.CBL: ¤È¤ê¤¢¤¨¤º¤Î¥È¥é¥ó¥¶¥¯¥·¥ç¥ó½èÍý¤òapsCOBOL¤Ø°Ü¤¹
 
-	* glserver/apsCOBOL.c: dbstub$B$HE}9g(B
+	* glserver/apsCOBOL.c: dbstub¤ÈÅý¹ç
 
-	* glserver/dbexec.c: dbstub$B$r=hM}It$H%5!<%PIt$KJ,3d(B
+	* glserver/dbexec.c: dbstub¤ò½èÍýÉô¤È¥µ¡¼¥ÐÉô¤ËÊ¬³ä
 
 2001-06-09  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* sample2/MCPMAIN.CBL: $B%H%i%s%6%/%7%g%s=hM}DI2C(B
+	* sample2/MCPMAIN.CBL: ¥È¥é¥ó¥¶¥¯¥·¥ç¥ó½èÍýÄÉ²Ã
 
-	* $B%*%s%i%$%s%G%b$,F0$/$h$&$K$7$?(B
+	* ¥ª¥ó¥é¥¤¥ó¥Ç¥â¤¬Æ°¤¯¤è¤¦¤Ë¤·¤¿
 
 2001-06-08  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/dbstub.c: dbstub$B$r(BDBMS$B0MB8It$HHs0MB8It$KJ,3d(B
+	* glserver/dbstub.c: dbstub¤òDBMS°ÍÂ¸Éô¤ÈÈó°ÍÂ¸Éô¤ËÊ¬³ä
 
 2001-06-07  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* configure.in: $B@FF#7/$N=$@5$N5[<}(B
+	* configure.in: ÀÆÆ£·¯¤Î½¤Àµ¤ÎµÛ¼ý
 
 2001-06-04  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c: NumericToFixed, FixedToNumeric$B$r(Bvalue.c$B$K0\$7$?(B
+	* glclient/widgetOPS.c: NumericToFixed, FixedToNumeric¤òvalue.c¤Ë°Ü¤·¤¿
 
 2001-05-26  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/DDparser.c (DD_ParserDataDefines): $BI{<!%-!<$N=hM}DI2C(B
+	* libs/DDparser.c (DD_ParserDataDefines): Éû¼¡¥­¡¼¤Î½èÍýÄÉ²Ã
 
 2001-05-16  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/option.c (CheckParam): $BF1$8J8;zNs$G;O$^$k%*%W%7%g%s$,;H$($k$h$&$K$7$?(B
+	* libs/option.c (CheckParam): Æ±¤¸Ê¸»úÎó¤Ç»Ï¤Þ¤ë¥ª¥×¥·¥ç¥ó¤¬»È¤¨¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-05-11  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/copygen.c : MCPDBSUB$BMQ(BCOPY$B6g$N@8@.5!G=(B
+	* tools/copygen.c : MCPDBSUBÍÑCOPY¶ç¤ÎÀ¸À®µ¡Ç½
 
 2001-04-23  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c: GtkNumberEntry$B$N8GDj>.?tE@2=$KBP1~(B
+	* glclient/widgetOPS.c: GtkNumberEntry¤Î¸ÇÄê¾®¿ôÅÀ²½¤ËÂÐ±þ
 
-	* glclient/protocol.c (SendConnect): $B%P!<%8%g%s%A%'%C%/(B
+	* glclient/protocol.c (SendConnect): ¥Ð¡¼¥¸¥ç¥ó¥Á¥§¥Ã¥¯
 
-	* glserver/server.c (MainLoop): $B%P!<%8%g%s%A%'%C%/(B
+	* glserver/server.c (MainLoop): ¥Ð¡¼¥¸¥ç¥ó¥Á¥§¥Ã¥¯
 
 2001-04-20  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c (RecvNumberEntry): $B%G!<%?$r(BFixed$B$GDL?.$9$k$h$&$K$7$?(B
+	* glclient/widgetOPS.c (RecvNumberEntry): ¥Ç¡¼¥¿¤òFixed¤ÇÄÌ¿®¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-03-26  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/copygen.c: number$B$N;~!"Id9f$r@8@.$9$k$h$&$K$7$?(B
+	* tools/copygen.c: number¤Î»þ¡¢Éä¹æ¤òÀ¸À®¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-03-20  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/recdefgen.rb: GtkButton$B$N%"%H%j%S%e!<%H@8@.(B
+	* tools/recdefgen.rb: GtkButton¤Î¥¢¥È¥ê¥Ó¥å¡¼¥ÈÀ¸À®
 
 2001-03-19  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/callbacks.c : change$B7O$N(Bcallback$B$r85$KLa$7$?(B
+	* glclient/callbacks.c : change·Ï¤Îcallback¤ò¸µ¤ËÌá¤·¤¿
 
-	* glserver/server.c (TermName): $BC<KvL>$N%U%)!<%^%C%H$rJQ$($?(B
+	* glserver/server.c (TermName): Ã¼ËöÌ¾¤Î¥Õ¥©¡¼¥Þ¥Ã¥È¤òÊÑ¤¨¤¿
 
 2001-03-15  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* cobol/MCPMAIN1.CBL: MCP-TERM, MCP-USER$BDI2C(B
+	* cobol/MCPMAIN1.CBL: MCP-TERM, MCP-USERÄÉ²Ã
 
-	* tools/user.c: $B%f!<%64IM}%f!<%F%#%j%F%#DI2C(B
+	* tools/user.c: ¥æ¡¼¥¶´ÉÍý¥æ¡¼¥Æ¥£¥ê¥Æ¥£ÄÉ²Ã
 
 2001-03-14  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/server.c : $B%f!<%6G'>Z!"C<KvL>(B
+	* glserver/server.c : ¥æ¡¼¥¶Ç§¾Ú¡¢Ã¼ËöÌ¾
 
-	* glclient/client.c : $B%f!<%6G'>Z(B
+	* glclient/client.c : ¥æ¡¼¥¶Ç§¾Ú
 
 2001-03-12  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/server.c : $BC<KvL>$N<hF@(B
+	* glserver/server.c : Ã¼ËöÌ¾¤Î¼èÆÀ
 
 2001-03-10  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/LDlex.c : cpp$B$rITMW$K$7$?(B
+	* libs/LDlex.c : cpp¤òÉÔÍ×¤Ë¤·¤¿
 
-	* libs/DDlex.c : cpp$B$rITMW$K$7$?(B
+	* libs/DDlex.c : cpp¤òÉÔÍ×¤Ë¤·¤¿
 
 2001-03-09  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/DIparser.c : $BG'>Z%W%m%H%3%kDj5ADI2C(B
+	* libs/DIparser.c : Ç§¾Ú¥×¥í¥È¥³¥ëÄêµÁÄÉ²Ã
 
-	* glserver/glauth.c: $BG'>Z%5!<%PDI2C(B
+	* glserver/glauth.c: Ç§¾Ú¥µ¡¼¥ÐÄÉ²Ã
 
 2001-02-27  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/auth.c: $BDI2C(B
+	* libs/auth.c: ÄÉ²Ã
 
 2001-02-17  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/applications.c (ApplicationsCall): $B%"%W%j%1!<%7%g%s$,H/8+(B
-	$B=PMh$J$$;~$N=hM}$r@5$7$/$7$?(B
+	* glserver/applications.c (ApplicationsCall): ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤¬È¯¸«
+	½ÐÍè¤Ê¤¤»þ¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿
 
 2001-02-11  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/copygen.c (MakeFromLD): $B3,AX$r0l$D>e$2$?(B
+	* tools/copygen.c (MakeFromLD): ³¬ÁØ¤ò°ì¤Ä¾å¤²¤¿
 
 2001-02-09  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/recdefgen.rb : GtkNumberEntry$B$NBP1~$,IT40A4$@$C$?$N$GD>$7$?(B
+	* tools/recdefgen.rb : GtkNumberEntry¤ÎÂÐ±þ¤¬ÉÔ´°Á´¤À¤Ã¤¿¤Î¤ÇÄ¾¤·¤¿
 
-	* libs/DDparser.c (ParValue): $BO@M}$r$A$g$C$HJQ$($?(B
-	(ParPKey): $BDI2C(B
+	* libs/DDparser.c (ParValue): ÏÀÍý¤ò¤Á¤ç¤Ã¤ÈÊÑ¤¨¤¿
+	(ParPKey): ÄÉ²Ã
 
 2001-01-26  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/recdefgen.rb: GtkToggleButton$B$H(BGtkCList$B$N=hM}$r@5$7$/$7$?(B
+	* tools/recdefgen.rb: GtkToggleButton¤ÈGtkCList¤Î½èÍý¤òÀµ¤·¤¯¤·¤¿
 
 2001-01-25  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/recdefgen.rb : GtkNumberEntry, GtkText$B$K@5$7$/BP1~$7$?(B
+	* tools/recdefgen.rb : GtkNumberEntry, GtkText¤ËÀµ¤·¤¯ÂÐ±þ¤·¤¿
 
-	* glclient/widgetOPS.c (RecvNotebook): $B;R%&%#%8%'%C%H$r@5$7$/=hM}$9(B
-	$B$k$h$&$K$7$?(B
+	* glclient/widgetOPS.c (RecvNotebook): »Ò¥¦¥£¥¸¥§¥Ã¥È¤òÀµ¤·¤¯½èÍý¤¹
+	¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-01-24  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* include/glterm.h (SCREEN_END_SESSION): $B%"%W%j%1!<%7%g%s$+$i$N6/@)(B
-	$B=*N;=hM}$rDI2C(B(MCPMAIN$B$bJQ99$7$F$$$k(B)
+	* include/glterm.h (SCREEN_END_SESSION): ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤«¤é¤Î¶¯À©
+	½ªÎ»½èÍý¤òÄÉ²Ã(MCPMAIN¤âÊÑ¹¹¤·¤Æ¤¤¤ë)
 
-	* glclient/callbacks.c (window_close): $B2hLL@Z$j49$(;~$KAk$,$J$/$J$C(B
-	$B$F=*N;$7$F$7$^$&(Bbug$B=$@5(B
+	* glclient/callbacks.c (window_close): ²èÌÌÀÚ¤ê´¹¤¨»þ¤ËÁë¤¬¤Ê¤¯¤Ê¤Ã
+	¤Æ½ªÎ»¤·¤Æ¤·¤Þ¤¦bug½¤Àµ
 
 2001-01-23  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/recdefgen.rb : $B:G?7$N;EMM$K9g$o$;$?(B
+	* tools/recdefgen.rb : ºÇ¿·¤Î»ÅÍÍ¤Ë¹ç¤ï¤»¤¿
 
-	* glclient/callbacks.c (window_close): $BA4$F$NAk$rJD$8$k$H%/%i%$%"%s(B
-	$B%H$,=*N;$9$k$h$&$K$7$?(B
-	(switch_page): GtkNotebook$B$N%Z!<%8@Z$j49$($KBP1~(B
+	* glclient/callbacks.c (window_close): Á´¤Æ¤ÎÁë¤òÊÄ¤¸¤ë¤È¥¯¥é¥¤¥¢¥ó
+	¥È¤¬½ªÎ»¤¹¤ë¤è¤¦¤Ë¤·¤¿
+	(switch_page): GtkNotebook¤Î¥Ú¡¼¥¸ÀÚ¤ê´¹¤¨¤ËÂÐ±þ
 
 Mon Jan 22 03:52:24 2001  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c (RecvCombo): GtkCombo$B$N%(%s%H%j$,85$KLa$i$J(B
-	$B$$$h$&$K$7$?!#%j%9%H!"%3%i%`%j%9%H$NI=<(3+;O%$%s%G%/%9$,;XDj2DG=$K(B
-	$B$7$?(B
+	* glclient/widgetOPS.c (RecvCombo): GtkCombo¤Î¥¨¥ó¥È¥ê¤¬¸µ¤ËÌá¤é¤Ê
+	¤¤¤è¤¦¤Ë¤·¤¿¡£¥ê¥¹¥È¡¢¥³¥é¥à¥ê¥¹¥È¤ÎÉ½¼¨³«»Ï¥¤¥ó¥Ç¥¯¥¹¤¬»ØÄê²ÄÇ½¤Ë
+	¤·¤¿
 	
-	* glclient/callbacks.c (entry_next_focus): $B%U%)!<%+%9@)8f$r(B
-	callback$B$G$b=PMh$k$h$&$K$7$?(B
+	* glclient/callbacks.c (entry_next_focus): ¥Õ¥©¡¼¥«¥¹À©¸æ¤ò
+	callback¤Ç¤â½ÐÍè¤ë¤è¤¦¤Ë¤·¤¿
 
 Fri Jan 19 15:25:13 2001  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/comm.c : $BIbF0>.?tE@$,07$($k$h$&$K$7$?(B
+	* libs/comm.c : ÉâÆ°¾®¿ôÅÀ¤¬°·¤¨¤ë¤è¤¦¤Ë¤·¤¿
 
-	* libs/value.c : $B8GDj>.?tE@$N07$$$,=PMh$k$h$&$K$7$?(B
+	* libs/value.c : ¸ÇÄê¾®¿ôÅÀ¤Î°·¤¤¤¬½ÐÍè¤ë¤è¤¦¤Ë¤·¤¿
 
-	* tools/copygen.c : number$B$N>.?tE@IU$-$KBP1~(B
+	* tools/copygen.c : number¤Î¾®¿ôÅÀÉÕ¤­¤ËÂÐ±þ
 
 Thu Jan 18 03:25:31 2001  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/apsCOBOL.c (RestoreValue): NUMBER$B$KBP1~$7$?(B($BK:$l$F$$$?$N(B
-	$B$5(B)$B!#$?$@$7IbF0>.?tE@$OL$BP1~(B
+	* glserver/apsCOBOL.c (RestoreValue): NUMBER¤ËÂÐ±þ¤·¤¿(Ëº¤ì¤Æ¤¤¤¿¤Î
+	¤µ)¡£¤¿¤À¤·ÉâÆ°¾®¿ôÅÀ¤ÏÌ¤ÂÐ±þ
 
-	* libs/value.c (SetValueString): NUMBER$B$O1&5M$a$K$J$k$h$&$K$7$?(B
+	* libs/value.c (SetValueString): NUMBER¤Ï±¦µÍ¤á¤Ë¤Ê¤ë¤è¤¦¤Ë¤·¤¿
 
-	* libs/DDparser.c (ParValue): CHAR$B$d(BNUMBER$B$N;~$K(B1$B%P%$%HM>J,$K<h$k$h(B
-	$B$&$K$7$?(B
+	* libs/DDparser.c (ParValue): CHAR¤äNUMBER¤Î»þ¤Ë1¥Ð¥¤¥ÈÍ¾Ê¬¤Ë¼è¤ë¤è
+	¤¦¤Ë¤·¤¿
 
 Wed Jan 17 19:41:07 2001  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c (RecvNumberEntry): $B?tCMF~NO%&%#%8%'%C%HBP1~(B
+	* glclient/widgetOPS.c (RecvNumberEntry): ¿ôÃÍÆþÎÏ¥¦¥£¥¸¥§¥Ã¥ÈÂÐ±þ
 
-	* libs/value.c: $BIbF0>.?tE@?tBP1~(B($B$?$@$7!"%U%)!<%^%C%H$O5!<o0MB8(B)
+	* libs/value.c: ÉâÆ°¾®¿ôÅÀ¿ôÂÐ±þ(¤¿¤À¤·¡¢¥Õ¥©¡¼¥Þ¥Ã¥È¤Ïµ¡¼ï°ÍÂ¸)
 
 2001-01-14  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* cobol/Makefile : $B:n$C$?(B
+	* cobol/Makefile : ºî¤Ã¤¿
 
-	* glclient/widgetOPS.c: $B%9%F!<%H$KBP1~(B
+	* glclient/widgetOPS.c: ¥¹¥Æ¡¼¥È¤ËÂÐ±þ
 
 2001-01-12  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c : $B%9%?%$%k$KBP1~(B
+	* glclient/widgetOPS.c : ¥¹¥¿¥¤¥ë¤ËÂÐ±þ
 
 2001-01-08  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* $B%U%)!<%+%9@)8f$rDI2C!#(BC/S$B4V$N%W%m%H%3%k$O>e0L8_49$G$"$k$,!"$=$NB>(B
-	$B$N%W%m%H%3%k$OHs8_49$K$J$C$?$N$GCm0U$,I,MW(B
+	* ¥Õ¥©¡¼¥«¥¹À©¸æ¤òÄÉ²Ã¡£C/S´Ö¤Î¥×¥í¥È¥³¥ë¤Ï¾å°Ì¸ß´¹¤Ç¤¢¤ë¤¬¡¢¤½¤ÎÂ¾
+	¤Î¥×¥í¥È¥³¥ë¤ÏÈó¸ß´¹¤Ë¤Ê¤Ã¤¿¤Î¤ÇÃí°Õ¤¬É¬Í×
 
 2001-01-07  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/value.c (RecvValueBody): $BJ8;zNs!"?t;zNs!"%P%$%HNs$ND9$5$N@)Ls(B
-	$B$r$J$/$7$?(B
+	* libs/value.c (RecvValueBody): Ê¸»úÎó¡¢¿ô»úÎó¡¢¥Ð¥¤¥ÈÎó¤ÎÄ¹¤µ¤ÎÀ©Ìó
+	¤ò¤Ê¤¯¤·¤¿
 
-	* tools/recdefgen.rb : GtkEntry$B$ND9$5$rD9$a$K(B
+	* tools/recdefgen.rb : GtkEntry¤ÎÄ¹¤µ¤òÄ¹¤á¤Ë
 
-	* libs/DDparser.c (AddRecordItem): $BL>A0=EJ#$N%(%i!<%a%C%;!<%8$K=EJ#(B
-	$B$7$?L>A0$rI=<($9$k$h$&$K$7$?(B
+	* libs/DDparser.c (AddRecordItem): Ì¾Á°½ÅÊ£¤Î¥¨¥é¡¼¥á¥Ã¥»¡¼¥¸¤Ë½ÅÊ£
+	¤·¤¿Ì¾Á°¤òÉ½¼¨¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
-	* glclient/protocol.c (ShowWindow): $B%&%#%s%I%&$rGK2u$7$?8e$K$O!"(B
-	XML$B$r:FFI$_9~$_$9$k$h$&$K$7$?(B
+	* glclient/protocol.c (ShowWindow): ¥¦¥£¥ó¥É¥¦¤òÇË²õ¤·¤¿¸å¤Ë¤Ï¡¢
+	XML¤òºÆÆÉ¤ß¹þ¤ß¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2001-01-04  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c : GtkCalendar$BDI2C!#%\%?%s@)8f$r%H%0%k$KE}9g(B
+	* glclient/widgetOPS.c : GtkCalendarÄÉ²Ã¡£¥Ü¥¿¥óÀ©¸æ¤ò¥È¥°¥ë¤ËÅý¹ç
 
 2000-12-27  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/recdefgen.rb : GtkCalendar$B$X$NBP1~!#%\%?%s7O%&%#%8%'%C%H$NB0(B
-	$B@-%U%#!<%k%I$X$NBP1~(B
+	* tools/recdefgen.rb : GtkCalendar¤Ø¤ÎÂÐ±þ¡£¥Ü¥¿¥ó·Ï¥¦¥£¥¸¥§¥Ã¥È¤ÎÂ°
+	À­¥Õ¥£¡¼¥ë¥É¤Ø¤ÎÂÐ±þ
 
 2000-12-25  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/copygen.c : $B%(%i!<=hM}DI2C!#Bg$-$5(B0$B$N>l9g$N=PNODd;_(B
+	* tools/copygen.c : ¥¨¥é¡¼½èÍýÄÉ²Ã¡£Âç¤­¤µ0¤Î¾ì¹ç¤Î½ÐÎÏÄä»ß
 
 2000-12-22  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/copygen.c : $B9`L\L>$r@0M}$7$?(B
+	* tools/copygen.c : ¹àÌÜÌ¾¤òÀ°Íý¤·¤¿
 
-	* $B%G%b$rJ#?t(BLD$B$KJQ99$7$?(B
+	* ¥Ç¥â¤òÊ£¿ôLD¤ËÊÑ¹¹¤·¤¿
 
-	* LD$B$r2#CG$9$k;~$K%Q%i%a!<%?$N0z$-EO$7$,=PMh$k$h$&$K$7$?(B
+	* LD¤ò²£ÃÇ¤¹¤ë»þ¤Ë¥Ñ¥é¥á¡¼¥¿¤Î°ú¤­ÅÏ¤·¤¬½ÐÍè¤ë¤è¤¦¤Ë¤·¤¿
 
-	* glserver/apsCOBOL.c (ExecuteServer): $BJVEz$N=g=x$rJQ99$7$?(B
+	* glserver/apsCOBOL.c (ExecuteServer): ÊÖÅú¤Î½ç½ø¤òÊÑ¹¹¤·¤¿
 
-	* libs/DDparser.c : $B%U%!%$%k$,$J$$;~$N=hM}(B
+	* libs/DDparser.c : ¥Õ¥¡¥¤¥ë¤¬¤Ê¤¤»þ¤Î½èÍý
 
-	* libs/LDparser.c : $B%U%!%$%k$,$J$$;~$N=hM}(B
+	* libs/LDparser.c : ¥Õ¥¡¥¤¥ë¤¬¤Ê¤¤»þ¤Î½èÍý
 
 2000-12-21  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/driver.c : fNew$B$rN)$F$k>l=j$r!"(BSetWindowName$B$+$i(BPutWindow$B$KJQ(B
-	$B$($?(B($B$I$&$b%P%0$r:n$k85$K$J$C$F$$$k$N$G(B)
+	* libs/driver.c : fNew¤òÎ©¤Æ¤ë¾ì½ê¤ò¡¢SetWindowName¤«¤éPutWindow¤ËÊÑ
+	¤¨¤¿(¤É¤¦¤â¥Ð¥°¤òºî¤ë¸µ¤Ë¤Ê¤Ã¤Æ¤¤¤ë¤Î¤Ç)
 
 2000-12-20  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/apsCOBOL.c : $B%l%3!<%ID9$N@)Ls$r2sHr$9$k$h$&$K$7!"(BLD$B$N%5%$(B
-	$B%:$N@)Ls$rE1GQ$7$?(B(named pipe$B$N07$$$K$bLdBj$,$"$C$?(B)
+	* glserver/apsCOBOL.c : ¥ì¥³¡¼¥ÉÄ¹¤ÎÀ©Ìó¤ò²óÈò¤¹¤ë¤è¤¦¤Ë¤·¡¢LD¤Î¥µ¥¤
+	¥º¤ÎÀ©Ìó¤òÅ±ÇÑ¤·¤¿(named pipe¤Î°·¤¤¤Ë¤âÌäÂê¤¬¤¢¤Ã¤¿)
 
-	* $B%G%#%l%/%H%j$rFI$`$h$&$K$7$?!#$=$N$?$a5/F0%Q%i%a!<%?$OJQ99$K$J$C$?(B
+	* ¥Ç¥£¥ì¥¯¥È¥ê¤òÆÉ¤à¤è¤¦¤Ë¤·¤¿¡£¤½¤Î¤¿¤áµ¯Æ°¥Ñ¥é¥á¡¼¥¿¤ÏÊÑ¹¹¤Ë¤Ê¤Ã¤¿
 
 2000-12-18  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/directory.c: $BDI2C(B($B%G%#%l%/%H%j$N35G0F3F~(B)
+	* libs/directory.c: ÄÉ²Ã(¥Ç¥£¥ì¥¯¥È¥ê¤Î³µÇ°Æ³Æþ)
 
 2000-12-10  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/apsCOBOL.c (ExecuteServer): $B=i2hLL$N35G0F3F~(B
+	* glserver/apsCOBOL.c (ExecuteServer): ½é²èÌÌ¤Î³µÇ°Æ³Æþ
 
-	* libs/value.c (ConvertCobol2C): nul$BJ8;z$N;~$K=hM}$rCf;_$7$J$$$h$&$K(B
-	$B$7$?(B
+	* libs/value.c (ConvertCobol2C): nulÊ¸»ú¤Î»þ¤Ë½èÍý¤òÃæ»ß¤·¤Ê¤¤¤è¤¦¤Ë
+	¤·¤¿
 
-	* tools/recdefgen.rb : notebook$B$XBP1~(B
+	* tools/recdefgen.rb : notebook¤ØÂÐ±þ
 
 2000-12-06  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/copygen.c (MakeFromLD): LDRFILE, LDWFILE$B$N@8@.$,MF0W$K$J$k$h(B
-	$B$&$K$7$?(B
+	* tools/copygen.c (MakeFromLD): LDRFILE, LDWFILE¤ÎÀ¸À®¤¬ÍÆ°×¤Ë¤Ê¤ë¤è
+	¤¦¤Ë¤·¤¿
 
 2000-12-05  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* cobol/MCPMAIN.CBL: `BACK'$B$N%5%]!<%H(B($B$?$@$7L$%F%9%H(B)
+	* cobol/MCPMAIN.CBL: `BACK'¤Î¥µ¥Ý¡¼¥È(¤¿¤À¤·Ì¤¥Æ¥¹¥È)
 
-	* libs/DDparser.c (DD_ParserDataDefines): cpp$B$N5/F0$r$3$3$G$d$k$h$&(B
-	$B$K$7$?!#$*1"$G(Bthread safe$B$G$J$/$J$C$F$$$k$N$GCm0U(B
+	* libs/DDparser.c (DD_ParserDataDefines): cpp¤Îµ¯Æ°¤ò¤³¤³¤Ç¤ä¤ë¤è¤¦
+	¤Ë¤·¤¿¡£¤ª±¢¤Çthread safe¤Ç¤Ê¤¯¤Ê¤Ã¤Æ¤¤¤ë¤Î¤ÇÃí°Õ
 
-	* libs/LDparser.c (LD_Parser): $B$3$$$D$bF1MM(B
+	* libs/LDparser.c (LD_Parser): ¤³¤¤¤Ä¤âÆ±ÍÍ
 
 2000-12-04  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/value.c: number$B7?(B($B?t;z$G9=@.$5$l$kJ8;zNs(B)$B$NDI2C(B
+	* libs/value.c: number·¿(¿ô»ú¤Ç¹½À®¤µ¤ì¤ëÊ¸»úÎó)¤ÎÄÉ²Ã
 
-	* tools/copygen.c: $BF0:n$r@0M}$7$?!#(Bcpp$B$rFbItE*$K5/F0$9$k$h$&$K$7$?!#(B
-	$B%3%a%s%H$NJ8;z$rJQ99$7$?!#(B
+	* tools/copygen.c: Æ°ºî¤òÀ°Íý¤·¤¿¡£cpp¤òÆâÉôÅª¤Ëµ¯Æ°¤¹¤ë¤è¤¦¤Ë¤·¤¿¡£
+	¥³¥á¥ó¥È¤ÎÊ¸»ú¤òÊÑ¹¹¤·¤¿¡£
 
-	* tools/recdefgen.rb : $B8=:_%5%]!<%H$7$F$$$k%&%#%8%'%C%H$NA4$F$KBP1~(B
-	$B$9$k$h$&$K$7$?(B
+	* tools/recdefgen.rb : ¸½ºß¥µ¥Ý¡¼¥È¤·¤Æ¤¤¤ë¥¦¥£¥¸¥§¥Ã¥È¤ÎÁ´¤Æ¤ËÂÐ±þ
+	¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2000-12-03  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c (RecvCombo): ComboBox$B$NF~NO0h$NL>A0$rG$0U$K$7(B
-	$B$?(B($B0JA0$O(Bentry$B$K8GDj$G$"$C$?(B)
+	* glclient/widgetOPS.c (RecvCombo): ComboBox¤ÎÆþÎÏ°è¤ÎÌ¾Á°¤òÇ¤°Õ¤Ë¤·
+	¤¿(°ÊÁ°¤Ïentry¤Ë¸ÇÄê¤Ç¤¢¤Ã¤¿)
 	
 2000-12-02  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/pandaIO.c (PandaIO_Main): $B2hLL%G!<%?Aw?.$5$l$J$$>l9g$,$"(B
-	$B$k$3$H$NBP=h(B
+	* glserver/pandaIO.c (PandaIO_Main): ²èÌÌ¥Ç¡¼¥¿Á÷¿®¤µ¤ì¤Ê¤¤¾ì¹ç¤¬¤¢
+	¤ë¤³¤È¤ÎÂÐ½è
 
 2000-11-24  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/protocol.c (CheckScreens): $B:G=i$KAw?.$5$l$?%&%#%s%I%&$N$_(B
-	$B$r5/F0;~$KI=<($9$k$h$&$K$7$?(B
+	* glclient/protocol.c (CheckScreens): ºÇ½é¤ËÁ÷¿®¤µ¤ì¤¿¥¦¥£¥ó¥É¥¦¤Î¤ß
+	¤òµ¯Æ°»þ¤ËÉ½¼¨¤¹¤ë¤è¤¦¤Ë¤·¤¿
 
 2000-11-16  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/copygen.c : COBOL$BMQ(BCOPY$B6g@8@.7O$r:n$C$?(B
+	* tools/copygen.c : COBOLÍÑCOPY¶çÀ¸À®·Ï¤òºî¤Ã¤¿
 
 2000-11-13  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/driver.c : $B%"%W%j%1!<%7%g%s$+$i$O(BScreenData$B$r0U<1$7$J$$$h(B
-	$B$&$K$7$?(B($B0UL#$,$J$$$N$G(B)
+	* glserver/driver.c : ¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤«¤é¤ÏScreenData¤ò°Õ¼±¤·¤Ê¤¤¤è
+	¤¦¤Ë¤·¤¿(°ÕÌ£¤¬¤Ê¤¤¤Î¤Ç)
 
 2000-11-10  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/driver.c (LinkModule): $BJL$N%"%W%j%1!<%7%g%s$K@Z$jBX$($k<j(B
-	$BB3$-$r:n$C$?(B
+	* glserver/driver.c (LinkModule): ÊÌ¤Î¥¢¥×¥ê¥±¡¼¥·¥ç¥ó¤ËÀÚ¤êÂØ¤¨¤ë¼ê
+	Â³¤­¤òºî¤Ã¤¿
 
-	* glclient/callbacks.c (map_event): $B%G!<%?<u?.$O9T$o$J$$$h$&$K$7$?(B
-	($B;W$o$L%?%$%_%s%0$G8F$S=P$5$l$F!"%G!<%?DL?.$N<j=g$r68$o$;$k$?$a(B)
+	* glclient/callbacks.c (map_event): ¥Ç¡¼¥¿¼õ¿®¤Ï¹Ô¤ï¤Ê¤¤¤è¤¦¤Ë¤·¤¿
+	(»×¤ï¤Ì¥¿¥¤¥ß¥ó¥°¤Ç¸Æ¤Ó½Ð¤µ¤ì¤Æ¡¢¥Ç¡¼¥¿ÄÌ¿®¤Î¼ê½ç¤ò¶¸¤ï¤»¤ë¤¿¤á)
 
-	* glserver/main.c: $B$$$o$f$k(Bmain module$B$r(Bserver.c$B$+$iJ,N%$7$?(B
+	* glserver/main.c: ¤¤¤ï¤æ¤ëmain module¤òserver.c¤«¤éÊ¬Î¥¤·¤¿
 
-	* glclient/callbacks.c: window_destroy$B<B9TCf$N(Bchanged$B%$%Y%s%H$N;~$K$O(B
-	UpdateWidget$B$N<B9T$r;_$a$k$h$&$K$7$?(B(gtk$B$N(Bbug$B!)(B)
+	* glclient/callbacks.c: window_destroy¼Â¹ÔÃæ¤Îchanged¥¤¥Ù¥ó¥È¤Î»þ¤Ë¤Ï
+	UpdateWidget¤Î¼Â¹Ô¤ò»ß¤á¤ë¤è¤¦¤Ë¤·¤¿(gtk¤Îbug¡©)
 
 2000-11-08  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c : List, Clist$B$NA*Br$r=hM}2DG=$K$7$?(B
+	* glclient/widgetOPS.c : List, Clist¤ÎÁªÂò¤ò½èÍý²ÄÇ½¤Ë¤·¤¿
 
 2000-11-06  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/protocol.c (SendWidgetData): $B%G!<%?Aw?.=hM}$b%&%#%8%'%C%H(B
-	$BKh$N<jB3$-$K$7$?(B
+	* glclient/protocol.c (SendWidgetData): ¥Ç¡¼¥¿Á÷¿®½èÍý¤â¥¦¥£¥¸¥§¥Ã¥È
+	Ëè¤Î¼êÂ³¤­¤Ë¤·¤¿
 
-	* libs/value.c : int, bool$B$NDI2C(B
+	* libs/value.c : int, bool¤ÎÄÉ²Ã
 
 2000-11-02  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/value.h: ValueStruct$B$KB0@-$rIU2C(B
+	* libs/value.h: ValueStruct¤ËÂ°À­¤òÉÕ²Ã
 
 2000-10-31  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* libs/value.h: ValueStruct$B$N9=B$$rJQ99!#(BRecordData$B$KL>A0$N$?$a(B
-	$B$N%G!<%?$rJ];}$9$k$h$&$K$7$?!#$3$l$K$h$j%G!<%?$NJB$S=g$KL>A0$r8+(B
-	$B$k$3$H$,2DG=$K$J$C$?(B
+	* libs/value.h: ValueStruct¤Î¹½Â¤¤òÊÑ¹¹¡£RecordData¤ËÌ¾Á°¤Î¤¿¤á
+	¤Î¥Ç¡¼¥¿¤òÊÝ»ý¤¹¤ë¤è¤¦¤Ë¤·¤¿¡£¤³¤ì¤Ë¤è¤ê¥Ç¡¼¥¿¤ÎÊÂ¤Ó½ç¤ËÌ¾Á°¤ò¸«
+	¤ë¤³¤È¤¬²ÄÇ½¤Ë¤Ê¤Ã¤¿
 
-	* libs/value.c (GetItemLongName): $BDI2C(B
+	* libs/value.c (GetItemLongName): ÄÉ²Ã
 
 2000-10-30  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/widgetOPS.c: $BBP1~(BWidget$B$N<oN`$,A}$($?$N$G(Bprotocol.c$B$+$iJ,N%(B
+	* glclient/widgetOPS.c: ÂÐ±þWidget¤Î¼ïÎà¤¬Áý¤¨¤¿¤Î¤Çprotocol.c¤«¤éÊ¬Î¥
 
 2000-10-07  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/DDparser.c : $B%G!<%?9=B$$rDj5A$9$k$?$a$N8@8l=hM}It(B
+	* glserver/DDparser.c : ¥Ç¡¼¥¿¹½Â¤¤òÄêµÁ¤¹¤ë¤¿¤á¤Î¸À¸ì½èÍýÉô
 
 2000-08-09  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glserver/server.c (InitServerPort): $BDL?.MQ(BFILE$B9=B$BN$r0l$D$K$7$?!#(B
-	$BC1$J$k%?%3$J4*0c$$$+$iI,MW$@$C$?$@$1$J$N$5!#(B
+	* glserver/server.c (InitServerPort): ÄÌ¿®ÍÑFILE¹½Â¤ÂÎ¤ò°ì¤Ä¤Ë¤·¤¿¡£
+	Ã±¤Ê¤ë¥¿¥³¤Ê´ª°ã¤¤¤«¤éÉ¬Í×¤À¤Ã¤¿¤À¤±¤Ê¤Î¤µ¡£
 
 2000-07-25  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* tools/copygen.rb: COBOL$BMQ(BCOPY$B6g@8@.7O$r:n$C$?!#(B
+	* tools/copygen.rb: COBOLÍÑCOPY¶çÀ¸À®·Ï¤òºî¤Ã¤¿¡£
 
 2000-07-01  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* glclient/protocol.c (CheckScreen): $BJ#?t$NAk$,3+$/$h$&$K$7$?!#(B
+	* glclient/protocol.c (CheckScreen): Ê£¿ô¤ÎÁë¤¬³«¤¯¤è¤¦¤Ë¤·¤¿¡£
 
 2000-06-25  Masami Ogoshi  <ogochan@linux.or.jp>
 
-	* server/applications.h: LARGE_DATA$B$N;HMQ$r$d$a$?!#$3$l$G(B
-	lib/block.c$B$r$D$J$0I,MW$,$J$/$J$C$?!#(B
+	* server/applications.h: LARGE_DATA¤Î»ÈÍÑ¤ò¤ä¤á¤¿¡£¤³¤ì¤Ç
+	lib/block.c¤ò¤Ä¤Ê¤°É¬Í×¤¬¤Ê¤¯¤Ê¤Ã¤¿¡£
 
 2000-06-23  Masami Ogoshi  <ogochan@linux.or.jp>
 

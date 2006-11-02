@@ -129,8 +129,8 @@ ENTER_FUNC;
 		}
 		que->head = el->next;
 		ret = el->data;
-		UnLockQueue(que);
 		xfree(el);
+		UnLockQueue(que);
 	} else {
 		ret = NULL;
 	}

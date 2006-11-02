@@ -85,13 +85,13 @@ typedef	struct {
 	byte	puttype;
 }	MessageHeader;
 
-typedef	struct {
+typedef	struct _SessionData	{
 	char		*name;
 	TermNode	*term;
 	int			apsid;
 	Bool		fKeep;
+	Bool		fInProcess;
 	LD_Node		*ld;
-	WindowControl	w;
 	size_t			cWindow;
 	int				retry;
 	Bool			fAbort;
@@ -102,6 +102,9 @@ typedef	struct {
 	LargeByteString	*mcpdata;
 	LargeByteString	*linkdata;
 	LargeByteString	**scrdata;
+	struct	_SessionData	*prev
+	,						*next;
+	WindowControl	w;
 }	SessionData;
 
 #undef	GLOBAL

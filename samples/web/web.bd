@@ -12,6 +12,7 @@ handler	"Ruby"	{
 
 bind	"TestDB"		"Ruby";
 bind	"TestSearch"	"Ruby";
+bind	"TestInsert"	"Ruby";
 
 home	"=/web";
 
@@ -21,4 +22,12 @@ db	"DBRUBY"	{
 
 #db	"Oseki"	{
 #	memo;
+#};
+
+db	"sitesearch"	{
+	memo;
+	sitesearch_text;
+};
+
+#db	"pg"	{
 #};

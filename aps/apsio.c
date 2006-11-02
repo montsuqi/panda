@@ -309,7 +309,8 @@ ENTER_FUNC;
 				break;
 			  case	APS_STOP:
 				dbgmsg("STOP");
-				fSuc = FALSE;
+				node->pstatus = APL_SYSTEM_END;
+				fSuc = TRUE;
 				fEnd = TRUE;
 				break;
 			  case	APS_PING:

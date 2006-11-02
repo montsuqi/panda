@@ -111,17 +111,19 @@ TermName(
 	struct	sockaddr_storage	addr;
 	struct	sockaddr_in		*in;
 	struct	sockaddr_in6	*in6;
+	struct	timeval	tv;
 
-dbgmsg(">TermName");
+ENTER_FUNC;
 	memclear(name,SIZE_TERM+1);
 	if		(  sock  ==  0  ) {
 		time(&nowtime);
+		gettimeofday(&tv,NULL);
 		Now = localtime(&nowtime);
 		Now->tm_year += 1900;
-		sprintf(name,"T%04d%02d%02d:%02d%02d%02d:%08X",
+		sprintf(name,"T%04d%02d%02d:%02d%02d%02d.%06d",
 				Now->tm_year,Now->tm_mon+1,Now->tm_mday,
 				Now->tm_hour,Now->tm_min,Now->tm_sec,
-				getpid());
+				tv.tv_usec);
 	} else {
 		len = sizeof(struct sockaddr_storage);
 		getpeername(sock,(struct sockaddr *)&addr,&len);
@@ -160,7 +162,7 @@ dbgmsg(">TermName");
 #ifdef	DEBUG
 	printf("term name = [%s]\n",name);
 #endif
-dbgmsg("<TermName");
+LEAVE_FUNC;
 	return	(name); 
 }
 

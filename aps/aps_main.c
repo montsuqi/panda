@@ -187,6 +187,11 @@ ENTER_FUNC;
 						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)	) {
 			Message("GetWFC failure");
+			rc = -1;
+			break;
+		}
+		if		(  node->pstatus  ==  APL_SYSTEM_END  ) {
+			Message("system stop");
 			rc = 0;
 			break;
 		}
@@ -220,8 +225,9 @@ ENTER_FUNC;
 			break;
 		}
 	}
-	MessageLog("exiting DC_Thread");
+	MessageLog("exiting APS");
 	FinishSession(node);
+	CloseNet(fpWFC);
 LEAVE_FUNC;
 	return	(rc);
 }
@@ -327,6 +333,7 @@ main(
 	SetDefault();
 	fl = GetOption(option,argc,argv);
 	(void)signal(SIGHUP,(void *)StopProcess);
+	(void)signal(SIGUSR2, SIG_IGN);
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
 		snprintf(id, sizeof(id), "aps-%s",fl->name);

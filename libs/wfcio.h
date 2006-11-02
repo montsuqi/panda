@@ -46,10 +46,12 @@
 #define	WFC_END			(PacketClass)0xFF
 
 extern	NETFILE	*ConnectTermServer(char *url, char *term, char *user, Bool fKeep, char *arg);
-extern	Bool	SendTermServer(NETFILE *fp, char *window, char *widget, char *event,
+extern	Bool	SendTermServer(NETFILE *fp, char *term, char *window, char *widget,
+							   char *event,
 							   ValueStruct *value);
 extern	Bool	RecvTermServerHeader(NETFILE *fp, char *user, char *window, char *widget,
 									 int *type, WindowControl *ctl);
 extern	void	RecvTermServerData(NETFILE *fp, ScreenData *scr);
+extern	Bool	SendTermServerEnd(NETFILE *fp, char *term);
 
 #endif

@@ -2,8 +2,9 @@ class FileUp
   def start(node, db)
     puts("File")
     fileup = node.windows["file"]
-    fileup.filename1 = ""
+    main = node.windows["main"]
     fileup.body1 = 0
+    p main.entry
     node.put_window
   end
   def do_down(node, db)

@@ -7,7 +7,8 @@
 #define	APL_SESSION_GET				2
 #define	APL_SESSION_PUT				3
 #define	APL_SESSION_RESEND			4
-#define	APL_SESSION_END				9
+#define	APL_SESSION_END				5
+#define	APL_SYSTEM_END				9
 
 
 #define	WIDGET_STATE_NORMAL			0

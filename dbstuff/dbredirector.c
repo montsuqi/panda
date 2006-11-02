@@ -491,6 +491,7 @@ ENTER_FUNC;
 	InitNET();
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
+	(void)signal(SIGUSR2, SIG_IGN);
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 	if		( ThisEnv == NULL ) {

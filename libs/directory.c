@@ -121,8 +121,8 @@ LoadDBG(
 	DBG_Struct	*dbg)
 {
 	DB_Func	*func;
-	char		funcname[SIZE_BUFF]
-	,			filename[SIZE_BUFF];
+	char		funcname[SIZE_LONGNAME+1]
+	,			filename[SIZE_LONGNAME+1];
 	void		*handle;
 	DB_Func		*(*f_init)(void);
 

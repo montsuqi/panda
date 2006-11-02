@@ -118,13 +118,10 @@ GetScreenData(
 			   ==  NULL  ) {
 		if		(  ( rec = GetWindow(name) )  !=  NULL  ) {
 			scrdata = NewLBS();
-#if	0
-			InitializeValue(rec->value);
-#endif
 			LBS_ReserveSize(scrdata,
 							NativeSizeValue(NULL,rec->value),FALSE);
 			NativePackValue(NULL,LBS_Body(scrdata),rec->value);
-			g_hash_table_insert(data->scrpool,rec->name,scrdata);
+			g_hash_table_insert(data->scrpool,StrDup(name),scrdata);
 		} else {
 			scrdata = NULL;
 		}
@@ -147,15 +144,15 @@ ENTER_FUNC;
 				   ==  NULL  ) {
 			if		(  newld->info->sparec  !=  NULL  ) {
 				data->spa = NewLBS();
-				//g_hash_table_insert(data->spadata,StrDup(newld->info->name),data->spa);
-				g_hash_table_insert(data->spadata,newld->info->name,data->spa);
-				//InitializeValue(newld->info->sparec->value);
+				g_hash_table_insert(data->spadata,StrDup(newld->info->name),data->spa);
 				LBS_ReserveSize(data->spa,
 								NativeSizeValue(NULL,newld->info->sparec->value),FALSE);
 				NativePackValue(NULL,LBS_Body(data->spa),newld->info->sparec->value);
 			}
 		}
-		xfree(data->scrdata);
+		if		(  data->scrdata  !=  NULL  ) {
+			xfree(data->scrdata);
+		}
 		scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 											  * newld->info->cWindow);
 		for	( i = 0 ; i < newld->info->cWindow ; i ++ ) {
@@ -314,9 +311,13 @@ static	ARG_TABLE	option[] = {
 		"LD directory"				 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"environment file name"							},
+	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
+		"session variable keep directory" 				},
 
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
 		"maximun retry count"							},
+	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
+		"terminal cache number"							},
 
 	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
 		"loopback test"									},
@@ -340,6 +341,7 @@ ENTER_FUNC;
 	MaxRetry = 0;
 	ControlPort = NULL;
 	fLoopBack = FALSE;
+	nCache = 100;
 LEAVE_FUNC;
 }
 
@@ -357,7 +359,8 @@ ENTER_FUNC;
     sigprocmask(SIG_BLOCK, &sigmask, &SigMask);
 
 	(void)signal(SIGPIPE, SIG_IGN);
-	signal(SIGUSR1,(void *)StopSystem);
+	(void)signal(SIGUSR1,(void *)StopSystem);
+	(void)signal(SIGUSR2, SIG_IGN);
 	InitMessage("wfc",NULL);
 
 	SetDefault();

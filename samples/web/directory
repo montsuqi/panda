@@ -1,7 +1,7 @@
 name	demo;
 
 #	"~" will be expanded to home directory
-base	"~/MONTSUQI/panda-current/samples";
+base	"~/MONTSUQI/panda/samples";
 
 #	"=" will be expanded to base
 
@@ -30,12 +30,26 @@ db_group	"BLOB"	{
 	password	"ogochan";
 };
 
-db_group	"Oseki"	{
+db_group	"pg"	{
+	type	"PostgreSQL";
+	port	"localhost";
+	name	"pg";
+};
+
+#db_group	"Oseki"	{
+#	type		"Oseki";
+#	port		"/tmp/oseki";
+#	name		"test";
+#	user		"ogochan";
+#	password	"ogochan";
+#};
+
+db_group	"sitesearch"	{
 	type		"Oseki";
-	port		"/tmp/oseki";
-	name		"test";
+	port		":2468";
 	user		"ogochan";
 	password	"ogochan";
+	name		"baa";
 };
 
 blob	{

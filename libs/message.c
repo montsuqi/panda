@@ -286,7 +286,8 @@ InitMessage(
 		fpLog = FileToNet(STDOUT_FILENO);
 	}
 #else
-	if		(  ( fpLog = fopen(fn,"w+") )  ==  NULL  ) {
+	if		(	(  fn  ==  NULL  )
+			||	(  ( fpLog = fopen(fn,"w+") )  ==  NULL  ) )	{
 		fpLog = stdout;
 	}
 #endif

@@ -53,23 +53,160 @@ static	int		Dim[SIZE_RNAME];
 #define	OS_CONN(dbg)		((OsekiClientSession *)(dbg)->conn)
 
 static	void
+EscapeString(LargeByteString *lbs, char *s)
+{
+	unsigned char *sp;
+	unsigned char *dp;
+	size_t len;
+    size_t old_size;
+
+	len = 0;
+	for (sp = s; *sp != '\0'; sp++) {
+		switch(*sp) {
+          case '\\':
+          case '\'':
+            len += 2;
+            break;
+          default:
+			len++;
+            break;
+        }
+	}
+
+    old_size = LBS_Size(lbs);
+    LBS_ReserveSize(lbs, old_size + len, TRUE);
+    dp = LBS_Body(lbs) + old_size;
+
+	for (sp = s; *sp != '\0'; sp++) {
+		switch(*sp) {
+          case '\\':
+            *dp++ = '\\';
+            *dp++ = '\\';
+            break;
+          case '\'':
+            *dp++ = '\'';
+            *dp++ = '\'';
+            break;
+          default:
+			*dp++ = *sp;
+            break;
+        }
+	}
+    LBS_SetPos(lbs, old_size + len);
+}
+static void
+EscapeBytea(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
+{
+    unsigned char *sp, *spend = bintext + binlen;
+    unsigned char *dp;
+    size_t len;
+    size_t old_size;
+
+    len = 0;
+    for (sp = bintext; sp < spend; sp++) {
+        if (*sp < 0x20 || *sp > 0x7e) {
+            len += 5;
+        }
+        else if (*sp == '\'') {
+            len += 2;
+        }
+        else if (*sp == '\\') {
+            len += 4;
+        }
+        else {
+            len++;
+        }
+    }
+
+    old_size = LBS_Size(lbs);
+    LBS_ReserveSize(lbs, old_size + len, TRUE);
+    dp = LBS_Body(lbs) + old_size;
+
+    for (sp = bintext; sp < spend; sp++) {
+        if (*sp < 0x20 || *sp > 0x7e) {
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '0' + ((*sp >> 6) & 7);
+            *dp++ = '0' + ((*sp >> 3) & 7);
+            *dp++ = '0' + (*sp & 7);
+        }
+        else if (*sp == '\'') {
+            *dp++ = '\\';
+            *dp++ = '\'';
+        }
+        else if (*sp == '\\') {
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+            *dp++ = '\\';
+        }
+        else {
+            *dp++ = *sp;
+        }
+    }
+    LBS_SetPos(lbs, old_size + len);
+}
+static	void
 ValueToSQL(
 	DBG_Struct	*dbg,
 	LargeByteString	*lbs,
 	ValueStruct	*val)
 {
-	size_t	size;
+	char	buff[SIZE_LONGNAME+1];
+	Numeric	nv;
 
-	if		(  val  ==  NULL  )	return;
-	size = SQL_SizeValue(NULL,val);
-	LBS_ReserveSize(lbs,size,TRUE);
-	SQL_PackValue(NULL,LBS_Ptr(lbs),val);
+ENTER_FUNC;
+	if		(  IS_VALUE_NIL(val)  ) {
+		LBS_EmitString(lbs,"null");
+	} else
+	switch	(ValueType(val)) {
+	  case	GL_TYPE_BYTE:
+	  case	GL_TYPE_CHAR:
+	  case	GL_TYPE_VARCHAR:
+	  case	GL_TYPE_TEXT:
+		LBS_EmitChar(lbs, '\'');
+		EscapeString(lbs, ValueToString(val,dbg->coding));
+		LBS_EmitChar(lbs, '\'');
+		break;
+	  case	GL_TYPE_BINARY:
+		LBS_EmitChar(lbs, '\'');
+		EscapeBytea(lbs, ValueByte(val), ValueByteLength(val));
+		LBS_EmitChar(lbs, '\'');
+        break;
+	  case	GL_TYPE_DBCODE:
+		LBS_EmitString(lbs,ValueToString(val,dbg->coding));
+		break;
+	  default:
+		SQL_PackValue(NULL,buff,val);
+		LBS_EmitString(lbs,buff);
+		break;
+	}
+LEAVE_FUNC;
+}
+
+static	void
+KeyValue(
+	DBG_Struct	*dbg,
+	LargeByteString	*lbs,
+	ValueStruct	*args,
+	char		**pk)
+{
+	ValueStruct	*val;
+
+ENTER_FUNC;
+	val = args;
+	while	(  *pk  !=  NULL  ) {
+		val = GetRecordItem(args,*pk);
+		pk ++;
+	}
+	ValueToSQL(dbg,lbs,val);
+LEAVE_FUNC;
 }
 
 static	char	*
 ItemName(void)
 {
-	static	char	buff[SIZE_BUFF];
+	static	char	buff[SIZE_LONGNAME+1];
 	char	*p;
 	int		i;
 
@@ -89,7 +226,7 @@ ItemName(void)
 static	char	*
 PutDim(void)
 {
-	static	char	buff[SIZE_NAME+1];
+	static	char	buff[SIZE_LONGNAME+1];
 	int		i;
 	char	*p;
 
@@ -113,9 +250,11 @@ UpdateValue(
 
 	if		(  val  ==  NULL  )	return;
 	if		(  IS_VALUE_NIL(val)  ) {
+#if	0
         LBS_EmitString(lbs,ItemName());
         LBS_EmitString(lbs,PutDim());
         LBS_EmitString(lbs," = null ");
+#endif
 	} else
 	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
@@ -224,22 +363,17 @@ InsertValues(
 	LargeByteString		*lbs,
 	ValueStruct	*val)
 {
-	size_t	size
-		,	i;
-	byte	*buff
-		,	*p;
+	size_t	size;
+	byte	*buff;
 
 ENTER_FUNC;
-	if		(  val  ==  NULL  )	return;
-	size = SQL_SizeValue(NULL,val);
-	buff = (byte *)xmalloc(size);
-	SQL_PackValue(NULL,buff,val);
-	p = buff;
-	for	( i = 0 ; i < size ; i ++ ) {
-		LBS_Emit(lbs,*p);
-		p ++;
+	if		(  val  !=  NULL  ) {
+		size = SQL_SizeValue(NULL,val);
+		buff = (byte *)xmalloc(size+1);
+		SQL_PackValue(NULL,buff,val);
+		LBS_EmitString(lbs,buff);
+		xfree(buff);
 	}
-	xfree(buff);
 LEAVE_FUNC;
 }
 
@@ -262,6 +396,35 @@ ENTER_FUNC;
 			dbgprintf("name = [%s]",name);
 			arg = GetRecordItem(args,name);
 			CopyValue(arg,value);
+		}
+	}
+LEAVE_FUNC;
+}
+
+static	void
+ReadItems(
+	ValueStruct	**args,
+	int			items,
+	ValueStruct	**tuples)
+{
+	ValueStruct	*value;
+	int			i
+		,		j
+		,		k;
+
+ENTER_FUNC;
+	if		(	(  args    !=  NULL  )
+			&&	(  tuples  !=  NULL  ) ) {
+		i = 0;
+		k = 0;
+		for	( j = 0 ; j < items ; j ++ , k ++ ) {
+			if		(  k  ==  ValueArraySize(tuples[i])  ) {
+				j ++;
+				k = 0;
+			}
+			if		(  tuples[i]  ==  NULL  )	break;
+			value = ValueArrayItem(tuples[i],k);
+			CopyValue(args[j],value);
 		}
 	}
 LEAVE_FUNC;
@@ -303,7 +466,6 @@ ExecOseki(
 	ValueStruct	**tuple
 		,		**input;
 	int			n
-		,		j
 		,		items;
 	Bool	fIntoAster;
 
@@ -368,7 +530,7 @@ ENTER_FUNC;
 						if		(  fIntoAster  ) {
 							if		(  ( input = OsekiReadData(ses,OsekiResult(ses)) )
 									   !=  NULL  ) {
-								ReadTuple(val,input[0]);
+								ReadTuple(args,input[0]);
 								OsekiFreeTuple(input);
 								ctrl->rc += MCP_OK;
 							} else {
@@ -377,15 +539,13 @@ ENTER_FUNC;
 						} else
 						if		(	(  items  ==  0     )
 								||	(  tuple  ==  NULL  ) ) {
-							dbgmsg("SQL error");
-							ctrl->rc = MCP_BAD_SQL;
+							dbgmsg("no tuple");
+							ctrl->rc = MCP_EOF;
 						} else {
 							dbgmsg("+");
 							if		(  ( input = OsekiReadData(ses,OsekiResult(ses)) )
 									   !=  NULL  ) {
-								for	( j = 0 ; j < items ; j ++ ) {
-									ReadTuple(tuple[j],input[j]);
-								}
+								ReadItems(tuple,items,input);
 								OsekiFreeTuple(input);
 								ctrl->rc += MCP_OK;
 							} else {
@@ -671,9 +831,13 @@ _DBUPDATE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+	LargeByteString	*sql;
 	DB_Struct	*db;
+	char	***item
+		,	**pk;
 	PathStruct	*path;
 	LargeByteString	*src;
+	int			res;
 
 ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
@@ -686,7 +850,43 @@ ENTER_FUNC;
 			ctrl->rc = MCP_OK;
 			ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
-			ctrl->rc = MCP_BAD_OTHER;
+            sql = NewLBS();
+            LBS_EmitString(sql,"UPDATE ");
+            LBS_EmitString(sql,rec->name);
+            LBS_EmitString(sql,"\tSET ");
+			level = 0;
+			alevel = 0;
+			UpdateValue(dbg,sql,args);
+			LBS_EmitString(sql,"WHERE\t");
+			item = db->pkey->item;
+			while	(  *item  !=  NULL  ) {
+                LBS_EmitString(sql,rec->name);
+                LBS_EmitChar(sql,'.');
+				pk = *item;
+				while	(  *pk  !=  NULL  ) {
+                    LBS_EmitString(sql,*pk);
+					pk ++;
+					if		(  *pk  !=  NULL  ) {
+                        LBS_EmitChar(sql,'_');
+					}
+				}
+                LBS_EmitString(sql," = ");
+                KeyValue(dbg,sql,args,*item);
+                LBS_EmitChar(sql,' ');
+				item ++;
+				if		(  *item  !=  NULL  ) {
+                    LBS_EmitString(sql,"AND\t");
+				}
+			}
+            LBS_EmitEnd(sql);
+			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
+			if		(  res  <  0  ) {
+				dbgmsg("NG");
+				ctrl->rc = MCP_BAD_OTHER;
+			} else {
+				ctrl->rc = MCP_OK;
+			}
+            FreeLBS(sql);
 		}
 	}
 LEAVE_FUNC;
@@ -699,7 +899,11 @@ _DBDELETE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+    LargeByteString	*sql;
 	DB_Struct	*db;
+	char	***item
+	,		**pk;
+	int			res;
 	PathStruct	*path;
 	LargeByteString	*src;
 
@@ -714,7 +918,39 @@ ENTER_FUNC;
 			ctrl->rc = MCP_OK;
 			ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
-			ctrl->rc = MCP_BAD_OTHER;
+			sql = NewLBS();
+			LBS_EmitString(sql,"DELETE\tFROM\t");
+			LBS_EmitString(sql,rec->name);
+			LBS_EmitString(sql," WHERE\t");
+			item = db->pkey->item;
+			while	(  *item  !=  NULL  ) {
+				pk = *item;
+                LBS_EmitString(sql,rec->name);
+                LBS_EmitChar(sql,'.');
+				while	(  *pk  !=  NULL  ) {
+                    LBS_EmitString(sql,*pk);
+					pk ++;
+					if		(  *pk  !=  NULL  ) {
+                        LBS_EmitChar(sql,' ');
+					}
+				}
+                LBS_EmitString(sql," = ");
+                KeyValue(dbg,sql,args,*item);
+                LBS_EmitChar(sql,' ');
+				item ++;
+				if		(  *item  !=  NULL  ) {
+                    LBS_EmitString(sql,"AND\t");
+				}
+			}
+            LBS_EmitEnd(sql);
+			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
+			if		(  res  <  0  ) {
+				dbgmsg("NG");
+				ctrl->rc = MCP_BAD_OTHER;
+			} else {
+				ctrl->rc = MCP_OK;
+			}
+            FreeLBS(sql);
 		}
 	}
 LEAVE_FUNC;

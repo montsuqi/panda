@@ -26,12 +26,13 @@
 #include	"glterm.h"
 #include	"driver.h"
 
-typedef	void	(*APL_FUNC)(char *);
+typedef	Bool	(*APL_FUNC)(char *);
 
 typedef	struct {
 	char	*name;
-	APL_FUNC	main
-	,			link;
+	APL_FUNC	main;
+	APL_FUNC	link;
+	APL_FUNC	exit;
 }	ApplicationStruct;
 
 extern	void		DestroyValues(GHashTable *value);

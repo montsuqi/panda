@@ -113,8 +113,8 @@ ENTER_FUNC;
 				sprintf(fname,"%s.rec",wname);
 				if		(  ( rec2 = ReadRecordDefine(fname) )  !=  NULL  ) {
 					g_hash_table_insert(Records,rec2->name,rec2);
+					InitializeValue(rec2->value);
 				}
-				InitializeValue(rec2->value);
 			}
 			if		(  iname  ==  NULL  ) {
 				rec = rec2;

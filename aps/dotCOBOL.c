@@ -85,12 +85,12 @@ DumpNode(
 	ProcessNode	*node)
 {
 #ifdef	DEBUG
-dbgmsg(">DumpNode");
+ENTER_FUNC;
 	dbgprintf("mcpsize  = %d\n",node->mcpsize);
 	dbgprintf("linksize = %d\n",node->linksize);
 	dbgprintf("spasize  = %d\n",node->spasize);
 	dbgprintf("scrsize  = %d\n",node->scrsize);
-dbgmsg("<DumpNode");
+LEAVE_FUNC;
 #endif
 }
 
@@ -105,8 +105,7 @@ PutApplication(
 	int		i;
 	char	*p;
 
-dbgmsg(">PutApplication");
-
+ENTER_FUNC;
 	DumpNode(node); 
 
 	if		(  node->mcprec  !=  NULL  ) {
@@ -133,7 +132,7 @@ dbgmsg(">PutApplication");
 		putc(' ',fp);
 	}
 	fflush(fp);
-dbgmsg("<PutApplication");
+LEAVE_FUNC;
 }
 
 #if	0
@@ -144,10 +143,12 @@ IsSpaces(
 {
 	Bool	rc;
 
+ENTER_FUNC;
 	for	( ; size > 0 ; size -- , buff ++ ) {
 		if		(  *buff  !=  ' '  )	break;
 	}
 	rc = ( size == 0 ) ? TRUE : FALSE;
+LEAVE_FUNC;
 	return	(rc);
 }
 #endif
@@ -161,7 +162,7 @@ GetApplication(
 	int		i;
 	char	*p;
 
-dbgmsg(">GetApplication");
+ENTER_FUNC;
 	fread(McpData,1,McpSize,fp);
 	size  = McpSize;
 	size += fread(SpaData,1,SpaSize,fp);
@@ -192,8 +193,7 @@ dbgmsg(">GetApplication");
 
 
 	DumpNode(node);
-
-dbgmsg("<GetApplication");
+LEAVE_FUNC;
 }
 
 
@@ -204,7 +204,7 @@ _ExecuteProcess(
 {
 	Bool	rc;
 
-dbgmsg(">ExecuteProcess");
+ENTER_FUNC;
 	PutApplication(fpAPW,node);
 	GetApplication(fpAPR,node);
 	if		(  ValueInteger(GetItemLongName(node->mcprec->value,"rc"))  <  0  ) {
@@ -212,7 +212,7 @@ dbgmsg(">ExecuteProcess");
 	} else {
 		rc = TRUE;
 	}
-dbgmsg("<ExecuteProcess");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -228,6 +228,7 @@ PrintSJIS(
 	,		sob;
 	iconv_t		cd;
 
+ENTER_FUNC;
 	if		(  istr  ==  NULL  )	return;
 	if		(  ( cd = iconv_open("EUC-JP","Shift-JIS") )  <  0  ) {
 		printf("code set error\n");
@@ -247,6 +248,7 @@ PrintSJIS(
 		printf("%s",obb);
 	}	while	(  sib  >  0  );
 	iconv_close(cd);
+LEAVE_FUNC;
 }
 
 static	void
@@ -258,6 +260,7 @@ ConsoleThread(
 	int		fh = (int)para;
 	char	buff[SIZE_BUFF+1];
 
+ENTER_FUNC;
 	fExit = FALSE;
 	while	( !fExit ) {
 		dbgmsg("msg");
@@ -271,17 +274,22 @@ ConsoleThread(
 		}
 	}
 	close(fh);
+LEAVE_FUNC;
 }
 
 static	void
 StartConsole(void)
 {
+ENTER_FUNC;
 	pthread_create(&_ConsoleThread,NULL,(void *(*)(void *))ConsoleThread,(void *)fhSub);
+LEAVE_FUNC;
 }
 #else
 static	void
 StartConsole(void)
 {
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 #endif
 
@@ -289,17 +297,19 @@ static	void
 _StopDB(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
 	if		(  pthread_kill(_DB_Thread,0)  ==  0  ) {
 		pthread_cancel(_DB_Thread);
 		pthread_join(_DB_Thread,NULL);
 	}
+LEAVE_FUNC;
 }
 
 static	void
 _StopDC(
 	MessageHandler	*handler)
 {
-dbgmsg(">StopDC");
+ENTER_FUNC;
 	if		(  ThisLD->cDB  >  0  ) {
 		_StopDB(handler);
 	}
@@ -313,7 +323,7 @@ dbgmsg(">StopDC");
 		pthread_join(_ConsoleThread,NULL);
 	}
 #endif
-dbgmsg("<StopDC");
+LEAVE_FUNC;
 }
 
 static	void
@@ -325,7 +335,7 @@ ReadyApplication(
 	char	line[SIZE_BUFF]
 	,		**cmd;
 
-dbgmsg(">ReadyApplication");
+ENTER_FUNC;
 #ifdef	USE_PTY
 	if		(  ( fhSub = GetMasterPTY() )  <  0  ) {
 		printf("error GetMasterPTY\n");
@@ -357,7 +367,7 @@ dbgmsg(">ReadyApplication");
 		CobolPID = pid;
 	}
 	StartConsole();
-dbgmsg("<ReadyApplication");
+LEAVE_FUNC;
 }
 
 static	void
@@ -365,7 +375,8 @@ _ReadyDC(
 	MessageHandler	*handler)
 {
 	int		i;
-dbgmsg(">ReadyDC");
+
+ENTER_FUNC;
 	unlink("dc.input");
 	mknod("dc.input",S_IFIFO|0600,0);
 	unlink("dc.output");
@@ -399,7 +410,7 @@ dbgmsg(">ReadyDC");
 		ScrSize += dotCOBOL_SizeValue(dotCOBOL_Conv,ThisLD->window[i]->rec->value);
 	}
 	ScrData = xmalloc(ScrSize);
-dbgmsg("<ReadyDC");
+LEAVE_FUNC;
 }
 
 
@@ -407,42 +418,50 @@ static	void
 _CleanUpDB(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
 	_StopDB(handler);
 	unlink("db.input");
 	unlink("db.output");
+LEAVE_FUNC;
 }
 
 static	void
 _CleanUpDC(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
 	fclose(fpAPW);
 	fclose(fpAPR);
 	(void)kill(CobolPID,SIGKILL);
 	unlink("dc.input");
 	unlink("dc.output");
+LEAVE_FUNC;
 }
 
 static	void
 ReadControl(
 	DBCOMM_CTRL	*ctrl)
 {
+ENTER_FUNC;
 	StringCobol2C(ctrl->func,SIZE_FUNC);
 	dotCOBOL_IntegerCobol2C(&ctrl->blocks);
 	dotCOBOL_IntegerCobol2C(&ctrl->rc);
 	dotCOBOL_IntegerCobol2C(&ctrl->rno);
 	dotCOBOL_IntegerCobol2C(&ctrl->pno);
+LEAVE_FUNC;
 }
 
 static	void
 SetControl(
 	DBCOMM_CTRL	*ctrl)
 {
+ENTER_FUNC;
 	StringC2Cobol(ctrl->func,SIZE_FUNC);
 	dotCOBOL_IntegerC2Cobol(&ctrl->blocks);
 	dotCOBOL_IntegerC2Cobol(&ctrl->rc);
 	dotCOBOL_IntegerC2Cobol(&ctrl->rno);
 	dotCOBOL_IntegerC2Cobol(&ctrl->pno);
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -457,7 +476,7 @@ ReadDB_Request(
 	char		*p;
 	int			i;
 
-dbgmsg(">ReadDB_Request");
+ENTER_FUNC;
 	if		(  ( size = fread(*block,1,SIZE_BLOCK,fpDBR) )  ==  SIZE_BLOCK  ) {
 		ctrl = (DBCOMM_CTRL *)*block;
 		ReadControl(ctrl);
@@ -482,7 +501,7 @@ dbgmsg(">ReadDB_Request");
 	} else {
 		rc = TRUE;
 	}
-dbgmsg("<ReadDB_Request");
+LEAVE_FUNC;
 	return	(rc);
 }
 
@@ -495,22 +514,24 @@ WriteDB_Reply(
 	DBCOMM_CTRL	*ctrl;
 	size_t		blocks;
 
+ENTER_FUNC;
 	ctrl = (DBCOMM_CTRL *)block;
 	blocks = ctrl->blocks;
 	SetControl(ctrl);
 	fwrite(block,1,SIZE_BLOCK * blocks,fpDBW);
 	fflush(fpDBW);
+LEAVE_FUNC;
 }
 
 static	void
 MakeDB_Pipe(void)
 {
-dbgmsg(">MakeDB_Pipe");
+ENTER_FUNC;
 	unlink("db.input");
 	mknod("db.input",S_IFIFO|0600,0);
 	unlink("db.output");
 	mknod("db.output",S_IFIFO|0600,0);
-dbgmsg("<MakeDB_Pipe");
+LEAVE_FUNC;
 }
 
 static	void
@@ -527,7 +548,7 @@ ExecuteDB_Server(
 	size_t		bnum;
 	RecordStruct	*rec;
 
-dbgmsg(">ExecuteDB_Server");
+ENTER_FUNC;
 	fhDBR = open("db.output",O_RDWR);
 	if		(  ( fpDBR = fdopen(fhDBR,"r+") )  ==  NULL  ) {
 		fprintf(stderr,"can not open input pipe\n");
@@ -558,21 +579,25 @@ dbgmsg(">ExecuteDB_Server");
 		dbgmsg("write");
 		WriteDB_Reply(fpDBW,block,bnum);
 	}
-dbgmsg("<ExecuteDB_Server");
+LEAVE_FUNC;
 }
 
 static	void
 StartDB(void)
 {
+ENTER_FUNC;
 	pthread_create(&_DB_Thread,NULL,(void *(*)(void *))ExecuteDB_Server,NULL);
+LEAVE_FUNC;
 }
 
 static	void
 _ReadyDB(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
 	MakeDB_Pipe();
 	StartDB();
+LEAVE_FUNC;
 }
 
 static	int
@@ -585,7 +610,7 @@ _StartBatch(
 	char	line[SIZE_BUFF]
 	,		**cmd;
 
-dbgmsg(">StartBatch");
+ENTER_FUNC;
 	dotCOBOL_Conv = NewConvOpt();
 	ConvSetSize(dotCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
 	ConvSetCoding(dotCOBOL_Conv,handler->conv->locale);
@@ -606,7 +631,7 @@ dbgmsg(">StartBatch");
 		CobolPID = pid;
 	}
 	(void)wait(&pid);
-dbgmsg("<StartBatch");
+LEAVE_FUNC;
 	return	(0); 
 }
 
@@ -626,9 +651,11 @@ static	MessageHandlerClass	Handler = {
 extern	MessageHandlerClass	*
 dotCOBOL(void)
 {
+ENTER_FUNC;
 	if		(  ( Command = getenv("DOTCOBOL_LINE") )  ==  NULL  ) {
 		Command = DOTCOBOL_COMMAND " %m";
 	}
+LEAVE_FUNC;
 	return	(&Handler);
 }
 #endif

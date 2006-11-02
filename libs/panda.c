@@ -65,6 +65,7 @@ SendPanda(void)
 	Bool		rc;
 	char	buff[SIZE_LONGNAME+1];
 	char	*p;
+	ValueStruct	*value;
 
 ENTER_FUNC;
 	dbgprintf("ThisWindow = [%s]",ThisWindow);
@@ -73,15 +74,19 @@ ENTER_FUNC;
 		if		(  ( rec = GetWindowRecord(buff) )  !=  NULL  )	break;
 		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
 			*p = 0;
+		} else {
+			rec = GetWindowRecord(buff);
+			break;
 		}
 	}
 	dbgprintf("Window = [%s]",buff);
 	if		(  rec  !=  NULL  ) {
-		rc = SendTermServer(fpPanda,ThisWindow,ThisWidget,ThisEvent,rec->value);
-		RemoveWindowRecord(ThisWindow);
+		dbgprintf("rec = [%s]",rec->name);
+		value = rec->value;
 	} else {
-		rc = FALSE;
+		value = NULL;
 	}
+	rc = SendTermServer(fpPanda,ThisTerm,ThisWindow,ThisWidget,ThisEvent,value);
 LEAVE_FUNC;
 	return	(rc); 
 }
@@ -98,9 +103,20 @@ RecvPanda(
 	WindowControl	ctl;
 	WindowData		*win;
 	char	msg[SIZE_LONGNAME+1];
+	void
+	ClearPutType(
+		char		*wname,
+		WindowData	*win)
+	{
+		win->PutType = SCREEN_NULL;
+	}
 
 ENTER_FUNC;
 	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
+		ON_IO_ERROR(fpPanda,badio);
+		if		(  ThisScreen->Windows  !=  NULL  ) {
+			g_hash_table_foreach(ThisScreen->Windows,(GHFunc)ClearPutType,NULL);
+		}
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
 			if		(  ctl.control[i].PutType  ==  SCREEN_CLOSE_WINDOW  ) {
 				win = PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
@@ -124,7 +140,7 @@ ENTER_FUNC;
 		(void)SetWindowName(window);
 		win = PutWindowByName(window,type);
 		if		(  win  !=  NULL  )	{
-			RecvTermServerData(fpPanda,ThisScreen);
+			RecvTermServerData(fpPanda,ThisScreen);	ON_IO_ERROR(fpPanda,badio);
 			strcpy(ThisWindow,window);
 			strcpy(ThisWidget,widget);
 			strcpy(ThisUser,user);
@@ -139,11 +155,13 @@ ENTER_FUNC;
 		snprintf(msg,SIZE_LONGNAME,"window = [%s]",window);
 		MessageLog(msg);
 		Error("invalid LD");
+	  badio:
+		exit(1);
 	}
 LEAVE_FUNC;
 }
 
-extern	void
+extern	Bool
 pandaLink(
 	char		*arg)
 {
@@ -154,25 +172,64 @@ pandaLink(
 ENTER_FUNC;
 	OpenPanda(arg);
 	RecvPanda(user,window,widget);
+	CloseNet(fpPanda);
 LEAVE_FUNC;
+	return	(TRUE);
 }
 
-extern	void
+extern	Bool
 pandaMain(
 	char		*arg)
 {
 	char	user[SIZE_NAME+1]	
 	,		window[SIZE_NAME+1]
 	,		widget[SIZE_NAME+1];
+	Port	*port;
+	int		fd;
+	Bool	ret;
 
 ENTER_FUNC;
-	if		(  SendPanda()  ) {
-		RecvPanda(user,window,widget);
+	port = ParPort(PandaPort,PORT_WFC);
+	fd = ConnectSocket(port,SOCK_STREAM);
+	DestroyPort(port);
+	if ( fd > 0 ){
+		fpPanda = SocketToNet(fd);
+		if		(  SendPanda()  ) {
+			RecvPanda(user,window,widget);
+			CloseNet(fpPanda);
+			ret = TRUE;
+		} else {
+			ret = FALSE;
+		}
 	} else {
-		CloseNet(fpPanda);
-		exit(0);
+		ret = FALSE;
 	}
 LEAVE_FUNC;
+	return	(ret);
+}
+
+extern	Bool
+pandaExit(
+	char		*arg)
+{
+	Port	*port;
+	int		fd;
+	Bool	ret;
+
+ENTER_FUNC;
+	port = ParPort(PandaPort,PORT_WFC);
+	fd = ConnectSocket(port,SOCK_STREAM);
+	DestroyPort(port);
+	if ( fd > 0 ){
+		fpPanda = SocketToNet(fd);
+		SendTermServerEnd(fpPanda,ThisTerm);
+		CloseNet(fpPanda);
+		ret = TRUE;
+	} else {
+		ret = FALSE;
+	}
+LEAVE_FUNC;
+	return	(ret);
 }
 
 #include	"option.h"

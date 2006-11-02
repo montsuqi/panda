@@ -42,8 +42,6 @@
 #include	"debug.h"
 #include	"socket.h"
 
-static	LargeByteString	*buff;
-
 extern	NETFILE	*
 ConnectTermServer(
 	char	*url,
@@ -55,6 +53,7 @@ ConnectTermServer(
 	int		fd;
 	Port	*port;
 	NETFILE	*fp;
+	PacketClass	klass;
 
 ENTER_FUNC;
 	port = ParPort(url,PORT_WFC);
@@ -62,22 +61,24 @@ ENTER_FUNC;
 	DestroyPort(port);
 	if ( fd > 0 ){
 		fp = SocketToNet(fd);
+		SendString(fp,term);		ON_IO_ERROR(fp,badio);
 		if		(  fKeep  ) {
 			SendPacketClass(fp,WFC_TRUE);
 		} else {
 			SendPacketClass(fp,WFC_FALSE);
 		}		
-		SendStringDelim(fp,term);
-		SendStringDelim(fp,"\n");
-		SendStringDelim(fp,user);
-		SendStringDelim(fp,"\n");
-		SendStringDelim(fp,arg);
-		SendStringDelim(fp,"\n");
+		SendString(fp,user);		ON_IO_ERROR(fp,badio);
+		SendString(fp,arg);			ON_IO_ERROR(fp,badio);
+		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
+		if		(  klass  !=  WFC_OK  ) {
+			CloseNet(fp);
+			fp = NULL;
+		}
 	} else {
+	  badio:
 		Warning("can not connect wfc server");
 		fp = NULL;
 	}
-	buff = NewLBS();
 LEAVE_FUNC;
 	return	(fp); 
 }
@@ -144,6 +145,7 @@ ForwardBLOB(
 extern	Bool
 SendTermServer(
 	NETFILE	*fp,
+	char	*term,
 	char	*window,
 	char	*widget,
 	char	*event,
@@ -151,35 +153,65 @@ SendTermServer(
 {
 	size_t	size;
 	Bool	rc;
+	LargeByteString	*buff;
+
 
 ENTER_FUNC;
-	size = NativeSizeValue(NULL,value);
-	LBS_ReserveSize(buff,size,FALSE);
-	NativePackValue(NULL,LBS_Body(buff),value);
-	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
-	dbgmsg("send PING");
-	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
+	rc = FALSE;
+	dbgprintf("term = [%s]",term);
+	SendString(fp,term);				ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
 		dbgmsg("recv PONG");
 		SendPacketClass(fp,WFC_DATA);	ON_IO_ERROR(fp,badio);
 		dbgmsg("send DATA");
+		dbgprintf("window = [%s]",window);
 		SendString(fp,window);			ON_IO_ERROR(fp,badio);
+		dbgprintf("widget = [%s]",widget);
 		SendString(fp,widget);			ON_IO_ERROR(fp,badio);
+		dbgprintf("event  = [%s]",event);
 		SendString(fp,event);			ON_IO_ERROR(fp,badio);
 		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
 			ON_IO_ERROR(fp,badio);
 			dbgmsg("recv OK");
-			SendLBS(fp,buff);
-			ForwardBLOB(fp,value);
+			if		(  value  !=  NULL  ) {
+				SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
+				size = NativeSizeValue(NULL,value);
+				buff = NewLBS();
+				LBS_ReserveSize(buff,size,FALSE);
+				NativePackValue(NULL,LBS_Body(buff),value);
+				SendLBS(fp,buff);				ON_IO_ERROR(fp,badio);
+				FreeLBS(buff);
+				ForwardBLOB(fp,value);			ON_IO_ERROR(fp,badio);
+			} else {
+				SendPacketClass(fp,WFC_NODATA);	ON_IO_ERROR(fp,badio);
+			}
 			SendPacketClass(fp,WFC_OK);		ON_IO_ERROR(fp,badio);
 			rc = TRUE;
-		} else {
-			/*	window not found	*/
-			rc = FALSE;
 		}
-	} else {
-	  badio:
-		rc = FALSE;
 	}
+  badio:
+LEAVE_FUNC;
+	return	(rc); 
+}
+
+extern	Bool
+SendTermServerEnd(
+	NETFILE	*fp,
+	char	*term)
+{
+	Bool	rc;
+
+ENTER_FUNC;
+	rc = FALSE;
+	SendString(fp,term);				ON_IO_ERROR(fp,badio);
+	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
+	dbgmsg("send PING");
+	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
+		dbgmsg("recv PONG");
+		SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
+		rc = TRUE;
+	}
+  badio:
 LEAVE_FUNC;
 	return	(rc); 
 }
@@ -304,6 +336,9 @@ _RecvWindow(
 	WindowData	*win,
 	NETFILE		*fp)
 {
+	PacketClass	klass;
+	LargeByteString	*buff;
+
 ENTER_FUNC;
 	dbgprintf("name = [%s]",wname);
 	dbgprintf("puttype = %02X",win->PutType);
@@ -312,15 +347,18 @@ ENTER_FUNC;
 	  case	SCREEN_CLOSE_WINDOW:
 		break;
 	  default:
-		SendPacketClass(fp,WFC_DATA);
-		SendString(fp,wname);
-		switch	(RecvPacketClass(fp))	{
+		SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
+		SendString(fp,wname);				ON_IO_ERROR(fp,badio);
+		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
+		switch	(klass)	{
 		  case	WFC_OK:
-			RecvLBS(fp,buff);
+			buff = NewLBS();
+			RecvLBS(fp,buff);				ON_IO_ERROR(fp,badio);
 			if		(  win->rec  !=  NULL  ) {
 				NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
-				FeedBLOB(fp,win->rec->value);
+				FeedBLOB(fp,win->rec->value);	ON_IO_ERROR(fp,badio);
 			}
+			FreeLBS(buff);
 			break;
 		  case	WFC_NODATA:
 			break;
@@ -328,6 +366,7 @@ ENTER_FUNC;
 			break;
 		}
 	}
+  badio:
 LEAVE_FUNC;
 }
 

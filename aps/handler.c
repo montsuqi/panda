@@ -85,7 +85,7 @@ EnterHandlerClass(
 	void			*dlhandle;
 	MessageHandlerClass	*klass;
 	MessageHandlerClass	*(*finit)(void);
-	char			filename[SIZE_BUFF];
+	char			filename[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	if		(  ( klass = g_hash_table_lookup(HandlerClassTable,name) )  ==  NULL  ) {

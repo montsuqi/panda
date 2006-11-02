@@ -38,7 +38,8 @@ aplenums_h(void)
 	printf("#define\tAPL_SESSION_GET\t\t\t\t%d\n",2);
 	printf("#define\tAPL_SESSION_PUT\t\t\t\t%d\n",3);
 	printf("#define\tAPL_SESSION_RESEND\t\t\t%d\n",4);
-	printf("#define\tAPL_SESSION_END\t\t\t\t%d\n",9);
+	printf("#define\tAPL_SESSION_END\t\t\t\t%d\n",5);
+	printf("#define\tAPL_SYSTEM_END\t\t\t\t%d\n",9);
 	printf("\n");
 }
 
