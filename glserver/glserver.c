@@ -122,11 +122,15 @@ main(
 
 	ParseURL(&Auth,AuthURL,"file");
 	InitSystem(argc,argv);
+#ifdef	USE_SSL
 	if ( fSsl ){
 		Message("glserver start (ssl)");
 	} else {
 		Message("glserver start");
 	}
+#else
+	Message("glserver start");
+#endif
 	ExecuteServer();
 	Message("glserver end");
 	return	(0);
