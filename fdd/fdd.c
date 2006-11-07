@@ -70,6 +70,7 @@ fdd_system(
 	int		pid;
 	int		status;
 
+	signal(SIGCHLD, SIG_DFL);
 	if		(  command  !=  NULL  ) {
 		if		(  ( pid = fork() )  <  0  )	{
 			status = -1;
@@ -179,12 +180,22 @@ Process(
   badio:;
 }
 
+void cache_SIGCHLD(int signo)
+{
+	pid_t child_pid = 0;	
+	do {
+		int child_ret;
+		waitpid(-1, &child_ret, WNOHANG);
+	} while(child_pid>0);
+}
+
 extern	void
 ExecuteServer(void)
 {
 	int		pid;
 	int		fd
 	,		_fd;
+	int		status;
 	Port	*port;
 	NETFILE	*fpComm;
 #ifdef	USE_SSL
@@ -241,6 +252,7 @@ InitSystem(void)
 {
 dbgmsg(">InitSystem");
 	InitNET();
+	signal(SIGCHLD, cache_SIGCHLD);
 dbgmsg("<InitSystem");
 }
 

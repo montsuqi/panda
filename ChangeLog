@@ -1,3 +1,7 @@
+2006-11-07  Noboru Saitou  <noborus@netlab.jp>
+
+	* fdd/fdd.c: 子プロセスの回収が不十分だった
+
 2006-11-02  Noboru Saitou  <noborus@netlab.jp>
 
 	* Merge from r_1_2_branch.
