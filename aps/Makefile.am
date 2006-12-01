@@ -21,8 +21,6 @@
 sbin_PROGRAMS = aps dbstub
 lib_LTLIBRARIES = MCPSUB.la MONFUNC.la $(HANDLER_OBJECTS)
 
-AM_CFLAGS	=	-O4 -Wall -Wunused -Wno-pointer-sign -Werror -funsigned-char
-
 libpandadbincludedir = $(includedir)/panda
 libpandadbinclude_HEADERS =	\
 	apslib.h

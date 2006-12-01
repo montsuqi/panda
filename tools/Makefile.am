@@ -24,8 +24,6 @@ noinst_SCRIPTS = copy
 
 copygen_LDFLAGS	=			\
 	-export-dynamic
-AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
-	-Werror -funsigned-char
 
 copygen_LDADD 		=					\
 	-lm									\

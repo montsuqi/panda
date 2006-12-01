@@ -29,9 +29,6 @@ noinst_PROGRAMS		=		\
 	testnet					\
 	testblob
 
-AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
-	-Werror -funsigned-char
-
 lib_LTLIBRARIES		=	panda.la
 
 panda_la_LDFLAGS	=	-module -export-dynamic

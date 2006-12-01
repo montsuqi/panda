@@ -19,9 +19,6 @@
 noinst_LIBRARIES	=	libpandadb.a 
 lib_LTLIBRARIES 	=	$(DB_OBJECTS)
 
-AM_CFLAGS	=	-O4 -Wall -Wunused -Wno-pointer-sign \
-	-Werror -funsigned-char
-
 libpandadb_a_LIBADD	=
 
 libpandadbincludedir = $(includedir)/panda
