@@ -1,3 +1,17 @@
+2006-12-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/mon.c (ParseUserAgent): MSIEの判別の間違いを直した
+
+	* htserver/tags.c (_Entry, _Text): 表示のロジック変更(代替イメージのタグ
+	を編集させない。危険な文字列を出力しない)
+
+	* htserver/exec.h (OPC_EMITSAFE): エスケープしつつ代替イメージ表示
+	をしない命令(ENTRY等に必須)
+
+	* htserver/file.c: ファイル関係モジュール分割
+
+	* gcc 4.x対応
+
 2006-11-07  Noboru Saitou  <noborus@netlab.jp>
 
 	* fdd/fdd.c: 子プロセスの回収が不十分だった
@@ -26,6 +40,7 @@
 	* glclient/bootdialog.c, glclient/client.c: pkcs12形式も使用できるので
 	表示修正
 	* glclient/bootdialog.c: file_selection のキャンセルの動作の追加	
+	
 2006-10-17  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/blob_v1.c, libs/blobup.c: syslog対応

@@ -271,8 +271,8 @@ ParseUserAgent(void)
 		} else
 		if		(  strlcmp(agent,"Mozilla/")  !=  0  ) {
 			agent += 8;
-			if		(  strstr(agent,"compatible;")  !=  NULL  ) {
-				agent += 11;
+			if		(  ( p = strstr(agent,"compatible;") )  !=  NULL  ) {
+				agent = p + 11;
 				SKIP_SPACE;
 				if		(  strlcmp(agent,"MSIE")  !=  0  ) {
 					AgentType |= AGENT_TYPE_MSIE;
