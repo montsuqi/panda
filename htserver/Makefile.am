@@ -20,8 +20,6 @@
 bin_PROGRAMS = mon htcproc mce makefont
 sbin_PROGRAMS = htserver
 
-AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign -Werror -funsigned-char
-
 #AM_CFLAGS	=	-O2 -Wformat -Wuninitialized -Wimplicit \
 #	-Wmissing-braces -Wsequence-point -Wreturn-type		\
 #	-Wswitch -Wunused -Wredundant-decls \
