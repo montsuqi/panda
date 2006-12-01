@@ -183,6 +183,7 @@ ENTER_FUNC;
 		}
 	}
 	node = MakeProcessNode();
+	rc = 0;
 	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
 						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)	) {
@@ -245,48 +246,48 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"wfcport",	STRING,		TRUE,	(void*)&WfcPortNumber,
-		"WFC��³�Ԥ��ݡ����ֹ�"	 						},
+		"WFC接続待ちポート番号"	 						},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"�Ķ��Υ١����ǥ��쥯�ȥ�"		 				},
+		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"�ǡ��������Ǽ�ǥ��쥯�ȥ�"	 				},
-	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
-		"�����Ǽ�ǥ��쥯�ȥ�"		 				},
+		"データ定義格納ディレクトリ"	 				},
+	{	"lddir",	STRING,		TRUE,	(void*)&D_Dir,
+		"LD定義格納ディレクトリ"		 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"�ǥ��쥯�ȥ�ե�����"	 						},
+		"ディレクトリファイル"	 						},
 	{	"path",		STRING,		TRUE,	(void*)&LibPath,
-		"�⥸�塼��Υ����ɥѥ�"						},
+		"モジュールのロードパス"						},
 
 	{	"dbhost",	STRING,		TRUE,	(void*)&DB_Host,
-		"�ǡ����١�����Ư�ۥ���̾"						},
+		"データベース稼働ホスト名"						},
 	{	"dbport",	STRING,		TRUE,	(void*)&DB_Port,
-		"�ǡ����١����Ե��ݡ����ֹ�"					},
+		"データベース待機ポート番号"					},
 	{	"db",		STRING,		TRUE,	(void*)&DB_Name,
-		"�ǡ����١���̾"								},
+		"データベース名"								},
 	{	"dbuser",	STRING,		TRUE,	(void*)&DB_User,
-		"�ǡ����١����Υ桼��̾"						},
+		"データベースのユーザ名"						},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
-		"�ǡ����١����Υѥ����"						},
+		"データベースのパスワード"						},
 
 	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
-		"aps�ν�������ȥ�󥶥�����������ꤹ��"		},
+		"apsの処理するトランザクション数を指定する"		},
 	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
-		"ü������򥭥�å��夹��ü����"				},
+		"端末情報をキャッシュする端末数"				},
 
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
-		"�¹Ի��֤�­����������(for debug)"				},
+		"実行時間に足す処理時間(for debug)"				},
 	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"���ַ�¬��Ԥ�"								},
+		"時間計測を行う"								},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirector�ε�ư������å����ʤ�"			},
+		"dbredirectorの起動をチェックしない"			},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
-		"dbredirector��Ȥ�ʤ�"						},
+		"dbredirectorを使わない"						},
 	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxRetry,
-		"dbredirector�����κƻ�Կ�����ꤹ��"			},
+		"dbredirector送信の再試行数を指定する"			},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
-		"dbredirector�����κƻ�Ԥδֳ֤���ꤹ��(��)"	},
+		"dbredirector送信の再試行の間隔を指定する(秒)"	},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };

@@ -881,6 +881,7 @@ ENTER_FUNC;
 				narg = 1;
 			} else {
 				value = NULL;
+				arg = (VALUE)0;
 				narg = 0;
 			}
 			dbgprintf("%s:%s:%s",rname,pname,fname);
@@ -1025,8 +1026,8 @@ ENTER_FUNC;
 	SendString(conn->fpW,pname);
 	SendString(conn->fpW,fname);
 
+	buff = NewLBS();
 	if		(  args  !=  NULL  ) {
-		buff = NewLBS();
 		size = NativeSizeValue(NULL,args);
 		LBS_ReserveSize(buff,size,FALSE);
 		NativePackValue(NULL,LBS_Body(buff),args);
@@ -1052,6 +1053,7 @@ ENTER_FUNC;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
+	FreeLBS(buff);
 LEAVE_FUNC;
 }
 

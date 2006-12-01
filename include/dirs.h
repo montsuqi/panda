@@ -34,5 +34,6 @@ GLOBAL	char	*BaseDir;
 GLOBAL	char	*ScreenDir;
 GLOBAL	char	*DirectoryDir;
 GLOBAL	char	*PasswordFile;
+GLOBAL	char	*SesDir;
 GLOBAL	char	*D_Dir;
 #endif

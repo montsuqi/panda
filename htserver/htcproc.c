@@ -49,13 +49,12 @@
 #include	"mon.h"
 #include	"tags.h"
 #include	"exec.h"
+#include	"dirs.h"
 #include	"RecParser.h"
 #include	"option.h"
 #include	"message.h"
 #include	"multipart.h"
 #include	"debug.h"
-
-#define	SRC_CODESET		"euc-jp"
 
 static	Bool		fComm;
 static	Bool		fDdump;
@@ -70,32 +69,32 @@ static	char		*Code;
 
 static	ARG_TABLE	option[] = {
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
-		"≤ËÃÃ≥ «º•«•£•Ï•Ø•»•Í"	 						},
+		"template directory"	 						},
 	{	"get",		BOOLEAN,	TRUE,	(void*)&fGet,
-		"action§Úget§«ΩËÕ˝§π§Î"	 						},
+		"action by GET"			 						},
 	{	"dump",		BOOLEAN,	TRUE,	(void*)&fDump,
-		" —øÙ§Œ•¿•Û•◊§Úπ‘§¶"	 						},
+		"dump variables"		 						},
 	{	"ddump",	BOOLEAN,	TRUE,	(void*)&fDdump,
-		"∆˛Œœ —øÙ§Œ•¿•Û•◊§Úπ‘§¶"	 					},
+		"?Œè??ƒé≈Ä≈≥≈óƒ≤?ƒ¶"	 					},
 	{	"cookie",	BOOLEAN,	TRUE,	(void*)&fCookie,
-		"•ª•∑•Á•Û —øÙ§Úcookie§«π‘§¶"					},
+		"session keeps by cookie"						},
 	{	"jslink",	BOOLEAN,	TRUE,	(void*)&fJavaScriptLink,
-		"<htc:hyperlink>§À§Ë§Î•Í•Û•Ø§ÚJavaScript§«π‘§¶"	},
+		"<htc:hyperlink> links by JavaScript"			},
 
 	{	"type",		STRING,		TRUE,	(void*)&Type	,
-		"•«°º•ø∑¡º∞Ãæ"			 						},
+		"input data language type"						},
 	{	"textsize",	INTEGER,	TRUE,	(void*)&TextSize,
-		"text§Œ∫«¬Áƒπ"									},
+		"text max length(for COBOL)"					},
 	{	"arraysize",INTEGER,	TRUE,	(void*)&ArraySize,
-		"≤ƒ —Õ◊¡««€ŒÛ§Œ∫«¬Á∑´§Í ÷§∑øÙ"					},
+		"variable array size(for COBOL)"				},
 	{	"rec",		STRING,		TRUE,	(void*)&RecName,
-		"rec§ŒÃæ¡∞"										},
+		"rec name"										},
 	{	"code",		STRING,		TRUE,	(void*)&Code,
-		" ∏ª˙•≥°º•…•ª•√•»Ãæ"							},
+		"character encoding"							},
 	{	"js",		BOOLEAN,	TRUE,	(void*)&fJavaScript,
-		"JavaScript§Úª»§√§øHTML¿∏¿Æ§Úπ‘§¶"	},
+		"use JavaScript"								},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"•«°º•øƒÍµ¡≥ «º•«•£•Ï•Ø•»•Í"	 				},
+		"record directory"				 				},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };

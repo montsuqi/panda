@@ -96,6 +96,7 @@ ENTER_FUNC;
 	sprintf(name,"/tmp/mcd2xml%d.sdoc",(int)getpid());
 	xmlSaveFormatFileEnc(name,res,"utf-8",0);
 
+	str = NULL;
 	if		(  ( fd = open(name,O_RDONLY ) )  >=  0  ) {
 		fstat(fd,&sb);
 		if		(  S_ISREG(sb.st_mode)  ) {
@@ -156,70 +157,9 @@ main(
 	char	*html1
 		,	*html2;
 
-	html1 =
-		"テストです。<br />\n"
-		"<strong>太字のテストです。<em>イタリック体のテストです。"
-		"<u>下線漬けです。<br />\n"
-		"<strike>抹消線です。<br />\n"
-		"<br />\n"
-		"</strike>あああああ</u>ああああ</em>ああああ</strong>ああああ<br />\n"
-		"<br />\n"
-		"<ul>\n"
-		"<li>箇条書です。</li>\n"
-		"<li>箇条書です。</li>\n"
-		"</ul>\n"
-		"<ol>\n"
-		"<li>番号付きです。</li>\n"
-		"<li>番号付きです。</li>\n"
-		"</ol>\n"
-		"<br />\n"
-		"これは左詰め<br />\n"
-		"<div align=\"center\">これは中央揃え<br />\n"
-		"<div align=\"right\">これは右詰め<br />\n"
-		"<br />\n"
-		"<div align=\"left\">これは<a href=\"http://www.nurs.or.jp/~ogochan/\" "
-		"target=\"_blank\">リンク</a>です。<br />\n"
-		"<br />\n"
-		"画像を入れてみます。<br />\n"
-		"<img vspace=\"0\" hspace=\"0\" border=\"0\" "
-		"src=\"http://www.nurs.or.jp/~ogochan/tatsujin_photo_2000_06.png\" "
-		"alt=\"おごちゃんの画像\" /><br />\n"
-		"<br />\n"
-		"<table width=\"273\" height=\"53\" border=\"1\"><tr><td>&#160;名前</td>\n"
-		"<td align=\"center\">年齢</td></tr><tr><td>&#160;おごちゃん</td>\n"
-		"<td align=\"right\">41</td></tr></table><br />\n"
-		"</div>\n"
-		"</div>\n"
-		"</div>\n";
+	html1 ="";
 
-	html2 =
-		"テストです。\n"
-		"<strong>太字のテストです。<em>イタリック体のテストです。<u>下線漬けです。\n"
-		"<strike>抹消線です。\n"
-		"</strike>あああああ</u>ああああ</em>ああああ</strong>ああああ\n"
-		"<ul>\n"
-		"<li>箇条書です。</li>\n"
-		"<li>箇条書です。</li>\n"
-		"</ul>\n"
-		"<ol>\n"
-		"<li>番号付きです。</li>\n"
-		"<li>番号付きです。</li>\n"
-		"</ol>\n"
-		"これは左詰め\n"
-		"<div align=\"center\">これは中央揃え\n"
-		"<div align=\"right\">これは右詰め\n"
-		"<div align=\"left\">これは<a href=\"http://www.nurs.or.jp/~ogochan/\" "
-		"target=\"_blank\">リンク</a>です。\n"
-		"画像を入れてみます。\n"
-		"<img vspace=\"0\" hspace=\"0\" border=\"0\" "
-		"src=\"http://www.nurs.or.jp/~ogochan/tatsujin_photo_2000_06.png\" "
-		"alt=\"おごちゃんの画像\" />\n"
-		"<table width=\"273\" height=\"53\" border=\"1\"><tr><td>&#160;名前</td>"
-		"<td align=\"center\">年齢</td></tr><tr><td>&#160;おごちゃん</td>"
-		"<td align=\"right\">41</td></tr></table>\n"
-		"</div>\n"
-		"</div>\n"
-		"</div>\n";
+	html2 ="";
 
 	printf("%s\n",MceHTML2XML(ConvUTF8(html1,"euc-jp")));
 	return	(0);

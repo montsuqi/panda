@@ -67,8 +67,8 @@ LoadGnumeric(
 		,		Col
 		,		r;
 	char		*text
-		,		*jname
-		,		*name
+		,		*jname = NULL
+		,		*name = NULL
 		,		*type;
 	char		**primary
 		,		**pr;

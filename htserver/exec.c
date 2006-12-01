@@ -460,7 +460,8 @@ EscapeJavaScriptString(char *str)
 static	size_t
 EmitChar(
 	LargeByteString	*lbs,
-	unsigned char	*str)
+	unsigned char	*str,
+	Bool			fConv)
 {
 	size_t	len;
 	byte	code[2]
@@ -473,8 +474,11 @@ EmitChar(
 		code[0] |= ( 0x3C & p[1] ) >> 2;
 		code[1]  = ( 0x03 & p[1] ) << 6;
 		code[1] |= ( 0x3F & p[2] );
-		if		(	(  code[0]  >=  0xE0  )
-				&&	(  code[0]  <   0xF8  ) ) {
+		if		(	(  fConv  )
+				&&	(  FontTemplate   !=  NULL  )
+				&&	(  *FontTemplate  !=  0     )
+				&&	(  code[0]        >=  0xE0  )
+				&&	(  code[0]        <   0xF8  ) ) {
 			sprintf(format,
 					"<img src=\"%s\" alt=\"%%02X%%02X\""
 					" style=\"vertical-align:text-bottom\">",FontTemplate);
@@ -501,7 +505,8 @@ EmitChar(
 extern	void
 EmitWithEscape(
 	LargeByteString	*lbs,
-	unsigned char	*str)
+	unsigned char	*str,
+	Bool			fConv)
 {
 	while	(  *str  !=  0  ) {
         switch (*str) {
@@ -529,7 +534,7 @@ EmitWithEscape(
 			str ++;
 			break;
 		  default:
-			str += EmitChar(lbs, str);
+			str += EmitChar(lbs, str, fConv);
 			break;
         }
 	}
@@ -540,13 +545,9 @@ EmitStringRaw(
 	LargeByteString	*lbs,
 	unsigned char	*str)
 {
-#if	0
-	LBS_EmitString(lbs,str);
-#else
 	while	(  *str  !=  0  ) {
-		str += EmitChar(lbs, str);
+		str += EmitChar(lbs, str, FALSE);
 	}
-#endif
 }
 
 static	void
@@ -598,13 +599,13 @@ ExecCode(
 	HTCInfo	*htc)
 {
 	int		c;
-	char	*name
-	,		*value
-	,		*str;
+	char	*name;
+	unsigned char	*value
+		,			*str;
 	Expr	*var
 	,		vval;
 	size_t	pos;
-	char	buff[SIZE_BUFF];
+	byte	buff[SIZE_BUFF];
 
 ENTER_FUNC;
 	RewindLBS(htc->code);
@@ -622,14 +623,14 @@ ENTER_FUNC;
 				name = LBS_FetchPointer(htc->code);
 				value = GetHostValue(name,FALSE);
 				if		(  ( value = GetHostValue(name,FALSE) )  !=  NULL  ) {
-					EmitWithEscape(html,value);
+					EmitWithEscape(html,value,TRUE);
 				}
 				break;
 			  case	OPC_REFINT:
 				dbgmsg("OPC_REFINT");
 				vval = Pop;
 				sprintf(buff,"%d",vval.body.ival);
-				EmitWithEscape(html,buff);
+				EmitWithEscape(html,buff,TRUE);
 				break;
 			  case	OPC_VAR:
 				dbgmsg("OPC_VAR");
@@ -699,7 +700,7 @@ ENTER_FUNC;
 #endif
 				str = LBS_FetchPointer(htc->code);
 				if		(  stricmp(value,"TRUE")  ==  0 ) {
-					EmitWithEscape(html,str);
+					EmitWithEscape(html,str,TRUE);
 				}
 				break;
 			  case	OPC_SPY:
@@ -711,7 +712,7 @@ ENTER_FUNC;
 				  case	VAR_STR:
 					sprintf(buff,"%s",TOP(1).body.sval);
 				}
-				EmitWithEscape(html,TOP(1).body.sval);
+				EmitWithEscape(html,TOP(1).body.sval,FALSE);
 				break;
 			  case	OPC_ICONST:
 				dbgmsg("OPC_ICONST");
@@ -787,7 +788,7 @@ ENTER_FUNC;
                     local = ConvLocal(vval.body.sval);
                     len = EncodeLengthURI(local);
                     encoded = (char *) xmalloc(len + 1);
-                    EncodeURI(encoded, (byte *)local);
+                    EncodeURI(encoded, local);
                     vval.body.sval = encoded;
 					vval.type = VAR_STR;
                     Push(vval);
@@ -811,14 +812,17 @@ ENTER_FUNC;
               case OPC_EMITSTR:
 				dbgmsg("OPC_EMITSTR");
 				vval = Pop;
-				EmitWithEscape(html,vval.body.sval);
+				EmitWithEscape(html,vval.body.sval,TRUE);
+				break;
+              case OPC_EMITSAFE:
+				dbgmsg("OPC_EMITSTR");
+				vval = Pop;
+				EmitWithEscape(html,vval.body.sval,FALSE);
 				break;
               case OPC_EMITRAW:
 				dbgmsg("OPC_EMITRAW");
 				vval = Pop;
-                if (strlen(vval.body.sval) > 0) {
-					EmitStringRaw(html,vval.body.sval);
-                }
+				EmitStringRaw(html,vval.body.sval);
 				break;
 			  case OPC_ESCJSS:
                 {
@@ -943,7 +947,7 @@ ParseInput(
 		char	*u8;
 
 		if		(  val->body  !=  NULL  ) {
-			u8 = ConvUTF8((byte *)val->body,Codeset);
+			u8 = ConvUTF8(val->body,Codeset);
 			xfree(val->body);
 			val->body = StrDup(u8);
 		}
@@ -955,7 +959,7 @@ ParseInput(
 		char	*u8;
 
 		if		(  file->filename  !=  NULL  ) {
-			u8 = ConvUTF8((byte *)file->filename,Codeset);
+			u8 = ConvUTF8(file->filename,Codeset);
 			xfree(file->filename);
 			file->filename = StrDup(u8);
 		}

@@ -158,7 +158,7 @@ DataProcess(
 	char	name[SIZE_LONGNAME+1]
 		,	data[SIZE_LARGE_BUFF];
 	byte	value[SIZE_LARGE_BUFF];
-	char	*got
+	byte	*got
 		,	*p;
 	FILE	*fpR
 		,	*fpW;
@@ -214,12 +214,13 @@ MakeErrorBody(
 	LargeByteString	*lbs,
 	char	*p)
 {
-	char	buff[SIZE_LARGE_BUFF];
+	byte	buff[SIZE_LARGE_BUFF];
 	char	*q;
 	Bool	fBody;
 	int		i;
 
 	fBody = FALSE;
+	i = 0;
 	while	(  *p  !=  0  ) {
 		if		(  ( q = strchr(p,'\n') )  !=  NULL  ) {
 			*q = 0;
@@ -231,7 +232,7 @@ MakeErrorBody(
 			sprintf(buff,"%s\n",p);
 			i = 0;
 		}
-		EmitWithEscape(lbs,buff);
+		EmitWithEscape(lbs,buff,TRUE);
 		if		(  q  ==  NULL  )	break;
 		p = q + 1;
 		i ++;
@@ -269,7 +270,7 @@ ParseFile(
 	Bool	fHTC)
 {
 	HTCInfo	*ret;
-	char	*str;
+	byte	*str;
 	int		fd
 		,	i;
 	int		pSource[2]

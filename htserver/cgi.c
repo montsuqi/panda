@@ -46,6 +46,7 @@
 #include	"multipart.h"
 #include	"cgi.h"
 #include    "HTClex.h"
+#include    "dirs.h"
 #include    "tags.h"
 #include    "exec.h"
 #include	"debug.h"
@@ -54,20 +55,20 @@ static	GET_VALUE	_GetValue;
 
 #define	SIZE_CHARS		16
 
-extern	char	*
+extern	byte	*
 SaveValue(
 	char		*name,
-	char		*value,
+	byte		*value,
 	Bool		fSave)
 {
 	CGIValue	*val;
-	char		*ret;
+	byte		*ret;
 
 ENTER_FUNC;
 	if		(  ( val = g_hash_table_lookup(Values, name) )  ==  NULL  )	{
 		val = New(CGIValue);
 		val->name = StrDup(name);
-        val->inFilter = StrDup;
+        val->inFilter = (byte *(*)(byte *))StrDup;
 		g_hash_table_insert(Values, val->name, val);
 	} else {
 		if		(  val->body  !=  NULL  ) {
@@ -92,8 +93,8 @@ LEAVE_FUNC;
 extern  void
 SetFilter(
     char    *name,
-    char    *(*inFilter)(char *in),
-    char    *(*outFilter)(char *out))
+    byte    *(*inFilter)(byte *in),
+    byte    *(*outFilter)(byte *out))
 {
 	CGIValue	*val;
 
@@ -109,13 +110,13 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern  char    *
+extern  byte    *
 SaveArgValue(
     char    *name,
-    char    *value,
+    byte    *value,
     Bool fSave)
 {
-    char    *val
+    byte    *val
         ,   *ret;
     char    *str;
 
@@ -125,7 +126,7 @@ SaveArgValue(
     } else
     if ((val = LoadValue(name)) != NULL) {
 
-        str = (char *) xmalloc(strlen(val) + strlen(value) + 2);
+        str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
         sprintf(str, "%s,%s", val, value);
         ret = SaveValue(name, str, fSave);
         xfree(str);
@@ -151,12 +152,12 @@ SetSave(
 	val->fSave = fSave;
 }
 
-extern	char	*
+extern	byte	*
 LoadValue(
 	char		*name)
 {
 	CGIValue	*val;
-	char		*value;
+	byte		*value;
 
     if		(  ( val = g_hash_table_lookup(Values, name) )  ==  NULL  )	{
 		value = NULL;
@@ -218,7 +219,7 @@ HexCharToInt(
 		ret = c - 'A' + 10;
 	} else
 	if		(	(  c  >=  'a'  )
-			&&	(  c  <=  'F'  ) ) {
+			&&	(  c  <=  'f'  ) ) {
 		ret = c - 'a' + 10;
 	} else {
 		ret = 0;
@@ -248,7 +249,7 @@ ConvLocal(
 
 extern	char	*
 ConvUTF8(
-	unsigned char	*str,
+	char	*str,
 	char	*code)
 {
 	char	*istr;
@@ -261,7 +262,7 @@ ConvUTF8(
 	cd = iconv_open("utf8",code);
 	istr = (char *)str;
 dbgprintf("size = %d\n",strlen(str));
- if		(  ( sib = strlen((char *)str)  )  >  0  ) {
+ if		(  ( sib = strlen(str)  )  >  0  ) {
 		ostr = cbuff;
 		sob = SIZE_LARGE_BUFF;
 		if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
@@ -343,10 +344,10 @@ StartScanEnv(
 static	Bool
 ScanEnv(
 	char	*name,
-	char	*value)
+	byte	*value)
 {
-	char	buff[SIZE_LARGE_BUFF];
-	char	*p;
+	byte	buff[SIZE_LARGE_BUFF];
+	byte	*p;
 	int		c;
 	Bool	rc;
 
@@ -379,9 +380,9 @@ ScanEnv(
 	}
 	*p = 0;
 	if		(  p  !=  buff  ) {
-		if		(  ( p = strchr((char *)buff,'=') )  !=  NULL  ) {
+		if		(  ( p = strchr(buff,'=') )  !=  NULL  ) {
 			*p = 0;
-			strcpy(name,(char *)buff);
+			strcpy(name,buff);
 			p ++;
 			while	(  *p  !=  0  ) {
 				if		(  *p  !=  '\r'  ) {
@@ -392,7 +393,7 @@ ScanEnv(
 			*value = 0;
 		} else {
 			*name = 0;
-			strcpy((char *)value,buff);
+			strcpy(value,buff);
 		}
 		rc = TRUE;
 	} else {
@@ -404,10 +405,10 @@ ScanEnv(
 static	Bool
 ScanPost(
 	char	*name,
-	char	*value)
+	byte	*value)
 {
-	char	buff[SIZE_LARGE_BUFF];
-	char	*p;
+	byte	buff[SIZE_LARGE_BUFF];
+	byte	*p;
 	int		c;
 	Bool	rc;
 
@@ -442,7 +443,7 @@ ScanPost(
 			*value = 0;
 		} else {
 			*name = 0;
-			strcpy((char *)value,buff);
+			strcpy(value,buff);
 		}
 		rc = TRUE;
 	} else {
@@ -462,16 +463,16 @@ extern	void
 GetArgs(void)
 {
 	char	name[SIZE_LONGNAME+1];
-	char	value[SIZE_LARGE_BUFF]
+	byte	value[SIZE_LARGE_BUFF]
 		,	buff[SIZE_LARGE_BUFF];
     char	*boundary;
-	char	*env;
-	char	*val
-		,	*str
+	char	*env
+		,	*str;
+	byte	*val
 		,	*p;
 
 ENTER_FUNC;
-	if		(  ( env  =  CommandLine )  ==  NULL  ) {
+ if		(  ( env  =  CommandLine )  ==  NULL  ) {
 		env = getenv("QUERY_STRING");
 	}
 	if		(  env  !=  NULL  ) {
@@ -493,14 +494,14 @@ ENTER_FUNC;
 		}
 		if		(  fCookie  ) {
 			if		(  ( env = getenv("HTTP_COOKIE") )  !=  NULL  ) {
-				strcpy((char *)buff,env);
-				if      (  ( p = strrchr((char *)buff,';') )  !=  NULL  )   *p = 0;
-                StartScanEnv((char *)buff);
+				strcpy(buff,env);
+				if      (  ( p = strrchr(buff,';') )  !=  NULL  )   *p = 0;
+                StartScanEnv(buff);
 				while	(  ScanEnv(name,value)  ) {
 					dbgprintf("var name = [%s]\n",name);
                     if      (  *name  ==  0  ) {
                         RemoveValue(name);
-						SaveValue(name, (char *)value,FALSE);
+						SaveValue(name, value,FALSE);
                     } else
 					if		(  ( val = LoadValue(name) )  !=  NULL  ) {
 						str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
@@ -523,14 +524,14 @@ GetSessionValues(void)
 	char	*sesid;
 	char	fname[SIZE_LONGNAME+1];
 	char	name[SIZE_LARGE_BUFF];
-	char	value[SIZE_LARGE_BUFF];
+	byte	value[SIZE_LARGE_BUFF];
 	int		fd;
 	Bool	ret;
 	struct	stat	sb;
 	char	*p;
 
 ENTER_FUNC;
-	if		(   ( ( sesid = LoadValue("_sesid") )  !=  NULL  )
+ if		(   ( ( sesid = LoadValue("_sesid") )  !=  NULL  )
             &&  (  *sesid  !=  0  ) ) {
 		sprintf(fname,"%s/%s.ses",SesDir,sesid);
         if		(  ( fd = open(fname,O_RDONLY ) )  <  0  ) {
@@ -573,7 +574,7 @@ PutValue(
 	if		(	(  value->fSave  )
 			&&	(  *name  !=  0  ) ) {
 		fprintf(fp,"%s=",name);
-		if		(  ( p = (byte *)value->body )  !=  NULL  ) {
+		if		(  ( p = value->body )  !=  NULL  ) {
 			while	(  *p  !=  0  ) {
 				if		(  *p  ==  0x20  ) {
 					fputc('+',fp);
@@ -758,7 +759,7 @@ DumpValues(
 		if		(  value->body  !=  NULL  ) {
 			sprintf(buff,"<tr><td>%s</td><td>",name);
 			LBS_EmitUTF8(html,buff,NULL);
-			EmitWithEscape(html,value->body);
+			EmitWithEscape(html,value->body,FALSE);
 			LBS_EmitUTF8(html,"</td></tr>\n",NULL);
 		}
 	}
@@ -844,13 +845,13 @@ Dump(void)
 	WriteLargeString(stdout,html,Codeset);
 }
 
-extern	char	*
+extern	byte	*
 GetHostValue(
 	char	*name,
 	Bool	fClear)
 {
 	ValueStruct			*item;
-	char	*value;
+	byte	*value;
 
 	dbgprintf("name = [%s]\n",name);
 	if		(  ( value = LoadValue(name) )  ==  NULL  )	{

@@ -123,7 +123,7 @@ ENTER_FUNC;
 		sprintf(name,"T%04d%02d%02d:%02d%02d%02d.%06d",
 				Now->tm_year,Now->tm_mon+1,Now->tm_mday,
 				Now->tm_hour,Now->tm_min,Now->tm_sec,
-				tv.tv_usec);
+				(int)tv.tv_usec);
 	} else {
 		len = sizeof(struct sockaddr_storage);
 		getpeername(sock,(struct sockaddr *)&addr,&len);

@@ -43,6 +43,7 @@
 #include	"comm.h"
 #include	"debug.h"
 
+#if	0
 static Bool
 SendQueryData_Redirect(
 	DBG_Struct	*dbg)
@@ -57,6 +58,7 @@ SendQueryData_Redirect(
 badio:
 	return rc;
 }
+#endif
 
 static Bool
 SendVeryfyData_Redirect(

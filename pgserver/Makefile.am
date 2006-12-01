@@ -19,6 +19,9 @@
 
 sbin_PROGRAMS = pgserver
 
+AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
+	-Werror -funsigned-char
+
 pgserver_LDFLAGS	=	-export-dynamic
 pgserver_LDADD 		=					\
 	-lm									\

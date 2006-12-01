@@ -1572,7 +1572,9 @@ LEAVE_FUNC;
         s = rb_str_new2("do_");
         rb_str_cat2(s, dc_event);
 		handler_method = rb_intern(StringValuePtr(s));
-    }
+    } else {
+        handler_method = (ID)0;
+	}
     app = rb_protect_funcall(app_class, rb_intern("new"), &state, 0);
     if (state && error_handle(state)) {
 LEAVE_FUNC;
@@ -1604,7 +1606,6 @@ execute_batch(MessageHandler *handler, char *name, char *param)
 {
     VALUE app_class;
     VALUE app;
-    char *module;
     VALUE rc;
     int state;
 
@@ -1612,7 +1613,7 @@ execute_batch(MessageHandler *handler, char *name, char *param)
     setup(handler);
     app_class = load_application(handler->loadpath, name);
     if (NIL_P(app_class)) {
-        fprintf(stderr, "%s is not found.", module);
+        fprintf(stderr, "%s is not found.", name);
         return -1;
     }
 

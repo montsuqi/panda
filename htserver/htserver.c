@@ -40,6 +40,7 @@
 #include	"RecParser.h"
 #include	"option.h"
 #include	"front.h"
+#include	"dirs.h"
 #include	"htserver.h"
 #include	"message.h"
 #include	"debug.h"
@@ -47,19 +48,20 @@
 static	char		*AuthURL;
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ポート番号"	 								},
+		"listen port"									},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"接続待ちキューの数" 							},
+		"waid queue length" 							},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"データ定義格納ディレクトリ"	 				},
+		"record directory"				 				},
 	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
-		"BLOBキャッシュディレクトリ名"					},
+		"BLOB cache directory"							},
 	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
-		"セション変数保持ディレクトリ" 					},
+		"session keep directory" 						},
 	{	"expire",	INTEGER,	TRUE,	(void*)&Expire,
-		"セション変数保持時間(秒)" 						},
+		"session expire time(min)" 						},
 	{	"fork",		INTEGER,	TRUE,	(void*)&nFork,
-		"プレフォークするサーバ数" 						},
+		"procces fork limit"	 						},
+
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 

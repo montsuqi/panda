@@ -59,7 +59,6 @@ extern	Port		*ParPortName(char *str);
 extern	char		*StringPort(Port *port);
 extern	char		*StringPortName(Port *port);
 
-extern	char		*ExpandPath(char *org,char *base);
 extern	Port		*NewIP_Port(char *host, char *port);
 extern	Port		*NewUNIX_Port(char *name, int mode);
 

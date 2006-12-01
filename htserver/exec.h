@@ -51,6 +51,7 @@
 #define	OPC_SPY			0x1C
 #define	OPC_SCMP		0x1D
 #define	OPC_EMITRAW		0x1E
+#define	OPC_EMITSAFE	0x1F
 
 #define	OPC_FLJS		0x7F
 
@@ -107,6 +108,6 @@ GLOBAL	char	*ScriptName;
 
 extern	void	ExecCode(LargeByteString *html, HTCInfo *htc);
 extern	char	*ParseInput(HTCInfo *htc);
-extern	void	EmitWithEscape(LargeByteString *lbs, unsigned char *str);
+extern	void	EmitWithEscape(LargeByteString *lbs, unsigned char *str, Bool fConv);
 
 #endif

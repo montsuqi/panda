@@ -89,8 +89,8 @@ HTCSetCodeset(
 	size_t	sib
 		,	sibo
 		,	sob;
-	char	*buff
-		,	*istr
+	byte	*buff;
+	char	*istr
 		,	*ostr;
 
 	if		(  libmondai_i18n  ) {
@@ -98,7 +98,7 @@ HTCSetCodeset(
 		sbuff = SIZE_BUFF;
 		sibo = strlen(HTC_Memory);
 		while	(TRUE) {
-			buff = (char *)xmalloc(sbuff);
+			buff = (byte *)xmalloc(sbuff);
 			sib = sibo;
 			istr = HTC_Memory;
 			ostr = buff;

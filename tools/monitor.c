@@ -552,10 +552,12 @@ WaitProcess(void)
 static	void
 ProcessMonitor(void)
 {
-	GSList	*plist
+	GSList	*plist;
+#if	0
 		,	*p;
 	pid_t	pid;
 	Process	*proc;
+#endif
 	void	_CheckProcess(
 		pid_t	pid)
 	{

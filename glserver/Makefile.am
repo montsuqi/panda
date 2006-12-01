@@ -20,6 +20,9 @@
 sbin_PROGRAMS = glserver
 bin_SCRIPTS = pstopng
 
+AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
+	-Werror -funsigned-char
+
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\
 	-lm 								\

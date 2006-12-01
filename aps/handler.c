@@ -611,6 +611,7 @@ StopOnlineDB(void)
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopOnlineDB,NULL);
 }
 
+#if	0
 static	void
 CleanUpDC(
 	MessageHandler	*handler)
@@ -623,6 +624,7 @@ CleanUpDC(
 		}
 	}
 }
+#endif
 
 extern	int
 StartBatch(

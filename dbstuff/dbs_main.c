@@ -519,7 +519,6 @@ LEAVE_FUNC;
 	exit(ec);
 }
 
-static	char		*AuthURL;
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
 		"ポート番号"	 								},

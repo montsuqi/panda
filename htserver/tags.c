@@ -371,7 +371,7 @@ ENTER_FUNC;
 		EmitCode(htc,OPC_EVAL);
 		LBS_EmitPointer(htc->code,StrDup(name));
 		EmitCode(htc,OPC_PHSTR);
-		EmitCode(htc,OPC_EMITRAW);
+		EmitCode(htc,OPC_EMITSAFE);
 
 		LBS_EmitString(htc->code,"\"");
 		if		(  ( size = HTCGetProp(tag,"size",0) )  !=  NULL  ) {
@@ -507,9 +507,9 @@ ENTER_FUNC;
 			switch	(dtype) {
 			  case	DTYPE_RAW:
 			  case	DTYPE_DIV:
-			  case	DTYPE_PRE:
 				EmitCode(htc,OPC_EMITRAW);
 				break;
+			  case	DTYPE_PRE:
 			  default:
 				EmitCode(htc,OPC_EMITSTR);
 				break;
@@ -706,7 +706,7 @@ ENTER_FUNC;
 #endif
 			LBS_EmitString(htc->code," mce_editable=\"true\"");
 			if		(  !stricmp(type,"xml")  ) {
-				SetFilter(HTCGetProp(tag,"name",0),StrDup,NULL);
+				SetFilter(HTCGetProp(tag,"name",0),(byte *(*)(byte *))StrDup,NULL);
 			}
 		}
 	}
@@ -726,7 +726,7 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code," rows=");
 		EmitAttributeValue(htc,rows,TRUE,FALSE,FALSE);
 	}
-    JavaScriptEvent(htc, tag, "onchange");
+    JavaScriptEvent   (htc, tag, "onchange");
     JavaScriptKeyEvent(htc, tag, "onkeydown");
     JavaScriptKeyEvent(htc, tag, "onkeyup");
 	Style(htc,tag);
@@ -737,7 +737,7 @@ ENTER_FUNC;
 	EmitCode(htc,OPC_PHSTR);
 	if		(	(  ( type = HTCGetProp(tag,"type",0) )  ==  NULL  )
 			||	(  !stricmp(type,"text")                      ) ) {
-		EmitCode(htc,OPC_EMITSTR);
+		EmitCode(htc,OPC_EMITSAFE);
 	} else {
 		EmitCode(htc,OPC_EMITRAW);
 	}

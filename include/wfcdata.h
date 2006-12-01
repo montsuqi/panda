@@ -108,7 +108,7 @@ typedef	struct _SessionData	{
 }	SessionData;
 
 #undef	GLOBAL
-#ifdef	_WFC
+#ifdef	MAIN
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern
@@ -117,5 +117,7 @@ typedef	struct _SessionData	{
 GLOBAL	GHashTable	*WindowHash;
 GLOBAL	GHashTable	*APS_Hash;
 GLOBAL	GHashTable	*MQ_Hash;
+
+#undef	GLOBAL
 
 #endif

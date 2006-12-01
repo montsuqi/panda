@@ -144,6 +144,7 @@ ParWindow(
 	char		wname[SIZE_NAME+1];
 
 ENTER_FUNC;
+	window = NULL;
 	if		(  GetSymbol  !=  '{'  ) { 
 		ParError("syntax error");
 	} else {

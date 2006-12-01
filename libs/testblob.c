@@ -78,6 +78,7 @@ main(
 {
 	BLOB_Space	*blob;
 	BLOB_State	*state;
+#if	0
 	ObjectType	lo[3];
 	char	buff[SIZE_LONGNAME+1];
 	int		i
@@ -85,6 +86,7 @@ main(
 		,	k
 		,	n
 		,	size;
+#endif
 
 	InitMessage("testblob",NULL);
 #ifdef	TEST_INIT

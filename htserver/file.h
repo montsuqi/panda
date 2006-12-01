@@ -18,21 +18,17 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_HTC_PARSER_H
-#define	_INC_HTC_PARSER_H
-#include	<glib.h>
-#include	"const.h"
-#include	"libmondai.h"
-#include	"cgi.h"
+#ifndef	_INC_FILE_H
+#define	_INC_FILE_H
 
-extern	HTCInfo		*NewHTCInfo(void);
-extern	HTCInfo		*HTCParserCore(void);
-extern	HTCInfo		*HTCParseFile(char *fname);
-extern	HTCInfo		*HTCParseMemory(char *buff);
-extern	void		DestroyHTC(HTCInfo *htc);
-extern	void		HTC_Error(char *msg, ...);
-extern	HTCInfo		*ParseScreen(char *name, Bool fComm, Bool fBody);
-extern	char		*CheckCoding(char **sstr);
-extern	byte		*GetFileBody(char *fname);
+#undef	GLOBAL
+#ifdef	MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+extern	void	PutFile(ValueStruct *file);
+extern	void	SendFile(char *name, MultipartFile *file, HTCInfo *htc);
 
 #endif

@@ -19,6 +19,9 @@
 bin_PROGRAMS = 					\
 	glclient
 
+AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
+	-Werror -funsigned-char
+
 glclient_SOURCES =				\
 	client.c	glclient.h		\
 	bootdialog.c	bootdialog.h		\

@@ -45,6 +45,7 @@
 #include	"libmondai.h"
 #include	"HTCparser.h"
 #include	"HTClex.h"
+#include	"dirs.h"
 #include	"cgi.h"
 #include	"exec.h"
 #ifdef	USE_ERUBY
@@ -131,12 +132,14 @@ CopyCommentTag(
 {
 	char	*p;
 	char	cbuff[3+1];
-	int		i;
+	int		i
+		,	c;
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<!-- ");
 	for	( i = 0 , p = cbuff ; i < 3 ; i ++ , p ++ ) {
-		if		(  ( *p = GetChar() )  ==  EOF  )	return;
+		if		(  ( c = GetChar() )  ==  EOF  )	return;
+		*p = c;
 	}
 	*p = 0;
 	while	(  strcmp(cbuff,"-->")  !=  0  ) {
@@ -144,7 +147,8 @@ ENTER_FUNC;
 		for	( i = 0 ; i < 2 ; i ++ ) {
 			cbuff[i] = cbuff[i+1];
 		}
-		if		(  ( cbuff[2] = GetChar() )  ==  EOF  )	return;
+		if		(  ( c = GetChar() )  ==  EOF  )	return;
+		cbuff[2] = c;
 		cbuff[3] = 0;
 	}
 	LBS_EmitString(htc->code," -->");
@@ -201,6 +205,7 @@ ParMacroTag(
 
 ENTER_FUNC;
 	ClearTagValue(tag);
+	lt = 0;
 	while	(  GetSymbol  !=  '>'  ) {
 		switch	(HTC_Token) {
 		  case	T_SYMBOL:
@@ -479,14 +484,14 @@ LEAVE_FUNC;
 	return	(coding);
 }
 
-extern	char	*
+extern	byte	*
 GetFileBody(
 	char	*fname)
 {
 	struct	stat	sb;
 	int		fd;
-	char	*p;
-	char	*ret;
+	byte	*p;
+	byte	*ret;
 
 ENTER_FUNC;
 	ret = NULL;
@@ -495,7 +500,7 @@ ENTER_FUNC;
 			fstat(fd,&sb);
 			if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0) )
 					   !=  NULL  ) {
-				ret = (char *)xmalloc(sb.st_size+1);
+				ret = (byte *)xmalloc(sb.st_size+1);
 				memcpy(ret,p,sb.st_size);
 				munmap(p,sb.st_size);
 				ret[sb.st_size] = 0;
@@ -512,7 +517,7 @@ HTCParseFile(
 	char	*fname)
 {
 	HTCInfo	*ret;
-	char	*str;
+	byte	*str;
 
 ENTER_FUNC;
 	if		(  ( str = GetFileBody(fname) )  !=  NULL  ) {
@@ -540,7 +545,7 @@ ENTER_FUNC;
 		fError = FALSE;
 		HTC_FileName = "*memory*";
 		HTC_cLine = 1;
-		HTC_Memory = (byte *)buff;
+		HTC_Memory = buff;
 		_HTC_Memory = NULL;
 		ret = HTCParserCore();
 	} else {
@@ -579,7 +584,7 @@ HTMLParseFile(
 	char	*fname)
 {
 	HTCInfo	*ret;
-	char	*str;
+	byte	*str;
 
 ENTER_FUNC;
 	if		(  ( str = GetFileBody(fname) )  !=  NULL  ) {

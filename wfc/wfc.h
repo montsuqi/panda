@@ -38,13 +38,13 @@ extern	LargeByteString	*GetScreenData(SessionData *data, char *name);
 GLOBAL	char		**BindTable;
 GLOBAL	int			cBind;
 GLOBAL	GHashTable	*ComponentHash;
-GLOBAL	GHashTable	*APS_Hash;
-GLOBAL	GHashTable	*MQ_Hash;
 GLOBAL	Bool		fShutdown;
 GLOBAL	int			MaxRetry;
 GLOBAL	int			nCache;
 GLOBAL	BLOB_State	*BlobState;
 GLOBAL	Bool		fLoopBack;
 GLOBAL	Bool		fTimer;
+
+#undef	GLOBAL
 
 #endif

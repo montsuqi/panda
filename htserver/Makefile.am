@@ -20,6 +20,14 @@
 bin_PROGRAMS = mon htcproc mce makefont
 sbin_PROGRAMS = htserver
 
+AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign -Werror -funsigned-char
+
+#AM_CFLAGS	=	-O2 -Wformat -Wuninitialized -Wimplicit \
+#	-Wmissing-braces -Wsequence-point -Wreturn-type		\
+#	-Wswitch -Wunused -Wredundant-decls \
+#	-Wdeclaration-after-statement -Wshadow -Wconversion	\
+#	-Wunreachable-code -Wno-pointer-sign -Werror -funsigned-char
+
 htserver_LDFLAGS	=	-export-dynamic
 htserver_LDADD 		=					\
 	-lm									\
@@ -73,6 +81,7 @@ mon_SOURCES	=	\
 	eruby.c		eruby.h		\
 	tags.c		tags.h		\
 	exec.c		exec.h		\
+	file.c		file.h		\
 	mon.c		mon.h
 
 mon_DEPENDENCIES	=				\

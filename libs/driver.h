@@ -79,6 +79,5 @@ extern	WindowData	*PutWindowByName(char *wname, byte type);
 #define	GLOBAL	extern
 #endif
 GLOBAL	ScreenData	*ThisScreen;	/*	current applications ScreenData		*/
-GLOBAL	char		*SesDir;
 #undef	GLOBAL
 #endif

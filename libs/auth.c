@@ -27,6 +27,7 @@
 #  include <config.h>
 #endif
 
+#define	_GNU_SOURCE
 #ifdef HAVE_CRYPT_H
 #include	<crypt.h>
 #endif

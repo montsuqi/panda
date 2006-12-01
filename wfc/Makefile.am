@@ -20,6 +20,9 @@
 sbin_PROGRAMS = wfc
 bin_PROGRAMS = wfccontrol
 
+AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
+	-Werror -funsigned-char
+
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\

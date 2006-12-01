@@ -45,9 +45,9 @@
 
 typedef	struct {
 	char	*name;
-	char	*body;
-	char	*(*inFilter)(char *in);
-	char	*(*outFilter)(char *out);
+	byte	*body;
+	byte	*(*inFilter)(byte *in);
+	byte	*(*outFilter)(byte *out);
 	Bool	fSave;
 }	CGIValue;
 
@@ -89,10 +89,8 @@ GLOBAL	Bool		fDebug;
 GLOBAL	Bool		fJavaScriptLink;
 GLOBAL	Bool		fNoJavaScript;
 GLOBAL	Bool		fJavaScript;
-GLOBAL	char		*SesDir;
 GLOBAL	char		*CommandLine;
 GLOBAL	time_t		SesExpire;
-GLOBAL	char		*ScreenDir;
 
 #undef	GLOBAL
 
@@ -100,7 +98,7 @@ extern  void	CGI_InitValues(void);
 extern	void	InitCGI(void);
 extern	void	InitHTC(char *script_name, GET_VALUE func);
 
-extern	char	*ConvUTF8(unsigned char *istr, char *code);
+extern	char	*ConvUTF8(char *istr, char *code);
 extern	char	*ConvLocal(char *istr);
 
 extern	void	LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
@@ -108,14 +106,14 @@ extern	void	GetArgs(void);
 extern	void	PutHTML(LargeByteString *header, LargeByteString *html, int code);
 extern	void	DumpValues(LargeByteString *html, GHashTable *args);
 extern	void	Dump(void);
-extern	char	*GetHostValue(char *name, Bool fClear);
-extern	char	*SaveValue(char *name, char *value, Bool fSave);
-extern	char	*SaveArgValue(char *name, char *value, Bool fSave);
-extern	char	*LoadValue(char *name);
+extern	byte	*GetHostValue(char *name, Bool fClear);
+extern	byte	*SaveValue(char *name, byte *value, Bool fSave);
+extern	byte	*SaveArgValue(char *name, byte *value, Bool fSave);
+extern	byte	*LoadValue(char *name);
 extern	void	RemoveValue(char *name);
 extern	void	SetSave(char *name, Bool fSave);
-extern  void	SetFilter(char *name, char *(*inFilter)(char *in),
-						  char *(*outFilter)(char *out));
+extern  void	SetFilter(char *name, byte *(*inFilter)(byte *in),
+						  byte *(*outFilter)(byte *out));
 
 extern  void	CheckSessionExpire(void);
 extern	Bool	GetSessionValues(void);

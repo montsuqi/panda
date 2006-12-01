@@ -28,9 +28,8 @@
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	char		*RecordDir;
-
 #undef	GLOBAL
-extern	void	PutFile(ValueStruct *file);
+
+extern	void	SendValue(char *name, char *value, size_t size);
 
 #endif

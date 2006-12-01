@@ -38,6 +38,9 @@ SUBDIRS		=	\
 
 BUILT_SOURCES = defaults.h
 
+AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
+	-Werror -funsigned-char
+
 release:
 	rm -rf .deps */.deps
 	$(MAKE) distcheck

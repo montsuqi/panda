@@ -50,9 +50,11 @@
 #include	"mon.h"
 #include	"tags.h"
 #include	"exec.h"
+#include	"dirs.h"
 #include	"option.h"
 #include	"message.h"
 #include	"multipart.h"
+#include	"file.h"
 #include	"debug.h"
 
 #define	SRC_CODESET		"euc-jp"
@@ -68,12 +70,15 @@ static	Bool		fComm;
 static	ARG_TABLE	option[] = {
 	{	"server",	STRING,		TRUE,	(void*)&ServerPort,
 		"htserver port name"							},
+
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
 		"template directory"	 						},
 	{	"font",		STRING,		TRUE,	(void*)&FontTemplate,
 		"alternate font image converting template"		},
+
 	{	"command",	STRING,		TRUE,	(void*)&Command,
 		"command name"	 								},
+
 	{	"get",		BOOLEAN,	TRUE,	(void*)&fGet,
 		"action by GET"			 						},
 	{	"dump",		BOOLEAN,	TRUE,	(void*)&fDump,
@@ -86,6 +91,7 @@ static	ARG_TABLE	option[] = {
 		"<htc:hyperlink> links by JavaScript"			},
 	{	"js",		BOOLEAN,	TRUE,	(void*)&fJavaScript,
 		"use JavaScript"								},
+
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -137,7 +143,7 @@ LEAVE_FUNC;
 	return value;
 }
 
-static	void
+extern	void
 SendValue(
 	char		*name,
 	char		*value,
@@ -155,170 +161,6 @@ ENTER_FUNC;
 	} else {
 		dbgprintf("send value = [%s]",name);
 	}
-LEAVE_FUNC;
-}
-
-static size_t
-EncodeRFC2231(char *q, byte *p)
-{
-	char	*qq;
-
-	qq = q;
-	while (*p != 0) {
-        if (*p <= 0x20 || *p >= 0x7f) {
-            *q++ = '%';
-            q += sprintf(q, "%02X", ((int) *p) & 0xFF);
-        }
-        else {
-            switch (*p) {
-            case '*': case '\'': case '%':
-            case '(': case ')': case '<': case '>': case '@':
-            case ',': case ';': case ':': case '\\': case '"':
-            case '/': case '[': case ']': case '?': case '=':
-                *q++ = '%';
-                q += sprintf(q, "%02X", ((int) *p) & 0xFF);
-                break;
-            default:
-                *q ++ = *p;
-                break;
-            }
-        }
-		p++;
-	}
-	*q = 0;
-	return q - qq;
-}
-
-static size_t
-EncodeLengthRFC2231(byte *p)
-{
-	size_t ret;
-
-    ret = 0;
-	while (*p != 0) {
-        if (*p <= 0x20 || *p >= 0x7f) {
-            ret += 3;
-        }
-        else {
-            switch (*p) {
-              case '*': case '\'': case '%':
-              case '(': case ')': case '<': case '>': case '@':
-              case ',': case ';': case ':': case '\\': case '"':
-              case '/': case '[': case ']': case '?': case '=':
-                ret += 3;
-                break;
-              default:
-                ret++;
-                break;
-            }
-        }
-		p++;
-	}
-	return ret;
-}
-
-static	char	*
-ConvShiftJIS(
-	char	*istr)
-{
-	iconv_t	cd;
-	size_t	sib
-	,		sob;
-	char	*ostr;
-	static	char	cbuff[SIZE_LARGE_BUFF];
-
-	cd = iconv_open("sjis","utf8");
-	sib = strlen(istr);
-	ostr = cbuff;
-	sob = SIZE_LARGE_BUFF;
-	iconv(cd,&istr,&sib,&ostr,&sob);
-	*ostr = 0;
-	iconv_close(cd);
-	return	(cbuff);
-}
-
-extern	void
-PutFile(ValueStruct *file)
-{
-	char *ctype_field;
-	char *filename_field;
-
-	if		((ctype_field = LoadValue("_contenttype")) != NULL) {
-		char *ctype = GetHostValue(ctype_field, FALSE);
-		if (*ctype != '\0')
-			printf("Content-Type: %s\r\n", ctype);
-    }
-    else {
-		printf("Content-Type: application/octet-stream\r\n");
-    }
-	if ((filename_field = LoadValue("_filename")) != NULL) {
-		char *filename = GetHostValue(filename_field, FALSE);
-		char *disposition_field = LoadValue("_disposition");
-		char *disposition = "attachment";
-
-		if (disposition_field != NULL) {
-			char *tmp = GetHostValue(disposition_field, FALSE);
-			if (*tmp != '\0')
-				disposition = tmp;
-		}
-		if (*filename != '\0') {
-			if		(  ( AgentType & AGENT_TYPE_MSIE )  ==  AGENT_TYPE_MSIE  ) {
-				printf("Content-Disposition: %s;"
-					   " filename=%s\r\n",
-					   disposition,
-					   ConvShiftJIS(filename));
-			} else {
-				int len = EncodeLengthRFC2231((byte *)filename);
-				char *encoded = (char *) xmalloc(len + 1);
-				EncodeRFC2231(encoded, (byte *)filename);
-				printf("Content-Disposition: %s;"
-					   " filename*=utf-8''%s\r\n",
-					   disposition,
-					   encoded);
-				xfree(encoded);
-			}
-		}
-	}
-	printf("\r\n");
-	switch (ValueType(file)) {
-	  case GL_TYPE_BYTE:
-	  case GL_TYPE_BINARY:
-		fwrite(ValueByte(file), 1, ValueByteLength(file), stdout);
-		break;
-	  case	GL_TYPE_OBJECT:
-		break;
-	  default:
-		fputs(ValueToString(file, Codeset), stdout);
-		break;
-	}
-	fDump = FALSE;
-}
-
-static	void
-SendFile(char *name, MultipartFile *file, HTCInfo *htc)
-{
-	char	*filename
-		,	*sendname
-		,	*p;
-	char	buff[SIZE_LONGNAME+1];
-
-ENTER_FUNC;
-	if		(  ( filename = (char *) g_hash_table_lookup(htc->FileSelection, name) )
-			   !=  NULL  ) {
-		dbgprintf("name           = [%s]",name);
-		dbgprintf("file->filename = [%s]",file->filename);
-		dbgprintf("filename       = [%s]",filename);
-
-		strcpy(buff,file->filename);
-		if		(	(  ( p = strrchr(buff,'\\') )  !=  NULL  )
-				||	(  ( p = strrchr(buff,'/') )   !=  NULL  ) ) {
-			sendname = p + 1;
-		} else {
-			sendname = buff;
-		}
-		SendValue(filename,sendname,strlen(sendname));
-		SendValue(name,LBS_Body(file->body),LBS_Size(file->body));
-    }
 LEAVE_FUNC;
 }
 
@@ -387,6 +229,8 @@ ENTER_FUNC;
 		} else {
 			name = window;
 		}
+	} else {
+		name = "";
 	}
 
 	SendPacketClass(fpServ,GL_Event);		ON_IO_ERROR(fpServ,badio);

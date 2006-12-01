@@ -56,6 +56,7 @@
 #include	"blobcom.h"
 #include	"blobserv.h"
 #include	"driver.h"
+#include	"dirs.h"
 #include	"message.h"
 #include	"debug.h"
 

@@ -125,6 +125,7 @@ ENTER_FUNC;
 						  wname,
 						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
 		rc = FALSE;
+		fp = NULL;
 		GL_RecvString(fpComm, SIZE_NAME, wname,fFeatureNetwork);	/*	dummy	*/ 
 		ON_IO_ERROR(fpComm,badio);
 		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
@@ -147,7 +148,9 @@ ENTER_FUNC;
 			}	while	(  left  >  0  );
 			rc = TRUE;
 		  badio:
-			fclose(fp);
+			if		(  fp  !=  NULL  ) {
+				fclose(fp);
+			}
 		}
 	} else {
 		rc = TRUE;

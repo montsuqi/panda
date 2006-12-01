@@ -388,7 +388,7 @@ dbgmsg(">MakeLD");
 	base = 2;
 	if		(	(  fLDR     )
 			||	(  fLDW     ) ) {
-		size =	SizeValue(Conv,ThisEnv->mcprec->value);
+		size =	SizeValue(Conv,ThisEnv->mcprec->value)
 			+	ThisEnv->linksize
 			+	SizeValue(Conv,ld->sparec->value);
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {

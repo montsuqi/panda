@@ -70,6 +70,7 @@ SendPanda(void)
 ENTER_FUNC;
 	dbgprintf("ThisWindow = [%s]",ThisWindow);
 	strcpy(buff,ThisWindow);
+	rec = NULL;
 	while	(  strlen(buff)  >  0  ) {
 		if		(  ( rec = GetWindowRecord(buff) )  !=  NULL  )	break;
 		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {

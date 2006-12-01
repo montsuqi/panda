@@ -163,12 +163,12 @@ ParseHeader(FILE *fp, char **name, char **filename)
 {
     char buf[SIZE_BUFF];
     int in_content_disposition = 0;
+    char *p;
 
     *name = NULL;
     *filename = NULL;
-    while (fgets(buf, sizeof(buf), fp) != NULL) {
-        char *p;
-        if (strcmp(buf, "\r\n") == 0) break;
+    while (fgets(buf, SIZE_BUFF, fp) != NULL) {
+        //if (strcmp(buf, "\r\n") == 0) break;
         if (strncasecmp(buf, "Content-Disposition:",
                         STR_LITERAL_LENGTH("Content-Disposition:")) == 0) {
             p = buf + STR_LITERAL_LENGTH("Content-Disposition:");
@@ -253,16 +253,20 @@ xrealloc(void *ptr, size_t size)
 #define MEMORY_EXPANSION_UNIT (512 * 1024)
 
 static int
-ParseBody(FILE *fp, char *delimiter, char *close_delimiter,
-          char **value, int *value_len)
+ParseBody(
+    FILE    *fp,
+    char    *delimiter,
+    char    *close_delimiter,
+    byte    **value,
+    int     *value_len)
 {
-    int boundary_type = BOUNDARY_NONE;
-    char buf[SIZE_BUFF];
-    int read_len;
-    char *val;
-    int val_capa = SIZE_BUFF, val_len = 0;
+    int     boundary_type = BOUNDARY_NONE;
+    char    buf[SIZE_BUFF];
+    int     read_len;
+    byte    *val;
+    int     val_capa = SIZE_BUFF, val_len = 0;
 
-    val = (char *) xmalloc(val_capa);
+    val = (byte *) xmalloc(val_capa);
     while ((read_len = ReadLine(fp, buf, sizeof(buf))) > 0) {
         boundary_type = CheckBoundary(buf, delimiter, close_delimiter);
         if (boundary_type != BOUNDARY_NONE)
@@ -274,7 +278,7 @@ ParseBody(FILE *fp, char *delimiter, char *close_delimiter,
             else {
                 val_capa += MEMORY_EXPANSION_UNIT;
             }
-            val = (char *) xrealloc(val, val_capa);
+            val = (byte *) xrealloc(val, val_capa);
         }
         memcpy(val + val_len, buf, read_len);
         val_len += read_len;
@@ -292,9 +296,11 @@ static int
 ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
           GHashTable *values, GHashTable *files)
 {
-    char *name, *filename, *value;
-    int value_len;
-    int boundary_type;
+    char    *name
+        ,   *filename;
+    byte    *value;
+    int     value_len;
+    int     boundary_type;
 
 ENTER_FUNC;
     if (ParseHeader(fp, &name, &filename) < 0)
@@ -320,7 +326,7 @@ LEAVE_FUNC;
     return boundary_type;
 }
 
-int
+extern  int
 ParseMultipart(FILE *fp, char *boundary,
                GHashTable *values, GHashTable *files)
 {

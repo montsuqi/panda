@@ -23,6 +23,7 @@
 #include	<glib.h>
 #include	"struct.h"
 #include	"Lex.h"
+#include	"RecParser.h"
 
 extern	void			 DB_ParserInit(void);
 extern	RecordStruct	*DB_Parser(char *name, char *gname, char **ValueName,
@@ -35,6 +36,5 @@ extern	RecordStruct	*DB_Parser(char *name, char *gname, char **ValueName,
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	char	*RecordDir;
 #undef	GLOBAL
 #endif

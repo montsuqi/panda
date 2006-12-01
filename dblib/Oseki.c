@@ -153,7 +153,6 @@ ValueToSQL(
 	ValueStruct	*val)
 {
 	char	buff[SIZE_LONGNAME+1];
-	Numeric	nv;
 
 ENTER_FUNC;
 	if		(  IS_VALUE_NIL(val)  ) {

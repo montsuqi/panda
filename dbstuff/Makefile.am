@@ -18,6 +18,9 @@
 
 sbin_PROGRAMS =  dbredirector dbs
 
+AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
+	-Werror -funsigned-char
+
 dbredirector_LDADD 		=				\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a	\
