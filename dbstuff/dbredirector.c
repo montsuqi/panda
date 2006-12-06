@@ -244,7 +244,7 @@ ReConnectDB(void)
 ENTER_FUNC;
 	while ( !ConnectDB() ){
 		retry ++;
-		if ( retry > MaxRetry ){
+		if ( retry > MaxSendRetry ){
 			break;
 		}
 		sleep (CONNECT_INTERVAL);
@@ -517,40 +517,40 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"�ݡ����ֹ�"	 								},
+		"ポート番号"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"��³�Ԥ����塼�ο�" 							},
+		"接続待ちキューの数" 							},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"�ǥ��쥯�ȥ�ե�����"	 						},
+		"ディレクトリファイル"	 						},
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"�Ķ��Υ١����ǥ��쥯�ȥ�"		 				},
+		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"�ǡ��������Ǽ�ǥ��쥯�ȥ�"	 				},
+		"データ定義格納ディレクトリ"	 				},
 	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
-		"�����Ǽ�ǥ��쥯�ȥ�"			 				},
+		"定義格納ディレクトリ"			 				},
 
 	{	"host",		STRING,		TRUE,	(void*)&DB_Host,
-		"PostgreSQL��Ư�ۥ���̾"						},
+		"PostgreSQL稼働ホスト名"						},
 	{	"port",		STRING,		TRUE,	(void*)&DB_Port,
-		"PostgreSQL�ݡ����ֹ�"							},
+		"PostgreSQLポート番号"							},
 	{	"db",		STRING,		TRUE,	(void*)&DB_Name,
-		"�ǡ����١���̾"								},
+		"データベース名"								},
 	{	"user",		STRING,		TRUE,	(void*)&DB_User,
-		"�桼��̾"										},
+		"ユーザ名"										},
 	{	"pass",		STRING,		TRUE,	(void*)&DB_Pass,
-		"�ѥ����"									},
+		"パスワード"									},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirector�ε�ư������å����ʤ�"			},
+		"dbredirectorの起動をチェックしない"			},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
-		"dbredirector��Ȥ�ʤ�"						},
+		"dbredirectorを使わない"						},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
-		"dbredirector�ǹ�����������å����ʤ�"			},
-	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxRetry,
-		"dbredirector�����κƻ�Կ�����ꤹ��"			},
+		"dbredirectorで更新数をチェックしない"			},
+	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
+		"dbredirector送信の再試行数を指定する"			},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
-		"dbredirector�����κƻ�Ԥδֳ֤���ꤹ��(��)"	},
+		"dbredirector送信の再試行の間隔を指定する(秒)"	},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -574,7 +574,7 @@ SetDefault(void)
 	fNoCheck = FALSE;
 	fNoSumCheck = FALSE;
 	fNoRedirect = FALSE;
-	MaxRetry = 3;
+	MaxSendRetry = 3;
 	RetryInterval = 5;
 }
 

@@ -121,40 +121,40 @@ LEAVE_FUNC;
 }
 static	ARG_TABLE	option[] = {
 	{	"host",		STRING,		TRUE,	(void*)&DB_Host,
-		"PostgreSQL��Ư�ۥ���̾"						},
+		"PostgreSQL稼働ホスト名"						},
 	{	"port",		STRING,		TRUE,	(void*)&DB_Port,
-		"PostgreSQL�ݡ����ֹ�"							},
+		"PostgreSQLポート番号"							},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"�Ķ��Υ١����ǥ��쥯�ȥ�"		 				},
+		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"�ǡ��������Ǽ�ǥ��쥯�ȥ�"	 				},
+		"データ定義格納ディレクトリ"	 				},
 	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
-		"�����Ǽ�ǥ��쥯�ȥ�"			 				},
+		"定義格納ディレクトリ"			 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"�ǥ��쥯�ȥ�ե�����"	 						},
+		"ディレクトリファイル"	 						},
 	{	"path",		STRING,		TRUE,	(void*)&LibPath,
-		"�⥸�塼��Υ����ɥѥ�"						},
+		"モジュールのロードパス"						},
 	{	"parameter",STRING,		TRUE,	(void*)&CommandParameter,
-		"���ޥ�ɥ饤��"								},
+		"コマンドライン"								},
 
 	{	"db",		STRING,		TRUE,	(void*)&DB_Name,
-		"�ǡ����١���̾"								},
+		"データベース名"								},
 	{	"user",		STRING,		TRUE,	(void*)&DB_User,
-		"�桼��̾"										},
+		"ユーザ名"										},
 	{	"pass",		STRING,		TRUE,	(void*)&DB_Pass,
-		"�ѥ����"									},
+		"パスワード"									},
 	{	"bd",		STRING,		TRUE,	(void*)&BD_Name,
-		"BD���̾"										},
+		"BD定義名"										},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirector�ε�ư������å����ʤ�"			},
+		"dbredirectorの起動をチェックしない"			},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
-		"dbredirector��Ȥ�ʤ�"						},
-	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxRetry,
-		"dbredirector�����κƻ�Կ�����ꤹ��"			},
+		"dbredirectorを使わない"						},
+	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
+		"dbredirector送信の再試行数を指定する"			},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
-		"dbredirector�����κƻ�Ԥδֳ֤���ꤹ��(��)"	},
+		"dbredirector送信の再試行の間隔を指定する(秒)"	},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -178,7 +178,7 @@ SetDefault(void)
 
 	fNoCheck = FALSE;
 	fNoRedirect = FALSE;
-	MaxRetry = 3;
+	MaxSendRetry = 3;
 	RetryInterval = 5;
 }
 

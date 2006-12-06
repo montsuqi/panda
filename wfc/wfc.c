@@ -314,7 +314,7 @@ static	ARG_TABLE	option[] = {
 	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
 		"session variable keep directory" 				},
 
-	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
+	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
 		"maximun retry count"							},
 	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
 		"terminal cache number"							},
@@ -338,7 +338,7 @@ ENTER_FUNC;
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
-	MaxRetry = 0;
+	MaxTransactionRetry = 0;
 	ControlPort = NULL;
 	fLoopBack = FALSE;
 	nCache = 100;

@@ -1,3 +1,9 @@
+2006-12-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/wfc.h: MaxRetry -> MaxTransactionRetry
+
+	* dblib/dbgroup.h: MaxRetry -> MaxSendRetry
+
 2006-12-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/mon.c (ParseUserAgent): MSIEの判別の間違いを直した
@@ -1986,7 +1992,7 @@
 
 	* Ver 1.0.4 release
 
-	* aps/dbredirector.c (LogThread): flushを忘れている部分を直す(高速
+	* aps/dbredirector.c (LogThread): flushを忘れている部分を��す(高速
 	化するか？)
 
 	* include/const.h (SIZE_BUFF): バッファサイズ拡張(一時しのぎ)

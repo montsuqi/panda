@@ -57,6 +57,7 @@ GLOBAL	char	*DB_Pass;
 GLOBAL	Bool	fNoCheck;
 GLOBAL	Bool	fNoRedirect;
 GLOBAL	Bool	fNoSumCheck;
+GLOBAL	int		MaxSendRetry;
 GLOBAL	int		RetryInterval;
 GLOBAL	NETFILE	*fpBlob;
 

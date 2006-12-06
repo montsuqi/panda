@@ -433,8 +433,8 @@ ENTER_FUNC;
 					ClearAPS_Node(ld,ix);
 					data->apsid = -1;
 					data->retry ++;
-					if		(	(  MaxRetry  >  0  )
-							&&	(  data->retry  >  MaxRetry  ) ) {
+					if		(	(  MaxTransactionRetry  >  0          )
+							&&	(  MaxTransactionRetry  < data->retry ) ) {
 						data->fAbort = TRUE;
 						TermEnqueue(data->term,data);
 					} else {

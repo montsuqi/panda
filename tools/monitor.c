@@ -64,6 +64,7 @@ static	Bool	fTimer;
 static	int		Interval;
 static	int		wfcinterval;
 static	int		MaxTran;
+static	int		MaxTransactionRetry;
 static	int		Sleep;
 static	int		nCache;
 
@@ -175,7 +176,7 @@ StartRedirector(
 
 ENTER_FUNC;
 	proc = New(Process);
-	argv = (char **)xmalloc(sizeof(char *) * 13);
+	argv = (char **)xmalloc(sizeof(char *) * 15);
 	proc->argv = argv;
 	proc->type = PTYPE_RED;
 	argc = 0;
@@ -209,6 +210,8 @@ ENTER_FUNC;
 	if		(  fQ  ) {
 		argv[argc ++] = "-?";
 	}
+	argv[argc ++] = "-maxretry";
+	argv[argc ++] = IntStrDup(MaxSendRetry);
 	proc->argc = argc;
 	argv[argc ++] = NULL;
 	pid = StartProcess(proc,Interval);
@@ -327,6 +330,8 @@ ENTER_FUNC;
 			argv[argc ++] = IntStrDup(MaxTran);
 			argv[argc ++] = "-sleep";
 			argv[argc ++] = IntStrDup(Sleep);
+			argv[argc ++] = "-maxretry";
+			argv[argc ++] = IntStrDup(MaxSendRetry);
 
 			if		(  fNoCheck  ) {
 				argv[argc ++] = "-nocheck";
@@ -409,9 +414,9 @@ ENTER_FUNC;
 			argv[argc ++] = "-record";
 			argv[argc ++] = RecDir;
 		}
-		if		(  MaxRetry  >  0  ) {
+		if		(  MaxTransactionRetry  >  0  ) {
 			argv[argc ++] = "-retry";
-			argv[argc ++] = IntStrDup(MaxRetry);
+			argv[argc ++] = IntStrDup(MaxTransactionRetry);
 		}
 		if		(  fQ  ) {
 			argv[argc ++] = "-?";
@@ -627,56 +632,58 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"ApsPath",	STRING,		TRUE,	(void*)&ApsPath,
-		"aps���ޥ�ɥѥ�"		 						},
+		"apsコマンドパス"		 						},
 	{	"WfcPath",	STRING,		TRUE,	(void*)&WfcPath,
-		"wfc���ޥ�ɥѥ�"		 						},
+		"wfcコマンドパス"		 						},
 	{	"RedPath",	STRING,		TRUE,	(void*)&RedirectorPath,
-		"redirector���ޥ�ɥѥ�"						},
+		"redirectorコマンドパス"						},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"�ǥ��쥯�ȥ�ե�����"	 						},
+		"ディレクトリファイル"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecDir,
-		"�쥳���ɤΤ���ǥ��쥯�ȥ�"					},
+		"レコードのあるディレクトリ"					},
 	{	"ddir",		STRING,		TRUE,	(void*)&DDir,
-		"LD�����Ǽ�ǥ��쥯�ȥ�"	 					},
+		"LD定義格納ディレクトリ"	 					},
 
 	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
-		"dbredirector��ư����"	 					},
+		"dbredirectorを起動する"	 					},
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirector�ε�ư������å����ʤ�"			},
+		"dbredirectorの起動をチェックしない"			},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
-		"dbredirector�ǹ�����������å����ʤ�"			},
+		"dbredirectorで更新数をチェックしない"			},
+	{	"sendretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
+		"dbredirector送信の再試行数を指定する"			},
 
 	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
-		"aps�۾ｪλ���˺Ƶ�ư����"	 					},
+		"aps異常終了時に再起動する"	 					},
 	{	"allrestart",BOOLEAN,	TRUE,	(void*)&fAllRestart,
-		"���Ƥλҥץ������۾ｪλ���˺Ƶ�ư����"	 	},
+		"全ての子プロセス異常終了時に再起動する"	 	},
 
 	{	"interval",	INTEGER,	TRUE,	(void*)&Interval,
-		"�ץ������������Ԥ�����"	 					},
+		"プロセス操作時の待ち時間"	 					},
 	{	"wfcwait",	INTEGER,	TRUE,	(void*)&wfcinterval,
-		"wfc��ư����Ԥ�����(�٤�CPU��)"				},
+		"wfc起動後の待ち時間(遅いCPU用)"				},
 	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
 		"terminal cache number"							},
 	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
-		"��������ѿ��ݻ��ǥ��쥯�ȥ�" 					},
+		"セション変数保持ディレクトリ" 					},
 
 	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
-		"��ʬ�Υۥ���̾����ꤹ��"	 					},
+		"自分のホスト名を指定する"	 					},
 
 	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
-		"aps�ν�������ȥ�󥶥�����������ꤹ��"		},
-	{	"retry",	INTEGER,	TRUE,	(void*)&MaxRetry,
-		"�ȥ�󥶥�������ƻ�Ԥ�����ξ�¿�"		},
+		"apsの処理するトランザクション数を指定する"		},
+	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
+		"トランザクションを再試行する時の上限数"		},
 
 	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
-		"-?����ꤹ��"				 					},
+		"-?を指定する"				 					},
 	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"���ַ�¬��Ԥ�"								},
+		"時間計測を行う"								},
 	{	"log",		STRING,		TRUE,	(void*)&Log,
-		"�¹ԥ�������ե�����̾����ꤹ��"			},
+		"実行ログを取るファイル名を指定する"			},
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
-		"�¹Ի��֤�­����������(for debug)"				},
+		"実行時間に足す処理時間(for debug)"				},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -695,7 +702,8 @@ SetDefault(void)
 	Interval = 0;
 	wfcinterval = 0;
 	MaxTran = 0;
-	MaxRetry = 0;
+	MaxTransactionRetry = 0;
+	MaxSendRetry = 3;
 	Sleep = 0;
 
 	MyHost = "localhost";

@@ -39,7 +39,7 @@ GLOBAL	char		**BindTable;
 GLOBAL	int			cBind;
 GLOBAL	GHashTable	*ComponentHash;
 GLOBAL	Bool		fShutdown;
-GLOBAL	int			MaxRetry;
+GLOBAL	int			MaxTransactionRetry;
 GLOBAL	int			nCache;
 GLOBAL	BLOB_State	*BlobState;
 GLOBAL	Bool		fLoopBack;
