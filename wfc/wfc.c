@@ -59,6 +59,7 @@
 #include	"termthread.h"
 #include	"controlthread.h"
 #include	"blobthread.h"
+#include	"dbgroup.h"
 #include	"blob.h"
 #include	"option.h"
 #include	"message.h"
