@@ -347,7 +347,11 @@ ENTER_FUNC;
 		close(pSource[1]);
 		DataProcess(pDBR[0],pDBW[1],pid);
 		xfree(str);
+#if	0
 		while( waitpid(-1, &status, WNOHANG) > 0 );
+#else
+		(void)wait(&status);
+#endif
 
 		lbs = NewLBS();
 		if		(  WEXITSTATUS(status)  ==  0  ) {
@@ -359,6 +363,8 @@ ENTER_FUNC;
 				LBS_EmitString(lbs,buff);
 			}
 		} else {
+			sprintf(buff,"code = %d\n",(int)WEXITSTATUS(status));
+			LBS_EmitString(lbs,buff);
 			fError = TRUE;
 			fd = pError[0];
 		}
