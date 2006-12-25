@@ -228,7 +228,9 @@ ENTER_FUNC;
 	}
 	MessageLog("exiting APS");
 	FinishSession(node);
+#if	0
 	CloseNet(fpWFC);
+#endif
 LEAVE_FUNC;
 	return	(rc);
 }

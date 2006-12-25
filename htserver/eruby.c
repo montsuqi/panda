@@ -46,6 +46,7 @@
 #include	"HTClex.h"
 #include	"cgi.h"
 #include	"exec.h"
+#include	"input.h"
 #include	"eruby.h"
 #include	"debug.h"
 
@@ -53,29 +54,6 @@
 
 #define	DBIN_FILENO		3
 #define	DBOUT_FILENO	4
-
-static	char	*
-ConvertEncoding(
-	char	*tcoding,
-	char	*coding,
-	char	*istr)
-{
-	iconv_t	cd;
-	size_t	sib
-		,	sob;
-	char	*ostr;
-	char	*cbuff;
-
-	cd = iconv_open(tcoding,coding);
-	sib = strlen(istr);
-	sob = sib * 2;
-	cbuff = (char *)xmalloc(sob);
-	ostr = cbuff;
-	iconv(cd,&istr,&sib,&ostr,&sob);
-	*ostr = 0;
-	iconv_close(cd);
-	return	(cbuff);
-}
 
 static	void
 ERubyPreambre(
@@ -321,8 +299,9 @@ ENTER_FUNC;
 		close(pDBW[0]);
 		istr = str;
 		coding = CheckCoding(&istr);
-		if		(	(  stricmp(coding,"utf-8")  !=  0  )
-				&&	(  stricmp(coding,"utf8")   !=  0  ) ) {
+		if	   (	(  coding  ==  NULL  )
+				||	(	(  stricmp(coding,"utf-8")  !=  0  )
+					&&	(  stricmp(coding,"utf8")   !=  0  ) ) ) {
 			ostr = ConvertEncoding("utf-8",coding,istr);
 			xfree(str);
 			str = ostr;
@@ -347,8 +326,9 @@ ENTER_FUNC;
 		close(pSource[1]);
 		DataProcess(pDBR[0],pDBW[1],pid);
 		xfree(str);
-#if	0
-		while( waitpid(-1, &status, WNOHANG) > 0 );
+#if	1
+		//while( waitpid(pid, &status, WNOHANG) > 0 );
+		waitpid(pid, &status, 0);
 #else
 		(void)wait(&status);
 #endif
@@ -399,6 +379,9 @@ ENTER_FUNC;
 				ret->code = NewLBS();
 				LBS_EmitString(ret->code,str);
 			}
+		}
+		if		(  coding  !=  NULL  ) {
+			xfree(coding);
 		}
 	} else {
 		ret = NULL;

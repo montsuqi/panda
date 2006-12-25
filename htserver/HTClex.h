@@ -38,6 +38,9 @@
   
 #define	T_COMMENT		(T_YYBASE +5)
 #define	T_COMMENTE		(T_YYBASE +6)
+#define	T_ERUBY			(T_YYBASE +7)
+#define	T_ERUBY_END		(T_YYBASE +8)
+#define	T_SCONT_S		(T_YYBASE +9)
 
 #ifdef	SIZE_SYMBOL
 #undef	SIZE_SYMBOL

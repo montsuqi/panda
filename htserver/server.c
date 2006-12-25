@@ -195,7 +195,7 @@ ENTER_FUNC;
 			DecodeName(&wname,&vname,buff);
 			LBS_EmitStart(lbs);
 			PureWindowName(wname,window);
-#if	0
+#ifdef	DEBUG
 			dbgprintf("window = [%s]",window);
 			dbgprintf("wname  = [%s]",wname);
 			dbgprintf("vname  = [%s]",vname);

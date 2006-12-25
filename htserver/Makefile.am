@@ -79,6 +79,7 @@ mon_SOURCES	=	\
 	eruby.c		eruby.h		\
 	tags.c		tags.h		\
 	exec.c		exec.h		\
+	input.c		input.h		\
 	file.c		file.h		\
 	mon.c		mon.h
 
@@ -93,6 +94,7 @@ htcproc_SOURCES	=	\
 	HTCparser.c	HTCparser.h	\
 	eruby.c		eruby.h		\
 	tags.c		tags.h		\
+	input.c		input.h		\
 	exec.c		exec.h		\
 	htcproc.c
 

@@ -1,3 +1,7 @@
+2006-12-25  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/input.c: ファイル入力関係処理を独立させる
+
 2006-12-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/wfc.h: MaxRetry -> MaxTransactionRetry
