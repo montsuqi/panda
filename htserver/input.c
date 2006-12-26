@@ -247,7 +247,6 @@ ENTER_FUNC;
 			while	(  ( c = MGETC(fp) )  !=  term  ) {
 				LBS_Emit(lbs,c);
 			}
-			break;
 			LBS_Emit(lbs,c);
 			break;
 		  case	'%':
