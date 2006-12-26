@@ -326,13 +326,8 @@ ENTER_FUNC;
 		close(pSource[1]);
 		DataProcess(pDBR[0],pDBW[1],pid);
 		xfree(str);
-#if	1
-		//while( waitpid(pid, &status, WNOHANG) > 0 );
-		waitpid(pid, &status, 0);
-#else
-		(void)wait(&status);
-#endif
-
+		status = 0;
+		while( waitpid(pid, &status, WNOHANG) > 0 );
 		lbs = NewLBS();
 		if		(  WEXITSTATUS(status)  ==  0  ) {
 			fd = pResult[0];
