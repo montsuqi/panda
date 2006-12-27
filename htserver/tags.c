@@ -378,7 +378,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code," size=\"");
 			EmitCode(htc,OPC_EVAL);
 			LBS_EmitPointer(htc->code,StrDup(size));
-			EmitCode(htc,OPC_EMITSTR);
+			EmitCode(htc,OPC_EMITSAFE);
 			LBS_EmitString(htc->code,"\"");
 
 		}
@@ -442,6 +442,7 @@ _Fixed(
 #define	DTYPE_DIV		1
 #define	DTYPE_SPAN		2
 #define	DTYPE_PRE		3
+#define	DTYPE_SAFE		4
 
 ENTER_FUNC;
 	value = HTCGetProp(tag,"value",0);
@@ -464,6 +465,12 @@ ENTER_FUNC;
 				Style(htc,tag);
 				LBS_EmitString(htc->code,">");
 				dtype = DTYPE_PRE;
+			} else
+			if		(  !stricmp(type,"safe")  ) {
+				LBS_EmitString(htc->code,"<span");
+				Style(htc,tag);
+				LBS_EmitString(htc->code,">");
+				dtype = DTYPE_SAFE;
 			} else {
 				LBS_EmitString(htc->code,"<span");
 				Style(htc,tag);
@@ -493,7 +500,8 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code,">");
 		}
 		if		(  value  !=  NULL  ) {
-			LBS_EmitString(htc->code,value);
+			EmitCode(htc,OPC_SCONST);
+			LBS_EmitPointer(htc->code,StrDup(value));
 		} else {
 			if		(	(  name[0]  ==  '$'  )
 					||	(  name[0]  ==  '#'  ) ) {
@@ -504,16 +512,19 @@ ENTER_FUNC;
 				LBS_EmitPointer(htc->code,StrDup(name));
 				EmitCode(htc,OPC_PHSTR);
 			}
-			switch	(dtype) {
-			  case	DTYPE_RAW:
-			  case	DTYPE_DIV:
-				EmitCode(htc,OPC_EMITRAW);
-				break;
-			  case	DTYPE_PRE:
-			  default:
-				EmitCode(htc,OPC_EMITSTR);
-				break;
-			}
+		}
+		switch	(dtype) {
+		  case	DTYPE_RAW:
+		  case	DTYPE_DIV:
+			EmitCode(htc,OPC_EMITRAW);
+			break;
+		  case	DTYPE_SAFE:
+			EmitCode(htc,OPC_EMITSAFE);
+			break;
+		  case	DTYPE_PRE:
+		  default:
+			EmitCode(htc,OPC_EMITSTR);
+			break;
 		}
 		if		(  link  !=  NULL  ) {
 			LBS_EmitString(htc->code,"</a>");
@@ -525,6 +536,7 @@ ENTER_FUNC;
 			LBS_EmitString(htc->code,"</div>");
 			break;
 		  case	DTYPE_SPAN:
+		  case	DTYPE_SAFE:
 			LBS_EmitString(htc->code,"</span>\n");
 			break;
 		  case	DTYPE_PRE:

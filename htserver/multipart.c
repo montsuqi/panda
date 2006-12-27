@@ -168,7 +168,7 @@ ParseHeader(FILE *fp, char **name, char **filename)
     *name = NULL;
     *filename = NULL;
     while (fgets(buf, SIZE_BUFF, fp) != NULL) {
-        //if (strcmp(buf, "\r\n") == 0) break;
+        if (strcmp(buf, "\r\n") == 0) break;
         if (strncasecmp(buf, "Content-Disposition:",
                         STR_LITERAL_LENGTH("Content-Disposition:")) == 0) {
             p = buf + STR_LITERAL_LENGTH("Content-Disposition:");

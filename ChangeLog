@@ -1,3 +1,7 @@
+2006-12-27  Masami Ogoshi  <ogochan@tencha>
+
+	* htserver/input.c (GetExecBody): 処理結果を取り込む処理(ssiのようなもの)
+
 2006-12-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/input.c: ファイル入力関係処理を独立させる

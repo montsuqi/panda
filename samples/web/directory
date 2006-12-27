@@ -44,13 +44,13 @@ db_group	"pg"	{
 #	password	"ogochan";
 #};
 
-db_group	"sitesearch"	{
-	type		"Oseki";
-	port		":2468";
-	user		"ogochan";
-	password	"ogochan";
-	name		"baa";
-};
+#db_group	"sitesearch"	{
+#	type		"Oseki";
+#	port		":2468";
+#	user		"ogochan";
+#	password	"ogochan";
+#	name		"baa";
+#};
 
 blob	{
 	space	"=/web/blob";

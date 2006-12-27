@@ -200,8 +200,70 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+extern	byte	*
+GetExecBody(
+	char	*command)
+{
+	LargeByteString	*lbs;
+	int		fd
+		,	i;
+	Bool	fError;
+	byte	*ret;
+	int		status;
+	pid_t	pid;
+	int		pResult[2]
+		,	pError[2];
+	char	buff[SIZE_LARGE_BUFF];
+	size_t	size;
+	char		**cmd;
 
-#if	1
+ENTER_FUNC;
+	ret = NULL;
+	if		(  command  !=  NULL  ) {
+		pipe(pResult);
+		pipe(pError);
+		if		(  ( pid = fork() )  ==  0  ) {
+			cmd = ParCommandLine(command);
+			dup2(pResult[1],STDOUT_FILENO);
+			dup2(pError[1],STDERR_FILENO);
+			close(pResult[0]);
+			close(pResult[1]);
+			close(pError[0]);
+			close(pError[1]);
+			execvp(cmd[0],cmd);
+		}
+		close(pResult[1]);
+		close(pError[1]);
+
+		status = 0;
+		while( waitpid(pid, &status, WNOHANG) > 0 );
+
+		lbs = NewLBS();
+		if		(  WEXITSTATUS(status)  ==  0  ) {
+			fd = pResult[0];
+			fError = FALSE;
+		} else {
+			sprintf(buff,"code = %d\n",(int)WEXITSTATUS(status));
+			LBS_EmitString(lbs,buff);
+			fError = TRUE;
+			fd = pError[0];
+		}
+		while	(  ( size = read(fd,buff,SIZE_LARGE_BUFF) )  >  0  ) {
+			for	( i = 0 ; i < size ; i ++ ) {
+				LBS_Emit(lbs,buff[i]);
+			}
+		}
+		close(pResult[0]);
+		close(pError[0]);
+		ret = LBS_ToString(lbs);
+		FreeLBS(lbs);
+	} else {
+		ret = NULL;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
 
 static	int
 MGETC(
@@ -334,6 +396,7 @@ ExecComment(
 
 #define	DIRECTIVE_NONE		0
 #define	DIRECTIVE_INCLUDE	1
+#define	DIRECTIVE_EXEC		2
 
 ENTER_FUNC;
 	fExit = FALSE;
@@ -365,6 +428,24 @@ ENTER_FUNC;
 					}
 					*p = 0;
 					LBS_EmitString(lbs,"$include \"");
+					LBS_EmitString(lbs,buff);
+					LBS_EmitString(lbs,"\"");
+				}
+			} else
+			if		(  strcmp(buff,"exec")  ==  0  ) {
+				directive = DIRECTIVE_EXEC;
+				while	(  isspace(c)  )	{
+					c = MGETC(fp);
+				}
+				if		(	(  c  ==  '"'   )
+						||	(  c  ==  '\''  ) ) {
+					term = c;
+					p = buff;
+					while	(  ( c = MGETC(fp) )  !=  term  ) {
+						*p ++ = c;
+					}
+					*p = 0;
+					LBS_EmitString(lbs,"$exec \"");
 					LBS_EmitString(lbs,buff);
 					LBS_EmitString(lbs,"\"");
 				}
@@ -415,6 +496,13 @@ ENTER_FUNC;
 		} else
 #endif
 		if		(  ( work = GetFileBody(buff) )  !=  NULL  ) {
+			dbgprintf("[%s]",work);
+			LBS_EmitString(lbs,work);
+			xfree(work);
+		}
+		break;
+	  case	DIRECTIVE_EXEC:
+		if		(  ( work = GetExecBody(buff) )  !=  NULL  ) {
 			dbgprintf("[%s]",work);
 			LBS_EmitString(lbs,work);
 			xfree(work);
@@ -508,33 +596,4 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(ret);
 }
-#else
-extern	byte	*
-GetFileBody(
-	char	*fname)
-{
-	struct	stat	sb;
-	int		fd;
-	byte	*p;
-	byte	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  fname  !=  NULL  ) {
-		if		(  ( fd = open(fname,O_RDONLY ) )  >=  0  ) {
-			fstat(fd,&sb);
-			if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0) )
-					   !=  NULL  ) {
-				ret = (byte *)xmalloc(sb.st_size+1);
-				memcpy(ret,p,sb.st_size);
-				munmap(p,sb.st_size);
-				ret[sb.st_size] = 0;
-				close(fd);
-			}
-		}
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-#endif
 
