@@ -215,7 +215,9 @@ GetExecBody(
 		,	pError[2];
 	char	buff[SIZE_LARGE_BUFF];
 	size_t	size;
-	char		**cmd;
+	extern	char	**environ;
+	char	*argv[4];
+	char	*sh;
 
 ENTER_FUNC;
 	ret = NULL;
@@ -223,14 +225,20 @@ ENTER_FUNC;
 		pipe(pResult);
 		pipe(pError);
 		if		(  ( pid = fork() )  ==  0  ) {
-			cmd = ParCommandLine(command);
 			dup2(pResult[1],STDOUT_FILENO);
 			dup2(pError[1],STDERR_FILENO);
 			close(pResult[0]);
 			close(pResult[1]);
 			close(pError[0]);
 			close(pError[1]);
-			execvp(cmd[0],cmd);
+			if		(  ( sh = getenv("SHELL") )  ==  NULL  ) {
+				sh = "/bin/sh";
+			}
+			argv[0] = sh;
+			argv[1] = "-c";
+			argv[2] = command;
+			argv[3] = NULL;
+			execve(sh, argv, environ);
 		}
 		close(pResult[1]);
 		close(pError[1]);
