@@ -115,12 +115,12 @@ dbgmsg(">ExecuteDB_Server");
 		path = NULL;
 		rec = NULL;
 		if		(	(  rname  !=  NULL  ) 
-				&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
+					&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 			ctrl.rno = rno - 1;
 			rec = ThisDB[ctrl.rno];
 			value = rec->value;
 			pname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"pname"));
-			if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+			if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
 														pname) )  !=  0  ) {
 				ctrl.pno = pno - 1;
 				path = rec->opt.db->path[pno-1];
@@ -132,7 +132,7 @@ dbgmsg(">ExecuteDB_Server");
 		func = ValueStringPointer(GetItemLongName(recDBCTRL->value,"func"));
 		if		(  *func  !=  0  ) {
 			if		(  path  !=  NULL  ) {
-				if		( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) {
+				if		( ( ono = (int)(long)g_hash_table_lookup(path->opHash,func) )  !=  0  ) {
 					op = path->ops[ono-1];
 					value = ( op->args != NULL ) ? op->args : value;
 				}

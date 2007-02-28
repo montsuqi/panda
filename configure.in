@@ -54,11 +54,13 @@ AM_MAINTAINER_MODE
 # Checks for programs.
 AC_PROG_CC
 if test "$GCC" = "yes"; then
-  CFLAGS="$CFLAGS -O4 -Wall -Wunused -Wredundant-decls -funsigned-char"
+#  CFLAGS="$CFLAGS -O4 -Wall -Wunused -Wredundant-decls -funsigned-char"
+  CFLAGS="$CFLAGS -O4 -Wall -Wunused -funsigned-char -Wno-pointer-sign"
 fi
+AM_PROG_CC_STDC
+AM_PROG_CC_C_O
 
 AC_ISC_POSIX
-AM_PROG_CC_STDC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AM_PROG_LIBTOOL

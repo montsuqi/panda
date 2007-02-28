@@ -475,9 +475,9 @@ aryval_new(ValueStruct *val, int need_free)
 
     obj = Data_Make_Struct(cArrayValue, value_struct_data,
                            value_struct_mark,
-                           need_free ?
-                           (RUBY_DATA_FUNC) value_struct_free :
-                           (RUBY_DATA_FUNC) free,
+                           (need_free ?
+							(RUBY_DATA_FUNC) value_struct_free :
+							(RUBY_DATA_FUNC) free),
                            data);
     data->value = val;
     data->cache = rb_ary_new2(ValueArraySize(val));
@@ -553,9 +553,9 @@ recval_new(ValueStruct *val, int need_free)
 
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
                            value_struct_mark,
-                           need_free ?
-                           (RUBY_DATA_FUNC) value_struct_free :
-                           (RUBY_DATA_FUNC) free,
+                           (need_free ?
+							(RUBY_DATA_FUNC) value_struct_free :
+							(RUBY_DATA_FUNC) free),
                            data);
     data->value = val;
     data->cache = rb_hash_new();
@@ -711,16 +711,16 @@ SearchFunctionArgument(
 
 	value = NULL;
 	if		(	(  rname  !=  NULL  )
-			&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
+			&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 		rec = ThisDB[rno-1];
 		value = rec->value;
 		if		(	(  pname  !=  NULL  )
-				&&	(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+				&&	(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
 														pname) )  !=  0  ) ) {
 			path = rec->opt.db->path[pno-1];
 			value = ( path->args != NULL ) ? path->args : value;
 			if		(	(  func  !=  NULL  )
-					&&	( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
+					&&	( ( ono = (int)(long)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
 				op = path->ops[ono-1];
 				value = ( op->args != NULL ) ? op->args : value;
 			}
@@ -1128,7 +1128,7 @@ ENTER_FUNC;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
-		if		(  (int)g_hash_table_lookup(path->opHash,name)  ==  0  ) {
+		if		(  (int)(long)g_hash_table_lookup(path->opHash,name)  ==  0  ) {
 			ctrl->rc = MCP_BAD_FUNC;
 			rc = FALSE;
 		} else {
@@ -1156,7 +1156,7 @@ ENTER_FUNC;
 		rc = TRUE;
 	} else {
 		db = rec->opt.db;
-		if		(  (int)g_hash_table_lookup(db->opHash,fname)  ==  0  ) {
+		if		(  (int)(long)g_hash_table_lookup(db->opHash,fname)  ==  0  ) {
 			rc = FALSE;
 		} else {
 			rc = TRUE;

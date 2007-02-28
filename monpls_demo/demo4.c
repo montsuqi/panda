@@ -156,7 +156,7 @@ ENTER_FUNC;
 			}
 		}
 
-		SetValueStringPointer(GetRecordItem(v,"value3"),ValueString(e2));
+		SetValueString(GetRecordItem(v,"value3"),ValueToString(e2,NULL),NULL);
 		count ++;
 		SetValueInteger(GetWindowValue("project6.vbox1.notebook1.fixed4.clist3.count"),count);
 		PutWindow(win,SCREEN_CURRENT_WINDOW);

@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -280,7 +280,6 @@ ENTER_FUNC;
 			}
 		}
 		data->name = StrDup(data->hdr->term);
-		data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 		data->hdr->puttype = SCREEN_NULL;
 		data->w.n = 0;
 		RegistSession(data);
@@ -333,7 +332,6 @@ ENTER_FUNC;
 							RecvLBS(fp,scrdata);					ON_IO_ERROR(fp,badio);
 						}
 						data->hdr->rc = TO_CHAR(0);
-						data->hdr->status = TO_CHAR(APL_SESSION_GET);
 						data->hdr->puttype = SCREEN_NULL;
 					} else {
 						Error("invalid window [%s]",window);
@@ -662,6 +660,7 @@ ENTER_FUNC;
 		if		(  !fInProcess  ) {
 			dbgmsg("TRUE");
 			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
+			data->hdr->status = TO_CHAR(APL_SESSION_GET);
 			data = ReadTerminal(fp,data);
 		} else {
 			dbgmsg("FALSE");
@@ -672,11 +671,13 @@ ENTER_FUNC;
 		if		(  ( data = LoadSession(term) )  ==  NULL  ) {
 			dbgmsg("INIT");
 			data = InitSession(fp,term);
+			data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 		} else {
 			dbgmsg("TRUE");
 			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
-			data = ReadTerminal(fp,data);
+			data->hdr->status = TO_CHAR(APL_SESSION_GET);
 		}
+		data = ReadTerminal(fp,data);
 	}
 	fError = FALSE;
   badio:

@@ -212,8 +212,11 @@ LD_DummyParser(
 	CURFILE	*in)
 {
 	LD_Struct	*ret;
+
+ENTER_FUNC;
     ret = New(LD_Struct);
     ret->name = StrDup(ComSymbol);
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -362,14 +365,18 @@ ENTER_FUNC;
 							n = ComInt;
 							GetSymbol;
 						} else {
-							ParError("invalid number");
+							ParError("invalid ld multiplicity number");
 						}
+						break;
+					  case	T_ICONST:
+						n = ComInt;
+						GetSymbol;
 						break;
 					  case	';':
 						n = 1;
 						break;
 					  default:
-						ParError("invalid operator");
+						ParError("invalid operator(ld multiplicity)");
 						break;
 					}
 					tports = (Port **)xmalloc(sizeof(Port *) * ( ld->nports + n));
@@ -809,8 +816,8 @@ BuildMcpArea(
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"private	{");
 	p += sprintf(p,			"count	int;");
-	p += sprintf(p,			"swindow	char(%d)[%d];",SIZE_NAME,stacksize);
-	p += sprintf(p,			"state		char(1)[%d];",stacksize);
+	p += sprintf(p,			"swindow	char(%d)[%d];",SIZE_NAME,(int)stacksize);
+	p += sprintf(p,			"state		char(1)[%d];",(int)stacksize);
 	//p += sprintf(p,			"index		int[%d];",stacksize);
 	p += sprintf(p,			"pstatus	char(1);");
 	p += sprintf(p,			"pputtype 	int;");

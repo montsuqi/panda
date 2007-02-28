@@ -1,3 +1,53 @@
+2007-03-01  ogochan  <ogochan@nurs.or.jp>
+
+	* libs/wfcio.c (ConnectTermServer): windowをパラメータとして追加。初期データ送信のため
+
+	* htserver/mon.c (Session): GL_ENDのタイミングを移す。cookie処理の
+	ためPutHTMLの中で通信をする可能性があるため
+
+	* htserver/cgi.h: cookie保存構造体(CookieEntry)
+
+	* htserver/tags.c (_Variable): cookie操作を追加
+
+	* htserver/exec.[ch] (ParseName): cgi.cから使うためにexternにした
+
+	* htserver/cgi.c (PutHTML): cookieの出力処理を入れた
+
+	* wfc/termthread.c (CheckSession): statusのセットはここでするよう
+	にした。ReadTerminalの中だと、初画面と一般処理の区別がつかないため
+
+	* htserver/server.c (RecvScreenData): windowsが空の時(HTML初画面か
+	らのリンク時)には送信データのウィンドウ名を代わりにセットした。こ
+	うしないと初期データがwfcに送信されない
+
+	* libs/panda.c (RecvPanda): 冗長なSetWindowNameをコメントアウト。
+	問題なければ本当に消すこと
+
+	* libs/wfcio.c (_RecvWindow): SCREEN_CLOSE_WINDOWの時もデータ通信
+	をするようにした(cookieの設定のため)
+	(ConnectTermServer): 接続時に初期データの送信を行うようにした
+	(cookieデータの初期投入のため)
+
+2007-02-22  ogochan  <ogochan@nurs.or.jp>
+
+	* htserver/mon.c (Session), htserver/server.c (NewSession): セショ
+	ン開設時にもform dataを受け取れるようにした
+
+	* htserver/eruby.c (ParseFile): 入力ファイルのコード変換を、
+	input.cに一本化したため、ここでのコード変換は不要になった。処理後
+	には表記のencodingを復元する必要はある
+
+2007-02-20  ogochan  <ogochan@nurs.or.jp>
+
+	* dblib/NativeBLOB.c (_DBDISCONNECT): コネクションの切断をやめた
+	(既にaps_main.cでCloseNetされているはずだから)。ただし、要修正
+
+2007-02-08  ogochan  <ogochan@nurs.or.jp>
+
+	* autogen.sh, configure.in, */Makefile.am : 最新のautotoolsに対応した
+
+	* libs/DIparser.c (ParLD_Elements): '*'を不要にした
+
 2006-12-27  Masami Ogoshi  <ogochan@tencha>
 
 	* htserver/input.c (GetExecBody): 処理結果を取り込む処理(ssiのようなもの)

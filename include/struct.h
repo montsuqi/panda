@@ -35,6 +35,7 @@ typedef	struct {
 	char	***item;
 }	KeyStruct;
 
+#define	SIZE_DBOP		6
 #define	DBOP_SELECT		0
 #define	DBOP_FETCH		1
 #define	DBOP_UPDATE		2

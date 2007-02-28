@@ -136,7 +136,7 @@ ENTER_FUNC;
 			rc = TRUE;
 		}
 	} else {
-		Message("%s is not found.",module);
+		Message("%s is not found. path=[%s]",module,handler->loadpath);
 		rc = FALSE;
 	}
 LEAVE_FUNC;

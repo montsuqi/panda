@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -177,6 +177,18 @@ LEAVE_FUNC;
 }
 
 static	void
+SendValues(
+	HTCInfo	*htc)
+{
+	g_hash_table_foreach(Values,(GHFunc)_SendValue,NULL);
+	ON_IO_ERROR(fpServ,badio);
+	g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
+	ON_IO_ERROR(fpServ,badio);
+	SendPacketClass(fpServ,GL_END);
+  badio:;
+}
+
+static	void
 SendEvent(void)
 {
 	char	*input;
@@ -238,9 +250,7 @@ ENTER_FUNC;
 	SendString(fpServ,widget);				ON_IO_ERROR(fpServ,badio);
 	SendString(fpServ,event);				ON_IO_ERROR(fpServ,badio);
 
-	g_hash_table_foreach(Values,(GHFunc)_SendValue,NULL);
-	g_hash_table_foreach(Files,(GHFunc)SendFile,htc);
-	SendPacketClass(fpServ,GL_END);			ON_IO_ERROR(fpServ,badio);
+	SendValues(htc);
 
 	SetSave("_sesid",TRUE);
     SetSave("_file",TRUE);
@@ -349,9 +359,9 @@ static	void
 Session(void)
 {
 	char	*user
-	,		*sesid
-	,		*name
-	,		*file;
+		,	*sesid
+		,	*name
+		,	*file;
 	char	buff[SIZE_LARGE_BUFF];
 	HTCInfo	*htc;
 	LargeByteString	*html
@@ -375,6 +385,7 @@ ENTER_FUNC;
 			SendPacketClass(fpServ,GL_Connect);			ON_IO_ERROR(fpServ,busy);
 			SendString(fpServ,Command);					ON_IO_ERROR(fpServ,busy);
 			SendString(fpServ,user);					ON_IO_ERROR(fpServ,busy);
+			SendValues(NULL);
 			RecvPacketClass(fpServ);	/*	session	*/	ON_IO_ERROR(fpServ,busy);
 			RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
 			sesid = StrDup(buff);
@@ -409,6 +420,7 @@ ENTER_FUNC;
 				dbgprintf("name = [%s]",name);
 				SaveValue("_name",name,FALSE);
 			}
+			dbgmsg("*");
 			if		(  klass  ==  GL_RedirectName  ) {
 				CGI_InitValues();
 				RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
@@ -416,7 +428,7 @@ ENTER_FUNC;
 					html = InfomationPage("exited",
 										  "<H1>session exited</H1>\n"
 										  "<p>left MONTSUQI session.</p>");
-					PutHTML(NULL,html,500);
+					PutHTML(NULL,NULL,html,500);
 				} else {
 					header = NewLBS();
 					LBS_EmitStart(header);
@@ -424,13 +436,14 @@ ENTER_FUNC;
 					dbgprintf("name = [%s]",name);
 					sprintf(buff,"Location: %s\r\n",name);
 					LBS_EmitString(header,buff);
-					PutHTML(header,NULL,200);
+					PutHTML(header,NULL,NULL,200);
 				}
 			} else {
 				if		(  name  ==  NULL  ) {
 					html = InfomationPage("expired",
 										  "<H1>htserver error</H1>\n"
 										  "<p>null screen name.</p>");
+					PutHTML(NULL,NULL,html,500);
 				} else {
 					if		(  ( file = LoadValue("_file") )  !=  NULL  )	{
 						ValueStruct *value;
@@ -450,23 +463,24 @@ ENTER_FUNC;
 						LBS_EmitStart(html);
 						ExecCode(html,htc);
 					}
-					SendPacketClass(fpServ,GL_END);
+					dbgmsg("*");
+					PutHTML(NULL,htc->Cookie,html,200);
 				}
-				PutHTML(NULL,html,200);
 			}
 		} else {
 			html = InfomationPage("expired",
 								  "<H1>htserver error</H1>\n"
 								  "<p>session expired.</p>\n");
-			PutHTML(NULL,html,500);
+			PutHTML(NULL,NULL,html,500);
 		}
+		SendPacketClass(fpServ,GL_END);
 		CloseNet(fpServ);
 	} else {
 	  busy:
 		html = InfomationPage("busy",
 							  "<H1>session open error</H1>\n"
 							  "<p>can't start application session.(busy)</p>\n");
-		PutHTML(NULL,html,500);
+		PutHTML(NULL,NULL,html,500);
 	}
 LEAVE_FUNC;
 }

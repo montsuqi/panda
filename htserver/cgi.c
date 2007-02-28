@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -261,8 +261,8 @@ ConvUTF8(
 
 	cd = iconv_open("utf8",code);
 	istr = (char *)str;
-dbgprintf("size = %d\n",strlen(str));
- if		(  ( sib = strlen(str)  )  >  0  ) {
+	dbgprintf("size = %d\n",strlen(str));
+	if		(  ( sib = strlen(str)  )  >  0  ) {
 		ostr = cbuff;
 		sob = SIZE_LARGE_BUFF;
 		if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
@@ -459,26 +459,51 @@ CGI_InitValues(void)
     Files = NewNameHash();
 }
 
+static	void
+SetValue(
+	char	*name,
+	char	*value)
+{
+	byte	*val;
+	char	*str;
+
+	if      (  *name  ==  0  ) {
+		RemoveValue(name);
+		SaveValue(name, value,FALSE);
+	} else
+	if		(  ( val = LoadValue(name) )  !=  NULL  ) {
+		str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
+		sprintf(str,"%s,%s",val,value);
+		SaveValue(name,str,FALSE);
+		xfree(str);
+	} else {
+		SaveValue(name,value,FALSE);
+	}
+}
+
 extern	void
 GetArgs(void)
 {
 	char	name[SIZE_LONGNAME+1];
-	byte	value[SIZE_LARGE_BUFF]
-		,	buff[SIZE_LARGE_BUFF];
+	byte	value[SIZE_LARGE_BUFF];
+	byte	*buff;
     char	*boundary;
-	char	*env
-		,	*str;
-	byte	*val
-		,	*p;
+	char	*env;
+	byte	*p;
 
 ENTER_FUNC;
- if		(  ( env  =  CommandLine )  ==  NULL  ) {
+	if		(  ( env  =  CommandLine )  ==  NULL  ) {
 		env = getenv("QUERY_STRING");
 	}
 	if		(  env  !=  NULL  ) {
 		StartScanEnv(env);
 		while	(  ScanEnv(name,value)  ) {
-            SaveArgValue(name, value, FALSE);
+			dbgprintf("query var %s = [%s]\n",name,value);
+			if		(	(  fCookie  )
+					&&	(  strcmp(name,"_sesid")  ==  0  ) ) {
+			} else {
+				SetValue(name, value);
+			}
 		}
 	}
 	if		(  CommandLine  ==  NULL  ) {
@@ -489,30 +514,27 @@ ENTER_FUNC;
 			}
 		} else {
 			while	(  ScanPost(name,value)  ) {
-                SaveArgValue(name, value, FALSE);
-			}
-		}
-		if		(  fCookie  ) {
-			if		(  ( env = getenv("HTTP_COOKIE") )  !=  NULL  ) {
-				strcpy(buff,env);
-				if      (  ( p = strrchr(buff,';') )  !=  NULL  )   *p = 0;
-                StartScanEnv(buff);
-				while	(  ScanEnv(name,value)  ) {
-					dbgprintf("var name = [%s]\n",name);
-                    if      (  *name  ==  0  ) {
-                        RemoveValue(name);
-						SaveValue(name, value,FALSE);
-                    } else
-					if		(  ( val = LoadValue(name) )  !=  NULL  ) {
-						str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
-						sprintf(str,"%s,%s",val,value);
-						SaveValue(name,str,FALSE);
-						xfree(str);
-					} else {
-						SaveValue(name, value,FALSE);
-					}
+				dbgprintf("post var %s = [%s]\n",name,value);
+				if		(	(  fCookie  )
+						&&	(  strcmp(name,"_sesid")  ==  0  ) ) {
+				} else {
+					SetValue(name, value);
 				}
 			}
+		}
+		if		(  ( env = getenv("HTTP_COOKIE") )  !=  NULL  ) {
+			buff = StrDup(env);
+			if      (  ( p = strrchr(buff,';') )  !=  NULL  )   *p = 0;
+			StartScanEnv(buff);
+			while	(  ScanEnv(name,value)  ) {
+				dbgprintf("cookie var %s = [%s]\n",name,value);
+				if		(	(  !fCookie  )
+						&&	(  strcmp(name,"_sesid")  ==  0  ) ) {
+				} else {
+					SetValue(name,value);
+				}
+			}
+			xfree(buff);
 		}
 	}
 LEAVE_FUNC;
@@ -531,8 +553,8 @@ GetSessionValues(void)
 	char	*p;
 
 ENTER_FUNC;
- if		(   ( ( sesid = LoadValue("_sesid") )  !=  NULL  )
-            &&  (  *sesid  !=  0  ) ) {
+	if		(   ( ( sesid = LoadValue("_sesid") )  !=  NULL  )
+			&&  (  *sesid                          !=  0     ) ) {
 		sprintf(fname,"%s/%s.ses",SesDir,sesid);
         if		(  ( fd = open(fname,O_RDONLY ) )  <  0  ) {
 			ret = FALSE;
@@ -564,6 +586,25 @@ LEAVE_FUNC;
 }
 
 static	void
+PutURLString(
+	byte	*p,
+	FILE	*fp)
+{
+	while	(  *p  !=  0  ) {
+		if		(  *p  ==  0x20  ) {
+			fputc('+',fp);
+		} else
+		if		(  isalnum(*p)  ) {
+			fputc(*p,fp);
+		} else {
+			fputc('%',fp);
+			fprintf(fp,"%02X",((int)*p)&0xFF);
+		}
+		p ++;
+	}
+}
+
+static	void
 PutValue(
 	char	*name,
 	CGIValue	*value,
@@ -575,18 +616,7 @@ PutValue(
 			&&	(  *name  !=  0  ) ) {
 		fprintf(fp,"%s=",name);
 		if		(  ( p = value->body )  !=  NULL  ) {
-			while	(  *p  !=  0  ) {
-				if		(  *p  ==  0x20  ) {
-					fputc('+',fp);
-				} else
-				if		(  isalnum(*p)  ) {
-					fputc(*p,fp);
-				} else {
-					fputc('%',fp);
-					fprintf(fp,"%02X",((int)*p)&0xFF);
-				}
-				p ++;
-			}
+			PutURLString(p,fp);
 		}
 		fputc('&',fp);
 	}
@@ -628,7 +658,7 @@ PutSessionValues(void)
 ENTER_FUNC;
 	CheckSessionExpire();
 	if		(   (  ( sesid = LoadValue("_sesid") )  !=  NULL  )
-            &&  (  *sesid  !=  0  ) ) {
+            &&  (  *sesid                           !=  0     ) ) {
 		sprintf(fname,"%s/%s.ses",SesDir,sesid);
 		if		(  ( fp = fopen(fname,"w") )  ==  NULL  ) {
 			ret = FALSE;
@@ -664,13 +694,13 @@ WriteLargeString(
 	char			*codeset)
 {
 	char	*oc
-	,		*ic
-	,		*istr;
+		,	*ic
+		,	*istr;
 	char	obuff[SIZE_CHARS]
-	,		ibuff[SIZE_CHARS];
+		,	ibuff[SIZE_CHARS];
 	size_t	count
-	,		sib
-	,		sob;
+		,	sib
+		,	sob;
 	int		ch;
 	iconv_t	cd;
 
@@ -695,9 +725,11 @@ ENTER_FUNC;
 				sob = SIZE_CHARS;
 				if		(  iconv(cd,&istr,&sib,&oc,&sob)  ==  0  )	break;
 			}	while	(  count  <   SIZE_CHARS  );
-			for	( oc = obuff ; sob < SIZE_CHARS ; oc ++ , sob ++ ) {
-				if		(  *oc  !=  0  ) {
-					fputc((int)*oc,output);
+			if		(  ch  !=  0  ) {
+				for	( oc = obuff ; sob < SIZE_CHARS ; oc ++ , sob ++ ) {
+					if		(  *oc  !=  0  ) {
+						fputc((int)*oc,output);
+					}
 				}
 			}
 		}
@@ -708,13 +740,48 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+
 extern	void
 PutHTML(
 	LargeByteString	*header,
+	GHashTable		*cookie,
 	LargeByteString	*html,
 	int				code)
 {
 	char	*sesid;
+	static	char	*wday[] = { "Sun", "Mon", "Tue", "Wed", "Tue", "Fri", "Sat" };
+	static	char	*mon[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+							   "Aug", "Sep", "Oct", "Nov", "Dec" };
+	void	PutCookie(
+		char	*name,
+		CookieEntry	*ent)
+	{
+		struct	tm	result;
+		char	*value;
+
+		printf("Set-Cookie: %s=",name);
+		if		(  ( value = ent->value )  ==  NULL  ) {
+			value = GetHostValue(ParseName(ent->name),FALSE);
+		}
+		PutURLString(value,stdout);
+		printf(";");
+		if		(  ent->expire  !=  NULL  ) {
+			gmtime_r(ent->expire,&result);
+			printf(" expires=%s %02d-%s-%04d %02d:%02d:%02d GMT;",
+				   wday[result.tm_wday],result.tm_mday,mon[result.tm_mon],result.tm_year,
+				   result.tm_hour, result.tm_min, result.tm_sec);
+		}
+		if		(  ent->domain  !=  NULL  ) {
+			printf(" domain=%s;",ent->domain);
+		}
+		if		(  ent->path  !=  NULL  ) {
+			printf(" path=%s;",ent->path);
+		}
+		if		(  ent->fSecure  ) {
+			printf("secure");
+		}
+		printf("\r\n");
+	}
 
 ENTER_FUNC;
 	if		(  code  ==  0  ) {
@@ -722,6 +789,9 @@ ENTER_FUNC;
 	}
 	printf("Status: %d\r\n",code);
 	printf("Content-Type: text/html; charset=%s\r\n", Codeset);
+	if		(  cookie  !=  NULL  ) {
+		g_hash_table_foreach(cookie,(GHFunc)PutCookie,NULL);
+	}
 	if		(  fCookie  ) {
 		if		(  ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
             printf("Set-Cookie: _sesid=%s;\r\n",sesid);
@@ -736,8 +806,8 @@ ENTER_FUNC;
 		LBS_EmitEnd(header);
 		WriteLargeString(stdout,header,Codeset);
 	}
+	printf("\r\n");
 	if		(  html  !=  NULL  ) {
-		printf("\r\n");
 		LBS_EmitEnd(html);
 		WriteLargeString(stdout,html,Codeset);
 	}
@@ -788,7 +858,7 @@ DumpFiles(
 			MultipartFile	*value,
 			gpointer	user_data)
 	{
-		sprintf(buff,"<TR><TD>%s<TD>%-10d\n",value->filename,LBS_Size(value->body));
+		sprintf(buff,"<TR><TD>%s<TD>%-10d\n",value->filename,(int)LBS_Size(value->body));
 		LBS_EmitString(html,buff);
 	}
 

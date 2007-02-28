@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,47 +41,6 @@
 #include	"front.h"
 #include	"debug.h"
 #include	"socket.h"
-
-extern	NETFILE	*
-ConnectTermServer(
-	char	*url,
-	char	*term,
-	char	*user,
-	Bool	fKeep,
-	char	*arg)
-{
-	int		fd;
-	Port	*port;
-	NETFILE	*fp;
-	PacketClass	klass;
-
-ENTER_FUNC;
-	port = ParPort(url,PORT_WFC);
-	fd = ConnectSocket(port,SOCK_STREAM);
-	DestroyPort(port);
-	if ( fd > 0 ){
-		fp = SocketToNet(fd);
-		SendString(fp,term);		ON_IO_ERROR(fp,badio);
-		if		(  fKeep  ) {
-			SendPacketClass(fp,WFC_TRUE);
-		} else {
-			SendPacketClass(fp,WFC_FALSE);
-		}		
-		SendString(fp,user);		ON_IO_ERROR(fp,badio);
-		SendString(fp,arg);			ON_IO_ERROR(fp,badio);
-		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-		if		(  klass  !=  WFC_OK  ) {
-			CloseNet(fp);
-			fp = NULL;
-		}
-	} else {
-	  badio:
-		Warning("can not connect wfc server");
-		fp = NULL;
-	}
-LEAVE_FUNC;
-	return	(fp); 
-}
 
 static	void
 _ForwardBLOB(
@@ -142,10 +101,9 @@ ForwardBLOB(
 	_ForwardBLOB(fp,value);
 }
 
-extern	Bool
-SendTermServer(
+static	Bool
+_SendTermServer(
 	NETFILE	*fp,
-	char	*term,
 	char	*window,
 	char	*widget,
 	char	*event,
@@ -155,6 +113,101 @@ SendTermServer(
 	Bool	rc;
 	LargeByteString	*buff;
 
+ENTER_FUNC;
+	rc = FALSE;
+	SendPacketClass(fp,WFC_DATA);	ON_IO_ERROR(fp,badio);
+	dbgmsg("send DATA");
+	dbgprintf("window = [%s]",window);
+	SendString(fp,window);			ON_IO_ERROR(fp,badio);
+	dbgprintf("widget = [%s]",widget);
+	SendString(fp,widget);			ON_IO_ERROR(fp,badio);
+	dbgprintf("event  = [%s]",event);
+	SendString(fp,event);			ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+		ON_IO_ERROR(fp,badio);
+		dbgmsg("recv OK");
+		if		(  value  !=  NULL  ) {
+			SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
+			size = NativeSizeValue(NULL,value);
+			buff = NewLBS();
+			LBS_ReserveSize(buff,size,FALSE);
+			NativePackValue(NULL,LBS_Body(buff),value);
+			SendLBS(fp,buff);				ON_IO_ERROR(fp,badio);
+			FreeLBS(buff);
+			ForwardBLOB(fp,value);			ON_IO_ERROR(fp,badio);
+		} else {
+			SendPacketClass(fp,WFC_NODATA);	ON_IO_ERROR(fp,badio);
+		}
+		SendPacketClass(fp,WFC_OK);		ON_IO_ERROR(fp,badio);
+		rc = TRUE;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(rc); 
+}
+
+extern	NETFILE	*
+ConnectTermServer(
+	char	*url,
+	char	*term,
+	char	*user,
+	char	*window,
+	Bool	fKeep,
+	char	*arg)
+{
+	int		fd;
+	Port	*port;
+	NETFILE	*fp;
+	PacketClass	klass;
+	RecordStruct	*rec;
+
+ENTER_FUNC;
+	port = ParPort(url,PORT_WFC);
+	fd = ConnectSocket(port,SOCK_STREAM);
+	DestroyPort(port);
+	if ( fd > 0 ){
+		fp = SocketToNet(fd);
+		SendString(fp,term);		ON_IO_ERROR(fp,badio);
+		if		(  fKeep  ) {
+			SendPacketClass(fp,WFC_TRUE);
+		} else {
+			SendPacketClass(fp,WFC_FALSE);
+		}		
+		SendString(fp,user);		ON_IO_ERROR(fp,badio);
+		SendString(fp,arg);			ON_IO_ERROR(fp,badio);
+		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
+		if		(  klass  !=  WFC_OK  ) {
+			CloseNet(fp);
+			fp = NULL;
+		} else {
+			dbgprintf("[%s]",window);
+			if		(  ( rec = GetWindowRecord(window) )  !=  NULL  ) {
+				_SendTermServer(fp,window,"","",rec->value);
+			} else {
+				dbgmsg("*");
+				SendPacketClass(fp,WFC_OK);
+			}
+			dbgmsg("*");
+		}
+	} else {
+	  badio:
+		Warning("can not connect wfc server");
+		fp = NULL;
+	}
+LEAVE_FUNC;
+	return	(fp); 
+}
+
+extern	Bool
+SendTermServer(
+	NETFILE	*fp,
+	char	*term,
+	char	*window,
+	char	*widget,
+	char	*event,
+	ValueStruct	*value)
+{
+	Bool	rc;
 
 ENTER_FUNC;
 	rc = FALSE;
@@ -162,32 +215,7 @@ ENTER_FUNC;
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
 		dbgmsg("recv PONG");
-		SendPacketClass(fp,WFC_DATA);	ON_IO_ERROR(fp,badio);
-		dbgmsg("send DATA");
-		dbgprintf("window = [%s]",window);
-		SendString(fp,window);			ON_IO_ERROR(fp,badio);
-		dbgprintf("widget = [%s]",widget);
-		SendString(fp,widget);			ON_IO_ERROR(fp,badio);
-		dbgprintf("event  = [%s]",event);
-		SendString(fp,event);			ON_IO_ERROR(fp,badio);
-		if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
-			ON_IO_ERROR(fp,badio);
-			dbgmsg("recv OK");
-			if		(  value  !=  NULL  ) {
-				SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
-				size = NativeSizeValue(NULL,value);
-				buff = NewLBS();
-				LBS_ReserveSize(buff,size,FALSE);
-				NativePackValue(NULL,LBS_Body(buff),value);
-				SendLBS(fp,buff);				ON_IO_ERROR(fp,badio);
-				FreeLBS(buff);
-				ForwardBLOB(fp,value);			ON_IO_ERROR(fp,badio);
-			} else {
-				SendPacketClass(fp,WFC_NODATA);	ON_IO_ERROR(fp,badio);
-			}
-			SendPacketClass(fp,WFC_OK);		ON_IO_ERROR(fp,badio);
-			rc = TRUE;
-		}
+		rc = _SendTermServer(fp,window,widget,event,value);
 	}
   badio:
 LEAVE_FUNC;
@@ -276,7 +304,7 @@ _FeedBLOB(
 {
 	int		i;
 
-ENTER_FUNC;
+	//ENTER_FUNC;
 	if		(  value  ==  NULL  )	return;
 	if		(  IS_VALUE_NIL(value)  )	return;
 	switch	(ValueType(value)) {
@@ -319,7 +347,7 @@ ENTER_FUNC;
 	  default:
 		break;
 	}
-LEAVE_FUNC;
+	//LEAVE_FUNC;
 }
 
 static	void
@@ -327,7 +355,9 @@ FeedBLOB(
 	NETFILE		*fp,
 	ValueStruct	*value)
 {
+ENTER_FUNC;
 	_FeedBLOB(fp,value);
+LEAVE_FUNC;
 }
 
 static	void
@@ -344,9 +374,9 @@ ENTER_FUNC;
 	dbgprintf("puttype = %02X",win->PutType);
 	switch	(win->PutType) {
 	  case	SCREEN_NULL:
-	  case	SCREEN_CLOSE_WINDOW:
 		break;
 	  default:
+		dbgmsg("recv");
 		SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
 		SendString(fp,wname);				ON_IO_ERROR(fp,badio);
 		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);

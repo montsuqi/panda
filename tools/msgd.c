@@ -63,7 +63,7 @@ static	void
 LogThread(
 	void	*para)
 {
-	int		fhLog = (int)para;
+	int		fhLog = (int)(long)para;
 	NETFILE	*fpLog;
 	char	buff[SIZE_BUFF+1];
 	Bool	fOK;
@@ -94,7 +94,7 @@ dbgmsg(">ConnectLog");
 		printf("_fhLog = %d\n",_fhLog);
 		Error("INET Domain Accept");
 	}
-	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)fhLog);
+	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)(long)fhLog);
 dbgmsg("<ConnectLog");
 	return	(thr); 
 }

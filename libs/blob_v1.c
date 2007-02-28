@@ -69,7 +69,7 @@ OpenEntry(
 	size_t	size;
 
 ENTER_FUNC;
-	snprintf(longname,SIZE_LONGNAME+1,"%s/%lld",ent->blob->space,ent->oid);
+ snprintf(longname,SIZE_LONGNAME+1,"%s/%d",ent->blob->space,(int)ent->oid);
 dbgmsg(longname);
 	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
 #if	1
@@ -120,7 +120,7 @@ ENTER_FUNC;
 	if		(  ent->oid  !=  GL_OBJ_NULL  ) {
 		LockBLOB(ent->blob);
 		g_hash_table_remove(ent->blob->table,(gpointer)&ent->oid);
-		snprintf(command,SIZE_LONGNAME+1,"rm -f %s/%lld",ent->blob->space,ent->oid);
+		snprintf(command,SIZE_LONGNAME+1,"rm -f %s/%d",ent->blob->space,(int)ent->oid);
 		system(command);
 		UnLockBLOB(ent->blob);
 		ReleaseBLOB(ent->blob);

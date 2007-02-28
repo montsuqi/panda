@@ -88,7 +88,7 @@ static	void
 LogThread(
 	void	*para)
 {
-	int		fhLog = (int)para;
+	int		fhLog = (int)(long)para;
 	LargeByteString	*data, *cdata;
 	VeryfyData *vdata;
 	NETFILE	*fpLog;
@@ -154,7 +154,7 @@ ENTER_FUNC;
 		printf("_fhLog = %d\n",_fhLog);
 		Error("INET Domain Accept");
 	}
-	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)fhLog);
+	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)(long)fhLog);
 	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(thr); 

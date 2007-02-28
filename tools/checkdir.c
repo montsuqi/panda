@@ -37,6 +37,7 @@
 #include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
+#include	"front.h"
 #include	"directory.h"
 #include	"dbgroup.h"
 #include	"dirs.h"
@@ -78,21 +79,21 @@ _DumpItems(
 		printf("byte");
 		break;
 	  case	GL_TYPE_CHAR:
-		printf("char(%d)",ValueStringLength(value));
+		printf("char(%d)",(int)ValueStringLength(value));
 		break;
 	  case	GL_TYPE_VARCHAR:
-		printf("varchar(%d)",ValueStringLength(value));
+		printf("varchar(%d)",(int)ValueStringLength(value));
 		break;
 	  case	GL_TYPE_DBCODE:
-		printf("dbcode(%d)",ValueStringLength(value));
+		printf("dbcode(%d)",(int)ValueStringLength(value));
 		break;
 	  case	GL_TYPE_NUMBER:
 		if		(  ValueFixedSlen(value)  ==  0  ) {
-			printf("number(%d)",ValueFixedLength(value));
+			printf("number(%d)",(int)ValueFixedLength(value));
 		} else {
 			printf("number(%d,%d)",
-				   ValueFixedLength(value),
-				   ValueFixedSlen(value));
+				   (int)ValueFixedLength(value),
+				   (int)ValueFixedSlen(value));
 		}
 		break;
 	  case	GL_TYPE_TEXT:
@@ -100,7 +101,7 @@ _DumpItems(
 		break;
 	  case	GL_TYPE_ARRAY:
 		_DumpItems(ValueArrayItem(value,0));
-		printf("[%d]",ValueArraySize(value));
+		printf("[%d]",(int)ValueArraySize(value));
 		break;
 	  case	GL_TYPE_RECORD:
 		printf("{\n");
@@ -137,7 +138,7 @@ DumpKey(
 	char	***item
 	,		**pk;
 
-dbgmsg(">DumpKey");
+ENTER_FUNC;
 	if		(  pkey  !=  NULL  ) {
 		item = pkey->item;
 		PutTab(2);
@@ -158,7 +159,7 @@ dbgmsg(">DumpKey");
 		}
 	}
 	printf("\n");
-dbgmsg("<DumpKey");
+LEAVE_FUNC;
 }
 
 #include	"SQLparser.h"
@@ -170,19 +171,20 @@ _DumpOps(
 	int		n;
 	Bool	fIntoAster;
 
+ENTER_FUNC;
 	RewindLBS(sql);
-	printf("\t\t\t\tlength = %d\n",LBS_Size(sql));
+	printf("\t\t\t\tlength = %d\n",(int)LBS_Size(sql));
 	fIntoAster = FALSE;
 	while	(  ( c = LBS_FetchByte(sql) )  >=  0  ) {
 		if		(  c  !=  SQL_OP_ESC  ) {
-			printf("%04d ",LBS_GetPos(sql)-1);
+			printf("%04d ",(int)LBS_GetPos(sql)-1);
 			do {
 				printf("%c",c);
 			}	while	(	(  ( c = LBS_FetchByte(sql) )  >=  0  )
 						&&	(  c  !=  SQL_OP_ESC  ) );
 			printf("\n");
 		}
-		printf("%04d ",LBS_GetPos(sql)-1);
+		printf("%04d ",(int)LBS_GetPos(sql)-1);
 		switch	(c = LBS_FetchByte(sql)) {
 		  case	SQL_OP_INTO:
 			n = LBS_FetchInt(sql);
@@ -217,6 +219,7 @@ _DumpOps(
 		}
 		printf("\n");
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -234,7 +237,9 @@ DumpOps(
 			DumpItems(3,op->args);
 			printf("\n");
 		}
-		_DumpOps(op->proc);
+		if		(  (int)(unsigned long)op->proc  >=  SIZE_DBOP  ) {
+			_DumpOps(op->proc);
+		}
 	} else {
 		printf("default operation.\n");
 	}
@@ -346,10 +351,10 @@ DumpLD(
 ENTER_FUNC;
 	printf("name      = [%s]\n",ld->name);
 	printf("\tgroup     = [%s]\n",ld->group);
-	printf("\tarraysize = %d\n",ld->arraysize);
-	printf("\ttextsize  = %d\n",ld->textsize);
+	printf("\tarraysize = %d\n",(int)ld->arraysize);
+	printf("\ttextsize  = %d\n",(int)ld->textsize);
 
-	printf("ld->cBind = %d\n",ld->cBind);
+	printf("ld->cBind = %d\n",(int)ld->cBind);
 
 	g_hash_table_foreach(ld->bhash,(GHFunc)_DumpHandler,NULL);
 	g_hash_table_foreach(ld->bhash,(GHFunc)_DumpBind,NULL);
@@ -368,7 +373,7 @@ ENTER_FUNC;
 			printf(";\n");
 		}
 	}
-	printf("\tcDB       = %d\n",ld->cDB);
+	printf("\tcDB       = %d\n",(int)ld->cDB);
 	for	( i = 1 ; i < ld->cDB ; i ++ ) {
 		DumpRecord(ld->db[i]);
 	}
@@ -382,12 +387,12 @@ DumpBD(
 	int		i;
 
 	printf("name      = [%s]\n",bd->name);
-	printf("\tarraysize = %d\n",bd->arraysize);
-	printf("\ttextsize  = %d\n",bd->textsize);
+	printf("\tarraysize = %d\n",(int)bd->arraysize);
+	printf("\ttextsize  = %d\n",(int)bd->textsize);
 
 	g_hash_table_foreach(bd->BatchTable,(GHFunc)_DumpHandler,NULL);
 
-	printf("\tcDB       = %d\n",bd->cDB);
+	printf("\tcDB       = %d\n",(int)bd->cDB);
 	for	( i = 1 ; i < bd->cDB ; i ++ ) {
 		DumpRecord(bd->db[i]);
 	}
@@ -400,9 +405,9 @@ DumpDBD(
 	int		i;
 
 	printf("name      = [%s]\n",dbd->name);
-	printf("\tarraysize = %d\n",dbd->arraysize);
-	printf("\ttextsize  = %d\n",dbd->textsize);
-	printf("\tcDB       = %d\n",dbd->cDB);
+	printf("\tarraysize = %d\n",(int)dbd->arraysize);
+	printf("\ttextsize  = %d\n",(int)dbd->textsize);
+	printf("\tcDB       = %d\n",(int)dbd->cDB);
 	for	( i = 1 ; i < dbd->cDB ; i ++ ) {
 		DumpRecord(dbd->db[i]);
 	}
@@ -448,10 +453,10 @@ dbgmsg("*");
 
 	printf("name     = [%s]\n",ThisEnv->name);
 	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);
-	printf("linksize = %d\n"  ,ThisEnv->linksize);
-	printf("cLD      = %d\n"  ,ThisEnv->cLD);
-	printf("cBD      = %d\n"  ,ThisEnv->cBD);
-	printf("cDBD     = %d\n"  ,ThisEnv->cDBD);
+	printf("linksize = %d\n"  ,(int)ThisEnv->linksize);
+	printf("cLD      = %d\n"  ,(int)ThisEnv->cLD);
+	printf("cBD      = %d\n"  ,(int)ThisEnv->cBD);
+	printf("cDBD     = %d\n"  ,(int)ThisEnv->cDBD);
 #if	0
 	printf("LINK ---------\n");
 	DumpRecord(ThisEnv->linkrec);

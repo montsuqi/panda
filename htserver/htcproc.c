@@ -75,7 +75,7 @@ static	ARG_TABLE	option[] = {
 	{	"dump",		BOOLEAN,	TRUE,	(void*)&fDump,
 		"dump variables"		 						},
 	{	"ddump",	BOOLEAN,	TRUE,	(void*)&fDdump,
-		"?Ώ??ĎŀųŗĲ?Ħ"	 					},
+		"dump input data"			 					},
 	{	"cookie",	BOOLEAN,	TRUE,	(void*)&fCookie,
 		"session keeps by cookie"						},
 	{	"jslink",	BOOLEAN,	TRUE,	(void*)&fJavaScriptLink,

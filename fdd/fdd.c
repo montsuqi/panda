@@ -115,6 +115,7 @@ Process(
 	filename = NULL;
 	command = NULL;
 	size = 0;
+	left = 0;
 	do {
 		if		(  ( fOK = RecvStringDelim(fpComm,SIZE_BUFF,buff) )  ) {
 			if		(  strlicmp(buff,"Command: ")  ==  0  ) {
@@ -129,7 +130,7 @@ Process(
 		} else
 			break;
 	}	while	(  *buff  !=  0  );
-	printf("size  = [%d]\n",left);
+	printf("size  = [%d]\n",(int)left);
 	sprintf(buff,"%s/XXXXXX",WorkDir);
 	fd = mkstemp(buff);
 	fp = fdopen(fd,"w");
@@ -195,7 +196,6 @@ ExecuteServer(void)
 	int		pid;
 	int		fd
 	,		_fd;
-	int		status;
 	Port	*port;
 	NETFILE	*fpComm;
 #ifdef	USE_SSL

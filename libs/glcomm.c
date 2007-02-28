@@ -410,6 +410,7 @@ ExpandFile(
 	char	*cname)
 {
 	static	char	fname[SIZE_LONGNAME+1];
+#ifdef	HAVE_LIBMAGIC
 	char	buff[SIZE_LONGNAME+1];
 	char	*PSTOPNGPath = BIN_DIR "/pstopng";
 	struct	stat	sb;
@@ -417,6 +418,7 @@ ExpandFile(
 		,	tmp_mtime;
 	const	char	*type;
 	FILE	*fpf;
+#endif
 
 ENTER_FUNC;
 	strcpy(fname,cname);

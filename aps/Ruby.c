@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2004-2005 Shugo Maeda
- * Copyright (C) 2006 Shugo Maeda & ogochan
+ * Copyright (C) 2006-2007 Shugo Maeda & ogochan
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -485,11 +485,11 @@ aryval_new(ValueStruct *val, int need_free)
     value_struct_data *data;
 
     obj = Data_Make_Struct(cArrayValue, value_struct_data,
-                           value_struct_mark,
-                           need_free ?
-                           (RUBY_DATA_FUNC) value_struct_free :
-                           (RUBY_DATA_FUNC) free,
-                           data);
+						   value_struct_mark,
+						   (need_free ?
+							(RUBY_DATA_FUNC) value_struct_free :
+							(RUBY_DATA_FUNC) free),
+						   data);
     data->value = val;
     data->cache = rb_ary_new2(ValueArraySize(val));
     return obj;
@@ -564,9 +564,9 @@ recval_new(ValueStruct *val, int need_free)
 
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
                            value_struct_mark,
-                           need_free ?
-                           (RUBY_DATA_FUNC) value_struct_free :
-                           (RUBY_DATA_FUNC) free,
+                           (need_free ?
+							(RUBY_DATA_FUNC) value_struct_free :
+							(RUBY_DATA_FUNC) free),
                            data);
     data->value = val;
     data->cache = rb_hash_new();
@@ -921,9 +921,6 @@ path_mark(path_data *data)
     rb_gc_mark(data->args);
 }
 
-static VALUE rec_get_field(VALUE self);
-static VALUE rec_set_field(VALUE self, VALUE obj);
-
 static VALUE
 path_new(PathStruct *path)
 {
@@ -1006,7 +1003,7 @@ path_op_args(VALUE self, VALUE name)
         return op_args;
     }
 
-    no = (int) g_hash_table_lookup(data->path->opHash, StringValuePtr(name));
+    no = (int)(long)g_hash_table_lookup(data->path->opHash, StringValuePtr(name));
     if (no == 0) {
         rb_raise(rb_eArgError,
                  "no such operation: %s", StringValuePtr(name));
@@ -1105,8 +1102,6 @@ set_param(VALUE key, VALUE value, set_param_arg *arg)
     return ST_CONTINUE;
 }
 
-static VALUE table_path(VALUE self, VALUE name);
-
 static VALUE
 table_exec(int argc, VALUE *argv, VALUE self)
 {
@@ -1134,7 +1129,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
 
     value = RECORD_STRUCT(data)->value;
     if (pname != NULL) {
-        no = (int) g_hash_table_lookup(RECORD_STRUCT(data)->opt.db->paths, pname);
+        no = (int)(long)g_hash_table_lookup(RECORD_STRUCT(data)->opt.db->paths, pname);
         if (no != 0) {
             PathStruct *path;
             ctrl.pno = no - 1;
@@ -1143,7 +1138,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
                 if (path->args != NULL) {
                     value = path->args;
                 }
-                no = (int) g_hash_table_lookup(path->opHash, func);
+                no = (int)(long)g_hash_table_lookup(path->opHash, func);
                 if (no != 0) {
                     DB_Operation *operation = path->ops[no - 1];
                     if (operation != NULL && operation->args != NULL) {
@@ -1267,7 +1262,7 @@ table_path(VALUE self, VALUE name)
         return path;
     }
 
-    no = (int) g_hash_table_lookup(RECORD_STRUCT(data)->opt.db->paths,
+    no = (int)(long)g_hash_table_lookup(RECORD_STRUCT(data)->opt.db->paths,
                                    StringValuePtr(name));
     if (no == 0) {
         rb_raise(rb_eArgError,
@@ -1324,8 +1319,8 @@ database_aref(VALUE self, VALUE name)
     if (!NIL_P(obj = rb_hash_aref(data->cache, name)))
         return obj;
 
-    no = (int) g_hash_table_lookup(data->indices,
-                                   StringValuePtr(name));
+    no = (int)(long)g_hash_table_lookup(data->indices,
+										StringValuePtr(name));
     if (no == 0) {
         return Qnil;
     }

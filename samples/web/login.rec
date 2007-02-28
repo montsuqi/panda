@@ -5,6 +5,9 @@ login	{
 	password	{
 		value	varchar(250);
 	};
+	cookie	{
+		value	varchar(250);
+	};
 	message	{
 		value	varchar(250);
 	};

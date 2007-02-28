@@ -186,17 +186,17 @@ ENTER_FUNC;
 					sprintf(buff,"Bool");
 					break;
 				  case	GL_TYPE_CHAR:
-					sprintf(buff,"char(%d)",ValueStringLength(value));
+					sprintf(buff,"char(%d)",(int)ValueStringLength(value));
 					break;
 				  case	GL_TYPE_VARCHAR:
-					sprintf(buff,"varchar(%d)",ValueStringLength(value));
+					sprintf(buff,"varchar(%d)",(int)ValueStringLength(value));
 					break;
 				  case	GL_TYPE_DBCODE:
-					sprintf(buff,"code(%d)",ValueStringLength(value));
+					sprintf(buff,"code(%d)",(int)ValueStringLength(value));
 					break;
 				  case	GL_TYPE_NUMBER:
 					sprintf(buff,"number(%d,%d)",
-							ValueFixedLength(value),ValueFixedSlen(value));
+							(int)ValueFixedLength(value),(int)ValueFixedSlen(value));
 					break;
 				  case	GL_TYPE_TEXT:
 					sprintf(buff,"text");

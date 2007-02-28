@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -330,7 +330,8 @@ ENTER_FUNC;
 
 	winfrom = 0;
 	winend = 0;
-	if		(  ( PutType = (int)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )  ==  0  ) {
+	if		(  ( PutType = (int)(long)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )
+			   ==  0  ) {
 		PutType = SCREEN_CURRENT_WINDOW;
 	}
 	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
@@ -502,6 +503,7 @@ static	void
 StopHandlerDC(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
 	if		(	(  ( handler->fInit & INIT_READYDC )  !=  0  )
 			&&	(  ( handler->fInit & INIT_STOPDC  )  ==  0  ) ) {
 		handler->fInit |= INIT_STOPDC;
@@ -509,6 +511,7 @@ StopHandlerDC(
 			handler->klass->StopDC(handler);
 		}
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -517,13 +520,18 @@ _StopDC(
 	WindowBind	*bind,
 	void		*dummy)
 {
+ENTER_FUNC;
+	dbgprintf("name = [%s]",name);
 	StopHandlerDC(bind->handler);
+LEAVE_FUNC;
 }
 
 extern	void
 StopDC(void)
 {
+ENTER_FUNC;
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopDC,NULL);
+LEAVE_FUNC;
 }
 
 static	void
@@ -586,6 +594,7 @@ extern	void
 StopHandlerDB(
 	MessageHandler	*handler)
 {
+ENTER_FUNC;
 	if		(	(  ( handler->fInit & INIT_READYDB )  !=  0  )
 			&&	(  ( handler->fInit & INIT_STOPDB  )  ==  0  ) ) {
 		handler->fInit |= INIT_STOPDB;
@@ -593,6 +602,7 @@ StopHandlerDB(
 			handler->klass->StopDB(handler);
 		}
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -601,14 +611,19 @@ _StopOnlineDB(
 	WindowBind	*bind,
 	void		*dummy)
 {
+ENTER_FUNC;
 	StopHandlerDB(bind->handler);
+LEAVE_FUNC;
 }
 
 extern	void
 StopOnlineDB(void)
 {
+ENTER_FUNC;
 	CloseDB(NULL);
+	dbgmsg("*");
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopOnlineDB,NULL);
+LEAVE_FUNC;
 }
 
 #if	0
@@ -694,18 +709,18 @@ MakeCTRLbyName(
 
 	*value = NULL;
 	if		(	(  rname  !=  NULL  )
-			&&	(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
+			&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 		ctrl.rno = rno - 1;
 		rec = ThisDB[rno-1];
 		*value = rec->value;
 		if		(	(  pname  !=  NULL  )
-				&&	(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+				&&	(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
 														pname) )  !=  0  ) ) {
 			ctrl.pno = pno - 1;
 			path = rec->opt.db->path[pno-1];
 			*value = ( path->args != NULL ) ? path->args : *value;
 			if		(	(  func  !=  NULL  )
-					&&	( ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
+					&&	( ( ono = (int)(long)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
 				op = path->ops[ono-1];
 				*value = ( op->args != NULL ) ? op->args : *value;
 			}

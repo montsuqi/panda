@@ -35,6 +35,7 @@ INCLUDES 			=		\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
+libpandadb_a_CFLAGS = $(AM_CFLAGS)
 libpandadb_a_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h
@@ -71,8 +72,7 @@ System_la_SOURCES		=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
 	System.c
-System_la_LIBADD	=		\
-	$(top_builddir)/libs/libpandas.a
+System_la_LIBADD	=
 
 NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
 NativeBLOB_la_SOURCES	=		\

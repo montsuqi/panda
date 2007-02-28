@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2006 Ogochan.
+ * Copyright (C) 2006-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -302,9 +302,6 @@ ENTER_FUNC;
 		if	   (	(  coding  ==  NULL  )
 				||	(	(  stricmp(coding,"utf-8")  !=  0  )
 					&&	(  stricmp(coding,"utf8")   !=  0  ) ) ) {
-			ostr = ConvertEncoding("utf-8",coding,istr);
-			xfree(str);
-			str = ostr;
 			fChange = TRUE;
 		} else {
 			fChange = FALSE;
@@ -314,7 +311,7 @@ ENTER_FUNC;
 		write(pSource[1],LBS_Body(lbs),LBS_Size(lbs));
 #ifdef	DEBUG
 		printf("code:-------\n");
-		printf("%s",(char *)LBS_Body(lbs));
+		write(STDOUT_FILENO,LBS_Body(lbs),LBS_Size(lbs));
 		printf("%s",str);
 		printf("------------\n");
 #endif
@@ -326,8 +323,10 @@ ENTER_FUNC;
 		close(pSource[1]);
 		DataProcess(pDBR[0],pDBW[1],pid);
 		xfree(str);
+
 		status = 0;
 		while( waitpid(pid, &status, WNOHANG) > 0 );
+
 		lbs = NewLBS();
 		if		(  WEXITSTATUS(status)  ==  0  ) {
 			fd = pResult[0];

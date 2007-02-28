@@ -8,7 +8,6 @@
 <html>
 <body onLoad="document.forms['f'].elements['login.id.value'].focus()">
 <form>
-<var name="login.cookie.value" type="cookie" expires="2010-12-31 00:00:00"/>
 <div id="body">
   <div class="section">
     <div class="password_table">
@@ -34,7 +33,7 @@
      <button event="clear" face="クリア"></button>
   </div>
 </div>
-<!-- $exec "sed 's,@screen_name@,'homescr',g' < foo.htc" -->
+
 </form>
 </body>
 </html>

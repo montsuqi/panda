@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -112,16 +112,25 @@ DecodeName(
 	while	(  isspace(*p)  )	p ++;
 	*rname = p;
 	while	(	(  *p  !=  0     )
-			&&	(  *p  !=  '.'   ) )	p ++;
-	*p = 0;
-	p ++;
-	while	(  isspace(*p)  )	p ++;
-	*vname = p;
-	if		(  *p  !=  0  ) {
-		while	(	(  *p  !=  0     )
-				&&	(  !isspace(*p)  ) )	p ++;
+			&&	(  *p  !=  '.'   )
+			&&	(  *p  !=  '/'   ) )	p ++;
+	if		(  *p  ==  0  ) {
+		*vname = *rname;
+		*rname = p;
+	} else {
+		*p = 0;
+		p ++;
+		while	(	(  *p  !=  0    )
+				&&	(	(  isspace(*p)  )
+					||	(  *p  ==  '.'  )
+					||	(  *p  ==  '/'  ) ) )	p ++;
+		*vname = p;
+		if		(  *p  !=  0  ) {
+			while	(	(  *p  !=  0     )
+					&&	(  !isspace(*p)  ) )	p ++;
+		}
+		*p = 0;
 	}
-	*p = 0;
 }
 
 static	void
@@ -245,6 +254,7 @@ ENTER_FUNC;
 			SendLBS(fp, lbs);	ON_IO_ERROR(fp,badio);
 		}
 	}
+	dbgprintf("klass = %X",klass);
   badio:
     FreeLBS(lbs);
 	if		(  !CheckNetFile(fp)  )		FinishSession(scr);
@@ -279,7 +289,18 @@ ENTER_FUNC;
         DecodeName(&wname, &vname, buff);
         LBS_EmitStart(lbs);
         RecvLBS(fp, lbs);		ON_IO_ERROR(fp,badio);
-		dbgprintf("[%s.%s]=[%s]",wname,vname,LBS_Body(lbs));
+		if		(  *wname  !=  0  ) {
+			dbgprintf("[%s.%s]=[%s]",wname,vname,LBS_Body(lbs));
+		}
+		dbgprintf("wname = [%s]",wname);
+		if		(	(  *wname                    !=  0  )
+				&&	(  strlicmp(wname,"http:/")  !=  0  ) ) {
+			SetWindowName(wname);
+			if		(  *scr->window  ==  0  ) {
+				strcpy(scr->window,wname);
+			}
+		}
+		dbgprintf("scr->window = [%s]",scr->window);
 		if		(  ( rec = SetWindowRecord(wname) )  !=  NULL  ) {
 			if		(  ( value = GetItemLongName(rec->value, vname) )  ==  NULL  ) {
 				fprintf(stderr, "no ValueStruct: %s.%s\n", wname, vname);
@@ -435,6 +456,7 @@ ENTER_FUNC;
 		strcpy(scr->cmd,cmd);
 		strcpy(scr->user,user);
 		strcpy(scr->term,TermName(0));
+		RecvScreenData(fp,scr);								ON_IO_ERROR(fp,badio);
 	}
   badio:
 LEAVE_FUNC;

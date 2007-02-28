@@ -202,25 +202,25 @@ _COBOL(
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
-		sprintf(buff,"PIC X(%d)",ValueStringLength(val));
+		sprintf(buff,"PIC X(%d)",(int)ValueStringLength(val));
 		PutString(buff);
 		break;
 	  case	GL_TYPE_OBJECT:
-        sprintf(buff,"PIC X(%d)",sizeof(MonObjectType));
+        sprintf(buff,"PIC X(%d)",(int)sizeof(MonObjectType));
 		PutString(buff);
 		break;
 	  case	GL_TYPE_NUMBER:
 		if		(  ValueFixedSlen(val)  ==  0  ) {
-			sprintf(buff,"PIC S9(%d)",ValueFixedLength(val));
+			sprintf(buff,"PIC S9(%d)",(int)ValueFixedLength(val));
 		} else {
 			sprintf(buff,"PIC S9(%d)V9(%d)",
-					(ValueFixedLength(val) - ValueFixedSlen(val)),
-					ValueFixedSlen(val));
+					(int)(ValueFixedLength(val) - ValueFixedSlen(val)),
+					(int)ValueFixedSlen(val));
 		}
 		PutString(buff);
 		break;
 	  case	GL_TYPE_TEXT:
-		sprintf(buff,"PIC X(%d)",conv->textsize);
+		sprintf(buff,"PIC X(%d)",(int)conv->textsize);
 		PutString(buff);
 		break;
 	  case	GL_TYPE_ARRAY:
@@ -320,7 +320,7 @@ SIZE(
 	PutLevel(level,TRUE);
 	PutName("filler");
 	PutTab(8);
-	sprintf(buff,"PIC X(%d)",SizeValue(conv,val));
+	sprintf(buff,"PIC X(%d)",(int)SizeValue(conv,val));
 	PutString(buff);
 	level --;
 }
@@ -403,7 +403,7 @@ dbgmsg(">MakeLD");
 		PutLevel(base+1,TRUE);
 		PutName("data");
 		PutTab(12);
-		printf("OCCURS  %d.\n",num);
+		printf("OCCURS  %d.\n",(int)num);
 
 		PutLevel(base+2,TRUE);
 		PutName("filler");
@@ -447,7 +447,7 @@ dbgmsg(">MakeLD");
 				printf(".\n");
 				PutLevel(base+1,TRUE);
 				PutName("filler");
-				printf("      PIC X(%d).\n",spasize);
+				printf("      PIC X(%d).\n",(int)spasize);
 			} else {
 				level = base;
 				if		(	(  fFiller  )
@@ -475,7 +475,7 @@ dbgmsg(">MakeLD");
 				printf(".\n");
 				PutLevel(level+1,TRUE);
 				PutName("filler");
-				printf("      PIC X(%d)",ThisEnv->linksize);
+				printf("      PIC X(%d)",(int)ThisEnv->linksize);
 			} else {
 				_prefix = Prefix;
 				Prefix = "lnk-";
@@ -522,7 +522,7 @@ dbgmsg(">MakeLD");
 		PutLevel(1,TRUE);
 		PutName("blocks");
 		PutTab(8);
-		printf("PIC S9(9)   BINARY  VALUE   %d.\n",num);
+		printf("PIC S9(9)   BINARY  VALUE   %d.\n",(int)num);
 	}
 dbgmsg("<MakeLD");
 }
@@ -553,7 +553,7 @@ MakeLinkage(void)
 	PutName("linkdata-redefine.\n");
 	PutLevel(3,TRUE);
 	PutName("filler");
-	printf("      PIC X(%d).\n",ThisEnv->linksize);
+	printf("      PIC X(%d).\n",(int)ThisEnv->linksize);
 
 	PutLevel(2,TRUE);
 	PutName(ld->name);
@@ -617,7 +617,7 @@ MakeDB(void)
 	PutLevel(2,TRUE);
 	PutName("dbdata");
 	PutTab(12);
-	printf("PIC X(%d).\n",msize);
+	printf("PIC X(%d).\n",(int)msize);
 }
 
 static	void
@@ -650,7 +650,7 @@ ENTER_FUNC;
 			PutLevel(2,TRUE);
 			PutName("filler");
 			PutTab(12);
-			printf("PIC X(%d).\n",msize - size);
+			printf("PIC X(%d).\n",(int)(msize - size));
 		}
 	}
 LEAVE_FUNC;
@@ -730,7 +730,7 @@ dbgmsg(">MakeDBREC");
 	if		( ( p = strchr(name,'.') )  !=  NULL  ) {
 		*p = 0;
 	}
-	if		(  ( rno = (int)g_hash_table_lookup(dbtable,name) )  !=  0  ) {
+	if		(  ( rno = (int)(long)g_hash_table_lookup(dbtable,name) )  !=  0  ) {
 		rec = dbrec[rno-1];
 		if		(  *RecName  ==  0  ) {
 			strcpy(rname,rec->name);
@@ -823,7 +823,7 @@ MakeDBCOMM(void)
 	PutLevel(3,TRUE);
 	PutName("dbcomm-block");
 	PutTab(12);
-	printf("OCCURS  %d.\n",num);
+	printf("OCCURS  %d.\n",(int)num);
 
 	PutLevel(4,TRUE);
 	PutName("filler");
@@ -877,7 +877,7 @@ MakeDBCOMM(void)
 	PutLevel(4,TRUE);
 	PutName("filler");
 	PutTab(12);
-	printf("PIC X(%d).\n",msize);
+	printf("PIC X(%d).\n",(int)msize);
 }
 
 static	void

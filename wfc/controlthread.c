@@ -92,7 +92,7 @@ ControlThread(
 	Bool	fExit;
 
 ENTER_FUNC;
-	fp = SocketToNet((int)para);
+	fp = SocketToNet((int)(long)para);
 	
 	if		(  InitSession(fp)  ) {
 		fExit = FALSE;
@@ -130,7 +130,7 @@ ENTER_FUNC;
 		Message("_fhControl = %d INET Domain Accept",_fhControl);
 		exit(1);
 	}
-	pthread_create(&thr,NULL,(void *(*)(void *))ControlThread,(void *)fhControl);
+	pthread_create(&thr,NULL,(void *(*)(void *))ControlThread,(void *)(long)fhControl);
 	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(thr); 

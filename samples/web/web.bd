@@ -24,10 +24,10 @@ db	"DBRUBY"	{
 #	memo;
 #};
 
-db	"sitesearch"	{
-	memo;
-	sitesearch_text;
-};
+#db	"sitesearch"	{
+#	memo;
+#	sitesearch_text;
+#};
 
 #db	"pg"	{
 #};

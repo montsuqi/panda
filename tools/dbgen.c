@@ -137,19 +137,19 @@ TableBody(
 	  case	GL_TYPE_BYTE:
 	  case	GL_TYPE_CHAR:
 		PutItemName();
-		printf("char(%d)",ValueStringLength(val));
+		printf("char(%d)",(int)ValueStringLength(val));
 		PutDim();
 		break;
 	  case	GL_TYPE_VARCHAR:
 		PutItemName();
-		printf("varchar(%d)",ValueStringLength(val));
+		printf("varchar(%d)",(int)ValueStringLength(val));
 		PutDim();
 		break;
 	  case	GL_TYPE_NUMBER:
 		PutItemName();
 		printf("numeric(%d,%d)",
-			   ValueFixedLength(val),
-			   ValueFixedSlen(val));
+			   (int)ValueFixedLength(val),
+			   (int)ValueFixedSlen(val));
 		PutDim();
 		break;
 	  case	GL_TYPE_TEXT:

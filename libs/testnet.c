@@ -98,7 +98,7 @@ ENTER_FUNC;
 	}
 	fp = SocketToNet(fd);
 	while	(  ( len = RecvLength(fp) )  >  0  ) {
-		printf("len = [%d]\n",len);
+		printf("len = [%d]\n",(int)len);
 		Recv(fp,buff,len);
 		Send(fp,buff,len);
 		SendLength(fp,len);

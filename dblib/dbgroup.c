@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ _ExecDBFunc(
 	DB_Operation	*op;
 
 ENTER_FUNC;
-	if		(  ( ix = (int)g_hash_table_lookup(db->opHash,fname) )  >  0  ) {
+	if		(  ( ix = (int)(long)g_hash_table_lookup(db->opHash,fname) )  >  0  ) {
 		if		(  ( op = db->ops[ix-1] )  !=  NULL  ) {
 			if		(  dbg->func->primitive->record  !=  NULL  ) {
 				if		(  !(*dbg->func->primitive->record)(dbg,fname,rec)  ) {

@@ -206,7 +206,7 @@ InsertBuildIn(
 
 	op = NewOperation(name);
 	ret->ops[func] = op;
-	g_hash_table_insert(ret->opHash,op->name,(gpointer)(func+1));
+	g_hash_table_insert(ret->opHash,op->name,(gpointer)(long)(func+1));
 }
 
 static	PathStruct	*
@@ -217,7 +217,7 @@ InitPathStruct(void)
 ENTER_FUNC;
 	ret = New(PathStruct);
 	ret->opHash = NewNameHash();
-	ret->ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * 6);
+	ret->ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * SIZE_DBOP);
 	InsertBuildIn(ret,"DBSELECT",DBOP_SELECT);
 	InsertBuildIn(ret,"DBFETCH",DBOP_FETCH);
 	InsertBuildIn(ret,"DBUPDATE",DBOP_UPDATE);
@@ -317,7 +317,7 @@ ParScript(
 
 ENTER_FUNC;
 	if		(  db->dbg  ==  NULL  ) {
-		Error("'db_group' must be before LD and BD, in directory.");
+		Error("'db_group' must be before LD and BD, in directory (%s).",rec->name);
 	}
 	switch	(db->dbg->func->type) {
 	  case	DB_PARSER_SCRIPT:
@@ -349,14 +349,14 @@ ParTableOperation(
 	char			name[SIZE_SYMBOL+1];
 
 ENTER_FUNC;
-	if		(  ( ix = (int)g_hash_table_lookup(path->opHash,ComSymbol) )  ==  0  ) {
+	if		(  ( ix = (int)(long)g_hash_table_lookup(path->opHash,ComSymbol) )  ==  0  ) {
 		ix = path->ocount;
 		ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * ( ix + 1 ));
 		memcpy(ops,path->ops,(sizeof(DB_Operation *) * ix));
 		xfree(path->ops);
 		path->ops = ops;
 		op = NewOperation(ComSymbol);
-		g_hash_table_insert(path->opHash, op->name, (gpointer)(ix + 1));
+		g_hash_table_insert(path->opHash, op->name, (gpointer)((long)ix + 1));
 		path->ops[ix] = op;
 		path->ocount ++;
 	} else {
@@ -419,7 +419,7 @@ ENTER_FUNC;
 	path = InitPathStruct();
 	paths[pcount] = path;
 	path->name = StrDup(ComSymbol);
-	g_hash_table_insert(rec->opt.db->paths,path->name,(void *)(pcount+1));
+	g_hash_table_insert(rec->opt.db->paths,path->name,(void *)((long)pcount+1));
 	rec->opt.db->pcount ++;
 	rec->opt.db->path = paths;
 	if		(  GetSymbol  ==  '('  ) {
@@ -479,7 +479,7 @@ ParDBOperation(
 	,				*op;
 
 ENTER_FUNC;
-	if		(  ( ix = (int)g_hash_table_lookup(db->opHash,ComSymbol) )  ==  0  ) {
+	if		(  ( ix = (int)(long)g_hash_table_lookup(db->opHash,ComSymbol) )  ==  0  ) {
 		ix = db->ocount;
 		ops = (DB_Operation **)xmalloc(sizeof(DB_Operation *) * ( ix + 1 ));
 		if		(  db->ops  !=  NULL  ) {
@@ -488,7 +488,7 @@ ENTER_FUNC;
 		}
 		db->ops = ops;
 		op = NewOperation(ComSymbol);
-		g_hash_table_insert(db->opHash, op->name, (gpointer)(ix + 1));
+		g_hash_table_insert(db->opHash, op->name, (gpointer)((long)ix + 1));
 		db->ops[db->ocount] = op;
 		db->ocount ++;
 	} else {
@@ -523,7 +523,7 @@ DB_Parse(
 	PathStruct		*path;
 
 ENTER_FUNC;
- dbgprintf("fScript = %d",fScript);
+	dbgprintf("fScript = %d",fScript);
 	ret = DD_Parse(in);
 	if		(  ret  ==  NULL  ) {
 		exit(1);
@@ -677,6 +677,8 @@ DB_Parser(
 
 ENTER_FUNC;
 	root.next = NULL;
+	dbgprintf("name  = [%s]",name);
+	dbgprintf("gname = [%s]",gname);
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,RecordDir,DB_Reserved) )  !=  NULL  ) {
 			ret = DB_Parse(in,name,gname,fScript);

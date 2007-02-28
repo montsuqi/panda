@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,24 +42,27 @@
 #include	"driver.h"
 #include	"debug.h"
 
-static	NETFILE	*fpPanda;
 static	char	*PandaPort;
 
-static	void
+static	NETFILE	*
 OpenPanda(
 	char	*arg)
 {
+	NETFILE	*fp;
+
 ENTER_FUNC;
-	fpPanda = ConnectTermServer(PandaPort,ThisTerm,ThisUser,TRUE,arg);
-	if		(  fpPanda  ==  NULL  ) {
+	fp = ConnectTermServer(PandaPort,ThisTerm,ThisUser,ThisWindow,TRUE,arg);
+	if		(  fp  ==  NULL  ) {
 		fprintf(stderr,"can't connect wfc\n");
 		exit(1);
 	}
 LEAVE_FUNC;
+	return	(fp);
 }
 
 static	Bool
-SendPanda(void)
+SendPanda(
+	NETFILE	*fp)
 {
 	RecordStruct	*rec;
 	Bool		rc;
@@ -87,7 +90,10 @@ ENTER_FUNC;
 	} else {
 		value = NULL;
 	}
-	rc = SendTermServer(fpPanda,ThisTerm,ThisWindow,ThisWidget,ThisEvent,value);
+#ifdef	DEBUG
+	DumpValueStruct(value);
+#endif
+	rc = SendTermServer(fp,ThisTerm,ThisWindow,ThisWidget,ThisEvent,value);
 LEAVE_FUNC;
 	return	(rc); 
 }
@@ -95,6 +101,7 @@ LEAVE_FUNC;
 
 static	void
 RecvPanda(
+	NETFILE	*fp,
 	char	*user,
 	char	*window,
 	char	*widget)
@@ -113,8 +120,8 @@ RecvPanda(
 	}
 
 ENTER_FUNC;
-	if		(  RecvTermServerHeader(fpPanda,user,window,widget,&type,&ctl)  ) {
-		ON_IO_ERROR(fpPanda,badio);
+	if		(  RecvTermServerHeader(fp,user,window,widget,&type,&ctl)  ) {
+		ON_IO_ERROR(fp,badio);
 		if		(  ThisScreen->Windows  !=  NULL  ) {
 			g_hash_table_foreach(ThisScreen->Windows,(GHFunc)ClearPutType,NULL);
 		}
@@ -138,10 +145,9 @@ ENTER_FUNC;
 		  default:
 			break;
 		}
-		(void)SetWindowName(window);
 		win = PutWindowByName(window,type);
 		if		(  win  !=  NULL  )	{
-			RecvTermServerData(fpPanda,ThisScreen);	ON_IO_ERROR(fpPanda,badio);
+			RecvTermServerData(fp,ThisScreen);	ON_IO_ERROR(fp,badio);
 			strcpy(ThisWindow,window);
 			strcpy(ThisWidget,widget);
 			strcpy(ThisUser,user);
@@ -169,13 +175,16 @@ pandaLink(
 	char	user[SIZE_NAME+1]	
 	,		window[SIZE_NAME+1]
 	,		widget[SIZE_NAME+1];
+	Bool	ret;
+	NETFILE	*fp;
 
 ENTER_FUNC;
-	OpenPanda(arg);
-	RecvPanda(user,window,widget);
-	CloseNet(fpPanda);
+	fp = OpenPanda(arg);
+	RecvPanda(fp,user,window,widget);
+	CloseNet(fp);
+	ret = TRUE;
 LEAVE_FUNC;
-	return	(TRUE);
+	return	(ret);
 }
 
 extern	Bool
@@ -188,16 +197,17 @@ pandaMain(
 	Port	*port;
 	int		fd;
 	Bool	ret;
+	NETFILE	*fp;
 
 ENTER_FUNC;
 	port = ParPort(PandaPort,PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
 	if ( fd > 0 ){
-		fpPanda = SocketToNet(fd);
-		if		(  SendPanda()  ) {
-			RecvPanda(user,window,widget);
-			CloseNet(fpPanda);
+		fp = SocketToNet(fd);
+		if		(  SendPanda(fp)  ) {
+			RecvPanda(fp,user,window,widget);
+			CloseNet(fp);
 			ret = TRUE;
 		} else {
 			ret = FALSE;
@@ -216,15 +226,16 @@ pandaExit(
 	Port	*port;
 	int		fd;
 	Bool	ret;
+	NETFILE	*fp;
 
 ENTER_FUNC;
 	port = ParPort(PandaPort,PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
 	if ( fd > 0 ){
-		fpPanda = SocketToNet(fd);
-		SendTermServerEnd(fpPanda,ThisTerm);
-		CloseNet(fpPanda);
+		fp = SocketToNet(fd);
+		SendTermServerEnd(fp,ThisTerm);
+		CloseNet(fp);
 		ret = TRUE;
 	} else {
 		ret = FALSE;
@@ -236,7 +247,7 @@ LEAVE_FUNC;
 #include	"option.h"
 static	ARG_TABLE	option[] = {
 	{	"panda",	STRING,		TRUE,	(void*)&PandaPort,
-		"wfc待機ポート番号"								},
+		"wfc waiting port number"						},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 

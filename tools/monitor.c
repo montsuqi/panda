@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,6 +61,7 @@ static	Bool	fRedirector;
 static	Bool	fRestart;
 static	Bool	fAllRestart;
 static	Bool	fTimer;
+static	Bool	fNoApsConnectRetry;
 static	int		Interval;
 static	int		wfcinterval;
 static	int		MaxTran;
@@ -143,7 +144,7 @@ ENTER_FUNC;
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
 		proc->state = STATE_RUN;
-		g_int_hash_table_insert(ProcessTable,pid,proc);
+		g_int_hash_table_insert(ProcessTable,(long)pid,proc);
 #ifdef	DEBUG
 		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
 			fprintf(fpLog,"%s ",proc->argv[i]);
@@ -296,7 +297,7 @@ ENTER_FUNC;
 		if		(	(  ld->ports[n]  ==  NULL  )
 				||	(  HerePort(ld->ports[n])  ) )	{
 			proc = New(Process);
-			argv = (char **)xmalloc(sizeof(char *) * 21);
+			argv = (char **)xmalloc(sizeof(char *) * 22);
 			proc->argv = argv;
 			proc->type = PTYPE_APS;
 			argc = 0;
@@ -324,7 +325,10 @@ ENTER_FUNC;
 			}
 			if		(  fTimer  ) {
 				argv[argc ++] = "-timer";
-			}		
+			}
+			if		(  !fNoApsConnectRetry  ) {
+				argv[argc ++] = "-connect-retry";
+			}
 			argv[argc ++] = ld->name;
 			argv[argc ++] = "-maxtran";
 			argv[argc ++] = IntStrDup(MaxTran);
@@ -503,7 +507,7 @@ WaitProcess(void)
 	fStop = FALSE;
 	while	(  ( pid = waitpid(-1,&status,WNOHANG) )  >  0  ) {
 		dbgprintf("pid = %d is down",pid);
-		if		(  ( proc = g_int_hash_table_lookup(ProcessTable,pid) )  !=  NULL  ) {
+		if		(  ( proc = g_int_hash_table_lookup(ProcessTable,(long)pid) )  !=  NULL  ) {
 			if (WIFSIGNALED(status) ) {
 				Message("%s(%d) killed by signal %d"
 						,proc->argv[0], (int)pid, WTERMSIG(status));
@@ -533,7 +537,7 @@ WaitProcess(void)
 				break;
 			}
 			if		(  !fStop  ) {
-				plist = g_slist_append(plist,(gpointer)pid);
+				plist = g_slist_append(plist,(gpointer)(long)pid);
 			}
 		} else {
 			Message("unknown process down pid = %d(%d)\n"
@@ -545,9 +549,9 @@ WaitProcess(void)
 	} else
 	if		(  plist  !=  NULL  ) {
 		for	( p = plist ; p != NULL ; p = p->next ) {
-			pid = (pid_t)p->data;
-			proc = g_int_hash_table_lookup(ProcessTable,pid);
-			g_int_hash_table_remove(ProcessTable,pid);
+			pid = (pid_t)(long)p->data;
+			proc = g_int_hash_table_lookup(ProcessTable,(long)pid);
+			g_int_hash_table_remove(ProcessTable,(long)pid);
 			StartProcess(proc,Interval);
 		}
 		g_slist_free(plist);
@@ -567,7 +571,7 @@ ProcessMonitor(void)
 		pid_t	pid)
 	{
 		if		(  kill(pid,SIGUSR2)  !=  0  ) {
-			plist = g_slist_append(plist,(gpointer)pid);
+			plist = g_slist_append(plist,(gpointer)(long)pid);
 		}
 	}
 
@@ -655,7 +659,7 @@ static	ARG_TABLE	option[] = {
 		"dbredirector送信の再試行数を指定する"			},
 
 	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
-		"aps異常終了時に再起動する"	 					},
+		"aps異常終了時に再起動する" 					},
 	{	"allrestart",BOOLEAN,	TRUE,	(void*)&fAllRestart,
 		"全ての子プロセス異常終了時に再起動する"	 	},
 
@@ -675,6 +679,8 @@ static	ARG_TABLE	option[] = {
 		"apsの処理するトランザクション数を指定する"		},
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
 		"トランザクションを再試行する時の上限数"		},
+	{	"no-aps-retry",	BOOLEAN,	TRUE,	(void*)&fNoApsConnectRetry,
+		"APSの接続の再試行を行わない"					},
 
 	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
 		"-?を指定する"				 					},
@@ -683,7 +689,7 @@ static	ARG_TABLE	option[] = {
 	{	"log",		STRING,		TRUE,	(void*)&Log,
 		"実行ログを取るファイル名を指定する"			},
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
-		"実行時間に足す処理時間(for debug)"				},
+		"実行時間に足す処理時閨for debug)"				},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -715,6 +721,7 @@ SetDefault(void)
 	fAllRestart = FALSE;
 	fQ = FALSE;
 	fTimer = FALSE;
+	fNoApsConnectRetry = FALSE;
 	nCache = 100;
 	SesDir = ".";
 }

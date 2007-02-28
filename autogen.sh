@@ -6,13 +6,13 @@ echo "Running libtoolize..."
 libtoolize --automake --force --copy
 
 echo "Running aclocal..."
-aclocal-1.4
+aclocal
 
 echo "Running autoheader..."
 autoheader
 
 echo "Running automake..."
-automake-1.4 --copy --add-missing
+automake --copy --add-missing
 
 echo "Running autoconf..."
 autoconf

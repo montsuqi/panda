@@ -64,8 +64,8 @@ control	{
 
 wfc	{
 	port		"/tmp/web";
-#	termport	"/tmp/web.term";
-	termport	"tencha:9010";
+	termport	"/tmp/web.term";
+#	termport	"tencha:9010";
 };
 
 ld	{

@@ -2,7 +2,16 @@ class Login
   def start(node, db)
     initialize_window(node, db)
     initialize_link(node, db)
-    node.put_window("CURRENT","login")
+    login = node.windows["login"]
+	cookie = login.cookie.value
+	puts(" login = #{cookie}")
+	if login.cookie.value  ==  "aaa"
+	  main = node.windows["main"]
+	  main.state = 0;
+      node.put_window("CURRENT","main")
+	else
+	  node.put_window("CURRENT","login")
+	end
   end
   
   def do_login(node, db)
@@ -10,6 +19,8 @@ class Login
     login = node.windows["login"]
     user_id = login.id.value
     password = login.password.value
+	p user_id
+	p password
     user_base = db["user_base"]
     if user_id == ""
       window = nil
@@ -22,6 +33,7 @@ class Login
       login.message.value = ""
       spa.user = user_id
       spa.pass = password
+	  login.cookie.value = user_id
       node.put_window("CHANGE","main")
     end
   end

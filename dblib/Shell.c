@@ -283,7 +283,7 @@ ENTER_FUNC;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
-		if		(  ( ix = (int)g_hash_table_lookup(path->opHash,name) )  ==  0  ) {
+		if		(  ( ix = (int)(long)g_hash_table_lookup(path->opHash,name) )  ==  0  ) {
 			rc = FALSE;
 		} else {
 			src = path->ops[ix-1]->proc;

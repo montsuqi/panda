@@ -187,7 +187,10 @@ PutFile(ValueStruct *file)
 }
 
 extern	void
-SendFile(char *name, MultipartFile *file, HTCInfo *htc)
+SendFile(
+	char	*name,
+	MultipartFile	*file,
+	HTCInfo	*htc)
 {
 	char	*filename
 		,	*sendname
@@ -195,8 +198,9 @@ SendFile(char *name, MultipartFile *file, HTCInfo *htc)
 	char	buff[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-	if		(  ( filename = (char *) g_hash_table_lookup(htc->FileSelection, name) )
-			   !=  NULL  ) {
+	if		(	(  htc  !=  NULL  )
+			&&	(  ( filename = (char *) g_hash_table_lookup(htc->FileSelection, name) )
+				   !=  NULL  ) ) {
 		dbgprintf("name           = [%s]",name);
 		dbgprintf("file->filename = [%s]",file->filename);
 		dbgprintf("filename       = [%s]",filename);

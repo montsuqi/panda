@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -151,7 +151,7 @@ ENTER_FUNC;
 		while	(  GetName  !=  '}'  ) {
 			if		(  ComToken  ==  T_SYMBOL  ) {
 				strcpy(wname,ComSymbol);
-				if		(  (int)g_hash_table_lookup(ld->whash,wname)  >  0  ) {
+				if		(  (int)(long)g_hash_table_lookup(ld->whash,wname)  >  0  ) {
 					ParError("duplicate window name");
 				} else {
 					window = GetWindow(wname);

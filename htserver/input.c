@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -222,6 +222,7 @@ GetExecBody(
 ENTER_FUNC;
 	ret = NULL;
 	if		(  command  !=  NULL  ) {
+		dbgprintf("command = [%s]",command);
 		pipe(pResult);
 		pipe(pError);
 		if		(  ( pid = fork() )  ==  0  ) {
@@ -346,6 +347,37 @@ ENTER_FUNC;
 	LBS_EmitString(lbs,"%>");
 LEAVE_FUNC;
 }
+
+#if	0
+static	void
+SkipTag(
+	LargeByteString	*lbs,
+	char	**fp)
+{
+	Bool	fExit;
+	int		term
+		,	c;
+
+ENTER_FUNC;
+	fExit = FALSE;
+	do {
+		while	(  isspace(c = MGETC(fp))  );
+		switch	(c) {
+		  case	'"':
+		  case	'\'':
+			term = c;
+			while	(  ( c = MGETC(fp) )  !=  term  );
+			break;
+		  case	'>':
+			fExit = TRUE;
+			break;
+		  default:
+			break;
+		}
+	}	while	(  !fExit  );
+LEAVE_FUNC;
+}
+#endif
 
 static	void
 ExecTag(
@@ -601,6 +633,7 @@ ENTER_FUNC;
 	} else {
 		ret = NULL;
 	}
+	dbgprintf("ret = [%s]",ret);
 LEAVE_FUNC;
 	return	(ret);
 }

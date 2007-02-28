@@ -89,7 +89,7 @@ static	void
 BlobThread(
 	void	*para)
 {
-	int		fhBlob = (int)para;
+	int		fhBlob = (int)(long)para;
 	NETFILE	*fp;
 
 ENTER_FUNC;
@@ -119,7 +119,7 @@ ENTER_FUNC;
 		Message("_fhBlob = %d INET Domain Accept",_fhBlob);
 		exit(1);
 	}
-	pthread_create(&thr,NULL,(void *(*)(void *))BlobThread,(void *)fhBlob);
+	pthread_create(&thr,NULL,(void *(*)(void *))BlobThread,(void *)(long)fhBlob);
 	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(thr); 

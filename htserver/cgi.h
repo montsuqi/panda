@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,12 +52,22 @@ typedef	struct {
 }	CGIValue;
 
 typedef	struct {
+	char	*name;
+	char	*value;
+	time_t	*expire;
+	char	*domain;
+	char	*path;
+	Bool	fSecure;
+}	CookieEntry;
+
+typedef	struct {
 	LargeByteString	*code;
 	GHashTable	*Trans;
 	GHashTable	*Radio;
 	GHashTable	*Toggle;
 	GHashTable	*Check;
 	GHashTable	*FileSelection;
+	GHashTable	*Cookie;
 	char		*DefaultEvent;
 	size_t		EnctypePos;
 	int			FormNo;
@@ -103,7 +113,7 @@ extern	char	*ConvLocal(char *istr);
 
 extern	void	LBS_EmitUTF8(LargeByteString *lbs, char *str, char *codeset);
 extern	void	GetArgs(void);
-extern	void	PutHTML(LargeByteString *header, LargeByteString *html, int code);
+extern	void	PutHTML(LargeByteString *header, GHashTable *cookie, LargeByteString *html, int code);
 extern	void	DumpValues(LargeByteString *html, GHashTable *args);
 extern	void	Dump(void);
 extern	byte	*GetHostValue(char *name, Bool fClear);

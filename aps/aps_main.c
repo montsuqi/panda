@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,6 +63,7 @@ static	char	*WfcPortNumber;
 static	sigset_t	hupset;
 static	int		MaxTran;
 static	int		Sleep;
+static	Bool	fConnectRetry;
 
 static	void
 InitSystem(
@@ -162,7 +163,10 @@ ENTER_FUNC;
 		port = ParPortName(WfcPortNumber);
 	}
   retry:
+	fpWFC = NULL;
+	rc = 0;
 	while	(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
+		if		(  !fConnectRetry  )	goto	quit;
 		Warning("WFC connection retry");
 		sleep(1);
 	}
@@ -172,6 +176,7 @@ ENTER_FUNC;
 	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
 		if		(  !CheckNetFile(fpWFC) ) {
 			Warning("WFC connection lost");
+			CloseNet(fpWFC);
 			goto	retry;
 		}
 		Error("invalid LD name");
@@ -183,7 +188,6 @@ ENTER_FUNC;
 		}
 	}
 	node = MakeProcessNode();
-	rc = 0;
 	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
 						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)	) {
@@ -228,8 +232,11 @@ ENTER_FUNC;
 	}
 	MessageLog("exiting APS");
 	FinishSession(node);
-#if	0
-	CloseNet(fpWFC);
+  quit:
+#if	1
+	if		(  fpWFC  !=  NULL  ) {
+		CloseNet(fpWFC);
+	}
 #endif
 LEAVE_FUNC;
 	return	(rc);
@@ -282,6 +289,9 @@ static	ARG_TABLE	option[] = {
 	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
 		"時間計測を行う"								},
 
+	{	"connect-retry",	BOOLEAN,	TRUE,	(void*)&fConnectRetry,
+		"WFCへの接続の再試行を行う"						},
+
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"dbredirectorの起動をチェックしない"			},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
@@ -321,6 +331,7 @@ ENTER_FUNC;
 	RetryInterval = 5;
 
 	fTimer = FALSE;
+	fConnectRetry = FALSE;
 LEAVE_FUNC;
 }
 

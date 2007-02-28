@@ -102,9 +102,11 @@ _DBDISCONNECT(
 {
 ENTER_FUNC;
 	if		(  dbg->fConnect == CONNECT ) { 
+#if	0	/*	dbg->conn already closed by aps_main	*/
 		SendPacketClass((NETFILE *)dbg->conn,APS_END);	ON_IO_ERROR((NETFILE *)dbg->conn,badio);
 	badio:
 		CloseNet((NETFILE *)dbg->conn);
+#endif
 		CloseDB_RedirectPort(dbg);
 		dbg->fConnect = DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {

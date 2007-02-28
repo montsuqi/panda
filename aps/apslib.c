@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -215,16 +215,16 @@ ENTER_FUNC;
 	}		
 
 	val = NULL;
-	if		(  ( rno = (int)g_hash_table_lookup(DB_Table,name) )  !=  0  ) {
+	if		(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,name) )  !=  0  ) {
 		rec = ThisDB[rno-1];
 		val = rec->value;
 		if		(	(  pname  !=  NULL  )
-				&&	(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
+					&&	(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
 														pname) )  !=  0  ) )	{
 			path = rec->opt.db->path[pno-1];
 			val = ( path->args != NULL ) ? path->args : val;
 			if		(	(  oname  !=  NULL  )
-					&&	(  ( ono = (int)g_hash_table_lookup(path->opHash,oname) )  !=  0  ) )
+					&&	(  ( ono = (int)(long)g_hash_table_lookup(path->opHash,oname) )  !=  0  ) )
 				{
 				op = path->ops[ono-1];
 				val = ( op->args != NULL ) ? op->args : val;

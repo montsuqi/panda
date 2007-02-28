@@ -351,7 +351,7 @@ SQL_LexInit(void)
 	Reserved = NewNameHash();
 	for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
 		g_hash_table_insert(Reserved,StrDup(tokentable[i].str),
-							(gpointer)tokentable[i].token);
+							(gpointer)(long)tokentable[i].token);
 	}
 }
 
@@ -370,7 +370,7 @@ CheckReserved(
 		str ++;
 	}
 	if		(  ( p = g_hash_table_lookup(Reserved,ustr) ) !=  NULL  ) {
-		ret = (int)p;
+		ret = (int)(long)p;
 	} else {
 		ret = T_SYMBOL;
 	}

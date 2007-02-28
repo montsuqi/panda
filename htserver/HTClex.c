@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2002-2006 Ogochan.
+ * Copyright (C) 2002-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ HTCLexInit(void)
 
 	Reserved = NewNameHash();
 	for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
-		g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
+		g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)(long)tokentable[i].token);
 	}
 }
 
@@ -68,7 +68,7 @@ CheckReserved(
 	int		ret;
 
 	if		(  ( p = g_hash_table_lookup(Reserved,str) ) !=  NULL  ) {
-#ifndef __alpha__ 	  
+#ifndef	__LP64__
 		ret = (int)p;
 #else
 		long tmp =(long)p;

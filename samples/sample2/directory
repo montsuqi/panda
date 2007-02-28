@@ -39,6 +39,7 @@ ld	{
 #	sample	"/tmp/sample2.ld.sample" * 3;
 	sample	3;
 };
+
 bd	{
 	sample;
 };
@@ -46,4 +47,3 @@ bd	{
 db	{
 	sample;
 };
-

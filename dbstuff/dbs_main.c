@@ -283,24 +283,24 @@ DumpItems(
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_CHAR:
-		sprintf(buff,"char(%d)",ValueStringLength(value));
+		sprintf(buff,"char(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_VARCHAR:
-		sprintf(buff,"varchar(%d)",ValueStringLength(value));
+		sprintf(buff,"varchar(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_DBCODE:
-		sprintf(buff,"dbcode(%d)",ValueStringLength(value));
+		sprintf(buff,"dbcode(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_NUMBER:
 		if		(  ValueFixedSlen(value)  ==  0  ) {
-			sprintf(buff,"number(%d)",ValueFixedLength(value));
+			sprintf(buff,"number(%d)",(int)ValueFixedLength(value));
 		} else {
 			sprintf(buff,"number(%d,%d)",
-					ValueFixedLength(value),
-					ValueFixedSlen(value));
+					(int)ValueFixedLength(value),
+					(int)ValueFixedSlen(value));
 		}
 		SendStringDelim(fp,buff);
 		break;
@@ -310,7 +310,7 @@ DumpItems(
 		break;
 	  case	GL_TYPE_ARRAY:
 		DumpItems(fp,ValueArrayItem(value,0));
-		sprintf(buff,"[%d]",ValueArraySize(value));
+		sprintf(buff,"[%d]",(int)ValueArraySize(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_RECORD:
@@ -378,16 +378,16 @@ do_String(
 			}
 			DecodeStringURL(pname,p);
 			value = NULL;
-			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
+			if		(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 				ctrl.rno = rno - 1;
 				rec = ThisDB[ctrl.rno];
 				value = rec->value;
-				if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
-															pname) )  !=  0  ) {
+				if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
+																  pname) )  !=  0  ) {
 					ctrl.pno = pno - 1;
 					path = rec->opt.db->path[pno-1];
 					value = ( path->args != NULL ) ? path->args : value;
-					if		(  ( ono = (int)g_hash_table_lookup(path->opHash,func) )  !=  0  )	{
+					if		(  ( ono = (int)(long)g_hash_table_lookup(path->opHash,func) )  !=  0  )	{
 						op = path->ops[ono-1];
 						value = ( op->args != NULL ) ? op->args : value;
 					}
@@ -421,11 +421,11 @@ do_String(
 			DecodeStringURL(rname,p);
 			p = q + 1;
 			DecodeStringURL(pname,p);
-			if		(  ( rno = (int)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
+			if		(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 				ctrl.rno = rno - 1;
 				rec = ThisDB[ctrl.rno];
-				if		(  ( pno = (int)g_hash_table_lookup(rec->opt.db->paths,
-															pname) )  ==  0  ) {
+				if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
+																  pname) )  ==  0  ) {
 					rec = NULL;
 				}
 			} else {

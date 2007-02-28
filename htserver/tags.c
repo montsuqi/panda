@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2002-2006 Ogochan.
+ * Copyright (C) 2002-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,6 +47,10 @@
 #define	SIZE_ASTACK		30
 static	size_t	AStack[SIZE_ASTACK];
 static	size_t	pAStack;
+
+#ifndef	_XOPEN_SOURCE
+extern	char *strptime(const char *s, const char *format, struct tm *tm);
+#endif
 
 #define	Push(v)		do { \
     if (pAStack == SIZE_ASTACK) { \
@@ -405,23 +409,68 @@ _Variable(
 	HTCInfo	*htc,
 	Tag		*tag)
 {
-	char	*name;
+	char	*name
+		,	*type
+		,	*expire
+		,	*secure
+		,	*value;
+	CookieEntry	*ent;
+	struct	tm	tm_exp;
+	time_t	time_exp;
 
 ENTER_FUNC;
 	if		(  ( name = HTCGetProp(tag,"name",0) )  !=  NULL  ) {
-		LBS_EmitString(htc->code,"<input type=\"hidden\" name=\"");
-		EmitCode(htc,OPC_EVAL);
-		LBS_EmitPointer(htc->code,StrDup(name));
-		EmitCode(htc,OPC_EMITSTR);
+		if		(	(  ( type = HTCGetProp(tag,"type",0) )  ==  NULL  )
+				||	(  stricmp(type,"form")                 ==  0     ) ) {
+			LBS_EmitString(htc->code,"<input type=\"hidden\" name=\"");
+			EmitCode(htc,OPC_EVAL);
+			LBS_EmitPointer(htc->code,StrDup(name));
+			EmitCode(htc,OPC_EMITSTR);
 
-		LBS_EmitString(htc->code,"\" value=\"");
+			LBS_EmitString(htc->code,"\" value=\"");
 
-		EmitCode(htc,OPC_EVAL);
-		LBS_EmitPointer(htc->code,StrDup(name));
-		EmitCode(htc,OPC_PHSTR);
-		EmitCode(htc,OPC_EMITRAW);
+			EmitCode(htc,OPC_EVAL);
+			LBS_EmitPointer(htc->code,StrDup(name));
+			EmitCode(htc,OPC_PHSTR);
+			EmitCode(htc,OPC_EMITRAW);
 
-		LBS_EmitString(htc->code,"\">\n");
+			LBS_EmitString(htc->code,"\">\n");
+		} else
+		if		(  strlicmp(type,"cookie")  ==  0  ) {
+			if		(  ( ent = g_hash_table_lookup(htc->Cookie,name) )  ==  NULL  ) {
+				ent = New(CookieEntry);
+				ent->name = StrDup(name);
+				ent->expire = NULL;
+				ent->domain = NULL;
+				ent->value = NULL;
+				ent->path = NULL;
+				ent->fSecure = FALSE;
+				g_hash_table_insert(htc->Cookie,ent->name,ent);
+			}
+			if		(  ( value = HTCGetProp(tag,"value",0) )  !=  NULL  ) {
+				if		(  ent->value  !=  NULL  ) {
+					xfree(ent->value);
+				}
+				ent->value = StrDup(value);
+			}
+			ent->domain = HTCGetProp(tag,"domain",0);
+			ent->path = HTCGetProp(tag,"path",0);
+			if		(	(  ( secure = HTCGetProp(tag,"secure",0) )  !=  NULL  )
+					&&	(  stricmp(secure,"true")                   ==  0  ) ) {
+				ent->fSecure = TRUE;
+			} else {
+				ent->fSecure = FALSE;
+			}
+			if		(  ( expire = HTCGetProp(tag,"expires",0) )  !=  NULL  ) {
+				strptime(expire,"%Y-%m-%d %H:%M:%S",&tm_exp);
+				tm_exp.tm_year += 1900;
+				time_exp = mktime(&tm_exp);
+				ent->expire = New(time_t);
+				*ent->expire = time_exp;
+			} else {
+				ent->expire = NULL;
+			}
+		}
 	}
 LEAVE_FUNC;
 }
@@ -1938,8 +1987,7 @@ _Htc(
 	char	*js;
 
 ENTER_FUNC;
-	Codeset = HTCGetProp(tag,"coding",0); 
-	HTCSetCodeset(Codeset);
+	Codeset = HTCGetProp(tag,"coding",0);
 	fButton = FALSE;
 	fHead = FALSE;
 	fNoJavaScript = FALSE;
@@ -2022,6 +2070,12 @@ ENTER_FUNC;
 
 	tag = NewTag("VAR",_Variable);
 	AddArg(tag,"name",TRUE);
+	AddArg(tag,"type",TRUE);
+	AddArg(tag,"domain",TRUE);
+	AddArg(tag,"path",TRUE);
+	AddArg(tag,"secure",TRUE);
+	AddArg(tag,"expires",TRUE);
+	AddArg(tag,"value",TRUE);
 	tag = NewTag("/VAR",NULL);
 
 	tag = NewTag("COMBO",_Combo);

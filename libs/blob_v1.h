@@ -77,7 +77,7 @@ extern	Bool			CommitBLOB_V1(BLOB_V1_State *state);
 extern	Bool			AbortBLOB_V1(BLOB_V1_State *state);
 
 extern	MonObjectType	NewBLOB_V1(BLOB_V1_State *state, int mode);
-extern	Bool			OpenBLOB_V1(BLOB_V1_State *state, MonObjectType obj, int mode);
+extern	ssize_t			OpenBLOB_V1(BLOB_V1_State *state, MonObjectType obj, int mode);
 extern	Bool			DestroyBLOB_V1(BLOB_V1_State *state, MonObjectType obj);
 extern	Bool			CloseBLOB_V1(BLOB_V1_State *state, MonObjectType obj);
 extern	int	WriteBLOB_V1(BLOB_V1_State *state, MonObjectType obj, byte *buff, size_t size);

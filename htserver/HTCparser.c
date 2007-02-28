@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,7 +82,7 @@ static	void
 CopyTag(
 	HTCInfo	*htc)
 {
-	char	*para;
+	byte	*para;
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<");
@@ -326,6 +326,7 @@ ENTER_FUNC;
 			break;
 		}
 	}
+	dbgprintf("[%X]",c);
 	LBS_EmitEnd(htc->code);
 LEAVE_FUNC;
 }
@@ -335,6 +336,7 @@ NewHTCInfo(void)
 {
 	HTCInfo	*ret;
 
+ENTER_FUNC;
 	ret = New(HTCInfo);
 	ret->code = NULL;
 	ret->Trans = NULL;
@@ -344,7 +346,7 @@ NewHTCInfo(void)
 	ret->EnctypePos = 0;
 	ret->FormNo = -1;
 	ret->fHTML = TRUE;
-
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -353,12 +355,14 @@ HTCParserCore(void)
 {
 	HTCInfo	*ret;
 
+ENTER_FUNC;
 	ret = NewHTCInfo();
 	ret->code = NewLBS();
 	ret->Trans = NewNameHash();
 	ret->Radio = NewNameHash();
 	ret->Toggle = NewNameHash();
 	ret->Check = NewNameHash();
+	ret->Cookie = NewNameHash();
 	ret->FileSelection = NewNameHash();
 	LBS_EmitStart(ret->code);
 	fError = FALSE;
@@ -367,6 +371,7 @@ HTCParserCore(void)
 		ret = NULL;
 	}
 	ret->fHTML = FALSE;
+LEAVE_FUNC;
 	return	(ret);
 }
 
