@@ -1,3 +1,7 @@
+2007-03-01  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/net.c: SSLのメッセージを Messageに対応
+
 2006-11-07  Noboru Saitou  <noborus@netlab.jp>
 
 	* fdd/fdd.c: 子プロセスの回収が不十分だった

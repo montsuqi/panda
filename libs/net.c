@@ -254,7 +254,7 @@ FD_Read(
 
 	if		(  ( ret = read(fp->fd,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
-			fprintf(stderr,"read %s\n",strerror(errno));
+			Warning("read %s\n",strerror(errno));
 		}
 		fp->fOK = FALSE;
 		fp->err = errno;
@@ -357,13 +357,13 @@ askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
     pid_t pid;
 
     if (pipe(p) < 0) {
-        fprintf(stderr, "pipe: %s\n", strerror(errno));
+        Warning("pipe: %s\n", strerror(errno));
         return -1;
     }       
     if ((pid = fork()) < 0){
         close(p[0]);
         close(p[1]);
-        fprintf(stderr, "fork: %s\n", strerror(errno));
+        Warning("fork: %s\n", strerror(errno));
         return -1;
     }
     else if (pid == 0){
@@ -376,8 +376,7 @@ askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
         }
         if (p[1] != STDOUT_FILENO) close(p[1]);
         execlp(askpass_command, askpass_command, prompt, (char *) 0);
-        fprintf(stderr, "exec(%s): %s\n", askpass_command, strerror(errno));
-        exit(1);
+        Error("exec(%s): %s\n", askpass_command, strerror(errno));
     }
     close(p[1]);
     len = ret = 0;
@@ -392,7 +391,7 @@ askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
 
     close(p[0]);
     while (waitpid(pid, &status, 0) < 0){
-        fprintf(stderr, "waitpid: %s\n", strerror(errno));
+        Warning("waitpid: %s\n", strerror(errno));
         if (errno != EINTR) break;
     }
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
@@ -425,7 +424,7 @@ SSL_Read(
 	if		(  ( ret = SSL_read(fp->net.ssl,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
 			err = ERR_get_error();
-			fprintf(stderr,"read %s\n",ERR_error_string(err, NULL));
+			Warning("read %s\n",ERR_error_string(err, NULL));
 		} else {
 			err = 0;
 		}
@@ -446,7 +445,7 @@ SSL_Write(
 	if		(  ( ret = SSL_write(fp->net.ssl,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
 			err = ERR_get_error();
-			fprintf(stderr,"write %s\n",ERR_error_string(err, NULL));
+			Warning("write %s\n",ERR_error_string(err, NULL));
 		} else {
 			err = 0;
 		}
@@ -493,11 +492,11 @@ GetSubjectFromCertificate_X509_NAME_print_ex(X509 *cert)
     }
 
     if ((out = BIO_new(BIO_s_mem())) == NULL){
-        fprintf(stderr, "BIO_new failure: %s\n", GetSSLErrorString());
+        Warning("BIO_new failure: %s\n", GetSSLErrorString());
         goto err;
     }
     if (!X509_NAME_print_ex(out, subject, 0, flags)){
-        fprintf(stderr,"X509_NAME_print_ex failure: %s\n",GetSSLErrorString());
+        Warning("X509_NAME_print_ex failure: %s\n",GetSSLErrorString());
         goto err;
     }
     BIO_write(out, "\0", 1);
@@ -523,11 +522,11 @@ GetSubjectFromCertificate_X509_NAME_online(X509 *cert)
         return NULL;
     }
     if ((ret = xmalloc(1000)) == NULL){
-        fprintf(stderr,"xmalloc failure: %s\n",strerror(errno));
+        Warning("xmalloc failure: %s\n",strerror(errno));
         return NULL;
     }
     if (!X509_NAME_oneline(subject, ret, 1000)){
-        fprintf(stderr,"X509_NAME_oneline failure: %s\n",GetSSLErrorString());
+        Warning("X509_NAME_oneline failure: %s\n",GetSSLErrorString());
         xfree(ret);
         ret = NULL;
     }
@@ -653,14 +652,14 @@ StartSSLClientSession(NETFILE *fp, const char *hostname)
     Bool id_ok = FALSE;
 
     if (SSL_connect(fp->net.ssl) <= 0){
-        fprintf(stderr, "SSL_connect failure: %s\n", GetSSLErrorString());
+        Warning("SSL_connect failure: %s\n", GetSSLErrorString());
         return FALSE;
     }
     if ((cert = SSL_get_peer_certificate(fp->net.ssl)) != NULL){
         fp->peer_cert = cert;
         id_ok = CheckHostnameInCertificate(cert, hostname);
         if (id_ok != TRUE){
-            fprintf(stderr, "hostname don't match %s\n", hostname);
+            Warning("hostname don't match %s\n", hostname);
             if (SSL_get_verify_mode(fp->net.ssl) & SSL_VERIFY_PEER){
                 return FALSE;
             }
@@ -676,7 +675,7 @@ StartSSLServerSession(NETFILE *fp)
     X509 *cert;
 
     if (SSL_accept(fp->net.ssl) <= 0){
-        fprintf(stderr, "SSL_accept failure: %s\n", GetSSLErrorString());
+        Warning("SSL_accept failure: %s\n", GetSSLErrorString());
         return FALSE;
     }
     if ((cert = SSL_get_peer_certificate(fp->net.ssl)) != NULL){
@@ -701,12 +700,12 @@ MakeSSL_Net(
     fp->fd = fd;
 
     if ((fp->net.ssl = SSL_new(ctx)) == NULL){
-        fprintf(stderr, "SSL_new failure: %s\n", GetSSLErrorString());
+        Warning("SSL_new failure: %s\n", GetSSLErrorString());
         FreeNet(fp);
         return NULL;
     }
     if (!SSL_set_fd(fp->net.ssl, fd)){
-        fprintf(stderr, "SSL_set_fd failure: %s\n", GetSSLErrorString());
+        Warning("SSL_set_fd failure: %s\n", GetSSLErrorString());
         SSL_free(fp->net.ssl);
         FreeNet(fp);
         return NULL;
@@ -808,12 +807,12 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
         if (key){ EVP_PKEY_free(key); key = NULL; }
         if (err_reason != PKCS12_R_MAC_VERIFY_FAILURE){
             message = "PKCS12_parse failure: %s\n";
-            fprintf(stderr, message, GetSSLErrorString());
+            Warning("%s: %s", message, GetSSLErrorString());
             break;
         }
 		ERR_clear_error();		
         if ((pass = GetPasswordString(passbuf, sizeof(passbuf))) == NULL){
-            fprintf(stderr, "cannot read password\n");
+            Warning("cannot read password\n");
             break;
         }
     }
@@ -825,16 +824,16 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
     if (cert && key){
         if (!SSL_CTX_use_certificate(ctx, cert)){
             message = "SSL_CTX_use_certificate failure: %s\n";
-            fprintf(stderr, message, GetSSLErrorString());
+            Warning("%s: %s", message, GetSSLErrorString());
             return FALSE;
         }
         if (!SSL_CTX_use_PrivateKey(ctx, key)){
             message = "SSL_CTX_use_PrivateKey failure: %s\n";
-            fprintf(stderr, message, GetSSLErrorString());
+            Warning("%s: %s",message, GetSSLErrorString());
             return FALSE;
         }
         if (!SSL_CTX_check_private_key(ctx)){
-            fprintf(stderr, "SSL_CTX_check_private_key failure: %s\n",
+            Warning("SSL_CTX_check_private_key failure: %s\n",
                     GetSSLErrorString());
             return FALSE;
         }
@@ -856,7 +855,7 @@ MakeSSL_CTX(
     const char *askpass_command;
 
     if ((ctx = SSL_CTX_new(SSLv23_method())) == NULL){
-        fprintf(stderr,"SSL_CTX_new failue: %s\n", GetSSLErrorString());
+        Warning("SSL_CTX_new failue: %s\n", GetSSLErrorString());
         return NULL;
     }
 
@@ -866,7 +865,7 @@ MakeSSL_CTX(
     }
 
     if (!SSL_CTX_set_cipher_list(ctx, ciphers)){
-        fprintf(stderr,"SSL_CTX_set_cipher_list(%s) failue: %s\n",
+        Warning("SSL_CTX_set_cipher_list(%s) failue: %s\n",
                 ciphers, GetSSLErrorString());
         SSL_CTX_free(ctx);
         return NULL;
@@ -879,12 +878,12 @@ MakeSSL_CTX(
 
     if ((cafile == NULL) && (capath == NULL)){
         if (!SSL_CTX_set_default_verify_paths(ctx)){
-            fprintf(stderr, "SSL_CTX_set_default_verify_paths error: %s\n",
+            Warning("SSL_CTX_set_default_verify_paths error: %s\n",
                     GetSSLErrorString());
         }
     }
     else if (!SSL_CTX_load_verify_locations(ctx, cafile, capath)){
-        fprintf(stderr,"SSL_CTX_load_verify_locations(%s, %s) error: %s\n",
+        Warning("SSL_CTX_load_verify_locations(%s, %s) error: %s\n",
                 cafile, capath, GetSSLErrorString());
         SSL_CTX_free(ctx);
         return NULL;
@@ -893,7 +892,7 @@ MakeSSL_CTX(
     if (cert != NULL){
         if (LoadPKCS12(ctx, cert)) return ctx;
         if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0){
-            fprintf(stderr,"SSL_CTX_use_certificate_file(%s) failure: %s\n",
+            Warning("SSL_CTX_use_certificate_file(%s) failure: %s\n",
                     cert, GetSSLErrorString());
             SSL_CTX_free(ctx);
             return NULL;
@@ -903,7 +902,7 @@ MakeSSL_CTX(
             if (SSL_CTX_use_PrivateKey_file(ctx, key, SSL_FILETYPE_PEM) <= 0){
                 int err_reason;
                 err_reason = ERR_GET_REASON(ERR_peek_error());
-                fprintf(stderr,"SSL_CTX_use_PrivateKey_file(%s) failure: %s\n",
+                Warning("SSL_CTX_use_PrivateKey_file(%s) failure: %s\n",
                         key, GetSSLErrorString());
                 if (err_reason == PEM_R_BAD_DECRYPT ||
                     err_reason == EVP_R_BAD_DECRYPT) continue;
@@ -913,7 +912,7 @@ MakeSSL_CTX(
             break;
         }
         if (!SSL_CTX_check_private_key(ctx)){
-            fprintf(stderr, "SSL_CTX_check_private_key failure: %s\n",
+            Warning("SSL_CTX_check_private_key failure: %s\n",
                     GetSSLErrorString());
             SSL_CTX_free(ctx);
             return NULL;
