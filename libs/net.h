@@ -30,7 +30,14 @@
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
 #include	<openssl/pkcs12.h>
-#endif
+
+#ifdef USE_PKCS11
+#include <opensc/rsaref/unix.h>
+#include <opensc/rsaref/pkcs11.h>
+#include <dlfcn.h>
+#endif /* USE_PKCS11 */
+
+#endif /* USE_SSL */
 
 #include	"socket.h"
 
@@ -89,4 +96,4 @@ extern	Bool		CheckNetFile(NETFILE *fp);
 
 #define	ON_IO_ERROR(fp,label)	if (!CheckNetFile(fp)) goto label
 
-#endif
+#endif /* USE_SSL */

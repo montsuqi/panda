@@ -22,8 +22,6 @@ sbin_PROGRAMS = monitor msgd
 bin_SCRIPTS = recdefgen.rb recgen.rb
 noinst_SCRIPTS = copy
 
-copygen_LDFLAGS	=			\
-	-export-dynamic
 copygen_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpanda.a		\
@@ -33,8 +31,6 @@ copygen_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
-dbgen_LDFLAGS	=			\
-	-export-dynamic
 dbgen_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpanda.a		\
@@ -44,8 +40,6 @@ dbgen_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
-checkdir_LDFLAGS	=			\
-	-export-dynamic
 checkdir_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpanda.a		\
@@ -55,8 +49,6 @@ checkdir_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
-monitor_LDFLAGS	=			\
-	-export-dynamic
 monitor_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpanda.a		\
@@ -77,14 +69,19 @@ msgd_LDADD 		=					\
 gnumerictodb_LDADD 		=				\
 	-lm									\
 	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(XML2_LIBS)						\
+	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
+
 gnumerictorec_LDADD 	=				\
 	-lm									\
 	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(XML2_LIBS)						\
+	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
 INCLUDES 			= 		\
@@ -128,9 +125,9 @@ gnumerictorec_SOURCES	=	\
 	gnumerictorec.c
 
 install-exec-hook:
-	$(LN_S) -f user $(bindir)/gluseradd
-	$(LN_S) -f user $(bindir)/gluserdel
-	$(LN_S) -f user $(bindir)/glusermod
+	$(LN_S) -f user $(sbindir)/gluseradd
+	$(LN_S) -f user $(sbindir)/gluserdel
+	$(LN_S) -f user $(sbindir)/glusermod
 
 EXTRA_DIST =					\
 	recdefgen.rb				\
