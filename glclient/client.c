@@ -43,6 +43,9 @@
 #include	<openssl/pem.h>
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
+#ifdef  USE_PKCS11
+#include	<openssl/engine.h>
+#endif
 #endif
 #ifdef USE_GNOME
 #    include <gnome.h>
@@ -255,6 +258,9 @@ start_client ()
 	Port	*port;
 #ifdef	USE_SSL
 	SSL_CTX	*ctx = NULL;
+#ifdef  USE_PKCS11
+    ENGINE *engine = NULL;
+#endif
 #endif
 
 	StyleParserInit();
@@ -282,8 +288,8 @@ start_client ()
         fpComm = SocketToNet(fd);
     else {
 #ifdef  USE_PKCS11
-        if (PKCS11_Lib){
-            ctx = MakeSSL_CTX(Slot,PKCS11_Lib,CA_File,CA_Path,Ciphers);
+        if (PKCS11_Lib != NULL){
+            ctx = MakeSSL_CTX_PKCS11(&engine, PKCS11_Lib,Slot,CA_File,CA_Path,Ciphers);
         }
         else{
             ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
@@ -320,6 +326,12 @@ start_client ()
 #ifdef	USE_SSL
     if (ctx != NULL)
         SSL_CTX_free (ctx);
+#ifdef  USE_PKCS11
+    if (engine != NULL){
+        ENGINE_free(engine);
+        ENGINE_cleanup();
+    }
+#endif
 #endif
     DestroyPort (port);
     gtk_rc_reparse_all ();
