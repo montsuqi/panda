@@ -1,0 +1,6 @@
+?package(panda-client): \
+  needs="X11" section="Apps/Tools" \
+  command="/usr/bin/glclient -dialog" \
+  title="glclient" longtitle="MONTSUQI(panda) client" \
+  description="glclient is MONTSUQI(panda) GUI client. \
+    MONTSUQI(panda) is Online Transaction processing."

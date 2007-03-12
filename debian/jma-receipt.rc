@@ -1,0 +1,123 @@
+style	"red"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 1.0, 0.0, 0.0}
+}
+
+style	"green"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.0, 1.0, 0.0}
+}
+
+style	"blue"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.0, 0.0, 1.0}
+}
+
+style	"cyan"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.0, 1.0, 1.0}
+}
+
+style	"darkred"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.8, 0.0, 0.0}
+}
+
+style	"middlered"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.9, 0.0, 0.0}
+}
+
+style	"darkgreen"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.0, 0.6, 0.0}
+}
+
+style	"middleyellow"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 1.0, 1.0, 0.2}
+}
+
+style	"black"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.0, 0.0, 0.0}
+}
+
+style	"darkgray"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.5, 0.5, 0.5}
+}
+
+style	"yellow"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 1.0, 1.0, 0.0}
+}
+
+style	"magenta"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 1.0, 0.0, 1.0}
+}
+
+style	"darkcyan"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 6.0, 8.0, 8.0}
+}
+style	"user-font"	{
+ 	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-c-*-*-*"
+ 	fg[NORMAL] = { 0.0, 0.0, 0.0}
+}
+style	"red-bar"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 1.0, 0.0, 0.0}
+	fg[ACTIVE] = { 1.0, 0.0, 0.0}
+	fg[PRELIGHT] = { 1.0, 0.0, 0.0}
+}
+style	"blue-bar"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.15, 0.09, 1.0}
+	fg[ACTIVE] = { 0.15, 0.09, 1.0}
+	fg[PRELIGHT] = { 0.15, 0.09, 1.0}
+}
+style	"green-bar"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 0.00, 1.00, 0.00}
+	fg[ACTIVE] = { 0.00, 1.00, 0.00}
+	fg[PRELIGHT] = { 0.00, 1.00, 0.00}
+}
+style	"yellow-bar"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 1.00, 0.74, 0.01}
+	fg[ACTIVE] = { 1.00, 0.74, 0.01}
+	fg[PRELIGHT] = { 1.00, 0.74, 0.01}
+}
+style	"pink-bar"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	fg[NORMAL] = { 1.0, 0.03, 1.00}
+	fg[ACTIVE] = { 1.0, 0.03, 1.00}
+	fg[PRELIGHT] = { 1.0, 0.03, 1.00}
+}
+style	"red-rev"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	base[NORMAL] = { 0.90, 0.00, 0.0}
+	fg[NORMAL] = { 0.0, 0.0, 0.0}
+}
+style	"blue-rev"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	base[NORMAL] = { 0.5, 1.00, 0.9}
+	fg[NORMAL] = { 0.0, 0.0, 0.0}
+}
+style	"green-rev"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	base[NORMAL] = { 0.68, 1.00, 0.54}
+	fg[NORMAL] = { 0.0, 0.0, 0.0}
+}
+style	"yellow-rev"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	base[NORMAL] = { 0.94, 1.00, 0.28}
+	fg[NORMAL] = { 0.0, 0.0, 0.0}
+}
+style	"pink-rev"	{
+	fontset = "-misc-fixed-medium-r-normal-*-14-*-*-*-*-*-*-*"
+	base[NORMAL] = { 1.0, 0.57, 0.94}
+	fg[NORMAL] = { 0.0, 0.0, 0.0}
+}

@@ -1,0 +1,14 @@
+usr/bin/panda-config
+usr/bin/panda/panda-config
+usr/bin/panda/copygen
+usr/bin/panda/dbgen
+usr/bin/panda/recgen.rb
+usr/bin/panda/recdefgen.rb
+usr/bin/panda/checkdir
+usr/include/*
+usr/lib/panda/bin/panda-config
+usr/lib/panda/bin/copygen
+usr/lib/panda/bin/dbgen
+usr/lib/panda/bin/recgen.rb
+usr/lib/panda/bin/recdefgen.rb
+usr/lib/panda/bin/checkdir

@@ -1,0 +1,38 @@
+Source: panda
+Section: unknown
+Priority: optional
+Maintainer: ORCA support <support@orca.med.or.jp>
+Build-Depends: debhelper (>> 3.0.0), automake, autoconf, postgresql-dev, libzvt-dev, libxml2-dev, libgtkpanda-dev, libglade-panda-dev, libglade-panda-gnome-dev, open-cobol, libmondai-dev, libmagic-dev, libxslt1-dev
+Standards-Version: 3.6.1
+Origin: jma-orca
+
+Package: panda-dev
+Section: devel
+Conflicts: panda-server (<= 1:1.2.0.cvs20040127-0+1jma1)
+Architecture: any
+Depends: panda-server (= ${Source-Version}), ruby, libxml-parser-ruby1.8, libuconv-ruby1.8 
+Description: Development files for panda
+ panda is Online Transaction processing. development file.
+
+Package: panda-server
+Architecture: any
+Depends: ${shlibs:Depends}, netpbm, gs-esp | gs-ja | gs 
+Conflicts: panda, orca (>= 1:0.9.01-1)
+Replaces: panda
+Provides: panda
+Description: OLTP monitor and client server GUI(server)
+ panda is Online Transaction processing.  server program.
+
+Package: panda-fdd
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: OLTP monitor and client server GUI(fdd daemon)
+ panda is Online Transaction processing.  FD daemon.
+
+Package: panda-client
+Architecture: any
+Depends: ${shlibs:Depends}
+Conflicts: orca (>= 1:0.9.01-1)
+Description: OLTP monitor and client server GUI(client)
+ panda is Online Transaction processing.  client program (glclient).
+

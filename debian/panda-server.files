@@ -1,0 +1,5 @@
+usr/bin
+usr/sbin
+usr/lib/MCPSUB.*
+usr/lib/panda
+usr/lib/open-cobol

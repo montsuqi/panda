@@ -1,0 +1,16 @@
+panda for Debian
+----------------
+
+On Debian, some commands is in not-standard-location:
+
+  * Checkdir, copygen, dbgen, dbstub, glclient, mon and recdefgen.rb are in
+    /usr/lib/panda/bin.  And a symlink to point to glclient is in /usr/bin.
+
+  * Aps, wfc, dbredirector, glauth, glserver, htserver, monitor, pgserver and
+    user are in /usr/lib/panda/sbin.  gluseradd, gluserdel and glusermod are
+    also provided at same location.  the symlinks points to user.
+
+Modules for OpenCOBOL (MCPSUB) is in /usr/lib/open-cobol.  The directory is
+included default COB_LIBRARY_PATH of open-cobol.deb.
+
+ -- ORCA support <support@orca.med.or.jp>, Wed, 28 Aug 2002 22:31:13 +0900

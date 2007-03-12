@@ -1,0 +1,189 @@
+#!/usr/bin/make -f
+# Sample debian/rules that uses debhelper. 
+# GNU copyright 1997 by Joey Hess.
+#
+# This version is for a hypothetical package that builds an
+# architecture-dependant package, as well as an architecture-independent
+# package.
+
+# Uncomment this to turn on verbose mode. 
+#export DH_VERBOSE=1
+
+# This is the debhelper compatibility version to use.
+export DH_COMPAT=3
+
+
+
+ifneq (,$(findstring debug,$(DEB_BUILD_OPTIONS)))
+	CFLAGS += -g
+endif
+ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
+	INSTALL_PROGRAM += -s
+endif
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	# Add here commands to configure the package.
+	./autogen.sh
+	./configure \
+		--prefix=/usr \
+		--bindir=\$${prefix}/lib/panda/bin \
+		--sbindir=\$${prefix}/lib/panda/sbin \
+		--libexecdir=\$${prefix}/lib/panda/libexec \
+		--enable-ipv6 \
+		--with-shell \
+		--with-postgres \
+		--enable-opencobol \
+		--with-ssl \
+		--with-pkcs11 \
+                --enable-msgd \
+                --enable-syslog
+
+	touch configure-stamp
+
+
+build-arch: configure-stamp  build-arch-stamp
+build-arch-stamp:
+	dh_testdir
+
+	# Add here command to compile/build the package.
+	#$(MAKE) -C aps defaults.h
+	$(MAKE)
+
+	touch build-arch-stamp
+
+build-indep:  configure-stamp build-indep-stamp
+build-indep-stamp:
+	dh_testdir
+
+	# Add here command to compile/build the arch indep package.
+	# It's ok not to do anything here, if you don't need to build
+	#  anything for this package.
+	#/usr/bin/docbook-to-man debian/panda.sgml > panda.1
+
+	touch build-indep-stamp
+
+build: build-arch build-indep
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-arch-stamp build-indep-stamp configure-stamp
+
+	# XXX:
+	# unneeded files in upstream source. they must be removed.
+	-rm -f debian/*.ex
+	-rm -f debian/postinst
+
+	# Add here commands to clean up after the build process.
+	-$(MAKE) distclean
+	-rm -f \
+		configure config.h.in \
+		Doc/Makefile.in aps/Makefile.in fdd/Makefile.in \
+		wfc/Makefile.in auth/Makefile.in libs/Makefile.in \
+		dbstuff/Makefile.in dblib/Makefile.in cobol/Makefile.in \
+		tools/Makefile.in pgserver/Makefile.in htserver/Makefile.in \
+		glclient/Makefile.in glserver/Makefile.in \
+		monpls_demo/Makefile.in include/Makefile.in Makefile.in
+
+	-rm -f aps/defaults.h
+
+	-test -r /usr/share/misc/config.sub && \
+		cp -f /usr/share/misc/config.sub config.sub
+	-test -r /usr/share/misc/config.guess && \
+		cp -f /usr/share/misc/config.guess config.guess
+
+	dh_clean
+
+install: DH_OPTIONS=
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	install -d $(CURDIR)/debian/tmp/usr/sbin
+	install -d $(CURDIR)/debian/tmp/usr/bin/panda
+	install -d $(CURDIR)/debian/tmp/usr/lib/panda
+	install -d $(CURDIR)/debian/tmp/usr/lib/open-cobol
+
+	# Add here commands to install the package into debian/tmp.
+	$(MAKE) install prefix=$(CURDIR)/debian/tmp/usr \
+		libdir=$(CURDIR)/debian/tmp/usr/lib/panda
+
+	# handler libraries
+	cd $(CURDIR)/debian/tmp/usr/lib/open-cobol && \
+		ln -s ../panda/MCPSUB.* . && \
+		ln -s ../panda/MONFUNC.* .
+
+	cd $(CURDIR)/debian/tmp/usr/lib/ && \
+		ln -s panda/MCPSUB.* . && \
+		ln -s panda/MONFUNC.* .
+
+#	cd $(CURDIR)/debian/tmp/usr/lib/ && \
+#		ln -s ./panda/lib* .
+
+	cd $(CURDIR)/debian/tmp/usr/bin/panda && \
+		ln -s ../../lib/panda/bin/* .
+	cd $(CURDIR)/debian/tmp/usr/sbin && \
+		ln -s ../lib/panda/sbin/gluser* .
+	ln -s panda/glclient \
+		$(CURDIR)/debian/tmp/usr/bin
+	ln -s panda/panda-config \
+		$(CURDIR)/debian/tmp/usr/bin
+
+	dh_movefiles -ppanda-dev
+	dh_movefiles -ppanda-client
+	dh_movefiles -ppanda-fdd
+	dh_movefiles -ppanda-server
+
+
+	install -m 644 debian/jma-receipt.rc $(CURDIR)/debian/panda-client/usr/share/panda-client
+
+# Build architecture-independent files here.
+# Pass -i to all debhelper commands in this target to reduce clutter.
+binary-indep: build install
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir -a
+	dh_testroot -a
+#	dh_installdebconf -a
+	dh_installdocs -a
+	dh_installexamples -a
+	dh_installmenu -a
+#	dh_installlogrotate -a
+#	dh_installemacsen -a
+#	dh_installpam -a
+#	dh_installmime -a
+#	dh_installinit -a
+	dh_installcron -a
+#	dh_installman -a
+	dh_installinfo -a
+	dh_undocumented -ppanda-dev \
+		checkdir.1 copygen.1 dbgen.1 panda-config.1 \
+		recdefgen.rb.1 recgen.rb.1 
+	dh_undocumented -ppanda-server \
+		dbstub.1 glauth.8 gluseradd.8 gluserdel.8 glusermod.8 \
+		mon.1 fdw.1 msgd.1 wfccontrol.1 pstopng.1 htcproc.1 mce.1
+	dh_undocumented -ppanda-client \
+		glclient.1
+	dh_installchangelogs ChangeLog -a
+	dh_strip -a
+	dh_link -a
+	dh_compress -a
+	dh_fixperms -a
+	dh_makeshlibs -a -Npanda-server
+	dh_makeshlibs -a -ppanda-server -n \
+		-XMCPSUB -XOpenCOBOL -XdotCOBOL -XC -XResident \
+		 -XExec -XRuby
+	dh_shlibdeps -a
+	dh_installdeb -a 
+#	dh_perl -a
+	dh_gencontrol -a
+	dh_md5sums -a
+	dh_builddeb -a
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

@@ -1,0 +1,893 @@
+panda (1:1.2.8-0+2jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 24 Oct 2006 16:17:16 +0900
+
+panda (1:1.2.7+1.2.8.pre2-0+2jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 19 Oct 2006 10:51:16 +0900
+
+panda (1:1.2.7+1.2.8.pre1-0+2jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 18 Oct 2006 14:42:08 +0900
+
+panda (1:1.2.7-0+2jma6) unstable; urgency=low
+
+  * fdd/fdd.c: applied patch(don't set SIG_IGN in SIGCHLD).
+
+ -- ORCA support <support@orca.med.or.jp>  Wed,  9 Aug 2006 22:24:23 +0900
+
+panda (1:1.2.7-0+2jma5) unstable; urgency=low
+
+  * libs/net.c (CloseNet): Locknet is unnecessary.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 27 Jul 2006 00:43:23 +0900
+
+panda (1:1.2.7-0+2jma4) unstable; urgency=low
+
+  * libs/auth.c: applied patch (no error message).
+  * libs/net.c: applied patch (add ERR_clear_error).
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 13 Jul 2006 14:22:50 +0900
+
+panda (1:1.2.7-0+2jma3) unstable; urgency=low
+
+  * aps/dbstub_main.c: "-bddir" was maed effective.
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 26 Jun 2006 22:22:31 +0900
+
+panda (1:1.2.7-0+2jma2) unstable; urgency=low
+
+  * libs/port.c(StringPort): "" returned at NULL.
+  * libs/port.c(ParseURL): applied patch (ParPort has the return of NULL).
+  * debian/control move Recommends to Depends (netpbm, gs).
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 22 Jun 2006 14:10:54 +0900
+
+panda (1:1.2.7-0+2jma1) unstable; urgency=low
+
+  * New upstream release
+  * debian/rules: add link MONFUNC.
+  * change maintainer.
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 19 Jun 2006 15:09:03 +0900
+
+panda (1:1.2.6p3-0+2jma2) unstable; urgency=low
+
+  * fix gluser* path. 
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  1 Jun 2006 13:50:23 +0900
+
+panda (1:1.2.6p3-0+2jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 25 Apr 2006 14:45:55 +0900
+
+panda (1:1.2.6-0+2jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 16 Mar 2006 11:18:06 +0900
+
+panda (1:1.2.5-0+2jma1) unstable; urgency=low
+
+  * upgrade Standards-Version: 3.6.1.
+  * fix symlink path MCPSUB.
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 11 Nov 2005 01:42:57 +0900
+
+panda (1:1.2.5-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 14 Oct 2005 13:56:44 +0900
+
+panda (1:1.2.4.cvs20051006-0+1jma2) unstable; urgency=low
+
+  * It is returned to have erased the line of dh_shlibdeps by mistake. 
+    (orca-users:08208)
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 12 Oct 2005 11:58:28 +0900
+
+panda (1:1.2.4.cvs20051006-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  6 Oct 2005 13:15:47 +0900
+
+panda (1:1.2.4.cvs20050902-2) unstable; urgency=low
+
+  * add link module libpandas(TermToHost)
+
+ -- ORCA support <support@orca.med.or.jp>  Tue,  4 Oct 2005 11:31:01 +0900
+
+panda (1:1.2.4.cvs20050902-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Fri,  2 Sep 2005 01:24:08 +0900
+
+panda (1:1.2.4.cvs20050901-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+  * Remove libpanda package.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  1 Sep 2005 04:03:15 +0000
+
+panda (1:1.2.4.cvs20050802-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue,  2 Aug 2005 05:44:19 +0000
+
+panda (1:1.2.4.cvs20050715-0+1jma2) unstable; urgency=low
+
+  * CheckArg is changed from the error to Warning.
+  * Change func name from CheckArgPATH to CheckArgTable.
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 15 Jul 2005 04:11:28 +0000
+
+panda (1:1.2.4.cvs20050715-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Sat, 16 Jul 2005 01:48:46 +0000
+
+panda (1:1.2.4.cvs20050711-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 11 Jul 2005 02:04:54 +0000
+
+panda (1:1.2.4-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 20 Jun 2005 21:00:28 +0900
+
+panda (1:1.2.3.cvs20050317-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+  * add configure option --enable-syslog.
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 18 Mar 2005 03:01:59 +0900
+
+panda (1:1.2.3.cvs20050316-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 16 Mar 2005 13:54:52 +0900
+
+panda (1:1.2.3.cvs20050311-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 11 Mar 2005 14:05:43 +0900
+
+panda (1:1.2.3.cvs20050303-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+  * debian/control: added libxslt1-dev to Build-Depends field
+  * debian/panda-dev.files: moved usr/lib/panda/bin/* develop tool
+
+ -- ORCA support <support@orca.med.or.jp>  Fri,  4 Mar 2005 13:46:51 +0900
+
+panda (1:1.2.2-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 29 Sep 2004 13:09:18 +0900
+
+panda (1:1.2.1.cvs20040927-0+1jma2) unstable; urgency=low
+
+  * fix cache file permission.
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 28 Sep 2004 16:01:29 +0900
+
+panda (1:1.2.1.cvs20040927-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 27 Sep 2004 21:47:26 +0900
+
+panda (1:1.2.1.cvs20040905-0+1jma6) unstable; urgency=low
+
+  * debian/jma-receipt.rc style file update.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 16 Sep 2004 16:07:16 +0900
+
+panda (1:1.2.1.cvs20040905-0+1jma5) unstable; urgency=low
+
+  * disable protocol version 2.
+  * change default option( application, style ).
+  * debian/control: added libmondai-dev, libmagic-dev to Build-Depends field
+    ( patch supplied by <honda@smilezone.biz>).
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 14 Sep 2004 13:50:06 +0900
+
+panda (1:1.2.1.cvs20040905-0+1jma4) unstable; urgency=low
+
+  * netpbm is changed into Recommends from Depends.
+  * panda-client.menu: section changed(Apps/Tools).
+  
+ -- ORCA support <support@orca.med.or.jp>  Fri, 10 Sep 2004 14:24:35 +0900
+
+panda (1:1.2.1.cvs20040905-0+1jma3) unstable; urgency=low
+
+  * added netpbm to Depends field.
+
+ -- ORCA support <support@orca.med.or.jp>  Mon,  6 Sep 2004 12:46:58 +0900
+
+panda (1:1.2.1.cvs20040905-0+1jma2) unstable; urgency=low
+
+  * add debian/menu file.
+  * Makefile.am: don't install monplas_demo(demo program).
+  * move package (*gen* tools) panda-server -> panda-dev.
+
+ -- ORCA support <support@orca.med.or.jp>  Sun,  5 Sep 2004 23:04:42 +0900
+
+panda (1:1.2.1.cvs20040905-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Sun,  5 Sep 2004 17:36:32 +0900
+
+panda (1:1.2.1.cvs20040902-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  2 Sep 2004 16:11:52 +0900
+
+panda (1:1.2.1.cvs20040831-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 31 Aug 2004 16:31:47 +0900
+
+panda (1:1.2.1.cvs20040827-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 27 Aug 2004 03:34:21 +0900
+
+panda (1:1.2.1.cvs20040825-0+1jma2) unstable; urgency=low
+
+  * don't OpenCOBOL_PackValue where MCP_EOF.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 26 Aug 2004 18:23:12 +0900
+
+panda (1:1.2.1.cvs20040825-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 25 Aug 2004 13:17:08 +0900
+
+panda (1:1.2.1.cvs20040817-0+1jma4) unstable; urgency=low
+
+  * use DEBUG_OPTION rebuild.
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 20 Aug 2004 17:46:08 +0900
+
+panda (1:1.2.1.cvs20040817-0+1jma3) unstable; urgency=low
+
+  * libs/comm.c: add RecvnString check.
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 20 Aug 2004 13:24:06 +0900
+
+panda (1:1.2.1.cvs20040817-0+1jma2) unstable; urgency=low
+
+  * bug fix(BLOB open state).
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 18 Aug 2004 16:15:20 +0900
+
+panda (1:1.2.1.cvs20040817-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 17 Aug 2004 18:46:19 +0900
+
+panda (1:1.2.1.cvs20040811-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 11 Aug 2004 22:49:04 +0900
+
+panda (1:1.2.1p5-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 23 Jun 2004 14:55:25 +0900
+
+panda (1:1.2.1p4-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 22 Jun 2004 15:02:34 +0900
+
+panda (1:1.2.1p3-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 16 Jun 2004 17:34:25 +0900
+
+panda (1:1.2.1p2-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+  * Fix thread detach.
+  * Change of DBOPEN/DBDISCONNECT into application.
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 16 Jun 2004 16:02:04 +0900
+
+panda (1:1.2.1p1-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 25 Feb 2004 02:25:39 +0900
+
+panda (1:1.2.1-0+jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Fri, 20 Feb 2004 14:52:45 +0900
+
+panda (1:1.2.0.cvs20040219-1+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 19 Feb 2004 21:46:30 +0900
+
+panda (1:1.2.0.cvs20040217-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 17 Feb 2004 19:34:41 +0900
+
+panda (1:1.2.0.cvs20040216-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 16 Feb 2004 16:49:30 +0900
+
+panda (1:1.2.0.cvs20040212-0+1jma2) unstable; urgency=low
+
+  * added libpanda dependent version.
+  * libpanda Conflicts: panda-server (<= 1:1.2.0.cvs20040127-0+1jma1). 
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 12 Feb 2004 18:55:20 +0900
+
+panda (1:1.2.0.cvs20040212-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+  * msgd is in /usr/lib/panda/sbin.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 12 Feb 2004 13:55:31 +0900
+
+panda (1:1.2.0.cvs20040209-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+  * fix typo deamon -> daemon.
+  * MONTSUQI_LIBRARY_PATH and  MONTSUQI_LOAD_PATH set to /usr/lib/panda.
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 10 Feb 2004 11:50:06 +0900
+
+panda (1:1.2.0.cvs20040127-0+1jma1) unstable; urgency=low
+
+  * MCPSUB.* /usr/lib/panda/lib* symlink to /usr/lib .
+  * add new package FD daemon (panda-fdd).
+  * New upstream release.
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 27 Jan 2004 22:18:10 +0900
+
+panda (1:1.2.0.cvs20031224-0+1jma2) unstable; urgency=low
+
+  * debian/rules: fix configure option( missing '\').
+
+ -- ORCA support <support@orca.med.or.jp>  Wed,  7 Jan 2004 13:01:10 +0900
+
+panda (1:1.2.0.cvs20031224-0+1jma1) unstable; urgency=low
+
+  * New upstream release.
+  * configure with i18n.
+  * configure with xml2.
+  * configure with ssl.
+  * configure with msgd.
+  * panda-config symlink to /usr/bin/ .
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 24 Dec 2003 15:54:05 +0900
+
+panda (1:1.2.0.cvs20031110-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+  * added libpanda(separated from panda-server)
+    panda-client is dependent only on libpanda.
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 10 Nov 2003 22:53:36 +0900
+
+panda (1:1.1.99+pre9-0+0jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 20 Aug 2003 13:05:52 +0900
+
+panda (1:1.1.99+pre8-0+0jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 16 Jun 2003 12:27:45 +0900
+
+panda (1:1.1.99+pre7-0+0jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 11 Jun 2003 15:01:03 +0900
+
+panda (1:1.1.99+pre6-0+0jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 10 Jun 2003 15:37:29 +0900
+
+panda (1:1.1.99+pre5-0+0jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 10 Jun 2003 08:32:37 +0900
+
+panda (1:1.1.99+pre4-0+0jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  5 Jun 2003 15:05:53 +0900
+
+panda (1:1.1.99+pre3-0+0jma1) unstable; urgency=low
+
+  * New upstram release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue,  3 Jun 2003 22:38:24 +0900
+
+panda (1:1.1.99+pre2-0+0jma1) unstable; urgency=low
+
+  * fix MCPSUB symlink (/usr/lib -> /usr/lib/panda).
+  * wfc/mqthread.c (MessageThread): (2003-05-24) send back.
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 28 May 2003 19:28:04 +0900
+
+panda (1:1.1.99-0+0jma0pre2) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Mon, 28 Apr 2003 21:18:18 +0900
+
+panda (1:1.1.2p6-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 22 Apr 2003 22:37:34 +0900
+
+panda (1:1.1.2p5-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Wed,  9 Apr 2003 16:53:13 +0900
+
+panda (1:1.1.2p4-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  3 Apr 2003 15:37:27 +0900
+
+panda (1:1.1.2p3-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  3 Apr 2003 14:04:34 +0900
+
+panda (1:1.1.2p2-0+1jma1) unstable; urgency=low
+
+  * New upstream release
+
+ -- ORCA support <support@orca.med.or.jp>  Fri,  7 Mar 2003 18:17:25 +0900
+
+panda (1:1.1.2p1-0+1jma1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 18 Feb 2003 14:53:20 +0900
+
+panda (1:1.0.7p5-0+1jma1) unstable; urgency=low
+
+  * (NumericToFixed): Temporary fix to avoid seg fault.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  5 Dec 2002 22:56:29 +0900
+
+panda (1:1.0.7p3-0+1jma1) unstable; urgency=low
+
+  * dblib/Postgres.c (GetTable, GetValue): Fix memory leak.
+  * datalib/value.c (NumericToFixed): Fix memory leak.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 28 Nov 2002 17:44:08 +0900
+
+panda (1:1.0.7p2-0+1jma1) unstable; urgency=low
+
+  * modification of version.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 17 Oct 2002 04:03:57 +0900
+
+panda (1:1.0.7p1-0+1jma2) unstable; urgency=low
+
+  * backported zonbee collection patch.
+  * libs/tcp.c: setsockopt hacks.
+
+ -- ORCA support <support@orca.med.or.jp>  Sun, 29 Sep 2002 01:07:07 +0900
+
+panda (1:1.0.7p1-0+1jma1) unstable; urgency=low
+
+  * new upstream version 1.0.7p1.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu, 26 Sep 2002 21:03:46 +0900
+
+panda (1:1.0.7-0+1jma7) unstable; urgency=low
+
+  * changed path of dbredirector to /usr/lib/panda/sbin/dbredirector.
+
+ -- ORCA support <support@orca.med.or.jp>  Tue, 17 Sep 2002 15:42:38 +0900
+
+panda (1:1.0.7-0+1jma6) unstable; urgency=low
+
+  * removed a hack for wrong-version-of-libxml2-problem.  It is not work...
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  5 Sep 2002 22:05:59 +0900
+
+panda (1:1.0.7-0+1jma5) unstable; urgency=low
+
+  * Conflicts: orca (>= 1:0.9.01-1).  Thete fields may bounce Debian's orca in
+    the future.
+  * added a hack for wrong-version-of-libxml2-problem.
+  * rebuild with open-cobol 0.8.9-3+0jma2.
+
+ -- ORCA support <support@orca.med.or.jp>  Thu,  5 Sep 2002 01:54:57 +0900
+
+panda (1:1.0.7-0+1jma4) unstable; urgency=low
+
+  * glauth is not symlink for user.
+  * added libxml2 to Depends field. (#03454)
+
+ -- ORCA support <support@orca.med.or.jp>  Wed,  4 Sep 2002 10:29:00 +0900
+
+panda (1:1.0.7-0+1jma3) unstable; urgency=low
+
+  * puted MCPSUB.* in /usr/lib and made symlinks to the files from
+    /usr/lib/open-cobol.
+  * dbstub is in /usr/lib/panda/sbin.
+
+ -- ORCA support <support@orca.med.or.jp>  Tue,  3 Sep 2002 16:25:44 +0900
+
+panda (1:1.0.7-0+1jma2) unstable; urgency=low
+
+  * built with libglade-panda.
+  * remove unneeded debian/shlibs.
+
+ -- ORCA support <support@orca.med.or.jp>  Mon,  2 Sep 2002 15:59:53 +0900
+
+panda (1:1.0.7-0+1jma1) unstable; urgency=low
+
+  * updated Standard-Version.
+  * debian/control: added Origin.
+  * debian/control: updated Build-Depends.
+  * debian/README.Debian: updated.
+  * extracted orig.tar.gz from upstream CVS.
+  * applied upstream CVS patch.
+  * Doc/panda.tex: double included aps.tex.
+  * */Makefile.am: install path.
+  * configure with --with-ipv6.
+
+ -- ORCA support <support@orca.med.or.jp>  Wed, 28 Aug 2002 22:33:42 +0900
+
+panda (1:1.0.7-0+0.orca.1) unstable; urgency=low
+
+  * New upstram release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 20 Aug 2002 17:55:21 +0900
+
+panda (1:1.0.6-0+0.orca.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 10 Jul 2002 13:08:18 +0900
+
+panda (1:1.0.5-0+0.orca.6) unstable; urgency=low
+
+  * add progressbar and timer. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  4 Jul 2002 10:54:07 +0900
+
+panda (1:1.0.5-0+0.orca.5) unstable; urgency=low
+
+  * add keypress_filter. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 21 Jun 2002 15:16:43 +0900
+
+panda (1:1.0.5-0+0.orca.4) unstable; urgency=low
+
+  * remove debug printf (widgetOPS.c). 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  6 Jun 2002 21:38:57 +0900
+
+panda (1:1.0.5-0+0.orca.3) unstable; urgency=low
+
+  * remove set_position. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  6 Jun 2002 20:06:52 +0900
+
+panda (1:1.0.5-0+0.orca.2) unstable; urgency=low
+
+  * fix redirector off mode. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  6 Jun 2002 17:51:30 +0900
+
+panda (1:1.0.5-0+0.orca.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu,  6 Jun 2002 11:07:11 +0900
+
+panda (1:1.0.4-0+0.orca.1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 24 May 2002 19:20:53 +0900
+
+panda (1:1.0.3-0+0.orca.3) unstable; urgency=low
+
+  * remove set_position.
+  * remove send_event_on_focus_out.
+  * db -> dbarea
+  * increase SIZE_BUFF 15000
+  * fix version.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu, 23 May 2002 17:47:45 +0900
+
+panda (1:1.0.3-2) unstable; urgency=low
+
+  * add send_event_on_focus_out 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon, 15 Apr 2002 17:12:12 +0900
+
+panda (1:1.0.3-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 10 Apr 2002 15:09:37 +0900
+
+panda (1:1.0.2-1) unstable; urgency=low
+
+  * New upstream release. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue,  2 Apr 2002 01:55:06 +0900
+
+panda (1:0.9.13-6) unstable; urgency=low
+
+  * fix GtkText. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue,  5 Feb 2002 18:51:10 +0900
+
+panda (1:0.9.13-5) unstable; urgency=low
+
+  * fix increment search.
+  * add event block. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu, 31 Jan 2002 13:08:04 +0900
+
+panda (1:0.9.13-4) unstable; urgency=low
+
+  * fix open_browser. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 30 Jan 2002 13:41:37 +0900
+
+panda (1:0.9.13-3) unstable; urgency=low
+
+  * add configure option --with-shell. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 29 Jan 2002 13:00:32 +0900
+
+panda (1:0.9.13-2) unstable; urgency=low
+
+  * add shlibs.local. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon, 28 Jan 2002 19:13:19 +0900
+
+panda (1:0.9.13-1) unstable; urgency=low
+
+  * New upstram release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 25 Jan 2002 14:11:26 +0900
+
+panda (1:0.9.11-1) unstable; urgency=low
+
+  * New upstream release. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 23 Jan 2002 23:09:36 +0900
+
+panda (011226-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 26 Dec 2001 19:05:14 +0900
+
+panda (011106-2) unstable; urgency=low
+
+  * add handler send_event_if_changed.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 14 Nov 2001 00:01:57 +0900
+
+panda (011106-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 13 Nov 2001 23:53:19 +0900
+
+panda (011102-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon,  5 Nov 2001 14:35:58 +0900
+
+panda (011023-7) unstable; urgency=low
+
+  * gtk_widget_show -> gtk_widget_show_all 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 31 Oct 2001 18:46:10 +0900
+
+panda (011023-6) unstable; urgency=low
+
+  * enable cache and enable ic_destroy 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 31 Oct 2001 16:04:21 +0900
+
+panda (011023-5) unstable; urgency=low
+
+  * add xim_on 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 31 Oct 2001 03:32:12 +0900
+
+panda (011023-4) unstable; urgency=low
+
+  * disable cache. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 30 Oct 2001 19:17:10 +0900
+
+panda (011023-3) unstable; urgency=low
+
+  * add widgetOPS.c gtk_panda_entry_type
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 30 Oct 2001 15:07:52 +0900
+
+panda (011023-2) unstable; urgency=low
+
+  * fix link add some bug. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Tue, 30 Oct 2001 02:46:51 +0900
+
+panda (011023-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@netlab.jp>  Mon, 29 Oct 2001 21:00:58 +0900
+
+panda (011018-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 19 Oct 2001 12:42:16 +0900
+
+panda (010928-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 28 Sep 2001 12:22:47 +0900
+
+panda (010918-2) unstable; urgency=low
+
+  * add clist_send_event and activate_widget. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 19 Sep 2001 23:49:36 +0900
+
+panda (010918-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 19 Sep 2001 21:52:34 +0900
+
+panda (010911-2) unstable; urgency=low
+
+  * add clist_send_event. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Wed, 19 Sep 2001 18:47:20 +0900
+
+panda (010911-1) unstable; urgency=low
+
+  * New upstream release. 
+
+ -- Noboru Saitou <noborus@netlab.jp>  Thu, 13 Sep 2001 13:55:45 +0900
+
+panda (010719-2) unstable; urgency=low
+
+  * add focus_out_event and clist event.  
+
+ -- Noboru Saitou <noborus@netlab.jp>  Fri, 24 Aug 2001 19:02:29 +0900
+
+panda (010719-1) unstable; urgency=low
+
+  * orca build 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Fri, 20 Jul 2001 04:17:23 +0900
+
+panda (010718-3-1) unstable; urgency=low
+
+  * New upstream release. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Wed, 18 Jul 2001 18:01:39 +0900
+
+panda (010629-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@zetabits.com>  Thu, 12 Jul 2001 00:37:30 +0900
+
+panda (010518-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Noboru Saitou <noborus@zetabits.com>  Thu, 21 Jun 2001 14:56:34 +0900
+
+panda (010319-7) unstable; urgency=low
+
+  * passwd file changed. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Wed, 11 Apr 2001 01:28:01 +0900
+
+panda (010319-6) unstable; urgency=low
+
+  * add init.d. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Tue, 10 Apr 2001 08:14:52 +0900
+
+panda (010319-5) unstable; urgency=low
+
+  * add link gluseradd gluserdel glsermod 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Tue, 10 Apr 2001 05:31:31 +0900
+
+panda (010319-4) unstable; urgency=low
+
+  * apscobo.sh changed. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Tue, 10 Apr 2001 05:21:58 +0900
+
+panda (010319-3) unstable; urgency=low
+
+  * passwd -> /usr/local/orca/passwd. 
+
+ -- Noboru Saitou <noborus@zetabits.com>  Tue, 10 Apr 2001 04:24:19 +0900
+
+panda (010319-2) unstable; urgency=low
+
+  * add Description and some bug fix.
+
+ -- Noboru Saitou <noborus@zetabits.com>  Mon,  9 Apr 2001 22:35:51 +0900
+
+panda (010319-1) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Noboru Saitou <noborus@zetabits.com>  Fri,  6 Apr 2001 14:25:45 +0900
+
+Local variables:
+mode: debian-changelog
+End:
