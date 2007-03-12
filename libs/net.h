@@ -93,7 +93,15 @@ extern	Bool		CheckHostnameInCertificate(X509 *cert, const char *host);
 extern	Bool		StartSSLClientSession(NETFILE *fp, const char *host);
 extern	Bool		StartSSLServerSession(NETFILE *fp);
 #define	NETFILE_SSL(fp)		((fp)->net.ssl)
-#endif
+#ifdef  USE_PKCS11
+extern	SSL_CTX		*MakeSSL_CTX_PKCS11(ENGINE **e,
+                        char *pkcs11, 
+                        char *slot, 
+                        char *cafile, 
+                        char *capath, 
+                        char *ciphers);
+#endif /* USE_PKCS11 */
+#endif /* USE_SSL */
 extern	NETFILE		*OpenPort(char *url, char *defport);
 extern	int			InitServerPort(Port *port, int back);
 
@@ -101,4 +109,4 @@ extern	Bool		CheckNetFile(NETFILE *fp);
 
 #define	ON_IO_ERROR(fp,label)	if (!CheckNetFile(fp)) goto label
 
-#endif /* USE_SSL */
+#endif 

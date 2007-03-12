@@ -57,6 +57,29 @@
 #define	UnLockNet(fp)
 #endif
 
+#ifdef  USE_SSL
+#ifdef  USE_PKCS11
+static const char *PKCS11ErrorString(CK_RV rv);
+static void *PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f);
+static Bool PKCS11UnloadModule(void *dl_handle, CK_FUNCTION_LIST_PTR f);
+static Bool PKCS11FindPrivateKey(CK_SESSION_HANDLE session,
+                CK_FUNCTION_LIST_PTR f,
+                char *keyid,
+                int keyid_size);
+static Bool PKCS11GetCertificate(CK_SLOT_ID slot,
+                CK_FUNCTION_LIST_PTR f, 
+                char *pin,
+                char **certder,
+                int *certder_size,
+                char **keyid,
+                int *keyid_size);
+static CK_ULONG PKCS11GetSlotList(CK_FUNCTION_LIST_PTR f, CK_SLOT_ID_PTR list);
+static ENGINE *InitEnginePKCS11( const char *pkcs11, const char *pin);
+static char *GetPinString(char *buf, size_t sz);
+static Bool LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slotstr);
+#endif
+#endif
+
 static	Bool
 _Flush(
 	NETFILE	*fp)
@@ -349,27 +372,6 @@ FileToNet(
  *	SSL
  */
 #ifdef	USE_SSL
-
-#ifdef  USE_PKCS11
-static const char *PKCS11ErrorString(CK_RV rv);
-static void *PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f);
-static Bool PKCS11UnloadModule(void *dl_handle, CK_FUNCTION_LIST_PTR f);
-static Bool PKCS11FindPrivateKey(CK_SESSION_HANDLE session,
-                CK_FUNCTION_LIST_PTR f,
-                char *keyid,
-                int keyid_size);
-static Bool PKCS11GetCertificate(CK_SLOT_ID slot,
-                CK_FUNCTION_LIST_PTR f, 
-                char *pin,
-                char **certder,
-                int *certder_size,
-                char **keyid,
-                int *keyid_size);
-static CK_ULONG PKCS11GetSlotList(CK_FUNCTION_LIST_PTR f, CK_SLOT_ID_PTR list);
-static ENGINE *InitEnginePKCS11( const char *pkcs11, const char *pin);
-static char *GetPinString(char *buf, size_t sz);
-static Bool LoadEnginePKCS11(SSL_CTX *ctx, const char *pkcs11, const char *slotstr);
-#endif
 
 static int
 askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
@@ -913,10 +915,6 @@ MakeSSL_CTX(
     }
 
     if (cert != NULL){
-#ifdef USE_PKCS11
-printf("cert in loadengine pkcs11: %s\n", cert);
-        if (LoadEnginePKCS11(ctx, cert, key)) return ctx;
-#endif /* USE_PKCS11 */
         if (LoadPKCS12(ctx, cert)) return ctx;
         if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0){
             Warning("SSL_CTX_use_certificate_file(%s) failure: %s\n",
@@ -1328,14 +1326,13 @@ GetPinString(char *buf, size_t sz)
 }
 
 static Bool
-LoadEnginePKCS11(SSL_CTX *ctx, const char *pkcs11, const char *slotstr)
+LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slotstr)
 {
     char pinbuf[PKCS11_BUF_SIZE];
     char *pin = NULL;
     const char *message;
     EVP_PKEY *key = NULL;
     X509 *cert = NULL;
-    ENGINE *e;
     int err_reason;
     int i;
 
@@ -1354,7 +1351,7 @@ LoadEnginePKCS11(SSL_CTX *ctx, const char *pkcs11, const char *slotstr)
     CK_FUNCTION_LIST_PTR p11funcs = NULL;
 
     if (!(dl_handle = PKCS11LoadModule((const char*)pkcs11, &p11funcs))) return FALSE;
-    if ((pin = GetPasswordString(pinbuf, sizeof(pinbuf))) == NULL){
+    if ((pin = GetPinString(pinbuf, sizeof(pinbuf))) == NULL){
         Warning("cannot read pin\n");
         return FALSE;
     }
@@ -1410,10 +1407,10 @@ LoadEnginePKCS11(SSL_CTX *ctx, const char *pkcs11, const char *slotstr)
     }
     
     /* setup OpenSSL ENGINE */
-    if (!(e = InitEnginePKCS11(pkcs11, pin))){
+    if (!(*e = InitEnginePKCS11(pkcs11, pin))){
         return FALSE;
     } 
-    if(!(key = ENGINE_load_private_key(e, keyid, NULL, NULL))) {
+    if(!(key = ENGINE_load_private_key(*e, keyid, NULL, NULL))) {
             message = "SSL_CTX_use_certificate failure: %s\n";
             Warning("%s: %s", message, GetSSLErrorString());
             return FALSE;
@@ -1440,6 +1437,59 @@ LoadEnginePKCS11(SSL_CTX *ctx, const char *pkcs11, const char *slotstr)
     
     memset(pinbuf, 0, sizeof(pinbuf));
     return TRUE;
+}
+
+extern	SSL_CTX	*
+MakeSSL_CTX_PKCS11(
+    ENGINE  **e,
+	char	*pkcs11,
+	char	*slotstr,
+	char	*cafile,
+	char	*capath,
+	char	*ciphers)
+{
+    SSL_CTX *ctx;
+    int     mode = SSL_VERIFY_NONE;
+    const char *askpass_command;
+
+    if ((ctx = SSL_CTX_new(SSLv23_method())) == NULL){
+        Warning("SSL_CTX_new failue: %s\n", GetSSLErrorString());
+        return NULL;
+    }
+
+    if ((askpass_command = getenv(ASKPASS_ENV)) != NULL){
+        SSL_CTX_set_default_passwd_cb(ctx, passphrase_callback);
+        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)askpass_command);
+    }
+
+    if (!SSL_CTX_set_cipher_list(ctx, ciphers)){
+        Warning("SSL_CTX_set_cipher_list(%s) failue: %s\n",
+                ciphers, GetSSLErrorString());
+        SSL_CTX_free(ctx);
+        return NULL;
+    }
+
+    mode = SSL_VERIFY_PEER;
+    mode |= SSL_VERIFY_CLIENT_ONCE;
+    SSL_CTX_set_verify(ctx, mode, VerifyCallBack);
+    SSL_CTX_set_options(ctx, SSL_OP_ALL);
+
+    if ((cafile == NULL) && (capath == NULL)){
+        if (!SSL_CTX_set_default_verify_paths(ctx)){
+            Warning("SSL_CTX_set_default_verify_paths error: %s\n",
+                    GetSSLErrorString());
+        }
+    }
+    else if (!SSL_CTX_load_verify_locations(ctx, cafile, capath)){
+        Warning("SSL_CTX_load_verify_locations(%s, %s) error: %s\n",
+                cafile, capath, GetSSLErrorString());
+        SSL_CTX_free(ctx);
+        return NULL;
+    }
+
+    if (pkcs11 != NULL)
+        if (LoadEnginePKCS11(ctx, e, pkcs11, slotstr)) return ctx;
+    return NULL;
 }
 #endif /* USE_PKCS11 */
 
