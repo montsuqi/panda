@@ -79,6 +79,11 @@ struct _EditDialog {
   GtkWidget *CApath;
   GtkWidget *CAfile;
   GtkWidget *ciphers;
+#ifdef  USE_PKCS11
+  GtkWidget *pkcs11;
+  GtkWidget *pkcs11_lib;
+  GtkWidget *slot;
+#endif
 #endif
 
   BDConfig *config;
@@ -146,6 +151,14 @@ edit_dialog_set_value (EditDialog * self)
                       bd_config_section_get_string (section, "cert"));
   gtk_entry_set_text (GTK_ENTRY (self->ciphers),
 		      bd_config_section_get_string (section, "ciphers"));
+#ifdef  USE_PKCS11
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
+                                bd_config_section_get_bool (section, "pkcs11"));
+  gtk_entry_set_text (GTK_ENTRY (self->pkcs11_lib),
+                      bd_config_section_get_string (section, "pkcs11_lib"));
+  gtk_entry_set_text (GTK_ENTRY (self->slot),
+                      bd_config_section_get_string (section, "slot"));
+#endif
 #endif
 }
 
@@ -217,8 +230,7 @@ edit_dialog_value_to_config (EditDialog * self)
   bd_config_section_set_bool (section, "savepassword", savepassword);
 #ifdef	USE_SSL
   bd_config_section_set_bool
-    (section, "ssl",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
+    (section, "ssl", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
   bd_config_section_set_string (section, "CApath",
                                 gtk_entry_get_text (GTK_ENTRY (self->CApath)));
   bd_config_section_set_string (section, "CAfile",
@@ -229,6 +241,14 @@ edit_dialog_value_to_config (EditDialog * self)
                                 gtk_entry_get_text (GTK_ENTRY (self->cert)));
   bd_config_section_set_string (section, "ciphers",
                                 gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
+#ifdef  USE_PKCS11
+  bd_config_section_set_bool
+    (section, "pkcs11", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11)));
+  bd_config_section_set_string (section, "pkcs11_lib",
+                                gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
+  bd_config_section_set_string (section, "slot",
+                                gtk_entry_get_text (GTK_ENTRY (self->slot)));
+#endif
 #endif
 }
 
@@ -604,6 +624,38 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
+#ifdef  USE_PKCS11
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  self->pkcs11 = check = gtk_check_button_new_with_label ("セキュリティデバイス");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("PKCS#11ライブラリ");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->pkcs11_lib = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
+  ypos++;
+
+  label = gtk_label_new ("スロットID");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->slot = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+#endif
 #endif
 
   return self;
@@ -1676,7 +1728,7 @@ boot_dialog_new ()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos = 0;
 
-  label = gtk_label_new ("PKCS#11ライブラリファイル");
+  label = gtk_label_new ("PKCS#11ライブラリ");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->pkcs11_lib = entry = gtk_entry_new ();
   button = gtk_button_new_with_label("参照");
@@ -1691,7 +1743,7 @@ boot_dialog_new ()
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new ("スロット番号");
+  label = gtk_label_new ("スロットID");
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->slot = entry = gtk_entry_new ();
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
