@@ -164,6 +164,7 @@ SetDefault(void)
 	CA_File = NULL;
 	Ciphers = "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH";
 #ifdef  USE_PKCS11
+    fPKCS11 = FALSE;
     PKCS11_Lib = NULL;
     Slot = NULL;
 #endif
@@ -239,12 +240,15 @@ show_boot_dialog ()
 		Ciphers = prop.ciphers;
 	}
 #ifdef  USE_PKCS11
-	if ( strlen(prop.pkcs11_lib) != 0 ){	
-		PKCS11_Lib = prop.pkcs11_lib;
-	}
-	if ( strlen(prop.slot) != 0 ){	
-		Slot = prop.slot;
-	}
+    fPKCS11 = prop.pkcs11;
+    if (fPKCS11){
+	    if ( strlen(prop.pkcs11_lib) != 0 ){	
+	    	PKCS11_Lib = prop.pkcs11_lib;
+	    }
+	    if ( strlen(prop.slot) != 0 ){
+	    	Slot = prop.slot;
+	    }
+    }
 #endif
 #endif
     return TRUE;

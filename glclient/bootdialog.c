@@ -603,6 +603,7 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
+
 #endif
 
   return self;
@@ -978,6 +979,11 @@ boot_dialog_create_conf (BDConfig *config)
       bd_config_section_append_value (section, "key", "");
       bd_config_section_append_value (section, "cert", "");
       bd_config_section_append_value (section, "ciphers", "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH");
+#ifdef  USE_PKCS11
+      bd_config_section_append_value (section, "pkcs11", "false");
+      bd_config_section_append_value (section, "pkcs11_lib", "");
+      bd_config_section_append_value (section, "slot", "");
+#endif
 #endif      
       is_create = TRUE;
     }
@@ -1055,6 +1061,12 @@ struct _BootDialog
   GtkWidget *key;
   GtkWidget *cert;
   GtkWidget *ciphers;
+#ifdef  USE_PKCS11
+  GtkWidget *pkcs11;
+  GtkWidget *pkcs11container;
+  GtkWidget *pkcs11_lib;
+  GtkWidget *slot;
+#endif
 #endif
   gboolean is_connect;
 };
@@ -1146,6 +1158,16 @@ boot_dialog_set_value (BootDialog *self, BDConfig *config)
                       bd_config_section_get_string (section, "cert"));
   gtk_entry_set_text (GTK_ENTRY (self->ciphers),
                       bd_config_section_get_string (section, "ciphers"));
+#ifdef  USE_PKCS11
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
+                                bd_config_section_get_bool (section, "pkcs11"));
+  gtk_widget_set_sensitive(self->pkcs11container, 
+                                bd_config_section_get_bool (section, "pkcs11"));
+  gtk_entry_set_text (GTK_ENTRY (self->pkcs11_lib),
+                      bd_config_section_get_string (section, "pkcs11_lib"));
+  gtk_entry_set_text (GTK_ENTRY (self->slot),
+                      bd_config_section_get_string (section, "slot"));
+#endif
 #endif
 }
 
@@ -1210,6 +1232,14 @@ boot_dialog_get_value (BootDialog *self, BDConfig *config)
                                 gtk_entry_get_text (GTK_ENTRY (self->cert)));
   bd_config_section_set_string (section, "ciphers",
                                 gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
+#ifdef  USE_PKCS11
+  bd_config_section_set_bool (section, "pkcs11", 
+               gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (self->pkcs11)));
+  bd_config_section_set_string (section, "pkcs11_lib",
+                                gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
+  bd_config_section_set_string (section, "slot",
+                                gtk_entry_get_text (GTK_ENTRY (self->slot)));
+#endif
 #endif
 }
 
@@ -1281,6 +1311,14 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean forc
                             bd_config_section_get_string (section, "cert"));
   bd_config_section_set_string (global, "ciphers",
                             bd_config_section_get_string (section, "ciphers"));
+#ifdef  USE_PKCS11
+  bd_config_section_set_bool (global, "pkcs11",
+                            bd_config_section_get_bool (section, "pkcs11"));
+  bd_config_section_set_string (global, "pkcs11_lib",
+                            bd_config_section_get_string (section, "pkcs11_lib"));
+  bd_config_section_set_string (global, "slot",
+                            bd_config_section_get_string (section, "slot"));
+#endif
 #endif
   boot_dialog_set_value (self, config);
 }
@@ -1386,6 +1424,15 @@ boot_dialog_on_ssl_toggle (GtkWidget *widget, BootDialog *self)
   gtk_widget_set_sensitive(self->ssllabel, sensitive);
   gtk_widget_set_sensitive(self->sslcontainer, sensitive);
 }
+#ifdef  USE_PKCS11
+boot_dialog_on_pkcs11_toggle (GtkWidget *widget, BootDialog *self)
+{
+  gboolean sensitive;
+
+  sensitive = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11));
+  gtk_widget_set_sensitive(self->pkcs11container, sensitive);
+}
+#endif
 #endif
 
 static BootDialog *
@@ -1608,6 +1655,52 @@ boot_dialog_new ()
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
+
+#ifdef  USE_PKCS11
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label ("セキュリティデバイスを使う");
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->pkcs11 = check;
+  gtk_signal_connect (GTK_OBJECT (check), "clicked",
+                      GTK_SIGNAL_FUNC (boot_dialog_on_pkcs11_toggle), self);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  /* pkcs11 container */
+  table = gtk_table_new (3, 1, FALSE);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+  self->pkcs11container = table;
+  gtk_table_attach (GTK_TABLE(self->sslcontainer), table, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos = 0;
+
+  label = gtk_label_new ("PKCS#11ライブラリファイル");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->pkcs11_lib = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label("参照");
+  gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
+  ypos++;
+
+  label = gtk_label_new ("スロット番号");
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->slot = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+#endif
 #endif
 
   /* Advanced options */
@@ -1786,6 +1879,11 @@ boot_property_config_to_property (BootProperty *self)
   self->key = bd_config_section_get_string (section, "key");
   self->cert = bd_config_section_get_string (section, "cert");
   self->ciphers = bd_config_section_get_string (section, "ciphers");
+#ifdef  USE_PKCS11
+  self->pkcs11 = bd_config_section_get_bool (section, "pkcs11");
+  self->pkcs11_lib = bd_config_section_get_string (section, "pkcs11_lib");
+  self->slot = bd_config_section_get_string (section, "slot");
+#endif
 #endif
 }
 
@@ -1813,6 +1911,11 @@ boot_property_inspect (BootProperty * self, FILE *fp)
   fprintf (fp, "key         : %s\n", self->key);
   fprintf (fp, "cert        : %s\n", self->cert);
   fprintf (fp, "ciphers     : %s\n", self->ciphers);
+#ifdef  USE_PKCS11
+  fprintf (fp, "pkcs11      : %s\n", self->pkcs11 ? "TRUE" : "FALSE");
+  fprintf (fp, "pkcs11_lib  : %s\n", self->pkcs11_lib);
+  fprintf (fp, "slot        : %s\n", self->slot);
+#endif
 #endif
 }
 
