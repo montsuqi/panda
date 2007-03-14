@@ -2,7 +2,7 @@ Source: panda
 Section: unknown
 Priority: optional
 Maintainer: ORCA support <support@orca.med.or.jp>
-Build-Depends: debhelper (>> 3.0.0), automake, autoconf, postgresql-dev, libzvt-dev, libxml2-dev, libgtkpanda-dev, libglade-panda-dev, libglade-panda-gnome-dev, open-cobol, libmondai-dev, libmagic-dev, libxslt1-dev, libopensc1-dev
+Build-Depends: debhelper (>> 3.0.0), automake, autoconf, postgresql-dev, libzvt-dev, libxml2-dev, libgtkpanda-dev, libglade-panda-dev, libglade-panda-gnome-dev, open-cobol, libmondai-dev, libmagic-dev, libxslt1-dev, libopensc1-dev, libopensc-openssl
 Standards-Version: 3.6.1
 Origin: jma-orca
 
@@ -31,7 +31,7 @@ Description: OLTP monitor and client server GUI(fdd daemon)
 
 Package: panda-client
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, libopensc-openssl
 Conflicts: orca (>= 1:0.9.01-1)
 Description: OLTP monitor and client server GUI(client)
  panda is Online Transaction processing.  client program (glclient).
