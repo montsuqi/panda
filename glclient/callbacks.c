@@ -200,6 +200,7 @@ send_event_when_idle(
 {
 	static int registed = 0;
 	static int timeout = -1;
+	static int openchanged = 0;
 ENTER_FUNC;
 	StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
 	if (!registed) {
@@ -215,7 +216,11 @@ ENTER_FUNC;
 	}
 
 	if (timeout > 0) {
-		StartTimer(event, timeout, send_event_if_kana, widget);
+		if ( openchanged == 0 ) {
+			openchanged += 1;
+		} else {
+			StartTimer(event, timeout, send_event_if_kana, widget);
+		}
 	} else {
 		entry_changed (widget, event);
 	}

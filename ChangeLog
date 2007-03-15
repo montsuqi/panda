@@ -1,3 +1,7 @@
+2007-03-15  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/callbacks.c(send_event_when_idle): 起動時の1回目は画面表示のため、タイマーを作動させない。
+
 2007-03-01  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/net.c: SSLのメッセージを Messageに対応
