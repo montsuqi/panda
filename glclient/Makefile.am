@@ -59,7 +59,7 @@ glclient_LDADD =				\
 	$(GTK_PANDA_LIBS)			\
 	$(MONDAI_LIBS)
 
-noinst_PROGRAMS = testdialogs testfileentry
+noinst_PROGRAMS = testdialogs testfileentry qrclient 
 
 test: testdialogs testfileentry
 
@@ -75,4 +75,10 @@ testfileentry_LDADD =\
 	dialogs.o \
 	fileEntry.o 
 
+qrclient_LDADD=\
+	$(SSL_LIBS)	\
+	$(MONDAI_LIBS) \
+	$(top_builddir)/libs/libpandagl.a \
+	$(top_builddir)/libs/message.o 
 
+	

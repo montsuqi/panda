@@ -1772,7 +1772,6 @@ ENTER_FUNC;
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
 			RecvStringData(fp,buff,SIZE_BUFF);
-			printf("URI %s\n", buff);
 			gtk_panda_html_set_uri (GTK_PANDA_HTML(widget), buff);
 		}
 	}
