@@ -19,6 +19,9 @@
 bin_PROGRAMS = 					\
 	glclient
 
+AM_CFLAGS	=	-O4 -Wall -Wunused -Wredundant-decls -Wno-pointer-sign \
+	-Werror -funsigned-char
+
 glclient_SOURCES =				\
 	client.c	glclient.h		\
 	bootdialog.c	bootdialog.h		\
@@ -59,7 +62,7 @@ glclient_LDADD =				\
 	$(GTK_PANDA_LIBS)			\
 	$(MONDAI_LIBS)
 
-noinst_PROGRAMS = testdialogs testfileentry qrclient 
+noinst_PROGRAMS = testdialogs testfileentry
 
 test: testdialogs testfileentry
 
@@ -75,10 +78,4 @@ testfileentry_LDADD =\
 	dialogs.o \
 	fileEntry.o 
 
-qrclient_LDADD=\
-	$(SSL_LIBS)	\
-	$(MONDAI_LIBS) \
-	$(top_builddir)/libs/libpandagl.a \
-	$(top_builddir)/libs/message.o 
 
-	
