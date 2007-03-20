@@ -499,6 +499,8 @@ RecvFile(
 	,			left;
 	char		buff[SIZE_BUFF];
 	Bool		ret;
+	gchar 		*tmpfile, *dirname;
+    int 		fd;
 
 ENTER_FUNC;
 	GL_SendPacketClass(fpC,GL_GetScreen);
@@ -508,7 +510,15 @@ ENTER_FUNC;
 		MessageLog(buff);
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
-		if	((fp = Fopen(fname,"w")) == NULL) {
+		tmpfile = g_strconcat(fname, "XXXXXX", NULL);
+		dirname = g_dirname(tmpfile);
+		mkCacheDir(dirname);
+		g_free(dirname);
+		if  ((fd = mkstemp(tmpfile)) == -1 ) {
+			GLError("could not write tmp file");
+			exit(1);
+		}
+		if	((fp = fdopen(fd,"w")) == NULL) {
 			GLError("could not write cache file");
 			exit(1);
 		}
@@ -527,6 +537,9 @@ ENTER_FUNC;
 			}
 		}	while	(  left  >  0  );
 		fclose(fp);
+		rename(tmpfile, fname);
+		unlink(tmpfile);
+		g_free(tmpfile);
 		ret = TRUE;
 	} else {
 		GLError("invalid protocol sequence");
@@ -563,8 +576,6 @@ dbgmsg("*");
 				 ||	(  stbuf.st_ctime      <   stctime  )
 				 ||	(  stbuf.st_size       !=  stsize   ) ) {
 			RecvFile(fp, sname, fname);
-			/* Clear cache */
-			DestroyWindow(sname);
 		} else {
 			GL_SendPacketClass(fp, GL_NOT);
 		}
@@ -773,7 +784,7 @@ ENTER_FUNC;
 	fInRecv = TRUE; 
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
-	GL_SendLong(fp,0);				/*	get all data	*/
+	GL_SendInt(fp,0);				/*	get all data	*/
 	fCancel = FALSE;
 	while	(  ( c = GL_RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		GL_RecvString(fp, sizeof(window), window);

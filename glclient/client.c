@@ -167,6 +167,25 @@ CacheFileName(
 	return	(buf);
 }
 
+extern  void
+mkCacheDir(
+	char    *dname)
+{
+	struct stat st;
+
+	stat(dname, &st);
+	if (S_ISDIR(st.st_mode)) {
+		return ;
+	} else {
+		unlink (dname);
+	}
+	mkdir (Cache, 0755);
+	if  (mkdir (dname, 0755) < 0) {
+		GLError("could not write tmp dir");
+		exit(1);
+	}
+}
+
 extern	void
 ExitSystem(void)
 {

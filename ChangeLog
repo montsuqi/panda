@@ -1,3 +1,7 @@
+2007-03-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c, glclient/glclient.c, glclient/protocol.c: サーバとクライアントの時計がずれているときにクラッシュしないように修正
+
 2007-03-15  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/callbacks.c(send_event_when_idle): 起動時の1回目は画面表示のため、タイマーを作動させない。
