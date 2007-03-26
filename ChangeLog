@@ -1,3 +1,9 @@
+2007-03-26  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.9 release
+
+	* glserver/server.c: SendScreenData invalid のときに Window名も出力するようにした
+
 2007-03-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/action.c, glclient/glclient.c, glclient/protocol.c: サーバとクライアントの時計がずれているときにクラッシュしないように修正
