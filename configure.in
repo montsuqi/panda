@@ -421,43 +421,31 @@ dnl ***************************************************************************
 enable_pkcs11="no"
 AC_ARG_WITH(pkcs11,
 	[  --with-pkcs11=<directory>  use engine_pkcs11.so in <directory>],[
-	if test x$withval = xyes; then
-		AC_MSG_CHECKING(for OpenSSL files) 
-		engine_pkcs11="" 
-		for d in $dir /usr/lib/opensc /usr/local/lib/opensc /usr/lib/engines 
-		do 
-		  if test -f $d/engine_pkcs11.so 
-		  then 
-		      AC_MSG_RESULT(found OpenSC engine_pkcs11.so lib in $d) 
-		      engine_pkcs11=$d/engine_pkcs11.so 
-		      break 
-		  fi 
-		done 
-		if test x$engine_pkcs11 = x 
+	if test x$withval = xyes
+	then
+		engine_pkcs11="/usr/lib/opensc/engine_pkcs11.so" 
+	else
+		engine_pkcs11=$withval 
+ 	fi
+	pkcs11_header=""
+	for d in $dir /usr/ /usr/lib/ /opt
+	do 
+		if test -f $d/include/opensc/rsaref/pkcs11.h 
 		then 
-			AC_MSG_WARN(engine_pkcs11 not used) 
-		else 
-            pkcs11_header=""
-		    for d in $dir /usr/ /usr/lib/ /opt
-		    do 
-		        if test -f $d/include/opensc/rsaref/pkcs11.h 
-		        then 
-		            AC_MSG_RESULT(found pkcs11.h in $d) 
-                    pkcs11_header=$d/include/opensc/rsaref/pkcs11.h  
-		            break 
-		        fi 
-		    done 
-		    if test x$pkcs11_header = x 
-            then
-			    AC_MSG_WARN(pkcs11 header not used) 
-            else
-			    AC_DEFINE(USE_PKCS11,1,"")
-                AC_DEFINE_UNQUOTED(ENGINE_PKCS11_PATH,"$engine_pkcs11","")
-			    enable_pkcs11="yes"
-            fi
-		fi
-	fi 
-])		
+			AC_MSG_RESULT(found pkcs11.h in $d) 
+			pkcs11_header=$d/include/opensc/rsaref/pkcs11.h  
+			break 
+		fi 
+	done 
+	if test x$pkcs11_header = x 
+	then
+		AC_MSG_WARN(pkcs11 header not used) 
+	else
+		AC_DEFINE(USE_PKCS11,1,"")
+		AC_DEFINE_UNQUOTED(ENGINE_PKCS11_PATH,"$engine_pkcs11","")
+		enable_pkcs11="yes"
+	fi
+])
 
 dnl ***************************************************************************
 dnl eRuby
