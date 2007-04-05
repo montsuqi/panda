@@ -43,6 +43,9 @@
 #include	<openssl/pem.h>
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
+#ifdef  USE_PKCS11
+#include	<openssl/engine.h>
+#endif
 #endif
 #ifdef USE_GNOME
 #    include <gnome.h>
@@ -128,7 +131,13 @@ static	ARG_TABLE	option[] = {
 		"CA証明書ファイル"								},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
 		"SSLで使用する暗号スイート"						},
-#endif
+#ifdef  USE_PKCS11
+	{	"pkcs11_lib",STRING,	TRUE,	(void*)&PKCS11_Lib,
+		"PKCS#11ライブラリ"				         		},
+	{	"slot",	    STRING,		TRUE,	(void*)&Slot,
+		"セキュリティデバイスのスロット番号"			},
+#endif  /* USE_PKCS11 */
+#endif  /* USE_SSL */
 	{	NULL,		0,			FALSE,	NULL,	NULL	},
 };
 
@@ -154,6 +163,11 @@ SetDefault(void)
 	CA_Path = NULL;
 	CA_File = NULL;
 	Ciphers = "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH";
+#ifdef  USE_PKCS11
+    fPKCS11 = FALSE;
+    PKCS11_Lib = NULL;
+    Slot = NULL;
+#endif
 #endif	
 }
 
@@ -244,6 +258,17 @@ show_boot_dialog ()
 	if ( strlen(prop.ciphers) != 0 ){	
 		Ciphers = prop.ciphers;
 	}
+#ifdef  USE_PKCS11
+    fPKCS11 = prop.pkcs11;
+    if (fPKCS11){
+	    if ( strlen(prop.pkcs11_lib) != 0 ){	
+	    	PKCS11_Lib = prop.pkcs11_lib;
+	    }
+	    if ( strlen(prop.slot) != 0 ){
+	    	Slot = prop.slot;
+	    }
+    }
+#endif
 #endif
     return TRUE;
 }
@@ -256,6 +281,9 @@ start_client ()
 	Port	*port;
 #ifdef	USE_SSL
 	SSL_CTX	*ctx = NULL;
+#ifdef  USE_PKCS11
+    ENGINE *engine = NULL;
+#endif
 #endif
 
 	StyleParserInit();
@@ -282,7 +310,16 @@ start_client ()
     if (!fSsl)
         fpComm = SocketToNet(fd);
     else {
+#ifdef  USE_PKCS11
+        if (PKCS11_Lib != NULL){
+            ctx = MakeSSL_CTX_PKCS11(&engine, PKCS11_Lib,Slot,CA_File,CA_Path,Ciphers);
+        }
+        else{
+            ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
+        }
+#else
         ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
+#endif
         if (ctx == NULL){
             GLError("MakeSSL_CTX failure");
 			return;
@@ -312,6 +349,12 @@ start_client ()
 #ifdef	USE_SSL
     if (ctx != NULL)
         SSL_CTX_free (ctx);
+#ifdef  USE_PKCS11
+    if (engine != NULL){
+        ENGINE_free(engine);
+        ENGINE_cleanup();
+    }
+#endif
 #endif
     DestroyPort (port);
     gtk_rc_reparse_all ();

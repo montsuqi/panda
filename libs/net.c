@@ -57,6 +57,29 @@
 #define	UnLockNet(fp)
 #endif
 
+#ifdef  USE_SSL
+#ifdef  USE_PKCS11
+static const char *PKCS11ErrorString(CK_RV rv);
+static void *PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f);
+static Bool PKCS11UnloadModule(void *dl_handle, CK_FUNCTION_LIST_PTR f);
+static Bool PKCS11FindPrivateKey(CK_SESSION_HANDLE session,
+                CK_FUNCTION_LIST_PTR f,
+                char *keyid,
+                int keyid_size);
+static Bool PKCS11GetCertificate(CK_SLOT_ID slot,
+                CK_FUNCTION_LIST_PTR f, 
+                char *pin,
+                char **certder,
+                int *certder_size,
+                char **keyid,
+                int *keyid_size);
+static CK_ULONG PKCS11GetSlotList(CK_FUNCTION_LIST_PTR f, CK_SLOT_ID_PTR list);
+static ENGINE *InitEnginePKCS11( const char *pkcs11, const char *pin);
+static char *GetPinString(char *buf, size_t sz);
+static Bool LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slotstr);
+#endif
+#endif
+
 static	Bool
 _Flush(
 	NETFILE	*fp)
@@ -349,6 +372,7 @@ FileToNet(
  *	SSL
  */
 #ifdef	USE_SSL
+
 static int
 askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
 {
@@ -842,6 +866,7 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
     return TRUE;
 }
 
+
 extern	SSL_CTX	*
 MakeSSL_CTX(
 	char	*key,
@@ -921,6 +946,553 @@ MakeSSL_CTX(
 
     return ctx;
 }
+
+/*
+ * SECURITY_DEVICE
+ */
+#ifdef USE_PKCS11
+
+/*
+ * PKCS11 library
+ */
+#define PKCS11_ERR_MSG(x) case x: return #x; break;
+
+static const char*
+PKCS11ErrorString(CK_RV rv)
+{
+    switch (rv) {
+        PKCS11_ERR_MSG(CKR_OK)
+        PKCS11_ERR_MSG(CKR_CANCEL)
+        PKCS11_ERR_MSG(CKR_HOST_MEMORY)
+        PKCS11_ERR_MSG(CKR_SLOT_ID_INVALID)
+        PKCS11_ERR_MSG(CKR_GENERAL_ERROR)
+        PKCS11_ERR_MSG(CKR_FUNCTION_FAILED)
+        PKCS11_ERR_MSG(CKR_ARGUMENTS_BAD)
+        PKCS11_ERR_MSG(CKR_NO_EVENT)
+        PKCS11_ERR_MSG(CKR_NEED_TO_CREATE_THREADS)
+        PKCS11_ERR_MSG(CKR_CANT_LOCK)
+        PKCS11_ERR_MSG(CKR_ATTRIBUTE_READ_ONLY)
+        PKCS11_ERR_MSG(CKR_ATTRIBUTE_SENSITIVE)
+        PKCS11_ERR_MSG(CKR_ATTRIBUTE_TYPE_INVALID)
+        PKCS11_ERR_MSG(CKR_ATTRIBUTE_VALUE_INVALID)
+        PKCS11_ERR_MSG(CKR_DATA_INVALID)
+        PKCS11_ERR_MSG(CKR_DATA_LEN_RANGE)
+        PKCS11_ERR_MSG(CKR_DEVICE_ERROR)
+        PKCS11_ERR_MSG(CKR_DEVICE_MEMORY)
+        PKCS11_ERR_MSG(CKR_DEVICE_REMOVED)
+        PKCS11_ERR_MSG(CKR_ENCRYPTED_DATA_INVALID)
+        PKCS11_ERR_MSG(CKR_ENCRYPTED_DATA_LEN_RANGE)
+        PKCS11_ERR_MSG(CKR_FUNCTION_CANCELED)
+        PKCS11_ERR_MSG(CKR_FUNCTION_NOT_PARALLEL)
+        PKCS11_ERR_MSG(CKR_FUNCTION_NOT_SUPPORTED)
+        PKCS11_ERR_MSG(CKR_KEY_HANDLE_INVALID)
+        PKCS11_ERR_MSG(CKR_KEY_SIZE_RANGE)
+        PKCS11_ERR_MSG(CKR_KEY_TYPE_INCONSISTENT)
+        PKCS11_ERR_MSG(CKR_KEY_NOT_NEEDED)
+        PKCS11_ERR_MSG(CKR_KEY_CHANGED)
+        PKCS11_ERR_MSG(CKR_KEY_NEEDED)
+        PKCS11_ERR_MSG(CKR_KEY_INDIGESTIBLE)
+        PKCS11_ERR_MSG(CKR_KEY_FUNCTION_NOT_PERMITTED)
+        PKCS11_ERR_MSG(CKR_KEY_NOT_WRAPPABLE)
+        PKCS11_ERR_MSG(CKR_KEY_UNEXTRACTABLE)
+        PKCS11_ERR_MSG(CKR_MECHANISM_INVALID)                 
+        PKCS11_ERR_MSG(CKR_MECHANISM_PARAM_INVALID)
+        PKCS11_ERR_MSG(CKR_OBJECT_HANDLE_INVALID)
+        PKCS11_ERR_MSG(CKR_OPERATION_ACTIVE)
+        PKCS11_ERR_MSG(CKR_OPERATION_NOT_INITIALIZED)
+        PKCS11_ERR_MSG(CKR_PIN_INCORRECT)
+        PKCS11_ERR_MSG(CKR_PIN_INVALID)
+        PKCS11_ERR_MSG(CKR_PIN_LEN_RANGE)
+        PKCS11_ERR_MSG(CKR_PIN_EXPIRED)
+        PKCS11_ERR_MSG(CKR_PIN_LOCKED)
+        PKCS11_ERR_MSG(CKR_SESSION_CLOSED)
+        PKCS11_ERR_MSG(CKR_SESSION_COUNT)
+        PKCS11_ERR_MSG(CKR_SESSION_HANDLE_INVALID)
+        PKCS11_ERR_MSG(CKR_SESSION_PARALLEL_NOT_SUPPORTED)
+        PKCS11_ERR_MSG(CKR_SESSION_READ_ONLY)
+        PKCS11_ERR_MSG(CKR_SESSION_EXISTS)
+        PKCS11_ERR_MSG(CKR_SESSION_READ_ONLY_EXISTS)
+        PKCS11_ERR_MSG(CKR_SESSION_READ_WRITE_SO_EXISTS)
+        PKCS11_ERR_MSG(CKR_SIGNATURE_INVALID)
+        PKCS11_ERR_MSG(CKR_SIGNATURE_LEN_RANGE)
+        PKCS11_ERR_MSG(CKR_TEMPLATE_INCOMPLETE)
+        PKCS11_ERR_MSG(CKR_TEMPLATE_INCONSISTENT)
+        PKCS11_ERR_MSG(CKR_TOKEN_NOT_PRESENT)
+        PKCS11_ERR_MSG(CKR_TOKEN_NOT_RECOGNIZED)
+        PKCS11_ERR_MSG(CKR_TOKEN_WRITE_PROTECTED)
+        PKCS11_ERR_MSG(CKR_UNWRAPPING_KEY_HANDLE_INVALID)
+        PKCS11_ERR_MSG(CKR_UNWRAPPING_KEY_SIZE_RANGE)
+        PKCS11_ERR_MSG(CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT)
+        PKCS11_ERR_MSG(CKR_USER_ALREADY_LOGGED_IN)
+        PKCS11_ERR_MSG(CKR_USER_NOT_LOGGED_IN)
+        PKCS11_ERR_MSG(CKR_USER_PIN_NOT_INITIALIZED)
+        PKCS11_ERR_MSG(CKR_USER_TYPE_INVALID)
+        PKCS11_ERR_MSG(CKR_USER_ANOTHER_ALREADY_LOGGED_IN)
+        PKCS11_ERR_MSG(CKR_USER_TOO_MANY_TYPES)
+        PKCS11_ERR_MSG(CKR_WRAPPED_KEY_INVALID)
+        PKCS11_ERR_MSG(CKR_WRAPPED_KEY_LEN_RANGE)
+        PKCS11_ERR_MSG(CKR_WRAPPING_KEY_HANDLE_INVALID)
+        PKCS11_ERR_MSG(CKR_WRAPPING_KEY_SIZE_RANGE)
+        PKCS11_ERR_MSG(CKR_WRAPPING_KEY_TYPE_INCONSISTENT)
+        PKCS11_ERR_MSG(CKR_RANDOM_SEED_NOT_SUPPORTED)
+        PKCS11_ERR_MSG(CKR_RANDOM_NO_RNG)
+        PKCS11_ERR_MSG(CKR_DOMAIN_PARAMS_INVALID)
+        PKCS11_ERR_MSG(CKR_BUFFER_TOO_SMALL)
+        PKCS11_ERR_MSG(CKR_SAVED_STATE_INVALID)
+        PKCS11_ERR_MSG(CKR_INFORMATION_SENSITIVE)
+        PKCS11_ERR_MSG(CKR_STATE_UNSAVEABLE)
+        PKCS11_ERR_MSG(CKR_CRYPTOKI_NOT_INITIALIZED)
+        PKCS11_ERR_MSG(CKR_CRYPTOKI_ALREADY_INITIALIZED)
+        PKCS11_ERR_MSG(CKR_MUTEX_BAD)
+        PKCS11_ERR_MSG(CKR_MUTEX_NOT_LOCKED)
+        PKCS11_ERR_MSG(CKR_VENDOR_DEFINED)
+        default:
+          return "not PKCS#11 ERROR";
+    }
+    return "";
+}
+
+static void *
+PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f)
+{
+    int rv;
+    void *dl_handle;
+    CK_RV (*c_get_function_list)(CK_FUNCTION_LIST_PTR_PTR) = NULL;
+    CK_FUNCTION_LIST_PTR ff;
+    char *error;
+    dl_handle = dlopen(pkcs11, RTLD_LAZY);
+    if (!dl_handle){
+        Warning("cannot open PKCS#11 library : %s\n", dlerror());
+        return NULL;
+    }
+    c_get_function_list = 
+        (CK_RV (*)(CK_FUNCTION_LIST_PTR_PTR))dlsym(dl_handle,"C_GetFunctionList");
+
+    if ((error = dlerror()) != NULL ){
+        Warning("cannot get C_GetFunctionList address : %s\n", error);
+        dlclose(dl_handle);
+        return NULL;
+    }
+    if (c_get_function_list){
+        rv = c_get_function_list(f);
+        if (rv != CKR_OK){
+            Warning("C_GetFunctionList : %s\n", PKCS11ErrorString(rv));
+            dlclose(dl_handle);
+            return NULL;
+        }
+    }
+
+    ff = *(f);
+    rv = ff->C_Initialize(NULL);
+    if (rv != CKR_OK){
+        Warning("C_Initialize : %s\n", PKCS11ErrorString(rv));
+        dlclose(dl_handle);
+        return NULL;
+    }
+    
+    return dl_handle;
+}
+
+static Bool
+PKCS11UnloadModule(void *dl_handle, CK_FUNCTION_LIST_PTR f)
+{
+    int rv;
+    rv = f->C_Finalize(NULL);
+    if (rv != CKR_OK){
+        Warning("C_Finalize : %s\n", PKCS11ErrorString(rv));
+    }
+    dlclose(dl_handle);
+    dl_handle = NULL;
+    return TRUE;
+}
+
+static Bool
+PKCS11FindPrivateKey(CK_SESSION_HANDLE session, 
+    CK_FUNCTION_LIST_PTR f,
+    char *keyid,
+    int keyid_size)
+{
+    CK_RV rv;
+    CK_OBJECT_CLASS key_object_class = CKO_PRIVATE_KEY;
+    CK_OBJECT_HANDLE key_handle[PKCS11_MAX_OBJECT_NUM];
+    CK_ATTRIBUTE key_attr[2];
+    CK_ULONG key_count;
+    int i;
+
+    /* find key id by cert's modulus */
+    key_attr[0].type = CKA_CLASS;
+    key_attr[0].pValue = &key_object_class;
+    key_attr[0].ulValueLen = sizeof(CK_OBJECT_CLASS);
+    key_attr[1].type = CKA_ID;
+    key_attr[1].pValue = keyid;
+    key_attr[1].ulValueLen = keyid_size;
+    rv = f->C_FindObjectsInit(session, key_attr, 2);
+    if ( rv != CKR_OK ){
+        Warning("C_FindObjectsInit : %s\n", PKCS11ErrorString(rv));
+        return FALSE;
+    }
+    rv = f->C_FindObjects(session, key_handle, 1, &key_count); 
+    if ( rv != CKR_OK ){
+        Warning("C_FindObjects : %s\n", PKCS11ErrorString(rv));
+        return FALSE;
+    }
+    rv = f->C_FindObjectsFinal(session);
+    if ( rv != CKR_OK ){
+        Warning("C_FindObjects : %s\n", PKCS11ErrorString(rv));
+        return FALSE;
+    }
+    if ( key_count <= 0){
+        Warning("cannot find private key ID : %s\n", keyid);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static Bool
+PKCS11GetCertificate(CK_SLOT_ID slot, 
+    CK_FUNCTION_LIST_PTR f, 
+    char *pin,
+    char **certder,
+    int *certder_size,
+    char **keyid,
+    int *keyid_size)
+{
+    int i;
+    CK_RV rv;
+    CK_SESSION_HANDLE session;
+
+    /* cert object */
+    CK_OBJECT_CLASS cert_object_class = CKO_CERTIFICATE;
+    CK_ATTRIBUTE cert_attr[2];
+    CK_OBJECT_HANDLE cert_handle[PKCS11_MAX_OBJECT_NUM];
+    CK_ULONG cert_count;
+
+    rv = f->C_OpenSession(slot, CKF_SERIAL_SESSION, NULL, NULL, &session);
+    if (rv != CKR_OK){
+        Warning("C_OpenSession : %s\n", PKCS11ErrorString(rv));
+        return FALSE;
+    }
+    rv = f->C_Login(session, CKU_USER, pin, strlen(pin));
+    if (rv != CKR_OK){
+        Warning("C_Login : %s\n", PKCS11ErrorString(rv));
+        rv = f->C_CloseSession(session);
+        return FALSE;
+    }
+
+    /* find cert */
+    cert_attr[0].type = CKA_CLASS;
+    cert_attr[0].pValue = &cert_object_class;
+    cert_attr[0].ulValueLen = sizeof(CK_OBJECT_CLASS);
+    rv = f->C_FindObjectsInit(session, cert_attr, 1);
+    if ( rv != CKR_OK ){
+        Warning("C_FindObjectsInit : %s\n", PKCS11ErrorString(rv));
+        goto PKCS11GetCertificateFailure;
+    }
+    rv = f->C_FindObjects(session, cert_handle, PKCS11_MAX_OBJECT_NUM, &cert_count); 
+    if ( rv != CKR_OK ){
+        Warning("C_FindObjects : %s\n", PKCS11ErrorString(rv));
+        goto PKCS11GetCertificateFailure;
+    }
+    rv = f->C_FindObjectsFinal(session);
+    if ( rv != CKR_OK ){
+        Warning("C_FindObjectsFinal : %s\n", PKCS11ErrorString(rv));
+        goto PKCS11GetCertificateFailure;
+    }
+
+
+    for (i = 0; i < cert_count; i++){
+        /* get certificate */
+        *certder = NULL;
+        cert_attr[0].type = CKA_VALUE;
+        cert_attr[0].pValue = NULL;
+        cert_attr[0].ulValueLen = 0;
+        cert_attr[1].type = CKA_ID;
+        cert_attr[1].pValue = NULL;
+        cert_attr[1].ulValueLen = 0;
+        rv = f->C_GetAttributeValue(session, cert_handle[i], cert_attr, 2);
+        if ( rv != CKR_OK ){
+            Warning("C_GetAttributeValue : %s\n", PKCS11ErrorString(rv));
+            goto PKCS11GetCertificateFailure;
+        }
+        *certder_size = cert_attr[0].ulValueLen;
+        *keyid_size = cert_attr[1].ulValueLen;
+        if ((*certder = xmalloc(*certder_size)) == NULL){
+            Warning("xmalloc failure\n");
+            goto PKCS11GetCertificateFailure;
+        }
+        if ((*keyid = xmalloc(*keyid_size)) == NULL){
+            Warning("xmalloc failure\n");
+            goto PKCS11GetCertificateFailure;
+        }
+        cert_attr[0].pValue = *certder;
+        cert_attr[1].pValue = *keyid;
+        rv = f->C_GetAttributeValue(session, cert_handle[i], cert_attr, 2);
+        if ( rv != CKR_OK ){
+            Warning("C_FindObjectsFinal : %s\n", PKCS11ErrorString(rv));
+            goto PKCS11GetCertificateFailure;
+        }
+        if (PKCS11FindPrivateKey(session, f, *keyid, *keyid_size)){
+            return TRUE;
+        }
+        
+        free(*certder);
+    }
+
+PKCS11GetCertificateFailure:
+    rv = f->C_Logout(session);
+    rv = f->C_CloseSession(session);
+    return FALSE;
+}  
+
+static CK_ULONG
+PKCS11GetSlotList(CK_FUNCTION_LIST_PTR f, CK_SLOT_ID_PTR list)
+{
+    CK_RV rv;
+    CK_ULONG count;
+
+    rv = f->C_GetSlotList(TRUE, NULL, &count);
+    if ( rv != CKR_OK ){
+        Warning("C_GetSlotList : %s\n", PKCS11ErrorString(rv));
+        return 0;
+    }
+    if (count > PKCS11_MAX_SLOT_NUM) count = PKCS11_MAX_SLOT_NUM;
+    rv = f->C_GetSlotList(TRUE, list, &count);
+    if ( rv != CKR_OK ){
+        Warning("C_GetSlotList : %s\n", PKCS11ErrorString(rv));
+        return 0;
+    }
+    return count;
+}
+
+/*
+ * OpenSSL ENGINE + engine_pkcs11.so
+ */
+
+static ENGINE *
+InitEnginePKCS11( const char *pkcs11, const char *pin)
+{
+    ENGINE *e;
+    const char *message;
+    ENGINE_load_dynamic();
+    e = ENGINE_by_id("dynamic");
+    if (!e){
+        message = "Engine_by_id failure\n";
+        Warning("%s: %s", message, GetSSLErrorString());
+        return NULL;
+    }
+
+    if(!ENGINE_ctrl_cmd_string(e, "SO_PATH", ENGINE_PKCS11_PATH, 0)||
+       !ENGINE_ctrl_cmd_string(e, "ID", "pkcs11", 0) ||
+       !ENGINE_ctrl_cmd_string(e, "LIST_ADD", "1", 0) ||
+       !ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0) ||
+       !ENGINE_ctrl_cmd_string(e, "MODULE_PATH", pkcs11, 0) ||
+       !ENGINE_ctrl_cmd_string(e, "PIN", pin, 0) ){
+        message = "Engine_ctrl_cmd_string failure\n";
+        Warning("%s: %s", message, GetSSLErrorString());
+        ENGINE_free(e);
+        return NULL;
+    }
+
+    if(!ENGINE_init(e)){
+        message = "Engine_init failure\n";
+        Warning("%s: %s", message, GetSSLErrorString());
+        ENGINE_free(e);
+        return NULL;
+    }
+
+    return e; 
+}
+
+#define ASKPIN_ENV "PANDA_ASKPIN"
+#define ASKPIN_PROMPT "Please input security device PIN:"
+
+static char *
+GetPinString(char *buf, size_t sz)
+{
+    const char *cmd;
+
+    if ((cmd = getenv(ASKPIN_ENV)) != NULL){
+        if (askpass(cmd, ASKPIN_PROMPT, buf, sz) >= 0){
+            return buf;
+        }
+    }
+    else if (isatty(STDIN_FILENO)){
+        if (EVP_read_pw_string(buf, sz, ASKPIN_PROMPT, 0) == 0){
+            return buf;
+        }
+    }
+
+    return NULL;
+}
+
+static Bool
+LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slotstr)
+{
+    char pinbuf[PKCS11_BUF_SIZE];
+    char *pin = NULL;
+    const char *message;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    int err_reason;
+    int i;
+
+    void *dl_handle = NULL;
+    Bool flag = FALSE;
+    char *certder;
+    unsigned char *derptr;
+    int certder_size;
+    char *keyidbuf;
+    int keyidbuf_size;
+    char keyid[PKCS11_BUF_SIZE];
+    char buf[4];
+    CK_SLOT_ID slot;
+    CK_SLOT_ID slot_list[PKCS11_MAX_SLOT_NUM];
+    CK_ULONG slot_count = 0;
+    CK_FUNCTION_LIST_PTR p11funcs = NULL;
+
+    if (!(dl_handle = PKCS11LoadModule((const char*)pkcs11, &p11funcs))) return FALSE;
+    if ((pin = GetPinString(pinbuf, sizeof(pinbuf))) == NULL){
+        Warning("cannot read pin\n");
+        return FALSE;
+    }
+    
+    /* get certificate and keyid by PKCS#11 */
+    if (slotstr != NULL){
+        slot = atol(slotstr);
+        flag = PKCS11GetCertificate(slot,
+            p11funcs,
+            pin,
+            &certder,
+            &certder_size,
+            &keyidbuf,
+            &keyidbuf_size);
+    }
+    else {
+        /* try all available slot */
+        slot_count = PKCS11GetSlotList(p11funcs, slot_list);
+        for (i = 0; i < slot_count; i++){
+            flag = PKCS11GetCertificate(slot_list[i],
+                    p11funcs,
+                    pin,
+                    &certder,
+                    &certder_size,
+                    &keyidbuf,
+                    &keyidbuf_size);
+            if (flag) break;
+        }
+    }
+    PKCS11UnloadModule(dl_handle, p11funcs);
+    if (!flag) return FALSE;
+    
+    /* change engine_pkcs11 id format 'id_XXXX' XXXX is keyids hexdump */
+    if (keyidbuf_size > PKCS11_BUF_SIZE - strlen("id_")){
+        Warning("keyidbuf size over");
+        free(keyidbuf);
+        return FALSE;
+    }
+    sprintf(keyid, "id_");
+    for (i = 0; i < keyidbuf_size; i++){
+        sprintf(buf, "%02x", keyidbuf[i]);
+        strcat(keyid, buf);
+    }
+    free(keyidbuf);
+
+    derptr = (unsigned char*)certder;
+    cert = d2i_X509(NULL , &derptr ,certder_size);
+    if (cert == NULL) {
+        message = "d2i_X509 failure: %s\n";
+        Warning("%s: %s", message, GetSSLErrorString());
+        free(certder);
+        return FALSE;
+    }
+    
+    /* setup OpenSSL ENGINE */
+    if (!(*e = InitEnginePKCS11(pkcs11, pin))){
+        return FALSE;
+    } 
+    if(!(key = ENGINE_load_private_key(*e, keyid, NULL, NULL))) {
+            message = "SSL_CTX_use_certificate failure: %s\n";
+            Warning("%s: %s", message, GetSSLErrorString());
+            return FALSE;
+    }
+
+    /* set key and cert to SSL_CTX */
+    if (cert && key){
+        if (!SSL_CTX_use_certificate(ctx, cert)){
+            message = "SSL_CTX_use_certificate failure: %s\n";
+            Warning("%s: %s", message, GetSSLErrorString());
+            return FALSE;
+        }
+        if (!SSL_CTX_use_PrivateKey(ctx, key)){
+            message = "SSL_CTX_use_PrivateKey failure: %s\n";
+            Warning("%s: %s",message, GetSSLErrorString());
+            return FALSE;
+        }
+        if (!SSL_CTX_check_private_key(ctx)){
+            Warning("SSL_CTX_check_private_key failure: %s\n",
+                    GetSSLErrorString());
+            return FALSE;
+        }
+    }
+    
+    memset(pinbuf, 0, sizeof(pinbuf));
+    return TRUE;
+}
+
+extern	SSL_CTX	*
+MakeSSL_CTX_PKCS11(
+    ENGINE  **e,
+	char	*pkcs11,
+	char	*slotstr,
+	char	*cafile,
+	char	*capath,
+	char	*ciphers)
+{
+    SSL_CTX *ctx;
+    int     mode = SSL_VERIFY_NONE;
+    const char *askpass_command;
+
+    if ((ctx = SSL_CTX_new(SSLv23_method())) == NULL){
+        Warning("SSL_CTX_new failue: %s\n", GetSSLErrorString());
+        return NULL;
+    }
+
+    if ((askpass_command = getenv(ASKPASS_ENV)) != NULL){
+        SSL_CTX_set_default_passwd_cb(ctx, passphrase_callback);
+        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)askpass_command);
+    }
+
+    if (!SSL_CTX_set_cipher_list(ctx, ciphers)){
+        Warning("SSL_CTX_set_cipher_list(%s) failue: %s\n",
+                ciphers, GetSSLErrorString());
+        SSL_CTX_free(ctx);
+        return NULL;
+    }
+
+    mode = SSL_VERIFY_PEER;
+    mode |= SSL_VERIFY_CLIENT_ONCE;
+    SSL_CTX_set_verify(ctx, mode, VerifyCallBack);
+    SSL_CTX_set_options(ctx, SSL_OP_ALL);
+
+    if ((cafile == NULL) && (capath == NULL)){
+        if (!SSL_CTX_set_default_verify_paths(ctx)){
+            Warning("SSL_CTX_set_default_verify_paths error: %s\n",
+                    GetSSLErrorString());
+        }
+    }
+    else if (!SSL_CTX_load_verify_locations(ctx, cafile, capath)){
+        Warning("SSL_CTX_load_verify_locations(%s, %s) error: %s\n",
+                cafile, capath, GetSSLErrorString());
+        SSL_CTX_free(ctx);
+        return NULL;
+    }
+
+    if (pkcs11 != NULL)
+        if (LoadEnginePKCS11(ctx, e, pkcs11, slotstr)) return ctx;
+    return NULL;
+}
+#endif /* USE_PKCS11 */
+
 #endif	/*	USE_SSL	*/
 
 extern	void

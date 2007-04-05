@@ -61,6 +61,11 @@ GLOBAL	char	*CertFile;
 GLOBAL	char	*CA_Path;
 GLOBAL	char	*CA_File;
 GLOBAL	char	*Ciphers;
+#ifdef  USE_PKCS11
+GLOBAL	Bool	fPKCS11;
+GLOBAL	char	*PKCS11_Lib;
+GLOBAL	char	*Slot;
+#endif
 #endif
 
 #endif

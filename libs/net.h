@@ -30,7 +30,19 @@
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
 #include	<openssl/pkcs12.h>
-#endif
+
+#ifdef USE_PKCS11
+#include <opensc/rsaref/unix.h>
+#include <opensc/rsaref/pkcs11.h>
+#include <openssl/engine.h>
+#include <dlfcn.h>
+#define PKCS11_MAX_SLOT_NUM 10
+#define PKCS11_MAX_OBJECT_NUM 10
+#define PKCS11_BUF_SIZE 256
+#define PKCS11_OBJECT_SIZE 4096
+#endif /* USE_PKCS11 */
+
+#endif /* USE_SSL */
 
 #include	"socket.h"
 
@@ -81,7 +93,15 @@ extern	Bool		CheckHostnameInCertificate(X509 *cert, const char *host);
 extern	Bool		StartSSLClientSession(NETFILE *fp, const char *host);
 extern	Bool		StartSSLServerSession(NETFILE *fp);
 #define	NETFILE_SSL(fp)		((fp)->net.ssl)
-#endif
+#ifdef  USE_PKCS11
+extern	SSL_CTX		*MakeSSL_CTX_PKCS11(ENGINE **e,
+                        char *pkcs11, 
+                        char *slot, 
+                        char *cafile, 
+                        char *capath, 
+                        char *ciphers);
+#endif /* USE_PKCS11 */
+#endif /* USE_SSL */
 extern	NETFILE		*OpenPort(char *url, char *defport);
 extern	int			InitServerPort(Port *port, int back);
 
@@ -89,4 +109,4 @@ extern	Bool		CheckNetFile(NETFILE *fp);
 
 #define	ON_IO_ERROR(fp,label)	if (!CheckNetFile(fp)) goto label
 
-#endif
+#endif 

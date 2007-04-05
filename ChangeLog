@@ -1,3 +1,13 @@
+2007-04-05  Noboru Saitou  <noborus@netlab.jp>
+
+	* Merge from r_1_2_security_device_branch. 
+	
+	* configure.in, glclient/bootdialog.c, glclient/bootdialog.h, glclient/client.c, glclient/glclient.h, libs/net.c, libs/net.h: セキュリティデバイス対応
+
+2007-04-02  Noboru Saitou  <noborus@netlab.jp>
+	
+	* glclient/action.c(ShowWindow): Sawfishのときに画面表示がとまってしまうため戻した
+	
 2007-03-26  Noboru Saitou  <noborus@netlab.jp>
 
 	* Ver 1.2.9 release
