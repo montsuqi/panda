@@ -1,3 +1,7 @@
+2007-04-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c(ShowWindow): マウスを押しながらショートカットキーを押した場合に、不正な通信になる問題を修正
+	
 2007-04-05  Noboru Saitou  <noborus@netlab.jp>
 
 	* Merge from r_1_2_security_device_branch. 

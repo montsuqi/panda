@@ -324,6 +324,7 @@ ShowWindow(
 {
 	char		*fname;
 	XML_Node	*node;
+	GtkWidget	*widget;
 ENTER_FUNC;
 	fname = CacheFileName(wname);
 	if		(  ( node = g_hash_table_lookup(WindowTable,wname) )  ==  NULL  ) {
@@ -337,11 +338,17 @@ ENTER_FUNC;
 		switch	(type) {
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CURRENT_WINDOW:
+			gtk_widget_set_sensitive (GTK_WIDGET(node->window), TRUE);
 			gtk_widget_show_all(GTK_WIDGET(node->window));
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
 			StopTimer(node->window);
 			ClearKeyBuffer();
+			widget = GTK_WIDGET(node->window->focus_widget);
+			if (GTK_IS_BUTTON (widget)){
+				gtk_button_released (GTK_BUTTON(widget));
+			}
+			gtk_widget_set_sensitive (GTK_WIDGET(node->window), FALSE);
 			gtk_widget_hide_all(GTK_WIDGET(node->window));
 			/* fall through */
 		  default:
