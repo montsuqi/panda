@@ -195,7 +195,7 @@ mkCacheDir(
 	}
 	mkdir (Cache, 0755);
 	if  (mkdir (dname, 0755) < 0) {
-		GLError("could not write tmp dir");
+		GLError("could not write cache dir");
 		exit(1);
 	}
 }
