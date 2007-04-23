@@ -341,8 +341,8 @@ start_client ()
 	if (SendConnect(fpComm,CurrentApplication)) {
 		CheckScreens(fpComm,TRUE);
 		(void)GetScreenData(fpComm);
+		gtk_main();  
 	}
-	gtk_main();  
 	
 	ExitSystem(); 
     CloseNet(fpComm);
