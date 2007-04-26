@@ -1303,7 +1303,7 @@ InitEnginePKCS11( const char *pkcs11, const char *pin)
     return e; 
 }
 
-#define ASKPIN_ENV "PANDA_ASKPIN"
+#define ASKPIN_ENV "PANDA_ASKPASS"
 #define ASKPIN_PROMPT "Please input security device PIN:"
 
 static char *
