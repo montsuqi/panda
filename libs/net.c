@@ -570,7 +570,6 @@ GetCommonNameFromCertificate__(X509 *cert, char *name, size_t len)
 {
     X509_NAME *subject;
     X509_NAME_ENTRY *entry;
-    char oid[16];
     int count, i;
 
     if ((subject = X509_get_subject_name(cert)) == NULL)
@@ -807,7 +806,6 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
     char passbuf[256];
     char *pass = NULL;
     const char *message;
-    const char *cmd;
     PKCS12 *p12;
     EVP_PKEY *key = NULL;
     X509 *cert = NULL;
@@ -1117,7 +1115,6 @@ PKCS11FindPrivateKey(CK_SESSION_HANDLE session,
     CK_OBJECT_HANDLE key_handle[PKCS11_MAX_OBJECT_NUM];
     CK_ATTRIBUTE key_attr[2];
     CK_ULONG key_count;
-    int i;
 
     /* find key id by cert's modulus */
     key_attr[0].type = CKA_CLASS;
@@ -1333,7 +1330,6 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
     const char *message;
     EVP_PKEY *key = NULL;
     X509 *cert = NULL;
-    int err_reason;
     int i;
 
     void *dl_handle = NULL;
