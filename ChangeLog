@@ -1,3 +1,7 @@
+2007-06-06  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c(ShowWindow): gtk_widget_set_sensitive の後に ClearKeyBuffer するように変更
+	
 2007-04-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/action.c(ShowWindow): マウスを押しながらショートカットキーを押した場合に、不正な通信になる問題を修正

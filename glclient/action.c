@@ -343,12 +343,12 @@ ENTER_FUNC;
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
 			StopTimer(node->window);
-			ClearKeyBuffer();
 			widget = GTK_WIDGET(node->window->focus_widget);
+			gtk_widget_set_sensitive (GTK_WIDGET(node->window), FALSE);
 			if (GTK_IS_BUTTON (widget)){
 				gtk_button_released (GTK_BUTTON(widget));
 			}
-			gtk_widget_set_sensitive (GTK_WIDGET(node->window), FALSE);
+			ClearKeyBuffer();
 			gtk_widget_hide_all(GTK_WIDGET(node->window));
 			/* fall through */
 		  default:
