@@ -287,9 +287,68 @@ AC_ARG_WITH(dotcobol,
 ]) 
 
 dnl *************************************************************************** 
+dnl for the OpenCOBOL23
+dnl *************************************************************************** 
+AC_ARG_ENABLE(opencobol23,
+  [  --enable-opencobol23      enable OpenCOBOL23 [[disable]]],,[enable_opencobol23="no"])
+if test "x$enable_opencobol23" = "xyes"; then
+    AC_MSG_CHECKING(for OpenCOBOL23)
+    cob23_exists=yes
+    cob-config23 --version > /dev/null 2> /dev/null || cob_exists=no
+    if test "x$cob23_exists" = "xyes"; then
+        COB_CFLAGS="`cob-config23 --cflags`"
+        COB_LIBS="`cob-config23 --libs`"
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_OPENCOBOL23,1,"")
+        AC_DEFINE(HAVE_OPENCOBOL,1,"")
+    else
+        AC_MSG_RESULT(no)
+        enable_opencobol23="no"
+    fi
+    AC_SUBST(COB23_CFLAGS)
+    AC_SUBST(COB23_LIBS)
+    
+    OPENCOBOL23_CFLAGS="$COB_CFLAGS"
+    OPENCOBOL23_LIBS="$COB_LIBS"
+    
+    AC_SUBST(OPENCOBOL23_LIBS) 
+    AC_SUBST(OPENCOBOL23_CFLAGS) 
+fi
+AM_CONDITIONAL(OPENCOBOL23, test "x$enable_opencobol23" = "xyes") 
+
+dnl *************************************************************************** 
+dnl for the OpenCOBOL08
+dnl *************************************************************************** 
+AC_ARG_ENABLE(opencobol08,
+  [  --enable-opencobol08      enable OpenCOBOL08 [[disable]]],,[enable_opencobol08="no"])
+if test "x$enable_opencobol08" = "xyes"; then
+    AC_MSG_CHECKING(for OpenCOBOL08)
+    cob08_exists=yes
+    cob-config08 --version > /dev/null 2> /dev/null || cob_exists=no
+    if test "x$cob08_exists" = "xyes"; then
+        COB_CFLAGS="`cob-config08 --cflags`"
+        COB_LIBS="`cob-config08 --libs`"
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_OPENCOBOL08,1,"")
+        AC_DEFINE(HAVE_OPENCOBOL,1,"")
+    else
+        AC_MSG_RESULT(no)
+        enable_opencobol08="no"
+    fi
+    AC_SUBST(COB08_CFLAGS)
+    AC_SUBST(COB08_LIBS)
+    
+    OPENCOBOL08_CFLAGS="$COB_CFLAGS"
+    OPENCOBOL08_LIBS="$COB_LIBS"
+    
+    AC_SUBST(OPENCOBOL08_LIBS) 
+    AC_SUBST(OPENCOBOL08_CFLAGS) 
+fi
+AM_CONDITIONAL(OPENCOBOL08, test "x$enable_opencobol08" = "xyes") 
+
+dnl *************************************************************************** 
 dnl for the OpenCOBOL
 dnl *************************************************************************** 
-
 AC_ARG_ENABLE(opencobol,
   [  --enable-opencobol      enable OpenCOBOL [[disable]]],,[enable_opencobol="no"])
 if test "x$enable_opencobol" = "xyes"; then
@@ -311,10 +370,10 @@ if test "x$enable_opencobol" = "xyes"; then
     OPENCOBOL_CFLAGS="$COB_CFLAGS"
     OPENCOBOL_LIBS="$COB_LIBS"
     
-    AM_CONDITIONAL(OPENCOBOL, test "x$enable_opencobol" = "xyes") 
     AC_SUBST(OPENCOBOL_LIBS) 
     AC_SUBST(OPENCOBOL_CFLAGS) 
 fi
+AM_CONDITIONAL(OPENCOBOL, test "x$enable_opencobol" = "xyes") 
 
 dnl *************************************************************************** 
 dnl for Ruby
@@ -599,8 +658,9 @@ AC_CONFIG_FILES([Makefile
                  monpls_demo/Makefile
                  pgserver/Makefile
                  tools/Makefile
-                 wfc/Makefile 
-                 panda-config ])
+                 wfc/Makefile
+                 panda-config
+], [chmod +x panda-config])
 AC_OUTPUT
 
 dnl ***************************************************************************
@@ -617,6 +677,8 @@ echo "  PostgreSQL support:    $enable_postgres"
 echo "  shell driver support:  $enable_shell"
 echo "  Oseki/Search support:  $enable_oseki"
 echo "  dotCOBOL support:      $enable_dotcobol"
+echo "  OpenCOBOL23 support:   $enable_opencobol23"
+echo "  OpenCOBOL08 support:   $enable_opencobol08"
 echo "  OpenCOBOL support:     $enable_opencobol"
 echo "  Ruby support:          $enable_ruby"
 echo "  pty message support:   $enable_pty"

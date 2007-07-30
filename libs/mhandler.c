@@ -179,6 +179,18 @@ EnterDefaultHandler(void)
 	handler->serialize = (ConvFuncs *)"OpenCOBOL";
 	ConvSetCodeset(handler->conv,"euc-jp");
 	handler->start = "";
+#ifdef HAVE_OPENCOBOL23
+	handler = NewMessageHandler("OpenCOBOL23","OpenCOBOL23");
+	handler->serialize = (ConvFuncs *)"OpenCOBOL23";
+	ConvSetCodeset(handler->conv,"euc-jp");
+	handler->start = "";
+#endif
+#ifdef HAVE_OPENCOBOL08
+	handler = NewMessageHandler("OpenCOBOL08","OpenCOBOL08");
+	handler->serialize = (ConvFuncs *)"OpenCOBOL08";
+	ConvSetCodeset(handler->conv,"euc-jp");
+	handler->start = "";
+#endif
 #endif
 	handler = NewMessageHandler("C","C");
 	handler->serialize = NULL;

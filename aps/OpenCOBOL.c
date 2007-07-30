@@ -163,8 +163,8 @@ ENTER_FUNC;
 	}
 	scrsize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
-		if		(  ThisLD->windows[i]  !=  NULL  ) {
-			scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->windows[i]->value);
+		if		(  ThisLD->window[i]->rec  !=  NULL  ) {
+			scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->window[i]->rec->value);
 		}
 	}
 	ScrData = xmalloc(scrsize);
@@ -278,4 +278,16 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(&Handler);
 }
+#ifdef HAVE_OPENCOBOL23
+OpenCOBOL23(void)
+{
+	OpenCOBOL();	
+}		
+#endif
+#ifdef HAVE_OPENCOBOL08
+OpenCOBOL08(void)
+{
+	OpenCOBOL();	
+}		
+#endif
 #endif

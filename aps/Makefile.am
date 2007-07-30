@@ -51,27 +51,49 @@ LDADD 		=							\
 MCPSUB_la_LIBADD	=
 MONFUNC_la_LIBADD	=
 
+
 INCLUDES 			= \
 	-I$(top_srcdir)	\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
+	$(OPENCOBOL23_CFLAGS)		\
+	$(OPENCOBOL08_CFLAGS)		\
 	$(RUBY_CFLAGS)		\
 	$(SSL_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
+OpenCOBOLla = 
+if OPENCOBOL
+OpenCOBOLla += OpenCOBOL.la
+endif
+if OPENCOBOL23
+OpenCOBOLla += OpenCOBOL23.la
+endif
+if OPENCOBOL08
+OpenCOBOLla += OpenCOBOL08.la
+endif
+
 HANDLER_OBJECTS	=	\
 	dotCOBOL.la		\
-	OpenCOBOL.la	\
 	C.la			\
 	Exec.la			\
 	Resident.la		\
-	Ruby.la
+	Ruby.la			\
+	$(OpenCOBOLla)
 
 dotCOBOL_la_LDFLAGS		=	-module -export-dynamic
+if OPENCOBOL
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic
+endif
+if OPENCOBOL23
+OpenCOBOL23_la_LDFLAGS	=	-module -export-dynamic
+endif
+if OPENCOBOL08
+OpenCOBOL08_la_LDFLAGS	=	-module -export-dynamic
+endif
 C_la_LDFLAGS			=	-module -export-dynamic
 Exec_la_LDFLAGS			=	-module -export-dynamic
 Resident_la_LDFLAGS		=	-module -export-dynamic
@@ -79,9 +101,21 @@ Ruby_la_LDFLAGS			=   -module -export-dynamic
 
 dotCOBOL_la_SOURCES		=	dotCOBOL.c
 C_la_SOURCES			=	C.c
+if OPENCOBOL23
+OpenCOBOL23_la_SOURCES	=	OpenCOBOL.c
+OpenCOBOL23_la_LIBADD		=	\
+	$(OPENCOBOL23_LIBS)
+endif
+if OPENCOBOL08
+OpenCOBOL08_la_SOURCES	=	OpenCOBOL.c
+OpenCOBOL08_la_LIBADD		=	\
+	$(OPENCOBOL08_LIBS)
+endif
+if OPENCOBOL
 OpenCOBOL_la_SOURCES	=	OpenCOBOL.c
 OpenCOBOL_la_LIBADD		=	\
 	$(OPENCOBOL_LIBS)
+endif
 Exec_la_SOURCES			=	Exec.c
 Exec_la_LIBADD			=	\
 	$(top_builddir)/libs/comm.lo \
@@ -120,3 +154,4 @@ MCPSUB_la_SOURCES	=			\
 MONFUNC_la_SOURCES	=			\
 	MONFUNC.c					\
 	OpenCOBOL.h
+
