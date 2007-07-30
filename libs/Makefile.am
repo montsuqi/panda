@@ -119,6 +119,7 @@ libpanda_a_SOURCES	=				\
 	load.c		load.h				\
 	blobcom.h						\
 	debug.h
+libpanda_a_CFLAGS	=	$(AM_CFLAGS)
 
 libpandas_a_SOURCES	=			\
 	applications.c applications.h	\
@@ -132,6 +133,7 @@ libpandas_a_SOURCES	=			\
 	auth.c		auth.h				\
 	authstub.c	authstub.h			\
 	load.c		load.h
+libpandas_a_CFLAGS	=	$(AM_CFLAGS)
 
 libpandas_a_DEPENDENCIES	=		\
 	$(top_srcdir)/defaults.h
@@ -153,11 +155,14 @@ libpandacom_a_SOURCES	=			\
 	port.c			port.h			\
 	pty.c			pty.h			\
 	queue.c			queue.h
+libpandacom_a_CFLAGS	=	$(AM_CFLAGS)
+
 libpandagl_a_SOURCES	=			\
 	net.c			net.h			\
 	socket.c		socket.h		\
 	port.c			port.h			\
 	queue.c			queue.h
+libpandagl_a_CFLAGS	=	$(AM_CFLAGS)
 
 enum.h:	enum
 	./enum > enum.h
@@ -191,3 +196,6 @@ testblob_LDADD	=				\
 	$(MONDAI_LIBS)				
 
 testblob_DEPENDENCIES	=
+
+AM_CPPFLAGS = \
+	-DLOCALEDIR=\"$(localedir)\"

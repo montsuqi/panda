@@ -29,6 +29,7 @@
 #include <unistd.h>		    /* fstat, close */
 #include <libgen.h>         /* dirname, basename */
 
+#include "gettext.h"
 #include "bd_config.h"
 
 #define XML_CHILDREN(node) ((node)->childs)
@@ -251,7 +252,7 @@ is_file (const char *filename)
   if ((fd = open (filename, O_RDONLY)) == -1)
     {
 #if 0
-      fprintf (stderr, "error: `%s' don't exist or could not read.\n",
+      fprintf (stderr, _("error: `%s' don't exist or could not read.\n"),
 	       filename);
 #endif
       return 0;
@@ -260,7 +261,7 @@ is_file (const char *filename)
   if (S_ISDIR (stat_buf.st_mode))
     {
 #if 0
-      fprintf (stderr, "error: `%s' is directory.\n", filename);
+      fprintf (stderr, _("error: `%s' is directory.\n"), filename);
 #endif
       close (fd);
       return 0;
@@ -280,20 +281,20 @@ bd_config_file_to_dom (char *filename)
 
   if ((doc = xmlParseFile (filename)) == NULL)
     {
-      fprintf (stderr, "error: `%s' unknown file type.", filename);
+      fprintf (stderr, _("error: `%s' unknown file type."), filename);
       goto error;
     }
 
   if (doc->root == NULL)
     {
-      fprintf (stderr, "error: `%s' unknown file type.", filename);
+      fprintf (stderr, _("error: `%s' unknown file type."), filename);
       goto error;
     }
 
   namespace = xmlSearchNs (doc, doc->root, "glclient");
   if (namespace == NULL || xmlStrcmp (doc->root->name, "config") != 0)
     {
-      fprintf (stderr, "error: `%s' is not glclient config file.", filename);
+      fprintf (stderr, _("error: `%s' is not glclient config file."), filename);
       goto error;
     }
 
@@ -503,7 +504,7 @@ bd_config_save (BDConfig *self, gchar *filename, mode_t mode)
 
   if ((fp = fopen (filename, "w")) == NULL)
     {
-      fprintf (stderr, "error: could not open for write: %s\n", filename);
+      fprintf (stderr, _("error: could not open for write: %s\n"), filename);
       return FALSE;
     }
 

@@ -1,0 +1,368 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-07-26 17:11+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: glclient/bd_config.c:255
+#, c-format
+msgid "error: `%s' don't exist or could not read.\n"
+msgstr ""
+
+#: glclient/bd_config.c:264
+#, c-format
+msgid "error: `%s' is directory.\n"
+msgstr ""
+
+#: glclient/bd_config.c:284 glclient/bd_config.c:290
+#, c-format
+msgid "error: `%s' unknown file type."
+msgstr ""
+
+#: glclient/bd_config.c:297
+#, c-format
+msgid "error: `%s' is not glclient config file."
+msgstr ""
+
+#: glclient/bd_config.c:507
+#, c-format
+msgid "error: could not open for write: %s\n"
+msgstr ""
+
+#: glclient/bootdialog.c:269
+#, c-format
+msgid "warning: Description is blank\n"
+msgstr ""
+
+#: glclient/bootdialog.c:282
+#, c-format
+msgid "warning: already used description\n"
+msgstr ""
+
+#: glclient/bootdialog.c:394 glclient/bootdialog.c:908
+msgid "New"
+msgstr ""
+
+#: glclient/bootdialog.c:396 glclient/bootdialog.c:913
+msgid "Edit"
+msgstr ""
+
+#: glclient/bootdialog.c:405
+msgid "Ok"
+msgstr ""
+
+#: glclient/bootdialog.c:411
+msgid "Cancel"
+msgstr ""
+
+#: glclient/bootdialog.c:425 glclient/bootdialog.c:715
+msgid "Description"
+msgstr ""
+
+#: glclient/bootdialog.c:434 glclient/bootdialog.c:1546
+msgid "Host(Port)"
+msgstr ""
+
+#: glclient/bootdialog.c:449 glclient/bootdialog.c:718
+#: glclient/bootdialog.c:1563
+msgid "Application"
+msgstr ""
+
+#: glclient/bootdialog.c:458 glclient/bootdialog.c:1585
+msgid "Protocol"
+msgstr ""
+
+#: glclient/bootdialog.c:475 glclient/bootdialog.c:1770
+msgid "Cache"
+msgstr ""
+
+#: glclient/bootdialog.c:478 glclient/bootdialog.c:493
+#: glclient/bootdialog.c:508 glclient/bootdialog.c:564
+#: glclient/bootdialog.c:579 glclient/bootdialog.c:594
+#: glclient/bootdialog.c:609 glclient/bootdialog.c:641
+#: glclient/bootdialog.c:1648 glclient/bootdialog.c:1663
+#: glclient/bootdialog.c:1678 glclient/bootdialog.c:1693
+#: glclient/bootdialog.c:1737 glclient/bootdialog.c:1774
+#: glclient/bootdialog.c:1790 glclient/bootdialog.c:1806
+msgid "Open"
+msgstr ""
+
+#: glclient/bootdialog.c:490 glclient/bootdialog.c:1786
+msgid "Style"
+msgstr ""
+
+#: glclient/bootdialog.c:505 glclient/bootdialog.c:1802
+msgid "Gtkrc"
+msgstr ""
+
+#: glclient/bootdialog.c:521 glclient/bootdialog.c:1819
+msgid "Output Logfile"
+msgstr ""
+
+#: glclient/bootdialog.c:528 glclient/bootdialog.c:1827 glclient/client.c:119
+msgid "Enable Keybuffer"
+msgstr ""
+
+#: glclient/bootdialog.c:534 glclient/bootdialog.c:719
+#: glclient/bootdialog.c:1604 glclient/client.c:109
+msgid "User"
+msgstr ""
+
+#: glclient/bootdialog.c:543 glclient/bootdialog.c:1614 glclient/client.c:111
+msgid "Passwrod"
+msgstr ""
+
+#: glclient/bootdialog.c:555 glclient/bootdialog.c:1638
+msgid "SSL"
+msgstr ""
+
+#: glclient/bootdialog.c:561 glclient/bootdialog.c:1645 glclient/client.c:130
+msgid "CA Certificate Path"
+msgstr ""
+
+#: glclient/bootdialog.c:576 glclient/bootdialog.c:1660 glclient/client.c:132
+msgid "CA Certificate File"
+msgstr ""
+
+#: glclient/bootdialog.c:591 glclient/bootdialog.c:1675
+msgid "SSL Key File(pem)"
+msgstr ""
+
+#: glclient/bootdialog.c:606 glclient/bootdialog.c:1690 glclient/client.c:126
+msgid "Certificate(pem/p12)"
+msgstr ""
+
+#: glclient/bootdialog.c:621 glclient/bootdialog.c:1705
+msgid "Cipher Suite"
+msgstr ""
+
+#: glclient/bootdialog.c:632
+msgid "Security Device"
+msgstr ""
+
+#: glclient/bootdialog.c:638 glclient/bootdialog.c:1734 glclient/client.c:137
+msgid "PKCS#11 Library"
+msgstr ""
+
+#: glclient/bootdialog.c:653 glclient/bootdialog.c:1749
+msgid "Slot ID"
+msgstr ""
+
+#: glclient/bootdialog.c:716
+msgid "Host"
+msgstr ""
+
+#: glclient/bootdialog.c:717 glclient/client.c:101
+msgid "Port"
+msgstr ""
+
+#: glclient/bootdialog.c:900
+msgid "Server Setting"
+msgstr ""
+
+#: glclient/bootdialog.c:919
+msgid "Delete"
+msgstr ""
+
+#: glclient/bootdialog.c:925 glclient/bootdialog.c:1843
+msgid "Close"
+msgstr ""
+
+#: glclient/bootdialog.c:996
+msgid "Custom"
+msgstr ""
+
+#: glclient/bootdialog.c:1008 glclient/bootdialog.c:1009
+#: glclient/bootdialog.c:1507 glclient/bootdialog.c:1516
+msgid "glclient Launcher"
+msgstr ""
+
+#: glclient/bootdialog.c:1061
+#, c-format
+msgid "error: could not create per-user config directory\n"
+msgstr ""
+
+#: glclient/bootdialog.c:1524
+msgid "Server"
+msgstr ""
+
+#: glclient/bootdialog.c:1541
+msgid "Basic"
+msgstr ""
+
+#: glclient/bootdialog.c:1575 glclient/client.c:128
+msgid "Use SSL"
+msgstr ""
+
+#: glclient/bootdialog.c:1626
+msgid "Remember Password"
+msgstr ""
+
+#: glclient/bootdialog.c:1716
+msgid "Use Security Device"
+msgstr ""
+
+#: glclient/bootdialog.c:1765
+msgid "Details"
+msgstr ""
+
+#: glclient/bootdialog.c:1836
+msgid "Connect"
+msgstr ""
+
+#: glclient/bootdialog.c:1849
+msgid "Configuration"
+msgstr ""
+
+#: glclient/bootdialog.c:1880
+#, c-format
+msgid "error: permissions is not 0%o: %s\n"
+msgstr ""
+
+#: glclient/client.c:103
+msgid "Cache Directory"
+msgstr ""
+
+#: glclient/client.c:105
+msgid "Style Filename"
+msgstr ""
+
+#: glclient/client.c:107
+msgid "GtkStyle Filename"
+msgstr ""
+
+#: glclient/client.c:113
+msgid "Use Protocol Version 1"
+msgstr ""
+
+#: glclient/client.c:115
+msgid "Use Protocol Version 2"
+msgstr ""
+
+#: glclient/client.c:117
+msgid "Enable Loggin"
+msgstr ""
+
+#: glclient/client.c:121
+msgid "Use Startup Dialog"
+msgstr ""
+
+#: glclient/client.c:124
+msgid "SSL Key File(pem/p12)"
+msgstr ""
+
+#: glclient/client.c:134
+msgid "SSL Cipher Sweet"
+msgstr ""
+
+#: glclient/client.c:139
+msgid "Security Device Slot ID"
+msgstr ""
+
+#: glclient/client.c:199
+msgid "could not write cache dir"
+msgstr ""
+
+#: glclient/client.c:216
+#, c-format
+msgid "glclient ver %s\n"
+msgstr ""
+
+#: glclient/client.c:217
+#, c-format
+msgid "Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n"
+msgstr ""
+
+#: glclient/client.c:218
+#, c-format
+msgid "              2000-2003 Masami Ogoshi & JMA.\n"
+msgstr ""
+
+#: glclient/client.c:304
+msgid "can not connect server(server port not found)"
+msgstr ""
+
+#: glclient/client.c:325
+msgid "MakeSSL_CTX failure"
+msgstr ""
+
+#: glclient/client.c:330
+msgid "could not start SSL session"
+msgstr ""
+
+#: glclient/fileEntry.c:101
+#, c-format
+msgid "Succeeded in writing %s"
+msgstr ""
+
+#: glclient/fileEntry.c:105
+#, c-format
+msgid ""
+"cannot write %s \n"
+"%s"
+msgstr ""
+
+#: glclient/fileEntry.c:169
+msgid "File already exists. Rewrite?"
+msgstr ""
+
+#: glclient/protocol.c:131
+msgid "Connection lost\n"
+msgstr ""
+
+#: glclient/protocol.c:287
+msgid "error size mismatch !"
+msgstr ""
+
+#: glclient/protocol.c:519
+msgid "could not write tmp file"
+msgstr ""
+
+#: glclient/protocol.c:523
+msgid "could not write cache file"
+msgstr ""
+
+#: glclient/protocol.c:546
+msgid "invalid protocol sequence"
+msgstr ""
+
+#: glclient/protocol.c:888
+msgid "connection start\n"
+msgstr ""
+
+#: glclient/protocol.c:901
+msgid "can not connect server"
+msgstr ""
+
+#: glclient/protocol.c:904
+msgid "can not connect server(version not match)"
+msgstr ""
+
+#: glclient/protocol.c:907
+msgid "can not connect server(authentication error)"
+msgstr ""
+
+#: glclient/protocol.c:910
+msgid "can not connect server(application name invalid)"
+msgstr ""
+
+#: glclient/protocol.c:914
+msgid "can not connect server(other protocol error)"
+msgstr ""
+
+#: glclient/protocol.c:1020 glclient/protocol.c:1046 glclient/protocol.c:1293
+#, c-format
+msgid "invalid data conversion\n"
+msgstr ""

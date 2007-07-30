@@ -38,8 +38,10 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<ctype.h>
+#include        "config.h"
 #include	"types.h"
 #include	"option.h"
+#include        "gettext.h"
 
 #define	MAX_LINE 8192
 
@@ -217,9 +219,12 @@ PrintUsage(
 	char		*comment)
 {	int		i;
 
+#if 0
+        bindtextdomain(PACKAGE, LOCALEDIR);
+#endif
 	printf("%s\n",comment);
 	for ( i = 0 ; tbl[i].option != NULL ; i++ )	{
-		printf( "  -%-12s : %-40s", tbl[i].option, tbl[i].message );
+		printf( "  -%-12s : %-40s", tbl[i].option, _d(tbl[i].message) );
 		if		(  tbl[i].defval  )	{
 			printf("\t[");
 			PrintVar(tbl[i]);

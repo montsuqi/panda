@@ -37,6 +37,7 @@
 #    include <gtk/gtk.h>
 #endif
 
+#include        "gettext.h"
 #include	"comm.h"
 #include	"dialogs.h"
 #include	"fileEntry.h"
@@ -97,11 +98,11 @@ SaveFile(
 		rc = FALSE;
 	}
 	if (rc){
-		snprintf(buf, sizeof(buf), "%s 書き込み終了", filename);
+		snprintf(buf, sizeof(buf), _("Succeeded in writing %s"), filename);
 		dialog = message_dialog(buf, rc);
 		gtk_widget_destroy (GTK_WIDGET (gtk_widget_get_toplevel(widget)));
 	} else {
-		snprintf(buf, sizeof(buf), "%s ファイルに書き込めませんでした\n %s", 
+		snprintf(buf, sizeof(buf), _("cannot write %s \n%s"), 
 				 filename, strerror(errno));
 		dialog = message_dialog(buf, rc);
 		gtk_window_set_transient_for (GTK_WINDOW (dialog),
@@ -165,7 +166,7 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 			}
 		} else {
 			dialog = question_dialog(
-					"ファイルが既に存在します。書き換えますか？",
+					_("File already exists. Rewrite?"),
 					(GtkSignalFunc) question_clicked, GTK_WIDGET(fs),
 					                                  GTK_WINDOW(fs));
 		}

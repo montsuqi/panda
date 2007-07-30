@@ -50,6 +50,7 @@
 #include	<gtkpanda/gtkpanda.h>
 #endif
 
+#include        "gettext.h"
 #include	"types.h"
 #include	"glterm.h"
 #include	"glclient.h"
@@ -127,7 +128,7 @@ PopScreenStack(void)
 static void
 GL_Error(void)
 {
-	GLError("Connection lost\n");
+	GLError(_("Connection lost\n"));
 	gtk_main_quit();
 }
 
@@ -283,7 +284,7 @@ ENTER_FUNC;
 		}
 		str[size] = 0;
 	} else {
-		GLError("error size mismatch !");
+		GLError(_("error size mismatch !"));
 		exit(1);
 	}
 LEAVE_FUNC;
@@ -515,11 +516,11 @@ ENTER_FUNC;
 		mkCacheDir(dirname);
 		g_free(dirname);
 		if  ((fd = mkstemp(tmpfile)) == -1 ) {
-			GLError("could not write tmp file");
+			GLError(_("could not write tmp file"));
 			exit(1);
 		}
 		if	((fp = fdopen(fd,"w")) == NULL) {
-			GLError("could not write cache file");
+			GLError(_("could not write cache file"));
 			exit(1);
 		}
 		fchmod(fileno(fp), 0600);
@@ -542,7 +543,7 @@ ENTER_FUNC;
 		g_free(tmpfile);
 		ret = TRUE;
 	} else {
-		GLError("invalid protocol sequence");
+		GLError(_("invalid protocol sequence"));
 		ret = FALSE;
 	}
 LEAVE_FUNC;
@@ -884,7 +885,7 @@ SendConnect(
 
 ENTER_FUNC;
 	if		(  fMlog  ) {
-		MessageLog("connection start\n");
+		MessageLog(_("connection start\n"));
 	}
 	GL_SendPacketClass(fp,GL_Connect);
 	GL_SendVersionString(fp);
@@ -897,20 +898,20 @@ ENTER_FUNC;
 		rc = FALSE;
 		switch	(pc) {
 		  case	GL_NOT:
-			GLError("can not connect server");
+			GLError(_("can not connect server"));
 			break;
 		  case	GL_E_VERSION:
-			GLError("can not connect server(version not match)");
+			GLError(_("can not connect server(version not match)"));
 			break;
 		  case	GL_E_AUTH:
-			GLError("can not connect server(authentication error)");
+			GLError(_("can not connect server(authentication error)"));
 			break;
 		  case	GL_E_APPL:
-			GLError("can not connect server(application name invalid)");
+			GLError(_("can not connect server(application name invalid)"));
 			break;
 		  default:
 			dbgprintf("[%X]\n",pc);
-			GLError("can not connect server(other protocol error)");
+			GLError(_("can not connect server(other protocol error)"));
 			break;
 		}
 	}
@@ -1016,7 +1017,7 @@ RecvFixedData(
 		ret = TRUE;
 		break;
 	  default:
-		printf("invalid data conversion\n");
+		printf(_("invalid data conversion\n"));
 		exit(1);
 		ret = FALSE;
 		break;
@@ -1042,7 +1043,7 @@ SendFixedData(
 		GL_SendFixed(fp,xval);
 		break;
 	  default:
-		printf("invalid data conversion\n");
+		printf(_("invalid data conversion\n"));
 		exit(1);
 		break;
 	}
@@ -1289,7 +1290,7 @@ SendFloatData(
 		GL_SendBool(fp,(( val == 0 ) ? FALSE : TRUE ));
 		break;
 	  default:
-		printf("invalid data conversion\n");
+		printf(_("invalid data conversion\n"));
 		exit(1);
 		break;
 	}

@@ -1,3 +1,8 @@
+2007-07-30  yusuke mihara  <mihara@netlab.jp>
+
+	* automake-1.10, autoconf2.61 に対応
+	* glclientのメッセージの国際化に対応
+	
 2007-06-06  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/action.c(ShowWindow): gtk_widget_set_sensitive の後に ClearKeyBuffer するように変更

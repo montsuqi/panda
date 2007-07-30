@@ -18,7 +18,7 @@
 
 bin_SCRIPTS = panda-config
 
-SUBDIRS		=	\
+SUBDIRS		= intl po 	\
 	libs		\
 	dblib		\
 	include 	\
@@ -52,7 +52,7 @@ defaults.h: Makefile.am $(top_builddir)/config.status
 	@echo "#define MONTSUQI_LIBRARY_PATH	\".:@LIB_DIR@\""		>> defaults.h
 	@echo "#define MONTSUQI_LOAD_PATH		\".:@LIB_DIR@\""		>> defaults.h
 
-EXTRA_DIST = 					\
+EXTRA_DIST = config.rpath m4/ChangeLog  					\
 	config.rpath				\
 	defaults.h
 
@@ -77,3 +77,5 @@ my-distcheck: dist
 	echo "$$dashes"; \
 	echo "$$banner"; \
 	echo "$$dashes"
+
+ACLOCAL_AMFLAGS = -I m4

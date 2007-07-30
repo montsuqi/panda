@@ -37,6 +37,7 @@ INCLUDES 			=		\
 libpandadb_a_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h
+libpandadb_a_CFLAGS 	=	$(AM_CFLAGS)
 
 DB_OBJECTS			=		\
 	PostgreSQL.la			\

@@ -57,6 +57,7 @@
 #include	<gtkpanda/gtkpanda.h>
 #endif
 #define		MAIN
+#include        "gettext.h"
 #include	"const.h"
 #include	"types.h"
 #include	"option.h"
@@ -97,45 +98,45 @@ InitSystem(void)
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,	TRUE,		(void*)&PortNumber,
-		"ポート"										},
+		N_("Port")										},
 	{	"cache",	STRING,		TRUE,	(void*)&Cache,
-		"キャッシュディレクトリ名"						},
+		N_("Cache Directory")						},
 	{	"style",	STRING,		TRUE,	(void*)&Style,
-		"スタイルファイル名"							},
+		N_("Style Filename")							},
 	{	"gtkrc",	STRING,		TRUE,	(void*)&Gtkrc,
-		"Gtkスタイルファイル名"							},
+		N_("GtkStyle Filename")							},
 	{	"user",		STRING,		TRUE,	(void*)&User,
-		"ユーザ名"										},
+		N_("User")										},
 	{	"pass",		STRING,		TRUE,	(void*)&Pass,
-		"パスワード"									},
+		N_("Passwrod")									},
 	{	"v1",		BOOLEAN,	TRUE,	(void*)&Protocol1,
-		"データ処理プロトコルバージョン 1 を使う"		},
+		N_("Use Protocol Version 1")		},
 	{	"v2",		BOOLEAN,	TRUE,	(void*)&Protocol2,
-		"データ処理プロトコルバージョン 2 を使う"		},
+		N_("Use Protocol Version 2")		},
 	{	"mlog",		BOOLEAN,	TRUE,	(void*)&fMlog,
-		"実行ログの取得を行う"							},
+		N_("Enable Loggin")							},
 	{	"keybuff",	BOOLEAN,	TRUE,	(void*)&fKeyBuff,
-		"キーバッファを有効にする"						},
+		N_("Enable Keybuffer")						},
 	{	"dialog",	BOOLEAN,	TRUE,	(void*)&fDialog,
-		"起動ダイアログを表示する"						},
+		N_("Use Startup Dialog")						},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"鍵ファイル名(pem/p12)"		 						},
+		N_("SSL Key File(pem/p12)")		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"証明書ファイル名(pem/p12)"	 						},
+		N_("Certificate(pem/p12)")	 						},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		"SSLを使う"				 						},
+		N_("Use SSL")				 						},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		"CA証明書へのパス"								},
+		N_("CA Certificate Path")								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		"CA証明書ファイル"								},
+		N_("CA Certificate File")								},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		"SSLで使用する暗号スイート"						},
+		N_("SSL Cipher Sweet")						},
 #ifdef  USE_PKCS11
 	{	"pkcs11_lib",STRING,	TRUE,	(void*)&PKCS11_Lib,
-		"PKCS#11ライブラリ"				         		},
+		N_("PKCS#11 Library")				         		},
 	{	"slot",	    STRING,		TRUE,	(void*)&Slot,
-		"セキュリティデバイスのスロット番号"			},
+		N_("Security Device Slot ID")			},
 #endif  /* USE_PKCS11 */
 #endif  /* USE_SSL */
 	{	NULL,		0,			FALSE,	NULL,	NULL	},
@@ -195,7 +196,7 @@ mkCacheDir(
 	}
 	mkdir (Cache, 0755);
 	if  (mkdir (dname, 0755) < 0) {
-		GLError("could not write cache dir");
+		GLError(_("could not write cache dir"));
 		exit(1);
 	}
 }
@@ -212,9 +213,9 @@ ExitSystem(void)
 static	void
 bannar(void)
 {
-	printf("glclient ver %s\n",VERSION);
-	printf("Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n");
-	printf("              2000-2003 Masami Ogoshi & JMA.\n");
+	printf(_("glclient ver %s\n"),VERSION);
+	printf(_("Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n"));
+	printf(_("              2000-2003 Masami Ogoshi & JMA.\n"));
 }
 
 static gboolean
@@ -300,7 +301,7 @@ start_client ()
 
     port = ParPort(PortNumber,PORT_GLTERM);
 	if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
-		GLError("can not connect server(server port not found)");
+		GLError(_("can not connect server(server port not found)"));
 		DestroyPort (port);
 		gtk_rc_reparse_all ();
 		StyleParserTerm ();
@@ -321,12 +322,12 @@ start_client ()
         ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
 #endif
         if (ctx == NULL){
-            GLError("MakeSSL_CTX failure");
+            GLError(_("MakeSSL_CTX failure"));
 			return;
         }
         if ((fpComm = MakeSSL_Net(ctx,fd)) != NULL){
             if (StartSSLClientSession(fpComm, IP_HOST(port)) != TRUE){
-                GLError("could not start SSL session");
+                GLError(_("could not start SSL session"));
                 CloseNet(fpComm);
                 SSL_CTX_free(ctx);
 				return;
@@ -394,6 +395,9 @@ main(
 #endif
 	glade_init();
 #endif
+
+        bindtextdomain(PACKAGE, LOCALEDIR);
+        textdomain(PACKAGE);
 
 	InitNET();
 

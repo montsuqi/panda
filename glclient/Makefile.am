@@ -75,4 +75,5 @@ testfileentry_LDADD =\
 	dialogs.o \
 	fileEntry.o 
 
-
+AM_CPPFLAGS = \
+	-DLOCALEDIR=\"$(localedir)\"

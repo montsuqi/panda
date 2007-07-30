@@ -1,44 +1,21 @@
-# PANDA -- a simple transaction monitor
-# Copyright (C) 2005  ogochan
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-# 02111-1307, USA
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
 
-AC_INIT(configure.in)
-
-dnl AM_INIT_AUTOMAKE is in aclocal.m4
-
-PACKAGE=panda
+AC_PREREQ(2.61)
+AC_INIT([panda], [1.2.10])
+AM_INIT_AUTOMAKE
+AM_MAINTAINER_MODE
+AC_CONFIG_SRCDIR([aps/C.c])
+AM_CONFIG_HEADER(config.h)
+AC_GNU_SOURCE
 
 # make version
 MAJOR_VERSION=1
 MINOR_VERSION=2
 MICRO_VERSION=10
-
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
 LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
 
-AC_SUBST(MAJOR_VERSION)
-AC_SUBST(MINOR_VERSION)
-AC_SUBST(MICRO_VERSION)
-
-AC_SUBST(PACKAGE)
-AC_SUBST(VERSION)
-AC_SUBST(LTVERSION)
-
-AM_CONFIG_HEADER(config.h)
 
 CONFDIR=`expr $sysconfdir`
 AC_SUBST(CONFDIR)
@@ -47,28 +24,65 @@ AC_DEFINE_UNQUOTED(PACKAGE,"$PACKAGE","")
 AC_DEFINE_UNQUOTED(VERSION,"$VERSION","")
 AC_DEFINE_UNQUOTED(CONFDIR,"$CONFDIR","")
 
-# Initialize automake stuff
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
-AM_MAINTAINER_MODE
+AC_SUBST(MAJOR_VERSION)
+AC_SUBST(MINOR_VERSION)
+AC_SUBST(MICRO_VERSION)
+AC_SUBST(PACKAGE)
+AC_SUBST(VERSION)
+AC_SUBST(LTVERSION)
 
 # Checks for programs.
+AC_PROG_CXX
 AC_PROG_CC
-AC_ISC_POSIX
-AM_PROG_CC_STDC
 AC_PROG_INSTALL
-AC_PROG_LN_S
+AM_PROG_CC_STDC
 AM_PROG_LIBTOOL
-AC_PROG_MAKE_SET
+AM_PROG_CC_C_O
 
-# Specify a configuration file
+AC_CHECK_LIB([m], [pow])
+AC_CHECK_LIB([pandas], [SendChar])
+AC_CHECK_LIB([dl],[dlopen])
+AC_CHECK_LIB([pthread],[pthread_create])
+AC_CHECK_LIB([crypt],[crypt])
+
+# Checks for header files.
+AC_HEADER_DIRENT
 AC_HEADER_STDC
-AC_CHECK_HEADERS([crypt.h errno.h])
-AC_CHECK_LIB(dl,dlopen)
-AC_CHECK_LIB(pthread,pthread_create)
-AC_CHECK_LIB(crypt,crypt)
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([fcntl.h netdb.h netinet/in.h stdint.h stdlib.h string.h strings.h sys/socket.h sys/time.h syslog.h unistd.h crypt.h errno.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_TYPE_UID_T
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+AC_TYPE_UINT64_T
+AC_C_VOLATILE
 
 # Checks for library functions.
-AC_CHECK_FUNCS([strerror])
+AC_FUNC_CHOWN
+AC_FUNC_CLOSEDIR_VOID
+AC_FUNC_FORK
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MALLOC
+AC_FUNC_MEMCMP
+AC_FUNC_MMAP
+AC_FUNC_REALLOC
+AC_FUNC_SELECT_ARGTYPES
+AC_TYPE_SIGNAL
+AC_FUNC_STAT
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS([dup2 getcwd gethostbyname gettimeofday memchr memset mkdir munmap pow select socket strcasecmp strchr strcspn strdup strerror strncasecmp strrchr strstr strtol])
+
+# gettext
+AC_CANONICAL_HOST
+AM_GNU_GETTEXT
 
 dnl ***************************************************************************
 dnl checking libmagic
@@ -564,30 +578,30 @@ MONDAI_LIBS=`libmondai-config --libs 2>/dev/null`
 AC_SUBST(MONDAI_LIBS)
 AC_SUBST(MONDAI_CFLAGS)
 
-
 LIB_DIR="${libdir}"
 AC_SUBST(LIB_DIR)
 
-AC_OUTPUT([
-	Makefile
-	Doc/Makefile
-	include/Makefile
-	libs/Makefile
-	dblib/Makefile
-	dbstuff/Makefile
-	cobol/Makefile
-	glclient/Makefile
-	glserver/Makefile
-	htserver/Makefile
-	aps/Makefile
-	auth/Makefile
-	pgserver/Makefile
-	tools/Makefile
-	wfc/Makefile
-	monpls_demo/Makefile
-	fdd/Makefile
-	panda-config
-], [chmod +x panda-config])
+AC_CONFIG_FILES([Makefile 
+                 intl/Makefile 
+                 po/Makefile.in
+                 Doc/Makefile
+                 aps/Makefile
+                 auth/Makefile
+                 cobol/Makefile
+                 dblib/Makefile
+                 dbstuff/Makefile
+                 fdd/Makefile
+                 glclient/Makefile
+                 glserver/Makefile
+                 htserver/Makefile
+                 include/Makefile
+                 libs/Makefile
+                 monpls_demo/Makefile
+                 pgserver/Makefile
+                 tools/Makefile
+                 wfc/Makefile 
+                 panda-config ])
+AC_OUTPUT
 
 dnl ***************************************************************************
 dnl output result
