@@ -90,6 +90,7 @@ AC_CHECK_FUNCS([dup2 getcwd gethostbyname gettimeofday memchr memset mkdir munma
 # gettext
 AC_CANONICAL_HOST
 AM_GNU_GETTEXT
+AM_GNU_GETTEXT_VERSION(0.16.1)
 
 dnl ***************************************************************************
 dnl checking libmagic
