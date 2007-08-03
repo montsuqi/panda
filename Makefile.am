@@ -52,9 +52,12 @@ defaults.h: Makefile.am $(top_builddir)/config.status
 	@echo "#define MONTSUQI_LIBRARY_PATH	\".:@LIB_DIR@\""		>> defaults.h
 	@echo "#define MONTSUQI_LOAD_PATH		\".:@LIB_DIR@\""		>> defaults.h
 
+DISTCLEANFILES = defaults.h
+
 EXTRA_DIST = config.rpath m4/ChangeLog  					\
-	config.rpath				\
-	defaults.h
+	config.rpath				
+
+
 
 my-distcheck: dist
 	-rm -rf $(distdir)

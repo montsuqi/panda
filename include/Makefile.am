@@ -24,4 +24,5 @@ EXTRA_DIST =					\
 	glterm.h				\
 	struct.h				\
 	types.h					\
-	wfcdata.h
+	wfcdata.h				\
+	gettext.h

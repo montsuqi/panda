@@ -2,11 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([panda], [1.2.10])
+AC_INIT([panda],[1.2.10])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_SRCDIR([aps/C.c])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 AC_GNU_SOURCE
 
 # make version
@@ -35,7 +35,14 @@ AC_SUBST(LTVERSION)
 AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_INSTALL
-AM_PROG_CC_STDC
+AC_PROG_CC
+AC_DIAGNOSE([obsolete],[AM_PROG_CC_STDC:
+	your code should no longer depend upon `am_cv_prog_cc_stdc', but upon
+	`ac_cv_prog_cc_stdc'.  Remove this warning and the assignment when
+	you adjust the code.  You can also remove the above call to
+	AC_PROG_CC if you already called it elsewhere.])
+am_cv_prog_cc_stdc=$ac_cv_prog_cc_stdc
+
 AM_PROG_LIBTOOL
 AM_PROG_CC_C_O
 
@@ -660,7 +667,7 @@ AC_CONFIG_FILES([Makefile
                  tools/Makefile
                  wfc/Makefile
                  panda-config
-], [chmod +x panda-config])
+])
 AC_OUTPUT
 
 dnl ***************************************************************************

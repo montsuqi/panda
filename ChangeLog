@@ -1,3 +1,8 @@
+2007-07-30  Noboru Saitou  <noborus@netlab.jp>
+
+	* configure.ac, aps/Makefile.am, aps/OpenCOBOL.c, libs/mhandler.c: 
+	  OpenCOBOL-0.8.x と　OpenCOBOL-0.23　の共存に対応
+	
 2007-07-30  yusuke mihara  <mihara@netlab.jp>
 
 	* automake-1.10, autoconf2.61 に対応

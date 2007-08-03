@@ -199,3 +199,5 @@ testblob_DEPENDENCIES	=
 
 AM_CPPFLAGS = \
 	-DLOCALEDIR=\"$(localedir)\"
+
+DISTCLEANFILES = enum.h

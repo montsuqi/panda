@@ -18,7 +18,9 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = glserver
+
 bin_SCRIPTS = pstopng
+EXTRA_DIST = $(bin_SCRIPTS)
 
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\

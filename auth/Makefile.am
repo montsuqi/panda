@@ -57,3 +57,9 @@ glauth_DEPENDENCIES	=					\
 	$(top_builddir)/libs/libpandacom.a
 user_DEPENDENCIES	=					\
 	$(top_builddir)/libs/libpandamisc.a
+
+install-exec-hook:
+	$(LN_S) -f $(DESTDIR)$(bindir)/user $(DESTDIR)$(bindir)/gluseradd
+	$(LN_S) -f $(DESTDIR)$(bindir)/user $(DESTDIR)$(bindir)/gluserdel
+	$(LN_S) -f $(DESTDIR)$(bindir)/user $(DESTDIR)$(bindir)/glusermod
+
