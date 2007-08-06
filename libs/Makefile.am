@@ -200,6 +200,7 @@ testblob_DEPENDENCIES	=
 AM_CPPFLAGS = \
 	-DLOCALEDIR=\"$(localedir)\"
 
+BUILT_SOURCES = enum.h
 DISTCLEANFILES = enum.h
 
 EXTRA_DIST = apistruct.h blobup.c option.doc
