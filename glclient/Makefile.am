@@ -77,3 +77,5 @@ testfileentry_LDADD =\
 
 AM_CPPFLAGS = \
 	-DLOCALEDIR=\"$(localedir)\"
+
+EXTRA_DIST = testrc

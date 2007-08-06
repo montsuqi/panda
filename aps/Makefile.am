@@ -155,3 +155,4 @@ MONFUNC_la_SOURCES	=			\
 	MONFUNC.c					\
 	OpenCOBOL.h
 
+EXTRA_DIST = apslib.rb

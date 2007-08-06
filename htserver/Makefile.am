@@ -114,3 +114,5 @@ mcd_INCLUDES =					\
 
 mce_SOURCES	=	\
 	mce.c
+
+EXTRA_DIST = mon.cgi monlib.rb montest.rb xhtml2sdoc.xsl

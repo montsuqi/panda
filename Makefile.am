@@ -57,8 +57,6 @@ DISTCLEANFILES = defaults.h
 EXTRA_DIST = config.rpath m4/ChangeLog  					\
 	config.rpath				
 
-
-
 my-distcheck: dist
 	-rm -rf $(distdir)
 	GZIP=$(GZIP_ENV) $(TAR) zxf $(distdir).tar.gz

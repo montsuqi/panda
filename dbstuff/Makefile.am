@@ -71,3 +71,6 @@ dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a
 
+EXTRA_DIST = dbslib.rb testdbs.rb
+
+

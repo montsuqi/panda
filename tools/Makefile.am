@@ -122,4 +122,9 @@ gnumerictorec_SOURCES	=	\
 EXTRA_DIST =					\
 	recdefgen.rb				\
 	recgen.rb				\
-	copy
+	copy					\
+	htcgen.rb				\
+	htcgen.xsl				\
+	htcgen2					\
+	structgen.c				\
+	test.def

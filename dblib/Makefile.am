@@ -56,7 +56,7 @@ PostgreSQL_la_LIBADD	=	\
 	$(top_builddir)/libs/socket.lo	\
 	$(POSTGRES_LIBS)
 PostgreSQL_la_DEPENDENCIES	=		\
-	$(top_srcdir)/defaults.h
+	$(top_builddir)/defaults.h
 
 Shell_la_LDFLAGS		=	-module -export-dynamic
 Shell_la_SOURCES		=	\

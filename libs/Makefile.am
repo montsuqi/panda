@@ -136,7 +136,7 @@ libpandas_a_SOURCES	=			\
 libpandas_a_CFLAGS	=	$(AM_CFLAGS)
 
 libpandas_a_DEPENDENCIES	=		\
-	$(top_srcdir)/defaults.h
+	$(top_builddir)/defaults.h
 
 #libpandacominclude_HEADERS =	\
 #	comm.h			\
@@ -201,3 +201,5 @@ AM_CPPFLAGS = \
 	-DLOCALEDIR=\"$(localedir)\"
 
 DISTCLEANFILES = enum.h
+
+EXTRA_DIST = apistruct.h blobup.c option.doc

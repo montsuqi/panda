@@ -20,7 +20,7 @@
 sbin_PROGRAMS = glserver
 
 bin_SCRIPTS = pstopng
-EXTRA_DIST = $(bin_SCRIPTS)
+EXTRA_DIST = $(bin_SCRIPTS) passwd
 
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\
@@ -47,3 +47,4 @@ INCLUDES 			= 		\
 glserver_SOURCES	=		\
 	glserver.c	glserver.h	\
 	server.c
+

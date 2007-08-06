@@ -9,5 +9,7 @@ EXTRA_DIST = \
 	about.tex      dbredirector.tex  htserver.tex		\
 	wfc.tex		aps.tex	     dbstub.tex			\
 	lang.tex	checkdir.tex	mon.tex			\
-	event.doc
-
+	event.doc	DBIO.tex	HAKAMA.tex		\
+	PostgreSQL.tex	Shell.tex	V2			\
+	dbs.tex		PGIO.tex	env.tex			\
+	memo.PostgreSQL	pgserver.tex 
