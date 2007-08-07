@@ -59,7 +59,7 @@ user_DEPENDENCIES	=					\
 	$(top_builddir)/libs/libpandamisc.a
 
 install-exec-hook:
-	$(LN_S) -f $(DESTDIR)$(bindir)/user $(DESTDIR)$(bindir)/gluseradd
-	$(LN_S) -f $(DESTDIR)$(bindir)/user $(DESTDIR)$(bindir)/gluserdel
-	$(LN_S) -f $(DESTDIR)$(bindir)/user $(DESTDIR)$(bindir)/glusermod
+	cd $(DESTDIR)$(bindir)/ && $(LN_S) -f user$(EXEEXT) gluseradd$(EXEEXT)
+	cd $(DESTDIR)$(bindir)/ && $(LN_S) -f user$(EXEEXT) gluserdel$(EXEEXT)
+	cd $(DESTDIR)$(bindir)/ && $(LN_S) -f user$(EXEEXT) glusermod$(EXEEXT)
 
