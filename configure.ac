@@ -649,7 +649,7 @@ LIB_DIR="${libdir}"
 AC_SUBST(LIB_DIR)
 
 AC_ARG_WITH(mon-libpath,
-	[--with-mon-libpath=<DIR>],
+	[  --with-mon-libpath=<DIR>],
 	[mon_libpath=$withval])
 if test "$mon_libpath" != ""; then
    MONTSUQI_LIBRARY_PATH=$mon_libpath
@@ -659,7 +659,7 @@ fi
 AC_SUBST(MONTSUQI_LIBRARY_PATH)
 
 AC_ARG_WITH(mon-loadpath,
-	[--with-mon-loadpath=<DIR>],
+	[  --with-mon-loadpath=<DIR>],
 	[mon_loadpath=$withval])
 if test "$mon_loadpath" != ""; then
    MONTSUQI_LOAD_PATH=$mon_loadpath
