@@ -17,8 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-sbin_PROGRAMS = glauth
-bin_PROGRAMS = user
+sbin_PROGRAMS = glauth user
 
 glauth_LDADD 		=					\
 	-lm									\
@@ -59,7 +58,7 @@ user_DEPENDENCIES	=					\
 	$(top_builddir)/libs/libpandamisc.a
 
 install-exec-hook:
-	cd $(DESTDIR)$(bindir)/ && $(LN_S) -f user$(EXEEXT) gluseradd$(EXEEXT)
-	cd $(DESTDIR)$(bindir)/ && $(LN_S) -f user$(EXEEXT) gluserdel$(EXEEXT)
-	cd $(DESTDIR)$(bindir)/ && $(LN_S) -f user$(EXEEXT) glusermod$(EXEEXT)
+	cd $(DESTDIR)$(sbindir)/ && $(LN_S) -f user$(EXEEXT) gluseradd$(EXEEXT)
+	cd $(DESTDIR)$(sbindir)/ && $(LN_S) -f user$(EXEEXT) gluserdel$(EXEEXT)
+	cd $(DESTDIR)$(sbindir)/ && $(LN_S) -f user$(EXEEXT) glusermod$(EXEEXT)
 
