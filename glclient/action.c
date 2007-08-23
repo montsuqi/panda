@@ -398,8 +398,9 @@ ENTER_FUNC;
 	attr.cursor = Busycursor;
 	attr.x = attr.y = 0;
 	attr.width = attr.height = 32767;
-
-	window = gtk_widget_get_toplevel(widget);
+	if ( widget != NULL ) {
+		window = gtk_widget_get_toplevel(widget);
+	}
 	pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
 	gdk_window_show (pane);
 	gdk_flush ();
