@@ -122,7 +122,7 @@ fi
 
 if test "x$enable_gnome" = "xyes"; then
     have_gnome="yes"
-    AC_DEFINE(USE_GNOME,,"")
+    AC_DEFINE(USE_GNOME,1,"")
 else
     have_gnome="no"
 fi

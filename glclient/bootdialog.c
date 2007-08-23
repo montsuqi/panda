@@ -27,10 +27,12 @@
 #include <ctype.h> /* isblank */
 #include <sys/stat.h> /* mkdir */
 #include <sys/types.h> /* mkdir */
-#include <glib.h>
-#include <gtk/gtk.h>
-
-#include "gettext.h"
+#ifdef USE_GNOME
+#    include <gnome.h>
+#else
+#    include <gtk/gtk.h>
+#    include "gettext.h"
+#endif
 #include "port.h"
 #include "const.h"
 #include "bd_config.h"

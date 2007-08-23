@@ -45,12 +45,12 @@
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
+#    include "gettext.h"
 #endif
 #ifdef	USE_PANDA
 #include	<gtkpanda/gtkpanda.h>
 #endif
 
-#include        "gettext.h"
 #include	"types.h"
 #include	"glterm.h"
 #include	"glclient.h"

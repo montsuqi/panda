@@ -35,9 +35,9 @@
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
+#    include "gettext.h"
 #endif
 
-#include        "gettext.h"
 #include	"comm.h"
 #include	"dialogs.h"
 #include	"fileEntry.h"

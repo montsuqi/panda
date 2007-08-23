@@ -51,13 +51,13 @@
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
+#    include "gettext.h"
 #endif
 #include	<glade/glade.h>
 #ifdef	USE_PANDA
 #include	<gtkpanda/gtkpanda.h>
 #endif
 #define		MAIN
-#include        "gettext.h"
 #include	"const.h"
 #include	"types.h"
 #include	"option.h"
