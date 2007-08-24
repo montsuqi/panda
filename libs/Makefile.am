@@ -17,14 +17,13 @@
 # 02111-1307, USA
 
 noinst_LIBRARIES	=		\
-	libpanda.a				\
-	libpandas.a				\
+	libpanda.a			\
 	libpandacom.a			\
 	libpandagl.a			\
 	libpandamisc.a			\
 	libpandablob.a
 
-noinst_PROGRAMS		=		\
+noinst_PROGRAMS		=			\
 	enum					\
 	testnet					\
 	testblob
@@ -34,7 +33,7 @@ lib_LTLIBRARIES		=	panda.la
 panda_la_LDFLAGS	=	-module -export-dynamic
 
 panda_la_SOURCES	=		\
-	Dlex.h							\
+	Dlex.h						\
 	mhandler.c	mhandler.h			\
 	DDparser.c	DDparser.h			\
 	BDparser.c	BDparser.h			\
@@ -46,10 +45,10 @@ panda_la_SOURCES	=		\
 	SQLparser.c	SQLparser.h			\
 	blobreq.c	blobreq.h			\
 	directory.c	directory.h			\
-	driver.c	driver.h	enum.h	\
+	driver.c	driver.h	enum.h		\
 	load.c		load.h				\
-	blobcom.h						\
-	applications.c applications.h	\
+	blobcom.h					\
+	applications.c applications.h			\
 	comm.c		comm.h				\
 	comms.c		comms.h				\
 	net.c		net.h				\
@@ -62,9 +61,9 @@ panda_la_SOURCES	=		\
 panda_la_DEPENDENCIES =
 
 panda_la_LIBADD		=	\
-	-lm									\
-	$(SSL_LIBS)							\
-	$(GLIB_LIBS)						\
+	-lm			\
+	$(SSL_LIBS)		\
+	$(GLIB_LIBS)		\
 	$(MONDAI_LIBS)						
 
 libpandaincludedir = $(includedir)/panda
@@ -73,36 +72,43 @@ libpandainclude_HEADERS =	\
 libpanda_a_DEPENDENCIES =	\
 	enum.h
 
-INCLUDES 			= 		\
-	-I$(top_srcdir)			\
+INCLUDES 			=	\
+	-I$(top_srcdir)		\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
-	$(GTK_CFLAGS)			\
-	$(GLIB_CFLAGS)			\
-	$(MONDAI_CFLAGS)		\
+	$(GTK_CFLAGS)		\
+	$(GLIB_CFLAGS)		\
+	$(MONDAI_CFLAGS)	\
 	-DBIN_DIR=\"$(bindir)\"
 
 enum_LDADD	= 	\
-	 -lm	\
-	$(GLADE_LIBS)			\
-	$(GLIB_LIBS)			\
+	 -lm		\
+	$(GLADE_LIBS)	\
+	$(GLIB_LIBS)	\
 	$(MONDAI_LIBS)
 
 testnet_LDADD	= 	\
-	-lm		\
-	$(GLIB_LIBS) \
+	-lm					\
+	$(GLIB_LIBS) 				\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(MONDAI_LIBS)			\
+	$(MONDAI_LIBS)				\
 	$(SSL_LIBS)
 
-testnet_DEPENDENCIES	=		\
+testnet_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
 libpanda_a_SOURCES	=				\
-	Dlex.h							\
+	applications.c applications.h			\
+	front.c		front.h				\
+	comm.c		comm.h				\
+	comms.c		comms.h				\
+	glcomm.c	glcomm.h			\
+	auth.c		auth.h				\
+	authstub.c	authstub.h			\
+	Dlex.h						\
 	mhandler.c	mhandler.h			\
 	DDparser.c	DDparser.h			\
 	BDparser.c	BDparser.h			\
@@ -115,28 +121,11 @@ libpanda_a_SOURCES	=				\
 	term.c		term.h				\
 	blobreq.c	blobreq.h			\
 	directory.c	directory.h			\
-	driver.c	driver.h	enum.h	\
+	driver.c	driver.h	enum.h		\
 	load.c		load.h				\
-	blobcom.h						\
+	blobcom.h					\
 	debug.h
 libpanda_a_CFLAGS	=	$(AM_CFLAGS)
-
-libpandas_a_SOURCES	=			\
-	applications.c applications.h	\
-	DDparser.c	DDparser.h			\
-	driver.c	driver.h	enum.h	\
-	term.c		term.h				\
-	front.c		front.h				\
-	comm.c		comm.h				\
-	comms.c		comms.h				\
-	glcomm.c	glcomm.h			\
-	auth.c		auth.h				\
-	authstub.c	authstub.h			\
-	load.c		load.h
-libpandas_a_CFLAGS	=	$(AM_CFLAGS)
-
-libpandas_a_DEPENDENCIES	=		\
-	$(top_builddir)/defaults.h
 
 #libpandacominclude_HEADERS =	\
 #	comm.h			\
@@ -175,7 +164,7 @@ libpandablobinclude_HEADERS =	\
 
 libpandablob_a_SOURCES	=			\
 	blob_v1.c		blob_v1.h		\
-					blob_v2.h		\
+				blob_v2.h		\
 	table.c			table.h			\
 	blob.c			blob.h
 
@@ -187,12 +176,12 @@ libpandamisc_a_SOURCES	=		\
 	message.c		message.h
 
 testblob_LDADD	=				\
-	-lm							\
+	-lm					\
 	libpandablob.a				\
 	libpandacom.a				\
 	libpandamisc.a				\
 	$(GLIB_LIBS)				\
-	$(SSL_LIBS)					\
+	$(SSL_LIBS)				\
 	$(MONDAI_LIBS)				
 
 testblob_DEPENDENCIES	=

@@ -23,23 +23,23 @@ bin_SCRIPTS = pstopng
 EXTRA_DIST = $(bin_SCRIPTS) passwd
 
 glserver_LDFLAGS	=	-export-dynamic
-glserver_LDADD 		=					\
-	-lm 								\
-	$(top_builddir)/libs/libpandas.a	\
+glserver_LDADD 		=			\
+	-lm 					\
+	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandagl.a	\
-	$(MAGIC_LIBS)						\
-	$(GLIB_LIBS)						\
-	$(SSL_LIBS)							\
+	$(MAGIC_LIBS)				\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
 	$(MONDAI_LIBS)						
-glserver_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpandas.a		\
+glserver_DEPENDENCIES	=			\
+	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandagl.a
-INCLUDES 			= 		\
+INCLUDES 			= 	\
 	-I$(top_srcdir)			\
-	-I$(top_srcdir)/include	\
-	-I$(top_srcdir)/libs	\
+	-I$(top_srcdir)/include		\
+	-I$(top_srcdir)/libs		\
 	$(GLIB_CFLAGS)			\
 	$(SSL_CFLAGS)			\
 	$(MONDAI_CFLAGS)

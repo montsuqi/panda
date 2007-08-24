@@ -70,8 +70,6 @@ System_la_SOURCES		=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
 	System.c
-System_la_LIBADD	=		\
-	$(top_builddir)/libs/libpandas.a
 
 NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
 NativeBLOB_la_SOURCES	=		\

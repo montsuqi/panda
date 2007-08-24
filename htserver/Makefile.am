@@ -21,33 +21,33 @@ bin_PROGRAMS = mon htcproc mce
 sbin_PROGRAMS = htserver
 
 htserver_LDFLAGS	=	-export-dynamic
-htserver_LDADD 		=					\
-	-lm									\
-	$(top_builddir)/libs/libpandas.a		\
+htserver_LDADD 		=			\
+	-lm					\
+	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(SSL_LIBS)							\
-	$(GLIB_LIBS)						\
+	$(SSL_LIBS)				\
+	$(GLIB_LIBS)				\
 	$(MONDAI_LIBS)
 
-mon_LDADD 		=						\
-	-lm									\
+mon_LDADD 		=			\
+	-lm					\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
-	$(SSL_LIBS)							\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
 	$(MONDAI_LIBS)
 
-htcproc_LDADD 	=						\
-	-lm									\
+htcproc_LDADD 	=				\
+	-lm					\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
-	$(SSL_LIBS)							\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
 	$(MONDAI_LIBS)
 
 INCLUDES 			= \
-	-I$(top_srcdir)	\
+	-I$(top_srcdir)		\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)	\
@@ -56,12 +56,12 @@ INCLUDES 			= \
 	$(XSLT_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
-htserver_SOURCES	=	\
+htserver_SOURCES	=		\
 	htserver.c	htserver.h	\
-	server.c	\
+	server.c			\
 	trid.c		trid.h
-htserver_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpandas.a		\
+htserver_DEPENDENCIES	=			\
+	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
@@ -75,7 +75,7 @@ mon_SOURCES	=	\
 	exec.c		exec.h		\
 	mon.c		mon.h
 
-mon_DEPENDENCIES	=				\
+mon_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
@@ -89,27 +89,27 @@ htcproc_SOURCES	=	\
 	exec.c		exec.h		\
 	htcproc.c
 
-htcproc_DEPENDENCIES	=				\
+htcproc_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
-mce_LDADD 		=						\
-	-lm									\
+mce_LDADD 		=			\
+	-lm					\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
-	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						\
-	$(XML2_LIBS)						\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
+	$(MONDAI_LIBS)				\
+	$(XML2_LIBS)				\
 	$(XSLT_LIBS)
 
-mcd_INCLUDES =					\
-	-I$(top_srcdir)				\
+mcd_INCLUDES =				\
+	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include		\
 	-I$(top_srcdir)/libs		\
-	$(XML2_CFLAGS)				\
-	$(XSLT_CFLAGS)				\
-	$(MONDAI_CFLAGS)			\
+	$(XML2_CFLAGS)			\
+	$(XSLT_CFLAGS)			\
+	$(MONDAI_CFLAGS)		\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
 mce_SOURCES	=	\

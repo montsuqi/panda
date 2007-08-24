@@ -20,29 +20,29 @@
 sbin_PROGRAMS = pgserver
 
 pgserver_LDFLAGS	=	-export-dynamic
-pgserver_LDADD 		=					\
-	-lm									\
-	$(top_builddir)/libs/libpandas.a		\
+pgserver_LDADD 		=			\
+	-lm					\
+	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
-	$(SSL_LIBS)							\
+	$(GLIB_LIBS)				\
+	$(SSL_LIBS)				\
 	$(MONDAI_LIBS)
 
 
-INCLUDES 			= \
-	-I$(top_srcdir)	\
+INCLUDES 		= 	\
+	-I$(top_srcdir)		\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	$(GLIB_CFLAGS)			\
-	$(SSL_CFLAGS)			\
+	$(GLIB_CFLAGS)		\
+	$(SSL_CFLAGS)		\
 	$(MONDAI_CFLAGS)
 
-pgserver_SOURCES	=	\
+pgserver_SOURCES	=		\
 	pgserver.c	pgserver.h	\
 	server.c	
-pgserver_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpandas.a		\
+pgserver_DEPENDENCIES	=			\
+	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 

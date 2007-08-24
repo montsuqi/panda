@@ -33,7 +33,6 @@ dbs_LDADD 		=						\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/libs/libpanda.a		\
-	$(top_builddir)/libs/libpandas.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\

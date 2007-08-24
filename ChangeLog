@@ -1,3 +1,8 @@
+2007-08-24  yusuke mihara  <mihara@netlab.jp>
+	* dblib/Makefile.am, dbstuff/Makefile.am, glserver/Makefile.am,
+	htserver/Makefile.am, libs/Makefile.am, pgserver/Makefile.am:
+	libpandas.a を libpanda.a と統合して廃止
+	 
 2007-07-30  Noboru Saitou  <noborus@netlab.jp>
 
 	* configure.ac, aps/Makefile.am, aps/OpenCOBOL.c, libs/mhandler.c: 
