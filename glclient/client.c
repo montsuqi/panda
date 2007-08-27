@@ -280,8 +280,8 @@ start_client ()
 {
 	int		fd;
 	char	buff[SIZE_BUFF];
-	Port	*port;
 
+	FPCOMM(glSession) = NULL;
 #ifdef	USE_SSL
 	CTX(glSession) = NULL;
 #ifdef  USE_PKCS11
@@ -300,10 +300,10 @@ start_client ()
         gtk_rc_parse(Gtkrc);
     }
 
-    port = ParPort(PortNumber,PORT_GLTERM);
-	if		(  ( fd = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
+    glSession->port = ParPort(PortNumber,PORT_GLTERM);
+	if		(  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
 		GLError(_("can not connect server(server port not found)"));
-		DestroyPort (port);
+		DestroyPort (glSession->port);
 		gtk_rc_reparse_all ();
 		StyleParserTerm ();
         return;
@@ -327,7 +327,7 @@ start_client ()
 			return;
         }
         if ((FPCOMM(glSession) = MakeSSL_Net(CTX(glSession),fd)) != NULL){
-            if (StartSSLClientSession(FPCOMM(glSession), IP_HOST(port)) != TRUE){
+            if (StartSSLClientSession(FPCOMM(glSession), IP_HOST(glSession->port)) != TRUE){
                 GLError(_("could not start SSL session"));
                 CloseNet(FPCOMM(glSession));
                 SSL_CTX_free(CTX(glSession));
@@ -358,7 +358,7 @@ start_client ()
     }
 #endif
 #endif
-    DestroyPort (port);
+    DestroyPort (glSession->port);
     gtk_rc_reparse_all ();
 	StyleParserTerm ();
 }
