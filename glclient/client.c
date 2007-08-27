@@ -303,9 +303,6 @@ start_client ()
     glSession->port = ParPort(PortNumber,PORT_GLTERM);
 	if		(  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
 		GLError(_("can not connect server(server port not found)"));
-		DestroyPort (glSession->port);
-		gtk_rc_reparse_all ();
-		StyleParserTerm ();
         return;
 	}
 #ifdef	USE_SSL
@@ -358,6 +355,11 @@ start_client ()
     }
 #endif
 #endif
+}
+
+static void
+stop_client ()
+{
     DestroyPort (glSession->port);
     gtk_rc_reparse_all ();
 	StyleParserTerm ();
@@ -406,6 +408,7 @@ main(
 		show_boot_dialog () ;
     }
 	start_client();
+	stop_client ();
     
 	return 0;
 }
