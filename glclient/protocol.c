@@ -794,7 +794,7 @@ ENTER_FUNC;
 			MessageLog(buff);
 		}
 		dbgprintf("[%s]\n",window);
-		switch( type = (byte)GL_RecvInt(fpComm) ) {
+		switch( type = (byte)GL_RecvInt(FPCOMM(glSession)) ) {
 		  case	SCREEN_END_SESSION:
 			ExitSystem();
 			fCancel= TRUE;
@@ -985,10 +985,10 @@ _SendWindowData(
 	gpointer	user_data)
 {
 ENTER_FUNC;
-	GL_SendPacketClass(fpComm,GL_WindowName);
-	GL_SendString(fpComm,wname);
-	g_hash_table_foreach(node->UpdateWidget,(GHFunc)SendWidgetData,fpComm);
-	GL_SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(FPCOMM(glSession),GL_WindowName);
+	GL_SendString(FPCOMM(glSession),wname);
+	g_hash_table_foreach(node->UpdateWidget,(GHFunc)SendWidgetData,FPCOMM(glSession));
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
 ENTER_FUNC;
 }
 
@@ -997,7 +997,7 @@ SendWindowData(void)
 {
 ENTER_FUNC;
 	g_hash_table_foreach(WindowTable,(GHFunc)_SendWindowData,NULL);
-	GL_SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
 	ClearWindowTable();
 ENTER_FUNC;
 }

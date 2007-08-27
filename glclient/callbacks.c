@@ -141,19 +141,19 @@ ENTER_FUNC;
 		wname = GetWindowName(widget);
 		/* send event */
 		if		(  event  !=  NULL  ) {
-			SendEvent(fpComm,
+			SendEvent(FPCOMM(glSession),
 					  wname,
 					  gtk_widget_get_name(widget),
 					  event);
 		} else {
-			SendEvent(fpComm,
+			SendEvent(FPCOMM(glSession),
 					  wname,
 					  gtk_widget_get_name(widget),
 					  gtk_widget_get_name(widget));
 		}
 		SendWindowData();
 		BlockChangedHandlers();
-		GetScreenData(fpComm);
+		GetScreenData(FPCOMM(glSession));
 		UnblockChangedHandlers();
 		if	( ! fKeyBuff  ) {
 			ignore_event = TRUE;

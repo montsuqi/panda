@@ -94,6 +94,7 @@ InitSystem(void)
 {
 	InitData();
 	InitApplications();
+	glSession = New(Session);
 }
 
 static	ARG_TABLE	option[] = {
@@ -204,7 +205,7 @@ mkCacheDir(
 extern	void
 ExitSystem(void)
 {
-	GL_SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
 	if	(  fMlog  ) {
 		MessageLog("connection end\n");
 	}
@@ -280,13 +281,13 @@ start_client ()
 	int		fd;
 	char	buff[SIZE_BUFF];
 	Port	*port;
-#ifdef	USE_SSL
-	SSL_CTX	*ctx = NULL;
-#ifdef  USE_PKCS11
-    ENGINE *engine = NULL;
-#endif
-#endif
 
+#ifdef	USE_SSL
+	CTX(glSession) = NULL;
+#ifdef  USE_PKCS11
+    ENGINE(glSession) = NULL;
+#endif
+#endif
 	StyleParserInit();
 	sprintf(buff,"%s/gltermrc",getenv("HOME"));
 	StyleParser(buff);
@@ -309,50 +310,50 @@ start_client ()
 	}
 #ifdef	USE_SSL
     if (!fSsl)
-        fpComm = SocketToNet(fd);
+        FPCOMM(glSession) = SocketToNet(fd);
     else {
 #ifdef  USE_PKCS11
         if (PKCS11_Lib != NULL){
-            ctx = MakeSSL_CTX_PKCS11(&engine, PKCS11_Lib,Slot,CA_File,CA_Path,Ciphers);
+            CTX(glSession) = MakeSSL_CTX_PKCS11(&ENGINE(glSession), PKCS11_Lib,Slot,CA_File,CA_Path,Ciphers);
         }
         else{
-            ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
+            CTX(glSession) = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
         }
 #else
-        ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
+        CTX(glSession) = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
 #endif
-        if (ctx == NULL){
+        if (CTX(glSession) == NULL){
             GLError(_("MakeSSL_CTX failure"));
 			return;
         }
-        if ((fpComm = MakeSSL_Net(ctx,fd)) != NULL){
-            if (StartSSLClientSession(fpComm, IP_HOST(port)) != TRUE){
+        if ((FPCOMM(glSession) = MakeSSL_Net(CTX(glSession),fd)) != NULL){
+            if (StartSSLClientSession(FPCOMM(glSession), IP_HOST(port)) != TRUE){
                 GLError(_("could not start SSL session"));
-                CloseNet(fpComm);
-                SSL_CTX_free(ctx);
+                CloseNet(FPCOMM(glSession));
+                SSL_CTX_free(CTX(glSession));
 				return;
             }
         }
     }
 #else
-	fpComm = SocketToNet(fd);
+	FPCOMM(glSession) = SocketToNet(fd);
 #endif
 	InitProtocol();
 
-	if (SendConnect(fpComm,CurrentApplication)) {
-		CheckScreens(fpComm,TRUE);
-		(void)GetScreenData(fpComm);
+	if (SendConnect(FPCOMM(glSession),CurrentApplication)) {
+		CheckScreens(FPCOMM(glSession),TRUE);
+		(void)GetScreenData(FPCOMM(glSession));
 		gtk_main();  
 	}
 	
 	ExitSystem(); 
-    CloseNet(fpComm);
+    CloseNet(FPCOMM(glSession));
 #ifdef	USE_SSL
-    if (ctx != NULL)
-        SSL_CTX_free (ctx);
+    if (CTX(glSession) != NULL)
+        SSL_CTX_free (CTX(glSession));
 #ifdef  USE_PKCS11
-    if (engine != NULL){
-        ENGINE_free(engine);
+    if (ENGINE(glSession) != NULL){
+        ENGINE_free(ENGINE(glSession));
         ENGINE_cleanup();
     }
 #endif

@@ -1,3 +1,7 @@
+2007-08-27  Noboru Saitou  <noborus@netlab.jp>
+
+	* fpComm, ctx, engine をglSession に構造体化　
+
 2007-08-24  yusuke mihara  <mihara@netlab.jp>
 	* dblib/Makefile.am, dbstuff/Makefile.am, glserver/Makefile.am,
 	htserver/Makefile.am, libs/Makefile.am, pgserver/Makefile.am:

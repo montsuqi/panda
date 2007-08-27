@@ -39,6 +39,17 @@ typedef	struct {
 	GHashTable	*UpdateWidget;
 }	XML_Node;
 
+
+typedef struct {
+	NETFILE		*fpComm;
+#ifdef	USE_SSL
+	SSL_CTX		*ctx;
+#ifdef  USE_PKCS11
+	ENGINE		*engine;
+#endif  /* USE_PKCS11 */
+#endif  /* USE_SSL */
+}	Session;
+
 extern	char	*CacheFileName(char *name);
 extern	void	ExitSystem(void);
 
@@ -49,7 +60,8 @@ GLOBAL	char		*CurrentApplication;
 
 GLOBAL	Bool	fInRecv;
 
-GLOBAL	NETFILE	*fpComm;
+/*GLOBAL	NETFILE	*fpComm;  */
+GLOBAL	Session	*glSession;
 GLOBAL	char	*User;
 GLOBAL	char	*Pass;
 GLOBAL	Bool	fMlog;
@@ -65,7 +77,14 @@ GLOBAL	char	*Ciphers;
 GLOBAL	Bool	fPKCS11;
 GLOBAL	char	*PKCS11_Lib;
 GLOBAL	char	*Slot;
-#endif
-#endif
+#endif  /* USE_PKCS11 */
+#endif  /* USE_SSL */
 
+#define FPCOMM(session) ((session)->fpComm)
+#ifdef	USE_SSL
+#define CTX(session) ((session)->ctx)
+#ifdef  USE_PKCS11
+#define ENGINE(session) ((session)->engine)
+#endif /* USE_PKCS11 */
+#endif /* USE_SSL */
 #endif
