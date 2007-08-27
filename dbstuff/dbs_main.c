@@ -145,7 +145,7 @@ ENTER_FUNC;
 	}
 	if		(  strcmp(ver,VERSION)  ) {
 		SendStringDelim(fpComm,"Error: version\n");
-		Warning("reject client(invalid version)");
+		Warning("reject client(invalid version %s, required %s)", ver, VERSION);
 		xfree(ses);
 		ses = NULL;
 	} else
