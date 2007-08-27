@@ -397,18 +397,15 @@ main(
 	glade_init();
 #endif
 
-        bindtextdomain(PACKAGE, LOCALEDIR);
-        textdomain(PACKAGE);
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
 
 	InitNET();
 
-    if (!fDialog) {
-        start_client ();
+    if (fDialog) {
+		show_boot_dialog () ;
     }
-    else {
-		if ( show_boot_dialog () )
-			start_client();
-    }
+	start_client();
     
 	return 0;
 }
