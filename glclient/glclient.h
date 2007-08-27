@@ -42,6 +42,7 @@ typedef	struct {
 
 typedef struct {
 	NETFILE		*fpComm;
+	Port		*port;
 #ifdef	USE_SSL
 	SSL_CTX		*ctx;
 #ifdef  USE_PKCS11
