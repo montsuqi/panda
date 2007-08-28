@@ -202,15 +202,6 @@ mkCacheDir(
 	}
 }
 
-extern	void
-ExitSystem(void)
-{
-	GL_SendPacketClass(FPCOMM(glSession),GL_END);
-	if	(  fMlog  ) {
-		MessageLog("connection end\n");
-	}
-}
-
 static	void
 bannar(void)
 {
@@ -275,11 +266,10 @@ show_boot_dialog ()
     return TRUE;
 }
 
-static void
+static gboolean
 start_client ()
 {
 	int		fd;
-	char	buff[SIZE_BUFF];
 
 	FPCOMM(glSession) = NULL;
 #ifdef	USE_SSL
@@ -288,17 +278,6 @@ start_client ()
     ENGINE(glSession) = NULL;
 #endif
 #endif
-	StyleParserInit();
-	sprintf(buff,"%s/gltermrc",getenv("HOME"));
-	StyleParser(buff);
-	StyleParser("gltermrc");
-	if		(  *Style  !=  0  ) {
-		StyleParser(Style);
-	}
-
-    if (*Gtkrc != '\0') {
-        gtk_rc_parse(Gtkrc);
-    }
 
     glSession->port = ParPort(PortNumber,PORT_GLTERM);
 	if		(  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
@@ -343,7 +322,16 @@ start_client ()
 		gtk_main();  
 	}
 	
-	ExitSystem(); 
+	return FALSE;
+}
+
+static void
+stop_client ()
+{
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
+	if	(  fMlog  ) {
+		MessageLog("connection end\n");
+	}
     CloseNet(FPCOMM(glSession));
 #ifdef	USE_SSL
     if (CTX(glSession) != NULL)
@@ -355,14 +343,7 @@ start_client ()
     }
 #endif
 #endif
-}
-
-static void
-stop_client ()
-{
     DestroyPort (glSession->port);
-    gtk_rc_reparse_all ();
-	StyleParserTerm ();
 }
 
 extern	int
@@ -370,6 +351,9 @@ main(
 	int		argc,
 	char	**argv)
 {
+	char	buff[SIZE_BUFF];
+	gboolean	do_run = TRUE;
+
 	FILE_LIST	*fl;
 
 	bannar();
@@ -379,12 +363,15 @@ main(
 	}
 	InitMessage("glclient",NULL);
 
+	gtk_set_locale();
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
+
+	InitSystem();
+
 	argc = 1;
 	argv[1] = NULL;
 
-	gtk_set_locale();
-
-	InitSystem();
 #ifdef USE_GNOME
 	gnome_init("glclient", VERSION, argc, argv);
 #ifdef	USE_PANDA
@@ -399,16 +386,32 @@ main(
 	glade_init();
 #endif
 
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
-
 	InitNET();
 
-    if (fDialog) {
-		show_boot_dialog () ;
+	StyleParserInit();
+	sprintf(buff,"%s/gltermrc",getenv("HOME"));
+	StyleParser(buff);
+	StyleParser("gltermrc");
+	if		(  *Style  !=  0  ) {
+		StyleParser(Style);
+	}
+
+    if (*Gtkrc != '\0') {
+        gtk_rc_parse(Gtkrc);
     }
-	start_client();
-	stop_client ();
-    
+
+
+    if (fDialog) {
+		do_run = show_boot_dialog() ;
+    }
+
+	while (do_run) {
+		do_run = start_client();
+		stop_client();
+	}
+
+    gtk_rc_reparse_all ();
+	StyleParserTerm ();
+
 	return 0;
 }

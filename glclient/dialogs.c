@@ -52,6 +52,7 @@ message_dialog(
 	GtkWidget *dialog, *label, *button;
 
 	dialog = gtk_dialog_new();
+
 	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
 
@@ -100,10 +101,15 @@ GLError( const char *message)
 		
 	dialog = message_dialog(message, FALSE);
 	g_warning(message);
+#ifdef USE_GNOME
+	gnome_dialog_run(GNOME_DIALOG(dialog));
+#else
+	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
 	gtk_signal_connect (GTK_OBJECT (dialog), "destroy",
 						GTK_SIGNAL_FUNC(gtk_main_quit),
 						NULL);
 	gtk_widget_show (dialog);
 	gtk_main();
+#endif
 }
 

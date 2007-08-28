@@ -129,7 +129,8 @@ static void
 GL_Error(void)
 {
 	GLError(_("Connection lost\n"));
-	gtk_main_quit();
+	if (gtk_main_level() > 0 ) 
+		gtk_main_quit();
 }
 
 extern	void
@@ -796,7 +797,6 @@ ENTER_FUNC;
 		dbgprintf("[%s]\n",window);
 		switch( type = (byte)GL_RecvInt(FPCOMM(glSession)) ) {
 		  case	SCREEN_END_SESSION:
-			ExitSystem();
 			fCancel= TRUE;
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
