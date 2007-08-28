@@ -87,6 +87,7 @@ InitData(void)
 static	void
 InitApplications(void)
 {
+	glSession = New(Session);
 }
 
 extern	void
@@ -94,7 +95,6 @@ InitSystem(void)
 {
 	InitData();
 	InitApplications();
-	glSession = New(Session);
 }
 
 static	ARG_TABLE	option[] = {
