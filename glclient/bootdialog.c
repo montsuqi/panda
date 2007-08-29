@@ -340,6 +340,7 @@ open_file_selection(GtkWidget *w, gpointer entry)
   GtkFileSelection *filew = NULL;
 
   filew = GTK_FILE_SELECTION(gtk_file_selection_new(""));
+  gtk_file_selection_hide_fileop_buttons (filew);
   gtk_file_selection_set_filename(filew, gtk_entry_get_text (GTK_ENTRY (entry)));
   data = g_malloc(sizeof(file_selection_data));
   data->entry = entry;
