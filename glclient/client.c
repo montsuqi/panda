@@ -305,8 +305,6 @@ start_client ()
         if ((FPCOMM(glSession) = MakeSSL_Net(CTX(glSession),fd)) != NULL){
             if (StartSSLClientSession(FPCOMM(glSession), IP_HOST(glSession->port)) != TRUE){
                 GLError(_("could not start SSL session"));
-                CloseNet(FPCOMM(glSession));
-                SSL_CTX_free(CTX(glSession));
 				return;
             }
         }
