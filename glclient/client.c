@@ -386,6 +386,10 @@ main(
 
 	InitNET();
 
+    if (fDialog) {
+		do_run = show_boot_dialog() ;
+    }
+
 	StyleParserInit();
 	sprintf(buff,"%s/gltermrc",getenv("HOME"));
 	StyleParser(buff);
@@ -393,14 +397,8 @@ main(
 	if		(  *Style  !=  0  ) {
 		StyleParser(Style);
 	}
-
     if (*Gtkrc != '\0') {
         gtk_rc_parse(Gtkrc);
-    }
-
-
-    if (fDialog) {
-		do_run = show_boot_dialog() ;
     }
 
 	while (do_run) {
