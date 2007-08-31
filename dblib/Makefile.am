@@ -66,10 +66,14 @@ Shell_la_SOURCES		=	\
 Shell_la_LIBADD	=
 
 System_la_LDFLAGS		=	-module -export-dynamic
+System_la_LIBADD		=	\
+	$(top_builddir)/libs/term.lo
 System_la_SOURCES		=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
 	System.c
+System_la_DEPENDENCIES	=		\
+	$(top_builddir)/defaults.h
 
 NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
 NativeBLOB_la_SOURCES	=		\
