@@ -56,6 +56,7 @@ panda_la_SOURCES	=		\
 	port.c		port.h				\
 	pty.c		pty.h				\
 	wfcio.c		wfcio.h				\
+	term.c		term.h				\
 	panda.c
 
 panda_la_DEPENDENCIES =

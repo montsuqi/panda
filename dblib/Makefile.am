@@ -72,8 +72,6 @@ System_la_SOURCES		=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
 	System.c
-System_la_DEPENDENCIES	=		\
-	$(top_builddir)/defaults.h
 
 NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
 NativeBLOB_la_SOURCES	=		\
