@@ -512,7 +512,7 @@ ENTER_FUNC;
 		MessageLog(buff);
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
-		tmpfile = g_strconcat(fname, "XXXXXX", NULL);
+		tmpfile = g_strconcat(fname, "gl_cache_XXXXXX", NULL);
 		dirname = g_dirname(tmpfile);
 		mkCacheDir(dirname);
 		g_free(dirname);
