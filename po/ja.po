@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2007-09-03 09:51+0900\n"
+"POT-Creation-Date: 2007-09-03 18:15+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -289,7 +289,7 @@ msgstr ""
 msgid "              2000-2003 Masami Ogoshi & JMA.\n"
 msgstr ""
 
-#: glclient/client.c:325
+#: glclient/client.c:329
 msgid "can not connect server(server port not found)"
 msgstr ""
 
@@ -311,23 +311,23 @@ msgstr "ファイルが既に存在します。書き換えますか？"
 
 #: glclient/protocol.c:131
 msgid "Connection lost\n"
-msgstr ""
+msgstr "接続が切れました\n"
 
 #: glclient/protocol.c:288
 msgid "error size mismatch !"
-msgstr ""
+msgstr "エラー!サイズが不正です"
 
 #: glclient/protocol.c:520
 msgid "could not write tmp file"
-msgstr ""
+msgstr "テンプファイルが書き込めません"
 
 #: glclient/protocol.c:524
 msgid "could not write cache file"
-msgstr ""
+msgstr "キャッシュファイルが書き込めません"
 
 #: glclient/protocol.c:547
 msgid "invalid protocol sequence"
-msgstr ""
+msgstr "プロトコルが不正です"
 
 #: glclient/protocol.c:888
 msgid "connection start\n"
@@ -335,23 +335,23 @@ msgstr ""
 
 #: glclient/protocol.c:901
 msgid "can not connect server"
-msgstr ""
+msgstr "サーバに接続できません"
 
 #: glclient/protocol.c:904
 msgid "can not connect server(version not match)"
-msgstr ""
+msgstr "サーバに接続できません(サーバのバージョンが違います)"
 
 #: glclient/protocol.c:907
 msgid "can not connect server(authentication error)"
-msgstr ""
+msgstr "ユーザまたはパスワードが違います"
 
 #: glclient/protocol.c:910
 msgid "can not connect server(application name invalid)"
-msgstr ""
+msgstr "サーバに接続できません(アプリケーション名が不正です)"
 
 #: glclient/protocol.c:914
 msgid "can not connect server(other protocol error)"
-msgstr ""
+msgstr "サーバに接続きません(プロトコルエラー)"
 
 #: glclient/protocol.c:1020 glclient/protocol.c:1046 glclient/protocol.c:1293
 #, c-format
