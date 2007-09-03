@@ -78,6 +78,8 @@ static	char	*Style;
 static	char	*Gtkrc;
 static	Bool 	fDialog;
 
+static void GLMessage(int level, char *file, int line, char *msg);
+
 static	void
 InitData(void)
 {
@@ -266,45 +268,43 @@ show_boot_dialog ()
     return TRUE;
 }
 
-static gboolean
-start_client ()
-{
-	int		fd;
-
-	FPCOMM(glSession) = NULL;
 #ifdef	USE_SSL
+static void
+_MakeSSL_CTX()
+{
 	CTX(glSession) = NULL;
 #ifdef  USE_PKCS11
-    ENGINE(glSession) = NULL;
+	ENGINE(glSession) = NULL;
+	if (PKCS11_Lib != NULL){
+		CTX(glSession) = MakeSSL_CTX_PKCS11(&ENGINE(glSession), PKCS11_Lib,Slot,CA_File,CA_Path,Ciphers);
+	}
+	else{
+		CTX(glSession) = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
+	}
+#else
+    CTX(glSession) = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
 #endif
+}
 #endif
 
-    glSession->port = ParPort(PortNumber,PORT_GLTERM);
-	if		(  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
-		GLError(_("can not connect server(server port not found)"));
-        return FALSE;
-	}
+static Bool
+MakeFPCOMM (int fd)
+{
+	FPCOMM(glSession) = NULL;
+
 #ifdef	USE_SSL
     if (!fSsl)
         FPCOMM(glSession) = SocketToNet(fd);
     else {
-#ifdef  USE_PKCS11
-        if (PKCS11_Lib != NULL){
-            CTX(glSession) = MakeSSL_CTX_PKCS11(&ENGINE(glSession), PKCS11_Lib,Slot,CA_File,CA_Path,Ciphers);
-        }
-        else{
-            CTX(glSession) = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
-        }
-#else
-        CTX(glSession) = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
-#endif
+		_MakeSSL_CTX();
+
         if (CTX(glSession) == NULL){
-            GLError(_("MakeSSL_CTX failure"));
+			GLError(GetSSLErrorMessage());
 			return FALSE;
         }
         if ((FPCOMM(glSession) = MakeSSL_Net(CTX(glSession),fd)) != NULL){
             if (StartSSLClientSession(FPCOMM(glSession), IP_HOST(glSession->port)) != TRUE){
-                GLError(_("could not start SSL session"));
+				GLError(GetSSLErrorMessage());
 				return FALSE;
             }
         }
@@ -312,7 +312,21 @@ start_client ()
 #else
 	FPCOMM(glSession) = SocketToNet(fd);
 #endif
+	return TRUE;
+}
+
+static gboolean
+start_client ()
+{
+	int		fd;
+
+    glSession->port = ParPort(PortNumber,PORT_GLTERM);
+	if (  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
+		GLError(_("can not connect server(server port not found)"));
+        return FALSE;
+	}
 	InitProtocol();
+	if(MakeFPCOMM(fd) != TRUE) return FALSE;
 
 	if (SendConnect(FPCOMM(glSession),CurrentApplication)) {
 		CheckScreens(FPCOMM(glSession),TRUE);
@@ -344,6 +358,20 @@ stop_client ()
     DestroyPort (glSession->port);
 }
 
+static void 
+GLMessage(int level, char *file, int line, char *msg)
+{
+	switch(level){
+    	case MESSAGE_WARN:
+    	case MESSAGE_ERROR:
+			GLError(msg);
+			break;
+		default:
+			printf("%s", msg);
+			break;
+	}
+}
+
 extern	int
 main(
 	int		argc,
@@ -356,11 +384,12 @@ main(
 
 	bannar();
 	SetDefault();
-	if		(  ( fl = GetOption(option,argc,argv) )  !=  NULL  ) {
+	if	(  ( fl = GetOption(option,argc,argv) )  !=  NULL  ) {
 		CurrentApplication = fl->name;
 	}
-	InitMessage("glclient",NULL);
 
+	InitMessage("glclient",NULL);
+	SetMessageFunction(GLMessage);
 	gtk_set_locale();
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);

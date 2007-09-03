@@ -71,11 +71,13 @@ static	char	*Processid = "";
 static	char	*FlagChar[]	= {
 	"M",	"D",	"W",	"E",	"L",	"P",	"?"};
 
+static  void (*MessageFunction)(int level, char *file, int line, char *msg);
+
 extern	void
 _MessageLevelPrintf(
 	int 	level,
 	char	*file,
-	int		line,
+	int	line,
 	char	*format,
 	...)
 {
@@ -132,11 +134,21 @@ PutLog(
 #endif
 }
 
-extern	void
+extern  void
 _Message(
-	int		level,
+	int	level,
 	char	*file,
-	int		line,
+	int	line,
+	char	*msg)
+{
+        MessageFunction(level, file, line, msg);
+}
+
+static	void
+__Message(
+	int	level,
+	char	*file,
+	int	line,
 	char	*msg)
 {
 	char	buff[SIZE_BUFF];
@@ -293,4 +305,12 @@ InitMessage(
 	if		(  Format  ==  NULL  ) {
 		Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
 	}
+
+        MessageFunction = __Message;
+}
+
+extern void
+SetMessageFunction(void (*func)(int level, char *file, int line, char *msg))
+{
+        MessageFunction = func;
 }

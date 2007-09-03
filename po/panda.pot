@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-26 17:11+0900\n"
+"Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
+"POT-Creation-Date: 2007-09-03 09:51+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -41,265 +41,257 @@ msgstr ""
 msgid "error: could not open for write: %s\n"
 msgstr ""
 
-#: glclient/bootdialog.c:269
+#: glclient/bootdialog.c:271
 #, c-format
 msgid "warning: Description is blank\n"
 msgstr ""
 
-#: glclient/bootdialog.c:282
+#: glclient/bootdialog.c:284
 #, c-format
 msgid "warning: already used description\n"
 msgstr ""
 
-#: glclient/bootdialog.c:394 glclient/bootdialog.c:908
+#: glclient/bootdialog.c:398 glclient/bootdialog.c:912
 msgid "New"
 msgstr ""
 
-#: glclient/bootdialog.c:396 glclient/bootdialog.c:913
+#: glclient/bootdialog.c:400 glclient/bootdialog.c:917
 msgid "Edit"
 msgstr ""
 
-#: glclient/bootdialog.c:405
+#: glclient/bootdialog.c:409
 msgid "Ok"
 msgstr ""
 
-#: glclient/bootdialog.c:411
+#: glclient/bootdialog.c:415
 msgid "Cancel"
 msgstr ""
 
-#: glclient/bootdialog.c:425 glclient/bootdialog.c:715
+#: glclient/bootdialog.c:429 glclient/bootdialog.c:719
 msgid "Description"
 msgstr ""
 
-#: glclient/bootdialog.c:434 glclient/bootdialog.c:1546
+#: glclient/bootdialog.c:438 glclient/bootdialog.c:1550
 msgid "Host(Port)"
 msgstr ""
 
-#: glclient/bootdialog.c:449 glclient/bootdialog.c:718
-#: glclient/bootdialog.c:1563
+#: glclient/bootdialog.c:453 glclient/bootdialog.c:722
+#: glclient/bootdialog.c:1567
 msgid "Application"
 msgstr ""
 
-#: glclient/bootdialog.c:458 glclient/bootdialog.c:1585
+#: glclient/bootdialog.c:462 glclient/bootdialog.c:1589
 msgid "Protocol"
 msgstr ""
 
-#: glclient/bootdialog.c:475 glclient/bootdialog.c:1770
+#: glclient/bootdialog.c:479 glclient/bootdialog.c:1774
 msgid "Cache"
 msgstr ""
 
-#: glclient/bootdialog.c:478 glclient/bootdialog.c:493
-#: glclient/bootdialog.c:508 glclient/bootdialog.c:564
-#: glclient/bootdialog.c:579 glclient/bootdialog.c:594
-#: glclient/bootdialog.c:609 glclient/bootdialog.c:641
-#: glclient/bootdialog.c:1648 glclient/bootdialog.c:1663
-#: glclient/bootdialog.c:1678 glclient/bootdialog.c:1693
-#: glclient/bootdialog.c:1737 glclient/bootdialog.c:1774
-#: glclient/bootdialog.c:1790 glclient/bootdialog.c:1806
+#: glclient/bootdialog.c:482 glclient/bootdialog.c:497
+#: glclient/bootdialog.c:512 glclient/bootdialog.c:568
+#: glclient/bootdialog.c:583 glclient/bootdialog.c:598
+#: glclient/bootdialog.c:613 glclient/bootdialog.c:645
+#: glclient/bootdialog.c:1652 glclient/bootdialog.c:1667
+#: glclient/bootdialog.c:1682 glclient/bootdialog.c:1697
+#: glclient/bootdialog.c:1741 glclient/bootdialog.c:1778
+#: glclient/bootdialog.c:1794 glclient/bootdialog.c:1810
 msgid "Open"
 msgstr ""
 
-#: glclient/bootdialog.c:490 glclient/bootdialog.c:1786
+#: glclient/bootdialog.c:494 glclient/bootdialog.c:1790
 msgid "Style"
 msgstr ""
 
-#: glclient/bootdialog.c:505 glclient/bootdialog.c:1802
+#: glclient/bootdialog.c:509 glclient/bootdialog.c:1806
 msgid "Gtkrc"
 msgstr ""
 
-#: glclient/bootdialog.c:521 glclient/bootdialog.c:1819
+#: glclient/bootdialog.c:525 glclient/bootdialog.c:1823
 msgid "Output Logfile"
 msgstr ""
 
-#: glclient/bootdialog.c:528 glclient/bootdialog.c:1827 glclient/client.c:119
+#: glclient/bootdialog.c:532 glclient/bootdialog.c:1831 glclient/client.c:122
 msgid "Enable Keybuffer"
 msgstr ""
 
-#: glclient/bootdialog.c:534 glclient/bootdialog.c:719
-#: glclient/bootdialog.c:1604 glclient/client.c:109
+#: glclient/bootdialog.c:538 glclient/bootdialog.c:723
+#: glclient/bootdialog.c:1608 glclient/client.c:112
 msgid "User"
 msgstr ""
 
-#: glclient/bootdialog.c:543 glclient/bootdialog.c:1614 glclient/client.c:111
+#: glclient/bootdialog.c:547 glclient/bootdialog.c:1618 glclient/client.c:114
 msgid "Passwrod"
 msgstr ""
 
-#: glclient/bootdialog.c:555 glclient/bootdialog.c:1638
+#: glclient/bootdialog.c:559 glclient/bootdialog.c:1642
 msgid "SSL"
 msgstr ""
 
-#: glclient/bootdialog.c:561 glclient/bootdialog.c:1645 glclient/client.c:130
+#: glclient/bootdialog.c:565 glclient/bootdialog.c:1649 glclient/client.c:133
 msgid "CA Certificate Path"
 msgstr ""
 
-#: glclient/bootdialog.c:576 glclient/bootdialog.c:1660 glclient/client.c:132
+#: glclient/bootdialog.c:580 glclient/bootdialog.c:1664 glclient/client.c:135
 msgid "CA Certificate File"
 msgstr ""
 
-#: glclient/bootdialog.c:591 glclient/bootdialog.c:1675
+#: glclient/bootdialog.c:595 glclient/bootdialog.c:1679
 msgid "SSL Key File(pem)"
 msgstr ""
 
-#: glclient/bootdialog.c:606 glclient/bootdialog.c:1690 glclient/client.c:126
+#: glclient/bootdialog.c:610 glclient/bootdialog.c:1694 glclient/client.c:129
 msgid "Certificate(pem/p12)"
 msgstr ""
 
-#: glclient/bootdialog.c:621 glclient/bootdialog.c:1705
+#: glclient/bootdialog.c:625 glclient/bootdialog.c:1709
 msgid "Cipher Suite"
 msgstr ""
 
-#: glclient/bootdialog.c:632
+#: glclient/bootdialog.c:636
 msgid "Security Device"
 msgstr ""
 
-#: glclient/bootdialog.c:638 glclient/bootdialog.c:1734 glclient/client.c:137
+#: glclient/bootdialog.c:642 glclient/bootdialog.c:1738 glclient/client.c:140
 msgid "PKCS#11 Library"
 msgstr ""
 
-#: glclient/bootdialog.c:653 glclient/bootdialog.c:1749
+#: glclient/bootdialog.c:657 glclient/bootdialog.c:1753
 msgid "Slot ID"
 msgstr ""
 
-#: glclient/bootdialog.c:716
+#: glclient/bootdialog.c:720
 msgid "Host"
 msgstr ""
 
-#: glclient/bootdialog.c:717 glclient/client.c:101
+#: glclient/bootdialog.c:721 glclient/client.c:104
 msgid "Port"
 msgstr ""
 
-#: glclient/bootdialog.c:900
+#: glclient/bootdialog.c:904
 msgid "Server Setting"
 msgstr ""
 
-#: glclient/bootdialog.c:919
+#: glclient/bootdialog.c:923
 msgid "Delete"
 msgstr ""
 
-#: glclient/bootdialog.c:925 glclient/bootdialog.c:1843
+#: glclient/bootdialog.c:929 glclient/bootdialog.c:1847
 msgid "Close"
 msgstr ""
 
-#: glclient/bootdialog.c:996
+#: glclient/bootdialog.c:1000
 msgid "Custom"
 msgstr ""
 
-#: glclient/bootdialog.c:1008 glclient/bootdialog.c:1009
-#: glclient/bootdialog.c:1507 glclient/bootdialog.c:1516
+#: glclient/bootdialog.c:1012 glclient/bootdialog.c:1013
+#: glclient/bootdialog.c:1511 glclient/bootdialog.c:1520
 msgid "glclient Launcher"
 msgstr ""
 
-#: glclient/bootdialog.c:1061
+#: glclient/bootdialog.c:1065
 #, c-format
 msgid "error: could not create per-user config directory\n"
 msgstr ""
 
-#: glclient/bootdialog.c:1524
+#: glclient/bootdialog.c:1528
 msgid "Server"
 msgstr ""
 
-#: glclient/bootdialog.c:1541
+#: glclient/bootdialog.c:1545
 msgid "Basic"
 msgstr ""
 
-#: glclient/bootdialog.c:1575 glclient/client.c:128
+#: glclient/bootdialog.c:1579 glclient/client.c:131
 msgid "Use SSL"
 msgstr ""
 
-#: glclient/bootdialog.c:1626
+#: glclient/bootdialog.c:1630
 msgid "Remember Password"
 msgstr ""
 
-#: glclient/bootdialog.c:1716
+#: glclient/bootdialog.c:1720
 msgid "Use Security Device"
 msgstr ""
 
-#: glclient/bootdialog.c:1765
+#: glclient/bootdialog.c:1769
 msgid "Details"
 msgstr ""
 
-#: glclient/bootdialog.c:1836
+#: glclient/bootdialog.c:1840
 msgid "Connect"
 msgstr ""
 
-#: glclient/bootdialog.c:1849
+#: glclient/bootdialog.c:1853
 msgid "Configuration"
 msgstr ""
 
-#: glclient/bootdialog.c:1880
+#: glclient/bootdialog.c:1884
 #, c-format
 msgid "error: permissions is not 0%o: %s\n"
 msgstr ""
 
-#: glclient/client.c:103
+#: glclient/client.c:106
 msgid "Cache Directory"
 msgstr ""
 
-#: glclient/client.c:105
+#: glclient/client.c:108
 msgid "Style Filename"
 msgstr ""
 
-#: glclient/client.c:107
+#: glclient/client.c:110
 msgid "GtkStyle Filename"
 msgstr ""
 
-#: glclient/client.c:113
+#: glclient/client.c:116
 msgid "Use Protocol Version 1"
 msgstr ""
 
-#: glclient/client.c:115
+#: glclient/client.c:118
 msgid "Use Protocol Version 2"
 msgstr ""
 
-#: glclient/client.c:117
+#: glclient/client.c:120
 msgid "Enable Loggin"
 msgstr ""
 
-#: glclient/client.c:121
+#: glclient/client.c:124
 msgid "Use Startup Dialog"
 msgstr ""
 
-#: glclient/client.c:124
+#: glclient/client.c:127
 msgid "SSL Key File(pem/p12)"
 msgstr ""
 
-#: glclient/client.c:134
+#: glclient/client.c:137
 msgid "SSL Cipher Sweet"
 msgstr ""
 
-#: glclient/client.c:139
+#: glclient/client.c:142
 msgid "Security Device Slot ID"
 msgstr ""
 
-#: glclient/client.c:199
+#: glclient/client.c:202
 msgid "could not write cache dir"
 msgstr ""
 
-#: glclient/client.c:216
+#: glclient/client.c:210
 #, c-format
 msgid "glclient ver %s\n"
 msgstr ""
 
-#: glclient/client.c:217
+#: glclient/client.c:211
 #, c-format
 msgid "Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n"
 msgstr ""
 
-#: glclient/client.c:218
+#: glclient/client.c:212
 #, c-format
 msgid "              2000-2003 Masami Ogoshi & JMA.\n"
 msgstr ""
 
-#: glclient/client.c:304
-msgid "can not connect server(server port not found)"
-msgstr ""
-
 #: glclient/client.c:325
-msgid "MakeSSL_CTX failure"
-msgstr ""
-
-#: glclient/client.c:330
-msgid "could not start SSL session"
+msgid "can not connect server(server port not found)"
 msgstr ""
 
 #: glclient/fileEntry.c:101
@@ -322,19 +314,19 @@ msgstr ""
 msgid "Connection lost\n"
 msgstr ""
 
-#: glclient/protocol.c:287
+#: glclient/protocol.c:288
 msgid "error size mismatch !"
 msgstr ""
 
-#: glclient/protocol.c:519
+#: glclient/protocol.c:520
 msgid "could not write tmp file"
 msgstr ""
 
-#: glclient/protocol.c:523
+#: glclient/protocol.c:524
 msgid "could not write cache file"
 msgstr ""
 
-#: glclient/protocol.c:546
+#: glclient/protocol.c:547
 msgid "invalid protocol sequence"
 msgstr ""
 
@@ -365,4 +357,166 @@ msgstr ""
 #: glclient/protocol.c:1020 glclient/protocol.c:1046 glclient/protocol.c:1293
 #, c-format
 msgid "invalid data conversion\n"
+msgstr ""
+
+#: libs/net.c:786
+#, c-format
+msgid ""
+"verify error:\n"
+"%s:%s\n"
+msgstr ""
+
+#: libs/net.c:792
+#, c-format
+msgid "Unable to get issuer cert. issuer= %s\n"
+msgstr ""
+
+#: libs/net.c:796
+msgid "Error in cert not_before field. notBefore="
+msgstr ""
+
+#: libs/net.c:804
+msgid "Error in cert not_after field. notAfter="
+msgstr ""
+
+#: libs/net.c:888 libs/net.c:1456 libs/net.c:1463
+#, c-format
+msgid ""
+"SSL_CTX_use_certificate failure:\n"
+" %s"
+msgstr ""
+
+#: libs/net.c:892 libs/net.c:1467
+#, c-format
+msgid ""
+"SSL_CTX_use_PrivateKey failure:\n"
+" %s"
+msgstr ""
+
+#: libs/net.c:896 libs/net.c:983 libs/net.c:1471
+#, c-format
+msgid ""
+"SSL_CTX_check_private_key failure:\n"
+" %s\n"
+msgstr ""
+
+#: libs/net.c:919 libs/net.c:1494
+#, c-format
+msgid ""
+"SSL_CTX_new failue:\n"
+" %s\n"
+msgstr ""
+
+#: libs/net.c:935 libs/net.c:1499
+#, c-format
+msgid ""
+"SSL_CTX_set_cipher_list(%s) failue:\n"
+" %s\n"
+msgstr ""
+
+#: libs/net.c:948 libs/net.c:1512
+#, c-format
+msgid ""
+"SSL_CTX_set_default_verify_paths error:\n"
+" %s\n"
+msgstr ""
+
+#: libs/net.c:953 libs/net.c:1517
+#, c-format
+msgid "SSL_CTX_load_verify_locations(%s, %s)\n"
+msgstr ""
+
+#: libs/net.c:963
+#, c-format
+msgid ""
+"SSL_CTX_use_certificate_file(%s) failure:\n"
+" %s\n"
+msgstr ""
+
+#: libs/net.c:973
+#, c-format
+msgid ""
+"SSL_CTX_use_PrivateKey_file(%s) failure:\n"
+" %s\n"
+msgstr ""
+
+#: libs/net.c:1108
+#, c-format
+msgid "cannot open PKCS#11 library : %s\n"
+msgstr ""
+
+#: libs/net.c:1115
+#, c-format
+msgid "cannot get C_GetFunctionList address : %s\n"
+msgstr ""
+
+#: libs/net.c:1122
+#, c-format
+msgid "C_GetFunctionList : %s\n"
+msgstr ""
+
+#: libs/net.c:1131
+#, c-format
+msgid "C_Initialize : %s\n"
+msgstr ""
+
+#: libs/net.c:1187
+#, c-format
+msgid "cannot find private key ID : %s\n"
+msgstr ""
+
+#: libs/net.c:1214
+#, c-format
+msgid "C_OpenSession : %s\n"
+msgstr ""
+
+#: libs/net.c:1219
+#, c-format
+msgid "C_Login : %s\n"
+msgstr ""
+
+#: libs/net.c:1230
+#, c-format
+msgid "C_FindObjectsInit : %s\n"
+msgstr ""
+
+#: libs/net.c:1235
+#, c-format
+msgid "C_FindObjects : %s\n"
+msgstr ""
+
+#: libs/net.c:1240 libs/net.c:1273
+#, c-format
+msgid "C_FindObjectsFinal : %s\n"
+msgstr ""
+
+#: libs/net.c:1256
+#, c-format
+msgid "C_GetAttributeValue : %s\n"
+msgstr ""
+
+#: libs/net.c:1297 libs/net.c:1303
+#, c-format
+msgid "C_GetSlotList : %s\n"
+msgstr ""
+
+#: libs/net.c:1321
+#, c-format
+msgid ""
+"Engine_by_id:\n"
+" %s"
+msgstr ""
+
+#: libs/net.c:1331
+#, c-format
+msgid ""
+"Engine_ctrl_cmd_string failure:\n"
+" %s"
+msgstr ""
+
+#: libs/net.c:1337
+#, c-format
+msgid ""
+"Engine_init failure:\n"
+" %s"
 msgstr ""

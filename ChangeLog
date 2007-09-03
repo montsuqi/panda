@@ -1,3 +1,8 @@
+2007-09-03  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/message.c: SetMessageFunction で _Message()を置き換え可能
+	* libs/net.c, po/ja.po: SSL関係のメッセージを国際化
+
 2007-08-27  Noboru Saitou  <noborus@netlab.jp>
 
 	* fpComm, ctx, engine をglSession に構造体化　

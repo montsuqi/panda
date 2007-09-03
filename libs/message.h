@@ -26,7 +26,7 @@
 #define	MESSAGE_DEBUG		1
 #define	MESSAGE_WARN		2
 #define	MESSAGE_ERROR		3
-#define	MESSAGE_LOG			4
+#define	MESSAGE_LOG		4
 #define	MESSAGE_PRINT		5
 
 #define	MessageLog(msg)				_Message(MESSAGE_LOG,__FILE__,__LINE__,(msg))
@@ -39,6 +39,7 @@ extern	void	_MessagePrintf(char *file, int line, char *format, ...);
 extern	void	_MessageLevelPrintf(int level, char *file, int line, char *format, ...);
 extern	void	_Message(int level, char *file, int line, char *msg);
 extern	void	InitMessage(char *id,char *fn);
+extern	void	SetMessageFunction(void (*func)(int level, char *file, int line, char *msg));
 
 #undef	GLOBAL
 #ifdef	MAIN

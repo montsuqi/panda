@@ -6,3 +6,4 @@ glclient/client.c
 glclient/fileEntry.c
 glclient/protocol.c
 libs/option.c
+libs/net.c

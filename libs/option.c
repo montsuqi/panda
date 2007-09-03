@@ -219,9 +219,7 @@ PrintUsage(
 	char		*comment)
 {	int		i;
 
-#if 0
         bindtextdomain(PACKAGE, LOCALEDIR);
-#endif
 	printf("%s\n",comment);
 	for ( i = 0 ; tbl[i].option != NULL ; i++ )	{
 		printf( "  -%-12s : %-40s", tbl[i].option, _d(tbl[i].message) );
