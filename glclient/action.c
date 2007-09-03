@@ -317,6 +317,13 @@ LEAVE_FUNC;
 	return (node);
 }
 
+static	gint
+_hide_all(gpointer data)
+{
+	gtk_widget_hide_all(GTK_WIDGET(data));
+	return FALSE;	
+}
+
 extern	XML_Node	*
 ShowWindow(
 	char	*wname,
@@ -350,8 +357,8 @@ ENTER_FUNC;
 			if ((widget != NULL) && GTK_IS_BUTTON (widget)){
 				gtk_button_released (GTK_BUTTON(widget));
 			}
-			ClearKeyBuffer();
-			gtk_widget_hide_all(GTK_WIDGET(node->window));
+			/* ClearKeyBuffer(); */
+			gtk_idle_add(_hide_all,node->window); 
 			/* fall through */
 		  default:
 			node = NULL;
@@ -413,8 +420,9 @@ ENTER_FUNC;
 	attr.cursor = Busycursor;
 	attr.x = attr.y = 0;
 	attr.width = attr.height = 32767;
-
-	window = gtk_widget_get_toplevel(widget);
+	if ( widget != NULL ) {
+		window = gtk_widget_get_toplevel(widget);
+	}
 	pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
 	gdk_window_show (pane);
 	gdk_flush ();
