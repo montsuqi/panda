@@ -272,9 +272,7 @@ show_boot_dialog ()
 static void
 _MakeSSL_CTX()
 {
-	CTX(glSession) = NULL;
 #ifdef  USE_PKCS11
-	ENGINE(glSession) = NULL;
 	if (PKCS11_Lib != NULL){
 		CTX(glSession) = MakeSSL_CTX_PKCS11(&ENGINE(glSession), PKCS11_Lib,Slot,CA_File,CA_Path,Ciphers);
 	}
@@ -319,6 +317,12 @@ static gboolean
 start_client ()
 {
 	int		fd;
+#ifdef	USE_SSL
+	CTX(glSession) = NULL;
+#ifdef  USE_PKCS11
+	ENGINE(glSession) = NULL;
+#endif
+#endif
 
     glSession->port = ParPort(PortNumber,PORT_GLTERM);
 	if (  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
