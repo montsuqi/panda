@@ -1,3 +1,7 @@
+2007-09-03  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c(ShowWindow): Windowを閉じるのを遅延させる
+
 2007-09-03  yusuke mihara  <mihara@netlab.jp>
 
 	* libs/message.c: SetMessageFunction で _Message()を置き換え可能
