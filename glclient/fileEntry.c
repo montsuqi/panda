@@ -86,7 +86,7 @@ SaveFile(
     int		fd;
 	char	buf[SIZE_BUFF];
 
-	fd = open(filename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
 	if (fd > 0) {
 		if ( write(fd, LBS_Body(binary), LBS_Size(binary) ) > 0){
 			close(fd);
