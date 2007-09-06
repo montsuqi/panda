@@ -100,12 +100,16 @@ static void
 edit_dialog_set_value (EditDialog * self)
 {
   BDConfigSection *section;
+  char *cachename;
 
   if (self->hostname == NULL)
     {
       gtk_entry_set_text (GTK_ENTRY (self->host), "localhost");
       gtk_entry_set_text (GTK_ENTRY (self->port), "8000");
       gtk_entry_set_text (GTK_ENTRY (self->application), "panda:");
+      cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
+      gtk_entry_set_text (GTK_ENTRY (self->cache), cachename);
+      g_free(cachename);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1), TRUE);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), FALSE);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog), TRUE);
@@ -1004,7 +1008,8 @@ boot_dialog_create_conf (BDConfig *config)
 {
   BDConfigSection *section;
   gboolean is_create = FALSE;
-  
+  char *cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
+
   if (!bd_config_exist_section (config, "glclient"))
     {
       section = bd_config_append_section (config, "glclient");
@@ -1023,7 +1028,7 @@ boot_dialog_create_conf (BDConfig *config)
       bd_config_section_append_value (section, "application", "panda:");
       bd_config_section_append_value (section, "protocol_v1", "true");
       bd_config_section_append_value (section, "protocol_v2", "false");
-      bd_config_section_append_value (section, "cache", "./cache");
+      bd_config_section_append_value (section, "cache", cachename);
       bd_config_section_append_value (section, "style", "");
       bd_config_section_append_value (section, "gtkrc", "");
       bd_config_section_append_value (section, "mlog", "false");
@@ -1049,6 +1054,8 @@ boot_dialog_create_conf (BDConfig *config)
 
   if (is_create)
     bd_config_save (config, NULL, permissions);
+
+  g_free(cachename);
 }
 
 static void

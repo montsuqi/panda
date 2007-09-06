@@ -148,9 +148,10 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
+	char *cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
 	PortNumber = "localhost:" PORT_GLTERM;
 	CurrentApplication = "demo";
-	Cache = "cache";
+	Cache =  cachename;
 	Style = "";
 	Gtkrc = "";
 	User = getenv("USER");
