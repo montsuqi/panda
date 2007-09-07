@@ -291,6 +291,11 @@ MakeFPCOMM (int fd)
 {
 	FPCOMM(glSession) = NULL;
 #ifdef	USE_SSL
+	CTX(glSession) = NULL;
+#ifdef  USE_PKCS11
+	ENGINE(glSession) = NULL;
+#endif
+
 	char *str;
 
     if (!fSsl)
@@ -321,12 +326,6 @@ static gboolean
 start_client ()
 {
 	int		fd;
-#ifdef	USE_SSL
-	CTX(glSession) = NULL;
-#ifdef  USE_PKCS11
-	ENGINE(glSession) = NULL;
-#endif
-#endif
 
     glSession->port = ParPort(PortNumber,PORT_GLTERM);
 	if (  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {

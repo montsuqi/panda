@@ -284,7 +284,7 @@ FD_Read(
 
 	if		(  ( ret = read(fp->fd,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
-			Warning("read %s\n",strerror(errno));
+			Warning(_d("read error:\n %s\n"),strerror(errno));
 		}
 		fp->fOK = FALSE;
 		fp->err = errno;
@@ -302,7 +302,7 @@ FD_Write(
 
 	if		(  ( ret = write(fp->fd,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
-			fprintf(stderr,"write %s\n",strerror(errno));
+			Warning(_d("write error:\n %s\n"),strerror(errno));
 		}
 		fp->fOK = FALSE;
 		fp->err = errno;
@@ -424,13 +424,13 @@ askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
     pid_t pid;
 
     if (pipe(p) < 0) {
-        SSL_Error("pipe: %s\n", strerror(errno));
+        SSL_Error(_d("pipe error:\n %s\n"), strerror(errno));
         return -1;
     }       
     if ((pid = fork()) < 0){
         close(p[0]);
         close(p[1]);
-        SSL_Error("fork: %s\n", strerror(errno));
+        SSL_Error(_d("fork error:\n %s\n"), strerror(errno));
         return -1;
     }
     else if (pid == 0){
@@ -438,12 +438,12 @@ askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
         setuid(getuid());
         close(p[0]);
         if (dup2(p[1], STDOUT_FILENO) < 0){
-            fprintf(stderr, "dup2: %s\n", strerror(errno));
+            SSL_Error(_d("dup2 error:\n %s\n"), strerror(errno));
             exit(1);
         }
         if (p[1] != STDOUT_FILENO) close(p[1]);
         execlp(askpass_command, askpass_command, _d(prompt), (char *) 0);
-        SSL_Error("exec(%s): %s\n", askpass_command, strerror(errno));
+        SSL_Error(_d("exec(%s) error:\n %s\n"), askpass_command, strerror(errno));
     }
     close(p[1]);
     len = ret = 0;
@@ -458,7 +458,7 @@ askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
 
     close(p[0]);
     while (waitpid(pid, &status, 0) < 0){
-        SSL_Error("waitpid: %s\n", strerror(errno));
+        SSL_Error(_d("waitpid error:\n %s\n"), strerror(errno));
         if (errno != EINTR) break;
     }
     if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
@@ -493,7 +493,7 @@ SSL_Read(
 	if		(  ( ret = SSL_read(fp->net.ssl,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
 			err = ERR_get_error();
-			Warning(_("read %s\n"),ERR_error_string(err, NULL));
+			SSL_Error(_d("SSL read error:\n %s\n"),ERR_error_string(err, NULL));
 		} else {
 			err = 0;
 		}
@@ -514,7 +514,7 @@ SSL_Write(
 	if		(  ( ret = SSL_write(fp->net.ssl,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
 			err = ERR_get_error();
-			Warning(_("write %s\n"),ERR_error_string(err, NULL));
+			SSL_Error(_d("SSL write error:\n %s\n"),ERR_error_string(err, NULL));
 		} else {
 			err = 0;
 		}
@@ -561,11 +561,11 @@ GetSubjectFromCertificate_X509_NAME_print_ex(X509 *cert)
     }
 
     if ((out = BIO_new(BIO_s_mem())) == NULL){
-        SSL_Error("BIO_new failure: %s\n", GetSSLErrorString());
+        SSL_Error(_d("BIO_new failure:\n %s\n"), GetSSLErrorString());
         goto err;
     }
     if (!X509_NAME_print_ex(out, subject, 0, flags)){
-        SSL_Error("X509_NAME_print_ex failure: %s\n",GetSSLErrorString());
+        SSL_Error(_d("X509_NAME_print_ex failure:\n %s\n"),GetSSLErrorString());
         goto err;
     }
     BIO_write(out, "\0", 1);
@@ -591,11 +591,10 @@ GetSubjectFromCertificate_X509_NAME_online(X509 *cert)
         return NULL;
     }
     if ((ret = xmalloc(1000)) == NULL){
-        SSL_Error("xmalloc failure: %s\n",strerror(errno));
         return NULL;
     }
     if (!X509_NAME_oneline(subject, ret, 1000)){
-        SSL_Error("X509_NAME_oneline failure: %s\n",GetSSLErrorString());
+        SSL_Error(_d("X509_NAME_oneline failure:\n %s\n"),GetSSLErrorString());
         xfree(ret);
         ret = NULL;
     }
@@ -720,14 +719,14 @@ StartSSLClientSession(NETFILE *fp, const char *hostname)
     Bool id_ok = FALSE;
 
     if (SSL_connect(fp->net.ssl) <= 0){
-        SSL_Error("SSL_connect failure: %s\n", GetSSLErrorString());
+        SSL_Error(_d("SSL_connect failure:\n %s\n"), GetSSLErrorString());
         return FALSE;
     }
     if ((cert = SSL_get_peer_certificate(fp->net.ssl)) != NULL){
         fp->peer_cert = cert;
         id_ok = CheckHostnameInCertificate(cert, hostname);
         if (id_ok != TRUE){
-            SSL_Error("hostname don't match %s\n", hostname);
+            SSL_Error(_d("hostname don't match %s\n"), hostname);
             if (SSL_get_verify_mode(fp->net.ssl) & SSL_VERIFY_PEER){
                 return FALSE;
             }
@@ -743,7 +742,7 @@ StartSSLServerSession(NETFILE *fp)
     X509 *cert;
 
     if (SSL_accept(fp->net.ssl) <= 0){
-        SSL_Error("SSL_accept failure: %s\n", GetSSLErrorString());
+        SSL_Error(_d("SSL_accept failure:\n %s\n"), GetSSLErrorString());
         return FALSE;
     }
     if ((cert = SSL_get_peer_certificate(fp->net.ssl)) != NULL){
@@ -768,12 +767,12 @@ MakeSSL_Net(
     fp->fd = fd;
 
     if ((fp->net.ssl = SSL_new(ctx)) == NULL){
-        SSL_Error("SSL_new failure: %s\n", GetSSLErrorString());
+        SSL_Error(_d("SSL_new failure:\n %s\n"), GetSSLErrorString());
         FreeNet(fp);
         return NULL;
     }
     if (!SSL_set_fd(fp->net.ssl, fd)){
-        SSL_Error("SSL_set_fd failure: %s\n", GetSSLErrorString());
+        SSL_Error(_d("SSL_set_fd failure:\n %s\n"), GetSSLErrorString());
         SSL_free(fp->net.ssl);
         FreeNet(fp);
         return NULL;
@@ -828,7 +827,7 @@ CheckValidPeriod(
 
 	if(valid < WARNING_BEFORE_EXPIRATION_PERIOD){
 		X509_NAME_oneline(X509_get_subject_name(cert),buf,sizeof buf);
-		SSL_Warning(_("Certificate(%s) will be expired in %d days\nPlease update the certificate\n"), buf, valid / (24 * 3600));
+		SSL_Warning(_d("Certificate(%s) will be expired in %d days\nPlease update the certificate\n"), buf, valid / (24 * 3600));
 	}
 }
 
@@ -852,18 +851,17 @@ VerifyCallBack(
 
 	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
 	if	(!ok) {
-                SSL_Error("depth=%d\n");
-                SSL_Error(_d("verify error:\n%s:%s\n"),
-				   X509_verify_cert_error_string(err),buf);
+                SSL_Error(_d("verify error:\n depth=%d\n %s:%s\n"),
+				   depth, X509_verify_cert_error_string(err),buf);
 	}
 	switch (ctx->error) {
 	  case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
 		X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert),buf,sizeof buf);
-		SSL_Error(_d("Unable to get issuer cert. issuer= %s\n"), buf);
+		SSL_Error(_d(" Unable to get issuer cert.\n issuer= %s\n"), buf);
 		break;
 	  case X509_V_ERR_CERT_NOT_YET_VALID:
 	  case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
-		SSL_Error(_d("Error in cert not_before field. notBefore="));
+		SSL_Error(_d(" Error in cert not_before field.\n notBefore="));
 		ASN1_TIME_print(bio_err,X509_get_notBefore(ctx->current_cert));
                 length = BIO_get_mem_data(bio_err, &ptr);
                 memcpy(printable, ptr, length - 1);
@@ -871,7 +869,7 @@ VerifyCallBack(
 		break;
 	  case X509_V_ERR_CERT_HAS_EXPIRED:
 	  case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
-		SSL_Error(_d("Error in cert not_after field. notAfter="));
+		SSL_Error(_d(" Error in cert not_after field.\n notAfter="));
 		ASN1_TIME_print(bio_err,X509_get_notAfter(ctx->current_cert));
                 length = BIO_get_mem_data(bio_err, &ptr);
                 memcpy(printable, ptr, length - 1);
@@ -910,12 +908,12 @@ GetPasswordString(char *buf, size_t sz, const char *prompt)
 static int
 SSL_CTX_use_certificate_with_check(
 	SSL_CTX *ctx, 
-	X509 *x)
+	X509 *x509)
 {
 	int ret;
-	ret = SSL_CTX_use_certificate(ctx, x);
+	ret = SSL_CTX_use_certificate(ctx, x509);
 	if(!ret)return ret;
-	CheckValidPeriod(x);
+	CheckValidPeriod(x509);
 	return ret;
 }
 
@@ -1001,7 +999,7 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
             return FALSE;
         }
         if (!SSL_CTX_check_private_key(ctx)){
-            SSL_Error(_("SSL_CTX_check_private_key failure:\n %s\n"),
+            SSL_Error(_d("SSL_CTX_check_private_key failure:\n %s\n"),
                     GetSSLErrorString());
             return FALSE;
         }
@@ -1058,9 +1056,8 @@ MakeSSL_CTX(
         }
     }
     else if (!SSL_CTX_load_verify_locations(ctx, cafile, capath)){
-        SSL_Error(_d("SSL_CTX_load_verify_locations(%s, %s)\n"),
-                cafile, capath, GetSSLErrorString());
-
+		if (cafile ==NULL) cafile = capath;
+        SSL_Error(_d("SSL_CTX_load_verify_locations(%s)\n"), cafile);
         SSL_CTX_free(ctx);
         return NULL;
     }
@@ -1213,21 +1210,21 @@ PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f)
     char *error;
     dl_handle = dlopen(pkcs11, RTLD_LAZY);
     if (!dl_handle){
-        SSL_Error(_d("cannot open PKCS#11 library : %s\n"), dlerror());
+        SSL_Error(_d("cannot open PKCS#11 library :\n %s\n"), dlerror());
         return NULL;
     }
     c_get_function_list = 
         (CK_RV (*)(CK_FUNCTION_LIST_PTR_PTR))dlsym(dl_handle,"C_GetFunctionList");
 
     if ((error = dlerror()) != NULL ){
-        SSL_Error(_d("cannot get C_GetFunctionList address : %s\n"), error);
+        SSL_Error(_d("cannot get C_GetFunctionList address :\n %s\n"), error);
         dlclose(dl_handle);
         return NULL;
     }
     if (c_get_function_list){
         rv = c_get_function_list(f);
         if (rv != CKR_OK){
-            SSL_Error(_d("C_GetFunctionList : %s\n"), PKCS11ErrorString(rv));
+            SSL_Error(_d("C_GetFunctionList :\n %s\n"), PKCS11ErrorString(rv));
             dlclose(dl_handle);
             return NULL;
         }
@@ -1236,7 +1233,7 @@ PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f)
     ff = *(f);
     rv = ff->C_Initialize(NULL);
     if (rv != CKR_OK){
-        SSL_Error(_d("C_Initialize : %s\n"), PKCS11ErrorString(rv));
+        SSL_Error(_d("C_Initialize :\n %s\n"), PKCS11ErrorString(rv));
         dlclose(dl_handle);
         return NULL;
     }
@@ -1250,7 +1247,7 @@ PKCS11UnloadModule(void *dl_handle, CK_FUNCTION_LIST_PTR f)
     int rv;
     rv = f->C_Finalize(NULL);
     if (rv != CKR_OK){
-        SSL_Error("C_Finalize : %s\n", PKCS11ErrorString(rv));
+        SSL_Error("C_Finalize :\n %s\n", PKCS11ErrorString(rv));
     }
     dlclose(dl_handle);
     dl_handle = NULL;
@@ -1278,21 +1275,21 @@ PKCS11FindPrivateKey(CK_SESSION_HANDLE session,
     key_attr[1].ulValueLen = keyid_size;
     rv = f->C_FindObjectsInit(session, key_attr, 2);
     if ( rv != CKR_OK ){
-        SSL_Error("C_FindObjectsInit : %s\n", PKCS11ErrorString(rv));
+        SSL_Error("C_FindObjectsInit :\n %s\n", PKCS11ErrorString(rv));
         return FALSE;
     }
     rv = f->C_FindObjects(session, key_handle, 1, &key_count); 
     if ( rv != CKR_OK ){
-        SSL_Error("C_FindObjects : %s\n", PKCS11ErrorString(rv));
+        SSL_Error("C_FindObjects :\n %s\n", PKCS11ErrorString(rv));
         return FALSE;
     }
     rv = f->C_FindObjectsFinal(session);
     if ( rv != CKR_OK ){
-        SSL_Error("C_FindObjects : %s\n", PKCS11ErrorString(rv));
+        SSL_Error("C_FindObjects :\n %s\n", PKCS11ErrorString(rv));
         return FALSE;
     }
     if ( key_count <= 0){
-        SSL_Error(_d("cannot find private key ID : %s\n"), keyid);
+        SSL_Error(_d("cannot find private key ID :\n %s\n"), keyid);
         return FALSE;
     }
     return TRUE;
@@ -1319,12 +1316,12 @@ PKCS11GetCertificate(CK_SLOT_ID slot,
 
     rv = f->C_OpenSession(slot, CKF_SERIAL_SESSION, NULL, NULL, &session);
     if (rv != CKR_OK){
-        SSL_Error(_d("C_OpenSession : %s\n"), PKCS11ErrorString(rv));
+        SSL_Error(_d("C_OpenSession :\n %s\n"), PKCS11ErrorString(rv));
         return FALSE;
     }
     rv = f->C_Login(session, CKU_USER, pin, strlen(pin));
     if (rv != CKR_OK){
-        SSL_Error(_d("C_Login : %s\n"), PKCS11ErrorString(rv));
+        SSL_Error(_d("C_Login :\n %s\n"), PKCS11ErrorString(rv));
         rv = f->C_CloseSession(session);
         return FALSE;
     }
@@ -1335,17 +1332,17 @@ PKCS11GetCertificate(CK_SLOT_ID slot,
     cert_attr[0].ulValueLen = sizeof(CK_OBJECT_CLASS);
     rv = f->C_FindObjectsInit(session, cert_attr, 1);
     if ( rv != CKR_OK ){
-        SSL_Error(_d("C_FindObjectsInit : %s\n"), PKCS11ErrorString(rv));
+        SSL_Error(_d("C_FindObjectsInit :\n %s\n"), PKCS11ErrorString(rv));
         goto PKCS11GetCertificateFailure;
     }
     rv = f->C_FindObjects(session, cert_handle, PKCS11_MAX_OBJECT_NUM, &cert_count); 
     if ( rv != CKR_OK ){
-        SSL_Error(_d("C_FindObjects : %s\n"), PKCS11ErrorString(rv));
+        SSL_Error(_d("C_FindObjects :\n %s\n"), PKCS11ErrorString(rv));
         goto PKCS11GetCertificateFailure;
     }
     rv = f->C_FindObjectsFinal(session);
     if ( rv != CKR_OK ){
-        SSL_Error(_d("C_FindObjectsFinal : %s\n"), PKCS11ErrorString(rv));
+        SSL_Error(_d("C_FindObjectsFinal :\n %s\n"), PKCS11ErrorString(rv));
         goto PKCS11GetCertificateFailure;
     }
 
@@ -1361,7 +1358,7 @@ PKCS11GetCertificate(CK_SLOT_ID slot,
         cert_attr[1].ulValueLen = 0;
         rv = f->C_GetAttributeValue(session, cert_handle[i], cert_attr, 2);
         if ( rv != CKR_OK ){
-            SSL_Error(_d("C_GetAttributeValue : %s\n"), PKCS11ErrorString(rv));
+            SSL_Error(_d("C_GetAttributeValue :\n %s\n"), PKCS11ErrorString(rv));
             goto PKCS11GetCertificateFailure;
         }
         *certder_size = cert_attr[0].ulValueLen;
@@ -1378,7 +1375,7 @@ PKCS11GetCertificate(CK_SLOT_ID slot,
         cert_attr[1].pValue = *keyid;
         rv = f->C_GetAttributeValue(session, cert_handle[i], cert_attr, 2);
         if ( rv != CKR_OK ){
-            SSL_Error(_d("C_FindObjectsFinal : %s\n"), PKCS11ErrorString(rv));
+            SSL_Error(_d("C_FindObjectsFinal :\n %s\n"), PKCS11ErrorString(rv));
             goto PKCS11GetCertificateFailure;
         }
         if (PKCS11FindPrivateKey(session, f, *keyid, *keyid_size)){
@@ -1402,13 +1399,13 @@ PKCS11GetSlotList(CK_FUNCTION_LIST_PTR f, CK_SLOT_ID_PTR list)
 
     rv = f->C_GetSlotList(TRUE, NULL, &count);
     if ( rv != CKR_OK ){
-        SSL_Error(_d("C_GetSlotList : %s\n"), PKCS11ErrorString(rv));
+        SSL_Error(_d("C_GetSlotList :\n %s\n"), PKCS11ErrorString(rv));
         return 0;
     }
     if (count > PKCS11_MAX_SLOT_NUM) count = PKCS11_MAX_SLOT_NUM;
     rv = f->C_GetSlotList(TRUE, list, &count);
     if ( rv != CKR_OK ){
-        SSL_Error(_d("C_GetSlotList : %s\n"), PKCS11ErrorString(rv));
+        SSL_Error(_d("C_GetSlotList :\n %s\n"), PKCS11ErrorString(rv));
         return 0;
     }
     return count;
@@ -1551,7 +1548,7 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
     derptr = (unsigned char*)certder;
     cert = d2i_X509(NULL , &derptr ,certder_size);
     if (cert == NULL) {
-        SSL_Error("d2i_X509 failure: %s", GetSSLErrorString());
+        SSL_Error("d2i_X509 failure:\n %s", GetSSLErrorString());
         free(certder);
         return FALSE;
     }
@@ -1622,8 +1619,8 @@ MakeSSL_CTX_PKCS11(
         }
     }
     else if (!SSL_CTX_load_verify_locations(ctx, cafile, capath)){
-        SSL_Error(_d("SSL_CTX_load_verify_locations(%s, %s)\n"),
-                cafile, capath);
+		if (cafile == NULL) cafile = capath;
+        SSL_Error(_d("SSL_CTX_load_verify_locations(%s)\n"), cafile);
         SSL_CTX_free(ctx);
         return NULL;
     }
