@@ -601,6 +601,7 @@ ExecuteServer(void)
 	Port	*port;
 #ifdef	USE_SSL
 	SSL_CTX	*ctx;
+	char *ssl_warning;
 #endif
 ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
@@ -611,12 +612,15 @@ ENTER_FUNC;
 	ctx = NULL;
 	if		(  fSsl  ) {
 		if		(  ( ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers) )
-				   ==  NULL  ) {
+				==  NULL  ) {
+			Warning(GetSSLErrorMessage());
 			Error("CTX make error");
 		}
-	    if (strcasecmp(Auth.protocol, "ssl") != 0){
-            SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
-        }
+		if 	(strcasecmp(Auth.protocol, "ssl") != 0){
+			SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+		}
+		ssl_warning = GetSSLWarningMessage();
+		if 	(strlen(ssl_warning) > 0) Warning(ssl_warning);
 	}
 #endif
 	while	(TRUE)	{
@@ -634,6 +638,7 @@ ENTER_FUNC;
 				fpComm = MakeSSL_Net(ctx, fd);
 				if (StartSSLServerSession(fpComm) != TRUE){
 			        CloseNet(fpComm);
+					Warning(GetSSLErrorMessage());
                     exit(0);
                 }
 			} else {

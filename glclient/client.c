@@ -290,8 +290,9 @@ static Bool
 MakeFPCOMM (int fd)
 {
 	FPCOMM(glSession) = NULL;
-
 #ifdef	USE_SSL
+	char *str;
+
     if (!fSsl)
         FPCOMM(glSession) = SocketToNet(fd);
     else {
@@ -307,6 +308,8 @@ MakeFPCOMM (int fd)
 				return FALSE;
             }
         }
+		str = GetSSLWarningMessage();
+		if (strlen(str) > 0) GLError(str);
     }
 #else
 	FPCOMM(glSession) = SocketToNet(fd);

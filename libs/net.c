@@ -36,6 +36,7 @@
 #include	<string.h>
 #include    <sys/socket.h>
 #include	<sys/wait.h>
+#include	<time.h>
 
 #include	"types.h"
 #include	"socket.h"
@@ -61,6 +62,9 @@
 #endif
 
 #ifdef  USE_SSL
+#define SSL_MESSAGE_SIZE 1024
+static char ssl_error_message[SSL_MESSAGE_SIZE];
+static char ssl_warning_message[SSL_MESSAGE_SIZE];
 #ifdef  USE_PKCS11
 static const char *PKCS11ErrorString(CK_RV rv);
 static void *PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f);
@@ -80,10 +84,8 @@ static CK_ULONG PKCS11GetSlotList(CK_FUNCTION_LIST_PTR f, CK_SLOT_ID_PTR list);
 static ENGINE *InitEnginePKCS11( const char *pkcs11, const char *pin);
 static char *GetPinString(char *buf, size_t sz);
 static Bool LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slotstr);
-#endif
-#define SSL_ERROR_MESSAGE_SIZE 1024
-static char ssl_error_message[SSL_ERROR_MESSAGE_SIZE];
-#endif
+#endif // USE_PKCS11
+#endif // USE_SSL
 
 static	Bool
 _Flush(
@@ -378,22 +380,40 @@ FileToNet(
  */
 #ifdef	USE_SSL
 
-static void 
+static void
 SSL_Error(char *format, ...)
 {
-    char buff[SSL_ERROR_MESSAGE_SIZE];
+    char buff[SSL_MESSAGE_SIZE];
     va_list va;
 
-    va_start(va, format); 
+    va_start(va, format);
     vsnprintf(buff, sizeof(buff), format, va);
     va_end(va);
-    strncat(ssl_error_message, buff, SSL_ERROR_MESSAGE_SIZE - 1);
+    strncat(ssl_error_message, buff, SSL_MESSAGE_SIZE - 1);
 }
 
 extern char*
 GetSSLErrorMessage(void)
 {
-        return ssl_error_message;
+	return ssl_error_message;
+}
+
+static void
+SSL_Warning(char *format, ...)
+{
+    char buff[SSL_MESSAGE_SIZE];
+    va_list va;
+
+    va_start(va, format);
+    vsnprintf(buff, sizeof(buff), format, va);
+    va_end(va);
+    strncat(ssl_warning_message, buff, SSL_MESSAGE_SIZE - 1);
+}
+
+extern char*
+GetSSLWarningMessage(void)
+{
+	return ssl_warning_message;
 }
 
 static int
@@ -473,7 +493,7 @@ SSL_Read(
 	if		(  ( ret = SSL_read(fp->net.ssl,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
 			err = ERR_get_error();
-			Warning("read %s\n",ERR_error_string(err, NULL));
+			Warning(_("read %s\n"),ERR_error_string(err, NULL));
 		} else {
 			err = 0;
 		}
@@ -494,7 +514,7 @@ SSL_Write(
 	if		(  ( ret = SSL_write(fp->net.ssl,buff,size) )  <=  0  ) {
 		if		(  ret  <  0  ) {
 			err = ERR_get_error();
-			Warning("write %s\n",ERR_error_string(err, NULL));
+			Warning(_("write %s\n"),ERR_error_string(err, NULL));
 		} else {
 			err = 0;
 		}
@@ -762,6 +782,56 @@ MakeSSL_Net(
     return fp;
 }
 
+
+static	time_t
+asn1_time_to_time(
+	ASN1_TIME *tm)
+{
+	struct tm rtm;
+	char work[3];
+	time_t rt;
+	extern time_t timezone;
+	
+	memset(work, '\0', sizeof(work));
+	memset(&rtm, 0, sizeof(struct tm));
+	
+	memcpy(work, tm->data + 10, 2);
+	rtm.tm_sec = atoi(work);
+	memcpy(work, tm->data + 8, 2);
+	rtm.tm_min = atoi(work);
+	memcpy(work, tm->data + 6, 2);
+	rtm.tm_hour = atoi(work);
+	memcpy(work, tm->data + 4, 2);
+	rtm.tm_mday = atoi(work);
+	memcpy(work, tm->data + 2, 2);
+	rtm.tm_mon = atoi(work) - 1;
+	memcpy(work, tm->data, 2);
+	rtm.tm_year = atoi(work);
+	if (rtm.tm_year < 70)
+	rtm.tm_year += 100;
+	
+	timezone = 0;
+	rt = mktime(&rtm);
+	tzset();
+	
+	return rt;
+}
+
+#define WARNING_BEFORE_EXPIRATION_PERIOD (31 * 24 * 3600) // 31 days
+static 	void
+CheckValidPeriod(
+	X509 *cert)
+{
+	char buf[256];
+	long valid;
+	valid = (long)difftime(asn1_time_to_time(X509_get_notAfter(cert)), time(NULL));
+
+	if(valid < WARNING_BEFORE_EXPIRATION_PERIOD){
+		X509_NAME_oneline(X509_get_subject_name(cert),buf,sizeof buf);
+		SSL_Warning(_("Certificate(%s) will be expired in %d days\nPlease update the certificate\n"), buf, valid / (24 * 3600));
+	}
+}
+
 static	int
 VerifyCallBack(
 	int		ok,
@@ -769,7 +839,7 @@ VerifyCallBack(
 {
 	char buf[256];
 	X509 *err_cert;
-	int err,depth;
+	int err, depth;
 	BIO	*bio_err;
         char *ptr = NULL;
         char printable[256] = {'\0'};
@@ -837,6 +907,44 @@ GetPasswordString(char *buf, size_t sz, const char *prompt)
     return NULL;
 }
 
+static int
+SSL_CTX_use_certificate_with_check(
+	SSL_CTX *ctx, 
+	X509 *x)
+{
+	int ret;
+	ret = SSL_CTX_use_certificate(ctx, x);
+	if(!ret)return ret;
+	CheckValidPeriod(x);
+	return ret;
+}
+
+static int
+SSL_CTX_use_certificate_file_with_check(
+	SSL_CTX *ctx, 
+	char *file, 
+	int type)
+{
+	FILE *fp;
+	X509 *x509;
+	int ret;
+	char buf[4096];
+	ret = SSL_CTX_use_certificate_file(ctx, file, type);
+	if(!ret) return ret;
+	if(!(fp = fopen(file, "r"))) {
+    	return -1;
+    }
+	x509 = PEM_read_X509(fp, NULL, NULL, NULL);
+	if(!x509){
+		rewind(fp);
+		x509 = d2i_X509_fp(fp, NULL);
+	}
+	fclose(fp);
+	if(!x509) return -1;
+	CheckValidPeriod(x509);
+	return ret;
+}
+
 static Bool
 LoadPKCS12(SSL_CTX *ctx, const char *file)
 {
@@ -873,7 +981,7 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
         ERR_clear_error();
         if (count >= 1) prompt = ASKPASS_PROMPT_RETRY;
         if ((pass = GetPasswordString(passbuf, sizeof(passbuf), prompt)) == NULL){
-            Message("Password input was canceled.\n");
+            Message("PASSWORD input was canceled\n");
             break;
         }
         count++;
@@ -884,7 +992,7 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
 
     /* set key and cert to SSL_CTX */
     if (cert && key){
-        if (!SSL_CTX_use_certificate(ctx, cert)){
+        if (!SSL_CTX_use_certificate_with_check(ctx, cert)){
             SSL_Error(_d("SSL_CTX_use_certificate failure:\n %s"), message, GetSSLErrorString());
             return FALSE;
         }
@@ -951,7 +1059,7 @@ MakeSSL_CTX(
     }
     else if (!SSL_CTX_load_verify_locations(ctx, cafile, capath)){
         SSL_Error(_d("SSL_CTX_load_verify_locations(%s, %s)\n"),
-                cafile, capath);
+                cafile, capath, GetSSLErrorString());
 
         SSL_CTX_free(ctx);
         return NULL;
@@ -959,7 +1067,7 @@ MakeSSL_CTX(
 
     if (cert != NULL){
         if (LoadPKCS12(ctx, cert)) return ctx;
-        if (SSL_CTX_use_certificate_file(ctx, cert, SSL_FILETYPE_PEM) <= 0){
+        if (SSL_CTX_use_certificate_file_with_check(ctx, cert, SSL_FILETYPE_PEM) <= 0){
             SSL_Error(_d("SSL_CTX_use_certificate_file(%s) failure:\n %s\n"),
                     cert, GetSSLErrorString());
             SSL_CTX_free(ctx);
@@ -1395,7 +1503,7 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
 
     if (!(dl_handle = PKCS11LoadModule((const char*)pkcs11, &p11funcs))) return FALSE;
     if ((pin = GetPinString(pinbuf, sizeof(pinbuf))) == NULL){
-        Message("PIN input was canceled.\n");
+        Message("PIN input was canceled\n");
         return FALSE;
     }
     
@@ -1453,13 +1561,13 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
         return FALSE;
     } 
     if(!(key = ENGINE_load_private_key(*e, keyid, NULL, NULL))) {
-            SSL_Error(_d("SSL_CTX_use_certificate failure:\n %s"), GetSSLErrorString());
+            SSL_Error(_d("ENGINE_load_private_key failure:\n %s\n"), GetSSLErrorString);
             return FALSE;
     }
 
     /* set key and cert to SSL_CTX */
     if (cert && key){
-        if (!SSL_CTX_use_certificate(ctx, cert)){
+        if (!SSL_CTX_use_certificate_with_check(ctx, cert)){
             SSL_Error(_d("SSL_CTX_use_certificate failure:\n %s"), GetSSLErrorString());
             return FALSE;
         }
@@ -1531,9 +1639,10 @@ MakeSSL_CTX_PKCS11(
 extern	void
 InitNET(void)
 {
-        bindtextdomain(PACKAGE, LOCALEDIR);
+	bindtextdomain(PACKAGE, LOCALEDIR);
 #ifdef	USE_SSL
-        ssl_error_message[0] = '\0';
+	ssl_error_message[0] = '\0';
+	ssl_warning_message[0] = '\0';
 	OpenSSL_add_ssl_algorithms();
 	OpenSSL_add_all_algorithms();	
 	ERR_load_crypto_strings();

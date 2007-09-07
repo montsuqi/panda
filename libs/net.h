@@ -85,7 +85,8 @@ extern	void		NetSetFD(NETFILE *fp, int fd);
 extern	void		InitNET(void);
 #define	NetGetFD(fp)	((fp)->fd)
 #ifdef	USE_SSL
-extern  char            *GetSSLErrorMessage(void);
+extern  char		*GetSSLErrorMessage(void);
+extern  char		*GetSSLWarningMessage(void);
 extern	NETFILE		*MakeSSL_Net(SSL_CTX *ctx, int fd);
 extern	SSL_CTX		*MakeSSL_CTX(char *key, char *cert, char *cafile, char *capath, char *ciphers);
 extern	char		*GetSubjectFromCertificate(X509 *cert);

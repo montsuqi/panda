@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2007-09-03 18:15+0900\n"
+"POT-Creation-Date: 2007-09-05 11:12+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -290,7 +290,7 @@ msgstr ""
 msgid "              2000-2003 Masami Ogoshi & JMA.\n"
 msgstr ""
 
-#: glclient/client.c:329
+#: glclient/client.c:332
 msgid "can not connect server(server port not found)"
 msgstr ""
 
@@ -359,164 +359,178 @@ msgstr ""
 msgid "invalid data conversion\n"
 msgstr ""
 
-#: libs/net.c:786
+#: libs/net.c:830
+#, c-format
+msgid ""
+"Certificate(%s) will be expired in %d days\n"
+"Please update the certificate"
+msgstr ""
+
+#: libs/net.c:855
 #, c-format
 msgid ""
 "verify error:\n"
 "%s:%s\n"
 msgstr ""
 
-#: libs/net.c:792
+#: libs/net.c:861
 #, c-format
 msgid "Unable to get issuer cert. issuer= %s\n"
 msgstr ""
 
-#: libs/net.c:796
+#: libs/net.c:865
 msgid "Error in cert not_before field. notBefore="
 msgstr ""
 
-#: libs/net.c:804
+#: libs/net.c:873
 msgid "Error in cert not_after field. notAfter="
 msgstr ""
 
-#: libs/net.c:888 libs/net.c:1456 libs/net.c:1463
+#: libs/net.c:998 libs/net.c:1573
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:892 libs/net.c:1467
+#: libs/net.c:1002 libs/net.c:1577
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:896 libs/net.c:983 libs/net.c:1471
+#: libs/net.c:1006 libs/net.c:1093 libs/net.c:1581
 #, c-format
 msgid ""
 "SSL_CTX_check_private_key failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:919 libs/net.c:1494
+#: libs/net.c:1029 libs/net.c:1604
 #, c-format
 msgid ""
 "SSL_CTX_new failue:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:935 libs/net.c:1499
+#: libs/net.c:1045 libs/net.c:1609
 #, c-format
 msgid ""
 "SSL_CTX_set_cipher_list(%s) failue:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:948 libs/net.c:1512
+#: libs/net.c:1058 libs/net.c:1622
 #, c-format
 msgid ""
 "SSL_CTX_set_default_verify_paths error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:953 libs/net.c:1517
+#: libs/net.c:1063 libs/net.c:1627
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s, %s)\n"
 msgstr ""
 
-#: libs/net.c:963
+#: libs/net.c:1073
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate_file(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:973
+#: libs/net.c:1083
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey_file(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1108
+#: libs/net.c:1218
 #, c-format
 msgid "cannot open PKCS#11 library : %s\n"
 msgstr ""
 
-#: libs/net.c:1115
+#: libs/net.c:1225
 #, c-format
 msgid "cannot get C_GetFunctionList address : %s\n"
 msgstr ""
 
-#: libs/net.c:1122
+#: libs/net.c:1232
 #, c-format
 msgid "C_GetFunctionList : %s\n"
 msgstr ""
 
-#: libs/net.c:1131
+#: libs/net.c:1241
 #, c-format
 msgid "C_Initialize : %s\n"
 msgstr ""
 
-#: libs/net.c:1187
+#: libs/net.c:1297
 #, c-format
 msgid "cannot find private key ID : %s\n"
 msgstr ""
 
-#: libs/net.c:1214
+#: libs/net.c:1324
 #, c-format
 msgid "C_OpenSession : %s\n"
 msgstr ""
 
-#: libs/net.c:1219
+#: libs/net.c:1329
 #, c-format
 msgid "C_Login : %s\n"
 msgstr ""
 
-#: libs/net.c:1230
+#: libs/net.c:1340
 #, c-format
 msgid "C_FindObjectsInit : %s\n"
 msgstr ""
 
-#: libs/net.c:1235
+#: libs/net.c:1345
 #, c-format
 msgid "C_FindObjects : %s\n"
 msgstr ""
 
-#: libs/net.c:1240 libs/net.c:1273
+#: libs/net.c:1350 libs/net.c:1383
 #, c-format
 msgid "C_FindObjectsFinal : %s\n"
 msgstr ""
 
-#: libs/net.c:1256
+#: libs/net.c:1366
 #, c-format
 msgid "C_GetAttributeValue : %s\n"
 msgstr ""
 
-#: libs/net.c:1297 libs/net.c:1303
+#: libs/net.c:1407 libs/net.c:1413
 #, c-format
 msgid "C_GetSlotList : %s\n"
 msgstr ""
 
-#: libs/net.c:1321
+#: libs/net.c:1431
 #, c-format
 msgid ""
 "Engine_by_id:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1331
+#: libs/net.c:1441
 #, c-format
 msgid ""
 "Engine_ctrl_cmd_string failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1337
+#: libs/net.c:1447
 #, c-format
 msgid ""
 "Engine_init failure:\n"
 " %s"
+msgstr ""
+
+#: libs/net.c:1566
+#, c-format
+msgid ""
+"ENGINE_load_private_key failure:\n"
+" %s\n"
 msgstr ""

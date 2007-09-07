@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2007-09-03 18:15+0900\n"
+"POT-Creation-Date: 2007-09-05 11:12+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -289,7 +289,7 @@ msgstr ""
 msgid "              2000-2003 Masami Ogoshi & JMA.\n"
 msgstr ""
 
-#: glclient/client.c:329
+#: glclient/client.c:332
 msgid "can not connect server(server port not found)"
 msgstr ""
 
@@ -358,7 +358,16 @@ msgstr "サーバに接続きません(プロトコルエラー)"
 msgid "invalid data conversion\n"
 msgstr ""
 
-#: libs/net.c:786
+#: libs/net.c:830
+#, c-format
+msgid ""
+"Certificate(%s) will be expired in %d days\n"
+"Please update the certificate\n"
+msgstr ""
+"証明書(%s)の有効期限が%d日後に切れます\n"
+"証明書を更新してください\n"
+
+#: libs/net.c:855
 #, c-format
 msgid ""
 "verify error:\n"
@@ -367,20 +376,20 @@ msgstr ""
 "証明書検証エラー:\n"
 "%s:%s\n"
 
-#: libs/net.c:792
+#: libs/net.c:861
 #, c-format
 msgid "Unable to get issuer cert. issuer= %s\n"
 msgstr "発行者(CA)の証明書が取得できません. 発行者= %s\n"
 
-#: libs/net.c:796
+#: libs/net.c:865
 msgid "Error in cert not_before field. notBefore="
 msgstr "証明書の有効期限の開始時刻に問題があります．有効期限の開始時刻="
 
-#: libs/net.c:804
+#: libs/net.c:873
 msgid "Error in cert not_after field. notAfter="
 msgstr "証明書の有効期限の終了時刻に問題があります．有効期限の終了時刻="
 
-#: libs/net.c:888 libs/net.c:1456 libs/net.c:1463
+#: libs/net.c:998 libs/net.c:1573
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate failure:\n"
@@ -390,7 +399,7 @@ msgstr ""
 " %s\n"
 "セキュリティデバイスに証明書が格納されていない可能性があります．"
 
-#: libs/net.c:892 libs/net.c:1467
+#: libs/net.c:1002 libs/net.c:1577
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey failure:\n"
@@ -400,7 +409,7 @@ msgstr ""
 " %s\n"
 "セキュリティデバイスに証明書が格納されていない可能性があります．"
 
-#: libs/net.c:896 libs/net.c:983 libs/net.c:1471
+#: libs/net.c:1006 libs/net.c:1093 libs/net.c:1581
 #, c-format
 msgid ""
 "SSL_CTX_check_private_key failure:\n"
@@ -410,7 +419,7 @@ msgstr ""
 " %s\n"
 "鍵ファイルが不正な可能性があります．\n"
 
-#: libs/net.c:919 libs/net.c:1494
+#: libs/net.c:1029 libs/net.c:1604
 #, c-format
 msgid ""
 "SSL_CTX_new failue:\n"
@@ -419,7 +428,7 @@ msgstr ""
 "SSL_CTX_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:935 libs/net.c:1499
+#: libs/net.c:1045 libs/net.c:1609
 #, c-format
 msgid ""
 "SSL_CTX_set_cipher_list(%s) failue:\n"
@@ -429,7 +438,7 @@ msgstr ""
 " %s\n"
 "「SSL暗号スイート」が不正な可能性があります．\n"
 
-#: libs/net.c:948 libs/net.c:1512
+#: libs/net.c:1058 libs/net.c:1622
 #, c-format
 msgid ""
 "SSL_CTX_set_default_verify_paths error:\n"
@@ -439,13 +448,13 @@ msgstr ""
 " %s\n"
 "システムのデフォルト検証パスを使おうとしましたが，失敗しました．\n"
 
-#: libs/net.c:953 libs/net.c:1517
+#: libs/net.c:1063 libs/net.c:1627
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s, %s)\n"
 msgstr "SSL_CTX_load_verify_locations(%s, %s)でエラーが発生しました:\n"
 
 # "「CA証明書へのパス」または「CA証明書ファイル」が不正な可能性があります.\n"
-#: libs/net.c:963
+#: libs/net.c:1073
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate_file(%s) failure:\n"
@@ -455,7 +464,7 @@ msgstr ""
 " %s\n"
 "「証明書ファイル名」またはファイルの中身が不正な可能性があります．\n"
 
-#: libs/net.c:973
+#: libs/net.c:1083
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey_file(%s) failure:\n"
@@ -465,73 +474,73 @@ msgstr ""
 " %s\n"
 "「鍵ファイル名」またはファイルの中身が不正な可能性があります．\n"
 
-#: libs/net.c:1108
+#: libs/net.c:1218
 #, c-format
 msgid "cannot open PKCS#11 library : %s\n"
 msgstr "PKCS#11ライブラリが開けません: %s\n"
 
-#: libs/net.c:1115
+#: libs/net.c:1225
 #, c-format
 msgid "cannot get C_GetFunctionList address : %s\n"
 msgstr ""
 "C_GetFunctionListのアドレスが得られませんでした: %s\n"
 "「PKCS#11ライブラリ」が不正な可能性があります．\n"
 
-#: libs/net.c:1122
+#: libs/net.c:1232
 #, c-format
 msgid "C_GetFunctionList : %s\n"
 msgstr "C_GetFunctionListでエラーが発生しました: %s\n"
 
-#: libs/net.c:1131
+#: libs/net.c:1241
 #, c-format
 msgid "C_Initialize : %s\n"
 msgstr "C_Initializeでエラーが発生しました: %s\n"
 
-#: libs/net.c:1187
+#: libs/net.c:1297
 #, c-format
 msgid "cannot find private key ID : %s\n"
 msgstr ""
 "秘密鍵IDが見付かりませんでした: %s\n"
 "セキュリティデバイスに証明書が格納されていない可能性があります．\n"
 
-#: libs/net.c:1214
+#: libs/net.c:1324
 #, c-format
 msgid "C_OpenSession : %s\n"
 msgstr "C_OpenSessionが失敗しました: %s\n"
 
-#: libs/net.c:1219
+#: libs/net.c:1329
 #, c-format
 msgid "C_Login : %s\n"
 msgstr ""
 "セキュリティデバイスへのログインに失敗しました: %s\n"
 "デバイスが初期化されていないか，PINが間違っている可能性があります．\n"
 
-#: libs/net.c:1230
+#: libs/net.c:1340
 #, c-format
 msgid "C_FindObjectsInit : %s\n"
 msgstr "C_FindObjectsInitに失敗しました: %s\n"
 
-#: libs/net.c:1235
+#: libs/net.c:1345
 #, c-format
 msgid "C_FindObjects : %s\n"
 msgstr "C_FindObjectsに失敗しました: %s\n"
 
-#: libs/net.c:1240 libs/net.c:1273
+#: libs/net.c:1350 libs/net.c:1383
 #, c-format
 msgid "C_FindObjectsFinal : %s\n"
 msgstr "C_FindObjectsFinalに失敗しました: %s\n"
 
-#: libs/net.c:1256
+#: libs/net.c:1366
 #, c-format
 msgid "C_GetAttributeValue : %s\n"
 msgstr "C_GetAttributeValueに失敗しました: %s\n"
 
-#: libs/net.c:1297 libs/net.c:1303
+#: libs/net.c:1407 libs/net.c:1413
 #, c-format
 msgid "C_GetSlotList : %s\n"
 msgstr "C_GetSlotListに失敗しました: %s\n"
 
-#: libs/net.c:1321
+#: libs/net.c:1431
 #, c-format
 msgid ""
 "Engine_by_id:\n"
@@ -540,7 +549,7 @@ msgstr ""
 "Engine_by_idに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1331
+#: libs/net.c:1441
 #, c-format
 msgid ""
 "Engine_ctrl_cmd_string failure:\n"
@@ -549,7 +558,7 @@ msgstr ""
 "Engine_ctrl_cmd_stringに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1337
+#: libs/net.c:1447
 #, c-format
 msgid ""
 "Engine_init failure:\n"
@@ -558,8 +567,11 @@ msgstr ""
 "Engine_initに失敗しました:\n"
 " %s"
 
-#~ msgid "cannot read password\n"
-#~ msgstr "パスワードが取得できません"
-
-#~ msgid "could not read pin\n"
-#~ msgstr "PINを取得できませんでした: %s\n"
+#: libs/net.c:1566
+#, c-format
+msgid ""
+"ENGINE_load_private_key failure:\n"
+" %s\n"
+msgstr ""
+"ENGINE_load_private_keyに失敗しました:\n"
+" %s\n"
