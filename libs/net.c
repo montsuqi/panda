@@ -832,7 +832,7 @@ CheckValidPeriod(
 }
 
 static	int
-VerifyCallBack(
+_VerifyCallBack(
 	int		ok,
 	X509_STORE_CTX	*ctx)
 {
@@ -840,9 +840,9 @@ VerifyCallBack(
 	X509 *err_cert;
 	int err, depth;
 	BIO	*bio_err;
-        char *ptr = NULL;
-        char printable[256] = {'\0'};
-        int length;
+	char *ptr = NULL;
+	char printable[256] = {'\0'};
+	int length;
 
 	bio_err = BIO_new(BIO_s_mem());
 	err_cert = X509_STORE_CTX_get_current_cert(ctx);
@@ -850,12 +850,9 @@ VerifyCallBack(
 	depth = X509_STORE_CTX_get_error_depth(ctx);
 
 	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
-	if	(!ok) {
-                SSL_Error(_d("verify error:\n depth=%d\n %s:%s\n"),
-				   depth, X509_verify_cert_error_string(err),buf);
-	}
 	switch (ctx->error) {
 	  case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
+	  case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
 		X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert),buf,sizeof buf);
 		SSL_Error(_d(" Unable to get issuer cert.\n issuer= %s\n"), buf);
 		break;
@@ -877,6 +874,50 @@ VerifyCallBack(
 		break;
 	}
 	BIO_free(bio_err);
+	return(ok);
+}
+
+static	int
+LocalVerifyCallBack(
+	int		ok,
+	X509_STORE_CTX	*ctx)
+{
+	char buf[256];
+	X509 *err_cert;
+	int err, depth;
+
+	err_cert = X509_STORE_CTX_get_current_cert(ctx);
+	err = X509_STORE_CTX_get_error(ctx);
+	depth = X509_STORE_CTX_get_error_depth(ctx);
+
+	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
+	if	(!ok) {
+                SSL_Error(_d("Local certificate verify error:\n depth=%d\n %s:%s\n"),
+				   depth, X509_verify_cert_error_string(err),buf);
+	}
+	_VerifyCallBack(ok, ctx);
+	return(ok);
+}
+
+static	int
+RemoteVerifyCallBack(
+	int		ok,
+	X509_STORE_CTX	*ctx)
+{
+	char buf[256];
+	X509 *err_cert;
+	int err, depth;
+
+	err_cert = X509_STORE_CTX_get_current_cert(ctx);
+	err = X509_STORE_CTX_get_error(ctx);
+	depth = X509_STORE_CTX_get_error_depth(ctx);
+
+	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
+	if	(!ok) {
+                SSL_Error(_d("Remote certificate verify error:\n depth=%d\n %s:%s\n"),
+				   depth, X509_verify_cert_error_string(err),buf);
+	}
+	_VerifyCallBack(ok, ctx);
 	return(ok);
 }
 
@@ -911,8 +952,15 @@ SSL_CTX_use_certificate_with_check(
 	X509 *x509)
 {
 	int ret;
+	X509_STORE_CTX *sctx;
 	ret = SSL_CTX_use_certificate(ctx, x509);
 	if(!ret)return ret;
+	X509_STORE_add_cert(ctx->cert_store, x509);
+	sctx = X509_STORE_CTX_new();
+	X509_STORE_CTX_init(sctx, ctx->cert_store, x509, NULL);
+	X509_STORE_CTX_set_verify_cb(sctx, LocalVerifyCallBack);
+	X509_verify_cert(sctx);
+	X509_STORE_CTX_free(sctx);
 	CheckValidPeriod(x509);
 	return ret;
 }
@@ -925,6 +973,7 @@ SSL_CTX_use_certificate_file_with_check(
 {
 	FILE *fp;
 	X509 *x509;
+	X509_STORE_CTX *sctx;
 	int ret;
 	char buf[4096];
 	ret = SSL_CTX_use_certificate_file(ctx, file, type);
@@ -939,6 +988,12 @@ SSL_CTX_use_certificate_file_with_check(
 	}
 	fclose(fp);
 	if(!x509) return -1;
+	X509_STORE_add_cert(ctx->cert_store, x509);
+	sctx = X509_STORE_CTX_new();
+	X509_STORE_CTX_init(sctx, ctx->cert_store, x509, NULL);
+	X509_STORE_CTX_set_verify_cb(sctx, LocalVerifyCallBack);
+	X509_verify_cert(sctx);
+	X509_STORE_CTX_free(sctx);
 	CheckValidPeriod(x509);
 	return ret;
 }
@@ -1046,7 +1101,7 @@ MakeSSL_CTX(
 
     mode = SSL_VERIFY_PEER;
     mode |= SSL_VERIFY_CLIENT_ONCE;
-    SSL_CTX_set_verify(ctx, mode, VerifyCallBack);
+    SSL_CTX_set_verify(ctx, mode, RemoteVerifyCallBack);
     SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
     if ((cafile == NULL) && (capath == NULL)){
@@ -1609,7 +1664,7 @@ MakeSSL_CTX_PKCS11(
 
     mode = SSL_VERIFY_PEER;
     mode |= SSL_VERIFY_CLIENT_ONCE;
-    SSL_CTX_set_verify(ctx, mode, VerifyCallBack);
+    SSL_CTX_set_verify(ctx, mode, RemoteVerifyCallBack);
     SSL_CTX_set_options(ctx, SSL_OP_ALL);
 
     if ((cafile == NULL) && (capath == NULL)){
