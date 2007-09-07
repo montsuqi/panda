@@ -530,7 +530,7 @@ msgid ""
 " Error in cert not_before field.\n"
 " notBefore="
 msgstr ""
-" 証明書の有効期限の開始時刻に問題があります．\n"
+" 証明書有効期限開始前です\n"
 " 有効期限の開始時刻="
 
 #: libs/net.c:869
@@ -538,7 +538,7 @@ msgid ""
 " Error in cert not_after field.\n"
 " notAfter="
 msgstr ""
-" 証明書の有効期限の終了時刻に問題があります．\n"
+" 証明書の有効期限が切れています．\n"
 " 有効期限の終了時刻="
 
 #: libs/net.c:895
@@ -548,7 +548,7 @@ msgid ""
 " depth=%d\n"
 " %s:%s\n"
 msgstr ""
-"接続元の証明書検証エラー:\n"
+"証明書検証エラー:\n"
 " depth=%d\n"
 " %s:%s\n"
 

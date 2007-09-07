@@ -1111,7 +1111,7 @@ MakeSSL_CTX(
         }
     }
     else if (!SSL_CTX_load_verify_locations(ctx, cafile, capath)){
-		if (cafile ==NULL) cafile = capath;
+		if (cafile == NULL) cafile = capath;
         SSL_Error(_d("SSL_CTX_load_verify_locations(%s)\n"), cafile);
         SSL_CTX_free(ctx);
         return NULL;
