@@ -374,7 +374,7 @@ GLMessage(int level, char *file, int line, char *msg)
 			GLError(msg);
 			break;
 		default:
-			printf("%s", msg);
+			__Message(level, file, line, msg);
 			break;
 	}
 }

@@ -144,7 +144,7 @@ _Message(
         MessageFunction(level, file, line, msg);
 }
 
-static	void
+extern	void
 __Message(
 	int	level,
 	char	*file,
@@ -286,7 +286,7 @@ InitMessage(
 			}
 			DestroyPort(port);
 		} else {
-			if		(  ( fd = open(fn,O_WRONLY|O_CREAT,0600) )  >=  0  ) {
+			if		(  ( fd = open(fn,O_WRONLY|O_CREAT|O_TRUNC,0600) )  >=  0  ) {
 				fpLog = FileToNet(fd);
 			}
 		}
