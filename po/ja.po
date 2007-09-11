@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2007-09-07 18:45+0900\n"
+"POT-Creation-Date: 2007-09-11 16:39+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -477,8 +477,8 @@ msgstr ""
 
 #: libs/net.c:729
 #, c-format
-msgid "hostname don't match %s\n"
-msgstr "接続先のホスト名(%s)が証明書と一致しません\n"
+msgid "The hostname does not match %s.\n"
+msgstr "接続先のホスト名(%s)が証明書と一致しません。\n"
 
 #: libs/net.c:745
 #, c-format
@@ -510,11 +510,11 @@ msgstr ""
 #: libs/net.c:830
 #, c-format
 msgid ""
-"Certificate(%s) will be expired in %d days\n"
-"Please update the certificate\n"
+"The certificate(%s) will be expired in %d days.\n"
+"Please update the certificate.\n"
 msgstr ""
-"証明書(%s)の有効期限が%d日後に切れます\n"
-"証明書を更新してください\n"
+"証明書(%s)の期限切れまであと%d日です。\n"
+"証明書を更新してください。\n"
 
 #: libs/net.c:857
 #, c-format
@@ -522,7 +522,7 @@ msgid ""
 " Unable to get issuer cert.\n"
 " issuer= %s\n"
 msgstr ""
-" 発行者(CA)の証明書が取得できません.\n"
+" 発行者(CA)の証明書が取得できません。\n"
 " 発行者= %s\n"
 
 #: libs/net.c:861
@@ -530,7 +530,7 @@ msgid ""
 " Error in cert not_before field.\n"
 " notBefore="
 msgstr ""
-" 証明書有効期限開始前です\n"
+" 証明書の有効期限開始前です。\n"
 " 有効期限の開始時刻="
 
 #: libs/net.c:869
@@ -538,13 +538,13 @@ msgid ""
 " Error in cert not_after field.\n"
 " notAfter="
 msgstr ""
-" 証明書の有効期限が切れています．\n"
+" 証明書の有効期限が切れています。\n"
 " 有効期限の終了時刻="
 
 #: libs/net.c:895
 #, c-format
 msgid ""
-"Local certificate verify error:\n"
+"Verification error of local entity certificate:\n"
 " depth=%d\n"
 " %s:%s\n"
 msgstr ""
@@ -555,7 +555,7 @@ msgstr ""
 #: libs/net.c:917
 #, c-format
 msgid ""
-"Remote certificate verify error:\n"
+"Verification error of remote entity certificate:\n"
 " depth=%d\n"
 " %s:%s\n"
 msgstr ""
@@ -571,7 +571,7 @@ msgid ""
 msgstr ""
 "SSL_CTX_use_certificateに失敗しました:\n"
 " %s\n"
-"セキュリティデバイスに証明書が格納されていない可能性があります．"
+"セキュリティデバイスに証明書が格納されていない可能性があります。"
 
 #: libs/net.c:1053 libs/net.c:1627
 #, c-format
@@ -581,7 +581,7 @@ msgid ""
 msgstr ""
 "SSL_CTX_use_PrivateKeyに失敗しました:\n"
 " %s\n"
-"セキュリティデバイスに証明書が格納されていない可能性があります．"
+"セキュリティデバイスに証明書が格納されていない可能性があります。"
 
 #: libs/net.c:1057 libs/net.c:1143 libs/net.c:1631
 #, c-format
@@ -591,7 +591,7 @@ msgid ""
 msgstr ""
 "SSL_CTX_check_private_keyに失敗しました:\n"
 " %s\n"
-"鍵ファイルが不正な可能性があります．\n"
+"鍵ファイルが不正な可能性があります。\n"
 
 #: libs/net.c:1080 libs/net.c:1654
 #, c-format
@@ -610,7 +610,7 @@ msgid ""
 msgstr ""
 "SSL_CTX_set_cipher_list(%s)に失敗しました:\n"
 " %s\n"
-"「SSL暗号スイート」が不正な可能性があります．\n"
+"「SSL暗号スイート」が不正な可能性があります。\n"
 
 #: libs/net.c:1109 libs/net.c:1672
 #, c-format
@@ -620,14 +620,14 @@ msgid ""
 msgstr ""
 "SSL_CTX_set_default_verify_pathsでエラーが発生しました:\n"
 " %s\n"
-"システムのデフォルト検証パスを使おうとしましたが，失敗しました．\n"
+"システムのデフォルト検証パスを使おうとしましたが失敗しました。\n"
 
 #: libs/net.c:1115 libs/net.c:1678
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s)\n"
 msgstr ""
 "SSL_CTX_load_verify_locations(%s)でエラーが発生しました:\n"
-"「CA証明書へのパス」または「CA証明書ファイル」が不正な可能性があります.\n"
+"「CA証明書へのパス」または「CA証明書ファイル」が不正な可能性があります。\n"
 
 #: libs/net.c:1123
 #, c-format
@@ -637,7 +637,7 @@ msgid ""
 msgstr ""
 "SSL_CTX_use_certificate_file(%s)に失敗しました:\n"
 " %s\n"
-"「証明書ファイル名」またはファイルの中身が不正な可能性があります．\n"
+"「証明書ファイル名」またはファイルの中身が不正な可能性があります。\n"
 
 #: libs/net.c:1133
 #, c-format
@@ -647,24 +647,24 @@ msgid ""
 msgstr ""
 "SSL_CTX_use_PrivateKey_file(%s)に失敗しました:\n"
 " %s\n"
-"「鍵ファイル名」またはファイルの中身が不正な可能性があります．\n"
+"「鍵ファイル名」またはファイルの中身が不正な可能性があります。\n"
 
 #: libs/net.c:1268
 #, c-format
 msgid ""
-"cannot open PKCS#11 library :\n"
+"Cannot open PKCS#11 library :\n"
 " %s\n"
 msgstr "PKCS#11ライブラリが開けません: %s\n"
 
 #: libs/net.c:1275
 #, c-format
 msgid ""
-"cannot get C_GetFunctionList address :\n"
+"Cannot get C_GetFunctionList address :\n"
 " %s\n"
 msgstr ""
 "C_GetFunctionListのアドレスが得られませんでした:\n"
 " %s\n"
-"「PKCS#11ライブラリ」が不正な可能性があります．\n"
+"「PKCS#11ライブラリ」が不正な可能性があります。\n"
 
 #: libs/net.c:1282
 #, c-format
@@ -687,12 +687,12 @@ msgstr ""
 #: libs/net.c:1347
 #, c-format
 msgid ""
-"cannot find private key ID :\n"
+"Cannot find private key ID :\n"
 " %s\n"
 msgstr ""
 "秘密鍵IDが見付かりませんでした:\n"
 " %s\n"
-"セキュリティデバイスに証明書が格納されていない可能性があります．\n"
+"セキュリティデバイスに証明書が格納されていない可能性があります。\n"
 
 #: libs/net.c:1374
 #, c-format
@@ -711,7 +711,7 @@ msgid ""
 msgstr ""
 "セキュリティデバイスへのログインに失敗しました:\n"
 " %s\n"
-"デバイスが初期化されていないか，PINが間違っている可能性があります．\n"
+"デバイスが初期化されていないか，PINが間違っている可能性があります。\n"
 
 #: libs/net.c:1390
 #, c-format
@@ -775,7 +775,7 @@ msgid ""
 msgstr ""
 "Engine_ctrl_cmd_stringに失敗しました:\n"
 " %s\n"
-"PKCS#11ライブラリ」が不正な可能性があります"
+"PKCS#11ライブラリ」が不正な可能性があります。"
 
 #: libs/net.c:1497
 #, c-format
@@ -785,7 +785,7 @@ msgid ""
 msgstr ""
 "Engine_initに失敗しました:\n"
 " %s\n"
-"「PKCS#11ライブラリ」が不正な可能性があります"
+"「PKCS#11ライブラリ」が不正な可能性があります。"
 
 #: libs/net.c:1616
 #, c-format
@@ -795,12 +795,4 @@ msgid ""
 msgstr ""
 "ENGINE_load_private_keyに失敗しました:\n"
 " %s\n"
-"「PKCS#11ライブラリ」が不正な可能性があります\n"
-
-#~ msgid ""
-#~ " Unable to get issuer cert locally.\n"
-#~ " issuer= %s\n"
-#~ msgstr ""
-#~ " 発行者(CA)の証明書が取得できません.\n"
-#~ " 発行者= %s\n"
-#~ " CA証明書，または証明書の設定が間違っている可能性があります\n"
+"「PKCS#11ライブラリ」が不正な可能性があります。\n"

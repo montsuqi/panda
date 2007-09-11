@@ -726,7 +726,7 @@ StartSSLClientSession(NETFILE *fp, const char *hostname)
         fp->peer_cert = cert;
         id_ok = CheckHostnameInCertificate(cert, hostname);
         if (id_ok != TRUE){
-            SSL_Error(_d("hostname don't match %s\n"), hostname);
+            SSL_Error(_d("The hostname does not match %s.\n"), hostname);
             if (SSL_get_verify_mode(fp->net.ssl) & SSL_VERIFY_PEER){
                 return FALSE;
             }
@@ -827,7 +827,7 @@ CheckValidPeriod(
 
 	if(valid < WARNING_BEFORE_EXPIRATION_PERIOD){
 		X509_NAME_oneline(X509_get_subject_name(cert),buf,sizeof buf);
-		SSL_Warning(_d("Certificate(%s) will be expired in %d days\nPlease update the certificate\n"), buf, valid / (24 * 3600));
+		SSL_Warning(_d("The certificate(%s) will be expired in %d days.\nPlease update the certificate.\n"), buf, valid / (24 * 3600));
 	}
 }
 
@@ -892,7 +892,7 @@ LocalVerifyCallBack(
 
 	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
 	if	(!ok) {
-                SSL_Error(_d("Local certificate verify error:\n depth=%d\n %s:%s\n"),
+                SSL_Error(_d("Verification error of local entity certificate:\n depth=%d\n %s:%s\n"),
 				   depth, X509_verify_cert_error_string(err),buf);
 	}
 	_VerifyCallBack(ok, ctx);
@@ -914,7 +914,7 @@ RemoteVerifyCallBack(
 
 	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
 	if	(!ok) {
-                SSL_Error(_d("Remote certificate verify error:\n depth=%d\n %s:%s\n"),
+                SSL_Error(_d("Verification error of remote entity certificate:\n depth=%d\n %s:%s\n"),
 				   depth, X509_verify_cert_error_string(err),buf);
 	}
 	_VerifyCallBack(ok, ctx);
@@ -1265,14 +1265,14 @@ PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f)
     char *error;
     dl_handle = dlopen(pkcs11, RTLD_LAZY);
     if (!dl_handle){
-        SSL_Error(_d("cannot open PKCS#11 library :\n %s\n"), dlerror());
+        SSL_Error(_d("Cannot open PKCS#11 library :\n %s\n"), dlerror());
         return NULL;
     }
     c_get_function_list = 
         (CK_RV (*)(CK_FUNCTION_LIST_PTR_PTR))dlsym(dl_handle,"C_GetFunctionList");
 
     if ((error = dlerror()) != NULL ){
-        SSL_Error(_d("cannot get C_GetFunctionList address :\n %s\n"), error);
+        SSL_Error(_d("Cannot get C_GetFunctionList address :\n %s\n"), error);
         dlclose(dl_handle);
         return NULL;
     }
@@ -1344,7 +1344,7 @@ PKCS11FindPrivateKey(CK_SESSION_HANDLE session,
         return FALSE;
     }
     if ( key_count <= 0){
-        SSL_Error(_d("cannot find private key ID :\n %s\n"), keyid);
+        SSL_Error(_d("Cannot find private key ID :\n %s\n"), keyid);
         return FALSE;
     }
     return TRUE;

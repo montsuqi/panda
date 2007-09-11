@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2007-09-07 18:45+0900\n"
+"POT-Creation-Date: 2007-09-11 16:39+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -452,7 +452,7 @@ msgstr ""
 
 #: libs/net.c:729
 #, c-format
-msgid "hostname don't match %s\n"
+msgid "The hostname does not match %s.\n"
 msgstr ""
 
 #: libs/net.c:745
@@ -479,8 +479,8 @@ msgstr ""
 #: libs/net.c:830
 #, c-format
 msgid ""
-"Certificate(%s) will be expired in %d days\n"
-"Please update the certificate\n"
+"The certificate(%s) will be expired in %d days.\n"
+"Please update the certificate.\n"
 msgstr ""
 
 #: libs/net.c:857
@@ -505,7 +505,7 @@ msgstr ""
 #: libs/net.c:895
 #, c-format
 msgid ""
-"Local certificate verify error:\n"
+"Verification error of local entity certificate:\n"
 " depth=%d\n"
 " %s:%s\n"
 msgstr ""
@@ -513,7 +513,7 @@ msgstr ""
 #: libs/net.c:917
 #, c-format
 msgid ""
-"Remote certificate verify error:\n"
+"Verification error of remote entity certificate:\n"
 " depth=%d\n"
 " %s:%s\n"
 msgstr ""
@@ -582,14 +582,14 @@ msgstr ""
 #: libs/net.c:1268
 #, c-format
 msgid ""
-"cannot open PKCS#11 library :\n"
+"Cannot open PKCS#11 library :\n"
 " %s\n"
 msgstr ""
 
 #: libs/net.c:1275
 #, c-format
 msgid ""
-"cannot get C_GetFunctionList address :\n"
+"Cannot get C_GetFunctionList address :\n"
 " %s\n"
 msgstr ""
 
@@ -610,7 +610,7 @@ msgstr ""
 #: libs/net.c:1347
 #, c-format
 msgid ""
-"cannot find private key ID :\n"
+"Cannot find private key ID :\n"
 " %s\n"
 msgstr ""
 
