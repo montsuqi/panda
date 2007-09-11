@@ -335,11 +335,6 @@ set_focus(
 	char		*name;
 
 ENTER_FUNC;
-	name = gtk_widget_get_name(widget);
-
-	if		(  ( node = g_hash_table_lookup(WindowTable,name) )  !=  NULL  ) {
-		FocusedScreen = node;
-	}
 LEAVE_FUNC;
 }
 
