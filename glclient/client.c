@@ -368,13 +368,11 @@ stop_client ()
 static void 
 GLMessage(int level, char *file, int line, char *msg)
 {
+	__Message(level, file, line, msg);
 	switch(level){
     	case MESSAGE_WARN:
     	case MESSAGE_ERROR:
 			GLError(msg);
-			break;
-		default:
-			__Message(level, file, line, msg);
 			break;
 	}
 }
