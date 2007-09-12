@@ -441,6 +441,7 @@ ENTER_FUNC;
 										 "browse_clicked");
 			} else {
 				FreeLBS(binary);
+				gtk_object_set_data(GTK_OBJECT(widget), "recvobject", NULL);
 			}
 		}
 	}
