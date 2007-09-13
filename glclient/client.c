@@ -123,7 +123,7 @@ static	ARG_TABLE	option[] = {
 	{	"v2",		BOOLEAN,	TRUE,	(void*)&Protocol2,
 		N_("Use Protocol Version 2")		},
 	{	"mlog",		BOOLEAN,	TRUE,	(void*)&fMlog,
-		N_("Enable Loggin")							},
+		N_("Enable Logging")							},
 	{	"keybuff",	BOOLEAN,	TRUE,	(void*)&fKeyBuff,
 		N_("Enable Keybuffer")						},
 	{	"dialog",	BOOLEAN,	TRUE,	(void*)&fDialog,
@@ -142,6 +142,8 @@ static	ARG_TABLE	option[] = {
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
 		N_("SSL Cipher Sweet")						},
 #ifdef  USE_PKCS11
+	{	"pkcs11",		BOOLEAN,	TRUE,	(void*)&fPKCS11,
+		N_("Use Security Device")	 						},
 	{	"pkcs11_lib",STRING,	TRUE,	(void*)&PKCS11_Lib,
 		N_("PKCS#11 Library")				         		},
 	{	"slot",	    STRING,		TRUE,	(void*)&Slot,
@@ -280,7 +282,7 @@ static void
 _MakeSSL_CTX()
 {
 #ifdef  USE_PKCS11
-	if (PKCS11_Lib != NULL){
+	if (fPKCS11 == TRUE){
 		CTX(glSession) = MakeSSL_CTX_PKCS11(&ENGINE(glSession), PKCS11_Lib,Slot,CA_File,CA_Path,Ciphers);
 	}
 	else{
