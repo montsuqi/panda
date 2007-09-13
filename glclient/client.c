@@ -90,6 +90,12 @@ static	void
 InitApplications(void)
 {
 	glSession = New(Session);
+	FPCOMM(glSession) = NULL;
+#ifdef	USE_SSL
+	CTX(glSession) = NULL;
+#ifdef  USE_PKCS11
+	ENGINE(glSession) = NULL;
+#endif
 }
 
 extern	void
@@ -289,13 +295,6 @@ _MakeSSL_CTX()
 static Bool
 MakeFPCOMM (int fd)
 {
-	FPCOMM(glSession) = NULL;
-#ifdef	USE_SSL
-	CTX(glSession) = NULL;
-#ifdef  USE_PKCS11
-	ENGINE(glSession) = NULL;
-#endif
-
 	char *str;
 
     if (!fSsl)
