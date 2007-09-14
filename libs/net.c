@@ -999,68 +999,101 @@ SSL_CTX_use_certificate_file_with_check(
 }
 
 static Bool
+IsPKCS12(const char *file)
+{
+	Bool ret = TRUE;
+	EVP_PKEY *key = NULL;
+	X509 *cert = NULL;
+	BIO *input;
+	PKCS12 *p12;
+	int err_reason;
+	
+	if ((input = BIO_new_file(file, "r")) == NULL){
+		if (d2i_PKCS12_bio(input, &p12) == NULL) return FALSE;
+	}
+	p12 = d2i_PKCS12_bio(input, NULL);
+	BIO_free(input);
+	if (p12 == NULL) return FALSE;
+	
+	if (!PKCS12_parse(p12, "", &key, &cert, NULL)){
+		if (err_reason == PKCS12_R_MAC_VERIFY_FAILURE){
+			ret = FALSE;
+		}
+	}
+	if (cert){ X509_free(cert); cert = NULL; }
+	if (key){ EVP_PKEY_free(key); key = NULL; }
+	ERR_clear_error();
+	PKCS12_free(p12);
+
+	return ret;
+}
+
+static Bool
 LoadPKCS12(SSL_CTX *ctx, const char *file)
 {
-    char passbuf[256];
-    char *pass = NULL;
-    const char *message;
-    PKCS12 *p12;
-    EVP_PKEY *key = NULL;
-    X509 *cert = NULL;
-    BIO *input;
-    int err_reason;
-    int count = 0;
-    const char *prompt = ASKPASS_PROMPT;
+	char passbuf[256];
+	char *pass = NULL;
+	const char *message;
+	PKCS12 *p12;
+	EVP_PKEY *key = NULL;
+	X509 *cert = NULL;
+	BIO *input;
+	int err_reason;
+	int count = 0;
+	const char *prompt = ASKPASS_PROMPT;
+	
+	/* read PKCS #12 from specified file */
+	if ((input = BIO_new_file(file, "r")) == NULL){
+	    if (d2i_PKCS12_bio(input, &p12) == NULL) return FALSE;
+	}
+	p12 = d2i_PKCS12_bio(input, NULL);
+	BIO_free(input);
+	if (p12 == NULL) return FALSE;
 
-    /* read PKCS #12 from specified file */
-    if ((input = BIO_new_file(file, "r")) == NULL){
-        if (d2i_PKCS12_bio(input, &p12) == NULL) return FALSE;
+	/* get key and cert from  PKCS #12 */
+	for (;;){
+	if (PKCS12_parse(p12, pass, &key, &cert, NULL))
+		break;
+	err_reason = ERR_GET_REASON(ERR_peek_error());
+	if (cert){ X509_free(cert); cert = NULL; }
+	if (key){ EVP_PKEY_free(key); key = NULL; }
+	if (err_reason != PKCS12_R_MAC_VERIFY_FAILURE){
+		Message("PKCS12_parse failure: %s", message, GetSSLErrorString());
+		break;
+	}
+	ERR_clear_error();
+	if (count >= 1) prompt = ASKPASS_PROMPT_RETRY;
+	if ((pass = GetPasswordString(passbuf, sizeof(passbuf), prompt)) == NULL){
+		Message("PASSWORD input was canceled\n");
+		break;
+	}
+	count++;
     }
-    p12 = d2i_PKCS12_bio(input, NULL);
-    BIO_free(input);
-    if (p12 == NULL) return FALSE;
+	//OPENSSL_cleanse(passbuf, sizeof(passbuf));
+	memset(passbuf, 0, sizeof(passbuf));
+	PKCS12_free(p12);
+	
+	/* set key and cert to SSL_CTX */
+	if (cert && key){
+    	if (!SSL_CTX_use_certificate_with_check(ctx, cert)){
+			SSL_Error(_d("SSL_CTX_use_certificate failure:\n %s"), message, GetSSLErrorString());
+			return FALSE;
+		}
+		if (!SSL_CTX_use_PrivateKey(ctx, key)){
+			SSL_Error(_d("SSL_CTX_use_PrivateKey failure:\n %s"),message, GetSSLErrorString());
+			return FALSE;
+		}
+		if (!SSL_CTX_check_private_key(ctx)){
+			SSL_Error(_d("SSL_CTX_check_private_key failure:\n %s\n"),
+				GetSSLErrorString());
+			return FALSE;
+		}
+	}
+	else{
+		return FALSE;
+	}
 
-    /* get key and cert from  PKCS #12 */
-    for (;;){
-        if (PKCS12_parse(p12, pass, &key, &cert, NULL))
-            break;
-        err_reason = ERR_GET_REASON(ERR_peek_error());
-        if (cert){ X509_free(cert); cert = NULL; }
-        if (key){ EVP_PKEY_free(key); key = NULL; }
-        if (err_reason != PKCS12_R_MAC_VERIFY_FAILURE){
-            Error("PKCS12_parse failure: %s", message, GetSSLErrorString());
-            break;
-        }
-        ERR_clear_error();
-        if (count >= 1) prompt = ASKPASS_PROMPT_RETRY;
-        if ((pass = GetPasswordString(passbuf, sizeof(passbuf), prompt)) == NULL){
-            Message("PASSWORD input was canceled\n");
-            break;
-        }
-        count++;
-    }
-    //OPENSSL_cleanse(passbuf, sizeof(passbuf));
-    memset(passbuf, 0, sizeof(passbuf));
-    PKCS12_free(p12);
-
-    /* set key and cert to SSL_CTX */
-    if (cert && key){
-        if (!SSL_CTX_use_certificate_with_check(ctx, cert)){
-            SSL_Error(_d("SSL_CTX_use_certificate failure:\n %s"), message, GetSSLErrorString());
-            return FALSE;
-        }
-        if (!SSL_CTX_use_PrivateKey(ctx, key)){
-            SSL_Error(_d("SSL_CTX_use_PrivateKey failure:\n %s"),message, GetSSLErrorString());
-            return FALSE;
-        }
-        if (!SSL_CTX_check_private_key(ctx)){
-            SSL_Error(_d("SSL_CTX_check_private_key failure:\n %s\n"),
-                    GetSSLErrorString());
-            return FALSE;
-        }
-    }
-
-    return TRUE;
+	return TRUE;
 }
 
 extern	SSL_CTX	*
@@ -1071,7 +1104,7 @@ MakeSSL_CTX(
 	char	*capath,
 	char	*ciphers)
 {
-    SSL_CTX *ctx;
+    SSL_CTX *ctx = NULL;
     int     mode = SSL_VERIFY_NONE;
     const char *askpass_command;
     struct stat stat_buf;
@@ -1086,7 +1119,7 @@ MakeSSL_CTX(
         SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)askpass_command);
     }
     else {
-        if(stat(DEFAULT_ASKPASS_COMMAND, &stat_buf) == 0){
+        if (stat(DEFAULT_ASKPASS_COMMAND, &stat_buf) == 0){
                 SSL_CTX_set_default_passwd_cb(ctx, passphrase_callback);
                 SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)DEFAULT_ASKPASS_COMMAND);
         }
@@ -1118,32 +1151,42 @@ MakeSSL_CTX(
     }
 
     if (cert != NULL){
-        if (LoadPKCS12(ctx, cert)) return ctx;
-        if (SSL_CTX_use_certificate_file_with_check(ctx, cert, SSL_FILETYPE_PEM) <= 0){
-            SSL_Error(_d("SSL_CTX_use_certificate_file(%s) failure:\n %s\n"),
-                    cert, GetSSLErrorString());
-            SSL_CTX_free(ctx);
-            return NULL;
+        if (IsPKCS12(cert)){
+            if (LoadPKCS12(ctx, cert)){
+                return ctx;
+            }
+            else {
+                SSL_CTX_free(ctx);
+                return NULL; 
+            }
         }
-        if (key == NULL) key = cert;
-        for (;;){ 
-            if (SSL_CTX_use_PrivateKey_file(ctx, key, SSL_FILETYPE_PEM) <= 0){
-                int err_reason;
-                err_reason = ERR_GET_REASON(ERR_peek_error());
-                SSL_Error(_d("SSL_CTX_use_PrivateKey_file(%s) failure:\n %s\n"),
-                        key, GetSSLErrorString());
-                if (err_reason == PEM_R_BAD_DECRYPT ||
-                    err_reason == EVP_R_BAD_DECRYPT) continue;
+        else {
+            if (SSL_CTX_use_certificate_file_with_check(ctx, cert, SSL_FILETYPE_PEM) <= 0){
+                SSL_Error(_d("SSL_CTX_use_certificate_file(%s) failure:\n %s\n"),
+                        cert, GetSSLErrorString());
                 SSL_CTX_free(ctx);
                 return NULL;
             }
-            break;
-        }
-        if (!SSL_CTX_check_private_key(ctx)){
-            SSL_Error(_d("SSL_CTX_check_private_key failure:\n %s\n"),
-                    GetSSLErrorString());
-            SSL_CTX_free(ctx);
-            return NULL;
+            if (key == NULL) key = cert;
+            for (;;){ 
+                if (SSL_CTX_use_PrivateKey_file(ctx, key, SSL_FILETYPE_PEM) <= 0){
+                    int err_reason;
+                    err_reason = ERR_GET_REASON(ERR_peek_error());
+                    SSL_Error(_d("SSL_CTX_use_PrivateKey_file(%s) failure:\n %s\n"),
+                            key, GetSSLErrorString());
+                    if (err_reason == PEM_R_BAD_DECRYPT ||
+                        err_reason == EVP_R_BAD_DECRYPT) continue;
+                    SSL_CTX_free(ctx);
+                    return NULL;
+                }
+                break;
+            }
+            if (!SSL_CTX_check_private_key(ctx)){
+                SSL_Error(_d("SSL_CTX_check_private_key failure:\n %s\n"),
+                        GetSSLErrorString());
+                SSL_CTX_free(ctx);
+                return NULL;
+            }
         }
     }
 
