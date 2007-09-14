@@ -297,8 +297,6 @@ _MakeSSL_CTX()
 static Bool
 MakeFPCOMM (int fd)
 {
-	char *str;
-
     if (!fSsl)
         FPCOMM(glSession) = SocketToNet(fd);
     else {
@@ -314,8 +312,7 @@ MakeFPCOMM (int fd)
 				return FALSE;
             }
         }
-		str = GetSSLWarningMessage();
-		if (strlen(str) > 0) GLError(str);
+		GLError(GetSSLWarningMessage());
     }
 #else
 	FPCOMM(glSession) = SocketToNet(fd);
