@@ -317,13 +317,6 @@ LEAVE_FUNC;
 	return (node);
 }
 
-static	gint
-_hide_all(gpointer data)
-{
-	gtk_widget_hide_all(GTK_WIDGET(data));
-	return FALSE;	
-}
-
 extern	XML_Node	*
 ShowWindow(
 	char	*wname,
@@ -358,7 +351,7 @@ ENTER_FUNC;
 				gtk_button_released (GTK_BUTTON(widget));
 			}
 			/* ClearKeyBuffer(); */
-			gtk_idle_add(_hide_all,node->window); 
+			gtk_widget_hide_all(GTK_WIDGET(node->window));
 			/* fall through */
 		  default:
 			node = NULL;
