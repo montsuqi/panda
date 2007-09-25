@@ -45,18 +45,18 @@
 #include	<openssl/err.h>
 #ifdef  USE_PKCS11
 #include	<openssl/engine.h>
-#endif
-#endif
+#endif	//USE_PKCS11
+#endif	//USE_SSL
 #ifdef USE_GNOME
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
 #    include "gettext.h"
-#endif
+#endif	//USE_GNOME
 #include	<glade/glade.h>
 #ifdef	USE_PANDA
 #include	<gtkpanda/gtkpanda.h>
-#endif
+#endif	//USE_PANDA
 #define		MAIN
 #include	"const.h"
 #include	"types.h"
@@ -95,7 +95,8 @@ InitApplications(void)
 	CTX(glSession) = NULL;
 #ifdef  USE_PKCS11
 	ENGINE(glSession) = NULL;
-#endif
+#endif	//USE_PKCS11
+#endif	//USE_SSL
 }
 
 extern	void
@@ -180,8 +181,8 @@ SetDefault(void)
     fPKCS11 = FALSE;
     PKCS11_Lib = NULL;
     Slot = NULL;
-#endif
-#endif	
+#endif	//USE_PKCS11
+#endif	//USE_SSL
 }
 
 extern	char	*
@@ -272,8 +273,8 @@ show_boot_dialog ()
 	    	Slot = prop.slot;
 	    }
     }
-#endif
-#endif
+#endif 	//USE_PKCS11
+#endif	//USE_SSL
     return TRUE;
 }
 
@@ -290,13 +291,14 @@ _MakeSSL_CTX()
 	}
 #else
     CTX(glSession) = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
-#endif
+#endif 	//USE_PKCS11
 }
-#endif
+#endif	//USE_SSL	
 
 static Bool
 MakeFPCOMM (int fd)
 {
+#ifdef USE_SSL
     if (!fSsl)
         FPCOMM(glSession) = SocketToNet(fd);
     else {
@@ -316,7 +318,7 @@ MakeFPCOMM (int fd)
     }
 #else
 	FPCOMM(glSession) = SocketToNet(fd);
-#endif
+#endif	//USE_SSL
 	return TRUE;
 }
 
@@ -358,8 +360,8 @@ stop_client ()
         ENGINE_free(ENGINE(glSession));
         ENGINE_cleanup();
     }
-#endif
-#endif
+#endif	//USE_PKCS11
+#endif	//USE_SSL
     DestroyPort (glSession->port);
 }
 
@@ -406,15 +408,15 @@ main(
 	gnome_init("glclient", VERSION, argc, argv);
 #ifdef	USE_PANDA
 	gtkpanda_init(&argc,&argv);
-#endif
+#endif	//USE_PANDA
 	glade_gnome_init();
 #else
 	gtk_init(&argc, &argv);
 #ifdef	USE_PANDA
 	gtkpanda_init(&argc,&argv);
-#endif
+#endif	//USE_PANDA
 	glade_init();
-#endif
+#endif	//USE_GNOME
 
 	InitNET();
 
