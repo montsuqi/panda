@@ -196,6 +196,43 @@ CacheFileName(
 }
 
 extern  void
+mkdir_p(
+	char    *dname,
+	int    mode)
+{
+	gchar *fn, *p;
+
+	fn = g_strdup(dname);
+	if (g_path_is_absolute (fn))
+		p = (gchar *) g_path_skip_root (fn);	
+	else
+		p = fn;	
+
+	do {
+		while (*p && !(G_DIR_SEPARATOR == (*p)))
+			p++;
+		if (!*p)
+			p = NULL;
+		else
+			*p = '\0';
+
+		printf("%s\n", fn);
+		if (fn)
+			mkdir (fn, mode);
+
+		if (p)
+		{
+			*p++ = G_DIR_SEPARATOR;
+			while (*p && (G_DIR_SEPARATOR == (*p)))
+				p++;
+		}
+    }
+	while (p);
+
+	g_free (fn);
+}
+
+extern  void
 mkCacheDir(
 	char    *dname)
 {
@@ -207,7 +244,7 @@ mkCacheDir(
 	} else {
 		unlink (dname);
 	}
-	mkdir (Cache, 0755);
+	mkdir_p (Cache, 0755);
 	if  (mkdir (dname, 0755) < 0) {
 		GLError(_("could not write cache dir"));
 		exit(1);
