@@ -101,7 +101,6 @@ GLError( const char *message)
 		
 	if(strlen(message) <= 0) return;
 	dialog = message_dialog(message, FALSE);
-	g_warning(message);
 #ifdef USE_GNOME
 	gnome_dialog_run(GNOME_DIALOG(dialog));
 #else
