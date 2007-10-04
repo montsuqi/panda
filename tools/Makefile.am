@@ -17,7 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = copygen dbgen checkdir
+bin_PROGRAMS = copygen dbgen checkdir gnumerictodb gnumerictorec
 sbin_PROGRAMS = monitor msgd
 bin_SCRIPTS = recdefgen.rb recgen.rb
 noinst_SCRIPTS = copy
@@ -66,6 +66,19 @@ msgd_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
+gnumerictodb_LDADD 		=				\
+	-lm									\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(GLIB_LIBS)						\
+	$(XML2_LIBS)						\
+	$(MONDAI_LIBS)
+gnumerictorec_LDADD 	=				\
+	-lm									\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(GLIB_LIBS)						\
+	$(XML2_LIBS)						\
+	$(MONDAI_LIBS)
+
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
@@ -98,6 +111,13 @@ monitor_SOURCES		=	\
 	monitor.c
 msgd_SOURCES		=	\
 	msgd.c
+
+gnumerictodb_SOURCES	=	\
+	xxml.c	xxml.h			\
+	gnumerictodb.c
+gnumerictorec_SOURCES	=	\
+	xxml.c	xxml.h			\
+	gnumerictorec.c
 
 EXTRA_DIST =					\
 	recdefgen.rb				\
