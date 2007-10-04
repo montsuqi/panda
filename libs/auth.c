@@ -32,6 +32,7 @@
 #endif
 #include	<sys/types.h>
 #include	<sys/time.h>
+#include	<sys/stat.h>
 #include	<unistd.h>
 #include	<time.h>
 #include	<stdio.h>
@@ -278,7 +279,10 @@ AuthSavePasswd(
 	int		i;
 	PassWord	*pw;
 	FILE	*fp;
+	struct stat	st;
+	int 	ret;
 
+	ret = stat(fname, &st);
 	if		(  ( fp = fopen(fname,"w") )  ==  NULL  ) {
 		Error("can not open password file");
 		return;
@@ -289,6 +293,9 @@ AuthSavePasswd(
 			fprintf(fp,"%s:%s:%d:%d:%s\n",
 					pw->name,pw->pass,pw->uid,pw->gid,pw->other);
 		}
+	}
+	if		(  ret  ) {
+		printf("a new password file was made\n", fname);
 	}
 	fclose(fp);
 }

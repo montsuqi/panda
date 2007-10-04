@@ -61,7 +61,7 @@ static	char	*CertFile;
 
 static	ARG_TABLE	option[] = {
 	{	"file",		STRING,		TRUE,	(void*)&PasswordFile,
-		"パスワードファイル名"							},
+		"password file"									},
 	{	"u",		INTEGER,	FALSE,	(void*)&Uid,
 		"user id"										},
 	{	"g",		INTEGER,	FALSE,	(void*)&Gid,

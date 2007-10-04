@@ -296,7 +296,7 @@ GetOption(
 				if		(	(  !strcmp(p,"?")  )
 						||	(  !strcmp(p,"h")  )
 						||	(  !strcmp(p,"H")  ) ) {
-					sprintf(buff,"USAGE:%s <option(s)> files...",cmd);
+					sprintf(buff,"USAGE:%s <option(s)> arguments...",cmd);
 					PrintUsage(tbl,buff);
 					exit(0);
 				} else {
