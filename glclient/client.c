@@ -216,7 +216,6 @@ mkdir_p(
 		else
 			*p = '\0';
 
-		printf("%s\n", fn);
 		if (fn)
 			mkdir (fn, mode);
 
