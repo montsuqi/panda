@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005  ogochan
+# Copyright (C) 2005-2007  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = copygen dbgen checkdir gnumerictodb gnumerictorec
+bin_PROGRAMS = pandadb copygen dbgen checkdir gnumerictodb gnumerictorec
 sbin_PROGRAMS = monitor msgd
 bin_SCRIPTS = recdefgen.rb recgen.rb
 noinst_SCRIPTS = copy
@@ -38,6 +38,18 @@ dbgen_LDFLAGS	=			\
 	-export-dynamic
 dbgen_LDADD 		=					\
 	-lm									\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)
+
+pandadb_LDFLAGS	=			\
+	-export-dynamic
+pandadb_LDADD 		=					\
+	-lm									\
+	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
@@ -78,14 +90,19 @@ msgd_LDADD 		=					\
 gnumerictodb_LDADD 		=				\
 	-lm									\
 	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(XML2_LIBS)						\
+	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
+
 gnumerictorec_LDADD 	=				\
 	-lm									\
 	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(XML2_LIBS)						\
+	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
 INCLUDES 			= 		\
@@ -108,11 +125,11 @@ monitor_DEPENDENCIES	=				\
 copygen_SOURCES		=	\
 	copygen.c
 
-#structgen_SOURCES	=	\
-#	structgen.c
-
 dbgen_SOURCES		=	\
 	dbgen.c
+
+pandadb_SOURCES		=	\
+	pandadb.c
 
 checkdir_SOURCES	=	\
 	checkdir.c
@@ -128,12 +145,12 @@ gnumerictorec_SOURCES	=	\
 	xxml.c	xxml.h			\
 	gnumerictorec.c
 
-install-exec-hook:
-	$(LN_S) -f user $(bindir)/gluseradd
-	$(LN_S) -f user $(bindir)/gluserdel
-	$(LN_S) -f user $(bindir)/glusermod
-
-EXTRA_DIST =					\
-	recdefgen.rb				\
+EXTRA_DIST =				\
+	recdefgen.rb			\
 	recgen.rb				\
-	copy
+	copy					\
+	htcgen.rb				\
+	htcgen.xsl				\
+	htcgen2					\
+	structgen.c				\
+	test.def

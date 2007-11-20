@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1991-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ typedef	struct	FILE_LIST_S	{
 	char	*name;
 }	FILE_LIST;
 
-extern	FILE_LIST	*GetOption(ARG_TABLE *,int,char**);
 extern	char		*GetExt(char *name);
 extern	void		ChangeExt(char *,char *,char *);
-extern	void		PrintUsage(ARG_TABLE *,char *);
+extern	FILE_LIST	*GetOption(ARG_TABLE *tbl, int argc, char **argv, char *help);
+extern	void		PrintUsage(ARG_TABLE *tbl, char *comment, char *help);

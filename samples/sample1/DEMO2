@@ -1,13 +1,13 @@
-web$B%$%s%?!<%U%'%$%9$N%G%b(B
+webインターフェイスのデモ
 
-1. $BF0$+$7J}(B
+1. 動かし方
 
-(1) panda$B$r(Bbuild$B$9$k(B
+(1) pandaをbuildする
 
 	$ ./configure --with-opencobol --with-dotcobol --with-postgres
 	$ make
 
-(2) $B%"%W%j%5!<%P$r5/F0$9$k(B
+(2) アプリサーバを起動する
 
 	$ export APS_HANDLER_LOAD_PATH=.:~/panda/aps/.libs/
 	$ cd ./samples/sample1/demo1
@@ -15,32 +15,32 @@ web$B%$%s%?!<%U%'%$%9$N%G%b(B
 	$ cd ./samples/sample1/demo2
 	$ ~/panda/aps/aps -port 9200 -record .. -lddir .. -dir ../directory -db ORCA demo2
 
-	OpenCOBOL$B$r;H$&>l9g$K$O!"%"%W%j%5!<%P$r5/F0$9$kA0$K!"(B
+	OpenCOBOLを使う場合には、アプリサーバを起動する前に、
 
 	$ export COB_LIBRARY_PATH=.:../../aps/.libs/
 
-	$B$N$h$&$K$7$F!"(BOpenCOBOL$B$N(Bdynamic loading path$B$r;XDj$7$F$*$/$3$H(B
+	のようにして、OpenCOBOLのdynamic loading pathを指定しておくこと
 
-(3) WFC$B$r5/F0$9$k(B
+(3) WFCを起動する
 
 	$ cd ./samples/sample1
 	$ ~/panda/wfc/wfc
 
-	(3) (4)$B$r0l5$$K!"(B
+	(3) (4)を一気に、
 
 	$ ~/panda/tools/monitor -ApsPath ~/panda/aps/aps -WfcPath ~/panda/wfc/wfc
 
-	$B$N$h$&$K5/F0$9$k$3$H$b=PMh$^$9(B
+	のように起動することも出来ます
 
-(4) htserver$B$r5/F0$9$k(B
+(4) htserverを起動する
 
 	$ export MONPS_LOAD_PATH=.:~/panda/libs/.libs/
 	$ cd ./samples/sample1
 	$ ~/panda/glserver/htserver
 
-(5) apache$B$N4D6-$r:n$k(B
+(5) apacheの環境を作る
 
-	$BIaDL$K(B.htpasswd$B$r;H$&>l9g!"(B
+	普通に.htpasswdを使う場合、
 
 <Directory /home/ogochan/panda/htserver>
     AllowOverride None
@@ -53,7 +53,7 @@ web$B%$%s%?!<%U%'%$%9$N%G%b(B
 	AuthName "MONTSUQI HTML"
 </Directory>
 
-	PAM$B$r;H$&$3$H$b=PMh$k(B
+	PAMを使うことも出来る
 
 <Directory /home/ogochan/panda/htserver>
     AllowOverride None
@@ -66,16 +66,16 @@ web$B%$%s%?!<%U%'%$%9$N%G%b(B
 	require group users
 </Directory>
 
-	$B%G%#%l%/%H%j$OE,Ev$KJQ99$9$k$3$H!#$3$N;~$N%G%#%l%/%H%j$K$O!"(Bhtc$B$N(B
-	$B3HD%;R$r;}$D%U%!%$%k$,$J$/$F$O$J$i$J$$!#(B
+	ディレクトリは適当に変更すること。この時のディレクトリには、htcの
+	拡張子を持つファイルがなくてはならない。
 
-(6) CGI$B$rF0$+$9(B
+(6) CGIを動かす
 
-2. $B4D6-$N@bL@(B
+2. 環境の説明
 
-(1) COBOL$B%=!<%9(B
+(1) COBOLソース
 
-  COBOL$B%=!<%9$O!"(B./samples/sample1$B0J2<$K$"$j$^$9!#$3$N%G%b$G$O(B
+  COBOLソースは、./samples/sample1以下にあります。このデモでは
 
 	MCPMAIN.CBL
 	MCPSUB.CBL
@@ -83,35 +83,35 @@ web$B%$%s%?!<%U%'%$%9$N%G%b(B
 	TPDEMO2.CBL
 	TPDEMO3.CBL
 
-  $B$N%W%m%0%i%`$r;H$$$^$9!#(B
+  のプログラムを使います。
 
-  COPY$B6g$OE,Ev$K8+$F2<$5$$!#%3%s%Q%$%k$9$k$K$O!"(B./samples/sample1$B$K$F(B
+  COPY句は適当に見て下さい。コンパイルするには、./samples/sample1にて
 
 	$ make all
 
-$B$HBG$F$P(BCOPY$B6g$b4^$a$FA4$F$N%U%!%$%k$,@8@.$5$l$^$9!#$^$?!"(B
+と打てばCOPY句も含めて全てのファイルが生成されます。また、
 
 	$ make -f Makefile.dotCOBOL all
 
-$B$HBG$F$P(BdotCOBOL$B$N%3!<%I$r@8@.$7$^$9(B
+と打てばdotCOBOLのコードを生成します
 
-  COBOL$B%W%m%0%i%`$O!"(BEUC$B%3!<%I$GJ]B8$5$l$kI,MW$,$"$j$^$9!#J8;z$,2=$1$k;~(B
-$B$OJ8;z%3!<%I$rD4$Y$F$_$^$9!#(B
+  COBOLプログラムは、EUCコードで保存される必要があります。文字が化ける時
+は文字コードを調べてみます。
 
-(2) $B2hLL%U%!%$%k(B
+(2) 画面ファイル
 
-  $B2hLL%U%!%$%k$O!"(B./samples/sample1$B$K$"$j$^$9!#$3$N%G%b$G$O!"(B
+  画面ファイルは、./samples/sample1にあります。このデモでは、
 
 	project1.htc
 	project3.htc
 	project5.htc
 
-  $B$r;H$$$^$9!#(B
+  を使います。
 
-(3) $B%l%3!<%IDj5A%U%!%$%k(B
+(3) レコード定義ファイル
 
-  $B%W%m%;%94V$N%G!<%?$N$d$j$H$j$d=hM}$r5,Dj$9$k$?$a$K!"DL?.%l%3!<%IDj5A(B
-$B$r9T$$$^$9!#$3$N%G%bMQ$N$b$N$O!"(B./samples/sample1$B$K$"$j$^$9!#$3$N%G%b$G$O!"(B
+  プロセス間のデータのやりとりや処理を規定するために、通信レコード定義
+を行います。このデモ用のものは、./samples/sample1にあります。このデモでは、
 
 	demo1spa.rec
 	demo2spa.rec
@@ -120,41 +120,41 @@ web$B%$%s%?!<%U%'%$%9$N%G%b(B
 	project3.rec
 	project5.rec
 
-  $B$r;H$$$^$9!#(B
+  を使います。
 
-(4) LD$BDj5A%U%!%$%k(B
+(4) LD定義ファイル
 
-  LD$B$NF0:n$rDj5A$9$k$?$a$K!"(BLD$BDj5A%U%!%$%k$r;H$$$^$9!#$3$N%G%bMQ$N$b$N(B
-$B$O!"(B./samples/sample1$B$K$"$j$^$9!#$3$N%G%b$G$O!"(B
+  LDの動作を定義するために、LD定義ファイルを使います。このデモ用のもの
+は、./samples/sample1にあります。このデモでは、
 
 	demo1.ld
 	demo2.ld
 
-  $B$r;H$$$^$9!#(B
+  を使います。
 
-(5) $B%G%#%l%/%H%j(B
+(5) ディレクトリ
 
-  $B%7%9%F%`A4BN$N4D6-Dj5A$N$?$a$K!"%G%#%l%/%H%j%U%!%$%k$r;H$$$^$9!#%G%bMQ(B
-$B$N$b$N$O!"(B./samples/sample1/directory$B$G$9!#(B
+  システム全体の環境定義のために、ディレクトリファイルを使います。デモ用
+のものは、./samples/sample1/directoryです。
 
-(6) $B5/F0%Q%i%a!<%?(B
+(6) 起動パラメータ
 
-  $B5/F0%Q%i%a!<%?$r8+$k$K$O!"3F%W%m%0%i%`$r(B-?$B$H$$$&%Q%i%a!<%?$r;XDj$7$F5/(B
-$BF0$7$F2<$5$$!#@_Dj$5$l$F$$$k%Q%i%a!<%?$rI=<($7$F=*N;$7$^$9!#(B
+  起動パラメータを見るには、各プログラムを-?というパラメータを指定して起
+動して下さい。設定されているパラメータを表示して終了します。
 
-(7) $B4D6-JQ?t(B
+(7) 環境変数
 
 APS_HANDLER_LOAD_PATH
 
-	   APS$B8@8l%O%s%I%i$N$"$k>l=j$r;XDj$7$^$9!#8@8l%O%s%I%i$N3HD%;R$O(B.so
-	$B$G$9!#(B
+	   APS言語ハンドラのある場所を指定します。言語ハンドラの拡張子は.so
+	です。
 
 MONPS_LOAD_PATH
 
-	  glserver$B$N%"%W%j%1!<%7%g%s%b%8%e!<%k$N$"$k>l=j$r;XDj$7$^$9!#(Bwfc
-	$B$K%$%s%?!<%U%'%$%9$9$k%b%8%e!<%k$O(Bpanda$B$H$$$&L>>N$J$N$G!"(Bpanda.so
-	$B$N$"$k>l=j$r;XDj$7$^$9!#(B
+	  glserverのアプリケーションモジュールのある場所を指定します。wfc
+	にインターフェイスするモジュールはpandaという名称なので、panda.so
+	のある場所を指定します。
 
 COB_LIBRARY_PATH
 
-	  OpenCOBOL$B$G=q$+$l$?%"%W%j%1!<%7%g%s$NB8:_$9$k>l=j$r;XDj$7$^$9!#(B
+	  OpenCOBOLで書かれたアプリケーションの存在する場所を指定します。

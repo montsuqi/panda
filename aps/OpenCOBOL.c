@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -278,4 +278,16 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(&Handler);
 }
+#ifdef HAVE_OPENCOBOL23
+OpenCOBOL23(void)
+{
+	OpenCOBOL();	
+}		
+#endif
+#ifdef HAVE_OPENCOBOL08
+OpenCOBOL08(void)
+{
+	OpenCOBOL();	
+}		
+#endif
 #endif

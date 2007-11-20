@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2007 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 #define	MAIN
 /*
@@ -69,7 +69,7 @@ LogThread(
 	Bool	fOK;
 	char	*str;
 
-dbgmsg(">LogThread");
+ENTER_FUNC;
 	fpLog = SocketToNet(fhLog);
 	do {
 		if		(  ( fOK = RecvStringDelim(fpLog,SIZE_BUFF,buff) )  ) {
@@ -79,7 +79,7 @@ dbgmsg(">LogThread");
 		if		(  !CheckNetFile(fpLog)  )	break;
 	}	while	(  fOK  );
 	CloseNet(fpLog);
-dbgmsg("<LogThread");
+LEAVE_FUNC;
 }
 
 extern	pthread_t
@@ -89,13 +89,13 @@ ConnectLog(
 	int		fhLog;
 	pthread_t	thr;
 
-dbgmsg(">ConnectLog");
+ENTER_FUNC;
 	if		(  ( fhLog = accept(_fhLog,0,0) )  <  0  )	{
 		printf("_fhLog = %d\n",_fhLog);
 		Error("INET Domain Accept");
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)(long)fhLog);
-dbgmsg("<ConnectLog");
+LEAVE_FUNC;
 	return	(thr); 
 }
 
@@ -108,7 +108,7 @@ FileThread(
 	time_t	nowtime;
 	struct	tm	*Now;
 
-dbgmsg(">FileThread");
+ENTER_FUNC;
 	if		(  fn  !=  NULL  ) { 
 		if		(  ( fp = fopen(fn,"w") )  ==  NULL  ) {
 			Error("log file can not open");
@@ -143,7 +143,7 @@ dbgmsg(">FileThread");
 		}
 		xfree(p);
 	}
-dbgmsg("<FileThread");
+LEAVE_FUNC;
 }
 
 
@@ -156,7 +156,7 @@ ExecuteServer(
 	int		maxfd;
 	Port	*port;
 
-dbgmsg(">ExecuteServer");
+ENTER_FUNC;
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,(void *)fn); 
 	port = ParPortName(PortNumber);
 	_fhLog = InitServerPort(port,Back);
@@ -171,30 +171,30 @@ dbgmsg(">ExecuteServer");
 		}
 	}
 	DestroyPort(port);
-dbgmsg("<ExecuteServer");
+LEAVE_FUNC;
 }
 
 extern	void
 InitSystem(void)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	InitNET();
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
 
 	FileQueue = NewQueue();
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"¥Ý¡¼¥ÈÈÖ¹æ"	 								},
+		"ãƒãƒ¼ãƒˆç•ªå·"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"ÀÜÂ³ÂÔ¤Á¥­¥å¡¼¤Î¿ô" 							},
+		"æŽ¥ç¶šå¾…ã¡ã‚­ãƒ¥ãƒ¼ã®æ•°" 							},
 	{	"date",		BOOLEAN,	TRUE,	(void*)&fDate,
-		"»þ¹ïÉ½¼¨¤ò¹Ô¤¦"								},
+		"æ™‚åˆ»è¡¨ç¤ºã‚’è¡Œã†"								},
 	{	"stdout",	BOOLEAN,	TRUE,	(void*)&fStdout,
-		"¥í¥°¤òstdout¤Ë½ÐÎÏ¤¹¤ë"						},
+		"ãƒ­ã‚°ã‚’stdoutã«å‡ºåŠ›ã™ã‚‹"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -215,7 +215,7 @@ main(
 	char		*name;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("msgd",NULL);
 
 	if		(	(  fl  !=  NULL  )

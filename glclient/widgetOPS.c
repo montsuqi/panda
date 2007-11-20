@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ ENTER_FUNC;
 		p->opt.xval = (Fixed *)opt;
 		break;
 	  case	OPT_TYPE_INT:
-		p->opt.ival = (int)opt;
+		p->opt.ival = (int)(long)opt;
 		break;
 	  default:
 		break;
@@ -168,7 +168,7 @@ static	guint
 ClassHash(
 	gconstpointer	key)
 {
-	return	((guint)key);
+	return	((guint)(long)key);
 }
 
 static	gint
@@ -176,7 +176,7 @@ ClassCompare(
 	gconstpointer	s1,
 	gconstpointer	s2)
 {
-	return	(gtk_type_is_a((GtkType)s1,(GtkType)s2));
+	return	(gtk_type_is_a((GtkType)(long)s1,(GtkType)(long)s2));
 }
 
 static	void
@@ -187,12 +187,12 @@ AddClass(
 {
 	HandlerNode	*node;
 
-	if		(  g_hash_table_lookup(ClassTable,(gconstpointer)type)  ==  NULL  ) {
+	if		(  g_hash_table_lookup(ClassTable,(gconstpointer)(long)type)  ==  NULL  ) {
 		node = New(HandlerNode);
 		node->type = type;
 		node->rfunc = rfunc;
 		node->sfunc = sfunc;
-		g_hash_table_insert(ClassTable,(gpointer)node->type,node);
+		g_hash_table_insert(ClassTable,(gpointer)(long)node->type,node);
 	}
 }
 
@@ -441,6 +441,7 @@ ENTER_FUNC;
 										 "browse_clicked");
 			} else {
 				FreeLBS(binary);
+				gtk_object_set_data(GTK_OBJECT(widget), "recvobject", NULL);
 			}
 		}
 	}
@@ -1029,7 +1030,7 @@ ENTER_FUNC;
 			gtkpanda_clist_moveto(GTK_PANDA_CLIST(widget), row - 1, 0, rowattrw, 0.0);
 		} else {
 			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			RegistValue(widget,name,OPT_TYPE_INT,(void*)from);
+			RegistValue(widget,name,OPT_TYPE_INT,(void*)(long)from);
 			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
@@ -1177,7 +1178,7 @@ ENTER_FUNC;
 			gtk_clist_thaw(GTK_CLIST(widget));
 		} else {
 			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			RegistValue(widget,name,OPT_TYPE_INT,(void*)from);
+			RegistValue(widget,name,OPT_TYPE_INT,(void*)(long)from);
 			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
@@ -1290,7 +1291,7 @@ ENTER_FUNC;
 			}
 		} else {
 			DataType = GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-			RegistValue(widget,name,OPT_TYPE_INT,(void *)from);
+			RegistValue(widget,name,OPT_TYPE_INT,(void *)(long)from);
 			num = GL_RecvInt(fp);
 			if		(  count  <  0  ) {
 				count = num;
@@ -1772,7 +1773,7 @@ ENTER_FUNC;
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
 			RecvStringData(fp,buff,SIZE_BUFF);
-			printf("URI %s\n", buff);
+			dbgprintf("URI %s", buff);
 			gtk_panda_html_set_uri (GTK_PANDA_HTML(widget), buff);
 		}
 	}

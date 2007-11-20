@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1989-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -71,6 +71,8 @@ static	char	*Processid = "";
 static	char	*FlagChar[]	= {
 	"M",	"D",	"W",	"E",	"L",	"P",	"?"};
 
+static	void	(*MessageFunction)(int level, char *file, int line, char *msg);
+
 extern	void
 _MessageLevelPrintf(
 	int 	level,
@@ -132,8 +134,18 @@ PutLog(
 #endif
 }
 
-extern	void
+extern  void
 _Message(
+	int		level,
+	char	*file,
+	int		line,
+	char	*msg)
+{
+	MessageFunction(level, file, line, msg);
+}
+
+extern	void
+__Message(
 	int		level,
 	char	*file,
 	int		line,
@@ -274,7 +286,7 @@ InitMessage(
 			}
 			DestroyPort(port);
 		} else {
-			if		(  ( fd = open(fn,O_WRONLY|O_CREAT,0600) )  >=  0  ) {
+			if		(  ( fd = open(fn,O_WRONLY|O_CREAT|O_TRUNC,0600) )  >=  0  ) {
 				fpLog = FileToNet(fd);
 			}
 		}
@@ -294,4 +306,12 @@ InitMessage(
 	if		(  Format  ==  NULL  ) {
 		Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
 	}
+	MessageFunction = __Message;
+}
+
+extern void
+SetMessageFunction(
+	void	(*func)(int level, char *file, int line, char *msg))
+{
+	MessageFunction = func;
 }

@@ -5,7 +5,7 @@ clean:
 	rm -f LINKAREA SPAAREA DB* SCRAREA.SE MCPAREA
 
 TOP			=	$(shell pwd)
-TOOLDIR		= 	/home/ogochan/MONTSUQI/panda/tools
+TOOLDIR		= 	/home/ogochan/panda-1.3.1/tools
 
 LDNAME	=	sample
 

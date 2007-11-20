@@ -100,6 +100,14 @@ LEAVE_FUNC;
 
 
 static	void
+ClearPutType(
+	char		*wname,
+	WindowData	*win)
+{
+	win->PutType = SCREEN_NULL;
+}
+
+static	void
 RecvPanda(
 	NETFILE	*fp,
 	char	*user,
@@ -111,14 +119,6 @@ RecvPanda(
 	WindowControl	ctl;
 	WindowData		*win;
 	char	msg[SIZE_LONGNAME+1];
-	void
-	ClearPutType(
-		char		*wname,
-		WindowData	*win)
-	{
-		win->PutType = SCREEN_NULL;
-	}
-
 ENTER_FUNC;
 	if		(  RecvTermServerHeader(fp,user,window,widget,&type,&ctl)  ) {
 		ON_IO_ERROR(fp,badio);
@@ -263,6 +263,6 @@ pandaInit(
 {
 ENTER_FUNC;
 	SetDefault();
-	(void)GetOption(option,argc,argv);
+	(void)GetOption(option,argc,argv,NULL);
 LEAVE_FUNC;
 }

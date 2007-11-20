@@ -1,22 +1,22 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2007 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 #define	MAIN
 #ifdef HAVE_CONFIG_H
@@ -46,17 +46,17 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 static	char		*AuthURL;
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"•›°º•»»÷πÊ"	 								},
+		"„Éù„Éº„ÉàÁï™Âè∑"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"¿‹¬≥¬‘§¡•≠•Â°º§ŒøÙ" 							},
+		"Êé•Á∂öÂæÖ„Å°„Ç≠„É•„Éº„ÅÆÊï∞" 							},
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
-		"≤ËÃÃ≥ «º•«•£•Ï•Ø•»•Í"	 						},
+		"ÁîªÈù¢Ê†ºÁ¥ç„Éá„Ç£„É¨„ÇØ„Éà„É™"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"•«°º•øƒÍµ¡≥ «º•«•£•Ï•Ø•»•Í"	 				},
+		"„Éá„Éº„ÇøÂÆöÁæ©Ê†ºÁ¥ç„Éá„Ç£„É¨„ÇØ„Éà„É™"	 				},
 	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
-		"BLOB•≠•„•√•∑•Â•«•£•Ï•Ø•»•ÍÃæ"					},
+		"BLOB„Ç≠„É£„ÉÉ„Ç∑„É•„Éá„Ç£„É¨„ÇØ„Éà„É™Âêç"					},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
-		"«ßæ⁄•µ°º•–"			 						},
+		"Ë™çË®º„Çµ„Éº„Éê"			 						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -78,7 +78,7 @@ main(
 	char	**argv)
 {
 	SetDefault();
-	(void)GetOption(option,argc,argv);
+	(void)GetOption(option,argc,argv,NULL);
 	InitMessage("pgserver",NULL);
 
 	ParseURL(&Auth,AuthURL,"file");

@@ -58,14 +58,14 @@ _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBOPEN");
+ENTER_FUNC;
 	dbg->conn = (void *)NULL;
 	OpenDB_RedirectPort(dbg);
 	dbg->fConnect = CONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
-dbgmsg("<_DBOPEN");
+LEAVE_FUNC;
 }
 
 static	void
@@ -73,13 +73,13 @@ _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBDISCONNECT");
+ENTER_FUNC;
 	if		(  dbg->fConnect == CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
 		dbg->fConnect = DISCONNECT;
 		ctrl->rc = MCP_OK;
 	}
-dbgmsg("<_DBDISCONNECT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -87,10 +87,10 @@ _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBSTART");
+ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
 	ctrl->rc = MCP_OK;
-dbgmsg("<_DBSTART");
+LEAVE_FUNC;
 }
 
 static	void
@@ -98,11 +98,11 @@ _DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-dbgmsg(">_DBCOMMIT");
+ENTER_FUNC;
 	CheckDB_Redirect(dbg);
 	CommitDB_Redirect(dbg);
 	ctrl->rc = MCP_OK;
-dbgmsg("<_DBCOMMIT");
+LEAVE_FUNC;
 }
 
 static	void
@@ -112,13 +112,13 @@ _DBSELECT(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-dbgmsg(">_DBSELECT");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
 		ctrl->rc = MCP_OK;
 	}
-dbgmsg("<_DBSELECT");
+LEAVE_FUNC;
 }
 
 static	int
@@ -130,6 +130,8 @@ SetValues(
 ENTER_FUNC;
 	if		(  ( e = GetItemLongName(value,"host") )  !=  NULL  ) {
 		if		(  CurrentProcess  !=  NULL  ) {
+			dbgprintf("term = [%s]",CurrentProcess->term);
+			dbgprintf("host = [%s]",TermToHost(CurrentProcess->term));
 			SetValueString(e,TermToHost(CurrentProcess->term),NULL);
 		} else {
 			SetValueString(e,"",NULL);
@@ -146,13 +148,13 @@ _DBFETCH(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-dbgmsg(">_DBFETCH");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
 		ctrl->rc = SetValues(rec->value);
 	}
-dbgmsg("<_DBFETCH");
+LEAVE_FUNC;
 }
 
 static	void
@@ -162,13 +164,13 @@ _DBUPDATE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-dbgmsg(">_DBUPDATE");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
 		ctrl->rc = MCP_BAD_OTHER;
 	}
-dbgmsg("<_DBUPDATE");
+LEAVE_FUNC;
 }
 
 static	void
@@ -178,13 +180,13 @@ _DBDELETE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-dbgmsg(">_DBDELETE");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
 		ctrl->rc = MCP_BAD_OTHER;
 	}
-dbgmsg("<_DBDELETE");
+LEAVE_FUNC;
 }
 
 static	void
@@ -194,13 +196,13 @@ _DBINSERT(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-dbgmsg(">_DBINSERT");
+ENTER_FUNC;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
 		ctrl->rc = MCP_BAD_OTHER;
 	}
-dbgmsg("<_DBINSERT");
+LEAVE_FUNC;
 }
 
 static	Bool
@@ -213,7 +215,7 @@ _DBACCESS(
 {
 	Bool	rc;
 
-dbgmsg(">_DBACCESS");
+ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",name); 
 #endif
@@ -224,7 +226,7 @@ dbgmsg(">_DBACCESS");
 		ctrl->rc = MCP_BAD_OTHER;
 		rc = FALSE;
 	}
-dbgmsg("<_DBACCESS");
+LEAVE_FUNC;
 	return	(rc);
 }
 

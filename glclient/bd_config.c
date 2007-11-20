@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Kouji TAKAO
+ * Copyright (C) 2004-2007 Kouji TAKAO
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 #include <unistd.h>		    /* fstat, close */
 #include <libgen.h>         /* dirname, basename */
 
+#include "gettext.h"
 #include "bd_config.h"
 
 #define XML_CHILDREN(node) ((node)->childs)
@@ -152,7 +153,7 @@ ghfunc_value_inspect (gchar *key, BDConfigValue *value, FILE *fp)
   key = NULL;
 }
 
-void
+extern  void
 bd_config_section_inspect (BDConfigSection *self, FILE *fp)
 {
   if (fp == NULL)
@@ -161,13 +162,13 @@ bd_config_section_inspect (BDConfigSection *self, FILE *fp)
   g_hash_table_foreach (self->values, (GHFunc) ghfunc_value_inspect, fp);
 }
 
-gchar *
+extern  gchar   *
 bd_config_section_get_name (BDConfigSection *self)
 {
   return self->name;
 }
 
-gboolean
+extern  gboolean
 bd_config_section_get_bool (BDConfigSection *self, gchar *name)
 {
   BDConfigValue *value;
@@ -180,7 +181,7 @@ bd_config_section_get_bool (BDConfigSection *self, gchar *name)
   }
 }
 
-gchar *
+extern  gchar   *
 bd_config_section_get_string (BDConfigSection *self, gchar *name)
 {
   BDConfigValue *value;
@@ -193,7 +194,7 @@ bd_config_section_get_string (BDConfigSection *self, gchar *name)
   }
 }
 
-gboolean
+extern  gboolean
 bd_config_section_set_path (BDConfigSection *self, gchar *name, gchar *str)
 {
   GString *path = g_string_new (NULL);
@@ -204,13 +205,13 @@ bd_config_section_set_path (BDConfigSection *self, gchar *name, gchar *str)
   return ret;
 }
 
-gboolean
+extern  gboolean
 bd_config_section_set_bool (BDConfigSection *self, gchar *name, gboolean bool)
 {
   return bd_config_section_set_string (self, name, bool ? "true" : "false");
 }
 
-gboolean
+extern  gboolean
 bd_config_section_set_string (BDConfigSection *self, gchar *name, gchar *str)
 {
   BDConfigValue *value;
@@ -223,7 +224,7 @@ bd_config_section_set_string (BDConfigSection *self, gchar *name, gchar *str)
   return TRUE;
 }
 
-void
+extern  void
 bd_config_section_append_value (BDConfigSection *self, gchar *name, gchar *contents)
 {
   BDConfigValue *value;
@@ -251,8 +252,8 @@ is_file (const char *filename)
   if ((fd = open (filename, O_RDONLY)) == -1)
     {
 #if 0
-      fprintf (stderr, "error: `%s' don't exist or could not read.\n",
-	       filename);
+      fprintf (stderr, _("error: `%s' don't exist or could not read.\n"),
+               filename);
 #endif
       return 0;
     }
@@ -260,7 +261,7 @@ is_file (const char *filename)
   if (S_ISDIR (stat_buf.st_mode))
     {
 #if 0
-      fprintf (stderr, "error: `%s' is directory.\n", filename);
+      fprintf (stderr, _("error: `%s' is directory.\n"), filename);
 #endif
       close (fd);
       return 0;
@@ -280,20 +281,20 @@ bd_config_file_to_dom (char *filename)
 
   if ((doc = xmlParseFile (filename)) == NULL)
     {
-      fprintf (stderr, "error: `%s' unknown file type.", filename);
+      fprintf (stderr, _("error: `%s' unknown file type."), filename);
       goto error;
     }
 
   if (doc->root == NULL)
     {
-      fprintf (stderr, "error: `%s' unknown file type.", filename);
+      fprintf (stderr, _("error: `%s' unknown file type."), filename);
       goto error;
     }
 
   namespace = xmlSearchNs (doc, doc->root, "glclient");
   if (namespace == NULL || xmlStrcmp (doc->root->name, "config") != 0)
     {
-      fprintf (stderr, "error: `%s' is not glclient config file.", filename);
+      fprintf (stderr, _("error: `%s' is not glclient config file."), filename);
       goto error;
     }
 
@@ -503,7 +504,7 @@ bd_config_save (BDConfig *self, gchar *filename, mode_t mode)
 
   if ((fp = fopen (filename, "w")) == NULL)
     {
-      fprintf (stderr, "error: could not open for write: %s\n", filename);
+      fprintf (stderr, _("error: could not open for write: %s\n"), filename);
       return FALSE;
     }
 

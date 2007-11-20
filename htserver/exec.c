@@ -250,6 +250,25 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	char	*
+outvalue(
+	char	*pp,
+	Expr	*val)
+{
+	switch	(val->type) {
+	  case	VAR_INT:
+		pp += sprintf(pp,"%d",val->body.ival);
+		break;
+	  case	VAR_STR:
+		pp += sprintf(pp,"%s",val->body.sval);
+		break;
+	  default:
+		pp += sprintf(pp,"(%d)",val->type);
+		break;
+	}
+	return	(pp);
+}
+
 extern	char	*
 ParseName(
 	char	*str)
@@ -259,24 +278,6 @@ ParseName(
 	char	*p
 	,		*q;
 	Expr	*var;
-	char	*outvalue(
-		char	*pp,
-		Expr	*val)
-	{
-		switch	(val->type) {
-		  case	VAR_INT:
-			pp += sprintf(pp,"%d",val->body.ival);
-			break;
-		  case	VAR_STR:
-			pp += sprintf(pp,"%s",val->body.sval);
-			break;
-		  default:
-			pp += sprintf(pp,"(%d)",val->type);
-			break;
-		}
-		return	(pp);
-	}
-		
 
 ENTER_FUNC;
 dbgprintf("name = [%s]\n",str);
@@ -551,42 +552,47 @@ EmitStringRaw(
 }
 
 static	void
+_OutJs(
+	char	*name,
+	Js		*js,
+	LargeByteString	*html)
+{
+	if		(	(  js->fUse   )
+			&&	(  !js->fFile  ) ) {
+		LBS_EmitString(html,js->body);
+	}
+}
+
+static	void
+_OutJsFile(
+	char	*name,
+	Js		*js,
+	LargeByteString	*html)
+{
+	char	buff[SIZE_BUFF];
+
+	if		(	(  js->fUse   )
+			&&	(  js->fFile  ) ) {
+		sprintf(buff,
+				"\n<script language=\"javascript\" "
+				"type=\"text/javascript\" "
+				"src=\"%s\"></script>\n",
+				js->body);
+		LBS_EmitString(html,buff);
+	}
+}
+
+static	void
 OutputJs(
 	LargeByteString	*html)
 {
-	void	_OutJs(
-		char	*name,
-		Js		*js)
-	{
-		if		(	(  js->fUse   )
-				&&	(  !js->fFile  ) ) {
-			LBS_EmitString(html,js->body);
-		}
-	}
-	void	_OutJsFile(
-		char	*name,
-		Js		*js)
-	{
-		char	buff[SIZE_BUFF];
-
-		if		(	(  js->fUse   )
-				&&	(  js->fFile  ) ) {
-			sprintf(buff,
-					"\n<script language=\"javascript\" "
-					"type=\"text/javascript\" "
-					"src=\"%s\"></script>\n",
-					js->body);
-			LBS_EmitString(html,buff);
-		}
-	}
-
 	if		(  Jslib  !=  NULL  ) {
-		g_hash_table_foreach(Jslib,(GHFunc)_OutJsFile,NULL);
+		g_hash_table_foreach(Jslib,(GHFunc)_OutJsFile,html);
 		LBS_EmitString(html,
 					   "\n<script language=\"javascript\" "
 					   "type=\"text/javascript\">\n"
 					   "<!--\n");
-		g_hash_table_foreach(Jslib,(GHFunc)_OutJs,NULL);
+		g_hash_table_foreach(Jslib,(GHFunc)_OutJs,html);
 		LBS_EmitString(html,
 					   "\n-->\n"
 					   "</script>\n");
@@ -933,44 +939,51 @@ GetToggle(
 	}
 }
 
+static	void
+ToUTF8(
+	char	*name,
+	CGIValue	*val)
+{
+	char	*u8;
+
+	if		(  val->body  !=  NULL  ) {
+		u8 = ConvUTF8(val->body,Codeset);
+		xfree(val->body);
+		val->body = StrDup(u8);
+	}
+}
+
+static	void
+FileNameToUTF8(
+	char	*name,
+	MultipartFile	*file)
+{
+	char	*u8;
+
+	if		(  file->filename  !=  NULL  ) {
+		u8 = ConvUTF8(file->filename,Codeset);
+		xfree(file->filename);
+		file->filename = StrDup(u8);
+	}
+}
+
+#ifdef	DEBUG
+static	void
+_Dump(
+	char	*name,
+	char	*trans)
+{
+	dbgprintf("[%s]",name);
+	dbgprintf("[%s]\n",trans);
+}
+#endif
+
 extern	char	*
 ParseInput(
 	HTCInfo	*htc)
 {
 	char	*button;
 	char	*event;
-
-	void	ToUTF8(
-		char	*name,
-		CGIValue	*val)
-	{
-		char	*u8;
-
-		if		(  val->body  !=  NULL  ) {
-			u8 = ConvUTF8(val->body,Codeset);
-			xfree(val->body);
-			val->body = StrDup(u8);
-		}
-	}
-	void	FileNameToUTF8(
-		char	*name,
-		MultipartFile	*file)
-	{
-		char	*u8;
-
-		if		(  file->filename  !=  NULL  ) {
-			u8 = ConvUTF8(file->filename,Codeset);
-			xfree(file->filename);
-			file->filename = StrDup(u8);
-		}
-	}
-	void	_Dump(
-		char	*name,
-		char	*trans)
-	{
-		dbgprintf("[%s]",name);
-		dbgprintf("[%s]\n",trans);
-	}
 	
 ENTER_FUNC;
  	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);

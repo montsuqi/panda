@@ -345,7 +345,7 @@ main(
 	char		id[128];
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	(void)signal(SIGHUP,(void *)StopProcess);
 	(void)signal(SIGUSR2, SIG_IGN);
 	if		(	(  fl  !=  NULL  )

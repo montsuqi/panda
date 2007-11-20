@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,8 +39,20 @@ typedef	struct {
 	GHashTable	*UpdateWidget;
 }	XML_Node;
 
+typedef struct {
+	NETFILE		*fpComm;
+	Port		*port;
+#ifdef	USE_SSL
+	SSL_CTX		*ctx;
+#ifdef  USE_PKCS11
+	ENGINE		*engine;
+#endif  /* USE_PKCS11 */
+#endif  /* USE_SSL */
+}	Session;
+
 extern	char	*CacheFileName(char *name);
 extern	void	ExitSystem(void);
+extern  void	MakeCacheDir(char *dname);
 
 GLOBAL	GHashTable	*WindowTable;
 GLOBAL	XML_Node	*FocusedScreen;
@@ -49,7 +61,7 @@ GLOBAL	char		*CurrentApplication;
 
 GLOBAL	Bool	fInRecv;
 
-GLOBAL	NETFILE	*fpComm;
+GLOBAL	Session	*glSession;
 GLOBAL	char	*User;
 GLOBAL	char	*Pass;
 GLOBAL	Bool	fMlog;
@@ -61,6 +73,19 @@ GLOBAL	char	*CertFile;
 GLOBAL	char	*CA_Path;
 GLOBAL	char	*CA_File;
 GLOBAL	char	*Ciphers;
-#endif
+#ifdef  USE_PKCS11
+GLOBAL	Bool	fPKCS11;
+GLOBAL	char	*PKCS11_Lib;
+GLOBAL	char	*Slot;
+#endif	/* USE_PKCS11 */
+#endif	/* USE_SSL */
+
+#define	FPCOMM(session)	((session)->fpComm)
+#ifdef	USE_SSL
+#define	CTX(session)	((session)->ctx)
+#ifdef	USE_PKCS11
+#define	ENGINE(session)	((session)->engine)
+#endif	/* USE_PKCS11 */
+#endif	/* USE_SSL */
 
 #endif

@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -163,6 +163,7 @@ ENTER_FUNC;
 		dbgmsg("MCPDATA");
 		SendPacketClass(fp,APS_MCPDATA);	ON_IO_ERROR(fp,badio);
 		SendLBS(fp,data->mcpdata);			ON_IO_ERROR(fp,badio);
+		SendChar(fp,data->tnest);			ON_IO_ERROR(fp,badio);
 	}
 	if		(  ( flag & APS_SCRDATA )  !=  0  ) {
 		dbgmsg("SCRDATA");
@@ -249,26 +250,6 @@ LEAVE_FUNC;
 	return	(flag); 
 }
 
-#ifdef	DEBUG
-#include	<ctype.h>
-static	void
-DumpLBS(
-	LargeByteString	*lbs)
-{
-	int		i;
-	byte	*p;
-
-	p = LBS_Body(lbs);
-	for	( i = 0 ; i < LBS_Size(lbs) ; i ++ , p ++ ) {
-		if		(  isprint(*p)  ) {
-			printf("%c",*p);
-		} else {
-			printf("(0x%02X)",(int)*p);
-		}
-	}
-}
-#endif
-
 static	void
 GetAPS_Value(
 	NETFILE	*fpLD,
@@ -297,7 +278,8 @@ ENTER_FUNC;
 			break;
 		  case	APS_MCPDATA:
 			dbgmsg("MCPDATA");
-			RecvLBS(fpLD,data->mcpdata);	ON_IO_ERROR(fpLD,badio);
+			RecvLBS(fpLD,data->mcpdata);		ON_IO_ERROR(fpLD,badio);
+			data->tnest = (int)RecvChar(fpLD);	ON_IO_ERROR(fpLD,badio);
 			break;
 		  case	APS_LINKDATA:
 			dbgmsg("LINKDATA");
@@ -318,8 +300,7 @@ ENTER_FUNC;
 			break;
 		  default:
 		  badio:
-			printf("class = [%X]\n",(int)c);
-			dbgmsg("protocol error");
+			Message("protocol error, class = [%X]", (int)c);
 			break;
 		}
 	}

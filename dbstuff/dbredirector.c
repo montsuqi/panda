@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -491,7 +491,7 @@ ENTER_FUNC;
 	InitNET();
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
-	(void)signal(SIGUSR2, SIG_IGN);
+	//(void)signal(SIGUSR2, SIG_IGN);
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 	if		( ThisEnv == NULL ) {
@@ -587,7 +587,7 @@ main(
 	char		*name;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("dbredirector",NULL);
 
 	if		(	fl	&&	fl->name  ) {

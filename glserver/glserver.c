@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,30 +54,30 @@
 static	char		*AuthURL;
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"¥İ¡¼¥ÈÈÖ¹æ"	 								},
+		"ãƒãƒ¼ãƒˆç•ªå·"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"ÀÜÂ³ÂÔ¤Á¥­¥å¡¼¤Î¿ô" 							},
+		"æ¥ç¶šå¾…ã¡ã‚­ãƒ¥ãƒ¼ã®æ•°" 							},
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
-		"²èÌÌ³ÊÇ¼¥Ç¥£¥ì¥¯¥È¥ê"	 						},
+		"ç”»é¢æ ¼ç´ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"¥Ç¡¼¥¿ÄêµÁ³ÊÇ¼¥Ç¥£¥ì¥¯¥È¥ê"	 				},
+		"ãƒ‡ãƒ¼ã‚¿å®šç¾©æ ¼ç´ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"	 				},
 	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
-		"BLOB¥­¥ã¥Ã¥·¥å¥Ç¥£¥ì¥¯¥È¥êÌ¾"					},
+		"BLOBã‚­ãƒ£ãƒƒã‚·ãƒ¥ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªå"					},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
-		"Ç§¾Ú¥µ¡¼¥Ğ"			 						},
+		"èªè¨¼ã‚µãƒ¼ãƒ"			 						},
 #ifdef	USE_SSL
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		"SSL¤ò»È¤¦"				 						},
+		"SSLã‚’ä½¿ã†"				 						},
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"¸°¥Õ¥¡¥¤¥ëÌ¾(pem)"		 						},
+		"éµãƒ•ã‚¡ã‚¤ãƒ«å(pem)"		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"¾ÚÌÀ½ñ¥Õ¥¡¥¤¥ëÌ¾(pem)"	 						},
+		"è¨¼æ˜æ›¸ãƒ•ã‚¡ã‚¤ãƒ«å(pem)"	 						},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		"CA¾ÚÌÀ½ñ¤Ø¤Î¥Ñ¥¹"								},
+		"CAè¨¼æ˜æ›¸ã¸ã®ãƒ‘ã‚¹"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		"CA¾ÚÌÀ½ñ¥Õ¥¡¥¤¥ë"								},
+		"CAè¨¼æ˜æ›¸ãƒ•ã‚¡ã‚¤ãƒ«"								},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		"SSL¤Ç»ÈÍÑ¤¹¤ë°Å¹æ¥¹¥¤¡¼¥È"						},
+		"SSLã§ä½¿ç”¨ã™ã‚‹æš—å·ã‚¹ã‚¤ãƒ¼ãƒˆ"						},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -90,7 +90,7 @@ SetDefault(void)
 	Back = 5;
 	ScreenDir = ".";
 	RecordDir = ".";
-	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
+	AuthURL = "glauth://localhost:" PORT_GLAUTH;
 	CacheDir = "cache";
 #ifdef	USE_SSL
 	fSsl = FALSE;
@@ -117,7 +117,7 @@ main(
 {
 	(void)signal(SIGPIPE,(void *)StopProcess);
 	SetDefault();
-	(void)GetOption(option,argc,argv);
+	(void)GetOption(option,argc,argv,NULL);
 	InitMessage("glserver",NULL);
 
 	ParseURL(&Auth,AuthURL,"file");

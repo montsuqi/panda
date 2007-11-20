@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,7 +77,7 @@ LoadModule(
 
 ENTER_FUNC;
 	if		(  ( f_main = (void *)g_hash_table_lookup(table,name) )  ==  NULL  ) {
-		sprintf(filename,"%s.so",name);
+		sprintf(filename,"%s." SO_SUFFIX ,name);
 		if		(  ( handle = LoadFile(path,filename) )  !=  NULL  ) {
 			sprintf(funcname,"%sInit",name);
 			if		(  ( f_init = (void *)dlsym(handle,funcname) )  !=  NULL  ) {

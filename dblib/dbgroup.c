@@ -42,6 +42,7 @@
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"directory.h"
+#include	"DDparser.h"
 #include	"dbgroup.h"
 #include	"blobreq.h"
 #include	"debug.h"
@@ -63,7 +64,7 @@ _ExecDBFunc(
 	RecordStruct	*rec,
 	char	*fname)
 {
-	DB_Struct	*db = rec->opt.db;
+	DB_Struct	*db = RecordDB(rec);
 	DBG_Struct	*dbg = db->dbg;
 	int			ix;
 	DB_Operation	*op;
@@ -125,12 +126,15 @@ LEAVE_FUNC;
 	return	(ctrl.rc); 
 }
 
-extern	void
+extern	int
 ExecDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
 {
-	dbg->func->primitive->exec(dbg,sql,TRUE);
+	int		rc;
+
+	rc = dbg->func->primitive->exec(dbg,sql,TRUE);
+	return	(rc);
 }
 
 extern	int
@@ -138,7 +142,10 @@ ExecRedirectDBOP(
 	DBG_Struct	*dbg,
 	char		*sql)
 {
-	return dbg->func->primitive->exec(dbg,sql,FALSE);
+	int		rc;
+
+	rc = dbg->func->primitive->exec(dbg,sql,FALSE);
+	return	(rc);
 }
 
 extern	void
@@ -171,7 +178,9 @@ ENTER_FUNC;
 			dbgprintf("ctrl->rc  = [%d]",ctrl->rc);
 		}
 	} else {
-		dbg = rec->opt.db->dbg;
+		dbgprintf("rec->name = [%s]",rec->name);
+		dbg = RecordDB(rec)->dbg;
+		dbgprintf("dbg->name = [%s]",dbg->name);
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl->func) )
 				   ==  NULL  ) {
 			if		(  !(*dbg->func->primitive->access)(dbg,ctrl->func,ctrl,rec,args)  ) {
@@ -180,7 +189,6 @@ ENTER_FUNC;
 			}
 		} else {
 			(*func)(dbg,ctrl,rec,args);
-			dbgprintf("dbg->name = [%s]",dbg->name);
 			dbgprintf("ctrl->rc  = [%d]",ctrl->rc);
 		}
 	}
@@ -188,10 +196,10 @@ ENTER_FUNC;
 	gettimeofday(&tv,NULL);
 	now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
 	if		(  rec  !=  NULL  ) {
-		printf("DB  %s:%s process time %6ld(ms)\n",
+		dbgprintf("DB  %s:%s process time %6ld(ms)",
 			   ctrl->func,rec->name,(now - ever));
 	} else {
-		printf("DB  %s    process time %6ld(ms)\n",
+		dbgprintf("DB  %s    process time %6ld(ms)",
 			   ctrl->func,(now - ever));
 	}
 #endif
@@ -373,5 +381,141 @@ GetDB_Pass(
 	DBG_Struct	*dbg)
 {
 	return (( DB_Pass != NULL ) ? DB_Pass : dbg->pass);
+}
+
+extern	void
+MakeCTRL(
+	DBCOMM_CTRL	*ctrl,
+	ValueStruct	*mcp)
+{
+	strcpy(ctrl->func,ValueStringPointer(GetItemLongName(mcp,"func")));
+	ctrl->rc = ValueInteger(GetItemLongName(mcp,"rc"));
+	ctrl->blocks = ValueInteger(GetItemLongName(mcp,"db.path.blocks"));
+	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
+	ctrl->pno = ValueInteger(GetItemLongName(mcp,"db.path.pname"));
+#ifdef	DEBUG
+	DumpDB_Node(ctrl);
+#endif
+}
+
+extern	ValueStruct	*
+_GetDB_Argument(
+	RecordStruct	*rec,
+	char			*pname,
+	char			*func,
+	int				*apno)
+{
+	ValueStruct	*value;
+	PathStruct		*path;
+	DB_Operation	*op;
+	int		pno
+		,	ono;
+
+ENTER_FUNC;
+	value = rec->value;
+	if		(	(  pname  !=  NULL  )
+			&&	(  ( pno = (int)(long)g_hash_table_lookup(RecordDB(rec)->paths,
+														  pname) )  !=  0  ) ) {
+		pno --;
+		path = RecordDB(rec)->path[pno];
+		value = ( path->args != NULL ) ? path->args : value;
+		if		(	(  func  !=  NULL  )
+				&&	( ( ono = (int)(long)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
+			op = path->ops[ono-1];
+			value = ( op->args != NULL ) ? op->args : value;
+		}
+	} else {
+		pno = 0;
+	}
+	if		(  apno  !=  NULL  ) {
+		*apno = pno;
+	}
+LEAVE_FUNC;
+	return	(value);
+}
+
+extern	RecordStruct	*
+MakeCTRLbyName(
+	ValueStruct		**value,
+	DBCOMM_CTRL	*rctrl,
+	char	*rname,
+	char	*pname,
+	char	*func)
+{
+	DBCOMM_CTRL		ctrl;
+	RecordStruct	*rec;
+	int			rno;
+
+ENTER_FUNC;
+	ctrl.rno = 0;
+	ctrl.pno = 0;
+	ctrl.blocks = 0;
+
+	*value = NULL;
+	if		(	(  rname  !=  NULL  )
+			&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
+		ctrl.rno = rno - 1;
+		rec = ThisDB[rno-1];
+		*value = _GetDB_Argument(rec,pname,func,&ctrl.pno);
+	} else {
+		rec = NULL;
+	}
+	if		(  rctrl  !=  NULL  ) {
+		strcpy(ctrl.func,func);
+		*rctrl = ctrl;
+	}
+#ifdef	DEBUG
+	DumpDB_Node(&ctrl);
+#endif
+LEAVE_FUNC;
+	return	(rec);
+}
+
+extern	void
+MakeMCP(
+	ValueStruct	*mcp,
+	DBCOMM_CTRL	*ctrl)
+{
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"func")),ctrl->func);
+	ValueInteger(GetItemLongName(mcp,"rc")) = ctrl->rc;
+	ValueInteger(GetItemLongName(mcp,"db.path.blocks")) = ctrl->blocks;
+	ValueInteger(GetItemLongName(mcp,"db.path.rname")) = ctrl->rno;
+	ValueInteger(GetItemLongName(mcp,"db.path.pname")) = ctrl->pno;
+}
+
+extern	void
+DumpDB_Node(
+	DBCOMM_CTRL	*ctrl)
+{
+	printf("func   = [%s]\n",ctrl->func);
+	printf("blocks = %d\n",ctrl->blocks);
+	printf("rno    = %d\n",ctrl->rno);
+	printf("pno    = %d\n",ctrl->pno);
+}
+
+extern	RecordStruct	*
+BuildDBCTRL(void)
+{
+	RecordStruct	*rec;
+	char			name[SIZE_LONGNAME+1];
+	FILE			*fp;
+
+	sprintf(name,"/tmp/dbctrl%d.rec",(int)getpid());
+	if		(  ( fp = fopen(name,"w") )  ==  NULL  ) {
+		fprintf(stderr,"tempfile can not make.\n");
+		exit(1);
+	}
+	fprintf(fp,	"dbctrl	{");
+	fprintf(fp,		"rc int;");
+	fprintf(fp,		"func	varchar(%d);",SIZE_FUNC);
+	fprintf(fp,		"rname	varchar(%d);",SIZE_NAME);
+	fprintf(fp,		"pname	varchar(%d);",SIZE_NAME);
+	fprintf(fp,	"};");
+	fclose(fp);
+
+	rec = ParseRecordFile(name);
+	remove(name);
+
+	return	(rec);
 }
 

@@ -147,24 +147,24 @@ ExecuteClient(
 
 static	ARG_TABLE	option[] = {
 	{	"command",	STRING,		TRUE,	(void*)&Command,
-		"•≥•ﬁ•Û•…Ãæ"	 								},
+		"≈≥≈û≈≥≈â?"	 								},
 	{	"host",		STRING,		TRUE,	(void*)&Host,
-		"•€•π•»Ãæ"	 									},
+		"≈õ≈π≈à?"	 									},
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"•›°º•»»÷πÊ"	 								},
+		"≈ù|≈à??"	 								},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"∏∞•’•°•§•ÎÃæ(pem)"		 						},
+		"?≈ï≈°≈§≈´?(pem)"		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"æ⁄Ã¿ΩÒ•’•°•§•ÎÃæ(pem)"	 						},
+		"???≈ï≈°≈§≈´?(pem)"	 						},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		"SSL§Úª»§¶"				 						},
+		"SSLƒ≤?ƒ¶"				 						},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		"CAæ⁄Ã¿ΩÒ§ÿ§Œ•—•π"								},
+		"CA???ƒòƒé≈ë≈π"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		"CAæ⁄Ã¿ΩÒ•’•°•§•Î"								},
+		"CA???≈ï≈°≈§≈´"								},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		"SSL§«ª»Õ—§π§Î∞≈πÊ•π•§°º•»"						},
+		"SSLƒá??ƒπƒ´–Ö?≈π≈§|≈à"						},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -197,7 +197,7 @@ main(
 	int			rc;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("fdw",NULL);
 
 	if		(	(  fl  !=  NULL  )

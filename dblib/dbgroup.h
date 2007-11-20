@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,16 @@ extern	char	*GetDB_Port(DBG_Struct *dbg);
 extern	char	*GetDB_DBname(DBG_Struct *dbg);
 extern	char	*GetDB_User(DBG_Struct *dbg);
 extern	char	*GetDB_Pass(DBG_Struct *dbg);
+
+extern	ValueStruct	*_GetDB_Argument(RecordStruct *rec, char *pname, char *func, int *apno);
+extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);
+extern	RecordStruct	*MakeCTRLbyName(ValueStruct **value, DBCOMM_CTRL *ctrl,
+										char *rname, char *pname, char *func);
+extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);
+extern	RecordStruct	*BuildDBCTRL(void);
+extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);
+
+#define	GetDB_Argument(rec,pname,func)	_GetDB_Argument((rec),(pname),(func),NULL)
 
 #undef	GLOBAL
 #ifdef	MAIN

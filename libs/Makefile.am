@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2006  ogochan
+# Copyright (C) 2005-2007  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@ noinst_LIBRARIES	=		\
 	libpandamisc.a			\
 	libpandablob.a
 
+BUILT_SOURCES = enum.h
+
 noinst_PROGRAMS		=		\
 	enum					\
 	testnet					\
@@ -33,7 +35,9 @@ lib_LTLIBRARIES		=	panda.la
 
 panda_la_LDFLAGS	=	-module -export-dynamic
 
-panda_la_SOURCES	=		\
+panda_la_DEPENDENCIES =				\
+	enum.h
+panda_la_SOURCES	=				\
 	Dlex.h							\
 	mhandler.c	mhandler.h			\
 	DDparser.c	DDparser.h			\
@@ -53,13 +57,13 @@ panda_la_SOURCES	=		\
 	comm.c		comm.h				\
 	comms.c		comms.h				\
 	net.c		net.h				\
+	term.c		term.h				\
 	socket.c	socket.h			\
 	port.c		port.h				\
 	pty.c		pty.h				\
 	wfcio.c		wfcio.h				\
 	panda.c
 
-panda_la_DEPENDENCIES =
 
 panda_la_LIBADD		=	\
 	-lm									\
@@ -69,6 +73,8 @@ panda_la_LIBADD		=	\
 
 libpandaincludedir = $(includedir)/panda
 libpandainclude_HEADERS =	\
+	enum.h
+libpanda_a_DEPENDENCIES =	\
 	enum.h
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
@@ -98,8 +104,6 @@ testnet_DEPENDENCIES	=		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
-libpanda_a_DEPENDENCIES =	\
-	enum.h
 libpanda_a_CFLAGS = $(AM_CFLAGS)
 libpanda_a_SOURCES	=				\
 	Dlex.h							\
@@ -135,7 +139,7 @@ libpandas_a_SOURCES	=			\
 	load.c		load.h
 
 libpandas_a_DEPENDENCIES	=		\
-	$(top_srcdir)/defaults.h
+	$(top_builddir)/defaults.h
 
 #libpandacominclude_HEADERS =	\
 #	comm.h			\
@@ -163,7 +167,7 @@ libpandagl_a_SOURCES	=			\
 	port.c			port.h			\
 	queue.c			queue.h
 
-enum.h:	enum
+enum.h:	enum enum.c
 	./enum > enum.h
 
 libpandablobincludedir = $(includedir)/panda
@@ -185,6 +189,9 @@ libpandablob_a_DEPENDENCIES	=		\
 libpandamisc_a_CFLAGS = $(AM_CFLAGS)
 libpandamisc_a_SOURCES	=		\
 	option.c		option.h	\
+	net.c			net.h		\
+	socket.c		socket.h	\
+	port.c			port.h		\
 	message.c		message.h
 
 testblob_LDADD	=				\
@@ -197,3 +204,12 @@ testblob_LDADD	=				\
 	$(MONDAI_LIBS)				
 
 testblob_DEPENDENCIES	=
+
+AM_CPPFLAGS = 					\
+	-DLOCALEDIR=\"$(localedir)\"
+
+DISTCLEANFILES = enum.h
+EXTRA_DIST	=					\
+	apistruct.h					\
+	blobup.c					\
+	option.doc

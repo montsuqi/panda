@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,11 @@
 #include	"front.h"
 #include	"debug.h"
 
+#ifdef	__APPLE__
+#include	<machine/endian.h>
+#else
 #include	<endian.h>
+#endif
 
 #define	RECV32(v)	ntohl(v)
 #define	RECV16(v)	ntohs(v)
@@ -145,7 +149,7 @@ GL_RecvUInt(
 	}
 	return	(data);
 }
-
+#if	0
 extern	void
 GL_SendLong(
 	NETFILE	*fp,
@@ -161,21 +165,23 @@ GL_SendLong(
 	}
 	Send(fp,buff,sizeof(long));
 }
-
+#endif
 static	void
 GL_SendLength(
 	NETFILE	*fp,
 	size_t	data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(size_t)];
+	byte	buff[sizeof(int)];
+	int		val;
 
+	val = (int)data;
 	if		(  fNetwork  ) {
-		*(size_t *)buff = SEND32(data);
+		*(int *)buff = SEND32(val);
 	} else {
-		*(size_t *)buff = data;
+		*(int *)buff = data;
 	}
-	Send(fp,buff,sizeof(size_t));
+	Send(fp,buff,sizeof(int));
 }
 
 extern	int
@@ -200,14 +206,14 @@ GL_RecvLength(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(size_t)];
+	byte	buff[sizeof(int)];
 	size_t	data;
 
-	Recv(fp,buff,sizeof(size_t));
+	Recv(fp,buff,sizeof(int));
 	if		(  fNetwork  ) {
-		data = RECV32(*(size_t *)buff);
+		data = (size_t)RECV32(*(int *)buff);
 	} else {
-		data = *(size_t *)buff;
+		data = (size_t)*(int *)buff;
 	}
 	return	(data);
 }
@@ -259,7 +265,7 @@ ENTER_FUNC;
 		str[size] = 0;
 	} else {
 		CloseNet(fp);
-		Warning("Error: receive size to large [%d]. defined size [%d]", lsize, size);
+		Warning("Error: receive size to large [%d]. defined size [%d]", (int)lsize, (int)size);
 	}
 LEAVE_FUNC;
 }
@@ -516,7 +522,7 @@ ENTER_FUNC;
 					fstat(fileno(fpf),&sb);
 					LBS_ReserveSize(Buff,sb.st_size,FALSE);
 					fread(LBS_Body(Buff),sb.st_size,1,fpf);
-					fclose(fpf);	
+					fclose(fpf);
 				} else {
 					dbgprintf("could not open for read: %s\n", fname);
 					LBS_ReserveSize(Buff,0,FALSE);

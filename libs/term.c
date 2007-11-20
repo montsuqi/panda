@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,10 +53,12 @@ TermToHost(
 	char	*term)
 {
 	struct	sockaddr_in		in;
+#ifdef	USE_IPv6
 	struct	sockaddr_in6	in6;
-	char	*p;
-	int		i;
 	char	buff[NI_MAXHOST+2];
+	int		i;
+#endif
+	char	*p;
 	static	char	host[NI_MAXHOST];
 	char	port[NI_MAXSERV];
 
@@ -71,6 +73,7 @@ ENTER_FUNC;
 		in.sin_family = AF_INET;
 		getnameinfo((struct sockaddr *)&in,sizeof(in),host,NI_MAXHOST,port,NI_MAXSERV,0);
 		break;
+#ifdef	USE_IPv6
 	  case	'6':
 		p ++;
 		in6.sin6_port = HexToInt(p,4);
@@ -89,6 +92,7 @@ ENTER_FUNC;
 			strcpy(host,buff);
 		}
 		break;
+#endif
 	  case	'U':	/*	UNIX domain	*/
 		strcpy(host,"localhost");
 		break;
@@ -110,7 +114,9 @@ TermName(
 	static	char			name[SIZE_TERM+1];	//	SIZE_TERM == 64
 	struct	sockaddr_storage	addr;
 	struct	sockaddr_in		*in;
+#ifdef	USE_IPv6
 	struct	sockaddr_in6	*in6;
+#endif
 	struct	timeval	tv;
 
 ENTER_FUNC;
@@ -144,6 +150,7 @@ ENTER_FUNC;
 					(unsigned int)(in->sin_addr.s_addr),
 					getpid());
 			break;
+#ifdef	USE_IPv6
 		  case	AF_INET6:
 			in6 = (struct sockaddr_in6 *)&addr;
 			sprintf(name,"6%04X:%08X%08X%08X%08X%08X:%08X",
@@ -155,6 +162,7 @@ ENTER_FUNC;
 					(unsigned int)(in6->sin6_scope_id),
 					getpid());
 			break;
+#endif
 		  default:
 			break;
 		}

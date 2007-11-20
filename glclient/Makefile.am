@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005  ogochan
+# Copyright (C) 2005-2007  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,24 +38,24 @@ glclient_DEPENDENCIES =				\
 
 INCLUDES =					\
 	-I$(top_srcdir)				\
-	-I$(top_srcdir)/include			\
-	-I$(top_srcdir)/libs			\
+	-I$(top_srcdir)/include		\
+	-I$(top_srcdir)/libs		\
 	$(SSL_CFLAGS)				\
 	$(XML_CFLAGS)				\
 	$(GLADE_CFLAGS)				\
 	$(MONDAI_CFLAGS)			\
 	$(GTK_PANDA_CFLAGS)			\
 	$(GTK_CFLAGS)				\
-        -DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
+	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
 glclient_LDADD =				\
-	-lm					\
+	-lm							\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandagl.a	\
 	$(GLIB_LIBS)				\
-	$(GTK_LIBS)				\
+	$(GTK_LIBS)					\
 	$(GLADE_LIBS)				\
-	$(SSL_LIBS)				\
+	$(SSL_LIBS)					\
 	$(GTK_PANDA_LIBS)			\
 	$(MONDAI_LIBS)
 
@@ -63,16 +63,19 @@ noinst_PROGRAMS = testdialogs testfileentry
 
 test: testdialogs testfileentry
 
-testdialogs_LDADD =\
-	$(GTK_LIBS) \
-	$(GLADE_LIBS) \
+testdialogs_LDADD =				\
+	$(GTK_LIBS) 				\
+	$(GLADE_LIBS) 				\
 	dialogs.o
 
-testfileentry_LDADD =\
-	$(GTK_LIBS) \
-	$(GLADE_LIBS) \
-	$(MONDAI_LIBS) \
-	dialogs.o \
+testfileentry_LDADD =			\
+	$(GTK_LIBS) 				\
+	$(GLADE_LIBS) 				\
+	$(MONDAI_LIBS) 				\
+	dialogs.o 					\
 	fileEntry.o 
 
-
+AM_CPPFLAGS = 					\
+	-DLOCALEDIR=\"$(localedir)\"
+EXTRA_DIST = 					\
+	testrc

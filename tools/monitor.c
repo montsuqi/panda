@@ -558,22 +558,27 @@ WaitProcess(void)
 	}
 }
 
+#if	0
+static	void
+_CheckProcess(
+	pid_t	pid,
+	GSList	*plist)
+{
+	if		(  kill(pid,SIGUSR2)  !=  0  ) {
+		plist = g_slist_append(plist,(gpointer)(long)pid);
+	}
+}
+#endif
+
 static	void
 ProcessMonitor(void)
 {
-	GSList	*plist;
 #if	0
+	GSList	*plist;
 		,	*p;
 	pid_t	pid;
 	Process	*proc;
 #endif
-	void	_CheckProcess(
-		pid_t	pid)
-	{
-		if		(  kill(pid,SIGUSR2)  !=  0  ) {
-			plist = g_slist_append(plist,(gpointer)(long)pid);
-		}
-	}
 
 ENTER_FUNC;
 	do {
@@ -582,7 +587,7 @@ ENTER_FUNC;
 #else
 		plist = NULL;
 		while	(  waitpid(-1,0,WNOHANG)  >  0  );
-		g_int_hash_table_foreach(ProcessTable,(GHFunc)_CheckProcess,NULL);
+		g_int_hash_table_foreach(ProcessTable,(GHFunc)_CheckProcess,plist);
 		if		(  plist  !=  NULL  ) {
 			for	( p = plist ; p != NULL ; p = p->next ) {
 				pid = (pid_t)p->data;
@@ -734,7 +739,7 @@ main(
 	FILE_LIST	*fl;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	if		(  fAllRestart  ) {
 		fRestart = TRUE;
 	}

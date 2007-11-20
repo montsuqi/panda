@@ -42,11 +42,9 @@
 #define	T_ERUBY_END		(T_YYBASE +8)
 #define	T_SCONT_S		(T_YYBASE +9)
 
-#ifdef	SIZE_SYMBOL
-#undef	SIZE_SYMBOL
-#endif
-
+#ifndef	SIZE_SYMBOL
 #define	SIZE_SYMBOL			1024
+#endif
 
 #undef	GLOBAL
 #ifdef	_HTC_PARSER

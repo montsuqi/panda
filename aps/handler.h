@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,13 +39,6 @@ extern	void	CleanUpOnlineDB(void);
 extern	void	CleanUpOnlineDC(void);
 
 extern	int		StartBatch(char *name, char *para);
-
-extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);
-extern	RecordStruct	*MakeCTRLbyName(ValueStruct **value, DBCOMM_CTRL *ctrl,
-										char *rname, char *pname, char *func);
-extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);
-extern	RecordStruct	*BuildDBCTRL(void);
-extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);
 
 extern	void	ExpandStart(char *line, char *start, char *path,
 							char *module, char *param);

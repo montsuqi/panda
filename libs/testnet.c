@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -151,9 +151,9 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"•›°º•»»÷πÊ"	 								},
+		"≈ù|≈à??"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"¿‹¬≥¬‘§¡•≠•Â°º§ŒøÙ" 							},
+		"¬≥?ƒÅ≈≠≈•|ƒé?" 							},
 	{	"server",	BOOLEAN,	TRUE,	(void*)&fServer,
 		"start as server"								},
 
@@ -177,7 +177,7 @@ main(
 	FILE_LIST	*fl;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("testnet",NULL);
 
 	InitNET();

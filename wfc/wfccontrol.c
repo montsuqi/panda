@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +45,7 @@
 #include	"comms.h"
 #include	"dirs.h"
 #include	"wfcdata.h"
+#include	"dbgroup.h"
 #include	"controlthread.h"
 #include	"option.h"
 #include	"message.h"
@@ -64,9 +65,10 @@ Auth(
 {
 	Bool	ret;
 
+ENTER_FUNC;
 	SendStringDelim(fp,ThisEnv->name);
 	SendStringDelim(fp,"\n");
-printf("name = [%s]\n",ThisEnv->name);
+	dbgprintf("name = [%s]\n",ThisEnv->name);
 	switch	(RecvPacketClass(fp)) {
 	  case	WFCCONTROL_OK:
 		ret = TRUE;
@@ -75,6 +77,7 @@ printf("name = [%s]\n",ThisEnv->name);
 		ret = FALSE;
 		break;
 	}
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -84,6 +87,7 @@ MainProc(
 {
 	NETFILE	*fp;
 
+ENTER_FUNC;
 	if		(  ( fp = OpenPort(ControlPort,0) )  !=  NULL  ) {
 		if		(  Auth(fp)  ) {
 			if		(  stricmp(comm,"stop")  ==  0  ) {
@@ -98,16 +102,17 @@ MainProc(
 	} else {
 		fprintf(stderr,"invalid control port\n");
 	}
+LEAVE_FUNC;
 }
 
 static	void
 InitSystem(void)
 {
-dbgmsg(">InitSystem");
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","",FALSE);
 	InitNET();
-dbgmsg("<InitSystem");
+LEAVE_FUNC;
 }
 
 static	void
@@ -117,16 +122,16 @@ CleanUp(void)
 
 static	ARG_TABLE	option[] = {
 	{	"control",	STRING,		TRUE,	(void*)&ControlPort,
-		"$B@)8f%]!<%H(B"									},
+		"制御ポート"									},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"$B4D6-$N%Y!<%9%G%#%l%/%H%j(B"		 				},
+		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"$B%G!<%?Dj5A3JG<%G%#%l%/%H%j(B"	 				},
+		"データ定義格納ディレクトリ"	 				},
 	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
-		"$BDj5A3JG<%G%#%l%/%H%j(B"		 					},
+		"定義格納ディレクトリ"		 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"$B%G%#%l%/%H%j%U%!%$%k(B"	 						},
+		"ディレクトリファイル"	 						},
 
 	{	NULL,		0,			TRUE,	NULL		 	}
 };
@@ -152,7 +157,7 @@ main(
 	char		*command;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 
 	InitMessage("wfccontrol",NULL);
 

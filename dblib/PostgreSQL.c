@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
  */
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -399,6 +399,30 @@ ValueToSQL(
 		sprintf(buff,"%u",id);
 		LBS_EmitString(lbs,buff);
 		break;
+	  case	GL_TYPE_TIMESTAMP:
+		sprintf(buff,"timestamp '%d-%d-%d %d:%d:%d'",
+				ValueDateTimeYear(val),
+				ValueDateTimeMon(val),
+				ValueDateTimeMDay(val),
+				ValueDateTimeHour(val),
+				ValueDateTimeMin(val),
+				ValueDateTimeSec(val));
+		LBS_EmitString(lbs,buff);
+		break;
+	  case	GL_TYPE_DATE:
+		sprintf(buff,"date '%d-%d-%d'",
+				ValueDateTimeYear(val),
+				ValueDateTimeMon(val),
+				ValueDateTimeMDay(val));
+		LBS_EmitString(lbs,buff);
+		break;
+	  case	GL_TYPE_TIME:
+		sprintf(buff,"time '%d:%d:%d'",
+				ValueDateTimeHour(val),
+				ValueDateTimeMin(val),
+				ValueDateTimeSec(val));
+		LBS_EmitString(lbs,buff);
+		break;
 	  default:
 		break;
 	}
@@ -437,9 +461,7 @@ ItemName(void)
 		}
 	}
 	p += sprintf(p,"%s",rname[level-1]);
-#ifdef	TRACE
-	printf("item = [%s]\n",buff);
-#endif
+	dbgprintf("item = [%s]",buff);
 	return	(buff);
 }
 
@@ -578,6 +600,89 @@ ParArray(
 	return	(p);
 }
 
+#define	STATE_DATE_NULL		0
+#define	STATE_DATE_YEAR		1
+#define	STATE_DATE_MON		2
+#define	STATE_DATE_MDAY		3
+#define	STATE_DATE_HOUR		4
+#define	STATE_DATE_MIN		5
+#define	STATE_DATE_SEC		6
+static	void
+ParseDate(
+	ValueStruct	*val,
+	char		*str,
+	int			state)
+{
+	char	*p;
+
+	while	(  *str  !=  0  ) {
+		switch	(state) {
+		  case	STATE_DATE_YEAR:
+			if		(  ( p = strchr(str,'-') )  !=  NULL  ) {
+				*p = 0;
+				state = STATE_DATE_MON;
+			} else {
+				p = str;
+				state = STATE_DATE_NULL;
+			}
+			ValueDateTimeYear(val) = atoi(str);
+			str = p + 1;
+			break;
+		  case	STATE_DATE_MON:
+			if		(  ( p = strchr(str,'-') )  !=  NULL  ) {
+				*p = 0;
+				state = STATE_DATE_MDAY;
+			} else {
+				p = str;
+				state = STATE_DATE_NULL;
+			}
+			ValueDateTimeMon(val) = atoi(str);
+			str = p + 1;
+			break;
+		  case	STATE_DATE_MDAY:
+			if		(  ( p = strchr(str,' ') )  !=  NULL  ) {
+				*p = 0;
+				state = STATE_DATE_HOUR;
+			} else {
+				p = str;
+				state = STATE_DATE_NULL;
+			}
+			ValueDateTimeMDay(val) = atoi(str);
+			str = p + 1;
+			break;
+		  case	STATE_DATE_HOUR:
+			if		(  ( p = strchr(str,':') )  !=  NULL  ) {
+				*p = 0;
+				state = STATE_DATE_MIN;
+			} else {
+				p = str;
+				state = STATE_DATE_NULL;
+			}
+			ValueDateTimeHour(val) = atoi(str);
+			str = p + 1;
+			break;
+		  case	STATE_DATE_MIN:
+			if		(  ( p = strchr(str,':') )  !=  NULL  ) {
+				*p = 0;
+				state = STATE_DATE_SEC;
+			} else {
+				p = str;
+				state = STATE_DATE_NULL;
+			}
+			ValueDateTimeMin(val) = atoi(str);
+			str = p + 1;
+			break;
+		  case	STATE_DATE_SEC:
+			ValueDateTimeSec(val) = atoi(str);
+			state = STATE_DATE_NULL;
+			break;
+		  default:
+			break;
+		}
+		if		(  state  ==  STATE_DATE_NULL  )	break;
+	}
+}
+
 static	void
 GetTable(
 	DBG_Struct	*dbg,
@@ -588,8 +693,9 @@ GetTable(
 	ValueStruct	*tmp;
 	int		fnum;
 	Numeric	nv;
-	char	*str;
 	Oid		id;
+	char	buff[SIZE_BUFF];
+	char	*str;
 
 ENTER_FUNC;
 	if		(  val  ==  NULL  )	return;
@@ -615,6 +721,42 @@ ENTER_FUNC;
 			}
 		} else {
 			SetValueBool(val,*(char *)PQgetvalue(res,0,fnum) == 't');
+		}
+		break;
+	  case	GL_TYPE_TIMESTAMP:
+		dbgmsg("timestamp");
+		fnum = PQfnumber(res,ItemName());
+		if		(  fnum  <  0  ) {
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
+		} else {
+			strcpy(buff,(char *)PQgetvalue(res,0,fnum));
+			ParseDate(val,buff,STATE_DATE_YEAR);
+		}
+		break;
+	  case	GL_TYPE_DATE:
+		dbgmsg("date");
+		fnum = PQfnumber(res,ItemName());
+		if		(  fnum  <  0  ) {
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
+		} else {
+			strcpy(buff,(char *)PQgetvalue(res,0,fnum));
+			ParseDate(val,buff,STATE_DATE_YEAR);
+		}
+		break;
+	  case	GL_TYPE_TIME:
+		dbgmsg("time");
+		fnum = PQfnumber(res,ItemName());
+		if		(  fnum  <  0  ) {
+			if		(  !IS_VALUE_VIRTUAL(val)  ) {
+				ValueIsNil(val);
+			}
+		} else {
+			strcpy(buff,(char *)PQgetvalue(res,0,fnum));
+			ParseDate(val,buff,STATE_DATE_HOUR);
 		}
 		break;
 	  case	GL_TYPE_BYTE:
@@ -748,6 +890,9 @@ UpdateValue(
 	  case	GL_TYPE_NUMBER:
 	  case	GL_TYPE_TEXT:
 	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_TIMESTAMP:
+	  case	GL_TYPE_DATE:
+	  case	GL_TYPE_TIME:
 	  case	GL_TYPE_OBJECT:
         LBS_EmitString(lbs,ItemName());
         LBS_EmitString(lbs,PutDim());
@@ -814,6 +959,9 @@ InsertNames(
 	  case	GL_TYPE_TEXT:
 	  case	GL_TYPE_BINARY:
 	  case	GL_TYPE_OBJECT:
+	  case	GL_TYPE_TIMESTAMP:
+	  case	GL_TYPE_DATE:
+	  case	GL_TYPE_TIME:
 	  case	GL_TYPE_ARRAY:
         LBS_EmitString(lbs,ItemName());
         LBS_EmitString(lbs,PutDim());
@@ -864,6 +1012,9 @@ InsertValues(
 	  case	GL_TYPE_OBJECT:
 	  case	GL_TYPE_TEXT:
 	  case	GL_TYPE_BINARY:
+	  case	GL_TYPE_TIMESTAMP:
+	  case	GL_TYPE_DATE:
+	  case	GL_TYPE_TIME:
 		ValueToSQL(dbg,lbs,val);
 		break;
 	  case	GL_TYPE_ARRAY:
@@ -939,9 +1090,7 @@ _PQexec(
 	PGresult	*res;
 
 ENTER_FUNC;
-#ifdef	TRACE
-	printf("%s;\n",sql);fflush(stdout);
-#endif
+	dbgprintf("%s;",sql);
 	res = PQexec(PGCONN(dbg),sql);
 	if		(  fRed  && IsRedirectQuery(res) ){
 		PutDB_Redirect(dbg,sql);
@@ -958,9 +1107,7 @@ _PQsendQuery(
 	DBG_Struct	*dbg,
 	char	*sql)
 {
-#ifdef	TRACE
-	printf("%s;\n",sql);fflush(stdout);
-#endif
+	dbgprintf("%s;",sql);
 	return PQsendQuery(PGCONN(dbg),sql);
 }
 
@@ -1005,6 +1152,7 @@ GetValue(
 {
 	Numeric	nv;
 	char	*str;
+	char	buff[SIZE_BUFF];
 
 	if		(  val  ==  NULL  )	return;
 
@@ -1022,6 +1170,18 @@ ENTER_FUNC;
 			break;
 		  case	GL_TYPE_BOOL:
 			SetValueBool(val,*(char *)PQgetvalue(res,tnum,fnum) == 't');
+			break;
+		  case	GL_TYPE_TIMESTAMP:
+			strcpy(buff,(char *)PQgetvalue(res,tnum,fnum));
+			ParseDate(val,buff,STATE_DATE_YEAR);
+			break;
+		  case	GL_TYPE_DATE:
+			strcpy(buff,(char *)PQgetvalue(res,tnum,fnum));
+			ParseDate(val,buff,STATE_DATE_YEAR);
+			break;
+		  case	GL_TYPE_TIME:
+			strcpy(buff,(char *)PQgetvalue(res,tnum,fnum));
+			ParseDate(val,buff,STATE_DATE_HOUR);
 			break;
 		  case	GL_TYPE_BYTE:
 		  case	GL_TYPE_CHAR:
@@ -1131,11 +1291,13 @@ ENTER_FUNC;
 			  case	SQL_OP_STO:
 				if		(  !fIntoAster  ) {
 					tuple[items] = (ValueStruct *)LBS_FetchPointer(src);
+					dbgprintf("STO [%s]",ValueToString(tuple[items],NULL));
 					items ++;
 				}
 				break;
 			  case	SQL_OP_REF:
 				val = (ValueStruct *)LBS_FetchPointer(src);
+				dbgprintf("REF [%s]",ValueToString(val,NULL));
 				InsertValues(dbg,sql,val);
 				break;
 			  case	SQL_OP_VCHAR:
@@ -1636,9 +1798,7 @@ _DBACCESS(
 	Bool	rc;
 
 ENTER_FUNC;
-#ifdef	TRACE
-	printf("[%s]\n",name); 
-#endif
+	dbgprintf("[%s]",name); 
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		rc = TRUE;

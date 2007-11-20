@@ -19,9 +19,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -97,9 +97,7 @@ SetWindowRecord(
 	RecordStruct	*rec;
 	char		fname[SIZE_LONGNAME+1];
 
-	if		(  ThisScreen->Records  ==  NULL  ) {
-		ThisScreen->Records = NewNameHash();
-	}
+ENTER_FUNC;
 	if		(  ( rec = (RecordStruct *)g_hash_table_lookup(ThisScreen->Records,wname) )
 			   ==  NULL  ) {
 		sprintf(fname,"%s.rec",wname);
@@ -107,6 +105,7 @@ SetWindowRecord(
 			g_hash_table_insert(ThisScreen->Records,rec->name,rec);
 		}
 	}
+LEAVE_FUNC;
 	return	(rec);
 }
 
@@ -142,9 +141,6 @@ ENTER_FUNC;
 			strcpy(path,name);	/*	exitting system	*/
 		} else {
 			PathWindowName(name,path);
-		}
-		if		(  ThisScreen->Windows  ==  NULL  ) {
-			ThisScreen->Windows = NewNameHash();
 		}
 		if		(  ( entry = 
 					 (WindowData *)g_hash_table_lookup(ThisScreen->Windows,path) )
@@ -287,6 +283,7 @@ NewScreenData(void)
 
 ENTER_FUNC;
 	scr = New(ScreenData);
+dbgmsg("*");
 	memclear(scr->window,SIZE_NAME+1);
 	memclear(scr->widget,SIZE_NAME+1);
 	memclear(scr->event,SIZE_EVENT+1);
@@ -294,8 +291,9 @@ ENTER_FUNC;
 	memclear(scr->term,SIZE_TERM+1);
 	memclear(scr->user,SIZE_USER+1);
 	memclear(scr->other,SIZE_OTHER+1);
-	scr->Windows = NULL;
-	scr->Records = NULL;
+	scr->Windows = NewNameHash();
+	scr->Records = NewNameHash();
+dbgmsg("*");
 	if		(  libmondai_i18n  ) {
 		if		(  ( lang = getenv("LANG") )  !=  NULL  &&
 				   ( encoding = strchr(lang,'.') )  !=  NULL  ){
@@ -460,27 +458,31 @@ LEAVE_FUNC;
 	return	(scr);
 }
 
+static	guint
+FreeWindows(
+	char	*name,
+	WindowData	*entry,
+	void		*dummy)
+{
+	xfree(entry->name);
+	return	(TRUE);
+}
+
+static	guint
+FreeRecords(
+	char	*name,
+	RecordStruct	*rec,
+	void		*dummy)
+{
+	xfree(rec->name);
+	FreeValueStruct(rec->value);
+	return	(TRUE);
+}
+
 extern	void
 FreeScreenData(
 	ScreenData	*scr)
 {
-	guint	FreeWindows(
-		char	*name,
-		WindowData	*entry,
-		void		*dummy)
-	{
-		xfree(entry->name);
-		return	(TRUE);
-	}
-	guint	FreeRecords(
-		char	*name,
-		RecordStruct	*rec,
-		void		*dummy)
-	{
-		xfree(rec->name);
-		FreeValueStruct(rec->value);
-		return	(TRUE);
-	}
 
 ENTER_FUNC;
 	if		(  scr->encoding  !=  NULL  ) {

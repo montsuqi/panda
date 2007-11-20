@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@
 #  include <config.h>
 #endif
 
-#define	_GNU_SOURCE
 #ifdef HAVE_CRYPT_H
 #include	<crypt.h>
 #endif
@@ -35,6 +34,7 @@
 #include	<sys/time.h>
 #include	<unistd.h>
 #include	<time.h>
+#include	<sys/stat.h>
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -279,7 +279,10 @@ AuthSavePasswd(
 	int		i;
 	PassWord	*pw;
 	FILE	*fp;
+	struct stat	st;
+	int 	ret;
 
+	ret = stat(fname, &st);
 	if		(  ( fp = fopen(fname,"w") )  ==  NULL  ) {
 		Error("can not open password file");
 		return;
@@ -290,6 +293,9 @@ AuthSavePasswd(
 			fprintf(fp,"%s:%s:%d:%d:%s\n",
 					pw->name,pw->pass,pw->uid,pw->gid,pw->other);
 		}
+	}
+	if		(  ret  ) {
+		printf("a new password file was made\n", fname);
 	}
 	fclose(fp);
 }
@@ -340,7 +346,7 @@ AuthDelX509BySubject(const char *subject)
     char *u, *s;
 
     assert(X509Table);
-    if (g_hash_table_lookup_extended(X509Table, subject, (gpointer*)&s,
+    if (g_hash_table_lookup_extended(X509Table, (gpointer)subject, (gpointer*)&s,
                 (gpointer*)&u)){
         g_hash_table_remove(X509Table, s);
         g_free(u);
@@ -411,7 +417,7 @@ AuthLoadX509(const char *file)
         return TRUE;
     }
     snprintf(format, sizeof(format),
-             "%%%ds %%%dc", sizeof(user)-1, sizeof(subject)-1);
+             "%%%ds %%%dc", (int)sizeof(user)-1, (int)sizeof(subject)-1);
     while (fgets(buf, sizeof(buf), fp) != NULL){
         if ( ( buf[0] == '\n' ) || (buf[0] == '#') ) {
             continue;
@@ -453,7 +459,7 @@ AuthSaveX509(const char *file)
 static void
 print_key_and_value(gpointer key, gpointer value, gpointer fp)
 {
-    fprintf((FILE*)fp, "%s\t%s\n", value, key);
+    fprintf((FILE*)fp, "%s\t%s\n", (char *)value, (char *)key);
 }
 
 extern  void

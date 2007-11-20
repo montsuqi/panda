@@ -157,25 +157,27 @@ LEAVE_FUNC;
 }
 
 static	void
+TagClear(
+	char	*name,
+	TagType	*type)
+{
+	int		i;
+
+	if		(  type->fPara  ) {
+		for	( i = 0 ; i < type->nPara ; i ++ ) {
+			xfree(type->Para[i]);
+		}
+		xfree(type->Para);
+	}
+	type->nPara = 0;
+	type->Para = NULL;
+}
+
+static	void
 ClearTagValue(
 	Tag		*tag)
 {
-	void	Clear(
-		char	*name,
-		TagType	*type)
-		{
-			int		i;
-
-			if		(  type->fPara  ) {
-				for	( i = 0 ; i < type->nPara ; i ++ ) {
-					xfree(type->Para[i]);
-				}
-				xfree(type->Para);
-			}
-			type->nPara = 0;
-			type->Para = NULL;
-		}
-	g_hash_table_foreach(tag->args,(GHFunc)Clear,NULL);
+	g_hash_table_foreach(tag->args,(GHFunc)TagClear,NULL);
 }
 
 static	void
@@ -422,23 +424,25 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+static	void
+ClearHTC(
+	char	*face,
+	char	*event)
+{
+	xfree(face);
+	if		(  event  !=  NULL  ) {
+		xfree(event);
+	}
+}
+
+
 extern	void
 DestroyHTC(
 	HTCInfo	*htc)
 {
-	void	Clear(
-		char	*face,
-		char	*event)
-		{
-			xfree(face);
-			if		(  event  !=  NULL  ) {
-				xfree(event);
-			}
-		}
-
 ENTER_FUNC;
 	if		(  htc->Trans  !=  NULL  ) {
-		g_hash_table_foreach(htc->Trans,(GHFunc)Clear,NULL);
+		g_hash_table_foreach(htc->Trans,(GHFunc)ClearHTC,NULL);
 	}
 	FreeLBS(htc->code);
 	xfree(htc);

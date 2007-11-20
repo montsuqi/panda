@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -192,7 +192,7 @@ ENTER_FUNC;
 			SendStringDelim(fpComm,"Error: version\n");
 			Message("reject client(invalid version)");
 		} else 
-		if		(  AuthUser(&Auth,scr->user,pass,scr->other)  ) {
+		if		(  AuthUser(&Auth,scr->user,pass,scr->other,NULL)  ) {
 			scr->Windows = NULL;
 			ApplicationsCall(APL_SESSION_LINK,scr);
 			if		(  scr->status  ==  APL_SESSION_NULL  ) {

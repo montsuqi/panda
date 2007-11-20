@@ -12,4 +12,10 @@ ltmain.sh
 panda-config
 autom4te.cache
 stamp-h1
-panda-*.tar.gz
+*.tar.gz
+mkinstalldirs
+java
+configure-stamp
+build-indep-stamp
+build-arch-stamp
+test

@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,8 +69,8 @@ OpenEntry(
 	size_t	size;
 
 ENTER_FUNC;
- snprintf(longname,SIZE_LONGNAME+1,"%s/%d",ent->blob->space,(int)ent->oid);
-dbgmsg(longname);
+	snprintf(longname,SIZE_LONGNAME+1,"%s/%d",ent->blob->space,(int)ent->oid);
+	dbgprintf("%s",longname);
 	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
 #if	1
 		flag = O_CREAT | O_APPEND | O_TRUNC;

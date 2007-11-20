@@ -110,6 +110,7 @@ SetDefault(void)
 	fDebug = FALSE;
 	CommandLine = NULL;
 	FontTemplate = "font/%02X%02X.png";
+	fNoHeader = FALSE;
 }
 
 static	ValueStruct	*
@@ -486,16 +487,17 @@ LEAVE_FUNC;
 }
 
 static	void
+DumpVs(
+	char		*name,
+	char		*value,
+	gpointer	user_data)
+{
+	dbgprintf("[%s][%s]\n",name,value);
+}
+
+static	void
 DumpV(void)
 {
-	void
-	DumpVs(
-			char		*name,
-			char		*value,
-			gpointer	user_data)
-	{
-		dbgprintf("[%s][%s]\n",name,value);
-	}
 
 ENTER_FUNC;
 	g_hash_table_foreach(Values,(GHFunc)DumpVs,NULL);
@@ -508,7 +510,7 @@ main(
 	char	**argv)
 {
 	SetDefault();
-	(void)GetOption(option,argc,argv);
+	(void)GetOption(option,argc,argv,NULL);
 	//InitMessage("mon","@localhost");
 	InitMessage("mon",NULL);
 

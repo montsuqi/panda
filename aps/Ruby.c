@@ -19,9 +19,9 @@
  */
 
 /*
+*/
 #define DEBUG
 #define TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -1165,8 +1165,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
     if (ctrl.rc == MCP_OK) {
         ValueStruct *result;
 
-        result = DuplicateValue(value);
-        CopyValue(result, value);
+        result = DuplicateValue(value,TRUE);
         return recval_new(result, 1);
     }
     else if (ctrl.rc == MCP_EOF) {

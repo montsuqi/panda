@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -141,19 +141,19 @@ ENTER_FUNC;
 		wname = GetWindowName(widget);
 		/* send event */
 		if		(  event  !=  NULL  ) {
-			SendEvent(fpComm,
+			SendEvent(FPCOMM(glSession),
 					  wname,
 					  gtk_widget_get_name(widget),
 					  event);
 		} else {
-			SendEvent(fpComm,
+			SendEvent(FPCOMM(glSession),
 					  wname,
 					  gtk_widget_get_name(widget),
 					  gtk_widget_get_name(widget));
 		}
 		SendWindowData();
 		BlockChangedHandlers();
-		GetScreenData(fpComm);
+		GetScreenData(FPCOMM(glSession));
 		UnblockChangedHandlers();
 		if	( ! fKeyBuff  ) {
 			ignore_event = TRUE;
@@ -200,6 +200,7 @@ send_event_when_idle(
 {
 	static int registed = 0;
 	static int timeout = -1;
+	static int openchanged = 0;
 ENTER_FUNC;
 	StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
 	if (!registed) {
@@ -215,7 +216,11 @@ ENTER_FUNC;
 	}
 
 	if (timeout > 0) {
-		StartTimer(event, timeout, send_event_if_kana, widget);
+		if ( openchanged == 0 ) {
+			openchanged += 1;
+		} else {
+			StartTimer(event, timeout, send_event_if_kana, widget);
+		}
 	} else {
 		entry_changed (widget, event);
 	}
@@ -326,15 +331,7 @@ set_focus(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-	XML_Node	*node;
-	char		*name;
-
 ENTER_FUNC;
-	name = gtk_widget_get_name(widget);
-
-	if		(  ( node = g_hash_table_lookup(WindowTable,name) )  !=  NULL  ) {
-		FocusedScreen = node;
-	}
 LEAVE_FUNC;
 }
 

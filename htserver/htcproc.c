@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -112,6 +112,7 @@ SetDefault(void)
 	CommandLine = NULL;
 	Code = NULL;
 	fJavaScript = TRUE;
+	fNoHeader = FALSE;
 
 	RecordDir = NULL;
 	ArraySize = -1;
@@ -220,8 +221,7 @@ main(
 
 	SetDefault();
 	InitMessage("htcproc",NULL);
-	fl = GetOption(option,argc,argv);
-#if	0
+	fl = GetOption(option,argc,argv,
 				   "\tLang can accept\n"
 				   "\tOpenCOBOL\n"
 				   "\tdotCOBOL\n"
@@ -236,7 +236,6 @@ main(
 				   "\tCGI('name=value&...)\n"
 				   "\tRFC822('name: value\\n')\n"
 		);
-#endif
 	InitHTC(NULL,TestGetValue);
 	CGI_InitValues();
 	if		(	(  fl  !=  NULL  )

@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2006  ogochan
+# Copyright (C) 2005-2007  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,9 +104,10 @@ makefont_DEPENDENCIES	=
 makefont_LDADD 		=					\
 	-lm									\
 	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\
 	$(top_builddir)/libs/libpandamisc.a	\
-	$(GDLIB_LDFLAGS) -lgd
+	$(GDLIB_LDFLAGS)
 
 htcproc_DEPENDENCIES	=				\
 	$(top_builddir)/libs/libpandamisc.a	\
@@ -133,3 +134,8 @@ mcd_INCLUDES =					\
 
 mce_SOURCES	=	\
 	mce.c
+EXTRA_DIST =					\
+	mon.cgi						\
+	monlib.rb					\
+	montest.rb					\
+	xhtml2sdoc.xsl

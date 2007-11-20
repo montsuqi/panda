@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,9 +42,10 @@
 #include	<sys/time.h>
 #include	<netinet/in.h>
 #ifdef USE_GNOME
-#    include <gnome.h>
+#	include	<gnome.h>
 #else
-#    include <gtk/gtk.h>
+#	include	<gtk/gtk.h>
+#	include	"gettext.h"
 #endif
 #ifdef	USE_PANDA
 #include	<gtkpanda/gtkpanda.h>
@@ -127,8 +128,9 @@ PopScreenStack(void)
 static void
 GL_Error(void)
 {
-	GLError("Connection lost\n");
-	gtk_main_quit();
+	GLError(_("Connection lost\n"));
+	if (gtk_main_level() > 0 ) 
+		gtk_main_quit();
 }
 
 extern	void
@@ -187,33 +189,6 @@ GL_RecvInt(
 	return	(RECV32(*(int *)buff));
 }
 
-static	long
-GL_RecvLong(
-	NETFILE	*fp)
-{
-	byte	buff[sizeof(int)];
-
-	Recv(fp,buff,sizeof(int));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
-	return	(RECV32(*(long *)buff));
-}
-
-static	void
-GL_SendLong(
-	NETFILE	*fp,
-	long	data)
-{
-	byte	buff[sizeof(int)];
-
-	*(long *)buff = SEND32(data);
-	Send(fp,buff,sizeof(long));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
-}
-
 static	void
 GL_SendLength(
 	NETFILE	*fp,
@@ -221,8 +196,8 @@ GL_SendLength(
 {
 	byte	buff[sizeof(int)];
 
-	*(size_t *)buff = SEND32(data);
-	Send(fp,buff,sizeof(size_t));
+	*(int *)buff = SEND32(data);
+	Send(fp,buff,sizeof(int));
 	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
@@ -234,11 +209,11 @@ GL_RecvLength(
 {
 	byte	buff[sizeof(int)];
 
-	Recv(fp,buff,sizeof(size_t));
+	Recv(fp,buff,sizeof(int));
 	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
-	return	(RECV32(*(size_t *)buff));
+	return	((size_t)RECV32(*(int *)buff));
 }
 #if	0
 static	unsigned	int
@@ -264,7 +239,9 @@ GL_SendUInt(
 		GL_Error();
 	}
 }
+
 #endif
+
 static	void
 GL_RecvString(
 	NETFILE	*fp,
@@ -283,7 +260,7 @@ ENTER_FUNC;
 		}
 		str[size] = 0;
 	} else {
-		GLError("error size mismatch !");
+		GLError(_("error size mismatch !"));
 		exit(1);
 	}
 LEAVE_FUNC;
@@ -499,6 +476,8 @@ RecvFile(
 	,			left;
 	char		buff[SIZE_BUFF];
 	Bool		ret;
+	gchar 		*tmpfile, *dirname;
+	int 		fd;
 
 ENTER_FUNC;
 	GL_SendPacketClass(fpC,GL_GetScreen);
@@ -508,12 +487,20 @@ ENTER_FUNC;
 		MessageLog(buff);
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
-		if	((fp = Fopen(fname,"w")) == NULL) {
-			GLError("could not write cache file");
+		tmpfile = g_strconcat(fname, "gl_cache_XXXXXX", NULL);
+		dirname = g_dirname(tmpfile);
+		MakeCacheDir(dirname);
+		g_free(dirname);
+		if  ((fd = mkstemp(tmpfile)) == -1 ) {
+			GLError(_("could not write tmp file"));
+			exit(1);
+		}
+		if	((fp = fdopen(fd,"w")) == NULL) {
+			GLError(_("could not write cache file"));
 			exit(1);
 		}
 		fchmod(fileno(fp), 0600);
-		left = (size_t)GL_RecvLong(fpC);
+		left = (size_t)GL_RecvInt(fpC);
 		do {
 			if		(  left  >  SIZE_BUFF  ) {
 				size = SIZE_BUFF;
@@ -527,9 +514,12 @@ ENTER_FUNC;
 			}
 		}	while	(  left  >  0  );
 		fclose(fp);
+		rename(tmpfile, fname);
+		unlink(tmpfile);
+		g_free(tmpfile);
 		ret = TRUE;
 	} else {
-		GLError("invalid protocol sequence");
+		GLError(_("invalid protocol sequence"));
 		ret = FALSE;
 	}
 LEAVE_FUNC;
@@ -553,9 +543,9 @@ ENTER_FUNC;
 	while		(  ( klass = GL_RecvPacketClass(fp) )  ==  GL_QueryScreen  ) {
 dbgmsg("*");
 		GL_RecvString(fp, sizeof(sname), sname);
-		stsize = (off_t)GL_RecvLong(fp);
-		stmtime = (time_t)GL_RecvLong(fp);
-		stctime = (time_t)GL_RecvLong(fp);
+		stsize = (off_t)GL_RecvInt(fp);
+		stmtime = (time_t)GL_RecvInt(fp);
+		stctime = (time_t)GL_RecvInt(fp);
 		fname = CacheFileName(sname);
 
 		if		(	(  stat(fname,&stbuf)  !=  0        )
@@ -563,8 +553,6 @@ dbgmsg("*");
 				 ||	(  stbuf.st_ctime      <   stctime  )
 				 ||	(  stbuf.st_size       !=  stsize   ) ) {
 			RecvFile(fp, sname, fname);
-			/* Clear cache */
-			DestroyWindow(sname);
 		} else {
 			GL_SendPacketClass(fp, GL_NOT);
 		}
@@ -587,7 +575,7 @@ RecvWidgetData(
 
 ENTER_FUNC;
 	if		(  ( node = g_hash_table_lookup(ClassTable,
-											(gconstpointer)((GtkTypeObject *)widget)->klass->type) )  !=  NULL  ) {
+											(gconstpointer)(long)((GtkTypeObject *)widget)->klass->type) )  !=  NULL  ) {
 		rfunc = node->rfunc;
 		ret = (*rfunc)(widget,fp);
 	} else {
@@ -609,7 +597,7 @@ SendWidgetData(
 
 ENTER_FUNC;
 	if		(  ( node = g_hash_table_lookup(ClassTable,
-											(gconstpointer)((GtkTypeObject *)widget)->klass->type) )  !=  NULL  ) {
+											(gconstpointer)(long)((GtkTypeObject *)widget)->klass->type) )  !=  NULL  ) {
 		sfunc = node->sfunc;
 		ret = (*sfunc)(name,widget,fp);
 	} else {
@@ -773,7 +761,7 @@ ENTER_FUNC;
 	fInRecv = TRUE; 
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
-	GL_SendLong(fp,0);				/*	get all data	*/
+	GL_SendInt(fp,0);				/*	get all data	*/
 	fCancel = FALSE;
 	while	(  ( c = GL_RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		GL_RecvString(fp, sizeof(window), window);
@@ -782,9 +770,8 @@ ENTER_FUNC;
 			MessageLog(buff);
 		}
 		dbgprintf("[%s]\n",window);
-		switch( type = (byte)GL_RecvInt(fpComm) ) {
+		switch( type = (byte)GL_RecvInt(FPCOMM(glSession)) ) {
 		  case	SCREEN_END_SESSION:
-			ExitSystem();
 			fCancel= TRUE;
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
@@ -873,7 +860,7 @@ SendConnect(
 
 ENTER_FUNC;
 	if		(  fMlog  ) {
-		MessageLog("connection start\n");
+		MessageLog(_("connection start\n"));
 	}
 	GL_SendPacketClass(fp,GL_Connect);
 	GL_SendVersionString(fp);
@@ -886,20 +873,28 @@ ENTER_FUNC;
 		rc = FALSE;
 		switch	(pc) {
 		  case	GL_NOT:
-			GLError("can not connect server");
+			GLError(_("can not connect server"));
 			break;
 		  case	GL_E_VERSION:
-			GLError("can not connect server(version not match)");
+			GLError(_("can not connect server(version not match)"));
 			break;
 		  case	GL_E_AUTH:
-			GLError("can not connect server(authentication error)");
+#ifdef USE_SSL
+			if 	(fSsl) {
+				GLError(_("can not connect server(authentication error)"));
+			} else {
+				GLError(_("can not connect server(user or password is incorrect)"));
+			}
+#else
+			GLError(_("can not connect server(user or password is incorrect)"));
+#endif
 			break;
 		  case	GL_E_APPL:
-			GLError("can not connect server(application name invalid)");
+			GLError(_("can not connect server(application name invalid)"));
 			break;
 		  default:
 			dbgprintf("[%X]\n",pc);
-			GLError("can not connect server(other protocol error)");
+			GLError(_("can not connect server(other protocol error)"));
 			break;
 		}
 	}
@@ -973,10 +968,10 @@ _SendWindowData(
 	gpointer	user_data)
 {
 ENTER_FUNC;
-	GL_SendPacketClass(fpComm,GL_WindowName);
-	GL_SendString(fpComm,wname);
-	g_hash_table_foreach(node->UpdateWidget,(GHFunc)SendWidgetData,fpComm);
-	GL_SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(FPCOMM(glSession),GL_WindowName);
+	GL_SendString(FPCOMM(glSession),wname);
+	g_hash_table_foreach(node->UpdateWidget,(GHFunc)SendWidgetData,FPCOMM(glSession));
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
 ENTER_FUNC;
 }
 
@@ -985,7 +980,7 @@ SendWindowData(void)
 {
 ENTER_FUNC;
 	g_hash_table_foreach(WindowTable,(GHFunc)_SendWindowData,NULL);
-	GL_SendPacketClass(fpComm,GL_END);
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
 	ClearWindowTable();
 ENTER_FUNC;
 }
@@ -1005,7 +1000,7 @@ RecvFixedData(
 		ret = TRUE;
 		break;
 	  default:
-		printf("invalid data conversion\n");
+		printf(_("invalid data conversion\n"));
 		exit(1);
 		ret = FALSE;
 		break;
@@ -1031,7 +1026,7 @@ SendFixedData(
 		GL_SendFixed(fp,xval);
 		break;
 	  default:
-		printf("invalid data conversion\n");
+		printf(_("invalid data conversion\n"));
 		exit(1);
 		break;
 	}
@@ -1278,7 +1273,7 @@ SendFloatData(
 		GL_SendBool(fp,(( val == 0 ) ? FALSE : TRUE ));
 		break;
 	  default:
-		printf("invalid data conversion\n");
+		printf(_("invalid data conversion\n"));
 		exit(1);
 		break;
 	}

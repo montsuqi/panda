@@ -27,22 +27,24 @@
 typedef struct _BDConfig BDConfig;
 typedef struct _BDConfigSection BDConfigSection;
 
-void      bd_config_section_inspect      (BDConfigSection *self,
+extern  void    bd_config_section_inspect      (BDConfigSection *self,
                                           FILE *fp);
-gchar    *bd_config_section_get_name     (BDConfigSection *self);
-gboolean  bd_config_section_get_bool     (BDConfigSection *self,
+extern  gchar   *bd_config_section_get_name     (BDConfigSection *self);
+extern  gboolean    bd_config_section_get_bool     (BDConfigSection *self,
                                           gchar *name);
-gchar    *bd_config_section_get_string   (BDConfigSection *self,
+extern  gchar   *bd_config_section_get_string   (BDConfigSection *self,
                                           gchar *name);
-gboolean  bd_config_section_set_bool     (BDConfigSection *self,
+extern  gboolean    bd_config_section_set_bool     (BDConfigSection *self,
                                           gchar *name,
                                           gboolean bool);
-gboolean  bd_config_section_set_string   (BDConfigSection *self,
+extern  gboolean    bd_config_section_set_string   (BDConfigSection *self,
                                           gchar *name,
                                           gchar *str);
-void      bd_config_section_append_value (BDConfigSection *self,
+extern  void    bd_config_section_append_value (BDConfigSection *self,
                                           gchar *name,
                                           gchar *contents);
+extern  gboolean    bd_config_section_set_path(BDConfigSection *self,
+                                               gchar *name, gchar *str);
 
 BDConfig        *bd_config_new               ();
 BDConfig        *bd_config_new_with_filename (gchar *filename);

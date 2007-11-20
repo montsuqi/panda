@@ -1,3 +1,134 @@
+2007-10-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/Makefile.am (htserver_SOURCES): libeventの一部モジュー
+	ルをcopyin(古いlibeventにはない機能を使っているため)
+
+2007-09-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/lock.h : オブジェクトロック用マクロ
+
+2007-09-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/http.c: http固有のデータ処理のモジュールを分割(evserverで流用するため)
+
+2007-09-07  yusuke mihara  <mihara@netlab.jp>
+
+	* glserver,glclientに証明書の有効期間チェック機能を追加
+
+2007-09-03  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c(ShowWindow): Windowを閉じるのを遅延させる
+
+2007-09-03  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/message.c: SetMessageFunction で _Message()を置き換え可能
+	* libs/net.c, po/ja.po: SSL関係のメッセージを国際化
+
+2007-08-27  Noboru Saitou  <noborus@netlab.jp>
+
+	* fpComm, ctx, engine をglSession に構造体化　
+
+2007-08-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.ac: soの拡張子を指定可能にした
+
+	* 関数内関数をやめた(メリットない)
+
+	* libs/glcomm.c: MacOS/X support(サーバのみ)
+
+2007-08-05  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.ac: Ver 1.3.9 release(次回リリース版は1.4.0となる予定)
+
+	* aps/dbstub_main.c: -bddirも有効にした(本来の-ddirだと互換になるので厄介)
+
+2007-08-01  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Makefile.am (defaults.h): @LIB_DIR@のみにした(debを作る時等に注意)
+
+	* libs/DIparser.c (ParDI): LINKSIZE廃止(使ってないし)
+
+2007-07-30  Noboru Saitou  <noborus@netlab.jp>
+
+	* configure.ac, aps/Makefile.am, aps/OpenCOBOL.c, libs/mhandler.c: 
+	  OpenCOBOL-0.8.x と　OpenCOBOL-0.23　の共存に対応
+	
+2007-07-30  yusuke mihara  <mihara@netlab.jp>
+
+	* automake-1.10, autoconf2.61 に対応
+	* glclientのメッセージの国際化に対応
+	
+2007-07-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/option.c (GetOption): help文字列用の引数を増やした
+
+2007-07-24  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c (MakeCTRLbyName, MakeCTRL, MakeMCP, DumpDB_Node,
+	BuildDBCTRL): aps/handler.cから移した(ここの方が都合がいい)
+
+2007-07-23  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/LDparser.c (GetWindow): エラーメッセージを付加
+
+2007-06-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/BDparser.c, libs/DBDparser.c, libs/DBparser.c, libs/DDparser.c, libs/DIparser.c, libs/LDparser.c, libs/SQLparser.c: 解析エラーで無限ループする場合があるものを直した
+
+2007-06-28  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/struct.h (RecordDB): RecordStructからDB_Structを参照しやすくした
+
+	* tools/pandadb.c: DB操作のためのコマンドを新設(現在はcreateのみ可能)
+
+	* libs/option.c (GetOption): オプション指定が -- でも通るようにした
+
+	* dblib/dbgroup.c (ExecDBOP): リターンコードを付与
+
+2007-06-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/mon.c (SetDefault): fNoHeaderの初期化
+
+2007-06-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.3.1
+
+2007-06-06  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c(ShowWindow): gtk_widget_set_sensitive の後に ClearKeyBuffer するように変更
+	
+2007-04-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c(ShowWindow): マウスを押しながらショートカットキーを押した場合に、不正な通信になる問題を修正
+	
+2007-04-05  Noboru Saitou  <noborus@netlab.jp>
+
+	* Merge from r_1_2_security_device_branch. 
+	
+	* configure.in, glclient/bootdialog.c, glclient/bootdialog.h, glclient/client.c, glclient/glclient.h, libs/net.c, libs/net.h: セキュリティデバイス対応
+
+2007-04-02  Noboru Saitou  <noborus@netlab.jp>
+	
+	* glclient/action.c(ShowWindow): Sawfishのときに画面表示がとまってしまうため戻した
+	
+2007-03-26  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.9 release
+
+	* glserver/server.c: SendScreenData invalid のときに Window名も出力するようにした
+
+2007-03-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c, glclient/glclient.c, glclient/protocol.c: サーバとクライアントの時計がずれているときにクラッシュしないように修正
+
+2007-03-15  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/callbacks.c(send_event_when_idle): 起動時の1回目は画面表示のため、タイマーを作動させない。
+
+2007-03-01  Noboru Saitou  <noborus@netlab.jp>
+  
+	* libs/net.c: SSLのメッセージを Messageに対応
+  
 2007-03-01  ogochan  <ogochan@nurs.or.jp>
 
 	* libs/wfcio.c (ConnectTermServer): windowをパラメータとして追加。初期データ送信のため
@@ -145,6 +276,10 @@
 	* tools/monitor.c: '-wait'をやめ'-interval'にした。環境によっては
 	'-wait'を何かが食うため
 
+2006-06-19  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.7 release
+  
 2006-06-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/mon.c (SendEvent): イベント解析前にeRubyを実行するようにした
@@ -386,6 +521,10 @@
 	にするようにした(基本的には安全網。また内部変数の参照の時はこうなっ
 	ていないと困る)
 
+2006-04-11  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.2.6p2 release
+
 2006-04-10  Noboru Saitou  <noborus@netlab.jp>
 
  	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c: 
@@ -528,6 +667,8 @@
 
 	* glclient/client.c, glserver/glserver.c, fdd/fdd.c, fdd/fwd.c: 
 	-ciphertsオプションを追加
+
+	* Ver 1.2.6p1 release
 
 2006-03-22  Noboru Saitou  <noborus@netlab.jp>
 
@@ -1852,7 +1993,7 @@
 
 	* libs/Makefile.am: libi18nの廃止(iconvを使うようにした)
 
-	* auth/: 認証関連プログラムを別ディレクトリに
+	* auth/: 認証関連プログラムを�ディレクトリに
 
 	* libs/applications.c: アプリケーションモジュールのダイナミックリンク
 

@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,17 @@
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
 #include	<openssl/pkcs12.h>
-#endif
+#ifdef USE_PKCS11
+#include	<opensc/rsaref/unix.h>
+#include	<opensc/rsaref/pkcs11.h>
+#include	<openssl/engine.h>
+#include	<dlfcn.h>
+#define		PKCS11_MAX_SLOT_NUM			16
+#define		PKCS11_MAX_OBJECT_NUM		16
+#define		PKCS11_BUF_SIZE				256
+#define		PKCS11_OBJECT_SIZE			4096
+#endif	/* USE_PKCS11 */
+#endif	/* USE_SSL */
 
 #include	"socket.h"
 
@@ -75,6 +85,8 @@ extern	void		NetSetFD(NETFILE *fp, int fd);
 extern	void		InitNET(void);
 #define	NetGetFD(fp)	((fp)->fd)
 #ifdef	USE_SSL
+extern  char		*GetSSLErrorMessage(void);
+extern  char		*GetSSLWarningMessage(void);
 extern	NETFILE		*MakeSSL_Net(SSL_CTX *ctx, int fd);
 extern	SSL_CTX		*MakeSSL_CTX(char *key, char *cert, char *cafile, char *capath, char *ciphers);
 extern	char		*GetSubjectFromCertificate(X509 *cert);
@@ -83,7 +95,15 @@ extern	Bool		CheckHostnameInCertificate(X509 *cert, const char *host);
 extern	Bool		StartSSLClientSession(NETFILE *fp, const char *host);
 extern	Bool		StartSSLServerSession(NETFILE *fp);
 #define	NETFILE_SSL(fp)		((fp)->net.ssl)
-#endif
+#ifdef  USE_PKCS11
+extern	SSL_CTX		*MakeSSL_CTX_PKCS11(ENGINE **e,
+										char *pkcs11, 
+										char *slot, 
+										char *cafile, 
+										char *capath, 
+										char *ciphers);
+#endif	/* USE_PKCS11 */
+#endif	/* USE_SSL */
 extern	NETFILE		*OpenPort(char *url, char *defport);
 extern	int			InitServerPort(Port *port, int back);
 

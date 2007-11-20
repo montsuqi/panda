@@ -821,17 +821,19 @@ ENTER_FUNC;
 			fNoJavaScript = TRUE;
 		}
 	}
-	LBS_EmitString(htc->code,"<head");
-	EmitAttribute(htc,tag,"profile");
-	EmitAttribute(htc,tag,"class");
-	EmitAttribute(htc,tag,"id");
-	EmitAttribute(htc,tag,"dir");
-	EmitAttribute(htc,tag,"lang");
-	LBS_EmitString(htc->code,">\n");
-	LBS_EmitString(htc->code,
-				   "<meta http-equiv=\"Pragma\" content=\"no-cache\">\n");
+	if		(  !fNoHeader  ) {
+		LBS_EmitString(htc->code,"<head");
+		EmitAttribute(htc,tag,"profile");
+		EmitAttribute(htc,tag,"class");
+		EmitAttribute(htc,tag,"id");
+		EmitAttribute(htc,tag,"dir");
+		EmitAttribute(htc,tag,"lang");
+		LBS_EmitString(htc->code,">\n");
+		LBS_EmitString(htc->code,
+					   "<meta http-equiv=\"Pragma\" content=\"no-cache\">\n");
+		fHead = TRUE;
+	}
 	EmitCode(htc,OPC_FLJS);
-	fHead = TRUE;
 LEAVE_FUNC;
 }
 
@@ -842,34 +844,38 @@ _Body(
 {
 ENTER_FUNC;
 	if		(  !fHead  ) {
-		LBS_EmitString(htc->code,
-					   "<head>\n<meta http-equiv=\"Pragma\" content=\"no-cache\">\n");
+		if		(  !fNoHeader  ) {
+			LBS_EmitString(htc->code,
+						   "<head>\n<meta http-equiv=\"Pragma\" content=\"no-cache\">\n");
+		}
 		EmitCode(htc,OPC_FLJS);
 		fHead = TRUE;
 	}
-	LBS_EmitString(htc->code,"</head>\n");
-	LBS_EmitString(htc->code,"<body");
-	EmitAttribute(htc,tag,"text");
-	EmitAttribute(htc,tag,"link");
-	EmitAttribute(htc,tag,"vlink");
-	EmitAttribute(htc,tag,"alink");
-	EmitAttribute(htc,tag,"bgcolor");
-	EmitAttribute(htc,tag,"background");
-	EmitAttribute(htc,tag,"bgproperties");
-	EmitAttribute(htc,tag,"marginheight");
-	EmitAttribute(htc,tag,"marginwidth");
-	EmitAttribute(htc,tag,"topmargin");
-	EmitAttribute(htc,tag,"leftmargin");
-	EmitAttribute(htc,tag,"bottommargin");
-	EmitAttribute(htc,tag,"rightmargin");
-	EmitAttribute(htc,tag,"scroll");
-	EmitAttribute(htc,tag,"dir");
-	EmitAttribute(htc,tag,"lang");
-	EmitAttribute(htc,tag,"title");
-	JavaScriptEvent(htc,tag,"oncontextmenu");
-	JavaScriptEvent(htc,tag,"onload");
-	Style(htc,tag);
-	LBS_EmitString(htc->code,">\n");
+	if		(  !fNoHeader  ) {
+		LBS_EmitString(htc->code,"</head>\n");
+		LBS_EmitString(htc->code,"<body");
+		EmitAttribute(htc,tag,"text");
+		EmitAttribute(htc,tag,"link");
+		EmitAttribute(htc,tag,"vlink");
+		EmitAttribute(htc,tag,"alink");
+		EmitAttribute(htc,tag,"bgcolor");
+		EmitAttribute(htc,tag,"background");
+		EmitAttribute(htc,tag,"bgproperties");
+		EmitAttribute(htc,tag,"marginheight");
+		EmitAttribute(htc,tag,"marginwidth");
+		EmitAttribute(htc,tag,"topmargin");
+		EmitAttribute(htc,tag,"leftmargin");
+		EmitAttribute(htc,tag,"bottommargin");
+		EmitAttribute(htc,tag,"rightmargin");
+		EmitAttribute(htc,tag,"scroll");
+		EmitAttribute(htc,tag,"dir");
+		EmitAttribute(htc,tag,"lang");
+		EmitAttribute(htc,tag,"title");
+		JavaScriptEvent(htc,tag,"oncontextmenu");
+		JavaScriptEvent(htc,tag,"onload");
+		Style(htc,tag);
+		LBS_EmitString(htc->code,">\n");
+	}
 LEAVE_FUNC;
 }
 
@@ -886,7 +892,9 @@ ENTER_FUNC;
 		LBS_EmitString(htc->code,"</span>");
 	}
 	if		(  !fDump  ) {
-		LBS_EmitString(htc->code,"</body>");
+		if		( !fNoHeader  ) {
+			LBS_EmitString(htc->code,"</body>");
+		}
 	}
 LEAVE_FUNC;
 }	
@@ -898,7 +906,9 @@ _eHtml(
 {
 ENTER_FUNC;
 	if		(  !fDump  ) {
-		LBS_EmitString(htc->code,"</html>");
+		if		(  !fNoHeader  ) {
+			LBS_EmitString(htc->code,"</html>");
+		}
 	}
 	LBS_EmitEnd(htc->code);
 LEAVE_FUNC;

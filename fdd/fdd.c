@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -258,26 +258,26 @@ dbgmsg("<InitSystem");
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"¥Ý¡¼¥ÈÈÖ¹æ"	 								},
+		"ãƒãƒ¼ãƒˆç•ªå·"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"ÀÜÂ³ÂÔ¤Á¥­¥å¡¼¤Î¿ô" 							},
+		"æŽ¥ç¶šå¾…ã¡ã‚­ãƒ¥ãƒ¼ã®æ•°" 							},
 	{	"workdir",	STRING,		TRUE,	(void*)&WorkDir,
-		"°ì»þ¥Õ¥¡¥¤¥ë¤òºî¤ë¥Ç¥£¥ì¥¯¥È¥ê"				},
+		"ä¸€æ™‚ãƒ•ã‚¡ã‚¤ãƒ«ã‚’ä½œã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"				},
 	{	"execdir",	STRING,		TRUE,	(void*)&ExecDir,
-		"¼Â¹Ô¥³¥Þ¥ó¥É¤Î¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê"				},
+		"å®Ÿè¡Œã‚³ãƒžãƒ³ãƒ‰ã®ã‚ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"				},
 #ifdef	USE_SSL
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		"SSL¤ò»È¤¦"				 						},
+		"SSLã‚’ä½¿ã†"				 						},
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"¸°¥Õ¥¡¥¤¥ëÌ¾(pem)"		 						},
+		"éµãƒ•ã‚¡ã‚¤ãƒ«å(pem)"		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"¾ÚÌÀ½ñ¥Õ¥¡¥¤¥ëÌ¾(pem)"	 						},
+		"è¨¼æ˜Žæ›¸ãƒ•ã‚¡ã‚¤ãƒ«å(pem)"	 						},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		"CA¾ÚÌÀ½ñ¤Ø¤Î¥Ñ¥¹"								},
+		"CAè¨¼æ˜Žæ›¸ã¸ã®ãƒ‘ã‚¹"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		"CA¾ÚÌÀ½ñ¥Õ¥¡¥¤¥ë"								},
+		"CAè¨¼æ˜Žæ›¸ãƒ•ã‚¡ã‚¤ãƒ«"								},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		"SSL¤Ç»ÈÍÑ¤¹¤ë°Å¹æ¥¹¥¤¡¼¥È"						},
+		"SSLã§ä½¿ç”¨ã™ã‚‹æš—å·ã‚¹ã‚¤ãƒ¼ãƒˆ"						},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -308,7 +308,7 @@ main(
 	FILE_LIST	*fl;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("fdd",NULL);
 
 	InitSystem();

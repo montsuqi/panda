@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -196,7 +196,7 @@ _UpdateWidget(
 
 ENTER_FUNC;
 	window = gtk_widget_get_toplevel(widget);
-	if (TimerFlag) {
+	if		(  TimerFlag  )	{
 		ResetTimer(GTK_WINDOW (window));
 	}
 	name = glade_get_widget_long_name(widget);
@@ -296,16 +296,23 @@ CreateNewNode(
 	char	*wname)
 {
 	char	*fname;
+	GladeXML	*xml;
 	XML_Node	*node;
 ENTER_FUNC;
 	fname = CacheFileName(wname);
-	node = New(XML_Node);
-	node->xml = glade_xml_new(fname, NULL);
-	node->window = GTK_WINDOW(glade_xml_get_widget(node->xml, wname));
-	node->name = StrDup(wname);
-	node->UpdateWidget = NewNameHash();
-	glade_xml_signal_autoconnect(node->xml);
-	g_hash_table_insert(WindowTable,node->name,node);
+	xml = glade_xml_new(fname, NULL);
+	if ( xml == NULL ) {
+		node = NULL;
+	} else {
+		DestroyWindow(wname);
+		node = New(XML_Node);
+		node->xml = xml;
+		node->window = GTK_WINDOW(glade_xml_get_widget(node->xml, wname));
+		node->name = StrDup(wname);
+		node->UpdateWidget = NewNameHash();
+		glade_xml_signal_autoconnect(node->xml);
+		g_hash_table_insert(WindowTable,node->name,node);
+	}
 LEAVE_FUNC;
 	return (node);
 }
@@ -317,13 +324,15 @@ ShowWindow(
 {
 	char		*fname;
 	XML_Node	*node;
+	GtkWidget	*widget;
 ENTER_FUNC;
+	widget = NULL;
 	dbgprintf("ShowWindow [%s][%d]",wname,type);
 	fname = CacheFileName(wname);
 
 	if		(  ( node = g_hash_table_lookup(WindowTable,wname) )  ==  NULL  ) {
-		if ( type == SCREEN_NEW_WINDOW ||
-			 type == SCREEN_CURRENT_WINDOW ){
+		if		(	(  type  ==  SCREEN_NEW_WINDOW      )
+				||	(  type  ==  SCREEN_CURRENT_WINDOW  ) ){
 			node = CreateNewNode(wname);
 		}
 	}
@@ -332,11 +341,18 @@ ENTER_FUNC;
 		switch	(type) {
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CURRENT_WINDOW:
+			gtk_widget_set_sensitive (GTK_WIDGET(node->window), TRUE);
 			gtk_widget_show_all(GTK_WIDGET(node->window));
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
 			StopTimer(node->window);
-			ClearKeyBuffer();
+			if (node->window->focus_widget != NULL ){
+				widget = GTK_WIDGET(node->window->focus_widget);
+			}
+			gtk_widget_set_sensitive (GTK_WIDGET(node->window), FALSE);
+			if ((widget != NULL) && GTK_IS_BUTTON (widget)){
+				gtk_button_released (GTK_BUTTON(widget));
+			}
 			gtk_widget_hide_all(GTK_WIDGET(node->window));
 			/* fall through */
 		  default:
@@ -354,9 +370,9 @@ DestroyWindow(
 	char	*sname)
 {
 	XML_Node	*node;
+	char		*key;
 
-	if		(  ( node = (XML_Node *)g_hash_table_lookup(WindowTable,sname) )
-			   !=  NULL  ) {
+	if		(  g_hash_table_lookup_extended(WindowTable,sname,(gpointer*)&key,(gpointer*)&node)  )	{
 		gtk_widget_destroy(GTK_WIDGET(node->window));
 		gtk_object_destroy((GtkObject *)node->xml);
 		if		(  node->UpdateWidget  !=  NULL  ) {
@@ -364,6 +380,7 @@ DestroyWindow(
 		}
 		xfree(node->name);
 		xfree(node);
+		xfree(key);
 		g_hash_table_remove(WindowTable,sname);
 	}
 }
@@ -398,8 +415,11 @@ ENTER_FUNC;
 	attr.cursor = Busycursor;
 	attr.x = attr.y = 0;
 	attr.width = attr.height = 32767;
-	if ( widget != NULL ) {
+
+	if		(  widget  !=  NULL  ) {
 		window = gtk_widget_get_toplevel(widget);
+	} else {
+		window = NULL;
 	}
 	pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
 	gdk_window_show (pane);

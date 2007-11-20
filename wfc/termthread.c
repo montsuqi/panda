@@ -171,37 +171,41 @@ FinishSession(
 	pthread_cond_signal(&TermCond);
 }
 
+static	guint
+FreeSpa(
+	char	*name,
+	LargeByteString	*spa,
+	void		*dummy)
+{
+	if		(  name  !=  NULL  ) {
+		xfree(name);
+	}
+	if		(  spa  !=  NULL  ) {
+		FreeLBS(spa);
+	}
+	return	(TRUE);
+}
+
+static	guint
+FreeScr(
+	char	*name,
+	LargeByteString	*scr,
+	void		*dummy)
+{
+	if		(  name  !=  NULL  ) {
+		xfree(name);
+	}
+	if		(  scr  !=  NULL  ) {
+		FreeLBS(scr);
+	}
+	return	(TRUE);
+}
+
 static	void
 FreeSession(
 	SessionData	*data)
 {
 	char	msg[SIZE_LONGNAME+1];
-	guint	FreeSpa(
-		char	*name,
-		LargeByteString	*spa,
-		void		*dummy)
-	{
-		if		(  name  !=  NULL  ) {
-			xfree(name);
-		}
-		if		(  spa  !=  NULL  ) {
-			FreeLBS(spa);
-		}
-		return	(TRUE);
-	}
-	guint	FreeScr(
-		char	*name,
-		LargeByteString	*scr,
-		void		*dummy)
-	{
-		if		(  name  !=  NULL  ) {
-			xfree(name);
-		}
-		if		(  scr  !=  NULL  ) {
-			FreeLBS(scr);
-		}
-		return	(TRUE);
-	}
 
 ENTER_FUNC;
 	snprintf(msg,SIZE_LONGNAME,"[%s@%s] session end",data->hdr->user,data->hdr->term);
@@ -820,10 +824,7 @@ static	void
 RemoveThread(void)
 {
 	SessionData	*data;
-	pthread_attr_t	attr;
 
-	pthread_attr_init(&attr);
-	pthread_attr_setstacksize(&attr,256*1024);
 	while	(TRUE)	{
 		data = (SessionData *)DeQueue(RemoveQueue);
 		FreeSession(data);

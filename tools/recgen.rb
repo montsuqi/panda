@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005  ogochan
+# Copyright (C) 2005-2007  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,15 +30,15 @@ $notab_enable = false
 
 def usage
   $stderr.puts "Usage: #{File.basename($0)} [OPTIONS] [FILE]"
-  $stderr.puts "²èÌÌÄêµÁÂÎ¤«¤é¥×¥í¥È¥³¥ëv2ÍÑ¤ÎPLÄêµÁÂÎ¤òÀ¸À®¤¹¤ë¡£"
+  $stderr.puts "ç”»é¢å®šç¾©ä½“ã‹ã‚‰ãƒ—ãƒ­ãƒˆã‚³ãƒ«v2ç”¨ã®PLå®šç¾©ä½“ã‚’ç”Ÿæˆã™ã‚‹ã€‚"
   $stderr.puts ""
   $stderr.puts "OPTIONS:"
-  $stderr.puts "  -b, --button GtkButton¤Ë´Ø¤¹¤ëPLÄêµÁÂÎ¤Î½ĞÎÏ¤òÍ­¸ú¤Ë¤¹¤ë"
-  $stderr.puts "  -t, --text   varchar·¿¤òtext¤È¤·¤Æ½ĞÎÏ¤¹¤ë"
-  $stderr.puts "  -n, --notab  ¥¤¥ó¥Ç¥ó¥È¤Ë4¸Ä¤Î¶õÇò¤òÍÑ¤¤¤ë"
-  $stderr.puts "  -e, --emacs  ¥¤¥ó¥Ç¥ó¥È¤Ë4¸Ä¤Î¶õÇò¤òÍÑ¤¤¡¢"
-  $stderr.puts "               EmacsÍÑ¤ËËöÈø¤ËLocal Variables¤òÄÉ²Ã¤¹¤ë"
-  $stderr.puts "  -h, --help   ¤³¤Î¥á¥Ã¥»¡¼¥¸¤ò½ĞÎÏ¤·¤Æ½ªÎ»¤¹¤ë"
+  $stderr.puts "  -b, --button GtkButtonã«é–¢ã™ã‚‹PLå®šç¾©ä½“ã®å‡ºåŠ›ã‚’æœ‰åŠ¹ã«ã™ã‚‹"
+  $stderr.puts "  -t, --text   varcharå‹ã‚’textã¨ã—ã¦å‡ºåŠ›ã™ã‚‹"
+  $stderr.puts "  -n, --notab  ã‚¤ãƒ³ãƒ‡ãƒ³ãƒˆã«4å€‹ã®ç©ºç™½ã‚’ç”¨ã„ã‚‹"
+  $stderr.puts "  -e, --emacs  ã‚¤ãƒ³ãƒ‡ãƒ³ãƒˆã«4å€‹ã®ç©ºç™½ã‚’ç”¨ã„ã€"
+  $stderr.puts "               Emacsç”¨ã«æœ«å°¾ã«Local Variablesã‚’è¿½åŠ ã™ã‚‹"
+  $stderr.puts "  -h, --help   ã“ã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å‡ºåŠ›ã—ã¦çµ‚äº†ã™ã‚‹"
 end
 
 parser = GetoptLong.new
@@ -407,7 +407,6 @@ tree.push(widget);
 widget.name = "top";
 widget.klass = "top-level";
 
-
 begin
 	signal = nil;
 	current = 0;
@@ -501,6 +500,8 @@ rescue XMLParserError
 	printf("%s:%s:%d:%d:E:%s\n",$0,$<.filename,parser.line,parser.column,$!);
 	exit 1
 end
+
+widget = Glade.new;
 
 widget.panda;
 

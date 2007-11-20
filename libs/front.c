@@ -71,7 +71,6 @@ InitSession(void)
 	ScreenData	*scr;
 
 ENTER_FUNC;
-	InitPool();
 	scr = NewScreenData();
 	scr->status = APL_SESSION_LINK;
 	rseed = (int)(long)scr;

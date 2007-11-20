@@ -285,7 +285,7 @@ ghfunc_styles_free (char *name, GtkStyle *value, gpointer user_data)
 {
     xfree (name);
     gtk_style_unref (value);
-    (void *) user_data; /* escape warning */
+    (void) user_data; /* escape warning */
 }
 
 void

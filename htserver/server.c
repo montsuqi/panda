@@ -134,38 +134,40 @@ DecodeName(
 }
 
 static	void
+SendWindow(
+	char		*wname,
+	WindowData	*win,
+	NETFILE		*fp)
+{
+	if		(  win->PutType  !=  SCREEN_NULL  ) {
+		dbgprintf("window       = [%s]",win->name);
+		dbgprintf("win->PutType = %02X",win->PutType);
+		switch	(win->PutType) {
+		  case	SCREEN_CURRENT_WINDOW:
+		  case	SCREEN_NEW_WINDOW:
+		  case	SCREEN_CHANGE_WINDOW:
+			SendPacketClass(fp,GL_WindowName);
+			SendString(fp,win->name);
+			break;
+		  case	SCREEN_END_SESSION:
+			SendPacketClass(fp,GL_RedirectName);
+			SendString(fp,win->name);
+		  default:
+			break;
+		}
+#if	0
+		win->PutType = SCREEN_NULL;
+#endif
+	}
+}
+
+static	void
 SendWindowName(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
-	void
-	SendWindow(
-		char		*wname,
-		WindowData	*win)
-	{
-		if		(  win->PutType  !=  SCREEN_NULL  ) {
-			dbgprintf("window       = [%s]",win->name);
-			dbgprintf("win->PutType = %02X",win->PutType);
-			switch	(win->PutType) {
-			  case	SCREEN_CURRENT_WINDOW:
-			  case	SCREEN_NEW_WINDOW:
-			  case	SCREEN_CHANGE_WINDOW:
-				SendPacketClass(fp,GL_WindowName);
-				SendString(fp,win->name);
-				break;
-			  case	SCREEN_END_SESSION:
-				SendPacketClass(fp,GL_RedirectName);
-				SendString(fp,win->name);
-			  default:
-				break;
-			}
-#if	0
-			win->PutType = SCREEN_NULL;
-#endif
-		}
-	}
 ENTER_FUNC;
-	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,NULL);
+	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,fp);
 	SendPacketClass(fp,GL_END);
 	if		(  !CheckNetFile(fp)  )		FinishSession(scr);
 LEAVE_FUNC;

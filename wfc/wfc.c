@@ -88,7 +88,7 @@ extern int pselect (int __nfds, fd_set *__restrict __readfds,
 		    fd_set *__restrict __writefds,
 		    fd_set *__restrict __exceptfds,
 		    const struct timespec *__restrict __timeout,
-		    const __sigset_t *__restrict __sigmask);
+		    const sigset_t *__restrict __sigmask);
 #endif
 
 #ifdef	DEBUG
@@ -364,7 +364,7 @@ ENTER_FUNC;
 	InitMessage("wfc",NULL);
 
 	SetDefault();
-	GetOption(option,argc,argv);
+	GetOption(option,argc,argv,NULL);
 
 	InitSystem();
 	Message("wfc server start");

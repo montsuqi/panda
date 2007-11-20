@@ -183,21 +183,22 @@ RemoveValue(
     }
 }
 
+static	void
+_ClearValue(
+	char	*name,
+	CGIValue	*val)
+{
+	if		(  !val->fSave  ) {
+		if		(  val->body  !=  NULL  ) {
+			xfree(val->body);
+			val->body = NULL;
+		}
+	}
+}
+
 extern	void
 ClearValues(void)
 {
-	void
-		_ClearValue(
-			char	*name,
-			CGIValue	*val)
-	{
-		if		(  !val->fSave  ) {
-			if		(  val->body  !=  NULL  ) {
-				xfree(val->body);
-				val->body = NULL;
-			}
-		}
-	}
 
 ENTER_FUNC;
 	g_hash_table_foreach(Values,(GHFunc)_ClearValue,NULL);
@@ -261,7 +262,7 @@ ConvUTF8(
 
 	cd = iconv_open("utf8",code);
 	istr = (char *)str;
-	dbgprintf("size = %d\n",strlen(str));
+	dbgprintf("size = %d\n",(int)strlen(str));
 	if		(  ( sib = strlen(str)  )  >  0  ) {
 		ostr = cbuff;
 		sob = SIZE_LARGE_BUFF;
@@ -435,7 +436,8 @@ ScanPost(
 			strcpy(name,buff);
 			p ++;
 			while	(  *p  !=  0  ) {
-				if		(  *p  !=  '\r'  ) {
+				if		(	(  *p  !=  '\r'  )
+						&&	(  *p  !=  '\n'  ) ) {
 					*value ++ = *p;
 				}
 				p ++;
@@ -540,51 +542,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	Bool
-GetSessionValues(void)
-{
-	char	*sesid;
-	char	fname[SIZE_LONGNAME+1];
-	char	name[SIZE_LARGE_BUFF];
-	byte	value[SIZE_LARGE_BUFF];
-	int		fd;
-	Bool	ret;
-	struct	stat	sb;
-	char	*p;
-
-ENTER_FUNC;
-	if		(   ( ( sesid = LoadValue("_sesid") )  !=  NULL  )
-			&&  (  *sesid                          !=  0     ) ) {
-		sprintf(fname,"%s/%s.ses",SesDir,sesid);
-        if		(  ( fd = open(fname,O_RDONLY ) )  <  0  ) {
-			ret = FALSE;
-		} else {
-			fstat(fd,&sb);
-			if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0) )  !=  NULL  ) {
-				StartScanEnv(p);
-				while	(  ScanEnv(name,value)  ) {
-					if		(  LoadValue(name)  ==  NULL  ) {
-						SaveValue(name,value,TRUE);
-					} else {
-                        if      (  *name  !=  0  ) {
-                            SetSave(name,TRUE);
-                        }
-					}
-				}
-				munmap(p,sb.st_size);
-				ret = TRUE;
-			} else {
-				ret = FALSE;
-			}
-			close(fd);
-		}
-	} else {
-		ret = FALSE;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
 static	void
 PutURLString(
 	byte	*p,
@@ -601,89 +558,6 @@ PutURLString(
 			fprintf(fp,"%02X",((int)*p)&0xFF);
 		}
 		p ++;
-	}
-}
-
-static	void
-PutValue(
-	char	*name,
-	CGIValue	*value,
-	FILE	*fp)
-{
-	byte	*p;
-
-	if		(	(  value->fSave  )
-			&&	(  *name  !=  0  ) ) {
-		fprintf(fp,"%s=",name);
-		if		(  ( p = value->body )  !=  NULL  ) {
-			PutURLString(p,fp);
-		}
-		fputc('&',fp);
-	}
-}
-
-extern  void
-CheckSessionExpire(void)
-{
-	DIR		*dir;
-	struct	dirent	*ent;
-	struct	stat	sb;
-	time_t		    nowtime
-        ,           exp;
-    char    fname[SIZE_LONGNAME+1];
-
-    time(&nowtime);
-    exp = nowtime - SesExpire;
-	dir = opendir(SesDir);
-	while	(  ( ent = readdir(dir) )  !=  NULL  ) {
-        sprintf(fname,"%s/%s",SesDir,ent->d_name);
-		if		(	(  stat(fname,&sb)  ==  0  )
-                &&	(  S_ISREG(sb.st_mode)     ) ) {
-            if      (  sb.st_mtime  <  exp  ) {
-                unlink(fname);
-            }
-		}
-	}
-	closedir(dir);
-}
-
-extern	Bool
-PutSessionValues(void)
-{
-	char	fname[SIZE_LONGNAME+1];
-	Bool	ret;
-	FILE	*fp;
-	char	*sesid;
-
-ENTER_FUNC;
-	CheckSessionExpire();
-	if		(   (  ( sesid = LoadValue("_sesid") )  !=  NULL  )
-            &&  (  *sesid                           !=  0     ) ) {
-		sprintf(fname,"%s/%s.ses",SesDir,sesid);
-		if		(  ( fp = fopen(fname,"w") )  ==  NULL  ) {
-			ret = FALSE;
-		} else {
-			g_hash_table_foreach(Values,(GHFunc)PutValue,fp);
-			fputc(0,fp);
-			fclose(fp);
-			ret = TRUE;
-		}
-	} else {
-		ret = FALSE;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-extern	void
-DeleteSessionValues(void)
-{
-	char	fname[SIZE_LONGNAME+1];
-	char	*sesid;
-
-	if		(  ( sesid = LoadValue("_sesid") )  !=  NULL  ) {
-		sprintf(fname,"%s/%s.ses",SesDir,sesid);
-		unlink(fname);
 	}
 }
 
@@ -741,6 +615,41 @@ LEAVE_FUNC;
 }
 
 
+static	void
+PutCookie(
+	char	*name,
+	CookieEntry	*ent)
+{
+	static	char	*wday[] = { "Sun", "Mon", "Tue", "Wed", "Tue", "Fri", "Sat" };
+	static	char	*mon[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
+							   "Aug", "Sep", "Oct", "Nov", "Dec" };
+	struct	tm	result;
+	char	*value;
+	
+	printf("Set-Cookie: %s=",name);
+	if		(  ( value = ent->value )  ==  NULL  ) {
+		value = GetHostValue(ParseName(ent->name),FALSE);
+	}
+	PutURLString(value,stdout);
+	printf(";");
+	if		(  ent->expire  !=  NULL  ) {
+		gmtime_r(ent->expire,&result);
+		printf(" expires=%s %02d-%s-%04d %02d:%02d:%02d GMT;",
+			   wday[result.tm_wday],result.tm_mday,mon[result.tm_mon],result.tm_year,
+			   result.tm_hour, result.tm_min, result.tm_sec);
+	}
+	if			(  ent->domain  !=  NULL  ) {
+		printf(" domain=%s;",ent->domain);
+	}
+	if		(  ent->path  !=  NULL  ) {
+		printf(" path=%s;",ent->path);
+	}
+	if		(  ent->fSecure  ) {
+		printf("secure");
+	}
+	printf("\r\n");
+}
+
 extern	void
 PutHTML(
 	LargeByteString	*header,
@@ -749,39 +658,6 @@ PutHTML(
 	int				code)
 {
 	char	*sesid;
-	static	char	*wday[] = { "Sun", "Mon", "Tue", "Wed", "Tue", "Fri", "Sat" };
-	static	char	*mon[] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul",
-							   "Aug", "Sep", "Oct", "Nov", "Dec" };
-	void	PutCookie(
-		char	*name,
-		CookieEntry	*ent)
-	{
-		struct	tm	result;
-		char	*value;
-
-		printf("Set-Cookie: %s=",name);
-		if		(  ( value = ent->value )  ==  NULL  ) {
-			value = GetHostValue(ParseName(ent->name),FALSE);
-		}
-		PutURLString(value,stdout);
-		printf(";");
-		if		(  ent->expire  !=  NULL  ) {
-			gmtime_r(ent->expire,&result);
-			printf(" expires=%s %02d-%s-%04d %02d:%02d:%02d GMT;",
-				   wday[result.tm_wday],result.tm_mday,mon[result.tm_mon],result.tm_year,
-				   result.tm_hour, result.tm_min, result.tm_sec);
-		}
-		if		(  ent->domain  !=  NULL  ) {
-			printf(" domain=%s;",ent->domain);
-		}
-		if		(  ent->path  !=  NULL  ) {
-			printf(" path=%s;",ent->path);
-		}
-		if		(  ent->fSecure  ) {
-			printf("secure");
-		}
-		printf("\r\n");
-	}
 
 ENTER_FUNC;
 	if		(  code  ==  0  ) {
@@ -814,36 +690,50 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+DumpValue(
+	char		*name,
+	CGIValue	*value,
+	LargeByteString	*html)
+{
+	char	buff[SIZE_LARGE_BUFF];
+
+	if		(  value->body  !=  NULL  ) {
+		sprintf(buff,"<tr><td>%s</td><td>",name);
+		LBS_EmitUTF8(html,buff,NULL);
+		EmitWithEscape(html,value->body,FALSE);
+		LBS_EmitUTF8(html,"</td></tr>\n",NULL);
+	}
+}
+
 extern	void
 DumpValues(
 	LargeByteString	*html,
 	GHashTable	*args)
 {
-	char	buff[SIZE_LARGE_BUFF];
-	void
-	DumpValue(
-			char		*name,
-			CGIValue	*value,
-			gpointer	user_data)
-	{
-		if		(  value->body  !=  NULL  ) {
-			sprintf(buff,"<tr><td>%s</td><td>",name);
-			LBS_EmitUTF8(html,buff,NULL);
-			EmitWithEscape(html,value->body,FALSE);
-			LBS_EmitUTF8(html,"</td></tr>\n",NULL);
-		}
-	}
-
 	LBS_EmitUTF8(html,
-				 "<HR>\n"
-				 "<H2>args</H2>"
+				 "<hr>\n"
+				 "<h2>args</h2>"
 				 "<table border>\n"
 				 "<tr><td width=\"150\">name<td width=\"150\">value</tr>\n"
 				 ,NULL);
-	g_hash_table_foreach(args,(GHFunc)DumpValue,NULL);
+	g_hash_table_foreach(args,(GHFunc)DumpValue,html);
 	LBS_EmitUTF8(html,
 				 "</table>\n"
 				 ,NULL);
+}
+
+static	void
+DumpFile(
+	char		*name,
+	MultipartFile	*value,
+	LargeByteString	*html)
+{
+	char	buff[SIZE_LARGE_BUFF];
+
+	sprintf(buff,"<tr><td>%s</td><td>%-10d</td>\n",
+			value->filename,(int)LBS_Size(value->body));
+	LBS_EmitString(html,buff);
 }
 
 extern	void
@@ -851,26 +741,15 @@ DumpFiles(
 	LargeByteString	*html,
 	GHashTable	*args)
 {
-	char	buff[SIZE_LARGE_BUFF];
-	void
-	DumpFile(
-			char		*name,
-			MultipartFile	*value,
-			gpointer	user_data)
-	{
-		sprintf(buff,"<TR><TD>%s<TD>%-10d\n",value->filename,(int)LBS_Size(value->body));
-		LBS_EmitString(html,buff);
-	}
-
 	LBS_EmitUTF8(html,
-				 "<HR>\n"
-				 "<H2>files</H2>"
-				 "<TABLE BORDER>\n"
-				 "<TR><TD width=\"150\">file name<TD width=\"150\">size\n"
+				 "<hr>\n"
+				 "<h2>files</h2>"
+				 "<table border=\"true\">\n"
+				 "<tr><td width=\"150\">file name</td><td width=\"150\">size</td>\n"
 				 ,NULL);
-	g_hash_table_foreach(args,(GHFunc)DumpFile,NULL);
+	g_hash_table_foreach(args,(GHFunc)DumpFile,html);
 	LBS_EmitUTF8(html,
-				 "</TABLE>\n"
+				 "</table>\n"
 				 ,NULL);
 }
 
@@ -883,8 +762,8 @@ PutEnv(
 
 	env = environ;
 	LBS_EmitUTF8(html,
-				 "<HR>\n"
-				 "<H2>environments</H2>\n",NULL);
+				 "<hr>\n"
+				 "<h2>environments</h2>\n",NULL);
 	while	(  *env  !=  NULL  ) {
 		LBS_EmitUTF8(html,"[",NULL);
 		LBS_EmitUTF8(html,*env,NULL);
@@ -903,13 +782,13 @@ Dump(void)
 	LBS_EmitStart(html);
     if (fDump) {
         LBS_EmitUTF8(html,
-                     "<HR>\n",NULL);
+                     "<hr>\n",NULL);
         PutEnv(html);
         DumpValues(html,Values);
         DumpFiles(html,Files);
         LBS_EmitUTF8(html,
-                     "</BODY>\n"
-                     "</HTML>\n",NULL);
+                     "</body>\n"
+                     "</html>\n",NULL);
     }
 	LBS_EmitEnd(html);
 	WriteLargeString(stdout,html,Codeset);

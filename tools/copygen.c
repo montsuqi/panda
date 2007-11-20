@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@
 #include	"wfcdata.h"
 #include	"DBparser.h"
 #include	"directory.h"
+#include	"dbgroup.h"
 #include	"driver.h"
 #include	"dirs.h"
 #include	"option.h"
@@ -171,8 +172,21 @@ PutName(
 	PutString(buff);
 }
 
-static	char	PrevName[SIZE_BUFF];
 static	int		PrevCount;
+
+static	void
+SubItem(
+	char	*name,
+	char	*buff)
+{
+	PutLevel(level+1,TRUE);
+	PrevCount = 0;
+	PutName(name);
+	PutTab(4);
+	PutString(buff);
+}
+
+static	char	PrevName[SIZE_BUFF];
 static	char	*PrevSuffix[] = { "X","Y","Z" };
 static	void
 _COBOL(
@@ -222,6 +236,87 @@ _COBOL(
 	  case	GL_TYPE_TEXT:
 		sprintf(buff,"PIC X(%d)",(int)conv->textsize);
 		PutString(buff);
+		break;
+	  case	GL_TYPE_TIMESTAMP:
+		printf(".\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-YEAR",namebuff);
+		} else {
+			sprintf(buff,"%s-YEAR",PrevName);
+		}
+		SubItem(buff,"PIC 9(4).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-MONTH",namebuff);
+		} else {
+			sprintf(buff,"%s-MONTH",PrevName);
+		}
+		SubItem(buff,"PIC 9(2).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-MDAY",namebuff);
+		} else {
+			sprintf(buff,"%s-MDAY",PrevName);
+		}
+		SubItem(buff,"PIC 9(2).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-HOUR",namebuff);
+		} else {
+			sprintf(buff,"%s-HOUR",PrevName);
+		}
+		SubItem(buff,"PIC 9(2).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-MIN ",namebuff);
+		} else {
+			sprintf(buff,"%s-MIN ",PrevName);
+		}
+		SubItem(buff,"PIC 9(2).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-SEC ",namebuff);
+		} else {
+			sprintf(buff,"%s-SEC ",PrevName);
+		}
+		SubItem(buff,"PIC 9(2)");
+		break;
+	  case	GL_TYPE_TIME:
+		printf(".\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-HOUR",namebuff);
+		} else {
+			sprintf(buff,"%s-HOUR",PrevName);
+		}
+		SubItem(buff,"PIC 9(2).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-MIN ",namebuff);
+		} else {
+			sprintf(buff,"%s-MIN ",PrevName);
+		}
+		SubItem(buff,"PIC 9(2).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-SEC ",namebuff);
+		} else {
+			sprintf(buff,"%s-SEC ",PrevName);
+		}
+		SubItem(buff,"PIC 9(2)");
+		break;
+	  case	GL_TYPE_DATE:
+		printf(".\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-YEAR",namebuff);
+		} else {
+			sprintf(buff,"%s-YEAR",PrevName);
+		}
+		SubItem(buff,"PIC 9(4).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-MONTH",namebuff);
+		} else {
+			sprintf(buff,"%s-MONTH",PrevName);
+		}
+		SubItem(buff,"PIC 9(2).\n");
+		if		(  fFull  )	{
+			sprintf(buff,"%s-MDAY",namebuff);
+		} else {
+			sprintf(buff,"%s-MDAY",PrevName);
+		}
+		SubItem(buff,"PIC 9(2)");
 		break;
 	  case	GL_TYPE_ARRAY:
 		tmp = ValueArrayItem(val,0);
@@ -367,7 +462,7 @@ MakeLD(void)
 	,		mcpsize;
 	int		base;
 
-dbgmsg(">MakeLD");
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,LD_Name,"","",TRUE);
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
@@ -524,7 +619,7 @@ dbgmsg(">MakeLD");
 		PutTab(8);
 		printf("PIC S9(9)   BINARY  VALUE   %d.\n",(int)num);
 	}
-dbgmsg("<MakeLD");
+LEAVE_FUNC;
 }
 
 static	void
@@ -532,19 +627,34 @@ MakeLinkage(void)
 {
 	LD_Struct	*ld;
 	char	*_prefix;
+	size_t		size;
 
+ENTER_FUNC;
 	InitDirectory();
+	dbgmsg("*");
 	SetUpDirectory(Directory,LD_Name,"","",TRUE);
+	dbgmsg("*");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
+	dbgmsg("*");
 
 	ConvSetSize(Conv,ld->textsize,ld->arraysize);
 
+#if	1
+	size = SizeValue(Conv,ThisEnv->linkrec->value);
+#else
 	if (ThisEnv->linksize <= 0) {
-		Error("linkarea not found.\n");
+		if		(	(  ThisEnv->linkrec         !=  NULL  )
+				&&	(  ThisEnv->linkrec->value  !=  NULL  ) ) {
+			size = SizeValue(Conv,ThisEnv->linkrec->value);
+		} else {
+			Error("linkarea not found.\n");
+		}
+	} else {
+		size = ThisEnv->linksize;
 	}
-
+#endif
 	_prefix = Prefix;
 	Prefix = "";
 	PutLevel(1,TRUE);
@@ -553,7 +663,7 @@ MakeLinkage(void)
 	PutName("linkdata-redefine.\n");
 	PutLevel(3,TRUE);
 	PutName("filler");
-	printf("      PIC X(%d).\n",(int)ThisEnv->linksize);
+	printf("      PIC X(%d).\n",(int)size);
 
 	PutLevel(2,TRUE);
 	PutName(ld->name);
@@ -564,6 +674,7 @@ MakeLinkage(void)
 	level = 3;
 	COBOL(Conv,ThisEnv->linkrec->value);
 	printf(".\n");
+LEAVE_FUNC;
 }
 
 static	void
@@ -961,7 +1072,7 @@ dbgmsg("<MakeDBPATH");
 }
 
 static	void
-MakeMCP(void)
+MakeMCPAREA(void)
 {
 ENTER_FUNC;
 	InitDirectory();
@@ -979,57 +1090,57 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"ldw",	BOOLEAN,	TRUE,		(void*)&fLDW,
-		"À©¸æ¥Õ¥£¡¼¥ë¥É°Ê³°¤òFILLER¤Ë¤¹¤ë"				},
+		"åˆ¶å¾¡ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ä»¥å¤–ã‚’FILLERã«ã™ã‚‹"				},
 	{	"ldr",	BOOLEAN,	TRUE,		(void*)&fLDR,
-		"À©¸æ¥Õ¥£¡¼¥ë¥É¤ÈSPA°Ê³°¤òFILLER¤Ë¤¹¤ë"			},
+		"åˆ¶å¾¡ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã¨SPAä»¥å¤–ã‚’FILLERã«ã™ã‚‹"			},
 	{	"spa",		BOOLEAN,	TRUE,	(void*)&fSPA,
-		"SPAÎÎ°è¤ò½ÐÎÏ¤¹¤ë"								},
+		"SPAé ˜åŸŸã‚’å‡ºåŠ›ã™ã‚‹"								},
 	{	"linkage",	BOOLEAN,	TRUE,	(void*)&fLinkage,
-		"Ï¢ÍíÎÎ°è¤ò½ÐÎÏ¤¹¤ë"							},
+		"é€£çµ¡é ˜åŸŸã‚’å‡ºåŠ›ã™ã‚‹"							},
 	{	"screen",	BOOLEAN,	TRUE,	(void*)&fScreen,
-		"²èÌÌ¥ì¥³¡¼¥ÉÎÎ°è¤ò½ÐÎÏ¤¹¤ë"					},
+		"ç”»é¢ãƒ¬ã‚³ãƒ¼ãƒ‰é ˜åŸŸã‚’å‡ºåŠ›ã™ã‚‹"					},
 	{	"dbarea",	BOOLEAN,	TRUE,	(void*)&fDB,
-		"MCPSUBÍÑÎÎ°è¤ò½ÐÎÏ¤¹¤ë"						},
+		"MCPSUBç”¨é ˜åŸŸã‚’å‡ºåŠ›ã™ã‚‹"						},
 	{	"dbrec",	BOOLEAN,	TRUE,	(void*)&fDBREC,
-		"MCBSUB¤Î°ú¿ô¤Ë»È¤¦¥ì¥³¡¼¥ÉÎÎ°è¤ò½ÐÎÏ¤¹¤ë"	},
+		"MCBSUBã®å¼•æ•°ã«ä½¿ã†ãƒ¬ã‚³ãƒ¼ãƒ‰é ˜åŸŸã‚’å‡ºåŠ›ã™ã‚‹"	},
 	{	"dbpath",	BOOLEAN,	TRUE,	(void*)&fDBPATH,
-		"DB¤Î¥Ñ¥¹Ì¾¥Æ¡¼¥Ö¥ë¤ò½ÐÎÏ¤¹¤ë"					},
+		"DBã®ãƒ‘ã‚¹åãƒ†ãƒ¼ãƒ–ãƒ«ã‚’å‡ºåŠ›ã™ã‚‹"					},
 	{	"dbcomm",	BOOLEAN,	TRUE,	(void*)&fDBCOMM,
-		"MCPSUB¤ÈDB¥µ¡¼¥Ð¤È¤ÎÄÌ¿®ÎÎ°è¤ò½ÐÎÏ¤¹¤ë"		},
+		"MCPSUBã¨DBã‚µãƒ¼ãƒã¨ã®é€šä¿¡é ˜åŸŸã‚’å‡ºåŠ›ã™ã‚‹"		},
 	{	"mcp",		BOOLEAN,	TRUE,	(void*)&fMCP,
-		"MCPAREA¤ò½ÐÎÏ¤¹¤ë"								},
+		"MCPAREAã‚’å‡ºåŠ›ã™ã‚‹"								},
 	{	"lang",		STRING,		TRUE,	(void*)&Lang	,
-		"ÂÐ¾Ý¸À¸ìÌ¾"			 						},
+		"å¯¾è±¡è¨€èªžå"			 						},
 	{	"textsize",	INTEGER,	TRUE,	(void*)&TextSize,
-		"text¤ÎºÇÂçÄ¹"									},
+		"textã®æœ€å¤§é•·"									},
 	{	"arraysize",INTEGER,	TRUE,	(void*)&ArraySize,
-		"²ÄÊÑÍ×ÁÇÇÛÎó¤ÎºÇÂç·«¤êÊÖ¤·¿ô"					},
+		"å¯å¤‰è¦ç´ é…åˆ—ã®æœ€å¤§ç¹°ã‚Šè¿”ã—æ•°"					},
 	{	"prefix",	STRING,		TRUE,	(void*)&Prefix,
-		"¹àÌÜÌ¾¤ÎÁ°¤ËÉÕ²Ã¤¹¤ëÊ¸»úÎó"					},
+		"é …ç›®åã®å‰ã«ä»˜åŠ ã™ã‚‹æ–‡å­—åˆ—"					},
 	{	"wprefix",	BOOLEAN,	TRUE,	(void*)&fWindowPrefix,
-		"²èÌÌ¥ì¥³¡¼¥É¤Î¹àÌÜ¤ÎÁ°¤Ë¥¦¥£¥ó¥É¥¦Ì¾¤òÉÕ²Ã¤¹¤ë"},
+		"ç”»é¢ãƒ¬ã‚³ãƒ¼ãƒ‰ã®é …ç›®ã®å‰ã«ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦åã‚’ä»˜åŠ ã™ã‚‹"},
 	{	"rprefix",	BOOLEAN,	TRUE,	(void*)&fRecordPrefix,
-		"¥Ç¡¼¥¿¥Ù¡¼¥¹¥ì¥³¡¼¥É¤Î¹àÌÜ¤ÎÁ°¤Ë¥ì¥³¡¼¥ÉÌ¾¤òÉÕ²Ã¤¹¤ë"},
+		"ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ãƒ¬ã‚³ãƒ¼ãƒ‰ã®é …ç›®ã®å‰ã«ãƒ¬ã‚³ãƒ¼ãƒ‰åã‚’ä»˜åŠ ã™ã‚‹"},
 	{	"name",		STRING,		TRUE,	(void*)&RecName,
-		"¥ì¥³¡¼¥É¤ÎÌ¾Á°"								},
+		"ãƒ¬ã‚³ãƒ¼ãƒ‰ã®åå‰"								},
 	{	"filler",	BOOLEAN,	TRUE,	(void*)&fFiller,
-		"¥ì¥³¡¼¥É¤ÎÃæ¿È¤òFILLER¤Ë¤¹¤ë"					},
+		"ãƒ¬ã‚³ãƒ¼ãƒ‰ã®ä¸­èº«ã‚’FILLERã«ã™ã‚‹"					},
 	{	"full",		BOOLEAN,	TRUE,	(void*)&fFull,
-		"³¬ÁØ¹½Â¤¤òÌ¾Á°¤ËÈ¿±Ç¤¹¤ë"						},
+		"éšŽå±¤æ§‹é€ ã‚’åå‰ã«åæ˜ ã™ã‚‹"						},
 	{	"noconv",	BOOLEAN,	TRUE,	(void*)&fNoConv,
-		"¹àÌÜÌ¾¤òÂçÊ¸»ú¤Ë²Ã¹©¤·¤Ê¤¤"					},
+		"é …ç›®åã‚’å¤§æ–‡å­—ã«åŠ å·¥ã—ãªã„"					},
 	{	"nofiller",	BOOLEAN,	TRUE,	(void*)&fNoFiller,
-		"¥ì¥³¡¼¥ÉÄ¹Ä´À°¤ÎFILLER¤òÆþ¤ì¤Ê¤¤"				},
+		"ãƒ¬ã‚³ãƒ¼ãƒ‰é•·èª¿æ•´ã®FILLERã‚’å…¥ã‚Œãªã„"				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"¥Ç¥£¥ì¥¯¥È¥ê¥Õ¥¡¥¤¥ë"	 						},
+		"ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ•ã‚¡ã‚¤ãƒ«"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"¥ì¥³¡¼¥É¤Î¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê"					},
+		"ãƒ¬ã‚³ãƒ¼ãƒ‰ã®ã‚ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"					},
 	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
-		"ÄêµÁ³ÊÇ¼¥Ç¥£¥ì¥¯¥È¥ê"	 						},
+		"å®šç¾©æ ¼ç´ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"	 						},
 	{	"ld",		STRING,		TRUE,	(void*)&LD_Name,
-		"LDÌ¾"						 					},
+		"LDå"						 					},
 	{	"bd",		STRING,		TRUE,	(void*)&BD_Name,
-		"BDÌ¾"						 					},
+		"BDå"						 					},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -1074,7 +1185,7 @@ main(
     ,			*ext;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("copygen",NULL);
 	ConvSetLanguage(Lang);
 	Conv = NewConvOpt();
@@ -1119,7 +1230,7 @@ main(
 			MakeDBPATH();
 		} else
 		if		(  fMCP  ) {
-			MakeMCP();
+			MakeMCPAREA();
 		} else
 		if		(  fLDW  ) {
 			fMCP = TRUE;

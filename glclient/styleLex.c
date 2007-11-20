@@ -78,7 +78,7 @@ StyleLexInit(void)
     if (Reserved == NULL) {
         Reserved = NewNameHash();
         for	( i = 0 ; tokentable[i].token  !=  0 ; i ++ ) {
-            g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)tokentable[i].token);
+            g_hash_table_insert(Reserved,tokentable[i].str,(gpointer)(long)tokentable[i].token);
         }
     }
 }
@@ -91,7 +91,7 @@ CheckReserved(
 	int		ret;
 
 	if		(  ( p = g_hash_table_lookup(Reserved,str) ) !=  NULL  ) {
-		ret = (int)p;
+		ret = (int)(long)p;
 	} else {
 		ret = T_SYMBOL;
 	}

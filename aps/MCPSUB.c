@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,17 +45,6 @@
 #include	"debug.h"
 
 static	void
-CheckArg(
-	char		*func,
-	DBCOMM_CTRL	*ctrl)
-{
-	if		(	(  ctrl->rno  !=  0  )
-			||	(  ctrl->pno  !=  0  ) ) {
-		Warning("argument invalid on %s\n",func);
-	}
-}
-
-static	void
 CheckArgTable(
 	char		*func,
 	DBCOMM_CTRL	*ctrl)
@@ -92,23 +81,18 @@ ENTER_FUNC;
 		MakeCTRL(&ctrl,mcp);
 		ctrl.rc = 0;
 		if		(  !strcmp(mcp_func,"DBOPEN")  ) {
-			CheckArg(mcp_func,&ctrl);
 			rec = NULL;
 		} else
 		if		(  !strcmp(mcp_func,"DBCLOSE")  ) {
-			CheckArg(mcp_func,&ctrl);
 			rec = NULL;
 		} else
 		if		(  !strcmp(mcp_func,"DBSTART")  ) {
-			CheckArg(mcp_func,&ctrl);
 			rec = NULL;
 		} else
 		if		(  !strcmp(mcp_func,"DBCOMMIT")  ) {
-			CheckArg(mcp_func,&ctrl);
 			rec = NULL;
 		} else
 		if		(  !strcmp(mcp_func,"DBDISCONNECT")  ) {
-			CheckArg(mcp_func,&ctrl);
 			rec = NULL;
 		} else {
 			CheckArgTable(mcp_func,&ctrl);

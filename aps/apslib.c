@@ -232,7 +232,7 @@ ENTER_FUNC;
 		}
 	}
 	if		(  val  !=  NULL  ) {
-		ret = DuplicateValue(val);
+		ret = DuplicateValue(val,FALSE);
 	} else {
 		ret = NULL;
 	}

@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2006 Ogochan.
+ * Copyright (C) 2006-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -545,9 +545,9 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"comment",	BOOLEAN,	TRUE,	(void*)&fComment,
-		"¹àÌÜ¤ÎÀâÌÀ¤òÆþ¤ì¤ë"							},
+		"é …ç›®ã®èª¬æ˜Žã‚’å…¥ã‚Œã‚‹"							},
 	{	"level",	INTEGER,	TRUE,	(void*)&Level,
-		"³¬ÁØ¤Î¿ô" 										},
+		"éšŽå±¤ã®æ•°" 										},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -567,7 +567,7 @@ main(
 	FILE_LIST	*fl;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("checkdir",NULL);
 
 	ProcessOne(fl->name);

@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -131,7 +131,7 @@ ENTER_FUNC;
 	if		(  dbg->func  ==  NULL  ) {
 		if		(  ( func = (DB_Func *)g_hash_table_lookup(DBMS_Table,dbg->type) )
 				   ==  NULL  ) {
-			sprintf(filename,"%s.so",dbg->type);
+			sprintf(filename,"%s." SO_SUFFIX,dbg->type);
 			dbgprintf("[%s][%s]",MONDB_LoadPath,filename);
 			if		(  ( handle = LoadFile(MONDB_LoadPath,filename) )  !=  NULL  ) {
 				sprintf(funcname,"Init%s",dbg->type);
@@ -144,7 +144,6 @@ ENTER_FUNC;
 						  dbg->type);
 				}
 			} else {
-				printf("%s\n",dlerror());
 				perror("LoadFile");
 				Error("DB group type [%s] not found.(module not exist)\n", dbg->type);
 			}
@@ -188,16 +187,16 @@ _AssignDBG(
 
 ENTER_FUNC;
 	for	( i = 1 ; i < n ; i ++ ) {
-		if		(  ( gname = db[i]->opt.db->gname )  !=  NULL  ) {
+		if		(  ( gname = RecordDB(db[i])->gname )  !=  NULL  ) {
 			if		(  ( dbg = GetDBG(gname) )  ==  NULL  )	{
 				fprintf(stderr,"[%s]\n",gname);
 				Error("DB group not found");
 			}
-			db[i]->opt.db->dbg = dbg;
+			RecordDB(db[i])->dbg = dbg;
 			xfree(gname);
-			db[i]->opt.db->gname = NULL;
+			RecordDB(db[i])->gname = NULL;
 		} else {
-			dbg = db[i]->opt.db->dbg;
+			dbg = RecordDB(db[i])->dbg;
 		}
 		if		(  dbg->dbt  ==  NULL  ) {
 			dbg->dbt = NewNameHash();
@@ -305,3 +304,18 @@ GetDBD(
 	return	(ret);
 }
 
+extern	RecordStruct	*
+GetTableDBG(
+	char	*gname,
+	char	*tname)
+{
+	DBG_Struct	*dbg;
+	RecordStruct	*db;
+
+	if		(  ( dbg = GetDBG(gname) )  !=  NULL  ) {
+		db = g_hash_table_lookup(dbg->dbt,tname);
+	} else {
+		db = NULL;
+	}
+	return	(db);
+}

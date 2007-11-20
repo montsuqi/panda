@@ -103,6 +103,7 @@ typedef	struct	_Expr	{
 
 GLOBAL	char	*FontTemplate;
 GLOBAL	char	*ScriptName;
+GLOBAL	Bool	fNoHeader;
 
 #undef	GLOBAL
 

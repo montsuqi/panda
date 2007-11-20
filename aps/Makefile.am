@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005  ogochan
+# Copyright (C) 2005-2007  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,8 +25,6 @@ libpandadbincludedir = $(includedir)/panda
 libpandadbinclude_HEADERS =	\
 	apslib.h
 
-aps_LDFLAGS		=	-export-dynamic
-dbstub_LDFLAGS	=	-export-dynamic
 
 MCPSUB_la_LDFLAGS	=			\
 	-module 					\
@@ -52,49 +50,85 @@ LDADD 		=							\
 MCPSUB_la_LIBADD	=
 MONFUNC_la_LIBADD	=
 
-INCLUDES 			= \
-	-I$(top_srcdir)	\
+INCLUDES 			= 		\
+	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
-	$(RUBY_CFLAGS)		\
+	$(OPENCOBOL23_CFLAGS)	\
+	$(OPENCOBOL08_CFLAGS)	\
+	$(RUBY_CFLAGS)			\
 	$(SSL_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
 	$(GLIB_CFLAGS)
 
+OpenCOBOLla = 
+if OPENCOBOL
+OpenCOBOLla += OpenCOBOL.la
+endif
+if OPENCOBOL23
+OpenCOBOLla += OpenCOBOL23.la
+endif
+if OPENCOBOL08
+OpenCOBOLla += OpenCOBOL08.la
+endif
+
 HANDLER_OBJECTS	=	\
 	dotCOBOL.la		\
-	OpenCOBOL.la	\
 	C.la			\
 	Exec.la			\
 	Resident.la		\
-	Ruby.la
+	Ruby.la			\
+	$(OpenCOBOLla)
 
 dotCOBOL_la_LDFLAGS		=	-module -export-dynamic
+if OPENCOBOL
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic
+endif
+if OPENCOBOL23
+OpenCOBOL23_la_LDFLAGS	=	-module -export-dynamic
+endif
+if OPENCOBOL08
+OpenCOBOL08_la_LDFLAGS	=	-module -export-dynamic
+endif
 C_la_LDFLAGS			=	-module -export-dynamic
 Exec_la_LDFLAGS			=	-module -export-dynamic
 Resident_la_LDFLAGS		=	-module -export-dynamic
 Ruby_la_LDFLAGS			=   -module -export-dynamic
 
 dotCOBOL_la_SOURCES		=	dotCOBOL.c
+
 C_la_SOURCES			=	\
 	C.c						\
 	apslib.c
+
+if OPENCOBOL23
+OpenCOBOL23_la_SOURCES	=	OpenCOBOL.c
+OpenCOBOL23_la_LIBADD		=	\
+	$(OPENCOBOL23_LIBS)
+endif
+if OPENCOBOL08
+OpenCOBOL08_la_SOURCES	=	OpenCOBOL.c
+OpenCOBOL08_la_LIBADD		=	\
+	$(OPENCOBOL08_LIBS)
+endif
+if OPENCOBOL
 OpenCOBOL_la_SOURCES	=	\
 	OpenCOBOL.c
+OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
+endif
+
 Ruby_la_SOURCES			=	\
 	Ruby.c					\
 	apslib.c
-
-OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
 Ruby_la_LIBADD			=	$(RUBY_LIBS)
 
 Exec_la_SOURCES			=	Exec.c
 Exec_la_LIBADD			=	\
 	$(top_builddir)/libs/comm.lo \
 	$(top_builddir)/libs/comms.lo
+
 Resident_la_SOURCES		=	Resident.c
 
 aps_LDFLAGS	=			\
@@ -103,7 +137,6 @@ aps_SOURCES	=	\
 	aps_main.c	aps_main.h				\
 	apsio.c		apsio.h					\
 	handler.c	handler.h
-
 aps_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
@@ -116,7 +149,6 @@ dbstub_LDFLAGS	=			\
 dbstub_SOURCES	=	\
 	dbstub_main.c						\
 	handler.c		handler.h
-
 dbstub_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	MCPSUB.la							\
@@ -133,3 +165,5 @@ MONFUNC_la_SOURCES	=			\
 	MONFUNC.c					\
 	OpenCOBOL.h					\
 	apslib.c
+
+EXTRA_DIST = apslib.rb

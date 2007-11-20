@@ -1,15 +1,15 @@
-$B%"%W%j%1!<%7%g%sO"7H$N%G%b$K$D$$$F(B
+アプリケーション連携のデモについて
 
-1. $BF0$+$7J}(B
+1. 動かし方
 
-(0) PostgreSQL$B$N=`Hw$r9T$&(B
+(0) PostgreSQLの準備を行う
 
-$B!&(Bportmaster$B$,5/F0=PMh$k$3$H(B
-$B!&(BORCA$B$H$$$&%G!<%?%Y!<%9$,B8:_$7$F$$$k$3$H(B
+・portmasterが起動出来ること
+・ORCAというデータベースが存在していること
 
     $ psql < adrs.create
 
-  $BE,Ev$K%G!<%?$r:n$C$F$*$/!#(B
+  適当にデータを作っておく。
 
     $ psql ORCA
     ORCA=>insert into adrs values('ogochan1','070-xxxx-7514','ogochan');
@@ -17,106 +17,106 @@
     ORCA=>insert into adrs values('ogochan3','070-xxxx-7514','ogochan');
     ORCA=>\q
 
-(1) panda$B$r(Bbuild$B$9$k(B
+(1) pandaをbuildする
 
 	$ ./configure --with-opencobol --with-dotcobol --with-postgres
 	$ make
 
-(2) $BG'>Z%5!<%P$r5/F0$9$k(B
+(2) 認証サーバを起動する
 
 	$ cd ./auth
 	$  ./glauth &
 
-	$B$"$i$+$8$a!"(Bgluseradd$B$G%Q%9%o!<%I%U%!%$%k$O:n$C$F$*$/$3$H(B
+	あらかじめ、gluseraddでパスワードファイルは作っておくこと
 
-(3) $B%"%W%j%5!<%P$r5/F0$9$k(B
+(3) アプリサーバを起動する
 
 	$ export APS_HANDLER_LOAD_PATH=.:~/panda/aps/.libs/
 	$ cd ./samples/sample2
 	$ ../aps/aps -db ORCA sample
 
-	OpenCOBOL$B$r;H$&>l9g$K$O!"%"%W%j%5!<%P$r5/F0$9$kA0$K!"(B
+	OpenCOBOLを使う場合には、アプリサーバを起動する前に、
 
 	$ export COB_LIBRARY_PATH=.:../aps/.libs/
 
-	$B$N$h$&$K$7$F!"(BOpenCOBOL$B$N(Bdynamic loading path$B$r;XDj$7$F$*$/$3$H(B
+	のようにして、OpenCOBOLのdynamic loading pathを指定しておくこと
 
-(4) WFC$B$r5/F0$9$k(B
+(4) WFCを起動する
 
 	$ cd ./samples/sample2
 	$ ~/panda/wfc/wfc
 
-	(3) (4)$B$r0l5$$K!"(B
+	(3) (4)を一気に、
 
 	$ export COB_LIBRARY_PATH=.:../../aps/.libs/ ; ~/panda/tools/monitor -ApsPath ~/panda/aps/aps -WfcPath ~/panda/wfc/wfc -dir ~/panda/samples/sample1/directory
 
-	$B$N$h$&$K5/F0$9$k$3$H$b=PMh$^$9(B
+	のように起動することも出来ます
 
-(5) pgserver$B$r5/F0$9$k(B
+(5) pgserverを起動する
 
 	$ export MONPS_LOAD_PATH=.:~/panda/libs/.libs/
 	$ cd ./samples/sample2
 	$ ~/panda/pgserver/pgserver
 
-(6) $B%F%9%H%W%m%0%i%`$r5/F0$9$k(B
+(6) テストプログラムを起動する
 
 	$ ruby ~/panda/pgserver/montest.rb
 
-2. $B4D6-$N@bL@(B
+2. 環境の説明
 
-(1) $B%=!<%9(B
+(1) ソース
 
-  $B%G%b$N%=!<%9$O!"(B./samples/sample2$B$K$"$j$^$9!#$3$N%G%b$G$O(B
+  デモのソースは、./samples/sample2にあります。このデモでは
 
 	SAMPLE1.CBL
 
-  $B$N%W%m%0%i%`$r;H$$$^$9!#$=$NB>$K(BdotCOBOL$B$N>l9g$O(B
+  のプログラムを使います。その他にdotCOBOLの場合は
 
 	MCPMAIN.CBL
 	MCPSUB.CBL
 
-  $B$r;H$$$^$9!#(B
+  を使います。
 
-  COPY$B6g$OE,Ev$K8+$F2<$5$$!#%3%s%Q%$%k$9$k$K$O!"(B./samples/sample2$B$K$F(B
+  COPY句は適当に見て下さい。コンパイルするには、./samples/sample2にて
 
 	$ make all
 
-$B$HBG$F$P(BCOPY$B6g$b4^$a$FA4$F$N%U%!%$%k$,@8@.$5$l$^$9!#$^$?!"(B
+と打てばCOPY句も含めて全てのファイルが生成されます。また、
 
 	$ make -f Makefile.OC all
 
-$B$HBG$F$P(BOpenCOBOL$B$N%3!<%I$r@8@.$7$^$9(B
+と打てばOpenCOBOLのコードを生成します
 
-  COBOL$B%W%m%0%i%`$O!"(BEUC$B%3!<%I$GJ]B8$5$l$kI,MW$,$"$j$^$9!#J8;z$,2=$1$k;~(B
-$B$OJ8;z%3!<%I$rD4$Y$F$_$^$9!#(B
+  COBOLプログラムは、EUCコードで保存される必要があります。文字が化ける時
+は文字コードを調べてみます。
 
-(2) $B%l%3!<%IDj5A%U%!%$%k(B
+(2) レコード定義ファイル
 
 	adrs.db
 	metadb.db
 
-(3) $B5/F0%Q%i%a!<%?(B
+(3) 起動パラメータ
 
-  $B5/F0%Q%i%a!<%?$r8+$k$K$O!"3F%W%m%0%i%`$r(B-?$B$H$$$&%Q%i%a!<%?$r;XDj$7$F5/(B
-$BF0$7$F2<$5$$!#@_Dj$5$l$F$$$k%Q%i%a!<%?$rI=<($7$F=*N;$7$^$9!#(B
+  起動パラメータを見るには、各プログラムを-?というパラメータを指定して起
+動して下さい。設定されているパラメータを表示して終了します。
 
-(4) $B4D6-JQ?t(B
+(4) 環境変数
 
 APS_HANDLER_LOAD_PATH
 
-	   APS$B8@8l%O%s%I%i$N$"$k>l=j$r;XDj$7$^$9!#8@8l%O%s%I%i$N3HD%;R$O(B.so
-	$B$G$9!#(B
+	   APS言語ハンドラのある場所を指定します。言語ハンドラの拡張子は.so
+	です。
 
 MONPS_LOAD_PATH
 
-	  glserver$B$N%"%W%j%1!<%7%g%s%b%8%e!<%k$N$"$k>l=j$r;XDj$7$^$9!#(Bwfc
-	$B$K%$%s%?!<%U%'%$%9$9$k%b%8%e!<%k$O(Bpanda$B$H$$$&L>>N$J$N$G!"(Bpanda.so
-	$B$N$"$k>l=j$r;XDj$7$^$9!#(B
+	  glserverのアプリケーションモジュールのある場所を指定します。wfc
+	にインターフェイスするモジュールはpandaという名称なので、panda.so
+	のある場所を指定します。
 
 COB_LIBRARY_PATH
 
-	  OpenCOBOL$B$G=q$+$l$?%"%W%j%1!<%7%g%s$NB8:_$9$k>l=j$r;XDj$7$^$9!#(B
+	  OpenCOBOLで書かれたアプリケーションの存在する場所を指定します。
 
-3. $B%G%b$NFbMF(B
+3. デモの内容
 
-  DEMO2$B$G9T$C$?$3$H$r%W%m%0%i%`$+$i9T$$$^$9!#(B
+  DEMO2で行ったことをプログラムから行います。

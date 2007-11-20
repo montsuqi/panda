@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -282,13 +282,13 @@ static	void
 DumpRecord(
 	RecordStruct	*db)
 {
-dbgmsg(">DumpRecord");
+ENTER_FUNC;
 	DumpDB(db->opt.db);
 	nTab = 2;
 	printf("\t\t%s\t",db->name);
 	DumpItems(2,db->value);
 	printf(";\n");
-dbgmsg("<DumpRecord");
+LEAVE_FUNC;
 }
 
 static	void
@@ -488,20 +488,20 @@ dbgmsg("<DumpDirectory");
 
 static	ARG_TABLE	option[] = {
 	{	"ld",		BOOLEAN,	TRUE,		(void*)&fLD,
-		"LD¾ðÊó¤ò½ÐÎÏ¤¹¤ë"								},
+		"LDæƒ…å ±ã‚’å‡ºåŠ›ã™ã‚‹"								},
 	{	"bd",		BOOLEAN,	TRUE,		(void*)&fBD,
-		"BD¾ðÊó¤ò½ÐÎÏ¤¹¤ë"								},
+		"BDæƒ…å ±ã‚’å‡ºåŠ›ã™ã‚‹"								},
 	{	"dbd",		BOOLEAN,	TRUE,		(void*)&fDBD,
-		"DBD¾ðÊó¤ò½ÐÎÏ¤¹¤ë"								},
+		"DBDæƒ…å ±ã‚’å‡ºåŠ›ã™ã‚‹"								},
 	{	"dbg",		BOOLEAN,	TRUE,		(void*)&fDBG,
-		"DB group¾ðÊó¤ò½ÐÎÏ¤¹¤ë"						},
+		"DB groupæƒ…å ±ã‚’å‡ºåŠ›ã™ã‚‹"						},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"¥Ç¥£¥ì¥¯¥È¥ê¥Õ¥¡¥¤¥ë"	 						},
+		"ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒªãƒ•ã‚¡ã‚¤ãƒ«"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"¥ì¥³¡¼¥É¤Î¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê"					},
+		"ãƒ¬ã‚³ãƒ¼ãƒ‰ã®ã‚ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"					},
 	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
-		"ÄêµÁ³ÊÇ¼¥Ç¥£¥ì¥¯¥È¥ê"		 					},
+		"å®šç¾©æ ¼ç´ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"		 					},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -526,7 +526,7 @@ main(
 	FILE_LIST	*fl;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("checkdir",NULL);
 
 	DumpDirectory();

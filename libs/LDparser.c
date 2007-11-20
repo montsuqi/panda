@@ -114,6 +114,9 @@ ENTER_FUNC;
 				if		(  ( rec2 = ReadRecordDefine(fname) )  !=  NULL  ) {
 					g_hash_table_insert(Records,rec2->name,rec2);
 					InitializeValue(rec2->value);
+				} else {
+					Error("window record not found [%s].",wname);
+					rec = NULL;
 				}
 			}
 			if		(  iname  ==  NULL  ) {
@@ -129,6 +132,7 @@ ENTER_FUNC;
 		}
 	} else {
 		rec = NULL;
+		Warning("window name is null.");
 	}
 LEAVE_FUNC;
 	return	(rec);
@@ -225,6 +229,7 @@ ENTER_FUNC;
 		if		(  GetSymbol  !=  ';'  ) {
 			ParError("DB ; missing");
 		}
+		ERROR_BREAK;
 	}
 	xfree(gname);
 LEAVE_FUNC;
@@ -263,6 +268,7 @@ ENTER_FUNC;
 			if		(  GetSymbol  !=  ';'  ) {
 				ParError("DATA ; missing");
 			}
+			ERROR_BREAK;
 		}
 	} else {
 		ParError("DATA syntax error");
@@ -436,6 +442,7 @@ ENTER_FUNC;
 		if		(  GetSymbol  !=  ';'  ) {
 			ParErrorPrintf("missing ;(semicolon).\n");
 		}
+		ERROR_BREAK;
 	}
     if (ret->name == NULL) {
         ParError("name directive is required");

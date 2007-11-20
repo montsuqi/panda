@@ -1,70 +1,70 @@
-SSL, X509$B%G%b$K$D$$$F(B
+SSL, X509デモについて
 
-1. $BF0$+$7J}(B
+1. 動かし方
 
-(1) panda$B$r(Bbuild$B$9$k(B
+(1) pandaをbuildする
 
 	$ ./configure --with-ssl
 	$ make
 
-(2) $BG'>Z%5!<%P$r5/F0$9$k(B
+(2) 認証サーバを起動する
 
 	$ cd ./auth
 	$  ./glauth &
 
-	$B$"$i$+$8$a!"(Bgluseradd$B$G%Q%9%o!<%I%U%!%$%k$O:n$C$F$*$/$3$H(B
+	あらかじめ、gluseraddでパスワードファイルは作っておくこと
 
-(3) glserver$B$r5/F0$9$k(B
+(3) glserverを起動する
 
 	$ export MONPS_LOAD_PATH=.:~/panda/libs/.libs/
 	$ cd ./samples/sample1
 	$ ~/panda/glserver/glserver -ssl -key key.pem -cert cert.pem
 
-(6) glclient$B$r5/F0$9$k(B
+(6) glclientを起動する
 
 	$ cd ~/panda/glclient
-	$ ./glclient -style testrc -ssl -pass $B%Q%9%o!<%I(B
+	$ ./glclient -style testrc -ssl -pass パスワード
 
-$B$^$?$O(B
+または
 
 	$ cd ~/panda/glclient
-	$ ./glclient -style testrc -ssl -pass $B%Q%9%o!<%I(B -key ~/panda/samples/sample1/key.pem -cert ~/panda/samples/sample1/cert.pem
+	$ ./glclient -style testrc -ssl -pass パスワード -key ~/panda/samples/sample1/key.pem -cert ~/panda/samples/sample1/cert.pem
 	
 
-2. $B4D6-$N@bL@(B
+2. 環境の説明
 
-(1) $B2hLL%U%!%$%k(B
+(1) 画面ファイル
 
-  $B2hLL%U%!%$%k$O!"(B./samples/sample1$B$K$"$j$^$9!#$3$N%G%b$G$O!"(B
+  画面ファイルは、./samples/sample1にあります。このデモでは、
 
 	project1.glade
 	project2.glade
 	project3.glade
 	project5.glade
 
-  $B$r;H$$$^$9!#(B
+  を使います。
 
-(3) $B%l%3!<%IDj5A%U%!%$%k(B
+(3) レコード定義ファイル
 
-  $B%W%m%;%94V$N%G!<%?$N$d$j$H$j$d=hM}$r5,Dj$9$k$?$a$K!"DL?.%l%3!<%IDj5A(B
-$B$r9T$$$^$9!#$3$N%G%bMQ$N$b$N$O!"(B./samples/sample1$B$K$"$j$^$9!#$3$N%G%b$G$O!"(B
+  プロセス間のデータのやりとりや処理を規定するために、通信レコード定義
+を行います。このデモ用のものは、./samples/sample1にあります。このデモでは、
 
 	project1.rec
 	project3.rec
 	project5.rec
 
-  $B$r;H$$$^$9!#(B
+  を使います。
 
-(4) $B5/F0%Q%i%a!<%?(B
+(4) 起動パラメータ
 
-  $B5/F0%Q%i%a!<%?$r8+$k$K$O!"3F%W%m%0%i%`$r(B-?$B$H$$$&%Q%i%a!<%?$r;XDj$7$F5/(B
-$BF0$7$F2<$5$$!#@_Dj$5$l$F$$$k%Q%i%a!<%?$rI=<($7$F=*N;$7$^$9!#(B
+  起動パラメータを見るには、各プログラムを-?というパラメータを指定して起
+動して下さい。設定されているパラメータを表示して終了します。
 
-(5) $B4D6-JQ?t(B
+(5) 環境変数
 
 MONPS_LOAD_PATH
 
-	  glserver$B$N%"%W%j%1!<%7%g%s%b%8%e!<%k$N$"$k>l=j$r;XDj$7$^$9!#(Bwfc
-	$B$K%$%s%?!<%U%'%$%9$9$k%b%8%e!<%k$O(Bpanda$B$H$$$&L>>N$J$N$G!"(Bpanda.so
-	$B$N$"$k>l=j$r;XDj$7$^$9!#(B
+	  glserverのアプリケーションモジュールのある場所を指定します。wfc
+	にインターフェイスするモジュールはpandaという名称なので、panda.so
+	のある場所を指定します。
 

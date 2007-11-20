@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,6 +49,7 @@
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"auth.h"
 #include	"authstub.h"
 #include	"applications.h"
 #include	"driver.h"
@@ -83,9 +84,9 @@ ENTER_FUNC;
 	GL_SendPacketClass(fpComm,GL_QueryScreen,fFeatureNetwork);
 	ON_IO_ERROR(fpComm,badio);
 	GL_SendString(fpComm,name,fFeatureNetwork);			ON_IO_ERROR(fpComm,badio);
-	GL_SendLong(fpComm,(long)stsize,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-	GL_SendLong(fpComm,(long)stmtime,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-	GL_SendLong(fpComm,(long)stctime,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_SendInt(fpComm,(long)stsize,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_SendInt(fpComm,(long)stmtime,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	GL_SendInt(fpComm,(long)stctime,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 	switch	(  klass = GL_RecvPacketClass(fpComm,fFeatureNetwork)  ) {
 	  case	GL_GetScreen:
 		dbgmsg("GetScreen");
@@ -131,7 +132,7 @@ ENTER_FUNC;
 		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
 			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
-			GL_SendLong(fpComm,(long)stbuf.st_size,fFeatureNetwork);
+			GL_SendInt(fpComm,(int)stbuf.st_size,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 			left = stbuf.st_size;
 			do {
@@ -328,6 +329,9 @@ ENTER_FUNC;
 	CheckScreens(fpComm,scr);
 	ret = SendScreenData(fpComm,scr);
 	if		(  !ret  ) {
+		if		( scr->window  !=  NULL  )	{
+			Warning("SendScreen [%s] failed.", scr->window);
+		}
 		Warning("SendScreenData invalid");
 	}
 LEAVE_FUNC;
@@ -355,13 +359,13 @@ ThisAuth(
         if (ret == TRUE) strcpy(user, tmp);
 	}
     else {
-		ret = AuthUser(&Auth, user, pass, other);
+		ret = AuthUser(&Auth, user, pass, other, NULL);
 	}
 
 	return	(ret);
 }
 #else
-#define	ThisAuth(fp,user,pass,other)	AuthUser(&Auth,(user),(pass),(other))
+#define	ThisAuth(fp,user,pass,other)	AuthUser(&Auth,(user),(pass),(other),NULL)
 #endif
 
 static	void
@@ -433,13 +437,18 @@ Connect(
 	char	pass[SIZE_PASS+1];
 	char	ver[SIZE_BUFF];
     Bool    auth_ok = FALSE;
-
-	Bool	rc = FALSE;
+	Bool	rc;
+ENTER_FUNC;
+	rc = FALSE;
 	GL_RecvString(fpComm, sizeof(ver), ver, FALSE);	ON_IO_ERROR(fpComm,badio);
+	dbgprintf("ver  = [%s]",ver);
 	CheckFeature(ver);
 	GL_RecvString(fpComm, sizeof(scr->user), scr->user,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	dbgprintf("user = [%s]",scr->user);
 	GL_RecvString(fpComm, sizeof(pass), pass, fFeatureNetwork);		ON_IO_ERROR(fpComm,badio);
+	dbgprintf("pass = [%s]",pass);
 	GL_RecvString(fpComm, sizeof(scr->cmd), scr->cmd, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+	dbgprintf("cmd  = [%s]",scr->cmd);
 	Message("[%s@%s] session start",scr->user, TermToHost(scr->term));
 
 	if		(  TermFeature  ==  FEATURE_NULL  ) {
@@ -453,7 +462,7 @@ Connect(
 
 	if (auth_ok){
 		Message("[%s@%s] client authenticated", scr->user,TermToHost(scr->term));
-		scr->Windows = NULL;
+		//scr->Windows = NULL;	???????????????????????????????????????????????????????
 		ApplicationsCall(APL_SESSION_LINK,scr);
 		if		(  scr->status  ==  APL_SESSION_NULL  ) {
 			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
@@ -470,6 +479,7 @@ Connect(
 		Warning("[%s@%s] reject client(authentication error)",scr->user,TermToHost(scr->term));
 	}
   badio:
+LEAVE_FUNC;
 	return (rc);
 }
 
@@ -603,6 +613,7 @@ ExecuteServer(void)
 	Port	*port;
 #ifdef	USE_SSL
 	SSL_CTX	*ctx;
+	char *ssl_warning;
 #endif
 ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
@@ -614,11 +625,14 @@ ENTER_FUNC;
 	if		(  fSsl  ) {
 		if		(  ( ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers) )
 				   ==  NULL  ) {
+			Warning(GetSSLErrorMessage());
 			Error("CTX make error");
 		}
 	    if (strcasecmp(Auth.protocol, "ssl") != 0){
             SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
         }
+		ssl_warning = GetSSLWarningMessage();
+		if 	(strlen(ssl_warning) > 0) Warning(ssl_warning);
 	}
 #endif
 	while	(TRUE)	{
@@ -636,6 +650,7 @@ ENTER_FUNC;
 				fpComm = MakeSSL_Net(ctx, fd);
 				if (StartSSLServerSession(fpComm) != TRUE){
 			        CloseNet(fpComm);
+					Warning(GetSSLErrorMessage());
                     exit(0);
                 }
 			} else {

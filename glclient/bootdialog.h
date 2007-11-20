@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Kouji TAKAO
+ * Copyright (C) 2004-2007 Kouji TAKAO
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,6 +51,11 @@ struct _BootProperty
   gchar *CApath;
   gchar *CAfile;
   gchar *ciphers;
+#ifdef USE_PKCS11
+  gboolean pkcs11;
+  gchar *pkcs11_lib;
+  gchar *slot;
+#endif
 #endif
 };
 

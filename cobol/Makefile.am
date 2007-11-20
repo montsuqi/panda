@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005  ogochan
+# Copyright (C) 2005-2007  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,4 +28,11 @@ MCPMAIN.CBL: MCPMAIN.CBL.C
 
 EXTRA_DIST =					\
 	ENUM-VALUE.C				\
-	MCPMAIN.CBL.C
+	MCPMAIN.CBL.C				\
+	MCPAREA						\
+	MCPDCSUB.CBL				\
+	MCPSUB.CBL
+
+CLEANFILES	=					\
+	ENUM-VALUE					\
+	MCPMAIN.CBL

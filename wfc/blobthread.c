@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ ENTER_FUNC;
 	RecvStringDelim(fp,SIZE_NAME,pass);		ON_IO_ERROR(fp,badio);
 	dbgprintf("user = [%s]\n",user);
 	dbgprintf("pass = [%s]\n",pass);
-	if		(  AuthUser(ThisEnv->blob->auth,user,pass,NULL)  ) {
+	if		(  AuthUser(ThisEnv->blob->auth,user,pass,NULL,NULL)  ) {
 		SendPacketClass(fp,APS_OK);
 		sprintf(msg,"[%s] Native BLOB connect",user);
 		MessageLog(msg);

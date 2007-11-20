@@ -325,10 +325,11 @@ ENTER_FUNC;
 		xfree(str);
 
 		status = 0;
-		while( waitpid(pid, &status, WNOHANG) > 0 );
+		waitpid(pid, &status, 0);
 
 		lbs = NewLBS();
-		if		(  WEXITSTATUS(status)  ==  0  ) {
+		if		(	(  WIFEXITED(status)  )
+				&&	(  WEXITSTATUS(status)  ==  0  ) ) {
 			fd = pResult[0];
 			fError = FALSE;
 			if		(	(  fHTC     )

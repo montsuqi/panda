@@ -99,6 +99,7 @@ GLOBAL	Bool		fDebug;
 GLOBAL	Bool		fJavaScriptLink;
 GLOBAL	Bool		fNoJavaScript;
 GLOBAL	Bool		fJavaScript;
+GLOBAL	Bool		fNoSession;
 GLOBAL	char		*CommandLine;
 GLOBAL	time_t		SesExpire;
 
@@ -125,10 +126,6 @@ extern	void	SetSave(char *name, Bool fSave);
 extern  void	SetFilter(char *name, byte *(*inFilter)(byte *in),
 						  byte *(*outFilter)(byte *out));
 
-extern  void	CheckSessionExpire(void);
-extern	Bool	GetSessionValues(void);
-extern	void	DeleteSessionValues(void);
-extern	Bool	PutSessionValues(void);
 extern	void	ClearValues(void);
 extern	void	WriteLargeString(FILE *output, LargeByteString *lbs, char *codeset);
 

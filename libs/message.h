@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1989-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,9 @@
 extern	void	_MessagePrintf(char *file, int line, char *format, ...);
 extern	void	_MessageLevelPrintf(int level, char *file, int line, char *format, ...);
 extern	void	_Message(int level, char *file, int line, char *msg);
+extern	void	__Message(int level, char *file, int line, char *msg);
 extern	void	InitMessage(char *id,char *fn);
+extern	void	SetMessageFunction(void (*func)(int level, char *file, int line, char *msg));
 
 #undef	GLOBAL
 #ifdef	MAIN

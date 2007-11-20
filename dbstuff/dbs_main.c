@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,6 +107,41 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+typedef	struct {
+	int		major;
+	int		minor;
+	int		micro;
+}	tVersionNumber;
+
+static	void
+ParseVersion(
+	char	*str,
+	tVersionNumber	*ver)
+{
+	ver->major = 0;
+	ver->minor = 0;
+	ver->micro = 0;
+
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		ver->major = ver->major * 10 + ( *str - '0' );
+		str ++;
+	}
+	if		(  *str  !=  0  )	str ++;
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		ver->minor = ver->minor * 10 + ( *str - '0' );
+		str ++;
+	}
+	if		(  *str  !=  0  )	str ++;
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		ver->micro = ver->micro * 10 + ( *str - '0' );
+		str ++;
+	}
+	dbgprintf("%d.%d.%d",ver->major,ver->minor,ver->micro);
+}
+
 static	SessionNode	*
 InitDBSSession(
 	NETFILE	*fpComm)
@@ -114,9 +149,9 @@ InitDBSSession(
 	SessionNode	*ses;
 	char	buff[SIZE_BUFF+1];
 	char	*pass;
-	char	*ver;
 	char	*p
 	,		*q;
+	tVersionNumber	ver;
 
 ENTER_FUNC;
 	ses = New(SessionNode);
@@ -126,7 +161,7 @@ ENTER_FUNC;
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	p = buff;
 	*(q = strchr(p,' ')) = 0;
-	ver = p;
+	ParseVersion(p,&ver);
 	p = q + 1;
 	*(q = strchr(p,' ')) = 0;
 	strcpy(ses->user,p);
@@ -143,17 +178,19 @@ ENTER_FUNC;
 		ses->type = COMM_STRINGE;
 	} else {
 	}
-	if		(  strcmp(ver,VERSION)  ) {
+	if		(	(  ver.major  !=  1  )
+			||	(	(  ver.major  ==  1  )
+				&&	(  ver.minor  <   2  ) ) ) {
 		SendStringDelim(fpComm,"Error: version\n");
-		g_warning("reject client(invalid version)");
+ 		Warning("reject client(invalid version %d.%d.%d)",ver.major, ver.minor, ver.micro);
 		xfree(ses);
 		ses = NULL;
 	} else
-	if		(  AuthUser(&Auth,ses->user,pass,NULL)  ) {
+		if		(  AuthUser(&Auth,ses->user,pass,NULL,NULL)  ) {
 		SendStringDelim(fpComm,"Connect: OK\n");
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
-		g_warning("reject client(authentication error)");
+		Warning("reject client(authentication error)");
 		xfree(ses);
 		ses = NULL;
 	}
@@ -351,16 +388,13 @@ do_String(
 	DBCOMM_CTRL	ctrl;
 	ValueStruct		*value;
 	RecordStruct	*rec;
-	PathStruct		*path;
-	DB_Operation	*op;
 	char			func[SIZE_FUNC+1]
 		,			rname[SIZE_RNAME+1]
 		,			pname[SIZE_PNAME+1];
 	char	*p
 		,	*q;
 	int		rno
-		,	pno
-		,	ono;
+		,	pno;
 
 	if		(  strncmp(input,"Exec: ",6)  ==  0  ) {
 		dbgmsg("exec");
@@ -377,37 +411,17 @@ do_String(
 				strcpy(rname,"");
 			}
 			DecodeStringURL(pname,p);
-			value = NULL;
-			if		(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
-				ctrl.rno = rno - 1;
-				rec = ThisDB[ctrl.rno];
-				value = rec->value;
-				if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
-																  pname) )  !=  0  ) {
-					ctrl.pno = pno - 1;
-					path = rec->opt.db->path[pno-1];
-					value = ( path->args != NULL ) ? path->args : value;
-					if		(  ( ono = (int)(long)g_hash_table_lookup(path->opHash,func) )  !=  0  )	{
-						op = path->ops[ono-1];
-						value = ( op->args != NULL ) ? op->args : value;
-					}
-				} else {
-					ctrl.pno = 0;
-				}
-			} else {
-				ctrl.rno = 0;
-				rec = NULL;
-			}
+			rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
 		} else {
 			DecodeStringURL(func,p);
 			ctrl.rno = 0;
 			ctrl.pno = 0;
+			ctrl.rc = 0;
+			strcpy(ctrl.func,func);
 			rec = NULL;
 			value = NULL;
 		}
-		strcpy(ctrl.func,func);
 		RecvData(fpComm,value);
-		ctrl.rc = 0;
 		ExecDB_Process(&ctrl,rec,value);
 		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
 		WriteClientString(fpComm,fType,&ctrl,value);
@@ -521,37 +535,37 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"�ݡ����ֹ�"	 								},
+		"ポート番号"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"��³�Ԥ����塼�ο�" 							},
+		"接続待ちキューの数" 							},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"�Ķ��Υ١����ǥ��쥯�ȥ�"		 				},
+		"環境のベースディレクトリ"		 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"�ǡ��������Ǽ�ǥ��쥯�ȥ�"	 				},
+		"データ定義格納ディレクトリ"	 				},
 	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
-		"�����Ǽ�ǥ��쥯�ȥ�"			 				},
+		"定義格納ディレクトリ"			 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"�ǥ��쥯�ȥ�ե�����"	 						},
+		"ディレクトリファイル"	 						},
 
 	{	"dbhost",	STRING,		TRUE,	(void*)&DB_Host,
-		"�ǡ����١�����Ư�ۥ���̾"						},
+		"データベース稼働ホスト名"						},
 	{	"dbport",	STRING,		TRUE,	(void*)&DB_Port,
-		"�ǡ����١����Ե��ݡ����ֹ�"					},
+		"データベース待機ポート番号"					},
 	{	"db",		STRING,		TRUE,	(void*)&DB_Name,
-		"�ǡ����١���̾"								},
+		"データベース名"								},
 	{	"dbuser",	STRING,		TRUE,	(void*)&DB_User,
-		"�ǡ����١����Υ桼��̾"						},
+		"データベースのユーザ名"						},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
-		"�ǡ����١����Υѥ����"						},
+		"データベースのパスワード"						},
 
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
-		"ǧ�ڥ�����"			 						},
+		"認証サーバ"			 						},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirector�ε�ư������å����ʤ�"			},
+		"dbredirectorの起動をチェックしない"			},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
-		"dbredirector��Ȥ�ʤ�"						},
+		"dbredirectorを使わない"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -589,7 +603,7 @@ main(
 	(void)signal(SIGCHLD,SIG_IGN);
 	(void)signal(SIGHUP,(void *)StopProcess);
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("dbs",NULL);
 
 	ParseURL(&Auth,AuthURL,"file");
@@ -603,7 +617,7 @@ main(
 		rc = 0;
 	} else {
 		rc = -1;
-		fprintf(stderr,"DBD̾�����ꤵ��Ƥ��ޤ���\n");
+		fprintf(stderr,"DBD名が指定されていません\n");
 	}
 	exit(rc);
 }

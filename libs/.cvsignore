@@ -6,6 +6,7 @@
 Makefile
 Makefile.in
 enum
+enum.h
 libpanda.la
 testnet
 testblob

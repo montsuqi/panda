@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -131,6 +131,8 @@ static	ARG_TABLE	option[] = {
 		"データ定義格納ディレクトリ"	 				},
 	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
 		"定義格納ディレクトリ"			 				},
+	{	"bddir",	STRING,		TRUE,	(void*)&D_Dir,
+		"定義格納ディレクトリ(互換用)"	 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"ディレクトリファイル"	 						},
 	{	"path",		STRING,		TRUE,	(void*)&LibPath,
@@ -191,7 +193,7 @@ main(
 	int		rc;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("dbstub",NULL);
 	InitNET();
 

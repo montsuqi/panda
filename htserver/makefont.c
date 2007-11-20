@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2006 Ogochan.
+ * Copyright (C) 2006-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-#ifdef	HAVE_GD
 
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	"const.h"
+#ifdef	HAVE_GD
 #include	"libmondai.h"
 #include	"gd.h"
 #include	"option.h"
@@ -45,17 +45,17 @@ static	int		Top;
 
 static	ARG_TABLE	option[] = {
 	{	"top",		INTEGER,	TRUE,	(void*)&Top,
-		"²èÁü¤Î¹â¤µÄ´À°"								},
+		"ç”»åƒã®é«˜ã•èª¿æ•´"								},
 	{	"base",		STRING,		TRUE,	(void*)&FontBase,
-		"É¸½àÊ¸»ú¤Î¥Õ¥©¥ó¥È¥Õ¥¡¥¤¥ëÌ¾"					},
+		"æ¨™æº–æ–‡å­—ã®ãƒ•ã‚©ãƒ³ãƒˆãƒ•ã‚¡ã‚¤ãƒ«å"					},
 	{	"ext",		STRING,		TRUE,	(void*)&FontExt,
-		"³°»úÊ¸»ú¤Î¥Õ¥©¥ó¥È¥Õ¥¡¥¤¥ëÌ¾"					},
+		"å¤–å­—æ–‡å­—ã®ãƒ•ã‚©ãƒ³ãƒˆãƒ•ã‚¡ã‚¤ãƒ«å"					},
 	{	"font",		STRING,		TRUE,	(void*)&FontTemplate,
-		"¥Õ¥©¥ó¥ÈÂåÂØ¥¤¥á¡¼¥¸¥Õ¥¡¥¤¥ëÌ¾À¸À®¥Æ¥ó¥×¥ì¡¼¥È"},
+		"ãƒ•ã‚©ãƒ³ãƒˆä»£æ›¿ã‚¤ãƒ¡ãƒ¼ã‚¸ãƒ•ã‚¡ã‚¤ãƒ«åç”Ÿæˆãƒ†ãƒ³ãƒ—ãƒ¬ãƒ¼ãƒˆ"},
 	{	"fgcolor",	STRING,		TRUE,	(void*)&FG,
-		"ÉÁ²è¿§"										},
+		"æç”»è‰²"										},
 	{	"bgcolor",	STRING,		TRUE,	(void*)&BG,
-		"ÇØ·Ê¿§"										},
+		"èƒŒæ™¯è‰²"										},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -97,7 +97,7 @@ main(
 		,		*p;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	argc = 0;
 	for	( p = fl ; p != NULL ; p = p->next ) {
 		argc ++;
@@ -129,7 +129,6 @@ main(
 			font = FontExt;
 		}
 		sprintf(str,"&#%d;",code);
-printf("&#%d;\n",code);
 		gdImageStringTTF(NULL,brect,0,font,size,0.0,0,0,str);
 		x = brect[2] - brect[6];
 		y = brect[3] - brect[7] + Top;
@@ -161,4 +160,14 @@ printf("&#%d;\n",code);
 	return	(0);
 }
 
+#else
+extern	int
+main(
+	int		argc,
+	char	**argv)
+{
+	printf("not support\n");
+	exit(1);
+	return	(1);
+}
 #endif

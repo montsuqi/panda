@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Noboru Saitou
+ * Copyright (C) 2004-2007 Noboru Saitou
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,9 +32,10 @@
 #include	<fcntl.h>
 #include	<unistd.h>
 #ifdef USE_GNOME
-#    include <gnome.h>
+#   include	<gnome.h>
 #else
-#    include <gtk/gtk.h>
+#	include	<gtk/gtk.h>
+#	include	"gettext.h"
 #endif
 
 #include	"comm.h"
@@ -85,7 +86,7 @@ SaveFile(
     int		fd;
 	char	buf[SIZE_BUFF];
 
-	fd = open(filename, O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR);
+	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, S_IRUSR|S_IWUSR);
 	if (fd > 0) {
 		if ( write(fd, LBS_Body(binary), LBS_Size(binary) ) > 0){
 			close(fd);
@@ -97,11 +98,11 @@ SaveFile(
 		rc = FALSE;
 	}
 	if (rc){
-		snprintf(buf, sizeof(buf), "%s 書き込み終了", filename);
+		snprintf(buf, sizeof(buf), _("Succeeded in writing %s"), filename);
 		dialog = message_dialog(buf, rc);
 		gtk_widget_destroy (GTK_WIDGET (gtk_widget_get_toplevel(widget)));
 	} else {
-		snprintf(buf, sizeof(buf), "%s ファイルに書き込めませんでした\n %s", 
+		snprintf(buf, sizeof(buf), _("cannot write %s \n%s"), 
 				 filename, strerror(errno));
 		dialog = message_dialog(buf, rc);
 		gtk_window_set_transient_for (GTK_WINDOW (dialog),
@@ -165,9 +166,9 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 			}
 		} else {
 			dialog = question_dialog(
-					"ファイルが既に存在します。書き換えますか？",
-					(GtkSignalFunc) question_clicked, GTK_WIDGET(fs),
-					                                  GTK_WINDOW(fs));
+				_("File already exists. Rewrite?"),
+				(GtkSignalFunc) question_clicked, GTK_WIDGET(fs),
+				GTK_WINDOW(fs));
 		}
 	} else {
 		/* do nothing */

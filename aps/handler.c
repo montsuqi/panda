@@ -90,7 +90,7 @@ EnterHandlerClass(
 ENTER_FUNC;
 	if		(  ( klass = g_hash_table_lookup(HandlerClassTable,name) )  ==  NULL  ) {
 		MessageLogPrintf("%s handlerClass invoke.", name);
-		sprintf(filename,"%s.so",name);
+		sprintf(filename,"%s." SO_SUFFIX,name);
 		klass = NULL;
 		if		(  ( dlhandle = LoadFile(APS_HandlerLoadPath,filename) )  !=  NULL  ) {
 			if		(  ( finit = (void *)dlsym(dlhandle,name) )
@@ -474,13 +474,17 @@ ExecuteProcess(
 ENTER_FUNC;
 	PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
 					  compo);
+	dbgprintf("component [%s]",compo);
 	if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,compo) )
 			   !=  NULL  ) {
+		dbgprintf("calling [%s] widget [%s] event [%s]",bind->module, node->widget, node->event);
 		handler = bind->handler;
 		if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
 			CallBefore(bind,node);
-			gettimeofday(&tv,NULL);
-			ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+			if		(  fTimer  ) {
+				gettimeofday(&tv,NULL);
+				ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+			}
 			if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
 				MessageLog("application process illegular execution");
 				exit(2);
@@ -490,6 +494,8 @@ ENTER_FUNC;
 				now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
 				printf("aps %s@%s:%s process time %6ld(ms)\n",
 					   node->user,node->term,compo,(now - ever));
+				dbgprintf("aps %s@%s:%s process time %6ld(ms)\n",
+						  node->user,node->term,compo,(now - ever));
 			}
 			CallAfter(node);
 		}
@@ -621,7 +627,6 @@ StopOnlineDB(void)
 {
 ENTER_FUNC;
 	CloseDB(NULL);
-	dbgmsg("*");
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopOnlineDB,NULL);
 LEAVE_FUNC;
 }
@@ -651,6 +656,7 @@ StartBatch(
 	int		rc;
 
 ENTER_FUNC;
+	dbgprintf("calling [%s]",name);
 	if		(  ( bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		Error("%s application is not in BD.\n",name);
 	}
@@ -672,122 +678,6 @@ LEAVE_FUNC;
 /*
  *	handler misc functions
  */
-extern	void
-MakeCTRL(
-	DBCOMM_CTRL	*ctrl,
-	ValueStruct	*mcp)
-{
-	strcpy(ctrl->func,ValueStringPointer(GetItemLongName(mcp,"func")));
-	ctrl->rc = ValueInteger(GetItemLongName(mcp,"rc"));
-	ctrl->blocks = ValueInteger(GetItemLongName(mcp,"db.path.blocks"));
-	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
-	ctrl->pno = ValueInteger(GetItemLongName(mcp,"db.path.pname"));
-#ifdef	DEBUG
-	DumpDB_Node(ctrl);
-#endif
-}
-
-extern	RecordStruct	*
-MakeCTRLbyName(
-	ValueStruct		**value,
-	DBCOMM_CTRL	*rctrl,
-	char	*rname,
-	char	*pname,
-	char	*func)
-{
-	DBCOMM_CTRL		ctrl;
-	RecordStruct	*rec;
-	PathStruct		*path;
-	DB_Operation	*op;
-	int			rno
-		,		pno
-		,		ono;
-
-	ctrl.rno = 0;
-	ctrl.pno = 0;
-	ctrl.blocks = 0;
-
-	*value = NULL;
-	if		(	(  rname  !=  NULL  )
-			&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
-		ctrl.rno = rno - 1;
-		rec = ThisDB[rno-1];
-		*value = rec->value;
-		if		(	(  pname  !=  NULL  )
-				&&	(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
-														pname) )  !=  0  ) ) {
-			ctrl.pno = pno - 1;
-			path = rec->opt.db->path[pno-1];
-			*value = ( path->args != NULL ) ? path->args : *value;
-			if		(	(  func  !=  NULL  )
-					&&	( ( ono = (int)(long)g_hash_table_lookup(path->opHash,func) )  !=  0  ) ) {
-				op = path->ops[ono-1];
-				*value = ( op->args != NULL ) ? op->args : *value;
-			}
-		} else {
-			ctrl.pno = 0;
-		}
-	} else {
-		rec = NULL;
-	}
-	if		(  rctrl  !=  NULL  ) {
-		strcpy(ctrl.func,func);
-		*rctrl = ctrl;
-	}
-#ifdef	DEBUG
-	DumpDB_Node(&ctrl);
-#endif
-	return	(rec);
-}
-
-extern	void
-MakeMCP(
-	ValueStruct	*mcp,
-	DBCOMM_CTRL	*ctrl)
-{
-	strcpy(ValueStringPointer(GetItemLongName(mcp,"func")),ctrl->func);
-	ValueInteger(GetItemLongName(mcp,"rc")) = ctrl->rc;
-	ValueInteger(GetItemLongName(mcp,"db.path.blocks")) = ctrl->blocks;
-	ValueInteger(GetItemLongName(mcp,"db.path.rname")) = ctrl->rno;
-	ValueInteger(GetItemLongName(mcp,"db.path.pname")) = ctrl->pno;
-}
-
-extern	void
-DumpDB_Node(
-	DBCOMM_CTRL	*ctrl)
-{
-	printf("func   = [%s]\n",ctrl->func);
-	printf("blocks = %d\n",ctrl->blocks);
-	printf("rno    = %d\n",ctrl->rno);
-	printf("pno    = %d\n",ctrl->pno);
-}
-
-extern	RecordStruct	*
-BuildDBCTRL(void)
-{
-	RecordStruct	*rec;
-	char			name[SIZE_LONGNAME+1];
-	FILE			*fp;
-
-	sprintf(name,"/tmp/dbctrl%d.rec",(int)getpid());
-	if		(  ( fp = fopen(name,"w") )  ==  NULL  ) {
-		fprintf(stderr,"tempfile can not make.\n");
-		exit(1);
-	}
-	fprintf(fp,	"dbctrl	{");
-	fprintf(fp,		"rc int;");
-	fprintf(fp,		"func	varchar(%d);",SIZE_FUNC);
-	fprintf(fp,		"rname	varchar(%d);",SIZE_NAME);
-	fprintf(fp,		"pname	varchar(%d);",SIZE_NAME);
-	fprintf(fp,	"};");
-	fclose(fp);
-
-	rec = ParseRecordFile(name);
-	remove(name);
-
-	return	(rec);
-}
-
 extern	void
 ExpandStart(
 	char	*line,

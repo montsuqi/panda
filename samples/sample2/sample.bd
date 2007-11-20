@@ -1,6 +1,6 @@
 name	sample;
 
-HandlerPath	".:/home/ogochan/MONTSUQI/panda-current/aps/.libs";
+# HandlerPath	".:/home/ogochan/MONTSUQI/panda-current/aps/.libs";
 
 arraysize	20;
 textsize	200;
@@ -19,10 +19,12 @@ handler	"RubyExec"	{
 	encoding	"URL";
 };
 
+home	"=/sample2";
+
 # bind <module name> <hander name> ;
 
 #bind	"SAMPLEB"		"dotCOBOL";
-#bind	"SAMPLEB"		"OpenCOBOL";
+bind	"SAMPLEB"		"OpenCOBOL";
 #bind	"say"			"OpenCOBOL";
 #bind	"sampleb"		"OpenCOBOL";
 #bind	"SAMPLEB"		"Ruby";

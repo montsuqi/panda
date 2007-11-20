@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
  */
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -64,7 +64,7 @@ ENTER_FUNC;
 			if		(  *name  !=  '.'  ) {
 				if		(  ( p = strchr(name,'.') )  !=  NULL  ) {
 					*p = 0;
-					if		(  ( use = g_hash_table_lookup(rec->opt.db->use,name) )
+					if		(  ( use = g_hash_table_lookup(RecordDB(rec)->use,name) )
 							   !=  NULL  ) {
 						val = GetItemLongName(use->value,p+1);
 					} else {
@@ -222,6 +222,7 @@ ENTER_FUNC;
 					  default:
 						break;
 					}
+					ERROR_BREAK;
 				}	while	(  ComToken  ==  T_SYMBOL  );
 				val = (  valp  !=  NULL  ) ? valp : valr;
 				val = (  valf  !=  NULL  ) ? valf : val;
@@ -279,6 +280,7 @@ ENTER_FUNC;
 			GetSymbol;
 			break;
 		}
+		ERROR_BREAK;
 	}
     
     if (sql->body[sql->ptr - 1] != SQL_OP_EOL) {

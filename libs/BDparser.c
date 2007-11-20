@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,7 +94,7 @@ ParDB(
 	char		*p
 	,			*q;
 
-dbgmsg(">ParDB");
+ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
@@ -130,6 +130,7 @@ dbgmsg(">ParDB");
 		if		(  GetSymbol  !=  ';'  ) {
 			ParError("DB ; missing");
 		}
+		ERROR_BREAK;
 	}
 	xfree(gname);
 LEAVE_FUNC;
@@ -253,6 +254,7 @@ ENTER_FUNC;
 		if		(  GetSymbol  !=  ';'  ) {
 			ParError("; missing");
 		}
+		ERROR_BREAK;
 	}
 dbgmsg("<ParBD");
 	return	(ret);

@@ -181,6 +181,7 @@ ENTER_FUNC;
 			fp = NULL;
 		} else {
 			dbgprintf("[%s]",window);
+			dbgprintf("[%p %p]",ThisScreen, ThisScreen->Records);
 			if		(  ( rec = GetWindowRecord(window) )  !=  NULL  ) {
 				_SendTermServer(fp,window,"","",rec->value);
 			} else {

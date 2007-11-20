@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1991-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,8 +38,10 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<ctype.h>
+#include	"config.h"
 #include	"types.h"
 #include	"option.h"
+#include	"gettext.h"
 
 #define	MAX_LINE 8192
 
@@ -116,7 +118,7 @@ SetVar(
 	      *(Bool *)option->var = FALSE; /* TRUE;*/
 		} else {
 			if		(  *arg  ==  '-'  )	{
-		*(Bool *)option->var = TRUE; /* FALSE;*/
+				*(Bool *)option->var = TRUE; /* FALSE;*/
 			} else {
 				*(Bool *)option->var = 
 				  ( *(Bool *)option->var == TRUE ) ? FALSE : TRUE;
@@ -214,12 +216,21 @@ AnalizeLine(
 extern	void
 PrintUsage(
 	ARG_TABLE	*tbl,
-	char		*comment)
+	char		*comment,
+	char		*help)
 {	int		i;
+
+#if	1
+	bindtextdomain(PACKAGE, LOCALEDIR);
+#endif
 
 	printf("%s\n",comment);
 	for ( i = 0 ; tbl[i].option != NULL ; i++ )	{
+#if	1
+  		printf( "  -%-12s : %-40s", tbl[i].option, _d(tbl[i].message) );
+#else
 		printf( "  -%-12s : %-40s", tbl[i].option, tbl[i].message );
+#endif
 		if		(  tbl[i].defval  )	{
 			printf("\t[");
 			PrintVar(tbl[i]);
@@ -227,13 +238,17 @@ PrintUsage(
 		}
 		printf("\n");	
 	}
+	if		(  help  !=  NULL  ) {
+		printf("%s",help);
+	}
 }
 
 extern	FILE_LIST	*
 GetOption(
 	ARG_TABLE	*tbl,
 	int			argc,
-	char		**argv)
+	char		**argv,
+	char		*help)
 {	int		c;
 	char	*p
 	,		*q
@@ -289,12 +304,13 @@ GetOption(
 			} else
 			if		(  *p  ==  COMMAND_SWITCH  )	{
 				LastArg = NULL;
-				p ++;
+				while	(  *p  ==  COMMAND_SWITCH  )
+					p ++;
 				if		(	(  !strcmp(p,"?")  )
 						||	(  !strcmp(p,"h")  )
 						||	(  !strcmp(p,"H")  ) ) {
-					sprintf(buff,"USAGE:%s <option(s)> files...",cmd);
-					PrintUsage(tbl,buff);
+					sprintf(buff,"USAGE:%s <option(s)> arguments...",cmd);
+					PrintUsage(tbl,buff,help);
 					exit(0);
 				} else {
 					isParam = AnalizeLine(tbl,p);

@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2006 ogochan
+# Copyright (C) 2005-2007 ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,19 +40,19 @@ dbs_LDADD 		=						\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						
 
-INCLUDES 			= 		\
-	-I$(top_srcdir)			\
-	-I$(top_srcdir)/include	\
-	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/blob	\
-	-I$(top_srcdir)/dblib	\
-	$(POSTGRES_CFLAGS)		\
-	$(SSL_CFLAGS)			\
-	$(MONDAI_CFLAGS)		\
+INCLUDES 			= 					\
+	-I$(top_builddir)					\
+	-I$(top_builddir)/include			\
+	-I$(top_builddir)/libs				\
+	-I$(top_builddir)/blob				\
+	-I$(top_builddir)/dblib				\
+	$(POSTGRES_CFLAGS)					\
+	$(SSL_CFLAGS)						\
+	$(MONDAI_CFLAGS)					\
 	$(GLIB_CFLAGS)
 
 dbs_LDFLAGS	=	-export-dynamic
-dbs_SOURCES	=	\
+dbs_SOURCES	=							\
 	dbs_main.c	dbs_main.h
 
 dbs_DEPENDENCIES	=					\
@@ -71,3 +71,6 @@ dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a
 
+EXTRA_DIST = 							\
+	dbslib.rb							\
+	testdbs.rb

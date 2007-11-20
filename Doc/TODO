@@ -1,100 +1,100 @@
-TODO$B$H%"%$%G%#%"(B
+TODOとアイディア
 
-$B""%(%i!<(B
+□エラー
 
-	glclient$B$,(Bwidget$B$N%G!<%?$NB7$$$,0-$$$H0[>o=*N;$9$k$i$7$$(B(PandaCList$BEy(B)
+	glclientがwidgetのデータの揃いが悪いと異常終了するらしい(PandaCList等)
 
-	aps$B$N%-%c%C%7%e$N@)8f$,$*$+$7$$(B(expire$B$9$Y$-;~$K$7$J$+$C$?$j!"=i4|2=0[>o$,$"$k(B)
+	apsのキャッシュの制御がおかしい(expireすべき時にしなかったり、初期化異常がある)
 
-$B""%F%9%HCf(B
+□テスト中
 
-	LD$B$^$?$.$N%]%C%W%"%C%W(B
+	LDまたぎのポップアップ
 
-	glade$B%U%!%$%k$N=$@5$K$D$$$F(B
-    	rec$B%U%!%$%k$G@k8@$7$F$$$k%&%#%8%'%C%H$r:o=|$9$k$H2hLL$,I=<($5$l$J$/$J$k!#(B
+	gladeファイルの修正について
+    	recファイルで宣言しているウィジェットを削除すると画面が表示されなくなる。
 
-	head$B$G%]%$%s%?$NF'$_30$7$,$"$k$h$&$@(B
+	headでポインタの踏み外しがあるようだ
 
-$B""%i!<%8%*%V%8%'%/%H$N<BAu$K$D$$$F(B
+□ラージオブジェクトの実装について
 
-	  $B%i!<%8%*%V%8%'%/%H$O!"(Bpanda$BFb$G$O(BMonObject$B$G07$&$,!"(BPLserver$BFb$G(B
-	binary$B$KJQ49$9$k!#>-MhE*$K$O(BPLclient$B$G$N%*%s%G%^%s%IE>Aw$b2DG=$K$9(B
-	$B$k$,!"(BVer 1.x$B7O$G$O<B8=$7$J$$!#(B
+	  ラージオブジェクトは、panda内ではMonObjectで扱うが、PLserver内で
+	binaryに変換する。将来的にはPLclientでのオンデマンド転送も可能にす
+	るが、Ver 1.x系では実現しない。
 
-$B""%G!<%?%Y!<%9%O%s%I%iDI2C(B
+□データベースハンドラ追加
 
 	full text search
 	native XML database
 
-$B""(Blibmonpic$BFb$N=hM}$N2~NI(B($BL$<BAu(B)
+□libmonpic内の処理の改良(未実装)
 
-	  $B8=:_!"(Bpeer$B$N@8;`H=Dj$O>e0L%W%m%H%3%k$G(BPING-PONG$B$9$k$3$H$K$h$C$F(B
-	$B9T$C$F$$$k!#$3$l$r(Blibmonpic$B$NCf$G9T$&$h$&$K$9$k!#(B
+	  現在、peerの生死判定は上位プロトコルでPING-PONGすることによって
+	行っている。これをlibmonpicの中で行うようにする。
 
-$B""2~NI(B
+□改良
 
-	UNIX domain socket$B$N>C5n(B
-	ValueStruct$B$N2~NI(B(NameTree)
-	$B%a%C%;!<%8%m%0$r@0Hw$9$k(B
-	mcp.dc.puttype$B$r?tCM$K$9$k(B
-	.db$B$G(Bfunction$B$H(Boperation$B$N6hJL$r$D$1$k!#(Bfunction$B$N;~$K$O%j%@%$%l%/%H$7$J$$(B
+	UNIX domain socketの消去
+	ValueStructの改良(NameTree)
+	メッセージログを整備する
+	mcp.dc.puttypeを数値にする
+	.dbでfunctionとoperationの区別をつける。functionの時にはリダイレクトしない
 
-$B""3HD%(B
+□拡張
 
-	DB$B$r<B8z%f!<%6Kh$K3+$1$k$h$&$K$9$k(B
-	$B>c32;~$N<+F0I|5l(B
-	$BB?%G!<%?%Y!<%9%(%s%8%sBP1~(B
-	$B%G!<%?8r497A<0$NCj>]2=(B
-	$BJ,;6%G!<%?%Y!<%9BP1~(B
-	$B%H%i%s%6%/%7%g%s4IM}$N2~NI(B
-	$B%H%i%s%6%/%7%g%s%m%0$N<h$jJ}$N2~NI(B($B8=>u$@$H(Bcommit$BCf$N%m%0<h$j$KLdBj$,$"$k(B)
-	$B%m%0$r%=!<%9%l%Y%k$G<hF@$9$k(B
-	dbredirector$B$K%U%!%$%k$+$i$NF~NO5!G=$r;}$?$;$k(B
-	$BC1BN%F%9%H4D6-$N:n@.(B
+	DBを実効ユーザ毎に開けるようにする
+	障害時の自動復旧
+	多データベースエンジン対応
+	データ交換形式の抽象化
+	分散データベース対応
+	トランザクション管理の改良
+	トランザクションログの取り方の改良(現状だとcommit中のログ取りに問題がある)
+	ログをソースレベルで取得する
+	dbredirectorにファイルからの入力機能を持たせる
+	単体テスト環境の作成
 
-$B"":n6HCf(B
+□作業中
 
-	web$B%$%s%?!<%U%'%$%9(B(QuestionLabor$B$GBP1~Cf(B)
-	$BB?%W%m%0%i%`8@8lBP1~(B
-	$B%m!<%I%P%i%s%9(B($B$^$@2~NI$NM>CO$"$j(B)
-	glade -> HTC$BJQ49$N2~NI(B
-	BLOB$B$r$b$C$H%^%7$J$b$N$K$9$k(B
+	webインターフェイス(QuestionLaborで対応中)
+	多プログラム言語対応
+	ロードバランス(まだ改良の余地あり)
+	glade -> HTC変換の改良
+	BLOBをもっとマシなものにする
 
-$B""40N;(B
+□完了
 
-	glade, libglade$B$N(Bfork -> MONSHA
-	termname$B$ND9$5$r8+D>$9(B($B8=>u(B36byte)[middle:04214]
-		$B8=>u$G$O!"J#?t$N%W%l%<%s%F!<%7%g%s%5!<%P$r;H$&$H!"=EJ#$9$k4m81@-$,$"$k(B
-		64byte$B$K7hDj(B($B6u$$$?$iE,Ev$K%j%6!<%V$K$9$k(B)
-	$B%H%i%U%#%C%/$N0E9f2=(B
-	$BG'>Z6IBP1~(B
-	lib$B$N@0M}(B
-	glserver$B$N%W%m%;%9$,;D$kLdBj(B[middle:3484]
-	$BDL?.$N:GE,2=(B
-	aps$BC<Kv%-%c%C%7%e(B
-	$BJ#?t2hLL$N(BPUT
-	$B$h$j%m%P%9%H$K$9$k(B($B2hLLL>$r4V0c$($k$H(Bwfc$B$4$HMn$A$k(B)
-	$B9q:]2=(B
-	C$B%O%s%I%i(B($B3HD%Cf(B)
-	Ruby$B%O%s%I%i(B($BA0ED7/$,3HD%Cf(B)
+	glade, libgladeのfork -> MONSHA
+	termnameの長さを見直す(現状36byte)[middle:04214]
+		現状では、複数のプレゼンテーションサーバを使うと、重複する危険性がある
+		64byteに決定(空いたら適当にリザーブにする)
+	トラフィックの暗号化
+	認証局対応
+	libの整理
+	glserverのプロセスが残る問題[middle:3484]
+	通信の最適化
+	aps端末キャッシュ
+	複数画面のPUT
+	よりロバストにする(画面名を間違えるとwfcごと落ちる)
+	国際化
+	Cハンドラ(拡張中)
+	Rubyハンドラ(前田君が拡張中)
 	DBRuby
-	dbcode$B$N%5%$%:$N@)8B$r$J$/$9(B($BA0ED7/$,$d$C$?(B)
-	binary$B$N%O%s%I%j%s%0(B
-	net.c$B$N8zN(2=(B($B$G$-$k8B$j%P%C%U%!%j%s%0$9$k(B)
-	Web$B%/%i%$%"%s%H$N%9%Z!<%9$NI=<($K$D$$$F(B
-		$B%W%m%0%i%`$G%9%Z!<%9$rI=<($9$k$h$&@_Dj$9$k$,I=<($5$l$J$$!#(B
-	Web$B%/%i%$%"%s%H$N(Bnumber$B$NI=<($K$D$$$F(B
-		number$B$rI=<($9$k$H:G8e$K%4%_$,$D$$$F$/$k(B
-	$B$$$o$f$k%i!<%8%G!<%?$N=hM}(B
-	htcgen2$B$G<+F0:n@.$5$l$k(BCList$B$K$D$$$F(B
-		Web$B%/%i%$%"%s%H$G(BCList$B$NItJ,$,(B1$BNs$7$+I=<($5$l$J$$!#(B
-	$B%$%s%A%->ZL@=qBP1~(B
+	dbcodeのサイズの制限をなくす(前田君がやった)
+	binaryのハンドリング
+	net.cの効率化(できる限りバッファリングする)
+	Webクライアントのスペースの表示について
+		プログラムでスペースを表示するよう設定するが表示されない。
+	Webクライアントのnumberの表示について
+		numberを表示すると最後にゴミがついてくる
+	いわゆるラージデータの処理
+	htcgen2で自動作成されるCListについて
+		WebクライアントでCListの部分が1列しか表示されない。
 
-$B""J|CV(B
+□放置
 
-	$BI,MWEY$NDc$$(Bthread$B$r8:$i$9(B
-	termthread$B$rHs%9%l%C%I2=$9$k(B
+	インチキ証明書対応
+	必要度の低いthreadを減らす
+	termthreadを非スレッド化する
 
-	ipv4$B%"%I%l%9$N%(%s%3!<%I$,F10l$K$J$C$F$7$^$&(B[middle:04214]
-		--with-ipv6$B$N;~$K(BIPv4$B$G@\B3$9$k$H!"%"%I%l%9$,F1$8$K$J$k(B($BK\Mh$O(Blibc$B$,<M1F%"%I%l%9$r4V0c$($F$$$k%P%0(B)
+	ipv4アドレスのエンコードが同一になってしまう[middle:04214]
+		--with-ipv6の時にIPv4で接続すると、アドレスが同じになる(本来はlibcが射影アドレスを間違えているバグ)
 

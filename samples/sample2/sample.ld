@@ -2,7 +2,7 @@ name	sample;
 
 # bind <window name> <hander name> <module name> ;
 
-HandlerPath	".:/home/ogochan/MONTSUQI/panda-current/aps/.libs";
+HandlerPath	".:/home/ogochan/panda/aps/.libs";
 
 home	"=/sample2";
 

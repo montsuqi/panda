@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,6 +53,7 @@ NewMessageHandler(
 {
 	MessageHandler	*handler;
 
+ENTER_FUNC;
 	handler = New(MessageHandler);
 	handler->name = StrDup(name);
 	handler->klass = (MessageHandlerClass *)klass;
@@ -64,7 +65,7 @@ NewMessageHandler(
 	handler->loadpath = NULL;
 	handler->private = NULL;
 	g_hash_table_insert(Handler,handler->name,handler);
-
+LEAVE_FUNC;
 	return	(handler);
 }
 
@@ -174,11 +175,24 @@ EnterDefaultHandler(void)
 {
 	MessageHandler	*handler;
 
+ENTER_FUNC;
 #ifdef	HAVE_OPENCOBOL
 	handler = NewMessageHandler("OpenCOBOL","OpenCOBOL");
 	handler->serialize = (ConvFuncs *)"OpenCOBOL";
 	ConvSetCodeset(handler->conv,"euc-jp");
 	handler->start = "";
+#ifdef HAVE_OPENCOBOL23
+	handler = NewMessageHandler("OpenCOBOL23","OpenCOBOL23");
+	handler->serialize = (ConvFuncs *)"OpenCOBOL23";
+ 	ConvSetCodeset(handler->conv,"euc-jp");
+	handler->start = "";
+#endif
+#ifdef HAVE_OPENCOBOL08
+	handler = NewMessageHandler("OpenCOBOL08","OpenCOBOL08");
+	handler->serialize = (ConvFuncs *)"OpenCOBOL08";
+	ConvSetCodeset(handler->conv,"euc-jp");
+	handler->start = "";
+#endif
 #endif
 	handler = NewMessageHandler("C","C");
 	handler->serialize = NULL;
@@ -189,11 +203,14 @@ EnterDefaultHandler(void)
 	handler->serialize = (ConvFuncs *)"CGI";
 	ConvSetCodeset(handler->conv,"euc-jp");
 	handler->start = "%m";
+LEAVE_FUNC;
 }
 
 extern	void
 MessageHandlerInit(void)
 {
+ENTER_FUNC;
 	Handler = NewNameHash();
 	EnterDefaultHandler();
+LEAVE_FUNC;
 }

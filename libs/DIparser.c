@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -167,6 +167,7 @@ ENTER_FUNC;
 		if		(  ComToken  !=  ';'  ) {		
 			ParError("missing ; in wfc directive");
 		}
+		ERROR_BREAK;
 	}
 LEAVE_FUNC;
 }
@@ -203,6 +204,7 @@ ENTER_FUNC;
 		if		(  ComToken  !=  ';'  ) {		
 			ParError("missing ; in control directive");
 		}
+		ERROR_BREAK;
 	}
 LEAVE_FUNC;
 }
@@ -238,7 +240,7 @@ ENTER_FUNC;
 		  case	T_AUTH:
 			switch	(GetSymbol) {
 			  case	T_SCONST:
-				auth = New(URL);
+				auth = NewURL();
 				ParseURL(auth,ComSymbol,"file");
 				if		(  !stricmp(auth->protocol,"file")  ) {
 					file = auth->file;
@@ -297,6 +299,7 @@ ENTER_FUNC;
 		if		(  ComToken  !=  ';'  ) {		
 			ParError("missing ; in blob directive");
 		}
+		ERROR_BREAK;
 	}
 LEAVE_FUNC;
 	return	(blob);
@@ -324,14 +327,13 @@ ENTER_FUNC;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
-		dbgprintf("*[%s]",ComSymbol);
 		sprintf(name,"%s/%s.ld",p,ComSymbol);
+		dbgprintf("[%s]\n",name);
 		if ( parse_ld ) {
 			ld = LD_Parser(name); 
 		} else {
 			ld = LD_DummyParser(in);
 		}
-		dbgprintf("**[%s]",ComSymbol);
 		if		(  ld !=  NULL  ) {
 			if		(  g_hash_table_lookup(ThisEnv->LD_Table,ComSymbol)
 					   !=  NULL  ) {
@@ -411,6 +413,7 @@ ENTER_FUNC;
 			}
 		}
 		p = q + 1;
+		ERROR_BREAK;
 	}	while	(	(  q   !=  NULL  )
 				&&	(  ld  ==  NULL  ) );
 	if		(  ld  ==  NULL  ) {
@@ -452,6 +455,7 @@ ENTER_FUNC;
 		  default:
 			break;
 		}
+		ERROR_BREAK;
 	}
 LEAVE_FUNC;
 }
@@ -483,6 +487,7 @@ ENTER_FUNC;
 				ParError("syntax error 2");
 			}
 		}
+		ERROR_BREAK;
 	}
 LEAVE_FUNC;
 }
@@ -545,6 +550,7 @@ ENTER_FUNC;
 		if		(  GetSymbol  !=  ';'  ) {
 			ParError("syntax error 1");
 		}
+		ERROR_BREAK;
 	}
 LEAVE_FUNC;
 }
@@ -605,6 +611,7 @@ ENTER_FUNC;
 		if		(  GetSymbol  !=  ';'  ) {
 			ParError("syntax error 1");
 		}
+		ERROR_BREAK;
 	}
 LEAVE_FUNC;
 }
@@ -699,12 +706,16 @@ ENTER_FUNC;
 			break;
 		  case	T_ENCODING:
 			if		(  GetSymbol  ==  T_SCONST  ) {
+#if	1
+				dbg->coding = StrDup(ComSymbol);
+#else
 				if		(	(  stricmp(ComSymbol,"utf8")   ==  0  )
 						||	(  stricmp(ComSymbol,"utf-8")  ==  0  ) ) {
 					dbg->coding = NULL;
 				} else {
 					dbg->coding = StrDup(ComSymbol);
 				}
+#endif
 			} else {
 				ParError("invalid logging file name");
 			}
@@ -730,6 +741,7 @@ ENTER_FUNC;
 		if		(  GetSymbol  !=  ';'  ) {
 			ParError("; not found in db_group");
 		}
+		ERROR_BREAK;
 	}
 	RegistDBG(dbg);
 LEAVE_FUNC;
@@ -818,7 +830,6 @@ BuildMcpArea(
 	p += sprintf(p,			"count	int;");
 	p += sprintf(p,			"swindow	char(%d)[%d];",SIZE_NAME,(int)stacksize);
 	p += sprintf(p,			"state		char(1)[%d];",(int)stacksize);
-	//p += sprintf(p,			"index		int[%d];",stacksize);
 	p += sprintf(p,			"pstatus	char(1);");
 	p += sprintf(p,			"pputtype 	int;");
 	p += sprintf(p,			"prc		char(1);");
@@ -845,7 +856,8 @@ ENTER_FUNC;
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
 		  case	T_NAME:
-			if		(  GetName  !=  T_SYMBOL  ) {
+			if		(	(  GetName   !=  T_SYMBOL  )
+					&&	(  ComToken  !=  T_SCONST  ) ) {
 				ParError("no name");
 			} else {
 				ThisEnv = New(DI_Struct);
@@ -884,11 +896,15 @@ ENTER_FUNC;
 			}
 			break;
 		  case	T_LINKSIZE:
+#if	1
+			ParError("this feature is obsolete. use linkage directive");
+#else
 			if		(  GetSymbol  ==  T_ICONST  ) {
 				ThisEnv->linksize = ComInt;
 			} else {
 				ParError("linksize must be integer");
 			}
+#endif
 			break;
 		  case	T_LINKAGE:
 			if		(  GetSymbol   ==  T_SYMBOL  ) {
@@ -1078,6 +1094,7 @@ ENTER_FUNC;
 		if		(  GetSymbol  !=  ';'  ) {
 			ParError("; missing");
 		}
+		ERROR_BREAK;
 	}
 	if		(  ThisEnv  !=  NULL  )	{
 		ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);

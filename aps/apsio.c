@@ -258,6 +258,7 @@ ENTER_FUNC;
 			  case	APS_MCPDATA:
 				dbgmsg("MCPDATA");
 				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+				node->tnest = (int)RecvChar(fp);	ON_IO_ERROR(fp,badio);
 				e = node->mcprec->value;
 				NativeUnPackValue(NULL,LBS_Body(buff),e);
 
@@ -291,7 +292,6 @@ ENTER_FUNC;
 				dbgmsg(">SCRDATA");
 				for	( i = 0 ; i < node->cWindow ; i ++ ) {
 					if		(  node->scrrec[i]  !=  NULL  ) {
-						dbgmsg("*");
 						RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
 						dbgprintf("rec = [%s]\n",node->scrrec[i]->name);
 						NativeUnPackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
@@ -365,9 +365,9 @@ ENTER_FUNC;
 	ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.event")));
 	ON_IO_ERROR(fp,badio);
-	SendChar(fp,node->dbstatus);
-	ON_IO_ERROR(fp,badio);
-	dbgprintf("private.pputtype = %02X",ValueInteger(GetItemLongName(e,"private.pputtype")));
+	SendChar(fp,node->dbstatus);			ON_IO_ERROR(fp,badio);
+	dbgprintf("private.pputtype = %02X",
+			  ValueInteger(GetItemLongName(e,"private.pputtype")));
 	SendInt(fp,ValueInteger(GetItemLongName(e,"private.pputtype")));
 	ON_IO_ERROR(fp,badio);
 	fEnd = FALSE; 
@@ -391,6 +391,7 @@ ENTER_FUNC;
 				RewindLBS(buff);
 			}
 			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
+			SendChar(fp,(char)node->tnest);			ON_IO_ERROR(fp,badio);
 			break;
 		  case	APS_LINKDATA:
 			dbgmsg("LINKDATA");

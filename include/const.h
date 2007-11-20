@@ -63,11 +63,16 @@
 #define	SIZE_STACK		16
 #define	SIZE_TRID		16
 #define	SIZE_SESID		16
+#define	SIZE_AUTHID		16
 #define	SIZE_ARG		255
 #define	SIZE_FUNC		16
 
 #ifndef	SIZE_LONGNAME
 #define	SIZE_LONGNAME		1024
+#endif
+
+#ifndef	SIZE_LARGE_BUFF
+#define	SIZE_LARGE_BUFF		1024*1024
 #endif
 
 #define	SIZE_DEFAULT_ARRAY_SIZE		64

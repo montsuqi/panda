@@ -20,9 +20,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -93,7 +93,7 @@ ApplicationLoad(
 ENTER_FUNC;
 	if		(  ( func = (ApplicationStruct *)g_hash_table_lookup(ApplicationTable,name) )
 			   ==  NULL  ) {
-		sprintf(filename,"%s.so",name);
+		sprintf(filename,"%s." SO_SUFFIX,name);
 		dbgprintf("MONPS_LoadPath = [%s]\n",MONPS_LoadPath);
 		if		(  ( handle = LoadFile(MONPS_LoadPath,filename) )  !=  NULL  ) {
 			sprintf(funcname,"%sInit",name);

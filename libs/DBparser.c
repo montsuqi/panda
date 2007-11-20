@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,6 +130,7 @@ ENTER_FUNC;
 		ret[rcount] = name;
 		ret[rcount+1] = NULL;
 		rcount ++;
+		ERROR_BREAK;
 	}
 	if		(  ComToken  !=  '}'  ) {
 		ParError("} not found");
@@ -147,7 +148,7 @@ ParKey(
 	KeyStruct	*skey;
 
 ENTER_FUNC;
-	db = rec->opt.db;
+	db = RecordDB(rec);
 	skey = New(KeyStruct);
 	skey->item = ParKeyItem(in,rec->value);
 	db->pkey = skey;
@@ -236,8 +237,8 @@ EnterUse(
 	char			*name,
 	RecordStruct	*rec)
 {
-	if		(  g_hash_table_lookup(root->opt.db->use,name)  ==  NULL  ) {
-		g_hash_table_insert(root->opt.db->use,name,rec);
+	if		(  g_hash_table_lookup(RecordDB(root)->use,name)  ==  NULL  ) {
+		g_hash_table_insert(RecordDB(root)->use,name,rec);
 	}
 }
 
@@ -279,7 +280,6 @@ ENTER_FUNC;
 	scr = NewLBS();
 	pc = 1;
 	while	(  ( c = SCRIPT_Lex(in) )  !=  EOF ) {
-		//printf("%c",c);
 		fTop = FALSE;
 		switch	(c) {
 		  case	'{':
@@ -313,7 +313,7 @@ ParScript(
 	ValueStruct		*argf)
 {
 	LargeByteString	*ret;
-	DB_Struct		*db = rec->opt.db;
+	DB_Struct		*db = RecordDB(rec);
 
 ENTER_FUNC;
 	if		(  db->dbg  ==  NULL  ) {
@@ -410,18 +410,18 @@ ParPath(
 	char			name[SIZE_SYMBOL+1];
 
 ENTER_FUNC;
-	pcount = rec->opt.db->pcount;
+	pcount = RecordDB(rec)->pcount;
 	paths = (PathStruct **)xmalloc(sizeof(PathStruct *) * (pcount + 1));
 	if		(  pcount  >  0  ) {
-		memcpy(paths,rec->opt.db->path,(sizeof(PathStruct *) * pcount));
-		xfree(rec->opt.db->path);
+		memcpy(paths,RecordDB(rec)->path,(sizeof(PathStruct *) * pcount));
+		xfree(RecordDB(rec)->path);
 	}
 	path = InitPathStruct();
 	paths[pcount] = path;
 	path->name = StrDup(ComSymbol);
-	g_hash_table_insert(rec->opt.db->paths,path->name,(void *)((long)pcount+1));
-	rec->opt.db->pcount ++;
-	rec->opt.db->path = paths;
+	g_hash_table_insert(RecordDB(rec)->paths,path->name,(void *)((long)pcount+1));
+	RecordDB(rec)->pcount ++;
+	RecordDB(rec)->path = paths;
 	if		(  GetSymbol  ==  '('  ) {
 		path->args = NewValue(GL_TYPE_RECORD);
 		GetName;
@@ -461,6 +461,7 @@ ENTER_FUNC;
 			ParError("invalid token");
 			break;
 		}
+		ERROR_BREAK;
 	}
 	if		(  GetSymbol  !=  ';'  ) {
 		ParError("; missing");
@@ -473,7 +474,7 @@ ParDBOperation(
 	CURFILE			*in,
 	RecordStruct	*rec)
 {
-	DB_Struct	*db = rec->opt.db;
+	DB_Struct	*db = RecordDB(rec);
 	int		ix;
 	DB_Operation	**ops
 	,				*op;
@@ -530,7 +531,7 @@ ENTER_FUNC;
     }
 	if		(  !stricmp(strrchr(name,'.'),".db")  ) {
 		ret->type = RECORD_DB;
-		ret->opt.db = InitDB_Struct(gname);
+		RecordDB(ret) = InitDB_Struct(gname);
 	} else {
 		ret->type = RECORD_NULL;
 	}
@@ -559,7 +560,7 @@ ENTER_FUNC;
 		  case	T_PRIMARY:
 			if		(  ret->type  ==  RECORD_NULL  ) {
 				ret->type = RECORD_DB;
-				ret->opt.db = InitDB_Struct(gname);
+				RecordDB(ret) = InitDB_Struct(gname);
 			}
 			if		(  GetSymbol  == '{'  ) {
 				ParKey(in,ret);
@@ -591,16 +592,17 @@ ENTER_FUNC;
 			exit(1);
 			break;
 		}
+		ERROR_BREAK;
 	}
   quit:
-	if		(	(  ret->type            ==  RECORD_DB  )
-			&&	(  ret->opt.db->pcount  ==  0          ) ) {
-		ret->opt.db->path = (PathStruct **)xmalloc(sizeof(PathStruct *) * 1);
+	if		(	(  ret->type              ==  RECORD_DB  )
+			&&	(  RecordDB(ret)->pcount  ==  0          ) ) {
+		RecordDB(ret)->path = (PathStruct **)xmalloc(sizeof(PathStruct *) * 1);
 		path = InitPathStruct();
 		path->name = StrDup("primary");
-		g_hash_table_insert(ret->opt.db->paths,path->name,(void *)1);
-		ret->opt.db->pcount ++;
-		ret->opt.db->path[0] = path;
+		g_hash_table_insert(RecordDB(ret)->paths,path->name,(void *)1);
+		RecordDB(ret)->pcount ++;
+		RecordDB(ret)->path[0] = path;
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -633,7 +635,7 @@ ENTER_FUNC;
 					name = ValueAliasName(item);
 					if		(  ( p = strchr(name,'.') )  !=  NULL  ) {
 						*p = 0;
-						if		(  ( use = g_hash_table_lookup(root->opt.db->use,name) )
+						if		(  ( use = g_hash_table_lookup(RecordDB(root)->use,name) )
 								   !=  NULL  ) {
 							ValueRecordItem(val,i) = GetItemLongName(use->value,p+1);
 							xfree(name);

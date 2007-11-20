@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"DBparser.h"
-//#include	"dbgroup.h"
 #include	"dirs.h"
 #include	"const.h"
 #include	"enum.h"
@@ -72,6 +71,7 @@ PutDim(void)
 {
 	int		i;
 
+ENTER_FUNC;
 	for	( i = alevel - 1 ; i >= 0 ; i -- ) {
 		if		(  Dim[i]  ==  0  ) {
 			printf("[]");
@@ -79,6 +79,7 @@ PutDim(void)
 			printf("[%d]",Dim[i]);
 		}
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -86,6 +87,7 @@ PutItemName(void)
 {
 	int		j;
 
+ENTER_FUNC;
 	PutTab(1);
 	if		(  level  >  1  ) {
 		for	( j = 0 ; j < level - 1 ; j ++ ) {
@@ -94,6 +96,7 @@ PutItemName(void)
 	}
 	printf("%s",rname[level-1]);
 	printf("\t");
+LEAVE_FUNC;
 }
 
 static	void
@@ -101,6 +104,7 @@ PutItemNameEx(void)
 {
 	int		j;
 
+ENTER_FUNC;
 	PutTab(1);
 	if		(  level  >  1  ) {
 		for	( j = 0 ; j < level - 1 ; j ++ ) {
@@ -108,6 +112,7 @@ PutItemNameEx(void)
 		}
 	}
 	printf("%s",rname[level-1]);
+LEAVE_FUNC;
 }
 
 
@@ -123,6 +128,7 @@ TableBody(
 
 	if		(  val  ==  NULL  )	return;
 
+ENTER_FUNC;
 	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
 		PutItemName();
@@ -150,6 +156,21 @@ TableBody(
 		printf("numeric(%d,%d)",
 			   (int)ValueFixedLength(val),
 			   (int)ValueFixedSlen(val));
+		PutDim();
+		break;
+	  case	GL_TYPE_TIMESTAMP:
+		PutItemName();
+		printf("timestamp");
+		PutDim();
+		break;
+	  case	GL_TYPE_DATE:
+		PutItemName();
+		printf("date");
+		PutDim();
+		break;
+	  case	GL_TYPE_TIME:
+		PutItemName();
+		printf("time");
 		PutDim();
 		break;
 	  case	GL_TYPE_TEXT:
@@ -195,6 +216,7 @@ TableBody(
 	  default:
 		break;
 	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -205,12 +227,14 @@ MakeCreate(
 	,		**pk;
 	KeyStruct	*key;
 
+ENTER_FUNC;
 	if		(  ( ValueAttribute(rec->value) & GL_ATTR_VIRTUAL )  ==  0  ) {
 		printf("create\ttable\t%s\t(\n",rec->name);
 		level = 0;
 		alevel = 0;
 		TableBody(rec->value,ArraySize,TextSize);
-		if		(  ( key = rec->opt.db->pkey )  !=  NULL  ) {
+		if		(	(  rec->type  ==  RECORD_DB  )
+				&&	(  ( key = RecordDB(rec)->pkey )  !=  NULL  ) ) {
 			item = key->item;
 			printf(",\n\tprimary\tkey(\n");
 			while	(  *item  !=  NULL  ) {
@@ -234,6 +258,7 @@ MakeCreate(
 			printf("\n);\n");
 		}
 	}
+LEAVE_FUNC;
 }
 
 static void
@@ -300,7 +325,7 @@ TableInsert(ValueStruct *val, size_t arraysize, size_t textsize, int type)
         break;
       default:
         if (type == 0)
-            fprintf(stderr, "ÂĞ±ş¤·¤Æ¤¤¤Ê¤¤·¿¤Ç¤¹¡£: %s\n", rname[level-1]);
+            fprintf(stderr, "å¯¾å¿œã—ã¦ã„ãªã„å‹ã§ã™ã€‚: %s\n", rname[level-1]);
         break;
     }
 }
@@ -352,22 +377,15 @@ PutItemNames(
 
 	switch	(ValueType(val)) {
 	  case	GL_TYPE_INT:
-		PutName();
-		break;
 	  case	GL_TYPE_BOOL:
-		PutName();
-		break;
 	  case	GL_TYPE_BYTE:
 	  case	GL_TYPE_CHAR:
-		PutName();
-		break;
 	  case	GL_TYPE_VARCHAR:
-		PutName();
-		break;
 	  case	GL_TYPE_NUMBER:
-		PutName();
-		break;
 	  case	GL_TYPE_TEXT:
+	  case	GL_TYPE_TIMESTAMP:
+	  case	GL_TYPE_DATE:
+	  case	GL_TYPE_TIME:
 		PutName();
 		break;
 	  case	GL_TYPE_ARRAY:
@@ -400,17 +418,17 @@ PutItemNames(
 
 static	ARG_TABLE	option[] = {
 	{	"create",	BOOLEAN,	TRUE,	(void*)&fCreate,
-		"create table¤òºî¤ë"							},
+		"create tableã‚’ä½œã‚‹"							},
 
 	{	"insert",	BOOLEAN,	TRUE,	(void*)&fInsert,
-		"insertÍÑ¥¹¥¯¥ê¥×¥È¤òºî¤ë"						},
+		"insertç”¨ã‚¹ã‚¯ãƒªãƒ—ãƒˆã‚’ä½œã‚‹"						},
 
 	{	"textsize",	INTEGER,	TRUE,	(void*)&TextSize,
-		"text¤ÎºÇÂçÄ¹"									},
+		"textã®æœ€å¤§é•·"									},
 	{	"arraysize",INTEGER,	TRUE,	(void*)&ArraySize,
-		"²ÄÊÑÍ×ÁÇÇÛÎó¤ÎºÇÂç·«¤êÊÖ¤·¿ô"					},
+		"å¯å¤‰è¦ç´ é…åˆ—ã®æœ€å¤§ç¹°ã‚Šè¿”ã—æ•°"					},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"¥ì¥³¡¼¥É¤Î¤¢¤ë¥Ç¥£¥ì¥¯¥È¥ê"					},
+		"ãƒ¬ã‚³ãƒ¼ãƒ‰ã®ã‚ã‚‹ãƒ‡ã‚£ãƒ¬ã‚¯ãƒˆãƒª"					},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -434,7 +452,7 @@ main(
 	RecordStruct	*rec;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv);
+	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("dbgen",NULL);
 
 	if		(  fl  !=  NULL  ) {

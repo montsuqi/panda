@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,7 +52,11 @@ typedef	struct {
 #define	UNIX_NAME(p)	((p)->adrs.a_unix.name)
 #define	UNIX_MODE(p)	((p)->adrs.a_unix.mode)
 
+extern	URL			*NewURL(void);
+extern	void		FreeURL(URL *url);
 extern	void		ParseURL(URL *url, char *instr, char *protocol);
+extern	URL			*DuplicateURL(URL *src);
+
 extern	void		DestroyPort(Port *port);
 extern	Port		*ParPort(char *str, char *def);
 extern	Port		*ParPortName(char *str);

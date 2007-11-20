@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -260,6 +260,52 @@ StringPortName(
 		break;
 	}
 	return	(buff);
+}
+
+extern	URL	*
+NewURL(void)
+{
+	URL		*ret;
+
+	ret = New(URL);
+	ret->protocol = NULL;
+	ret->host = NULL;
+	ret->port = NULL;
+	ret->file = NULL;
+
+	return	(ret);
+}
+
+extern	void
+FreeURL(
+	URL		*url)
+{
+	if		(  url  !=  NULL  ) {
+		xfree(url->protocol);
+		xfree(url->host);
+		xfree(url->port);
+		xfree(url->file);
+		xfree(url);
+	}
+}
+
+extern	URL	*
+DuplicateURL(
+	URL		*src)
+{
+	URL		*ret;
+
+	if		(  src  !=  NULL  ) {
+		ret = NewURL();
+		ret->protocol = StrDup(src->protocol);
+		ret->host = StrDup(src->host);
+		ret->port = StrDup(src->port);
+		ret->file = StrDup(src->file);
+	} else {
+		ret = NULL;
+	}
+
+	return	(ret);
 }
 
 extern	void
