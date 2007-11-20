@@ -1,0 +1,9 @@
+# List of source files which contain translatable strings.
+
+glclient/bd_config.c
+glclient/bootdialog.c
+glclient/client.c
+glclient/fileEntry.c
+glclient/protocol.c
+libs/option.c
+libs/net.c
