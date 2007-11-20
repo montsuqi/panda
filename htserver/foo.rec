@@ -1,0 +1,4 @@
+foo	{
+	times	int;
+	value	int[10];
+};
