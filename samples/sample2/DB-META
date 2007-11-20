@@ -1,3 +1,0 @@
-        01  METADB.
-            02  META-HOST   PIC X(1024).
-            02  FILLER      PIC X(1407).

@@ -1,6 +1,0 @@
-file	{
-	filename1	varchar(64);
-	body1		object;
-	filename2	varchar(64);
-	body2		object;
-};

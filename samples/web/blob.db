@@ -1,4 +1,0 @@
-blob	{
-	object	object;
-	file	varchar(100);
-};
