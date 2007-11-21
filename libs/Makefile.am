@@ -210,6 +210,5 @@ AM_CPPFLAGS = 					\
 
 DISTCLEANFILES = enum.h
 EXTRA_DIST	=					\
-	apistruct.h					\
 	blobup.c					\
 	option.doc
