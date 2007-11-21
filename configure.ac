@@ -111,6 +111,13 @@ AM_GNU_GETTEXT
 AM_GNU_GETTEXT_VERSION(0.16.1)
 
 dnl ***************************************************************************
+dnl Find pkg-config
+dnl ***************************************************************************
+AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+if test x$PKG_CONFIG = xno ; then
+  AC_MSG_ERROR([*** pkg-config not found. See http://pkgconfig.sourceforge.net])
+fi
+dnl ***************************************************************************
 dnl checking libmagic
 dnl ***************************************************************************
 have_libmagic=false
@@ -670,13 +677,7 @@ AC_SUBST(XSLT_CFLAGS)
 dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the libmondai modules.
 dnl ***************************************************************************
-
-AC_PATH_PROG(LIBMONDAI_CONFIG, libmondai-config,no)
-if test x$LIBMONDAI_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find libmondai-config)
-fi 
-MONDAI_CFLAGS=`libmondai-config --cflags 2>/dev/null`
-MONDAI_LIBS=`libmondai-config --libs 2>/dev/null`
+PKG_CHECK_MODULES(MONDAI, libmondai >= 1.4.0 )
 AC_SUBST(MONDAI_LIBS)
 AC_SUBST(MONDAI_CFLAGS)
 
