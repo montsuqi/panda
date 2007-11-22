@@ -41,11 +41,11 @@ dbs_LDADD 		=						\
 	$(MONDAI_LIBS)						
 
 INCLUDES 			= 					\
-	-I$(top_builddir)					\
-	-I$(top_builddir)/include			\
-	-I$(top_builddir)/libs				\
-	-I$(top_builddir)/blob				\
-	-I$(top_builddir)/dblib				\
+	-I$(top_srcdir)					\
+	-I$(top_srcdir)/include			\
+	-I$(top_srcdir)/libs				\
+	-I$(top_srcdir)/blob				\
+	-I$(top_srcdir)/dblib				\
 	$(POSTGRES_CFLAGS)					\
 	$(SSL_CFLAGS)						\
 	$(MONDAI_CFLAGS)					\

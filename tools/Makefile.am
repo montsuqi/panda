@@ -152,5 +152,4 @@ EXTRA_DIST =				\
 	htcgen.rb				\
 	htcgen.xsl				\
 	htcgen2					\
-	structgen.c				\
 	test.def
