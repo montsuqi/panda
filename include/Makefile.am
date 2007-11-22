@@ -20,7 +20,6 @@ libpandaincludedir = $(includedir)/panda
 libpandainclude_HEADERS = const.h
 
 EXTRA_DIST =				\
-	lock.h					\
 	dirs.h					\
 	glterm.h				\
 	struct.h				\
