@@ -152,4 +152,5 @@ EXTRA_DIST =				\
 	htcgen.rb				\
 	htcgen.xsl				\
 	htcgen2					\
-	test.def
+	test.def				\
+	test.gnumeric
