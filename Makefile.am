@@ -62,7 +62,7 @@ EXTRA_DIST =			\
 	config.rpath		\
 	m4/ChangeLog		\
 	config.rpath		\
-	defaults.h
+	CREDIT
 
 my-distcheck: dist
 	-rm -rf $(distdir)
