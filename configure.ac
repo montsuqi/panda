@@ -10,10 +10,10 @@ AC_CONFIG_HEADERS([config.h])
 AC_GNU_SOURCE
 
 # make version
-MAJOR_VERSION=1
-MINOR_VERSION=4
-MICRO_VERSION=0
-VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION
+MAJOR_VERSION=`echo AC_PACKAGE_VERSION|sed 's/\(.*\)\.\(.*\)\.\(.*\)/\1/'|sed 's/\([0-9][0-9]*\).*/\1/'`
+MINOR_VERSION=`echo AC_PACKAGE_VERSION|sed 's/\(.*\)\.\(.*\)\.\(.*\)/\2/'|sed 's/\([0-9][0-9]*\).*/\1/'`
+MICRO_VERSION=`echo AC_PACKAGE_VERSION|sed 's/\(.*\)\.\(.*\)\.\(.*\)/\3/'|sed 's/\([0-9][0-9]*\).*/\1/'`
+
 LTVERSION=`expr $MAJOR_VERSION + $MINOR_VERSION`:$MICRO_VERSION:$MINOR_VERSION
 
 AC_CANONICAL_HOST
