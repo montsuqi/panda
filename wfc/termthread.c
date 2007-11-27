@@ -703,8 +703,8 @@ KeepSession(
 
 ENTER_FUNC;
 	dbgprintf("data->name = [%s]\n",data->name);
-	SaveSession(data);
 	pthread_mutex_lock(&TermLock);
+	SaveSession(data);
 	data->fInProcess = FALSE;
 	if		(  data  !=  Head  ) {
 		if		(  data->next  !=  NULL  ) {
