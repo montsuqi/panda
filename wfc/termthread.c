@@ -41,6 +41,7 @@
 #include	"enum.h"
 
 #include	"libmondai.h"
+#include	"lock.h"
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"
@@ -60,9 +61,11 @@
 #include	"message.h"
 #include	"debug.h"
 
-static	GHashTable	*TermHash;
-static	pthread_mutex_t	TermLock;
-static	pthread_cond_t	TermCond;
+static	struct {
+	LOCKOBJECT;
+	GHashTable	*Hash;
+}	Terminal;
+	
 static	int			cTerm;
 static	SessionData	*Head;
 static	SessionData	*Tail;
@@ -101,13 +104,12 @@ static	void
 RegistSession(
 	SessionData	*data)
 {
-	pthread_mutex_lock(&TermLock);
-	if		(  g_hash_table_lookup(TermHash,data->name)  ==  NULL  ) {
+	LockWrite(&Terminal);
+	if		(  g_hash_table_lookup(Terminal.Hash,data->name)  ==  NULL  ) {
 		cTerm ++;
-		g_hash_table_insert(TermHash,data->name,data);
+		g_hash_table_insert(Terminal.Hash,data->name,data);
 	}
-	pthread_mutex_unlock(&TermLock);
-	pthread_cond_signal(&TermCond);
+	UnLock(&Terminal);
 }
 
 static	SessionData	*
@@ -118,15 +120,14 @@ LookupSession(
 	SessionData	*data;
 
 ENTER_FUNC;
-	pthread_mutex_lock(&TermLock);
-	if		(  ( data = g_hash_table_lookup(TermHash,term) )  !=  NULL  ) {
+	LockRead(&Terminal);
+	if		(  ( data = g_hash_table_lookup(Terminal.Hash,term) )  !=  NULL  ) {
 		*fInProcess = data->fInProcess;
 		data->fInProcess = TRUE;
 	} else {
 		*fInProcess = FALSE;
 	}
-	pthread_mutex_unlock(&TermLock);
-	pthread_cond_signal(&TermCond);
+	UnLock(&Terminal);
 LEAVE_FUNC;
 	return	(data);
 }
@@ -149,9 +150,9 @@ _UnrefSession(
 		}
 	}
 	if		(	(  data->name  !=  NULL  )
-			&&	(  g_hash_table_lookup(TermHash,data->name)  !=  NULL  ) ) {
+			&&	(  g_hash_table_lookup(Terminal.Hash,data->name)  !=  NULL  ) ) {
 		cTerm --;
-		g_hash_table_remove(TermHash,data->name);
+		g_hash_table_remove(Terminal.Hash,data->name);
 	}
 	EnQueue(RemoveQueue,data);
 }
@@ -165,10 +166,9 @@ FinishSession(
 	dbgprintf("unref name = [%s]\n",data->name);
 	sprintf(fname,"%s/%s.ses",SesDir,data->name);
 	remove(fname);
-	pthread_mutex_lock(&TermLock);
+	LockWrite(&Terminal);
 	_UnrefSession(data);
-	pthread_mutex_unlock(&TermLock);
-	pthread_cond_signal(&TermCond);
+	UnLock(&Terminal);
 }
 
 static	guint
@@ -703,7 +703,7 @@ KeepSession(
 
 ENTER_FUNC;
 	dbgprintf("data->name = [%s]\n",data->name);
-	pthread_mutex_lock(&TermLock);
+	LockWrite(&Terminal);
 	SaveSession(data);
 	data->fInProcess = FALSE;
 	if		(  data  !=  Head  ) {
@@ -747,8 +747,7 @@ ENTER_FUNC;
 	if		(  exp  !=  NULL  ) {
 		_UnrefSession(exp);
 	}
-	pthread_mutex_unlock(&TermLock);
-	pthread_cond_signal(&TermCond);
+	UnLock(&Terminal);
 #ifdef	DEBUG
 	{
 		SessionData	*p;
@@ -841,9 +840,11 @@ ENTER_FUNC;
 	Head = NULL;
 	Tail = NULL;
 	RemoveQueue = NewQueue();
-	pthread_cond_init(&TermCond,NULL);
-	pthread_mutex_init(&TermLock,NULL);
-	TermHash = NewNameHash();
+	InitLock(&Terminal);
+	LockWrite(&Terminal);
+	Terminal.Hash = NewNameHash();
+	UnLock(&Terminal);
+
 	pthread_create(&thr,NULL,(void *(*)(void *))RemoveThread,NULL);
 	pthread_detach(thr);
 

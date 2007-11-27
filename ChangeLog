@@ -1,3 +1,7 @@
+2007-11-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c: ロックを正確にした
+
 2007-10-01  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/Makefile.am (htserver_SOURCES): libeventの一部モジュー
