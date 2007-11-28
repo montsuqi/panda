@@ -1,3 +1,7 @@
+2007-11-28  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/action.c(GrabFocus): フォーカスセットは一回のみにする
+
 2007-11-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/termthread.c: ロックを正確にした

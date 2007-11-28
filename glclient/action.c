@@ -168,9 +168,14 @@ _GrabFocus(gpointer data)
 extern	void
 GrabFocus(GtkWidget *widget)
 {
+	static guint tag = 0;
+
 	gtk_widget_grab_focus(widget);
+	if (tag != 0) {
+		gtk_idle_remove (tag);	
+	}
 	/* Do not erase.  The interval is necessary in GtkCombo. */
-	gtk_idle_add(_GrabFocus, widget);
+	tag = gtk_idle_add(_GrabFocus, widget);
 }
 
 static	void
