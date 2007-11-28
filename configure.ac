@@ -70,8 +70,8 @@ AC_CHECK_LIB([crypt],[crypt])
 AC_HEADER_DIRENT
 AC_HEADER_STDC
 if test "$GCC" = "yes"; then
-#  CFLAGS="$CFLAGS -O4 -Wall -Wunused -Wredundant-decls -funsigned-char"
-  CFLAGS="$CFLAGS -O4 -Wall -Wunused -funsigned-char -Wno-pointer-sign"
+#  CFLAGS="$CFLAGS -Wall -Wunused -Wredundant-decls -funsigned-char"
+  CFLAGS="$CFLAGS -Wall -Wunused -funsigned-char -Wno-pointer-sign"
 fi
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([fcntl.h netdb.h netinet/in.h stdint.h stdlib.h string.h strings.h sys/socket.h sys/time.h syslog.h unistd.h crypt.h errno.h])
