@@ -342,6 +342,7 @@ ENTER_FUNC;
 	ControlPort = NULL;
 	fLoopBack = FALSE;
 	nCache = 100;
+	SesDir = NULL;
 LEAVE_FUNC;
 }
 

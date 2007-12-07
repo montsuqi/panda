@@ -1,3 +1,7 @@
+2007-12-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c: SesDir == NULL の時、セションの保存をやめるようにする
+
 2007-11-28  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/action.c(GrabFocus): フォーカスセットは一回のみにする

@@ -164,8 +164,10 @@ FinishSession(
 	char	fname[SIZE_LONGNAME+1];
 
 	dbgprintf("unref name = [%s]\n",data->name);
-	sprintf(fname,"%s/%s.ses",SesDir,data->name);
-	remove(fname);
+	if		(  SesDir  !=  NULL  ) {
+		sprintf(fname,"%s/%s.ses",SesDir,data->name);
+		remove(fname);
+	}
 	LockWrite(&Terminal);
 	_UnrefSession(data);
 	UnLock(&Terminal);
@@ -516,61 +518,65 @@ LoadSession(
 	int		flag;
 
 ENTER_FUNC;
-	sprintf(fname,"%s/%s.ses",SesDir,term);
-	if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
-		data = MakeSessionData();
-		strcpy(data->hdr->term,term);
-		fread(&data->fKeep,sizeof(Bool),1,fp);
-#if	0
-		fread(&data->fInProcess,sizeof(Bool),1,fp);
-#else
-		data->fInProcess = TRUE;
-#endif
-		fread(data->hdr,sizeof(MessageHeader),1,fp);
-		fread(&size,sizeof(size_t),1,fp);	/*	ld		*/
-		fread(name,size,1,fp);
-		ld = g_hash_table_lookup(APS_Hash,name);
-		fread(&data->w,sizeof(WindowControl),1,fp);	/*	w		*/
-		while	(  ( flag = fgetc(fp) )  ==  RECORD_SPA  ) {
-			fread(&size,sizeof(size_t),1,fp);	/*	spa name	*/
-			fread(name,size,1,fp);
-			lbs = NewLBS();
-			fread(&size,sizeof(size_t),1,fp);	/*	spa data	*/
-			LBS_ReserveSize(lbs,size,FALSE);
-			fread(LBS_Body(lbs),size,1,fp);
-			dbgprintf("spa name = [%s]",name);
-			if		(  data->spadata  !=  NULL  ) {
-				g_hash_table_insert(data->spadata,StrDup(name),lbs);
-			}
-		}
-		ungetc(flag,fp);
-		data->mcpdata = NewLBS();
-		fread(&size,sizeof(size_t),1,fp);	/*	mcp data	*/
-		LBS_ReserveSize(data->mcpdata,size,FALSE);
-		fread(LBS_Body(data->mcpdata),size,1,fp);
-		data->linkdata = NewLBS();
-		fread(&size,sizeof(size_t),1,fp);	/*	link data	*/
-		LBS_ReserveSize(data->linkdata,size,FALSE);
-		fread(LBS_Body(data->linkdata),size,1,fp);
-		while	(  ( flag = fgetc(fp) )  ==  RECORD_SCRPOOL  ) {
-			fread(&size,sizeof(size_t),1,fp);	/*	screen name	*/
-			fread(name,size,1,fp);
-			lbs = NewLBS();
-			fread(&size,sizeof(size_t),1,fp);	/*	scr data	*/
-			LBS_ReserveSize(lbs,size,FALSE);
-			fread(LBS_Body(lbs),size,1,fp);
-			dbgprintf("scr name = [%s]",name);
-			if		(  data->scrpool  !=  NULL  ) {
-				g_hash_table_insert(data->scrpool,StrDup(name),lbs);
-			}
-		}
-		ungetc(flag,fp);
-		ChangeLD(data,ld);
-		data->name = StrDup(data->hdr->term);
-		RegistSession(data);
-		fclose(fp);
-	} else {
+	if		(  SesDir  ==  NULL  ) {
 		data = NULL;
+	} else {
+		sprintf(fname,"%s/%s.ses",SesDir,term);
+		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
+			data = MakeSessionData();
+			strcpy(data->hdr->term,term);
+			fread(&data->fKeep,sizeof(Bool),1,fp);
+#if	0
+			fread(&data->fInProcess,sizeof(Bool),1,fp);
+#else
+			data->fInProcess = TRUE;
+#endif
+			fread(data->hdr,sizeof(MessageHeader),1,fp);
+			fread(&size,sizeof(size_t),1,fp);	/*	ld		*/
+			fread(name,size,1,fp);
+			ld = g_hash_table_lookup(APS_Hash,name);
+			fread(&data->w,sizeof(WindowControl),1,fp);	/*	w		*/
+			while	(  ( flag = fgetc(fp) )  ==  RECORD_SPA  ) {
+				fread(&size,sizeof(size_t),1,fp);	/*	spa name	*/
+				fread(name,size,1,fp);
+				lbs = NewLBS();
+				fread(&size,sizeof(size_t),1,fp);	/*	spa data	*/
+				LBS_ReserveSize(lbs,size,FALSE);
+				fread(LBS_Body(lbs),size,1,fp);
+				dbgprintf("spa name = [%s]",name);
+				if		(  data->spadata  !=  NULL  ) {
+					g_hash_table_insert(data->spadata,StrDup(name),lbs);
+				}
+			}
+			ungetc(flag,fp);
+			data->mcpdata = NewLBS();
+			fread(&size,sizeof(size_t),1,fp);	/*	mcp data	*/
+			LBS_ReserveSize(data->mcpdata,size,FALSE);
+			fread(LBS_Body(data->mcpdata),size,1,fp);
+			data->linkdata = NewLBS();
+			fread(&size,sizeof(size_t),1,fp);	/*	link data	*/
+			LBS_ReserveSize(data->linkdata,size,FALSE);
+			fread(LBS_Body(data->linkdata),size,1,fp);
+			while	(  ( flag = fgetc(fp) )  ==  RECORD_SCRPOOL  ) {
+				fread(&size,sizeof(size_t),1,fp);	/*	screen name	*/
+				fread(name,size,1,fp);
+				lbs = NewLBS();
+				fread(&size,sizeof(size_t),1,fp);	/*	scr data	*/
+				LBS_ReserveSize(lbs,size,FALSE);
+				fread(LBS_Body(lbs),size,1,fp);
+				dbgprintf("scr name = [%s]",name);
+				if		(  data->scrpool  !=  NULL  ) {
+					g_hash_table_insert(data->scrpool,StrDup(name),lbs);
+				}
+			}
+			ungetc(flag,fp);
+			ChangeLD(data,ld);
+			data->name = StrDup(data->hdr->term);
+			RegistSession(data);
+			fclose(fp);
+		} else {
+			data = NULL;
+		}
 	}
 LEAVE_FUNC;
 	return	(data);
@@ -621,30 +627,32 @@ SaveSession(
 	size_t	size;
 
 ENTER_FUNC;
-	sprintf(fname,"%s/%s.ses",SesDir,data->name);
-	if		(  ( fp = Fopen(fname,"w") )  !=  NULL  ) {
-		fwrite(&data->fKeep,sizeof(Bool),1,fp);
+	if		(  SesDir  !=  NULL  ) {
+		sprintf(fname,"%s/%s.ses",SesDir,data->name);
+		if		(  ( fp = Fopen(fname,"w") )  !=  NULL  ) {
+			fwrite(&data->fKeep,sizeof(Bool),1,fp);
 #if	0
-		fwrite(&data->fInProcess,sizeof(Bool),1,fp);
+			fwrite(&data->fInProcess,sizeof(Bool),1,fp);
 #endif
-		fwrite(data->hdr,sizeof(MessageHeader),1,fp);
-		size = strlen(data->ld->info->name) + 1;
-		fwrite(&size,sizeof(size_t),1,fp);				/*	ld		*/
-		fwrite(data->ld->info->name,size,1,fp);
-		fwrite(&data->w,sizeof(WindowControl),1,fp);	/*	w		*/
-		if		(  data->spadata  !=  NULL  ) {
-			g_hash_table_foreach(data->spadata,(GHFunc)_SaveSpa,fp);
+			fwrite(data->hdr,sizeof(MessageHeader),1,fp);
+			size = strlen(data->ld->info->name) + 1;
+			fwrite(&size,sizeof(size_t),1,fp);				/*	ld		*/
+			fwrite(data->ld->info->name,size,1,fp);
+			fwrite(&data->w,sizeof(WindowControl),1,fp);	/*	w		*/
+			if		(  data->spadata  !=  NULL  ) {
+				g_hash_table_foreach(data->spadata,(GHFunc)_SaveSpa,fp);
+			}
+			size = LBS_Size(data->mcpdata);
+			fwrite(&size,sizeof(size_t),1,fp);				/*	mcp data	*/
+			fwrite(LBS_Body(data->mcpdata),LBS_Size(data->mcpdata),1,fp);
+			size = LBS_Size(data->linkdata);
+			fwrite(&size,sizeof(size_t),1,fp);				/*	link data	*/
+			fwrite(LBS_Body(data->linkdata),LBS_Size(data->linkdata),1,fp);
+			if		(  data->scrpool  !=  NULL  ) {
+				g_hash_table_foreach(data->scrpool,(GHFunc)_SaveScrpool,fp);
+			}
+			fclose(fp);
 		}
-		size = LBS_Size(data->mcpdata);
-		fwrite(&size,sizeof(size_t),1,fp);				/*	mcp data	*/
-		fwrite(LBS_Body(data->mcpdata),LBS_Size(data->mcpdata),1,fp);
-		size = LBS_Size(data->linkdata);
-		fwrite(&size,sizeof(size_t),1,fp);				/*	link data	*/
-		fwrite(LBS_Body(data->linkdata),LBS_Size(data->linkdata),1,fp);
-		if		(  data->scrpool  !=  NULL  ) {
-			g_hash_table_foreach(data->scrpool,(GHFunc)_SaveScrpool,fp);
-		}
-		fclose(fp);
 	}
 LEAVE_FUNC;
 }
@@ -729,6 +737,9 @@ ENTER_FUNC;
 	}
 	dbgprintf("cTerm  = %d",cTerm);
 	dbgprintf("nCache = %d",nCache);
+	if		(  nCache  ==  0  ) {
+		exp = NULL;
+	} else
 	if		(  cTerm  >  nCache  ) {
 		if		(  ( exp = Tail )  !=  NULL  ) {
 			if		(  Tail->prev  !=  NULL  ) {
