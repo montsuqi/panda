@@ -437,7 +437,7 @@ ENTER_FUNC;
 					dbgprintf("name = [%s]",name);
 					sprintf(buff,"Location: %s\r\n",name);
 					LBS_EmitString(header,buff);
-					PutHTML(header,NULL,NULL,200);
+					PutHTML(header,NULL,NULL,303);
 				}
 			} else {
 				if		(  name  ==  NULL  ) {

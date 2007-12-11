@@ -1,3 +1,7 @@
+2007-12-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* htserver/mon.c (Session): Locationは303であるべき
+
 2007-12-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/termthread.c: SesDir == NULL の時、セションの保存をやめるようにする
