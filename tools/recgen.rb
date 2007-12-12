@@ -501,8 +501,6 @@ rescue XMLParserError
 	exit 1
 end
 
-widget = Glade.new;
-
 widget.panda;
 
 if $emacs_enable
