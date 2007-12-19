@@ -238,6 +238,18 @@ clist_send_event(
 }
 
 extern void
+clist_select(
+	GtkWidget	*widget,
+	gint		row,
+	gint		column,
+	GdkEventButton	*dummy,
+	char		*event)
+{
+	UpdateWidget(widget,event);
+	send_event(widget, event);
+}
+
+extern void
 activate_widget(GtkWidget *widget)
 {
 	send_event(widget, "ACTIVATE");

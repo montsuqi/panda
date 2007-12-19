@@ -112,7 +112,7 @@ edit_dialog_set_value (EditDialog * self)
       gtk_entry_set_text (GTK_ENTRY (self->cache), cachename);
       g_free(cachename);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1), TRUE);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), FALSE);
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), TRUE);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog), TRUE);
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff), FALSE);
       return;
@@ -687,8 +687,8 @@ edit_dialog_run (BDConfig * config, gchar * hostname)
   edit_dialog_set_value (self);
   
   gtk_widget_show_all (self->dialog);
-  gtk_widget_set_sensitive( self->protocol_v1, FALSE);
-  gtk_widget_hide( self->protocol_v2 );
+  gtk_widget_set_sensitive( self->protocol_v1, TRUE);
+  gtk_widget_set_sensitive( self->protocol_v2, TRUE);
   gtk_widget_grab_focus (self->description);
   gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
   gtk_main ();
@@ -1028,7 +1028,7 @@ boot_dialog_create_conf (BDConfig *config)
       bd_config_section_append_value (section, "port", "8000");
       bd_config_section_append_value (section, "application", "panda:orca00");
       bd_config_section_append_value (section, "protocol_v1", "true");
-      bd_config_section_append_value (section, "protocol_v2", "false");
+      bd_config_section_append_value (section, "protocol_v2", "true");
       bd_config_section_append_value (section, "cache", cachename);
       bd_config_section_append_value (section, "style", "/usr/share/panda-client/jma-receipt.rc");
       bd_config_section_append_value (section, "gtkrc", "");
@@ -1896,8 +1896,8 @@ boot_dialog_run ()
 
   self = boot_dialog_new ();
   gtk_widget_show_all (self->dialog);
-  gtk_widget_set_sensitive( self->protocol_v1, FALSE);
-  gtk_widget_hide( self->protocol_v2 );
+  gtk_widget_set_sensitive( self->protocol_v1, TRUE);
+  gtk_widget_set_sensitive( self->protocol_v1, TRUE);
   gtk_widget_grab_focus (self->dialog);
   gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
   gtk_main ();
