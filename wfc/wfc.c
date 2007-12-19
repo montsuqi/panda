@@ -23,9 +23,9 @@
 #define SOMAXCONN		1024
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -114,6 +114,7 @@ GetScreenData(
 	LargeByteString	*scrdata;
 	RecordStruct	*rec;
 
+ENTER_FUNC;
 	if		(  ( scrdata = (LargeByteString *)g_hash_table_lookup(data->scrpool,name) )
 			   ==  NULL  ) {
 		if		(  ( rec = GetWindow(name) )  !=  NULL  ) {
@@ -126,6 +127,7 @@ GetScreenData(
 			scrdata = NULL;
 		}
 	}
+LEAVE_FUNC;
 	return	(scrdata);
 }
 
@@ -354,7 +356,6 @@ main(
 	int			rc;
     sigset_t sigmask;
 
-ENTER_FUNC;
     sigemptyset(&sigmask);
     sigaddset(&sigmask, SIGUSR1);
     sigprocmask(SIG_BLOCK, &sigmask, &SigMask);
@@ -363,6 +364,7 @@ ENTER_FUNC;
 	(void)signal(SIGUSR1,(void *)StopSystem);
 	(void)signal(SIGUSR2, SIG_IGN);
 	InitMessage("wfc",NULL);
+ENTER_FUNC;
 
 	SetDefault();
 	GetOption(option,argc,argv,NULL);

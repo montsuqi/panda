@@ -62,6 +62,7 @@ PureWindowName(
 {
 	char	*p;
 
+ENTER_FUNC;
 	if		(  ( p = strrchr(comp,'/') )  ==  NULL  ) {
 		p = comp;
 	} else {
@@ -71,6 +72,7 @@ PureWindowName(
 	if		(  ( p = strchr(buff,'.') )  !=  NULL  ) {
 		*p = 0;
 	}
+LEAVE_FUNC;
 	return	(buff);
 }
 
@@ -102,6 +104,7 @@ ENTER_FUNC;
 			   ==  NULL  ) {
 		sprintf(fname,"%s.rec",wname);
 		if		(  ( rec = ReadRecordDefine(fname) )  !=  NULL  ) {
+			InitializeValue(rec->value);
 			g_hash_table_insert(ThisScreen->Records,rec->name,rec);
 		}
 	}

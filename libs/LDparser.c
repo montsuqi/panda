@@ -115,19 +115,21 @@ ENTER_FUNC;
 					g_hash_table_insert(Records,rec2->name,rec2);
 					InitializeValue(rec2->value);
 				} else {
-					Error("window record not found [%s].",wname);
+					Warning("window record not found [%s].",wname);
 					rec = NULL;
 				}
 			}
 			if		(  iname  ==  NULL  ) {
 				rec = rec2;
 			} else {
-				value = GetItemLongName(rec2->value,iname);
-				rec = New(RecordStruct);
-				rec->name = StrDup(name);
-				rec->type = RECORD_NULL;
-				rec->value = value;
-				g_hash_table_insert(Records,rec->name,rec);
+				if		(  rec2  !=  NULL  ) {
+					value = GetItemLongName(rec2->value,iname);
+					rec = New(RecordStruct);
+					rec->name = StrDup(name);
+					rec->type = RECORD_NULL;
+					rec->value = value;
+					g_hash_table_insert(Records,rec->name,rec);
+				}
 			}
 		}
 	} else {

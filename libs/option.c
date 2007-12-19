@@ -220,26 +220,22 @@ PrintUsage(
 	char		*help)
 {	int		i;
 
-#if	1
 	bindtextdomain(PACKAGE, LOCALEDIR);
-#endif
 
 	printf("%s\n",comment);
 	for ( i = 0 ; tbl[i].option != NULL ; i++ )	{
-#if	1
-  		printf( "  -%-12s : %-40s", tbl[i].option, _d(tbl[i].message) );
-#else
-		printf( "  -%-12s : %-40s", tbl[i].option, tbl[i].message );
-#endif
-		if		(  tbl[i].defval  )	{
-			printf("\t[");
-			PrintVar(tbl[i]);
-			printf("]");
+		if		(  tbl[i].message  !=  NULL  ) {
+			printf( "  -%-12s : %-40s", tbl[i].option, _d(tbl[i].message) );
+			if		(  tbl[i].defval  )	{
+				printf("\t[");
+				PrintVar(tbl[i]);
+				printf("]");
+			}
+			printf("\n");
 		}
-		printf("\n");	
 	}
 	if		(  help  !=  NULL  ) {
-		printf("%s",help);
+		printf("%s",_d(help));
 	}
 }
 

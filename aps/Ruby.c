@@ -319,6 +319,40 @@ bigdecimal_new(ValueStruct *val)
                       INT2NUM((ValueFixedLength(val))));
 }
 
+static VALUE
+timestamp_new(ValueStruct *val)
+{
+    VALUE cTime
+		, ret;
+
+ENTER_FUNC;
+    cTime = rb_const_get(rb_cObject, rb_intern("Time"));
+    ret = rb_funcall(cTime, rb_intern("local"), 6,
+					 INT2NUM((ValueDateTimeYear(val))),
+					 INT2NUM((ValueDateTimeMon(val)+1)),
+					 INT2NUM((ValueDateTimeMDay(val))),
+					 INT2NUM((ValueDateTimeHour(val))),
+					 INT2NUM((ValueDateTimeMin(val))),
+					 INT2NUM((ValueDateTimeSec(val))));
+LEAVE_FUNC;
+	return	ret;
+}
+
+static VALUE
+date_new(ValueStruct *val)
+{
+    VALUE cTime
+		, ret;
+
+ENTER_FUNC;
+    cTime = rb_const_get(rb_cObject, rb_intern("Time"));
+    ret = rb_funcall(cTime, rb_intern("local"), 3,
+					 INT2NUM((ValueDateTimeYear(val))),
+					 INT2NUM((ValueDateTimeMon(val)+1)),
+					 INT2NUM((ValueDateTimeMDay(val))));
+LEAVE_FUNC;
+	return	ret;
+}
 
 static VALUE
 get_value(ValueStruct *val)
@@ -355,6 +389,10 @@ get_value(ValueStruct *val)
         return aryval_new(val, 0);
     case GL_TYPE_RECORD:
         return recval_new(val, 0);
+	case GL_TYPE_TIMESTAMP:
+		return timestamp_new(val);
+	case GL_TYPE_DATE:
+		return date_new(val);
     default:
         rb_raise(rb_eArgError, "unsupported ValueStruct type");
         break;
@@ -409,6 +447,10 @@ set_value(ValueStruct *value, VALUE obj)
             class_path = rb_class_path(CLASS_OF(obj));
             if (strcasecmp(StringValuePtr(class_path), "BigDecimal") == 0) {
                 str = rb_funcall(obj, rb_intern("to_s"), 1, rb_str_new2("F"));
+            } else
+            if (strcasecmp(StringValuePtr(class_path), "Time") == 0) {
+                str = rb_funcall(obj, rb_intern("strftime"), 1, rb_str_new2("%Y%m%d%H%M%S"));
+dbgprintf("strftime [%s]",StringValuePtr(str));
             }
             else {
                 str = rb_funcall(obj, rb_intern("to_s"), 0);

@@ -230,7 +230,7 @@ ENTER_FUNC;
 			break;
 		}
 	}
-	MessageLog("exiting APS");
+	MessageLogPrintf("exiting APS (%s)",ThisLD->name);
 	FinishSession(node);
   quit:
 #if	1
@@ -255,51 +255,51 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"wfcport",	STRING,		TRUE,	(void*)&WfcPortNumber,
-		"WFC接続待ちポート番号"	 						},
+		"WFC waiting port"		 						},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"環境のベースディレクトリ"		 				},
+		"base environment directory path"	 			},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"データ定義格納ディレクトリ"	 				},
+		".rec directory"				 				},
 	{	"lddir",	STRING,		TRUE,	(void*)&D_Dir,
-		"LD定義格納ディレクトリ"		 				},
+		"LD directory path"				 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"directory file name"	 						},
 	{	"path",		STRING,		TRUE,	(void*)&LibPath,
-		"モジュールのロードパス"						},
+		"application module load path"					},
 
 	{	"dbhost",	STRING,		TRUE,	(void*)&DB_Host,
-		"データベース稼働ホスト名"						},
+		"DB host name"									},
 	{	"dbport",	STRING,		TRUE,	(void*)&DB_Port,
-		"データベース待機ポート番号"					},
+		"DB port number"								},
 	{	"db",		STRING,		TRUE,	(void*)&DB_Name,
-		"データベース名"								},
+		"DB name"										},
 	{	"dbuser",	STRING,		TRUE,	(void*)&DB_User,
-		"データベースのユーザ名"						},
+		"DB user name"									},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
-		"データベースのパスワード"						},
+		"DB password"									},
 
 	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
-		"apsの処理するトランザクション数を指定する"		},
+		"aps process transaction count"					},
 	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
-		"端末情報をキャッシュする端末数"				},
+		"cache terminal number"							},
 
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
-		"実行時間に足す処理時間(for debug)"				},
+		"aps sleep time(for debug)"						},
 	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"時間計測を行う"								},
+		"time measuring"								},
 
 	{	"connect-retry",	BOOLEAN,	TRUE,	(void*)&fConnectRetry,
-		"WFCへの接続の再試行を行う"						},
+		"WFC connection retry"							},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirectorの起動をチェックしない"			},
+		"no check dbredirector start"					},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
-		"dbredirectorを使わない"						},
+		"no use dbredirector"							},
 	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
-		"dbredirector送信の再試行数を指定する"			},
+		"max retry dbredirector"						},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
-		"dbredirector送信の再試行の間隔を指定する(秒)"	},
+		"dbredirector retry interval(sec)"				},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };

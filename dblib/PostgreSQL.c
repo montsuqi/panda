@@ -402,7 +402,7 @@ ValueToSQL(
 	  case	GL_TYPE_TIMESTAMP:
 		sprintf(buff,"timestamp '%d-%d-%d %d:%d:%d'",
 				ValueDateTimeYear(val),
-				ValueDateTimeMon(val),
+				ValueDateTimeMon(val) + 1,
 				ValueDateTimeMDay(val),
 				ValueDateTimeHour(val),
 				ValueDateTimeMin(val),
@@ -412,7 +412,7 @@ ValueToSQL(
 	  case	GL_TYPE_DATE:
 		sprintf(buff,"date '%d-%d-%d'",
 				ValueDateTimeYear(val),
-				ValueDateTimeMon(val),
+				ValueDateTimeMon(val) + 1,
 				ValueDateTimeMDay(val));
 		LBS_EmitString(lbs,buff);
 		break;
@@ -615,7 +615,9 @@ ParseDate(
 {
 	char	*p;
 
+	InitializeValue(val);
 	while	(  *str  !=  0  ) {
+		ValueIsNonNil(val);
 		switch	(state) {
 		  case	STATE_DATE_YEAR:
 			if		(  ( p = strchr(str,'-') )  !=  NULL  ) {
@@ -636,7 +638,7 @@ ParseDate(
 				p = str;
 				state = STATE_DATE_NULL;
 			}
-			ValueDateTimeMon(val) = atoi(str);
+			ValueDateTimeMon(val) = atoi(str) - 1;
 			str = p + 1;
 			break;
 		  case	STATE_DATE_MDAY:

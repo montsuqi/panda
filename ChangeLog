@@ -1,3 +1,13 @@
+2007-12-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/Ruby.c (timestamp_new): 時刻系の型に対応
+
+	* dblib/PostgreSQL.c (ParseDate): 更新忘れの修正
+
+2007-12-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glclient/callbacks.c (clist_select): clistの選択イベント追加(clist_send_eventを直すと互換性に問題があるので)
+
 2007-12-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* htserver/mon.c (Session): Locationは303であるべき
