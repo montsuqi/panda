@@ -20,9 +20,9 @@
  */
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #define	_PANDA
 
