@@ -69,8 +69,8 @@ typedef	struct {
 #define	OPT_TYPE_FIXED	1
 #define	OPT_TYPE_INT	2
 	union	{
-		Fixed	*xval;
-		int		ival;
+		Fixed			*xval;
+		int				ival;
 	}	opt;
 }	ValueAttribute;
 
@@ -119,7 +119,7 @@ ENTER_FUNC;
 		p->ValueName = StrDup(WidgetName);
 		g_hash_table_insert(ValueTable,p->key,p);
 	} else {
-		if		(  p->optype  ==  OPT_TYPE_FIXED  ) {
+		if 		(	p->optype == OPT_TYPE_FIXED ) {
 			xfree(p->opt.xval->sval);
 			xfree(p->opt.xval);
 		}
@@ -129,13 +129,13 @@ ENTER_FUNC;
 	p->type = DataType;
 	p->optype = optype;
 	switch	(optype) {
-	  case	OPT_TYPE_FIXED:
+	case OPT_TYPE_FIXED:
 		p->opt.xval = (Fixed *)opt;
 		break;
-	  case	OPT_TYPE_INT:
+	case OPT_TYPE_INT:
 		p->opt.ival = (int)(long)opt;
 		break;
-	  default:
+	default:
 		break;
 	}
 LEAVE_FUNC;
@@ -421,6 +421,7 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"objectdata")  ) {
 				binary = NewLBS();
 				RecvBinaryData(fp, binary);
+				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 			} else {
 				longname = WidgetName + strlen(WidgetName);
 				sprintf(longname,".%s",name);
@@ -442,12 +443,141 @@ ENTER_FUNC;
 			} else {
 				FreeLBS(binary);
 				gtk_object_set_data(GTK_OBJECT(widget), "recvobject", NULL);
+				subWidget = gnome_file_entry_gtk_entry(
+						                    GNOME_FILE_ENTRY(widget));
+				_UpdateWidget((GtkWidget *)widget,NULL);
+				_UpdateWidget((GtkWidget *)subWidget,NULL);
 			}
 		}
 	}
 LEAVE_FUNC;
 	return	(TRUE);
 }
+
+static	Bool
+SendFileEntry(
+	char		*name,
+	GtkWidget	*widget,
+	NETFILE		*netfp)
+{
+	char			iname[SIZE_BUFF]
+	,				*path;
+	ValueAttribute 	*v;
+	LargeByteString *binary;
+	FILE			*fp;
+	struct stat		st;
+	GtkWidget		*subWidget;
+
+ENTER_FUNC;
+	subWidget = gnome_file_entry_gtk_entry(GNOME_FILE_ENTRY(widget));
+	path = (char *)gtk_entry_get_text(GTK_ENTRY(subWidget));
+	if ( path == NULL ){
+		return (TRUE);
+	}
+	if ( stat(path,&st) ){
+		return (TRUE);
+	}
+
+	if ( (fp = fopen(path,"r")) != NULL) {
+		binary = NewLBS();
+		LBS_ReserveSize(binary,st.st_size,FALSE);
+		fread(LBS_Body(binary),st.st_size,1,fp);
+		fclose(fp);
+	} else {
+		return (TRUE);
+	}
+	
+	v = GetValue(name);
+	GL_SendPacketClass(netfp,GL_ScreenData);
+	sprintf(iname,"%s.objectdata",v->ValueName);
+	GL_SendName(netfp,iname);
+	SendBinaryData(netfp, v->type, binary);
+	FreeLBS(binary);
+LEAVE_FUNC;
+	return (TRUE);
+}
+
+static	Bool
+RecvPixmapEntry(
+	GtkWidget	*widget,
+	NETFILE	*fp)
+{
+	char	name[SIZE_BUFF]
+	,		*longname;
+	int		nitem
+	,		i;
+	GtkWidget	*subWidget;
+    LargeByteString *binary = NULL;
+
+ENTER_FUNC;
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  !stricmp(name,"objectdata")  ) {
+				binary = NewLBS();
+				RecvBinaryData(fp, binary);
+				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
+				FreeLBS(binary);
+			} else {
+				longname = WidgetName + strlen(WidgetName);
+				sprintf(longname,".%s",name);
+				subWidget = gnome_pixmap_entry_gtk_entry(
+						                    GNOME_PIXMAP_ENTRY(widget));
+				RecvEntry(subWidget,fp);
+			}
+		}
+		subWidget = gnome_pixmap_entry_gtk_entry(
+						GNOME_PIXMAP_ENTRY(widget));
+		_UpdateWidget((GtkWidget *)widget,NULL);
+		_UpdateWidget((GtkWidget *)subWidget,NULL);
+	}
+LEAVE_FUNC;
+	return	(TRUE);
+}
+
+static	Bool
+SendPixmapEntry(
+	char		*name,
+	GtkWidget	*widget,
+	NETFILE		*netfp)
+{
+	char			iname[SIZE_BUFF]
+	,				*path;
+	ValueAttribute 	*v;
+	LargeByteString *binary;
+	FILE			*fp;
+	struct stat		st;
+
+ENTER_FUNC;
+	
+	path = (char *)gnome_pixmap_entry_get_filename(GNOME_PIXMAP_ENTRY(widget));
+	if ( path == NULL || strlen(path) <= 0 ){
+		return (TRUE);
+	}
+	if ( stat(path,&st) ){
+		return (TRUE);
+	}
+
+	if ( (fp = fopen(path,"r")) != NULL) {
+		binary = NewLBS();
+		LBS_ReserveSize(binary,st.st_size,FALSE);
+		fread(LBS_Body(binary),st.st_size,1,fp);
+		fclose(fp);
+	} else {
+		return (TRUE);
+	}
+	
+	v = GetValue(name);
+	GL_SendPacketClass(netfp,GL_ScreenData);
+	sprintf(iname,"%s.objectdata",v->ValueName);
+	GL_SendName(netfp,iname);
+	SendBinaryData(netfp, v->type, binary);
+	FreeLBS(binary);
+LEAVE_FUNC;
+	return (TRUE);
+}
+
 #endif
 
 #ifdef	USE_PANDA
@@ -1823,6 +1953,7 @@ InitWidgetOperations(void)
 	AddClass(GTK_TYPE_SCROLLED_WINDOW,RecvScrolledWindow,SendScrolledWindow);
 #ifdef USE_GNOME
 	AddClass(GNOME_TYPE_PIXMAP,RecvPixmap,NULL);
-	AddClass(GNOME_TYPE_FILE_ENTRY,RecvFileEntry,NULL);
+	AddClass(GNOME_TYPE_FILE_ENTRY,RecvFileEntry,SendFileEntry);
+	AddClass(GNOME_TYPE_PIXMAP_ENTRY,RecvPixmapEntry,SendPixmapEntry);
 #endif
 }

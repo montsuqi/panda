@@ -1344,3 +1344,24 @@ ENTER_FUNC;
     }
 LEAVE_FUNC;
 }
+
+extern void
+SendBinaryData(
+	NETFILE 		*fp, 
+	PacketDataType 	type, 
+	LargeByteString	*binary)
+{
+ENTER_FUNC;
+	GL_SendDataType(fp,type);
+    switch (DataType) {
+    case  GL_TYPE_BINARY:
+    case  GL_TYPE_BYTE:
+    case  GL_TYPE_OBJECT:
+        GL_SendLBS(fp, binary);
+        break;
+    default:
+        Warning("unsupported data type: %d\n", DataType);
+        break;
+    }
+LEAVE_FUNC;
+}
