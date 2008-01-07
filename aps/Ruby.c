@@ -19,9 +19,9 @@
  */
 
 /*
-*/
 #define DEBUG
 #define TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -613,6 +613,7 @@ recval_new(ValueStruct *val, int need_free)
     data->value = val;
     data->cache = rb_hash_new();
     for (i = 0; i < ValueRecordSize(val); i++) {
+        ValueIsNonNil(ValueValuesItem(val,i));
         rb_define_singleton_method(obj, ValueRecordName(val, i),
                                    recval_get_field, 0);
         name = rb_str_new2(ValueRecordName(val, i));
