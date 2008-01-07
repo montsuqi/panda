@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2004-2005 Shugo Maeda
- * Copyright (C) 2006-2007 Shugo Maeda & ogochan
+ * Copyright (C) 2006-2008 Shugo Maeda & ogochan
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -613,7 +613,7 @@ recval_new(ValueStruct *val, int need_free)
     data->value = val;
     data->cache = rb_hash_new();
     for (i = 0; i < ValueRecordSize(val); i++) {
-        ValueIsNonNil(ValueValuesItem(val,i));
+        ValueIsNonNil(ValueRecordItem(val,i));
         rb_define_singleton_method(obj, ValueRecordName(val, i),
                                    recval_get_field, 0);
         name = rb_str_new2(ValueRecordName(val, i));
