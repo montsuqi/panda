@@ -279,15 +279,17 @@ LEAVE_FUNC;
 	return	(&Handler);
 }
 #ifdef HAVE_OPENCOBOL23
+extern	MessageHandlerClass	*
 OpenCOBOL23(void)
 {
-	OpenCOBOL();	
+	return OpenCOBOL();	
 }		
 #endif
 #ifdef HAVE_OPENCOBOL08
+extern	MessageHandlerClass	*
 OpenCOBOL08(void)
 {
-	OpenCOBOL();	
+	return OpenCOBOL();	
 }		
 #endif
 #endif
