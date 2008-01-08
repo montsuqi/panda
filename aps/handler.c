@@ -468,7 +468,7 @@ ExecuteProcess(
 	MessageHandler	*handler;
 	char		compo[SIZE_LONGNAME+1];
 	struct	timeval	tv;
-	long	ever
+	long	ever = 0
 		,	now;
 
 ENTER_FUNC;

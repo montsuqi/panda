@@ -376,8 +376,12 @@ DestroyWindow(
 {
 	XML_Node	*node;
 	char		*key;
+	gpointer	n
+	,			k;
 
-	if		(  g_hash_table_lookup_extended(WindowTable,sname,(gpointer*)&key,(gpointer*)&node)  )	{
+	if		(  g_hash_table_lookup_extended(WindowTable,sname,&n,&k)  )	{
+		node = (XML_Node *)n;
+		key = (char *)k;
 		gtk_widget_destroy(GTK_WIDGET(node->window));
 		gtk_object_destroy((GtkObject *)node->xml);
 		if		(  node->UpdateWidget  !=  NULL  ) {

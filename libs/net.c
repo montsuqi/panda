@@ -665,12 +665,14 @@ CheckSubjectAltName(X509_EXTENSION *ext, const char *hostname)
     CONF_VALUE *value;
     X509V3_EXT_METHOD *meth;
     unsigned char *data;
+    int len;
     int ok = FALSE;
     int i;
 
-    data = ext->value->data;
     if ((meth = X509V3_EXT_get(ext)) == NULL) return FALSE;
-    values = meth->i2v(meth, meth->d2i(NULL, &data, ext->value->length), NULL);
+    data = ext->value->data;
+    len = ext->value->length;
+    values = meth->i2v(meth, meth->d2i(NULL, (const unsigned char **)&data, len), NULL);
     if (values == NULL) return FALSE;
     for (i = 0; i < sk_CONF_VALUE_num(values); i++){
         value = sk_CONF_VALUE_value(values, i);
@@ -983,7 +985,6 @@ SSL_CTX_use_certificate_file_with_check(
 	X509 *x509;
 	X509_STORE_CTX *sctx;
 	int ret;
-	char buf[4096];
 	ret = SSL_CTX_use_certificate_file(ctx, file, type);
 	if(!ret) return ret;
 	if(!(fp = fopen(file, "r"))) {
@@ -1023,10 +1024,9 @@ IsPKCS12(const char *file)
 	BIO_free(input);
 	if (p12 == NULL) return FALSE;
 	
-	if (!PKCS12_parse(p12, "", &key, &cert, NULL)){
-		if (err_reason == PKCS12_R_MAC_VERIFY_FAILURE){
-			ret = FALSE;
-		}
+	err_reason = PKCS12_parse(p12, "", &key, &cert, NULL);
+	if (err_reason == PKCS12_R_MAC_VERIFY_FAILURE){
+		ret = FALSE;
 	}
 	if (cert){ X509_free(cert); cert = NULL; }
 	if (key){ EVP_PKEY_free(key); key = NULL; }
@@ -1041,7 +1041,6 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
 {
 	char passbuf[256];
 	char *pass = NULL;
-	const char *message;
 	PKCS12 *p12;
 	EVP_PKEY *key = NULL;
 	X509 *cert = NULL;
@@ -1066,7 +1065,7 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
 	if (cert){ X509_free(cert); cert = NULL; }
 	if (key){ EVP_PKEY_free(key); key = NULL; }
 	if (err_reason != PKCS12_R_MAC_VERIFY_FAILURE){
-		Message("PKCS12_parse failure: %s", message, GetSSLErrorString());
+		Message("PKCS12_parse failure: %s", GetSSLErrorString());
 		break;
 	}
 	ERR_clear_error();
@@ -1084,11 +1083,11 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
 	/* set key and cert to SSL_CTX */
 	if (cert && key){
     	if (!SSL_CTX_use_certificate_with_check(ctx, cert)){
-			SSL_Error(_d("SSL_CTX_use_certificate failure:\n %s"), message, GetSSLErrorString());
+			SSL_Error(_d("SSL_CTX_use_certificate failure:\n %s"), GetSSLErrorString());
 			return FALSE;
 		}
 		if (!SSL_CTX_use_PrivateKey(ctx, key)){
-			SSL_Error(_d("SSL_CTX_use_PrivateKey failure:\n %s"),message, GetSSLErrorString());
+			SSL_Error(_d("SSL_CTX_use_PrivateKey failure:\n %s"), GetSSLErrorString());
 			return FALSE;
 		}
 		if (!SSL_CTX_check_private_key(ctx)){
@@ -1525,11 +1524,10 @@ static ENGINE *
 InitEnginePKCS11( const char *pkcs11, const char *pin)
 {
     ENGINE *e;
-    const char *message;
     ENGINE_load_dynamic();
     e = ENGINE_by_id("dynamic");
     if (!e){
-        SSL_Error(_d("Engine_by_id:\n %s"), message, GetSSLErrorString());
+        SSL_Error(_d("Engine_by_id:\n %s"), GetSSLErrorString());
         return NULL;
     }
 
@@ -1585,7 +1583,6 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
 {
     char pinbuf[PKCS11_BUF_SIZE];
     char *pin = NULL;
-    const char *message;
     EVP_PKEY *key = NULL;
     X509 *cert = NULL;
     int i;
@@ -1655,15 +1652,15 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
         return FALSE;
     }
 
-	sprintf(keyid, "slot_%d-id_", slot);
+	sprintf(keyid, "slot_%ld-id_", slot);
     for (i = 0; i < keyidbuf_size; i++){
         sprintf(buf, "%02x", keyidbuf[i]);
         strcat(keyid, buf);
     }
     free(keyidbuf);
 
-    derptr = (unsigned char*)certder;
-    cert = d2i_X509(NULL , &derptr ,certder_size);
+    derptr = (unsigned char *)certder;
+    cert = d2i_X509(NULL, (const unsigned char **)&derptr, certder_size);
     if (cert == NULL) {
         SSL_Error(_d("d2i_X509 failure:\n %s"), GetSSLErrorString());
         free(certder);

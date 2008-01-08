@@ -1492,6 +1492,7 @@ boot_dialog_on_ssl_toggle (GtkWidget *widget, BootDialog *self)
   gtk_widget_set_sensitive(self->sslcontainer, sensitive);
 }
 #ifdef  USE_PKCS11
+static void
 boot_dialog_on_pkcs11_toggle (GtkWidget *widget, BootDialog *self)
 {
   gboolean sensitive;

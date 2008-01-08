@@ -295,7 +295,7 @@ AuthSavePasswd(
 		}
 	}
 	if		(  ret  ) {
-		printf("a new password file was made\n", fname);
+		printf("a new password file was made\n");
 	}
 	fclose(fp);
 }
@@ -343,11 +343,10 @@ AuthAddX509(const char *user, const char *subject)
 extern void
 AuthDelX509BySubject(const char *subject)
 {
-    char *u, *s;
+    gpointer u, s;
 
     assert(X509Table);
-    if (g_hash_table_lookup_extended(X509Table, (gpointer)subject, (gpointer*)&s,
-                (gpointer*)&u)){
+    if (g_hash_table_lookup_extended(X509Table, (gpointer)subject, &s, &u)){
         g_hash_table_remove(X509Table, s);
         g_free(u);
         g_free(s);
