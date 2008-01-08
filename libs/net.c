@@ -1805,7 +1805,7 @@ CheckNetFile(
 	if		(  fp && fp->fOK  ) {
 		ret = TRUE;
 	} else {
-		Warning("bad net file");
+		Message("bad net file");
 		ret = FALSE;
 	}
 	return	(ret);

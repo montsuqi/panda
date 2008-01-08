@@ -355,7 +355,7 @@ msgstr "サーバに接続できません(アプリケーション名が不正です)"
 
 #: glclient/protocol.c:897
 msgid "can not connect server(other protocol error)"
-msgstr "サーバに接続きません(プロトコルエラー)"
+msgstr "サーバに接続できません(プロトコルエラー)"
 
 #: glclient/protocol.c:1003 glclient/protocol.c:1029 glclient/protocol.c:1276
 #, c-format

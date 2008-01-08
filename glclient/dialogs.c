@@ -111,5 +111,6 @@ GLError( const char *message)
 	gtk_widget_show (dialog);
 	gtk_main();
 #endif
+	exit(0);
 }
 
