@@ -84,13 +84,37 @@ FreeVeryfyData(
 	xfree(vdata);
 }
 
+static void
+RecvRedData(NETFILE	*fpLog)
+{
+	LargeByteString	*data, *cdata;
+	VeryfyData *vdata;
+ENTER_FUNC;
+	pthread_mutex_lock(&redlock);
+	vdata = New(VeryfyData);
+	cdata = NewLBS();
+	LBS_EmitStart(cdata);
+	RecvLBS(fpLog,cdata);
+	LBS_EmitEnd(cdata);
+	vdata->CheckData = cdata;
+
+	data = NewLBS();
+	LBS_EmitStart(data);
+	RecvLBS(fpLog,data);
+	LBS_EmitEnd(data);
+	vdata->RedirectData = data;
+
+	EnQueue(FileQueue, vdata);
+	SendPacketClass(fpLog,RED_OK);
+	pthread_mutex_unlock(&redlock);
+LEAVE_FUNC;
+}
+
 static	void
 LogThread(
 	void	*para)
 {
 	int		fhLog = (int)(long)para;
-	LargeByteString	*data, *cdata;
-	VeryfyData *vdata;
 	NETFILE	*fpLog;
 	PacketClass	c;
 	Bool	fSuc = TRUE;
@@ -101,23 +125,7 @@ ENTER_FUNC;
 	do {
 		switch	( c = RecvPacketClass(fpLog) ) {
 		  case	RED_DATA:
-			pthread_mutex_lock(&redlock);
-			vdata = New(VeryfyData);
-			cdata = NewLBS();
-			LBS_EmitStart(cdata);
-			RecvLBS(fpLog,cdata);
-			LBS_EmitEnd(cdata);
-			vdata->CheckData = cdata;
-
-			data = NewLBS();
-			LBS_EmitStart(data);
-			RecvLBS(fpLog,data);
-			LBS_EmitEnd(data);
-			vdata->RedirectData = data;
-
-			EnQueue(FileQueue, vdata);
-			SendPacketClass(fpLog,RED_OK);
-			pthread_mutex_unlock(&redlock);
+			RecvRedData(fpLog);
 			fSuc = TRUE;
 			break;
 		  case	RED_PING:
