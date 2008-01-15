@@ -58,7 +58,6 @@
 #define	UnLockNet(fp)	{				\
 	dbgmsg("unlock");					\
 	pthread_mutex_unlock(&(fp)->lock);	\
-	pthread_cond_signal(&(fp)->isdata);	\
 }
 #else
 #define	LockNet(fp)
@@ -134,9 +133,12 @@ Send(
 		,	left;
 	int		ret;
 
-	if		(	(  fp  !=  NULL  )
-			&&	(  fp->fOK       ) ) {
+	if		(	fp  !=  NULL  ) {
 		LockNet(fp);
+		if	(	!fp->fOK	) {
+			UnLockNet(fp);
+			return -1;
+		}
 		ret = size;
 		if		(	(  fp->buff  !=  NULL  )
 				&&	(  fp->size  >  size  ) ) {
@@ -146,14 +148,16 @@ Send(
 				fp->ptr = fp->size;
 				if		(  !_Flush(fp)  )	{
 					ret = -1;
-					goto	quit;
+					break;
 				}
 				p += left;
 				size -= left;
 			}
-			memcpy((fp->buff + fp->ptr),p,size);
-			fp->ptr += size;
-			fp->fSent = TRUE;
+			if	(	ret != -1	) {
+				memcpy((fp->buff + fp->ptr),p,size);
+				fp->ptr += size;
+				fp->fSent = TRUE;
+			}
 		} else {
 			_Flush(fp);
 			while	(  size  >  0  ) {
@@ -172,7 +176,6 @@ Send(
 	} else {
 		ret = -1;
 	}
- quit:
 	return	(ret);
 }
 
@@ -186,9 +189,12 @@ Recv(
 	ssize_t	count;
 	int		ret;
 
-	if		(	(  fp  !=  NULL  )
-			&&	(  fp->fOK       ) ) {
+	if		(	fp  !=  NULL  ) {
 		LockNet(fp);
+		if	(	!fp->fOK	) {
+			UnLockNet(fp);
+			return -1;
+		}
 		if		(  fp->fSent  ) {
 			_Flush(fp);
 		}
@@ -246,7 +252,6 @@ FreeNet(
 	}
 #ifdef	MT_NET
 	pthread_mutex_destroy(&fp->lock);
-	pthread_cond_destroy(&fp->isdata);
 #endif
 	xfree(fp);
 }

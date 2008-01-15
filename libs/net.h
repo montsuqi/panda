@@ -63,7 +63,6 @@ typedef	struct _NETFILE	{
 	byte	*buff;
 #ifdef	MT_NET
 	pthread_mutex_t	lock;
-	pthread_cond_t	isdata;
 #endif
 	ssize_t	(*read)(struct _NETFILE *fp, void *buf, size_t count);
 	ssize_t	(*write)(struct _NETFILE *fp, void *buf, size_t count);
