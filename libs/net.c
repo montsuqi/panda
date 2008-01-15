@@ -344,7 +344,6 @@ NewNet(void)
 	fp->ptr = 0;
 	fp->buff = NULL;
 #ifdef	MT_NET
-	pthread_cond_init(&fp->isdata,NULL);
 	pthread_mutex_init(&fp->lock,NULL);
 #endif
 	return	(fp);
