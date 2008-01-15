@@ -1,3 +1,8 @@
+2008-01-15  yusuke mihara  <mihara@netlab.jp>
+
+    * libs/net.{c,h}: 使用されていない pthread条件変数 を削除、fp の
+	ロック周りを修正
+
 2007-12-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* aps/Ruby.c (timestamp_new): 時刻系の型に対応
