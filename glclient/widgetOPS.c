@@ -828,11 +828,10 @@ SetStyle(
 	GtkWidget	*widget,
 	GtkStyle	*style)
 {
-	if		(  GTK_IS_LABEL(widget)  ) {
-		gtk_widget_set_style(widget,style);
-	} else {
-		gtk_container_foreach(GTK_CONTAINER(widget),(GtkCallback)SetStyle,style);
-	}
+    gtk_widget_set_style(widget,style);
+    if (GTK_IS_CONTAINER(widget)){
+        gtk_container_foreach(GTK_CONTAINER(widget),(GtkCallback)SetStyle,style);
+    }
 }
 
 static	Bool
