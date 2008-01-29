@@ -1,5 +1,6 @@
 2008-01-29  Noboru Saitou  <noborus@netlab.jp>
 
+	* glclient/callbacks.c (notebook_send_event): タブ切替えコールバックの追加
 	* glclient/action.[ch] (GetObjectData, SetObjectData): gtk_objectのサポート
 	* glclient/callbacks.c, glcient/widgetOPS.c: GtkNotebookの制御の修正
 	  (user_data != NULL: サーバ制御, user_data = NLL: 制御せず)

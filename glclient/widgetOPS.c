@@ -1591,7 +1591,7 @@ ENTER_FUNC;
 			RecvValue(fp,longname + strlen(name) + 1);
 		}
 	}
-	SetObjectData(widget, "page", (void *)&page);
+	SetObjectData(widget, "recv_page", (void *)&page);
 	gtk_notebook_set_page(GTK_NOTEBOOK(widget),page);
 LEAVE_FUNC;
 	return	(TRUE);
