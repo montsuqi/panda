@@ -43,4 +43,7 @@ extern	void		StartTimer( char *event, int timeout,
 extern	char		*GetTimerEvent(GtkWindow *window);
 extern	void		ResetTimer(GtkWindow *window);
 extern	void		StopTimer(GtkWindow *window);
+extern	gpointer	*GetObjectData(GtkWidget	*widget, char *object_key);
+extern	void		SetObjectData(GtkWidget	*widget, char *object_key, gpointer	*data);
+
 #endif

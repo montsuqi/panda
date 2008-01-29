@@ -361,12 +361,29 @@ day_selected(
 #endif
 }
 
-extern	void
+extern	gboolean
 switch_page(
 	GtkNotebook	*widget,
-	char		*user_data)
+	GtkNotebookPage *page,
+	gint			page_num,
+	char			*user_data)
 {
+	int			old_page;
+	gboolean	rc;
+	gpointer *object;
+
+	object = GetObjectData(GTK_WIDGET(widget), "page");
+	old_page = (int )(*object);
 	UpdateWidget((GtkWidget *)widget,user_data);
+	if ((user_data != NULL ) &&
+		(old_page != page_num)){
+		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "switch_page");
+		rc = TRUE;	
+	} else {
+		SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
+		rc = FALSE;
+	}
+	return rc;
 }
 
 static	void
