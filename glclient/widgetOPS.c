@@ -1538,15 +1538,16 @@ SendNotebook(
 {
 	char	iname[SIZE_BUFF];
 	ValueAttribute	*v;
+	gpointer *object;
 	int		page;
 
 ENTER_FUNC;
 	v = GetValue(name);
-	page = gtk_notebook_get_current_page(GTK_NOTEBOOK(notebook));
-
+	object = GetObjectData(GTK_WIDGET(notebook), "page");
+	page = (int )(*object);
 	GL_SendPacketClass(fp,GL_ScreenData);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
-#ifdef	TRACE
+#ifdef TRACE
 	printf("iname = [%s] value = %d\n",iname,page);
 #endif
 	GL_SendName(fp,iname);
@@ -1590,6 +1591,7 @@ ENTER_FUNC;
 			RecvValue(fp,longname + strlen(name) + 1);
 		}
 	}
+	SetObjectData(widget, "page", (void *)&page);
 	gtk_notebook_set_page(GTK_NOTEBOOK(widget),page);
 LEAVE_FUNC;
 	return	(TRUE);
@@ -1611,7 +1613,7 @@ ENTER_FUNC;
 
 	GL_SendPacketClass(fp,GL_ScreenData);
 	sprintf(iname,"%s.%s",v->ValueName,v->NameSuffix);
-#ifdef	TRACE
+#ifdef TRACE
 	printf("iname = [%s] value = %d\n",iname,value);
 #endif
 	GL_SendName(fp,iname);

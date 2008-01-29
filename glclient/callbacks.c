@@ -1,24 +1,23 @@
-/*	PANDA -- a simple transaction monitor
-
-Copyright (C) 1998-1999 Ogochan.
-              2000-2003 Ogochan & JMA (Japan Medical Association).
-
-This module is part of PANDA.
-
-	PANDA is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY.  No author or distributor accepts responsibility
-to anyone for the consequences of using it or for whether it serves
-any particular purpose or works at all, unless he says so in writing.
-Refer to the GNU General Public License for full details. 
-
-	Everyone is granted permission to copy, modify and redistribute
-PANDA, but only under the conditions described in the GNU General
-Public License.  A copy of this license is supposed to have been given
-to you along with PANDA so you can know your rights and
-responsibilities.  It should be in a file named COPYING.  Among other
-things, the copyright notice and this notice must be preserved on all
-copies. 
-*/
+/*
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 1998-1999 Ogochan.
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2007 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -31,7 +30,7 @@ copies.
 
 #include	<stdio.h>
 
-#ifdef ENABLE_GNOME
+#ifdef USE_GNOME
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
@@ -52,9 +51,6 @@ copies.
 #include	"glterm.h"
 #include	"debug.h"
 
-static char *timeout_event;
-static gint timeout_hander_id = 0;
-
 extern	gboolean
 select_all(
 	GtkWidget	*widget,
@@ -62,8 +58,10 @@ select_all(
 	gpointer		user_data)
 {
 	GtkEntry *entry = GTK_ENTRY (widget);
+ENTER_FUNC;
 	gtk_entry_select_region(entry, 0, entry->text_length);
 	GTK_EDITABLE (entry)->current_pos = 0;
+LEAVE_FUNC;
 	return (TRUE);
 }
 
@@ -74,7 +72,9 @@ unselect_all(
 	gpointer		user_data)
 {
 	GtkEntry *entry = GTK_ENTRY (widget);
+ENTER_FUNC;
 	gtk_entry_select_region (entry, 0, 0);
+LEAVE_FUNC;
 	return (TRUE);
 }
 
@@ -88,7 +88,7 @@ keypress_filter(
 	GtkWidget	*window;
 	char		*wname;
 	XML_Node	*node;
-
+ENTER_FUNC;
 	if		(event->keyval == GDK_KP_Enter) {
 		window = gtk_widget_get_toplevel(widget);
 		wname = gtk_widget_get_name(window);
@@ -98,6 +98,7 @@ keypress_filter(
 		}
 		gtk_signal_emit_stop_by_name(GTK_OBJECT(widget),"key_press_event");
 	}
+LEAVE_FUNC;
 	return	(TRUE);
 }
 
@@ -108,7 +109,7 @@ press_filter(
 	gpointer		user_data)
 {
 	gboolean	rc;
-
+ENTER_FUNC;
 	/* If WIDGET already has focus, do the default action */
 	if		(GTK_WIDGET_HAS_FOCUS (widget)) {
 		rc = FALSE;
@@ -118,48 +119,8 @@ press_filter(
 		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "button_press_event");
 		rc = TRUE;
 	}
+LEAVE_FUNC;
 	return	(rc);
-}
-
-struct changed_hander {
-	GtkObject       *object;
-	GtkSignalFunc	func;
-	gpointer	data;
-	struct changed_hander *next;
-} *changed_hander_list = NULL;
-
-static	void
-RegisterChangedHander(
-	GtkObject *object,
-	GtkSignalFunc func,
-	gpointer data)
-{
-  struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
-  p->object = object;
-  p->func = func;
-  p->data = data;
-  p->next = changed_hander_list;
-  changed_hander_list = p;
-}
-
-static void
-BlockChangedHanders(void)
-{
-  struct changed_hander *p;
-ENTER_FUNC;
-  for (p = changed_hander_list; p != NULL; p = p->next)
-    gtk_signal_handler_block_by_func (p->object, p->func, p->data);
-LEAVE_FUNC;
-}
-
-static void
-UnblockChangedHanders(void)
-{
-  struct changed_hander *p;
-ENTER_FUNC;
-  for (p = changed_hander_list; p != NULL; p = p->next)
-    gtk_signal_handler_unblock_by_func (p->object, p->func, p->data);
-LEAVE_FUNC;
 }
 
 extern	void
@@ -167,61 +128,39 @@ send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	GtkWidget	*window;
 	GdkWindow	*pane;
-	GdkWindowAttr	attr;
-	static int	ignore_event = FALSE;
-	char	wname[SIZE_LONGNAME];
+	char		*wname;
+	static Bool	ignore_event = FALSE;
 
 ENTER_FUNC;
-	memset (&attr, 0, sizeof (GdkWindowAttr));
-	attr.wclass = GDK_INPUT_ONLY;
-	attr.window_type = GDK_WINDOW_CHILD;
-	attr.cursor = gdk_cursor_new (GDK_WATCH);
-	attr.x = attr.y = 0;
-	attr.width = attr.height = 32767;
+	if		(  !fInRecv &&  !ignore_event ) {
+		pane = ShowBusyCursor(widget);
 
-	if		(  !fInRecv  &&  !ignore_event ) {
-		/* remove timer */
-		if (timeout_hander_id != 0) {
-			gtk_timeout_remove(timeout_hander_id);
-			timeout_hander_id = 0;
-		}
-		/* show busy cursor */
-		window = gtk_widget_get_toplevel(widget);
-#if	1	/*	This logic is escape code for GTK bug.	*/
-		strcpy(wname,glade_get_widget_long_name(widget));
-		*(strchr(wname,'.')) = 0;
-#else
-		strcpy(wname,gtk_widget_get_name(window));
-#endif
-		pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
-		gdk_window_show (pane);
-		gdk_flush ();
+		StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
+
+		wname = GetWindowName(widget);
 		/* send event */
 		if		(  event  !=  NULL  ) {
-			SendEvent(fpComm,
+			SendEvent(FPCOMM(glSession),
 					  wname,
 					  gtk_widget_get_name(widget),
 					  event);
 		} else {
-			SendEvent(fpComm,
+			SendEvent(FPCOMM(glSession),
 					  wname,
 					  gtk_widget_get_name(widget),
 					  gtk_widget_get_name(widget));
 		}
 		SendWindowData();
-		BlockChangedHanders();
-		if		(  GetScreenData(fpComm)  ) {
+		BlockChangedHandlers();
+		GetScreenData(FPCOMM(glSession));
+		UnblockChangedHandlers();
+		if	( ! fKeyBuff  ) {
 			ignore_event = TRUE;
-			while	(  gtk_events_pending()  ) {
-				gtk_main_iteration();
-			}
+			ClearKeyBuffer();
 			ignore_event = FALSE;
 		}
-		UnblockChangedHanders();
-		/* clear busy cursor */
-		gdk_window_destroy (pane);
+		HideBusyCursor(pane); 
 	}
 LEAVE_FUNC;
 }
@@ -238,14 +177,19 @@ send_event_on_focus_out(
 static gint
 send_event_if_kana (gpointer widget)
 {
-  guchar *text = gtk_entry_get_text (GTK_ENTRY (widget));
-  int len = strlen (text);
-  if (len == 0 || text[len - 1] >= 0x80)
-    {
-      entry_changed (widget, timeout_event);
-      send_event (widget, timeout_event);
-    }
-  timeout_hander_id = 0;
+	GtkWidget	*window;
+	char *timeout_event;
+	guchar *text = gtk_entry_get_text (GTK_ENTRY (widget));
+	int len = strlen (text);
+ENTER_FUNC;
+	window = gtk_widget_get_toplevel(widget);
+	if (len == 0 || text[len - 1] >= 0x80)
+	{
+		timeout_event = GetTimerEvent(GTK_WINDOW(window));
+		entry_changed (widget, timeout_event);
+		send_event (widget, timeout_event);
+	}
+LEAVE_FUNC;
   return FALSE;
 }
 
@@ -256,12 +200,11 @@ send_event_when_idle(
 {
 	static int registed = 0;
 	static int timeout = -1;
-
-	if (timeout_hander_id)
-		gtk_timeout_remove (timeout_hander_id);
-
+	static int openchanged = 0;
+ENTER_FUNC;
+	StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
 	if (!registed) {
-		RegisterChangedHander (GTK_OBJECT (widget), send_event_when_idle, event);
+		RegisterChangedHandler (GTK_OBJECT (widget), send_event_when_idle, event);
 		registed = 1;
 	}
 	if (timeout == -1) {
@@ -273,11 +216,15 @@ send_event_when_idle(
 	}
 
 	if (timeout > 0) {
-		timeout_event = event;
-		timeout_hander_id = gtk_timeout_add (timeout, send_event_if_kana, widget);
+		if ( openchanged == 0 ) {
+			openchanged += 1;
+		} else {
+			StartTimer(event, timeout, send_event_if_kana, widget);
+		}
 	} else {
 		entry_changed (widget, event);
 	}
+LEAVE_FUNC;
 }
 
 extern void
@@ -288,6 +235,18 @@ clist_send_event(
 	char		*event)
 {
 	send_event(widget, "SELECT");
+}
+
+extern void
+clist_select(
+	GtkWidget	*widget,
+	gint		row,
+	gint		column,
+	GdkEventButton	*dummy,
+	char		*event)
+{
+	UpdateWidget(widget,event);
+	send_event(widget, event);
 }
 
 extern void
@@ -305,13 +264,14 @@ entry_next_focus(
 	GtkWidget	*window;
 	char		*wname;
 	XML_Node	*node;
-
+ENTER_FUNC;
 	window = gtk_widget_get_toplevel(GTK_WIDGET(entry));
 	wname = gtk_widget_get_name(window);
 	if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )       !=  NULL  )
 			&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
 		gtk_widget_grab_focus(nextWidget);
 	}
+LEAVE_FUNC;
 }
 
 extern	void
@@ -375,9 +335,7 @@ map_event(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-dbgmsg(">map_event");
 	ClearWindowTable();
-dbgmsg("<map_event");
 }
 
 extern	void
@@ -385,16 +343,8 @@ set_focus(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-	XML_Node	*node;
-	char		*name;
-
-dbgmsg(">set_focus");
-	name = gtk_widget_get_name(widget);
-
-	if		(  ( node = g_hash_table_lookup(WindowTable,name) )  !=  NULL  ) {
-		FocusedScreen = node;
-	}
-dbgmsg("<set_focus");
+ENTER_FUNC;
+LEAVE_FUNC;
 }
 
 extern	void
@@ -411,12 +361,29 @@ day_selected(
 #endif
 }
 
-extern	void
+extern	gboolean
 switch_page(
 	GtkNotebook	*widget,
-	char		*user_data)
+	GtkNotebookPage *page,
+	gint			page_num,
+	char			*user_data)
 {
+	int			old_page;
+	gboolean	rc;
+	gpointer *object;
+
+	object = GetObjectData(GTK_WIDGET(widget), "page");
+	old_page = (int )(*object);
 	UpdateWidget((GtkWidget *)widget,user_data);
+	if ((user_data != NULL ) &&
+		(old_page != page_num)){
+		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "switch_page");
+		rc = TRUE;	
+	} else {
+		SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
+		rc = FALSE;
+	}
+	return rc;
 }
 
 static	void
@@ -428,6 +395,7 @@ CheckWindow(
 	if		(  node->window  !=  NULL  ) {
 		*fOpen = TRUE;
 	}
+LEAVE_FUNC;
 }
 
 extern	void
@@ -439,6 +407,7 @@ window_close(
 	char		*name;
 	Bool		fOpen;
 
+ENTER_FUNC;
 	name = gtk_widget_get_name(widget);
 	if		(  ( node = g_hash_table_lookup(WindowTable,name) )  !=  NULL  ) {
 		gtk_widget_hide(GTK_WIDGET(node->window));
@@ -450,6 +419,7 @@ window_close(
 			}
 		}
 	}
+LEAVE_FUNC;
 }
 
 extern	void
@@ -457,11 +427,8 @@ window_destroy(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-dbgmsg(">window_destroy");
-    DestroyWindowAll();
 	fInRecv = TRUE;
 	gtk_main_quit();
-dbgmsg("<window_destroy");
 }
 
 #ifdef	GTK_PANDA_TYPE_HTML
@@ -476,6 +443,7 @@ open_browser(
 	char	*p;
 	char	buff[SIZE_BUFF];
 
+ENTER_FUNC;
 	if		(strncmp (cbs->href, "http:", 5) == 0)	{
 		/* full URI */
 		strcpy (uri, cbs->href);
@@ -508,5 +476,6 @@ open_browser(
 		sprintf (buff, "gnome-moz-remote %s", uri);
 		system (buff);
 	}
+LEAVE_FUNC;
 }
 #endif
