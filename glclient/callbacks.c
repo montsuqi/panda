@@ -249,6 +249,32 @@ clist_select(
 	send_event(widget, event);
 }
 
+extern	gboolean
+notebook_send_event(
+	GtkNotebook	*widget,
+	GtkNotebookPage *page,
+	gint			page_num,
+	char			*event)
+{
+	int			recv_page;
+	gboolean	rc;
+	gpointer *object;
+
+	object = GetObjectData(GTK_WIDGET(widget), "recv_page");
+	recv_page = (int )(*object);
+
+	SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
+	UpdateWidget((GtkWidget *)widget, event);
+	if ( recv_page != page_num ){
+		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "switch_page");
+		send_event(GTK_WIDGET(widget), event);
+		rc = TRUE;	
+	} else {
+		rc = FALSE;
+	}
+	return TRUE;
+}
+
 extern void
 activate_widget(GtkWidget *widget)
 {
@@ -368,19 +394,19 @@ switch_page(
 	gint			page_num,
 	char			*user_data)
 {
-	int			old_page;
+	int			recv_page;
 	gboolean	rc;
 	gpointer *object;
 
-	object = GetObjectData(GTK_WIDGET(widget), "page");
-	old_page = (int )(*object);
+	object = GetObjectData(GTK_WIDGET(widget), "recv_page");
+	recv_page = (int )(*object);
+	SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
 	UpdateWidget((GtkWidget *)widget,user_data);
 	if ((user_data != NULL ) &&
-		(old_page != page_num)){
+		(recv_page != page_num)){
 		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "switch_page");
 		rc = TRUE;	
 	} else {
-		SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
 		rc = FALSE;
 	}
 	return rc;
