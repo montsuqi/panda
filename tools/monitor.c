@@ -403,9 +403,10 @@ ENTER_FUNC;
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->WfcApsPort));
 		argv[argc ++] = "-cache";
 		argv[argc ++] = IntStrDup(nCache);
-		argv[argc ++] = "-sesdir";
-		argv[argc ++] = SesDir;
-
+		if		(  SesDir  !=  NULL  ) {
+			argv[argc ++] = "-sesdir";
+			argv[argc ++] = SesDir;
+		}
 		if		(  Directory  !=  NULL  ) {
 			argv[argc ++] = "-dir";
 			argv[argc ++] = Directory;
@@ -728,7 +729,7 @@ SetDefault(void)
 	fTimer = FALSE;
 	fNoApsConnectRetry = FALSE;
 	nCache = 100;
-	SesDir = ".";
+	SesDir = NULL;
 }
 
 extern	int
