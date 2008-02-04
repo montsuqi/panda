@@ -406,9 +406,15 @@ RecvTermServerData(
 	NETFILE		*fp,
 	ScreenData	*scr)
 {
+	PacketClass	klass;
+
 ENTER_FUNC;
 	g_hash_table_foreach(scr->Windows,(GHFunc)_RecvWindow,fp);
 	SendPacketClass(fp,WFC_DONE);
+	klass = RecvPacketClass(fp);
+	if (klass != WFC_DONE) {
+		Warning("Error wfc fail");
+	}
 LEAVE_FUNC;
 }
 
