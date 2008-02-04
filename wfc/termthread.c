@@ -676,14 +676,18 @@ ENTER_FUNC;
 			data = ReadTerminal(fp,data);
 		} else {
 			dbgmsg("FALSE");
+			Warning("Error: Other threads are processing it.");
 			SendPacketClass(fp,WFC_FALSE);			ON_IO_ERROR(fp,badio);
 			data = NULL;
 		}
 	} else {
 		if		(  ( data = LoadSession(term) )  ==  NULL  ) {
 			dbgmsg("INIT");
-			data = InitSession(fp,term);
-			data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+			if (  ( data = InitSession(fp,term) ) == NULL) {
+				Warning("Error: session initialize failure");
+			} else {
+				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+			}
 		} else {
 			dbgmsg("TRUE");
 			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
