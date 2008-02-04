@@ -799,6 +799,7 @@ ENTER_FUNC;
 			KeepSession(data);
 		}
 	}
+	SendPacketClass(term->fp,WFC_DONE);
 	CloseNet(term->fp);
 	FreeQueue(term->que);
 	xfree(term);

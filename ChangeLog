@@ -1,3 +1,7 @@
+2008-02-04  Noboru Saitou  <noborus@netlab.jp>
+
+	* wfc/termthread.c, libs/wfcio.c: wfcの終了を待つように修正
+
 2008-01-29  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/callbacks.c (notebook_send_event): タブ切替えコールバックの追加
