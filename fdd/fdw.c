@@ -147,24 +147,24 @@ ExecuteClient(
 
 static	ARG_TABLE	option[] = {
 	{	"command",	STRING,		TRUE,	(void*)&Command,
-		"ųŞųŉ?"	 								},
+		"コマンド名"	 								},
 	{	"host",		STRING,		TRUE,	(void*)&Host,
-		"śŹň?"	 									},
+		"ホスト名"	 									},
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ŝ|ň??"	 								},
+		"ポート番号"	 								},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"?ŕšŤū?(pem)"		 						},
+		"鍵ファイル名(pem)"		 						},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"???ŕšŤū?(pem)"	 						},
+		"証明書ファイル名(pem)"	 						},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		"SSLĲ?Ħ"				 						},
+		"SSLを使う"				 						},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		"CA???ĘĎőŹ"								},
+		"CA証明書へのパス"								},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		"CA???ŕšŤū"								},
+		"CA証明書ファイル"								},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		"SSLć??ĹīЅ?ŹŤ|ň"						},
+		"SSLで使用する暗号スイート"						},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
