@@ -40,6 +40,7 @@
 #include	<glib.h>
 #include	<signal.h>
 
+#include	"gettext.h"
 #include	"types.h"
 #include	"const.h"
 #include	"glserver.h"

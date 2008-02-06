@@ -44,6 +44,7 @@
 #include	<openssl/err.h>
 #endif
 
+#include	"gettext.h"
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
