@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -265,35 +265,79 @@ WriteClientString(
 	,		rname[SIZE_BUFF+1]
 	,		vname[SIZE_BUFF+1];
 	char	buff[SIZE_BUFF+1];
-	ValueStruct	*value;
-	char	*p;
+	ValueStruct	*value
+		,		*rec;
+	char	*p
+		,	*q;
 	Bool	fName;
+	int		ix
+		,	i
+		,	count;
 
 ENTER_FUNC;
 	SendStringDelim(fpComm,"Exec: ");
-	sprintf(buff,"%d\n",ctrl->rc);
+	sprintf(buff,"%d:%d\n",ctrl->rc,ctrl->count);
 	SendStringDelim(fpComm,buff);
-	do {
-		if		(  !RecvStringDelim(fpComm,SIZE_BUFF,name)  )	break;
-		if		(  *name  ==  0  )	break;
-		if		(  ( p = strchr(name,':') )  !=  NULL  ) {
+	dbgprintf("[%s]",buff);
+	ix = 0;
+	fName = FALSE;
+	while	(  RecvStringDelim(fpComm,SIZE_BUFF,name)  ) {
+		if		(  *name  ==  0  )	{
+			ix ++;
+			if		(  ix  >=  ctrl->count  )	break;
+		}
+		dbgprintf("name = [%s]",name);
+		if		(  ( p = strchr(name,';') )  !=  NULL  ) {
+			*p = 0;
+			q = p + 1;
+			count = atoi(q);
+		} else {
+			q = name;
+			count = 1;
+		}
+		if		(  ( p = strchr(q,':') )  !=  NULL  ) {
 			*p = 0;
 			fName = FALSE;
 		} else {
 			fName = TRUE;
 		}
+		dbgprintf("count = %d",count);
 		DecodeName(rname,vname,name);
-		if		(  *vname  !=  0  ) {
-			value = GetItemLongName(args,vname);
+		if		(  count  >  1  ) {
+			for	( i = 0 ; i < count ; i ++ ) {
+				rec = ValueArrayItem(args,ix);
+				if		(  *vname  !=  0  ) {
+					value = GetItemLongName(rec,vname);
+				} else {
+					value = rec;
+				}
+				SetValueName(name);
+				SendValueString(fpComm,value,NULL,fName,fType,NULL);
+				if		(  fName  ) {
+					SendStringDelim(fpComm,"\n");
+				}
+				ix ++;
+				if		(  ix  ==  ctrl->count  )	break;
+			}
 		} else {
-			value = args;
+			if		(  *vname  !=  0  ) {
+				value = GetItemLongName(args,vname);
+			} else {
+				value = args;
+			}
+#ifdef	DEBUG
+			DumpValueStruct(value);
+#endif
+			if		(  value  !=  NULL  ) {
+				SetValueName(name);
+				dbgmsg("*");
+				SendValueString(fpComm,value,NULL,fName,fType,NULL);
+			}
 		}
-		SetValueName(name);
-		SendValueString(fpComm,value,NULL,fName,fType,NULL);
 		if		(  fName  ) {
 			SendStringDelim(fpComm,"\n");
 		}
-	}	while	(TRUE);
+	}
 LEAVE_FUNC;
 }
 
@@ -386,7 +430,8 @@ do_String(
 	Bool	ret
 	,		fType;
 	DBCOMM_CTRL	ctrl;
-	ValueStruct		*value;
+	ValueStruct		*value
+		,			*arg;
 	RecordStruct	*rec;
 	char			func[SIZE_FUNC+1]
 		,			rname[SIZE_RNAME+1]
@@ -399,6 +444,7 @@ do_String(
 	if		(  strncmp(input,"Exec: ",6)  ==  0  ) {
 		dbgmsg("exec");
 		p = input + 6;
+		ctrl.count = 0;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 			DecodeStringURL(func,p);
@@ -410,8 +456,15 @@ do_String(
 			} else {
 				strcpy(rname,"");
 			}
+			p = q + 1;
+			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+				*q = 0;
+				ctrl.limit = atoi(q+1);
+			} else {
+				ctrl.limit = 1;
+			}
 			DecodeStringURL(pname,p);
-			rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
+			rec = MakeCTRLbyName(&arg,&ctrl,rname,pname,func);
 		} else {
 			DecodeStringURL(func,p);
 			ctrl.rno = 0;
@@ -421,10 +474,11 @@ do_String(
 			rec = NULL;
 			value = NULL;
 		}
-		RecvData(fpComm,value);
-		ExecDB_Process(&ctrl,rec,value);
+		RecvData(fpComm,arg);
+		value = ExecDB_Process(&ctrl,rec,arg);
 		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
 		WriteClientString(fpComm,fType,&ctrl,value);
+		FreeValueStruct(value);
 		ret = TRUE;
 	} else
 	if		(  strncmp(input,"Schema: ",8)  ==  0  ) {
@@ -535,37 +589,37 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ポート番号"	 								},
+		"port number"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"接続待ちキューの数" 							},
+		"connection waiting queue length" 				},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"環境のベースディレクトリ"		 				},
+		"base directory"				 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"データ定義格納ディレクトリ"	 				},
+		"record directory"				 				},
 	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
-		"定義格納ディレクトリ"			 				},
+		"defines directory"				 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"config file name"		 						},
 
 	{	"dbhost",	STRING,		TRUE,	(void*)&DB_Host,
-		"データベース稼働ホスト名"						},
+		"DB host name(for override)"					},
 	{	"dbport",	STRING,		TRUE,	(void*)&DB_Port,
-		"データベース待機ポート番号"					},
+		"DB port numver(for override)"					},
 	{	"db",		STRING,		TRUE,	(void*)&DB_Name,
-		"データベース名"								},
+		"DB name(for override)"							},
 	{	"dbuser",	STRING,		TRUE,	(void*)&DB_User,
-		"データベースのユーザ名"						},
+		"DB user name(for override)"					},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
-		"データベースのパスワード"						},
+		"DB password(for override)"						},
 
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
-		"認証サーバ"			 						},
+		"authentication server"		 					},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirectorの起動をチェックしない"			},
+		"no check dbredirector"							},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
-		"dbredirectorを使わない"						},
+		"no DB redirection"								},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -580,7 +634,11 @@ SetDefault(void)
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
+#if	0
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
+#else
+	AuthURL = "file://./passwd";
+#endif
 
 	DB_User = NULL;
 	DB_Pass = NULL;
@@ -617,7 +675,7 @@ main(
 		rc = 0;
 	} else {
 		rc = -1;
-		fprintf(stderr,"DBD名が指定されていません\n");
+		fprintf(stderr,"DBD is not specified\n");
 	}
 	exit(rc);
 }
