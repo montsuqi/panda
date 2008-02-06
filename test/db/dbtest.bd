@@ -1,0 +1,24 @@
+name	dbtest;
+
+HandlerPath	".:=/aps/.libs";
+
+handler	"Ruby"	{
+	class		"Ruby";
+    loadpath	"=/test/db";
+	locale		"utf-8";
+};
+
+handler	"OpenCOBOL"	{
+	class		"OpenCOBOL";
+	bigendian	true;
+};
+
+# bind <module name> <hander name> ;
+
+bind	"Test1"		"Ruby";
+bind	"TEST1"		"OpenCOBOL";
+
+db	"Test"	{
+	metadb;
+	test1;
+};

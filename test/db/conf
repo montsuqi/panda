@@ -1,0 +1,10 @@
+#! /bin/sh
+
+TOP=$HOME'/MONTSUQI/panda'
+TESTDB='dbtest'
+
+DBGEN=$TOP'/tools/dbgen'
+DBSTUB=$TOP'/aps/dbstub'
+DBS=$TOP'/dbstuff/dbs'
+LOGDIR=`pwd`'/log'
+

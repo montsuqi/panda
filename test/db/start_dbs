@@ -1,0 +1,6 @@
+#! /bin/sh
+
+. ./conf
+
+#$DBS dbtest  > $LOGDIR/dbs &
+$DBS dbtest
