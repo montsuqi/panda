@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -295,7 +295,7 @@ AuthSavePasswd(
 		}
 	}
 	if		(  ret  ) {
-		printf("a new password file was made\n");
+		printf("a new password file was made (%s)\n", fname);
 	}
 	fclose(fp);
 }
@@ -343,10 +343,10 @@ AuthAddX509(const char *user, const char *subject)
 extern void
 AuthDelX509BySubject(const char *subject)
 {
-    gpointer u, s;
+    char *u, *s;
 
     assert(X509Table);
-    if (g_hash_table_lookup_extended(X509Table, (gpointer)subject, &s, &u)){
+	if (g_hash_table_lookup_extended(X509Table, (gpointer)subject, &s, &u)){
         g_hash_table_remove(X509Table, s);
         g_free(u);
         g_free(s);

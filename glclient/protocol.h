@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,8 +62,8 @@ extern	void			SendFloatData(NETFILE *fp, PacketDataType type, double val);
 extern	Bool			RecvFloatData(NETFILE *fp, double *val);
 extern	void			SendFixedData(NETFILE *fp, PacketDataType type, Fixed *xval);
 extern	Bool			RecvFixedData(NETFILE *fp, Fixed **xval);
-extern  void            RecvBinaryData(NETFILE *fp, LargeByteString *binary);
-extern  void            SendBinaryData(NETFILE *fp, PacketDataType type, LargeByteString *binary);
+extern  void			RecvBinaryData(NETFILE *fp, LargeByteString *binary);
+extern  void			SendBinaryData(NETFILE *fp, PacketDataType type, LargeByteString *binary);
 
 #undef	GLOBAL
 #ifdef	MAIN

@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,6 +91,8 @@ typedef	struct {
 	int		blocks;
 	int		rno;
 	int		pno;
+	int		count;
+	int		limit;
 }	DBCOMM_CTRL;
 
 #define NOCONNECT   0x00
@@ -127,11 +129,11 @@ typedef	struct _DBG_Struct	{
 	char		*file;
 }	DBG_Struct;
 
-typedef	void	(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 
 typedef struct	{
 	int		(*exec)(DBG_Struct *, char *, Bool);
-	Bool	(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+	ValueStruct	*(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
 }	DB_Primitives;
 
@@ -290,7 +292,6 @@ typedef	struct {
 	size_t		cLD
 	,			cBD
 	,			cDBD
-	,			linksize
 	,			stacksize;
 	BLOB_Struct		*blob;
 	RecordStruct	*mcprec;

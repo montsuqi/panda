@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -153,7 +153,7 @@ Send(
 				p += left;
 				size -= left;
 			}
-			if	(	ret != -1	) {
+			if		(  ret  !=  -1  ) {
 				memcpy((fp->buff + fp->ptr),p,size);
 				fp->ptr += size;
 				fp->fSent = TRUE;
@@ -665,18 +665,19 @@ GetCommonNameFromCertificate(X509 *cert)
 static int
 CheckSubjectAltName(X509_EXTENSION *ext, const char *hostname)
 {
-    STACK_OF(CONF_VALUE) *values;
-    CONF_VALUE *value;
-    X509V3_EXT_METHOD *meth;
-    unsigned char *data;
-    int len;
-    int ok = FALSE;
-    int i;
+	STACK_OF(CONF_VALUE) *values;
+	CONF_VALUE *value;
+	X509V3_EXT_METHOD *meth;
+	unsigned char *data;
+	int len;
+	int ok = FALSE;
+	int i;
 
-    if ((meth = X509V3_EXT_get(ext)) == NULL) return FALSE;
-    data = ext->value->data;
-    len = ext->value->length;
-    values = meth->i2v(meth, meth->d2i(NULL, (const unsigned char **)&data, len), NULL);
+	data = ext->value->data;
+	if ((meth = X509V3_EXT_get(ext)) == NULL) return FALSE;
+	data = ext->value->data;
+	len = ext->value->length;
+	values = meth->i2v(meth, meth->d2i(NULL, (const unsigned char **)&data, len), NULL);
     if (values == NULL) return FALSE;
     for (i = 0; i < sk_CONF_VALUE_num(values); i++){
         value = sk_CONF_VALUE_value(values, i);
@@ -1531,7 +1532,7 @@ InitEnginePKCS11( const char *pkcs11, const char *pin)
     ENGINE_load_dynamic();
     e = ENGINE_by_id("dynamic");
     if (!e){
-        SSL_Error(_d("Engine_by_id:\n %s"), GetSSLErrorString());
+		SSL_Error(_d("Engine_by_id:\n %s"), GetSSLErrorString());
         return NULL;
     }
 
@@ -1663,8 +1664,9 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
     }
     free(keyidbuf);
 
-    derptr = (unsigned char *)certder;
-    cert = d2i_X509(NULL, (const unsigned char **)&derptr, certder_size);
+	derptr = (unsigned char *)certder;
+	cert = d2i_X509(NULL, (const unsigned char **)&derptr, certder_size);
+
     if (cert == NULL) {
         SSL_Error(_d("d2i_X509 failure:\n %s"), GetSSLErrorString());
         free(certder);
@@ -1809,7 +1811,7 @@ CheckNetFile(
 	if		(  fp && fp->fOK  ) {
 		ret = TRUE;
 	} else {
-		Message("bad net file");
+		Warning("bad net file");
 		ret = FALSE;
 	}
 	return	(ret);

@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -132,17 +132,17 @@ static	ARG_TABLE	option[] = {
 		N_("Use Startup Dialog")						},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		N_("SSL Key File(pem/p12)")		 						},
+		N_("SSL Key File(pem/p12)")		 				},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		N_("Certificate(pem/p12)")	 						},
+		N_("Certificate(pem/p12)")	 					},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		N_("Use SSL")				 						},
+		N_("Use SSL")				 					},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		N_("CA Certificate Path")								},
+		N_("CA Certificate Path")						},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		N_("CA Certificate File")								},
+		N_("CA Certificate File")						},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		N_("SSL Cipher Sweet")						},
+		N_("SSL Cipher Sweet")							},
 #ifdef  USE_PKCS11
 	{	"pkcs11",		BOOLEAN,	TRUE,	(void*)&fPKCS11,
 		N_("Use Security Device")	 						},
@@ -257,6 +257,7 @@ bannar(void)
 	printf(_("glclient ver %s\n"),VERSION);
 	printf(_("Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n"));
 	printf(_("              2000-2003 Masami Ogoshi & JMA.\n"));
+	printf(_("              2004-2007 Masami Ogoshi\n"));
 }
 
 static gboolean

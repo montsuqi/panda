@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,6 +75,7 @@ static	TokenTable	tokentable[] = {
 	{	"encoding"	,T_ENCODING	},
 	{	"handlerpath"	,T_HANDLERPATH	},
 	{	"loadpath"	,T_LOADPATH	},
+	{	"bigendian"	,T_BIGENDIAN	},
 
 	{	""			,0	}
 };
@@ -229,14 +230,16 @@ ENTER_FUNC;
 			break;
 		  case	T_LOADPATH:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				ret->loadpath = StrDup(ComSymbol);
+				ret->loadpath = StrDup(ExpandPath(ComSymbol
+												  ,ThisEnv->BaseDir));
 			} else {
 				ParError("load path invalid");
 			}
 			break;
 		  case	T_HANDLERPATH:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				ret->handlerpath = StrDup(ComSymbol);
+				ret->handlerpath = StrDup(ExpandPath(ComSymbol
+													 ,ThisEnv->BaseDir));
 			} else {
 				ParError("handler path invalid");
 			}

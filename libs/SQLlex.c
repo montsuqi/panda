@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,7 +116,7 @@ static	TokenTable	tokentable[] = {
 	{	"DAY_P",		T_SQL	},
 	{	"DEC",			T_SQL	},
 	{	"DECIMAL",		T_SQL	},
-	{	"DECLARE",		T_SQL	},
+	{	"DECLARE",		T_DECLARE	},
 	{	"DEFAULT",		T_SQL	},
 	{	"DELETE",		T_SQL	},
 	{	"DESC",			T_SQL	},
@@ -199,7 +199,7 @@ static	TokenTable	tokentable[] = {
 	{	"SCHEMA",		T_SQL	},
 	{	"SCROLL",		T_SQL	},
 	{	"SECOND_P",		T_SQL	},
-	{	"SELECT",		T_SQL	},
+	{	"SELECT",		T_SELECT},
 	{	"SESSION",		T_SQL	},
 	{	"SESSION_USER",	T_SQL	},
 	{	"SET",			T_SQL	},
@@ -227,7 +227,7 @@ static	TokenTable	tokentable[] = {
 	{	"VARYING",		T_SQL	},
 	{	"VIEW",			T_SQL	},
 	{	"WHEN",			T_SQL	},
-	{	"WHERE",		T_SQL	},
+	{	"WHERE",		T_WHERE	},
 	{	"WITH",			T_SQL	},
 	{	"WORK",			T_SQL	},
 	{	"YEAR_P",		T_SQL	},
@@ -435,7 +435,8 @@ ENTER_FUNC;
 	  default:
 		p = buff;
 		if		(	(  isalpha(c)  )
-				||	(  isdigit(c) ) )	{
+				||	(  isdigit(c)  )
+				||	(  c  ==  '$'  ) )	{
 			do {
 				*p ++ = c;
 				c = GetChar(in);

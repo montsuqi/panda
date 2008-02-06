@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -122,16 +122,16 @@ CleanUp(void)
 
 static	ARG_TABLE	option[] = {
 	{	"control",	STRING,		TRUE,	(void*)&ControlPort,
-		"制御ポート"									},
+		"control port"									},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"環境のベースディレクトリ"		 				},
+		"base directory of configurations"				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"データ定義格納ディレクトリ"	 				},
+		"record directory"				 				},
 	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
-		"定義格納ディレクトリ"		 					},
+		"definition directory"		 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"configuration file"	 						},
 
 	{	NULL,		0,			TRUE,	NULL		 	}
 };

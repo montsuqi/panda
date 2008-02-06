@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@
 #define	SQL_OP_EOL		0x05
 #define	SQL_OP_VCHAR	0x06
 #define	SQL_OP_SYMBOL	0x07
+#define	SQL_OP_LIMIT	0x08
 
 extern	LargeByteString	*ParSQL(CURFILE *in,RecordStruct *rec, ValueStruct *argp,
 								ValueStruct *argf);

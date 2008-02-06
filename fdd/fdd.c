@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -257,27 +257,27 @@ dbgmsg("<InitSystem");
 }
 
 static	ARG_TABLE	option[] = {
-	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ポート番号"	 								},
+	{	"port",		STRING,	TRUE,		(void*)&PortNumber,
+		N_("Port")										},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"接続待ちキューの数" 							},
+		N_("connection waiting queue number")			},
 	{	"workdir",	STRING,		TRUE,	(void*)&WorkDir,
-		"一時ファイルを作るディレクトリ"				},
+		N_("working file directory")					},
 	{	"execdir",	STRING,		TRUE,	(void*)&ExecDir,
-		"実行コマンドのあるディレクトリ"				},
+		N_("execute command directory")					},
 #ifdef	USE_SSL
-	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		"SSLを使う"				 						},
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"鍵ファイル名(pem)"		 						},
+		N_("SSL Key File(pem/p12)")		 				},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"証明書ファイル名(pem)"	 						},
+		N_("Certificate(pem/p12)")	 					},
+	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
+		N_("Use SSL")				 					},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		"CA証明書へのパス"								},
+		N_("CA Certificate Path")						},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		"CA証明書ファイル"								},
+		N_("CA Certificate File")						},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		"SSLで使用する暗号スイート"						},
+		N_("SSL Cipher Sweet")							},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}

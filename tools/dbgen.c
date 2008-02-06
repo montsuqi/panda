@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,6 +47,7 @@
 #include	"debug.h"
 
 static	Bool	fCreate;
+static	Bool	fDrop;
 static	Bool	fInsert;
 
 static	int		TextSize;
@@ -261,6 +262,17 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+MakeDrop(
+	RecordStruct	*rec)
+{
+ENTER_FUNC;
+	if		(  ( ValueAttribute(rec->value) & GL_ATTR_VIRTUAL )  ==  0  ) {
+		printf("drop\ttable\t%s;\n",rec->name);
+	}
+LEAVE_FUNC;
+}
+
 static void
 TableInsert(ValueStruct *val, size_t arraysize, size_t textsize, int type)
 {
@@ -418,17 +430,19 @@ PutItemNames(
 
 static	ARG_TABLE	option[] = {
 	{	"create",	BOOLEAN,	TRUE,	(void*)&fCreate,
-		"create tableを作る"							},
+		"generate 'create table'"						},
+	{	"drop",		BOOLEAN,	TRUE,	(void*)&fDrop,
+		"generate 'drop table'"							},
 
 	{	"insert",	BOOLEAN,	TRUE,	(void*)&fInsert,
-		"insert用スクリプトを作る"						},
+		"generate insert script"						},
 
 	{	"textsize",	INTEGER,	TRUE,	(void*)&TextSize,
-		"textの最大長"									},
+		"'text' length(for COBOL)"						},
 	{	"arraysize",INTEGER,	TRUE,	(void*)&ArraySize,
-		"可変要素配列の最大繰り返し数"					},
+		"'array' size (for COBOL)"						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"レコードのあるディレクトリ"					},
+		"record directory"								},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -438,6 +452,7 @@ SetDefault(void)
 {
 	fCreate = FALSE;
 	fInsert = FALSE;
+	fDrop = FALSE;
 	ArraySize = SIZE_DEFAULT_ARRAY_SIZE;
 	TextSize = SIZE_DEFAULT_TEXT_SIZE;
 	RecordDir = ".";
@@ -458,15 +473,21 @@ main(
 	if		(  fl  !=  NULL  ) {
 		RecParserInit();
 		DB_ParserInit();
+		if		( fDrop ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
+				MakeDrop(rec);
+			}
+		}
 		if		(  fCreate  ) {
 			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
-		} else if		( fInsert ) {
-            if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
-                MakeInsert(rec);
-            }
-        }
+		}
+		if		( fInsert ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
+				MakeInsert(rec);
+			}
+		}
 	}
 
 	return	(0);

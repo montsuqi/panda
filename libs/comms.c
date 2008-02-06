@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,7 +66,7 @@ SendLargeString(
 	size_t	size;
 	char	*str;
 
-dbgmsg(">SendLargeString");
+ENTER_FUNC;
 	str = LBS_Body(lbs);
 	if		(   str  !=  NULL  ) { 
 		size = strlen(str);
@@ -76,7 +76,7 @@ dbgmsg(">SendLargeString");
 	if		(  size  >  0  ) {
 		Send(fp,str,size);
 	}
-dbgmsg("<SendLargeString");
+LEAVE_FUNC;
 }
 
 extern	Bool
@@ -126,7 +126,7 @@ ENTER_FUNC;
 	} else {
 		rc = FALSE;
 	}
-dbgmsg("<RecvLargeString");
+LEAVE_FUNC;
 	return	(rc);
 }
 

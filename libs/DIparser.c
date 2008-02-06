@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -798,7 +798,8 @@ BuildMcpArea(
 	size_t	stacksize)
 {
 	RecordStruct	*rec;
-	char    *buff, *p;
+	char    *buff
+		,	*p;
 
 	buff = (char *)xmalloc(SIZE_BUFF);
 	p = buff;
@@ -825,6 +826,8 @@ BuildMcpArea(
 	p += sprintf(p,			"};");
 	p += sprintf(p,			"table      varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"pathname   varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"limit      int;");
+	p += sprintf(p,			"rcount     int;");
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"private	{");
 	p += sprintf(p,			"count	int;");
@@ -865,9 +868,12 @@ ENTER_FUNC;
 				ThisEnv->BaseDir = BaseDir;
 				ThisEnv->D_Dir = D_Dir;
 				ThisEnv->RecordDir = RecordDir;
-				ThisEnv->WfcApsPort = ParPort("localhost",PORT_WFC_APS);
-				ThisEnv->TermPort = ParPort("localhost",PORT_WFC);
-				ThisEnv->ControlPort = ParPort(CONTROL_PORT,PORT_WFC_CONTROL);
+				sprintf(buff,"/tmp/wfc.%s",ThisEnv->name);
+				ThisEnv->WfcApsPort = ParPort(buff,NULL);
+				sprintf(buff,"/tmp/term.%s",ThisEnv->name);
+				ThisEnv->TermPort = ParPort(buff,NULL);
+				sprintf(buff,"/tmp/wfcc.%s",ThisEnv->name);
+				ThisEnv->ControlPort = ParPort(buff,NULL);
 				ThisEnv->cLD = 0;
 				ThisEnv->cBD = 0;
 				ThisEnv->cDBD = 0;
@@ -884,6 +890,7 @@ ENTER_FUNC;
 				ThisEnv->WfcPath = NULL;
 				ThisEnv->RedPath = NULL;
 				ThisEnv->DbPath = NULL;
+				ThisEnv->linkrec = NULL;
 			}
 			break;
 		  case	T_STACKSIZE:
@@ -896,15 +903,7 @@ ENTER_FUNC;
 			}
 			break;
 		  case	T_LINKSIZE:
-#if	1
 			ParError("this feature is obsolete. use linkage directive");
-#else
-			if		(  GetSymbol  ==  T_ICONST  ) {
-				ThisEnv->linksize = ComInt;
-			} else {
-				ParError("linksize must be integer");
-			}
-#endif
 			break;
 		  case	T_LINKAGE:
 			if		(  GetSymbol   ==  T_SYMBOL  ) {
@@ -916,8 +915,6 @@ ENTER_FUNC;
 				}
 				if		(  ThisEnv->linkrec ==  NULL  ) {
 					ParError("linkage record not found");
-				} else {
-					ThisEnv->linksize = NativeSizeValue(NULL,ThisEnv->linkrec->value);
 				}
 			} else {
 				ParError("linkage invalid");
@@ -1004,7 +1001,8 @@ ENTER_FUNC;
 			break;
 		  case	T_DBPATH:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				ThisEnv->DbPath = StrDup(ComSymbol);
+				ThisEnv->DbPath = StrDup(ExpandPath(ComSymbol
+													,ThisEnv->BaseDir));
 				SetDBGPath(ThisEnv->DbPath);
 			} else {
 				ParError("db handler load path invalid");

@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -553,10 +553,14 @@ ENTER_FUNC;
 			fread(&size,sizeof(size_t),1,fp);	/*	mcp data	*/
 			LBS_ReserveSize(data->mcpdata,size,FALSE);
 			fread(LBS_Body(data->mcpdata),size,1,fp);
-			data->linkdata = NewLBS();
 			fread(&size,sizeof(size_t),1,fp);	/*	link data	*/
-			LBS_ReserveSize(data->linkdata,size,FALSE);
-			fread(LBS_Body(data->linkdata),size,1,fp);
+			if		(  size  >  0  ) {
+				data->linkdata = NewLBS();
+				LBS_ReserveSize(data->linkdata,size,FALSE);
+				fread(LBS_Body(data->linkdata),size,1,fp);
+			} else {
+				data->linkdata = NULL;
+			}
 			while	(  ( flag = fgetc(fp) )  ==  RECORD_SCRPOOL  ) {
 				fread(&size,sizeof(size_t),1,fp);	/*	screen name	*/
 				fread(name,size,1,fp);
@@ -645,9 +649,14 @@ ENTER_FUNC;
 			size = LBS_Size(data->mcpdata);
 			fwrite(&size,sizeof(size_t),1,fp);				/*	mcp data	*/
 			fwrite(LBS_Body(data->mcpdata),LBS_Size(data->mcpdata),1,fp);
-			size = LBS_Size(data->linkdata);
-			fwrite(&size,sizeof(size_t),1,fp);				/*	link data	*/
-			fwrite(LBS_Body(data->linkdata),LBS_Size(data->linkdata),1,fp);
+			if		(  data->linkdata  !=  NULL  ) {
+				size = LBS_Size(data->linkdata);
+				fwrite(&size,sizeof(size_t),1,fp);				/*	link data	*/
+				fwrite(LBS_Body(data->linkdata),LBS_Size(data->linkdata),1,fp);
+			} else {
+				size = 0;
+				fwrite(&size,sizeof(size_t),1,fp);
+			}
 			if		(  data->scrpool  !=  NULL  ) {
 				g_hash_table_foreach(data->scrpool,(GHFunc)_SaveScrpool,fp);
 			}
@@ -683,7 +692,7 @@ ENTER_FUNC;
 	} else {
 		if		(  ( data = LoadSession(term) )  ==  NULL  ) {
 			dbgmsg("INIT");
-			if (  ( data = InitSession(fp,term) ) == NULL) {
+			if		(  ( data = InitSession(fp,term) )  ==  NULL  )	{
 				Warning("Error: session initialize failure");
 			} else {
 				data->hdr->status = TO_CHAR(APL_SESSION_LINK);

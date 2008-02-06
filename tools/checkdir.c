@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -212,6 +212,9 @@ ENTER_FUNC;
 			break;
 		  case	SQL_OP_EOL:
 			printf("EOL");fflush(stdout);
+			break;
+		  case	SQL_OP_LIMIT:
+			printf(" $limit");fflush(stdout);
 			break;
 		  default:
 			dbgprintf("[%X]",c);
@@ -453,7 +456,6 @@ dbgmsg("*");
 
 	printf("name     = [%s]\n",ThisEnv->name);
 	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);
-	printf("linksize = %d\n"  ,(int)ThisEnv->linksize);
 	printf("cLD      = %d\n"  ,(int)ThisEnv->cLD);
 	printf("cBD      = %d\n"  ,(int)ThisEnv->cBD);
 	printf("cDBD     = %d\n"  ,(int)ThisEnv->cDBD);
@@ -488,20 +490,20 @@ dbgmsg("<DumpDirectory");
 
 static	ARG_TABLE	option[] = {
 	{	"ld",		BOOLEAN,	TRUE,		(void*)&fLD,
-		"LD情報を出力する"								},
+		"print LD infomation(s)"						},
 	{	"bd",		BOOLEAN,	TRUE,		(void*)&fBD,
-		"BD情報を出力する"								},
+		"print BD infomation(s)"						},
 	{	"dbd",		BOOLEAN,	TRUE,		(void*)&fDBD,
-		"DBD情報を出力する"								},
+		"print DBD infomation(s)"						},
 	{	"dbg",		BOOLEAN,	TRUE,		(void*)&fDBG,
-		"DB group情報を出力する"						},
+		"print DB group infomation(s)"					},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"directory file name"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"レコードのあるディレクトリ"					},
+		"record directory"								},
 	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
-		"定義格納ディレクトリ"		 					},
+		"defines directory"			 					},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
