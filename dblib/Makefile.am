@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2007  ogochan
+# Copyright (C) 2005-2008  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,10 @@ DB_OBJECTS			=		\
 	NativeBLOB.la			\
 	DBRuby.la
 
-PostgreSQL_la_LDFLAGS	=	-module -export-dynamic
+PostgreSQL_la_LDFLAGS	=	\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
 PostgreSQL_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
@@ -60,14 +63,20 @@ PostgreSQL_la_LIBADD	=	\
 PostgreSQL_la_DEPENDENCIES	=		\
 	$(top_builddir)/defaults.h
 
-Shell_la_LDFLAGS		=	-module -export-dynamic
+Shell_la_LDFLAGS		=		\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
 Shell_la_SOURCES		=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
 	Shell.c
 Shell_la_LIBADD	=
 
-System_la_LDFLAGS		=	-module -export-dynamic
+System_la_LDFLAGS		=		\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
 System_la_SOURCES		=		\
 	dbgroup.c	dbgroup.h		\
 	redirect.c	redirect.h		\
@@ -75,7 +84,10 @@ System_la_SOURCES		=		\
 System_la_LIBADD	=			\
 	$(top_builddir)/libs/term.lo
 
-NativeBLOB_la_LDFLAGS	=	-module -export-dynamic
+NativeBLOB_la_LDFLAGS	=		\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
 NativeBLOB_la_SOURCES	=		\
 	dbgroup.c	dbgroup.h		\
 	redirect.c	redirect.h		\
@@ -84,7 +96,10 @@ NativeBLOB_la_LIBADD	=		\
 	$(top_builddir)/libs/blobreq.lo
 
 
-Oseki_la_LDFLAGS	=	-module -export-dynamic
+Oseki_la_LDFLAGS	=			\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
 Oseki_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
@@ -92,7 +107,10 @@ Oseki_la_SOURCES	=	\
 Oseki_la_LIBADD		=	\
 	$(OSEKI_LIBS)
 
-DBRuby_la_LDFLAGS	=	-module -export-dynamic
+DBRuby_la_LDFLAGS	=			\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
 DBRuby_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\

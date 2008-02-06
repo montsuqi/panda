@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -600,7 +600,7 @@ _EXEC(
 	return	(rc);
 }
 
-static	void
+static	ValueStruct	*
 _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -639,9 +639,10 @@ ENTER_FUNC;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -656,9 +657,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -679,6 +681,7 @@ ENTER_FUNC;
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	void
@@ -703,9 +706,10 @@ ENTER_FUNC;
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBSELECT(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -715,9 +719,10 @@ _DBSELECT(
 	DB_Struct	*db;
 	PathStruct	*path;
 	LargeByteString	*src;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
-
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -725,12 +730,13 @@ ENTER_FUNC;
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_SELECT]->proc;
-		ExecOseki(dbg,ctrl,rec,src,args);
+		ret = ExecOseki(dbg,ctrl,rec,src,args);
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	void
+static	ValueStruct	*
 _DBFETCH(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -745,8 +751,10 @@ _DBFETCH(
 	int			res;
 	LargeByteString	*src;
 	ValueStruct		**input;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -755,10 +763,10 @@ ENTER_FUNC;
 		src = path->ops[DBOP_FETCH]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecOseki(dbg,ctrl,rec,src,args);
+			ret = ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
-			p += sprintf(p,"FETCH FROM %s_%s_csr;",rec->name,path->name);
+			p += sprintf(p,"FETCH FROM %s_%s_csr;", rec->name, path->name);
 			res = _SendCommand(dbg,sql,TRUE);
 			if		(  res  <  0  ) {
 				dbgmsg("NG");
@@ -768,6 +776,7 @@ ENTER_FUNC;
 					dbgmsg("OK");
 					if		(  ( input = OsekiReadData(ses,OsekiResult(ses)) )  !=  NULL  ) {
 						ReadTuple(args,input[0]);
+						ret = DuplicateValue(args,TRUE);
 						OsekiFreeTuple(input);
 						ctrl->rc = MCP_OK;
 					} else {
@@ -781,9 +790,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	void
+static	ValueStruct	*
 _DBCLOSECURSOR(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -796,8 +806,10 @@ _DBCLOSECURSOR(
 	PathStruct	*path;
 	int			res;
 	LargeByteString	*src;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -806,7 +818,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_CLOSE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecOseki(dbg,ctrl,rec,src,args);
+			ret = ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
 			p = sql;
 			p += sprintf(p,"CLOSE %s_%s_csr;",rec->name,path->name);
@@ -821,9 +833,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	void
+static	ValueStruct	*
 _DBUPDATE(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -837,8 +850,10 @@ _DBUPDATE(
 	PathStruct	*path;
 	LargeByteString	*src;
 	int			res;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -847,7 +862,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_UPDATE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecOseki(dbg,ctrl,rec,src,args);
+			rer = ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
             sql = NewLBS();
             LBS_EmitString(sql,"UPDATE ");
@@ -889,9 +904,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	void
+static	ValueStruct	*
 _DBDELETE(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -905,8 +921,10 @@ _DBDELETE(
 	int			res;
 	PathStruct	*path;
 	LargeByteString	*src;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -915,7 +933,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_DELETE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecOseki(dbg,ctrl,rec,src,args);
+			ret = ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
 			sql = NewLBS();
 			LBS_EmitString(sql,"DELETE\tFROM\t");
@@ -953,9 +971,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	void
+static	ValueStruct	*
 _DBINSERT(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -967,8 +986,10 @@ _DBINSERT(
 	int			res;
 	PathStruct	*path;
 	LargeByteString	*src;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
@@ -977,7 +998,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_INSERT]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ExecOseki(dbg,ctrl,rec,src,args);
+			ret = ExecOseki(dbg,ctrl,rec,src,args);
 		} else {
             sql = NewLBS();
 			LBS_EmitString(sql,"INSERT\tINTO\t");
@@ -1004,9 +1025,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	Bool
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
@@ -1018,12 +1040,13 @@ _DBACCESS(
 	PathStruct	*path;
 	LargeByteString	*src;
 	int		ix;
-	Bool	rc;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",name); 
 #endif
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		rc = TRUE;
@@ -1032,21 +1055,18 @@ ENTER_FUNC;
 		path = db->path[ctrl->pno];
 		if		(  ( ix = (int)g_hash_table_lookup(path->opHash,name) )  ==  0  ) {
 			ctrl->rc = MCP_BAD_FUNC;
-			rc = FALSE;
 		} else {
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
 				ctrl->rc = MCP_OK;
-				ExecOseki(dbg,ctrl,rec,src,args);
-				rc = TRUE;
+				ret = ExecOseki(dbg,ctrl,rec,src,args);
 			} else {
 				ctrl->rc = MCP_BAD_OTHER;
-				rc = FALSE;
 			}
 		}
 	}
 LEAVE_FUNC;
-	return	(rc);
+	return	(ret);
 }
 
 static	DB_OPS	Operations[] = {

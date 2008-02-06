@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2006 Ogochan.
+ * Copyright (C) 2006-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -936,7 +936,7 @@ dbgmsg("*");
 LEAVE_FUNC;
 }
 
-static	void
+static	ValueStruct	*
 _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -1000,9 +1000,10 @@ ENTER_FUNC;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 ExecRuby(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -1015,8 +1016,10 @@ ExecRuby(
 	LargeByteString	*buff;
 	size_t	size;
 	int		rc;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
+	ret = NULL;
 	if		(  rname  ==  NULL  )	rname = "";
 	if		(  pname  ==  NULL  )	pname = "";
 
@@ -1027,6 +1030,7 @@ ENTER_FUNC;
 	SendString(conn->fpW,fname);
 
 	buff = NewLBS();
+	ret = NULL;
 	if		(  args  !=  NULL  ) {
 		size = NativeSizeValue(NULL,args);
 		LBS_ReserveSize(buff,size,FALSE);
@@ -1040,7 +1044,8 @@ ENTER_FUNC;
 	switch	(RecvPacketClass(conn->fpR))	{
 	  case	CMD_Value:
 		RecvLBS(conn->fpR,buff);
-		NativeUnPackValue(NULL,LBS_Body(buff),args);
+		ret = DuplicateValue(args,FALSE);
+		NativeUnPackValue(NULL,LBS_Body(buff),ret);
 		rc = MCP_OK;
 		break;
 	  case	CMD_NoValue:
@@ -1055,6 +1060,7 @@ ENTER_FUNC;
 	}
 	FreeLBS(buff);
 LEAVE_FUNC;
+	return	(ret);
 }
 
 static	Bool
@@ -1067,7 +1073,7 @@ _FreeRecs(
 	return	(TRUE);
 }
 
-static	void
+static	ValueStruct	*
 _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -1091,6 +1097,7 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	int
@@ -1106,7 +1113,7 @@ _EXEC(
 	return	rc;
 }
 
-static	Bool
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
@@ -1116,29 +1123,27 @@ _DBACCESS(
 {
 	DB_Struct	*db;
 	PathStruct	*path;
-	Bool	rc;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",name); 
 #endif
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		rc = TRUE;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		if		(  (int)(long)g_hash_table_lookup(path->opHash,name)  ==  0  ) {
 			ctrl->rc = MCP_BAD_FUNC;
-			rc = FALSE;
 		} else {
-			rc = TRUE;
-			ExecRuby(dbg,ctrl,name,rec->name,path->name,args);
+			ret = ExecRuby(dbg,ctrl,name,rec->name,path->name,args);
 			ctrl->rc = MCP_OK;
 		}
 	}
 LEAVE_FUNC;
-	return	(rc);
+	return	(ret);
 }
 
 static	Bool
@@ -1149,9 +1154,11 @@ _DBRECORD(
 {
 	DB_Struct	*db;
 	Bool	rc;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
 	dbgprintf("[%s]",fname); 
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		rc = TRUE;
 	} else {
@@ -1161,7 +1168,10 @@ ENTER_FUNC;
 		} else {
 			rc = TRUE;
 			if		(  strcmp(fname,"DBOPEN")  !=  0  ) {
-				ExecRuby(dbg,NULL,fname,rec->name,NULL,NULL);
+				ret = ExecRuby(dbg,NULL,fname,rec->name,NULL,NULL);
+				if		(  ret  !=  NULL  ) {
+					FreeValueStruct(ret);
+				}
 			}
 		}
 	}
@@ -1169,7 +1179,7 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
-static	void
+static	ValueStruct	*
 _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -1179,9 +1189,10 @@ ENTER_FUNC;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -1191,6 +1202,7 @@ ENTER_FUNC;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	DB_OPS	Operations[] = {

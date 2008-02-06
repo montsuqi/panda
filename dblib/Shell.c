@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ _EXEC(
 	return	(rc);
 }
 
-static	void
+static	ValueStruct	*
 _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -69,9 +69,10 @@ ENTER_FUNC;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -86,9 +87,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -99,6 +101,7 @@ ENTER_FUNC;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	int
@@ -141,7 +144,7 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
-static	void
+static	ValueStruct	*
 _DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -168,6 +171,7 @@ ENTER_FUNC;
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	void
@@ -216,7 +220,7 @@ InsertValue(
 	}
 }
 
-static	void
+static	ValueStruct	*
 ExecShell(
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
@@ -226,8 +230,10 @@ ExecShell(
 	int		c;
 	ValueStruct	*val;
 	DBG_Struct	*dbg;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
+	ret = NULL;
 	dbg =  rec->opt.db->dbg;
 	if	(  src  ==  NULL )	{
 		Error("function \"%s\" is not found.",ctrl->func);
@@ -245,11 +251,7 @@ ENTER_FUNC;
 				break;
 			  case	SQL_OP_EOL:
 			  case	0:
-#if	1
 				LBS_EmitChar(dbg->conn,';');
-#else
-				LBS_EmitChar(dbg->conn,0xFF);
-#endif
 				break;
 			  default:
 				break;
@@ -257,9 +259,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	Bool
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
@@ -272,11 +275,13 @@ _DBACCESS(
 	LargeByteString	*src;
 	int		ix;
 	Bool	rc;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",name); 
 #endif
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		rc = TRUE;
@@ -288,7 +293,7 @@ ENTER_FUNC;
 		} else {
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
-				ExecShell(ctrl,rec,src,args);
+				ret = ExecShell(ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
 				rc = FALSE;
@@ -299,10 +304,10 @@ ENTER_FUNC;
 		ctrl->rc = rc ? MCP_OK : MCP_BAD_FUNC;
 	}
 LEAVE_FUNC;
-	return	(rc);
+	return	(ret);
 }
 
-static	void
+static	ValueStruct	*
 _DBERROR(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -316,6 +321,7 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	DB_OPS	Operations[] = {

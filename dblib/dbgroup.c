@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ ExecRedirectDBOP(
 	return	(rc);
 }
 
-extern	void
+extern	ValueStruct	*
 ExecDB_Process(
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
@@ -157,6 +157,7 @@ ExecDB_Process(
 	DB_FUNC	func;
 	DBG_Struct		*dbg;
 	int				i;
+	ValueStruct		*ret;
 #ifdef	TIMER
 	struct	timeval	tv;
 	long	ever
@@ -170,6 +171,7 @@ ENTER_FUNC;
 	gettimeofday(&tv,NULL);
 	ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
 #endif
+	ret = NULL;
 	if		(  rec  ==  NULL  ) { 
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
@@ -183,13 +185,12 @@ ENTER_FUNC;
 		dbgprintf("dbg->name = [%s]",dbg->name);
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl->func) )
 				   ==  NULL  ) {
-			if		(  !(*dbg->func->primitive->access)(dbg,ctrl->func,ctrl,rec,args)  ) {
-				Warning("function not found [%s]\n",ctrl->func);
-				ctrl->rc = MCP_BAD_FUNC;
-			}
+			ret = (*dbg->func->primitive->access)(dbg,ctrl->func,ctrl,rec,args);
 		} else {
-			(*func)(dbg,ctrl,rec,args);
-			dbgprintf("ctrl->rc  = [%d]",ctrl->rc);
+			ret = (*func)(dbg,ctrl,rec,args);
+		}
+		if		(  ctrl->rc  <  0  ) {
+			Warning("bad function [%s] rc = %d\n",ctrl->func, ctrl->rc);
 		}
 	}
 #ifdef	TIMER
@@ -204,6 +205,7 @@ ENTER_FUNC;
 	}
 #endif
 LEAVE_FUNC;
+	return	(ret);
 }
 
 static	int
@@ -214,11 +216,12 @@ ExecDBG_Operation(
 	return ExecFunction(dbg,name,FALSE);
 }
 
-extern	void
+extern	int
 TransactionStart(
 	DBG_Struct *dbg)
 {
 	int		i;
+	int		rc;
 
 ENTER_FUNC;
 	NewPool("Transaction");
@@ -226,17 +229,20 @@ ENTER_FUNC;
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		}
 	}
-	ExecDBG_Operation(dbg,"DBSTART");
+	rc = ExecDBG_Operation(dbg,"DBSTART");
 LEAVE_FUNC;
+	return	(rc);
 }
 
-extern	void
+extern	int
 TransactionEnd(
 	DBG_Struct *dbg)
 {
 	int		i;
+	int		rc;
+
 ENTER_FUNC;
-	ExecDBG_Operation(dbg,"DBCOMMIT");
+	rc = ExecDBG_Operation(dbg,"DBCOMMIT");
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
@@ -244,6 +250,7 @@ ENTER_FUNC;
 	}
 	ReleasePoolByName("Transaction");
 LEAVE_FUNC;
+	return	(rc);
 }
 
 extern	int
@@ -393,6 +400,8 @@ MakeCTRL(
 	ctrl->blocks = ValueInteger(GetItemLongName(mcp,"db.path.blocks"));
 	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
 	ctrl->pno = ValueInteger(GetItemLongName(mcp,"db.path.pname"));
+	ctrl->count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
+	ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 #ifdef	DEBUG
 	DumpDB_Node(ctrl);
 #endif
@@ -450,6 +459,8 @@ ENTER_FUNC;
 	ctrl.rno = 0;
 	ctrl.pno = 0;
 	ctrl.blocks = 0;
+	ctrl.count = rctrl->count;
+	ctrl.limit = rctrl->limit;
 
 	*value = NULL;
 	if		(	(  rname  !=  NULL  )
@@ -481,8 +492,11 @@ MakeMCP(
 	ValueInteger(GetItemLongName(mcp,"db.path.blocks")) = ctrl->blocks;
 	ValueInteger(GetItemLongName(mcp,"db.path.rname")) = ctrl->rno;
 	ValueInteger(GetItemLongName(mcp,"db.path.pname")) = ctrl->pno;
+	ValueInteger(GetItemLongName(mcp,"db.rcount")) = ctrl->count;
+	ValueInteger(GetItemLongName(mcp,"db.limit")) = ctrl->limit;
 }
 
+#ifdef	DEBUG
 extern	void
 DumpDB_Node(
 	DBCOMM_CTRL	*ctrl)
@@ -491,30 +505,29 @@ DumpDB_Node(
 	printf("blocks = %d\n",ctrl->blocks);
 	printf("rno    = %d\n",ctrl->rno);
 	printf("pno    = %d\n",ctrl->pno);
+	printf("count  = %d\n",ctrl->count);
+	printf("limit  = %d\n",ctrl->limit);
 }
+#endif
 
 extern	RecordStruct	*
 BuildDBCTRL(void)
 {
 	RecordStruct	*rec;
-	char			name[SIZE_LONGNAME+1];
-	FILE			*fp;
+	char			*buff
+		,			*p;
 
-	sprintf(name,"/tmp/dbctrl%d.rec",(int)getpid());
-	if		(  ( fp = fopen(name,"w") )  ==  NULL  ) {
-		fprintf(stderr,"tempfile can not make.\n");
-		exit(1);
-	}
-	fprintf(fp,	"dbctrl	{");
-	fprintf(fp,		"rc int;");
-	fprintf(fp,		"func	varchar(%d);",SIZE_FUNC);
-	fprintf(fp,		"rname	varchar(%d);",SIZE_NAME);
-	fprintf(fp,		"pname	varchar(%d);",SIZE_NAME);
-	fprintf(fp,	"};");
-	fclose(fp);
-
-	rec = ParseRecordFile(name);
-	remove(name);
+	buff = (char *)xmalloc(SIZE_BUFF);
+	p = buff;
+	p += sprintf(p,	"dbctrl	{");
+	p += sprintf(p,		"rc int;");
+	p += sprintf(p,		"count int;");
+	p += sprintf(p,		"limit int;");
+	p += sprintf(p,		"func	varchar(%d);",SIZE_FUNC);
+	p += sprintf(p,		"rname	varchar(%d);",SIZE_NAME);
+	p += sprintf(p,		"pname	varchar(%d);",SIZE_NAME);
+	p += sprintf(p,	"};");
+	rec = ParseRecordMem(buff);
 
 	return	(rec);
 }
