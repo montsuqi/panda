@@ -597,6 +597,22 @@ aryval_index(VALUE self, VALUE obj)
 }
 
 static VALUE
+aryval_each(int argc, VALUE *argv, VALUE self)
+{
+    value_struct_data *data;
+    ValueStruct *val;
+    int n = (argc > 2 ? 2 : argc);
+	int	i;
+
+    Data_Get_Struct(self, value_struct_data, data);
+	for	( i = 0 ; i < ValueArraySize(data->value) ; i ++ )	{
+		val = GetArrayItem(data->value, i);
+        rb_yield(get_value(val));
+    }
+    return Qnil;
+}
+
+static VALUE
 recval_new(ValueStruct *val, int need_free)
 {
     VALUE obj;
@@ -604,6 +620,7 @@ recval_new(ValueStruct *val, int need_free)
     int i;
     VALUE name;
 
+ENTER_FUNC;
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
                            value_struct_mark,
                            (need_free ?
@@ -613,7 +630,7 @@ recval_new(ValueStruct *val, int need_free)
     data->value = val;
     data->cache = rb_hash_new();
     for (i = 0; i < ValueRecordSize(val); i++) {
-        ValueIsNonNil(ValueRecordItem(val,i));
+		ValueIsNonNil(ValueRecordItem(val,i));
         rb_define_singleton_method(obj, ValueRecordName(val, i),
                                    recval_get_field, 0);
         name = rb_str_new2(ValueRecordName(val, i));
@@ -621,6 +638,7 @@ recval_new(ValueStruct *val, int need_free)
         rb_define_singleton_method(obj, StringValuePtr(name),
                                    recval_set_field, 1);
     }
+LEAVE_FUNC;
     return obj;
 }
 
@@ -1149,15 +1167,16 @@ static VALUE
 table_exec(int argc, VALUE *argv, VALUE self)
 {
     table_data *data;
-    VALUE funcname, pathname, params;
+    VALUE funcname, pathname, params, limit;
     char *func, *pname;
     DBCOMM_CTRL ctrl;
     int no;
     size_t size;
-    ValueStruct *value;
+    ValueStruct *value
+		,		*result;
 
     Data_Get_Struct(self, table_data, data);
-    rb_scan_args(argc, argv, "12", &funcname, &pathname, &params);
+    rb_scan_args(argc, argv, "13", &funcname, &pathname, &params, &limit);
     func = StringValuePtr(funcname);
     if (NIL_P(pathname)) {
         pname = NULL;
@@ -1192,24 +1211,38 @@ table_exec(int argc, VALUE *argv, VALUE self)
         }
     }
 
+	ctrl.limit = 1;
     if (argc == 3) {
         set_param_arg arg;
 
-        Check_Type(params, T_HASH);
-        arg.hash = params;
-        arg.value = value;
-        st_foreach(RHASH(params)->tbl, set_param, (st_data_t) &arg);
+		if	(!NIL_P(params)) {
+			Check_Type(params, T_HASH);
+			arg.hash = params;
+			arg.value = value;
+			st_foreach(RHASH(params)->tbl, set_param, (st_data_t) &arg);
+		}
     }
+	if (argc == 4) {
+		ctrl.limit = NUM2INT(limit);
+	}
 
     size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
     ctrl.blocks = ((size + sizeof(DBCOMM_CTRL)) / SIZE_BLOCK) + 1;
     strcpy(ctrl.func, func);
-    ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
+    result = ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
+#ifdef	DEBUG
+	DumpValueStruct(result);
+	dbgprintf("ctrl.rc = %d",ctrl.rc);
+#endif
     if (ctrl.rc == MCP_OK) {
-        ValueStruct *result;
-
-        result = DuplicateValue(value,TRUE);
-        return recval_new(result, 1);
+		if		(  result  ==  NULL  ) {
+			result = DuplicateValue(value,TRUE);
+		}
+		if		(  ctrl.count  ==  1  ) {
+			return recval_new(result, 1);
+		} else {
+			return aryval_new(result, 1);
+		}
     }
     else if (ctrl.rc == MCP_EOF) {
         return Qnil;
@@ -1281,13 +1314,16 @@ table_each(int argc, VALUE *argv, VALUE self)
     int n = (argc > 2 ? 2 : argc);
 
     table_select(argc, argv, self);
+dbgmsg("*");
     while (1) {
         val = table_fetch(n, argv, self);
         if (NIL_P(val))
             break;
         rb_yield(val);
     }
+dbgmsg("*");
     table_close_cursor(n, argv, self);
+dbgmsg("*");
     return Qnil;
 }
 
@@ -1389,7 +1425,7 @@ database_exec(VALUE self, VALUE funcname)
     ctrl.blocks = 0;
 
     strcpy(ctrl.func, func);
-    ExecDB_Process(&ctrl, NULL, NULL);
+    (void)ExecDB_Process(&ctrl, NULL, NULL);
     if (ctrl.rc != MCP_OK) {
         rb_raise(eDatabaseError, "database error (ctrl.rc=%d)", ctrl.rc);
     }
@@ -1399,31 +1435,56 @@ database_exec(VALUE self, VALUE funcname)
 static VALUE
 database_open(VALUE self)
 {
-    return database_exec(self, rb_str_new2("DBOPEN"));
+	int		rc;
+
+	if		(  ( rc = OpenDB(NULL) )  !=  MCP_OK  ) {
+        rb_raise(eDatabaseError, "database open error (ctrl.rc=%d)", rc);
+	}
+    return Qnil;
 }
 
 static VALUE
 database_close(VALUE self)
 {
-    return database_exec(self, rb_str_new2("DBCLOSE"));
+	int		rc;
+
+	if		(  ( rc = CloseDB(NULL) )  !=  MCP_OK  ) {
+        rb_raise(eDatabaseError, "database close error (ctrl.rc=%d)", rc);
+	}
+    return Qnil;
 }
 
 static VALUE
 database_start(VALUE self)
 {
-    return database_exec(self, rb_str_new2("DBSTART"));
+	int		rc;
+
+	if		(  ( rc = TransactionStart(NULL) )  !=  MCP_OK  ) {
+        rb_raise(eDatabaseError, "database start error (ctrl.rc=%d)", rc);
+	}
+    return Qnil;
 }
 
 static VALUE
 database_commit(VALUE self)
 {
-    return database_exec(self, rb_str_new2("DBCOMMIT"));
+	int		rc;
+
+	if		(  ( rc = TransactionEnd(NULL) )  !=  MCP_OK  ) {
+        rb_raise(eDatabaseError, "database commit error (ctrl.rc=%d)", rc);
+	}
+    return Qnil;
 }
 
 static VALUE
 database_disconnect(VALUE self)
 {
-    return database_exec(self, rb_str_new2("DBDISCONNECT"));
+	int		rc;
+
+	if		(  ( rc = CloseDB(NULL) )  !=  MCP_OK  ) {
+        rb_raise(eDatabaseError, "database close error (ctrl.rc=%d)", rc);
+	}
+    return Qnil;
 }
 
 static void
@@ -1445,6 +1506,7 @@ init()
     rb_define_method(cArrayValue, "[]", aryval_aref, 1);
     rb_define_method(cArrayValue, "[]=", aryval_aset, 2);
     rb_define_method(cArrayValue, "index", aryval_index, 1);
+    rb_define_method(cArrayValue, "each", aryval_each, -1);
     cRecordValue = rb_define_class_under(mPanda, "RecordValue", rb_cObject);
     rb_define_method(cRecordValue, "length", recval_length, 0);
     rb_define_method(cRecordValue, "size", recval_length, 0);

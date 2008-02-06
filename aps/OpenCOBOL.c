@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -147,6 +147,7 @@ ENTER_FUNC;
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
 	ConvSetCodeset(OpenCOBOL_Conv,ConvCodeset(handler->conv));
+	OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
 
 	if		(  ThisEnv->mcprec  !=  NULL  ) {
 		McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec->value));
@@ -211,6 +212,7 @@ ENTER_FUNC;
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisBD->textsize,ThisBD->arraysize);
 	ConvSetCodeset(OpenCOBOL_Conv,ConvCodeset(handler->conv));
+	OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
 
 #ifdef	DEBUG
 	printf("starting [%s][%s]\n",name,param);
@@ -278,18 +280,4 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(&Handler);
 }
-#ifdef HAVE_OPENCOBOL23
-extern	MessageHandlerClass	*
-OpenCOBOL23(void)
-{
-	return OpenCOBOL();	
-}		
-#endif
-#ifdef HAVE_OPENCOBOL08
-extern	MessageHandlerClass	*
-OpenCOBOL08(void)
-{
-	return OpenCOBOL();	
-}		
-#endif
 #endif

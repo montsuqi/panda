@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,7 +64,8 @@ MCPSUB(
 	PathStruct		*path;
 	DB_Operation	*op;
 	ValueStruct		*mcp
-		,			*value;
+		,			*value
+		,			*ret;
 	char			*mcp_func;
 	int				ono;
 
@@ -100,16 +101,19 @@ ENTER_FUNC;
 			value = rec->value;
 			path = rec->opt.db->path[ctrl.pno];
 			value = ( path->args != NULL ) ? path->args : value;
-			if		(  ( ono = (int)g_hash_table_lookup(path->opHash,mcp_func) )  !=  0  ) {
+			if		(  ( ono = (int)(long)g_hash_table_lookup(path->opHash,mcp_func) )  !=  0  ) {
 				op = path->ops[ono-1];
 				value = ( op->args != NULL ) ? op->args : value;
 			}
 			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
 		}
-		ExecDB_Process(&ctrl,rec,value);
-		if		(	(  rec      !=  NULL    )
+		ret = ExecDB_Process(&ctrl,rec,value);
+		if		(	(  ret      !=  NULL    )
 				&&	(  ctrl.rc  ==  MCP_OK  ) )	{
-			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, value);
+			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, ret);
+		}
+		if		(  ret  !=  NULL  ) {
+			FreeValueStruct(ret);
 		}
 		MakeMCP(mcp,&ctrl);
 	}

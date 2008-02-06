@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,7 +87,6 @@ DumpNode(
 #ifdef	DEBUG
 ENTER_FUNC;
 	dbgprintf("mcpsize  = %d\n",node->mcpsize);
-	dbgprintf("linksize = %d\n",node->linksize);
 	dbgprintf("spasize  = %d\n",node->spasize);
 	dbgprintf("scrsize  = %d\n",node->scrsize);
 LEAVE_FUNC;
@@ -401,10 +400,20 @@ ENTER_FUNC;
 
 	McpSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisEnv->mcprec->value);
 	McpData = xmalloc(McpSize);
-	LinkSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisEnv->linkrec->value);
-	LinkData = xmalloc(LinkSize);
-	SpaSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisLD->sparec->value);
-	SpaData = xmalloc(SpaSize);
+	if		(  ThisEnv->linkrec  !=  NULL  ) {
+		LinkSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisEnv->linkrec->value);
+		LinkData = xmalloc(LinkSize);
+	} else {
+		LinkSize = 0;
+		LinkData = NULL;
+	}
+	if		(  ThisEnv->sparec  !=  NULL  ) {
+		SpaSize = dotCOBOL_SizeValue(dotCOBOL_Conv,ThisLD->sparec->value);
+		SpaData = xmalloc(SpaSize);
+	} else {
+		SpaSize = 0;
+		SpaData = NULL;
+	}
 	ScrSize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 		ScrSize += dotCOBOL_SizeValue(dotCOBOL_Conv,ThisLD->window[i]->rec->value);
@@ -547,6 +556,7 @@ ExecuteDB_Server(
 	DBCOMM_CTRL	*ctrl;
 	size_t		bnum;
 	RecordStruct	*rec;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
 	fhDBR = open("db.output",O_RDWR);
@@ -572,9 +582,10 @@ ENTER_FUNC;
 		} else {
 			rec = NULL;
 		}
-		ExecDB_Process(ctrl,rec,rec->value);
-		if		(  rec  !=  NULL  ) {
-			dotCOBOL_PackValue(dotCOBOL_Conv,data, rec->value);
+		ret = ExecDB_Process(ctrl,rec,rec->value);
+		if		(  ret  !=  NULL  ) {
+			dotCOBOL_PackValue(dotCOBOL_Conv,data, ret);
+			FreeValueStruct(ret);
 		}
 		dbgmsg("write");
 		WriteDB_Reply(fpDBW,block,bnum);

@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,7 +63,8 @@ MONFUNC(
 	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
 	ValueStruct		*mcp
-		,			*value;
+		,			*value
+		,			*ret;
 	char			*func
 		,			*rname
 		,			*pname;
@@ -80,9 +81,14 @@ ENTER_FUNC;
 		rname = ValueStringPointer(GetItemLongName(mcp,"db.table"));
 		pname = ValueStringPointer(GetItemLongName(mcp,"db.pathname"));
 		value = NULL;
+		dbgprintf("%s:%s:%s",rname,pname,func);
 		rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
+		ctrl.count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
+		ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 		ctrl.rc = 0;
 		if		(  !strcmp(func,"DBOPEN")  ) {
+			ctrl.limit = 1;
+			ctrl.count = 0;
 			CheckArg(func,&ctrl);
 			rec = NULL;
 		} else
@@ -91,6 +97,8 @@ ENTER_FUNC;
 			rec = NULL;
 		} else
 		if		(  !strcmp(func,"DBSTART")  ) {
+			ctrl.limit = 1;
+			ctrl.count = 0;
 			CheckArg(func,&ctrl);
 			rec = NULL;
 		} else
@@ -102,16 +110,32 @@ ENTER_FUNC;
 			CheckArg(func,&ctrl);
 			rec = NULL;
 		} else {
+#ifdef	DEBUG
+			{
+				size_t	size = OpenCOBOL_SizeValue(OpenCOBOL_Conv, value);
+				int		i;
+
+				for ( i = 0 ; i < size ; i ++ ) {
+					printf("%02X:",data[i]);
+				}
+			}
+#endif				
 			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
 		}
-		ExecDB_Process(&ctrl,rec,value);
+		ret = ExecDB_Process(&ctrl,rec,value);
 		if		(	(  rec      !=  NULL    )
 				&&	(  ctrl.rc  ==  MCP_OK  ) )	{
-			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, value);
+			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, ret);
 		}
-		MakeMCP(mcp,&ctrl);
+		if		(  ret  !=  NULL  ) {
+			FreeValueStruct(ret);
+		}
 	}
-	OpenCOBOL_PackValue(OpenCOBOL_Conv, mcpdata,mcp);
+	MakeMCP(mcp,&ctrl);
+#ifdef	DEBUG
+	DumpValueStruct(mcp);
+#endif
+	OpenCOBOL_PackValue(OpenCOBOL_Conv, mcpdata, mcp);
 LEAVE_FUNC;
 	return ctrl.rc;
 }

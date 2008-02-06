@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,8 +91,12 @@ ENTER_FUNC;
 	DB_Table = ThisLD->DB_Table;
 	TextSize = ThisLD->textsize;
 	InitializeValue(ThisEnv->mcprec->value);
-	InitializeValue(ThisEnv->linkrec->value);
-	InitializeValue(ThisLD->sparec->value);
+	if		(  ThisEnv->linkrec  !=  NULL  ) {
+		InitializeValue(ThisEnv->linkrec->value);
+	}
+	if		(  ThisLD->sparec  !=  NULL  ) {
+		InitializeValue(ThisLD->sparec->value);
+	}
 
 	for	( i = 0 ; i < ThisLD->cBind ; i ++ ) {
 		if		(	(  ThisLD->binds[i]  !=  NULL  )
