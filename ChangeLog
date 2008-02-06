@@ -2,6 +2,12 @@
 
 	* wfc/termthread.c, libs/wfcio.c: wfcの終了を待つように修正
 
+2008-02-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* panda-config.in: libpandaを追加
+
+	* so にバージョン番号
+
 2008-01-29  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/callbacks.c (notebook_send_event): タブ切替えコールバックの追加
@@ -9,10 +15,48 @@
 	* glclient/callbacks.c, glcient/widgetOPS.c: GtkNotebookの制御の修正
 	  (user_data != NULL: サーバ制御, user_data = NLL: 制御せず)
 
+2008-01-25  Noboru Saitou  <noborus@netlab.jp>
+
+	* configure.ac: autoconf更新,　LIBMONDAI_VERSIONをVERSIONに変更
+	
+2008-01-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/port.c (ParseURL): URLのファイル名にExpandPathを使うようにした
+
+2008-01-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* 「展開」に環境変数の参照や、シェルの実行結果を取り込むことが出来るようになった
+
+	* 全てのパスの指定が「展開」を行うようになった
+
 2008-01-15  yusuke mihara  <mihara@netlab.jp>
 
     * libs/net.{c,h}: 使用されていない pthread条件変数 を削除、fp の
 	ロック周りを修正
+
+2008-01-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/mhandler.c (EnterDefaultHandler): デフォルトハンドラの登録を正しくした
+
+2008-01-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/mhandler.c (ParHANDLER): ハンドラ定義にendianを指定可能にした
+
+2008-01-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/copygen.c: トップレベルのレベル番号を指定可能にした
+
+2008-01-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/dbgen.c (MakeDrop): drop tableの生成を追加(create tableの前に必ず出力する)
+
+2008-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/struct.h: DI_Structのlinksize廃止(不要)
+
+2008-01-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/port.c (ParPort): デフォルトUNIXポートのモードを666->600に
 
 2007-12-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1894,7 +1938,7 @@
 	しかった)
 
 	* include/glterm.h (SCREEN_FORK_WINDOW): 新規ウィンドウを出して処
-	理を分枝させる機能(ポップアップではなく、他に処理を移すため)
+	��を分枝させる機能(ポップアップではなく、他に処理を移すため)
 
 2003-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1910,7 +1954,7 @@
 
 2003-05-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/widgetOPS.c (RegistValue): 名前の持ち方を変更(V2対応)
+	* glclient/widgetOPS.c (RegistValue): ��前の持ち方を変更(V2対応)
 
 	* glclient/callbacks.c: V2プロトコルへの対応を正しくした
 
