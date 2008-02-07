@@ -126,15 +126,15 @@ ENTER_FUNC;
 		switch	( c = RecvPacketClass(fpLog) ) {
 		  case	RED_DATA:
 			RecvRedData(fpLog);
-			fSuc = TRUE;
+			fSuc = fpLog->fOK;
 			break;
 		  case	RED_PING:
 			SendPacketClass(fpLog,RED_PONG);
-			fSuc = TRUE;
+			fSuc = fpLog->fOK;
 			break;
 		  case	RED_STATUS:
 			SendChar(fpLog, ThisDBG->fConnect);
-			fSuc = TRUE;
+			fSuc = fpLog->fOK;
 			break;
 		  case	RED_END:
 			fSuc = FALSE;
