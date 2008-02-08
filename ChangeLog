@@ -1,3 +1,7 @@
+2008-02-08  Noboru Saitou  <noborus@netlab.jp>
+
+	* dbstuff/dbredirector.c: SIGPIPEを無視するようにした
+
 2008-02-06  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.4.2
