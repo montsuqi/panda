@@ -73,7 +73,9 @@ RecvLength(
 {
 	size_t	size;
 
-	Recv(fp,&size,sizeof(size));
+	if ( Recv(fp,&size,sizeof(size)) < 0 ) {
+		size = 0;
+	}	
 	return	(size);
 }
 
