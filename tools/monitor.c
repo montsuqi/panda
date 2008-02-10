@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -407,6 +406,7 @@ ENTER_FUNC;
 			argv[argc ++] = "-sesdir";
 			argv[argc ++] = SesDir;
 		}
+
 		if		(  Directory  !=  NULL  ) {
 			argv[argc ++] = "-dir";
 			argv[argc ++] = Directory;
@@ -642,60 +642,60 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"ApsPath",	STRING,		TRUE,	(void*)&ApsPath,
-		"apsコマンドパス"		 						},
+		"aps command path"		 						},
 	{	"WfcPath",	STRING,		TRUE,	(void*)&WfcPath,
-		"wfcコマンドパス"		 						},
+		"wfc command path"		 						},
 	{	"RedPath",	STRING,		TRUE,	(void*)&RedirectorPath,
-		"redirectorコマンドパス"						},
+		"redirector command path"						},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"directory file name"		 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecDir,
-		"レコードのあるディレクトリ"					},
+		"record directory"								},
 	{	"ddir",		STRING,		TRUE,	(void*)&DDir,
-		"LD定義格納ディレクトリ"	 					},
+		"LD file directory"			 					},
 
 	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
-		"dbredirectorを起動する"	 					},
+		"start dbredirector"		 					},
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirectorの起動をチェックしない"			},
+		"no check dbredirector start"					},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
-		"dbredirectorで更新数をチェックしない"			},
+		"no count dbredirector updates"					},
 	{	"sendretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
-		"dbredirector送信の再試行数を指定する"			},
+		"send retry dbredirector"						},
 
 	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
-		"aps異常終了時に再起動する" 					},
+		"restart aps when aborted" 						},
 	{	"allrestart",BOOLEAN,	TRUE,	(void*)&fAllRestart,
-		"全ての子プロセス異常終了時に再起動する"	 	},
+		"restart all process when aborted"			 	},
 
 	{	"interval",	INTEGER,	TRUE,	(void*)&Interval,
-		"プロセス操作時の待ち時間"	 					},
+		"process start interval time" 					},
 	{	"wfcwait",	INTEGER,	TRUE,	(void*)&wfcinterval,
-		"wfc起動後の待ち時間(遅いCPU用)"				},
+		"wfc start interval time(for slowCPU)"			},
 	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
 		"terminal cache number"							},
 	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
-		"セション変数保持ディレクトリ" 					},
+		"session keep directory"	 					},
 
 	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
-		"自分のホスト名を指定する"	 					},
+		"my host name"				 					},
 
 	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
-		"apsの処理するトランザクション数を指定する"		},
+		"aps process transaction count"					},
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
-		"トランザクションを再試行する時の上限数"		},
+		"transaction retry count"						},
 	{	"no-aps-retry",	BOOLEAN,	TRUE,	(void*)&fNoApsConnectRetry,
-		"APSの接続の再試行を行わない"					},
+		"don't retry aps commection"					},
 
 	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
-		"-?を指定する"				 					},
+		"show sub-program options"	 					},
 	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"時間計測を行う"								},
+		"time measuring"								},
 	{	"log",		STRING,		TRUE,	(void*)&Log,
-		"実行ログを取るファイル名を指定する"			},
+		"monitor log file name"							},
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
-		"実行時間に足す処理時閨for debug)"				},
+		"aps sleep time(for debug)"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
