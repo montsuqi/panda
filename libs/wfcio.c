@@ -288,6 +288,7 @@ ENTER_FUNC;
 		goto	top;
 		break;
 	  default:
+		Warning("Recv packet failure [%x]", c);
 		dbgmsg("recv default");
 		SendPacketClass(fp,WFC_NOT);
 		dbgmsg("send NOT");

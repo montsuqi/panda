@@ -416,9 +416,11 @@ ENTER_FUNC;
 					data->retry ++;
 					if		(	(  MaxTransactionRetry  >  0          )
 							&&	(  MaxTransactionRetry  < data->retry ) ) {
+						Warning("Transaction abort %s", mq->name);
 						data->fAbort = TRUE;
 						TermEnqueue(data->term,data);
 					} else {
+						Warning("Transaction retry %s", mq->name);
 						EnQueue(mq->que,data);
 					}
 					WaitConnect(ld,ix);
