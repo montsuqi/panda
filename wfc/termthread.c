@@ -457,8 +457,7 @@ ENTER_FUNC;
 				rc = FALSE;
 				break;
 			  default:
-				dbgmsg("default");
-				dbgprintf("c = [%X]\n",c);
+				Warning("[%s] session failure packet [%X]",data->hdr->term, c);
 				fExit = TRUE;
 				rc = FALSE;
 				break;
@@ -466,7 +465,7 @@ ENTER_FUNC;
 		}	while	(  !fExit  );
 	} else {
 	  badio:
-		dbgmsg("recv FALSE");
+		Warning("[%s] session recv failure",data->hdr->term);
 	}
 LEAVE_FUNC;
 	return	(rc); 
