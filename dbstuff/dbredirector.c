@@ -500,6 +500,8 @@ ENTER_FUNC;
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
 	//(void)signal(SIGUSR2, SIG_IGN);
+	(void)signal(SIGPIPE, SIG_IGN);
+
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 	if		( ThisEnv == NULL ) {

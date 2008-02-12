@@ -1,3 +1,8 @@
+2008-02-08  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/comm.c (RecvLength): 通信エラー時に不正なサイズが返らないように修正
+	* dbstuff/dbredirector.c: SIGPIPEを無視するようにした
+
 2008-02-04  Noboru Saitou  <noborus@netlab.jp>
 
 	* wfc/termthread.c, libs/wfcio.c: wfcの終了を待つように修正
