@@ -280,24 +280,15 @@ LoadPS(
 {
     FILE *file;
     gchar *tmpname;
-	static guint cache_value = 0;
-	guint hash_value;
+
 ENTER_FUNC;		
-	hash_value = g_direct_hash(LBS_Body(binary)); 
-	if (cache_value != hash_value ){
-		tmpname = NewTempname();
-		file = CreateTempfile(tmpname);
-		fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
-		fclose(file);
-		gtk_gs_set_antialiasing(GTK_GS (GTK_PANDA_PS (widget)->gs), FALSE);
-		gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
-		unlink(tmpname);
-		g_free(tmpname);
-		hash_value = cache_value; 
-		printf("load\n");
-	} else {
-		printf("no load\n");
-	}
+	tmpname = NewTempname();
+	file = CreateTempfile(tmpname);
+	fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
+	fclose(file);
+	gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
+	unlink(tmpname);
+	g_free(tmpname);
 LEAVE_FUNC;
 }
 
@@ -1891,6 +1882,7 @@ ENTER_FUNC;
 			RecvValue(fp,longname + strlen(name) + 1);
 		}
 	}
+	_UpdateWidget(widget,NULL);
 LEAVE_FUNC;
 	return	(TRUE);
 }
