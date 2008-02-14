@@ -1809,7 +1809,7 @@ CheckNetFile(
 	if		(  fp && fp->fOK  ) {
 		ret = TRUE;
 	} else {
-		Message("bad net file");
+		dbgmsg("bad net file");
 		ret = FALSE;
 	}
 	return	(ret);
