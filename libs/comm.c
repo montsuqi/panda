@@ -128,7 +128,7 @@ ENTER_FUNC;
 		str[size] = 0;
 	} else {
 		CloseNet(fp);
-		Error("error size mismatch !");
+		Message("error size mismatch !");
 	}
 LEAVE_FUNC;
 }
