@@ -1811,7 +1811,7 @@ CheckNetFile(
 	if		(  fp && fp->fOK  ) {
 		ret = TRUE;
 	} else {
-		Warning("bad net file");
+		dbgmsg("bad net file");
 		ret = FALSE;
 	}
 	return	(ret);
