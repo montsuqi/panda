@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Ogochan.
+ * Copyright (C) 2004-2007 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,8 @@
 #include	"blobcom.h"
 #include	"blobreq.h"
 #include	"debug.h"
+#include	"message.h"
+
 
 static	Bool
 RequestBLOB(
@@ -204,6 +206,8 @@ ENTER_FUNC;
 			}
 			fclose(fpf);
 			rc = TRUE;
+		} else {
+			Warning("could not open for write: %s", fname);
 		}
 	}
   badio:
@@ -242,6 +246,7 @@ ENTER_FUNC;
 			}
 			fclose(fpf);
 		} else {
+			Warning("could not open for read: %s", fname);
 			SendLength(fp,0);
 		}
 	}
@@ -282,6 +287,7 @@ ENTER_FUNC;
 			}
 			fclose(fpf);
 		} else {
+			Warning("could not open for read: %s", fname);
 			SendLength(fp,0);
 		}
 		rc = TRUE;
