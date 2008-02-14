@@ -42,6 +42,8 @@
 #include	"blobcom.h"
 #include	"blobreq.h"
 #include	"debug.h"
+#include	"message.h"
+
 
 static	Bool
 RequestBLOB(
@@ -204,6 +206,8 @@ ENTER_FUNC;
 			}
 			fclose(fpf);
 			rc = TRUE;
+		} else {
+			Warning("could not open for write: %s", fname);
 		}
 	}
   badio:
@@ -242,6 +246,7 @@ ENTER_FUNC;
 			}
 			fclose(fpf);
 		} else {
+			Warning("could not open for read: %s", fname);
 			SendLength(fp,0);
 		}
 	}
@@ -282,6 +287,7 @@ ENTER_FUNC;
 			}
 			fclose(fpf);
 		} else {
+			Warning("could not open for read: %s", fname);
 			SendLength(fp,0);
 		}
 		rc = TRUE;
