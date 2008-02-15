@@ -1,3 +1,7 @@
+2008-02-15  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.4.1 release
+
 2008-02-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/wfcio.c, wfc/mqthread.c, wfc/termthread.c: Warningの追加
