@@ -1,3 +1,7 @@
+2008-02-20  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/widgetOPS.c: GnomePixmapEntryのgladeでのプレビュー非表示に対応
+
 2008-02-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/wfcio.c, wfc/mqthread.c, wfc/termthread.c: Warningの追加

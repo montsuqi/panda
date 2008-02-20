@@ -526,6 +526,9 @@ ENTER_FUNC;
 				RecvEntry(subWidget,fp);
 			}
 		}
+		if ( GetObjectData(widget, "do_preview") == NULL ){
+			gnome_pixmap_entry_set_preview(GNOME_PIXMAP_ENTRY(widget), FALSE);
+		}
 		subWidget = gnome_pixmap_entry_gtk_entry(
 						GNOME_PIXMAP_ENTRY(widget));
 		_UpdateWidget((GtkWidget *)widget,NULL);
