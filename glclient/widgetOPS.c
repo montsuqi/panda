@@ -763,6 +763,8 @@ RecvText(
 	int		nitem
 	,		i;
 	int		state;
+	gfloat	vvalue;
+	gfloat	hvalue;
 
 ENTER_FUNC;
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -780,11 +782,15 @@ ENTER_FUNC;
 				RecvStringData(fp,buff,SIZE_BUFF);
 				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 				gtk_text_freeze(GTK_TEXT(widget));
+				vvalue = GTK_TEXT(widget)->vadj->value;
+				hvalue = GTK_TEXT(widget)->hadj->value;
 				gtk_text_set_point(GTK_TEXT(widget), 0);
 				gtk_text_forward_delete(GTK_TEXT(widget),
 										gtk_text_get_length((GTK_TEXT(widget))));
 				gtk_text_insert(GTK_TEXT(widget),NULL,NULL,NULL,buff,strlen(buff));
 				gtk_text_thaw(GTK_TEXT(widget));
+				gtk_adjustment_set_value(GTK_TEXT(widget)->vadj, vvalue);
+				gtk_adjustment_set_value(GTK_TEXT(widget)->hadj, hvalue);
 			}
 		}
 	}
@@ -1847,7 +1853,9 @@ RecvScrolledWindow(
 		,	hpos;
 	int		state;
 	char	*longname;
+#if 0
 	GtkAdjustment	*ad;
+#endif
 
 ENTER_FUNC;
 	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
@@ -1868,24 +1876,27 @@ ENTER_FUNC;
 			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 			dbgprintf("%s = %d\n",name,vpos);
 
+#if 0
 			ad = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
 			ad->value = (gfloat)vpos;
 			gtk_adjustment_value_changed(ad);
+#endif
 		} else
 		if		(  !stricmp(name,"hpos")  ) {
 			RecvIntegerData(fp,&hpos);
 			RegistValue(widget,name,OPT_TYPE_NULL,NULL);
 			dbgprintf("%s = %d\n",name,hpos);
-
+#if 0
 			ad = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
 			ad->value = (gfloat)hpos;
 			gtk_adjustment_value_changed(ad);
+#endif
 		} else {
 			sprintf(longname,".%s",name);
 			RecvValue(fp,longname + strlen(name) + 1);
 		}
 	}
-	_UpdateWidget(widget,NULL);
+	//_UpdateWidget(widget,NULL);
 LEAVE_FUNC;
 	return	(TRUE);
 }

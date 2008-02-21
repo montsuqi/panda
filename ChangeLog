@@ -1,3 +1,9 @@
+2008-02-21  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/widgetOPS.c:
+	GtkTextのGtkAdjustmentをイベント前の値に戻すよう修正
+	GtkScrolledWindowの制御を停止
+
 2008-02-20  yusuke mihara  <mihara@netlab.jp>
 
 	* glclient/widgetOPS.c: GnomePixmapEntryのgladeでのプレビュー非表示に対応
