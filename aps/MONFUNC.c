@@ -129,8 +129,8 @@ ENTER_FUNC;
 		if		(  ret  !=  NULL  ) {
 			FreeValueStruct(ret);
 		}
+		MakeMCP(mcp,&ctrl);
 	}
-	MakeMCP(mcp,&ctrl);
 #ifdef	DEBUG
 	DumpValueStruct(mcp);
 #endif
