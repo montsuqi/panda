@@ -789,11 +789,19 @@ ENTER_FUNC;
 		}
 		switch	(type) {
 		  case	SCREEN_CURRENT_WINDOW:
+			strcpy(WidgetName,window);
+			if		(  ( c = GL_RecvPacketClass(fp) )  ==  GL_ScreenData  ) {
+				RecvValue(fp,WidgetName + strlen(WidgetName));
+			}
+			break;
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
 			strcpy(WidgetName,window);
 			if		(  ( c = GL_RecvPacketClass(fp) )  ==  GL_ScreenData  ) {
 				RecvValue(fp,WidgetName + strlen(WidgetName));
+			}
+			if	(	(widget = glade_xml_get_widget(node->xml, window))	) {
+				ResetScrolledWindow(widget, NULL);
 			}
 			break;
 		  default:
@@ -1353,12 +1361,12 @@ SendBinaryData(
 ENTER_FUNC;
 	GL_SendDataType(fp,type);
     switch (DataType) {
-	  case  GL_TYPE_BINARY:
-	  case  GL_TYPE_BYTE:
-	  case  GL_TYPE_OBJECT:
+    case  GL_TYPE_BINARY:
+    case  GL_TYPE_BYTE:
+    case  GL_TYPE_OBJECT:
         GL_SendLBS(fp, binary);
         break;
-	  default:
+    default:
         Warning("unsupported data type: %d\n", DataType);
         break;
     }

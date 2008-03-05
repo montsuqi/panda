@@ -177,6 +177,30 @@ GrabFocus(GtkWidget *widget)
 	tag = gtk_idle_add(_GrabFocus, widget);
 }
 
+extern  void
+ResetScrolledWindow(
+    GtkWidget   *widget,
+    gpointer    user_data)
+{
+    GtkAdjustment   *adj;
+
+    if  (   GTK_IS_SCROLLED_WINDOW(widget)  ) {
+		adj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
+		if	(	adj	) {
+			adj->value = 0.0;
+			gtk_adjustment_value_changed(adj);
+		}
+		adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
+		if	(	adj	) {
+			adj->value = 0.0;
+			gtk_adjustment_value_changed(adj);
+		}
+    }
+    if  (   GTK_IS_CONTAINER(widget)    ) {
+        gtk_container_forall(GTK_CONTAINER(widget), ResetScrolledWindow, NULL);
+    }
+}
+
 static	void
 _ResetTimer(
 	    GtkWidget	*widget,

@@ -41,6 +41,7 @@ extern	void		StartTimer( char *event, int timeout,
 							  GtkFunction function, GtkWidget *widget);
 extern	char		*GetTimerEvent(GtkWindow *window);
 extern	void		ResetTimer(GtkWindow *window);
+extern  void 		ResetScrolledWindow(GtkWidget *widget, gpointer user_data);
 extern	void		StopTimer(GtkWindow *window);
 extern	gpointer	*GetObjectData(GtkWidget	*widget, char *object_key);
 extern	void		SetObjectData(GtkWidget	*widget, char *object_key, gpointer	*data);

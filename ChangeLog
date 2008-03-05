@@ -1,3 +1,9 @@
+2008-03-05  yusuke mihara  <mihara@netlab.jp>
+
+	* action.c, callbacks.c, protocol.c, widgetOPS.c:
+	GtkScrolledWindowのスクロールを画面切替時にリセット
+	カーソル移動にあわせてスクロール位置を設定
+
 2008-02-21  yusuke mihara  <mihara@netlab.jp>
 
 	* glclient/widgetOPS.c:

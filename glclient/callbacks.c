@@ -122,6 +122,85 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
+static GtkWidget*
+find_widget_ancestor(
+	GtkWidget	*w,
+	GtkType		t)
+{
+	GtkWidget	*widget;
+	GtkType		type;
+	widget = w;
+	while	(	widget	) {
+		type = (long)(((GtkTypeObject *)widget)->klass->type);
+		if	(	type == t	){
+			return widget;
+		}
+		widget = widget->parent;
+	}
+	return NULL;
+}
+
+extern	void
+set_focus_child_container(
+	GtkContainer	*container,
+	GtkWidget		*widget,
+	gpointer		*user_data)
+{
+	GtkViewport		*vp;
+	GtkAdjustment	*adj;
+	GtkAllocation	alloc;
+
+#define	FOCUS_MARGIN	10
+
+ENTER_FUNC;
+	if	(	!container || !widget	) return;
+	vp = GTK_VIEWPORT(find_widget_ancestor(
+			GTK_WIDGET(container), 
+			GTK_TYPE_VIEWPORT));
+	if	(	vp	) {
+		alloc = widget->allocation;
+		if	(	(adj = gtk_viewport_get_vadjustment(vp))	){
+			if	(	alloc.y < adj->value	){
+				if	( alloc.y - FOCUS_MARGIN < adj->lower ) {
+					adj->value = alloc.y;
+				} else {
+					adj->value = alloc.y - FOCUS_MARGIN;
+				}
+				gtk_adjustment_value_changed(adj);
+			}
+			if 	(	alloc.y + alloc.height > adj->value + adj->page_size ) {
+				if	(	alloc.y + alloc.height + FOCUS_MARGIN > adj->upper	) {
+					adj->value = adj->upper - adj->page_size;
+				} else {
+					adj->value = alloc.y + alloc.height - adj->page_size 
+									+ FOCUS_MARGIN;
+				}
+				gtk_adjustment_value_changed(adj);
+			}
+		}
+		if	(	(adj = gtk_viewport_get_hadjustment(vp))	){
+         	if  (   alloc.x < adj->value    ){
+                if  ( alloc.x - FOCUS_MARGIN < adj->lower ) {
+                    adj->value = alloc.x;
+                } else {
+                    adj->value = alloc.x - FOCUS_MARGIN;
+                }
+                gtk_adjustment_value_changed(adj);
+            }
+            if  (   alloc.x + alloc.width > adj->value + adj->page_size ) {
+				if	(	alloc.x + alloc.width + FOCUS_MARGIN > adj->upper	) {
+					adj->value = alloc.x + alloc.width - adj->page_size;
+				} else {
+					adj->value = alloc.x + alloc.width - adj->page_size
+									+ FOCUS_MARGIN;
+				}
+                gtk_adjustment_value_changed(adj);
+            }
+		}
+	}
+LEAVE_FUNC;
+}
+
 extern	void
 send_event(
 	GtkWidget	*widget,
