@@ -192,7 +192,6 @@ ENTER_FUNC;
 			Message("reject client(invalid version)");
 		} else 
 		if		(  AuthUser(&Auth,scr->user,pass,scr->other,NULL)  ) {
-			scr->Windows = NULL;
 			ApplicationsCall(APL_SESSION_LINK,scr);
 			if		(  scr->status  ==  APL_SESSION_NULL  ) {
 				SendStringDelim(fpComm,"Error: application\n");
