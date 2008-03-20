@@ -804,6 +804,7 @@ BuildMcpArea(
 	buff = (char *)xmalloc(SIZE_BUFF);
 	p = buff;
 	p += sprintf(p,	"mcparea	{");
+	p += sprintf(p,		"version int;");
 	p += sprintf(p,		"func varchar(%d);",SIZE_FUNC);
 	p += sprintf(p,		"rc int;");
 	p += sprintf(p,		"dc	{");

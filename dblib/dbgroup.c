@@ -400,7 +400,11 @@ MakeCTRL(
 	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
 	ctrl->pno = ValueInteger(GetItemLongName(mcp,"db.path.pname"));
 	ctrl->count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
-	ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
+	if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
+		ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
+	} else {
+		ctrl->limit = 1;
+	}
 #ifdef	DEBUG
 	DumpDB_Node(ctrl);
 #endif

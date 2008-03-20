@@ -1,3 +1,11 @@
+2008-03-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c (MakeCTRL): バージョンによって挙動を変える
+
+	* aps/MONFUNC.c (MONFUNC): バージョンによって挙動を変える
+
+	* libs/DIparser.c (BuildMcpArea): mcparea.versionを追加(バージョンチェック用)
+
 2008-03-05  yusuke mihara  <mihara@netlab.jp>
 
 	* action.c, callbacks.c, protocol.c, widgetOPS.c:
@@ -1927,7 +1935,7 @@
 2003-08-05  OGOSHI  <ogochan@nurs.or.jp>
 
 	* libs/LDparser.h: WindowBindの構造の若干の変更、cWindowsの論理の
-	変更(このため、データの並びが変更になっている)
+	変更(このため、デー�の並びが変更になっている)
 
 2003-07-27  OGOSHI  <ogochan@nurs.or.jp>
 
