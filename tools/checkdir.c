@@ -329,6 +329,41 @@ _DumpHandler(
 }
 
 static	void
+_DumpBatchHandler(
+	char	*name,
+	BatchBind	*bind,
+	void	*dummy)
+{
+	MessageHandler		*handler;
+
+	handler = bind->handler;
+
+	if		(  ( handler->fInit & INIT_LOAD )  ==  0  ) {
+		handler->fInit |= INIT_LOAD;
+		printf("\thandler\t\"%s\"\t{\n",handler->name);
+		printf("\t\tmodule    \"%s\";\n",(char *)bind->module);
+		printf("\t\tclass     \"%s\";\n",(char *)handler->klass);
+		printf("\t\tselialize \"%s\";\n",(char *)handler->serialize);
+		printf("\t\tlocale    \"%s\";\n",ConvCodeset(handler->conv));
+		printf("\t\tstart     \"%s\";\n",handler->start);
+		printf("\t\tencoding  ");
+		switch	(handler->conv->encode) {
+		  case	STRING_ENCODING_URL:
+			printf("\"URL\";\n");
+			break;
+		  case	STRING_ENCODING_BASE64:
+			printf("\"BASE64\";\n");
+			break;
+		  default:
+			printf("\"NULL\";\n");
+			break;
+		}
+			
+		printf("\t};\n");
+	}
+}
+
+static	void
 _DumpBind(
 	char	*name,
 	WindowBind	*bind,
@@ -392,7 +427,7 @@ DumpBD(
 	printf("\tarraysize = %d\n",(int)bd->arraysize);
 	printf("\ttextsize  = %d\n",(int)bd->textsize);
 
-	g_hash_table_foreach(bd->BatchTable,(GHFunc)_DumpHandler,NULL);
+	g_hash_table_foreach(bd->BatchTable,(GHFunc)_DumpBatchHandler,NULL);
 
 	printf("\tcDB       = %d\n",(int)bd->cDB);
 	for	( i = 1 ; i < bd->cDB ; i ++ ) {
@@ -446,11 +481,14 @@ static	void
 DumpDirectory(void)
 {
 	int		i;
-
+	Bool	parse_ld = FALSE;
 ENTER_FUNC;
 	InitDirectory();
+	if (fLD || fBD || fDBD ){
+		parse_ld = TRUE;
+	}
 dbgmsg("*");
-	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,parse_ld);
 dbgmsg("*");
 
 	printf("name     = [%s]\n",ThisEnv->name);
