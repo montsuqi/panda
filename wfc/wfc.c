@@ -255,7 +255,7 @@ ENTER_FUNC;
 	} else {
 		WfcPort = ParPortName(PortNumber);
 	}
-	if		(  ControlPort  ==  NULL  ) {
+	if		(  ControlPortNumber  ==  NULL  ) {
 		ControlPort = ThisEnv->ControlPort;
 	} else {
 		ControlPort = ParPortName(ControlPortNumber);
