@@ -310,3 +310,18 @@ BindSocket(
 	}
 	return	(fd);
 }
+
+extern void
+CleanUNIX_Socket(
+		Port	*port)
+{
+	struct	stat	sb;
+
+	if(port->type == PORT_UNIX) {
+		if ((stat(port->adrs.a_unix.name,&sb) == 0 )
+		&& ( S_ISSOCK(sb.st_mode))) {
+			unlink(port->adrs.a_unix.name);
+		}	
+	}
+}
+

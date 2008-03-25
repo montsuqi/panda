@@ -34,5 +34,6 @@ extern	int		BindIP_Socket(char *port, int type);
 extern	int		BindUNIX_Socket(char *name, int type, int mode);
 extern	int		ConnectIP_Socket(char *port, int type, char *host);
 extern	int		ConnectUNIX_Socket(char *name, int type);
+extern	void	CleanUNIX_Socket(Port *port);
 
 #endif

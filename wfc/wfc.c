@@ -285,6 +285,9 @@ CleanUp(void)
 		DisConnectBLOB(BlobState);
 		FinishBLOB(Blob);
 	}
+	CleanUNIX_Socket(ApsPort);
+	CleanUNIX_Socket(WfcPort);
+	CleanUNIX_Socket(ControlPort);
 }
 
 static	void

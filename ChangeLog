@@ -1,3 +1,7 @@
+2008-03-25  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/socket.[ch],wfc/wfc.c (CleanUNIX_Socket): UNIX domain socketの後始末追加
+
 2008-03-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dblib/dbgroup.c (MakeCTRL): バージョンによって挙動を変える
