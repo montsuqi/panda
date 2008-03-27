@@ -1,3 +1,7 @@
+2008-03-27  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/panda.c, libs/DIparser.c: TermPort のデフォルト値を変更
+
 2008-03-25  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/socket.[ch],wfc/wfc.c (CleanUNIX_Socket): UNIX domain socketの後始末追加

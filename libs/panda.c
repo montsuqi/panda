@@ -254,7 +254,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault()
 {
-	PandaPort = "localhost:9000";			/*	PORT_WFC	*/
+	PandaPort = "/tmp/wfc.term";			/*	PORT_WFC	*/
 }
 extern	void
 pandaInit(

@@ -871,7 +871,7 @@ ENTER_FUNC;
 				ThisEnv->RecordDir = RecordDir;
 				sprintf(buff,"/tmp/wfc.%s",ThisEnv->name);
 				ThisEnv->WfcApsPort = ParPort(buff,NULL);
-				sprintf(buff,"/tmp/term.%s",ThisEnv->name);
+				sprintf(buff,"/tmp/wfc.term");
 				ThisEnv->TermPort = ParPort(buff,NULL);
 				sprintf(buff,"/tmp/wfcc.%s",ThisEnv->name);
 				ThisEnv->ControlPort = ParPort(buff,NULL);
