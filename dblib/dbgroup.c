@@ -92,13 +92,11 @@ ExecFunction(
 	int			i;
 
 ENTER_FUNC;
-#ifdef	DEBUG
-	printf("func  = [%s]\n",name);
+	dbgprintf("func  = [%s]",name);
 	if		(  dbg  !=  NULL  ) {
-		printf("name  = [%s]\n",dbg->name);
+		dbgprintf("name  = [%s]",dbg->name);
 	}
-	printf("fAll = [%s]\n",fAll?"TRUE":"FALSE");
-#endif
+	dbgprintf("fAll = [%s]",fAll?"TRUE":"FALSE");
 	ctrl.rc = 0;
 	if		(  dbg  ==  NULL  ) {
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
@@ -128,22 +126,24 @@ LEAVE_FUNC;
 extern	int
 ExecDBOP(
 	DBG_Struct	*dbg,
-	char		*sql)
+	char		*sql,
+	int			usage)
 {
 	int		rc;
 
-	rc = dbg->func->primitive->exec(dbg,sql,TRUE);
+	rc = dbg->func->primitive->exec(dbg,sql,TRUE, usage);
 	return	(rc);
 }
 
 extern	int
 ExecRedirectDBOP(
 	DBG_Struct	*dbg,
-	char		*sql)
+	char		*sql,
+	int			usage)
 {
 	int		rc;
 
-	rc = dbg->func->primitive->exec(dbg,sql,FALSE);
+	rc = dbg->func->primitive->exec(dbg,sql,FALSE, usage);
 	return	(rc);
 }
 
@@ -261,8 +261,8 @@ GetDBStatus(void)
 ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		if ( rc < dbg->dbstatus ){
-			rc = dbg->dbstatus;
+		if ( rc < dbg->process[PROCESS_UPDATE].dbstatus ){
+			rc = dbg->process[PROCESS_UPDATE].dbstatus;
 		}
 	}
 LEAVE_FUNC;
@@ -332,61 +332,135 @@ CloseDB(
 
 /*	utility	*/
 
+extern	Port	*
+GetDB_Port(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	Port	*port;
+	int		i;
+
+ENTER_FUNC;
+	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+		dbgprintf("usage = %d",dbg->server[i].usage);
+		if		(	(  dbg->server[i].usage  ==  usage  )
+				&&	(  dbg->server[i].port  !=  NULL  ) )	break;
+	}
+	dbgprintf("i = %d",i);
+	if		(  i  ==  dbg->nServer  ) {
+		dbgmsg("port null");
+		port = NULL;
+	} else {
+		port = dbg->server[i].port;
+	}
+LEAVE_FUNC;
+	return (port);
+}
+
 extern	char	*
 GetDB_Host(
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	int			usage)
 {
 	char	*host;
 
+ENTER_FUNC;
 	if		(  DB_Host  !=  NULL  ) {
 		host = DB_Host;
 	} else {
-		if		(  dbg->port  ==  NULL  ) {
-			host = NULL;
-		} else {
-			host = IP_HOST(dbg->port);
-		}
+		host = IP_HOST((GetDB_Port(dbg,usage)));
 	}
+LEAVE_FUNC;
 	return (host);
 }
 
 extern	char	*
-GetDB_Port(
-	DBG_Struct	*dbg)
+GetDB_PortName(
+	DBG_Struct	*dbg,
+	int			usage)
 {
 	char	*port;
 
+ENTER_FUNC;
 	if		(  DB_Port  !=  NULL  ) {
 		port = DB_Port;
 	} else {
-		if		(  dbg->port  ==  NULL  ) {
-			port = NULL;
-		} else {
-			port = IP_PORT(dbg->port);
-		}
+		port = IP_PORT(GetDB_Port(dbg,usage));
 	}
+LEAVE_FUNC;
 	return (port);
 }
 
 extern	char	*
 GetDB_DBname(
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	int			usage)
 {
-	return (( DB_Name != NULL ) ? DB_Name : dbg->dbname);
+	char	*name;
+	int		i;
+
+	if		(  DB_Name  !=  NULL  ) {
+		name = DB_Name;
+	} else {
+		for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+			if		(	(  dbg->server[i].usage  ==  usage  )
+					&&	(  dbg->server[i].dbname !=  NULL  ) )	break;
+		}
+		if		(  i  ==  dbg->nServer  ) {
+			name = NULL;
+		} else {
+			name = dbg->server[i].dbname;
+		}
+	}
+	return	(name);
 }
 
 extern	char	*
 GetDB_User(
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	int			usage)
 {
-	return (( DB_User != NULL ) ? DB_User : dbg->user);
+	char	*name;
+	int		i;
+
+	if		(  DB_User  !=  NULL  ) {
+		name = DB_User;
+	} else {
+		for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+			if		(	(  dbg->server[i].usage  ==  usage  )
+					&&	(  dbg->server[i].user   !=  NULL   ) )	break;
+		}
+		if		(  i  ==  dbg->nServer  ) {
+			name = NULL;
+		} else {
+			name = dbg->server[i].user;
+		}
+	}
+	return	(name);
 }
 
 extern	char	*
 GetDB_Pass(
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	int			usage)
 {
-	return (( DB_Pass != NULL ) ? DB_Pass : dbg->pass);
+	char	*pass;
+	int		i;
+
+	if		(  DB_Pass  !=  NULL  ) {
+		pass = DB_Pass;
+	} else {
+		for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+			if		(	(  dbg->server[i].usage  ==  usage  )
+					&&	(  dbg->server[i].pass   !=  NULL   ) )	break;
+		}
+		if		(  i  ==  dbg->nServer  ) {
+			pass = NULL;
+		} else {
+			pass = dbg->server[i].pass;
+		}
+	}
+	return	(pass);
 }
 
 extern	void
@@ -400,11 +474,15 @@ MakeCTRL(
 	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
 	ctrl->pno = ValueInteger(GetItemLongName(mcp,"db.path.pname"));
 	ctrl->count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
+#if	0
+	ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
+#else
 	if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
 		ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 	} else {
 		ctrl->limit = 1;
 	}
+#endif
 #ifdef	DEBUG
 	DumpDB_Node(ctrl);
 #endif

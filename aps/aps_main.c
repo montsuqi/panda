@@ -215,7 +215,7 @@ ENTER_FUNC;
 				break;
 			}
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
-			if ( node->dbstatus == REDFAILURE ) {
+			if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
 				RedirectError();
 			} else {
 				node->dbstatus = GetDBStatus();

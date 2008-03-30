@@ -83,11 +83,15 @@ ENTER_FUNC;
 		dbgprintf("%s:%s:%s",rname,pname,func);
 		rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
 		ctrl.count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
+#if	0
+		ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
+#else
 		if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
 			ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 		} else {
 			ctrl.limit = 1;
 		}
+#endif
 		ctrl.rc = 0;
 		if		(  !strcmp(func,"DBOPEN")  ) {
 			ctrl.limit = 1;

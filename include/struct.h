@@ -42,6 +42,15 @@ typedef	struct {
 #define	DBOP_DELETE		4
 #define	DBOP_CLOSE		5
 
+#define	DB_NONE			0x00
+#define	DB_READONLY		0x01
+#define	DB_UPDATE		0x02
+#define	DB_UNDEF		0x03
+#define	DB_FAIL			0x04
+
+#define	IsUsageNotFail(usage)	(((usage)&DB_FAIL) == 0)
+#define	IsUsageUpdate(usage)	(((usage)&DB_UPDATE) != 0)
+
 typedef	struct {
 	char			*name;
 	LargeByteString	*proc;
@@ -52,6 +61,7 @@ typedef	struct {
 	char			*name;
 	GHashTable		*opHash;
 	int				ocount;
+	int				usage;
 	DB_Operation	**ops;
 	ValueStruct		*args;
 }	PathStruct;
@@ -94,12 +104,29 @@ typedef	struct {
 	int		limit;
 }	DBCOMM_CTRL;
 
-#define NOCONNECT   0x00
-#define CONNECT     0x01
-#define UNCONNECT   0x02
-#define FAILURE     0x03
-#define DISCONNECT  0x04
-#define REDFAILURE  0x05
+typedef	struct {
+	int			usage;
+	/*	DB depend	*/
+	Port		*port;
+	char		*dbname;
+	char		*user;
+	char		*pass;
+}	DB_Server;
+
+#define DB_STATUS_NOCONNECT		0x00
+#define DB_STATUS_CONNECT		0x01
+#define DB_STATUS_UNCONNECT		0x02
+#define DB_STATUS_FAILURE		0x03
+#define DB_STATUS_DISCONNECT	0x04
+#define DB_STATUS_REDFAILURE	0x05
+
+typedef	struct {
+	void		*conn;
+	int			dbstatus;
+}	DB_Process;
+
+#define	PROCESS_UPDATE		0
+#define	PROCESS_READONLY	1
 
 typedef	struct _DBG_Struct	{
 	int			id;
@@ -110,15 +137,6 @@ typedef	struct _DBG_Struct	{
 										  value is NULL, this DBG has no DB	*/
 	int			priority;				/*	commit priority			*/
 	char		*coding;				/*	DB backend coding		*/
-	/*	DB depend	*/
-	Port		*port;
-	char		*dbname;
-	char		*user;
-	char		*pass;
-	/*	DB connection variable	*/
-	int			fConnect;
-	void		*conn;
-	int			dbstatus;
 	/*	DB redirect variable	*/
 	Port		*redirectPort;
 	struct	_DBG_Struct	*redirect;
@@ -126,12 +144,15 @@ typedef	struct _DBG_Struct	{
 	LargeByteString	*redirectData;
 	LargeByteString	*checkData;
 	char		*file;
+	DB_Server	*server;
+	DB_Process	process[2];
+	int			nServer;
 }	DBG_Struct;
 
 typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 
 typedef struct	{
-	int		(*exec)(DBG_Struct *, char *, Bool);
+	int		(*exec)(DBG_Struct *, char *, Bool, int);
 	ValueStruct	*(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
 }	DB_Primitives;

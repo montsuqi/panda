@@ -47,7 +47,8 @@ static	int
 _EXEC(
 	DBG_Struct	*dbg,
 	char		*sql,
-	Bool		fRedirect)
+	Bool		fRedirect,
+	int			usage)
 {
 	int			rc;
 
@@ -61,9 +62,10 @@ _DBOPEN(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	dbg->conn = NewLBS();
 	OpenDB_RedirectPort(dbg);
-	dbg->fConnect = CONNECT;
+	dbg->process[PROCESS_UPDATE].conn = (void *)NewLBS();
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -77,10 +79,10 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect == CONNECT ) { 
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
-		FreeLBS(dbg->conn);
-		dbg->fConnect = DISCONNECT;
+		FreeLBS((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}
@@ -95,7 +97,7 @@ _DBSTART(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	LBS_EmitStart(dbg->conn); 
+	LBS_EmitStart((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -151,12 +153,14 @@ _DBCOMMIT(
 	int			rc;
 	char		*p
 	,			*q;
+	LargeByteString	*lbs;
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	LBS_EmitEnd(dbg->conn);
-	RewindLBS(dbg->conn);
-	p = (char *)LBS_Body(dbg->conn);
+	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
+	LBS_EmitEnd(lbs);
+	RewindLBS(lbs);
+	p = (char *)LBS_Body(lbs);
 	rc = 0;
 	while	(  ( q = strchr(p,0xFF) )  !=  NULL  ) {
 		*q = 0;
@@ -164,7 +168,7 @@ ENTER_FUNC;
 		p = q + 1;
 	}
 	rc += DoShell(p);
-	LBS_Clear(dbg->conn);
+	LBS_Clear(lbs);
 	CommitDB_Redirect(dbg);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
@@ -230,27 +234,29 @@ ExecShell(
 	ValueStruct	*val;
 	DBG_Struct	*dbg;
 	ValueStruct	*ret;
+	LargeByteString	*lbs;
 
 ENTER_FUNC;
 	ret = NULL;
 	dbg =  rec->opt.db->dbg;
+	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
 	if	(  src  ==  NULL )	{
 		Error("function \"%s\" is not found.",ctrl->func);
 	}
 	RewindLBS(src);
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
 		if		(  c  !=  SQL_OP_ESC  ) {
-			LBS_EmitChar(dbg->conn,c);
+			LBS_EmitChar(lbs,c);
 		} else {
 			c = LBS_FetchByte(src);
 			switch	(c) {
 			  case	SQL_OP_REF:
 				val = (ValueStruct *)LBS_FetchPointer(src);
-				InsertValue(dbg,dbg->conn,val);
+				InsertValue(dbg,lbs,val);
 				break;
 			  case	SQL_OP_EOL:
 			  case	0:
-				LBS_EmitChar(dbg->conn,';');
+				LBS_EmitChar(lbs,';');
 				break;
 			  default:
 				break;

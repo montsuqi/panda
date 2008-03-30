@@ -112,6 +112,7 @@ dbgmsg(">ExecuteDB_Server");
 		conv->UnPackValue(handler->conv,LBS_Body(dbbuff),recDBCTRL->value);
 		rname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"rname"));
 		value = NULL;
+		ret = NULL;
 		if		(	(  rname  !=  NULL  ) 
 				&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 			ctrl.rno = rno - 1;

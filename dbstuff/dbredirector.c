@@ -47,6 +47,7 @@
 #include	"comm.h"
 #include	"dirs.h"
 #include	"redirect.h"
+#include	"dbgroup.h"
 #include	"dblib.h"
 #include	"directory.h"
 #include	"queue.h"
@@ -132,7 +133,7 @@ ENTER_FUNC;
 			fSuc = fpLog->fOK;
 			break;
 		  case	RED_STATUS:
-			SendChar(fpLog, ThisDBG->fConnect);
+			SendChar(fpLog, ThisDBG->process[PROCESS_UPDATE].dbstatus);
 			fSuc = fpLog->fOK;
 			break;
 		  case	RED_END:
@@ -256,8 +257,8 @@ ENTER_FUNC;
 		}
 		sleep (CONNECT_INTERVAL);
 	}
-	if ( ThisDBG->fConnect == UNCONNECT ){
-		ThisDBG->fConnect = FAILURE;
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ){
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
 	}
 LEAVE_FUNC;
 }
@@ -289,7 +290,7 @@ WriteDB(
 ENTER_FUNC;
 	rc = TransactionRedirectStart(ThisDBG);
 	if ( rc == MCP_OK ) {
-		rc = ExecRedirectDBOP(ThisDBG, query);
+		rc = ExecRedirectDBOP(ThisDBG, query, DB_UPDATE);
 		redcheck = ThisDBG->checkData;
 	}
 	if ( rc == MCP_OK ) {
@@ -320,14 +321,14 @@ ENTER_FUNC;
 	rc = WriteDB(query, orgcheck);
 	if ( rc == MCP_BAD_CONN ) {
 		CloseRedirectDB(ThisDBG);
-		ThisDBG->fConnect = UNCONNECT;
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
 		ReConnectDB();
-		if ( ThisDBG->fConnect == CONNECT ){
+		if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
 			rc = WriteDB(query, orgcheck);
 		}
 	} else
 	if ( rc != MCP_OK ) {
-		ThisDBG->fConnect = FAILURE;
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
 		CloseRedirectDB(ThisDBG);
 	}
 LEAVE_FUNC;
@@ -349,12 +350,13 @@ FileThread(
 	void	*dummy)
 {
 	VeryfyData *vdata;
-	char	*query;
+	char	*query
+		,	*dbname;
 	FILE	*fp;
 
 ENTER_FUNC;
 	fp = OpenLogFile(ThisDBG->file);
-	if		(  ThisDBG->dbname  !=  NULL  ) {
+	if		(  ( dbname = GetDB_DBname(ThisDBG,DB_UPDATE) )  !=  NULL  ) {
 		if (!fNoSumCheck) {
 			WriteLog(fp, "dbredirector start");
 		} else {
@@ -364,29 +366,29 @@ ENTER_FUNC;
 	} else {
 		WriteLog(fp, "dbredirector start(No database)");
 		OpenDB_RedirectPort(ThisDBG);
-		ThisDBG->fConnect = NOCONNECT;
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	}
 	while	( TRUE )	{
 		vdata = (VeryfyData *)DeQueue(FileQueue);
 		query = LBS_Body(vdata->RedirectData);
 		if		(  *query  !=  0 ) {
-			if ( ThisDBG->fConnect == UNCONNECT ) {
+			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ) {
 				ReConnectDB();
 			}
-			if ( ThisDBG->fConnect == CONNECT ){
+			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
 				ExecDB(query, vdata->CheckData);
 			}
-			if ( ThisDBG->fConnect == FAILURE ){
+			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
 				Warning("DB synchronous failure");
 				WriteLog(fp, "DB synchronous failure");
-				ThisDBG->fConnect = DISCONNECT;
+				ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
 			}
 			ReRedirect(query);
 			WriteLogQuery(fp, query);
 		}
 		FreeVeryfyData(vdata);
 	}
-	if		(  ThisDBG->dbname  ==  NULL  ) {
+	if		(  dbname  ==  NULL  ) {
 		CloseDB_RedirectPort(ThisDBG);
 	}
 	WriteLog(fp, "dbredirector stop");
@@ -428,9 +430,9 @@ DumpDBG(
 {
 	printf("name     = [%s]\n",dbg->name);
 	printf("\ttype     = [%s]\n",dbg->type);
-	printf("\tDB name  = [%s]\n",dbg->dbname);
-	printf("\tDB user  = [%s]\n",dbg->user);
-	printf("\tDB pass  = [%s]\n",dbg->pass);
+	printf("\tDB name  = [%s]\n",GetDB_DBname(dbg,DB_UPDATE));
+	printf("\tDB user  = [%s]\n",GetDB_User(dbg,DB_UPDATE));
+	printf("\tDB pass  = [%s]\n",GetDB_Pass(dbg,DB_UPDATE));
 	if		(  dbg->file  !=  NULL  ) {
 		printf("\tlog file = [%s]\n",dbg->file);
 	}
@@ -450,17 +452,18 @@ _CheckDBG(
 	DBG_Struct	*red_dbg;
 	char *src_port, *dsc_port;
 	char *dbg_dbname = "", *red_dbg_dbname = "";
+	char	*dbname;
 ENTER_FUNC;		
 	if		(  dbg->redirect  !=  NULL  ) {
 		red_dbg = dbg->redirect;
 		if ( strcmp(red_dbg->name, red_name ) == 0 ){
-			src_port = StrDup(StringPort(dbg->port));
-			dsc_port = StrDup(StringPort(red_dbg->port));
-			if ( dbg->dbname != NULL){
-				dbg_dbname = dbg->dbname;
+			src_port = StrDup(StringPort(GetDB_Port(dbg,DB_UPDATE)));
+			dsc_port = StrDup(StringPort(GetDB_Port(red_dbg,DB_UPDATE)));
+			if		(  ( dbname = GetDB_DBname(dbg,DB_UPDATE) )  !=  NULL  ) {
+				dbg_dbname = dbname;
 			}
-			if ( red_dbg->dbname != NULL){
-				red_dbg_dbname = red_dbg->dbname;
+			if		(  ( dbname = GetDB_DBname(red_dbg,DB_UPDATE) )  !=  NULL  ) {
+				red_dbg_dbname = dbname;
 			}
 			if ( ( strcmp(dbg->type, red_dbg->type ) == 0 )
 				 && ( strcmp(dbg_dbname, red_dbg_dbname ) == 0 )
@@ -526,40 +529,40 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ポート番号"	 								},
+		"waiting port name"	 							},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"接続待ちキューの数" 							},
+		"connection waiting queue number"				},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"environment file name"							},
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"環境のベースディレクトリ"		 				},
+		"base directory"			 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"データ定義格納ディレクトリ"	 				},
-	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
-		"定義格納ディレクトリ"			 				},
+		"record directory"			 					},
+	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
+		"*D directory"				 					},
 
 	{	"host",		STRING,		TRUE,	(void*)&DB_Host,
-		"PostgreSQL稼働ホスト名"						},
+		"DB host name"									},
 	{	"port",		STRING,		TRUE,	(void*)&DB_Port,
-		"PostgreSQLポート番号"							},
+		"DB port number"								},
 	{	"db",		STRING,		TRUE,	(void*)&DB_Name,
-		"データベース名"								},
+		"DB name"										},
 	{	"user",		STRING,		TRUE,	(void*)&DB_User,
-		"ユーザ名"										},
+		"DB user name"									},
 	{	"pass",		STRING,		TRUE,	(void*)&DB_Pass,
-		"パスワード"									},
+		"DB password"									},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirectorの起動をチェックしない"			},
+		"no check dbredirector start"					},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
-		"dbredirectorを使わない"						},
+		"don't use dbredirector"						},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
-		"dbredirectorで更新数をチェックしない"			},
+		"no count dbredirector updates"					},
 	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
-		"dbredirector送信の再試行数を指定する"			},
+		"send retry dbredirector"						},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
-		"dbredirector送信の再試行の間隔を指定する(秒)"	},
+		"retry interval of dbredirector(sec)"			},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };

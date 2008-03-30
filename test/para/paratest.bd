@@ -1,0 +1,18 @@
+name	dbtest;
+
+HandlerPath	".:=/aps/.libs";
+
+handler	"Ruby"	{
+	class		"Ruby";
+    loadpath	"=/test/para";
+	locale		"utf-8";
+};
+
+# bind <module name> <hander name> ;
+
+bind	"Test1"		"Ruby";
+
+db	"master"	{
+	metadb;
+	test1;
+};

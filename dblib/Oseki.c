@@ -50,7 +50,16 @@ static	char	*rname[SIZE_RNAME];
 static	int		alevel;
 static	int		Dim[SIZE_RNAME];
 
-#define	OS_CONN(dbg)		((OsekiClientSession *)(dbg)->conn)
+static	OsekiClientSession	*
+OS_CONN(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	int		ix;
+
+	ix = IsUsageUpdate(usage) ? PROCESS_UPDATE : PROCESS_READONLY;
+	return	((OsekiClientSession *)dbg->process[ix].conn);
+}
 
 static	void
 EscapeString(LargeByteString *lbs, char *s)
@@ -433,7 +442,8 @@ static	int
 _SendCommand(
 	DBG_Struct	*dbg,
 	unsigned char	*sql,
-	Bool	fRed)
+	Bool	fRed,
+	int		usage)
 {
 	int		res;
 
@@ -441,7 +451,7 @@ ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",sql);fflush(stdout);
 #endif
-	res = OsekiSendCommand(OS_CONN(dbg),sql);
+	res = OsekiSendCommand(OS_CONN(dbg,usage),sql);
 	if		(  fRed  ) {
 		PutDB_Redirect(dbg,sql);
 	}
@@ -455,9 +465,10 @@ ExecOseki(
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	LargeByteString	*src,
-	ValueStruct		*args)
+	ValueStruct		*args,
+	int				usage)
 {
-	OsekiClientSession	*ses = OS_CONN(dbg);
+	OsekiClientSession	*ses;
     LargeByteString *sql;
 	int		c;
 	ValueStruct	*val;
@@ -469,6 +480,7 @@ ExecOseki(
 	Bool	fIntoAster;
 
 ENTER_FUNC;
+	ses = OS_CONN(dbg,usage);
 	dbg =  rec->opt.db->dbg;
 	sql = NewLBS();
 	if	(  src  ==  NULL )	{
@@ -518,7 +530,7 @@ ENTER_FUNC;
 				break;
 			  case	SQL_OP_EOL:
                 LBS_EmitEnd(sql);
-				res = _SendCommand(dbg,LBS_Body(sql),TRUE);
+				res = _SendCommand(dbg,LBS_Body(sql),TRUE,usage);
                 LBS_Clear(sql);
 				if		(  res <  0  ) {
 					dbgmsg("NG");
@@ -580,12 +592,14 @@ static	int
 _EXEC(
 	DBG_Struct	*dbg,
 	char		*sql,
-	Bool		fRed)
+	Bool		fRed,
+	int			usage)
 {
 	int			res;
 	int			rc;
 
-	res = _SendCommand(dbg,sql,fRed);
+	res = _SendCommand(dbg,sql,fRed,usage);
+	LBS_EmitStart(dbg->checkData);
 	if		(  res <  0  ) {
 		dbgmsg("NG");
 		rc = MCP_BAD_OTHER;
@@ -597,6 +611,7 @@ _EXEC(
 		dbgmsg("EOF");
 		rc = MCP_EOF;
 	}
+	LBS_EmitEnd(dbg->checkData);
 	return	(rc);
 }
 
@@ -610,33 +625,69 @@ _DBOPEN(
 	,		*dbname
 	,		*pass;
 	OsekiClientSession	*ses;
+	int		i;
+	int		rc;
 
 ENTER_FUNC;
-	if ( dbg->fConnect == CONNECT ){
-		Warning("database is already connected.");
+	rc = 0;
+	if ( dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
+		Warning("database is already *UPDATE* connected.");
 	}
 
-	port = StringPort(dbg->port);
-	user =  GetDB_User(dbg);
-	dbname = GetDB_DBname(dbg);
-	pass = GetDB_Pass(dbg);
-
-	dbgprintf("port = [%s]\n",port);
-	dbgprintf("user = [%s]\n",user);
-	dbgprintf("pass = [%s]\n",pass);
-
-	ses = ConnectOseki(NULL,port,user,pass);
-	if		(  ses  !=  NULL  ) {
-		OpenDB_RedirectPort(dbg);
-		dbg->conn = (void *)ses;
-		dbg->fConnect = CONNECT;
-		ctrl->rc = MCP_OK;
+	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+		if		(	(  IsUsageNotFail(dbg->server[i].usage)  )
+				&&	(  IsUsageUpdate(dbg->server[i].usage)   ) )	break;
+	}
+	if		(  i  ==  dbg->nServer  ) {
+		Wraning("UPDATE SERVER is none.");
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	} else {
-		Message("Connection to database failed.\n");
-		ctrl->rc = MCP_BAD_OTHER;
+		port = StringPort(GetDB_Port(dbg,DB_UPDATE));
+		user = GetDB_User(dbg,DB_UPDATE);
+		dbname = GetDB_DBname(dbg,DB_UPDATE);
+		pass = GetDB_Pass(dbg,DB_UPDATE);
+		dbgprintf("port = [%s]\n",port);
+		dbgprintf("user = [%s]\n",user);
+		dbgprintf("pass = [%s]\n",pass);
+		if		(  ( ses = ConnectOseki(NULL,port,user,pass) )  !=  NULL  ) {
+			OpenDB_RedirectPort(dbg);
+			dbg->process[PROCESS_UPDATE].conn = (void *)ses;
+			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+			rc = MCP_OK;
+		} else {
+			Message("Connection to database failed.\n");
+			rc = MCP_BAD_OTHER;
+		}
+	}
+	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+		if		(	(  IsUsageNotFail(dbg->server[i].usage)  )
+				&&	(  !IsUsageUpdate(dbg->server[i].usage)  ) )	break;
+	}
+	if		(  i  ==  dbg->nServer  ) {
+		Wraning("READONLY SERVER is none.");
+		dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+	} else {
+		port = StringPort(GetDB_Port(dbg,DB_READONLY));
+		user = GetDB_User(dbg,DB_READONLY);
+		dbname = GetDB_DBname(dbg,DB_READONLY);
+		pass = GetDB_Pass(dbg,DB_READONLY);
+		dbgprintf("port = [%s]\n",port);
+		dbgprintf("user = [%s]\n",user);
+		dbgprintf("pass = [%s]\n",pass);
+		if		(  ( ses = ConnectOseki(NULL,port,user,pass) )  !=  NULL  ) {
+			OpenDB_RedirectPort(dbg);
+			dbg->process[PROCESS_READONLY].conn = (void *)ses;
+			dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_CONNECT;
+			if		(  rc  ==  0  ) {
+				rc = MCP_OK;
+			}
+		} else {
+			Message("Connection to database failed.\n");
+			rc = MCP_BAD_OTHER;
+		}
 	}
 	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
+		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -648,13 +699,17 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect == CONNECT ) { 
-		DisConnectOseki(OS_CONN(dbg));
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+		DisConnectOseki(OS_CONN(dbg,DB_UPDATE));
 		CloseDB_RedirectPort(dbg);
-		dbg->fConnect = DISCONNECT;
-		if		(  ctrl  !=  NULL  ) {
-			ctrl->rc = MCP_OK;
-		}
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+	}
+	if		(  dbg->process[PROCESS_READONLY].dbstatus == DB_STATUS_CONNECT ) { 
+		DisConnectOseki(OS_CONN(dbg,DB_READONLY));
+		dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_DISCONNECT;
+	}
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -668,14 +723,28 @@ _DBSTART(
 	int			rc;
 
 ENTER_FUNC;
-	BeginDB_Redirect(dbg); 
-	rc = OsekiStart(OS_CONN(dbg));
-	if		(  rc  !=  0  ) {
-		dbgmsg("NG");
-		rc = MCP_BAD_OTHER;
-	} else {
-		dbgmsg("OK");
-		rc = MCP_OK;
+	rc = 0;
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
+		BeginDB_Redirect(dbg); 
+		if		(  OsekiStart(OS_CONN(dbg,DB_UPDATE))  !=  0  ) {
+			dbgmsg("NG");
+			rc = MCP_BAD_OTHER;
+		} else {
+			dbgmsg("OK");
+			rc = MCP_OK;
+		}
+	}
+	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_READONLY  ) {
+		BeginDB_Redirect(dbg); 
+		if		(  OsekiStart(OS_CONN(dbg,DB_READONLY))  !=  0  ) {
+			dbgmsg("NG");
+			rc = MCP_BAD_OTHER;
+		} else {
+			dbgmsg("OK");
+			if		(  rc  ==  0  ) {
+				rc = MCP_OK;
+			}
+		}
 	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
@@ -692,16 +761,28 @@ _DBCOMMIT(
 	int			rc;
 
 ENTER_FUNC;
-	CheckDB_Redirect(dbg);
-	rc = OsekiCommit(OS_CONN(dbg));
-	if		(  rc  !=  0  ) {
-		dbgmsg("NG");
-		rc = MCP_BAD_OTHER;
-	} else {
-		dbgmsg("OK");
-		rc = MCP_OK;
+	rc = 0;
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
+		CheckDB_Redirect(dbg);
+		if		(  OsekiCommit(OS_CONN(dbg,DB_UPDATE))  !=  0  ) {
+			dbgmsg("NG");
+			rc = MCP_BAD_OTHER;
+		} else {
+			dbgmsg("OK");
+			rc = MCP_OK;
+		}
+		CommitDB_Redirect(dbg);
 	}
-	CommitDB_Redirect(dbg);
+	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_CONNECT  ) {
+		if		(  OsekiCommit(OS_CONN(dbg,DB_READONLY))  !=  0  ) {
+			dbgmsg("NG");
+			rc = MCP_BAD_OTHER;
+		} else {
+			dbgmsg("OK");
+			rc = MCP_OK;
+		}
+	}
+
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
@@ -730,7 +811,7 @@ ENTER_FUNC;
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_SELECT]->proc;
-		ret = ExecOseki(dbg,ctrl,rec,src,args);
+		ret = ExecOseki(dbg,ctrl,rec,src,args,path->usage);
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -743,7 +824,7 @@ _DBFETCH(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	OsekiClientSession	*ses = OS_CONN(dbg);
+	OsekiClientSession	*ses;
 	char	sql[SIZE_SQL+1]
 	,		*p;
 	DB_Struct	*db;
@@ -763,15 +844,16 @@ ENTER_FUNC;
 		src = path->ops[DBOP_FETCH]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecOseki(dbg,ctrl,rec,src,args);
+			ret = ExecOseki(dbg,ctrl,rec,src,args,path->usage);
 		} else {
 			p = sql;
 			p += sprintf(p,"FETCH FROM %s_%s_csr;", rec->name, path->name);
-			res = _SendCommand(dbg,sql,TRUE);
+			res = _SendCommand(dbg,sql,TRUE,path->usage);
 			if		(  res  <  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
 			} else {
+				ses = OS_CONN(dbg,path->usage);
 				if		(  OsekiIsData(ses)  ) {
 					dbgmsg("OK");
 					if		(  ( input = OsekiReadData(ses,OsekiResult(ses)) )  !=  NULL  ) {
@@ -818,11 +900,11 @@ ENTER_FUNC;
 		src = path->ops[DBOP_CLOSE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecOseki(dbg,ctrl,rec,src,args);
+			ret = ExecOseki(dbg,ctrl,rec,src,args,path->usage);
 		} else {
 			p = sql;
 			p += sprintf(p,"CLOSE %s_%s_csr;",rec->name,path->name);
-			res = _SendCommand(dbg,sql,TRUE);
+			res = _SendCommand(dbg,sql,TRUE,path->usage);
 			if		(  res !=  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
@@ -862,7 +944,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_UPDATE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			rer = ExecOseki(dbg,ctrl,rec,src,args);
+			rer = ExecOseki(dbg,ctrl,rec,src,args,path->usage);
 		} else {
             sql = NewLBS();
             LBS_EmitString(sql,"UPDATE ");
@@ -893,7 +975,7 @@ ENTER_FUNC;
 				}
 			}
             LBS_EmitEnd(sql);
-			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
+			res = _SendCommand(dbg,LBS_Body(sql),TRUE,path->usage);
 			if		(  res  <  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
@@ -933,7 +1015,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_DELETE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecOseki(dbg,ctrl,rec,src,args);
+			ret = ExecOseki(dbg,ctrl,rec,src,args,path->usage);
 		} else {
 			sql = NewLBS();
 			LBS_EmitString(sql,"DELETE\tFROM\t");
@@ -960,7 +1042,7 @@ ENTER_FUNC;
 				}
 			}
             LBS_EmitEnd(sql);
-			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
+			res = _SendCommand(dbg,LBS_Body(sql),TRUE,path->usage);
 			if		(  res  <  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
@@ -998,7 +1080,7 @@ ENTER_FUNC;
 		src = path->ops[DBOP_INSERT]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecOseki(dbg,ctrl,rec,src,args);
+			ret = ExecOseki(dbg,ctrl,rec,src,args,path->usage);
 		} else {
             sql = NewLBS();
 			LBS_EmitString(sql,"INSERT\tINTO\t");
@@ -1013,7 +1095,7 @@ ENTER_FUNC;
 			LBS_EmitString(sql,")");
 			LBS_EmitChar(sql,';');
             LBS_EmitEnd(sql);
-			res = _SendCommand(dbg,LBS_Body(sql),TRUE);
+			res = _SendCommand(dbg,LBS_Body(sql),TRUE,path->usage);
 			if		(  res  !=  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
@@ -1059,7 +1141,7 @@ ENTER_FUNC;
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
 				ctrl->rc = MCP_OK;
-				ret = ExecOseki(dbg,ctrl,rec,src,args);
+				ret = ExecOseki(dbg,ctrl,rec,src,args,path->usage);
 			} else {
 				ctrl->rc = MCP_BAD_OTHER;
 			}

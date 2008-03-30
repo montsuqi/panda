@@ -48,7 +48,8 @@ static	int
 _EXEC(
 	DBG_Struct	*dbg,
 	char		*sql,
-	Bool		fRedirect)
+	Bool		fRedirect,
+	int			usage)
 {
 	return	(MCP_OK);
 }
@@ -59,9 +60,10 @@ _DBOPEN(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	dbg->conn = (void *)NULL;
 	OpenDB_RedirectPort(dbg);
-	dbg->fConnect = CONNECT;
+	dbg->process[PROCESS_UPDATE].conn = NULL;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -75,9 +77,9 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect == CONNECT ) { 
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
-		dbg->fConnect = DISCONNECT;
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;

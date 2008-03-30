@@ -53,7 +53,16 @@ static	int		alevel;
 static	int		Dim[SIZE_RNAME];
 static	Bool	fInArray;
 
-#define	PGCONN(dbg)		((PGconn *)(dbg)->conn)
+static	PGconn	*
+PGCONN(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	int		ix;
+
+	ix = IsUsageUpdate(usage) ? PROCESS_UPDATE : PROCESS_READONLY;
+	return	((PGconn *)dbg->process[ix].conn);
+}
 
 /*	This code depends on sizeof(Oid).	*/
 static	void
@@ -308,28 +317,35 @@ AddConninfo(
 	char *item,
 	char *value)
 {
-	if ( value ) {
+ENTER_FUNC;
+	if		(  value  !=  NULL  )	{
+		dbgprintf("%s = '%s'",item,value);
 		LBS_EmitString(conninfo, item);
 		LBS_EmitString(conninfo, "='");
 		LBS_EmitString(conninfo, value);
 		LBS_EmitString(conninfo, "'");
 		LBS_EmitSpace(conninfo);
 	}
+LEAVE_FUNC;
 }
 
-LargeByteString *
+static	LargeByteString	*
 CreateConninfo(
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	int			usage)
 {
 	static LargeByteString *conninfo;
 
+ENTER_FUNC;
 	conninfo = NewLBS();
-	AddConninfo(conninfo, "host", GetDB_Host(dbg));
-	AddConninfo(conninfo, "port", GetDB_Port(dbg));
-	AddConninfo(conninfo, "dbname", GetDB_DBname(dbg));
-	AddConninfo(conninfo, "user", GetDB_User(dbg));
-	AddConninfo(conninfo, "password", GetDB_Pass(dbg));
+	dbgmsg("*");
+	AddConninfo(conninfo, "host", GetDB_Host(dbg,usage));
+	AddConninfo(conninfo, "port", GetDB_PortName(dbg,usage));
+	AddConninfo(conninfo, "dbname", GetDB_DBname(dbg,usage));
+	AddConninfo(conninfo, "user", GetDB_User(dbg,usage));
+	AddConninfo(conninfo, "password", GetDB_Pass(dbg,usage));
 	LBS_EmitEnd(conninfo);
+LEAVE_FUNC;
 
 	return conninfo;
 }
@@ -1158,15 +1174,18 @@ IsRedirectQuery(
 static	PGresult	*
 _PQexec(
 	DBG_Struct	*dbg,
-	char	*sql,
-	Bool	fRed)
+	char		*sql,
+	Bool		fRed,
+	int			usage)
 {
 	PGresult	*res;
 
 ENTER_FUNC;
 	dbgprintf("%s;",sql);
-	res = PQexec(PGCONN(dbg),sql);
-	if		(  fRed  && IsRedirectQuery(res) ){
+	res = PQexec(PGCONN(dbg,usage),sql);
+	if		(	(  IsUsageUpdate(usage)  )
+			&&	(  fRed                  )
+			&&	(  IsRedirectQuery(res)  ) ) {
 		PutDB_Redirect(dbg,sql);
 		PutDB_Redirect(dbg,";");
 		PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
@@ -1179,28 +1198,31 @@ LEAVE_FUNC;
 static int
 _PQsendQuery(
 	DBG_Struct	*dbg,
-	char	*sql)
+	char		*sql,
+	int			usage)
 {
 	dbgprintf("%s;",sql);
-	return PQsendQuery(PGCONN(dbg),sql);
+	return PQsendQuery(PGCONN(dbg,usage),sql);
 }
 
 static	PGresult	*
 _PQgetResult(
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	int			usage)
 {
-	return PQgetResult(PGCONN(dbg));
+	return PQgetResult(PGCONN(dbg,usage));
 }
 
 static int
 CheckResult(
 	DBG_Struct	*dbg,
+	int			usage,
 	PGresult	*res,
-	int status)
+	int 		status)	
 {
 	int rc;
 
-	if ( PQstatus(PGCONN(dbg)) != CONNECTION_OK ){
+	if ( PQstatus(PGCONN(dbg,usage)) != CONNECTION_OK ){
 		dbgmsg("NG");
 		rc = MCP_BAD_CONN;
 	} else 
@@ -1209,7 +1231,7 @@ CheckResult(
 		rc = MCP_OK;
 	} else {
 		dbgmsg("NG");
-		Warning("%s",PQerrorMessage(PGCONN(dbg)));
+		Warning("%s",PQerrorMessage(PGCONN(dbg,usage)));
 		rc = MCP_BAD_OTHER;
 		AbortDB_Redirect(dbg); 
 	}
@@ -1221,7 +1243,8 @@ ExecPGSQL(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	LargeByteString	*src,
-	ValueStruct		*args)
+	ValueStruct		*args,
+	int				usage)
 {
     LargeByteString *sql;
 	int		c;
@@ -1314,7 +1337,7 @@ ENTER_FUNC;
 				break;
 			  case	SQL_OP_EOL:
                 LBS_EmitEnd(sql);
-				res = _PQexec(dbg,LBS_Body(sql),TRUE);
+				res = _PQexec(dbg,LBS_Body(sql),TRUE,usage);
                 LBS_Clear(sql);
 				status = PGRES_FATAL_ERROR;
 				if		(	(  res ==  NULL  )
@@ -1323,8 +1346,9 @@ ENTER_FUNC;
 						||	(  status  ==  PGRES_FATAL_ERROR     )
 						||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
 					dbgmsg("NG");
-					Warning("%s",PQerrorMessage(PGCONN(dbg)));
+					Warning("%s",PQerrorMessage(PGCONN(dbg,usage)));
 					ctrl->rc = - status;
+					ctrl->count = 0;
 					break;
 				} else {
 					switch	(status) {
@@ -1422,16 +1446,17 @@ static	int
 _EXEC(
 	DBG_Struct	*dbg,
 	char		*sql,
-	Bool		fRed)
+	Bool		fRed,
+	int			usage)
 {
 	PGresult	*res;
 	int			rc = MCP_OK;
 
 ENTER_FUNC;
 	LBS_EmitStart(dbg->checkData);
-	if	( _PQsendQuery(dbg,sql) == TRUE ) {
-		while ( (res = _PQgetResult(dbg)) != NULL ){
-			rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
+	if	( _PQsendQuery(dbg,sql,usage) == TRUE ) {
+		while ( (res = _PQgetResult(dbg,usage)) != NULL ){
+			rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
 			if ( rc == MCP_OK ) {
 				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 				PutCheckDataDB_Redirect(dbg, ":");
@@ -1442,7 +1467,7 @@ ENTER_FUNC;
 			_PQclear(res);
 		}
 	} else {
-		Warning("%s",PQerrorMessage(PGCONN(dbg)));
+		Warning("%s",PQerrorMessage(PGCONN(dbg,usage)));
 		rc = MCP_BAD_OTHER;
 	}
 	LBS_EmitEnd(dbg->checkData);
@@ -1458,29 +1483,85 @@ _DBOPEN(
 	int		rc;
 	LargeByteString *conninfo;
 	PGconn	*conn;
+	int		i;
 	
 ENTER_FUNC;
-	if ( dbg->fConnect == CONNECT ){
-		Warning("database is already connected.");
+	rc = 0;
+	if ( dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
+		Warning("database is already *UPDATE* connected.");
 	}
-	conninfo = CreateConninfo(dbg);
-	conn = PQconnectdb(LBS_Body(conninfo));
-	FreeLBS(conninfo);
-	
-	if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
-		PQsetNoticeProcessor((conn), NoticeMessage, NULL);
-		OpenDB_RedirectPort(dbg);
-		dbg->conn = (void *)conn;
-		dbg->fConnect = CONNECT;
-		rc = MCP_OK;
+	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+		dbgprintf("usage = %d",dbg->server[i].usage);
+		if		(	(  IsUsageNotFail(dbg->server[i].usage)  )
+				&&	(  IsUsageUpdate(dbg->server[i].usage)   ) )	break;
+	}
+	if		(  i  ==  dbg->nServer  ) {
+		Warning("UPDATE SERVER is none.");
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	} else {
-		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg));
-		Message("%s", PQerrorMessage(conn));
-		PQfinish(conn);
-		rc = MCP_BAD_CONN;
+		conninfo = CreateConninfo(dbg,DB_UPDATE);
+		conn = PQconnectdb(LBS_Body(conninfo));
+		dbgprintf("conninfo = [%s]",LBS_Body(conninfo));
+		FreeLBS(conninfo);
+		if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
+			PQsetNoticeProcessor((conn), NoticeMessage, NULL);
+			OpenDB_RedirectPort(dbg);
+			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
+			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+			rc = MCP_OK;
+		} else {
+			Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg,DB_UPDATE));
+			Message("%s", PQerrorMessage(conn));
+			PQfinish(conn);
+			rc = MCP_BAD_CONN;
+		}
 	}
+	dbgmsg("*");
+	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+		if		(	(  IsUsageNotFail(dbg->server[i].usage)  )
+				&&	(  !IsUsageUpdate(dbg->server[i].usage)  ) )	break;
+	}
+	if		(  i  ==  dbg->nServer  ) {
+		Warning("READONLY SERVER is none.");
+#if	1
+		Warning("using UPDATE SERVER.");
+		dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
+		dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
+		rc = MCP_OK;
+#else
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
+		rc = MCP_BAD_CONN;
+#endif
+
+	} else {
+		conninfo = CreateConninfo(dbg,DB_READONLY);
+		conn = PQconnectdb(LBS_Body(conninfo));
+		FreeLBS(conninfo);
+		if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
+			PQsetNoticeProcessor((conn), NoticeMessage, NULL);
+			dbg->process[PROCESS_READONLY].conn = (void *)conn;
+			dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_CONNECT;
+			if		(  rc  ==  0  ) {
+				rc = MCP_OK;
+			}
+		} else {
+			Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg,DB_READONLY));
+			Message("%s", PQerrorMessage(conn));
+			PQfinish(conn);
+#if	1
+			Warning("using UPDATE SERVER.");
+			dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
+			dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
+			rc = MCP_OK;
+#else
+			rc = MCP_BAD_CONN;
+#endif
+		}
+	}
+
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
+		ctrl->count = 0;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -1491,14 +1572,25 @@ _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
+	PGconn	*conn;
 ENTER_FUNC;
-	if		(  dbg->fConnect == CONNECT ) { 
-		PQfinish(PGCONN(dbg));
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+		conn = PGCONN(dbg,DB_UPDATE);
+		PQfinish(PGCONN(dbg,DB_UPDATE));
 		CloseDB_RedirectPort(dbg);
-		dbg->fConnect = DISCONNECT;
-		if		(  ctrl  !=  NULL  ) {
-			ctrl->rc = MCP_OK;
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+	} else {
+		conn = NULL;
+	}
+	if		(  dbg->process[PROCESS_READONLY].dbstatus == DB_STATUS_CONNECT ) {
+		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
+			PQfinish(PGCONN(dbg,DB_READONLY));
 		}
+		dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_DISCONNECT;
+	}
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = MCP_OK;
+		ctrl->count = 0;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -1511,14 +1603,31 @@ _DBSTART(
 {
 	PGresult	*res;
 	int			rc;
+	PGconn	*conn;
 
 ENTER_FUNC;
-	BeginDB_Redirect(dbg); 
-	res = _PQexec(dbg,"BEGIN",FALSE);
-	rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
-	_PQclear(res);
+	rc = 0;
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
+		conn = PGCONN(dbg,DB_UPDATE);
+		BeginDB_Redirect(dbg); 
+		res = _PQexec(dbg,"BEGIN",FALSE,DB_UPDATE);
+		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
+		_PQclear(res);
+	} else {
+		conn = NULL;
+	}
+	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_CONNECT  ) {
+		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
+			res = _PQexec(dbg,"BEGIN",FALSE,DB_READONLY);
+			if		(  rc  ==  0  ) {
+				rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
+			}
+			_PQclear(res);
+		}
+	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
+		ctrl->count = 0;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -1531,15 +1640,33 @@ _DBCOMMIT(
 {
 	PGresult	*res;
 	int			rc;
+	PGconn	*conn;
 
 ENTER_FUNC;
-	CheckDB_Redirect(dbg);
-	res = _PQexec(dbg,"COMMIT WORK",FALSE);
-	rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
-	_PQclear(res);
-	CommitDB_Redirect(dbg);
+	rc = 0;
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
+		conn = PGCONN(dbg,DB_UPDATE);
+		CheckDB_Redirect(dbg);
+		res = _PQexec(dbg,"COMMIT WORK",FALSE,DB_UPDATE);
+		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
+		_PQclear(res);
+		CommitDB_Redirect(dbg);
+	} else {
+		conn = NULL;
+	}
+	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_CONNECT  ) {
+		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
+			res = _PQexec(dbg,"COMMIT WORK",FALSE,DB_READONLY);
+			if		(  rc  ==  0  ) {
+				rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
+			}
+			_PQclear(res);
+		}
+	}
+
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
+		ctrl->count = 0;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -1561,12 +1688,13 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
+		ctrl->count = 0;
 	} else {
 		ctrl->rc = MCP_OK;
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_SELECT]->proc;
-		ret = ExecPGSQL(dbg,ctrl,src,args);
+		ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -1594,19 +1722,20 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
+		ctrl->count = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_FETCH]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecPGSQL(dbg,ctrl,src,args);
+			ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 		} else {
 			ret = NULL;
 			p = sql;
 			p += sprintf(p,"FETCH %d FROM %s_%s_csr",ctrl->limit,rec->name,path->name);
-			res = _PQexec(dbg,sql,TRUE);
-			ctrl->rc = CheckResult(dbg, res, PGRES_TUPLES_OK);
+			res = _PQexec(dbg,sql,TRUE,path->usage);
+			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_TUPLES_OK);
 			if ( ctrl->rc == MCP_OK ) {
 				if		(  ( n = PQntuples(res) )  >  0  ) {
 					ctrl->count = n;
@@ -1628,6 +1757,7 @@ ENTER_FUNC;
 					ctrl->rc = MCP_OK;
 				} else {
 					dbgmsg("EOF");
+					ctrl->count = 0;
 					ctrl->rc = MCP_EOF;
 				}
 			}
@@ -1657,18 +1787,20 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
+		ctrl->count = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_CLOSE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecPGSQL(dbg,ctrl,src,args);
+			ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 		} else {
 			p = sql;
 			p += sprintf(p,"CLOSE %s_%s_csr",rec->name,path->name);
-			res = _PQexec(dbg,sql,TRUE);
-			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
+			ctrl->count = 0;
+			res = _PQexec(dbg,sql,TRUE,path->usage);
+			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
 		}
 	}
@@ -1696,13 +1828,14 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
+		ctrl->count = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_UPDATE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecPGSQL(dbg,ctrl,src,args);
+			ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 		} else {
             sql = NewLBS();
             LBS_EmitString(sql,"UPDATE ");
@@ -1735,8 +1868,9 @@ ENTER_FUNC;
 				}
 			}
             LBS_EmitEnd(sql);
-			res = _PQexec(dbg,LBS_Body(sql),TRUE);
-			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
+			ctrl->count = 0;
+			res = _PQexec(dbg,LBS_Body(sql),TRUE,path->usage);
+			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
 		}
@@ -1765,13 +1899,14 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
+		ctrl->count = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_DELETE]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecPGSQL(dbg,ctrl,src,args);
+			ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 		} else {
 			sql = NewLBS();
 			LBS_EmitString(sql,"DELETE\tFROM\t");
@@ -1798,8 +1933,9 @@ ENTER_FUNC;
 				}
 			}
             LBS_EmitEnd(sql);
-			res = _PQexec(dbg,LBS_Body(sql),TRUE);
-			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
+			ctrl->count = 0;
+			res = _PQexec(dbg,LBS_Body(sql),TRUE,path->usage);
+			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
 		}
@@ -1826,13 +1962,14 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
+		ctrl->count = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
 		src = path->ops[DBOP_INSERT]->proc;
 		if		(  src  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
-			ret = ExecPGSQL(dbg,ctrl,src,args);
+			ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 		} else {
 			sql = NewLBS();
 			LBS_EmitString(sql,"INSERT\tINTO\t");
@@ -1847,8 +1984,9 @@ ENTER_FUNC;
 			InsertValues(dbg,sql,args);
 			LBS_EmitString(sql,") ");
             LBS_EmitEnd(sql);
-			res = _PQexec(dbg,LBS_Body(sql),TRUE);
-			ctrl->rc = CheckResult(dbg, res, PGRES_COMMAND_OK);
+			ctrl->count = 0;
+			res = _PQexec(dbg,LBS_Body(sql),TRUE,path->usage);
+			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
 		}
@@ -1876,6 +2014,7 @@ ENTER_FUNC;
 	dbgprintf("[%s]",name); 
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
+		ctrl->count = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
@@ -1885,9 +2024,10 @@ ENTER_FUNC;
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
 				ctrl->rc = MCP_OK;
-				ret = ExecPGSQL(dbg,ctrl,src,args);
+				ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 			} else {
 				ctrl->rc = MCP_BAD_OTHER;
+				ctrl->count = 0;
 			}
 		}
 	}

@@ -458,6 +458,7 @@ ENTER_FUNC;
 				break;
 			  default:
 				Warning("[%s] session failure packet [%X]",data->hdr->term, c);
+				dbgprintf("c = [%X]\n",c);
 				fExit = TRUE;
 				rc = FALSE;
 				break;

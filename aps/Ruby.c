@@ -601,10 +601,10 @@ aryval_each(int argc, VALUE *argv, VALUE self)
 {
     value_struct_data *data;
     ValueStruct *val;
-    int n = (argc > 2 ? 2 : argc);
 	int	i;
 
     Data_Get_Struct(self, value_struct_data, data);
+	dbgprintf("count = %d",ValueArraySize(data->value));
 	for	( i = 0 ; i < ValueArraySize(data->value) ; i ++ )	{
 		val = GetArrayItem(data->value, i);
         rb_yield(get_value(val));
@@ -1152,6 +1152,7 @@ set_param(VALUE key, VALUE value, set_param_arg *arg)
 
     if (key == Qundef) return ST_CONTINUE;
     longname = StringValuePtr(key);
+	dbgprintf("longname = '%s'",longname);
     val = GetItemLongName(arg->value, longname);
     if (val == NULL) {
         rb_raise(rb_eArgError, "no such parameter: %s", longname);
@@ -1175,6 +1176,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
     ValueStruct *value
 		,		*result;
 
+	dbgprintf("argc = %d",argc);
     Data_Get_Struct(self, table_data, data);
     rb_scan_args(argc, argv, "13", &funcname, &pathname, &params, &limit);
     func = StringValuePtr(funcname);
@@ -1211,8 +1213,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
         }
     }
 
-	ctrl.limit = 1;
-    if (argc == 3) {
+    if (argc >= 3) {
         set_param_arg arg;
 
 		if	(!NIL_P(params)) {
@@ -1224,6 +1225,8 @@ table_exec(int argc, VALUE *argv, VALUE self)
     }
 	if (argc == 4) {
 		ctrl.limit = NUM2INT(limit);
+	} else {
+		ctrl.limit = 1;
 	}
 
     size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
@@ -1232,7 +1235,8 @@ table_exec(int argc, VALUE *argv, VALUE self)
     result = ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
 #ifdef	DEBUG
 	DumpValueStruct(result);
-	dbgprintf("ctrl.rc = %d",ctrl.rc);
+	dbgprintf("ctrl.rc    = %d",ctrl.rc);
+	dbgprintf("ctrl.count = %d",ctrl.count);
 #endif
     if (ctrl.rc == MCP_OK) {
 		if		(  result  ==  NULL  ) {

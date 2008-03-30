@@ -1,3 +1,16 @@
+2008-03-31  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.4.3
+
+2008-03-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/Ruby.c (aryval_each): ValueStructにeach methodを付加
+
+	* libs/DIparser.c (ParDBGROUP): db_groupに複数のDBサーバを指定可能にし、それぞれに
+	usage(readonly/updateの別)を指定可能にした
+
+	* libs/DBparser.c (DB_Parse): pathにreadonlyとupdateのオプションをつけられるようにした
+
 2008-03-27  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/panda.c, libs/DIparser.c: TermPort のデフォルト値を変更
@@ -14,6 +27,12 @@
 
 	* libs/DIparser.c (BuildMcpArea): mcparea.versionを追加(バージョンチェック用)
 
+2008-03-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/struct.h: DBG_StructからDB_Process, DB_Serverを分離し、複数保持可能にした。
+	(PathStruct) パスがreadonlyかupdateを行うかの識別を付加。目的別にコネクトするようにした。
+	(DB_Process) fConnectを廃止しdbstatusに統合した(今まで同じ用途で別々に存在していたのが異常)
+
 2008-03-05  yusuke mihara  <mihara@netlab.jp>
 
 	* action.c, callbacks.c, protocol.c, widgetOPS.c:
@@ -29,14 +48,19 @@
 2008-02-20  yusuke mihara  <mihara@netlab.jp>
 
 	* glclient/widgetOPS.c: GnomePixmapEntryのgladeでのプレビュー非表示に対応
-
+ 
 2008-02-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/wfcio.c, wfc/mqthread.c, wfc/termthread.c: Warningの追加
 
+2008-02-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/DBRuby.c (timestamp_new): 時刻系の型に対応
+
 2008-02-08  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/comm.c (RecvLength): 通信エラー時に不正なサイズが返らないように修正
+
 	* dbstuff/dbredirector.c: SIGPIPEを無視するようにした
 
 2008-02-06  Masami Ogoshi  <ogochan@nurs.or.jp>
@@ -1911,7 +1935,7 @@
 
 2003-09-04  OGOSHI  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.c, libs/BDparse.c, aps/handler.c: 一部ハンドラを定
+	* libs/LDparser.c, libs/BDparse.c, aps/handler.c: 一部ハ��ドラを定
 	義可能にした
 
 2003-09-03  OGOSHI  <ogochan@nurs.or.jp>
@@ -1943,7 +1967,7 @@
 2003-08-05  OGOSHI  <ogochan@nurs.or.jp>
 
 	* libs/LDparser.h: WindowBindの構造の若干の変更、cWindowsの論理の
-	変更(このため、デー�の並びが変更になっている)
+	変更(このため、データの並びが変更になっている)
 
 2003-07-27  OGOSHI  <ogochan@nurs.or.jp>
 
@@ -1967,7 +1991,7 @@
 
 	* auth/glauth.c (ExecuteServer): 多重化をやめる(必要性がない)
 
-	* libs/tcp.c (SetNodelay): 追加(TCP_NODELAYを設定する)
+	* libs/tcp.c (SetNodelay): 追加(TCP_NODELAYを��定する)
 
 2003-06-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 

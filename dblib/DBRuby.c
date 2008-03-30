@@ -310,6 +310,41 @@ bigdecimal_new(ValueStruct *val)
 
 
 static VALUE
+timestamp_new(ValueStruct *val)
+{
+    VALUE cTime
+		, ret;
+
+ENTER_FUNC;
+    cTime = rb_const_get(rb_cObject, rb_intern("Time"));
+    ret = rb_funcall(cTime, rb_intern("local"), 6,
+					 INT2NUM((ValueDateTimeYear(val))),
+					 INT2NUM((ValueDateTimeMon(val)+1)),
+					 INT2NUM((ValueDateTimeMDay(val))),
+					 INT2NUM((ValueDateTimeHour(val))),
+					 INT2NUM((ValueDateTimeMin(val))),
+					 INT2NUM((ValueDateTimeSec(val))));
+LEAVE_FUNC;
+	return	ret;
+}
+
+static VALUE
+date_new(ValueStruct *val)
+{
+    VALUE cTime
+		, ret;
+
+ENTER_FUNC;
+    cTime = rb_const_get(rb_cObject, rb_intern("Time"));
+    ret = rb_funcall(cTime, rb_intern("local"), 3,
+					 INT2NUM((ValueDateTimeYear(val))),
+					 INT2NUM((ValueDateTimeMon(val)+1)),
+					 INT2NUM((ValueDateTimeMDay(val))));
+LEAVE_FUNC;
+	return	ret;
+}
+
+static VALUE
 get_value(ValueStruct *val)
 {
     if (val == NULL)
@@ -344,6 +379,10 @@ get_value(ValueStruct *val)
         return aryval_new(val, 0);
     case GL_TYPE_RECORD:
         return recval_new(val, 0);
+	case GL_TYPE_TIMESTAMP:
+		return timestamp_new(val);
+	case GL_TYPE_DATE:
+		return date_new(val);
     default:
         rb_raise(rb_eArgError, "unsupported ValueStruct type");
         break;
@@ -398,6 +437,10 @@ set_value(ValueStruct *value, VALUE obj)
             class_path = rb_class_path(CLASS_OF(obj));
             if (strcasecmp(StringValuePtr(class_path), "BigDecimal") == 0) {
                 str = rb_funcall(obj, rb_intern("to_s"), 1, rb_str_new2("F"));
+            } else
+            if (strcasecmp(StringValuePtr(class_path), "Time") == 0) {
+                str = rb_funcall(obj, rb_intern("strftime"), 1, rb_str_new2("%Y%m%d%H%M%S"));
+dbgprintf("strftime [%s]",StringValuePtr(str));
             }
             else {
                 str = rb_funcall(obj, rb_intern("to_s"), 0);
@@ -678,6 +721,7 @@ init(
     rb_define_method(cRecordValue, "size", recval_length, 0);
     rb_define_method(cRecordValue, "[]", recval_aref, 1);
     rb_define_method(cRecordValue, "[]=", recval_aset, 2);
+
     eDatabaseError = rb_define_class_under(mPanda, "DatabaseError",
                                            rb_eStandardError);
     application_instances = rb_hash_new();
@@ -807,11 +851,12 @@ InstallDefines(
 	LargeByteString	*src;
 	int		state;
 	Bool	rc;
+	char	*dbname;
 
 ENTER_FUNC;
 	src = NewLBS();
-	if		(  dbg->dbname  !=  NULL  ) {
-		sprintf(buff,"DBNAME = \"%s\"\n",dbg->dbname);
+	if		(  ( dbname = GetDB_DBname(dbg,DB_UPDATE) )  !=  NULL  ) {
+		sprintf(buff,"DBNAME = \"%s\"\n",dbname);
 		LBS_EmitString(src,buff);
 	}
 	if		(  dbg->dbt  !=  NULL  ) {
@@ -950,7 +995,7 @@ _DBOPEN(
 	DBRubyConn	*conn;
 
 ENTER_FUNC;
-	if ( dbg->fConnect == CONNECT ){
+	if ( dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
 		Warning("database is already connected.");
 	}
 	pipe(pSource);
@@ -994,8 +1039,9 @@ ENTER_FUNC;
 	conn->fpR = SocketToNet(pDBR[0]);
 	conn->fpW = SocketToNet(pDBW[1]);
 	conn->rhash = NewNameHash();
-	dbg->conn = (void *)conn;
-	dbg->fConnect = CONNECT;
+	dbg->process[PROCESS_UPDATE].conn = (void *)conn;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -1012,7 +1058,7 @@ ExecRuby(
 	char			*pname,
 	ValueStruct		*args)
 {
-	DBRubyConn	*conn = dbg->conn;
+	DBRubyConn	*conn;
 	LargeByteString	*buff;
 	size_t	size;
 	int		rc;
@@ -1023,6 +1069,7 @@ ENTER_FUNC;
 	if		(  rname  ==  NULL  )	rname = "";
 	if		(  pname  ==  NULL  )	pname = "";
 
+	conn = dbg->process[PROCESS_UPDATE].conn;
 	SendPacketClass(conn->fpW,CMD_Data);
 	SendPacketClass(conn->fpW,CMD_Record);
 	SendString(conn->fpW,rname);
@@ -1082,8 +1129,8 @@ _DBDISCONNECT(
 	int		status;
 
 ENTER_FUNC;
-	if		(  dbg->fConnect == CONNECT ) {
-		conn = (DBRubyConn *)dbg->conn;
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+		conn = (DBRubyConn *)dbg->process[PROCESS_UPDATE].conn;
 		CloseDB_RedirectPort(dbg);
 		SendPacketClass(conn->fpW,CMD_End);
 		CloseNet(conn->fpW);
@@ -1091,7 +1138,7 @@ ENTER_FUNC;
 		g_hash_table_foreach_remove(conn->rhash,(GHRFunc)_FreeRecs,NULL);
 		while( waitpid(-1, &status, WNOHANG) > 0 );
 
-		dbg->fConnect = DISCONNECT;
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}
@@ -1104,7 +1151,8 @@ static	int
 _EXEC(
 	DBG_Struct	*dbg,
 	char		*sql,
-	Bool		fRed)
+	Bool		fRed,
+	int			usage)
 {
 	int			rc = MCP_OK;
 

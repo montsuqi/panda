@@ -26,17 +26,18 @@
 
 extern	int		OpenRedirectDB(DBG_Struct *dbg);
 extern	int		CloseRedirectDB(DBG_Struct *dbg);
-extern	int		ExecRedirectDBOP(DBG_Struct *dbg, char *sql);
+extern	int		ExecRedirectDBOP(DBG_Struct *dbg, char *sql, int usage);
 extern	int		TransactionRedirectStart(DBG_Struct *dbg);
 extern	int		TransactionRedirectEnd(DBG_Struct *dbg);
 
 extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
 
-extern	char	*GetDB_Host(DBG_Struct *dbg);
-extern	char	*GetDB_Port(DBG_Struct *dbg);
-extern	char	*GetDB_DBname(DBG_Struct *dbg);
-extern	char	*GetDB_User(DBG_Struct *dbg);
-extern	char	*GetDB_Pass(DBG_Struct *dbg);
+extern	Port	*GetDB_Port(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Host(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_PortName(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_DBname(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_User(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Pass(DBG_Struct *dbg, int usage);
 
 extern	ValueStruct	*_GetDB_Argument(RecordStruct *rec, char *pname, char *func, int *apno);
 extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);

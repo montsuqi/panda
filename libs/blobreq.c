@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,9 +41,8 @@
 #include	"blob.h"
 #include	"blobcom.h"
 #include	"blobreq.h"
-#include	"debug.h"
 #include	"message.h"
-
+#include	"debug.h"
 
 static	Bool
 RequestBLOB(
