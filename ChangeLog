@@ -1,3 +1,7 @@
+2008-04-01  yusuke mihara  <mihara@netlab.jp>
+
+	* dblib/NativeBLOB.c: _ImportBLOB() で object id がセットされないバグを修正
+
 2008-03-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* Ver 1.4.3

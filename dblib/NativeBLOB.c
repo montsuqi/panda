@@ -465,6 +465,7 @@ ENTER_FUNC;
 			if		(  ( ValueObjectId(obj) = RequestImportBLOB(NBCONN(dbg),APS_BLOB,
 																ValueToString(f,NULL)) )  !=  GL_OBJ_NULL  ) {
                 ValueIsNonNil(obj);
+				ret = DuplicateValue(args,TRUE);
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;
