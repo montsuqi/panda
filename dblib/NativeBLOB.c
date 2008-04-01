@@ -46,14 +46,11 @@
 #include	"redirect.h"
 #include	"debug.h"
 
-#define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
-
 static	int
 _EXEC(
 	DBG_Struct	*dbg,
 	char		*sql,
-	Bool		fRed,
-	int			usage)
+	Bool		fRed)
 {
 	return	(MCP_OK);
 }
@@ -65,19 +62,18 @@ _DBOPEN(
 {
 	int		fh
 		,	rc;
-	Port	*port;
 
 ENTER_FUNC;
 	if		(  fpBlob  ==  NULL  ) {
-		if		(  ( port = GetDB_Port(dbg,DB_UPDATE) )  ==  NULL  ) {
-			port = ThisEnv->blob->port;
+		if		(  dbg->port  ==  NULL  ) {
+			dbg->port = ThisEnv->blob->port;
 		}
-		if		(	(  port  !=  NULL  )
-				&&	(  ( fh = ConnectSocket(port,SOCK_STREAM) )  >=  0  ) ) {
+		if		(	(  dbg->port  !=  NULL  )
+				&&	(  ( fh = ConnectSocket(dbg->port,SOCK_STREAM) )  >=  0  ) ) {
 			fpBlob = SocketToNet(fh);
-			SendStringDelim(fpBlob,GetDB_User(dbg,DB_UPDATE));
+			SendStringDelim(fpBlob,dbg->user);
 			SendStringDelim(fpBlob,"\n");
-			SendStringDelim(fpBlob,GetDB_Pass(dbg,DB_UPDATE));
+			SendStringDelim(fpBlob,dbg->pass);
 			SendStringDelim(fpBlob,"\n");
 			if		(  RecvPacketClass(fpBlob)  !=  APS_OK  ) {
 				CloseNet(fpBlob);
@@ -86,10 +82,9 @@ ENTER_FUNC;
 		}
 	}
 	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = (void *)fpBlob;
+	dbg->conn = (void *)fpBlob;
 	if		(  fpBlob  !=  NULL  ) {
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-		dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+		dbg->fConnect = CONNECT;
 		rc = MCP_OK;
 	} else {
 		rc = MCP_BAD_OTHER;
@@ -107,14 +102,14 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->fConnect == CONNECT ) { 
 #if	0	/*	dbg->conn already closed by aps_main	*/
-		SendPacketClass(NBCONN(dbg),APS_END);	ON_IO_ERROR(NBCONN(dbg),badio);
+		SendPacketClass((NETFILE *)dbg->conn,APS_END);	ON_IO_ERROR((NETFILE *)dbg->conn,badio);
 	badio:
-		CloseNet(NBCONN(dbg);
+		CloseNet((NETFILE *)dbg->conn);
 #endif
 		CloseDB_RedirectPort(dbg);
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		dbg->fConnect = DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}
@@ -132,10 +127,10 @@ _DBSTART(
 
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->fConnect != CONNECT ) {
 		rc = MCP_OK;
 	} else
-	if		(  RequestStartBLOB(NBCONN(dbg),APS_BLOB)  ) {
+	if		(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) {
 		dbgmsg("OK");
 		rc = MCP_OK;
 	} else {
@@ -158,10 +153,10 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->fConnect != CONNECT ) {
 		rc = MCP_OK;
 	} else
-	if		(  RequestStartBLOB(NBCONN(dbg),APS_BLOB)  ) {
+	if		(  RequestStartBLOB((NETFILE*)dbg->conn,APS_BLOB)  ) {
 		dbgmsg("OK");
 		rc = MCP_OK;
 	} else {
@@ -193,8 +188,8 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( e = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  ( ValueObjectId(e) = RequestNewBLOB(NBCONN(dbg),APS_BLOB,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
-				RequestCloseBLOB(NBCONN(dbg),APS_BLOB,ValueObjectId(e));
+			if		(  ( ValueObjectId(e) = RequestNewBLOB((NETFILE*)dbg->conn,APS_BLOB,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
+				RequestCloseBLOB((NETFILE*)dbg->conn,APS_BLOB,ValueObjectId(e));
 				ret = DuplicateValue(args,TRUE);
 				rc = MCP_OK;
 			} else {
@@ -235,7 +230,7 @@ ENTER_FUNC;
 			mode = BLOB_OPEN_READ;
 		}
 		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  RequestOpenBLOB(NBCONN(dbg),APS_BLOB,mode,
+			if		(  RequestOpenBLOB((NETFILE*)dbg->conn,APS_BLOB,mode,
 									  ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
@@ -269,8 +264,8 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  RequestCloseBLOB(NBCONN(dbg),APS_BLOB,
-										ValueObjectId(obj))  ) {
+			if		(  RequestCloseBLOB((NETFILE*)dbg->conn,APS_BLOB,
+									  ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;
@@ -323,7 +318,7 @@ ENTER_FUNC;
 		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
 			if		(  value  !=  NULL  ) {
 				NativePackValue(NULL,value,v);
-				if		(  RequestWriteBLOB(NBCONN(dbg),APS_BLOB,
+				if		(  RequestWriteBLOB((NETFILE*)dbg->conn,APS_BLOB,
 											ValueObjectId(obj),value,size)  ==  size  ) {
 					rc = MCP_OK;
 				} else {
@@ -382,8 +377,8 @@ ENTER_FUNC;
 		}
 		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
 			if		(  value  !=  NULL  ) {
-				if		(  RequestReadBLOB(NBCONN(dbg),APS_BLOB,
-										   ValueObjectId(obj),value,size)  ==  size  ) {
+				if		(  RequestReadBLOB((NETFILE*)dbg->conn,APS_BLOB,
+											ValueObjectId(obj),value,size)  ==  size  ) {
 					NativeUnPackValue(NULL,value,v);
 					ret = DuplicateValue(args,TRUE);
 					rc = MCP_OK;
@@ -426,7 +421,7 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
-			if		(  RequestExportBLOB(NBCONN(dbg),APS_BLOB,
+			if		(  RequestExportBLOB((NETFILE*)dbg->conn,APS_BLOB,
 										 ValueObjectId(obj),ValueToString(f,NULL))  ) {
 				rc = MCP_OK;
 			} else {
@@ -462,8 +457,8 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
-			if		(  ( ValueObjectId(obj) = RequestImportBLOB(NBCONN(dbg),APS_BLOB,
-																ValueToString(f,NULL)) )  !=  GL_OBJ_NULL  ) {
+			if		(  ( ValueObjectId(obj) = RequestImportBLOB((NETFILE*)dbg->conn,APS_BLOB,
+															  ValueToString(f,NULL)) )  !=  GL_OBJ_NULL  ) {
                 ValueIsNonNil(obj);
 				ret = DuplicateValue(args,TRUE);
 				rc = MCP_OK;
@@ -500,7 +495,7 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
-			if		(  RequestSaveBLOB(NBCONN(dbg),APS_BLOB,
+			if		(  RequestSaveBLOB((NETFILE*)dbg->conn,APS_BLOB,
 									   ValueObjectId(obj),ValueToString(f,NULL))  ) {
 				rc = MCP_OK;
 			} else {
@@ -534,7 +529,7 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  RequestCheckBLOB(NBCONN(dbg),APS_BLOB,
+			if		(  RequestCheckBLOB((NETFILE*)dbg->conn,APS_BLOB,
 										ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
@@ -568,8 +563,8 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  RequestDestroyBLOB(NBCONN(dbg),APS_BLOB,
-										  ValueObjectId(obj))  ) {
+			if		(  RequestDestroyBLOB((NETFILE*)dbg->conn,APS_BLOB,
+									   ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
