@@ -130,7 +130,7 @@ ENTER_FUNC;
 			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
 		}
 		ret = ExecDB_Process(&ctrl,rec,value);
-		if		(	(  rec      !=  NULL    )
+		if		(	(  ret      !=  NULL    )
 				&&	(  ctrl.rc  ==  MCP_OK  ) )	{
 			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, ret);
 		}
