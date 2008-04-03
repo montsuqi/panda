@@ -115,7 +115,6 @@ ENTER_FUNC;
 		value = NULL;
 		path = NULL;
 		rec = NULL;
-		ret = NULL;
 		if		(	(  rname  !=  NULL  ) 
 					&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 			ctrl.rno = rno - 1;
@@ -161,6 +160,9 @@ ENTER_FUNC;
 		conv->PackValue(handler->conv,LBS_Body(dbbuff), recDBCTRL->value);
 		LBS_EmitEnd(dbbuff);
 		SendLargeString(fpDBW,dbbuff);			ON_IO_ERROR(fpDBW,badio);
+		if		(  ret == NULL && value != NULL ) {
+			ret = DuplicateValue(value,TRUE);
+        }
 		if		(  ret  !=  NULL  ) {
 			Send(fpDBW,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fpDBW,badio);
 			LBS_EmitStart(dbbuff);
