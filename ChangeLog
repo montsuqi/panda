@@ -1,3 +1,7 @@
+2008-04-03  yusuke mihara  <mihara@netlab.jp>
+
+   * aps/Exec.c: ExecuteDB_Server() で返り値の設定洩れを修正
+
 2008-04-01  yusuke mihara  <mihara@netlab.jp>
 
 	* dblib/NativeBLOB.c: _ImportBLOB() で object id がセットされないバグを修正
