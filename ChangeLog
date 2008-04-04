@@ -1,3 +1,7 @@
+2008-04-04  yusuke mihara  <mihara@netlab.jp>
+
+   * pgserver/server.c: バージョンチェックの修正、1.2.5 以上 OK に変更
+
 2008-04-03  yusuke mihara  <mihara@netlab.jp>
 
    * aps/Exec.c: ExecuteDB_Server() で返り値の設定洩れを修正
