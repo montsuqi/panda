@@ -328,8 +328,8 @@ ENTER_FUNC;
 		}
 	} else
 	if ( rc != MCP_OK ) {
-		ThisDBG->fConnect = FAILURE;
 		CloseRedirectDB(ThisDBG);
+		ThisDBG->fConnect = FAILURE;
 	}
 LEAVE_FUNC;
 }
