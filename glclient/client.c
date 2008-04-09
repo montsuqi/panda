@@ -237,11 +237,12 @@ MakeCacheDir(
 {
 	struct stat st;
 
-	stat(dname, &st);
-	if (S_ISDIR(st.st_mode)) {
-		return ;
-	} else {
-		unlink (dname);
+	if (stat(dname, &st) == 0){
+		if (S_ISDIR(st.st_mode)) {
+			return ;
+		} else {
+			unlink (dname);
+		}
 	}
 	mkdir_p (Cache, 0755);
 	if  (mkdir (dname, 0755) < 0) {
