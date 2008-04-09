@@ -201,15 +201,16 @@ MainLoop(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
-	Bool			ret;
-	char			buff[SIZE_BUFF+1];
-	char			*pass
-	,				*p
-	,				*q;
+	Bool	ret;
+	char	buff[SIZE_BUFF+1];
+	char	*pass;
+	char	*p
+		,	*q;
 	tVersionNumber  ver;
 
 ENTER_FUNC;
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
+	dbgprintf("[%s]",buff);
 	if		(  strncmp(buff,"Start: ",7)  ==  0  ) {
 		dbgmsg("start");
 		p = buff + 7;

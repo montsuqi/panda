@@ -124,6 +124,7 @@ ENTER_FUNC;
 	node->bhash = ThisLD->bhash;
 	node->textsize = ThisLD->textsize;
 	node->scrrec = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * node->cWindow);
+	node->dbstatus = GetDBStatus();
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		node->scrrec[i] = ThisLD->windows[i];
 	}
@@ -310,7 +311,6 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-ENTER_FUNC;
 	WfcPortNumber = NULL;
 	fNoCheck = FALSE;
 	fNoRedirect = FALSE;
@@ -335,7 +335,6 @@ ENTER_FUNC;
 
 	fTimer = FALSE;
 	fConnectRetry = FALSE;
-LEAVE_FUNC;
 }
 
 extern	int

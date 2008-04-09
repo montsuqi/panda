@@ -988,6 +988,7 @@ ParseInput(
 	char	*event;
 	
 ENTER_FUNC;
+	dbgprintf("Codeset = [%s]",Codeset); 
  	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);
  	g_hash_table_foreach(Files,(GHFunc)FileNameToUTF8,NULL);
 #ifdef	DEBUG

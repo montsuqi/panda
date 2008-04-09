@@ -281,6 +281,7 @@ ENTER_FUNC;
 	SetValueString(GetItemLongName(mcp,"dc.status"),
 				   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
 				   NULL);
+	dbgprintf("node->dbstatus = %d",(int)node->dbstatus);
 	SetValueString(GetItemLongName(mcp,"dc.dbstatus"),
 				   DBSTATUS[(unsigned char)node->dbstatus],NULL);
 	SetValueInteger(GetItemLongName(mcp,"db.rcount"),0);

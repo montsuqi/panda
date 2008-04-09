@@ -154,12 +154,12 @@ SendValue(
 ENTER_FUNC;
 	if		(	(  name   !=  NULL  )
 			&&	(  value  !=  NULL  ) ) {
-		dbgprintf("send value = [%s:%s]",name,value);
+		dbgprintf("send value = [%s:",name,value);
 		SendPacketClass(fpServ,GL_ScreenData);
 		SendString(fpServ,name);
 		SendLength(fpServ,size);
 		Send(fpServ, value, size);
-		dbgprintf(":%s]\n",value);
+		dbgprintf(":%s]",value);
 	} else {
 		dbgprintf("send value = [%s]",name);
 	}
@@ -465,7 +465,6 @@ ENTER_FUNC;
 						LBS_EmitStart(html);
 						ExecCode(html,htc);
 					}
-					dbgmsg("*");
 					PutHTML(NULL,htc->Cookie,html,200);
 				}
 			}
@@ -490,16 +489,15 @@ LEAVE_FUNC;
 static	void
 DumpVs(
 	char		*name,
-	char		*value,
+	CGIValue	*val,
 	gpointer	user_data)
 {
-	dbgprintf("[%s][%s]\n",name,value);
+	dbgprintf("[%s][%s]\n",name,val->body);
 }
 
 static	void
 DumpV(void)
 {
-
 ENTER_FUNC;
 	g_hash_table_foreach(Values,(GHFunc)DumpVs,NULL);
 LEAVE_FUNC;
@@ -512,8 +510,8 @@ main(
 {
 	SetDefault();
 	(void)GetOption(option,argc,argv,NULL);
-	//InitMessage("mon","@localhost");
-	InitMessage("mon",NULL);
+	InitMessage("mon","@localhost");
+	//InitMessage("mon",NULL);
 
 	InitNET();
     lbs = NewLBS();

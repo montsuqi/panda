@@ -259,9 +259,10 @@ GetDBStatus(void)
 	int		i;
 	int     rc = 0;
 ENTER_FUNC;
+	rc = DB_STATUS_NOCONNECT; 
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		if ( rc < dbg->process[PROCESS_UPDATE].dbstatus ){
+		if		(  rc  <  dbg->process[PROCESS_UPDATE].dbstatus  )	{
 			rc = dbg->process[PROCESS_UPDATE].dbstatus;
 		}
 	}

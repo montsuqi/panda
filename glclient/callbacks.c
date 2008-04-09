@@ -339,7 +339,7 @@ notebook_send_event(
 	gpointer *object;
 
 	object = GetObjectData(GTK_WIDGET(widget), "recv_page");
-	recv_page = (int )(*object);
+	recv_page = (int)(long)(*object);
 
 	SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
 	UpdateWidget((GtkWidget *)widget, event);
@@ -477,7 +477,7 @@ switch_page(
 	gpointer *object;
 
 	object = GetObjectData(GTK_WIDGET(widget), "recv_page");
-	recv_page = (int )(*object);
+	recv_page = (int)(long)(*object);
 	SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
 	UpdateWidget((GtkWidget *)widget,user_data);
 	if ((user_data != NULL ) &&

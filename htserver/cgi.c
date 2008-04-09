@@ -50,6 +50,7 @@
 #include    "dirs.h"
 #include    "tags.h"
 #include    "exec.h"
+#include    "mon.h"
 #include	"debug.h"
 
 static	GET_VALUE	_GetValue;
@@ -261,19 +262,23 @@ ConvUTF8(
 	char	*ostr;
 	static	char	cbuff[SIZE_LARGE_BUFF];
 
-	cd = iconv_open("utf8",code);
-	istr = (char *)str;
-	dbgprintf("size = %d\n",(int)strlen(str));
-	if		(  ( sib = strlen(str)  )  >  0  ) {
-		ostr = cbuff;
-		sob = SIZE_LARGE_BUFF;
-		if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
-			dbgprintf("error = %d\n",errno);
-		}
-		*ostr = 0;
-		iconv_close(cd);
+	if		(  code  ==  NULL  ) {
+		strcpy(cbuff,str);
 	} else {
-		*cbuff = 0;
+		cd = iconv_open("utf8",code);
+		istr = (char *)str;
+		dbgprintf("size = %d\n",(int)strlen(str));
+		if		(  ( sib = strlen(str)  )  >  0  ) {
+			ostr = cbuff;
+			sob = SIZE_LARGE_BUFF;
+			if		(  iconv(cd,&istr,&sib,&ostr,&sob)  !=  0  ) {
+				dbgprintf("error = %d\n",errno);
+			}
+			*ostr = 0;
+			iconv_close(cd);
+		} else {
+			*cbuff = 0;
+		}
 	}
 
 	return	(cbuff);
@@ -458,8 +463,10 @@ ScanPost(
 extern  void
 CGI_InitValues(void)
 {
+ENTER_FUNC;
 	Values = NewNameHash();
     Files = NewNameHash();
+LEAVE_FUNC;
 }
 
 static	void
@@ -470,6 +477,7 @@ SetValue(
 	byte	*val;
 	char	*str;
 
+ENTER_FUNC;
 	if      (  *name  ==  0  ) {
 		RemoveValue(name);
 		SaveValue(name, value,FALSE);
@@ -482,6 +490,7 @@ SetValue(
 	} else {
 		SaveValue(name,value,FALSE);
 	}
+LEAVE_FUNC;
 }
 
 extern	void
@@ -626,7 +635,8 @@ PutCookie(
 							   "Aug", "Sep", "Oct", "Nov", "Dec" };
 	struct	tm	result;
 	char	*value;
-	
+
+ENTER_FUNC;	
 	printf("Set-Cookie: %s=",name);
 	if		(  ( value = ent->value )  ==  NULL  ) {
 		value = GetHostValue(ParseName(ent->name),FALSE);
@@ -649,6 +659,7 @@ PutCookie(
 		printf("secure");
 	}
 	printf("\r\n");
+LEAVE_FUNC;	
 }
 
 extern	void

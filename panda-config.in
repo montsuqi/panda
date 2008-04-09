@@ -81,5 +81,5 @@ fi
 
 if test "$echo_libs" = "yes"; then
       libdirs=-L@libdir@
-      echo @GLIB_LIBS@ @MONDAI_LIBS@ $libdirs -lpandadb -lm
+      echo @GLIB_LIBS@ @MONDAI_LIBS@ $libdirs -lpanda -lpandadb -lm
 fi

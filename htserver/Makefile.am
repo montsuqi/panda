@@ -64,8 +64,7 @@ INCLUDES 			= \
 
 htserver_SOURCES	=	\
 	htserver.c	htserver.h	\
-	server.c	\
-	trid.c		trid.h
+	server.c
 htserver_DEPENDENCIES	=				\
 	$(top_builddir)/libs/libpandas.a		\
 	$(top_builddir)/libs/libpandamisc.a	\

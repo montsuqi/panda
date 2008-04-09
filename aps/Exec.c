@@ -163,7 +163,7 @@ ENTER_FUNC;
 		SendLargeString(fpDBW,dbbuff);			ON_IO_ERROR(fpDBW,badio);
 		if		(  ret == NULL && value != NULL ) {
 			ret = DuplicateValue(value,TRUE);
-        }
+		}
 		if		(  ret  !=  NULL  ) {
 			Send(fpDBW,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fpDBW,badio);
 			LBS_EmitStart(dbbuff);
@@ -193,12 +193,12 @@ LEAVE_FUNC;
 static	void
 CancelDB(void)
 {
-dbgmsg(">CancelDB");
+ENTER_FUNC;
 	if		(  pthread_kill(_DB_Thread,0)  ==  0  ) {
 		pthread_cancel(_DB_Thread);
 		pthread_join(_DB_Thread,NULL);
 	}
-dbgmsg("<CancelDB");
+LEAVE_FUNC;
 }
 
 static	void
@@ -211,7 +211,7 @@ PutApplication(
 	size_t	size;
 	ConvFuncs	*conv;
 
-dbgmsg(">PutApplication");
+ENTER_FUNC;
 	DumpNode(node);
 	conv = handler->serialize;
 	ConvSetRecName(handler->conv,node->mcprec->name);
@@ -260,7 +260,7 @@ dbgmsg(">PutApplication");
 	}
 	Send(fp,conv->bsep,strlen(conv->bsep));		ON_IO_ERROR(fp,badio);
   badio:
-dbgmsg("<PutApplication");
+LEAVE_FUNC;
 }
 
 static	void
@@ -272,7 +272,7 @@ GetApplication(
 	int		i;
 	ConvFuncs	*conv;
 
-dbgmsg(">GetApplication");
+ENTER_FUNC;
 	conv = handler->serialize;
 
 	LBS_EmitStart(iobuff);
@@ -300,7 +300,7 @@ dbgmsg(">GetApplication");
 	}
 	DumpNode(node);
   badio:
-dbgmsg("<GetApplication");
+LEAVE_FUNC;
 }
 
 static	jmp_buf	SubError;
@@ -330,7 +330,7 @@ _ExecuteProcess(
 	,		**cmd;
 
 
-dbgmsg(">ExecuteProcess");
+ENTER_FUNC;
 	if		(  handler->loadpath  ==  NULL  ) {
 		handler->loadpath = ExecPath;
 	}
@@ -394,7 +394,7 @@ dbgmsg(">ExecuteProcess");
 	} else {
 		rc = FALSE;
 	}
-dbgmsg("<ExecuteProcess");
+LEAVE_FUNC;
 	return	(rc); 
 }
 
@@ -410,11 +410,11 @@ static	void
 _StopDC(
 	MessageHandler	*handler)
 {
-dbgmsg(">StopDC");
+ENTER_FUNC;
 	if		(  ThisLD->cDB  >  0  ) {
 		_StopDB(handler);
 	}
-dbgmsg("<StopDC");
+LEAVE_FUNC;
 }
 
 static	void
@@ -449,7 +449,7 @@ _StartBatch(
 	int		pAPR[2]
 	,		pAPW[2];
 
-dbgmsg(">StartBatch");
+ENTER_FUNC;
 	if		(  handler->loadpath  ==  NULL  ) {
 		handler->loadpath = ExecPath;
 	}
@@ -510,7 +510,7 @@ dbgmsg(">StartBatch");
 	} else {
 		rc = FALSE;
 	}
-dbgmsg("<StartBatch");
+ENTER_FUNC;
 	return	(rc);
 }
 
