@@ -1,5 +1,7 @@
 2008-04-09  Noboru Saitou  <noborus@netlab.jp>
 
+	* glclient/client.c(MakeCacheDir): ディレクトリチェックのバグ修正
+
 	* dbstuff/dbredirector.c: ちゃんとDISCONNECTされない問題を修正
 
 2008-04-04  yusuke mihara  <mihara@netlab.jp>
