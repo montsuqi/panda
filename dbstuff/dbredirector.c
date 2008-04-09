@@ -328,8 +328,8 @@ ENTER_FUNC;
 		}
 	} else
 	if ( rc != MCP_OK ) {
-		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
 		CloseRedirectDB(ThisDBG);
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
 	}
 LEAVE_FUNC;
 }
