@@ -346,7 +346,7 @@ OnChildExit(
 {
 ENTER_FUNC;
 	while( waitpid(-1, NULL, WNOHANG) > 0 );
-	(void)signal(SIGCHLD, (void *)OnChildExit);
+//	(void)signal(SIGCHLD, (void *)OnChildExit);
 LEAVE_FUNC;
 }
 
