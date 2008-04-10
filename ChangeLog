@@ -1,3 +1,9 @@
+2008-04-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c (NewDBG_Struct): processの初期化(ここでするべき)
+
+	* tools/monitor.c (ProcessMonitor): 古いコードに戻した(つか、勘違いしたままのコードだった)
+
 2008-04-09  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/client.c(MakeCacheDir): ディレクトリチェックのバグ修正
@@ -28,10 +34,6 @@
 	usage(readonly/updateの別)を指定可能にした
 
 	* libs/DBparser.c (DB_Parse): pathにreadonlyとupdateのオプションをつけられるようにした
-
-2008-03-27  Noboru Saitou  <noborus@netlab.jp>
-
-	* libs/panda.c, libs/DIparser.c: TermPort のデフォルト値を変更
 
 2008-03-25  Noboru Saitou  <noborus@netlab.jp>
 
