@@ -218,7 +218,7 @@ ENTER_FUNC;
 	proc->argc = argc;
 	argv[argc ++] = NULL;
 	pid = StartProcess(proc,Interval);
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	dbg->fConnect = CONNECT;
 LEAVE_FUNC;
 }
 
@@ -256,7 +256,7 @@ ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL  ) {
 		_StartRedirectors(dbg->redirect);
 	}
-	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{
+	if		(  dbg->fConnect != CONNECT ) {
 		StartRedirector(dbg);
 	}
 LEAVE_FUNC;
@@ -270,7 +270,7 @@ StartRedirectors(void)
 
 ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		ThisEnv->DBG[i]->process[DB_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+		ThisEnv->DBG[i]->fConnect = UNCONNECT;
 	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
@@ -498,111 +498,72 @@ LEAVE_FUNC;
 }
 
 static	void
-WaitProcess(void)
+ProcessMonitor(void)
 {
+	pid_t	pid;
 	int		status;
 	Process	*proc;
 	Bool	fStop;
-	pid_t	pid;
-	GSList	*plist
-		,	*p;
-
-	plist = NULL;
-	fStop = FALSE;
-	while	(  ( pid = waitpid(-1,&status,WNOHANG) )  >  0  ) {
-		dbgprintf("pid = %d is down",pid);
-		if		(  ( proc = g_int_hash_table_lookup(ProcessTable,(long)pid) )  !=  NULL  ) {
-			if (WIFSIGNALED(status) ) {
-				Message("%s(%d) killed by signal %d"
-						,proc->argv[0], (int)pid, WTERMSIG(status));
-			} else {
-				Message("process down pid = %d(%d) Command =[%s]\n"
-						,(int)pid, WEXITSTATUS(status),proc->argv[0]);
-			}
-			proc->state = STATE_DOWN;
-			switch	(proc->type) {
-			  case	PTYPE_APS:
-				if		(	(  fRestart     )
-						||	(  fAllRestart  ) ) {
-					if		(	(  WIFEXITED(status)  )
-							&&	(  WEXITSTATUS(status)  <  2  )	) {
-						if		(  !fAllRestart  ) {
-							fStop = TRUE;
-						}
-					}
-				} else {
-					fStop = TRUE;
-				}
-				break;
-			  default:
-				if		(  !fAllRestart  ) {
-					fStop = TRUE;
-				}
-				break;
-			}
-			if		(  !fStop  ) {
-				plist = g_slist_append(plist,(gpointer)(long)pid);
-			}
-		} else {
-			Message("unknown process down pid = %d(%d)\n"
-						,(int)pid,WEXITSTATUS(status));
-		}
-	}
-	if		(  fStop  ) {
-		StopSystem();
-	} else
-	if		(  plist  !=  NULL  ) {
-		for	( p = plist ; p != NULL ; p = p->next ) {
-			pid = (pid_t)(long)p->data;
-			proc = g_int_hash_table_lookup(ProcessTable,(long)pid);
-			g_int_hash_table_remove(ProcessTable,(long)pid);
-			StartProcess(proc,Interval);
-		}
-		g_slist_free(plist);
-	}
-}
-
-#if	0
-static	void
-_CheckProcess(
-	pid_t	pid,
-	GSList	*plist)
-{
-	if		(  kill(pid,SIGUSR2)  !=  0  ) {
-		plist = g_slist_append(plist,(gpointer)(long)pid);
-	}
-}
-#endif
-
-static	void
-ProcessMonitor(void)
-{
-#if	0
-	GSList	*plist;
-		,	*p;
-	pid_t	pid;
-	Process	*proc;
-#endif
 
 ENTER_FUNC;
 	do {
-#if	1
-		WaitProcess();
+		while	(  ( pid = waitpid(-1,&status,0) )  !=  -1  ) {
+			dbgprintf("pid = %d is down",pid);
+			if		(  ( proc = g_int_hash_table_lookup(ProcessTable,pid) )  !=  NULL  ) {
+#if	0
+				fprintf(fpLog,"process down pid = %d(%d) Command =[%s]\n"
+						,(int)pid,WEXITSTATUS(status),proc->argv[0]);
 #else
-		plist = NULL;
-		while	(  waitpid(-1,0,WNOHANG)  >  0  );
-		g_int_hash_table_foreach(ProcessTable,(GHFunc)_CheckProcess,plist);
-		if		(  plist  !=  NULL  ) {
-			for	( p = plist ; p != NULL ; p = p->next ) {
-				pid = (pid_t)p->data;
-				proc = g_int_hash_table_lookup(ProcessTable,pid);
-				g_int_hash_table_remove(ProcessTable,pid);
-				StartProcess(proc,Interval);
-			}
-			g_slist_free(plist);
-		}
+				if (WIFSIGNALED(status) ) {
+					Message("%s(%d) killed by signal %d"
+							,proc->argv[0], (int)pid, WTERMSIG(status));
+				} else {
+					Message("process down pid = %d(%d) Command =[%s]\n"
+							,(int)pid, WEXITSTATUS(status),proc->argv[0]);
+				}
 #endif
-		sleep(1);
+				switch	(proc->type) {
+				  case	PTYPE_APS:
+					if		(	(  fRestart     )
+							||	(  fAllRestart  ) ) {
+						if		(	(  WIFEXITED(status)  )
+								&&	(  WEXITSTATUS(status)  <  2  )	) {
+							if		(  fAllRestart  ) {
+								fStop = FALSE;
+							} else {
+								fStop = TRUE;
+							}
+						} else {
+							fStop = FALSE;
+						}
+					} else {
+						fStop = TRUE;
+					}
+					break;
+				  default:
+					if		(  fAllRestart  ) {
+						fStop = FALSE;
+					} else {
+						fStop = TRUE;
+					}
+					break;
+				}
+				if		(  fStop  ) {
+					StopSystem();
+				} else {
+					g_int_hash_table_remove(ProcessTable,pid);
+					StartProcess(proc,Interval);
+				}
+			} else {
+#if	0
+				fprintf(fpLog,"unknown process down pid = %d(%d)\n"
+						,(int)pid,WEXITSTATUS(status));
+#else
+				Message("unknown process down pid = %d(%d)\n"
+ 						,(int)pid,WEXITSTATUS(status));
+#endif
+			}
+		}
 	}	while	(TRUE);
 LEAVE_FUNC;
 }
@@ -759,7 +720,7 @@ main(
 
 	Message("Start system");
  	StartPrograms();
-	signal(SIGCHLD,(void *)WaitProcess);
+
 	ProcessMonitor();
 
 	return	(0);
