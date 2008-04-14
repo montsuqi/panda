@@ -129,7 +129,10 @@ _execv(
 #ifdef	DEBUG
 	DumpCommand(argv);
 #endif
-	execv(cmd,argv);
+	if (execv(cmd,argv) < 0 ){
+		int errsv = errno;	
+		Error("%s: %s", strerror(errsv), cmd);
+	}
 }
 
 static	int
