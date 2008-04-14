@@ -503,6 +503,7 @@ ProcessMonitor(void)
 	Bool	fStop;
 
 ENTER_FUNC;
+	signal(SIGCHLD, SIG_DFL);
 	do {
 		while	(  ( pid = waitpid(-1,&status,0) )  !=  -1  ) {
 			dbgprintf("pid = %d is down",pid);
