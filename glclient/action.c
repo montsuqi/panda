@@ -327,13 +327,11 @@ ShowWindow(
 	char	*wname,
 	byte	type)
 {
-	char		*fname;
 	XML_Node	*node;
 	GtkWidget	*widget;
 ENTER_FUNC;
 	widget = NULL;
 	dbgprintf("ShowWindow [%s][%d]",wname,type);
-	fname = CacheFileName(wname);
 
 	if		(  ( node = g_hash_table_lookup(WindowTable,wname) )  ==  NULL  ) {
 		if		(	(  type  ==  SCREEN_NEW_WINDOW      )
