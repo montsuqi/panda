@@ -1186,9 +1186,7 @@ ENTER_FUNC;
 			}
 		}
 	}
-	fInRecv = FALSE;
-	UpdateWidget((GtkWidget *)widget,NULL);
-	fInRecv = TRUE;
+	_UpdateWidget((GtkWidget *)widget,NULL);
 LEAVE_FUNC;
 	return	(TRUE);
 }

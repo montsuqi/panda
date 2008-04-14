@@ -358,12 +358,10 @@ ENTER_FUNC;
 	dbgprintf("ShowWindow [%s][%d]",wname,type);
 	fname = CacheFileName(wname);
 
-	if		(  ( node = g_hash_table_lookup(WindowTable,wname) )  ==  NULL  ) {
 		if		(	(  type  ==  SCREEN_NEW_WINDOW      )
 				||	(  type  ==  SCREEN_CURRENT_WINDOW  ) ){
 			node = CreateNewNode(wname);
 		}
-	}
 
 	if		(  node  !=  NULL  ) {
 		switch	(type) {

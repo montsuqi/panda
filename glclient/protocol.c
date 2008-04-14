@@ -786,6 +786,7 @@ ENTER_FUNC;
 		}
 		if		(  ( node = ShowWindow(window,type) )  !=  NULL  ) {
 			ThisXML = node->xml;
+			gdk_flush();
 		}
 		switch	(type) {
 		  case	SCREEN_CURRENT_WINDOW:
