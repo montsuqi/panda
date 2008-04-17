@@ -642,6 +642,8 @@ ENTER_FUNC;
 	dbg->dbstatus = 0;
 	dbg->redirect = NULL;
 	dbg->redirectPort = NULL;
+	dbg->redirectData = NULL;
+	dbg->checkData = NULL;
 	dbg->fpLog = NULL;
 	dbg->dbt = NULL;
 	dbg->priority = 50;
