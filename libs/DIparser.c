@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,8 +85,6 @@
 #define	T_WFCPATH		(T_YYBASE +33)
 #define	T_REDPATH		(T_YYBASE +34)
 #define	T_DBPATH		(T_YYBASE +35)
-#define	T_UPDATE		(T_YYBASE +36)
-#define	T_READONLY		(T_YYBASE +37)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -121,8 +120,6 @@ static	TokenTable	tokentable[] = {
 	{	"wfcpath"			,T_WFCPATH	},
 	{	"redpath"			,T_REDPATH	},
 	{	"dbpath"			,T_DBPATH	},
-	{	"update"			,T_UPDATE	},
-	{	"readonly"			,T_READONLY	},
 	{	""					,0			}
 };
 
@@ -620,45 +617,33 @@ LEAVE_FUNC;
 }
 
 static	void
-AddDB_Server(
-	DBG_Struct	*dbg,
-	DB_Server	*server)
-{
-	DB_Server	*tmp;
-
-ENTER_FUNC;
-	tmp = (DB_Server *)xmalloc(sizeof(DB_Server) * ( dbg->nServer + 1 ));
-	if		(  dbg->server  !=  NULL  ) {
-		memcpy(tmp,dbg->server,(sizeof(DB_Server) * dbg->nServer));
-	}
-	if		(  server  !=  NULL  ) {
-		memcpy(&tmp[dbg->nServer],server,sizeof(DB_Server));
-	} else {
-		memclear(&tmp[dbg->nServer],sizeof(DB_Server));
-	}
-	dbg->nServer ++;
-	xfree(dbg->server);
-	dbg->server = tmp;
-LEAVE_FUNC;
-}
-
-static	DBG_Struct	*
-NewDBG_Struct(
+ParDBGROUP(
+	CURFILE	*in,
 	char	*name)
 {
 	DBG_Struct	*dbg;
 	char		*env;
 
+ENTER_FUNC;
+	if		(  g_hash_table_lookup(ThisEnv->DBG_Table,name)  !=  NULL  ) {
+		ParError("DB group name duplicate");
+	}
 	dbg = New(DBG_Struct);
-	dbg->name = StrDup(name);
+	dbg->name = name;
 	dbg->id = 0;
 	dbg->type = NULL;
 	dbg->func = NULL;
-	dbg->nServer = 0;
-	dbg->server = NULL;
+	dbg->user = NULL;
+	dbg->dbname = NULL;
+	dbg->port = NULL;
+	dbg->pass = NULL;
 	dbg->file = NULL;
+	dbg->fConnect = UNCONNECT;
+	dbg->dbstatus = 0;
 	dbg->redirect = NULL;
 	dbg->redirectPort = NULL;
+	dbg->redirectData = NULL;
+	dbg->checkData = NULL;
 	dbg->fpLog = NULL;
 	dbg->dbt = NULL;
 	dbg->priority = 50;
@@ -668,94 +653,8 @@ NewDBG_Struct(
 	if		(  stricmp(env,"UTF8")  ==  0  ) {
 		dbg->coding = NULL;
 	}
-
-	return	(dbg);
-}
-
-static	void
-ParDB_Server(
-	int			usage,
-	DBG_Struct	*dbg,
-	CURFILE	*in)
-{
-	DB_Server	server;
-
-	server.usage = usage;
-	server.port = NULL;
-	server.dbname = NULL;
-	server.user = NULL;
-	server.pass = NULL;
 	while	(  GetSymbol  !=  '}'  ) {
 		switch	(ComToken) {
-		  case	T_PORT:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.port = ParPort(ComSymbol,NULL);
-			} else {
-				ParError("invalid port");
-			}
-			break;
-		  case	T_NAME:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.dbname = StrDup(ComSymbol);
-			} else {
-				ParError("invalid DB name");
-			}
-			break;
-		  case	T_USER:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.user = StrDup(ComSymbol);
-			} else {
-				ParError("invalid DB user");
-			}
-			break;
-		  case	T_PASS:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.pass = StrDup(ComSymbol);
-			} else {
-				ParError("invalid DB password");
-			}
-			break;
-		}
-		if		(  GetSymbol  !=  ';'  ) {
-			ParError("; not found in db_group");
-		}
-		ERROR_BREAK;
-	}
-	AddDB_Server(dbg,&server);
-}
-
-static	void
-ParDBGROUP(
-	CURFILE	*in,
-	char	*name)
-{
-	DBG_Struct	*dbg;
-	DB_Server	server;
-	int		i;
-
-ENTER_FUNC;
-	if		(  g_hash_table_lookup(ThisEnv->DBG_Table,name)  !=  NULL  ) {
-		ParError("DB group name duplicate");
-	}
-	dbg = NewDBG_Struct(name);
-	memclear(&server,sizeof(server));
-	server.usage = DB_UPDATE;
-	while	(  GetSymbol  !=  '}'  ) {
-		switch	(ComToken) {
-		  case	T_UPDATE:
-			if		(  GetSymbol  ==  '{'  ) {
-				ParDB_Server(DB_UPDATE,dbg,in);
-			} else {
-				ParError("{ not found");
-			}
-			break;
-		  case	T_READONLY:
-			if		(  GetSymbol  ==  '{'  ) {
-				ParDB_Server(DB_READONLY,dbg,in);
-			} else {
-				ParError("{ not found");
-			}
-			break;
 		  case	T_TYPE:
 			GetSymbol;
 			if		(	(  ComToken  ==  T_SYMBOL  )
@@ -765,11 +664,39 @@ ENTER_FUNC;
 				ParError("invalid DBMS type");
 			}
 			break;
+		  case	T_PORT:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				dbg->port = ParPort(ComSymbol,NULL);
+			} else {
+				ParError("invalid port");
+			}
+			break;
 		  case	T_REDIRECTPORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->redirectPort = ParPort(ComSymbol,PORT_REDIRECT);
 			} else {
 				ParError("invalid port");
+			}
+			break;
+		  case	T_NAME:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				dbg->dbname = StrDup(ComSymbol);
+			} else {
+				ParError("invalid DB name");
+			}
+			break;
+		  case	T_USER:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				dbg->user = StrDup(ComSymbol);
+			} else {
+				ParError("invalid DB user");
+			}
+			break;
+		  case	T_PASS:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				dbg->pass = StrDup(ComSymbol);
+			} else {
+				ParError("invalid DB password");
 			}
 			break;
 		  case	T_FILE:
@@ -809,34 +736,6 @@ ENTER_FUNC;
 				ParError("priority invalid");
 			}
 			break;
-		  case	T_PORT:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.port = ParPort(ComSymbol,NULL);
-			} else {
-				ParError("invalid port");
-			}
-			break;
-		  case	T_NAME:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.dbname = StrDup(ComSymbol);
-			} else {
-				ParError("invalid DB name");
-			}
-			break;
-		  case	T_USER:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.user = StrDup(ComSymbol);
-			} else {
-				ParError("invalid DB user");
-			}
-			break;
-		  case	T_PASS:
-			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.pass = StrDup(ComSymbol);
-			} else {
-				ParError("invalid DB password");
-			}
-			break;
 		  default:
 			ParErrorPrintf("other syntax error in db_group [%s]\n",ComSymbol);
 			break;
@@ -845,17 +744,6 @@ ENTER_FUNC;
 			ParError("; not found in db_group");
 		}
 		ERROR_BREAK;
-	}
-	if		(  server.dbname  !=  NULL  ) {
-		if		(  dbg->server  ==  NULL  ) {
-			AddDB_Server(dbg,&server);
-		} else {
-			AddDB_Server(dbg,NULL);
-			for	( i = dbg->nServer - 1  ; i > 0 ; i -- ) {
-				dbg->server[i] = dbg->server[i-1];
-			}
-			dbg->server[0] = server;
-		}
 	}
 	RegistDBG(dbg);
 LEAVE_FUNC;
@@ -959,45 +847,6 @@ BuildMcpArea(
 }
 
 static	DI_Struct	*
-NewEnv(
-	char	*name)
-{
-	char	buff[SIZE_LONGNAME+1];
-	DI_Struct	*env;
-
-	env = New(DI_Struct);
-	env->name = StrDup(name);
-	env->BaseDir = BaseDir;
-	env->D_Dir = D_Dir;
-	env->RecordDir = RecordDir;
-	sprintf(buff,"/tmp/wfc.%s",name);
-	env->WfcApsPort = ParPort(buff,NULL);
-	sprintf(buff,"/tmp/wfc.term");
-	env->TermPort = ParPort(buff,NULL);
-	sprintf(buff,"/tmp/wfcc.%s",name);
-	env->ControlPort = ParPort(buff,NULL);
-	env->cLD = 0;
-	env->cBD = 0;
-	env->cDBD = 0;
-	env->stacksize = SIZE_STACK;
-	env->LD_Table = NewNameHash();
-	env->BD_Table = NewNameHash();
-	env->DBD_Table = NewNameHash();
-	env->mlevel = MULTI_NO;
-	env->cDBG = 0;
-	env->DBG = NULL;
-	env->DBG_Table = NewNameHash();
-	env->blob = NULL;
-	env->ApsPath = NULL;
-	env->WfcPath = NULL;
-	env->RedPath = NULL;
-	env->DbPath = NULL;
-	env->linkrec = NULL;
-
-	return	(env);
-}
-
-static	DI_Struct	*
 ParDI(
 	CURFILE	*in,
 	char	*ld,
@@ -1005,8 +854,8 @@ ParDI(
 	char	*db,
 	Bool    parse_ld)
 {
-	char	gname[SIZE_LONGNAME+1]
-		,	buff[SIZE_LONGNAME+1];
+	char	*gname;
+	char	buff[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	ThisEnv = NULL;
@@ -1017,7 +866,34 @@ ENTER_FUNC;
 					&&	(  ComToken  !=  T_SCONST  ) ) {
 				ParError("no name");
 			} else {
-				ThisEnv = NewEnv(ComSymbol);
+				ThisEnv = New(DI_Struct);
+				ThisEnv->name = StrDup(ComSymbol);
+				ThisEnv->BaseDir = BaseDir;
+				ThisEnv->D_Dir = D_Dir;
+				ThisEnv->RecordDir = RecordDir;
+				sprintf(buff,"/tmp/wfc.%s",ThisEnv->name);
+				ThisEnv->WfcApsPort = ParPort(buff,NULL);
+				sprintf(buff,"/tmp/wfc.term");
+				ThisEnv->TermPort = ParPort(buff,NULL);
+				sprintf(buff,"/tmp/wfcc.%s",ThisEnv->name);
+				ThisEnv->ControlPort = ParPort(buff,NULL);
+				ThisEnv->cLD = 0;
+				ThisEnv->cBD = 0;
+				ThisEnv->cDBD = 0;
+				ThisEnv->stacksize = SIZE_STACK;
+				ThisEnv->LD_Table = NewNameHash();
+				ThisEnv->BD_Table = NewNameHash();
+				ThisEnv->DBD_Table = NewNameHash();
+				ThisEnv->mlevel = MULTI_NO;
+				ThisEnv->cDBG = 0;
+				ThisEnv->DBG = NULL;
+				ThisEnv->DBG_Table = NewNameHash();
+				ThisEnv->blob = NULL;
+				ThisEnv->ApsPath = NULL;
+				ThisEnv->WfcPath = NULL;
+				ThisEnv->RedPath = NULL;
+				ThisEnv->DbPath = NULL;
+				ThisEnv->linkrec = NULL;
 			}
 			break;
 		  case	T_STACKSIZE:
@@ -1199,14 +1075,15 @@ ENTER_FUNC;
 			break;
 		  case	T_DBGROUP:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				strcpy(gname,ComSymbol);
+				gname = StrDup(ComSymbol);
 				if		(  GetSymbol  !=  '{'  ) {
 					ParError("syntax error in db names");
 				}
 			} else
 			if		(  ComToken  ==  '{'  ) {
-				strcpy(gname,"");
+				gname = "";
 			} else {
+				gname = NULL;
 				ParError("syntax error dbgroup directive");
 			}
 			ParDBGROUP(in,gname);
