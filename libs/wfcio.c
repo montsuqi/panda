@@ -233,11 +233,10 @@ SendTermServerEnd(
 ENTER_FUNC;
 	rc = FALSE;
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
-	dbgmsg("send PING");
-	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
-		dbgmsg("recv PONG");
-		SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
+	SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
+	dbgmsg("send WFC_END");
+	if		(  RecvPacketClass(fp)  ==  WFC_END  ) {
+		dbgmsg("recv WFC_END");
 		rc = TRUE;
 	}
   badio:

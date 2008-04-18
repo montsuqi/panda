@@ -1,3 +1,7 @@
+2008-04-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* glserver/server.c, libs/wfcio.c, wfc/termthread.c: FinishSessionをしない問題修正
+
 2008-04-09  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/client.c(MakeCacheDir): ディレクトリチェックのバグ修正

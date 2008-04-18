@@ -571,7 +571,7 @@ ENTER_FUNC;
 			scr->status = APL_SESSION_RESEND;
 			break;
 		  case	GL_END:
-			scr->status = APL_SESSION_NULL;
+			scr->status = APL_SESSION_END;
 			break;
 		  default:
 			Warning("invalid class = %X\n",klass);
@@ -582,6 +582,10 @@ ENTER_FUNC;
 			ApplicationsCall(scr->status,scr);
 		}
 		switch	(scr->status) {
+		  case	APL_SESSION_END:
+			ApplicationsCall(scr->status,scr);
+			ret = FALSE;
+			break;
 		  case	APL_SESSION_NULL:
 			ret = FALSE;
 			break;
@@ -596,6 +600,8 @@ ENTER_FUNC;
 	  badio:
 		ret = FALSE;
 		Message("[%s@%s] abnormal client termination",scr->user,TermToHost(scr->term));
+		scr->status = APL_SESSION_END;
+		ApplicationsCall(scr->status, scr);
 	}
 
 LEAVE_FUNC;
