@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -208,14 +209,17 @@ SendTermServer(
 	ValueStruct	*value)
 {
 	Bool	rc;
+	int		c;
 
 ENTER_FUNC;
 	rc = FALSE;
 	dbgprintf("term = [%s]",term);
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
-		dbgmsg("recv PONG");
+	if		(  (c = RecvPacketClass(fp))  ==  WFC_TRUE  ) {
+		dbgmsg("recv TRUE");
 		rc = _SendTermServer(fp,window,widget,event,value);
+	} else {
+		Warning("Recv packet failure [%x]", c);
 	}
   badio:
 LEAVE_FUNC;
@@ -228,16 +232,23 @@ SendTermServerEnd(
 	char	*term)
 {
 	Bool	rc;
+	int		c;
 
 ENTER_FUNC;
 	rc = FALSE;
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
-	dbgmsg("send PING");
-	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
-		dbgmsg("recv PONG");
-		SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
+	if		(  (c = RecvPacketClass(fp))  ==  WFC_TRUE  ) {
+		dbgmsg("recv TRUE");
+	} else {
+		Warning("Recv packet failure [%x]", c);
+	}
+	SendPacketClass(fp,WFC_END);		ON_IO_ERROR(fp,badio);
+	dbgmsg("send WFC_END");
+	if		(  (c = RecvPacketClass(fp))  ==  WFC_DONE  ) {
+		dbgmsg("recv DONE");
 		rc = TRUE;
+	} else {
+		Warning("Recv packet failure [%x]", c);
 	}
   badio:
 LEAVE_FUNC;

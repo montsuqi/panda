@@ -162,6 +162,7 @@ FinishSession(
 {
 	char	fname[SIZE_LONGNAME+1];
 
+ENTER_FUNC;
 	dbgprintf("unref name = [%s]\n",data->name);
 	if		(  SesDir  !=  NULL  ) {
 		sprintf(fname,"%s/%s.ses",SesDir,data->name);
@@ -170,6 +171,7 @@ FinishSession(
 	LockWrite(&Terminal);
 	_UnrefSession(data);
 	UnLock(&Terminal);
+LEAVE_FUNC;
 }
 
 static	guint
@@ -458,7 +460,6 @@ ENTER_FUNC;
 				break;
 			  default:
 				Warning("[%s] session failure packet [%X]",data->hdr->term, c);
-				dbgprintf("c = [%X]\n",c);
 				fExit = TRUE;
 				rc = FALSE;
 				break;
@@ -804,11 +805,15 @@ ENTER_FUNC;
 		if		(  !data->fAbort  ) {
 			data = Process(data);
 		}
-		if		(	(  data->fAbort  )
-				||	(  !SendTerminal(term->fp,data)  ) ) {
-			FinishSession(data);
-		} else {
+		if		(  !data->fAbort  ) {
+			if (!SendTerminal(term->fp,data)){
+				data->fAbort = TRUE;
+			}
+		}
+		if 		(  !data->fAbort  ) {
 			KeepSession(data);
+		} else {
+			FinishSession(data);
 		}
 	}
 	SendPacketClass(term->fp,WFC_DONE);
