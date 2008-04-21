@@ -215,7 +215,7 @@ ENTER_FUNC;
 	dbgprintf("term = [%s]",term);
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
-		dbgmsg("recv PONG");
+		dbgmsg("recv TRUE");
 		rc = _SendTermServer(fp,window,widget,event,value);
 	}
   badio:
@@ -233,10 +233,13 @@ SendTermServerEnd(
 ENTER_FUNC;
 	rc = FALSE;
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
+		dbgmsg("recv TRUE");
+	}
 	SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
 	dbgmsg("send WFC_END");
-	if		(  RecvPacketClass(fp)  ==  WFC_END  ) {
-		dbgmsg("recv WFC_END");
+	if		(  RecvPacketClass(fp)  ==  WFC_DONE  ) {
+		dbgmsg("recv DONE");
 		rc = TRUE;
 	}
   badio:

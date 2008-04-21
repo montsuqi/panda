@@ -370,8 +370,6 @@ ENTER_FUNC;
 			break;
 		  case	WFC_END:
 			dbgmsg("END");
-			SendPacketClass(fp,WFC_END);		ON_IO_ERROR(fp,badio);
-			dbgmsg("send END");
 			data->fAbort = TRUE;
 			fExit = TRUE;
 			break;
@@ -804,10 +802,10 @@ ENTER_FUNC;
 			FinishSession(data);
 		} else {
 			KeepSession(data);
-			SendPacketClass(term->fp,WFC_DONE);
-			CloseNet(term->fp);
 		}
 	}
+	SendPacketClass(term->fp,WFC_DONE);
+	CloseNet(term->fp);
 	FreeQueue(term->que);
 	xfree(term);
 LEAVE_FUNC;
