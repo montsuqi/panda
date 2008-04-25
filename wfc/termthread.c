@@ -763,6 +763,8 @@ ENTER_FUNC;
 			} else {
 				Tail = Tail->prev;
 			}
+			exp->next = NULL;
+			exp->prev = NULL;
 		}
 	} else {
 		exp = NULL;
