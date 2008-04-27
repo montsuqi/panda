@@ -286,8 +286,8 @@ CleanUp(void)
 		FinishBLOB(Blob);
 	}
 	CleanUNIX_Socket(ApsPort);
-	CleanUNIX_Socket(WfcPort);
-	CleanUNIX_Socket(ControlPort);
+ 	CleanUNIX_Socket(WfcPort);
+ 	CleanUNIX_Socket(ControlPort);
 }
 
 static	void
@@ -345,7 +345,7 @@ ENTER_FUNC;
 	MaxTransactionRetry = 0;
 	ControlPort = NULL;
 	fLoopBack = FALSE;
-	nCache = 100;
+	nCache = 0;
 	SesDir = NULL;
 LEAVE_FUNC;
 }

@@ -1,3 +1,9 @@
+2008-04-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c (SetDefault): キャッシュのデフォルトを0に
+
+	* wfc/wfc.c (SetDefault): キャッシュのデフォルトを0に
+
 2008-04-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/DIparser.c (NewDBG_Struct): processの初期化(ここでするべき)

@@ -20,9 +20,9 @@
 #define	MAIN
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -96,9 +96,9 @@ DumpCommand(
 	int		i;
 
 	for	( i = 0 ; argv[i]  !=  NULL ; i ++ ) {
-		fprintf(fpLog,"%s ",argv[i]);
+		dbgprintf("%s ",argv[i]);
 	}
-	fprintf(fpLog,"\n");
+	dbgmsg("");
 }
 
 static	void
@@ -140,6 +140,9 @@ StartProcess(
 	int		interval)
 {
 	pid_t	pid;
+#ifdef	DEBUG
+	int		i;
+#endif
 
 ENTER_FUNC;
   retry:
@@ -149,10 +152,9 @@ ENTER_FUNC;
 		g_int_hash_table_insert(ProcessTable,(long)pid,proc);
 #ifdef	DEBUG
 		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
-			fprintf(fpLog,"%s ",proc->argv[i]);
+			dbgprintf("%s ",proc->argv[i]);
 		}
-		fprintf(fpLog,"(%d)\n",pid);
-		fflush(fpLog);
+		dbgprintf("(%d)\n",pid);
 #endif
 	} else
 	if		(  pid  ==  0  ) {
@@ -403,8 +405,10 @@ ENTER_FUNC;
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->TermPort));
 		argv[argc ++] = "-apsport";
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->WfcApsPort));
-		argv[argc ++] = "-cache";
-		argv[argc ++] = IntStrDup(nCache);
+		if		(  nCache  >  0  ) {
+			argv[argc ++] = "-cache";
+			argv[argc ++] = IntStrDup(nCache);
+		}
 		if		(  SesDir  !=  NULL  ) {
 			argv[argc ++] = "-sesdir";
 			argv[argc ++] = SesDir;
@@ -426,6 +430,7 @@ ENTER_FUNC;
 			argv[argc ++] = "-retry";
 			argv[argc ++] = IntStrDup(MaxTransactionRetry);
 		}
+dbgmsg("*");
 		if		(  fQ  ) {
 			argv[argc ++] = "-?";
 		}
@@ -683,7 +688,7 @@ SetDefault(void)
 	fQ = FALSE;
 	fTimer = FALSE;
 	fNoApsConnectRetry = FALSE;
-	nCache = 100;
+	nCache = 0;
 	SesDir = NULL;
 }
 
