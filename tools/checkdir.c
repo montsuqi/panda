@@ -490,9 +490,6 @@ DumpDirectory(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	if (fLD || fBD || fDBD ){
-		parse_ld = TRUE;
-	}
 	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 
 	printf("name     = [%s]\n",ThisEnv->name);
