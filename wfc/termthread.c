@@ -638,15 +638,18 @@ _LookupOldSession(
 	SessionData	**olddata_p)
 {
 	SessionData	*olddata;
-	olddata = *olddata_p;
-	if ( olddata != NULL){
-		if(timercmp(&(olddata->tv), &(data->tv), >)){
+
+	if ( ! data->fInProcess ){
+		olddata = *olddata_p;
+		if ( olddata != NULL){
+			if(timercmp(&(olddata->tv), &(data->tv), >)){
+				olddata = data;	
+			}	
+		} else {
 			olddata = data;	
-		}	
-	} else {
-		olddata = data;	
+		}
+		*olddata_p = olddata;
 	}
-	*olddata_p = olddata;
 }
 
 static	void
@@ -656,7 +659,6 @@ FreeOldSession(void)
 	g_hash_table_foreach(Terminal.Hash,(GHFunc)_LookupOldSession, &olddata);
 	UnRegistSession(olddata);
 	FreeSession(olddata);
-	g_hash_table_remove(Terminal.Hash,olddata->name);
 }
 
 static	void
