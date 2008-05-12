@@ -84,6 +84,13 @@ typedef	struct {
 	byte	puttype;
 }	MessageHeader;
 
+typedef struct {
+	char	term[SIZE_NAME+1]
+	,		user[SIZE_USER+1];
+	LD_Node	*ld;
+	Bool	fKeep;
+}	TerminalHeader;
+
 typedef	struct _SessionData	{
 	char		*name;
 	TermNode	*term;
@@ -102,8 +109,7 @@ typedef	struct _SessionData	{
 	LargeByteString	*mcpdata;
 	LargeByteString	*linkdata;
 	LargeByteString	**scrdata;
-	struct	_SessionData	*prev
-	,						*next;
+	struct	timeval tv;
 	WindowControl	w;
 }	SessionData;
 

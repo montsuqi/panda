@@ -39,6 +39,7 @@
 #include	"wfcio.h"
 #include	"blobreq.h"
 #include	"front.h"
+#include	"message.h"
 #include	"debug.h"
 #include	"socket.h"
 
@@ -201,12 +202,14 @@ LEAVE_FUNC;
 
 extern	Bool
 SendTermServer(
-	NETFILE	*fp,
-	char	*term,
-	char	*window,
-	char	*widget,
-	char	*event,
-	ValueStruct	*value)
+	NETFILE		*fp,
+	char		*term,
+	char		*user,
+	char		*window,
+	char		*widget,
+	char		*event,
+	ValueStruct	*value,
+	char		*arg)
 {
 	Bool	rc;
 	int		c;
@@ -215,11 +218,16 @@ ENTER_FUNC;
 	rc = FALSE;
 	dbgprintf("term = [%s]",term);
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	if		(  (c = RecvPacketClass(fp))  ==  WFC_TRUE  ) {
-		dbgmsg("recv TRUE");
+	SendPacketClass(fp,WFC_TRUE);		ON_IO_ERROR(fp,badio);
+	SendString(fp,user);				ON_IO_ERROR(fp,badio);
+	SendString(fp,arg);					ON_IO_ERROR(fp,badio);
+	if		(  (c = RecvPacketClass(fp))  ==  WFC_OK  ) {
+		dbgmsg("recv OK");
 		rc = _SendTermServer(fp,window,widget,event,value);
 	} else {
 		Warning("Recv packet failure [%x]", c);
+		CloseNet(fp);
+		fp = NULL;
 	}
   badio:
 LEAVE_FUNC;
@@ -229,7 +237,9 @@ LEAVE_FUNC;
 extern	Bool
 SendTermServerEnd(
 	NETFILE	*fp,
-	char	*term)
+	char	*term,
+	char	*user,
+	char	*arg)
 {
 	Bool	rc;
 	int		c;
@@ -237,8 +247,11 @@ SendTermServerEnd(
 ENTER_FUNC;
 	rc = FALSE;
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	if		(  (c = RecvPacketClass(fp))  ==  WFC_TRUE  ) {
-		dbgmsg("recv TRUE");
+	SendPacketClass(fp,WFC_TRUE);		ON_IO_ERROR(fp,badio);
+	SendString(fp,user);				ON_IO_ERROR(fp,badio);
+	SendString(fp,arg);					ON_IO_ERROR(fp,badio);
+	if		(  (c = RecvPacketClass(fp))  ==  WFC_OK  ) {
+		dbgmsg("recv OK");
 	} else {
 		Warning("Recv packet failure [%x]", c);
 	}

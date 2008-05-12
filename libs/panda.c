@@ -1,9 +1,8 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2005 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2006-2008 Ogochan & JMA (Japan Medical Association)
- *                                 & JFBA (Japan Federation of Bar Association)
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -63,7 +62,8 @@ LEAVE_FUNC;
 
 static	Bool
 SendPanda(
-	NETFILE	*fp)
+	NETFILE	*fp,
+	char	*arg)
 {
 	RecordStruct	*rec;
 	Bool		rc;
@@ -94,7 +94,7 @@ ENTER_FUNC;
 #ifdef	DEBUG
 	DumpValueStruct(value);
 #endif
-	rc = SendTermServer(fp,ThisTerm,ThisWindow,ThisWidget,ThisEvent,value);
+	rc = SendTermServer(fp,ThisTerm,ThisUser,ThisWindow,ThisWidget,ThisEvent,value,arg);
 LEAVE_FUNC;
 	return	(rc); 
 }
@@ -206,7 +206,7 @@ ENTER_FUNC;
 	DestroyPort(port);
 	if ( fd > 0 ){
 		fp = SocketToNet(fd);
-		if		(  SendPanda(fp)  ) {
+		if		(  SendPanda(fp,arg)  ) {
 			RecvPanda(fp,user,window,widget);
 			CloseNet(fp);
 			ret = TRUE;
@@ -235,7 +235,7 @@ ENTER_FUNC;
 	DestroyPort(port);
 	if ( fd > 0 ){
 		fp = SocketToNet(fd);
-		SendTermServerEnd(fp,ThisTerm);
+		SendTermServerEnd(fp,ThisTerm,ThisUser,arg);
 		CloseNet(fp);
 		ret = TRUE;
 	} else {

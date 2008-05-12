@@ -1,3 +1,9 @@
+2008-05-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* include/wfcdata.h, libs/panda.c, libs/wfcio.c, libs/wfcio.h, wfc/termthread.c: wfc<->*server間のプロトコル変更
+
+	* wfc/termthread.h, wfc/termthread.c: セッション管理の変更 
+
 2008-04-21  Noboru Saitou  <noborus@netlab.jp>
 
  	* glserver/server.c, libs/wfcio.c, wfc/termthread.c: FinishSessionをしない問題修正

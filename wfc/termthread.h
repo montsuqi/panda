@@ -25,5 +25,6 @@
 extern	void		TermEnqueue(TermNode *term, SessionData *data);
 extern	int			ConnectTerm(int _fhTerm);
 extern	void		InitTerm(void);
+extern	void		FreeSession(SessionData	*data);
 
 #endif

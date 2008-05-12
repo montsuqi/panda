@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,12 +46,10 @@
 #define	WFC_END			(PacketClass)0xFF
 
 extern	NETFILE	*ConnectTermServer(char *url, char *term, char *user, char *window, Bool fKeep, char *arg);
-extern	Bool	SendTermServer(NETFILE *fp, char *term, char *window, char *widget,
-							   char *event,
-							   ValueStruct *value);
+extern	Bool	SendTermServer(NETFILE *fp, char *term, char *user, char *window, char *widget, char *event, ValueStruct *value, char *arg);
 extern	Bool	RecvTermServerHeader(NETFILE *fp, char *user, char *window, char *widget,
 									 int *type, WindowControl *ctl);
 extern	void	RecvTermServerData(NETFILE *fp, ScreenData *scr);
-extern	Bool	SendTermServerEnd(NETFILE *fp, char *term);
+extern	Bool	SendTermServerEnd(NETFILE *fp, char *term, char *user, char *arg);
 
 #endif
