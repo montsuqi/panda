@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,10 +35,10 @@ typedef	struct {
 	char		user[SIZE_USER+1];
 	char		term[SIZE_TERM+1];
 	char		other[SIZE_OTHER+1];
+	char		encoding[SIZE_ENCODING+1];
 	int			status;
 	GHashTable	*Windows;			/*	for WindowData		*/
 	GHashTable	*Records;			/*	for	RecordStruct	*/
-	char		*encoding;
 }	ScreenData;
 
 typedef	struct {
@@ -57,7 +58,9 @@ extern	char			*PureWindowName(char *comp, char *buff);
 extern	char			*PureComponentName(char *comp, char *buff);
 extern	void			RemoveWindowRecord(char *name);
 extern	void			SaveScreenData(ScreenData *scr, Bool fSaveRecords);
+extern	void			_SaveScreenData(char *path, ScreenData *scr, Bool fSaveRecords);
 extern	ScreenData		*LoadScreenData(char *term);
+extern	ScreenData		*_LoadScreenData(char *path, char *term);
 extern	void			FreeScreenData(ScreenData *scr);
 extern	void			PargeScreenData(ScreenData *scr);
 

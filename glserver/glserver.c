@@ -63,6 +63,8 @@ static	ARG_TABLE	option[] = {
 		N_("record directory")		 					},
 	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
 		N_("BLOB cache directory")						},
+	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
+		N_("Session directory")							},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		N_("authentication server")	 					},
 #ifdef	USE_SSL
@@ -92,6 +94,7 @@ SetDefault(void)
 	RecordDir = ".";
 	AuthURL = "glauth://localhost:" PORT_GLAUTH;
 	CacheDir = "cache";
+	SesDir = "";
 #ifdef	USE_SSL
 	fSsl = FALSE;
 	KeyFile = NULL;

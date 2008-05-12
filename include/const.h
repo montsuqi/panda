@@ -45,6 +45,7 @@
 
 #define	SIZE_PASS		(3+8+1+22)
 #define	SIZE_OTHER		128
+#define	SIZE_ENCODING	128
 
 #define	SIZE_BLOCK		1024
 

@@ -258,10 +258,7 @@ ENTER_FUNC;
 	} else
 	if		(  strncmp(buff,"Encoding: ",10)  ==  0  ) {
 		dbgmsg("encoding");
-		if		(  scr->encoding  !=  NULL  ) {
-			xfree(scr->encoding);
-		}
-		scr->encoding = StrDup(buff+10);
+		strcpy(scr->encoding, buff+10);
 		scr->status = APL_SESSION_RESEND;
 	} else
 	if		(  strncmp(buff,"End",3)  ==  0  ) {

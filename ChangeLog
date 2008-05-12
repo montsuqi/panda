@@ -1,3 +1,9 @@
+2008-05-12  yusuke mihara  <mihara@netlab.jp>
+
+	* glserver/glserver_replay.c, glserver/Makefile.am, glserver/server.c,
+	include/const.h, libs/driver.c, libs/driver.h, pgserver/server.c:
+	glserverにセッションデータ保存機能追加、保存したセッションデータからセッションを再現するプログラム(glserver_replay)追加
+
 2008-05-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* include/wfcdata.h, libs/panda.c, libs/wfcio.c, libs/wfcio.h, wfc/termthread.c: wfc<->*server間のプロトコル変更

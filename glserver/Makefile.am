@@ -17,7 +17,8 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-sbin_PROGRAMS = glserver
+sbin_PROGRAMS = glserver	\
+				glserver_replay
 
 bin_SCRIPTS = pstopng
 EXTRA_DIST = 							\
@@ -35,9 +36,30 @@ glserver_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						
 glserver_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpandas.a		\
+	$(top_builddir)/libs/libpandas.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandagl.a
+glserver_SOURCES	=		\
+	glserver.c	glserver.h	\
+	server.c
+
+glserver_replay_LDFLAGS	=	-export-dynamic
+glserver_replay_LDADD 		=			\
+	-lm 								\
+	$(top_builddir)/libs/libpandas.a	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandagl.a	\
+	$(MAGIC_LIBS)						\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)						
+glserver_replay_DEPENDENCIES	=		\
+	$(top_builddir)/libs/libpandas.a	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandagl.a
+glserver_replay_SOURCES	=		\
+	glserver_replay.c
+
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
@@ -46,6 +68,3 @@ INCLUDES 			= 		\
 	$(SSL_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
-glserver_SOURCES	=		\
-	glserver.c	glserver.h	\
-	server.c

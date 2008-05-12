@@ -61,6 +61,8 @@
 #include	"message.h"
 #include	"debug.h"
 
+static	int	SessionCount;
+
 static	void
 FinishSession(
 	ScreenData	*scr)
@@ -428,6 +430,23 @@ CheckFeature(
 #endif
 }
 
+static	void
+SessionCall(
+	int         sts,
+	ScreenData  *scr)
+{
+	char	path[SIZE_BUFF];
+ENTER_FUNC;
+	scr->status = sts;
+	if		(  SesDir && strcmp("", SesDir)  ) {
+		sprintf(path, "%s/%s_%06d.scr", SesDir, scr->term, SessionCount);
+		_SaveScreenData(path, scr, TRUE);
+	}
+	ApplicationsCall(scr->status, scr);
+	SessionCount++;	
+LEAVE_FUNC;
+}
+
 static	Bool
 Connect(
 	NETFILE	*fpComm,
@@ -461,8 +480,7 @@ ENTER_FUNC;
 
 	if (auth_ok){
 		Message("[%s@%s] client authenticated", scr->user,TermToHost(scr->term));
-		//scr->Windows = NULL;	???????????????????????????????????????????????????????
-		ApplicationsCall(APL_SESSION_LINK,scr);
+		SessionCall(APL_SESSION_LINK, scr);
 		if		(  scr->status  ==  APL_SESSION_NULL  ) {
 			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
@@ -563,7 +581,7 @@ ENTER_FUNC;
 			dbgprintf("window = [%s]\n",scr->window);
 			dbgprintf("event  = [%s]\n",scr->event);
 			RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
-			ApplicationsCall(APL_SESSION_GET,scr);
+			SessionCall(APL_SESSION_GET,scr);
 			break;
 		  case	GL_ScreenData:
 			/*	fatal error	*/
@@ -578,11 +596,11 @@ ENTER_FUNC;
 			break;
 		}
 		while	(  scr->status  ==  APL_SESSION_LINK  ) {
-			ApplicationsCall(scr->status,scr);
+			SessionCall(scr->status,scr);
 		}
 		switch	(scr->status) {
 		  case	APL_SESSION_END:
-			ApplicationsCall(scr->status,scr);
+			SessionCall(scr->status,scr);
 			ret = FALSE;
 			break;
 		  case	APL_SESSION_NULL:
@@ -600,7 +618,7 @@ ENTER_FUNC;
 		ret = FALSE;
 		Message("[%s@%s] abnormal client termination",scr->user,TermToHost(scr->term));
 		scr->status = APL_SESSION_END;
-		ApplicationsCall(scr->status, scr);
+		SessionCall(scr->status, scr);
 	}
 
 LEAVE_FUNC;
@@ -622,6 +640,7 @@ ExecuteServer(void)
 #endif
 ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
+	SessionCount = 0;
 
 	port = ParPortName(PortNumber);
 	_fd = InitServerPort(port,Back);

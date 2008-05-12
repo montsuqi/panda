@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -141,6 +142,7 @@ ENTER_FUNC;
 		PureWindowName(name,wname);
 		if		(  ( rec = SetWindowRecord(wname) )  ==  NULL  ) {
 			strcpy(path,name);	/*	exitting system	*/
+			exit(1);
 		} else {
 			PathWindowName(name,path);
 		}
@@ -293,18 +295,19 @@ dbgmsg("*");
 	memclear(scr->term,SIZE_TERM+1);
 	memclear(scr->user,SIZE_USER+1);
 	memclear(scr->other,SIZE_OTHER+1);
+	memclear(scr->encoding,SIZE_ENCODING+1);
 	scr->Windows = NewNameHash();
 	scr->Records = NewNameHash();
 dbgmsg("*");
 	if		(  libmondai_i18n  ) {
 		if		(  ( lang = getenv("LANG") )  !=  NULL  &&
 				   ( encoding = strchr(lang,'.') )  !=  NULL  ){
-			scr->encoding = StrDup(++encoding);
+			strcpy(scr->encoding,++encoding);
 		} else {
-			scr->encoding = NULL;
+			scr->encoding[0] = NULL;
 		}
 	} else {
-		scr->encoding = StrDup("euc-jp");
+		strcpy(scr->encoding,"euc-jp");
 	}
 LEAVE_FUNC;
 	return	(scr); 
@@ -322,7 +325,6 @@ _SaveWindowName(
 	size_t	size;
 
 	fputc(RECORD_WINDOW_NAME,fp);
-
 	size = strlen(name) + 1;
 	fwrite(&size,sizeof(size_t),1,fp);
 	fwrite(name,size,1,fp);
@@ -331,12 +333,14 @@ _SaveWindowName(
 
 static	void
 _SaveRecords(
-	char	*name,
+	char			*name,
 	RecordStruct	*rec,
-	FILE	*fp)
+	FILE			*fp)
 {
 	LargeByteString	*buff;
 	size_t	size;
+	char 	sum = 0;
+	char	*buff2;
 
 	fputc(RECORD_RECORD,fp);
 
@@ -354,24 +358,40 @@ _SaveRecords(
 }
 
 extern	void
-SaveScreenData(
+_SaveScreenData(
+	char		*path,
 	ScreenData	*scr,
 	Bool		fSaveRecords)
 {
 	FILE	*fp;
-	char	fname[SIZE_LONGNAME+1];
-
-	sprintf(fname,"%s/%s.d",SesDir,scr->term);
-	if		(  ( fp = Fopen(fname,"w") )  !=  NULL  ) {
+	if		(  ( fp = Fopen(path,"w") )  !=  NULL  ) {
 		fwrite(&fSaveRecords,sizeof(Bool),1,fp);
+		fwrite(scr->window,SIZE_NAME+1,1,fp);
+		fwrite(scr->widget,SIZE_NAME+1,1,fp);
+		fwrite(scr->event,SIZE_EVENT+1,1,fp);
 		fwrite(scr->cmd,SIZE_LONGNAME+1,1,fp);
 		fwrite(scr->user,SIZE_USER+1,1,fp);
+		fwrite(scr->term,SIZE_TERM+1,1,fp);
+		fwrite(scr->other,SIZE_OTHER+1,1,fp);
+		fwrite(scr->encoding,SIZE_ENCODING+1,1,fp);
+		fwrite(&scr->status, sizeof(int), 1, fp);
 		if		(  fSaveRecords  ) {
 			g_hash_table_foreach(scr->Records,(GHFunc)_SaveRecords,fp);
 			g_hash_table_foreach(scr->Windows,(GHFunc)_SaveWindowName,fp);
 		}
 		fclose(fp);
 	}
+}
+
+extern	void
+SaveScreenData(
+	ScreenData	*scr,
+	Bool		fSaveRecords)
+{
+	char	path[SIZE_LONGNAME+1];
+
+	sprintf(path,"%s/%s.d",SesDir,scr->term);
+	_SaveScreenData(path, scr, fSaveRecords);
 }
 
 extern	void
@@ -399,7 +419,6 @@ LoadRecords(
 		fread(&size,sizeof(size_t),1,fp);
 		fread(name,size,1,fp);
 		rec  = SetWindowRecord(name);
-
 		fread(&size,sizeof(size_t),1,fp);
 		buff = (byte *)xmalloc(size);
 		fread(buff,size,1,fp);
@@ -431,34 +450,51 @@ LoadWindows(
 }
 
 extern	ScreenData	*
-LoadScreenData(
+_LoadScreenData(
+	char	*path,
 	char	*term)
 {
-	FILE	*fp;
-	char	fname[SIZE_LONGNAME+1];
+	FILE		*fp;
 	ScreenData	*scr;
 	Bool		fSaveRecords;
 
 ENTER_FUNC;
-	sprintf(fname,"%s/%s.d",SesDir,term);
-	if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
+	scr = NULL;
+	if		(  ( fp = fopen(path,"r") )  !=  NULL  ) {
 		scr = NewScreenData();
 		ThisScreen = scr;
-		strcpy(scr->term,term);
+
 		fread(&fSaveRecords,sizeof(Bool),1,fp);
+		fread(scr->window,SIZE_NAME+1,1,fp);
+		fread(scr->widget,SIZE_NAME+1,1,fp);
+		fread(scr->event,SIZE_EVENT+1,1,fp);
 		fread(scr->cmd,SIZE_LONGNAME+1,1,fp);
 		fread(scr->user,SIZE_USER+1,1,fp);
+		fread(scr->term,SIZE_TERM+1,1,fp);
+		fread(scr->other,SIZE_OTHER+1,1,fp);
+		fread(scr->encoding,SIZE_ENCODING+1,1,fp);
+		fread(&scr->status,sizeof(int),1,fp);
 		if		(  fSaveRecords  ) {
 			LoadRecords(scr,fp);
 			LoadWindows(scr,fp);
 		}
+		strcpy(scr->term,term);
 		fclose(fp);
-	} else {
-		scr = NULL;
 	}
 LEAVE_FUNC;
 	return	(scr);
 }
+
+extern	ScreenData	*
+LoadScreenData(
+	char	*term)
+{
+	char	path[SIZE_LONGNAME+1];
+
+	sprintf(path,"%s/%s.d",SesDir,term);
+	return	_LoadScreenData(path, term);
+}
+
 
 static	guint
 FreeWindows(
@@ -487,9 +523,6 @@ FreeScreenData(
 {
 
 ENTER_FUNC;
-	if		(  scr->encoding  !=  NULL  ) {
-		xfree(scr->encoding);
-	}
 	if		(  scr->Windows  !=  NULL  ) {
 		g_hash_table_foreach_remove(scr->Windows,(GHRFunc)FreeWindows,NULL);
 		g_hash_table_destroy(scr->Windows);
