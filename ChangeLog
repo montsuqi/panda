@@ -1,3 +1,7 @@
+2008-05-13  Noboru Saitou  <noborus@netlab.jp>
+
+	* wfc/termthread.c: ReadTerminalとSendTerminalの引数をdataのみに変更, badioのときに fAbortさせるように修正
+
 2008-05-12  yusuke mihara  <mihara@netlab.jp>
 
 	* glserver/glserver_replay.c, glserver/Makefile.am, glserver/server.c,

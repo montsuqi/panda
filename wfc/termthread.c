@@ -196,7 +196,6 @@ ReadTerminalHeader(
 	TerminalHeader 	*termhdr;
 	char			buff[SIZE_LONGNAME+1];
 	Bool			fKeep;
-	LD_Node			*ld;
 ENTER_FUNC;
 	termhdr = New(TerminalHeader);
 	RecvnString(fp,SIZE_TERM,termhdr->term);		ON_IO_ERROR(fp,badio);
@@ -208,9 +207,7 @@ ENTER_FUNC;
 	} else {
 		termhdr->fKeep = FALSE;
 	}
-	if		(  (ld = g_hash_table_lookup(APS_Hash,buff)) !=  NULL  ) {
-		termhdr->ld = ld;
-	} else {
+	if		(  (termhdr->ld = g_hash_table_lookup(APS_Hash,buff)) ==  NULL  ) {
 		Warning("[%s] session fail LD [%s] not found.", termhdr->term, buff);
 	badio:
 		xfree(termhdr);
@@ -268,7 +265,6 @@ LEAVE_FUNC;
 
 static	SessionData	*
 ReadTerminal(
-	NETFILE		*fp,
 	SessionData	*data)
 {
 	LD_Node	*ld;
@@ -277,45 +273,43 @@ ReadTerminal(
 	LargeByteString	*scrdata;
 	char		window[SIZE_LONGNAME+1]
 		,		comp[SIZE_LONGNAME+1];
+	NETFILE		*fp;
 
 ENTER_FUNC;
+	fp = data->term->fp;
 	fExit = FALSE;
 	while	(  !fExit  ) {
 		switch	(c = RecvPacketClass(fp)) {
 		  case	WFC_DATA:
 			dbgmsg("recv DATA");
-			if		(  data  !=  NULL  ) {
-				RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,data->hdr->event);		ON_IO_ERROR(fp,badio);
-				dbgprintf("window = [%s]",data->hdr->window);
-				dbgprintf("widget = [%s]",data->hdr->widget);
-				dbgprintf("event  = [%s]",data->hdr->event);
-				PureComponentName(data->hdr->window,comp);
-				if		(  ( ld = g_hash_table_lookup(ComponentHash,comp) )
-						   !=  NULL  ) {
-					dbgprintf("ld = [%s]",ld->info->name);
-					PureWindowName(data->hdr->window,window);
-					dbgprintf("window = [%s]",window);
-					if		(  ( scrdata = GetScreenData(data,window) )  !=  NULL  ) {
-						SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
-						dbgmsg("send OK");
-						if		(  RecvPacketClass(fp)  ==  WFC_DATA  ) {
-							RecvLBS(fp,scrdata);					ON_IO_ERROR(fp,badio);
-						}
-						data->hdr->rc = TO_CHAR(0);
-						data->hdr->puttype = SCREEN_NULL;
-					} else {
-						Error("invalid window [%s]",window);
+			RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,data->hdr->event);		ON_IO_ERROR(fp,badio);
+			dbgprintf("window = [%s]",data->hdr->window);
+			dbgprintf("widget = [%s]",data->hdr->widget);
+			dbgprintf("event  = [%s]",data->hdr->event);
+			PureComponentName(data->hdr->window,comp);
+			if		(  ( ld = g_hash_table_lookup(ComponentHash,comp) )
+					   !=  NULL  ) {
+				dbgprintf("ld = [%s]",ld->info->name);
+				PureWindowName(data->hdr->window,window);
+				dbgprintf("window = [%s]",window);
+				if		(  ( scrdata = GetScreenData(data,window) )  !=  NULL  ) {
+					SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
+					dbgmsg("send OK");
+					if		(  RecvPacketClass(fp)  ==  WFC_DATA  ) {
+						RecvLBS(fp,scrdata);					ON_IO_ERROR(fp,badio);
 					}
-					if		(  data->ld  !=  ld  ) {
-						ChangeLD(data,ld);
-					}
+					data->hdr->rc = TO_CHAR(0);
+					data->hdr->puttype = SCREEN_NULL;
 				} else {
-					Error("component [%s] not found.",data->hdr->window);
-					fExit = TRUE;
+					Error("invalid window [%s]",window);
+				}
+				if		(  data->ld  !=  ld  ) {
+					ChangeLD(data,ld);
 				}
 			} else {
+				Error("component [%s] not found.",data->hdr->window);
 				fExit = TRUE;
 			}
 			break;
@@ -340,8 +334,7 @@ ENTER_FUNC;
 		  default:
 			dbgmsg("default");
 			dbgprintf("c = [%X]\n",c);
-			SendPacketClass(fp,WFC_NOT);
-			ON_IO_ERROR(fp,badio);
+			SendPacketClass(fp,WFC_NOT);		ON_IO_ERROR(fp,badio);
 			fExit = TRUE;
 			data->fAbort = TRUE;
 			break;
@@ -358,7 +351,6 @@ LEAVE_FUNC;
 
 static	Bool
 SendTerminal(
-	NETFILE		*fp,
 	SessionData	*data)
 {
 	MessageHeader	*hdr;
@@ -369,9 +361,12 @@ SendTerminal(
 	char		wname[SIZE_LONGNAME+1]
 		,		buff[SIZE_LONGNAME+1];
 	LargeByteString	*scrdata;
+	NETFILE		*fp;
 
 ENTER_FUNC;
+	fp = data->term->fp;
 	rc = FALSE;
+	fExit = FALSE;
 	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
 	dbgmsg("send PING");
 	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
@@ -392,7 +387,6 @@ ENTER_FUNC;
 			SendString(fp,data->w.control[i].window);		ON_IO_ERROR(fp,badio);
 		}
 		data->w.n = 0;
-		fExit = FALSE;
 		do {
 			rc = TRUE;
 			switch	(c = RecvPacketClass(fp))	{
@@ -437,6 +431,9 @@ ENTER_FUNC;
 	} else {
 	  badio:
 		Warning("[%s] session recv failure",data->hdr->term);
+		if (fExit != TRUE) {
+			data->fAbort = TRUE;
+		}
 	}
 LEAVE_FUNC;
 	return	(rc); 
@@ -449,10 +446,8 @@ Process(
 	struct	timeval	tv;
 	long	ever
 		,	now;
-	guint scrpool_size;
 
 ENTER_FUNC;
-	scrpool_size = g_hash_table_size(data->scrpool);
 
 	gettimeofday(&tv,NULL);
 	ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
@@ -715,30 +710,28 @@ TermThread(
 {
 	SessionData		*data;
 	TerminalHeader *termhdr;
-	guint scrpool_size;
 
 ENTER_FUNC;
 	termhdr = ReadTerminalHeader(term->fp);
 	data = LookupSession(termhdr);
 	if		( data != NULL ) {
 		SendPacketClass(term->fp,WFC_OK);		ON_IO_ERROR(term->fp,badio);
-		if		(  ( data = ReadTerminal(term->fp, data) ) != NULL ) {
-			data->term = term;
-			data->retry = 0;
-			if		(  !data->fAbort  ) {
-				data = Process(data);
-			}
-			if		(  !data->fAbort  ) {
-				scrpool_size = g_hash_table_size(data->scrpool);
-				if (!SendTerminal(term->fp,data)){
-					data->fAbort = TRUE;
-				}
-			}
-			if 		(  !data->fAbort  ) {
-				KeepSession(data);
-			} else {
-				FinishSession(data);
-			}
+		data->term = term;
+		data->retry = 0;
+		data = ReadTerminal(data);
+
+		if		(  !data->fAbort  ) {
+			data = Process(data);
+		}
+
+		if		(  !data->fAbort  ) {
+			SendTerminal(data);
+		}
+
+		if 		(  !data->fAbort  ) {
+			KeepSession(data);
+		} else {
+			FinishSession(data);
 		}
 	} else {
 		SendPacketClass(term->fp,WFC_NOT);		ON_IO_ERROR(term->fp,badio);
