@@ -217,9 +217,6 @@ ENTER_FUNC;
 				SendPacketClass(fp,WFC_OK);
 			}
 			dbgmsg("*");
-		} else {
-			CloseNet(fp);
-			fp = NULL;
 		}
 	} else {
 		Warning("can not connect wfc server");
@@ -248,10 +245,6 @@ ENTER_FUNC;
 	if ( SendTermServerHeader(fp, term, user,FALSE,TRUE,arg) ) {
 		rc = _SendTermServer(fp,window,widget,event,value);
 	}
-	if ( !rc ) {
-		CloseNet(fp);
-		fp = NULL;
-	}
 LEAVE_FUNC;
 	return	(rc); 
 }
@@ -277,9 +270,6 @@ ENTER_FUNC;
 		} else {
 			Warning("Recv packet failure [%x]", c);
 		}
-	} else {
-		CloseNet(fp);
-		fp = NULL;
 	}
   badio:
 LEAVE_FUNC;
