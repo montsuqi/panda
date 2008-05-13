@@ -304,7 +304,7 @@ dbgmsg("*");
 				   ( encoding = strchr(lang,'.') )  !=  NULL  ){
 			strcpy(scr->encoding,++encoding);
 		} else {
-			scr->encoding[0] = NULL;
+			scr->encoding[0] = '\0';
 		}
 	} else {
 		strcpy(scr->encoding,"euc-jp");
@@ -339,8 +339,6 @@ _SaveRecords(
 {
 	LargeByteString	*buff;
 	size_t	size;
-	char 	sum = 0;
-	char	*buff2;
 
 	fputc(RECORD_RECORD,fp);
 
