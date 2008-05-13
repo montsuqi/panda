@@ -63,6 +63,7 @@
 #include    "debug.h"
 
 char	*Term;
+Bool	FixTerm;
 
 static	ARG_TABLE	option[] = {
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
@@ -75,6 +76,8 @@ static	ARG_TABLE	option[] = {
 		N_("Session directory")							},
 	{	"term",		STRING,		TRUE,	(void*)&Term,
 		N_("Terminal ID")								},
+	{	"fixterm",	BOOLEAN,	TRUE,	(void*)&FixTerm,
+		N_("Fix Terminal ID")			},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -85,6 +88,8 @@ SetDefault(void)
 	RecordDir = ".";
 	CacheDir = "cache";
 	SesDir = "";
+	Term = "";
+	FixTerm = FALSE;
 }
 
 static	void
@@ -139,7 +144,11 @@ ExecuteServer(void)
 ENTER_FUNC;
 	signal(SIGCHLD,SIG_IGN);
 	scr = InitSession();
-	strcpy(term,TermName(0));
+	if ( FixTerm ) {
+		strcpy(term, Term);
+	} else {
+		strcpy(term, TermName(0));
+	}
 	while ( 1 ) {
 		sprintf(fname, "%s/%s_%06d.scr", SesDir, Term, count);
 		if ( (scr = _LoadScreenData(fname, term) ) != NULL ) {
