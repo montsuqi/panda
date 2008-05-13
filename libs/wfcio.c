@@ -147,6 +147,46 @@ LEAVE_FUNC;
 	return	(rc); 
 }
 
+extern	Bool
+SendTermServerHeader(
+	NETFILE	*fp,
+	char	*term,
+	char	*user,
+	Bool	start,
+	Bool	fKeep,
+	char	*arg)
+{
+	Bool	rc;
+	int		c;
+ENTER_FUNC;
+	rc = FALSE;
+	SendString(fp,term);				ON_IO_ERROR(fp,badio);
+	if (start) {
+		SendPacketClass(fp, WFC_START);	ON_IO_ERROR(fp,badio);
+	} else {
+		SendPacketClass(fp,WFC_PING);	ON_IO_ERROR(fp,badio);
+	}
+	if (fKeep) {
+		SendPacketClass(fp,WFC_TRUE);	ON_IO_ERROR(fp,badio);
+	} else {
+		SendPacketClass(fp,WFC_FALSE);	ON_IO_ERROR(fp,badio);
+	}
+	SendString(fp,user);				ON_IO_ERROR(fp,badio);
+	SendString(fp,arg);					ON_IO_ERROR(fp,badio);
+	c = RecvPacketClass(fp);
+	if			( c ==  WFC_OK  ) {
+		dbgmsg("recv OK");
+		rc = TRUE;
+	} else if	( c ==  WFC_NOT ) {
+		Warning("Session failure");
+	} else {
+		Warning("Recv packet failure [%x]", c);
+	}
+badio:
+LEAVE_FUNC;
+	return	(rc); 
+}
+
 extern	NETFILE	*
 ConnectTermServer(
 	char	*url,
@@ -159,7 +199,6 @@ ConnectTermServer(
 	int		fd;
 	Port	*port;
 	NETFILE	*fp;
-	PacketClass	klass;
 	RecordStruct	*rec;
 
 ENTER_FUNC;
@@ -168,19 +207,7 @@ ENTER_FUNC;
 	DestroyPort(port);
 	if ( fd > 0 ){
 		fp = SocketToNet(fd);
-		SendString(fp,term);		ON_IO_ERROR(fp,badio);
-		if		(  fKeep  ) {
-			SendPacketClass(fp,WFC_TRUE);
-		} else {
-			SendPacketClass(fp,WFC_FALSE);
-		}		
-		SendString(fp,user);		ON_IO_ERROR(fp,badio);
-		SendString(fp,arg);			ON_IO_ERROR(fp,badio);
-		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-		if		(  klass  !=  WFC_OK  ) {
-			CloseNet(fp);
-			fp = NULL;
-		} else {
+		if ( SendTermServerHeader(fp, term, user,TRUE,TRUE,arg) ) {
 			dbgprintf("[%s]",window);
 			dbgprintf("[%p %p]",ThisScreen, ThisScreen->Records);
 			if		(  ( rec = GetWindowRecord(window) )  !=  NULL  ) {
@@ -190,9 +217,11 @@ ENTER_FUNC;
 				SendPacketClass(fp,WFC_OK);
 			}
 			dbgmsg("*");
+		} else {
+			CloseNet(fp);
+			fp = NULL;
 		}
 	} else {
-	  badio:
 		Warning("can not connect wfc server");
 		fp = NULL;
 	}
@@ -212,24 +241,17 @@ SendTermServer(
 	char		*arg)
 {
 	Bool	rc;
-	int		c;
 
 ENTER_FUNC;
 	rc = FALSE;
 	dbgprintf("term = [%s]",term);
-	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	SendPacketClass(fp,WFC_TRUE);		ON_IO_ERROR(fp,badio);
-	SendString(fp,user);				ON_IO_ERROR(fp,badio);
-	SendString(fp,arg);					ON_IO_ERROR(fp,badio);
-	if		(  (c = RecvPacketClass(fp))  ==  WFC_OK  ) {
-		dbgmsg("recv OK");
+	if ( SendTermServerHeader(fp, term, user,FALSE,TRUE,arg) ) {
 		rc = _SendTermServer(fp,window,widget,event,value);
-	} else {
-		Warning("Recv packet failure [%x]", c);
+	}
+	if ( !rc ) {
 		CloseNet(fp);
 		fp = NULL;
 	}
-  badio:
 LEAVE_FUNC;
 	return	(rc); 
 }
@@ -246,22 +268,18 @@ SendTermServerEnd(
 
 ENTER_FUNC;
 	rc = FALSE;
-	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	SendPacketClass(fp,WFC_TRUE);		ON_IO_ERROR(fp,badio);
-	SendString(fp,user);				ON_IO_ERROR(fp,badio);
-	SendString(fp,arg);					ON_IO_ERROR(fp,badio);
-	if		(  (c = RecvPacketClass(fp))  ==  WFC_OK  ) {
-		dbgmsg("recv OK");
+	if ( SendTermServerHeader(fp, term, user,FALSE,TRUE,arg) ) {
+		SendPacketClass(fp,WFC_END);		ON_IO_ERROR(fp,badio);
+		dbgmsg("send WFC_END");
+		if		(  (c = RecvPacketClass(fp))  ==  WFC_DONE  ) {
+			dbgmsg("recv DONE");
+			rc = TRUE;
+		} else {
+			Warning("Recv packet failure [%x]", c);
+		}
 	} else {
-		Warning("Recv packet failure [%x]", c);
-	}
-	SendPacketClass(fp,WFC_END);		ON_IO_ERROR(fp,badio);
-	dbgmsg("send WFC_END");
-	if		(  (c = RecvPacketClass(fp))  ==  WFC_DONE  ) {
-		dbgmsg("recv DONE");
-		rc = TRUE;
-	} else {
-		Warning("Recv packet failure [%x]", c);
+		CloseNet(fp);
+		fp = NULL;
 	}
   badio:
 LEAVE_FUNC;

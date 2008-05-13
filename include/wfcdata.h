@@ -87,6 +87,7 @@ typedef	struct {
 typedef struct {
 	char	term[SIZE_NAME+1]
 	,		user[SIZE_USER+1];
+	PacketClass 	status;
 	LD_Node	*ld;
 	Bool	fKeep;
 }	TerminalHeader;

@@ -199,6 +199,7 @@ ReadTerminalHeader(
 ENTER_FUNC;
 	termhdr = New(TerminalHeader);
 	RecvnString(fp,SIZE_TERM,termhdr->term);		ON_IO_ERROR(fp,badio);
+	termhdr->status = RecvPacketClass(fp);			ON_IO_ERROR(fp,badio);
 	fKeep = RecvPacketClass(fp);					ON_IO_ERROR(fp,badio);
 	RecvnString(fp,SIZE_NAME,termhdr->user);		ON_IO_ERROR(fp,badio);
 	RecvnString(fp,SIZE_NAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
@@ -694,10 +695,12 @@ ENTER_FUNC;
 				data = NULL;
 			}
 		} else {
-			data = InitSession(termhdr);
-			data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-			data->fInProcess = TRUE;
-		} 
+			if ( termhdr->status == WFC_START ) {
+				data = InitSession(termhdr);
+				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+				data->fInProcess = TRUE;
+			}
+		}
 		UnLock(&Terminal);
 	}
 LEAVE_FUNC;

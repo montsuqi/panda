@@ -1,6 +1,10 @@
 2008-05-13  Noboru Saitou  <noborus@netlab.jp>
 
-	* wfc/termthread.c: ReadTerminalとSendTerminalの引数をdataのみに変更, badioのときに fAbortさせるように修正
+	* libs/applications.c (ApplicationsCall): セッションエラー時に接続を切る(APL_SESSION_NULL)ように変更
+
+	* libs/wfcio.c (ConnectTermServer, SendTermServer, SendTermServerEnd, SendTermServerHeader): 共通の通信をSendTermServerHeaderにまとめる
+
+	* wfc/termthread.c: ReadTerminalとSendTerminalの引数をdataのみに変更, badioのときに fAbortさせるように修正, WFC_START時のみ InitSessionするように変更
 
 2008-05-12  yusuke mihara  <mihara@netlab.jp>
 
