@@ -217,6 +217,9 @@ ENTER_FUNC;
 				SendPacketClass(fp,WFC_OK);
 			}
 			dbgmsg("*");
+		} else {
+			CloseNet(fp);	
+			fp = NULL;	
 		}
 	} else {
 		Warning("can not connect wfc server");

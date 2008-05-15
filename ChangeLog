@@ -1,3 +1,10 @@
+2008-05-15  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/comm.c (RecvnString): Size エラーのときに CloseNetしない
+	(double free を起こしやすいため)
+
+	* libs/wfcio.c (ConnectTermServer): SendTermServerHeader失敗時の後始末追加
+
 2008-05-13  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/applications.c (ApplicationsCall): セッションエラー時に接続を切る(APL_SESSION_NULL)ように変更
