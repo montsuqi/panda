@@ -202,7 +202,7 @@ ENTER_FUNC;
 	termhdr->status = RecvPacketClass(fp);			ON_IO_ERROR(fp,badio);
 	fKeep = RecvPacketClass(fp);					ON_IO_ERROR(fp,badio);
 	RecvnString(fp,SIZE_NAME,termhdr->user);		ON_IO_ERROR(fp,badio);
-	RecvnString(fp,SIZE_NAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_LONGNAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
 	if		(  fKeep == WFC_TRUE  ) {
 		termhdr->fKeep = TRUE;
 	} else {
