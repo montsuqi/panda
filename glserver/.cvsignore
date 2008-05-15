@@ -4,3 +4,4 @@ Makefile
 Makefile.in
 glauth
 glserver
+glserver_replay
