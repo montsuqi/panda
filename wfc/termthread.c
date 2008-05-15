@@ -256,7 +256,7 @@ ENTER_FUNC;
 	MessageLog(msg);
 	dbgprintf("term = [%s]",data->hdr->term);
 	dbgprintf("user = [%s]",data->hdr->user);
-	RecvnString(fp,SIZE_NAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_LONGNAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
 	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )  !=  NULL  ) {
 		SendPacketClass(fp,WFC_OK);
 		data->ld = ld;
