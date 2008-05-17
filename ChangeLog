@@ -1,3 +1,9 @@
+2008-05-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dbstuff/dbslib.rb: 件数処理を正しく
+
+	* dbstuff/dbs_main.c (WriteClientString): 件数処理はVer 1.4.3以降のクライアントで
+
 2008-04-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/monitor.c (SetDefault): キャッシュのデフォルトを0に
