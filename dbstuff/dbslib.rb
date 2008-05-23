@@ -16,9 +16,10 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-require	'socket';
+require	'socket'
 
-VER="1.4.0";
+VER="1.4.0"
+#VER="1.4.3"
 
 class	DB_Server
 	def get_event
@@ -106,27 +107,30 @@ class	DB_Server
 		@s.printf("%s;%d\n",name,limit)
 		rec = Array.new
 	  end
-	  @s.flush;
+	  @s.flush
 	  item = nil
 	  while  is = @s.gets
 		is.chomp!
-#		printf("is = [%s]\n",is)
+		printf("is = [%s]\n",is)
 		if  (  is  ==  ''  )
 		  break if !item
-		  if  (  limit  ==  1  )
+		  if  (  @count  ==  1  )
 			rec = item
 			break
 		  else
 			rec << item
-			item = nil
 		  end
+		  item = nil
 		else
 		  if  !item
 			item = Hash.new
 		  end
 		  dat = is.split(/: /)
 		  var = dat[0].split(/;/)
+#		  printf("name = [%s]\n",var[0])
 		  item[var[0]] = decode(dat[1])
+#		  printf("dat = [%s]\n",item[var[0]])
+#		  printf("type = [%s]\n",var[1])
 		end
 	  end
 	  @s.printf("\n")

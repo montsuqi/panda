@@ -92,15 +92,11 @@ LEAVE_FUNC;
 #define	COMM_BINARY		2
 #define	COMM_STRINGE	3
 
-#define	V_1_0_0			0
-#define	V_1_2_0			1
-#define	V_1_4_2			2
-
 typedef	struct {
-	NETFILE	*fpComm;
 	char	user[SIZE_USER+1];
 	int		type;
-	int		version;
+	Bool	fCount
+	,		fLimit;
 }	SessionNode;
 
 static	void
@@ -116,13 +112,13 @@ static	int
 ParseVersion(
 	char	*str)
 {
-	int	major,
-		minor,
-		micro,
-		version;
+	int		major;
+	int		minor;
+	int		micro;
 
-	version = V_1_0_0;
-	major = minor = micro = 0;
+	major = 0;
+	minor = 0;
+	micro = 0;
 
 	while	(	(  *str  !=  0    )
 			&&	(  isdigit(*str)  ) )	{
@@ -142,22 +138,21 @@ ParseVersion(
 		str ++;
 	}
 	dbgprintf("%d.%d.%d",major,minor,micro);
+	return	(major * 10000 + minor * 100 + micro);
+}
 
-	if		(	( major > 1  ) ||
-				( (  major  ==  1  ) &&	
-				  (  minor  >=  2  ) ) ) {
-		version = V_1_2_0;
-	}
-	if		(	(  major  >  1  ) ||
-				( (  major == 1 ) &&
-				  (  major >= 5 ) ) ||
-				( (  major == 1  ) &&
-                  (  minor == 4  ) &&
-				  (  micro >= 2  ) ) ) {  
-		version = V_1_4_2;
-	}
+static	SessionNode	*
+NewSessionNode(void)
+{
+	SessionNode	*ses;
 
-	return version;
+	ses = New(SessionNode);
+	*ses->user = 0;
+	ses->type = COMM_STRING;
+	ses->fCount = FALSE;
+	ses->fLimit = FALSE;
+
+	return	(ses);
 }
 
 static	SessionNode	*
@@ -169,17 +164,17 @@ InitDBSSession(
 	char	*pass;
 	char	*p
 	,		*q;
+	int		ver;
 
 ENTER_FUNC;
-	ses = New(SessionNode);
-	ses->fpComm = fpComm;
+	ses = NewSessionNode();
 	/*
 	 version user password type\n
 	 */
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	p = buff;
 	*(q = strchr(p,' ')) = 0;
-	ses->version = ParseVersion(p);
+	ver = ParseVersion(p);
 	p = q + 1;
 	*(q = strchr(p,' ')) = 0;
 	strcpy(ses->user,p);
@@ -196,24 +191,23 @@ ENTER_FUNC;
 		ses->type = COMM_STRINGE;
 	} else {
 	}
-
-	switch ( ses->version ) {
-	case V_1_0_0:
+	if		(  ver  <  10200  ) {
 		SendStringDelim(fpComm,"Error: version\n");
- 		Warning("reject client(old version (< 1.0.0))");
+ 		Warning("reject client(invalid version %d)",ver);
 		xfree(ses);
 		ses = NULL;
-		break;
-	case V_1_2_0:
-	case V_1_4_2:
+	} else
+	if		(  AuthUser(&Auth,ses->user,pass,NULL,NULL)  ) {
 		SendStringDelim(fpComm,"Connect: OK\n");
-		break;
-	default:
-		SendStringDelim(fpComm,"Error: version\n");
- 		Warning("reject client(invalid version)");
+		if		(  ver  >=  10403  ) {
+			ses->fCount = TRUE;
+			ses->fLimit = TRUE;
+		}
+	} else {
+		SendStringDelim(fpComm,"Error: authentication\n");
+		Warning("reject client(authentication error)");
 		xfree(ses);
 		ses = NULL;
-		break;
 	}
 LEAVE_FUNC;
 	return	(ses); 
@@ -278,6 +272,8 @@ RecvData(
 static	void
 WriteClientString(
 	SessionNode	*ses,
+	NETFILE		*fpComm,
+	Bool		fType,
 	DBCOMM_CTRL	*ctrl,
 	ValueStruct	*args)
 {
@@ -293,23 +289,14 @@ WriteClientString(
 	int		ix
 		,	i
 		,	count;
-	NETFILE *fpComm;
-	Bool	fType;
 
 ENTER_FUNC;
-	fpComm = ses->fpComm;
-	fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
 	SendStringDelim(fpComm,"Exec: ");
-	switch ( ses->version ) {
-	case V_1_2_0:
-		sprintf(buff,"%d\n",ctrl->rc);
-		break;
-	case V_1_4_2:
+	if		(  ses->fCount  ) {
 		sprintf(buff,"%d:%d\n",ctrl->rc,ctrl->count);
-		break;
-	default:
-		Error("invalid version");
-		break;
+	} else {
+		sprintf(buff,"%d\n",ctrl->rc);
+		ctrl->count = 1;
 	}
 	SendStringDelim(fpComm,buff);
 	dbgprintf("[%s]",buff);
@@ -329,6 +316,9 @@ ENTER_FUNC;
 			q = name;
 			count = 1;
 		}
+		if		(  !ses->fCount  ) {
+			count = 1;
+		}
 		if		(  ( p = strchr(q,':') )  !=  NULL  ) {
 			*p = 0;
 			fName = FALSE;
@@ -336,6 +326,7 @@ ENTER_FUNC;
 			fName = TRUE;
 		}
 		dbgprintf("count = %d",count);
+		dbgprintf("name = [%s]",name);
 		DecodeName(rname,vname,name);
 		if		(  count  >  1  ) {
 			for	( i = 0 ; i < count ; i ++ ) {
@@ -446,12 +437,10 @@ DumpItems(
 static	void
 WriteClientStructure(
 	SessionNode		*ses,
+	NETFILE			*fpComm,
 	RecordStruct	*rec)
 {
-	NETFILE	*fpComm;
-
 ENTER_FUNC;
-	fpComm = ses->fpComm;
 	SendStringDelim(fpComm,rec->name);
 	DumpItems(fpComm,rec->value);
 	SendStringDelim(fpComm,";\n");
@@ -460,29 +449,29 @@ LEAVE_FUNC;
 
 static	Bool
 do_String(
-	SessionNode	*ses,
-	char		*input)
+	NETFILE	*fpComm,
+	char	*input,
+	SessionNode	*ses)
 {
-	Bool			ret;
-	DBCOMM_CTRL		ctrl;
+	Bool	ret
+	,		fType;
+	DBCOMM_CTRL	ctrl;
 	ValueStruct		*value
 		,			*arg;
 	RecordStruct	*rec;
 	char			func[SIZE_FUNC+1]
 		,			rname[SIZE_RNAME+1]
 		,			pname[SIZE_PNAME+1];
-	char			*p
-		,			*q;
-	int				rno
-		,			pno;
-	NETFILE			*fpComm;
+	char	*p
+		,	*q;
+	int		rno
+		,	pno;
+	Bool	fOn;
 
-	fpComm = ses->fpComm;
 	if		(  strncmp(input,"Exec: ",6)  ==  0  ) {
 		dbgmsg("exec");
 		p = input + 6;
 		ctrl.count = 0;
-		ctrl.limit = 1;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 			DecodeStringURL(func,p);
@@ -501,6 +490,9 @@ do_String(
 			} else {
 				ctrl.limit = 1;
 			}
+			if		(  !ses->fLimit  ) {
+				ctrl.limit = 1;
+			}
 			DecodeStringURL(pname,p);
 			rec = MakeCTRLbyName(&arg,&ctrl,rname,pname,func);
 		} else {
@@ -514,7 +506,8 @@ do_String(
 		}
 		RecvData(fpComm,arg);
 		value = ExecDB_Process(&ctrl,rec,arg);
-		WriteClientString(ses,&ctrl,value);
+		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
+		WriteClientString(ses,fpComm,fType,&ctrl,value);
 		FreeValueStruct(value);
 		ret = TRUE;
 	} else
@@ -540,11 +533,40 @@ do_String(
 			rec = NULL;
 		}
 		if		(  rec  !=  NULL  ) {
-			WriteClientStructure(ses,rec);
+			WriteClientStructure(ses,fpComm,rec);
 			ret = TRUE;
 		} else {
 			ret = FALSE;
 		}
+	} else
+	if		(  strncmp(input,"Feature: ",9)  ==  0  ) {
+		dbgmsg("feature");
+		p = input + 9;
+		while	(  *p  !=  0  ) {
+			while	(	(  *p  !=  0    )
+					&&	(  isspace(*p)  ) ) p ++;
+			if		(  *p  ==  0  )	break;
+			if		(  ( q = strchr(p,',') )  !=  NULL  ) {
+				*q = 0;
+				q ++;
+			} else {
+				q = p + strlen(p);
+			}
+			if		(  *p  ==  '!'  ) {
+				fOn = FALSE;
+				p ++;
+			} else {
+				fOn = TRUE;
+			}
+			if		(  strcmp(p,"count")  ==  0  ) {
+				ses->fCount = fOn;
+			} else
+			if		(  strcmp(p,"limit")  ==  0  ) {
+				ses->fLimit = fOn;
+			}
+			p = q;
+		}
+		ret = TRUE;
 	} else
 	if		(  strncmp(input,"End",3)  ==  0  ) {
 		dbgmsg("end");
@@ -558,19 +580,18 @@ do_String(
 
 static	Bool
 MainLoop(
+	NETFILE	*fpComm,
 	SessionNode	*ses)
 {
 	char	buff[SIZE_BUFF+1];
 	Bool	ret;
-	NETFILE	*fpComm;
 
 ENTER_FUNC;
-	fpComm = ses->fpComm;
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	switch	(ses->type) {
 	  case	COMM_STRING:
 	  case	COMM_STRINGE:
-		ret = do_String(ses,buff);
+		ret = do_String(fpComm,buff,ses);
 		break;
 	  default:
 		ret = FALSE;
@@ -606,7 +627,7 @@ ENTER_FUNC;
 			fp = SocketToNet(fh);
 			close(_fh);
 			if		(  ( ses = InitDBSSession(fp) )  !=  NULL  ) {
-				while	(  MainLoop(ses)  );
+				while	(  MainLoop(fp,ses)  );
 				FinishSession(ses);
 			}
 			CloseNet(fp);
