@@ -1352,15 +1352,15 @@ SendBinaryData(
 	LargeByteString	*binary)
 {
 ENTER_FUNC;
-	GL_SendDataType(fp,type);
-    switch (DataType) {
+    switch (type) {
     case  GL_TYPE_BINARY:
     case  GL_TYPE_BYTE:
     case  GL_TYPE_OBJECT:
+		GL_SendDataType(fp, GL_TYPE_OBJECT);
         GL_SendLBS(fp, binary);
         break;
     default:
-        Warning("unsupported data type: %d\n", DataType);
+        Warning("unsupported data type: %d\n", type);
         break;
     }
 LEAVE_FUNC;
