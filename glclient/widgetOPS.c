@@ -1693,7 +1693,6 @@ ENTER_FUNC;
 		} else
 		if		(  !stricmp(name,"title")  ) {
 			RecvStringData(fp,buff,SIZE_BUFF);
-			printf("title %s\n", buff);
 			SetSessionTitle(buff);
 		} else {
 			sprintf(longname,".%s",name);
