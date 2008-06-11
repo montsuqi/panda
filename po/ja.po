@@ -790,7 +790,7 @@ msgstr ""
 " %s"
 
 #: libs/net.c:1610
-#, fuzzy
+#, c-format
 msgid "Cannot find available security device"
 msgstr "利用可能なセキュリティデバイスが接続されていません。"
 
