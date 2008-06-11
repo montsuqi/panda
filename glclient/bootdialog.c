@@ -37,27 +37,56 @@
 #include    "port.h"
 #include    "const.h"
 #include    "bd_config.h"
+#include    "bd_component.h"
 #include    "bootdialog.h"
+#include    "message.h"
+#include    "debug.h"
 
 static mode_t permissions = 0600;
 
-gboolean
-validate_isblank (gchar *str)
-{
-  gint i;
-#if 0
-  extern int isblank(int c);
-#endif
+/*********************************************************************
+ * misc
+ ********************************************************************/
 
-  if (str == NULL || str[0] == '\0')
-    return TRUE;
-  for (i = strlen (str) - 1; i >= 0; i--)
-    {
-      if (!isblank (str[i]))
-        return FALSE;
-    }
-  return TRUE;
+static BDConfigSection *
+new_config_section(
+  BDConfig *config,
+  char *hostname)
+{
+  BDConfigSection *section;
+  char *cachename = g_strconcat(g_get_home_dir(), DEFAULT_CACHE_PATH, NULL);
+
+  section = bd_config_append_section (config, hostname);
+  bd_config_section_append_value (section, "host", DEFAULT_HOST);
+  bd_config_section_append_value (section, "port", DEFAULT_PORT);
+  bd_config_section_append_value (section, "application", DEFAULT_APPLICATION);
+  bd_config_section_append_value (section, "protocol_v1", DEFAULT_PROTOCOL_V1_STR);
+  bd_config_section_append_value (section, "protocol_v2", DEFAULT_PROTOCOL_V2_STR);
+  bd_config_section_append_value (section, "cache", cachename);
+  bd_config_section_append_value (section, "style", DEFAULT_STYLE);
+  bd_config_section_append_value (section, "gtkrc", DEFAULT_GTKRC);
+  bd_config_section_append_value (section, "mlog",  DEFAULT_MLOG_STR);
+  bd_config_section_append_value (section, "keybuff", DEFAULT_KEYBUFF_STR);
+  bd_config_section_append_value (section, "user", DEFAULT_USER);
+  bd_config_section_append_value (section, "password", DEFAULT_PASSWORD);
+  bd_config_section_append_value (section, "savepassword", DEFAULT_SAVEPASSWORD_STR);
+#ifdef	USE_SSL
+  bd_config_section_append_value (section, "ssl", DEFAULT_SSL_STR);
+  bd_config_section_append_value (section, "CApath", DEFAULT_CAPATH);
+  bd_config_section_append_value (section, "CAfile", DEFAULT_CAFILE);
+  bd_config_section_append_value (section, "key", DEFAULT_KEY);
+  bd_config_section_append_value (section, "cert", DEFAULT_CERT);
+  bd_config_section_append_value (section, "ciphers", DEFAULT_CIPHERS);
+#ifdef  USE_PKCS11
+  bd_config_section_append_value (section, "pkcs11", DEFAULT_PKCS11_STR);
+  bd_config_section_append_value (section, "pkcs11_lib", DEFAULT_PKCS11_LIB);
+  bd_config_section_append_value (section, "slot", DEFAULT_SLOT);
+#endif
+#endif      
+  g_free(cachename);
+  return section;
 }
+
 
 /*********************************************************************
  * EditDialog
@@ -66,201 +95,11 @@ typedef struct _EditDialog EditDialog;
 struct _EditDialog {
   GtkWidget *dialog;
   GtkWidget *description;
-  GtkWidget *host;
-  GtkWidget *port;
-  GtkWidget *application;
-  GtkWidget *protocol_v1;
-  GtkWidget *protocol_v2;
-  GtkWidget *mlog;
-  GtkWidget *cache;
-  GtkWidget *style;
-  GtkWidget *gtkrc;
-  GtkWidget *user;
-  GtkWidget *password;
-  GtkWidget *keybuff;
-#ifdef	USE_SSL
-  GtkWidget *ssl;
-  GtkWidget *key;
-  GtkWidget *cert;
-  GtkWidget *CApath;
-  GtkWidget *CAfile;
-  GtkWidget *ciphers;
-#ifdef  USE_PKCS11
-  GtkWidget *pkcs11;
-  GtkWidget *pkcs11_lib;
-  GtkWidget *slot;
-#endif
-#endif
-
+  BDComponent *component;
   BDConfig *config;
   gchar *hostname;
   gboolean is_update;
 };
-
-static void
-edit_dialog_set_value (EditDialog * self)
-{
-  BDConfigSection *section;
-  char *cachename;
-
-  if (self->hostname == NULL)
-    {
-      gtk_entry_set_text (GTK_ENTRY (self->host), "localhost");
-      gtk_entry_set_text (GTK_ENTRY (self->port), "8000");
-      gtk_entry_set_text (GTK_ENTRY (self->application), "panda:");
-      cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
-      gtk_entry_set_text (GTK_ENTRY (self->cache), cachename);
-      g_free(cachename);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1), TRUE);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), TRUE);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog), TRUE);
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff), FALSE);
-      return;
-    }
-
-  g_return_if_fail (bd_config_exist_section (self->config, self->hostname));
-
-  section = bd_config_get_section (self->config, self->hostname);
-  
-  gtk_entry_set_text (GTK_ENTRY (self->description),
-                      bd_config_section_get_string (section, "description"));
-  gtk_entry_set_text (GTK_ENTRY (self->host),
-                      bd_config_section_get_string (section, "host"));
-  gtk_entry_set_text (GTK_ENTRY (self->port),
-                      bd_config_section_get_string (section, "port"));
-  gtk_entry_set_text (GTK_ENTRY (self->application),
-                      bd_config_section_get_string (section, "application"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1),
-                                bd_config_section_get_bool (section, "protocol_v1"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2),
-                                bd_config_section_get_bool (section, "protocol_v2"));
-  gtk_entry_set_text (GTK_ENTRY (self->cache),
-                      bd_config_section_get_string (section, "cache"));
-  gtk_entry_set_text (GTK_ENTRY (self->style),
-                      bd_config_section_get_string (section, "style"));
-  gtk_entry_set_text (GTK_ENTRY (self->gtkrc),
-                      bd_config_section_get_string (section, "gtkrc"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
-                      bd_config_section_get_bool (section, "mlog"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
-                      bd_config_section_get_bool (section, "keybuff"));
-  gtk_entry_set_text (GTK_ENTRY (self->user),
-                      bd_config_section_get_string (section, "user"));
-  gtk_entry_set_text (GTK_ENTRY (self->password),
-                      bd_config_section_get_string (section, "password"));
-#ifdef	USE_SSL
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->ssl),
-                                bd_config_section_get_bool (section, "ssl"));
-  gtk_entry_set_text (GTK_ENTRY (self->CApath),
-                      bd_config_section_get_string (section, "CApath"));
-  gtk_entry_set_text (GTK_ENTRY (self->CAfile),
-                      bd_config_section_get_string (section, "CAfile"));
-  gtk_entry_set_text (GTK_ENTRY (self->key),
-                      bd_config_section_get_string (section, "key"));
-  gtk_entry_set_text (GTK_ENTRY (self->cert),
-                      bd_config_section_get_string (section, "cert"));
-  gtk_entry_set_text (GTK_ENTRY (self->ciphers),
-		      bd_config_section_get_string (section, "ciphers"));
-#ifdef  USE_PKCS11
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
-                                bd_config_section_get_bool (section, "pkcs11"));
-  gtk_entry_set_text (GTK_ENTRY (self->pkcs11_lib),
-                      bd_config_section_get_string (section, "pkcs11_lib"));
-  gtk_entry_set_text (GTK_ENTRY (self->slot),
-                      bd_config_section_get_string (section, "slot"));
-#endif
-#endif
-}
-
-static void
-edit_dialog_value_to_config (EditDialog * self)
-{
-  BDConfigSection *section;
-  GString *hostname;
-  gint i;
-  gchar *password;
-  gboolean savepassword;
-
-  section = NULL;
-  if (self->hostname != NULL)
-    {
-      g_return_if_fail (bd_config_exist_section (self->config, self->hostname));
-      section = bd_config_get_section (self->config, self->hostname);
-    }
-  else
-    {
-      hostname = g_string_new (NULL);
-      for (i = 1; i < 1000; i++)
-        {
-          g_string_sprintf (hostname, "host%03d", i);
-          if (!bd_config_exist_section (self->config, hostname->str))
-            {
-              section = bd_config_append_section (self->config, hostname->str);
-              break;
-            }
-        }
-      g_string_free (hostname, TRUE);
-    }
-  g_return_if_fail (section != NULL);
-
-  bd_config_section_set_string (section, "description",
-                                gtk_entry_get_text (GTK_ENTRY (self->description)));
-  bd_config_section_set_string (section, "host",
-                                gtk_entry_get_text (GTK_ENTRY (self->host)));
-  bd_config_section_set_string (section, "port",
-                                gtk_entry_get_text (GTK_ENTRY (self->port)));
-  bd_config_section_set_string (section, "application",
-                                gtk_entry_get_text (GTK_ENTRY (self->application)));
-  bd_config_section_set_bool
-    (section, "protocol_v1",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v1)));
-  bd_config_section_set_bool
-    (section, "protocol_v2",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
-  bd_config_section_set_path (section, "cache",
-                              gtk_entry_get_text (GTK_ENTRY (self->cache)));
-  bd_config_section_set_path (section, "style",
-                                gtk_entry_get_text (GTK_ENTRY (self->style)));
-  bd_config_section_set_path (section, "gtkrc",
-                                gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
-  bd_config_section_set_bool
-    (section, "mlog",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
-  bd_config_section_set_bool
-    (section, "keybuff",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
-  bd_config_section_set_string (section, "user",
-                                gtk_entry_get_text (GTK_ENTRY (self->user)));
-  password = gtk_entry_get_text (GTK_ENTRY (self->password));
-  if (validate_isblank (password))
-    savepassword = FALSE;
-  else
-    savepassword = TRUE;
-  bd_config_section_set_string (section, "password", password);
-  bd_config_section_set_bool (section, "savepassword", savepassword);
-#ifdef	USE_SSL
-  bd_config_section_set_bool
-    (section, "ssl", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
-  bd_config_section_set_string (section, "CApath",
-                                gtk_entry_get_text (GTK_ENTRY (self->CApath)));
-  bd_config_section_set_string (section, "CAfile",
-                                gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
-  bd_config_section_set_string (section, "key",
-                                gtk_entry_get_text (GTK_ENTRY (self->key)));
-  bd_config_section_set_string (section, "cert",
-                                gtk_entry_get_text (GTK_ENTRY (self->cert)));
-  bd_config_section_set_string (section, "ciphers",
-                                gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
-#ifdef  USE_PKCS11
-  bd_config_section_set_bool
-    (section, "pkcs11", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11)));
-  bd_config_section_set_string (section, "pkcs11_lib",
-                                gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
-  bd_config_section_set_string (section, "slot",
-                                gtk_entry_get_text (GTK_ENTRY (self->slot)));
-#endif
-#endif
-}
 
 static gboolean
 edit_dialog_validate (EditDialog * self)
@@ -273,7 +112,7 @@ edit_dialog_validate (EditDialog * self)
   desc = gtk_entry_get_text (GTK_ENTRY (self->description));
   if (validate_isblank (desc))
     {
-      fprintf (stderr, _("warning: Description is blank\n"));
+      Warning(_("warning: Description is blank\n"));
       return FALSE;
     }
   if (self->hostname == NULL)
@@ -286,7 +125,7 @@ edit_dialog_validate (EditDialog * self)
           str = bd_config_get_string (self->config, hostname, "description");
           if (strcmp (str, desc) == 0)
             {
-              fprintf (stderr, _("warning: already used description\n"));
+              Warning(_("warning: already used description\n"));
               return FALSE;
             }
         }
@@ -302,60 +141,19 @@ edit_dialog_on_delete_event (GtkWidget * widget, EditDialog * self)
   return TRUE;
 }
 
-typedef struct {
-  GtkWidget *entry, *filesel;
-} file_selection_data;
-
-
 static void
-destroy(GtkWidget *w, gpointer data)
+edit_dialog_value_to_config (EditDialog *self)
 {
-  gtk_grab_remove(w);
-  g_free(data);
-}
+  BDConfigSection *section;
+  section = NULL;
+  g_return_if_fail (! (self->hostname == NULL));
+  g_return_if_fail (bd_config_exist_section (self->config, self->hostname));
+  section = bd_config_get_section (self->config, self->hostname);
+  g_return_if_fail (! (section == NULL));
+  bd_config_section_set_string (section, "description",
+                                gtk_entry_get_text (GTK_ENTRY (self->description)));
 
-static void
-file_ok(GtkWidget *w, gpointer data)
-{
-  file_selection_data *localdata;
-  char *tmp;
-
-  localdata = (file_selection_data*)data;
-  tmp = gtk_file_selection_get_filename(GTK_FILE_SELECTION(localdata->filesel));
-  gtk_entry_set_text(GTK_ENTRY(localdata->entry), tmp);
-  gtk_widget_destroy(localdata->filesel);
-
-  return;
-}
-
-static void
-file_cancel(GtkWidget *w, gpointer data)
-{
-  file_selection_data *localdata;
-
-  localdata = (file_selection_data*)data;
-  gtk_widget_destroy(localdata->filesel);
-  return;
-}
-
-static void
-open_file_selection(GtkWidget *w, gpointer entry)
-{
-  file_selection_data *data;
-  GtkFileSelection *filew = NULL;
-
-  filew = GTK_FILE_SELECTION(gtk_file_selection_new(""));
-  data = g_malloc(sizeof(file_selection_data));
-  data->entry = entry;
-  data->filesel = GTK_WIDGET(filew);
-  gtk_signal_connect(GTK_OBJECT(filew), "destroy",
-		     (GtkSignalFunc)destroy, data);
-  gtk_signal_connect(GTK_OBJECT(filew->ok_button), "clicked",
-		     (GtkSignalFunc)file_ok, data);
-  gtk_signal_connect(GTK_OBJECT(filew->cancel_button), "clicked",
-		     (GtkSignalFunc)file_cancel, data);
-  gtk_widget_show(GTK_WIDGET(filew));
-  gtk_grab_add(GTK_WIDGET(filew));
+  bd_component_value_to_config(self->config, self->hostname, self->component);
 }
 
 static void
@@ -383,31 +181,41 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   GtkWidget *dialog;
   GtkWidget *button;
   GtkWidget *table;
-  GtkWidget *hbox;
   GtkWidget *label;
   GtkWidget *entry;
-  GtkWidget *alignment;
-  GtkWidget *check;
-  gint ypos;
+  GString *newhostname;
+  gint i;
 
   self = g_new0 (EditDialog, 1);
 
-  self->hostname = hostname;
+  if (hostname == NULL) {
+    title = _("New");
+    newhostname = g_string_new (NULL);
+    for (i = 1; i < 1000; i++) {
+      g_string_sprintf (newhostname, "host%03d", i);
+      if (!bd_config_exist_section (config, newhostname->str)) {
+        new_config_section(config, newhostname->str);
+        break;
+      } 
+    }
+    self->hostname = hostname = newhostname->str;
+  } else {
+    title = _("Edit");
+    self->hostname = hostname;
+  }
+
   self->config = config;
   self->is_update = FALSE;
 
   self->dialog = dialog = gtk_dialog_new ();
-  if (self->hostname == NULL)
-    title = _("New");
-  else
-    title = _("Edit");
+
   gtk_window_set_title (GTK_WINDOW (dialog), title);
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_wmclass (GTK_WINDOW (dialog), "edit", "glclient");
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
   gtk_signal_connect (GTK_OBJECT (dialog), "delete_event",
                       GTK_SIGNAL_FUNC (edit_dialog_on_delete_event), self);
-  
+
   /* buttons */
   button = gtk_button_new_with_label (_("Ok"));
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
@@ -425,256 +233,45 @@ edit_dialog_new (BDConfig * config, gchar * hostname)
   table = gtk_table_new (2, 1, FALSE);
   gtk_container_set_border_width (GTK_CONTAINER (table), 5);
   gtk_table_set_row_spacings (GTK_TABLE (table), 4);
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), table, TRUE, TRUE, 0);
-
-  ypos = 0;
-
   label = gtk_label_new (_("Description"));
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->description = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, 0, 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), table, TRUE, TRUE, 0);
 
-  label = gtk_label_new (_("Host(Port)"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  self->host = entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 110, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  self->port = entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 40, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Application"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->application = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Protocol"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  hbox = gtk_hbox_new (TRUE, 5);
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  self->protocol_v1 = check = gtk_check_button_new_with_label ("v1");
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_box_pack_start (GTK_BOX (hbox), alignment, TRUE, TRUE, 0);
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  self->protocol_v2 = check = gtk_check_button_new_with_label ("v2");
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_box_pack_start (GTK_BOX (hbox), alignment, TRUE, TRUE, 0);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-  
-  label = gtk_label_new (_("Cache"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->cache = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                    (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Style"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->style = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Gtkrc"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->gtkrc = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  self->mlog = check = gtk_check_button_new_with_label (_("Output Logfile"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  self->keybuff = check = gtk_check_button_new_with_label (_("Enable Keybuffer"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  label = gtk_label_new (_("User"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->user = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Passwrod"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->password = entry = gtk_entry_new ();
-  gtk_entry_set_visibility (GTK_ENTRY (entry), FALSE);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
+  self->component = bd_component_new();
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), self->component->basictable, TRUE, TRUE, 0);
 #ifdef USE_SSL
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  self->ssl = check = gtk_check_button_new_with_label (_("SSL"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  label = gtk_label_new (_("CA Certificate Path"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->CApath = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("CA Certificate File"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->CAfile = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("SSL Key File(pem)"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->key = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Certificate(pem/p12)"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->cert = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Cipher Suite"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->ciphers = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-#ifdef  USE_PKCS11
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  self->pkcs11 = check = gtk_check_button_new_with_label (_("Security Device"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  label = gtk_label_new (_("PKCS#11 Library"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->pkcs11_lib = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Slot ID"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->slot = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), self->component->ssltable, TRUE, TRUE, 0);
 #endif
-#endif
-
+  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), self->component->othertable, TRUE, TRUE, 0);
   return self;
 }
 
 static void
 edit_dialog_free (EditDialog * self)
 {
+  g_free (self->component);
   g_free (self);
+}
+
+static void
+edit_dialog_set_value(EditDialog *self)
+{
+  BDConfigSection *section;
+
+  bd_component_set_value(self->config, self->hostname, self->component);
+  g_return_if_fail(!(self->hostname == NULL));
+
+  section = bd_config_get_section (self->config, self->hostname);
+  g_return_if_fail (! (section == NULL));
+  gtk_entry_set_text (GTK_ENTRY (self->description),
+    bd_config_section_get_string (section, "description"));
+  bd_config_section_set_string (section, "description",
+                                gtk_entry_get_text (GTK_ENTRY (self->description)));
 }
 
 static gboolean
@@ -687,8 +284,8 @@ edit_dialog_run (BDConfig * config, gchar * hostname)
   edit_dialog_set_value (self);
   
   gtk_widget_show_all (self->dialog);
-  gtk_widget_set_sensitive( self->protocol_v1, TRUE);
-  gtk_widget_set_sensitive( self->protocol_v2, TRUE);
+  gtk_widget_set_sensitive( self->component->protocol_v1, TRUE);
+  gtk_widget_set_sensitive( self->component->protocol_v2, TRUE);
   gtk_widget_grab_focus (self->description);
   gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
   gtk_main ();
@@ -727,8 +324,9 @@ static struct {
   { N_("Application"), "application"},
   { N_("User"),           "user" },
 };
-static gint server_dialog_titles_count
-= sizeof (server_dialog_titles) / sizeof (server_dialog_titles[0]);
+
+static gint server_dialog_titles_count =
+  sizeof (server_dialog_titles) / sizeof (server_dialog_titles[0]);
 
 static void
 server_dialog_server_list_update (ServerDialog * self)
@@ -1009,7 +607,6 @@ boot_dialog_create_conf (BDConfig *config)
 {
   BDConfigSection *section;
   gboolean is_create = FALSE;
-  char *cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
   
   if (!bd_config_exist_section (config, "glclient"))
     {
@@ -1022,41 +619,14 @@ boot_dialog_create_conf (BDConfig *config)
     }
   if (!bd_config_exist_section (config, "global"))
     {
-      section = bd_config_append_section (config, "global");
+      section = new_config_section (config, "global");
       bd_config_section_append_value (section, "hostname", _(custom_label));
-      bd_config_section_append_value (section, "host", "localhost");
-      bd_config_section_append_value (section, "port", "8000");
-      bd_config_section_append_value (section, "application", "panda:orca00");
-      bd_config_section_append_value (section, "protocol_v1", "true");
-      bd_config_section_append_value (section, "protocol_v2", "true");
-      bd_config_section_append_value (section, "cache", cachename);
-      bd_config_section_append_value (section, "style", "/usr/share/panda-client/jma-receipt.rc");
-      bd_config_section_append_value (section, "gtkrc", "");
-      bd_config_section_append_value (section, "mlog", "false");
-      bd_config_section_append_value (section, "keybuff", "false");
-      bd_config_section_append_value (section, "user", "");
-      bd_config_section_append_value (section, "password", "");
-      bd_config_section_append_value (section, "savepassword", "false");
-#ifdef	USE_SSL
-      bd_config_section_append_value (section, "ssl", "false");
-      bd_config_section_append_value (section, "CApath", "");
-      bd_config_section_append_value (section, "CAfile", "");
-      bd_config_section_append_value (section, "key", "");
-      bd_config_section_append_value (section, "cert", "");
-      bd_config_section_append_value (section, "ciphers", "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH");
-#ifdef  USE_PKCS11
-      bd_config_section_append_value (section, "pkcs11", "false");
-      bd_config_section_append_value (section, "pkcs11_lib", "");
-      bd_config_section_append_value (section, "slot", "");
-#endif
-#endif      
       is_create = TRUE;
     }
 
   if (is_create)
     bd_config_save (config, NULL, permissions);
 
-  g_free(cachename);
 }
 
 static void
@@ -1070,7 +640,7 @@ boot_dialog_init ()
       
       dir = g_strconcat(g_get_home_dir (), G_DIR_SEPARATOR_S, ".glclient", NULL);
       if (mkdir (dir, 0755) && errno != EEXIST)
-        fprintf (stderr, _("error: could not create per-user config directory\n"));
+        Warning(_("error: could not create per-user config directory\n"));
       file = g_strconcat(dir, G_DIR_SEPARATOR_S, "glclient.conf", NULL);
       config_ = bd_config_new_with_filename (file);
       boot_dialog_create_conf (config_);
@@ -1106,35 +676,7 @@ struct _BootDialog
   GtkWidget *welcome;
   GtkWidget *servers;
   GHashTable *servers_hash;
-  GtkWidget *host;
-  GtkWidget *port;
-  GtkWidget *application;
-  GtkWidget *protocol_v1;
-  GtkWidget *protocol_v2;
-  GtkWidget *user;
-  GtkWidget *password;
-  GtkWidget *savepassword;
-  GtkWidget *cache;
-  GtkWidget *style;
-  GtkWidget *gtkrc;
-  GtkWidget *mlog;
-  GtkWidget *keybuff;
-#ifdef	USE_SSL
-  GtkWidget *ssl;
-  GtkWidget *ssllabel;
-  GtkWidget *sslcontainer;
-  GtkWidget *CApath;
-  GtkWidget *CAfile;
-  GtkWidget *key;
-  GtkWidget *cert;
-  GtkWidget *ciphers;
-#ifdef  USE_PKCS11
-  GtkWidget *pkcs11;
-  GtkWidget *pkcs11container;
-  GtkWidget *pkcs11_lib;
-  GtkWidget *slot;
-#endif
-#endif
+  BDComponent *component;
   gboolean is_connect;
 };
 
@@ -1168,6 +710,7 @@ static void
 boot_dialog_set_value (BootDialog *self, BDConfig *config)
 {
   BDConfigSection *section;
+  gchar *hostname;
   
   g_return_if_fail (bd_config_exist_section (config, "glclient"));
   g_return_if_fail (bd_config_exist_section (config, "global"));
@@ -1175,147 +718,35 @@ boot_dialog_set_value (BootDialog *self, BDConfig *config)
   section = bd_config_get_section (config, "glclient");
 
   gtk_window_set_title (GTK_WINDOW (self->dialog),
-                        _(bd_config_section_get_string (section, "caption")));
+    _(bd_config_section_get_string (section, "caption")));
   gtk_label_set_text (GTK_LABEL (self->welcome),
-                      _(bd_config_section_get_string (section, "welcome")));
+    _(bd_config_section_get_string (section, "welcome")));
   
   section = bd_config_get_section (config, "global");
-
-  boot_dialog_servers_set_hostname (self,
-                                    bd_config_section_get_string (section, "hostname"));
-  gtk_entry_set_text (GTK_ENTRY (self->host),
-                      bd_config_section_get_string (section, "host"));
-  gtk_entry_set_text (GTK_ENTRY (self->port),
-                      bd_config_section_get_string (section, "port"));
-  gtk_entry_set_text (GTK_ENTRY (self->application),
-                      bd_config_section_get_string (section, "application"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1),
-                                bd_config_section_get_bool (section, "protocol_v1"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2),
-                                bd_config_section_get_bool (section, "protocol_v2"));
-  gtk_entry_set_text (GTK_ENTRY (self->cache),
-                      bd_config_section_get_string (section, "cache"));
-  gtk_entry_set_text (GTK_ENTRY (self->style),
-                      bd_config_section_get_string (section, "style"));
-  gtk_entry_set_text (GTK_ENTRY (self->gtkrc),
-                      bd_config_section_get_string (section, "gtkrc"));
-  gtk_entry_set_text (GTK_ENTRY (self->user),
-                      bd_config_section_get_string (section, "user"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
-                      bd_config_section_get_bool (section, "mlog"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
-                      bd_config_section_get_bool (section, "keybuff"));
-  gtk_entry_set_text (GTK_ENTRY (self->password), password_->str);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->savepassword),
-                                bd_config_section_get_bool (section, "savepassword"));
-#ifdef	USE_SSL
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->ssl),
-                                bd_config_section_get_bool (section, "ssl"));
-  gtk_widget_set_sensitive(self->ssllabel, 
-                                bd_config_section_get_bool (section, "ssl"));
-  gtk_widget_set_sensitive(self->sslcontainer, 
-                                bd_config_section_get_bool (section, "ssl"));
-  gtk_entry_set_text (GTK_ENTRY (self->CApath),
-                      bd_config_section_get_string (section, "CApath"));
-  gtk_entry_set_text (GTK_ENTRY (self->CAfile),
-                      bd_config_section_get_string (section, "CAfile"));
-  gtk_entry_set_text (GTK_ENTRY (self->key),
-                      bd_config_section_get_string (section, "key"));
-  gtk_entry_set_text (GTK_ENTRY (self->cert),
-                      bd_config_section_get_string (section, "cert"));
-  gtk_entry_set_text (GTK_ENTRY (self->ciphers),
-                      bd_config_section_get_string (section, "ciphers"));
-#ifdef  USE_PKCS11
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
-                                bd_config_section_get_bool (section, "pkcs11"));
-  gtk_widget_set_sensitive(self->pkcs11container, 
-                                bd_config_section_get_bool (section, "pkcs11"));
-  gtk_entry_set_text (GTK_ENTRY (self->pkcs11_lib),
-                      bd_config_section_get_string (section, "pkcs11_lib"));
-  gtk_entry_set_text (GTK_ENTRY (self->slot),
-                      bd_config_section_get_string (section, "slot"));
-#endif
-#endif
+  hostname = bd_config_section_get_string (section, "hostname");
+  boot_dialog_servers_set_hostname (self, hostname);
+  bd_component_set_value(config, hostname, self->component);
 }
 
 static void
 boot_dialog_get_value (BootDialog *self, BDConfig *config)
 {
-  BDConfigSection *section;
-  gboolean savepassword;
+  gchar *hostname;
 
   g_return_if_fail (bd_config_exist_section (config, "global"));
 
-  section = bd_config_get_section (config, "global");
+  hostname = boot_dialog_servers_get_hostname(self);
 
-  bd_config_section_set_string (section, "hostname",
-                                boot_dialog_servers_get_hostname (self));
-  bd_config_section_set_string (section, "host",
-                                gtk_entry_get_text (GTK_ENTRY (self->host)));
-  bd_config_section_set_string (section, "port",
-                                gtk_entry_get_text (GTK_ENTRY (self->port)));
-  bd_config_section_set_string (section, "application",
-                                gtk_entry_get_text (GTK_ENTRY (self->application)));
-  bd_config_section_set_bool
-    (section, "protocol_v1",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v1)));
-  bd_config_section_set_bool
-    (section, "protocol_v2",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
-  bd_config_section_set_path (section, "cache",
-                                gtk_entry_get_text (GTK_ENTRY (self->cache)));
-  bd_config_section_set_path (section, "style",
-                                gtk_entry_get_text (GTK_ENTRY (self->style)));
-  bd_config_section_set_path (section, "gtkrc",
-                                gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
-  bd_config_section_set_bool
-    (section, "mlog",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
-  bd_config_section_set_bool
-    (section, "keybuff",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
-  bd_config_section_set_string (section, "user",
-                                gtk_entry_get_text (GTK_ENTRY (self->user)));
-  g_string_assign (password_, gtk_entry_get_text (GTK_ENTRY (self->password)));
-  savepassword = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->savepassword));
-  bd_config_section_set_bool (section, "savepassword", savepassword);
-  if (savepassword)
-    bd_config_section_set_string (section, "password", password_->str);
-  else
-    {
-      gtk_entry_set_text (GTK_ENTRY (self->password), "");
-      bd_config_section_set_string (section, "password", "");
-    }
-#ifdef	USE_SSL
-  bd_config_section_set_bool (section, "ssl", 
-               gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (self->ssl)));
-  bd_config_section_set_string (section, "CApath",
-                                gtk_entry_get_text (GTK_ENTRY (self->CApath)));
-  bd_config_section_set_string (section, "CAfile",
-                                gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
-  bd_config_section_set_string (section, "key",
-                                gtk_entry_get_text (GTK_ENTRY (self->key)));
-  bd_config_section_set_string (section, "cert",
-                                gtk_entry_get_text (GTK_ENTRY (self->cert)));
-  bd_config_section_set_string (section, "ciphers",
-                                gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
-#ifdef  USE_PKCS11
-  bd_config_section_set_bool (section, "pkcs11", 
-               gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (self->pkcs11)));
-  bd_config_section_set_string (section, "pkcs11_lib",
-                                gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
-  bd_config_section_set_string (section, "slot",
-                                gtk_entry_get_text (GTK_ENTRY (self->slot)));
-#endif
-#endif
+  bd_component_value_to_config(config, hostname, self->component);
+  bd_component_value_to_config(config, "global", self->component);
+  g_string_assign (password_, gtk_entry_get_text (GTK_ENTRY (self->component->password)));
 }
 
 static void
 boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean force)
 {
-  BDConfigSection *global, *section;
+  BDConfigSection *global;
   gchar *hostname;
-  gchar *password;
 
   g_return_if_fail (bd_config_exist_section (config, "global"));
 
@@ -1323,8 +754,9 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean forc
   
   global = bd_config_get_section (config, "global");
   if (!force
-      && strcmp (hostname, bd_config_section_get_string (global, "hostname")) == 0)
+      && strcmp (hostname, bd_config_section_get_string (global, "hostname")) == 0) { 
     return;
+  }
   if (strcmp (hostname, _(custom_label)) == 0)
     {
       bd_config_section_set_string (global, "hostname", _(custom_label));
@@ -1336,57 +768,10 @@ boot_dialog_change_hostname (BootDialog * self, BDConfig * config, gboolean forc
       bd_config_section_set_string (global, "hostname", _(custom_label));
       return;
     }
-  
-  section = bd_config_get_section (config, hostname);
 
   bd_config_section_set_string (global, "hostname", hostname);
-  bd_config_section_set_string (global, "host",
-                                bd_config_section_get_string (section, "host"));
-  bd_config_section_set_string (global, "port",
-                                bd_config_section_get_string (section, "port"));
-  bd_config_section_set_string (global, "application",
-                                bd_config_section_get_string (section, "application"));
-  bd_config_section_set_bool (global, "protocol_v1",
-                              bd_config_section_get_bool (section, "protocol_v1"));
-  bd_config_section_set_bool (global, "protocol_v2",
-                              bd_config_section_get_bool (section, "protocol_v2"));
-  bd_config_section_set_path (global, "cache",
-                                bd_config_section_get_string (section, "cache"));
-  bd_config_section_set_path (global, "style",
-                                bd_config_section_get_string (section, "style"));
-  bd_config_section_set_path (global, "gtkrc",
-                                bd_config_section_get_string (section, "gtkrc"));
-  bd_config_section_set_bool (global, "mlog",
-                              bd_config_section_get_bool (section, "mlog"));
-  bd_config_section_set_string (global, "user",
-                                bd_config_section_get_string (section, "user"));
-  password = bd_config_section_get_string (section, "password");
-  password_ = g_string_assign (password_, password);
-  bd_config_section_set_string (global, "password", password);
-  bd_config_section_set_bool (global, "savepassword",
-                              bd_config_section_get_bool (section, "savepassword"));
-#ifdef	USE_SSL
-  bd_config_section_set_bool (global, "ssl",
-                            bd_config_section_get_bool (section, "ssl"));
-  bd_config_section_set_string (global, "CApath",
-                            bd_config_section_get_string (section, "CApath"));
-  bd_config_section_set_string (global, "CAfile",
-                            bd_config_section_get_string (section, "CAfile"));
-  bd_config_section_set_string (global, "key",
-                            bd_config_section_get_string (section, "key"));
-  bd_config_section_set_string (global, "cert",
-                            bd_config_section_get_string (section, "cert"));
-  bd_config_section_set_string (global, "ciphers",
-                            bd_config_section_get_string (section, "ciphers"));
-#ifdef  USE_PKCS11
-  bd_config_section_set_bool (global, "pkcs11",
-                            bd_config_section_get_bool (section, "pkcs11"));
-  bd_config_section_set_string (global, "pkcs11_lib",
-                            bd_config_section_get_string (section, "pkcs11_lib"));
-  bd_config_section_set_string (global, "slot",
-                            bd_config_section_get_string (section, "slot"));
-#endif
-#endif
+  bd_component_set_value(config, hostname, self->component);
+  bd_component_value_to_config(config, "global", self->component);
   boot_dialog_set_value (self, config);
 }
 
@@ -1448,6 +833,7 @@ static void
 boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
 {
   self->is_connect = TRUE;
+  boot_dialog_get_value (self, config_);
   gtk_widget_hide (self->dialog);
   gtk_main_quit ();
 }
@@ -1481,39 +867,17 @@ boot_dialog_on_delete_event (GtkWidget *widget, GdkEvent *event, BootDialog *sel
   return TRUE;
 }
 
-#ifdef	USE_SSL
-static void
-boot_dialog_on_ssl_toggle (GtkWidget *widget, BootDialog *self)
-{
-  gboolean sensitive;
-
-  sensitive = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl));
-  gtk_widget_set_sensitive(self->ssllabel, sensitive);
-  gtk_widget_set_sensitive(self->sslcontainer, sensitive);
-}
-#ifdef  USE_PKCS11
-static void
-boot_dialog_on_pkcs11_toggle (GtkWidget *widget, BootDialog *self)
-{
-  gboolean sensitive;
-
-  sensitive = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11));
-  gtk_widget_set_sensitive(self->pkcs11container, sensitive);
-}
-#endif
-#endif
-
 static BootDialog *
 boot_dialog_new ()
 {
   BootDialog *self;
-  GtkWidget *dialog, *vbox, *welcome, *notebook, *table, *action_area, *button;
-  GtkWidget *label, *entry, *hbox, *check, *alignment, *omenu;
-  gint ypos;
+  GtkWidget *dialog, *vbox, *welcome, *notebook, *action_area, *button;
+  GtkWidget *label, *hbox, *omenu;
 
   self = g_new0 (BootDialog, 1);
   self->servers_hash = NULL;
   self->is_connect = FALSE;
+  self->component = bd_component_new();
 
   dialog = gtk_dialog_new ();
   self->dialog = dialog;
@@ -1547,302 +911,25 @@ boot_dialog_new ()
   gtk_notebook_set_homogeneous_tabs (GTK_NOTEBOOK (notebook), TRUE);
   gtk_box_pack_start (GTK_BOX (vbox), notebook, TRUE, TRUE, 5);
 
-  /* General options */
-  table = gtk_table_new (2, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+  /* Basic tab */
   label = gtk_label_new (_("Basic"));
-  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), table, label);
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->basictable, label);
 
-  ypos = 0;
-
-  label = gtk_label_new (_("Host(Port)"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 110, 0);
-  self->host = entry;
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 40, 0);
-  self->port = entry;
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Application"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->application = entry;
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-#ifdef	USE_SSL
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Use SSL"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  self->ssl = check;
-  gtk_signal_connect (GTK_OBJECT (check), "clicked",
-                      GTK_SIGNAL_FUNC (boot_dialog_on_ssl_toggle), self);
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-#endif
-
-  label = gtk_label_new (_("Protocol"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  hbox = gtk_hbox_new (TRUE, 5);
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label ("v1");
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_box_pack_start (GTK_BOX (hbox), alignment, TRUE, TRUE, 0);
-  self->protocol_v1 = check;
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label ("v2");
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_box_pack_start (GTK_BOX (hbox), alignment, TRUE, TRUE, 0);
-  self->protocol_v2 = check;
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-  
-  label = gtk_label_new (_("User"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->user = entry;
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Passwrod"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  gtk_entry_set_visibility (GTK_ENTRY (entry), FALSE);
-  self->password = entry;
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Remember Password"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  self->savepassword = check;
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-#ifdef	USE_SSL
-  /* SSL options */
-  table = gtk_table_new (3, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+#ifdef USE_SSL
+  /* SSL tab */
   label = gtk_label_new (_("SSL"));
-  self->sslcontainer = table;
-  self->ssllabel = label;
-  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), table, label);
-
-  ypos = 0;
-
-  label = gtk_label_new (_("CA Certificate Path"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->CApath = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("CA Certificate File"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->CAfile = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("SSL Key File(pem)"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->key = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Certificate(pem/p12)"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->cert = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Cipher Suite"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->ciphers = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-#ifdef  USE_PKCS11
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Use Security Device"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  self->pkcs11 = check;
-  gtk_signal_connect (GTK_OBJECT (check), "clicked",
-                      GTK_SIGNAL_FUNC (boot_dialog_on_pkcs11_toggle), self);
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  /* pkcs11 container */
-  table = gtk_table_new (3, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
-  self->pkcs11container = table;
-  gtk_table_attach (GTK_TABLE(self->sslcontainer), table, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos = 0;
-
-  label = gtk_label_new (_("PKCS#11 Library"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->pkcs11_lib = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Slot ID"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->slot = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-#endif
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->ssltable, label);
 #endif
 
-  /* Advanced options */
-  table = gtk_table_new (2, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+  /* Other tab */
   label = gtk_label_new (_("Details"));
-  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), table, label);
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->othertable, label);
 
-  ypos = 0;
-
-  label = gtk_label_new (_("Cache"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->cache = entry;
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Style"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->style = entry;
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Gtkrc"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->gtkrc = entry;
-  button = gtk_button_new_with_label(_("Open"));
-  gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		     (GtkSignalFunc)open_file_selection, (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Output Logfile"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  self->mlog = check;
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Enable Keybuffer"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  self->keybuff = check;
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
+#if 0
+  /* Info tab */
+  label = gtk_label_new (_("Information"));
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->infotable, label);
+#endif
 
   action_area = GTK_DIALOG (dialog)->action_area;
 
@@ -1858,7 +945,7 @@ boot_dialog_new ()
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
                       GTK_SIGNAL_FUNC (boot_dialog_on_close), self);
   GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
-  
+
   button = gtk_button_new_with_label (_("Configuration"));
   gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
   gtk_signal_connect (GTK_OBJECT (button), "clicked",
@@ -1866,7 +953,7 @@ boot_dialog_new ()
   GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
 
   boot_dialog_set_value (self, config_);
-    
+
   return self;
 }
 
@@ -1890,15 +977,15 @@ boot_dialog_run ()
   boot_dialog_init ();
   if (bd_config_permissions (config_) != permissions)
     {
-      fprintf (stderr, _("error: permissions is not 0%o: %s\n"),
+      Warning(_("error: permissions is not 0%o: %s\n"),
                permissions, bd_config_get_filename (config_));
       return FALSE;
     }
 
   self = boot_dialog_new ();
   gtk_widget_show_all (self->dialog);
-  gtk_widget_set_sensitive( self->protocol_v1, TRUE);
-  gtk_widget_set_sensitive( self->protocol_v1, TRUE);
+  gtk_widget_set_sensitive( self->component->protocol_v1, TRUE);
+  gtk_widget_set_sensitive( self->component->protocol_v1, TRUE);
   gtk_widget_grab_focus (self->dialog);
   gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
   gtk_main ();
@@ -1917,19 +1004,19 @@ boot_dialog_run ()
   return res;
 }
 
+
 /*********************************************************************
  * BootProperty
  ********************************************************************/
-
 void
 boot_property_config_to_property (BootProperty *self)
 {
   BDConfigSection *section;
 
   g_return_if_fail (bd_config_exist_section (config_, "global"));
-  
+
   section = bd_config_get_section (config_, "global");
-  
+
   self->host = bd_config_section_get_string (section, "host");
   self->port = bd_config_section_get_string (section, "port");
   self->application = bd_config_section_get_string (section, "application");
@@ -1941,8 +1028,17 @@ boot_property_config_to_property (BootProperty *self)
   self->mlog = bd_config_section_get_bool (section, "mlog");
   self->keybuff = bd_config_section_get_bool (section, "keybuff");
   self->user = bd_config_section_get_string (section, "user");
-  self->password = password_->str;
-#ifdef	USE_SSL
+  self->savepassword = bd_config_section_get_bool (section, "savepassword");
+  if ( self->savepassword ) {
+    self->password = bd_config_section_get_string (section, "password");
+  } else {
+    self->password = password_->str;
+  }
+#if 0
+  self->timer = bd_config_section_get_bool (section, "timer");
+  self->timerperiod = bd_config_section_get_string (section, "timerperiod");
+#endif
+#ifdef  USE_SSL
   self->ssl = bd_config_section_get_bool (section, "ssl");
   self->CApath = bd_config_section_get_string (section, "CApath");
   self->CAfile = bd_config_section_get_string (section, "CAfile");
@@ -1962,29 +1058,34 @@ boot_property_inspect (BootProperty * self, FILE *fp)
 {
   if (fp == NULL)
     fp = stdout;
-  
-  fprintf (fp, "host(port)  : %s:%s\n", self->host, self->port);
-  fprintf (fp, "application : %s\n", self->application);
-  fprintf (fp, "protocol v1 : %s\n", self->protocol_v1 ? "TRUE" : "FALSE");
-  fprintf (fp, "protocol v2 : %s\n", self->protocol_v2 ? "TRUE" : "FALSE");
-  fprintf (fp, "cache       : %s\n", self->cache);
-  fprintf (fp, "style       : %s\n", self->style);
-  fprintf (fp, "gtkrc       : %s\n", self->gtkrc);
-  fprintf (fp, "mlog        : %s\n", self->mlog ? "TRUE" : "FALSE");
-  fprintf (fp, "keybuff     : %s\n", self->keybuff ? "TRUE" : "FALSE");
-  fprintf (fp, "user        : %s\n", self->user);
-  fprintf (fp, "password    : %s\n", self->password);
-#ifdef	USE_SSL
-  fprintf (fp, "ssl         : %s\n", self->ssl ? "TRUE" : "FALSE");
-  fprintf (fp, "CApath      : %s\n", self->CApath);
-  fprintf (fp, "CAfile      : %s\n", self->CAfile);
-  fprintf (fp, "key         : %s\n", self->key);
-  fprintf (fp, "cert        : %s\n", self->cert);
-  fprintf (fp, "ciphers     : %s\n", self->ciphers);
+
+  fprintf (fp, "host(port)   : %s:%s\n", self->host, self->port);
+  fprintf (fp, "application  : %s\n", self->application);
+  fprintf (fp, "protocol v1  : %s\n", self->protocol_v1 ? "TRUE" : "FALSE");
+  fprintf (fp, "protocol v2  : %s\n", self->protocol_v2 ? "TRUE" : "FALSE");
+  fprintf (fp, "cache        : %s\n", self->cache);
+  fprintf (fp, "style        : %s\n", self->style);
+  fprintf (fp, "gtkrc        : %s\n", self->gtkrc);
+  fprintf (fp, "mlog         : %s\n", self->mlog ? "TRUE" : "FALSE");
+  fprintf (fp, "keybuff      : %s\n", self->keybuff ? "TRUE" : "FALSE");
+  fprintf (fp, "user         : %s\n", self->user);
+  fprintf (fp, "password     : %s\n", self->password);
+  fprintf (fp, "savepassword : %s\n", self->savepassword ? "TRUE" : "FALSE");
+#if 0
+  fprintf (fp, "timer        : %s\n", self->timer ? "TRUE" : "FALSE");
+  fprintf (fp, "timerperiod  : %s\n", self->timerperiod);
+#endif
+#ifdef  USE_SSL
+  fprintf (fp, "ssl          : %s\n", self->ssl ? "TRUE" : "FALSE");
+  fprintf (fp, "CApath       : %s\n", self->CApath);
+  fprintf (fp, "CAfile       : %s\n", self->CAfile);
+  fprintf (fp, "key          : %s\n", self->key);
+  fprintf (fp, "cert         : %s\n", self->cert);
+  fprintf (fp, "ciphers      : %s\n", self->ciphers);
 #ifdef  USE_PKCS11
-  fprintf (fp, "pkcs11      : %s\n", self->pkcs11 ? "TRUE" : "FALSE");
-  fprintf (fp, "pkcs11_lib  : %s\n", self->pkcs11_lib);
-  fprintf (fp, "slot        : %s\n", self->slot);
+  fprintf (fp, "pkcs11       : %s\n", self->pkcs11 ? "TRUE" : "FALSE");
+  fprintf (fp, "pkcs11_lib   : %s\n", self->pkcs11_lib);
+  fprintf (fp, "slot         : %s\n", self->slot);
 #endif
 #endif
 }

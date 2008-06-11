@@ -1,3 +1,9 @@
+2008-06-11  yusuke mihara  <mihara@netlab.jp>
+
+    * glclient/bootdialog.c, glclient/bd_component.c:
+	    glclientランチャーのリファクタリング、ランチャーとサーバリスト設定の共通部分をbd_component.cにまとめた
+		ランチャーでの変更をサーバリストの設定に反映可能にした
+
 2008-05-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dbstuff/dbslib.rb: 件数処理を正しく
