@@ -70,6 +70,8 @@
 #include	"protocol.h"
 #include	"message.h"
 #include	"bootdialog.h"
+#include	"bd_config.h"
+#include	"bd_component.h"
 #include	"debug.h"
 
 static	char	*PortNumber;
@@ -158,29 +160,29 @@ static	void
 SetDefault(void)
 {
 	char *cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
-	PortNumber = "localhost:" PORT_GLTERM;
-	CurrentApplication = "demo";
+	PortNumber = g_strconcat(DEFAULT_HOST, ":", DEFAULT_PORT);
+	CurrentApplication = DEFAULT_APPLICATION;
 	Cache =  cachename;
-	Style = "";
-	Gtkrc = "";
+	Style = DEFAULT_STYLE;
+	Gtkrc = DEFAULT_GTKRC;
 	User = getenv("USER");
-	Pass = "";
-	Protocol1 = TRUE;
-	Protocol2 = FALSE;
-	fMlog = FALSE;
-	fKeyBuff = FALSE;
+	Pass = DEFAULT_PASSWORD;
+	Protocol1 = DEFAULT_PROTOCOL_V1;
+	Protocol2 = DEFAULT_PROTOCOL_V2;
+	fMlog = DEFAULT_MLOG;
+	fKeyBuff = DEFAULT_KEYBUFF;
 	fDialog = FALSE;
 #ifdef	USE_SSL
-	fSsl = FALSE;
-	KeyFile = NULL;
-	CertFile = NULL;
-	CA_Path = NULL;
-	CA_File = NULL;
-	Ciphers = "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH";
+	fSsl = DEFAULT_SSL;
+	KeyFile = DEFAULT_KEY;
+	CertFile = DEFAULT_CERT;
+	CA_Path = DEFAULT_CAPATH;
+	CA_File = DEFAULT_CAFILE;
+	Ciphers = DEFAULT_CIPHERS;
 #ifdef  USE_PKCS11
-    fPKCS11 = FALSE;
-    PKCS11_Lib = NULL;
-    Slot = NULL;
+    fPKCS11 = DEFAULT_PKCS11;
+    PKCS11_Lib = DEFAULT_PKCS11;
+    Slot = DEFAULT_SLOT;
 #endif	//USE_PKCS11
 #endif	//USE_SSL
 }
@@ -313,6 +315,7 @@ show_boot_dialog ()
     }
 #endif 	//USE_PKCS11
 #endif	//USE_SSL
+
     return TRUE;
 }
 

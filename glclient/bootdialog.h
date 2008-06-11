@@ -41,6 +41,7 @@ struct _BootProperty
   gchar *gtkrc;
   gchar *user;
   gchar *password;
+  gboolean savepassword;
   gboolean mlog;
   gboolean keybuff;
 #ifdef USE_SSL
