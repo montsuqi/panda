@@ -225,7 +225,9 @@ bd_component_value_to_config (
 
   section = NULL;
   if (hostname != NULL) {
-      g_return_if_fail (bd_config_exist_section (config, hostname));
+      if (! bd_config_exist_section (config, hostname)) {
+        return;
+      }
       section = bd_config_get_section (config, hostname);
   }
   g_return_if_fail (section != NULL);
