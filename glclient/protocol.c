@@ -829,6 +829,14 @@ ENTER_FUNC;
 	if		(  ( node = g_hash_table_lookup(WindowTable,window) )  !=  NULL  ) {
 		ResetTimer(node->window);
 	}
+	if ( TITLE(glSession) ) {
+		if ( strlen(TITLE(glSession)) >	0) {
+			snprintf(buff, sizeof(buff), "%s - %s", TITLE(glSession), node->title);
+		} else {
+			snprintf(buff, sizeof(buff), "%s", node->title);
+		}
+		gtk_window_set_title (GTK_WINDOW (node->window), buff);
+	}
 	fInRecv = FALSE;
 LEAVE_FUNC;
 	return	(fCancel);

@@ -35,12 +35,14 @@ typedef	struct {
 	char		*name;
 	GladeXML	*xml;
 	GtkWindow	*window;
+	char		*title;
 	GHashTable	*UpdateWidget;
 }	XML_Node;
 
 typedef struct {
 	NETFILE		*fpComm;
 	Port		*port;
+	char		*title;
 #ifdef	USE_SSL
 	SSL_CTX		*ctx;
 #ifdef  USE_PKCS11
@@ -52,6 +54,7 @@ typedef struct {
 extern	char	*CacheFileName(char *name);
 extern	void	ExitSystem(void);
 extern  void	MakeCacheDir(char *dname);
+extern	void	SetSessionTitle(char *title);
 
 GLOBAL	GHashTable	*WindowTable;
 GLOBAL	XML_Node	*FocusedScreen;
@@ -76,10 +79,13 @@ GLOBAL	char	*Ciphers;
 GLOBAL	Bool	fPKCS11;
 GLOBAL	char	*PKCS11_Lib;
 GLOBAL	char	*Slot;
+GLOBAL	char	WindowTitle[256];
+
 #endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
 
 #define	FPCOMM(session)	((session)->fpComm)
+#define	TITLE(session)	((session)->title)
 #ifdef	USE_SSL
 #define	CTX(session)	((session)->ctx)
 #ifdef	USE_PKCS11
