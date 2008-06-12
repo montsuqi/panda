@@ -1,3 +1,8 @@
+2008-06-12  yusuke mihara  <mihara@netlab.jp>
+
+	* bd_component.c bootdialog.c callbacks.c client.c: ランチャーにsend_event_when_idleのタイマー設定を追加した
+
+
 2008-06-11  yusuke mihara  <mihara@netlab.jp>
 
 	* glclient/bootdialog.c, glclient/bd_component.c:glclientランチャーのリファクタリング、ランチャーとサーバリスト設定の共通部分をbd_component.cにまとめた

@@ -97,6 +97,9 @@ struct _BDComponent {
   GtkWidget *style;
   GtkWidget *gtkrc;
   GtkWidget *keybuff;
+  GtkWidget *timer;
+  GtkWidget *timerperiod;
+  GtkWidget *timer_container;
 };
 
 gboolean validate_isblank (gchar *str);
@@ -105,16 +108,22 @@ typedef struct {
   GtkWidget *entry, *filesel;
 } file_selection_data;
 
+BDConfigSection * new_config_section(BDConfig *config, char *hostname);
 void file_ok(GtkWidget *w, gpointer data); 
 void file_cancel(GtkWidget *w, gpointer data);
 void file_cancel(GtkWidget *w, gpointer data);
 
-void bd_component_set_value(BDConfig *config, char *configName, BDComponent *self);
+void bd_component_set_value(
+	BDConfig *config, 
+	char *configName, 
+	BDComponent *self);
 
-void bd_component_value_to_config(BDConfig *config, char *configName, BDComponent *self);
+void bd_component_value_to_config(
+	BDConfig *config, 
+	char *configName, 
+	BDComponent *self);
 
-BDComponent *
-bd_component_new();
+BDComponent * bd_component_new();
 
 #endif /* #ifndef __BDCOMPONENT_H_INCLUDED__ */
 

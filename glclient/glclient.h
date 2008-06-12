@@ -65,6 +65,8 @@ GLOBAL	char	*User;
 GLOBAL	char	*Pass;
 GLOBAL	Bool	fMlog;
 GLOBAL	Bool	fKeyBuff;
+GLOBAL	Bool	fTimer;
+GLOBAL	char	*TimerPeriod;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
 GLOBAL	char	*KeyFile;

@@ -44,6 +44,8 @@ struct _BootProperty
   gboolean savepassword;
   gboolean mlog;
   gboolean keybuff;
+  gboolean timer;
+  gchar *timerperiod;
 #ifdef USE_SSL
   gchar *key;
   gchar *cert;
