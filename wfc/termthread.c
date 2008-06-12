@@ -663,10 +663,10 @@ KeepSession(
 {
 ENTER_FUNC;
 	dbgprintf("data->name = [%s]\n",data->name);
-	LockWrite(&Terminal);
 	SaveSession(data);
-	data->fInProcess = FALSE;
 	gettimeofday(&(data->tv),NULL);
+	LockWrite(&Terminal);
+	data->fInProcess = FALSE;
 	if ( (nCache !=0) && (g_hash_table_size(Terminal.Hash) > nCache) ){
 		FreeOldSession();
 	}
