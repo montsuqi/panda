@@ -286,11 +286,10 @@ ENTER_FUNC;
 		registed = 1;
 	}
 	if (timeout == -1) {
-		char *s = getenv ("GL_SEND_EVENT_DELAY");
-		if (s)
-			timeout = atoi (s);
+		if (fTimer)
+			timeout = atoi (TimerPeriod);
 		else
-			timeout = 1000;
+			timeout = 0;
 	}
 
 	if (timeout > 0) {

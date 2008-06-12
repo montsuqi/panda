@@ -42,6 +42,45 @@
 /*********************************************************************
  * misc function
  ********************************************************************/
+BDConfigSection *
+new_config_section(
+  BDConfig *config,
+  char *hostname)
+{
+  BDConfigSection *section;
+  char *cachename = g_strconcat(g_get_home_dir(), DEFAULT_CACHE_PATH, NULL);
+
+  section = bd_config_append_section (config, hostname);
+  bd_config_section_append_value (section, "host", DEFAULT_HOST);
+  bd_config_section_append_value (section, "port", DEFAULT_PORT);
+  bd_config_section_append_value (section, "application", DEFAULT_APPLICATION);
+  bd_config_section_append_value (section, "protocol_v1", DEFAULT_PROTOCOL_V1_STR);
+  bd_config_section_append_value (section, "protocol_v2", DEFAULT_PROTOCOL_V2_STR);
+  bd_config_section_append_value (section, "cache", cachename);
+  bd_config_section_append_value (section, "style", DEFAULT_STYLE);
+  bd_config_section_append_value (section, "gtkrc", DEFAULT_GTKRC);
+  bd_config_section_append_value (section, "mlog",  DEFAULT_MLOG_STR);
+  bd_config_section_append_value (section, "keybuff", DEFAULT_KEYBUFF_STR);
+  bd_config_section_append_value (section, "user", DEFAULT_USER);
+  bd_config_section_append_value (section, "password", DEFAULT_PASSWORD);
+  bd_config_section_append_value (section, "savepassword", DEFAULT_SAVEPASSWORD_STR);
+#ifdef  USE_SSL
+  bd_config_section_append_value (section, "ssl", DEFAULT_SSL_STR);
+  bd_config_section_append_value (section, "CApath", DEFAULT_CAPATH);
+  bd_config_section_append_value (section, "CAfile", DEFAULT_CAFILE);
+  bd_config_section_append_value (section, "key", DEFAULT_KEY);
+  bd_config_section_append_value (section, "cert", DEFAULT_CERT);
+  bd_config_section_append_value (section, "ciphers", DEFAULT_CIPHERS);
+#ifdef  USE_PKCS11
+  bd_config_section_append_value (section, "pkcs11", DEFAULT_PKCS11_STR);
+  bd_config_section_append_value (section, "pkcs11_lib", DEFAULT_PKCS11_LIB);
+  bd_config_section_append_value (section, "slot", DEFAULT_SLOT);
+#endif
+#endif
+  g_free(cachename);
+  return section;
+}
+
 gboolean
 validate_isblank (gchar *str)
 {
@@ -131,6 +170,14 @@ on_pkcs11_toggle (GtkWidget *widget, BDComponent *self) {
 #endif 
 #endif
 
+static void
+on_timer_toggle (GtkWidget *widget, BDComponent *self) {
+  gboolean sensitive;
+
+  sensitive = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer));
+  gtk_widget_set_sensitive(self->timer_container, sensitive);
+}
+
 /*********************************************************************
  * boot dialog component
  ********************************************************************/
@@ -211,6 +258,12 @@ bd_component_set_value (
     bd_config_section_get_bool (section, "mlog"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
     bd_config_section_get_bool (section, "keybuff"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
+    bd_config_section_get_bool (section, "timer"));
+  gtk_entry_set_text (GTK_ENTRY (self->timerperiod),
+    bd_config_section_get_string (section, "timerperiod"));
+  gtk_widget_set_sensitive(self->timer_container, 
+    bd_config_section_get_bool (section, "timer"));  
 }
 
 void
@@ -282,17 +335,22 @@ bd_component_value_to_config (
 
   // other
   bd_config_section_set_path (section, "cache",
-                              gtk_entry_get_text (GTK_ENTRY (self->cache)));
+    gtk_entry_get_text (GTK_ENTRY (self->cache)));
   bd_config_section_set_path (section, "style",
-                                gtk_entry_get_text (GTK_ENTRY (self->style)));
+    gtk_entry_get_text (GTK_ENTRY (self->style)));
   bd_config_section_set_path (section, "gtkrc",
-                                gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
+    gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
   bd_config_section_set_bool
     (section, "mlog",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
   bd_config_section_set_bool
     (section, "keybuff",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
+  bd_config_section_set_bool
+    (section, "timer",
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer)));
+  bd_config_section_set_path (section, "timerperiod",
+    gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
 }
 
 BDComponent *
@@ -495,8 +553,8 @@ bd_component_new()
 
   /* pkcs11 container */
   table = gtk_table_new (3, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 0);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 0);
   self->pkcs11_container = table;
   gtk_table_attach (GTK_TABLE(self->ssl_container), table, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
@@ -599,6 +657,36 @@ bd_component_new()
   self->keybuff = check;
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label (_("Enable Timer"));
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->timer = check;
+  gtk_signal_connect (GTK_OBJECT (check), "clicked",
+                      GTK_SIGNAL_FUNC (on_timer_toggle), self);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  /* timer container */
+  table = gtk_table_new (3, 1, FALSE);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 0);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 0);
+  self->timer_container = table;
+  gtk_table_attach (GTK_TABLE(self->othertable), table, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos = 0;
+
+  label = gtk_label_new (_("Timer Period(ms)"));
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->timerperiod = entry = gtk_entry_new ();
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
   return self;
 }
 

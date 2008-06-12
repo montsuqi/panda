@@ -297,6 +297,8 @@ show_boot_dialog ()
     fKeyBuff = prop.keybuff;
     User = prop.user;
     Pass = prop.password;
+	fTimer = prop.timer;
+	TimerPeriod = prop.timerperiod;
 #ifdef	USE_SSL
 	fSsl = prop.ssl;
 	if ( strlen(prop.key) != 0 ){

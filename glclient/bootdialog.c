@@ -45,50 +45,6 @@
 static mode_t permissions = 0600;
 
 /*********************************************************************
- * misc
- ********************************************************************/
-
-static BDConfigSection *
-new_config_section(
-  BDConfig *config,
-  char *hostname)
-{
-  BDConfigSection *section;
-  char *cachename = g_strconcat(g_get_home_dir(), DEFAULT_CACHE_PATH, NULL);
-
-  section = bd_config_append_section (config, hostname);
-  bd_config_section_append_value (section, "host", DEFAULT_HOST);
-  bd_config_section_append_value (section, "port", DEFAULT_PORT);
-  bd_config_section_append_value (section, "application", DEFAULT_APPLICATION);
-  bd_config_section_append_value (section, "protocol_v1", DEFAULT_PROTOCOL_V1_STR);
-  bd_config_section_append_value (section, "protocol_v2", DEFAULT_PROTOCOL_V2_STR);
-  bd_config_section_append_value (section, "cache", cachename);
-  bd_config_section_append_value (section, "style", DEFAULT_STYLE);
-  bd_config_section_append_value (section, "gtkrc", DEFAULT_GTKRC);
-  bd_config_section_append_value (section, "mlog",  DEFAULT_MLOG_STR);
-  bd_config_section_append_value (section, "keybuff", DEFAULT_KEYBUFF_STR);
-  bd_config_section_append_value (section, "user", DEFAULT_USER);
-  bd_config_section_append_value (section, "password", DEFAULT_PASSWORD);
-  bd_config_section_append_value (section, "savepassword", DEFAULT_SAVEPASSWORD_STR);
-#ifdef	USE_SSL
-  bd_config_section_append_value (section, "ssl", DEFAULT_SSL_STR);
-  bd_config_section_append_value (section, "CApath", DEFAULT_CAPATH);
-  bd_config_section_append_value (section, "CAfile", DEFAULT_CAFILE);
-  bd_config_section_append_value (section, "key", DEFAULT_KEY);
-  bd_config_section_append_value (section, "cert", DEFAULT_CERT);
-  bd_config_section_append_value (section, "ciphers", DEFAULT_CIPHERS);
-#ifdef  USE_PKCS11
-  bd_config_section_append_value (section, "pkcs11", DEFAULT_PKCS11_STR);
-  bd_config_section_append_value (section, "pkcs11_lib", DEFAULT_PKCS11_LIB);
-  bd_config_section_append_value (section, "slot", DEFAULT_SLOT);
-#endif
-#endif      
-  g_free(cachename);
-  return section;
-}
-
-
-/*********************************************************************
  * EditDialog
  ********************************************************************/
 typedef struct _EditDialog EditDialog;
@@ -925,12 +881,6 @@ boot_dialog_new ()
   label = gtk_label_new (_("Details"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->othertable, label);
 
-#if 0
-  /* Info tab */
-  label = gtk_label_new (_("Information"));
-  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->infotable, label);
-#endif
-
   action_area = GTK_DIALOG (dialog)->action_area;
 
   button = gtk_button_new_with_label (_("Connect"));
@@ -1034,10 +984,8 @@ boot_property_config_to_property (BootProperty *self)
   } else {
     self->password = password_->str;
   }
-#if 0
   self->timer = bd_config_section_get_bool (section, "timer");
   self->timerperiod = bd_config_section_get_string (section, "timerperiod");
-#endif
 #ifdef  USE_SSL
   self->ssl = bd_config_section_get_bool (section, "ssl");
   self->CApath = bd_config_section_get_string (section, "CApath");
@@ -1071,10 +1019,8 @@ boot_property_inspect (BootProperty * self, FILE *fp)
   fprintf (fp, "user         : %s\n", self->user);
   fprintf (fp, "password     : %s\n", self->password);
   fprintf (fp, "savepassword : %s\n", self->savepassword ? "TRUE" : "FALSE");
-#if 0
   fprintf (fp, "timer        : %s\n", self->timer ? "TRUE" : "FALSE");
   fprintf (fp, "timerperiod  : %s\n", self->timerperiod);
-#endif
 #ifdef  USE_SSL
   fprintf (fp, "ssl          : %s\n", self->ssl ? "TRUE" : "FALSE");
   fprintf (fp, "CApath       : %s\n", self->CApath);

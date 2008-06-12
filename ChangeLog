@@ -1,3 +1,8 @@
+2008-06-12  yusuke mihara  <mihara@netlab.jp>
+
+	* bd_component.c bootdialog.c callbacks.c client.c: ランチャーに
+	send_event_when_idle のタイマー設定を追加した
+
 2008-06-11  Noboru Saitou  <noborus@netlab.jp>
 
 	* action.c, client.c, glclient.h, protocol.c, widgetOPS.c (RecvWindow):
