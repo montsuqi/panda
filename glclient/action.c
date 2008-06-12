@@ -489,3 +489,18 @@ SetObjectData(GtkWidget	*widget,
 	gtk_object_set_data(GTK_OBJECT(widget), object_key, object);
 }
 
+extern void
+SetTitle(
+	GtkWindow	*window,
+	char *session_title,
+	char *window_title)
+{
+	char		buff[SIZE_BUFF];
+
+	if ( (session_title != NULL) && (strlen(session_title) != 0)) {
+		snprintf(buff, sizeof(buff), "%s - %s", session_title, window_title);
+	} else {
+		snprintf(buff, sizeof(buff), "%s", window_title);
+	}
+	gtk_window_set_title (window, buff);
+}
