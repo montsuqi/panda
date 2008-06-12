@@ -173,6 +173,8 @@ SetDefault(void)
 	fMlog = DEFAULT_MLOG;
 	fKeyBuff = DEFAULT_KEYBUFF;
 	fDialog = FALSE;
+	fTimer = TRUE;
+	TimerPeriod = "1000";
 #ifdef	USE_SSL
 	fSsl = DEFAULT_SSL;
 	KeyFile = DEFAULT_KEY;
