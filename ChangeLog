@@ -1,3 +1,8 @@
+2008-06-13  yusuke mihara  <mihara@netlab.jp>
+
+	* bd_component.c bd_config.c bootdialog.c dialogs.c:
+	glclientのコマンドラインオプションにランチャーの設定を指定するオプション(-config)を追加した
+
 2008-06-13  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/aps_main.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dblib/dbgroup.h,

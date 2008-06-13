@@ -79,6 +79,8 @@ static	char	*Cache;
 static	char	*Style;
 static	char	*Gtkrc;
 static	Bool 	fDialog;
+static	char	*Config;
+static	Bool 	fConfigList;
 
 static void GLMessage(int level, char *file, int line, char *msg);
 
@@ -120,7 +122,7 @@ static	ARG_TABLE	option[] = {
 	{	"user",		STRING,		TRUE,	(void*)&User,
 		N_("User")										},
 	{	"pass",		STRING,		TRUE,	(void*)&Pass,
-		N_("Passwrod")									},
+		N_("Password")									},
 	{	"v1",		BOOLEAN,	TRUE,	(void*)&Protocol1,
 		N_("Use Protocol Version 1")		},
 	{	"v2",		BOOLEAN,	TRUE,	(void*)&Protocol2,
@@ -131,6 +133,10 @@ static	ARG_TABLE	option[] = {
 		N_("Enable Keybuffer")						},
 	{	"dialog",	BOOLEAN,	TRUE,	(void*)&fDialog,
 		N_("Use Startup Dialog")						},
+	{	"config",		STRING,	TRUE,	(void*)&Config,
+		N_("Specify Config")							},
+	{	"configlist",BOOLEAN,	TRUE,	(void*)&fConfigList,
+		N_("List Config")						},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
 		N_("SSL Key File(pem/p12)")		 				},
@@ -167,13 +173,16 @@ SetDefault(void)
 	Gtkrc = DEFAULT_GTKRC;
 	User = getenv("USER");
 	Pass = DEFAULT_PASSWORD;
+	SavePass = DEFAULT_SAVEPASSWORD;
 	Protocol1 = DEFAULT_PROTOCOL_V1;
 	Protocol2 = DEFAULT_PROTOCOL_V2;
 	fMlog = DEFAULT_MLOG;
 	fKeyBuff = DEFAULT_KEYBUFF;
-	fDialog = FALSE;
 	fTimer = TRUE;
 	TimerPeriod = "1000";
+	Config = "";
+	fConfigList = FALSE;
+	fDialog = FALSE;
 #ifdef	USE_SSL
 	fSsl = DEFAULT_SSL;
 	KeyFile = DEFAULT_KEY;
@@ -264,62 +273,124 @@ bannar(void)
 	printf(_("              2004-2007 Masami Ogoshi\n"));
 }
 
+static	void
+list_config()
+{
+	BDConfig *config;
+	BDConfigSection *section;
+	GList *p;
+	char *hostname;
+	char *desc;
+	
+	config = bd_config_load_file();
+	
+	for (p = bd_config_get_sections (config); p != NULL; p = g_list_next (p)) {
+		hostname = (char *) p->data;
+		if (!strcmp (hostname, "glclient"))
+			continue;
+		section = bd_config_get_section (config, hostname);
+		if (!strcmp("global", hostname)) {
+        	desc = _("Custom");
+		} else {
+        	desc = bd_config_section_get_string (section, "description");
+        }
+		printf("------------------\n");
+		printf("%s\n", desc);
+		printf("\thost:\t\t%s\n", 
+        	bd_config_section_get_string (section, "host"));
+		printf("\tport:\t\t%s\n", 
+        	bd_config_section_get_string (section, "port"));
+		printf("\tapplication:\t%s\n", 
+        	bd_config_section_get_string (section, "application"));
+		printf("\tuser:\t\t%s\n", 
+        	bd_config_section_get_string (section, "user"));
+	}
+	bd_config_free(config);
+}
+
+static	Bool
+load_config (
+	char *desc)
+{
+	BDConfig *config;
+	BDConfigSection *section;
+	GList *p;
+	char *hostname;
+	Bool ret;
+	char *propdesc;
+	char *host;
+	char *port;
+	
+	ret = FALSE;
+	config = bd_config_load_file();
+	
+	if ( !strcmp(_("Custom"), desc) || !strcmp("global", desc)) {
+		section = bd_config_get_section (config, "global");
+		ret = TRUE;
+	} else {
+		for ( 	p = bd_config_get_sections (config); 
+				p != NULL; 
+				p = g_list_next (p)) 
+		{
+			hostname = (char *) p->data;
+			if (!strcmp (hostname, "glclient") || !strcmp("global", desc))
+				continue;
+			section = bd_config_get_section (config, hostname);
+			propdesc = bd_config_section_get_string (section, "description");
+			if (!strcmp(desc, propdesc)) {
+				ret = TRUE;
+				break;
+			}
+		}
+	}
+	if (ret) {
+		host = bd_config_section_get_string (section, "host");
+		port = bd_config_section_get_string (section, "port");
+		PortNumber = g_strconcat(host, ":", port, NULL);
+		CurrentApplication = bd_config_section_get_string (section, "application");
+		Protocol1 = bd_config_section_get_bool (section, "protocol_v1");
+		Protocol2 = bd_config_section_get_bool (section, "protocol_v2");
+		Cache = bd_config_section_get_string (section, "cache");
+		Style = bd_config_section_get_string (section, "style");
+		Gtkrc = bd_config_section_get_string (section, "gtkrc");
+		fMlog = bd_config_section_get_bool (section, "mlog");
+		fKeyBuff = bd_config_section_get_bool (section, "keybuff");
+		User = bd_config_section_get_string (section, "user");
+		SavePass = bd_config_section_get_bool (section, "savepassword");
+		if (SavePass) {
+			Pass = bd_config_section_get_string (section, "password");
+		} 
+		fTimer = bd_config_section_get_bool (section, "timer");
+		TimerPeriod = bd_config_section_get_string (section, "timerperiod");
+#ifdef  USE_SSL
+		fSsl = bd_config_section_get_bool (section, "ssl");
+		CA_Path = bd_config_section_get_string (section, "CApath");
+		CA_File = bd_config_section_get_string (section, "CAfile");
+		KeyFile = bd_config_section_get_string (section, "key");
+		CertFile = bd_config_section_get_string (section, "cert");
+		Ciphers = bd_config_section_get_string (section, "ciphers");
+#ifdef  USE_PKCS11
+		fPKCS11 = bd_config_section_get_bool (section, "pkcs11");
+		PKCS11_Lib = bd_config_section_get_string (section, "pkcs11_lib");
+		Slot = bd_config_section_get_string (section, "slot");
+#endif
+#endif
+	} else {
+		Warning(_("cannot load config:%s"), desc);
+	}
+	return ret;
+}
+
 static gboolean
 show_boot_dialog ()
 {
-    static char *PortNumber_ = NULL;
-
-    BootProperty prop;
-
     if (!boot_dialog_run ())
         return FALSE;
-
-    boot_property_config_to_property (&prop);
-
-    g_free (PortNumber_);
-    PortNumber = PortNumber_ = g_strconcat (prop.host, ":", prop.port, NULL);
-    CurrentApplication = prop.application;
-    Protocol1 = prop.protocol_v1;
-    Protocol2 = prop.protocol_v2;
-    Cache = prop.cache;
-    Style = prop.style;
-    Gtkrc = prop.gtkrc;
-    fMlog = prop.mlog;
-    fKeyBuff = prop.keybuff;
-    User = prop.user;
-    Pass = prop.password;
-	fTimer = prop.timer;
-	TimerPeriod = prop.timerperiod;
-#ifdef	USE_SSL
-	fSsl = prop.ssl;
-	if ( strlen(prop.key) != 0 ){
-		KeyFile = prop.key;
+	if (!load_config("global"))
+		return FALSE;
+	if (!SavePass) {
+		Pass = boot_dialog_get_password();
 	}
-	if ( strlen(prop.cert) != 0 ){
-		CertFile = prop.cert;
-	}
-	if ( strlen(prop.CApath) != 0 ){
-		CA_Path = prop.CApath;
-	}
-	if ( strlen(prop.CAfile) != 0 ){	
-		CA_File = prop.CAfile;
-	}
-	if ( strlen(prop.ciphers) != 0 ){	
-		Ciphers = prop.ciphers;
-	}
-#ifdef  USE_PKCS11
-    fPKCS11 = prop.pkcs11;
-    if (fPKCS11){
-	    if ( strlen(prop.pkcs11_lib) != 0 ){	
-	    	PKCS11_Lib = prop.pkcs11_lib;
-	    }
-	    if ( strlen(prop.slot) != 0 ){
-	    	Slot = prop.slot;
-	    }
-    }
-#endif 	//USE_PKCS11
-#endif	//USE_SSL
-
     return TRUE;
 }
 
@@ -430,6 +501,7 @@ main(
 	char	**argv)
 {
 	char	buff[SIZE_BUFF];
+	char	password_[SIZE_BUFF];
 	gboolean	do_run = TRUE;
 
 	FILE_LIST	*fl;
@@ -464,6 +536,24 @@ main(
 #endif	//USE_PANDA
 	glade_init();
 #endif	//USE_GNOME
+
+    if (fConfigList) {
+		list_config();
+		exit(0);
+    }
+
+	if (strlen(Config) > 0) {
+		fDialog = FALSE;
+    	if (!load_config (Config))
+			exit(0);
+        if (!SavePass) {
+			if(askpass(_("Password"), password_, SIZE_BUFF) != -1) {
+				Pass = password_;
+			} else {
+				exit(0);
+			}
+		}
+	}
 
 	InitNET();
 

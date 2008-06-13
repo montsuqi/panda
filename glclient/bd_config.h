@@ -48,6 +48,7 @@ extern  gboolean    bd_config_section_set_path(BDConfigSection *self,
 
 BDConfig        *bd_config_new               ();
 BDConfig        *bd_config_new_with_filename (gchar *filename);
+BDConfig        *bd_config_load_file         ();
 void             bd_config_free              (BDConfig *self);
 void             bd_config_inspect           (BDConfig *self,
                                               FILE *fp);

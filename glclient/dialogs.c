@@ -30,6 +30,7 @@
 #    include <gnome.h>
 #else
 #    include <gtk/gtk.h>
+#    include "gettext.h"
 #endif
 
 #include	"dialogs.h"
@@ -80,10 +81,10 @@ message_dialog(
 #ifdef USE_GNOME
 GtkWidget*
 question_dialog(
-	const char	*message,
-	GtkSignalFunc	clicked_handler,
-	GtkWidget	*widget,
-	GtkWindow	*window)
+	const char *message,
+	GtkSignalFunc clicked_handler,
+	GtkWidget *widget,
+	GtkWindow *window)
 {
 	GtkWidget *dialog;
 		
@@ -94,8 +95,9 @@ question_dialog(
 }
 #endif
 
-extern void
-GLError( const char *message)
+void
+GLError(
+	const char *message)
 {
 	GtkWidget *dialog;
 		
@@ -114,3 +116,95 @@ GLError( const char *message)
 	exit(0);
 }
 
+typedef struct _AskPassDialog {   
+	GtkWidget 	*dialog;
+	GtkWidget 	*entry;
+	char		*buf;
+	int			buflen;
+	gboolean	result;
+}AskPassDialog;
+
+static void
+on_okbutton (GtkWidget * widget, AskPassDialog * self)
+{
+	strncpy(self->buf, gtk_entry_get_text(GTK_ENTRY(self->entry)), self->buflen);
+	self->result = TRUE;
+	gtk_main_quit ();
+}
+
+static void
+on_cancelbutton (GtkWidget * widget, AskPassDialog * self)
+{
+	self->buf = "";
+	gtk_main_quit ();
+}
+
+int
+askpass(
+	const char *prompt,
+	char *buf,
+	int	buflen)
+{
+	AskPassDialog *self;
+	GtkWidget *dialog;
+	GtkWidget *entry;
+	GtkWidget *label;
+	GtkWidget *okbutton;
+	GtkWidget *cancelbutton;
+
+	self = g_new0(AskPassDialog, 1);
+	self->buf = buf;
+	self->buflen = buflen;
+	self->result = FALSE;
+	self->dialog = dialog = gtk_dialog_new();
+
+	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
+	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
+
+	label = gtk_label_new (_(prompt));
+	gtk_misc_set_padding (GTK_MISC (label), 20, 20);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), label,
+						TRUE, TRUE, 0);
+	gtk_widget_show (label);
+
+	self->entry = entry = gtk_entry_new ();
+	gtk_entry_set_visibility (GTK_ENTRY (entry), FALSE);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), entry,
+						TRUE, TRUE, 0);
+	gtk_widget_show (entry);
+
+	okbutton = gtk_button_new_with_label (_("OK"));
+	gtk_widget_set_usize (okbutton, 80, -1);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+						okbutton,
+						FALSE, FALSE, 14);
+	gtk_signal_connect (GTK_OBJECT (okbutton), "clicked",
+							   GTK_SIGNAL_FUNC (on_okbutton),
+							   self);
+	gtk_widget_show (okbutton);
+
+	cancelbutton = gtk_button_new_with_label (_("Cancel"));
+	gtk_widget_set_usize (cancelbutton, 80, -1);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+						cancelbutton,
+						FALSE, FALSE, 14);
+	gtk_signal_connect (GTK_OBJECT (cancelbutton), "clicked",
+						GTK_SIGNAL_FUNC (on_cancelbutton),
+				 		self);
+	gtk_widget_show (cancelbutton);
+
+	gtk_signal_connect (GTK_OBJECT (dialog), "destroy",
+						GTK_SIGNAL_FUNC(gtk_main_quit),
+						NULL);
+	GTK_WIDGET_SET_FLAGS (entry, GTK_CAN_DEFAULT);
+	gtk_widget_grab_default (entry);
+	gtk_widget_grab_focus (entry);
+	gtk_widget_show (dialog);
+	gtk_main();
+
+	g_free(self);
+	if (self->result) {
+		return strlen(buf);
+	}
+	return -1;
+}

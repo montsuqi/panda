@@ -23,10 +23,7 @@
 
 #include    <stdio.h>
 #include    <string.h> /* strlen */
-#include    <errno.h> /* errno */
 #include    <ctype.h> /* isblank */
-#include    <sys/stat.h> /* mkdir */
-#include    <sys/types.h> /* mkdir */
 #include    <glib.h>
 #ifdef  USE_GNOME
 #include    <gnome.h>
@@ -590,23 +587,13 @@ boot_dialog_init ()
 {
   if (!is_boot_dialog_init)
     {
-      gchar *dir;
-      gchar *file;
       BDConfigSection *section;
       
-      dir = g_strconcat(g_get_home_dir (), G_DIR_SEPARATOR_S, ".glclient", NULL);
-      if (mkdir (dir, 0755) && errno != EEXIST)
-        Warning(_("error: could not create per-user config directory\n"));
-      file = g_strconcat(dir, G_DIR_SEPARATOR_S, "glclient.conf", NULL);
-      config_ = bd_config_new_with_filename (file);
+      config_ = bd_config_load_file ();
       boot_dialog_create_conf (config_);
       
       section = bd_config_get_section (config_, "global");
       password_ = g_string_new (bd_config_section_get_string (section, "password"));
-
-      g_free (file);
-      g_free (dir);
-      
       is_boot_dialog_init = TRUE;
     }
 }
@@ -954,86 +941,10 @@ boot_dialog_run ()
   return res;
 }
 
-
-/*********************************************************************
- * BootProperty
- ********************************************************************/
-void
-boot_property_config_to_property (BootProperty *self)
+char *
+boot_dialog_get_password()
 {
-  BDConfigSection *section;
-
-  g_return_if_fail (bd_config_exist_section (config_, "global"));
-
-  section = bd_config_get_section (config_, "global");
-
-  self->host = bd_config_section_get_string (section, "host");
-  self->port = bd_config_section_get_string (section, "port");
-  self->application = bd_config_section_get_string (section, "application");
-  self->protocol_v1 = bd_config_section_get_bool (section, "protocol_v1");
-  self->protocol_v2 = bd_config_section_get_bool (section, "protocol_v2");
-  self->cache = bd_config_section_get_string (section, "cache");
-  self->style = bd_config_section_get_string (section, "style");
-  self->gtkrc = bd_config_section_get_string (section, "gtkrc");
-  self->mlog = bd_config_section_get_bool (section, "mlog");
-  self->keybuff = bd_config_section_get_bool (section, "keybuff");
-  self->user = bd_config_section_get_string (section, "user");
-  self->savepassword = bd_config_section_get_bool (section, "savepassword");
-  if ( self->savepassword ) {
-    self->password = bd_config_section_get_string (section, "password");
-  } else {
-    self->password = password_->str;
-  }
-  self->timer = bd_config_section_get_bool (section, "timer");
-  self->timerperiod = bd_config_section_get_string (section, "timerperiod");
-#ifdef  USE_SSL
-  self->ssl = bd_config_section_get_bool (section, "ssl");
-  self->CApath = bd_config_section_get_string (section, "CApath");
-  self->CAfile = bd_config_section_get_string (section, "CAfile");
-  self->key = bd_config_section_get_string (section, "key");
-  self->cert = bd_config_section_get_string (section, "cert");
-  self->ciphers = bd_config_section_get_string (section, "ciphers");
-#ifdef  USE_PKCS11
-  self->pkcs11 = bd_config_section_get_bool (section, "pkcs11");
-  self->pkcs11_lib = bd_config_section_get_string (section, "pkcs11_lib");
-  self->slot = bd_config_section_get_string (section, "slot");
-#endif
-#endif
-}
-
-void
-boot_property_inspect (BootProperty * self, FILE *fp)
-{
-  if (fp == NULL)
-    fp = stdout;
-
-  fprintf (fp, "host(port)   : %s:%s\n", self->host, self->port);
-  fprintf (fp, "application  : %s\n", self->application);
-  fprintf (fp, "protocol v1  : %s\n", self->protocol_v1 ? "TRUE" : "FALSE");
-  fprintf (fp, "protocol v2  : %s\n", self->protocol_v2 ? "TRUE" : "FALSE");
-  fprintf (fp, "cache        : %s\n", self->cache);
-  fprintf (fp, "style        : %s\n", self->style);
-  fprintf (fp, "gtkrc        : %s\n", self->gtkrc);
-  fprintf (fp, "mlog         : %s\n", self->mlog ? "TRUE" : "FALSE");
-  fprintf (fp, "keybuff      : %s\n", self->keybuff ? "TRUE" : "FALSE");
-  fprintf (fp, "user         : %s\n", self->user);
-  fprintf (fp, "password     : %s\n", self->password);
-  fprintf (fp, "savepassword : %s\n", self->savepassword ? "TRUE" : "FALSE");
-  fprintf (fp, "timer        : %s\n", self->timer ? "TRUE" : "FALSE");
-  fprintf (fp, "timerperiod  : %s\n", self->timerperiod);
-#ifdef  USE_SSL
-  fprintf (fp, "ssl          : %s\n", self->ssl ? "TRUE" : "FALSE");
-  fprintf (fp, "CApath       : %s\n", self->CApath);
-  fprintf (fp, "CAfile       : %s\n", self->CAfile);
-  fprintf (fp, "key          : %s\n", self->key);
-  fprintf (fp, "cert         : %s\n", self->cert);
-  fprintf (fp, "ciphers      : %s\n", self->ciphers);
-#ifdef  USE_PKCS11
-  fprintf (fp, "pkcs11       : %s\n", self->pkcs11 ? "TRUE" : "FALSE");
-  fprintf (fp, "pkcs11_lib   : %s\n", self->pkcs11_lib);
-  fprintf (fp, "slot         : %s\n", self->slot);
-#endif
-#endif
+  return password_->str;
 }
 
 /*************************************************************

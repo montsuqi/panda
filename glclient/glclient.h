@@ -63,6 +63,7 @@ GLOBAL	Bool	fInRecv;
 GLOBAL	Session	*glSession;
 GLOBAL	char	*User;
 GLOBAL	char	*Pass;
+GLOBAL	Bool	SavePass;
 GLOBAL	Bool	fMlog;
 GLOBAL	Bool	fKeyBuff;
 GLOBAL	Bool	fTimer;

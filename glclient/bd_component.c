@@ -40,7 +40,7 @@
 #include    "bd_component.h"
 
 /*********************************************************************
- * misc function
+ * config function
  ********************************************************************/
 BDConfigSection *
 new_config_section(
@@ -81,6 +81,9 @@ new_config_section(
   return section;
 }
 
+/*********************************************************************
+ * misc function
+ ********************************************************************/
 gboolean
 validate_isblank (gchar *str)
 {
@@ -426,7 +429,7 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
-  label = gtk_label_new (_("Passwrod"));
+  label = gtk_label_new (_("Password"));
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->password = entry = gtk_entry_new ();
   gtk_entry_set_visibility (GTK_ENTRY (entry), FALSE);
