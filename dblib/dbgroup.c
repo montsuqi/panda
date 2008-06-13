@@ -464,6 +464,30 @@ GetDB_Pass(
 	return	(pass);
 }
 
+extern	char	*
+GetDB_Sslmode(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	char	*sslmode;
+	int		i;
+
+	if		(  DB_Sslmode  !=  NULL  ) {
+		sslmode = DB_Sslmode;
+	} else {
+		for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+			if		(	(  dbg->server[i].usage  ==  usage  )
+					&&	(  dbg->server[i].sslmode   !=  NULL   ) )	break;
+		}
+		if		(  i  ==  dbg->nServer  ) {
+			sslmode = NULL;
+		} else {
+			sslmode = dbg->server[i].sslmode;
+		}
+	}
+	return	(sslmode);
+}
+
 extern	void
 MakeCTRL(
 	DBCOMM_CTRL	*ctrl,

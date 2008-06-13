@@ -282,6 +282,8 @@ static	ARG_TABLE	option[] = {
 		"DB user name"									},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
 		"DB password"									},
+	{	"dbsslmode",	STRING,		TRUE,	(void*)&DB_Sslmode,
+		"DB SSL mode"									},
 
 	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
 		"aps process transaction count"					},
@@ -329,6 +331,7 @@ SetDefault(void)
 	DB_Host = NULL;
 	DB_Port = NULL;
 	DB_Name = DB_User;
+	DB_Sslmode = NULL;
 
 	MaxSendRetry = 3;
 	RetryInterval = 5;

@@ -469,7 +469,9 @@ DumpDBG(
 		}
 		printf("\t\tDB name  = [%s]\n",dbg->server[i].dbname);
 		printf("\t\tDB user  = [%s]\n",dbg->server[i].user);
-		printf("\t\tDB pass  = [%s]\n",dbg->server[i].pass);fflush(stdout);
+		printf("\t\tDB pass  = [%s]\n",dbg->server[i].pass);
+		printf("\t\tDB sslmode = [%s]\n",dbg->server[i].sslmode);
+		fflush(stdout);
 	}
 	printf("\tDB locale= [%s]\n",dbg->coding);
 	if		(  dbg->file  !=  NULL  ) {

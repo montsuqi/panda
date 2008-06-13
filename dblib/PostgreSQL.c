@@ -344,6 +344,7 @@ ENTER_FUNC;
 	AddConninfo(conninfo, "dbname", GetDB_DBname(dbg,usage));
 	AddConninfo(conninfo, "user", GetDB_User(dbg,usage));
 	AddConninfo(conninfo, "password", GetDB_Pass(dbg,usage));
+	AddConninfo(conninfo, "sslmode", GetDB_Sslmode(dbg,usage));
 	LBS_EmitEnd(conninfo);
 LEAVE_FUNC;
 

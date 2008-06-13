@@ -433,6 +433,8 @@ DumpDBG(
 	printf("\tDB name  = [%s]\n",GetDB_DBname(dbg,DB_UPDATE));
 	printf("\tDB user  = [%s]\n",GetDB_User(dbg,DB_UPDATE));
 	printf("\tDB pass  = [%s]\n",GetDB_Pass(dbg,DB_UPDATE));
+ 	printf("\tDB sslmode  = [%s]\n",GetDB_Sslmode(dbg,DB_UPDATE));
+
 	if		(  dbg->file  !=  NULL  ) {
 		printf("\tlog file = [%s]\n",dbg->file);
 	}
@@ -552,6 +554,8 @@ static	ARG_TABLE	option[] = {
 		"DB user name"									},
 	{	"pass",		STRING,		TRUE,	(void*)&DB_Pass,
 		"DB password"									},
+	{	"sslmode",	STRING,		TRUE,	(void*)&DB_Sslmode,
+		"DB SSL mode"									},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"no check dbredirector start"					},
@@ -581,6 +585,7 @@ SetDefault(void)
 	DB_Pass = NULL;
 	DB_Host = NULL;
 	DB_Port = NULL;
+	DB_Sslmode = NULL;
 	DB_Name = DB_User;
 
 	fNoCheck = FALSE;

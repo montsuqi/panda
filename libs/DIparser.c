@@ -86,6 +86,7 @@
 #define	T_DBPATH		(T_YYBASE +35)
 #define	T_UPDATE		(T_YYBASE +36)
 #define	T_READONLY		(T_YYBASE +37)
+#define	T_SSLMODE		(T_YYBASE +38)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -98,6 +99,7 @@ static	TokenTable	tokentable[] = {
 	{	"port"				,T_PORT		},
 	{	"user"				,T_USER		},
 	{	"password"			,T_PASS		},
+	{	"sslmode"			,T_SSLMODE	},
 	{	"type"				,T_TYPE		},
 	{	"file"				,T_FILE		},
 	{	"redirect"			,T_REDIRECT	},
@@ -691,6 +693,7 @@ ParDB_Server(
 	server.dbname = NULL;
 	server.user = NULL;
 	server.pass = NULL;
+	server.sslmode = NULL;
 	while	(  GetSymbol  !=  '}'  ) {
 		switch	(ComToken) {
 		  case	T_PORT:
@@ -719,6 +722,13 @@ ParDB_Server(
 				server.pass = StrDup(ComSymbol);
 			} else {
 				ParError("invalid DB password");
+			}
+			break;
+		  case	T_SSLMODE:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				server.sslmode = StrDup(ComSymbol);
+			} else {
+				ParError("invalid DB sslmode");
 			}
 			break;
 		}
@@ -841,6 +851,13 @@ ENTER_FUNC;
 				server.pass = StrDup(ComSymbol);
 			} else {
 				ParError("invalid DB password");
+			}
+			break;
+		  case	T_SSLMODE:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				server.sslmode = StrDup(ComSymbol);
+			} else {
+				ParError("invalid DB sslmode");
 			}
 			break;
 		  default:

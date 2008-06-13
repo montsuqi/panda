@@ -38,6 +38,7 @@ extern	char	*GetDB_PortName(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_DBname(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_User(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_Pass(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Sslmode(DBG_Struct *dbg, int usage);
 
 extern	ValueStruct	*_GetDB_Argument(RecordStruct *rec, char *pname, char *func, int *apno);
 extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);
@@ -63,6 +64,7 @@ GLOBAL	char	*DB_Port;
 GLOBAL	char	*DB_Name;
 GLOBAL	char	*DB_User;
 GLOBAL	char	*DB_Pass;
+GLOBAL	char	*DB_Sslmode;
 
 GLOBAL	Bool	fNoCheck;
 GLOBAL	Bool	fNoRedirect;

@@ -111,6 +111,7 @@ typedef	struct {
 	char		*dbname;
 	char		*user;
 	char		*pass;
+	char		*sslmode;
 }	DB_Server;
 
 #define DB_STATUS_NOCONNECT		0x00

@@ -1,3 +1,9 @@
+2008-06-13  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/aps_main.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dblib/dbgroup.h,
+	  dbstuff/dbredirector.c, dbstuff/dbs_main.c, include/struct.h,
+	  libs/DIparser.c, tools/checkdir.c: sslmodeの追加(PostgreSQL)
+
 2008-06-12  yusuke mihara  <mihara@netlab.jp>
 
 	* bd_component.c bootdialog.c callbacks.c client.c: ランチャーにsend_event_when_idleのタイマー設定を追加した
