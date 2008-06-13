@@ -21,6 +21,9 @@
 #include <stdlib.h>
 #include <string.h>         /* strcmp */
 #include <glib.h>
+#include <errno.h> 			/* errno */
+#include <sys/stat.h> 		/* mkdir */
+#include <sys/types.h> 		/* mkdir */
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <sys/types.h>		/* open, fstat, mode_t */
@@ -31,6 +34,8 @@
 
 #include "gettext.h"
 #include "bd_config.h"
+#include "message.h"
+#include "debug.h"
 
 #define XML_CHILDREN(node) ((node)->childs)
 
@@ -574,6 +579,24 @@ bd_config_move_section (BDConfig * self, gchar * name, gint to)
   self->names = g_list_insert (self->names, section->name, to);
 
   return TRUE;
+}
+
+BDConfig *
+bd_config_load_file()
+{
+  BDConfig *config;
+  gchar *dir;
+  gchar *file;
+
+  dir = g_strconcat(g_get_home_dir (), G_DIR_SEPARATOR_S, ".glclient", NULL);
+  if (mkdir (dir, 0755) && errno != EEXIST)
+    fprintf(stderr,_("error: could not create per-user config directory\n"));
+  file = g_strconcat(dir, G_DIR_SEPARATOR_S, "glclient.conf", NULL);
+  config = bd_config_new_with_filename (file);
+
+  g_free (file);
+  g_free (dir);
+  return config;
 }
 
 /*************************************************************

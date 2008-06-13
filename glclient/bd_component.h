@@ -102,13 +102,14 @@ struct _BDComponent {
   GtkWidget *timer_container;
 };
 
+BDConfigSection * new_config_section(BDConfig *config, char *hostname);
+
 gboolean validate_isblank (gchar *str);
 
 typedef struct {
   GtkWidget *entry, *filesel;
 } file_selection_data;
 
-BDConfigSection * new_config_section(BDConfig *config, char *hostname);
 void file_ok(GtkWidget *w, gpointer data); 
 void file_cancel(GtkWidget *w, gpointer data);
 void file_cancel(GtkWidget *w, gpointer data);

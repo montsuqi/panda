@@ -22,6 +22,7 @@
 
 GtkWidget* message_dialog( const char *message, gboolean message_type);
 void GLError( const char *message);
+int askpass( const char *prompt, char *buf, int buflen);
 
 #ifdef USE_GNOME
 GtkWidget* question_dialog(	const char *message, GtkSignalFunc clicked_handler,

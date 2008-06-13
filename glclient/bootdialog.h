@@ -27,46 +27,9 @@
 #include <stdio.h>
 #include <glib.h>
 
-typedef struct _BootProperty BootProperty;
-
-struct _BootProperty
-{
-  gchar *host;
-  gchar *port;
-  gchar *application;
-  gboolean protocol_v1;
-  gboolean protocol_v2;
-  gchar *cache;
-  gchar *style;
-  gchar *gtkrc;
-  gchar *user;
-  gchar *password;
-  gboolean savepassword;
-  gboolean mlog;
-  gboolean keybuff;
-  gboolean timer;
-  gchar *timerperiod;
-#ifdef USE_SSL
-  gchar *key;
-  gchar *cert;
-  gboolean ssl;
-  gchar *verifypeer;
-  gchar *CApath;
-  gchar *CAfile;
-  gchar *ciphers;
-#ifdef USE_PKCS11
-  gboolean pkcs11;
-  gchar *pkcs11_lib;
-  gchar *slot;
-#endif
-#endif
-};
-
 gboolean boot_dialog_run ();
 void boot_dialog_term ();
-
-void boot_property_config_to_property (BootProperty *self);
-void boot_property_inspect (BootProperty * self, FILE *fp);
+char * boot_dialog_get_password();
 
 #endif /* #ifndef __BOOTDIALOG_H_INCLUDED__ */
 

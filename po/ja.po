@@ -120,7 +120,7 @@ msgid "User"
 msgstr "ユーザ名"
 
 #: glclient/bootdialog.c:550 glclient/bootdialog.c:1626 glclient/client.c:122
-msgid "Passwrod"
+msgid "Password"
 msgstr "パスワード"
 
 #: glclient/bootdialog.c:562 glclient/bootdialog.c:1650
