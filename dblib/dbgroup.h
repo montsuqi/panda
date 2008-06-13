@@ -37,6 +37,7 @@ extern	char	*GetDB_Port(DBG_Struct *dbg);
 extern	char	*GetDB_DBname(DBG_Struct *dbg);
 extern	char	*GetDB_User(DBG_Struct *dbg);
 extern	char	*GetDB_Pass(DBG_Struct *dbg);
+extern	char	*GetDB_Sslmode(DBG_Struct *dbg);
 
 extern	ValueStruct	*_GetDB_Argument(RecordStruct *rec, char *pname, char *func, int *apno);
 extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);

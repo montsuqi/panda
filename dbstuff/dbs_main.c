@@ -671,6 +671,8 @@ static	ARG_TABLE	option[] = {
 		"DB user name(for override)"					},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
 		"DB password(for override)"						},
+	{	"dbsslmode",STRING,		TRUE,	(void*)&DB_Sslmode,
+		"DB SSL mode(for override)"						},
 
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		"authentication server"		 					},
@@ -703,6 +705,7 @@ SetDefault(void)
 	DB_Pass = NULL;
 	DB_Host = NULL;
 	DB_Port = NULL;
+	DB_Sslmode = NULL;
 	DB_Name = DB_User;
 
 	fNoCheck = FALSE;

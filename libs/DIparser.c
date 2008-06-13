@@ -85,6 +85,7 @@
 #define	T_WFCPATH		(T_YYBASE +33)
 #define	T_REDPATH		(T_YYBASE +34)
 #define	T_DBPATH		(T_YYBASE +35)
+#define	T_SSLMODE		(T_YYBASE +36)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -120,6 +121,7 @@ static	TokenTable	tokentable[] = {
 	{	"wfcpath"			,T_WFCPATH	},
 	{	"redpath"			,T_REDPATH	},
 	{	"dbpath"			,T_DBPATH	},
+	{	"sslmode"			,T_SSLMODE	},
 	{	""					,0			}
 };
 
@@ -637,6 +639,7 @@ ENTER_FUNC;
 	dbg->dbname = NULL;
 	dbg->port = NULL;
 	dbg->pass = NULL;
+	dbg->sslmode = NULL;
 	dbg->file = NULL;
 	dbg->fConnect = UNCONNECT;
 	dbg->dbstatus = 0;
@@ -697,6 +700,13 @@ ENTER_FUNC;
 				dbg->pass = StrDup(ComSymbol);
 			} else {
 				ParError("invalid DB password");
+			}
+			break;
+		  case	T_SSLMODE:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				dbg->sslmode = StrDup(ComSymbol);
+			} else {
+				ParError("invalid DB sslmode");
 			}
 			break;
 		  case	T_FILE:

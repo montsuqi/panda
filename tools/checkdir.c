@@ -253,7 +253,6 @@ DumpPath(
 {
 ENTER_FUNC;
 	printf("\t\tname     = [%s]\n",path->name);
-	printf("\t\tusage    = [%02X]\n",path->usage);
 	if		(  path->args  !=  NULL  ) {
 		printf("** args\n\t\t");
 		DumpItems(2,path->args);
@@ -274,7 +273,7 @@ ENTER_FUNC;
 	DumpKey(db->pkey);
 	if		(  db->pcount  >  0  ) {
 		printf("\t\tpath ------\n");
-		for	( i = 0 ; i < db->pcount ; i ++ ) {
+		for	( i = 1 ; i < db->pcount ; i ++ ) {
 			DumpPath(db->path[i]);
 		}
 	}
@@ -457,20 +456,16 @@ DumpDBG(
 	DBG_Struct	*dbg,
 	void		*dummy)
 {
-	int		i;
-
-	printf("name     = [%s]\n",dbg->name);fflush(stdout);
-	printf("\ttype    = [%s]\n",dbg->type);fflush(stdout);
-	printf("\tnServer = [%d]\n",dbg->nServer);fflush(stdout);
-	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
-		if		(  dbg->server[i].port  !=  NULL  ) {
-			printf("\t\thost     = [%s]\n",IP_HOST(dbg->server[i].port));fflush(stdout);
-			printf("\t\tport     = [%s]\n",IP_PORT(dbg->server[i].port));fflush(stdout);
-		}
-		printf("\t\tDB name  = [%s]\n",dbg->server[i].dbname);
-		printf("\t\tDB user  = [%s]\n",dbg->server[i].user);
-		printf("\t\tDB pass  = [%s]\n",dbg->server[i].pass);fflush(stdout);
+	printf("name     = [%s]\n",dbg->name);
+	printf("\ttype     = [%s]\n",dbg->type);
+	if		(  dbg->port  !=  NULL  ) {
+		printf("\thost     = [%s]\n",IP_HOST(dbg->port));
+		printf("\tport     = [%s]\n"  ,IP_PORT(dbg->port));
 	}
+	printf("\tDB name  = [%s]\n",dbg->dbname);
+	printf("\tDB user  = [%s]\n",dbg->user);
+	printf("\tDB pass  = [%s]\n",dbg->pass);
+	printf("\tDB sslmode  = [%s]\n",dbg->sslmode);
 	printf("\tDB locale= [%s]\n",dbg->coding);
 	if		(  dbg->file  !=  NULL  ) {
 		printf("\tlog file = [%s]\n",dbg->file);

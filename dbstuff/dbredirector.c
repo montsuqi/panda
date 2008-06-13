@@ -431,6 +431,7 @@ DumpDBG(
 	printf("\tDB name  = [%s]\n",dbg->dbname);
 	printf("\tDB user  = [%s]\n",dbg->user);
 	printf("\tDB pass  = [%s]\n",dbg->pass);
+	printf("\tDB sslmode  = [%s]\n",dbg->sslmode);
 	if		(  dbg->file  !=  NULL  ) {
 		printf("\tlog file = [%s]\n",dbg->file);
 	}
@@ -549,6 +550,8 @@ static	ARG_TABLE	option[] = {
 		"ユーザ名"										},
 	{	"pass",		STRING,		TRUE,	(void*)&DB_Pass,
 		"パスワード"									},
+	{	"sslmode",	STRING,		TRUE,	(void*)&DB_Sslmode,
+		"SSLモード"										},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"dbredirectorの起動をチェックしない"			},
@@ -578,6 +581,7 @@ SetDefault(void)
 	DB_Pass = NULL;
 	DB_Host = NULL;
 	DB_Port = NULL;
+	DB_Sslmode = NULL;
 	DB_Name = DB_User;
 
 	fNoCheck = FALSE;
