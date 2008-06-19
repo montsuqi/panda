@@ -141,9 +141,9 @@ on_cancelbutton (GtkWidget * widget, AskPassDialog * self)
 
 int
 askpass(
-	const char *prompt,
 	char *buf,
-	int	buflen)
+	size_t	buflen,
+	const char *prompt)
 {
 	AskPassDialog *self;
 	GtkWidget *dialog;
@@ -202,9 +202,9 @@ askpass(
 	gtk_widget_show (dialog);
 	gtk_main();
 
-	g_free(self);
 	if (self->result) {
 		return strlen(buf);
 	}
+	g_free(self);
 	return -1;
 }

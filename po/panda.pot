@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2008-06-13 19:13+0900\n"
+"POT-Creation-Date: 2008-06-19 14:32+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -32,7 +32,7 @@ msgstr ""
 msgid "User"
 msgstr ""
 
-#: glclient/bd_component.c:432 glclient/client.c:125 glclient/client.c:550
+#: glclient/bd_component.c:432 glclient/client.c:125 glclient/client.c:555
 msgid "Password"
 msgstr ""
 
@@ -299,12 +299,12 @@ msgstr ""
 msgid "              2004-2007 Masami Ogoshi\n"
 msgstr ""
 
-#: glclient/client.c:379
+#: glclient/client.c:384
 #, c-format
 msgid "cannot load config:%s"
 msgstr ""
 
-#: glclient/client.c:448
+#: glclient/client.c:453
 msgid "can not connect server(server port not found)"
 msgstr ""
 
@@ -391,136 +391,111 @@ msgid ""
 " %s\n"
 msgstr ""
 
-#: libs/net.c:438
-#, c-format
-msgid ""
-"pipe error:\n"
-" %s\n"
+#: libs/net.c:430
+msgid "Please input key passphrase:"
 msgstr ""
 
-#: libs/net.c:444
-#, c-format
+#: libs/net.c:431
 msgid ""
-"fork error:\n"
-" %s\n"
+"Verify ERROR!\n"
+"Please input key passphrase:"
 msgstr ""
 
-#: libs/net.c:452
-#, c-format
-msgid ""
-"dup2 error:\n"
-" %s\n"
-msgstr ""
-
-#: libs/net.c:457
-#, c-format
-msgid ""
-"exec(%s) error:\n"
-" %s\n"
-msgstr ""
-
-#: libs/net.c:472
-#, c-format
-msgid ""
-"waitpid error:\n"
-" %s\n"
-msgstr ""
-
-#: libs/net.c:507
+#: libs/net.c:480
 #, c-format
 msgid ""
 "SSL read error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:528
+#: libs/net.c:501
 #, c-format
 msgid ""
 "SSL write error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:575
+#: libs/net.c:548
 #, c-format
 msgid ""
 "BIO_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:579
+#: libs/net.c:552
 #, c-format
 msgid ""
 "X509_NAME_print_ex failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:608
+#: libs/net.c:581
 #, c-format
 msgid ""
 "X509_NAME_oneline failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:736
+#: libs/net.c:709
 #, c-format
 msgid ""
 "SSL_connect failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:743
+#: libs/net.c:716
 #, c-format
 msgid "The hostname does not match %s.\n"
 msgstr ""
 
-#: libs/net.c:759
+#: libs/net.c:732
 #, c-format
 msgid ""
 "SSL_accept failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:784
+#: libs/net.c:757
 #, c-format
 msgid ""
 "SSL_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:789
+#: libs/net.c:762
 #, c-format
 msgid ""
 "SSL_set_fd failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:844
+#: libs/net.c:817
 #, c-format
 msgid ""
 "The certificate(%s) will be expired in %d days.\n"
 "Please update the certificate.\n"
 msgstr ""
 
-#: libs/net.c:871
+#: libs/net.c:844
 #, c-format
 msgid ""
 " Unable to get issuer cert.\n"
 " issuer= %s\n"
 msgstr ""
 
-#: libs/net.c:875
+#: libs/net.c:848
 msgid ""
 " Error in cert not_before field.\n"
 " notBefore="
 msgstr ""
 
-#: libs/net.c:883
+#: libs/net.c:856
 msgid ""
 " Error in cert not_after field.\n"
 " notAfter="
 msgstr ""
 
-#: libs/net.c:909
+#: libs/net.c:882
 #, c-format
 msgid ""
 "Verification error of local entity certificate:\n"
@@ -528,7 +503,7 @@ msgid ""
 " %s:%s\n"
 msgstr ""
 
-#: libs/net.c:931
+#: libs/net.c:904
 #, c-format
 msgid ""
 "Verification error of remote entity certificate:\n"
@@ -536,188 +511,196 @@ msgid ""
 " %s:%s\n"
 msgstr ""
 
-#: libs/net.c:1090 libs/net.c:1687
+#: libs/net.c:1039 libs/net.c:1605
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1094 libs/net.c:1691
+#: libs/net.c:1043 libs/net.c:1609
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1098 libs/net.c:1196 libs/net.c:1695
+#: libs/net.c:1047 libs/net.c:1135 libs/net.c:1613
 #, c-format
 msgid ""
 "SSL_CTX_check_private_key failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1124 libs/net.c:1718
+#: libs/net.c:1071 libs/net.c:1636
 #, c-format
 msgid ""
 "SSL_CTX_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1140 libs/net.c:1723
+#: libs/net.c:1079 libs/net.c:1641
 #, c-format
 msgid ""
 "SSL_CTX_set_cipher_list(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1153 libs/net.c:1736
+#: libs/net.c:1092 libs/net.c:1654
 #, c-format
 msgid ""
 "SSL_CTX_set_default_verify_paths error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1159 libs/net.c:1742
+#: libs/net.c:1098 libs/net.c:1660
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s)\n"
 msgstr ""
 
-#: libs/net.c:1176
+#: libs/net.c:1115
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate_file(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1186
+#: libs/net.c:1125
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey_file(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1322
+#: libs/net.c:1142
+msgid "Please specify certificate file"
+msgstr ""
+
+#: libs/net.c:1264
 #, c-format
 msgid ""
 "Cannot open PKCS#11 library :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1329
+#: libs/net.c:1271
 #, c-format
 msgid ""
 "Cannot get C_GetFunctionList address :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1336
+#: libs/net.c:1278
 #, c-format
 msgid ""
 "C_GetFunctionList :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1345
+#: libs/net.c:1287
 #, c-format
 msgid ""
 "C_Initialize :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1401
+#: libs/net.c:1343
 #, c-format
 msgid ""
 "Cannot find private key ID :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1428
+#: libs/net.c:1370
 #, c-format
 msgid ""
 "C_OpenSession :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1433
+#: libs/net.c:1375
 #, c-format
 msgid ""
 "C_Login :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1444
+#: libs/net.c:1386
 #, c-format
 msgid ""
 "C_FindObjectsInit :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1449
+#: libs/net.c:1391
 #, c-format
 msgid ""
 "C_FindObjects :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1454 libs/net.c:1487
+#: libs/net.c:1396 libs/net.c:1429
 #, c-format
 msgid ""
 "C_FindObjectsFinal :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1470
+#: libs/net.c:1412
 #, c-format
 msgid ""
 "C_GetAttributeValue :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1511 libs/net.c:1517
+#: libs/net.c:1453 libs/net.c:1459
 #, c-format
 msgid ""
 "C_GetSlotList :\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1534
+#: libs/net.c:1476
 #, c-format
 msgid ""
 "Engine_by_id:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1544
+#: libs/net.c:1486
 #, c-format
 msgid ""
 "Engine_ctrl_cmd_string failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1550
+#: libs/net.c:1492
 #, c-format
 msgid ""
 "Engine_init failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1611
+#: libs/net.c:1500
+msgid "Please input security device PIN:"
+msgstr ""
+
+#: libs/net.c:1528
 msgid "Cannot find available security device"
 msgstr ""
 
-#: libs/net.c:1647
+#: libs/net.c:1565
 msgid "Cannot find certificate in the security device"
 msgstr ""
 
-#: libs/net.c:1670
+#: libs/net.c:1588
 #, c-format
 msgid ""
 "d2i_X509 failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1680
+#: libs/net.c:1598
 #, c-format
 msgid ""
 "ENGINE_load_private_key failure:\n"

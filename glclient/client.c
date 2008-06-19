@@ -365,13 +365,18 @@ load_config (
 #ifdef  USE_SSL
 		fSsl = bd_config_section_get_bool (section, "ssl");
 		CA_Path = bd_config_section_get_string (section, "CApath");
+		if (!strcmp("", CA_Path)) CA_Path = NULL;
 		CA_File = bd_config_section_get_string (section, "CAfile");
+		if (!strcmp("", CA_File)) CA_File = NULL;
 		KeyFile = bd_config_section_get_string (section, "key");
+		if (!strcmp("", KeyFile)) KeyFile = NULL;
 		CertFile = bd_config_section_get_string (section, "cert");
+		if (!strcmp("", CertFile)) CertFile = NULL;
 		Ciphers = bd_config_section_get_string (section, "ciphers");
 #ifdef  USE_PKCS11
 		fPKCS11 = bd_config_section_get_bool (section, "pkcs11");
 		PKCS11_Lib = bd_config_section_get_string (section, "pkcs11_lib");
+		if (!strcmp("", PKCS11_Lib)) PKCS11_Lib = NULL;
 		Slot = bd_config_section_get_string (section, "slot");
 #endif
 #endif
@@ -547,7 +552,7 @@ main(
     	if (!load_config (Config))
 			exit(0);
         if (!SavePass) {
-			if(askpass(_("Password"), password_, SIZE_BUFF) != -1) {
+			if(askpass(password_, SIZE_BUFF, _("Password")) != -1) {
 				Pass = password_;
 			} else {
 				exit(0);
@@ -556,6 +561,7 @@ main(
 	}
 
 	InitNET();
+	SetAskPassFunction(askpass);
 
     if (fDialog) {
 		do_run = show_boot_dialog() ;

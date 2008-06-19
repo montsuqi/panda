@@ -20,9 +20,11 @@
 #ifndef	_INC_DIALOGS_H
 #define	_INC_DIALOGS_H
 
+#include "types.h"
+
 GtkWidget* message_dialog( const char *message, gboolean message_type);
 void GLError( const char *message);
-int askpass( const char *prompt, char *buf, int buflen);
+int askpass(char *buf, size_t buflen, const char *prompt);
 
 #ifdef USE_GNOME
 GtkWidget* question_dialog(	const char *message, GtkSignalFunc clicked_handler,
