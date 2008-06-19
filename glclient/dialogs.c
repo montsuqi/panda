@@ -124,19 +124,22 @@ typedef struct _AskPassDialog {
 	gboolean	result;
 }AskPassDialog;
 
-static void
+static gboolean
 on_okbutton (GtkWidget * widget, AskPassDialog * self)
 {
 	strncpy(self->buf, gtk_entry_get_text(GTK_ENTRY(self->entry)), self->buflen);
 	self->result = TRUE;
+	gtk_widget_destroy(self->dialog);
 	gtk_main_quit ();
+	return TRUE;
 }
 
-static void
+static gboolean
 on_cancelbutton (GtkWidget * widget, AskPassDialog * self)
 {
 	self->buf = "";
 	gtk_main_quit ();
+	return TRUE;
 }
 
 int
@@ -151,12 +154,14 @@ askpass(
 	GtkWidget *label;
 	GtkWidget *okbutton;
 	GtkWidget *cancelbutton;
+	char *ret;
 
 	self = g_new0(AskPassDialog, 1);
 	self->buf = buf;
 	self->buflen = buflen;
 	self->result = FALSE;
 	self->dialog = dialog = gtk_dialog_new();
+	ret = NULL;
 
 	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
@@ -201,10 +206,14 @@ askpass(
 	gtk_widget_grab_focus (entry);
 	gtk_widget_show (dialog);
 	gtk_main();
-
-	g_free(self);
+	
 	if (self->result) {
-		return strlen(buf);
+		ret = self->buf;
+	}
+	g_free(self);
+
+	if (ret != NULL) {
+		return strlen(ret);
 	}
 	return -1;
 }
