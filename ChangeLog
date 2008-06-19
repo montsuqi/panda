@@ -1,3 +1,8 @@
+2008-06-19  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/net.c:
+	SSLのパスフレーズ入力を組込み関数からのみ行うように変更した。環境変数指定の外部コマンドからの入力は廃止。
+
 2008-06-13  yusuke mihara  <mihara@netlab.jp>
 
 	* bd_component.c bd_config.c bootdialog.c dialogs.c:

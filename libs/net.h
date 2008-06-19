@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,6 +84,11 @@ extern	void		NetSetFD(NETFILE *fp, int fd);
 extern	void		InitNET(void);
 #define	NetGetFD(fp)	((fp)->fd)
 #ifdef	USE_SSL
+extern	void 		SetAskPassFunction(
+						int (*func)(
+							char *buf, 
+							size_t buflen, 
+							const char *prompt));
 extern  char		*GetSSLErrorMessage(void);
 extern  char		*GetSSLWarningMessage(void);
 extern	NETFILE		*MakeSSL_Net(SSL_CTX *ctx, int fd);
