@@ -572,7 +572,9 @@ main(
 	}
 
 	InitNET();
+#ifdef	USE_SSL
 	SetAskPassFunction(askpass);
+#endif
 
     if (fDialog) {
 		do_run = show_boot_dialog() ;
