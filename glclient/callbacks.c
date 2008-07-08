@@ -417,6 +417,20 @@ selection_changed(
 	UpdateWidget((GtkWidget *)entry,user_data);
 }
 
+extern void
+fileentry_changed(
+	GtkWidget	*widget,
+	gpointer	user_data)
+{
+	GtkWidget	*fileentry;
+
+    fileentry = find_widget_ancestor(widget, GNOME_TYPE_FILE_ENTRY);
+    if (fileentry != NULL) {
+	  UpdateWidget(fileentry,user_data);
+	  UpdateWidget(widget,user_data);
+    }
+}
+
 extern	void
 click_column(
 	GtkWidget	*button,

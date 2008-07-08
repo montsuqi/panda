@@ -444,8 +444,6 @@ ENTER_FUNC;
 				gtk_object_set_data(GTK_OBJECT(widget), "recvobject", NULL);
 				subWidget = gnome_file_entry_gtk_entry(
 						                    GNOME_FILE_ENTRY(widget));
-				_UpdateWidget((GtkWidget *)widget,NULL);
-				_UpdateWidget((GtkWidget *)subWidget,NULL);
 			}
 		}
 	}
@@ -531,8 +529,6 @@ ENTER_FUNC;
 		}
 		subWidget = gnome_pixmap_entry_gtk_entry(
 						GNOME_PIXMAP_ENTRY(widget));
-		_UpdateWidget((GtkWidget *)widget,NULL);
-		_UpdateWidget((GtkWidget *)subWidget,NULL);
 	}
 LEAVE_FUNC;
 	return	(TRUE);
@@ -1932,7 +1928,6 @@ ENTER_FUNC;
 			RecvValue(fp,longname + strlen(name) + 1);
 		}
 	}
-	//_UpdateWidget(widget,NULL);
 LEAVE_FUNC;
 	return	(TRUE);
 }
