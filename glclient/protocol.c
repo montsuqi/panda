@@ -829,6 +829,7 @@ ENTER_FUNC;
 	if		(  ( node = g_hash_table_lookup(WindowTable,window) )  !=  NULL  ) {
 		ResetTimer(node->window);
 	}
+	SetTitle(node->window, TITLE(glSession), node->title);
 	fInRecv = FALSE;
 LEAVE_FUNC;
 	return	(fCancel);

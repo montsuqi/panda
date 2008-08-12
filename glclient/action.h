@@ -45,5 +45,6 @@ extern  void 		ResetScrolledWindow(GtkWidget *widget, gpointer user_data);
 extern	void		StopTimer(GtkWindow *window);
 extern	gpointer	*GetObjectData(GtkWidget	*widget, char *object_key);
 extern	void		SetObjectData(GtkWidget	*widget, char *object_key, gpointer	*data);
+extern	void		SetTitle(GtkWindow	*window, char *session_title, char *window_title);
 
 #endif

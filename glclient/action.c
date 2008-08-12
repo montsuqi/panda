@@ -335,8 +335,9 @@ ENTER_FUNC;
 		DestroyWindow(wname);
 		node = New(XML_Node);
 		node->xml = xml;
-		node->window = GTK_WINDOW(glade_xml_get_widget(node->xml, wname));
 		node->name = StrDup(wname);
+		node->window = GTK_WINDOW(glade_xml_get_widget(node->xml, node->name));
+		node->title = StrDup(GTK_WINDOW (node->window)->title);
 		node->UpdateWidget = NewNameHash();
 		glade_xml_signal_autoconnect(node->xml);
 		g_hash_table_insert(WindowTable,node->name,node);
@@ -486,4 +487,20 @@ SetObjectData(GtkWidget	*widget,
 	}
 	memcpy(object, data, sizeof(data));
 	gtk_object_set_data(GTK_OBJECT(widget), object_key, object);
+}
+
+extern void
+SetTitle(
+	GtkWindow	*window,
+	char *session_title,
+	char *window_title)
+{
+	char		buff[SIZE_BUFF];
+
+	if ( (session_title != NULL) && (strlen(session_title) != 0)) {
+		snprintf(buff, sizeof(buff), "%s - %s", session_title, window_title);
+	} else {
+		snprintf(buff, sizeof(buff), "%s", window_title);
+	}
+	gtk_window_set_title (window, buff);
 }

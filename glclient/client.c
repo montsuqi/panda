@@ -95,6 +95,7 @@ InitApplications(void)
 {
 	glSession = New(Session);
 	FPCOMM(glSession) = NULL;
+	TITLE(glSession) = NULL;
 #ifdef	USE_SSL
 	CTX(glSession) = NULL;
 #ifdef  USE_PKCS11
@@ -242,6 +243,16 @@ mkdir_p(
 	while (p);
 
 	g_free (fn);
+}
+
+extern	void
+SetSessionTitle(
+		char *title)
+{
+	if ( TITLE(glSession) ) {
+		xfree(TITLE(glSession));
+	}
+	TITLE(glSession) = StrDup(title);
 }
 
 extern  void

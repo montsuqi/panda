@@ -1182,9 +1182,7 @@ ENTER_FUNC;
 			}
 		}
 	}
-	fInRecv = FALSE;
-	UpdateWidget((GtkWidget *)widget,NULL);
-	fInRecv = TRUE;
+	_UpdateWidget((GtkWidget *)widget,NULL);
 LEAVE_FUNC;
 	return	(TRUE);
 }
@@ -1664,6 +1662,44 @@ LEAVE_FUNC;
 }
 
 static	Bool
+RecvWindow(
+	GtkWidget	*widget,
+	NETFILE		*fp)
+{
+	char	name[SIZE_BUFF]
+	,		buff[SIZE_BUFF];
+	int		nitem
+	,		i;
+	int		state;
+	char	*longname;
+
+ENTER_FUNC;
+	DataType = GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+	nitem = GL_RecvInt(fp);
+	longname = WidgetName + strlen(WidgetName);
+	for	( i = 0 ; i < nitem ; i ++ ) {
+		GL_RecvName(fp, sizeof(name), name);
+		if		(  !stricmp(name,"state")  ) {
+			RecvIntegerData(fp,&state);
+			SetState(widget,(GtkStateType)state);
+		} else
+		if		(  !stricmp(name,"style")  ) {
+			RecvStringData(fp,buff,SIZE_BUFF);
+			gtk_widget_set_style(widget,GetStyle(buff));
+		} else
+		if		(  !stricmp(name,"title")  ) {
+			RecvStringData(fp,buff,SIZE_BUFF);
+			SetSessionTitle(buff);
+		} else {
+			sprintf(longname,".%s",name);
+			RecvValue(fp,longname + strlen(name) + 1);
+		}
+	}
+LEAVE_FUNC;
+	return	(TRUE);
+}
+
+static	Bool
 RecvFrame(
 	GtkWidget	*widget,
 	NETFILE		*fp)
@@ -1943,6 +1979,7 @@ InitWidgetOperations(void)
 	AddClass(GTK_PANDA_TYPE_TIMER,RecvTimer,SendTimer);
 	AddClass(GTK_PANDA_TYPE_HTML,RecvURI,NULL);
 #endif
+	AddClass(GTK_TYPE_WINDOW,RecvWindow,NULL);
 	AddClass(GTK_TYPE_ENTRY,RecvEntry,SendEntry);
 	AddClass(GTK_TYPE_TEXT,RecvText,SendText);
 	AddClass(GTK_TYPE_LABEL,RecvLabel,NULL);
