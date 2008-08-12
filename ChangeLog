@@ -1,3 +1,7 @@
+2008-08-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/widgetOPS.c(RecvEntry): INSENSITIVE のときに表示位置を左詰めにした
+
 2008-06-19  yusuke mihara  <mihara@netlab.jp>
 
 	* libs/net.c:

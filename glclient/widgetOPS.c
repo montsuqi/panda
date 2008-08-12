@@ -225,6 +225,9 @@ ENTER_FUNC;
 				gtk_entry_set_text(GTK_ENTRY(widget),buff);
 			}
 		}
+		if		(  !GTK_WIDGET_IS_SENSITIVE  (widget) ) {
+			gtk_editable_set_position (GTK_EDITABLE(widget), 0);
+		}
 	}
 LEAVE_FUNC;
 	return	(TRUE);
