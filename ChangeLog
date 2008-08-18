@@ -1,3 +1,6 @@
+2008-08-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* glserver/pstopng: 画像の大きさを2倍にして antialias を掛けるようにした
 2008-08-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/widgetOPS.c(RecvEntry): INSENSITIVE のときに表示位置を左詰めにした
