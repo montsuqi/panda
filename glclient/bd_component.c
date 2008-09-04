@@ -61,6 +61,8 @@ new_config_section(
   bd_config_section_append_value (section, "gtkrc", DEFAULT_GTKRC);
   bd_config_section_append_value (section, "mlog",  DEFAULT_MLOG_STR);
   bd_config_section_append_value (section, "keybuff", DEFAULT_KEYBUFF_STR);
+  bd_config_section_append_value (section, "timer", DEFAULT_TIMER_STR);
+  bd_config_section_append_value (section, "timerperiod", DEFAULT_TIMERPERIOD);
   bd_config_section_append_value (section, "user", DEFAULT_USER);
   bd_config_section_append_value (section, "password", DEFAULT_PASSWORD);
   bd_config_section_append_value (section, "savepassword", DEFAULT_SAVEPASSWORD_STR);
@@ -263,11 +265,12 @@ bd_component_set_value (
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
     bd_config_section_get_bool (section, "keybuff"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
-    bd_config_section_get_bool_default (section, "timer", TRUE));
+    bd_config_section_get_bool_default (section, "timer", DEFAULT_TIMER));
   gtk_entry_set_text (GTK_ENTRY (self->timerperiod),
-    bd_config_section_get_string_default (section, "timerperiod", "1000"));
+    bd_config_section_get_string_default (section, "timerperiod", 
+      DEFAULT_TIMERPERIOD));
   gtk_widget_set_sensitive(self->timer_container, 
-    bd_config_section_get_bool_default (section, "timer", TRUE));  
+    bd_config_section_get_bool_default (section, "timer", DEFAULT_TIMER));  
 }
 
 void

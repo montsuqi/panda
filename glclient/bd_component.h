@@ -25,6 +25,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <glib.h>
 
 #define	DEFAULT_HOST 				"localhost"
@@ -39,9 +40,12 @@
 #define	DEFAULT_MLOG_STR 			"true"
 #define	DEFAULT_KEYBUFF 			FALSE
 #define	DEFAULT_KEYBUFF_STR 		"false"
-#define	DEFAULT_STYLE 				"/usr/share/panda-client/jma-receipt.rc"
+#define	DEFAULT_TIMER 				TRUE
+#define	DEFAULT_TIMER_STR 			"true"
+#define	DEFAULT_TIMERPERIOD 		"1000"
+#define	DEFAULT_STYLE 				""
 #define	DEFAULT_GTKRC 				""
-#define	DEFAULT_USER 				"user"
+#define	DEFAULT_USER 				(getenv("USER"))
 #define	DEFAULT_PASSWORD 			""
 #define	DEFAULT_SAVEPASSWORD 		FALSE
 #define	DEFAULT_SAVEPASSWORD_STR	"false"
