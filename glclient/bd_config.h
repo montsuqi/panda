@@ -32,8 +32,14 @@ extern  void    bd_config_section_inspect      (BDConfigSection *self,
 extern  gchar   *bd_config_section_get_name     (BDConfigSection *self);
 extern  gboolean    bd_config_section_get_bool     (BDConfigSection *self,
                                           gchar *name);
+extern  gboolean    bd_config_section_get_bool_default (BDConfigSection *self,
+                                          gchar *name,
+                                          gboolean bool);
 extern  gchar   *bd_config_section_get_string   (BDConfigSection *self,
                                           gchar *name);
+extern  gchar   *bd_config_section_get_string_default (BDConfigSection *self,
+                                          gchar *name,
+                                          gchar *str);
 extern  gboolean    bd_config_section_set_bool     (BDConfigSection *self,
                                           gchar *name,
                                           gboolean bool);

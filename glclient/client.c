@@ -371,8 +371,8 @@ load_config (
 		if (SavePass) {
 			Pass = bd_config_section_get_string (section, "password");
 		} 
-		fTimer = bd_config_section_get_bool (section, "timer");
-		TimerPeriod = bd_config_section_get_string (section, "timerperiod");
+		fTimer = bd_config_section_get_bool_default (section, "timer", TRUE);
+		TimerPeriod = bd_config_section_get_string_default (section, "timerperiod", "1000");
 #ifdef  USE_SSL
 		fSsl = bd_config_section_get_bool (section, "ssl");
 		CA_Path = bd_config_section_get_string (section, "CApath");

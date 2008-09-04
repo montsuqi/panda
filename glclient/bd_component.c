@@ -238,6 +238,7 @@ bd_component_set_value (
     bd_config_section_get_string (section, "cert"));
   gtk_entry_set_text (GTK_ENTRY (self->ciphers),
     bd_config_section_get_string (section, "ciphers"));
+
 #ifdef USE_PKCS11
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
     bd_config_section_get_bool (section, "pkcs11"));  
@@ -262,11 +263,11 @@ bd_component_set_value (
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
     bd_config_section_get_bool (section, "keybuff"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
-    bd_config_section_get_bool (section, "timer"));
+    bd_config_section_get_bool_default (section, "timer", TRUE));
   gtk_entry_set_text (GTK_ENTRY (self->timerperiod),
-    bd_config_section_get_string (section, "timerperiod"));
+    bd_config_section_get_string_default (section, "timerperiod", "1000"));
   gtk_widget_set_sensitive(self->timer_container, 
-    bd_config_section_get_bool (section, "timer"));  
+    bd_config_section_get_bool_default (section, "timer", TRUE));  
 }
 
 void

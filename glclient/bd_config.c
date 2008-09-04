@@ -186,6 +186,21 @@ bd_config_section_get_bool (BDConfigSection *self, gchar *name)
   }
 }
 
+extern  gboolean
+bd_config_section_get_bool_default (BDConfigSection *self, 
+  gchar *name,
+  gboolean bool)
+{
+  BDConfigValue *value;
+  
+  value = g_hash_table_lookup (self->values, name);
+  if (value){
+    return bd_config_value_to_bool (value);
+  } else {
+    return bool;
+  }
+}
+
 extern  gchar   *
 bd_config_section_get_string (BDConfigSection *self, gchar *name)
 {
@@ -196,6 +211,21 @@ bd_config_section_get_string (BDConfigSection *self, gchar *name)
     return bd_config_value_to_string (value);
   } else {
     return "";
+  }
+}
+
+extern  gchar   *
+bd_config_section_get_string_default (BDConfigSection *self, 
+  gchar *name,
+  gchar *str)
+{
+  BDConfigValue *value;
+  
+  value = (BDConfigValue *) g_hash_table_lookup (self->values, name);
+  if (value){
+    return bd_config_value_to_string (value);
+  } else {
+    return str;
   }
 }
 

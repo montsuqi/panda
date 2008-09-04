@@ -1,3 +1,8 @@
+2008-09-04  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/bd_component.c, bd_component.c, client.c:
+	タイマー設定をデフォルト有効にするようにした
+
 2008-08-18  Noboru Saitou  <noborus@netlab.jp>
 
 	* glserver/pstopng: 画像の大きさを2倍にして antialias を掛けるようにした
