@@ -498,7 +498,7 @@ SetTitle(
 	char		buff[SIZE_BUFF];
 
 	if ( (session_title != NULL) && (strlen(session_title) != 0)) {
-		snprintf(buff, sizeof(buff), "%s - %s", session_title, window_title);
+		snprintf(buff, sizeof(buff), "%s - %s", window_title, session_title);
 	} else {
 		snprintf(buff, sizeof(buff), "%s", window_title);
 	}
