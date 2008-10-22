@@ -139,8 +139,13 @@ open_file_selection(GtkWidget *w, gpointer entry)
 {
   file_selection_data *data;
   GtkFileSelection *filew = NULL;
+  gchar *default_path;
 
   filew = GTK_FILE_SELECTION(gtk_file_selection_new(""));
+  default_path = gtk_entry_get_text (GTK_ENTRY (entry));
+  if ( strlen(default_path) > 0 ){ 
+    gtk_file_selection_set_filename(filew, default_path);
+  }
   data = g_malloc(sizeof(file_selection_data));
   data->entry = entry;
   data->filesel = GTK_WIDGET(filew);

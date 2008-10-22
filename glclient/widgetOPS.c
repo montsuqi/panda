@@ -222,10 +222,13 @@ ENTER_FUNC;
 			} else {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				RegistValue(widget,name,OPT_TYPE_NULL,NULL);
-				gtk_entry_set_text(GTK_ENTRY(widget),buff);
+				if ( strcmp (gtk_entry_get_text(GTK_ENTRY(widget)), buff) ){
+					gtk_entry_set_text(GTK_ENTRY(widget),buff);
+				}
 			}
 		}
-		if		(  !GTK_WIDGET_IS_SENSITIVE  (widget) ) {
+		if ( !GTK_WIDGET_HAS_FOCUS(widget)
+			 && (gtk_editable_get_position (GTK_EDITABLE(widget)) != 0) ) {
 			gtk_editable_set_position (GTK_EDITABLE(widget), 0);
 		}
 	}

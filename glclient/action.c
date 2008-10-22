@@ -120,13 +120,16 @@ GetWindowName(
 {
 	GtkWidget	*window;
 	static char	wname[SIZE_LONGNAME];
+	char *p;
 
 ENTER_FUNC;
-	window = GetWindow(widget);
 #if	1	/*	This logic is escape code for GTK bug.	*/
 	strcpy(wname,glade_get_widget_long_name(widget));
-	*(strchr(wname,'.')) = 0;
+	if ((p = strchr(wname,'.')) != NULL) {
+		*p = 0;
+	}
 #else
+	window = GetWindow(widget);
 	strcpy(wname,gtk_widget_get_name(window));
 #endif
 LEAVE_FUNC;
@@ -497,7 +500,7 @@ SetTitle(
 {
 	char		buff[SIZE_BUFF];
 
-	if ( (session_title != NULL) && (strlen(session_title) != 0)) {
+	if ( strlen(session_title) > 0 ) {
 		snprintf(buff, sizeof(buff), "%s - %s", window_title, session_title);
 	} else {
 		snprintf(buff, sizeof(buff), "%s", window_title);

@@ -95,7 +95,7 @@ InitApplications(void)
 {
 	glSession = New(Session);
 	FPCOMM(glSession) = NULL;
-	TITLE(glSession) = NULL;
+	TITLE(glSession) = StrDup("");
 #ifdef	USE_SSL
 	CTX(glSession) = NULL;
 #ifdef  USE_PKCS11
