@@ -175,7 +175,7 @@ ClassCompare(
 	gconstpointer	s1,
 	gconstpointer	s2)
 {
-	return	(gtk_type_is_a((GtkType)(long)s1,(GtkType)(long)s2));
+	return	((long)s1 == (long)s2);
 }
 
 static	void
