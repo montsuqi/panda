@@ -411,62 +411,92 @@ GL_RecvDataType(
 	return	(c);
 }
 
-static	char	*
-ExpandFile(
-	char	*cname)
+static void
+ReadFile(char *fname)
 {
-	static	char	fname[SIZE_LONGNAME+1];
+	FILE	*fpf;
+	struct	stat	sb;
+
+	if		(  ( fpf = Fopen(fname,"r") )  !=  NULL  ) {
+		fstat(fileno(fpf),&sb);
+		if (sb.st_size > 0) {
+			LBS_ReserveSize(Buff,sb.st_size,FALSE);
+			fread(LBS_Body(Buff),sb.st_size,1,fpf);
+		} else {
+			LBS_ReserveSize(Buff,0,FALSE);
+		}
+		fclose(fpf);
+	} else {
+		dbgprintf("could not open for read: %s\n", fname);
+		LBS_ReserveSize(Buff,0,FALSE);
+	}
+}
+
+static	void
+SendExpandObject(
+	NETFILE	*fp,
+	char	*cname,
+	Bool	fNetwork)
+{
+	char	fname[SIZE_LONGNAME+1];
 #ifdef	HAVE_LIBMAGIC
 	char	buff[SIZE_LONGNAME+1];
 	char	*PSTOPNGPath = BIN_DIR "/pstopng";
-	struct	stat	sb;
-	time_t	ps_mtime
-		,	tmp_mtime;
 	const	char	*type;
-	FILE	*fpf;
 #endif
 
 ENTER_FUNC;
 	strcpy(fname,cname);
 #ifdef	HAVE_LIBMAGIC
-	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  ) {
-		if		(  !strlcmp(type,"PostScript")  ) {
-			if	(  !fFeaturePS  ) {
-				if		(	(  stat(cname,&sb)  ==  0   )
-						&&	(  S_ISREG(sb.st_mode)      ) )	{
-					ps_mtime = sb.st_mtime;
-				} else {
-					ps_mtime = 0;
-				}
-				if		(  fFeaturePDF ) {
-					sprintf(fname,"%s.pdf",cname); 
-				} else {
-					sprintf(fname,"%s.png",cname);
-				}
-				if		(	(  stat(fname,&sb)  ==  0  )
-						&&	(  S_ISREG(sb.st_mode)   ) ) {
-					tmp_mtime = sb.st_mtime;
-				} else {
-					tmp_mtime = 0;
-					if	(  ( fpf = Fopen(fname,"w") )  !=  NULL  ) {
-						fchmod(fileno(fpf), 0600);
-						fclose(fpf);	
-					}
-				}
-				if		(  ps_mtime  >  tmp_mtime  ) {
-					if		(  fFeaturePDF ) {
-						sprintf(buff,"ps2pdf13 %s %s", cname,fname);
-					} else {
-						sprintf(buff,"%s %s > %s",PSTOPNGPath, cname,fname);
-					}
-					system(buff);
-				}
-			}
-        }
+	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  &&
+				!strlcmp(type,"PostScript") ) {
+		switch (TermExpandType) {
+		case EXPAND_PNG:
+			sprintf(fname,"%s.png", cname);
+			sprintf(buff,"%s %s > %s",PSTOPNGPath, cname, fname);
+			system(buff);
+			ReadFile(fname);
+			GL_SendLBS(fp,Buff,fNetwork);
+			break;
+		case EXPAND_PDF:
+			sprintf(fname,"%s.pdf", cname);
+			sprintf(buff,"ps2pdf13 %s %s", cname, fname);
+			system(buff);
+			ReadFile(fname);
+			GL_SendLBS(fp,Buff,fNetwork);
+			break;
+		case EXPAND_PS:
+			ReadFile(cname);
+			GL_SendLBS(fp,Buff,fNetwork);
+			break;
+		case EXPAND_PNGPDF:
+			sprintf(fname,"%s.png", cname);
+			sprintf(buff,"%s %s > %s",PSTOPNGPath, cname, fname);
+			system(buff);
+			ReadFile(fname);
+			GL_SendLBS(fp,Buff,fNetwork);
+
+			sprintf(fname,"%s.pdf", cname);
+			sprintf(buff,"ps2pdf13 %s %s", cname, fname);
+			system(buff);
+
+			GL_SendDataType(fp,GL_TYPE_OBJECT,fNetwork);
+			ReadFile(fname);
+			GL_SendLBS(fp,Buff,fNetwork);
+			break;
+		}
+	} else {
+		LBS_ReserveSize(Buff,0,FALSE);
+		if (TermExpandType == EXPAND_PNGPDF) {
+			GL_SendLBS(fp,Buff,fNetwork);
+			GL_SendDataType(fp,GL_TYPE_OBJECT,fNetwork);
+			GL_SendLBS(fp,Buff,fNetwork);
+		} else {
+			GL_SendLBS(fp,Buff,fNetwork);
+		}
 	}
 #endif
 LEAVE_FUNC;
-	return	(fname);
 }
 
 /*
@@ -482,9 +512,6 @@ GL_SendValue(
 	Bool		fNetwork)
 {
 	int		i;
-	struct	stat	sb;
-	FILE	*fpf;
-	char	*fname;
 
 ENTER_FUNC;
 	ValueIsNotUpdate(value);
@@ -517,17 +544,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_OBJECT:
 		if		(  fBlob  ) {
 			if		(  fExpand  ) {
-				fname = ExpandFile(BlobCacheFileName(value));
-				if		(  ( fpf = Fopen(fname,"r") )  !=  NULL  ) {
-					fstat(fileno(fpf),&sb);
-					LBS_ReserveSize(Buff,sb.st_size,FALSE);
-					fread(LBS_Body(Buff),sb.st_size,1,fpf);
-					fclose(fpf);
-				} else {
-					dbgprintf("could not open for read: %s\n", fname);
-					LBS_ReserveSize(Buff,0,FALSE);
-				}
-				GL_SendLBS(fp,Buff,fNetwork);
+				SendExpandObject(fp, BlobCacheFileName(value), fNetwork);
 			} else {
 				GL_SendObject(fp,ValueObjectId(value),fNetwork);
 			}

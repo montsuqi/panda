@@ -376,6 +376,7 @@ CheckFeature(
 		,	*n;
 
 	TermFeature = FEATURE_NULL;
+	TermExpandType = EXPAND_PNG;
 	if		(  strlcmp(ver,"1.2")    ==  0  ) {
 		TermFeature |= FEATURE_CORE;
 	} else
@@ -406,11 +407,17 @@ CheckFeature(
 				if		(  !strlicmp(p,"no")  ) {
 					TermFeature |= FEATURE_NETWORK;
 				}
+				if		(  !strlicmp(p,"negotiation")  ) {
+					TermFeature |= FEATURE_NEGO;
+				}
 				if		(  !strlicmp(p,"ps")  ) {
-					TermFeature |= FEATURE_PS;
+					TermExpandType = EXPAND_PS;
 				}
 				if		(  !strlicmp(p,"pdf")  ) {
-					TermFeature |= FEATURE_PDF;
+					TermExpandType = EXPAND_PDF;
+				}
+				if		(  !strlicmp(p,"pngpdf")  ) {
+					TermExpandType = EXPAND_PNGPDF;
 				}
 				p = n;
 			}
@@ -422,9 +429,8 @@ CheckFeature(
 	printf("blob      = %s\n",fFeatureBlob ? "YES" : "NO");
 	printf("expand    = %s\n",fFeatureExpand ? "YES" : "NO");
 	printf("network   = %s\n",fFeatureNetwork ? "YES" : "NO");
-	printf("ps        = %s\n",fFeaturePS ? "YES" : "NO");
+	printf("network   = %s\n",fFeatureNego ? "YES" : "NO");
 	printf("old       = %s\n",fFeatureOld ? "YES" : "NO");
-	printf("pdf       = %s\n",fFeaturePDF ? "YES" : "NO");
 #endif
 }
 
@@ -467,7 +473,14 @@ ENTER_FUNC;
 			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 		} else {
-			GL_SendPacketClass(fpComm,GL_OK,fFeatureNetwork);
+			if (fFeatureNego) {
+				sprintf(ver,"%s.%02d", PACKAGE_VERSION, 0);
+				GL_SendPacketClass(fpComm,GL_ServerVersion,fFeatureNetwork);
+				GL_SendString(fpComm, ver,fFeatureNetwork);
+				ON_IO_ERROR(fpComm,badio);
+			} else {
+				GL_SendPacketClass(fpComm,GL_OK,fFeatureNetwork);
+			}
 			ON_IO_ERROR(fpComm,badio);
 			CheckScreens(fpComm,scr);
 			rc = TRUE;

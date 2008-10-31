@@ -1,3 +1,8 @@
+2008-10-31  yusuke mihara  <mihara@netlab.jp>
+
+	* glserver/server.c, include/glterm.h, libs/glcomm.c, libs/glcomm.h: monsiajのプレビューウィジェットにpngとPDFを渡すように変更した。
+	バージョン文字列に"negotiation"と"pngpdf"を追加した。クライアントが"negotiation"を指定した場合、認証結果GL_OKを送る代わりに、GL_ServerVersionを送信する。 
+
 2008-09-04  yusuke mihara  <mihara@netlab.jp>
 
 	* glclient/bd_component.c, bd_component.c, client.c:

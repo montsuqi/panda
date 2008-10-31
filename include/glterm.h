@@ -51,6 +51,7 @@
 #define	GL_Name						(PacketClass)0x0B
 #define	GL_Session					(PacketClass)0x0C
 #define	GL_RedirectName				(PacketClass)0x0D
+#define	GL_ServerVersion			(PacketClass)0x0E
 
 #define	GL_OK						(PacketClass)0x80
 #define	GL_END						(PacketClass)0x81
