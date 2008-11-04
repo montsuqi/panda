@@ -279,24 +279,6 @@ LEAVE_FUNC;
 }
 
 #ifdef	USE_PANDA
-static void
-LoadPS(
-	GtkWidget	*widget,
-    LargeByteString *binary)
-{
-    FILE *file;
-    gchar *tmpname;
-
-ENTER_FUNC;		
-	tmpname = NewTempname();
-	file = CreateTempfile(tmpname);
-	fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
-	fclose(file);
-	gtk_panda_ps_load(GTK_PANDA_PS(widget), tmpname);
-	unlink(tmpname);
-	g_free(tmpname);
-LEAVE_FUNC;
-}
 
 static	Bool
 RecvPS(
@@ -315,7 +297,8 @@ ENTER_FUNC;
 			GL_RecvName(fp, sizeof(name), name);
 			binary = NewLBS();
 			RecvBinaryData(fp, binary);
-			LoadPS(widget, binary);
+			gtk_panda_ps_set(GTK_PANDA_PS(widget), 
+				LBS_Size(binary), LBS_Body(binary));
 			FreeLBS(binary);
 		}
 	}
