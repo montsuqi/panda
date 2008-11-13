@@ -1,3 +1,7 @@
+2008-11-13  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/glcomm.c: "pngpdf"を一旦廃止。フラグ定数のみ残し再検討する。
+
 2008-11-04  yusuke mihara  <mihara@netlab.jp>
 
 	* glclient/widgetOPS.c: gtk_panda_ps_loadをgtk_panda_ps_setに変更した。

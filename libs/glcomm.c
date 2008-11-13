@@ -469,31 +469,14 @@ ENTER_FUNC;
 			ReadFile(cname);
 			GL_SendLBS(fp,Buff,fNetwork);
 			break;
-		case EXPAND_PNGPDF:
-			sprintf(fname,"%s.png", cname);
-			sprintf(buff,"%s %s > %s",PSTOPNGPath, cname, fname);
-			system(buff);
-			ReadFile(fname);
-			GL_SendLBS(fp,Buff,fNetwork);
-
-			sprintf(fname,"%s.pdf", cname);
-			sprintf(buff,"ps2pdf13 %s %s", cname, fname);
-			system(buff);
-
-			GL_SendDataType(fp,GL_TYPE_OBJECT,fNetwork);
-			ReadFile(fname);
+		default:
+			ReadFile(cname);
 			GL_SendLBS(fp,Buff,fNetwork);
 			break;
 		}
 	} else {
-		LBS_ReserveSize(Buff,0,FALSE);
-		if (TermExpandType == EXPAND_PNGPDF) {
-			GL_SendLBS(fp,Buff,fNetwork);
-			GL_SendDataType(fp,GL_TYPE_OBJECT,fNetwork);
-			GL_SendLBS(fp,Buff,fNetwork);
-		} else {
-			GL_SendLBS(fp,Buff,fNetwork);
-		}
+		ReadFile(cname);
+		GL_SendLBS(fp,Buff,fNetwork);
 	}
 #endif
 LEAVE_FUNC;
