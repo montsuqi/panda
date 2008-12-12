@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Noboru Saitou & JMA (Japan Medical Association).
+ * Copyright (C) 1998-1999 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +18,21 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_FILEENTRY_H
-#define	_INC_FILEENTRY_H
+#ifndef	_WIDGET_OPS_H
+#define	_WIDGET_OPS_H
 
-#ifdef	USE_GNOME
-extern void browse_clicked(GnomeFileEntry *fentry, gpointer data);
+#include	<glade/glade.h>
+#include	"marshaller.h"
+
+#undef	GLOBAL
+#ifdef	_PROTOCOL_C
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
 #endif
+
+extern  void		UpdateWindow(char *windowName);
+extern	void		GetWidgetData(WidgetData *data);
+extern	WidgetType	GetWidgetType(char *wname, char *name);
+
 #endif

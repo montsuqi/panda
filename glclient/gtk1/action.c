@@ -34,21 +34,18 @@
 #include	<sys/stat.h>
 #include    <unistd.h>
 #include	<sys/time.h>
-#ifdef USE_GNOME
-#    include <gnome.h>
-#else
-#    include <gtk/gtk.h>
-#endif
-#ifdef	USE_PANDA
+#include 	<gnome.h>
 #include	<gtkpanda/gtkpanda.h>
-#endif
 
 #include	"types.h"
 #include	"glclient.h"
 #include	"glterm.h"
-#include	"action.h"
 #include	"message.h"
 #include	"debug.h"
+#include	"marshaller.h"
+#define		_ACTION_C
+#include	"action.h"
+#include	"queue.h"
 
 static struct changed_hander {
 	GtkObject       *object;
@@ -120,44 +117,17 @@ GetWindowName(
 {
 	GtkWidget	*window;
 	static char	wname[SIZE_LONGNAME];
-	char *p;
 
 ENTER_FUNC;
+	window = GetWindow(widget);
 #if	1	/*	This logic is escape code for GTK bug.	*/
 	strcpy(wname,glade_get_widget_long_name(widget));
-	if ((p = strchr(wname,'.')) != NULL) {
-		*p = 0;
-	}
+	*(strchr(wname,'.')) = 0;
 #else
-	window = GetWindow(widget);
 	strcpy(wname,gtk_widget_get_name(window));
 #endif
 LEAVE_FUNC;
 	return (wname);
-}
-
-static	void
-ClearWindowData(
-	char		*wname,
-	XML_Node	*node,
-	gpointer	user_data)
-{
-ENTER_FUNC;
-	if		(  node->UpdateWidget  !=  NULL  ) { 
-		g_hash_table_destroy(node->UpdateWidget);
-	}
-	node->UpdateWidget = NewNameHash();
-LEAVE_FUNC;
-}
-
-extern	void
-ClearWindowTable(void)
-{
-ENTER_FUNC;
-	if		(  WindowTable  !=  NULL  ) {
-		g_hash_table_foreach(WindowTable,(GHFunc)ClearWindowData,NULL);
-	}
-LEAVE_FUNC;
 }
 
 static	gint
@@ -216,14 +186,14 @@ _ResetTimer(
 }
 
 extern	void
-_UpdateWidget(
-	GtkWidget	*widget,
-	void		*user_data)
+_AddChangedWidget(
+	GtkWidget	*widget)
 {
-	const	char	*name;
-	char	*wname;
-	XML_Node	*node;
+	const char	*name;
+	char		*wname;
+	char		*key;
 	GtkWidget	*window;
+	WindowData	*wdata;
 
 ENTER_FUNC;
 	window = gtk_widget_get_toplevel(widget);
@@ -232,21 +202,21 @@ ENTER_FUNC;
 	}
 	name = glade_get_widget_long_name(widget);
 	wname = gtk_widget_get_name(window);
-	if		( ( node = g_hash_table_lookup(WindowTable,wname) )  !=  NULL  ) {
-		if	(  g_hash_table_lookup(node->UpdateWidget,name)      ==  NULL  ) {
-			g_hash_table_insert(node->UpdateWidget,(char *)name,widget);
+	if ((wdata = g_hash_table_lookup(WindowTable,wname)) != NULL) {
+		if (g_hash_table_lookup(wdata->ChangedWidgetTable, name) == NULL) {
+			key = strdup(name);
+			g_hash_table_insert(wdata->ChangedWidgetTable, key, key);
 		}
 	}
 LEAVE_FUNC;
 }
 
 extern	void
-UpdateWidget(
-	GtkWidget	*widget,
-	void		*user_data)
+AddChangedWidget(
+	GtkWidget	*widget)
 {
 	if		(  !fInRecv  ) {
-		_UpdateWidget(widget,user_data);
+		_AddChangedWidget(widget);
 	}
 }
 
@@ -322,114 +292,99 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	XML_Node	*
-CreateNewNode(
+static	WindowData	*
+CreateWindowData(
 	char	*wname)
 {
-	char	*fname;
+	char		*fname;
 	GladeXML	*xml;
-	XML_Node	*node;
+	WindowData	*wdata;
+	GtkWidget	*window;
+
 ENTER_FUNC;
 	fname = CacheFileName(wname);
 	xml = glade_xml_new(fname, NULL);
 	if ( xml == NULL ) {
-		node = NULL;
+		wdata = NULL;
 	} else {
-		DestroyWindow(wname);
-		node = New(XML_Node);
-		node->xml = xml;
-		node->name = StrDup(wname);
-		node->window = GTK_WINDOW(glade_xml_get_widget(node->xml, node->name));
-		node->title = StrDup(GTK_WINDOW (node->window)->title);
-		node->UpdateWidget = NewNameHash();
-		glade_xml_signal_autoconnect(node->xml);
-		g_hash_table_insert(WindowTable,node->name,node);
+		window = glade_xml_get_widget_by_long_name(xml, wname);
+		if (window == NULL) {
+			Warning("Window %s not found in %s", wname, fname);
+			return NULL;
+		}
+		wdata = New(WindowData);
+		wdata->xml = xml;
+		wdata->name = StrDup(wname);
+		wdata->title = StrDup(GTK_WINDOW (window)->title);
+		wdata->ChangedWidgetTable = NewNameHash();
+		wdata->UpdateWidgetQueue = NewQueue();
+		glade_xml_signal_autoconnect(xml);
+		g_hash_table_insert(WindowTable,strdup(wname),wdata);
 	}
 LEAVE_FUNC;
-	return (node);
+	return (wdata);
 }
 
-extern	XML_Node	*
+static void
+SetTitle(GtkWidget	*window,
+	char *window_title)
+{
+	char		buff[SIZE_BUFF];
+
+	if ( glSession->title != NULL && strlen(glSession->title) > 0 ) {
+		snprintf(buff, sizeof(buff), "%s - %s", window_title, glSession->title);
+	} else {
+		snprintf(buff, sizeof(buff), "%s", window_title);
+	}
+	gtk_window_set_title (GTK_WINDOW(window), buff);
+}
+
+extern	void
 ShowWindow(
 	char	*wname,
 	byte	type)
 {
-	XML_Node	*node;
+	WindowData	*data;
 	GtkWidget	*widget;
+	GtkWidget	*window;
+
 ENTER_FUNC;
 	widget = NULL;
 	dbgprintf("ShowWindow [%s][%d]",wname,type);
-
-	if		(  ( node = g_hash_table_lookup(WindowTable,wname) )  ==  NULL  ) {
-		if		(	(  type  ==  SCREEN_NEW_WINDOW      )
-				||	(  type  ==  SCREEN_CURRENT_WINDOW  ) ){
-			node = CreateNewNode(wname);
+	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
+		if ((type == SCREEN_NEW_WINDOW) ||
+			(type == SCREEN_CURRENT_WINDOW)) {
+			data = CreateWindowData(wname);
 		}
 	}
-
-	if		(  node  !=  NULL  ) {
-		switch	(type) {
-		  case	SCREEN_NEW_WINDOW:
-		  case	SCREEN_CURRENT_WINDOW:
-			gtk_widget_set_sensitive (GTK_WIDGET(node->window), TRUE);
-			gtk_widget_show_all(GTK_WIDGET(node->window));
-			break;
-		  case	SCREEN_CLOSE_WINDOW:
-			StopTimer(node->window);
-			if (node->window->focus_widget != NULL ){
-				widget = GTK_WIDGET(node->window->focus_widget);
-			}
-			gtk_widget_set_sensitive (GTK_WIDGET(node->window), FALSE);
-			if ((widget != NULL) && GTK_IS_BUTTON (widget)){
-				gtk_button_released (GTK_BUTTON(widget));
-			}
-			gtk_widget_hide_all(GTK_WIDGET(node->window));
-			/* fall through */
-		  default:
-			node = NULL;
-			break;
-		}
+	if (data == NULL) {
+		// FIXME sometimes comes here.
+		return;
 	}
-
+	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
+	g_return_if_fail(window != NULL);
+	switch	(type) {
+	  case	SCREEN_NEW_WINDOW:
+	  case	SCREEN_CURRENT_WINDOW:
+        SetTitle(window, data->title);
+		gtk_widget_set_sensitive (window, TRUE);
+		gtk_widget_show_all(window);
+		break;
+	  case	SCREEN_CLOSE_WINDOW:
+		StopTimer(GTK_WINDOW(window));
+		if (GTK_WINDOW(window)->focus_widget != NULL ){
+			widget = GTK_WIDGET(GTK_WINDOW(window)->focus_widget);
+		}
+		gtk_widget_set_sensitive (window, FALSE);
+		if ((widget != NULL) && GTK_IS_BUTTON (widget)){
+			gtk_button_released (GTK_BUTTON(widget));
+		}
+		gtk_widget_hide_all(window);
+		/* fall through */
+	  default:
+		break;
+	}
 LEAVE_FUNC;
-	return	(node);
-}
-
-extern	void
-DestroyWindow(
-	char	*sname)
-{
-	XML_Node	*node;
-	char		*key;
-	gpointer	n
-	,			k;
-
-	if		(  g_hash_table_lookup_extended(WindowTable,sname,&n,&k)  )	{
-		node = (XML_Node *)n;
-		key = (char *)k;
-		gtk_widget_destroy(GTK_WIDGET(node->window));
-		gtk_object_destroy((GtkObject *)node->xml);
-		if		(  node->UpdateWidget  !=  NULL  ) {
-			g_hash_table_destroy(node->UpdateWidget);
-		}
-		xfree(node->name);
-		xfree(node);
-		xfree(key);
-		g_hash_table_remove(WindowTable,sname);
-	}
-}
-
-static void
-destroy_window_one(char *wname, XML_Node *node, gpointer user_data)
-{
-    gtk_widget_destroy(GTK_WIDGET(node->window));
-    node->window = NULL;
-}
-
-extern void
-DestroyWindowAll()
-{
-    g_hash_table_foreach(WindowTable, (GHFunc)destroy_window_one, NULL);
 }
 
 static	GdkCursor *Busycursor;
@@ -478,7 +433,7 @@ GetObjectData(GtkWidget	*widget,
 	return gtk_object_get_data(GTK_OBJECT(widget), object_key);
 }
 
-extern void
+extern	void
 SetObjectData(GtkWidget	*widget,
 			  char *object_key,
 			  gpointer	*data)
@@ -492,18 +447,64 @@ SetObjectData(GtkWidget	*widget,
 	gtk_object_set_data(GTK_OBJECT(widget), object_key, object);
 }
 
-extern void
-SetTitle(
-	GtkWindow	*window,
-	char *session_title,
-	char *window_title)
-{
-	char		buff[SIZE_BUFF];
 
-	if ( strlen(session_title) > 0 ) {
-		snprintf(buff, sizeof(buff), "%s - %s", window_title, session_title);
-	} else {
-		snprintf(buff, sizeof(buff), "%s", window_title);
+extern	GtkWidget*
+GetWidgetByLongName(char *name)
+{
+	WidgetData	*data;
+	GtkWidget	*widget;
+	
+	widget = NULL;
+	data = g_hash_table_lookup(WidgetDataTable, name);
+	if (data != NULL) {
+	    widget = glade_xml_get_widget_by_long_name(
+			(GladeXML *)data->window->xml, name);
 	}
-	gtk_window_set_title (window, buff);
+	return widget;
+}
+
+extern	GtkWidget*
+GetWidgetByName(char *name)
+{
+	WindowData	*wdata;
+	GtkWidget	*widget;
+	
+	widget = NULL;
+	wdata = g_hash_table_lookup(WindowTable,ThisWindowName);
+	if (wdata != NULL && wdata->xml != NULL) {
+	    widget = glade_xml_get_widget((GladeXML *)wdata->xml, name);
+	}
+	return widget;
+}
+
+extern	GtkWidget*
+GetWidgetByWindowNameAndLongName(char *windowName,
+	char *widgetName)
+{
+	WindowData	*wdata;
+	GtkWidget	*widget;
+	
+	widget = NULL;
+	wdata = g_hash_table_lookup(WindowTable,windowName);
+	if (wdata != NULL && wdata->xml != NULL) {
+	    widget = glade_xml_get_widget_by_long_name(
+			(GladeXML *)wdata->xml, widgetName);
+	}
+	return widget;
+}
+
+extern	GtkWidget*
+GetWidgetByWindowNameAndName(char *windowName,
+	char *widgetName)
+{
+	WindowData	*wdata;
+	GtkWidget	*widget;
+	
+	widget = NULL;
+	wdata = g_hash_table_lookup(WindowTable,windowName);
+	if (wdata != NULL && wdata->xml != NULL) {
+	    widget = glade_xml_get_widget(
+			(GladeXML *)wdata->xml, widgetName);
+	}
+	return widget;
 }

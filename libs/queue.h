@@ -46,6 +46,7 @@ typedef	struct {
 extern	Queue	*NewQueue(void);
 extern	Bool	EnQueue(Queue *que, void *data);
 extern	void	*DeQueue(Queue *que);
+extern	void	*DeQueueNoWait(Queue *que);
 extern	void	*DeQueueTime(Queue *que, int ms);
 extern	void	*PeekQueue(Queue *que);
 extern	Bool	IsQueue(Queue *que);

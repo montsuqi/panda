@@ -416,9 +416,6 @@ CheckFeature(
 				if		(  !strlicmp(p,"pdf")  ) {
 					TermExpandType = EXPAND_PDF;
 				}
-				if		(  !strlicmp(p,"pngpdf")  ) {
-					TermExpandType = EXPAND_PNGPDF;
-				}
 				p = n;
 			}
 		}

@@ -42,7 +42,6 @@ typedef enum _ExpandType {
 	EXPAND_PS,
 	EXPAND_PNG,
 	EXPAND_PDF,
-	EXPAND_PNGPDF
 } ExpandType;
 
 extern	void	GL_SendPacketClass(NETFILE *fp, PacketClass c, Bool fNetwork);

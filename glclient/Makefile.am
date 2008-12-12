@@ -16,65 +16,94 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-bin_PROGRAMS = 						\
-	glclient
+if GTK1CLIENT
+gtk1bin	=	glclient
+gtk1dir	=	gtk1
+else
+gtk1bin	=	
+gtk1dir	=	
+endif
 
-glclient_SOURCES =					\
+if GTK2CLIENT
+gtk2bin	=	glclient2
+gtk2dir	=	gtk2
+else
+gtk2bin	=	
+gtk2dir	=	
+endif
+
+SUBDIRS	=		\
+	$(gtk1dir)	\
+	$(gtk2dir)	
+
+bin_PROGRAMS = 	\
+	$(gtk1bin)	\
+	$(gtk2bin)
+
+base_sources =						\
 	client.c		glclient.h		\
-	bootdialog.c	bootdialog.h	\
-	bd_component.c	bd_component.h	\
-	bd_config.c		bd_config.h		\
-	action.c		action.h		\
 	protocol.c		protocol.h		\
-	callbacks.c		callbacks.h		\
-	widgetOPS.c		widgetOPS.h		\
-	styleLex.c		styleLex.h		\
-	styleParser.c	styleParser.h	\
-	dialogs.c		dialogs.h		\
-	fileEntry.c		fileEntry.h
+	marshaller.c	marshaller.h	\
+	interface.h
 
-glclient_DEPENDENCIES =					\
-	$(top_builddir)/libs/libpandamisc.a	\
+base_dependencies =								\
+	$(top_builddir)/libs/libpandamisc.a			\
 	$(top_builddir)/libs/libpandagl.a
 
-INCLUDES =						\
+base_CFLAGS =					\
 	-I$(top_srcdir)				\
 	-I$(top_srcdir)/include		\
 	-I$(top_srcdir)/libs		\
 	$(SSL_CFLAGS)				\
-	$(XML_CFLAGS)				\
-	$(GLADE_CFLAGS)				\
-	$(MONDAI_CFLAGS)			\
-	$(GTK_PANDA_CFLAGS)			\
-	$(GTK_CFLAGS)				\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
-glclient_LDADD =						\
-	-lm									\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandagl.a	\
-	$(GLIB_LIBS)						\
-	$(GTK_LIBS)							\
-	$(GLADE_LIBS)						\
-	$(SSL_LIBS)							\
-	$(GTK_PANDA_LIBS)					\
+base_LDADD =									\
+	-lm											\
+	$(top_builddir)/libs/libpandamisc.a			\
+	$(top_builddir)/libs/libpandagl.a			\
+	$(SSL_LIBS)									\
 	$(MONDAI_LIBS)
 
-noinst_PROGRAMS = testdialogs testfileentry
+#################################################
+# glclient1
+#################################################
+	
+glclient_SOURCES =		\
+	$(base_sources)
 
-test: testdialogs testfileentry
+glclient_DEPENDENCIES =							\
+	$(base_dependencies)						\
+	$(top_builddir)/glclient/gtk1/libuigtk1.la
 
-testdialogs_LDADD =				\
-	$(GTK_LIBS) 				\
-	$(GLADE_LIBS) 				\
-	dialogs.o
+glclient_CFLAGS =				\
+	$(GTK1CLIENT_CFLAGS)		\
+	$(base_CFLAGS)
 
-testfileentry_LDADD =			\
-	$(GTK_LIBS) 				\
-	$(GLADE_LIBS) 				\
-	$(MONDAI_LIBS) 				\
-	dialogs.o 					\
-	fileEntry.o 
+glclient_LDADD =								\
+	$(GLIB_LIBS)								\
+	$(GTK1CLIENT_LIBS)							\
+	$(base_LDADD)								\
+	$(top_builddir)/glclient/gtk1/libuigtk1.la
+
+#################################################
+# glclient2
+#################################################
+
+glclient2_SOURCES =		\
+	$(base_sources)
+
+glclient2_DEPENDENCIES =						\
+	$(top_builddir)/glclient/gtk2/libuigtk2.la	\
+	$(base_dependencies)
+
+glclient2_CFLAGS =				\
+	$(GTK2CLIENT_CFLAGS)		\
+	$(base_CFLAGS)
+
+glclient2_LDADD =								\
+	$(GTK2CLIENT_LIBS)							\
+	$(top_builddir)/glclient/gtk2/libuigtk2.la	\
+	$(base_LDADD)
 
 AM_CPPFLAGS = 					\
 	-DLOCALEDIR=\"$(localedir)\"

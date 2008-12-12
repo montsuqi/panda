@@ -189,7 +189,7 @@ bd_config_section_get_bool (BDConfigSection *self, gchar *name)
 extern  gboolean
 bd_config_section_get_bool_default (BDConfigSection *self, 
   gchar *name,
-  gboolean bool)
+  gboolean dvalue)
 {
   BDConfigValue *value;
   
@@ -197,7 +197,7 @@ bd_config_section_get_bool_default (BDConfigSection *self,
   if (value){
     return bd_config_value_to_bool (value);
   } else {
-    return bool;
+    return dvalue;
   }
 }
 
@@ -217,7 +217,7 @@ bd_config_section_get_string (BDConfigSection *self, gchar *name)
 extern  gchar   *
 bd_config_section_get_string_default (BDConfigSection *self, 
   gchar *name,
-  gchar *str)
+  gchar *dvalue)
 {
   BDConfigValue *value;
   
@@ -225,7 +225,7 @@ bd_config_section_get_string_default (BDConfigSection *self,
   if (value){
     return bd_config_value_to_string (value);
   } else {
-    return str;
+    return dvalue;
   }
 }
 

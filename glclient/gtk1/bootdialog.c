@@ -239,6 +239,7 @@ edit_dialog_run (BDConfig * config, gchar * hostname)
   gtk_widget_show_all (self->dialog);
   gtk_widget_set_sensitive( self->component->protocol_v1, TRUE);
   gtk_widget_set_sensitive( self->component->protocol_v2, TRUE);
+  //gtk_widget_hide( self->component->protocol_v2);
   gtk_widget_grab_focus (self->description);
   gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
   gtk_main ();
@@ -565,8 +566,8 @@ boot_dialog_create_conf (BDConfig *config)
     {
       section = bd_config_append_section (config, "glclient");
       bd_config_section_append_value (section, "splash", "");
-      bd_config_section_append_value (section, "caption", _("glclient Launcher"));
-      bd_config_section_append_value (section, "welcome", _("glclient Launcher"));
+      bd_config_section_append_value (section, "caption", "glclient Launcher");
+      bd_config_section_append_value (section, "welcome", "glclient Launcher");
       
       is_create = TRUE;
     }
@@ -922,7 +923,8 @@ boot_dialog_run ()
   self = boot_dialog_new ();
   gtk_widget_show_all (self->dialog);
   gtk_widget_set_sensitive( self->component->protocol_v1, TRUE);
-  gtk_widget_set_sensitive( self->component->protocol_v1, TRUE);
+  gtk_widget_set_sensitive( self->component->protocol_v2, TRUE);
+  //gtk_widget_hide( self->component->protocol_v2);
   gtk_widget_grab_focus (self->dialog);
   gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
   gtk_main ();

@@ -34,6 +34,7 @@
 #include    <gtk/gtk.h>
 #include    "gettext.h"
 #endif
+#include	"glclient.h"
 #include    "port.h"
 #include    "const.h"
 #include    "bd_config.h"
@@ -61,8 +62,6 @@ new_config_section(
   bd_config_section_append_value (section, "gtkrc", DEFAULT_GTKRC);
   bd_config_section_append_value (section, "mlog",  DEFAULT_MLOG_STR);
   bd_config_section_append_value (section, "keybuff", DEFAULT_KEYBUFF_STR);
-  bd_config_section_append_value (section, "timer", DEFAULT_TIMER_STR);
-  bd_config_section_append_value (section, "timerperiod", DEFAULT_TIMERPERIOD);
   bd_config_section_append_value (section, "user", DEFAULT_USER);
   bd_config_section_append_value (section, "password", DEFAULT_PASSWORD);
   bd_config_section_append_value (section, "savepassword", DEFAULT_SAVEPASSWORD_STR);
@@ -139,13 +138,8 @@ open_file_selection(GtkWidget *w, gpointer entry)
 {
   file_selection_data *data;
   GtkFileSelection *filew = NULL;
-  gchar *default_path;
 
   filew = GTK_FILE_SELECTION(gtk_file_selection_new(""));
-  default_path = gtk_entry_get_text (GTK_ENTRY (entry));
-  if ( strlen(default_path) > 0 ){ 
-    gtk_file_selection_set_filename(filew, default_path);
-  }
   data = g_malloc(sizeof(file_selection_data));
   data->entry = entry;
   data->filesel = GTK_WIDGET(filew);
@@ -198,6 +192,8 @@ bd_component_set_value (
   BDComponent *self) 
 {
   BDConfigSection *section;
+  char *host;
+  char *port;
 
   g_return_if_fail( hostname != NULL );
 
@@ -212,8 +208,15 @@ bd_component_set_value (
     bd_config_section_get_string (section, "host"));
   gtk_entry_set_text (GTK_ENTRY (self->port), 
     bd_config_section_get_string (section, "port"));
+
+  host = bd_config_section_get_string (section, "host");
+  port = bd_config_section_get_string (section, "port");
+  PortNumber = g_strconcat(host, ":", port, NULL);
+
   gtk_entry_set_text (GTK_ENTRY (self->application), 
     bd_config_section_get_string (section, "application"));
+  CurrentApplication = bd_config_section_get_string (section, "application");
+
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1), 
     bd_config_section_get_bool (section, "protocol_v1"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), 
@@ -245,7 +248,6 @@ bd_component_set_value (
     bd_config_section_get_string (section, "cert"));
   gtk_entry_set_text (GTK_ENTRY (self->ciphers),
     bd_config_section_get_string (section, "ciphers"));
-
 #ifdef USE_PKCS11
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
     bd_config_section_get_bool (section, "pkcs11"));  
@@ -272,7 +274,7 @@ bd_component_set_value (
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
     bd_config_section_get_bool_default (section, "timer", DEFAULT_TIMER));
   gtk_entry_set_text (GTK_ENTRY (self->timerperiod),
-    bd_config_section_get_string_default (section, "timerperiod", 
+    bd_config_section_get_string_default (section, "timerperiod",
       DEFAULT_TIMERPERIOD));
   gtk_widget_set_sensitive(self->timer_container, 
     bd_config_section_get_bool_default (section, "timer", DEFAULT_TIMER));  
@@ -287,6 +289,8 @@ bd_component_value_to_config (
   BDConfigSection *section;
   gchar *password;
   gboolean savepassword;
+  char *host;
+  char *port;
 
   section = NULL;
   if (hostname != NULL) {
@@ -311,7 +315,7 @@ bd_component_value_to_config (
      gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
   bd_config_section_set_string (section, "user",
                                 gtk_entry_get_text (GTK_ENTRY (self->user)));
-  password = gtk_entry_get_text (GTK_ENTRY (self->password));
+  password = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
   savepassword = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->savepassword));
   if (savepassword) {
     bd_config_section_set_string (section, "password", password);
@@ -319,6 +323,19 @@ bd_component_value_to_config (
     bd_config_section_set_string (section, "password", "");
   }
   bd_config_section_set_bool (section, "savepassword", savepassword);
+
+  host = strdup(gtk_entry_get_text (GTK_ENTRY (self->host)));
+  port = strdup(gtk_entry_get_text (GTK_ENTRY (self->port)));
+  PortNumber = g_strconcat(host, ":", port, NULL);
+  CurrentApplication = strdup(gtk_entry_get_text (GTK_ENTRY (self->application)));
+  Protocol1 = gtk_toggle_button_get_active(
+    GTK_TOGGLE_BUTTON (self->protocol_v1));
+  Protocol2 = gtk_toggle_button_get_active(
+    GTK_TOGGLE_BUTTON (self->protocol_v2));
+  User = strdup(gtk_entry_get_text (GTK_ENTRY (self->user)));
+  Pass = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
+  SavePass = gtk_toggle_button_get_active (
+    GTK_TOGGLE_BUTTON (self->savepassword));
 
 #ifdef USE_SSL
   // ssl
@@ -335,6 +352,18 @@ bd_component_value_to_config (
     gtk_entry_get_text (GTK_ENTRY (self->cert)));
   bd_config_section_set_string (section, "ciphers",
     gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
+
+  fSsl = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl));
+  CA_Path = strdup(gtk_entry_get_text (GTK_ENTRY (self->CApath)));
+  if (!strcmp("", CA_Path)) CA_Path = NULL;
+  CA_File = strdup(gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
+  if (!strcmp("", CA_File)) CA_File = NULL;
+  KeyFile = strdup(gtk_entry_get_text (GTK_ENTRY (self->key)));
+  if (!strcmp("", KeyFile)) KeyFile = NULL;
+  CertFile = strdup(gtk_entry_get_text (GTK_ENTRY (self->cert)));
+  if (!strcmp("", CertFile)) CertFile = NULL;
+  Ciphers = strdup(gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
+
 #ifdef  USE_PKCS11
   bd_config_section_set_bool
     (section, "pkcs11", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11)));
@@ -342,6 +371,11 @@ bd_component_value_to_config (
     gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
   bd_config_section_set_string (section, "slot",
     gtk_entry_get_text (GTK_ENTRY (self->slot)));
+
+  fPKCS11 = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11));
+  PKCS11_Lib = strdup(gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
+  if (!strcmp("", PKCS11_Lib)) PKCS11_Lib = NULL;
+  Slot = strdup(gtk_entry_get_text (GTK_ENTRY (self->slot)));
 #endif
 #endif
 
@@ -363,6 +397,14 @@ bd_component_value_to_config (
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer)));
   bd_config_section_set_path (section, "timerperiod",
     gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
+
+  Cache = strdup(gtk_entry_get_text (GTK_ENTRY (self->cache)));
+  Style = strdup(gtk_entry_get_text (GTK_ENTRY (self->style)));
+  Gtkrc = strdup(gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
+  fMlog = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog));
+  fKeyBuff = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff));
+  fTimer = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer));
+  TimerPeriod = strdup(gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
 }
 
 BDComponent *

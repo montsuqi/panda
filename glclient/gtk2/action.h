@@ -22,19 +22,17 @@
 #define	_INC_ACTION_H
 #include	"glclient.h"
 
-extern	void		RegisterChangedHandler(GtkObject *object, GtkSignalFunc func, gpointer data);
+extern	void		RegisterChangedHandler(GObject *object, 
+						GCallback func, gpointer data);
 extern	void		BlockChangedHandlers(void);
 extern	void		UnblockChangedHandlers(void);
 extern	GtkWidget	*GetWindow(	GtkWidget	*widget);
 extern	char		*GetWindowName(	GtkWidget	*widget);
 extern	void		GrabFocus(GtkWidget *widget);
-extern	XML_Node	*ShowWindow(char *wname, byte type);
-extern	void		DestroyWindow(char *sname);
-extern	void		DestroyWindowAll();
-extern	void		ClearWindowTable(void);
+extern	void		ShowWindow(char *wname, byte type);
 extern	void		ClearKeyBuffer(void);
-extern	void		_UpdateWidget(GtkWidget *widget, void *user_data);
-extern	void		UpdateWidget(GtkWidget *widget, void *user_data);
+extern	void		_AddChangedWidget(GtkWidget *widget);
+extern	void		AddChangedWidget(GtkWidget *widget);
 extern	GdkWindow	*ShowBusyCursor(GtkWidget *widget);
 extern	void		HideBusyCursor(GdkWindow *pane);
 extern	void		StartTimer( char *event, int timeout,
@@ -44,7 +42,11 @@ extern	void		ResetTimer(GtkWindow *window);
 extern  void 		ResetScrolledWindow(GtkWidget *widget, gpointer user_data);
 extern	void		StopTimer(GtkWindow *window);
 extern	gpointer	*GetObjectData(GtkWidget	*widget, char *object_key);
-extern	void		SetObjectData(GtkWidget	*widget, char *object_key, gpointer	*data);
-extern	void		SetTitle(GtkWindow	*window, char *session_title, char *window_title);
+extern	void		SetObjectData(GtkWidget	*widget, 
+						char *object_key, gpointer	*data);
+extern	GtkWidget	*GetWidgetByLongName(char *longName);
+extern	GtkWidget	*GetWidgetByName(char *dataName);
+extern	GtkWidget	*GetWidgetByWindowNameAndLongName(char *wname, char *name);
+extern	GtkWidget	*GetWidgetByWindowNameAndName(char *wname, char *name);
 
 #endif

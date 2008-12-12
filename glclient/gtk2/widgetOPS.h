@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Kouji TAKAO & JMA (Japan Medical Association).
+ * Copyright (C) 1998-1999 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +18,21 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_DIALOGS_H
-#define	_INC_DIALOGS_H
+#ifndef	_WIDGET_OPS_H
+#define	_WIDGET_OPS_H
 
-#include "types.h"
+#include	<glade/glade.h>
+#include	"marshaller.h"
 
-GtkWidget* message_dialog( const char *message, gboolean message_type);
-void GLError( const char *message);
-int askpass(char *buf, size_t buflen, const char *prompt);
-
-#ifdef USE_GNOME
-GtkWidget* question_dialog(	const char *message, GtkSignalFunc clicked_handler,
-							GtkWidget	*widget, GtkWindow	*window);
-
+#undef	GLOBAL
+#ifdef	_PROTOCOL_C
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
 #endif
+
+extern  void		UpdateWindow(char *windowName);
+extern	void		GetWidgetData(WidgetData *data);
+extern	WidgetType	GetWidgetType(char *wname, char *name);
 
 #endif

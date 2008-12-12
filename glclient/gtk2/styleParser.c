@@ -158,6 +158,7 @@ ParStyle(void)
 	GtkStyle	*st
 	,			*dst;
 	int			state;	
+	GdkFont		*font;
 
 dbgmsg(">ParStyle");
 	dst = gtk_widget_get_default_style();
@@ -186,7 +187,9 @@ dbgmsg(">ParStyle");
 						Error("= not found");
 					}
 					if		(  GetSymbol  ==  T_SCONST  ) {
-						st->font = gdk_fontset_load(StyleComSymbol);
+						font = gdk_fontset_load(StyleComSymbol);
+						// Warning!! gtk_style_set_font is deprecated
+						gtk_style_set_font(st, font);
 					} else {
 						Error("font set not found");
 					}
@@ -324,10 +327,11 @@ GetStyle(
 {
 	GtkStyle	*p;
 
-	if		(  ( p = g_hash_table_lookup(Styles,name) )  ==  NULL  ) {
-		p = gtk_widget_get_default_style();
+	p = NULL;
+	if (name != NULL) {
+		p = g_hash_table_lookup(Styles,name);
 	}
-	return	(p);
+	return p;
 }
 
 #ifdef	MAIN

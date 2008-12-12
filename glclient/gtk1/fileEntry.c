@@ -31,12 +31,7 @@
 #include	<sys/stat.h>
 #include	<fcntl.h>
 #include	<unistd.h>
-#ifdef USE_GNOME
-#   include	<gnome.h>
-#else
-#	include	<gtk/gtk.h>
-#	include	"gettext.h"
-#endif
+#include	<gnome.h>
 
 #include	"comm.h"
 #include	"dialogs.h"
@@ -113,7 +108,6 @@ SaveFile(
 	return (rc);
 }
 
-#ifdef USE_GNOME
 static void
 question_clicked(
 	gint reply,
@@ -201,5 +195,4 @@ browse_clicked(GnomeFileEntry *fentry, gpointer data)
 	gtk_signal_connect(GTK_OBJECT(fsw), "destroy",
 				   GTK_SIGNAL_FUNC(browse_dialog_destroy), NULL);
 }
-#endif
 

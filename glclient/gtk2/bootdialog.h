@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Kouji TAKAO & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,21 +17,28 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_WIDGET_OPS_H
-#define	_WIDGET_OPS_H
+#ifndef __BOOTDIALOG_H_INCLUDED__
+#define __BOOTDIALOG_H_INCLUDED__
 
-#include <glade/glade.h>
-
-
-
-#undef	GLOBAL
-#ifdef	_PROTOCOL_C
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
 #endif
-GLOBAL	char		WidgetName[SIZE_BUFF];
-GLOBAL	GladeXML	*ThisXML;
 
-extern	void	InitWidgetOperations(void);
+#include <stdio.h>
+#include <glib.h>
+
+gboolean boot_dialog_run ();
+#if 0
+void boot_dialog_term ();
 #endif
+
+#endif /* #ifndef __BOOTDIALOG_H_INCLUDED__ */
+
+/*************************************************************
+ * Local Variables:
+ * mode: c
+ * c-set-style: gnu
+ * c-basic-offset: 2
+ * indent-tabs-mode: nil
+ * End:
+ ************************************************************/

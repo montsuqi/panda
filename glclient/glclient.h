@@ -21,9 +21,10 @@
 #ifndef	_INC_GLCLIENT_H
 #define	_INC_GLCLIENT_H
 
-#include <glade/glade.h>
+#include 	<glade/glade.h>
 #include	"libmondai.h"
 #include	"net.h"
+#include	"queue.h"
 
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -31,18 +32,14 @@
 #define	GLOBAL		extern
 #endif
 
-typedef	struct {
-	char		*name;
-	GladeXML	*xml;
-	GtkWindow	*window;
-	char		*title;
-	GHashTable	*UpdateWidget;
-}	XML_Node;
+#define UI_VERSION_1 1
+#define UI_VERSION_2 2
 
 typedef struct {
 	NETFILE		*fpComm;
 	Port		*port;
 	char		*title;
+	int 		uiversion;
 #ifdef	USE_SSL
 	SSL_CTX		*ctx;
 #ifdef  USE_PKCS11
@@ -51,22 +48,37 @@ typedef struct {
 #endif  /* USE_SSL */
 }	Session;
 
+typedef struct {
+	char		*name;
+	char		*title;
+	void		*xml;
+	GHashTable	*ChangedWidgetTable;
+	Queue		*UpdateWidgetQueue;
+}	WindowData;
+
 extern	char	*CacheFileName(char *name);
 extern	void	ExitSystem(void);
 extern  void	MakeCacheDir(char *dname);
-extern	void	SetSessionTitle(char *title);
+extern  void	SetSessionTitle(char *dname);
 
+GLOBAL	char		*FocusedWindowName;
+GLOBAL	char		*ThisWindowName;
 GLOBAL	GHashTable	*WindowTable;
-GLOBAL	XML_Node	*FocusedScreen;
 
-GLOBAL	char		*CurrentApplication;
+GLOBAL	char	*CurrentApplication;
 
 GLOBAL	Bool	fInRecv;
 
 GLOBAL	Session	*glSession;
+GLOBAL	char	*PortNumber;
+GLOBAL	Bool	Protocol1;
+GLOBAL	Bool	Protocol2;
 GLOBAL	char	*User;
 GLOBAL	char	*Pass;
 GLOBAL	Bool	SavePass;
+GLOBAL	char	*Cache; 
+GLOBAL	char	*Style; 
+GLOBAL	char	*Gtkrc; 
 GLOBAL	Bool	fMlog;
 GLOBAL	Bool	fKeyBuff;
 GLOBAL	Bool	fTimer;
@@ -82,18 +94,54 @@ GLOBAL	char	*Ciphers;
 GLOBAL	Bool	fPKCS11;
 GLOBAL	char	*PKCS11_Lib;
 GLOBAL	char	*Slot;
-GLOBAL	char	WindowTitle[256];
-
 #endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
 
-#define	FPCOMM(session)	((session)->fpComm)
-#define	TITLE(session)	((session)->title)
+#define DEFAULT_HOST				"localhost"
+#define DEFAULT_PORT				"8000"
+#define DEFAULT_APPLICATION			"panda:"
+#define DEFAULT_CACHE_PATH			"/.glclient/cache"
+#define DEFAULT_PROTOCOL_V1			TRUE
+#define DEFAULT_PROTOCOL_V1_STR		"true" 
+#define DEFAULT_PROTOCOL_V2			FALSE
+#define DEFAULT_PROTOCOL_V2_STR		"false"
+#define DEFAULT_MLOG				TRUE 
+#define DEFAULT_MLOG_STR			"true"
+#define DEFAULT_KEYBUFF				FALSE
+#define DEFAULT_KEYBUFF_STR			"false" 
+#define DEFAULT_TIMER				TRUE
+#define DEFAULT_TIMER_STR			"true"
+#define DEFAULT_TIMERPERIOD			"1000"
+#define DEFAULT_STYLE				""
+#define DEFAULT_GTKRC				""
+#define DEFAULT_USER				(getenv("USER"))
+#define DEFAULT_PASSWORD			""
+#define DEFAULT_SAVEPASSWORD		FALSE
+#define DEFAULT_SAVEPASSWORD_STR	"false"
+#ifdef USE_SSL
+#define DEFAULT_SSL					FALSE
+#define DEFAULT_SSL_STR				"false"
+#define DEFAULT_CAPATH				""
+#define DEFAULT_CAFILE				""
+#define DEFAULT_KEY					""
+#define DEFAULT_CERT				""
+#define DEFAULT_CIPHERS				"ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"
+#ifdef USE_PKCS11
+#define DEFAULT_PKCS11				FALSE
+#define DEFAULT_PKCS11_STR			"false"
+#define DEFAULT_PKCS11_LIB			""
+#define DEFAULT_SLOT				""
+#endif
+#endif
+
+#define	FPCOMM(session)		((session)->fpComm)
+#define	TITLE(session)		((session)->title)
 #ifdef	USE_SSL
-#define	CTX(session)	((session)->ctx)
+#define	CTX(session)		((session)->ctx)
 #ifdef	USE_PKCS11
-#define	ENGINE(session)	((session)->engine)
+#define	ENGINE(session)		((session)->engine)
 #endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
+#define	UIVERSION(session)	((session)->uiversion)
 
 #endif

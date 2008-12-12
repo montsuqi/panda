@@ -138,6 +138,34 @@ LEAVE_FUNC;
 }
 
 extern	void	*
+DeQueueNoWait(
+	Queue	*que)
+{
+	QueueElement	*el;
+	void			*ret;
+
+ENTER_FUNC;
+	if		(	(  que             !=  NULL  )
+			&&	(  que->head       !=  NULL  )
+			&&	(  LockQueue(que)  ==  0     )) {
+		el = que->head;
+		if		(  el->next  ==  NULL  ) {
+			que->tail = NULL;
+		} else {
+			el->next->prev = NULL;
+		}
+		que->head = el->next;
+		ret = el->data;
+		xfree(el);
+		UnLockQueue(que);
+	} else {
+		ret = NULL;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+extern	void	*
 DeQueueTime(
 	Queue	*que,
 	int		ms)

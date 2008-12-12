@@ -47,16 +47,6 @@
 #include	<openssl/engine.h>
 #endif	//USE_PKCS11
 #endif	//USE_SSL
-#ifdef USE_GNOME
-#    include <gnome.h>
-#else
-#    include <gtk/gtk.h>
-#    include "gettext.h"
-#endif	//USE_GNOME
-#include	<glade/glade.h>
-#ifdef	USE_PANDA
-#include	<gtkpanda/gtkpanda.h>
-#endif	//USE_PANDA
 #define		MAIN
 #include	"const.h"
 #include	"types.h"
@@ -64,20 +54,13 @@
 #include	"socket.h"
 #include	"glterm.h"
 #include	"glclient.h"
-#include	"styleParser.h"
-#include	"dialogs.h"
 #include	"comm.h"
 #include	"protocol.h"
 #include	"message.h"
-#include	"bootdialog.h"
-#include	"bd_config.h"
-#include	"bd_component.h"
 #include	"debug.h"
+#include	"interface.h"
+#include	"gettext.h"
 
-static	char	*PortNumber;
-static	char	*Cache;
-static	char	*Style;
-static	char	*Gtkrc;
 static	Bool 	fDialog;
 static	char	*Config;
 static	Bool 	fConfigList;
@@ -95,13 +78,13 @@ InitApplications(void)
 {
 	glSession = New(Session);
 	FPCOMM(glSession) = NULL;
-	TITLE(glSession) = StrDup("");
 #ifdef	USE_SSL
 	CTX(glSession) = NULL;
 #ifdef  USE_PKCS11
 	ENGINE(glSession) = NULL;
 #endif	//USE_PKCS11
 #endif	//USE_SSL
+	UIVERSION(glSession) = UI_Version();
 }
 
 extern	void
@@ -166,8 +149,8 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	char *cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
-	PortNumber = g_strconcat(DEFAULT_HOST, ":", DEFAULT_PORT);
+	char *cachename = g_strconcat(g_get_home_dir(), "/.glclient2/cache", NULL);
+	PortNumber = g_strconcat(DEFAULT_HOST, ":", DEFAULT_PORT, NULL);
 	CurrentApplication = DEFAULT_APPLICATION;
 	Cache =  cachename;
 	Style = DEFAULT_STYLE;
@@ -245,16 +228,6 @@ mkdir_p(
 	g_free (fn);
 }
 
-extern	void
-SetSessionTitle(
-		char *title)
-{
-	if ( TITLE(glSession) ) {
-		xfree(TITLE(glSession));
-	}
-	TITLE(glSession) = StrDup(title);
-}
-
 extern  void
 MakeCacheDir(
 	char    *dname)
@@ -270,9 +243,17 @@ MakeCacheDir(
 	}
 	mkdir_p (Cache, 0755);
 	if  (mkdir (dname, 0755) < 0) {
-		GLError(_("could not write cache dir"));
-		exit(1);
+		UI_ErrorDialog(_("could not write cache dir"));
 	}
+}
+
+extern	void SetSessionTitle(
+	char *title)
+{
+	if ( TITLE(glSession) ) {
+		xfree(TITLE(glSession));
+	}
+	TITLE(glSession) = StrDup(title);
 }
 
 static	void
@@ -282,132 +263,6 @@ bannar(void)
 	printf(_("Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n"));
 	printf(_("              2000-2003 Masami Ogoshi & JMA.\n"));
 	printf(_("              2004-2007 Masami Ogoshi\n"));
-}
-
-static	void
-list_config()
-{
-	BDConfig *config;
-	BDConfigSection *section;
-	GList *p;
-	char *hostname;
-	char *desc;
-	
-	config = bd_config_load_file();
-	
-	for (p = bd_config_get_sections (config); p != NULL; p = g_list_next (p)) {
-		hostname = (char *) p->data;
-		if (!strcmp (hostname, "glclient"))
-			continue;
-		section = bd_config_get_section (config, hostname);
-		if (!strcmp("global", hostname)) {
-        	desc = _("Custom");
-		} else {
-        	desc = bd_config_section_get_string (section, "description");
-        }
-		printf("------------------\n");
-		printf("%s\n", desc);
-		printf("\thost:\t\t%s\n", 
-        	bd_config_section_get_string (section, "host"));
-		printf("\tport:\t\t%s\n", 
-        	bd_config_section_get_string (section, "port"));
-		printf("\tapplication:\t%s\n", 
-        	bd_config_section_get_string (section, "application"));
-		printf("\tuser:\t\t%s\n", 
-        	bd_config_section_get_string (section, "user"));
-	}
-	bd_config_free(config);
-}
-
-static	Bool
-load_config (
-	char *desc)
-{
-	BDConfig *config;
-	BDConfigSection *section;
-	GList *p;
-	char *hostname;
-	Bool ret;
-	char *propdesc;
-	char *host;
-	char *port;
-	
-	ret = FALSE;
-	config = bd_config_load_file();
-	
-	if ( !strcmp(_("Custom"), desc) || !strcmp("global", desc)) {
-		section = bd_config_get_section (config, "global");
-		ret = TRUE;
-	} else {
-		for ( 	p = bd_config_get_sections (config); 
-				p != NULL; 
-				p = g_list_next (p)) 
-		{
-			hostname = (char *) p->data;
-			if (!strcmp (hostname, "glclient") || !strcmp("global", desc))
-				continue;
-			section = bd_config_get_section (config, hostname);
-			propdesc = bd_config_section_get_string (section, "description");
-			if (!strcmp(desc, propdesc)) {
-				ret = TRUE;
-				break;
-			}
-		}
-	}
-	if (ret) {
-		host = bd_config_section_get_string (section, "host");
-		port = bd_config_section_get_string (section, "port");
-		PortNumber = g_strconcat(host, ":", port, NULL);
-		CurrentApplication = bd_config_section_get_string (section, "application");
-		Protocol1 = bd_config_section_get_bool (section, "protocol_v1");
-		Protocol2 = bd_config_section_get_bool (section, "protocol_v2");
-		Cache = bd_config_section_get_string (section, "cache");
-		Style = bd_config_section_get_string (section, "style");
-		Gtkrc = bd_config_section_get_string (section, "gtkrc");
-		fMlog = bd_config_section_get_bool (section, "mlog");
-		fKeyBuff = bd_config_section_get_bool (section, "keybuff");
-		User = bd_config_section_get_string (section, "user");
-		SavePass = bd_config_section_get_bool (section, "savepassword");
-		if (SavePass) {
-			Pass = bd_config_section_get_string (section, "password");
-		} 
-		fTimer = bd_config_section_get_bool_default (section, "timer", TRUE);
-		TimerPeriod = bd_config_section_get_string_default (section, "timerperiod", "1000");
-#ifdef  USE_SSL
-		fSsl = bd_config_section_get_bool (section, "ssl");
-		CA_Path = bd_config_section_get_string (section, "CApath");
-		if (!strcmp("", CA_Path)) CA_Path = NULL;
-		CA_File = bd_config_section_get_string (section, "CAfile");
-		if (!strcmp("", CA_File)) CA_File = NULL;
-		KeyFile = bd_config_section_get_string (section, "key");
-		if (!strcmp("", KeyFile)) KeyFile = NULL;
-		CertFile = bd_config_section_get_string (section, "cert");
-		if (!strcmp("", CertFile)) CertFile = NULL;
-		Ciphers = bd_config_section_get_string (section, "ciphers");
-#ifdef  USE_PKCS11
-		fPKCS11 = bd_config_section_get_bool (section, "pkcs11");
-		PKCS11_Lib = bd_config_section_get_string (section, "pkcs11_lib");
-		if (!strcmp("", PKCS11_Lib)) PKCS11_Lib = NULL;
-		Slot = bd_config_section_get_string (section, "slot");
-#endif
-#endif
-	} else {
-		Warning(_("cannot load config:%s"), desc);
-	}
-	return ret;
-}
-
-static gboolean
-show_boot_dialog ()
-{
-    if (!boot_dialog_run ())
-        return FALSE;
-	if (!load_config("global"))
-		return FALSE;
-	if (!SavePass) {
-		Pass = boot_dialog_get_password();
-	}
-    return TRUE;
 }
 
 #ifdef	USE_SSL
@@ -437,16 +292,14 @@ MakeFPCOMM (int fd)
 		_MakeSSL_CTX();
 
         if (CTX(glSession) == NULL){
-			GLError(GetSSLErrorMessage());
-			return FALSE;
+			UI_ErrorDialog(GetSSLErrorMessage());
         }
         if ((FPCOMM(glSession) = MakeSSL_Net(CTX(glSession),fd)) != NULL){
             if (StartSSLClientSession(FPCOMM(glSession), IP_HOST(glSession->port)) != TRUE){
-				GLError(GetSSLErrorMessage());
-				return FALSE;
+				UI_ErrorDialog(GetSSLErrorMessage());
             }
         }
-		GLError(GetSSLWarningMessage());
+		UI_ErrorDialog(GetSSLWarningMessage());
     }
 #else
 	FPCOMM(glSession) = SocketToNet(fd);
@@ -461,7 +314,7 @@ start_client ()
 
     glSession->port = ParPort(PortNumber,PORT_GLTERM);
 	if (  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
-		GLError(_("can not connect server(server port not found)"));
+		UI_ErrorDialog(_("can not connect server(server port not found)"));
         return FALSE;
 	}
 	InitProtocol();
@@ -470,7 +323,7 @@ start_client ()
 	if (SendConnect(FPCOMM(glSession),CurrentApplication)) {
 		CheckScreens(FPCOMM(glSession),TRUE);
 		(void)GetScreenData(FPCOMM(glSession));
-		gtk_main();  
+		UI_Main();
 	}
 	
 	return FALSE;
@@ -503,11 +356,23 @@ GLMessage(int level, char *file, int line, char *msg)
 	switch(level){
 	  case MESSAGE_WARN:
 	  case MESSAGE_ERROR:
-		GLError(msg);
+		UI_ErrorDialog(msg);
 		break;
 	  default:
 		__Message(level, file, line, msg);
 		break;
+	}
+}
+
+static	void
+askpass(char *pass)
+{
+	if (!SavePass) {
+		if(UI_AskPass(pass, SIZE_BUFF, _("input Password")) != -1) {
+			Pass = pass;
+		} else {
+			exit(0);
+		}
 	}
 }
 
@@ -516,8 +381,7 @@ main(
 	int		argc,
 	char	**argv)
 {
-	char	buff[SIZE_BUFF];
-	char	password_[SIZE_BUFF];
+	char		_password[SIZE_BUFF];
 	gboolean	do_run = TRUE;
 
 	FILE_LIST	*fl;
@@ -529,75 +393,44 @@ main(
 	}
 
 	InitMessage("glclient",NULL);
+	InitSystem();
+	UI_Init(argc, argv);
+
 	SetMessageFunction(GLMessage);
-	gtk_set_locale();
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	InitSystem();
-
-	argc = 1;
-	argv[1] = NULL;
-
-#ifdef USE_GNOME
-	gnome_init("glclient", VERSION, argc, argv);
-#ifdef	USE_PANDA
-	gtkpanda_init(&argc,&argv);
-#endif	//USE_PANDA
-	glade_gnome_init();
-#else
-	gtk_init(&argc, &argv);
-#ifdef	USE_PANDA
-	gtkpanda_init(&argc,&argv);
-#endif	//USE_PANDA
-	glade_init();
-#endif	//USE_GNOME
-
     if (fConfigList) {
-		list_config();
+		UI_list_config();
 		exit(0);
     }
 
 	if (strlen(Config) > 0) {
 		fDialog = FALSE;
-    	if (!load_config (Config))
-			exit(0);
-        if (!SavePass) {
-			if(askpass(password_, SIZE_BUFF, _("Password")) != -1) {
-				Pass = password_;
-			} else {
-				exit(0);
-			}
-		}
+    	UI_load_config(Config);
+		askpass(_password);
 	}
 
 	InitNET();
 #ifdef	USE_SSL
-	SetAskPassFunction(askpass);
+	SetAskPassFunction(UI_AskPass);
 #endif
 
-    if (fDialog) {
-		do_run = show_boot_dialog() ;
-    }
-
-	StyleParserInit();
-	sprintf(buff,"%s/gltermrc",getenv("HOME"));
-	StyleParser(buff);
-	StyleParser("gltermrc");
-	if		(  *Style  !=  0  ) {
-		StyleParser(Style);
+	if (fDialog) {
+		do_run = UI_BootDialogRun();
+		if (!do_run) {
+			exit(0);
+		}
 	}
-    if (*Gtkrc != '\0') {
-        gtk_rc_parse(Gtkrc);
-    }
+
+	UI_InitStyle();
 
 	while (do_run) {
 		do_run = start_client();
 		stop_client();
 	}
 
-    gtk_rc_reparse_all ();
-	StyleParserTerm ();
+	UI_Final();
 
 	return 0;
 }

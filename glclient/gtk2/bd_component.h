@@ -28,43 +28,6 @@
 #include <stdlib.h>
 #include <glib.h>
 
-#define	DEFAULT_HOST 				"localhost"
-#define	DEFAULT_PORT 				"8000"
-#define	DEFAULT_APPLICATION 		"panda:"
-#define DEFAULT_CACHE_PATH			"/.glclient/cache"
-#define	DEFAULT_PROTOCOL_V1 		TRUE
-#define	DEFAULT_PROTOCOL_V1_STR 	"true"
-#define	DEFAULT_PROTOCOL_V2 		TRUE
-#define	DEFAULT_PROTOCOL_V2_STR 	"true"
-#define	DEFAULT_MLOG 				TRUE
-#define	DEFAULT_MLOG_STR 			"true"
-#define	DEFAULT_KEYBUFF 			FALSE
-#define	DEFAULT_KEYBUFF_STR 		"false"
-#define	DEFAULT_TIMER 				TRUE
-#define	DEFAULT_TIMER_STR 			"true"
-#define	DEFAULT_TIMERPERIOD 		"1000"
-#define	DEFAULT_STYLE 				""
-#define	DEFAULT_GTKRC 				""
-#define	DEFAULT_USER 				(getenv("USER"))
-#define	DEFAULT_PASSWORD 			""
-#define	DEFAULT_SAVEPASSWORD 		FALSE
-#define	DEFAULT_SAVEPASSWORD_STR	"false"
-#ifdef USE_SSL
-#define	DEFAULT_SSL 				FALSE
-#define	DEFAULT_SSL_STR 			"false"
-#define	DEFAULT_CAPATH 				""
-#define	DEFAULT_CAFILE 				""
-#define	DEFAULT_KEY 				""
-#define	DEFAULT_CERT 				""
-#define	DEFAULT_CIPHERS 			"ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"
-#ifdef USE_PKCS11
-#define	DEFAULT_PKCS11 				FALSE
-#define	DEFAULT_PKCS11_STR 			"false"
-#define	DEFAULT_PKCS11_LIB			""
-#define	DEFAULT_SLOT				""
-#endif
-#endif
-
 typedef struct _BDComponent BDComponent;
 struct _BDComponent {
 // basic
@@ -113,10 +76,6 @@ gboolean validate_isblank (gchar *str);
 typedef struct {
   GtkWidget *entry, *filesel;
 } file_selection_data;
-
-void file_ok(GtkWidget *w, gpointer data); 
-void file_cancel(GtkWidget *w, gpointer data);
-void file_cancel(GtkWidget *w, gpointer data);
 
 void bd_component_set_value(
 	BDConfig *config, 

@@ -27,30 +27,32 @@
 typedef struct _BDConfig BDConfig;
 typedef struct _BDConfigSection BDConfigSection;
 
-extern  void    bd_config_section_inspect      (BDConfigSection *self,
-                                          FILE *fp);
+extern  void     bd_config_section_inspect      (BDConfigSection *self,
+                                                 FILE *fp);
 extern  gchar   *bd_config_section_get_name     (BDConfigSection *self);
-extern  gboolean    bd_config_section_get_bool     (BDConfigSection *self,
-                                          gchar *name);
-extern  gboolean    bd_config_section_get_bool_default (BDConfigSection *self,
-                                          gchar *name,
-                                          gboolean bool);
+extern  gboolean bd_config_section_get_bool     (BDConfigSection *self,
+                                                 gchar *name);
+extern  gboolean bd_config_section_get_bool_default 
+                                                (BDConfigSection *self,
+                                                 gchar *name,
+                                                 gboolean value);
 extern  gchar   *bd_config_section_get_string   (BDConfigSection *self,
-                                          gchar *name);
-extern  gchar   *bd_config_section_get_string_default (BDConfigSection *self,
-                                          gchar *name,
-                                          gchar *str);
-extern  gboolean    bd_config_section_set_bool     (BDConfigSection *self,
-                                          gchar *name,
-                                          gboolean bool);
-extern  gboolean    bd_config_section_set_string   (BDConfigSection *self,
-                                          gchar *name,
-                                          gchar *str);
-extern  void    bd_config_section_append_value (BDConfigSection *self,
-                                          gchar *name,
-                                          gchar *contents);
-extern  gboolean    bd_config_section_set_path(BDConfigSection *self,
-                                               gchar *name, gchar *str);
+                                                 gchar *name);
+extern  gchar   *bd_config_section_get_string_default 
+                                                (BDConfigSection *self,
+                                                 gchar *name,
+                                                 gchar *value);
+extern  gboolean bd_config_section_set_bool     (BDConfigSection *self,
+                                                 gchar *name,
+                                                 gboolean bool);
+extern  gboolean bd_config_section_set_string   (BDConfigSection *self,
+                                                 gchar *name,
+                                                 const gchar *str);
+extern  void     bd_config_section_append_value (BDConfigSection *self,
+                                                 gchar *name,
+                                                 const gchar *contents);
+extern  gboolean bd_config_section_set_path     (BDConfigSection *self,
+                                                 gchar *name, const gchar *str);
 
 BDConfig        *bd_config_new               ();
 BDConfig        *bd_config_new_with_filename (gchar *filename);
@@ -66,6 +68,9 @@ gboolean         bd_config_exist_section     (BDConfig *self,
                                               gchar *name);
 BDConfigSection *bd_config_append_section    (BDConfig *self,
                                               gchar *name);
+gchar           *bd_config_get_string        (BDConfig * self,
+                                              gchar * section_name,
+                                              gchar * value_name);
 gchar           *bd_config_get_string        (BDConfig * self,
                                               gchar * section_name,
                                               gchar * value_name);

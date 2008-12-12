@@ -29,15 +29,9 @@
 
 #include	<stdio.h>
 
-#ifdef USE_GNOME
-#    include <gnome.h>
-#else
-#    include <gtk/gtk.h>
-#endif
+#include	<gnome.h>
 #include	<glade/glade.h>
-#ifdef	USE_PANDA
 #include	<gtkpanda/gtkpanda.h>
-#endif
 #include	<gdk/gdkkeysyms.h>
 
 #include	"callbacks.h"
@@ -85,15 +79,13 @@ keypress_filter(
 {
 	GtkWidget	*nextWidget;
 	GtkWidget	*window;
-	char		*wname;
-	XML_Node	*node;
+
 ENTER_FUNC;
 	if		(event->keyval == GDK_KP_Enter) {
 		window = gtk_widget_get_toplevel(widget);
-		wname = gtk_widget_get_name(window);
-		if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )       !=  NULL  )
-				&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
-				gtk_widget_grab_focus (nextWidget);
+		nextWidget = GetWidgetByLongName(next);
+		if (nextWidget != NULL) {
+			gtk_widget_grab_focus (nextWidget);
 		}
 		gtk_signal_emit_stop_by_name(GTK_OBJECT(widget),"key_press_event");
 	}
@@ -322,7 +314,7 @@ clist_select(
 	GdkEventButton	*dummy,
 	char		*event)
 {
-	UpdateWidget(widget,event);
+	AddChangedWidget(widget);
 	send_event(widget, event);
 }
 
@@ -338,10 +330,10 @@ notebook_send_event(
 	gpointer *object;
 
 	object = GetObjectData(GTK_WIDGET(widget), "recv_page");
-	recv_page = (int)(long)(*object);
+	recv_page = (int )(*object);
 
 	SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
-	UpdateWidget((GtkWidget *)widget, event);
+	AddChangedWidget((GtkWidget *)widget);
 	if ( recv_page != page_num ){
 		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "switch_page");
 		send_event(GTK_WIDGET(widget), event);
@@ -365,13 +357,11 @@ entry_next_focus(
 {	
 	GtkWidget	*nextWidget;
 	GtkWidget	*window;
-	char		*wname;
-	XML_Node	*node;
+
 ENTER_FUNC;
 	window = gtk_widget_get_toplevel(GTK_WIDGET(entry));
-	wname = gtk_widget_get_name(window);
-	if		(	( ( node = g_hash_table_lookup(WindowTable,wname) )       !=  NULL  )
-			&&	(  ( nextWidget = glade_xml_get_widget(node->xml,next) )  !=  NULL  ) ) {
+	nextWidget = GetWidgetByLongName(next);
+	if (nextWidget != NULL) {
 		gtk_widget_grab_focus(nextWidget);
 	}
 LEAVE_FUNC;
@@ -382,7 +372,7 @@ changed(
 	GtkWidget	*entry,
 	gpointer	user_data)
 {
-	UpdateWidget((GtkWidget *)entry,NULL);
+	AddChangedWidget((GtkWidget *)entry);
 }
 
 extern	void
@@ -390,7 +380,7 @@ entry_changed(
 	GtkWidget	*entry,
 	gpointer	user_data)
 {
-	UpdateWidget((GtkWidget *)entry,NULL);
+	AddChangedWidget((GtkWidget *)entry);
 }
 
 extern	void
@@ -398,7 +388,7 @@ text_changed(
 	GtkWidget	*entry,
 	gpointer	user_data)
 {
-	UpdateWidget((GtkWidget *)entry,user_data);
+	AddChangedWidget((GtkWidget *)entry);
 }
 
 extern	void
@@ -406,7 +396,7 @@ button_toggled(
 	GtkWidget	*button,
 	gpointer	user_data)
 {
-	UpdateWidget((GtkWidget *)button,user_data);
+	AddChangedWidget((GtkWidget *)button);
 }
 
 extern	void
@@ -414,7 +404,7 @@ selection_changed(
 	GtkWidget	*entry,
 	gpointer	user_data)
 {
-	UpdateWidget((GtkWidget *)entry,user_data);
+	AddChangedWidget((GtkWidget *)entry);
 }
 
 extern void
@@ -426,8 +416,8 @@ fileentry_changed(
 
     fileentry = find_widget_ancestor(widget, GNOME_TYPE_FILE_ENTRY);
     if (fileentry != NULL) {
-	  UpdateWidget(fileentry,user_data);
-	  UpdateWidget(widget,user_data);
+	  AddChangedWidget(fileentry);
+	  AddChangedWidget(widget);
     }
 }
 
@@ -436,7 +426,7 @@ click_column(
 	GtkWidget	*button,
 	gpointer	user_data)
 {
-	UpdateWidget((GtkWidget *)button,user_data);
+	AddChangedWidget((GtkWidget *)button);
 }
 
 extern	void
@@ -452,7 +442,7 @@ map_event(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-	ClearWindowTable();
+	//fprintf(stderr,"map_event\n");
 }
 
 extern	void
@@ -469,7 +459,7 @@ day_selected(
 	GtkCalendar	*widget,
 	gpointer	user_data)
 {
-	UpdateWidget((GtkWidget *)widget,user_data);
+	AddChangedWidget((GtkWidget *)widget);
 #ifdef	DEBUG
 	printf("%d\n",(int)user_data);
 	printf("year = %d\n",widget->year);
@@ -490,9 +480,9 @@ switch_page(
 	gpointer *object;
 
 	object = GetObjectData(GTK_WIDGET(widget), "recv_page");
-	recv_page = (int)(long)(*object);
+	recv_page = (int )(*object);
 	SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
-	UpdateWidget((GtkWidget *)widget,user_data);
+	AddChangedWidget((GtkWidget *)widget);
 	if ((user_data != NULL ) &&
 		(recv_page != page_num)){
 		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "switch_page");
@@ -503,38 +493,19 @@ switch_page(
 	return rc;
 }
 
-static	void
-CheckWindow(
-	char	*name,
-	XML_Node	*node,
-	Bool		*fOpen)
-{
-	if		(  node->window  !=  NULL  ) {
-		*fOpen = TRUE;
-	}
-LEAVE_FUNC;
-}
-
 extern	void
 window_close(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-	XML_Node	*node;
+	GtkWidget	*window;
 	char		*name;
-	Bool		fOpen;
 
 ENTER_FUNC;
 	name = gtk_widget_get_name(widget);
-	if		(  ( node = g_hash_table_lookup(WindowTable,name) )  !=  NULL  ) {
-		gtk_widget_hide(GTK_WIDGET(node->window));
-		if		(  !fInRecv  ) {
-			fOpen = FALSE;
-			g_hash_table_foreach(WindowTable,(GHFunc)CheckWindow,&fOpen);
-			if		(  !fOpen  ) {
-				gtk_main_quit();
-			}
-		}
+	window = GetWidgetByLongName(name);
+	if (window != NULL) {
+		gtk_widget_hide(GTK_WIDGET(window));
 	}
 LEAVE_FUNC;
 }
