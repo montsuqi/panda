@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([panda],[1.4.3])
+AC_INIT([panda],[1.4.4])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_SRCDIR([aps/C.c])
@@ -156,6 +156,12 @@ if test "x$enable_client_gtk2" = "xyes"; then
 		libglade-panda-gnome-2.0 >= 1.9.0
 		libmondai				 >= 1.4.0
 	])
+	AC_CHECK_LIB(gtkpanda-2.0, gtk_panda_pdf_new,
+	    enable_pdf=1,
+	    enable_pdf=0)
+	if test $enable_pdf = 1 ; then
+	    AC_DEFINE(USE_PDF, 1, "")
+	fi
 fi
 AM_CONDITIONAL(GTK2CLIENT, test "x$enable_client_gtk2" = "xyes")
 

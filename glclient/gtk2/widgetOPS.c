@@ -141,13 +141,20 @@ SetStyle(
 /******************************************************************************/
 
 static	void
-SetPandaPDF(
+SetPandaPreview(
 	GtkWidget	*widget,
 	_PREVIEW	*data)
 {
 ENTER_FUNC;
+
+#ifdef USE_PDF
 	gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 
 		LBS_Size(data->binary), LBS_Body(data->binary));
+#else
+	gtk_panda_ps_set(GTK_PANDA_PS(widget), 
+		LBS_Size(data->binary), LBS_Body(data->binary));
+#endif
+
 LEAVE_FUNC;
 }
 
@@ -674,8 +681,13 @@ GetWidgetType(
 			return WIDGET_TYPE_PANDA_ENTRY;
 		} else if (type == GTK_PANDA_TYPE_TEXT) {
 			return WIDGET_TYPE_PANDA_TEXT;
+#ifdef USE_PDF
 		} else if (type == GTK_PANDA_TYPE_PDF) {
 			return WIDGET_TYPE_PANDA_PREVIEW;
+#else
+		} else if (type == GTK_PANDA_TYPE_PS) {
+			return WIDGET_TYPE_PANDA_PREVIEW;
+#endif
 		} else if (type == GTK_PANDA_TYPE_TIMER) {
 			return WIDGET_TYPE_PANDA_TIMER;
 		} else if (type == GTK_PANDA_TYPE_HTML) {
@@ -804,7 +816,7 @@ UpdateWidget(WidgetData *data)
 		SetText(widget, (_Text *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_PREVIEW:
-		SetPandaPDF(widget, (_PREVIEW *)data->attrs);
+		SetPandaPreview(widget, (_PREVIEW *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_TIMER:
 		SetPandaTimer(widget, (_Timer *)data->attrs);

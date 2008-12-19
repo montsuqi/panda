@@ -873,13 +873,21 @@ GL_SendVersionString(
 	if (UI_Version() == UI_VERSION_1) {
 		version = "version:no:blob:expand:ps";
 	} else {
+#	ifdef	USE_PDF
 		version = "version:no:blob:expand:pdf";
+#	else
+		version = "version:no:blob:expand:ps";
+#	endif
 	}
 #else
 	if (UI_Version() == UI_VERSION_1) {
 		version = "version:blob:expand:ps";
 	} else {
+#	ifdef	USE_PDF
 		version = "version:blob:expand:pdf";
+#	else
+		version = "version:blob:expand:ps";
+#	endif
 	}
 #endif
 	size = strlen(version);
