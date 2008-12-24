@@ -84,6 +84,7 @@ InitApplications(void)
 	ENGINE(glSession) = NULL;
 #endif	//USE_PKCS11
 #endif	//USE_SSL
+	TITLE(glSession) = NULL;
 	UIVERSION(glSession) = UI_Version();
 }
 
