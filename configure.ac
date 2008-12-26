@@ -153,8 +153,8 @@ AC_ARG_ENABLE(client_gtk2,
 if test "x$enable_client_gtk2" = "xyes"; then
 	PKG_CHECK_MODULES(GTK2CLIENT,
 	[
-		libglade-panda-gnome-2.0 >= 1.9.0
-		libmondai				 >= 1.4.0
+		libglade-panda-2.0	>= 1.9.0
+		libmondai			>= 1.4.0
 	])
 	AC_CHECK_LIB(gtkpanda-2.0, gtk_panda_pdf_new,
 	    enable_pdf=1,
@@ -716,7 +716,6 @@ echo "------------------------------------------------------"
 echo "$PACKAGE Configuration:"
 echo ""
 echo "  VERSION:               $VERSION"
-echo "  GNOME support:         $enable_gnome"
 echo "  Gtk1 client support:   $enable_client_gtk1"
 echo "  Gtk2 client support:   $enable_client_gtk2"
 echo "  PostgreSQL support:    $enable_postgres"

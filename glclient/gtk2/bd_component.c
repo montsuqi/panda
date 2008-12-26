@@ -28,12 +28,8 @@
 #include    <sys/stat.h> /* mkdir */
 #include    <sys/types.h> /* mkdir */
 #include    <glib.h>
-#ifdef  USE_GNOME
-#include    <gnome.h>
-#else
 #include    <gtk/gtk.h>
 #include    "gettext.h"
-#endif
 #include	"glclient.h"
 #include    "port.h"
 #include    "const.h"

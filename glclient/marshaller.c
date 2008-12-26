@@ -1293,33 +1293,18 @@ SendFileEntry(
 	NETFILE		*netfp)
 {
 	char			iname[SIZE_BUFF];
-	FILE			*fp;
-	struct stat		st;
 	_FileEntry		*attrs;
-	LargeByteString	*binary;
 
 ENTER_FUNC;
 	attrs = (_FileEntry *)data->attrs;
-	if (attrs->path == NULL || strlen(attrs->path) <= 0){
-		return TRUE;
-	}
-	if ( stat(attrs->path,&st) ){
-		return TRUE;
-	}
-	if ( (fp = fopen(attrs->path,"r")) != NULL) {
-		binary = NewLBS();
-		LBS_ReserveSize(binary,st.st_size,FALSE);
-		fread(LBS_Body(binary),st.st_size,1,fp);
-		fclose(fp);
-	} else {
+	if (attrs->path == NULL){
 		return TRUE;
 	}
 	
 	GL_SendPacketClass(netfp,GL_ScreenData);
 	sprintf(iname,"%s.objectdata", data->name);
 	GL_SendName(netfp,iname);
-	SendBinaryData(netfp, GL_TYPE_OBJECT, binary);
-	FreeLBS(binary);
+	SendBinaryData(netfp, GL_TYPE_OBJECT, attrs->binary);
 LEAVE_FUNC;
 	return TRUE;
 }

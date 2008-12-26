@@ -598,14 +598,26 @@ GetFileEntry(
 {
 	LargeByteString	*binary;
 	GtkWidget		*subWidget;
+	FILE			*fp;
+	struct stat		st;
 
 ENTER_FUNC;
 	binary = gtk_object_get_data(GTK_OBJECT(widget), "recvobject");
 	if (binary != NULL) {
 		data->path = NULL;
 	} else {
-		subWidget = gnome_file_entry_gtk_entry(GNOME_FILE_ENTRY(widget));
-		data->path = gtk_editable_get_chars(GTK_EDITABLE(subWidget),0,-1);
+		subWidget = gnome_file_entry_gtk_entry(
+			GNOME_FILE_ENTRY(widget));
+		data->path = gtk_editable_get_chars(GTK_EDITABLE(subWidget),
+			0,-1);
+		if ( stat(data->path,&st) ){
+			return;
+		}
+		if ( (fp = fopen(data->path,"r")) != NULL) {
+			LBS_ReserveSize(data->binary,st.st_size,FALSE);
+			fread(LBS_Body(data->binary),st.st_size,1,fp);
+			fclose(fp);
+		}
 	}
 LEAVE_FUNC;
 }

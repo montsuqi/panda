@@ -34,7 +34,8 @@
 #include	<sys/stat.h>
 #include    <unistd.h>
 #include	<sys/time.h>
-#include 	<gnome.h>
+#include 	<gtk/gtk.h>
+#include 	"gettext.h"
 #include	<gtkpanda/gtkpanda.h>
 
 #include	"types.h"
@@ -246,14 +247,14 @@ UI_Init(int argc,
 {
 	GtkSettings *set;
 
-	gnome_program_init(PACKAGE, VERSION, LIBGNOMEUI_MODULE, argc, argv, NULL);
+	gtk_init(&argc, &argv);
 	/* set gtk-entry-select-on-focus */
 	set = gtk_settings_get_default();
     gtk_settings_set_long_property(set, "gtk-entry-select-on-focus", 0, 
 		"glclient2");
 	gtk_panda_init(&argc,&argv);
 	gtk_set_locale();
-	glade_gnome_init();
+	glade_init();
 	WindowTable = NewNameHash();
 }
 

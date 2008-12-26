@@ -34,7 +34,7 @@
 #include	<sys/stat.h>
 #include    <unistd.h>
 #include	<sys/time.h>
-#include 	<gnome.h>
+#include 	<gtk/gtk.h>
 #include	<gtkpanda/gtkpanda.h>
 
 #include	"types.h"
@@ -46,6 +46,7 @@
 #define		_ACTION_C
 #include	"action.h"
 #include	"queue.h"
+#include	"gettext.h"
 
 static struct changed_hander {
 	GObject					*object;

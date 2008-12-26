@@ -27,8 +27,10 @@
 #endif
 
 #include	<stdio.h>
+#include	<stdlib.h>
 #include	<stdarg.h>
-#include	<gnome.h>
+#include	<gtk/gtk.h>
+#include	"gettext.h"
 
 #include	"dialogs.h"
 

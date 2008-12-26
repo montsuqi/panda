@@ -34,10 +34,10 @@
 #include	<unistd.h>
 #include	<sys/time.h>
 #include	<errno.h>
-#include 	<gnome.h>
 #include	<gtkpanda/gtkpanda.h>
 #include	<gdk/gdk.h>
 #include	<gtk/gtk.h>
+#include 	"gettext.h"
 #include	<gdk-pixbuf/gdk-pixbuf.h>
 
 #include	"types.h"
@@ -47,7 +47,6 @@
 #include	"protocol.h"
 #include	"widgetOPS.h"
 #include	"action.h"
-#include	"fileEntry.h"
 #include	"marshaller.h"
 #include	"message.h"
 #include	"debug.h"
@@ -560,39 +559,35 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-/******************************************************************************/
-/* Gnome widget                                                               */
-/******************************************************************************/
 static	void
 SetFileEntry(
 	GtkWidget			*widget,
 	_FileEntry			*data)
 {
-	GtkWidget 		*window;
-	GtkWidget		*subWidget;
-	WidgetData		*subdata;
+	GtkPandaFileentry 	*fentry;
+	GtkWidget			*subWidget;
+	WidgetData			*subdata;
 
 ENTER_FUNC;
+	fentry = GTK_PANDA_FILEENTRY(widget);
 	g_return_if_fail(data->binary != NULL);
 	if (LBS_Size(data->binary) > 0) {
+		//download
+		gtk_panda_fileentry_set_mode(fentry, 
+			GTK_FILE_CHOOSER_ACTION_SAVE);
+		gtk_panda_fileentry_set_data(fentry,
+			LBS_Size(data->binary), LBS_Body(data->binary));
 		//set subwidget
 		subdata = g_hash_table_lookup(WidgetDataTable, data->subname);
 		subWidget = GetWidgetByLongName(data->subname);
 		if (subdata != NULL || subWidget != NULL) {
 			SetEntry(subWidget, (_Entry *)subdata->attrs);
 		}
-
-		g_object_set_data(G_OBJECT(widget), "recvobject", data->binary);
-		window = gtk_widget_get_toplevel(widget);
-		g_signal_connect_after(G_OBJECT(widget),
-								 "browse_clicked",
-								 G_CALLBACK(browse_clicked),
-								 window);
-		g_signal_emit_by_name (G_OBJECT (widget),
-								 "browse_clicked");
+		g_signal_emit_by_name(G_OBJECT(widget), "browse_clicked", NULL);
 	} else {
 		//upload
-		gtk_object_set_data(GTK_OBJECT(widget), "recvobject", NULL);
+		gtk_panda_fileentry_set_mode(GTK_PANDA_FILEENTRY(widget), 
+			GTK_FILE_CHOOSER_ACTION_OPEN);
 	}
 LEAVE_FUNC;
 }
@@ -602,16 +597,25 @@ GetFileEntry(
 	GtkWidget			*widget,
 	_FileEntry			*data)
 {
-	LargeByteString	*binary;
-	GtkWidget		*subWidget;
+	GtkFileChooserAction mode;
+	GtkPandaFileentry *fe;
+	GError *error = NULL;
 
 ENTER_FUNC;
-	binary = gtk_object_get_data(GTK_OBJECT(widget), "recvobject");
-	if (binary != NULL) {
+	fe = GTK_PANDA_FILEENTRY(widget);
+	mode = gtk_panda_fileentry_get_mode(fe);
+	if (mode == GTK_FILE_CHOOSER_ACTION_OPEN) {
 		data->path = NULL;
 	} else {
-		subWidget = gnome_file_entry_gtk_entry(GNOME_FILE_ENTRY(widget));
-		data->path = gtk_editable_get_chars(GTK_EDITABLE(subWidget),0,-1);
+		data->path = gtk_editable_get_chars(
+			GTK_EDITABLE(fe->entry),0,-1);
+		if(!g_file_get_contents(data->path, 
+				(gchar **)LBS_Ptr(data->binary), 
+				(gsize *)&(LBS_Size(data->binary)), 
+				&error)) {
+			g_error_free(error);
+			return;
+		}
 	}
 LEAVE_FUNC;
 }
@@ -720,7 +724,7 @@ GetWidgetType(
 			return WIDGET_TYPE_SCROLLED_WINDOW;
 		} else if (type == GTK_TYPE_IMAGE) {
 			return WIDGET_TYPE_PIXMAP;
-		} else if (type == GNOME_TYPE_FILE_ENTRY) {
+		} else if (type == GTK_PANDA_TYPE_FILEENTRY) {
 			return WIDGET_TYPE_FILE_ENTRY;
 		}
 	}

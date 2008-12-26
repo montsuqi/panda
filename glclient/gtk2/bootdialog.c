@@ -25,12 +25,8 @@
 #include    <string.h> /* strlen */
 #include    <ctype.h> /* isblank */
 #include    <glib.h>
-#ifdef  USE_GNOME
-#include    <gnome.h>
-#else
 #include    <gtk/gtk.h>
 #include    "gettext.h"
-#endif
 #include	<gtkpanda/gtkpanda.h>
 #include    "port.h"
 #include    "const.h"

@@ -21,7 +21,7 @@
 #ifndef	_CALLBACKS_H
 #define	_CALLBACKS_H
 
-#include <gnome.h>
+#include <gtk/gtk.h>
 
 extern	gboolean	select_all(GtkWidget *widget, GdkEventFocus *event, gpointer user_data);
 extern	gboolean	unselect_all(GtkWidget *widget, GdkEventFocus *event, gpointer user_data);

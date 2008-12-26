@@ -584,30 +584,29 @@ ENTER_FUNC;
 		unlink(tmpfile);
 		g_free(tmpfile);
 
-		// convert to utf8
-		if (UIVERSION(glSession) == UI_VERSION_2) {
-			left = SIZE_LARGE_BUFF * 2;
-			ConvEUCJP2UTF8(buffeuc, &totalsize, buffutf8, &left);
-			totalsize = SIZE_LARGE_BUFF * 2 - left;
-			// write utf8 file
-			snprintf(ffname,SIZE_BUFF , "%s.utf8", fname);
-			tmpfile = g_strconcat(ffname, "gl_cache_XXXXXX", NULL);
-			dirname = g_dirname(tmpfile);
-			MakeCacheDir(dirname);
-			g_free(dirname);
-			if  ((fd = mkstemp(tmpfile)) == -1 ) {
-				UI_ErrorDialog(_("could not write tmp file"));
-			}
-			if	((fp = fdopen(fd,"w")) == NULL) {
-				UI_ErrorDialog(_("could not write cache file"));
-			}
-			fwrite(buffutf8, 1, totalsize, fp);
-			fchmod(fileno(fp), 0600);
-			fclose(fp);
-			rename(tmpfile, ffname);
-			unlink(tmpfile);
-			g_free(tmpfile);
+		// convert to utf8 for UI_VERSION_2
+		left = SIZE_LARGE_BUFF * 2;
+		ConvEUCJP2UTF8(buffeuc, &totalsize, buffutf8, &left);
+		totalsize = SIZE_LARGE_BUFF * 2 - left;
+		// write utf8 file
+		snprintf(ffname,SIZE_BUFF , "%s.utf8", fname);
+		tmpfile = g_strconcat(ffname, "gl_cache_XXXXXX", NULL);
+		dirname = g_dirname(tmpfile);
+		MakeCacheDir(dirname);
+		g_free(dirname);
+		if  ((fd = mkstemp(tmpfile)) == -1 ) {
+			UI_ErrorDialog(_("could not write tmp file"));
 		}
+		if	((fp = fdopen(fd,"w")) == NULL) {
+			UI_ErrorDialog(_("could not write cache file"));
+		}
+		fwrite(buffutf8, 1, totalsize, fp);
+		fchmod(fileno(fp), 0600);
+		fclose(fp);
+		rename(tmpfile, ffname);
+		unlink(tmpfile);
+		g_free(tmpfile);
+
 		ret = TRUE;
 	} else {
 		UI_ErrorDialog(_("invalid protocol sequence"));
@@ -623,7 +622,6 @@ CheckScreens(
 	Bool		fInit)
 {	
 	char		sname[SIZE_BUFF];
-	char		sname2[SIZE_BUFF];
 	char		*fname;
 	struct	stat	stbuf;
 	time_t		stmtime
@@ -646,18 +644,7 @@ dbgmsg("*");
 				 ||	(  stbuf.st_size       !=  stsize   ) ) {
 			RecvFile(fp, sname, fname);
 		} else {
-			if (UIVERSION(glSession) == UI_VERSION_2) {
-				snprintf(sname2, SIZE_BUFF, "%s.utf8", fname);
-				fname = (char *)sname2;
-				if (stat(fname,&stbuf) != 0) {
-					fname = (char *)sname;
-					RecvFile(fp, sname, fname);
-				} else {
-					GL_SendPacketClass(fp, GL_NOT);
-				}
-			} else {
-				GL_SendPacketClass(fp, GL_NOT);
-			}
+			GL_SendPacketClass(fp, GL_NOT);
 		}
 		if		(  fInit  ) {
 			UI_ShowWindow(sname,SCREEN_NEW_WINDOW);

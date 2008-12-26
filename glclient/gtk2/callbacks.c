@@ -29,7 +29,8 @@
 
 #include	<stdio.h>
 
-#include	<gnome.h>
+#include	<gtk/gtk.h>
+#include	"gettext.h"
 #include	<gtkpanda/gtkpanda.h>
 #include	<gdk/gdkkeysyms.h>
 
@@ -288,7 +289,7 @@ fileentry_changed(
 {
 	GtkWidget	*fileentry;
 
-    fileentry = find_widget_ancestor(widget, GNOME_TYPE_FILE_ENTRY);
+    fileentry = find_widget_ancestor(widget, GTK_PANDA_TYPE_FILEENTRY);
     if (fileentry != NULL) {
 	  AddChangedWidget(fileentry);
 	  AddChangedWidget(widget);
