@@ -1268,7 +1268,6 @@ ENTER_FUNC;
 		g_free(attrs->subname);
 	}
 
-
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {

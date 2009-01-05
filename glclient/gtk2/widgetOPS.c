@@ -600,22 +600,24 @@ GetFileEntry(
 	GtkFileChooserAction mode;
 	GtkPandaFileentry *fe;
 	GError *error = NULL;
+	gchar *contents;
+	gsize size;
 
 ENTER_FUNC;
 	fe = GTK_PANDA_FILEENTRY(widget);
 	mode = gtk_panda_fileentry_get_mode(fe);
-	if (mode == GTK_FILE_CHOOSER_ACTION_OPEN) {
+	if (mode == GTK_FILE_CHOOSER_ACTION_SAVE) {
 		data->path = NULL;
 	} else {
 		data->path = gtk_editable_get_chars(
 			GTK_EDITABLE(fe->entry),0,-1);
 		if(!g_file_get_contents(data->path, 
-				(gchar **)LBS_Ptr(data->binary), 
-				(gsize *)&(LBS_Size(data->binary)), 
-				&error)) {
+				&contents, &size, &error)) {
 			g_error_free(error);
 			return;
 		}
+		data->binary->body = contents;
+		data->binary->size = data->binary->asize = data->binary->ptr = size;
 	}
 LEAVE_FUNC;
 }
