@@ -130,9 +130,9 @@ ConvEUCJP2UTF8(
 		if (iconv(cd,&instr,insize,&ostr,outsize) != 0) {
 			dbgprintf("error = %d\n",errno);
 		}
-		iconv_close(cd);
 	}
 	*ostr = 0;
+	iconv_close(cd);
 }
 
 static	void
@@ -152,9 +152,9 @@ ConvUTF82EUCJP(
 		if (iconv(cd,&instr,insize,&ostr,outsize) != 0) {
 			dbgprintf("error = %d\n",errno);
 		}
-		iconv_close(cd);
 	}
 	*ostr = 0;
+	iconv_close(cd);
 }
 
 /*
