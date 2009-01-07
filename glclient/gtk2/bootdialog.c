@@ -735,7 +735,9 @@ boot_dialog_new ()
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (boot_dialog_on_connect), self);
   GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_FOCUS);
   gtk_widget_grab_default (button);
+  gtk_widget_grab_focus (button);
 
   button = gtk_button_new_with_label (_("Close"));
   gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
