@@ -376,7 +376,14 @@ ENTER_FUNC;
 	  case	SCREEN_CLOSE_WINDOW:
 		StopTimer(GTK_WINDOW(window));
 		widget = gtk_window_get_focus(GTK_WINDOW(window));
+
+//FIXME; for gtk_panda_clist bug?
+//gtk_panda_clist crash memory when list was empty
+//perhaps, it is gtk+(GtkTreeView) bug.
+#if 0
 		gtk_widget_set_sensitive (window, FALSE);
+#endif
+
 		if ((widget != NULL) && GTK_IS_BUTTON (widget)) {
 			gtk_button_released (GTK_BUTTON(widget));
 		}
