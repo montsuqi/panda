@@ -145,6 +145,7 @@ ENTER_FUNC;
 				conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
 			}
 			strcpy(ctrl.func,func);
+			ctrl.limit = 1;
 			if		(  ( ctrl.rc = ValueInteger(GetItemLongName(recDBCTRL->value,"rc")) )
 						 >=  0  ) {
 				ret = ExecDB_Process(&ctrl,rec,value);
