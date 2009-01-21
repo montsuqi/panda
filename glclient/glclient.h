@@ -39,7 +39,6 @@ typedef struct {
 	NETFILE		*fpComm;
 	Port		*port;
 	char		*title;
-	int 		uiversion;
 #ifdef	USE_SSL
 	SSL_CTX		*ctx;
 #ifdef  USE_PKCS11
@@ -56,9 +55,10 @@ typedef struct {
 	Queue		*UpdateWidgetQueue;
 }	WindowData;
 
+extern	char	*CacheDirName(void);
 extern	char	*CacheFileName(char *name);
 extern	void	ExitSystem(void);
-extern  void	MakeCacheDir(char *dname);
+extern  void	MakeCacheDir(void);
 extern  void	SetSessionTitle(char *dname);
 
 GLOBAL	char		*FocusedWindowName;
@@ -142,6 +142,5 @@ GLOBAL	char	*Slot;
 #define	ENGINE(session)		((session)->engine)
 #endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
-#define	UIVERSION(session)	((session)->uiversion)
 
 #endif

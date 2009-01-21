@@ -291,7 +291,7 @@ GL_RecvString(
 ENTER_FUNC;
 	lsize = GL_RecvLength(fp);
 	if		(	maxsize > lsize 	){
-		if	(UIVERSION(glSession) == UI_VERSION_1) {
+		if	(UI_Version() == UI_VERSION_1) {
 			Recv(fp,str,lsize);
 			if		(  !CheckNetFile(fp)  ) {
 				GL_Error();
@@ -337,7 +337,7 @@ ENTER_FUNC;
 	if (str != NULL) { 
 		size = strlen(str);
 		optr = str;
-		if (UIVERSION(glSession) == UI_VERSION_2) {
+		if (UI_Version() == UI_VERSION_2) {
 			optr = buff;
 			osize = SIZE_LARGE_BUFF * 2;
 			ConvUTF82EUCJP(str, &size, optr, &osize);
@@ -538,7 +538,7 @@ RecvFile(
 	char		buffutf8[SIZE_LARGE_BUFF * 2];
 	char		ffname[SIZE_BUFF];
 	Bool		ret;
-	gchar 		*tmpfile, *dirname;
+	gchar 		*tmpfile;
 	int 		fd;
 
 ENTER_FUNC;
@@ -568,9 +568,7 @@ ENTER_FUNC;
 
 		// write euc file
 		tmpfile = g_strconcat(fname, "gl_cache_XXXXXX", NULL);
-		dirname = g_dirname(tmpfile);
-		MakeCacheDir(dirname);
-		g_free(dirname);
+		MakeCacheDir();
 		if  ((fd = mkstemp(tmpfile)) == -1 ) {
 			UI_ErrorDialog(_("could not write tmp file"));
 		}
@@ -585,27 +583,26 @@ ENTER_FUNC;
 		g_free(tmpfile);
 
 		// convert to utf8 for UI_VERSION_2
-		left = SIZE_LARGE_BUFF * 2;
-		ConvEUCJP2UTF8(buffeuc, &totalsize, buffutf8, &left);
-		totalsize = SIZE_LARGE_BUFF * 2 - left;
-		// write utf8 file
-		snprintf(ffname,SIZE_BUFF , "%s.utf8", fname);
-		tmpfile = g_strconcat(ffname, "gl_cache_XXXXXX", NULL);
-		dirname = g_dirname(tmpfile);
-		MakeCacheDir(dirname);
-		g_free(dirname);
-		if  ((fd = mkstemp(tmpfile)) == -1 ) {
-			UI_ErrorDialog(_("could not write tmp file"));
+		if (UI_Version() == UI_VERSION_2) {
+			left = SIZE_LARGE_BUFF * 2;
+			ConvEUCJP2UTF8(buffeuc, &totalsize, buffutf8, &left);
+			totalsize = SIZE_LARGE_BUFF * 2 - left;
+			// write utf8 file
+			snprintf(ffname,SIZE_BUFF , "%s.utf8", fname);
+			tmpfile = g_strconcat(ffname, "gl_cache_XXXXXX", NULL);
+			if  ((fd = mkstemp(tmpfile)) == -1 ) {
+				UI_ErrorDialog(_("could not write tmp file"));
+			}
+			if	((fp = fdopen(fd,"w")) == NULL) {
+				UI_ErrorDialog(_("could not write cache file"));
+			}
+			fwrite(buffutf8, 1, totalsize, fp);
+			fchmod(fileno(fp), 0600);
+			fclose(fp);
+			rename(tmpfile, ffname);
+			unlink(tmpfile);
+			g_free(tmpfile);
 		}
-		if	((fp = fdopen(fd,"w")) == NULL) {
-			UI_ErrorDialog(_("could not write cache file"));
-		}
-		fwrite(buffutf8, 1, totalsize, fp);
-		fchmod(fileno(fp), 0600);
-		fclose(fp);
-		rename(tmpfile, ffname);
-		unlink(tmpfile);
-		g_free(tmpfile);
 
 		ret = TRUE;
 	} else {

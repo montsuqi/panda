@@ -85,7 +85,6 @@ InitApplications(void)
 #endif	//USE_PKCS11
 #endif	//USE_SSL
 	TITLE(glSession) = NULL;
-	UIVERSION(glSession) = UI_Version();
 }
 
 extern	void
@@ -150,7 +149,7 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	char *cachename = g_strconcat(g_get_home_dir(), "/.glclient2/cache", NULL);
+	char *cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
 	PortNumber = g_strconcat(DEFAULT_HOST, ":", DEFAULT_PORT, NULL);
 	CurrentApplication = DEFAULT_APPLICATION;
 	Cache =  cachename;
@@ -184,12 +183,25 @@ SetDefault(void)
 }
 
 extern	char	*
+CacheDirName(void)
+{
+	static	char	buf[SIZE_BUFF];
+
+	if (UI_Version() == UI_VERSION_1) {
+		sprintf(buf,"%s/%s",Cache,PortNumber);
+	} else {
+		sprintf(buf,"%s/glclient2/%s",Cache,PortNumber);
+	}
+	return	(buf);
+}
+
+extern	char	*
 CacheFileName(
 	char	*name)
 {
 	static	char	buf[SIZE_BUFF];
 
-	sprintf(buf,"%s/%s/%s",Cache,PortNumber,name);
+	sprintf(buf,"%s/%s", CacheDirName() ,name);
 	return	(buf);
 }
 
@@ -230,22 +242,26 @@ mkdir_p(
 }
 
 extern  void
-MakeCacheDir(
-	char    *dname)
+MakeCacheDir(void)
 {
 	struct stat st;
+	char *dir;
 
-	if (stat(dname, &st) == 0){
+	dir = CacheDirName();
+
+	if (stat(dir, &st) == 0){
 		if (S_ISDIR(st.st_mode)) {
 			return ;
 		} else {
-			unlink (dname);
+			unlink (dir);
 		}
 	}
-	mkdir_p (Cache, 0755);
-	if  (mkdir (dname, 0755) < 0) {
+	mkdir_p (dir, 0755);
+#if 0
+	if  (mkdir (dir, 0755) < 0) {
 		UI_ErrorDialog(_("could not write cache dir"));
 	}
+#endif
 }
 
 extern	void SetSessionTitle(
