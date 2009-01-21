@@ -257,11 +257,6 @@ MakeCacheDir(void)
 		}
 	}
 	mkdir_p (dir, 0755);
-#if 0
-	if  (mkdir (dir, 0755) < 0) {
-		UI_ErrorDialog(_("could not write cache dir"));
-	}
-#endif
 }
 
 extern	void SetSessionTitle(
