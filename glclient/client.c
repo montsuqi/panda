@@ -395,6 +395,8 @@ main(
 {
 	char		_password[SIZE_BUFF];
 	gboolean	do_run = TRUE;
+	char		*delay_str;
+	int			delay;
 
 	FILE_LIST	*fl;
 
@@ -436,6 +438,17 @@ main(
 	}
 
 	UI_InitStyle();
+
+	delay_str = getenv ("GL_SEND_EVENT_DELAY");
+	if (delay_str) {
+		delay = atoi(delay_str);
+		if (delay > 0) {
+			fTimer = TRUE;
+			TimerPeriod = delay_str;
+		} else {
+			fTimer = FALSE;
+		}
+	}
 
 	while (do_run) {
 		do_run = start_client();

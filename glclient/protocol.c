@@ -522,13 +522,45 @@ GL_SendLBS(
 
 //////////////////////////////////////////////////////////////////////
 
+
+static void
+WriteFile(
+	char *fname,
+	char *buff,
+	size_t size)
+{
+	FILE *fp;
+	int	fd;
+	size_t rsize;
+	gchar *tmpfile;
+
+	tmpfile = g_strconcat(fname, "gl_cache_XXXXXX", NULL);
+	MakeCacheDir();
+	if  ((fd = mkstemp(tmpfile)) == -1 ) {
+		UI_ErrorDialog(_("could not write tmp file"));
+	}
+	if	((fp = fdopen(fd,"w")) == NULL) {
+		UI_ErrorDialog(_("could not write cache file"));
+	}
+	rsize = fwrite(buff, 1, size, fp);
+	if (rsize != size) {
+		UI_ErrorDialog(_("fwrite failed"));
+	}
+	fchmod(fileno(fp), 0600);
+	if (fclose(fp) != 0) {
+		UI_ErrorDialog(_("fclose failed"));
+	}
+	rename(tmpfile, fname);
+	unlink(tmpfile);
+	g_free(tmpfile);
+}
+
 static	Bool
 RecvFile(
 	NETFILE	*fpC,
 	char	*name,
 	char	*fname)
 {
-	FILE		*fp;
 	size_t		size
 	,			left
 	,			totalsize
@@ -538,8 +570,6 @@ RecvFile(
 	char		buffutf8[SIZE_LARGE_BUFF * 2];
 	char		ffname[SIZE_BUFF];
 	Bool		ret;
-	gchar 		*tmpfile;
-	int 		fd;
 
 ENTER_FUNC;
 	GL_SendPacketClass(fpC,GL_GetScreen);
@@ -566,21 +596,7 @@ ENTER_FUNC;
 			}
 		}	while	(  left  >  0  );
 
-		// write euc file
-		tmpfile = g_strconcat(fname, "gl_cache_XXXXXX", NULL);
-		MakeCacheDir();
-		if  ((fd = mkstemp(tmpfile)) == -1 ) {
-			UI_ErrorDialog(_("could not write tmp file"));
-		}
-		if	((fp = fdopen(fd,"w")) == NULL) {
-			UI_ErrorDialog(_("could not write cache file"));
-		}
-		fwrite(buffeuc, 1, totalsize, fp);
-		fchmod(fileno(fp), 0600);
-		fclose(fp);
-		rename(tmpfile, fname);
-		unlink(tmpfile);
-		g_free(tmpfile);
+		WriteFile(fname, buffeuc, totalsize);
 
 		// convert to utf8 for UI_VERSION_2
 		if (UI_Version() == UI_VERSION_2) {
@@ -589,19 +605,7 @@ ENTER_FUNC;
 			totalsize = SIZE_LARGE_BUFF * 2 - left;
 			// write utf8 file
 			snprintf(ffname,SIZE_BUFF , "%s.utf8", fname);
-			tmpfile = g_strconcat(ffname, "gl_cache_XXXXXX", NULL);
-			if  ((fd = mkstemp(tmpfile)) == -1 ) {
-				UI_ErrorDialog(_("could not write tmp file"));
-			}
-			if	((fp = fdopen(fd,"w")) == NULL) {
-				UI_ErrorDialog(_("could not write cache file"));
-			}
-			fwrite(buffutf8, 1, totalsize, fp);
-			fchmod(fileno(fp), 0600);
-			fclose(fp);
-			rename(tmpfile, ffname);
-			unlink(tmpfile);
-			g_free(tmpfile);
+			WriteFile(ffname, buffutf8, totalsize);
 		}
 
 		ret = TRUE;
