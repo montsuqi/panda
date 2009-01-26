@@ -42,9 +42,20 @@ NewQueue(void)
 	que->head = NULL;
 	que->tail = NULL;
 	que->curr = NULL;
+	que->length = 0;
 	pthread_cond_init(&que->isdata,NULL);
 	pthread_mutex_init(&que->qlock,NULL);
 	return	(que);
+}
+
+extern	unsigned int
+GetQueueLength(
+	Queue	*que)
+{
+	if (que == NULL){
+		return 0;
+	}
+	return (que->length);
 }
 
 extern	Bool
@@ -68,6 +79,7 @@ ENTER_FUNC;
 			que->tail->next = el;
 		}
 		que->tail = el;
+		que->length++;
 		UnLockQueue(que);
 		ReleaseQueue(que);
 		rc = TRUE;
@@ -129,6 +141,7 @@ ENTER_FUNC;
 		que->head = el->next;
 		ret = el->data;
 		xfree(el);
+		que->length--;
 		UnLockQueue(que);
 	} else {
 		ret = NULL;
@@ -186,6 +199,7 @@ ENTER_FUNC;
 			que->head = el->next;
 			ret = el->data;
 			xfree(el);
+			que->length--;
 		} else {
 			ret = NULL;
 		}
@@ -268,6 +282,7 @@ ENTER_FUNC;
 			}
 			ret = el->data;
 			xfree(el);
+			que->length--;
 		} else {
 			ret = NULL;
 		}

@@ -34,6 +34,7 @@ typedef	struct {
 	QueueElement	*head
 	,				*tail
 	,				*curr;
+	unsigned int	length;
 }	Queue;
 
 #undef	GLOBAL
@@ -44,6 +45,7 @@ typedef	struct {
 #endif
 
 extern	Queue	*NewQueue(void);
+extern	unsigned int	GetQueueLength(Queue *que);
 extern	Bool	EnQueue(Queue *que, void *data);
 extern	void	*DeQueue(Queue *que);
 extern	void	*DeQueueNoWait(Queue *que);
