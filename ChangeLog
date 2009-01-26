@@ -1,3 +1,7 @@
+2009-01-26  Noboru Saitou  <noborus@netlab.jp>
+
+	* glauth/glauth.c: パスワードの再読み込みを自動にした。
+
 2008-12-19  yusuke mihara  <mihara@netlab.jp>
 
 	* glclient/gtk2/widgetOPS.c:
