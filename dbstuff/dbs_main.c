@@ -695,11 +695,7 @@ SetDefault(void)
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
-#if	0
 	AuthURL = "glauth://localhost:8001";	/*	PORT_GLAUTH	*/
-#else
-	AuthURL = "file://./passwd";
-#endif
 
 	DB_User = NULL;
 	DB_Pass = NULL;
