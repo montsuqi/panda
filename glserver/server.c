@@ -557,7 +557,9 @@ ENTER_FUNC;
 	dbgprintf("event  = [%s]\n",scr->event);
 	RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
 	ApplicationsCall(APL_SESSION_GET,scr);
-	ret = SendScreen(fpComm,scr);			
+	if ( scr->status == APL_SESSION_GET ){
+		ret = SendScreen(fpComm,scr);
+	}
 badio:
 LEAVE_FUNC;
 	return ret;
@@ -587,8 +589,10 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Event:
-			if (!Glevent(fpComm, scr)){
-				scr->status = APL_SESSION_NULL;
+			if (  scr->status  !=  APL_SESSION_NULL  ) {
+				if	(  !Glevent(fpComm, scr)	){
+					scr->status = APL_SESSION_NULL;
+				}
 			}
 			ON_IO_ERROR(fpComm,badio);
 			break;
