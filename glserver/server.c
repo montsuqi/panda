@@ -464,7 +464,6 @@ ENTER_FUNC;
 
 	if (auth_ok){
 		Message("[%s@%s] client authenticated", scr->user,TermToHost(scr->term));
-		//scr->Windows = NULL;	???????????????????????????????????????????????????????
 		ApplicationsCall(APL_SESSION_LINK,scr);
 		if		(  scr->status  ==  APL_SESSION_NULL  ) {
 			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
@@ -480,7 +479,7 @@ ENTER_FUNC;
 			}
 			ON_IO_ERROR(fpComm,badio);
 			CheckScreens(fpComm,scr);
-			rc = TRUE;
+			rc = SendScreen(fpComm,scr);
 		}
 	} else {
 		GL_SendPacketClass(fpComm,GL_E_AUTH,fFeatureNetwork);
@@ -539,18 +538,42 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
+static  Bool
+Glevent(
+	NETFILE	*fpComm,
+	ScreenData	*scr)
+{
+	Bool	ret;
+	
+	ret = FALSE;
+ENTER_FUNC;
+	GL_RecvString(fpComm, sizeof(scr->window), scr->window, fFeatureNetwork);
+	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->widget), scr->widget, fFeatureNetwork);
+	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->event), scr->event, fFeatureNetwork);
+	ON_IO_ERROR(fpComm,badio);
+	dbgprintf("window = [%s]\n",scr->window);
+	dbgprintf("event  = [%s]\n",scr->event);
+	RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
+	ApplicationsCall(APL_SESSION_GET,scr);
+	ret = SendScreen(fpComm,scr);			
+badio:
+LEAVE_FUNC;
+	return ret;
+}
+
 static	Bool
 MainLoop(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	Bool	ret;
-
 	PacketClass	klass;
-
+	
 ENTER_FUNC;
 	klass = GL_RecvPacketClass(fpComm,fFeatureNetwork); ON_IO_ERROR(fpComm,badio);
-	dbgprintf("class = %d",(int)klass);
+	dbgprintf("class = %X\n",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
 		  case	GL_Connect:
@@ -564,16 +587,10 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 			break;
 		  case	GL_Event:
-			GL_RecvString(fpComm, sizeof(scr->window), scr->window, fFeatureNetwork);
+			if (!Glevent(fpComm, scr)){
+				scr->status = APL_SESSION_NULL;
+			}
 			ON_IO_ERROR(fpComm,badio);
-			GL_RecvString(fpComm, sizeof(scr->widget), scr->widget, fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-			GL_RecvString(fpComm, sizeof(scr->event), scr->event, fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-			dbgprintf("window = [%s]\n",scr->window);
-			dbgprintf("event  = [%s]\n",scr->event);
-			RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
-			ApplicationsCall(APL_SESSION_GET,scr);
 			break;
 		  case	GL_ScreenData:
 			/*	fatal error	*/
@@ -598,7 +615,7 @@ ENTER_FUNC;
 			ret = TRUE;
 			break;
 		  default:
-			ret = SendScreen(fpComm,scr);
+			ret = TRUE;
 			break;
 		}
 	} else {
