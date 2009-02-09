@@ -582,11 +582,7 @@ ENTER_FUNC;
 			if (!Connect(fpComm,scr)){
 				scr->status = APL_SESSION_NULL;
 			}
-			ON_IO_ERROR(fpComm,badio);
-			break;
-		  case	GL_Name:
-			GL_RecvString(fpComm, sizeof(scr->term), scr->term,fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
+			ON_IO_ERROR(fpComm,badio);			
 			break;
 		  case	GL_Event:
 			if (  scr->status  !=  APL_SESSION_NULL  ) {
@@ -596,10 +592,6 @@ ENTER_FUNC;
 			}
 			ON_IO_ERROR(fpComm,badio);
 			break;
-		  case	GL_ScreenData:
-			/*	fatal error	*/
-			scr->status = APL_SESSION_RESEND;
-			break;
 		  case	GL_END:
 			scr->status = APL_SESSION_NULL;
 			break;
@@ -608,15 +600,9 @@ ENTER_FUNC;
 			scr->status = APL_SESSION_NULL;
 			break;
 		}
-		while	(  scr->status  ==  APL_SESSION_LINK  ) {
-			ApplicationsCall(scr->status,scr);
-		}
 		switch	(scr->status) {
 		  case	APL_SESSION_NULL:
 			ret = FALSE;
-			break;
-		  case	APL_SESSION_RESEND:
-			ret = TRUE;
 			break;
 		  default:
 			ret = TRUE;
