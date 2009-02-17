@@ -176,56 +176,37 @@ AC_SUBST(GLCLIENT)
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the PostgreSQL 
 dnl *************************************************************************** 
- 
+
 enable_postgres="no"
 AC_ARG_WITH(postgres, 
 [  --with-postgres=<directory> use postgres backend in <directory>],[
-if test $withval != yes 
-then 
-  dir=$withval 
-else 
-  dir="/usr/local/" 
-fi 
-AC_MSG_CHECKING(for Postgres files) 
-postgresdir="" 
-for d in $dir /usr /usr/local/postgres /opt/postgres /opt/packages/postgres /disk/postgres /usr/local/pgsql /sw
-do 
-  if test -f $d/lib/libpq.$SO_SUFFIX
-  then 
-      AC_MSG_RESULT(found Postgres in $d) 
-      postgresdir=$d 
-      break 
-  fi 
-done 
-if test x$postgresdir = x 
-then 
-  AC_MSG_WARN(Postgres backend not used) 
-else 
-  if test -f ${postgresdir}/include/libpq-fe.h 
-  then 
-      POSTGRES_CFLAGS=-I${postgresdir}/include 
-  elif test -f ${postgresdir}/include/pgsql/libpq-fe.h 
-  then 
-      POSTGRES_CFLAGS=-I${postgresdir}/include/pgsql 
-  elif test -f ${postgresdir}/include/postgresql/libpq-fe.h 
-  then 
-      POSTGRES_CFLAGS=-I${postgresdir}/include/postgresql 
-  elif test -f ${postgresdir}/include/postgresql/8.0/libpq-fe.h 
-  then 
-      POSTGRES_CFLAGS=-I${postgresdir}/include/postgresql/8.0
-  else 
-      AC_MSG_WARN(Postgres include files not found, backend not used) 
-      postgresdir="" 
-  fi 
-  POSTGRES_LIBS="-L${postgresdir}/lib -lpq" 
-  AC_DEFINE(HAVE_POSTGRES,1,"") 
-  enable_postgres="yes"
-fi 
- 
-#AM_CONDITIONAL(POSTGRES, test x$postgresdir != x) 
+   AC_MSG_CHECKING(for Postgres files) 
+   enable_postgres="yes"
+   if test $withval != yes 
+   then 
+     pgsql_path=$withval 
+   fi
+])
+if test x"$enable_postgres" = "xyes"; then
+   if test -z "$pgsql_path"; then
+      AC_PATH_PROGS(PG_CONFIG, pg_config, no)
+   else 
+      AC_PATH_PROGS(PG_CONFIG, pg_config, no, "$pgsql_path/bin")
+   fi
+   if test x"$PG_CONFIG" = "xno"; then
+     AC_MSG_ERROR(Couldn't find pg_config)
+   else
+      postgres_bindir=`$PG_CONFIG --bindir`
+      postgres_libdir=`$PG_CONFIG --libdir`
+      postgres_includedir=`$PG_CONFIG --includedir`
+      POSTGRES_LIBS="-L$postgres_libdir -lpq"
+      POSTGRES_CFLAGS="-I$postgres_includedir"
+      AC_DEFINE(HAVE_POSTGRES,1,"") 
+      AC_DEFINE_UNQUOTED(POSTGRES_BINDIR,"$postgres_bindir","")
+   fi
+fi
 AC_SUBST(POSTGRES_LIBS) 
 AC_SUBST(POSTGRES_CFLAGS) 
-])
 
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the Oseki
