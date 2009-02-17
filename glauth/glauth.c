@@ -179,7 +179,7 @@ ENTER_FUNC;
 			Error("INET Domain Accept");
 		}
 		if	(	CheckPassword() )	{
-			Message("%s reload", PasswordFile);
+			_InitPasswd(0);
 		}
 		if		(  ( pid = fork() )  >  0  )	{	/*	parent	*/
 			close(fd);
