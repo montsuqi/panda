@@ -1523,9 +1523,9 @@ ENTER_FUNC;
 				&&	(  !IsUsageUpdate(dbg->server[i].usage)  ) )	break;
 	}
 	if		(  i  ==  dbg->nServer  ) {
-		Warning("READONLY SERVER is none.");
+		dbgmsg("READONLY SERVER is none.");
 #if	1
-		Warning("using UPDATE SERVER.");
+		dbgmsg("using UPDATE SERVER.");
 		dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
 		dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
 		rc = MCP_OK;
