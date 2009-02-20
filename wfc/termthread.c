@@ -291,30 +291,68 @@ LEAVE_FUNC;
 	return	(data);
 }
 
-
 static	SessionData	*
 InitSession(
 	NETFILE	*fp,
 	char	*term)
 {
 	SessionData	*data;
-	char	user[SIZE_USER+1];
-	char	ldname[SIZE_LONGNAME+1];
+	char	buff[SIZE_LONGNAME+1];
+	char	msg[SIZE_LONGNAME+1];
+	LD_Node	*ld;
+	int			i;
 	Bool	fKeep;
 
 ENTER_FUNC;
-	data = NULL;
+	data = MakeSessionData();
 	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
 		fKeep = TRUE;
 	} else {
 		fKeep = FALSE;
 	}
-	RecvnString(fp,SIZE_USER,user);		ON_IO_ERROR(fp,badio);
-	RecvnString(fp,SIZE_LONGNAME,ldname);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
-	if ((data = _InitSession(APS_TERM, term, fKeep, user, ldname)) != NULL) {
+	strcpy(data->hdr->term,term);
+	RecvnString(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
+	data->fKeep = fKeep;
+	data->fInProcess = TRUE;
+	snprintf(msg,SIZE_LONGNAME,"[%s@%s] session start(%d)",data->hdr->user,data->hdr->term,
+		cTerm+1);
+	MessageLog(msg);
+	dbgprintf("term = [%s]",data->hdr->term);
+	dbgprintf("user = [%s]",data->hdr->user);
+	RecvnString(fp,SIZE_LONGNAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
+	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )  !=  NULL  ) {
 		SendPacketClass(fp,WFC_OK);
+		data->ld = ld;
+		if		(  ThisEnv->mcprec  !=  NULL  ) {
+			data->mcpdata = NewLBS();
+			LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
+			NativePackValue(NULL,LBS_Body(data->mcpdata),ThisEnv->mcprec->value);
+		}
+		if		(  ThisEnv->linkrec  !=  NULL  ) {
+			data->linkdata = NewLBS();
+			LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
+			NativePackValue(NULL,LBS_Body(data->linkdata),ThisEnv->linkrec->value);
+		} else {
+			data->linkdata = NULL;
+		}
+
+		data->cWindow = ld->info->cWindow;
+		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
+													* data->cWindow);
+		for	( i = 0 ; i < data->cWindow ; i ++ ) {
+			if		(  data->ld->info->windows[i]  !=  NULL  ) {
+				dbgprintf("[%s]",data->ld->info->windows[i]->name);
+				data->scrdata[i] = GetScreenData(data,data->ld->info->windows[i]->name);
+			} else {
+				data->scrdata[i] = NULL;
+			}
+		}
+		data->name = StrDup(data->hdr->term);
+		data->hdr->puttype = SCREEN_NULL;
+		data->w.n = 0;
 		RegistSession(data);
 	} else {
+		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
 	  badio:
 		SendPacketClass(fp,WFC_NOT);
 		FinishSession(data);

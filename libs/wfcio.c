@@ -213,6 +213,7 @@ SendTermServer(
 ENTER_FUNC;
 	rc = FALSE;
 	dbgprintf("term = [%s]",term);
+	SendPacketClass(fp,WFC_TERM);
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
 		dbgmsg("recv PONG");
