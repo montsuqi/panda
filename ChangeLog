@@ -1,4 +1,8 @@
-2009-02-20	Yusuke Mihara	<mihara@netlab.jp>
+2009-02-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQLlib.[ch]: dblib/PostgreSQL.c を分割
+
+2009-02-20 Yusuke Mihara	<mihara@netlab.jp>
 
 	* glserver/Makefile.am glserver/server.c include/glterm.h
 	include/wfcdata.h libs/Makefile.am libs/wfcio.c

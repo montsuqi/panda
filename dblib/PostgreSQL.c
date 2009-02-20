@@ -46,23 +46,13 @@
 #include	"directory.h"
 #include	"redirect.h"
 #include	"debug.h"
+#include	"PostgreSQLlib.h"
 
 static	int		level;
 static	char	*rname[SIZE_RNAME];
 static	int		alevel;
 static	int		Dim[SIZE_RNAME];
 static	Bool	fInArray;
-
-static	PGconn	*
-PGCONN(
-	DBG_Struct	*dbg,
-	int			usage)
-{
-	int		ix;
-
-	ix = IsUsageUpdate(usage) ? PROCESS_UPDATE : PROCESS_READONLY;
-	return	((PGconn *)dbg->process[ix].conn);
-}
 
 /*	This code depends on sizeof(Oid).	*/
 static	void
@@ -309,46 +299,6 @@ NoticeMessage(
 	const char * message)
 {
 	Warning("%s", message);
-}
-
-void
-AddConninfo(
-	LargeByteString *conninfo,
-	char *item,
-	char *value)
-{
-ENTER_FUNC;
-	if		(  value  !=  NULL  )	{
-		dbgprintf("%s = '%s'",item,value);
-		LBS_EmitString(conninfo, item);
-		LBS_EmitString(conninfo, "='");
-		LBS_EmitString(conninfo, value);
-		LBS_EmitString(conninfo, "'");
-		LBS_EmitSpace(conninfo);
-	}
-LEAVE_FUNC;
-}
-
-static	LargeByteString	*
-CreateConninfo(
-	DBG_Struct	*dbg,
-	int			usage)
-{
-	static LargeByteString *conninfo;
-
-ENTER_FUNC;
-	conninfo = NewLBS();
-	dbgmsg("*");
-	AddConninfo(conninfo, "host", GetDB_Host(dbg,usage));
-	AddConninfo(conninfo, "port", GetDB_PortName(dbg,usage));
-	AddConninfo(conninfo, "dbname", GetDB_DBname(dbg,usage));
-	AddConninfo(conninfo, "user", GetDB_User(dbg,usage));
-	AddConninfo(conninfo, "password", GetDB_Pass(dbg,usage));
-	AddConninfo(conninfo, "sslmode", GetDB_Sslmode(dbg,usage));
-	LBS_EmitEnd(conninfo);
-LEAVE_FUNC;
-
-	return conninfo;
 }
 
 static	void
@@ -1481,9 +1431,8 @@ _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-	int		rc;
-	LargeByteString *conninfo;
 	PGconn	*conn;
+	int		rc;
 	int		i;
 	
 ENTER_FUNC;
@@ -1500,20 +1449,13 @@ ENTER_FUNC;
 		Warning("UPDATE SERVER is none.");
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	} else {
-		conninfo = CreateConninfo(dbg,DB_UPDATE);
-		conn = PQconnectdb(LBS_Body(conninfo));
-		dbgprintf("conninfo = [%s]",LBS_Body(conninfo));
-		FreeLBS(conninfo);
-		if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
-			PQsetNoticeProcessor((conn), NoticeMessage, NULL);
+		if		(  (conn = PgConnect(dbg, DB_UPDATE)) != NULL ) {
+			PQsetNoticeProcessor(PGCONN(dbg, DB_UPDATE), NoticeMessage, NULL);
 			OpenDB_RedirectPort(dbg);
-			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
+			dbg->process[PROCESS_UPDATE].conn = (void *)PGCONN(dbg, DB_UPDATE);
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 			rc = MCP_OK;
 		} else {
-			Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg,DB_UPDATE));
-			Message("%s", PQerrorMessage(conn));
-			PQfinish(conn);
 			rc = MCP_BAD_CONN;
 		}
 	}
@@ -1523,9 +1465,9 @@ ENTER_FUNC;
 				&&	(  !IsUsageUpdate(dbg->server[i].usage)  ) )	break;
 	}
 	if		(  i  ==  dbg->nServer  ) {
-		dbgmsg("READONLY SERVER is none.");
+		Warning("READONLY SERVER is none.");
 #if	1
-		dbgmsg("using UPDATE SERVER.");
+		Warning("using UPDATE SERVER.");
 		dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
 		dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
 		rc = MCP_OK;
@@ -1533,22 +1475,15 @@ ENTER_FUNC;
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 		rc = MCP_BAD_CONN;
 #endif
-
 	} else {
-		conninfo = CreateConninfo(dbg,DB_READONLY);
-		conn = PQconnectdb(LBS_Body(conninfo));
-		FreeLBS(conninfo);
-		if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
-			PQsetNoticeProcessor((conn), NoticeMessage, NULL);
+		if		(  (conn = PgConnect(dbg, DB_READONLY)) != NULL ) {
+			PQsetNoticeProcessor(PGCONN(dbg,DB_READONLY), NoticeMessage, NULL);
 			dbg->process[PROCESS_READONLY].conn = (void *)conn;
 			dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_CONNECT;
 			if		(  rc  ==  0  ) {
 				rc = MCP_OK;
 			}
 		} else {
-			Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg,DB_READONLY));
-			Message("%s", PQerrorMessage(conn));
-			PQfinish(conn);
 #if	1
 			Warning("using UPDATE SERVER.");
 			dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
@@ -1559,7 +1494,6 @@ ENTER_FUNC;
 #endif
 		}
 	}
-
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 		ctrl->count = 0;

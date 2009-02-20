@@ -55,6 +55,7 @@ PostgreSQL_la_LDFLAGS	=	\
 PostgreSQL_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
+	PostgreSQLlib.c PostgreSQLlib.h \
 	PostgreSQL.c
 PostgreSQL_la_LIBADD	=	\
 	$(top_builddir)/libs/net.lo		\
