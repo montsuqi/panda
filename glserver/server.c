@@ -59,6 +59,7 @@
 #include	"dirs.h"
 #include	"RecParser.h"
 #include	"message.h"
+#include	"http.h"
 #include	"debug.h"
 
 static	void
@@ -578,13 +579,13 @@ ENTER_FUNC;
 	dbgprintf("class = %X\n",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
-		  case	GL_Connect:
+		case GL_Connect:
 			if (!Connect(fpComm,scr)){
 				scr->status = APL_SESSION_NULL;
 			}
 			ON_IO_ERROR(fpComm,badio);			
 			break;
-		  case	GL_Event:
+		case GL_Event:
 			if (  scr->status  !=  APL_SESSION_NULL  ) {
 				if	(  !Glevent(fpComm, scr)	){
 					scr->status = APL_SESSION_NULL;
@@ -592,10 +593,17 @@ ENTER_FUNC;
 			}
 			ON_IO_ERROR(fpComm,badio);
 			break;
-		  case	GL_END:
+		case GL_END:
 			scr->status = APL_SESSION_NULL;
 			break;
-		  default:
+		case HTTP_GET:
+		case HTTP_POST:
+		case HTTP_HEAD:
+			HTTP_Method(klass, fpComm);
+			scr->status = APL_SESSION_NULL;
+			ret = FALSE;
+			break;
+		default:
 			Warning("invalid class = %X\n",klass);
 			scr->status = APL_SESSION_NULL;
 			break;

@@ -34,6 +34,8 @@
 #define	WFC_PING		(PacketClass)0x02
 #define	WFC_BLOB		(PacketClass)0x03
 #define	WFC_HEADER		(PacketClass)0x04
+#define	WFC_TERM		(PacketClass)0x05
+#define	WFC_API			(PacketClass)0x06
 
 #define	WFC_FALSE		(PacketClass)0xE0
 #define	WFC_TRUE		(PacketClass)0xE1

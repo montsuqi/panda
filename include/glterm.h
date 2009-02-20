@@ -53,6 +53,10 @@
 #define	GL_RedirectName				(PacketClass)0x0D
 #define	GL_ServerVersion			(PacketClass)0x0E
 
+#define HTTP_GET					(PacketClass)0x47
+#define HTTP_HEAD					(PacketClass)0x48
+#define HTTP_POST					(PacketClass)0x50
+
 #define	GL_OK						(PacketClass)0x80
 #define	GL_END						(PacketClass)0x81
 #define	GL_NOT						(PacketClass)0x83

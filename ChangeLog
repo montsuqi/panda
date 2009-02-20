@@ -1,3 +1,18 @@
+2009-02-20	Yusuke Mihara	<mihara@netlab.jp>
+
+	* glserver/Makefile.am glserver/server.c include/glterm.h
+	include/wfcdata.h libs/Makefile.am libs/wfcio.c
+	libs/wfcio.h tools/Makefile.am wfc/termthread.c
+	glserver/http.c glserver/http.h libs/monapi.c libs/monapi.h:
+	API対応
+		* glserverにHTTPサーバ機能を追加
+			* GLプロトコルとHTTPのマルチプロトコル化(glserver/http.c)
+		* glserverはHTTPリクエストをpanda.soを経由せずwfcに直接送信
+			* glserver-wfc間に新プロトコルを追加(libs/monapi.c)
+		* wfcのsession dataをAPI用に拡張
+		* HTTPリクエストの解析はapsで実施(未実装)
+			* 現状はリクエストをwfcでエコーバック
+
 2009-01-26  Noboru Saitou  <noborus@netlab.jp>
 
 	* glauth/glauth.c: パスワードの再読み込みを自動にした。

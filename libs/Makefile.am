@@ -175,6 +175,7 @@ libpandas_a_SOURCES	=			\
 	glcomm.c	glcomm.h			\
 	auth.c		auth.h				\
 	authstub.c	authstub.h			\
+	monapi.c	monapi.h			\
 	load.c		load.h
 
 libpandas_a_DEPENDENCIES	=		\

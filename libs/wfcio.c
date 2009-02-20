@@ -166,6 +166,7 @@ ENTER_FUNC;
 	DestroyPort(port);
 	if ( fd > 0 ){
 		fp = SocketToNet(fd);
+		SendPacketClass(fp,WFC_TERM);
 		SendString(fp,term);		ON_IO_ERROR(fp,badio);
 		if		(  fKeep  ) {
 			SendPacketClass(fp,WFC_TRUE);

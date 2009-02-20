@@ -105,6 +105,24 @@ gnumerictorec_LDADD 	=				\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)
 
+gnumerictodb_LDADD 		=				\
+	-lm									\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(GLIB_LIBS)						\
+	$(XML2_LIBS)						\
+	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)
+
+gnumerictorec_LDADD 	=				\
+	-lm									\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(GLIB_LIBS)						\
+	$(XML2_LIBS)						\
+	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)
+
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
@@ -137,6 +155,13 @@ monitor_SOURCES		=	\
 	monitor.c
 msgd_SOURCES		=	\
 	msgd.c
+
+gnumerictodb_SOURCES	=	\
+	xxml.c	xxml.h			\
+	gnumerictodb.c
+gnumerictorec_SOURCES	=	\
+	xxml.c	xxml.h			\
+	gnumerictorec.c
 
 gnumerictodb_SOURCES	=	\
 	xxml.c	xxml.h			\

@@ -95,6 +95,10 @@ ENTER_FUNC;
 	data->scrpool = NewNameHash();
 	data->next = NULL;
 	data->prev = NULL;
+	data->apidata = New(APIData);
+	data->apidata->arguments = NewLBS();
+	data->apidata->headers = NewLBS();
+	data->apidata->body = NewLBS();
 LEAVE_FUNC;
 	return	(data);
 }
@@ -211,6 +215,7 @@ FreeSession(
 ENTER_FUNC;
 	snprintf(msg,SIZE_LONGNAME,"[%s@%s] session end",data->hdr->user,data->hdr->term);
 	MessageLog(msg);
+	xfree(data->name);
 	xfree(data->hdr);
 	if		(  data->mcpdata  !=  NULL  ) {
 		FreeLBS(data->mcpdata);
@@ -223,42 +228,33 @@ ENTER_FUNC;
 	g_hash_table_foreach_remove(data->scrpool,(GHRFunc)FreeScr,NULL);
 	g_hash_table_destroy(data->scrpool);
 	xfree(data->scrdata);
-	xfree(data->name);
+	FreeLBS(data->apidata->arguments);
+	FreeLBS(data->apidata->headers);
+	FreeLBS(data->apidata->body);
+	xfree(data->apidata);
 	xfree(data);
 LEAVE_FUNC;
 }
 
 static	SessionData	*
-InitSession(
-	NETFILE	*fp,
-	char	*term)
+_InitSession(
+	PacketClass type,
+	char *term,
+	Bool fKeep,
+	char *hdr_user,
+	char *ldname)
 {
 	SessionData	*data;
-	char	buff[SIZE_LONGNAME+1];
-	char	msg[SIZE_LONGNAME+1];
-	LD_Node	*ld;
+	LD_Node		*ld;
 	int			i;
-	Bool	fKeep;
 
 ENTER_FUNC;
 	data = MakeSessionData();
-	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
-		fKeep = TRUE;
-	} else {
-		fKeep = FALSE;
-	}
+	data->type = type;
 	strcpy(data->hdr->term,term);
-	RecvnString(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
 	data->fKeep = fKeep;
 	data->fInProcess = TRUE;
-	snprintf(msg,SIZE_LONGNAME,"[%s@%s] session start(%d)",data->hdr->user,data->hdr->term,
-		cTerm+1);
-	MessageLog(msg);
-	dbgprintf("term = [%s]",data->hdr->term);
-	dbgprintf("user = [%s]",data->hdr->user);
-	RecvnString(fp,SIZE_LONGNAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
-	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )  !=  NULL  ) {
-		SendPacketClass(fp,WFC_OK);
+	if		(  ( ld = g_hash_table_lookup(APS_Hash, ldname) )  !=  NULL  ) {
 		data->ld = ld;
 		if		(  ThisEnv->mcprec  !=  NULL  ) {
 			data->mcpdata = NewLBS();
@@ -287,9 +283,38 @@ ENTER_FUNC;
 		data->name = StrDup(data->hdr->term);
 		data->hdr->puttype = SCREEN_NULL;
 		data->w.n = 0;
+	} else {
+		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,ldname);
+		data = NULL;
+	}
+LEAVE_FUNC;
+	return	(data);
+}
+
+
+static	SessionData	*
+InitSession(
+	NETFILE	*fp,
+	char	*term)
+{
+	SessionData	*data;
+	char	user[SIZE_USER+1];
+	char	ldname[SIZE_LONGNAME+1];
+	Bool	fKeep;
+
+ENTER_FUNC;
+	data = NULL;
+	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
+		fKeep = TRUE;
+	} else {
+		fKeep = FALSE;
+	}
+	RecvnString(fp,SIZE_USER,user);		ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_LONGNAME,ldname);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
+	if ((data = _InitSession(APS_TERM, term, fKeep, user, ldname)) != NULL) {
+		SendPacketClass(fp,WFC_OK);
 		RegistSession(data);
 	} else {
-		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
 	  badio:
 		SendPacketClass(fp,WFC_NOT);
 		FinishSession(data);
@@ -792,13 +817,12 @@ LEAVE_FUNC;
 }
 
 static	void
-TermThread(
+ExecTerm(
 	TermNode	*term)
 {
 	SessionData	*data;
 	char	buff[SIZE_TERM+1];
-
-ENTER_FUNC;
+	
 	RecvnString(term->fp,SIZE_TERM,buff);
 	if		(  ( data = CheckSession(term->fp,buff) )  !=  NULL  ) {
 		data->term = term;
@@ -815,6 +839,79 @@ ENTER_FUNC;
 	}
 	SendPacketClass(term->fp,WFC_DONE);
 	CloseNet(term->fp);
+}
+
+static	void
+CallAPI(
+	TermNode	*term)
+{
+	SessionData *data;
+	APIData *api;
+	char ld[SIZE_NAME+1];
+	char user[SIZE_USER+1];
+	char sterm[SIZE_TERM+1];
+
+	data = NULL;
+	RecvnString(term->fp, sizeof(ld), ld);			
+		ON_IO_ERROR(term->fp,badio);
+	RecvnString(term->fp, sizeof(user), user);		
+		ON_IO_ERROR(term->fp,badio);
+	RecvnString(term->fp, sizeof(sterm), sterm);	
+		ON_IO_ERROR(term->fp,badio);
+
+	data = _InitSession(APS_API, sterm, FALSE, user, ld);
+	if (data != NULL) {
+		api = data->apidata;
+		api->method = RecvPacketClass(term->fp);
+		RecvLBS(term->fp, api->arguments);	ON_IO_ERROR(term->fp,badio2);
+		RecvLBS(term->fp, api->headers);	ON_IO_ERROR(term->fp,badio2);
+		RecvLBS(term->fp, api->body);		ON_IO_ERROR(term->fp,badio2);
+		RegistSession(data);
+
+		Message("== request",ld);
+		Message("ld:%s",ld);
+		Message("user:%s",user);
+		Message("term:%s",sterm);
+		Message("method:%c", (char)api->method);
+		Message("arguments:%s", (char *)LBS_Body(api->arguments));
+		Message("headers size:%d", LBS_Size(api->headers));
+		Message("body:%s", (char *)LBS_Body(api->body));
+
+#if 0
+		data = Process(data);
+#endif
+		api = data->apidata;
+
+		SendPacketClass(term->fp, WFC_OK);
+		SendLBS(term->fp, api->headers);
+		SendLBS(term->fp, api->body);
+		CloseNet(term->fp);
+	badio2:
+		FinishSession(data);
+	} else {
+		SendPacketClass(term->fp, WFC_END);
+		CloseNet(term->fp);
+	}
+	badio:
+		;
+}
+
+static	void
+TermThread(
+	TermNode	*term)
+{
+	PacketClass klass;
+
+ENTER_FUNC;
+	klass = RecvPacketClass(term->fp);
+	switch (klass) {
+	case WFC_TERM:
+		ExecTerm(term);
+		break;
+	case WFC_API:
+		CallAPI(term);
+		break;
+	}
 	FreeQueue(term->que);
 	xfree(term);
 LEAVE_FUNC;

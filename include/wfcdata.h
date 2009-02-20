@@ -38,6 +38,9 @@
 #define	APS_CTRLDATA	(PacketClass)0x40
 #define	APS_BLOB		(PacketClass)0x80
 
+#define APS_TERM		(PacketClass)0xA0
+#define APS_API			(PacketClass)0xA1
+
 #define	APS_NOT			(PacketClass)0xF0
 #define	APS_PONG		(PacketClass)0xF1
 #define	APS_PING		(PacketClass)0xF2
@@ -45,7 +48,6 @@
 #define	APS_REQ			(PacketClass)0xF4
 #define	APS_OK			(PacketClass)0xFE
 #define	APS_END			(PacketClass)0xFF
-
 
 typedef	struct {
 	NETFILE	*fp;
@@ -84,27 +86,36 @@ typedef	struct {
 	byte	puttype;
 }	MessageHeader;
 
+typedef struct {
+	int						method;
+	LargeByteString			*arguments;
+	LargeByteString			*headers;
+	LargeByteString			*body;
+}	APIData;
+
 typedef	struct _SessionData	{
-	char		*name;
-	TermNode	*term;
-	int			apsid;
-	Bool		fKeep;
-	Bool		fInProcess;
-	LD_Node		*ld;
-	size_t			cWindow;
-	int				retry;
-	Bool			fAbort;
-	MessageHeader	*hdr;
-	int				tnest;
-	GHashTable		*spadata;
-	GHashTable		*scrpool;
-	LargeByteString	*spa;
-	LargeByteString	*mcpdata;
-	LargeByteString	*linkdata;
-	LargeByteString	**scrdata;
+	PacketClass				type;
+	char					*name;
+	TermNode				*term;
+	int						apsid;
+	Bool					fKeep;
+	Bool					fInProcess;
+	LD_Node					*ld;
+	size_t					cWindow;
+	int						retry;
+	Bool					fAbort;
+	MessageHeader			*hdr;
+	int						tnest;
+	GHashTable				*spadata;
+	GHashTable				*scrpool;
+	LargeByteString			*spa;
+	LargeByteString			*mcpdata;
+	LargeByteString			*linkdata;
+	LargeByteString			**scrdata;
+	APIData					*apidata;
 	struct	_SessionData	*prev
 	,						*next;
-	WindowControl	w;
+	WindowControl			w;
 }	SessionData;
 
 #undef	GLOBAL
