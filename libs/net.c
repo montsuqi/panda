@@ -179,6 +179,15 @@ Send(
 }
 
 extern	int
+RecvAtOnce(
+	NETFILE	*fp,
+	char	*buff,
+	size_t	size)
+{
+	return	fp->read(fp,buff,size);
+}
+
+extern	int
 Recv(
 	NETFILE	*fp,
 	void	*buff,
@@ -199,7 +208,7 @@ Recv(
 		}
 		ret = size;
 		while	(  size  >  0  ) {
-			if		(  ( count = fp->read(fp,p,size) )  >  0  ) {
+			if		(  ( count = RecvAtOnce(fp,p,size) )  >  0  ) {
 				size -= count;
 				p += count;
 			} else {

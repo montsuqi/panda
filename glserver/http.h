@@ -20,6 +20,7 @@
 #ifndef	_HTTP_H
 #define	_HTTP_H
 #include	"port.h"
+#include	"net.h"
 
 #undef	GLOBAL
 #ifdef	MAIN

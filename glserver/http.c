@@ -64,7 +64,7 @@ typedef struct {
 	PacketClass	method;
 	int			buf_size;
 	char		buf[MAX_REQ_SIZE];
-	char		*pp;
+	char		*head;
 	int			body_size;
 	char		body[MAX_REQ_SIZE];
 	char		*arguments;
@@ -76,31 +76,34 @@ typedef struct {
 	int			status;
 } HTTP_REQUEST;
 
-static HTTP_REQUEST *
+HTTP_REQUEST *
 HTTP_Init(
 	PacketClass klass,
 	NETFILE *fp)
 {
 	HTTP_REQUEST *req;
 
-	req = xmalloc(sizeof(HTTP_REQUEST));
-	req->method = klass;
+	req = New(HTTP_REQUEST);
 	req->fp = fp;
-	req->arguments = NULL;
-	req->headers = NULL;
-	req->header_hash = NewNameHash();
+	req->method = klass;
 	req->buf_size = 0;
 	req->buf[0] = '\0';
+	req->head = req->buf;
 	req->body_size = 0;
 	req->body[0] = '\0';
-	req->pp = NULL;
+	req->arguments = NULL;
+	req->header_hash = NewNameHash();
+	req->headers = NULL;
+	req->user = NULL;
+	req->pass = NULL;
+	req->ld = NULL;
 	req->status = HTTP_OK;
 	return req;
 }
 
 #define HTTP_CODE2REASON(x,y) case x: return y; break;
 
-static char *
+char *
 GetReasonPhrase(
 	int code)
 {
@@ -164,7 +167,7 @@ HTTP_CODE2REASON(HTTP_NOT_EXTENDED,"Not Extended")
 	}
 }
 
-static void
+void
 SendResponse(
 	NETFILE *fp,
 	int status,
@@ -203,16 +206,11 @@ SendResponse(
 	}
 }
 
-static int
+int
 TryRecv(
 	HTTP_REQUEST *req)
 {
-	NETFILE *fp;
 	int size;
-
-	if (req->pp == NULL) {
-		req->pp = req->buf;
-	}
 
 	if (req->buf_size >= MAX_REQ_SIZE) {
 		req->status = HTTP_UNPROCESSABLE_ENTITY;
@@ -220,20 +218,19 @@ TryRecv(
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
 
-	fp = req->fp;
-	size = fp->read(fp, 
+	size = RecvAtOnce(req->fp, 
 		req->buf + req->buf_size , 
 		MAX_REQ_SIZE - req->buf_size);
-	if (size > 0) {
+	if (size >= 0) {
 		req->buf_size += size;
 		req->buf[req->buf_size] = '\0';
-	} else if (size < 0) {
+	} else {
 		Error("can't read request");
 	}
 	return size;
 }
 
-static char *
+char *
 GetNextLine(HTTP_REQUEST *req)
 {
 	char *p;
@@ -241,22 +238,17 @@ GetNextLine(HTTP_REQUEST *req)
 	int len;
 
 	while(1) {
-		if (req->pp == NULL) {
-			TryRecv(req);
-		} else {
-			p = strstr(req->pp, "\r\n");
-			if (p != NULL) {
-				len =  p - req->pp;
-				if (len == 0) {
-					return NULL;
-				}
-				ret = strndup(req->pp, len);
-				req->pp = p + strlen("\r\n");
-				return ret;
-			} else {
-				TryRecv(req);
+		p = strstr(req->head, "\r\n");
+		if (p != NULL) {
+			len =  p - req->head;
+			if (len <= 0) {
+				return NULL;
 			}
+			ret = strndup(req->head, len);
+			req->head = p + strlen("\r\n");
+			return ret;
 		}
+		TryRecv(req);
 	}
 }
 
@@ -304,7 +296,7 @@ ParseReqArgument(HTTP_REQUEST *req, char *argument)
 }
 #endif
 
-static void
+void
 ParseReqLine(HTTP_REQUEST *req)
 {
 	char *head;
@@ -382,7 +374,7 @@ ParseReqLine(HTTP_REQUEST *req)
 	free(line);
 }
 
-static gboolean
+gboolean
 ParseReqHeader(HTTP_REQUEST *req)
 {
 	char *line;
@@ -424,7 +416,7 @@ ParseReqHeader(HTTP_REQUEST *req)
 	return TRUE;
 }
 
-static void
+void
 ParseReqBody(HTTP_REQUEST *req)
 {
 	char *value;
@@ -455,7 +447,7 @@ ParseReqBody(HTTP_REQUEST *req)
 	dbgprintf("body :%s\n", req->body);
 }
 
-static void
+void
 ParseReqAuth(HTTP_REQUEST *req)
 {
 	char *head;
@@ -497,7 +489,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 	g_free(dec);
 }
 
-static void
+void
 ParseRequest(
 	HTTP_REQUEST *req)
 {
@@ -509,7 +501,7 @@ ParseRequest(
 	ParseReqAuth(req);
 }
 
-static MonAPIData *
+MonAPIData *
 MakeMonAPIData(
 	HTTP_REQUEST *req)
 {

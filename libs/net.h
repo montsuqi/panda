@@ -71,6 +71,7 @@ typedef	struct _NETFILE	{
 extern	Bool		Flush(NETFILE *fp);
 extern	int			Send(NETFILE *fp, void *buff, size_t size);
 extern	int			Recv(NETFILE *fp, void *buff, size_t size);
+extern	int			RecvAtOnce(NETFILE *fp, char *buff, size_t size);
 extern	int			nputc(int c, NETFILE *fp);
 extern	int			ngetc(NETFILE *fp);
 
