@@ -18,8 +18,10 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -436,7 +438,7 @@ ParseReqBody(HTTP_REQUEST *req)
 	}
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Type");
 
-	// FIXME ; delete this check at some future day
+	// FIXME ; delete this check
 	if (strcmp("application/xml", value)) {
 		req->status = HTTP_BAD_REQUEST;
 		Message("invalid Content-Type:%s", value);
@@ -552,11 +554,13 @@ HTTP_Method(
 		return;
 	}
 	data = MakeMonAPIData(req);
-#if 1
+
 	if (!CallMonAPI(data)) { 
 		status = HTTP_INTERNAL_SERVER_ERROR; 
+		SendResponse(req->fp, req->status, NULL , NULL);
+		return;
 	}
-#endif
+
 	SendResponse(req->fp, status, 
 		data->headers, data->body);
 }
