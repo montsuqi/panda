@@ -35,6 +35,7 @@
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<pthread.h>
+#include	<time.h>
 
 #include	"types.h"
 #include	"enum.h"
@@ -66,8 +67,6 @@ static	struct {
 }	Terminal;
 	
 static	int			cTerm;
-static	SessionData	*Head;
-static	SessionData	*Tail;
 static	Queue		*RemoveQueue;
 
 extern	void
@@ -93,8 +92,7 @@ ENTER_FUNC;
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
-	data->next = NULL;
-	data->prev = NULL;
+	time(&(data->atime));
 	data->apidata = New(APIData);
 	data->apidata->arguments = NewLBS();
 	data->apidata->headers = NewLBS();
@@ -104,11 +102,57 @@ LEAVE_FUNC;
 }
 
 static	void
+_UnrefSession(
+	SessionData	*data)
+{
+	data->fInProcess = FALSE;
+	if		(	(  data->name  !=  NULL  )
+			&&	(  g_hash_table_lookup(Terminal.Hash,data->name)  !=  NULL  ) ) {
+		cTerm --;
+		g_hash_table_remove(Terminal.Hash,data->name);
+	}
+	EnQueue(RemoveQueue,data);
+}
+
+static void
+CheckATime(
+	char *name,
+	SessionData *data,
+	SessionData **candidate)
+{
+	if (*candidate == NULL) {
+		*candidate = data;
+	} else {
+		if ((uintmax_t)((*candidate)->atime) > (uintmax_t)data->atime) {
+			*candidate = data;
+		}	
+	}
+}
+
+static	void
+DiscardSession()
+{
+	SessionData *data;
+
+	data = NULL;
+	g_hash_table_foreach(Terminal.Hash, 
+		(GHFunc)CheckATime, (gpointer)(&data));
+	if (data != NULL) {
+		Message("[%s@%s] discard session; nCache size over", 
+			data->hdr->user, data->hdr->term);
+		_UnrefSession(data);
+	}
+}
+
+static	void
 RegistSession(
 	SessionData	*data)
 {
 	LockWrite(&Terminal);
 	if		(  g_hash_table_lookup(Terminal.Hash,data->name)  ==  NULL  ) {
+		if (nCache != 0 && cTerm >= nCache) {
+			DiscardSession();
+		}
 		cTerm ++;
 		g_hash_table_insert(Terminal.Hash,data->name,data);
 	}
@@ -133,31 +177,6 @@ ENTER_FUNC;
 	UnLock(&Terminal);
 LEAVE_FUNC;
 	return	(data);
-}
-
-static	void
-_UnrefSession(
-	SessionData	*data)
-{
-	data->fInProcess = FALSE;
-	if		(  data->next  !=  NULL  ) {
-		data->next->prev = data->prev;
-		if		(  data  ==  Head  ) {
-			Head = data->next;
-		}
-	}
-	if		(  data->prev  !=  NULL  ) {
-		data->prev->next = data->next;
-		if		(  data  ==  Tail  ) {
-			Tail = data->prev;
-		}
-	}
-	if		(	(  data->name  !=  NULL  )
-			&&	(  g_hash_table_lookup(Terminal.Hash,data->name)  !=  NULL  ) ) {
-		cTerm --;
-		g_hash_table_remove(Terminal.Hash,data->name);
-	}
-	EnQueue(RemoveQueue,data);
 }
 
 static	void
@@ -782,75 +801,15 @@ static	void
 KeepSession(
 	SessionData	*data)
 {
-	SessionData	*exp;
-
 ENTER_FUNC;
 	dbgprintf("data->name = [%s]\n",data->name);
 	LockWrite(&Terminal);
 	SaveSession(data);
 	data->fInProcess = FALSE;
-	if		(  data  !=  Head  ) {
-		if		(  data->next  !=  NULL  ) {
-			data->next->prev = data->prev;
-		}
-		if		(  data->prev  !=  NULL  ) {
-			data->prev->next = data->next;
-		}
-		if		(  Tail  ==  NULL  ) {
-			Tail = data;
-		} else {
-			if		(  data  ==  Tail  ) {
-				Tail = data->prev;
-			}
-		}
-		if		(  Head  !=  NULL  ) {
-			Head->prev = data;
-		}
-		data->next = Head;
-		data->prev = NULL;
-		Head = data;
-	}
+	time(&(data->atime));
 	dbgprintf("cTerm  = %d",cTerm);
 	dbgprintf("nCache = %d",nCache);
-	if		(  nCache  ==  0  ) {
-		exp = NULL;
-	} else
-	if		(  cTerm  >  nCache  ) {
-		if		(  ( exp = Tail )  !=  NULL  ) {
-			if		(  Tail->prev  !=  NULL  ) {
-				Tail->prev->next = NULL;
-			}
-			if		(  Head  ==  Tail  ) {
-				Head = NULL;
-				Tail = NULL;
-			} else {
-				Tail = Tail->prev;
-			}
-			exp->next = NULL;
-			exp->prev = NULL;
-		}
-	} else {
-		exp = NULL;
-	}
-	if		(  exp  !=  NULL  ) {
-		_UnrefSession(exp);
-	}
 	UnLock(&Terminal);
-#ifdef	DEBUG
-	{
-		SessionData	*p;
-		printf("*** term dump Head -> Tail ***\n");
-		for	( p = Head ; p != NULL ; p = p->next ) {
-			printf("[%s]\n",p->name);
-		}
-		printf("*****************\n");
-		printf("*** term dump Tail -> Head  ***\n");
-		for	( p = Tail ; p != NULL ; p = p->prev ) {
-			printf("[%s]\n",p->name);
-		}
-		printf("*****************\n");
-	}
-#endif
 LEAVE_FUNC;
 }
 
@@ -998,8 +957,6 @@ InitTerm(void)
 
 ENTER_FUNC;
 	cTerm = 0;
-	Head = NULL;
-	Tail = NULL;
 	RemoveQueue = NewQueue();
 	InitLock(&Terminal);
 	LockWrite(&Terminal);

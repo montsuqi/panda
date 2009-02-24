@@ -113,8 +113,7 @@ typedef	struct _SessionData	{
 	LargeByteString			*linkdata;
 	LargeByteString			**scrdata;
 	APIData					*apidata;
-	struct	_SessionData	*prev
-	,						*next;
+	time_t					atime;
 	WindowControl			w;
 }	SessionData;
 
