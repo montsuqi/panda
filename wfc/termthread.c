@@ -92,7 +92,8 @@ ENTER_FUNC;
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
-	time(&(data->atime));
+	time(&(data->create_time));
+	time(&(data->access_time));
 	data->apidata = New(APIData);
 	data->apidata->arguments = NewLBS();
 	data->apidata->headers = NewLBS();
@@ -115,7 +116,7 @@ _UnrefSession(
 }
 
 static void
-CheckATime(
+CheckAccessTime(
 	char *name,
 	SessionData *data,
 	SessionData **candidate)
@@ -123,7 +124,7 @@ CheckATime(
 	if (*candidate == NULL) {
 		*candidate = data;
 	} else {
-		if ((uintmax_t)((*candidate)->atime) > (uintmax_t)data->atime) {
+		if ((uintmax_t)((*candidate)->access_time) > (uintmax_t)data->access_time) {
 			*candidate = data;
 		}	
 	}
@@ -136,7 +137,7 @@ DiscardSession()
 
 	data = NULL;
 	g_hash_table_foreach(Terminal.Hash, 
-		(GHFunc)CheckATime, (gpointer)(&data));
+		(GHFunc)CheckAccessTime, (gpointer)(&data));
 	if (data != NULL) {
 		Message("[%s@%s] discard session; nCache size over", 
 			data->hdr->user, data->hdr->term);
@@ -806,7 +807,7 @@ ENTER_FUNC;
 	LockWrite(&Terminal);
 	SaveSession(data);
 	data->fInProcess = FALSE;
-	time(&(data->atime));
+	time(&(data->access_time));
 	dbgprintf("cTerm  = %d",cTerm);
 	dbgprintf("nCache = %d",nCache);
 	UnLock(&Terminal);
