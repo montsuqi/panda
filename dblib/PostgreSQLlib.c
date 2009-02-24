@@ -116,19 +116,14 @@ PgConnect(
 {
 	LargeByteString *conninfo;
 	PGconn	*conn;
-	int ix;
-	
-	ix = IsUsageUpdate(usage) ? PROCESS_UPDATE : PROCESS_READONLY;
+
 	conninfo = CreateConninfo(dbg,usage);
 	conn = PQconnectdb(LBS_Body(conninfo));
 	FreeLBS(conninfo);
 
-	if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
-		Message("Connection to database \"%s\" %d.", GetDB_DBname(dbg,usage), ix);
-		dbg->process[ix].conn = (void *)conn;
-		dbg->process[ix].dbstatus = DB_STATUS_CONNECT;
-	} else {
-		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg,usage));
+	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
+		Message("Connection to database \"%s\" failed.",
+				GetDB_DBname(dbg,usage));
 		Message("%s", PQerrorMessage(conn));
 		PQfinish(conn);
 		conn = NULL;
