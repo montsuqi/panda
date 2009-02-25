@@ -1452,7 +1452,7 @@ ENTER_FUNC;
 		if		(  (conn = PgConnect(dbg, DB_UPDATE)) != NULL ) {
 			PQsetNoticeProcessor(PGCONN(dbg, DB_UPDATE), NoticeMessage, NULL);
 			OpenDB_RedirectPort(dbg);
-			dbg->process[PROCESS_UPDATE].conn = (void *)PGCONN(dbg, DB_UPDATE);
+			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 			rc = MCP_OK;
 		} else {
@@ -1465,9 +1465,9 @@ ENTER_FUNC;
 				&&	(  !IsUsageUpdate(dbg->server[i].usage)  ) )	break;
 	}
 	if		(  i  ==  dbg->nServer  ) {
-		Warning("READONLY SERVER is none.");
+		dbgmsg("READONLY SERVER is none.");
 #if	1
-		Warning("using UPDATE SERVER.");
+		dbgmsg("using UPDATE SERVER.");
 		dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
 		dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
 		rc = MCP_OK;
@@ -1485,7 +1485,7 @@ ENTER_FUNC;
 			}
 		} else {
 #if	1
-			Warning("using UPDATE SERVER.");
+			dbgmsg("using UPDATE SERVER.");
 			dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
 			dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
 			rc = MCP_OK;
