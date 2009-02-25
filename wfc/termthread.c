@@ -85,6 +85,7 @@ MakeSessionData(void)
 ENTER_FUNC;
 	data = New(SessionData);
 	memclear(data,sizeof(SessionData));
+	data->type = SESSION_TYPE_TERM;
 	data->hdr = New(MessageHeader);
 	data->name = NULL;
 	memclear(data->hdr,sizeof(MessageHeader));
@@ -257,8 +258,7 @@ LEAVE_FUNC;
 }
 
 static	SessionData	*
-_InitSession(
-	PacketClass type,
+InitAPISession(
 	char *term,
 	Bool fKeep,
 	char *hdr_user,
@@ -266,14 +266,15 @@ _InitSession(
 {
 	SessionData	*data;
 	LD_Node		*ld;
-	int			i;
 
 ENTER_FUNC;
 	data = MakeSessionData();
-	data->type = type;
+	data->type = SESSION_TYPE_API;
 	strcpy(data->hdr->term,term);
 	data->fKeep = fKeep;
 	data->fInProcess = TRUE;
+	MessageLogPrintf("[%s@%s] session start(%d)",
+		data->hdr->user, data->hdr->term, cTerm+1);
 	if		(  ( ld = g_hash_table_lookup(APS_Hash, ldname) )  !=  NULL  ) {
 		data->ld = ld;
 		if		(  ThisEnv->mcprec  !=  NULL  ) {
@@ -281,25 +282,9 @@ ENTER_FUNC;
 			LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
 			NativePackValue(NULL,LBS_Body(data->mcpdata),ThisEnv->mcprec->value);
 		}
-		if		(  ThisEnv->linkrec  !=  NULL  ) {
-			data->linkdata = NewLBS();
-			LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(data->linkdata),ThisEnv->linkrec->value);
-		} else {
-			data->linkdata = NULL;
-		}
-
+		data->linkdata = NULL;
 		data->cWindow = ld->info->cWindow;
-		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
-													* data->cWindow);
-		for	( i = 0 ; i < data->cWindow ; i ++ ) {
-			if		(  data->ld->info->windows[i]  !=  NULL  ) {
-				dbgprintf("[%s]",data->ld->info->windows[i]->name);
-				data->scrdata[i] = GetScreenData(data,data->ld->info->windows[i]->name);
-			} else {
-				data->scrdata[i] = NULL;
-			}
-		}
+		data->scrdata = NULL;
 		data->name = StrDup(data->hdr->term);
 		data->hdr->puttype = SCREEN_NULL;
 		data->w.n = 0;
@@ -318,7 +303,6 @@ InitSession(
 {
 	SessionData	*data;
 	char	buff[SIZE_LONGNAME+1];
-	char	msg[SIZE_LONGNAME+1];
 	LD_Node	*ld;
 	int			i;
 	Bool	fKeep;
@@ -334,9 +318,8 @@ ENTER_FUNC;
 	RecvnString(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
 	data->fKeep = fKeep;
 	data->fInProcess = TRUE;
-	snprintf(msg,SIZE_LONGNAME,"[%s@%s] session start(%d)",data->hdr->user,data->hdr->term,
-		cTerm+1);
-	MessageLog(msg);
+	MessageLogPrintf("[%s@%s] session start(%d)",
+		data->hdr->user,data->hdr->term, cTerm+1);
 	dbgprintf("term = [%s]",data->hdr->term);
 	dbgprintf("user = [%s]",data->hdr->user);
 	RecvnString(fp,SIZE_LONGNAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
@@ -815,7 +798,7 @@ LEAVE_FUNC;
 }
 
 static	void
-ExecTerm(
+TermSession(
 	TermNode	*term)
 {
 	SessionData	*data;
@@ -840,7 +823,7 @@ ExecTerm(
 }
 
 static	void
-CallAPI(
+APISession(
 	TermNode	*term)
 {
 	SessionData *data;
@@ -857,8 +840,10 @@ CallAPI(
 	RecvnString(term->fp, sizeof(sterm), sterm);	
 		ON_IO_ERROR(term->fp,badio);
 
-	data = _InitSession(APS_API, sterm, FALSE, user, ld);
+	data = InitAPISession(sterm, FALSE, user, ld);
 	if (data != NULL) {
+		data->term = term;
+		data->retry = 0;
 		api = data->apidata;
 		api->method = RecvPacketClass(term->fp);
 		RecvLBS(term->fp, api->arguments);	ON_IO_ERROR(term->fp,badio2);
@@ -866,6 +851,7 @@ CallAPI(
 		RecvLBS(term->fp, api->body);		ON_IO_ERROR(term->fp,badio2);
 		RegistSession(data);
 
+#if 0
 		Message("== request",ld);
 		Message("ld:%s",ld);
 		Message("user:%s",user);
@@ -874,8 +860,9 @@ CallAPI(
 		Message("arguments:%s", (char *)LBS_Body(api->arguments));
 		Message("headers size:%d", LBS_Size(api->headers));
 		Message("body:%s", (char *)LBS_Body(api->body));
+#endif
 
-#if 0
+#if 1
 		data = Process(data);
 #endif
 		api = data->apidata;
@@ -904,10 +891,10 @@ ENTER_FUNC;
 	klass = RecvPacketClass(term->fp);
 	switch (klass) {
 	case WFC_TERM:
-		ExecTerm(term);
+		TermSession(term);
 		break;
 	case WFC_API:
-		CallAPI(term);
+		APISession(term);
 		break;
 	}
 	FreeQueue(term->que);

@@ -38,16 +38,18 @@
 #define	APS_CTRLDATA	(PacketClass)0x40
 #define	APS_BLOB		(PacketClass)0x80
 
-#define APS_TERM		(PacketClass)0xA0
-#define APS_API			(PacketClass)0xA1
-
 #define	APS_NOT			(PacketClass)0xF0
 #define	APS_PONG		(PacketClass)0xF1
 #define	APS_PING		(PacketClass)0xF2
 #define	APS_STOP		(PacketClass)0xF3
 #define	APS_REQ			(PacketClass)0xF4
+#define	APS_TERM		(PacketClass)0xF8
+#define	APS_API			(PacketClass)0xF9
 #define	APS_OK			(PacketClass)0xFE
 #define	APS_END			(PacketClass)0xFF
+
+#define SESSION_TYPE_TERM	0
+#define SESSION_TYPE_API	1
 
 typedef	struct {
 	NETFILE	*fp;
@@ -94,7 +96,7 @@ typedef struct {
 }	APIData;
 
 typedef	struct _SessionData	{
-	PacketClass				type;
+	int						type;
 	char					*name;
 	TermNode				*term;
 	int						apsid;

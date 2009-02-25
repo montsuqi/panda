@@ -63,6 +63,7 @@
 
 typedef struct {
 	NETFILE		*fp;
+	char		*term;
 	PacketClass	method;
 	int			buf_size;
 	char		buf[MAX_REQ_SIZE];
@@ -87,6 +88,7 @@ HTTP_Init(
 
 	req = New(HTTP_REQUEST);
 	req->fp = fp;
+	req->term = TermName(fp->fd);
 	req->method = klass;
 	req->buf_size = 0;
 	req->buf[0] = '\0';
@@ -171,8 +173,7 @@ HTTP_CODE2REASON(HTTP_NOT_EXTENDED,"Not Extended")
 
 void
 SendResponse(
-	NETFILE *fp,
-	int status,
+	HTTP_REQUEST *req,
 	LargeByteString *headers,
 	LargeByteString *body)
 {
@@ -182,29 +183,29 @@ SendResponse(
 	time_t t = time(NULL);
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
-		status, GetReasonPhrase(status));
-	Send(fp, buf, strlen(buf));
-	Message("%s", buf);
+		req->status, GetReasonPhrase(req->status));
+	Send(req->fp, buf, strlen(buf));
+	MessageLogPrintf("[%s@%s] %s", req->user, req->term ,buf);
 
 	gmtime_r(&t, &cur);
 	cur_p = &cur;
 	if (strftime(date, sizeof(date),
 			"%a, %d %b %Y %H:%M:%S GMT", cur_p) != 0) {
 		sprintf(buf, "Date: %s\r\n", date);
-		Send(fp, buf, strlen(buf));
+		Send(req->fp, buf, strlen(buf));
 	}
 	
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
-	Send(fp, buf, strlen(buf));
+	Send(req->fp, buf, strlen(buf));
 
 	if (headers != NULL && LBS_Body(headers) != NULL) {
-		Send(fp, LBS_Body(headers), LBS_Size(headers));
+		Send(req->fp, LBS_Body(headers), LBS_Size(headers));
 	}
 
-	Send(fp, "\r\n", strlen("\r\n"));
+	Send(req->fp, "\r\n", strlen("\r\n"));
 
 	if (body != NULL && LBS_Body(body) != NULL) {
-		Send(fp, LBS_Body(body), LBS_Size(body));
+		Send(req->fp, LBS_Body(body), LBS_Size(body));
 	}
 }
 
@@ -216,7 +217,7 @@ TryRecv(
 
 	if (req->buf_size >= MAX_REQ_SIZE) {
 		req->status = HTTP_UNPROCESSABLE_ENTITY;
-		SendResponse(req->fp, req->status, 0, NULL);
+		SendResponse(req, 0, NULL);
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
 
@@ -248,6 +249,9 @@ GetNextLine(HTTP_REQUEST *req)
 			}
 			ret = strndup(req->head, len);
 			req->head = p + strlen("\r\n");
+
+			MessageLogPrintf("[%s]:%s", req->term, ret);
+
 			return ret;
 		}
 		TryRecv(req);
@@ -307,7 +311,6 @@ ParseReqLine(HTTP_REQUEST *req)
 	int cmp = 1;
 
 	line = head = GetNextLine(req);
-	Message("%s", line);
 
 	tail = strstr(head, " ");
 	if (tail == NULL) {
@@ -389,7 +392,6 @@ ParseReqHeader(HTTP_REQUEST *req)
 	if ( line == NULL) {
 		return FALSE;
 	}
-	Message("%s", line);
 
 	tail = strstr(head, ":");
 	if (tail == NULL) {
@@ -487,7 +489,6 @@ ParseReqAuth(HTTP_REQUEST *req)
 	}
 	req->user = strndup(dec, tail - dec);
 	req->pass = strndup(dec, size - (tail - dec + 1));
-	dbgprintf("Basic Auth user:%s pass:%s\n", req->user, req->pass);
 	g_free(dec);
 }
 
@@ -513,7 +514,7 @@ MakeMonAPIData(
 	data = NewMonAPIData();
 	strncpy(data->ld, req->ld, sizeof(data->ld));
 	strncpy(data->user, req->user, sizeof(data->user));
-	strncpy(data->term, TermName(req->fp->fd), sizeof(data->term));
+	strncpy(data->term, req->term, sizeof(data->term));
 	data->method = req->method;
 
 	if (req->arguments != NULL &&
@@ -540,27 +541,25 @@ HTTP_Method(
 {
 	HTTP_REQUEST *req;
 	MonAPIData *data;
-	int status = HTTP_OK;
 
 	req = HTTP_Init(klass, fpComm);
 
 	ParseRequest(req);
 	if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
-		Message("Auth Error user:%s pass:%s", req->user, req->pass);
+		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
 		req->status = HTTP_UNAUTHORIZED;
 	}
 	if (req->status != HTTP_OK) {
-		SendResponse(req->fp, req->status, NULL , NULL);
+		SendResponse(req, NULL , NULL);
 		return;
 	}
 	data = MakeMonAPIData(req);
 
 	if (!CallMonAPI(data)) { 
-		status = HTTP_INTERNAL_SERVER_ERROR; 
-		SendResponse(req->fp, req->status, NULL , NULL);
+		req->status = HTTP_INTERNAL_SERVER_ERROR; 
+		SendResponse(req, NULL , NULL);
 		return;
 	}
 
-	SendResponse(req->fp, status, 
-		data->headers, data->body);
+	SendResponse(req, data->headers, data->body);
 }
