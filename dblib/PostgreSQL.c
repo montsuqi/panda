@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -45,8 +45,8 @@
 #include	"dbgroup.h"
 #include	"directory.h"
 #include	"redirect.h"
-#include	"debug.h"
 #include	"PostgreSQLlib.h"
+#include	"debug.h"
 
 static	int		level;
 static	char	*rname[SIZE_RNAME];
@@ -57,9 +57,9 @@ static	Bool	fInArray;
 /*	This code depends on sizeof(Oid).	*/
 static	void
 SetValueOid(
-	ValueStruct	*value,
-	DBG_Struct	*dbg,
-	Oid			id)
+	ValueStruct		*value,
+	DBG_Class		*dbg,
+	Oid				id)
 {
 	ValueObjectId(value) = (uint64_t)id;
 }
@@ -303,9 +303,9 @@ NoticeMessage(
 
 static	void
 ValueToSQL(
-	DBG_Struct	*dbg,
+	DBG_Class		*dbg,
 	LargeByteString	*lbs,
-	ValueStruct	*val)
+	ValueStruct		*val)
 {
 	static	char	buff[SIZE_BUFF];
 	Numeric	nv;
@@ -396,7 +396,7 @@ ValueToSQL(
 
 static	void
 KeyValue(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	LargeByteString	*lbs,
 	ValueStruct	*args,
 	char		**pk)
@@ -433,7 +433,7 @@ ItemName(void)
 
 static	char	*
 ParArray(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	char		*p,
 	ValueStruct	*val)
 {
@@ -653,7 +653,7 @@ ParseDate(
 
 static	void
 GetTable(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	PGresult	*res,
 	int			ix,
 	ValueStruct	*val)
@@ -816,7 +816,7 @@ LEAVE_FUNC;
 
 static	void
 GetValue(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	PGresult	*res,
 	int			tnum,
 	int			fnum,
@@ -903,9 +903,9 @@ PutDim(void)
 
 static	void
 UpdateValue(
-	DBG_Struct	*dbg,
+	DBG_Class		*dbg,
 	LargeByteString	*lbs,
-	ValueStruct	*val)
+	ValueStruct		*val)
 {
 	int		i;
 	ValueStruct	*tmp;
@@ -981,7 +981,7 @@ UpdateValue(
 static	void
 InsertNames(
 	LargeByteString	*lbs,
-	ValueStruct	*val)
+	ValueStruct		*val)
 {
 	int		i;
 	ValueStruct	*tmp;
@@ -1030,9 +1030,9 @@ InsertNames(
 
 static	void
 InsertValues(
-	DBG_Struct	*dbg,
-	LargeByteString		*lbs,
-	ValueStruct	*val)
+	DBG_Class		*dbg,
+	LargeByteString	*lbs,
+	ValueStruct		*val)
 {
 	int		i;
 	ValueStruct	*tmp;
@@ -1124,10 +1124,10 @@ IsRedirectQuery(
 
 static	PGresult	*
 _PQexec(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	Bool			fRed,
+	int				usage)
 {
 	PGresult	*res;
 
@@ -1148,9 +1148,9 @@ LEAVE_FUNC;
 
 static int
 _PQsendQuery(
-	DBG_Struct	*dbg,
-	char		*sql,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	int				usage)
 {
 	dbgprintf("%s;",sql);
 	return PQsendQuery(PGCONN(dbg,usage),sql);
@@ -1158,18 +1158,18 @@ _PQsendQuery(
 
 static	PGresult	*
 _PQgetResult(
-	DBG_Struct	*dbg,
-	int			usage)
+	DBG_Instance	*dbg,
+	int				usage)
 {
 	return PQgetResult(PGCONN(dbg,usage));
 }
 
 static int
 CheckResult(
-	DBG_Struct	*dbg,
-	int			usage,
-	PGresult	*res,
-	int 		status)	
+	DBG_Instance	*dbg,
+	int				usage,
+	PGresult		*res,
+	int 			status)	
 {
 	int rc;
 
@@ -1191,7 +1191,7 @@ CheckResult(
 
 static	ValueStruct	*
 ExecPGSQL(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	LargeByteString	*src,
 	ValueStruct		*args,
@@ -1277,11 +1277,16 @@ ENTER_FUNC;
 			  case	SQL_OP_REF:
 				val = (ValueStruct *)LBS_FetchPointer(src);
 				dbgprintf("REF [%s]",ValueToString(val,NULL));
-				InsertValues(dbg,sql,val);
+				InsertValues(dbg->class,sql,val);
 				break;
 			  case	SQL_OP_LIMIT:
 				dbgprintf("%d",ctrl->limit);
 				sprintf(buff," %d ",ctrl->limit);
+				LBS_EmitString(sql,buff);
+				break;
+			  case	SQL_OP_OFFSET:
+				dbgprintf("%d",ctrl->offset);
+				sprintf(buff," %d ",ctrl->offset);
 				LBS_EmitString(sql,buff);
 				break;
 			  case	SQL_OP_VCHAR:
@@ -1308,18 +1313,18 @@ ENTER_FUNC;
 							if		(  ( n = PQntuples(res) )  >  0  ) {
 								dbgmsg("OK");
 								ctrl->count = n;
-								if		(  n  ==  1  ) {
+								if		(  ctrl->limit  ==  1  ) {
 									ret = DuplicateValue(args,FALSE);
 									level = 0;
 									alevel = 0;
-									GetTable(dbg,res,0,ret);
+									GetTable(dbg->class,res,0,ret);
 								} else {
 									ret = NewValue(GL_TYPE_ARRAY);
 									for	( i = 0 ; i < n ; i ++ ) {
 										value = DuplicateValue(args,FALSE);
 										level = 0;
 										alevel = 0;
-										GetTable(dbg,res,i,value);
+										GetTable(dbg->class,res,i,value);
 										ValueAddArrayItem(ret,i,value);
 									}
 								}
@@ -1337,16 +1342,16 @@ ENTER_FUNC;
 						} else
 						if		(  ( ntuples = PQntuples(res) )  >  0  ) {
 							ctrl->count = ntuples;
-							if		(  ntuples  ==  1  ) {
+							if		(  ctrl->limit  ==  1  ) {
 								for	( j = 0 ; j < items ; j ++ ) {
-									GetValue(dbg,res,0,j,tuple[j]);
+									GetValue(dbg->class,res,0,j,tuple[j]);
 								}
 								ret = DuplicateValue(args,TRUE);
 							} else {
 								ret = NewValue(GL_TYPE_ARRAY);
 								for	( i = 0 ; i < ntuples ; i ++ ) {
 									for	( j = 0 ; j < items ; j ++ ) {
-										GetValue(dbg,res,i,j,tuple[j]);
+										GetValue(dbg->class,res,i,j,tuple[j]);
 									}
 									value = DuplicateValue(args,TRUE);
 									ValueAddArrayItem(ret,i,value);
@@ -1395,10 +1400,10 @@ LEAVE_FUNC;
 
 static	int
 _EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	Bool			fRed,
+	int				usage)
 {
 	PGresult	*res;
 	int			rc = MCP_OK;
@@ -1428,72 +1433,78 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBOPEN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL	*	ctrl)
 {
-	PGconn	*conn;
 	int		rc;
+	PGconn	*conn;
 	int		i;
+	LargeByteString	*conninfo;
 	
 ENTER_FUNC;
 	rc = 0;
-	if ( dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
+	if		(  IS_DB_STATUS_CONNECT(dbg->update.dbstatus)  )	{
 		Warning("database is already *UPDATE* connected.");
 	}
-	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
-		dbgprintf("usage = %d",dbg->server[i].usage);
-		if		(	(  IsUsageNotFail(dbg->server[i].usage)  )
-				&&	(  IsUsageUpdate(dbg->server[i].usage)   ) )	break;
+	for	( i = 0 ; i < dbg->class->nServer ; i ++ ) {
+		dbgprintf("usage = %d",dbg->class->server[i].usage);
+		if		(	(  IsUsageNotFail(dbg->class->server[i].usage)  )
+				&&	(  IsUsageUpdate(dbg->class->server[i].usage)   ) )	break;
 	}
-	if		(  i  ==  dbg->nServer  ) {
+	if		(  i  ==  dbg->class->nServer  ) {
 		Warning("UPDATE SERVER is none.");
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
+		dbg->update.dbstatus = DB_STATUS_NOCONNECT;
 	} else {
+		conninfo = CreateConninfo(dbg->class,DB_UPDATE);
+		conn = PQconnectdb(LBS_Body(conninfo));
+		dbgprintf("conninfo = [%s]",LBS_Body(conninfo));
+		FreeLBS(conninfo);
 		if		(  (conn = PgConnect(dbg, DB_UPDATE)) != NULL ) {
 			PQsetNoticeProcessor(PGCONN(dbg, DB_UPDATE), NoticeMessage, NULL);
 			OpenDB_RedirectPort(dbg);
-			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
-			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+			dbg->update.conn = (void *)PGCONN(dbg, DB_UPDATE);
+			dbg->update.dbstatus = DB_STATUS_CONNECT;
 			rc = MCP_OK;
 		} else {
 			rc = MCP_BAD_CONN;
 		}
 	}
-	dbgmsg("*");
-	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
-		if		(	(  IsUsageNotFail(dbg->server[i].usage)  )
-				&&	(  !IsUsageUpdate(dbg->server[i].usage)  ) )	break;
+	for	( i = 0 ; i < dbg->class->nServer ; i ++ ) {
+		if		(	(  IsUsageNotFail(dbg->class->server[i].usage)  )
+				&&	(  !IsUsageUpdate(dbg->class->server[i].usage)  ) )	break;
 	}
-	if		(  i  ==  dbg->nServer  ) {
-		dbgmsg("READONLY SERVER is none.");
+	if		(  i  ==  dbg->class->nServer  ) {
+		Warning("READONLY SERVER is none.");
 #if	1
-		dbgmsg("using UPDATE SERVER.");
-		dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
-		dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
+		Warning("using UPDATE SERVER.");
+		dbg->readonly.conn = dbg->update.conn;
+		dbg->readonly.dbstatus = dbg->update.dbstatus;
 		rc = MCP_OK;
 #else
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
+		dbg->update.dbstatus = DB_STATUS_NOCONNECT;
 		rc = MCP_BAD_CONN;
 #endif
+
 	} else {
 		if		(  (conn = PgConnect(dbg, DB_READONLY)) != NULL ) {
 			PQsetNoticeProcessor(PGCONN(dbg,DB_READONLY), NoticeMessage, NULL);
-			dbg->process[PROCESS_READONLY].conn = (void *)conn;
-			dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_CONNECT;
+			dbg->readonly.conn = (void *)conn;
+			dbg->readonly.dbstatus = DB_STATUS_CONNECT;
 			if		(  rc  ==  0  ) {
 				rc = MCP_OK;
 			}
 		} else {
 #if	1
-			dbgmsg("using UPDATE SERVER.");
-			dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
-			dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
+			Warning("using UPDATE SERVER.");
+			dbg->readonly.conn = dbg->update.conn;
+			dbg->readonly.dbstatus = dbg->update.dbstatus;
 			rc = MCP_OK;
 #else
 			rc = MCP_BAD_CONN;
 #endif
 		}
 	}
+
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 		ctrl->count = 0;
@@ -1504,24 +1515,24 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBDISCONNECT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	PGconn	*conn;
 ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+	if		(  IS_DB_STATUS_CONNECT(dbg->update.dbstatus)  ) {
 		conn = PGCONN(dbg,DB_UPDATE);
 		PQfinish(PGCONN(dbg,DB_UPDATE));
 		CloseDB_RedirectPort(dbg);
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		dbg->update.dbstatus = DB_STATUS_DISCONNECT;
 	} else {
 		conn = NULL;
 	}
-	if		(  dbg->process[PROCESS_READONLY].dbstatus == DB_STATUS_CONNECT ) {
+	if		(  IS_DB_STATUS_CONNECT(dbg->readonly.dbstatus)  )	{
 		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
 			PQfinish(PGCONN(dbg,DB_READONLY));
 		}
-		dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_DISCONNECT;
+		dbg->readonly.dbstatus = DB_STATUS_DISCONNECT;
 	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
@@ -1533,8 +1544,8 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBSTART(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	PGresult	*res;
 	int			rc;
@@ -1542,23 +1553,33 @@ _DBSTART(
 
 ENTER_FUNC;
 	rc = 0;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
-		conn = PGCONN(dbg,DB_UPDATE);
-		BeginDB_Redirect(dbg); 
-		res = _PQexec(dbg,"BEGIN",FALSE,DB_UPDATE);
-		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
-		_PQclear(res);
-	} else {
-		conn = NULL;
-	}
-	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_CONNECT  ) {
-		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
-			res = _PQexec(dbg,"BEGIN",FALSE,DB_READONLY);
-			if		(  rc  ==  0  ) {
-				rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
-			}
+	if		(  dbg->class->mode  !=  TRANSACTION_MODE_NULL  ) {
+		if		(  dbg->update.dbstatus  ==  DB_STATUS_CONNECT  ) {
+			dbg->update.dbstatus = DB_STATUS_START;
+			conn = PGCONN(dbg,DB_UPDATE);
+			BeginDB_Redirect(dbg); 
+			res = _PQexec(dbg,"BEGIN",FALSE,DB_UPDATE);
+			rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
 			_PQclear(res);
+		} else {
+			Error("transaction sequence is bad \"%s\" (update).",dbg->class->name);
+			conn = NULL;
 		}
+		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
+			if		(  dbg->readonly.dbstatus  ==  DB_STATUS_CONNECT  ) {
+				dbg->readonly.dbstatus = DB_STATUS_START;
+				res = _PQexec(dbg,"BEGIN",FALSE,DB_READONLY);
+				if		(  rc  ==  0  ) {
+					rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
+				}
+				_PQclear(res);
+			} else {
+				Error("transaction sequence is bad \"%s\".",dbg->class->name);
+			}
+		}
+	} else {
+		dbg->update.dbstatus = DB_STATUS_START;
+		dbg->readonly.dbstatus = DB_STATUS_START;
 	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
@@ -1570,32 +1591,72 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBCOMMIT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	PGresult	*res;
 	int			rc;
 	PGconn	*conn;
+	char	buff[sizeof("COMMIT PREPARED ") + 36 + 1];
 
 ENTER_FUNC;
 	rc = 0;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
-		conn = PGCONN(dbg,DB_UPDATE);
-		CheckDB_Redirect(dbg);
-		res = _PQexec(dbg,"COMMIT WORK",FALSE,DB_UPDATE);
-		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
-		_PQclear(res);
-		CommitDB_Redirect(dbg);
+	if		(  dbg->class->mode  ==  TRANSACTION_MODE_NULL  ) {
+		dbg->update.dbstatus = DB_STATUS_CONNECT;
+		dbg->readonly.dbstatus = DB_STATUS_CONNECT;
 	} else {
-		conn = NULL;
-	}
-	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_CONNECT  ) {
-		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
-			res = _PQexec(dbg,"COMMIT WORK",FALSE,DB_READONLY);
-			if		(  rc  ==  0  ) {
-				rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
+		conn = PGCONN(dbg,DB_UPDATE);
+		dbgprintf("update status = %02X",dbg->update.dbstatus);
+		dbgprintf("read only status = %02X",dbg->update.dbstatus);
+		if		(	(  PQserverVersion(conn)  >=  80200  )
+				&&	(  dbg->class->mode       ==  TRANSACTION_MODE_2PHASE  ) ) {
+			if		(  dbg->update.dbstatus  ==  DB_STATUS_PREPARE  ) {
+				sprintf(buff,"COMMTI PREPARED %s",dbg->env->id);
+				dbgmsg("*");
+			} else {
+				dbgmsg("*");
+				conn = NULL;
 			}
+		} else
+		if		(  dbg->update.dbstatus  ==  DB_STATUS_START  ) {
+			dbgmsg("*");
+			sprintf(buff,"COMMIT WORK");
+		} else {
+			dbgmsg("*");
+			conn = NULL;
+		}
+		if		(  conn  !=  NULL  ) {
+			dbgmsg("*");
+			CheckDB_Redirect(dbg);
+			dbg->update.dbstatus = DB_STATUS_CONNECT;
+			res = _PQexec(dbg,buff,FALSE,DB_UPDATE);
+			rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
 			_PQclear(res);
+			CommitDB_Redirect(dbg);
+		}
+		if		(	(  PGCONN(dbg,DB_READONLY)  !=  NULL  )
+				&&	(  PGCONN(dbg,DB_READONLY)  !=  conn  ) ) {
+			conn = PGCONN(dbg,DB_READONLY);
+			if		(	(  PQserverVersion(conn)  >=  80200  )
+					&&	(  dbg->class->mode       ==  TRANSACTION_MODE_2PHASE  ) ) {
+				if		(  dbg->readonly.dbstatus  ==  DB_STATUS_PREPARE  ) {
+					sprintf(buff,"COMMTI PREPARED %s",dbg->env->id);
+				} else {
+					conn = NULL;
+				}
+			} else
+			if		(  dbg->readonly.dbstatus  ==  DB_STATUS_START  ) {
+				sprintf(buff,"COMMIT WORK");
+			} else {
+				conn = NULL;
+			}
+			if		(  conn  !=  NULL  ) {
+				dbgmsg("*");
+				dbg->readonly.dbstatus = DB_STATUS_CONNECT;
+				res = _PQexec(dbg,buff,FALSE,DB_READONLY);
+				rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
+				_PQclear(res);
+			}
 		}
 	}
 
@@ -1608,8 +1669,148 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
+_DBROLLBACK(
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
+{
+	PGresult	*res;
+	int			rc;
+	PGconn	*conn;
+	char	buff[sizeof("ROLLBACK PREPARED ") + 36 + 1];
+
+ENTER_FUNC;
+	rc = 0;
+	if		(  dbg->class->mode  ==  TRANSACTION_MODE_NULL  ) {
+		dbg->update.dbstatus = DB_STATUS_CONNECT;
+		dbg->readonly.dbstatus = DB_STATUS_CONNECT;
+	} else {
+		conn = PGCONN(dbg,DB_UPDATE);
+		if		(	(  PQserverVersion(conn)  >=  80200  )
+				&&	(  dbg->class->mode       ==  TRANSACTION_MODE_2PHASE  ) ) {
+			switch	(dbg->update.dbstatus)	{
+			  case	DB_STATUS_PREPARE:
+				sprintf(buff,"ROLLBACK PREPARED %s",dbg->env->id);
+				break;
+			  case	DB_STATUS_START:
+				sprintf(buff,"ROLLBACK WORK");
+				break;
+			  default:
+				conn = NULL;
+				break;
+			}
+		} else
+		if		(  dbg->update.dbstatus  ==  DB_STATUS_START  ) {
+			sprintf(buff,"ROLLBACK WORK");
+		} else {
+			conn = NULL;
+		}
+		if		(  conn  !=  NULL  ) {
+			CheckDB_Redirect(dbg);
+			dbg->update.dbstatus = DB_STATUS_CONNECT;
+			res = _PQexec(dbg,buff,FALSE,DB_UPDATE);
+			rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
+			_PQclear(res);
+			AbortDB_Redirect(dbg);
+		}
+		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
+			conn = PGCONN(dbg,DB_READONLY);
+			if		(	(  PQserverVersion(conn)  >=  80200  )
+					&&	(  dbg->class->mode       ==  TRANSACTION_MODE_2PHASE  ) ) {
+				switch	(dbg->readonly.dbstatus)	{
+				  case	DB_STATUS_PREPARE:
+					sprintf(buff,"ROLLBACK PREPARED %s",dbg->env->id);
+					break;
+				  case	DB_STATUS_START:
+					sprintf(buff,"ROLLBACK WORK");
+					break;
+				  default:
+					conn = NULL;
+					break;
+				}
+			} else
+			if		(  dbg->readonly.dbstatus  ==  DB_STATUS_START  ) {
+				sprintf(buff,"ROLLBACK WORK");
+			} else {
+				conn = NULL;
+			}
+			if		(  conn  !=  NULL  ) {
+				dbg->readonly.dbstatus = DB_STATUS_CONNECT;
+				res = _PQexec(dbg,buff,FALSE,DB_READONLY);
+				rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
+				_PQclear(res);
+			}
+		}
+	}
+
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = rc;
+		ctrl->count = 0;
+	}
+LEAVE_FUNC;
+	return	(NULL);
+}
+
+static	ValueStruct	*
+_DBPREPARE(
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
+{
+	PGresult	*res;
+	int			rc;
+	PGconn	*conn;
+	char	buff[sizeof("PREPARE TRANSACTION ") + 36 + 1];
+
+ENTER_FUNC;
+	rc = 0;
+	dbgprintf("update status = %02X",dbg->update.dbstatus);
+	dbgprintf("read only status = %02X",dbg->update.dbstatus);
+	if		(  dbg->class->mode  ==  TRANSACTION_MODE_NULL  ) {
+		dbg->update.dbstatus = DB_STATUS_PREPARE;
+		dbg->readonly.dbstatus = DB_STATUS_PREPARE;
+	} else {
+		conn = PGCONN(dbg,DB_UPDATE);
+		if		(	(  PQserverVersion(conn)  >=  80200  )
+				&&	(  dbg->class->mode       ==  TRANSACTION_MODE_2PHASE  )
+				&&	(  dbg->update.dbstatus   ==  DB_STATUS_START          ) )	{
+			sprintf(buff,"PREPARE TRANSACTION %s",dbg->env->id);
+			CheckDB_Redirect(dbg);
+			dbg->update.dbstatus = DB_STATUS_PREPARE;
+			res = _PQexec(dbg,buff,FALSE,DB_UPDATE);
+			rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
+			_PQclear(res);
+			PrepareDB_Redirect(dbg);
+		} else {
+			conn = NULL;
+			CheckDB_Redirect(dbg);
+			PrepareDB_Redirect(dbg);
+		}
+		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
+			conn = PGCONN(dbg,DB_READONLY);
+			if		(	(  PQserverVersion(conn)   >=  80200  )
+					&&	(  dbg->class->mode        ==  TRANSACTION_MODE_2PHASE  )
+					&&	(  dbg->readonly.dbstatus  ==  DB_STATUS_START          ) )	{
+				sprintf(buff,"PREPARE TRANSACTION %s",dbg->env->id);
+				dbg->readonly.dbstatus = DB_STATUS_PREPARE;
+				res = _PQexec(dbg,buff,FALSE,DB_READONLY);
+				rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
+				_PQclear(res);
+			}
+		}
+	}
+	dbgprintf("update status = %02X",dbg->update.dbstatus);
+	dbgprintf("read only status = %02X",dbg->update.dbstatus);
+
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = rc;
+		ctrl->count = 0;
+	}
+LEAVE_FUNC;
+	return	(NULL);
+}
+
+static	ValueStruct	*
 _DBSELECT(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -1637,7 +1838,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBFETCH(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -1674,18 +1875,18 @@ ENTER_FUNC;
 			if ( ctrl->rc == MCP_OK ) {
 				if		(  ( n = PQntuples(res) )  >  0  ) {
 					ctrl->count = n;
-					if		(  n  ==  1  ) {
+					if		(  ctrl->limit  ==  1  ) {
 						ret = DuplicateValue(args,FALSE);
 						level = 0;
 						alevel = 0;
-						GetTable(dbg,res,0,ret);
+						GetTable(dbg->class,res,0,ret);
 					} else {
 						ret = NewValue(GL_TYPE_ARRAY);
 						for	( i = 0 ; i < n ; i ++ ) {
 							value = DuplicateValue(args,FALSE);
 							level = 0;
 							alevel = 0;
-							GetTable(dbg,res,i,value);
+							GetTable(dbg->class,res,i,value);
 							ValueAddArrayItem(ret,i,value);
 						}
 					}
@@ -1705,7 +1906,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBCLOSECURSOR(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -1745,7 +1946,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBUPDATE(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -1779,7 +1980,7 @@ ENTER_FUNC;
 			level = 0;
 			alevel = 0;
 			fInArray = FALSE;
-			UpdateValue(dbg,sql,args);
+			UpdateValue(dbg->class,sql,args);
 
 			LBS_EmitString(sql,"WHERE\t");
 			item = db->pkey->item;
@@ -1795,7 +1996,7 @@ ENTER_FUNC;
 					}
 				}
                 LBS_EmitString(sql," = ");
-                KeyValue(dbg,sql,args,*item);
+                KeyValue(dbg->class,sql,args,*item);
                 LBS_EmitChar(sql,' ');
 				item ++;
 				if		(  *item  !=  NULL  ) {
@@ -1816,7 +2017,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBDELETE(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -1860,7 +2061,7 @@ ENTER_FUNC;
 					}
 				}
                 LBS_EmitString(sql," = ");
-                KeyValue(dbg,sql,args,*item);
+                KeyValue(dbg->class,sql,args,*item);
                 LBS_EmitChar(sql,' ');
 				item ++;
 				if		(  *item  !=  NULL  ) {
@@ -1881,7 +2082,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBINSERT(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -1907,7 +2108,7 @@ ENTER_FUNC;
 			ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 		} else {
 			sql = NewLBS();
-			LBS_EmitString(sql,"INSERT\tINTO\t");
+			LBS_EmitString(sql,"INSERT INTO ");
 			LBS_EmitString(sql,rec->name);
 			LBS_EmitString(sql," (");
 
@@ -1916,7 +2117,7 @@ ENTER_FUNC;
 			InsertNames(sql,args);
 			LBS_EmitString(sql,") VALUES\t(");
 			fInArray = FALSE;
-			InsertValues(dbg,sql,args);
+			InsertValues(dbg->class,sql,args);
 			LBS_EmitString(sql,") ");
             LBS_EmitEnd(sql);
 			ctrl->count = 0;
@@ -1932,7 +2133,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBACCESS(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	char			*name,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
@@ -1976,6 +2177,8 @@ static	DB_OPS	Operations[] = {
 	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
 	{	"DBSTART",		(DB_FUNC)_DBSTART },
 	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
+	{	"DBROLLBACK",	(DB_FUNC)_DBROLLBACK },
+	{	"DBPREPARE",	(DB_FUNC)_DBPREPARE },
 	/*	table operations	*/
 	{	"DBSELECT",		_DBSELECT },
 	{	"DBFETCH",		_DBFETCH },

@@ -35,6 +35,10 @@
 #include	<glib.h>
 #include	<numeric.h>
 
+#undef	PACKAGE_NAME
+#undef	PACKAGE_TARNAME
+#undef	PACKAGE_VERSION
+#undef	PACKAGE_STRING
 #include    <ruby.h>
 #include    <env.h>
 #include    <st.h>
@@ -663,14 +667,14 @@ recval_get_field(VALUE self)
     VALUE obj;
     value_struct_data *data;
     ValueStruct *val;
-    char *name = rb_id2name(ruby_frame->last_func);
+    const char *name = rb_id2name(ruby_frame->last_func);
 
     Data_Get_Struct(self, value_struct_data, data);
 
     if (!NIL_P(obj = rb_hash_aref(data->cache, rb_str_new2(name))))
         return obj;
 
-    val = GetRecordItem(data->value, name);
+    val = GetRecordItem(data->value, (char *)name);
     obj = get_value(val);
     if (CACHEABLE(val))
         rb_hash_aset(data->cache, rb_str_new2(name), obj);
@@ -682,7 +686,7 @@ recval_set_field(VALUE self, VALUE obj)
 {
     value_struct_data *data;
     ValueStruct *val;
-    char *s = rb_id2name(ruby_frame->last_func);
+    const char *s = rb_id2name(ruby_frame->last_func);
     VALUE name;
 
     name = rb_str_new(s, strlen(s) - 1);
@@ -697,7 +701,7 @@ recval_set_field(VALUE self, VALUE obj)
 
 static void
 init(
-	DBG_Struct	*dbg)
+	DBG_Instance	*dbg)
 {
     VALUE stack_start;
     void Init_stack(VALUE *);
@@ -727,7 +731,7 @@ init(
     application_instances = rb_hash_new();
     rb_gc_register_address(&application_instances);
 
-    codeset = dbg->coding;
+    codeset = dbg->class->coding;
 }
 
 #define	CMD_Data		(PacketClass)0x01
@@ -845,7 +849,7 @@ LEAVE_FUNC;
 
 static	Bool
 InstallDefines(
-	DBG_Struct	*dbg)
+	DBG_Instance	*dbg)
 {
 	char	buff[SIZE_BUFF];
 	LargeByteString	*src;
@@ -855,12 +859,12 @@ InstallDefines(
 
 ENTER_FUNC;
 	src = NewLBS();
-	if		(  ( dbname = GetDB_DBname(dbg,DB_UPDATE) )  !=  NULL  ) {
+	if		(  ( dbname = GetDB_DBname(dbg->class,DB_UPDATE) )  !=  NULL  ) {
 		sprintf(buff,"DBNAME = \"%s\"\n",dbname);
 		LBS_EmitString(src,buff);
 	}
-	if		(  dbg->dbt  !=  NULL  ) {
-		g_hash_table_foreach(dbg->dbt,(GHFunc)_DefineClass,src);
+	if		(  dbg->class->dbt  !=  NULL  ) {
+		g_hash_table_foreach(dbg->class->dbt,(GHFunc)_DefineClass,src);
 	}
 	LBS_EmitEnd(src);
 #ifdef	DEBUG
@@ -871,7 +875,7 @@ ENTER_FUNC;
 	rb_eval_string_protect((char *)LBS_Body(src), &state);
 	FreeLBS(src);
 	if		(  state  ==  0  ) {
-		g_hash_table_foreach(dbg->dbt,(GHFunc)_NewInstance,NULL);
+		g_hash_table_foreach(dbg->class->dbt,(GHFunc)_NewInstance,NULL);
 		rc = TRUE;
 	} else {
 		error_print();
@@ -883,7 +887,7 @@ LEAVE_FUNC;
 
 static	void
 StartChild(
-	DBG_Struct	*dbg)
+	DBG_Instance	*dbg)
 {
 	char	rname[SIZE_LONGNAME+1]
 		,	pname[SIZE_LONGNAME+1]
@@ -983,8 +987,8 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBOPEN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	int		pid;
 	int		pSource[2]
@@ -995,7 +999,7 @@ _DBOPEN(
 	DBRubyConn	*conn;
 
 ENTER_FUNC;
-	if ( dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
+	if ( dbg->update.dbstatus == DB_STATUS_CONNECT ){
 		Warning("database is already connected.");
 	}
 	pipe(pSource);
@@ -1039,9 +1043,9 @@ ENTER_FUNC;
 	conn->fpR = SocketToNet(pDBR[0]);
 	conn->fpW = SocketToNet(pDBW[1]);
 	conn->rhash = NewNameHash();
-	dbg->process[PROCESS_UPDATE].conn = (void *)conn;
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+	dbg->update.conn = (void *)conn;
+	dbg->update.dbstatus = DB_STATUS_CONNECT;
+	dbg->update.dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -1051,7 +1055,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 ExecRuby(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	char			*fname,
 	char			*rname,
@@ -1069,7 +1073,7 @@ ENTER_FUNC;
 	if		(  rname  ==  NULL  )	rname = "";
 	if		(  pname  ==  NULL  )	pname = "";
 
-	conn = dbg->process[PROCESS_UPDATE].conn;
+	conn = dbg->update.conn;
 	SendPacketClass(conn->fpW,CMD_Data);
 	SendPacketClass(conn->fpW,CMD_Record);
 	SendString(conn->fpW,rname);
@@ -1122,15 +1126,15 @@ _FreeRecs(
 
 static	ValueStruct	*
 _DBDISCONNECT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	DBRubyConn	*conn;
 	int		status;
 
 ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
-		conn = (DBRubyConn *)dbg->process[PROCESS_UPDATE].conn;
+	if		(  dbg->update.dbstatus == DB_STATUS_CONNECT ) {
+		conn = (DBRubyConn *)dbg->update.conn;
 		CloseDB_RedirectPort(dbg);
 		SendPacketClass(conn->fpW,CMD_End);
 		CloseNet(conn->fpW);
@@ -1138,7 +1142,7 @@ ENTER_FUNC;
 		g_hash_table_foreach_remove(conn->rhash,(GHRFunc)_FreeRecs,NULL);
 		while( waitpid(-1, &status, WNOHANG) > 0 );
 
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		dbg->update.dbstatus = DB_STATUS_DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}
@@ -1149,10 +1153,10 @@ LEAVE_FUNC;
 
 static	int
 _EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	Bool			fRed,
+	int				usage)
 {
 	int			rc = MCP_OK;
 
@@ -1163,7 +1167,7 @@ _EXEC(
 
 static	ValueStruct	*
 _DBACCESS(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	char			*name,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
@@ -1196,7 +1200,7 @@ LEAVE_FUNC;
 
 static	Bool
 _DBRECORD(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	char			*fname,
 	RecordStruct	*rec)
 {
@@ -1229,8 +1233,8 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBSTART(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
 	if		(  ctrl  !=  NULL  ) {
@@ -1242,8 +1246,8 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBCOMMIT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
 	if		(  ctrl  !=  NULL  ) {

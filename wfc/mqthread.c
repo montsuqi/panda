@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 #define	APS_STICK
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -33,6 +33,7 @@
 #include	<unistd.h>
 #include	<glib.h>
 #include	<pthread.h>
+#include	<sys/time.h>
 
 #include	"types.h"
 #include	"libmondai.h"
@@ -156,6 +157,7 @@ ENTER_FUNC;
 		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
 		SendString(fp,hdr->event);			ON_IO_ERROR(fp,badio);
+		SendString(fp,hdr->lang);			ON_IO_ERROR(fp,badio);
 		SendChar(fp,hdr->dbstatus);			ON_IO_ERROR(fp,badio);
 	}
 	if		(  ( flag & APS_MCPDATA )  !=  0  ) {
@@ -227,6 +229,7 @@ ENTER_FUNC;
 			RecvnString(fp,SIZE_NAME,hdr->window);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->widget);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->event);			ON_IO_ERROR(fp,badio);
+			RecvnString(fp,SIZE_NAME,hdr->lang);			ON_IO_ERROR(fp,badio);
 			hdr->dbstatus = (char)RecvChar(fp);				ON_IO_ERROR(fp,badio);
 			hdr->puttype = (byte)RecvInt(fp);				ON_IO_ERROR(fp,badio);
 			dbgprintf("hdr->window  = [%s]",hdr->window);
@@ -291,8 +294,10 @@ ENTER_FUNC;
 			break;
 		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
+			dbgprintf("cWindow = %d",data->cWindow);
 			for	( i = 0 ; i < data->cWindow ; i ++ ) {
 				if		(  data->scrdata[i]  !=  NULL  ) {
+					dbgprintf("i = %d",i);
 					RecvLBS(fpLD,data->scrdata[i]);	ON_IO_ERROR(fpLD,badio);
 				}
 			}
@@ -331,13 +336,13 @@ SelectData(
 	LD_Node		*ld;
 #endif
 
-ENTER_FUNC;
 #ifndef	APS_STICK
 	data = DeQueue(que); 
 #else
 	OpenQueue(que);
 	WaitQueue(que);
 #ifdef	DEBUG
+#if	0
 	{
 		RewindQueue(que);
 		while	(  ( data = GetElement(que) )  !=  NULL  ) {
@@ -345,6 +350,7 @@ ENTER_FUNC;
 			printf("apsid = %d\nid    = %d\n",data->apsid,ld->aps[ix].id);
 		}
 	}
+#endif
 #endif
 	RewindQueue(que);
 	while	(	( data = GetElement(que) )  !=  NULL  ) {
@@ -364,13 +370,24 @@ ENTER_FUNC;
 		data = WithdrawQueue(que);
 	}
 	if		(  data  ==  NULL  ){
-		dbgmsg("null");
 		ReleaseQueue(que);
 	}
 	CloseQueue(que);
 #endif
-LEAVE_FUNC;
 	return	(data);
+}
+
+static	void
+ReleaseProcess(
+	SessionData	*data)
+{
+	struct	timeval	tv;
+
+ENTER_FUNC;
+	gettimeofday(&tv,NULL);
+	timersub(&tv,&data->start,&data->elapse);
+	UnLock(data);
+LEAVE_FUNC;
 }
 
 static	void
@@ -406,7 +423,7 @@ HandleTermMessage(
 			(MaxTransactionRetry < data->retry)) {
 			Warning("transaction abort %s", mq->name);
 			data->fAbort = TRUE;
-			TermEnqueue(data->term,data);
+			ReleaseProcess(data);
 		} else {
 			Warning("transaction retry %s", mq->name);
 			EnQueue(mq->que,data);
@@ -451,7 +468,7 @@ HandleTermMessage(
 		  case	SCREEN_NEW_WINDOW:
 			dbgmsg("new");
 			if		(  newld  ==  ld  ) {
-				TermEnqueue(data->term,data);
+				ReleaseProcess(data);
 			} else {
 				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 				ChangeLD(data,newld);
@@ -460,16 +477,20 @@ HandleTermMessage(
 			break;
 		  case	SCREEN_CURRENT_WINDOW:
 			dbgmsg("current");
-			data->hdr->puttype = puttype;
-			TermEnqueue(data->term,data);
+			//	data->hdr->puttype = puttype;		??? change at 2008/12/26
+			ReleaseProcess(data);
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
 			dbgmsg("close");
-			TermEnqueue(data->term,data);
+			ReleaseProcess(data);
 			break;
 		  case	SCREEN_END_SESSION:
 			dbgmsg("end");
-			TermEnqueue(data->term,data);
+			ReleaseProcess(data);
+			break;
+		  case	SCREEN_CHANGE_LD:
+			dbgmsg("change LD");
+			ReleaseProcess(data);
 			break;
 		  default:
 			/*	don't reach here	*/
@@ -498,14 +519,14 @@ ENTER_FUNC;
 		if ((data = SelectData(mq->que,ix)) != NULL) {
 			dbgprintf("act %s\n",mq->name);
 			switch(data->type) {
-			case SESSION_TYPE_TERM:
+			  case SESSION_TYPE_TERM:
 				HandleTermMessage(data,mq,ix);
 				break;
-			case SESSION_TYPE_API:
+			  case SESSION_TYPE_API:
 #if 0
 				HandleAPIMessage();
 #else
-				TermEnqueue(data->term,data);
+				ReleaseProcess(data);
 #endif
 				break;
 			}
@@ -641,16 +662,15 @@ ENTER_FUNC;
 		ld = New(LD_Node);
 		LDs[i] = ld;
 		ld->nports = info->nports;
-		ld->aps = (APS_Node *)xmalloc(sizeof(APS_Node) * ld->nports);
 		if		(  ThisEnv->mlevel  !=  MULTI_APS  ) {
 			ld->nports = 1;
 		}
+		ld->aps = (APS_Node *)xmalloc(sizeof(APS_Node) * ld->nports);
 		for	( j = 0 ; j < ld->nports ; j ++ ) {
 			ld->aps[j].fp = NULL;
 			ld->aps[j].id = ApsId ++;
 			ClearAPS_Node(ld,j);
 		}
-
 		ld->info = info;
 		pthread_mutex_init(&ld->lock,NULL);
 		pthread_cond_init(&ld->conn,NULL);
@@ -662,8 +682,9 @@ ENTER_FUNC;
 		dbgprintf("LD [%s]",info->name);
 		for	( j = 0 ; j < info->cBind ; j ++ ) {
 			PureComponentName(info->binds[j]->name,cname);
-			dbgprintf("add component [%s]",cname);
-			if		(  g_hash_table_lookup(ComponentHash,cname)  ==  NULL  ) {
+			if		(	(  *cname  !=  0  )
+					&&	(  g_hash_table_lookup(ComponentHash,cname)  ==  NULL  ) ) {
+				dbgprintf("add component [%s]",cname);
 				BindTable[k] = info->binds[j]->name;
 				k ++;
 				g_hash_table_insert(ComponentHash,StrDup(cname),ld);

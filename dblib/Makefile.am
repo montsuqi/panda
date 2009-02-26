@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2008  ogochan
+# Copyright (C) 2005-2009  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,12 +52,12 @@ PostgreSQL_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
-PostgreSQL_la_SOURCES	=	\
-	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h	\
+PostgreSQL_la_SOURCES	=			\
+	dbgroup.c	dbgroup.h			\
+	redirect.c	redirect.h			\
 	PostgreSQLlib.c PostgreSQLlib.h \
 	PostgreSQL.c
-PostgreSQL_la_LIBADD	=	\
+PostgreSQL_la_LIBADD	=			\
 	$(top_builddir)/libs/net.lo		\
 	$(top_builddir)/libs/socket.lo	\
 	$(POSTGRES_LIBS)

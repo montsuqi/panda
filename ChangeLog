@@ -2,7 +2,7 @@
 
 	* dblib/PostgreSQLlib.[ch]: dblib/PostgreSQL.c を分割
 
-2009-02-20 Yusuke Mihara	<mihara@netlab.jp>
+2009-02-20	Yusuke Mihara	<mihara@netlab.jp>
 
 	* glserver/Makefile.am glserver/server.c include/glterm.h
 	include/wfcdata.h libs/Makefile.am libs/wfcio.c
@@ -17,9 +17,27 @@
 		* HTTPリクエストの解析はapsで実施(未実装)
 			* 現状はリクエストをwfcでエコーバック
 
+2009-02-19  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/Ruby.c (recval_table): テーブル情報から空レコードを作るメソッド
+
+2009-01-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/panda.c (pandaMain): トランザクション単位で切断するようにした
+
+	* include/wfcdata.h: queueを廃止してLOCKOBJECTにした。1つのtermには1つのSessionDataしか持たないので、queueになる必要はないから。
+
+	* libs/wfcio.h, libs/wfcio.c, wfc/termthread.c : wfc <->termのプトロコルを変更。トランザクション単位で切断可能にした
+
+	* include/struct.h, aps/handler.c, dblib/dbgroup.c, aps/aps_main.c, aps/dbs_main, aps/MCPFUNC.c aps/MCPSUB.c, aps/Ruby.c aps/apslib.c aps/Exec.c, dbstuff/dbredirect.c tools/monitor.c : DBG_StructをDBG_ClassとDBG_Instanceに分離した。
+
 2009-01-26  Noboru Saitou  <noborus@netlab.jp>
 
 	* glauth/glauth.c: パスワードの再読み込みを自動にした。
+
+2008-12-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/mqthread.c (MessageThread): SCREEN_CURRENT_WINDOWの時にputtypeを変更している部分をやめてみた。もしかしたら画面遷移がおかしくなるかも知れない。
 
 2008-12-19  yusuke mihara  <mihara@netlab.jp>
 
@@ -33,6 +51,14 @@
 2008-12-10  yusuke mihara  <mihara@netlab.jp>
 
 	* libs/glcomm.c: "pngpdf"のフラグ定数を削除 
+
+2008-11-29  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.ac: uuidを使うことにした(なければないで済ます)
+
+2008-09-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/panda.c (RecvPanda), libs/wfcio.c (SendTermServer): langのハンドリング
 
 2008-11-27  yusuke mihara  <mihara@netlab.jp>
 
@@ -62,14 +88,31 @@
 	* glserver/server.c, include/glterm.h, libs/glcomm.c, libs/glcomm.h: monsiajのプレビューウィジェットにpngとPDFを渡すように変更した。
 	バージョン文字列に"negotiation"と"pngpdf"を追加した。クライアントが"negotiation"を指定した場合、認証結果GL_OKを送る代わりに、GL_ServerVersionを送信する。 
 
+2008-09-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glserver/glserver.c (SetDefault): Langを指定可能にした
+
 2008-09-04  yusuke mihara  <mihara@netlab.jp>
 
 	* glclient/bd_component.c, bd_component.c, client.c:
 	タイマー設定をデフォルト有効にするようにした
 
+2008-08-26  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/PostgreSQL.c (ExecPGSQL): Arrayで返すかどうかは、limitで判定するようにした
+
+	* aps/Ruby.c (table_exec), dblib/PostgreSQL.c (ExecPGSQL),dblib/dbgroup.c (MakeMCP), libs/SQLparser.c (ParSQL), libs/SQLparser.h (SQL_OP_OFFSET), libs/DIparser.c (BuildMcpArea): offsetを追加
+
+2008-08-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/glterm.h (SCREEN_CHANGE_LD): LD変更の制御(web系のみ)
+
+	* include/const.h : 名前関係の大きさの拡大(16文字では足りない)
+
 2008-08-18  Noboru Saitou  <noborus@netlab.jp>
 
 	* glserver/pstopng: 画像の大きさを2倍にして antialias を掛けるようにした
+	
 2008-08-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* glclient/widgetOPS.c(RecvEntry): INSENSITIVE のときに表示位置を左詰めにした
@@ -105,17 +148,31 @@
 	* glclient/bootdialog.c, glclient/bd_component.c:glclientランチャーのリファクタリング、ランチャーとサーバリスト設定の共通部分をbd_component.cにまとめた
 	ランチャーでの変更をサーバリストの設定に反映可能にした
 
+2008-06-04  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/apslib.c (MCP_PutWindow): ウィジェットを指定可能にした
+
+	* aps/Ruby.c (procnode_put_window): ウィジェットを指定可能にした
+
 2008-05-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* dbstuff/dbslib.rb: 件数処理を正しく
 
 	* dbstuff/dbs_main.c (WriteClientString): 件数処理はVer 1.4.3以降のクライアントで
 
+2008-04-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/Ruby.c (recval_clear, recval_initialize): ValueStruct関係のmethodを追加
+	
 2008-04-27  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* tools/monitor.c (SetDefault): キャッシュのデフォルトを0に
 
 	* wfc/wfc.c (SetDefault): キャッシュのデフォルトを0に
+
+2008-04-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* glserver/server.c, libs/wfcio.c, wfc/termthread.c: Finishsessionしない問題修正
 
 2008-04-11  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1865,7 +1922,7 @@
 
 2004-02-05  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* fdd/fdd.c: コマンドの実行論理の変更
+	* fdd/fdd.c: コマンドの実行�理の変更
 
 2004-02-03  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1932,7 +1989,7 @@
 
 	* include/struct.h: DB_Func等の構造変更(名前表に登録しない関数を増やした)
 
-	* aps/Exec.c (ExecuteDB_Server): rcが負値の時には実処理を回避するようにした
+	* aps/Exec.c (ExecuteDB_Server): rcが負値の時には実処理��回避するようにした
 
 2003-12-25  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1953,7 +2010,7 @@
 2003-12-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* libs/Dlex.h (T_CODING): ディレクティブの名称を直した(現在のとこ
-	ろ両方使える)
+	��両方使える)
 
 2003-12-17  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1971,7 +2028,7 @@
 	* monpls_demo/demo.c: 日レセに必要なウィジェット全部に対応
 
 	* auth/glauth.c (ExecuteServer): forkするようにした(異常クライアン
-	トに対してrobustにするため)
+	トに対�てrobustにするため)
 
 2003-12-10  Masami Ogoshi  <ogochan@nurs.or.jp>
 

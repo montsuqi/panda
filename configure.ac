@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([panda],[1.4.3])
+AC_INIT([panda],[1.4.4])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_SRCDIR([aps/C.c])
@@ -584,6 +584,23 @@ AC_ARG_ENABLE(syslog,
 if test "x$enable_syslog" = "xyes"; then
     AC_DEFINE(USE_SYSLOG,1,"")
 fi
+
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the uuid modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(UUID_CONFIG,uuid-config,no)
+if test x$UUID_CONFIG = xno; then
+  AC_MSG_WARN(Couldn't find uuid-config)
+  UUID_LIBS=
+  UUID_CFLAGS=
+else
+  UUID_LIBS=`uuid-config --libs`
+  UUID_CFLAGS=`uuid-config --cflags`
+  AC_DEFINE(HAVE_UUID,1,"") 
+fi
+AC_SUBST(UUID_LIBS)
+AC_SUBST(UUID_CFLAGS)
 
 dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the glib modules.

@@ -46,24 +46,24 @@
 
 static	int
 _EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRedirect,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	Bool			fRedirect,
+	int				usage)
 {
 	return	(MCP_OK);
 }
 
 static	ValueStruct	*
 _DBOPEN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
 	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = NULL;
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+	dbg->update.conn = NULL;
+	dbg->update.dbstatus = DB_STATUS_CONNECT;
+	dbg->readonly.dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -73,13 +73,13 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBDISCONNECT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->update.dbstatus == DB_STATUS_CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		dbg->update.dbstatus = DB_STATUS_DISCONNECT;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
@@ -88,8 +88,8 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBSTART(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
@@ -100,8 +100,8 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBCOMMIT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
@@ -113,7 +113,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBSELECT(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -153,7 +153,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBFETCH(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -173,7 +173,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBUPDATE(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -190,7 +190,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBDELETE(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -207,7 +207,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBINSERT(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -224,7 +224,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBACCESS(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	char			*name,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,

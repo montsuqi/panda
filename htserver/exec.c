@@ -280,6 +280,7 @@ ParseName(
 	char	*p
 	,		*q;
 	Expr	*var;
+	int		ch;
 
 ENTER_FUNC;
 dbgprintf("name = [%s]\n",str);
@@ -288,34 +289,8 @@ dbgprintf("name = [%s]\n",str);
 	while	(  *str  !=  0  ) {
 		switch	(*str) {
 		  case	'$':
-			str ++;
-			if		(  *str  ==  '('  ) {
-				str ++;
-				q = name;
-				while	(  *str !=  ')'  ) {
-					*q ++ = *str ++;
-				}
-				str ++;
-				*q = 0;
-				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p = outvalue(p,var);
-				} else {
-					p += sprintf(p,"$%s",name);
-				}
-			} else {
-				q = name;
-				while	(  isalnum(*str)  ) {
-					*q ++ = *str ++;
-				}
-				*q = 0;
-				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
-					p = outvalue(p,var);
-				} else {
-					p += sprintf(p,"$%s",name);
-				}
-			}
-			break;
 		  case	'#':
+			ch = *str;
 			str ++;
 			if		(  *str  ==  '('  ) {
 				str ++;
@@ -328,7 +303,7 @@ dbgprintf("name = [%s]\n",str);
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
 				} else {
-					p += sprintf(p,"#%s",name);
+					p += sprintf(p,"%c%s",ch,name);
 				}
 			} else {
 				q = name;
@@ -339,7 +314,7 @@ dbgprintf("name = [%s]\n",str);
 				if		(  ( var = g_hash_table_lookup(VarArea,name) )  !=  NULL  ) {
 					p = outvalue(p,var);
 				} else {
-					p += sprintf(p,"#%s",name);
+					p += sprintf(p,"%c%s",ch,name);
 				}
 			}
 			break;

@@ -21,9 +21,9 @@
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -121,13 +121,16 @@ GetValue(char *name, Bool fClear)
 
 ENTER_FUNC;
 	if		(  fComm  ) {
+		dbgprintf("get [%s]",name);
 		SendPacketClass(fpServ,GL_GetData);
 		SendString(fpServ,name);
 		SendBool(fpServ,fClear);
 		RecvLBS(fpServ, lbs);
 		if (LBS_Size(lbs) == 0) {
+			dbgmsg("null");
 			value = NULL;
 		} else {
+			dbgmsg("non null");
 			value = NativeRestoreValue(LBS_Body(lbs),TRUE);
 			if		(  ValueType(value)  ==  GL_TYPE_OBJECT  ) {
 				RecvLBS(fpServ,lbs);
@@ -371,6 +374,8 @@ Session(void)
 	Bool	fError
 		,	fInit;
 	PacketClass	klass;
+	int		iRedirect
+		,	cWindows;
 
 ENTER_FUNC;
 	fError = FALSE;
@@ -413,33 +418,32 @@ ENTER_FUNC;
 				goto	retry;
 			}
 		}
+		/*
+		  processing
+		*/
 		if		(  !fError  ) {
 			name = NULL;
-			while	(  ( klass = RecvPacketClass(fpServ) )  ==  GL_WindowName  ) {
+			iRedirect = -1;
+			cWindows = 0;
+			while	(  ( klass = RecvPacketClass(fpServ) )  !=  GL_END  ) {
+				if		(  klass  ==  GL_RedirectName  ) {
+					iRedirect = cWindows;
+				}
 				ON_IO_ERROR(fpServ,busy);
 				RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
 				name = StrDup(buff);
 				dbgprintf("name = [%s]",name);
 				SaveValue("_name",name,FALSE);
+				cWindows ++;
 			}
-			dbgmsg("*");
-			if		(  klass  ==  GL_RedirectName  ) {
+			if		(  iRedirect  >=  0  ) {
 				CGI_InitValues();
-				RecvString(fpServ,buff);					ON_IO_ERROR(fpServ,busy);
-				if		(  *buff  ==  0  ) {
-					html = InfomationPage("exited",
-										  "<H1>session exited</H1>\n"
-										  "<p>left MONTSUQI session.</p>");
-					PutHTML(NULL,NULL,html,500);
-				} else {
-					header = NewLBS();
-					LBS_EmitStart(header);
-					name = StrDup(buff);
-					dbgprintf("name = [%s]",name);
-					sprintf(buff,"Location: %s\r\n",name);
-					LBS_EmitString(header,buff);
-					PutHTML(header,NULL,NULL,303);
-				}
+				header = NewLBS();
+				LBS_EmitStart(header);
+				dbgprintf("name = [%s]",name);
+				sprintf(buff,"Location: %s\r\n",name);
+				LBS_EmitString(header,buff);
+				PutHTML(header,NULL,NULL,303);
 			} else {
 				if		(  name  ==  NULL  ) {
 					html = InfomationPage("expired",
@@ -455,9 +459,11 @@ ENTER_FUNC;
 							return;
 						}
 					}
+					dbgmsg("*");
 					if		(  ( htc = ParseScreen(name,TRUE,FALSE) )  ==  NULL  ) {
 						exit(1);
 					}
+					dbgmsg("*");
 					if		(  htc->fHTML  ) {
 						html = htc->code;
 					} else {
@@ -465,6 +471,7 @@ ENTER_FUNC;
 						LBS_EmitStart(html);
 						ExecCode(html,htc);
 					}
+					dbgmsg("*");
 					PutHTML(NULL,htc->Cookie,html,200);
 				}
 			}

@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -221,6 +221,16 @@ Recv(
 		ret = -1;
 	}
 	fp->fSent = FALSE;
+#if	0
+	{
+		int		i;
+
+		p = buff;
+		for	( i = 0 ; i < ret ; i ++ ) {
+			printf("[%d][%c]\n",(int)p[i],p[i]);fflush(stdout);
+		}
+	}
+#endif
 	return	(ret);
 }
 
@@ -243,12 +253,30 @@ ngetc(
 	size_t	s;
 	int		ret;
 
-	if		(  ( s = Recv(fp,&ch,1) )  >=  0  ) {
-		ret = ch;
+	if		(  fp->back  >=  0  ) {
+		ret = fp->back;
+		fp->back = -1;
 	} else {
-		ret = -1;
+		if		(  ( s = Recv(fp,&ch,1) )  >=  0  ) {
+			ret = ch;
+		} else {
+			ret = -1;
+		}
 	}
 	return	(ret);
+}
+
+extern	int
+unngetc(
+	int		c,
+	NETFILE	*fp)
+{
+	if		(  fp->back  <  0  ) {
+		fp->back = c;
+	} else {
+		c = EOF;
+	}
+	return	(c);
 }
 
 extern	void
@@ -270,7 +298,8 @@ CloseNet(
 {
 ENTER_FUNC;
 	if		(  fp  !=  NULL  ) {
-		if		(  fp->fOK  ) {
+		if		(	(  fp->fOK  )
+				&&	(  fp->write  !=  NULL  ) ) {
 			_Flush(fp);
 		}
 		fp->close(fp);
@@ -351,6 +380,7 @@ NewNet(void)
 	fp->size = 0;
 	fp->ptr = 0;
 	fp->buff = NULL;
+	fp->back = -1;
 #ifdef	MT_NET
 	pthread_mutex_init(&fp->lock,NULL);
 #endif
@@ -370,6 +400,10 @@ SocketToNet(
 	fp->write = FD_Write;
 	fp->close = FD_Close;
 #if	1
+	fp->buff = NULL;
+	fp->size = 0;
+	fp->ptr = 0;
+#else
 	fp->buff = xmalloc(SIZE_BUFF);
 	fp->size = SIZE_BUFF;
 	fp->ptr = 0;
@@ -392,6 +426,61 @@ FileToNet(
 	fp->read = FD_Read;
 	fp->write = FD_Write;
 	fp->close = FD_Close;
+	return	(fp);
+}
+
+/*
+ *	string
+ */
+
+static	ssize_t
+STR_Read(
+	NETFILE	*fp,
+	void	*buff,
+	size_t	size)
+{
+	ssize_t	ret;
+
+	if		(  ( fp->size - fp->ptr )  >=  size  ) {
+		ret = size;
+	} else {
+		ret = fp->size - fp->ptr;
+	}
+	if		(  ret  >=  0  ) {
+		if		(  ret  >  0  ) {
+			memcpy(buff,fp->buff+fp->ptr,ret);
+		}
+		fp->ptr += ret;
+	} else {
+		fp->fOK = FALSE;
+		fp->err = errno;
+		Warning(_d("read error\n"));
+	}
+	return	(ret);
+}
+
+static	void
+STR_Close(
+	NETFILE	*fp)
+{
+}
+
+extern	NETFILE	*
+StringToNet(
+	byte	*str,
+	size_t	size)
+{
+	NETFILE	*fp;
+
+	fp = NewNet();
+	fp->fd = -1;
+	fp->read = STR_Read;
+	fp->write = NULL;
+	fp->close = STR_Close;
+	fp->buff = (byte *)xmalloc(size);
+	memcpy(fp->buff,str,size);
+	fp->size = size;
+	fp->ptr = 0;
 	return	(fp);
 }
 
@@ -445,7 +534,7 @@ SetAskPassFunction(
 {
 	AskPassFunction_ = func;
 }
-
+  
 static int
 AskPassFunction(char *buf, size_t sz, const char *prompt)
 {
@@ -458,7 +547,7 @@ AskPassFunction(char *buf, size_t sz, const char *prompt)
     }
     return -1;
 }
-
+  
 static char *
 GetPasswordString(char *buf, size_t sz, const char *prompt)
 {
@@ -467,13 +556,13 @@ GetPasswordString(char *buf, size_t sz, const char *prompt)
 	}
     return NULL;
 }
-
+  
 static int
 passphrase_callback(char *buf, int buflen, int flag, void *userdata)
 {
     return AskPassFunction(buf, (size_t)buflen, (const char*)userdata);
 }
-
+  
 static	ssize_t
 SSL_Read(
 	NETFILE	*fp,
@@ -917,7 +1006,6 @@ RemoteVerifyCallBack(
 	return(ok);
 }
 
-
 static int
 SSL_CTX_use_certificate_with_check(
 	SSL_CTX *ctx, 
@@ -1146,11 +1234,11 @@ MakeSSL_CTX(
                 SSL_CTX_free(ctx);
                 return NULL;
             }
+		} else {
+			SSL_Error(_d("Please specify certificate file"));
+			return NULL;
 		}
-    } else {
-		SSL_Error(_d("Please specify certificate file"));
-		return NULL;
-	}
+    }
 
     return ctx;
 }

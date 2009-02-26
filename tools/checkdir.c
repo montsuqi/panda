@@ -270,7 +270,7 @@ DumpDB(
 	int		i;
 
 ENTER_FUNC;
-	printf("\t\tDB group = [%s]\n",((DBG_Struct *)db->dbg)->name);
+	printf("\t\tDB group = [%s]\n",((DBG_Class *)db->dbg)->name);
 	DumpKey(db->pkey);
 	if		(  db->pcount  >  0  ) {
 		printf("\t\tpath ------\n");
@@ -454,7 +454,7 @@ DumpDBD(
 static	void
 DumpDBG(
 	char		*name,
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	void		*dummy)
 {
 	int		i;
@@ -469,7 +469,7 @@ DumpDBG(
 		}
 		printf("\t\tDB name  = [%s]\n",dbg->server[i].dbname);
 		printf("\t\tDB user  = [%s]\n",dbg->server[i].user);
-		printf("\t\tDB pass  = [%s]\n",dbg->server[i].pass);
+		printf("\t\tDB pass  = [%s]\n",dbg->server[i].pass);fflush(stdout);
 		printf("\t\tDB sslmode = [%s]\n",dbg->server[i].sslmode);
 		fflush(stdout);
 	}

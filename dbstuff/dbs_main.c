@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -59,7 +59,7 @@ static	DBD_Struct	*ThisDBD;
 static	sigset_t	hupset;
 static	char		*PortNumber;
 static	int			Back;
-static	char	*Directory;
+static	char		*Directory;
 static	char		*AuthURL;
 static	URL			Auth;
 
@@ -97,6 +97,7 @@ typedef	struct {
 	int		type;
 	Bool	fCount
 	,		fLimit;
+	DB_Environment	*env;
 }	SessionNode;
 
 static	void
@@ -151,6 +152,7 @@ NewSessionNode(void)
 	ses->type = COMM_STRING;
 	ses->fCount = FALSE;
 	ses->fLimit = FALSE;
+	ses->env = NULL;
 
 	return	(ses);
 }
@@ -505,7 +507,25 @@ do_String(
 			value = NULL;
 		}
 		RecvData(fpComm,arg);
-		value = ExecDB_Process(&ctrl,rec,arg);
+		value = NULL;
+		dbgprintf("func = [%s]",func);
+		if		(  stricmp(func,"DBOPEN")  ==  0  ) {
+			ses->env = OpenAllDB();
+		} else
+		if		(  stricmp(func,"DBCLOSE")  ==  0  ) {
+			ctrl.rc = CloseAllDB(ses->env);
+		} else
+		if		(  stricmp(func,"DBSTART")  ==  0  ) {
+			ctrl.rc = TransactionAllStart(ses->env);
+		} else
+		if		(  strcmp(func,"DBCOMMIT")  ==  0  ) {
+			ctrl.rc = TransactionAllEnd(ses->env);
+		} else
+		if		(  strcmp(func,"DBDISCONNECT")  ==  0  ) {
+			ctrl.rc = CloseAllDB(ses->env);
+		} else {
+			value = ExecDB_Process(&ctrl,rec,arg,ses->env);
+		}
 		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
 		WriteClientString(ses,fpComm,fType,&ctrl,value);
 		FreeValueStruct(value);

@@ -37,6 +37,7 @@ typedef	struct {
 	int			status;
 	GHashTable	*Windows;			/*	for WindowData		*/
 	GHashTable	*Records;			/*	for	RecordStruct	*/
+	char		lang[SIZE_NAME+1];
 	char		*encoding;
 }	ScreenData;
 
@@ -60,6 +61,7 @@ extern	void			SaveScreenData(ScreenData *scr, Bool fSaveRecords);
 extern	ScreenData		*LoadScreenData(char *term);
 extern	void			FreeScreenData(ScreenData *scr);
 extern	void			PargeScreenData(ScreenData *scr);
+extern	void			DumpScreenData(ScreenData *scr);
 
 /*	C API	*/
 extern	ValueStruct	*GetWindowValue(char *name);
@@ -70,6 +72,7 @@ extern	WindowData	*PutWindowByName(char *wname, byte type);
 #define	ThisEvent	(ThisScreen->event)
 #define	ThisUser	(ThisScreen->user)
 #define	ThisTerm	(ThisScreen->term)
+#define	ThisLang	(ThisScreen->lang)
 
 #undef	GLOBAL
 #ifdef	_DRIVER

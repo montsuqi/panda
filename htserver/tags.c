@@ -1259,6 +1259,12 @@ ENTER_FUNC;
 				LBS_EmitPointer(htc->code,StrDup(label+1));
 				EmitCode(htc,OPC_PHSTR);
 				EmitCode(htc,OPC_EMITSTR);
+			} else
+			if		(  *label  ==  '#'  ) {
+				EmitCode(htc,OPC_EVAL);
+				LBS_EmitPointer(htc->code,StrDup(label));
+				EmitCode(htc,OPC_PHSTR);
+				EmitCode(htc,OPC_EMITSTR);
 			} else {
 				LBS_EmitString(htc->code,label);
 			}

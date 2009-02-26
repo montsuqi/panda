@@ -105,19 +105,19 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	DBG_Struct	*
+extern	DBG_Class	*
 GetDBG(
 	char	*name)
 {
-	DBG_Struct	*dbg;
+	DBG_Class	*dbg;
 
-	dbg = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name);
+	dbg = (DBG_Class *)g_hash_table_lookup(ThisEnv->DBG_Table,name);
 	return	(dbg);
 }
 
 static	void
 LoadDBG(
-	DBG_Struct	*dbg)
+	DBG_Class	*dbg)
 {
 	DB_Func	*func;
 	char		funcname[SIZE_LONGNAME+1]
@@ -154,15 +154,15 @@ LEAVE_FUNC;
 
 extern	void
 RegistDBG(
-	DBG_Struct	*dbg)
+	DBG_Class	*dbg)
 {
-	DBG_Struct	**dbga;
+	DBG_Class	**dbga;
 
 ENTER_FUNC;
-	dbga = (DBG_Struct **)xmalloc(sizeof(DBG_Struct *) *
+	dbga = (DBG_Class **)xmalloc(sizeof(DBG_Class *) *
 										  ( ThisEnv->cDBG + 1 ));
 	if		(  ThisEnv->cDBG  >  0  ) {
-		memcpy(dbga,ThisEnv->DBG,sizeof(DBG_Struct *) * ThisEnv->cDBG);
+		memcpy(dbga,ThisEnv->DBG,sizeof(DBG_Class *) * ThisEnv->cDBG);
 		xfree(ThisEnv->DBG);
 	}
 	ThisEnv->DBG = dbga;
@@ -182,7 +182,7 @@ _AssignDBG(
 {
 	int		i;
 	char	*gname;
-	DBG_Struct	*dbg;
+	DBG_Class	*dbg;
 
 ENTER_FUNC;
 	for	( i = 1 ; i < n ; i ++ ) {
@@ -308,7 +308,7 @@ GetTableDBG(
 	char	*gname,
 	char	*tname)
 {
-	DBG_Struct	*dbg;
+	DBG_Class		*dbg;
 	RecordStruct	*db;
 
 	if		(  ( dbg = GetDBG(gname) )  !=  NULL  ) {

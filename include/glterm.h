@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,9 @@
 #define	SCREEN_END_SESSION			(byte)0x07
 #define	SCREEN_BACK_WINDOW			(byte)0x08
 #define	SCREEN_RETURN_COMPONENT		(byte)0x09
-#define	SCREEN_CALL_COMPONENT		(byte)0x10
+#define	SCREEN_CALL_COMPONENT		(byte)0x0A
+#define	SCREEN_CHANGE_LD			(byte)0x0B
+#define	SCREEN_SEND_DATA			(byte)0x0C
 
 #define	GL_Null						(PacketClass)0x00
 #define	GL_Connect					(PacketClass)0x01
@@ -52,6 +54,7 @@
 #define	GL_Session					(PacketClass)0x0C
 #define	GL_RedirectName				(PacketClass)0x0D
 #define	GL_ServerVersion			(PacketClass)0x0E
+#define	GL_CloseWindow				(PacketClass)0x0F
 
 #define HTTP_GET					(PacketClass)0x47
 #define HTTP_HEAD					(PacketClass)0x48

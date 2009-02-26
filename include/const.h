@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,18 +53,16 @@
 #define	SIZE_NAME		64
 #define	SIZE_EVENT		64
 #define	SIZE_TERM		64
-#define	SIZE_FUNC		16
-#define	SIZE_USER		16
-#define	SIZE_RNAME		16
-#define	SIZE_PNAME		16
+#define	SIZE_FUNC		64
+#define	SIZE_USER		64
+#define	SIZE_RNAME		64
+#define	SIZE_PNAME		64
 #define	SIZE_STATUS		4
 #define	SIZE_PUTTYPE	8
 #define	SIZE_STACK		16
-#define	SIZE_TRID		16
-#define	SIZE_SESID		16
-#define	SIZE_AUTHID		16
+#define	SIZE_SESID		64
+#define	SIZE_AUTHID		64
 #define	SIZE_ARG		255
-#define	SIZE_FUNC		16
 
 #ifndef	SIZE_LONGNAME
 #define	SIZE_LONGNAME		1024

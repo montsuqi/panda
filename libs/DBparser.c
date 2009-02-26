@@ -548,7 +548,7 @@ ENTER_FUNC;
 			switch	(GetName) {
 			  case	T_SYMBOL:
 				sprintf(buff,"%s.db",ComSymbol);
-				use = ReadRecordDefine(buff);
+				use = ReadRecordDefine(buff,ThisEnv->BaseDir);
 				if		(  use  ==  NULL  ) {
 					ParError("define not found");
 				} else {

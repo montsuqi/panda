@@ -50,6 +50,7 @@ LoadFile(
 	struct	stat	st;
 
 ENTER_FUNC;
+	dbgprintf("[%s][%s]",path,name);
 	strcpy(buff,path);
 	p = buff;
 	ret = NULL;

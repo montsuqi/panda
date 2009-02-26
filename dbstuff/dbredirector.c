@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 #define	MAIN
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -61,13 +61,18 @@
 static	char	*PortNumber;
 static	int		Back;
 static	char	*Directory;
+static	int		nPool;
 
-static	sigset_t	hupset;
-static	DBG_Struct	*ThisDBG;
-static	pthread_t	_FileThread;
-static	Queue		*FileQueue;
+static	sigset_t		hupset;
+static	DBG_Instance	*ThisDBG_Instance;
+#define	ThisDBG_Class	(ThisDBG_Instance->class)
+static	pthread_t		_FileThread;
+static	Queue			*FileQueue;
+static	GHashTable		*DataHash;
+static	int				cPool;
 
 typedef	struct {
+	char			id[SIZE_TERM + 1];
 	LargeByteString	*CheckData;
 	LargeByteString	*RedirectData;
 }	VeryfyData;
@@ -79,33 +84,82 @@ static	void
 FreeVeryfyData(
 	VeryfyData	*vdata)
 {
+	pthread_mutex_lock(&redlock);
+	g_hash_table_remove(DataHash,vdata->id);
+	pthread_mutex_unlock(&redlock);
 	FreeLBS(vdata->CheckData);
 	FreeLBS(vdata->RedirectData);
 	xfree(vdata);
+	cPool ++;
 }
 
 static void
-RecvRedData(NETFILE	*fpLog)
+RecvRedData(
+	NETFILE	*fpLog)
 {
-	LargeByteString	*data, *cdata;
 	VeryfyData *vdata;
+	char		id[SIZE_TERM + 1];
+
 ENTER_FUNC;
+	RecvnString(fpLog,SIZE_TERM,id);
 	pthread_mutex_lock(&redlock);
-	vdata = New(VeryfyData);
-	cdata = NewLBS();
-	LBS_EmitStart(cdata);
-	RecvLBS(fpLog,cdata);
-	LBS_EmitEnd(cdata);
-	vdata->CheckData = cdata;
+	vdata = (VeryfyData *)g_hash_table_lookup(DataHash,id);
+	if		(  vdata  ==  NULL  ) {
+		vdata = New(VeryfyData);
+		vdata->CheckData = NewLBS();
+		vdata->RedirectData = NewLBS();
+		strcpy(vdata->id,id);
+		g_hash_table_insert(DataHash,vdata,vdata->id);
+		cPool ++;
+	}
+	pthread_mutex_unlock(&redlock);
 
-	data = NewLBS();
-	LBS_EmitStart(data);
-	RecvLBS(fpLog,data);
-	LBS_EmitEnd(data);
-	vdata->RedirectData = data;
+	RecvLBS(fpLog,vdata->CheckData);
+	LBS_EmitEnd(vdata->CheckData);
 
-	EnQueue(FileQueue, vdata);
+	RecvLBS(fpLog,vdata->RedirectData);
+	LBS_EmitEnd(vdata->RedirectData);
 	SendPacketClass(fpLog,RED_OK);
+LEAVE_FUNC;
+}
+
+static	void
+CommitRedData(
+	NETFILE	*fpLog)
+{
+	VeryfyData *vdata;
+	char		id[SIZE_TERM + 1];
+
+ENTER_FUNC;
+	RecvnString(fpLog,SIZE_TERM,id);
+	pthread_mutex_lock(&redlock);
+	if		(  ( vdata = (VeryfyData *)g_hash_table_lookup(DataHash,id) )  !=  NULL  ) {
+		EnQueue(FileQueue, vdata);
+		dbgmsg("*");
+		SendPacketClass(fpLog,RED_OK);
+	} else {
+		dbgmsg("*");
+		SendPacketClass(fpLog,RED_NOT);
+	}
+	pthread_mutex_unlock(&redlock);
+LEAVE_FUNC;
+}
+
+static	void
+AbortRedData(
+	NETFILE	*fpLog)
+{
+	VeryfyData *vdata;
+	char		id[SIZE_TERM + 1];
+
+ENTER_FUNC;
+	RecvnString(fpLog,SIZE_TERM,id);
+	pthread_mutex_lock(&redlock);
+	if		(  ( vdata = (VeryfyData *)g_hash_table_lookup(DataHash,id) )  !=  NULL  ) {
+		SendPacketClass(fpLog,RED_OK);
+		RewindLBS(vdata->CheckData);
+		RewindLBS(vdata->RedirectData);
+	}
 	pthread_mutex_unlock(&redlock);
 LEAVE_FUNC;
 }
@@ -118,6 +172,7 @@ LogThread(
 	NETFILE	*fpLog;
 	PacketClass	c;
 	Bool	fSuc = TRUE;
+	char		id[SIZE_TERM + 1];
 
 ENTER_FUNC;
 	dbgmsg("log thread!\n");
@@ -125,21 +180,37 @@ ENTER_FUNC;
 	do {
 		switch	( c = RecvPacketClass(fpLog) ) {
 		  case	RED_DATA:
+			dbgmsg("RED_DATA");
 			RecvRedData(fpLog);
 			fSuc = fpLog->fOK;
 			break;
+		  case	RED_COMMIT:
+			dbgmsg("RED_COMMIT");
+			CommitRedData(fpLog);
+			fSuc = fpLog->fOK;
+			break;
+		  case	RED_ABORT:
+			dbgmsg("RED_ABORT");
+			AbortRedData(fpLog);
+			fSuc = fpLog->fOK;
+			break;
 		  case	RED_PING:
+			dbgmsg("RED_PING");
 			SendPacketClass(fpLog,RED_PONG);
 			fSuc = fpLog->fOK;
 			break;
 		  case	RED_STATUS:
-			SendChar(fpLog, ThisDBG->process[PROCESS_UPDATE].dbstatus);
+			dbgmsg("RED_STATUS");
+			RecvnString(fpLog,SIZE_TERM,id);
+			SendChar(fpLog, ThisDBG_Instance->update.dbstatus);
 			fSuc = fpLog->fOK;
 			break;
 		  case	RED_END:
+			dbgmsg("RED_END");
 			fSuc = FALSE;
 			break;
 		  default:
+			dbgprintf("default %02X",c);
 			SendPacketClass(fpLog,RED_NOT);
 			fSuc = FALSE;
 			break;
@@ -174,10 +245,10 @@ OpenLogFile(
 {
 	FILE	*fp = NULL;
 
-	if		(  ThisDBG->file  !=  NULL  ) {
+	if		(  ThisDBG_Class->file  !=  NULL  ) {
 		umask((mode_t) 0077);
-		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
-			Error("can not open log file :%s", ThisDBG->file);
+		if		(  ( fp = fopen(ThisDBG_Class->file,"a+") )  ==  NULL  ) {
+			Error("can not open log file :%s", ThisDBG_Class->file);
 		}
 	}
 	return fp;
@@ -195,10 +266,10 @@ ENTER_FUNC;
 		time(&nowtime);
 		Now = localtime(&nowtime);
 		fprintf(fp, "%s %04d/%02d/%02d/%02d:%02d:%02d/ ========== %s ========== %s\n"
-				,ThisDBG->func->commentStart
+				,ThisDBG_Class->func->commentStart
 				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
 				, Now->tm_hour,Now->tm_min,Now->tm_sec,state
-				,ThisDBG->func->commentEnd);
+				,ThisDBG_Class->func->commentEnd);
 		fflush(fp);
 	}
 LEAVE_FUNC;
@@ -218,10 +289,10 @@ ENTER_FUNC;
 		time(&nowtime);
 		Now = localtime(&nowtime);
 		fprintf(fp,"%s %04d/%02d/%02d/%02d:%02d:%02d/%08d %s"
-				,ThisDBG->func->commentStart
+				,ThisDBG_Class->func->commentStart
 				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
 				, Now->tm_hour,Now->tm_min,Now->tm_sec,count
-				,ThisDBG->func->commentEnd);
+				,ThisDBG_Class->func->commentEnd);
 		fprintf(fp,"%s\n", query);
 		fflush(fp);
 		count ++;
@@ -234,9 +305,9 @@ ConnectDB(void)
 {
 	Bool rc = TRUE;
 ENTER_FUNC;
-	if ( OpenRedirectDB(ThisDBG) == MCP_OK ) {
+	if ( OpenRedirectDB(ThisDBG_Instance) == MCP_OK ) {
 		Message("connect to database successed");
-		ThisDBG->checkData = NewLBS();
+		ThisDBG_Instance->checkData = NewLBS();
 	} else {
 		Message("connect to database failed");
 		rc = FALSE;
@@ -257,8 +328,8 @@ ENTER_FUNC;
 		}
 		sleep (CONNECT_INTERVAL);
 	}
-	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ){
-		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
+	if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_UNCONNECT ){
+		ThisDBG_Instance->update.dbstatus = DB_STATUS_FAILURE;
 	}
 LEAVE_FUNC;
 }
@@ -288,10 +359,10 @@ WriteDB(
 	char buff[SIZE_BUFF];
 	LargeByteString	*redcheck;
 ENTER_FUNC;
-	rc = TransactionRedirectStart(ThisDBG);
+	rc = TransactionRedirectStart(ThisDBG_Instance);
 	if ( rc == MCP_OK ) {
-		rc = ExecRedirectDBOP(ThisDBG, query, DB_UPDATE);
-		redcheck = ThisDBG->checkData;
+		rc = ExecRedirectDBOP(ThisDBG_Instance, query, DB_UPDATE);
+		redcheck = ThisDBG_Instance->checkData;
 	}
 	if ( rc == MCP_OK ) {
 		if ( ( !fNoSumCheck) &&  ( LBS_Size(orgcheck) > 0 ) ){
@@ -303,7 +374,10 @@ ENTER_FUNC;
 		}
 	}
 	if ( rc == MCP_OK ) {
-		rc = TransactionRedirectEnd(ThisDBG);
+		rc = TransactionRedirectPrepare(ThisDBG_Instance);
+	}
+	if ( rc == MCP_OK ) {
+		rc = TransactionRedirectEnd(ThisDBG_Instance);
 	}
 LEAVE_FUNC;
 	return rc;
@@ -320,16 +394,16 @@ ExecDB(
 ENTER_FUNC;
 	rc = WriteDB(query, orgcheck);
 	if ( rc == MCP_BAD_CONN ) {
-		CloseRedirectDB(ThisDBG);
-		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+		CloseRedirectDB(ThisDBG_Instance);
+		ThisDBG_Instance->update.dbstatus = DB_STATUS_UNCONNECT;
 		ReConnectDB();
-		if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
+		if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_CONNECT ){
 			rc = WriteDB(query, orgcheck);
 		}
 	} else
 	if ( rc != MCP_OK ) {
-		CloseRedirectDB(ThisDBG);
-		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
+		CloseRedirectDB(ThisDBG_Instance);
+		ThisDBG_Instance->update.dbstatus = DB_STATUS_FAILURE;
 	}
 LEAVE_FUNC;
 }
@@ -339,9 +413,9 @@ ReRedirect(
 	char	*query)
 {
 ENTER_FUNC;
-	BeginDB_Redirect(ThisDBG);
-	PutDB_Redirect(ThisDBG, query);
-	CommitDB_Redirect(ThisDBG);
+	BeginDB_Redirect(ThisDBG_Instance);
+	PutDB_Redirect(ThisDBG_Instance, query);
+	CommitDB_Redirect(ThisDBG_Instance);
 LEAVE_FUNC;
 }
 
@@ -355,8 +429,8 @@ FileThread(
 	FILE	*fp;
 
 ENTER_FUNC;
-	fp = OpenLogFile(ThisDBG->file);
-	if		(  ( dbname = GetDB_DBname(ThisDBG,DB_UPDATE) )  !=  NULL  ) {
+	fp = OpenLogFile(ThisDBG_Class->file);
+	if		(  ( dbname = GetDB_DBname(ThisDBG_Class,DB_UPDATE) )  !=  NULL  ) {
 		if (!fNoSumCheck) {
 			WriteLog(fp, "dbredirector start");
 		} else {
@@ -365,31 +439,33 @@ ENTER_FUNC;
 		ConnectDB();
 	} else {
 		WriteLog(fp, "dbredirector start(No database)");
-		OpenDB_RedirectPort(ThisDBG);
-		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
+		OpenDB_RedirectPort(ThisDBG_Instance);
+		ThisDBG_Instance->update.dbstatus = DB_STATUS_NOCONNECT;
 	}
 	while	( TRUE )	{
 		vdata = (VeryfyData *)DeQueue(FileQueue);
 		query = LBS_Body(vdata->RedirectData);
 		if		(  *query  !=  0 ) {
-			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ) {
+			if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_UNCONNECT ) {
 				ReConnectDB();
 			}
-			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
+			if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_CONNECT ){
 				ExecDB(query, vdata->CheckData);
 			}
-			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
+			if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_FAILURE ){
 				Warning("DB synchronous failure");
 				WriteLog(fp, "DB synchronous failure");
-				ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+				ThisDBG_Instance->update.dbstatus = DB_STATUS_DISCONNECT;
 			}
 			ReRedirect(query);
 			WriteLogQuery(fp, query);
+			if		(  cPool  >=  nPool  ) {
+				FreeVeryfyData(vdata);
+			}
 		}
-		FreeVeryfyData(vdata);
 	}
 	if		(  dbname  ==  NULL  ) {
-		CloseDB_RedirectPort(ThisDBG);
+		CloseDB_RedirectPort(ThisDBG_Instance);
 	}
 	WriteLog(fp, "dbredirector stop");
 	exit(0);
@@ -425,7 +501,7 @@ LEAVE_FUNC;
 static	void
 DumpDBG(
 	char		*name,
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	void		*dummy)
 {
 	printf("name     = [%s]\n",dbg->name);
@@ -448,13 +524,16 @@ DumpDBG(
 static	void
 _CheckDBG(
 	char		*name,
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	char		*red_name)
 {
-	DBG_Struct	*red_dbg;
-	char *src_port, *dsc_port;
-	char *dbg_dbname = "", *red_dbg_dbname = "";
+	DBG_Class	*red_dbg;
+	char		*src_port
+		,		*dsc_port;
+	char		*dbg_dbname = ""
+		,		*red_dbg_dbname = "";
 	char	*dbname;
+
 ENTER_FUNC;		
 	if		(  dbg->redirect  !=  NULL  ) {
 		red_dbg = dbg->redirect;
@@ -483,12 +562,16 @@ static	void
 CheckDBG(
 	char		*name)
 {
+	DBG_Class	*dbg;
+
 #ifdef	DEBUG
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)DumpDBG,NULL);
 #endif
-	if		(  ( ThisDBG = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name) )
+	if		(  ( dbg = (DBG_Class *)g_hash_table_lookup(ThisEnv->DBG_Table,name) )
 			   ==  NULL  ) {
 		Error("DB group not found");
+	} else {
+		ThisDBG_Instance = OpenDB(dbg,NULL);
 	}
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)_CheckDBG,name);
 }
@@ -516,9 +599,9 @@ ENTER_FUNC;
 	CheckDBG(name);
 
 	if		(  PortNumber  ==  NULL  ) {
-		if		(  ( ThisDBG != NULL) 
-				   && (ThisDBG->redirectPort  !=  NULL )) {
-			RedirectPort = ThisDBG->redirectPort;
+		if		(  ( ThisDBG_Class != NULL) 
+				   && (ThisDBG_Class->redirectPort  !=  NULL )) {
+			RedirectPort = ThisDBG_Class->redirectPort;
 		} else {
 			RedirectPort = ParPortName(PORT_REDIRECT);
 		}
@@ -526,6 +609,8 @@ ENTER_FUNC;
 		RedirectPort = ParPortName(PortNumber);
 	}
 	FileQueue = NewQueue();
+	cPool = 0;
+	DataHash = NewNameHash();
 LEAVE_FUNC;
 }
 
@@ -567,6 +652,8 @@ static	ARG_TABLE	option[] = {
 		"send retry dbredirector"						},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
 		"retry interval of dbredirector(sec)"			},
+	{	"pool",	INTEGER,	TRUE,		(void*)&nPool,
+		"max number of transaction hold pool"			},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -580,6 +667,7 @@ SetDefault(void)
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
+	nPool = 1;
 
 	DB_User = NULL;
 	DB_Pass = NULL;

@@ -46,22 +46,22 @@
 #include	"redirect.h"
 #include	"debug.h"
 
-#define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
+#define	NBCONN(dbg)		(NETFILE *)((dbg)->update.conn)
 
 static	int
 _EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	Bool			fRed,
+	int				usage)
 {
 	return	(MCP_OK);
 }
 
 static	ValueStruct	*
 _DBOPEN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	int		fh
 		,	rc;
@@ -69,15 +69,15 @@ _DBOPEN(
 
 ENTER_FUNC;
 	if		(  fpBlob  ==  NULL  ) {
-		if		(  ( port = GetDB_Port(dbg,DB_UPDATE) )  ==  NULL  ) {
+		if		(  ( port = GetDB_Port(dbg->class,DB_UPDATE) )  ==  NULL  ) {
 			port = ThisEnv->blob->port;
 		}
 		if		(	(  port  !=  NULL  )
 				&&	(  ( fh = ConnectSocket(port,SOCK_STREAM) )  >=  0  ) ) {
 			fpBlob = SocketToNet(fh);
-			SendStringDelim(fpBlob,GetDB_User(dbg,DB_UPDATE));
+			SendStringDelim(fpBlob,GetDB_User(dbg->class,DB_UPDATE));
 			SendStringDelim(fpBlob,"\n");
-			SendStringDelim(fpBlob,GetDB_Pass(dbg,DB_UPDATE));
+			SendStringDelim(fpBlob,GetDB_Pass(dbg->class,DB_UPDATE));
 			SendStringDelim(fpBlob,"\n");
 			if		(  RecvPacketClass(fpBlob)  !=  APS_OK  ) {
 				CloseNet(fpBlob);
@@ -86,10 +86,10 @@ ENTER_FUNC;
 		}
 	}
 	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = (void *)fpBlob;
+	dbg->update.conn = (void *)fpBlob;
 	if		(  fpBlob  !=  NULL  ) {
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-		dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+		dbg->update.dbstatus = DB_STATUS_CONNECT;
+		dbg->readonly.dbstatus = DB_STATUS_NOCONNECT;
 		rc = MCP_OK;
 	} else {
 		rc = MCP_BAD_OTHER;
@@ -103,18 +103,18 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBDISCONNECT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->update.dbstatus == DB_STATUS_CONNECT ) { 
 #if	0	/*	dbg->conn already closed by aps_main	*/
 		SendPacketClass(NBCONN(dbg),APS_END);	ON_IO_ERROR(NBCONN(dbg),badio);
-	badio:
+	  badio:;
 		CloseNet(NBCONN(dbg);
 #endif
 		CloseDB_RedirectPort(dbg);
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		dbg->update.dbstatus = DB_STATUS_DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}
@@ -125,14 +125,14 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBSTART(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	int			rc;
 
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->update.dbstatus == DB_STATUS_CONNECT ) { 
 		rc = MCP_OK;
 	} else
 	if		(  RequestStartBLOB(NBCONN(dbg),APS_BLOB)  ) {
@@ -151,14 +151,14 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBCOMMIT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	int			rc;
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->update.dbstatus == DB_STATUS_CONNECT ) { 
 		rc = MCP_OK;
 	} else
 	if		(  RequestStartBLOB(NBCONN(dbg),APS_BLOB)  ) {
@@ -178,7 +178,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _NewBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -213,7 +213,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _OpenBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -254,7 +254,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _CloseBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -288,7 +288,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _WriteBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -348,7 +348,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _ReadBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -409,7 +409,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _ExportBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -445,7 +445,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _ImportBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -483,7 +483,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _SaveBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -519,7 +519,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _CheckBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -553,7 +553,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DestroyBLOB(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
@@ -587,7 +587,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBACCESS(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	char			*name,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,

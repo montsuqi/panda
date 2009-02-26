@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2008  ogochan
+# Copyright (C) 2005-2009  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,6 +72,7 @@ monitor_LDFLAGS	=			\
 	-export-dynamic
 monitor_LDADD 		=					\
 	-lm									\
+	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\

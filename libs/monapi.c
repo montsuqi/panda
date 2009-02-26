@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ ENTER_FUNC;
 		SendLBS(fp, data->headers);			ON_IO_ERROR(fp,badio);
 		SendLBS(fp, data->body);			ON_IO_ERROR(fp,badio);
 		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-		if (klass == WFC_OK) {
+		if (klass == WFC_TRUE) {
 			RecvLBS(fp, data->headers);    ON_IO_ERROR(fp,badio);
 			RecvLBS(fp, data->body);			ON_IO_ERROR(fp,badio);
 		}

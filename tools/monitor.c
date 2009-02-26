@@ -20,9 +20,9 @@
 #define	MAIN
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -172,7 +172,8 @@ LEAVE_FUNC;
 
 static	void
 StartRedirector(
-	DBG_Struct	*dbg)
+	DBG_Instance	*inst,
+	DBG_Class		*dbg)
 {
 	pid_t	pid;
 	int		argc;
@@ -220,7 +221,7 @@ ENTER_FUNC;
 	proc->argc = argc;
 	argv[argc ++] = NULL;
 	pid = StartProcess(proc,Interval);
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	inst->update.dbstatus = DB_STATUS_CONNECT;
 LEAVE_FUNC;
 }
 
@@ -251,15 +252,16 @@ LEAVE_FUNC;
 
 static	void
 _StartRedirectors(
-	DBG_Struct	*dbg)
+	DBG_Instance	*inst,
+	DBG_Class		*class)
 {
 
 ENTER_FUNC;
-	if		(  dbg->redirect  !=  NULL  ) {
-		_StartRedirectors(dbg->redirect);
+	if		(  class->redirect  !=  NULL  ) {
+		_StartRedirectors(inst,class->redirect);
 	}
-	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{
-		StartRedirector(dbg);
+	if		(  inst->update.dbstatus  !=  DB_STATUS_CONNECT  )	{
+		StartRedirector(inst,class);
 	}
 LEAVE_FUNC;
 }
@@ -268,16 +270,18 @@ static	void
 StartRedirectors(void)
 {
 	int		i;
-	DBG_Struct	*dbg;
+	DBG_Class	*dbg;
+	DB_Environment	*env;
 
 ENTER_FUNC;
+	env = NewDB_Environment(ThisEnv->cDBG);
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		ThisEnv->DBG[i]->process[DB_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+		env->entry[ThisEnv->DBG[i]->id] = NewDBG_Instance(ThisEnv->DBG[i],env);
 	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		if		(  dbg->redirect  !=  NULL  ) {
-			_StartRedirectors(dbg->redirect);
+			_StartRedirectors(env->entry[i],dbg->redirect);
 		}
 	}
 LEAVE_FUNC;

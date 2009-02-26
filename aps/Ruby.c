@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 2004-2005 Shugo Maeda
- * Copyright (C) 2006-2008 Shugo Maeda & ogochan
+ * Copyright (C) 2006-2009 Shugo Maeda & ogochan
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,6 +43,10 @@
 #include    <pthread.h>
 #include    <glib.h>
 
+#undef	PACKAGE_NAME
+#undef	PACKAGE_TARNAME
+#undef	PACKAGE_VERSION
+#undef	PACKAGE_STRING
 #include    <ruby.h>
 #include    <env.h>
 #include    <st.h>
@@ -50,6 +54,9 @@
 #include    "types.h"
 #include    "const.h"
 #include    "libmondai.h"
+#undef	T_SYMBOL
+#include	"Lex.h"
+#include	"RecParser.h"
 #include    "comm.h"
 #include    "directory.h"
 #include    "handler.h"
@@ -102,6 +109,19 @@ typedef struct _protect_call_arg {
     int argc;
     VALUE *argv;
 } protect_call_arg;
+
+typedef struct _record_struct_data {
+    RecordStruct *rec;
+    VALUE value;
+} record_struct_data;
+
+#define RECORD_STRUCT(x) (((struct _record_struct_data *) x)->rec)
+
+typedef struct _table_data {
+    record_struct_data rec;
+    int no;
+    VALUE paths;
+} table_data;
 
 static VALUE
 protect_funcall0(VALUE arg)
@@ -450,7 +470,7 @@ set_value(ValueStruct *value, VALUE obj)
             } else
             if (strcasecmp(StringValuePtr(class_path), "Time") == 0) {
                 str = rb_funcall(obj, rb_intern("strftime"), 1, rb_str_new2("%Y%m%d%H%M%S"));
-dbgprintf("strftime [%s]",StringValuePtr(str));
+				dbgprintf("strftime [%s]",StringValuePtr(str));
             }
             else {
                 str = rb_funcall(obj, rb_intern("to_s"), 0);
@@ -612,13 +632,27 @@ aryval_each(int argc, VALUE *argv, VALUE self)
     return Qnil;
 }
 
+static	void
+recval_set_method(VALUE obj, ValueStruct *val)
+{
+    int i;
+    VALUE name;
+
+    for (i = 0; i < ValueRecordSize(val); i++) {
+        rb_define_singleton_method(obj, ValueRecordName(val, i),
+                                   recval_get_field, 0);
+        name = rb_str_new2(ValueRecordName(val, i));
+        rb_str_cat2(name, "=");
+        rb_define_singleton_method(obj, StringValuePtr(name),
+                                   recval_set_field, 1);
+    }
+}
+
 static VALUE
 recval_new(ValueStruct *val, int need_free)
 {
     VALUE obj;
     value_struct_data *data;
-    int i;
-    VALUE name;
 
 ENTER_FUNC;
     obj = Data_Make_Struct(cRecordValue, value_struct_data,
@@ -629,17 +663,55 @@ ENTER_FUNC;
                            data);
     data->value = val;
     data->cache = rb_hash_new();
-    for (i = 0; i < ValueRecordSize(val); i++) {
-		ValueIsNonNil(ValueRecordItem(val,i));
-        rb_define_singleton_method(obj, ValueRecordName(val, i),
-                                   recval_get_field, 0);
-        name = rb_str_new2(ValueRecordName(val, i));
-        rb_str_cat2(name, "=");
-        rb_define_singleton_method(obj, StringValuePtr(name),
-                                   recval_set_field, 1);
-    }
+	recval_set_method(obj,data->value);
 LEAVE_FUNC;
     return obj;
+}
+
+static VALUE
+recval_alloc(VALUE klass)
+{
+    VALUE obj;
+    value_struct_data *data;
+
+ENTER_FUNC;
+    obj = Data_Make_Struct(cRecordValue, value_struct_data,
+                           value_struct_mark,
+						   (RUBY_DATA_FUNC) value_struct_free,
+                           data);
+LEAVE_FUNC;
+    return obj;
+}
+
+static VALUE
+recval_table(VALUE self)
+{
+    table_data *data;
+	ValueStruct	*value;
+    VALUE obj;
+
+ENTER_FUNC;
+    Data_Get_Struct(self, table_data, data);
+    value = DuplicateValue(RECORD_STRUCT(data)->value,TRUE);
+	obj = recval_new(value, 1);
+LEAVE_FUNC;
+    return obj;
+}
+
+static VALUE
+recval_initialize(VALUE self, VALUE defs)
+{
+	ValueStruct	*val;
+    value_struct_data *data;
+
+ENTER_FUNC;
+	Data_Get_Struct(self, value_struct_data, data);
+	val = RecParseValueMem(StringValuePtr(defs),NULL);
+	data->value = val;
+    data->cache = rb_hash_new();
+	recval_set_method(self,data->value);
+LEAVE_FUNC;
+    return Qnil;
 }
 
 static VALUE
@@ -649,6 +721,16 @@ recval_length(VALUE self)
 
     Data_Get_Struct(self, value_struct_data, data);
     return INT2NUM(ValueRecordSize(data->value));
+}
+
+static VALUE
+recval_clear(VALUE self)
+{
+    value_struct_data *data;
+
+    Data_Get_Struct(self, value_struct_data, data);
+	InitializeValue(data->value);
+    return Qnil;
 }
 
 static VALUE
@@ -687,19 +769,18 @@ recval_aset(VALUE self, VALUE name, VALUE obj)
 }
 
 static VALUE
-recval_get_field(VALUE self)
+_recval_get_field(VALUE self, const char *name)
 {
-    VALUE obj;
     value_struct_data *data;
+    VALUE obj;
     ValueStruct *val;
-    char *name = rb_id2name(ruby_frame->last_func);
 
-    Data_Get_Struct(self, value_struct_data, data);
+	Data_Get_Struct(self, value_struct_data, data);
 
     if (!NIL_P(obj = rb_hash_aref(data->cache, rb_str_new2(name))))
         return obj;
 
-    val = GetRecordItem(data->value, name);
+    val = GetRecordItem(data->value, (char *)name);
     obj = get_value(val);
     if (CACHEABLE(val))
         rb_hash_aset(data->cache, rb_str_new2(name), obj);
@@ -707,14 +788,22 @@ recval_get_field(VALUE self)
 }
 
 static VALUE
-recval_set_field(VALUE self, VALUE obj)
+recval_get_field(VALUE self)
+{
+    return _recval_get_field(self,rb_id2name(ruby_frame->last_func));
+}
+
+static VALUE
+recval_get_field2(VALUE self, VALUE name)
+{
+    return _recval_get_field(self,StringValuePtr(name));
+}
+
+static VALUE
+_recval_set_field(VALUE self, VALUE name, VALUE obj)
 {
     value_struct_data *data;
     ValueStruct *val;
-    char *s = rb_id2name(ruby_frame->last_func);
-    VALUE name;
-
-    name = rb_str_new(s, strlen(s) - 1);
 
     Data_Get_Struct(self, value_struct_data, data);
     val = GetRecordItem(data->value, StringValuePtr(name));
@@ -724,12 +813,22 @@ recval_set_field(VALUE self, VALUE obj)
     return obj;
 }
 
-typedef struct _record_struct_data {
-    RecordStruct *rec;
-    VALUE value;
-} record_struct_data;
+static VALUE
+recval_set_field(VALUE self, VALUE obj)
+{
+    const char *s = rb_id2name(ruby_frame->last_func);
+    VALUE name;
 
-#define RECORD_STRUCT(x) (((struct _record_struct_data *) x)->rec)
+    name = rb_str_new(s, strlen(s) - 1);
+
+    return _recval_set_field(self, name, obj);
+}
+
+static VALUE
+recval_set_field2(VALUE self, VALUE name, VALUE obj)
+{
+    return _recval_set_field(self, name, obj);
+}
 
 static void
 rec_mark(record_struct_data *data)
@@ -761,6 +860,7 @@ rec_new(RecordStruct *rec)
         rb_define_singleton_method(obj, StringValuePtr(name),
                                    rec_set_field, 1);
     }
+
     return obj;
 }
 
@@ -780,6 +880,15 @@ rec_length(VALUE self)
 
     Data_Get_Struct(self, record_struct_data, data);
     return recval_length(data->value);
+}
+
+static VALUE
+rec_clear(VALUE self)
+{
+    record_struct_data *data;
+
+    Data_Get_Struct(self, record_struct_data, data);
+    return recval_clear(data->value);
 }
 
 static VALUE
@@ -810,12 +919,30 @@ rec_get_field(VALUE self)
 }
 
 static VALUE
+rec_get_field2(VALUE self, VALUE name)
+{
+    record_struct_data *data;
+
+    Data_Get_Struct(self, record_struct_data, data);
+    return recval_get_field2(data->value,name);
+}
+
+static VALUE
 rec_set_field(VALUE self, VALUE obj)
 {
     record_struct_data *data;
 
     Data_Get_Struct(self, record_struct_data, data);
     return recval_set_field(data->value, obj);
+}
+
+static VALUE
+rec_set_field2(VALUE self, VALUE name, VALUE obj)
+{
+    record_struct_data *data;
+
+    Data_Get_Struct(self, record_struct_data, data);
+    return recval_set_field2(data->value, name, obj);
 }
 
 typedef struct _procnode_data {
@@ -928,14 +1055,26 @@ procnode_thisscreen(VALUE self)
 }
 
 static VALUE
+procnode_send_data(VALUE self, VALUE name)
+{
+    procnode_data *data;
+	char *rname;
+
+    Data_Get_Struct(self, procnode_data, data);
+	rname = StringValuePtr(name);
+	MCP_PutData(data->node,rname);
+    return Qnil;
+}
+
+static VALUE
 procnode_put_window(int argc, VALUE *argv, VALUE self)
 {
     procnode_data *data;
-    VALUE win, type;
-	char *wname, *ptype;
+    VALUE win, type, wid;
+	char *wname, *ptype, *widget;
 
     Data_Get_Struct(self, procnode_data, data);
-    rb_scan_args(argc, argv, "02", &type, &win);
+    rb_scan_args(argc, argv, "03", &type, &win, &wid);
 
     if (!NIL_P(win)) {
 		wname = StringValuePtr(win);
@@ -947,7 +1086,12 @@ procnode_put_window(int argc, VALUE *argv, VALUE self)
     } else {
 		ptype = StringValuePtr(type);
     }
-	MCP_PutWindow(data->node,wname,ptype);
+    if (NIL_P(wid)) {
+        widget = NULL;
+    } else {
+		widget = StringValuePtr(wid);
+    }
+	MCP_PutWindow(data->node,wname,ptype,widget);
     return Qnil;
 }
 
@@ -1099,12 +1243,6 @@ path_set_field(VALUE self, VALUE obj)
 
 #endif
 
-typedef struct _table_data {
-    record_struct_data rec;
-    int no;
-    VALUE paths;
-} table_data;
-
 static void
 table_mark(table_data *data)
 {
@@ -1168,7 +1306,7 @@ static VALUE
 table_exec(int argc, VALUE *argv, VALUE self)
 {
     table_data *data;
-    VALUE funcname, pathname, params, limit;
+    VALUE funcname, pathname, params, limit, offset;
     char *func, *pname;
     DBCOMM_CTRL ctrl;
     int no;
@@ -1178,7 +1316,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
 
 	dbgprintf("argc = %d",argc);
     Data_Get_Struct(self, table_data, data);
-    rb_scan_args(argc, argv, "13", &funcname, &pathname, &params, &limit);
+    rb_scan_args(argc, argv, "14", &funcname, &pathname, &params, &limit, &offset);
     func = StringValuePtr(funcname);
     if (NIL_P(pathname)) {
         pname = NULL;
@@ -1223,16 +1361,21 @@ table_exec(int argc, VALUE *argv, VALUE self)
 			st_foreach(RHASH(params)->tbl, set_param, (st_data_t) &arg);
 		}
     }
-	if (argc == 4) {
+	if (argc >= 4) {
 		ctrl.limit = NUM2INT(limit);
 	} else {
 		ctrl.limit = 1;
+	}
+	if (argc >= 5) {
+		ctrl.offset = NUM2INT(offset);
+	} else {
+		ctrl.offset = 0;
 	}
 
     size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
     ctrl.blocks = ((size + sizeof(DBCOMM_CTRL)) / SIZE_BLOCK) + 1;
     strcpy(ctrl.func, func);
-    result = ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
+    result = ExecDB_Process(&ctrl, RECORD_STRUCT(data), value, ThisDB_Environment);
 #ifdef	DEBUG
 	DumpValueStruct(result);
 	dbgprintf("ctrl.rc    = %d",ctrl.rc);
@@ -1242,7 +1385,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
 		if		(  result  ==  NULL  ) {
 			result = DuplicateValue(value,TRUE);
 		}
-		if		(  ctrl.count  ==  1  ) {
+		if		(  ctrl.limit  ==  1  ) {
 			return recval_new(result, 1);
 		} else {
 			return aryval_new(result, 1);
@@ -1318,17 +1461,41 @@ table_each(int argc, VALUE *argv, VALUE self)
     int n = (argc > 2 ? 2 : argc);
 
     table_select(argc, argv, self);
-dbgmsg("*");
     while (1) {
         val = table_fetch(n, argv, self);
         if (NIL_P(val))
             break;
         rb_yield(val);
     }
-dbgmsg("*");
     table_close_cursor(n, argv, self);
-dbgmsg("*");
     return Qnil;
+}
+
+static VALUE
+table_set_value(VALUE self, VALUE obj)
+{
+    table_data *dst;
+    value_struct_data *src;
+	RecordStruct	*rec;
+    int i;
+    VALUE name;
+
+    Data_Get_Struct(self, table_data, dst);
+    Data_Get_Struct(obj,  value_struct_data, src);
+	rec = RECORD_STRUCT(dst);
+
+	CopyValue(rec->value,src->value);
+
+    for (i = 0; i < ValueRecordSize(rec->value); i++) {
+        rb_define_singleton_method(self, ValueRecordName(rec->value, i),
+                                   rec_get_field, 0);
+        name = rb_str_new2(ValueRecordName(rec->value, i));
+        rb_str_cat2(name, "=");
+        rb_define_singleton_method(self, StringValuePtr(name),
+                                   rec_set_field, 1);
+    }
+
+    return self;
 }
 
 static VALUE
@@ -1429,7 +1596,7 @@ database_exec(VALUE self, VALUE funcname)
     ctrl.blocks = 0;
 
     strcpy(ctrl.func, func);
-    (void)ExecDB_Process(&ctrl, NULL, NULL);
+    (void)ExecDB_Process(&ctrl, NULL, NULL, ThisDB_Environment);
     if (ctrl.rc != MCP_OK) {
         rb_raise(eDatabaseError, "database error (ctrl.rc=%d)", ctrl.rc);
     }
@@ -1439,10 +1606,8 @@ database_exec(VALUE self, VALUE funcname)
 static VALUE
 database_open(VALUE self)
 {
-	int		rc;
-
-	if		(  ( rc = OpenDB(NULL) )  !=  MCP_OK  ) {
-        rb_raise(eDatabaseError, "database open error (ctrl.rc=%d)", rc);
+	if		(  ( ThisDB_Environment = OpenAllDB() )  ==  NULL  ) {
+        rb_raise(eDatabaseError, "database open error");
 	}
     return Qnil;
 }
@@ -1452,7 +1617,7 @@ database_close(VALUE self)
 {
 	int		rc;
 
-	if		(  ( rc = CloseDB(NULL) )  !=  MCP_OK  ) {
+	if		(  ( rc = CloseAllDB(ThisDB_Environment) )  !=  MCP_OK  ) {
         rb_raise(eDatabaseError, "database close error (ctrl.rc=%d)", rc);
 	}
     return Qnil;
@@ -1463,8 +1628,19 @@ database_start(VALUE self)
 {
 	int		rc;
 
-	if		(  ( rc = TransactionStart(NULL) )  !=  MCP_OK  ) {
+	if		(  ( rc = TransactionAllStart(ThisDB_Environment) )  !=  MCP_OK  ) {
         rb_raise(eDatabaseError, "database start error (ctrl.rc=%d)", rc);
+	}
+    return Qnil;
+}
+
+static VALUE
+database_prepare(VALUE self)
+{
+	int		rc;
+
+	if		(  ( rc = TransactionAllPrepare(ThisDB_Environment) )  !=  MCP_OK  ) {
+        rb_raise(eDatabaseError, "database prepare error (ctrl.rc=%d)", rc);
 	}
     return Qnil;
 }
@@ -1474,8 +1650,19 @@ database_commit(VALUE self)
 {
 	int		rc;
 
-	if		(  ( rc = TransactionEnd(NULL) )  !=  MCP_OK  ) {
+	if		(  ( rc = TransactionAllEnd(ThisDB_Environment) )  !=  MCP_OK  ) {
         rb_raise(eDatabaseError, "database commit error (ctrl.rc=%d)", rc);
+	}
+    return Qnil;
+}
+
+static VALUE
+database_rollback(VALUE self)
+{
+	int		rc;
+
+	if		(  ( rc = TransactionAllRollback(ThisDB_Environment) )  !=  MCP_OK  ) {
+        rb_raise(eDatabaseError, "database rollback error (ctrl.rc=%d)", rc);
 	}
     return Qnil;
 }
@@ -1485,7 +1672,7 @@ database_disconnect(VALUE self)
 {
 	int		rc;
 
-	if		(  ( rc = CloseDB(NULL) )  !=  MCP_OK  ) {
+	if		(  ( rc = CloseAllDB(ThisDB_Environment) )  !=  MCP_OK  ) {
         rb_raise(eDatabaseError, "database close error (ctrl.rc=%d)", rc);
 	}
     return Qnil;
@@ -1512,16 +1699,24 @@ init()
     rb_define_method(cArrayValue, "index", aryval_index, 1);
     rb_define_method(cArrayValue, "each", aryval_each, -1);
     cRecordValue = rb_define_class_under(mPanda, "RecordValue", rb_cObject);
+	rb_define_alloc_func(cRecordValue, recval_alloc);
+	rb_define_private_method(cRecordValue, "initialize", recval_initialize, 1);
     rb_define_method(cRecordValue, "length", recval_length, 0);
     rb_define_method(cRecordValue, "size", recval_length, 0);
+    rb_define_method(cRecordValue, "clear", recval_clear, 0);
     rb_define_method(cRecordValue, "[]", recval_aref, 1);
     rb_define_method(cRecordValue, "[]=", recval_aset, 2);
+    rb_define_method(cRecordValue, "get_field", recval_get_field2, 1);
+    rb_define_method(cRecordValue, "set_field", recval_set_field2, 2);
     cRecordStruct = rb_define_class_under(mPanda, "RecordStruct", rb_cObject);
     rb_define_method(cRecordStruct, "name", rec_name, 0);
     rb_define_method(cRecordStruct, "length", rec_length, 0);
     rb_define_method(cRecordStruct, "size", rec_length, 0);
+    rb_define_method(cRecordStruct, "clear", rec_clear, 0);
     rb_define_method(cRecordStruct, "[]", rec_aref, 1);
     rb_define_method(cRecordStruct, "[]=", rec_aset, 2);
+    rb_define_method(cRecordStruct, "get_field", rec_get_field2, 1);
+    rb_define_method(cRecordStruct, "set_field", rec_set_field2, 2);
     cProcessNode = rb_define_class_under(mPanda, "ProcessNode", rb_cObject);
     rb_define_method(cProcessNode, "term", procnode_term, 0);
     rb_define_method(cProcessNode, "user", procnode_user, 0);
@@ -1532,6 +1727,7 @@ init()
     rb_define_method(cProcessNode, "windows", procnode_windows, 0);
     rb_define_method(cProcessNode, "put_window", procnode_put_window, -1);
     rb_define_method(cProcessNode, "exit", procnode_exit, -1);
+    rb_define_method(cProcessNode, "send_data", procnode_send_data, 1);
     cPath = rb_define_class_under(mPanda, "Path", rb_cObject);
     rb_define_method(cPath, "name", path_name, 0);
     rb_define_method(cPath, "args", path_args, 0);
@@ -1546,6 +1742,9 @@ init()
     rb_define_method(cTable, "size", rec_length, 0);
     rb_define_method(cTable, "[]", rec_aref, 1);
     rb_define_method(cTable, "[]=", rec_aset, 2);
+    rb_define_method(cTable, "get_field", rec_get_field2, 1);
+    rb_define_method(cTable, "set_field", rec_set_field2, 2);
+	rb_define_method(cTable, "value=", table_set_value, 1);
     rb_define_method(cTable, "exec", table_exec, -1);
     rb_define_method(cTable, "select", table_select, -1);
     rb_define_method(cTable, "fetch", table_fetch, -1);
@@ -1557,13 +1756,16 @@ init()
     rb_define_method(cTable, "close_cursor", table_close_cursor, -1);
     rb_define_method(cTable, "each", table_each, -1);
     rb_define_method(cTable, "path", table_path, 1);
+    rb_define_method(cTable, "record", recval_table, 0);
     cDatabase = rb_define_class_under(mPanda, "Database", rb_cObject);
     rb_define_method(cDatabase, "[]", database_aref, 1);
     rb_define_method(cDatabase, "exec", database_exec, 1);
     rb_define_method(cDatabase, "open", database_open, 0);
     rb_define_method(cDatabase, "close", database_close, 0);
     rb_define_method(cDatabase, "start", database_start, 0);
+    rb_define_method(cDatabase, "prepare", database_prepare, 0);
     rb_define_method(cDatabase, "commit", database_commit, 0);
+    rb_define_method(cDatabase, "rollback", database_rollback, 0);
     rb_define_method(cDatabase, "disconnect", database_disconnect, 0);
     eDatabaseError = rb_define_class_under(mPanda, "DatabaseError",
                                            rb_eStandardError);
@@ -1615,24 +1817,41 @@ load_application(char *path, char *name)
     VALUE app_class, class_name;
     VALUE filename;
     int state;
+	char buff[SIZE_LONGNAME+1]
+		,	*p, *q;
 
+ENTER_FUNC;
     class_name = rb_str_new2(name);
     app_class = rb_hash_aref(application_classes, class_name);
     if (NIL_P(app_class)) {
-        filename = get_source_filename(name, path);
-        if (NIL_P(filename)) {
-            fprintf(stderr, "invalid module name: %s\n", name);
-            return Qnil;
-        }
+		strcpy(buff,path);
+		for	( p = buff ; *p != 0 ; p = q) {
+			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+				*q = 0;
+				q ++;
+			} else {
+				q = p + strlen(p);
+			}
+			filename = get_source_filename(name, p);
+			if (NIL_P(filename)) {
+				fprintf(stderr, "invalid module name: %s\n", name);
+LEAVE_FUNC;
+				return Qnil;
+			}
         
-        rb_load_protect(filename, 0, &state);
-        if (state && error_handle(state))
-            return Qnil;
-        app_class = rb_eval_string_protect(name, &state);
-        if (state && error_handle(state))
-            return Qnil;
-        rb_hash_aset(application_classes, class_name, app_class);
+			rb_load_protect(filename, 0, &state);
+			if ( state && error_handle(state)) {
+			} else {
+				app_class = rb_eval_string_protect(name, &state);
+				if (state && error_handle(state)) {
+LEAVE_FUNC;
+					return Qnil;
+				}
+				rb_hash_aset(application_classes, class_name, app_class);
+			}
+		}
     }
+LEAVE_FUNC;
     return app_class;
 }
 

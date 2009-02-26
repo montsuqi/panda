@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -106,7 +106,8 @@ LEAVE_FUNC;
 
 extern	RecordStruct	*
 ReadRecordDefine(
-	char	*name)
+	char	*name,
+	char	*base)
 {
 	RecordStruct	*rec;
 	char		buf[SIZE_LONGNAME+1]
@@ -126,7 +127,8 @@ ENTER_FUNC;
 		} else {
 			fExit = TRUE;
 		}
-		sprintf(buf,"%s/%s",p,name);
+		sprintf(buf,"%s/%s",ExpandPath(p,base),name);
+		dbgprintf("[%s]",buf);
 		if		(  ( rec = ParseRecordFile(buf) )  !=  NULL  ) {
 			break;
 		}

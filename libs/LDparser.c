@@ -111,7 +111,7 @@ ENTER_FUNC;
 						 (RecordStruct *)g_hash_table_lookup(Records,wname) )
 					   ==  NULL  ) {
 				sprintf(fname,"%s.rec",wname);
-				if		(  ( rec2 = ReadRecordDefine(fname) )  !=  NULL  ) {
+				if		(  ( rec2 = ReadRecordDefine(fname,ThisEnv->BaseDir) )  !=  NULL  ) {
 					g_hash_table_insert(Records,rec2->name,rec2);
 					InitializeValue(rec2->value);
 				} else {
@@ -162,15 +162,17 @@ ENTER_FUNC;
 				} else {
 					window = GetWindow(wname);
 				}
-				wn = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cWindow + 1));
-				if		(  ld->cWindow  >  0  ) {
-					memcpy(wn,ld->windows,sizeof(RecordStruct *) * ld->cWindow);
-					xfree(ld->windows);
+				if		(  window  !=  NULL  ) {
+					wn = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cWindow + 1));
+					if		(  ld->cWindow  >  0  ) {
+						memcpy(wn,ld->windows,sizeof(RecordStruct *) * ld->cWindow);
+						xfree(ld->windows);
+					}
+					ld->windows = wn;
+					ld->windows[ld->cWindow] = window;
+					ld->cWindow ++;
+					g_hash_table_insert(ld->whash,window->name,(void *)ld->cWindow);
 				}
-				ld->windows = wn;
-				ld->windows[ld->cWindow] = window;
-				ld->cWindow ++;
-				g_hash_table_insert(ld->whash,window->name,(void *)ld->cWindow);
 			} else {
 				ParError("record name not found");
 			}
@@ -252,7 +254,7 @@ ENTER_FUNC;
 				GetName;
 				if		(  ComToken   ==  T_SYMBOL  ) {
 					sprintf(buff,"%s.rec",ComSymbol);
-					if		(  ( ld->sparec = ReadRecordDefine(buff) )
+					if		(  ( ld->sparec = ReadRecordDefine(buff,ThisEnv->BaseDir) )
 							   ==  NULL  ) {
 						ParError("spa record not found");
 					}

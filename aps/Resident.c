@@ -142,7 +142,7 @@ dbgmsg(">ExecuteDB_Server");
 			InitializeValue(value);
 			conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
 			strcpy(ctrl.func,func);
-			ret = ExecDB_Process(&ctrl,rec,value);
+			ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
 		} else {
 			ctrl.rc = 0;
 		}

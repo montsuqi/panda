@@ -44,6 +44,7 @@
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
+#include	"net.h"
 #include	"multipart.h"
 #include	"cgi.h"
 #include    "HTClex.h"
@@ -114,9 +115,9 @@ LEAVE_FUNC;
 
 extern  byte    *
 SaveArgValue(
+	GHashTable	*table,	/*	dummy	*/
     char    *name,
-    byte    *value,
-    Bool fSave)
+    byte    *value)
 {
     byte    *val
         ,   *ret;
@@ -124,16 +125,16 @@ SaveArgValue(
 
     if      (  *name  ==  0  ) {
         RemoveValue(name);
-        ret = SaveValue(name, value,fSave);
+        ret = SaveValue(name, value,FALSE);
     } else
     if ((val = LoadValue(name)) != NULL) {
 
         str = (char *)xmalloc(strlen(val) + strlen(value) + 2);
         sprintf(str, "%s,%s", val, value);
-        ret = SaveValue(name, str, fSave);
+        ret = SaveValue(name, str, FALSE);
         xfree(str);
     } else {
-        ret = SaveValue(name, value, fSave);
+        ret = SaveValue(name, value, FALSE);
     }
     return  (ret);
 }
@@ -502,6 +503,7 @@ GetArgs(void)
     char	*boundary;
 	char	*env;
 	byte	*p;
+	NETFILE	*fp;
 
 ENTER_FUNC;
 	if		(  ( env  =  CommandLine )  ==  NULL  ) {
@@ -520,7 +522,8 @@ ENTER_FUNC;
 	}
 	if		(  CommandLine  ==  NULL  ) {
 		if ((boundary = GetMultipartBoundary(getenv("CONTENT_TYPE"))) != NULL) {
-			if (ParseMultipart(stdin, boundary, Values, Files) < 0) {
+			fp = FileToNet(fileno(stdin));
+			if (ParseMultipart(fp, boundary, Values, Files) < 0) {
 				fprintf(stderr, "malformed multipart/form-data\n");
 				exit(1);
 			}
@@ -676,7 +679,11 @@ ENTER_FUNC;
 		code = 200;
 	}
 	printf("Status: %d\r\n",code);
-	printf("Content-Type: text/html; charset=%s\r\n", Codeset);
+	if		(  Codeset  !=  NULL  ) {
+		printf("Content-Type: text/html; charset=%s\r\n", Codeset);
+	} else {
+		printf("Content-Type: text/html; charset=utf-8\r\n");
+	}
 	if		(  cookie  !=  NULL  ) {
 		g_hash_table_foreach(cookie,(GHFunc)PutCookie,NULL);
 	}

@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #define	_INC_WFCDATA_H
 #include	"queue.h"
 #include	"struct.h"
+#include	"lock.h"
 #include	"net.h"
 
 #ifndef	PacketClass
@@ -43,18 +44,13 @@
 #define	APS_PING		(PacketClass)0xF2
 #define	APS_STOP		(PacketClass)0xF3
 #define	APS_REQ			(PacketClass)0xF4
-#define	APS_TERM		(PacketClass)0xF8
-#define	APS_API			(PacketClass)0xF9
+#define APS_TERM		(PacketClass)0xA0
+#define APS_API			(PacketClass)0xA1
 #define	APS_OK			(PacketClass)0xFE
 #define	APS_END			(PacketClass)0xFF
 
 #define SESSION_TYPE_TERM	0
 #define SESSION_TYPE_API	1
-
-typedef	struct {
-	NETFILE	*fp;
-	Queue	*que;
-}	TermNode;
 
 typedef	struct {
 	NETFILE	*fp;
@@ -82,6 +78,7 @@ typedef	struct {
 	,		event[SIZE_EVENT+1]
 	,		term[SIZE_TERM+1]
 	,		user[SIZE_USER+1]
+	,		lang[SIZE_NAME+1]
 	,		status
 	,		dbstatus
 	,		rc;
@@ -96,12 +93,12 @@ typedef struct {
 }	APIData;
 
 typedef	struct _SessionData	{
+	LOCKOBJECT;
 	int						type;
 	char					*name;
-	TermNode				*term;
+	//	TermNode				*term;
 	int						apsid;
 	Bool					fKeep;
-	Bool					fInProcess;
 	LD_Node					*ld;
 	size_t					cWindow;
 	int						retry;
@@ -115,9 +112,13 @@ typedef	struct _SessionData	{
 	LargeByteString			*linkdata;
 	LargeByteString			**scrdata;
 	APIData					*apidata;
-	time_t					create_time;
-	time_t					access_time;
+	struct	_SessionData	*prev
+	,						*next;
 	WindowControl			w;
+	struct	timeval			create_time
+	,						access_time;
+	struct	timeval			start
+	,						elapse;
 }	SessionData;
 
 #undef	GLOBAL

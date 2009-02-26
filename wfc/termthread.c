@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,9 +18,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -34,8 +34,11 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<glib.h>
-#include	<pthread.h>
 #include	<time.h>
+#include	<pthread.h>
+#ifdef	HAVE_UUID
+#include	<uuid.h>
+#endif
 
 #include	"types.h"
 #include	"enum.h"
@@ -69,14 +72,6 @@ static	struct {
 static	int			cTerm;
 static	Queue		*RemoveQueue;
 
-extern	void
-TermEnqueue(
-	TermNode	*term,
-	SessionData	*data)
-{
-	EnQueue(term->que,data);
-}
-
 static	SessionData	*
 MakeSessionData(void)
 {
@@ -93,12 +88,13 @@ ENTER_FUNC;
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
-	time(&(data->create_time));
-	time(&(data->access_time));
+	gettimeofday(&data->create_time,NULL);
+	gettimeofday(&data->access_time,NULL);
 	data->apidata = New(APIData);
 	data->apidata->arguments = NewLBS();
 	data->apidata->headers = NewLBS();
 	data->apidata->body = NewLBS();
+	InitLock(data);
 LEAVE_FUNC;
 	return	(data);
 }
@@ -107,7 +103,6 @@ static	void
 _UnrefSession(
 	SessionData	*data)
 {
-	data->fInProcess = FALSE;
 	if		(	(  data->name  !=  NULL  )
 			&&	(  g_hash_table_lookup(Terminal.Hash,data->name)  !=  NULL  ) ) {
 		cTerm --;
@@ -125,7 +120,7 @@ CheckAccessTime(
 	if (*candidate == NULL) {
 		*candidate = data;
 	} else {
-		if ((uintmax_t)((*candidate)->access_time) > (uintmax_t)data->access_time) {
+		if		(  timercmp(&(*candidate)->access_time,&data->access_time, > )  ) {
 			*candidate = data;
 		}	
 	}
@@ -146,10 +141,12 @@ DiscardSession()
 	}
 }
 
-static	void
+static	Bool
 RegistSession(
 	SessionData	*data)
 {
+	Bool	rc;
+
 	LockWrite(&Terminal);
 	if		(  g_hash_table_lookup(Terminal.Hash,data->name)  ==  NULL  ) {
 		if (nCache != 0 && cTerm >= nCache) {
@@ -157,25 +154,24 @@ RegistSession(
 		}
 		cTerm ++;
 		g_hash_table_insert(Terminal.Hash,data->name,data);
+		rc = TRUE;
+	} else {
+		rc = FALSE;
 	}
 	UnLock(&Terminal);
+
+	return	(rc);
 }
 
 static	SessionData	*
 LookupSession(
-	char	*term,
-	Bool	*fInProcess)
+	char	*term)
 {
 	SessionData	*data;
 
 ENTER_FUNC;
 	LockRead(&Terminal);
-	if		(  ( data = g_hash_table_lookup(Terminal.Hash,term) )  !=  NULL  ) {
-		*fInProcess = data->fInProcess;
-		data->fInProcess = TRUE;
-	} else {
-		*fInProcess = FALSE;
-	}
+	data = g_hash_table_lookup(Terminal.Hash,term);
 	UnLock(&Terminal);
 LEAVE_FUNC;
 	return	(data);
@@ -187,6 +183,7 @@ FinishSession(
 {
 	char	fname[SIZE_LONGNAME+1];
 
+ENTER_FUNC;
 	dbgprintf("unref name = [%s]\n",data->name);
 	if		(  SesDir  !=  NULL  ) {
 		sprintf(fname,"%s/%s.ses",SesDir,data->name);
@@ -195,6 +192,7 @@ FinishSession(
 	LockWrite(&Terminal);
 	_UnrefSession(data);
 	UnLock(&Terminal);
+LEAVE_FUNC;
 }
 
 static	guint
@@ -234,6 +232,7 @@ FreeSession(
 	char	msg[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
+	DestroyLock(data);
 	snprintf(msg,SIZE_LONGNAME,"[%s@%s] session end",data->hdr->user,data->hdr->term);
 	MessageLog(msg);
 	xfree(data->name);
@@ -272,9 +271,8 @@ ENTER_FUNC;
 	data->type = SESSION_TYPE_API;
 	strcpy(data->hdr->term,term);
 	data->fKeep = fKeep;
-	data->fInProcess = TRUE;
 	MessageLogPrintf("[%s@%s] session start(%d)",
-		data->hdr->user, data->hdr->term, cTerm+1);
+					 data->hdr->user, data->hdr->term, cTerm+1);
 	if		(  ( ld = g_hash_table_lookup(APS_Hash, ldname) )  !=  NULL  ) {
 		data->ld = ld;
 		if		(  ThisEnv->mcprec  !=  NULL  ) {
@@ -297,34 +295,79 @@ LEAVE_FUNC;
 }
 
 static	SessionData	*
-InitSession(
+CreateSession(
 	NETFILE	*fp,
 	char	*term)
 {
 	SessionData	*data;
-	char	buff[SIZE_LONGNAME+1];
-	LD_Node	*ld;
-	int			i;
-	Bool	fKeep;
 
 ENTER_FUNC;
 	data = MakeSessionData();
-	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
-		fKeep = TRUE;
-	} else {
-		fKeep = FALSE;
+	data->fKeep = ( RecvPacketClass(fp) == WFC_TRUE ) ? TRUE : FALSE;
+#ifdef	HAVE_UUID
+	if		(  *term  ==  0  ) {
+		uuid_t	*uu;
+		size_t	len;
+
+		uuid_create(&uu);
+		uuid_make(uu, UUID_MAKE_V1);
+		len = SIZE_TERM+1;
+		uuid_export(uu, UUID_FMT_STR, (void **)&term, &len );
+		uuid_destroy(uu);
 	}
+#endif
 	strcpy(data->hdr->term,term);
 	RecvnString(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
-	data->fKeep = fKeep;
-	data->fInProcess = TRUE;
+	RecvnString(fp,SIZE_NAME,data->hdr->lang);		ON_IO_ERROR(fp,badio);
 	MessageLogPrintf("[%s@%s] session start(%d)",
 		data->hdr->user,data->hdr->term, cTerm+1);
+	data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 	dbgprintf("term = [%s]",data->hdr->term);
 	dbgprintf("user = [%s]",data->hdr->user);
-	RecvnString(fp,SIZE_LONGNAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
-	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )  !=  NULL  ) {
-		SendPacketClass(fp,WFC_OK);
+	dbgprintf("lang = [%s]",data->hdr->lang);
+	if		(  CheckNetFile(fp)  ) {
+		data->name = StrDup(data->hdr->term);
+		data->hdr->puttype = SCREEN_NULL;
+		data->w.n = 0;
+		if		(  RegistSession(data)  ) {
+			SendPacketClass(fp,WFC_TRUE);
+			SendString(fp,data->hdr->term);					ON_IO_ERROR(fp,badio);
+		} else {
+			SendPacketClass(fp,WFC_FALSE);
+			FinishSession(data);
+			data = NULL;
+		}
+	} else {
+	  badio:;
+		FinishSession(data);
+		data = NULL;
+	}
+LEAVE_FUNC;
+	return	(data);
+}
+
+/*
+ *	LD(string)			<=
+ *	ack(PacketClass)	=>
+ */
+static	SessionData	*
+SwitchLD(
+	NETFILE	*fp,
+	SessionData	*data,
+	char	*ldname)
+{
+	LD_Node	*ld;
+	int			i;
+
+ENTER_FUNC;
+	dbgprintf("LD = [%s]",ldname);
+	data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+	*data->hdr->window = 0;
+	*data->hdr->widget = 0;
+	*data->hdr->event = 0;
+	data->apsid = -1;
+	if		(  ( ld = g_hash_table_lookup(APS_Hash,ldname) )  !=  NULL  ) {
+		SendPacketClass(fp,WFC_TRUE);					ON_IO_ERROR(fp,badio);
 		data->ld = ld;
 		if		(  ThisEnv->mcprec  !=  NULL  ) {
 			data->mcpdata = NewLBS();
@@ -350,14 +393,10 @@ ENTER_FUNC;
 				data->scrdata[i] = NULL;
 			}
 		}
-		data->name = StrDup(data->hdr->term);
-		data->hdr->puttype = SCREEN_NULL;
-		data->w.n = 0;
-		RegistSession(data);
 	} else {
-		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
+		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,ldname);
 	  badio:
-		SendPacketClass(fp,WFC_NOT);
+		SendPacketClass(fp,WFC_FALSE);
 		FinishSession(data);
 		data = NULL;
 	}
@@ -365,204 +404,113 @@ LEAVE_FUNC;
 	return	(data);
 }
 
-static	SessionData	*
-ReadTerminal(
+static	Bool
+ReadTerminalHeader(
 	NETFILE		*fp,
 	SessionData	*data)
 {
-	LD_Node	*ld;
-	Bool		fExit;
-	int			c;
-	LargeByteString	*scrdata;
-	char		window[SIZE_LONGNAME+1]
-		,		comp[SIZE_LONGNAME+1];
+	Bool	rc;
 
 ENTER_FUNC;
-	fExit = FALSE;
-	while	(  !fExit  ) {
-		switch	(c = RecvPacketClass(fp)) {
-		  case	WFC_DATA:
-			dbgmsg("recv DATA");
-			if		(  data  !=  NULL  ) {
-				RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,data->hdr->event);		ON_IO_ERROR(fp,badio);
-				dbgprintf("window = [%s]",data->hdr->window);
-				dbgprintf("widget = [%s]",data->hdr->widget);
-				dbgprintf("event  = [%s]",data->hdr->event);
-				PureComponentName(data->hdr->window,comp);
-				if		(  ( ld = g_hash_table_lookup(ComponentHash,comp) )
-						   !=  NULL  ) {
-					dbgprintf("ld = [%s]",ld->info->name);
-					PureWindowName(data->hdr->window,window);
-					dbgprintf("window = [%s]",window);
-					if		(  ( scrdata = GetScreenData(data,window) )  !=  NULL  ) {
-						SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
-						dbgmsg("send OK");
-						if		(  RecvPacketClass(fp)  ==  WFC_DATA  ) {
-							RecvLBS(fp,scrdata);					ON_IO_ERROR(fp,badio);
-						}
-						data->hdr->rc = TO_CHAR(0);
-						data->hdr->puttype = SCREEN_NULL;
-					} else {
-						Error("invalid window [%s]",window);
-					}
-					if		(  data->ld  !=  ld  ) {
-						ChangeLD(data,ld);
-					}
-				} else {
-					Error("component [%s] not found.",data->hdr->window);
-					fExit = TRUE;
-				}
-			} else {
-				fExit = TRUE;
-			}
-			break;
-		  case	WFC_BLOB:
-			dbgmsg("recv BLOB");
-			PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
-			break;
-		  case	WFC_PING:
-			dbgmsg("recv PING");
-			SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
-			dbgmsg("send PONG");
-			break;
-		  case	WFC_OK:
-			dbgmsg("OK");
-			fExit = TRUE;
-			break;
-		  case	WFC_END:
-			dbgmsg("END");
-			data->fAbort = TRUE;
-			fExit = TRUE;
-			break;
-		  default:
-			dbgmsg("default");
-			dbgprintf("c = [%X]\n",c);
-			SendPacketClass(fp,WFC_NOT);
-			ON_IO_ERROR(fp,badio);
-			fExit = TRUE;
-			data->fAbort = TRUE;
-			break;
-		}
-	}
-  badio:
+	rc = FALSE;
+	RecvnString(fp,SIZE_NAME,data->hdr->lang);		ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_NAME,data->hdr->event);		ON_IO_ERROR(fp,badio);
+	rc = TRUE;
+  badio:;
+	dbgprintf("lang   = [%s]",data->hdr->lang);
+	dbgprintf("widget = [%s]",data->hdr->window);
+	dbgprintf("widget = [%s]",data->hdr->widget);
+	dbgprintf("event  = [%s]",data->hdr->event);
 LEAVE_FUNC;
-	return(data);
+	return	(rc);
 }
 
 static	Bool
-SendTerminal(
+ReadTerminalBody(
 	NETFILE		*fp,
 	SessionData	*data)
 {
-	MessageHeader	*hdr;
-	int			i
-		,		c;
-	Bool		rc;
-	Bool		fExit;
-	char		wname[SIZE_LONGNAME+1]
-		,		buff[SIZE_LONGNAME+1];
+	Bool	rc;
+	char		window[SIZE_LONGNAME+1]
+		,		comp[SIZE_LONGNAME+1];
+	LD_Node		*ld;
 	LargeByteString	*scrdata;
 
 ENTER_FUNC;
 	rc = FALSE;
-	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
-	dbgmsg("send PING");
-	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
-		dbgmsg("recv PONG");
-		ON_IO_ERROR(fp,badio);
-		SendPacketClass(fp,WFC_HEADER);		ON_IO_ERROR(fp,badio);
-		dbgmsg("send DATA");
-		hdr = data->hdr;
-		SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
-		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
-		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
-		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
-		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
-		dbgprintf("window    = [%s]",hdr->window);
-		dbgprintf("data->w.n = %d",data->w.n);
-		for	( i = 0 ; i < data->w.n ; i ++ ) {
-			SendInt(fp,data->w.control[i].PutType);			ON_IO_ERROR(fp,badio);
-			SendString(fp,data->w.control[i].window);		ON_IO_ERROR(fp,badio);
-		}
-		data->w.n = 0;
-		fExit = FALSE;
-		do {
-			rc = TRUE;
-			switch	(c = RecvPacketClass(fp))	{
-			  case	WFC_PING:
-				dbgmsg("PING");
-				SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
-				break;
+	RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
+	dbgprintf("window = [%s]",data->hdr->window);
+	PureComponentName(data->hdr->window,comp);
+	if		(  ( ld = g_hash_table_lookup(ComponentHash,comp) )  !=  NULL  ) {
+		dbgprintf("ld = [%s]",ld->info->name);
+		PureWindowName(data->hdr->window,window);
+		dbgprintf("window = [%s]",window);
+		if		(  ( scrdata = GetScreenData(data,window) )  !=  NULL  ) {
+			SendPacketClass(fp,WFC_TRUE);				ON_IO_ERROR(fp,badio);
+			dbgmsg("send OK");
+			switch	(RecvPacketClass(fp))	{
 			  case	WFC_DATA:
-				dbgmsg(">DATA");
-				RecvnString(fp,SIZE_NAME,buff);				ON_IO_ERROR(fp,badio);
-				PureWindowName(buff,wname);
-				if		(  ( scrdata = GetScreenData(data,wname) )  !=  NULL  ) {
-					dbgmsg("send OK");
-					SendPacketClass(fp,WFC_OK);			ON_IO_ERROR(fp,badio);
-					SendLBS(fp,scrdata);				ON_IO_ERROR(fp,badio);
-				} else {
-					dbgmsg("send NODATA");
-					SendPacketClass(fp,WFC_NODATA);			ON_IO_ERROR(fp,badio);
-				}
-				dbgmsg("<DATA");
+				RecvLBS(fp,scrdata);					ON_IO_ERROR(fp,badio);
 				break;
-			  case	WFC_BLOB:
-				dbgmsg("send BLOB");
-				PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
-				break;
-			  case	WFC_DONE:
-				dbgmsg("DONE");
-				fExit = TRUE;
-				break;
-			  case	WFC_END:
-				dbgmsg("END");
-				fExit = TRUE;
-				rc = FALSE;
+			  case	WFC_NODATA:
 				break;
 			  default:
-				Warning("[%s] session failure packet [%X]",data->hdr->term, c);
-				dbgprintf("c = [%X]\n",c);
-				fExit = TRUE;
-				rc = FALSE;
+				Error("protocol exception [%s]",window);
 				break;
 			}
-		}	while	(  !fExit  );
+			data->hdr->rc = TO_CHAR(0);
+			data->hdr->puttype = SCREEN_NULL;
+		} else {
+			SendPacketClass(fp,WFC_FALSE);				ON_IO_ERROR(fp,badio);
+			Error("invalid window [%s]",window);
+		}
+		if		(  data->ld  !=  ld  ) {
+			ChangeLD(data,ld);
+		}
+		rc = TRUE;
 	} else {
-	  badio:
-		Warning("[%s] session recv failure",data->hdr->term);
+		Error("component [%s] not found.",data->hdr->window);
 	}
+  badio:;
 LEAVE_FUNC;
-	return	(rc); 
+	return	(rc);
 }
 
-static	SessionData	*
-Process(
+static	Bool
+SendHeader(
+	NETFILE		*fp,
 	SessionData	*data)
 {
-	struct	timeval	tv;
-	long	ever
-		,	now;
+	MessageHeader	*hdr;
+	int			i;
+	Bool		rc;
 
 ENTER_FUNC;
-	gettimeofday(&tv,NULL);
-	ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
-	if		(  !fLoopBack  ) {
-		CoreEnqueue(data);
-	} else {
-		EnQueue(data->term->que,data);
+	rc = FALSE;
+	SendPacketClass(fp,WFC_HEADER);		ON_IO_ERROR(fp,badio);
+	hdr = data->hdr;
+	SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
+	SendString(fp,hdr->lang);			ON_IO_ERROR(fp,badio);
+	SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
+	SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
+	SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
+	SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
+	dbgprintf("window    = [%s]",hdr->window);
+	dbgprintf("puttype   = [%02X]",hdr->puttype);
+	dbgprintf("data->w.n = %d",data->w.n);
+	for	( i = 0 ; i < data->w.n ; i ++ ) {
+		SendInt(fp,data->w.control[i].PutType);			ON_IO_ERROR(fp,badio);
+		SendString(fp,data->w.control[i].window);		ON_IO_ERROR(fp,badio);
+		dbgprintf("*window    = [%s]",data->w.control[i].window);
+		dbgprintf("*puttype   = [%02X]",data->w.control[i].PutType);
 	}
-	data = DeQueue(data->term->que);
-	if		(  fTimer  ) {
-		gettimeofday(&tv,NULL);
-		now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
-		printf("wfc %s@%s:%s process time %6ld(ms)\n",
-			   data->hdr->user,data->hdr->term,data->hdr->window,(now - ever));
-	}
+	data->w.n = 0;
+	rc = TRUE;
+  badio:;
 LEAVE_FUNC;
-	return	(data);
+	return	(rc); 
 }
 
 #define	RECORD_SPA		1
@@ -591,11 +539,6 @@ ENTER_FUNC;
 			data = MakeSessionData();
 			strcpy(data->hdr->term,term);
 			fread(&data->fKeep,sizeof(Bool),1,fp);
-#if	0
-			fread(&data->fInProcess,sizeof(Bool),1,fp);
-#else
-			data->fInProcess = TRUE;
-#endif
 			fread(data->hdr,sizeof(MessageHeader),1,fp);
 			fread(&size,sizeof(size_t),1,fp);	/*	ld		*/
 			fread(name,size,1,fp);
@@ -700,9 +643,6 @@ ENTER_FUNC;
 		sprintf(fname,"%s/%s.ses",SesDir,data->name);
 		if		(  ( fp = Fopen(fname,"w") )  !=  NULL  ) {
 			fwrite(&data->fKeep,sizeof(Bool),1,fp);
-#if	0
-			fwrite(&data->fInProcess,sizeof(Bool),1,fp);
-#endif
 			fwrite(data->hdr,sizeof(MessageHeader),1,fp);
 			size = strlen(data->ld->info->name) + 1;
 			fwrite(&size,sizeof(size_t),1,fp);				/*	ld		*/
@@ -737,46 +677,23 @@ CheckSession(
 	char	*term)
 {
 	SessionData	*data;
-	Bool		fError
-		,		fInProcess;
 
 ENTER_FUNC;
-	fError = TRUE;
-	if		(  ( data = LookupSession(term,&fInProcess) )  !=  NULL  ) {
-		if		(  !fInProcess  ) {
-			dbgmsg("TRUE");
-			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
-			data->hdr->status = TO_CHAR(APL_SESSION_GET);
-			data = ReadTerminal(fp,data);
-		} else {
-			dbgmsg("FALSE");
-			Warning("Error: Other threads are processing it.");
-			SendPacketClass(fp,WFC_FALSE);			ON_IO_ERROR(fp,badio);
-			data = NULL;
-		}
+	if		(  ( data = LookupSession(term) )  !=  NULL  ) {
+		dbgmsg("TRUE");
+		SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
+		data->hdr->status = TO_CHAR(APL_SESSION_GET);
 	} else {
 		if		(  ( data = LoadSession(term) )  ==  NULL  ) {
 			dbgmsg("INIT");
-			if		(  ( data = InitSession(fp,term) )  ==  NULL  )	{
-				Warning("Error: session initialize failure");
-			} else {
-				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-			}
+			SendPacketClass(fp,WFC_FALSE);			ON_IO_ERROR(fp,badio);
 		} else {
 			dbgmsg("TRUE");
 			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
 			data->hdr->status = TO_CHAR(APL_SESSION_GET);
 		}
-		data = ReadTerminal(fp,data);
 	}
-	fError = FALSE;
-  badio:
-	if		(  fError  ) {
-		data = NULL;
-	}
-	if		(  data  !=  NULL  ) {
-		SaveSession(data);
-	}
+  badio:;
 LEAVE_FUNC;
 	return	(data);
 }
@@ -789,8 +706,7 @@ ENTER_FUNC;
 	dbgprintf("data->name = [%s]\n",data->name);
 	LockWrite(&Terminal);
 	SaveSession(data);
-	data->fInProcess = FALSE;
-	time(&(data->access_time));
+	gettimeofday(&data->access_time,NULL);
 	dbgprintf("cTerm  = %d",cTerm);
 	dbgprintf("nCache = %d",nCache);
 	UnLock(&Terminal);
@@ -798,57 +714,53 @@ LEAVE_FUNC;
 }
 
 static	void
-TermSession(
-	TermNode	*term)
+SendWindowData(
+	NETFILE	*fp,
+	SessionData	*data,
+	char		*buff)
 {
-	SessionData	*data;
-	char	buff[SIZE_TERM+1];
-	
-	RecvnString(term->fp,SIZE_TERM,buff);
-	if		(  ( data = CheckSession(term->fp,buff) )  !=  NULL  ) {
-		data->term = term;
-		data->retry = 0;
-		if		(  !data->fAbort  ) {
-			data = Process(data);
-		}
-		if		(	(  data->fAbort  )
-				||	(  !SendTerminal(term->fp,data)  ) ) {
-			FinishSession(data);
-		} else {
-			KeepSession(data);
-		}
+	char		wname[SIZE_LONGNAME+1];
+	LargeByteString	*scrdata;
+
+	PureWindowName(buff,wname);
+	if		(  ( scrdata = GetScreenData(data,wname) )  !=  NULL  ) {
+		SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
+		SendLBS(fp,scrdata);					ON_IO_ERROR(fp,badio);
+	} else {
+		dbgmsg("send NODATA");
+		SendPacketClass(fp,WFC_FALSE);			ON_IO_ERROR(fp,badio);
 	}
-	SendPacketClass(term->fp,WFC_DONE);
-	CloseNet(term->fp);
+  badio:;
 }
 
 static	void
 APISession(
-	TermNode	*term)
+	NETFILE		*fp)
 {
 	SessionData *data;
 	APIData *api;
 	char ld[SIZE_NAME+1];
 	char user[SIZE_USER+1];
 	char sterm[SIZE_TERM+1];
+	struct	timeval	tv
+		,			res;
 
 	data = NULL;
-	RecvnString(term->fp, sizeof(ld), ld);			
-		ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp, sizeof(user), user);		
-		ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp, sizeof(sterm), sterm);	
-		ON_IO_ERROR(term->fp,badio);
+	RecvnString(fp, sizeof(ld), ld);			
+		ON_IO_ERROR(fp,badio);
+	RecvnString(fp, sizeof(user), user);		
+		ON_IO_ERROR(fp,badio);
+	RecvnString(fp, sizeof(sterm), sterm);	
+		ON_IO_ERROR(fp,badio);
 
 	data = InitAPISession(sterm, FALSE, user, ld);
 	if (data != NULL) {
-		data->term = term;
 		data->retry = 0;
 		api = data->apidata;
-		api->method = RecvPacketClass(term->fp);
-		RecvLBS(term->fp, api->arguments);	ON_IO_ERROR(term->fp,badio2);
-		RecvLBS(term->fp, api->headers);	ON_IO_ERROR(term->fp,badio2);
-		RecvLBS(term->fp, api->body);		ON_IO_ERROR(term->fp,badio2);
+		api->method = RecvPacketClass(fp);
+		RecvLBS(fp, api->arguments);	ON_IO_ERROR(fp,badio2);
+		RecvLBS(fp, api->headers);	ON_IO_ERROR(fp,badio2);
+		RecvLBS(fp, api->body);		ON_IO_ERROR(fp,badio2);
 		RegistSession(data);
 
 #if 0
@@ -861,44 +773,175 @@ APISession(
 		Message("headers size:%d", LBS_Size(api->headers));
 		Message("body:%s", (char *)LBS_Body(api->body));
 #endif
-
-#if 1
-		data = Process(data);
+#if	1
+		gettimeofday(&data->start,NULL);
+		data->retry = 0;
+		if		(  !fLoopBack  ) {
+			LockWrite(data);
+			CoreEnqueue(data);
+		}
+		LockRead(data);
+		if		(  fTimer  ) {
+			gettimeofday(&tv,NULL);
+			timersub(&tv,&data->start,&res);
+			printf("wfc %s@%s:%s process time %6ld(ms)\n",
+				   data->hdr->user,data->hdr->term,data->hdr->window,
+				   (res.tv_sec * 1000L + res.tv_usec / 1000L));
+		}
 #endif
 		api = data->apidata;
 
-		SendPacketClass(term->fp, WFC_OK);
-		SendLBS(term->fp, api->headers);
-		SendLBS(term->fp, api->body);
-		CloseNet(term->fp);
+		SendPacketClass(fp, WFC_TRUE);
+		SendLBS(fp, api->headers);
+		SendLBS(fp, api->body);
 	badio2:
 		FinishSession(data);
 	} else {
-		SendPacketClass(term->fp, WFC_END);
-		CloseNet(term->fp);
+		SendPacketClass(fp, WFC_END);
 	}
-	badio:
-		;
+  badio:;
 }
 
 static	void
 TermThread(
-	TermNode	*term)
+	NETFILE		*fp)
 {
-	PacketClass klass;
+	int		c;
+	SessionData	*data;
+	char	buff[SIZE_TERM+1];
+	Bool	fCont;
+	struct	timeval	tv
+		,			res;
 
 ENTER_FUNC;
-	klass = RecvPacketClass(term->fp);
-	switch (klass) {
-	case WFC_TERM:
-		TermSession(term);
-		break;
-	case WFC_API:
-		APISession(term);
-		break;
-	}
-	FreeQueue(term->que);
-	xfree(term);
+	fCont = TRUE;
+	data = NULL;
+#ifdef	DEBUG
+	//LockDebug(TRUE);
+#endif
+	do {
+		switch	(c = RecvPacketClass(fp))	{
+		  case	WFC_INIT:
+			dbgmsg("WFC_INIT");
+			RecvnString(fp,SIZE_TERM,buff);
+			data = CreateSession(fp,buff);				ON_IO_ERROR(fp,badio);
+			break;
+		  case	WFC_BREAK:
+			dbgmsg("WFC_BREAK");
+			SendPacketClass(fp,WFC_DONE);				ON_IO_ERROR(fp,badio);
+			fCont = FALSE;
+			break;
+		  case	WFC_TERMID:
+			dbgmsg("WFC_TERMID");
+			RecvnString(fp,SIZE_TERM,buff);				ON_IO_ERROR(fp,badio);
+			data = CheckSession(fp,buff);
+			break;
+		  case	WFC_SWITCH_LD:
+			dbgmsg("WFC_SWITCH_LD");
+			RecvnString(fp,SIZE_TERM,buff);				ON_IO_ERROR(fp,badio);
+			data = SwitchLD(fp,data,buff);
+			break;
+		  case	WFC_HEADER:
+			dbgmsg("WFC_HEADER");
+			ReadTerminalHeader(fp,data);				ON_IO_ERROR(fp,badio);
+			break;
+		  case	WFC_BODY:
+			dbgmsg("WFC_BODY");
+			if		(  ReadTerminalBody(fp,data)  ) {
+				SaveSession(data);
+			}
+			break;
+		  case	WFC_EXEC:
+			dbgmsg("WFC_EXEC");
+			gettimeofday(&data->start,NULL);
+			data->retry = 0;
+			if		(  !fLoopBack  ) {
+				LockWrite(data);
+				CoreEnqueue(data);
+			}
+			break;
+		  case	WFC_REQ_HEAD:
+			dbgmsg("WFC_REQ_HEAD");
+			LockRead(data);
+			if		(  fTimer  ) {
+				gettimeofday(&tv,NULL);
+				timersub(&tv,&data->start,&res);
+				printf("wfc %s@%s:%s process time %6ld(ms)\n",
+					   data->hdr->user,data->hdr->term,data->hdr->window,
+					   (res.tv_sec * 1000L + res.tv_usec / 1000L));
+			}
+			if		(  !data->fAbort  ) {
+				SendHeader(fp,data);
+				UnLock(data);
+			} else {
+				SendPacketClass(fp,WFC_NODATA);			ON_IO_ERROR(fp,badio);
+				FinishSession(data);
+				data = NULL;
+			}
+			break;
+		  case	WFC_REQ_DATA:
+			dbgmsg("WFC_REQ_DATA");
+			RecvnString(fp,SIZE_TERM,buff);				ON_IO_ERROR(fp,badio);
+			LockRead(data);
+			SendWindowData(fp,data,buff);
+			UnLock(data);
+			break;
+		  case	WFC_START:
+			dbgmsg("WFC_START");
+			/*	start	*/
+			break;
+		  case	WFC_PREPARE:
+			dbgmsg("WFC_PREPARE");
+			/*	prepare	*/
+			break;
+		  case	WFC_COMMIT:
+			dbgmsg("WFC_COMMIT");
+			if		(  !data->fAbort  ) {
+				/*	commit	*/
+				LockRead(data);
+				KeepSession(data);
+				UnLock(data);
+			} else {
+				FinishSession(data);
+				data = NULL;
+			}
+			break;
+		  case	WFC_ABORT:
+			dbgmsg("WFC_ABORT");
+			/*	abort	*/
+			UnLock(data);
+			data = NULL;
+			break;
+		  case	WFC_PING:
+			dbgmsg("PING");
+			SendPacketClass(fp,WFC_PONG);				ON_IO_ERROR(fp,badio);
+			break;
+		  case	WFC_BLOB:
+			dbgmsg("WFC_BLOB");
+			PassiveBLOB(fp,BlobState);					ON_IO_ERROR(fp,badio);
+			break;
+		  case	WFC_END:
+			dbgmsg("WFC_END");
+			FinishSession(data);
+			data = NULL;
+			break;
+		  case	WFC_API:
+			APISession(fp);
+			data = NULL;
+			break;
+		  default:
+			dbgmsg("default");
+			dbgprintf("c = [%X]\n",c);
+			SendPacketClass(fp,WFC_FALSE);				ON_IO_ERROR(fp,badio);
+			data->fAbort = TRUE;
+			break;
+		}
+		if		(  data  ==  NULL  ) {
+			fCont = FALSE;
+		}
+	}	while	(  fCont  );
+  badio:;
+	CloseNet(fp);
 LEAVE_FUNC;
 }
 
@@ -909,7 +952,7 @@ ConnectTerm(
 	int		fhTerm;
 	pthread_t	thr;
 	pthread_attr_t	attr;
-	TermNode	*term;
+	NETFILE	*fp;
 
 ENTER_FUNC;
 	pthread_attr_init(&attr);
@@ -918,10 +961,8 @@ ENTER_FUNC;
 		Message("_fhTerm = %d INET Domain Accept",_fhTerm);
 		exit(1);
 	}
-	term = New(TermNode);
-	term->que = NewQueue();
-	term->fp = SocketToNet(fhTerm);
-	pthread_create(&thr,&attr,(void *(*)(void *))TermThread,(void *)term);
+	fp = SocketToNet(fhTerm);
+	pthread_create(&thr,&attr,(void *(*)(void *))TermThread,(void *)fp);
 	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(fhTerm); 

@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -207,30 +207,140 @@ LEAVE_FUNC;
 	return	(flag);
 }
 
+static	Bool
+GetEventData(
+	NETFILE		*fp,
+	ProcessNode	*node)
+{
+	Bool		fEnd;
+	Bool		fSuc;
+	int			i;
+	PacketClass	c;
+	MessageHeader	hdr;
+	ValueStruct	*e;
+
+	fEnd = FALSE; 
+	fSuc = FALSE;
+	while	(  !fEnd  ) {
+		switch	(c = RecvPacketClass(fp)) {
+		  case	APS_EVENTDATA:
+			dbgmsg("EVENTDATA");
+			hdr.status = RecvChar(fp);					ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_TERM+1, hdr.term);		ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_USER+1, hdr.user);		ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_NAME+1, hdr.window);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_NAME+1, hdr.widget);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_EVENT+1, hdr.event);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_EVENT+1, hdr.lang);	ON_IO_ERROR(fp,badio);
+			hdr.dbstatus = RecvChar(fp);				ON_IO_ERROR(fp,badio);
+#ifdef	DEBUG
+			dbgprintf("status = [%c]\n",hdr.status);
+			dbgprintf("term   = [%s]\n",hdr.term);
+			dbgprintf("user   = [%s]\n",hdr.user);
+			dbgprintf("window = [%s]\n",hdr.window);
+			dbgprintf("widget = [%s]\n",hdr.widget);
+			dbgprintf("event  = [%s]\n",hdr.event);
+			dbgprintf("lang   = [%s]\n",hdr.lang);
+			dbgprintf("dbstatus=[%c]\n",hdr.dbstatus);
+#endif
+			fSuc = TRUE;
+			break;
+		  case	APS_MCPDATA:
+			dbgmsg("MCPDATA");
+			RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+			node->tnest = (int)RecvChar(fp);	ON_IO_ERROR(fp,badio);
+			e = node->mcprec->value;
+			NativeUnPackValue(NULL,LBS_Body(buff),e);
+
+			SetValueChar(GetItemLongName(e,"private.pstatus"),hdr.status);
+			SetValueString(GetItemLongName(e,"dc.term"),hdr.term,NULL);
+			SetValueString(GetItemLongName(e,"dc.user"),hdr.user,NULL);
+			SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
+			SetValueString(GetItemLongName(e,"dc.widget"),hdr.widget,NULL);
+			SetValueString(GetItemLongName(e,"dc.event"),hdr.event,NULL);
+			SetValueString(GetItemLongName(e,"dc.lang"),hdr.lang,NULL);
+			SetValueChar(GetItemLongName(e,"dc.dbstatus"),hdr.dbstatus);
+
+			node->pstatus = hdr.status;
+			node->dbstatus = hdr.dbstatus;
+			strcpy(node->term,hdr.term);
+			strcpy(node->user,hdr.user);
+			strcpy(node->window,hdr.window);
+			strcpy(node->widget,hdr.widget);
+			strcpy(node->event,hdr.event);
+			strcpy(node->lang,hdr.lang);
+			break;
+		  case	APS_LINKDATA:
+			dbgmsg("LINKDATA");
+			RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+			if		(  node->linkrec  !=  NULL  ) {
+				NativeUnPackValue(NULL,LBS_Body(buff),node->linkrec->value);
+			}
+			break;
+		  case	APS_SPADATA:
+			dbgmsg("SPADATA");
+			RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+			if		(  node->sparec  !=  NULL  ) {
+				NativeUnPackValue(NULL,LBS_Body(buff),node->sparec->value);
+			}
+			break;
+		  case	APS_SCRDATA:
+			dbgmsg(">SCRDATA");
+			for	( i = 0 ; i < node->cWindow ; i ++ ) {
+				if		(  node->scrrec[i]  !=  NULL  ) {
+					RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
+					dbgprintf("rec = [%s]\n",node->scrrec[i]->name);
+					NativeUnPackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
+#ifdef	DEBUG
+					DumpValueStruct(node->scrrec[i]->value);
+#endif
+				}
+			}
+			dbgmsg("<SCRDATA");
+			break;
+		  case	APS_END:
+			dbgmsg("END");
+			SetValueInteger(GetItemLongName(node->mcprec->value,"private.prc"),0);
+			fEnd = TRUE;
+			break;
+		  case	APS_STOP:
+			dbgmsg("STOP");
+			node->pstatus = APL_SYSTEM_END;
+			fSuc = TRUE;
+			fEnd = TRUE;
+			break;
+		  case	APS_PING:
+			dbgmsg("PING");
+			SendPacketClass(fp,APS_PONG);		ON_IO_ERROR(fp,badio);
+			break;
+		  default:
+			dbgmsg("default");
+			SendPacketClass(fp,APS_NOT);		ON_IO_ERROR(fp,badio);
+		  badio:
+			fEnd = TRUE;
+			break;
+		}
+	}
+	return	(fSuc);
+}
 
 extern	Bool
 GetWFC(
-	NETFILE	*fp,
+	NETFILE		*fp,
 	ProcessNode	*node)
 {
-	int			i;
-	PacketClass	c;
 	Bool		fSuc;
-	Bool		fEnd;
-	MessageHeader	hdr;
 	char		term[SIZE_TERM+1];
 	byte		flag;
-	ValueStruct	*e;
 
 ENTER_FUNC;
-	fEnd = FALSE; 
 	fSuc = FALSE;
-	flag = APS_EVENTDATA | APS_MCPDATA | APS_SCRDATA;
-	fSuc = FALSE;
-	if		(  RecvPacketClass(fp)  ==  APS_REQ  ) {
+	switch	(RecvPacketClass(fp))	{
+	  case	APS_REQ:
 		dbgmsg("REQ");
-		RecvnString(fp, sizeof(term), term);			ON_IO_ERROR(fp,badio2);
+		RecvnString(fp, sizeof(term), term);			ON_IO_ERROR(fp,badio);
 		dbgprintf("term = [%s]\n",term);
+		flag = APS_EVENTDATA | APS_MCPDATA | APS_SCRDATA;
 		if		(  nCache  >  0  ) {
 			if		(  !CheckCache(node,term)  ) {
 				flag |= APS_SPADATA;
@@ -239,103 +349,12 @@ ENTER_FUNC;
 		} else {
 			flag |= APS_SPADATA | APS_LINKDATA;
 		}
-		SendChar(fp,flag);					ON_IO_ERROR(fp,badio2);
-		while	(  !fEnd  ) {
-			switch	(c = RecvPacketClass(fp)) {
-			  case	APS_EVENTDATA:
-				dbgmsg("EVENTDATA");
-				hdr.status = RecvChar(fp);					ON_IO_ERROR(fp,badio);
-				RecvnString(fp, SIZE_TERM+1, hdr.term);		ON_IO_ERROR(fp,badio);
-				RecvnString(fp, SIZE_USER+1, hdr.user);		ON_IO_ERROR(fp,badio);
-				RecvnString(fp, SIZE_NAME+1, hdr.window);	ON_IO_ERROR(fp,badio);
-				RecvnString(fp, SIZE_NAME+1, hdr.widget);	ON_IO_ERROR(fp,badio);
-				RecvnString(fp, SIZE_EVENT+1, hdr.event);	ON_IO_ERROR(fp,badio);
-				hdr.dbstatus = RecvChar(fp);				ON_IO_ERROR(fp,badio);
-#ifdef	DEBUG
-				dbgprintf("status = [%c]\n",hdr.status);
-				dbgprintf("term   = [%s]\n",hdr.term);
-				dbgprintf("user   = [%s]\n",hdr.user);
-				dbgprintf("window = [%s]\n",hdr.window);
-				dbgprintf("widget = [%s]\n",hdr.widget);
-				dbgprintf("event  = [%s]\n",hdr.event);
-				dbgprintf("dbstatus=[%c]\n",hdr.dbstatus);
-#endif
-				fSuc = TRUE;
-				break;
-			  case	APS_MCPDATA:
-				dbgmsg("MCPDATA");
-				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				node->tnest = (int)RecvChar(fp);	ON_IO_ERROR(fp,badio);
-				e = node->mcprec->value;
-				NativeUnPackValue(NULL,LBS_Body(buff),e);
-
-				SetValueChar(GetItemLongName(e,"private.pstatus"),hdr.status);
-				SetValueString(GetItemLongName(e,"dc.term"),hdr.term,NULL);
-				SetValueString(GetItemLongName(e,"dc.user"),hdr.user,NULL);
-				SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
-				SetValueString(GetItemLongName(e,"dc.widget"),hdr.widget,NULL);
-				SetValueString(GetItemLongName(e,"dc.event"),hdr.event,NULL);
-				SetValueChar(GetItemLongName(e,"dc.dbstatus"),hdr.dbstatus);
-
-				node->pstatus = hdr.status;
-				node->dbstatus = hdr.dbstatus;
-				strcpy(node->term,hdr.term);
-				strcpy(node->user,hdr.user);
-				strcpy(node->window,hdr.window);
-				strcpy(node->widget,hdr.widget);
-				strcpy(node->event,hdr.event);
-				break;
-			  case	APS_LINKDATA:
-				dbgmsg("LINKDATA");
-				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				if		(  node->linkrec  !=  NULL  ) {
-					NativeUnPackValue(NULL,LBS_Body(buff),node->linkrec->value);
-				}
-				break;
-			  case	APS_SPADATA:
-				dbgmsg("SPADATA");
-				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				if		(  node->sparec  !=  NULL  ) {
-					NativeUnPackValue(NULL,LBS_Body(buff),node->sparec->value);
-				}
-				break;
-			  case	APS_SCRDATA:
-				dbgmsg(">SCRDATA");
-				for	( i = 0 ; i < node->cWindow ; i ++ ) {
-					if		(  node->scrrec[i]  !=  NULL  ) {
-						RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-						dbgprintf("rec = [%s]\n",node->scrrec[i]->name);
-						NativeUnPackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
-#ifdef	DEBUG
-						DumpValueStruct(node->scrrec[i]->value);
-#endif
-					}
-				}
-				dbgmsg("<SCRDATA");
-				break;
-			  case	APS_END:
-				dbgmsg("END");
-				SetValueInteger(GetItemLongName(node->mcprec->value,"private.prc"),0);
-				fEnd = TRUE;
-				break;
-			  case	APS_STOP:
-				dbgmsg("STOP");
-				node->pstatus = APL_SYSTEM_END;
-				fSuc = TRUE;
-				fEnd = TRUE;
-				break;
-			  case	APS_PING:
-				dbgmsg("PING");
-				SendPacketClass(fp,APS_PONG);		ON_IO_ERROR(fp,badio);
-				break;
-			  default:
-				dbgmsg("default");
-				SendPacketClass(fp,APS_NOT);		ON_IO_ERROR(fp,badio);
-			  badio:
-				fEnd = TRUE;
-				break;
-			}
-		}
+		SendChar(fp,flag);					ON_IO_ERROR(fp,badio);
+		fSuc = GetEventData(fp,node);
+		break;
+	  default:
+		fSuc = FALSE;
+		break;
 	}
 #ifdef	DEBUG
 	dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
@@ -346,7 +365,7 @@ ENTER_FUNC;
 		dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
 	}
 #endif
-  badio2:
+  badio:
 LEAVE_FUNC;
 	return	(fSuc); 
 }
@@ -381,6 +400,8 @@ ENTER_FUNC;
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));
 	ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.event")));
+	ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.lang")));
 	ON_IO_ERROR(fp,badio);
 	SendChar(fp,node->dbstatus);			ON_IO_ERROR(fp,badio);
 	dbgprintf("private.pputtype = %02X",
@@ -434,16 +455,21 @@ ENTER_FUNC;
 			break;
 		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
+			dbgprintf("cWindow = %d",ThisLD->cWindow);
 			for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 				if		(  node->scrrec[i]  !=  NULL  ) {
 					dbgprintf("scr[%s]  = %d\n",node->scrrec[i]->name,
 							  NativeSizeValue(NULL,node->scrrec[i]->value));
+#ifdef	DEBUG
+					DumpValueStruct(node->scrrec[i]->value);
+#endif
 					LBS_ReserveSize(buff,
 									NativeSizeValue(NULL,node->scrrec[i]->value),FALSE);
 					NativePackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
 					SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 				}
 			}
+			dbgmsg("*");
 			break;
 		  case	APS_END:
 			dbgmsg("END");

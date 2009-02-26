@@ -1,17 +1,17 @@
 name	sample;
 
 #	"~" will be expanded to HOME
-base	"~/panda/samples";
+base	"~/MONTSUQI/panda";
 
 #	"=" will be expanded to base or BASE_DIR
-ddir	"=/sample2";
-record	"=/sample2";
-#blob	"=/sample2";
+ddir	"=/samples/sample2";
+record	"=/samples/sample2";
+#blob	"=/samples/sample2";
 
-# DBPath	"/home/ogochan/panda/dblib/.libs";
-# APSPath	"/home/ogochan/panda/aps/aps";
-WFCPath	"/home/ogochan/panda/wfc/wfc";
-REDPath	"/home/ogochan/panda/dbstuff/dbredirector";
+DBPath	"=/dblib/.libs";
+APSPath	"=/aps/aps";
+WFCPath	"=/wfc/wfc";
+REDPath	"=/dbstuff/dbredirector";
 
 #linksize	1024;
 linkage		link;

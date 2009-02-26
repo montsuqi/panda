@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -61,6 +61,7 @@ static	char	*WfcPortNumber;
 
 static	sigset_t	hupset;
 static	int		MaxTran;
+static	int		nPool;
 static	int		Sleep;
 static	Bool	fConnectRetry;
 
@@ -124,7 +125,7 @@ ENTER_FUNC;
 	node->bhash = ThisLD->bhash;
 	node->textsize = ThisLD->textsize;
 	node->scrrec = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * node->cWindow);
-	node->dbstatus = GetDBStatus();
+	node->dbstatus = DB_STATUS_NOCONNECT;
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		node->scrrec[i] = ThisLD->windows[i];
 	}
@@ -148,6 +149,90 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	DB_Environment	**ConnectionPool;
+static	GHashTable		*ConnectionHash;
+static	void
+InitConnectionPool(void)
+{
+	int		i;
+
+ENTER_FUNC;
+	ConnectionPool = (DB_Environment **)xmalloc(sizeof(DB_Environment *) * nPool);
+	for	( i = 0 ; i < nPool ; i ++ ) {
+		ConnectionPool[i] = NULL;
+	}
+	ConnectionHash = NewNameHash();
+LEAVE_FUNC;
+}
+
+static	DB_Environment	*
+GetConnection(
+	char	*id)
+{
+	DB_Environment	*env;
+
+	env = g_hash_table_lookup(ConnectionHash,id);
+
+	return	(env);
+}
+
+static	void
+CloseConnections(void)
+{
+	DB_Environment	*env;
+	int		i;
+
+	for	( i = 0 ; i < nPool ; i ++ ) {
+		if		(  ( env = ConnectionPool[i] )  !=  NULL  ) {
+			if		(  env->dbstatus  ==  DB_STATUS_PREPARE  ) {
+			}
+		}
+	}
+}
+
+static	DB_Environment	*
+GetFreeConnection(
+	char	*id,
+	NETFILE	*fpWFC)
+{
+	DB_Environment	*env;
+	int		i;
+
+ENTER_FUNC;
+	if		(  ( env = GetConnection(id) )  ==  NULL  ) {
+		for	( i = 0 ; i < nPool ; i ++ ) {
+			if		(	(  ConnectionPool[i]            !=  NULL               )
+					&&	(  ConnectionPool[i]->dbstatus  ==  DB_STATUS_CONNECT  ) )	break;
+		}
+		if		(  i  <  nPool  ) {
+			env = ConnectionPool[i];
+			g_hash_table_remove(ConnectionHash,env->id);
+			strcpy(env->id,id);
+			g_hash_table_insert(ConnectionHash,env,env->id);
+		} else {
+			for	( i = 0 ; i < nPool ; i ++ ) {
+				if		(  ConnectionPool[i]  ==  NULL  )	break;
+			}
+			if		(  i  <  nPool  ) {
+				if		(  ( env = ReadyOnlineDB(fpWFC) )   ==  NULL  )	{
+					Error("Online DB is not ready");
+				}
+				ConnectionPool[i] = env;
+				strcpy(env->id,id);
+				g_hash_table_insert(ConnectionHash,env,env->id);
+			} else {
+				Error("to many active transaction");
+			}
+		}
+	} else {
+		if		(  env->dbstatus  !=  DB_STATUS_CONNECT  ) {
+			Error("transaction sequence is invalid");
+		}
+	}
+LEAVE_FUNC;
+	return	(env);
+}
+
 static	int
 ExecuteServer(void)
 {
@@ -159,6 +244,7 @@ ExecuteServer(void)
 	WindowBind	*bind;
 	int		tran;
 	char	wname[SIZE_LONGNAME+1];
+	DB_Environment	*env;
 
 ENTER_FUNC;
 	if		(  WfcPortNumber  ==  NULL  ) {
@@ -171,7 +257,7 @@ ENTER_FUNC;
 	rc = 0;
 	while	(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
 		if		(  !fConnectRetry  )	goto	quit;
-		Warning("WFC connection retry");
+		Warning("WFC connection retry %s",StringPort(port));
 		sleep(1);
 	}
 	fpWFC = SocketToNet(fhWFC);
@@ -185,15 +271,11 @@ ENTER_FUNC;
 		}
 		Error("invalid LD name");
 	}
+	InitConnectionPool();
 	InitAPSIO(fpWFC);
-	if		(  ThisLD->cDB  >  0  ) {
-		if ( ReadyOnlineDB(fpWFC) < 0 ){
-			Error("Online DB is not ready");
-		}
-	}
 	node = MakeProcessNode();
-	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
-						||	(  tran     >   0  ) ); tran -- ) {
+	tran = MaxTran;
+	while	(TRUE) {
 		if		(  !GetWFC(fpWFC,node)	) {
 			Message("GetWFC failure");
 			rc = -1;
@@ -215,18 +297,24 @@ ENTER_FUNC;
 				rc = 2;
 				break;
 			}
+			env = GetFreeConnection(node->term,fpWFC);
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
 			if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
 				RedirectError();
 			} else {
-				node->dbstatus = GetDBStatus();
+				node->dbstatus = GetDBStatus(env);
 			}
-			TransactionStart(NULL);
-			ExecuteProcess(node);
+			TransactionAllStart(env);
+			if		(  MaxTran  >  0  ) {
+				tran --;
+				if		(  tran  ==  0  )	break;
+			}
+			ExecuteProcess(node,env);
 			if		(  Sleep  >  0  ) {
 				sleep(Sleep);
 			}
-			TransactionEnd(NULL);
+			TransactionAllPrepare(env);
+			TransactionAllEnd(env);
 			PutWFC(fpWFC,node);
 		} else {
 			Message("window [%s] not found.",wname);
@@ -234,6 +322,7 @@ ENTER_FUNC;
 			break;
 		}
 	}
+	StopOnlineDB(env); 
 	MessageLogPrintf("exiting APS (%s)",ThisLD->name);
 	FinishSession(node);
   quit:
@@ -250,7 +339,6 @@ static	void
 StopProcess(void)
 {
 ENTER_FUNC;
-	StopOnlineDB(); 
 	CleanUpOnlineDB(); 
 	StopDC();
 	CleanUpOnlineDC();
@@ -289,6 +377,8 @@ static	ARG_TABLE	option[] = {
 		"aps process transaction count"					},
 	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
 		"cache terminal number"							},
+	{	"pool",	INTEGER,	TRUE,		(void*)&nPool,
+		"max number of DB connection pool"				},
 
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
 		"aps sleep time(for debug)"						},
@@ -324,6 +414,7 @@ SetDefault(void)
 	LibPath = NULL;
 	MaxTran = 0;
 	nCache = 0;
+	nPool = 1;
 	Sleep = 0;
 
 	DB_User = NULL;

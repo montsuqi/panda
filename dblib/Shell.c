@@ -45,10 +45,10 @@
 
 static	int
 _EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRedirect,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	Bool			fRedirect,
+	int				usage)
 {
 	int			rc;
 
@@ -58,14 +58,14 @@ _EXEC(
 
 static	ValueStruct	*
 _DBOPEN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
 	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = (void *)NewLBS();
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
+	dbg->update.conn = (void *)NewLBS();
+	dbg->update.dbstatus = DB_STATUS_CONNECT;
+	dbg->readonly.dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -75,14 +75,14 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBDISCONNECT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->update.dbstatus == DB_STATUS_CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
-		FreeLBS((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		FreeLBS((LargeByteString *)dbg->update.conn);
+		dbg->update.dbstatus = DB_STATUS_DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}
@@ -93,11 +93,11 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBSTART(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 ENTER_FUNC;
-	LBS_EmitStart((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
+	LBS_EmitStart((LargeByteString *)dbg->update.conn);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -147,8 +147,8 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBCOMMIT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
+	DBG_Instance	*dbg,
+	DBCOMM_CTRL		*ctrl)
 {
 	int			rc;
 	char		*p
@@ -157,7 +157,7 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
+	lbs = (LargeByteString *)dbg->update.conn;
 	LBS_EmitEnd(lbs);
 	RewindLBS(lbs);
 	p = (char *)LBS_Body(lbs);
@@ -179,7 +179,7 @@ LEAVE_FUNC;
 
 static	void
 InsertValue(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	LargeByteString	*lbs,
 	ValueStruct		*val)
 {
@@ -194,7 +194,7 @@ InsertValue(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		LBS_EmitChar(lbs,'"');
-		LBS_EmitString(lbs,ValueToString(val,dbg->coding));
+		LBS_EmitString(lbs,ValueToString(val,dbg->class->coding));
 		LBS_EmitChar(lbs,'"');
 		break;
 	  case	GL_TYPE_NUMBER:
@@ -225,6 +225,7 @@ InsertValue(
 
 static	ValueStruct	*
 ExecShell(
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	LargeByteString	*src,
@@ -232,14 +233,12 @@ ExecShell(
 {
 	int		c;
 	ValueStruct	*val;
-	DBG_Struct	*dbg;
 	ValueStruct	*ret;
 	LargeByteString	*lbs;
 
 ENTER_FUNC;
 	ret = NULL;
-	dbg =  rec->opt.db->dbg;
-	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
+	lbs = (LargeByteString *)dbg->update.conn;
 	if	(  src  ==  NULL )	{
 		Error("function \"%s\" is not found.",ctrl->func);
 	}
@@ -269,7 +268,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBACCESS(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	char			*name,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
@@ -298,7 +297,7 @@ ENTER_FUNC;
 		} else {
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
-				ret = ExecShell(ctrl,rec,src,args);
+				ret = ExecShell(dbg,ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
 				rc = FALSE;
@@ -314,7 +313,7 @@ LEAVE_FUNC;
 
 static	ValueStruct	*
 _DBERROR(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)

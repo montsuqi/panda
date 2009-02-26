@@ -60,8 +60,10 @@ BlobCacheCleanUp(void)
 {
 	char	buf[SIZE_BUFF];
 
-	sprintf(buf,"rm -f %s/*",CacheDir);
-	system(buf);
+	if		(  CacheDir  !=  NULL  ) {
+		sprintf(buf,"rm -f %s/*",CacheDir);
+		system(buf);
+	}
 }
 
 extern	ScreenData	*

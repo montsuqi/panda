@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,10 @@
  */
 
 /*
+*/
 #define	TIMER
 #define	DEBUG
 #define	TRACE
-*/
 
 #define	DBGROUP
 #ifdef HAVE_CONFIG_H
@@ -55,25 +55,30 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-typedef	void	(*DB_FUNC2)(DBG_Struct *, DBCOMM_CTRL *);
+typedef	void	(*DB_FUNC2)(DBG_Instance *, DBCOMM_CTRL *);
+
+typedef	struct {
+	char			*fname;
+	DBG_Instance	*dbg;
+}	_ExecDBFuncArg;
 
 static	void
 _ExecDBFunc(
 	char	*rname,
 	RecordStruct	*rec,
-	char	*fname)
+	_ExecDBFuncArg	*arg)
 {
 	DB_Struct	*db = RecordDB(rec);
-	DBG_Struct	*dbg = db->dbg;
-	int			ix;
+	DBG_Instance	*dbg = arg->dbg;
+	int				ix;
 	DB_Operation	*op;
 
 ENTER_FUNC;
-	if		(  ( ix = (int)(long)g_hash_table_lookup(db->opHash,fname) )  >  0  ) {
+	if		(  ( ix = (int)(long)g_hash_table_lookup(db->opHash,arg->fname) )  >  0  ) {
 		if		(  ( op = db->ops[ix-1] )  !=  NULL  ) {
-			if		(  dbg->func->primitive->record  !=  NULL  ) {
-				if		(  !(*dbg->func->primitive->record)(dbg,fname,rec)  ) {
-					Warning("function not found [%s]\n",fname);
+			if		(  dbg->class->func->primitive->record  !=  NULL  ) {
+				if		(  !(*dbg->class->func->primitive->record)(dbg,arg->fname,rec)  ) {
+					Warning("function not found [%s]\n",arg->fname);
 				}
 			}
 		}
@@ -83,38 +88,38 @@ LEAVE_FUNC;
 
 static	int
 ExecFunction(
-	DBG_Struct	*dbg,
-	char		*name,
-	Bool		fAll)
+	DBG_Instance	*dbg,
+	char			*fname,
+	Bool			fAll)
 {
 	DBCOMM_CTRL	ctrl;
 	DB_FUNC2	func;
-	int			i;
+	_ExecDBFuncArg	arg;
 
 ENTER_FUNC;
-	dbgprintf("func  = [%s]",name);
+	dbgprintf("func  = [%s]",fname);
 	if		(  dbg  !=  NULL  ) {
-		dbgprintf("name  = [%s]",dbg->name);
+		dbgprintf("name  = [%s]",dbg->class->name);
 	}
 	dbgprintf("fAll = [%s]",fAll?"TRUE":"FALSE");
 	ctrl.rc = 0;
 	if		(  dbg  ==  NULL  ) {
-		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-			dbg = ThisEnv->DBG[i];
-			ctrl.rc += ExecFunction(dbg,name,fAll);
-		}
+		fprintf(stderr,"DBG_Instance is NULL.\n");
+		exit(1);
 	} else {
 		if		(	(  fAll  )
-				||	(  dbg->dbt  !=  NULL  ) ) { 
-			if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->func->table,name) )
+				||	(  dbg->class->dbt  !=  NULL  ) ) { 
+			if		(  ( func = (DB_FUNC2)g_hash_table_lookup(dbg->class->func->table,fname) )
 					   !=  NULL  ) {
 				(*func)(dbg,&ctrl);
 				dbgprintf("ctrl.rc   = [%d]",ctrl.rc);
-				if		(  dbg->dbt  !=  NULL  ) {
-					g_hash_table_foreach(dbg->dbt,(GHFunc)_ExecDBFunc,name);
+				if		(  dbg->class->dbt  !=  NULL  ) {
+					arg.fname = fname;
+					arg.dbg = dbg;
+					g_hash_table_foreach(dbg->class->dbt,(GHFunc)_ExecDBFunc,&arg);
 				}
 			} else {
-				Warning("function not found [%s]\n",name);
+				Warning("function not found [%s]\n",fname);
 				ctrl.rc = MCP_BAD_FUNC;
 			}
 		}
@@ -125,25 +130,25 @@ LEAVE_FUNC;
 
 extern	int
 ExecDBOP(
-	DBG_Struct	*dbg,
-	char		*sql,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	int				usage)
 {
 	int		rc;
 
-	rc = dbg->func->primitive->exec(dbg,sql,TRUE, usage);
+	rc = dbg->class->func->primitive->exec(dbg, sql, TRUE, usage);
 	return	(rc);
 }
 
 extern	int
 ExecRedirectDBOP(
-	DBG_Struct	*dbg,
-	char		*sql,
-	int			usage)
+	DBG_Instance	*dbg,
+	char			*sql,
+	int				usage)
 {
 	int		rc;
 
-	rc = dbg->func->primitive->exec(dbg,sql,FALSE, usage);
+	rc = dbg->class->func->primitive->exec(dbg,sql,FALSE, usage);
 	return	(rc);
 }
 
@@ -151,11 +156,11 @@ extern	ValueStruct	*
 ExecDB_Process(
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
-	ValueStruct		*args)
+	ValueStruct		*args,
+	DB_Environment	*env)
 {
 	DB_FUNC	func;
-	DBG_Struct		*dbg;
-	int				i;
+	DBG_Class		*dbg;
 	ValueStruct		*ret;
 #ifdef	TIMER
 	struct	timeval	tv;
@@ -171,22 +176,18 @@ ENTER_FUNC;
 	ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
 #endif
 	ret = NULL;
-	if		(  rec  ==  NULL  ) { 
-		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-			dbg = ThisEnv->DBG[i];
-			ctrl->rc += ExecFunction(dbg,ctrl->func,FALSE);
-			dbgprintf("dbg->name = [%s]",dbg->name);
-			dbgprintf("ctrl->rc  = [%d]",ctrl->rc);
-		}
+	if		(  rec  ==  NULL  ) {
+		fprintf(stderr,"RecordStruct is NULL.\n");
+		exit(1);
 	} else {
 		dbgprintf("rec->name = [%s]",rec->name);
 		dbg = RecordDB(rec)->dbg;
 		dbgprintf("dbg->name = [%s]",dbg->name);
 		if		(  ( func = g_hash_table_lookup(dbg->func->table,ctrl->func) )
 				   ==  NULL  ) {
-			ret = (*dbg->func->primitive->access)(dbg,ctrl->func,ctrl,rec,args);
+			ret = (*dbg->func->primitive->access)(env->entry[dbg->id],ctrl->func,ctrl,rec,args);
 		} else {
-			ret = (*func)(dbg,ctrl,rec,args);
+			ret = (*func)(env->entry[dbg->id],ctrl,rec,args);
 		}
 		if		(  ctrl->rc  <  0  ) {
 			Warning("bad function [%s] rc = %d\n",ctrl->func, ctrl->rc);
@@ -209,61 +210,138 @@ LEAVE_FUNC;
 
 static	int
 ExecDBG_Operation(
-	DBG_Struct	*dbg,
-	char		*name)
+	DBG_Instance	*dbg,
+	char			*name)
 {
 	return ExecFunction(dbg,name,FALSE);
 }
 
 extern	int
 TransactionStart(
-	DBG_Struct *dbg)
+	DBG_Instance *dbg)
 {
-	int		i;
 	int		rc;
 
 ENTER_FUNC;
-	NewPool("Transaction");
-	if		(  dbg  ==  NULL  ) {
-		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		}
-	}
 	rc = ExecDBG_Operation(dbg,"DBSTART");
 LEAVE_FUNC;
 	return	(rc);
 }
 
 extern	int
-TransactionEnd(
-	DBG_Struct *dbg)
+TransactionAllStart(
+	DB_Environment	*env)
 {
 	int		i;
 	int		rc;
 
 ENTER_FUNC;
-	rc = ExecDBG_Operation(dbg,"DBCOMMIT");
-	if		(  dbg  ==  NULL  ) {
-		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-			dbg = ThisEnv->DBG[i];
-		}
+	rc = 0;
+	for	( i = 0 ; i < env->nNode ; i ++ ) {
+		rc += ExecDBG_Operation(env->entry[i],"DBSTART");
 	}
-	ReleasePoolByName("Transaction");
+	env->dbstatus = DB_STATUS_START;
 LEAVE_FUNC;
 	return	(rc);
 }
 
 extern	int
-GetDBStatus(void)
+TransactionEnd(
+	DBG_Instance *dbg)
 {
-	DBG_Struct	*dbg;
+	int		rc;
+
+ENTER_FUNC;
+	rc = ExecDBG_Operation(dbg,"DBCOMMIT");
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	int
+TransactionAllEnd(
+	DB_Environment	*env)
+{
 	int		i;
-	int     rc = 0;
+	int		rc;
+ENTER_FUNC;
+	rc = 0;
+	for	( i = 0 ; i < env->nNode ; i ++ ) {
+		rc += ExecDBG_Operation(env->entry[i],"DBCOMMIT");
+	}
+	env->dbstatus = DB_STATUS_CONNECT;
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	int
+TransactionRollback(
+	DBG_Instance *dbg)
+{
+	int		rc;
+
+ENTER_FUNC;
+	rc = ExecDBG_Operation(dbg,"DBROLLBACK");
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	int
+TransactionAllRollback(
+	DB_Environment	*env)
+{
+	int		i;
+	int		rc;
+ENTER_FUNC;
+	rc = 0;
+	for	( i = 0 ; i < env->nNode ; i ++ ) {
+		rc += ExecDBG_Operation(env->entry[i],"DBROLLBACK");
+	}
+	env->dbstatus = DB_STATUS_CONNECT;
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	int
+TransactionPrepare(
+	DBG_Instance *dbg)
+{
+	int		rc;
+
+ENTER_FUNC;
+	rc = ExecDBG_Operation(dbg,"DBPREPARE");
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	int
+TransactionAllPrepare(
+	DB_Environment	*env)
+{
+	int		i;
+	int		rc;
+ENTER_FUNC;
+	rc = 0;
+	for	( i = 0 ; i < env->nNode ; i ++ ) {
+		rc += ExecDBG_Operation(env->entry[i],"DBPREPARE");
+	}
+	env->dbstatus = DB_STATUS_PREPARE;
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	int
+GetDBStatus(
+	DB_Environment	*env)
+{
+	DBG_Instance	*dbg;
+	int		i;
+	int     rc;
 ENTER_FUNC;
 	rc = DB_STATUS_NOCONNECT; 
-	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		dbg = ThisEnv->DBG[i];
-		if		(  rc  <  dbg->process[PROCESS_UPDATE].dbstatus  )	{
-			rc = dbg->process[PROCESS_UPDATE].dbstatus;
+	for	( i = 0 ; i < env->nNode ; i ++ ) {
+		dbg = env->entry[i];
+		if		(  rc  <  dbg->update.dbstatus  )	{
+			rc = dbg->update.dbstatus;
 		}
 	}
 LEAVE_FUNC;
@@ -273,69 +351,167 @@ LEAVE_FUNC;
 extern	void
 RedirectError(void)
 {
-	DBG_Struct	*dbg;
+	DBG_Instance	*dbg;
 	int		i;
 ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		dbg = ThisEnv->DBG[i];
+		dbg = ThisDB_Environment->entry[i];
 		CloseDB_RedirectPort(dbg);
 	}
 LEAVE_FUNC;
 }
 
-extern	int
-OpenDB(
-	DBG_Struct *dbg)
+extern	DBG_Instance	*
+NewDBG_Instance(
+	DBG_Class		*class,
+	DB_Environment	*env)
 {
-	return ExecDBG_Operation(dbg,"DBOPEN");
+	DBG_Instance	*dbg;
+
+ENTER_FUNC;
+	dbg = New(DBG_Instance);
+	dbg->class = class;
+	dbg->fpLog = NULL;
+	dbg->redirectData = NULL;
+	dbg->checkData = NULL;
+
+	dbg->update.dbstatus = DB_STATUS_NOCONNECT;
+	dbg->update.conn = NULL;
+	dbg->readonly.dbstatus = DB_STATUS_NOCONNECT;
+	dbg->readonly.conn = NULL;
+	dbg->env = env;
+LEAVE_FUNC;
+
+	return	(dbg);
+}
+
+extern	DBG_Instance	*
+OpenDB(
+	DBG_Class 		*class,
+	DB_Environment	*env)
+{
+	DBG_Instance	*dbg;
+
+	dbg = NewDBG_Instance(class,env);
+	if		(  ExecDBG_Operation(dbg,"DBOPEN")  !=  0  ) {
+		xfree(dbg);
+		dbg = NULL;
+	}
+	return	(dbg);
+}
+
+extern	DB_Environment	*
+NewDB_Environment(
+	int		n)
+{
+	DB_Environment	*env;
+
+	env = (DB_Environment *)xmalloc(sizeof(DB_Environment) + sizeof(DBG_Instance *) * n);
+	env->nNode = n;
+	env->dbstatus = DB_STATUS_NOCONNECT;
+
+	return	(env);
+}
+
+extern	DB_Environment	*
+OpenAllDB(void)
+{
+	int		i;
+	DB_Environment	*env;
+
+	env = NewDB_Environment(ThisEnv->cDBG);
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		dbgprintf("i = %d id = %d",i,ThisEnv->DBG[i]->id);
+		env->entry[ThisEnv->DBG[i]->id] =  OpenDB(ThisEnv->DBG[i],env);
+	}
+	return	(env);
 }
 
 extern	int
 OpenRedirectDB(
-	DBG_Struct *dbg)
+	DBG_Instance *dbg)
 {
 	return ExecFunction(dbg,"DBOPEN",TRUE);
 }
 
 extern	int
 CloseRedirectDB(
-	DBG_Struct *dbg)
+	DBG_Instance	*dbg)
 {
 	return ExecFunction(dbg,"DBDISCONNECT",TRUE);
 }
 
 extern	int
 TransactionRedirectStart(
-	DBG_Struct *dbg)
+	DBG_Instance	*dbg)
 {
-	NewPool("Transaction");
 	return ExecFunction(dbg,"DBSTART",TRUE);
 }
 
 extern	int
 TransactionRedirectEnd(
-	DBG_Struct *dbg)
+	DBG_Instance	*dbg)
 {
 	int rc;
 
 	rc = ExecFunction(dbg,"DBCOMMIT",TRUE);
-	ReleasePoolByName("Transaction");
+
+	return rc;
+}
+
+extern	int
+TransactionRedirectRollback(
+	DBG_Instance	*dbg)
+{
+	int rc;
+
+	rc = ExecFunction(dbg,"DBROLLBACK",TRUE);
+
+	return rc;
+}
+
+extern	int
+TransactionRedirectPrepare(
+	DBG_Instance	*dbg)
+{
+	int rc;
+
+	rc = ExecFunction(dbg,"DBPREPARE",TRUE);
 
 	return rc;
 }
 
 extern	int
 CloseDB(
-	DBG_Struct *dbg)
+	DBG_Instance	*dbg)
 {
 	return ExecDBG_Operation(dbg,"DBDISCONNECT");
+}
+
+extern	int
+CloseAllDB(
+	DB_Environment	*env)
+{
+	int		i;
+	int		rc;
+
+ENTER_FUNC;
+	rc = 0;
+	if		(  env  !=  NULL  ) {
+		for	( i = 0 ; i < env->nNode ; i ++ ) {
+			rc += CloseDB(env->entry[i]);
+		}
+	}
+	xfree(env);
+LEAVE_FUNC;
+	return	(rc);
 }
 
 /*	utility	*/
 
 extern	Port	*
 GetDB_Port(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	Port	*port;
@@ -360,7 +536,7 @@ LEAVE_FUNC;
 
 extern	char	*
 GetDB_Host(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	char	*host;
@@ -377,7 +553,7 @@ LEAVE_FUNC;
 
 extern	char	*
 GetDB_PortName(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	char	*port;
@@ -394,7 +570,7 @@ LEAVE_FUNC;
 
 extern	char	*
 GetDB_DBname(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	char	*name;
@@ -418,7 +594,7 @@ GetDB_DBname(
 
 extern	char	*
 GetDB_User(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	char	*name;
@@ -442,7 +618,7 @@ GetDB_User(
 
 extern	char	*
 GetDB_Pass(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	char	*pass;
@@ -466,7 +642,7 @@ GetDB_Pass(
 
 extern	char	*
 GetDB_Sslmode(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	char	*sslmode;
@@ -502,10 +678,15 @@ MakeCTRL(
 #if	0
 	ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 #else
-	if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
+	if		(  ValueInteger(GetItemLongName(mcp,"version"))  >=  2  ) {
 		ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 	} else {
 		ctrl->limit = 1;
+	}
+	if		(  ValueInteger(GetItemLongName(mcp,"version"))  >=  3  ) {
+		ctrl->offset = ValueInteger(GetItemLongName(mcp,"db.offset"));
+	} else {
+		ctrl->offset = 0;
 	}
 #endif
 #ifdef	DEBUG
@@ -567,6 +748,7 @@ ENTER_FUNC;
 	ctrl.blocks = 0;
 	ctrl.count = rctrl->count;
 	ctrl.limit = rctrl->limit;
+	ctrl.offset = rctrl->offset;
 
 	*value = NULL;
 	if		(	(  rname  !=  NULL  )
@@ -600,6 +782,7 @@ MakeMCP(
 	ValueInteger(GetItemLongName(mcp,"db.path.pname")) = ctrl->pno;
 	ValueInteger(GetItemLongName(mcp,"db.rcount")) = ctrl->count;
 	ValueInteger(GetItemLongName(mcp,"db.limit")) = ctrl->limit;
+	ValueInteger(GetItemLongName(mcp,"db.offset")) = ctrl->offset;
 }
 
 #ifdef	DEBUG
@@ -613,6 +796,7 @@ DumpDB_Node(
 	printf("pno    = %d\n",ctrl->pno);
 	printf("count  = %d\n",ctrl->count);
 	printf("limit  = %d\n",ctrl->limit);
+	printf("offset = %d\n",ctrl->offset);
 }
 #endif
 
@@ -629,6 +813,7 @@ BuildDBCTRL(void)
 	p += sprintf(p,		"rc int;");
 	p += sprintf(p,		"count int;");
 	p += sprintf(p,		"limit int;");
+	p += sprintf(p,		"offset int;");
 	p += sprintf(p,		"func	varchar(%d);",SIZE_FUNC);
 	p += sprintf(p,		"rname	varchar(%d);",SIZE_NAME);
 	p += sprintf(p,		"pname	varchar(%d);",SIZE_NAME);

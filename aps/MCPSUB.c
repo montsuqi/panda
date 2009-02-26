@@ -81,19 +81,24 @@ ENTER_FUNC;
 		MakeCTRL(&ctrl,mcp);
 		ctrl.rc = 0;
 		if		(  !strcmp(mcp_func,"DBOPEN")  ) {
-			rec = NULL;
+			ThisDB_Environment = OpenAllDB();
+			ret = NULL;
 		} else
 		if		(  !strcmp(mcp_func,"DBCLOSE")  ) {
-			rec = NULL;
+			ctrl.rc = CloseAllDB(ThisDB_Environment);
+			ret = NULL;
 		} else
 		if		(  !strcmp(mcp_func,"DBSTART")  ) {
-			rec = NULL;
+			ctrl.rc = TransactionAllStart(ThisDB_Environment);
+			ret = NULL;
 		} else
 		if		(  !strcmp(mcp_func,"DBCOMMIT")  ) {
-			rec = NULL;
+			ctrl.rc = TransactionAllEnd(ThisDB_Environment);
+			ret = NULL;
 		} else
 		if		(  !strcmp(mcp_func,"DBDISCONNECT")  ) {
-			rec = NULL;
+			ctrl.rc = CloseAllDB(ThisDB_Environment);
+			ret = NULL;
 		} else {
 			CheckArgTable(mcp_func,&ctrl);
 			rec = ThisDB[ctrl.rno];
@@ -105,8 +110,8 @@ ENTER_FUNC;
 				value = ( op->args != NULL ) ? op->args : value;
 			}
 			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
+			ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
 		}
-		ret = ExecDB_Process(&ctrl,rec,value);
 		if		(	(  ret      !=  NULL    )
 				&&	(  ctrl.rc  ==  MCP_OK  ) )	{
 			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, ret);

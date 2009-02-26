@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2007-2008 Ogochan.
+ * Copyright (C) 2007-2009 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -218,7 +218,7 @@ TableBody(
 
 static	void
 MakeCreate(
-	DBG_Struct		*dbg,
+	DBG_Instance	*dbg,
 	RecordStruct	*rec)
 {
 	char	***item
@@ -275,7 +275,7 @@ static	void
 _MakeCreate(
 	char	*name,
 	RecordStruct	*rec,
-	DBG_Struct	*dbg)
+	DBG_Instance	*dbg)
 {
 	MakeCreate(dbg,rec);
 }
@@ -285,24 +285,25 @@ CreateTables(
 	char	*gname,
 	char	*tname)
 {
-	DBG_Struct	*dbg;
+	DBG_Class		*dbg;
 	RecordStruct	*rec;
+	DBG_Instance	*inst;
 
 ENTER_FUNC;
 	if		( ( dbg = GetDBG(gname) )  !=  NULL  ) {
-		OpenDB(dbg);
+		inst = OpenDB(dbg,NULL);
 		if		(	(  tname  !=  NULL  )
 				&&	(  ( rec = GetTableDBG(gname,tname) )  !=  NULL  ) ) {
-			MakeCreate(dbg,rec);
+			MakeCreate(inst,rec);
 		} else
 		if		(  tname  ==  NULL  ) {
 			if		(  dbg->dbt  !=  NULL  ) {
-				g_hash_table_foreach(dbg->dbt,(GHFunc)_MakeCreate,dbg);
+				g_hash_table_foreach(dbg->dbt,(GHFunc)_MakeCreate,inst);
 			}
 		} else {
 			fprintf(stderr,N_("table %s not found.\n"),tname);
 		}
-		CloseDB(dbg);
+		CloseDB(inst);
 	} else {
 		fprintf(stderr,N_("db group %s not found.\n"),gname);
 	}
@@ -323,9 +324,11 @@ Insert(
 	size_t		size;
 	byte		*p;
 	RecordStruct	*rec;
-	DBG_Struct	*dbg;
+	DBG_Class	*dbg;
+	DBG_Instance	*inst;
 	ValueStruct	*value;
 	DBCOMM_CTRL	ctrl;
+	DB_FUNC	func;
 
 ENTER_FUNC;
 	type = 0;
@@ -359,7 +362,7 @@ ENTER_FUNC;
 		}
 	}
 	if		( ( dbg = GetDBG(gname) )  !=  NULL  ) {
-		OpenDB(dbg);
+		inst = OpenDB(dbg,NULL);
 		fstat(fileno(stdin),&sb);
 		if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fileno(stdin),0) )
 				   !=  NULL  ) {
@@ -370,7 +373,10 @@ ENTER_FUNC;
 #ifdef	TRACE
 					DumpValueStruct(value);
 #endif
-					ExecDB_Process(&ctrl,rec,value);
+					if		(  ( func = g_hash_table_lookup(dbg->func->table,"DBINSERT") )
+							   !=  NULL  ) {
+						(*func)(inst,&ctrl,rec,value);
+					}
 					left -= size + strlen(infunc->bsep);
 					p += size + strlen(infunc->bsep);
 				} else
@@ -378,7 +384,7 @@ ENTER_FUNC;
 			}
 			munmap(p,sb.st_size);
 		}
-		CloseDB(dbg);
+		CloseDB(inst);
 	} else {
 		fprintf(stderr,N_("db group %s not found.\n"),gname);
 	}

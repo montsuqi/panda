@@ -4,8 +4,7 @@
       * PANDA -- a simple transaction monitor
       *
       * Copyright (C) 1993-1999 Ogochan.
-      *               2000-2003 Ogochan & JMARI.
-      *               2004-2005 Ogochan.
+      *               2000-2008 Ogochan & JMARI.
       *
       * This program is free software; you can redistribute it and/or modify
       * it under the terms of the GNU General Public License as published by
@@ -21,12 +20,12 @@
       * along with this program; if not, write to the Free Software
       * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
       ******************************************************************
-      *  $B%7%9%F%`L>(B        : $B#O#R#C#A(B
-      *  $B%5%V%7%9%F%`L>(B    : MCP
-      *  $B%3%s%]!<%M%s%HL>(B  : DC
-      *  $B4IM}<T(B            : 
-      *  $B:n@.F|IU(B    $B:n6H<T(B        $B5-=R(B
-      *  XX.XX.XX    $B#N#N#N(B        $B?75,:n@.(B
+      *  システム名        : ＯＲＣＡ
+      *  サブシステム名    : MCP
+      *  コンポーネント名  : DC
+      *  管理者            : 
+      *  作成日付    作業者        記述
+      *  XX.XX.XX    ＮＮＮ        新規作成
       *****************************************************************
        ENVIRONMENT             DIVISION.
       *****************************************************************

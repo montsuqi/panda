@@ -27,6 +27,7 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/dblib	\
 	$(SSL_CFLAGS)			\
 	$(GLIB_CFLAGS)			\
+	$(UUID_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
 LDADD 			=						\
@@ -37,6 +38,7 @@ LDADD 			=						\
 	$(top_builddir)/libs/libpandablob.a	\
 	$(SSL_LIBS)							\
 	$(GLIB_LIBS)						\
+	$(UUID_LIBS)						\
 	$(MONDAI_LIBS)						
 DEPENDENCIES	=						\
 	$(top_builddir)/defaults.h			\

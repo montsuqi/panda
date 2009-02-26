@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,28 +65,32 @@
 #define	T_FILE			(T_YYBASE +11)
 #define	T_REDIRECT		(T_YYBASE +12)
 #define	T_REDIRECTPORT	(T_YYBASE +13)
-#define	T_RECDIR		(T_YYBASE +16)
-#define	T_BASEDIR		(T_YYBASE +17)
-#define	T_PRIORITY		(T_YYBASE +18)
-#define	T_LINKAGE		(T_YYBASE +19)
-#define	T_STACKSIZE		(T_YYBASE +20)
-#define	T_DB			(T_YYBASE +21)
-#define	T_WFC			(T_YYBASE +23)
-#define	T_EXIT			(T_YYBASE +24)
-#define	T_ENCODING		(T_YYBASE +25)
-#define	T_TERMPORT		(T_YYBASE +26)
-#define	T_CONTROL		(T_YYBASE +27)
-#define	T_DDIR			(T_YYBASE +28)
-#define	T_BLOB			(T_YYBASE +29)
-#define	T_AUTH			(T_YYBASE +30)
-#define	T_SPACE			(T_YYBASE +31)
-#define	T_APSPATH		(T_YYBASE +32)
-#define	T_WFCPATH		(T_YYBASE +33)
-#define	T_REDPATH		(T_YYBASE +34)
-#define	T_DBPATH		(T_YYBASE +35)
-#define	T_UPDATE		(T_YYBASE +36)
-#define	T_READONLY		(T_YYBASE +37)
-#define	T_SSLMODE		(T_YYBASE +38)
+#define	T_TRANSMODE		(T_YYBASE +14)
+#define	T_RECDIR		(T_YYBASE +15)
+#define	T_BASEDIR		(T_YYBASE +16)
+#define	T_PRIORITY		(T_YYBASE +17)
+#define	T_LINKAGE		(T_YYBASE +18)
+#define	T_STACKSIZE		(T_YYBASE +19)
+#define	T_DB			(T_YYBASE +20)
+#define	T_WFC			(T_YYBASE +21)
+#define	T_EXIT			(T_YYBASE +22)
+#define	T_ENCODING		(T_YYBASE +23)
+#define	T_TERMPORT		(T_YYBASE +24)
+#define	T_CONTROL		(T_YYBASE +25)
+#define	T_DDIR			(T_YYBASE +26)
+#define	T_BLOB			(T_YYBASE +27)
+#define	T_AUTH			(T_YYBASE +28)
+#define	T_SPACE			(T_YYBASE +29)
+#define	T_APSPATH		(T_YYBASE +30)
+#define	T_WFCPATH		(T_YYBASE +31)
+#define	T_REDPATH		(T_YYBASE +32)
+#define	T_DBPATH		(T_YYBASE +33)
+#define	T_UPDATE		(T_YYBASE +34)
+#define	T_READONLY		(T_YYBASE +35)
+#define	T_SSLMODE		(T_YYBASE +36)
+#define	T_NO			(T_YYBASE +37)
+#define	T_SINGLE		(T_YYBASE +38)
+#define	T_TWOPHASE		(T_YYBASE +39)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -125,6 +129,10 @@ static	TokenTable	tokentable[] = {
 	{	"dbpath"			,T_DBPATH	},
 	{	"update"			,T_UPDATE	},
 	{	"readonly"			,T_READONLY	},
+	{	"transaction_mode"	,T_TRANSMODE	},
+	{	"no"				,T_NO 		},
+	{	"single"			,T_SINGLE	},
+	{	"two_phase"			,T_TWOPHASE	},
 	{	""					,0			}
 };
 
@@ -143,11 +151,14 @@ ENTER_FUNC;
 				ThisEnv->WfcApsPort = NewIP_Port(NULL,IntStrDup(ComInt));
 				break;
 			  case	T_SCONST:
-				ThisEnv->WfcApsPort = ParPort(ComSymbol,PORT_WFC_APS);
+				ThisEnv->WfcApsPort = ParPort(ExpandPath(ComSymbol,ThisEnv->BaseDir),PORT_WFC_APS);
 				break;
 			  default:
 				ParError("invalid port number");
 				break;
+			}
+			if		(  ThisEnv->WfcApsPort  ==  NULL  ) {
+				ParError("port number is null");
 			}
 			GetSymbol;
 			break;
@@ -157,11 +168,14 @@ ENTER_FUNC;
 				ThisEnv->TermPort = NewIP_Port(NULL,IntStrDup(ComInt));
 				break;
 			  case	T_SCONST:
-				ThisEnv->TermPort = ParPort(ComSymbol,PORT_WFC);
+				ThisEnv->TermPort = ParPort(ExpandPath(ComSymbol,ThisEnv->BaseDir),PORT_WFC);
 				break;
 			  default:
 				ParError("invalid port number");
 				break;
+			}
+			if		(  ThisEnv->TermPort  ==  NULL  )	{
+				ParError("termport number is null");
 			}
 			GetSymbol;
 			break;
@@ -191,7 +205,7 @@ ENTER_FUNC;
 				GetSymbol;
 				break;
 			  case	T_SCONST:
-				ThisEnv->ControlPort = ParPort(ComSymbol,PORT_WFC_CONTROL);
+				ThisEnv->ControlPort = ParPort(ExpandPath(ComSymbol,ThisEnv->BaseDir),PORT_WFC_CONTROL);
 				GetSymbol;
 				break;
 			  case	';':
@@ -209,6 +223,9 @@ ENTER_FUNC;
 		if		(  ComToken  !=  ';'  ) {		
 			ParError("missing ; in control directive");
 		}
+		if		(  ThisEnv->ControlPort  ==  NULL  ) {
+			ParError("control port is null");
+		}
 		ERROR_BREAK;
 	}
 LEAVE_FUNC;
@@ -222,7 +239,7 @@ LD_DummyParser(
 
 ENTER_FUNC;
     ret = New(LD_Struct);
-    ret->name = StrDup(ComSymbol);
+    ret->name = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -272,7 +289,7 @@ ENTER_FUNC;
 				GetSymbol;
 				break;
 			  case	T_SCONST:
-				blob->port = ParPort(ComSymbol,PORT_BLOB);
+				blob->port = ParPort(ExpandPath(ComSymbol,ThisEnv->BaseDir),PORT_BLOB);
 				GetSymbol;
 				break;
 			  case	';':
@@ -332,10 +349,10 @@ ENTER_FUNC;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 		}
-		sprintf(name,"%s/%s.ld",p,ComSymbol);
+		sprintf(name,"%s/%s.ld",ExpandPath(p,ThisEnv->BaseDir),ComSymbol);
 		dbgprintf("[%s]\n",name);
 		if ( parse_ld ) {
-			ld = LD_Parser(name); 
+			ld = LD_Parser(name);
 		} else {
 			ld = LD_DummyParser(in);
 		}
@@ -352,7 +369,7 @@ ENTER_FUNC;
 			ThisEnv->ld = tmp;
 			ThisEnv->ld[ThisEnv->cLD] = ld;
 			ThisEnv->cLD ++;
-			g_hash_table_insert(ThisEnv->LD_Table, StrDup(ComSymbol),ld);
+			g_hash_table_insert(ThisEnv->LD_Table, StrDup(ComSymbol), ld);
 			switch	(ComToken)	{
 			  case	T_SYMBOL:
 			  case	T_SCONST:
@@ -361,7 +378,7 @@ ENTER_FUNC;
 				ld->nports = 0;
 				while	(	(  ComToken  ==  T_SCONST  )
 						||	(  ComToken  ==  T_SYMBOL  ) ) {
-					strcpy(buff,ComSymbol);
+					strcpy(buff,ExpandPath(ComSymbol,ThisEnv->BaseDir));
 					n = 0;
 					switch	(GetSymbol) {
 					  case	',':
@@ -528,7 +545,8 @@ ENTER_FUNC;
 						if ( parse_ld ) {
 							bd = BD_Parser(name);
 							if		(  bd  !=  NULL  ) {
-								if		(  g_hash_table_lookup(ThisEnv->BD_Table,ComSymbol)  ==  NULL  ) {
+								if		(  g_hash_table_lookup(ThisEnv->BD_Table,ExpandPath(ComSymbol,ThisEnv->BaseDir))
+										   ==  NULL  ) {
 									btmp = (BD_Struct **)xmalloc(sizeof(BD_Struct *)
 																 * ( ThisEnv->cBD + 1));
 									if		(  ThisEnv->cBD  >  0  ) {
@@ -540,7 +558,7 @@ ENTER_FUNC;
 									ThisEnv->bd[ThisEnv->cBD] = bd;
 									ThisEnv->cBD ++;
 									g_hash_table_insert(ThisEnv->BD_Table,
-														StrDup(ComSymbol),bd);
+														StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir)),bd);
 								} else {
 									ParError("same bd appier");
 								}
@@ -587,7 +605,8 @@ ENTER_FUNC;
 						}
 						sprintf(name,"%s/%s.dbd",p,ComSymbol);
 						if		(  (  dbd = DBD_Parser(name) )  !=  NULL  ) {
-							if		(  g_hash_table_lookup(ThisEnv->DBD_Table,ComSymbol)  ==  NULL  ) {
+							if		(  g_hash_table_lookup(ThisEnv->DBD_Table,ExpandPath(ComSymbol,ThisEnv->BaseDir))
+									   ==  NULL  ) {
 								btmp = (DBD_Struct **)xmalloc(sizeof(DBD_Struct *)
 															 * ( ThisEnv->cDBD + 1));
 								if		(  ThisEnv->cDBD  >  0  ) {
@@ -599,7 +618,7 @@ ENTER_FUNC;
 								ThisEnv->db[ThisEnv->cDBD] = dbd;
 								ThisEnv->cDBD ++;
 								g_hash_table_insert(ThisEnv->DBD_Table,
-													StrDup(ComSymbol),dbd);
+													StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir)),dbd);
 							} else {
 								ParError("same db appier");
 							}
@@ -623,7 +642,7 @@ LEAVE_FUNC;
 
 static	void
 AddDB_Server(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	DB_Server	*server)
 {
 	DB_Server	*tmp;
@@ -644,15 +663,15 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	DBG_Struct	*
-NewDBG_Struct(
+static	DBG_Class	*
+NewDBG_Class(
 	char	*name)
 {
-	DBG_Struct	*dbg;
+	DBG_Class	*dbg;
 	char		*env;
 
-	dbg = New(DBG_Struct);
-	dbg->name = StrDup(name);
+	dbg = New(DBG_Class);
+	dbg->name = StrDup(ExpandPath(name,ThisEnv->BaseDir));
 	dbg->id = 0;
 	dbg->type = NULL;
 	dbg->func = NULL;
@@ -661,15 +680,9 @@ NewDBG_Struct(
 	dbg->file = NULL;
 	dbg->redirect = NULL;
 	dbg->redirectPort = NULL;
-	dbg->redirectData = NULL;
-	dbg->checkData = NULL;
-	dbg->fpLog = NULL;
 	dbg->dbt = NULL;
 	dbg->priority = 50;
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
-	dbg->process[PROCESS_UPDATE].conn = NULL;
-	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
-	dbg->process[PROCESS_READONLY].conn = NULL;
+	dbg->mode = TRANSACTION_MODE_SINGLE;
 	if		(  ( env = getenv("MONDB_LOCALE") )  ==  NULL  ) {
 		dbg->coding = DB_LOCALE;
 	} else
@@ -683,11 +696,12 @@ NewDBG_Struct(
 static	void
 ParDB_Server(
 	int			usage,
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	CURFILE	*in)
 {
 	DB_Server	server;
 
+ENTER_FUNC;
 	server.usage = usage;
 	server.port = NULL;
 	server.dbname = NULL;
@@ -698,28 +712,28 @@ ParDB_Server(
 		switch	(ComToken) {
 		  case	T_PORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.port = ParPort(ComSymbol,NULL);
+				server.port = ParPort(ExpandPath(ComSymbol,ThisEnv->BaseDir),NULL);
 			} else {
 				ParError("invalid port");
 			}
 			break;
 		  case	T_NAME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.dbname = StrDup(ComSymbol);
+				server.dbname = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid DB name");
 			}
 			break;
 		  case	T_USER:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.user = StrDup(ComSymbol);
+				server.user = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid DB user");
 			}
 			break;
 		  case	T_PASS:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.pass = StrDup(ComSymbol);
+				server.pass = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid DB password");
 			}
@@ -738,6 +752,7 @@ ParDB_Server(
 		ERROR_BREAK;
 	}
 	AddDB_Server(dbg,&server);
+LEAVE_FUNC;
 }
 
 static	void
@@ -745,15 +760,16 @@ ParDBGROUP(
 	CURFILE	*in,
 	char	*name)
 {
-	DBG_Struct	*dbg;
+	DBG_Class	*dbg;
 	DB_Server	server;
 	int		i;
+	char	*code;
 
 ENTER_FUNC;
 	if		(  g_hash_table_lookup(ThisEnv->DBG_Table,name)  !=  NULL  ) {
 		ParError("DB group name duplicate");
 	}
-	dbg = NewDBG_Struct(name);
+	dbg = NewDBG_Class(name);
 	memclear(&server,sizeof(server));
 	server.usage = DB_UPDATE;
 	while	(  GetSymbol  !=  '}'  ) {
@@ -776,35 +792,36 @@ ENTER_FUNC;
 			GetSymbol;
 			if		(	(  ComToken  ==  T_SYMBOL  )
 					||	(  ComToken  ==  T_SCONST  ) ) {
-				dbg->type = StrDup(ComSymbol);
+				dbg->type = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid DBMS type");
 			}
 			break;
 		  case	T_REDIRECTPORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->redirectPort = ParPort(ComSymbol,PORT_REDIRECT);
+				dbg->redirectPort = ParPort(ExpandPath(ComSymbol,ThisEnv->BaseDir),PORT_REDIRECT);
 			} else {
 				ParError("invalid port");
 			}
 			break;
 		  case	T_FILE:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->file = StrDup(ComSymbol);
+				dbg->file = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid logging file name");
 			}
 			break;
 		  case	T_ENCODING:
 			if		(  GetSymbol  ==  T_SCONST  ) {
+				code = ExpandPath(ComSymbol,ThisEnv->BaseDir);
 #if	1
-				dbg->coding = StrDup(ComSymbol);
+				dbg->coding = StrDup(code);
 #else
-				if		(	(  stricmp(ComSymbol,"utf8")   ==  0  )
-						||	(  stricmp(ComSymbol,"utf-8")  ==  0  ) ) {
+				if		(	(  stricmp(code,"utf8")   ==  0  )
+						||	(  stricmp(code,"utf-8")  ==  0  ) ) {
 					dbg->coding = NULL;
 				} else {
-					dbg->coding = StrDup(ComSymbol);
+					dbg->coding = StrDup(code);
 				}
 #endif
 			} else {
@@ -813,42 +830,42 @@ ENTER_FUNC;
 			break;
 		  case	T_REDIRECT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->redirect = (DBG_Struct *)StrDup(ComSymbol);
+				dbg->redirect = (DBG_Class *)StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid redirect group");
 			}
 			break;
 		  case	T_PRIORITY:
 			if		(  GetSymbol  ==  T_ICONST  ) {
-				dbg->priority = atoi(ComSymbol);
+				dbg->priority = atoi(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("priority invalid");
 			}
 			break;
 		  case	T_PORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.port = ParPort(ComSymbol,NULL);
+				server.port = ParPort(ExpandPath(ComSymbol,ThisEnv->BaseDir),NULL);
 			} else {
 				ParError("invalid port");
 			}
 			break;
 		  case	T_NAME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.dbname = StrDup(ComSymbol);
+				server.dbname = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid DB name");
 			}
 			break;
 		  case	T_USER:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.user = StrDup(ComSymbol);
+				server.user = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid DB user");
 			}
 			break;
 		  case	T_PASS:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				server.pass = StrDup(ComSymbol);
+				server.pass = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 			} else {
 				ParError("invalid DB password");
 			}
@@ -858,6 +875,25 @@ ENTER_FUNC;
 				server.sslmode = StrDup(ComSymbol);
 			} else {
 				ParError("invalid DB sslmode");
+			}
+			break;
+		  case	T_TRANSMODE:
+			GetSymbol;
+			if		(	(  ComToken  ==  T_SYMBOL  )
+					||	(  ComToken  ==  T_SCONST  ) ) {
+				if		(  stricmp(ComSymbol,"no")  ==  0  ) {
+					dbg->mode = TRANSACTION_MODE_NULL;
+				} else
+				if		(  stricmp(ComSymbol,"single")  ==  0  ) {
+					dbg->mode = TRANSACTION_MODE_SINGLE;
+				} else
+				if		(  stricmp(ComSymbol,"2phase")  ==  0  ) {
+					dbg->mode = TRANSACTION_MODE_2PHASE;
+				} else {
+					ParError("transaction mode is invalid");
+				}
+			} else {
+				ParError("transaction mode is invalid");
 			}
 			break;
 		  default:
@@ -888,9 +924,9 @@ static	void
 _AssignDBG(
 	CURFILE	*in,
 	char	*name,
-	DBG_Struct	*dbg)
+	DBG_Class	*dbg)
 {
-	DBG_Struct	*red;
+	DBG_Class	*red;
 
 ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL  ) {
@@ -906,8 +942,8 @@ LEAVE_FUNC;
 
 static	int
 DBGcomp(
-	DBG_Struct	**x,
-	DBG_Struct	**y)
+	DBG_Class	**x,
+	DBG_Class	**y)
 {
 	return	(  (*x)->priority  -  (*y)->priority  );
 }
@@ -917,10 +953,10 @@ AssignDBG(
 	CURFILE	*in)
 {
 	int		i;
-	DBG_Struct	*dbg;
+	DBG_Class	*dbg;
 
 ENTER_FUNC;
-	qsort(ThisEnv->DBG,ThisEnv->cDBG,sizeof(DBG_Struct *),
+	qsort(ThisEnv->DBG,ThisEnv->cDBG,sizeof(DBG_Class *),
 		  (int (*)(const void *,const void *))DBGcomp);
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
@@ -955,6 +991,7 @@ BuildMcpArea(
 	p += sprintf(p,			"puttype varchar(%d);",SIZE_PUTTYPE);
 	p += sprintf(p,			"term	 varchar(%d);",SIZE_TERM);
 	p += sprintf(p,			"user	 varchar(%d);",SIZE_USER);
+	p += sprintf(p,			"lang	 varchar(%d);",SIZE_NAME);
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"db	{");
 	p += sprintf(p,			"path	{");
@@ -966,6 +1003,7 @@ BuildMcpArea(
 	p += sprintf(p,			"pathname   varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"limit      int;");
 	p += sprintf(p,			"rcount     int;");
+	p += sprintf(p,			"offset     int;");
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"private	{");
 	p += sprintf(p,			"count	int;");
@@ -989,8 +1027,8 @@ NewEnv(
 	DI_Struct	*env;
 
 	env = New(DI_Struct);
-	env->name = StrDup(name);
-	env->BaseDir = BaseDir;
+	env->name = StrDup(ExpandPath(name,NULL));
+	env->BaseDir = NULL;
 	env->D_Dir = D_Dir;
 	env->RecordDir = RecordDir;
 	sprintf(buff,"/tmp/wfc.%s",name);
@@ -1059,7 +1097,7 @@ ENTER_FUNC;
 			if		(  GetSymbol   ==  T_SYMBOL  ) {
 				if ( parse_ld ) {
 					sprintf(buff,"%s.rec",ComSymbol);
-					ThisEnv->linkrec = ReadRecordDefine(buff);
+					ThisEnv->linkrec = ReadRecordDefine(buff,ThisEnv->BaseDir);
 				} else {
 					break;
 				}
@@ -1243,6 +1281,9 @@ ENTER_FUNC;
 		}
 		ERROR_BREAK;
 	}
+	if		(  ThisEnv->BaseDir  ==  NULL  ) {
+		ThisEnv->BaseDir = BaseDir;
+	}
 	if		(  ThisEnv  !=  NULL  )	{
 		ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
 		AssignDBG(in);
@@ -1267,7 +1308,7 @@ DI_Parser(
 ENTER_FUNC;
 	ret = NULL;
 	root.next = NULL;
-	DirectoryDir = dirname(StrDup(name));
+	DirectoryDir = dirname(StrDup(ExpandPath(name,NULL)));
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,DirectoryDir,Reserved) )  !=  NULL  ) {
 			ret = ParDI(in,ld,bd,db,parse_ld);

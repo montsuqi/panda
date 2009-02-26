@@ -22,14 +22,15 @@
 #define	_INC_MULTIPART_H
 
 #include	"LBSfunc.h"
+#include	"net.h"
 
 typedef struct _MultipartFile {
 	char *filename;
 	LargeByteString	*body;
-} MultipartFile;
+}	MultipartFile;
 
-char *GetMultipartBoundary(char *content_type);
-int ParseMultipart(FILE *fp, char *boundary,
-                   GHashTable *values, GHashTable *files);
+extern	char	*GetMultipartBoundary(const char *content_type);
+extern	int		ParseMultipart(NETFILE *fp, char *boundary,
+							   GHashTable *values, GHashTable *files);
 
 #endif

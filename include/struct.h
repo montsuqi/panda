@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ typedef	struct {
 	GHashTable		*opHash;
 	int				ocount;
 	DB_Operation	**ops;
-	struct	_DBG_Struct	*dbg;
+	struct	_DBG_Class	*dbg;
 	char		*gname;
 }	DB_Struct;
 
@@ -102,6 +102,7 @@ typedef	struct {
 	int		pno;
 	int		count;
 	int		limit;
+	int		offset;
 }	DBCOMM_CTRL;
 
 typedef	struct {
@@ -120,16 +121,38 @@ typedef	struct {
 #define DB_STATUS_FAILURE		0x03
 #define DB_STATUS_DISCONNECT	0x04
 #define DB_STATUS_REDFAILURE	0x05
+#define	DB_STATUS_START			0x06
+#define	DB_STATUS_PREPARE		0x07
+
+#define	IS_DB_STATUS_CONNECT(status)	(((status) & DB_STATUS_CONNECT) == DB_STATUS_CONNECT)
 
 typedef	struct {
 	void		*conn;
 	int			dbstatus;
 }	DB_Process;
 
-#define	PROCESS_UPDATE		0
-#define	PROCESS_READONLY	1
+typedef	struct {
+	struct	_DBG_Class		*class;
+	struct	_DB_Environment	*env;
+	NETFILE					*fpLog;
+	LargeByteString			*redirectData;
+	LargeByteString			*checkData;
+	DB_Process				update
+	,						readonly;
+}	DBG_Instance;
 
-typedef	struct _DBG_Struct	{
+typedef	struct _DB_Environment	{
+	int				nNode;
+	int				dbstatus;
+	char			id[SIZE_TERM+1];	/*	transaction id (= term id)	*/
+	DBG_Instance	*entry[0];
+}	DB_Environment;
+
+#define	TRANSACTION_MODE_NULL		0
+#define	TRANSACTION_MODE_SINGLE		1
+#define	TRANSACTION_MODE_2PHASE		2
+
+typedef	struct _DBG_Class	{
 	int			id;
 	char		*name;					/*	group name				*/
 	char		*type;					/*	DBMS type name			*/
@@ -140,22 +163,19 @@ typedef	struct _DBG_Struct	{
 	char		*coding;				/*	DB backend coding		*/
 	/*	DB redirect variable	*/
 	Port		*redirectPort;
-	struct	_DBG_Struct	*redirect;
-	NETFILE		*fpLog;
-	LargeByteString	*redirectData;
-	LargeByteString	*checkData;
+	struct	_DBG_Class	*redirect;
 	char		*file;
 	DB_Server	*server;
-	DB_Process	process[2];
 	int			nServer;
-}	DBG_Struct;
+	int			mode;					/*	transaction mode		*/
+}	DBG_Class;
 
-typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+typedef	ValueStruct	*(*DB_FUNC)(DBG_Instance *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 
 typedef struct	{
-	int		(*exec)(DBG_Struct *, char *, Bool, int);
-	ValueStruct	*(*access)(DBG_Struct *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
-	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
+	int		(*exec)(DBG_Instance *, char *, Bool, int);
+	ValueStruct	*(*access)(DBG_Instance *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+	Bool	(*record)(DBG_Instance *, char *, RecordStruct *);
 }	DB_Primitives;
 
 #define	DB_PARSER_NULL		0
@@ -189,6 +209,7 @@ typedef	struct _ProcessNode	{
 	char		window[SIZE_NAME+1]
 	,			widget[SIZE_NAME+1]
 	,			event[SIZE_EVENT]
+	,			lang[SIZE_NAME+1]
 	,			pstatus
 	,			dbstatus;
 	RecordStruct	*mcprec;
@@ -325,7 +346,7 @@ typedef	struct {
 	DBD_Struct	**db;
 	int			mlevel;
 	int			cDBG;
-	DBG_Struct	**DBG;
+	DBG_Class	**DBG;
 	GHashTable	*DBG_Table;
 	char		*ApsPath
 		,		*WfcPath

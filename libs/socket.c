@@ -318,7 +318,7 @@ CleanUNIX_Socket(
 
 	if(port->type == PORT_UNIX) {
 		if ((stat(port->adrs.a_unix.name,&sb) == 0 )
-		&& ( S_ISSOCK(sb.st_mode))) {
+			&& ( S_ISSOCK(sb.st_mode))) {
 			unlink(port->adrs.a_unix.name);
 		}	
 	}

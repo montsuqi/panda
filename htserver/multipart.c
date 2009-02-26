@@ -19,9 +19,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -38,9 +38,11 @@
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
-#include	"cgi.h"
+#include	"net.h"
 #include	"multipart.h"
 #include	"debug.h"
+
+extern	void	SaveArgValue(GHashTable *values, char *name, byte *value);
 
 #define STR_LITERAL_LENGTH(x) (sizeof(x) - 1)
 #define MAX_BOUNDARY_SIZE 70
@@ -48,13 +50,44 @@
 #define BOUNDARY_DELIMITER 1
 #define BOUNDARY_CLOSE_DELIMITER 2
 
-char *
-GetMultipartBoundary(char *content_type)
+static  char    *
+FGETS(
+    char    *s,
+    int     size,
+    NETFILE *fp)
+{
+    int     c;
+	char	*ret;
+
+	if		(	(  CheckNetFile(fp)  )
+			&&	(  s  !=  NULL       ) ) {
+		ret = s;
+		while	(  size  >  1  ) {
+			c = ngetc(fp);
+			if		(  c  <  0  )	break;
+			*s ++ = c;
+			if		(  c  ==  '\n'  )	break;
+			size --;
+		}
+		if		(  s  !=  ret  ) {
+			*s = 0;
+		} else {
+			ret = NULL;
+		}
+	} else {
+		ret = NULL;
+	}
+	return	(ret);
+}
+
+extern  char *
+GetMultipartBoundary(const char *content_type)
 {
     char *p;
 	char *ret;
 
 ENTER_FUNC;
+	dbgprintf("content_type = [%s]",content_type);
     if (content_type == NULL ||
         strncasecmp(content_type, "multipart/form-data",
                     STR_LITERAL_LENGTH("multipart/form-data")) != 0) {
@@ -73,6 +106,9 @@ ENTER_FUNC;
 		else {
 			ret = NULL;
 		}
+	}
+	if		(  ret  !=  NULL  ) {
+		dbgprintf("boundary= [%s]",ret);
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -160,15 +196,16 @@ ParseParameter(char **s, char *name)
 }
 
 static int
-ParseHeader(FILE *fp, char **name, char **filename)
+ParseHeader(NETFILE *fp, char **name, char **filename)
 {
     char buf[SIZE_BUFF];
     int in_content_disposition = 0;
     char *p;
 
+ENTER_FUNC;
     *name = NULL;
     *filename = NULL;
-    while (fgets(buf, SIZE_BUFF, fp) != NULL) {
+    while (FGETS(buf, SIZE_BUFF, fp) != NULL) {
         if (strcmp(buf, "\r\n") == 0) break;
         if (strncasecmp(buf, "Content-Disposition:",
                         STR_LITERAL_LENGTH("Content-Disposition:")) == 0) {
@@ -207,27 +244,28 @@ ParseHeader(FILE *fp, char **name, char **filename)
             }
         }
     }
+LEAVE_FUNC;
     if (*name == NULL)
         return -1;
     return 0;
 }
 
 static int
-ReadLine(FILE *fp, char *buf, int buf_len)
+ReadLine(NETFILE *fp, char *buf, int buf_len)
 {
     int c;
     char *p, *pend;
 
     p = buf;
     pend = buf + buf_len - 1;
-    while (p < pend && (c = getc(fp)) != EOF) {
+    while (p < pend && (c = ngetc(fp)) >= 0) {
         if (c == '\r') {
             *p++ = c;
-            if ((c = getc(fp)) == '\n') {
+            if ((c = ngetc(fp)) == '\n') {
                 *p++ = c;
             }
             else {
-                ungetc(c, fp);
+                unngetc(c, fp);
             }
             break;
         }
@@ -255,7 +293,7 @@ xrealloc(void *ptr, size_t size)
 
 static int
 ParseBody(
-    FILE    *fp,
+    NETFILE *fp,
     char    *delimiter,
     char    *close_delimiter,
     byte    **value,
@@ -294,7 +332,7 @@ ParseBody(
 }
 
 static int
-ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
+ParsePart(NETFILE *fp, char *delimiter, char *close_delimiter,
           GHashTable *values, GHashTable *files)
 {
     char    *name
@@ -311,7 +349,7 @@ ENTER_FUNC;
     if (boundary_type == BOUNDARY_NONE)
         return -1;
     if (filename == NULL) {
-        SaveArgValue(name, value, FALSE);
+        SaveArgValue(values, name, value);
     }
     else {
         MultipartFile *file = New(MultipartFile);
@@ -321,14 +359,14 @@ ENTER_FUNC;
         memcpy(LBS_Body(file->body),value,value_len);
         g_hash_table_insert(files, name, file);
 dbgprintf("filename = [%s]\n",file->filename);
-dbgprintf("length   = [%d]\n",file->length);
+dbgprintf("length   = [%d]\n",value_len);
     }
 LEAVE_FUNC;
     return boundary_type;
 }
 
 extern  int
-ParseMultipart(FILE *fp, char *boundary,
+ParseMultipart(NETFILE *fp, char *boundary,
                GHashTable *values, GHashTable *files)
 {
     char buf[SIZE_BUFF];
@@ -351,7 +389,8 @@ ENTER_FUNC;
 		sprintf(delimiter, "--%s\r\n", boundary);
 		sprintf(close_delimiter, "--%s--\r\n", boundary);
 
-		while (fgets(buf, sizeof(buf), fp) != NULL) {
+		while (FGETS(buf, sizeof(buf), fp) != NULL) {
+			dbgprintf("%s",buf);
 			boundary_type = CheckBoundary(buf, delimiter, close_delimiter);
 			if (boundary_type != BOUNDARY_NONE) {
 				break;
@@ -426,7 +465,6 @@ main(int argc, char **argv)
 
 /*
  * Local variables:
- * indent-tabs-mode: nil
  * tab-width: 4
  * End:
  */

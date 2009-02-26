@@ -20,9 +20,9 @@
  */
 
 /*
+*/
 #define	TRACE
 #define	DEBUG
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -151,7 +151,11 @@ SendWindow(
 			SendString(fp,win->name);
 			break;
 		  case	SCREEN_END_SESSION:
+		  case	SCREEN_CHANGE_LD:
 			SendPacketClass(fp,GL_RedirectName);
+			SendString(fp,win->name);
+		  case	SCREEN_CLOSE_WINDOW:
+			SendPacketClass(fp,GL_CloseWindow);
 			SendString(fp,win->name);
 		  default:
 			break;
@@ -246,15 +250,11 @@ ENTER_FUNC;
 					}
 				}
 			} else {
-#if	1
+				dbgprintf("no window [%s]",window);
 				LBS_ReserveSize(lbs,0,FALSE);
-#else
-				fprintf(stderr, "window [%s] not found\n", window);
-				SetErrorNetFile(fp);
-				goto	badio;
-#endif
 			}
 			SendLBS(fp, lbs);	ON_IO_ERROR(fp,badio);
+			dbgmsg("*");
 		}
 	}
 	dbgprintf("klass = %X",klass);
@@ -482,11 +482,14 @@ ENTER_FUNC;
 			printf("_fd = %d\n",_fd);
 			Error("INET Domain Accept");
 		}
+		dbgmsg("accept");
 		fp = SocketToNet(fd);
 		klass = RecvPacketClass(fp);
 		scr = NULL;
+		dbgmsg("*");
 		switch	(klass) {
 		  case	GL_Connect:
+			dbgmsg("GL_Connect");
 			if		(  ( scr = NewSession(fp) )  !=  NULL  ) {
 				ApplicationsCall(APL_SESSION_LINK,scr);
 				SendPacketClass(fp,GL_Session);		ON_IO_ERROR(fp,badio);
@@ -496,9 +499,11 @@ ENTER_FUNC;
 			}
 			break;
 		  case	GL_Session:
+			dbgmsg("GL_Session");
 			RecvString(fp,buff);			ON_IO_ERROR(fp,badio);
 			dbgprintf("sesid = [%s]",buff);
 			if		(  ( scr = LoadScreenData(buff) )  !=  NULL  ) {
+				dbgmsg("data");
 				if		(  ExecSingle(fp,scr)  ) {
 					dbgmsg("save");
 					SaveScreenData(scr,TRUE);
@@ -506,6 +511,8 @@ ENTER_FUNC;
 					dbgmsg("parge");
 					PargeScreenData(scr);
 				}
+			} else {
+				dbgmsg("no data");
 			}
 			break;
 		  default:

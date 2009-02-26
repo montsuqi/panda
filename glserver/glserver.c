@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,6 +65,8 @@ static	ARG_TABLE	option[] = {
 		N_("BLOB cache directory")						},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		N_("authentication server")	 					},
+	{	"lang",		STRING,		TRUE,	(void*)&Lang,
+		N_("language")				 					},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
 		N_("SSL Key File(pem/p12)")		 				},
@@ -92,6 +94,7 @@ SetDefault(void)
 	RecordDir = ".";
 	AuthURL = "glauth://localhost:" PORT_GLAUTH;
 	CacheDir = "cache";
+	Lang = NULL;
 #ifdef	USE_SSL
 	fSsl = FALSE;
 	KeyFile = NULL;

@@ -209,6 +209,11 @@ ENTER_FUNC;
 					LBS_Emit(sql,SQL_OP_ESC);
 					LBS_Emit(sql,SQL_OP_LIMIT);
 					GetName;
+				} else
+				if		(  strcmp(ComSymbol,"$offset")  ==  0  ) {
+					LBS_Emit(sql,SQL_OP_ESC);
+					LBS_Emit(sql,SQL_OP_OFFSET);
+					GetName;
 				} else {
 					if		(  fInto  ) {
 						LBS_Emit(sql,SQL_OP_ESC);

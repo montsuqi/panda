@@ -40,8 +40,8 @@ extern	LD_Struct	*SearchWindowToLD(char *wname);
 extern	LD_Struct	*GetLD(char *name);
 extern	BD_Struct	*GetBD(char *name);
 extern	DBD_Struct	*GetDBD(char *name);
-extern	DBG_Struct	*GetDBG(char *name);
-extern	void		RegistDBG(DBG_Struct *dbg);
+extern	DBG_Class	*GetDBG(char *name);
+extern	void		RegistDBG(DBG_Class *dbg);
 extern	void		SetDBGPath(char *path);
 extern	DB_Func		*EnterDB_Function(char *name, DB_OPS *ops, int type,
 									  DB_Primitives *primitive,

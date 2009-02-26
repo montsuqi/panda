@@ -22,9 +22,9 @@
 */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -98,7 +98,7 @@ ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
-			if		(  stricmp(ComSymbol,"metadb")  ) {
+			if		(  stricmp(ComSymbol,"metadb")  !=  0  ) {
 				strcpy(buff,RecordDir);
 				p = buff;
 				do {
@@ -106,6 +106,7 @@ ENTER_FUNC;
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,ComSymbol);
+					dbgprintf("[%s]",name);
 					if		(  (  db = DB_Parser(name,gname,NULL,TRUE) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(bd->DB_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( bd->cDB + 1));

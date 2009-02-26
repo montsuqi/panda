@@ -120,7 +120,7 @@ extern	void	DumpValues(LargeByteString *html, GHashTable *args);
 extern	void	Dump(void);
 extern	byte	*GetHostValue(char *name, Bool fClear);
 extern	byte	*SaveValue(char *name, byte *value, Bool fSave);
-extern	byte	*SaveArgValue(char *name, byte *value, Bool fSave);
+extern	byte	*SaveArgValue(GHashTable *table, char *name, byte *value);
 extern	byte	*LoadValue(char *name);
 extern	void	RemoveValue(char *name);
 extern	void	SetSave(char *name, Bool fSave);

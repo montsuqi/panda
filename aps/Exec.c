@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2003-2008 Ogochan.
+ * Copyright (C) 2003-2009 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -144,11 +144,11 @@ ENTER_FUNC;
 				InitializeValue(value);
 				conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
 			}
-			strcpy(ctrl.func,func);
 			ctrl.limit = 1;
+			strcpy(ctrl.func,func);
 			if		(  ( ctrl.rc = ValueInteger(GetItemLongName(recDBCTRL->value,"rc")) )
 						 >=  0  ) {
-				ret = ExecDB_Process(&ctrl,rec,value);
+				ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
 			}
 		} else {
 			ctrl.rc = 0;

@@ -18,9 +18,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -62,6 +62,7 @@ PureWindowName(
 	char	*p;
 
 ENTER_FUNC;
+	dbgprintf("[%s]",comp);
 	if		(  ( p = strrchr(comp,'/') )  ==  NULL  ) {
 		p = comp;
 	} else {
@@ -102,7 +103,7 @@ ENTER_FUNC;
 	if		(  ( rec = (RecordStruct *)g_hash_table_lookup(ThisScreen->Records,wname) )
 			   ==  NULL  ) {
 		sprintf(fname,"%s.rec",wname);
-		if		(  ( rec = ReadRecordDefine(fname) )  !=  NULL  ) {
+		if		(  ( rec = ReadRecordDefine(fname,NULL) )  !=  NULL  ) {
 			InitializeValue(rec->value);
 			g_hash_table_insert(ThisScreen->Records,rec->name,rec);
 		}
@@ -280,12 +281,12 @@ extern	ScreenData	*
 NewScreenData(void)
 {
 	ScreenData	*scr;
-	char		*encoding
-		,		*lang;
+	char		*lang
+		,		*p;
 
 ENTER_FUNC;
 	scr = New(ScreenData);
-dbgmsg("*");
+
 	memclear(scr->window,SIZE_NAME+1);
 	memclear(scr->widget,SIZE_NAME+1);
 	memclear(scr->event,SIZE_EVENT+1);
@@ -293,17 +294,27 @@ dbgmsg("*");
 	memclear(scr->term,SIZE_TERM+1);
 	memclear(scr->user,SIZE_USER+1);
 	memclear(scr->other,SIZE_OTHER+1);
+	memclear(scr->lang,SIZE_NAME+1);
 	scr->Windows = NewNameHash();
 	scr->Records = NewNameHash();
-dbgmsg("*");
 	if		(  libmondai_i18n  ) {
-		if		(  ( lang = getenv("LANG") )  !=  NULL  &&
-				   ( encoding = strchr(lang,'.') )  !=  NULL  ){
-			scr->encoding = StrDup(++encoding);
+		if		(  ( lang = getenv("LANG") )        !=  NULL  ) {
+			lang = StrDup(lang);
+			if		(  ( p = strchr(lang,'.') )  !=  NULL  ){
+				*p = 0;
+				strcpy(scr->lang,lang);
+				scr->encoding = StrDup(p+1);
+			} else {
+				strcpy(scr->lang,lang);
+				scr->encoding = NULL;
+			}
+			xfree(lang);
 		} else {
+			*scr->lang = 0;
 			scr->encoding = NULL;
 		}
 	} else {
+		strcpy(scr->lang,"ja");
 		scr->encoding = StrDup("euc-jp");
 	}
 LEAVE_FUNC;
@@ -366,6 +377,7 @@ SaveScreenData(
 		fwrite(&fSaveRecords,sizeof(Bool),1,fp);
 		fwrite(scr->cmd,SIZE_LONGNAME+1,1,fp);
 		fwrite(scr->user,SIZE_USER+1,1,fp);
+		fwrite(scr->lang,SIZE_NAME+1,1,fp);
 		if		(  fSaveRecords  ) {
 			g_hash_table_foreach(scr->Records,(GHFunc)_SaveRecords,fp);
 			g_hash_table_foreach(scr->Windows,(GHFunc)_SaveWindowName,fp);
@@ -448,6 +460,7 @@ ENTER_FUNC;
 		fread(&fSaveRecords,sizeof(Bool),1,fp);
 		fread(scr->cmd,SIZE_LONGNAME+1,1,fp);
 		fread(scr->user,SIZE_USER+1,1,fp);
+		fread(scr->lang,SIZE_NAME+1,1,fp);
 		if		(  fSaveRecords  ) {
 			LoadRecords(scr,fp);
 			LoadWindows(scr,fp);
@@ -490,14 +503,56 @@ ENTER_FUNC;
 	if		(  scr->encoding  !=  NULL  ) {
 		xfree(scr->encoding);
 	}
+	dbgmsg("*");
 	if		(  scr->Windows  !=  NULL  ) {
 		g_hash_table_foreach_remove(scr->Windows,(GHRFunc)FreeWindows,NULL);
 		g_hash_table_destroy(scr->Windows);
 	}
+	dbgmsg("*");
 	if		(  scr->Records  !=  NULL  ) {
 		g_hash_table_foreach_remove(scr->Records,(GHRFunc)FreeRecords,NULL);
 		g_hash_table_destroy(scr->Records);
 	}
+	dbgmsg("*");
 	xfree(scr);
+LEAVE_FUNC;
+}
+
+static	guint
+DumpWindows(
+	char	*name,
+	WindowData	*entry,
+	void		*dummy)
+{
+	dbgprintf("window = [%s]",entry->name);
+	return	(TRUE);
+}
+
+static	guint
+DumpRecords(
+	char	*name,
+	RecordStruct	*rec,
+	void		*dummy)
+{
+	dbgprintf("rec name = [%s]",rec->name);
+	DumpValueStruct(rec->value);
+	return	(TRUE);
+}
+
+extern	void
+DumpScreenData(
+	ScreenData	*scr)
+{
+
+ENTER_FUNC;
+	if		(  scr->encoding  !=  NULL  ) {
+		dbgprintf("encoding = [%s]",scr->encoding);
+	}
+	if		(  scr->Windows  !=  NULL  ) {
+		g_hash_table_foreach_remove(scr->Windows,(GHRFunc)DumpWindows,NULL);
+	}
+	if		(  scr->Records  !=  NULL  ) {
+		g_hash_table_foreach_remove(scr->Records,(GHRFunc)DumpRecords,NULL);
+	}
 LEAVE_FUNC;
 }

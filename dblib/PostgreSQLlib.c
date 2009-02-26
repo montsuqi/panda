@@ -34,7 +34,7 @@
 #include	"PostgreSQLlib.h"
 #include	"debug.h"
 
-extern void
+extern	void
 AddConninfo(
 	LargeByteString *conninfo,
 	char *item,
@@ -55,7 +55,7 @@ LEAVE_FUNC;
 static LargeByteString	*
 _CreateConninfo(
 	LargeByteString *conninfo,
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	AddConninfo(conninfo, "host", GetDB_Host(dbg,usage));
@@ -68,7 +68,7 @@ _CreateConninfo(
 	
 extern LargeByteString	*
 CreateConninfo(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	LargeByteString *conninfo;
@@ -85,7 +85,7 @@ LEAVE_FUNC;
 
 extern LargeByteString	*
 Template1Conninfo(
-	DBG_Struct	*dbg,
+	DBG_Class	*dbg,
 	int			usage)
 {
 	LargeByteString *conninfo;
@@ -100,30 +100,35 @@ LEAVE_FUNC;
 
 extern	PGconn	*
 PGCONN(
-	DBG_Struct	*dbg,
-	int			usage)
+	DBG_Instance	*dbg,
+	int				usage)
 {
-	int		ix;
+	DB_Process	process;
 
-	ix = IsUsageUpdate(usage) ? PROCESS_UPDATE : PROCESS_READONLY;
-	return	((PGconn *)dbg->process[ix].conn);
+	process = IsUsageUpdate(usage) ? dbg->update : dbg->readonly;
+	return	((PGconn *)process.conn);
 }
 
 extern PGconn	*
 PgConnect(
-	DBG_Struct	*dbg,
-	int			usage)
+	DBG_Instance	*dbg,
+	int				usage)
 {
+	DB_Process		*process;
 	LargeByteString *conninfo;
 	PGconn	*conn;
-
-	conninfo = CreateConninfo(dbg,usage);
+	
+	process = IsUsageUpdate(usage) ? &dbg->update : &dbg->readonly;
+	conninfo = CreateConninfo(dbg->class,usage);
 	conn = PQconnectdb(LBS_Body(conninfo));
 	FreeLBS(conninfo);
 
-	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
-		Message("Connection to database \"%s\" failed.",
-				GetDB_DBname(dbg,usage));
+	if		(  PQstatus(conn)  ==  CONNECTION_OK  ) {
+		Message("Connection to database \"%s\".", GetDB_DBname(dbg->class,usage));
+		process->conn = (void *)conn;
+		process->dbstatus = DB_STATUS_CONNECT;
+	} else {
+		Message("Connection to database \"%s\" failed.", GetDB_DBname(dbg->class,usage));
 		Message("%s", PQerrorMessage(conn));
 		PQfinish(conn);
 		conn = NULL;

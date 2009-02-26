@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan.
+ * Copyright (C) 2000-2009 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,8 @@ extern	int
 MCP_PutWindow(
 	ProcessNode	*node,
 	char		*wname,
-	char		*type)
+	char		*type,
+	char		*widget)
 {
 	ValueStruct	*mcp;
 
@@ -54,10 +55,25 @@ ENTER_FUNC;
 		dbgprintf("window = [%s]",wname);
 		SetValueString(GetItemLongName(mcp,"dc.window"),wname,NULL);
 	}
-	SetValueString(GetItemLongName(mcp,"dc.widget"),"",NULL);
+	if		(  widget  ==  NULL  ) {
+		SetValueString(GetItemLongName(mcp,"dc.widget"),"",NULL);
+	} else {
+		SetValueString(GetItemLongName(mcp,"dc.widget"),widget,NULL);
+	}
 	SetValueString(GetItemLongName(mcp,"dc.puttype"),type,NULL);
 	SetValueString(GetItemLongName(mcp,"dc.status"),"PUTG",NULL);
 	SetValueInteger(GetItemLongName(mcp,"rc"),0);
+LEAVE_FUNC;
+	return	(0);
+}
+
+extern	int
+MCP_PutData(
+	ProcessNode	*node,
+	char		*rname)
+{
+ENTER_FUNC;
+	SetPutType(node,rname,SCREEN_SEND_DATA);
 LEAVE_FUNC;
 	return	(0);
 }
@@ -168,7 +184,7 @@ ENTER_FUNC;
 	if		(  rec  !=  NULL  ) {
 		CopyValue(value,data);
 	}
-	ret = ExecDB_Process(&ctrl,rec,value);
+	ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
 	if		(  ret  !=  NULL  ) {
 		CopyValue(data,ret);
 		FreeValueStruct(ret);

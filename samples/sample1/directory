@@ -1,11 +1,17 @@
-name	demo;
+name	"$SYSTEM";
 
 #	"~" will be expanded to home directory
-base	"~/MONTSUQI/panda-current/samples";
+
+base	"$TOP";
 
 #	"=" will be expanded to base
 ddir	"=/sample1";
-record	"=/sample1";
+record	"=/sample1/rec";
+
+DBPath	"~/MONTSUQI/panda/dblib/.libs";
+APSPath	"~/MONTSUQI/panda/aps/aps";
+WFCPath	"~/MONTSUQI/panda/wfc/wfc";
+REDPath	"~/MONTSUQI/panda/dbstuff/dbredirector";
 
 #multiplex_level	no;
 #multiplex_level	ld;
@@ -23,8 +29,8 @@ control	{
 wfc	{
 #	port	"[192.168.2.10]:9002";
 #	port	":9002";
-	port		"/tmp/sample1";
-	termport	"/tmp/sample1.term";
+	port		"=/sample1/port";
+	termport	"$TERM_PORT";
 };
 
 ld	{
@@ -36,6 +42,6 @@ ld	{
 #	demo2	"[192.168.2.10]" * 1;
 #	demo2	"localhost" * 1;
 #	demo2	"/tmp/sample1demo2" * 1;
-	demo2	1;
+#	demo2	1;
 };
 

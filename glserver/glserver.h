@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ GLOBAL	char	*CA_File;
 GLOBAL	char	*Ciphers;
 #endif
 GLOBAL	URL		Auth;
+GLOBAL	char	*Lang;
 
 extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);

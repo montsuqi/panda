@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,6 +60,7 @@ typedef	struct _NETFILE	{
 	size_t	size
 	,		ptr;
 	byte	*buff;
+	int		back;
 #ifdef	MT_NET
 	pthread_mutex_t	lock;
 #endif
@@ -74,12 +75,14 @@ extern	int			Recv(NETFILE *fp, void *buff, size_t size);
 extern	int			RecvAtOnce(NETFILE *fp, char *buff, size_t size);
 extern	int			nputc(int c, NETFILE *fp);
 extern	int			ngetc(NETFILE *fp);
+extern	int			unngetc(int c, NETFILE *fp);
 
 extern	void		FreeNet(NETFILE *fp);
 extern	void		CloseNet(NETFILE *fp);
 extern	NETFILE		*NewNet(void);
 extern	NETFILE		*SocketToNet(int s);
 extern	NETFILE		*FileToNet(int f);
+extern	NETFILE		*StringToNet(byte *str, size_t size);
 extern	void		NetSetFD(NETFILE *fp, int fd);
 extern	void		InitNET(void);
 #define	NetGetFD(fp)	((fp)->fd)

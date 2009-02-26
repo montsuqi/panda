@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -86,36 +86,48 @@ ENTER_FUNC;
 #if	0
 		ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 #else
-		if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
+		if		(  ValueInteger(GetItemLongName(mcp,"version"))  >=  2  ) {
 			ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 		} else {
 			ctrl.limit = 1;
+		}
+		if		(  ValueInteger(GetItemLongName(mcp,"version"))  >=  3  ) {
+			ctrl.offset = ValueInteger(GetItemLongName(mcp,"db.offset"));
+		} else {
+			ctrl.offset = 0;
 		}
 #endif
 		ctrl.rc = 0;
 		if		(  !strcmp(func,"DBOPEN")  ) {
 			ctrl.limit = 1;
 			ctrl.count = 0;
+			ctrl.offset = 0;
 			CheckArg(func,&ctrl);
-			rec = NULL;
+			ThisDB_Environment = OpenAllDB();
+			ret = NULL;
 		} else
 		if		(  !strcmp(func,"DBCLOSE")  ) {
 			CheckArg(func,&ctrl);
-			rec = NULL;
+			ctrl.rc = CloseAllDB(ThisDB_Environment);
+			ret = NULL;
 		} else
 		if		(  !strcmp(func,"DBSTART")  ) {
 			ctrl.limit = 1;
 			ctrl.count = 0;
+			ctrl.offset = 0;
 			CheckArg(func,&ctrl);
-			rec = NULL;
+			ctrl.rc = TransactionAllStart(ThisDB_Environment);
+			ret = NULL;
 		} else
 		if		(  !strcmp(func,"DBCOMMIT")  ) {
 			CheckArg(func,&ctrl);
-			rec = NULL;
+			ctrl.rc = TransactionAllEnd(ThisDB_Environment);
+			ret = NULL;
 		} else
 		if		(  !strcmp(func,"DBDISCONNECT")  ) {
 			CheckArg(func,&ctrl);
-			rec = NULL;
+			ctrl.rc = CloseAllDB(ThisDB_Environment);
+			ret = NULL;
 		} else {
 #ifdef	DEBUG
 			{
@@ -128,8 +140,8 @@ ENTER_FUNC;
 			}
 #endif				
 			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
+			ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
 		}
-		ret = ExecDB_Process(&ctrl,rec,value);
 		if		(	(  ret      !=  NULL    )
 				&&	(  ctrl.rc  ==  MCP_OK  ) )	{
 			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, ret);

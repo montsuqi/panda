@@ -2,7 +2,7 @@
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2005 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2006-2008 Ogochan & JMA (Japan Medical Association)
+ * Copyright (C) 2006-2009 Ogochan & JMA (Japan Medical Association)
  *                                 & JFBA (Japan Federation of Bar Association)
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +21,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #define	_PANDA
 
@@ -46,14 +46,14 @@
 static	char	*PandaPort;
 
 static	NETFILE	*
-OpenPanda(
-	char	*arg)
+OpenPanda(void)
 {
 	NETFILE	*fp;
 
 ENTER_FUNC;
-	fp = ConnectTermServer(PandaPort,ThisTerm,ThisUser,ThisWindow,TRUE,arg);
-	if		(  fp  ==  NULL  ) {
+	if		(  ( fp = TermConnectServer(PandaPort) )  !=  NULL  ) {
+		TermCreateSession(fp,ThisTerm,ThisUser,ThisLang,TRUE);
+	} else {
 		fprintf(stderr,"can't connect wfc\n");
 		exit(1);
 	}
@@ -94,7 +94,15 @@ ENTER_FUNC;
 #ifdef	DEBUG
 	DumpValueStruct(value);
 #endif
-	rc = SendTermServer(fp,ThisTerm,ThisWindow,ThisWidget,ThisEvent,value);
+	rc = FALSE;
+	dbgprintf("ThisTerm = [%s]",ThisTerm);
+	if		(  TermSendID(fp,ThisTerm)  ) {
+		if		(  !TermSendStart(fp)  )	goto	quit;
+		if		(  !TermSendDataHeader(fp,ThisLang,ThisWindow,ThisWidget,ThisEvent)  )	goto	quit;
+		if		(  !TermSendDataBody(fp,ThisWindow,value)  )	goto	quit;
+		rc = TRUE;
+	}
+  quit:;
 LEAVE_FUNC;
 	return	(rc); 
 }
@@ -108,33 +116,36 @@ ClearPutType(
 	win->PutType = SCREEN_NULL;
 }
 
-static	void
+static	Bool
 RecvPanda(
 	NETFILE	*fp,
 	char	*user,
 	char	*window,
-	char	*widget)
+	char	*widget,
+	char	*lang)
 {
 	int		type;
 	int		i;
 	WindowControl	ctl;
 	WindowData		*win;
 	char	msg[SIZE_LONGNAME+1];
+	Bool	rc;
+
 ENTER_FUNC;
-	if		(  RecvTermServerHeader(fp,user,window,widget,&type,&ctl)  ) {
+	rc = FALSE;
+	if		(  TermRequestHeader(fp,user,lang,window,widget,&type,&ctl)  ) {
 		ON_IO_ERROR(fp,badio);
 		if		(  ThisScreen->Windows  !=  NULL  ) {
 			g_hash_table_foreach(ThisScreen->Windows,(GHFunc)ClearPutType,NULL);
 		}
 		for	( i = 0 ; i < ctl.n ; i ++ ) {
-			if		(  ctl.control[i].PutType  ==  SCREEN_CLOSE_WINDOW  ) {
-				win = PutWindowByName(ctl.control[i].window,SCREEN_CLOSE_WINDOW);
-			}
+			(void)PutWindowByName(ctl.control[i].window,ctl.control[i].PutType);
 		}
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",ThisWindow);
 		dbgprintf("window     [%s]",window);
 		dbgprintf("user =     [%s]",user);
+		dbgprintf("lang =     [%s]",lang);
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:
 			win = PutWindowByName(ThisWindow,SCREEN_CLOSE_WINDOW);
@@ -148,10 +159,13 @@ ENTER_FUNC;
 		}
 		win = PutWindowByName(window,type);
 		if		(  win  !=  NULL  )	{
-			RecvTermServerData(fp,ThisScreen);	ON_IO_ERROR(fp,badio);
+			TermRecvServerData(fp,ThisScreen);	ON_IO_ERROR(fp,badio);
 			strcpy(ThisWindow,window);
 			strcpy(ThisWidget,widget);
 			strcpy(ThisUser,user);
+			if		(  *lang  !=  0  ) {
+				strcpy(ThisLang,lang);
+			}
 			if		(  win->rec  ==  NULL  ) {
 				ThisScreen->status = APL_SESSION_END;
 			}
@@ -159,6 +173,7 @@ ENTER_FUNC;
 			ThisScreen->status = APL_SESSION_END;
 			//Error("Illegal windowData");
 		}
+		rc = TRUE;
 	} else {
 		snprintf(msg,SIZE_LONGNAME,"window = [%s]",window);
 		MessageLog(msg);
@@ -167,23 +182,34 @@ ENTER_FUNC;
 		exit(1);
 	}
 LEAVE_FUNC;
+	return	(rc);
 }
 
 extern	Bool
 pandaLink(
 	char		*arg)
 {
-	char	user[SIZE_NAME+1]	
-	,		window[SIZE_NAME+1]
-	,		widget[SIZE_NAME+1];
+	RecordStruct	*rec;
 	Bool	ret;
 	NETFILE	*fp;
 
 ENTER_FUNC;
-	fp = OpenPanda(arg);
-	RecvPanda(fp,user,window,widget);
+	ret = FALSE;
+	if		(  ( fp = OpenPanda() )  !=  NULL  ) {
+		if		(  !TermSendStart(fp)  )	goto	quit;
+		if		(  !TermSwitchLD(fp,arg)  )	goto	quit;
+		if		(  ( rec = GetWindowRecord(ThisWindow) )  !=  NULL  ) {
+			TermSendDataBody(fp,ThisWindow,rec->value);
+		}
+		if		(  !TermSendExec(fp) )	goto	quit;
+		if		(  !RecvPanda(fp,ThisUser,ThisWindow,ThisWidget,ThisLang)  )	goto	quit;
+		if		(  !TermSendPrepare(fp)  )	goto	quit;
+		if		(  !TermSendCommit(fp)  )	goto	quit;
+		if		(  !TermBreakSession(fp)  )	goto	quit;
+		ret = TRUE;
+	}
+  quit:;
 	CloseNet(fp);
-	ret = TRUE;
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -192,30 +218,29 @@ extern	Bool
 pandaMain(
 	char		*arg)
 {
-	char	user[SIZE_NAME+1]	
-	,		window[SIZE_NAME+1]
-	,		widget[SIZE_NAME+1];
-	Port	*port;
-	int		fd;
 	Bool	ret;
 	NETFILE	*fp;
 
 ENTER_FUNC;
-	port = ParPort(PandaPort,PORT_WFC);
-	fd = ConnectSocket(port,SOCK_STREAM);
-	DestroyPort(port);
-	if ( fd > 0 ){
-		fp = SocketToNet(fd);
-		if		(  SendPanda(fp)  ) {
-			RecvPanda(fp,user,window,widget);
-			CloseNet(fp);
-			ret = TRUE;
+	ret = FALSE;
+	dbgprintf("pandaMain(%s)",arg);
+	if		(  ( fp = TermConnectServer(PandaPort) )  !=  NULL  ) {
+		if		(  *ThisWindow  ==  0  ) {
+			if		(  !TermSendID(fp,ThisTerm)  )	goto	quit;
+			if		(  !TermSendStart(fp)  )		goto	quit;
+			if		(  !TermSwitchLD(fp,arg)  )		goto	quit;
 		} else {
-			ret = FALSE;
+			if		(  !SendPanda(fp)  )	goto	quit;
 		}
-	} else {
-		ret = FALSE;
+		if		(  !TermSendExec(fp) )		goto	quit;
+		if		(  !RecvPanda(fp,ThisUser,ThisWindow,ThisWidget,ThisLang)  )	goto	quit;
+		if		(  !TermSendPrepare(fp)  )	goto	quit;
+		if		(  !TermSendCommit(fp)  )	goto	quit;
+		if		(  !TermBreakSession(fp)  )	goto	quit;
+		ret = TRUE;
 	}
+  quit:;
+	CloseNet(fp);
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -224,23 +249,18 @@ extern	Bool
 pandaExit(
 	char		*arg)
 {
-	Port	*port;
-	int		fd;
 	Bool	ret;
 	NETFILE	*fp;
 
 ENTER_FUNC;
-	port = ParPort(PandaPort,PORT_WFC);
-	fd = ConnectSocket(port,SOCK_STREAM);
-	DestroyPort(port);
-	if ( fd > 0 ){
-		fp = SocketToNet(fd);
-		SendTermServerEnd(fp,ThisTerm);
-		CloseNet(fp);
+	ret = FALSE;
+	if		(  ( fp = TermConnectServer(PandaPort) )  !=  NULL  ) {
+		if		(  !TermSendID(fp,ThisTerm)  )	goto	quit;
+		if		(  !TermSendEnd(fp)  )		goto	quit;
 		ret = TRUE;
-	} else {
-		ret = FALSE;
 	}
+  quit:;
+	CloseNet(fp);
 LEAVE_FUNC;
 	return	(ret);
 }

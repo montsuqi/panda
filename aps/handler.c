@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,9 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 /*
 #define	NEW_SEQUENCT
@@ -63,13 +63,15 @@ static	char	*STATUS[4] = {
 	"RSND"
 };
 
-static	char	*DBSTATUS[6] = {
+static	char	*DBSTATUS[8] = {
 	"NORE",
 	"CONN",
 	"WAIT",
 	"FAIL",
 	"DISC",
-	"RERR"
+	"RERR",
+	"STAR",
+	"PREP"
 };
 
 static	char	*APS_HandlerLoadPath;
@@ -173,6 +175,7 @@ ENTER_FUNC;
 
 	g_hash_table_insert(TypeHash,"CALL",(gpointer)SCREEN_CALL_COMPONENT);
 	g_hash_table_insert(TypeHash,"RETURN",(gpointer)SCREEN_RETURN_COMPONENT);
+	g_hash_table_insert(TypeHash,"CHANGELD",(gpointer)SCREEN_CHANGE_LD);
 LEAVE_FUNC;
 }
 
@@ -256,17 +259,17 @@ _ReadyOnlineDB(
 	ReadyHandlerDB(bind->handler);
 }
 
-extern	int
+extern	DB_Environment	*
 ReadyOnlineDB(
 	NETFILE	*fp)
 {
-	int	rc;
+	DB_Environment	*env;
 ENTER_FUNC;
 	InitDB_Process(fp);
-	rc = OpenDB(NULL);
+	env = OpenAllDB();
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_ReadyOnlineDB,NULL);
 LEAVE_FUNC;
-	return	rc;
+	return	env;
 }
 
 static	void
@@ -286,21 +289,29 @@ ENTER_FUNC;
 				   DBSTATUS[(unsigned char)node->dbstatus],NULL);
 	SetValueInteger(GetItemLongName(mcp,"db.rcount"),0);
 	SetValueInteger(GetItemLongName(mcp,"db.limit"),1);
+	SetValueInteger(GetItemLongName(mcp,"db.offset"),0);
 	node->w.n = 0;
 	node->thisscrrec = bind->rec;
 	CurrentProcess = node;
 LEAVE_FUNC;
 }
 
-static	void
+extern	void
 SetPutType(
 	ProcessNode	*node,
 	char		*wname,
 	byte		type)
 {	
-	strcpy(node->w.control[node->w.n].window,wname);
-	node->w.control[node->w.n].PutType = type;
-	node->w.n ++;
+	int		i;
+
+	for	( i = 0 ; i < node->w.n  ; i ++ ) {
+		if		(  strcmp(node->w.control[i].window,wname)  ==  0  )	break;
+	}
+	strcpy(node->w.control[i].window,wname);
+	node->w.control[i].PutType = type;
+	if		(  i  ==  node->w.n  ) {
+		node->w.n ++;
+	}
 }
 
 static	void
@@ -464,7 +475,8 @@ DumpProcessNode(
 
 extern	void
 ExecuteProcess(
-	ProcessNode	*node)
+	ProcessNode	*node,
+	DB_Environment	*env)
 {
 	WindowBind	*bind;
 	MessageHandler	*handler;
@@ -483,6 +495,7 @@ ENTER_FUNC;
 		dbgprintf("calling [%s] widget [%s] event [%s]",bind->module, node->widget, node->event);
 		handler = bind->handler;
 		if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
+			ThisDB_Environment = env;
 			CallBefore(bind,node);
 			if		(  fTimer  ) {
 				gettimeofday(&tv,NULL);
@@ -492,6 +505,7 @@ ENTER_FUNC;
 				MessageLog("application process illegular execution");
 				exit(2);
 			}
+			CallAfter(node);
 			if		(  fTimer  ) {
 				gettimeofday(&tv,NULL);
 				now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
@@ -500,7 +514,6 @@ ENTER_FUNC;
 				dbgprintf("aps %s@%s:%s process time %6ld(ms)\n",
 						  node->user,node->term,compo,(now - ever));
 			}
-			CallAfter(node);
 		}
 	} else {
 		Error("invalid event request [%s]",compo);
@@ -617,8 +630,7 @@ LEAVE_FUNC;
 static	void
 _StopOnlineDB(
 	char		*name,
-	WindowBind	*bind,
-	void		*dummy)
+	WindowBind	*bind)
 {
 ENTER_FUNC;
 	StopHandlerDB(bind->handler);
@@ -626,10 +638,11 @@ LEAVE_FUNC;
 }
 
 extern	void
-StopOnlineDB(void)
+StopOnlineDB(
+	DB_Environment	*env)
 {
 ENTER_FUNC;
-	CloseDB(NULL);
+	CloseAllDB(env);
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopOnlineDB,NULL);
 LEAVE_FUNC;
 }
@@ -663,6 +676,7 @@ ENTER_FUNC;
 	if		(  ( bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		Error("%s application is not in BD.\n",name);
 	}
+	ThisDB_Environment = NULL;
 	CurrentProcess = NULL;
 	handler = bind->handler;
 	if		(  handler->klass->ReadyExecute  !=  NULL  ) {

@@ -388,7 +388,7 @@ HTCParseFile(
 ENTER_FUNC;
 	if		(  ( str = GetFileBody(fname) )  !=  NULL  ) {
 #ifdef	TRACE
-		printf("[%s]\n",str);
+		dbgprintf("[%s]",str);
 #endif
 		fError = FALSE;
 		HTC_FileName = fname;
