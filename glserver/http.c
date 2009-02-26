@@ -461,13 +461,13 @@ ParseReqAuth(HTTP_REQUEST *req)
 
 	head = (char *)g_hash_table_lookup(req->header_hash,"Authorization");
 	if (head == NULL) {
-		req->status = HTTP_BAD_REQUEST;
+		req->status = HTTP_UNAUTHORIZED;
 		Message("does not have Authorization");
 		return;
 	}
 	tail = strstr(head, "Basic");
 	if (tail == NULL) {
-		req->status = HTTP_BAD_REQUEST;
+		req->status = HTTP_UNAUTHORIZED;
 		Message("does not support Authorization method:%s", head);
 		return;
 	}
@@ -475,7 +475,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 	while (head[0] == ' ') { head++; }
 	dec = (char *)g_base64_decode(head, &size);
 	if (size <= 0 || dec == NULL) {
-		req->status = HTTP_BAD_REQUEST;
+		req->status = HTTP_UNAUTHORIZED;
 		Message("can not base64_decode :%s", head);
 		return;
 	}
@@ -483,7 +483,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 	tail = strstr(dec, ":");
 	if (tail == NULL) {
 
-		req->status = HTTP_BAD_REQUEST;
+		req->status = HTTP_UNAUTHORIZED;
 		Message("Invalid Basic Authorization data:%s", dec);
 		return;
 	}
@@ -550,7 +550,20 @@ HTTP_Method(
 		req->status = HTTP_UNAUTHORIZED;
 	}
 	if (req->status != HTTP_OK) {
-		SendResponse(req, NULL , NULL);
+		if (req->status == HTTP_UNAUTHORIZED) {
+			const char *str = "WWW-Authenticate: Basic realm=\"glserver\"\r\n";
+			char *p;
+			LargeByteString *headers;
+
+			headers = NewLBS();
+			LBS_ReserveSize(headers,strlen(str)+1,FALSE);
+			p = LBS_Body(headers);
+			strcpy(p, str);
+			SendResponse(req, headers, NULL);
+			FreeLBS(headers);
+		} else {
+			SendResponse(req, NULL , NULL);
+		}
 		return;
 	}
 	data = MakeMonAPIData(req);
