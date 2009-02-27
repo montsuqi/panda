@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,10 +25,10 @@
 #include	"blob.h"
 
 extern	void	InitDB_Process(NETFILE *fp);
-extern	int		ExecDBOP(DBG_Struct *dbg, char *sql);
-extern	void	ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec, ValueStruct *args);
-extern	void	TransactionStart(DBG_Struct *dbg);
-extern	void	TransactionEnd(DBG_Struct *dbg);
+extern	int		ExecDBOP(DBG_Struct *dbg, char *sql, int usage);
+extern	ValueStruct	*ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec, ValueStruct *args);
+extern	int	TransactionStart(DBG_Struct *dbg);
+extern	int	TransactionEnd(DBG_Struct *dbg);
 extern	int		GetDBStatus(void);
 extern	void	RedirectError(void);
 extern	int		OpenDB(DBG_Struct *dbg);

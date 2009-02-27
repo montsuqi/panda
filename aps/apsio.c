@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -86,8 +85,12 @@ CheckCache(
 
 ENTER_FUNC;
 	if		(  ( ent = g_hash_table_lookup(CacheTable,term) )  !=  NULL  ) {
-		NativeUnPackValue(NULL,ent->linkdata->body,node->linkrec->value);
-		NativeUnPackValue(NULL,ent->spadata->body,node->sparec->value);
+		if		(  node->linkrec  !=  NULL  ) {
+			NativeUnPackValue(NULL,ent->linkdata->body,node->linkrec->value);
+		}
+		if		(  node->sparec  !=  NULL  ) {
+			NativeUnPackValue(NULL,ent->spadata->body,node->sparec->value);
+		}
 		ret = TRUE;
 	} else {
 		ret = FALSE;
@@ -174,27 +177,31 @@ ENTER_FUNC;
 	}
 #endif
 
-	size =  NativeSizeValue(NULL,node->linkrec->value);
-	LBS_ReserveSize(buff,size,FALSE);
-	NativePackValue(NULL,buff->body,node->linkrec->value);
-	if		(	(  ent->linkdata  ==  NULL  )
-			||	(  memcmp(buff->body,ent->linkdata->body,size)  ) ) {
+	if		(  node->linkrec  !=  NULL  ) {
+		size =  NativeSizeValue(NULL,node->linkrec->value);
+		LBS_ReserveSize(buff,size,FALSE);
+		NativePackValue(NULL,buff->body,node->linkrec->value);
+		if		(	(  ent->linkdata  ==  NULL  )
+				||	(  memcmp(buff->body,ent->linkdata->body,size)  ) ) {
 			flag |= APS_LINKDATA;
 			if		(  ent->linkdata  !=  NULL  ) {
 				FreeLBS(ent->linkdata);
 			}
 			ent->linkdata = LBS_Duplicate(buff);
+		}
 	}
-	size =  NativeSizeValue(NULL,node->sparec->value);
-	LBS_ReserveSize(buff,size,FALSE);
-	NativePackValue(NULL,buff->body,node->sparec->value);
-	if		(	(  ent->spadata  ==  NULL  )
-			||	(  memcmp(buff->body,ent->spadata->body,size)  ) ) {
+	if		(  node->sparec  !=  NULL  ) {
+		size =  NativeSizeValue(NULL,node->sparec->value);
+		LBS_ReserveSize(buff,size,FALSE);
+		NativePackValue(NULL,buff->body,node->sparec->value);
+		if		(	(  ent->spadata  ==  NULL  )
+				||	(  memcmp(buff->body,ent->spadata->body,size)  ) ) {
 			flag |= APS_SPADATA;
 			if		(  ent->spadata  !=  NULL  ) {
 				FreeLBS(ent->spadata);
 			}
 			ent->spadata = LBS_Duplicate(buff);
+		}
 	}
 LEAVE_FUNC;
 	return	(flag);
@@ -281,12 +288,16 @@ ENTER_FUNC;
 			  case	APS_LINKDATA:
 				dbgmsg("LINKDATA");
 				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				NativeUnPackValue(NULL,LBS_Body(buff),node->linkrec->value);
+				if		(  node->linkrec  !=  NULL  ) {
+					NativeUnPackValue(NULL,LBS_Body(buff),node->linkrec->value);
+				}
 				break;
 			  case	APS_SPADATA:
 				dbgmsg("SPADATA");
 				RecvLBS(fp,buff);					ON_IO_ERROR(fp,badio);
-				NativeUnPackValue(NULL,LBS_Body(buff),node->sparec->value);
+				if		(  node->sparec  !=  NULL  ) {
+					NativeUnPackValue(NULL,LBS_Body(buff),node->sparec->value);
+				}
 				break;
 			  case	APS_SCRDATA:
 				dbgmsg(">SCRDATA");
@@ -326,9 +337,15 @@ ENTER_FUNC;
 			}
 		}
 	}
+#ifdef	DEBUG
 	dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
-	dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
-	dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
+	if		(  node->linkrec  !=  NULL  ) {
+		dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
+	}
+	if		(  node->sparec  !=  NULL  ) {
+		dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
+	}
+#endif
   badio2:
 LEAVE_FUNC;
 	return	(fSuc); 

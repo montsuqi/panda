@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2002-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +32,7 @@
 #include	<unistd.h>
 #include	<glib.h>
 
+#include	"gettext.h"
 #include	"types.h"
 #include	"const.h"
 #include	"pgserver.h"
@@ -45,18 +45,18 @@
 
 static	char		*AuthURL;
 static	ARG_TABLE	option[] = {
-	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ポート番号"	 								},
+	{	"port",		STRING,	TRUE,		(void*)&PortNumber,
+		N_("Port")										},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"接続待ちキューの数" 							},
+		N_("connection waiting queue number")			},
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
-		"画面格納ディレクトリ"	 						},
+		N_("screen directory")	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"データ定義格納ディレクトリ"	 				},
+		N_("record directory")		 					},
 	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
-		"BLOBキャッシュディレクトリ名"					},
+		N_("BLOB cache directory")						},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
-		"認証サーバ"			 						},
+		N_("authentication server")	 					},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };

@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,9 +43,13 @@
 #define	APS_PING		(PacketClass)0xF2
 #define	APS_STOP		(PacketClass)0xF3
 #define	APS_REQ			(PacketClass)0xF4
+#define	APS_TERM		(PacketClass)0xF8
+#define	APS_API			(PacketClass)0xF9
 #define	APS_OK			(PacketClass)0xFE
 #define	APS_END			(PacketClass)0xFF
 
+#define SESSION_TYPE_TERM	0
+#define SESSION_TYPE_API	1
 
 typedef	struct {
 	NETFILE	*fp;
@@ -85,27 +88,36 @@ typedef	struct {
 	byte	puttype;
 }	MessageHeader;
 
+typedef struct {
+	int						method;
+	LargeByteString			*arguments;
+	LargeByteString			*headers;
+	LargeByteString			*body;
+}	APIData;
+
 typedef	struct _SessionData	{
-	char		*name;
-	TermNode	*term;
-	int			apsid;
-	Bool		fKeep;
-	Bool		fInProcess;
-	LD_Node		*ld;
-	size_t			cWindow;
-	int				retry;
-	Bool			fAbort;
-	MessageHeader	*hdr;
-	int				tnest;
-	GHashTable		*spadata;
-	GHashTable		*scrpool;
-	LargeByteString	*spa;
-	LargeByteString	*mcpdata;
-	LargeByteString	*linkdata;
-	LargeByteString	**scrdata;
-	struct	_SessionData	*prev
-	,						*next;
-	WindowControl	w;
+	int						type;
+	char					*name;
+	TermNode				*term;
+	int						apsid;
+	Bool					fKeep;
+	Bool					fInProcess;
+	LD_Node					*ld;
+	size_t					cWindow;
+	int						retry;
+	Bool					fAbort;
+	MessageHeader			*hdr;
+	int						tnest;
+	GHashTable				*spadata;
+	GHashTable				*scrpool;
+	LargeByteString			*spa;
+	LargeByteString			*mcpdata;
+	LargeByteString			*linkdata;
+	LargeByteString			**scrdata;
+	APIData					*apidata;
+	time_t					create_time;
+	time_t					access_time;
+	WindowControl			w;
 }	SessionData;
 
 #undef	GLOBAL

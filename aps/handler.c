@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -282,8 +281,11 @@ ENTER_FUNC;
 	SetValueString(GetItemLongName(mcp,"dc.status"),
 				   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
 				   NULL);
+	dbgprintf("node->dbstatus = %d",(int)node->dbstatus);
 	SetValueString(GetItemLongName(mcp,"dc.dbstatus"),
 				   DBSTATUS[(unsigned char)node->dbstatus],NULL);
+	SetValueInteger(GetItemLongName(mcp,"db.rcount"),0);
+	SetValueInteger(GetItemLongName(mcp,"db.limit"),1);
 	node->w.n = 0;
 	node->thisscrrec = bind->rec;
 	CurrentProcess = node;
@@ -468,10 +470,11 @@ ExecuteProcess(
 	MessageHandler	*handler;
 	char		compo[SIZE_LONGNAME+1];
 	struct	timeval	tv;
-	long	ever = 0
+	long	ever
 		,	now;
 
 ENTER_FUNC;
+	ever = 0;
 	PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
 					  compo);
 	dbgprintf("component [%s]",compo);

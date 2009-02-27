@@ -1,8 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,30 +65,36 @@ AuthUser(
 ENTER_FUNC;
 	if		(  strcmp(auth->protocol,"trust")  ==  0  ) {
 		rc = TRUE;
-	} else
-	if		(  !stricmp(auth->protocol,"glauth")  ) {
-		fh = ConnectIP_Socket(auth->port,SOCK_STREAM,auth->host);
-		if	( fh > 0) {
-			fp = SocketToNet(fh);
-			SendString(fp,user);
-			SendString(fp,pass);
-			if		(  ( rc = RecvBool(fp) )  ) {
-				RecvnString(fp, sizeof(buff), buff);
-				if		(  other  !=  NULL  ) {
-					strcpy(other,buff);
-				}
-			}
-			CloseNet(fp);
-		} else{
-			Warning("can not connect glauth server");
-			rc = FALSE;
-		}
-	} else
-	if		(  !stricmp(auth->protocol,"file")  ) {
-		rc = AuthSingle(auth->file,user,pass,NULL);
 	} else {
-		rc = FALSE;
+		if		(user == NULL || pass == NULL) {
+			return FALSE;
+		}
+		if		(  !stricmp(auth->protocol,"glauth")  ) {
+			fh = ConnectIP_Socket(auth->port,SOCK_STREAM,auth->host);
+			if	( fh > 0) {
+				fp = SocketToNet(fh);
+				SendString(fp,user);
+				SendString(fp,pass);
+				if		(  ( rc = RecvBool(fp) )  ) {
+					RecvnString(fp, sizeof(buff), buff);
+					if		(  other  !=  NULL  ) {
+						strcpy(other,buff);
+					}
+				}
+				CloseNet(fp);
+			} else{
+				Warning("can not connect glauth server");
+				rc = FALSE;
+			}
+		} else {
+			if		(  !stricmp(auth->protocol,"file")  ) {
+				rc = AuthSingle(auth->file,user,pass,NULL);
+			} else {
+				rc = FALSE;
+			}
+		}
 	}
+
 	if		(  id  !=  NULL  ) {
 		if		(  rc  ) {
 			gettimeofday(&tv, (struct timezone *) 0);

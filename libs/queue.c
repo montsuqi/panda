@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,9 +42,20 @@ NewQueue(void)
 	que->head = NULL;
 	que->tail = NULL;
 	que->curr = NULL;
+	que->length = 0;
 	pthread_cond_init(&que->isdata,NULL);
 	pthread_mutex_init(&que->qlock,NULL);
 	return	(que);
+}
+
+extern	unsigned int
+GetQueueLength(
+	Queue	*que)
+{
+	if (que == NULL){
+		return 0;
+	}
+	return (que->length);
 }
 
 extern	Bool
@@ -69,6 +79,7 @@ ENTER_FUNC;
 			que->tail->next = el;
 		}
 		que->tail = el;
+		que->length++;
 		UnLockQueue(que);
 		ReleaseQueue(que);
 		rc = TRUE;
@@ -130,6 +141,35 @@ ENTER_FUNC;
 		que->head = el->next;
 		ret = el->data;
 		xfree(el);
+		que->length--;
+		UnLockQueue(que);
+	} else {
+		ret = NULL;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+extern	void	*
+DeQueueNoWait(
+	Queue	*que)
+{
+	QueueElement	*el;
+	void			*ret;
+
+ENTER_FUNC;
+	if		(	(  que             !=  NULL  )
+			&&	(  que->head       !=  NULL  )
+			&&	(  LockQueue(que)  ==  0     )) {
+		el = que->head;
+		if		(  el->next  ==  NULL  ) {
+			que->tail = NULL;
+		} else {
+			el->next->prev = NULL;
+		}
+		que->head = el->next;
+		ret = el->data;
+		xfree(el);
 		UnLockQueue(que);
 	} else {
 		ret = NULL;
@@ -159,6 +199,7 @@ ENTER_FUNC;
 			que->head = el->next;
 			ret = el->data;
 			xfree(el);
+			que->length--;
 		} else {
 			ret = NULL;
 		}
@@ -241,6 +282,7 @@ ENTER_FUNC;
 			}
 			ret = el->data;
 			xfree(el);
+			que->length--;
 		} else {
 			ret = NULL;
 		}

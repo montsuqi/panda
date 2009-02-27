@@ -1,8 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1996-1999 Ogochan.
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,5 +33,6 @@ extern	int		BindIP_Socket(char *port, int type);
 extern	int		BindUNIX_Socket(char *name, int type, int mode);
 extern	int		ConnectIP_Socket(char *port, int type, char *host);
 extern	int		ConnectUNIX_Socket(char *name, int type);
+extern	void	CleanUNIX_Socket(Port *port);
 
 #endif

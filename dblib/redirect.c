@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +82,7 @@ RecvSTATUS_Redirect(
 	int rc = FALSE;
 
 	SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
-	dbg->dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
+	dbg->process[PROCESS_UPDATE].dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
 	rc = TRUE;
 badio:
 	return rc;
@@ -112,7 +111,7 @@ ENTER_FUNC;
 			dbg->redirectData = NULL;
 			dbg->checkData = NULL;
 			if ( !fNoCheck ){
-				dbg->dbstatus = REDFAILURE;	
+				dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_REDFAILURE;	
 			}
 		} else {
 			dbg->fpLog = SocketToNet(fh);
@@ -192,7 +191,7 @@ ENTER_FUNC;
 		SendPacketClass(dbg->fpLog,RED_PING);
 		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
 			Warning("log server down?");
-			dbg->dbstatus = REDFAILURE;
+			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_REDFAILURE;
 			CloseDB_RedirectPort(dbg);
 			rc = FALSE;
 		}

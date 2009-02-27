@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2001-2005  ogochan
+# Copyright (C) 2001-2008  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,21 +16,27 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-require	'socket';
+require	'socket'
 
-VER="1.2.5";
+VER="1.4.0"
+#VER="1.4.3"
 
 class	DB_Server
 	def get_event
-	  msg = @s.gets.chomp;
-	  if  (  msg  =~  /^Exec\: (.*?)$/  )
-		rc = $1.to_i;
+	  msg = @s.gets.chomp
+	  if  (  msg  =~  /^Exec\: (.*?)\:(.*?)$/  )
+		rc = $1.to_i
+		@count = $2.to_i
+	  elsif  (  msg  =~  /^Exec\: (.*?)$/  )
+		rc = $1.to_i
+		@count = 1
 	  else
-		printf("error: connection lost ?\n");
+		printf("error: connection lost ?\n")
 		@s.close
-		rc = -1;
+		@count = 0
+		rc = -1
 	  end
-	  rc;
+	  return rc
 	end
 	def decode(string)
 	  if  string
@@ -64,40 +70,83 @@ class	DB_Server
 	  end
 	end
 	def exec_data(rec)
-	  rec.each{ | name, value | @s.printf("%s: %s\n",name,encode(value)) };
-	  @s.printf("\n");
+	  if rec
+		rec.each{ | name, value | @s.printf("%s: %s\n",name,encode(value.to_s)) }
+	  end
+	  @s.printf("\n")
 	end
-	def	dbops(func)
-	  @s.printf("Exec: %s\n",func);
-	  @s.printf("\n");
-	  rc = get_event;
-	  @s.printf("\n");
+	def	dbops(func):protected
+	  @s.printf("Exec: %s\n",func)
+	  @s.printf("\n")
+	  rc = get_event
+	  @s.printf("\n")
 	  rc;
+	end
+	def open
+	  return dbops("DBOPEN")
+	  rc;
+	end
+	def start
+	  return dbops("DBSTART")
+	end
+	def commit
+	  return dbops("DBCOMMIT")
+	end
+	def disconnect
+	  return dbops("DBDISCONNECT")
 	end
 	def	getSchema(rname,pname)
-	  @s.printf("Schema: %s:%s\n",rname,pname);
-	  @s.gets.chomp;
+	  @s.printf("Schema: %s:%s\n",rname,pname)
+	  @s.gets.chomp
 	end
-	def	getValues(rec,name)
-	  @s.printf("%s\n",name);
-	  @s.flush;
+	def	getValues(name,limit)
+	  if  ( limit == 1 )
+		@s.printf("%s\n",name)
+		rec = nil
+	  else
+		@s.printf("%s;%d\n",name,limit)
+		rec = Array.new
+	  end
+	  @s.flush
+	  item = nil
 	  while  is = @s.gets
 		is.chomp!
-#printf("is = [%s]\n",is);
-		break if  is  ==  "";
-		dat = is.split(/: /);
-		var = dat[0].split(/;/);
-		rec[var[0]] = decode(dat[1]);
+		printf("is = [%s]\n",is)
+		if  (  is  ==  ''  )
+		  break if !item
+		  if  (  @count  ==  1  )
+			rec = item
+			break
+		  else
+			rec << item
+		  end
+		  item = nil
+		else
+		  if  !item
+			item = Hash.new
+		  end
+		  dat = is.split(/: /)
+		  var = dat[0].split(/;/)
+#		  printf("name = [%s]\n",var[0])
+		  item[var[0]] = decode(dat[1])
+#		  printf("dat = [%s]\n",item[var[0]])
+#		  printf("type = [%s]\n",var[1])
+		end
 	  end
-	  @s.printf("\n");
-	  rec;
+	  @s.printf("\n")
+	  @s.flush;
+	  return rec
 	end
-	def	recordops(func,rname,pname,rec)
-	  @s.printf("Exec: %s:%s:%s\n",func,rname,pname);
+	def	recordops(func,rname,pname,rec=nil,limit=1)
+	  if  ( limit == 1 )
+		@s.printf("Exec: %s:%s:%s\n",func,rname,pname);
+	  else
+		@s.printf("Exec: %s:%s:%s:%d\n",func,rname,pname,limit);
+	  end
+	  @s.flush;
 	  exec_data(rec)
 	  rc = get_event;
-	  getValues(rec,rname);
-	  rc;
+	  return getValues(rname,limit);
 	end
 	def	close
 		@s.printf("End\n");

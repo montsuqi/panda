@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2001-2005  ogochan
+# Copyright (C) 2001-2008  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 require	'dbslib';
 
-server = DB_Server.new("localhost",0,"ogochan",";suPer00");
+server = DB_Server.new("localhost",0,"ogochan","ogochan");
 
 adrs = Hash.new(nil);
 

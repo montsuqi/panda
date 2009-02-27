@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2007  ogochan
+# Copyright (C) 2005-2008  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
+lib_LTLIBRARIES = panda.la libpanda.la
+
 noinst_LIBRARIES	=		\
 	libpanda.a				\
 	libpandas.a				\
@@ -31,9 +33,10 @@ noinst_PROGRAMS		=		\
 	testnet					\
 	testblob
 
-lib_LTLIBRARIES		=	panda.la
-
-panda_la_LDFLAGS	=	-module -export-dynamic
+panda_la_LDFLAGS	=			\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
 
 panda_la_DEPENDENCIES =				\
 	enum.h
@@ -104,6 +107,42 @@ testnet_DEPENDENCIES	=		\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
+libpanda_la_CFLAGS = $(AM_CFLAGS)
+libpanda_la_LDFLAGS	=	\
+	-version-info $(LTVERSION)	\
+	-export-dynamic
+libpanda_la_SOURCES	=		\
+	Dlex.h							\
+	mhandler.c		mhandler.h		\
+	DDparser.c		DDparser.h		\
+	BDparser.c		BDparser.h		\
+	LDparser.c		LDparser.h		\
+	DBDparser.c		DBDparser.h		\
+	DIparser.c		DIparser.h		\
+	DBparser.c		DBparser.h		\
+	SQLlex.c		SQLlex.h		\
+	SQLparser.c		SQLparser.h		\
+	term.c			term.h			\
+	blobreq.c		blobreq.h		\
+	directory.c		directory.h		\
+	driver.c		driver.h	enum.h	\
+	load.c			load.h			\
+	blobcom.h						\
+	debug.h							\
+	applications.c	applications.h	\
+	front.c			front.h			\
+	comm.c			comm.h			\
+	comms.c			comms.h			\
+	auth.c			auth.h			\
+	authstub.c		authstub.h		\
+	net.c			net.h			\
+	socket.c		socket.h		\
+	port.c			port.h			\
+	pty.c			pty.h			\
+	option.c		option.h		\
+	message.c		message.h		\
+	queue.c			queue.h
+
 libpanda_a_CFLAGS = $(AM_CFLAGS)
 libpanda_a_SOURCES	=				\
 	Dlex.h							\
@@ -136,6 +175,7 @@ libpandas_a_SOURCES	=			\
 	glcomm.c	glcomm.h			\
 	auth.c		auth.h				\
 	authstub.c	authstub.h			\
+	monapi.c	monapi.h			\
 	load.c		load.h
 
 libpandas_a_DEPENDENCIES	=		\

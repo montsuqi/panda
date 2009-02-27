@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2007  ogochan
+# Copyright (C) 2005-2008  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,8 +64,7 @@ INCLUDES 			= \
 
 htserver_SOURCES	=	\
 	htserver.c	htserver.h	\
-	server.c	\
-	trid.c		trid.h
+	server.c
 htserver_DEPENDENCIES	=				\
 	$(top_builddir)/libs/libpandas.a		\
 	$(top_builddir)/libs/libpandamisc.a	\

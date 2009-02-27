@@ -1,8 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,38 +77,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	void
-ExecuteServer(void)
-{
-	int		pid;
-	int		fd
-	,		_fd;
-	NETFILE	*fp;
-	Port	*port;
-
-ENTER_FUNC;
-	port = ParPortName(PortNumber);
-	_fd = InitServerPort(port,Back);
-
-	while	(TRUE)	{
-		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
-			printf("_fd = %d\n",_fd);
-			Error("INET Domain Accept");
-		}
-		if		(  ( pid = fork() )  >  0  )	{	/*	parent	*/
-			close(fd);
-		} else
-		if		(  pid  ==  0  )	{	/*	child	*/
-			close(_fd);
-			fp = SocketToNet(fd);
-			Session(fp);
-			CloseNet(fp);
-			exit(1);
-		}
-	}
-LEAVE_FUNC;
-}
-
 static	void
 InitData(void)
 {
@@ -118,8 +85,7 @@ LEAVE_FUNC;
 }
 
 static	void
-InitPasswd(
-	int		dummy)
+InitPasswd(void)
 {
 ENTER_FUNC;
 	AuthLoadPasswd(PasswordFile);
@@ -130,9 +96,38 @@ static	void
 InitSystem(void)
 {
 ENTER_FUNC;
-	InitPasswd(0);
+	InitPasswd();
 	InitData();
 LEAVE_FUNC;
+}
+
+static	Bool
+CheckPassword(void)
+{
+	struct  stat    stbuf;
+	static  off_t stsize;
+	static  time_t stmtime;
+	static  time_t stctime;
+
+	if		(stat(PasswordFile,&stbuf)  ==  0 )		{
+		if	(	(stmtime != stbuf.st_mtime )
+			 || (stctime != stbuf.st_ctime )
+			 || (stsize != stbuf.st_size ) ) {
+			stmtime = stbuf.st_mtime;
+			stctime = stbuf.st_ctime;
+			stsize = stbuf.st_size;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+static	void
+_InitPasswd(int dummy)
+{
+	Message("%s reload", PasswordFile);
+	InitPasswd();
+	CheckPassword();
 }
 
 static	void
@@ -164,6 +159,42 @@ SetDefault(void)
 	PasswordFile = "./passwd";
 }
 
+extern	void
+ExecuteServer(void)
+{
+	int		pid;
+	int		fd
+	,		_fd;
+	NETFILE	*fp;
+	Port	*port;
+
+ENTER_FUNC;
+	port = ParPortName(PortNumber);
+	_fd = InitServerPort(port,Back);
+	CheckPassword();
+
+	while	(TRUE)	{
+		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
+			printf("_fd = %d\n",_fd);
+			Error("INET Domain Accept");
+		}
+		if	(	CheckPassword() )	{
+			_InitPasswd(0);
+		}
+		if		(  ( pid = fork() )  >  0  )	{	/*	parent	*/
+			close(fd);
+		} else
+		if		(  pid  ==  0  )	{	/*	child	*/
+			close(_fd);
+			fp = SocketToNet(fd);
+			Session(fp);
+			CloseNet(fp);
+			exit(1);
+		}
+	}
+LEAVE_FUNC;
+}
+
 extern	int
 main(
 	int		argc,
@@ -176,7 +207,7 @@ main(
 #ifdef	DEBUG
 #endif
 	InitNET();
-	(void)signal(SIGHUP, InitPasswd);
+	(void)signal(SIGHUP, _InitPasswd);
 	(void)signal(SIGCHLD, (void *)OnChildExit);
 
 	InitSystem();

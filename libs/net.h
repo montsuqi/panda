@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,6 +71,7 @@ typedef	struct _NETFILE	{
 extern	Bool		Flush(NETFILE *fp);
 extern	int			Send(NETFILE *fp, void *buff, size_t size);
 extern	int			Recv(NETFILE *fp, void *buff, size_t size);
+extern	int			RecvAtOnce(NETFILE *fp, char *buff, size_t size);
 extern	int			nputc(int c, NETFILE *fp);
 extern	int			ngetc(NETFILE *fp);
 
@@ -84,6 +84,11 @@ extern	void		NetSetFD(NETFILE *fp, int fd);
 extern	void		InitNET(void);
 #define	NetGetFD(fp)	((fp)->fd)
 #ifdef	USE_SSL
+extern	void 		SetAskPassFunction(
+						int (*func)(
+							char *buf, 
+							size_t buflen, 
+							const char *prompt));
 extern  char		*GetSSLErrorMessage(void);
 extern  char		*GetSSLWarningMessage(void);
 extern	NETFILE		*MakeSSL_Net(SSL_CTX *ctx, int fd);

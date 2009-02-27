@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,6 +50,41 @@
 #include	"dirs.h"
 #include	"RecParser.h"
 #include	"debug.h"
+
+typedef	struct {
+	int		major;
+	int		minor;
+	int		micro;
+}	tVersionNumber;
+
+static	void
+ParseVersion(
+	char	*str,
+	tVersionNumber	*ver)
+{
+	ver->major = 0;
+	ver->minor = 0;
+	ver->micro = 0;
+
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		ver->major = ver->major * 10 + ( *str - '0' );
+		str ++;
+	}
+	if		(  *str  !=  0  )	str ++;
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		ver->minor = ver->minor * 10 + ( *str - '0' );
+		str ++;
+	}
+	if		(  *str  !=  0  )	str ++;
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		ver->micro = ver->micro * 10 + ( *str - '0' );
+		str ++;
+	}
+	dbgprintf("%d.%d.%d",ver->major,ver->minor,ver->micro);
+}
 
 static	void
 FinishSession(
@@ -170,17 +204,18 @@ MainLoop(
 	Bool	ret;
 	char	buff[SIZE_BUFF+1];
 	char	*pass;
-	char	*ver;
 	char	*p
-	,		*q;
+		,	*q;
+	tVersionNumber  ver;
 
 ENTER_FUNC;
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
+	dbgprintf("[%s]",buff);
 	if		(  strncmp(buff,"Start: ",7)  ==  0  ) {
 		dbgmsg("start");
 		p = buff + 7;
 		*(q = strchr(p,' ')) = 0;
-		ver = p;
+		ParseVersion(p,&ver);
 		p = q + 1;
 		*(q = strchr(p,' ')) = 0;
 		strcpy(scr->user,p);
@@ -188,12 +223,14 @@ ENTER_FUNC;
 		*(q = strchr(p,' ')) = 0;
 		pass = p;
 		strcpy(scr->cmd,q+1);
-		if		(  strcmp(ver,VERSION)  ) {
+		if		(  ( ver.major <  1 ) ||
+				   ( ( ver.major == 1 ) && ( ver.minor <  2 ) ) ||
+				   ( ( ver.major == 1 ) && ( ver.minor == 2 ) && 
+                     ( ver.micro < 5 ) ) ) {
 			SendStringDelim(fpComm,"Error: version\n");
 			Message("reject client(invalid version)");
 		} else 
 		if		(  AuthUser(&Auth,scr->user,pass,scr->other,NULL)  ) {
-			scr->Windows = NULL;
 			ApplicationsCall(APL_SESSION_LINK,scr);
 			if		(  scr->status  ==  APL_SESSION_NULL  ) {
 				SendStringDelim(fpComm,"Error: application\n");

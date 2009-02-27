@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,6 +73,7 @@ static	char	*LD_Name;
 static	char	*BD_Name;
 static	char	*Directory;
 static	char	*Lang;
+static	int		Top;
 
 static	CONVOPT	*Conv;
 
@@ -428,7 +428,7 @@ MakeFromRecord(
 	char			*ValueName;
 
 ENTER_FUNC;
-	level = 1;
+	level = Top;
 	RecParserInit();
 	DB_ParserInit();
 	if		(  ( rec = DB_Parser(name,NULL,&ValueName,FALSE) )  !=  NULL  ) {
@@ -457,9 +457,10 @@ MakeLD(void)
 	char	buff[SIZE_BUFF+1];
 	char	*_prefix;
 	size_t	size
-	,		num
-	,		spasize
-	,		mcpsize;
+		,	num
+		,	spasize
+		,	linksize
+		,	mcpsize;
 	int		base;
 
 ENTER_FUNC;
@@ -469,7 +470,7 @@ ENTER_FUNC;
 		Error("LD not found.\n");
 	}
 
-	PutLevel(1,TRUE);
+	PutLevel(Top,TRUE);
 	if		(  *RecName  ==  0  ) {
 		sprintf(buff,"%s",ld->name);
 	} else {
@@ -480,11 +481,11 @@ ENTER_FUNC;
 
 	ConvSetSize(Conv,ld->textsize,ld->arraysize);
 
-	base = 2;
+	base = Top+1;
 	if		(	(  fLDR     )
 			||	(  fLDW     ) ) {
 		size =	SizeValue(Conv,ThisEnv->mcprec->value)
-			+	ThisEnv->linksize
+			+	SizeValue(Conv,ThisEnv->linkrec->value)
 			+	SizeValue(Conv,ld->sparec->value);
 		for	( i = 0 ; i < ld->cWindow ; i ++ ) {
 			size += SizeValue(Conv,ld->windows[i]->value);
@@ -560,7 +561,7 @@ ENTER_FUNC;
 		}
 	}
 	if		(  fLinkage  ) {
-		if		(  SizeValue(Conv,ThisEnv->linkrec->value)  >  0  ) {
+		if		(  ( linksize = SizeValue(Conv,ThisEnv->linkrec->value) )  >  0  ) {
 			PutLevel(base,TRUE);
 			PutName("linkdata");
 			level = base;
@@ -570,7 +571,7 @@ ENTER_FUNC;
 				printf(".\n");
 				PutLevel(level+1,TRUE);
 				PutName("filler");
-				printf("      PIC X(%d)",(int)ThisEnv->linksize);
+				printf("      PIC X(%d)",(int)linksize);
 			} else {
 				_prefix = Prefix;
 				Prefix = "lnk-";
@@ -614,7 +615,7 @@ ENTER_FUNC;
 	}
 	if		(	(  fLDR     )
 			||	(  fLDW     ) ) {
-		PutLevel(1,TRUE);
+		PutLevel(Top,TRUE);
 		PutName("blocks");
 		PutTab(8);
 		printf("PIC S9(9)   BINARY  VALUE   %d.\n",(int)num);
@@ -631,13 +632,10 @@ MakeLinkage(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	dbgmsg("*");
 	SetUpDirectory(Directory,LD_Name,"","",TRUE);
-	dbgmsg("*");
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
-	dbgmsg("*");
 
 	ConvSetSize(Conv,ld->textsize,ld->arraysize);
 
@@ -657,21 +655,21 @@ ENTER_FUNC;
 #endif
 	_prefix = Prefix;
 	Prefix = "";
-	PutLevel(1,TRUE);
+	PutLevel(Top,TRUE);
 	PutName("linkarea.\n");
-	PutLevel(2,TRUE);
+	PutLevel(Top+1,TRUE);
 	PutName("linkdata-redefine.\n");
-	PutLevel(3,TRUE);
+	PutLevel(Top+2,TRUE);
 	PutName("filler");
 	printf("      PIC X(%d).\n",(int)size);
 
-	PutLevel(2,TRUE);
+	PutLevel(Top+1,TRUE);
 	PutName(ld->name);
 	PutTab(4);
 	printf("REDEFINES   ");
 	PutName("linkdata-redefine");
 	Prefix = _prefix;
-	level = 3;
+	level = Top+2;
 	COBOL(Conv,ThisEnv->linkrec->value);
 	printf(".\n");
 LEAVE_FUNC;
@@ -716,7 +714,7 @@ MakeDB(void)
 
 	ConvSetSize(Conv,textsize,arraysize);
 
-	PutLevel(1,TRUE);
+	PutLevel(Top,TRUE);
 	PutName("dbarea");
 	printf(".\n");
 	msize = 0;
@@ -725,7 +723,7 @@ MakeDB(void)
 		msize = ( msize > size ) ? msize : size;
 	}
 
-	PutLevel(2,TRUE);
+	PutLevel(Top+1,TRUE);
 	PutName("dbdata");
 	PutTab(12);
 	printf("PIC X(%d).\n",(int)msize);
@@ -742,7 +740,7 @@ PutDBREC(
 	char	prefix[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-	level = 1;
+	level = Top;
 	PutLevel(level,TRUE);
 	if		(  fRecordPrefix  ) {
 		sprintf(prefix,"%s-",rname);
@@ -758,7 +756,7 @@ ENTER_FUNC;
 	if		(  !fNoFiller  ) {
 		size = SizeValue(Conv,value);
 		if		(  msize  !=  size  ) {
-			PutLevel(2,TRUE);
+			PutLevel(Top+1,TRUE);
 			PutName("filler");
 			PutTab(12);
 			printf("PIC X(%d).\n",(int)(msize - size));
@@ -790,7 +788,7 @@ MakeDBREC(
 	char			*p;
 	int				rno;
 
-dbgmsg(">MakeDBREC");
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
@@ -872,7 +870,7 @@ dbgmsg(">MakeDBREC");
 			}
 		}
 	}
-dbgmsg("<MakeDBREC");
+LEAVE_FUNC;
 }
 
 static	void
@@ -889,6 +887,7 @@ MakeDBCOMM(void)
 	,			textsize;
 	size_t	cDB;
 
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
@@ -921,74 +920,75 @@ MakeDBCOMM(void)
 		msize = ( msize > size ) ? msize : size;
 	}
 
-	PutLevel(1,TRUE);
+	PutLevel(Top,TRUE);
 	PutName("dbcomm");
 	printf(".\n");
 
 	num = ( ( msize + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 
-	PutLevel(2,TRUE);
+	PutLevel(Top+1,TRUE);
 	PutName("dbcomm-blocks");
 	printf(".\n");
 
-	PutLevel(3,TRUE);
+	PutLevel(Top+2,TRUE);
 	PutName("dbcomm-block");
 	PutTab(12);
 	printf("OCCURS  %d.\n",(int)num);
 
-	PutLevel(4,TRUE);
+	PutLevel(Top+3,TRUE);
 	PutName("filler");
 	PutTab(12);
 	printf("PIC X(%d).\n",SIZE_BLOCK);
 
-	PutLevel(2,TRUE);
+	PutLevel(Top+1,TRUE);
 	PutName("dbcomm-data");
 	PutTab(4);
 	printf("REDEFINES   ");
 	PutName("dbcomm-blocks");
 	printf(".\n");
 
-	PutLevel(3,TRUE);
+	PutLevel(Top+2,TRUE);
 	PutName("dbcomm-ctrl");
 	printf(".\n");
 
-	PutLevel(4,TRUE);
+	PutLevel(Top+3,TRUE);
 	PutName("dbcomm-func");
 	PutTab(12);
 	printf("PIC X(16).\n");
 
-	PutLevel(4,TRUE);
+	PutLevel(Top+3,TRUE);
 	PutName("dbcomm-rc");
 	PutTab(12);
 	printf("PIC S9(9)   BINARY.\n");
 
-	PutLevel(4,TRUE);
+	PutLevel(Top+3,TRUE);
 	PutName("dbcomm-path");
 	printf(".\n");
 
-	PutLevel(5,TRUE);
+	PutLevel(Top+4,TRUE);
 	PutName("dbcomm-path-blocks");
 	PutTab(12);
 	printf("PIC S9(9)   BINARY.\n");
 
-	PutLevel(5,TRUE);
+	PutLevel(Top+4,TRUE);
 	PutName("dbcomm-path-rname");
 	PutTab(12);
 	printf("PIC S9(9)   BINARY.\n");
 
-	PutLevel(5,TRUE);
+	PutLevel(Top+4,TRUE);
 	PutName("dbcomm-path-pname");
 	PutTab(12);
 	printf("PIC S9(9)   BINARY.\n");
 
-	PutLevel(3,TRUE);
+	PutLevel(Top+2,TRUE);
 	PutName("dbcomm-record");
 	printf(".\n");
 
-	PutLevel(4,TRUE);
+	PutLevel(Top+3,TRUE);
 	PutName("filler");
 	PutTab(12);
 	printf("PIC X(%d).\n",(int)msize);
+LEAVE_FUNC;
 }
 
 static	void
@@ -1007,7 +1007,7 @@ MakeDBPATH(void)
 	,			textsize;
 	size_t	cDB;
 
-dbgmsg(">MakeDBPATH");
+ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
@@ -1038,7 +1038,7 @@ dbgmsg(">MakeDBPATH");
 
 	ConvSetSize(Conv,textsize,arraysize);
 
-	PutLevel(1,TRUE);
+	PutLevel(Top,TRUE);
 	PutName("dbpath");
 	printf(".\n");
 	for	( i = 1 ; i < cDB ; i ++ ) {
@@ -1047,28 +1047,28 @@ dbgmsg(">MakeDBPATH");
 		blocks = ( ( size + sizeof(DBCOMM_CTRL) ) / SIZE_BLOCK ) + 1;
 		
 		for	( j = 0 ; j < db->pcount ; j ++ ) {
-			PutLevel(2,TRUE);
+			PutLevel(Top+1,TRUE);
 			sprintf(buff,"path-%s-%s",dbrec[i]->name,db->path[j]->name);
 			PutName(buff);
 			printf(".\n");
 
-			PutLevel(3,TRUE);
+			PutLevel(Top+2,TRUE);
 			PutName("filler");
 			PutTab(12);
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",blocks);
 
-			PutLevel(3,TRUE);
+			PutLevel(Top+2,TRUE);
 			PutName("filler");
 			PutTab(12);
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",i);
 
-			PutLevel(3,TRUE);
+			PutLevel(Top+2,TRUE);
 			PutName("filler");
 			PutTab(12);
 			printf("PIC S9(9)   BINARY  VALUE %d.\n",j);
 		}
 	}
-dbgmsg("<MakeDBPATH");
+LEAVE_FUNC;
 }
 
 static	void
@@ -1079,22 +1079,24 @@ ENTER_FUNC;
 	SetUpDirectory(Directory,"","","",TRUE);
 
 	Prefix = "";
-	PutLevel(1,TRUE);
+	PutLevel(Top,TRUE);
 	PutName("mcparea");
 	Prefix = "mcp_";
-	level = 1;
+	level = Top;
 	COBOL(Conv,ThisEnv->mcprec->value);
 	printf(".\n");
 LEAVE_FUNC;
 }
 
 static	ARG_TABLE	option[] = {
+	{	"top",		INTEGER,	TRUE,		(void*)&Top,
+		"top level number"								},
 	{	"ldw",	BOOLEAN,	TRUE,		(void*)&fLDW,
-		"制御フィールド以外をFILLERにする"				},
+		"制御フィールド以外をFILLERにする(dotCOBOL)"	},
 	{	"ldr",	BOOLEAN,	TRUE,		(void*)&fLDR,
-		"制御フィールドとSPA以外をFILLERにする"			},
+		"制御フィールドとSPA以外をFILLERにする(dotCOBOL)"},
 	{	"spa",		BOOLEAN,	TRUE,	(void*)&fSPA,
-		"SPA領域を出力する"								},
+		"SPA領域を出力する(dotCOBOL)"					},
 	{	"linkage",	BOOLEAN,	TRUE,	(void*)&fLinkage,
 		"連絡領域を出力する"							},
 	{	"screen",	BOOLEAN,	TRUE,	(void*)&fScreen,
@@ -1173,6 +1175,7 @@ SetDefault(void)
 	D_Dir = NULL;
 	Directory = "./directory";
 	Lang = "OpenCOBOL";
+	Top = 1;
 }
 
 extern	int

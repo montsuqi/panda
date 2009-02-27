@@ -1,6 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2003-2007 Shugo Maeda
+ * Copyright (C) 2003-2005 Shugo Maeda
+ * Copyright (C) 2006-2008 Shugo Maeda & JFBA (Japan Federation of Bar Association)
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

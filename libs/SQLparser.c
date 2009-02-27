@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -107,12 +106,17 @@ ParSQL(
 		,			*valf
 		,			*val;
 	Bool	fInto
-	,		fAster;
+		,	fAster
+		,	fDeclare;
 	size_t	mark
-	,		current;
+		,	current;
 	int		into;
 	int		n;
-	Bool	fInsert;
+	int		pred;
+#define	PRED_NULL			0
+#define	PRED_INSERT			1
+#define	PRED_SELECT			2
+#define	PRED_SELECT_CURSOR	3
 
 ENTER_FUNC;
 	sql = NewLBS();
@@ -121,7 +125,8 @@ ENTER_FUNC;
 	mark = 0;
 	into = 0;
 	fAster = FALSE;
-	fInsert = FALSE;
+	fDeclare = FALSE;
+	pred = PRED_NULL;
 	while	( ComToken != '}' ) {
 		switch	(ComToken) {
 		  case	T_SYMBOL:
@@ -160,77 +165,105 @@ ENTER_FUNC;
 		  case	T_INSERT:
 			LBS_EmitString(sql,ComSymbol);
 			LBS_EmitSpace(sql);
-			fInsert = TRUE;
+			pred = PRED_INSERT;
+			GetSymbol;
+			break;
+		  case	T_DECLARE:
+			LBS_EmitString(sql,"DECLARE ");
+			fDeclare = TRUE;
+			GetSymbol;
+			break;
+		  case	T_WHERE:
+			LBS_EmitString(sql,"WHERE ");
+			fInto = FALSE;
+			GetSymbol;
+			break;
+		  case	T_SELECT:
+			LBS_EmitString(sql,"SELECT ");
+			if		(  fDeclare  ) {
+				pred = PRED_SELECT_CURSOR;
+			} else {
+				pred = PRED_SELECT;
+			}
 			GetSymbol;
 			break;
 		  case	T_INTO:
-			if		(  !fInsert  ) {
+			switch	(pred) {
+			  case	PRED_INSERT:
+				LBS_EmitString(sql,"INTO ");
+				break;
+			  default:
 				LBS_Emit(sql,SQL_OP_ESC);
 				LBS_Emit(sql,SQL_OP_INTO);
 				mark = MarkCode(sql);
 				into = 0;
 				LBS_EmitInt(sql,0);
 				fInto = TRUE;
-			} else {
-				LBS_EmitString(sql,"INTO ");
+				break;
 			}
 			GetSymbol;
 			break;
 		  case	':':
-			if		(  fInto  ) {
-				LBS_Emit(sql,SQL_OP_ESC);
-				LBS_Emit(sql,SQL_OP_STO);
-				into ++;
-			} else {
-				LBS_Emit(sql,SQL_OP_ESC);
-				LBS_Emit(sql,SQL_OP_REF);
-			}
 			if		(  GetName  ==  T_SYMBOL  ) {
-                GString *str = g_string_new("");
-				valr = rec->value;
-				valp = argp;
-				valf = argf;
-				do {
-					valr = GetRecordItem(TraceAlias(rec,valr),ComSymbol);
-					valp = GetRecordItem(TraceAlias(rec,valp),ComSymbol);
-					valf = GetRecordItem(TraceAlias(rec,valf),ComSymbol);
-                    str = g_string_append(str, ComSymbol);
-					switch	(GetSymbol) {
-					  case	'.':
-						GetName;
-                        str = g_string_append_c(str, '.');
-						break;
-					  case	'[':
-						if (GetSymbol != T_SYMBOL) {
-                            ParError("parse error missing symbol after `['");
-                        }
-                        str = g_string_append_c(str, '[');
-                        str = g_string_append(str, ComSymbol);
-                        str = g_string_append_c(str, ']');
-                        n = atoi(ComSymbol) - 1;
-                        if (n < 0) {
-                            ParErrorPrintf("invalid array index: %s\n", ComSymbol);
-                        }
-                        if		(  GetSymbol  !=  ']'  ) {
-                            ParError("parse error missing symbol: `]'");
-                        }
-                        GetSymbol;
-						valr = TraceArray(valr,n);
-						valp = TraceArray(valp,n);
-						valf = TraceArray(valf,n);
-						break;
-					  default:
-						break;
+				if		(  strcmp(ComSymbol,"$limit")  ==  0  ) {
+					LBS_Emit(sql,SQL_OP_ESC);
+					LBS_Emit(sql,SQL_OP_LIMIT);
+					GetName;
+				} else {
+					if		(  fInto  ) {
+						LBS_Emit(sql,SQL_OP_ESC);
+						LBS_Emit(sql,SQL_OP_STO);
+						into ++;
+					} else {
+						LBS_Emit(sql,SQL_OP_ESC);
+						LBS_Emit(sql,SQL_OP_REF);
 					}
-					ERROR_BREAK;
-				}	while	(  ComToken  ==  T_SYMBOL  );
-				val = (  valp  !=  NULL  ) ? valp : valr;
-				val = (  valf  !=  NULL  ) ? valf : val;
-				if		(  val  ==  NULL  ) {
-					ParErrorPrintf("undeclared (first in use this file): `%s'\n", str->str);
+					GString *str = g_string_new("");
+					valr = rec->value;
+					valp = argp;
+					valf = argf;
+					do {
+						valr = GetRecordItem(TraceAlias(rec,valr),ComSymbol);
+						valp = GetRecordItem(TraceAlias(rec,valp),ComSymbol);
+						valf = GetRecordItem(TraceAlias(rec,valf),ComSymbol);
+						str = g_string_append(str, ComSymbol);
+						switch	(GetSymbol) {
+						  case	'.':
+							GetName;
+							str = g_string_append_c(str, '.');
+							break;
+						  case	'[':
+							if (GetSymbol != T_SYMBOL) {
+								ParError("parse error missing symbol after `['");
+							}
+							str = g_string_append_c(str, '[');
+							str = g_string_append(str, ComSymbol);
+							str = g_string_append_c(str, ']');
+							n = atoi(ComSymbol) - 1;
+							if (n < 0) {
+								ParErrorPrintf("invalid array index: %s\n", ComSymbol);
+							}
+							if		(  GetSymbol  !=  ']'  ) {
+								ParError("parse error missing symbol: `]'");
+							}
+							GetSymbol;
+							valr = TraceArray(valr,n);
+							valp = TraceArray(valp,n);
+							valf = TraceArray(valf,n);
+							break;
+						  default:
+							break;
+						}
+						ERROR_BREAK;
+					}	while	(  ComToken  ==  T_SYMBOL  );
+					val = (  valp  !=  NULL  ) ? valp : valr;
+					val = (  valf  !=  NULL  ) ? valf : val;
+					if		(  val  ==  NULL  ) {
+						ParErrorPrintf("undeclared (first in use this file): `%s'\n", str->str);
+					}
+					LBS_EmitPointer(sql,(void *)TraceAlias(rec,val));
+					g_string_free(str, TRUE);
 				}
-				LBS_EmitPointer(sql,(void *)TraceAlias(rec,val));
-                g_string_free(str, TRUE);
 				if		(  ComToken  ==  ','  ) {
 					if		(  !fInto  ) {
 						LBS_EmitChar(sql,',');
@@ -247,7 +280,7 @@ ENTER_FUNC;
 			}
 			break;
 		  case	';':
-			if		(  fInto  ) {
+			if		(  mark  >  0  ) {
 				current = MarkCode(sql);
 				SeekCode(sql,mark);
 				if		(  fAster  ) {
@@ -261,9 +294,22 @@ ENTER_FUNC;
 			LBS_Emit(sql,SQL_OP_EOL);
 			GetSymbol;
 			fInto = FALSE;
-			fInsert = FALSE;
+			pred = PRED_NULL;
+			fDeclare = FALSE;
 			break;
 		  case	'*':
+			switch	(pred) {
+			  case	PRED_SELECT:
+				LBS_Emit(sql,SQL_OP_ESC);
+				LBS_Emit(sql,SQL_OP_INTO);
+				mark = MarkCode(sql);
+				into = 0;
+				LBS_EmitInt(sql,0);
+				fInto = TRUE;
+				break;
+			  default:
+				break;
+			}
 			LBS_EmitChar(sql,'*');
 			LBS_EmitSpace(sql);
 			GetSymbol;

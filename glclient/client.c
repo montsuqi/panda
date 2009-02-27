@@ -1,8 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,16 +47,6 @@
 #include	<openssl/engine.h>
 #endif	//USE_PKCS11
 #endif	//USE_SSL
-#ifdef USE_GNOME
-#    include <gnome.h>
-#else
-#    include <gtk/gtk.h>
-#    include "gettext.h"
-#endif	//USE_GNOME
-#include	<glade/glade.h>
-#ifdef	USE_PANDA
-#include	<gtkpanda/gtkpanda.h>
-#endif	//USE_PANDA
 #define		MAIN
 #include	"const.h"
 #include	"types.h"
@@ -65,19 +54,16 @@
 #include	"socket.h"
 #include	"glterm.h"
 #include	"glclient.h"
-#include	"styleParser.h"
-#include	"dialogs.h"
 #include	"comm.h"
 #include	"protocol.h"
 #include	"message.h"
-#include	"bootdialog.h"
 #include	"debug.h"
+#include	"interface.h"
+#include	"gettext.h"
 
-static	char	*PortNumber;
-static	char	*Cache;
-static	char	*Style;
-static	char	*Gtkrc;
 static	Bool 	fDialog;
+static	char	*Config;
+static	Bool 	fConfigList;
 
 static void GLMessage(int level, char *file, int line, char *msg);
 
@@ -98,6 +84,7 @@ InitApplications(void)
 	ENGINE(glSession) = NULL;
 #endif	//USE_PKCS11
 #endif	//USE_SSL
+	TITLE(glSession) = NULL;
 }
 
 extern	void
@@ -119,7 +106,7 @@ static	ARG_TABLE	option[] = {
 	{	"user",		STRING,		TRUE,	(void*)&User,
 		N_("User")										},
 	{	"pass",		STRING,		TRUE,	(void*)&Pass,
-		N_("Passwrod")									},
+		N_("Password")									},
 	{	"v1",		BOOLEAN,	TRUE,	(void*)&Protocol1,
 		N_("Use Protocol Version 1")		},
 	{	"v2",		BOOLEAN,	TRUE,	(void*)&Protocol2,
@@ -130,19 +117,23 @@ static	ARG_TABLE	option[] = {
 		N_("Enable Keybuffer")						},
 	{	"dialog",	BOOLEAN,	TRUE,	(void*)&fDialog,
 		N_("Use Startup Dialog")						},
+	{	"config",		STRING,	TRUE,	(void*)&Config,
+		N_("Specify Config")							},
+	{	"configlist",BOOLEAN,	TRUE,	(void*)&fConfigList,
+		N_("List Config")						},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		N_("SSL Key File(pem/p12)")		 						},
+		N_("SSL Key File(pem/p12)")		 				},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		N_("Certificate(pem/p12)")	 						},
+		N_("Certificate(pem/p12)")	 					},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		N_("Use SSL")				 						},
+		N_("Use SSL")				 					},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		N_("CA Certificate Path")								},
+		N_("CA Certificate Path")						},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		N_("CA Certificate File")								},
+		N_("CA Certificate File")						},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		N_("SSL Cipher Sweet")						},
+		N_("SSL Cipher Sweet")							},
 #ifdef  USE_PKCS11
 	{	"pkcs11",		BOOLEAN,	TRUE,	(void*)&fPKCS11,
 		N_("Use Security Device")	 						},
@@ -159,31 +150,49 @@ static	void
 SetDefault(void)
 {
 	char *cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
-	PortNumber = "localhost:" PORT_GLTERM;
-	CurrentApplication = "demo";
+	PortNumber = g_strconcat(DEFAULT_HOST, ":", DEFAULT_PORT, NULL);
+	CurrentApplication = DEFAULT_APPLICATION;
 	Cache =  cachename;
-	Style = "";
-	Gtkrc = "";
+	Style = DEFAULT_STYLE;
+	Gtkrc = DEFAULT_GTKRC;
 	User = getenv("USER");
-	Pass = "";
-	Protocol1 = TRUE;
-	Protocol2 = FALSE;
-	fMlog = FALSE;
-	fKeyBuff = FALSE;
+	Pass = DEFAULT_PASSWORD;
+	SavePass = DEFAULT_SAVEPASSWORD;
+	Protocol1 = DEFAULT_PROTOCOL_V1;
+	Protocol2 = DEFAULT_PROTOCOL_V2;
+	fMlog = DEFAULT_MLOG;
+	fKeyBuff = DEFAULT_KEYBUFF;
+	fTimer = TRUE;
+	TimerPeriod = "1000";
+	Config = "";
+	fConfigList = FALSE;
 	fDialog = FALSE;
 #ifdef	USE_SSL
-	fSsl = FALSE;
-	KeyFile = NULL;
-	CertFile = NULL;
-	CA_Path = NULL;
-	CA_File = NULL;
-	Ciphers = "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH";
+	fSsl = DEFAULT_SSL;
+	KeyFile = DEFAULT_KEY;
+	CertFile = DEFAULT_CERT;
+	CA_Path = DEFAULT_CAPATH;
+	CA_File = DEFAULT_CAFILE;
+	Ciphers = DEFAULT_CIPHERS;
 #ifdef  USE_PKCS11
-    fPKCS11 = FALSE;
-    PKCS11_Lib = NULL;
-    Slot = NULL;
+    fPKCS11 = DEFAULT_PKCS11;
+    PKCS11_Lib = DEFAULT_PKCS11;
+    Slot = DEFAULT_SLOT;
 #endif	//USE_PKCS11
 #endif	//USE_SSL
+}
+
+extern	char	*
+CacheDirName(void)
+{
+	static	char	buf[SIZE_BUFF];
+
+	if (UI_Version() == UI_VERSION_1) {
+		sprintf(buf,"%s/%s",Cache,PortNumber);
+	} else {
+		sprintf(buf,"%s/glclient2/%s",Cache,PortNumber);
+	}
+	return	(buf);
 }
 
 extern	char	*
@@ -192,7 +201,7 @@ CacheFileName(
 {
 	static	char	buf[SIZE_BUFF];
 
-	sprintf(buf,"%s/%s/%s",Cache,PortNumber,name);
+	sprintf(buf,"%s/%s", CacheDirName() ,name);
 	return	(buf);
 }
 
@@ -233,23 +242,30 @@ mkdir_p(
 }
 
 extern  void
-MakeCacheDir(
-	char    *dname)
+MakeCacheDir(void)
 {
 	struct stat st;
+	char *dir;
 
-	if (stat(dname, &st) == 0){
+	dir = CacheDirName();
+
+	if (stat(dir, &st) == 0){
 		if (S_ISDIR(st.st_mode)) {
 			return ;
 		} else {
-			unlink (dname);
+			unlink (dir);
 		}
 	}
-	mkdir_p (Cache, 0755);
-	if  (mkdir (dname, 0755) < 0) {
-		GLError(_("could not write cache dir"));
-		exit(1);
+	mkdir_p (dir, 0755);
+}
+
+extern	void SetSessionTitle(
+	char *title)
+{
+	if ( TITLE(glSession) ) {
+		xfree(TITLE(glSession));
 	}
+	TITLE(glSession) = StrDup(title);
 }
 
 static	void
@@ -258,62 +274,7 @@ bannar(void)
 	printf(_("glclient ver %s\n"),VERSION);
 	printf(_("Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n"));
 	printf(_("              2000-2003 Masami Ogoshi & JMA.\n"));
-}
-
-static gboolean
-show_boot_dialog ()
-{
-    static char *PortNumber_ = NULL;
-
-    BootProperty prop;
-
-    if (!boot_dialog_run ())
-        return FALSE;
-
-    boot_property_config_to_property (&prop);
-
-    g_free (PortNumber_);
-    PortNumber = PortNumber_ = g_strconcat (prop.host, ":", prop.port, NULL);
-    CurrentApplication = prop.application;
-    Protocol1 = prop.protocol_v1;
-    Protocol2 = prop.protocol_v2;
-    Cache = prop.cache;
-    Style = prop.style;
-    Gtkrc = prop.gtkrc;
-    fMlog = prop.mlog;
-    fKeyBuff = prop.keybuff;
-    User = prop.user;
-    Pass = prop.password;
-#ifdef	USE_SSL
-	fSsl = prop.ssl;
-	if ( strlen(prop.key) != 0 ){
-		KeyFile = prop.key;
-	}
-	if ( strlen(prop.cert) != 0 ){
-		CertFile = prop.cert;
-	}
-	if ( strlen(prop.CApath) != 0 ){
-		CA_Path = prop.CApath;
-	}
-	if ( strlen(prop.CAfile) != 0 ){	
-		CA_File = prop.CAfile;
-	}
-	if ( strlen(prop.ciphers) != 0 ){	
-		Ciphers = prop.ciphers;
-	}
-#ifdef  USE_PKCS11
-    fPKCS11 = prop.pkcs11;
-    if (fPKCS11){
-	    if ( strlen(prop.pkcs11_lib) != 0 ){	
-	    	PKCS11_Lib = prop.pkcs11_lib;
-	    }
-	    if ( strlen(prop.slot) != 0 ){
-	    	Slot = prop.slot;
-	    }
-    }
-#endif 	//USE_PKCS11
-#endif	//USE_SSL
-    return TRUE;
+	printf(_("              2004-2007 Masami Ogoshi\n"));
 }
 
 #ifdef	USE_SSL
@@ -343,16 +304,14 @@ MakeFPCOMM (int fd)
 		_MakeSSL_CTX();
 
         if (CTX(glSession) == NULL){
-			GLError(GetSSLErrorMessage());
-			return FALSE;
+			UI_ErrorDialog(GetSSLErrorMessage());
         }
         if ((FPCOMM(glSession) = MakeSSL_Net(CTX(glSession),fd)) != NULL){
             if (StartSSLClientSession(FPCOMM(glSession), IP_HOST(glSession->port)) != TRUE){
-				GLError(GetSSLErrorMessage());
-				return FALSE;
+				UI_ErrorDialog(GetSSLErrorMessage());
             }
         }
-		GLError(GetSSLWarningMessage());
+		UI_ErrorDialog(GetSSLWarningMessage());
     }
 #else
 	FPCOMM(glSession) = SocketToNet(fd);
@@ -367,7 +326,7 @@ start_client ()
 
     glSession->port = ParPort(PortNumber,PORT_GLTERM);
 	if (  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
-		GLError(_("can not connect server(server port not found)"));
+		UI_ErrorDialog(_("can not connect server(server port not found)"));
         return FALSE;
 	}
 	InitProtocol();
@@ -376,7 +335,7 @@ start_client ()
 	if (SendConnect(FPCOMM(glSession),CurrentApplication)) {
 		CheckScreens(FPCOMM(glSession),TRUE);
 		(void)GetScreenData(FPCOMM(glSession));
-		gtk_main();  
+		UI_Main();
 	}
 	
 	return FALSE;
@@ -409,11 +368,23 @@ GLMessage(int level, char *file, int line, char *msg)
 	switch(level){
 	  case MESSAGE_WARN:
 	  case MESSAGE_ERROR:
-		GLError(msg);
+		UI_ErrorDialog(msg);
 		break;
 	  default:
 		__Message(level, file, line, msg);
 		break;
+	}
+}
+
+static	void
+askpass(char *pass)
+{
+	if (!SavePass) {
+		if(UI_AskPass(pass, SIZE_BUFF, _("input Password")) != -1) {
+			Pass = pass;
+		} else {
+			exit(0);
+		}
 	}
 }
 
@@ -422,8 +393,10 @@ main(
 	int		argc,
 	char	**argv)
 {
-	char	buff[SIZE_BUFF];
+	char		_password[SIZE_BUFF];
 	gboolean	do_run = TRUE;
+	char		*delay_str;
+	int			delay;
 
 	FILE_LIST	*fl;
 
@@ -434,54 +407,55 @@ main(
 	}
 
 	InitMessage("glclient",NULL);
+	InitSystem();
+	UI_Init(argc, argv);
+
 	SetMessageFunction(GLMessage);
-	gtk_set_locale();
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	InitSystem();
+    if (fConfigList) {
+		UI_list_config();
+		exit(0);
+    }
 
-	argc = 1;
-	argv[1] = NULL;
-
-#ifdef USE_GNOME
-	gnome_init("glclient", VERSION, argc, argv);
-#ifdef	USE_PANDA
-	gtkpanda_init(&argc,&argv);
-#endif	//USE_PANDA
-	glade_gnome_init();
-#else
-	gtk_init(&argc, &argv);
-#ifdef	USE_PANDA
-	gtkpanda_init(&argc,&argv);
-#endif	//USE_PANDA
-	glade_init();
-#endif	//USE_GNOME
+	if (strlen(Config) > 0) {
+		fDialog = FALSE;
+    	UI_load_config(Config);
+		askpass(_password);
+	}
 
 	InitNET();
+#ifdef	USE_SSL
+	SetAskPassFunction(UI_AskPass);
+#endif
 
-    if (fDialog) {
-		do_run = show_boot_dialog() ;
-    }
-
-	StyleParserInit();
-	sprintf(buff,"%s/gltermrc",getenv("HOME"));
-	StyleParser(buff);
-	StyleParser("gltermrc");
-	if		(  *Style  !=  0  ) {
-		StyleParser(Style);
+	if (fDialog) {
+		do_run = UI_BootDialogRun();
+		if (!do_run) {
+			exit(0);
+		}
 	}
-    if (*Gtkrc != '\0') {
-        gtk_rc_parse(Gtkrc);
-    }
+
+	UI_InitStyle();
+
+	delay_str = getenv ("GL_SEND_EVENT_DELAY");
+	if (delay_str) {
+		delay = atoi(delay_str);
+		if (delay > 0) {
+			fTimer = TRUE;
+			TimerPeriod = delay_str;
+		} else {
+			fTimer = FALSE;
+		}
+	}
 
 	while (do_run) {
 		do_run = start_client();
 		stop_client();
 	}
 
-    gtk_rc_reparse_all ();
-	StyleParserTerm ();
+	UI_Final();
 
 	return 0;
 }

@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -158,7 +157,8 @@ MCP_ExecFunction(
 {
 	DBCOMM_CTRL		ctrl;
 	RecordStruct	*rec;
-	ValueStruct		*value;
+	ValueStruct		*value
+		,			*ret;
 
 ENTER_FUNC;
 	dbgprintf("rname = [%s]",rname); 
@@ -168,9 +168,10 @@ ENTER_FUNC;
 	if		(  rec  !=  NULL  ) {
 		CopyValue(value,data);
 	}
-	ExecDB_Process(&ctrl,rec,value);
-	if		(  rec  !=  NULL  ) {
-		CopyValue(data,value);
+	ret = ExecDB_Process(&ctrl,rec,value);
+	if		(  ret  !=  NULL  ) {
+		CopyValue(data,ret);
+		FreeValueStruct(ret);
 	}
 	if		(  node  !=  NULL  ) {
 		MakeMCP(node->mcprec->value,&ctrl);

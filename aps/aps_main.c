@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -91,8 +90,12 @@ ENTER_FUNC;
 	DB_Table = ThisLD->DB_Table;
 	TextSize = ThisLD->textsize;
 	InitializeValue(ThisEnv->mcprec->value);
-	InitializeValue(ThisEnv->linkrec->value);
-	InitializeValue(ThisLD->sparec->value);
+	if		(  ThisEnv->linkrec  !=  NULL  ) {
+		InitializeValue(ThisEnv->linkrec->value);
+	}
+	if		(  ThisLD->sparec  !=  NULL  ) {
+		InitializeValue(ThisLD->sparec->value);
+	}
 
 	for	( i = 0 ; i < ThisLD->cBind ; i ++ ) {
 		if		(	(  ThisLD->binds[i]  !=  NULL  )
@@ -121,6 +124,7 @@ ENTER_FUNC;
 	node->bhash = ThisLD->bhash;
 	node->textsize = ThisLD->textsize;
 	node->scrrec = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * node->cWindow);
+	node->dbstatus = GetDBStatus();
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		node->scrrec[i] = ThisLD->windows[i];
 	}
@@ -212,7 +216,7 @@ ENTER_FUNC;
 				break;
 			}
 			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
-			if ( node->dbstatus == REDFAILURE ) {
+			if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
 				RedirectError();
 			} else {
 				node->dbstatus = GetDBStatus();
@@ -278,6 +282,8 @@ static	ARG_TABLE	option[] = {
 		"DB user name"									},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
 		"DB password"									},
+	{	"dbsslmode",	STRING,		TRUE,	(void*)&DB_Sslmode,
+		"DB SSL mode"									},
 
 	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
 		"aps process transaction count"					},
@@ -307,7 +313,6 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-ENTER_FUNC;
 	WfcPortNumber = NULL;
 	fNoCheck = FALSE;
 	fNoRedirect = FALSE;
@@ -326,13 +331,13 @@ ENTER_FUNC;
 	DB_Host = NULL;
 	DB_Port = NULL;
 	DB_Name = DB_User;
+	DB_Sslmode = NULL;
 
 	MaxSendRetry = 3;
 	RetryInterval = 5;
 
 	fTimer = FALSE;
 	fConnectRetry = FALSE;
-LEAVE_FUNC;
 }
 
 extern	int

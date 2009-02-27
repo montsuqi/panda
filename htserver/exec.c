@@ -1,6 +1,8 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2002-2007 Ogochan.
+ * Copyright (C) 2002-2005 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2006-2008 Ogochan & JMA (Japan Medical Association)
+ *                                 & JFBA (Japan Federation of Bar Association)
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -986,6 +988,7 @@ ParseInput(
 	char	*event;
 	
 ENTER_FUNC;
+	dbgprintf("Codeset = [%s]",Codeset); 
  	g_hash_table_foreach(Values,(GHFunc)ToUTF8,NULL);
  	g_hash_table_foreach(Files,(GHFunc)FileNameToUTF8,NULL);
 #ifdef	DEBUG

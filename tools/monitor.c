@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +20,9 @@
 #define	MAIN
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -97,9 +96,9 @@ DumpCommand(
 	int		i;
 
 	for	( i = 0 ; argv[i]  !=  NULL ; i ++ ) {
-		fprintf(fpLog,"%s ",argv[i]);
+		dbgprintf("%s ",argv[i]);
 	}
-	fprintf(fpLog,"\n");
+	dbgmsg("");
 }
 
 static	void
@@ -129,10 +128,10 @@ _execv(
 #ifdef	DEBUG
 	DumpCommand(argv);
 #endif
-	if (execv(cmd,argv) < 0 ){
-		int errsv = errno;	
-		Error("%s: %s", strerror(errsv), cmd);
-	}
+ 	if (execv(cmd,argv) < 0 ){
+ 		int errsv = errno;	
+ 		Error("%s: %s", strerror(errsv), cmd);
+ 	}
 }
 
 static	int
@@ -141,6 +140,9 @@ StartProcess(
 	int		interval)
 {
 	pid_t	pid;
+#ifdef	DEBUG
+	int		i;
+#endif
 
 ENTER_FUNC;
   retry:
@@ -150,10 +152,9 @@ ENTER_FUNC;
 		g_int_hash_table_insert(ProcessTable,(long)pid,proc);
 #ifdef	DEBUG
 		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
-			fprintf(fpLog,"%s ",proc->argv[i]);
+			dbgprintf("%s ",proc->argv[i]);
 		}
-		fprintf(fpLog,"(%d)\n",pid);
-		fflush(fpLog);
+		dbgprintf("(%d)\n",pid);
 #endif
 	} else
 	if		(  pid  ==  0  ) {
@@ -219,7 +220,7 @@ ENTER_FUNC;
 	proc->argc = argc;
 	argv[argc ++] = NULL;
 	pid = StartProcess(proc,Interval);
-	dbg->fConnect = CONNECT;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 LEAVE_FUNC;
 }
 
@@ -257,7 +258,7 @@ ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL  ) {
 		_StartRedirectors(dbg->redirect);
 	}
-	if		(  dbg->fConnect != CONNECT ) {
+	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{
 		StartRedirector(dbg);
 	}
 LEAVE_FUNC;
@@ -271,7 +272,7 @@ StartRedirectors(void)
 
 ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		ThisEnv->DBG[i]->fConnect = UNCONNECT;
+		ThisEnv->DBG[i]->process[DB_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
 	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
@@ -404,12 +405,15 @@ ENTER_FUNC;
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->TermPort));
 		argv[argc ++] = "-apsport";
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->WfcApsPort));
-		argv[argc ++] = "-cache";
-		argv[argc ++] = IntStrDup(nCache);
+		if		(  nCache  >  0  ) {
+			argv[argc ++] = "-cache";
+			argv[argc ++] = IntStrDup(nCache);
+		}
 		if		(  SesDir  !=  NULL  ) {
 			argv[argc ++] = "-sesdir";
 			argv[argc ++] = SesDir;
 		}
+
 		if		(  Directory  !=  NULL  ) {
 			argv[argc ++] = "-dir";
 			argv[argc ++] = Directory;
@@ -426,6 +430,7 @@ ENTER_FUNC;
 			argv[argc ++] = "-retry";
 			argv[argc ++] = IntStrDup(MaxTransactionRetry);
 		}
+dbgmsg("*");
 		if		(  fQ  ) {
 			argv[argc ++] = "-?";
 		}
@@ -510,11 +515,7 @@ ENTER_FUNC;
 	do {
 		while	(  ( pid = waitpid(-1,&status,0) )  !=  -1  ) {
 			dbgprintf("pid = %d is down",pid);
-			if		(  ( proc = g_int_hash_table_lookup(ProcessTable,pid) )  !=  NULL  ) {
-#if	0
-				fprintf(fpLog,"process down pid = %d(%d) Command =[%s]\n"
-						,(int)pid,WEXITSTATUS(status),proc->argv[0]);
-#else
+			if		(  ( proc = g_int_hash_table_lookup(ProcessTable,(long)pid) )  !=  NULL  ) {
 				if (WIFSIGNALED(status) ) {
 					Message("%s(%d) killed by signal %d"
 							,proc->argv[0], (int)pid, WTERMSIG(status));
@@ -522,7 +523,6 @@ ENTER_FUNC;
 					Message("process down pid = %d(%d) Command =[%s]\n"
 							,(int)pid, WEXITSTATUS(status),proc->argv[0]);
 				}
-#endif
 				switch	(proc->type) {
 				  case	PTYPE_APS:
 					if		(	(  fRestart     )
@@ -552,17 +552,12 @@ ENTER_FUNC;
 				if		(  fStop  ) {
 					StopSystem();
 				} else {
-					g_int_hash_table_remove(ProcessTable,pid);
+					g_int_hash_table_remove(ProcessTable,(long)pid);
 					StartProcess(proc,Interval);
 				}
 			} else {
-#if	0
-				fprintf(fpLog,"unknown process down pid = %d(%d)\n"
-						,(int)pid,WEXITSTATUS(status));
-#else
 				Message("unknown process down pid = %d(%d)\n"
  						,(int)pid,WEXITSTATUS(status));
-#endif
 			}
 		}
 	}	while	(TRUE);
@@ -607,60 +602,60 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"ApsPath",	STRING,		TRUE,	(void*)&ApsPath,
-		"apsコマンドパス"		 						},
+		"aps command path"		 						},
 	{	"WfcPath",	STRING,		TRUE,	(void*)&WfcPath,
-		"wfcコマンドパス"		 						},
+		"wfc command path"		 						},
 	{	"RedPath",	STRING,		TRUE,	(void*)&RedirectorPath,
-		"redirectorコマンドパス"						},
+		"redirector command path"						},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"directory file name"		 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecDir,
-		"レコードのあるディレクトリ"					},
+		"record directory"								},
 	{	"ddir",		STRING,		TRUE,	(void*)&DDir,
-		"LD定義格納ディレクトリ"	 					},
+		"LD file directory"			 					},
 
 	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
-		"dbredirectorを起動する"	 					},
+		"start dbredirector"		 					},
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirectorの起動をチェックしない"			},
+		"no check dbredirector start"					},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
-		"dbredirectorで更新数をチェックしない"			},
+		"no count dbredirector updates"					},
 	{	"sendretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
-		"dbredirector送信の再試行数を指定する"			},
+		"send retry dbredirector"						},
 
 	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
-		"aps異常終了時に再起動する" 					},
+		"restart aps when aborted" 						},
 	{	"allrestart",BOOLEAN,	TRUE,	(void*)&fAllRestart,
-		"全ての子プロセス異常終了時に再起動する"	 	},
+		"restart all process when aborted"			 	},
 
 	{	"interval",	INTEGER,	TRUE,	(void*)&Interval,
-		"プロセス操作時の待ち時間"	 					},
+		"process start interval time" 					},
 	{	"wfcwait",	INTEGER,	TRUE,	(void*)&wfcinterval,
-		"wfc起動後の待ち時間(遅いCPU用)"				},
+		"wfc start interval time(for slowCPU)"			},
 	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
 		"terminal cache number"							},
 	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
-		"セション変数保持ディレクトリ" 					},
+		"session keep directory"	 					},
 
 	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
-		"自分のホスト名を指定する"	 					},
+		"my host name"				 					},
 
 	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
-		"apsの処理するトランザクション数を指定する"		},
+		"aps process transaction count"					},
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
-		"トランザクションを再試行する時の上限数"		},
+		"transaction retry count"						},
 	{	"no-aps-retry",	BOOLEAN,	TRUE,	(void*)&fNoApsConnectRetry,
-		"APSの接続の再試行を行わない"					},
+		"don't retry aps commection"					},
 
 	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
-		"-?を指定する"				 					},
+		"show sub-program options"	 					},
 	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"時間計測を行う"								},
+		"time measuring"								},
 	{	"log",		STRING,		TRUE,	(void*)&Log,
-		"実行ログを取るファイル名を指定する"			},
+		"monitor log file name"							},
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
-		"実行時間に足す処理時閨for debug)"				},
+		"aps sleep time(for debug)"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -693,7 +688,7 @@ SetDefault(void)
 	fQ = FALSE;
 	fTimer = FALSE;
 	fNoApsConnectRetry = FALSE;
-	nCache = 100;
+	nCache = 0;
 	SesDir = NULL;
 }
 

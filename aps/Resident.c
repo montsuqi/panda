@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2003-2007 Ogochan.
+ * Copyright (C) 2003-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,7 +87,8 @@ ExecuteDB_Server(
 	MessageHandler	*handler)
 {
 	RecordStruct	*rec;
-	ValueStruct		*value;
+	ValueStruct		*value
+		,			*ret;
 	PathStruct		*path;
 	DB_Operation	*op;
 	size_t			size;
@@ -111,6 +112,7 @@ dbgmsg(">ExecuteDB_Server");
 		conv->UnPackValue(handler->conv,LBS_Body(dbbuff),recDBCTRL->value);
 		rname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"rname"));
 		value = NULL;
+		ret = NULL;
 		if		(	(  rname  !=  NULL  ) 
 				&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 			ctrl.rno = rno - 1;
@@ -140,7 +142,7 @@ dbgmsg(">ExecuteDB_Server");
 			InitializeValue(value);
 			conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
 			strcpy(ctrl.func,func);
-			ExecDB_Process(&ctrl,rec,value);
+			ret = ExecDB_Process(&ctrl,rec,value);
 		} else {
 			ctrl.rc = 0;
 		}
@@ -153,15 +155,16 @@ dbgmsg(">ExecuteDB_Server");
 		conv->PackValue(handler->conv,LBS_Body(dbbuff), recDBCTRL->value);
 		LBS_EmitEnd(dbbuff);
 		SendLargeString(fpDBW,dbbuff);			ON_IO_ERROR(fpDBW,badio);
-		if		(  rec  !=  NULL  ) {
+		if		(  ret  !=  NULL  ) {
 			Send(fpDBW,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fpDBW,badio);
 			LBS_EmitStart(dbbuff);
 			ConvSetRecName(handler->conv,rec->name);
-			size = conv->SizeValue(handler->conv,value);
+			size = conv->SizeValue(handler->conv,ret);
 			LBS_ReserveSize(dbbuff,size,FALSE);
-			conv->PackValue(handler->conv,LBS_Body(dbbuff), value);
+			conv->PackValue(handler->conv,LBS_Body(dbbuff), ret);
 			LBS_EmitEnd(dbbuff);
 			SendLargeString(fpDBW,dbbuff);	ON_IO_ERROR(fpDBW,badio);
+			FreeValueStruct(ret);
 		}
 		Send(fpDBW,conv->bsep,strlen(conv->bsep));		ON_IO_ERROR(fpDBW,badio);
 	}
@@ -212,22 +215,26 @@ dbgmsg(">PutApplication");
 	SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
 	Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
 
-	ConvSetRecName(handler->conv,node->linkrec->name);
-	size = conv->SizeValue(handler->conv,node->linkrec->value);
-	LBS_EmitStart(iobuff);
-	LBS_ReserveSize(iobuff,size,FALSE);
-	conv->PackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
-	LBS_EmitEnd(iobuff);
-	SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
-	Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
+	if		(  node->linkrec  !=  NULL  ) {
+		ConvSetRecName(handler->conv,node->linkrec->name);
+		size = conv->SizeValue(handler->conv,node->linkrec->value);
+		LBS_EmitStart(iobuff);
+		LBS_ReserveSize(iobuff,size,FALSE);
+		conv->PackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
+		LBS_EmitEnd(iobuff);
+		SendLargeString(fp,iobuff);					ON_IO_ERROR(fp,badio);
+		Send(fp,conv->fsep,strlen(conv->fsep));		ON_IO_ERROR(fp,badio);
+	}
 
-	ConvSetRecName(handler->conv,node->sparec->name);
-	size = conv->SizeValue(handler->conv,node->sparec->value);
-	LBS_EmitStart(iobuff);
-	LBS_ReserveSize(iobuff,size,FALSE);
-	conv->PackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
-	LBS_EmitEnd(iobuff);
-	SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
+	if		(  node->sparec  !=  NULL  ) {
+		ConvSetRecName(handler->conv,node->sparec->name);
+		size = conv->SizeValue(handler->conv,node->sparec->value);
+		LBS_EmitStart(iobuff);
+		LBS_ReserveSize(iobuff,size,FALSE);
+		conv->PackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
+		LBS_EmitEnd(iobuff);
+		SendLargeString(fp,iobuff);		ON_IO_ERROR(fp,badio);
+	}
 
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		LBS_EmitStart(iobuff);
@@ -266,12 +273,14 @@ dbgmsg(">GetApplication");
 	ConvSetRecName(handler->conv,node->mcprec->name);
 	conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->mcprec->value);
 
-	ConvSetRecName(handler->conv,node->linkrec->name);
-	conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
-
-	ConvSetRecName(handler->conv,node->sparec->name);
-	conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
-
+	if		(  node->linkrec  !=  NULL  ) {
+		ConvSetRecName(handler->conv,node->linkrec->name);
+		conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->linkrec->value);
+	}
+	if		(  node->sparec  !=  NULL  ) {
+		ConvSetRecName(handler->conv,node->sparec->name);
+		conv->UnPackValue(handler->conv,LBS_Body(iobuff),node->sparec->value);
+	}
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
 			ConvSetRecName(handler->conv,node->scrrec[i]->name);

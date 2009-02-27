@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([panda],[1.4.1])
+AC_INIT([panda],[1.4.3])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_SRCDIR([aps/C.c])
@@ -132,126 +132,89 @@ fi
 AC_SUBST(MAGIC_LIBS)
 
 dnl ***************************************************************************
-dnl Gnome Support (use --disable-gnome to disable).
-dnl (Use "#ifdef USE_GNOME" in Glade for Gnome-specific code.)
+dnl checking glib-2.0
+dnl ***************************************************************************
+PKG_CHECK_MODULES(GLIB2,
+[
+	glib-2.0	>= 2.12.0
+])
+
+dnl ***************************************************************************
+dnl glclient Support
 dnl ***************************************************************************
 
-AC_ARG_ENABLE(gnome,
-  [  --disable-gnome         disable gnome support [[enable]]],,[enable_gnome="yes"])
-if test "x$enable_gnome" = "xyes"; then
-    AC_PATH_PROG(gnome_config, gnome-config)
-    if test "x$gnome_config" = "x"; then
-        enable_gnome="no"
-    fi
+AC_ARG_ENABLE(client_gtk1,
+  [  --enable-client-gtk1 use gtk1 [[disable]]],,[enable_client_gtk1="no"])
+if test "x$enable_client_gtk1" = "xyes"; then
+	PKG_CHECK_MODULES(GTK1CLIENT,
+	[
+		libglade-panda-gnome >= 0.16
+		gtkpanda             >= 1.0.0
+		libxml               >= 1.7.2
+		libmondai            >= 1.4.0
+	])
 fi
+AM_CONDITIONAL(GTK1CLIENT, test "x$enable_client_gtk1" = "xyes")
 
-if test "x$enable_gnome" = "xyes"; then
-    have_gnome="yes"
-    AC_DEFINE(USE_GNOME,1,"")
-else
-    have_gnome="no"
+AC_ARG_ENABLE(client_gtk2,
+  [  --enable-client-gtk2 use gtk2 [[disable]]],,[enable_client_gtk2="no"])
+if test "x$enable_client_gtk2" = "xyes"; then
+	PKG_CHECK_MODULES(GTK2CLIENT,
+	[
+		libglade-panda-2.0	>= 1.9.0
+		libmondai			>= 1.4.0
+	])
+	AC_CHECK_LIB(gtkpanda-2.0, gtk_panda_pdf_new,
+	    enable_pdf=1,
+	    enable_pdf=0)
+	if test $enable_pdf = 1 ; then
+	    AC_DEFINE(USE_PDF, 1, "")
+	fi
 fi
+AM_CONDITIONAL(GTK2CLIENT, test "x$enable_client_gtk2" = "xyes")
 
-AC_ARG_ENABLE(client,
-  [  --disable-client        disable build client [[enable]]],,[enable_client="yes"])
-if test "x$enable_client" = "xyes"; then
-	AC_PATH_PROG(GTK_PANDA_CONFIG, gtkpanda-config, no)
-	if test x$GTK_PANDA_CONFIG = xno; then
-	  AC_MSG_ERROR(Couldn't find gtkpanda-config)
-	fi
-	GTK_PANDA_CFLAGS=`$GTK_PANDA_CONFIG --cflags 2>/dev/null`
-	GTK_PANDA_LIBS=`$GTK_PANDA_CONFIG --libs 2>/dev/null`
-	AC_SUBST(GTK_PANDA_LIBS)
-	AC_SUBST(GTK_PANDA_CFLAGS)
-	AC_DEFINE(USE_PANDA,1,"")
-	AC_DEFINE(USE_GTK,1,"")
-
-	AC_PATH_PROG(GLADE_PANDA_CONFIG,libglade-panda-config,no)
-	if test x$GLADE_PANDA_CONFIG = xno; then
-	  AC_MSG_ERROR(Couldn't find libglade-panda-config)
-	fi
-	if test "x$have_gnome" = "xyes"; then
-	  GLADE_LIBS=`libglade-panda-config --libs gnome`
-	  GLADE_CFLAGS=`libglade-panda-config --cflags gnome`
-	else
-	  GLADE_LIBS=`libglade-panda-config --libs`
-	  GLADE_CFLAGS=`libglade-panda-config --cflags`
-	fi
-	AC_SUBST(GLADE_LIBS)
-	AC_SUBST(GLADE_CFLAGS)
-	AC_PATH_PROG(XML_CONFIG,xml-config,no)
-	if test x$XML_CONFIG = xno; then
-	  AC_MSG_ERROR(Couldn't find xml-config)
-	fi
-	XML_LIBS=`xml-config --libs`
-	XML_CFLAGS=`xml-config --cflags`
-	AC_SUBST(XML_LIBS)
-	AC_SUBST(XML_CFLAGS)
-	old_LIBS="$LIBS"
-	LIBS="$XML_LIBS $LIBS"
-	AC_CHECK_FUNC(xmlSAXUserParseFile,,
-	AC_MSG_ERROR([*** libxml >= 1.7.2 is required to compile libglade]))
-	LIBS="$old_LIBS"
+if test "x$enable_client_gtk1" = "xyes" -o "x$enable_client_gtk2" = "xyes"
+then
 	GLCLIENT="glclient"
 else
-	GLCLIENT=""
+	GLCLIENT=
 fi
 AC_SUBST(GLCLIENT)
-AM_PATH_GTK(1.2.0)
 
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the PostgreSQL 
 dnl *************************************************************************** 
- 
+
 enable_postgres="no"
 AC_ARG_WITH(postgres, 
 [  --with-postgres=<directory> use postgres backend in <directory>],[
-if test $withval != yes 
-then 
-  dir=$withval 
-else 
-  dir="/usr/local/" 
-fi 
-AC_MSG_CHECKING(for Postgres files) 
-postgresdir="" 
-for d in $dir /usr /usr/local/postgres /opt/postgres /opt/packages/postgres /disk/postgres /usr/local/pgsql /sw
-do 
-  if test -f $d/lib/libpq.$SO_SUFFIX
-  then 
-      AC_MSG_RESULT(found Postgres in $d) 
-      postgresdir=$d 
-      break 
-  fi 
-done 
-if test x$postgresdir = x 
-then 
-  AC_MSG_WARN(Postgres backend not used) 
-else 
-  if test -f ${postgresdir}/include/libpq-fe.h 
-  then 
-      POSTGRES_CFLAGS=-I${postgresdir}/include 
-  elif test -f ${postgresdir}/include/pgsql/libpq-fe.h 
-  then 
-      POSTGRES_CFLAGS=-I${postgresdir}/include/pgsql 
-  elif test -f ${postgresdir}/include/postgresql/libpq-fe.h 
-  then 
-      POSTGRES_CFLAGS=-I${postgresdir}/include/postgresql 
-  elif test -f ${postgresdir}/include/postgresql/8.0/libpq-fe.h 
-  then 
-      POSTGRES_CFLAGS=-I${postgresdir}/include/postgresql/8.0
-  else 
-      AC_MSG_WARN(Postgres include files not found, backend not used) 
-      postgresdir="" 
-  fi 
-  POSTGRES_LIBS="-L${postgresdir}/lib -lpq" 
-  AC_DEFINE(HAVE_POSTGRES,1,"") 
-  enable_postgres="yes"
-fi 
- 
-#AM_CONDITIONAL(POSTGRES, test x$postgresdir != x) 
+   AC_MSG_CHECKING(for Postgres files) 
+   enable_postgres="yes"
+   if test $withval != yes 
+   then 
+     pgsql_path=$withval 
+   fi
+])
+if test x"$enable_postgres" = "xyes"; then
+   if test -z "$pgsql_path"; then
+      AC_PATH_PROGS(PG_CONFIG, pg_config, no)
+   else 
+      AC_PATH_PROGS(PG_CONFIG, pg_config, no, "$pgsql_path/bin")
+   fi
+   if test x"$PG_CONFIG" = "xno"; then
+     AC_MSG_ERROR(Couldn't find pg_config)
+   else
+      postgres_bindir=`$PG_CONFIG --bindir`
+      postgres_libdir=`$PG_CONFIG --libdir`
+      postgres_includedir=`$PG_CONFIG --includedir`
+      POSTGRES_LIBS="-L$postgres_libdir -lpq"
+      POSTGRES_CFLAGS="-I$postgres_includedir"
+      AC_DEFINE(HAVE_POSTGRES,1,"") 
+      AC_DEFINE_UNQUOTED(POSTGRES_BINDIR,"$postgres_bindir","")
+   fi
+fi
 AC_SUBST(POSTGRES_LIBS) 
 AC_SUBST(POSTGRES_CFLAGS) 
-])
 
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the Oseki
@@ -719,6 +682,8 @@ AC_CONFIG_FILES([Makefile
                  dbstuff/Makefile
                  fdd/Makefile
                  glclient/Makefile
+                 glclient/gtk1/Makefile
+                 glclient/gtk2/Makefile
                  glserver/Makefile
                  htserver/Makefile
                  include/Makefile
@@ -740,8 +705,8 @@ echo "------------------------------------------------------"
 echo "$PACKAGE Configuration:"
 echo ""
 echo "  VERSION:               $VERSION"
-echo "  GNOME support:         $enable_gnome"
-echo "  client support:        $enable_client"
+echo "  Gtk1 client support:   $enable_client_gtk1"
+echo "  Gtk2 client support:   $enable_client_gtk2"
 echo "  PostgreSQL support:    $enable_postgres"
 echo "  shell driver support:  $enable_shell"
 echo "  Oseki/Search support:  $enable_oseki"

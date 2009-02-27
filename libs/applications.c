@@ -1,8 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,8 +80,8 @@ static	ApplicationStruct	*
 ApplicationLoad(
 	char	*name)
 {
-	char		funcname[SIZE_BUFF]
-	,			filename[SIZE_BUFF];
+	char		funcname[SIZE_LONGNAME+1]
+		,		filename[SIZE_LONGNAME+1];
 	APL_FUNC	f_link
 		,		f_main
 		,		f_exit;

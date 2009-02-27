@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -213,6 +212,9 @@ ENTER_FUNC;
 		  case	SQL_OP_EOL:
 			printf("EOL");fflush(stdout);
 			break;
+		  case	SQL_OP_LIMIT:
+			printf(" $limit");fflush(stdout);
+			break;
 		  default:
 			dbgprintf("[%X]",c);
 			break;
@@ -251,6 +253,7 @@ DumpPath(
 {
 ENTER_FUNC;
 	printf("\t\tname     = [%s]\n",path->name);
+	printf("\t\tusage    = [%02X]\n",path->usage);
 	if		(  path->args  !=  NULL  ) {
 		printf("** args\n\t\t");
 		DumpItems(2,path->args);
@@ -271,7 +274,7 @@ ENTER_FUNC;
 	DumpKey(db->pkey);
 	if		(  db->pcount  >  0  ) {
 		printf("\t\tpath ------\n");
-		for	( i = 1 ; i < db->pcount ; i ++ ) {
+		for	( i = 0 ; i < db->pcount ; i ++ ) {
 			DumpPath(db->path[i]);
 		}
 	}
@@ -295,6 +298,41 @@ static	void
 _DumpHandler(
 	char	*name,
 	WindowBind	*bind,
+	void	*dummy)
+{
+	MessageHandler		*handler;
+
+	handler = bind->handler;
+
+	if		(  ( handler->fInit & INIT_LOAD )  ==  0  ) {
+		handler->fInit |= INIT_LOAD;
+		printf("\thandler\t\"%s\"\t{\n",handler->name);
+		printf("\t\tmodule    \"%s\";\n",(char *)bind->module);
+		printf("\t\tclass     \"%s\";\n",(char *)handler->klass);
+		printf("\t\tselialize \"%s\";\n",(char *)handler->serialize);
+		printf("\t\tlocale    \"%s\";\n",ConvCodeset(handler->conv));
+		printf("\t\tstart     \"%s\";\n",handler->start);
+		printf("\t\tencoding  ");
+		switch	(handler->conv->encode) {
+		  case	STRING_ENCODING_URL:
+			printf("\"URL\";\n");
+			break;
+		  case	STRING_ENCODING_BASE64:
+			printf("\"BASE64\";\n");
+			break;
+		  default:
+			printf("\"NULL\";\n");
+			break;
+		}
+			
+		printf("\t};\n");
+	}
+}
+
+static	void
+_DumpBatchHandler(
+	char	*name,
+	BatchBind	*bind,
 	void	*dummy)
 {
 	MessageHandler		*handler;
@@ -390,7 +428,7 @@ DumpBD(
 	printf("\tarraysize = %d\n",(int)bd->arraysize);
 	printf("\ttextsize  = %d\n",(int)bd->textsize);
 
-	g_hash_table_foreach(bd->BatchTable,(GHFunc)_DumpHandler,NULL);
+	g_hash_table_foreach(bd->BatchTable,(GHFunc)_DumpBatchHandler,NULL);
 
 	printf("\tcDB       = %d\n",(int)bd->cDB);
 	for	( i = 1 ; i < bd->cDB ; i ++ ) {
@@ -419,15 +457,22 @@ DumpDBG(
 	DBG_Struct	*dbg,
 	void		*dummy)
 {
-	printf("name     = [%s]\n",dbg->name);
-	printf("\ttype     = [%s]\n",dbg->type);
-	if		(  dbg->port  !=  NULL  ) {
-		printf("\thost     = [%s]\n",IP_HOST(dbg->port));
-		printf("\tport     = [%s]\n"  ,IP_PORT(dbg->port));
+	int		i;
+
+	printf("name     = [%s]\n",dbg->name);fflush(stdout);
+	printf("\ttype    = [%s]\n",dbg->type);fflush(stdout);
+	printf("\tnServer = [%d]\n",dbg->nServer);fflush(stdout);
+	for	( i = 0 ; i < dbg->nServer ; i ++ ) {
+		if		(  dbg->server[i].port  !=  NULL  ) {
+			printf("\t\thost     = [%s]\n",IP_HOST(dbg->server[i].port));fflush(stdout);
+			printf("\t\tport     = [%s]\n",IP_PORT(dbg->server[i].port));fflush(stdout);
+		}
+		printf("\t\tDB name  = [%s]\n",dbg->server[i].dbname);
+		printf("\t\tDB user  = [%s]\n",dbg->server[i].user);
+		printf("\t\tDB pass  = [%s]\n",dbg->server[i].pass);
+		printf("\t\tDB sslmode = [%s]\n",dbg->server[i].sslmode);
+		fflush(stdout);
 	}
-	printf("\tDB name  = [%s]\n",dbg->dbname);
-	printf("\tDB user  = [%s]\n",dbg->user);
-	printf("\tDB pass  = [%s]\n",dbg->pass);
 	printf("\tDB locale= [%s]\n",dbg->coding);
 	if		(  dbg->file  !=  NULL  ) {
 		printf("\tlog file = [%s]\n",dbg->file);
@@ -447,13 +492,10 @@ DumpDirectory(void)
 
 ENTER_FUNC;
 	InitDirectory();
-dbgmsg("*");
 	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
-dbgmsg("*");
 
 	printf("name     = [%s]\n",ThisEnv->name);
 	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);
-	printf("linksize = %d\n"  ,(int)ThisEnv->linksize);
 	printf("cLD      = %d\n"  ,(int)ThisEnv->cLD);
 	printf("cBD      = %d\n"  ,(int)ThisEnv->cBD);
 	printf("cDBD     = %d\n"  ,(int)ThisEnv->cDBD);
@@ -488,20 +530,20 @@ dbgmsg("<DumpDirectory");
 
 static	ARG_TABLE	option[] = {
 	{	"ld",		BOOLEAN,	TRUE,		(void*)&fLD,
-		"LD情報を出力する"								},
+		"print LD infomation(s)"						},
 	{	"bd",		BOOLEAN,	TRUE,		(void*)&fBD,
-		"BD情報を出力する"								},
+		"print BD infomation(s)"						},
 	{	"dbd",		BOOLEAN,	TRUE,		(void*)&fDBD,
-		"DBD情報を出力する"								},
+		"print DBD infomation(s)"						},
 	{	"dbg",		BOOLEAN,	TRUE,		(void*)&fDBG,
-		"DB group情報を出力する"						},
+		"print DB group infomation(s)"					},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"directory file name"	 						},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"レコードのあるディレクトリ"					},
+		"record directory"								},
 	{	"ddir",		STRING,		TRUE,	(void*)&D_Dir,
-		"定義格納ディレクトリ"		 					},
+		"defines directory"			 					},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 

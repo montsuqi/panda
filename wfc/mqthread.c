@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -375,63 +374,46 @@ LEAVE_FUNC;
 }
 
 static	void
-MessageThread(
-	APS_Start	*aps)
+HandleTermMessage(
+	SessionData *data,
+	MQ_Node		*mq,
+	int	ix)
 {
-	SessionData	*data;
 	MessageHeader	hdr;
 	LD_Node		*ld
 	,			*newld;
 	NETFILE		*fp;
 	byte		puttype;
-	int			ix;
-	MQ_Node		*mq;
 	byte		flag;
-	char		msg[SIZE_BUFF]
-		,		buff[SIZE_LONGNAME+1];
+	char		buff[SIZE_LONGNAME+1];
 
-ENTER_FUNC;
-	mq = aps->mq; 
-	ix = aps->no;
-	dbgprintf("start %s(%d)\n",mq->name,ix);
+	fp = NULL; 
 	puttype = 0;
-	do {
-		fp = NULL;
-		do {
-			if		(  ( data = SelectData(mq->que,ix) )  !=  NULL  ) {
-				dbgprintf("act %s\n",mq->name);
-				ld = data->ld;
-				if		(  ( flag = CheckAPS(ld,ix,data->name) )  !=  0  ) {
-					memcpy(&hdr,data->hdr,sizeof(MessageHeader));
-					puttype = hdr.puttype;
-					if		(	(  PutAPS(ld,ix,data,flag)  )
-							&&	(  ( flag = GetAPS_Control(ld,ix,&hdr) )
-									   !=  0  ) ) {
-						fp = ld->aps[ix].fp;
-					}
-				}
-				if		(  fp  ==  NULL  ) {
-					ClearAPS_Node(ld,ix);
-					data->apsid = -1;
-					data->retry ++;
-					if		(	(  MaxTransactionRetry  >  0          )
-							&&	(  MaxTransactionRetry  < data->retry ) ) {
-						Warning("transaction abort %s", mq->name);
-						data->fAbort = TRUE;
-						TermEnqueue(data->term,data);
-					} else {
-						Warning("transaction retry %s", mq->name);
-						EnQueue(mq->que,data);
-					}
-					WaitConnect(ld,ix);
-					sched_yield();
-				}
-			} else {
-				flag = 0;
-				ld = NULL;
-				sched_yield();
-			}
-		}	while	(  fp  ==  NULL  );
+	ld = data->ld;
+	if ((flag = CheckAPS(ld,ix,data->name)) != 0) {
+		memcpy(&hdr,data->hdr,sizeof(MessageHeader));
+		puttype = hdr.puttype;
+		if ((PutAPS(ld,ix,data,flag)) && 
+			((flag = GetAPS_Control(ld,ix,&hdr)) != 0)) {
+			fp = ld->aps[ix].fp;
+		}
+	}
+	if (fp == NULL) {
+		ClearAPS_Node(ld,ix);
+		data->apsid = -1;
+		data->retry ++;
+		if ((MaxTransactionRetry > 0) && 
+			(MaxTransactionRetry < data->retry)) {
+			Warning("transaction abort %s", mq->name);
+			data->fAbort = TRUE;
+			TermEnqueue(data->term,data);
+		} else {
+			Warning("transaction retry %s", mq->name);
+			EnQueue(mq->que,data);
+		}
+		WaitConnect(ld,ix);
+		sched_yield();
+	} else {
 		memcpy(data->hdr,&hdr,sizeof(MessageHeader));
 		PureComponentName(hdr.window,buff);
 		newld = g_hash_table_lookup(ComponentHash,buff);
@@ -494,9 +476,41 @@ ENTER_FUNC;
 			break;
 		}
 		if		(  newld  ==  NULL  ) {
-			sprintf(msg,"exititting panda [%s@%s] change to [%s]\n",
-					hdr.user,hdr.term,hdr.window);
-			MessageLog(msg);
+			MessageLogPrintf("exititting panda [%s@%s] change to [%s]",
+				hdr.user,hdr.term,hdr.window);
+		}
+	}
+}
+
+static	void
+MessageThread(
+	APS_Start	*aps)
+{
+	SessionData	*data;
+	int			ix;
+	MQ_Node		*mq;
+
+ENTER_FUNC;
+	mq = aps->mq; 
+	ix = aps->no;
+	dbgprintf("start %s(%d)\n",mq->name,ix);
+	do {
+		if ((data = SelectData(mq->que,ix)) != NULL) {
+			dbgprintf("act %s\n",mq->name);
+			switch(data->type) {
+			case SESSION_TYPE_TERM:
+				HandleTermMessage(data,mq,ix);
+				break;
+			case SESSION_TYPE_API:
+#if 0
+				HandleAPIMessage();
+#else
+				TermEnqueue(data->term,data);
+#endif
+				break;
+			}
+		} else {
+			sched_yield();
 		}
 	}	while	(TRUE);
 LEAVE_FUNC;

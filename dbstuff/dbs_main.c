@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,6 +95,8 @@ LEAVE_FUNC;
 typedef	struct {
 	char	user[SIZE_USER+1];
 	int		type;
+	Bool	fCount
+	,		fLimit;
 }	SessionNode;
 
 static	void
@@ -107,39 +108,51 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-typedef	struct {
+static	int
+ParseVersion(
+	char	*str)
+{
 	int		major;
 	int		minor;
 	int		micro;
-}	tVersionNumber;
 
-static	void
-ParseVersion(
-	char	*str,
-	tVersionNumber	*ver)
+	major = 0;
+	minor = 0;
+	micro = 0;
+
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		major = major * 10 + ( *str - '0' );
+		str ++;
+	}
+	if		(  *str  !=  0  )	str ++;
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		minor = minor * 10 + ( *str - '0' );
+		str ++;
+	}
+	if		(  *str  !=  0  )	str ++;
+	while	(	(  *str  !=  0    )
+			&&	(  isdigit(*str)  ) )	{
+		micro = micro * 10 + ( *str - '0' );
+		str ++;
+	}
+	dbgprintf("%d.%d.%d",major,minor,micro);
+	return	(major * 10000 + minor * 100 + micro);
+}
+
+static	SessionNode	*
+NewSessionNode(void)
 {
-	ver->major = 0;
-	ver->minor = 0;
-	ver->micro = 0;
+	SessionNode	*ses;
 
-	while	(	(  *str  !=  0    )
-			&&	(  isdigit(*str)  ) )	{
-		ver->major = ver->major * 10 + ( *str - '0' );
-		str ++;
-	}
-	if		(  *str  !=  0  )	str ++;
-	while	(	(  *str  !=  0    )
-			&&	(  isdigit(*str)  ) )	{
-		ver->minor = ver->minor * 10 + ( *str - '0' );
-		str ++;
-	}
-	if		(  *str  !=  0  )	str ++;
-	while	(	(  *str  !=  0    )
-			&&	(  isdigit(*str)  ) )	{
-		ver->micro = ver->micro * 10 + ( *str - '0' );
-		str ++;
-	}
-	dbgprintf("%d.%d.%d",ver->major,ver->minor,ver->micro);
+	ses = New(SessionNode);
+	*ses->user = 0;
+	ses->type = COMM_STRING;
+	ses->fCount = FALSE;
+	ses->fLimit = FALSE;
+
+	return	(ses);
 }
 
 static	SessionNode	*
@@ -151,17 +164,17 @@ InitDBSSession(
 	char	*pass;
 	char	*p
 	,		*q;
-	tVersionNumber	ver;
+	int		ver;
 
 ENTER_FUNC;
-	ses = New(SessionNode);
+	ses = NewSessionNode();
 	/*
 	 version user password type\n
 	 */
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	p = buff;
 	*(q = strchr(p,' ')) = 0;
-	ParseVersion(p,&ver);
+	ver = ParseVersion(p);
 	p = q + 1;
 	*(q = strchr(p,' ')) = 0;
 	strcpy(ses->user,p);
@@ -178,16 +191,18 @@ ENTER_FUNC;
 		ses->type = COMM_STRINGE;
 	} else {
 	}
-	if		(	(  ver.major  !=  1  )
-			||	(	(  ver.major  ==  1  )
-				&&	(  ver.minor  <   2  ) ) ) {
+	if		(  ver  <  10200  ) {
 		SendStringDelim(fpComm,"Error: version\n");
- 		Warning("reject client(invalid version %d.%d.%d)",ver.major, ver.minor, ver.micro);
+ 		Warning("reject client(invalid version %d)",ver);
 		xfree(ses);
 		ses = NULL;
 	} else
-		if		(  AuthUser(&Auth,ses->user,pass,NULL,NULL)  ) {
+	if		(  AuthUser(&Auth,ses->user,pass,NULL,NULL)  ) {
 		SendStringDelim(fpComm,"Connect: OK\n");
+		if		(  ver  >=  10403  ) {
+			ses->fCount = TRUE;
+			ses->fLimit = TRUE;
+		}
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
 		Warning("reject client(authentication error)");
@@ -256,6 +271,7 @@ RecvData(
 
 static	void
 WriteClientString(
+	SessionNode	*ses,
 	NETFILE		*fpComm,
 	Bool		fType,
 	DBCOMM_CTRL	*ctrl,
@@ -265,35 +281,88 @@ WriteClientString(
 	,		rname[SIZE_BUFF+1]
 	,		vname[SIZE_BUFF+1];
 	char	buff[SIZE_BUFF+1];
-	ValueStruct	*value;
-	char	*p;
+	ValueStruct	*value
+		,		*rec;
+	char	*p
+		,	*q;
 	Bool	fName;
+	int		ix
+		,	i
+		,	count;
 
 ENTER_FUNC;
 	SendStringDelim(fpComm,"Exec: ");
-	sprintf(buff,"%d\n",ctrl->rc);
+	if		(  ses->fCount  ) {
+		sprintf(buff,"%d:%d\n",ctrl->rc,ctrl->count);
+	} else {
+		sprintf(buff,"%d\n",ctrl->rc);
+		ctrl->count = 1;
+	}
 	SendStringDelim(fpComm,buff);
-	do {
-		if		(  !RecvStringDelim(fpComm,SIZE_BUFF,name)  )	break;
-		if		(  *name  ==  0  )	break;
-		if		(  ( p = strchr(name,':') )  !=  NULL  ) {
+	dbgprintf("[%s]",buff);
+	ix = 0;
+	fName = FALSE;
+	while	(  RecvStringDelim(fpComm,SIZE_BUFF,name)  ) {
+		if		(  *name  ==  0  )	{
+			ix ++;
+			if		(  ix  >=  ctrl->count  )	break;
+		}
+		dbgprintf("name = [%s]",name);
+		if		(  ( p = strchr(name,';') )  !=  NULL  ) {
+			*p = 0;
+			q = p + 1;
+			count = atoi(q);
+		} else {
+			q = name;
+			count = 1;
+		}
+		if		(  !ses->fCount  ) {
+			count = 1;
+		}
+		if		(  ( p = strchr(q,':') )  !=  NULL  ) {
 			*p = 0;
 			fName = FALSE;
 		} else {
 			fName = TRUE;
 		}
+		dbgprintf("count = %d",count);
+		dbgprintf("name = [%s]",name);
 		DecodeName(rname,vname,name);
-		if		(  *vname  !=  0  ) {
-			value = GetItemLongName(args,vname);
+		if		(  count  >  1  ) {
+			for	( i = 0 ; i < count ; i ++ ) {
+				rec = ValueArrayItem(args,ix);
+				if		(  *vname  !=  0  ) {
+					value = GetItemLongName(rec,vname);
+				} else {
+					value = rec;
+				}
+				SetValueName(name);
+				SendValueString(fpComm,value,NULL,fName,fType,NULL);
+				if		(  fName  ) {
+					SendStringDelim(fpComm,"\n");
+				}
+				ix ++;
+				if		(  ix  ==  ctrl->count  )	break;
+			}
 		} else {
-			value = args;
+			if		(  *vname  !=  0  ) {
+				value = GetItemLongName(args,vname);
+			} else {
+				value = args;
+			}
+#ifdef	DEBUG
+			DumpValueStruct(value);
+#endif
+			if		(  value  !=  NULL  ) {
+				SetValueName(name);
+				dbgmsg("*");
+				SendValueString(fpComm,value,NULL,fName,fType,NULL);
+			}
 		}
-		SetValueName(name);
-		SendValueString(fpComm,value,NULL,fName,fType,NULL);
 		if		(  fName  ) {
 			SendStringDelim(fpComm,"\n");
 		}
-	}	while	(TRUE);
+	}
 LEAVE_FUNC;
 }
 
@@ -367,6 +436,7 @@ DumpItems(
 
 static	void
 WriteClientStructure(
+	SessionNode		*ses,
 	NETFILE			*fpComm,
 	RecordStruct	*rec)
 {
@@ -386,7 +456,8 @@ do_String(
 	Bool	ret
 	,		fType;
 	DBCOMM_CTRL	ctrl;
-	ValueStruct		*value;
+	ValueStruct		*value
+		,			*arg;
 	RecordStruct	*rec;
 	char			func[SIZE_FUNC+1]
 		,			rname[SIZE_RNAME+1]
@@ -395,10 +466,12 @@ do_String(
 		,	*q;
 	int		rno
 		,	pno;
+	Bool	fOn;
 
 	if		(  strncmp(input,"Exec: ",6)  ==  0  ) {
 		dbgmsg("exec");
 		p = input + 6;
+		ctrl.count = 0;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 			DecodeStringURL(func,p);
@@ -410,8 +483,18 @@ do_String(
 			} else {
 				strcpy(rname,"");
 			}
+			p = q + 1;
+			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+				*q = 0;
+				ctrl.limit = atoi(q+1);
+			} else {
+				ctrl.limit = 1;
+			}
+			if		(  !ses->fLimit  ) {
+				ctrl.limit = 1;
+			}
 			DecodeStringURL(pname,p);
-			rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
+			rec = MakeCTRLbyName(&arg,&ctrl,rname,pname,func);
 		} else {
 			DecodeStringURL(func,p);
 			ctrl.rno = 0;
@@ -421,10 +504,11 @@ do_String(
 			rec = NULL;
 			value = NULL;
 		}
-		RecvData(fpComm,value);
-		ExecDB_Process(&ctrl,rec,value);
+		RecvData(fpComm,arg);
+		value = ExecDB_Process(&ctrl,rec,arg);
 		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
-		WriteClientString(fpComm,fType,&ctrl,value);
+		WriteClientString(ses,fpComm,fType,&ctrl,value);
+		FreeValueStruct(value);
 		ret = TRUE;
 	} else
 	if		(  strncmp(input,"Schema: ",8)  ==  0  ) {
@@ -449,11 +533,40 @@ do_String(
 			rec = NULL;
 		}
 		if		(  rec  !=  NULL  ) {
-			WriteClientStructure(fpComm,rec);
+			WriteClientStructure(ses,fpComm,rec);
 			ret = TRUE;
 		} else {
 			ret = FALSE;
 		}
+	} else
+	if		(  strncmp(input,"Feature: ",9)  ==  0  ) {
+		dbgmsg("feature");
+		p = input + 9;
+		while	(  *p  !=  0  ) {
+			while	(	(  *p  !=  0    )
+					&&	(  isspace(*p)  ) ) p ++;
+			if		(  *p  ==  0  )	break;
+			if		(  ( q = strchr(p,',') )  !=  NULL  ) {
+				*q = 0;
+				q ++;
+			} else {
+				q = p + strlen(p);
+			}
+			if		(  *p  ==  '!'  ) {
+				fOn = FALSE;
+				p ++;
+			} else {
+				fOn = TRUE;
+			}
+			if		(  strcmp(p,"count")  ==  0  ) {
+				ses->fCount = fOn;
+			} else
+			if		(  strcmp(p,"limit")  ==  0  ) {
+				ses->fLimit = fOn;
+			}
+			p = q;
+		}
+		ret = TRUE;
 	} else
 	if		(  strncmp(input,"End",3)  ==  0  ) {
 		dbgmsg("end");
@@ -535,37 +648,39 @@ LEAVE_FUNC;
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ポート番号"	 								},
+		"port number"	 								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
-		"接続待ちキューの数" 							},
+		"connection waiting queue length" 				},
 
 	{	"base",		STRING,		TRUE,	(void*)&BaseDir,
-		"環境のベースディレクトリ"		 				},
+		"base directory"				 				},
 	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		"データ定義格納ディレクトリ"	 				},
+		"record directory"				 				},
 	{	"ddir",	STRING,			TRUE,	(void*)&D_Dir,
-		"定義格納ディレクトリ"			 				},
+		"defines directory"				 				},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"ディレクトリファイル"	 						},
+		"config file name"		 						},
 
 	{	"dbhost",	STRING,		TRUE,	(void*)&DB_Host,
-		"データベース稼働ホスト名"						},
+		"DB host name(for override)"					},
 	{	"dbport",	STRING,		TRUE,	(void*)&DB_Port,
-		"データベース待機ポート番号"					},
+		"DB port numver(for override)"					},
 	{	"db",		STRING,		TRUE,	(void*)&DB_Name,
-		"データベース名"								},
+		"DB name(for override)"							},
 	{	"dbuser",	STRING,		TRUE,	(void*)&DB_User,
-		"データベースのユーザ名"						},
+		"DB user name(for override)"					},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
-		"データベースのパスワード"						},
+		"DB password(for override)"						},
+	{	"dbsslmode",STRING,		TRUE,	(void*)&DB_Sslmode,
+		"DB SSL mode(for override)"						},
 
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
-		"認証サーバ"			 						},
+		"authentication server"		 					},
 
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"dbredirectorの起動をチェックしない"			},
+		"no check dbredirector"							},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
-		"dbredirectorを使わない"						},
+		"no DB redirection"								},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -586,6 +701,7 @@ SetDefault(void)
 	DB_Pass = NULL;
 	DB_Host = NULL;
 	DB_Port = NULL;
+	DB_Sslmode = NULL;
 	DB_Name = DB_User;
 
 	fNoCheck = FALSE;
@@ -617,7 +733,7 @@ main(
 		rc = 0;
 	} else {
 		rc = -1;
-		fprintf(stderr,"DBD名が指定されていません\n");
+		fprintf(stderr,"DBD is not specified\n");
 	}
 	exit(rc);
 }

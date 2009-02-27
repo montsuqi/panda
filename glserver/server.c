@@ -1,8 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,6 +59,7 @@
 #include	"dirs.h"
 #include	"RecParser.h"
 #include	"message.h"
+#include	"http.h"
 #include	"debug.h"
 
 static	void
@@ -377,6 +377,7 @@ CheckFeature(
 		,	*n;
 
 	TermFeature = FEATURE_NULL;
+	TermExpandType = EXPAND_PNG;
 	if		(  strlcmp(ver,"1.2")    ==  0  ) {
 		TermFeature |= FEATURE_CORE;
 	} else
@@ -407,11 +408,14 @@ CheckFeature(
 				if		(  !strlicmp(p,"no")  ) {
 					TermFeature |= FEATURE_NETWORK;
 				}
+				if		(  !strlicmp(p,"negotiation")  ) {
+					TermFeature |= FEATURE_NEGO;
+				}
 				if		(  !strlicmp(p,"ps")  ) {
-					TermFeature |= FEATURE_PS;
+					TermExpandType = EXPAND_PS;
 				}
 				if		(  !strlicmp(p,"pdf")  ) {
-					TermFeature |= FEATURE_PDF;
+					TermExpandType = EXPAND_PDF;
 				}
 				p = n;
 			}
@@ -423,9 +427,8 @@ CheckFeature(
 	printf("blob      = %s\n",fFeatureBlob ? "YES" : "NO");
 	printf("expand    = %s\n",fFeatureExpand ? "YES" : "NO");
 	printf("network   = %s\n",fFeatureNetwork ? "YES" : "NO");
-	printf("ps        = %s\n",fFeaturePS ? "YES" : "NO");
+	printf("network   = %s\n",fFeatureNego ? "YES" : "NO");
 	printf("old       = %s\n",fFeatureOld ? "YES" : "NO");
-	printf("pdf       = %s\n",fFeaturePDF ? "YES" : "NO");
 #endif
 }
 
@@ -462,16 +465,22 @@ ENTER_FUNC;
 
 	if (auth_ok){
 		Message("[%s@%s] client authenticated", scr->user,TermToHost(scr->term));
-		//scr->Windows = NULL;	???????????????????????????????????????????????????????
 		ApplicationsCall(APL_SESSION_LINK,scr);
 		if		(  scr->status  ==  APL_SESSION_NULL  ) {
 			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 		} else {
-			GL_SendPacketClass(fpComm,GL_OK,fFeatureNetwork);
+			if (fFeatureNego) {
+				sprintf(ver,"%s.%02d", PACKAGE_VERSION, 0);
+				GL_SendPacketClass(fpComm,GL_ServerVersion,fFeatureNetwork);
+				GL_SendString(fpComm, ver,fFeatureNetwork);
+				ON_IO_ERROR(fpComm,badio);
+			} else {
+				GL_SendPacketClass(fpComm,GL_OK,fFeatureNetwork);
+			}
 			ON_IO_ERROR(fpComm,badio);
 			CheckScreens(fpComm,scr);
-			rc = TRUE;
+			rc = SendScreen(fpComm,scr);
 		}
 	} else {
 		GL_SendPacketClass(fpComm,GL_E_AUTH,fFeatureNetwork);
@@ -530,78 +539,87 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
+static  Bool
+Glevent(
+	NETFILE	*fpComm,
+	ScreenData	*scr)
+{
+	Bool	ret;
+	
+	ret = FALSE;
+ENTER_FUNC;
+	GL_RecvString(fpComm, sizeof(scr->window), scr->window, fFeatureNetwork);
+	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->widget), scr->widget, fFeatureNetwork);
+	ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->event), scr->event, fFeatureNetwork);
+	ON_IO_ERROR(fpComm,badio);
+	dbgprintf("window = [%s]\n",scr->window);
+	dbgprintf("event  = [%s]\n",scr->event);
+	RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
+	ApplicationsCall(APL_SESSION_GET,scr);
+	if ( scr->status == APL_SESSION_GET ){
+		ret = SendScreen(fpComm,scr);
+	}
+badio:
+LEAVE_FUNC;
+	return ret;
+}
+
 static	Bool
 MainLoop(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	Bool	ret;
-
 	PacketClass	klass;
-
+	
 ENTER_FUNC;
 	klass = GL_RecvPacketClass(fpComm,fFeatureNetwork); ON_IO_ERROR(fpComm,badio);
-	dbgprintf("class = %d",(int)klass);
+	dbgprintf("class = %X\n",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
 		switch	(klass) {
-		  case	GL_Connect:
+		case GL_Connect:
 			if (!Connect(fpComm,scr)){
 				scr->status = APL_SESSION_NULL;
 			}
+			ON_IO_ERROR(fpComm,badio);			
+			break;
+		case GL_Event:
+			if (  scr->status  !=  APL_SESSION_NULL  ) {
+				if	(  !Glevent(fpComm, scr)	){
+					scr->status = APL_SESSION_NULL;
+				}
+			}
 			ON_IO_ERROR(fpComm,badio);
 			break;
-		  case	GL_Name:
-			GL_RecvString(fpComm, sizeof(scr->term), scr->term,fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
+		case GL_END:
+			scr->status = APL_SESSION_NULL;
 			break;
-		  case	GL_Event:
-			GL_RecvString(fpComm, sizeof(scr->window), scr->window, fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-			GL_RecvString(fpComm, sizeof(scr->widget), scr->widget, fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-			GL_RecvString(fpComm, sizeof(scr->event), scr->event, fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-			dbgprintf("window = [%s]\n",scr->window);
-			dbgprintf("event  = [%s]\n",scr->event);
-			RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
-			ApplicationsCall(APL_SESSION_GET,scr);
+		case HTTP_GET:
+		case HTTP_POST:
+		case HTTP_HEAD:
+			HTTP_Method(klass, fpComm);
+			scr->status = APL_SESSION_NULL;
+			ret = FALSE;
 			break;
-		  case	GL_ScreenData:
-			/*	fatal error	*/
-			scr->status = APL_SESSION_RESEND;
-			break;
-		  case	GL_END:
-			scr->status = APL_SESSION_END;
-			break;
-		  default:
+		default:
 			Warning("invalid class = %X\n",klass);
 			scr->status = APL_SESSION_NULL;
 			break;
 		}
-		while	(  scr->status  ==  APL_SESSION_LINK  ) {
-			ApplicationsCall(scr->status,scr);
-		}
 		switch	(scr->status) {
-		  case	APL_SESSION_END:
-			ApplicationsCall(scr->status,scr);
-			ret = FALSE;
-			break;
 		  case	APL_SESSION_NULL:
 			ret = FALSE;
 			break;
-		  case	APL_SESSION_RESEND:
-			ret = TRUE;
-			break;
 		  default:
-			ret = SendScreen(fpComm,scr);
+			ret = TRUE;
 			break;
 		}
 	} else {
 	  badio:
 		ret = FALSE;
 		Message("[%s@%s] abnormal client termination",scr->user,TermToHost(scr->term));
-		scr->status = APL_SESSION_END;
-		ApplicationsCall(scr->status, scr);
 	}
 
 LEAVE_FUNC;

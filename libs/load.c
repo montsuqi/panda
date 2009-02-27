@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,10 +58,11 @@ ENTER_FUNC;
 			*q = 0;
 		}
 		sprintf(filename,"%s/%s",p,name);
+		dbgprintf("load [%s]",filename);
 		if		(  stat(filename, &st)  ==  0  ) {
-			dbgprintf("load [%s]",filename);
 			if		(  ( ret = dlopen(filename,RTLD_GLOBAL | RTLD_LAZY) )  !=  NULL  )
 				break;
+			printf("%s\n",dlerror());
 		}
 		p = q + 1;
 	}	while	(	(  q    !=  NULL  )

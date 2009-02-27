@@ -1,23 +1,23 @@
 /*
-PANDA -- a simple transaction monitor
-Copyright (C) 1998-1999 Ogochan.
-Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
-Copyright (C) 2004-2005 Ogochan.
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-*/
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 1998-1999 Ogochan.
+ * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
 
 /*
 #define	DEBUG
@@ -37,7 +37,7 @@ Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include	"driver.h"
 #include	"debug.h"
 
-#define	SOURCE_LOCALE	"euc-jp"
+#define	SOURCE_LOCALE	"utf-8"
 
 static	int		count;
 
@@ -52,7 +52,7 @@ dbgmsg(">demoLink");
 	printf("arg = [%s]\n",arg);
 	(void)SetWindowName("project1");
 
-	SetValueString(GetWindowValue("project1.vbox1.entry1.value"),"¥¡ª˙§Ú∆˛§Ï§∆§ﬂ§ø",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.entry1.value"),"Êº¢Â≠ó„ÇíÂÖ•„Çå„Å¶„Åø„Åü",SOURCE_LOCALE);
 
 //	SetValueInteger(GetWindowValue("project1.vbox1.entry1.state"),WIDGET_STATE_INSENSITIVE);
 
@@ -61,33 +61,33 @@ dbgmsg(">demoLink");
 	SetValueString(GetWindowValue("project1.vbox1.entry2.style"),"red",NULL);
 	SetValueString(GetWindowValue("project1.vbox1.entry3.style"),"blue",NULL);
 
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[0]"),"§™§¥§¡§„§Û",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.combo1.item[1]"),"§®§Í§µ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.item[0]"),"„Åä„Åî„Å°„ÇÉ„Çì",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.item[1]"),"„Åà„Çä„Åï",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.combo1.item[2]"),"ques",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.combo1.name.value"),"§®§Í§µ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.combo1.name.value"),"„Åà„Çä„Åï",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project1.vbox1.combo1.count"),4);
 	SetValueString(GetWindowValue("project1.vbox1.combo1.name.style"),"blue",NULL);
 
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[0]"),"§™§¥§¡§„§Û",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[1]"),"§®§Í§µ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[0]"),"„Åä„Åî„Å°„ÇÉ„Çì",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[1]"),"„Åà„Çä„Åï",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[2]"),"ques",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[3]"),"void_No2",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[4]"),"Mul6",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[5]"),"Àˆπ≠",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin2.vp1.list1.item[5]"),"Êú´Â∫É",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project1.vbox1.swin2.vp1.list1.count"),7);
 	SetValueInteger(GetWindowValue("project1.vbox1.swin2.vp1.list1.from"),5);
 	SetValueBool(GetWindowValue("project1.vbox1.swin2.vp1.list1.select[1]"),TRUE);
 
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label1.value"),"§Ω§Œ£±",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label1.value"),"„Åù„ÅÆÔºë",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label1.style"),"blue",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label2.value"),"§Ω§Œ£≤",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label2.value"),"„Åù„ÅÆÔºí",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label2.style"),"red",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label3.value"),"§Ω§Œ£≥",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label3.value"),"„Åù„ÅÆÔºì",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.swin1.clist1.label3.style"),"green",SOURCE_LOCALE);
 	SetValueInteger(GetWindowValue("project1.vbox1.swin1.clist1.from"),2);
 
 	SetValueBool(GetWindowValue("project1.vbox1.togglebutton1.value"),FALSE);
-	SetValueString(GetWindowValue("project1.vbox1.togglebutton1.label"),"§ﬁ§¿",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.togglebutton1.label"),"„Åæ„Å†",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.togglebutton1.style"),"green",SOURCE_LOCALE);
 
 	SetValueBool(GetWindowValue("project1.vbox1.hbox5.checkleft.value"),FALSE);
@@ -100,12 +100,12 @@ dbgmsg(">demoLink");
 
 	SetValueInteger(GetWindowValue("project1.vbox1.notebook1.pageno"),3);
 	SetValueString(GetWindowValue("project1.vbox1.notebook1.entry4.value"),"123456",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin3.text1.value"),"•Œ°º•»•÷•√•Ø§Œ√Êø»",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin3.text1.value"),"„Éé„Éº„Éà„Éñ„ÉÉ„ÇØ„ÅÆ‰∏≠Ë∫´",SOURCE_LOCALE);
 
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.label14.value"),"Ãæ¡∞",SOURCE_LOCALE);
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.label15.value"),"≈≈œ√»÷πÊ",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.label14.value"),"ÂêçÂâç",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.label15.value"),"ÈõªË©±Áï™Âè∑",SOURCE_LOCALE);
 
-	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value1"),"§™§¥§¡§„§Û",SOURCE_LOCALE);
+	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value1"),"„Åä„Åî„Å°„ÇÉ„Çì",SOURCE_LOCALE);
 	SetValueString(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.item[0].value2"),"070-6163-7932",NULL);
 	SetValueInteger(GetWindowValue("project1.vbox1.notebook1.swin4.clist2.count"),1);
 
@@ -170,7 +170,7 @@ dbgmsg(">demoMain");
 		e = GetWindowValue("project1.vbox1.togglebutton1");
 
 		if		(  GetRecordItem(e,"value")->body.BoolData  ) {
-			SetValueString(GetRecordItem(e,"label"),"¡™§Û§¿",SOURCE_LOCALE);
+			SetValueString(GetRecordItem(e,"label"),"ÈÅ∏„Çì„Å†",SOURCE_LOCALE);
 			e1 = GetWindowValue("project1.vbox1.entry1.value");
 			e2 = GetWindowValue("project1.vbox1.entry2.value");
 			e3 = GetWindowValue("project1.vbox1.combo1.name.value");
@@ -189,7 +189,7 @@ dbgmsg(">demoMain");
 			SetValueInteger(GetWindowValue("project1.vbox1.swin1.clist1.count")
 							,count);
 		} else {
-			SetValueString(GetRecordItem(e,"label"),"¡™§Û§«§ §§",SOURCE_LOCALE);
+			SetValueString(GetRecordItem(e,"label"),"ÈÅ∏„Çì„Åß„Å™„ÅÑ",SOURCE_LOCALE);
 		}
 		for	( i = 0 ; i < 20 ; i ++ ) {
 			v = GetWindowValue("project1.vbox1.swin1.clist1.select");
@@ -197,22 +197,22 @@ dbgmsg(">demoMain");
 			if		(  ValueBool(v)  ) {
 				e = GetWindowValue("project1.vbox1.swin1.clist1.item");
 				e = GetArrayItem(e,i);
-				SetValueString(GetRecordItem(e,"value1"),"§Ë§§ª“",SOURCE_LOCALE);
+				SetValueString(GetRecordItem(e,"value1"),"„Çà„ÅÑÂ≠ê",SOURCE_LOCALE);
 //				ValueBool(v) = FALSE;
 			}
 		}
 		memclear(buff,SIZE_BUFF);
 		v = GetWindowValue("project1.vbox1.hbox5.checknone.value");
 		if		(  ValueBool(v)  ) {
-			strcat(buff,"§ §∑");
+			strcat(buff,"„Å™„Åó");
 		}
 		v = GetWindowValue("project1.vbox1.hbox5.checkleft.value");
 		if		(  ValueBool(v)  ) {
-			strcat(buff,"∫∏");
+			strcat(buff,"Â∑¶");
 		}
 		v = GetWindowValue("project1.vbox1.hbox5.checkright.value");
 		if		(  ValueBool(v)  ) {
-			strcat(buff,"±¶");
+			strcat(buff,"Âè≥");
 		}
 
 		if		(  ValueBool(GetWindowValue("project1.vbox1.hbox6.radioleft.value")) ) {
@@ -239,7 +239,7 @@ dbgmsg(">demoMain");
 			if		(  ValueBool(v)  ) {
 				e = GetWindowValue("project1.vbox1.swin2.vp1.list1.item");
 				e = GetArrayItem(e,i);
-				SetValueString(e,"§Ë§§ª“",SOURCE_LOCALE);
+				SetValueString(e,"„Çà„ÅÑÂ≠ê",SOURCE_LOCALE);
 				ValueBool(v) = FALSE;
 			}
 		}

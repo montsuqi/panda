@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2003-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,10 +46,10 @@ typedef	struct {
 	}	adrs;
 }	Port;
 
-#define	IP_PORT(p)		((p)->adrs.a_ip.port)
-#define	IP_HOST(p)		((p)->adrs.a_ip.host)
-#define	UNIX_NAME(p)	((p)->adrs.a_unix.name)
-#define	UNIX_MODE(p)	((p)->adrs.a_unix.mode)
+#define	IP_PORT(p)		(((p) == NULL) ? NULL : ((p)->adrs.a_ip.port))
+#define	IP_HOST(p)		(((p) == NULL) ? NULL : ((p)->adrs.a_ip.host))
+#define	UNIX_NAME(p)	(((p) == NULL) ? NULL : ((p)->adrs.a_unix.name))
+#define	UNIX_MODE(p)	(((p) == NULL) ? 0 : ((p)->adrs.a_unix.mode))
 
 extern	URL			*NewURL(void);
 extern	void		FreeURL(URL *url);

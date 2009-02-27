@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@
 #include	<openssl/err.h>
 #endif
 
+#include	"gettext.h"
 #include	"const.h"
 #include	"types.h"
 #include	"libmondai.h"
@@ -147,24 +148,24 @@ ExecuteClient(
 
 static	ARG_TABLE	option[] = {
 	{	"command",	STRING,		TRUE,	(void*)&Command,
-		"コマンド名"	 								},
+		N_("command name")	 							},
 	{	"host",		STRING,		TRUE,	(void*)&Host,
-		"ホスト名"	 									},
+		N_("host name")									},
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
-		"ポート番号"	 								},
+		N_("port number")								},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
-		"鍵ファイル名(pem)"		 						},
+		N_("SSL Key File(pem/p12)")		 				},
 	{	"cert",		STRING,		TRUE,	(void*)&CertFile,
-		"証明書ファイル名(pem)"	 						},
+		N_("Certificate(pem/p12)")	 					},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
-		"SSLを使う"				 						},
+		N_("Use SSL")				 					},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
-		"CA証明書へのパス"								},
+		N_("CA Certificate Path")						},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
-		"CA証明書ファイル"								},
+		N_("CA Certificate File")						},
 	{	"ciphers",	STRING,		TRUE,	(void*)&Ciphers,
-		"SSLで使用する暗号スイート"						},
+		N_("SSL Cipher Sweet")							},
 #endif
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}

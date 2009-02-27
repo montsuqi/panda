@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2002-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2002-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +47,8 @@ static	int
 _EXEC(
 	DBG_Struct	*dbg,
 	char		*sql,
-	Bool		fRedirect)
+	Bool		fRedirect,
+	int			usage)
 {
 	int			rc;
 
@@ -56,49 +56,53 @@ _EXEC(
 	return	(rc);
 }
 
-static	void
+static	ValueStruct	*
 _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	dbg->conn = NewLBS();
 	OpenDB_RedirectPort(dbg);
-	dbg->fConnect = CONNECT;
+	dbg->process[PROCESS_UPDATE].conn = (void *)NewLBS();
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect == CONNECT ) { 
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
-		FreeLBS(dbg->conn);
-		dbg->fConnect = DISCONNECT;
+		FreeLBS((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
 		}
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	LBS_EmitStart(dbg->conn); 
+	LBS_EmitStart((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	int
@@ -141,7 +145,7 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
-static	void
+static	ValueStruct	*
 _DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -149,12 +153,14 @@ _DBCOMMIT(
 	int			rc;
 	char		*p
 	,			*q;
+	LargeByteString	*lbs;
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	LBS_EmitEnd(dbg->conn);
-	RewindLBS(dbg->conn);
-	p = (char *)LBS_Body(dbg->conn);
+	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
+	LBS_EmitEnd(lbs);
+	RewindLBS(lbs);
+	p = (char *)LBS_Body(lbs);
 	rc = 0;
 	while	(  ( q = strchr(p,0xFF) )  !=  NULL  ) {
 		*q = 0;
@@ -162,12 +168,13 @@ ENTER_FUNC;
 		p = q + 1;
 	}
 	rc += DoShell(p);
-	LBS_Clear(dbg->conn);
+	LBS_Clear(lbs);
 	CommitDB_Redirect(dbg);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	void
@@ -216,7 +223,7 @@ InsertValue(
 	}
 }
 
-static	void
+static	ValueStruct	*
 ExecShell(
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
@@ -226,30 +233,30 @@ ExecShell(
 	int		c;
 	ValueStruct	*val;
 	DBG_Struct	*dbg;
+	ValueStruct	*ret;
+	LargeByteString	*lbs;
 
 ENTER_FUNC;
+	ret = NULL;
 	dbg =  rec->opt.db->dbg;
+	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
 	if	(  src  ==  NULL )	{
 		Error("function \"%s\" is not found.",ctrl->func);
 	}
 	RewindLBS(src);
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
 		if		(  c  !=  SQL_OP_ESC  ) {
-			LBS_EmitChar(dbg->conn,c);
+			LBS_EmitChar(lbs,c);
 		} else {
 			c = LBS_FetchByte(src);
 			switch	(c) {
 			  case	SQL_OP_REF:
 				val = (ValueStruct *)LBS_FetchPointer(src);
-				InsertValue(dbg,dbg->conn,val);
+				InsertValue(dbg,lbs,val);
 				break;
 			  case	SQL_OP_EOL:
 			  case	0:
-#if	1
-				LBS_EmitChar(dbg->conn,';');
-#else
-				LBS_EmitChar(dbg->conn,0xFF);
-#endif
+				LBS_EmitChar(lbs,';');
 				break;
 			  default:
 				break;
@@ -257,9 +264,10 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	Bool
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
@@ -272,11 +280,13 @@ _DBACCESS(
 	LargeByteString	*src;
 	int		ix;
 	Bool	rc;
+	ValueStruct	*ret;
 
 ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",name); 
 #endif
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		rc = TRUE;
@@ -288,7 +298,7 @@ ENTER_FUNC;
 		} else {
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
-				ExecShell(ctrl,rec,src,args);
+				ret = ExecShell(ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
 				rc = FALSE;
@@ -299,10 +309,10 @@ ENTER_FUNC;
 		ctrl->rc = rc ? MCP_OK : MCP_BAD_FUNC;
 	}
 LEAVE_FUNC;
-	return	(rc);
+	return	(ret);
 }
 
-static	void
+static	ValueStruct	*
 _DBERROR(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -316,6 +326,7 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
 static	DB_OPS	Operations[] = {
@@ -346,7 +357,7 @@ OnChildExit(
 {
 ENTER_FUNC;
 	while( waitpid(-1, NULL, WNOHANG) > 0 );
-//	(void)signal(SIGCHLD, (void *)OnChildExit);
+	(void)signal(SIGCHLD, (void *)OnChildExit);
 LEAVE_FUNC;
 }
 

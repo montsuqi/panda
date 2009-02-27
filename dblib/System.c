@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2006 Ogochan.
+ * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,41 +48,45 @@ static	int
 _EXEC(
 	DBG_Struct	*dbg,
 	char		*sql,
-	Bool		fRedirect)
+	Bool		fRedirect,
+	int			usage)
 {
-	return	(TRUE);
+	return	(MCP_OK);
 }
 
-static	void
+static	ValueStruct	*
 _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	dbg->conn = (void *)NULL;
 	OpenDB_RedirectPort(dbg);
-	dbg->fConnect = CONNECT;
+	dbg->process[PROCESS_UPDATE].conn = NULL;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->fConnect == CONNECT ) { 
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
 		CloseDB_RedirectPort(dbg);
-		dbg->fConnect = DISCONNECT;
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
 		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -91,9 +95,10 @@ ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
 	ctrl->rc = MCP_OK;
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
@@ -103,22 +108,27 @@ ENTER_FUNC;
 	CommitDB_Redirect(dbg);
 	ctrl->rc = MCP_OK;
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBSELECT(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+	ValueStruct	*ret;
 ENTER_FUNC;
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
 		ctrl->rc = MCP_OK;
+		ret = DuplicateValue(args,TRUE);
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
 static	int
@@ -141,23 +151,27 @@ LEAVE_FUNC;
 	return	(MCP_OK);
 }
 
-static	void
+static	ValueStruct	*
 _DBFETCH(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+	ValueStruct	*ret;
 ENTER_FUNC;
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
-		ctrl->rc = SetValues(rec->value);
+		ctrl->rc = SetValues(args);
+		ret = DuplicateValue(args,TRUE);
 	}
 LEAVE_FUNC;
+	return	(ret);
 }
 
-static	void
+static	ValueStruct	*
 _DBUPDATE(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -171,9 +185,10 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBDELETE(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -187,9 +202,10 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	void
+static	ValueStruct	*
 _DBINSERT(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -203,9 +219,10 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
+	return	(NULL);
 }
 
-static	Bool
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
@@ -213,21 +230,17 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	Bool	rc;
-
 ENTER_FUNC;
 #ifdef	TRACE
 	printf("[%s]\n",name); 
 #endif
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		rc = TRUE;
 	} else {
 		ctrl->rc = MCP_BAD_OTHER;
-		rc = FALSE;
 	}
 LEAVE_FUNC;
-	return	(rc);
+	return	(NULL);
 }
 
 static	DB_OPS	Operations[] = {

@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -167,6 +166,7 @@ ENTER_FUNC;
 	DestroyPort(port);
 	if ( fd > 0 ){
 		fp = SocketToNet(fd);
+		SendPacketClass(fp,WFC_TERM);
 		SendString(fp,term);		ON_IO_ERROR(fp,badio);
 		if		(  fKeep  ) {
 			SendPacketClass(fp,WFC_TRUE);
@@ -213,9 +213,10 @@ SendTermServer(
 ENTER_FUNC;
 	rc = FALSE;
 	dbgprintf("term = [%s]",term);
+	SendPacketClass(fp,WFC_TERM);
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
 	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
-		dbgmsg("recv TRUE");
+		dbgmsg("recv PONG");
 		rc = _SendTermServer(fp,window,widget,event,value);
 	}
   badio:
@@ -233,13 +234,11 @@ SendTermServerEnd(
 ENTER_FUNC;
 	rc = FALSE;
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
-		dbgmsg("recv TRUE");
-	}
-	SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
-	dbgmsg("send WFC_END");
-	if		(  RecvPacketClass(fp)  ==  WFC_DONE  ) {
-		dbgmsg("recv DONE");
+	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
+	dbgmsg("send PING");
+	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
+		dbgmsg("recv PONG");
+		SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
 		rc = TRUE;
 	}
   badio:

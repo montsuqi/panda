@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2007 Ogochan.
+ * Copyright (C) 2007-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 
 #define	MAIN
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -263,7 +263,7 @@ ENTER_FUNC;
 #ifdef	DEBUG
 		printf("[%s]",(char *)LBS_Body(lbs));
 #endif
-		if		(  ExecDBOP(dbg,(char *)LBS_Body(lbs))  !=  MCP_OK  ) {
+		if		(  ExecDBOP(dbg,(char *)LBS_Body(lbs),DB_UPDATE)  !=  MCP_OK  ) {
 			fprintf(stderr,N_("create table error on %s\n"),rec->name);
 		}
 		FreeLBS(lbs);

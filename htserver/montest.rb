@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2006  ogochan
+# Copyright (C) 2005-2008  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,14 +31,14 @@ printf("%s = [%s]\n","project1.vbox1.entry3.value",
 server.commit;
 
 server.start;
-server.setValue("project1.vbox1.entry1.value","¤ª¤´¤Á¤ã¤ó");
+server.setValue("project1.vbox1.entry1.value","ÄªÄ´ÄÄ£Ä³");
 server.event("Right","Button");
 printf("%s = [%s]\n","project1.vbox1.entry3.value",
 	server.getValue("project1.vbox1.entry3.value"));
 server.commit;
 
 server.start;
-server.setValue("project1.vbox1.entry1.value","¤ª¤´");
+server.setValue("project1.vbox1.entry1.value","ÄªÄ´");
 server.event("Right","Button");
 printf("%s = [%s]\n","project1.vbox1.entry3.value",
 	server.getValue("project1.vbox1.entry3.value"));

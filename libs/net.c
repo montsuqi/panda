@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,6 +67,7 @@
 #define	SSL_MESSAGE_SIZE			1024
 static	char	ssl_error_message[SSL_MESSAGE_SIZE];
 static	char	ssl_warning_message[SSL_MESSAGE_SIZE];
+static	int		(* AskPassFunction_)(char *buf, size_t buflen, const char *prompt) = NULL;
 #ifdef  USE_PKCS11
 static	const	char	*PKCS11ErrorString(CK_RV rv);
 static	void	*PKCS11LoadModule(const char* pkcs11, CK_FUNCTION_LIST_PTR_PTR f);
@@ -85,9 +85,8 @@ static	Bool	PKCS11GetCertificate(CK_SLOT_ID slot,
 									 int *keyid_size);
 static	CK_ULONG	PKCS11GetSlotList(CK_FUNCTION_LIST_PTR f, CK_SLOT_ID_PTR list);
 static	ENGINE		*InitEnginePKCS11( const char *pkcs11, const char *pin);
-static	char		*GetPinString(char *buf, size_t sz);
 static	Bool		LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slotstr);
-#endif	//	USE_OKCS11
+#endif	//	USE_PKCS11
 #endif	//	USE_SSL
 
 static	Bool
@@ -153,7 +152,7 @@ Send(
 				p += left;
 				size -= left;
 			}
-			if	(	ret != -1	) {
+			if		(  ret  !=  -1  ) {
 				memcpy((fp->buff + fp->ptr),p,size);
 				fp->ptr += size;
 				fp->fSent = TRUE;
@@ -180,6 +179,15 @@ Send(
 }
 
 extern	int
+RecvAtOnce(
+	NETFILE	*fp,
+	char	*buff,
+	size_t	size)
+{
+	return	fp->read(fp,buff,size);
+}
+
+extern	int
 Recv(
 	NETFILE	*fp,
 	void	*buff,
@@ -200,7 +208,7 @@ Recv(
 		}
 		ret = size;
 		while	(  size  >  0  ) {
-			if		(  ( count = fp->read(fp,p,size) )  >  0  ) {
+			if		(  ( count = RecvAtOnce(fp,p,size) )  >  0  ) {
 				size -= count;
 				p += count;
 			} else {
@@ -428,69 +436,42 @@ GetSSLWarningMessage(void)
 	return ssl_warning_message;
 }
 
-static int
-askpass(const char *askpass_command, const char *prompt, char *buf, int buflen)
+#define ASKPASS_PROMPT          _("Please input key passphrase:")
+#define ASKPASS_PROMPT_RETRY    _("Verify ERROR!\nPlease input key passphrase:")
+
+extern void
+SetAskPassFunction(
+	int (*func)(char *buf, size_t sz, const char *prompt))
 {
-    int ret, len, status;
-    int p[2];
-    pid_t pid;
-
-    if (pipe(p) < 0) {
-        SSL_Error(_d("pipe error:\n %s\n"), strerror(errno));
-        return -1;
-    }       
-    if ((pid = fork()) < 0){
-        close(p[0]);
-        close(p[1]);
-        SSL_Error(_d("fork error:\n %s\n"), strerror(errno));
-        return -1;
-    }
-    else if (pid == 0){
-        seteuid(getuid());
-        setuid(getuid());
-        close(p[0]);
-        if (dup2(p[1], STDOUT_FILENO) < 0){
-            SSL_Error(_d("dup2 error:\n %s\n"), strerror(errno));
-            exit(1);
-        }
-        if (p[1] != STDOUT_FILENO) close(p[1]);
-        execlp(askpass_command, askpass_command, _d(prompt), (char *) 0);
-        SSL_Error(_d("exec(%s) error:\n %s\n"), askpass_command, strerror(errno));
-    }
-    close(p[1]);
-    len = ret = 0;
-    do {
-        ret = read(p[0], buf + len, buflen - 1 - len);
-        if (ret == -1 && errno == EINTR) continue;
-        if (ret <= 0) break;
-        len += ret;
-    } while (buflen - 1 - len > 0);
-    buf[len] = '\0';
-    buf[strcspn(buf, "\r\n")] = '\0';
-
-    close(p[0]);
-    while (waitpid(pid, &status, 0) < 0){
-        SSL_Error(_d("waitpid error:\n %s\n"), strerror(errno));
-        if (errno != EINTR) break;
-    }
-    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-        memset(buf, 0, sizeof(buf));
-        return -1;
-    }
-
-    return strlen(buf);
+	AskPassFunction_ = func;
 }
 
-#define ASKPASS_ENV             "PANDA_ASKPASS"
-#define ASKPASS_PROMPT          "Please input key passphrase:"
-#define ASKPASS_PROMPT_RETRY    "Verify ERROR!\nPlease input key passphrase:"
-#define DEFAULT_ASKPASS_COMMAND "/usr/bin/ssh-askpass"
+static int
+AskPassFunction(char *buf, size_t sz, const char *prompt)
+{
+	if ( AskPassFunction_ != NULL ) {
+		return AskPassFunction_(buf, sz, prompt);
+	} else if (isatty(STDIN_FILENO)){
+        if (EVP_read_pw_string(buf, sz, prompt, 0) == 0) {
+			return strlen(buf);
+		}
+    }
+    return -1;
+}
+
+static char *
+GetPasswordString(char *buf, size_t sz, const char *prompt)
+{
+	if ( AskPassFunction(buf, sz, prompt) != -1) {
+		return buf;
+	}
+    return NULL;
+}
 
 static int
 passphrase_callback(char *buf, int buflen, int flag, void *userdata)
 {
-    const char *askpass_command = (const char *)userdata;
-    return askpass(askpass_command, ASKPASS_PROMPT, buf, buflen);
+    return AskPassFunction(buf, (size_t)buflen, (const char*)userdata);
 }
 
 static	ssize_t
@@ -665,18 +646,19 @@ GetCommonNameFromCertificate(X509 *cert)
 static int
 CheckSubjectAltName(X509_EXTENSION *ext, const char *hostname)
 {
-    STACK_OF(CONF_VALUE) *values;
-    CONF_VALUE *value;
-    X509V3_EXT_METHOD *meth;
-    unsigned char *data;
-    int len;
-    int ok = FALSE;
-    int i;
+	STACK_OF(CONF_VALUE) *values;
+	CONF_VALUE *value;
+	X509V3_EXT_METHOD *meth;
+	unsigned char *data;
+	int len;
+	int ok = FALSE;
+	int i;
 
-    if ((meth = X509V3_EXT_get(ext)) == NULL) return FALSE;
-    data = ext->value->data;
-    len = ext->value->length;
-    values = meth->i2v(meth, meth->d2i(NULL, (const unsigned char **)&data, len), NULL);
+	data = ext->value->data;
+	if ((meth = X509V3_EXT_get(ext)) == NULL) return FALSE;
+	data = ext->value->data;
+	len = ext->value->length;
+	values = meth->i2v(meth, meth->d2i(NULL, (const unsigned char **)&data, len), NULL);
     if (values == NULL) return FALSE;
     for (i = 0; i < sk_CONF_VALUE_num(values); i++){
         value = sk_CONF_VALUE_value(values, i);
@@ -935,30 +917,6 @@ RemoteVerifyCallBack(
 	return(ok);
 }
 
-static char *
-GetPasswordString(char *buf, size_t sz, const char *prompt)
-{
-    const char *cmd;
-    struct stat stat_buf;
-
-    if ((cmd = getenv(ASKPASS_ENV)) != NULL){
-        if (askpass(cmd, prompt, buf, sz) >= 0){
-            return buf;
-        }
-    }
-    else if (stat(DEFAULT_ASKPASS_COMMAND, &stat_buf) == 0){
-        if (askpass(DEFAULT_ASKPASS_COMMAND, prompt, buf, sz) >= 0){
-            return buf;
-        }
-    }
-    else if (isatty(STDIN_FILENO)){
-        if (EVP_read_pw_string(buf, sz, prompt, 0) == 0){
-            return buf;
-        }
-    }
-
-    return NULL;
-}
 
 static int
 SSL_CTX_use_certificate_with_check(
@@ -1117,24 +1075,14 @@ MakeSSL_CTX(
 {
 	SSL_CTX *ctx = NULL;
     int     mode = SSL_VERIFY_NONE;
-    const char *askpass_command;
-    struct stat stat_buf;
 
     if ((ctx = SSL_CTX_new(SSLv23_method())) == NULL){
         SSL_Error(_d("SSL_CTX_new failure:\n %s\n"), GetSSLErrorString());
         return NULL;
     }
 
-    if ((askpass_command = getenv(ASKPASS_ENV)) != NULL){
-        SSL_CTX_set_default_passwd_cb(ctx, passphrase_callback);
-        SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)askpass_command);
-    }
-    else {
-        if (stat(DEFAULT_ASKPASS_COMMAND, &stat_buf) == 0){
-                SSL_CTX_set_default_passwd_cb(ctx, passphrase_callback);
-                SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)DEFAULT_ASKPASS_COMMAND);
-        }
-    } 
+    SSL_CTX_set_default_passwd_cb(ctx, passphrase_callback);
+    SSL_CTX_set_default_passwd_cb_userdata(ctx, (void*)ASKPASS_PROMPT);
 
     if (!SSL_CTX_set_cipher_list(ctx, ciphers)){
         SSL_Error(_d("SSL_CTX_set_cipher_list(%s) failure:\n %s\n"),
@@ -1198,8 +1146,11 @@ MakeSSL_CTX(
                 SSL_CTX_free(ctx);
                 return NULL;
             }
-        }
-    }
+		}
+    } else {
+		SSL_Error(_d("Please specify certificate file"));
+		return NULL;
+	}
 
     return ctx;
 }
@@ -1531,7 +1482,7 @@ InitEnginePKCS11( const char *pkcs11, const char *pin)
     ENGINE_load_dynamic();
     e = ENGINE_by_id("dynamic");
     if (!e){
-        SSL_Error(_d("Engine_by_id:\n %s"), GetSSLErrorString());
+		SSL_Error(_d("Engine_by_id:\n %s"), GetSSLErrorString());
         return NULL;
     }
 
@@ -1555,32 +1506,7 @@ InitEnginePKCS11( const char *pkcs11, const char *pin)
     return e; 
 }
 
-#define PKCS11_ASKPIN_PROMPT "Please input security device PIN:"
-
-static char *
-GetPinString(char *buf, size_t sz)
-{
-    const char *cmd;
-    struct stat stat_buf;
-
-    if ((cmd = getenv(ASKPASS_ENV)) != NULL){
-        if (askpass(cmd, PKCS11_ASKPIN_PROMPT, buf, sz) >= 0){
-            return buf;
-        }
-    }
-    else if (stat(DEFAULT_ASKPASS_COMMAND, &stat_buf) == 0){
-        if (askpass(DEFAULT_ASKPASS_COMMAND, PKCS11_ASKPIN_PROMPT, buf, sz) >= 0){
-            return buf;
-        }
-    }
-    else if (isatty(STDIN_FILENO)){
-        if (EVP_read_pw_string(buf, sz, PKCS11_ASKPIN_PROMPT, 0) == 0){
-            return buf;
-        }
-    }
-
-    return NULL;
-}
+#define PKCS11_ASKPIN_PROMPT _("Please input security device PIN:")
 
 static Bool
 LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slotstr)
@@ -1612,7 +1538,8 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
         return FALSE;
 	}
 
-    if ((pin = GetPinString(pinbuf, sizeof(pinbuf))) == NULL){
+    pin = GetPasswordString(pinbuf, sizeof(pinbuf), PKCS11_ASKPIN_PROMPT);
+    if (pin == NULL){
         Message("PIN input was canceled\n");
         return FALSE;
     }
@@ -1663,8 +1590,9 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
     }
     free(keyidbuf);
 
-    derptr = (unsigned char *)certder;
-    cert = d2i_X509(NULL, (const unsigned char **)&derptr, certder_size);
+	derptr = (unsigned char *)certder;
+	cert = d2i_X509(NULL, (const unsigned char **)&derptr, certder_size);
+
     if (cert == NULL) {
         SSL_Error(_d("d2i_X509 failure:\n %s"), GetSSLErrorString());
         free(certder);

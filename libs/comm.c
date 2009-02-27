@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -73,9 +72,9 @@ RecvLength(
 {
 	size_t	size;
 
-	if ( Recv(fp,&size,sizeof(size)) < 0 ) {
+	if		(  Recv(fp,&size,sizeof(size))  <  0  ) {
 		size = 0;
-	}	
+	}
 	return	(size);
 }
 

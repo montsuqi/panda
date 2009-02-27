@@ -1,7 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2003 Ogochan & JMA (Japan Medical Association).
- * Copyright (C) 2004-2007 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,6 +52,8 @@ static	GHashTable	*DB_Reserved;
 #define	T_USE			(T_YYBASE +3)
 #define	T_OPERATION		(T_YYBASE +4)
 #define	T_PROCEDURE		(T_YYBASE +5)
+#define	T_READONLY		(T_YYBASE +6)
+#define	T_UPDATE		(T_YYBASE +7)
 
 static	TokenTable	DB_Tokentable[] = {
 	{	"primary"	,T_PRIMARY		},
@@ -60,6 +61,8 @@ static	TokenTable	DB_Tokentable[] = {
 	{	"use"		,T_USE			},
 	{	"operation"	,T_OPERATION	},
 	{	"procedure"	,T_PROCEDURE	},
+	{	"readonly"	,T_READONLY		},
+	{	"update"	,T_UPDATE		},
 	{	""			,0				}
 };
 
@@ -211,7 +214,8 @@ InsertBuildIn(
 }
 
 static	PathStruct	*
-InitPathStruct(void)
+NewPathStruct(
+	int		usage)
 {
 	PathStruct	*ret;
 
@@ -226,6 +230,7 @@ ENTER_FUNC;
 	InsertBuildIn(ret,"DBDELETE",DBOP_DELETE);
 	InsertBuildIn(ret,"DBCLOSECURSOR",DBOP_CLOSE);
 	ret->ocount = 6;
+	ret->usage = usage;
 	ret->args = NULL;
 LEAVE_FUNC;
 	return	(ret);
@@ -401,7 +406,8 @@ LEAVE_FUNC;
 static	void
 ParPath(
 	CURFILE			*in,
-	RecordStruct	*rec)
+	RecordStruct	*rec,
+	int				usage)
 {
 	int		pcount;
 	PathStruct		**paths
@@ -416,7 +422,7 @@ ENTER_FUNC;
 		memcpy(paths,RecordDB(rec)->path,(sizeof(PathStruct *) * pcount));
 		xfree(RecordDB(rec)->path);
 	}
-	path = InitPathStruct();
+	path = NewPathStruct(usage);
 	paths[pcount] = path;
 	path->name = StrDup(ComSymbol);
 	g_hash_table_insert(RecordDB(rec)->paths,path->name,(void *)((long)pcount+1));
@@ -571,12 +577,36 @@ ENTER_FUNC;
 				ParError("syntax error(PRIMARY)");
 			}
 			break;
+		  case	T_READONLY:
+			if		(  GetSymbol  ==  T_PATH  ) {
+				if		(  !fScript  )	goto	quit;
+				if		(  GetName  !=  T_SYMBOL  ) {
+					ParError("path name invalid");
+				} else {
+					ParPath(in,ret,DB_READONLY);
+				}
+			} else {
+				ParError("path missing");
+			}
+			break;
+		  case	T_UPDATE:
+			if		(  GetSymbol  ==  T_PATH  ) {
+				if		(  !fScript  )	goto	quit;
+				if		(  GetName  !=  T_SYMBOL  ) {
+					ParError("path name invalid");
+				} else {
+					ParPath(in,ret,DB_UPDATE);
+				}
+			} else {
+				ParError("path missing");
+			}
+			break;
 		  case	T_PATH:
 			if		(  !fScript  )	goto	quit;
 			if		(  GetName  !=  T_SYMBOL  ) {
 				ParError("path name invalid");
 			} else {
-				ParPath(in,ret);
+				ParPath(in,ret,DB_UNDEF);
 			}
 			break;
 		  case	T_OPERATION:
@@ -598,7 +628,7 @@ ENTER_FUNC;
 	if		(	(  ret->type              ==  RECORD_DB  )
 			&&	(  RecordDB(ret)->pcount  ==  0          ) ) {
 		RecordDB(ret)->path = (PathStruct **)xmalloc(sizeof(PathStruct *) * 1);
-		path = InitPathStruct();
+		path = NewPathStruct(DB_UNDEF);
 		path->name = StrDup("primary");
 		g_hash_table_insert(RecordDB(ret)->paths,path->name,(void *)1);
 		RecordDB(ret)->pcount ++;

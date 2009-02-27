@@ -1,6 +1,127 @@
-2008-04-18  Noboru Saitou  <noborus@netlab.jp>
+2009-02-20  Noboru Saitou  <noborus@netlab.jp>
 
-	* glserver/server.c, libs/wfcio.c, wfc/termthread.c: FinishSessionをしない問題修正
+	* dblib/PostgreSQLlib.[ch]: dblib/PostgreSQL.c を分割
+
+2009-02-20 Yusuke Mihara	<mihara@netlab.jp>
+
+	* glserver/Makefile.am glserver/server.c include/glterm.h
+	include/wfcdata.h libs/Makefile.am libs/wfcio.c
+	libs/wfcio.h tools/Makefile.am wfc/termthread.c
+	glserver/http.c glserver/http.h libs/monapi.c libs/monapi.h:
+	API対応
+		* glserverにHTTPサーバ機能を追加
+			* GLプロトコルとHTTPのマルチプロトコル化(glserver/http.c)
+		* glserverはHTTPリクエストをpanda.soを経由せずwfcに直接送信
+			* glserver-wfc間に新プロトコルを追加(libs/monapi.c)
+		* wfcのsession dataをAPI用に拡張
+		* HTTPリクエストの解析はapsで実施(未実装)
+			* 現状はリクエストをwfcでエコーバック
+
+2009-01-26  Noboru Saitou  <noborus@netlab.jp>
+
+	* glauth/glauth.c: パスワードの再読み込みを自動にした。
+
+2008-12-19  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/gtk2/widgetOPS.c:
+	GtkPandaPDFが使えない環境(etch)ではGtkPandaPSを使用する
+
+2008-12-12  yusuke mihara  <mihara@netlab.jp>
+
+	* r_gkt2_branchとマージ
+
+2008-12-10  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/glcomm.c: "pngpdf"のフラグ定数を削除 
+
+2008-11-27  yusuke mihara  <mihara@netlab.jp>
+
+	*  glclient/marshaller.c, glclient/protocol.c. glclient/gtk1/widgetOPS.c,
+	glclient/gtk2/bd_config.c glclient/gtk2/widgetOPS.c:
+	glclient2のプレビューをPostScriptからPDFに変更
+
+2008-11-13  yusuke mihara  <mihara@netlab.jp>
+
+    * glclient/gtk1, glclient/gtk2:
+	glclientのGtk2対応版の追加。gtk+panda2とlibglade-panda2が必要。
+	* gtk+panda2
+		* http://www.montsuqi.org/svn/gtk+panda2/
+	* libglade-panda2
+		* http://www.montsuqi.org/svn/libglade-panda2/
+
+2008-11-13  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/glcomm.c: "pngpdf"を一旦廃止。フラグ定数のみ残し再検討する。
+
+2008-11-04  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/widgetOPS.c: gtk_panda_ps_loadをgtk_panda_ps_setに変更した。
+
+2008-10-31  yusuke mihara  <mihara@netlab.jp>
+
+	* glserver/server.c, include/glterm.h, libs/glcomm.c, libs/glcomm.h: monsiajのプレビューウィジェットにpngとPDFを渡すように変更した。
+	バージョン文字列に"negotiation"と"pngpdf"を追加した。クライアントが"negotiation"を指定した場合、認証結果GL_OKを送る代わりに、GL_ServerVersionを送信する。 
+
+2008-09-04  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/bd_component.c, bd_component.c, client.c:
+	タイマー設定をデフォルト有効にするようにした
+
+2008-08-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* glserver/pstopng: 画像の大きさを2倍にして antialias を掛けるようにした
+2008-08-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/widgetOPS.c(RecvEntry): INSENSITIVE のときに表示位置を左詰めにした
+
+2008-06-19  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/net.c:
+	SSLのパスフレーズ入力を組込み関数からのみ行うように変更した。環境変数指定の外部コマンドからの入力は廃止。
+
+2008-06-13  yusuke mihara  <mihara@netlab.jp>
+
+	* bd_component.c bd_config.c bootdialog.c dialogs.c:
+	glclientのコマンドラインオプションにランチャーの設定を指定するオプション(-config)を追加した
+
+2008-06-13  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/aps_main.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dblib/dbgroup.h,
+	  dbstuff/dbredirector.c, dbstuff/dbs_main.c, include/struct.h,
+	  libs/DIparser.c, tools/checkdir.c: sslmodeの追加(PostgreSQL)
+
+2008-06-12  yusuke mihara  <mihara@netlab.jp>
+
+	* bd_component.c bootdialog.c callbacks.c client.c: ランチャーにsend_event_when_idleのタイマー設定を追加した
+
+
+2008-06-11  Noboru Saitou  <noborus@netlab.jp>
+
+	* action.c, client.c, glclient.h, protocol.c, widgetOPS.c (RecvWindow):
+	セッション毎にタイトルを設定可能にした
+
+2008-06-11  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/bootdialog.c, glclient/bd_component.c:glclientランチャーのリファクタリング、ランチャーとサーバリスト設定の共通部分をbd_component.cにまとめた
+	ランチャーでの変更をサーバリストの設定に反映可能にした
+
+2008-05-17  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dbstuff/dbslib.rb: 件数処理を正しく
+
+	* dbstuff/dbs_main.c (WriteClientString): 件数処理はVer 1.4.3以降のクライアントで
+
+2008-04-27  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/monitor.c (SetDefault): キャッシュのデフォルトを0に
+
+	* wfc/wfc.c (SetDefault): キャッシュのデフォルトを0に
+
+2008-04-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/DIparser.c (NewDBG_Struct): processの初期化(ここでするべき)
+
+	* tools/monitor.c (ProcessMonitor): 古いコードに戻した(つか、勘違いしたままのコードだった)
 
 2008-04-09  Noboru Saitou  <noborus@netlab.jp>
 
@@ -8,22 +129,92 @@
 
 	* dbstuff/dbredirector.c: ちゃんとDISCONNECTされない問題を修正
 
-2008-02-15  Noboru Saitou  <noborus@netlab.jp>
+2008-04-04  yusuke mihara  <mihara@netlab.jp>
 
-	* Ver 1.4.1 release
+	* pgserver/server.c: バージョンチェックの修正、1.2.5 以上 OK に変更
 
+2008-04-03  yusuke mihara  <mihara@netlab.jp>
+
+	* aps/Exec.c: ExecuteDB_Server() で返り値の設定洩れを修正
+
+2008-04-01  yusuke mihara  <mihara@netlab.jp>
+
+	* dblib/NativeBLOB.c: _ImportBLOB() で object id がセットされないバグを修正
+
+2008-03-31  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.4.3
+
+2008-03-30  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* aps/Ruby.c (aryval_each): ValueStructにeach methodを付加
+
+	* libs/DIparser.c (ParDBGROUP): db_groupに複数のDBサーバを指定可能にし、それぞれに
+	usage(readonly/updateの別)を指定可能にした
+
+	* libs/DBparser.c (DB_Parse): pathにreadonlyとupdateのオプションをつけられるようにした
+
+2008-03-25  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/socket.[ch],wfc/wfc.c (CleanUNIX_Socket): UNIX domain socketの後始末追加
+
+2008-03-20  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/dbgroup.c (MakeCTRL): バージョンによって挙動を変える
+
+	* aps/MONFUNC.c (MONFUNC): バージョンによって挙動を変える
+
+	* libs/DIparser.c (BuildMcpArea): mcparea.versionを追加(バージョンチェック用)
+
+2008-03-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/struct.h: DBG_StructからDB_Process, DB_Serverを分離し、複数保持可能にした。
+	(PathStruct) パスがreadonlyかupdateを行うかの識別を付加。目的別にコネクトするようにした。
+	(DB_Process) fConnectを廃止しdbstatusに統合した(今まで同じ用途で別々に存在していたのが異常)
+
+2008-03-05  yusuke mihara  <mihara@netlab.jp>
+
+	* action.c, callbacks.c, protocol.c, widgetOPS.c:
+	GtkScrolledWindowのスクロールを画面切替時にリセット
+	カーソル移動にあわせてスクロール位置を設定
+
+2008-02-21  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/widgetOPS.c:
+	GtkTextのGtkAdjustmentをイベント前の値に戻すよう修正
+	GtkScrolledWindowの制御を停止
+
+2008-02-20  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/widgetOPS.c: GnomePixmapEntryのgladeでのプレビュー非表示に対応
+ 
 2008-02-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/wfcio.c, wfc/mqthread.c, wfc/termthread.c: Warningの追加
 
+2008-02-11  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* dblib/DBRuby.c (timestamp_new): 時刻系の型に対応
+
 2008-02-08  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/comm.c (RecvLength): 通信エラー時に不正なサイズが返らないように修正
+
 	* dbstuff/dbredirector.c: SIGPIPEを無視するようにした
+
+2008-02-06  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* Ver 1.4.2
 
 2008-02-04  Noboru Saitou  <noborus@netlab.jp>
 
 	* wfc/termthread.c, libs/wfcio.c: wfcの終了を待つように修正
+
+2008-02-02  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* panda-config.in: libpandaを追加
+
+	* so にバージョン番号
 
 2008-01-29  Noboru Saitou  <noborus@netlab.jp>
 
@@ -32,10 +223,48 @@
 	* glclient/callbacks.c, glcient/widgetOPS.c: GtkNotebookの制御の修正
 	  (user_data != NULL: サーバ制御, user_data = NLL: 制御せず)
 
+2008-01-25  Noboru Saitou  <noborus@netlab.jp>
+
+	* configure.ac: autoconf更新,　LIBMONDAI_VERSIONをVERSIONに変更
+	
+2008-01-22  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/port.c (ParseURL): URLのファイル名にExpandPathを使うようにした
+
+2008-01-18  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* 「展開」に環境変数の参照や、シェルの実行結果を取り込むことが出来るようになった
+
+	* 全てのパスの指定が「展開」を行うようになった
+
 2008-01-15  yusuke mihara  <mihara@netlab.jp>
 
     * libs/net.{c,h}: 使用されていない pthread条件変数 を削除、fp の
 	ロック周りを修正
+
+2008-01-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/mhandler.c (EnterDefaultHandler): デフォルトハンドラの登録を正しくした
+
+2008-01-14  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/mhandler.c (ParHANDLER): ハンドラ定義にendianを指定可能にした
+
+2008-01-13  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/copygen.c: トップレベルのレベル番号を指定可能にした
+
+2008-01-10  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* tools/dbgen.c (MakeDrop): drop tableの生成を追加(create tableの前に必ず出力する)
+
+2008-01-08  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* include/struct.h: DI_Structのlinksize廃止(不要)
+
+2008-01-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* libs/port.c (ParPort): デフォルトUNIXポートのモードを666->600に
 
 2007-12-20  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1845,7 +2074,7 @@
 
 2003-09-04  OGOSHI  <ogochan@nurs.or.jp>
 
-	* libs/LDparser.c, libs/BDparse.c, aps/handler.c: 一部ハンドラを定
+	* libs/LDparser.c, libs/BDparse.c, aps/handler.c: 一部ハ��ドラを定
 	義可能にした
 
 2003-09-03  OGOSHI  <ogochan@nurs.or.jp>
@@ -1901,7 +2130,7 @@
 
 	* auth/glauth.c (ExecuteServer): 多重化をやめる(必要性がない)
 
-	* libs/tcp.c (SetNodelay): 追加(TCP_NODELAYを設定する)
+	* libs/tcp.c (SetNodelay): 追加(TCP_NODELAYを��定する)
 
 2003-06-23  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1917,7 +2146,7 @@
 	しかった)
 
 	* include/glterm.h (SCREEN_FORK_WINDOW): 新規ウィンドウを出して処
-	理を分枝させる機能(ポップアップではなく、他に処理を移すため)
+	��を分枝させる機能(ポップアップではなく、他に処理を移すため)
 
 2003-05-24  Masami Ogoshi  <ogochan@nurs.or.jp>
 
@@ -1933,7 +2162,7 @@
 
 2003-05-18  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* glclient/widgetOPS.c (RegistValue): 名前の持ち方を変更(V2対応)
+	* glclient/widgetOPS.c (RegistValue): ��前の持ち方を変更(V2対応)
 
 	* glclient/callbacks.c: V2プロトコルへの対応を正しくした
 
