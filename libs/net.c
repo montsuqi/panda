@@ -1234,11 +1234,11 @@ MakeSSL_CTX(
                 SSL_CTX_free(ctx);
                 return NULL;
             }
-		} else {
-			SSL_Error(_d("Please specify certificate file"));
-			return NULL;
 		}
-    }
+	} else {
+		SSL_Error(_d("Please specify certificate file"));
+		return NULL;
+	}
 
     return ctx;
 }
