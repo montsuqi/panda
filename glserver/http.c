@@ -63,6 +63,7 @@
 #include	"monapi.h"
 
 #define MAX_REQ_SIZE 1024*1024
+#define TIMEOUT_SEC 60
 
 typedef struct {
 	NETFILE		*fp;
@@ -566,6 +567,12 @@ MakeMonAPIData(
 	return data;
 }
 
+static void timeout(int i)
+{
+	Warning("request timeout");
+	exit(0);
+}
+
 void
 HTTP_Method(
 	PacketClass klass,
@@ -574,10 +581,20 @@ HTTP_Method(
 	HTTP_REQUEST *req;
 	MonAPIData *data;
 	PacketClass result;
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));  
+	sa.sa_handler = timeout;
+	if(sigaction(SIGALRM, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	} 
 
 	req = HTTP_Init(klass, fpComm);
 
+	alarm(TIMEOUT_SEC);
 	ParseRequest(req);
+	alarm(0);
+
 	if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
 		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
 		req->status = HTTP_UNAUTHORIZED;
