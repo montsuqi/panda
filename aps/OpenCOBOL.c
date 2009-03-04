@@ -46,6 +46,7 @@
 #include	"libcob.h"
 #define		_OPENCOBOL
 #include	"OpenCOBOL.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	void	*McpData;

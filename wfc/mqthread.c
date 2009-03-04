@@ -83,6 +83,7 @@ LEAVE_FUNC;
 
 static	byte
 CheckAPS(
+	PacketClass	klass,
 	LD_Node		*ld,
 	int			ix,
 	char		*term)
@@ -94,7 +95,7 @@ CheckAPS(
 	aps = &ld->aps[ix];
 	fp = aps->fp;
 	if		(  fp  !=  NULL  ) {
-		SendPacketClass(fp,APS_REQ);	ON_IO_ERROR(fp,badio);
+		SendPacketClass(fp,klass);		ON_IO_ERROR(fp,badio);
 		SendString(fp,term);			ON_IO_ERROR(fp,badio);
 		flag = RecvChar(fp);			ON_IO_ERROR(fp,badio);
 	} else {
@@ -374,7 +375,7 @@ LEAVE_FUNC;
 }
 
 static	void
-HandleTermMessage(
+SendTermMessage(
 	SessionData *data,
 	MQ_Node		*mq,
 	int	ix)
@@ -390,7 +391,7 @@ HandleTermMessage(
 	fp = NULL; 
 	puttype = 0;
 	ld = data->ld;
-	if ((flag = CheckAPS(ld,ix,data->name)) != 0) {
+	if ((flag = CheckAPS(APS_REQ, ld,ix,data->name)) != 0) {
 		memcpy(&hdr,data->hdr,sizeof(MessageHeader));
 		puttype = hdr.puttype;
 		if ((PutAPS(ld,ix,data,flag)) && 
@@ -483,6 +484,61 @@ HandleTermMessage(
 }
 
 static	void
+SendAPIMessage(
+	SessionData *data,
+	MQ_Node		*mq,
+	int	ix)
+{
+	LD_Node			*ld;
+	NETFILE			*fp;
+	APIData			*api;
+	byte			flag;
+
+	fp = NULL;
+	ld = data->ld;
+	api = data->apidata;
+	if ((flag = CheckAPS(APS_API, ld,ix,data->name)) != 0) {
+		fp = ld->aps[ix].fp;
+
+		SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
+
+        SendPacketClass(fp,APS_MCPDATA);    ON_IO_ERROR(fp,badio);
+        SendLBS(fp,data->mcpdata);          ON_IO_ERROR(fp,badio);
+        SendChar(fp,data->tnest);           ON_IO_ERROR(fp,badio);
+
+		SendString(fp,api->method);			ON_IO_ERROR(fp,badio);
+		SendLBS(fp,api->arguments);			ON_IO_ERROR(fp,badio);
+		SendLBS(fp,api->headers);			ON_IO_ERROR(fp,badio);
+		SendLBS(fp,api->body);				ON_IO_ERROR(fp,badio);
+
+		RecvLBS(fp,api->headers);			ON_IO_ERROR(fp,badio);
+		RecvLBS(fp,api->body);				ON_IO_ERROR(fp,badio);
+		api->status = WFC_API_OK;
+	} else {
+		api->status = WFC_API_NOT_FOUND;
+	}
+	TermEnqueue(data->term,data);
+	return;
+badio:
+	ClearAPS_Node(ld,ix);
+	data->apsid = -1;
+	data->retry ++;
+	if ((MaxTransactionRetry > 0) && 
+		(MaxTransactionRetry < data->retry)) {
+		Warning("transaction abort %s", mq->name);
+		data->fAbort = TRUE;
+		data->apidata->status = WFC_API_ERROR;
+		TermEnqueue(data->term,data);
+	} else {
+		Warning("transaction retry %s", mq->name);
+		EnQueue(mq->que,data);
+	}
+	WaitConnect(ld,ix);
+	sched_yield();
+}
+
+
+static	void
 MessageThread(
 	APS_Start	*aps)
 {
@@ -499,14 +555,10 @@ ENTER_FUNC;
 			dbgprintf("act %s\n",mq->name);
 			switch(data->type) {
 			case SESSION_TYPE_TERM:
-				HandleTermMessage(data,mq,ix);
+				SendTermMessage(data,mq,ix);
 				break;
 			case SESSION_TYPE_API:
-#if 0
-				HandleAPIMessage();
-#else
-				TermEnqueue(data->term,data);
-#endif
+				SendAPIMessage(data,mq,ix);
 				break;
 			}
 		} else {

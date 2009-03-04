@@ -196,8 +196,12 @@ ENTER_FUNC;
 						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)	) {
 			Message("GetWFC failure");
+#if 0
 			rc = -1;
 			break;
+#else
+			continue;
+#endif
 		}
 		if		(  node->pstatus  ==  APL_SYSTEM_END  ) {
 			Message("system stop");

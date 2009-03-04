@@ -1,8 +1,29 @@
+2009-03-04  Yusuke Mihara  <mihara@netlab.jp>
+
+	* configure.ac aps/OpenCOBOL.c aps/aps_main.c aps/apsio.c
+	aps/handler.c glserver/Makefile.am glserver/http.c 
+	include/wfcdata.h libs/DIparser.c libs/monapi.c 
+	libs/wfcio.h wfc/mqthread.c wfc/termthread.c:
+	API対応その2
+		* wfc
+			* APIセッションをapiという特別なLDに振り分け
+		* aps
+			* API用にwfc-aps間プロトコルを拡張
+			* APIリクエストをAPI用レコードにパッキングして
+			アプリケーションに渡す
+			* アプリケーションからの応答をvalueconvで変換
+			してwfcへ返す
+		* glserver
+			* リクエストパラメータの文字コード変換
+				* UTF-8 -> EUC-JP
+			* レスポンスXMLの文字エンコード変換
+				* EUC-JP -> UTF-8
+
 2009-02-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/PostgreSQLlib.[ch]: dblib/PostgreSQL.c を分割
 
-2009-02-20 Yusuke Mihara	<mihara@netlab.jp>
+2009-02-20  Yusuke Mihara  <mihara@netlab.jp>
 
 	* glserver/Makefile.am glserver/server.c include/glterm.h
 	include/wfcdata.h libs/Makefile.am libs/wfcio.c

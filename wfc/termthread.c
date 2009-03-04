@@ -96,6 +96,7 @@ ENTER_FUNC;
 	time(&(data->create_time));
 	time(&(data->access_time));
 	data->apidata = New(APIData);
+	data->apidata->status = WFC_API_OK;
 	data->apidata->arguments = NewLBS();
 	data->apidata->headers = NewLBS();
 	data->apidata->body = NewLBS();
@@ -261,7 +262,7 @@ static	SessionData	*
 InitAPISession(
 	char *term,
 	Bool fKeep,
-	char *hdr_user,
+	char *user,
 	char *ldname)
 {
 	SessionData	*data;
@@ -271,6 +272,7 @@ ENTER_FUNC;
 	data = MakeSessionData();
 	data->type = SESSION_TYPE_API;
 	strcpy(data->hdr->term,term);
+	strcpy(data->hdr->user,user);
 	data->fKeep = fKeep;
 	data->fInProcess = TRUE;
 	MessageLogPrintf("[%s@%s] session start(%d)",
@@ -831,6 +833,7 @@ APISession(
 	char ld[SIZE_NAME+1];
 	char user[SIZE_USER+1];
 	char sterm[SIZE_TERM+1];
+	PacketClass klass;
 
 	data = NULL;
 	RecvnString(term->fp, sizeof(ld), ld);			
@@ -845,36 +848,36 @@ APISession(
 		data->term = term;
 		data->retry = 0;
 		api = data->apidata;
-		api->method = RecvPacketClass(term->fp);
+		klass = RecvPacketClass(term->fp);	ON_IO_ERROR(term->fp,badio2);
+		switch(klass) {
+		case 0x47:
+			sprintf(api->method, "GET");
+			break;
+		case 0x48:
+			sprintf(api->method, "HEAD");
+			break;
+		case 0x50:
+			sprintf(api->method, "PUT");
+			break;
+		}
 		RecvLBS(term->fp, api->arguments);	ON_IO_ERROR(term->fp,badio2);
 		RecvLBS(term->fp, api->headers);	ON_IO_ERROR(term->fp,badio2);
 		RecvLBS(term->fp, api->body);		ON_IO_ERROR(term->fp,badio2);
 		RegistSession(data);
 
-#if 0
-		Message("== request",ld);
-		Message("ld:%s",ld);
-		Message("user:%s",user);
-		Message("term:%s",sterm);
-		Message("method:%c", (char)api->method);
-		Message("arguments:%s", (char *)LBS_Body(api->arguments));
-		Message("headers size:%d", LBS_Size(api->headers));
-		Message("body:%s", (char *)LBS_Body(api->body));
-#endif
-
-#if 1
 		data = Process(data);
-#endif
 		api = data->apidata;
 
-		SendPacketClass(term->fp, WFC_OK);
-		SendLBS(term->fp, api->headers);
-		SendLBS(term->fp, api->body);
+		SendPacketClass(term->fp, api->status);	ON_IO_ERROR(term->fp,badio2);
+		if (api->status == WFC_API_OK) {
+			SendLBS(term->fp, api->headers);	ON_IO_ERROR(term->fp,badio2);
+			SendLBS(term->fp, api->body);		ON_IO_ERROR(term->fp,badio2);
+		}
 		CloseNet(term->fp);
 	badio2:
 		FinishSession(data);
 	} else {
-		SendPacketClass(term->fp, WFC_END);
+		SendPacketClass(term->fp, WFC_API_ERROR);ON_IO_ERROR(term->fp,badio2);
 		CloseNet(term->fp);
 	}
 	badio:

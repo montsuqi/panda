@@ -89,7 +89,8 @@ typedef	struct {
 }	MessageHeader;
 
 typedef struct {
-	int						method;
+	PacketClass				status;
+	char					method[SIZE_NAME+1];
 	LargeByteString			*arguments;
 	LargeByteString			*headers;
 	LargeByteString			*body;

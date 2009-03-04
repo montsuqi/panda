@@ -279,7 +279,7 @@ CallBefore(
 ENTER_FUNC;
 	mcp = node->mcprec->value; 
 	SetValueString(GetItemLongName(mcp,"dc.status"),
-				   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
+				   STATUS[(*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1')%sizeof(STATUS)],
 				   NULL);
 	dbgprintf("node->dbstatus = %d",(int)node->dbstatus);
 	SetValueString(GetItemLongName(mcp,"dc.dbstatus"),

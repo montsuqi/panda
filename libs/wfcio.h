@@ -46,6 +46,10 @@
 #define	WFC_OK			(PacketClass)0xFE
 #define	WFC_END			(PacketClass)0xFF
 
+#define WFC_API_OK			(WFC_TRUE)
+#define WFC_API_ERROR		(WFC_FALSE)
+#define WFC_API_NOT_FOUND	(WFC_Null)
+
 extern	NETFILE	*ConnectTermServer(char *url, char *term, char *user, char *window, Bool fKeep, char *arg);
 extern	Bool	SendTermServer(NETFILE *fp, char *term, char *window, char *widget,
 							   char *event,
