@@ -39,7 +39,10 @@
 #include	<sys/wait.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
+#include	<ctype.h>
 #include	<glib.h>
+#include 	<libxml/tree.h>
+#include 	<libxml/parser.h>
 
 #include	"types.h"
 #include	"enum.h"
@@ -66,10 +69,10 @@ typedef struct {
 	char		*term;
 	PacketClass	method;
 	int			buf_size;
-	char		buf[MAX_REQ_SIZE];
+	char		*buf;
 	char		*head;
 	int			body_size;
-	char		body[MAX_REQ_SIZE];
+	char		*body;
 	char		*arguments;
 	GHashTable 	*header_hash;
 	char		*headers;
@@ -91,10 +94,11 @@ HTTP_Init(
 	req->term = TermName(fp->fd);
 	req->method = klass;
 	req->buf_size = 0;
-	req->buf[0] = '\0';
-	req->head = req->buf;
+	req->buf = req->head = xmalloc(sizeof(char) * MAX_REQ_SIZE);
+	memset(req->buf, 0x0, MAX_REQ_SIZE);
 	req->body_size = 0;
-	req->body[0] = '\0';
+	req->body = xmalloc(sizeof(char) * MAX_REQ_SIZE);
+	memset(req->body, 0x0, MAX_REQ_SIZE);
 	req->arguments = NULL;
 	req->header_hash = NewNameHash();
 	req->headers = NULL;
@@ -181,6 +185,11 @@ SendResponse(
 	char date[50];
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
+	xmlDocPtr doc = NULL;
+	xmlChar *newbody;
+	int size;
+
+	newbody = NULL;
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
 		req->status, GetReasonPhrase(req->status));
@@ -202,10 +211,19 @@ SendResponse(
 		Send(req->fp, LBS_Body(headers), LBS_Size(headers));
 	}
 
+	//convert xml encoding
+	if (body != NULL && LBS_Body(body) != NULL) {
+		doc = xmlReadMemory(LBS_Body(body), LBS_Size(body),
+				"http://www.montsuqi.org/", "", XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
+		if (doc != NULL) {
+			xmlDocDumpFormatMemoryEnc(doc, &newbody, &size, "UTF-8", 0);
+		}
+	}
 	Send(req->fp, "\r\n", strlen("\r\n"));
 
-	if (body != NULL && LBS_Body(body) != NULL) {
-		Send(req->fp, LBS_Body(body), LBS_Size(body));
+	if (newbody != NULL) {
+		Send(req->fp, (char *)newbody, size);
+		xfree(newbody);
 	}
 }
 
@@ -241,73 +259,78 @@ GetNextLine(HTTP_REQUEST *req)
 	int len;
 
 	while(1) {
-		p = strstr(req->head, "\r\n");
-		if (p != NULL) {
-			len =  p - req->head;
-			if (len <= 0) {
-				return NULL;
+		if (req->buf_size > 0) {
+			p = strstr(req->head, "\r\n");
+			if (p != NULL) {
+				len = p - req->head;
+				if (len <= 0) {
+					return NULL;
+				}
+				ret = strndup(req->head, len);
+				req->head = p + 2;
+				return ret;
 			}
-			ret = strndup(req->head, len);
-			req->head = p + strlen("\r\n");
-
-			MessageLogPrintf("[%s]:%s", req->term, ret);
-
-			return ret;
 		}
 		TryRecv(req);
 	}
 }
 
-#if 0
 static char *
-ParseReqArgument(HTTP_REQUEST *req, char *argument)
+decode_uri(const char *uri)
 {
-	char *head;
-	char *tail;
-	char *key;
-	char *value;
+	char c, *ret;
+	int i, j, in_query = 0;
+	
+	ret = xmalloc(strlen(uri) + 1);
 
-	head = argument;
-
-	while(1) {
-		tail = strstr(head, "=");
-		if (tail == NULL) {
-			Message("Invalid HTTP Argument :%s", argument);
-			req->status = HTTP_BAD_REQUEST;
-			return head;
+	for (i = j = 0; uri[i] != '\0'; i++) {
+		c = uri[i];
+		if (c == '?') {
+			in_query = 1;
+		} else if (c == '+' && in_query) {
+			c = ' ';
+		} else if (c == '%' && isxdigit((unsigned char)uri[i+1]) &&
+		    isxdigit((unsigned char)uri[i+2])) {
+			char tmp[] = { uri[i+1], uri[i+2], '\0' };
+			c = (char)strtol(tmp, NULL, 16);
+			i += 2;
 		}
-		key = strndup(head, tail - head);
-		head = tail + 1;
-		
-		tail = strstr(head, "&");
-		if (tail != NULL) {
-				value = strndup(head, tail - head);
-				head = tail + 1;
-				g_hash_table_insert(req->arguments, key, value);
-				dbgprintf("argument key:%s value:%s\n", key, value);
-		} else {
-			tail = strstr(head, " ");
-			if (tail == NULL) {
-				Message("Invalid HTTP Argument :%s", argument);
-				req->status = HTTP_BAD_REQUEST;
-			} else {
-				value = strndup(head, tail - head);
-				head = tail + 1;
-				g_hash_table_insert(req->arguments, key, value);
-				dbgprintf("argument key:%s value:%s\n", key, value);
-			}
-			return head;
-		}
+		ret[j++] = c;
 	}
+	ret[j] = '\0';
+	
+	return (ret);
 }
-#endif
+
+void
+DecodeArguments(
+	HTTP_REQUEST *req,
+	char *args)
+{
+	gsize isize;
+	gsize osize;
+	GError *error;
+	char *decoded;
+
+	error = NULL;
+	decoded = decode_uri(args);
+	req->arguments = g_convert(decoded, strlen(decoded), 
+		"EUC-JP", "utf8", &isize, &osize, &error);
+	if (error != NULL) {
+		Warning("Arguments convert failure:%s", error->message);
+		req->status = HTTP_BAD_REQUEST;
+		g_error_free(error);
+	}
+	xfree(decoded);
+}
 
 void
 ParseReqLine(HTTP_REQUEST *req)
 {
+	char *line;
 	char *head;
 	char *tail;
-	char *line;
+	char *args;
 	int cmp = 1;
 
 	line = head = GetNextLine(req);
@@ -334,7 +357,7 @@ ParseReqLine(HTTP_REQUEST *req)
 		req->status = HTTP_BAD_REQUEST;
 		return;
 	}
-	head = tail + strlen(" ");
+	head = tail + 1;
 	while (head[0] == ' ') { head++; }
 
 	tail = strstr(head, "/");
@@ -343,8 +366,7 @@ ParseReqLine(HTTP_REQUEST *req)
 		req->status = HTTP_BAD_REQUEST;
 		return;
 	}
-	head = tail + strlen("/");
-	
+	head = tail + 1;
 	tail = strstr(head, "?");
 	if (tail == NULL) {
 		tail = strstr(head, " ");
@@ -364,7 +386,9 @@ ParseReqLine(HTTP_REQUEST *req)
 			req->status = HTTP_BAD_REQUEST;
 			return;
 		}
-		req->arguments = strndup(head, tail - head);
+		args = strndup(head, tail - head);
+		DecodeArguments(req, args);
+		xfree(args);
 		head = tail + 1;
 	}
 	while (head[0] == ' ') { head++; }
@@ -373,8 +397,11 @@ ParseReqLine(HTTP_REQUEST *req)
 
 	tail = strstr(head, "HTTP/1.1");
 	if (tail == NULL) {
-		Message("Invalid HTTP Version :%s", head);
-		req->status = HTTP_BAD_REQUEST;
+		tail = strstr(head, "HTTP/1.0");
+		if (tail == NULL) {
+			Message("Invalid HTTP Version :%s", head);
+			req->status = HTTP_BAD_REQUEST;
+		}
 	}
 	free(line);
 }
@@ -388,9 +415,19 @@ ParseReqHeader(HTTP_REQUEST *req)
 	char *key;
 	char *value;
 
+ENTER_FUNC;
 	line = head = GetNextLine(req);
-	if ( line == NULL) {
+	if (line == NULL) {
 		return FALSE;
+	}
+
+	if (req->headers != NULL) {
+		tail = xmalloc(strlen(req->headers) + strlen(line) + strlen("\r\n") + 1);
+		sprintf(tail, "%s\r\n%s", req->headers, line);
+		xfree(req->headers);
+		req->headers = tail;
+	} else {
+		req->headers = strdup(line);
 	}
 
 	tail = strstr(head, ":");
@@ -407,16 +444,8 @@ ParseReqHeader(HTTP_REQUEST *req)
 	g_hash_table_insert(req->header_hash, key, value);
 	dbgprintf("header key:%s value:%s\n", key, value);
 
-	if (req->headers != NULL) {
-		tail = xmalloc(strlen(req->headers) + strlen(line) + strlen("\r\n") + 1);
-		sprintf(tail, "%s\r\n%s", req->headers, line);
-		xfree(req->headers);
-		req->headers = tail;
-	} else {
-		req->headers = strdup(line);
-	}
-
 	xfree(line);
+LEAVE_FUNC;
 	return TRUE;
 }
 
@@ -482,13 +511,12 @@ ParseReqAuth(HTTP_REQUEST *req)
 
 	tail = strstr(dec, ":");
 	if (tail == NULL) {
-
 		req->status = HTTP_UNAUTHORIZED;
 		Message("Invalid Basic Authorization data:%s", dec);
 		return;
 	}
 	req->user = strndup(dec, tail - dec);
-	req->pass = strndup(dec, size - (tail - dec + 1));
+	req->pass = strndup(tail + 1, size - (tail - dec + 1));
 	g_free(dec);
 }
 
@@ -541,6 +569,7 @@ HTTP_Method(
 {
 	HTTP_REQUEST *req;
 	MonAPIData *data;
+	PacketClass result;
 
 	req = HTTP_Init(klass, fpComm);
 
@@ -556,9 +585,9 @@ HTTP_Method(
 			LargeByteString *headers;
 
 			headers = NewLBS();
-			LBS_ReserveSize(headers,strlen(str)+1,FALSE);
+			LBS_ReserveSize(headers,strlen(str),FALSE);
 			p = LBS_Body(headers);
-			strcpy(p, str);
+			memcpy(p, str, strlen(str));
 			SendResponse(req, headers, NULL);
 			FreeLBS(headers);
 		} else {
@@ -566,13 +595,24 @@ HTTP_Method(
 		}
 		return;
 	}
-	data = MakeMonAPIData(req);
-
-	if (!CallMonAPI(data)) { 
-		req->status = HTTP_INTERNAL_SERVER_ERROR; 
+	if (req->method == HTTP_HEAD) {
 		SendResponse(req, NULL , NULL);
 		return;
 	}
+	data = MakeMonAPIData(req);
 
-	SendResponse(req, data->headers, data->body);
+	result = CallMonAPI(data);
+	switch(result) {
+	case WFC_API_OK:
+		SendResponse(req, data->headers, data->body);
+		break;
+	case WFC_API_NOT_FOUND:
+		req->status = HTTP_NOT_FOUND; 
+		SendResponse(req, NULL , NULL);
+		break;
+	default:
+		req->status = HTTP_INTERNAL_SERVER_ERROR; 
+		SendResponse(req, NULL , NULL);
+		break;
+	}
 }

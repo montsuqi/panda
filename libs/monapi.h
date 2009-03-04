@@ -23,6 +23,7 @@
 #include	"const.h"
 #include	"enum.h"
 #include	"libmondai.h"
+#include	"wfcio.h"
 
 typedef	struct {
 	char			ld[SIZE_NAME+1];
@@ -36,7 +37,7 @@ typedef	struct {
 
 extern	MonAPIData	*NewMonAPIData(void);
 extern	void		FreeMonAPIData(MonAPIData *data);
-extern	gboolean	CallMonAPI(MonAPIData *data);
+extern	PacketClass	CallMonAPI(MonAPIData *data);
 
 #undef	GLOBAL
 #ifdef	_MONAPI

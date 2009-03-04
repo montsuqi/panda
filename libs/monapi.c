@@ -75,16 +75,17 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern gboolean
+extern PacketClass
 CallMonAPI(
 	MonAPIData *data)
 {
 	int fd;
 	Port *port;
 	NETFILE *fp;
-	PacketClass klass;
+	PacketClass status;
 
 ENTER_FUNC;
+	status = WFC_API_ERROR;
 	port = ParPort(TermPort, PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
@@ -98,8 +99,8 @@ ENTER_FUNC;
 		SendLBS(fp, data->arguments);		ON_IO_ERROR(fp,badio);
 		SendLBS(fp, data->headers);			ON_IO_ERROR(fp,badio);
 		SendLBS(fp, data->body);			ON_IO_ERROR(fp,badio);
-		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-		if (klass == WFC_OK) {
+		status = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
+		if (status == WFC_API_OK) {
 			RecvLBS(fp, data->headers);    ON_IO_ERROR(fp,badio);
 			RecvLBS(fp, data->body);			ON_IO_ERROR(fp,badio);
 		}
@@ -107,8 +108,7 @@ ENTER_FUNC;
 	} else {
 		badio:
 		Message("can not connect wfc server");
-		return FALSE;
 	}
-	return TRUE;
+	return status;
 LEAVE_FUNC;
 }
