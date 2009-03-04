@@ -599,7 +599,11 @@ ENTER_FUNC;
 		case HTTP_GET:
 		case HTTP_POST:
 		case HTTP_HEAD:
-			HTTP_Method(klass, fpComm);
+			if (fAPI) {
+				HTTP_Method(klass, fpComm);
+			} else {
+				Warning("invalid class = %X\n",klass);
+			}
 			scr->status = APL_SESSION_NULL;
 			ret = FALSE;
 			break;
