@@ -218,6 +218,10 @@ SendResponse(
 		if (doc != NULL) {
 			xmlDocDumpFormatMemoryEnc(doc, &newbody, &size, "UTF-8", 0);
 		}
+		if (newbody != NULL) {
+			sprintf(buf, "Content-Length: %d\r\n", size);
+			Send(req->fp, buf, strlen(buf));
+		}
 	}
 	Send(req->fp, "\r\n", strlen("\r\n"));
 
