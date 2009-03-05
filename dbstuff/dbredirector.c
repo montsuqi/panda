@@ -259,7 +259,7 @@ ENTER_FUNC;
 		if ( (ticket != NULL )
 			 && (ticket->fd == fpLog->fd)
 			 && ((ticket->status == TICKET_BEGIN)
-				 || (ticket->status == TICKET_DATA)) {
+				 || (ticket->status == TICKET_DATA)) ) {
 			ticket->status = TICKET_ABORT;
 			Warning("Auto abort %llu\n", ticket->ticket_id);
 		}
