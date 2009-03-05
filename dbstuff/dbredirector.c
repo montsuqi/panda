@@ -52,11 +52,10 @@
 #include	"directory.h"
 #include	"queue.h"
 #include	"socket.h"
+#include	"dbredirector.h"
 #include	"option.h"
 #include	"message.h"
 #include	"debug.h"
-
-#define		CONNECT_INTERVAL		60
 
 static	char	*PortNumber;
 static	int		Back;
@@ -67,46 +66,204 @@ static	DBG_Struct	*ThisDBG;
 static	pthread_t	_FileThread;
 static	Queue		*FileQueue;
 
-typedef	struct {
-	LargeByteString	*CheckData;
-	LargeByteString	*RedirectData;
-}	VeryfyData;
-
 static	Port		*RedirectPort;
 static  pthread_mutex_t redlock;
+
+static  GSList *TicketList;
+static  uint64_t TICKETID = 0;
+
+static VeryfyData	*
+NewVerfyData(void)
+{
+	VeryfyData *veryfydata;
+	veryfydata = New(VeryfyData);
+	veryfydata->checkData = NewLBS();
+	veryfydata->redirectData = NewLBS();
+	return veryfydata;
+}
 
 static	void
 FreeVeryfyData(
 	VeryfyData	*vdata)
 {
-	FreeLBS(vdata->CheckData);
-	FreeLBS(vdata->RedirectData);
+	FreeLBS(vdata->checkData);
+	FreeLBS(vdata->redirectData);
 	xfree(vdata);
 }
 
-static void
-RecvRedData(NETFILE	*fpLog)
+static Ticket *
+NewTicket(void)
 {
-	LargeByteString	*data, *cdata;
-	VeryfyData *vdata;
+	Ticket *ticket;
 ENTER_FUNC;
+	ticket = New(Ticket);
+	ticket->ticket_id = 0;
+	ticket->fd = 0;
+	ticket->veryfydata = NULL;
+	ticket->status = TICKET_BEGIN;
+LEAVE_FUNC;
+	return ticket;
+}
+
+static Ticket *
+LookupTicket(
+	uint64_t	ticket_id,
+	int fd)
+{
+	GSList *list;
+	Ticket *ticket;
+	
+	list = TicketList;
+	while(list){
+		if (list->data) {
+			ticket = (Ticket *)list->data;
+			if ( ticket->ticket_id == ticket_id) {
+				/* if (ticket->fd == fd) */
+				return ticket;
+			}
+		}
+		list = list->next;
+	}
+	return NULL;
+}
+
+
+static void
+OrderTicket(
+	NETFILE	*fpLog)
+{
+	Ticket *ticket;
+ENTER_FUNC;
+	ticket = NewTicket();
+	ticket->fd = fpLog->fd;
 	pthread_mutex_lock(&redlock);
-	vdata = New(VeryfyData);
-	cdata = NewLBS();
-	LBS_EmitStart(cdata);
-	RecvLBS(fpLog,cdata);
-	LBS_EmitEnd(cdata);
-	vdata->CheckData = cdata;
-
-	data = NewLBS();
-	LBS_EmitStart(data);
-	RecvLBS(fpLog,data);
-	LBS_EmitEnd(data);
-	vdata->RedirectData = data;
-
-	EnQueue(FileQueue, vdata);
-	SendPacketClass(fpLog,RED_OK);
+	ticket->ticket_id = TICKETID++;
+	TicketList = g_slist_append(TicketList, ticket);
+	SendUInt64(fpLog, ticket->ticket_id);
 	pthread_mutex_unlock(&redlock);
+LEAVE_FUNC;
+}
+
+static void
+RecvRedData(
+	NETFILE	*fpLog)
+{
+	uint64_t	ticket_id;
+	Ticket		*ticket;
+	VeryfyData	*veryfydata;
+ENTER_FUNC;
+	veryfydata = NewVerfyData();
+	ticket_id = RecvUInt64(fpLog);
+	RecvLBS(fpLog, veryfydata->checkData);
+	LBS_EmitEnd(veryfydata->checkData);
+	RecvLBS(fpLog, veryfydata->redirectData);
+	LBS_EmitEnd(veryfydata->redirectData);	
+	ticket = LookupTicket(ticket_id, fpLog->fd);
+	if ( (ticket != NULL)
+		 && (ticket->status == TICKET_BEGIN) ) {
+		ticket->veryfydata = veryfydata;
+		ticket->status = TICKET_DATA;
+	} else {
+		FreeVeryfyData(veryfydata);
+	}
+LEAVE_FUNC;
+}
+
+static Ticket *
+PopTicket(void)
+{
+	GSList *first = NULL;
+	Ticket *ticket = NULL;
+
+	pthread_mutex_lock(&redlock);
+	first = g_slist_nth(TicketList,0);
+	if ( first ) {
+		ticket = (Ticket *)(first->data);
+		if ( (ticket->status == TICKET_COMMIT)
+			|| (ticket->status == TICKET_ABORT) ) {
+			TicketList = g_slist_remove_link(TicketList,first);
+			g_slist_free_1(first);
+		} else {
+			ticket = NULL;
+		}
+	}
+	pthread_mutex_unlock(&redlock);
+	return ticket;
+}
+
+static void
+EnQueueTicket(void)
+{
+	Ticket		*ticket;
+	VeryfyData *veryfydata;
+	while ( (ticket = PopTicket()) != NULL ){
+		if ( ticket->status == TICKET_COMMIT ) {
+			veryfydata = ticket->veryfydata;
+			if ( veryfydata != NULL) {
+				if (LBS_Size(veryfydata->redirectData) > 0) {
+					EnQueue(FileQueue, veryfydata);
+				} else {
+					FreeVeryfyData(veryfydata);
+				}
+			}
+		}
+		xfree(ticket);
+	}
+}
+
+static void
+CommitTicket(
+	NETFILE	*fpLog)
+{
+	uint64_t	ticket_id;
+	Ticket		*ticket;
+
+	ticket_id = RecvUInt64(fpLog);
+	ticket = LookupTicket(ticket_id, fpLog->fd);
+	if (ticket) {
+		if (ticket->status != TICKET_ABORT) {
+			ticket->status = TICKET_COMMIT;
+		}
+		SendPacketClass(fpLog,RED_OK);	
+	} else {
+		SendPacketClass(fpLog,RED_NOT);			
+	}
+	
+	EnQueueTicket();
+}
+
+static void
+AbortTicket(
+	NETFILE	*fpLog)
+{
+	Ticket *ticket;
+	uint64_t	ticket_id;
+ENTER_FUNC;
+	ticket_id = RecvUInt64(fpLog);
+	ticket = LookupTicket(ticket_id, fpLog->fd);
+	if (ticket) {
+		ticket->status = TICKET_ABORT;
+	}
+LEAVE_FUNC;
+}
+
+static void
+AllAbortTicket(
+	NETFILE	*fpLog)
+{
+	GSList *list;
+	Ticket *ticket;
+ENTER_FUNC;
+	for (list = TicketList; list; list=list->next){
+		ticket = (Ticket *)list->data;
+		if ( (ticket != NULL )
+			 && (ticket->fd == fpLog->fd)
+			 && ((ticket->status == TICKET_BEGIN)
+				 || (ticket->status == TICKET_DATA)) {
+			ticket->status = TICKET_ABORT;
+			Warning("Auto abort %llu\n", ticket->ticket_id);
+		}
+	}
 LEAVE_FUNC;
 }
 
@@ -118,23 +275,28 @@ LogThread(
 	NETFILE	*fpLog;
 	PacketClass	c;
 	Bool	fSuc = TRUE;
-
 ENTER_FUNC;
 	dbgmsg("log thread!\n");
 	fpLog = SocketToNet(fhLog);
 	do {
 		switch	( c = RecvPacketClass(fpLog) ) {
+		  case	RED_BEGIN:
+			OrderTicket(fpLog);
+			break;
 		  case	RED_DATA:
 			RecvRedData(fpLog);
-			fSuc = fpLog->fOK;
+			break;
+		  case	RED_COMMIT:
+			CommitTicket(fpLog);
+			break;
+		  case	RED_ABORT:
+			AbortTicket(fpLog);
 			break;
 		  case	RED_PING:
 			SendPacketClass(fpLog,RED_PONG);
-			fSuc = fpLog->fOK;
 			break;
 		  case	RED_STATUS:
 			SendChar(fpLog, ThisDBG->process[PROCESS_UPDATE].dbstatus);
-			fSuc = fpLog->fOK;
 			break;
 		  case	RED_END:
 			fSuc = FALSE;
@@ -144,7 +306,8 @@ ENTER_FUNC;
 			fSuc = FALSE;
 			break;
 		}
-	}	while	(  fSuc  );
+	}	while	(  fSuc && fpLog->fOK );
+	AllAbortTicket(fpLog);
 	CloseNet(fpLog);
 	dbgmsg("log thread close!\n");
 LEAVE_FUNC;
@@ -273,13 +436,14 @@ ENTER_FUNC;
 	if ( strcmp(LBS_Body(src), LBS_Body(dsc)) == 0){
 		rc = MCP_OK;
 	} else {
+		Warning("CheckData difference %s %s", LBS_Body(src), LBS_Body(dsc));
 		rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
 	return	rc;
 }
 
-static	int
+extern	int
 WriteDB(
 	char	*query,
 	LargeByteString	*orgcheck)
@@ -370,13 +534,13 @@ ENTER_FUNC;
 	}
 	while	( TRUE )	{
 		vdata = (VeryfyData *)DeQueue(FileQueue);
-		query = LBS_Body(vdata->RedirectData);
+		query = LBS_Body(vdata->redirectData);
 		if		(  *query  !=  0 ) {
 			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ) {
 				ReConnectDB();
 			}
 			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
-				ExecDB(query, vdata->CheckData);
+				ExecDB(query, vdata->checkData);
 			}
 			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
 				Warning("DB synchronous failure");

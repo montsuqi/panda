@@ -48,29 +48,50 @@ SendQueryData_Redirect(
 	DBG_Struct	*dbg)
 {
 	int rc = FALSE;
-		
-	SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
-	SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
-	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
-		rc = TRUE;
+	if		(  dbg->fpLog  !=  NULL  ) {					
+		SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
+		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
+			Warning("Commit error");			
+		}
 	}
+	rc = TRUE;		
 badio:
 	return rc;
 }
 #endif
 
-static Bool
+extern Bool
 SendVeryfyData_Redirect(
 	DBG_Struct	*dbg)
 {
 	int rc = FALSE;
-		
-	SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
-	SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
-	SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
-	if		(  RecvPacketClass(dbg->fpLog)  ==  RED_OK  ) {
-		rc = TRUE;
+	if	( (dbg->fpLog  !=  NULL)
+		  && ( dbg->redirectData !=  NULL)
+		  && ( LBS_Size(dbg->redirectData) > 0 ) ) {
+		SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendUInt64(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
+		SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
 	}
+	rc = SendCommit_Redirect(dbg);
+badio:
+	return rc;
+}
+
+extern Bool
+SendCommit_Redirect(
+	DBG_Struct	*dbg)
+{
+	int rc = FALSE;
+	if		(  dbg->fpLog  !=  NULL  ) {	
+		SendPacketClass(dbg->fpLog,RED_COMMIT);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendUInt64(dbg->fpLog, dbg->ticket_id); ON_IO_ERROR(dbg->fpLog,badio);
+		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {		
+			Warning("Commit error");			
+		}
+	}
+	rc = TRUE;	
 badio:
 	return rc;
 }
@@ -80,9 +101,10 @@ RecvSTATUS_Redirect(
 	DBG_Struct	*dbg)
 {
 	int rc = FALSE;
-
-	SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
-	dbg->process[PROCESS_UPDATE].dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
+	if		(  dbg->fpLog  !=  NULL  ) {
+		SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
+		dbg->process[PROCESS_UPDATE].dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
+	}
 	rc = TRUE;
 badio:
 	return rc;
@@ -174,6 +196,10 @@ BeginDB_Redirect(
 	DBG_Struct	*dbg)
 {
 ENTER_FUNC;
+	if		(  dbg->fpLog  !=  NULL  ) {
+		SendPacketClass(dbg->fpLog,RED_BEGIN);
+		dbg->ticket_id = RecvUInt64(dbg->fpLog);
+	}
 	if		(  dbg->redirectData  !=  NULL  ) { 
 		LBS_EmitStart(dbg->redirectData);
 		LBS_EmitStart(dbg->checkData);
@@ -188,12 +214,14 @@ CheckDB_Redirect(
 	Bool	rc = TRUE;
 ENTER_FUNC;
 	if		(  dbg->redirectData  !=  NULL  ) {
-		SendPacketClass(dbg->fpLog,RED_PING);
-		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
-			Warning("log server down?");
-			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_REDFAILURE;
-			CloseDB_RedirectPort(dbg);
-			rc = FALSE;
+		if		(  dbg->fpLog  !=  NULL  ) {				
+			SendPacketClass(dbg->fpLog,RED_PING);
+			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
+				Warning("log server down?");
+				dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_REDFAILURE;
+				CloseDB_RedirectPort(dbg);
+				rc = FALSE;
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -205,10 +233,15 @@ AbortDB_Redirect(
 	DBG_Struct	*dbg)
 {
 ENTER_FUNC;
+	if		(  dbg->fpLog  !=  NULL  ) {
+		SendPacketClass(dbg->fpLog,RED_ABORT);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendUInt64(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
+	}
 	if	(  dbg->redirectData  !=  NULL  ) {
 		LBS_EmitStart(dbg->redirectData);
 		LBS_EmitStart(dbg->checkData);
 	}
+badio:
 LEAVE_FUNC;
 }
 
@@ -219,16 +252,12 @@ CommitDB_Redirect(
 	Bool rc = TRUE;
 
 ENTER_FUNC;
-	if	( dbg->redirectData !=  NULL) {
-		if ( LBS_Size(dbg->redirectData) > 0 ) {
-			rc = SendVeryfyData_Redirect(dbg);
-		}
-		if ( rc ){
-			rc = RecvSTATUS_Redirect(dbg);
-		}
-		if ( !rc ){
-			CloseDB_RedirectPort(dbg);
-		}
+	rc = SendVeryfyData_Redirect(dbg);
+	if ( rc ){
+		rc = RecvSTATUS_Redirect(dbg);
+	}
+	if ( !rc ){
+		CloseDB_RedirectPort(dbg);
 	}
 LEAVE_FUNC;
 }

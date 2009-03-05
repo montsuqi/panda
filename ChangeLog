@@ -1,3 +1,8 @@
+2009-03-05  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.c, dblib/redirect.h, dbstuff/dbredirector.c,
+	dbstuff/dbredirector.h: dbredirectorのトランザクション順を正しくなるようにした
+
 2009-03-04  Yusuke Mihara  <mihara@netlab.jp>
 
 	* configure.ac aps/OpenCOBOL.c aps/aps_main.c aps/apsio.c

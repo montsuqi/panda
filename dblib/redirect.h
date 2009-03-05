@@ -29,6 +29,9 @@
 #define	RED_DATA		(PacketClass)0x02
 #define	RED_LOCK		(PacketClass)0x03
 #define	RED_STATUS		(PacketClass)0x04
+#define	RED_BEGIN		(PacketClass)0x05
+#define	RED_ABORT		(PacketClass)0x06
+#define	RED_COMMIT		(PacketClass)0x07
 #define	RED_NOT			(PacketClass)0xF0
 #define	RED_PONG		(PacketClass)0xF1
 #define	RED_OK			(PacketClass)0xFE
@@ -39,6 +42,7 @@ extern	void	PutDB_Redirect(DBG_Struct *dbg, char *data);
 extern	void	PutCheckDataDB_Redirect(DBG_Struct	*dbg, char	*data);
 extern	void	AbortDB_Redirect(DBG_Struct *dbg);
 extern	void	BeginDB_Redirect(DBG_Struct *dbg);
+extern	Bool	SendVeryfyData_Redirect(DBG_Struct	*dbg);
 extern	void	CommitDB_Redirect(DBG_Struct *dbg);
 extern	Bool	CheckDB_Redirect(DBG_Struct *dbg);
 

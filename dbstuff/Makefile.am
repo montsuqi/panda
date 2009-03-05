@@ -63,7 +63,7 @@ dbs_DEPENDENCIES	=					\
 
 dbredirector_LDFLAGS	=	-export-dynamic
 dbredirector_SOURCES	=	\
-	dbredirector.c
+	dbredirector.c	dbredirector.h
 
 dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\

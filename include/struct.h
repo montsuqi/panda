@@ -144,6 +144,7 @@ typedef	struct _DBG_Struct	{
 	NETFILE		*fpLog;
 	LargeByteString	*redirectData;
 	LargeByteString	*checkData;
+	uint64_t	ticket_id;
 	char		*file;
 	DB_Server	*server;
 	DB_Process	process[2];

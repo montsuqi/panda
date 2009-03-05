@@ -35,6 +35,8 @@ extern	int				RecvInt(NETFILE *fp);
 extern	void			SendInt(NETFILE *fp,int data);
 extern	unsigned int	RecvUInt(NETFILE *fp);
 extern	void			SendUInt(NETFILE *fp, unsigned int data);
+extern	uint64_t		RecvUInt64(NETFILE *fp);
+extern	void			SendUInt64(NETFILE *fp, uint64_t data);
 extern	int				RecvChar(NETFILE *fp);
 extern	void			SendChar(NETFILE *fp,int data);
 extern	Bool			RecvBool(NETFILE *fp);
