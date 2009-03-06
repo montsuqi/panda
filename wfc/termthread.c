@@ -123,12 +123,14 @@ CheckAccessTime(
 	SessionData *data,
 	SessionData **candidate)
 {
-	if (*candidate == NULL) {
-		*candidate = data;
-	} else {
-		if ((uintmax_t)((*candidate)->access_time) > (uintmax_t)data->access_time) {
+	if (!data->fInProcess) {
+		if (*candidate == NULL) {
 			*candidate = data;
-		}	
+		} else {
+			if ((uintmax_t)((*candidate)->access_time) > (uintmax_t)data->access_time) {
+				*candidate = data;
+			}	
+		}
 	}
 }
 
