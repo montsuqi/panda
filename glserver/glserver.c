@@ -66,7 +66,7 @@ static	ARG_TABLE	option[] = {
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		N_("authentication server")	 					},
 	{	"api",		BOOLEAN,	TRUE,	(void*)&fAPI,
-		N_("Use SSL")				 					},
+		N_("Use API")				 					},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
 		N_("SSL Key File(pem/p12)")		 				},
