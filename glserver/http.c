@@ -63,7 +63,6 @@
 #include	"monapi.h"
 
 #define MAX_REQ_SIZE 1024*1024
-#define TIMEOUT_SEC 60
 
 typedef struct {
 	NETFILE		*fp;
@@ -591,7 +590,6 @@ HTTP_Method(
 
 	req = HTTP_Init(klass, fpComm);
 
-	alarm(TIMEOUT_SEC);
 	ParseRequest(req);
 	alarm(0);
 
