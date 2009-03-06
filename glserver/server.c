@@ -62,6 +62,8 @@
 #include	"http.h"
 #include	"debug.h"
 
+#define TIMEOUT_SEC 60
+
 static	void
 FinishSession(
 	ScreenData	*scr)
@@ -575,9 +577,15 @@ MainLoop(
 	PacketClass	klass;
 	
 ENTER_FUNC;
+	alarm(TIMEOUT_SEC);
 	klass = GL_RecvPacketClass(fpComm,fFeatureNetwork); ON_IO_ERROR(fpComm,badio);
 	dbgprintf("class = %X\n",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
+		if (klass != HTTP_GET && 
+			klass != HTTP_POST && 
+			klass != HTTP_HEAD) {
+			alarm(0);
+		}
 		switch	(klass) {
 		case GL_Connect:
 			if (!Connect(fpComm,scr)){
