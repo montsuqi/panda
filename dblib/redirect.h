@@ -42,7 +42,6 @@ extern	void	PutDB_Redirect(DBG_Struct *dbg, char *data);
 extern	void	PutCheckDataDB_Redirect(DBG_Struct	*dbg, char	*data);
 extern	void	AbortDB_Redirect(DBG_Struct *dbg);
 extern	void	BeginDB_Redirect(DBG_Struct *dbg);
-extern	Bool	SendVeryfyData_Redirect(DBG_Struct	*dbg);
 extern	void	CommitDB_Redirect(DBG_Struct *dbg);
 extern	Bool	CheckDB_Redirect(DBG_Struct *dbg);
 

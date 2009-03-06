@@ -61,7 +61,24 @@ badio:
 }
 #endif
 
-extern Bool
+static Bool
+SendCommit_Redirect(
+	DBG_Struct	*dbg)
+{
+	int rc = FALSE;
+	if		(  dbg->fpLog  !=  NULL  ) {	
+		SendPacketClass(dbg->fpLog,RED_COMMIT);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendUInt64(dbg->fpLog, dbg->ticket_id); ON_IO_ERROR(dbg->fpLog,badio);
+		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {		
+			Warning("Commit error");			
+		}
+	}
+	rc = TRUE;	
+badio:
+	return rc;
+}
+
+static Bool
 SendVeryfyData_Redirect(
 	DBG_Struct	*dbg)
 {
@@ -75,23 +92,6 @@ SendVeryfyData_Redirect(
 		SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
 	}
 	rc = SendCommit_Redirect(dbg);
-badio:
-	return rc;
-}
-
-extern Bool
-SendCommit_Redirect(
-	DBG_Struct	*dbg)
-{
-	int rc = FALSE;
-	if		(  dbg->fpLog  !=  NULL  ) {	
-		SendPacketClass(dbg->fpLog,RED_COMMIT);	ON_IO_ERROR(dbg->fpLog,badio);
-		SendUInt64(dbg->fpLog, dbg->ticket_id); ON_IO_ERROR(dbg->fpLog,badio);
-		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {		
-			Warning("Commit error");			
-		}
-	}
-	rc = TRUE;	
 badio:
 	return rc;
 }
