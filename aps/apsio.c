@@ -437,7 +437,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	Bool
+static	void
 PackAPIRecord(
 	ProcessNode *node, 
 	char *method,
@@ -458,15 +458,13 @@ ENTER_FUNC;
 		}
 	}
 	if (e == NULL) {
-		Warning("not found scrrec for API");
-		return FALSE;
+		Error("not found scrrec for API");
 	}
 	SetValueString(GetItemLongName(e,"request.method"), method,NULL);
 
 	PackAPIArguments(e, arguments);
 	PackAPIBody(e, headers, body);
 LEAVE_FUNC;
-	return TRUE;
 }
 
 static	Bool
@@ -525,12 +523,13 @@ ENTER_FUNC;
         RecvLBS(fp,arguments);     					ON_IO_ERROR(fp,badio);
         RecvLBS(fp,headers);     					ON_IO_ERROR(fp,badio);
         RecvLBS(fp,body);	     					ON_IO_ERROR(fp,badio);
-		fSuc = PackAPIRecord(node, method, arguments, headers, body);
+		PackAPIRecord(node, method, arguments, headers, body);
 	
 		FreeLBS(arguments);
 		FreeLBS(headers);
 		FreeLBS(body);
 	}
+	fSuc = TRUE;
 LEAVE_FUNC;
 badio:
 	return fSuc;
@@ -746,10 +745,10 @@ PutWFC(
 	ProcessNode	*node)
 {
 ENTER_FUNC;
-	if (strcmp(node->window, "api")) {
-		PutWFCTerm(fp, node);
-	} else {
+	if (!strcmp(node->window, "api")) {
 		PutWFCAPI(fp, node);
+	} else {
+		PutWFCTerm(fp, node);
 	}
 LEAVE_FUNC;
 }

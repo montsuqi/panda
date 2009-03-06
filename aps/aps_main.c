@@ -196,12 +196,8 @@ ENTER_FUNC;
 						||	(  tran     >   0  ) ); tran -- ) {
 		if		(  !GetWFC(fpWFC,node)	) {
 			Message("GetWFC failure");
-#if 0
 			rc = -1;
 			break;
-#else
-			continue;
-#endif
 		}
 		if		(  node->pstatus  ==  APL_SYSTEM_END  ) {
 			Message("system stop");
@@ -212,31 +208,30 @@ ENTER_FUNC;
 		dbgprintf("window = [%s]",ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
 		PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
 					   wname);
+
 		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname) )
-				   !=  NULL  ) {
-			if		(  bind->module  ==  NULL  ){
-				Message("bind->module not found");
+				   ==  NULL  ) {
+			Message("window [%s] not found.",wname);
+			if (!strcmp(node->window, "api")) {
+				continue;
+			} else {
 				rc = 2;
 				break;
 			}
-			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
-			if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
-				RedirectError();
-			} else {
-				node->dbstatus = GetDBStatus();
-			}
-			TransactionStart(NULL);
-			ExecuteProcess(node);
-			if		(  Sleep  >  0  ) {
-				sleep(Sleep);
-			}
-			TransactionEnd(NULL);
-			PutWFC(fpWFC,node);
-		} else {
-			Message("window [%s] not found.",wname);
-			rc = 2;
-			break;
 		}
+		SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
+		if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
+			RedirectError();
+		} else {
+			node->dbstatus = GetDBStatus();
+		}
+		TransactionStart(NULL);
+		ExecuteProcess(node);
+		if		(  Sleep  >  0  ) {
+			sleep(Sleep);
+		}
+		TransactionEnd(NULL);
+		PutWFC(fpWFC,node);
 	}
 	MessageLogPrintf("exiting APS (%s)",ThisLD->name);
 	FinishSession(node);
