@@ -155,6 +155,7 @@ ENTER_FUNC;
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_END);
 		CloseNet(dbg->fpLog);
+		dbg->fpLog = NULL;
 	}
 	if		(  dbg->redirectData  !=  NULL  ) {
 		FreeLBS(dbg->redirectData);
