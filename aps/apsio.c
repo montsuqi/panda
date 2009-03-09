@@ -698,7 +698,7 @@ ENTER_FUNC;
 					GetItemLongName(mcp, "api.response_type"), NULL);
 	opt = NewConvOpt();
 	ConvSetSize(opt,ThisLD->textsize,ThisLD->arraysize);
-	opt->recname = strdup("api");
+	opt->recname = NULL;
 	opt->codeset = strdup("EUC-JP");
 
 	body = NewLBS();
