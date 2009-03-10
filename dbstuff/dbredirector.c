@@ -668,7 +668,6 @@ void StopSystem( int no ) {
     ( void )no;
 	fShutdown = TRUE;
 	Message("receive stop signal");
-	pthread_cond_signal(&redcond);	
 }
 
 extern	void
