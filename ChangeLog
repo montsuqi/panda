@@ -1,3 +1,7 @@
+2009-03-10  Noboru Saitou  <noborus@netlab.jp>
+
+	* dbstuff/dbredirector.c: 終了シグナルをサポート、キューの処理を直接チケット処理になるように変更
+
 2009-03-05  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/redirect.c, dblib/redirect.h, dbstuff/dbredirector.c,

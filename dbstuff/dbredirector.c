@@ -64,10 +64,12 @@ static	char	*Directory;
 static	sigset_t	hupset;
 static	DBG_Struct	*ThisDBG;
 static	pthread_t	_FileThread;
-static	Queue		*FileQueue;
 
 static	Port		*RedirectPort;
 static  pthread_mutex_t redlock;
+static  pthread_cond_t redcond;  
+
+static 	Bool 	fShutdown = FALSE;
 
 static  GSList *TicketList;
 static  uint64_t TICKETID = 0;
@@ -84,11 +86,12 @@ NewVerfyData(void)
 
 static	void
 FreeVeryfyData(
-	VeryfyData	*vdata)
+	VeryfyData	*veryfydata)
 {
-	FreeLBS(vdata->checkData);
-	FreeLBS(vdata->redirectData);
-	xfree(vdata);
+	FreeLBS(veryfydata->checkData);
+	FreeLBS(veryfydata->redirectData);
+	xfree(veryfydata);
+	veryfydata = NULL;
 }
 
 static Ticket *
@@ -117,8 +120,8 @@ LookupTicket(
 	while(list){
 		if (list->data) {
 			ticket = (Ticket *)list->data;
-			if ( ticket->ticket_id == ticket_id) {
-				/* if (ticket->fd == fd) */
+			if ( (ticket->ticket_id == ticket_id)
+				 && (ticket->fd == fd) ) {
 				return ticket;
 			}
 		}
@@ -134,9 +137,9 @@ OrderTicket(
 {
 	Ticket *ticket;
 ENTER_FUNC;
+	pthread_mutex_lock(&redlock);
 	ticket = NewTicket();
 	ticket->fd = fpLog->fd;
-	pthread_mutex_lock(&redlock);
 	ticket->ticket_id = TICKETID++;
 	TicketList = g_slist_append(TicketList, ticket);
 	SendUInt64(fpLog, ticket->ticket_id);
@@ -170,45 +173,33 @@ LEAVE_FUNC;
 }
 
 static Ticket *
-PopTicket(void)
+DequeueTicket(void)
 {
 	GSList *first = NULL;
 	Ticket *ticket = NULL;
 
-	pthread_mutex_lock(&redlock);
-	first = g_slist_nth(TicketList,0);
-	if ( first ) {
-		ticket = (Ticket *)(first->data);
-		if ( (ticket->status == TICKET_COMMIT)
-			|| (ticket->status == TICKET_ABORT) ) {
-			TicketList = g_slist_remove_link(TicketList,first);
-			g_slist_free_1(first);
-		} else {
-			ticket = NULL;
+	while ( ticket == NULL ) {
+		pthread_mutex_lock(&redlock);
+		first = g_slist_nth(TicketList,0);
+		if ( (fShutdown) && (first == NULL) ){
+			break;
 		}
-	}
-	pthread_mutex_unlock(&redlock);
-	return ticket;
-}
-
-static void
-EnQueueTicket(void)
-{
-	Ticket		*ticket;
-	VeryfyData *veryfydata;
-	while ( (ticket = PopTicket()) != NULL ){
-		if ( ticket->status == TICKET_COMMIT ) {
-			veryfydata = ticket->veryfydata;
-			if ( veryfydata != NULL) {
-				if (LBS_Size(veryfydata->redirectData) > 0) {
-					EnQueue(FileQueue, veryfydata);
-				} else {
-					FreeVeryfyData(veryfydata);
-				}
+		if ( first ) {
+			ticket = (Ticket *)(first->data);
+			if ( (ticket->status == TICKET_COMMIT)
+				 || (ticket->status == TICKET_ABORT) ) {
+				TicketList = g_slist_remove_link(TicketList,first);
+				g_slist_free_1(first);
+			} else {
+				ticket = NULL;
 			}
 		}
-		xfree(ticket);
+		if ( ticket == NULL ) {
+			pthread_cond_wait(&redcond,&redlock);
+		}
+		pthread_mutex_unlock(&redlock);
 	}
+	return ticket;
 }
 
 static void
@@ -228,8 +219,7 @@ CommitTicket(
 	} else {
 		SendPacketClass(fpLog,RED_NOT);			
 	}
-	
-	EnQueueTicket();
+	pthread_cond_signal(&redcond);
 }
 
 static void
@@ -244,6 +234,7 @@ ENTER_FUNC;
 	if (ticket) {
 		ticket->status = TICKET_ABORT;
 	}
+	pthread_cond_signal(&redcond);
 LEAVE_FUNC;
 }
 
@@ -264,6 +255,7 @@ ENTER_FUNC;
 			Warning("Auto abort %llu\n", ticket->ticket_id);
 		}
 	}
+	pthread_cond_signal(&redcond);
 LEAVE_FUNC;
 }
 
@@ -306,7 +298,7 @@ ENTER_FUNC;
 			fSuc = FALSE;
 			break;
 		}
-	}	while	(  fSuc && fpLog->fOK );
+	}	while	(  !fShutdown && fSuc && fpLog->fOK );
 	AllAbortTicket(fpLog);
 	CloseNet(fpLog);
 	dbgmsg("log thread close!\n");
@@ -445,7 +437,7 @@ LEAVE_FUNC;
 
 extern	int
 WriteDB(
-	char	*query,
+	LargeByteString	*query,
 	LargeByteString	*orgcheck)
 {
 	int rc;
@@ -454,14 +446,14 @@ WriteDB(
 ENTER_FUNC;
 	rc = TransactionRedirectStart(ThisDBG);
 	if ( rc == MCP_OK ) {
-		rc = ExecRedirectDBOP(ThisDBG, query, DB_UPDATE);
+		rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), DB_UPDATE);
 		redcheck = ThisDBG->checkData;
 	}
 	if ( rc == MCP_OK ) {
 		if ( ( !fNoSumCheck) &&  ( LBS_Size(orgcheck) > 0 ) ){
 			rc = CheckRedirectData(orgcheck, redcheck);
 			if ( rc != MCP_OK ) {
-				snprintf(buff, 60, "Difference for the update check %s...", query);
+				snprintf(buff, 60, "Difference for the update check %s...",(char *)LBS_Body(query));
 				Warning(buff);
 			}
 		}
@@ -474,28 +466,28 @@ LEAVE_FUNC;
 }
 
 
-static	void
+static	int
 ExecDB(
-	char	*query,
-	LargeByteString	*orgcheck)
+	VeryfyData *veryfydata)
 {
-	int rc;
-	
+	int rc = MCP_OK;
 ENTER_FUNC;
-	rc = WriteDB(query, orgcheck);
-	if ( rc == MCP_BAD_CONN ) {
-		CloseRedirectDB(ThisDBG);
-		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ) {
 		ReConnectDB();
-		if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
-			rc = WriteDB(query, orgcheck);
-		}
-	} else
+	}
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){	
+		rc = WriteDB(veryfydata->redirectData, veryfydata->checkData);
+	}
 	if ( rc != MCP_OK ) {
 		CloseRedirectDB(ThisDBG);
-		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
+		if ( rc == MCP_BAD_CONN ) {
+			ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+		} else {
+			ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
+		}
 	}
 LEAVE_FUNC;
+	return ThisDBG->process[PROCESS_UPDATE].dbstatus;
 }
 
 static  void
@@ -509,14 +501,26 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static void
+CheckFailure(
+	FILE	*fp)
+{
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
+		WriteLog(fp, "DB synchronous failure");		
+		Warning("DB synchronous failure");
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+	}
+}
+
+
 static	void
 FileThread(
 	void	*dummy)
 {
-	VeryfyData *vdata;
-	char	*query
-		,	*dbname;
+	VeryfyData *veryfydata;
+	char	*dbname;
 	FILE	*fp;
+	Ticket *ticket;
 
 ENTER_FUNC;
 	fp = OpenLogFile(ThisDBG->file);
@@ -533,29 +537,31 @@ ENTER_FUNC;
 		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	}
 	while	( TRUE )	{
-		vdata = (VeryfyData *)DeQueue(FileQueue);
-		query = LBS_Body(vdata->redirectData);
-		if		(  *query  !=  0 ) {
-			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ) {
-				ReConnectDB();
+		ticket = DequeueTicket();
+		if ( ticket == NULL )
+			break;
+		if ( ticket->status == TICKET_COMMIT ) {
+			veryfydata = ticket->veryfydata;
+			if (veryfydata != NULL) {
+				if (LBS_Size(veryfydata->redirectData) > 0) {
+					if ( ExecDB(veryfydata) == DB_STATUS_UNCONNECT ){
+						/* retry */						
+						ExecDB(veryfydata);
+					}
+					CheckFailure(fp);
+					ReRedirect(LBS_Body(veryfydata->redirectData));
+					WriteLogQuery(fp, LBS_Body(veryfydata->redirectData));
+				}
+				FreeVeryfyData(veryfydata);
 			}
-			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
-				ExecDB(query, vdata->checkData);
-			}
-			if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
-				Warning("DB synchronous failure");
-				WriteLog(fp, "DB synchronous failure");
-				ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
-			}
-			ReRedirect(query);
-			WriteLogQuery(fp, query);
 		}
-		FreeVeryfyData(vdata);
+		xfree(ticket);
 	}
 	if		(  dbname  ==  NULL  ) {
 		CloseDB_RedirectPort(ThisDBG);
 	}
 	WriteLog(fp, "dbredirector stop");
+	Message("dbredirector stop");
 	exit(0);
 LEAVE_FUNC;
 }
@@ -570,6 +576,7 @@ ExecuteServer(void)
 
 ENTER_FUNC;
 	pthread_mutex_init(&redlock,NULL);
+	pthread_cond_init(&redcond, NULL);
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL); 
 	_fhLog = InitServerPort(RedirectPort,Back);
 	maxfd = _fhLog;
@@ -657,14 +664,28 @@ CheckDBG(
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)_CheckDBG,name);
 }
 
+void StopSystem( int no ) {
+    ( void )no;
+	fShutdown = TRUE;
+	Message("receive stop signal");
+	pthread_cond_signal(&redcond);	
+}
 
 extern	void
 InitSystem(
 	char	*name)
 {
+    struct sigaction sa;
 
 ENTER_FUNC;
 	InitNET();
+
+	memset( &sa, 0, sizeof(struct sigaction) );
+	sa.sa_handler = StopSystem;
+	sa.sa_flags = SA_RESTART;	
+	if( sigaction( SIGUSR1, &sa, NULL ) != 0 ) {
+		Error("sigaction(2) error!");
+	} 
 	sigemptyset(&hupset); 
 	sigaddset(&hupset,SIGHUP);
 	//(void)signal(SIGUSR2, SIG_IGN);
@@ -689,7 +710,6 @@ ENTER_FUNC;
 	} else {
 		RedirectPort = ParPortName(PortNumber);
 	}
-	FileQueue = NewQueue();
 LEAVE_FUNC;
 }
 
