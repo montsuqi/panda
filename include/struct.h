@@ -184,6 +184,9 @@ typedef	struct {
 	}	control[15];
 }	WindowControl;
 
+#define MESSAGE_TYPE_TERM	0
+#define MESSAGE_TYPE_API	1
+
 typedef	struct _ProcessNode	{
 	char		term[SIZE_TERM+1]
 	,			user[SIZE_USER+1];
@@ -203,6 +206,7 @@ typedef	struct _ProcessNode	{
 	size_t		textsize;
 	WindowControl	w;
 	int			tnest;
+	int			messagetype;
 }	ProcessNode;
 
 typedef	struct	{

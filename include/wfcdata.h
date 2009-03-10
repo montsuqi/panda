@@ -43,8 +43,7 @@
 #define	APS_PING		(PacketClass)0xF2
 #define	APS_STOP		(PacketClass)0xF3
 #define	APS_REQ			(PacketClass)0xF4
-#define	APS_TERM		(PacketClass)0xF8
-#define	APS_API			(PacketClass)0xF9
+#define	APS_API			(PacketClass)0xF5
 #define	APS_OK			(PacketClass)0xFE
 #define	APS_END			(PacketClass)0xFF
 

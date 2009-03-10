@@ -482,7 +482,7 @@ ENTER_FUNC;
 	MessageHeader	hdr;
 	ValueStruct		*e;
 
-	dbgmsg("REQ");
+	dbgmsg("API");
 
 	fSuc = FALSE;
 
@@ -491,6 +491,7 @@ ENTER_FUNC;
 
 	if (g_hash_table_lookup(node->bhash, "api") == NULL) {
 		SendChar(fp, 0x0);							ON_IO_ERROR(fp,badio);
+		node->pstatus = APL_SYSTEM_END;
 	} else {
 		SendChar(fp, 0xFE);							ON_IO_ERROR(fp,badio);
 		
@@ -549,9 +550,11 @@ ENTER_FUNC;
 	c = RecvPacketClass(fp);
 	switch(c){
 	case APS_REQ:
+		node->messagetype = MESSAGE_TYPE_TERM;
 		fSuc = GetWFCTerm(fp, node);
 		break;
 	case APS_API:
+		node->messagetype = MESSAGE_TYPE_API;
 		fSuc = GetWFCAPI(fp, node);
 		break;
 	}

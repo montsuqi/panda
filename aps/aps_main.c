@@ -200,24 +200,23 @@ ENTER_FUNC;
 			break;
 		}
 		if		(  node->pstatus  ==  APL_SYSTEM_END  ) {
-			Message("system stop");
-			rc = 0;
+			if (node->messagetype == MESSAGE_TYPE_API) {
+				continue;
+			} else {
+				Message("system stop");
+				rc = 0;
+			}
 			break;
 		}
 		dbgprintf("ld     = [%s]",ThisLD->name);
 		dbgprintf("window = [%s]",ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
-		PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
-					   wname);
+		PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),wname);
 
 		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname) )
 				   ==  NULL  ) {
 			Message("window [%s] not found.",wname);
-			if (!strcmp(node->window, "api")) {
-				continue;
-			} else {
-				rc = 2;
-				break;
-			}
+			rc = 2;
+			break;
 		}
 		SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
 		if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
