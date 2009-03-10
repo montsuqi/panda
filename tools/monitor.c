@@ -585,8 +585,8 @@ ENTER_FUNC;
 	fAllRestart = FALSE;
 	Message("Stop system");
 	signal(SIGCHLD,(void *)WaitStop);
-	KillAllProcess((PTYPE_APS | PTYPE_RED ),SIGKILL);
-	KillAllProcess(PTYPE_WFC,SIGUSR1);
+	KillAllProcess(PTYPE_APS,SIGKILL);
+	KillAllProcess((PTYPE_WFC | PTYPE_RED),SIGUSR1);
 LEAVE_FUNC;
 	exit(0);
 }
