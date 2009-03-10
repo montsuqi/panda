@@ -577,15 +577,10 @@ MainLoop(
 	PacketClass	klass;
 	
 ENTER_FUNC;
-	alarm(TIMEOUT_SEC);
 	klass = GL_RecvPacketClass(fpComm,fFeatureNetwork); ON_IO_ERROR(fpComm,badio);
+	alarm(0);
 	dbgprintf("class = %X\n",(int)klass);
 	if		(  klass  !=  GL_Null  ) {
-		if (klass != HTTP_GET && 
-			klass != HTTP_POST && 
-			klass != HTTP_HEAD) {
-			alarm(0);
-		}
 		switch	(klass) {
 		case GL_Connect:
 			if (!Connect(fpComm,scr)){
@@ -608,6 +603,7 @@ ENTER_FUNC;
 		case HTTP_POST:
 		case HTTP_HEAD:
 			if (fAPI) {
+				alarm(TIMEOUT_SEC);
 				HTTP_Method(klass, fpComm);
 			} else {
 				Warning("invalid class = %X\n",klass);
@@ -698,6 +694,7 @@ ENTER_FUNC;
 			close(_fd);
 			scr = InitSession();
 			strcpy(scr->term,TermName(fd));
+			alarm(TIMEOUT_SEC);
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
 			CloseNet(fpComm);
