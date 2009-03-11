@@ -389,7 +389,8 @@ ConnectDB(void)
 {
 	Bool rc = TRUE;
 ENTER_FUNC;
-	if ( OpenRedirectDB(ThisDBG) == MCP_OK ) {
+	OpenRedirectDB(ThisDBG);
+	if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
 		Message("connect to database successed");
 		ThisDBG->checkData = NewLBS();
 	} else {
