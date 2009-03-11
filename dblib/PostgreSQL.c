@@ -48,6 +48,8 @@
 #include	"debug.h"
 #include	"PostgreSQLlib.h"
 
+#define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
+
 static	int		level;
 static	char	*rname[SIZE_RNAME];
 static	int		alevel;
@@ -299,6 +301,35 @@ NoticeMessage(
 	const char * message)
 {
 	Warning("%s", message);
+}
+
+static  void
+LockRedirectorConnect(
+	PGconn	*conn)
+{
+	PGresult	*res;	
+	char *sql = "CREATE TEMP TABLE " \
+			   REDIRECT_LOCK_TABLE \
+			   " (flag int);";
+	
+	res = PQexec(conn, sql);
+	PQclear(res);	
+}
+
+static  Bool
+CheckRedirectorConnect(
+	PGconn	*conn)
+{
+	PGresult	*res;
+	Bool	ret;	
+	char	*sql = "SELECT relname FROM pg_class " \
+			       "WHERE relkind = 'r' AND relname = '" \
+			       REDIRECT_LOCK_TABLE \
+			       "';";
+	res = PQexec(conn,sql);
+	ret = (PQntuples(res)  ==  0 ) ? TRUE : FALSE ;
+	PQclear(res);
+	return ret;
 }
 
 static	void
@@ -1454,6 +1485,14 @@ ENTER_FUNC;
 			OpenDB_RedirectPort(dbg);
 			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+			if (dbg->redirectPort != NULL) {
+				LockRedirectorConnect(conn);
+			} else {
+				if ( !CheckRedirectorConnect(conn) ) {
+					dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_LOCKEDRED;
+					Warning("DBredirector is already connected. ");
+				}
+			}
 			rc = MCP_OK;
 		} else {
 			rc = MCP_BAD_CONN;

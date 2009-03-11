@@ -1,3 +1,7 @@
+2009-03-11  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c: redirectする接続は同じdbへのdbredirectorの接続を確認するようにした
+
 2009-03-10  Noboru Saitou  <noborus@netlab.jp>
 
 	* dbstuff/dbredirector.c: 終了シグナルをサポート、キューの処理を直接チケット処理になるように変更
@@ -47,7 +51,7 @@
 		* HTTPリクエストの解析はapsで実施(未実装)
 			* 現状はリクエストをwfcでエコーバック
 
-2009-01-26  Noboru Saitou  <noborus@netlab.jp>
+[2009-01-26  Noboru Saitou  <noborus@netlab.jp>
 
 	* glauth/glauth.c: パスワードの再読み込みを自動にした。
 
