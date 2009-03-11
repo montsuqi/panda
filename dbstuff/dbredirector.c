@@ -331,7 +331,7 @@ OpenLogFile(
 	if		(  ThisDBG->file  !=  NULL  ) {
 		umask((mode_t) 0077);
 		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
-			Error("can not open log file :%s", ThisDBG->file);
+			Warning("can not open log file :%s", ThisDBG->file);
 		}
 	}
 	return fp;
@@ -681,7 +681,6 @@ InitSystem(
 	char	*name)
 {
     struct sigaction sa;
-
 ENTER_FUNC;
 	InitNET();
 
