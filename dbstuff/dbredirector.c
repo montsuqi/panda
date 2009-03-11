@@ -61,7 +61,6 @@ static	char	*PortNumber;
 static	int		Back;
 static	char	*Directory;
 
-static	sigset_t	hupset;
 static	DBG_Struct	*ThisDBG;
 static	pthread_t	_FileThread;
 
@@ -315,7 +314,7 @@ ConnectLog(
 ENTER_FUNC;
 	if		(  ( fhLog = accept(_fhLog,0,0) )  <  0  )	{
 		printf("_fhLog = %d\n",_fhLog);
-		Error("INET Domain Accept");
+		Error("accept: ", strerror(errno));					
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)(long)fhLog);
 	pthread_detach(thr);
@@ -561,9 +560,8 @@ ENTER_FUNC;
 	if		(  dbname  ==  NULL  ) {
 		CloseDB_RedirectPort(ThisDBG);
 	}
+	CleanUNIX_Socket(RedirectPort);
 	WriteLog(fp, "dbredirector stop");
-	Message("dbredirector stop");
-	exit(0);
 LEAVE_FUNC;
 }
 
@@ -582,14 +580,21 @@ ENTER_FUNC;
 	_fhLog = InitServerPort(RedirectPort,Back);
 	maxfd = _fhLog;
 
-	while	(TRUE)	{
+	while	(!fShutdown)	{
 		FD_ZERO(&ready);
 		FD_SET(_fhLog,&ready);
-		select(maxfd+1,&ready,NULL,NULL,NULL);
+		if (select(maxfd+1,&ready,NULL,NULL,NULL) < 0) {
+			if (errno == EINTR) {
+				continue;
+			}
+			Error("select: ", strerror(errno));			
+		}
 		if		(  FD_ISSET(_fhLog,&ready)  ) {
 			ConnectLog(_fhLog);
 		}
 	}
+	pthread_cond_signal(&redcond);
+	pthread_join(_FileThread,NULL);
 LEAVE_FUNC;
 }
 
@@ -681,15 +686,15 @@ ENTER_FUNC;
 	InitNET();
 
 	memset( &sa, 0, sizeof(struct sigaction) );
+	sa.sa_flags = 0;
+	sa.sa_handler = SIG_IGN;
+	sigemptyset (&sa.sa_mask);	
+	sigaction( SIGPIPE, &sa, NULL );
+
 	sa.sa_handler = StopSystem;
-	sa.sa_flags = SA_RESTART;	
-	if( sigaction( SIGUSR1, &sa, NULL ) != 0 ) {
-		Error("sigaction(2) error!");
-	} 
-	sigemptyset(&hupset); 
-	sigaddset(&hupset,SIGHUP);
-	//(void)signal(SIGUSR2, SIG_IGN);
-	(void)signal(SIGPIPE, SIG_IGN);
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	sigaction( SIGUSR1, &sa, NULL );
 
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
