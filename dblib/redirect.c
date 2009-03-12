@@ -234,8 +234,7 @@ CheckDB_Redirect(
 	Bool	rc = TRUE;
 ENTER_FUNC;
 	if (  dbg->redirect == NULL )
-		return;
-	
+		return rc;
 	if		(  dbg->redirectData  !=  NULL  ) {
 		if		(  dbg->fpLog  !=  NULL  ) {				
 			SendPacketClass(dbg->fpLog,RED_PING);
