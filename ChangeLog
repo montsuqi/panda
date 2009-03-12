@@ -1,3 +1,8 @@
+2009-03-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.c: リダイレクト先のdbstatusをそれぞれのDBGにセットするように修正
+	* dblib/dbgroup.c: dblib/GetDBStatus -> dblib/GetDBRedirectStatus に変更(リダイレクトの状態なので)
+	
 2009-03-11  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/PostgreSQL.c: redirectする接続は同じdbへのdbredirectorの接続を確認するようにした

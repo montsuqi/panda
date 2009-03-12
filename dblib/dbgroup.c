@@ -253,18 +253,22 @@ LEAVE_FUNC;
 }
 
 extern	int
-GetDBStatus(void)
+GetDBRedirectStatus(void)
 {
-	DBG_Struct	*dbg;
+	DBG_Struct	*dbg, *rdbg;
 	int		i;
 	int     rc = 0;
 ENTER_FUNC;
 	rc = DB_STATUS_NOCONNECT; 
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		if		(  rc  <  dbg->process[PROCESS_UPDATE].dbstatus  )	{
-			rc = dbg->process[PROCESS_UPDATE].dbstatus;
+		if		( dbg->redirect != NULL ) {
+			rdbg = dbg->redirect;
+			if		(  rc  <  rdbg->process[PROCESS_UPDATE].dbstatus  )	{
+				rc = rdbg->process[PROCESS_UPDATE].dbstatus;
+			}
 		}
+		
 	}
 LEAVE_FUNC;
 	return rc;

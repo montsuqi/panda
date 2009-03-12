@@ -96,16 +96,28 @@ badio:
 	return rc;
 }
 
+static void
+ChangeDBStatus_Redirect(
+	DBG_Struct	*dbg,
+	int dbstatus)
+{
+	DBG_Struct	*rdbg;
+	if ( dbg->redirect != NULL ){
+		rdbg = dbg->redirect;
+		rdbg->process[PROCESS_UPDATE].dbstatus = dbstatus;
+	}
+}
+
 static Bool
 RecvSTATUS_Redirect(
 	DBG_Struct	*dbg)
 {
+	int dbstatus;
 	int rc = FALSE;
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
-		dbg->process[PROCESS_UPDATE].dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
-	} else {
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
+		dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);		
+		ChangeDBStatus_Redirect(dbg, dbstatus);
 	}
 	rc = TRUE;
 badio:
@@ -135,7 +147,7 @@ ENTER_FUNC;
 			dbg->redirectData = NULL;
 			dbg->checkData = NULL;
 			if ( !fNoCheck ){
-				dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_REDFAILURE;	
+				ChangeDBStatus_Redirect(dbg, DB_STATUS_REDFAILURE);
 			}
 		} else {
 			dbg->fpLog = SocketToNet(fh);
@@ -154,6 +166,8 @@ CloseDB_RedirectPort(
 	DBG_Struct	*dbg)
 {
 ENTER_FUNC;
+	if (  dbg->redirect == NULL )
+		return;
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_END);
 		CloseNet(dbg->fpLog);
@@ -199,6 +213,9 @@ BeginDB_Redirect(
 	DBG_Struct	*dbg)
 {
 ENTER_FUNC;
+	if (  dbg->redirect == NULL )
+		return;
+
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_BEGIN);
 		dbg->ticket_id = RecvUInt64(dbg->fpLog);
@@ -216,12 +233,15 @@ CheckDB_Redirect(
 {
 	Bool	rc = TRUE;
 ENTER_FUNC;
+	if (  dbg->redirect == NULL )
+		return;
+	
 	if		(  dbg->redirectData  !=  NULL  ) {
 		if		(  dbg->fpLog  !=  NULL  ) {				
 			SendPacketClass(dbg->fpLog,RED_PING);
 			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
 				Warning("log server down?");
-				dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_REDFAILURE;
+				ChangeDBStatus_Redirect(dbg, DB_STATUS_REDFAILURE);
 				CloseDB_RedirectPort(dbg);
 				rc = FALSE;
 			}
@@ -236,6 +256,9 @@ AbortDB_Redirect(
 	DBG_Struct	*dbg)
 {
 ENTER_FUNC;
+	if (  dbg->redirect == NULL )
+		return;
+	
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_ABORT);	ON_IO_ERROR(dbg->fpLog,badio);
 		SendUInt64(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
@@ -255,6 +278,9 @@ CommitDB_Redirect(
 	Bool rc = TRUE;
 
 ENTER_FUNC;
+	if (  dbg->redirect == NULL )
+		return;
+	
 	rc = SendVeryfyData_Redirect(dbg);
 	if ( rc ){
 		rc = RecvSTATUS_Redirect(dbg);
