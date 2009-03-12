@@ -104,6 +104,8 @@ RecvSTATUS_Redirect(
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
 		dbg->process[PROCESS_UPDATE].dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);
+	} else {
+		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	}
 	rc = TRUE;
 badio:
