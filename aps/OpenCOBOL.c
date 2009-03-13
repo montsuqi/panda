@@ -218,12 +218,10 @@ ENTER_FUNC;
 	printf("starting [%s][%s]\n",name,param);
 #endif
 	if		(  ( apl = cob_resolve(name) )  !=  NULL  ) {
-		arg = (char *)xmalloc(ThisBD->textsize);
-		memclear(arg,ThisBD->textsize);
-		strncpy(arg,param,ThisBD->textsize+1);
-		arg[ThisBD->textsize] = 0;
+		arg = StrnDup(param,ThisBD->textsize);
 		StringC2Cobol(arg,ThisBD->textsize);
 		rc = apl(arg);
+		xfree(arg);
 	} else {
 		Warning( "%s - %s is not found.", cob_resolve_error(),name);
 		rc = -1;
