@@ -187,6 +187,7 @@ ENTER_FUNC;
 				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
 				ret->DB_Table = NewNameHash();
 				ret->BatchTable = NewNameHash();
+				ret->home = NULL;
 				ret->loadpath = NULL;
 				ret->handlerpath = NULL;
 			}
