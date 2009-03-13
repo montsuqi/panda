@@ -270,7 +270,7 @@ GetNextLine(HTTP_REQUEST *req)
 				if (len <= 0) {
 					return NULL;
 				}
-				ret = strndup(req->head, len);
+				ret = StrnDup(req->head, len);
 				req->head = p + 2;
 				return ret;
 			}
@@ -379,10 +379,10 @@ ParseReqLine(HTTP_REQUEST *req)
 			req->status = HTTP_BAD_REQUEST;
 			return;
 		}
-		req->ld = strndup(head, tail - head);
+		req->ld = StrnDup(head, tail - head);
 		head = tail + 1;
 	} else {
-		req->ld = strndup(head, tail - head);
+		req->ld = StrnDup(head, tail - head);
 		head = tail + 1;
 		tail = strstr(head, " ");
 		if (tail == NULL) {
@@ -390,7 +390,7 @@ ParseReqLine(HTTP_REQUEST *req)
 			req->status = HTTP_BAD_REQUEST;
 			return;
 		}
-		args = strndup(head, tail - head);
+		args = StrnDup(head, tail - head);
 		DecodeArguments(req, args);
 		xfree(args);
 		head = tail + 1;
@@ -440,7 +440,7 @@ ENTER_FUNC;
 		req->status = HTTP_BAD_REQUEST;
 		return FALSE;
 	}
-	key = strndup(head, tail - head);
+	key = StrnDup(head, tail - head);
 	head = tail + 1;
 	while(head[0] == ' '){ head++; }
 
@@ -519,8 +519,8 @@ ParseReqAuth(HTTP_REQUEST *req)
 		Message("Invalid Basic Authorization data:%s", dec);
 		return;
 	}
-	req->user = strndup(dec, tail - dec);
-	req->pass = strndup(tail + 1, size - (tail - dec + 1));
+	req->user = StrnDup(dec, tail - dec);
+	req->pass = StrnDup(tail + 1, size - (tail - dec + 1));
 	g_free(dec);
 }
 
