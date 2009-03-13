@@ -369,12 +369,12 @@ ENTER_FUNC;
 		if (p == NULL) {
 			return;
 		}
-		key = strndup(head, p - head);
+		key = StrnDup(head, p - head);
 		head = p + 1;
 		while(head[0] == ' '){ head++; }
 		p = strstr(head, "\r\n");
 		if (p != NULL) {
-			value = strndup(head, p - head);
+			value = StrnDup(head, p - head);
 			head = p + 2;
 		} else {
 			value = strdup(head);
@@ -418,14 +418,14 @@ ENTER_FUNC;
 		if (tail == NULL) {
 			return;
 		}
-		key = strndup(head, tail - head);
+		key = StrnDup(head, tail - head);
 		snprintf(buff, sizeof(buff), "request.arguments.%s", key);
 		xfree(key);
 		head = tail + 1;
 		
 		tail = strstr(head, "&");
 		if (tail != NULL) {
-			value = strndup(head, tail - head);
+			value = StrnDup(head, tail - head);
 			SetValueString(GetItemLongName(e, buff), value, NULL);
 			xfree(value);
 			head = tail + 1;
