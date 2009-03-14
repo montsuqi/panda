@@ -662,7 +662,7 @@ NewDBG_Struct(
 	dbg->redirect = NULL;
 	dbg->redirectPort = NULL;
 	dbg->redirectData = NULL;
-	dbg->checkData = NULL;
+	dbg->checkData = NewLBS();
 	dbg->fpLog = NULL;
 	dbg->dbt = NULL;
 	dbg->priority = 50;

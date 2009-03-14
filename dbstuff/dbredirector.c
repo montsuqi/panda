@@ -392,7 +392,7 @@ ENTER_FUNC;
 	OpenRedirectDB(ThisDBG);
 	if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
 		Message("connect to database successed");
-		ThisDBG->checkData = NewLBS();
+		LBS_EmitStart(ThisDBG->checkData);
 	} else {
 		Message("connect to database failed");
 		rc = FALSE;
@@ -429,7 +429,7 @@ ENTER_FUNC;
 	if ( strcmp(LBS_Body(src), LBS_Body(dsc)) == 0){
 		rc = MCP_OK;
 	} else {
-		Warning("CheckData difference %s %s", LBS_Body(src), LBS_Body(dsc));
+		Warning("CheckData difference %s<>%s", LBS_Body(src), LBS_Body(dsc));
 		rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
@@ -493,11 +493,13 @@ LEAVE_FUNC;
 
 static  void
 ReRedirect(
-	char	*query)
+	char	*query,
+	char	*checkData)
 {
 ENTER_FUNC;
 	BeginDB_Redirect(ThisDBG);
 	PutDB_Redirect(ThisDBG, query);
+	PutCheckDataDB_Redirect(ThisDBG, checkData);	
 	CommitDB_Redirect(ThisDBG);
 LEAVE_FUNC;
 }
@@ -550,7 +552,8 @@ ENTER_FUNC;
 						ExecDB(veryfydata);
 					}
 					CheckFailure(fp);
-					ReRedirect(LBS_Body(veryfydata->redirectData));
+					ReRedirect(LBS_Body(veryfydata->redirectData),
+							   LBS_Body(veryfydata->checkData));
 					WriteLogQuery(fp, LBS_Body(veryfydata->redirectData));
 				}
 				FreeVeryfyData(veryfydata);

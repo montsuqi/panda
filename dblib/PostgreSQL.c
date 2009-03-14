@@ -1183,7 +1183,7 @@ _PQsendQuery(
 	char		*sql,
 	int			usage)
 {
-	dbgprintf("%s;",sql);
+	dbgprintf("%s",sql);
 	return PQsendQuery(PGCONN(dbg,usage),sql);
 }
 
@@ -1439,12 +1439,16 @@ ENTER_FUNC;
 	if	( _PQsendQuery(dbg,sql,usage) == TRUE ) {
 		while ( (res = _PQgetResult(dbg,usage)) != NULL ){
 			rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
-			if ( rc == MCP_OK ) {
-				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-				PutCheckDataDB_Redirect(dbg, ":");
-			} else {
+			if		( rc != MCP_OK ) {
 				_PQclear(res);
 				break;
+			}
+			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
+			PutCheckDataDB_Redirect(dbg, ":");
+			if		(	(  IsUsageUpdate(usage)  )
+						&&	(  fRed                  )
+						&&	(  IsRedirectQuery(res)  ) ) {
+				PutDB_Redirect(dbg,sql);
 			}
 			_PQclear(res);
 		}

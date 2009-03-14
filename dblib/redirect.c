@@ -52,7 +52,7 @@ SendQueryData_Redirect(
 		SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
 		SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
 		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
-			Warning("Commit error");			
+			Warning("Redirect Commit error");			
 		}
 	}
 	rc = TRUE;		
@@ -66,11 +66,11 @@ SendCommit_Redirect(
 	DBG_Struct	*dbg)
 {
 	int rc = FALSE;
-	if		(  dbg->fpLog  !=  NULL  ) {	
+	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_COMMIT);	ON_IO_ERROR(dbg->fpLog,badio);
 		SendUInt64(dbg->fpLog, dbg->ticket_id); ON_IO_ERROR(dbg->fpLog,badio);
 		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {		
-			Warning("Commit error");			
+			Warning("Redirect Commit error");			
 		}
 	}
 	rc = TRUE;	
@@ -137,7 +137,6 @@ ENTER_FUNC;
 			||	(  dbg->redirect  ==  NULL  ) ) {
 		dbg->fpLog = NULL;
 		dbg->redirectData = NULL;
-		dbg->checkData = NULL;
 	} else {
 		rdbg = dbg->redirect;
 		if		( ( rdbg->redirectPort  ==  NULL ) 
@@ -145,14 +144,12 @@ ENTER_FUNC;
 			Warning("loging server not ready");
 			dbg->fpLog = NULL;
 			dbg->redirectData = NULL;
-			dbg->checkData = NULL;
 			if ( !fNoCheck ){
 				ChangeDBStatus_Redirect(dbg, DB_STATUS_REDFAILURE);
 			}
 		} else {
 			dbg->fpLog = SocketToNet(fh);
 			dbg->redirectData = NewLBS();
-			dbg->checkData = NewLBS();
 			if ( !RecvSTATUS_Redirect(dbg) ){
 				CloseDB_RedirectPort(dbg);
 			}
@@ -177,10 +174,6 @@ ENTER_FUNC;
 		FreeLBS(dbg->redirectData);
 		dbg->redirectData = NULL;
 	}
-	if		(  dbg->checkData  !=  NULL  ) {
-		FreeLBS(dbg->checkData);
-		dbg->checkData = NULL;
-	}
 LEAVE_FUNC;
 }
 
@@ -202,9 +195,7 @@ PutCheckDataDB_Redirect(
 	char		*data)
 {
 ENTER_FUNC;
-	if		(  dbg->checkData  !=  NULL  ) {
-		LBS_EmitString(dbg->checkData,data);
-	}
+	LBS_EmitString(dbg->checkData,data);
 LEAVE_FUNC;
 }
 
@@ -279,7 +270,6 @@ CommitDB_Redirect(
 ENTER_FUNC;
 	if (  dbg->redirect == NULL )
 		return;
-	
 	rc = SendVeryfyData_Redirect(dbg);
 	if ( rc ){
 		rc = RecvSTATUS_Redirect(dbg);

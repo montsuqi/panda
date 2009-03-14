@@ -1,3 +1,7 @@
+2009-03-14  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.c, dblib/PostgreSQL.c, dbstuff/dbredirector.c, libs/DIparser.c: 2台目以降のリダイレクトが出来るように checkData の初期化場所を変更
+
 2009-03-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/redirect.c: リダイレクト先のdbstatusをそれぞれのDBGにセットするように修正
