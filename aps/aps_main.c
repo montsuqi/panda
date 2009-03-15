@@ -200,37 +200,77 @@ GetFreeConnection(
 
 ENTER_FUNC;
 	if		(  ( env = GetConnection(id) )  ==  NULL  ) {
+		dbgmsg("New connection");
 		for	( i = 0 ; i < nPool ; i ++ ) {
 			if		(	(  ConnectionPool[i]            !=  NULL               )
-					&&	(  ConnectionPool[i]->dbstatus  ==  DB_STATUS_CONNECT  ) )	break;
+					&&	(	(  ConnectionPool[i]->dbstatus  ==  DB_STATUS_NOCONNECT  )
+						||	(  ConnectionPool[i]->dbstatus  ==  DB_STATUS_CONNECT    ) ) )	break;
 		}
 		if		(  i  <  nPool  ) {
+			dbgmsg("reuse pool");
 			env = ConnectionPool[i];
 			g_hash_table_remove(ConnectionHash,env->id);
 			strcpy(env->id,id);
-			g_hash_table_insert(ConnectionHash,env,env->id);
+			g_hash_table_insert(ConnectionHash,env->id,env);
 		} else {
+			dbgmsg("new pool");
 			for	( i = 0 ; i < nPool ; i ++ ) {
 				if		(  ConnectionPool[i]  ==  NULL  )	break;
 			}
 			if		(  i  <  nPool  ) {
+				dbgmsg("allocate");
 				if		(  ( env = ReadyOnlineDB(fpWFC) )   ==  NULL  )	{
 					Error("Online DB is not ready");
 				}
 				ConnectionPool[i] = env;
 				strcpy(env->id,id);
-				g_hash_table_insert(ConnectionHash,env,env->id);
+				g_hash_table_insert(ConnectionHash,env->id,env);
 			} else {
 				Error("to many active transaction");
 			}
 		}
-	} else {
-		if		(  env->dbstatus  !=  DB_STATUS_CONNECT  ) {
-			Error("transaction sequence is invalid");
-		}
+		env->dbstatus = DB_STATUS_CONNECT;
 	}
 LEAVE_FUNC;
 	return	(env);
+}
+
+static	int
+ProcessEvent(
+	ProcessNode	*node,
+	DB_Environment	*env)
+{
+	char	wname[SIZE_LONGNAME+1];
+	WindowBind	*bind;
+	int		rc;
+
+	dbgprintf("ld     = [%s]",ThisLD->name);
+	dbgprintf("window = [%s]",ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
+
+	PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),wname);
+	if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname) )
+			   !=  NULL  ) {
+		if		(  bind->module  ==  NULL  ){
+			Message("bind->module not found");
+			rc = 2;
+		} else {
+			rc = 0;
+			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
+			if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
+				RedirectError();
+			} else {
+				node->dbstatus = GetDBStatus(env);
+			}
+			ExecuteProcess(node,env);
+			if		(  Sleep  >  0  ) {
+				sleep(Sleep);
+			}
+		}
+	} else {
+		Message("window [%s] not found.",wname);
+		rc = 2;
+	}
+	return	(rc);
 }
 
 static	int
@@ -241,10 +281,10 @@ ExecuteServer(void)
 	Port	*port;
 	NETFILE		*fpWFC;
 	ProcessNode	*node;
-	WindowBind	*bind;
 	int		tran;
-	char	wname[SIZE_LONGNAME+1];
+	char	term[SIZE_TERM+1];
 	DB_Environment	*env;
+	int		c;
 
 ENTER_FUNC;
 	if		(  WfcPortNumber  ==  NULL  ) {
@@ -275,52 +315,95 @@ ENTER_FUNC;
 	InitAPSIO(fpWFC);
 	node = MakeProcessNode();
 	tran = MaxTran;
-	while	(TRUE) {
-		if		(  !GetWFC(fpWFC,node)	) {
-			Message("GetWFC failure");
-			rc = -1;
-			break;
+	while	(  RecvPacketClass(fpWFC)  ==  APS_REQ  ) {
+		RecvnString(fpWFC, sizeof(term), term);			ON_IO_ERROR(fpWFC,quit);
+		dbgprintf("term = [%s]\n",term);
+		env = GetFreeConnection(term,fpWFC);
+		if		(  ( c = RecvPacketClass(fpWFC) )  ==  APS_EVENT  ) {
+			dbgmsg("APS_EVENT");
+			if		(  GetWFC(fpWFC,node,term)	) {
+				if		(  MaxTran  >  0  ) {
+					tran --;
+					if		(  tran  ==  0  )	break;
+				}
+				if		(  ( rc = ProcessEvent(node,env) )  ==  0  ) {
+					PutWFC(fpWFC,node);
+				}
+			} else {
+				Message("GetWFC failure");
+				rc = -1;
+				goto	quit;
+			}
+		} else {
+			switch	(c)	{
+			  case	APS_START:
+				dbgmsg("APS_START");
+				switch	(env->dbstatus) {
+				  case	DB_STATUS_CONNECT:
+					rc = TransactionAllStart(env);
+					break;
+				  case	DB_STATUS_START:
+					rc = 0;
+					break;
+				  default:
+					Error("transaction sequence is invalid(start) %02X",env->dbstatus);
+					rc = -1;
+				}
+				break;
+			  case	APS_PREPARE:
+				dbgmsg("APS_PREPARE");
+				if		(  env->dbstatus  ==  DB_STATUS_START  ) {
+					rc = TransactionAllPrepare(env);
+				} else
+				if		(  env->dbstatus  ==  DB_STATUS_CONNECT  ) {
+					(void)TransactionAllPrepare(env);
+					rc = 0;
+				} else {
+					rc = -1;
+					Error("transaction sequence is invalid(prepare) %02X",env->dbstatus);
+				}
+				break;
+			  case	APS_COMMIT:
+				dbgmsg("APS_COMMIT");
+				if		(	(  env->dbstatus  ==  DB_STATUS_START    )
+						||	(  env->dbstatus  ==  DB_STATUS_PREPARE  ) ) {
+					rc = TransactionAllCommit(env);
+				} else
+				if		(  env->dbstatus  ==  DB_STATUS_CONNECT  ) {
+					(void)TransactionAllCommit(env);
+					rc = 0;
+				} else {
+					rc = -1;
+					Error("transaction sequence is invalid(prepare) %02X",env->dbstatus);
+				}
+				break;
+			  case	APS_ROLLBACK:
+				dbgmsg("APS_ROLLBACK");
+				if		(	(  env->dbstatus  ==  DB_STATUS_START    )
+						||	(  env->dbstatus  ==  DB_STATUS_PREPARE  ) ) {
+					rc = TransactionAllRollback(env);
+				} else
+				if		(  env->dbstatus  ==  DB_STATUS_CONNECT  ) {
+					(void)TransactionAllRollback(env);
+					rc = 0;
+				} else {
+					rc = -1;
+					Error("transaction sequence is invalid(prepare) %02X",env->dbstatus);
+				}
+				break;
+			}
+			if		(  rc  ==  0  ) {
+				SendPacketClass(fpWFC,APS_OK);		ON_IO_ERROR(fpWFC,quit);
+			} else {
+				SendPacketClass(fpWFC,APS_NOT);		ON_IO_ERROR(fpWFC,quit);
+			}
 		}
 		if		(  node->pstatus  ==  APL_SYSTEM_END  ) {
 			Message("system stop");
 			rc = 0;
 			break;
 		}
-		dbgprintf("ld     = [%s]",ThisLD->name);
-		dbgprintf("window = [%s]",ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
-		PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
-					   wname);
-		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname) )
-				   !=  NULL  ) {
-			if		(  bind->module  ==  NULL  ){
-				Message("bind->module not found");
-				rc = 2;
-				break;
-			}
-			env = GetFreeConnection(node->term,fpWFC);
-			SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
-			if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
-				RedirectError();
-			} else {
-				node->dbstatus = GetDBStatus(env);
-			}
-			TransactionAllStart(env);
-			if		(  MaxTran  >  0  ) {
-				tran --;
-				if		(  tran  ==  0  )	break;
-			}
-			ExecuteProcess(node,env);
-			if		(  Sleep  >  0  ) {
-				sleep(Sleep);
-			}
-			TransactionAllPrepare(env);
-			TransactionAllEnd(env);
-			PutWFC(fpWFC,node);
-		} else {
-			Message("window [%s] not found.",wname);
-			rc = 2;
-			break;
-		}
+		if		(  rc  !=  0  )	break;
 	}
 	StopOnlineDB(env); 
 	MessageLogPrintf("exiting APS (%s)",ThisLD->name);

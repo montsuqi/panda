@@ -35,7 +35,7 @@
 GLOBAL	int		ApsId;
 
 extern	void	InitAPSIO(NETFILE *fpWFC);
-extern	Bool	GetWFC(NETFILE *fpWFC, ProcessNode *node);
+extern	Bool	GetWFC(NETFILE *fpWFC, ProcessNode *node, char *term);
 extern	void	PutWFC(NETFILE *fpWFC, ProcessNode *node);
 
 #endif

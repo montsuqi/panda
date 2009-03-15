@@ -17,8 +17,6 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#define	APS_STICK
-
 /*
 */
 #define	DEBUG
@@ -52,6 +50,9 @@
 #include	"blobserv.h"
 #include	"driver.h"
 #include	"debug.h"
+
+static	LD_Node	**LDs;
+static	APS_Node	**APS_Table;
 
 static	void
 ClearAPS_Node(
@@ -95,9 +96,17 @@ CheckAPS(
 	aps = &ld->aps[ix];
 	fp = aps->fp;
 	if		(  fp  !=  NULL  ) {
-		SendPacketClass(fp,APS_REQ);	ON_IO_ERROR(fp,badio);
-		SendString(fp,term);			ON_IO_ERROR(fp,badio);
-		flag = RecvChar(fp);			ON_IO_ERROR(fp,badio);
+		SendPacketClass(fp,APS_REQ);		ON_IO_ERROR(fp,badio);
+		SendString(fp,term);				ON_IO_ERROR(fp,badio);
+		SendPacketClass(fp,APS_START);		ON_IO_ERROR(fp,badio);
+		if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
+			SendPacketClass(fp,APS_REQ);		ON_IO_ERROR(fp,badio);
+			SendString(fp,term);				ON_IO_ERROR(fp,badio);
+			SendPacketClass(fp,APS_EVENT);		ON_IO_ERROR(fp,badio);
+			flag = RecvChar(fp);				ON_IO_ERROR(fp,badio);
+		} else {
+			flag = 0;
+		}
 	} else {
 	  badio:
 		flag = 0;
@@ -242,6 +251,7 @@ ENTER_FUNC;
 			break;
 		  default:
 		  badio:
+			dbgprintf("%02X",c);
 			MessageLog("aps die ?");
 			done = TRUE;
 			flag = 0;
@@ -322,23 +332,21 @@ LEAVE_FUNC;
 }
 
 typedef	struct {
-	int		no;
+	int		no
+	,		id;
 	MQ_Node	*mq;
 }	APS_Start;
 
 static	SessionData	*
 SelectData(
 	Queue	*que,
-	int		ix)
+	int		ix,
+	int		id)
 {
 	SessionData	*data;
-#ifdef	APS_STICK
 	LD_Node		*ld;
-#endif
 
-#ifndef	APS_STICK
-	data = DeQueue(que); 
-#else
+ENTER_FUNC;
 	OpenQueue(que);
 	WaitQueue(que);
 #ifdef	DEBUG
@@ -347,25 +355,32 @@ SelectData(
 		RewindQueue(que);
 		while	(  ( data = GetElement(que) )  !=  NULL  ) {
 			ld = data->ld;
-			printf("apsid = %d\nid    = %d\n",data->apsid,ld->aps[ix].id);
+			dbgprintf("apsid = %d\nid    = %d\n",data->apsid,ld->aps[ix].id);
 		}
 	}
 #endif
 #endif
 	RewindQueue(que);
 	while	(	( data = GetElement(que) )  !=  NULL  ) {
-		ld = data->ld;
-		if		(  data->apsid  ==  -1  )	break;
-		if		(  data->apsid  ==  ld->aps[ix].id  )	break;
 		if		(	(  ThisEnv->mlevel  ==  MULTI_NO  )
 				||	(  ThisEnv->mlevel  ==  MULTI_ID  ) )	break;
+		if		(  data->mtype  ==  MESSAGE_TYPE_EVENT  ) {
+			ld = data->ld;
+			if		(  data->apsid  ==  -1  )	break;
+			if		(  data->apsid  ==  ld->aps[ix].id  )	break;
+		} else {
+			if		(  data->dbstatus[id]  !=  DB_STATUS_NOCONNECT  )	break;
+		}
 	}
 	if		(  data  !=  NULL  ) {
-		if		(  data->apsid  ==  -1  ) {
-			dbgmsg("virgin data");
-		}
-		if		(  data->apsid  ==  ld->aps[ix].id  ) {
-			dbgmsg("same aps selected");
+		dbgprintf("data->apsid = %d apsid = %d",data->apsid,id);
+		if		(  data->mtype  ==  MESSAGE_TYPE_EVENT  ) {
+			if		(  data->apsid  ==  -1  ) {
+				dbgmsg("virgin data");
+			}
+			if		(  data->apsid  ==  ld->aps[ix].id  ) {
+				dbgmsg("same aps selected");
+			}
 		}
 		data = WithdrawQueue(que);
 	}
@@ -373,7 +388,8 @@ SelectData(
 		ReleaseQueue(que);
 	}
 	CloseQueue(que);
-#endif
+
+LEAVE_FUNC;
 	return	(data);
 }
 
@@ -394,7 +410,7 @@ static	void
 HandleTermMessage(
 	SessionData *data,
 	MQ_Node		*mq,
-	int	ix)
+	int			ix)
 {
 	MessageHeader	hdr;
 	LD_Node		*ld
@@ -413,6 +429,7 @@ HandleTermMessage(
 		if ((PutAPS(ld,ix,data,flag)) && 
 			((flag = GetAPS_Control(ld,ix,&hdr)) != 0)) {
 			fp = ld->aps[ix].fp;
+			data->dbstatus[data->apsid] = DB_STATUS_START;
 		}
 	}
 	if (fp == NULL) {
@@ -504,26 +521,78 @@ HandleTermMessage(
 }
 
 static	void
+HandleTransactionMessage(
+	SessionData *data,
+	int			id)
+{
+	APS_Node	*aps;
+	NETFILE		*fp;
+
+	aps = APS_Table[id];
+	if		(  ( fp = aps->fp )  !=  NULL  ) {
+		SendPacketClass(fp,APS_REQ);		ON_IO_ERROR(fp,badio);
+		SendString(fp,data->name);			ON_IO_ERROR(fp,badio);
+		switch	(data->mtype) {
+		  case	MESSAGE_TYPE_START:	/*	not send here	*/
+			SendPacketClass(fp,APS_START);		ON_IO_ERROR(fp,badio);
+			if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
+				data->dbstatus[id] = DB_STATUS_START;
+			}
+			break;
+		  case	MESSAGE_TYPE_PREPARE:
+			SendPacketClass(fp,APS_PREPARE);	ON_IO_ERROR(fp,badio);
+			if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
+				data->dbstatus[id] = DB_STATUS_PREPARE;
+			}
+			break;
+		  case	MESSAGE_TYPE_COMMIT:
+			SendPacketClass(fp,APS_COMMIT);		ON_IO_ERROR(fp,badio);
+			if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
+				data->dbstatus[id] = DB_STATUS_CONNECT;
+			}
+			break;
+		  case	MESSAGE_TYPE_ROLLBACK:
+			SendPacketClass(fp,APS_ROLLBACK);	ON_IO_ERROR(fp,badio);
+			if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
+				data->dbstatus[id] = DB_STATUS_CONNECT;
+			}
+			break;
+		  default:
+			Error("invalid mtype");
+			break;
+		}
+		ReleaseProcess(data);
+	} else {
+	  badio:;
+	}
+}
+
+static	void
 MessageThread(
 	APS_Start	*aps)
 {
 	SessionData	*data;
-	int			ix;
+	int			ix
+		,		id;
 	MQ_Node		*mq;
 
 ENTER_FUNC;
 	mq = aps->mq; 
 	ix = aps->no;
+	id = aps->id;
 	dbgprintf("start %s(%d)\n",mq->name,ix);
 	do {
-		if ((data = SelectData(mq->que,ix)) != NULL) {
+		if		(  ( data = SelectData(mq->que,ix,id) )  !=  NULL  )	{
 			dbgprintf("act %s\n",mq->name);
 			switch(data->type) {
-			  case SESSION_TYPE_TERM:
+			  case	SESSION_TYPE_TERM:
 				HandleTermMessage(data,mq,ix);
 				break;
-			  case SESSION_TYPE_API:
+			  case	SESSION_TYPE_TRANSACTION:
+				HandleTransactionMessage(data,id);
+				break;
 #if 0
+			  case SESSION_TYPE_API:
 				HandleAPIMessage();
 #else
 				ReleaseProcess(data);
@@ -541,22 +610,22 @@ static	void
 StartMessageThread(
 	char	*name,
 	MQ_Node	*mq,
-	void	*dummy)
+	int		*id)
 {
 	APS_Start	*aps;
 	int		i;
 	LD_Struct	*ld;
 
 ENTER_FUNC;
-#ifdef	TRACE
-	printf("start thread for %s\n",name);
-#endif
+	dbgprintf("start thread for %s",name);
 	switch	(ThisEnv->mlevel) { 
 	  case	MULTI_NO:
 	  case	MULTI_ID:
 		aps = New(APS_Start);
 		aps->mq = mq;
 		aps->no = 0;
+		aps->id = (*id) ++;
+		dbgprintf("id = %d",*id);
 		pthread_create(&mq->thr,NULL,(void *(*)(void *))MessageThread,aps);
 		break;
 	  case	MULTI_LD:
@@ -566,6 +635,8 @@ ENTER_FUNC;
 				aps = New(APS_Start);
 				aps->mq = mq;
 				aps->no = i;
+				dbgprintf("id = %d",*id);
+				aps->id = (*id) ++;
 				pthread_create(&mq->thr,NULL,(void *(*)(void *))MessageThread,aps);
 			}
 		}
@@ -574,16 +645,21 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	GHashTable	*mqs;
 extern	void
 SetupMessageQueue(void)
 {
-	int		i;
+	int		i
+		,	j
+		,	id;
 	MQ_Node	*mq;
+	MQ_Node	**mqs;
+	GHashTable	*mqh;
 
 ENTER_FUNC;
 	MQ_Hash = NewNameHash();
-	mqs = NewNameHash();
+	mqh = NewNameHash();
+	mqs = (MQ_Node **)xmalloc(sizeof(MQ_Node *) * ApsId);
+	j = 0;
 	switch	(ThisEnv->mlevel) {
 	  case	MULTI_NO:
 		mq = New(MQ_Node);
@@ -593,8 +669,9 @@ ENTER_FUNC;
 			if		(  g_hash_table_lookup(MQ_Hash, ThisEnv->ld[i]->name)  ==  NULL  ) {
 				(void)g_hash_table_insert(MQ_Hash,ThisEnv->ld[i]->name,mq);
 			}
-			if		(  g_hash_table_lookup(mqs,mq->name)  ==  NULL  ) {
-				g_hash_table_insert(mqs,mq->name,mq);
+			if		(  g_hash_table_lookup(mqh,mq->name)  ==  NULL  ) {
+				g_hash_table_insert(mqh,mq->name,mq);
+				mqs[j ++] = mq;
 			}
 		}
 		break;
@@ -607,19 +684,21 @@ ENTER_FUNC;
 			if		(  g_hash_table_lookup(MQ_Hash, ThisEnv->ld[i]->name)  ==  NULL  ) {
 				(void)g_hash_table_insert(MQ_Hash,ThisEnv->ld[i]->name,mq);
 			}
-			if		(  g_hash_table_lookup(mqs,mq->name)  ==  NULL  ) {
-				g_hash_table_insert(mqs,mq->name,mq);
+			if		(  g_hash_table_lookup(mqh,mq->name)  ==  NULL  ) {
+				g_hash_table_insert(mqh,mq->name,mq);
+				mqs[j ++] = mq;
 			}
 		}
 		break;
 	  case	MULTI_ID:
 		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
-			if		(  ( mq = g_hash_table_lookup(mqs,ThisEnv->ld[i]->group) )
+			if		(  ( mq = g_hash_table_lookup(mqh,ThisEnv->ld[i]->group) )
 					   ==  NULL  ) {
 				mq = New(MQ_Node);
 				mq->name = ThisEnv->ld[i]->group;
 				mq->que = NewQueue();
-				g_hash_table_insert(mqs,mq->name,mq);
+				g_hash_table_insert(mqh,mq->name,mq);
+				mqs[j ++] = mq;
 			}
 			if		(  g_hash_table_lookup(MQ_Hash,ThisEnv->ld[i]->name)  ==  NULL  ) {
 				g_hash_table_insert(MQ_Hash,ThisEnv->ld[i]->name,mq);
@@ -630,12 +709,14 @@ ENTER_FUNC;
 		Error("not supported");
 		break;
 	}
-	g_hash_table_foreach(mqs,(GHFunc)StartMessageThread,NULL);
+	id = 0;
+	for	( i = 0 ; i < j ; i ++ ) {
+		StartMessageThread(mqs[i]->name,mqs[i],&id);
+	}
+	g_hash_table_destroy(mqh);
+	xfree(mqs);
 LEAVE_FUNC;
 }
-
-static	LD_Node	**LDs;
-static	int		ApsId;
 
 static	int
 TableComp(
@@ -650,12 +731,18 @@ ReadyAPS(void)
 {
 	int		i
 		,	j
-		,	k;
+		,	k
+		,	naps;
 	LD_Struct	*info;
 	LD_Node	*ld;
 	char	cname[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
+	naps = 0;
+	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
+		naps += ThisEnv->ld[i]->nports;
+	}
+	APS_Table = (APS_Node **)xmalloc(sizeof(APS_Node *) * naps);
 	k = 0;
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 		info = ThisEnv->ld[i];
@@ -668,6 +755,7 @@ ENTER_FUNC;
 		ld->aps = (APS_Node *)xmalloc(sizeof(APS_Node) * ld->nports);
 		for	( j = 0 ; j < ld->nports ; j ++ ) {
 			ld->aps[j].fp = NULL;
+			APS_Table[ApsId] = &ld->aps[j];
 			ld->aps[j].id = ApsId ++;
 			ClearAPS_Node(ld,j);
 		}

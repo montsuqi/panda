@@ -1238,7 +1238,7 @@ MakeSSL_CTX(
 	} else {
 		SSL_Error(_d("Please specify certificate file"));
 		return NULL;
-	}
+    }
 
     return ctx;
 }

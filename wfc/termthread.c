@@ -76,11 +76,13 @@ static	SessionData	*
 MakeSessionData(void)
 {
 	SessionData	*data;
+	int		i;
 
 ENTER_FUNC;
 	data = New(SessionData);
 	memclear(data,sizeof(SessionData));
 	data->type = SESSION_TYPE_TERM;
+	data->mtype = MESSAGE_TYPE_EVENT;
 	data->hdr = New(MessageHeader);
 	data->name = NULL;
 	memclear(data->hdr,sizeof(MessageHeader));
@@ -94,6 +96,10 @@ ENTER_FUNC;
 	data->apidata->arguments = NewLBS();
 	data->apidata->headers = NewLBS();
 	data->apidata->body = NewLBS();
+	data->dbstatus = (int *)xmalloc(sizeof(int) * ApsId);
+	for	( i = 0 ; i < ApsId ; i ++ ) {
+		data->dbstatus[i] = DB_STATUS_NOCONNECT;
+	}
 	InitLock(data);
 LEAVE_FUNC;
 	return	(data);
@@ -252,6 +258,7 @@ ENTER_FUNC;
 	FreeLBS(data->apidata->headers);
 	FreeLBS(data->apidata->body);
 	xfree(data->apidata);
+	xfree(data->dbstatus);
 	xfree(data);
 LEAVE_FUNC;
 }
@@ -346,10 +353,6 @@ LEAVE_FUNC;
 	return	(data);
 }
 
-/*
- *	LD(string)			<=
- *	ack(PacketClass)	=>
- */
 static	SessionData	*
 SwitchLD(
 	NETFILE	*fp,
@@ -812,6 +815,7 @@ TermThread(
 	Bool	fCont;
 	struct	timeval	tv
 		,			res;
+	int		i;
 
 ENTER_FUNC;
 	fCont = TRUE;
@@ -857,6 +861,8 @@ ENTER_FUNC;
 			data->retry = 0;
 			if		(  !fLoopBack  ) {
 				LockWrite(data);
+				data->mtype = MESSAGE_TYPE_EVENT;
+				data->type = SESSION_TYPE_TERM;
 				CoreEnqueue(data);
 			}
 			break;
@@ -892,12 +898,27 @@ ENTER_FUNC;
 			break;
 		  case	WFC_PREPARE:
 			dbgmsg("WFC_PREPARE");
-			/*	prepare	*/
+			for	( i = 0 ; i < ApsId ; i ++ ) {
+				if		(  data->dbstatus[i]  ==  DB_STATUS_START  ) {
+					LockWrite(data);
+					data->mtype = MESSAGE_TYPE_PREPARE;
+					data->type = SESSION_TYPE_TRANSACTION;
+					CoreEnqueue(data);
+				}
+			}
 			break;
 		  case	WFC_COMMIT:
 			dbgmsg("WFC_COMMIT");
 			if		(  !data->fAbort  ) {
-				/*	commit	*/
+				for	( i = 0 ; i < ApsId ; i ++ ) {
+					if		(	(  data->dbstatus[i]  ==  DB_STATUS_START    )
+							||	(  data->dbstatus[i]  ==  DB_STATUS_PREPARE  ) ) {
+						LockWrite(data);
+						data->mtype = MESSAGE_TYPE_COMMIT;
+						data->type = SESSION_TYPE_TRANSACTION;
+						CoreEnqueue(data);
+					}
+				}
 				LockRead(data);
 				KeepSession(data);
 				UnLock(data);

@@ -30,6 +30,7 @@ extern	int	TransactionStart(DBG_Instance *dbg);
 extern	int	TransactionAllStart(DB_Environment *env);
 extern	int	TransactionEnd(DBG_Instance *dbg);
 extern	int	TransactionAllEnd(DB_Environment *env);
+#define	TransactionAllCommit(env)	TransactionAllEnd(env)
 extern	int	TransactionRollback(DBG_Instance *dbg);
 extern	int	TransactionAllRollback(DB_Environment *env);
 extern	int	TransactionPrepare(DBG_Instance *dbg);

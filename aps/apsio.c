@@ -18,9 +18,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -219,6 +219,7 @@ GetEventData(
 	MessageHeader	hdr;
 	ValueStruct	*e;
 
+ENTER_FUNC;
 	fEnd = FALSE; 
 	fSuc = FALSE;
 	while	(  !fEnd  ) {
@@ -241,7 +242,7 @@ GetEventData(
 			dbgprintf("widget = [%s]\n",hdr.widget);
 			dbgprintf("event  = [%s]\n",hdr.event);
 			dbgprintf("lang   = [%s]\n",hdr.lang);
-			dbgprintf("dbstatus=[%c]\n",hdr.dbstatus);
+			dbgprintf("dbstatus=[%02X]\n",hdr.dbstatus);
 #endif
 			fSuc = TRUE;
 			break;
@@ -321,41 +322,32 @@ GetEventData(
 			break;
 		}
 	}
+LEAVE_FUNC;
 	return	(fSuc);
 }
 
 extern	Bool
 GetWFC(
 	NETFILE		*fp,
-	ProcessNode	*node)
+	ProcessNode	*node,
+	char		*term)
 {
-	Bool		fSuc;
-	char		term[SIZE_TERM+1];
+	Bool		ret;
 	byte		flag;
 
 ENTER_FUNC;
-	fSuc = FALSE;
-	switch	(RecvPacketClass(fp))	{
-	  case	APS_REQ:
-		dbgmsg("REQ");
-		RecvnString(fp, sizeof(term), term);			ON_IO_ERROR(fp,badio);
-		dbgprintf("term = [%s]\n",term);
-		flag = APS_EVENTDATA | APS_MCPDATA | APS_SCRDATA;
-		if		(  nCache  >  0  ) {
-			if		(  !CheckCache(node,term)  ) {
-				flag |= APS_SPADATA;
-				flag |= APS_LINKDATA;
-			}
-		} else {
-			flag |= APS_SPADATA | APS_LINKDATA;
+	ret = FALSE;
+	flag = APS_EVENTDATA | APS_MCPDATA | APS_SCRDATA;
+	if		(  nCache  >  0  ) {
+		if		(  !CheckCache(node,term)  ) {
+			flag |= APS_SPADATA;
+			flag |= APS_LINKDATA;
 		}
-		SendChar(fp,flag);					ON_IO_ERROR(fp,badio);
-		fSuc = GetEventData(fp,node);
-		break;
-	  default:
-		fSuc = FALSE;
-		break;
+	} else {
+		flag |= APS_SPADATA | APS_LINKDATA;
 	}
+	SendChar(fp,flag);					ON_IO_ERROR(fp,badio);
+	ret = GetEventData(fp,node);
 #ifdef	DEBUG
 	dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
 	if		(  node->linkrec  !=  NULL  ) {
@@ -367,7 +359,7 @@ ENTER_FUNC;
 #endif
   badio:
 LEAVE_FUNC;
-	return	(fSuc); 
+	return	(ret); 
 }
 
 extern	void

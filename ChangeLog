@@ -1,3 +1,7 @@
+2009-03-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* wfc/termthread.c: 2 phase transactionにした
+
 2009-02-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/PostgreSQLlib.[ch]: dblib/PostgreSQL.c を分割
@@ -9,13 +13,13 @@
 	libs/wfcio.h tools/Makefile.am wfc/termthread.c
 	glserver/http.c glserver/http.h libs/monapi.c libs/monapi.h:
 	API対応
-		* glserverにHTTPサーバ機能を追加
-			* GLプロトコルとHTTPのマルチプロトコル化(glserver/http.c)
-		* glserverはHTTPリクエストをpanda.soを経由せずwfcに直接送信
-			* glserver-wfc間に新プロトコルを追加(libs/monapi.c)
-		* wfcのsession dataをAPI用に拡張
-		* HTTPリクエストの解析はapsで実施(未実装)
-			* 現状はリクエストをwfcでエコーバック
+	* glserverにHTTPサーバ機能を追加
+	* GLプロトコルとHTTPのマルチプロトコル化(glserver/http.c)
+	* glserverはHTTPリクエストをpanda.soを経由せずwfcに直接送信
+	* glserver-wfc間に新プロトコルを追加(libs/monapi.c)
+	* wfcのsession dataをAPI用に拡張
+	* HTTPリクエストの解析はapsで実施(未実装)
+	* 現状はリクエストをwfcでエコーバック
 
 2009-02-19  Masami Ogoshi  <ogochan@nurs.or.jp>
 

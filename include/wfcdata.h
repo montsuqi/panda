@@ -39,18 +39,33 @@
 #define	APS_CTRLDATA	(PacketClass)0x40
 #define	APS_BLOB		(PacketClass)0x80
 
-#define	APS_NOT			(PacketClass)0xF0
-#define	APS_PONG		(PacketClass)0xF1
-#define	APS_PING		(PacketClass)0xF2
-#define	APS_STOP		(PacketClass)0xF3
-#define	APS_REQ			(PacketClass)0xF4
+#define	APS_REQ			(PacketClass)0xF0
+#define	APS_EVENT		(PacketClass)0xF1
+#define	APS_START		(PacketClass)0xF2
+#define	APS_PREPARE		(PacketClass)0xF3
+#define	APS_COMMIT		(PacketClass)0xF4
+#define	APS_ROLLBACK	(PacketClass)0xF5
+
 #define APS_TERM		(PacketClass)0xA0
 #define APS_API			(PacketClass)0xA1
+
+#define	APS_NOT			(PacketClass)0xFA
+#define	APS_PONG		(PacketClass)0xFB
+#define	APS_PING		(PacketClass)0xFC
+#define	APS_STOP		(PacketClass)0xFD
 #define	APS_OK			(PacketClass)0xFE
 #define	APS_END			(PacketClass)0xFF
 
-#define SESSION_TYPE_TERM	0
-#define SESSION_TYPE_API	1
+#define SESSION_TYPE_TERM			0
+#define SESSION_TYPE_API			1
+#define SESSION_TYPE_TRANSACTION	2
+
+#define	MESSAGE_TYPE_NULL		0
+#define	MESSAGE_TYPE_EVENT		1
+#define	MESSAGE_TYPE_START		2
+#define	MESSAGE_TYPE_PREPARE	3
+#define	MESSAGE_TYPE_COMMIT		4
+#define	MESSAGE_TYPE_ROLLBACK	5
 
 typedef	struct {
 	NETFILE	*fp;
@@ -92,11 +107,11 @@ typedef struct {
 	LargeByteString			*body;
 }	APIData;
 
-typedef	struct _SessionData	{
+typedef	struct	_SessionData	{
 	LOCKOBJECT;
+	int						mtype;
 	int						type;
 	char					*name;
-	//	TermNode				*term;
 	int						apsid;
 	Bool					fKeep;
 	LD_Node					*ld;
@@ -119,6 +134,7 @@ typedef	struct _SessionData	{
 	,						access_time;
 	struct	timeval			start
 	,						elapse;
+	int						*dbstatus;
 }	SessionData;
 
 #undef	GLOBAL
