@@ -88,8 +88,10 @@ ENTER_FUNC;
 #else
 		if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
 			ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
+			ctrl.redirect = ValueInteger(GetItemLongName(mcp,"db.redirect"));
 		} else {
 			ctrl.limit = 1;
+			ctrl.redirect = 1;
 		}
 #endif
 		ctrl.rc = 0;

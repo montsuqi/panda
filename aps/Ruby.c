@@ -1228,7 +1228,7 @@ table_exec(int argc, VALUE *argv, VALUE self)
 	} else {
 		ctrl.limit = 1;
 	}
-
+    ctrl.redirect = 1;
     size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
     ctrl.blocks = ((size + sizeof(DBCOMM_CTRL)) / SIZE_BLOCK) + 1;
     strcpy(ctrl.func, func);

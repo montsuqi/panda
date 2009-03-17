@@ -966,6 +966,7 @@ BuildMcpArea(
 	p += sprintf(p,			"pathname   varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"limit      int;");
 	p += sprintf(p,			"rcount     int;");
+ 	p += sprintf(p,			"redirect   int;");
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"private	{");
 	p += sprintf(p,			"count	int;");

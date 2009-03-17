@@ -102,6 +102,7 @@ typedef	struct {
 	int		pno;
 	int		count;
 	int		limit;
+	int		redirect;
 }	DBCOMM_CTRL;
 
 typedef	struct {

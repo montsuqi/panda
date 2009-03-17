@@ -472,6 +472,7 @@ do_String(
 		dbgmsg("exec");
 		p = input + 6;
 		ctrl.count = 0;
+		ctrl.redirect = 1;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 			DecodeStringURL(func,p);

@@ -1319,7 +1319,7 @@ ENTER_FUNC;
 				break;
 			  case	SQL_OP_EOL:
                 LBS_EmitEnd(sql);
-				res = _PQexec(dbg,LBS_Body(sql),TRUE,usage);
+				res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,usage);
                 LBS_Clear(sql);
 				status = PGRES_FATAL_ERROR;
 				if		(	(  res ==  NULL  )
@@ -1712,7 +1712,7 @@ ENTER_FUNC;
 			ret = NULL;
 			p = sql;
 			p += sprintf(p,"FETCH %d FROM %s_%s_csr",ctrl->limit,rec->name,path->name);
-			res = _PQexec(dbg,sql,TRUE,path->usage);
+			res = _PQexec(dbg,sql,ctrl->redirect,path->usage);
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_TUPLES_OK);
 			if ( ctrl->rc == MCP_OK ) {
 				if		(  ( n = PQntuples(res) )  >  0  ) {
@@ -1777,7 +1777,7 @@ ENTER_FUNC;
 			p = sql;
 			p += sprintf(p,"CLOSE %s_%s_csr",rec->name,path->name);
 			ctrl->count = 0;
-			res = _PQexec(dbg,sql,TRUE,path->usage);
+			res = _PQexec(dbg,sql,ctrl->redirect,path->usage);
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
 		}
@@ -1847,7 +1847,7 @@ ENTER_FUNC;
 			}
             LBS_EmitEnd(sql);
 			ctrl->count = 0;
-			res = _PQexec(dbg,LBS_Body(sql),TRUE,path->usage);
+			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
@@ -1912,7 +1912,7 @@ ENTER_FUNC;
 			}
             LBS_EmitEnd(sql);
 			ctrl->count = 0;
-			res = _PQexec(dbg,LBS_Body(sql),TRUE,path->usage);
+			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
@@ -1963,7 +1963,7 @@ ENTER_FUNC;
 			LBS_EmitString(sql,") ");
             LBS_EmitEnd(sql);
 			ctrl->count = 0;
-			res = _PQexec(dbg,LBS_Body(sql),TRUE,path->usage);
+			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);

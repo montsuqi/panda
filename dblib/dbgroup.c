@@ -130,7 +130,6 @@ ExecDBOP(
 	int			usage)
 {
 	int		rc;
-
 	rc = dbg->func->primitive->exec(dbg,sql,TRUE, usage);
 	return	(rc);
 }
@@ -508,8 +507,10 @@ MakeCTRL(
 #else
 	if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
 		ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
+		ctrl->redirect = ValueInteger(GetItemLongName(mcp,"db.redirect"));
 	} else {
 		ctrl->limit = 1;
+		ctrl->redirect = 1;
 	}
 #endif
 #ifdef	DEBUG
@@ -571,6 +572,7 @@ ENTER_FUNC;
 	ctrl.blocks = 0;
 	ctrl.count = rctrl->count;
 	ctrl.limit = rctrl->limit;
+	ctrl.redirect = rctrl->redirect;	
 
 	*value = NULL;
 	if		(	(  rname  !=  NULL  )

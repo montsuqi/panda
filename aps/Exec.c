@@ -146,6 +146,7 @@ ENTER_FUNC;
 			}
 			strcpy(ctrl.func,func);
 			ctrl.limit = 1;
+			ctrl.redirect = 1;
 			if		(  ( ctrl.rc = ValueInteger(GetItemLongName(recDBCTRL->value,"rc")) )
 						 >=  0  ) {
 				ret = ExecDB_Process(&ctrl,rec,value);
