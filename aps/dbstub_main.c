@@ -119,11 +119,28 @@ LEAVE_FUNC;
 	exit(ec);
 }
 
-static	void
-Logging(
-	int		ec)
+static void
+SegvProcess(
+	int			sn,
+	siginfo_t	*si,
+	void		*uc)
 {
-	Error("SIGSEGV catch");
+	MessageLogPrintf("Received signal %d errno %d", si->si_signo,si->si_errno);
+	switch(si->si_code)
+	{
+		case 1:
+			MessageLogPrintf(" SI code = %d (Address not mapped to object)\n",
+							 si->si_code);
+             break;
+		case 2:
+			MessageLogPrintf(" SI code = %d (Invalid permissions for \
+                       mapped object)\n",si->si_code);
+           break;
+		default:
+			MessageLogPrintf("SI code = %d (Unknown SI Code)\n", si->si_code);
+            break;
+	}	
+	Error("Fault addr = 0x%08x \n",si->si_addr);
 }
 
 static	ARG_TABLE	option[] = {
@@ -196,16 +213,30 @@ main(
 	int		argc,
 	char	**argv)
 {
+	struct sigaction sa_segv, sa_stop;
 	FILE_LIST	*fl;
 	int		rc;
+
+ENTER_FUNC;
+	InitNET();
+
+	memset( &sa_segv, 0, sizeof(struct sigaction) );
+	sa_segv.sa_flags = SA_SIGINFO;
+	sa_segv.sa_sigaction = SegvProcess;
+	sigemptyset (&sa_segv.sa_mask);	
+	sigaction( SIGSEGV, &sa_segv, NULL );
+
+	memset( &sa_stop, 0, sizeof(struct sigaction) );
+	sigemptyset (&sa_stop.sa_mask);
+	sa_stop.sa_flags = 0;
+	sa_stop.sa_handler = StopProcess;
+	sigaction( SIGHUP, &sa_stop, NULL );
 
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("dbstub",NULL);
 	InitNET();
 
-	(void)signal(SIGHUP,(void *)StopProcess);
-	(void)signal(SIGSEGV,(void *)Logging);
 	if		(  BD_Name  ==  NULL  ) {
 		Error("BD name is not specified.");
 	}
