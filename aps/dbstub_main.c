@@ -118,6 +118,14 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	exit(ec);
 }
+
+static	void
+Logging(
+	int		ec)
+{
+	Error("SIGSEGV catch");
+}
+
 static	ARG_TABLE	option[] = {
 	{	"host",		STRING,		TRUE,	(void*)&DB_Host,
 		"PostgreSQL稼働ホスト名"						},
@@ -197,6 +205,7 @@ main(
 	InitNET();
 
 	(void)signal(SIGHUP,(void *)StopProcess);
+	(void)signal(SIGSEGV,(void *)Logging);
 	if		(  BD_Name  ==  NULL  ) {
 		Error("BD name is not specified.");
 	}
