@@ -514,6 +514,7 @@ ENTER_FUNC;
 	SetStyle(widget,GetStyle(data->style));
 	if (data->title != NULL) {
 		SetSessionTitle(data->title);
+		SetTitle(widget, data->title);
 	}
 LEAVE_FUNC;
 }

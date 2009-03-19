@@ -328,7 +328,7 @@ LEAVE_FUNC;
 	return (wdata);
 }
 
-static	void
+extern	void
 SetTitle(GtkWidget	*window,
 	char *window_title)
 {
