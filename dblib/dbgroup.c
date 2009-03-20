@@ -252,25 +252,29 @@ LEAVE_FUNC;
 }
 
 extern	int
-GetDBRedirectStatus(void)
+GetDBRedirectStatus(int newstatus)
 {
+	static int dbstatus = DB_STATUS_NOCONNECT;
 	DBG_Struct	*dbg, *rdbg;
 	int		i;
-	int     rc = 0;
 ENTER_FUNC;
-	rc = DB_STATUS_NOCONNECT; 
+	if ( newstatus < 0 ) {
+		/* reset */
+		dbstatus = DB_STATUS_NOCONNECT;
+	} else if ( dbstatus < newstatus ){
+		dbstatus = newstatus;
+	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		if		( dbg->redirect != NULL ) {
 			rdbg = dbg->redirect;
-			if		(  rc  <  rdbg->process[PROCESS_UPDATE].dbstatus  )	{
-				rc = rdbg->process[PROCESS_UPDATE].dbstatus;
+			if		( dbstatus  <  rdbg->process[PROCESS_UPDATE].dbstatus )	{
+				dbstatus = rdbg->process[PROCESS_UPDATE].dbstatus;
 			}
 		}
-		
 	}
 LEAVE_FUNC;
-	return rc;
+	return dbstatus;
 }
 
 extern	void

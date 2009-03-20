@@ -124,7 +124,7 @@ ENTER_FUNC;
 	node->bhash = ThisLD->bhash;
 	node->textsize = ThisLD->textsize;
 	node->scrrec = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * node->cWindow);
-	node->dbstatus = GetDBRedirectStatus();
+	node->dbstatus = GetDBRedirectStatus(0);
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		node->scrrec[i] = ThisLD->windows[i];
 	}
@@ -222,7 +222,7 @@ ENTER_FUNC;
 		if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
 			RedirectError();
 		} else {
-			node->dbstatus = GetDBRedirectStatus();
+			node->dbstatus = GetDBRedirectStatus(0);
 		}
 		TransactionStart(NULL);
 		ExecuteProcess(node);

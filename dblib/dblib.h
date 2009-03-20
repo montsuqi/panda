@@ -29,7 +29,7 @@ extern	int		ExecDBOP(DBG_Struct *dbg, char *sql, int usage);
 extern	ValueStruct	*ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec, ValueStruct *args);
 extern	int	TransactionStart(DBG_Struct *dbg);
 extern	int	TransactionEnd(DBG_Struct *dbg);
-extern	int		GetDBRedirectStatus(void);
+extern	int		GetDBRedirectStatus(int newstatus);
 extern	void	RedirectError(void);
 extern	int		OpenDB(DBG_Struct *dbg);
 extern	int		CloseDB(DBG_Struct *dbg);

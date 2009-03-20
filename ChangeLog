@@ -1,3 +1,7 @@
+2009-03-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/aps_main.c, aps/handler.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dblib/dblib.h: dbredirectorが接続しているかどうかチェック修正
+
 2009-03-17  Noboru Saitou  <noborus@netlab.jp>
 
 	*  aps/Exec.c, aps/MONFUNC.c, aps/Ruby.c, dblib/Oseki.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dbstuff/dbs_main.c, include/struct.h, libs/DIparser.c:

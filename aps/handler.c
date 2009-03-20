@@ -63,13 +63,14 @@ static	char	*STATUS[4] = {
 	"RSND"
 };
 
-static	char	*DBSTATUS[6] = {
+static	char	*DBSTATUS[7] = {
 	"NORE",
 	"CONN",
 	"WAIT",
 	"FAIL",
 	"DISC",
-	"RERR"
+	"RERR",
+	"REDL"
 };
 
 static	char	*APS_HandlerLoadPath;
@@ -281,9 +282,9 @@ ENTER_FUNC;
 	SetValueString(GetItemLongName(mcp,"dc.status"),
 				   STATUS[(*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1')%sizeof(STATUS)],
 				   NULL);
-	dbgprintf("node->dbstatus = %d",(int)node->dbstatus);
+	dbgprintf("node->dbstatus = %d",node->dbstatus);
 	SetValueString(GetItemLongName(mcp,"dc.dbstatus"),
-				   DBSTATUS[(unsigned char)node->dbstatus],NULL);
+				   DBSTATUS[(char)node->dbstatus],NULL);
 	SetValueInteger(GetItemLongName(mcp,"db.rcount"),0);
 	SetValueInteger(GetItemLongName(mcp,"db.limit"),1);
 	node->w.n = 0;

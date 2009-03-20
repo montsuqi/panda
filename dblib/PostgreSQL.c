@@ -329,6 +329,10 @@ CheckRedirectorConnect(
 	res = PQexec(conn,sql);
 	ret = (PQntuples(res)  ==  0 ) ? TRUE : FALSE ;
 	PQclear(res);
+	if ( !ret ) {
+		GetDBRedirectStatus(DB_STATUS_LOCKEDRED);
+		Warning("DBredirector is already connected. ");
+	}
 	return ret;
 }
 
@@ -1492,10 +1496,7 @@ ENTER_FUNC;
 			if (dbg->redirectPort != NULL) {
 				LockRedirectorConnect(conn);
 			} else {
-				if ( !CheckRedirectorConnect(conn) ) {
-					dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_LOCKEDRED;
-					Warning("DBredirector is already connected. ");
-				}
+				CheckRedirectorConnect(conn);
 			}
 			rc = MCP_OK;
 		} else {
