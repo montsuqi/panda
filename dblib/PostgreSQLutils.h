@@ -30,6 +30,7 @@ typedef struct table
 	char *name;
 	char relkind;
 	int  count;
+	char ngkind;
 } Table;
 
 typedef struct tablelist
@@ -38,17 +39,17 @@ typedef struct tablelist
 	Table	**tables;
 } TableList;
 
-typedef struct m_s_tablelist
-{
-	TableList *master;
-	TableList *slave;	
-} M_S_tablelist;
-
 extern 	Bool	dropdb(DBG_Struct	*dbg);
 extern 	Bool	createdb(DBG_Struct	*dbg);
+extern 	Bool	delete_table(DBG_Struct	*dbg, char *table_name);
 extern 	Bool	dbexist(DBG_Struct	*dbg);
 extern 	size_t	pg_escape( char *to, const char *from, size_t length);
 extern 	Bool    all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg);
+extern 	Bool    table_sync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg, char *table_name);
 extern  TableList *get_table_info(DBG_Struct *dbg, char opt);
 extern  void    printTableList(TableList *table_list);
 extern  void	puttable(DBG_Struct	*dbg);
+extern TableList	*NewTableList(int count);
+extern Table 	*NewTable(void);
+
+

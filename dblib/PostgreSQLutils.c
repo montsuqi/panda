@@ -47,6 +47,7 @@ pg_connect(
 		conn = PGCONN(dbg, DB_UPDATE);
 	} else {
 		if ((conn = PgConnect(dbg, DB_UPDATE)) != NULL){
+			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 		}
 	}
@@ -180,7 +181,6 @@ sync_wait(pid_t pg_dump_pid, pid_t restore_pid)
 				fprintf(stderr, "Restore error(%d)\n", pid);
 				break;
 			} else {
-				fprintf(stderr, "succcess restore\n");
 				ret = TRUE;
 			}
 		} else if (pid == -1) {
@@ -247,6 +247,8 @@ dropdb(DBG_Struct	*dbg)
 	Bool ret = FALSE;
 	char sql[SIZE_BUFF];
 
+	pg_disconnect(dbg);
+
 	conn = template1_connect(dbg);
 	snprintf(sql, SIZE_BUFF, "DROP DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
 	ret = db_command(conn, sql);
@@ -262,6 +264,7 @@ createdb(DBG_Struct	*dbg)
 	Bool ret = FALSE;
 	char sql[SIZE_BUFF];
 
+	pg_disconnect(dbg);		
 	conn = template1_connect(dbg);
 	snprintf(sql, SIZE_BUFF, "CREATE DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
 	ret = db_command(conn, sql);
@@ -270,30 +273,32 @@ createdb(DBG_Struct	*dbg)
 	return ret;
 }
 
-extern Bool
-all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
+extern 	Bool
+delete_table(DBG_Struct	*dbg, char *table_name)
 {
-	int p1[2], moptc, soptc;
-	char *master_pass, *slave_pass;
-	char **master_argv, **slave_argv;
-	pid_t	pg_dump_pid, restore_pid;
+	PGconn	*conn;
 	Bool ret = FALSE;
+	char sql[SIZE_BUFF];
 
-	master_argv = make_pgopts(PG_DUMP, master_dbg);
-	moptc = optsize(master_argv);
-	master_argv[moptc++] = GetDB_DBname(master_dbg,DB_UPDATE);
-	master_argv[moptc] = NULL;
+	conn = pg_connect(dbg);
 	
-	slave_argv = make_pgopts(PSQL, slave_dbg);
-	soptc = optsize(slave_argv);
-	slave_argv[soptc++] = "-v";
-	slave_argv[soptc++] = "ON_ERROR_STOP=1";
-	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
-	slave_argv[soptc] = NULL;	
+	snprintf(sql, SIZE_BUFF, "DELETE FROM %s;\n", table_name);
+	ret = db_command(conn, sql);
 	
-	master_pass = GetDB_Pass(master_dbg, DB_UPDATE);
-	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);	
-	
+	return ret;
+}
+
+extern Bool
+db_sync(
+		char **master_argv,
+		char *master_pass,
+		char **slave_argv,
+		char *slave_pass)
+{
+	int p1[2];
+	Bool ret = FALSE;
+	pid_t	pg_dump_pid, restore_pid;
+
 	if ( pipe(p1) == -1 ) {
 		fprintf( stderr, "cannot open pipe\n");
 		return FALSE;
@@ -320,6 +325,61 @@ all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
 		}
 	}
 	return ret;
+}
+
+extern Bool
+all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
+{
+	int moptc, soptc;
+	char **master_argv, **slave_argv;
+	char *master_pass, *slave_pass;
+	
+	master_pass = GetDB_Pass(master_dbg, DB_UPDATE);
+	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);	
+
+	master_argv = make_pgopts(PG_DUMP, master_dbg);
+	moptc = optsize(master_argv);
+	master_argv[moptc++] = GetDB_DBname(master_dbg,DB_UPDATE);
+	master_argv[moptc] = NULL;
+	
+	slave_argv = make_pgopts(PSQL, slave_dbg);
+	soptc = optsize(slave_argv);
+	slave_argv[soptc++] = "-q";	
+	slave_argv[soptc++] = "-v";
+	slave_argv[soptc++] = "ON_ERROR_STOP=1";
+	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
+	slave_argv[soptc] = NULL;	
+
+	return db_sync(master_argv, master_pass, slave_argv, slave_pass);
+}
+
+extern Bool
+table_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, char *table_name)
+{
+	int moptc, soptc;
+	char *master_pass, *slave_pass;
+	char **master_argv, **slave_argv;
+
+	master_pass = GetDB_Pass(master_dbg, DB_UPDATE);
+	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);	
+
+	master_argv = make_pgopts(PG_DUMP, master_dbg);
+	moptc = optsize(master_argv);
+	master_argv[moptc++] = "-a";
+	master_argv[moptc++] = "-t";
+	master_argv[moptc++] = table_name;
+	master_argv[moptc++] = GetDB_DBname(master_dbg,DB_UPDATE);
+	master_argv[moptc] = NULL;
+	
+	slave_argv = make_pgopts(PSQL, slave_dbg);
+	soptc = optsize(slave_argv);
+	slave_argv[soptc++] = "-q";	
+	slave_argv[soptc++] = "-v";
+	slave_argv[soptc++] = "ON_ERROR_STOP=1";
+	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
+	slave_argv[soptc] = NULL;
+	
+	return db_sync(master_argv, master_pass, slave_argv, slave_pass);
 }
 
 static char *
