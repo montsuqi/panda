@@ -1,3 +1,7 @@
+2009-03-24  Noboru Saitou  <noborus@netlab.jp>
+
+	* tools/dbsync.c: DB同期ツール dbsync の追加
+
 2009-03-20  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/aps_main.c, aps/handler.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dblib/dblib.h: dbredirectorが接続しているかどうかチェック修正

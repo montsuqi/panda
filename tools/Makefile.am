@@ -17,7 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = pandadb copygen dbgen checkdir gnumerictodb gnumerictorec
+bin_PROGRAMS = pandadb copygen dbgen checkdir gnumerictodb gnumerictorec dbsync
 sbin_PROGRAMS = monitor msgd
 bin_SCRIPTS = recdefgen.rb recgen.rb
 noinst_SCRIPTS = copy
@@ -144,6 +144,30 @@ gnumerictodb_SOURCES	=	\
 gnumerictorec_SOURCES	=	\
 	xxml.c	xxml.h			\
 	gnumerictorec.c
+
+dbsync_SOURCES	=	\
+	$(top_builddir)/defaults.h			\
+	dbsync.c
+
+dbsync_LDADD			=		\
+	-lm		\
+	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/libs/libpanda.a				\
+	$(top_builddir)/libs/libpandamisc.a			\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/dblib/libpostgresqlutils.a	\
+	$(GLIB_LIBS)						\
+	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)						\
+	$(POSTGRES_LIBS)			
+dbsync_LDFLAGS	=	-export-dynamic
+
+dbsync_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.a				\
+	$(top_builddir)/libs/libpandamisc.a			\
+	$(top_builddir)/dblib/libpostgresqlutils.a	
+
 
 EXTRA_DIST =				\
 	recdefgen.rb			\
