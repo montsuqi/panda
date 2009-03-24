@@ -325,6 +325,10 @@ main(
 	master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, MASTERDB);
 	slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, SLAVEDB);
 
+	if (!master_dbg || !slave_dbg){
+		Error("Illegal dbgroup.");		
+	}
+
 	if (fVerbose){
 		info_print(master_dbg, slave_dbg);
 	}
