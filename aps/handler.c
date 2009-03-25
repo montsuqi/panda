@@ -284,7 +284,7 @@ ENTER_FUNC;
 				   NULL);
 	dbgprintf("node->dbstatus = %d",node->dbstatus);
 	SetValueString(GetItemLongName(mcp,"dc.dbstatus"),
-				   DBSTATUS[(char)node->dbstatus],NULL);
+				   DBSTATUS[(int)node->dbstatus],NULL);
 	SetValueInteger(GetItemLongName(mcp,"db.rcount"),0);
 	SetValueInteger(GetItemLongName(mcp,"db.limit"),1);
 	node->w.n = 0;
