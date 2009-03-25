@@ -39,12 +39,13 @@ typedef struct tablelist
 	Table	**tables;
 } TableList;
 
+extern 	Bool	template1_check(DBG_Struct *dbg);
 extern 	Bool	dropdb(DBG_Struct	*dbg);
 extern 	Bool	createdb(DBG_Struct	*dbg);
 extern 	Bool	delete_table(DBG_Struct	*dbg, char *table_name);
 extern 	Bool	dbexist(DBG_Struct	*dbg);
 extern 	size_t	pg_escape( char *to, const char *from, size_t length);
-extern 	Bool    all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg);
+extern 	Bool    all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, Bool verbose);
 extern 	Bool    table_sync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg, char *table_name);
 extern  TableList *get_table_info(DBG_Struct *dbg, char opt);
 extern  void    printTableList(TableList *table_list);

@@ -79,7 +79,7 @@ separator(void)
 static void
 ms_print(char *name, char *master, char *slave)
 {
-	printf("| %-6s   | %-20s       |     | %-20s       |\n", name, master, slave);
+	printf("| %-6s   | %-20s       |     | %-20s       |\n", name, (master ? master : ""), (slave ? slave : ""));
 }
 
 static void
@@ -148,7 +148,7 @@ all_allsync(
 	if (fVerbose) {
 		printf("Database sync start\n");
 	}
-	ret = all_sync(master_dbg, slave_dbg);
+	ret = all_sync(master_dbg, slave_dbg, fVerbose);
 	if (!ret) {
 		Error("ERROR: database sync failed.");
 	}
@@ -328,13 +328,17 @@ main(
 	if (!master_dbg || !slave_dbg){
 		Error("Illegal dbgroup.");		
 	}
-
-	if (fVerbose){
-		info_print(master_dbg, slave_dbg);
-	}
-
 	if (!dbtype_check(master_dbg) || !dbtype_check(slave_dbg) ){
 		Error("Sorry, does not support Database type.");
+	}
+	if (!template1_check(master_dbg)){
+		Error("ERROR: database can not access server %s", GetDB_Host(master_dbg,DB_UPDATE));		
+	}
+	if (!template1_check(slave_dbg)){
+		Error("ERROR: database can not access server %s", GetDB_Host(slave_dbg,DB_UPDATE));		
+	}
+	if (fVerbose){
+		info_print(master_dbg, slave_dbg);
 	}
 	if (!dbexist(master_dbg)){
 		Error("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));		

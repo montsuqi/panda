@@ -25,6 +25,8 @@
 #include	<stdio.h>
 #include	<unistd.h>
 #include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<fcntl.h>
 #include	<sys/wait.h>
 #include	<libpq-fe.h>
 #include	<libpq/libpq-fs.h>
@@ -32,7 +34,9 @@
 #include	"PostgreSQLlib.h"
 #include	"PostgreSQLutils.h"
 #include	"debug.h"
-		
+
+static char *ignore_message = "ERROR:  must be owner of schema public";
+
 const char *PG_DUMP = "pg_dump";
 const char *PSQL = "psql";
 
@@ -73,6 +77,10 @@ template1_connect(
 
 	conninfo = Template1Conninfo(dbg,DB_UPDATE);
 	conn = PQconnectdb(LBS_Body(conninfo));
+	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
+		Message("%s", PQerrorMessage(conn));
+		conn = NULL;
+	}
 	FreeLBS(conninfo);
 	
 	return conn;
@@ -85,6 +93,21 @@ pg_escape(
 	size_t length)
 {
 	return PQescapeString (to, from, length);
+}
+
+extern Bool
+template1_check(
+	DBG_Struct	*dbg)
+{
+	Bool ret = FALSE;
+	PGconn	*conn;
+	
+	conn = template1_connect(dbg);
+	if (conn){
+		ret = TRUE;
+		PQfinish(conn);		
+	}
+	return ret;
 }
 
 extern PGresult	*
@@ -191,6 +214,22 @@ sync_wait(pid_t pg_dump_pid, pid_t restore_pid)
 }
 
 static void
+err_check(int err_fd)
+{
+	int len;
+	char buff[SIZE_BUFF];	
+
+	len = read(err_fd, buff, SIZE_BUFF);
+	if (len > 0) {
+		buff[len] = '\0';
+		if (strncmp(ignore_message, buff, strlen(ignore_message)) != 0 ){
+			fprintf(stderr, buff);						
+			exit(1);
+		}
+	}
+}
+
+static void
 db_dump(int fd, char *pass, char **argv)
 {
 	char command[SIZE_BUFF];
@@ -229,13 +268,15 @@ dbexist(DBG_Struct	*dbg)
 	char sql[SIZE_BUFF];	
 
 	conn = template1_connect(dbg);
-	snprintf(sql, SIZE_BUFF, "SELECT datname FROM pg_database WHERE datname = '%s';\n", GetDB_DBname(dbg,DB_UPDATE));
-	res = db_exec(conn, sql);
-	if (PQntuples(res) == 1) {
-		ret = TRUE;
+	if (conn){
+		snprintf(sql, SIZE_BUFF, "SELECT datname FROM pg_database WHERE datname = '%s';\n", GetDB_DBname(dbg,DB_UPDATE));
+		res = db_exec(conn, sql);
+		if (PQntuples(res) == 1) {
+			ret = TRUE;
+		}
+		PQclear(res);
+		PQfinish(conn);
 	}
-	PQclear(res);
-	PQfinish(conn);
 	
 	return ret;
 }
@@ -250,10 +291,11 @@ dropdb(DBG_Struct	*dbg)
 	pg_disconnect(dbg);
 
 	conn = template1_connect(dbg);
-	snprintf(sql, SIZE_BUFF, "DROP DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
-	ret = db_command(conn, sql);
-	
-	PQfinish(conn);
+	if (conn){	
+		snprintf(sql, SIZE_BUFF, "DROP DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
+		ret = db_command(conn, sql);
+		PQfinish(conn);
+	}
 	
 	return ret;
 }
@@ -266,10 +308,12 @@ createdb(DBG_Struct	*dbg)
 
 	pg_disconnect(dbg);		
 	conn = template1_connect(dbg);
-	snprintf(sql, SIZE_BUFF, "CREATE DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
-	ret = db_command(conn, sql);
-
-	PQfinish(conn);
+	if (conn) {
+		snprintf(sql, SIZE_BUFF, "CREATE DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
+		ret = db_command(conn, sql);
+		PQfinish(conn);
+	}
+	
 	return ret;
 }
 
@@ -295,32 +339,38 @@ db_sync(
 		char **slave_argv,
 		char *slave_pass)
 {
-	int p1[2];
+	int std_out[2], std_err[2];
+	
 	Bool ret = FALSE;
 	pid_t	pg_dump_pid, restore_pid;
-
-	if ( pipe(p1) == -1 ) {
+	
+	if ( (pipe(std_out) == -1) || ( pipe(std_err) == -1 ) ) {
 		fprintf( stderr, "cannot open pipe\n");
 		return FALSE;
 	}
-
 	if ( (restore_pid = fork()) == 0 ){
 		/* |psql */		
-		close( p1[1] );
-		close( 0 );
-		dup2(p1[0], 0); /* (STDIN -> fd) */
-		db_restore(p1[0], slave_pass, slave_argv);
+		close( std_out[1] );
+		close( std_err[0] );
+		close( STDIN_FILENO );
+		dup2(std_out[0], STDIN_FILENO); 
+		dup2(std_err[1], STDERR_FILENO);
+		db_restore(std_out[0], slave_pass, slave_argv);
 	} else {
 		if ( (pg_dump_pid = fork()) == 0 ) {
 			/* pg_dump| */
-			close( p1[0] );
-			close( 1 );
-			dup2( p1[1], 1); /* (STDOUT -> fd) */
-			db_dump(p1[1], master_pass, master_argv);
+			close( std_out[0] );
+			close( std_err[0] );
+			close( std_err[1] );
+			close( STDOUT_FILENO );
+			dup2( std_out[1], STDOUT_FILENO); 
+			db_dump(std_out[1], master_pass, master_argv);
 		} else {
 			/* parent */
-			close( p1[0] );
-			close( p1[1] );			
+			close( std_out[0] );
+			close( std_out[1] );
+			close( std_err[1] );
+			err_check(std_err[0]);
 			ret = sync_wait(pg_dump_pid, restore_pid);
 		}
 	}
@@ -328,7 +378,7 @@ db_sync(
 }
 
 extern Bool
-all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
+all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, Bool verbose)
 {
 	int moptc, soptc;
 	char **master_argv, **slave_argv;
@@ -339,14 +389,18 @@ all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
 
 	master_argv = make_pgopts(PG_DUMP, master_dbg);
 	moptc = optsize(master_argv);
+	master_argv[moptc++] = "-O";
+	master_argv[moptc++] = "-x";	
 	master_argv[moptc++] = GetDB_DBname(master_dbg,DB_UPDATE);
 	master_argv[moptc] = NULL;
 	
 	slave_argv = make_pgopts(PSQL, slave_dbg);
 	soptc = optsize(slave_argv);
-	slave_argv[soptc++] = "-q";	
-	slave_argv[soptc++] = "-v";
-	slave_argv[soptc++] = "ON_ERROR_STOP=1";
+	if (!verbose){
+		slave_argv[soptc++] = "-q";
+	}
+/*	slave_argv[soptc++] = "-v";
+	slave_argv[soptc++] = "ON_ERROR_STOP=1"; */
 	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
 	slave_argv[soptc] = NULL;	
 
