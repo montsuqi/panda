@@ -252,7 +252,7 @@ ENTER_FUNC;
 			 && ((ticket->status == TICKET_BEGIN)
 				 || (ticket->status == TICKET_DATA)) ) {
 			ticket->status = TICKET_ABORT;
-			Warning("Auto abort %llu\n", ticket->ticket_id);
+			dbgprintf("Auto abort %llu\n", ticket->ticket_id);
 		}
 	}
 	pthread_cond_signal(&redcond);
