@@ -258,11 +258,9 @@ GetDBRedirectStatus(int newstatus)
 	DBG_Struct	*dbg, *rdbg;
 	int		i;
 ENTER_FUNC;
-	if ( newstatus < 0 ) {
+	if ( (newstatus < 0) || ( dbstatus != DB_STATUS_LOCKEDRED ) ) {
 		/* reset */
 		dbstatus = DB_STATUS_NOCONNECT;
-	} else if ( dbstatus < newstatus ){
-		dbstatus = newstatus;
 	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
