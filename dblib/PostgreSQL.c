@@ -1489,7 +1489,7 @@ ENTER_FUNC;
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	} else {
 		if		(  (conn = PgConnect(dbg, DB_UPDATE)) != NULL ) {
-			PQsetNoticeProcessor(PGCONN(dbg, DB_UPDATE), NoticeMessage, NULL);
+			PQsetNoticeProcessor(conn, NoticeMessage, NULL);
 			OpenDB_RedirectPort(dbg);
 			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
