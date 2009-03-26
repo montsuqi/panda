@@ -1500,6 +1500,7 @@ ENTER_FUNC;
 			}
 			rc = MCP_OK;
 		} else {
+			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
 			rc = MCP_BAD_CONN;
 		}
 	}
