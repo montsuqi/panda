@@ -43,9 +43,7 @@ LDADD 		=							\
 	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						\
-	$(OPENCOBOL_LIBS)					\
-	$(RUBY_LIBS)						
+	$(MONDAI_LIBS)
 
 MCPSUB_la_LIBADD	=
 MONFUNC_la_LIBADD	=
