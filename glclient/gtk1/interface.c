@@ -257,15 +257,13 @@ UI_Init(int argc,
 extern	void
 UI_InitStyle(void)
 {
-	char	buff[SIZE_BUFF];
-
+	char *glclientrc;
+	
 	StyleParserInit();
-	sprintf(buff,"%s/gltermrc",getenv("HOME"));
-	StyleParser(buff);
-	StyleParser("gltermrc");
-	if      (  *Style  !=  0  ) {
-		StyleParser(Style);
-	}
+
+	glclientrc = g_strconcat(GLCLIENT_DATADIR, G_DIR_SEPARATOR_S, "glclientrc",NULL);
+	gtk_rc_parse(glclientrc);		
+
 	if (*Gtkrc != '\0') {
 		gtk_rc_parse(Gtkrc);
 	}
