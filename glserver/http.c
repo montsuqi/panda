@@ -181,7 +181,7 @@ SendResponse(
 	LargeByteString *headers,
 	LargeByteString *body)
 {
-	char buf[256];
+	char buf[1024];
 	char date[50];
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
@@ -217,6 +217,9 @@ SendResponse(
 				"http://www.montsuqi.org/", "", XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
 		if (doc != NULL) {
 			xmlDocDumpFormatMemoryEnc(doc, &newbody, &size, "UTF-8", 0);
+		} else {
+			snprintf(buf, sizeof(buf) -1 , "%s", (char *)LBS_Body(body));
+			MessageLogPrintf("can't read response XML:%s", buf);
 		}
 		if (newbody != NULL) {
 			sprintf(buf, "Content-Length: %d\r\n", size);
