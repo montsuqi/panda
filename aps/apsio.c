@@ -722,7 +722,6 @@ ENTER_FUNC;
 			LBS_ReserveSize(body, size, FALSE);
 			p = LBS_Body(body);
 			func->PackValue(opt, p, value);
-			p[size] = '\0';
 
 			// FIXME; ConvFunc should return mime type. update libmondai
 			snprintf(str, sizeof(str),
