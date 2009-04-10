@@ -105,14 +105,16 @@ void
 open_file_chooser(GtkWidget *w, gpointer entry)
 {
   GtkWidget *dialog;
-  
+  gchar *default_path;
+
   dialog = gtk_file_chooser_dialog_new (_("Open File"),
     NULL,
     GTK_FILE_CHOOSER_ACTION_OPEN,
     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
     GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
     NULL);
-  
+  default_path = gtk_entry_get_text (GTK_ENTRY (entry));
+  gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), default_path);
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
     char *filename;
     
