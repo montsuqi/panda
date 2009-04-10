@@ -260,7 +260,9 @@ UI_InitStyle(void)
 	char *glclientrc;
 	
 	StyleParserInit();
-
+	if      (  *Style  !=  '\0'  ) {
+		StyleParser(Style);
+	}
 	glclientrc = g_strconcat(GLCLIENT_DATADIR, G_DIR_SEPARATOR_S, "glclientrc",NULL);
 	gtk_rc_parse(glclientrc);		
 
