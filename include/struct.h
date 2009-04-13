@@ -251,6 +251,7 @@ typedef	struct {
 	MessageHandler	*handler;
 	char			*module;
 	RecordStruct	*rec;
+	Bool			fAPI;
 }	WindowBind;
 
 typedef	struct {

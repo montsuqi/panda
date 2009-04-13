@@ -1,3 +1,10 @@
+2009-04-13  Yusuke Mihara  <mihara@netlab.jp>
+
+	* aps/apsio.c, glserver/http.c, include/struct.h, libs/Dlex.h,
+	libs/LDparser.c, libs/monapi.c, libs/monapi.h, wfc/mqthread.c,
+	wfc/termthread.c:
+	APIのモジュール名を任意に設定できるよう変更、URIはhttp://server:port/LD/module?argumentsのようになる
+
 2009-03-27  Noboru Saitou  <noborus@netlab.jp>
 
 	* Ver 1.4.4 release

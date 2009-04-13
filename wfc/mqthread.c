@@ -492,31 +492,32 @@ SendAPIMessage(
 	LD_Node			*ld;
 	NETFILE			*fp;
 	APIData			*api;
-	byte			flag;
 
 	fp = NULL;
 	ld = data->ld;
 	api = data->apidata;
-	if ((flag = CheckAPS(APS_API, ld,ix,data->name)) != 0) {
+	if (CheckAPS(APS_API, ld,ix,data->name) == 0) {
+		api->status = WFC_API_NOT_FOUND;
+	} else {
 		fp = ld->aps[ix].fp;
 
-		SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
-
-        SendPacketClass(fp,APS_MCPDATA);    ON_IO_ERROR(fp,badio);
-        SendLBS(fp,data->mcpdata);          ON_IO_ERROR(fp,badio);
-        SendChar(fp,data->tnest);           ON_IO_ERROR(fp,badio);
-
-		SendString(fp,api->method);			ON_IO_ERROR(fp,badio);
-		SendLBS(fp,api->arguments);			ON_IO_ERROR(fp,badio);
-		SendLBS(fp,api->headers);			ON_IO_ERROR(fp,badio);
-		SendLBS(fp,api->body);				ON_IO_ERROR(fp,badio);
-
-		RecvLBS(fp,api->headers);			ON_IO_ERROR(fp,badio);
-		RecvLBS(fp,api->body);				ON_IO_ERROR(fp,badio);
-		api->status = WFC_API_OK;
-	} else {
-		api->status = WFC_API_NOT_FOUND;
-	}
+		SendString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
+		if (RecvChar(fp) == 0) {
+			api->status = WFC_API_NOT_FOUND;
+		} else {
+			SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
+			SendPacketClass(fp,APS_MCPDATA);    ON_IO_ERROR(fp,badio);
+			SendLBS(fp,data->mcpdata);          ON_IO_ERROR(fp,badio);
+			SendChar(fp,data->tnest);           ON_IO_ERROR(fp,badio);
+			SendString(fp,api->method);			ON_IO_ERROR(fp,badio);
+			SendLBS(fp,api->arguments);			ON_IO_ERROR(fp,badio);
+			SendLBS(fp,api->headers);			ON_IO_ERROR(fp,badio);
+			SendLBS(fp,api->body);				ON_IO_ERROR(fp,badio);
+			RecvLBS(fp,api->headers);			ON_IO_ERROR(fp,badio);
+			RecvLBS(fp,api->body);				ON_IO_ERROR(fp,badio);
+			api->status = WFC_API_OK;
+		}
+	}	
 	TermEnqueue(data->term,data);
 	return;
 badio:

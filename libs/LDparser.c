@@ -60,6 +60,7 @@ static	TokenTable	tokentable[] = {
 	{	"db"		,T_DB		},
 	{	"multiplex_group"	,T_MGROUP		},
 	{	"bind"		,T_BIND		},
+	{	"bindapi"	,T_BINDAPI	},
 
 	{	"handler"	,T_HANDLER	},
 	{	"class"		,T_CLASS	},
@@ -281,7 +282,8 @@ LEAVE_FUNC;
 static	void
 ParBIND(
 	CURFILE		*in,
-	LD_Struct	*ret)
+	LD_Struct	*ret,
+	Bool		fAPI)
 {
 	WindowBind	*bind
 		,		**binds;
@@ -294,6 +296,7 @@ ENTER_FUNC;
 		if		(  ( bind = g_hash_table_lookup(ret->bhash,name) )  ==  NULL  ) {
 			bind = New(WindowBind);
 			bind->name = StrDup(name);
+			bind->fAPI = fAPI;
 			if		(  *name  !=  0  ) {
 				bind->rec = GetWindow(name);
 			} else {
@@ -431,7 +434,10 @@ ENTER_FUNC;
 			}
 			break;
 		  case	T_BIND:
-			ParBIND(in,ret);
+			ParBIND(in,ret, FALSE);
+			break;
+		  case	T_BINDAPI:
+			ParBIND(in,ret, TRUE);
 			break;
 		  case	T_HANDLER:
 			ParHANDLER(in);

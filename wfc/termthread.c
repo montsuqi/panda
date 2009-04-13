@@ -265,7 +265,8 @@ InitAPISession(
 	char *term,
 	Bool fKeep,
 	char *user,
-	char *ldname)
+	char *ldname,
+	char *wname)
 {
 	SessionData	*data;
 	LD_Node		*ld;
@@ -273,6 +274,7 @@ InitAPISession(
 ENTER_FUNC;
 	data = MakeSessionData();
 	data->type = SESSION_TYPE_API;
+	strcpy(data->hdr->window,wname);
 	strcpy(data->hdr->term,term);
 	strcpy(data->hdr->user,user);
 	data->fKeep = fKeep;
@@ -833,6 +835,7 @@ APISession(
 	SessionData *data;
 	APIData *api;
 	char ld[SIZE_NAME+1];
+	char window[SIZE_NAME+1];
 	char user[SIZE_USER+1];
 	char sterm[SIZE_TERM+1];
 	PacketClass klass;
@@ -840,12 +843,14 @@ APISession(
 	data = NULL;
 	RecvnString(term->fp, sizeof(ld), ld);			
 		ON_IO_ERROR(term->fp,badio);
+	RecvnString(term->fp, sizeof(window), window);			
+		ON_IO_ERROR(term->fp,badio);
 	RecvnString(term->fp, sizeof(user), user);		
 		ON_IO_ERROR(term->fp,badio);
 	RecvnString(term->fp, sizeof(sterm), sterm);	
 		ON_IO_ERROR(term->fp,badio);
 
-	data = InitAPISession(sterm, FALSE, user, ld);
+	data = InitAPISession(sterm, FALSE, user, ld, window);
 	if (data != NULL) {
 		data->term = term;
 		data->retry = 0;

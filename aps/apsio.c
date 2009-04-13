@@ -19,8 +19,8 @@
 
 /*
 #define	DEBUG
-#define	TRACE
 */
+#define	TRACE
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -391,7 +391,7 @@ ENTER_FUNC;
 		xfree(key);
 		xfree(value);
 	}
-	SetValueString(GetItemLongName(e,"api.request.body"), 
+	SetValueString(GetItemLongName(e,"request.body"), 
 		(char *)LBS_Body(body), NULL);
 LEAVE_FUNC;
 }
@@ -452,7 +452,7 @@ ENTER_FUNC;
 	e = NULL;
 	for(i = 0; i < node->cWindow; i++) {
 		if (node->scrrec[i] != NULL &&
-			!strcmp(node->scrrec[i]->name, "api")) {
+			!strcmp(node->scrrec[i]->name, node->window)) {
 			e = node->scrrec[i]->value;
 			break;
 		}
@@ -481,20 +481,25 @@ ENTER_FUNC;
 	LargeByteString *body;
 	MessageHeader	hdr;
 	ValueStruct		*e;
+	WindowBind		*bind;
 
 	dbgmsg("API");
 
 	fSuc = FALSE;
 
+	node->pstatus = APL_SESSION_GET;
 	RecvnString(fp, sizeof(hdr.term), hdr.term);	ON_IO_ERROR(fp,badio);
 	dbgprintf("term = [%s]\n",hdr.term);
+	SendChar(fp, 0xFE);							ON_IO_ERROR(fp,badio);
 
-	if (g_hash_table_lookup(node->bhash, "api") == NULL) {
+	RecvnString(fp, sizeof(hdr.window),hdr.window);	ON_IO_ERROR(fp,badio);
+	dbgprintf("window = [%s]\n",hdr.window);
+	if ((bind = g_hash_table_lookup(node->bhash, hdr.window)) == NULL ||
+         !bind->fAPI) {
 		SendChar(fp, 0x0);							ON_IO_ERROR(fp,badio);
 		node->pstatus = APL_SYSTEM_END;
 	} else {
 		SendChar(fp, 0xFE);							ON_IO_ERROR(fp,badio);
-		
 		RecvnString(fp, sizeof(hdr.user), hdr.user);ON_IO_ERROR(fp,badio);
 		c = RecvPacketClass(fp);					ON_IO_ERROR(fp,badio);
 		if (c != APS_MCPDATA) {
@@ -508,13 +513,13 @@ ENTER_FUNC;
 
 		SetValueString(GetItemLongName(e,"dc.term"),hdr.term,NULL);
 		SetValueString(GetItemLongName(e,"dc.user"),hdr.user,NULL);
-		SetValueString(GetItemLongName(e,"dc.window"),"api",NULL);
+		SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
 		SetValueString(GetItemLongName(e,"api.response_type"),"XML2",NULL);
 		SetValueChar(GetItemLongName(e,"private.pstatus"),APL_SESSION_GET);
 
 		strcpy(node->term,hdr.term);
 		strcpy(node->user,hdr.user);
-		strcpy(node->window,"api");
+		strcpy(node->window,hdr.window);
 
 		arguments = NewLBS();
 		headers = NewLBS();
@@ -710,7 +715,7 @@ ENTER_FUNC;
 
 	for(i = 0; i < node->cWindow; i++) {
 		if (node->scrrec[i] != NULL &&
-			!strcmp(node->scrrec[i]->name, "api")) {
+			!strcmp(node->scrrec[i]->name, node->window)) {
 			value = node->scrrec[i]->value;
 			break;
 		}
@@ -747,7 +752,7 @@ PutWFC(
 	ProcessNode	*node)
 {
 ENTER_FUNC;
-	if (!strcmp(node->window, "api")) {
+	if (node->messagetype == MESSAGE_TYPE_API) {
 		PutWFCAPI(fp, node);
 	} else {
 		PutWFCTerm(fp, node);
