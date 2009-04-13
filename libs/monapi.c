@@ -54,6 +54,7 @@ NewMonAPIData(void)
 ENTER_FUNC;
 	data = New(MonAPIData);
 	memclear(data->ld,sizeof(data->ld));
+	memclear(data->window,sizeof(data->window));
 	memclear(data->user,sizeof(data->user));
 	memclear(data->term,sizeof(data->term));
 	data->arguments = NewLBS();
@@ -93,6 +94,7 @@ ENTER_FUNC;
 		fp = SocketToNet(fd);
 		SendPacketClass(fp,WFC_API);		ON_IO_ERROR(fp,badio);
 		SendString(fp, data->ld);			ON_IO_ERROR(fp,badio);
+		SendString(fp, data->window);		ON_IO_ERROR(fp,badio);
 		SendString(fp, data->user);			ON_IO_ERROR(fp,badio);
 		SendString(fp, data->term);			ON_IO_ERROR(fp,badio);
 		SendPacketClass(fp, data->method);	ON_IO_ERROR(fp,badio);

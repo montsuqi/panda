@@ -27,6 +27,7 @@
 
 typedef	struct {
 	char			ld[SIZE_NAME+1];
+	char			window[SIZE_NAME+1];
 	char			user[SIZE_USER+1];
 	char			term[SIZE_TERM+1];
 	PacketClass		method;

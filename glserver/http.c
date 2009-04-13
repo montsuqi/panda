@@ -79,6 +79,7 @@ typedef struct {
 	char		*user;
 	char		*pass;
 	char		*ld;
+	char		*window;
 	int			status;
 } HTTP_REQUEST;
 
@@ -105,6 +106,7 @@ HTTP_Init(
 	req->user = NULL;
 	req->pass = NULL;
 	req->ld = NULL;
+	req->window = NULL;
 	req->status = HTTP_OK;
 	return req;
 }
@@ -374,18 +376,30 @@ ParseReqLine(HTTP_REQUEST *req)
 		return;
 	}
 	head = tail + 1;
+
+	tail = strstr(head, "/");
+	if (tail == NULL) {
+		Warning("Invalid LD Name :%s", line);
+		req->status = HTTP_BAD_REQUEST;
+		return;
+	} else {
+		req->ld = StrnDup(head, tail - head);
+		head = tail + 1;
+	}
+
+
 	tail = strstr(head, "?");
 	if (tail == NULL) {
 		tail = strstr(head, " ");
 		if (tail == NULL) {
-			Warning("Invalid Panda Command :%s", line);
+			Warning("Invalid Window :%s", line);
 			req->status = HTTP_BAD_REQUEST;
 			return;
 		}
-		req->ld = StrnDup(head, tail - head);
+		req->window = StrnDup(head, tail - head);
 		head = tail + 1;
 	} else {
-		req->ld = StrnDup(head, tail - head);
+		req->window = StrnDup(head, tail - head);
 		head = tail + 1;
 		tail = strstr(head, " ");
 		if (tail == NULL) {
@@ -548,6 +562,7 @@ MakeMonAPIData(
 
 	data = NewMonAPIData();
 	strncpy(data->ld, req->ld, sizeof(data->ld));
+	strncpy(data->window, req->window, sizeof(data->window));
 	strncpy(data->user, req->user, sizeof(data->user));
 	strncpy(data->term, req->term, sizeof(data->term));
 	data->method = req->method;
