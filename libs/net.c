@@ -371,6 +371,7 @@ SocketToNet(
 	fp->close = FD_Close;
 #if	1
 	fp->buff = xmalloc(SIZE_BUFF);
+	memclear(fp->buff, SIZE_BUFF);
 	fp->size = SIZE_BUFF;
 	fp->ptr = 0;
 #endif

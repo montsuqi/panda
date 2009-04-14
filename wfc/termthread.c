@@ -97,7 +97,7 @@ ENTER_FUNC;
 	time(&(data->access_time));
 	data->apidata = New(APIData);
 	data->apidata->status = WFC_API_OK;
-	data->apidata->arguments = NewLBS();
+	data->apidata->rec = NewLBS();
 	data->apidata->headers = NewLBS();
 	data->apidata->body = NewLBS();
 LEAVE_FUNC;
@@ -252,7 +252,7 @@ ENTER_FUNC;
 	g_hash_table_foreach_remove(data->scrpool,(GHRFunc)FreeScr,NULL);
 	g_hash_table_destroy(data->scrpool);
 	xfree(data->scrdata);
-	FreeLBS(data->apidata->arguments);
+	FreeLBS(data->apidata->rec);
 	FreeLBS(data->apidata->headers);
 	FreeLBS(data->apidata->body);
 	xfree(data->apidata);
@@ -268,8 +268,9 @@ InitAPISession(
 	char *ldname,
 	char *wname)
 {
-	SessionData	*data;
-	LD_Node		*ld;
+	SessionData		*data;
+	LD_Node			*ld;
+	RecordStruct	*rec;
 
 ENTER_FUNC;
 	data = MakeSessionData();
@@ -281,7 +282,7 @@ ENTER_FUNC;
 	data->fInProcess = TRUE;
 	MessageLogPrintf("[%s@%s] session start(%d)",
 		data->hdr->user, data->hdr->term, cTerm+1);
-	if		(  ( ld = g_hash_table_lookup(APS_Hash, ldname) )  !=  NULL  ) {
+	if ((ld = g_hash_table_lookup(APS_Hash, ldname)) != NULL) {
 		data->ld = ld;
 		if		(  ThisEnv->mcprec  !=  NULL  ) {
 			data->mcpdata = NewLBS();
@@ -294,6 +295,9 @@ ENTER_FUNC;
 		data->name = StrDup(data->hdr->term);
 		data->hdr->puttype = SCREEN_NULL;
 		data->w.n = 0;
+		rec = GetWindow(wname);
+		LBS_ReserveSize(data->apidata->rec, NativeSizeValue(NULL,rec->value),FALSE);
+		NativePackValue(NULL,LBS_Body(data->apidata->rec),rec->value);
 	} else {
 		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,ldname);
 		data = NULL;
@@ -828,6 +832,7 @@ TermSession(
 	CloseNet(term->fp);
 }
 
+
 static	void
 APISession(
 	TermNode	*term)
@@ -838,7 +843,6 @@ APISession(
 	char window[SIZE_NAME+1];
 	char user[SIZE_USER+1];
 	char sterm[SIZE_TERM+1];
-	PacketClass klass;
 
 	data = NULL;
 	RecvnString(term->fp, sizeof(ld), ld);			
@@ -855,21 +859,7 @@ APISession(
 		data->term = term;
 		data->retry = 0;
 		api = data->apidata;
-		klass = RecvPacketClass(term->fp);	ON_IO_ERROR(term->fp,badio2);
-		switch(klass) {
-		case 0x47:
-			sprintf(api->method, "GET");
-			break;
-		case 0x48:
-			sprintf(api->method, "HEAD");
-			break;
-		case 0x50:
-			sprintf(api->method, "PUT");
-			break;
-		}
-		RecvLBS(term->fp, api->arguments);	ON_IO_ERROR(term->fp,badio2);
-		RecvLBS(term->fp, api->headers);	ON_IO_ERROR(term->fp,badio2);
-		RecvLBS(term->fp, api->body);		ON_IO_ERROR(term->fp,badio2);
+		RecvLBS(term->fp, api->rec);
 		RegistSession(data);
 
 		data = Process(data);
@@ -884,7 +874,7 @@ APISession(
 	badio2:
 		FinishSession(data);
 	} else {
-		SendPacketClass(term->fp, WFC_API_ERROR);ON_IO_ERROR(term->fp,badio2);
+		SendPacketClass(term->fp, WFC_API_NOT_FOUND);ON_IO_ERROR(term->fp,badio2);
 		CloseNet(term->fp);
 	}
 	badio:

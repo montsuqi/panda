@@ -89,8 +89,7 @@ typedef	struct {
 
 typedef struct {
 	PacketClass				status;
-	char					method[SIZE_NAME+1];
-	LargeByteString			*arguments;
+	LargeByteString			*rec;
 	LargeByteString			*headers;
 	LargeByteString			*body;
 }	APIData;

@@ -348,125 +348,6 @@ LEAVE_FUNC;
 	return	(fSuc); 
 }
 
-static	void
-PackAPIBody(
-	ValueStruct *e,
-	LargeByteString *headers,
-	LargeByteString *body)
-{
-	char *head;
-	char *p;
-	char *key;
-	char *value;
-
-ENTER_FUNC;
-	head = (char *)LBS_Body(headers);
-	if ( head == NULL) {
-		return;
-	}
-	while(1) {
-		p = strstr(head, ":");
-		if (p == NULL) {
-			return;
-		}
-		key = StrnDup(head, p - head);
-		head = p + 1;
-		while(head[0] == ' '){ head++; }
-		p = strstr(head, "\r\n");
-		if (p != NULL) {
-			value = StrnDup(head, p - head);
-			head = p + 2;
-		} else {
-			value = strdup(head);
-		}
-
-		if (!strcmp(key, "Content-Type")) {
-			SetValueString(
-				GetItemLongName(e, "request.content_type"), value, NULL);
-		}
-		if (!strcmp(key, "Content-Length")) {
-			SetValueString(GetItemLongName(e, 
-				"request.content_length"), value, NULL);
-		}
-		xfree(key);
-		xfree(value);
-	}
-	SetValueString(GetItemLongName(e,"request.body"), 
-		(char *)LBS_Body(body), NULL);
-LEAVE_FUNC;
-}
-
-static	void
-PackAPIArguments(
-	ValueStruct *e,
-	LargeByteString *arguments)
-{
-	char *head;
-	char *tail;
-	char *key;
-	char *value;
-	char buff[SIZE_BUFF+1];
-
-ENTER_FUNC;
-	head = (char *)LBS_Body(arguments);
-
-	while(1) {
-		if (head == NULL || head == '\0') {
-			return;
-		}
-		tail = strstr(head, "=");
-		if (tail == NULL) {
-			return;
-		}
-		key = StrnDup(head, tail - head);
-		snprintf(buff, sizeof(buff), "request.arguments.%s", key);
-		xfree(key);
-		head = tail + 1;
-		
-		tail = strstr(head, "&");
-		if (tail != NULL) {
-			value = StrnDup(head, tail - head);
-			SetValueString(GetItemLongName(e, buff), value, NULL);
-			xfree(value);
-			head = tail + 1;
-		} else {
-			SetValueString(GetItemLongName(e, buff), head, NULL);
-			head = NULL;
-		}
-	}
-LEAVE_FUNC;
-}
-
-static	void
-PackAPIRecord(
-	ProcessNode *node, 
-	char *method,
-	LargeByteString *arguments, 
-	LargeByteString *headers,
-	LargeByteString *body)
-{
-	int i;
-	ValueStruct	*e;
-
-ENTER_FUNC;
-	e = NULL;
-	for(i = 0; i < node->cWindow; i++) {
-		if (node->scrrec[i] != NULL &&
-			!strcmp(node->scrrec[i]->name, node->window)) {
-			e = node->scrrec[i]->value;
-			break;
-		}
-	}
-	if (e == NULL) {
-		Error("not found scrrec for API");
-	}
-	SetValueString(GetItemLongName(e,"request.method"), method,NULL);
-
-	PackAPIArguments(e, arguments);
-	PackAPIBody(e, headers, body);
-LEAVE_FUNC;
-}
-
 static	Bool
 GetWFCAPI(
 	NETFILE	*fp,
@@ -475,13 +356,10 @@ GetWFCAPI(
 ENTER_FUNC;
 	PacketClass		c;
 	Bool			fSuc;
-	char			method[SIZE_NAME+1];
-	LargeByteString *arguments;
-	LargeByteString *headers;
-	LargeByteString *body;
 	MessageHeader	hdr;
 	ValueStruct		*e;
 	WindowBind		*bind;
+	int 			i;
 
 	dbgmsg("API");
 
@@ -521,19 +399,20 @@ ENTER_FUNC;
 		strcpy(node->user,hdr.user);
 		strcpy(node->window,hdr.window);
 
-		arguments = NewLBS();
-		headers = NewLBS();
-		body = NewLBS();
+        RecvLBS(fp,buff);     					ON_IO_ERROR(fp,badio);
 
-		RecvnString(fp, sizeof(method), method);	ON_IO_ERROR(fp,badio);
-        RecvLBS(fp,arguments);     					ON_IO_ERROR(fp,badio);
-        RecvLBS(fp,headers);     					ON_IO_ERROR(fp,badio);
-        RecvLBS(fp,body);	     					ON_IO_ERROR(fp,badio);
-		PackAPIRecord(node, method, arguments, headers, body);
-	
-		FreeLBS(arguments);
-		FreeLBS(headers);
-		FreeLBS(body);
+		e = NULL;
+		for(i = 0; i < node->cWindow; i++) {
+			if (node->scrrec[i] != NULL &&
+				!strcmp(node->scrrec[i]->name, hdr.window)) {
+				e = node->scrrec[i]->value;
+				break;
+			}
+		}
+		if (e == NULL) {
+			Error("record [%s] not found", hdr.window);
+		}
+		NativeUnPackValue(NULL, LBS_Body(buff), e);
 	}
 	fSuc = TRUE;
 LEAVE_FUNC;
