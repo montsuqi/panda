@@ -49,7 +49,7 @@
 extern	MonAPIData	*
 NewMonAPIData(void)
 {
-	MonAPIData	*data;
+	MonAPIData *data;
 
 ENTER_FUNC;
 	data = New(MonAPIData);
@@ -57,9 +57,9 @@ ENTER_FUNC;
 	memclear(data->window,sizeof(data->window));
 	memclear(data->user,sizeof(data->user));
 	memclear(data->term,sizeof(data->term));
-	data->arguments = NewLBS();
 	data->headers = NewLBS();
 	data->body = NewLBS();
+	data->rec = NULL;
 LEAVE_FUNC;
 	return	(data); 
 }
@@ -69,7 +69,9 @@ FreeMonAPIData(
 	MonAPIData *data)
 {
 ENTER_FUNC;
-	FreeLBS(data->arguments);
+	xfree(data->rec->name);
+	FreeValueStruct(data->rec->value);
+	xfree(data->rec);
 	FreeLBS(data->headers);
 	FreeLBS(data->body);
 	xfree(data);
@@ -84,6 +86,7 @@ CallMonAPI(
 	Port *port;
 	NETFILE *fp;
 	PacketClass status;
+	LargeByteString *buff;
 
 ENTER_FUNC;
 	status = WFC_API_ERROR;
@@ -97,14 +100,15 @@ ENTER_FUNC;
 		SendString(fp, data->window);		ON_IO_ERROR(fp,badio);
 		SendString(fp, data->user);			ON_IO_ERROR(fp,badio);
 		SendString(fp, data->term);			ON_IO_ERROR(fp,badio);
-		SendPacketClass(fp, data->method);	ON_IO_ERROR(fp,badio);
-		SendLBS(fp, data->arguments);		ON_IO_ERROR(fp,badio);
-		SendLBS(fp, data->headers);			ON_IO_ERROR(fp,badio);
-		SendLBS(fp, data->body);			ON_IO_ERROR(fp,badio);
+		buff = NewLBS();
+		LBS_ReserveSize(buff,NativeSizeValue(NULL,data->rec->value),FALSE);
+		NativePackValue(NULL,LBS_Body(buff),data->rec->value);
+		SendLBS(fp, buff);					ON_IO_ERROR(fp,badio);
+		FreeLBS(buff);
 		status = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
 		if (status == WFC_API_OK) {
-			RecvLBS(fp, data->headers);    ON_IO_ERROR(fp,badio);
-			RecvLBS(fp, data->body);			ON_IO_ERROR(fp,badio);
+			RecvLBS(fp, data->headers);		ON_IO_ERROR(fp,badio);
+			RecvLBS(fp, data->body);		ON_IO_ERROR(fp,badio);
 		}
 		CloseNet(fp);
 	} else {

@@ -102,7 +102,6 @@ HTTP_Init(
 	memset(req->body, 0x0, MAX_REQ_SIZE);
 	req->arguments = NULL;
 	req->header_hash = NewNameHash();
-	req->headers = NULL;
 	req->user = NULL;
 	req->pass = NULL;
 	req->ld = NULL;
@@ -442,15 +441,6 @@ ENTER_FUNC;
 		return FALSE;
 	}
 
-	if (req->headers != NULL) {
-		tail = xmalloc(strlen(req->headers) + strlen(line) + strlen("\r\n") + 1);
-		sprintf(tail, "%s\r\n%s", req->headers, line);
-		xfree(req->headers);
-		req->headers = tail;
-	} else {
-		req->headers = strdup(line);
-	}
-
 	tail = strstr(head, ":");
 	if (tail == NULL) {
 		Message("invalid HTTP Header:%s", line);
@@ -553,34 +543,91 @@ ParseRequest(
 	ParseReqAuth(req);
 }
 
+static	void
+PackRequestRecord(
+	RecordStruct *rec,
+	HTTP_REQUEST *req)
+{
+	char *head;
+	char *tail;
+	char *key;
+	char *value;
+	char buff[SIZE_BUFF+1];
+	ValueStruct *e;
+	char *p;
+
+ENTER_FUNC;
+	e = rec->value;
+
+	switch(req->method) {
+		case 'G':
+			SetValueString(GetItemLongName(e,"request.method"), StrDup("GET"),NULL);
+			break;
+		case 'P':
+			SetValueString(GetItemLongName(e,"request.method"), StrDup("PUT"),NULL);
+			break;
+		case 'H':
+			SetValueString(GetItemLongName(e,"request.method"), StrDup("HEAD"),NULL);
+			break;
+	}
+
+	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
+	if (p != NULL) {
+		SetValueString(GetItemLongName(e, "request.content_type"), p, NULL);
+	}
+	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Length");
+	if (p != NULL) {
+		SetValueString(GetItemLongName(e, "request.content_length"), p, NULL); 
+	}
+	SetValueBinary(GetItemLongName(e,"request.body"), req->body, req->body_size);
+
+	head = req->arguments;
+	while(1) {
+		if (head == NULL || head == '\0') {
+			return;
+		}
+		tail = strstr(head, "=");
+		if (tail == NULL) {
+			return;
+		}
+		key = StrnDup(head, tail - head);
+		snprintf(buff, sizeof(buff), "request.arguments.%s", key);
+		xfree(key);
+		head = tail + 1;
+		
+		tail = strstr(head, "&");
+		if (tail != NULL) {
+			value = StrnDup(head, tail - head);
+			SetValueString(GetItemLongName(e, buff), value, NULL);
+			xfree(value);
+			head = tail + 1;
+		} else {
+			SetValueString(GetItemLongName(e, buff), head, NULL);
+			head = NULL;
+		}
+	}
+LEAVE_FUNC;
+}
+
 MonAPIData *
 MakeMonAPIData(
 	HTTP_REQUEST *req)
 {
-	MonAPIData * data;
-	int size;
+	MonAPIData *data;
+	RecordStruct *rec;
 
+	ThisScreen = NewScreenData();
+	if ((rec = SetWindowRecord(req->window)) == NULL) {
+		return NULL;
+	}
+	InitializeValue(rec->value);
 	data = NewMonAPIData();
+	data->rec = rec;
 	strncpy(data->ld, req->ld, sizeof(data->ld));
 	strncpy(data->window, req->window, sizeof(data->window));
 	strncpy(data->user, req->user, sizeof(data->user));
 	strncpy(data->term, req->term, sizeof(data->term));
-	data->method = req->method;
-
-	if (req->arguments != NULL &&
-		(size = strlen(req->arguments)) > 0) {
-		LBS_ReserveSize(data->arguments, size + 1,FALSE);
-		strcpy(LBS_Body(data->arguments),req->arguments);
-	}
-	if (req->headers != NULL &&
-		(size = strlen(req->headers)) > 0) {
-		LBS_ReserveSize(data->headers, size + 1,FALSE);
-		strcpy(LBS_Body(data->headers),req->headers);
-	}
-	if (req->body_size > 0) {
-		LBS_ReserveSize(data->body, req->body_size, FALSE);
-		memcpy(LBS_Body(data->body), req->body, req->body_size);
-	}
+	PackRequestRecord(data->rec, req);
 	return data;
 }
 
@@ -637,7 +684,11 @@ HTTP_Method(
 		return;
 	}
 	data = MakeMonAPIData(req);
-
+	if (data == NULL) {
+		req->status = HTTP_NOT_FOUND; 
+		SendResponse(req, NULL , NULL);
+		return;
+	}
 	result = CallMonAPI(data);
 	switch(result) {
 	case WFC_API_OK:
