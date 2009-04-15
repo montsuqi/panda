@@ -465,6 +465,9 @@ ParseReqBody(HTTP_REQUEST *req)
 {
 	char *value;
 	int size;
+	int partsize;
+	char *p;
+	char *q;
 	
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
 	size = atoi(value);
@@ -487,7 +490,24 @@ ParseReqBody(HTTP_REQUEST *req)
 		return;
 	}
 
-	req->body_size = Recv(req->fp, req->body, size);
+	p = req->buf;
+	while((q = strstr(p, "\r\n")) != NULL) {
+		p = q + strlen("\r\n");
+	}
+
+	partsize = strlen(p);
+	if (partsize > 0) {
+		if (partsize >= size) {
+			memcpy(req->body, p, size);
+		} else {
+			memcpy(req->body, p, partsize);
+			q = req->body + partsize + 1;
+			Recv(req->fp, q, size - partsize);
+		}
+	} else {
+		Recv(req->fp, req->body, size);
+	}
+	req->body_size = size;
 	dbgprintf("body :%s\n", req->body);
 }
 
