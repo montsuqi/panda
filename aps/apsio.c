@@ -19,8 +19,8 @@
 
 /*
 #define	DEBUG
-*/
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
