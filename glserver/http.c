@@ -62,7 +62,7 @@
 #include	"http.h"
 #include	"monapi.h"
 
-#define MAX_REQ_SIZE 1024*1024
+#define MAX_REQ_SIZE 1024*1024+1
 
 typedef struct {
 	NETFILE		*fp;
