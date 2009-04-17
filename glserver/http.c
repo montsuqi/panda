@@ -581,15 +581,16 @@ ENTER_FUNC;
 
 	switch(req->method) {
 		case 'G':
-			SetValueString(GetItemLongName(e,"request.method"), StrDup("GET"),NULL);
+			p = StrDup("GET");
 			break;
 		case 'P':
-			SetValueString(GetItemLongName(e,"request.method"), StrDup("PUT"),NULL);
+			p = StrDup("PUT");
 			break;
 		case 'H':
-			SetValueString(GetItemLongName(e,"request.method"), StrDup("HEAD"),NULL);
+			p = StrDup("HEAD");
 			break;
 	}
+	SetValueString(GetItemLongName(e,"request.methodtype"), p,NULL);
 
 	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
 	if (p != NULL) {
