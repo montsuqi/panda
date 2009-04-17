@@ -501,7 +501,7 @@ ParseReqBody(HTTP_REQUEST *req)
 			memcpy(req->body, p, size);
 		} else {
 			memcpy(req->body, p, partsize);
-			q = req->body + partsize + 1;
+			q = req->body + partsize;
 			Recv(req->fp, q, size - partsize);
 		}
 	} else {
@@ -579,6 +579,7 @@ PackRequestRecord(
 ENTER_FUNC;
 	e = rec->value;
 
+	p = NULL;
 	switch(req->method) {
 		case 'G':
 			p = StrDup("GET");
