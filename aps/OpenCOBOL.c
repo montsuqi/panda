@@ -253,7 +253,9 @@ ENTER_FUNC;
 	}
 	cob_init(0,NULL);
 	if		(  handler->loadpath  !=  NULL  ) {
+#ifndef OPENCOBOL_1_0
 		cob_set_library_path(handler->loadpath);
+#endif
 	}
 LEAVE_FUNC;
 }
