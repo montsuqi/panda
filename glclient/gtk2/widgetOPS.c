@@ -51,6 +51,7 @@
 #include	"message.h"
 #include	"debug.h"
 #include	"queue.h"
+#include	"widgetcache.h"
 
 static gchar *
 NewTempname(void)
@@ -466,7 +467,7 @@ SetNotebook(
 ENTER_FUNC;
 	SetState(widget,(GtkStateType)data->state);
 	SetStyle(widget,GetStyle(data->style));
-	SetObjectData(widget, "recv_page", (void *)&(data->pageno));
+	SetObjectData(widget, "recv_page", (void *)(&(data->pageno)));
 	gtk_notebook_set_page(GTK_NOTEBOOK(widget),data->pageno);
 LEAVE_FUNC;
 }
@@ -553,7 +554,7 @@ GetScrolledWindow(
 	_ScrolledWindow				*data)
 {
 	GtkAdjustment	*vad
-		,			*had;
+	,				*had;
 
 ENTER_FUNC;
 	vad = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
@@ -564,17 +565,51 @@ LEAVE_FUNC;
 }
 
 static	void
+SavePreviousFolder(
+	GtkWidget	*widget,
+	gpointer 	data) 
+{
+	GtkPandaFileentry 	*fentry;
+	char				*longname;
+
+	fentry = GTK_PANDA_FILEENTRY(widget);
+	longname = (char *)glade_get_widget_long_name(widget);
+	SetWidgetCache(longname, fentry->folder);
+}
+
+static	void
 SetFileEntry(
 	GtkWidget			*widget,
 	_FileEntry			*data)
 {
+static GHashTable		*connectlist = NULL;
+
 	GtkPandaFileentry 	*fentry;
 	GtkWidget			*subWidget;
 	WidgetData			*subdata;
+	char				*longname;
+	char				*folder;
 
 ENTER_FUNC;
+
 	fentry = GTK_PANDA_FILEENTRY(widget);
 	g_return_if_fail(data->binary != NULL);
+	longname = (char *)glade_get_widget_long_name(widget);
+
+	if (connectlist == NULL) {
+		connectlist = NewNameHash();
+	}
+    if (g_hash_table_lookup(connectlist, longname) == NULL) {
+		g_hash_table_insert(connectlist, longname, longname);
+		g_signal_connect_after(G_OBJECT(widget), "done_action", 
+			G_CALLBACK(SavePreviousFolder), NULL);
+	}
+
+	folder = GetWidgetCache(longname);
+	if (folder != NULL) {
+		gtk_panda_fileentry_set_folder(fentry, folder);
+	}
+
 	if (LBS_Size(data->binary) > 0) {
 		//download
 		gtk_panda_fileentry_set_mode(fentry, 

@@ -32,10 +32,14 @@
 #include	<fcntl.h>
 #include	<unistd.h>
 #include	<gnome.h>
+#include	<glib.h>
+#include	<libmondai.h>
+#include	<glade/glade.h>
 
 #include	"comm.h"
 #include	"dialogs.h"
 #include	"fileEntry.h"
+#include	"widgetcache.h"
 
 static Bool
 CheckAlreadyFile(
@@ -139,7 +143,8 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 	GnomeFileEntry *fentry;
 	GtkWidget *entry;
     LargeByteString *binary;
-	char	*filename;
+	char *dir;
+	char *fname;
 
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(widget),"clicked");
 
@@ -151,12 +156,15 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 	/* Is this evil? */
 	gtk_signal_emit_by_name (GTK_OBJECT (entry), "activate");
 
-	filename = (char *)gnome_file_entry_get_full_path(GNOME_FILE_ENTRY(fentry), FALSE);
+	fname = gnome_file_entry_get_full_path(GNOME_FILE_ENTRY(fentry), FALSE);
+
+	dir = g_dirname(fname);
+	SetWidgetCache(StrDup((char *)glade_get_widget_long_name(GTK_WIDGET(fentry))), dir);
 	binary = gtk_object_get_data(GTK_OBJECT(fentry), "recvobject");
 
 	if ((binary) && (LBS_Size(binary) > 0)){
-		if (CheckAlreadyFile(filename)){
-			if (SaveFile(filename, binary, widget)){
+		if (CheckAlreadyFile(fname)){
+			if (SaveFile(fname, binary, widget)){
 			}
 		} else {
 			dialog = question_dialog(
@@ -168,6 +176,7 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 		/* do nothing */
 		gtk_widget_destroy (GTK_WIDGET (fs));
 	}
+	free(fname);
 }
 
 static void
@@ -183,10 +192,23 @@ extern void
 browse_clicked(GnomeFileEntry *fentry, gpointer data)
 {
 	GtkFileSelection *fsw;
+	char fname[256];
+	char *base;
+	char *dir;
 
-	if(!fentry->fsw)
-		return;
 	fsw = GTK_FILE_SELECTION(fentry->fsw);
+	if(!fsw)
+		return;
+	dir = GetWidgetCache((char *)glade_get_widget_long_name(GTK_WIDGET(fentry)));
+	if (dir != NULL) {
+		base = g_basename(gtk_entry_get_text(GTK_ENTRY(gnome_file_entry_gtk_entry(fentry))));
+		if (base != NULL) {
+			snprintf(fname, sizeof(fname), "%s/%s", dir, base);
+			gtk_file_selection_set_filename(fsw, fname);
+		}
+fprintf(stderr, "brows_clicked %s\n", fname);
+	}
+
 	/* rebind browse_dialog_ok */
 	gtk_signal_handlers_destroy(GTK_OBJECT (fsw->ok_button));
 	gtk_signal_connect (GTK_OBJECT (fsw->ok_button), "clicked",

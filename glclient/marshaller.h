@@ -22,7 +22,7 @@
 #define	_MARSHALLER_H
 
 #undef	GLOBAL
-#ifdef	_PROTOCOL_C
+#ifdef	MARSHALLER
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern

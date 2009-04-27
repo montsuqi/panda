@@ -35,6 +35,8 @@
 #include	<sys/time.h>
 #include	<errno.h>
 
+#define		MARSHALLER
+
 #include	"types.h"
 #include	"glterm.h"
 #include	"glclient.h"

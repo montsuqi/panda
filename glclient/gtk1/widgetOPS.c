@@ -51,6 +51,7 @@
 #include	"message.h"
 #include	"debug.h"
 #include	"queue.h"
+#include	"widgetcache.h"
 
 static gchar *
 NewTempname(void)
@@ -593,6 +594,10 @@ ENTER_FUNC;
 								 "browse_clicked");
 	} else {
 		//upload
+		gtk_signal_connect_after(GTK_OBJECT(widget),
+								 "browse_clicked",
+								 GTK_SIGNAL_FUNC(browse_clicked),
+								 window);
 		gtk_object_set_data(GTK_OBJECT(widget), "recvobject", NULL);
 	}
 LEAVE_FUNC;
@@ -607,6 +612,7 @@ GetFileEntry(
 	GtkWidget		*subWidget;
 	FILE			*fp;
 	struct stat		st;
+	gchar			*dir;
 
 ENTER_FUNC;
 	binary = gtk_object_get_data(GTK_OBJECT(widget), "recvobject");
@@ -624,6 +630,10 @@ ENTER_FUNC;
 			LBS_ReserveSize(data->binary,st.st_size,FALSE);
 			fread(LBS_Body(data->binary),st.st_size,1,fp);
 			fclose(fp);
+			dir = g_dirname(data->path);
+			SetWidgetCache(StrDup(glade_get_widget_long_name(widget)), 
+				dir);
+			g_free(dir);
 		}
 	}
 LEAVE_FUNC;
