@@ -1,3 +1,11 @@
+2009-04-27  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glclient/Makefile.am, glclient/client.c, glclient/marshaller.c,
+	gtk1/fileEntry.c, gtk1/widgetOPS.c, gtk2/widgetOPS.c:
+	ウィジェットの情報をためるキャッシュ(NameHash)を追加した。
+	キャッシュは[cachedir]/widgetcache.txtに保存する。
+	ウィジェットキャッシュを利用してFileEntryの参照ディレクトリを保存するようにした。
+
 2009-04-13  Yusuke Mihara  <mihara@netlab.jp>
 
 	* aps/apsio.c, glserver/http.c, include/struct.h, libs/Dlex.h,
