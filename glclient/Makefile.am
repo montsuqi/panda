@@ -44,6 +44,7 @@ base_sources =						\
 	client.c		glclient.h		\
 	protocol.c		protocol.h		\
 	marshaller.c	marshaller.h	\
+	widgetcache.c	widgetcache.h	\
 	interface.h
 
 base_dependencies =								\

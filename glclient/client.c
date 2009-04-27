@@ -60,6 +60,7 @@
 #include	"debug.h"
 #include	"interface.h"
 #include	"gettext.h"
+#include	"widgetcache.h"
 
 static	Bool 	fDialog;
 static	char	*Config;
@@ -331,6 +332,7 @@ start_client ()
 	}
 	InitProtocol();
 	if(MakeFPCOMM(fd) != TRUE) return FALSE;
+	LoadWidgetCache();
 
 	if (SendConnect(FPCOMM(glSession),CurrentApplication)) {
 		CheckScreens(FPCOMM(glSession),TRUE);
@@ -360,6 +362,7 @@ stop_client ()
 #endif	//USE_PKCS11
 #endif	//USE_SSL
     DestroyPort (glSession->port);
+	SaveWidgetCache();
 }
 
 static void 
