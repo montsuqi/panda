@@ -206,7 +206,6 @@ browse_clicked(GnomeFileEntry *fentry, gpointer data)
 			snprintf(fname, sizeof(fname), "%s/%s", dir, base);
 			gtk_file_selection_set_filename(fsw, fname);
 		}
-fprintf(stderr, "brows_clicked %s\n", fname);
 	}
 
 	/* rebind browse_dialog_ok */
