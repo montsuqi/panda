@@ -1149,6 +1149,7 @@ IsRedirectQuery(
 {
 	Bool rc = FALSE;
 
+
 	if ( (strncmp(PQcmdStatus(res), "INSERT ", 7) == 0)
 		 ||(strncmp(PQcmdStatus(res), "UPDATE ", 7) == 0)
 		 ||(strncmp(PQcmdStatus(res), "DELETE ", 7) == 0) ){
@@ -1169,13 +1170,15 @@ _PQexec(
 ENTER_FUNC;
 	dbgprintf("%s;",sql);
 	res = PQexec(PGCONN(dbg,usage),sql);
-	if		(	(  IsUsageUpdate(usage)  )
-			&&	(  fRed                  )
-			&&	(  IsRedirectQuery(res)  ) ) {
-		PutDB_Redirect(dbg,sql);
-		PutDB_Redirect(dbg,";");
-		PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-		PutCheckDataDB_Redirect(dbg, ":");
+ 	if ( res != NULL) {
+		if		(	(  IsUsageUpdate(usage)  )
+				&&	(  fRed                  )
+				&&	(  IsRedirectQuery(res)  ) ) {
+			PutDB_Redirect(dbg,sql);
+			PutDB_Redirect(dbg,";");
+			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
+			PutCheckDataDB_Redirect(dbg, ":");
+		}
 	}
 LEAVE_FUNC;
 	return	(res);
