@@ -576,6 +576,7 @@ SetFileEntry(
 
 ENTER_FUNC;
 	g_return_if_fail(data->binary != NULL);
+	window = gtk_widget_get_toplevel(widget);
 	if (LBS_Size(data->binary) > 0) {
 		//set subwidget
 		subdata = g_hash_table_lookup(WidgetDataTable, data->subname);
@@ -585,7 +586,6 @@ ENTER_FUNC;
 		}
 
 		gtk_object_set_data(GTK_OBJECT(widget), "recvobject", data->binary);
-		window = gtk_widget_get_toplevel(widget);
 		gtk_signal_connect_after(GTK_OBJECT(widget),
 								 "browse_clicked",
 								 GTK_SIGNAL_FUNC(browse_clicked),
@@ -631,7 +631,7 @@ ENTER_FUNC;
 			fread(LBS_Body(data->binary),st.st_size,1,fp);
 			fclose(fp);
 			dir = g_dirname(data->path);
-			SetWidgetCache(StrDup(glade_get_widget_long_name(widget)), 
+			SetWidgetCache(StrDup((char *)glade_get_widget_long_name(widget)), 
 				dir);
 			g_free(dir);
 		}
