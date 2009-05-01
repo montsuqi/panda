@@ -39,12 +39,10 @@ extern	gboolean	UI_IsWidgetName(char *name);
 extern	gboolean	UI_IsWidgetName2(char *dataname);
 extern	void		UI_ErrorDialog(const char *msg);
 extern	int			UI_AskPass(char *buff, size_t buflen, const char *prmpt);
-
 extern	gboolean	UI_BootDialogRun(void);
 
 extern	void		UI_Init(int argc, char **argv);
 extern	void		UI_InitStyle(void);
 extern	void		UI_Main(void);
-extern  void		UI_Final(void);
 
 #endif

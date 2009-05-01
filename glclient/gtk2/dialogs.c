@@ -68,7 +68,7 @@ error_dialog(
 	const char *message)
 {
     message_dialog(GTK_MESSAGE_ERROR, message);
-	exit(0);
+	exit(1);
 }
 
 void

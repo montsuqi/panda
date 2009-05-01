@@ -289,13 +289,6 @@ UI_Main(void)
 	gtk_main();
 }
 
-extern  void        
-UI_Final(void)
-{
-	gtk_rc_reparse_all ();
-	StyleParserTerm ();
-}
-
 extern	void
 UI_GetWidgetData(WidgetData	*data)
 {
