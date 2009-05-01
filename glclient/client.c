@@ -391,16 +391,11 @@ askpass(char *pass)
 	}
 }
 
-extern	int
-main(
+static	void
+InitLauncher(
 	int		argc,
 	char	**argv)
 {
-	char		_password[SIZE_BUFF];
-	gboolean	do_run = TRUE;
-	char		*delay_str;
-	int			delay;
-
 	FILE_LIST	*fl;
 
 	bannar();
@@ -411,27 +406,33 @@ main(
 
 	InitMessage("glclient",NULL);
 	InitSystem();
-	UI_Init(argc, argv);
 
-	SetMessageFunction(GLMessage);
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-    if (fConfigList) {
+}
+
+static	void
+ExecClient(int argc, char **argv)
+{
+	char		_password[SIZE_BUFF];
+	gboolean	do_run = TRUE;
+	char		*delay_str;
+	int			delay;
+
+	UI_Init(argc, argv);
+	UI_InitStyle();
+
+	if (fConfigList) {
 		UI_list_config();
 		exit(0);
-    }
+	}
 
 	if (strlen(Config) > 0) {
 		fDialog = FALSE;
-    	UI_load_config(Config);
+		UI_load_config(Config);
 		askpass(_password);
 	}
-
-	InitNET();
-#ifdef	USE_SSL
-	SetAskPassFunction(UI_AskPass);
-#endif
 
 	if (fDialog) {
 		do_run = UI_BootDialogRun();
@@ -439,9 +440,6 @@ main(
 			exit(0);
 		}
 	}
-
-	UI_InitStyle();
-
 	delay_str = getenv ("GL_SEND_EVENT_DELAY");
 	if (delay_str) {
 		delay = atoi(delay_str);
@@ -453,12 +451,38 @@ main(
 		}
 	}
 
-	while (do_run) {
-		do_run = start_client();
-		stop_client();
+	SetMessageFunction(GLMessage);
+
+	InitNET();
+#ifdef	USE_SSL
+	SetAskPassFunction(UI_AskPass);
+#endif
+	start_client();
+	stop_client();
+
+	exit(0);
+}
+
+extern	int
+main(
+	int		argc,
+	char	**argv)
+{
+	int status;
+	pid_t pid;
+
+	InitLauncher(argc, argv);
+	while(1) {
+		if ((pid = fork()) == 0) {
+			ExecClient(argc, argv);
+		} else if (pid > 0) {
+			wait(&status);
+			if (WEXITSTATUS(status) == 0) {
+				break;
+			}
+		} else {
+			Error("fork failed");
+		}
 	}
-
-	UI_Final();
-
 	return 0;
 }
