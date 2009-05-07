@@ -214,6 +214,7 @@ if test x"$enable_postgres" = "xyes"; then
       AC_DEFINE_UNQUOTED(POSTGRES_BINDIR,"$postgres_bindir","")
    fi
 fi
+AM_CONDITIONAL(POSTGRESQL, test x$enable_postgres = xtrue)
 AC_SUBST(POSTGRES_LIBS) 
 AC_SUBST(POSTGRES_CFLAGS) 
 
