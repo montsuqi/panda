@@ -2,8 +2,7 @@
       * PANDA -- a simple transaction monitor
       *
       * Copyright (C) 1993-1999 Ogochan.
-      * 2000-2003 Ogochan & JMARI.
-      * 2004-2005 Ogochan.
+      * 2000-2008 Ogochan & JMARI.
       *
       * This program is free software; you can redistribute it and/or modify
       * it under the terms of the GNU General Public License as published by
@@ -18,14 +17,6 @@
       * You should have received a copy of the GNU General Public License
       * along with this program; if not, write to the Free Software
       * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
-      ******************************************************************
-      * システム名 ：PANDA TPモニタ
-      * サブシステム名 ：COBOL MAIN
-      * 管理者 ：ogochan@netlab.jp
-      * 日付日付 作業者 記述
-      * 00.11.18 .... 修正内容
-      * 01.01.08 生越 フォーカス制御追加
-      * 01.09.15 生越 JOIN
       ******************************************************************
        IDENTIFICATION DIVISION.
        PROGRAM-ID. MCPMAIN.

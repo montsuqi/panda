@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 #define	DEBUG
 #define	TRACE
 */
+#define	OID_RANDOM
+
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -46,10 +48,9 @@
 #include	"message.h"
 #include	"debug.h"
 
-#define	LockBLOB(blob)		pthread_mutex_lock(&(blob)->mutex)
-#define	UnLockBLOB(blob)	pthread_mutex_unlock(&(blob)->mutex)
-#define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
-#define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
+#define	LockBLOB(blob)		LockWrite(blob)
+#define	UnLockBLOB(blob)	UnLock(blob)
+#define	WaitBLOB(blod)		_WaitLock(&(blob)->cond,&(blob)->lock)
 
 typedef	struct {
 	NETFILE	*fp;
@@ -123,7 +124,6 @@ ENTER_FUNC;
 		snprintf(command,SIZE_LONGNAME+1,"rm -f %s/%d",ent->blob->space,(int)ent->oid);
 		system(command);
 		UnLockBLOB(ent->blob);
-		ReleaseBLOB(ent->blob);
 	}
 LEAVE_FUNC;
 	xfree(ent);
@@ -175,10 +175,19 @@ NewBLOB_V1(
 {
 	BLOB_V1_Entry	*ent;
 	MonObjectType	obj;
+#ifndef	OID_RANDOM
 	BLOB_V1_Header	head;
+#endif
 
 ENTER_FUNC;
 	LockBLOB(state->blob);
+#ifdef	OID_RANDOM
+	while	(TRUE) {
+		obj = random();
+		if		(  OpenBLOB_V1(state,obj,BLOB_OPEN_READ)  <  0  )	break;
+		CloseBLOB_V1(state,obj);
+	}
+#else
 	obj = state->blob->oid;
 	state->blob->oid ++;
 	memcpy(head.magic,BLOB_V1_HEADER,SIZE_BLOB_HEADER);
@@ -187,12 +196,12 @@ ENTER_FUNC;
 	fwrite(&head,sizeof(head),1,state->blob->fp);
 	fflush(state->blob->fp);
 	fsync(fileno(state->blob->fp));
+#endif
 
 	ent = New(BLOB_V1_Entry);
 	ent->oid = obj;
 	g_hash_table_insert(state->blob->table,(gpointer)&ent->oid,ent);
 	UnLockBLOB(state->blob);
-	ReleaseBLOB(state->blob);
 	ent->blob = state->blob;
 
 	mode |=  BLOB_OPEN_CREATE;
@@ -209,13 +218,21 @@ extern	BLOB_V1_Space	*
 InitBLOB_V1(
 	char	*space)
 {
+	BLOB_V1_Space	*blob;
+#ifndef	OID_RANDOM
 	FILE	*fp;
 	char	name[SIZE_LONGNAME+1];
 	char	buff[SIZE_BUFF];
-	BLOB_V1_Space	*blob;
 	BLOB_V1_Header	head;
+#endif
 
 ENTER_FUNC;
+#ifdef	OID_RANDOM
+	blob = New(BLOB_V1_Space);
+	blob->space = StrDup(space);
+	blob->table = NewLLHash();
+	InitLock(blob);
+#else
 	snprintf(name,SIZE_LONGNAME+1,"%s/pid",space);
 	if		(  ( fp = fopen(name,"r") )  !=  NULL  ) {
 		if		(  fgets(buff,SIZE_BUFF,fp)  !=  NULL  ) {
@@ -259,12 +276,11 @@ ENTER_FUNC;
 		blob->fp = fp;
 		blob->oid = head.oid;
 		blob->table = NewLLHash();
-		pthread_mutex_init(&blob->mutex,NULL);
-		pthread_cond_init(&blob->cond,NULL);
+		InitLock(blob);
 	} else {
 		blob = NULL;
 	}
-
+#endif
 LEAVE_FUNC;
 	return	(blob);
 }
@@ -280,8 +296,7 @@ ENTER_FUNC;
 	unlink(name);
 
 	xfree(blob->space);
-	pthread_mutex_destroy(&blob->mutex);
-	pthread_cond_destroy(&blob->cond);
+	DestroyLock(blob);
 	xfree(blob);
 LEAVE_FUNC;
 }
@@ -302,7 +317,6 @@ ENTER_FUNC;
 		ent->oid = obj;
 		g_hash_table_insert(state->blob->table,(gpointer)&ent->oid,ent);
 		UnLockBLOB(state->blob);
-		ReleaseBLOB(state->blob);
 		ent->blob = state->blob;
 	}
 	ret = OpenEntry(ent,mode);

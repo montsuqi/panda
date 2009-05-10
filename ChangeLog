@@ -1,3 +1,7 @@
+2009-05-07  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* glauth/glauth.c (Session): 文字列の受信方法を直した(size_tはx86_64とi386では互換性がないため)
+
 2009-03-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* wfc/termthread.c: 2 phase transactionにした
