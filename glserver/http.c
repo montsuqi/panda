@@ -71,11 +71,10 @@ typedef struct {
 	int			buf_size;
 	char		*buf;
 	char		*head;
+	char		*arguments;
 	int			body_size;
 	char		*body;
-	char		*arguments;
-	GHashTable 	*header_hash;
-	char		*headers;
+	GHashTable	*header_hash;
 	char		*user;
 	char		*pass;
 	char		*ld;
@@ -194,7 +193,7 @@ SendResponse(
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
 		req->status, GetReasonPhrase(req->status));
-	Send(req->fp, buf, strlen(buf));
+	Send(req->fp, buf, strlen(buf)); 
 	MessageLogPrintf("[%s@%s] %s", req->user, req->term ,buf);
 
 	gmtime_r(&t, &cur);
@@ -202,14 +201,14 @@ SendResponse(
 	if (strftime(date, sizeof(date),
 			"%a, %d %b %Y %H:%M:%S GMT", cur_p) != 0) {
 		sprintf(buf, "Date: %s\r\n", date);
-		Send(req->fp, buf, strlen(buf));
+		Send(req->fp, buf, strlen(buf)); 
 	}
 	
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
 	if (headers != NULL && LBS_Body(headers) != NULL) {
-		Send(req->fp, LBS_Body(headers), LBS_Size(headers));
+		Send(req->fp, LBS_Body(headers), LBS_Size(headers)); 
 	}
 
 	//convert xml encoding
@@ -233,6 +232,7 @@ SendResponse(
 		Send(req->fp, (char *)newbody, size);
 		xfree(newbody);
 	}
+	Flush(req->fp);
 }
 
 int
@@ -246,10 +246,10 @@ TryRecv(
 		SendResponse(req, 0, NULL);
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
-
 	size = RecvAtOnce(req->fp, 
 		req->buf + req->buf_size , 
 		MAX_REQ_SIZE - req->buf_size);
+	ON_IO_ERROR(req->fp,badio);	
 	if (size >= 0) {
 		req->buf_size += size;
 		req->buf[req->buf_size] = '\0';
@@ -257,6 +257,9 @@ TryRecv(
 		Error("can't read request");
 	}
 	return size;
+badio:
+	Error("client termination");
+	return 0;
 }
 
 char *
@@ -264,18 +267,20 @@ GetNextLine(HTTP_REQUEST *req)
 {
 	char *p;
 	char *ret;
+	char *head;
 	int len;
 
 	while(1) {
 		if (req->buf_size > 0) {
-			p = strstr(req->head, "\r\n");
+			head = req->head;
+			p = strstr(head, "\r\n");
 			if (p != NULL) {
-				len = p - req->head;
+				req->head = p + 2;
+				len = p - head;
 				if (len <= 0) {
 					return NULL;
 				}
-				ret = StrnDup(req->head, len);
-				req->head = p + 2;
+				ret = StrnDup(head, len);
 				return ret;
 			}
 		}
@@ -386,7 +391,6 @@ ParseReqLine(HTTP_REQUEST *req)
 		head = tail + 1;
 	}
 
-
 	tail = strstr(head, "?");
 	if (tail == NULL) {
 		tail = strstr(head, " ");
@@ -451,7 +455,7 @@ ENTER_FUNC;
 	head = tail + 1;
 	while(head[0] == ' '){ head++; }
 
-	value = strdup(head);
+	value = StrDup(head);
 	g_hash_table_insert(req->header_hash, key, value);
 	dbgprintf("header key:%s value:%s\n", key, value);
 
@@ -490,19 +494,24 @@ ParseReqBody(HTTP_REQUEST *req)
 		return;
 	}
 
+#if 0
 	p = req->buf;
 	while((q = strstr(p, "\r\n")) != NULL) {
 		p = q + strlen("\r\n");
 	}
+#endif
+	p = req->head;
 
 	partsize = strlen(p);
 	if (partsize > 0) {
 		if (partsize >= size) {
 			memcpy(req->body, p, size);
+			req->head += size;
 		} else {
 			memcpy(req->body, p, partsize);
 			q = req->body + partsize;
 			Recv(req->fp, q, size - partsize);
+			req->head += partsize;
 		}
 	} else {
 		Recv(req->fp, req->body, size);
@@ -572,7 +581,7 @@ PackRequestRecord(
 	char *tail;
 	char *key;
 	char *value;
-	char buff[SIZE_BUFF+1];
+	char buf[SIZE_BUFF+1];
 	ValueStruct *e;
 	char *p;
 
@@ -601,7 +610,9 @@ ENTER_FUNC;
 	if (p != NULL) {
 		SetValueString(GetItemLongName(e, "request.content_length"), p, NULL); 
 	}
-	SetValueBinary(GetItemLongName(e,"request.body"), req->body, req->body_size);
+	if (req->body != NULL && req->body_size > 0) {
+		SetValueBinary(GetItemLongName(e,"request.body"), req->body, req->body_size);
+	}
 
 	head = req->arguments;
 	while(1) {
@@ -613,18 +624,18 @@ ENTER_FUNC;
 			return;
 		}
 		key = StrnDup(head, tail - head);
-		snprintf(buff, sizeof(buff), "request.arguments.%s", key);
+		snprintf(buf, sizeof(buf), "request.arguments.%s", key);
 		xfree(key);
 		head = tail + 1;
 		
 		tail = strstr(head, "&");
 		if (tail != NULL) {
 			value = StrnDup(head, tail - head);
-			SetValueString(GetItemLongName(e, buff), value, NULL);
+			SetValueString(GetItemLongName(e, buf), value, NULL);
 			xfree(value);
 			head = tail + 1;
 		} else {
-			SetValueString(GetItemLongName(e, buff), head, NULL);
+			SetValueString(GetItemLongName(e, buf), head, NULL);
 			head = NULL;
 		}
 	}
@@ -638,7 +649,6 @@ MakeMonAPIData(
 	MonAPIData *data;
 	RecordStruct *rec;
 
-	ThisScreen = NewScreenData();
 	if ((rec = SetWindowRecord(req->window)) == NULL) {
 		return NULL;
 	}
@@ -659,23 +669,12 @@ static void timeout(int i)
 	exit(0);
 }
 
-void
-HTTP_Method(
-	PacketClass klass,
-	NETFILE *fpComm)
+static gboolean
+_HTTP_Method(
+	HTTP_REQUEST *req)
 {
-	HTTP_REQUEST *req;
 	MonAPIData *data;
 	PacketClass result;
-	struct sigaction sa;
-
-	memset(&sa, 0, sizeof(struct sigaction));  
-	sa.sa_handler = timeout;
-	if(sigaction(SIGALRM, &sa, NULL) != 0) {
-		Error("sigaction(2) failure");
-	} 
-
-	req = HTTP_Init(klass, fpComm);
 
 	ParseRequest(req);
 	alarm(0);
@@ -699,17 +698,17 @@ HTTP_Method(
 		} else {
 			SendResponse(req, NULL , NULL);
 		}
-		return;
+		return FALSE;
 	}
 	if (req->method == HTTP_HEAD) {
 		SendResponse(req, NULL , NULL);
-		return;
+		return TRUE;
 	}
 	data = MakeMonAPIData(req);
 	if (data == NULL) {
 		req->status = HTTP_NOT_FOUND; 
 		SendResponse(req, NULL , NULL);
-		return;
+		return FALSE;
 	}
 	result = CallMonAPI(data);
 	switch(result) {
@@ -724,5 +723,87 @@ HTTP_Method(
 		req->status = HTTP_INTERNAL_SERVER_ERROR; 
 		SendResponse(req, NULL , NULL);
 		break;
+	}
+	FreeMonAPIData(data);
+	return TRUE;
+}
+
+static void
+XFree(char **ptr)
+{
+	xfree(*ptr);
+	*ptr = NULL;
+}
+
+static gboolean
+RemoveHeader(
+	gpointer key,
+	gpointer value,
+	gpointer data)
+{
+	xfree(key);
+	xfree(value);
+	return TRUE;
+}
+
+static gboolean
+PrepareNextRequest(
+	HTTP_REQUEST *req)
+{
+	XFree(&(req->arguments));
+	XFree(&(req->user));
+	XFree(&(req->pass));
+	XFree(&(req->ld));
+	XFree(&(req->window));
+	req->status = HTTP_OK;
+	req->body_size = 0;
+	g_hash_table_foreach_remove(req->header_hash, RemoveHeader, NULL);
+
+	if (req->head != NULL && strlen(req->head)> 1) {
+		req->method = req->head[0];
+		req->head ++;
+		req->buf_size -= strlen(req->head);
+		memmove(req->buf, req->head, req->buf_size);
+		memset(req->head + 1, MAX_REQ_SIZE - req->buf_size, 0);
+		req->buf[req->buf_size] = '\0';
+		req->head = req->buf;
+	} else {
+		req->buf_size = 0;
+		req->head = req->buf;
+		memset(req->buf , MAX_REQ_SIZE, 0);
+
+		req->method = RecvPacketClass(req->fp);
+		ON_IO_ERROR(req->fp,badio);	
+	}
+	return TRUE;
+badio:
+	return FALSE;
+}
+
+void
+HTTP_Method(
+	PacketClass _klass,
+	NETFILE *fpComm)
+{
+	HTTP_REQUEST *req;
+	PacketClass klass;
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));  
+	sa.sa_handler = timeout;
+	if(sigaction(SIGALRM, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	} 
+
+	ThisScreen = NewScreenData();
+
+	klass = _klass;
+	req = HTTP_Init(klass, fpComm);
+	if (_HTTP_Method(req)) {
+		do {
+			if (!PrepareNextRequest(req)) {
+				break;
+			}
+		} while(_HTTP_Method(req));
 	}
 }

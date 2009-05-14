@@ -69,9 +69,6 @@ FreeMonAPIData(
 	MonAPIData *data)
 {
 ENTER_FUNC;
-	xfree(data->rec->name);
-	FreeValueStruct(data->rec->value);
-	xfree(data->rec);
 	FreeLBS(data->headers);
 	FreeLBS(data->body);
 	xfree(data);
