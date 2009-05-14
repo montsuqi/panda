@@ -1,3 +1,11 @@
+2009-05-15  Masami Ogoshi  <ogochan@nurs.or.jp>
+
+	* configure.ac: バージョン番号を1.5.0に
+
+	* dbstuff/dbs_main.c : パスのリスト出力、テーブルリストの出力
+	(InitDBSSession): バージョンチェックおよびバージョン情報の返信(<=1.4.3にはパスやテーブルのリスト取得機能はないため)。
+	バージョンが>=1.5.0で返却データがない場合は、データ送信ロジックを通らないようにした(プロトコルの安全性のため)
+
 2009-05-07  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* glauth/glauth.c (Session): 文字列の受信方法を直した(size_tはx86_64とi386では互換性がないため)
@@ -1842,7 +1850,7 @@
 
 2004-03-31  Masami Ogoshi  <ogochan@nurs.or.jp>
 
-	* htserver/tags.c : <fixed>にlink属性追加
+	* htserver/tags.c : <fixed>にlink��性追加
 
 2004-03-29  Masami Ogoshi  <ogochan@nurs.or.jp>
 

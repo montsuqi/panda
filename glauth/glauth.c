@@ -56,22 +56,20 @@ static	void
 Session(
 	NETFILE	*fp)
 {
-	size_t	size;
 	char	user[SIZE_USER+1]
 	,		pass[SIZE_PASS+1];
 	PassWord	*pw;
 
 ENTER_FUNC;
-	if		(  Recv(fp,&size,sizeof(size))  >  0  ) {
-		Recv(fp,user,size);
-		user[size] = 0;
-		RecvnString(fp, sizeof(pass), pass);	ON_IO_ERROR(fp,badio);
-		if		(  ( pw = AuthAuthUser(user,pass) )  ==  NULL  ) {
-			SendBool(fp,FALSE);				ON_IO_ERROR(fp,badio);
-		} else {
-			SendBool(fp,TRUE);				ON_IO_ERROR(fp,badio);
-			SendString(fp,pw->other);		ON_IO_ERROR(fp,badio);
-		}
+	RecvnString(fp, sizeof(user), user);	ON_IO_ERROR(fp,badio);
+	dbgprintf("user = [%s]",user);
+	RecvnString(fp, sizeof(pass), pass);	ON_IO_ERROR(fp,badio);
+	dbgprintf("pass = [%s]",pass);
+	if		(  ( pw = AuthAuthUser(user,pass) )  ==  NULL  ) {
+		SendBool(fp,FALSE);				ON_IO_ERROR(fp,badio);
+	} else {
+		SendBool(fp,TRUE);				ON_IO_ERROR(fp,badio);
+		SendString(fp,pw->other);		ON_IO_ERROR(fp,badio);
 	}
   badio:
 LEAVE_FUNC;
