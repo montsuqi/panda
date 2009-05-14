@@ -750,6 +750,7 @@ static gboolean
 PrepareNextRequest(
 	HTTP_REQUEST *req)
 {
+	alarm(TIMEOUT_SEC);
 	XFree(&(req->arguments));
 	XFree(&(req->user));
 	XFree(&(req->pass));
