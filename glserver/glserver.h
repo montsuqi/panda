@@ -29,6 +29,8 @@
 #define	GLOBAL		extern
 #endif
 
+#define TIMEOUT_SEC 60
+
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
 #ifdef	USE_SSL

@@ -62,8 +62,6 @@
 #include	"http.h"
 #include	"debug.h"
 
-#define TIMEOUT_SEC 60
-
 static	void
 FinishSession(
 	ScreenData	*scr)
