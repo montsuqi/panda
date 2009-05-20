@@ -472,17 +472,21 @@ main(
 	pid_t pid;
 
 	InitLauncher(argc, argv);
-	while(1) {
-		if ((pid = fork()) == 0) {
-			ExecClient(argc, argv);
-		} else if (pid > 0) {
-			wait(&status);
-			if (WEXITSTATUS(status) == 0) {
-				break;
+	if (fDialog) {
+		while(1) {
+			if ((pid = fork()) == 0) {
+				ExecClient(argc, argv);
+			} else if (pid > 0) {
+				wait(&status);
+				if (WEXITSTATUS(status) == 0) {
+					break;
+				}
+			} else {
+				Error("fork failed");
 			}
-		} else {
-			Error("fork failed");
 		}
+	} else {
+		ExecClient(argc, argv);
 	}
 	return 0;
 }
