@@ -48,6 +48,8 @@
 #include	"bootdialog.h"
 #include	"dialogs.h"
 #include	"styleParser.h"
+#define		TOPLEVEL
+#include	"toplevel.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -171,10 +173,21 @@ UI_load_config (
 }
 
 extern  void
-UI_ShowWindow(char *sname, 
-	PacketClass type)
+UI_ShowWindow(char *sname)
 {
-	return ShowWindow(sname, type);
+	return ShowWindow(sname);
+}
+
+extern	void
+UI_CreateWindow(char *name)
+{
+	CreateWindow(name);
+}
+
+extern	void
+UI_CloseWindow(char *name)
+{
+	CloseWindow(name);
 }
 
 extern  void        
@@ -252,6 +265,13 @@ UI_Init(int argc,
 	glade_gnome_init();
 
 	WindowTable = NewNameHash();
+
+	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_signal_connect(GTK_OBJECT(TopWindow), 
+		"delete_event", (GtkSignalFunc)gtk_true, NULL);
+	TopNoteBook = gtk_notebook_new();
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
+	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
 }
 
 extern	void

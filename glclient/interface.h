@@ -28,7 +28,9 @@ extern	int			UI_Version();
 extern	void		UI_list_config();
 extern	void		UI_load_config(char *configname);
 
-extern	void		UI_ShowWindow(char *sname, PacketClass type);
+extern	void		UI_CreateWindow(char *sname);
+extern	void		UI_CloseWindow(char *sname);
+extern	void		UI_ShowWindow(char *sname);
 extern	void		UI_UpdateScreen(char *window);
 extern	void		UI_ResetScrolledWindow(char *window);
 extern	void		UI_GrabFocus(char *window, char *widgetName);

@@ -48,10 +48,11 @@
 #include	"action.h"
 #include	"fileEntry.h"
 #include	"marshaller.h"
-#include	"message.h"
-#include	"debug.h"
 #include	"queue.h"
 #include	"widgetcache.h"
+#include	"toplevel.h"
+#include	"message.h"
+#include	"debug.h"
 
 static gchar *
 NewTempname(void)
@@ -518,7 +519,7 @@ ENTER_FUNC;
 	SetStyle(widget,GetStyle(data->style));
 	if (data->title != NULL && wdata != NULL) {
 		SetSessionTitle(data->title);
-		SetTitle(widget, wdata->title);
+		SetTitle(TopWindow, wdata->title);
 	}
 LEAVE_FUNC;
 }
@@ -905,9 +906,10 @@ UpdateWindow(char *windowName)
 {
 	WindowData	*wdata;
 	WidgetData	*data;
-
+	
 	wdata = (WindowData *)g_hash_table_lookup(WindowTable, windowName);
 	g_return_if_fail(wdata != NULL);
+
 	while(
 		(data = (WidgetData *)DeQueueNoWait(wdata->UpdateWidgetQueue)) != NULL
 	) {

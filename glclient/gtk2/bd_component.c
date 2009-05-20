@@ -113,7 +113,7 @@ open_file_chooser(GtkWidget *w, gpointer entry)
     GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
     GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
     NULL);
-  default_path = gtk_entry_get_text (GTK_ENTRY (entry));
+  default_path = (gchar *)gtk_entry_get_text (GTK_ENTRY (entry));
   gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), default_path);
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
     char *filename;

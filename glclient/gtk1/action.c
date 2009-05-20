@@ -45,6 +45,7 @@
 #include	"marshaller.h"
 #define		_ACTION_C
 #include	"action.h"
+#include	"toplevel.h"
 #include	"queue.h"
 
 static struct changed_hander {
@@ -189,9 +190,10 @@ extern	void
 _AddChangedWidget(
 	GtkWidget	*widget)
 {
-	const char	*name;
+	char 		*name;
 	char		*wname;
 	char		*key;
+	char		*tail;
 	GtkWidget	*window;
 	WindowData	*wdata;
 
@@ -200,14 +202,21 @@ ENTER_FUNC;
 	if		(  TimerFlag  )	{
 		ResetTimer(GTK_WINDOW (window));
 	}
-	name = glade_get_widget_long_name(widget);
-	wname = gtk_widget_get_name(window);
+	name = (char *)glade_get_widget_long_name(widget);
+	tail = strchr(name, '.');
+	if (tail == NULL) {
+		wname = StrDup(name);
+	} else {	
+		wname = StrnDup(name, tail - name);
+	}
+
 	if ((wdata = g_hash_table_lookup(WindowTable,wname)) != NULL) {
 		if (g_hash_table_lookup(wdata->ChangedWidgetTable, name) == NULL) {
-			key = strdup(name);
+			key = StrDup(name);
 			g_hash_table_insert(wdata->ChangedWidgetTable, key, key);
 		}
 	}
+	free(wname);
 LEAVE_FUNC;
 }
 
@@ -292,39 +301,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	WindowData	*
-CreateWindowData(
-	char	*wname)
-{
-	char		*fname;
-	GladeXML	*xml;
-	WindowData	*wdata;
-	GtkWidget	*window;
-
-ENTER_FUNC;
-	fname = CacheFileName(wname);
-	xml = glade_xml_new(fname, NULL);
-	if ( xml == NULL ) {
-		wdata = NULL;
-	} else {
-		window = glade_xml_get_widget_by_long_name(xml, wname);
-		if (window == NULL) {
-			Warning("Window %s not found in %s", wname, fname);
-			return NULL;
-		}
-		wdata = New(WindowData);
-		wdata->xml = xml;
-		wdata->name = StrDup(wname);
-		wdata->title = StrDup(GTK_WINDOW (window)->title);
-		wdata->ChangedWidgetTable = NewNameHash();
-		wdata->UpdateWidgetQueue = NewQueue();
-		glade_xml_signal_autoconnect(xml);
-		g_hash_table_insert(WindowTable,strdup(wname),wdata);
-	}
-LEAVE_FUNC;
-	return (wdata);
-}
-
 extern void
 SetTitle(GtkWidget	*window,
 	char *window_title)
@@ -339,50 +315,163 @@ SetTitle(GtkWidget	*window,
 	gtk_window_set_title (GTK_WINDOW(window), buff);
 }
 
-extern	void
-ShowWindow(
-	char	*wname,
-	byte	type)
+extern	void	
+CreateWindow(
+	char	*wname)
 {
-	WindowData	*data;
-	GtkWidget	*widget;
+	char		*fname;
+	GladeXML	*xml;
+	WindowData	*wdata;
 	GtkWidget	*window;
+	GtkWidget	*child;
 
 ENTER_FUNC;
-	widget = NULL;
-	dbgprintf("ShowWindow [%s][%d]",wname,type);
-	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
-		if ((type == SCREEN_NEW_WINDOW) ||
-			(type == SCREEN_CURRENT_WINDOW)) {
-			data = CreateWindowData(wname);
-		}
+	if (g_hash_table_lookup(WindowTable,wname) != NULL) {
+		return;
 	}
-	if (data == NULL) {
+	fname = CacheFileName(wname);
+	xml = glade_xml_new(fname, NULL);
+	if ( xml == NULL ) {
+		return;
+	}
+	window = glade_xml_get_widget_by_long_name(xml, wname);
+	if (window == NULL) {
+		Warning("Window %s not found in %s", wname, fname);
+		return;
+	}
+	wdata = New(WindowData);
+	wdata->xml = xml;
+	wdata->name = StrDup(wname);
+	wdata->title = StrDup(GTK_WINDOW (window)->title);
+	wdata->fAccelGroup = FALSE;
+	wdata->ChangedWidgetTable = NewNameHash();
+	wdata->UpdateWidgetQueue = NewQueue();
+	glade_xml_signal_autoconnect(xml);
+	g_hash_table_insert(WindowTable,strdup(wname),wdata);
+
+	child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
+	g_return_if_fail(child != NULL);
+	if (strstr(GTK_WINDOW(window)->wmclass_class, "dialog") != NULL) {
+		dbgprintf("create dialog:%s\n", wname);
+		gtk_container_add(GTK_CONTAINER(window), child); 
+		wdata->fWindow = FALSE;
+	} else {
+		dbgprintf("create window:%s\n", wname);
+		gtk_notebook_append_page(GTK_NOTEBOOK(TopNoteBook), 
+			child, gtk_label_new(wname));
+		wdata->fWindow = TRUE;
+	}
+LEAVE_FUNC;
+}
+
+static	void
+SwitchWindow(
+	GtkWidget *window)
+{
+	GtkWidget				*child;
+
+ENTER_FUNC;
+	child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
+	g_return_if_fail(child != NULL);
+	gtk_widget_show_all(child);
+	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
+		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
+
+	gtk_window_set_default_size(GTK_WINDOW(TopWindow), 
+		window->requisition.width, 
+		window->requisition.height);
+	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
+
+	gtk_window_set_policy(GTK_WINDOW(TopWindow), 
+		GTK_WINDOW(window)->allow_shrink,
+		GTK_WINDOW(window)->allow_grow,
+		GTK_WINDOW(window)->auto_shrink);
+	gtk_window_set_modal(GTK_WINDOW(TopWindow),
+		GTK_WINDOW(window)->modal);
+
+	gtk_widget_show(TopNoteBook);
+	gtk_widget_show(TopWindow);
+LEAVE_FUNC;
+}
+
+extern	void
+CloseWindow(
+	char	*wname)
+{
+	WindowData	*data;
+	GtkWidget	*window;
+	GtkWidget	*child;
+	GSList		*list;
+
+ENTER_FUNC;
+	dbgprintf("close window:%s\n", wname);
+	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
 		// FIXME sometimes comes here.
+		fprintf(stderr,"%s:%d data is NULL\n", __FILE__, __LINE__);
+		return;
+	}
+	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
+	if (data->fWindow) {
+		child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
+		gtk_widget_hide(child);
+		if (data->fAccelGroup) {
+			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
+				list != NULL;
+				list = list->next) {
+				if (list->data != NULL) {
+				gtk_accel_group_detach(((GtkAccelGroup*)(list->data)), 
+					GTK_OBJECT(TopWindow));
+				}
+			}
+			data->fAccelGroup = FALSE;
+		}
+	} else {
+		gtk_widget_hide(window);
+		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
+	}
+LEAVE_FUNC;
+}
+
+extern	void
+ShowWindow(
+	char	*wname)
+{
+	WindowData	*data;
+	GtkWidget	*window;
+	GSList		*list;
+
+ENTER_FUNC;
+	dbgprintf("show window:%s\n", wname);
+	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
+		// FIXME sometimes comes here.
+		fprintf(stderr,"%s:%d data %s is NULL\n", __FILE__, __LINE__, wname);
 		return;
 	}
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	g_return_if_fail(window != NULL);
-	switch	(type) {
-	  case	SCREEN_NEW_WINDOW:
-	  case	SCREEN_CURRENT_WINDOW:
-        SetTitle(window, data->title);
-		gtk_widget_set_sensitive (window, TRUE);
+
+	if (data->fWindow) {
+	dbgmsg("show primari window\n");
+		SetTitle(TopWindow, data->title);
+		_ResetTimer(TopWindow, NULL);
+		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
+			SwitchWindow(window);
+			if (!data->fAccelGroup) {
+				for(list = ((GladeXML*)data->xml)->priv->accel_groups;
+					list != NULL;
+					list = list->next) {
+					if (list->data != NULL) {
+						gtk_accel_group_attach(((GtkAccelGroup*)(list->data)), 
+							GTK_OBJECT(TopWindow));
+					}
+				}
+				data->fAccelGroup = TRUE;
+			}
+		}
+	} else {
+	dbgmsg("show dialog\n");
 		gtk_widget_show_all(window);
-		break;
-	  case	SCREEN_CLOSE_WINDOW:
-		StopTimer(GTK_WINDOW(window));
-		if (GTK_WINDOW(window)->focus_widget != NULL ){
-			widget = GTK_WIDGET(GTK_WINDOW(window)->focus_widget);
-		}
-		gtk_widget_set_sensitive (window, FALSE);
-		if ((widget != NULL) && GTK_IS_BUTTON (widget)){
-			gtk_button_released (GTK_BUTTON(widget));
-		}
-		gtk_widget_hide_all(window);
-		/* fall through */
-	  default:
-		break;
+		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
 	}
 LEAVE_FUNC;
 }

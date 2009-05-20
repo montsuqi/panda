@@ -32,6 +32,7 @@ libuigtk1_la_SOURCES	=				\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\
 	widgetOPS.c		widgetOPS.h		\
+	toplevel.h						\
 	interface.c
 
 libuigtk1_la_CFLAGS	=			\
