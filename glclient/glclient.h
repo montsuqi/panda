@@ -51,6 +51,8 @@ typedef struct {
 	char		*name;
 	char		*title;
 	void		*xml;
+	Bool		fWindow;
+	Bool		fAccelGroup;
 	GHashTable	*ChangedWidgetTable;
 	Queue		*UpdateWidgetQueue;
 }	WindowData;

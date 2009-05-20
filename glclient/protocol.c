@@ -648,7 +648,8 @@ dbgmsg("*");
 			GL_SendPacketClass(fp, GL_NOT);
 		}
 		if		(  fInit  ) {
-			UI_ShowWindow(sname,SCREEN_NEW_WINDOW);
+			UI_CreateWindow(sname);
+			UI_ShowWindow(sname);
 			fInit = FALSE;
 		}
 	}
@@ -793,8 +794,9 @@ extern	Bool
 GetScreenData(
 	NETFILE		*fp)
 {
-	char		window[SIZE_BUFF]
-	,			widgetName[SIZE_BUFF];
+	char		window[SIZE_NAME+1]
+	,			currentWindow[SIZE_NAME+1]
+	,			widgetName[SIZE_LONGNAME+1];
 	PacketClass	c;
 	byte		type;
 	char		buff[SIZE_BUFF];
@@ -814,11 +816,12 @@ ENTER_FUNC;
 		}
 		dbgprintf("[%s]\n",window);
 		type = (byte)GL_RecvInt(FPCOMM(glSession)); 
-		UI_ShowWindow(window,type);
 		switch	(type) {
-		  case	SCREEN_CURRENT_WINDOW:
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
+		  case	SCREEN_CURRENT_WINDOW:
+			UI_CreateWindow(window);
+			strcpy(currentWindow, window);
 			if ((c = GL_RecvPacketClass(fp)) == GL_ScreenData) {
 				ThisWindowName = strdup(window);
 				RecvValue(fp,window);
@@ -827,6 +830,10 @@ ENTER_FUNC;
 			if (type == SCREEN_CHANGE_WINDOW) {
 				UI_ResetScrolledWindow(window);
 			}
+			break;
+		  case	SCREEN_CLOSE_WINDOW:
+			UI_CloseWindow(window);
+			c = GL_RecvPacketClass(fp);
 			break;
 		  default:
 			c = GL_RecvPacketClass(fp);
@@ -838,6 +845,7 @@ ENTER_FUNC;
 			/*	fatal error	*/
 		}
 	}
+	UI_ShowWindow(currentWindow);
 	if (c == GL_FocusName) {
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
