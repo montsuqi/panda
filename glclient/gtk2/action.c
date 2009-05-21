@@ -375,9 +375,9 @@ SwitchWindow(
 	GtkWidget				*child;
 
 ENTER_FUNC;
+
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
-	gtk_widget_show_all(child);
 	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
 		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
 
@@ -393,8 +393,9 @@ ENTER_FUNC;
 	gtk_window_set_modal(GTK_WINDOW(TopWindow),
 		GTK_WINDOW(window)->modal);
 
-	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(TopWindow);
+	gtk_widget_show(TopNoteBook);
+	gtk_widget_show(child);
 LEAVE_FUNC;
 }
 
@@ -409,6 +410,7 @@ CloseWindow(
 
 ENTER_FUNC;
 	dbgprintf("close window:%s\n", wname);
+	gtk_widget_set_sensitive(TopWindow, FALSE);
 	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
 		// FIXME sometimes comes here.
 		fprintf(stderr,"%s:%d data %s is NULL\n", __FILE__, __LINE__, wname);
@@ -477,64 +479,9 @@ ENTER_FUNC;
 		gtk_widget_show_all(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
 	}
+	gtk_widget_set_sensitive(TopWindow, TRUE);
 LEAVE_FUNC;
 }
-
-#if 0
-extern	void
-ShowWindow(
-	char	*wname,
-	byte	type)
-{
-	WindowData	*data;
-	GtkWidget	*widget;
-	GtkWidget	*window;
-
-ENTER_FUNC;
-	widget = NULL;
-	dbgprintf("ShowWindow [%s][%d]",wname,type);
-	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
-		if ((type == SCREEN_NEW_WINDOW) ||
-			(type == SCREEN_CURRENT_WINDOW)) {
-			data = CreateWindowData(wname);
-		}
-	}
-	if (data == NULL) {
-		// FIXME sometimes comes here.
-		return;
-	}
-	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
-	g_return_if_fail(window != NULL);
-	switch	(type) {
-	  case	SCREEN_NEW_WINDOW:
-	  case	SCREEN_CURRENT_WINDOW:
-		SetTitle(window, data->title);
-		gtk_widget_set_sensitive (window, TRUE);
-		gtk_widget_show_all(window);
-		break;
-	  case	SCREEN_CLOSE_WINDOW:
-		StopTimer(GTK_WINDOW(window));
-		widget = gtk_window_get_focus(GTK_WINDOW(window));
-
-//FIXME; for gtk_panda_clist bug?
-//gtk_panda_clist crash memory when list was empty
-//perhaps, it is gtk+(GtkTreeView) bug.
-#if 0
-		gtk_widget_set_sensitive (window, FALSE);
-#endif
-
-		if ((widget != NULL) && GTK_IS_BUTTON (widget)) {
-			gtk_button_released (GTK_BUTTON(widget));
-		}
-		//gtk_widget_hide_all(window);
-		gtk_widget_hide(window);
-		/* fall through */
-	  default:
-		break;
-	}
-LEAVE_FUNC;
-}
-#endif
 
 static	GdkCursor *Busycursor;
 

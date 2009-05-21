@@ -373,7 +373,6 @@ SwitchWindow(
 ENTER_FUNC;
 	child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
-	gtk_widget_show_all(child);
 	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
 		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
 
@@ -389,8 +388,9 @@ ENTER_FUNC;
 	gtk_window_set_modal(GTK_WINDOW(TopWindow),
 		GTK_WINDOW(window)->modal);
 
-	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(TopWindow);
+	gtk_widget_show(TopNoteBook);
+	gtk_widget_show(child);
 LEAVE_FUNC;
 }
 
@@ -410,6 +410,7 @@ ENTER_FUNC;
 		fprintf(stderr,"%s:%d data is NULL\n", __FILE__, __LINE__);
 		return;
 	}
+	gtk_widget_set_sensitive(TopWindow, FALSE);
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	if (data->fWindow) {
 		child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
@@ -473,6 +474,7 @@ ENTER_FUNC;
 		gtk_widget_show_all(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
 	}
+	gtk_widget_set_sensitive(TopWindow, TRUE);
 LEAVE_FUNC;
 }
 
