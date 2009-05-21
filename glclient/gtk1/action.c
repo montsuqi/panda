@@ -354,6 +354,8 @@ ENTER_FUNC;
 	if (strstr(GTK_WINDOW(window)->wmclass_class, "dialog") != NULL) {
 		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
+		gtk_window_set_transient_for(GTK_WINDOW(window), 
+			GTK_WINDOW(PrevWindow));
 		wdata->fWindow = FALSE;
 	} else {
 		dbgprintf("create window:%s\n", wname);
@@ -405,16 +407,15 @@ CloseWindow(
 
 ENTER_FUNC;
 	dbgprintf("close window:%s\n", wname);
+	gtk_widget_set_sensitive(TopWindow, FALSE);
 	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
 		// FIXME sometimes comes here.
 		fprintf(stderr,"%s:%d data is NULL\n", __FILE__, __LINE__);
 		return;
 	}
-	gtk_widget_set_sensitive(TopWindow, FALSE);
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	if (data->fWindow) {
 		child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
-		gtk_widget_hide(child);
 		if (data->fAccelGroup) {
 			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
 				list != NULL;
@@ -469,10 +470,12 @@ ENTER_FUNC;
 				data->fAccelGroup = TRUE;
 			}
 		}
+		PrevWindow = TopWindow;
 	} else {
 	dbgmsg("show dialog\n");
 		gtk_widget_show_all(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+		PrevWindow = window;
 	}
 	gtk_widget_set_sensitive(TopWindow, TRUE);
 LEAVE_FUNC;

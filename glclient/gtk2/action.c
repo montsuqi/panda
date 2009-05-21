@@ -358,6 +358,8 @@ ENTER_FUNC;
 	if (strstr(GTK_WINDOW(window)->wmclass_class, "dialog") != NULL) {
 		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
+		gtk_window_set_transient_for(GTK_WINDOW(window), 
+			GTK_WINDOW(PrevWindow));
 		wdata->fWindow = FALSE;
 	} else {
 		dbgprintf("create window:%s\n", wname);
@@ -419,7 +421,6 @@ ENTER_FUNC;
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	if (data->fWindow) {
 		child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
-		gtk_widget_hide(child);
 		if (data->fAccelGroup) {
 			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
 				list != NULL;
@@ -474,10 +475,12 @@ ENTER_FUNC;
 				data->fAccelGroup = TRUE;
 			}
 		}
+		PrevWindow = TopWindow;
 	} else {
 	dbgmsg("show dialog\n");
 		gtk_widget_show_all(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+		PrevWindow = window;
 	}
 	gtk_widget_set_sensitive(TopWindow, TRUE);
 LEAVE_FUNC;
