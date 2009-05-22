@@ -128,9 +128,12 @@ SetStyle(
 	GtkWidget	*widget,
 	GtkStyle	*style)
 {
-	GdkFont *font;
+	static GdkFont *font = NULL;
+
 	if (style != NULL) {
+	if (font == NULL) {
 		font = widget->style->font;
+	}
 		gtk_widget_set_style(widget, style);
 		widget->style->font = font;
     	if (GTK_IS_CONTAINER(widget)){
