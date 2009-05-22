@@ -421,7 +421,6 @@ ExecClient(int argc, char **argv)
 	int			delay;
 
 	UI_Init(argc, argv);
-	UI_InitStyle();
 
 	if (fConfigList) {
 		UI_list_config();
@@ -440,6 +439,9 @@ ExecClient(int argc, char **argv)
 			exit(0);
 		}
 	}
+
+	UI_InitStyle();
+
 	delay_str = getenv ("GL_SEND_EVENT_DELAY");
 	if (delay_str) {
 		delay = atoi(delay_str);
