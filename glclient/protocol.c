@@ -575,8 +575,7 @@ ENTER_FUNC;
 	GL_SendPacketClass(fpC,GL_GetScreen);
 	GL_SendString(fpC,name);
 	if		(  fMlog  ) {
-		sprintf(buff,"recv screen file [%s]\n",name);
-		MessageLog(buff);
+		MessageLogPrintf("recv screen file [%s]\n",name);
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		// download
@@ -624,7 +623,7 @@ CheckScreens(
 {	
 	char		sname[SIZE_BUFF];
 	char		*fname;
-	struct	stat	stbuf;
+	struct stat	stbuf;
 	time_t		stmtime
 	,			stctime;
 	off_t		stsize;
@@ -799,7 +798,6 @@ GetScreenData(
 	,			widgetName[SIZE_LONGNAME+1];
 	PacketClass	c;
 	byte		type;
-	char		buff[SIZE_BUFF];
 
 ENTER_FUNC;
 	fInRecv = TRUE; 
@@ -808,14 +806,27 @@ ENTER_FUNC;
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
 	GL_SendInt(fp,0);				/*	get all data	*/
+	if		(  fMlog  ) {
+		MessageLog("====");
+	}
 	while	(  ( c = GL_RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		GL_RecvString(fp, sizeof(window), window);
-		if		(  fMlog  ) {
-			sprintf(buff,"recv window [%s]\n",window);
-			MessageLog(buff);
-		}
 		dbgprintf("[%s]\n",window);
 		type = (byte)GL_RecvInt(FPCOMM(glSession)); 
+		if		(  fMlog  ) {
+			switch	(type) {
+			  case	SCREEN_NEW_WINDOW:
+				MessageLogPrintf("new window [%s]\n",window);break;
+			  case	SCREEN_CHANGE_WINDOW:
+				MessageLogPrintf("change window [%s]\n",window);break;
+			  case	SCREEN_CURRENT_WINDOW:
+				MessageLogPrintf("current window [%s]\n",window);break;
+			  case	SCREEN_CLOSE_WINDOW:
+				MessageLogPrintf("close window [%s]\n",window);break;
+			  case	SCREEN_JOIN_WINDOW:
+				MessageLogPrintf("join window [%s]\n",window);break;
+			}
+		}
 		switch	(type) {
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
@@ -836,6 +847,7 @@ ENTER_FUNC;
 			c = GL_RecvPacketClass(fp);
 			break;
 		  default:
+			UI_CloseWindow(window);
 			c = GL_RecvPacketClass(fp);
 			break;
 		}
@@ -852,7 +864,6 @@ ENTER_FUNC;
 		UI_GrabFocus(window, widgetName);
 		c = GL_RecvPacketClass(fp);
 	}
-	UI_ResetTimer(window);
 	fInRecv = FALSE;
 LEAVE_FUNC;
 	return TRUE;
@@ -960,15 +971,12 @@ SendEvent(
 	char		*widget,
 	char		*event)
 {
-	char		buff[SIZE_BUFF];
-
 ENTER_FUNC;
 	dbgprintf("window = [%s]",window); 
 	dbgprintf("widget = [%s]",widget); 
 	dbgprintf("event  = [%s]",event); 
 	if		(  fMlog  ) {
-		sprintf(buff,"send event  [%s:%s:%s]\n",window,widget,event);
-		MessageLog(buff);
+		MessageLogPrintf("send event  [%s:%s:%s]\n",window,widget,event);
 	}
 
 	GL_SendPacketClass(fp,GL_Event);
