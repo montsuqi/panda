@@ -606,7 +606,7 @@ ENTER_FUNC;
 			LBS_ReserveSize(body, size, FALSE);
 			p = LBS_Body(body);
 			func->PackValue(opt, p, value);
-
+			LBS_EmitEnd(body);
 			// FIXME; ConvFunc should return mime type. update libmondai
 			snprintf(str, sizeof(str),
 				"Content-Type: application/xml\r\n");
