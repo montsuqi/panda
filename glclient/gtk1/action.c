@@ -174,61 +174,6 @@ ResetScrolledWindow(
         gtk_container_forall(GTK_CONTAINER(widget), ResetScrolledWindow, NULL);
     }
 }
-
-static	void
-_ResetTimer(
-	    GtkWidget	*widget,
-	    gpointer	data)
-{
-	if (GTK_IS_CONTAINER (widget))
-		gtk_container_forall (GTK_CONTAINER (widget), _ResetTimer, NULL);
-	else if (GTK_IS_PANDA_TIMER (widget))
-		gtk_panda_timer_reset (GTK_PANDA_TIMER (widget));
-}
-
-extern	void
-_AddChangedWidget(
-	GtkWidget	*widget)
-{
-	char 		*name;
-	char		*wname;
-	char		*key;
-	char		*tail;
-	GtkWidget	*window;
-	WindowData	*wdata;
-
-ENTER_FUNC;
-	window = gtk_widget_get_toplevel(widget);
-	if		(  TimerFlag  )	{
-		ResetTimer(GTK_WINDOW (window));
-	}
-	name = (char *)glade_get_widget_long_name(widget);
-	tail = strchr(name, '.');
-	if (tail == NULL) {
-		wname = StrDup(name);
-	} else {	
-		wname = StrnDup(name, tail - name);
-	}
-
-	if ((wdata = g_hash_table_lookup(WindowTable,wname)) != NULL) {
-		if (g_hash_table_lookup(wdata->ChangedWidgetTable, name) == NULL) {
-			key = StrDup(name);
-			g_hash_table_insert(wdata->ChangedWidgetTable, key, key);
-		}
-	}
-	free(wname);
-LEAVE_FUNC;
-}
-
-extern	void
-AddChangedWidget(
-	GtkWidget	*widget)
-{
-	if		(  !fInRecv  ) {
-		_AddChangedWidget(widget);
-	}
-}
-
 extern	void
 ClearKeyBuffer(void)
 {
@@ -274,13 +219,6 @@ LEAVE_FUNC;
 	return (timeout_event);
 }
 
-extern	void
-ResetTimer(
-	GtkWindow	*window)
-{
-	gtk_container_forall (GTK_CONTAINER (window), _ResetTimer, NULL);
-}
-
 extern void
 StopTimer(
 		GtkWindow	*window)
@@ -300,6 +238,81 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 }
+
+static	void
+_RegistTimer(
+	    GtkWidget	*widget,
+	    gpointer	data)
+{
+	if (GTK_IS_CONTAINER (widget))
+		gtk_container_forall (GTK_CONTAINER (widget), _RegistTimer, data);
+	else if (GTK_IS_PANDA_TIMER (widget))
+		g_hash_table_insert((GHashTable*)data, 
+			gtk_widget_get_name(widget), widget);
+}
+
+static	void
+_StopTimer(
+		gpointer	key,
+		gpointer	value,
+		gpointer	data)
+{
+	gtk_widget_hide(GTK_WIDGET(value));
+}
+
+static	void
+_ResetTimer(
+		gpointer	key,
+		gpointer	value,
+		gpointer	data)
+{
+	gtk_widget_show(GTK_WIDGET(value));
+	gtk_panda_timer_reset(GTK_PANDA_TIMER(value));
+}
+
+extern	void
+_AddChangedWidget(
+	GtkWidget	*widget)
+{
+	char 		*name;
+	char		*wname;
+	char		*key;
+	char		*tail;
+	GtkWidget	*window;
+	WindowData	*wdata;
+
+ENTER_FUNC;
+	window = gtk_widget_get_toplevel(widget);
+	name = (char *)glade_get_widget_long_name(widget);
+	tail = strchr(name, '.');
+	if (tail == NULL) {
+		wname = StrDup(name);
+	} else {	
+		wname = StrnDup(name, tail - name);
+	}
+
+	if ((wdata = g_hash_table_lookup(WindowTable,wname)) != NULL) {
+		if (g_hash_table_lookup(wdata->ChangedWidgetTable, name) == NULL) {
+			key = StrDup(name);
+			g_hash_table_insert(wdata->ChangedWidgetTable, key, key);
+		}
+		if		(  TimerFlag  )	{
+			g_hash_table_foreach(wdata->TimerWidgetTable, _ResetTimer, NULL);
+		}
+	}
+	free(wname);
+LEAVE_FUNC;
+}
+
+extern	void
+AddChangedWidget(
+	GtkWidget	*widget)
+{
+	if		(  !fInRecv  ) {
+		_AddChangedWidget(widget);
+	}
+}
+
 
 extern void
 SetTitle(GtkWidget	*window,
@@ -345,17 +358,18 @@ ENTER_FUNC;
 	wdata->title = StrDup(GTK_WINDOW (window)->title);
 	wdata->fAccelGroup = FALSE;
 	wdata->ChangedWidgetTable = NewNameHash();
+	wdata->TimerWidgetTable = NewNameHash();
 	wdata->UpdateWidgetQueue = NewQueue();
 	glade_xml_signal_autoconnect(xml);
 	g_hash_table_insert(WindowTable,strdup(wname),wdata);
 
 	child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
+	gtk_widget_show_all(child);
+	gtk_container_forall (GTK_CONTAINER (child), _RegistTimer, wdata->TimerWidgetTable);
 	if (strstr(GTK_WINDOW(window)->wmclass_class, "dialog") != NULL) {
 		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
-		gtk_window_set_transient_for(GTK_WINDOW(window), 
-			GTK_WINDOW(PrevWindow));
 		wdata->fWindow = FALSE;
 	} else {
 		dbgprintf("create window:%s\n", wname);
@@ -414,7 +428,9 @@ ENTER_FUNC;
 		return;
 	}
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
+	g_hash_table_foreach(data->TimerWidgetTable, _StopTimer, NULL);
 	if (data->fWindow) {
+		StopTimer(GTK_WINDOW(TopWindow));
 		child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
 		if (data->fAccelGroup) {
 			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
@@ -428,6 +444,7 @@ ENTER_FUNC;
 			data->fAccelGroup = FALSE;
 		}
 	} else {
+		StopTimer(GTK_WINDOW(window));
 		gtk_widget_hide(window);
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
 	}
@@ -452,10 +469,11 @@ ENTER_FUNC;
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	g_return_if_fail(window != NULL);
 
+	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
 	if (data->fWindow) {
 	dbgmsg("show primari window\n");
+		gtk_widget_set_sensitive(TopWindow, FALSE);
 		SetTitle(TopWindow, data->title);
-		_ResetTimer(TopWindow, NULL);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
 			SwitchWindow(window);
 			if (!data->fAccelGroup) {
@@ -471,13 +489,17 @@ ENTER_FUNC;
 			}
 		}
 		PrevWindow = TopWindow;
+		gtk_widget_set_sensitive(TopWindow, TRUE);
 	} else {
 	dbgmsg("show dialog\n");
-		gtk_widget_show_all(window);
+		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+		if (PrevWindow != NULL && PrevWindow != window) {
+			gtk_window_set_transient_for(GTK_WINDOW(window), 
+				GTK_WINDOW(PrevWindow));
+		}
 		PrevWindow = window;
 	}
-	gtk_widget_set_sensitive(TopWindow, TRUE);
 LEAVE_FUNC;
 }
 

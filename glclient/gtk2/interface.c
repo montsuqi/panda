@@ -219,17 +219,6 @@ UI_GrabFocus(char *windowName,
 	}
 }
 
-extern  void        
-UI_ResetTimer(char *windowName)
-{
-	GtkWidget 	*widget;
-	
-	widget = GetWidgetByLongName(windowName);
-	if (widget != NULL) {
-		ResetTimer(GTK_WINDOW(widget));
-	}
-}
-
 extern  gboolean    
 UI_BootDialogRun(void)
 {

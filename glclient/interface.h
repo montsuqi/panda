@@ -36,7 +36,6 @@ extern	void		UI_ResetScrolledWindow(char *window);
 extern	void		UI_GrabFocus(char *window, char *widgetName);
 extern  void 		UI_GetWidgetData(WidgetData *data);
 extern	WidgetType	UI_GetWidgetType(char *windowname, char *widgetName);
-extern	void		UI_ResetTimer(char *window);
 extern	gboolean	UI_IsWidgetName(char *name);
 extern	gboolean	UI_IsWidgetName2(char *dataname);
 extern	void		UI_ErrorDialog(const char *msg);
