@@ -425,7 +425,6 @@ CloseWindow(
 
 ENTER_FUNC;
 	dbgprintf("close window:%s\n", wname);
-	gtk_widget_set_sensitive(TopWindow, FALSE);
 	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
 		// FIXME sometimes comes here.
 		fprintf(stderr,"%s:%d data %s is NULL\n", __FILE__, __LINE__, wname);
@@ -476,7 +475,6 @@ ENTER_FUNC;
 	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
 	if (data->fWindow) {
 	dbgmsg("show primari window\n");
-		gtk_widget_set_sensitive(TopWindow, FALSE);
 		SetTitle(TopWindow, data->title);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
 			SwitchWindow(window);
@@ -493,7 +491,6 @@ ENTER_FUNC;
 			}
 		}
 		PrevWindow = TopWindow;
-		gtk_widget_set_sensitive(TopWindow, TRUE);
 	} else {
 	dbgmsg("show dialog\n");
 		gtk_widget_show(window);
