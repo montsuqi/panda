@@ -388,7 +388,6 @@ ENTER_FUNC;
 		e = node->mcprec->value;
 		NativeUnPackValue(NULL, LBS_Body(buff), e);
 		node->tnest = (int)RecvChar(fp);			ON_IO_ERROR(fp,badio);
-
 		SetValueString(GetItemLongName(e,"dc.term"),hdr.term,NULL);
 		SetValueString(GetItemLongName(e,"dc.user"),hdr.user,NULL);
 		SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
@@ -576,7 +575,7 @@ PutWFCAPI(
 	char str[SIZE_BUFF+1];
 	char *convfunc;
 	char *p;
-	int size;
+	int asize, rsize;
 	int i;
 	
 ENTER_FUNC;
@@ -602,17 +601,16 @@ ENTER_FUNC;
 	if (value != NULL &&
 		(value = GetItemLongName(value, "response")) != NULL) {
 		if ((func = GetConvFunc(convfunc)) != NULL) {
-			size = func->SizeValue(opt, value);
-			LBS_ReserveSize(body, size, FALSE);
+			asize = func->SizeValue(opt, value);
+			LBS_ReserveSize(body, asize, FALSE);
 			p = LBS_Body(body);
-			func->PackValue(opt, p, value);
+			rsize = func->PackValue(opt, p, value);
+			LBS_ReserveSize(body, rsize, TRUE);
 			LBS_EmitEnd(body);
 			// FIXME; ConvFunc should return mime type. update libmondai
 			snprintf(str, sizeof(str),
 				"Content-Type: application/xml\r\n");
-			LBS_ReserveSize(headers, strlen(str), FALSE);
-			p = LBS_Body(headers);
-			memcpy(p, str, strlen(str));
+			LBS_EmitString(headers,str);
 		} 
 	}
 	SendLBS(fp,headers);	ON_IO_ERROR(fp,badio);
