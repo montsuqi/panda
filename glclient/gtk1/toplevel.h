@@ -28,6 +28,6 @@
 #endif
 GLOBAL	GtkWidget	*TopWindow;
 GLOBAL	GtkWidget	*TopNoteBook;
-GLOBAL	GtkWidget	*PrevWindow;
+GLOBAL	GList		*DialogStack;
 
 #endif

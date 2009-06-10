@@ -265,7 +265,7 @@ UI_Init(int argc,
 	TopNoteBook = gtk_notebook_new();
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
 	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
-	PrevWindow = NULL;
+	DialogStack = NULL;
 }
 
 extern	void

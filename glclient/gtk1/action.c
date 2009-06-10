@@ -446,6 +446,7 @@ ENTER_FUNC;
 		StopTimer(GTK_WINDOW(window));
 		gtk_widget_hide(window);
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
+		DialogStack = g_list_remove(DialogStack, window);
 	}
 LEAVE_FUNC;
 }
@@ -486,16 +487,23 @@ ENTER_FUNC;
 				data->fAccelGroup = TRUE;
 			}
 		}
-		PrevWindow = TopWindow;
 	} else {
 	dbgmsg("show dialog\n");
+		GtkWidget *parent = TopWindow;
+		int i;
+
 		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
-		if (PrevWindow != NULL && PrevWindow != window) {
-			gtk_window_set_transient_for(GTK_WINDOW(window), 
-				GTK_WINDOW(PrevWindow));
+		for(i = 0; i < g_list_length(DialogStack); i++) {
+			if ((gpointer)window != g_list_nth_data(DialogStack, i)) {
+				parent = (GtkWidget *)g_list_nth_data(DialogStack, i);
+			}
 		}
-		PrevWindow = window;
+		gtk_window_set_transient_for(GTK_WINDOW(window), 
+			GTK_WINDOW(parent));
+		if (g_list_find(DialogStack, window) == NULL) {
+			DialogStack = g_list_append(DialogStack, window);
+		}
 	}
 LEAVE_FUNC;
 }
