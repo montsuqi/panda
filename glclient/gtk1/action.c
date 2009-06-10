@@ -257,7 +257,7 @@ _StopTimer(
 		gpointer	value,
 		gpointer	data)
 {
-	gtk_widget_hide(GTK_WIDGET(value));
+	gtk_panda_timer_stop(GTK_PANDA_TIMER(value));
 }
 
 static	void
