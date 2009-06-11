@@ -516,7 +516,7 @@ window_destroy(
 	gpointer	user_data)
 {
 	fInRecv = TRUE;
-	exit(0);
+	gtk_main_quit();
 }
 
 #ifdef	GTK_PANDA_TYPE_HTML
