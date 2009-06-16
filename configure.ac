@@ -285,34 +285,34 @@ AC_ARG_WITH(dotcobol,
 ]) 
 
 dnl *************************************************************************** 
-dnl for the OpenCOBOL23
+dnl for the OpenCOBOL 1.0
 dnl *************************************************************************** 
-AC_ARG_ENABLE(opencobol23,
-  [  --enable-opencobol23      enable OpenCOBOL23 [[disable]]],,[enable_opencobol23="no"])
-if test "x$enable_opencobol23" = "xyes"; then
-    AC_MSG_CHECKING(for OpenCOBOL23)
-    cob23_exists=yes
-    cob-config23 --version > /dev/null 2> /dev/null || cob_exists=no
-    if test "x$cob23_exists" = "xyes"; then
-        COB_CFLAGS="`cob-config23 --cflags`"
-        COB_LIBS="`cob-config23 --libs`"
+AC_ARG_ENABLE(opencobol100,
+  [  --enable-opencobol100     enable OpenCOBOL100 [[disable]]],,[enable_opencobol100="no"])
+if test "x$enable_opencobol100" = "xyes"; then
+    AC_MSG_CHECKING(for OpenCOBOL100)
+    cob100_exists=yes
+    cob-config100 --version > /dev/null 2> /dev/null || cob_exists=no
+    if test "x$cob100_exists" = "xyes"; then
+        COB_CFLAGS="`cob-config100 --cflags`"
+        COB_LIBS="`cob-config100 --libs`"
         AC_MSG_RESULT(yes)
-        AC_DEFINE(HAVE_OPENCOBOL23,1,"")
+        AC_DEFINE(HAVE_OPENCOBOL100,1,"")
         AC_DEFINE(HAVE_OPENCOBOL,1,"")
     else
         AC_MSG_RESULT(no)
-        enable_opencobol23="no"
+        enable_opencobol100="no"
     fi
-    AC_SUBST(COB23_CFLAGS)
-    AC_SUBST(COB23_LIBS)
+    AC_SUBST(COB100_CFLAGS)
+    AC_SUBST(COB100_LIBS)
     
-    OPENCOBOL23_CFLAGS="$COB_CFLAGS"
-    OPENCOBOL23_LIBS="$COB_LIBS"
+    OPENCOBOL100_CFLAGS="$COB_CFLAGS"
+    OPENCOBOL100_LIBS="$COB_LIBS"
     
-    AC_SUBST(OPENCOBOL23_LIBS) 
-    AC_SUBST(OPENCOBOL23_CFLAGS) 
+    AC_SUBST(OPENCOBOL100_LIBS) 
+    AC_SUBST(OPENCOBOL100_CFLAGS) 
 fi
-AM_CONDITIONAL(OPENCOBOL23, test "x$enable_opencobol23" = "xyes") 
+AM_CONDITIONAL(OPENCOBOL100, test "x$enable_opencobol100" = "xyes") 
 
 dnl *************************************************************************** 
 dnl for the OpenCOBOL08
@@ -718,7 +718,7 @@ echo "  PostgreSQL support:    $enable_postgres"
 echo "  shell driver support:  $enable_shell"
 echo "  Oseki/Search support:  $enable_oseki"
 echo "  dotCOBOL support:      $enable_dotcobol"
-echo "  OpenCOBOL23 support:   $enable_opencobol23"
+echo "  OpenCOBOL100 support:  $enable_opencobol100"
 echo "  OpenCOBOL08 support:   $enable_opencobol08"
 echo "  OpenCOBOL support:     $enable_opencobol"
 echo "  Ruby support:          $enable_ruby"

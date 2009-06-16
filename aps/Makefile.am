@@ -43,7 +43,9 @@ LDADD 		=							\
 	$(top_builddir)/libs/libpandacom.a	\
 	$(GLIB_LIBS)						\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(MONDAI_LIBS)						\
+	$(OPENCOBOL_LIBS)					\
+	$(RUBY_LIBS)						
 
 MCPSUB_la_LIBADD	=
 MONFUNC_la_LIBADD	=
@@ -54,7 +56,7 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
-	$(OPENCOBOL23_CFLAGS)	\
+	$(OPENCOBOL100_CFLAGS)	\
 	$(OPENCOBOL08_CFLAGS)	\
 	$(RUBY_CFLAGS)			\
 	$(SSL_CFLAGS)			\
@@ -65,8 +67,8 @@ OpenCOBOLla =
 if OPENCOBOL
 OpenCOBOLla += OpenCOBOL.la
 endif
-if OPENCOBOL23
-OpenCOBOLla += OpenCOBOL23.la
+if OPENCOBOL100
+OpenCOBOLla += OpenCOBOL100.la
 endif
 if OPENCOBOL08
 OpenCOBOLla += OpenCOBOL08.la
@@ -84,8 +86,8 @@ dotCOBOL_la_LDFLAGS		=	-module -export-dynamic
 if OPENCOBOL
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic
 endif
-if OPENCOBOL23
-OpenCOBOL23_la_LDFLAGS	=	-module -export-dynamic
+if OPENCOBOL100
+OpenCOBOL100_la_LDFLAGS	=	-module -export-dynamic
 endif
 if OPENCOBOL08
 OpenCOBOL08_la_LDFLAGS	=	-module -export-dynamic
@@ -101,10 +103,10 @@ C_la_SOURCES			=	\
 	C.c						\
 	apslib.c
 
-if OPENCOBOL23
-OpenCOBOL23_la_SOURCES	=	OpenCOBOL.c
-OpenCOBOL23_la_LIBADD		=	\
-	$(OPENCOBOL23_LIBS)
+if OPENCOBOL100
+OpenCOBOL100_la_SOURCES	=	OpenCOBOL.c
+OpenCOBOL100_la_LIBADD		=	\
+	$(OPENCOBOL100_LIBS)
 endif
 if OPENCOBOL08
 OpenCOBOL08_la_SOURCES	=	OpenCOBOL.c
