@@ -52,6 +52,8 @@
 #define	GL_Session					(PacketClass)0x0C
 #define	GL_RedirectName				(PacketClass)0x0D
 #define	GL_ServerVersion			(PacketClass)0x0E
+#define	GL_Ping						(PacketClass)0x0F
+#define	GL_Pong						(PacketClass)0x10
 
 #define HTTP_GET					(PacketClass)0x47
 #define HTTP_HEAD					(PacketClass)0x48
@@ -60,11 +62,12 @@
 #define	GL_OK						(PacketClass)0x80
 #define	GL_END						(PacketClass)0x81
 #define	GL_NOT						(PacketClass)0x83
+#define	GL_CONTINUE					(PacketClass)0x84
+#define	GL_STOP						(PacketClass)0x85
 
 #define	GL_E_VERSION				(PacketClass)0xF1
 #define	GL_E_AUTH					(PacketClass)0xF2
 #define	GL_E_APPL					(PacketClass)0xF3
 #define	GL_E_Session				(PacketClass)0xF4
-
 
 #endif

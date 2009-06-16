@@ -337,6 +337,7 @@ start_client ()
 	if (SendConnect(FPCOMM(glSession),CurrentApplication)) {
 		CheckScreens(FPCOMM(glSession),TRUE);
 		(void)GetScreenData(FPCOMM(glSession));
+		UI_SetPingTimerFunc(PingTimerFunc, FPCOMM(glSession));
 		UI_Main();
 	}
 	

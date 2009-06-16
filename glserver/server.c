@@ -422,13 +422,13 @@ CheckFeature(
 		}
 	}
 #ifdef	DEBUG
-	printf("core      = %s\n",fFeatureCore ? "YES" : "NO");
-	printf("i18n      = %s\n",fFeatureI18N ? "YES" : "NO");
-	printf("blob      = %s\n",fFeatureBlob ? "YES" : "NO");
-	printf("expand    = %s\n",fFeatureExpand ? "YES" : "NO");
-	printf("network   = %s\n",fFeatureNetwork ? "YES" : "NO");
-	printf("network   = %s\n",fFeatureNego ? "YES" : "NO");
-	printf("old       = %s\n",fFeatureOld ? "YES" : "NO");
+	printf("core		= %s\n",fFeatureCore ? "YES" : "NO");
+	printf("i18n      	= %s\n",fFeatureI18N ? "YES" : "NO");
+	printf("blob      	= %s\n",fFeatureBlob ? "YES" : "NO");
+	printf("expand    	= %s\n",fFeatureExpand ? "YES" : "NO");
+	printf("network   	= %s\n",fFeatureNetwork ? "YES" : "NO");
+	printf("negotiation	= %s\n",fFeatureNego ? "YES" : "NO");
+	printf("old			= %s\n",fFeatureOld ? "YES" : "NO");
 #endif
 }
 
@@ -471,7 +471,7 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 		} else {
 			if (fFeatureNego) {
-				sprintf(ver,"%s.%02d", PACKAGE_VERSION, 0);
+				sprintf(ver,"%s.%02d", PACKAGE_VERSION, 1);
 				GL_SendPacketClass(fpComm,GL_ServerVersion,fFeatureNetwork);
 				GL_SendString(fpComm, ver,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
@@ -566,6 +566,48 @@ LEAVE_FUNC;
 	return ret;
 }
 
+static  Bool
+Pong(
+	NETFILE	*fpComm)
+{
+	Bool		ret;
+	
+	ret = FALSE;
+ENTER_FUNC;
+	//FIXME; check whether have a message
+	GL_SendPacketClass(fpComm,GL_Pong,fFeatureNetwork);
+	ON_IO_ERROR(fpComm,badio);
+
+#if 1
+	GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
+#else
+	char		str[256];
+	static int count = 0;
+	fprintf(stderr, "pong %d\n", count);
+	if (count == 20) {
+		GL_SendPacketClass(fpComm,GL_STOP,fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+		sprintf(str, "for test; count:%d is over", count);
+		GL_SendString(fpComm, str, fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+	} else if(count == 5) {
+		GL_SendPacketClass(fpComm,GL_CONTINUE,fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+		sprintf(str, "for test; count:%d", count);
+		GL_SendString(fpComm, str, fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+	} else {
+		GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+	}
+	count++;
+#endif
+	ret = TRUE;
+badio:
+LEAVE_FUNC;
+	return ret;
+}
+
 static	Bool
 MainLoop(
 	NETFILE	*fpComm,
@@ -573,7 +615,7 @@ MainLoop(
 {
 	Bool	ret;
 	PacketClass	klass;
-	
+
 ENTER_FUNC;
 	klass = GL_RecvPacketClass(fpComm,fFeatureNetwork); ON_IO_ERROR(fpComm,badio);
 	alarm(0);
@@ -591,6 +633,12 @@ ENTER_FUNC;
 				if	(  !Glevent(fpComm, scr)	){
 					scr->status = APL_SESSION_NULL;
 				}
+			}
+			ON_IO_ERROR(fpComm,badio);
+			break;
+		case GL_Ping:
+			if	(  !Pong(fpComm)	){
+				scr->status = APL_SESSION_NULL;
 			}
 			ON_IO_ERROR(fpComm,badio);
 			break;

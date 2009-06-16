@@ -621,7 +621,7 @@ CheckScreens(
 	NETFILE		*fp,
 	Bool		fInit)
 {	
-	char		sname[SIZE_BUFF];
+	char		sname[SIZE_NAME];
 	char		*fname;
 	struct stat	stbuf;
 	time_t		stmtime
@@ -962,6 +962,37 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return	(rc);
+}
+
+extern gint
+PingTimerFunc(gpointer data)
+{
+	NETFILE *fp = (NETFILE *)data;
+	PacketClass	c;
+	char buff[SIZE_BUFF];
+
+	fp = (NETFILE *)data;
+	GL_SendPacketClass(fp,GL_Ping);
+	c = GL_RecvPacketClass(fp);
+	if (c != GL_Pong) {
+		UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
+	}
+	c = GL_RecvPacketClass(fp);
+	switch (c) {
+	case GL_STOP:
+		GL_RecvString(fp, sizeof(buff), buff);
+		UI_MessageDialog(buff);
+		exit(1);
+		break;
+	case GL_CONTINUE:
+		GL_RecvString(fp, sizeof(buff), buff);
+		UI_MessageDialog(buff);
+		break;
+	case GL_END:
+	default:
+		break;
+	};
+	return 1;
 }
 
 extern	void

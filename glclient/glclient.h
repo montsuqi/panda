@@ -139,6 +139,7 @@ GLOBAL	char	*Slot;
 #endif
 #endif
 
+#define	PING_TIMER_PERIOD	(10000)
 
 #define	FPCOMM(session)		((session)->fpComm)
 #define	TITLE(session)		((session)->title)

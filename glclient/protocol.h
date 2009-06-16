@@ -26,6 +26,7 @@ extern	void			InitProtocol(void);
 extern  void        	TermProtocol(void);
 extern	void			CheckScreens(NETFILE *fp, Bool);
 extern	Bool			SendConnect(NETFILE *fpComm, char *apl);
+extern	gint			PingTimerFunc(gpointer data);
 extern	void			RecvValue(NETFILE *fp, char *longname);
 extern	Bool			GetScreenData(NETFILE *fpComm);
 extern  void			SendWindowData(void);
