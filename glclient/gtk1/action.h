@@ -32,7 +32,6 @@ extern	void		GrabFocus(GtkWidget *widget);
 extern	void		CreateWindow(char *wname);
 extern	void		ShowWindow(char *wname);
 extern	void		CloseWindow(char *wname);
-extern	void		HideWindow();
 extern	void		ClearKeyBuffer(void);
 extern	void		_AddChangedWidget(GtkWidget *widget);
 extern	void		AddChangedWidget(GtkWidget *widget);
@@ -52,5 +51,6 @@ extern	GtkWidget	*GetWidgetByLongName(char *longName);
 extern	GtkWidget	*GetWidgetByName(char *dataName);
 extern	GtkWidget	*GetWidgetByWindowNameAndLongName(char *wname, char *name);
 extern	GtkWidget	*GetWidgetByWindowNameAndName(char *wname, char *name);
+extern	void		SetPingTimer(void);
 
 #endif

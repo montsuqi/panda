@@ -64,7 +64,14 @@ message_dialog(
 }
 
 void
-error_dialog(
+show_message_dialog(
+	const char *message)
+{
+    message_dialog(GTK_MESSAGE_INFO, message);
+}
+
+void
+show_error_dialog(
 	const char *message)
 {
     message_dialog(GTK_MESSAGE_ERROR, message);

@@ -23,6 +23,8 @@
 #ifndef	_INC_INTERFACE_H
 #define	_INC_INTERFACE_H
 
+typedef	gint		(*_PingTimerFunc)	(gpointer data);
+
 extern	int			UI_Version();
 
 extern	void		UI_list_config();
@@ -38,9 +40,11 @@ extern  void 		UI_GetWidgetData(WidgetData *data);
 extern	WidgetType	UI_GetWidgetType(char *windowname, char *widgetName);
 extern	gboolean	UI_IsWidgetName(char *name);
 extern	gboolean	UI_IsWidgetName2(char *dataname);
+extern	void		UI_MessageDialog(const char *msg);
 extern	void		UI_ErrorDialog(const char *msg);
 extern	int			UI_AskPass(char *buff, size_t buflen, const char *prmpt);
 extern	gboolean	UI_BootDialogRun(void);
+extern	void		UI_SetPingTimerFunc(_PingTimerFunc func, gpointer data);
 
 extern	void		UI_Init(int argc, char **argv);
 extern	void		UI_InitStyle(void);

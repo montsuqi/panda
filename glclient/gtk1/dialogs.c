@@ -63,7 +63,18 @@ question_dialog(
 }
 
 void
-error_dialog(
+show_message_dialog(
+	const char *message)
+{
+	GtkWidget *dialog;
+		
+	if(strlen(message) <= 0) return;
+	dialog = message_dialog(message, TRUE);
+	gnome_dialog_run(GNOME_DIALOG(dialog));
+}
+
+void
+show_error_dialog(
 	const char *message)
 {
 	GtkWidget *dialog;

@@ -23,7 +23,8 @@
 #include "types.h"
 
 extern	GtkWidget*	message_dialog(const char *message, gboolean message_type);
-extern	void		error_dialog(const char *message);
+extern	void		show_error_dialog(const char *message);
+extern	void		show_message_dialog(const char *message);
 extern	int 		askpass(char *buf, size_t buflen, const char *prompt);
 extern	GtkWidget*	question_dialog(const char *message, 
 	GtkSignalFunc clicked_handler, GtkWidget *widget, GtkWindow *window);

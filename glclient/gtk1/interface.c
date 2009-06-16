@@ -237,9 +237,16 @@ UI_IsWidgetName2(char *name)
 }
 
 extern void
+UI_MessageDialog(const char *msg)
+{
+	show_message_dialog(msg);
+}
+
+
+extern void
 UI_ErrorDialog(const char *msg)
 {
-	error_dialog(msg);
+	show_error_dialog(msg);
 }
 
 extern  void        
@@ -308,3 +315,8 @@ UI_GetWidgetType(char *windowName,
 	return GetWidgetType(windowName, widgetName);
 }
 
+extern	void
+UI_SetPingTimerFunc(_PingTimerFunc func, gpointer data)
+{
+	gtk_timeout_add(PING_TIMER_PERIOD, func, data);
+}
