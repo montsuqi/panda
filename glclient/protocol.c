@@ -873,30 +873,24 @@ static	void
 GL_SendVersionString(
 	NETFILE		*fp)
 {
-	char	*version;
+	char	version[256];
 	size_t	size;
 
+	sprintf(version,"version:blob:expand:negotiation");
 #ifdef	NETWORK_ORDER
-	if (UI_Version() == UI_VERSION_1) {
-		version = "version:no:blob:expand:ps";
-	} else {
-#	ifdef	USE_PDF
-		version = "version:no:blob:expand:pdf";
-#	else
-		version = "version:no:blob:expand:ps";
-#	endif
-	}
-#else
-	if (UI_Version() == UI_VERSION_1) {
-		version = "version:blob:expand:ps";
-	} else {
-#	ifdef	USE_PDF
-		version = "version:blob:expand:pdf";
-#	else
-		version = "version:blob:expand:ps";
-#	endif
-	}
+	strcat(version, ":no");
 #endif
+
+	if (UI_Version() == UI_VERSION_1) {
+		strcat(version, ":ps");
+	} else {
+#		ifdef	USE_PDF
+			strcat(version, ":pdf");
+#		else
+			strcat(version, ":ps");
+#		endif
+	}
+
 	size = strlen(version);
 	SendChar(fp,(size&0xFF));
 	SendChar(fp,0);
@@ -908,15 +902,49 @@ GL_SendVersionString(
 	}
 }
 
+static gint
+PingTimerFunc(gpointer data)
+{
+	NETFILE *fp = (NETFILE *)data;
+	PacketClass	c;
+	char buff[SIZE_BUFF];
+
+	fp = (NETFILE *)data;
+	GL_SendPacketClass(fp,GL_Ping);
+	c = GL_RecvPacketClass(fp);
+	if (c != GL_Pong) {
+		UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
+	}
+	c = GL_RecvPacketClass(fp);
+	switch (c) {
+	case GL_STOP:
+		GL_RecvString(fp, sizeof(buff), buff);
+		UI_MessageDialog(buff);
+		exit(1);
+		break;
+	case GL_CONTINUE:
+		GL_RecvString(fp, sizeof(buff), buff);
+		UI_MessageDialog(buff);
+		break;
+	case GL_END:
+	default:
+		break;
+	};
+	return 1;
+}
+
+
 extern	Bool
 SendConnect(
 	NETFILE		*fp,
 	char		*apl)
 {
-	Bool	rc;
+	Bool		rc;
 	PacketClass	pc;
+	char		ver[16];
 
 ENTER_FUNC;
+	rc = TRUE;
 	if		(  fMlog  ) {
 		MessageLog(_("connection start\n"));
 	}
@@ -925,8 +953,13 @@ ENTER_FUNC;
 	GL_SendString(fp,User);
 	GL_SendString(fp,Pass);
 	GL_SendString(fp,apl);
-	if		(  ( pc = GL_RecvPacketClass(fp) )   ==  GL_OK  ) {
-		rc = TRUE;
+	pc = GL_RecvPacketClass(fp);
+	if		(  pc  ==  GL_OK  ) {
+	} else if (pc == GL_ServerVersion) {
+		GL_RecvString(fp, sizeof(ver), ver);
+		if (strcmp(ver, "1.4.4.01") >= 0) {
+			UI_SetPingTimerFunc(PingTimerFunc, fp);
+		}
 	} else {
 		rc = FALSE;
 		switch	(pc) {
@@ -962,37 +995,6 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return	(rc);
-}
-
-extern gint
-PingTimerFunc(gpointer data)
-{
-	NETFILE *fp = (NETFILE *)data;
-	PacketClass	c;
-	char buff[SIZE_BUFF];
-
-	fp = (NETFILE *)data;
-	GL_SendPacketClass(fp,GL_Ping);
-	c = GL_RecvPacketClass(fp);
-	if (c != GL_Pong) {
-		UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
-	}
-	c = GL_RecvPacketClass(fp);
-	switch (c) {
-	case GL_STOP:
-		GL_RecvString(fp, sizeof(buff), buff);
-		UI_MessageDialog(buff);
-		exit(1);
-		break;
-	case GL_CONTINUE:
-		GL_RecvString(fp, sizeof(buff), buff);
-		UI_MessageDialog(buff);
-		break;
-	case GL_END:
-	default:
-		break;
-	};
-	return 1;
 }
 
 extern	void
