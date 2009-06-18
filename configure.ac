@@ -358,11 +358,6 @@ if test "x$enable_opencobol" = "xyes"; then
         COB_LIBS="`cob-config --libs`"
         AC_MSG_RESULT(yes)
         AC_DEFINE(HAVE_OPENCOBOL,1,"")
-
-		COB_VERSION=`cob-config --version`
-		if test `expr $COB_VERSION ">=" 1.0` = 1 ; then
-        	AC_DEFINE(OPENCOBOL_1_0,1,"")
-		fi
     else
         AC_MSG_RESULT(no)
         enable_opencobol="no"
