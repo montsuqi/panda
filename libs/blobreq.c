@@ -395,3 +395,47 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
+#if BLOB_VERSION == 1
+extern	Bool
+RequestRegisterBLOB(
+	NETFILE	*fp,
+	PacketClass		flag,
+	MonObjectType	obj,
+	char 			*key)
+{
+	Bool	rc;
+	
+ENTER_FUNC;
+	rc = FALSE;
+	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
+	RequestBLOB(fp,BLOB_REGISTER);		ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	SendString(fp,key);					ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+		rc = TRUE;
+	}
+  badio:
+LEAVE_FUNC;
+	return	(rc);
+}
+
+extern	MonObjectType
+RequestLookupBLOB(
+	NETFILE	*fp,
+	PacketClass		flag,
+	char 			*key)
+{
+	MonObjectType obj;
+	
+ENTER_FUNC;
+	obj = GL_OBJ_NULL;
+	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
+	RequestBLOB(fp,BLOB_LOOKUP);		ON_IO_ERROR(fp,badio);
+	SendString(fp,key);					ON_IO_ERROR(fp,badio);
+	obj = RecvObject(fp);				ON_IO_ERROR(fp,badio);
+  badio:
+LEAVE_FUNC;
+	return	(obj);
+}
+
+#endif

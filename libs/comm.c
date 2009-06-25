@@ -132,6 +132,21 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+extern	char *
+RecvStringNew(
+	NETFILE *fp)
+{
+	size_t	size;
+	char *ret;
+ENTER_FUNC;
+	size = RecvLength(fp);
+	ret = xmalloc(size + 1);
+	Recv(fp,ret,size);
+	ret[size] = 0;
+	return ret;
+LEAVE_FUNC;
+}
+
 extern	void
 SendLBS(
 	NETFILE	*fp,

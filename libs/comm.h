@@ -31,6 +31,7 @@ extern	void			RecvLBS(NETFILE *fp, LargeByteString *lbs);
 extern	void			SendString(NETFILE *fp, char *str);
 extern	void			RecvString(NETFILE *fp, char *str);
 extern	void			RecvnString(NETFILE *fp, size_t  size, char *str);
+extern	char *			RecvStringNew(NETFILE *fp);
 extern	int				RecvInt(NETFILE *fp);
 extern	void			SendInt(NETFILE *fp,int data);
 extern	unsigned int	RecvUInt(NETFILE *fp);

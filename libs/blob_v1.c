@@ -107,6 +107,19 @@ LEAVE_FUNC;
 	return	(size);
 }
 
+static gboolean
+RemoveKeyTable(
+	gpointer key, 
+	gpointer value,
+	gpointer data) 
+{
+	if (data == value) {
+		xfree(key);
+		return TRUE;
+	}
+	return FALSE;
+}
+
 static	void
 DestroyEntry(
 	BLOB_V1_Entry	*ent)
@@ -119,7 +132,8 @@ ENTER_FUNC;
 	}
 	if		(  ent->oid  !=  GL_OBJ_NULL  ) {
 		LockBLOB(ent->blob);
-		g_hash_table_remove(ent->blob->table,(gpointer)&ent->oid);
+		g_hash_table_remove(ent->blob->oid_table,(gpointer)&ent->oid);
+		g_hash_table_foreach_remove(ent->blob->key_table,RemoveKeyTable,ent);
 		snprintf(command,SIZE_LONGNAME+1,"rm -f %s/%d",ent->blob->space,(int)ent->oid);
 		system(command);
 		UnLockBLOB(ent->blob);
@@ -190,7 +204,7 @@ ENTER_FUNC;
 
 	ent = New(BLOB_V1_Entry);
 	ent->oid = obj;
-	g_hash_table_insert(state->blob->table,(gpointer)&ent->oid,ent);
+	g_hash_table_insert(state->blob->oid_table,(gpointer)&ent->oid,ent);
 	UnLockBLOB(state->blob);
 	ReleaseBLOB(state->blob);
 	ent->blob = state->blob;
@@ -258,7 +272,8 @@ ENTER_FUNC;
 		blob->space = StrDup(space);
 		blob->fp = fp;
 		blob->oid = head.oid;
-		blob->table = NewLLHash();
+		blob->oid_table = NewLLHash();
+		blob->key_table = NewNameHash();
 		pthread_mutex_init(&blob->mutex,NULL);
 		pthread_cond_init(&blob->cond,NULL);
 	} else {
@@ -296,11 +311,11 @@ OpenBLOB_V1(
 	ssize_t		ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )  ==  NULL  ) {
+	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )  ==  NULL  ) {
 		LockBLOB(state->blob);
 		ent = New(BLOB_V1_Entry);
 		ent->oid = obj;
-		g_hash_table_insert(state->blob->table,(gpointer)&ent->oid,ent);
+		g_hash_table_insert(state->blob->oid_table,(gpointer)&ent->oid,ent);
 		UnLockBLOB(state->blob);
 		ReleaseBLOB(state->blob);
 		ent->blob = state->blob;
@@ -323,7 +338,7 @@ CloseBLOB_V1(
 	Bool		ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )
+	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			CloseNet(ent->fp);
@@ -345,7 +360,7 @@ DestroyBLOB_V1(
 	BLOB_V1_Entry	*ent;
 	Bool			rc;
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )
+	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
 		DestroyEntry(ent);
 		rc = TRUE;
@@ -367,7 +382,7 @@ WriteBLOB_V1(
 	int			ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )
+	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			ret = Send(ent->fp,buff,size);
@@ -392,7 +407,7 @@ ReadBLOB_V1(
 	int			ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(state->blob->table,(gpointer)&obj) )
+	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
 			ret = Recv(ent->fp,buff,size);
@@ -404,4 +419,53 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 	return	(ret);
+}
+
+extern	Bool
+RegisterBLOB_V1(
+	BLOB_V1_State	*state,
+	MonObjectType	obj,
+	char			*key)
+{
+	BLOB_V1_Entry	*ent;
+	int				ret;
+	gpointer		okey;
+	gpointer		oval;
+
+ENTER_FUNC;
+	ret = FALSE;
+	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
+			   !=  NULL  ) {
+		LockBLOB(ent->blob);
+		if (g_hash_table_lookup_extended(state->blob->key_table, key, &okey, &oval)) {
+			g_hash_table_remove(state->blob->key_table, key);
+			xfree(okey);
+		}
+		g_hash_table_insert(state->blob->key_table, StrDup(key) , ent);
+		obj = ent->oid;
+		UnLockBLOB(ent->blob);
+		ReleaseBLOB(ent->blob);
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+extern	MonObjectType
+LookupBLOB_V1(
+	BLOB_V1_State	*state,
+	char			*key)
+{
+	BLOB_V1_Entry	*ent;
+	MonObjectType 	obj;
+
+ENTER_FUNC;
+	ent = g_hash_table_lookup(state->blob->key_table,(gpointer)key);
+	if (ent != NULL) {
+		obj = ent->oid;
+	} else {
+		obj = GL_OBJ_NULL;
+	}
+LEAVE_FUNC;
+	return	obj;
 }

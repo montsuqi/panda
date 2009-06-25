@@ -585,6 +585,77 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+#ifdef BLOB_VERSION == 1
+static	ValueStruct	*
+_RegisterBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	int			rc;
+	ValueStruct	*obj
+		,		*f;
+	ValueStruct	*ret;
+
+ENTER_FUNC;
+	ret = NULL;
+	if		(  rec->type  !=  RECORD_DB  ) {
+		rc = MCP_BAD_ARG;
+	} else {
+		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
+				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
+			if		(  RequestRegisterBLOB(NBCONN(dbg),APS_BLOB, ValueObjectId(obj), ValueToString(f,NULL))  ) {
+				ret = DuplicateValue(args,TRUE);
+				rc = MCP_OK;
+			} else {
+				rc = MCP_BAD_OTHER;
+			}
+		} else {
+			rc = MCP_BAD_ARG;
+		}
+	}
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = rc;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_LookupBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	int			rc;
+	ValueStruct	*obj
+		,		*f;
+	ValueStruct	*ret;
+
+ENTER_FUNC;
+	ret = NULL;
+	if		(  rec->type  !=  RECORD_DB  ) {
+		rc = MCP_BAD_ARG;
+	} else {
+		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
+				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
+			ValueObjectId(obj) = RequestLookupBLOB(NBCONN(dbg),APS_BLOB, ValueToString(f,NULL));
+			ret = DuplicateValue(args,TRUE);
+			rc = MCP_OK;
+		} else {
+			rc = MCP_BAD_ARG;
+		}
+	}
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = rc;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+#endif
+
 static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
@@ -613,16 +684,20 @@ static	DB_OPS	Operations[] = {
 	{	"DBSTART",		(DB_FUNC)_DBSTART },
 	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
 	/*	table operations	*/
-	{	"BLOBNEW",		_NewBLOB	},
-	{	"BLOBOPEN",		_OpenBLOB	},
-	{	"BLOBWRITE",	_WriteBLOB	},
-	{	"BLOBREAD",		_ReadBLOB	},
-	{	"BLOBCLOSE",	_CloseBLOB	},
-	{	"BLOBEXPORT",	_ExportBLOB	},
-	{	"BLOBIMPORT",	_ImportBLOB	},
-	{	"BLOBSAVE",		_SaveBLOB	},
-	{	"BLOBCHECK",	_CheckBLOB	},
-	{	"BLOBDESTROY",	_DestroyBLOB},
+	{	"BLOBNEW",		_NewBLOB		},
+	{	"BLOBOPEN",		_OpenBLOB		},
+	{	"BLOBWRITE",	_WriteBLOB		},
+	{	"BLOBREAD",		_ReadBLOB		},
+	{	"BLOBCLOSE",	_CloseBLOB		},
+	{	"BLOBEXPORT",	_ExportBLOB		},
+	{	"BLOBIMPORT",	_ImportBLOB		},
+	{	"BLOBSAVE",		_SaveBLOB		},
+	{	"BLOBCHECK",	_CheckBLOB		},
+	{	"BLOBDESTROY",	_DestroyBLOB	},
+#if BLOB_VERSION == 1
+	{	"BLOBREGISTER",	_RegisterBLOB	},
+	{	"BLOBLOOKUP",	_LookupBLOB  	},
+#endif
 
 	{	NULL,			NULL }
 };

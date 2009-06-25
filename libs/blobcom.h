@@ -45,6 +45,8 @@
 #define	BLOB_START			(PacketClass)0x0C
 #define	BLOB_COMMIT			(PacketClass)0x0D
 #define	BLOB_ABORT			(PacketClass)0x0E
+#define	BLOB_REGISTER		(PacketClass)0x0F
+#define	BLOB_LOOKUP			(PacketClass)0x10
 
 #define	BLOB_OK				(PacketClass)0xFE
 #define	BLOB_NOT			(PacketClass)0xF0

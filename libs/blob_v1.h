@@ -44,17 +44,21 @@
 
 #define	NewBLOB				NewBLOB_V1
 #define	OpenBLOB			OpenBLOB_V1
+#define	LookupBLOB			LookupBLOB_V1
 #define	DestroyBLOB			DestroyBLOB_V1
 #define	CloseBLOB			CloseBLOB_V1
 #define	WriteBLOB			WriteBLOB_V1
 #define	ReadBLOB			ReadBLOB_V1
+#define	RegisterBLOB		RegisterBLOB_V1
+#define LookupBLOB			LookupBLOB_V1
 #endif
 
 typedef	struct _BLOB_Space	{
 	char			*space;
 	FILE			*fp;
 	MonObjectType	oid;
-	GHashTable	*table;
+	GHashTable	*oid_table;
+	GHashTable	*key_table;
 	pthread_mutex_t	mutex;
 	pthread_cond_t	cond;
 }	BLOB_V1_Space;
@@ -80,8 +84,10 @@ extern	MonObjectType	NewBLOB_V1(BLOB_V1_State *state, int mode);
 extern	ssize_t			OpenBLOB_V1(BLOB_V1_State *state, MonObjectType obj, int mode);
 extern	Bool			DestroyBLOB_V1(BLOB_V1_State *state, MonObjectType obj);
 extern	Bool			CloseBLOB_V1(BLOB_V1_State *state, MonObjectType obj);
-extern	int	WriteBLOB_V1(BLOB_V1_State *state, MonObjectType obj, byte *buff, size_t size);
-extern	int	ReadBLOB_V1(BLOB_V1_State *state, MonObjectType obj, byte *buff, size_t size);
+extern	int				WriteBLOB_V1(BLOB_V1_State *state, MonObjectType obj, byte *buff, size_t size);
+extern	int				ReadBLOB_V1(BLOB_V1_State *state, MonObjectType obj, byte *buff, size_t size);
+extern	Bool			RegisterBLOB_V1(BLOB_V1_State *state, MonObjectType obj, char *key);
+extern	MonObjectType	LookupBLOB_V1(BLOB_V1_State *state, char *k);
 
 #undef	GLOBAL
 #ifdef	MAIN

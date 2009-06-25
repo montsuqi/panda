@@ -53,6 +53,7 @@ PassiveBLOB(
 	size_t			size;
 	ssize_t			ssize;
 	byte			*buff;
+	char			*str;
 
 ENTER_FUNC;
 	switch	(RecvPacketClass(fp)) {
@@ -207,6 +208,26 @@ ENTER_FUNC;
 			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
 		}
 		break;
+#if BLOB_VERSION == 1
+	  case	BLOB_REGISTER:
+		dbgmsg("BLOB_REGISTER");
+		obj = RecvObject(fp);					ON_IO_ERROR(fp,badio);
+		str = RecvStringNew(fp);				ON_IO_ERROR(fp,badio);
+		if		(  RegisterBLOB(blob, obj, str)  ) {
+			SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
+		} else {
+			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
+		}
+		xfree(str);
+		break;
+	  case	BLOB_LOOKUP:
+		dbgmsg("BLOB_Lookup");
+		str = RecvStringNew(fp);			ON_IO_ERROR(fp,badio);
+		obj = LookupBLOB(blob, str);
+		SendObject(fp, obj); 				ON_IO_ERROR(fp,badio);
+		xfree(str);
+		break;
+#endif
 	  default:
 		break;
 	}

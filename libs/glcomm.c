@@ -435,18 +435,25 @@ ReadFile(char *fname)
 static	void
 SendExpandObject(
 	NETFILE	*fp,
-	char	*cname,
+	ValueStruct	*value,
 	Bool	fNetwork)
 {
-	char	fname[SIZE_LONGNAME+1];
+	char		fname[SIZE_LONGNAME+1];
+	char		*cname;
 #ifdef	HAVE_LIBMAGIC
-	char	buff[SIZE_LONGNAME+1];
-	char	*PSTOPNGPath = BIN_DIR "/pstopng";
-	const	char	*type;
+	char		buff[SIZE_LONGNAME+1];
+	char		*PSTOPNGPath = BIN_DIR "/pstopng";
+	const char	*type;
 #endif
 
 ENTER_FUNC;
-	strcpy(fname,cname);
+	if (IS_OBJECT_NULL(ValueObjectId(value))) {
+		LBS_ReserveSize(Buff,0,FALSE);
+		GL_SendLBS(fp,Buff,fNetwork);
+		return;
+	}
+	cname = BlobCacheFileName(value);
+	strcpy(fname, cname);
 #ifdef	HAVE_LIBMAGIC
 	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  &&
 				!strlcmp(type,"PostScript") ) {
@@ -527,7 +534,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_OBJECT:
 		if		(  fBlob  ) {
 			if		(  fExpand  ) {
-				SendExpandObject(fp, BlobCacheFileName(value), fNetwork);
+				SendExpandObject(fp, value, fNetwork);
 			} else {
 				GL_SendObject(fp,ValueObjectId(value),fNetwork);
 			}
