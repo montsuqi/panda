@@ -50,6 +50,10 @@
 #define SESSION_TYPE_TERM	0
 #define SESSION_TYPE_API	1
 
+#define	SESSION_STATUS_NORMAL 	0
+#define	SESSION_STATUS_END 		1
+#define	SESSION_STATUS_ABORT 	2
+
 typedef	struct {
 	NETFILE	*fp;
 	Queue	*que;
@@ -104,7 +108,7 @@ typedef	struct _SessionData	{
 	LD_Node					*ld;
 	size_t					cWindow;
 	int						retry;
-	Bool					fAbort;
+	int						status;
 	MessageHeader			*hdr;
 	int						tnest;
 	GHashTable				*spadata;
@@ -118,6 +122,7 @@ typedef	struct _SessionData	{
 	time_t					access_time;
 	WindowControl			w;
 }	SessionData;
+
 
 #undef	GLOBAL
 #ifdef	MAIN

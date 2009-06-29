@@ -406,7 +406,7 @@ SendTermMessage(
 		if ((MaxTransactionRetry > 0) && 
 			(MaxTransactionRetry < data->retry)) {
 			Warning("transaction abort %s", mq->name);
-			data->fAbort = TRUE;
+			data->status = SESSION_STATUS_ABORT;
 			TermEnqueue(data->term,data);
 		} else {
 			Warning("transaction retry %s", mq->name);
@@ -524,7 +524,7 @@ badio:
 	if ((MaxTransactionRetry > 0) && 
 		(MaxTransactionRetry < data->retry)) {
 		Warning("transaction abort %s", mq->name);
-		data->fAbort = TRUE;
+		data->status = SESSION_STATUS_ABORT;
 		data->apidata->status = WFC_API_ERROR;
 		TermEnqueue(data->term,data);
 	} else {

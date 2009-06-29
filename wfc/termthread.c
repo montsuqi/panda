@@ -89,7 +89,7 @@ ENTER_FUNC;
 	data->hdr = New(MessageHeader);
 	data->name = NULL;
 	memclear(data->hdr,sizeof(MessageHeader));
-	data->fAbort = FALSE;
+	data->status = SESSION_STATUS_NORMAL;
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
@@ -443,7 +443,16 @@ ENTER_FUNC;
 			break;
 		  case	WFC_END:
 			dbgmsg("END");
-			data->fAbort = TRUE;
+			if ((ld = g_hash_table_lookup(APS_Hash, "finalize"))  !=  NULL) {
+				data->hdr->window[0] = 0;
+				data->hdr->widget[0] = 0;
+				sprintf(data->hdr->event,"SESSION_END");
+				data->hdr->puttype = SCREEN_NULL;
+				ChangeLD(data,ld);
+				data->status = SESSION_STATUS_END;
+			} else {
+				data->status = SESSION_STATUS_ABORT;
+			}
 			fExit = TRUE;
 			break;
 		  default:
@@ -452,7 +461,7 @@ ENTER_FUNC;
 			SendPacketClass(fp,WFC_NOT);
 			ON_IO_ERROR(fp,badio);
 			fExit = TRUE;
-			data->fAbort = TRUE;
+			data->status = SESSION_STATUS_ABORT;
 			break;
 		}
 	}
@@ -818,10 +827,10 @@ TermSession(
 	if		(  ( data = CheckSession(term->fp,buff) )  !=  NULL  ) {
 		data->term = term;
 		data->retry = 0;
-		if		(  !data->fAbort  ) {
+		if		(  data->status != SESSION_STATUS_ABORT  ) {
 			data = Process(data);
 		}
-		if		(	(  data->fAbort  )
+		if		(	(  data->status != SESSION_STATUS_NORMAL  )
 				||	(  !SendTerminal(term->fp,data)  ) ) {
 			FinishSession(data);
 		} else {

@@ -527,11 +527,13 @@ ENTER_FUNC;
 						   !=  NULL  ) {
 					GL_RecvValue(fpComm,value,coding,fFeatureBlob,fFeatureExpand,fFeatureNetwork);
 				} else {
-					Error("invalid item name [%s]\n",name);
+					Warning("invalid item name [%s]\n",name);
+					goto badio;
 				}
 			}
 		} else {
-			Error("invalid window name [%s]\n",wname);
+			Message("invalid window name [%s]\n",wname);
+			goto badio;
 		}
 	}
 	rc = TRUE;
