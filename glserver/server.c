@@ -66,6 +66,7 @@ static	void
 FinishSession(
 	ScreenData	*scr)
 {
+	ApplicationsCall(APL_SESSION_END,scr);
 	Message("[%s@%s] session end",scr->user,TermToHost(scr->term));
 }
 

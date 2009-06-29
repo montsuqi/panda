@@ -236,7 +236,7 @@ ENTER_FUNC;
 	if ( fd > 0 ){
 		fp = SocketToNet(fd);
 		SendTermServerEnd(fp,ThisTerm);
-		CloseNet(fp);
+//		CloseNet(fp);
 		ret = TRUE;
 	} else {
 		ret = FALSE;

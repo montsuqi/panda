@@ -294,12 +294,12 @@ SendTermServerEnd(
 
 ENTER_FUNC;
 	rc = FALSE;
+
+	SendPacketClass(fp,WFC_TERM);
 	SendString(fp,term);				ON_IO_ERROR(fp,badio);
-	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
-	dbgmsg("send PING");
-	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
-		dbgmsg("recv PONG");
+	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
 		SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
+		RecvPacketClass(fp); // WFC_DONE
 		rc = TRUE;
 	}
   badio:
