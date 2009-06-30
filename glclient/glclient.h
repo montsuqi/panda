@@ -121,8 +121,8 @@ GLOBAL	char	*Slot;
 #define DEFAULT_GTKRC				""
 #define DEFAULT_USER				(getenv("USER"))
 #define DEFAULT_PASSWORD			""
-#define DEFAULT_SAVEPASSWORD		FALSE
-#define DEFAULT_SAVEPASSWORD_STR	"false"
+#define DEFAULT_SAVEPASSWORD		TRUE
+#define DEFAULT_SAVEPASSWORD_STR	"true"
 #ifdef USE_SSL
 #define DEFAULT_SSL					FALSE
 #define DEFAULT_SSL_STR				"false"
