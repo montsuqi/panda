@@ -388,7 +388,8 @@ static	void
 SwitchWindow(
 	GtkWidget *window)
 {
-	GtkWidget				*child;
+	int			width, height;
+	GtkWidget	*child;
 
 ENTER_FUNC;
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
@@ -396,17 +397,11 @@ ENTER_FUNC;
 	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
 		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
 
-	gtk_window_set_default_size(GTK_WINDOW(TopWindow), 
-		window->requisition.width, 
-		window->requisition.height);
+	gtk_window_get_default_size(GTK_WINDOW(window), &width, &height);
+	gtk_window_set_default_size(GTK_WINDOW(TopWindow), width, height);
 	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
-
-	gtk_window_set_policy(GTK_WINDOW(TopWindow), 
-		GTK_WINDOW(window)->allow_shrink,
-		GTK_WINDOW(window)->allow_grow,
-		FALSE);
-	gtk_window_set_modal(GTK_WINDOW(TopWindow),
-		GTK_WINDOW(window)->modal);
+	gtk_window_set_resizable(GTK_WINDOW(TopWindow),
+		GTK_WINDOW(window)->allow_grow);
 
 	gtk_widget_show(TopWindow);
 	gtk_widget_show(TopNoteBook);
