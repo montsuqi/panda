@@ -565,10 +565,10 @@ RecvFile(
 	,			left
 	,			totalsize
 	,			currentsize;
-	char		buff[SIZE_BUFF];
-	char		buffeuc[SIZE_LARGE_BUFF];
-	char		buffutf8[SIZE_LARGE_BUFF * 2];
-	char		ffname[SIZE_BUFF];
+	static char	buff[SIZE_BUFF];
+	static char	buffeuc[SIZE_LARGE_BUFF];
+	static char	buffutf8[SIZE_LARGE_BUFF * 2];
+	static char	ffname[SIZE_BUFF];
 	Bool		ret;
 
 ENTER_FUNC;
