@@ -336,6 +336,18 @@ CheckRedirectorConnect(
 	return ret;
 }
 
+static Bool
+InTrans(
+		PGconn	*conn)
+{
+	Bool rc = FALSE;
+	if ( (PQtransactionStatus(conn) == PQTRANS_INTRANS)
+		 || (PQtransactionStatus(conn) == PQTRANS_ACTIVE) ) {
+		rc = TRUE;
+	}
+	return rc;
+}
+
 static	void
 ValueToSQL(
 	DBG_Struct	*dbg,
@@ -1222,7 +1234,6 @@ CheckResult(
 		dbgmsg("NG");
 		Warning("%s",PQerrorMessage(PGCONN(dbg,usage)));
 		rc = MCP_BAD_OTHER;
-		AbortDB_Redirect(dbg); 
 	}
 	return rc;
 }
@@ -1624,16 +1635,21 @@ _DBCOMMIT(
 	PGresult	*res;
 	int			rc;
 	PGconn	*conn;
-
+	Bool	fCommit;
 ENTER_FUNC;
 	rc = 0;
 	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
 		conn = PGCONN(dbg,DB_UPDATE);
 		CheckDB_Redirect(dbg);
+		fCommit = InTrans(conn);
 		res = _PQexec(dbg,"COMMIT WORK",FALSE,DB_UPDATE);
 		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
 		_PQclear(res);
-		CommitDB_Redirect(dbg);
+		if ( (fCommit == TRUE) && (rc == MCP_OK) ) {
+			CommitDB_Redirect(dbg);
+		} else {
+			AbortDB_Redirect(dbg); 
+		}
 	} else {
 		conn = NULL;
 	}
