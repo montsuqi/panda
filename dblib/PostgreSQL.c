@@ -145,7 +145,6 @@ PgInitConnect(
 	PGresult	*res;
 	
 	PQsetNoticeProcessor(conn, NoticeMessage, NULL);
-	PQsetClientEncoding(conn, "EUC-JP");
 	res = PQexec(conn, "set standard_conforming_strings = on;");
 	if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
 		Warning("%s",PQerrorMessage(conn));
