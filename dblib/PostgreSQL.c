@@ -1995,6 +1995,34 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
+_DBESCAPE(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DB_Struct	*db;
+	PathStruct	*path;
+    LargeByteString	*lbs;
+	LargeByteString	*src;
+	ValueStruct	*ret;
+	ValueStruct	*val;
+ENTER_FUNC;
+	db = rec->opt.db;
+	path = db->path[ctrl->pno];
+	src = path->ops[DBOP_SELECT]->proc;
+	val = GetItemLongName(args,"dbescapestring");
+	lbs = NewLBS();
+	EscapeString(lbs, ValueToString(val,dbg->coding));
+	LBS_EmitEnd(lbs);
+	SetValueString(val, LBS_Body(lbs),dbg->coding);
+	FreeLBS(lbs);
+	ret = DuplicateValue(args,TRUE);	
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
@@ -2047,6 +2075,7 @@ static	DB_OPS	Operations[] = {
 	{	"DBDELETE",		_DBDELETE },
 	{	"DBINSERT",		_DBINSERT },
 	{	"DBCLOSECURSOR",_DBCLOSECURSOR },
+	{	"DBESCAPE",		_DBESCAPE },	
 
 	{	NULL,			NULL }
 };
