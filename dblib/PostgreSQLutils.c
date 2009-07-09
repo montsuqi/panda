@@ -223,7 +223,7 @@ err_check(int err_fd)
 	if (len > 0) {
 		buff[len] = '\0';
 		if (strncmp(ignore_message, buff, strlen(ignore_message)) != 0 ){
-			fprintf(stderr, buff);						
+			fprintf(stderr, "%s\n", buff);						
 			exit(1);
 		}
 	}
