@@ -78,221 +78,56 @@ ValueOid(
 /**/
 
 static	void
-EscapeString(LargeByteString *lbs, char *s)
+EscapeString(
+	DBG_Struct	*dbg,
+	LargeByteString *lbs,
+	char *s)
 {
-	unsigned char *sp;
+	int error;
 	unsigned char *dp;
-	size_t len;
+	size_t len, new_len;
     size_t old_size;
 
-	len = 0;
-	for (sp = s; *sp != '\0'; sp++) {
-		switch(*sp) {
-          case '\\':
-          case '\'':
-            len += 2;
-            break;
-          default:
-			len++;
-            break;
-        }
-	}
-
+	if		(  s  ==  NULL  )	return;
+	
     old_size = LBS_Size(lbs);
-    LBS_ReserveSize(lbs, old_size + len, TRUE);
+	len = strlen(s);
+	
+	LBS_ReserveSize(lbs, old_size + (len * 2) + 1, TRUE);
     dp = LBS_Body(lbs) + old_size;
 
-	for (sp = s; *sp != '\0'; sp++) {
-		switch(*sp) {
-          case '\\':
-            *dp++ = '\\';
-            *dp++ = '\\';
-            break;
-          case '\'':
-            *dp++ = '\'';
-            *dp++ = '\'';
-            break;
-          default:
-			*dp++ = *sp;
-            break;
-        }
+	new_len = PQescapeStringConn(PGCONN(dbg,DB_UPDATE), dp, s, len, &error);
+	if ( error != 0 ) {
+		Warning("%s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
-    LBS_SetPos(lbs, old_size + len);
-}
-
-static	void
-EscapeStringInArray(LargeByteString *lbs, char *s)
-{
-	unsigned char *sp;
-	unsigned char *dp;
-	size_t len;
-    size_t old_size;
-
-	len = 0;
-	for (sp = s; *sp != '\0'; sp++) {
-		switch(*sp) {
-          case '\\':
-            len += 4;
-            break;
-          case '"':
-            len += 3;
-            break;
-          case '\'':
-            len += 2;
-            break;
-          default:
-			len++;
-            break;
-        }
-	}
-
-    old_size = LBS_Size(lbs);
-    LBS_ReserveSize(lbs, old_size + len, TRUE);
-    dp = LBS_Body(lbs) + old_size;
-
-	for (sp = s; *sp != '\0'; sp++) {
-		switch(*sp) {
-          case '\\':
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            break;
-          case '"':
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '"';
-            break;
-          case '\'':
-            *dp++ = '\'';
-            *dp++ = '\'';
-            break;
-          default:
-			*dp++ = *sp;
-            break;
-        }
-	}
-    LBS_SetPos(lbs, old_size + len);
+	LBS_SetPos(lbs, old_size + new_len);
 }
 
 static void
-EscapeBytea(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
+EscapeBytea(
+	DBG_Struct	*dbg,
+	LargeByteString *lbs,
+	unsigned char *bintext,
+	size_t binlen)
 {
-    unsigned char *sp, *spend = bintext + binlen;
+	size_t old_size;
+	size_t to_length;
     unsigned char *dp;
-    size_t len;
-    size_t old_size;
-
-    len = 0;
-    for (sp = bintext; sp < spend; sp++) {
-        if (*sp < 0x20 || *sp > 0x7e) {
-            len += 5;
-        }
-        else if (*sp == '\'') {
-            len += 2;
-        }
-        else if (*sp == '\\') {
-            len += 4;
-        }
-        else {
-            len++;
-        }
-    }
+    unsigned char *to_char;
 
     old_size = LBS_Size(lbs);
-    LBS_ReserveSize(lbs, old_size + len, TRUE);
-    dp = LBS_Body(lbs) + old_size;
-
-    for (sp = bintext; sp < spend; sp++) {
-        if (*sp < 0x20 || *sp > 0x7e) {
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '0' + ((*sp >> 6) & 7);
-            *dp++ = '0' + ((*sp >> 3) & 7);
-            *dp++ = '0' + (*sp & 7);
-        }
-        else if (*sp == '\'') {
-            *dp++ = '\\';
-            *dp++ = '\'';
-        }
-        else if (*sp == '\\') {
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-        }
-        else {
-            *dp++ = *sp;
-        }
-    }
-    LBS_SetPos(lbs, old_size + len);
-}
-
-static void
-EscapeByteaInArray(LargeByteString *lbs, unsigned char *bintext, size_t binlen)
-{
-    unsigned char *sp, *spend = bintext + binlen;
-    unsigned char *dp;
-    size_t len;
-    size_t old_size;
-
-    len = 0;
-    for (sp = bintext; sp < spend; sp++) {
-        if (*sp < 0x20 || *sp > 0x7e) {
-            len += 7;
-        }
-        else if (*sp == '\'') {
-            len += 2;
-        }
-        else if (*sp == '"') {
-            len += 3;
-        }
-        else if (*sp == '\\') {
-            len += 8;
-        }
-        else {
-            len++;
-        }
-    }
-
-    old_size = LBS_Size(lbs);
-    LBS_ReserveSize(lbs, old_size + len, TRUE);
-    dp = LBS_Body(lbs) + old_size;
-
-    for (sp = bintext; sp < spend; sp++) {
-        if (*sp < 0x20 || *sp > 0x7e) {
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '0' + ((*sp >> 6) & 7);
-            *dp++ = '0' + ((*sp >> 3) & 7);
-            *dp++ = '0' + (*sp & 7);
-        }
-        else if (*sp == '\'') {
-            *dp++ = '\\';
-            *dp++ = '\'';
-        }
-        else if (*sp == '"') {
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '"';
-        }
-        else if (*sp == '\\') {
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-            *dp++ = '\\';
-        }
-        else {
-            *dp++ = *sp;
-        }
-    }
-    LBS_SetPos(lbs, old_size + len);
+	to_char = PQescapeByteaConn(PGCONN(dbg,DB_UPDATE),
+								bintext,
+								binlen,
+								&to_length);
+	if (to_char == NULL) {
+		Warning("%s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
+	}
+    LBS_ReserveSize(lbs, old_size + to_length, TRUE);
+	dp = LBS_Body(lbs) + old_size;
+	memcpy(dp, to_char, to_length);
+	PQfreemem(to_char);
+    LBS_SetPos(lbs, old_size + to_length);
 }
 
 static void
@@ -301,6 +136,21 @@ NoticeMessage(
 	const char * message)
 {
 	Warning("%s", message);
+}
+
+static	void
+PgInitConnect(
+	PGconn	*conn)
+{
+	PGresult	*res;
+	
+	PQsetNoticeProcessor(conn, NoticeMessage, NULL);
+	PQsetClientEncoding(conn, "EUC-JP");
+	res = PQexec(conn, "set standard_conforming_strings = on;");
+	if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
+		Warning("%s",PQerrorMessage(conn));
+	}
+	PQclear(res);	
 }
 
 static  void
@@ -366,26 +216,14 @@ ValueToSQL(
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_TEXT:
-		if		(  fInArray  ) {
-            LBS_EmitChar(lbs, '"');
-            EscapeStringInArray(lbs, ValueToString(val,dbg->coding));
-            LBS_EmitChar(lbs, '"');
-		} else {
-            LBS_EmitChar(lbs, '\'');
-            EscapeString(lbs, ValueToString(val,dbg->coding));
-            LBS_EmitChar(lbs, '\'');
-		}
+		LBS_EmitChar(lbs, '\'');
+		EscapeString(dbg, lbs, ValueToString(val,dbg->coding));
+		LBS_EmitChar(lbs, '\'');
 		break;
 	  case	GL_TYPE_BINARY:
-		if		(  fInArray  ) {
-            LBS_EmitChar(lbs, '"');
-            EscapeByteaInArray(lbs, ValueByte(val), ValueByteLength(val));
-            LBS_EmitChar(lbs, '"');
-		} else {
-            LBS_EmitChar(lbs, '\'');
-            EscapeBytea(lbs, ValueByte(val), ValueByteLength(val));
-            LBS_EmitChar(lbs, '\'');
-		}
+		LBS_EmitChar(lbs, '\'');
+        EscapeBytea(dbg, lbs, ValueByte(val), ValueByteLength(val));
+        LBS_EmitChar(lbs, '\'');
         break;
 	  case	GL_TYPE_DBCODE:
 		LBS_EmitString(lbs,ValueToString(val,dbg->coding));
@@ -1106,7 +944,7 @@ InsertValues(
 		ValueToSQL(dbg,lbs,val);
 		break;
 	  case	GL_TYPE_ARRAY:
-        LBS_EmitString(lbs, "'{");
+        LBS_EmitString(lbs, "ARRAY[");
 		fInArray = TRUE;
 		fComm = FALSE;
 		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
@@ -1123,7 +961,7 @@ InsertValues(
 			}
 		}
 		fInArray = FALSE;
-        LBS_EmitString(lbs,"}' ");
+        LBS_EmitString(lbs,"] ");
 		break;
 	  case	GL_TYPE_RECORD:
 		level ++;
@@ -1503,7 +1341,7 @@ ENTER_FUNC;
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	} else {
 		if		(  (conn = PgConnect(dbg, DB_UPDATE)) != NULL ) {
-			PQsetNoticeProcessor(conn, NoticeMessage, NULL);
+			PgInitConnect(conn);
 			OpenDB_RedirectPort(dbg);
 			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
@@ -1536,7 +1374,7 @@ ENTER_FUNC;
 #endif
 	} else {
 		if		(  (conn = PgConnect(dbg, DB_READONLY)) != NULL ) {
-			PQsetNoticeProcessor(PGCONN(dbg,DB_READONLY), NoticeMessage, NULL);
+			PgInitConnect(conn);
 			dbg->process[PROCESS_READONLY].conn = (void *)conn;
 			dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_CONNECT;
 			if		(  rc  ==  0  ) {
@@ -2011,13 +1849,17 @@ ENTER_FUNC;
 	db = rec->opt.db;
 	path = db->path[ctrl->pno];
 	src = path->ops[DBOP_SELECT]->proc;
-	val = GetItemLongName(args,"dbescapestring");
+	
+	if ( (val = GetItemLongName(args,"dbescapestring")) == NULL) {
+		return DuplicateValue(args,TRUE);
+	}
+	
 	lbs = NewLBS();
-	EscapeString(lbs, ValueToString(val,dbg->coding));
+	EscapeString(dbg, lbs, ValueToString(val,dbg->coding));
 	LBS_EmitEnd(lbs);
 	SetValueString(val, LBS_Body(lbs),dbg->coding);
 	FreeLBS(lbs);
-	ret = DuplicateValue(args,TRUE);	
+	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
 }
