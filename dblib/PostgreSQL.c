@@ -81,26 +81,25 @@ static	void
 EscapeString(
 	DBG_Struct	*dbg,
 	LargeByteString *lbs,
-	char *s)
+	char *str)
 {
 	int error;
-	unsigned char *dp;
-	size_t len, new_len;
-    size_t old_size;
+	size_t len;
+    size_t size;
 
-	if		(  s  ==  NULL  )	return;
+	if		(  str  ==  NULL  )	return;
+	len = strlen(str);
+	if		( len == 0 )		return;
 	
-    old_size = LBS_Size(lbs);
-	len = strlen(s);
-	
-	LBS_ReserveSize(lbs, old_size + (len * 2) + 1, TRUE);
-    dp = LBS_Body(lbs) + old_size;
-
-	new_len = PQescapeStringConn(PGCONN(dbg,DB_UPDATE), dp, s, len, &error);
+    size = LBS_Size(lbs);
+	LBS_ReserveSize(lbs, size + (len * 2) + 1, TRUE);
+	size += PQescapeStringConn(PGCONN(dbg,DB_UPDATE),
+							   LBS_Body(lbs) + size, str, len, &error);
 	if ( error != 0 ) {
 		Warning("%s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
-	LBS_SetPos(lbs, old_size + new_len);
+	LBS_ReserveSize(lbs, size, TRUE);
+	LBS_SetPos(lbs, size);
 }
 
 static void
