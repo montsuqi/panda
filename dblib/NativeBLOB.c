@@ -41,6 +41,7 @@
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"blobreq.h"
+#include	"NativeBLOB.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"redirect.h"
@@ -58,8 +59,8 @@ _EXEC(
 	return	(MCP_OK);
 }
 
-static	ValueStruct	*
-_DBOPEN(
+extern	ValueStruct	*
+BLOB_DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
@@ -101,8 +102,8 @@ LEAVE_FUNC;
 	return	(NULL);
 }
 
-static	ValueStruct	*
-_DBDISCONNECT(
+extern	ValueStruct	*
+BLOB_DBDISCONNECT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
@@ -123,8 +124,8 @@ LEAVE_FUNC;
 	return	(NULL);
 }
 
-static	ValueStruct	*
-_DBSTART(
+extern	ValueStruct	*
+BLOB_DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
@@ -149,8 +150,8 @@ LEAVE_FUNC;
 	return	(NULL);
 }
 
-static	ValueStruct	*
-_DBCOMMIT(
+extern	ValueStruct	*
+BLOB_DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
@@ -194,7 +195,6 @@ ENTER_FUNC;
 	} else {
 		if		(  ( e = GetItemLongName(args,"object") )  !=  NULL  ) {
 			if		(  ( ValueObjectId(e) = RequestNewBLOB(NBCONN(dbg),APS_BLOB,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
-				RequestCloseBLOB(NBCONN(dbg),APS_BLOB,ValueObjectId(e));
 				ret = DuplicateValue(args,TRUE);
 				rc = MCP_OK;
 			} else {
@@ -202,202 +202,6 @@ ENTER_FUNC;
 			}
 		} else {
 			rc = MCP_BAD_ARG;
-		}
-	}
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-static	ValueStruct	*
-_OpenBLOB(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	int			rc;
-	ValueStruct	*obj
-		,		*m;
-	int			mode;
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		rc = MCP_BAD_ARG;
-	} else {
-		if		(  ( m = GetItemLongName(args,"mode") )  !=  NULL  ) {
-			mode = ValueToInteger(m);
-		} else {
-			mode = BLOB_OPEN_READ;
-		}
-		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  RequestOpenBLOB(NBCONN(dbg),APS_BLOB,mode,
-									  ValueObjectId(obj))  ) {
-				rc = MCP_OK;
-			} else {
-				rc = MCP_BAD_OTHER;
-			}
-		} else {
-			rc = MCP_BAD_ARG;
-		}
-	}
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-static	ValueStruct	*
-_CloseBLOB(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	int			rc;
-	ValueStruct	*obj;
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		rc = MCP_BAD_ARG;
-	} else {
-		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  RequestCloseBLOB(NBCONN(dbg),APS_BLOB,
-										ValueObjectId(obj))  ) {
-				rc = MCP_OK;
-			} else {
-				rc = MCP_BAD_OTHER;
-			}
-		} else {
-			rc = MCP_BAD_ARG;
-		}
-	}
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-static	ValueStruct	*
-_WriteBLOB(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	int			rc;
-	ValueStruct	*obj
-		,		*s
-		,		*v;
-	byte		*value;
-	ValueStruct	*ret;
-	size_t		size;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		rc = MCP_BAD_ARG;
-	} else {
-		v = GetItemLongName(args,"value");
-		if		(  ( s = GetItemLongName(args,"size") )  !=  NULL  ) {
-			size = ValueToInteger(s);
-		} else
-		if		(  v  !=  NULL  ) {
-			size = NativeSizeValue(NULL,v);
-		} else {
-			size = 0;
-		}
-		if		(  size  >  0  ) {
-			value = (byte *)xmalloc(size);
-		} else {
-			value = NULL;
-		}
-		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  value  !=  NULL  ) {
-				NativePackValue(NULL,value,v);
-				if		(  RequestWriteBLOB(NBCONN(dbg),APS_BLOB,
-											ValueObjectId(obj),value,size)  ==  size  ) {
-					rc = MCP_OK;
-				} else {
-					rc = MCP_BAD_OTHER;
-				}
-			} else {
-				rc = MCP_BAD_ARG;
-			}
-		} else {
-			rc = MCP_BAD_ARG;
-		}
-		if		(  value  !=  NULL  ) {
-			xfree(value);
-		}
-	}
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-static	ValueStruct	*
-_ReadBLOB(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	int			rc;
-	ValueStruct	*obj
-		,		*s
-		,		*v;
-	byte		*value;
-	size_t		size;
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		rc = MCP_BAD_ARG;
-	} else {
-		v = GetItemLongName(args,"value");
-		if		(  ( s = GetItemLongName(args,"size") )  !=  NULL  ) {
-			size = ValueToInteger(s);
-		} else
-		if		(  v  !=  NULL  ) {
-			size = NativeSizeValue(NULL,v);
-		} else {
-			size = 0;
-		}
-		if		(  size  >  0  ) {
-			value = (byte *)xmalloc(size);
-		} else {
-			value = NULL;
-		}
-		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  value  !=  NULL  ) {
-				if		(  RequestReadBLOB(NBCONN(dbg),APS_BLOB,
-										   ValueObjectId(obj),value,size)  ==  size  ) {
-					NativeUnPackValue(NULL,value,v);
-					ret = DuplicateValue(args,TRUE);
-					rc = MCP_OK;
-				} else {
-					rc = MCP_BAD_OTHER;
-				}
-			} else {
-				rc = MCP_BAD_ARG;
-			}
-		} else {
-			rc = MCP_BAD_ARG;
-		}
-		if		(  value  !=  NULL  ) {
-			xfree(value);
 		}
 	}
 	if		(  ctrl  !=  NULL  ) {
@@ -482,42 +286,6 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
-_SaveBLOB(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	int			rc;
-	ValueStruct	*obj
-		,		*f;
-	ValueStruct	*ret;
-
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		rc = MCP_BAD_ARG;
-	} else {
-		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
-				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
-			if		(  RequestSaveBLOB(NBCONN(dbg),APS_BLOB,
-									   ValueObjectId(obj),ValueToString(f,NULL))  ) {
-				rc = MCP_OK;
-			} else {
-				rc = MCP_BAD_OTHER;
-			}
-		} else {
-			rc = MCP_BAD_ARG;
-		}
-	}
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-static	ValueStruct	*
 _CheckBLOB(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -585,7 +353,7 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-#ifdef BLOB_VERSION == 1
+#if BLOB_VERSION == 1
 static	ValueStruct	*
 _RegisterBLOB(
 	DBG_Struct		*dbg,
@@ -679,19 +447,14 @@ LEAVE_FUNC;
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)BLOB_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)BLOB_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)BLOB_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)BLOB_DBCOMMIT },
 	/*	table operations	*/
 	{	"BLOBNEW",		_NewBLOB		},
-	{	"BLOBOPEN",		_OpenBLOB		},
-	{	"BLOBWRITE",	_WriteBLOB		},
-	{	"BLOBREAD",		_ReadBLOB		},
-	{	"BLOBCLOSE",	_CloseBLOB		},
 	{	"BLOBEXPORT",	_ExportBLOB		},
 	{	"BLOBIMPORT",	_ImportBLOB		},
-	{	"BLOBSAVE",		_SaveBLOB		},
 	{	"BLOBCHECK",	_CheckBLOB		},
 	{	"BLOBDESTROY",	_DestroyBLOB	},
 #if BLOB_VERSION == 1

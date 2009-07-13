@@ -72,6 +72,8 @@ ENTER_FUNC;
 	snprintf(longname,SIZE_LONGNAME+1,"%s/%d",ent->blob->space,(int)ent->oid);
 	dbgprintf("%s",longname);
 	if		(  ( mode & BLOB_OPEN_WRITE )  !=  0  ) {
+		dbgmsg("mode blob open write");
+
 #if	1
 		flag = O_CREAT | O_APPEND | O_TRUNC;
 #else
@@ -87,12 +89,15 @@ ENTER_FUNC;
 			flag |= O_WRONLY;
 		}
 	} else {
+		dbgmsg("mode blob open read");
 		flag = (  ( mode & BLOB_OPEN_READ )  !=  0  ) ? O_RDONLY : 0;
 	}
 
 	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
+		dbgmsg("mode blob open create");
 		fd = open(longname,flag,0600);
 	} else {
+		dbgmsg("open read or write mode");
 		fd = open(longname,flag);
 	}
 	if		(  fd  >=  0  ) {
@@ -346,6 +351,7 @@ ENTER_FUNC;
 		ret = TRUE;
 		ent->fp = NULL;
 	} else {
+dbgmsg("CloseBLOB not found");
 		ret = FALSE;
 	}
 LEAVE_FUNC;
@@ -396,29 +402,31 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-extern	int
+extern	byte *
 ReadBLOB_V1(
 	BLOB_V1_State	*state,
 	MonObjectType	obj,
-	byte			*buff,
-	size_t			size)
+	size_t			*size)
 {
 	BLOB_V1_Entry	*ent;
-	int			ret;
+	struct stat		st;
+	byte			*buff;
 
 ENTER_FUNC;
+	buff = NULL;
+	*size = 0;
 	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
-		if		(  ent->fp  !=  NULL  ) {
-			ret = Recv(ent->fp,buff,size);
-		} else {
-			ret = -1;
+		if(ent->fp != NULL && !fstat(ent->fp->fd, &st)) {
+			*size = st.st_size;
+			buff = xmalloc(*size);
+			Recv(ent->fp,buff,*size);
 		}
 	} else {
-		ret = -1;
+		dbgprintf("ent not found oid:%d\n", (int)obj);
 	}
 LEAVE_FUNC;
-	return	(ret);
+	return	buff;
 }
 
 extern	Bool

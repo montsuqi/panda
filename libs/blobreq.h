@@ -26,13 +26,10 @@
 #include	"blobcom.h"
 
 extern	MonObjectType	RequestNewBLOB(NETFILE *fp, PacketClass flag, int mode);
-extern	Bool			RequestOpenBLOB(NETFILE *fp, PacketClass flag, int mode, MonObjectType obj);
-extern	Bool			RequestCloseBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
 extern	size_t			RequestWriteBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, byte *buff, size_t size);
-extern	size_t			RequestReadBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, byte *buff, size_t size);
+extern	size_t			RequestReadBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, byte **buff, size_t *size);
 extern	Bool			RequestExportBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *fname);
 extern	MonObjectType	RequestImportBLOB(NETFILE *fp, PacketClass flag, char *fname);
-extern	Bool			RequestSaveBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *fname);
 extern	Bool			RequestCheckBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
 extern	Bool			RequestDestroyBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
 extern	Bool			RequestStartBLOB(NETFILE *fp, PacketClass flag);

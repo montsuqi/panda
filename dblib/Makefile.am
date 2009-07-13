@@ -33,6 +33,7 @@ INCLUDES 			=		\
 	$(RUBY_CFLAGS)			\
 	$(OSEKI_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
+	$(XML2_CFLAGS)			\
 	$(GLIB_CFLAGS)
 
 libpandadb_a_CFLAGS = $(AM_CFLAGS)
@@ -55,7 +56,8 @@ DB_OBJECTS			=		\
 	System.la				\
 	Oseki.la				\
 	NativeBLOB.la			\
-	DBRuby.la
+	DBRuby.la				\
+	XMLIO.la
 
 PostgreSQL_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
@@ -101,10 +103,10 @@ NativeBLOB_la_LDFLAGS	=		\
 NativeBLOB_la_SOURCES	=		\
 	dbgroup.c	dbgroup.h		\
 	redirect.c	redirect.h		\
-	NativeBLOB.c
+	NativeBLOB.h				\
+	NativeBLOB.c	
 NativeBLOB_la_LIBADD	=		\
 	$(top_builddir)/libs/blobreq.lo
-
 
 Oseki_la_LDFLAGS	=			\
 	-version-info $(LTVERSION)	\
@@ -128,3 +130,16 @@ DBRuby_la_SOURCES	=	\
 DBRuby_la_LIBADD		=	\
 	$(RUBY_LIBS)
 
+XMLIO_la_LDFLAGS	=	\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
+XMLIO_la_SOURCES	=	\
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	NativeBLOB.h			\
+	NativeBLOB.c			\
+	XMLIO.c
+XMLIO_la_LIBADD			=	\
+	$(top_builddir)/libs/blobreq.lo	\
+	$(XML2_LIBS)

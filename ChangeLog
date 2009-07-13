@@ -1,7 +1,36 @@
+2009-07-13  Yusuke Mihara  <mihara@netlab.jp>
+
+	* configure.ac dblib/Makefile.am dblib/NativeBLOB.c libs/blob_v1.c
+	libs/blob_v1.h libs/blobreq.c libs/blobreq.h wfc/blobserv.c:
+	COBOLから利用可能なXML DOMパーサ、DOMライタであるXMLIO.so を追加。
+	NativeBLOB より使用されていない BLOBOPEN, BLOBCLOSE, BLOBREAD, BLOBWRITE, BLOBSAVE を削除。
+
+
 2009-07-07  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/PostgreSQL.c: トランザクション状態でROLLBACKしているか判断する
 	ように変更。
+
+2009-06-25  Yusuke Mihara  <mihara@netlab.jp>
+	* dblib/NativeBLOB.c libs/blob_v1.c libs/blobreq.c libs/comm.c
+	libs/front.c libs/glcomm.c libs/wfcio.c wfc/blobserv.c:
+	NativeBLOBにBLOBREGISTER,BLOBLOOKUPを追加。
+
+
+2009-06-16  Yusuke Mihara  <mihara@netlab.jp>
+    * glclient/client.c glclient/protocol.c glclient/gtk1/dialogs.c
+	glclient/gtk1/interface.c glclient/gtk2/dialogs.c
+	glclient/gtk2/interface.c glserver/server.c include/glterm.h:
+	クライアントへのメッセージ通知機能を追加した。client-glserver間で Ping
+	Pong を行うようにした。
+
+2009-05-20  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glclient/protocol.c glclient/gtk1/action.c glclient/gtk1/interface.c
+	glclient/gtk1/widgetOPS.c glclient/gtk2/action.c
+	glclient/gtk2/bd_component.c glclient/gtk2/interface.c
+	glclient/gtk2widgetOPS.c:
+	画面切り替えにGtkWindowの代わりにGtkNotebookを利用するようにした。
 
 2009-04-27  Yusuke Mihara  <mihara@netlab.jp>
 

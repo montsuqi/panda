@@ -141,6 +141,14 @@ PKG_CHECK_MODULES(GLSERVERLIB,
 ])
 
 dnl ***************************************************************************
+dnl checking for xml2
+dnl ***************************************************************************
+PKG_CHECK_MODULES(XML2,
+[
+	libxml-2.0	>= 2.6.27
+])
+
+dnl ***************************************************************************
 dnl glclient Support
 dnl ***************************************************************************
 
@@ -620,15 +628,6 @@ AC_SUBST(GDLIB_CFLAGS)
 dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the XML2 modules.
 dnl ***************************************************************************
-
-AC_PATH_PROG(XML2_CONFIG,xml2-config,no)
-if test x$XML2_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find xml2-config)
-fi
-XML2_LIBS=`xml2-config --libs`
-XML2_CFLAGS=`xml2-config --cflags`
-AC_SUBST(XML2_LIBS)
-AC_SUBST(XML2_CFLAGS)
 
 AC_PATH_PROG(XSLT_CONFIG,xslt-config,no)
 if test x$XSLT_CONFIG = xno; then
