@@ -172,11 +172,11 @@ XMLNode2Value(
 	xmlNodePtr	root)
 {
 	int			i;
-	char		*buff;
+	char		*buff1;
 	char		*buff2;
-	char		*p;
+	char		*p1;
 	char		*p2;
-	size_t		size;
+	size_t		size1;
 	size_t		size2;
 	iconv_t		cd;
 	xmlNodePtr	node;
@@ -190,33 +190,33 @@ ENTER_FUNC;
 		if (xmlStrcmp(root->name, "int") != 0) {
 			break;
 		}
-		buff = xmlNodeListGetString(root->doc, root->children, TRUE);
-		SetValueStringWithLength(val, buff, strlen(buff), NULL);
-		free(buff);
+		buff1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
+		free(buff1);
 		break;
 	  case	GL_TYPE_FLOAT:
 		if (xmlStrcmp(root->name, "float") != 0) {
 			break;
 		}
-		buff = xmlNodeListGetString(root->doc, root->children, TRUE);
-		SetValueStringWithLength(val, buff, strlen(buff), NULL);
-		free(buff);
+		buff1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
+		free(buff1);
 		break;
 	  case	GL_TYPE_NUMBER:
 		if (xmlStrcmp(root->name, "number") != 0) {
 			break;
 		}
-		buff = xmlNodeListGetString(root->doc, root->children, TRUE);
-		SetValueStringWithLength(val, buff, strlen(buff), NULL);
-		free(buff);
+		buff1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
+		free(buff1);
 		break;
 	  case	GL_TYPE_BOOL:
 		if (xmlStrcmp(root->name, "bool") != 0) {
 			break;
 		}
-		buff = xmlNodeListGetString(root->doc, root->children, TRUE);
-		SetValueStringWithLength(val, buff, strlen(buff), NULL);
-		free(buff);
+		buff1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
+		free(buff1);
 		break;
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
@@ -226,20 +226,21 @@ ENTER_FUNC;
 		if (xmlStrcmp(root->name, "string") != 0) {
 			break;
 		}
-		buff = p = xmlNodeListGetString(root->doc, root->children, TRUE);
+		buff1 = p1 = xmlNodeListGetString(root->doc, root->children, TRUE);
 #if 1
-		size = strlen(buff);
-		size2 = size;
+		size1 = strlen(buff1);
+		size2 = size1;
 		buff2 = p2 = xmalloc(size2 + 1);
 		cd = iconv_open("EUC-JP", "utf8");
-		if (iconv(cd, &p, &size, &p2, &size2) == 0) {
-			SetValueStringWithLength(val, buff2, size2, NULL);
+		if (iconv(cd, &p1, &size1, &p2, &size2) == 0) {
+			*p2 = 0;
+			SetValueStringWithLength(val, buff2, strlen(buff2), NULL);
 		}
 		iconv_close(cd);
 #else
-		SetValueStringWithLength(val, buff, size, NULL);
+		SetValueStringWithLength(val, buff1, size1, NULL);
 #endif
-		free(buff);
+		free(buff1);
 		break;
 	  case	GL_TYPE_ARRAY:
 		if (xmlStrcmp(root->name, "array") != 0) {
@@ -260,15 +261,15 @@ ENTER_FUNC;
 		}
 		for	( i = 0 ; i < ValueRecordSize(val) ; i ++ ) {
 			for( node = root->children; node != NULL; node = node->next) {
-				if ((buff = xmlGetProp (node, "name")) == NULL) {
+				if ((buff1 = xmlGetProp (node, "name")) == NULL) {
 					continue;
 				}
-				if (!xmlStrcmp(buff, ValueRecordName(val, i))) {
+				if (!xmlStrcmp(buff1, ValueRecordName(val, i))) {
 					XMLNode2Value(ValueRecordItem(val,i), node);
-					free(buff);
+					free(buff1);
 					break;
 				}
-				free(buff);
+				free(buff1);
 			}
 		}
 		break;
@@ -289,11 +290,11 @@ Value2XMLNode(
 {
 	xmlNodePtr	node;
 	xmlNodePtr	child;
-	char		*buff;
+	char		*buff1;
 	char		*buff2;
-	char		*p;
+	char		*p1;
 	char		*p2;
-	size_t		size;
+	size_t		size1;
 	size_t		size2;
 	int			i;
 	iconv_t		cd;
@@ -326,15 +327,14 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		node = xmlNewNode(NULL, "string");
-		size = ValueStringLength(val);
-		buff = p = ValueStringPointer(val);
-dbgprintf("buff:%s", buff);
+		size1 = ValueStringLength(val);
+		buff1 = p1 = ValueStringPointer(val);
 #if 1
-		size2 = size * 2 + 1;
+		size2 = size1 * 2 + 1;
 		buff2 = p2 = xmalloc(size2);
 		cd = iconv_open("utf8", "EUC-JP");
-		if (iconv(cd, &p, &size, &p2, &size2) == 0) {
-dbgprintf("buff2:%s", buff2);
+		if (iconv(cd, &p1, &size1, &p2, &size2) == 0) {
+			*p2 = 0;
 			xmlNodeAddContent(node, buff2); 
 		}
 		iconv_close(cd);
