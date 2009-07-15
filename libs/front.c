@@ -83,6 +83,7 @@ InitSession(void)
 ENTER_FUNC;
 	scr = NewScreenData();
 	scr->status = APL_SESSION_LINK;
+	scr->fConnect = FALSE;
 LEAVE_FUNC;
 	return	(scr); 
 }

@@ -66,7 +66,9 @@ static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	ApplicationsCall(APL_SESSION_END,scr);
+	if (scr->fConnect) {
+		ApplicationsCall(APL_SESSION_END,scr);
+	}
 	Message("[%s@%s] session end",scr->user,TermToHost(scr->term));
 }
 
@@ -657,8 +659,8 @@ ENTER_FUNC;
 			} else {
 				Warning("invalid class = %X\n",klass);
 			}
-			scr->status = APL_SESSION_NULL;
-			ret = FALSE;
+			// this should not come
+			exit(-1);
 			break;
 		default:
 			Warning("invalid class = %X\n",klass);

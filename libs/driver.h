@@ -35,6 +35,7 @@ typedef	struct {
 	char		term[SIZE_TERM+1];
 	char		other[SIZE_OTHER+1];
 	int			status;
+	Bool		fConnect;
 	GHashTable	*Windows;			/*	for WindowData		*/
 	GHashTable	*Records;			/*	for	RecordStruct	*/
 	char		*encoding;

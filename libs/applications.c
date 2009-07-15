@@ -145,6 +145,8 @@ ENTER_FUNC;
 			if		(  apl->link  !=  NULL  ) {
 				if		(  !apl->link(p)  ) {
 					scr->status = APL_SESSION_NULL;
+				} else {
+					scr->fConnect = TRUE;
 				}
 			}
 			break;
