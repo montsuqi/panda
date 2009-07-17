@@ -148,15 +148,14 @@ ENTER_FUNC;
 	}
 	ctrl->rc = MCP_OK;
 	if (XMLmode == MODE_WRITE) {
-		buff = xmalloc(SIZE_LARGE_BUFF);
 		xmlDocDumpFormatMemoryEnc(XMLDoc, &buff, &size, "UTF-8", 0);
 		if (buff != NULL) {
 			wrote = RequestWriteBLOB(NBCONN(dbg),APS_BLOB,ValueObjectId(obj), (byte *)buff, size);
-			xfree(buff);
 			if (wrote != size) {
 				ctrl->rc = MCP_BAD_OTHER;
 			}
 		}
+		xfree(buff);
 	}
 	xmlFreeDoc(XMLDoc);
 	XMLDoc = NULL;
@@ -237,6 +236,7 @@ ENTER_FUNC;
 			SetValueStringWithLength(val, buff2, strlen(buff2), NULL);
 		}
 		iconv_close(cd);
+		xfree(buff2);
 #else
 		SetValueStringWithLength(val, buff1, size1, NULL);
 #endif

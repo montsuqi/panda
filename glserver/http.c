@@ -41,8 +41,6 @@
 #include	<unistd.h>
 #include	<ctype.h>
 #include	<glib.h>
-#include 	<libxml/tree.h>
-#include 	<libxml/parser.h>
 
 #include	"types.h"
 #include	"enum.h"
@@ -178,18 +176,19 @@ HTTP_CODE2REASON(HTTP_NOT_EXTENDED,"Not Extended")
 void
 SendResponse(
 	HTTP_REQUEST *req,
-	LargeByteString *headers,
-	LargeByteString *body)
+	MonAPIData *data)
 {
 	char buf[1024];
 	char date[50];
+	char *body;
+	int size;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
-	xmlDocPtr doc = NULL;
-	xmlChar *newbody;
-	int size;
+	ValueStruct *e;
+	MonObjectType obj;
 
-	newbody = NULL;
+	size = 0;
+	body = NULL;
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
 		req->status, GetReasonPhrase(req->status));
@@ -207,30 +206,33 @@ SendResponse(
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
-	if (headers != NULL && LBS_Body(headers) != NULL) {
-		Send(req->fp, LBS_Body(headers), LBS_Size(headers)); 
+	if (data != NULL && (e = data->rec->value) != NULL) {
+		obj = ValueObjectId(GetItemLongName(e, "body"));
+		dbgprintf("obj:%d GL_OBJ_NULL:%d", (int)obj, (int)GL_OBJ_NULL);
+		if (obj != GL_OBJ_NULL) {
+			MonAPIReadBLOB(obj, &body, &size);
+		}
+		sprintf(buf, "Content-Type: %s\r\n", 
+			ValueToString(GetItemLongName(e,"content_type"), NULL));
+		Send(req->fp, buf, strlen(buf));
+	}
+	if (body != NULL && size > 0) {
+		sprintf(buf, "Content-Length: %d\r\n", size);
+		Send(req->fp, buf, strlen(buf));
+	} else {
+		sprintf(buf, "Content-Length: 0\r\n");
+		Send(req->fp, buf, strlen(buf));
 	}
 
-	//convert xml encoding
-	if (body != NULL && LBS_Body(body) != NULL) {
-		doc = xmlReadMemory(LBS_Body(body), LBS_Size(body),
-				"http://www.montsuqi.org/", "", XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
-		if (doc != NULL) {
-			xmlDocDumpFormatMemoryEnc(doc, &newbody, &size, "UTF-8", 0);
-		} else {
-			snprintf(buf, sizeof(buf) -1 , "%s", (char *)LBS_Body(body));
-			MessageLogPrintf("can't read response XML:%s", buf);
-		}
-		if (newbody != NULL) {
-			sprintf(buf, "Content-Length: %d\r\n", size);
-			Send(req->fp, buf, strlen(buf));
-		}
+	if (req->status == HTTP_UNAUTHORIZED) {
+		const char *str = "WWW-Authenticate: Basic realm=\"glserver\"\r\n";
+		Send(req->fp, (char *)str, strlen(str));
 	}
+
 	Send(req->fp, "\r\n", strlen("\r\n"));
-
-	if (newbody != NULL) {
-		Send(req->fp, (char *)newbody, size);
-		xfree(newbody);
+	if (body != NULL && size > 0) {
+		Send(req->fp, (char *)body, size);
+		xfree(body);
 	}
 	Flush(req->fp);
 }
@@ -243,7 +245,7 @@ TryRecv(
 
 	if (req->buf_size >= MAX_REQ_SIZE) {
 		req->status = HTTP_UNPROCESSABLE_ENTITY;
-		SendResponse(req, 0, NULL);
+		SendResponse(req, NULL);
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
 	size = RecvAtOnce(req->fp, 
@@ -487,19 +489,15 @@ ParseReqBody(HTTP_REQUEST *req)
 	}
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Type");
 
+#if 0
 	// FIXME ; delete this check
 	if (strcmp("application/xml", value)) {
 		req->status = HTTP_BAD_REQUEST;
 		Message("invalid Content-Type:%s", value);
 		return;
 	}
-
-#if 0
-	p = req->buf;
-	while((q = strstr(p, "\r\n")) != NULL) {
-		p = q + strlen("\r\n");
-	}
 #endif
+
 	p = req->head;
 
 	partsize = strlen(p);
@@ -587,6 +585,7 @@ PackRequestRecord(
 
 ENTER_FUNC;
 	e = rec->value;
+	InitializeValue(e);
 
 	p = NULL;
 	switch(req->method) {
@@ -594,24 +593,20 @@ ENTER_FUNC;
 			p = StrDup("GET");
 			break;
 		case 'P':
-			p = StrDup("PUT");
+			p = StrDup("POST");
 			break;
 		case 'H':
 			p = StrDup("HEAD");
 			break;
 	}
-	SetValueString(GetItemLongName(e,"request.methodtype"), p,NULL);
+	SetValueString(GetItemLongName(e,"methodtype"), p,NULL);
 
 	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
 	if (p != NULL) {
-		SetValueString(GetItemLongName(e, "request.content_type"), p, NULL);
-	}
-	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Length");
-	if (p != NULL) {
-		SetValueString(GetItemLongName(e, "request.content_length"), p, NULL); 
+		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
 	}
 	if (req->body != NULL && req->body_size > 0) {
-		SetValueBinary(GetItemLongName(e,"request.body"), req->body, req->body_size);
+		ValueObjectId(GetItemLongName(e,"body")) = MonAPIWriteBLOB(req->body, req->body_size);
 	}
 
 	head = req->arguments;
@@ -624,7 +619,7 @@ ENTER_FUNC;
 			return;
 		}
 		key = StrnDup(head, tail - head);
-		snprintf(buf, sizeof(buf), "request.arguments.%s", key);
+		snprintf(buf, sizeof(buf), "argument.%s", key);
 		xfree(key);
 		head = tail + 1;
 		
@@ -684,44 +679,31 @@ _HTTP_Method(
 		req->status = HTTP_UNAUTHORIZED;
 	}
 	if (req->status != HTTP_OK) {
-		if (req->status == HTTP_UNAUTHORIZED) {
-			const char *str = "WWW-Authenticate: Basic realm=\"glserver\"\r\n";
-			char *p;
-			LargeByteString *headers;
-
-			headers = NewLBS();
-			LBS_ReserveSize(headers,strlen(str),FALSE);
-			p = LBS_Body(headers);
-			memcpy(p, str, strlen(str));
-			SendResponse(req, headers, NULL);
-			FreeLBS(headers);
-		} else {
-			SendResponse(req, NULL , NULL);
-		}
+		SendResponse(req, NULL);
 		return FALSE;
 	}
 	if (req->method == HTTP_HEAD) {
-		SendResponse(req, NULL , NULL);
+		SendResponse(req, NULL);
 		return TRUE;
 	}
 	data = MakeMonAPIData(req);
 	if (data == NULL) {
 		req->status = HTTP_NOT_FOUND; 
-		SendResponse(req, NULL , NULL);
+		SendResponse(req, NULL);
 		return FALSE;
 	}
 	result = CallMonAPI(data);
 	switch(result) {
 	case WFC_API_OK:
-		SendResponse(req, data->headers, data->body);
+		SendResponse(req, data);
 		break;
 	case WFC_API_NOT_FOUND:
 		req->status = HTTP_NOT_FOUND; 
-		SendResponse(req, NULL , NULL);
+		SendResponse(req, NULL);
 		break;
 	default:
 		req->status = HTTP_INTERNAL_SERVER_ERROR; 
-		SendResponse(req, NULL , NULL);
+		SendResponse(req, NULL);
 		break;
 	}
 	FreeMonAPIData(data);

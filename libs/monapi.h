@@ -31,13 +31,13 @@ typedef	struct {
 	char			user[SIZE_USER+1];
 	char			term[SIZE_TERM+1];
 	RecordStruct	*rec;
-	LargeByteString	*headers;
-	LargeByteString	*body;
 }	MonAPIData;
 
-extern	MonAPIData	*NewMonAPIData(void);
-extern	void		FreeMonAPIData(MonAPIData *data);
-extern	PacketClass	CallMonAPI(MonAPIData *data);
+extern	MonObjectType	MonAPIWriteBLOB(char *data, int size);
+extern	int				MonAPIReadBLOB(MonObjectType id, char **data, int *size);
+extern	MonAPIData		*NewMonAPIData(void);
+extern	void			FreeMonAPIData(MonAPIData *data);
+extern	PacketClass		CallMonAPI(MonAPIData *data);
 
 #undef	GLOBAL
 #ifdef	_MONAPI
