@@ -46,10 +46,10 @@
 #include	"message.h"
 #include	"debug.h"
 
-#define	LockBLOB(blob)		pthread_mutex_lock(&(blob)->mutex)
-#define	UnLockBLOB(blob)	pthread_mutex_unlock(&(blob)->mutex)
-#define	ReleaseBLOB(blob)	pthread_cond_signal(&(blob)->cond)
-#define	WaitBLOB(blod)		pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
+#define	LockBLOB(blob)		dbgmsg("LockBLOB");pthread_mutex_lock(&(blob)->mutex)
+#define	UnLockBLOB(blob)	dbgmsg("UnLockBLOB");pthread_mutex_unlock(&(blob)->mutex)
+#define	ReleaseBLOB(blob)	dbgmsg("ReleaseBLOB");pthread_cond_signal(&(blob)->cond)
+#define	WaitBLOB(blod)		dbgmsg("WaiteBLOB");pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
 typedef	struct {
 	NETFILE	*fp;

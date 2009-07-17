@@ -80,8 +80,8 @@ ENTER_FUNC;
 				size = WriteBLOB(blob,obj,buff,size);
 				CloseBLOB(blob,obj);
 				xfree(buff);
+				SendLength(fp,size);
 			}
-			SendLength(fp,size);
 		} else {
 			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
 		}
@@ -90,6 +90,7 @@ ENTER_FUNC;
 		dbgmsg("BLOB_READ");
 		obj = RecvObject(fp);		ON_IO_ERROR(fp,badio);
 		if		(  OpenBLOB(blob,obj,BLOB_OPEN_READ)  >=  0  ) {
+		dbgmsg("   OpenBLOB end");
 			SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
 			ON_IO_ERROR(fp,badio);
 			buff = ReadBLOB(blob,obj,&size);

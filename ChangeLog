@@ -1,3 +1,14 @@
+2009-07-17  Yusuke Mihara  <mihara@netlab.jp>
+
+	* configure.ac aps/apsio.c cobol/MCPMAIN.CBL dblib/NativeBLOB.c
+	dblib/XMLIO.c dblib/dbgroup.c glserver/http.c libs/DIparser.c 
+	libs/Makefile.am libs/blob_v1.c libs/blobreq.c libs/debug.h
+	libs/message.c libs/monapi.c libs/monapi.h libs/port.c
+	libs/wfcio.h wfc/blobserv.c wfc/blobthread.c wfc/mqthread.c
+	wfc/termthread.c:
+	APIセッションの内部のプロトコルを修正。
+	リクエスト/レスポンスのボディをBLOBでやりとりするようにした。
+
 2009-07-13  Yusuke Mihara  <mihara@netlab.jp>
 
 	* configure.ac dblib/Makefile.am dblib/NativeBLOB.c libs/blob_v1.c

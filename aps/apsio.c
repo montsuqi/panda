@@ -391,7 +391,6 @@ ENTER_FUNC;
 		SetValueString(GetItemLongName(e,"dc.term"),hdr.term,NULL);
 		SetValueString(GetItemLongName(e,"dc.user"),hdr.user,NULL);
 		SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
-		SetValueString(GetItemLongName(e,"api.response_type"),"XML2",NULL);
 		SetValueChar(GetItemLongName(e,"private.pstatus"),APL_SESSION_GET);
 
 		strcpy(node->term,hdr.term);
@@ -566,60 +565,26 @@ PutWFCAPI(
 	NETFILE	*fp,
 	ProcessNode	*node)
 {
-	CONVOPT *opt = NULL;
-	ConvFuncs *func;
 	ValueStruct *value;
 	ValueStruct *mcp;
-	LargeByteString *headers;
-	LargeByteString *body;
-	char str[SIZE_BUFF+1];
-	char *convfunc;
-	char *p;
-	int asize, rsize;
 	int i;
 	
 ENTER_FUNC;
 	mcp = node->mcprec->value;
-	convfunc = ValueToString(
-					GetItemLongName(mcp, "api.response_type"), NULL);
-	opt = NewConvOpt();
-	ConvSetSize(opt,ThisLD->textsize,ThisLD->arraysize);
-	opt->recname = NULL;
-	opt->codeset = strdup("EUC-JP");
 
-	body = NewLBS();
-	headers = NewLBS();
 	value = NULL;
 
 	for(i = 0; i < node->cWindow; i++) {
 		if (node->scrrec[i] != NULL &&
 			!strcmp(node->scrrec[i]->name, node->window)) {
 			value = node->scrrec[i]->value;
+			LBS_ReserveSize(buff,NativeSizeValue(NULL,node->scrrec[i]->value),FALSE);
+			NativePackValue(NULL,LBS_Body(buff),node->scrrec[i]->value);
+			SendLBS(fp,buff);						ON_IO_ERROR(fp,badio);
 			break;
 		}
 	}
-	if (value != NULL &&
-		(value = GetItemLongName(value, "response")) != NULL) {
-		if ((func = GetConvFunc(convfunc)) != NULL) {
-			asize = func->SizeValue(opt, value);
-			LBS_ReserveSize(body, asize, FALSE);
-			p = LBS_Body(body);
-			rsize = func->PackValue(opt, p, value);
-			LBS_ReserveSize(body, rsize, TRUE);
-			LBS_EmitEnd(body);
-			// FIXME; ConvFunc should return mime type. update libmondai
-			snprintf(str, sizeof(str),
-				"Content-Type: application/xml\r\n");
-			LBS_EmitString(headers,str);
-		} 
-	}
-	SendLBS(fp,headers);	ON_IO_ERROR(fp,badio);
-	SendLBS(fp,body);		ON_IO_ERROR(fp,badio);
-
 badio:
-	DestroyConvOpt(opt);
-	FreeLBS(headers);
-	FreeLBS(body);
 LEAVE_FUNC;
 }
 

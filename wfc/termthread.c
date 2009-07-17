@@ -876,8 +876,7 @@ APISession(
 
 		SendPacketClass(term->fp, api->status);	ON_IO_ERROR(term->fp,badio2);
 		if (api->status == WFC_API_OK) {
-			SendLBS(term->fp, api->headers);	ON_IO_ERROR(term->fp,badio2);
-			SendLBS(term->fp, api->body);		ON_IO_ERROR(term->fp,badio2);
+			SendLBS(term->fp, api->rec);	ON_IO_ERROR(term->fp,badio2);
 		}
 		CloseNet(term->fp);
 	badio2:
@@ -888,6 +887,20 @@ APISession(
 	}
 	badio:
 		;
+}
+
+static  void
+BLOBSession(
+	TermNode	*term)
+{
+	do {
+		ON_IO_ERROR(term->fp,badio);
+		PassiveBLOB(term->fp, BlobState);
+		ON_IO_ERROR(term->fp,badio);
+	} while (RecvPacketClass(term->fp) == WFC_BLOB);
+	CloseNet(term->fp);
+badio:
+	;
 }
 
 static	void
@@ -904,6 +917,9 @@ ENTER_FUNC;
 		break;
 	case WFC_API:
 		APISession(term);
+		break;
+	case WFC_BLOB:
+		BLOBSession(term);
 		break;
 	}
 	FreeQueue(term->que);

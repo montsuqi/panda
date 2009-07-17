@@ -55,36 +55,6 @@
 #include	"message.h"
 #include	"debug.h"
 
-static	Bool
-InitSession(
-	NETFILE	*fp)
-{
-	char	user[SIZE_NAME+1]
-		,	pass[SIZE_NAME+1];
-	char	msg[SIZE_BUFF];
-	Bool	rc;
-
-ENTER_FUNC;
-	rc = FALSE;
-	RecvStringDelim(fp,SIZE_NAME,user);		ON_IO_ERROR(fp,badio);
-	RecvStringDelim(fp,SIZE_NAME,pass);		ON_IO_ERROR(fp,badio);
-	dbgprintf("user = [%s]\n",user);
-	dbgprintf("pass = [%s]\n",pass);
-	if		(  AuthUser(ThisEnv->blob->auth,user,pass,NULL,NULL)  ) {
-		SendPacketClass(fp,APS_OK);
-		sprintf(msg,"[%s] Native BLOB connect",user);
-		MessageLog(msg);
-		rc = TRUE;
-	} else {
-		sprintf(msg,"[%s] Native BLOB auth error.",user);
-		MessageLog(msg);
-	  badio:
-		SendPacketClass(fp,APS_NOT);
-	}
-LEAVE_FUNC;
-	return	(rc);
-}
-
 static	void
 BlobThread(
 	void	*para)
@@ -95,11 +65,9 @@ BlobThread(
 ENTER_FUNC;
 
 	fp = SocketToNet(fhBlob);
-	
-	if		(  InitSession(fp)  ) {
-		while	(  RecvChar(fp)  ==  APS_BLOB  ) {
-			PassiveBLOB(fp,BlobState);		ON_IO_ERROR(fp,badio);
-		}
+	while	(  RecvChar(fp)  ==  APS_BLOB  ) {
+dbgmsg("Call PassiveBLOB");
+		PassiveBLOB(fp,BlobState);		ON_IO_ERROR(fp,badio);
 	}
   badio:
 	CloseNet(fp);
@@ -117,6 +85,7 @@ ConnectBlob(
 ENTER_FUNC;
 	if		(  ( fhBlob = accept(_fhBlob,0,0) )  <  0  )	{
 		Message("_fhBlob = %d INET Domain Accept",_fhBlob);
+		dbgprintf("_fhBlob = %d INET Domain Accept",_fhBlob);
 		exit(1);
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))BlobThread,(void *)(long)fhBlob);

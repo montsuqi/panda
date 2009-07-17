@@ -510,8 +510,7 @@ SendAPIMessage(
 			SendLBS(fp,data->mcpdata);          ON_IO_ERROR(fp,badio);
 			SendChar(fp,data->tnest);           ON_IO_ERROR(fp,badio);
 			SendLBS(fp,api->rec);				ON_IO_ERROR(fp,badio);
-			RecvLBS(fp,api->headers);			ON_IO_ERROR(fp,badio);
-			RecvLBS(fp,api->body);				ON_IO_ERROR(fp,badio);
+			RecvLBS(fp,api->rec);				ON_IO_ERROR(fp,badio);
 			api->status = WFC_API_OK;
 		}
 	}	

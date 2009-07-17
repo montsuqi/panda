@@ -976,9 +976,6 @@ BuildMcpArea(
 	p += sprintf(p,			"pputtype 	int;");
 	p += sprintf(p,			"prc		char(1);");
 	p += sprintf(p,		"};");
-	p += sprintf(p,		"api		{");
-	p += sprintf(p,			"response_type varchar(%d);",SIZE_NAME);
-	p += sprintf(p,		"};");
 	p += sprintf(p,	"};");
 	rec = ParseRecordMem(buff);
 

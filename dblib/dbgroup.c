@@ -51,7 +51,6 @@ InitDB_Process(
 	NETFILE	*fp)
 {
 ENTER_FUNC;
-	fpBlob = fp;
 LEAVE_FUNC;
 }
 
