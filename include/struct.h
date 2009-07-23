@@ -307,7 +307,6 @@ typedef	struct {
 typedef	struct {
 	char		*dir;
 	Port		*port;
-	URL			*auth;
 }	BLOB_Struct;
 
 typedef	struct {

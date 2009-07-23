@@ -191,8 +191,7 @@ ENTER_FUNC;
 		_fhControl = -1;
 	}
 	if		(	(  ThisEnv->blob        !=  NULL  )
-			&&	(  ThisEnv->blob->port  !=  NULL  )
-			&&	(  ThisEnv->blob->auth  !=  NULL  ) ) {
+			&&	(  ThisEnv->blob->port  !=  NULL  ) ) {
 		_fhBlob = InitServerPort(ThisEnv->blob->port,Back);
 		maxfd = maxfd < _fhBlob ? _fhBlob : maxfd;
 	} else {

@@ -232,39 +232,13 @@ ParBLOB(
 	CURFILE	*in)
 {
 	BLOB_Struct	*blob;
-	URL			*auth;
-	char		*file;
 
 ENTER_FUNC;
 	blob = New(BLOB_Struct);
 	blob->port = NULL;
-	blob->auth = NULL;
 	blob->dir = NULL;
 	while	(  GetSymbol  !=  '}'  ) {
 		switch	(ComToken) {
-		  case	T_AUTH:
-			switch	(GetSymbol) {
-			  case	T_SCONST:
-				auth = NewURL();
-				ParseURL(auth,ComSymbol,"file");
-				if		(  !stricmp(auth->protocol,"file")  ) {
-					file = auth->file;
-					auth->file = StrDup(ExpandPath(file,ThisEnv->BaseDir));
-					if		(  file  !=  NULL  ) {
-						xfree(file);
-					}
-				}
-				blob->auth = auth;
-				GetSymbol;
-				break;
-			  case	';':
-				blob->auth = NULL;
-				break;
-			  default:
-				ParError("invalid auth URL");
-				break;
-			}
-			break;
 		  case	T_PORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
