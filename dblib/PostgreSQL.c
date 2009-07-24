@@ -96,7 +96,7 @@ EscapeString(
 	size += PQescapeStringConn(PGCONN(dbg,DB_UPDATE),
 							   LBS_Body(lbs) + size, str, len, &error);
 	if ( error != 0 ) {
-		Warning("%s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
+		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
 	LBS_ReserveSize(lbs, size, TRUE);
 	LBS_SetPos(lbs, size);
@@ -120,7 +120,7 @@ EscapeBytea(
 								binlen,
 								&to_length);
 	if (to_char == NULL) {
-		Warning("%s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
+		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
     LBS_ReserveSize(lbs, old_size + to_length, TRUE);
 	dp = LBS_Body(lbs) + old_size;
@@ -146,7 +146,7 @@ PgInitConnect(
 	PQsetNoticeProcessor(conn, NoticeMessage, NULL);
 	res = PQexec(conn, "set standard_conforming_strings = on;");
 	if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
-		Warning("%s",PQerrorMessage(conn));
+		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 	}
 	PQclear(res);	
 }
@@ -997,7 +997,6 @@ IsRedirectQuery(
 {
 	Bool rc = FALSE;
 
-
 	if ( (strncmp(PQcmdStatus(res), "INSERT ", 7) == 0)
 		 ||(strncmp(PQcmdStatus(res), "UPDATE ", 7) == 0)
 		 ||(strncmp(PQcmdStatus(res), "DELETE ", 7) == 0) ){
@@ -1068,7 +1067,7 @@ CheckResult(
 		rc = MCP_OK;
 	} else {
 		dbgmsg("NG");
-		Warning("%s",PQerrorMessage(PGCONN(dbg,usage)));
+		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,usage)));
 		rc = MCP_BAD_OTHER;
 	}
 	return rc;
@@ -1182,7 +1181,7 @@ ENTER_FUNC;
 						||	(  status  ==  PGRES_FATAL_ERROR     )
 						||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
 					dbgmsg("NG");
-					Warning("%s",PQerrorMessage(PGCONN(dbg,usage)));
+					Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,usage)));
 					ctrl->rc = - status;
 					ctrl->count = 0;
 					break;
@@ -1307,7 +1306,7 @@ ENTER_FUNC;
 			_PQclear(res);
 		}
 	} else {
-		Warning("%s",PQerrorMessage(PGCONN(dbg,usage)));
+		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,usage)));
 		rc = MCP_BAD_OTHER;
 	}
 	LBS_EmitEnd(dbg->checkData);
