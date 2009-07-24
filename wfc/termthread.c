@@ -766,7 +766,6 @@ ENTER_FUNC;
 			dbgmsg("TRUE");
 			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
 			data->hdr->status = TO_CHAR(APL_SESSION_GET);
-			data = ReadTerminal(fp,data);
 		} else {
 			dbgmsg("FALSE");
 			Warning("Error: Other threads are processing it.");
@@ -786,15 +785,11 @@ ENTER_FUNC;
 			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
 			data->hdr->status = TO_CHAR(APL_SESSION_GET);
 		}
-		data = ReadTerminal(fp,data);
 	}
 	fError = FALSE;
   badio:
 	if		(  fError  ) {
 		data = NULL;
-	}
-	if		(  data  !=  NULL  ) {
-		SaveSession(data);
 	}
 LEAVE_FUNC;
 	return	(data);
@@ -824,7 +819,10 @@ TermSession(
 	char	buff[SIZE_TERM+1];
 	
 	RecvnString(term->fp,SIZE_TERM,buff);
-	if		(  ( data = CheckSession(term->fp,buff) )  !=  NULL  ) {
+	data = CheckSession(term->fp,buff);
+	if (data != NULL) {
+		data = ReadTerminal(term->fp,data);
+		SaveSession(data);
 		data->term = term;
 		data->retry = 0;
 		if		(  data->status != SESSION_STATUS_ABORT  ) {
