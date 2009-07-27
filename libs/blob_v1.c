@@ -48,8 +48,6 @@
 
 #define	LockBLOB(blob)		dbgmsg("LockBLOB");pthread_mutex_lock(&(blob)->mutex)
 #define	UnLockBLOB(blob)	dbgmsg("UnLockBLOB");pthread_mutex_unlock(&(blob)->mutex)
-#define	ReleaseBLOB(blob)	dbgmsg("ReleaseBLOB");pthread_cond_signal(&(blob)->cond)
-#define	WaitBLOB(blod)		dbgmsg("WaiteBLOB");pthread_cond_wait(&(blob)->cond,&(blob)->mutex);
 
 typedef	struct {
 	NETFILE	*fp;
@@ -142,7 +140,6 @@ ENTER_FUNC;
 		snprintf(command,SIZE_LONGNAME+1,"rm -f %s/%d",ent->blob->space,(int)ent->oid);
 		system(command);
 		UnLockBLOB(ent->blob);
-		ReleaseBLOB(ent->blob);
 	}
 LEAVE_FUNC;
 	xfree(ent);
@@ -211,7 +208,6 @@ ENTER_FUNC;
 	ent->oid = obj;
 	g_hash_table_insert(state->blob->oid_table,(gpointer)&ent->oid,ent);
 	UnLockBLOB(state->blob);
-	ReleaseBLOB(state->blob);
 	ent->blob = state->blob;
 
 	mode |=  BLOB_OPEN_CREATE;
@@ -280,7 +276,6 @@ ENTER_FUNC;
 		blob->oid_table = NewLLHash();
 		blob->key_table = NewNameHash();
 		pthread_mutex_init(&blob->mutex,NULL);
-		pthread_cond_init(&blob->cond,NULL);
 	} else {
 		blob = NULL;
 	}
@@ -301,7 +296,6 @@ ENTER_FUNC;
 
 	xfree(blob->space);
 	pthread_mutex_destroy(&blob->mutex);
-	pthread_cond_destroy(&blob->cond);
 	xfree(blob);
 LEAVE_FUNC;
 }
@@ -316,19 +310,21 @@ OpenBLOB_V1(
 	ssize_t		ret;
 
 ENTER_FUNC;
-	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )  ==  NULL  ) {
-		LockBLOB(state->blob);
-		ent = New(BLOB_V1_Entry);
-		ent->oid = obj;
-		g_hash_table_insert(state->blob->oid_table,(gpointer)&ent->oid,ent);
-		UnLockBLOB(state->blob);
-		ReleaseBLOB(state->blob);
-		ent->blob = state->blob;
-	}
-	ret = OpenEntry(ent,mode);
-	if		(  ent->fp  ==  NULL  ) {
-		DestroyEntry(ent);
-		ret = -1;
+	ret = -1;
+	if		(  obj != GL_OBJ_NULL ) {
+		if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )  ==  NULL  ) {
+			LockBLOB(state->blob);
+			ent = New(BLOB_V1_Entry);
+			ent->oid = obj;
+			g_hash_table_insert(state->blob->oid_table,(gpointer)&ent->oid,ent);
+			UnLockBLOB(state->blob);
+			ent->blob = state->blob;
+		}
+		ret = OpenEntry(ent,mode);
+		if		(  ent->fp  ==  NULL  ) {
+			DestroyEntry(ent);
+			ret = -1;
+		}
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -452,7 +448,6 @@ ENTER_FUNC;
 		g_hash_table_insert(state->blob->key_table, StrDup(key) , ent);
 		obj = ent->oid;
 		UnLockBLOB(ent->blob);
-		ReleaseBLOB(ent->blob);
 		ret = TRUE;
 	}
 LEAVE_FUNC;

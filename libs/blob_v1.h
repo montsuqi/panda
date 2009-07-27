@@ -60,7 +60,6 @@ typedef	struct _BLOB_Space	{
 	GHashTable	*oid_table;
 	GHashTable	*key_table;
 	pthread_mutex_t	mutex;
-	pthread_cond_t	cond;
 }	BLOB_V1_Space;
 
 typedef	struct {
