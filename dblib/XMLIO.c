@@ -17,8 +17,10 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -52,7 +54,7 @@
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
 static	xmlDocPtr	XMLDoc;
-static	int			XMLPos;
+static	int			XMLpos;
 static	int			XMLmode;
 static	int			XMLobj;
 
@@ -78,7 +80,7 @@ _OpenXML(
 	xmlNodePtr	root;
 
 ENTER_FUNC;
-	XMLPos = 0;
+	XMLpos = 0;
 	XMLDoc = NULL;
 	XMLobj = GL_OBJ_NULL;
 	XMLmode = MODE_NONE;
@@ -168,11 +170,24 @@ ENTER_FUNC;
 	}
 	xmlFreeDoc(XMLDoc);
 	XMLDoc = NULL;
-	XMLPos = 0;
+	XMLpos = 0;
 	XMLmode = MODE_NONE;
 	XMLobj = GL_OBJ_NULL;
 LEAVE_FUNC;
 	return	ret;
+}
+
+static char*
+XMLGetString(
+	xmlNodePtr ptr,
+	char *value)
+{
+	char	*buff;
+	buff = xmlNodeListGetString(ptr->doc, ptr->children, TRUE);
+	if (buff == NULL) {
+		buff = StrDup(value);
+	}
+	return buff;
 }
 
 static int
@@ -199,7 +214,7 @@ ENTER_FUNC;
 		if (xmlStrcmp(root->name, "int") != 0) {
 			break;
 		}
-		buff1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		buff1 = XMLGetString(root, "0");
 		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
 		free(buff1);
 		break;
@@ -207,7 +222,7 @@ ENTER_FUNC;
 		if (xmlStrcmp(root->name, "float") != 0) {
 			break;
 		}
-		buff1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		buff1 = XMLGetString(root, "0");
 		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
 		free(buff1);
 		break;
@@ -215,7 +230,7 @@ ENTER_FUNC;
 		if (xmlStrcmp(root->name, "number") != 0) {
 			break;
 		}
-		buff1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		buff1 = XMLGetString(root, "0.0");
 		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
 		free(buff1);
 		break;
@@ -223,7 +238,7 @@ ENTER_FUNC;
 		if (xmlStrcmp(root->name, "bool") != 0) {
 			break;
 		}
-		buff1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		buff1 = XMLGetString(root, "FALSE");
 		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
 		free(buff1);
 		break;
@@ -235,7 +250,7 @@ ENTER_FUNC;
 		if (xmlStrcmp(root->name, "string") != 0) {
 			break;
 		}
-		buff1 = p1 = xmlNodeListGetString(root->doc, root->children, TRUE);
+		buff1 = p1 = XMLGetString(root, "");
 #if 1
 		size1 = strlen(buff1);
 		size2 = size1;
@@ -409,12 +424,12 @@ ENTER_FUNC;
 	}
 	for (node=root->children, i=0; node != NULL; node=node->next, i++) {
 		root = NULL;
-		if (i == XMLPos) {
+		if (i == XMLpos) {
 			root = node;
 			break;
 		}	
 	}
-	XMLPos++;
+	XMLpos++;
 	if (root == NULL) {
 		return NULL;
 	}
