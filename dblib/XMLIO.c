@@ -17,10 +17,8 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-/*
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -56,6 +54,7 @@
 static	xmlDocPtr	XMLDoc;
 static	int			XMLPos;
 static	int			XMLmode;
+static	int			XMLobj;
 
 enum xml_open_mode {
 	MODE_READ = 0,
@@ -81,8 +80,12 @@ _OpenXML(
 ENTER_FUNC;
 	XMLPos = 0;
 	XMLDoc = NULL;
-	ret = NULL;
+	XMLobj = GL_OBJ_NULL;
+	XMLmode = MODE_NONE;
+
 	rc = MCP_BAD_OTHER;
+	ret = NULL;
+
 	if (rec->type  !=  RECORD_DB) {
 		rc = MCP_BAD_ARG;
 	} else {
@@ -91,11 +94,12 @@ ENTER_FUNC;
 		) {
 			XMLmode = ValueInteger(mode);
 			if ( XMLmode == MODE_WRITE) {
-				if ((ValueObjectId(obj) = RequestNewBLOB(NBCONN(dbg),APS_BLOB,BLOB_OPEN_WRITE)) != GL_OBJ_NULL) {
+				if ((XMLobj = RequestNewBLOB(NBCONN(dbg),APS_BLOB,BLOB_OPEN_WRITE)) != GL_OBJ_NULL) {
+					ValueObjectId(obj) = XMLobj;
 					XMLDoc = xmlNewDoc("1.0");
 					root = xmlNewDocNode(XMLDoc, NULL, "data", NULL);
 					xmlDocSetRootElement(XMLDoc, root);
-					ret = DuplicateValue(args,TRUE);
+					ret = DuplicateValue(args, TRUE);
 					rc = MCP_OK;
 				}
 			} else {
@@ -128,12 +132,14 @@ _CloseXML(
 	ValueStruct		*args)
 {
 	ValueStruct	*obj;
+	ValueStruct	*ret;
 	xmlChar 	*buff;
 	int			size;
 	int			wrote;
 
 ENTER_FUNC;
 	buff = NULL;
+	ret = NULL;
 	if (rec->type  !=  RECORD_DB) {
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
@@ -149,9 +155,12 @@ ENTER_FUNC;
 	ctrl->rc = MCP_OK;
 	if (XMLmode == MODE_WRITE) {
 		xmlDocDumpFormatMemoryEnc(XMLDoc, &buff, &size, "UTF-8", 0);
-		if (buff != NULL) {
-			wrote = RequestWriteBLOB(NBCONN(dbg),APS_BLOB,ValueObjectId(obj), (byte *)buff, size);
-			if (wrote != size) {
+		if (buff != NULL && XMLobj != GL_OBJ_NULL) {
+			wrote = RequestWriteBLOB(NBCONN(dbg),APS_BLOB, XMLobj, (byte *)buff, size);
+			if (wrote == size) {
+				ValueObjectId(obj) = XMLobj;
+				ret = DuplicateValue(ret, TRUE);
+			} else {
 				ctrl->rc = MCP_BAD_OTHER;
 			}
 		}
@@ -161,8 +170,9 @@ ENTER_FUNC;
 	XMLDoc = NULL;
 	XMLPos = 0;
 	XMLmode = MODE_NONE;
+	XMLobj = GL_OBJ_NULL;
 LEAVE_FUNC;
-	return	NULL;
+	return	ret;
 }
 
 static int
@@ -438,9 +448,6 @@ ENTER_FUNC;
 		return NULL;
 	}
 	root = xmlDocGetRootElement(XMLDoc);
-#ifdef TRACE
-	DumpValueStruct(args);
-#endif
 	node = Value2XMLNode(NULL, args);
 	if (node != NULL) {
 		xmlAddChildList(root, node);
