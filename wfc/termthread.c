@@ -104,6 +104,34 @@ LEAVE_FUNC;
 	return	(data);
 }
 
+static LargeByteString	*
+NewMcpData(void)
+{
+	LargeByteString *mcpdata;
+	if		(  ThisEnv->mcprec  !=  NULL  ) {
+		mcpdata = NewLBS();
+		LBS_ReserveSize(mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
+		NativePackValue(NULL,LBS_Body(mcpdata),ThisEnv->mcprec->value);
+	} else {
+		mcpdata = NULL;
+	}
+	return mcpdata;
+}
+
+static LargeByteString	*
+NewLinkData(void)
+{
+	LargeByteString *linkdata;
+	if		(  ThisEnv->linkrec  !=  NULL  ) {
+		linkdata = NewLBS();
+		LBS_ReserveSize(linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
+		NativePackValue(NULL,LBS_Body(linkdata),ThisEnv->linkrec->value);
+	} else {
+		linkdata = NULL;
+	}
+	return linkdata;
+}
+
 static	void
 _UnrefSession(
 	SessionData	*data)
@@ -336,19 +364,8 @@ ENTER_FUNC;
 	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )  !=  NULL  ) {
 		SendPacketClass(fp,WFC_OK);
 		data->ld = ld;
-		if		(  ThisEnv->mcprec  !=  NULL  ) {
-			data->mcpdata = NewLBS();
-			LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(data->mcpdata),ThisEnv->mcprec->value);
-		}
-		if		(  ThisEnv->linkrec  !=  NULL  ) {
-			data->linkdata = NewLBS();
-			LBS_ReserveSize(data->linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(data->linkdata),ThisEnv->linkrec->value);
-		} else {
-			data->linkdata = NULL;
-		}
-
+		data->mcpdata = NewMcpData();
+		data->linkdata = NewLinkData();
 		data->cWindow = ld->info->cWindow;
 		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
 													* data->cWindow);
