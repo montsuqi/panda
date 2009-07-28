@@ -73,10 +73,8 @@ ENTER_FUNC;
 		if		(  ( port = GetDB_Port(dbg,DB_UPDATE) )  ==  NULL  ) {
 			port = ThisEnv->blob->port;
 		}
-dbgprintf("port:%s",port->adrs.a_unix.name);
 		if		(	(  port  !=  NULL  )
 				&&	(  ( fh = ConnectSocket(port,SOCK_STREAM) )  >=  0  ) ) {
-dbgmsg("success Connect");
 			fpBlob = SocketToNet(fh);
 		}
 	}
@@ -86,9 +84,7 @@ dbgmsg("success Connect");
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 		dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 		rc = MCP_OK;
-dbgmsg("fpBlob != NULL");
 	} else {
-dbgmsg("error fpBlob == NULL");
 		rc = MCP_BAD_OTHER;
 	}
 	if		(  ctrl  !=  NULL  ) {

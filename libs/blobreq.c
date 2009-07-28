@@ -122,15 +122,10 @@ RequestReadBLOB(
 ENTER_FUNC;
 	red = 0;
 	*ret = NULL;
-dbgmsg("-");
 	SendPacketClass(fp,flag);			ON_IO_ERROR(fp,badio);
-dbgmsg("-");
 	RequestBLOB(fp,BLOB_READ);			ON_IO_ERROR(fp,badio);
-dbgmsg("-");
 	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-dbgmsg("-");
 	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
-dbgmsg("-");
 		*size = RecvLength(fp);				ON_IO_ERROR(fp,badio);
 		if		(  *size  >  0  ) {
 			buff = malloc(*size);
