@@ -206,6 +206,7 @@ ENTER_FUNC;
 				Send(fp,buff,size);			ON_IO_ERROR(fp,badio);
 				left -= size;
 			}
+			Flush(fp);
 			fclose(fpf);
 		} else {
 			dbgprintf("could not open for read: %s", fname);
