@@ -792,9 +792,7 @@ ENTER_FUNC;
 	} else {
 		if		(  ( data = LoadSession(term) )  ==  NULL  ) {
 			dbgmsg("INIT");
-			if		(  ( data = InitSession(fp,term) )  ==  NULL  )	{
-				Warning("Error: session initialize failure");
-			} else {
+			if		(  ( data = InitSession(fp,term) )  !=  NULL  )	{
 				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
 			}
 		} else {
