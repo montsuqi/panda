@@ -46,7 +46,8 @@ INCLUDES 			= 		\
 	$(SSL_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
-glserver_SOURCES	=		\
-	glserver.c	glserver.h	\
-	http.c		http.h		\
+glserver_SOURCES	=				\
+	glserver.c		glserver.h		\
+	http.c			http.h			\
+	blobaccess.c	blobaccess.h	\
 	server.c

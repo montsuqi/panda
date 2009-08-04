@@ -53,9 +53,6 @@
 #include	"wfc.h"
 #include	"termthread.h"
 #include	"corethread.h"
-#include	"blob.h"
-#include	"blobcom.h"
-#include	"blobserv.h"
 #include	"driver.h"
 #include	"dirs.h"
 #include	"message.h"
@@ -445,10 +442,6 @@ ENTER_FUNC;
 				fExit = TRUE;
 			}
 			break;
-		  case	WFC_BLOB:
-			dbgmsg("recv BLOB");
-			PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
-			break;
 		  case	WFC_PING:
 			dbgmsg("recv PING");
 			SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
@@ -544,10 +537,6 @@ ENTER_FUNC;
 					SendPacketClass(fp,WFC_NODATA);			ON_IO_ERROR(fp,badio);
 				}
 				dbgmsg("<DATA");
-				break;
-			  case	WFC_BLOB:
-				dbgmsg("send BLOB");
-				PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
 				break;
 			  case	WFC_DONE:
 				dbgmsg("DONE");
@@ -902,20 +891,6 @@ APISession(
 		;
 }
 
-static  void
-BLOBSession(
-	TermNode	*term)
-{
-	do {
-		ON_IO_ERROR(term->fp,badio);
-		PassiveBLOB(term->fp, BlobState);
-		ON_IO_ERROR(term->fp,badio);
-	} while (RecvPacketClass(term->fp) == WFC_BLOB);
-	CloseNet(term->fp);
-badio:
-	;
-}
-
 static	void
 TermThread(
 	TermNode	*term)
@@ -930,9 +905,6 @@ ENTER_FUNC;
 		break;
 	case WFC_API:
 		APISession(term);
-		break;
-	case WFC_BLOB:
-		BLOBSession(term);
 		break;
 	}
 	FreeQueue(term->que);

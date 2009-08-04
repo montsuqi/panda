@@ -39,8 +39,8 @@
 #include	"net.h"
 #include	"comm.h"
 #include	"blob.h"
-#include	"blobcom.h"
 #include	"blobserv.h"
+#include	"blobcom.h"
 #include	"debug.h"
 
 extern	void

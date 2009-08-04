@@ -1,3 +1,21 @@
+2009-08-04  Yusuke Mihara  <mihara@netlab.jp>
+
+	* dblib/NativeBLOB.c dblib/System.c
+	dblib/XMLIO.c glserver/Makefile.am glserver/glserver.c
+	glserver/glserver.h glserver/http.c glserver/server.c
+	include/const.h include/struct.h libs/DIparser.c
+	libs/Makefile.am libs/blob.h libs/blobcom.h libs/blobreq.c
+	libs/blobreq.h libs/driver.h libs/monapi.c libs/monapi.h
+	libs/panda.c libs/wfcio.c libs/wfcio.h wfc/Makefile.am
+	wfc/blobserv.c wfc/mqthread.c wfc/termthread.c wfc/wfc.c
+	wfc/wfc.h glserver/blobaccess.c glserver/blobaccess.h libs/keyvalue.c
+	libs/keyvalue.h libs/keyvaluecom.h libs/keyvaluereq.c
+	libs/keyvaluereq.h wfc/kvserv.c wfc/kvserv.h
+	wfc/sysdatathread.c wfc/sysdatathread.h:
+	dblib/System.cをGHashTableを利用したキーバリュー型DBに変更。
+	blobthreadをsysdatathreadに変更して、BLOBに加えてキーバリューDBのサーバを追加。
+	apsとglserverからのBLOBのリクエストを{term,mq}threadではなく、sysdatathreadで受けるよう変更。
+
 2009-07-17  Yusuke Mihara  <mihara@netlab.jp>
 
 	* configure.ac aps/apsio.c cobol/MCPMAIN.CBL dblib/NativeBLOB.c
@@ -15,7 +33,6 @@
 	libs/blob_v1.h libs/blobreq.c libs/blobreq.h wfc/blobserv.c:
 	COBOLから利用可能なXML DOMパーサ、DOMライタであるXMLIO.so を追加。
 	NativeBLOB より使用されていない BLOBOPEN, BLOBCLOSE, BLOBREAD, BLOBWRITE, BLOBSAVE を削除。
-
 
 2009-07-07  Noboru Saitou  <noborus@netlab.jp>
 

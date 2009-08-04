@@ -77,7 +77,7 @@
 #define	T_TERMPORT		(T_YYBASE +26)
 #define	T_CONTROL		(T_YYBASE +27)
 #define	T_DDIR			(T_YYBASE +28)
-#define	T_BLOB			(T_YYBASE +29)
+#define	T_SYSDATA		(T_YYBASE +29)
 #define	T_AUTH			(T_YYBASE +30)
 #define	T_SPACE			(T_YYBASE +31)
 #define	T_APSPATH		(T_YYBASE +32)
@@ -87,6 +87,7 @@
 #define	T_UPDATE		(T_YYBASE +36)
 #define	T_READONLY		(T_YYBASE +37)
 #define	T_SSLMODE		(T_YYBASE +38)
+#define	T_BLOB			(T_YYBASE +39)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -117,6 +118,7 @@ static	TokenTable	tokentable[] = {
 	{	"termport"			,T_TERMPORT	},
 	{	"control"			,T_CONTROL	},
 	{	"blob"				,T_BLOB		},
+	{	"sysdata"			,T_SYSDATA	},
 	{	"auth"				,T_AUTH		},
 	{	"space"				,T_SPACE	},
 	{	"apspath"			,T_APSPATH	},
@@ -227,30 +229,30 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-static	BLOB_Struct	*
-ParBLOB(
+static	SysData_Struct	*
+ParSysData(
 	CURFILE	*in)
 {
-	BLOB_Struct	*blob;
+	SysData_Struct	*sysdata;
 
 ENTER_FUNC;
-	blob = New(BLOB_Struct);
-	blob->port = NULL;
-	blob->dir = NULL;
+	sysdata = New(SysData_Struct);
+	sysdata->port = NULL;
+	sysdata->dir = NULL;
 	while	(  GetSymbol  !=  '}'  ) {
 		switch	(ComToken) {
 		  case	T_PORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
-				blob->port = NewIP_Port(NULL,IntStrDup(ComInt));
+				sysdata->port = NewIP_Port(NULL,IntStrDup(ComInt));
 				GetSymbol;
 				break;
 			  case	T_SCONST:
-				blob->port = ParPort(ComSymbol,PORT_BLOB);
+				sysdata->port = ParPort(ComSymbol,SYSDATA_PORT);
 				GetSymbol;
 				break;
 			  case	';':
-				blob->port = NULL;
+				sysdata->port = NULL;
 				break;
 			  default:
 				ParError("invalid port number");
@@ -260,28 +262,28 @@ ENTER_FUNC;
 		  case	T_SPACE:
 			switch	(GetSymbol) {
 			  case	T_SCONST:
-				blob->dir = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
+				sysdata->dir = StrDup(ExpandPath(ComSymbol,ThisEnv->BaseDir));
 				GetSymbol;
 				break;
 			  case	';':
-				blob->dir = NULL;
+				sysdata->dir = NULL;
 				break;
 			  default:
-				ParError("invalid blob space");
+				ParError("invalid sysdata space");
 				break;
 			}
 			break;
 		  default:
-			ParError("blob keyword error");
+			ParError("sysdata keyword error");
 			break;
 		}
 		if		(  ComToken  !=  ';'  ) {		
-			ParError("missing ; in blob directive");
+			ParError("missing ; in sysdata directive");
 		}
 		ERROR_BREAK;
 	}
 LEAVE_FUNC;
-	return	(blob);
+	return	(sysdata);
 }
 
 static	void
@@ -985,7 +987,7 @@ NewEnv(
 	env->cDBG = 0;
 	env->DBG = NULL;
 	env->DBG_Table = NewNameHash();
-	env->blob = NULL;
+	env->sysdata = NULL;
 	env->ApsPath = NULL;
 	env->WfcPath = NULL;
 	env->RedPath = NULL;
@@ -1154,8 +1156,9 @@ ENTER_FUNC;
 			}
 			break;
 		  case	T_BLOB:
+		  case	T_SYSDATA:
 			if		(  GetSymbol  ==  '{'  ) {
-				ThisEnv->blob = ParBLOB(in);
+				ThisEnv->sysdata = ParSysData(in);
 			} else {
 				ParError("syntax error in blob directive");
 			}

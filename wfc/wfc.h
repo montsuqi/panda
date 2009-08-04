@@ -23,6 +23,7 @@
 #include	"struct.h"
 #include	"net.h"
 #include	"blob.h"
+#include	"keyvalue.h"
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -41,6 +42,7 @@ GLOBAL	Bool		fShutdown;
 GLOBAL	int			MaxTransactionRetry;
 GLOBAL	int			nCache;
 GLOBAL	BLOB_State	*BlobState;
+GLOBAL	KV_State	*KVState;
 GLOBAL	Bool		fLoopBack;
 GLOBAL	Bool		fTimer;
 

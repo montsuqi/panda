@@ -52,9 +52,10 @@ wfc_SOURCES	=							\
 	wfc.c		wfc.h						\
 	mqthread.c		mqthread.h			\
 	corethread.c	corethread.h		\
-	blobthread.c	blobthread.h		\
+	sysdatathread.c	sysdatathread.h		\
 	controlthread.c	controlthread.h		\
 	blobserv.c		blobserv.h			\
+	kvserv.c		kvserv.h			\
 	termthread.c	termthread.h
 
 wfccontrol_LDFLAGS	=			\

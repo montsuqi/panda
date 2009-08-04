@@ -58,8 +58,9 @@
 #include	"term.h"
 #include	"dirs.h"
 #include	"RecParser.h"
-#include	"message.h"
 #include	"http.h"
+#include	"blobaccess.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	void
@@ -240,6 +241,7 @@ ENTER_FUNC;
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
 			if		(  win->rec->value  !=  NULL  ) {
+				AccessBLOB(BLOB_ACCESS_EXPORT,win->rec->value);
 				GL_SendPacketClass(fpComm,GL_ScreenData,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
 				if		(  fFeatureI18N  ) {
@@ -533,6 +535,7 @@ ENTER_FUNC;
 					goto badio;
 				}
 			}
+			AccessBLOB(BLOB_ACCESS_IMPORT, win->rec->value);
 		} else {
 			Message("invalid window name [%s]\n",wname);
 			goto badio;

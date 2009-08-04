@@ -52,4 +52,8 @@
 #define	BLOB_NOT			(PacketClass)0xF0
 #define	BLOB_END			(PacketClass)0xFF
 
+#define TYPE_END			(PacketClass)0x01
+#define TYPE_BLOB			(PacketClass)0x02
+#define TYPE_KV				(PacketClass)0x03
+
 #endif

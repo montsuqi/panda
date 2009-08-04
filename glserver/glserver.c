@@ -55,6 +55,8 @@ static	char		*AuthURL;
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
 		N_("waiting port name")							},
+	{	"sysdata",	STRING,		TRUE,	(void*)&PortSysData,
+		N_("sysdata port")								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
 		N_("connection waiting queue number")			},
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
@@ -89,6 +91,7 @@ static	void
 SetDefault(void)
 {
 	PortNumber = PORT_GLTERM;
+	PortSysData = SYSDATA_PORT;
 	Back = 5;
 	ScreenDir = ".";
 	RecordDir = ".";

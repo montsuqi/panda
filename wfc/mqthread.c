@@ -47,8 +47,6 @@
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"directory.h"
-#include	"blob.h"
-#include	"blobserv.h"
 #include	"driver.h"
 #include	"debug.h"
 
@@ -233,10 +231,6 @@ ENTER_FUNC;
 			dbgprintf("hdr->window  = [%s]",hdr->window);
 			dbgprintf("hdr->puttype = %02X",(int)hdr->puttype);
 			done = TRUE;
-			break;
-		  case	APS_BLOB:
-			PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
-			flag = 0;
 			break;
 		  default:
 		  badio:

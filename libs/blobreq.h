@@ -25,19 +25,19 @@
 #include	"blob.h"
 #include	"blobcom.h"
 
-extern	MonObjectType	RequestNewBLOB(NETFILE *fp, PacketClass flag, int mode);
-extern	size_t			RequestWriteBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, byte *buff, size_t size);
-extern	size_t			RequestReadBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, byte **buff, size_t *size);
-extern	Bool			RequestExportBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *fname);
-extern	MonObjectType	RequestImportBLOB(NETFILE *fp, PacketClass flag, char *fname);
-extern	Bool			RequestCheckBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
-extern	Bool			RequestDestroyBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
-extern	Bool			RequestStartBLOB(NETFILE *fp, PacketClass flag);
-extern	Bool			RequestCommitBLOB(NETFILE *fp, PacketClass flag);
-extern	Bool			RequestAbortBLOB(NETFILE *fp, PacketClass flag);
+extern	MonObjectType	RequestNewBLOB(NETFILE *fp, int mode);
+extern	size_t			RequestWriteBLOB(NETFILE *fp, MonObjectType obj, byte *buff, size_t size);
+extern	size_t			RequestReadBLOB(NETFILE *fp, MonObjectType obj, byte **buff, size_t *size);
+extern	Bool			RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname);
+extern	MonObjectType	RequestImportBLOB(NETFILE *fp, char *fname);
+extern	Bool			RequestCheckBLOB(NETFILE *fp, MonObjectType obj);
+extern	Bool			RequestDestroyBLOB(NETFILE *fp, MonObjectType obj);
+extern	Bool			RequestStartBLOB(NETFILE *fp);
+extern	Bool			RequestCommitBLOB(NETFILE *fp);
+extern	Bool			RequestAbortBLOB(NETFILE *fp);
 #if BLOB_VERSION == 1
-extern	Bool			RequestRegisterBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *key);
-extern	MonObjectType	RequestLookupBLOB(NETFILE *fp, PacketClass flag, char *key);
+extern	Bool			RequestRegisterBLOB(NETFILE *fp, MonObjectType obj, char *key);
+extern	MonObjectType	RequestLookupBLOB(NETFILE *fp, char *key);
 #endif
 
 #undef	GLOBAL

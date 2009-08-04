@@ -52,10 +52,13 @@ panda_la_SOURCES	=				\
 	SQLlex.c	SQLlex.h			\
 	SQLparser.c	SQLparser.h			\
 	blobreq.c	blobreq.h			\
+	blobcom.h						\
+	keyvaluereq.c					\
+	keyvaluereq.h					\
+	keyvaluecom.h					\
 	directory.c	directory.h			\
 	driver.c	driver.h	enum.h	\
 	load.c		load.h				\
-	blobcom.h						\
 	applications.c applications.h	\
 	comm.c		comm.h				\
 	comms.c		comms.h				\
@@ -124,10 +127,13 @@ libpanda_la_SOURCES	=		\
 	SQLparser.c		SQLparser.h		\
 	term.c			term.h			\
 	blobreq.c		blobreq.h		\
+	blobcom.h						\
+	keyvaluereq.c					\
+	keyvaluereq.h					\
+	keyvaluecom.h					\
 	directory.c		directory.h		\
 	driver.c		driver.h	enum.h	\
 	load.c			load.h			\
-	blobcom.h						\
 	debug.h							\
 	applications.c	applications.h	\
 	front.c			front.h			\
@@ -157,10 +163,13 @@ libpanda_a_SOURCES	=				\
 	SQLparser.c	SQLparser.h			\
 	term.c		term.h				\
 	blobreq.c	blobreq.h			\
+	blobcom.h						\
+	keyvaluereq.c					\
+	keyvaluereq.h					\
+	keyvaluecom.h					\
 	directory.c	directory.h			\
 	driver.c	driver.h	enum.h	\
 	load.c		load.h				\
-	blobcom.h						\
 	debug.h
 
 libpandas_a_CFLAGS = $(AM_CFLAGS)
@@ -176,6 +185,7 @@ libpandas_a_SOURCES	=			\
 	auth.c		auth.h				\
 	authstub.c	authstub.h			\
 	blobreq.c	blobreq.h			\
+	blobcom.h						\
 	monapi.c	monapi.h			\
 	load.c		load.h
 
@@ -222,7 +232,8 @@ libpandablob_a_SOURCES	=			\
 	blob_v1.c		blob_v1.h		\
 					blob_v2.h		\
 	table.c			table.h			\
-	blob.c			blob.h
+	blob.c			blob.h			\
+	keyvalue.c		keyvalue.h
 
 libpandablob_a_DEPENDENCIES	=		\
 	$(top_builddir)/defaults.h

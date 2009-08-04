@@ -57,7 +57,7 @@
 #include	"corethread.h"
 #include	"termthread.h"
 #include	"controlthread.h"
-#include	"blobthread.h"
+#include	"sysdatathread.h"
 #include	"dbgroup.h"
 #include	"blob.h"
 #include	"option.h"
@@ -173,7 +173,7 @@ ExecuteServer(void)
 	int		_fhTerm
 		,	_fhAps
 		,	_fhControl
-		,	_fhBlob;
+		,	_fhSysData;
 	fd_set	ready;
 	int		maxfd;
     int		ret;
@@ -190,12 +190,12 @@ ENTER_FUNC;
 	} else {
 		_fhControl = -1;
 	}
-	if		(	(  ThisEnv->blob        !=  NULL  )
-			&&	(  ThisEnv->blob->port  !=  NULL  ) ) {
-		_fhBlob = InitServerPort(ThisEnv->blob->port,Back);
-		maxfd = maxfd < _fhBlob ? _fhBlob : maxfd;
+	if		(	(  ThisEnv->sysdata        !=  NULL  )
+			&&	(  ThisEnv->sysdata->port  !=  NULL  ) ) {
+		_fhSysData = InitServerPort(ThisEnv->sysdata->port,Back);
+		maxfd = maxfd < _fhSysData ? _fhSysData : maxfd;
 	} else {
-		_fhBlob = -1;
+		_fhSysData = -1;
 	}
 	fShutdown = FALSE;
 	do {
@@ -207,8 +207,8 @@ ENTER_FUNC;
 		if		(  _fhControl  >=  0  ) {
 			FD_SET(_fhControl,&ready);
 		}
-		if		(  _fhBlob  >=  0  ) {
-			FD_SET(_fhBlob,&ready);
+		if		(  _fhSysData  >=  0  ) {
+			FD_SET(_fhSysData,&ready);
 		}
 		ret = pselect(maxfd+1,&ready,NULL,NULL,&timeout,&SigMask);
         if (ret == -1) {
@@ -226,9 +226,9 @@ ENTER_FUNC;
 				&&	(  FD_ISSET(_fhControl,&ready)  ) ) {	/*	control connect		*/
 			ConnectControl(_fhControl);
 		}
-		if		(	(  _fhBlob  >=  0  )
-				&&	(  FD_ISSET(_fhBlob,&ready)  ) ) {		/*	blob connect		*/
-			ConnectBlob(_fhBlob);
+		if		(	(  _fhSysData  >=  0  )
+				&&	(  FD_ISSET(_fhSysData,&ready)  ) ) {		/*	sysdata connect		*/
+			ConnectSysData(_fhSysData);
 		}
 	}	while	(!fShutdown);
 LEAVE_FUNC;
@@ -260,13 +260,15 @@ ENTER_FUNC;
 		ControlPort = ParPortName(ControlPortNumber);
 	}
 	InitNET();
-	if		(	(  ThisEnv->blob       !=  NULL  )
-			&&	(  ThisEnv->blob->dir  !=  NULL  ) ) {
-		Blob = InitBLOB(ThisEnv->blob->dir);
+	if		(	(  ThisEnv->sysdata       !=  NULL  )
+			&&	(  ThisEnv->sysdata->dir  !=  NULL  ) ) {
+		Blob = InitBLOB(ThisEnv->sysdata->dir);
 		BlobState = ConnectBLOB(Blob);
+		KVState = InitKV();
 	} else {
 		Blob = NULL;
 		BlobState = NULL;
+		KVState = NULL;
 	}
 	InitMessageQueue();
 	ReadyAPS();
@@ -283,6 +285,9 @@ CleanUp(void)
 	if (BlobState != NULL) {
 		DisConnectBLOB(BlobState);
 		FinishBLOB(Blob);
+	}
+	if (KVState != NULL) {
+		FinishKV(KVState);
 	}
 	CleanUNIX_Socket(ApsPort);
  	CleanUNIX_Socket(WfcPort);

@@ -33,6 +33,7 @@
 
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
+GLOBAL	char	*PortSysData;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
 GLOBAL	char	*KeyFile;

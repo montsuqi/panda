@@ -36,128 +36,9 @@
 #include	"comms.h"
 #include	"wfcdata.h"
 #include	"wfcio.h"
-#include	"blobreq.h"
 #include	"front.h"
 #include	"debug.h"
 #include	"socket.h"
-
-static	void
-_ForwardBLOB(
-	NETFILE		*fp,
-	ValueStruct	*value)
-{
-	int		i;
-
-ENTER_FUNC;
-	if		(  value  ==  NULL  )	return;
-	if		(  IS_VALUE_NIL(value)  )	return;
-	switch	(ValueType(value)) {
-	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			_ForwardBLOB(fp,ValueArrayItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_VALUES:
-		for	( i = 0 ; i < ValueValuesSize(value) ; i ++ ) {
-			_ForwardBLOB(fp,ValueValuesItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			_ForwardBLOB(fp,ValueRecordItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_INT:
-	  case	GL_TYPE_FLOAT:
-	  case	GL_TYPE_BOOL:
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-	  case	GL_TYPE_BINARY:
-	  case	GL_TYPE_NUMBER:
-		break;
-	  case	GL_TYPE_OBJECT:
-		if		(  IS_OBJECT_NULL(ValueObjectId(value))  ) {
-			if (BlobCacheFileSize(value) > 0) {
-				ValueObjectId(value) = RequestImportBLOB(fp,WFC_BLOB,BlobCacheFileName(value));
-			}
-		}
-		break;
-	  case	GL_TYPE_ALIAS:
-	  default:
-		break;
-	}
-LEAVE_FUNC;
-}
-
-static	void
-ForwardBLOB(
-	NETFILE		*fp,
-	ValueStruct	*value)
-{
-	_ForwardBLOB(fp,value);
-}
-
-static	void
-_FeedBLOB(
-	NETFILE		*fp,
-	ValueStruct	*value)
-{
-	int		i;
-
-	//ENTER_FUNC;
-	if		(  value  ==  NULL  )	return;
-	if		(  IS_VALUE_NIL(value)  )	return;
-	switch	(ValueType(value)) {
-	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			_FeedBLOB(fp,ValueArrayItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_VALUES:
-		for	( i = 0 ; i < ValueValuesSize(value) ; i ++ ) {
-			_FeedBLOB(fp,ValueValuesItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			_FeedBLOB(fp,ValueRecordItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_INT:
-	  case	GL_TYPE_FLOAT:
-	  case	GL_TYPE_BOOL:
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-	  case	GL_TYPE_BINARY:
-	  case	GL_TYPE_NUMBER:
-		break;
-	  case	GL_TYPE_OBJECT:
-		if		( !IS_OBJECT_NULL(ValueObjectId(value))  ) {
-			RequestExportBLOB(fp,WFC_BLOB,ValueObjectId(value),BlobCacheFileName(value));
-		}
-		break;
-	  case	GL_TYPE_ALIAS:
-	  default:
-		break;
-	}
-	//LEAVE_FUNC;
-}
-
-static	void
-FeedBLOB(
-	NETFILE		*fp,
-	ValueStruct	*value)
-{
-ENTER_FUNC;
-	_FeedBLOB(fp,value);
-LEAVE_FUNC;
-}
 
 static	Bool
 _SendTermServer(
@@ -173,9 +54,6 @@ _SendTermServer(
 
 ENTER_FUNC;
 	rc = FALSE;
-	if (value != NULL) {
-		ForwardBLOB(fp,value);			ON_IO_ERROR(fp,badio);
-	}
 	SendPacketClass(fp,WFC_DATA);	ON_IO_ERROR(fp,badio);
 	dbgmsg("send DATA");
 	dbgprintf("window = [%s]",window);
@@ -388,7 +266,6 @@ ENTER_FUNC;
 			RecvLBS(fp,buff);				ON_IO_ERROR(fp,badio);
 			if		(  win->rec  !=  NULL  ) {
 				NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
-				FeedBLOB(fp,win->rec->value);	ON_IO_ERROR(fp,badio);
 			}
 			FreeLBS(buff);
 			break;

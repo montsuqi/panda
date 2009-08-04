@@ -71,7 +71,7 @@ BLOB_DBOPEN(
 ENTER_FUNC;
 	if		(  fpBlob  ==  NULL  ) {
 		if		(  ( port = GetDB_Port(dbg,DB_UPDATE) )  ==  NULL  ) {
-			port = ThisEnv->blob->port;
+			port = ThisEnv->sysdata->port;
 		}
 		if		(	(  port  !=  NULL  )
 				&&	(  ( fh = ConnectSocket(port,SOCK_STREAM) )  >=  0  ) ) {
@@ -121,22 +121,10 @@ BLOB_DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-	int			rc;
-
 ENTER_FUNC;
 	BeginDB_Redirect(dbg); 
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
-		rc = MCP_OK;
-	} else
-	if		(  RequestStartBLOB(NBCONN(dbg),APS_BLOB)  ) {
-		dbgmsg("OK");
-		rc = MCP_OK;
-	} else {
-		dbgmsg("NG");
-		rc = MCP_BAD_OTHER;
-	}
 	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
+		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -147,23 +135,11 @@ BLOB_DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
-	int			rc;
-
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
-		rc = MCP_OK;
-	} else
-	if		(  RequestStartBLOB(NBCONN(dbg),APS_BLOB)  ) {
-		dbgmsg("OK");
-		rc = MCP_OK;
-	} else {
-		dbgmsg("NG");
-		rc = MCP_BAD_OTHER;
-	}
 	CommitDB_Redirect(dbg);
 	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
+		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -186,7 +162,7 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( e = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  ( ValueObjectId(e) = RequestNewBLOB(NBCONN(dbg),APS_BLOB,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
+			if		(  ( ValueObjectId(e) = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
 				ret = DuplicateValue(args,TRUE);
 				rc = MCP_OK;
 			} else {
@@ -222,7 +198,7 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
-			if		(  RequestExportBLOB(NBCONN(dbg),APS_BLOB,
+			if		(  RequestExportBLOB(NBCONN(dbg),
 										 ValueObjectId(obj),ValueToString(f,NULL))  ) {
 				rc = MCP_OK;
 			} else {
@@ -258,7 +234,7 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
-			if		(  ( ValueObjectId(obj) = RequestImportBLOB(NBCONN(dbg),APS_BLOB,
+			if		(  ( ValueObjectId(obj) = RequestImportBLOB(NBCONN(dbg),
 																ValueToString(f,NULL)) )  !=  GL_OBJ_NULL  ) {
                 ValueIsNonNil(obj);
 				ret = DuplicateValue(args,TRUE);
@@ -294,8 +270,7 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  RequestCheckBLOB(NBCONN(dbg),APS_BLOB,
-										ValueObjectId(obj))  ) {
+			if		(  RequestCheckBLOB(NBCONN(dbg),ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
@@ -328,8 +303,7 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
-			if		(  RequestDestroyBLOB(NBCONN(dbg),APS_BLOB,
-										  ValueObjectId(obj))  ) {
+			if		(  RequestDestroyBLOB(NBCONN(dbg),ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
@@ -365,7 +339,7 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
-			if		(  RequestRegisterBLOB(NBCONN(dbg),APS_BLOB, ValueObjectId(obj), ValueToString(f,NULL))  ) {
+			if		(  RequestRegisterBLOB(NBCONN(dbg),ValueObjectId(obj), ValueToString(f,NULL))  ) {
 				ret = DuplicateValue(args,TRUE);
 				rc = MCP_OK;
 			} else {
@@ -401,7 +375,7 @@ ENTER_FUNC;
 	} else {
 		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
 				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
-			ValueObjectId(obj) = RequestLookupBLOB(NBCONN(dbg),APS_BLOB, ValueToString(f,NULL));
+			ValueObjectId(obj) = RequestLookupBLOB(NBCONN(dbg),ValueToString(f,NULL));
 			ret = DuplicateValue(args,TRUE);
 			rc = MCP_OK;
 		} else {

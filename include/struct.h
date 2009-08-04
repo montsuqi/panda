@@ -307,7 +307,7 @@ typedef	struct {
 typedef	struct {
 	char		*dir;
 	Port		*port;
-}	BLOB_Struct;
+}	SysData_Struct;
 
 typedef	struct {
 	char		*name;
@@ -321,7 +321,7 @@ typedef	struct {
 	,			cBD
 	,			cDBD
 	,			stacksize;
-	BLOB_Struct		*blob;
+	SysData_Struct	*sysdata;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
 	GHashTable	*LD_Table;

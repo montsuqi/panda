@@ -33,7 +33,6 @@
 #define	PORT_WFC			"9000"
 #define	PORT_WFC_APS		"9001"
 #define	PORT_WFC_CONTROL	"9010"
-#define	PORT_BLOB			"9011"
 #define	PORT_POSTGRES		5432
 #define	PORT_REDIRECT		"8010"
 
@@ -41,7 +40,7 @@
 #define	PORT_FDD			"8515"
 
 #define	CONTROL_PORT	"/tmp/wfc.control:0600"
-#define	BLOB_PORT		"/tmp/blob:0600"
+#define	SYSDATA_PORT	"/tmp/sysdata:0600"
 
 #define	SIZE_PASS		(3+8+1+22)
 #define	SIZE_OTHER		128
