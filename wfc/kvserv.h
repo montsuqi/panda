@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,32 +17,20 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_MONAPI_H
-#define	_INC_MONAPI_H
+#ifndef	_INC_KVSERV_H
+#define	_INC_KVSERV_H
 
-#include	"const.h"
-#include	"enum.h"
 #include	"libmondai.h"
-#include	"wfcio.h"
+#include	"net.h"
+#include	"keyvalue.h"
 
-typedef	struct {
-	char			ld[SIZE_NAME+1];
-	char			window[SIZE_NAME+1];
-	char			user[SIZE_USER+1];
-	char			term[SIZE_TERM+1];
-	RecordStruct	*rec;
-}	MonAPIData;
-
-extern	MonAPIData		*NewMonAPIData(void);
-extern	void			FreeMonAPIData(MonAPIData *data);
-extern	PacketClass		CallMonAPI(MonAPIData *data);
+extern	void	PassiveKV(NETFILE *fp, KV_State *state);
 
 #undef	GLOBAL
-#ifdef	_MONAPI
-#define	GLOBAL	/*	*/
+#ifdef	MAIN
+#define	GLOBAL		/*	*/
 #else
-#define	GLOBAL	extern
+#define	GLOBAL		extern
 #endif
-/* GLOBAL define here*/
-#undef	GLOBAL
+
 #endif

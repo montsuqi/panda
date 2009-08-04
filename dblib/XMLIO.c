@@ -96,7 +96,7 @@ ENTER_FUNC;
 		) {
 			XMLmode = ValueInteger(mode);
 			if ( XMLmode == MODE_WRITE) {
-				if ((XMLobj = RequestNewBLOB(NBCONN(dbg),APS_BLOB,BLOB_OPEN_WRITE)) != GL_OBJ_NULL) {
+				if ((XMLobj = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE)) != GL_OBJ_NULL) {
 					ValueObjectId(obj) = XMLobj;
 					XMLDoc = xmlNewDoc("1.0");
 					root = xmlNewDocNode(XMLDoc, NULL, "data", NULL);
@@ -105,7 +105,7 @@ ENTER_FUNC;
 					rc = MCP_OK;
 				}
 			} else {
-				if(RequestReadBLOB(NBCONN(dbg),APS_BLOB, ValueObjectId(obj), &buff, &size) > 0) {
+				if(RequestReadBLOB(NBCONN(dbg),ValueObjectId(obj), &buff, &size) > 0) {
 					if (size > 0) {
 						XMLDoc = xmlReadMemory(buff, size, "http://www.montsuqi.org/", NULL, XML_PARSE_NOBLANKS|XML_PARSE_NOENT);
 						if (XMLDoc != NULL) {
@@ -158,7 +158,7 @@ ENTER_FUNC;
 	if (XMLmode == MODE_WRITE) {
 		xmlDocDumpFormatMemoryEnc(XMLDoc, &buff, &size, "UTF-8", 0);
 		if (buff != NULL && XMLobj != GL_OBJ_NULL) {
-			wrote = RequestWriteBLOB(NBCONN(dbg),APS_BLOB, XMLobj, (byte *)buff, size);
+			wrote = RequestWriteBLOB(NBCONN(dbg),XMLobj, (byte *)buff, size);
 			if (wrote == size) {
 				ValueObjectId(obj) = XMLobj;
 				ret = DuplicateValue(ret, TRUE);

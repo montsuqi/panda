@@ -47,6 +47,7 @@
 #include	"libmondai.h"
 #include	"glterm.h"
 #include	"socket.h"
+#include	"port.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"auth.h"
@@ -55,10 +56,11 @@
 #include	"glcomm.h"
 #include	"front.h"
 #include	"term.h"
-#include	"message.h"
-#include	"debug.h"
 #include	"http.h"
 #include	"monapi.h"
+#include	"blobreq.h"
+#include	"message.h"
+#include	"debug.h"
 
 #define MAX_REQ_SIZE 1024*1024+1
 
@@ -78,6 +80,7 @@ typedef struct {
 	char		*ld;
 	char		*window;
 	int			status;
+	NETFILE		*fpSysData;
 } HTTP_REQUEST;
 
 HTTP_REQUEST *
@@ -86,6 +89,8 @@ HTTP_Init(
 	NETFILE *fp)
 {
 	HTTP_REQUEST *req;
+	Port *port;
+	int fd;
 
 	req = New(HTTP_REQUEST);
 	req->fp = fp;
@@ -104,6 +109,15 @@ HTTP_Init(
 	req->ld = NULL;
 	req->window = NULL;
 	req->status = HTTP_OK;
+
+	port = ParPort(PortSysData, SYSDATA_PORT);
+	fd = ConnectSocket(port,SOCK_STREAM);
+	DestroyPort(port);
+	if ( fd > 0 ){
+		req->fpSysData = SocketToNet(fd);
+	} else {
+		Error("cannot connect sysdata");
+	}
 	return req;
 }
 
@@ -180,7 +194,7 @@ SendResponse(
 {
 	char buf[1024];
 	char date[50];
-	char *body;
+	byte *body;
 	int size;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
@@ -210,7 +224,7 @@ SendResponse(
 		obj = ValueObjectId(GetItemLongName(e, "body"));
 		dbgprintf("obj:%d GL_OBJ_NULL:%d", (int)obj, (int)GL_OBJ_NULL);
 		if (obj != GL_OBJ_NULL) {
-			MonAPIReadBLOB(obj, &body, &size);
+			RequestReadBLOB(req->fpSysData, obj, &body, &size);
 		}
 		sprintf(buf, "Content-Type: %s\r\n", 
 			ValueToString(GetItemLongName(e,"content_type"), NULL));
@@ -582,6 +596,7 @@ PackRequestRecord(
 	char buf[SIZE_BUFF+1];
 	ValueStruct *e;
 	char *p;
+	MonObjectType obj;
 
 ENTER_FUNC;
 	e = rec->value;
@@ -606,7 +621,10 @@ ENTER_FUNC;
 		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
 	}
 	if (req->body != NULL && req->body_size > 0) {
-		ValueObjectId(GetItemLongName(e,"body")) = MonAPIWriteBLOB(req->body, req->body_size);
+		ValueObjectId(GetItemLongName(e,"body")) = obj = RequestNewBLOB(req->fpSysData,BLOB_OPEN_WRITE);
+		if (obj != GL_OBJ_NULL) {
+			RequestWriteBLOB(req->fpSysData, obj, req->body, req->body_size);
+		}
 	}
 
 	head = req->arguments;

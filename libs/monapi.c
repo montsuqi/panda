@@ -35,7 +35,6 @@
 #include	"libmondai.h"
 #include	"comm.h"
 #include	"comms.h"
-#include	"blobreq.h"
 #include	"wfcdata.h"
 #include	"wfcio.h"
 #include	"front.h"
@@ -70,71 +69,6 @@ FreeMonAPIData(
 ENTER_FUNC;
 	xfree(data);
 LEAVE_FUNC;
-}
-
-extern MonObjectType
-MonAPIWriteBLOB(
-	char	*data,
-	int 	size)
-{
-	int fd;
-	Port *port;
-	NETFILE *fp;
-	MonObjectType obj;
-
-ENTER_FUNC;
-	obj = GL_OBJ_NULL;
-	port = ParPort(TermPort, PORT_WFC);
-	fd = ConnectSocket(port,SOCK_STREAM);
-	DestroyPort(port);
-
-	if (fd > 0) {
-		fp = SocketToNet(fd);
-		obj = RequestNewBLOB(fp,WFC_BLOB,BLOB_OPEN_WRITE);
-			ON_IO_ERROR(fp,badio);
-		if (obj != GL_OBJ_NULL) {
-			RequestWriteBLOB(fp, WFC_BLOB, obj, (byte *)data, size);
-				ON_IO_ERROR(fp,badio);
-		}
-		SendPacketClass(fp, WFC_BLOB_END);
-			ON_IO_ERROR(fp,badio);
-		CloseNet(fp);
-	} else {
-		badio:
-		Message("can not connect wfc server");
-	}
-LEAVE_FUNC;
-	return obj;
-}
-
-extern int
-MonAPIReadBLOB(
-	MonObjectType obj, 
-	char **data,
-	int *size)
-{
-	int fd;
-	Port *port;
-	NETFILE *fp;
-
-ENTER_FUNC;
-	port = ParPort(TermPort, PORT_WFC);
-	fd = ConnectSocket(port,SOCK_STREAM);
-	DestroyPort(port);
-
-	if (fd > 0) {
-		fp = SocketToNet(fd);
-		RequestReadBLOB(fp, WFC_BLOB, obj, (byte **)data, size);
-			ON_IO_ERROR(fp,badio);
-		SendPacketClass(fp, WFC_BLOB_END);
-			ON_IO_ERROR(fp,badio);
-		CloseNet(fp);
-	} else {
-		badio:
-		Message("can not connect wfc server");
-	}
-LEAVE_FUNC;
-	return *size;
 }
 
 extern PacketClass

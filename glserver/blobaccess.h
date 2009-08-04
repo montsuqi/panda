@@ -17,32 +17,12 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_MONAPI_H
-#define	_INC_MONAPI_H
+#ifndef	_BLOBACCESS_H
+#define	_BLOBACCESS_H
 
-#include	"const.h"
-#include	"enum.h"
-#include	"libmondai.h"
-#include	"wfcio.h"
+#define	BLOB_ACCESS_IMPORT	0
+#define	BLOB_ACCESS_EXPORT	1
 
-typedef	struct {
-	char			ld[SIZE_NAME+1];
-	char			window[SIZE_NAME+1];
-	char			user[SIZE_USER+1];
-	char			term[SIZE_TERM+1];
-	RecordStruct	*rec;
-}	MonAPIData;
+extern	void	AccessBLOB(int mode, ValueStruct *value);
 
-extern	MonAPIData		*NewMonAPIData(void);
-extern	void			FreeMonAPIData(MonAPIData *data);
-extern	PacketClass		CallMonAPI(MonAPIData *data);
-
-#undef	GLOBAL
-#ifdef	_MONAPI
-#define	GLOBAL	/*	*/
-#else
-#define	GLOBAL	extern
-#endif
-/* GLOBAL define here*/
-#undef	GLOBAL
 #endif
