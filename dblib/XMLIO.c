@@ -369,7 +369,7 @@ ENTER_FUNC;
 		free(buff2);
 		break;
 	  case	GL_TYPE_ARRAY:
-		node = xmlNewNode(NULL, "arry");
+		node = xmlNewNode(NULL, "array");
 		for	( i = 0 ; i < ValueArraySize(val) ; i ++ ) {
 			child = Value2XMLNode(NULL, ValueArrayItem(val,i));
 			if (child != NULL) {
