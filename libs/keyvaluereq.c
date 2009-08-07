@@ -36,6 +36,7 @@
 #include	"types.h"
 
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"enum.h"
 #include	"net.h"
 #include	"comm.h"
@@ -46,7 +47,7 @@
 #include	"debug.h"
 
 extern	int
-RequestKV(
+KVREQ_Request(
 	NETFILE	*fp,
 	PacketClass	op,
 	ValueStruct *args)
@@ -55,7 +56,7 @@ RequestKV(
 	int rc;
 ENTER_FUNC;
 	rc = MCP_BAD_OTHER;
-	SendPacketClass(fp, TYPE_KV);	ON_IO_ERROR(fp,badio);
+	SendPacketClass(fp, SYSDATA_KV);	ON_IO_ERROR(fp,badio);
 	SendPacketClass(fp,op);			ON_IO_ERROR(fp,badio);
 	buff = NewLBS();
 	LBS_ReserveSize(buff,NativeSizeValue(NULL,args),FALSE);
@@ -71,4 +72,125 @@ ENTER_FUNC;
   badio:
 LEAVE_FUNC;
 	return	(rc);
+}
+
+static	ValueStruct *
+NewQueryTemplate(
+	int num)
+{
+	ValueStruct *ret;
+	char buff[256];
+	const char *str = ""
+"system {					 "
+"	id		char(128);		 "
+"	num		int;			 "
+"	query {					 "
+"		key		char(128);	 "
+"		value	char(128);	 "
+"	}[%d];					 "
+"};							 ";
+ENTER_FUNC;
+	sprintf(buff, str, num);
+	ret = RecParseValueMem(buff, NULL);
+LEAVE_FUNC;
+	return ret;
+}
+
+extern	ValueStruct	*
+KVREQ_NewQuery(
+	char *id, 
+	int num, 
+	char **keys, 
+	char **values)
+{
+	ValueStruct *ret;
+	ValueStruct *value;
+	char lname[256];
+	int i;
+ENTER_FUNC;
+	if (num <= 0) {
+		return NULL;
+	}
+	ret = NewQueryTemplate(num);
+	value = GetItemLongName(ret, "id");
+	if (id != NULL) {
+		SetValueStringWithLength(value, id, strlen(id), NULL);
+	} else {
+		SetValueStringWithLength(value, "", strlen(""), NULL);
+	}
+	value = GetItemLongName(ret, "num");
+	ValueInteger(value) = num;
+
+	for (i = 0; i < num ; i++) {
+		sprintf(lname, "query[%d].key", i);
+		value = GetItemLongName(ret, lname);
+		if (keys[i] != NULL) {
+			SetValueStringWithLength(value, keys[i], strlen(keys[i]), NULL);
+		} else {
+			SetValueStringWithLength(value, "", strlen(""), NULL);
+		}
+		sprintf(lname, "query[%d].value", i);
+		value = GetItemLongName(ret, lname);
+		if (values[i] != NULL) {
+			SetValueStringWithLength(value, values[i], strlen(values[i]), NULL);
+		} else {
+			SetValueStringWithLength(value, "", strlen(""), NULL);
+		}
+	}
+#ifdef TRACE
+	DumpValueStruct(ret);
+#endif
+LEAVE_FUNC;
+	return ret;
+}
+
+extern	int
+KVREQ_GetNum(
+	ValueStruct *query)
+{
+	ValueStruct *value;
+ENTER_FUNC;
+	value = GetItemLongName(query, "num");
+	if (value == NULL) {
+		Warning("cannot get num");
+		return 0;
+	}
+LEAVE_FUNC;
+	return ValueInteger(value);
+}
+
+extern	char *
+KVREQ_GetKey(
+	ValueStruct *query,
+	int num)
+{
+	char lname[256];
+	ValueStruct *value;
+ENTER_FUNC;
+	sprintf(lname, "query[%d].key", num);
+	value = GetItemLongName(query, lname);
+	if (value == NULL) {
+		Warning("cannot get query[%d].key", num);
+		return "";
+	}
+LEAVE_FUNC;
+	return ValueToString(value, NULL);
+}
+
+extern	char *
+KVREQ_GetValue(
+	ValueStruct *query,
+	int num)
+{
+	char lname[256];
+	ValueStruct *value;
+ENTER_FUNC;
+	sprintf(lname, "query[%d].value", num);
+	value = GetItemLongName(query, lname);
+	if (value == NULL) {
+		Warning("cannot get query[%d].value", num);
+		return "";
+	}
+LEAVE_FUNC;
+	return ValueToString(value, NULL);
 }

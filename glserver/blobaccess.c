@@ -17,8 +17,10 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -116,6 +118,7 @@ ENTER_FUNC;
 	if (fd > 0) {
 		fp = SocketToNet(fd);
 		_AccessBLOB(fp,mode,value);
+		SendPacketClass(fp, SYSDATA_END);	
 		CloseNet(fp);
 	} else {
 		Warning("cannot connect sysdata server");

@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,24 +17,12 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_KEYVALUEREQ_H
-#define	_INC_KEYVALUEREQ_H
+#ifndef	_SYSDATA_H
+#define	_SYSDATA_H
 
-#include	"libmondai.h"
-#include	"keyvaluecom.h"
-#include	"net.h"
-
-extern	int			KVREQ_Request(NETFILE *fp, PacketClass c, ValueStruct *args);
-extern	ValueStruct	*KVREQ_NewQuery(char *id, int num, char **keys, char **values);
-extern	int			KVREQ_GetNum(ValueStruct *value);
-extern	char		*KVREQ_GetValue(ValueStruct *value,int num);
-extern	char		*KVREQ_GetKey(ValueStruct *value,int num);
-
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
+extern	ValueStruct	* SYSDATA_DBOPEN(DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
+extern	ValueStruct	* SYSDATA_DBDISCONNECT( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
+extern	ValueStruct	* SYSDATA_DBSTART( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
+extern	ValueStruct	* SYSDATA_DBCOMMIT( DBG_Struct	*dbg, DBCOMM_CTRL	*ctrl);
 
 #endif

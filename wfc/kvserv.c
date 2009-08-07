@@ -17,8 +17,10 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -52,6 +54,7 @@ PassiveKV(
 	ValueStruct *args;
 	PacketClass c;
 	int rc;
+	size_t size;
 ENTER_FUNC;
 	rc = MCP_BAD_FUNC;
 	c = RecvPacketClass(fp); 	ON_IO_ERROR(fp,badio);
@@ -90,6 +93,10 @@ ENTER_FUNC;
 			dbgmsg("DELETEENTRY");
 			rc = KV_DeleteEntry(state, args);
 			break;
+		case KV_DUMP:
+			dbgmsg("DUMP");
+			rc = KV_Dump(state, args);
+			break;
 		default:
 			Warning("invalid packet class[%d]", c);
 			break;
@@ -97,6 +104,8 @@ ENTER_FUNC;
 	}
 	SendInt(fp, rc);		ON_IO_ERROR(fp,badio);
 	if (rc == MCP_OK) {
+		size = NativeSizeValue(NULL,args);
+		LBS_ReserveSize(buff,size,FALSE);
 		NativePackValue(NULL, LBS_Body(buff), args);
 		SendLBS(fp, buff);		ON_IO_ERROR(fp,badio);
 	}

@@ -17,8 +17,10 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -68,15 +70,19 @@ ENTER_FUNC;
 	fp = SocketToNet(fhSysData);
 	fLoop = TRUE;
 	while	(  fLoop  ) {
-		c = RecvChar(fp);
+		c = RecvChar(fp);	ON_IO_ERROR(fp,badio);
 		switch(c) {
-		case TYPE_BLOB:
+		case SYSDATA_BLOB:
 			dbgmsg("Call PassiveBLOB");
 			PassiveBLOB(fp,BlobState);	ON_IO_ERROR(fp,badio);
 			break;
-		case TYPE_KV:
+		case SYSDATA_KV:
 			dbgmsg("Call PassiveKV");
 			PassiveKV(fp,KVState);		ON_IO_ERROR(fp,badio);
+			break;
+		case SYSDATA_END:
+			dbgmsg("SYSDATA END");
+			fLoop = FALSE;
 			break;
 		default:
 			dbgprintf("invalid packet[%d]",(int)c);
@@ -84,8 +90,8 @@ ENTER_FUNC;
 			break;
 		}
 	}
-  badio:
 	CloseNet(fp);
+  badio:
 LEAVE_FUNC;
 	pthread_exit(NULL);
 }

@@ -34,6 +34,8 @@
 #include	<numeric.h>
 #include	<netdb.h>
 #include	<pthread.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
 
 #include	"const.h"
 #include	"types.h"
@@ -337,7 +339,7 @@ LEAVE_FUNC;
 extern	int
 KV_DeleteEntry(
 	KV_State	*state,
-	ValueStruct		*args)
+	ValueStruct	*args)
 {
 	ValueStruct	*id;
 	gpointer	okey;
@@ -356,6 +358,55 @@ ENTER_FUNC;
 			xfree(okey);
 			xfree(oval);
 			rc = MCP_OK;
+		}
+	}
+	UnLockDB(state);
+LEAVE_FUNC;
+	return rc;
+}
+
+static	void
+DumpValue(
+	gpointer key,
+	gpointer value,
+	gpointer data)
+{
+	fprintf((FILE*)data,"  - [\"%s\",\"%s\"]\n", (char*)key,(char*)value);
+}
+
+static	void
+DumpEntry(
+	gpointer key,
+	gpointer value,
+	gpointer data)
+{
+	fprintf((FILE*)data,"%s:\n",(char*)key);
+	g_hash_table_foreach((GHashTable*)value,DumpValue,data);
+}
+
+extern	int
+KV_Dump(
+	KV_State	*state,
+	ValueStruct	*args)
+{
+	ValueStruct *id;
+	FILE *fp;
+	int rc;
+ENTER_FUNC;
+	LockDB(state);
+	rc = MCP_BAD_OTHER;
+	if ((id = GetItemLongName(args, "id")) == NULL) {
+		rc = MCP_BAD_ARG;
+		Warning("does not found id");
+	} else {
+		umask(S_IRGRP |  S_IWGRP |  S_IROTH  |  S_IWOTH);
+		if ((fp = fopen(ValueToString(id, NULL), "w")) != NULL) {
+			g_hash_table_foreach(state->table, DumpEntry, fp);
+			fclose(fp);
+			rc = MCP_OK;
+		} else {
+			Warning("fopen %s failure",ValueToString(id, NULL));
+			rc = MCP_BAD_OTHER;
 		}
 	}
 	UnLockDB(state);

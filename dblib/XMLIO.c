@@ -44,7 +44,7 @@
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"blobreq.h"
-#include	"NativeBLOB.h"
+#include	"sysdata.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"redirect.h"
@@ -474,10 +474,10 @@ LEAVE_FUNC;
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)BLOB_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)BLOB_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)BLOB_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)BLOB_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
 	/*	table operations	*/
 	{	"XMLOPEN",		_OpenXML		},
 	{	"XMLREAD",		_ReadXML		},

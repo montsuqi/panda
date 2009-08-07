@@ -31,6 +31,7 @@
 #define	KV_LISTENTRY	(PacketClass)0x05
 #define	KV_NEWENTRY		(PacketClass)0x06
 #define	KV_DELETEENTRY	(PacketClass)0x07
+#define	KV_DUMP			(PacketClass)0x08
 
 #undef	GLOBAL
 #ifdef	MAIN
