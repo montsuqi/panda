@@ -91,10 +91,11 @@ System_la_LDFLAGS		=		\
 	-export-dynamic
 System_la_SOURCES		=		\
 	dbgroup.c	dbgroup.h		\
+	sysdata.c	sysdata.h		\
 	redirect.c	redirect.h		\
 	System.c
 System_la_LIBADD	=			\
-	$(top_builddir)/libs/term.lo
+	$(top_builddir)/libs/keyvaluereq.lo
 
 NativeBLOB_la_LDFLAGS	=		\
 	-version-info $(LTVERSION)	\
@@ -102,8 +103,8 @@ NativeBLOB_la_LDFLAGS	=		\
 	-export-dynamic
 NativeBLOB_la_SOURCES	=		\
 	dbgroup.c	dbgroup.h		\
+	sysdata.c	sysdata.h		\
 	redirect.c	redirect.h		\
-	NativeBLOB.h				\
 	NativeBLOB.c	
 NativeBLOB_la_LIBADD	=		\
 	$(top_builddir)/libs/blobreq.lo
@@ -137,8 +138,7 @@ XMLIO_la_LDFLAGS	=	\
 XMLIO_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
-	NativeBLOB.h			\
-	NativeBLOB.c			\
+	sysdata.c	sysdata.h	\
 	XMLIO.c
 XMLIO_la_LIBADD			=	\
 	$(top_builddir)/libs/blobreq.lo	\

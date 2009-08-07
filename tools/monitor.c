@@ -229,6 +229,7 @@ HerePort(
 	Port	*port)
 {
 	Bool	ret;
+	char	*host;
 
 ENTER_FUNC;
 	if		(  port  ==  NULL  ) {
@@ -236,7 +237,11 @@ ENTER_FUNC;
 	} else {
 		switch	(port->type) {
 		  case	PORT_IP:
-			ret = ( strcmp(IP_HOST(port),MyHost) == 0 ) ? TRUE : TRUE;
+			if ((host = IP_HOST(port)) != NULL) {
+				ret = ( strcmp(host,MyHost) == 0 ) ? TRUE : FALSE;
+			} else {
+				ret = FALSE;
+			}
 			break;
 		  case	PORT_UNIX:
 			ret = TRUE;

@@ -56,7 +56,8 @@ wfc_SOURCES	=							\
 	controlthread.c	controlthread.h		\
 	blobserv.c		blobserv.h			\
 	kvserv.c		kvserv.h			\
-	termthread.c	termthread.h
+	termthread.c	termthread.h		\
+	sysdb.c			sysdb.h
 
 wfccontrol_LDFLAGS	=			\
 	-export-dynamic

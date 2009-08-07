@@ -117,7 +117,6 @@ static	TokenTable	tokentable[] = {
 	{	"encoding"			,T_ENCODING	},
 	{	"termport"			,T_TERMPORT	},
 	{	"control"			,T_CONTROL	},
-	{	"blob"				,T_BLOB		},
 	{	"sysdata"			,T_SYSDATA	},
 	{	"auth"				,T_AUTH		},
 	{	"space"				,T_SPACE	},
@@ -127,6 +126,7 @@ static	TokenTable	tokentable[] = {
 	{	"dbpath"			,T_DBPATH	},
 	{	"update"			,T_UPDATE	},
 	{	"readonly"			,T_READONLY	},
+	{	"blob"				,T_BLOB		},
 	{	""					,0			}
 };
 

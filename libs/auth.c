@@ -342,7 +342,7 @@ AuthAddX509(const char *user, const char *subject)
 extern void
 AuthDelX509BySubject(const char *subject)
 {
-    char *u, *s;
+	gpointer s,u;
 
     assert(X509Table);
 	if (g_hash_table_lookup_extended(X509Table, (gpointer)subject, &s, &u)){

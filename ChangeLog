@@ -1,3 +1,20 @@
+2009-08-07  Yusuke Mihara  <mihara@netlab.jp>
+
+	* cobol/MCPMAIN.CBL dblib/DBRuby.c dblib/Makefile.am
+	dblib/NativeBLOB.c dblib/System.c dblib/XMLIO.c
+	dblib/dbgroup.h glserver/blobaccess.c include/wfcdata.h
+	libs/DIparser.c libs/auth.c libs/blobcom.h libs/blobreq.c
+	libs/keyvalue.c libs/keyvalue.h libs/keyvaluecom.h
+	libs/keyvaluereq.c libs/keyvaluereq.h libs/net.c
+	tools/monitor.c wfc/Makefile.am wfc/kvserv.c
+	wfc/sysdatathread.c wfc/termthread.c wfc/wfc.c wfc/wfc.h
+	dblib/sysdata.c dblib/sysdata.h wfc/sysdb.c wfc/sysdb.h:
+	termthreadでセッションの以下の情報をシステムDBに格納するようにした。
+		* user, host, window, widget, event, create_time, access_time,
+		process_time, total_process_time, count
+	glserverのBLOBのやりとりをlibs/wfcio.cからglserver/blobaccess.cに移動。
+	sysdatathreadとdblib/{NativeBLOB,System,XMLIO}.soとのプロトコルを変更。
+
 2009-08-04  Yusuke Mihara  <mihara@netlab.jp>
 
 	* dblib/NativeBLOB.c dblib/System.c

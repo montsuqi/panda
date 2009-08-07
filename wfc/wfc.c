@@ -60,7 +60,9 @@
 #include	"sysdatathread.h"
 #include	"dbgroup.h"
 #include	"blob.h"
+#include	"keyvalue.h"
 #include	"option.h"
+#include	"sysdb.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -129,7 +131,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(scrdata);
 }
-
 
 extern	void
 ChangeLD(
@@ -260,16 +261,18 @@ ENTER_FUNC;
 		ControlPort = ParPortName(ControlPortNumber);
 	}
 	InitNET();
-	if		(	(  ThisEnv->sysdata       !=  NULL  )
-			&&	(  ThisEnv->sysdata->dir  !=  NULL  ) ) {
-		Blob = InitBLOB(ThisEnv->sysdata->dir);
-		BlobState = ConnectBLOB(Blob);
+	if		(  ThisEnv->sysdata       !=  NULL  ) {
+		if 		(  ThisEnv->sysdata->dir  !=  NULL  ) {
+			Blob = InitBLOB(ThisEnv->sysdata->dir);
+			BlobState = ConnectBLOB(Blob);
+		}
 		KVState = InitKV();
 	} else {
 		Blob = NULL;
 		BlobState = NULL;
 		KVState = NULL;
 	}
+	SYSDB_Init();
 	InitMessageQueue();
 	ReadyAPS();
 	SetupMessageQueue();
@@ -329,8 +332,6 @@ static	ARG_TABLE	option[] = {
 
 	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
 		"loopback test"									},
-	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"timer"											},
 
 	{	NULL,		0,			TRUE,	NULL		 	}
 };

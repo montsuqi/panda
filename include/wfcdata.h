@@ -94,8 +94,6 @@ typedef	struct {
 typedef struct {
 	PacketClass				status;
 	LargeByteString			*rec;
-	LargeByteString			*headers;
-	LargeByteString			*body;
 }	APIData;
 
 typedef	struct _SessionData	{
@@ -118,8 +116,12 @@ typedef	struct _SessionData	{
 	LargeByteString			*linkdata;
 	LargeByteString			**scrdata;
 	APIData					*apidata;
-	time_t					create_time;
-	time_t					access_time;
+	struct timeval			create_time;
+	struct timeval			access_time;
+	struct timeval			process_time;
+	struct timeval			total_process_time;
+	int						count;
+	ValueStruct				*sysdbval;
 	WindowControl			w;
 }	SessionData;
 

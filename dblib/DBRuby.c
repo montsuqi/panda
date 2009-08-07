@@ -34,7 +34,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 #include	<numeric.h>
-
 #include    <ruby.h>
 #include    <env.h>
 #include    <st.h>

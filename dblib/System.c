@@ -44,9 +44,9 @@
 #include	"redirect.h"
 #include	"keyvaluereq.h"
 #include	"keyvaluecom.h"
-#include	"NativeBLOB.h"
 #include	"comm.h"
 #include	"comms.h"
+#include	"sysdata.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -97,7 +97,7 @@ ENTER_FUNC;														\
 	if		(  rec->type  !=  RECORD_DB  ) {					\
 		ctrl->rc = MCP_BAD_ARG;									\
 	} else {													\
-		ctrl->rc = RequestKV(NBCONN(dbg), (pklass), args);		\
+		ctrl->rc = KVREQ_Request(NBCONN(dbg), (pklass), args);	\
 		ret = DuplicateValue(args, TRUE);						\
 	}															\
 LEAVE_FUNC;														\
@@ -116,10 +116,10 @@ DEFFUNC(KV_DELETEENTRY)
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)BLOB_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)BLOB_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)BLOB_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)BLOB_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT },
+	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
 	/*	table operations	*/
 	{	"GETVALUE",		_KV_GETVALUE },
 	{	"SETVALUE",		_KV_SETVALUE },

@@ -71,6 +71,5 @@ GLOBAL	Bool	fNoRedirect;
 GLOBAL	Bool	fNoSumCheck;
 GLOBAL	int		MaxSendRetry;
 GLOBAL	int		RetryInterval;
-GLOBAL	NETFILE	*fpBlob;
 
 #endif

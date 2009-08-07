@@ -44,7 +44,6 @@ GLOBAL	int			nCache;
 GLOBAL	BLOB_State	*BlobState;
 GLOBAL	KV_State	*KVState;
 GLOBAL	Bool		fLoopBack;
-GLOBAL	Bool		fTimer;
 
 #undef	GLOBAL
 

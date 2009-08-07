@@ -55,6 +55,7 @@
 #include	"corethread.h"
 #include	"driver.h"
 #include	"dirs.h"
+#include	"sysdb.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -66,6 +67,14 @@ static	struct {
 static	int			cTerm;
 static	Queue		*RemoveQueue;
 
+static	void
+TimevalToString(
+	char *buff,
+	struct timeval tv)
+{
+	sprintf(buff,"%lld.%06d", (long long)tv.tv_sec, (int)tv.tv_usec);
+}
+	
 extern	void
 TermEnqueue(
 	TermNode	*term,
@@ -90,13 +99,14 @@ ENTER_FUNC;
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
-	time(&(data->create_time));
-	time(&(data->access_time));
+	gettimeofday(&(data->create_time), NULL);
+	gettimeofday(&(data->access_time), NULL);
+	timerclear(&(data->process_time));
+	timerclear(&(data->total_process_time));
 	data->apidata = New(APIData);
 	data->apidata->status = WFC_API_OK;
 	data->apidata->rec = NewLBS();
-	data->apidata->headers = NewLBS();
-	data->apidata->body = NewLBS();
+	data->sysdbval = NULL;
 LEAVE_FUNC;
 	return	(data);
 }
@@ -152,9 +162,9 @@ CheckAccessTime(
 		if (*candidate == NULL) {
 			*candidate = data;
 		} else {
-			if ((uintmax_t)((*candidate)->access_time) > (uintmax_t)data->access_time) {
+			if (timercmp(&(*candidate)->access_time,&data->access_time, >)) {
 				*candidate = data;
-			}	
+			}
 		}
 	}
 }
@@ -278,9 +288,10 @@ ENTER_FUNC;
 	g_hash_table_destroy(data->scrpool);
 	xfree(data->scrdata);
 	FreeLBS(data->apidata->rec);
-	FreeLBS(data->apidata->headers);
-	FreeLBS(data->apidata->body);
 	xfree(data->apidata);
+	if (data->sysdbval != NULL) {
+		SYSDB_TERM_Delete(data->sysdbval);
+	}
 	xfree(data);
 LEAVE_FUNC;
 }
@@ -377,6 +388,12 @@ ENTER_FUNC;
 		data->name = StrDup(data->hdr->term);
 		data->hdr->puttype = SCREEN_NULL;
 		data->w.n = 0;
+		data->sysdbval = SYSDB_TERM_New(term);
+		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_USER, data->hdr->user);
+		TimevalToString(buff, data->create_time);
+		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_CTIME, buff);
+		TimevalToString(buff, data->access_time);
+		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME, buff);
 		RegistSession(data);
 	} else {
 		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
@@ -414,6 +431,9 @@ ENTER_FUNC;
 				dbgprintf("window = [%s]",data->hdr->window);
 				dbgprintf("widget = [%s]",data->hdr->widget);
 				dbgprintf("event  = [%s]",data->hdr->event);
+				SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_WINDOW, data->hdr->window);
+				SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_WIDGET, data->hdr->widget);
+				SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_EVENT, data->hdr->event);
 				PureComponentName(data->hdr->window,comp);
 				if		(  ( ld = g_hash_table_lookup(ComponentHash,comp) )
 						   !=  NULL  ) {
@@ -567,25 +587,25 @@ static	SessionData	*
 Process(
 	SessionData	*data)
 {
-	struct	timeval	tv;
-	long	ever
-		,	now;
-
+	struct	timeval	tv1;
+	struct	timeval	tv2;
+	char buff[128];
 ENTER_FUNC;
-	gettimeofday(&tv,NULL);
-	ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+	gettimeofday(&tv1,NULL);
 	if		(  !fLoopBack  ) {
 		CoreEnqueue(data);
 	} else {
 		EnQueue(data->term->que,data);
 	}
 	data = DeQueue(data->term->que);
-	if		(  fTimer  ) {
-		gettimeofday(&tv,NULL);
-		now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
-		printf("wfc %s@%s:%s process time %6ld(ms)\n",
-			   data->hdr->user,data->hdr->term,data->hdr->window,(now - ever));
-	}
+	gettimeofday(&tv2,NULL);
+	timersub(&tv2, &tv1, &(data->process_time));
+	timeradd(&(data->total_process_time), &(data->process_time), &tv1);
+	data->total_process_time = tv1;
+	TimevalToString(buff, data->process_time);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_PTIME, buff);
+	TimevalToString(buff, data->total_process_time);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_TPTIME, buff);
 LEAVE_FUNC;
 	return	(data);
 }
@@ -764,7 +784,7 @@ CheckSession(
 	SessionData	*data;
 	Bool		fError
 		,		fInProcess;
-
+	char		buff[128];
 ENTER_FUNC;
 	fError = TRUE;
 	if		(  ( data = LookupSession(term,&fInProcess) )  !=  NULL  ) {
@@ -790,6 +810,13 @@ ENTER_FUNC;
 			data->hdr->status = TO_CHAR(APL_SESSION_GET);
 		}
 	}
+	if (data != NULL) {
+		gettimeofday(&data->access_time,NULL);
+		TimevalToString(buff, data->access_time);
+		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME,buff);
+		sprintf(buff, "%d", ++data->count);
+		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_COUNT,buff);
+	}
 	fError = FALSE;
   badio:
 	if		(  fError  ) {
@@ -808,7 +835,6 @@ ENTER_FUNC;
 	LockWrite(&Terminal);
 	SaveSession(data);
 	data->fInProcess = FALSE;
-	time(&(data->access_time));
 	dbgprintf("cTerm  = %d",cTerm);
 	dbgprintf("nCache = %d",nCache);
 	UnLock(&Terminal);
@@ -830,7 +856,13 @@ TermSession(
 		data->term = term;
 		data->retry = 0;
 		if		(  data->status != SESSION_STATUS_ABORT  ) {
+#if 1
+			SYSDB_TERM_Update(data->sysdbval);
+#endif
 			data = Process(data);
+#if 0
+			SYSDB_TERM_Update(data->sysdbval);
+#endif
 		}
 		if		(	(  data->status != SESSION_STATUS_NORMAL  )
 				||	(  !SendTerminal(term->fp,data)  ) ) {

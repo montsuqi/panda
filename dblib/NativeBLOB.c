@@ -41,7 +41,7 @@
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"blobreq.h"
-#include	"NativeBLOB.h"
+#include	"sysdata.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"redirect.h"
@@ -49,101 +49,6 @@
 
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
-static	int
-_EXEC(
-	DBG_Struct	*dbg,
-	char		*sql,
-	Bool		fRed,
-	int			usage)
-{
-	return	(MCP_OK);
-}
-
-extern	ValueStruct	*
-BLOB_DBOPEN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-	int		fh
-		,	rc;
-	Port	*port;
-
-ENTER_FUNC;
-	if		(  fpBlob  ==  NULL  ) {
-		if		(  ( port = GetDB_Port(dbg,DB_UPDATE) )  ==  NULL  ) {
-			port = ThisEnv->sysdata->port;
-		}
-		if		(	(  port  !=  NULL  )
-				&&	(  ( fh = ConnectSocket(port,SOCK_STREAM) )  >=  0  ) ) {
-			fpBlob = SocketToNet(fh);
-		}
-	}
-	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = (void *)fpBlob;
-	if		(  fpBlob  !=  NULL  ) {
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-		dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
-		rc = MCP_OK;
-	} else {
-		rc = MCP_BAD_OTHER;
-	}
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = rc;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-extern	ValueStruct	*
-BLOB_DBDISCONNECT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
-#if	0	/*	dbg->conn already closed by aps_main	*/
-		SendPacketClass(NBCONN(dbg),APS_END);	ON_IO_ERROR(NBCONN(dbg),badio);
-	badio:
-		CloseNet(NBCONN(dbg);
-#endif
-		CloseDB_RedirectPort(dbg);
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
-		if		(  ctrl  !=  NULL  ) {
-			ctrl->rc = MCP_OK;
-		}
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-extern	ValueStruct	*
-BLOB_DBSTART(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	BeginDB_Redirect(dbg); 
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-extern	ValueStruct	*
-BLOB_DBCOMMIT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	CheckDB_Redirect(dbg);
-	CommitDB_Redirect(dbg);
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
 
 static	ValueStruct	*
 _NewBLOB(
@@ -390,6 +295,16 @@ LEAVE_FUNC;
 }
 #endif
 
+static	int
+_EXEC(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	return	(MCP_OK);
+}
+
 static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
@@ -413,10 +328,10 @@ LEAVE_FUNC;
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)BLOB_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)BLOB_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)BLOB_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)BLOB_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
 	/*	table operations	*/
 	{	"BLOBNEW",		_NewBLOB		},
 	{	"BLOBEXPORT",	_ExportBLOB		},

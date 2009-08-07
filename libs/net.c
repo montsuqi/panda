@@ -541,6 +541,7 @@ GetSSLErrorString()
     return msg;
 }
 
+#if 0
 static char*
 GetSubjectFromCertificate_X509_NAME_print_ex(X509 *cert)
 {
@@ -574,6 +575,7 @@ err:
 
     return ret;
 }
+#endif
 
 static char*
 GetSubjectFromCertificate_X509_NAME_online(X509 *cert)

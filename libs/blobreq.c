@@ -17,8 +17,10 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+/*
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -50,7 +52,7 @@ RequestBLOB(
 
 ENTER_FUNC;
 	rc = FALSE;
-	SendPacketClass(fp,TYPE_BLOB);		ON_IO_ERROR(fp,badio);
+	SendPacketClass(fp,SYSDATA_BLOB);	ON_IO_ERROR(fp,badio);
 	SendPacketClass(fp,op);				ON_IO_ERROR(fp,badio);
 	rc = TRUE;
   badio:
