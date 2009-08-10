@@ -74,6 +74,26 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
+extern	size_t
+KVREQ_Dump(
+	NETFILE	*fp,
+	char **ret)
+{
+	size_t size;
+ENTER_FUNC;
+	size = 0;
+	SendPacketClass(fp, SYSDATA_KV);	ON_IO_ERROR(fp,badio);
+	SendPacketClass(fp,KV_DUMP);		ON_IO_ERROR(fp,badio);
+	size = RecvLength(fp);				ON_IO_ERROR(fp,badio);
+	if (size > 0) {
+		*ret = xmalloc(size);
+		Recv(fp, *ret, size);			ON_IO_ERROR(fp,badio);
+	}
+  badio:
+LEAVE_FUNC;
+	return	size;
+}
+
 static	ValueStruct *
 NewQueryTemplate(
 	int num)

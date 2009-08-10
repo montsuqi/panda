@@ -25,6 +25,7 @@
 #include	"net.h"
 
 extern	int			KVREQ_Request(NETFILE *fp, PacketClass c, ValueStruct *args);
+extern	size_t		KVREQ_Dump(NETFILE *fp, char **data);
 extern	ValueStruct	*KVREQ_NewQuery(char *id, int num, char **keys, char **values);
 extern	int			KVREQ_GetNum(ValueStruct *value);
 extern	char		*KVREQ_GetValue(ValueStruct *value,int num);

@@ -45,8 +45,9 @@
 #include	"message.h"
 #include	"debug.h"
 
-#define	LockDB(db)		dbgmsg("LockDB");pthread_mutex_lock(&(db->mutex))
-#define	UnLockDB(db)	dbgmsg("UnLockDB");pthread_mutex_unlock(&(db->mutex))
+#define	KV_LockRead(db)		dbgmsg("KV_LockRead");LockRead(db)
+#define	KV_LockWrite(db)	dbgmsg("KV_LockWrite");LockWrite(db)
+#define	KV_UnLock(db)		dbgmsg("KV_UnLock");UnLock(db)
 
 extern	KV_State *
 InitKV(void)
@@ -55,7 +56,7 @@ InitKV(void)
 ENTER_FUNC;
 	state = New(KV_State);
 	state->table = NewNameHash();
-	pthread_mutex_init(&(state->mutex),NULL);
+	InitLock(state);
 LEAVE_FUNC;
 	return state;
 }
@@ -89,7 +90,7 @@ FinishKV(
 {
 	g_hash_table_foreach_remove(state->table, RemoveEntry, NULL);
 	xfree(state->table);
-	pthread_mutex_destroy(&(state->mutex));
+	DestroyLock(state);
 	xfree(state);
 }
 
@@ -109,7 +110,7 @@ KV_GetValue(
 	int max;
 	char *val;
 ENTER_FUNC;
-	LockDB(state);
+	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL ||
 			(num = GetItemLongName(args, "num")) == NULL ||
@@ -135,7 +136,7 @@ ENTER_FUNC;
 			rc = MCP_OK;
 		}
 	}
-	UnLockDB(state);
+	KV_UnLock(state);
 LEAVE_FUNC;
 	return	rc;
 }
@@ -187,7 +188,7 @@ KV_SetValue(
 	GHashTable	*record;
 	int rc;
 ENTER_FUNC;
-	LockDB(state);
+	KV_LockWrite(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL ||
 			(num = GetItemLongName(args, "num")) == NULL ||
@@ -203,7 +204,7 @@ ENTER_FUNC;
 			rc = MCP_OK;
 		}
 	}
-	UnLockDB(state);
+	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
 }
@@ -217,7 +218,7 @@ KV_SetValueALL(
 	ValueStruct	*num;
 	int rc;
 ENTER_FUNC;
-	LockDB(state);
+	KV_LockWrite(state);
 	rc = MCP_BAD_OTHER;
 	if ((num = GetItemLongName(args, "num")) == NULL ||
 			(query = GetItemLongName(args, "query")) == NULL) {
@@ -227,7 +228,7 @@ ENTER_FUNC;
 		g_hash_table_foreach(state->table, (GHFunc)SetValue, args);
 		rc = MCP_OK;
 	}
-	UnLockDB(state);
+	KV_UnLock(state);
 LEAVE_FUNC;
 	return	rc;
 }
@@ -265,7 +266,7 @@ KV_ListKey(
 	GHashTable	*record;
 	int rc;
 ENTER_FUNC;
-	LockDB(state);
+	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL ||
 			(num = GetItemLongName(args, "num")) == NULL ||
@@ -282,7 +283,7 @@ ENTER_FUNC;
 			rc = MCP_OK;
 		}
 	}
-	UnLockDB(state);
+	KV_UnLock(state);
 LEAVE_FUNC;
 	return	rc;
 }
@@ -296,7 +297,7 @@ KV_ListEntry(
 	ValueStruct	*query;
 	int rc;
 ENTER_FUNC;
-	LockDB(state);
+	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
 	if ((num = GetItemLongName(args, "num")) == NULL ||
 			(query = GetItemLongName(args, "query")) == NULL) {
@@ -307,7 +308,7 @@ ENTER_FUNC;
 		g_hash_table_foreach(state->table, (GHFunc)KeyToKey, args);
 		rc = MCP_OK;
 	}
-	UnLockDB(state);
+	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
 }
@@ -320,7 +321,7 @@ KV_NewEntry(
 	ValueStruct	*id;
 	int rc;
 ENTER_FUNC;
-	LockDB(state);
+	KV_LockWrite(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL) {
 		rc = MCP_BAD_ARG;
@@ -331,7 +332,7 @@ ENTER_FUNC;
 		}
 		rc = MCP_OK;
 	}
-	UnLockDB(state);
+	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
 }
@@ -346,7 +347,7 @@ KV_DeleteEntry(
 	gpointer	oval;
 	int	rc;
 ENTER_FUNC;
-	LockDB(state);
+	KV_LockWrite(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL) {
 		rc = MCP_BAD_ARG;
@@ -360,9 +361,31 @@ ENTER_FUNC;
 			rc = MCP_OK;
 		}
 	}
-	UnLockDB(state);
+	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
+}
+
+static	void
+DumpValueSize(
+	gpointer key,
+	gpointer value,
+	gpointer data)
+{
+	char buff[SIZE_LONGNAME];
+	*((size_t*)data) += snprintf(buff, SIZE_LONGNAME, "  - [\"%s\",\"%s\"]\n", (char*)key, (char*)value);
+}
+
+static	void
+DumpEntrySize(
+	gpointer key,
+	gpointer value,
+	gpointer data)
+{
+	char buff[SIZE_LONGNAME+1];
+	*((size_t*)data) += snprintf(buff, SIZE_LONGNAME,"%s:\n",(char*)key);
+	buff[SIZE_LONGNAME] = 0;
+	g_hash_table_foreach((GHashTable*)value,DumpValueSize,data);
 }
 
 static	void
@@ -371,7 +394,10 @@ DumpValue(
 	gpointer value,
 	gpointer data)
 {
-	fprintf((FILE*)data,"  - [\"%s\",\"%s\"]\n", (char*)key,(char*)value);
+	char buff[SIZE_LONGNAME+1];
+	snprintf(buff,SIZE_LONGNAME,"  - [\"%s\",\"%s\"]\n", (char*)key,(char*)value);
+	buff[SIZE_LONGNAME] = 0;
+	strcat((char*)data, buff);
 }
 
 static	void
@@ -380,36 +406,30 @@ DumpEntry(
 	gpointer value,
 	gpointer data)
 {
-	fprintf((FILE*)data,"%s:\n",(char*)key);
+	char buff[SIZE_LONGNAME+1];
+	snprintf(buff, SIZE_LONGNAME,"%s:\n",(char*)key);
+	buff[SIZE_LONGNAME] = 0;
+	strcat((char*)data, buff);
 	g_hash_table_foreach((GHashTable*)value,DumpValue,data);
 }
 
-extern	int
+extern	size_t
 KV_Dump(
 	KV_State	*state,
-	ValueStruct	*args)
+	char		**ret)
 {
-	ValueStruct *id;
-	FILE *fp;
-	int rc;
+	size_t size;
 ENTER_FUNC;
-	LockDB(state);
-	rc = MCP_BAD_OTHER;
-	if ((id = GetItemLongName(args, "id")) == NULL) {
-		rc = MCP_BAD_ARG;
-		Warning("does not found id");
-	} else {
-		umask(S_IRGRP |  S_IWGRP |  S_IROTH  |  S_IWOTH);
-		if ((fp = fopen(ValueToString(id, NULL), "w")) != NULL) {
-			g_hash_table_foreach(state->table, DumpEntry, fp);
-			fclose(fp);
-			rc = MCP_OK;
-		} else {
-			Warning("fopen %s failure",ValueToString(id, NULL));
-			rc = MCP_BAD_OTHER;
-		}
+	KV_LockRead(state);
+	size = 0;
+	*ret = NULL;
+	g_hash_table_foreach(state->table, DumpEntrySize, &size);
+	if (size > 0) {
+		size++;
+		*ret = xmalloc(size);
+		g_hash_table_foreach(state->table, DumpEntry, *ret);
 	}
-	UnLockDB(state);
+	KV_UnLock(state);
 LEAVE_FUNC;
-	return rc;
+	return size;
 }

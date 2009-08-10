@@ -55,63 +55,74 @@ PassiveKV(
 	PacketClass c;
 	int rc;
 	size_t size;
+	char *data;
 ENTER_FUNC;
-	rc = MCP_BAD_FUNC;
 	c = RecvPacketClass(fp); 	ON_IO_ERROR(fp,badio);
-	buff = NewLBS();
-	RecvLBS(fp, buff);			ON_IO_ERROR(fp,badio);
-	NativeUnPackValueNew(NULL, LBS_Body(buff), &args);
-	if (args == NULL) {
-		rc = MCP_BAD_ARG;
-	} else {
-		switch	(c) {
-		case KV_GETVALUE:
-			dbgmsg("GETVALUE");
-			rc = KV_GetValue(state, args);
-			break;
-		case KV_SETVALUE:
-			dbgmsg("SETVALUE");
-			rc = KV_SetValue(state, args);
-			break;
-		case KV_SETVALUEALL:
-			dbgmsg("SETVALUEALL");
-			rc = KV_SetValueALL(state, args);
-			break;
-		case KV_LISTKEY:
-			dbgmsg("LISTKEY");
-			rc = KV_ListKey(state, args);
-			break;
-		case KV_LISTENTRY:
-			dbgmsg("LISTENTRY");
-			rc = KV_ListEntry(state, args);
-			break;
-		case KV_NEWENTRY:
-			dbgmsg("NEWENTRY");
-			rc = KV_NewEntry(state, args);
-			break;
-		case KV_DELETEENTRY:
-			dbgmsg("DELETEENTRY");
-			rc = KV_DeleteEntry(state, args);
-			break;
-		case KV_DUMP:
-			dbgmsg("DUMP");
-			rc = KV_Dump(state, args);
-			break;
-		default:
-			Warning("invalid packet class[%d]", c);
-			break;
+	if (c == KV_DUMP) {
+		dbgmsg("DUMP");
+		size = KV_Dump(state, &data);
+		if (data == NULL) {
+			Warning("Dump failure");
+			size = 0;
 		}
-	}
-	SendInt(fp, rc);		ON_IO_ERROR(fp,badio);
-	if (rc == MCP_OK) {
-		size = NativeSizeValue(NULL,args);
-		LBS_ReserveSize(buff,size,FALSE);
-		NativePackValue(NULL, LBS_Body(buff), args);
-		SendLBS(fp, buff);		ON_IO_ERROR(fp,badio);
-	}
-	FreeLBS(buff);
-	if (args != NULL) {
-		FreeValueStruct(args);
+		SendLength(fp, size);
+		if (size > 0) {
+			Send(fp, data, size);
+			xfree(data);
+		}
+	} else {
+		rc = MCP_BAD_FUNC;
+		buff = NewLBS();
+		RecvLBS(fp, buff);			ON_IO_ERROR(fp,badio);
+		NativeUnPackValueNew(NULL, LBS_Body(buff), &args);
+		if (args == NULL) {
+			rc = MCP_BAD_ARG;
+		} else {
+			switch	(c) {
+			case KV_GETVALUE:
+				dbgmsg("GETVALUE");
+				rc = KV_GetValue(state, args);
+				break;
+			case KV_SETVALUE:
+				dbgmsg("SETVALUE");
+				rc = KV_SetValue(state, args);
+				break;
+			case KV_SETVALUEALL:
+				dbgmsg("SETVALUEALL");
+				rc = KV_SetValueALL(state, args);
+				break;
+			case KV_LISTKEY:
+				dbgmsg("LISTKEY");
+				rc = KV_ListKey(state, args);
+				break;
+			case KV_LISTENTRY:
+				dbgmsg("LISTENTRY");
+				rc = KV_ListEntry(state, args);
+				break;
+			case KV_NEWENTRY:
+				dbgmsg("NEWENTRY");
+				rc = KV_NewEntry(state, args);
+				break;
+			case KV_DELETEENTRY:
+				dbgmsg("DELETEENTRY");
+				rc = KV_DeleteEntry(state, args);
+				break;
+			default:
+				Warning("invalid packet class[%d]", c);
+				break;
+			}
+		}
+		SendInt(fp, rc);		ON_IO_ERROR(fp,badio);
+		if (rc == MCP_OK) {
+			size = NativeSizeValue(NULL,args);
+			LBS_ReserveSize(buff,size,FALSE);
+			NativePackValue(NULL, LBS_Body(buff), args);
+			SendLBS(fp, buff);		ON_IO_ERROR(fp,badio);
+		}
+		FreeLBS(buff);
+		if (args != NULL) {
+			FreeValueStruct(args);
+		}
 	}
 badio:
 LEAVE_FUNC;

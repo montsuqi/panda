@@ -20,9 +20,11 @@
 #ifndef	_INC_KEYVALUE_H
 #define	_INC_KEYVALUE_H
 
+#include "lock.h"
+
 typedef	struct _KV_State	{
 	GHashTable	*table;
-	pthread_mutex_t	mutex;
+	LOCKOBJECT;
 }	KV_State;
 
 extern	KV_State	*InitKV(void);
@@ -35,7 +37,7 @@ extern	int		KV_ListKey(KV_State *state, ValueStruct *arg);
 extern	int		KV_ListEntry(KV_State *state, ValueStruct *arg);
 extern	int		KV_NewEntry(KV_State *state, ValueStruct *arg);
 extern	int		KV_DeleteEntry(KV_State *state, ValueStruct *arg);
-extern	int		KV_Dump(KV_State *state, ValueStruct *arg);
+extern	size_t	KV_Dump(KV_State *state, char **data);
 
 #undef	GLOBAL
 #ifdef	MAIN
