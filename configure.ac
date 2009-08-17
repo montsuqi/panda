@@ -132,14 +132,6 @@ fi
 AC_SUBST(MAGIC_LIBS)
 
 dnl ***************************************************************************
-dnl checking for glserver
-dnl ***************************************************************************
-PKG_CHECK_MODULES(GLSERVERLIB,
-[
-	glib-2.0	>= 2.12.0
-])
-
-dnl ***************************************************************************
 dnl checking for xml2
 dnl ***************************************************************************
 PKG_CHECK_MODULES(XML2,
@@ -606,6 +598,11 @@ GLIB_LIBS=`glib-config --libs`
 GLIB_CFLAGS=`glib-config --cflags`
 AC_SUBST(GLIB_LIBS)
 AC_SUBST(GLIB_CFLAGS)
+
+PKG_CHECK_MODULES(GLIB2,
+[
+	glib-2.0	>= 2.12.0
+])
 
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the GD modules. 

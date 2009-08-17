@@ -1,3 +1,14 @@
+2009-08-17  Yusuke Mihara  <mihara@netlab.jp>
+
+	* configure.ac dblib/System.c glserver/Makefile.am
+	libs/keyvalue.c libs/keyvalue.h libs/keyvaluecom.h
+	libs/keyvaluereq.c libs/keyvaluereq.h 
+	wfc/Makefile.am wfc/kvserv.c wfc/sysdb.c wfc/termthread.c
+	wfc/wfc.c wfc/moninfo.c:
+	セッション管理コマンドmoninfoを追加。
+	システムDBのいくつかの致命的なバグを修正。
+	システムDBのcreate_time、access_timeの形式を変更。
+
 2009-08-07  Yusuke Mihara  <mihara@netlab.jp>
 
 	* cobol/MCPMAIN.CBL dblib/DBRuby.c dblib/Makefile.am

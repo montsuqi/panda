@@ -31,7 +31,7 @@ glserver_LDADD 		=					\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandagl.a	\
 	$(MAGIC_LIBS)						\
-	$(GLSERVERLIB_LIBS)					\
+	$(GLIB2_LIBS)					\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						
 glserver_DEPENDENCIES	=				\
@@ -42,7 +42,7 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	$(GLSERVERLIB_CFLAGS)	\
+	$(GLIB2_CFLAGS)	\
 	$(SSL_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 

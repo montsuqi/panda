@@ -74,7 +74,18 @@ TimevalToString(
 {
 	sprintf(buff,"%lld.%06d", (long long)tv.tv_sec, (int)tv.tv_usec);
 }
-	
+
+static	void
+_strftime(
+	char *ret, 
+	size_t size,
+	time_t time)
+{
+	struct tm *tmp;
+	tmp = localtime(&time);
+	strftime(ret, size, "%a %b %d %H:%M:%S %Y", tmp);
+}
+
 extern	void
 TermEnqueue(
 	TermNode	*term,
@@ -350,7 +361,7 @@ InitSession(
 	SessionData	*data;
 	char	buff[SIZE_LONGNAME+1];
 	LD_Node	*ld;
-	int			i;
+	int		i;
 	Bool	fKeep;
 
 ENTER_FUNC;
@@ -390,9 +401,9 @@ ENTER_FUNC;
 		data->w.n = 0;
 		data->sysdbval = SYSDB_TERM_New(term);
 		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_USER, data->hdr->user);
-		TimevalToString(buff, data->create_time);
+		_strftime(buff, sizeof(buff), data->create_time.tv_sec);
 		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_CTIME, buff);
-		TimevalToString(buff, data->access_time);
+		_strftime(buff, sizeof(buff), data->access_time.tv_sec);
 		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME, buff);
 		RegistSession(data);
 	} else {
@@ -784,7 +795,7 @@ CheckSession(
 	SessionData	*data;
 	Bool		fError
 		,		fInProcess;
-	char		buff[128];
+	char		buff[SIZE_LONGNAME+1];
 ENTER_FUNC;
 	fError = TRUE;
 	if		(  ( data = LookupSession(term,&fInProcess) )  !=  NULL  ) {
@@ -812,7 +823,7 @@ ENTER_FUNC;
 	}
 	if (data != NULL) {
 		gettimeofday(&data->access_time,NULL);
-		TimevalToString(buff, data->access_time);
+		_strftime(buff, sizeof(buff), data->access_time.tv_sec);
 		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME,buff);
 		sprintf(buff, "%d", ++data->count);
 		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_COUNT,buff);

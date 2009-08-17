@@ -18,7 +18,8 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = wfc
-bin_PROGRAMS = wfccontrol
+bin_PROGRAMS = wfccontrol	\
+	moninfo
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
@@ -26,7 +27,7 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
 	$(SSL_CFLAGS)			\
-	$(GLIB_CFLAGS)			\
+	$(GLIB2_CFLAGS)			\
 	$(MONDAI_CFLAGS)
 
 LDADD 			=						\
@@ -36,7 +37,7 @@ LDADD 			=						\
 	$(top_builddir)/libs/libpandacom.a	\
 	$(top_builddir)/libs/libpandablob.a	\
 	$(SSL_LIBS)							\
-	$(GLIB_LIBS)						\
+	$(GLIB2_LIBS)						\
 	$(MONDAI_LIBS)						
 DEPENDENCIES	=						\
 	$(top_builddir)/defaults.h			\
@@ -65,3 +66,7 @@ wfccontrol_SOURCES	=					\
 	wfccontrol.c						\
 	controlthread.h
 
+moninfo_LDFLAGS	=			\
+	-export-dynamic
+moninfo_SOURCES	=					\
+	moninfo.c
