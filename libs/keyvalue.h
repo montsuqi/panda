@@ -37,7 +37,7 @@ extern	int		KV_ListKey(KV_State *state, ValueStruct *arg);
 extern	int		KV_ListEntry(KV_State *state, ValueStruct *arg);
 extern	int		KV_NewEntry(KV_State *state, ValueStruct *arg);
 extern	int		KV_DeleteEntry(KV_State *state, ValueStruct *arg);
-extern	size_t	KV_Dump(KV_State *state, char **data);
+extern	int		KV_Dump(KV_State *state, ValueStruct *arg);
 
 #undef	GLOBAL
 #ifdef	MAIN

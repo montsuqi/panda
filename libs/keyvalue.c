@@ -79,7 +79,7 @@ RemoveEntry(
 	gpointer	data)
 {
 	g_hash_table_foreach_remove((GHashTable*)value, RemoveValue, NULL);
-	xfree(value);
+	g_hash_table_destroy(value);
 	xfree(key);
 	return TRUE;
 }
@@ -89,7 +89,7 @@ FinishKV(
 	KV_State *state)
 {
 	g_hash_table_foreach_remove(state->table, RemoveEntry, NULL);
-	xfree(state->table);
+	g_hash_table_destroy(state->table);
 	DestroyLock(state);
 	xfree(state);
 }
@@ -357,7 +357,7 @@ ENTER_FUNC;
 			g_hash_table_remove(state->table, okey);
 			g_hash_table_foreach_remove((GHashTable*)oval, RemoveValue, NULL);
 			xfree(okey);
-			xfree(oval);
+			g_hash_table_destroy(oval);
 			rc = MCP_OK;
 		}
 	}
@@ -367,37 +367,13 @@ LEAVE_FUNC;
 }
 
 static	void
-DumpValueSize(
-	gpointer key,
-	gpointer value,
-	gpointer data)
-{
-	char buff[SIZE_LONGNAME];
-	*((size_t*)data) += snprintf(buff, SIZE_LONGNAME, "  - [\"%s\",\"%s\"]\n", (char*)key, (char*)value);
-}
-
-static	void
-DumpEntrySize(
-	gpointer key,
-	gpointer value,
-	gpointer data)
-{
-	char buff[SIZE_LONGNAME+1];
-	*((size_t*)data) += snprintf(buff, SIZE_LONGNAME,"%s:\n",(char*)key);
-	buff[SIZE_LONGNAME] = 0;
-	g_hash_table_foreach((GHashTable*)value,DumpValueSize,data);
-}
-
-static	void
 DumpValue(
 	gpointer key,
 	gpointer value,
 	gpointer data)
 {
-	char buff[SIZE_LONGNAME+1];
-	snprintf(buff,SIZE_LONGNAME,"  - [\"%s\",\"%s\"]\n", (char*)key,(char*)value);
-	buff[SIZE_LONGNAME] = 0;
-	strcat((char*)data, buff);
+	fprintf((FILE*)data,"  - - \"%s\"\n", (char*)key);
+	fprintf((FILE*)data,"    - \"%s\"\n", (char*)value);
 }
 
 static	void
@@ -406,30 +382,42 @@ DumpEntry(
 	gpointer value,
 	gpointer data)
 {
-	char buff[SIZE_LONGNAME+1];
-	snprintf(buff, SIZE_LONGNAME,"%s:\n",(char*)key);
-	buff[SIZE_LONGNAME] = 0;
-	strcat((char*)data, buff);
+	fprintf((FILE*)data,"\"%s\":\n",(char*)key);
 	g_hash_table_foreach((GHashTable*)value,DumpValue,data);
 }
 
-extern	size_t
+extern	int
 KV_Dump(
 	KV_State	*state,
-	char		**ret)
+	ValueStruct	*args)
 {
-	size_t size;
+	FILE *fp;
+	char buff[256];
+	int rc;
+	int fd;
+	ValueStruct *id;
 ENTER_FUNC;
 	KV_LockRead(state);
-	size = 0;
-	*ret = NULL;
-	g_hash_table_foreach(state->table, DumpEntrySize, &size);
-	if (size > 0) {
-		size++;
-		*ret = xmalloc(size);
-		g_hash_table_foreach(state->table, DumpEntry, *ret);
+	rc = MCP_BAD_OTHER;
+	if ((id = GetItemLongName(args, "id")) == NULL) {
+		rc = MCP_BAD_ARG;
+		Warning("does not found id");
+	} else {
+		sprintf(buff, "/tmp/sysdata_dump_XXXXXX");
+		if ((fd = mkstemp(buff)) != -1) {
+			if ((fp = fdopen(fd, "w")) != NULL) {
+				g_hash_table_foreach(state->table, DumpEntry, fp);
+				fclose(fp);
+				SetValueStringWithLength(id, buff, strlen(buff), NULL);
+				rc = MCP_OK;
+			} else {
+				Warning("fdopne failure");
+			}
+		} else {
+			Warning("mkstemp failure");
+		}
 	}
 	KV_UnLock(state);
 LEAVE_FUNC;
-	return size;
+	return rc;
 }

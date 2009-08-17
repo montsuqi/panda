@@ -108,7 +108,7 @@ ENTER_FUNC;
 				values[i] = "";
 			}
 		}
-		ret = KVREQ_NewQuery(termid,SYSDB_TERM_LAST,keys,values);
+		ret = KVREQ_NewQueryWithValue(termid,SYSDB_TERM_LAST,keys,values);
 		KVREQ_Request(fp, KV_NEWENTRY, ret);
 		SendPacketClass(fp, SYSDATA_END);
 		CloseNet(fp);

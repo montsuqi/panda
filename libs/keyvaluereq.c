@@ -34,9 +34,8 @@
 #include	<glib.h>
 
 #include	"types.h"
-
-#include	"libmondai.h"
-#include	"RecParser.h"
+#include	<libmondai.h>
+#include	<RecParser.h>
 #include	"enum.h"
 #include	"net.h"
 #include	"comm.h"
@@ -74,50 +73,36 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
-extern	size_t
-KVREQ_Dump(
-	NETFILE	*fp,
-	char **ret)
-{
-	size_t size;
-ENTER_FUNC;
-	size = 0;
-	SendPacketClass(fp, SYSDATA_KV);	ON_IO_ERROR(fp,badio);
-	SendPacketClass(fp,KV_DUMP);		ON_IO_ERROR(fp,badio);
-	size = RecvLength(fp);				ON_IO_ERROR(fp,badio);
-	if (size > 0) {
-		*ret = xmalloc(size);
-		Recv(fp, *ret, size);			ON_IO_ERROR(fp,badio);
-	}
-  badio:
-LEAVE_FUNC;
-	return	size;
-}
-
-static	ValueStruct *
-NewQueryTemplate(
+extern	ValueStruct *
+KVREQ_NewQuery(
 	int num)
 {
+	static Bool fInit = TRUE;
 	ValueStruct *ret;
-	char buff[256];
+	char buff[512];
 	const char *str = ""
-"system {					 "
-"	id		char(128);		 "
-"	num		int;			 "
-"	query {					 "
-"		key		char(128);	 "
-"		value	char(128);	 "
-"	}[%d];					 "
-"};							 ";
+"dummy	{"
+	"id		char(256);"
+	"num	int;"
+	"query	{"
+		"key	char(256);"
+		"value	char(256);"
+	"}[%d];"
+"};";
 ENTER_FUNC;
+	if (fInit) {
+		RecParserInit();
+		fInit = FALSE;
+	}
 	sprintf(buff, str, num);
 	ret = RecParseValueMem(buff, NULL);
+	InitializeValue(ret);
 LEAVE_FUNC;
 	return ret;
 }
 
 extern	ValueStruct	*
-KVREQ_NewQuery(
+KVREQ_NewQueryWithValue(
 	char *id, 
 	int num, 
 	char **keys, 
@@ -131,7 +116,7 @@ ENTER_FUNC;
 	if (num <= 0) {
 		return NULL;
 	}
-	ret = NewQueryTemplate(num);
+	ret = KVREQ_NewQuery(num);
 	value = GetItemLongName(ret, "id");
 	if (id != NULL) {
 		SetValueStringWithLength(value, id, strlen(id), NULL);
