@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,12 +17,13 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_BLOBACCESS_H
-#define	_BLOBACCESS_H
+#ifndef	_SYSDATAIO_H
+#define	_SYSDATAIO_H
 
 #define	BLOB_ACCESS_IMPORT	0
 #define	BLOB_ACCESS_EXPORT	1
 
 extern	void	AccessBLOB(int mode, ValueStruct *value);
+extern	void	GetSysDBMessage(char *term, Bool *fAbort, char **message);
 
 #endif

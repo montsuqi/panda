@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,9 @@
 #include	"front.h"
 #include	"socket.h"
 #include	"blobreq.h"
-#include	"blobaccess.h"
+#include	"keyvaluereq.h"
+#include	"sysdataio.h"
+#include	"enum.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -103,25 +105,71 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	void
-AccessBLOB(
-	int			mode,
-	ValueStruct	*value)
+static	NETFILE *
+ConnectSysData()
 {
 	Port	*port;
 	int		fd;
 	NETFILE	*fp;
 ENTER_FUNC;
+	fp = NULL;
 	port = ParPort(PortSysData, SYSDATA_PORT);
 	fd = ConnectSocket(port, SOCK_STREAM);
 	DestroyPort(port);
 	if (fd > 0) {
 		fp = SocketToNet(fd);
-		_AccessBLOB(fp,mode,value);
-		SendPacketClass(fp, SYSDATA_END);	
-		CloseNet(fp);
 	} else {
 		Warning("cannot connect sysdata server");
+	}
+LEAVE_FUNC;
+	return fp;
+}
+
+extern	void
+AccessBLOB(
+	int			mode,
+	ValueStruct	*value)
+{
+	NETFILE	*fp;
+ENTER_FUNC;
+	if ((fp = ConnectSysData()) != NULL) {
+		_AccessBLOB(fp,mode,value);
+		SendPacketClass(fp, SYSDATA_END);
+		CloseNet(fp);
+	}
+LEAVE_FUNC;
+}
+
+extern	void
+GetSysDBMessage(
+	char	*term,
+	Bool	*fAbort,
+	char	**message)
+{
+	NETFILE	*fp;
+	ValueStruct *q;
+	char *key[2] = {"message","abort"};
+	char *value[2] = {"", ""};
+	static char msg[KVREQ_TEXT_SIZE+1];
+ENTER_FUNC;
+	*fAbort = FALSE;
+	msg[0] = 0;
+	*message = msg;
+	if ((fp = ConnectSysData()) != NULL) {
+		q = KVREQ_NewQueryWithValue(term,2,key,value);
+		if(KVREQ_Request(fp, KV_GETVALUE, q) == MCP_OK) {
+			strncpy(msg, ValueToString(GetItemLongName(q,"query[0].value"), NULL), KVREQ_TEXT_SIZE);
+			if (!strcmp("T", ValueToString(GetItemLongName(q,"query[1].value"), NULL))) {
+				*fAbort = TRUE;
+			} else {
+				*fAbort = FALSE;
+			}
+			SetValueStringWithLength(GetItemLongName(q,"query[0].value"), "", strlen(""), NULL);
+			SetValueStringWithLength(GetItemLongName(q,"query[1].value"), "", strlen(""), NULL);
+			KVREQ_Request(fp, KV_SETVALUE, q);
+		}
+		SendPacketClass(fp, SYSDATA_END);
+		CloseNet(fp);
 	}
 LEAVE_FUNC;
 }

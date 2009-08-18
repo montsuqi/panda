@@ -82,11 +82,11 @@ KVREQ_NewQuery(
 	char buff[512];
 	const char *str = ""
 "dummy	{"
-	"id		char(256);"
+	"id		char(%d);"
 	"num	int;"
 	"query	{"
-		"key	char(256);"
-		"value	char(256);"
+		"key	char(%d);"
+		"value	char(%d);"
 	"}[%d];"
 "};";
 ENTER_FUNC;
@@ -94,7 +94,7 @@ ENTER_FUNC;
 		RecParserInit();
 		fInit = FALSE;
 	}
-	sprintf(buff, str, num);
+	sprintf(buff, str, KVREQ_TEXT_SIZE, KVREQ_TEXT_SIZE, KVREQ_TEXT_SIZE, num);
 	ret = RecParseValueMem(buff, NULL);
 	InitializeValue(ret);
 LEAVE_FUNC;

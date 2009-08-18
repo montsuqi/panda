@@ -24,6 +24,8 @@
 #include	"keyvaluecom.h"
 #include	"net.h"
 
+#define	KVREQ_TEXT_SIZE	256
+
 extern	int			KVREQ_Request(NETFILE *fp, PacketClass c, ValueStruct *args);
 extern	ValueStruct	*KVREQ_NewQuery(int num);
 extern	ValueStruct	*KVREQ_NewQueryWithValue(char *id, int num, char **keys, char **values);
