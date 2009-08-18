@@ -49,5 +49,5 @@ INCLUDES 			= 		\
 glserver_SOURCES	=				\
 	glserver.c		glserver.h		\
 	http.c			http.h			\
-	blobaccess.c	blobaccess.h	\
+	sysdataio.c		sysdataio.h		\
 	server.c

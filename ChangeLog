@@ -1,3 +1,10 @@
+2009-08-18  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glserver/Makefile.am glserver/server.c
+	libs/Makefile.am libs/keyvaluereq.c libs/keyvaluereq.h
+	glserver/sysdataio.c glserver/sysdataio.h:
+	glserverがシステムDBの"message","abort"を参照してクライアントにメッセージと終了命令を発行するようにした。
+
 2009-08-17  Yusuke Mihara  <mihara@netlab.jp>
 
 	* configure.ac dblib/System.c glserver/Makefile.am

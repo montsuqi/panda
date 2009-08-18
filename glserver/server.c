@@ -59,7 +59,7 @@
 #include	"dirs.h"
 #include	"RecParser.h"
 #include	"http.h"
-#include	"blobaccess.h"
+#include	"sysdataio.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -576,40 +576,35 @@ LEAVE_FUNC;
 
 static  Bool
 Pong(
-	NETFILE	*fpComm)
+	NETFILE		*fpComm,
+	ScreenData	*scr)
 {
-	Bool		ret;
-	
-	ret = FALSE;
+	Bool	ret;
+	char	*message;
+	Bool	fAbort;
 ENTER_FUNC;
-	//FIXME; check whether have a message
+	ret = FALSE;
 	GL_SendPacketClass(fpComm,GL_Pong,fFeatureNetwork);
 	ON_IO_ERROR(fpComm,badio);
 
-#if 1
-	GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
-#else
-	char		str[256];
-	static int count = 0;
-	fprintf(stderr, "pong %d\n", count);
-	if (count == 20) {
+	GetSysDBMessage(scr->term, &fAbort, &message);
+	if (fAbort) {
 		GL_SendPacketClass(fpComm,GL_STOP,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
-		sprintf(str, "for test; count:%d is over", count);
-		GL_SendString(fpComm, str, fFeatureNetwork);
-		ON_IO_ERROR(fpComm,badio);
-	} else if(count == 5) {
-		GL_SendPacketClass(fpComm,GL_CONTINUE,fFeatureNetwork);
-		ON_IO_ERROR(fpComm,badio);
-		sprintf(str, "for test; count:%d", count);
-		GL_SendString(fpComm, str, fFeatureNetwork);
+		if (strlen(message) <= 0) {
+			sprintf(message,"shutdown from the server");
+		}
+		GL_SendString(fpComm, message, fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
 	} else {
-		GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
-		ON_IO_ERROR(fpComm,badio);
+		if (strlen(message) > 0) {
+			GL_SendPacketClass(fpComm,GL_CONTINUE,fFeatureNetwork);
+			GL_SendString(fpComm, message, fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		} else {
+			GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
+		}
 	}
-	count++;
-#endif
 	ret = TRUE;
 badio:
 LEAVE_FUNC;
@@ -645,7 +640,7 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 			break;
 		case GL_Ping:
-			if	(  !Pong(fpComm)	){
+			if	(  !Pong(fpComm, scr)	){
 				scr->status = APL_SESSION_NULL;
 			}
 			ON_IO_ERROR(fpComm,badio);

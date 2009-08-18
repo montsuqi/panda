@@ -152,39 +152,42 @@ libpanda_la_SOURCES	=		\
 libpanda_a_CFLAGS = $(AM_CFLAGS)
 libpanda_a_SOURCES	=				\
 	Dlex.h							\
-	mhandler.c	mhandler.h			\
-	DDparser.c	DDparser.h			\
-	BDparser.c	BDparser.h			\
-	LDparser.c	LDparser.h			\
-	DBDparser.c	DBDparser.h			\
-	DIparser.c	DIparser.h			\
-	DBparser.c	DBparser.h			\
-	SQLlex.c	SQLlex.h			\
-	SQLparser.c	SQLparser.h			\
-	term.c		term.h				\
-	blobreq.c	blobreq.h			\
+	mhandler.c		mhandler.h		\
+	DDparser.c		DDparser.h		\
+	BDparser.c		BDparser.h		\
+	LDparser.c		LDparser.h		\
+	DBDparser.c		DBDparser.h		\
+	DIparser.c		DIparser.h		\
+	DBparser.c		DBparser.h		\
+	SQLlex.c		SQLlex.h		\
+	SQLparser.c		SQLparser.h		\
+	term.c			term.h			\
+	blobreq.c		blobreq.h		\
 	blobcom.h						\
-	keyvaluereq.c					\
-	keyvaluereq.h					\
+	keyvaluereq.c	keyvaluereq.h	\
 	keyvaluecom.h					\
-	directory.c	directory.h			\
-	driver.c	driver.h	enum.h	\
-	load.c		load.h				\
+	directory.c		directory.h		\
+	driver.c		driver.h		\
+	enum.h							\
+	load.c			load.h			\
 	debug.h
 
 libpandas_a_CFLAGS = $(AM_CFLAGS)
 libpandas_a_SOURCES	=			\
 	applications.c applications.h	\
-	DDparser.c	DDparser.h			\
-	driver.c	driver.h	enum.h	\
-	term.c		term.h				\
-	front.c		front.h				\
-	comm.c		comm.h				\
-	comms.c		comms.h				\
-	glcomm.c	glcomm.h			\
-	auth.c		auth.h				\
-	authstub.c	authstub.h			\
-	blobreq.c	blobreq.h			\
+	DDparser.c		DDparser.h		\
+	driver.c		driver.h		\
+	enum.h							\
+	term.c			term.h			\
+	front.c			front.h			\
+	comm.c			comm.h			\
+	comms.c			comms.h			\
+	glcomm.c		glcomm.h		\
+	auth.c			auth.h			\
+	authstub.c		authstub.h		\
+	blobreq.c		blobreq.h		\
+	keyvaluereq.c	keyvaluereq.h	\
+	keyvaluecom.h					\
 	blobcom.h						\
 	monapi.c	monapi.h			\
 	load.c		load.h
