@@ -238,7 +238,7 @@ ENTER_FUNC;
 		switch	(port->type) {
 		  case	PORT_IP:
 			if ((host = IP_HOST(port)) != NULL) {
-				ret = ( strcmp(host,MyHost) == 0 ) ? TRUE : FALSE;
+				ret = ( strcmp(host,MyHost) == 0 ) ? TRUE : TRUE; // what meaning?
 			} else {
 				ret = FALSE;
 			}

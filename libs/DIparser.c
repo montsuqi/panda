@@ -369,7 +369,7 @@ ENTER_FUNC;
 					}
 					ld->ports = tports;
 					for	( i = 0 ; i < n ; i ++ ) {
-						ld->ports[ld->nports] = ParPort(buff,PORT_WFC);
+						ld->ports[ld->nports] = ParPort(buff,PORT_WFC); // ldname in buff .what meaning?
 						ld->nports ++;
 					}
 					if		(  ComToken  ==  ','  ) {
