@@ -58,16 +58,17 @@ static char *termkeys[SYSDB_TERM_LAST];
 extern	void
 SYSDB_Init()
 {
-	termkeys[SYSDB_TERM_USER] = "user";
-	termkeys[SYSDB_TERM_HOST] = "host";
-	termkeys[SYSDB_TERM_WINDOW] = "window";
-	termkeys[SYSDB_TERM_WIDGET] = "widget";
-	termkeys[SYSDB_TERM_EVENT] = "event";
-	termkeys[SYSDB_TERM_CTIME] = "create_time";
-	termkeys[SYSDB_TERM_ATIME] = "access_time";
-	termkeys[SYSDB_TERM_PTIME] = "process_time";
-	termkeys[SYSDB_TERM_TPTIME] = "total_process_time";
-	termkeys[SYSDB_TERM_COUNT] = "count";
+	termkeys[SYSDB_TERM_USER]      = "user";
+	termkeys[SYSDB_TERM_HOST]      = "host";
+	termkeys[SYSDB_TERM_WINDOW]    = "window";
+	termkeys[SYSDB_TERM_WIDGET]    = "widget";
+	termkeys[SYSDB_TERM_EVENT]     = "event";
+	termkeys[SYSDB_TERM_INPROCESS] = "in_process";
+	termkeys[SYSDB_TERM_CTIME]     = "create_time";
+	termkeys[SYSDB_TERM_ATIME]     = "access_time";
+	termkeys[SYSDB_TERM_PTIME]     = "process_time";
+	termkeys[SYSDB_TERM_TPTIME]    = "total_process_time";
+	termkeys[SYSDB_TERM_COUNT]     = "count";
 }
 
 static	NETFILE *
