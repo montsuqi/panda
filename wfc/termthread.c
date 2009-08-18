@@ -353,6 +353,22 @@ LEAVE_FUNC;
 	return	(data);
 }
 
+static	void
+InitSysDBValue(
+	char 		*term,
+	SessionData	*data)
+{
+	char	buff[SIZE_LONGNAME+1];
+ENTER_FUNC;
+	data->sysdbval = SYSDB_TERM_New(term);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_USER, data->hdr->user);
+	_strftime(buff, sizeof(buff), data->create_time.tv_sec);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_CTIME, buff);
+	_strftime(buff, sizeof(buff), data->access_time.tv_sec);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME, buff);
+LEAVE_FUNC;
+}
+
 static	SessionData	*
 InitSession(
 	NETFILE	*fp,
@@ -399,12 +415,7 @@ ENTER_FUNC;
 		data->name = StrDup(data->hdr->term);
 		data->hdr->puttype = SCREEN_NULL;
 		data->w.n = 0;
-		data->sysdbval = SYSDB_TERM_New(term);
-		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_USER, data->hdr->user);
-		_strftime(buff, sizeof(buff), data->create_time.tv_sec);
-		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_CTIME, buff);
-		_strftime(buff, sizeof(buff), data->access_time.tv_sec);
-		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME, buff);
+		InitSysDBValue(term, data);
 		RegistSession(data);
 	} else {
 		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
@@ -442,9 +453,6 @@ ENTER_FUNC;
 				dbgprintf("window = [%s]",data->hdr->window);
 				dbgprintf("widget = [%s]",data->hdr->widget);
 				dbgprintf("event  = [%s]",data->hdr->event);
-				SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_WINDOW, data->hdr->window);
-				SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_WIDGET, data->hdr->widget);
-				SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_EVENT, data->hdr->event);
 				PureComponentName(data->hdr->window,comp);
 				if		(  ( ld = g_hash_table_lookup(ComponentHash,comp) )
 						   !=  NULL  ) {
@@ -600,7 +608,6 @@ Process(
 {
 	struct	timeval	tv1;
 	struct	timeval	tv2;
-	char buff[128];
 ENTER_FUNC;
 	gettimeofday(&tv1,NULL);
 	if		(  !fLoopBack  ) {
@@ -609,14 +616,11 @@ ENTER_FUNC;
 		EnQueue(data->term->que,data);
 	}
 	data = DeQueue(data->term->que);
+
 	gettimeofday(&tv2,NULL);
 	timersub(&tv2, &tv1, &(data->process_time));
 	timeradd(&(data->total_process_time), &(data->process_time), &tv1);
 	data->total_process_time = tv1;
-	TimevalToString(buff, data->process_time);
-	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_PTIME, buff);
-	TimevalToString(buff, data->total_process_time);
-	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_TPTIME, buff);
 LEAVE_FUNC;
 	return	(data);
 }
@@ -795,7 +799,6 @@ CheckSession(
 	SessionData	*data;
 	Bool		fError
 		,		fInProcess;
-	char		buff[SIZE_LONGNAME+1];
 ENTER_FUNC;
 	fError = TRUE;
 	if		(  ( data = LookupSession(term,&fInProcess) )  !=  NULL  ) {
@@ -823,10 +826,6 @@ ENTER_FUNC;
 	}
 	if (data != NULL) {
 		gettimeofday(&data->access_time,NULL);
-		_strftime(buff, sizeof(buff), data->access_time.tv_sec);
-		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME,buff);
-		sprintf(buff, "%d", ++data->count);
-		SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_COUNT,buff);
 	}
 	fError = FALSE;
   badio:
@@ -853,6 +852,46 @@ LEAVE_FUNC;
 }
 
 static	void
+UpdateSysDBPreProcess(
+	SessionData *data)
+{
+	char buff[128];
+ENTER_FUNC;
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_WINDOW, data->hdr->window);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_WIDGET, data->hdr->widget);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_EVENT, data->hdr->event);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_INPROCESS, "T");
+
+	_strftime(buff, sizeof(buff), data->access_time.tv_sec);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME,buff);
+	sprintf(buff, "%d", ++data->count);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_COUNT,buff);
+
+	SYSDB_TERM_Update(data->sysdbval);
+LEAVE_FUNC;
+}
+
+static	void
+UpdateSysDBPostProcess(
+	SessionData *data)
+{
+	char buff[128];
+ENTER_FUNC;
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_WINDOW, data->hdr->window);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_WIDGET, data->hdr->widget);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_EVENT, data->hdr->event);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_INPROCESS, "F");
+
+	TimevalToString(buff, data->process_time);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_PTIME, buff);
+	TimevalToString(buff, data->total_process_time);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_TPTIME, buff);
+
+	SYSDB_TERM_Update(data->sysdbval);
+LEAVE_FUNC;
+}
+
+static	void
 TermSession(
 	TermNode	*term)
 {
@@ -867,13 +906,9 @@ TermSession(
 		data->term = term;
 		data->retry = 0;
 		if		(  data->status != SESSION_STATUS_ABORT  ) {
-#if 1
-			SYSDB_TERM_Update(data->sysdbval);
-#endif
+			UpdateSysDBPreProcess(data);
 			data = Process(data);
-#if 0
-			SYSDB_TERM_Update(data->sysdbval);
-#endif
+			UpdateSysDBPostProcess(data);
 		}
 		if		(	(  data->status != SESSION_STATUS_NORMAL  )
 				||	(  !SendTerminal(term->fp,data)  ) ) {
