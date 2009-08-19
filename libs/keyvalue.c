@@ -372,8 +372,7 @@ DumpValue(
 	gpointer value,
 	gpointer data)
 {
-	fprintf((FILE*)data,"  - - \"%s\"\n", (char*)key);
-	fprintf((FILE*)data,"    - \"%s\"\n", (char*)value);
+	fprintf((FILE*)data,"  %s: %s\n", (char*)key, (char*)value);
 }
 
 static	void
@@ -382,7 +381,7 @@ DumpEntry(
 	gpointer value,
 	gpointer data)
 {
-	fprintf((FILE*)data,"\"%s\":\n",(char*)key);
+	fprintf((FILE*)data,"%s: \n",(char*)key);
 	g_hash_table_foreach((GHashTable*)value,DumpValue,data);
 }
 

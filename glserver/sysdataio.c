@@ -146,8 +146,8 @@ GetSysDBMessage(
 	Bool	*fAbort,
 	char	**message)
 {
-	NETFILE	*fp;
 	ValueStruct *q;
+	NETFILE	*fp;
 	char *key[2] = {"message","abort"};
 	char *value[2] = {"", ""};
 	static char msg[KVREQ_TEXT_SIZE+1];
@@ -155,6 +155,7 @@ ENTER_FUNC;
 	*fAbort = FALSE;
 	msg[0] = 0;
 	*message = msg;
+
 	if ((fp = ConnectSysData()) != NULL) {
 		q = KVREQ_NewQueryWithValue(term,2,key,value);
 		if(KVREQ_Request(fp, KV_GETVALUE, q) == MCP_OK) {
@@ -168,6 +169,7 @@ ENTER_FUNC;
 			SetValueStringWithLength(GetItemLongName(q,"query[1].value"), "", strlen(""), NULL);
 			KVREQ_Request(fp, KV_SETVALUE, q);
 		}
+		FreeValueStruct(q);
 		SendPacketClass(fp, SYSDATA_END);
 		CloseNet(fp);
 	}
