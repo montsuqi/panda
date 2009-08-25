@@ -269,15 +269,6 @@ extern	void SetSessionTitle(
 	TITLE(glSession) = StrDup(title);
 }
 
-static	void
-bannar(void)
-{
-	printf(_("glclient ver %s\n"),VERSION);
-	printf(_("Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n"));
-	printf(_("              2000-2003 Masami Ogoshi & JMA.\n"));
-	printf(_("              2004-2007 Masami Ogoshi\n"));
-}
-
 #ifdef	USE_SSL
 static void
 _MakeSSL_CTX()
@@ -398,7 +389,6 @@ InitLauncher(
 {
 	FILE_LIST	*fl;
 
-	bannar();
 	SetDefault();
 	if	(  ( fl = GetOption(option,argc,argv,NULL) )  !=  NULL  ) {
 		CurrentApplication = fl->name;

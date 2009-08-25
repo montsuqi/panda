@@ -1,3 +1,14 @@
+2009-08-25  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glclient/client.c glclient/protocol.c
+	glclient/gtk1/bd_component.c glclient/gtk1/bd_component.h
+	glclient/gtk1/bootdialog.c glclient/gtk2/action.c
+	glclient/gtk2/bd_component.c glclient/gtk2/bd_component.h
+	glclient/gtk2/bootdialog.c glserver/server.c libs/glcomm.c
+	libs/glcomm.h po/POTFILES.in po/ja.po po/panda.pot:
+	glserverについて、クライアントのバージョン文字列のi18nの有無でクライアントの文字コードに合わせて文字列、gladeファイルを変換するよう修正
+	glclientのコンソールへのバナー表示を廃止、代わりにランチャーに情報タブを追加
+
 2009-08-18  Yusuke Mihara  <mihara@netlab.jp>
 
 	* glserver/Makefile.am glserver/server.c

@@ -8,7 +8,6 @@ glclient/gtk1/dialogs.c
 glclient/gtk2/bd_component.c
 glclient/gtk2/bd_config.c
 glclient/gtk2/bootdialog.c
-glclient/gtk2/fileEntry.c
 glclient/gtk2/dialogs.c
 glclient/client.c
 glclient/protocol.c

@@ -44,6 +44,9 @@ typedef enum _ExpandType {
 	EXPAND_PDF,
 } ExpandType;
 
+extern	size_t	ConvEUCJP2UTF8(char *is,size_t *iss,char *os,size_t *oss);
+extern	size_t	ConvUTF82EUCJP(char *is,size_t *iss,char *os,size_t *oss);
+
 extern	void	GL_SendPacketClass(NETFILE *fp, PacketClass c, Bool fNetwork);
 extern	PacketClass	GL_RecvPacketClass(NETFILE *fp, Bool fNetwork);
 
@@ -56,10 +59,10 @@ extern	Fixed	*GL_RecvFixed(NETFILE *fp, Bool fNetwork);
 extern	double	GL_RecvFloat(NETFILE *fp, Bool fNetwork);
 extern	Bool	GL_RecvBool(NETFILE *fp, Bool fNetwork);
 
-extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, char *coding,
-							 Bool fBlob, Bool fExpand, Bool fNetwork);
-extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, char *coding,
-							 Bool fBlob, Bool fExpand, Bool fNetwork);
+extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, Bool fBlob, 
+					Bool fExpand, Bool fI18n, Bool fNetwork);
+extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, Bool fBlob, 
+					Bool fExpand, Bool fI18n, Bool fNetwork);
 
 extern	void	InitGL_Comm(void);
 

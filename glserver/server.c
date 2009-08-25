@@ -40,6 +40,7 @@
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<glib.h>
+#include	<iconv.h>
 
 #include	"types.h"
 #include	"enum.h"
@@ -117,12 +118,13 @@ SendFile(
 	char	*fname,
 	char	*wname)
 {
-	char	buff[SIZE_BUFF];
 	struct	stat	stbuf;
-	size_t	size
-	,		left;
-	FILE	*fp;
-	Bool	rc;
+	char			*buff
+	,				*buff2;
+	size_t			size
+	,				size2;
+	FILE			*fp;
+	Bool			rc;
 
 ENTER_FUNC;
 	stat(fname,&stbuf);
@@ -138,19 +140,21 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 			GL_SendInt(fpComm,(int)stbuf.st_size,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
-			left = stbuf.st_size;
-			do {
-				if		(  left  >  SIZE_BUFF  ) {
-					size = SIZE_BUFF;
+
+			size = stbuf.st_size;
+			buff = xmalloc(size);
+			if (fread(buff, 1, size, fp) == size) {
+				if (fFeatureI18N) {
+					size2 = size * 2;
+					buff2 = xmalloc(size2);
+					size2 = ConvEUCJP2UTF8(buff, &size, buff2, &size2);
+					Send(fpComm,buff2,size2);		ON_IO_ERROR(fpComm,badio);
+					xfree(buff2);
 				} else {
-					size = left;
-				}
-				size = fread(buff,1,size,fp);
-				if		(  size  >  0  ) {
 					Send(fpComm,buff,size);			ON_IO_ERROR(fpComm,badio);
-					left -= size;
 				}
-			}	while	(  left  >  0  );
+			}
+			xfree(buff);
 			rc = TRUE;
 		  badio:
 			if		(  fp  !=  NULL  ) {
@@ -244,15 +248,9 @@ ENTER_FUNC;
 				AccessBLOB(BLOB_ACCESS_EXPORT,win->rec->value);
 				GL_SendPacketClass(fpComm,GL_ScreenData,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
-				if		(  fFeatureI18N  ) {
-					GL_SendValue(fpComm,win->rec->value,NULL,
-								 fFeatureBlob,fFeatureExpand,fFeatureNetwork);
+				GL_SendValue(fpComm,win->rec->value,fFeatureBlob,
+					fFeatureExpand,fFeatureI18N,fFeatureNetwork);
 					ON_IO_ERROR(fpComm,badio);
-				} else {
-					GL_SendValue(fpComm,win->rec->value,"euc-jp",
-								 fFeatureBlob,fFeatureExpand,fFeatureNetwork);
-					ON_IO_ERROR(fpComm,badio);
-				}
 			} else {
 				GL_SendPacketClass(fpComm,GL_NOT,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
@@ -529,7 +527,7 @@ ENTER_FUNC;
 				GL_RecvString(fpComm, sizeof(name), name, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
-					GL_RecvValue(fpComm,value,coding,fFeatureBlob,fFeatureExpand,fFeatureNetwork);
+					GL_RecvValue(fpComm,value,fFeatureBlob,fFeatureExpand,fFeatureI18N,fFeatureNetwork);
 				} else {
 					Warning("invalid item name [%s]\n",name);
 					goto badio;

@@ -69,94 +69,6 @@
 
 static	LargeByteString	*LargeBuff;
 
-#if	0
-static	GList		*ScreenStack;
-static	void
-InitScreenStack(void)
-{
-	ScreenStack = NULL;
-}
-
-static	void
-PushScreenStack(
-	char	*name)
-{
-	ScreenStack = g_list_append(ScreenStack,name);
-}
-
-static	char	*
-BottomScreenStack(void)
-{
-	GList	*last;
-	char	*ret;
-
-	if		(  ScreenStack  !=  NULL  ) {
-		last = g_list_last(ScreenStack);
-		ret = (char *)last->data;
-	} else {
-		ret = NULL;
-	}
-	return	(ret);
-}
-
-static	void
-PopScreenStack(void)
-{
-	GList	*last;
-
-	last = g_list_last(ScreenStack);
-	ScreenStack = g_list_remove_link(ScreenStack,last);
-}
-#endif
-
-/*
- *	misc functions
- */
-
-static	void
-ConvEUCJP2UTF8(
-	char	*instr,
-	size_t	*insize,
-	char	*outstr,
-	size_t	*outsize)
-{
-	iconv_t	cd;
-	char	*ostr;
-
-	cd = iconv_open("utf8", "EUC-JP");
-	dbgprintf("size = %d\n",(int)strlen(str));
-	ostr = outstr;
-	if (*insize > 0) {
-		if (iconv(cd,&instr,insize,&ostr,outsize) != 0) {
-			dbgprintf("error = %d\n",errno);
-		}
-	}
-	*ostr = 0;
-	iconv_close(cd);
-}
-
-static	void
-ConvUTF82EUCJP(
-	char	*instr,
-	size_t	*insize,
-	char	*outstr,
-	size_t	*outsize)
-{
-	iconv_t	cd;
-	char	*ostr;
-
-	cd = iconv_open("EUC-JP", "utf8");
-	dbgprintf("size = %d\n",(int)strlen(str));
-	ostr = outstr;
-	if (*insize > 0) {
-		if (iconv(cd,&instr,insize,&ostr,outsize) != 0) {
-			dbgprintf("error = %d\n",errno);
-		}
-	}
-	*ostr = 0;
-	iconv_close(cd);
-}
-
 /*
  *	send/recv functions
  */
@@ -285,27 +197,14 @@ GL_RecvString(
 	char	*str)
 {
 	size_t		lsize;
-	static char	buff[SIZE_LARGE_BUFF * 2];
-	char		*optr;
-
 ENTER_FUNC;
 	lsize = GL_RecvLength(fp);
 	if		(	maxsize > lsize 	){
-		if	(UI_Version() == UI_VERSION_1) {
-			Recv(fp,str,lsize);
-			if		(  !CheckNetFile(fp)  ) {
-				GL_Error();
-			}
-			str[lsize] = 0;
-		}	else	{
-			Recv(fp,buff, lsize);
-			if		(  !CheckNetFile(fp)  ) {
-				GL_Error();
-			}
-			buff[lsize] = 0;
-			optr = str;
-			ConvEUCJP2UTF8(buff,&lsize, optr, &maxsize);
+		Recv(fp,str,lsize);
+		if		(  !CheckNetFile(fp)  ) {
+			GL_Error();
 		}
+		str[lsize] = 0;
 	} else {
 		UI_ErrorDialog(_("error size mismatch !"));
 	}
@@ -329,22 +228,11 @@ GL_SendString(
 	char	*str)
 {
 	size_t		size;
-	size_t		osize;
-	static char	buff[SIZE_LARGE_BUFF * 2];
-	char		*optr;
 
 ENTER_FUNC;
 	if (str != NULL) { 
 		size = strlen(str);
-		optr = str;
-		if (UI_Version() == UI_VERSION_2) {
-			optr = buff;
-			osize = SIZE_LARGE_BUFF * 2;
-			ConvUTF82EUCJP(str, &size, optr, &osize);
-			size = SIZE_LARGE_BUFF * 2 - osize;
-		}
 	} else {
-		optr = NULL;
 		size = 0;
 	}
 	GL_SendLength(fp,size);
@@ -352,7 +240,7 @@ ENTER_FUNC;
 		GL_Error();
 	}
 	if (size > 0) {
-		Send(fp,optr,size);
+		Send(fp,str,size);
 		if (!CheckNetFile(fp)) {
 			GL_Error();
 		}
@@ -390,25 +278,7 @@ GL_SendDataType(
 {
 	nputc(c,fp);
 }
-#if	0
-static	void
-GL_SendObject(
-	NETFILE	*fp,
-	MonObjectType	obj)
-{
-	GL_SendUInt(fp,(unsigned int)obj);
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
-}
 
-static	MonObjectType
-GL_RecvObject(
-	NETFILE	*fp)
-{
-	return	((MonObjectType)GL_RecvUInt(fp));
-}
-#endif
 static	void
 GL_SendFixed(
 	NETFILE	*fp,
@@ -522,7 +392,6 @@ GL_SendLBS(
 
 //////////////////////////////////////////////////////////////////////
 
-
 static void
 WriteFile(
 	char *fname,
@@ -561,14 +430,8 @@ RecvFile(
 	char	*name,
 	char	*fname)
 {
-	size_t		size
-	,			left
-	,			totalsize
-	,			currentsize;
-	static char	buff[SIZE_BUFF];
-	static char	buffeuc[SIZE_LARGE_BUFF];
-	static char	buffutf8[SIZE_LARGE_BUFF * 2];
-	static char	ffname[SIZE_BUFF];
+	size_t		size;
+	char 		*buff;
 	Bool		ret;
 
 ENTER_FUNC;
@@ -579,35 +442,17 @@ ENTER_FUNC;
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		// download
-		left = totalsize = (size_t)GL_RecvInt(fpC);
-		currentsize = 0;
-		do {
-			if		(left  >  SIZE_BUFF  ) {
-				size = SIZE_BUFF;
-			} else {
-				size = left;
-			}
-			size = Recv(fpC,buff,size);
-			if		(  size  >  0  ) {
-				memcpy(buffeuc + currentsize, buff, size);
-				left -= size;
-				currentsize += size;
-			}
-		}	while	(  left  >  0  );
-
-		WriteFile(fname, buffeuc, totalsize);
-
-		// convert to utf8 for UI_VERSION_2
-		if (UI_Version() == UI_VERSION_2) {
-			left = SIZE_LARGE_BUFF * 2;
-			ConvEUCJP2UTF8(buffeuc, &totalsize, buffutf8, &left);
-			totalsize = SIZE_LARGE_BUFF * 2 - left;
-			// write utf8 file
-			snprintf(ffname,SIZE_BUFF , "%s.utf8", fname);
-			WriteFile(ffname, buffutf8, totalsize);
+		size = (size_t)GL_RecvInt(fpC);
+		if (size > SIZE_LARGE_BUFF) {
+			UI_ErrorDialog(_("too large file size(>SIZE_LARGE_BUFF)"));
+			ret = FALSE;
+		} else {
+			buff = xmalloc(size);
+			Recv(fpC, buff, size);
+			WriteFile(fname, buff, size);
+			xfree(buff);
+			ret = TRUE;
 		}
-
-		ret = TRUE;
 	} else {
 		UI_ErrorDialog(_("invalid protocol sequence"));
 		ret = FALSE;
@@ -884,6 +729,7 @@ GL_SendVersionString(
 	if (UI_Version() == UI_VERSION_1) {
 		strcat(version, ":ps");
 	} else {
+		strcat(version, ":i18n");
 #		ifdef	USE_PDF
 			strcat(version, ":pdf");
 #		else
