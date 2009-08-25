@@ -681,7 +681,7 @@ boot_dialog_new ()
 
   dialog = gtk_dialog_new ();
   self->dialog = dialog;
-  gtk_window_set_title (GTK_WINDOW (dialog), _("glclient Launcher"));
+  gtk_window_set_title (GTK_WINDOW (dialog), _("glclient2 Launcher"));
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_wmclass (GTK_WINDOW (dialog), "lancher", "glclient");
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
@@ -690,7 +690,7 @@ boot_dialog_new ()
   
   vbox = GTK_DIALOG (dialog)->vbox;
 
-  welcome = gtk_label_new (_("glclient Launcher"));
+  welcome = gtk_label_new (_("glclient2 Launcher"));
   self->welcome = welcome;
   gtk_misc_set_alignment (GTK_MISC (welcome), 0.5, 0.5);
   gtk_box_pack_start (GTK_BOX (vbox), welcome, TRUE, TRUE, 5);
@@ -750,6 +750,10 @@ boot_dialog_new ()
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (boot_dialog_on_config), self);
   GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+
+  /* INFO tab */
+  label = gtk_label_new (_("INFOMATION"));
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->infotable, label);
 
   return self;
 }

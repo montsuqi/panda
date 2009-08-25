@@ -345,7 +345,6 @@ ENTER_FUNC;
 		return;
 	}
 	fname = CacheFileName(wname);
-	strcat(fname, ".utf8");
 	xml = glade_xml_new(fname, NULL);
 	if ( xml == NULL ) {
 		dbgmsg("no xml");

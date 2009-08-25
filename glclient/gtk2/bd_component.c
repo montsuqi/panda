@@ -416,6 +416,7 @@ bd_component_new()
   GtkWidget *entry;
   GtkWidget *alignment;
   GtkWidget *check;
+  char buff[256];
   gint ypos;
 
   self = g_new0(BDComponent, 1);
@@ -738,6 +739,28 @@ bd_component_new()
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
+
+  // info
+  table = gtk_table_new (2, 1, FALSE);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+  self->infotable = table;
+
+  ypos = 0;
+  
+  sprintf(buff, "glclient2 ver %s", PACKAGE_VERSION);
+  label = gtk_label_new (buff);
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  gtk_container_add (GTK_CONTAINER (alignment), label);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  label = gtk_label_new ("Copyright (C) 2009 ORCA Project");
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  gtk_container_add (GTK_CONTAINER (alignment), label);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
 
   return self;
 }

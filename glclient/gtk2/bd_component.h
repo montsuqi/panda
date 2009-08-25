@@ -67,6 +67,8 @@ struct _BDComponent {
   GtkWidget *timer;
   GtkWidget *timerperiod;
   GtkWidget *timer_container;
+// other 
+  GtkWidget *infotable;
 };
 
 BDConfigSection * new_config_section(BDConfig *config, char *hostname);

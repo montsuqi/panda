@@ -890,6 +890,10 @@ boot_dialog_new ()
                       GTK_SIGNAL_FUNC (boot_dialog_on_config), self);
   GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
 
+  /* INFO tab */
+  label = gtk_label_new (_("INFOMATION"));
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->infotable, label);
+
   boot_dialog_set_value (self, config_);
 
   return self;
