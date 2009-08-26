@@ -430,7 +430,6 @@ RecvFile(
 	char	*name,
 	char	*fname)
 {
-	size_t		size;
 	char 		*buff;
 	Bool		ret;
 
@@ -442,17 +441,11 @@ ENTER_FUNC;
 	}
 	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		// download
-		size = (size_t)GL_RecvInt(fpC);
-		if (size > SIZE_LARGE_BUFF) {
-			UI_ErrorDialog(_("too large file size(>SIZE_LARGE_BUFF)"));
-			ret = FALSE;
-		} else {
-			buff = xmalloc(size);
-			Recv(fpC, buff, size);
-			WriteFile(fname, buff, size);
-			xfree(buff);
-			ret = TRUE;
-		}
+		buff = xmalloc(SIZE_LARGE_BUFF);
+		GL_RecvString(fpC, SIZE_LARGE_BUFF, buff);
+		WriteFile(fname, buff, strlen(buff));
+		xfree(buff);
+		ret = TRUE;
 	} else {
 		UI_ErrorDialog(_("invalid protocol sequence"));
 		ret = FALSE;

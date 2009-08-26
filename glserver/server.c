@@ -119,10 +119,8 @@ SendFile(
 	char	*wname)
 {
 	struct	stat	stbuf;
-	char			*buff
-	,				*buff2;
-	size_t			size
-	,				size2;
+	char			*buff;
+	size_t			size;
 	FILE			*fp;
 	Bool			rc;
 
@@ -138,21 +136,13 @@ ENTER_FUNC;
 		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
 			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
-			GL_SendInt(fpComm,(int)stbuf.st_size,fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
 
 			size = stbuf.st_size;
-			buff = xmalloc(size);
+			buff = xmalloc(size + 1);
 			if (fread(buff, 1, size, fp) == size) {
-				if (fFeatureI18N) {
-					size2 = size * 2;
-					buff2 = xmalloc(size2);
-					size2 = ConvEUCJP2UTF8(buff, &size, buff2, &size2);
-					Send(fpComm,buff2,size2);		ON_IO_ERROR(fpComm,badio);
-					xfree(buff2);
-				} else {
-					Send(fpComm,buff,size);			ON_IO_ERROR(fpComm,badio);
-				}
+				buff[size] = 0;
+				GL_SendStringOnServer(fpComm, buff, fFeatureI18N, fFeatureNetwork);
+				ON_IO_ERROR(fpComm,badio);
 			}
 			xfree(buff);
 			rc = TRUE;
@@ -592,12 +582,12 @@ ENTER_FUNC;
 		if (strlen(message) <= 0) {
 			sprintf(message,"shutdown from the server");
 		}
-		GL_SendString(fpComm, message, fFeatureNetwork);
+		GL_SendStringOnServer(fpComm, message, fFeatureI18N, fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
 	} else {
 		if (strlen(message) > 0) {
 			GL_SendPacketClass(fpComm,GL_CONTINUE,fFeatureNetwork);
-			GL_SendString(fpComm, message, fFeatureNetwork);
+			GL_SendStringOnServer(fpComm, message, fFeatureI18N, fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 		} else {
 			GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
