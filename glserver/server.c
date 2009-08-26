@@ -571,7 +571,7 @@ Pong(
 	char	*message;
 	Bool	fAbort;
 ENTER_FUNC;
-	ret = FALSE;
+	ret = TRUE;
 	GL_SendPacketClass(fpComm,GL_Pong,fFeatureNetwork);
 	ON_IO_ERROR(fpComm,badio);
 
@@ -584,6 +584,7 @@ ENTER_FUNC;
 		}
 		GL_SendStringOnServer(fpComm, message, fFeatureI18N, fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
+		ret = FALSE;
 	} else {
 		if (strlen(message) > 0) {
 			GL_SendPacketClass(fpComm,GL_CONTINUE,fFeatureNetwork);
@@ -593,7 +594,6 @@ ENTER_FUNC;
 			GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
 		}
 	}
-	ret = TRUE;
 badio:
 LEAVE_FUNC;
 	return ret;
