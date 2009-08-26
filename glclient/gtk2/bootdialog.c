@@ -380,6 +380,7 @@ server_dialog_new (BDConfig * config, GtkWidget *parent)
   GtkWidget *button;
   GtkWidget *scroll;
   GtkWidget *clist;
+  GtkTreeViewColumn *column;
   gint i;
 
   self = g_new0 (ServerDialog, 1);
@@ -440,12 +441,11 @@ server_dialog_new (BDConfig * config, GtkWidget *parent)
   gtk_panda_clist_set_selection_mode(GTK_PANDA_CLIST(clist),
     GTK_SELECTION_SINGLE);
   for (i = 0; i < server_dialog_titles_count; i++) {
-    gtk_tree_view_insert_column_with_attributes (GTK_TREE_VIEW (clist),
-      -1,
-      _(server_dialog_titles[i].title),
-      gtk_cell_renderer_text_new (),
-      "text", i,
-      NULL);
+    column = gtk_tree_view_get_column(GTK_TREE_VIEW(clist), i);
+    if (column != NULL) {
+      gtk_tree_view_column_set_resizable(column, TRUE);
+      gtk_tree_view_column_set_title (column, _(server_dialog_titles[i].title));
+    }
   }
   gtk_container_add (GTK_CONTAINER (scroll), clist);
   g_signal_connect (G_OBJECT (clist), "select_row",
