@@ -44,27 +44,20 @@ typedef enum _ExpandType {
 	EXPAND_PDF,
 } ExpandType;
 
-extern	void	ConvEUCJP2UTF8(char *is,size_t iss,char *os,size_t oss);
-extern	void	ConvUTF82EUCJP(char *is,size_t iss,char *os,size_t oss);
-
 extern	void	GL_SendPacketClass(NETFILE *fp, PacketClass c, Bool fNetwork);
 extern	PacketClass	GL_RecvPacketClass(NETFILE *fp, Bool fNetwork);
 
 extern	void	GL_SendInt(NETFILE *fp, int data, Bool fNetwork);
 extern	void	GL_SendLong(NETFILE *fp, long data, Bool fNetwork);
 extern	void	GL_SendString(NETFILE *fp, char *str, Bool fNetwork);
-extern	void	GL_SendStringOnServer(NETFILE *fp, char *str, Bool fI18N, Bool fNetwork);
 extern	int		GL_RecvInt(NETFILE *fp ,Bool fNetwork);
 extern	void	GL_RecvString(NETFILE *fp, size_t size, char *str, Bool fNetwork);
-extern	void	GL_RecvStringOnServer(NETFILE *fp, size_t size, char *str, Bool fI18N, Bool fNetwork);
 extern	Fixed	*GL_RecvFixed(NETFILE *fp, Bool fNetwork);
 extern	double	GL_RecvFloat(NETFILE *fp, Bool fNetwork);
 extern	Bool	GL_RecvBool(NETFILE *fp, Bool fNetwork);
 
-extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, Bool fBlob, 
-					Bool fExpand, Bool fI18n, Bool fNetwork);
-extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, Bool fBlob, 
-					Bool fExpand, Bool fI18n, Bool fNetwork);
+extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, char *coding, Bool fBlob, Bool fExpand, Bool fNetwork);
+extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, char *coding, Bool fBlob, Bool fExpand, Bool fNetwork);
 
 extern	void	InitGL_Comm(void);
 

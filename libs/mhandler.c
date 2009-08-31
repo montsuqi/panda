@@ -194,20 +194,13 @@ ENTER_FUNC;
 #ifdef	HAVE_OPENCOBOL
 	handler = NewMessageHandler("OpenCOBOL","OpenCOBOL");
 	handler->serialize = (ConvFuncs *)"OpenCOBOL";
-	ConvSetCodeset(handler->conv,"euc-jp");
+	ConvSetCodeset(handler->conv,"euc-jisx0213");
 	handler->conv->fBigEndian = FALSE;
 	handler->start = "";
-#ifdef HAVE_OPENCOBOL23
-	handler = NewMessageHandler("OpenCOBOL23","OpenCOBOL");
-	handler->serialize = (ConvFuncs *)"OpenCOBOL";
- 	ConvSetCodeset(handler->conv,"euc-jp");
-	handler->conv->fBigEndian = TRUE;
-	handler->start = "";
-#endif
 #ifdef HAVE_OPENCOBOL08
 	handler = NewMessageHandler("OpenCOBOL08","OpenCOBOL");
 	handler->serialize = (ConvFuncs *)"OpenCOBOL";
-	ConvSetCodeset(handler->conv,"euc-jp");
+	ConvSetCodeset(handler->conv,"euc-jisx0213");
 	handler->conv->fBigEndian = FALSE;
 	handler->start = "";
 #endif
@@ -219,7 +212,7 @@ ENTER_FUNC;
 
 	handler = NewMessageHandler("Exec","Exec");
 	handler->serialize = (ConvFuncs *)"CGI";
-	ConvSetCodeset(handler->conv,"euc-jp");
+	ConvSetCodeset(handler->conv,"euc-jisx0213");
 	handler->start = "%m";
 LEAVE_FUNC;
 }

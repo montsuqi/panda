@@ -120,11 +120,18 @@ SendFile(
 {
 	struct	stat	stbuf;
 	char			*buff;
+	char			*coding;
 	size_t			size;
 	FILE			*fp;
 	Bool			rc;
+	ValueStruct		*value;
 
 ENTER_FUNC;
+	if (fFeatureI18N) {
+		coding = NULL;
+	} else {
+		coding = "euc-jisx0213";
+	}
 	stat(fname,&stbuf);
 	if		(  CheckCache(fpComm,
 						  wname,
@@ -141,8 +148,11 @@ ENTER_FUNC;
 			buff = xmalloc(size + 1);
 			if (fread(buff, 1, size, fp) == size) {
 				buff[size] = 0;
-				GL_SendStringOnServer(fpComm, buff, fFeatureI18N, fFeatureNetwork);
+				value = NewValue(GL_TYPE_CHAR);
+				SetValueString(value, buff, "euc-jisx0213");
+				GL_SendString(fpComm, ValueToString(value,coding), fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
+				FreeValueStruct(value);
 			}
 			xfree(buff);
 			rc = TRUE;
@@ -221,9 +231,14 @@ SendWindow(
 	NETFILE		*fpComm)
 {
 	Bool	rc;
+	char	*coding;
 ENTER_FUNC;
-
 	rc = FALSE; 
+	if (fFeatureI18N) {
+		coding = NULL;
+	} else {
+		coding = "euc-jisx0213";
+	}
 	if		(  win->PutType  !=  SCREEN_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_WindowName,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
@@ -238,9 +253,8 @@ ENTER_FUNC;
 				AccessBLOB(BLOB_ACCESS_EXPORT,win->rec->value);
 				GL_SendPacketClass(fpComm,GL_ScreenData,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
-				GL_SendValue(fpComm,win->rec->value,fFeatureBlob,
-					fFeatureExpand,fFeatureI18N,fFeatureNetwork);
-					ON_IO_ERROR(fpComm,badio);
+				GL_SendValue(fpComm,win->rec->value,coding,fFeatureBlob,fFeatureExpand,fFeatureNetwork);
+				ON_IO_ERROR(fpComm,badio);
 			} else {
 				GL_SendPacketClass(fpComm,GL_NOT,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
@@ -504,7 +518,7 @@ ENTER_FUNC;
 	if		(  fFeatureI18N  ) {
 		coding = NULL;
 	} else {
-		coding = "euc-jp";
+		coding = "euc-jisx0213";
 	}
 	while	(  GL_RecvPacketClass(fpComm,fFeatureNetwork)  ==  GL_WindowName  ) {
 		ON_IO_ERROR(fpComm,badio);
@@ -517,7 +531,7 @@ ENTER_FUNC;
 				GL_RecvString(fpComm, sizeof(name), name, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
-					GL_RecvValue(fpComm,value,fFeatureBlob,fFeatureExpand,fFeatureI18N,fFeatureNetwork);
+					GL_RecvValue(fpComm,value,coding,fFeatureBlob,fFeatureExpand,fFeatureNetwork);
 				} else {
 					Warning("invalid item name [%s]\n",name);
 					goto badio;
@@ -567,29 +581,45 @@ Pong(
 	NETFILE		*fpComm,
 	ScreenData	*scr)
 {
-	Bool	ret;
-	char	*message;
-	Bool	fAbort;
+	Bool		ret;
+	Bool		fAbort;
+	char		*message;
+	char		*coding;
+	ValueStruct	*value;
+	
 ENTER_FUNC;
 	ret = TRUE;
+	if (fFeatureI18N) {
+		coding = NULL;
+	} else {
+		coding = "euc-jisx0213";
+	}
+
 	GL_SendPacketClass(fpComm,GL_Pong,fFeatureNetwork);
 	ON_IO_ERROR(fpComm,badio);
 
 	GetSysDBMessage(scr->term, &fAbort, &message);
 	if (fAbort) {
 		GL_SendPacketClass(fpComm,GL_STOP,fFeatureNetwork);
-		ON_IO_ERROR(fpComm,badio);
+			ON_IO_ERROR(fpComm,badio);
 		if (strlen(message) <= 0) {
 			sprintf(message,"shutdown from the server");
 		}
-		GL_SendStringOnServer(fpComm, message, fFeatureI18N, fFeatureNetwork);
-		ON_IO_ERROR(fpComm,badio);
+		value = NewValue(GL_TYPE_CHAR);
+		SetValueString(value,message,NULL);
+		GL_SendString(fpComm, ValueToString(value,coding), fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		FreeValueStruct(value);
 		ret = FALSE;
 	} else {
 		if (strlen(message) > 0) {
 			GL_SendPacketClass(fpComm,GL_CONTINUE,fFeatureNetwork);
-			GL_SendStringOnServer(fpComm, message, fFeatureI18N, fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
+				ON_IO_ERROR(fpComm,badio);
+			value = NewValue(GL_TYPE_CHAR);
+			SetValueString(value,message,NULL);
+			GL_SendString(fpComm, ValueToString(value,coding), fFeatureNetwork);
+				ON_IO_ERROR(fpComm,badio);
+			FreeValueStruct(value);
 		} else {
 			GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
 		}

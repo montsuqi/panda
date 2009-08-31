@@ -1,3 +1,11 @@
+2009-08-31  Yusuke Mihara  <mihara@netlab.jp>
+
+	* dblib/XMLIO.c glserver/http.c glserver/server.c
+	include/const.h libs/glcomm.c libs/glcomm.h libs/mhandler.c
+	wfc/moninfo.c:
+	libmondaiのi18nを利用して内部コードをUTF-8に変更。
+	COBOLまわりだけeuc-jisx0213に変換する。日レセのバッチはまだ動作しない。
+
 2009-08-25  Yusuke Mihara  <mihara@netlab.jp>
 
 	* glclient/client.c glclient/protocol.c

@@ -39,7 +39,6 @@
 #include	<sys/stat.h>
 #include	<glib.h>
 #include	<math.h>
-#include	<iconv.h>
 
 #include	"types.h"
 #include	"libmondai.h"
@@ -78,52 +77,6 @@ static	struct	magic_set	*Magic;
 
 static	PacketDataType	ToOldType[256];
 static	PacketDataType	ToNewType[256];
-
-extern	void
-ConvEUCJP2UTF8(
-	char	*in,
-	size_t	insize,
-	char	*out,
-	size_t	outsize)
-{
-	iconv_t	cd;
-	char *ip;
-	char *op;
-
-	cd = iconv_open("utf8", "euc-jisx0213");
-	ip = in;
-	op = out;
-	if (insize > 0) {
-		if (iconv(cd, &ip, &insize, &op, &outsize) != 0) {
-			dbgprintf("error = %d\n",errno);
-		}
-	}
-	*op = 0;
-	iconv_close(cd);
-}
-
-extern	void
-ConvUTF82EUCJP(
-	char	*in,
-	size_t	insize,
-	char	*out,
-	size_t	outsize)
-{
-	iconv_t	cd;
-	char *ip;
-	char *op;
-
-	cd = iconv_open("euc-jisx0213", "utf8");
-	ip = in;
-	op = out;
-	if (insize > 0) {
-		if (iconv(cd,&ip,&insize,&op,&outsize) != 0) {
-			dbgprintf("error = %d\n",errno);
-		}
-	}
-	*op = 0;
-	iconv_close(cd);
-}
 
 extern	void
 GL_SendPacketClass(
@@ -318,41 +271,6 @@ LEAVE_FUNC;
 }
 
 extern	void
-GL_RecvStringOnServer(
-	NETFILE	*fp,
-	size_t  size,
-	char	*str,
-	Bool	fI18N,
-	Bool	fNetwork)
-{
-	size_t	size1;
-	size_t	size2;
-	char	*buff1;
-	char	*buff2;
-
-ENTER_FUNC;
-	if (fI18N) {
-		size1 = size2 = GL_RecvLength(fp,fNetwork);
-		if (size1 > size * 2) {
-			CloseNet(fp);
-			Warning("Error: receive size to large [%d]. defined size [%d]", (int)size1, (int)size);
-		} else {
-			buff1 = xmalloc(size1);
-			buff2 = xmalloc(size2);
-			Recv(fp, buff1, size1);
-			ConvUTF82EUCJP(buff1,size1,buff2,size2);
-			strncpy(str, buff2, size);
-			str[size] = 0;
-			xfree(buff1);
-			xfree(buff2);
-		}
-	} else {
-		GL_RecvString(fp, size, str, fNetwork);
-	}
-LEAVE_FUNC;
-}
-
-extern	void
 GL_SendString(
 	NETFILE	*fp,
 	char	*str,
@@ -369,32 +287,6 @@ ENTER_FUNC;
 	GL_SendLength(fp,size,fNetwork);
 	if		(  size  >  0  ) {
 		Send(fp,str,size);
-	}
-LEAVE_FUNC;
-}
-
-extern	void
-GL_SendStringOnServer(
-	NETFILE	*fp,
-	char	*str,
-	Bool	fI18N,
-	Bool	fNetwork)
-{
-	char	*buff1;
-	char	*buff2;
-	size_t	size1;
-	size_t	size2;
-ENTER_FUNC;
-	if (str != NULL && fI18N) { 
-		buff1 = str;
-		size1 = strlen(buff1);
-		size2 = size1 * 2 + 1;
-		buff2 = xmalloc(size2);
-		ConvEUCJP2UTF8(buff1, size1, buff2, size2);
-		GL_SendString(fp,buff2,fNetwork);
-		xfree(buff2);
-	} else {
-		GL_SendString(fp,str,fNetwork);
 	}
 LEAVE_FUNC;
 }
@@ -604,9 +496,9 @@ extern	void
 GL_SendValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
+	char		*coding,
 	Bool		fBlob,
 	Bool		fExpand,
-	Bool		fI18N,
 	Bool		fNetwork)
 {
 	int		i;
@@ -631,7 +523,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		GL_SendStringOnServer(fp,ValueToString(value,NULL),fI18N,fNetwork);
+		GL_SendString(fp,ValueToString(value,coding),fNetwork);
 		break;
 	  case	GL_TYPE_FLOAT:
 		GL_SendFloat(fp,ValueFloat(value),fNetwork);
@@ -651,7 +543,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_ARRAY:
 		GL_SendInt(fp,ValueArraySize(value),fNetwork);
 		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			GL_SendValue(fp,ValueArrayItem(value,i),fBlob,fExpand,fI18N,fNetwork);
+			GL_SendValue(fp,ValueArrayItem(value,i),coding,fBlob,fExpand,fNetwork);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
@@ -666,11 +558,11 @@ ENTER_FUNC;
 					GL_SendString(fp,"row",fNetwork);
 				} else {
 					GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-					GL_SendValue(fp,ValueRecordItem(value,i),fBlob,fExpand,fI18N,fNetwork);
+					GL_SendValue(fp,ValueRecordItem(value,i),coding,fBlob,fExpand,fNetwork);
 				}
 			} else {
 				GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-				GL_SendValue(fp,ValueRecordItem(value,i),fBlob,fExpand,fI18N,fNetwork);
+				GL_SendValue(fp,ValueRecordItem(value,i),coding,fBlob,fExpand,fNetwork);
 			}
 		}
 		break;
@@ -684,9 +576,9 @@ extern	void
 GL_RecvValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
+	char		*coding,
 	Bool		fBlob,
 	Bool		fExpand,
-	Bool		fI18N,
 	Bool		fNetwork)
 {
 	PacketDataType	type;
@@ -707,10 +599,8 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		dbgmsg("strings");
-		GL_RecvStringOnServer(fp,sizeof(str),str,fI18N,fNetwork);
-			ON_IO_ERROR(fp,badio);
-		SetValueString(value,str,NULL);	
-			ON_IO_ERROR(fp,badio);
+		GL_RecvString(fp,sizeof(str),str,fNetwork);	ON_IO_ERROR(fp,badio);
+		SetValueString(value,str,coding);			ON_IO_ERROR(fp,badio);
 		break;
 	  case	GL_TYPE_NUMBER:
 		dbgmsg("NUMBER");
