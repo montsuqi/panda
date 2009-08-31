@@ -332,34 +332,11 @@ decode_uri(const char *uri)
 }
 
 void
-DecodeArguments(
-	HTTP_REQUEST *req,
-	char *args)
-{
-	gsize isize;
-	gsize osize;
-	GError *error;
-	char *decoded;
-
-	error = NULL;
-	decoded = decode_uri(args);
-	req->arguments = g_convert(decoded, strlen(decoded), 
-		"EUC-JP", "utf8", &isize, &osize, &error);
-	if (error != NULL) {
-		Warning("Arguments convert failure:%s", error->message);
-		req->status = HTTP_BAD_REQUEST;
-		g_error_free(error);
-	}
-	xfree(decoded);
-}
-
-void
 ParseReqLine(HTTP_REQUEST *req)
 {
 	char *line;
 	char *head;
 	char *tail;
-	char *args;
 	int cmp = 1;
 
 	line = head = GetNextLine(req);
@@ -426,9 +403,7 @@ ParseReqLine(HTTP_REQUEST *req)
 			req->status = HTTP_BAD_REQUEST;
 			return;
 		}
-		args = StrnDup(head, tail - head);
-		DecodeArguments(req, args);
-		xfree(args);
+		req->arguments = StrnDup(head, tail - head);
 		head = tail + 1;
 	}
 	while (head[0] == ' ') { head++; }

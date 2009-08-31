@@ -36,7 +36,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 #include	<pthread.h>
-#include	<iconv.h>
 
 #include	"types.h"
 #include	"enum.h"
@@ -131,37 +130,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	char*
-ConvStr(
-	char *str)
-{
-	char *lang;
-	char *buff;
-	char *p1;
-	char *p2;
-	size_t s1;
-	size_t s2;
-	iconv_t cd;
-
-	lang = getenv("LANG");
-	if (strstr(lang, "euc") != NULL ||
-			strstr(lang, "EUC") != NULL) {
-		return str;
-	} else {
-		p1 = str;
-		s1 = s2 = strlen(str);
-		buff = p2 = xmalloc(strlen(str) + 1);
-		cd = iconv_open("EUC-JP", "utf8");
-		if (iconv(cd , &p1, &s1, &p2, &s2) != 0 ) {
-			printf("[ERROR] iconv error");
-			exit(1);
-		}
-		*p2 = 0;
-		iconv_close(cd);
-		return buff;
-	}
-}
-
 static	void
 SendMsg(
 	char *id,
@@ -178,7 +146,7 @@ SendMsg(
 ENTER_FUNC;
 	fp = ConnectSysData();
 	key[0] = "message";
-	value[0] = ConvStr(msg);
+	value[0] = msg;
 	key[1] = "abort";
 	if (fAbort) {
 		value[1] = "T";

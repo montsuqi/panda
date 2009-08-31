@@ -197,12 +197,6 @@ XMLNode2Value(
 {
 	int			i;
 	char		*buff1;
-	char		*buff2;
-	char		*p1;
-	char		*p2;
-	size_t		size1;
-	size_t		size2;
-	iconv_t		cd;
 	xmlNodePtr	node;
 
 ENTER_FUNC;
@@ -250,21 +244,8 @@ ENTER_FUNC;
 		if (xmlStrcmp(root->name, "string") != 0) {
 			break;
 		}
-		buff1 = p1 = XMLGetString(root, "");
-#if 1
-		size1 = strlen(buff1);
-		size2 = size1;
-		buff2 = p2 = xmalloc(size2 + 1);
-		cd = iconv_open("EUC-JP", "utf8");
-		if (iconv(cd, &p1, &size1, &p2, &size2) == 0) {
-			*p2 = 0;
-			SetValueStringWithLength(val, buff2, strlen(buff2), NULL);
-		}
-		iconv_close(cd);
-		xfree(buff2);
-#else
-		SetValueStringWithLength(val, buff1, size1, NULL);
-#endif
+		buff1 = XMLGetString(root, "");
+		SetValueStringWithLength(val, buff1, strlen(buff1), NULL);
 		free(buff1);
 		break;
 	  case	GL_TYPE_ARRAY:
@@ -315,14 +296,7 @@ Value2XMLNode(
 {
 	xmlNodePtr	node;
 	xmlNodePtr	child;
-	char		*buff1;
-	char		*buff2;
-	char		*p1;
-	char		*p2;
-	size_t		size1;
-	size_t		size2;
 	int			i;
-	iconv_t		cd;
 
 ENTER_FUNC;
 	if (val == NULL) {
@@ -352,21 +326,7 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		node = xmlNewNode(NULL, "string");
-		size1 = ValueStringLength(val);
-		buff1 = p1 = ValueStringPointer(val);
-#if 1
-		size2 = size1 * 2 + 1;
-		buff2 = p2 = xmalloc(size2);
-		cd = iconv_open("utf8", "EUC-JP");
-		if (iconv(cd, &p1, &size1, &p2, &size2) == 0) {
-			*p2 = 0;
-			xmlNodeAddContent(node, buff2); 
-		}
-		iconv_close(cd);
-#else
-		xmlNodeAddContent(node, buff); 
-#endif
-		free(buff2);
+		xmlNodeAddContent(node, ValueToString(val,NULL)); 
 		break;
 	  case	GL_TYPE_ARRAY:
 		node = xmlNewNode(NULL, "array");
