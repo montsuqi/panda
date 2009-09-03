@@ -214,14 +214,15 @@ Who(void)
 	ValueStruct *list;
 	ValueStruct *query;
 	char lname[128];
-	char *key[5] =  {
+	char *key[6] =  {
 		"user",
 		"host",
 		"create_time",
 		"access_time",
-		"window"
+		"window",
+		"agent"
 	};
-	char *value[5] = {"","","","",""};
+	char *value[6] = {"","","","","",""};
 	int i;
 ENTER_FUNC;
 	fp = ConnectSysData();
@@ -235,6 +236,7 @@ ENTER_FUNC;
 	ColumnPrint(32, "LOGIN@");
 	ColumnPrint(32, "LAST@");
 	ColumnPrint(17, "WINDOW");
+	ColumnPrint(17, "AGENT");
 	ColumnPrint(129, "ID");
 	printf("\n");
 	for ( i = 0; i < ValueInteger(GetItemLongName(list, "num")); i++) {
@@ -242,13 +244,14 @@ ENTER_FUNC;
 		if (!strcmp("system", ValueToString(GetItemLongName(list,lname), NULL))) {
 			continue;
 		} 
-		query = KVREQ_NewQueryWithValue(ValueToString(GetItemLongName(list,lname), NULL),5,key,value);
+		query = KVREQ_NewQueryWithValue(ValueToString(GetItemLongName(list,lname), NULL),6,key,value);
 		if (KVREQ_Request(fp, KV_GETVALUE, query) == MCP_OK) {
 			ColumnPrint(11, ValueToString(GetItemLongName(query,"query[0].value"), NULL));
 			ColumnPrint(17, ValueToString(GetItemLongName(query,"query[1].value"), NULL));
 			ColumnPrint(32, ValueToString(GetItemLongName(query,"query[2].value"), NULL));
 			ColumnPrint(32, ValueToString(GetItemLongName(query,"query[3].value"), NULL));
 			ColumnPrint(17, ValueToString(GetItemLongName(query,"query[4].value"), NULL));
+			ColumnPrint(17, ValueToString(GetItemLongName(query,"query[5].value"), NULL));
 			ColumnPrint(129, ValueToString(GetItemLongName(query,"id"), NULL));
 			printf("\n");
 		}

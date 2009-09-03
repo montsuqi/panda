@@ -49,13 +49,14 @@
 #include	"wfc.h"
 #include	"auth.h"
 #include	"authstub.h"
-#include	"sysdatathread.h"
 #include	"blobcom.h"
 #include	"blobserv.h"
 #include	"keyvaluecom.h"
 #include	"kvserv.h"
 #include	"message.h"
 #include	"debug.h"
+#define 	MAIN
+#include	"sysdatathread.h"
 
 static	void
 SysDataThread(
@@ -119,5 +120,6 @@ extern	void
 InitSysData(void)
 {
 ENTER_FUNC;
+	InitBLOBServ();
 LEAVE_FUNC;
 }

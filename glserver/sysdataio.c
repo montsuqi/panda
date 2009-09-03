@@ -140,38 +140,58 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	void
-GetSysDBMessage(
+extern	char*
+GetSysDB(
 	char	*term,
-	Bool	*fAbort,
-	char	**message)
+	char	*k)
 {
 	ValueStruct *q;
 	NETFILE	*fp;
-	char *key[2] = {"message","abort"};
-	char *value[2] = {"", ""};
-	static char msg[KVREQ_TEXT_SIZE+1];
+	char *key[1];
+	char *value[1];
+	char *ret;
 ENTER_FUNC;
-	*fAbort = FALSE;
-	msg[0] = 0;
-	*message = msg;
-
+	ret = NULL;
+	key[0] = k;
+	value[0] = "";
 	if ((fp = ConnectSysData()) != NULL) {
-		q = KVREQ_NewQueryWithValue(term,2,key,value);
+		q = KVREQ_NewQueryWithValue(term,1,key,value);
 		if(KVREQ_Request(fp, KV_GETVALUE, q) == MCP_OK) {
-			strncpy(msg, ValueToString(GetItemLongName(q,"query[0].value"), NULL), KVREQ_TEXT_SIZE);
-			if (!strcmp("T", ValueToString(GetItemLongName(q,"query[1].value"), NULL))) {
-				*fAbort = TRUE;
-			} else {
-				*fAbort = FALSE;
-			}
-			SetValueStringWithLength(GetItemLongName(q,"query[0].value"), "", strlen(""), NULL);
-			SetValueStringWithLength(GetItemLongName(q,"query[1].value"), "", strlen(""), NULL);
-			KVREQ_Request(fp, KV_SETVALUE, q);
+			ret = StrDup(ValueToString(GetItemLongName(q,"query[0].value"), NULL));
 		}
 		FreeValueStruct(q);
 		SendPacketClass(fp, SYSDATA_END);
 		CloseNet(fp);
 	}
 LEAVE_FUNC;
+	return ret;
+}
+
+extern	Bool
+SetSysDB(
+	char	*term,
+	char	*k,
+	char	*v)
+{
+	ValueStruct *q;
+	NETFILE	*fp;
+	char *key[1];
+	char *value[1];
+	Bool ret;
+ENTER_FUNC;
+	key[0] = k;
+	value[0] = v;
+	ret = FALSE;
+
+	if ((fp = ConnectSysData()) != NULL) {
+		q = KVREQ_NewQueryWithValue(term,1,key,value);
+		if(KVREQ_Request(fp, KV_SETVALUE, q) == MCP_OK) {
+			ret = TRUE;
+		}
+		FreeValueStruct(q);
+		SendPacketClass(fp, SYSDATA_END);
+		CloseNet(fp);
+	}
+LEAVE_FUNC;
+	return ret;
 }

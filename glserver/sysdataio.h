@@ -24,6 +24,7 @@
 #define	BLOB_ACCESS_EXPORT	1
 
 extern	void	AccessBLOB(int mode, ValueStruct *value);
-extern	void	GetSysDBMessage(char *term, Bool *fAbort, char **message);
+extern	char*	GetSysDB(char *term, char *key);
+extern	Bool	SetSysDB(char *term, char *key, char *value);
 
 #endif

@@ -337,6 +337,7 @@ ParseReqLine(HTTP_REQUEST *req)
 	char *line;
 	char *head;
 	char *tail;
+	char *args;
 	int cmp = 1;
 
 	line = head = GetNextLine(req);
@@ -403,7 +404,9 @@ ParseReqLine(HTTP_REQUEST *req)
 			req->status = HTTP_BAD_REQUEST;
 			return;
 		}
-		req->arguments = StrnDup(head, tail - head);
+		args = StrnDup(head, tail - head);
+		req->arguments = decode_uri(args);
+		xfree(args);
 		head = tail + 1;
 	}
 	while (head[0] == ' ') { head++; }
