@@ -20,8 +20,6 @@
 #ifndef	_INC_BLOB_V1_H
 #define	_INC_BLOB_V1_H
 
-#include "lock.h"
-
 #define	BLOB_V1_HEADER		"PNB1"
 #if	BLOB_VERSION == 1
 
@@ -61,7 +59,6 @@ typedef	struct _BLOB_Space	{
 	MonObjectType	oid;
 	GHashTable		*oid_table;
 	GHashTable		*key_table;
-	LOCKOBJECT;
 }	BLOB_V1_Space;
 
 typedef	struct {

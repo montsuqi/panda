@@ -712,6 +712,7 @@ GL_SendVersionString(
 	NETFILE		*fp)
 {
 	char	version[256];
+	char	buff[256];
 	size_t	size;
 
 	sprintf(version,"version:blob:expand:negotiation");
@@ -721,6 +722,8 @@ GL_SendVersionString(
 
 	if (UI_Version() == UI_VERSION_1) {
 		strcat(version, ":ps");
+		sprintf(buff,":agent=glclient/%s",PACKAGE_VERSION);
+		strcat(version, buff);
 	} else {
 		strcat(version, ":i18n");
 #		ifdef	USE_PDF
@@ -728,6 +731,8 @@ GL_SendVersionString(
 #		else
 			strcat(version, ":ps");
 #		endif
+		sprintf(buff,":agent=glclient2/%s",PACKAGE_VERSION);
+		strcat(version, buff);
 	}
 
 	size = strlen(version);

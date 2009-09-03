@@ -69,5 +69,6 @@ extern	void	InitGL_Comm(void);
 #endif
 GLOBAL	byte		TermFeature;
 GLOBAL	ExpandType	TermExpandType;
+GLOBAL	char		TermAgent[128];
 
 #endif

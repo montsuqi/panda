@@ -46,10 +46,6 @@
 #include	"message.h"
 #include	"debug.h"
 
-#define	LockReadBLOB(blob)	dbgmsg("LockReadBLOB");LockRead(blob);
-#define	LockWriteBLOB(blob)	dbgmsg("LockWriteBLOB");LockWrite(blob);
-#define	UnLockBLOB(blob)	dbgmsg("UnLockBLOB");UnLock(blob);
-
 typedef	struct {
 	NETFILE	*fp;
 	MonObjectType	oid;
@@ -193,7 +189,6 @@ NewBLOB_V1(
 	BLOB_V1_Header	head;
 
 ENTER_FUNC;
-	LockWriteBLOB(state->blob);
 	obj = state->blob->oid;
 	state->blob->oid ++;
 	memcpy(head.magic,BLOB_V1_HEADER,SIZE_BLOB_HEADER);
@@ -214,7 +209,6 @@ ENTER_FUNC;
 		DestroyEntry(ent);
 		obj = GL_OBJ_NULL;
 	}
-	UnLockBLOB(state->blob);
 LEAVE_FUNC;
 	return	(obj);
 }
@@ -274,7 +268,6 @@ ENTER_FUNC;
 		blob->oid = head.oid;
 		blob->oid_table = NewLLHash();
 		blob->key_table = NewNameHash();
-		InitLock(blob);
 	} else {
 		blob = NULL;
 	}
@@ -293,7 +286,6 @@ ENTER_FUNC;
 	unlink(name);
 
 	xfree(blob->space);
-	DestroyLock(blob);
 	xfree(blob);
 LEAVE_FUNC;
 }
@@ -310,7 +302,6 @@ OpenBLOB_V1(
 ENTER_FUNC;
 	ret = -1;
 	if		(  obj != GL_OBJ_NULL ) {
-		LockWriteBLOB(state->blob);
 		if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )  ==  NULL  ) {
 			ent = New(BLOB_V1_Entry);
 			ent->oid = obj;
@@ -322,7 +313,6 @@ ENTER_FUNC;
 			DestroyEntry(ent);
 			ret = -1;
 		}
-		UnLockBLOB(state->blob);
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -337,7 +327,6 @@ CloseBLOB_V1(
 	Bool		ret;
 
 ENTER_FUNC;
-	LockReadBLOB(state->blob);
 	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
@@ -349,7 +338,6 @@ ENTER_FUNC;
 dbgmsg("CloseBLOB not found");
 		ret = FALSE;
 	}
-	UnLockBLOB(state->blob);
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -362,7 +350,6 @@ DestroyBLOB_V1(
 	BLOB_V1_Entry	*ent;
 	Bool			rc;
 ENTER_FUNC;
-	LockWriteBLOB(state->blob);
 	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
 		DestroyEntry(ent);
@@ -370,7 +357,6 @@ ENTER_FUNC;
 	} else {
 		rc = FALSE;
 	}
-	UnLockBLOB(state->blob);
 LEAVE_FUNC;
 	return	(rc);
 }
@@ -386,7 +372,6 @@ WriteBLOB_V1(
 	int			ret;
 
 ENTER_FUNC;
-	LockWriteBLOB(state->blob);
 	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
 		if		(  ent->fp  !=  NULL  ) {
@@ -397,7 +382,6 @@ ENTER_FUNC;
 	} else {
 		ret = -1;
 	}
-	UnLockBLOB(state->blob);
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -413,7 +397,6 @@ ReadBLOB_V1(
 	byte			*buff;
 
 ENTER_FUNC;
-	LockReadBLOB(state->blob);
 	buff = NULL;
 	*size = 0;
 	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
@@ -426,7 +409,6 @@ ENTER_FUNC;
 	} else {
 		dbgprintf("ent not found oid:%d\n", (int)obj);
 	}
-	UnLockBLOB(state->blob);
 LEAVE_FUNC;
 	return	buff;
 }
@@ -443,7 +425,6 @@ RegisterBLOB_V1(
 	gpointer		oval;
 
 ENTER_FUNC;
-	LockWriteBLOB(state->blob);
 	ret = FALSE;
 	if		(  ( ent = g_hash_table_lookup(state->blob->oid_table,(gpointer)&obj) )
 			   !=  NULL  ) {
@@ -455,7 +436,6 @@ ENTER_FUNC;
 		obj = ent->oid;
 		ret = TRUE;
 	}
-	UnLockBLOB(state->blob);
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -469,14 +449,12 @@ LookupBLOB_V1(
 	MonObjectType 	obj;
 
 ENTER_FUNC;
-	LockReadBLOB(state->blob);
 	ent = g_hash_table_lookup(state->blob->key_table,(gpointer)key);
 	if (ent != NULL) {
 		obj = ent->oid;
 	} else {
 		obj = GL_OBJ_NULL;
 	}
-	UnLockBLOB(state->blob);
 LEAVE_FUNC;
 	return	obj;
 }

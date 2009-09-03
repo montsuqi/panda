@@ -32,6 +32,7 @@
 #include    <sys/types.h>
 #include	<sys/stat.h>
 #include	<glib.h>
+#include	<pthread.h>
 
 #include	"types.h"
 
@@ -42,6 +43,16 @@
 #include	"blobserv.h"
 #include	"blobcom.h"
 #include	"debug.h"
+
+static	pthread_mutex_t	mutex;
+
+extern	void
+InitBLOBServ()
+{
+ENTER_FUNC;
+	pthread_mutex_init(&mutex,NULL);
+LEAVE_FUNC;
+}
 
 extern	void
 PassiveBLOB(
@@ -56,6 +67,7 @@ PassiveBLOB(
 	char			*str;
 
 ENTER_FUNC;
+	pthread_mutex_lock(&mutex);
 	switch	(RecvPacketClass(fp)) {
 	  case	BLOB_CREATE:
 		dbgmsg("BLOB_CREATE");
@@ -204,6 +216,7 @@ ENTER_FUNC;
 		break;
 	}
   badio:
+	pthread_mutex_unlock(&mutex);
 LEAVE_FUNC;
 }
 

@@ -25,6 +25,7 @@
 #include	"blob.h"
 
 extern	void	PassiveBLOB(NETFILE *fp, BLOB_State *state);
+extern	void	InitBLOBServ();
 
 #undef	GLOBAL
 #ifdef	MAIN

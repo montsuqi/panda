@@ -385,6 +385,7 @@ CheckFeature(
 
 	TermFeature = FEATURE_NULL;
 	TermExpandType = EXPAND_PNG;
+	strcpy(TermAgent,"unknown");
 	if		(  strlcmp(ver,"1.2")    ==  0  ) {
 		TermFeature |= FEATURE_CORE;
 	} else
@@ -423,6 +424,13 @@ CheckFeature(
 				}
 				if		(  !strlicmp(p,"pdf")  ) {
 					TermExpandType = EXPAND_PDF;
+				}
+				if		(  !strlicmp(p,"agent")  ) {
+					if ((q = strchr(p,'=')) != NULL) {
+						q++;
+						strncpy(TermAgent,q,sizeof(TermAgent));
+						TermAgent[sizeof(TermAgent)-1] = 0;
+					}
 				}
 				p = n;
 			}
@@ -477,6 +485,7 @@ ENTER_FUNC;
 			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 		} else {
+			SetSysDB(scr->term, "agent", TermAgent);
 			if (fFeatureNego) {
 				sprintf(ver,"%s.%02d", PACKAGE_VERSION, 1);
 				GL_SendPacketClass(fpComm,GL_ServerVersion,fFeatureNetwork);
@@ -581,11 +590,11 @@ Pong(
 	NETFILE		*fpComm,
 	ScreenData	*scr)
 {
-	Bool		ret;
-	Bool		fAbort;
+	char		*abort;
 	char		*message;
 	char		*coding;
 	ValueStruct	*value;
+	Bool		ret;
 	
 ENTER_FUNC;
 	ret = TRUE;
@@ -598,31 +607,43 @@ ENTER_FUNC;
 	GL_SendPacketClass(fpComm,GL_Pong,fFeatureNetwork);
 	ON_IO_ERROR(fpComm,badio);
 
-	GetSysDBMessage(scr->term, &fAbort, &message);
-	if (fAbort) {
-		GL_SendPacketClass(fpComm,GL_STOP,fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-		if (strlen(message) <= 0) {
-			sprintf(message,"shutdown from the server");
-		}
-		value = NewValue(GL_TYPE_CHAR);
-		SetValueString(value,message,NULL);
-		GL_SendString(fpComm, ValueToString(value,coding), fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-		FreeValueStruct(value);
-		ret = FALSE;
+	abort = GetSysDB(scr->term, "abort");
+	message = GetSysDB(scr->term, "message");
+
+	if (abort == NULL || message == NULL) {
+		GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
 	} else {
-		if (strlen(message) > 0) {
-			GL_SendPacketClass(fpComm,GL_CONTINUE,fFeatureNetwork);
+		if (!strcmp(abort, "T")) {
+			GL_SendPacketClass(fpComm,GL_STOP,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
-			value = NewValue(GL_TYPE_CHAR);
-			SetValueString(value,message,NULL);
-			GL_SendString(fpComm, ValueToString(value,coding), fFeatureNetwork);
-				ON_IO_ERROR(fpComm,badio);
-			FreeValueStruct(value);
+			if (strlen(message) <= 0) {
+				GL_SendString(fpComm, "shutdown by server instruction", fFeatureNetwork);
+					ON_IO_ERROR(fpComm,badio);
+			} else {
+				value = NewValue(GL_TYPE_CHAR);
+				SetValueString(value,message,NULL);
+				GL_SendString(fpComm, ValueToString(value,coding), fFeatureNetwork);
+					ON_IO_ERROR(fpComm,badio);
+				FreeValueStruct(value);
+			}
+			ret = FALSE;
 		} else {
-			GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
+			if (strlen(message) > 0) {
+				GL_SendPacketClass(fpComm,GL_CONTINUE,fFeatureNetwork);
+					ON_IO_ERROR(fpComm,badio);
+				value = NewValue(GL_TYPE_CHAR);
+				SetValueString(value,message,NULL);
+				GL_SendString(fpComm, ValueToString(value,coding), fFeatureNetwork);
+					ON_IO_ERROR(fpComm,badio);
+				FreeValueStruct(value);
+			} else {
+				GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
+			}
 		}
+		SetSysDB(scr->term, "abort", "");
+		SetSysDB(scr->term, "message", "");
+		xfree(abort);
+		xfree(message);
 	}
 badio:
 LEAVE_FUNC;
