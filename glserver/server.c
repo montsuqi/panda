@@ -383,57 +383,47 @@ CheckFeature(
 		,	*q
 		,	*n;
 
-	TermFeature = FEATURE_NULL;
 	TermExpandType = EXPAND_PNG;
 	strcpy(TermAgent,"unknown");
-	if		(  strlcmp(ver,"1.2")    ==  0  ) {
-		TermFeature |= FEATURE_CORE;
-	} else
-	  if	(	(  strlcmp(ver,"1.1.1")  ==  0  )
-			||	(  strlcmp(ver,"1.1.2")  ==  0  ) ) {
-		TermFeature |= FEATURE_CORE;
-		TermFeature |= FEATURE_OLD;
-	} else {
-		TermFeature = FEATURE_CORE;
-		if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
-			p ++;
-			while	(  *p  !=  0  ) {
-				if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-					*q = 0;
-					n = q + 1;
-				} else {
-					n = p + strlen(p);
-				}
-				if		(  !strlicmp(p,"blob")  ) {
-					TermFeature |= FEATURE_BLOB;
-				}
-				if		(  !strlicmp(p,"expand")  ) {
-					TermFeature |= FEATURE_EXPAND;
-				}
-				if		(  !strlicmp(p,"i18n")  ) {
-					TermFeature |= FEATURE_I18N;
-				}
-				if		(  !strlicmp(p,"no")  ) {
-					TermFeature |= FEATURE_NETWORK;
-				}
-				if		(  !strlicmp(p,"negotiation")  ) {
-					TermFeature |= FEATURE_NEGO;
-				}
-				if		(  !strlicmp(p,"ps")  ) {
-					TermExpandType = EXPAND_PS;
-				}
-				if		(  !strlicmp(p,"pdf")  ) {
-					TermExpandType = EXPAND_PDF;
-				}
-				if		(  !strlicmp(p,"agent")  ) {
-					if ((q = strchr(p,'=')) != NULL) {
-						q++;
-						strncpy(TermAgent,q,sizeof(TermAgent));
-						TermAgent[sizeof(TermAgent)-1] = 0;
-					}
-				}
-				p = n;
+	TermFeature = FEATURE_CORE;
+	if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
+		p ++;
+		while	(  *p  !=  0  ) {
+			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+				*q = 0;
+				n = q + 1;
+			} else {
+				n = p + strlen(p);
 			}
+			if		(  !strlicmp(p,"blob")  ) {
+				TermFeature |= FEATURE_BLOB;
+			}
+			if		(  !strlicmp(p,"expand")  ) {
+				TermFeature |= FEATURE_EXPAND;
+			}
+			if		(  !strlicmp(p,"i18n")  ) {
+				TermFeature |= FEATURE_I18N;
+			}
+			if		(  !strlicmp(p,"no")  ) {
+				TermFeature |= FEATURE_NETWORK;
+			}
+			if		(  !strlicmp(p,"negotiation")  ) {
+				TermFeature |= FEATURE_NEGO;
+			}
+			if		(  !strlicmp(p,"ps")  ) {
+				TermExpandType = EXPAND_PS;
+			}
+			if		(  !strlicmp(p,"pdf")  ) {
+				TermExpandType = EXPAND_PDF;
+			}
+			if		(  !strlicmp(p,"agent")  ) {
+				if ((q = strchr(p,'=')) != NULL) {
+					q++;
+					strncpy(TermAgent,q,sizeof(TermAgent));
+					TermAgent[sizeof(TermAgent)-1] = 0;
+				}
+			}
+			p = n;
 		}
 	}
 #ifdef	DEBUG
