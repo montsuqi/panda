@@ -236,7 +236,7 @@ ENTER_FUNC;
 	ColumnPrint(32, "LOGIN@");
 	ColumnPrint(32, "LAST@");
 	ColumnPrint(17, "WINDOW");
-	ColumnPrint(17, "AGENT");
+	ColumnPrint(20, "AGENT");
 	ColumnPrint(129, "ID");
 	printf("\n");
 	for ( i = 0; i < ValueInteger(GetItemLongName(list, "num")); i++) {
@@ -251,7 +251,7 @@ ENTER_FUNC;
 			ColumnPrint(32, ValueToString(GetItemLongName(query,"query[2].value"), NULL));
 			ColumnPrint(32, ValueToString(GetItemLongName(query,"query[3].value"), NULL));
 			ColumnPrint(17, ValueToString(GetItemLongName(query,"query[4].value"), NULL));
-			ColumnPrint(17, ValueToString(GetItemLongName(query,"query[5].value"), NULL));
+			ColumnPrint(20, ValueToString(GetItemLongName(query,"query[5].value"), NULL));
 			ColumnPrint(129, ValueToString(GetItemLongName(query,"id"), NULL));
 			printf("\n");
 		}
