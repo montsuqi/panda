@@ -261,6 +261,7 @@ ENTER_FUNC;
 		ControlPort = ParPortName(ControlPortNumber);
 	}
 	InitNET();
+	InitSysData();
 	if		(  ThisEnv->sysdata       !=  NULL  ) {
 		if 		(  ThisEnv->sysdata->dir  !=  NULL  ) {
 			Blob = InitBLOB(ThisEnv->sysdata->dir);

@@ -109,6 +109,7 @@ ENTER_FUNC;
 			CloseBLOB(blob,obj);
 			SendLength(fp,size);					ON_IO_ERROR(fp,badio);
 			Send(fp,buff,size);						ON_IO_ERROR(fp,badio);
+			Flush(fp);
 			xfree(buff);
 		} else {
 			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);

@@ -194,6 +194,7 @@ ENTER_FUNC;
 				size = (  left  >  SIZE_BUFF  ) ? SIZE_BUFF : left;
 				fread(buff,size,1,fpf);
 				Send(fp,buff,size);			ON_IO_ERROR(fp,badio);
+				Flush(fp);
 				left -= size;
 			}
 			fclose(fpf);
