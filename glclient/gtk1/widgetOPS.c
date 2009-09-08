@@ -129,11 +129,12 @@ SetStyle(
 	GtkStyle	*style)
 {
 	static GdkFont *font = NULL;
-
+	GtkStyle *s;
 	if (style != NULL) {
-	if (font == NULL) {
-		font = widget->style->font;
-	}
+		if (font == NULL) {
+			s = gtk_rc_get_style(widget);
+			font = s->font;
+		}
 		gtk_widget_set_style(widget, style);
 		widget->style->font = font;
     	if (GTK_IS_CONTAINER(widget)){
@@ -332,12 +333,15 @@ SetEntry(
 	GtkWidget		*widget,
 	_Entry			*data)
 {
+	gchar *text;
 ENTER_FUNC;
 	SetState(widget,(GtkStateType)(data->state));
 	SetStyle(widget,GetStyle(data->style));
-	if (strcmp (gtk_entry_get_text(GTK_ENTRY(widget)), data->text)) {
+	text = gtk_editable_get_chars(GTK_EDITABLE(widget), 0, -1);
+	if (text != NULL && strcmp (text, data->text)) {
 		gtk_entry_set_text(GTK_ENTRY(widget), data->text);
 	}
+	g_free(text);
 	if (!GTK_WIDGET_HAS_FOCUS(widget)
 		&& (gtk_editable_get_position (GTK_EDITABLE(widget)) != 0)) {
 		gtk_editable_set_position (GTK_EDITABLE(widget), 0);
