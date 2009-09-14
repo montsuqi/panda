@@ -204,9 +204,10 @@ _StartBatch(
 	char	*name,
 	char	*param)
 {
-	int		(*apl)(char *);
-	int		rc;
-	char	*arg;
+	int			(*apl)(char *);
+	int			rc;
+	ValueStruct	*val;
+	char		*arg;
 
 ENTER_FUNC;
 	OpenCOBOL_Conv = NewConvOpt();
@@ -218,9 +219,12 @@ ENTER_FUNC;
 	printf("starting [%s][%s]\n",name,param);
 #endif
 	if		(  ( apl = cob_resolve(name) )  !=  NULL  ) {
-		arg = StrnDup(param,ThisBD->textsize);
+		val = NewValue(GL_TYPE_CHAR);
+		SetValueStringWithLength(val, param, ThisBD->textsize, NULL);
+		arg = StrnDup(ValueToString(val,"euc-jisx0213"), ThisBD->textsize);
 		StringC2Cobol(arg,ThisBD->textsize);
 		rc = apl(arg);
+		FreeValueStruct(val);
 		xfree(arg);
 	} else {
 		Warning( "%s - %s is not found.", cob_resolve_error(),name);

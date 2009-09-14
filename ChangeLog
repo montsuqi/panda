@@ -1,3 +1,8 @@
+2009-09-14  Yusuke Mihara  <mihara@netlab.jp>
+
+	* aps/OpenCOBOL.c: dbstubの引数をUTF-8からeuc-jisx0213に変換する。
+	日レセのバッチが動作可能。
+
 2009-08-31  Yusuke Mihara  <mihara@netlab.jp>
 
 	* dblib/XMLIO.c glserver/http.c glserver/server.c
