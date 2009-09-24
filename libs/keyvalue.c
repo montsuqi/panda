@@ -395,6 +395,7 @@ KV_Dump(
 	int rc;
 	int fd;
 	ValueStruct *id;
+	mode_t mode;
 ENTER_FUNC;
 	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
@@ -403,6 +404,7 @@ ENTER_FUNC;
 		Warning("does not found id");
 	} else {
 		sprintf(buff, "/tmp/sysdata_dump_XXXXXX");
+		mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 		if ((fd = mkstemp(buff)) != -1) {
 			if ((fp = fdopen(fd, "w")) != NULL) {
 				g_hash_table_foreach(state->table, DumpEntry, fp);
@@ -415,6 +417,7 @@ ENTER_FUNC;
 		} else {
 			Warning("mkstemp failure");
 		}
+		umask(mode);
 	}
 	KV_UnLock(state);
 LEAVE_FUNC;

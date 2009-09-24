@@ -66,15 +66,17 @@ CreateTempfile(
 {
     int fildes;
     FILE *file;
+	mode_t mode;
 
 ENTER_FUNC;
+	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 	if ((fildes = mkstemp(tmpname)) == -1) {
 		Error("Couldn't make tempfile %s",tmpname );
 	}
-	fchmod(fildes, 0600);
 	if ((file = fdopen(fildes, "wb")) == NULL ) {
 		Error("Couldn't open tempfile %s",tmpname);
 	}
+	umask(mode);
 LEAVE_FUNC;
 	return file;
 }
