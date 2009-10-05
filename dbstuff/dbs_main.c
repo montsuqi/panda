@@ -59,9 +59,10 @@ static	DBD_Struct	*ThisDBD;
 static	sigset_t	hupset;
 static	char		*PortNumber;
 static	int			Back;
-static	char	*Directory;
+static	char		*Directory;
 static	char		*AuthURL;
 static	URL			Auth;
+static	char		*Encoding;
 
 static	void
 InitSystem(
@@ -151,7 +152,6 @@ NewSessionNode(void)
 	ses->type = COMM_STRING;
 	ses->fCount = FALSE;
 	ses->fLimit = FALSE;
-
 	return	(ses);
 }
 
@@ -202,6 +202,11 @@ ENTER_FUNC;
 		if		(  ver  >=  10403  ) {
 			ses->fCount = TRUE;
 			ses->fLimit = TRUE;
+		}
+		if		(  ver  >=  10405  ) {
+			Encoding = NULL;
+		} else  {
+			Encoding = "euc-jisx0213";
 		}
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
@@ -264,7 +269,7 @@ RecvData(
 			value = GetItemLongName(args,vname);
 			if (value != NULL) {
 				ValueIsUpdate(value);
-				SetValueString(value,str,DB_LOCALE);
+				SetValueString(value,str,Encoding);
 			}
 		} else {
 			break;
@@ -341,7 +346,7 @@ ENTER_FUNC;
 					value = rec;
 				}
 				SetValueName(name);
-				SendValueString(fpComm,value,NULL,fName,fType,NULL);
+				SendValueString(fpComm,value,NULL,fName,fType,Encoding);
 				if		(  fName  ) {
 					SendStringDelim(fpComm,"\n");
 				}
@@ -360,7 +365,7 @@ ENTER_FUNC;
 			if		(  value  !=  NULL  ) {
 				SetValueName(name);
 				dbgmsg("*");
-				SendValueString(fpComm,value,NULL,fName,fType,NULL);
+				SendValueString(fpComm,value,NULL,fName,fType,Encoding);
 			}
 		}
 		if		(  fName  ) {
