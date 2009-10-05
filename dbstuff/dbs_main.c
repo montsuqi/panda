@@ -262,10 +262,13 @@ RecvData(
 			DecodeName(rname,vname,buff);
 			DecodeStringURL(str,p+1);
 			value = GetItemLongName(args,vname);
-			ValueIsUpdate(value);
-			SetValueString(value,str,DB_LOCALE);
-		} else
+			if (value != NULL) {
+				ValueIsUpdate(value);
+				SetValueString(value,str,DB_LOCALE);
+			}
+		} else {
 			break;
+        }
 	}	while	(TRUE);
 }
 
@@ -327,6 +330,7 @@ ENTER_FUNC;
 		}
 		dbgprintf("count = %d",count);
 		dbgprintf("name = [%s]",name);
+		dbgprintf("vname = [%s]",vname);
 		DecodeName(rname,vname,name);
 		if		(  count  >  1  ) {
 			for	( i = 0 ; i < count ; i ++ ) {
