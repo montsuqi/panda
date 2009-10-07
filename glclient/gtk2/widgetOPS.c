@@ -130,12 +130,25 @@ SetStyle(
 	GtkWidget	*widget,
 	GtkStyle	*style)
 {
+	int i;
+	GtkRcStyle *rc_style;
+
 	if (style != NULL) {
-    	gtk_widget_set_style(widget,style);
+		rc_style = gtk_widget_get_modifier_style(widget);
+		for(i = GTK_STATE_NORMAL ; i <= GTK_STATE_INSENSITIVE; i++) {
+			rc_style->fg[i] = style->fg[i];
+			rc_style->bg[i] = style->bg[i];
+			rc_style->text[i] = style->text[i];
+			rc_style->base[i] = style->base[i];
+			rc_style->color_flags[i] = GTK_RC_FG | GTK_RC_BG | GTK_RC_TEXT | GTK_RC_BASE;
+		}
+		gtk_widget_modify_style(widget, rc_style);
+#if 1
     	if (GTK_IS_CONTAINER(widget)){
     	    gtk_container_foreach(GTK_CONTAINER(widget),
 				(GtkCallback)SetStyle,style);
     	}
+#endif
 	}
 }
 
