@@ -1657,7 +1657,8 @@ _DBUPDATE(
 	PathStruct	*path;
 	LargeByteString	*src;
 	ValueStruct	*ret;
-
+	char *cmdtuples;
+	
 ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
@@ -1704,6 +1705,12 @@ ENTER_FUNC;
             LBS_EmitEnd(sql);
 			ctrl->count = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
+			cmdtuples = PQcmdTuples(res);
+			if (*cmdtuples != '\0') {
+			  ctrl->cmdcount = atoi(cmdtuples);
+			} else {
+			  ctrl->cmdcount = 0;
+			}
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
@@ -1728,7 +1735,8 @@ _DBDELETE(
 	PathStruct	*path;
 	LargeByteString	*src;
 	ValueStruct	*ret;
-
+	char *cmdtuples;
+	
 ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
@@ -1769,6 +1777,12 @@ ENTER_FUNC;
             LBS_EmitEnd(sql);
 			ctrl->count = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
+			cmdtuples = PQcmdTuples(res);
+			if (*cmdtuples != '\0') {
+			  ctrl->cmdcount = atoi(cmdtuples);
+			} else {
+			  ctrl->cmdcount = 0;
+			}
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);
@@ -1791,7 +1805,8 @@ _DBINSERT(
 	PathStruct	*path;
 	LargeByteString	*src;
 	ValueStruct	*ret;
-
+	char *cmdtuples;
+	
 ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
@@ -1820,6 +1835,12 @@ ENTER_FUNC;
             LBS_EmitEnd(sql);
 			ctrl->count = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
+			cmdtuples = PQcmdTuples(res);
+			if (*cmdtuples != '\0') {
+			  ctrl->cmdcount = atoi(cmdtuples);
+			} else {
+			  ctrl->cmdcount = 0;
+			}
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
             FreeLBS(sql);

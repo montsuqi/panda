@@ -101,6 +101,7 @@ typedef	struct {
 	int		rno;
 	int		pno;
 	int		count;
+	int		cmdcount;  
 	int		limit;
 	int		redirect;
 }	DBCOMM_CTRL;
