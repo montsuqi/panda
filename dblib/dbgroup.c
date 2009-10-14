@@ -570,10 +570,12 @@ MakeCTRLbyName(
 	int			rno;
 
 ENTER_FUNC;
+        ctrl.rc = 0;
 	ctrl.rno = 0;
 	ctrl.pno = 0;
 	ctrl.blocks = 0;
 	ctrl.count = rctrl->count;
+	ctrl.cmdcount = rctrl->cmdcount;
 	ctrl.limit = rctrl->limit;
 	ctrl.redirect = rctrl->redirect;	
 
@@ -584,6 +586,7 @@ ENTER_FUNC;
 		rec = ThisDB[rno-1];
 		*value = _GetDB_Argument(rec,pname,func,&ctrl.pno);
 	} else {
+		ctrl.rc = MCP_BAD_ARG;	  
 		rec = NULL;
 	}
 	if		(  rctrl  !=  NULL  ) {
