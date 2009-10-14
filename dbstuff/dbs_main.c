@@ -19,9 +19,9 @@
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -54,6 +54,11 @@
 #include	"option.h"
 #include	"message.h"
 #include	"debug.h"
+
+/*
+#define DBS_VERSION VERSION
+ */
+#define DBS_VERSION "1.5.1"
 
 static	DBD_Struct	*ThisDBD;
 static	sigset_t	hupset;
@@ -96,8 +101,13 @@ LEAVE_FUNC;
 typedef	struct {
 	char	user[SIZE_USER+1];
 	int		type;
-	Bool	fCount
-	,		fLimit;
+	Bool	fCount;
+	Bool	fLimit;
+	Bool	fIgnore;		/*	ignore no data request	*/
+	Bool	fSendTermLF;
+	Bool	fCmdTuples;
+  	Bool	fFixFieldName;
+  	Bool	fLimitResult;
 }	SessionNode;
 
 static	void
@@ -152,6 +162,12 @@ NewSessionNode(void)
 	ses->type = COMM_STRING;
 	ses->fCount = FALSE;
 	ses->fLimit = FALSE;
+	ses->fIgnore = FALSE;
+	ses->fSendTermLF = FALSE;
+	ses->fCmdTuples = FALSE;
+	ses->fFixFieldName = FALSE;
+	ses->fLimitResult = FALSE;
+
 	return	(ses);
 }
 
@@ -198,7 +214,12 @@ ENTER_FUNC;
 		ses = NULL;
 	} else
 	if		(  AuthUser(&Auth,ses->user,pass,NULL,NULL)  ) {
-		SendStringDelim(fpComm,"Connect: OK\n");
+		if		(  ver  >=  10500  ) {
+			sprintf(buff,"Connect: OK;%s\n",DBS_VERSION);
+			SendStringDelim(fpComm,buff);
+		} else {
+			SendStringDelim(fpComm,"Connect: OK\n");
+		}
 		if		(  ver  >=  10403  ) {
 			ses->fCount = TRUE;
 			ses->fLimit = TRUE;
@@ -207,6 +228,15 @@ ENTER_FUNC;
 			Encoding = NULL;
 		} else  {
 			Encoding = "euc-jisx0213";
+		}
+		if		(  ver  >=  10500  ) {
+			ses->fIgnore = TRUE;
+		}
+		if (ver >= 10501) {
+			ses->fSendTermLF = TRUE;
+			ses->fCmdTuples = TRUE;
+			ses->fFixFieldName = TRUE;
+			ses->fLimitResult = TRUE;
 		}
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
@@ -252,15 +282,17 @@ RecvData(
 	NETFILE		*fpComm,
 	ValueStruct	*args)
 {
-	char	buff[SIZE_BUFF+1];
-	char	vname[SIZE_BUFF+1]
-	,		rname[SIZE_BUFF+1]
-	,		str[SIZE_BUFF+1];
+	char	buff[SIZE_LARGE_BUFF+1];
+	char	vname[SIZE_LONGNAME+1]
+	,		rname[SIZE_LONGNAME+1]
+	,		str[SIZE_LARGE_BUFF+1];
 	char	*p;
 	ValueStruct		*value;
 
+ENTER_FUNC;
 	do {
 		RecvStringDelim(fpComm,SIZE_BUFF,buff);
+		dbgprintf("[%s]",buff);
 		if		(	(  *buff                     !=  0     )
 				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
 			*p = 0;
@@ -273,8 +305,9 @@ RecvData(
 			}
 		} else {
 			break;
-        }
+		}
 	}	while	(TRUE);
+LEAVE_FUNC;
 }
 
 static	void
@@ -296,7 +329,7 @@ WriteClientString(
 	Bool	fName;
 	int		ix
 		,	i
-		,	count;
+		,	limit = INT_MAX;
 
 ENTER_FUNC;
 	SendStringDelim(fpComm,"Exec: ");
@@ -308,24 +341,34 @@ ENTER_FUNC;
 	}
 	SendStringDelim(fpComm,buff);
 	dbgprintf("[%s]",buff);
+	if		(	(  ses->fIgnore  )
+			&&	(	(  ctrl->count  ==  0     )
+				||	(  args         ==  NULL  ) ) ) {
+LEAVE_FUNC;
+		return;
+	}
 	ix = 0;
 	fName = FALSE;
 	while	(  RecvStringDelim(fpComm,SIZE_BUFF,name)  ) {
 		if		(  *name  ==  0  )	{
 			ix ++;
 			if		(  ix  >=  ctrl->count  )	break;
+			if		(ses->fLimitResult &&  ix  >=  limit  )	break;
 		}
 		dbgprintf("name = [%s]",name);
 		if		(  ( p = strchr(name,';') )  !=  NULL  ) {
 			*p = 0;
 			q = p + 1;
-			count = atoi(q);
+			limit = atoi(q);
 		} else {
 			q = name;
-			count = 1;
+			limit = 1;
 		}
 		if		(  !ses->fCount  ) {
-			count = 1;
+			limit = 1;
+		}
+		if		(  limit  <  0  ) {
+			limit = ctrl->count;
 		}
 		if		(  ( p = strchr(q,':') )  !=  NULL  ) {
 			*p = 0;
@@ -333,12 +376,11 @@ ENTER_FUNC;
 		} else {
 			fName = TRUE;
 		}
-		dbgprintf("count = %d",count);
-		dbgprintf("name = [%s]",name);
-		dbgprintf("vname = [%s]",vname);
+		dbgprintf("limit = %d",limit);
+		dbgprintf("name  = [%s]",name);
 		DecodeName(rname,vname,name);
-		if		(  count  >  1  ) {
-			for	( i = 0 ; i < count ; i ++ ) {
+		if		(  limit  >  1  ) {
+			for	( i = 0 ; i < limit ; i ++ ) {
 				rec = ValueArrayItem(args,ix);
 				if		(  *vname  !=  0  ) {
 					value = GetItemLongName(rec,vname);
@@ -357,15 +399,24 @@ ENTER_FUNC;
 			if		(  *vname  !=  0  ) {
 				value = GetItemLongName(args,vname);
 			} else {
-				value = args;
+			  if (ses->fFixFieldName) {
+			    if (IS_VALUE_RECORD(args)) {
+			      value = args;
+			    } else {
+			      value = ValueArrayItem(args,0);
+			    }
+			  } else {
+			    value = args;
+			  }
 			}
 #ifdef	DEBUG
 			DumpValueStruct(value);
 #endif
-			if		(  value  !=  NULL  ) {
-				SetValueName(name);
-				dbgmsg("*");
-				SendValueString(fpComm,value,NULL,fName,fType,Encoding);
+			SetValueName(name);
+			dbgmsg("*");
+			SendValueString(fpComm,value,NULL,fName,fType,Encoding);
+			if (ses->fSendTermLF && fName) {
+			  SendStringDelim(fpComm,"\n");
 			}
 		}
 		if		(  fName  ) {
@@ -457,128 +508,265 @@ LEAVE_FUNC;
 }
 
 static	Bool
-do_String(
+ExecQuery(
+	SessionNode	*ses,
 	NETFILE	*fpComm,
-	char	*input,
-	SessionNode	*ses)
+	char		*para)
 {
-	Bool	ret
-	,		fType;
-	DBCOMM_CTRL	ctrl;
 	ValueStruct		*value
-		,			*arg;
+		,			*arg = NULL;
 	RecordStruct	*rec;
 	char			func[SIZE_FUNC+1]
 		,			rname[SIZE_RNAME+1]
 		,			pname[SIZE_PNAME+1];
+	Bool		fType
+		,		ret;
+	DBCOMM_CTRL	ctrl;
 	char	*p
 		,	*q;
-	int		rno
-		,	pno;
-	Bool	fOn;
 
-	if		(  strncmp(input,"Exec: ",6)  ==  0  ) {
-		dbgmsg("exec");
-		p = input + 6;
-		ctrl.count = 0;
-		ctrl.redirect = 1;
-		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-			*q = 0;
-			DecodeStringURL(func,p);
-			p = q + 1;
-			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-				*q = 0;
-				DecodeStringURL(rname,p);
-				p = q + 1;
-			} else {
-				strcpy(rname,"");
-			}
-			p = q + 1;
-			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-				*q = 0;
-				ctrl.limit = atoi(q+1);
-			} else {
-				ctrl.limit = 1;
-			}
-			if		(  !ses->fLimit  ) {
-				ctrl.limit = 1;
-			}
-			DecodeStringURL(pname,p);
-			rec = MakeCTRLbyName(&arg,&ctrl,rname,pname,func);
-		} else {
-			DecodeStringURL(func,p);
-			ctrl.rno = 0;
-			ctrl.pno = 0;
-			ctrl.rc = 0;
-			strcpy(ctrl.func,func);
-			rec = NULL;
-			value = NULL;
-		}
-		RecvData(fpComm,arg);
-		value = ExecDB_Process(&ctrl,rec,arg);
-		fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
-		WriteClientString(ses,fpComm,fType,&ctrl,value);
-		FreeValueStruct(value);
-		ret = TRUE;
-	} else
-	if		(  strncmp(input,"Schema: ",8)  ==  0  ) {
-		dbgmsg("schema");
-		p = input + 8;
+ENTER_FUNC;
+ 	ctrl.rc = 0;
+	ctrl.count = 0;
+	ctrl.cmdcount = 0;
+	ctrl.redirect = 1;
+	dbgprintf("para => [%s]", para);
+	if		(  ( q = strchr(para,':') )  !=  NULL  ) {
+		*q = 0;
+		DecodeStringURL(func,para);
+		p = q + 1;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 			DecodeStringURL(rname,p);
 			p = q + 1;
-			DecodeStringURL(pname,p);
-			if		(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
-				ctrl.rno = rno - 1;
-				rec = ThisDB[ctrl.rno];
-				if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
-																  pname) )  ==  0  ) {
-					rec = NULL;
-				}
+		} else {
+			strcpy(rname,"");
+		}
+		p = q + 1;
+		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+			*q = 0;
+			ctrl.limit = atoi(q+1);
+		} else {
+			ctrl.limit = 1;
+		}
+		if		(  !ses->fLimit  ) {
+			ctrl.limit = 1;
+		}
+		DecodeStringURL(pname,p);
+		rec = MakeCTRLbyName(&arg,&ctrl,rname,pname,func);
+		if (rec == NULL) {
+		  ctrl.rc = MCP_BAD_ARG;
+		}
+	} else {
+		DecodeStringURL(func,para);
+		ctrl.rno = 0;
+		ctrl.pno = 0;
+		ctrl.rc = 0;
+		strcpy(ctrl.func,func);
+		rec = NULL;
+		value = NULL;
+		ret = FALSE;
+	}
+	if (arg) InitializeValue(arg);
+	RecvData(fpComm,arg);
+	value = NULL;
+
+	if (ctrl.rc == 0) {
+	  value = ExecDB_Process(&ctrl,rec,arg);
+	  if (ses->fCmdTuples
+	      && (strcmp(func, "DBUPDATE") == 0
+		  || strcmp(func, "DBINSERT") == 0
+		  || strcmp(func, "DBDELETE") == 0))
+	  {
+	    ctrl.count = ctrl.cmdcount;
+	  }
+	} else {
+	  ctrl.count = 0;
+	}
+	ret = TRUE;
+	fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
+	WriteClientString(ses,fpComm,fType,&ctrl,value);
+	if (value) {
+	  FreeValueStruct(value);
+	}
+LEAVE_FUNC;
+
+	return	(ret);
+}
+
+static	Bool
+GetPathTable(
+	SessionNode	*ses,
+	NETFILE		*fpComm,
+	char		*para)
+{
+	RecordStruct	*rec;
+	char			rname[SIZE_RNAME+1]
+		,			buff[SIZE_RNAME+SIZE_PNAME+1];
+	Bool	ret;
+	int		rno;
+	char	*pname
+		,	*p;
+	void	_SendPathTable(
+		char	*pname)
+	{
+		sprintf(buff,"%s$%s\n",rname,pname);
+		SendStringDelim(fpComm,buff);
+	}
+	void	_SendTable(
+		char	*name,
+		int		rno)
+	{
+		rec = ThisDB[rno-1];
+		strcpy(rname,name);
+		g_hash_table_foreach(rec->opt.db->paths,(GHFunc)_SendPathTable,NULL);
+	}
+
+ENTER_FUNC;
+	if		(  *para  !=  0  ) {
+		strcpy(rname,para);
+		dbgprintf("rname = [%s]",rname);
+		if		(  ( p = strchr(rname,'$') )  !=  NULL  ) {
+			*p = 0;
+			pname = p + 1;
+		} else {
+			pname = NULL;
+		}
+		if		(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
+			rec = ThisDB[rno-1];
+			if		(  pname  ==  NULL  ) {
+				g_hash_table_foreach(rec->opt.db->paths,(GHFunc)_SendPathTable,NULL);
 			} else {
+				if		(  g_hash_table_lookup(rec->opt.db->paths,pname)  !=  NULL  ) {
+					sprintf(buff,"%s$%s\n",rname,pname);
+					SendStringDelim(fpComm,buff);
+				}
+			}
+		}
+	} else {
+		g_hash_table_foreach(DB_Table,(GHFunc)_SendTable,NULL);
+	}
+	SendStringDelim(fpComm,"\n");
+
+	ret = TRUE;
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	Bool
+GetSchema(
+	SessionNode	*ses,
+	NETFILE		*fpComm,
+	char		*para)
+{
+	RecordStruct	*rec;
+	char			rname[SIZE_RNAME+1]
+		,			pname[SIZE_PNAME+1];
+	int		rno
+		,	pno;
+	char	*p
+		,	*q;
+	DBCOMM_CTRL	ctrl;
+	Bool	ret;
+
+ENTER_FUNC;
+	if		(  ( q = strchr(para,':') )  !=  NULL  ) {
+		*q = 0;
+		DecodeStringURL(rname,para);
+		p = q + 1;
+		DecodeStringURL(pname,p);
+		dbgprintf("rname => [%s], pname => [%s]", rname, pname);
+		if		(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
+			ctrl.rno = rno - 1;
+			rec = ThisDB[ctrl.rno];
+			if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
+															  pname) )  ==  0  ) {
 				rec = NULL;
 			}
 		} else {
 			rec = NULL;
 		}
-		if		(  rec  !=  NULL  ) {
-			WriteClientStructure(ses,fpComm,rec);
-			ret = TRUE;
-		} else {
-			ret = FALSE;
-		}
-	} else
-	if		(  strncmp(input,"Feature: ",9)  ==  0  ) {
-		dbgmsg("feature");
-		p = input + 9;
-		while	(  *p  !=  0  ) {
-			while	(	(  *p  !=  0    )
-					&&	(  isspace(*p)  ) ) p ++;
-			if		(  *p  ==  0  )	break;
-			if		(  ( q = strchr(p,',') )  !=  NULL  ) {
-				*q = 0;
-				q ++;
-			} else {
-				q = p + strlen(p);
-			}
-			if		(  *p  ==  '!'  ) {
-				fOn = FALSE;
-				p ++;
-			} else {
-				fOn = TRUE;
-			}
-			if		(  strcmp(p,"count")  ==  0  ) {
-				ses->fCount = fOn;
-			} else
-			if		(  strcmp(p,"limit")  ==  0  ) {
-				ses->fLimit = fOn;
-			}
-			p = q;
-		}
+	} else {
+		rec = NULL;
+	}
+	if		(  rec  !=  NULL  ) {
+		WriteClientStructure(ses,fpComm,rec);
 		ret = TRUE;
+	} else {
+		ret = FALSE;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	Bool
+SetFeature(
+	SessionNode	*ses,
+	NETFILE	*fpComm,
+	char	*para)
+{
+	char	*p = para
+		,	*q;
+	Bool	fOn
+		,	ret;
+
+ENTER_FUNC;
+	while	(  *p  !=  0  ) {
+		while	(	(  *p  !=  0    )
+				&&	(  isspace(*p)  ) ) p ++;
+		if		(  *p  ==  0  )	break;
+		if		(  ( q = strchr(p,',') )  !=  NULL  ) {
+			*q = 0;
+			q ++;
+		} else {
+			q = p + strlen(p);
+		}
+		if		(  *p  ==  '!'  ) {
+			fOn = FALSE;
+			p ++;
+		} else {
+			fOn = TRUE;
+		}
+		if		(  strcmp(p,"count")  ==  0  ) {
+			ses->fCount = fOn;
+		} else
+		if		(  strcmp(p,"limit")  ==  0  ) {
+			ses->fLimit = fOn;
+		} else
+		if		(  strcmp(p,"ignore")  ==  0  ) {
+			ses->fIgnore = fOn;
+		}
+		p = q;
+	}
+	ret = TRUE;
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	Bool
+do_String(
+	NETFILE	*fpComm,
+	char	*input,
+	SessionNode	*ses)
+{
+	Bool	ret;
+
+	if		(  strlcmp(input,"Exec: ")  ==  0  ) {
+		dbgmsg("exec");
+		ret = ExecQuery(ses,fpComm,input + 6);
 	} else
-	if		(  strncmp(input,"End",3)  ==  0  ) {
+	if		(  strlcmp(input,"PathTables: ")  ==  0  ) {
+		ret = GetPathTable(ses,fpComm,input + 12);
+	} else
+	if		(  strlcmp(input,"Schema: ")  ==  0  ) {
+		dbgmsg("schema");
+		ret = GetSchema(ses,fpComm,input + 8);
+	} else
+	if		(  strlcmp(input,"Feature: ")  ==  0  ) {
+		dbgmsg("feature");
+		ret = SetFeature(ses,fpComm,input + 9);
+	} else
+	if		(  strlcmp(input,"End")  ==  0  ) {
 		dbgmsg("end");
 		ret = FALSE;
 	} else {
