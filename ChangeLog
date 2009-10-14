@@ -1,3 +1,22 @@
+2009-10-14  Kazuya Nagadomi  <nagadomi@wasp-corp.co.jp>
+	
+	* dbstuff/dbs_main.c:
+	スキーマを取得する機能を追加
+	リクエストのパラメータをリクエスト毎にクリアするよう修正
+	dbsのバージョンをpandaと別に設定するよう変更
+	クライアントのdbsバージョンが1.5.1以降の場合に以下のプロトコルを変更
+	DBSELECT,DBFETCHの結果が1行の場合もN行の場合と同じく2改行で1レコードの通信を終えるよう変更
+	DBSELECTの結果が1行の場合のフィールド名を修正
+	DBUPDATE,DBINSERT,DBDELETEで影響のあった行数をcountとして返すよう変更
+
+	* dblib/dbgroup.c (MakeCTRLbyName): 指定されたpathが無かった場合にエラーコードを設定するよう変更
+	
+	* include/struct.h: DBCOMM_CTLにDBUPDATE,DBINSERT,DBDELETEで影響のあった行数を保存する変数を追加
+
+	* dblib/PostgreSQL.c: _DBUPDATE,_DBINSERT,_DBDELETEで影響のあった行数を結果に設定するよう変更
+
+	* dblib/dbslib.rb: dbs変更分の対応
+
 2009-09-14  Yusuke Mihara  <mihara@netlab.jp>
 
 	* aps/OpenCOBOL.c: dbstubの引数をUTF-8からeuc-jisx0213に変換する。

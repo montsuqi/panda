@@ -20,10 +20,11 @@ require	'socket'
 
 VER="1.4.0"
 #VER="1.4.3"
+VER="1.5.1"
 
 class	DB_Server
 	def get_event
-	  msg = @s.gets.chomp
+	  msg = @s.gets
 	  if  (  msg  =~  /^Exec\: (.*?)\:(.*?)$/  )
 		rc = $1.to_i
 		@count = $2.to_i
@@ -38,14 +39,14 @@ class	DB_Server
 	  end
 	  return rc
 	end
-	def decode(string)
+	def decode(string):protected
 	  if  string
 		string.tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2})+)/n) do
 		  [$1.delete('%')].pack('H*')
 		end
 	  end
 	end
-	def encode(string)
+	def encode(string):protected
 	  if  string
 		string.gsub(/([^ a-zA-Z0-9_.-]+)/n) do
 		  '%' + $1.unpack('H2' * $1.size).join('%').upcase
@@ -62,14 +63,22 @@ class	DB_Server
 	  @s = TCPSocket.new(@host,@port);
 	  @s.printf("%s %s %s stringe\n",VER,user,pass);
 	  msg = @s.gets.chomp;
-	  if  (  msg  =~  /^Error\: (.*?)$/  )
+	  if  ( msg  =~  /^Connect\: OK/  )
+		@values = Hash.new(nil);
+		if  (  msg  =~  /^Connect\: OK;(.*?)$/  )
+		  ver = $1.split(/\./)
+		  @version = ( ( ver[0].to_i * 100 ) + ver[1].to_i ) * 100 + ver[2].to_i
+		else
+		  @version = 10403
+		end
+	  elsif  (  msg  =~  /^Error\: (.*?)$/  )
 		printf("error: %s\n",$1);
 		@s.close
 	  else
-		@values = Hash.new(nil);
+		@s.close
 	  end
 	end
-	def exec_data(rec)
+	def exec_data(rec):protected
 	  if rec
 		rec.each{ | name, value | @s.printf("%s: %s\n",name,encode(value.to_s)) }
 	  end
@@ -79,12 +88,13 @@ class	DB_Server
 	  @s.printf("Exec: %s\n",func)
 	  @s.printf("\n")
 	  rc = get_event
-	  @s.printf("\n")
+	  if  (  @version  <  10500  )
+		@s.printf("\n")
+	  end
 	  rc;
 	end
 	def open
 	  return dbops("DBOPEN")
-	  rc;
 	end
 	def start
 	  return dbops("DBSTART")
@@ -99,7 +109,19 @@ class	DB_Server
 	  @s.printf("Schema: %s:%s\n",rname,pname)
 	  @s.gets.chomp
 	end
-	def	getValues(name,limit)
+
+	def getPathTables(rname = '')
+	  @s.printf("PathTables: %s\n",rname)
+	  pathes = Hash.new
+	  while  is = @s.gets
+		is.chomp!
+		printf("is = [%s]\n",is)
+		break if  (  is  ==  ''  )
+		pathes[is] = is
+	  end
+	  return pathes
+	end
+	def	getValues(name,limit):protected
 	  if  ( limit == 1 )
 		@s.printf("%s\n",name)
 		rec = nil
@@ -116,7 +138,6 @@ class	DB_Server
 		  break if !item
 		  if  (  @count  ==  1  )
 			rec = item
-			break
 		  else
 			rec << item
 		  end
@@ -146,7 +167,16 @@ class	DB_Server
 	  @s.flush;
 	  exec_data(rec)
 	  rc = get_event;
-	  return getValues(rname,limit);
+          printf("rc => #{rc}, count => #{@count}\n");
+	  if  (  (  @version  >=  10500  ) && ( @count  ==  0  )  )
+		ret = nil
+	  else
+            print "func => #{func}\n"
+            if func == "DBSELECT" || func == "DBFETCH"
+              ret = getValues(rname,limit);
+            end
+	  end
+	  return ret
 	end
 	def	close
 		@s.printf("End\n");
