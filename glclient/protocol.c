@@ -753,6 +753,9 @@ PingTimerFunc(gpointer data)
 	PacketClass	c;
 	char buff[SIZE_BUFF];
 
+	if (fInRecv) {
+		return 1;
+	}
 	fp = (NETFILE *)data;
 	GL_SendPacketClass(fp,GL_Ping);
 	c = GL_RecvPacketClass(fp);
