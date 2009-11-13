@@ -144,7 +144,9 @@ PgInitConnect(
 	PGresult	*res;
 	
 	PQsetNoticeProcessor(conn, NoticeMessage, NULL);
-	res = PQexec(conn, "set standard_conforming_strings = on;");
+	if ( PQserverVersion(conn)  >=  80200 ) {
+		res = PQexec(conn, "set standard_conforming_strings = on;");
+	}
 	if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
 		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 	}
