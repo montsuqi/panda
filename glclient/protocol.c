@@ -638,7 +638,6 @@ GetScreenData(
 	byte		type;
 
 ENTER_FUNC;
-	fInRecv = TRUE; 
 	if (ThisWindowName != NULL)
 		g_free(ThisWindowName);
 	CheckScreens(fp,FALSE);	 
@@ -702,7 +701,6 @@ ENTER_FUNC;
 		UI_GrabFocus(window, widgetName);
 		c = GL_RecvPacketClass(fp);
 	}
-	fInRecv = FALSE;
 LEAVE_FUNC;
 	return TRUE;
 }
