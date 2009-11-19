@@ -384,7 +384,9 @@ static	void
 SwitchWindow(
 	GtkWidget *window)
 {
-	GtkWidget				*child;
+	GtkWidget	*child;
+	static Bool	fInit = TRUE;
+	
 
 ENTER_FUNC;
 	child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
@@ -407,6 +409,14 @@ ENTER_FUNC;
 	gtk_widget_show(TopWindow);
 	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(child);
+
+	if (fInit) {
+		gtk_window_set_position(GTK_WINDOW(TopWindow),
+			GTK_WINDOW(window)->position);
+		fInit = FALSE;
+	}
+
+
 LEAVE_FUNC;
 }
 
@@ -499,10 +509,10 @@ ENTER_FUNC;
 				parent = (GtkWidget *)g_list_nth_data(DialogStack, i);
 			}
 		}
-		gtk_window_set_transient_for(GTK_WINDOW(window), 
-			GTK_WINDOW(parent));
 		if (g_list_find(DialogStack, window) == NULL) {
 			DialogStack = g_list_append(DialogStack, window);
+			gtk_window_set_transient_for(GTK_WINDOW(window), 
+				GTK_WINDOW(parent));
 		}
 	}
 LEAVE_FUNC;

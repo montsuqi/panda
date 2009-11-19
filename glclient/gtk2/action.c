@@ -389,6 +389,7 @@ SwitchWindow(
 {
 	int			width, height;
 	GtkWidget	*child;
+	static Bool	fInit = TRUE;
 
 ENTER_FUNC;
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
@@ -403,8 +404,24 @@ ENTER_FUNC;
 		GTK_WINDOW(window)->allow_grow);
 
 	gtk_widget_show(TopWindow);
+
 	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(child);
+
+	if (fInit) {
+		if (GTK_WINDOW(window)->position == GTK_WIN_POS_CENTER) {
+			gtk_window_set_position(GTK_WINDOW(TopWindow),
+				GTK_WIN_POS_CENTER_ALWAYS);
+		} else {
+			gtk_window_set_position(GTK_WINDOW(TopWindow),
+				GTK_WINDOW(window)->position);
+		}
+		fInit = FALSE;
+	} else {
+		gtk_window_set_position(GTK_WINDOW(TopWindow),
+			GTK_WINDOW(window)->position);
+	}
+
 LEAVE_FUNC;
 }
 
@@ -497,10 +514,10 @@ ENTER_FUNC;
 				parent = (GtkWidget *)g_list_nth_data(DialogStack, i);
 			}
 		}
-		gtk_window_set_transient_for(GTK_WINDOW(window), 
-			GTK_WINDOW(parent));
 		if (g_list_find(DialogStack, window) == NULL) {
 			DialogStack = g_list_append(DialogStack, window);
+			gtk_window_set_transient_for(GTK_WINDOW(window), 
+				GTK_WINDOW(parent));
 		}
 	}
 LEAVE_FUNC;

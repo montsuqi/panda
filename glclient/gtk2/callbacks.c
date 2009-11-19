@@ -147,6 +147,7 @@ send_event(
 
 ENTER_FUNC;
 	if		(  !fInRecv &&  !ignore_event ) {
+		fInRecv = TRUE;
 		pane = ShowBusyCursor(widget);
 
 		StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
@@ -174,6 +175,7 @@ ENTER_FUNC;
 			ignore_event = FALSE;
 		}
 		HideBusyCursor(pane); 
+		fInRecv = FALSE;
 	}
 LEAVE_FUNC;
 }
