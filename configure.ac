@@ -691,7 +691,6 @@ AC_CONFIG_FILES([Makefile
                  wfc/Makefile
                  panda-config
 ])
-#####], [chmod +x panda-config])
 AC_OUTPUT
 
 dnl ***************************************************************************
