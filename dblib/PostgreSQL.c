@@ -143,6 +143,7 @@ PgInitConnect(
 {
 	PGresult	*res;
 	
+	res = NULL;
 	PQsetNoticeProcessor(conn, NoticeMessage, NULL);
 	if ( PQserverVersion(conn)  >=  80200 ) {
 		res = PQexec(conn, "set standard_conforming_strings = on;");
