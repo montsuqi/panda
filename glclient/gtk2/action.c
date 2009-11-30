@@ -434,6 +434,7 @@ CloseWindow(
 	GtkWidget	*child;
 	GSList		*list;
 	int			i;
+	GList		*wlist;
 
 ENTER_FUNC;
 	dbgprintf("close window:%s\n", wname);
@@ -462,6 +463,10 @@ ENTER_FUNC;
 		StopTimer(GTK_WINDOW(window));
 		gtk_widget_hide(window);
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
+		wlist = g_list_find(DialogStack, window);
+		if (wlist != NULL && wlist->next != NULL && wlist->next->data != NULL) {
+			gtk_window_set_transient_for((GtkWindow *)wlist->next->data, NULL);
+		}
 		DialogStack = g_list_remove(DialogStack, window);
 		for (i = g_list_length(DialogStack) - 1; i >= 1; i--) {
 			gtk_window_set_transient_for(
