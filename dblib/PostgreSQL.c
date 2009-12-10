@@ -144,6 +144,7 @@ PgInitConnect(
 	PGresult	*res;
 	
 	res = NULL;
+	PQsetClientEncoding(conn, "UTF-8");
 	PQsetNoticeProcessor(conn, NoticeMessage, NULL);
 	if ( PQserverVersion(conn)  >=  80200 ) {
 		res = PQexec(conn, "set standard_conforming_strings = on;");
@@ -151,7 +152,7 @@ PgInitConnect(
 	if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
 		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 	}
-	PQclear(res);	
+	PQclear(res);
 }
 
 static  void
