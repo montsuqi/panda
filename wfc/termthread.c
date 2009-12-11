@@ -189,7 +189,7 @@ DiscardSession()
 	g_hash_table_foreach(Terminal.Hash, 
 		(GHFunc)CheckAccessTime, (gpointer)(&data));
 	if (data != NULL) {
-		Message("[%s@%s] discard session; nCache size over", 
+		Message("[%s@%s] discard session", 
 			data->hdr->user, data->hdr->term);
 		_UnrefSession(data);
 	}
@@ -201,7 +201,7 @@ RegistSession(
 {
 	LockWrite(&Terminal);
 	if		(  g_hash_table_lookup(Terminal.Hash,data->name)  ==  NULL  ) {
-		if (nCache != 0 && cTerm >= nCache) {
+		if (SesNum != 0 && cTerm >= SesNum) {
 			DiscardSession();
 		}
 		cTerm ++;
@@ -846,7 +846,7 @@ ENTER_FUNC;
 	SaveSession(data);
 	data->fInProcess = FALSE;
 	dbgprintf("cTerm  = %d",cTerm);
-	dbgprintf("nCache = %d",nCache);
+	dbgprintf("SesNum = %d",SesNum);
 	UnLock(&Terminal);
 LEAVE_FUNC;
 }

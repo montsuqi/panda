@@ -89,7 +89,7 @@ EnterHandlerClass(
 
 ENTER_FUNC;
 	if		(  ( klass = g_hash_table_lookup(HandlerClassTable,name) )  ==  NULL  ) {
-		MessageLogPrintf("%s handlerClass invoke.", name);
+		dbgprintf("%s handlerClass invoke.", name);
 		sprintf(filename,"%s." SO_SUFFIX,name);
 		klass = NULL;
 		if		(  ( dlhandle = LoadFile(APS_HandlerLoadPath,filename) )  !=  NULL  ) {
@@ -103,7 +103,7 @@ ENTER_FUNC;
 				}
 			}
 		} else {
-			Warning("[%s] not found.",name);
+			Error("[%s] not found.",name);
 		}
 	}
 LEAVE_FUNC;

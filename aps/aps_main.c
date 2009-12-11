@@ -59,7 +59,6 @@
 
 static	char	*WfcPortNumber;
 
-static	sigset_t	hupset;
 static	int		MaxTran;
 static	int		Sleep;
 static	Bool	fConnectRetry;
@@ -71,9 +70,6 @@ InitSystem(
 	int		i;
 
 ENTER_FUNC;
-	sigemptyset(&hupset); 
-	sigaddset(&hupset,SIGHUP);
-	pthread_sigmask(SIG_BLOCK,&hupset,NULL);
 	InitDirectory();
 	SetUpDirectory(Directory,name,"","",TRUE);
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
@@ -171,7 +167,7 @@ ENTER_FUNC;
 	rc = 0;
 	while	(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
 		if		(  !fConnectRetry  )	goto	quit;
-		Warning("WFC connection retry");
+		dbgmsg("WFC connection retry");
 		sleep(1);
 	}
 	fpWFC = SocketToNet(fhWFC);
@@ -242,6 +238,12 @@ ENTER_FUNC;
 #endif
 LEAVE_FUNC;
 	return	(rc);
+}
+
+static	void
+HungUp(void)
+{
+	exit(15);
 }
 
 static	void
@@ -346,11 +348,24 @@ main(
 	FILE_LIST	*fl;
 	int			rc;
 	char		id[128];
+	struct sigaction	sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = (void *)HungUp;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGHUP, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_IGN;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGUSR2, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
 
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
-	(void)signal(SIGHUP,(void *)StopProcess);
-	(void)signal(SIGUSR2, SIG_IGN);
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
 		snprintf(id, sizeof(id), "aps-%s",fl->name);

@@ -697,7 +697,7 @@ ENTER_FUNC;
 	sa.sa_handler = StopSystem;
 	sa.sa_flags |= SA_RESTART;
 	sigemptyset (&sa.sa_mask);
-	sigaction( SIGUSR1, &sa, NULL );
+	sigaction( SIGHUP, &sa, NULL );
 
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);

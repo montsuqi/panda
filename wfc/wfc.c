@@ -198,8 +198,7 @@ ENTER_FUNC;
 	} else {
 		_fhSysData = -1;
 	}
-	fShutdown = FALSE;
-	do {
+	while	(!fShutdown) {
 		timeout.tv_sec = 1;
 		timeout.tv_nsec = 0;
 		FD_ZERO(&ready);
@@ -231,7 +230,7 @@ ENTER_FUNC;
 				&&	(  FD_ISSET(_fhSysData,&ready)  ) ) {		/*	sysdata connect		*/
 			ConnectSysData(_fhSysData);
 		}
-	}	while	(!fShutdown);
+	}
 LEAVE_FUNC;
 }
 
@@ -240,6 +239,7 @@ static	void
 InitSystem(void)
 {
 ENTER_FUNC;
+	fShutdown = FALSE;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","",TRUE);
 	if		( ThisEnv == NULL ) {
@@ -328,7 +328,7 @@ static	ARG_TABLE	option[] = {
 
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
 		"maximun retry count"							},
-	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
+	{	"sesnum",	INTEGER,	TRUE,	(void*)&SesNum,
 		"terminal cache number"							},
 
 	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
@@ -351,7 +351,7 @@ ENTER_FUNC;
 	MaxTransactionRetry = 0;
 	ControlPort = NULL;
 	fLoopBack = FALSE;
-	nCache = 0;
+	SesNum = 0;
 	SesDir = NULL;
 LEAVE_FUNC;
 }
@@ -363,14 +363,34 @@ main(
 {
 	int			rc;
     sigset_t sigmask;
+	struct sigaction sa;
 
     sigemptyset(&sigmask);
     sigaddset(&sigmask, SIGUSR1);
     sigprocmask(SIG_BLOCK, &sigmask, &SigMask);
 
-	(void)signal(SIGPIPE, SIG_IGN);
-	(void)signal(SIGUSR1,(void *)StopSystem);
-	(void)signal(SIGUSR2, SIG_IGN);
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_IGN;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGPIPE, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	sa.sa_handler = (void *)StopSystem;
+	if (sigaction(SIGHUP, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	sa.sa_handler = SIG_IGN;
+	if (sigaction(SIGUSR1, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	sa.sa_handler = SIG_IGN;
+	if (sigaction(SIGUSR2, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
 	InitMessage("wfc",NULL);
 ENTER_FUNC;
 
