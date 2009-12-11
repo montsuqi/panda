@@ -733,8 +733,5 @@ main(
 	while (fLoop) {
 		ProcessMonitor();
 	}
-#if 0
-	WaitChildren();
-#endif
 	return	(0);
 }
