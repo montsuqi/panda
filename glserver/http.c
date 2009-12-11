@@ -770,6 +770,8 @@ HTTP_Method(
 
 	memset(&sa, 0, sizeof(struct sigaction));  
 	sa.sa_handler = timeout;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
 	if(sigaction(SIGALRM, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	} 
