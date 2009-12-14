@@ -79,7 +79,7 @@ show_error_dialog(
 {
 	GtkWidget *dialog;
 		
-	if(strlen(message) <= 0) return;
+	if(message == NULL || strlen(message) <= 0) return;
 	dialog = message_dialog(message, FALSE);
 	gnome_dialog_run(GNOME_DIALOG(dialog));
 	exit(1);

@@ -119,7 +119,7 @@ ENTER_FUNC;
 	if (fd > 0) {
 		fp = SocketToNet(fd);
 	} else {
-		Warning("cannot connect sysdata server");
+		Error("cannot connect sysdata server");
 	}
 LEAVE_FUNC;
 	return fp;

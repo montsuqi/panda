@@ -74,6 +74,7 @@ void
 show_error_dialog(
 	const char *message)
 {
+	if(message == NULL || strlen(message) <= 0) return;
     message_dialog(GTK_MESSAGE_ERROR, message);
 	exit(1);
 }
