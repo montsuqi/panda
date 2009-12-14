@@ -755,26 +755,29 @@ PingTimerFunc(gpointer data)
 		return 1;
 	}
 	fp = (NETFILE *)data;
-	GL_SendPacketClass(fp,GL_Ping);
-	c = GL_RecvPacketClass(fp);
+	GL_SendPacketClass(fp,GL_Ping);ON_IO_ERROR(fp,badio);
+	c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
 	if (c != GL_Pong) {
 		UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
 	}
-	c = GL_RecvPacketClass(fp);
+	c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
 	switch (c) {
 	case GL_STOP:
-		GL_RecvString(fp, sizeof(buff), buff);
+		GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
 		UI_MessageDialog(buff);
 		exit(1);
 		break;
 	case GL_CONTINUE:
-		GL_RecvString(fp, sizeof(buff), buff);
+		GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
 		UI_MessageDialog(buff);
 		break;
 	case GL_END:
 	default:
 		break;
 	};
+	return 1;
+badio:
+	UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
 	return 1;
 }
 

@@ -31,7 +31,6 @@
 #include	<stdlib.h>
 #include	<signal.h>
 #include	<string.h>
-#include	<setjmp.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -168,7 +167,6 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
-static	jmp_buf	envCheckScreen;
 static	void
 CheckScreen(
 	char		*wname,
@@ -202,8 +200,7 @@ ENTER_FUNC;
 			p = q + 1;
 		}	while	(  !fExit  );
 		if		(  !fDone  ) {
-			Warning("[%s] screen file not exitsts.",wname);
-			longjmp(envCheckScreen,1);
+			Error("[%s] screen file not exitsts.",wname);
 		}
 		win->fNew = FALSE;
 	}
@@ -216,14 +213,11 @@ CheckScreens(
 	ScreenData	*scr)
 {
 ENTER_FUNC;
-	if		(  setjmp(envCheckScreen)  ==  0  ) {
-		g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
-	}
+	g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
 	GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
 LEAVE_FUNC;
 }
 
-static	jmp_buf	envSendWindow;
 static	void
 SendWindow(
 	char		*wname,
@@ -269,7 +263,9 @@ ENTER_FUNC;
 	}
 	rc = TRUE;
   badio:
-	if		(  !rc  )	longjmp(envSendWindow,1);
+	if (!rc) {
+		Error("SendWindow failure:%s", win->name);
+	}
 LEAVE_FUNC;
 }
 
@@ -281,11 +277,7 @@ SendScreenAll(
 	Bool	rc;
 ENTER_FUNC;
 	rc = FALSE;
-	if		(  setjmp(envSendWindow)  ==  0  ) {
-		g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,fpComm);
-	} else {
-		goto	badio;
-	}
+	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,fpComm);
 	if		(	(  *scr->window  !=  0  )
 			&&	(  *scr->widget  !=  0  ) ) {
 		GL_SendPacketClass(fpComm,GL_FocusName,fFeatureNetwork);

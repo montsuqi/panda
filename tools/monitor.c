@@ -51,8 +51,10 @@ static	char	*Directory;
 static	char	*ApsPath;
 static	char	*WfcPath;
 static	char	*RedirectorPath;
+static	char	*GlserverPath;
 static	char	*DDir;
 static	char	*RecDir;
+static	char	*ScrDir;
 static	char	*MyHost;
 static	char	*Log;
 static	Bool	fQ;
@@ -65,18 +67,25 @@ static	int		MaxTran;
 static	int		MaxTransactionRetry;
 static	int		Sleep;
 static	int		SesNum;
+static	Bool	fGlserver;
+static	Bool	fGlSSL;
+static	char	*GlCacheDir;
+static	char	*GlAuth;
+static	char	*GlCert;
+static	char	*GlCAfile;
 
 static	GList	*ProcessList;
 static	Bool	fLoop;
-
 
 #define	PTYPE_NULL	(byte)0x00
 #define	PTYPE_APS	(byte)0x01
 #define	PTYPE_WFC	(byte)0x02
 #define	PTYPE_RED	(byte)0x04
+#define	PTYPE_GLS	(byte)0x05
 
-#define	STATE_RUN	1
-#define	STATE_DOWN	2
+#define	STATE_RUN		1
+#define	STATE_DOWN		2
+#define STATE_STOP		3
 
 typedef	struct {
 	pid_t	pid;
@@ -130,11 +139,15 @@ static	ARG_TABLE	option[] = {
 		"wfc command path"		 						},
 	{	"RedPath",	STRING,		TRUE,	(void*)&RedirectorPath,
 		"redirector command path"						},
+	{	"GlsPath",	STRING,		TRUE,	(void*)&GlserverPath,
+		"glserver command path"						},
 
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"directory file name"		 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecDir,
 		"record directory"								},
+	{	"screen",	STRING,		TRUE,	(void*)&ScrDir,
+		"screen directory"								},
 	{	"ddir",		STRING,		TRUE,	(void*)&DDir,
 		"LD file directory"			 					},
 
@@ -146,6 +159,19 @@ static	ARG_TABLE	option[] = {
 		"no count dbredirector updates"					},
 	{	"sendretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
 		"send retry dbredirector"						},
+
+	{	"glserver",BOOLEAN,		TRUE,	(void*)&fGlserver,
+		"start glserver"		 						},
+	{	"glcache",	STRING,		TRUE,	(void*)&GlCacheDir,
+		"glserver cache directory"		 				},
+	{	"glauth",	STRING,		TRUE,	(void*)&GlAuth,
+		"glserver authentication"						},
+	{	"glssl",	BOOLEAN,	TRUE,	(void*)&fGlSSL,
+		"use ssl connection"		 					},
+	{	"glcert",	STRING,		TRUE,	(void*)&GlCert,
+		"ssl certificate(p12)"							},
+	{	"glcafile",	STRING,		TRUE,	(void*)&GlCAfile,
+		"ca certificate(pem)"							},
 
 	{	"interval",	INTEGER,	TRUE,	(void*)&Interval,
 		"process start interval time" 					},
@@ -184,10 +210,12 @@ SetDefault(void)
 	ApsPath = NULL;
 	WfcPath = NULL;
 	RedirectorPath = NULL;
+	GlserverPath = NULL;
 
 	Directory = "./directory";
 	DDir = NULL;
 	RecDir = NULL;
+	ScrDir = NULL;
 	Log = NULL;
 	Interval = 0;
 	Wfcinterval = 0;
@@ -207,6 +235,13 @@ SetDefault(void)
 	fNoApsConnectRetry = FALSE;
 	SesNum = 0;
 	SesDir = NULL;
+
+	fGlserver = FALSE;
+	fGlSSL = FALSE;
+	GlCacheDir = NULL;
+	GlAuth = NULL;
+	GlCert = NULL;
+	GlCAfile = NULL;
 }
 
 static	void
@@ -265,7 +300,7 @@ ENTER_FUNC;
 		}
 		_execv(proc->argv[0],proc->argv);
 	} else {
-		Message("can't start process\n");
+		Message("can't start process");
 		goto	retry;
 	}
 LEAVE_FUNC;
@@ -322,10 +357,71 @@ ENTER_FUNC;
 	proc->argc = argc;
 	argv[argc ++] = NULL;
 	ProcessList = g_list_append(ProcessList, proc);
+	Message("start redirector:%s",dbg->name);
 	pid = StartProcess(proc,Interval);
 	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 LEAVE_FUNC;
 }
+
+static	void
+StartGlserver(void)
+{
+	pid_t	pid;
+	int		argc;
+	char	**argv;
+	Process	*proc;
+
+ENTER_FUNC;
+	proc = New(Process);
+	argv = (char **)xmalloc(sizeof(char *) * 20);
+	proc->argv = argv;
+	proc->type = PTYPE_GLS;
+	argc = 0;
+	if		(  GlserverPath  !=  NULL  ) {
+		argv[argc ++] = GlserverPath;
+	} else {
+		argv[argc ++] = SERVER_DIR "/glserver";
+	}
+	if		(  RecDir  !=  NULL  ) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = RecDir;
+	} else if (ThisEnv->RecordDir != NULL) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = ThisEnv->RecordDir;
+	}
+	if		(  ScrDir  !=  NULL  ) {
+		argv[argc ++] = "-screen";
+		argv[argc ++] = ScrDir;
+	}
+	if		(  GlCacheDir  !=  NULL  ) {
+		argv[argc ++] = "-cache";
+		argv[argc ++] = GlCacheDir;
+	}
+	if		(  GlAuth  !=  NULL  ) {
+		argv[argc ++] = "-auth";
+		argv[argc ++] = GlAuth;
+	}
+	argv[argc ++] = "-api";
+	if		(  fGlSSL  ) {
+		argv[argc ++] = "-ssl";
+		if		(  GlCert  !=  NULL  ) {
+			argv[argc ++] = "-cert";
+			argv[argc ++] = GlCert;
+		}
+		if		(  GlCAfile  !=  NULL  ) {
+			argv[argc ++] = "-CAfile";
+			argv[argc ++] = GlCAfile;
+		}
+	}
+	
+	proc->argc = argc;
+	argv[argc ++] = NULL;
+	ProcessList = g_list_append(ProcessList, proc);
+	Message("start glserver");
+	pid = StartProcess(proc,Interval);
+LEAVE_FUNC;
+}
+
 
 static	Bool
 HerePort(
@@ -469,23 +565,16 @@ static	void
 StartApss(void)
 {
 	int		i;
-	int		j;
-	char	str[256];
+	char	str[512];
 
 ENTER_FUNC;
-	for	(i = 0,j = 0,str[0] = 0; i < ThisEnv->cLD; i++,j++ ) {
+	str[0] = 0;
+	for	(i = 0; i < ThisEnv->cLD; i++) {
 		_StartAps(ThisEnv->ld[i]);
 		strncat(str, ThisEnv->ld[i]->name,sizeof(str));
 		strncat(str, " ",sizeof(str));
-		if (j == 9) {
-			Message("start aps:%s",str);
-			str[0] = 0;
-			j = -1;
-		}
 	}
-	if (j > 0) {
-		Message("start aps:%s",str);
-	}
+	Message("start aps:%s",str);
 LEAVE_FUNC;
 }
 
@@ -558,6 +647,7 @@ dbgmsg("*");
 		proc->argc = argc;
 		argv[argc ++] = NULL;
 		ProcessList = g_list_append(ProcessList, proc);
+		Message("start wfc");
 		StartProcess(proc,Wfcinterval);
 	}
 LEAVE_FUNC;
@@ -570,6 +660,9 @@ StartServers(void)
 ENTER_FUNC;
 	if		(  fRedirector  ) {
 		StartRedirectors();
+	}
+	if		(  fGlserver  ) {
+		StartGlserver();
 	}
 	StartWfc();
 	StartApss();
@@ -590,7 +683,7 @@ ENTER_FUNC;
 		if ((proc->type & type) != 0) {
 			dbgprintf("kill -%d %d\n",sig,proc->pid);
 			kill(proc->pid,sig);
-			proc->state = STATE_DOWN;
+			proc->state = STATE_STOP;
 		}
 	}
 LEAVE_FUNC;
@@ -602,6 +695,7 @@ StopServers(void)
 {
 ENTER_FUNC;
 	KillProcess(PTYPE_APS,SIGHUP);
+	KillProcess(PTYPE_GLS,SIGHUP);
 	KillProcess((PTYPE_WFC | PTYPE_RED),SIGHUP);
 LEAVE_FUNC;
 }
@@ -613,7 +707,7 @@ StopSystem(void)
 ENTER_FUNC;
 	fLoop = FALSE;
 	StopServers();
-	Message("Stop system");
+	Message("stop system");
 LEAVE_FUNC;
 }
 
@@ -622,7 +716,7 @@ RestartSystem(void)
 {
 ENTER_FUNC;
 	StopServers();
-	Message("Restart system");
+	Message("restart system");
 LEAVE_FUNC;
 }
 
@@ -665,14 +759,18 @@ ENTER_FUNC;
 			Error("[BUG] unknown process down:%d",pid);
 			break;
 		}
-		proc->state = STATE_DOWN;
+		if (proc->state == STATE_RUN) {
+			proc->state = STATE_DOWN;
+		}
 		if (fLoop) {
-			if (WIFSIGNALED(status)) {
-				Message("%s(%d) killed by signal %d"
-						,proc->argv[0], (int)pid, WTERMSIG(status));
-			} else {
-				Message("process down pid = %d(%d) Command =[%s]\n"
-						,(int)pid, WEXITSTATUS(status),proc->argv[0]);
+			if (proc->state == STATE_DOWN) {
+				if (WIFSIGNALED(status)) {
+					Message("%s(%d) killed by signal %d"
+							,proc->argv[0], (int)pid, WTERMSIG(status));
+				} else {
+					Message("process down pid = %d(%d) Command =[%s]\n"
+							,(int)pid, WEXITSTATUS(status),proc->argv[0]);
+				}
 			}
 		}
 		switch	(proc->type) {
@@ -681,7 +779,7 @@ ENTER_FUNC;
 				StopSystem();
 			}
 			break;
-		default:
+		case PTYPE_WFC:
 			if (WIFSIGNALED(status) || 
 				(WIFEXITED(status) && WEXITSTATUS(status) != 0)) {
 				StopSystem();
@@ -713,7 +811,7 @@ main(
 	}
 
 	InitSystem();
-	Message("Start system");
+	Message("start system");
 
 	StartServers();
 
