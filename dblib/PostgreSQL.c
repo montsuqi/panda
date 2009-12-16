@@ -144,7 +144,6 @@ PgInitConnect(
 	PGresult	*res;
 	
 	res = NULL;
-	PQsetClientEncoding(conn, "UTF-8");
 	PQsetNoticeProcessor(conn, NoticeMessage, NULL);
 	if ( PQserverVersion(conn)  >=  80200 ) {
 		res = PQexec(conn, "set standard_conforming_strings = on;");
@@ -153,6 +152,37 @@ PgInitConnect(
 		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 	}
 	PQclear(res);
+}
+
+static	void
+SetDBGcoding(
+	DBG_Struct	*dbg)
+{
+	PGconn	*conn;
+	PGresult	*res;
+	char		*encoding;
+	char		*sql = "SELECT pg_encoding_to_char(encoding) " \
+				" FROM pg_database " \
+				"WHERE datname = current_database();";
+	res = NULL;
+	conn = PgConnect(dbg, DB_UPDATE);
+	res = PQexec(conn, sql);
+	if ( (res == NULL) || (PQresultStatus(res) != PGRES_TUPLES_OK) ) {
+		Warning("PostgreSQL: %s",PQerrorMessage(conn));		
+	} else {
+		encoding = (char *)PQgetvalue(res,0,0);
+		if	( dbg->coding != NULL ) {
+			xfree(dbg->coding);
+		}
+		if	(	(  stricmp(encoding,"utf8")   ==  0  ) ) {
+			dbg->coding = NULL;
+		} else if 	(	(  stricmp(encoding,"euc_jp")   ==  0  ) ) {
+			dbg->coding = StrDup("euc-jisx0213");
+		} else {
+			dbg->coding = StrDup(encoding);				
+		}
+	}
+	PQclear(res);	
 }
 
 static  void
@@ -1343,6 +1373,7 @@ ENTER_FUNC;
 	} else {
 		if		(  (conn = PgConnect(dbg, DB_UPDATE)) != NULL ) {
 			PgInitConnect(conn);
+			SetDBGcoding(dbg);
 			OpenDB_RedirectPort(dbg);
 			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
