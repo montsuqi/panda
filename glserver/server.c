@@ -129,7 +129,7 @@ ENTER_FUNC;
 	if (fFeatureI18N) {
 		coding = NULL;
 	} else {
-		coding = "euc-jp";
+		coding = "euc-jisx0213";
 	}
 	stat(fname,&stbuf);
 	if		(  CheckCache(fpComm,
@@ -148,7 +148,7 @@ ENTER_FUNC;
 			if (fread(buff, 1, size, fp) == size) {
 				buff[size] = 0;
 				value = NewValue(GL_TYPE_CHAR);
-				SetValueString(value, buff, "euc-jp");
+				SetValueString(value, buff, "euc-jisx0213");
 				GL_SendString(fpComm, ValueToString(value,coding), fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
 				FreeValueStruct(value);
@@ -231,7 +231,7 @@ ENTER_FUNC;
 	if (fFeatureI18N) {
 		coding = NULL;
 	} else {
-		coding = "euc-jp";
+		coding = "euc-jisx0213";
 	}
 	if		(  win->PutType  !=  SCREEN_NULL  ) {
 		GL_SendPacketClass(fpComm,GL_WindowName,fFeatureNetwork);
@@ -509,7 +509,7 @@ ENTER_FUNC;
 	if		(  fFeatureI18N  ) {
 		coding = NULL;
 	} else {
-		coding = "euc-jp";
+		coding = "euc-jisx0213";
 	}
 	while	(  GL_RecvPacketClass(fpComm,fFeatureNetwork)  ==  GL_WindowName  ) {
 		ON_IO_ERROR(fpComm,badio);
@@ -583,7 +583,7 @@ ENTER_FUNC;
 	if (fFeatureI18N) {
 		coding = NULL;
 	} else {
-		coding = "euc-jp";
+		coding = "euc-jisx0213";
 	}
 
 	GL_SendPacketClass(fpComm,GL_Pong,fFeatureNetwork);
