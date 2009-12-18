@@ -266,6 +266,8 @@ UI_Init(int argc,
 
 	WindowTable = NewNameHash();
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_default_size(GTK_WINDOW(TopWindow),1024,768);
+	gtk_window_set_position(GTK_WINDOW(TopWindow),GTK_WIN_POS_CENTER);
 	gtk_signal_connect(GTK_OBJECT(TopWindow), 
 		"delete_event", (GtkSignalFunc)gtk_true, NULL);
 	TopNoteBook = gtk_notebook_new();

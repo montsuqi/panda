@@ -385,37 +385,29 @@ SwitchWindow(
 	GtkWidget *window)
 {
 	GtkWidget	*child;
-	static Bool	fInit = TRUE;
-	
 
 ENTER_FUNC;
 	child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
+
+	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
+
 	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
 		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
 
-	gtk_window_set_default_size(GTK_WINDOW(TopWindow), 
-		window->requisition.width, 
-		window->requisition.height);
-	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
-
+	gtk_widget_show_all(TopWindow);
+	gtk_window_set_modal(GTK_WINDOW(TopWindow),
+		GTK_WINDOW(window)->modal);
 	gtk_window_set_policy(GTK_WINDOW(TopWindow), 
 		GTK_WINDOW(window)->allow_shrink,
 		GTK_WINDOW(window)->allow_grow,
 		GTK_WINDOW(window)->auto_shrink);
-	gtk_window_set_modal(GTK_WINDOW(TopWindow),
-		GTK_WINDOW(window)->modal);
 
-	gtk_widget_show(TopWindow);
-	gtk_widget_show(TopNoteBook);
-	gtk_widget_show(child);
-
-	if (fInit) {
-		gtk_window_set_position(GTK_WINDOW(TopWindow),
-			GTK_WINDOW(window)->position);
-		fInit = FALSE;
-	}
-
+#if 0
+	gtk_window_set_default_size(GTK_WINDOW(TopWindow), 
+		window->requisition.width, 
+		window->requisition.height);
+#endif
 
 LEAVE_FUNC;
 }

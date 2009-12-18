@@ -387,9 +387,7 @@ static	void
 SwitchWindow(
 	GtkWidget *window)
 {
-	int			width, height;
 	GtkWidget	*child;
-	static Bool	fInit = TRUE;
 
 ENTER_FUNC;
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
@@ -397,30 +395,20 @@ ENTER_FUNC;
 	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
 		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
 
-	gtk_window_get_default_size(GTK_WINDOW(window), &width, &height);
-	gtk_window_set_default_size(GTK_WINDOW(TopWindow), width, height);
 	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
-	gtk_window_set_resizable(GTK_WINDOW(TopWindow),
-		GTK_WINDOW(window)->allow_grow);
 
 	gtk_widget_show(TopWindow);
 
 	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(child);
 
-	if (fInit) {
-		if (GTK_WINDOW(window)->position == GTK_WIN_POS_CENTER) {
-			gtk_window_set_position(GTK_WINDOW(TopWindow),
-				GTK_WIN_POS_CENTER_ALWAYS);
-		} else {
-			gtk_window_set_position(GTK_WINDOW(TopWindow),
-				GTK_WINDOW(window)->position);
-		}
-		fInit = FALSE;
-	} else {
-		gtk_window_set_position(GTK_WINDOW(TopWindow),
-			GTK_WINDOW(window)->position);
-	}
+	gtk_window_set_resizable(GTK_WINDOW(TopWindow),
+		GTK_WINDOW(window)->allow_grow);
+#if 0
+	int			width, height;
+	gtk_window_get_default_size(GTK_WINDOW(window), &width, &height);
+	gtk_window_set_default_size(GTK_WINDOW(TopWindow), width, height);
+#endif
 
 LEAVE_FUNC;
 }
