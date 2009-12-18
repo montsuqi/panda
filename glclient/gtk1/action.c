@@ -395,7 +395,11 @@ ENTER_FUNC;
 	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
 		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
 
-	gtk_widget_show_all(TopWindow);
+	gtk_widget_show(TopWindow);
+	gtk_widget_show(TopNoteBook);
+	gtk_widget_show(child);
+
+
 	gtk_window_set_modal(GTK_WINDOW(TopWindow),
 		GTK_WINDOW(window)->modal);
 	gtk_window_set_policy(GTK_WINDOW(TopWindow), 

@@ -398,7 +398,6 @@ ENTER_FUNC;
 	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
 
 	gtk_widget_show(TopWindow);
-
 	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(child);
 
