@@ -18,9 +18,9 @@
  */
 
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -182,7 +182,8 @@ SetDBGcoding(
 			dbg->coding = StrDup(encoding);				
 		}
 	}
-	PQclear(res);	
+	PQclear(res);
+	PQfinish(conn);
 }
 
 static  void
