@@ -47,10 +47,18 @@ static	char	*Directory;
 static	Bool	fAllsync;
 static	Bool	fTablecheck;
 static	Bool	fVerbose;
+static  char    *Master = NULL;
+static  char    *Slave = NULL;
 
 static	ARG_TABLE	option[] = {
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"environment file name"							},
+	
+	{	"master",		STRING,		TRUE,	(void*)&Master,
+		"master dbg name"							},
+	{	"slave",		STRING,		TRUE,	(void*)&Slave,
+		"slave dbg name"							},
+	
 	{	"allsync",	BOOLEAN,	TRUE,	(void*)&fAllsync,
 		"All Database sync"								},
 	{	"check",	BOOLEAN,	TRUE,	(void*)&fTablecheck,
@@ -295,7 +303,7 @@ lookup_master_slave(
 	void		*dummy)
 {
 	DBG_Struct	*rdbg;
-	if (dbg->redirect != NULL){
+	if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH) {
 		MASTERDB = StrDup(dbg->name);
 		rdbg = dbg->redirect;
 		SLAVEDB = StrDup(rdbg->name);
@@ -321,13 +329,22 @@ main(
 		Error("DI file parse error.");
 	}
 
-	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)lookup_master_slave,NULL);
-	master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, MASTERDB);
-	slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, SLAVEDB);
-
-	if (!master_dbg || !slave_dbg){
-		Error("Illegal dbgroup.");		
+	if ((Master != NULL && Slave == NULL) || (Master == NULL && Slave != NULL)) {
+		Error("master dbg or slave dbg is null");
 	}
+	if (Master != NULL && Slave != NULL)  {
+		master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, Master);
+		slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, Slave);
+	} else {
+		g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)lookup_master_slave,NULL);
+		master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, MASTERDB);
+		slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, SLAVEDB);
+	}
+	
+	if (!master_dbg || !slave_dbg){
+		Error("Illegal dbgroup.");
+	}
+
 	if (!dbtype_check(master_dbg) || !dbtype_check(slave_dbg) ){
 		Error("Sorry, does not support Database type.");
 	}
@@ -348,7 +365,7 @@ main(
 		fAllsync = TRUE;
 	}
 
-	if (!fAllsync) {	
+	if (!fAllsync) {
 		ng_list = table_check(master_dbg, slave_dbg);
 		if (ng_list->tables[0]->name != NULL) {
 			if (fTablecheck){
