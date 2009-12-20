@@ -114,6 +114,7 @@ INCLUDES 			= 		\
 	$(SSL_CFLAGS)			\
 	$(XML2_CFLAGS)			\
 	$(MONDAI_CFLAGS)		\
+	$(POSTGRES_CFLAGS)		\
 	-DSERVER_DIR=\"$(sbindir)\"
 
 monitor_DEPENDENCIES	=				\
