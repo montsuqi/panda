@@ -17,6 +17,9 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include	"struct.h"
+#include	<libpq-fe.h>
+#include	<libpq/libpq-fs.h>
 
 typedef enum table_TYPE {
 	ALL,
@@ -53,4 +56,8 @@ extern  void	puttable(DBG_Struct	*dbg);
 extern TableList	*NewTableList(int count);
 extern Table 	*NewTable(void);
 
+extern PGconn	*pg_connect(DBG_Struct *dbg);
+extern void	pg_disconnect(DBG_Struct *dbg);
+extern PGresult	*db_exec(PGconn	*conn, char *query);
+extern Bool	db_command(PGconn *conn, char *query);
 

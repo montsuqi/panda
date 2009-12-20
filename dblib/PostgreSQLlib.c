@@ -120,7 +120,7 @@ PgConnect(
 	conninfo = CreateConninfo(dbg,usage);
 	conn = PQconnectdb(LBS_Body(conninfo));
 	FreeLBS(conninfo);
-
+		
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
 		Message("Connection to database \"%s\" failed.",
 				GetDB_DBname(dbg,usage));
