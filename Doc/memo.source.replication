@@ -1,0 +1,54 @@
+- レプリケーション機能のコード説明
+
+- dblib/dblog.c,h
+  ログテーブルの操作関数. PostgreSQLのAPIで直接操作.
+  CREATE TALBEもこの中で行っている.
+
+- dbstuff/dbredirector.c
+  プログラム名が"dblogger"の場合にdbloggerの処理
+  dbredirectorがパッチをあてる処理が更新クエリをログテーブルに保存する動作になる
+  
+- dbstuff/dbmaster_thread.c,h
+  dbmasterのメイン処理. スレッドで起動.
+  - 起動
+    NewDBMasterThread() -> StartDBMaster()
+  - 待機
+    JoinDBMaster()
+  - 停止シグナル
+    StopDBMaster()
+  - リソース開放
+    DestroyDBMasterThread()
+
+- dbstuff/dbslave_thread.c,h
+  dbslaveのメイン処理. スレッドで起動.
+  - 起動
+    NewDBSlaveThread() -> StartDBSlave()
+  - 待機
+    JoinDBSlave()
+  - 停止シグナル
+    StopDBSlave()
+  - リソース開放
+    DestroyDBSlaveThread()
+
+- dbstuff/dbmaster.c
+  DBMasterThreadの操作
+
+- dbstuff/dbslave.c
+  DBSlaveThreadの操作  
+  
+- dbmaster <-> dbslaveの通信プロトコル
+
+  - 同期ソケット
+  - バイナリプロトコル(SendPacketClass,SendLBS等)
+
+  - フロー
+  
+  通信は状態遷移ループではなく順番に処理する
+
+  % dbslave: バージョン,ユーザ名,パスワード送信
+  # dbmaster: OK (or NG)
+  % dbslave: 最終取得ログ番号送信
+  # dbmaster: 最終取得ログ番号より新しいログがあれば送信
+  # dbmaster: 終了命令送信
+
+  途中でIOエラーが発生した場合は即切断する

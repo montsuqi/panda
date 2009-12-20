@@ -17,36 +17,20 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_DBREDIRECTOR_MAIN_H
-#define	_DBREDIRECTOR_MAIN_H
+#ifndef	_DBREPLICATION_H
+#define	_DBREPLICATION_H
 
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
+#include "libmondai.h"
+#include "comm.h"
+#include "port.h"
+#include "dblog.h"
 
-#define		CONNECT_INTERVAL		60
-
-typedef enum {
-	TICKET_BEGIN = 0,
-	TICKET_DATA,
-	TICKET_ABORT,
-	TICKET_COMMIT
-} TICKET_STATUS;
-
-typedef	struct {
-	LargeByteString	*checkData;
-	LargeByteString	*redirectData;
-}	VeryfyData;
-
-typedef	struct {
-	int			fd;
-	uint64_t	ticket_id;
-	VeryfyData *veryfydata;
-	TICKET_STATUS status;
-}	Ticket;
+#define DBREPLICATION_COMMAND_OK     0x00
+#define DBREPLICATION_COMMAND_NG     0x01
+#define DBREPLICATION_COMMAND_AUTH   0x02
+#define DBREPLICATION_COMMAND_REQ    0x03
+#define DBREPLICATION_COMMAND_RECORD 0x04
+#define DBREPLICATION_COMMAND_EOR    0x05
 
 
 

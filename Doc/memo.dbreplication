@@ -1,0 +1,186 @@
+- レプリケーション機能
+
+montsuqiの非同期マスタースレーブ方式によるレプリケーション機能を使用すると
+ひとつの更新系データベースに対して複数の参照系データベースを構成できます。
+
+- 目次
+	- 特徴
+	- 構成
+	- 設定
+		- dbloggerの設定
+		- dbmasterの設定
+		- monitorの設定
+		- dbslaveの設定
+	- 運用
+		- 初期セットアップ
+		- スレーブの追加
+
+- 特徴
+	- マスタースレーブ方式
+	- スレーブが一定期間停止していても起動時に同期可能
+	- マスターとスレーブで同期されていない期間がある
+	
+- 構成
+	- dblogger
+	マスター上で実行され、マスターで実行された更新系クエリの
+	ログをとります。
+	
+	- dbmaster
+	マスター上で実行され、dbslaveからの問い合わせに対して
+	dbloggerが作成したログを配信します。
+	
+	- dbslave
+	スレーブ上で実行され、一定時間毎にdbmasterへログの問い合わせを
+	行い、ローカル上にログのコピーを作成します。
+	コピーされたログ(更新系クエリ)で実行していない行をスレーブ上で
+	実行します。
+
+
+- 設定と運用
+
+- dbloggerの設定
+マスターのデータベース定義体でログの保存先を指定します(logdb_name)。
+
+-- 例
+db_group        "ulog" {
+        type    "PostgreSQL";
+        name    "ulog";
+        logport "/dev/shm/dblogger.socket";
+        logtable_name "master1_log";
+};
+
+db_group        "master1"      {
+        type    "PostgreSQL";
+        name    "master";
+        logdb_name "ulog";
+};
+-- 
+ログの保存先にはPostgreSQLのデータベースを指定します。
+ログのテーブルを変える場合は、logtable_nameで指定します。
+テーブル名の指定がない場合は`montsuqi_dbmater_log'に保存されます。
+ログの保存先ではlogportで待受ポートを指定します。
+※ dbloggerはredirectorと同じプログラムになっています。
+
+- dbmasterの設定
+
+monitorから起動する場合はdirectoryで待機ポートと配信するログのデータベースを指定します。
+--- 例
+dbmaster {
+         port           "localhost:8017";
+         logdb_name     "ulog";
+		 auth           "glauth://localhost:8001";
+};
+--
+portはdbmasterの待機ポートです。
+logdb_nameは配信するログのdb_grop名です。
+auth記述がない場合は'glauth://localhost:8001'を使います。
+
+- monitorの設定
+
+monitorからdbloggerを起動する場合は、`-dblogger 1'オプションを追加します。
+monitorからdbmasterを起動する場合は、`-dbmaster 1'オプションを追加します。
+
+- dbslaveの設定
+スレーブ上でdbslaveコマンドを実行しておきます。
+nohup dbslave -dir ./directory -dbmport "localhost:8017" -dbmuser test -dbmpass test -log ulog2 -sec 60 -expiresec 60 slave1 
+
+-- オプション
+	-dir
+	directoryファイル
+	
+	-dbmport
+	dbmasterへの接続先ポート
+	
+	-dbmuser
+	dbmasterと認証する際に使用するユーザ名
+	
+	-dbmpass
+	dbmasterと認証する際に使用するパスワード
+	
+	-log
+	ログのコピーを作成する先のdb_groupの名前
+	
+	-sec
+	問い合わせ間隔(秒)
+	指定がない場合は60
+	
+	-expiressec
+	ローカルのログの保存期間(秒)
+	このオプションを指定すると実行済みで最新以外の行は指定秒後に
+	削除されます
+	指定がない場合は削除しません
+	
+	*
+	最後にスレーブDBのdb_group名を指定します。
+
+- 初期セットアップ
+
+1. マスターDBのバッグアップ
+	初期状態のデータベースをバックアップします。
+	このバックアップはスレーブを追加する際の初期状態に使用します。
+
+2. スレーブDBの作成
+	マスターDBのコピーとしてスレーブDBを作成します。
+	コピーにはdbsyncコマンドを使います。
+	
+	-- 例
+	dbsync -dir directory -master master1 -slave slave1 -allsync 1
+	--
+	`-master'、`-slave'でマスターとスレーブのデータベース定義体名を
+	指定します。
+	
+3. アプリケーションの起動
+	マスター側でmonitorからdblogger,dbmaster,その他のアプリケーション起動します。
+
+4. dbslaveの起動
+	スレーブ側でdbslaveを起動しておきます。
+
+- スレーブの追加
+
+1. スレーブDBの作成
+	マスターDB初期状態のコピーとしてスレーブDBを作成します。
+	初期セットアップ時のバックアップを使用して作成します。
+	
+2. dbslaveの起動
+	スレーブ側でdbslaveを起動しておきます。
+
+- マスターの初期状態バックアップがない場合のスレーブの追加
+
+なんらかのトラブルでマスターのバックアップがない場合などの対応方法。
+
+1. マスターDBの停止
+	更新が割り込まないように停止します。
+
+2. スレーブDBの作成
+	マスターDBのコピーとしてスレーブDBを作成します。
+	コピーにはdbsyncコマンドを使います。
+
+3. スレーブ側のログに最新行を更新済みとして追加
+	I.  マスター側ログテーブルの最新行を調べます。
+	
+		SELECT MAX(no) FROM montsuqi_dbmaster_log;
+	
+	II. スレーブ側にログテーブルを作成します。
+	
+		CREATE TABLE montsuqi_dbmaster_log (
+			no              INT8 PRIMARY KEY 
+			,data           TEXT             
+			,checkdata      TEXT             
+			,applydate      TIMESTAMP        
+		);
+		CREATE INDEX montsuqi_dbmaster_log_applydate_idx ON montsuqi_dbmaster_log ( 
+			applydate
+		);
+	
+	III. スレーブ側ログテーブルにマスターの最新ログを更新済みとして
+	    追加します。
+	    
+	    	INSERT INTO montsuqi_dbmaster_log (no, applydate) VALUES(マスター側MAX_NO, NOW());
+
+4. アプリケーションの起動
+	マスター側でmonitorからdblogger,dbmaster,その他のアプリケーション起動します。
+
+5. dbslaveの起動
+	スレーブ側でdbslaveを起動しておきます。
+
+

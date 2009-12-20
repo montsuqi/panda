@@ -17,37 +17,31 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_DBREDIRECTOR_MAIN_H
-#define	_DBREDIRECTOR_MAIN_H
+#ifndef	_DBMASTER_THREAD_H
+#define	_DBMASTER_THREAD_H
 
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
+#include "libmondai.h"
+#include "comm.h"
+#include "port.h"
+#include <pthread.h>
+#include "dbreplication.h"
 
-#define		CONNECT_INTERVAL		60
-
-typedef enum {
-	TICKET_BEGIN = 0,
-	TICKET_DATA,
-	TICKET_ABORT,
-	TICKET_COMMIT
-} TICKET_STATUS;
-
-typedef	struct {
-	LargeByteString	*checkData;
-	LargeByteString	*redirectData;
-}	VeryfyData;
-
-typedef	struct {
-	int			fd;
-	uint64_t	ticket_id;
-	VeryfyData *veryfydata;
-	TICKET_STATUS status;
-}	Ticket;
+typedef struct {
+	DBLogCtx *log;
+	URL *auth_url;
+	pthread_t main_thread;
+	NETFILE *server;
+	int server_fd;
+	Bool shutdown;
+	Bool main_thread_active;
+} DBMasterThread;
 
 
+extern DBMasterThread *	NewDBMasterThread(DBG_INSTANCE *dbg, char *auth_url, Port *port, int backlog);
+extern void 			DestroyDBMasterThread(DBMasterThread **ctx);
+
+extern void			StartDBMaster(DBMasterThread *ctx);
+extern void			JoinDBMaster(DBMasterThread *ctx);
+extern void			StopDBMaster(DBMasterThread *ctx);
 
 #endif
