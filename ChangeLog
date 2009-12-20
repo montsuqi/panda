@@ -1,3 +1,29 @@
+2009-12-21  Kazuya Nagadomi  <nagadomi@wasp-corp.co.jp>
+
+	* dblib/PostgreSQL.c
+	SetDBGcodingで接続が増えていたので切断するように修正
+
+	* tools/dbsync.c
+	-slave, -masterオプションで同期元と先を指定できるように変更
+
+	* dblib/PostgreSQLutil.h
+	接続関係の関数を他から使えるように変更
+
+	* dbstuff/dbredirector.c
+	"dblogger"として起動された場合にログを保存する処理を追加
+	
+	* dbstuff/dbmaster.c dbstuff/dbmaster_thread.c dbstuff/dbmaster_thread.h
+	dbstuff/dbreplication.h dbstuff/dbslave.c dbstuff/dbslave_thread.c
+	dbstuff/dbslave_thread.h
+	dbstuff/Makefile.am dbstuff/dbredirector.c dbstuff/dbredirector.h
+	dblib/Makefile.am dblib/dblog.c dblib/dblog.h include/const.h
+	include/struct.h libs/DIparser.c tools/monitor.c
+	非同期マスタースレーブのレプリケーション機能を追加
+
+	* Doc/memo.dbreplication
+	 Doc/memo.source.replication
+	レプリケーション機能のメモを追加
+	
 2009-10-14  Kazuya Nagadomi  <nagadomi@wasp-corp.co.jp>
 	
 	* dbstuff/dbs_main.c:
