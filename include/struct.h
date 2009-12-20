@@ -132,6 +132,9 @@ typedef	struct {
 #define	PROCESS_UPDATE		0
 #define	PROCESS_READONLY	1
 
+#define	REDIRECTOR_MODE_PATCH	0
+#define	REDIRECTOR_MODE_LOG	1
+
 typedef	struct _DBG_Struct	{
 	int			id;
 	char		*name;					/*	group name				*/
@@ -144,6 +147,8 @@ typedef	struct _DBG_Struct	{
 	/*	DB redirect variable	*/
 	Port		*redirectPort;
 	struct	_DBG_Struct	*redirect;
+	int		redirectorMode;	
+	char		*logTableName;
 	NETFILE		*fpLog;
 	LargeByteString	*redirectData;
 	LargeByteString	*checkData;
@@ -317,7 +322,9 @@ typedef	struct {
 	,			*RecordDir;
 	Port		*WfcApsPort
 	,			*TermPort
-	,			*ControlPort;
+	,			*ControlPort
+	,			*DBMasterPort;
+	char			*DBMasterAuth;
 	size_t		cLD
 	,			cBD
 	,			cDBD
@@ -338,7 +345,12 @@ typedef	struct {
 	char		*ApsPath
 		,		*WfcPath
 		,		*RedPath
-		,		*DbPath;
+		,		*DbPath
+		,		*DBLoggerPath
+		,		*DBMasterPath
+		,		*DBSlavePath;
+
+	char           *DBMasterLogDBName;
 }	DI_Struct;
 
 #endif

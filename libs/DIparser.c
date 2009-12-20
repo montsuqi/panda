@@ -89,6 +89,15 @@
 #define	T_SSLMODE		(T_YYBASE +38)
 #define	T_BLOB			(T_YYBASE +39)
 
+#define	T_LOGDBNAME		(T_YYBASE +40)
+#define	T_LOGTABLENAME		(T_YYBASE +41)
+#define	T_LOGPORT		(T_YYBASE +42)
+#define	T_LOGPATH		(T_YYBASE +43)
+#define	T_MSTPATH		(T_YYBASE +44)
+#define	T_SLVPATH		(T_YYBASE +45)
+#define	T_MSTPORT		(T_YYBASE +46)
+#define	T_DBMASTER		(T_YYBASE +47)
+
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
 	{	"bd"				,T_BD		},
@@ -127,6 +136,16 @@ static	TokenTable	tokentable[] = {
 	{	"update"			,T_UPDATE	},
 	{	"readonly"			,T_READONLY	},
 	{	"blob"				,T_BLOB		},
+	
+	{	"logdb_name"			,T_LOGDBNAME	},
+	{	"logtable_name"			,T_LOGTABLENAME	},
+	{	"logport"			,T_LOGPORT	},
+	{	"logpath"			,T_LOGPATH	},
+	{	"mstpath"			,T_MSTPATH	},
+	{	"slvpath"			,T_SLVPATH	},
+	{	"mstport"			,T_MSTPORT	},
+	{	"dbmaster"			,T_DBMASTER	},
+	
 	{	""					,0			}
 };
 
@@ -215,6 +234,65 @@ ENTER_FUNC;
 	}
 LEAVE_FUNC;
 }
+
+static	void
+ParDBMaster(
+	CURFILE	*in)
+{
+ENTER_FUNC;
+	while	(  GetSymbol  !=  '}'  ) {
+		switch	(ComToken) {
+		  case	T_PORT:
+			switch	(GetSymbol) {
+			  case	T_ICONST:
+				ThisEnv->DBMasterPort = NewIP_Port(NULL,IntStrDup(ComInt));
+				GetSymbol;
+				break;
+			  case	T_SCONST:
+				ThisEnv->DBMasterPort = ParPort(ComSymbol,PORT_WFC_CONTROL);
+				GetSymbol;
+				break;
+			  case	';':
+				ThisEnv->DBMasterPort = NULL;
+				break;
+			  default:
+				ParError("invalid dbmaster port number");
+				break;
+			}
+			break;
+		  case	T_LOGDBNAME:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ThisEnv->DBMasterLogDBName  = StrDup(ComSymbol);
+			} else {
+				ParError("invalid dbmaster group");
+			}
+			GetSymbol;			
+			break;
+		  case	T_AUTH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				ThisEnv->DBMasterAuth  = StrDup(ComSymbol);
+			} else {
+				ParError("invalid dbmaster group");
+			}
+			GetSymbol;			
+			break;
+		  default:
+			ParError("dbmaster keyword error");
+			break;
+		}
+		if		(  ComToken  !=  ';'  ) {
+			ParError("missing ; in dbmaster directive");
+		}
+		ERROR_BREAK;
+	}
+	if		(  ThisEnv->DBMasterPort  ==  NULL  ) {
+		ParError(" port is null");
+	}
+	
+LEAVE_FUNC;
+}
+
+
 
 extern	LD_Struct	*
 LD_DummyParser(
@@ -636,6 +714,8 @@ NewDBG_Struct(
 	dbg->server = NULL;
 	dbg->file = NULL;
 	dbg->redirect = NULL;
+	dbg->logTableName = NULL;
+	dbg->redirectorMode = REDIRECTOR_MODE_PATCH;
 	dbg->redirectPort = NULL;
 	dbg->redirectData = NULL;
 	dbg->checkData = NewLBS();
@@ -646,6 +726,7 @@ NewDBG_Struct(
 	dbg->process[PROCESS_UPDATE].conn = NULL;
 	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 	dbg->process[PROCESS_READONLY].conn = NULL;
+	
 	if		(  ( env = getenv("MONDB_LOCALE") )  ==  NULL  ) {
 		dbg->coding = DB_LOCALE;
 	} else
@@ -836,6 +917,33 @@ ENTER_FUNC;
 				ParError("invalid DB sslmode");
 			}
 			break;
+		  case	T_LOGDBNAME:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				dbg->redirect = (DBG_Struct *)StrDup(ComSymbol);
+				dbg->redirectorMode = REDIRECTOR_MODE_LOG;
+				if (dbg->redirect->type) {
+					if (stricmp(dbg->redirect->type, "postgres") != 0) {
+						ParError("invalid log db type");
+					}
+				}
+			} else {
+				ParError("invalid logdbname");
+			}
+			break;
+		  case	T_LOGTABLENAME:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				dbg->logTableName = (DBG_Struct *)StrDup(ComSymbol);
+			} else {
+				ParError("invalid logtable_name");
+			}
+			break;
+		  case	T_LOGPORT:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				dbg->redirectPort = ParPort(ComSymbol, PORT_LOG);
+			} else {
+				ParError("invalid port");
+			}
+			break;
 		  default:
 			ParErrorPrintf("other syntax error in db_group [%s]\n",ComSymbol);
 			break;
@@ -901,6 +1009,7 @@ ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		dbgprintf("%d DB group name = [%s]\n",dbg->priority,dbg->name);
+		dbgprintf("  redirectorMode => %d", dbg->redirectorMode);		
 		_AssignDBG(in,dbg->name,dbg);
 	}
 LEAVE_FUNC;
@@ -993,6 +1102,12 @@ NewEnv(
 	env->RedPath = NULL;
 	env->DbPath = NULL;
 	env->linkrec = NULL;
+	env->DBLoggerPath = NULL;
+	env->DBMasterPath = NULL;
+	env->DBSlavePath = NULL;
+	env->DBMasterPort = NULL;
+	env->DBMasterAuth = NULL;
+	env->DBMasterLogDBName = NULL;
 
 	return	(env);
 }
@@ -1211,6 +1326,46 @@ ENTER_FUNC;
 				ParError("syntax error dbgroup directive");
 			}
 			ParDBGROUP(in,gname);
+			break;
+		  case	T_LOGPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->DBLoggerPath  ==  NULL  ) {
+					ThisEnv->DBLoggerPath = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+				} else {
+					ParError("DBLOG path definision duplicate");
+				}
+			} else {
+				ParError("DBLOG path invalid");
+			}
+			break;
+		  case	T_MSTPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->DBMasterPath  ==  NULL  ) {
+					ThisEnv->DBMasterPath = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+				} else {
+					ParError("DBMASTER path definision duplicate");
+				}
+			} else {
+				ParError("DBMASTER path invalid");
+			}
+			break;
+		  case	T_SLVPATH:
+			if		(  GetSymbol  ==  T_SCONST  ) {
+				if		(  ThisEnv->DBSlavePath  ==  NULL  ) {
+					ThisEnv->DBSlavePath = StrDup(ExpandPath(ComSymbol, ThisEnv->BaseDir));
+				} else {
+					ParError("DBSLAVE path definision duplicate");
+				}
+			} else {
+				ParError("DBSLAVE path invalid");
+			}
+			break;
+		  case	T_DBMASTER:
+			if		(  GetSymbol  ==  '{'  ) {
+				ParDBMaster(in);
+			} else {
+				ParError("syntax error in dbmaster directive");
+			}
 			break;
 		  default:
 			ParErrorPrintf("misc syntax error [%X][%s]\n",ComToken,ComSymbol);

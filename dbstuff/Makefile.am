@@ -16,11 +16,12 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-sbin_PROGRAMS =  dbredirector dbs
+sbin_PROGRAMS =  dbredirector dbs dbmaster dbslave dblogger
 
 dbredirector_LDADD 		=				\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandacom.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
@@ -28,6 +29,7 @@ dbredirector_LDADD 		=				\
 	$(SSL_LIBS)							\
 	$(MONDAI_LIBS)						\
 	$(POSTGRES_LIBS)					
+
 
 dbs_LDADD 		=						\
 	-lm									\
@@ -71,6 +73,36 @@ dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a
 
+
+dblogger_LDADD 		= $(dbredirector_LDADD)
+dblogger_LDFLAGS	= $(dbredirector_LDFLAGS)
+dblogger_SOURCES	= $(dbredirector_SOURCES)
+dblogger_DEPENDENCIES	= $(dbredirector_DEPENDENCIES)
+
+
+dbmaster_LDADD 		= $(dbredirector_LDADD)
+dbmaster_LDFLAGS	=	-export-dynamic
+dbmaster_SOURCES	=	\
+	dbmaster.c dbmaster_thread.c 
+dbmaster_DEPENDENCIES	=			\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a
+
+
+dbslave_LDADD 		= $(dbredirector_LDADD)
+dbslave_LDFLAGS	=	-export-dynamic
+dbslave_SOURCES	=	\
+	dbslave.c dbslave_thread.c 
+dbslave_DEPENDENCIES	=			\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a
+
+
 EXTRA_DIST = 							\
 	dbslib.rb							\
 	testdbs.rb
+

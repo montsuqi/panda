@@ -52,6 +52,9 @@ static	char	*ApsPath;
 static	char	*WfcPath;
 static	char	*RedirectorPath;
 static	char	*GlserverPath;
+static	char	*DBLoggerPath;
+static	char	*DBMasterPath;
+static	char	*DBSlavePath;
 static	char	*DDir;
 static	char	*RecDir;
 static	char	*ScrDir;
@@ -74,6 +77,9 @@ static	char	*GlAuth;
 static	char	*GlCert;
 static	char	*GlCAfile;
 
+static	Bool	fDBMaster;
+static	Bool	fDBLog;
+
 static	GList	*ProcessList;
 static	Bool	fLoop;
 
@@ -81,7 +87,10 @@ static	Bool	fLoop;
 #define	PTYPE_APS	(byte)0x01
 #define	PTYPE_WFC	(byte)0x02
 #define	PTYPE_RED	(byte)0x04
-#define	PTYPE_GLS	(byte)0x05
+#define	PTYPE_GLS	(byte)0x08
+#define	PTYPE_LOG	(byte)0x10
+#define	PTYPE_MST	(byte)0x20
+#define	PTYPE_SLV	(byte)0x40
 
 #define	STATE_RUN		1
 #define	STATE_DOWN		2
@@ -142,6 +151,15 @@ static	ARG_TABLE	option[] = {
 	{	"GlsPath",	STRING,		TRUE,	(void*)&GlserverPath,
 		"glserver command path"						},
 
+	{	"DBLoggerPath",	STRING,		TRUE,	(void*)&DBLoggerPath,
+		"dblogger command path"							},
+
+	{	"DBMasterPath",	STRING,		TRUE,	(void*)&DBMasterPath,
+		"dbmaster command path"							},
+
+	{	"DBSlavePath",	STRING,		TRUE,	(void*)&DBSlavePath,
+		"dbslave command path"							},
+
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"directory file name"		 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecDir,
@@ -153,6 +171,10 @@ static	ARG_TABLE	option[] = {
 
 	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
 		"start dbredirector"		 					},
+	{	"dblogger", BOOLEAN,	TRUE,	(void*)&fDBLog,
+		"start dblogger"		 					},
+	{	"dbmaster", BOOLEAN,	TRUE,	(void*)&fDBMaster,
+		"start dbmaster"		 					},
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"no check dbredirector start"					},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
@@ -211,7 +233,10 @@ SetDefault(void)
 	WfcPath = NULL;
 	RedirectorPath = NULL;
 	GlserverPath = NULL;
-
+	DBLoggerPath = NULL;
+	DBMasterPath = NULL;
+	DBSlavePath = NULL;
+	
 	Directory = "./directory";
 	DDir = NULL;
 	RecDir = NULL;
@@ -242,6 +267,8 @@ SetDefault(void)
 	GlAuth = NULL;
 	GlCert = NULL;
 	GlCAfile = NULL;
+	fDBLog = FALSE;
+	fDBMaster = FALSE;
 }
 
 static	void
@@ -422,6 +449,59 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+StartDBLog(
+	DBG_Struct	*dbg)
+{
+	pid_t	pid;
+	int		argc;
+	char	**argv;
+	Process	*proc;
+
+ENTER_FUNC;
+	proc = New(Process);
+	argv = (char **)xmalloc(sizeof(char *) * 15);
+	proc->argv = argv;
+	proc->type = PTYPE_LOG;
+	argc = 0;
+	if		(  DBLoggerPath  !=  NULL  ) {
+		argv[argc ++] = DBLoggerPath;
+	} else
+	if		(  ThisEnv->DBLoggerPath  !=  NULL  ) {
+		argv[argc ++] = ThisEnv->DBLoggerPath;
+	} else {
+		argv[argc ++] = SERVER_DIR "/dblogger";
+	}
+	if		(  Directory  !=  NULL  ) {
+		argv[argc ++] = "-dir";
+		argv[argc ++] = Directory;
+	}
+	if		(  DDir  !=  NULL  ) {
+		argv[argc ++] = "-ddir";
+		argv[argc ++] = DDir;
+	}
+	if		(  RecDir  !=  NULL  ) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = RecDir;
+	}
+	if		(  fTimer  ) {
+		argv[argc ++] = "-timer";
+	}
+	if		(  fNoSumCheck  ) {
+		argv[argc ++] = "-nosumcheck";
+	}
+	argv[argc ++] = dbg->name;
+	if		(  fQ  ) {
+		argv[argc ++] = "-?";
+	}
+	argv[argc ++] = "-maxretry";
+	argv[argc ++] = IntStrDup(MaxSendRetry);
+	proc->argc = argc;
+	argv[argc ++] = NULL;
+	pid = StartProcess(proc,Interval);
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;	
+LEAVE_FUNC;
+}
 
 static	Bool
 HerePort(
@@ -454,12 +534,105 @@ LEAVE_FUNC;
 }
 
 static	void
+StartDBMaster(void)
+{
+	int		argc;
+	char	**argv;
+	Process	*proc;
+	int		back;
+	int		i;
+
+ENTER_FUNC;
+	if		(  HerePort(ThisEnv->DBMasterPort)  ) {
+		back = 0;
+		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
+			back += ThisEnv->ld[i]->nports;
+		}
+		proc = New(Process);
+		proc->type = PTYPE_MST;
+		argv = (char **)xmalloc(sizeof(char *) * 24);
+		proc->argv = argv;
+		argc = 0;
+		if		(  DBMasterPath  !=  NULL  ) {
+			argv[argc ++] = DBMasterPath;
+		} else
+		if		(  ThisEnv->DBMasterPath  !=  NULL  ) {
+			argv[argc ++] = ThisEnv->DBMasterPath;
+		} else {
+			argv[argc ++] = SERVER_DIR "/dbmaster";
+		}
+		if		(  Directory  !=  NULL  ) {
+			argv[argc ++] = "-dir";
+			argv[argc ++] = Directory;
+		}
+		if		(  DDir  !=  NULL  ) {
+			argv[argc ++] = "-ddir";
+			argv[argc ++] = DDir;
+		}
+		if		(  RecDir  !=  NULL  ) {
+			argv[argc ++] = "-record";
+			argv[argc ++] = RecDir;
+		}
+		if		(  ThisEnv->DBMasterAuth  !=  NULL  ) {
+			argv[argc ++] = "-auth";
+			argv[argc ++] = ThisEnv->DBMasterAuth;
+		}
+		argv[argc ++] = "-port";
+		argv[argc ++] = StrDup(StringPortName(ThisEnv->DBMasterPort));
+		argv[argc ++] = ThisEnv->DBMasterLogDBName;
+		
+		if		(  fQ  ) {
+			argv[argc ++] = "-?";
+		}
+		proc->argc = argc;
+		argv[argc ++] = NULL;
+		StartProcess(proc,Interval);
+	}
+LEAVE_FUNC;
+}
+
+
+static	void
+_StartDBLogs(
+	DBG_Struct *dbg)
+{
+
+ENTER_FUNC;
+	if		(  dbg->redirect  !=  NULL  && dbg->redirectorMode == REDIRECTOR_MODE_LOG) {
+		_StartDBLogs(dbg->redirect);
+	}
+	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{	
+		StartDBLog(dbg);
+	}
+LEAVE_FUNC;
+}
+
+static	void
+StartDBLogs(void)
+{
+	int		i;
+	DBG_Struct	*dbg;
+
+ENTER_FUNC;
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		ThisEnv->DBG[i]->process[DB_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+	}
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		dbg = ThisEnv->DBG[i];
+		if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_LOG ) {
+			_StartDBLogs(dbg->redirect);
+		}
+	}
+LEAVE_FUNC;
+}
+
+static	void
 _StartRedirectors(
 	DBG_Struct	*dbg)
 {
 
 ENTER_FUNC;
-	if		(  dbg->redirect  !=  NULL  ) {
+	if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
 		_StartRedirectors(dbg->redirect);
 	}
 	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{
@@ -480,7 +653,7 @@ ENTER_FUNC;
 	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		if		(  dbg->redirect  !=  NULL  ) {
+		if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
 			_StartRedirectors(dbg->redirect);
 		}
 	}
@@ -664,6 +837,12 @@ ENTER_FUNC;
 	if		(  fGlserver  ) {
 		StartGlserver();
 	}
+	if              (  fDBLog  ) {
+		StartDBLogs();
+	}
+	if              (  fDBMaster  ) {
+		StartDBMaster();
+	}
 	StartWfc();
 	StartApss();
 LEAVE_FUNC;
@@ -696,7 +875,7 @@ StopServers(void)
 ENTER_FUNC;
 	KillProcess(PTYPE_APS,SIGHUP);
 	KillProcess(PTYPE_GLS,SIGHUP);
-	KillProcess((PTYPE_WFC | PTYPE_RED),SIGHUP);
+	KillProcess((PTYPE_WFC | PTYPE_RED| PTYPE_LOG | PTYPE_MST),SIGHUP);
 LEAVE_FUNC;
 }
 

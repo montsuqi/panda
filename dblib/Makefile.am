@@ -39,7 +39,8 @@ INCLUDES 			=		\
 libpandadb_a_CFLAGS = $(AM_CFLAGS)
 libpandadb_a_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h
+	redirect.c	redirect.h      \
+	dblog.c         dblog.h
 
 libpostgresqlutils_a_LIBADD = 
 libpostgresqlutils_a_CFLAGS = $(AM_CFLAGS)

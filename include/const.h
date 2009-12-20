@@ -34,6 +34,9 @@
 #define	PORT_WFC_CONTROL	"9010"
 #define	PORT_POSTGRES		5432
 #define	PORT_REDIRECT		"8010"
+#define	PORT_LOG		"8016"
+#define	PORT_MASTER		"8017"
+
 
 #define	PORT_MSGD			"8514"
 #define	PORT_FDD			"8515"

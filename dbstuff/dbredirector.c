@@ -31,6 +31,7 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
+#include	<strings.h>
 #include	<errno.h>
 #include	<sys/types.h>
 #include	<sys/stat.h>
@@ -56,6 +57,7 @@
 #include	"dbredirector.h"
 #include	"option.h"
 #include	"message.h"
+#include	"dblog.h"
 #include	"debug.h"
 
 static	char	*PortNumber;
@@ -64,6 +66,7 @@ static	char	*Directory;
 
 static	DBG_Struct	*ThisDBG;
 static	pthread_t	_FileThread;
+static int               RedirectorMode;
 
 static	Port		*RedirectPort;
 static  pthread_mutex_t redlock;
@@ -73,6 +76,11 @@ static 	Bool 	fShutdown = FALSE;
 
 static  GSList *TicketList;
 static  uint64_t TICKETID = 0;
+
+static 	DBLogCtx *DBLog;
+
+#define DBLOG_PROGRAM "dblogger"
+#define FILE_SEP      '/'
 
 static VeryfyData	*
 NewVerfyData(void)
@@ -177,11 +185,11 @@ DequeueTicket(void)
 {
 	GSList *first = NULL;
 	Ticket *ticket = NULL;
-
+ENTER_FUNC;
 	while ( ticket == NULL ) {
 		pthread_mutex_lock(&redlock);
 		first = g_slist_nth(TicketList,0);
-		if ( (fShutdown) && (first == NULL) ){
+		if ( (fShutdown) && (first == NULL)){
 			break;
 		}
 		if ( first ) {
@@ -199,6 +207,7 @@ DequeueTicket(void)
 		}
 		pthread_mutex_unlock(&redlock);
 	}
+LEAVE_FUNC;	
 	return ticket;
 }
 
@@ -389,13 +398,15 @@ ConnectDB(void)
 {
 	Bool rc = TRUE;
 ENTER_FUNC;
-	OpenRedirectDB(ThisDBG);
-	if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
-		Message("connect to database successed");
-		LBS_EmitStart(ThisDBG->checkData);
-	} else {
-		Message("connect to database failed");
-		rc = FALSE;
+	if (  ThisDBG->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT ) {
+		OpenRedirectDB(ThisDBG);
+		if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+			Message("connect to database successed");
+			LBS_EmitStart(ThisDBG->checkData);
+		} else {
+			Message("connect to database failed");
+			rc = FALSE;
+		}
 	}
 LEAVE_FUNC;
 	return rc;
@@ -515,6 +526,27 @@ CheckFailure(
 	}
 }
 
+static void
+HandleRedirector(VeryfyData *veryfydata)
+{
+ENTER_FUNC;		
+	if (ExecDB(veryfydata) == DB_STATUS_UNCONNECT ){
+		ExecDB(veryfydata);
+	}
+LEAVE_FUNC;	
+}
+
+static void
+HandleLog(VeryfyData *veryfydata)
+{
+ENTER_FUNC;	
+	Put_DBLog(
+		DBLog,
+		LBS_Body(veryfydata->redirectData),
+		LBS_Body(veryfydata->checkData)
+	);
+LEAVE_FUNC;	
+}
 
 static	void
 FileThread(
@@ -547,11 +579,12 @@ ENTER_FUNC;
 			veryfydata = ticket->veryfydata;
 			if (veryfydata != NULL) {
 				if (LBS_Size(veryfydata->redirectData) > 0) {
-					if ( ExecDB(veryfydata) == DB_STATUS_UNCONNECT ){
-						/* retry */						
-						ExecDB(veryfydata);
+					if (RedirectorMode == REDIRECTOR_MODE_LOG) {
+						HandleLog(veryfydata);
+					} else {
+						HandleRedirector(veryfydata);
+						CheckFailure(fp);
 					}
-					CheckFailure(fp);
 					ReRedirect(LBS_Body(veryfydata->redirectData),
 							   LBS_Body(veryfydata->checkData));
 					WriteLogQuery(fp, LBS_Body(veryfydata->redirectData));
@@ -568,7 +601,6 @@ ENTER_FUNC;
 	WriteLog(fp, "dbredirector stop");
 LEAVE_FUNC;
 }
-
 
 extern	void
 ExecuteServer(void)
@@ -609,19 +641,20 @@ DumpDBG(
 	DBG_Struct	*dbg,
 	void		*dummy)
 {
-	printf("name     = [%s]\n",dbg->name);
-	printf("\ttype     = [%s]\n",dbg->type);
-	printf("\tDB name  = [%s]\n",GetDB_DBname(dbg,DB_UPDATE));
-	printf("\tDB user  = [%s]\n",GetDB_User(dbg,DB_UPDATE));
-	printf("\tDB pass  = [%s]\n",GetDB_Pass(dbg,DB_UPDATE));
- 	printf("\tDB sslmode  = [%s]\n",GetDB_Sslmode(dbg,DB_UPDATE));
-
+	dbgprintf("name     = [%s]\n",dbg->name);
+	dbgprintf("\ttype     = [%s]\n",dbg->type);
+	dbgprintf("\tDB name  = [%s]\n",GetDB_DBname(dbg,DB_UPDATE));
+	dbgprintf("\tDB user  = [%s]\n",GetDB_User(dbg,DB_UPDATE));
+	dbgprintf("\tDB pass  = [%s]\n",GetDB_Pass(dbg,DB_UPDATE));
+ 	dbgprintf("\tDB sslmode  = [%s]\n",GetDB_Sslmode(dbg,DB_UPDATE));
+	dbgprintf("\t   redirectorMode = [%d]\n", dbg->redirectorMode);
+	
 	if		(  dbg->file  !=  NULL  ) {
-		printf("\tlog file = [%s]\n",dbg->file);
+		dbgprintf("\tlog file = [%s]\n",dbg->file);
 	}
 	if		(  dbg->redirect  !=  NULL  ) {
 		dbg = dbg->redirect;
-		printf("\tredirect = [%s]\n",dbg->name);
+		dbgprintf("\tredirect = [%s]\n",dbg->name);
 	}
 }
 #endif
@@ -682,9 +715,11 @@ void StopSystem( int no ) {
 
 extern	void
 InitSystem(
-	char	*name)
+	char	*name,
+	char    *program)
 {
-    struct sigaction sa;
+	struct sigaction sa;
+	char *filename;
 ENTER_FUNC;
 	InitNET();
 
@@ -718,6 +753,24 @@ ENTER_FUNC;
 	} else {
 		RedirectPort = ParPortName(PortNumber);
 	}
+	dbgprintf("cmd filename => %s", program);
+	filename = rindex(program, FILE_SEP);
+	if (filename) {
+		++filename;
+		dbgprintf("cmd filename => %s", filename);
+		RedirectorMode = strcasecmp(filename, DBLOG_PROGRAM) == 0 ? REDIRECTOR_MODE_LOG:REDIRECTOR_MODE_PATCH;
+	} else {
+		RedirectorMode = strcasecmp(program, DBLOG_PROGRAM) == 0 ? REDIRECTOR_MODE_LOG:REDIRECTOR_MODE_PATCH;
+	}
+
+	if (RedirectorMode == REDIRECTOR_MODE_LOG) {
+		dbgmsg("log mode");
+		DBLog = Open_DBLog(ThisDBG, ThisDBG->logTableName);
+	} else {
+		dbgmsg("redirect mode");
+	}
+	//	TicketList = g_slist_alloc();
+
 LEAVE_FUNC;
 }
 
@@ -795,16 +848,16 @@ main(
 	FILE_LIST	*fl;
 	char		*name;
 
+	InitMessage("dbredirector", NULL);
+
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
-	InitMessage("dbredirector",NULL);
-
 	if		(	fl	&&	fl->name  ) {
 		name = fl->name;
 	} else {
 		name = "";
 	}
-	InitSystem(name);
+	InitSystem(name, argv[0]);
 	Message("dbredirector start");
 	ExecuteServer();
 	Message("dbredirector end");
