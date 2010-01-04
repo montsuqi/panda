@@ -7,3 +7,6 @@ Makefile
 Makefile.in
 dbs
 dbredirector
+dblogger
+dbmaster
+dbslave
