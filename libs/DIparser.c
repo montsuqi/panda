@@ -921,11 +921,6 @@ ENTER_FUNC;
 			if		(  GetSymbol  ==  T_SCONST  ) {
 				dbg->redirect = (DBG_Struct *)StrDup(ComSymbol);
 				dbg->redirectorMode = REDIRECTOR_MODE_LOG;
-				if (dbg->redirect->type) {
-					if (stricmp(dbg->redirect->type, "postgres") != 0) {
-						ParError("invalid log db type");
-					}
-				}
 			} else {
 				ParError("invalid logdbname");
 			}

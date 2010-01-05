@@ -765,7 +765,13 @@ ENTER_FUNC;
 
 	if (RedirectorMode == REDIRECTOR_MODE_LOG) {
 		dbgmsg("log mode");
+		if (stricmp(ThisDBG->type, "postgresql") != 0) {
+			Error("invalid db type");
+		}
 		DBLog = Open_DBLog(ThisDBG, ThisDBG->logTableName);
+		if (!DBLog) {
+			Error("open logdb failed");
+		}
 	} else {
 		dbgmsg("redirect mode");
 	}
