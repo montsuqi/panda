@@ -146,6 +146,7 @@ typedef	struct _DBG_Struct	{
 	char		*coding;				/*	DB backend coding		*/
 	/*	DB redirect variable	*/
 	Port		*redirectPort;
+	char		*redirectName;
 	struct	_DBG_Struct	*redirect;
 	int		redirectorMode;	
 	char		*logTableName;

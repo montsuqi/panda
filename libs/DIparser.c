@@ -714,6 +714,7 @@ NewDBG_Struct(
 	dbg->server = NULL;
 	dbg->file = NULL;
 	dbg->redirect = NULL;
+	dbg->redirectName = NULL;
 	dbg->logTableName = NULL;
 	dbg->redirectorMode = REDIRECTOR_MODE_PATCH;
 	dbg->redirectPort = NULL;
@@ -870,7 +871,7 @@ ENTER_FUNC;
 			break;
 		  case	T_REDIRECT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->redirect = (DBG_Struct *)StrDup(ComSymbol);
+				dbg->redirectName = StrDup(ComSymbol);
 			} else {
 				ParError("invalid redirect group");
 			}
@@ -919,7 +920,7 @@ ENTER_FUNC;
 			break;
 		  case	T_LOGDBNAME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->redirect = (DBG_Struct *)StrDup(ComSymbol);
+				dbg->redirectName = StrDup(ComSymbol);
 				dbg->redirectorMode = REDIRECTOR_MODE_LOG;
 			} else {
 				ParError("invalid logdbname");
@@ -927,7 +928,7 @@ ENTER_FUNC;
 			break;
 		  case	T_LOGTABLENAME:
 			if		(  GetSymbol  ==  T_SCONST  ) {
-				dbg->logTableName = (DBG_Struct *)StrDup(ComSymbol);
+				dbg->logTableName = StrDup(ComSymbol);
 			} else {
 				ParError("invalid logtable_name");
 			}
@@ -972,12 +973,11 @@ _AssignDBG(
 	DBG_Struct	*red;
 
 ENTER_FUNC;
-	if		(  dbg->redirect  !=  NULL  ) {
-		red = g_hash_table_lookup(ThisEnv->DBG_Table,(char *)dbg->redirect);
+	if (dbg->redirectName != NULL) {
+		red = g_hash_table_lookup(ThisEnv->DBG_Table,dbg->redirectName);
 		if		(  red  ==  NULL  ) {
 			ParError("redirect DB group not found");
 		}
-		xfree(dbg->redirect);
 		dbg->redirect = red;
 	}
 LEAVE_FUNC;

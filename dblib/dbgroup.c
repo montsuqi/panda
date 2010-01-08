@@ -217,15 +217,10 @@ extern	int
 TransactionStart(
 	DBG_Struct *dbg)
 {
-	int		i;
 	int		rc;
 
 ENTER_FUNC;
 	NewPool("Transaction");
-	if		(  dbg  ==  NULL  ) {
-		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		}
-	}
 	rc = ExecDBG_Operation(dbg,"DBSTART");
 LEAVE_FUNC;
 	return	(rc);
@@ -235,16 +230,10 @@ extern	int
 TransactionEnd(
 	DBG_Struct *dbg)
 {
-	int		i;
 	int		rc;
 
 ENTER_FUNC;
 	rc = ExecDBG_Operation(dbg,"DBCOMMIT");
-	if		(  dbg  ==  NULL  ) {
-		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-			dbg = ThisEnv->DBG[i];
-		}
-	}
 	ReleasePoolByName("Transaction");
 LEAVE_FUNC;
 	return	(rc);
