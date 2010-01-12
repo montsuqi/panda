@@ -412,9 +412,11 @@ LEAVE_FUNC;
 #ifdef	DEBUG
 			DumpValueStruct(value);
 #endif
-			SetValueName(name);
-			dbgmsg("*");
-			SendValueString(fpComm,value,NULL,fName,fType,Encoding);
+			if 	( value != NULL ) {
+				SetValueName(name);
+				dbgmsg("*");
+				SendValueString(fpComm,value,NULL,fName,fType,Encoding);
+			}
 			if (ses->fSendTermLF && fName) {
 			  SendStringDelim(fpComm,"\n");
 			}
