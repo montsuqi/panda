@@ -564,7 +564,7 @@ ENTER_FUNC;
 	ctrl.pno = 0;
 	ctrl.blocks = 0;
 	ctrl.count = rctrl->count;
-	ctrl.cmdcount = rctrl->cmdcount;
+	ctrl.cmdtuples = rctrl->cmdtuples;
 	ctrl.limit = rctrl->limit;
 	ctrl.redirect = rctrl->redirect;	
 

@@ -528,7 +528,7 @@ ExecQuery(
 ENTER_FUNC;
  	ctrl.rc = 0;
 	ctrl.count = 0;
-	ctrl.cmdcount = 0;
+	ctrl.cmdtuples = 0;
 	ctrl.redirect = 1;
 	dbgprintf("para => [%s]", para);
 	if		(  ( q = strchr(para,':') )  !=  NULL  ) {
@@ -578,7 +578,7 @@ ENTER_FUNC;
 		  || strcmp(func, "DBINSERT") == 0
 		  || strcmp(func, "DBDELETE") == 0))
 	  {
-	    ctrl.count = ctrl.cmdcount;
+	    ctrl.count = ctrl.cmdtuples;
 	  }
 	} else {
 	  ctrl.count = 0;
