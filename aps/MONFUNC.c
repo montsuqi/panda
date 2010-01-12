@@ -119,16 +119,9 @@ ENTER_FUNC;
 			CheckArg(func,&ctrl);
 			rec = NULL;
 		} else {
-#ifdef	DEBUG
-			{
-				size_t	size = OpenCOBOL_SizeValue(OpenCOBOL_Conv, value);
-				int		i;
-
-				for ( i = 0 ; i < size ; i ++ ) {
-					printf("%02X:",data[i]);
-				}
+			if (  rec == NULL  ) {
+				Error("record[%s,%s,%s] not found",rname,pname,func);
 			}
-#endif				
 			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
 		}
 		ret = ExecDB_Process(&ctrl,rec,value);
