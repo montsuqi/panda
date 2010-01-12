@@ -151,6 +151,9 @@ SendValueString(
 	int		i;
 
 ENTER_FUNC;
+	if 	( value == NULL ) {
+		Error("value is null");
+	}
 	if		(  name  ==  NULL  ) { 
 		name = namebuff + strlen(namebuff);
 	}
