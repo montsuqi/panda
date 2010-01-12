@@ -104,6 +104,7 @@ typedef	struct {
 	int		cmdtuples;  
 	int		limit;
 	int		redirect;
+	int		fDBOperation;
 }	DBCOMM_CTRL;
 
 typedef	struct {

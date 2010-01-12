@@ -169,7 +169,7 @@ ENTER_FUNC;
 	ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
 #endif
 	ret = NULL;
-	if		(  rec  ==  NULL  ) { 
+	if		(  ctrl->fDBOperation  ) { 
 		for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 			dbg = ThisEnv->DBG[i];
 			ctrl->rc += ExecFunction(dbg,ctrl->func,FALSE);
@@ -494,6 +494,7 @@ MakeCTRL(
 	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
 	ctrl->pno = ValueInteger(GetItemLongName(mcp,"db.path.pname"));
 	ctrl->count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
+	ctrl->fDBOperation = FALSE;
 #if	0
 	ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 #else
@@ -559,7 +560,7 @@ MakeCTRLbyName(
 	int			rno;
 
 ENTER_FUNC;
-        ctrl.rc = 0;
+	ctrl.rc = 0;
 	ctrl.rno = 0;
 	ctrl.pno = 0;
 	ctrl.blocks = 0;
@@ -567,6 +568,7 @@ ENTER_FUNC;
 	ctrl.cmdtuples = rctrl->cmdtuples;
 	ctrl.limit = rctrl->limit;
 	ctrl.redirect = rctrl->redirect;	
+	ctrl.fDBOperation = FALSE;
 
 	*value = NULL;
 	if		(	(  rname  !=  NULL  )

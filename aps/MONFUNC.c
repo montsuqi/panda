@@ -98,26 +98,26 @@ ENTER_FUNC;
 		if		(  !strcmp(func,"DBOPEN")  ) {
 			ctrl.limit = 1;
 			ctrl.count = 0;
+			ctrl.fDBOperation = TRUE;
 			CheckArg(func,&ctrl);
-			rec = NULL;
 		} else
 		if		(  !strcmp(func,"DBCLOSE")  ) {
+			ctrl.fDBOperation = TRUE;
 			CheckArg(func,&ctrl);
-			rec = NULL;
 		} else
 		if		(  !strcmp(func,"DBSTART")  ) {
 			ctrl.limit = 1;
 			ctrl.count = 0;
+			ctrl.fDBOperation = TRUE;
 			CheckArg(func,&ctrl);
-			rec = NULL;
 		} else
 		if		(  !strcmp(func,"DBCOMMIT")  ) {
+			ctrl.fDBOperation = TRUE;
 			CheckArg(func,&ctrl);
-			rec = NULL;
 		} else
 		if		(  !strcmp(func,"DBDISCONNECT")  ) {
+			ctrl.fDBOperation = TRUE;
 			CheckArg(func,&ctrl);
-			rec = NULL;
 		} else {
 			if (  rec == NULL  ) {
 				Error("record[%s,%s,%s] not found",rname,pname,func);

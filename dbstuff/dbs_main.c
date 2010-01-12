@@ -564,6 +564,7 @@ ENTER_FUNC;
 		ctrl.rno = 0;
 		ctrl.pno = 0;
 		ctrl.rc = 0;
+		ctrl.fDBOperation = TRUE;
 		strcpy(ctrl.func,func);
 		rec = NULL;
 		value = NULL;
