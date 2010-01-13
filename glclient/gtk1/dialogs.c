@@ -30,6 +30,7 @@
 #include	<gnome.h>
 
 #include	"dialogs.h"
+#include	"toplevel.h"
 
 GtkWidget*
 message_dialog(
@@ -37,11 +38,17 @@ message_dialog(
 	gboolean message_type)
 {
 	GtkWidget *dialog, *button;
-	if (message_type){
-		dialog = gnome_ok_dialog(message);
-	} else {
-		dialog = gnome_error_dialog(message);
+	GtkWindow *parent;
+	
+	if ((parent = (GtkWindow *)g_list_nth_data(DialogStack,g_list_length(DialogStack)-1)) == NULL) {
+		parent = GTK_WINDOW(TopWindow);
 	}
+	if (message_type){
+		dialog = gnome_ok_dialog_parented(message,parent);
+	} else {
+		dialog = gnome_error_dialog_parented(message,parent);
+	}
+	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
 	button = GNOME_DIALOG (dialog)->buttons->data;
 	gtk_widget_grab_focus (button);
 	return (dialog);
