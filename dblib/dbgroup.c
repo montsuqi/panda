@@ -565,7 +565,7 @@ ENTER_FUNC;
 	ctrl.pno = 0;
 	ctrl.blocks = 0;
 	ctrl.count = rctrl->count;
-	ctrl.cmdtuples = rctrl->cmdtuples;
+	ctrl.tuples = rctrl->tuples;
 	ctrl.limit = rctrl->limit;
 	ctrl.redirect = rctrl->redirect;	
 	ctrl.fDBOperation = FALSE;
@@ -603,6 +603,7 @@ MakeMCP(
 	ValueInteger(GetItemLongName(mcp,"db.path.pname")) = ctrl->pno;
 	ValueInteger(GetItemLongName(mcp,"db.rcount")) = ctrl->count;
 	ValueInteger(GetItemLongName(mcp,"db.limit")) = ctrl->limit;
+	ValueInteger(GetItemLongName(mcp,"db.tuples")) = ctrl->tuples;
 }
 
 #ifdef	DEBUG

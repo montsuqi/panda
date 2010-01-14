@@ -94,6 +94,7 @@ ENTER_FUNC;
 			ctrl.redirect = 1;
 		}
 #endif
+		ctrl.tuples = 0;
 		ctrl.rc = 0;
 		if		(  !strcmp(func,"DBOPEN")  ) {
 			ctrl.limit = 1;

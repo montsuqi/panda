@@ -101,7 +101,7 @@ typedef	struct {
 	int		rno;
 	int		pno;
 	int		count;
-	int		cmdtuples;  
+	int		tuples;  
 	int		limit;
 	int		redirect;
 	int		fDBOperation;
