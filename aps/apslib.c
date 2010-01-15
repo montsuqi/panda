@@ -147,39 +147,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	int
-MCP_ExecFunction(
-	ProcessNode	*node,
-	char	*rname,
-	char	*pname,
-	char	*func,
-	ValueStruct	*data)
-{
-	DBCOMM_CTRL		ctrl;
-	RecordStruct	*rec;
-	ValueStruct		*value
-		,			*ret;
-
-ENTER_FUNC;
-	dbgprintf("rname = [%s]",rname); 
-	dbgprintf("pname = [%s]",pname); 
-	dbgprintf("func  = [%s]",func); 
-	rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
-	if		(  rec  !=  NULL  ) {
-		CopyValue(value,data);
-	}
-	ret = ExecDB_Process(&ctrl,rec,value);
-	if		(  ret  !=  NULL  ) {
-		CopyValue(data,ret);
-		FreeValueStruct(ret);
-	}
-	if		(  node  !=  NULL  ) {
-		MakeMCP(node->mcprec->value,&ctrl);
-	}
-LEAVE_FUNC;
-	return	(ctrl.rc);
-}
-
 extern	ValueStruct	*
 MCP_GetDB_Define(
 	char	*name)

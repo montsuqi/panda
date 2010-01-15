@@ -1218,7 +1218,7 @@ ENTER_FUNC;
 					dbgmsg("NG");
 					Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,usage)));
 					ctrl->rc = - status;
-					ctrl->count = 0;
+					ctrl->rcount = 0;
 					break;
 				} else {
 					switch	(status) {
@@ -1226,7 +1226,7 @@ ENTER_FUNC;
 						if		(  fIntoAster  ) {
 							if		(  ( n = PQntuples(res) )  >  0  ) {
 								dbgmsg("OK");
-								ctrl->count = n;
+								ctrl->rcount = n;
 								if		(  n  ==  1  ) {
 									ret = DuplicateValue(args,FALSE);
 									level = 0;
@@ -1255,7 +1255,7 @@ ENTER_FUNC;
 							ctrl->rc = MCP_BAD_SQL;
 						} else
 						if		(  ( ntuples = PQntuples(res) )  >  0  ) {
-							ctrl->count = ntuples;
+							ctrl->rcount = ntuples;
 							if		(  ntuples  ==  1  ) {
 								for	( j = 0 ; j < items ; j ++ ) {
 									GetValue(dbg,res,0,j,tuple[j]);
@@ -1426,7 +1426,7 @@ ENTER_FUNC;
 	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -1455,7 +1455,7 @@ ENTER_FUNC;
 	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -1492,7 +1492,7 @@ ENTER_FUNC;
 	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -1536,7 +1536,7 @@ ENTER_FUNC;
 
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	}
 LEAVE_FUNC;
 	return	(NULL);
@@ -1558,7 +1558,7 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	} else {
 		ctrl->rc = MCP_OK;
 		db = rec->opt.db;
@@ -1592,7 +1592,7 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
@@ -1608,7 +1608,7 @@ ENTER_FUNC;
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_TUPLES_OK);
 			if ( ctrl->rc == MCP_OK ) {
 				if		(  ( n = PQntuples(res) )  >  0  ) {
-					ctrl->count = n;
+					ctrl->rcount = n;
 					if		(  n  ==  1  ) {
 						ret = DuplicateValue(args,FALSE);
 						level = 0;
@@ -1627,7 +1627,7 @@ ENTER_FUNC;
 					ctrl->rc = MCP_OK;
 				} else {
 					dbgmsg("EOF");
-					ctrl->count = 0;
+					ctrl->rcount = 0;
 					ctrl->rc = MCP_EOF;
 				}
 			}
@@ -1657,7 +1657,7 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
@@ -1668,7 +1668,7 @@ ENTER_FUNC;
 		} else {
 			p = sql;
 			p += sprintf(p,"CLOSE %s_%s_csr",rec->name,path->name);
-			ctrl->count = 0;
+			ctrl->rcount = 0;
 			res = _PQexec(dbg,sql,ctrl->redirect,path->usage);
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
@@ -1699,7 +1699,7 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
@@ -1739,13 +1739,13 @@ ENTER_FUNC;
 				}
 			}
             LBS_EmitEnd(sql);
-			ctrl->count = 0;
+			ctrl->rcount = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
 			cmdtuples = PQcmdTuples(res);
 			if (*cmdtuples != '\0') {
-			  ctrl->tuples = atoi(cmdtuples);
+			  ctrl->rcount = atoi(cmdtuples);
 			} else {
-			  ctrl->tuples = 0;
+			  ctrl->rcount = 0;
 			}
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
@@ -1777,7 +1777,7 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
@@ -1811,13 +1811,13 @@ ENTER_FUNC;
 				}
 			}
             LBS_EmitEnd(sql);
-			ctrl->count = 0;
+			ctrl->rcount = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
 			cmdtuples = PQcmdTuples(res);
 			if (*cmdtuples != '\0') {
-			  ctrl->tuples = atoi(cmdtuples);
+			  ctrl->rcount = atoi(cmdtuples);
 			} else {
-			  ctrl->tuples = 0;
+			  ctrl->rcount = 0;
 			}
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
@@ -1847,7 +1847,7 @@ ENTER_FUNC;
 	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
@@ -1869,13 +1869,13 @@ ENTER_FUNC;
 			InsertValues(dbg,sql,args);
 			LBS_EmitString(sql,") ");
             LBS_EmitEnd(sql);
-			ctrl->count = 0;
+			ctrl->rcount = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
 			cmdtuples = PQcmdTuples(res);
 			if (*cmdtuples != '\0') {
-			  ctrl->tuples = atoi(cmdtuples);
+			  ctrl->rcount = atoi(cmdtuples);
 			} else {
-			  ctrl->tuples = 0;
+			  ctrl->rcount = 0;
 			}
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
@@ -1937,7 +1937,7 @@ ENTER_FUNC;
 	dbgprintf("[%s]",name); 
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
-		ctrl->count = 0;
+		ctrl->rcount = 0;
 	} else {
 		db = rec->opt.db;
 		path = db->path[ctrl->pno];
@@ -1950,7 +1950,7 @@ ENTER_FUNC;
 				ret = ExecPGSQL(dbg,ctrl,src,args,path->usage);
 			} else {
 				ctrl->rc = MCP_BAD_OTHER;
-				ctrl->count = 0;
+				ctrl->rcount = 0;
 			}
 		}
 	}

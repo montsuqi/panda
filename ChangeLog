@@ -1,3 +1,19 @@
+2010-01-15  Yusuke Mihara  <mihara@netlab.jp>
+
+	* aps/MONFUNC.c cobol/MCPMAIN.CBL 
+	dblib/PostgreSQL.c dblib/dbgroup.c dbstuff/dbs_main.c 
+	include/struct.h libs/DIparser.c tools/pandadb.c
+	DBCOMM_CTRL->tuples、MCPAREA-TUPLES を削除
+	DBCOMM_CTRL->count を DBCOMM_CTRL->rcountに変更
+	dbgroup.c の MakeCTRLbyName を GetTableFuncData に変更
+	MONFUNC.c のDB funcとTABLE funcの振り分けのあたりを整理
+
+	* aps/apslib.c
+	使用していない MCP_ExecFunction を削除
+
+	* aps/Makefile.am aps/MCPSUB.c
+	MCPSUB を削除
+
 2009-12-21  Kazuya Nagadomi  <nagadomi@wasp-corp.co.jp>
 
 	* dblib/PostgreSQL.c

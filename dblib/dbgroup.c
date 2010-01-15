@@ -483,40 +483,12 @@ GetDB_Sslmode(
 	return	(sslmode);
 }
 
-extern	void
-MakeCTRL(
-	DBCOMM_CTRL	*ctrl,
-	ValueStruct	*mcp)
-{
-	strcpy(ctrl->func,ValueStringPointer(GetItemLongName(mcp,"func")));
-	ctrl->rc = ValueInteger(GetItemLongName(mcp,"rc"));
-	ctrl->blocks = ValueInteger(GetItemLongName(mcp,"db.path.blocks"));
-	ctrl->rno = ValueInteger(GetItemLongName(mcp,"db.path.rname"));
-	ctrl->pno = ValueInteger(GetItemLongName(mcp,"db.path.pname"));
-	ctrl->count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
-	ctrl->fDBOperation = FALSE;
-#if	0
-	ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
-#else
-	if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
-		ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
-		ctrl->redirect = ValueInteger(GetItemLongName(mcp,"db.redirect"));
-	} else {
-		ctrl->limit = 1;
-		ctrl->redirect = 1;
-	}
-#endif
-#ifdef	DEBUG
-	DumpDB_Node(ctrl);
-#endif
-}
-
-extern	ValueStruct	*
-_GetDB_Argument(
+static	ValueStruct	*
+GetTableFuncValue(
 	RecordStruct	*rec,
 	char			*pname,
 	char			*func,
-	int				*apno)
+	int				*ctrl_pno)
 {
 	ValueStruct	*value;
 	PathStruct		*path;
@@ -540,55 +512,36 @@ ENTER_FUNC;
 	} else {
 		pno = 0;
 	}
-	if		(  apno  !=  NULL  ) {
-		*apno = pno;
-	}
+	*ctrl_pno = pno;
 LEAVE_FUNC;
 	return	(value);
 }
 
-extern	RecordStruct	*
-MakeCTRLbyName(
+extern	int
+GetTableFuncData(
+	RecordStruct	**rec,
 	ValueStruct		**value,
-	DBCOMM_CTRL	*rctrl,
-	char	*rname,
-	char	*pname,
-	char	*func)
+	DBCOMM_CTRL		*ctrl,
+	char			*rname,
+	char			*pname,
+	char			*func)
 {
-	DBCOMM_CTRL		ctrl;
-	RecordStruct	*rec;
-	int			rno;
+	int	rno;
 
 ENTER_FUNC;
-	ctrl.rc = 0;
-	ctrl.rno = 0;
-	ctrl.pno = 0;
-	ctrl.blocks = 0;
-	ctrl.count = rctrl->count;
-	ctrl.tuples = rctrl->tuples;
-	ctrl.limit = rctrl->limit;
-	ctrl.redirect = rctrl->redirect;	
-	ctrl.fDBOperation = FALSE;
-
 	*value = NULL;
-	if		(	(  rname  !=  NULL  )
-			&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
-		ctrl.rno = rno - 1;
-		rec = ThisDB[rno-1];
-		*value = _GetDB_Argument(rec,pname,func,&ctrl.pno);
-	} else {
-		ctrl.rc = MCP_BAD_ARG;	  
-		rec = NULL;
+	*rec = NULL;
+
+	ctrl->fDBOperation = FALSE;
+	if ((rname != NULL)
+		&& ((rno = (int)(long)g_hash_table_lookup(DB_Table,rname)) != 0)) {
+		ctrl->rno = rno -1;
+		*rec = ThisDB[rno-1];
+		*value = GetTableFuncValue(*rec,pname,func,&(ctrl->pno));
+		return 1;
 	}
-	if		(  rctrl  !=  NULL  ) {
-		strcpy(ctrl.func,func);
-		*rctrl = ctrl;
-	}
-#ifdef	DEBUG
-	DumpDB_Node(&ctrl);
-#endif
+	return 0;
 LEAVE_FUNC;
-	return	(rec);
 }
 
 extern	void
@@ -601,9 +554,8 @@ MakeMCP(
 	ValueInteger(GetItemLongName(mcp,"db.path.blocks")) = ctrl->blocks;
 	ValueInteger(GetItemLongName(mcp,"db.path.rname")) = ctrl->rno;
 	ValueInteger(GetItemLongName(mcp,"db.path.pname")) = ctrl->pno;
-	ValueInteger(GetItemLongName(mcp,"db.rcount")) = ctrl->count;
+	ValueInteger(GetItemLongName(mcp,"db.rcount")) = ctrl->rcount;
 	ValueInteger(GetItemLongName(mcp,"db.limit")) = ctrl->limit;
-	ValueInteger(GetItemLongName(mcp,"db.tuples")) = ctrl->tuples;
 }
 
 #ifdef	DEBUG

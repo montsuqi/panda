@@ -100,8 +100,7 @@ typedef	struct {
 	int		blocks;
 	int		rno;
 	int		pno;
-	int		count;
-	int		tuples;  
+	int		rcount;
 	int		limit;
 	int		redirect;
 	int		fDBOperation;

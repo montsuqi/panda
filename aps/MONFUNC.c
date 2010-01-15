@@ -79,10 +79,7 @@ ENTER_FUNC;
 	} else {
 		rname = ValueStringPointer(GetItemLongName(mcp,"db.table"));
 		pname = ValueStringPointer(GetItemLongName(mcp,"db.pathname"));
-		value = NULL;
 		dbgprintf("%s:%s:%s",rname,pname,func);
-		rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
-		ctrl.count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
 #if	0
 		ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 #else
@@ -94,33 +91,21 @@ ENTER_FUNC;
 			ctrl.redirect = 1;
 		}
 #endif
-		ctrl.tuples = 0;
+		ctrl.rcount = 0;
 		ctrl.rc = 0;
-		if		(  !strcmp(func,"DBOPEN")  ) {
+		strcpy(ctrl.func,func);
+		if		(  !strcmp(func,"DBOPEN") 		||
+				   !strcmp(func,"DBCLOSE")		||
+				   !strcmp(func,"DBSTART") 		||
+				   !strcmp(func,"DBCOMMIT")		||
+				   !strcmp(func,"DBDISCONNECT")  ) {
 			ctrl.limit = 1;
-			ctrl.count = 0;
 			ctrl.fDBOperation = TRUE;
-			CheckArg(func,&ctrl);
-		} else
-		if		(  !strcmp(func,"DBCLOSE")  ) {
-			ctrl.fDBOperation = TRUE;
-			CheckArg(func,&ctrl);
-		} else
-		if		(  !strcmp(func,"DBSTART")  ) {
-			ctrl.limit = 1;
-			ctrl.count = 0;
-			ctrl.fDBOperation = TRUE;
-			CheckArg(func,&ctrl);
-		} else
-		if		(  !strcmp(func,"DBCOMMIT")  ) {
-			ctrl.fDBOperation = TRUE;
-			CheckArg(func,&ctrl);
-		} else
-		if		(  !strcmp(func,"DBDISCONNECT")  ) {
-			ctrl.fDBOperation = TRUE;
+			rec = NULL;
+			value = NULL;
 			CheckArg(func,&ctrl);
 		} else {
-			if (  rec == NULL  ) {
+			if (  !GetTableFuncData(&rec,&value,&ctrl,rname,pname,func)  ) {
 				Error("record[%s,%s,%s] not found",rname,pname,func);
 			}
 			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);

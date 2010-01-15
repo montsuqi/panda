@@ -334,15 +334,15 @@ WriteClientString(
 ENTER_FUNC;
 	SendStringDelim(fpComm,"Exec: ");
 	if		(  ses->fCount  ) {
-		sprintf(buff,"%d:%d\n",ctrl->rc,ctrl->count);
+		sprintf(buff,"%d:%d\n",ctrl->rc,ctrl->rcount);
 	} else {
 		sprintf(buff,"%d\n",ctrl->rc);
-		ctrl->count = 1;
+		ctrl->rcount = 1;
 	}
 	SendStringDelim(fpComm,buff);
 	dbgprintf("[%s]",buff);
 	if		(	(  ses->fIgnore  )
-			&&	(	(  ctrl->count  ==  0     )
+			&&	(	(  ctrl->rcount  ==  0     )
 				||	(  args         ==  NULL  ) ) ) {
 LEAVE_FUNC;
 		return;
@@ -352,7 +352,7 @@ LEAVE_FUNC;
 	while	(  RecvStringDelim(fpComm,SIZE_BUFF,name)  ) {
 		if		(  *name  ==  0  )	{
 			ix ++;
-			if		(  ix  >=  ctrl->count  )	break;
+			if		(  ix  >=  ctrl->rcount  )	break;
 			if		(ses->fLimitResult &&  ix  >=  limit  )	break;
 		}
 		dbgprintf("name = [%s]",name);
@@ -368,7 +368,7 @@ LEAVE_FUNC;
 			limit = 1;
 		}
 		if		(  limit  <  0  ) {
-			limit = ctrl->count;
+			limit = ctrl->rcount;
 		}
 		if		(  ( p = strchr(q,':') )  !=  NULL  ) {
 			*p = 0;
@@ -393,7 +393,7 @@ LEAVE_FUNC;
 					SendStringDelim(fpComm,"\n");
 				}
 				ix ++;
-				if		(  ix  ==  ctrl->count  )	break;
+				if		(  ix  ==  ctrl->rcount  )	break;
 			}
 		} else {
 			if		(  *vname  !=  0  ) {
@@ -529,9 +529,9 @@ ExecQuery(
 
 ENTER_FUNC;
  	ctrl.rc = 0;
-	ctrl.count = 0;
-	ctrl.tuples = 0;
+	ctrl.rcount = 0;
 	ctrl.redirect = 1;
+	strcpy(ctrl.func,func);
 	dbgprintf("para => [%s]", para);
 	if		(  ( q = strchr(para,':') )  !=  NULL  ) {
 		*q = 0;
@@ -555,9 +555,9 @@ ENTER_FUNC;
 			ctrl.limit = 1;
 		}
 		DecodeStringURL(pname,p);
-		rec = MakeCTRLbyName(&arg,&ctrl,rname,pname,func);
-		if (rec == NULL) {
-		  ctrl.rc = MCP_BAD_ARG;
+		if (!GetTableFuncData(&rec,&arg,&ctrl,rname,pname,func)) {
+			Warning("record[%s,%s,%s] not found",rname,pname,func);
+			ctrl.rc = MCP_BAD_ARG;
 		}
 	} else {
 		DecodeStringURL(func,para);
@@ -565,7 +565,6 @@ ENTER_FUNC;
 		ctrl.pno = 0;
 		ctrl.rc = 0;
 		ctrl.fDBOperation = TRUE;
-		strcpy(ctrl.func,func);
 		rec = NULL;
 		value = NULL;
 		ret = FALSE;
@@ -576,15 +575,8 @@ ENTER_FUNC;
 
 	if (ctrl.rc == 0) {
 	  value = ExecDB_Process(&ctrl,rec,arg);
-	  if (ses->fCmdTuples
-	      && (strcmp(func, "DBUPDATE") == 0
-		  || strcmp(func, "DBINSERT") == 0
-		  || strcmp(func, "DBDELETE") == 0))
-	  {
-	    ctrl.count = ctrl.tuples;
-	  }
 	} else {
-	  ctrl.count = 0;
+	  ctrl.rcount = 0;
 	}
 	ret = TRUE;
 	fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;

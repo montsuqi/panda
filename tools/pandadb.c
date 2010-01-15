@@ -365,7 +365,7 @@ ENTER_FUNC;
 				   !=  NULL  ) {
 			left = sb.st_size;
 			while	(  left  >  0  ) {
-				if		(  ( rec = MakeCTRLbyName(&value,&ctrl,rname,pname,"DBINSERT") )  !=  NULL  ) {
+				if		(  GetTableFuncData(&rec,&value,&ctrl,rname,pname,"DBINSERT") ) {
 					size = infunc->UnPackValue(inopt,p,value);
 #ifdef	TRACE
 					DumpValueStruct(value);
