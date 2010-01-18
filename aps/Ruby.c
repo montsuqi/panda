@@ -1236,13 +1236,13 @@ table_exec(int argc, VALUE *argv, VALUE self)
 #ifdef	DEBUG
 	DumpValueStruct(result);
 	dbgprintf("ctrl.rc    = %d",ctrl.rc);
-	dbgprintf("ctrl.count = %d",ctrl.count);
+	dbgprintf("ctrl.rcount = %d",ctrl.rcount);
 #endif
     if (ctrl.rc == MCP_OK) {
 		if		(  result  ==  NULL  ) {
 			result = DuplicateValue(value,TRUE);
 		}
-		if		(  ctrl.count  ==  1  ) {
+		if		(  ctrl.rcount  ==  1  ) {
 			return recval_new(result, 1);
 		} else {
 			return aryval_new(result, 1);
