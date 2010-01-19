@@ -370,6 +370,7 @@ SetLabel(
 ENTER_FUNC;
 	SetStyle(widget, GetStyle(data->style));
 	gtk_label_set(GTK_LABEL(widget),data->text);
+	gtk_widget_show(widget);
 LEAVE_FUNC;
 }
 
@@ -419,6 +420,7 @@ ENTER_FUNC;
 	SetStyle(widget,GetStyle(data->style));
 	if (data->label != NULL) {
 		SetWidgetLabelRecursive(widget,data->label);
+		gtk_widget_show(widget);
 	}
 	if (data->have_button_state == TRUE) {
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), 
