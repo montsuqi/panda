@@ -194,7 +194,7 @@ LockRedirectorConnect(
 	char *sql = "CREATE TEMP TABLE " \
 			   REDIRECT_LOCK_TABLE \
 			   " (flag int);";
-	
+
 	res = PQexec(conn, sql);
 	PQclear(res);	
 }
@@ -205,17 +205,27 @@ CheckRedirectorConnect(
 {
 	PGresult	*res;
 	Bool	ret;	
-	char	*sql = "SELECT relname FROM pg_class " \
-			       "WHERE relkind = 'r' AND relname = '" \
+	char	*sql = "SELECT c.relname FROM pg_class AS c,pg_namespace AS n" \
+			       " WHERE c.relkind = 'r' " \
+			       "   AND c.relnamespace = n.oid "\
+			       "   AND n.nspname LIKE 'pg_temp%'"\
+			       "   AND c.relname = '" \
 			       REDIRECT_LOCK_TABLE \
 			       "';";
 	res = PQexec(conn,sql);
-	ret = (PQntuples(res)  ==  0 ) ? TRUE : FALSE ;
-	PQclear(res);
-	if ( !ret ) {
-		GetDBRedirectStatus(DB_STATUS_LOCKEDRED);
-		Warning("DBredirector is already connected. ");
+	if ( (res != NULL) && (PQresultStatus(res) == PGRES_TUPLES_OK)) {
+		ret = (PQntuples(res)  ==  0 ) ? TRUE : FALSE ;
+		if ( !ret ) {
+			GetDBRedirectStatus(DB_STATUS_LOCKEDRED);
+			Warning("DBredirector is already connected. ");
+		}
+		printf("tuples ok\n");
+		
+	} else {
+		Warning("PostgreSQL: %s",PQerrorMessage(conn));
+		ret = FALSE;
 	}
+	PQclear(res);
 	return ret;
 }
 
