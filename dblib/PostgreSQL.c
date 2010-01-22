@@ -52,7 +52,7 @@
 
 static	int		level;
 static	char	*rname[SIZE_RNAME];
-static	int		alevel;
+static	int	alevel;
 static	int		Dim[SIZE_RNAME];
 static	Bool	fInArray;
 
@@ -219,8 +219,6 @@ CheckRedirectorConnect(
 			GetDBRedirectStatus(DB_STATUS_LOCKEDRED);
 			Warning("DBredirector is already connected. ");
 		}
-		printf("tuples ok\n");
-		
 	} else {
 		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 		ret = FALSE;
@@ -453,27 +451,27 @@ ParArray(
 				SetValueString(item,qq,dbg->coding);
 				xfree(qq);
 				break;
-              case	GL_TYPE_BINARY:
-                pp = p;
-                if		(  *p  ==  '"'  ) {
-                    p ++;
-                    len = 0;
-                    while	(  *p  !=  '"'  ) {
-                        p ++;
-                        len ++;
-                    }
-                } else break;
-                qq = (char *)xmalloc(len+1);
-                p = pp + 1;
-                q = qq;
-                while	(  *p  !=  '"'  ) {
-                    *q ++ = *p ++;
-                }
-                *q = 0;
-                p ++;
-                SetValueBinary(item, qq, q - qq);
-                xfree(qq);
-                break;
+			  case	GL_TYPE_BINARY:
+				pp = p;
+				if		(  *p  ==  '"'  ) {
+					p ++;
+					len = 0;
+					while	(  *p  !=  '"'  ) {
+						p ++;
+						len ++;
+					}
+				} else break;
+				qq = (char *)xmalloc(len+1);
+				p = pp + 1;
+				q = qq;
+				while	(  *p  !=  '"'  ) {
+					*q ++ = *p ++;
+				}
+				*q = 0;
+				p ++;
+				SetValueBinary(item, qq, q - qq);
+				xfree(qq);
+				break;
 			  case	GL_TYPE_ARRAY:
 				p = ParArray(dbg,p,item);
 				break;
@@ -494,11 +492,11 @@ ParArray(
 	return	(p);
 }
 
-#define	STATE_DATE_NULL		0
-#define	STATE_DATE_YEAR		1
+#define	STATE_DATE_NULL	0
+#define	STATE_DATE_YEAR	1
 #define	STATE_DATE_MON		2
-#define	STATE_DATE_MDAY		3
-#define	STATE_DATE_HOUR		4
+#define	STATE_DATE_MDAY	3
+#define	STATE_DATE_HOUR	4
 #define	STATE_DATE_MIN		5
 #define	STATE_DATE_SEC		6
 static	void
@@ -1341,11 +1339,11 @@ ENTER_FUNC;
 				_PQclear(res);
 				break;
 			}
-			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-			PutCheckDataDB_Redirect(dbg, ":");
 			if		(	(  IsUsageUpdate(usage)  )
 						&&	(  fRed                  )
 						&&	(  IsRedirectQuery(res)  ) ) {
+				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
+				PutCheckDataDB_Redirect(dbg, ":");
 				PutDB_Redirect(dbg,sql);
 			}
 			_PQclear(res);
@@ -1529,7 +1527,7 @@ ENTER_FUNC;
 		if ( (fCommit == TRUE) && (rc == MCP_OK) ) {
 			CommitDB_Redirect(dbg);
 		} else {
-			AbortDB_Redirect(dbg); 
+			AbortDB_Redirect(dbg);
 		}
 	} else {
 		conn = NULL;
@@ -1803,18 +1801,18 @@ ENTER_FUNC;
 			item = db->pkey->item;
 			while	(  *item  !=  NULL  ) {
 				pk = *item;
-                LBS_EmitString(sql,rec->name);
-                LBS_EmitChar(sql,'.');
+				LBS_EmitString(sql,rec->name);
+				LBS_EmitChar(sql,'.');
 				while	(  *pk  !=  NULL  ) {
-                    LBS_EmitString(sql,*pk);
+					LBS_EmitString(sql,*pk);
 					pk ++;
 					if		(  *pk  !=  NULL  ) {
                         LBS_EmitChar(sql,' ');
 					}
 				}
-                LBS_EmitString(sql," = ");
-                KeyValue(dbg,sql,args,*item);
-                LBS_EmitChar(sql,' ');
+				LBS_EmitString(sql," = ");
+				KeyValue(dbg,sql,args,*item);
+				LBS_EmitChar(sql,' ');
 				item ++;
 				if		(  *item  !=  NULL  ) {
                     LBS_EmitString(sql,"AND\t");
