@@ -27,6 +27,8 @@
 #include	<sys/types.h>
 #include	<sys/stat.h>
 #include	<fcntl.h>
+#include	<signal.h>
+#include        <errno.h>
 #include	<sys/wait.h>
 #include	<libpq-fe.h>
 #include	<libpq/libpq-fs.h>
@@ -196,7 +198,7 @@ sync_wait(pid_t pg_dump_pid, pid_t restore_pid)
 		pid = wait(&status);
 		if ( pg_dump_pid ==  pid ) {
 			if ( WIFEXITED(status) && (WEXITSTATUS(status) != 0) ) {
-				fprintf(stderr, "Dump error(%d)\n", pid );				
+				fprintf(stderr, "Dump error(%d)\n", pid );
 				break;				
 			}
 		} else if (restore_pid ==  pid ) {
@@ -207,6 +209,15 @@ sync_wait(pid_t pg_dump_pid, pid_t restore_pid)
 				ret = TRUE;
 			}
 		} else if (pid == -1) {
+			if (!ret) {
+				if (errno == ECHILD) {
+					fprintf(stderr, "ECHILD\n");
+				} else if (errno == EINTR) {
+					fprintf(stderr, "EINTR\n");
+				} else if (errno == EINVAL) {
+					fprintf(stderr, "EINVAL\n");
+				}
+			}
 			break;
 		}
 	}
@@ -223,7 +234,7 @@ err_check(int err_fd)
 	if (len > 0) {
 		buff[len] = '\0';
 		if (strncmp(ignore_message, buff, strlen(ignore_message)) != 0 ){
-			fprintf(stderr, "%s\n", buff);						
+			fprintf(stderr, "%s\n", buff);
 			exit(1);
 		}
 	}
@@ -339,11 +350,19 @@ db_sync(
 		char **slave_argv,
 		char *slave_pass)
 {
+	struct sigaction sa;
 	int std_out[2], std_err[2];
 	
 	Bool ret = FALSE;
 	pid_t	pg_dump_pid, restore_pid;
 	
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_DFL;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		fprintf(stderr,"sigaction(2) failure\n");
+	}
+
 	if ( (pipe(std_out) == -1) || ( pipe(std_err) == -1 ) ) {
 		fprintf( stderr, "cannot open pipe\n");
 		return FALSE;
@@ -363,7 +382,7 @@ db_sync(
 			close( std_err[0] );
 			close( std_err[1] );
 			close( STDOUT_FILENO );
-			dup2( std_out[1], STDOUT_FILENO); 
+			dup2( std_out[1], STDOUT_FILENO);
 			db_dump(std_out[1], master_pass, master_argv);
 		} else {
 			/* parent */
