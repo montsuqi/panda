@@ -1060,14 +1060,13 @@ _PQexec(
 ENTER_FUNC;
 	dbgprintf("%s;",sql);
 	res = PQexec(PGCONN(dbg,usage),sql);
- 	if ( res != NULL) {
+	if ( res != NULL) {
 		if		(	(  IsUsageUpdate(usage)  )
 				&&	(  fRed                  )
 				&&	(  IsRedirectQuery(res)  ) ) {
 			PutDB_Redirect(dbg,sql);
 			PutDB_Redirect(dbg,";");
 			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-			PutCheckDataDB_Redirect(dbg, ":");
 		}
 	}
 LEAVE_FUNC;
@@ -1339,11 +1338,8 @@ ENTER_FUNC;
 				_PQclear(res);
 				break;
 			}
-			if		(	(  IsUsageUpdate(usage)  )
-						&&	(  fRed                  )
-						&&	(  IsRedirectQuery(res)  ) ) {
-				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-				PutCheckDataDB_Redirect(dbg, ":");
+			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
+			if		( fRed ) {
 				PutDB_Redirect(dbg,sql);
 			}
 			_PQclear(res);

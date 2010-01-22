@@ -195,6 +195,7 @@ PutCheckDataDB_Redirect(
 	char		*data)
 {
 ENTER_FUNC;
+	LBS_EmitString(dbg->checkData,":");
 	LBS_EmitString(dbg->checkData,data);
 LEAVE_FUNC;
 }
