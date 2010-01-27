@@ -28,6 +28,10 @@
 #endif
 
 #include	<stdio.h>
+#include	<unistd.h>
+#include	<sys/types.h>
+#include	<sys/wait.h>
+#include	<signal.h>
 
 #include	<gnome.h>
 #include	<glade/glade.h>
@@ -43,6 +47,9 @@
 #include	"protocol.h"
 #include	"glterm.h"
 #include	"debug.h"
+
+/* #define GTK1_OPEN_BROWSER_COMMAND "/usr/bin/gnome-moz-remote" */
+#define GTK1_OPEN_BROWSER_COMMAND "/usr/bin/x-www-browser"
 
 extern	gboolean
 select_all(
@@ -522,6 +529,37 @@ window_destroy(
 }
 
 #ifdef	GTK_PANDA_TYPE_HTML
+extern void
+new_browser_window(char *uri)
+{
+	struct sigaction	sa, old_sa;
+	
+	int err;
+	pid_t	pid;
+	char *argv[3];
+	extern char **environ;
+	
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_IGN;
+	sa.sa_flags = SA_NOCLDWAIT;
+	if (sigaction(SIGCHLD, &sa, &old_sa) != 0) {
+		Error("sigaction(2) failure");
+	}
+	
+	if ((pid = fork()) == 0) { 
+		argv[0] = GTK1_OPEN_BROWSER_COMMAND;
+		argv[1] = uri;
+		argv[2] = NULL;
+		printf("%s %s\n", argv[0], argv[1]);
+	 	err = execve(argv[0], argv, environ);
+		fprintf(stderr, "error: %s", strerror(errno));
+		_exit(1);
+	} else if (pid < 0 ) { 
+	 	Warning("fork errror"); 
+	} 
+	sigaction(SIGCHLD, &old_sa, NULL);
+}
+
 extern	void
 open_browser(
 	GtkPandaHTML	*html,
@@ -531,7 +569,6 @@ open_browser(
 	/* build target URI */
 	char	uri[FILENAME_MAX];
 	char	*p;
-	char	buff[SIZE_BUFF];
 
 ENTER_FUNC;
 	if		(strncmp (cbs->href, "http:", 5) == 0)	{
@@ -563,8 +600,7 @@ ENTER_FUNC;
 	if		(  cbs->target  ==  NULL  ) {
 		gtk_panda_html_set_uri (html, uri);
 	} else {
-		sprintf (buff, "gnome-moz-remote %s", uri);
-		system (buff);
+		new_browser_window(uri);		
 	}
 LEAVE_FUNC;
 }
