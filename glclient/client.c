@@ -462,6 +462,13 @@ main(
 {
 	int status;
 	pid_t pid;
+	struct sigaction sa;
+
+	sa.sa_handler = SIG_DFL;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
 
 	InitLauncher(argc, argv);
 	if (fDialog) {
