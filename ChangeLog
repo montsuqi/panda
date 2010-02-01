@@ -1,3 +1,10 @@
+2010-02-02  Noboru Saitou  <noborus@fukko>
+
+	* aps/handler.h, aps_main.c, MONFUNC.c
+	DB操作時にユーザを再セットするように変更
+	(認証無しに権限昇格しないようにした)
+	MONFUNCをMonDBfuncとMonGLfuncに分割
+
 2010-01-15  Yusuke Mihara  <mihara@netlab.jp>
 
 	* aps/MONFUNC.c cobol/MCPMAIN.CBL 

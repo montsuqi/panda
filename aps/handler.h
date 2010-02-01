@@ -59,6 +59,9 @@ GLOBAL	char		*LibPath;
 GLOBAL	size_t		TextSize;
 GLOBAL	int			nCache;
 
+GLOBAL	char		*CurrentUser;
+GLOBAL	char		*CurrentTerm;
+
 #undef	GLOBAL
 #endif
 
