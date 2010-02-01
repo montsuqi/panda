@@ -86,6 +86,8 @@ SendVeryfyData_Redirect(
 	if	( (dbg->fpLog  !=  NULL)
 		  && ( dbg->redirectData !=  NULL)
 		  && ( LBS_Size(dbg->redirectData) > 0 ) ) {
+		LBS_EmitEnd(dbg->checkData);
+		LBS_EmitEnd(dbg->redirectData);
 		SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
 		SendUInt64(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
 		SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);

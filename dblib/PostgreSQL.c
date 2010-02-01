@@ -1065,7 +1065,7 @@ ENTER_FUNC;
 				&&	(  fRed                  )
 				&&	(  IsRedirectQuery(res)  ) ) {
 			PutDB_Redirect(dbg,sql);
-			PutDB_Redirect(dbg,";");
+			PutDB_Redirect(dbg,";\n");
 			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 		}
 	}
