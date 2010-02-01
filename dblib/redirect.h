@@ -32,16 +32,19 @@
 #define	RED_BEGIN		(PacketClass)0x05
 #define	RED_ABORT		(PacketClass)0x06
 #define	RED_COMMIT		(PacketClass)0x07
-#define	RED_NOT			(PacketClass)0xF0
+#define	RED_UNLOCK		(PacketClass)0x08
+#define	RED_NOT		(PacketClass)0xF0
 #define	RED_PONG		(PacketClass)0xF1
 #define	RED_OK			(PacketClass)0xFE
-#define	RED_END			(PacketClass)0xFF
+#define	RED_END		(PacketClass)0xFF
 
 extern	void	OpenDB_RedirectPort(DBG_Struct *dbg);
 extern	void	PutDB_Redirect(DBG_Struct *dbg, char *data);
 extern	void	PutCheckDataDB_Redirect(DBG_Struct	*dbg, char	*data);
 extern	void	AbortDB_Redirect(DBG_Struct *dbg);
 extern	void	BeginDB_Redirect(DBG_Struct *dbg);
+extern	void	LockDB_Redirect(DBG_Struct *dbg);
+extern	void	UnLockDB_Redirect(DBG_Struct *dbg);
 extern	void	CommitDB_Redirect(DBG_Struct *dbg);
 extern	Bool	CheckDB_Redirect(DBG_Struct *dbg);
 

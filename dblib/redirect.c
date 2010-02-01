@@ -201,6 +201,32 @@ LEAVE_FUNC;
 }
 
 extern	void
+LockDB_Redirect(
+	DBG_Struct	*dbg)
+{
+ENTER_FUNC;
+	if	(  ( dbg->redirect != NULL )
+		   && ( dbg->fpLog  !=  NULL ) ) {
+		SendPacketClass(dbg->fpLog,RED_LOCK);
+		Flush(dbg->fpLog);		
+	}
+LEAVE_FUNC;
+}
+
+extern	void
+UnLockDB_Redirect(
+	DBG_Struct	*dbg)
+{
+ENTER_FUNC;
+	if	(  ( dbg->redirect != NULL )
+		   && ( dbg->fpLog  !=  NULL ) ) {
+		SendPacketClass(dbg->fpLog,RED_UNLOCK);
+		Flush(dbg->fpLog);
+	}
+LEAVE_FUNC;
+}
+
+extern	void
 BeginDB_Redirect(
 	DBG_Struct	*dbg)
 {

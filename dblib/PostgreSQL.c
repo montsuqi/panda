@@ -1478,8 +1478,10 @@ ENTER_FUNC;
 	rc = 0;
 	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
 		conn = PGCONN(dbg,DB_UPDATE);
+		LockDB_Redirect(dbg);		
 		BeginDB_Redirect(dbg); 
 		res = _PQexec(dbg,"BEGIN",FALSE,DB_UPDATE);
+		UnLockDB_Redirect(dbg);		
 		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
 		_PQclear(res);
 	} else {

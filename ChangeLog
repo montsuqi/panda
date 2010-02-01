@@ -1,5 +1,9 @@
 2010-02-02  Noboru Saitou  <noborus@fukko>
 
+	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c,
+	dblib/PostgreSQL.c
+	dbredirectorにロックを掛け順番を前後しないようにした。
+
 	* aps/handler.h, aps_main.c, MONFUNC.c
 	DB操作時にユーザを再セットするように変更
 	(認証無しに権限昇格しないようにした)

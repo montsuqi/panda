@@ -70,6 +70,7 @@ static int               RedirectorMode;
 
 static	Port		*RedirectPort;
 static  pthread_mutex_t redlock;
+static  pthread_mutex_t ticketlock;
 static  pthread_cond_t redcond;  
 
 static 	Bool 	fShutdown = FALSE;
@@ -138,6 +139,19 @@ LookupTicket(
 	return NULL;
 }
 
+static void
+LockTicket(
+	NETFILE	*fpLog)
+{
+	pthread_mutex_lock(&ticketlock);
+}
+
+static void
+UnLockTicket(
+	NETFILE	*fpLog)
+{
+	pthread_mutex_unlock(&ticketlock);
+}
 
 static void
 OrderTicket(
@@ -145,13 +159,11 @@ OrderTicket(
 {
 	Ticket *ticket;
 ENTER_FUNC;
-	pthread_mutex_lock(&redlock);
 	ticket = NewTicket();
 	ticket->fd = fpLog->fd;
 	ticket->ticket_id = TICKETID++;
 	TicketList = g_slist_append(TicketList, ticket);
 	SendUInt64(fpLog, ticket->ticket_id);
-	pthread_mutex_unlock(&redlock);
 LEAVE_FUNC;
 }
 
@@ -298,6 +310,12 @@ ENTER_FUNC;
 			break;
 		  case	RED_STATUS:
 			SendChar(fpLog, ThisDBG->process[PROCESS_UPDATE].dbstatus);
+			break;
+		  case	RED_LOCK:
+			LockTicket(fpLog);
+			break;
+		  case	RED_UNLOCK:
+			UnLockTicket(fpLog);
 			break;
 		  case	RED_END:
 			fSuc = FALSE;
@@ -611,6 +629,7 @@ ExecuteServer(void)
 
 ENTER_FUNC;
 	pthread_mutex_init(&redlock,NULL);
+	pthread_mutex_init(&ticketlock,NULL);	
 	pthread_cond_init(&redcond, NULL);
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL); 
 	_fhLog = InitServerPort(RedirectPort,Back);
