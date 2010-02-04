@@ -451,8 +451,9 @@ ENTER_FUNC;
 			data->fAccelGroup = FALSE;
 		}
 	} else {
-		StopTimer(GTK_WINDOW(window));
 		gtk_widget_hide(window);
+		gtk_widget_set_sensitive(window,FALSE);
+		StopTimer(GTK_WINDOW(window));
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
 		wlist = g_list_find(DialogStack, window);
         if (wlist != NULL && wlist->next != NULL && wlist->next->data != NULL) {
@@ -509,6 +510,7 @@ ENTER_FUNC;
 		GtkWidget *parent = TopWindow;
 		int i;
 
+		gtk_widget_set_sensitive(window,TRUE);
 		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
 		for(i = 0; i < g_list_length(DialogStack); i++) {
