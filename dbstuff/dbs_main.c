@@ -531,7 +531,6 @@ ENTER_FUNC;
  	ctrl.rc = 0;
 	ctrl.rcount = 0;
 	ctrl.redirect = 1;
-	strcpy(ctrl.func,func);
 	dbgprintf("para => [%s]", para);
 	if		(  ( q = strchr(para,':') )  !=  NULL  ) {
 		*q = 0;
@@ -569,6 +568,7 @@ ENTER_FUNC;
 		value = NULL;
 		ret = FALSE;
 	}
+	strcpy(ctrl.func,func);
 	if (arg) InitializeValue(arg);
 	RecvData(fpComm,arg);
 	value = NULL;
