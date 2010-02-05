@@ -70,6 +70,7 @@ dbredirector_SOURCES	=	\
 dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a
 
@@ -87,6 +88,7 @@ dbmaster_SOURCES	=	\
 dbmaster_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a
 
@@ -98,6 +100,7 @@ dbslave_SOURCES	=	\
 dbslave_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.a		\
 	$(top_builddir)/libs/libpandamisc.a
 
