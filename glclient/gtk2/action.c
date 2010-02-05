@@ -331,9 +331,10 @@ SetTitle(GtkWidget	*window,
 
 extern	void	
 CreateWindow(
-	char	*wname)
+	char	*wname,
+	int		size,
+	char	*buff)
 {
-	char		*fname;
 	GladeXML	*xml;
 	WindowData	*wdata;
 	GtkWidget	*window;
@@ -344,15 +345,14 @@ ENTER_FUNC;
 		dbgprintf("%s already in WindowTable", wname);
 		return;
 	}
-	fname = CacheFileName(wname);
-	xml = glade_xml_new(fname, NULL);
+	xml = glade_xml_new_from_memory(buff,size,NULL,NULL);
 	if ( xml == NULL ) {
 		dbgmsg("no xml");
 		return;
 	}
 	window = glade_xml_get_widget_by_long_name(xml, wname);
 	if (window == NULL) {
-		Warning("Window %s not found in %s", wname, fname);
+		Warning("Window %s not found", wname);
 		return;
 	}
 	wdata = New(WindowData);
@@ -485,6 +485,8 @@ ENTER_FUNC;
 	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
 	if (data->fWindow) {
 	dbgmsg("show primari window\n");
+		gtk_widget_show(TopWindow);
+		_GrabFocus(TopWindow);
 		SetTitle(TopWindow, data->title);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
 			SwitchWindow(window);

@@ -29,7 +29,7 @@ extern	void		UnblockChangedHandlers(void);
 extern	GtkWidget	*GetWindow(	GtkWidget	*widget);
 extern	char		*GetWindowName(	GtkWidget	*widget);
 extern	void		GrabFocus(GtkWidget *widget);
-extern	void		CreateWindow(char *wname);
+extern	void		CreateWindow(char *wname,int size, char *buff);
 extern	void		ShowWindow(char *wname);
 extern	void		CloseWindow(char *wname);
 extern	void		ClearKeyBuffer(void);

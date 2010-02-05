@@ -180,9 +180,9 @@ UI_ShowWindow(char *sname)
 }
 
 extern	void
-UI_CreateWindow(char *name)
+UI_CreateWindow(char *name,int size,char *buff)
 {
-	CreateWindow(name);
+	CreateWindow(name,size,buff);
 }
 
 extern	void
