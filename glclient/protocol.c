@@ -392,43 +392,10 @@ GL_SendLBS(
 
 //////////////////////////////////////////////////////////////////////
 
-static void
-WriteFile(
-	char *fname,
-	char *buff,
-	size_t size)
-{
-	FILE *fp;
-	int	fd;
-	size_t rsize;
-	gchar *tmpfile;
-
-	tmpfile = g_strconcat(fname, "gl_cache_XXXXXX", NULL);
-	MakeCacheDir();
-	if  ((fd = mkstemp(tmpfile)) == -1 ) {
-		UI_ErrorDialog(_("could not write tmp file"));
-	}
-	if	((fp = fdopen(fd,"w")) == NULL) {
-		UI_ErrorDialog(_("could not write cache file"));
-	}
-	rsize = fwrite(buff, 1, size, fp);
-	if (rsize != size) {
-		UI_ErrorDialog(_("fwrite failed"));
-	}
-	fchmod(fileno(fp), 0600);
-	if (fclose(fp) != 0) {
-		UI_ErrorDialog(_("fclose failed"));
-	}
-	rename(tmpfile, fname);
-	unlink(tmpfile);
-	g_free(tmpfile);
-}
-
 static	Bool
 RecvFile(
 	NETFILE	*fpC,
-	char	*name,
-	char	*fname)
+	char	*name)
 {
 	char 		*buff;
 	Bool		ret;
@@ -443,7 +410,7 @@ ENTER_FUNC;
 		// download
 		buff = xmalloc(SIZE_LARGE_BUFF);
 		GL_RecvString(fpC, SIZE_LARGE_BUFF, buff);
-		WriteFile(fname, buff, strlen(buff));
+		UI_CreateWindow(name,strlen(buff),buff);
 		xfree(buff);
 		ret = TRUE;
 	} else {
@@ -460,8 +427,6 @@ CheckScreens(
 	Bool		fInit)
 {	
 	char		sname[SIZE_NAME];
-	char		*fname;
-	struct stat	stbuf;
 	time_t		stmtime
 	,			stctime;
 	off_t		stsize;
@@ -474,18 +439,13 @@ dbgmsg("*");
 		stsize = (off_t)GL_RecvInt(fp);
 		stmtime = (time_t)GL_RecvInt(fp);
 		stctime = (time_t)GL_RecvInt(fp);
-		fname = CacheFileName(sname);
 
-		if		(	(  stat(fname,&stbuf)  !=  0        )
-				 ||	(  stbuf.st_mtime      <   stmtime  )
-				 ||	(  stbuf.st_ctime      <   stctime  )
-				 ||	(  stbuf.st_size       !=  stsize   ) ) {
-			RecvFile(fp, sname, fname);
+		if (g_hash_table_lookup(WindowTable, sname) == NULL) {
+			RecvFile(fp, sname);
 		} else {
 			GL_SendPacketClass(fp, GL_NOT);
 		}
 		if		(  fInit  ) {
-			UI_CreateWindow(sname);
 			UI_ShowWindow(sname);
 			fInit = FALSE;
 		}
@@ -668,7 +628,6 @@ ENTER_FUNC;
 		  case	SCREEN_NEW_WINDOW:
 		  case	SCREEN_CHANGE_WINDOW:
 		  case	SCREEN_CURRENT_WINDOW:
-			UI_CreateWindow(window);
 			strcpy(currentWindow, window);
 			if ((c = GL_RecvPacketClass(fp)) == GL_ScreenData) {
 				ThisWindowName = strdup(window);

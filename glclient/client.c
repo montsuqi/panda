@@ -183,29 +183,6 @@ SetDefault(void)
 #endif	//USE_SSL
 }
 
-extern	char	*
-CacheDirName(void)
-{
-	static	char	buf[SIZE_BUFF];
-
-	if (UI_Version() == UI_VERSION_1) {
-		sprintf(buf,"%s/%s",Cache,PortNumber);
-	} else {
-		sprintf(buf,"%s/glclient2/%s",Cache,PortNumber);
-	}
-	return	(buf);
-}
-
-extern	char	*
-CacheFileName(
-	char	*name)
-{
-	static	char	buf[SIZE_BUFF];
-
-	sprintf(buf,"%s/%s", CacheDirName() ,name);
-	return	(buf);
-}
-
 extern  void
 mkdir_p(
 	char    *dname,
@@ -246,18 +223,15 @@ extern  void
 MakeCacheDir(void)
 {
 	struct stat st;
-	char *dir;
 
-	dir = CacheDirName();
-
-	if (stat(dir, &st) == 0){
+	if (stat(Cache, &st) == 0){
 		if (S_ISDIR(st.st_mode)) {
 			return ;
 		} else {
-			unlink (dir);
+			unlink (Cache);
 		}
 	}
-	mkdir_p (dir, 0755);
+	mkdir_p (Cache, 0755);
 }
 
 extern	void SetSessionTitle(
