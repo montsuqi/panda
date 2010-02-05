@@ -196,17 +196,22 @@ browse_clicked(GnomeFileEntry *fentry, gpointer data)
 	char *base;
 	char *dir;
 
-	fsw = GTK_FILE_SELECTION(fentry->fsw);
-	if(!fsw)
+	if (fentry->fsw == NULL) {
 		return;
-	dir = GetWidgetCache((char *)glade_get_widget_long_name(GTK_WIDGET(fentry)));
-	if (dir != NULL) {
-		base = g_basename(gtk_entry_get_text(GTK_ENTRY(gnome_file_entry_gtk_entry(fentry))));
-		if (base != NULL) {
-			snprintf(fname, sizeof(fname), "%s/%s", dir, base);
-			gtk_file_selection_set_filename(fsw, fname);
-		}
 	}
+	fsw = GTK_FILE_SELECTION(fentry->fsw);
+	dir = GetWidgetCache((char *)glade_get_widget_long_name(GTK_WIDGET(fentry)));
+	base = g_basename(gtk_entry_get_text(GTK_ENTRY(gnome_file_entry_gtk_entry(fentry))));
+	if (base != NULL) {
+		if (dir != NULL) {
+			snprintf(fname, sizeof(fname), "%s/%s", dir, base);
+		} else {
+			snprintf(fname, sizeof(fname), "%s", base);
+		}
+	} else {
+		fname[0] = 0;
+	}
+	gtk_file_selection_set_filename(fsw, fname);
 
 	/* rebind browse_dialog_ok */
 	gtk_signal_handlers_destroy(GTK_OBJECT (fsw->ok_button));

@@ -602,8 +602,7 @@ ENTER_FUNC;
 								 "browse_clicked",
 								 GTK_SIGNAL_FUNC(browse_clicked),
 								 window);
-		gtk_signal_emit_by_name (GTK_OBJECT (widget),
-								 "browse_clicked");
+		gtk_signal_emit_by_name (GTK_OBJECT (widget), "browse_clicked");
 	} else {
 		//upload
 		gtk_signal_connect_after(GTK_OBJECT(widget),

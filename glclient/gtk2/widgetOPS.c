@@ -622,9 +622,10 @@ ENTER_FUNC;
 	}
 
 	folder = GetWidgetCache(longname);
-	if (folder != NULL) {
-		gtk_panda_fileentry_set_folder(fentry, folder);
+	if (folder == NULL) {
+		folder = "";
 	}
+	gtk_panda_fileentry_set_folder(fentry, folder);
 
 	if (LBS_Size(data->binary) > 0) {
 		//download
