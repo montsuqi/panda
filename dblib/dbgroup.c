@@ -567,7 +567,7 @@ DumpDB_Node(
 	printf("blocks = %d\n",ctrl->blocks);
 	printf("rno    = %d\n",ctrl->rno);
 	printf("pno    = %d\n",ctrl->pno);
-	printf("count  = %d\n",ctrl->count);
+	printf("count  = %d\n",ctrl->rcount);
 	printf("limit  = %d\n",ctrl->limit);
 }
 #endif
