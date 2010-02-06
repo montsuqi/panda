@@ -1,4 +1,9 @@
-2010-02-02  Noboru Saitou  <noborus@fukko>
+2010-02-06  Noboru Saitou  <noborus@netlab.jp>
+
+	* PostgreSQLlib.c, dbgroup.h, dbgroup.c
+	PostgreSQLのUNIXドメインソケットを指定できるようにした。
+
+2010-02-02  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c,
 	dblib/PostgreSQL.c

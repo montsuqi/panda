@@ -39,6 +39,7 @@ extern	char	*GetDB_DBname(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_User(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_Pass(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_Sslmode(DBG_Struct *dbg, int usage);
+extern	int	GetDB_PortMode(DBG_Struct *dbg, int usage);
 extern	int		GetTableFuncData(RecordStruct **rec, ValueStruct **value,
 					DBCOMM_CTRL *ctrl,char *rname, char *pname, char *func);
 extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);

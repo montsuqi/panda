@@ -375,16 +375,41 @@ GetDB_PortName(
 	DBG_Struct	*dbg,
 	int			usage)
 {
-	char	*port;
+	Port	*port;
+	char	*portname;
 
 ENTER_FUNC;
 	if		(  DB_Port  !=  NULL  ) {
-		port = DB_Port;
+		portname = DB_Port;
 	} else {
-		port = IP_PORT(GetDB_Port(dbg,usage));
+		port = GetDB_Port(dbg,usage);
+		if ( port->type == PORT_IP) {
+			portname = IP_PORT(port);
+		} else {
+			portname = NULL;
+		}
 	}
 LEAVE_FUNC;
-	return (port);
+	return (portname);
+}
+
+extern	int
+GetDB_PortMode(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	Port	*port;
+	int	mode;
+
+ENTER_FUNC;
+	port = GetDB_Port(dbg,usage);
+	if ( port->type == PORT_UNIX) {
+		mode = UNIX_MODE(port);
+	} else {
+		mode = 0;
+	}
+LEAVE_FUNC;
+	return (mode);
 }
 
 extern	char	*
