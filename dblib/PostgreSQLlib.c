@@ -58,8 +58,26 @@ _CreateConninfo(
 	DBG_Struct	*dbg,
 	int			usage)
 {
+	int portnum;
+	char buff[SIZE_OTHER];
+	
 	AddConninfo(conninfo, "host", GetDB_Host(dbg,usage));
-	AddConninfo(conninfo, "port", GetDB_PortName(dbg,usage));
+	if ( GetDB_PortName(dbg,usage) != NULL) {
+		AddConninfo(conninfo, "port",GetDB_PortName(dbg,usage));
+	} else {
+		/* for PostgreSQL
+			 db_group{
+			   port "/var/run/postgresql/:5432";
+			 }
+			 host='/var/run/postgresql/'
+			 mode='5432'
+			 socket = /var/run/postgresql/.s.PGSQL.5432 */
+		portnum = GetDB_PortMode(dbg,usage);
+		if ( portnum != 0 ){
+			snprintf(buff, SIZE_OTHER, "%d", portnum);
+			AddConninfo(conninfo, "port", buff);
+		}
+	}
 	AddConninfo(conninfo, "user", GetDB_User(dbg,usage));
 	AddConninfo(conninfo, "password", GetDB_Pass(dbg,usage));
 	AddConninfo(conninfo, "sslmode", GetDB_Sslmode(dbg,usage));
