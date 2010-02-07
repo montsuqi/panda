@@ -74,6 +74,7 @@ static  pthread_mutex_t ticketlock;
 static  pthread_cond_t redcond;  
 
 static 	Bool 	fShutdown = FALSE;
+static		Bool	fReopen = FALSE;
 
 static  GSList *TicketList;
 static  uint64_t TICKETID = 0;
@@ -201,7 +202,8 @@ ENTER_FUNC;
 	while ( ticket == NULL ) {
 		pthread_mutex_lock(&redlock);
 		first = g_slist_nth(TicketList,0);
-		if ( (fShutdown) && (first == NULL)){
+		if ( ((fShutdown)||(fReopen)) && (first == NULL)){
+			pthread_mutex_unlock(&redlock);
 			break;
 		}
 		if ( first ) {
@@ -347,22 +349,7 @@ ENTER_FUNC;
 	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)(long)fhLog);
 	pthread_detach(thr);
 LEAVE_FUNC;
-	return	(thr); 
-}
-
-static  FILE	*
-OpenLogFile(
-	char	*file)
-{
-	FILE	*fp = NULL;
-
-	if		(  ThisDBG->file  !=  NULL  ) {
-		umask((mode_t) 0077);
-		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
-			Warning("can not open log file :%s", ThisDBG->file);
-		}
-	}
-	return fp;
+	return	(thr);
 }
 
 static  void
@@ -416,6 +403,9 @@ ConnectDB(void)
 {
 	Bool rc = TRUE;
 ENTER_FUNC;
+	if (GetDB_DBname(ThisDBG,DB_UPDATE) == NULL){
+		return rc;
+	}
 	if (  ThisDBG->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT ) {
 		OpenRedirectDB(ThisDBG);
 		if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
@@ -446,6 +436,59 @@ ENTER_FUNC;
 		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
 	}
 LEAVE_FUNC;
+}
+
+static  Bool
+DisConnectDB(void)
+{
+	Bool rc = TRUE;
+ENTER_FUNC;
+	CloseRedirectDB(ThisDBG);
+	if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_DISCONNECT ) {
+		Message("disconnect to database successed");
+	} else {
+		rc = FALSE;
+		Message("disconnect to database failed");		
+	}
+	return rc;
+LEAVE_FUNC;
+}
+
+static  FILE	*
+OpenLogFile(void)
+{
+	FILE	*fp = NULL;
+
+	if		(  ThisDBG->file  !=  NULL  ) {
+		umask((mode_t) 0077);
+		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
+			Warning("can not open log file :%s", ThisDBG->file);
+		}
+	}
+	return fp;
+}
+
+static	int
+CloseLogFile(
+	FILE	*fp)
+{
+	return fclose(fp);
+}
+
+static  FILE	*
+ReopenSystem(
+	FILE	*fp)
+{
+	FILE	*rfp = NULL;
+ENTER_FUNC;
+	DisConnectDB();
+	if ( fp != NULL) {
+		CloseLogFile(fp);
+	}
+	ConnectDB();
+	rfp = OpenLogFile();
+LEAVE_FUNC;
+	return rfp;
 }
 
 static int
@@ -571,26 +614,32 @@ FileThread(
 	void	*dummy)
 {
 	VeryfyData *veryfydata;
-	char	*dbname;
 	FILE	*fp;
 	Ticket *ticket;
-
+	char header[SIZE_BUFF];
 ENTER_FUNC;
-	fp = OpenLogFile(ThisDBG->file);
-	if		(  ( dbname = GetDB_DBname(ThisDBG,DB_UPDATE) )  !=  NULL  ) {
-		if (!fNoSumCheck) {
-			WriteLog(fp, "dbredirector start");
-		} else {
-			WriteLog(fp, "dbredirector start(No sum check)");
-		}
-		ConnectDB();
-	} else {
-		WriteLog(fp, "dbredirector start(No database)");
+	fp = OpenLogFile();
+	ConnectDB();
+	strncpy(header, "dbredirector start", sizeof(header));
+	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
+		strncat(header, "(No database)", sizeof(header));
 		OpenDB_RedirectPort(ThisDBG);
 		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	}
+	if	( fNoSumCheck) {
+		strncat(header, "(No sum check)", sizeof(header));
+	}
+	WriteLog(fp, header);
 	while	( TRUE )	{
 		ticket = DequeueTicket();
+		if ( fReopen ){
+			fp = ReopenSystem(fp);
+			WriteLog(fp, header);
+			fReopen = FALSE;
+			if ( ticket == NULL ){
+				continue;
+			}
+		}
 		if ( ticket == NULL )
 			break;
 		if ( ticket->status == TICKET_COMMIT ) {
@@ -612,11 +661,11 @@ ENTER_FUNC;
 		}
 		xfree(ticket);
 	}
-	if		(  dbname  ==  NULL  ) {
+	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
 		CloseDB_RedirectPort(ThisDBG);
 	}
 	CleanUNIX_Socket(RedirectPort);
-	WriteLog(fp, "dbredirector stop");
+	WriteLog(fp, "dbredirector stop ");
 LEAVE_FUNC;
 }
 
@@ -640,6 +689,7 @@ ENTER_FUNC;
 		FD_SET(_fhLog,&ready);
 		if (select(maxfd+1,&ready,NULL,NULL,NULL) < 0) {
 			if (errno == EINTR) {
+				pthread_cond_signal(&redcond);
 				continue;
 			}
 			Error("select: ", strerror(errno));			
@@ -726,10 +776,16 @@ CheckDBG(
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)_CheckDBG,name);
 }
 
-void StopSystem( int no ) {
+void StopHandler( int no ) {
     ( void )no;
 	fShutdown = TRUE;
 	Message("receive stop signal");
+}
+
+void ReopenHandler( int no ) {
+    ( void )no;
+	fReopen = TRUE;
+	Message("receive reopen signal");
 }
 
 extern	void
@@ -748,11 +804,16 @@ ENTER_FUNC;
 	sigemptyset (&sa.sa_mask);	
 	sigaction( SIGPIPE, &sa, NULL );
 
-	sa.sa_handler = StopSystem;
+	sa.sa_handler = StopHandler;
 	sa.sa_flags |= SA_RESTART;
 	sigemptyset (&sa.sa_mask);
 	sigaction( SIGHUP, &sa, NULL );
 
+	sa.sa_handler = ReopenHandler;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	sigaction( SIGUSR1, &sa, NULL );
+	
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 	if		( ThisEnv == NULL ) {

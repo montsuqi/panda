@@ -1,3 +1,8 @@
+2010-02-08  Noboru Saitou  <noborus@fukko>
+
+	* dbstuff/dbredirector.c
+	signalによる再Openを出来るようにした。
+
 2010-02-06  Noboru Saitou  <noborus@netlab.jp>
 
 	* PostgreSQLlib.c, dbgroup.h, dbgroup.c
