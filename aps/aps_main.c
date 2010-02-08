@@ -18,6 +18,7 @@
  */
 
 #define	MAIN
+
 /*
 #define	DEBUG
 #define	TRACE
@@ -176,15 +177,17 @@ ENTER_FUNC;
 	SendStringDelim(fpWFC,ThisLD->name);
 	SendStringDelim(fpWFC,"\n");
 	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
-		if		(  !CheckNetFile(fpWFC) ) {
-			Warning("WFC connection lost");
-			CloseNet(fpWFC);
-			goto	retry;
+		if		(  CheckNetFile(fpWFC) ) {
+			Error("invalid LD name");
 		}
-		Error("invalid LD name");
 	}
 	InitAPSIO(fpWFC);
-	if		(  ThisLD->cDB  >  0  ) {
+	if		(  !CheckNetFile(fpWFC) ) {
+		Warning("WFC connection lost");
+		CloseNet(fpWFC);
+		goto	retry;
+	}
+	if		( ThisLD->cDB  >  0 ) {
 		if ( ReadyOnlineDB(fpWFC) < 0 ){
 			Error("Online DB is not ready");
 		}
@@ -255,7 +258,7 @@ StopProcess(void)
 {
 ENTER_FUNC;
 	StopOnlineDB(); 
-	CleanUpOnlineDB(); 
+	CleanUpOnlineDB();
 	StopDC();
 	CleanUpOnlineDC();
 LEAVE_FUNC;

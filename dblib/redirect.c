@@ -210,7 +210,6 @@ ENTER_FUNC;
 	if	(  ( dbg->redirect != NULL )
 		   && ( dbg->fpLog  !=  NULL ) ) {
 		SendPacketClass(dbg->fpLog,RED_LOCK);
-		Flush(dbg->fpLog);		
 	}
 LEAVE_FUNC;
 }
@@ -223,7 +222,6 @@ ENTER_FUNC;
 	if	(  ( dbg->redirect != NULL )
 		   && ( dbg->fpLog  !=  NULL ) ) {
 		SendPacketClass(dbg->fpLog,RED_UNLOCK);
-		Flush(dbg->fpLog);
 	}
 LEAVE_FUNC;
 }

@@ -1,4 +1,10 @@
-2010-02-08  Noboru Saitou  <noborus@fukko>
+2010-02-08  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/aps_main.c
+	終了時にDB接続にいかないように修正
+
+	* libs/comm.c (SendPacketClass):
+	即時応答が要求される場合が多いのでFlushを追加した。
 
 	* dbstuff/dbredirector.c
 	signalによる再Openを出来るようにした。
