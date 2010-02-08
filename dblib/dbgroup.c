@@ -383,7 +383,7 @@ ENTER_FUNC;
 		portname = DB_Port;
 	} else {
 		port = GetDB_Port(dbg,usage);
-		if ( port->type == PORT_IP) {
+		if ( (port != NULL) && (port->type == PORT_IP)) {
 			portname = IP_PORT(port);
 		} else {
 			portname = NULL;
