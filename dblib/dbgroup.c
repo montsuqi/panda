@@ -403,7 +403,7 @@ GetDB_PortMode(
 
 ENTER_FUNC;
 	port = GetDB_Port(dbg,usage);
-	if ( port->type == PORT_UNIX) {
+	if ( (port != NULL) && port->type == PORT_UNIX) {
 		mode = UNIX_MODE(port);
 	} else {
 		mode = 0;
