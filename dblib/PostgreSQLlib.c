@@ -149,4 +149,23 @@ PgConnect(
 	return conn;
 }
 
+extern  char	*
+GetPGencoding(
+	PGconn	*conn)
+{
+	PGresult	*res;
+	char		*encoding = NULL;	
+	char		*sql = "SELECT pg_encoding_to_char(encoding) " \
+				" FROM pg_database " \
+				"WHERE datname = current_database();";
+	res = PQexec(conn, sql);
+	if ( (res == NULL) || (PQresultStatus(res) != PGRES_TUPLES_OK) ) {
+		Warning("PostgreSQL: %s",PQerrorMessage(conn));
+	} else {
+		encoding = StrDup((char *)PQgetvalue(res,0,0));
+	}
+	PQclear(res);
+	return encoding;
+}
+
 #endif /* #ifdef HAVE_POSTGRES */

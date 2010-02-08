@@ -28,6 +28,7 @@
 #  include <config.h>
 #endif
 #include	<stdio.h>
+#include	<stdarg.h>
 #include	<unistd.h>
 #include	<sys/types.h>
 #include	<sys/wait.h>
@@ -70,6 +71,19 @@ static	ARG_TABLE	option[] = {
 
 static	Bool	FirstNG = TRUE;
 
+static void
+verPrintf(
+	char *format,
+	...)
+{
+	va_list	va;
+	if (fVerbose) {
+		va_start(va, format);
+		vprintf(format, va);
+		va_end(va);
+	}
+}
+
 static	void
 SetDefault(void)
 {
@@ -81,19 +95,19 @@ SetDefault(void)
 static void
 separator(void)
 {
-	printf(" --------------------------------------------------------------------------\n");	
+	verPrintf(" --------------------------------------------------------------------------\n");	
 }
 
 static void
 ms_print(char *name, char *master, char *slave)
 {
-	printf("| %-6s   | %-20s       |     | %-20s       |\n", name, (master ? master : ""), (slave ? slave : ""));
+	verPrintf("| %-6s   | %-20s       |     | %-20s       |\n", name, (master ? master : ""), (slave ? slave : ""));
 }
 
 static void
 msr_print(char *result, char *master, int m_count, char *slave, int s_count)
 {
-	printf("| %-6s   | %-17.17s %8d | ==> | %-17.17s %8d |\n",result, master,m_count,  slave, s_count);
+	verPrintf("| %-6s   | %-17.17s %8d | ==> | %-17.17s %8d |\n",result, master,m_count,  slave, s_count);
 }
 
 static void
@@ -112,7 +126,8 @@ info_print(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
 static void
 pre_print(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
 {
-	if (FirstNG && !fVerbose) {
+	if ( FirstNG ) {
+		fVerbose = TRUE;
 		info_print(master_dbg, slave_dbg);
 		FirstNG = FALSE;
 	}
@@ -134,28 +149,37 @@ all_allsync(
 	DBG_Struct	*slave_dbg)
 {
 	Bool ret;
+	DBInfo *dbinfo;
+	char *tablespace = NULL;
+	char *template = NULL;
+	char *encoding = NULL;
+	char *lc_collate = NULL;
+	char *lc_ctype = NULL;
 	
 	ret = dbexist(master_dbg);
 	if (!ret) {
 		Error("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));
 	}
-	ret = dbexist(slave_dbg);	
+	dbinfo = getDBInfo(master_dbg, GetDB_DBname(master_dbg,DB_UPDATE));
+	if	( slave_dbg->coding != NULL ) {
+		encoding = slave_dbg->coding;
+	} else {
+		encoding = dbinfo->encoding;
+	}
+	lc_collate = dbinfo->lc_collate;
+	lc_ctype = dbinfo->lc_ctype;
+	template = dbinfo->template;
+	ret = dbexist(slave_dbg);
 	if (ret) {
 		dropdb(slave_dbg);
-		if (fVerbose) {
-			printf("Drop database\n");
-		}
+		verPrintf("Drop database\n");
 	}
-	ret = createdb(slave_dbg);
+	verPrintf("Create database name=%s, template=%s, encoding=%s, lc_collate=%s, lc_ctype=%s \n", slave_dbg->name, template, encoding, lc_collate, lc_ctype);
+	ret = createdb(slave_dbg, tablespace, template, encoding, lc_collate, lc_ctype);
 	if (!ret) {
-		Error("ERROR: create database \"%s\" failed.", GetDB_DBname(slave_dbg,DB_UPDATE));		
+		Error("ERROR: create database \"%s\" failed.", GetDB_DBname(slave_dbg,DB_UPDATE));
 	}
-	if (fVerbose) {
-		printf("Create database\n");
-	}
-	if (fVerbose) {
-		printf("Database sync start\n");
-	}
+	verPrintf("Database sync start\n");
 	ret = all_sync(master_dbg, slave_dbg, fVerbose);
 	if (!ret) {
 		Error("ERROR: database sync failed.");
@@ -204,12 +228,12 @@ table_check(
 		rcmp = (master_list->tables[m]->relkind - slave_list->tables[s]->relkind)* 2 + cmp;
 		if ( rcmp == 0 ) {
 			if (master_list->tables[m]->count == slave_list->tables[s]->count) {
-				if (fVerbose) {
+				if (fVerbose){
 					msr_print("OK",
-						   master_list->tables[m]->name,
-						   master_list->tables[m]->count,
-						   slave_list->tables[s]->name,
-						   slave_list->tables[s]->count);
+						master_list->tables[m]->name,
+						master_list->tables[m]->count,
+						slave_list->tables[s]->name,
+						slave_list->tables[s]->count);
 				}
 			} else {
 				pre_print(master_dbg, slave_dbg);
@@ -243,9 +267,7 @@ table_check(
 		}
 	}
 	add_ng_list(ng_list, NULL, ' ');	
-	if (fVerbose){
-		separator();
-	}
+	separator();
 	return ng_list;
 }
 

@@ -28,7 +28,7 @@
 #include	<sys/stat.h>
 #include	<fcntl.h>
 #include	<signal.h>
-#include        <errno.h>
+#include 	<errno.h>
 #include	<sys/wait.h>
 #include	<libpq-fe.h>
 #include	<libpq/libpq-fs.h>
@@ -302,7 +302,7 @@ dropdb(DBG_Struct	*dbg)
 	pg_disconnect(dbg);
 
 	conn = template1_connect(dbg);
-	if (conn){	
+	if (conn){
 		snprintf(sql, SIZE_BUFF, "DROP DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
 		ret = db_command(conn, sql);
 		PQfinish(conn);
@@ -310,18 +310,109 @@ dropdb(DBG_Struct	*dbg)
 	
 	return ret;
 }
-extern 	Bool
-createdb(DBG_Struct	*dbg)
+
+static DBInfo *
+NewDBInfo(void)
+{
+	DBInfo *dbinfo;
+	dbinfo = (DBInfo *)malloc(sizeof(DBInfo));
+	dbinfo->tablespace = NULL;
+	dbinfo->template = NULL;
+	dbinfo->encoding = NULL;
+	dbinfo->lc_collate = NULL;
+	dbinfo->lc_ctype = NULL;
+	return dbinfo;
+}
+
+extern DBInfo *
+getDBInfo(DBG_Struct	*dbg,
+	char *dbname)
 {
 	PGconn	*conn;
-	Bool ret = FALSE;
-	char sql[SIZE_BUFF];
+	PGresult	*res;
+	DBInfo *dbinfo;
+	LargeByteString *sql;
 
-	pg_disconnect(dbg);		
+	sql = NewLBS();
+	dbinfo = NewDBInfo();
+	
+	conn = template1_connect(dbg);
+	LBS_EmitString(sql, "SELECT pg_encoding_to_char(encoding) ");
+	if ( PQserverVersion(conn)  >=  80400 ) {
+		LBS_EmitString(sql, " , datcollate ");
+		LBS_EmitString(sql, " , datctype ");
+	}
+	LBS_EmitString(sql, " FROM pg_database WHERE datname ='");
+	LBS_EmitString(sql, dbname);
+	LBS_EmitString(sql, "';\n");
+	LBS_EmitEnd(sql);
+	res = PQexec(conn, LBS_Body(sql));
+	if ( (res == NULL) || (PQresultStatus(res) != PGRES_TUPLES_OK) ) {
+		Warning("PostgreSQL: %s",PQerrorMessage(conn));
+	} else {
+		dbinfo->encoding = StrDup(PQgetvalue(res, 0,0));
+		if ( PQserverVersion(conn)  >=  80400 ) {
+			dbinfo->lc_collate = StrDup(PQgetvalue(res, 0,1));
+			dbinfo->lc_ctype = StrDup(PQgetvalue(res, 0,2));
+			/* for PostgreSQL 8.4 */
+			dbinfo->template = StrDup("template0");
+		}
+	}
+	PQclear(res);
+	PQfinish(conn);
+	return dbinfo;
+}
+
+extern 	Bool
+createdb(DBG_Struct	*dbg,
+	char *tablespace,
+	char *template,
+	char *encoding,
+	char *lc_collate,
+	char *lc_ctype)
+{
+	PGconn	*conn;
+	LargeByteString *sql;
+	Bool ret = FALSE;
+
+	sql = NewLBS();
+	pg_disconnect(dbg);
 	conn = template1_connect(dbg);
 	if (conn) {
-		snprintf(sql, SIZE_BUFF, "CREATE DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
-		ret = db_command(conn, sql);
+		LBS_EmitString(sql, "CREATE DATABASE ");
+		LBS_EmitString(sql, GetDB_DBname(dbg,DB_UPDATE));
+		if (tablespace) {
+			LBS_EmitString(sql," TABLESPACE ");
+			LBS_EmitString(sql, tablespace);
+		}
+		if (template) {
+			LBS_EmitString(sql," TEMPLATE ");
+			LBS_EmitString(sql, template);
+		}
+		if (encoding) {
+			LBS_EmitString(sql," ENCODING ");
+			LBS_EmitString(sql, "'");
+			LBS_EmitString(sql, encoding);
+			LBS_EmitString(sql, "' ");
+		}
+		if ( PQserverVersion(conn)  >=  80400 ) {
+			if (lc_collate) {
+				LBS_EmitString(sql," LC_COLLATE ");
+				LBS_EmitString(sql, "'");
+				LBS_EmitString(sql, lc_collate);
+				LBS_EmitString(sql, "' ");			
+			}
+			if (lc_ctype) {
+				LBS_EmitString(sql," LC_CTYPE ");		
+				LBS_EmitString(sql, "'");
+				LBS_EmitString(sql, lc_ctype);
+				LBS_EmitString(sql, "' ");			
+			}
+		}
+		LBS_EmitString(sql,";\n");
+		LBS_EmitEnd(sql);
+		ret = db_command(conn, LBS_Body(sql));
+		FreeLBS(sql);		
 		PQfinish(conn);
 	}
 	
@@ -491,7 +582,7 @@ NewTableList(int count)
 	return table_list;
 }
 
-Table *
+extern Table *
 NewTable(void)
 {
 	Table		*table;

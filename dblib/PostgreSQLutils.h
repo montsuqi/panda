@@ -42,9 +42,24 @@ typedef struct tablelist
 	Table	**tables;
 } TableList;
 
+typedef struct dbinfo
+{
+	char	*tablespace;
+	char	*template;
+	char 	*encoding;
+	char	*lc_collate;
+	char	*lc_ctype;
+} DBInfo;
+
 extern 	Bool	template1_check(DBG_Struct *dbg);
+extern 	DBInfo *getDBInfo(DBG_Struct	*dbg, char *dbname);
 extern 	Bool	dropdb(DBG_Struct	*dbg);
-extern 	Bool	createdb(DBG_Struct	*dbg);
+extern 	Bool	createdb(DBG_Struct	*dbg,
+						 char *tablespace,
+						 char *template,
+						 char *encoding,
+						 char *lc_collate,
+						 char *lc_ctype);
 extern 	Bool	delete_table(DBG_Struct	*dbg, char *table_name);
 extern 	Bool	dbexist(DBG_Struct	*dbg);
 extern 	size_t	pg_escape( char *to, const char *from, size_t length);

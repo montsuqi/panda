@@ -26,5 +26,6 @@ extern LargeByteString	*CreateConninfo(DBG_Struct	*dbg, int usage);
 extern LargeByteString	*Template1Conninfo(DBG_Struct	*dbg, int usage);
 extern PGconn	*PGCONN( DBG_Struct	*dbg, int usage);
 extern PGconn	*PgConnect(	DBG_Struct	*dbg, int usage);
+extern  char	*GetPGencoding(PGconn	*conn);
 
 #endif
