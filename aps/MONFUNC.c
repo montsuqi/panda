@@ -44,21 +44,13 @@
 #include	"debug.h"
 
 static	void
-CheckArg(
-	char		*func,
-	DBCOMM_CTRL	*ctrl)
-{
-	if		(	(  ctrl->rno  !=  0  )
-			||	(  ctrl->pno  !=  0  ) ) {
-		Warning("argument invalid on %s\n",func);
-	}
-}
-
-static	void
 InitializeCTRL(
 	DBCOMM_CTRL	*ctrl)
 {
+	ctrl->rno = 0;
+	ctrl.pno = 0;
 	ctrl->rcount = 0;
+	ctrl.blocks = 0;
 	ctrl->rc = 0;
 	ctrl->limit = 1;
 	ctrl->redirect = 1;
@@ -100,7 +92,6 @@ ENTER_FUNC;
 		ctrl.fDBOperation = TRUE;
 		rec = NULL;
 		value = NULL;
-		CheckArg(func,&ctrl);
 	} else {
 #if	0
 		ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
