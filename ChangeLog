@@ -1,3 +1,10 @@
+2010-02-09  Noboru Saitou  <noborus@netlab.jp>
+
+	* tools/dbsync.c, dblib/PostgreSQLlib.c, dblib/PostgreSQLlib.h,
+	dblib/PostgreSQLutils.c, dblib/PostgreSQLutils.h,
+	dblib/PostgreSQL.c
+	dbgroup{coding}, masterのDBの優先順で encodingを指定するようにした。
+
 2010-02-08  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/aps_main.c

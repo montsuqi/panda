@@ -156,21 +156,10 @@ PgInitConnect(
 
 static	void
 SetDBGcoding(
-	DBG_Struct	*dbg)
+	DBG_Struct	*dbg,
+	char	*encoding)
 {
-	PGconn	*conn;
-	PGresult	*res;
-	char		*encoding;
-	char		*sql = "SELECT pg_encoding_to_char(encoding) " \
-				" FROM pg_database " \
-				"WHERE datname = current_database();";
-	res = NULL;
-	conn = PgConnect(dbg, DB_UPDATE);
-	res = PQexec(conn, sql);
-	if ( (res == NULL) || (PQresultStatus(res) != PGRES_TUPLES_OK) ) {
-		Warning("PostgreSQL: %s",PQerrorMessage(conn));		
-	} else {
-		encoding = (char *)PQgetvalue(res,0,0);
+	if (encoding) {
 		if	( dbg->coding != NULL ) {
 			xfree(dbg->coding);
 		}
@@ -182,8 +171,6 @@ SetDBGcoding(
 			dbg->coding = StrDup(encoding);				
 		}
 	}
-	PQclear(res);
-	PQfinish(conn);
 }
 
 static  void
@@ -1359,6 +1346,7 @@ _DBOPEN(
 	DBCOMM_CTRL	*ctrl)
 {
 	PGconn	*conn;
+	char	*encoding;
 	int		rc;
 	int		i;
 	
@@ -1378,7 +1366,11 @@ ENTER_FUNC;
 	} else {
 		if		(  (conn = PgConnect(dbg, DB_UPDATE)) != NULL ) {
 			PgInitConnect(conn);
-			SetDBGcoding(dbg);
+			encoding = GetPGencoding(conn);
+			SetDBGcoding(dbg,encoding);
+			if (encoding != NULL) {
+				xfree(encoding);
+			}
 			OpenDB_RedirectPort(dbg);
 			dbg->process[PROCESS_UPDATE].conn = (void *)conn;
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
