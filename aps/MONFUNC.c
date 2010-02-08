@@ -48,9 +48,9 @@ InitializeCTRL(
 	DBCOMM_CTRL	*ctrl)
 {
 	ctrl->rno = 0;
-	ctrl.pno = 0;
+	ctrl->pno = 0;
 	ctrl->rcount = 0;
-	ctrl.blocks = 0;
+	ctrl->blocks = 0;
 	ctrl->rc = 0;
 	ctrl->limit = 1;
 	ctrl->redirect = 1;
