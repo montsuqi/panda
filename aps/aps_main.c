@@ -177,16 +177,14 @@ ENTER_FUNC;
 	SendStringDelim(fpWFC,ThisLD->name);
 	SendStringDelim(fpWFC,"\n");
 	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
-		if		(  CheckNetFile(fpWFC) ) {
-			Error("invalid LD name");
+		if		(  !CheckNetFile(fpWFC) ) {
+			Warning("WFC connection lost");
+			CloseNet(fpWFC);
+			goto	retry;
 		}
+		Error("invalid LD name");
 	}
 	InitAPSIO(fpWFC);
-	if		(  !CheckNetFile(fpWFC) ) {
-		Warning("WFC connection lost");
-		CloseNet(fpWFC);
-		goto	retry;
-	}
 	if		( ThisLD->cDB  >  0 ) {
 		if ( ReadyOnlineDB(fpWFC) < 0 ){
 			Error("Online DB is not ready");

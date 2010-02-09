@@ -73,9 +73,6 @@ ActivateAPS_Node(
 ENTER_FUNC;
 	aps->count = 0;
 	aps->fp = fp;
-	if		(  fp  !=  NULL  ) {
-		SendInt(fp,aps->id);
-	}
 LEAVE_FUNC;
 }
 

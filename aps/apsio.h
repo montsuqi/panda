@@ -32,9 +32,6 @@
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	int		ApsId;
-
-
 extern	void	InitAPSIO(NETFILE *fpWFC);
 extern	Bool	GetWFC(NETFILE *fpWFC, ProcessNode *node);
 extern	void	PutWFC(NETFILE *fpWFC, ProcessNode *node);

@@ -63,16 +63,12 @@ InitAPSIO(
 {
 	buff = NewLBS();
 	CacheTable = NewNameHash();
-	ApsId = RecvInt(fpWFC);
 	Head = NULL;
 	Tail = NULL;
 	cTerm = 0;
 	if		(  nCache  ==  0  ) {
 		nCache = ThisLD->nCache;
 	}
-#ifdef	DEBUG
-	printf("my id = %d\n",ApsId);
-#endif
 }
 
 static	Bool
