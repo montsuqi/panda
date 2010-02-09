@@ -72,7 +72,6 @@ static	char		*Directory;
 static  DBG_Struct       *ThisDBG;
 static	DBG_Struct	*LogDBG;
 
-static 	Bool 		fShutdown = FALSE;
 static 	DBSlaveThread *DBSlave;
 static	int		ReplicationSec;
 static	int		ExpireLogSec;

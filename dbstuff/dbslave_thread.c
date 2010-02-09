@@ -438,6 +438,7 @@ PatchLog(
 	PatchFuncArg arg;
 	
 ENTER_FUNC;
+	ret = FALSE;
 	log = Open_DBLog(ctx->log, ctx->log->logTableName);
 	if (log == NULL) {
 		Warning("open log db failed");
