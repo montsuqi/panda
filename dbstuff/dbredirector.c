@@ -71,13 +71,13 @@ static int               RedirectorMode;
 static	Port		*RedirectPort;
 static  pthread_mutex_t redlock;
 static  pthread_mutex_t ticketlock;
-static  pthread_cond_t redcond;  
-
-static 	Bool 	fShutdown = FALSE;
-static		Bool	fReopen = FALSE;
+static  pthread_cond_t redcond;
 
 static  GSList *TicketList;
 static  uint64_t TICKETID = 0;
+
+volatile sig_atomic_t 	fShutdown = FALSE;
+volatile sig_atomic_t	fReopen = FALSE;
 
 static 	DBLogCtx *DBLog;
 

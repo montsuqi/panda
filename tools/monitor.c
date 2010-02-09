@@ -81,7 +81,7 @@ static	Bool	fDBMaster;
 static	Bool	fDBLog;
 
 static	GList	*ProcessList;
-static	Bool	fLoop;
+static	volatile sig_atomic_t	fLoop = TRUE;
 
 #define	PTYPE_NULL	(byte)0x00
 #define	PTYPE_APS	(byte)0x01
@@ -254,7 +254,6 @@ SetDefault(void)
 	fRedirector = FALSE;
 	fNoCheck = FALSE;
 	fNoSumCheck = FALSE;
-	fLoop = TRUE;
 	fQ = FALSE;
 	fTimer = FALSE;
 	fNoApsConnectRetry = FALSE;
@@ -276,7 +275,6 @@ InitSystem(void)
 {
 ENTER_FUNC;
 	ProcessList = NULL;
-	fLoop = TRUE;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 	if		( ThisEnv == NULL ) {
@@ -744,8 +742,8 @@ ENTER_FUNC;
 	str[0] = 0;
 	for	(i = 0; i < ThisEnv->cLD; i++) {
 		_StartAps(ThisEnv->ld[i]);
-		strncat(str, ThisEnv->ld[i]->name,sizeof(str));
-		strncat(str, " ",sizeof(str));
+		strncat(str, ThisEnv->ld[i]->name,sizeof(str) - strlen(str));
+		strncat(str, " ",sizeof(str) - strlen(str));
 	}
 	Message("start aps:%s",str);
 LEAVE_FUNC;

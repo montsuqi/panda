@@ -38,7 +38,7 @@ extern	LargeByteString	*GetScreenData(SessionData *data, char *name);
 GLOBAL	char		**BindTable;
 GLOBAL	int			cBind;
 GLOBAL	GHashTable	*ComponentHash;
-GLOBAL	Bool		fShutdown;
+GLOBAL	volatile sig_atomic_t		fShutdown;
 GLOBAL	int			MaxTransactionRetry;
 GLOBAL	int			SesNum;
 GLOBAL	BLOB_State	*BlobState;
