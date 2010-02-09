@@ -743,13 +743,13 @@ PrepareNextRequest(
 		req->head ++;
 		req->buf_size -= strlen(req->head);
 		memmove(req->buf, req->head, req->buf_size);
-		memset(req->head + 1, MAX_REQ_SIZE - req->buf_size, 0);
+		memset(req->head + 1, 0, MAX_REQ_SIZE - req->buf_size);
 		req->buf[req->buf_size] = '\0';
 		req->head = req->buf;
 	} else {
 		req->buf_size = 0;
 		req->head = req->buf;
-		memset(req->buf , MAX_REQ_SIZE, 0);
+		memset(req->buf , 0, MAX_REQ_SIZE);
 
 		req->method = RecvPacketClass(req->fp);
 		ON_IO_ERROR(req->fp,badio);	
