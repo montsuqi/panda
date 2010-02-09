@@ -742,8 +742,8 @@ ENTER_FUNC;
 	str[0] = 0;
 	for	(i = 0; i < ThisEnv->cLD; i++) {
 		_StartAps(ThisEnv->ld[i]);
-		strncat(str, ThisEnv->ld[i]->name,sizeof(str) - strlen(str));
-		strncat(str, " ",sizeof(str) - strlen(str));
+		strncat(str, ThisEnv->ld[i]->name,sizeof(str) - strlen(str)-1);
+		strncat(str, " ",sizeof(str) - strlen(str)-1);
 	}
 	Message("start aps:%s",str);
 LEAVE_FUNC;

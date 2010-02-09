@@ -622,12 +622,12 @@ ENTER_FUNC;
 	ConnectDB();
 	strncpy(header, "dbredirector start", sizeof(header));
 	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
-		strncat(header, "(No database)", sizeof(header));
+		strncat(header, "(No database)", sizeof(header) - strlen(header) - 1);
 		OpenDB_RedirectPort(ThisDBG);
 		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	}
 	if	( fNoSumCheck) {
-		strncat(header, "(No sum check)", sizeof(header));
+		strncat(header, "(No sum check)", sizeof(header)- strlen(header) - 1);
 	}
 	WriteLog(fp, header);
 	while	( TRUE )	{
