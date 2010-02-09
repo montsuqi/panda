@@ -34,7 +34,7 @@
 #define	PORT_WFC_CONTROL	"9010"
 #define	PORT_POSTGRES		5432
 #define	PORT_REDIRECT		"8010"
-#define	PORT_LOG		"8016"
+#define	PORT_LOG			"8016"
 #define	PORT_MASTER		"8017"
 
 
@@ -58,7 +58,7 @@
 #define	SIZE_USER		16
 #define	SIZE_RNAME		16
 #define	SIZE_PNAME		16
-#define	SIZE_STATUS		4
+#define	SIZE_STATUS	4
 #define	SIZE_PUTTYPE	8
 #define	SIZE_STACK		16
 #define	SIZE_TRID		16
@@ -66,6 +66,7 @@
 #define	SIZE_AUTHID		16
 #define	SIZE_ARG		255
 #define	SIZE_FUNC		16
+#define	SIZE_COMMENT	255
 
 #ifndef	SIZE_LONGNAME
 #define	SIZE_LONGNAME		1024

@@ -1047,6 +1047,8 @@ BuildMcpArea(
 	p += sprintf(p,			"limit      int;");
 	p += sprintf(p,			"rcount     int;");
  	p += sprintf(p,			"redirect   int;");
+	p += sprintf(p,			"logflag    int;");
+	p += sprintf(p,			"logcomment	varchar(%d);",SIZE_COMMENT);	
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"private	{");
 	p += sprintf(p,			"count	int;");
