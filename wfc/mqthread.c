@@ -33,6 +33,7 @@
 #include	<unistd.h>
 #include	<glib.h>
 #include	<pthread.h>
+#include	<signal.h>
 
 #include	"types.h"
 #include	"libmondai.h"
