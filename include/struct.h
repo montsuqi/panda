@@ -104,6 +104,8 @@ typedef	struct {
 	int		limit;
 	int		redirect;
 	int		fDBOperation;
+	uint64_t	ticket_id;
+	LargeByteString	*last_query;
 }	DBCOMM_CTRL;
 
 typedef	struct {
@@ -154,6 +156,7 @@ typedef	struct _DBG_Struct	{
 	LargeByteString	*redirectData;
 	LargeByteString	*checkData;
 	uint64_t	ticket_id;
+	LargeByteString	*last_query;
 	char		*file;
 	DB_Server	*server;
 	DB_Process	process[2];

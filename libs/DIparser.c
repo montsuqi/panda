@@ -720,6 +720,7 @@ NewDBG_Struct(
 	dbg->redirectPort = NULL;
 	dbg->redirectData = NULL;
 	dbg->checkData = NewLBS();
+	dbg->last_query = NewLBS();
 	dbg->fpLog = NULL;
 	dbg->dbt = NULL;
 	dbg->priority = 50;
@@ -1060,7 +1061,6 @@ BuildMcpArea(
 	p += sprintf(p,		"};");
 	p += sprintf(p,	"};");
 	rec = ParseRecordMem(buff);
-
 	return	(rec);
 }
 

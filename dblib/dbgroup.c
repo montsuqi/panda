@@ -619,3 +619,23 @@ BuildDBCTRL(void)
 	return	(rec);
 }
 
+extern	void
+LBS_String(
+	LargeByteString	*lbs,
+	char			*str)
+{
+	LBS_EmitStart(lbs);
+	LBS_EmitString(lbs, str);
+	LBS_EmitEnd(lbs);
+}
+
+extern	void
+LastQuery(
+	DBG_Struct	*dbg,
+	DBCOMM_CTRL		*ctrl)
+{
+	ctrl->last_query = dbg->last_query;
+	ctrl->ticket_id = dbg->ticket_id;
+}
+
+

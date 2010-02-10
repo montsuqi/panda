@@ -1,3 +1,9 @@
+2010-02-10  Noboru Saitou  <noborus@netlab.jp>
+
+	* include/struct.h, libs/DIparser.c, dblib/dbgroup.h,
+	dblib/dbgroup.c, dblib/PostgreSQL.c, dblib/Shell.c, Osek.c
+	監査ログのためクエリーを保存するようにした
+
 2010-02-09  Noboru Saitou  <noborus@netlab.jp>
 
 	* tools/dbsync.c, dblib/PostgreSQLlib.c, dblib/PostgreSQLlib.h,

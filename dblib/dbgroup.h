@@ -45,6 +45,8 @@ extern	int		GetTableFuncData(RecordStruct **rec, ValueStruct **value,
 extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);
 extern	RecordStruct	*BuildDBCTRL(void);
 extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);
+extern	void	LBS_String(LargeByteString *lbs, char *str);
+extern	void	LastQuery(DBG_Struct *dbg, DBCOMM_CTRL *ctrl);
 
 #undef	GLOBAL
 #ifdef	MAIN
