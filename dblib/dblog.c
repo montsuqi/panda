@@ -239,10 +239,11 @@ AppendRecord(
 	char *esc_checkdata = (char *)xmalloc(checkdata_len);
 	char *sql = (char *)xmalloc(sql_len);
 	Bool ret = TRUE;
+	int error;
 
-ENTER_FUNC;	
-	pg_escape(esc_data, data, data_len);
-	pg_escape(esc_checkdata, checkdata, checkdata_len);
+ENTER_FUNC;
+	PQescapeStringConn(conn, esc_data, data, data_len, &error);
+	PQescapeStringConn(conn, esc_checkdata, checkdata, checkdata_len, &error);
 
 	if (no == DBLOG_DEFAULT_NO) {
 		snprintf(sql, sql_len,

@@ -88,15 +88,6 @@ template1_connect(
 	return conn;
 }
 
-extern size_t
-pg_escape(
-	char *to,
-	const char *from,
-	size_t length)
-{
-	return PQescapeString (to, from, length);
-}
-
 extern Bool
 template1_check(
 	DBG_Struct	*dbg)
