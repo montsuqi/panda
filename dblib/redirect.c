@@ -143,7 +143,7 @@ ENTER_FUNC;
 		rdbg = dbg->redirect;
 		if		( ( rdbg->redirectPort  ==  NULL ) 
 		 || (( fh = ConnectSocket(rdbg->redirectPort,SOCK_STREAM) )  <  0 ) ) {
-			Warning("loging server not ready");
+			dbgmsg("loging server not ready");
 			dbg->fpLog = NULL;
 			dbg->redirectData = NULL;
 			if ( !fNoCheck ){
