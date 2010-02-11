@@ -280,7 +280,7 @@ ValueToSQL(
 		break;
 	  case	GL_TYPE_TIMESTAMP:
 		sprintf(buff,"timestamp '%d-%d-%d %d:%d:%d'",
-				ValueDateTimeYear(val),
+				ValueDateTimeYear(val) + 1900,
 				ValueDateTimeMon(val) + 1,
 				ValueDateTimeMDay(val),
 				ValueDateTimeHour(val),
@@ -290,7 +290,7 @@ ValueToSQL(
 		break;
 	  case	GL_TYPE_DATE:
 		sprintf(buff,"date '%d-%d-%d'",
-				ValueDateTimeYear(val),
+				ValueDateTimeYear(val) + 1900,
 				ValueDateTimeMon(val) + 1,
 				ValueDateTimeMDay(val));
 		LBS_EmitString(lbs,buff);
@@ -1204,7 +1204,6 @@ ENTER_FUNC;
 				LBS_EmitEnd(sql);
 				res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,usage);
 				LastQuery(dbg, ctrl);
-				ctrl->last_query = dbg->last_query;
 				LBS_Clear(sql);
 				status = PGRES_FATAL_ERROR;
 				if		(	(  res ==  NULL  )
@@ -1927,6 +1926,36 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
+_DBAUDITLOG(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	char	buff[SIZE_BUFF];
+	LargeByteString	*sql;
+	ValueStruct	*ret;
+ENTER_FUNC;
+	ret = NULL;
+	sql = NewLBS();
+	LBS_EmitString(sql,"INSERT\tINTO\t");
+	LBS_EmitString(sql, AUDITLOG_TABLE);
+	LBS_EmitString(sql," (");
+	LBS_EmitString(sql," id, ");	
+	InsertNames(sql,args);
+	LBS_EmitString(sql,") VALUES\t(");
+	sprintf(buff, " nextval('%s_seq'), ", AUDITLOG_TABLE);
+	LBS_EmitString(sql,buff);
+	InsertValues(dbg,sql,args);
+	LBS_EmitString(sql,");");
+	LBS_EmitEnd(sql);
+	PutDB_AuditLog(dbg, sql);
+	FreeLBS(sql);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	char			*name,
@@ -1979,7 +2008,8 @@ static	DB_OPS	Operations[] = {
 	{	"DBDELETE",		_DBDELETE },
 	{	"DBINSERT",		_DBINSERT },
 	{	"DBCLOSECURSOR",_DBCLOSECURSOR },
-	{	"DBESCAPE",		_DBESCAPE },	
+	{	"DBESCAPE",		_DBESCAPE },
+	{	"DBAUDITLOG",		_DBAUDITLOG },
 
 	{	NULL,			NULL }
 };

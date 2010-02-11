@@ -57,6 +57,25 @@ LEAVE_FUNC;
 typedef	void	(*DB_FUNC2)(DBG_Struct *, DBCOMM_CTRL *);
 
 static	void
+SetDBAudit(
+	DBG_Struct		*dbg)
+{
+	ValueStruct	*audit;
+	LargeByteString	*lbs;
+	
+	if		( dbg->auditlog > 0 ) {
+		if ( ThisEnv->auditrec->value != NULL){
+			audit = ThisEnv->auditrec->value;
+			SetValueInteger(GetItemLongName(audit,"ticket_id"), dbg->ticket_id);
+			lbs = dbg->last_query;
+			if ((!lbs) && (LBS_Size(lbs) > 0)){
+				SetValueString(GetItemLongName(audit,"exec_query"),LBS_Body(lbs), NULL);
+			}
+		}
+	}
+}
+
+static	void
 _ExecDBFunc(
 	char	*rname,
 	RecordStruct	*rec,
@@ -189,6 +208,9 @@ ENTER_FUNC;
 		if		(  ctrl->rc  <  0  ) {
 			Warning("bad function [%s] rc = %d\n",ctrl->func, ctrl->rc);
 		}
+		if		( dbg && (dbg->auditlog > 0) ) {
+			SetDBAudit(dbg);
+		}
 	}
 #ifdef	TIMER
 	gettimeofday(&tv,NULL);
@@ -210,7 +232,12 @@ ExecDBG_Operation(
 	DBG_Struct	*dbg,
 	char		*name)
 {
-	return ExecFunction(dbg,name,FALSE);
+	int rc;
+	rc = ExecFunction(dbg,name,FALSE);
+	if		( dbg && (dbg->auditlog > 0) ) {
+		SetDBAudit(dbg);
+	}
+	return rc;
 }
 
 extern	int
@@ -638,4 +665,60 @@ LastQuery(
 	ctrl->ticket_id = dbg->ticket_id;
 }
 
+static	void
+CopyValuebyName(
+	ValueStruct	*to,
+	char			*to_name,
+	ValueStruct	*from,
+	char			*from_name)
+{
+	CopyValue(GetItemLongName(to, to_name), GetItemLongName(from, from_name));
+}
+
+extern		RecordStruct		*
+SetAuditRec(
+	ValueStruct		*mcp,
+	RecordStruct		*rec)
+{
+	time_t now;
+	struct	tm	tm_now;
+	ValueStruct	*audit;
+
+	audit = rec->value;
+	now = time(NULL);
+	localtime_r(&now, &tm_now);
+	SetValueDateTime(GetItemLongName(audit, "exec_date"), tm_now);
+	CopyValuebyName(audit, "func", mcp, "func");
+	CopyValuebyName(audit, "result", mcp, "rc");
+	CopyValuebyName(audit, "username", mcp, "dc.user");
+	CopyValuebyName(audit, "term", mcp, "dc.term");
+	CopyValuebyName(audit, "windowname", mcp, "dc.window");
+	CopyValuebyName(audit, "widget", mcp, "dc.widget");
+	CopyValuebyName(audit, "event", mcp, "dc.event");
+	CopyValuebyName(audit, "comment", mcp, "db.logcomment");
+	return (rec);
+}
+
+extern	void
+AuditLog(
+	ValueStruct		*mcp)
+{
+	int	i;
+	DBG_Struct	*dbg;
+	ValueStruct *ret;
+	DB_FUNC	func;
+	RecordStruct		*rec;
+ENTER_FUNC;
+	rec = ThisEnv->auditrec;
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		dbg = ThisEnv->DBG[i];
+		if		( dbg->auditlog > 0 ) {
+			rec = SetAuditRec(mcp, rec);
+			if		(  (func = g_hash_table_lookup(dbg->func->table,"DBAUDITLOG")) != NULL){
+				ret = (*func)(dbg,NULL,rec,rec->value);
+			}
+		}
+	}
+LEAVE_FUNC;
+}
 

@@ -68,7 +68,7 @@ SendCommit_Redirect(
 	int rc = FALSE;
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_COMMIT);	ON_IO_ERROR(dbg->fpLog,badio);
-		SendUInt64(dbg->fpLog, dbg->ticket_id); ON_IO_ERROR(dbg->fpLog,badio);
+		SendInt(dbg->fpLog, dbg->ticket_id); ON_IO_ERROR(dbg->fpLog,badio);
 		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {		
 			Warning("Redirect Commit error");			
 		}
@@ -89,7 +89,7 @@ SendVeryfyData_Redirect(
 		LBS_EmitEnd(dbg->checkData);
 		LBS_EmitEnd(dbg->redirectData);
 		SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
-		SendUInt64(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendInt(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
 		SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
 		SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
 	}
@@ -236,7 +236,7 @@ ENTER_FUNC;
 
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_BEGIN);
-		dbg->ticket_id = RecvUInt64(dbg->fpLog);
+		dbg->ticket_id = RecvInt(dbg->fpLog);
 	}
 	if		(  dbg->redirectData  !=  NULL  ) { 
 		LBS_EmitStart(dbg->redirectData);
@@ -278,7 +278,7 @@ ENTER_FUNC;
 	
 	if		(  dbg->fpLog  !=  NULL  ) {
 		SendPacketClass(dbg->fpLog,RED_ABORT);	ON_IO_ERROR(dbg->fpLog,badio);
-		SendUInt64(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendInt(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
 	}
 	if	(  dbg->redirectData  !=  NULL  ) {
 		LBS_EmitStart(dbg->redirectData);
@@ -304,6 +304,20 @@ ENTER_FUNC;
 	if ( !rc ){
 		CloseDB_RedirectPort(dbg);
 	}
+LEAVE_FUNC;
+}
+
+extern	void
+PutDB_AuditLog(
+	DBG_Struct	*dbg,
+	LargeByteString	*lbs)
+{
+ENTER_FUNC;
+	if		(  dbg->fpLog  !=  NULL  ) {
+		SendPacketClass(dbg->fpLog,RED_AUDIT);	ON_IO_ERROR(dbg->fpLog,badio);
+		SendLBS(dbg->fpLog,lbs);				ON_IO_ERROR(dbg->fpLog,badio);
+	}
+badio:
 LEAVE_FUNC;
 }
 

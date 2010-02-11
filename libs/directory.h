@@ -34,6 +34,8 @@
 GLOBAL	DI_Struct	*ThisEnv;
 #undef	GLOBAL
 
+#define	AUDITLOG_TABLE	"MONTSUQI_AUDITLOG"
+
 extern	void		InitDirectory(void);
 extern	void		SetUpDirectory(char *name, char *ld, char *bd, char *db, Bool parse_ld);
 extern	LD_Struct	*SearchWindowToLD(char *wname);

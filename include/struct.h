@@ -150,7 +150,8 @@ typedef	struct _DBG_Struct	{
 	Port		*redirectPort;
 	char		*redirectName;
 	struct	_DBG_Struct	*redirect;
-	int		redirectorMode;	
+	int		redirectorMode;
+	int		auditlog;
 	char		*logTableName;
 	NETFILE		*fpLog;
 	LargeByteString	*redirectData;
@@ -334,6 +335,7 @@ typedef	struct {
 	,			cDBD
 	,			stacksize;
 	SysData_Struct	*sysdata;
+	RecordStruct	*auditrec;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
 	GHashTable	*LD_Table;

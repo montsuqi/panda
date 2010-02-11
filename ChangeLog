@@ -1,3 +1,11 @@
+2010-02-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/MONFUNC.c, dblib/PostgreSQL.c, dblib/dbgroup.c,
+	 dblib/dbgroup.h, dblib/redirect.c, dblib/redirect.h,
+	 dbstuff/dbredirector.c, dbstuff/dbredirector.h,
+	include/struct.h, libs/DIparser.c, libs/directory.h
+	監査ログの追加
+
 2010-02-10  Noboru Saitou  <noborus@netlab.jp>
 
 	* include/struct.h, libs/DIparser.c, dblib/dbgroup.h,

@@ -70,8 +70,8 @@ ResetUser(
 
 static int
 MonDBFunc(
-	ValueStruct		*mcp,
-	char			*func,	
+	ValueStruct	*mcp,
+	char			*func,
 	char			*data)
 {
 	RecordStruct	*rec;
@@ -139,17 +139,24 @@ MONFUNC(
 	char	*data)
 {
 	ValueStruct		*mcp;
+	ValueStruct	*audit;
 	char			*func;
 	int			ret;
 
 ENTER_FUNC;
 	mcp = ThisEnv->mcprec->value;
+	audit = ThisEnv->auditrec->value;
+	InitializeValue(audit);
 	OpenCOBOL_UnPackValue(OpenCOBOL_Conv, mcpdata, mcp);
 	func  = ValueStringPointer(GetItemLongName(mcp,"func"));
 	if		(  !strcmp(func,"PUTWINDOW")  ) {
 		ret = MonGLFunc(mcp);
 	} else {
 		ret = MonDBFunc(mcp, func, data);
+	}
+	if ( ValueInteger(GetItemLongName(mcp,"db.logflag")) > 0 ){
+		AuditLog(mcp);
+		ValueInteger(GetItemLongName(mcp,"db.logflag")) = 0;
 	}
 #ifdef	DEBUG
 	DumpValueStruct(mcp);

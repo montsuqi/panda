@@ -65,6 +65,7 @@ static	int		Back;
 static	char	*Directory;
 
 static	DBG_Struct	*ThisDBG;
+static	DBG_Struct	*AuditDBG;
 static	pthread_t	_FileThread;
 static int               RedirectorMode;
 
@@ -74,7 +75,7 @@ static  pthread_mutex_t ticketlock;
 static  pthread_cond_t redcond;
 
 static  GSList *TicketList;
-static  uint64_t TICKETID = 0;
+static  int TICKETID = 1;
 
 volatile sig_atomic_t 	fShutdown = FALSE;
 volatile sig_atomic_t	fReopen = FALSE;
@@ -113,6 +114,7 @@ ENTER_FUNC;
 	ticket->ticket_id = 0;
 	ticket->fd = 0;
 	ticket->veryfydata = NULL;
+	ticket->auditlog = NULL;
 	ticket->status = TICKET_BEGIN;
 LEAVE_FUNC;
 	return ticket;
@@ -120,7 +122,7 @@ LEAVE_FUNC;
 
 static Ticket *
 LookupTicket(
-	uint64_t	ticket_id,
+	int	ticket_id,
 	int fd)
 {
 	GSList *list;
@@ -164,20 +166,21 @@ ENTER_FUNC;
 	ticket->fd = fpLog->fd;
 	ticket->ticket_id = TICKETID++;
 	TicketList = g_slist_append(TicketList, ticket);
-	SendUInt64(fpLog, ticket->ticket_id);
+	SendInt(fpLog, ticket->ticket_id);
 LEAVE_FUNC;
 }
+
 
 static void
 RecvRedData(
 	NETFILE	*fpLog)
 {
-	uint64_t	ticket_id;
+	int		ticket_id;
 	Ticket		*ticket;
 	VeryfyData	*veryfydata;
 ENTER_FUNC;
 	veryfydata = NewVerfyData();
-	ticket_id = RecvUInt64(fpLog);
+	ticket_id = RecvInt(fpLog);
 	RecvLBS(fpLog, veryfydata->checkData);
 	LBS_EmitEnd(veryfydata->checkData);
 	RecvLBS(fpLog, veryfydata->redirectData);
@@ -209,7 +212,8 @@ ENTER_FUNC;
 		if ( first ) {
 			ticket = (Ticket *)(first->data);
 			if ( (ticket->status == TICKET_COMMIT)
-				 || (ticket->status == TICKET_ABORT) ) {
+				 || (ticket->status == TICKET_ABORT)
+				 || (ticket->status == TICKET_AUDIT)) {
 				TicketList = g_slist_remove_link(TicketList,first);
 				g_slist_free_1(first);
 			} else {
@@ -229,18 +233,18 @@ static void
 CommitTicket(
 	NETFILE	*fpLog)
 {
-	uint64_t	ticket_id;
+	int		ticket_id;
 	Ticket		*ticket;
 
-	ticket_id = RecvUInt64(fpLog);
+	ticket_id = RecvInt(fpLog);
 	ticket = LookupTicket(ticket_id, fpLog->fd);
 	if (ticket) {
 		if (ticket->status != TICKET_ABORT) {
 			ticket->status = TICKET_COMMIT;
 		}
-		SendPacketClass(fpLog,RED_OK);	
+		SendPacketClass(fpLog,RED_OK);
 	} else {
-		SendPacketClass(fpLog,RED_NOT);			
+		SendPacketClass(fpLog,RED_NOT);
 	}
 	pthread_cond_signal(&redcond);
 }
@@ -250,9 +254,9 @@ AbortTicket(
 	NETFILE	*fpLog)
 {
 	Ticket *ticket;
-	uint64_t	ticket_id;
+	int	ticket_id;
 ENTER_FUNC;
-	ticket_id = RecvUInt64(fpLog);
+	ticket_id = RecvInt(fpLog);
 	ticket = LookupTicket(ticket_id, fpLog->fd);
 	if (ticket) {
 		ticket->status = TICKET_ABORT;
@@ -280,6 +284,30 @@ ENTER_FUNC;
 	}
 	pthread_cond_signal(&redcond);
 LEAVE_FUNC;
+}
+
+static void
+AuditTicket(
+	NETFILE	*fpLog,
+	LargeByteString	*lbs)
+{
+	Ticket *ticket;
+ENTER_FUNC;
+	ticket = NewTicket();
+	ticket->status = TICKET_AUDIT;
+	ticket->auditlog = lbs;
+	TicketList = g_slist_append(TicketList, ticket);
+LEAVE_FUNC;
+}
+
+static void
+RecvAuditLog(				
+	NETFILE	*fpLog)
+{
+	LargeByteString	*lbs;
+	lbs = NewLBS();
+	RecvLBS(fpLog, lbs);
+	AuditTicket(fpLog, lbs);
 }
 
 static	void
@@ -318,6 +346,9 @@ ENTER_FUNC;
 			break;
 		  case	RED_UNLOCK:
 			UnLockTicket(fpLog);
+			break;
+		  case	RED_AUDIT:
+			RecvAuditLog(fpLog);
 			break;
 		  case	RED_END:
 			fSuc = FALSE;
@@ -398,6 +429,22 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+WriteAuditLog(
+	FILE	*afp,
+	char	*query)
+{
+	int rc;
+#if 0
+	rc = ExecDBOP(AuditDBG, query, DB_UPDATE);
+	if (rc){
+		ExecRedirectDBOP(ThisDBG, query, DB_UPDATE);
+	}
+#endif
+	fprintf(afp,"%s\n",query);
+	fflush(afp);
+}
+
 static  Bool
 ConnectDB(void)
 {
@@ -463,6 +510,40 @@ OpenLogFile(void)
 		umask((mode_t) 0077);
 		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
 			Warning("can not open log file :%s", ThisDBG->file);
+		}
+	}
+	return fp;
+}
+
+
+static  Bool
+ConnectAuditDB(void)
+{
+	Bool rc = TRUE;
+ENTER_FUNC;
+	printf("%d\n", AuditDBG->process[PROCESS_UPDATE].dbstatus);
+	if (  AuditDBG->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT ) {
+		OpenRedirectDB(AuditDBG);
+		if (  AuditDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+			Message("connect to audit database successed");
+		} else {
+			Message("connect to audit database failed");
+			rc = FALSE;
+		}
+	}
+LEAVE_FUNC;
+	return rc;
+}
+
+static  FILE	*
+OpenAuditLogFile(void)
+{
+	FILE	*fp = NULL;
+	
+	if		(  AuditLogFile  !=  NULL  ) {
+		umask((mode_t) 0077);
+		if		(  ( fp = fopen(AuditLogFile,"a+") )  ==  NULL  ) {
+			Warning("can not open audit log file :%s", AuditLogFile);
 		}
 	}
 	return fp;
@@ -614,12 +695,15 @@ FileThread(
 	void	*dummy)
 {
 	VeryfyData *veryfydata;
-	FILE	*fp;
+	FILE	*fp, *afp;
 	Ticket *ticket;
 	char header[SIZE_BUFF];
 ENTER_FUNC;
 	fp = OpenLogFile();
 	ConnectDB();
+	afp = OpenAuditLogFile();
+	ConnectAuditDB();
+	
 	strncpy(header, "dbredirector start", sizeof(header));
 	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
 		strncat(header, "(No database)", sizeof(header) - strlen(header) - 1);
@@ -658,9 +742,13 @@ ENTER_FUNC;
 				}
 				FreeVeryfyData(veryfydata);
 			}
+		} else if ( ticket->status == TICKET_AUDIT ) {
+			WriteAuditLog(afp, LBS_Body(ticket->auditlog));
+			FreeLBS(ticket->auditlog);
 		}
 		xfree(ticket);
 	}
+		
 	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
 		CloseDB_RedirectPort(ThisDBG);
 	}
@@ -776,6 +864,17 @@ CheckDBG(
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)_CheckDBG,name);
 }
 
+extern	void
+SetAuditDBG(
+	char		*name)
+{
+	if		(  ( AuditDBG = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name) )
+			   ==  NULL  ) {
+		Error("DB group not found");
+	}
+	AuditDBG->auditlog = 0;
+}
+
 void StopHandler( int no ) {
     ( void )no;
 	fShutdown = TRUE;
@@ -822,6 +921,8 @@ ENTER_FUNC;
 	InitDB_Process(NULL);
 
 	CheckDBG(name);
+	char *auditdbname = "";
+	SetAuditDBG(auditdbname);
 
 	if		(  PortNumber  ==  NULL  ) {
 		if		(  ( ThisDBG != NULL) 
@@ -888,6 +989,8 @@ static	ARG_TABLE	option[] = {
 	{	"sslmode",	STRING,		TRUE,	(void*)&DB_Sslmode,
 		"DB SSL mode"									},
 
+	{	"auditlog",		STRING,	TRUE,	(void*)&AuditLogFile,
+		"audit log file name"							},
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"no check dbredirector start"					},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
@@ -919,6 +1022,7 @@ SetDefault(void)
 	DB_Sslmode = NULL;
 	DB_Name = DB_User;
 
+	AuditLogFile = NULL;
 	fNoCheck = FALSE;
 	fNoSumCheck = FALSE;
 	fNoRedirect = FALSE;
@@ -944,6 +1048,7 @@ main(
 		name = "";
 	}
 	InitSystem(name, argv[0]);
+
 	Message("dbredirector start");
 	ExecuteServer();
 	Message("dbredirector end");

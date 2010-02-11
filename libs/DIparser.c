@@ -717,6 +717,7 @@ NewDBG_Struct(
 	dbg->redirectName = NULL;
 	dbg->logTableName = NULL;
 	dbg->redirectorMode = REDIRECTOR_MODE_PATCH;
+	dbg->auditlog = 0;
 	dbg->redirectPort = NULL;
 	dbg->redirectData = NULL;
 	dbg->checkData = NewLBS();
@@ -980,6 +981,8 @@ ENTER_FUNC;
 			ParError("redirect DB group not found");
 		}
 		dbg->redirect = red;
+		/* Default AuditLog = have redirect */
+		dbg->auditlog = 1;
 	}
 LEAVE_FUNC;
 }
@@ -1009,6 +1012,32 @@ ENTER_FUNC;
 		_AssignDBG(in,dbg->name,dbg);
 	}
 LEAVE_FUNC;
+}
+
+static	RecordStruct	*
+BuildAuditLog(void)
+{
+	RecordStruct	*rec;
+	char			*buff
+		,			*p;
+	buff = (char *)xmalloc(SIZE_BUFF);
+	p = buff;
+	p += sprintf(p,	"%s	{", AUDITLOG_TABLE);
+	p += sprintf(p,		"exec_date	timestamp;");
+	p += sprintf(p,		"username	varchar(%d);",SIZE_USER);
+	p += sprintf(p,		"term		varchar(%d);",SIZE_TERM);
+	p += sprintf(p,		"windowname varchar(%d);",SIZE_NAME);
+	p += sprintf(p,		"widget	varchar(%d);",SIZE_NAME);
+	p += sprintf(p,		"event		varchar(%d);",SIZE_NAME);
+	p += sprintf(p,		"comment	varchar(%d);",SIZE_COMMENT);;
+	p += sprintf(p,		"func		varchar(%d);",SIZE_FUNC);
+	p += sprintf(p,		"result	integer;");	
+	p += sprintf(p,		"ticket_id	integer;");
+	p += sprintf(p,		"exec_query	text;");
+	p += sprintf(p,	"};");
+	rec = ParseRecordMem(buff);
+
+	return (rec);
 }
 
 static	RecordStruct	*
@@ -1375,6 +1404,7 @@ ENTER_FUNC;
 	}
 	if		(  ThisEnv  !=  NULL  )	{
 		ThisEnv->mcprec = BuildMcpArea(ThisEnv->stacksize);
+		ThisEnv->auditrec = BuildAuditLog();
 		AssignDBG(in);
 	}
 LEAVE_FUNC;
