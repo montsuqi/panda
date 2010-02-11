@@ -33,7 +33,8 @@ typedef enum {
 	TICKET_BEGIN = 0,
 	TICKET_DATA,
 	TICKET_ABORT,
-	TICKET_COMMIT
+	TICKET_COMMIT,
+	TICKET_AUDIT
 } TICKET_STATUS;
 
 typedef	struct {
@@ -45,6 +46,7 @@ typedef	struct {
 	int			fd;
 	uint64_t	ticket_id;
 	VeryfyData *veryfydata;
+	LargeByteString	*auditlog;
 	TICKET_STATUS status;
 }	Ticket;
 
