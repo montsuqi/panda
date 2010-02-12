@@ -58,6 +58,7 @@
 #include	"option.h"
 #include	"message.h"
 #include	"dblog.h"
+#include	"audit.h"
 #include	"debug.h"
 
 static	char	*PortNumber;
@@ -437,12 +438,14 @@ WriteAuditLog(
 	char	*query)
 {
 	int rc;
-#if 0
+
+	CheckAuditTable(AuditDBG);
 	rc = ExecDBOP(AuditDBG, query, DB_UPDATE);
 	if (rc){
+		CheckAuditTable(ThisDBG);		
 		ExecRedirectDBOP(ThisDBG, query, DB_UPDATE);
 	}
-#endif
+
 	if		(	afp != NULL) {
 		fprintf(afp,"%s\n",query);
 		fflush(afp);

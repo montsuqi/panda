@@ -1,5 +1,8 @@
 2010-02-12  Noboru Saitou  <noborus@netlab.jp>
 
+	* dblib/audit.h, dblib/audit.c, dbstuff/dbredirector.c
+	auditテーブルがない場合に作成するようにした(仮)。
+
 	* aps/MONFUNC.c, dblib/PostgreSQL.c, dblib/dbgroup.c,
 	 dblib/dbgroup.h, dblib/redirect.c, dblib/redirect.h,
 	 dbstuff/dbredirector.c, dbstuff/dbredirector.h,

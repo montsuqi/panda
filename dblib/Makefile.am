@@ -51,7 +51,7 @@ libpostgresqlutils_a_SOURCES = \
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
 	PostgreSQLlib.c PostgreSQLlib.h	\
-	PostgreSQLutils.c
+	PostgreSQLutils.c audit.c
 
 
 DB_OBJECTS			=		\
