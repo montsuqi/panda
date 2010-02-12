@@ -67,7 +67,6 @@ static	int		Back;
 static	char		*Directory;
 static DBG_Struct       *ThisDBG;
 
-static 	Bool 		fShutdown = FALSE;
 static 	DBMasterThread *DBMasterServer;
 
 static char *AuthURL;
