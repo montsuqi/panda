@@ -296,7 +296,9 @@ ENTER_FUNC;
 	ticket = NewTicket();
 	ticket->status = TICKET_AUDIT;
 	ticket->auditlog = lbs;
+	LockTicket(fpLog);
 	TicketList = g_slist_append(TicketList, ticket);
+	UnLockTicket(fpLog);
 LEAVE_FUNC;
 }
 
@@ -746,7 +748,7 @@ ENTER_FUNC;
 			}
 		} else if ( ticket->status == TICKET_AUDIT ) {
 			if (ticket->auditlog != NULL ) {
-				if (LBS_Size(ticket->auditlog) >0 ) {
+				if (LBS_Size(ticket->auditlog) > 0 ) {
 					WriteAuditLog(afp, LBS_Body(ticket->auditlog));
 				}
 				FreeLBS(ticket->auditlog);
