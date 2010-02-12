@@ -532,7 +532,6 @@ ENTER_FUNC;
 			  case	SQL_OP_EOL:
                 LBS_EmitEnd(sql);
 				res = _SendCommand(dbg,LBS_Body(sql),ctrl->redirect,usage);
-				LastQuery(dbg, ctrl);
                 LBS_Clear(sql);
 				if		(  res <  0  ) {
 					dbgmsg("NG");
@@ -601,7 +600,6 @@ _EXEC(
 	int			rc;
 
 	res = _SendCommand(dbg,sql,fRed,usage);
-	LastQuery(dbg, ctrl);
 	LBS_EmitStart(dbg->checkData);
 	if		(  res <  0  ) {
 		dbgmsg("NG");
@@ -852,7 +850,6 @@ ENTER_FUNC;
 			p = sql;
 			p += sprintf(p,"FETCH FROM %s_%s_csr;", rec->name, path->name);
 			res = _SendCommand(dbg,sql,ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			if		(  res  <  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
@@ -909,7 +906,6 @@ ENTER_FUNC;
 			p = sql;
 			p += sprintf(p,"CLOSE %s_%s_csr;",rec->name,path->name);
 			res = _SendCommand(dbg,sql,ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			if		(  res !=  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
@@ -981,7 +977,6 @@ ENTER_FUNC;
 			}
             LBS_EmitEnd(sql);
 			res = _SendCommand(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			if		(  res  <  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
@@ -1049,7 +1044,6 @@ ENTER_FUNC;
 			}
             LBS_EmitEnd(sql);
 			res = _SendCommand(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			if		(  res  <  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;
@@ -1103,7 +1097,6 @@ ENTER_FUNC;
 			LBS_EmitChar(sql,';');
             LBS_EmitEnd(sql);
 			res = _SendCommand(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			if		(  res  !=  0  ) {
 				dbgmsg("NG");
 				ctrl->rc = MCP_BAD_OTHER;

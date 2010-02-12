@@ -104,8 +104,6 @@ typedef	struct {
 	int		limit;
 	int		redirect;
 	int		fDBOperation;
-	uint64_t	ticket_id;
-	LargeByteString	*last_query;
 }	DBCOMM_CTRL;
 
 typedef	struct {

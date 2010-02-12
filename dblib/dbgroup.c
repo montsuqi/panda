@@ -656,15 +656,6 @@ LBS_String(
 	LBS_EmitEnd(lbs);
 }
 
-extern	void
-LastQuery(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL		*ctrl)
-{
-	ctrl->last_query = dbg->last_query;
-	ctrl->ticket_id = dbg->ticket_id;
-}
-
 static	void
 CopyValuebyName(
 	ValueStruct	*to,

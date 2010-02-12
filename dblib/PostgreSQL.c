@@ -1203,7 +1203,6 @@ ENTER_FUNC;
 			  case	SQL_OP_EOL:
 				LBS_EmitEnd(sql);
 				res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,usage);
-				LastQuery(dbg, ctrl);
 				LBS_Clear(sql);
 				status = PGRES_FATAL_ERROR;
 				if		(	(  res ==  NULL  )
@@ -1476,7 +1475,6 @@ ENTER_FUNC;
 		BeginDB_Redirect(dbg); 
 		res = _PQexec(dbg,"BEGIN",FALSE,DB_UPDATE);
 		UnLockDB_Redirect(dbg);		
-		LastQuery(dbg, ctrl);		
 		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
 		_PQclear(res);
 	} else {
@@ -1515,7 +1513,6 @@ ENTER_FUNC;
 		CheckDB_Redirect(dbg);
 		fCommit = InTrans(conn);
 		res = _PQexec(dbg,"COMMIT WORK",FALSE,DB_UPDATE);
-		LastQuery(dbg, ctrl);
 		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
 		_PQclear(res);
 		if ( (fCommit == TRUE) && (rc == MCP_OK) ) {
@@ -1607,7 +1604,6 @@ ENTER_FUNC;
 			p = sql;
 			p += sprintf(p,"FETCH %d FROM %s_%s_csr",ctrl->limit,rec->name,path->name);
 			res = _PQexec(dbg,sql,ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_TUPLES_OK);
 			if ( ctrl->rc == MCP_OK ) {
 				if		(  ( n = PQntuples(res) )  >  0  ) {
@@ -1673,7 +1669,6 @@ ENTER_FUNC;
 			p += sprintf(p,"CLOSE %s_%s_csr",rec->name,path->name);
 			ctrl->rcount = 0;
 			res = _PQexec(dbg,sql,ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
 			_PQclear(res);
 		}
@@ -1745,7 +1740,6 @@ ENTER_FUNC;
 			LBS_EmitEnd(sql);
 			ctrl->rcount = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			cmdtuples = PQcmdTuples(res);
 			if (*cmdtuples != '\0') {
 			  ctrl->rcount = atoi(cmdtuples);
@@ -1818,7 +1812,6 @@ ENTER_FUNC;
 			LBS_EmitEnd(sql);
 			ctrl->rcount = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			cmdtuples = PQcmdTuples(res);
 			if (*cmdtuples != '\0') {
 			  ctrl->rcount = atoi(cmdtuples);
@@ -1877,7 +1870,6 @@ ENTER_FUNC;
 			LBS_EmitEnd(sql);
 			ctrl->rcount = 0;
 			res = _PQexec(dbg,LBS_Body(sql),ctrl->redirect,path->usage);
-			LastQuery(dbg, ctrl);
 			cmdtuples = PQcmdTuples(res);
 			if (*cmdtuples != '\0') {
 			  ctrl->rcount = atoi(cmdtuples);

@@ -170,7 +170,6 @@ ENTER_FUNC;
 	rc += DoShell(p);
 	LBS_String(dbg->last_query,p);
 	LBS_Clear(lbs);
-	LastQuery(dbg, ctrl);
 	CommitDB_Redirect(dbg);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
