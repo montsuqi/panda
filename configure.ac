@@ -590,15 +590,6 @@ dnl ***************************************************************************
 dnl Add all the cflags & libs needed for the glib modules.
 dnl ***************************************************************************
 
-AC_PATH_PROG(GLIB_CONFIG,glib-config,no)
-if test x$GLIB_CONFIG = xno; then
-  AC_MSG_ERROR(Couldn't find glib-config)
-fi
-GLIB_LIBS=`glib-config --libs`
-GLIB_CFLAGS=`glib-config --cflags`
-AC_SUBST(GLIB_LIBS)
-AC_SUBST(GLIB_CFLAGS)
-
 PKG_CHECK_MODULES(GLIB2,
 [
 	glib-2.0	>= 2.12.0
@@ -689,7 +680,6 @@ AC_CONFIG_FILES([Makefile
                  pgserver/Makefile
                  tools/Makefile
                  wfc/Makefile
-                 panda-config
 ])
 AC_OUTPUT
 
