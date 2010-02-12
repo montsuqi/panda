@@ -68,7 +68,7 @@ SetDBAudit(
 			audit = ThisEnv->auditrec->value;
 			SetValueInteger(GetItemLongName(audit,"ticket_id"), dbg->ticket_id);
 			lbs = dbg->last_query;
-			if ((!lbs) && (LBS_Size(lbs) > 0)){
+			if ((lbs != NULL) && (LBS_Size(lbs) > 0)){
 				SetValueString(GetItemLongName(audit,"exec_query"),LBS_Body(lbs), NULL);
 			}
 		}
