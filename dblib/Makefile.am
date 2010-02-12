@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-noinst_LIBRARIES	=	libpandadb.a libpostgresqlutils.a
+noinst_LIBRARIES	=	libpandadb.a libpostgresqlutils.a libdblog.a
 lib_LTLIBRARIES 	=	$(DB_OBJECTS)
 
 libpandadb_a_LIBADD	=
@@ -39,7 +39,10 @@ INCLUDES 			=		\
 libpandadb_a_CFLAGS = $(AM_CFLAGS)
 libpandadb_a_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h      \
+	redirect.c	redirect.h
+
+libdblog_a_CFLAGS = $(AM_CFLAGS)
+libdblog_a_SOURCES	=	\
 	dblog.c         dblog.h
 
 libpostgresqlutils_a_LIBADD = 
