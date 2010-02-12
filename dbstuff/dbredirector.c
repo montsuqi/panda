@@ -441,8 +441,10 @@ WriteAuditLog(
 		ExecRedirectDBOP(ThisDBG, query, DB_UPDATE);
 	}
 #endif
-	fprintf(afp,"%s\n",query);
-	fflush(afp);
+	if		(	afp != NULL) {
+		fprintf(afp,"%s\n",query);
+		fflush(afp);
+	}
 }
 
 static  Bool
@@ -743,12 +745,16 @@ ENTER_FUNC;
 				FreeVeryfyData(veryfydata);
 			}
 		} else if ( ticket->status == TICKET_AUDIT ) {
-			WriteAuditLog(afp, LBS_Body(ticket->auditlog));
-			FreeLBS(ticket->auditlog);
+			if (ticket->auditlog != NULL ) {
+				if (LBS_Size(ticket->auditlog) >0 ) {
+					WriteAuditLog(afp, LBS_Body(ticket->auditlog));
+				}
+				FreeLBS(ticket->auditlog);
+			}
 		}
 		xfree(ticket);
 	}
-		
+
 	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
 		CloseDB_RedirectPort(ThisDBG);
 	}
