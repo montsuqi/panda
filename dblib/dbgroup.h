@@ -67,6 +67,7 @@ GLOBAL	char	*DB_Sslmode;
 GLOBAL	Bool	fNoCheck;
 GLOBAL	Bool	fNoRedirect;
 GLOBAL	Bool	fNoSumCheck;
+GLOBAL	Bool	fNoAudit;
 GLOBAL	int		MaxSendRetry;
 GLOBAL	int		RetryInterval;
 GLOBAL	char	*AuditLogFile;

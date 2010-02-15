@@ -70,7 +70,6 @@ static	DBG_Struct	*AuditDBG;
 static	pthread_t	_FileThread;
 static int               RedirectorMode;
 
-static	Port		*RedirectPort;
 static  pthread_mutex_t redlock;
 static  pthread_mutex_t ticketlock;
 static  pthread_cond_t redcond;
@@ -78,6 +77,7 @@ static  pthread_cond_t redcond;
 static  GSList *TicketList;
 static  int TICKETID = 1;
 
+static  Bool fDbsyncstatus = TRUE;
 volatile sig_atomic_t 	fShutdown = FALSE;
 volatile sig_atomic_t	fReopen = FALSE;
 
@@ -206,9 +206,11 @@ ENTER_FUNC;
 	while ( ticket == NULL ) {
 		pthread_mutex_lock(&redlock);
 		first = g_slist_nth(TicketList,0);
-		if ( ((fShutdown)||(fReopen)) && (first == NULL)){
-			pthread_mutex_unlock(&redlock);
-			break;
+		if ( first == NULL ){
+			if ( fShutdown||fReopen ) {
+				pthread_mutex_unlock(&redlock);
+				break;
+			}
 		}
 		if ( first ) {
 			ticket = (Ticket *)(first->data);
@@ -432,26 +434,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	void
-WriteAuditLog(
-	FILE	*afp,
-	char	*query)
-{
-	int rc;
-
-	CheckAuditTable(AuditDBG);
-	rc = ExecDBOP(AuditDBG, query, DB_UPDATE);
-	if (rc){
-		CheckAuditTable(ThisDBG);		
-		ExecRedirectDBOP(ThisDBG, query, DB_UPDATE);
-	}
-
-	if		(	afp != NULL) {
-		fprintf(afp,"%s\n",query);
-		fflush(afp);
-	}
-}
-
 static  Bool
 ConnectDB(void)
 {
@@ -502,7 +484,7 @@ ENTER_FUNC;
 		Message("disconnect to database successed");
 	} else {
 		rc = FALSE;
-		Message("disconnect to database failed");		
+		Message("disconnect to database failed");
 	}
 	return rc;
 LEAVE_FUNC;
@@ -522,13 +504,14 @@ OpenLogFile(void)
 	return fp;
 }
 
-
 static  Bool
 ConnectAuditDB(void)
 {
 	Bool rc = TRUE;
 ENTER_FUNC;
-	printf("%d\n", AuditDBG->process[PROCESS_UPDATE].dbstatus);
+	if (  AuditDBG == NULL) {
+		return rc;
+	}
 	if (  AuditDBG->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT ) {
 		OpenRedirectDB(AuditDBG);
 		if (  AuditDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
@@ -665,13 +648,55 @@ LEAVE_FUNC;
 }
 
 static void
+WriteRedirectAuditLog(void)
+{
+	VeryfyData	*veryfydata;
+	
+	veryfydata = NewVerfyData();
+	veryfydata->checkData = LBS_Duplicate(AuditDBG->checkData);
+	veryfydata->redirectData = LBS_Duplicate(AuditDBG->redirectData);
+	ExecDB(veryfydata);
+	ReRedirect(LBS_Body(veryfydata->redirectData),
+						 LBS_Body(veryfydata->checkData));
+	FreeVeryfyData(veryfydata);
+}
+
+static	void
+WriteAuditLog(
+	FILE	*afp,
+	Ticket *ticket)
+{
+	int rc;
+
+	if (ticket->auditlog != NULL ) {
+		if (LBS_Size(ticket->auditlog) > 0 ) {
+			if (  AuditDBG != NULL) {
+				CheckAuditTable(AuditDBG);
+				rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), DB_UPDATE);
+				if (rc){
+					CheckAuditTable(ThisDBG);
+					WriteRedirectAuditLog();
+				}
+			}
+			if		(	afp != NULL) {
+				fprintf(afp,"%s\n",(char *)LBS_Body(ticket->auditlog));
+				fflush(afp);
+			}
+		}
+		FreeLBS(ticket->auditlog);
+	}
+}
+
+static void
 CheckFailure(
 	FILE	*fp)
 {
+	char *failure = "DB synchronous failure";
 	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
-		WriteLog(fp, "DB synchronous failure");		
-		Warning("DB synchronous failure");
+		WriteLog(fp, failure);
+		Warning(failure);
 		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		fDbsyncstatus = FALSE;
 	}
 }
 
@@ -714,6 +739,7 @@ ENTER_FUNC;
 	strncpy(header, "dbredirector start", sizeof(header));
 	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
 		strncat(header, "(No database)", sizeof(header) - strlen(header) - 1);
+		/* ReRedirect */		
 		OpenDB_RedirectPort(ThisDBG);
 		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	}
@@ -750,21 +776,19 @@ ENTER_FUNC;
 				FreeVeryfyData(veryfydata);
 			}
 		} else if ( ticket->status == TICKET_AUDIT ) {
-			if (ticket->auditlog != NULL ) {
-				if (LBS_Size(ticket->auditlog) > 0 ) {
-					WriteAuditLog(afp, LBS_Body(ticket->auditlog));
-				}
-				FreeLBS(ticket->auditlog);
-			}
+			WriteAuditLog(afp, ticket);
 		}
 		xfree(ticket);
 	}
-
 	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
+		/* ReRedirect */
 		CloseDB_RedirectPort(ThisDBG);
 	}
-	CleanUNIX_Socket(RedirectPort);
+	CleanUNIX_Socket(ThisDBG->redirectPort);
 	WriteLog(fp, "dbredirector stop ");
+	if (!fDbsyncstatus) {
+		WriteLog(fp, "DB synchronous failure");
+	}
 LEAVE_FUNC;
 }
 
@@ -779,8 +803,8 @@ ENTER_FUNC;
 	pthread_mutex_init(&redlock,NULL);
 	pthread_mutex_init(&ticketlock,NULL);	
 	pthread_cond_init(&redcond, NULL);
-	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL); 
-	_fhLog = InitServerPort(RedirectPort,Back);
+	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL);
+	_fhLog = InitServerPort(ThisDBG->redirectPort,Back);
 	maxfd = _fhLog;
 
 	while	(!fShutdown)	{
@@ -791,7 +815,7 @@ ENTER_FUNC;
 				pthread_cond_signal(&redcond);
 				continue;
 			}
-			Error("select: ", strerror(errno));			
+			Error("select: ", strerror(errno));
 		}
 		if		(  FD_ISSET(_fhLog,&ready)  ) {
 			ConnectLog(_fhLog);
@@ -875,14 +899,25 @@ CheckDBG(
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)_CheckDBG,name);
 }
 
-extern	void
-SetAuditDBG(
-	char		*name)
+static	void
+LookupAuditDBG(
+	char		*name,
+	DBG_Struct	*dbg,
+	void 		*dummy)
 {
-	if		(  ( AuditDBG = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name) )
-			   ==  NULL  ) {
+	if ((dbg->auditlog > 0) && (AuditDBG == NULL)) {
+		AuditDBG = dbg;
+	}
+}
+
+extern	void
+SetAuditDBG(void)
+{
+	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)LookupAuditDBG,NULL);
+	if		(  AuditDBG  ==  NULL  ) {
 		Error("DB group not found");
 	}
+	/* The audit log is not issued with the dbredirector. */
 	AuditDBG->auditlog = 0;
 }
 
@@ -932,18 +967,15 @@ ENTER_FUNC;
 	InitDB_Process(NULL);
 
 	CheckDBG(name);
-	char *auditdbname = "";
-	SetAuditDBG(auditdbname);
+	if (!fNoAudit) {
+		SetAuditDBG();
+	}
 
-	if		(  PortNumber  ==  NULL  ) {
-		if		(  ( ThisDBG != NULL) 
-				   && (ThisDBG->redirectPort  !=  NULL )) {
-			RedirectPort = ThisDBG->redirectPort;
-		} else {
-			RedirectPort = ParPortName(PORT_REDIRECT);
-		}
-	} else {
-		RedirectPort = ParPortName(PortNumber);
+	if		(  PortNumber  !=  NULL  ) {
+		ThisDBG->redirectPort = ParPortName(PortNumber);
+	}
+	if (ThisDBG->redirectPort == NULL) {
+		ThisDBG->redirectPort = ParPortName(PORT_REDIRECT);
 	}
 	dbgprintf("cmd filename => %s", program);
 	filename = rindex(program, FILE_SEP);
@@ -1007,7 +1039,9 @@ static	ARG_TABLE	option[] = {
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
 		"don't use dbredirector"						},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
-		"no count dbredirector updates"					},
+		"no count dbredirector updates"				},
+	{	"noaudit",BOOLEAN,	TRUE,		(void*)&fNoAudit,
+		"don't write audit log"						},
 	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
 		"send retry dbredirector"						},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
@@ -1037,6 +1071,7 @@ SetDefault(void)
 	fNoCheck = FALSE;
 	fNoSumCheck = FALSE;
 	fNoRedirect = FALSE;
+	fNoAudit = FALSE;	
 	MaxSendRetry = 3;
 	RetryInterval = 5;
 }
