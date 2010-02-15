@@ -394,7 +394,11 @@ main(
 				printf("NG, synchronization of the database\n");
 				exit(2);
 			}
-			ng_list_sync(master_dbg, slave_dbg, ng_list);			
+#if 0			
+			ng_list_sync(master_dbg, slave_dbg, ng_list);
+#else
+			fAllsync = TRUE;
+#endif
 		} else {
 			if (fVerbose){
 				printf("OK, synchronization of the database\n");			
