@@ -123,6 +123,16 @@ LEAVE_FUNC;
 }
 
 static	int
+MonLOGFunc(
+	ValueStruct		*mcp)
+{
+ENTER_FUNC;
+	ValueInteger(GetItemLongName(mcp,"rc")) = 0;
+	return 0;
+LEAVE_FUNC;
+}
+
+static	int
 MonGLFunc(
 	ValueStruct		*mcp)
 {
@@ -149,8 +159,11 @@ ENTER_FUNC;
 	InitializeValue(audit);
 	OpenCOBOL_UnPackValue(OpenCOBOL_Conv, mcpdata, mcp);
 	func  = ValueStringPointer(GetItemLongName(mcp,"func"));
-	if		(  !strcmp(func,"PUTWINDOW")  ) {
+	if (  !strcmp(func,"PUTWINDOW") ) {
 		ret = MonGLFunc(mcp);
+	} else
+	if (  !strcmp(func,"AUDITLOG")  ) {
+		ret = MonLOGfunc(mcp);
 	} else {
 		ret = MonDBFunc(mcp, func, data);
 	}

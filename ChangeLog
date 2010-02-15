@@ -1,3 +1,8 @@
+2010-02-15  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/MONFUNC.c
+	funcにAUDITLOGを追加した。
+
 2010-02-12  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/audit.h, dblib/audit.c, dbstuff/dbredirector.c
