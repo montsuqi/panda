@@ -163,7 +163,7 @@ ENTER_FUNC;
 		ret = MonGLFunc(mcp);
 	} else
 	if (  !strcmp(func,"AUDITLOG")  ) {
-		ret = MonLOGfunc(mcp);
+		ret = MonLOGFunc(mcp);
 	} else {
 		ret = MonDBFunc(mcp, func, data);
 	}
