@@ -123,6 +123,7 @@ typedef	struct {
 #define DB_STATUS_DISCONNECT	0x04
 #define DB_STATUS_REDFAILURE	0x05
 #define DB_STATUS_LOCKEDRED		0x06
+#define DB_STATUS_SYNC			0x07
 
 typedef	struct {
 	void		*conn;

@@ -1,3 +1,12 @@
+2010-02-16  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/handler.c, dblib/PostgreSQLutils.c,
+	dblib/PostgreSQLutils.h, dblib/redirect.h,
+	dbstuff/dbredirector.c, include/struct.h,
+	tools/dbsync.c
+	dbsyncをdbredirectorと連携させ動作中に同期が取れるようにした。
+	DBSTATUS 「SYNC」を追加した。
+
 2010-02-15  Noboru Saitou  <noborus@netlab.jp>
 
 	* aps/MONFUNC.c

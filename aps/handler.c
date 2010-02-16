@@ -63,14 +63,15 @@ static	char	*STATUS[4] = {
 	"RSND"
 };
 
-static	char	*DBSTATUS[7] = {
+static	char	*DBSTATUS[8] = {
 	"NORE",
 	"CONN",
 	"WAIT",
 	"FAIL",
 	"DISC",
 	"RERR",
-	"REDL"
+	"REDL",
+	"SYNC"
 };
 
 static	char	*APS_HandlerLoadPath;

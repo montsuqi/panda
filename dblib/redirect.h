@@ -34,6 +34,8 @@
 #define	RED_COMMIT		(PacketClass)0x07
 #define	RED_UNLOCK		(PacketClass)0x08
 #define	RED_AUDIT		(PacketClass)0x09
+#define	RED_SYNC_START	(PacketClass)0x0A
+#define	RED_SYNC_END	(PacketClass)0x0B
 #define	RED_NOT		(PacketClass)0xF0
 #define	RED_PONG		(PacketClass)0xF1
 #define	RED_OK			(PacketClass)0xFE

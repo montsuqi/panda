@@ -80,6 +80,8 @@ static  int TICKETID = 1;
 static  Bool fDbsyncstatus = TRUE;
 volatile sig_atomic_t 	fShutdown = FALSE;
 volatile sig_atomic_t	fReopen = FALSE;
+volatile static Bool	fSync = FALSE;
+volatile static int	LOCKFD = 0;
 
 static 	DBLogCtx *DBLog;
 
@@ -148,13 +150,25 @@ LockTicket(
 	NETFILE	*fpLog)
 {
 	pthread_mutex_lock(&ticketlock);
+	LOCKFD = fpLog->fd;
 }
 
 static void
 UnLockTicket(
 	NETFILE	*fpLog)
 {
+	LOCKFD = 0;
 	pthread_mutex_unlock(&ticketlock);
+}
+
+static void
+CleanLock(
+	NETFILE	*fpLog)
+{
+	if ( (LOCKFD > 0) && (LOCKFD == fpLog->fd) ){
+		Message("clean lock %d\n", fpLog->fd);
+		UnLockTicket(fpLog);
+	}
 }
 
 static void
@@ -207,7 +221,7 @@ ENTER_FUNC;
 		pthread_mutex_lock(&redlock);
 		first = g_slist_nth(TicketList,0);
 		if ( first == NULL ){
-			if ( fShutdown||fReopen ) {
+			if ( fShutdown||fReopen||fSync ) {
 				pthread_mutex_unlock(&redlock);
 				break;
 			}
@@ -355,6 +369,17 @@ ENTER_FUNC;
 		  case	RED_AUDIT:
 			RecvAuditLog(fpLog);
 			break;
+		  case	RED_SYNC_START:
+			Message("Sync mode start");
+			fSync = TRUE;
+			pthread_cond_signal(&redcond);
+			break;
+		  case	RED_SYNC_END:
+			if ( fSync ){
+				fSync = FALSE;
+				Message("Sync mode end");
+			}
+			break;
 		  case	RED_END:
 			fSuc = FALSE;
 			break;
@@ -364,6 +389,7 @@ ENTER_FUNC;
 			break;
 		}
 	}	while	(  !fShutdown && fSuc && fpLog->fOK );
+	CleanLock(fpLog);
 	AllAbortTicket(fpLog);
 	CloseNet(fpLog);
 	dbgmsg("log thread close!\n");
@@ -662,8 +688,23 @@ WriteRedirectAuditLog(void)
 }
 
 static	void
+SyncMode(
+	FILE	*fp)
+{
+	DisConnectDB();
+	ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_SYNC;
+	while (fSync) {
+		sleep(1);
+	}
+	ConnectDB();
+	fDbsyncstatus = TRUE;
+	WriteLog(fp, "The database synchronized again. ");
+}
+
+static	void
 WriteAuditLog(
 	FILE	*afp,
+	FILE	*fp,
 	Ticket *ticket)
 {
 	int rc;
@@ -674,6 +715,9 @@ WriteAuditLog(
 				CheckAuditTable(AuditDBG);
 				rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), DB_UPDATE);
 				if (rc){
+					if (fSync){
+						SyncMode(fp);
+					}
 					CheckAuditTable(ThisDBG);
 					WriteRedirectAuditLog();
 				}
@@ -749,16 +793,20 @@ ENTER_FUNC;
 	WriteLog(fp, header);
 	while	( TRUE )	{
 		ticket = DequeueTicket();
-		if ( fReopen ){
-			fp = ReopenSystem(fp);
-			WriteLog(fp, header);
-			fReopen = FALSE;
-			if ( ticket == NULL ){
+		if ( ticket == NULL ){
+			if ( fSync ){
+				SyncMode(fp);
 				continue;
 			}
+			if ( fReopen ){
+				fp = ReopenSystem(fp);
+				WriteLog(fp, header);
+				fReopen = FALSE;
+				continue;
+			} else {
+				break;
+			}
 		}
-		if ( ticket == NULL )
-			break;
 		if ( ticket->status == TICKET_COMMIT ) {
 			veryfydata = ticket->veryfydata;
 			if (veryfydata != NULL) {
@@ -776,7 +824,7 @@ ENTER_FUNC;
 				FreeVeryfyData(veryfydata);
 			}
 		} else if ( ticket->status == TICKET_AUDIT ) {
-			WriteAuditLog(afp, ticket);
+			WriteAuditLog(afp, fp, ticket);
 		}
 		xfree(ticket);
 	}
