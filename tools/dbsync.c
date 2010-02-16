@@ -35,6 +35,8 @@
 
 #include	"directory.h"
 #include	"dbgroup.h"
+#include	"comm.h"
+#include	"redirect.h"
 #include	"dirs.h"
 #include	"PostgreSQLutils.h"
 #include	"option.h"
@@ -148,6 +150,7 @@ all_allsync(
 	DBG_Struct	*master_dbg,
 	DBG_Struct	*slave_dbg)
 {
+	int i;
 	Bool ret;
 	DBInfo *dbinfo;
 	char *tablespace = NULL;
@@ -155,10 +158,12 @@ all_allsync(
 	char *encoding = NULL;
 	char *lc_collate = NULL;
 	char *lc_ctype = NULL;
+	int c;
 	
 	ret = dbexist(master_dbg);
 	if (!ret) {
-		Error("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));
+		Warning("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));
+		return;
 	}
 	dbinfo = getDBInfo(master_dbg, GetDB_DBname(master_dbg,DB_UPDATE));
 	if	( slave_dbg->coding != NULL ) {
@@ -170,6 +175,16 @@ all_allsync(
 	lc_ctype = dbinfo->lc_ctype;
 	template = dbinfo->template;
 	ret = dbexist(slave_dbg);
+	i = 0;
+	while ((c = dbactivity(slave_dbg)) > 0){
+		i += 1;
+		if ( i > 10) {
+			Warning("Can not dropdb.");
+			return;
+		}
+		Message("Other clients are connected(%d). wait...", c);
+		sleep(1);
+	}
 	if (ret) {
 		dropdb(slave_dbg);
 		verPrintf("Drop database\n");
@@ -177,12 +192,14 @@ all_allsync(
 	verPrintf("Create database name=%s, template=%s, encoding=%s, lc_collate=%s, lc_ctype=%s \n", slave_dbg->name, template, encoding, lc_collate, lc_ctype);
 	ret = createdb(slave_dbg, tablespace, template, encoding, lc_collate, lc_ctype);
 	if (!ret) {
-		Error("ERROR: create database \"%s\" failed.", GetDB_DBname(slave_dbg,DB_UPDATE));
+		Warning("ERROR: create database \"%s\" failed.", GetDB_DBname(slave_dbg,DB_UPDATE));
+		return;
 	}
 	verPrintf("Database sync start\n");
 	ret = all_sync(master_dbg, slave_dbg, fVerbose);
 	if (!ret) {
-		Error("ERROR: database sync failed.");
+		Warning("ERROR: database sync failed.");
+		return;
 	}
 	printf("Success all sync\n");
 }
@@ -332,6 +349,20 @@ lookup_master_slave(
 	}
 }
 
+static	NETFILE	*
+connect_dbredirector(
+		DBG_Struct	*rdbg)
+{
+	int		fh;
+	NETFILE	*fp;
+	
+	if		( ( rdbg->redirectPort  !=  NULL )
+			&& (( fh = ConnectSocket(rdbg->redirectPort,SOCK_STREAM) )  >  0 ) ) {
+		fp = SocketToNet(fh);
+	}
+	return fp;
+}
+
 extern	int
 main(
 	int		argc,
@@ -340,6 +371,7 @@ main(
 	FILE_LIST	*fl;
 	DBG_Struct	*master_dbg, *slave_dbg;
 	TableList *ng_list;
+	NETFILE	*fp;
 	
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
@@ -401,14 +433,18 @@ main(
 #endif
 		} else {
 			if (fVerbose){
-				printf("OK, synchronization of the database\n");			
+				printf("OK, synchronization of the database\n");
 			}
 		}
 	}
 	
 	if (fAllsync) {
+		fp = connect_dbredirector(slave_dbg);
+		SendPacketClass(fp,RED_SYNC_START);
 		all_allsync(master_dbg, slave_dbg);
+		SendPacketClass(fp,RED_SYNC_END);
+		CloseNet(fp);
 	}
 	
-	return	(0);
+	return	0;
 }

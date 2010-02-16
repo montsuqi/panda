@@ -283,14 +283,33 @@ dbexist(DBG_Struct	*dbg)
 	return ret;
 }
 
+extern 	int
+dbactivity(DBG_Struct	*dbg)
+{
+	PGconn	*conn;
+	PGresult	*res;
+	int	ret;
+	char sql[SIZE_BUFF];	
+
+	pg_disconnect(dbg);
+	conn = template1_connect(dbg);
+	if (conn){
+		snprintf(sql, SIZE_BUFF, "SELECT datname FROM pg_stat_activity WHERE datname = '%s';\n", GetDB_DBname(dbg,DB_UPDATE));
+		res = db_exec(conn, sql);
+		ret = PQntuples(res);
+		PQclear(res);
+		PQfinish(conn);
+	}
+	
+	return ret;
+}
+
 extern 	Bool
 dropdb(DBG_Struct	*dbg)
 {
 	PGconn	*conn;
 	Bool ret = FALSE;
 	char sql[SIZE_BUFF];
-
-	pg_disconnect(dbg);
 
 	conn = template1_connect(dbg);
 	if (conn){
