@@ -701,6 +701,19 @@ SyncMode(
 	WriteLog(fp, "The database synchronized again. ");
 }
 
+static void
+CheckFailure(
+	FILE	*fp)
+{
+	char *failure = "DB synchronous failure";
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
+		WriteLog(fp, failure);
+		Warning(failure);
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		fDbsyncstatus = FALSE;
+	}
+}
+
 static	void
 WriteAuditLog(
 	FILE	*afp,
@@ -720,6 +733,7 @@ WriteAuditLog(
 					}
 					CheckAuditTable(ThisDBG);
 					WriteRedirectAuditLog();
+					CheckFailure(fp);
 				}
 			}
 			if		(	afp != NULL) {
@@ -732,23 +746,11 @@ WriteAuditLog(
 }
 
 static void
-CheckFailure(
-	FILE	*fp)
-{
-	char *failure = "DB synchronous failure";
-	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
-		WriteLog(fp, failure);
-		Warning(failure);
-		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
-		fDbsyncstatus = FALSE;
-	}
-}
-
-static void
 HandleRedirector(VeryfyData *veryfydata)
 {
 ENTER_FUNC;		
 	if (ExecDB(veryfydata) == DB_STATUS_UNCONNECT ){
+		/* Retry */
 		ExecDB(veryfydata);
 	}
 LEAVE_FUNC;	
@@ -962,11 +964,10 @@ extern	void
 SetAuditDBG(void)
 {
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)LookupAuditDBG,NULL);
-	if		(  AuditDBG  ==  NULL  ) {
-		Error("DB group not found");
-	}
 	/* The audit log is not issued with the dbredirector. */
-	AuditDBG->auditlog = 0;
+	if (AuditDBG != NULL) {
+		AuditDBG->auditlog = 0;
+	}
 }
 
 void StopHandler( int no ) {

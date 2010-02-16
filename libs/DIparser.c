@@ -97,6 +97,7 @@
 #define	T_SLVPATH		(T_YYBASE +45)
 #define	T_MSTPORT		(T_YYBASE +46)
 #define	T_DBMASTER		(T_YYBASE +47)
+#define	T_AUDITLOG		(T_YYBASE +48)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -145,6 +146,7 @@ static	TokenTable	tokentable[] = {
 	{	"slvpath"			,T_SLVPATH	},
 	{	"mstport"			,T_MSTPORT	},
 	{	"dbmaster"			,T_DBMASTER	},
+	{	"auditlog"			,T_AUDITLOG	},
 	
 	{	""					,0			}
 };
@@ -942,6 +944,13 @@ ENTER_FUNC;
 				ParError("invalid port");
 			}
 			break;
+		  case	T_AUDITLOG:
+			if		(  GetSymbol  ==  T_ICONST  ) {
+				dbg->auditlog = atoi(ComSymbol);
+			} else {
+				ParError("auditlog invalid");
+			}
+			break;
 		  default:
 			ParErrorPrintf("other syntax error in db_group [%s]\n",ComSymbol);
 			break;
@@ -981,8 +990,6 @@ ENTER_FUNC;
 			ParError("redirect DB group not found");
 		}
 		dbg->redirect = red;
-		/* Default AuditLog = have redirect */
-		dbg->auditlog = 1;
 	}
 LEAVE_FUNC;
 }
