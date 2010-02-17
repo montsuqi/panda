@@ -288,8 +288,8 @@ dbactivity(DBG_Struct	*dbg)
 {
 	PGconn	*conn;
 	PGresult	*res;
-	int	ret;
-	char sql[SIZE_BUFF];	
+	int	ret = 0;
+	char sql[SIZE_BUFF];
 
 	pg_disconnect(dbg);
 	conn = template1_connect(dbg);

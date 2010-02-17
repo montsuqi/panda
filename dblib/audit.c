@@ -76,8 +76,11 @@ CreateCommand(
 	Bool ret = FALSE;
 	PGresult *res;
 	res = PQexec(PGCONN(dbg, DB_UPDATE), sql);
-	if (res != NULL && PQresultStatus(res) == PGRES_COMMAND_OK){
+	if ((res != NULL) && (PQresultStatus(res) == PGRES_COMMAND_OK)){
 		ret = TRUE;
+	} else {
+		ret = FALSE;
+		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
 	PQclear(res);
 	return ret;
@@ -90,27 +93,37 @@ CheckAuditTable(
 	PGresult *res;
 	char *buff;
 	Bool rc;
+	int ntuples;
+	
 	static Bool ExistAuditTable = FALSE;
 	
-	if ( ExistAuditTable != TRUE ){
-		buff = (char *)xmalloc(SIZE_BUFF);
-		sprintf(buff, "SELECT tablename FROM pg_tables WHERE tablename ='%s';",
-						AUDITLOG_TABLE);
-		res = PQexec(PGCONN(dbg, DB_UPDATE), buff);
+	if ( ExistAuditTable == TRUE ){
+		return;
+	}
+	ExistAuditTable = TRUE;
+
+	buff = (char *)xmalloc(SIZE_BUFF);
+	sprintf(buff, "SELECT tablename FROM pg_tables WHERE tablename ='%s';",
+					AUDITLOG_TABLE);
+	res = PQexec(PGCONN(dbg, DB_UPDATE), buff);
+	xfree(buff);
+	if ( (res == NULL ) || (PQresultStatus(res) != PGRES_TUPLES_OK) ){
+		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
+		PQclear(res);
+		return;
+	}
+	ntuples = PQntuples(res);
+	PQclear(res);
+	if (ntuples > 0) {
+		return;
+	}
+	buff = QueryAuditTable();
+	rc = CreateCommand(dbg,buff);
+	xfree(buff);
+	if (rc) {
+		buff = QueryAuditSequence();
+		rc = CreateCommand(dbg,buff);
 		xfree(buff);
-		if (res != NULL && PQresultStatus(res) == PGRES_TUPLES_OK){
-			if (PQntuples(res) < 1) {
-				buff = QueryAuditTable();
-				rc = CreateCommand(dbg,buff);
-				xfree(buff);
-				if (rc) {
-					buff = QueryAuditSequence();
-					rc = CreateCommand(dbg,buff);
-					xfree(buff);
-				}
-			}
-		}
-		ExistAuditTable = TRUE;
 	}
 }
 
