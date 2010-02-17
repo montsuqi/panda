@@ -34,7 +34,7 @@
 GLOBAL	DI_Struct	*ThisEnv;
 #undef	GLOBAL
 
-#define	AUDITLOG_TABLE	"MONTSUQI_AUDITLOG"
+#define	AUDITLOG_TABLE	"montsuqi_auditlog"
 
 extern	void		InitDirectory(void);
 extern	void		SetUpDirectory(char *name, char *ld, char *bd, char *db, Bool parse_ld);
