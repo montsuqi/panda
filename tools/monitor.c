@@ -873,7 +873,8 @@ StopServers(void)
 ENTER_FUNC;
 	KillProcess(PTYPE_APS,SIGHUP);
 	KillProcess(PTYPE_GLS,SIGHUP);
-	KillProcess((PTYPE_WFC | PTYPE_RED| PTYPE_LOG | PTYPE_MST),SIGHUP);
+	KillProcess(PTYPE_RED,SIGUSR1);
+	KillProcess((PTYPE_WFC | PTYPE_LOG | PTYPE_MST),SIGHUP);
 LEAVE_FUNC;
 }
 
