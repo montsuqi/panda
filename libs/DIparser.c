@@ -1043,7 +1043,7 @@ BuildAuditLog(void)
 	p += sprintf(p,		"exec_query	text;");
 	p += sprintf(p,	"};");
 	rec = ParseRecordMem(buff);
-
+	xfree(buff);
 	return (rec);
 }
 
@@ -1097,6 +1097,7 @@ BuildMcpArea(
 	p += sprintf(p,		"};");
 	p += sprintf(p,	"};");
 	rec = ParseRecordMem(buff);
+	xfree(buff);
 	return	(rec);
 }
 
