@@ -354,7 +354,7 @@ connect_dbredirector(
 		DBG_Struct	*rdbg)
 {
 	int		fh;
-	NETFILE	*fp;
+	NETFILE	*fp = NULL;
 	
 	if		( ( rdbg->redirectPort  !=  NULL )
 			&& (( fh = ConnectSocket(rdbg->redirectPort,SOCK_STREAM) )  >  0 ) ) {
@@ -440,10 +440,14 @@ main(
 	
 	if (fAllsync) {
 		fp = connect_dbredirector(slave_dbg);
-		SendPacketClass(fp,RED_SYNC_START);
+		if (fp){
+			SendPacketClass(fp,RED_SYNC_START);
+		}
 		all_allsync(master_dbg, slave_dbg);
-		SendPacketClass(fp,RED_SYNC_END);
-		CloseNet(fp);
+		if (fp){		
+			SendPacketClass(fp,RED_SYNC_END);
+			CloseNet(fp);
+		}
 	}
 	
 	return	0;
