@@ -195,6 +195,26 @@ SyncModeEnd(
 }
 
 static void
+SyncWait(
+		NETFILE	*fpLog)
+{
+	int i;
+	Message("Sync wait...");
+	LockTicket(fpLog);
+	while (g_slist_length(TicketList) > 0){
+		sleep(1);
+		i++;
+		if (i>5){
+			Warning("The ticket processing doesn't end.");
+			break;
+		}
+	}
+	SendPacketClass(fpLog,RED_SYNC_WAIT);
+	sleep(1);
+	UnLockTicket(fpLog);
+}
+
+static void
 CleanSyncMode(
 	NETFILE	*fpLog)
 {
@@ -413,6 +433,9 @@ ENTER_FUNC;
 		  case	RED_SYNC_END:
 			SyncModeEnd(fpLog);
 			break;
+		  case	RED_SYNC_WAIT:
+			SyncWait(fpLog);
+			break;
 		  case	RED_END:
 			fSuc = FALSE;
 			break;
@@ -564,7 +587,7 @@ OpenLogFile(void)
 	return fp;
 }
 
-static  Bool
+extern  Bool
 ConnectAuditDB(void)
 {
 	Bool rc = TRUE;
@@ -748,7 +771,7 @@ CheckFailure(
 	}
 }
 
-static	void
+extern	void
 WriteAuditLog(
 	FILE	*afp,
 	FILE	*fp,
@@ -756,15 +779,21 @@ WriteAuditLog(
 {
 	int rc;
 
+	while (fSync){
+		Message("auditlog wait...");
+		sleep(1);
+	}
+
 	if (ticket->auditlog != NULL ) {
 		if (LBS_Size(ticket->auditlog) > 0 ) {
 			if (  AuditDBG != NULL) {
 				CheckAuditTable(AuditDBG);
+				LBS_EmitStart(AuditDBG->redirectData);
+				LBS_EmitStart(AuditDBG->checkData);
 				rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), DB_UPDATE);
-				if (rc){
-					if (fSync){
-						SyncMode(fp);
-					}
+				LBS_EmitEnd(AuditDBG->redirectData);
+				LBS_EmitEnd(AuditDBG->checkData);
+				if (rc == MCP_OK){
 					CheckAuditTable(ThisDBG);
 					WriteRedirectAuditLog();
 					CheckFailure(fp);

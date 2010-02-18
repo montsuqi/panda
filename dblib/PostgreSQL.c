@@ -1886,12 +1886,12 @@ _DBAUDITLOG(
 ENTER_FUNC;
 	ret = NULL;
 	sql = NewLBS();
-	LBS_EmitString(sql,"INSERT\tINTO\t");
+	LBS_EmitString(sql,"INSERT INTO ");
 	LBS_EmitString(sql, AUDITLOG_TABLE);
 	LBS_EmitString(sql," (");
 	LBS_EmitString(sql," id, ");	
 	InsertNames(sql,args);
-	LBS_EmitString(sql,") VALUES\t(");
+	LBS_EmitString(sql,") VALUES (");
 	sprintf(buff, " nextval('%s_seq'), ", AUDITLOG_TABLE);
 	LBS_EmitString(sql,buff);
 	InsertValues(dbg,sql,args);

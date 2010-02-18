@@ -1,3 +1,14 @@
+2010-02-19  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.h, tools/dbsync.c, dbstuff/dbredirector.c
+	同期するタイミングをあわせるために RED_SYNC_WAITを追加した
+
+	* dbstuff/dbredirector.c
+	監査ログのredirectが間違っていたのを修正した
+
+	* dblib/PostgreSQLutils.c, dblib/PostgreSQLutils.h, tools/dbsync.c
+	同期時に dbredirectorの接続とそれ以外の接続を分けて処理するようにした
+
 2010-02-18  Noboru Saitou  <noborus@netlab.jp>
 
 	*  dblib/PostgreSQL.c, dblib/PostgreSQLlib.c,
@@ -358,7 +369,7 @@
 		* HTTPリクエストの解析はapsで実施(未実装)
 			* 現状はリクエストをwfcでエコーバック
 
-[2009-01-26  Noboru Saitou  <noborus@netlab.jp>
+2009-01-26  Noboru Saitou  <noborus@netlab.jp>
 
 	* glauth/glauth.c: パスワードの再読み込みを自動にした。
 
