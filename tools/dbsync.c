@@ -30,6 +30,7 @@
 #include	<stdio.h>
 #include	<stdarg.h>
 #include	<unistd.h>
+#include	<time.h>
 #include	<sys/types.h>
 #include	<sys/wait.h>
 
@@ -372,6 +373,8 @@ main(
 	DBG_Struct	*master_dbg, *slave_dbg;
 	TableList *ng_list;
 	NETFILE	*fp;
+	time_t start, end;
+	int n, h, m, s;
 	
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
@@ -443,7 +446,15 @@ main(
 		if (fp){
 			SendPacketClass(fp,RED_SYNC_START);
 		}
+		time(&start);
+
 		all_allsync(master_dbg, slave_dbg);
+
+		time(&end);
+		n = (int)difftime(end, start);
+		h = (n/60/60); m = (n/60)-(h*60) ;s = (n)-(m*60);
+		MessageLogPrintf("Synchronous processing time %02d:%02d:%02d\n",
+										 h,m,s);
 		if (fp){		
 			SendPacketClass(fp,RED_SYNC_END);
 			CloseNet(fp);
