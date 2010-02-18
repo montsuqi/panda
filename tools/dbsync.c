@@ -159,6 +159,7 @@ all_allsync(
 	char *lc_collate = NULL;
 	char *lc_ctype = NULL;
 	char *dump_opt = NULL;
+	int  i = 0;
 	
 	ret = dbexist(master_dbg);
 	if (!ret) {
@@ -175,6 +176,15 @@ all_allsync(
 	lc_ctype = dbinfo->lc_ctype;
 	template = dbinfo->template;
 
+	while(redirector_check(slave_dbg) != 0){
+		sleep(1);
+		i++;
+		if (i>10){
+			Warning("dbredirector is connected.");
+			break;
+		}
+	}
+	
 	if (dbactivity(slave_dbg) > 0){
 		dump_opt = StrDup("-c");
 	} else {
@@ -421,10 +431,14 @@ main(
 	}
 
 	fp = connect_dbredirector(slave_dbg);
-	if (fp){
-		SendPacketClass(fp,RED_SYNC_START);
-	}
 	if (!fAllsync) {
+		if (fp){
+			SendPacketClass(fp,RED_SYNC_WAIT);
+			if (RecvPacketClass(fp) != RED_SYNC_WAIT){
+				Error("unknown packet");
+			}
+		}
+		
 		ng_list = table_check(master_dbg, slave_dbg);
 		if (ng_list->tables[0]->name != NULL) {
 			if (fTablecheck){
@@ -444,6 +458,13 @@ main(
 	}
 	
 	if (fAllsync) {
+		if (fp){
+			SendPacketClass(fp,RED_SYNC_WAIT);
+			if (RecvPacketClass(fp) != RED_SYNC_WAIT){
+				Error("unknown packet");
+			}
+			SendPacketClass(fp,RED_SYNC_START);
+		}
 		Message("Synchronous begin.");
 		time(&start);
 		all_allsync(master_dbg, slave_dbg);
@@ -452,10 +473,10 @@ main(
 		h = (n/60/60); m = (n/60)-(h*60) ;s = (n)-(m*60);
 		MessageLogPrintf("Synchronous end. processing time %02d:%02d:%02d\n",
 										 h,m,s);
-	}
-	if (fp){		
-		SendPacketClass(fp,RED_SYNC_END);
-		CloseNet(fp);
+		if (fp){		
+			SendPacketClass(fp,RED_SYNC_END);
+			CloseNet(fp);
+		}
 	}
 	
 	return	0;

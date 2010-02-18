@@ -342,6 +342,33 @@ dbactivity(DBG_Struct	*dbg)
 	return ret;
 }
 
+extern 	int
+redirector_check(DBG_Struct	*dbg)
+{
+	PGconn	*conn;
+	PGresult	*res;
+	int	ret = 0;
+	char sql[SIZE_BUFF];
+
+	conn = pg_connect(dbg);
+	if (conn){
+		snprintf(sql, SIZE_BUFF,
+						 "SELECT c.relname " \
+						 "  FROM pg_class AS c,pg_namespace AS n " \
+						 " WHERE c.relkind = 'r'" \
+						 "   AND c.relnamespace = n.oid" \
+						 "   AND n.nspname LIKE 'pg_temp%%'" \
+						 "AND c.relname = '%s';", REDIRECT_LOCK_TABLE);
+		res = db_exec(conn, sql);
+		ret = PQntuples(res);
+		printf("ntuples %d\n", ret);
+		PQclear(res);
+		pg_disconnect(dbg);
+	}
+	
+	return ret;
+}
+
 extern 	Bool
 dropdb(DBG_Struct	*dbg)
 {

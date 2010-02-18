@@ -73,6 +73,7 @@ extern Table 	*NewTable(void);
 
 extern	Bool	pg_trans_begin(DBG_Struct	*dbg);
 extern	Bool	pg_trans_end(DBG_Struct	*dbg);
+extern	int	redirector_check(DBG_Struct	*dbg);
 
 extern PGconn	*pg_connect(DBG_Struct *dbg);
 extern void	pg_disconnect(DBG_Struct *dbg);
