@@ -48,6 +48,7 @@
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"directory.h"
+#include	"message.h"
 #include	"driver.h"
 #include	"debug.h"
 
@@ -768,7 +769,7 @@ ENTER_FUNC;
 				/*	if you need permitte more APS connection,
 					you should expand ld->fp.
 				*/
-				Error("too many aps tasks");
+				Warning("too many aps tasks");
 			}
 		}
 	} else {
