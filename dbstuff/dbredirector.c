@@ -82,6 +82,7 @@ volatile sig_atomic_t 	fShutdown = FALSE;
 volatile sig_atomic_t	fReopen = FALSE;
 volatile static Bool	fSync = FALSE;
 volatile static int	LOCKFD = 0;
+volatile static int	SYNCFD = 0;
 
 static 	DBLogCtx *DBLog;
 
@@ -168,7 +169,40 @@ CleanLock(
 	if ( (LOCKFD > 0) && (LOCKFD == fpLog->fd) ){
 		Message("clean lock %d\n", fpLog->fd);
 		UnLockTicket(fpLog);
+		LOCKFD = 0;
 	}
+}
+
+static void
+SyncModeStart(
+		NETFILE	*fpLog)
+{
+	Message("Sync mode start");
+	fSync = TRUE;
+	SYNCFD = fpLog->fd;
+	pthread_cond_signal(&redcond);
+}
+
+static void
+SyncModeEnd(
+		NETFILE	*fpLog)
+{
+	if ( fSync ){
+		fSync = FALSE;
+		Message("Sync mode end");
+	}
+	SYNCFD = 0;
+}
+
+static void
+CleanSyncMode(
+	NETFILE	*fpLog)
+{
+	if ( (SYNCFD > 0) && (SYNCFD == fpLog->fd) ){
+		Message("clean Sync mode");
+		fSync = FALSE;
+	}
+	SYNCFD = 0;
 }
 
 static void
@@ -370,15 +404,10 @@ ENTER_FUNC;
 			RecvAuditLog(fpLog);
 			break;
 		  case	RED_SYNC_START:
-			Message("Sync mode start");
-			fSync = TRUE;
-			pthread_cond_signal(&redcond);
+			SyncModeStart(fpLog);
 			break;
 		  case	RED_SYNC_END:
-			if ( fSync ){
-				fSync = FALSE;
-				Message("Sync mode end");
-			}
+			SyncModeEnd(fpLog);
 			break;
 		  case	RED_END:
 			fSuc = FALSE;
@@ -390,6 +419,7 @@ ENTER_FUNC;
 		}
 	}	while	(  !fShutdown && fSuc && fpLog->fOK );
 	CleanLock(fpLog);
+	CleanSyncMode(fpLog);
 	AllAbortTicket(fpLog);
 	CloseNet(fpLog);
 	dbgmsg("log thread close!\n");
@@ -406,7 +436,7 @@ ConnectLog(
 ENTER_FUNC;
 	if		(  ( fhLog = accept(_fhLog,0,0) )  <  0  )	{
 		printf("_fhLog = %d\n",_fhLog);
-		Error("accept: ", strerror(errno));					
+		Error("accept: ", strerror(errno));
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)(long)fhLog);
 	pthread_detach(thr);
