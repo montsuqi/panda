@@ -128,8 +128,8 @@ db_command(
 		 && (PQresultStatus(res) == PGRES_COMMAND_OK ) ) {
 		ret = TRUE;
 	} else {
-		fprintf(stderr, "%s\n", PQerrorMessage(conn));		
-		ret = FALSE;		
+		fprintf(stderr, "%s\n", PQerrorMessage(conn));
+		ret = FALSE;
 	}
 	PQclear(res);
 	return ret;
@@ -254,7 +254,7 @@ db_restore(int fd, char *pass, char **argv)
 	snprintf(command, SIZE_BUFF, "%s/%s", POSTGRES_BINDIR, PSQL);
 
 	setenv("PGPASSWORD", pass, 1);
-	execv(command, argv);	
+	execv(command, argv);
 
 	fprintf( stderr, "load program psql\n" );
 	perror("");
