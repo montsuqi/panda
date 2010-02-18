@@ -1,3 +1,8 @@
+2010-02-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c
+	CheckRedirectorConnect の廃止。
+
 2010-02-16  Noboru Saitou  <noborus@netlab.jp>
 
 	* libs/DIparser.c
