@@ -149,7 +149,8 @@ PgInitConnect(
 		res = PQexec(conn, "set standard_conforming_strings = on;");
 	}
 	if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
-		Warning("PostgreSQL: %s",PQerrorMessage(conn));
+    /*  comment for version 8.1 */
+    /*  Warning("PostgreSQL: %s",PQerrorMessage(conn)); */
 	}
 	PQclear(res);
 }
