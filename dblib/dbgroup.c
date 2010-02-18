@@ -269,16 +269,11 @@ LEAVE_FUNC;
 extern	int
 GetDBRedirectStatus(int newstatus)
 {
-	static int dbstatus = DB_STATUS_NOCONNECT;
+	int dbstatus;
 	DBG_Struct	*dbg, *rdbg;
 	int		i;
 ENTER_FUNC;
-	if ( (dbstatus == DB_STATUS_LOCKEDRED)
-		 || (newstatus == DB_STATUS_LOCKEDRED) ) {
-		dbstatus = DB_STATUS_LOCKEDRED;
-	} else {
-		dbstatus = DB_STATUS_NOCONNECT;
-	}
+    dbstatus = DB_STATUS_NOCONNECT;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		if		( dbg->redirect != NULL ) {

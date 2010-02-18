@@ -186,34 +186,6 @@ LockRedirectorConnect(
 	PQclear(res);	
 }
 
-static  Bool
-CheckRedirectorConnect(
-	PGconn	*conn)
-{
-	PGresult	*res;
-	Bool	ret;	
-	char	*sql = "SELECT c.relname FROM pg_class AS c,pg_namespace AS n" \
-			       " WHERE c.relkind = 'r' " \
-			       "   AND c.relnamespace = n.oid "\
-			       "   AND n.nspname LIKE 'pg_temp%'"\
-			       "   AND c.relname = '" \
-			       REDIRECT_LOCK_TABLE \
-			       "';";
-	res = PQexec(conn,sql);
-	if ( (res != NULL) && (PQresultStatus(res) == PGRES_TUPLES_OK)) {
-		ret = (PQntuples(res)  ==  0 ) ? TRUE : FALSE ;
-		if ( !ret ) {
-			GetDBRedirectStatus(DB_STATUS_LOCKEDRED);
-			Warning("DBredirector is already connected. ");
-		}
-	} else {
-		Warning("PostgreSQL: %s",PQerrorMessage(conn));
-		ret = FALSE;
-	}
-	PQclear(res);
-	return ret;
-}
-
 static Bool
 InTrans(
 		PGconn	*conn)
@@ -1377,8 +1349,6 @@ ENTER_FUNC;
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 			if (dbg->redirectPort != NULL) {
 				LockRedirectorConnect(conn);
-			} else {
-				CheckRedirectorConnect(conn);
 			}
 			rc = MCP_OK;
 		} else {
