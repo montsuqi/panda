@@ -1,5 +1,14 @@
 2010-02-18  Noboru Saitou  <noborus@netlab.jp>
 
+	*  dblib/PostgreSQL.c, dblib/PostgreSQLlib.c,
+	dblib/PostgreSQLlib.h, dblib/PostgreSQLutils.c,
+	dblib/PostgreSQLutils.h, dblib/dbgroup.h, tools/dbsync.c
+	同期時にも従サーバにロックが掛かるように修正
+	テーブル比較時はトランザクション内で実行するようにした
+	dropdb出来ない場合は pg_dump -c(clean)を利用するようにした
+
+2010-02-18  Noboru Saitou  <noborus@netlab.jp>
+
 	* dblib/PostgreSQL.c
 	CheckRedirectorConnect の廃止。
 

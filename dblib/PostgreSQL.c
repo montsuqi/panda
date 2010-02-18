@@ -48,8 +48,6 @@
 #include	"debug.h"
 #include	"PostgreSQLlib.h"
 
-#define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
-
 static	int		level;
 static	char	*rname[SIZE_RNAME];
 static	int	alevel;
@@ -172,19 +170,6 @@ SetDBGcoding(
 			dbg->coding = StrDup(encoding);				
 		}
 	}
-}
-
-static  void
-LockRedirectorConnect(
-	PGconn	*conn)
-{
-	PGresult	*res;	
-	char *sql = "CREATE TEMP TABLE " \
-			   REDIRECT_LOCK_TABLE \
-			   " (flag int);";
-
-	res = PQexec(conn, sql);
-	PQclear(res);	
 }
 
 static Bool

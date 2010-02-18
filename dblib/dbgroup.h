@@ -24,6 +24,8 @@
 #include	"net.h"
 #include	"dblib.h"
 
+#define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
+
 extern	int		OpenRedirectDB(DBG_Struct *dbg);
 extern	int		CloseRedirectDB(DBG_Struct *dbg);
 extern	int		ExecRedirectDBOP(DBG_Struct *dbg, char *sql, int usage);
