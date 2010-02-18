@@ -151,7 +151,6 @@ all_allsync(
 	DBG_Struct	*master_dbg,
 	DBG_Struct	*slave_dbg)
 {
-	int i;
 	Bool ret;
 	DBInfo *dbinfo;
 	char *tablespace = NULL;
@@ -159,7 +158,7 @@ all_allsync(
 	char *encoding = NULL;
 	char *lc_collate = NULL;
 	char *lc_ctype = NULL;
-	int c;
+	char *dump_opt = NULL;
 	
 	ret = dbexist(master_dbg);
 	if (!ret) {
@@ -175,29 +174,23 @@ all_allsync(
 	lc_collate = dbinfo->lc_collate;
 	lc_ctype = dbinfo->lc_ctype;
 	template = dbinfo->template;
-	ret = dbexist(slave_dbg);
-	i = 0;
-	while ((c = dbactivity(slave_dbg)) > 0){
-		i += 1;
-		if ( i > 10) {
-			Warning("Can not dropdb.");
+
+	if (dbactivity(slave_dbg) > 0){
+		dump_opt = StrDup("-c");
+	} else {
+		if ( dbexist(slave_dbg) ){
+			verPrintf("Drop database\n");
+			dropdb(slave_dbg);
+		}
+		verPrintf("Create database name=%s, template=%s, encoding=%s, lc_collate=%s, lc_ctype=%s \n", slave_dbg->name, template, encoding, lc_collate, lc_ctype);
+		ret = createdb(slave_dbg, tablespace, template, encoding, lc_collate, lc_ctype);
+		if (!ret) {
+			Warning("ERROR: create database \"%s\" failed.", GetDB_DBname(slave_dbg,DB_UPDATE));
 			return;
 		}
-		Message("Other clients are connected(%d). wait...", c);
-		sleep(1);
-	}
-	if (ret) {
-		dropdb(slave_dbg);
-		verPrintf("Drop database\n");
-	}
-	verPrintf("Create database name=%s, template=%s, encoding=%s, lc_collate=%s, lc_ctype=%s \n", slave_dbg->name, template, encoding, lc_collate, lc_ctype);
-	ret = createdb(slave_dbg, tablespace, template, encoding, lc_collate, lc_ctype);
-	if (!ret) {
-		Warning("ERROR: create database \"%s\" failed.", GetDB_DBname(slave_dbg,DB_UPDATE));
-		return;
 	}
 	verPrintf("Database sync start\n");
-	ret = all_sync(master_dbg, slave_dbg, fVerbose);
+	ret = all_sync(master_dbg, slave_dbg, dump_opt, fVerbose);
 	if (!ret) {
 		Warning("ERROR: database sync failed.");
 		return;
@@ -237,8 +230,13 @@ table_check(
 	int i, m, s, cmp, rcmp;
 	TableList *master_list, *slave_list, *ng_list;
 
-	master_list	= get_table_info(master_dbg, 'c');
+	pg_trans_begin(master_dbg);
+	pg_trans_begin(slave_dbg);
+	master_list = get_table_info(master_dbg, 'c');
 	slave_list = get_table_info(slave_dbg, 'c');
+	pg_trans_commit(master_dbg);
+	pg_trans_commit(slave_dbg);
+
 	ng_list = NewTableList(master_list->count + slave_list->count);
 	m = s = 0;
 	for ( i=0; (master_list->count > m) && (slave_list->count > s); i++) {
@@ -422,6 +420,10 @@ main(
 		fAllsync = TRUE;
 	}
 
+	fp = connect_dbredirector(slave_dbg);
+	if (fp){
+		SendPacketClass(fp,RED_SYNC_START);
+	}
 	if (!fAllsync) {
 		ng_list = table_check(master_dbg, slave_dbg);
 		if (ng_list->tables[0]->name != NULL) {
@@ -442,23 +444,18 @@ main(
 	}
 	
 	if (fAllsync) {
-		fp = connect_dbredirector(slave_dbg);
-		if (fp){
-			SendPacketClass(fp,RED_SYNC_START);
-		}
+		Message("Synchronous begin.");
 		time(&start);
-
 		all_allsync(master_dbg, slave_dbg);
-
 		time(&end);
 		n = (int)difftime(end, start);
 		h = (n/60/60); m = (n/60)-(h*60) ;s = (n)-(m*60);
-		MessageLogPrintf("Synchronous processing time %02d:%02d:%02d\n",
+		MessageLogPrintf("Synchronous end. processing time %02d:%02d:%02d\n",
 										 h,m,s);
-		if (fp){		
-			SendPacketClass(fp,RED_SYNC_END);
-			CloseNet(fp);
-		}
+	}
+	if (fp){		
+		SendPacketClass(fp,RED_SYNC_END);
+		CloseNet(fp);
 	}
 	
 	return	0;

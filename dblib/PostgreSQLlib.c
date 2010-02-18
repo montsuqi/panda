@@ -168,4 +168,26 @@ GetPGencoding(
 	return encoding;
 }
 
+extern  char	*
+LockRedirectorQuery(void)
+{
+	return StrDup("CREATE TEMP TABLE "
+			   REDIRECT_LOCK_TABLE \
+				" (flag int);\n");
+}
+
+
+extern  void
+LockRedirectorConnect(
+	PGconn	*conn)
+{
+	char *sql;
+	PGresult	*res;
+	
+	sql = LockRedirectorQuery();
+	res = PQexec(conn, sql);
+	xfree(sql);
+	PQclear(res);
+}
+
 #endif /* #ifdef HAVE_POSTGRES */

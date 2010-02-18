@@ -70,6 +70,40 @@ pg_disconnect(
 	}
 }
 
+extern	Bool
+pg_trans_begin(
+	DBG_Struct	*dbg)
+{
+	Bool ret = FALSE;
+	PGconn *conn = NULL;
+	
+	conn = pg_connect(dbg);
+	ret = db_command(conn, "BEGIN;");
+	return ret;
+}
+
+extern	Bool
+pg_trans_commit(
+	DBG_Struct	*dbg)
+{
+	Bool ret = FALSE;
+	PGconn *conn = NULL;
+	
+	conn = PGCONN(dbg, DB_UPDATE);
+	ret = db_command(conn, "COMMIT;");
+	return ret;
+}
+
+extern	void
+pg_lockredirector(
+	DBG_Struct	*dbg)
+{
+	PGconn *conn = NULL;
+
+	conn = PGCONN(dbg, DB_UPDATE);
+	LockRedirectorConnect(conn);
+}
+
 extern PGconn	*
 template1_connect(
 	DBG_Struct	*dbg)
@@ -234,11 +268,15 @@ err_check(int err_fd)
 static void
 db_dump(int fd, char *pass, char **argv)
 {
+	char *sql;
 	char command[SIZE_BUFF];
 	
 	snprintf(command, SIZE_BUFF, "%s/%s", POSTGRES_BINDIR, PG_DUMP);
 	setenv("PGPASSWORD", pass, 1);
 
+	sql = LockRedirectorQuery();
+	write(fd, sql, strlen(sql));
+	xfree(sql);
 	execv(command, argv);
 
 	fprintf( stderr, "load program pg_dump\n" );
@@ -446,10 +484,10 @@ delete_table(DBG_Struct	*dbg, char *table_name)
 
 extern Bool
 db_sync(
-		char **master_argv,
-		char *master_pass,
-		char **slave_argv,
-		char *slave_pass)
+	char **master_argv,
+	char *master_pass,
+	char **slave_argv,
+	char *slave_pass)
 {
 	struct sigaction sa;
 	int std_out[2], std_err[2];
@@ -475,7 +513,7 @@ db_sync(
 		close( STDIN_FILENO );
 		dup2(std_out[0], STDIN_FILENO); 
 		dup2(std_err[1], STDERR_FILENO);
-		db_restore(std_out[0], slave_pass, slave_argv);
+		db_restore(STDIN_FILENO, slave_pass, slave_argv);
 	} else {
 		if ( (pg_dump_pid = fork()) == 0 ) {
 			/* pg_dump| */
@@ -498,7 +536,11 @@ db_sync(
 }
 
 extern Bool
-all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, Bool verbose)
+all_sync(
+	DBG_Struct *master_dbg,
+	DBG_Struct *slave_dbg,
+	char *dump_opt,
+	Bool verbose)
 {
 	int moptc, soptc;
 	char **master_argv, **slave_argv;
@@ -509,8 +551,11 @@ all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, Bool verbose)
 
 	master_argv = make_pgopts(PG_DUMP, master_dbg);
 	moptc = optsize(master_argv);
+	if (dump_opt){
+		master_argv[moptc++] = dump_opt;
+	}
 	master_argv[moptc++] = "-O";
-	master_argv[moptc++] = "-x";	
+	master_argv[moptc++] = "-x";
 	master_argv[moptc++] = GetDB_DBname(master_dbg,DB_UPDATE);
 	master_argv[moptc] = NULL;
 	
@@ -662,7 +707,6 @@ getTableList( PGconn	*conn )
 	status = PQresultStatus(res);
 	ntuples = PQntuples(res);
 	table_list = NewTableList(ntuples);
-	
 	for (i = 0; i < ntuples; i++) {
 		table = NewTable();
 		table->name = strdup(PQgetvalue(res, i, 0));
@@ -683,7 +727,8 @@ get_table_info(
 	PGconn	*conn;
 	TableList *tablelist;
 	
-	conn = pg_connect(dbg);
+	conn = PGCONN(dbg, DB_UPDATE);
+	
 	tablelist = getTableList(conn);
 	
 	if (opt == 'c'){

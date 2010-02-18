@@ -63,13 +63,16 @@ extern 	Bool	createdb(DBG_Struct	*dbg,
 extern 	Bool	delete_table(DBG_Struct	*dbg, char *table_name);
 extern 	Bool	dbexist(DBG_Struct	*dbg);
 extern 	Bool	dbactivity(DBG_Struct	*dbg);
-extern 	Bool    all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, Bool verbose);
+extern 	Bool    all_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, char *dump_opt, Bool verbose);
 extern 	Bool    table_sync(DBG_Struct *master_dbg, DBG_Struct *slave_dbg, char *table_name);
 extern  TableList *get_table_info(DBG_Struct *dbg, char opt);
 extern  void    printTableList(TableList *table_list);
 extern  void	puttable(DBG_Struct	*dbg);
 extern TableList	*NewTableList(int count);
 extern Table 	*NewTable(void);
+
+extern	Bool	pg_trans_begin(DBG_Struct	*dbg);
+extern	Bool	pg_trans_end(DBG_Struct	*dbg);
 
 extern PGconn	*pg_connect(DBG_Struct *dbg);
 extern void	pg_disconnect(DBG_Struct *dbg);
