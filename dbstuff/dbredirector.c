@@ -213,8 +213,12 @@ OrderTicket(
 ENTER_FUNC;
 	ticket = NewTicket();
 	ticket->fd = fpLog->fd;
+	/* */
+	LockTicket(fpLog);
 	ticket->ticket_id = TICKETID++;
 	TicketList = g_slist_append(TicketList, ticket);
+	/* */
+	UnLockTicket(fpLog);
 	SendInt(fpLog, ticket->ticket_id);
 LEAVE_FUNC;
 }
@@ -395,10 +399,10 @@ ENTER_FUNC;
 			SendChar(fpLog, ThisDBG->process[PROCESS_UPDATE].dbstatus);
 			break;
 		  case	RED_LOCK:
-			LockTicket(fpLog);
+			/* LockTicket(fpLog); */
 			break;
 		  case	RED_UNLOCK:
-			UnLockTicket(fpLog);
+			/* UnLockTicket(fpLog); */
 			break;
 		  case	RED_AUDIT:
 			RecvAuditLog(fpLog);
