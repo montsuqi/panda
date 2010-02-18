@@ -872,7 +872,11 @@ StopServers(void)
 {
 ENTER_FUNC;
 	KillProcess(PTYPE_APS,SIGHUP);
+#if 0
 	KillProcess(PTYPE_GLS,SIGHUP);
+#else 
+	system("/usr/bin/killall -HUP glserver");
+#endif
 	KillProcess(PTYPE_RED,SIGUSR1);
 	KillProcess((PTYPE_WFC | PTYPE_LOG | PTYPE_MST),SIGHUP);
 LEAVE_FUNC;
