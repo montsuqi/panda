@@ -38,6 +38,8 @@
 #define SIZE_BUFF               8192 
 #endif
 
+static int have_error = 0;
+
 static GtkWidget*
 _message_dialog(
 	GtkMessageType type,
@@ -75,8 +77,13 @@ show_error_dialog(
 	const char *message)
 {
 	if(message == NULL || strlen(message) <= 0) return;
-    message_dialog(GTK_MESSAGE_ERROR, message);
-	exit(1);
+	if(!have_error) {
+		have_error = 1;
+    	message_dialog(GTK_MESSAGE_ERROR, message);
+		exit(1);
+	} else {
+		while(1) {sleep(1);}
+	}
 }
 
 void
