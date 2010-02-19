@@ -185,7 +185,7 @@ all_allsync(
 		}
 	}
 	
-	if (dbactivity(slave_dbg) > 0){
+	if ((!template1_check(slave_dbg)) || (dbactivity(slave_dbg) > 0)){
 		dump_opt = StrDup("-c");
 	} else {
 		if ( dbexist(slave_dbg) ){
@@ -430,7 +430,7 @@ main(
 		Error("ERROR: database can not access server %s", GetDB_Host(master_dbg,DB_UPDATE));		
 	}
 	if (!template1_check(slave_dbg)){
-		Error("ERROR: database can not access server %s", GetDB_Host(slave_dbg,DB_UPDATE));		
+/*		Error("ERROR: database can not access server %s", GetDB_Host(slave_dbg,DB_UPDATE));		*/
 	}
 	if (fVerbose){
 		info_print(master_dbg, slave_dbg);
