@@ -249,7 +249,7 @@ table_check(
 
 	ng_list = NewTableList(master_list->count + slave_list->count);
 	m = s = 0;
-	for ( i=0; (master_list->count > m) && (slave_list->count > s); i++) {
+	for ( i=0; (master_list->count > m) || (slave_list->count > s); i++) {
 		cmp = strcmp( master_list->tables[m]->name, slave_list->tables[s]->name);
 		rcmp = (master_list->tables[m]->relkind - slave_list->tables[s]->relkind)* 2 + cmp;
 		if ( rcmp == 0 ) {
