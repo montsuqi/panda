@@ -50,6 +50,7 @@ char *SLAVEDB  = "log";
 static	char	*Directory;
 static	Bool	fAllsync;
 static	Bool	fTablecheck;
+static	Bool	fOVerbose;
 static	Bool	fVerbose;
 static  char    *Master = NULL;
 static  char    *Slave = NULL;
@@ -67,7 +68,7 @@ static	ARG_TABLE	option[] = {
 		"All Database sync"								},
 	{	"check",	BOOLEAN,	TRUE,	(void*)&fTablecheck,
 		"Table compare check only(no sync)"				},
-	{	"v",		BOOLEAN,	TRUE,	(void*)&fVerbose,
+	{	"v",		BOOLEAN,	TRUE,	(void*)&fOVerbose,
 		"Verbose mode"									},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -130,7 +131,6 @@ static void
 pre_print(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
 {
 	if ( FirstNG ) {
-		fVerbose = TRUE;
 		info_print(master_dbg, slave_dbg);
 		FirstNG = FALSE;
 	}
@@ -262,38 +262,48 @@ table_check(
 						slave_list->tables[s]->count);
 				}
 			} else {
+				fVerbose = TRUE;
 				pre_print(master_dbg, slave_dbg);
 				msr_print("NG",
 					   master_list->tables[m]->name,
 					   master_list->tables[m]->count,
 					   slave_list->tables[s]->name,
 					   slave_list->tables[s]->count);
+				fVerbose = fOVerbose;
 				add_ng_list(ng_list, slave_list->tables[s], 'c');
 			}
 			m++;
 			s++;
 		} else if ( rcmp < 0 ) {
-			pre_print(master_dbg, slave_dbg);			
+			fVerbose = TRUE;
+			pre_print(master_dbg, slave_dbg);
 			msr_print("NG",
 				   master_list->tables[m]->name,
 				   master_list->tables[m]->count,
 				   "",
 				   0);
-			add_ng_list(ng_list, master_list->tables[m], 's');			
+			fVerbose = fOVerbose;
+			add_ng_list(ng_list, master_list->tables[m], 's');
 			m++;
 		} else if ( rcmp > 0 ) {
-			pre_print(master_dbg, slave_dbg);			
-			msr_print("NG",			
+			fVerbose = TRUE;
+			pre_print(master_dbg, slave_dbg);
+			msr_print("NG",
 				   "",
 				   0,
 				   slave_list->tables[s]->name,
 				   slave_list->tables[s]->count);
-			add_ng_list(ng_list, slave_list->tables[s], 'd');			
+			fVerbose = fOVerbose;
+			add_ng_list(ng_list, slave_list->tables[s], 'd');
 			s++;
 		}
 	}
-	add_ng_list(ng_list, NULL, ' ');	
+	add_ng_list(ng_list, NULL, ' ');
+	if (!FirstNG){
+		fVerbose = TRUE;
+	}
 	separator();
+	fVerbose = fOVerbose;
 	return ng_list;
 }
 
@@ -390,6 +400,9 @@ main(
 	
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
+
+	fVerbose = fOVerbose;
+
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}

@@ -361,7 +361,6 @@ redirector_check(DBG_Struct	*dbg)
 						 "AND c.relname = '%s';", REDIRECT_LOCK_TABLE);
 		res = db_exec(conn, sql);
 		ret = PQntuples(res);
-		printf("ntuples %d\n", ret);
 		PQclear(res);
 		pg_disconnect(dbg);
 	}
