@@ -797,6 +797,6 @@ InitMessageQueue(void)
 	if		(  cBind  >  0  ) {
 		BindTable = (char **)xmalloc(cBind * sizeof(char *));
 	} else {
-		Error("no binds.");
+		Error("No LD defintion. Please check Directory and dbgroup.");
 	}
 }
