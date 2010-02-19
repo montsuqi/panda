@@ -513,7 +513,8 @@ db_sync(
 	char **master_argv,
 	char *master_pass,
 	char **slave_argv,
-	char *slave_pass)
+	char *slave_pass,
+	int check)
 {
 	struct sigaction sa;
 	int std_out[2], std_err[2];
@@ -533,7 +534,7 @@ db_sync(
 		return FALSE;
 	}
 	if ( (restore_pid = fork()) == 0 ){
-		/* |psql */		
+		/* |psql */
 		close( std_out[1] );
 		close( std_err[0] );
 		close( STDIN_FILENO );
@@ -554,7 +555,10 @@ db_sync(
 			close( std_out[0] );
 			close( std_out[1] );
 			close( std_err[1] );
-			err_check(std_err[0]);
+			printf("%d\n", check);
+			if (check){
+				err_check(std_err[0]);
+			}
 			ret = sync_wait(pg_dump_pid, restore_pid);
 		}
 	}
@@ -568,6 +572,7 @@ all_sync(
 	char *dump_opt,
 	Bool verbose)
 {
+	int check = TRUE;
 	int moptc, soptc;
 	char **master_argv, **slave_argv;
 	char *master_pass, *slave_pass;
@@ -579,6 +584,7 @@ all_sync(
 	moptc = optsize(master_argv);
 	if (dump_opt){
 		master_argv[moptc++] = dump_opt;
+		check = FALSE;
 	}
 	master_argv[moptc++] = "-O";
 	master_argv[moptc++] = "-x";
@@ -595,7 +601,7 @@ all_sync(
 	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
 	slave_argv[soptc] = NULL;	
 
-	return db_sync(master_argv, master_pass, slave_argv, slave_pass);
+	return db_sync(master_argv, master_pass, slave_argv, slave_pass, check);
 }
 
 extern Bool
@@ -618,13 +624,13 @@ table_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, char *table_name)
 	
 	slave_argv = make_pgopts(PSQL, slave_dbg);
 	soptc = optsize(slave_argv);
-	slave_argv[soptc++] = "-q";	
+	slave_argv[soptc++] = "-q";
 	slave_argv[soptc++] = "-v";
 	slave_argv[soptc++] = "ON_ERROR_STOP=1";
 	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
 	slave_argv[soptc] = NULL;
 	
-	return db_sync(master_argv, master_pass, slave_argv, slave_pass);
+	return db_sync(master_argv, master_pass, slave_argv, slave_pass, TRUE);
 }
 
 static char *
