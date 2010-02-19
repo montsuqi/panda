@@ -199,7 +199,7 @@ SyncWait(
 		NETFILE	*fpLog)
 {
 	int i;
-	Message("Sync wait...");
+
 	LockTicket(fpLog);
 	while (g_slist_length(TicketList) > 0){
 		sleep(1);
