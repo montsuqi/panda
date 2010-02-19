@@ -1,3 +1,7 @@
+2010-02-19  yusuke mihara  <yusuke@netlab.jp>
+
+	* Ver 1.4.5 release
+
 2010-02-19  Noboru Saitou  <noborus@netlab.jp>
 
 	* dblib/redirect.h, tools/dbsync.c, dbstuff/dbredirector.c
