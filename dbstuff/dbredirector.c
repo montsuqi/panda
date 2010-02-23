@@ -778,6 +778,14 @@ WriteAuditLog(
 	Ticket *ticket)
 {
 	int rc;
+	static Bool ExistADBGAuditTable = FALSE;
+	static Bool ExistTDBGAuditTable = FALSE;
+	
+	if ( ExistAuditTable == TRUE ){
+		return;
+	}
+	ExistAuditTable = TRUE;
+
 
 	while (fSync){
 		Message("auditlog wait...");
@@ -787,14 +795,20 @@ WriteAuditLog(
 	if (ticket->auditlog != NULL ) {
 		if (LBS_Size(ticket->auditlog) > 0 ) {
 			if (  AuditDBG != NULL) {
-				CheckAuditTable(AuditDBG);
+				if (!ExistADBGAuditTable){
+					CheckAuditTable(AuditDBG);
+					ExistADBGAuditTable = TRUE;
+				}
 				LBS_EmitStart(AuditDBG->redirectData);
 				LBS_EmitStart(AuditDBG->checkData);
 				rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), DB_UPDATE);
 				LBS_EmitEnd(AuditDBG->redirectData);
 				LBS_EmitEnd(AuditDBG->checkData);
 				if (rc == MCP_OK){
-					CheckAuditTable(ThisDBG);
+					if (!ExistTDBGAuditTable){
+						CheckAuditTable(ThisDBG);
+						ExistTDBGAuditTable = TRUE;
+					}
 					WriteRedirectAuditLog();
 					CheckFailure(fp);
 				}
