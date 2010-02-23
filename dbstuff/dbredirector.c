@@ -781,12 +781,6 @@ WriteAuditLog(
 	static Bool ExistADBGAuditTable = FALSE;
 	static Bool ExistTDBGAuditTable = FALSE;
 	
-	if ( ExistAuditTable == TRUE ){
-		return;
-	}
-	ExistAuditTable = TRUE;
-
-
 	while (fSync){
 		Message("auditlog wait...");
 		sleep(1);
