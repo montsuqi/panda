@@ -95,13 +95,6 @@ CheckAuditTable(
 	Bool rc;
 	int ntuples;
 	
-	static Bool ExistAuditTable = FALSE;
-	
-	if ( ExistAuditTable == TRUE ){
-		return;
-	}
-	ExistAuditTable = TRUE;
-
 	buff = (char *)xmalloc(SIZE_BUFF);
 	sprintf(buff, "SELECT tablename FROM pg_tables WHERE tablename ='%s';",
 					AUDITLOG_TABLE);
