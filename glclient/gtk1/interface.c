@@ -264,13 +264,8 @@ UI_Init(int argc,
 	WindowTable = NewNameHash();
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	if (gdk_screen_width() > 1024 &&
-		gdk_screen_height() > 768) {
-		gtk_window_set_position(GTK_WINDOW(TopWindow), GTK_WIN_POS_CENTER_ALWAYS);
-	} else {
-		gtk_widget_set_uposition(TopWindow,0,0);
-	}
 	gtk_window_set_default_size(GTK_WINDOW(TopWindow), 1024, 768);
+	gtk_window_set_position(GTK_WINDOW(TopWindow), GTK_WIN_POS_CENTER_ALWAYS);
 
 	gtk_signal_connect(GTK_OBJECT(TopWindow), 
 		"delete_event", (GtkSignalFunc)gtk_true, NULL);
