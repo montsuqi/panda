@@ -174,6 +174,19 @@ ResetScrolledWindow(
         gtk_container_forall(GTK_CONTAINER(widget), ResetScrolledWindow, NULL);
     }
 }
+
+extern  void
+HideGtkPandaPS(
+    GtkWidget   *widget,
+    gpointer    user_data)
+{
+    if  (   GTK_IS_PANDA_PS(widget)  ) {
+		gtk_widget_hide(widget);
+    }
+    if  (   GTK_IS_CONTAINER(widget)    ) {
+        gtk_container_forall(GTK_CONTAINER(widget), HideGtkPandaPS, NULL);
+    }
+}
 extern	void
 ClearKeyBuffer(void)
 {
@@ -439,7 +452,7 @@ ENTER_FUNC;
 	if (data->fWindow) {
 		StopTimer(GTK_WINDOW(TopWindow));
 		child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
-		gtk_widget_hide_all(child);
+		HideGtkPandaPS(child,NULL);
 		if (data->fAccelGroup) {
 			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
 				list != NULL;
@@ -453,7 +466,7 @@ ENTER_FUNC;
 		}
 	} else {
 		gtk_widget_hide(window);
-		gtk_widget_hide_all(window);
+		HideGtkPandaPS(window,NULL);
 		gtk_widget_set_sensitive(window,FALSE);
 		StopTimer(GTK_WINDOW(window));
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
