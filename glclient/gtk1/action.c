@@ -396,7 +396,7 @@ ENTER_FUNC;
 		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
 
 	gtk_widget_show(TopNoteBook);
-	gtk_widget_show(child);
+	gtk_widget_show_all(child);
 	gtk_widget_show(TopWindow);
 
 
@@ -439,6 +439,7 @@ ENTER_FUNC;
 	if (data->fWindow) {
 		StopTimer(GTK_WINDOW(TopWindow));
 		child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
+		gtk_widget_hide_all(child);
 		if (data->fAccelGroup) {
 			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
 				list != NULL;
@@ -452,6 +453,7 @@ ENTER_FUNC;
 		}
 	} else {
 		gtk_widget_hide(window);
+		gtk_widget_hide_all(window);
 		gtk_widget_set_sensitive(window,FALSE);
 		StopTimer(GTK_WINDOW(window));
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
@@ -511,7 +513,7 @@ ENTER_FUNC;
 		int i;
 
 		gtk_widget_set_sensitive(window,TRUE);
-		gtk_widget_show(window);
+		gtk_widget_show_all(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
 		for(i = 0; i < g_list_length(DialogStack); i++) {
 			if ((gpointer)window != g_list_nth_data(DialogStack, i)) {

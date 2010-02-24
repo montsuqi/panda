@@ -35,6 +35,7 @@
 #include    <unistd.h>
 #include	<sys/time.h>
 #include 	<gnome.h>
+#include	<gdk/gdk.h>
 #include	<gtkpanda/gtkpanda.h>
 
 #include	"types.h"
@@ -263,7 +264,12 @@ UI_Init(int argc,
 	WindowTable = NewNameHash();
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_position(GTK_WINDOW(TopWindow), GTK_WIN_POS_CENTER_ALWAYS);
+	if (gdk_screen_width() > 1024 &&
+		gdk_screen_height() > 768) {
+		gtk_window_set_position(GTK_WINDOW(TopWindow), GTK_WIN_POS_CENTER_ALWAYS);
+	} else {
+		gtk_widget_set_uposition(TopWindow,0,0);
+	}
 	gtk_window_set_default_size(GTK_WINDOW(TopWindow), 1024, 768);
 
 	gtk_signal_connect(GTK_OBJECT(TopWindow), 
