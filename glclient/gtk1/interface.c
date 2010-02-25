@@ -250,11 +250,21 @@ UI_ErrorDialog(const char *msg)
 	show_error_dialog(msg);
 }
 
+static void
+SetPosition(gpointer data)
+{
+	if (gdk_screen_width() > 1024 &&
+		gdk_screen_height() > 768) {
+		gtk_window_set_position(GTK_WINDOW(TopWindow), GTK_WIN_POS_CENTER_ALWAYS);
+	} else {
+		gtk_widget_set_uposition(TopWindow, 0,0);
+	}
+}
+
 extern  void        
 UI_Init(int argc, 
 	char **argv)
 {
-	GtkWidget *dummyFixed;
 	argc = 1;
 	argv[1] = NULL;
 	gnome_init("glclient", VERSION, argc, argv);
@@ -266,21 +276,15 @@ UI_Init(int argc,
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_default_size(GTK_WINDOW(TopWindow), 1024, 768);
-	if (gdk_screen_width() > 1024 &&
-		gdk_screen_height() > 768) {
-		gtk_window_set_position(GTK_WINDOW(TopWindow), GTK_WIN_POS_CENTER_ALWAYS);
-	} else {
-		gtk_widget_set_uposition(TopWindow, 0,0);
-	}
+
+	TopNoteBook = gtk_notebook_new();
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
+	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
+
+	gtk_idle_add(SetPosition,TopWindow);
 
 	gtk_signal_connect(GTK_OBJECT(TopWindow), 
 		"delete_event", (GtkSignalFunc)gtk_true, NULL);
-	TopNoteBook = gtk_notebook_new();
-	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
-	dummyFixed = gtk_fixed_new();
-	gtk_widget_set_usize(dummyFixed,1024,768);
-	gtk_notebook_append_page(TopNoteBook,dummyFixed,gtk_label_new("_dummyFixed_"));
-	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
 	DialogStack = NULL;
 }
 
