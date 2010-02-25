@@ -281,7 +281,8 @@ UI_Init(int argc,
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
 	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
 
-	gtk_idle_add(SetPosition,TopWindow);
+	//gtk_idle_add(SetPosition,TopWindow);
+	SetPosition(TopWindow);
 
 	gtk_signal_connect(GTK_OBJECT(TopWindow), 
 		"delete_event", (GtkSignalFunc)gtk_true, NULL);
