@@ -250,17 +250,6 @@ UI_ErrorDialog(const char *msg)
 	show_error_dialog(msg);
 }
 
-static void
-SetPosition(gpointer data)
-{
-	if (gdk_screen_width() > 1024 &&
-		gdk_screen_height() > 768) {
-		gtk_window_set_position(GTK_WINDOW(TopWindow), GTK_WIN_POS_CENTER_ALWAYS);
-	} else {
-		gtk_widget_set_uposition(TopWindow, 0,0);
-	}
-}
-
 extern  void        
 UI_Init(int argc, 
 	char **argv)
@@ -280,9 +269,6 @@ UI_Init(int argc,
 	TopNoteBook = gtk_notebook_new();
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
 	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
-
-	//gtk_idle_add(SetPosition,TopWindow);
-	SetPosition(TopWindow);
 
 	gtk_signal_connect(GTK_OBJECT(TopWindow), 
 		"delete_event", (GtkSignalFunc)gtk_true, NULL);
