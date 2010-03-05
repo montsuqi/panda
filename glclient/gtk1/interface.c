@@ -254,6 +254,7 @@ extern  void
 UI_Init(int argc, 
 	char **argv)
 {
+	GtkWidget *dummyFixed;
 	argc = 1;
 	argv[1] = NULL;
 	gnome_init("glclient", VERSION, argc, argv);
@@ -268,6 +269,9 @@ UI_Init(int argc,
 
 	TopNoteBook = gtk_notebook_new();
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
+	dummyFixed = gtk_fixed_new();
+	gtk_widget_set_usize(dummyFixed, 1024, 768);
+	gtk_notebook_append_page(GTK_NOTEBOOK(TopNoteBook), dummyFixed, gtk_label_new("_dummy_"));
 	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
 
 	gtk_signal_connect(GTK_OBJECT(TopWindow), 
