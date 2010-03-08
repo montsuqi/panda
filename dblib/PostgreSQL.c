@@ -162,12 +162,12 @@ SetDBGcoding(
 		if	( dbg->coding != NULL ) {
 			xfree(dbg->coding);
 		}
-		if	(	(  stricmp(encoding,"utf8")   ==  0  ) ) {
+		if	(	(  stricmp(encoding,"utf8") == 0 ) ) {
 			dbg->coding = NULL;
-		} else if 	(	(  stricmp(encoding,"euc_jp")   ==  0  ) ) {
+		} else if 	(	(  stricmp(encoding,"euc_jp") == 0 ) ) {
 			dbg->coding = StrDup("euc-jisx0213");
 		} else {
-			dbg->coding = StrDup(encoding);				
+			dbg->coding = StrDup(encoding);
 		}
 	}
 }
@@ -1280,13 +1280,11 @@ ENTER_FUNC;
 	if	( _PQsendQuery(dbg,sql,usage) == TRUE ) {
 		while ( (res = _PQgetResult(dbg,usage)) != NULL ){
 			rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
-			if		( rc != MCP_OK ) {
-				_PQclear(res);
-				break;
-			}
-			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-			if		( fRed ) {
-				PutDB_Redirect(dbg,sql);
+			if		( rc == MCP_OK ) {
+				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
+				if		( fRed ) {
+					PutDB_Redirect(dbg,sql);
+				}
 			}
 			_PQclear(res);
 		}
