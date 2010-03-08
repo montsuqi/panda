@@ -277,7 +277,9 @@ DequeueTicket(void)
 ENTER_FUNC;
 	while ( ticket == NULL ) {
 		pthread_mutex_lock(&redlock);
+		pthread_mutex_lock(&ticketlock);
 		first = g_slist_nth(TicketList,0);
+		pthread_mutex_unlock(&ticketlock);
 		if ( first == NULL ){
 			if ( fShutdown||fReopen||fSync ) {
 				pthread_mutex_unlock(&redlock);
@@ -287,9 +289,11 @@ ENTER_FUNC;
 		if ( first ) {
 			ticket = (Ticket *)(first->data);
 			if ( (ticket->status == TICKET_COMMIT)
-				 || (ticket->status == TICKET_ABORT)
-				 || (ticket->status == TICKET_AUDIT)) {
+				|| (ticket->status == TICKET_ABORT)
+				|| (ticket->status == TICKET_AUDIT)) {
+				pthread_mutex_lock(&ticketlock);
 				TicketList = g_slist_remove_link(TicketList,first);
+				pthread_mutex_unlock(&ticketlock);
 				g_slist_free_1(first);
 			} else {
 				ticket = NULL;
@@ -378,13 +382,19 @@ LEAVE_FUNC;
 }
 
 static void
-RecvAuditLog(				
+RecvAuditLog(
 	NETFILE	*fpLog)
 {
 	LargeByteString	*lbs;
-	lbs = NewLBS();
+ENTER_FUNC;
+    lbs = NewLBS();
 	RecvLBS(fpLog, lbs);
-	AuditTicket(fpLog, lbs);
+	if (LBS_Size(lbs) > 0 ){
+		AuditTicket(fpLog, lbs);
+	} else {
+		FreeLBS(lbs);
+	}
+LEAVE_FUNC;
 }
 
 static	void
@@ -780,7 +790,7 @@ WriteAuditLog(
 	int rc;
 	static Bool ExistADBGAuditTable = FALSE;
 	static Bool ExistTDBGAuditTable = FALSE;
-	
+ENTER_FUNC;	
 	while (fSync){
 		Message("auditlog wait...");
 		sleep(1);
@@ -795,7 +805,9 @@ WriteAuditLog(
 				}
 				LBS_EmitStart(AuditDBG->redirectData);
 				LBS_EmitStart(AuditDBG->checkData);
+				TransactionStart(AuditDBG);
 				rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), DB_UPDATE);
+				TransactionEnd(AuditDBG);
 				LBS_EmitEnd(AuditDBG->redirectData);
 				LBS_EmitEnd(AuditDBG->checkData);
 				if (rc == MCP_OK){
@@ -814,6 +826,7 @@ WriteAuditLog(
 		}
 		FreeLBS(ticket->auditlog);
 	}
+LEAVE_FUNC;
 }
 
 static void
