@@ -239,7 +239,7 @@ void_table_list(
 	Table		*table;
 	table = NewTable();
 	table->name = strdup("");
-	table->relkind = ' ';
+	table->relkind = 'z';
 	table_list->tables[0] = table;
 }
 
