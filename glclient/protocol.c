@@ -718,6 +718,7 @@ PingTimerFunc(gpointer data)
 	c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
 	if (c != GL_Pong) {
 		UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
+		return 1;
 	}
 	c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
 	switch (c) {
