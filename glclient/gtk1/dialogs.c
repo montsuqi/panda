@@ -32,7 +32,6 @@
 #include	"dialogs.h"
 #include	"toplevel.h"
 
-static int have_error = 0;
 
 GtkWidget*
 message_dialog(
@@ -86,6 +85,7 @@ void
 show_error_dialog(
 	const char *message)
 {
+	static int have_error = 0;
 	GtkWidget *dialog;
 		
 	if(message == NULL || strlen(message) <= 0) return;
@@ -94,8 +94,6 @@ show_error_dialog(
 		dialog = message_dialog(message, FALSE);
 		gnome_dialog_run(GNOME_DIALOG(dialog));
 		exit(1);
-	} else {
-		while(1) {sleep(1);}
 	}
 }
 
