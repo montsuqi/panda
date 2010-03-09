@@ -232,6 +232,18 @@ add_ng_list(
 	ng_list->count++;
 }
 
+static void
+void_table_list(
+	TableList *table_list)
+{
+	Table		*table;
+	table = NewTable();
+	table->name = strdup("");
+	table->relkind = ' ';
+	table_list->tables[0] = table;
+}
+
+
 static TableList *
 table_check(
 	DBG_Struct	*master_dbg,
@@ -249,6 +261,13 @@ table_check(
 
 	ng_list = NewTableList(master_list->count + slave_list->count);
 	m = s = 0;
+	if (slave_list->count <= 0) {
+		void_table_list(slave_list);
+	}
+	if (master_list->count <= 0) {
+		void_table_list(master_list);
+	}
+	
 	for ( i=0; (master_list->count > m) || (slave_list->count > s); i++) {
 		cmp = strcmp( master_list->tables[m]->name, slave_list->tables[s]->name);
 		rcmp = (master_list->tables[m]->relkind - slave_list->tables[s]->relkind)* 2 + cmp;
@@ -427,22 +446,20 @@ main(
 		Error("Sorry, does not support Database type.");
 	}
 	if (!template1_check(master_dbg)){
-		Error("ERROR: database can not access server %s", GetDB_Host(master_dbg,DB_UPDATE));		
+		Error("ERROR: database can not access server %s", GetDB_Host(master_dbg,DB_UPDATE));
 	}
 	if (!template1_check(slave_dbg)){
-/*		Error("ERROR: database can not access server %s", GetDB_Host(slave_dbg,DB_UPDATE));		*/
+/*		Error("ERROR: database can not access server %s", GetDB_Host(slave_dbg,DB_UPDATE)); */
 	}
 	if (fVerbose){
 		info_print(master_dbg, slave_dbg);
 	}
 	if (!dbexist(master_dbg)){
-		Error("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));		
+		Error("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));
 	}
-
 	if (!dbexist(slave_dbg)) {
 		fAllsync = TRUE;
 	}
-
 	fp = connect_dbredirector(slave_dbg);
 	if (!fAllsync) {
 		if (fp){
