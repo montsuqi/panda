@@ -33,7 +33,6 @@
 #include	<glib.h>
 
 #include	"gettext.h"
-#include	"types.h"
 #include	"const.h"
 #include	"pgserver.h"
 #include	"dirs.h"

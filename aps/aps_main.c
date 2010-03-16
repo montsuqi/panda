@@ -37,7 +37,6 @@
 #include	<pthread.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"RecParser.h"

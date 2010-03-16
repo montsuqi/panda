@@ -29,7 +29,7 @@
 #define	CGIV_NULL		0x00
 #define	CGIV_SAVE		0x01
 
-#define	AGENT_TYPE	word
+#define	AGENT_TYPE	unsigned short
 #define	AGENT_TYPE_NULL		(AGENT_TYPE)0x0000
 #define	AGENT_TYPE_MSIE		(AGENT_TYPE)0x8000
 #define	AGENT_TYPE_MSIE_OLD	(AGENT_TYPE)0x8100
@@ -46,9 +46,9 @@
 
 typedef	struct {
 	char	*name;
-	byte	*body;
-	byte	*(*inFilter)(byte *in);
-	byte	*(*outFilter)(byte *out);
+	unsigned char	*body;
+	unsigned char	*(*inFilter)(unsigned char *in);
+	unsigned char	*(*outFilter)(unsigned char *out);
 	Bool	fSave;
 }	CGIValue;
 
@@ -118,14 +118,14 @@ extern	void	GetArgs(void);
 extern	void	PutHTML(LargeByteString *header, GHashTable *cookie, LargeByteString *html, int code);
 extern	void	DumpValues(LargeByteString *html, GHashTable *args);
 extern	void	Dump(void);
-extern	byte	*GetHostValue(char *name, Bool fClear);
-extern	byte	*SaveValue(char *name, byte *value, Bool fSave);
-extern	byte	*SaveArgValue(char *name, byte *value, Bool fSave);
-extern	byte	*LoadValue(char *name);
+extern	unsigned char	*GetHostValue(char *name, Bool fClear);
+extern	unsigned char	*SaveValue(char *name, unsigned char *value, Bool fSave);
+extern	unsigned char	*SaveArgValue(char *name, unsigned char *value, Bool fSave);
+extern	unsigned char	*LoadValue(char *name);
 extern	void	RemoveValue(char *name);
 extern	void	SetSave(char *name, Bool fSave);
-extern  void	SetFilter(char *name, byte *(*inFilter)(byte *in),
-						  byte *(*outFilter)(byte *out));
+extern  void	SetFilter(char *name, unsigned char *(*inFilter)(unsigned char *in),
+						  unsigned char *(*outFilter)(unsigned char *out));
 
 extern	void	ClearValues(void);
 extern	void	WriteLargeString(FILE *output, LargeByteString *lbs, char *codeset);

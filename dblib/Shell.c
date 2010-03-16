@@ -33,7 +33,6 @@
 #include	<glib.h>
 #include	<signal.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"enum.h"
 #include	"SQLparser.h"

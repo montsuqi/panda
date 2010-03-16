@@ -33,7 +33,6 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"front.h"
@@ -75,7 +74,7 @@ _DumpItems(
 		printf("bool");
 		break;
 	  case	GL_TYPE_BYTE:
-		printf("byte");
+		printf("unsigned char");
 		break;
 	  case	GL_TYPE_CHAR:
 		printf("char(%d)",(int)ValueStringLength(value));

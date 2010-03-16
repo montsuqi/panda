@@ -38,7 +38,6 @@
 #include	<sys/stat.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"socket.h"
 #include	"net.h"
@@ -290,7 +289,7 @@ main(
 						i --;
 					}
 				}
-				UnPackValue(Conv,(byte *)q,Value);
+				UnPackValue(Conv,(unsigned char *)q,Value);
 				if		(  fDdump  ) {
 					DumpValueStruct(Value);
 				}

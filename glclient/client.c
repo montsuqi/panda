@@ -48,12 +48,11 @@
 #endif	//USE_PKCS11
 #endif	//USE_SSL
 #define		MAIN
+#include	"glclient.h"
 #include	"const.h"
-#include	"types.h"
 #include	"option.h"
 #include	"socket.h"
 #include	"glterm.h"
-#include	"glclient.h"
 #include	"comm.h"
 #include	"protocol.h"
 #include	"message.h"

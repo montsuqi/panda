@@ -55,7 +55,7 @@ GLOBAL	GHashTable	*Jslib;
 #undef	GLOBAL
 
 extern	void	TagsInit(char *);
-extern	void	EmitCode(HTCInfo *htc, byte code);
+extern	void	EmitCode(HTCInfo *htc, unsigned char code);
 extern	void	ExpandAttributeString(HTCInfo *htc, char *para);
 
 extern	void	JslibInit(void);

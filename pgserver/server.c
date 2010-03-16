@@ -34,7 +34,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"enum.h"
 #include	"socket.h"
 #include	"libmondai.h"

@@ -41,7 +41,6 @@
 #include	<unistd.h>
 #include	<netdb.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"term.h"

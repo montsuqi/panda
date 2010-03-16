@@ -31,7 +31,6 @@
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"Lex.h"
 #include	"SQLlex.h"

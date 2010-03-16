@@ -38,7 +38,6 @@
 #include	<iconv.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"socket.h"
 #include	"net.h"
@@ -52,7 +51,7 @@
 #include	"debug.h"
 
 static size_t
-EncodeRFC2231(char *q, byte *p)
+EncodeRFC2231(char *q, unsigned char *p)
 {
 	char	*qq;
 
@@ -83,7 +82,7 @@ EncodeRFC2231(char *q, byte *p)
 }
 
 static size_t
-EncodeLengthRFC2231(byte *p)
+EncodeLengthRFC2231(unsigned char *p)
 {
 	size_t ret;
 

@@ -37,7 +37,6 @@
 #include	<unistd.h>
 #endif
 
-#include	"types.h"
 
 #include	"dirs.h"
 #include	"option.h"

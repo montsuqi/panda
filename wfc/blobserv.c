@@ -34,7 +34,6 @@
 #include	<glib.h>
 #include	<pthread.h>
 
-#include	"types.h"
 
 #include	"libmondai.h"
 #include	"net.h"
@@ -63,7 +62,7 @@ PassiveBLOB(
 	int				mode;
 	size_t			size;
 	ssize_t			ssize;
-	byte			*buff;
+	unsigned char			*buff;
 	char			*str;
 
 ENTER_FUNC;

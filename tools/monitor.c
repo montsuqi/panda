@@ -38,7 +38,6 @@
 #include    <sys/socket.h>
 #include	<signal.h>
 #include	<errno.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
@@ -83,14 +82,14 @@ static	Bool	fDBLog;
 static	GList	*ProcessList;
 static	volatile sig_atomic_t	fLoop = TRUE;
 
-#define	PTYPE_NULL	(byte)0x00
-#define	PTYPE_APS	(byte)0x01
-#define	PTYPE_WFC	(byte)0x02
-#define	PTYPE_RED	(byte)0x04
-#define	PTYPE_GLS	(byte)0x08
-#define	PTYPE_LOG	(byte)0x10
-#define	PTYPE_MST	(byte)0x20
-#define	PTYPE_SLV	(byte)0x40
+#define	PTYPE_NULL	(unsigned char)0x00
+#define	PTYPE_APS	(unsigned char)0x01
+#define	PTYPE_WFC	(unsigned char)0x02
+#define	PTYPE_RED	(unsigned char)0x04
+#define	PTYPE_GLS	(unsigned char)0x08
+#define	PTYPE_LOG	(unsigned char)0x10
+#define	PTYPE_MST	(unsigned char)0x20
+#define	PTYPE_SLV	(unsigned char)0x40
 
 #define	STATE_RUN		1
 #define	STATE_DOWN		2
@@ -99,7 +98,7 @@ static	volatile sig_atomic_t	fLoop = TRUE;
 typedef	struct {
 	pid_t	pid;
 	int		state;
-	byte	type;
+	unsigned char	type;
 	int		argc;
 	char	**argv;
 }	Process;
@@ -848,7 +847,7 @@ LEAVE_FUNC;
 
 static	void
 KillProcess(
-	byte	type,
+	unsigned char	type,
 	int		sig)
 {
 	int		i;

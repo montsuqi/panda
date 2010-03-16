@@ -20,6 +20,7 @@
 
 #ifndef	_SERVER_H
 #define	_SERVER_H
+#include	"libmondai.h"
 #include	"port.h"
 
 #undef	GLOBAL

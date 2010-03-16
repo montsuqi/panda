@@ -40,7 +40,6 @@
 #include	<sys/types.h>
 #include	<sys/wait.h>
 #include	<fcntl.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"input.h"
 #include	"debug.h"
@@ -199,7 +198,7 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-extern	byte	*
+extern	unsigned char	*
 GetExecBody(
 	char	*command)
 {
@@ -207,7 +206,7 @@ GetExecBody(
 	int		fd
 		,	i;
 	Bool	fError;
-	byte	*ret;
+	unsigned char	*ret;
 	int		status;
 	pid_t	pid;
 	int		pResult[2]
@@ -553,12 +552,12 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	byte	*
+extern	unsigned char	*
 GetFileBody(
 	char	*fname)
 {
 	struct	stat	sb;
-	byte	*ret;
+	unsigned char	*ret;
 	int		fd;
 	int		c;
 	char	**fp
@@ -576,7 +575,7 @@ ENTER_FUNC;
 		fstat(fd,&sb);
 		if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fd,0) )
 				   !=  NULL  ) {
-			file = (byte *)xmalloc(sb.st_size+1);
+			file = (unsigned char *)xmalloc(sb.st_size+1);
 			memcpy(file,p,sb.st_size);
 			munmap(p,sb.st_size);
 			file[sb.st_size] = 0;

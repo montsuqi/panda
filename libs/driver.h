@@ -43,13 +43,13 @@ typedef	struct {
 
 typedef	struct {
 	Bool			fNew;
-	byte			PutType;
+	unsigned char			PutType;
 	char			*name;
 	RecordStruct	*rec;
 }	WindowData;
 
 extern	WindowData		*SetWindowName(char *name);
-extern	Bool			PutWindow(WindowData *win, byte type);
+extern	Bool			PutWindow(WindowData *win, unsigned char type);
 extern	RecordStruct	*GetWindowRecord(char *wname);
 extern	RecordStruct	*SetWindowRecord(char *wname);
 extern	void			LinkModule(char *name);
@@ -64,7 +64,7 @@ extern	void			PargeScreenData(ScreenData *scr);
 
 /*	C API	*/
 extern	ValueStruct	*GetWindowValue(char *name);
-extern	WindowData	*PutWindowByName(char *wname, byte type);
+extern	WindowData	*PutWindowByName(char *wname, unsigned char type);
 
 #define	ThisWindow	(ThisScreen->window)
 #define	ThisWidget	(ThisScreen->widget)

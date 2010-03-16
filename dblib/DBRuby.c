@@ -42,7 +42,6 @@
 #include	<sys/wait.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"comm.h"

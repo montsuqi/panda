@@ -35,7 +35,6 @@
 #include	<errno.h>
 #include	<iconv.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"HTClex.h"
 #include	"debug.h"
@@ -91,7 +90,7 @@ HTCSetCodeset(
 	size_t	sib
 		,	sibo
 		,	sob;
-	byte	*buff;
+	unsigned char	*buff;
 	char	*istr
 		,	*ostr;
 
@@ -100,7 +99,7 @@ HTCSetCodeset(
 		sbuff = SIZE_BUFF;
 		sibo = strlen(HTC_Memory);
 		while	(TRUE) {
-			buff = (byte *)xmalloc(sbuff);
+			buff = (unsigned char *)xmalloc(sbuff);
 			sib = sibo;
 			istr = HTC_Memory;
 			ostr = buff;

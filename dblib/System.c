@@ -35,7 +35,6 @@
 #include	<pthread.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"dbgroup.h"

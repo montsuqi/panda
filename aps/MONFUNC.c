@@ -33,7 +33,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"dblib.h"

@@ -39,7 +39,6 @@
 #include	<glib.h>
 
 #include	"defaults.h"
-#include	"types.h"
 #include	"socket.h"
 #include	"libmondai.h"
 #include	"glterm.h"

@@ -36,7 +36,6 @@
 #include	<iconv.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"HTCparser.h"
 #include	"cgi.h"
@@ -357,7 +356,7 @@ LEAVE_FUNC;
 }
 
 static size_t
-EncodeURI(char *q, byte *p)
+EncodeURI(char *q, unsigned char *p)
 {
 	char	*qq;
 
@@ -392,7 +391,7 @@ EncodeURI(char *q, byte *p)
 }
 
 static size_t
-EncodeLengthURI(byte *p)
+EncodeLengthURI(unsigned char *p)
 {
 	size_t ret;
 
@@ -467,12 +466,12 @@ EmitChar(
 	Bool			fConv)
 {
 	size_t	len;
-	byte	code[2]
+	unsigned char	code[2]
 		,	*p = str;
 	char	buff[SIZE_BUFF]
 		,	format[SIZE_BUFF];
 
-	if		(  ( p[0] & 0xE0 )  ==  0xE0  ) {	/*	3byte code	*/
+	if		(  ( p[0] & 0xE0 )  ==  0xE0  ) {	/*	3unsigned char code	*/
 		code[0]  = ( 0x0F & p[0] ) << 4;
 		code[0] |= ( 0x3C & p[1] ) >> 2;
 		code[1]  = ( 0x03 & p[1] ) << 6;
@@ -494,7 +493,7 @@ EmitChar(
 		}
 		len = 3;
 	} else
-	if		(  ( p[0] & 0xC0 )  ==  0xC0  ) {	/*	2byte code	*/
+	if		(  ( p[0] & 0xC0 )  ==  0xC0  ) {	/*	2unsigned char code	*/
 		LBS_EmitChar(lbs,p[0]);
 		LBS_EmitChar(lbs,p[1]);
 		len = 2;
@@ -613,7 +612,7 @@ ExecCode(
 	Expr	*var
 	,		vval;
 	size_t	pos;
-	byte	buff[SIZE_BUFF];
+	unsigned char	buff[SIZE_BUFF];
 
 ENTER_FUNC;
 	RewindLBS(htc->code);

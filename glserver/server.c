@@ -41,7 +41,6 @@
 #include	<glib.h>
 #include	<iconv.h>
 
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"glterm.h"

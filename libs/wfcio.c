@@ -28,7 +28,6 @@
 #include	<stdio.h>
 #include	<unistd.h>
 
-#include	"types.h"
 #include	"const.h"
 
 #include	"libmondai.h"
@@ -212,7 +211,7 @@ ENTER_FUNC;
 		ctl->n = RecvInt(fp);					ON_IO_ERROR(fp,badio);
 		dbgprintf("ctl->n = %d\n",ctl->n);
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
-			ctl->control[i].PutType = (byte)RecvInt(fp);
+			ctl->control[i].PutType = (unsigned char)RecvInt(fp);
 			ON_IO_ERROR(fp,badio);
 			RecvnString(fp, SIZE_NAME+1, ctl->control[i].window);
 			ON_IO_ERROR(fp,badio);

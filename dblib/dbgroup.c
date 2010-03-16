@@ -37,7 +37,6 @@
 #include	<sys/time.h>
 
 #include	"defaults.h"
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"directory.h"

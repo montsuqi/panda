@@ -36,7 +36,6 @@
 #include	<fcntl.h>
 #include	<errno.h>
 
-#include	"types.h"
 
 #include	"libmondai.h"
 #include	"net.h"
@@ -365,7 +364,7 @@ extern	int
 WriteBLOB_V1(
 	BLOB_V1_State	*state,
 	MonObjectType	obj,
-	byte			*buff,
+	unsigned char			*buff,
 	size_t			size)
 {
 	BLOB_V1_Entry	*ent;
@@ -386,7 +385,7 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-extern	byte *
+extern	unsigned char *
 ReadBLOB_V1(
 	BLOB_V1_State	*state,
 	MonObjectType	obj,
@@ -394,7 +393,7 @@ ReadBLOB_V1(
 {
 	BLOB_V1_Entry	*ent;
 	struct stat		st;
-	byte			*buff;
+	unsigned char			*buff;
 
 ENTER_FUNC;
 	buff = NULL;

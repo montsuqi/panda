@@ -38,7 +38,6 @@
 #include	<libpq/libpq-fs.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"enum.h"
 #include	"SQLparser.h"
 #include	"libmondai.h"
@@ -615,7 +614,7 @@ ENTER_FUNC;
 		}
 		break;
 	  case	GL_TYPE_BINARY:
-		dbgmsg("byte");
+		dbgmsg("unsigned char");
 		fnum = PQfnumber(res,ItemName());
 		if		(  fnum  <  0  ) {
 			if		(  !IS_VALUE_VIRTUAL(val)  ) {

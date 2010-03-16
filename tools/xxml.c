@@ -30,7 +30,6 @@
 #include	<stdlib.h>
 #include	<ctype.h>
 #include	<iconv.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"xxml.h"
 #include	"debug.h"

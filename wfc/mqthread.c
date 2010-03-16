@@ -35,7 +35,6 @@
 #include	<pthread.h>
 #include	<signal.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"socket.h"
 #include	"net.h"
@@ -78,7 +77,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	byte
+static	unsigned char
 CheckAPS(
 	PacketClass	klass,
 	LD_Node		*ld,
@@ -86,7 +85,7 @@ CheckAPS(
 	char		*term)
 {
 	APS_Node	*aps;
-	byte	flag;
+	unsigned char	flag;
 	NETFILE	*fp;
 
 	aps = &ld->aps[ix];
@@ -121,7 +120,7 @@ PutAPS(
 	LD_Node		*ld,
 	int			ix,
 	SessionData	*data,
-	byte		flag)
+	unsigned char		flag)
 {
 	MessageHeader	*hdr;
 	APS_Node	*aps;
@@ -201,7 +200,7 @@ LEAVE_FUNC;
 	return(fOK);
 }
 
-static	byte
+static	unsigned char
 GetAPS_Control(
 	LD_Node			*ld,
 	int				ix,
@@ -210,7 +209,7 @@ GetAPS_Control(
 	APS_Node	*aps;
 	PacketClass	c;
 	NETFILE		*fp;
-	byte		flag;
+	unsigned char		flag;
 	Bool		done;
 
 ENTER_FUNC;
@@ -226,7 +225,7 @@ ENTER_FUNC;
 			RecvnString(fp,SIZE_NAME,hdr->widget);			ON_IO_ERROR(fp,badio);
 			RecvnString(fp,SIZE_NAME,hdr->event);			ON_IO_ERROR(fp,badio);
 			hdr->dbstatus = (char)RecvChar(fp);				ON_IO_ERROR(fp,badio);
-			hdr->puttype = (byte)RecvInt(fp);				ON_IO_ERROR(fp,badio);
+			hdr->puttype = (unsigned char)RecvInt(fp);				ON_IO_ERROR(fp,badio);
 			dbgprintf("hdr->window  = [%s]",hdr->window);
 			dbgprintf("hdr->puttype = %02X",(int)hdr->puttype);
 			done = TRUE;
@@ -248,7 +247,7 @@ GetAPS_Value(
 	NETFILE	*fpLD,
 	SessionData	*data,
 	PacketClass	c,
-	byte		flag)
+	unsigned char		flag)
 {
 	int		i
 	,		n;
@@ -262,7 +261,7 @@ ENTER_FUNC;
 			dbgmsg("WINCTRL");
 			n = RecvInt(fpLD);		ON_IO_ERROR(fpLD,badio);
 			for	( i = 0 ; i < n ; i ++ ) {
-				data->w.control[data->w.n].PutType = (byte)RecvInt(fpLD);
+				data->w.control[data->w.n].PutType = (unsigned char)RecvInt(fpLD);
 				ON_IO_ERROR(fpLD,badio);
 				RecvnString(fpLD,SIZE_NAME,data->w.control[data->w.n].window);
 				ON_IO_ERROR(fpLD,badio);
@@ -377,8 +376,8 @@ SendTermMessage(
 	LD_Node		*ld
 	,			*newld;
 	NETFILE		*fp;
-	byte		puttype;
-	byte		flag;
+	unsigned char		puttype;
+	unsigned char		flag;
 	char		buff[SIZE_LONGNAME+1];
 
 	fp = NULL; 

@@ -36,7 +36,6 @@
 #include	<sys/types.h>
 #include	<sys/wait.h>
 #include	<signal.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"blob.h"
 #include	"option.h"

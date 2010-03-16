@@ -40,7 +40,6 @@
 #include	<glib.h>
 #include	<setjmp.h>
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"net.h"
 #include	"comm.h"

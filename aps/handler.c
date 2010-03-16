@@ -38,7 +38,6 @@
 #include	<sys/time.h>
 
 #include	"defaults.h"
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"struct.h"
@@ -298,7 +297,7 @@ static	void
 SetPutType(
 	ProcessNode	*node,
 	char		*wname,
-	byte		type)
+	unsigned char		type)
 {	
 	strcpy(node->w.control[node->w.n].window,wname);
 	node->w.control[node->w.n].PutType = type;

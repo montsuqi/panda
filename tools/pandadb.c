@@ -35,7 +35,6 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"DBparser.h"
@@ -163,7 +162,7 @@ TableBody(
 		break;
 	  case	GL_TYPE_BINARY:
 		PutItemName(lbs);
-		LBS_EmitString(lbs,"bytea");
+		LBS_EmitString(lbs,"unsigned chara");
 		PutDim(lbs);
 		break;
 	  case	GL_TYPE_OBJECT:
@@ -321,7 +320,7 @@ Insert(
 	struct	stat	sb;
 	ssize_t		left;
 	size_t		size;
-	byte		*p;
+	unsigned char		*p;
 	RecordStruct	*rec;
 	DBG_Struct	*dbg;
 	ValueStruct	*value;

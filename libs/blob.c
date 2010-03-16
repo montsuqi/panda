@@ -38,7 +38,6 @@
 #include	<fcntl.h>
 #include	<errno.h>
 
-#include	"types.h"
 
 #include	"libmondai.h"
 #include	"net.h"

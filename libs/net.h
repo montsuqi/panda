@@ -41,6 +41,7 @@
 #endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
 
+#include	"libmondai.h"
 #include	"socket.h"
 
 typedef	struct _NETFILE	{
@@ -59,7 +60,7 @@ typedef	struct _NETFILE	{
 	int		err;
 	size_t	size
 	,		ptr;
-	byte	*buff;
+	unsigned char	*buff;
 #ifdef	MT_NET
 	pthread_mutex_t	lock;
 #endif

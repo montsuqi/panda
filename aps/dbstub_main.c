@@ -37,7 +37,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 
 #include	"dirs.h"
 #include	"const.h"

@@ -34,7 +34,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"net.h"
 #include	"dbgroup.h"

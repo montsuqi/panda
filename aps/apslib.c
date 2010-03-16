@@ -31,7 +31,6 @@
 #include	<string.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"directory.h"

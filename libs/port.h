@@ -19,7 +19,6 @@
 
 #ifndef	_INC_PORT_H
 #define	_INC_PORT_H
-#include	"types.h"
 
 typedef	struct	{
 	char	*protocol;

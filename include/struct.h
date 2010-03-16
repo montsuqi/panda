@@ -191,7 +191,7 @@ typedef	struct {
 typedef	struct {
 	size_t	n;
 	struct {
-		byte	PutType;
+		unsigned char	PutType;
 		char	window[SIZE_NAME];
 	}	control[15];
 }	WindowControl;
@@ -223,7 +223,7 @@ typedef	struct _ProcessNode	{
 
 typedef	struct	{
 	char	*name;
-	byte	fInit;
+	unsigned char	fInit;
 	struct	_MessageHandlerClass	*klass;
 	ConvFuncs			*serialize;
 	CONVOPT				*conv;

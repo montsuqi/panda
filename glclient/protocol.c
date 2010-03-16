@@ -42,7 +42,6 @@
 #include	<netinet/in.h>
 #include	<iconv.h>
 
-#include	"types.h"
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"comm.h"
@@ -115,7 +114,7 @@ GL_SendInt(
 	NETFILE	*fp,
 	int		data)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 
 	*(int *)buff = SEND32(data);
 	Send(fp,buff,sizeof(int));
@@ -128,7 +127,7 @@ extern	int
 GL_RecvInt(
 	NETFILE	*fp)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 
 	Recv(fp,buff,sizeof(int));
 	if		(  !CheckNetFile(fp)  ) {
@@ -142,7 +141,7 @@ GL_SendLength(
 	NETFILE	*fp,
 	size_t	data)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 
 	*(int *)buff = SEND32(data);
 	Send(fp,buff,sizeof(int));
@@ -155,7 +154,7 @@ static	size_t
 GL_RecvLength(
 	NETFILE	*fp)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 
 	Recv(fp,buff,sizeof(int));
 	if		(  !CheckNetFile(fp)  ) {
@@ -168,7 +167,7 @@ static	unsigned	int
 GL_RecvUInt(
 	NETFILE	*fp)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 
 	Recv(fp,buff,sizeof(unsigned int));
 	return	(RECV32(*(unsigned int *)buff));
@@ -179,7 +178,7 @@ GL_SendUInt(
 	NETFILE	*fp,
 	unsigned	int		data)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 
 	*(unsigned int *)buff = SEND32(data);
 	Send(fp,buff,sizeof(unsigned int));
@@ -595,7 +594,7 @@ GetScreenData(
 	,			currentWindow[SIZE_NAME+1]
 	,			widgetName[SIZE_LONGNAME+1];
 	PacketClass	c;
-	byte		type;
+	unsigned char		type;
 
 ENTER_FUNC;
 	if (ThisWindowName != NULL)
@@ -609,7 +608,7 @@ ENTER_FUNC;
 	while	(  ( c = GL_RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		GL_RecvString(fp, sizeof(window), window);
 		dbgprintf("[%s]\n",window);
-		type = (byte)GL_RecvInt(FPCOMM(glSession)); 
+		type = (unsigned char)GL_RecvInt(FPCOMM(glSession)); 
 		if		(  fMlog  ) {
 			switch	(type) {
 			  case	SCREEN_NEW_WINDOW:

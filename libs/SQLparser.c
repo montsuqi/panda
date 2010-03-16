@@ -32,7 +32,6 @@
 #include	<ctype.h>
 #include	<glib.h>
 #define		_SQL_PARSER
-#include	"types.h"
 #include	"libmondai.h"
 #include	"Lex.h"
 #include	"SQLlex.h"

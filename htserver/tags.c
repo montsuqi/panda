@@ -36,7 +36,6 @@
 #include	<time.h>
 #include	<sys/time.h>
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"HTClex.h"
 #include	"HTCparser.h"
@@ -109,7 +108,7 @@ LEAVE_FUNC;
 extern	void
 EmitCode(
 	HTCInfo	*htc,
-	byte	code)
+	unsigned char	code)
 {
 	LBS_EmitByte(htc->code,0x01);
 	LBS_EmitByte(htc->code,code);
@@ -769,7 +768,7 @@ ENTER_FUNC;
 #endif
 			LBS_EmitString(htc->code," mce_editable=\"true\"");
 			if		(  !stricmp(type,"xml")  ) {
-				SetFilter(HTCGetProp(tag,"name",0),(byte *(*)(byte *))StrDup,NULL);
+				SetFilter(HTCGetProp(tag,"name",0),(unsigned char *(*)(unsigned char *))StrDup,NULL);
 			}
 		}
 	}

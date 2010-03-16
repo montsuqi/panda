@@ -42,7 +42,6 @@
 #include	<fcntl.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"multipart.h"
 #include	"cgi.h"
@@ -57,20 +56,20 @@ static	GET_VALUE	_GetValue;
 
 #define	SIZE_CHARS		16
 
-extern	byte	*
+extern	unsigned char	*
 SaveValue(
 	char		*name,
-	byte		*value,
+	unsigned char		*value,
 	Bool		fSave)
 {
 	CGIValue	*val;
-	byte		*ret;
+	unsigned char		*ret;
 
 ENTER_FUNC;
 	if		(  ( val = g_hash_table_lookup(Values, name) )  ==  NULL  )	{
 		val = New(CGIValue);
 		val->name = StrDup(name);
-        val->inFilter = (byte *(*)(byte *))StrDup;
+        val->inFilter = (unsigned char *(*)(unsigned char *))StrDup;
 		g_hash_table_insert(Values, val->name, val);
 	} else {
 		if		(  val->body  !=  NULL  ) {
@@ -95,8 +94,8 @@ LEAVE_FUNC;
 extern  void
 SetFilter(
     char    *name,
-    byte    *(*inFilter)(byte *in),
-    byte    *(*outFilter)(byte *out))
+    unsigned char    *(*inFilter)(unsigned char *in),
+    unsigned char    *(*outFilter)(unsigned char *out))
 {
 	CGIValue	*val;
 
@@ -112,13 +111,13 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern  byte    *
+extern  unsigned char    *
 SaveArgValue(
     char    *name,
-    byte    *value,
+    unsigned char    *value,
     Bool fSave)
 {
-    byte    *val
+    unsigned char    *val
         ,   *ret;
     char    *str;
 
@@ -154,12 +153,12 @@ SetSave(
 	val->fSave = fSave;
 }
 
-extern	byte	*
+extern	unsigned char	*
 LoadValue(
 	char		*name)
 {
 	CGIValue	*val;
-	byte		*value;
+	unsigned char		*value;
 
     if		(  ( val = g_hash_table_lookup(Values, name) )  ==  NULL  )	{
 		value = NULL;
@@ -351,10 +350,10 @@ StartScanEnv(
 static	Bool
 ScanEnv(
 	char	*name,
-	byte	*value)
+	unsigned char	*value)
 {
-	byte	buff[SIZE_LARGE_BUFF];
-	byte	*p;
+	unsigned char	buff[SIZE_LARGE_BUFF];
+	unsigned char	*p;
 	int		c;
 	Bool	rc;
 
@@ -412,10 +411,10 @@ ScanEnv(
 static	Bool
 ScanPost(
 	char	*name,
-	byte	*value)
+	unsigned char	*value)
 {
-	byte	buff[SIZE_LARGE_BUFF];
-	byte	*p;
+	unsigned char	buff[SIZE_LARGE_BUFF];
+	unsigned char	*p;
 	int		c;
 	Bool	rc;
 
@@ -474,7 +473,7 @@ SetValue(
 	char	*name,
 	char	*value)
 {
-	byte	*val;
+	unsigned char	*val;
 	char	*str;
 
 ENTER_FUNC;
@@ -497,11 +496,11 @@ extern	void
 GetArgs(void)
 {
 	char	name[SIZE_LONGNAME+1];
-	byte	value[SIZE_LARGE_BUFF];
-	byte	*buff;
+	unsigned char	value[SIZE_LARGE_BUFF];
+	unsigned char	*buff;
     char	*boundary;
 	char	*env;
-	byte	*p;
+	unsigned char	*p;
 
 ENTER_FUNC;
 	if		(  ( env  =  CommandLine )  ==  NULL  ) {
@@ -554,7 +553,7 @@ LEAVE_FUNC;
 
 static	void
 PutURLString(
-	byte	*p,
+	unsigned char	*p,
 	FILE	*fp)
 {
 	while	(  *p  !=  0  ) {
@@ -806,13 +805,13 @@ Dump(void)
 	WriteLargeString(stdout,html,Codeset);
 }
 
-extern	byte	*
+extern	unsigned char	*
 GetHostValue(
 	char	*name,
 	Bool	fClear)
 {
 	ValueStruct			*item;
-	byte	*value;
+	unsigned char	*value;
 
 	dbgprintf("name = [%s]\n",name);
 	if		(  ( value = LoadValue(name) )  ==  NULL  )	{

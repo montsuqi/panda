@@ -25,6 +25,7 @@
  *	user:pass:gid:uid:others
  */
 
+#include	"libmondai.h"
 #include	"const.h"
 #ifndef	SIZE_USER
 #define	SIZE_USER		64

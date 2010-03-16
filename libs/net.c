@@ -41,7 +41,6 @@
 #include	<sys/wait.h>
 #include	<time.h>
 
-#include	"types.h"
 #include	"socket.h"
 #include	"net.h"
 #include	<libmondai.h>
@@ -93,7 +92,7 @@ static	Bool
 _Flush(
 	NETFILE	*fp)
 {
-	byte	*p = fp->buff;
+	unsigned char	*p = fp->buff;
 	ssize_t	count;
 
 ENTER_FUNC;

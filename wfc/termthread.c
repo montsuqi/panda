@@ -37,7 +37,6 @@
 #include	<pthread.h>
 #include	<time.h>
 
-#include	"types.h"
 #include	"enum.h"
 
 #include	"libmondai.h"

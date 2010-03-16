@@ -33,7 +33,6 @@
 #include	<sys/stat.h>
 #include	<glib.h>
 
-#include	"types.h"
 
 #include	"libmondai.h"
 #include	"net.h"
@@ -83,7 +82,7 @@ extern	size_t
 RequestWriteBLOB(
 	NETFILE	*fp,
 	MonObjectType	obj,
-	byte	*buff,
+	unsigned char	*buff,
 	size_t	size)
 {
 	size_t	wrote;
@@ -108,10 +107,10 @@ extern	size_t
 RequestReadBLOB(
 	NETFILE	*fp,
 	MonObjectType	obj,
-	byte	**ret,
+	unsigned char	**ret,
 	size_t	*size)
 {
-	byte 	*buff;
+	unsigned char 	*buff;
 	size_t	red;
 	
 ENTER_FUNC;

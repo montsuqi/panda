@@ -25,17 +25,17 @@
 #ifndef	_INC_GLTERM_H
 #define	_INC_GLTERM_H
 
-#define	SCREEN_NULL					(byte)0x00
-#define	SCREEN_CURRENT_WINDOW		(byte)0x01
-#define	SCREEN_NEW_WINDOW			(byte)0x02
-#define	SCREEN_CLOSE_WINDOW			(byte)0x03
-#define	SCREEN_CHANGE_WINDOW		(byte)0x04
-#define	SCREEN_JOIN_WINDOW			(byte)0x05
-#define	SCREEN_FORK_WINDOW			(byte)0x06
-#define	SCREEN_END_SESSION			(byte)0x07
-#define	SCREEN_BACK_WINDOW			(byte)0x08
-#define	SCREEN_RETURN_COMPONENT		(byte)0x09
-#define	SCREEN_CALL_COMPONENT		(byte)0x10
+#define	SCREEN_NULL					(unsigned char)0x00
+#define	SCREEN_CURRENT_WINDOW		(unsigned char)0x01
+#define	SCREEN_NEW_WINDOW			(unsigned char)0x02
+#define	SCREEN_CLOSE_WINDOW			(unsigned char)0x03
+#define	SCREEN_CHANGE_WINDOW		(unsigned char)0x04
+#define	SCREEN_JOIN_WINDOW			(unsigned char)0x05
+#define	SCREEN_FORK_WINDOW			(unsigned char)0x06
+#define	SCREEN_END_SESSION			(unsigned char)0x07
+#define	SCREEN_BACK_WINDOW			(unsigned char)0x08
+#define	SCREEN_RETURN_COMPONENT		(unsigned char)0x09
+#define	SCREEN_CALL_COMPONENT		(unsigned char)0x10
 
 #define	GL_Null						(PacketClass)0x00
 #define	GL_Connect					(PacketClass)0x01

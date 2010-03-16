@@ -37,7 +37,6 @@
 #include	<sys/stat.h>	/*	for stbuf	*/
 #include	<unistd.h>
 #include	<libgen.h>
-#include	"types.h"
 #include	"const.h"
 #include	"dirs.h"
 #include	<libmondai.h>

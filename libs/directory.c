@@ -32,7 +32,6 @@
 #include	<unistd.h>
 #include	<dlfcn.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"defaults.h"
 #include	"libmondai.h"
 #include	"RecParser.h"

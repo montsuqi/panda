@@ -36,7 +36,6 @@
 #include	<iconv.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"cgi.h"
 #include	"multipart.h"
@@ -258,16 +257,16 @@ ParseBody(
     FILE    *fp,
     char    *delimiter,
     char    *close_delimiter,
-    byte    **value,
+    unsigned char    **value,
     int     *value_len)
 {
     int     boundary_type = BOUNDARY_NONE;
     char    buf[SIZE_BUFF];
     int     read_len;
-    byte    *val;
+    unsigned char    *val;
     int     val_capa = SIZE_BUFF, val_len = 0;
 
-    val = (byte *) xmalloc(val_capa);
+    val = (unsigned char *) xmalloc(val_capa);
     while ((read_len = ReadLine(fp, buf, sizeof(buf))) > 0) {
         boundary_type = CheckBoundary(buf, delimiter, close_delimiter);
         if (boundary_type != BOUNDARY_NONE)
@@ -279,7 +278,7 @@ ParseBody(
             else {
                 val_capa += MEMORY_EXPANSION_UNIT;
             }
-            val = (byte *) xrealloc(val, val_capa);
+            val = (unsigned char *) xrealloc(val, val_capa);
         }
         memcpy(val + val_len, buf, read_len);
         val_len += read_len;
@@ -299,7 +298,7 @@ ParsePart(FILE *fp, char *delimiter, char *close_delimiter,
 {
     char    *name
         ,   *filename;
-    byte    *value;
+    unsigned char    *value;
     int     value_len;
     int     boundary_type;
 

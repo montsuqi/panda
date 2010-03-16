@@ -38,7 +38,6 @@
 #include	<iconv.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"socket.h"
 #include	"net.h"

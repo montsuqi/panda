@@ -31,7 +31,6 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"applications.h"
 #include	"driver.h"

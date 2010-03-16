@@ -37,7 +37,6 @@
 #include    <sys/socket.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"enum.h"
 #include	"dirs.h"
@@ -447,7 +446,7 @@ DumpItems(
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_BYTE:
-		sprintf(buff,"byte");
+		sprintf(buff,"unsigned char");
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_CHAR:

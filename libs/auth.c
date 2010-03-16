@@ -42,7 +42,6 @@
 #include	<errno.h>
 #include	<assert.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"auth.h"
 #include	"message.h"

@@ -32,7 +32,6 @@
 #include	<ctype.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"port.h"
 #include	"debug.h"

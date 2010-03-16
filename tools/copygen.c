@@ -33,7 +33,6 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"struct.h"

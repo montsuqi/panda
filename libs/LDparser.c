@@ -35,7 +35,6 @@
 #include	<glib.h>
 #include	<unistd.h>
 #include	<sys/stat.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"mhandler.h"
 #include	"DDparser.h"

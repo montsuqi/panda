@@ -28,7 +28,6 @@
 #include	<stdlib.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"table.h"
 #include	"debug.h"
 

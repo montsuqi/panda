@@ -35,7 +35,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"dirs.h"
 #include	"RecParser.h"

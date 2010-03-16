@@ -40,7 +40,6 @@
 #include	<glib.h>
 #include	<math.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"glcomm.h"
 #include	"front.h"
@@ -107,7 +106,7 @@ GL_SendInt(
 	int		data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 
 	if		(  fNetwork  ) {
 		*(int *)buff = SEND32(data);
@@ -123,7 +122,7 @@ GL_SendUInt(
 	unsigned	int	data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(unsigned int)];
+	unsigned char	buff[sizeof(unsigned int)];
 
 	if		(  fNetwork  ) {
 		*(unsigned int *)buff = SEND32(data);
@@ -138,7 +137,7 @@ GL_RecvUInt(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(unsigned int)];
+	unsigned char	buff[sizeof(unsigned int)];
 	unsigned	int	data;
 
 	Recv(fp,buff,sizeof(unsigned int));
@@ -156,7 +155,7 @@ GL_SendLong(
 	long	data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(long)];
+	unsigned char	buff[sizeof(long)];
 
 	if		(  fNetwork  ) {
 		*(long *)buff = SEND32(data);
@@ -172,7 +171,7 @@ GL_SendLength(
 	size_t	data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 	int		val;
 
 	val = (int)data;
@@ -189,7 +188,7 @@ GL_RecvInt(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 	int		data;
 
 	Recv(fp,buff,sizeof(int));
@@ -206,7 +205,7 @@ GL_RecvLength(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 	size_t	data;
 
 	Recv(fp,buff,sizeof(int));

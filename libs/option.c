@@ -37,8 +37,8 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<ctype.h>
+#include	"libmondai.h"
 #include	"config.h"
-#include	"types.h"
 #include	"option.h"
 #include	"gettext.h"
 

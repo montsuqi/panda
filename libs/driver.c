@@ -30,7 +30,6 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"comm.h"
@@ -196,7 +195,7 @@ LEAVE_FUNC;
 extern	Bool
 PutWindow(
 	WindowData	*win,
-	byte		type)
+	unsigned char		type)
 {
 	Bool		rc;
 
@@ -255,7 +254,7 @@ GetWindowValue(
 extern	WindowData	*
 PutWindowByName(
 	char		*wname,
-	byte		type)
+	unsigned char		type)
 {
 	WindowData	*win;
 
@@ -326,7 +325,7 @@ _SaveWindowName(
 	size = strlen(name) + 1;
 	fwrite(&size,sizeof(size_t),1,fp);
 	fwrite(name,size,1,fp);
-	fwrite(&win->PutType,sizeof(byte),1,fp);
+	fwrite(&win->PutType,sizeof(unsigned char),1,fp);
 }
 
 static	void
@@ -393,7 +392,7 @@ LoadRecords(
 	int		flag;
 	char	name[SIZE_LONGNAME+1];
 	RecordStruct	*rec;
-	byte	*buff;
+	unsigned char	*buff;
 
 	while	(  ( flag = fgetc(fp) )  ==  RECORD_RECORD  ) {
 		fread(&size,sizeof(size_t),1,fp);
@@ -401,7 +400,7 @@ LoadRecords(
 		rec  = SetWindowRecord(name);
 
 		fread(&size,sizeof(size_t),1,fp);
-		buff = (byte *)xmalloc(size);
+		buff = (unsigned char *)xmalloc(size);
 		fread(buff,size,1,fp);
 		NativeUnPackValue(NULL,buff,rec->value);
 		xfree(buff);
@@ -417,13 +416,13 @@ LoadWindows(
 	size_t	size;
 	char	name[SIZE_LONGNAME+1];
 	int		flag;
-	byte	PutType;
+	unsigned char	PutType;
 	WindowData	*win;
 
 	while	(  ( flag = fgetc(fp) )  ==  RECORD_WINDOW_NAME  ) {
 		fread(&size,sizeof(size_t),1,fp);
 		fread(name,size,1,fp);
-		fread(&PutType,sizeof(byte),1,fp);
+		fread(&PutType,sizeof(unsigned char),1,fp);
 		win = SetWindowName(name);
 		win->PutType = PutType;
 	}

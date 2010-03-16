@@ -30,7 +30,6 @@
 #include	<stdlib.h>
 #include	<unistd.h>
 
-#include	"types.h"
 #include	"const.h"
 
 #include	"libmondai.h"
@@ -95,11 +94,11 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-static	byte
+static	unsigned char
 SaveCache(
 	ProcessNode	*node)
 {
-	byte		flag;
+	unsigned char		flag;
 	SessionCache	*ent;
 	size_t		size;
 
@@ -214,7 +213,7 @@ GetWFCTerm(
 	Bool		fEnd;
 	MessageHeader	hdr;
 	char		term[SIZE_TERM+1];
-	byte		flag;
+	unsigned char		flag;
 	ValueStruct	*e;
 
 ENTER_FUNC;
@@ -448,7 +447,7 @@ PutWFCTerm(
 	int				i;
 	PacketClass		c;
 	Bool			fEnd;
-	byte		flag;
+	unsigned char		flag;
 	ValueStruct	*e;
 
 ENTER_FUNC;

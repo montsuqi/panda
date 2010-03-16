@@ -43,7 +43,6 @@
 #include	<libexslt/exsltconfig.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"xxml.h"
 #include	"load.h"

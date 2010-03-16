@@ -40,7 +40,6 @@
 #include	<sys/types.h>
 #include	<sys/wait.h>
 #include	<fcntl.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"HTCparser.h"
 #include	"HTClex.h"
@@ -135,8 +134,8 @@ DataProcess(
 {
 	char	name[SIZE_LONGNAME+1]
 		,	data[SIZE_LARGE_BUFF];
-	byte	value[SIZE_LARGE_BUFF];
-	byte	*got
+	unsigned char	value[SIZE_LARGE_BUFF];
+	unsigned char	*got
 		,	*p;
 	FILE	*fpR
 		,	*fpW;
@@ -192,7 +191,7 @@ MakeErrorBody(
 	LargeByteString	*lbs,
 	char	*p)
 {
-	byte	buff[SIZE_LARGE_BUFF];
+	unsigned char	buff[SIZE_LARGE_BUFF];
 	char	*q;
 	Bool	fBody;
 	int		i;
@@ -248,7 +247,7 @@ ParseFile(
 	Bool	fHTC)
 {
 	HTCInfo	*ret;
-	byte	*str;
+	unsigned char	*str;
 	int		fd
 		,	i;
 	int		pSource[2]

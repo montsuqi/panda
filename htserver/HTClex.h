@@ -57,8 +57,8 @@ GLOBAL	char	HTC_ComSymbol[SIZE_SYMBOL+1];
 GLOBAL	char	*HTC_FileName;
 GLOBAL	int		HTC_Token;
 GLOBAL	int		HTC_cLine;
-GLOBAL	byte	*HTC_Memory;
-GLOBAL	byte	*_HTC_Memory;
+GLOBAL	unsigned char	*HTC_Memory;
+GLOBAL	unsigned char	*_HTC_Memory;
 
 #undef	GLOBAL
 

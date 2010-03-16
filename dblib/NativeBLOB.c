@@ -34,7 +34,6 @@
 #include	<signal.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"directory.h"

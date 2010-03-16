@@ -33,7 +33,6 @@
 #include	<glib.h>
 #include	<math.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"comm.h"
 #define	_COMMS

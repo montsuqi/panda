@@ -47,7 +47,6 @@
 #include    <env.h>
 #include    <st.h>
 
-#include    "types.h"
 #include    "const.h"
 #include    "libmondai.h"
 #include    "comm.h"

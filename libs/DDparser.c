@@ -32,7 +32,6 @@
 #include	<ctype.h>
 #include	<glib.h>
 #include	<sys/stat.h>	/*	for stbuf	*/
-#include	"types.h"
 #include	<libmondai.h>
 #include	<RecParser.h>
 #include	"struct.h"

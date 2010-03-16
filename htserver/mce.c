@@ -47,7 +47,6 @@
 
 #include	"const.h"
 #include	"libmondai.h"
-#include	"types.h"
 #include	"debug.h"
 
 static	xsltStylesheetPtr	style = NULL;

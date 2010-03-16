@@ -42,7 +42,6 @@
 #include	<sys/types.h>
 #include	<sys/wait.h>
 #include	<fcntl.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"HTCparser.h"
 #include	"HTClex.h"
@@ -83,7 +82,7 @@ static	void
 CopyTag(
 	HTCInfo	*htc)
 {
-	byte	*para;
+	unsigned char	*para;
 
 ENTER_FUNC;
 	LBS_EmitString(htc->code,"<");
@@ -383,7 +382,7 @@ HTCParseFile(
 	char	*fname)
 {
 	HTCInfo	*ret;
-	byte	*str;
+	unsigned char	*str;
 
 ENTER_FUNC;
 	if		(  ( str = GetFileBody(fname) )  !=  NULL  ) {
@@ -455,7 +454,7 @@ HTMLParseFile(
 	char	*fname)
 {
 	HTCInfo	*ret;
-	byte	*str;
+	unsigned char	*str;
 
 ENTER_FUNC;
 	if		(  ( str = GetFileBody(fname) )  !=  NULL  ) {

@@ -31,7 +31,6 @@
 #include	<stdlib.h>
 #include	<string.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"front.h"
 #include	"debug.h"

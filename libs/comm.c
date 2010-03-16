@@ -34,7 +34,6 @@
 #include	<glib.h>
 #include	<math.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #define	_COMM
 #include	"comm.h"
@@ -231,7 +230,7 @@ extern	int
 RecvChar(
 	NETFILE	*fp)
 {
-	byte	data;
+	unsigned char	data;
 	int		ret;
 
 	if		(  Recv(fp,&data,sizeof(data))  ==  sizeof(data)  ) {
@@ -247,9 +246,9 @@ SendChar(
 	NETFILE	*fp,
 	int		data)
 {
-	byte	buf;
+	unsigned char	buf;
 
-	buf = (byte)data;
+	buf = (unsigned char)data;
 	Send(fp,&buf,sizeof(buf));
 }
 

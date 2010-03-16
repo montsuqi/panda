@@ -82,8 +82,8 @@ extern	MonObjectType	NewBLOB_V1(BLOB_V1_State *state, int mode);
 extern	ssize_t			OpenBLOB_V1(BLOB_V1_State *state, MonObjectType obj, int mode);
 extern	Bool			DestroyBLOB_V1(BLOB_V1_State *state, MonObjectType obj);
 extern	Bool			CloseBLOB_V1(BLOB_V1_State *state, MonObjectType obj);
-extern	int				WriteBLOB_V1(BLOB_V1_State *state, MonObjectType obj, byte *buff, size_t size);
-extern	byte*			ReadBLOB_V1(BLOB_V1_State *state, MonObjectType obj, size_t *size);
+extern	int				WriteBLOB_V1(BLOB_V1_State *state, MonObjectType obj, unsigned char *buff, size_t size);
+extern	unsigned char*			ReadBLOB_V1(BLOB_V1_State *state, MonObjectType obj, size_t *size);
 extern	Bool			RegisterBLOB_V1(BLOB_V1_State *state, MonObjectType obj, char *key);
 extern	MonObjectType	LookupBLOB_V1(BLOB_V1_State *state, char *k);
 

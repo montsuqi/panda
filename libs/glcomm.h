@@ -21,14 +21,14 @@
 #define	_GLCOMM_H
 #include	"net.h"
 
-#define	FEATURE_NULL		(byte)0x0000
-#define	FEATURE_CORE		(byte)0x0001
-#define	FEATURE_I18N		(byte)0x0002
-#define	FEATURE_BLOB		(byte)0x0004
-#define	FEATURE_EXPAND		(byte)0x0008
-#define	FEATURE_NETWORK		(byte)0x0010
-#define	FEATURE_NEGO		(byte)0x0020
-#define	FEATURE_OLD			(byte)0x0040
+#define	FEATURE_NULL		(unsigned char)0x0000
+#define	FEATURE_CORE		(unsigned char)0x0001
+#define	FEATURE_I18N		(unsigned char)0x0002
+#define	FEATURE_BLOB		(unsigned char)0x0004
+#define	FEATURE_EXPAND		(unsigned char)0x0008
+#define	FEATURE_NETWORK		(unsigned char)0x0010
+#define	FEATURE_NEGO		(unsigned char)0x0020
+#define	FEATURE_OLD			(unsigned char)0x0040
 
 #define	fFeatureCore		(((TermFeature & FEATURE_CORE) != 0) ? TRUE : FALSE)
 #define	fFeatureBlob		(((TermFeature & FEATURE_BLOB) != 0) ? TRUE : FALSE)
@@ -67,7 +67,7 @@ extern	void	InitGL_Comm(void);
 #else
 #define	GLOBAL		extern
 #endif
-GLOBAL	byte		TermFeature;
+GLOBAL	unsigned char		TermFeature;
 GLOBAL	ExpandType	TermExpandType;
 GLOBAL	char		TermAgent[128];
 

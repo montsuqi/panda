@@ -35,7 +35,6 @@
 #include	<numeric.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"enum.h"
 #include	"SQLparser.h"
 #include	"libmondai.h"
@@ -372,12 +371,12 @@ InsertValues(
 	ValueStruct	*val)
 {
 	size_t	size;
-	byte	*buff;
+	unsigned char	*buff;
 
 ENTER_FUNC;
 	if		(  val  !=  NULL  ) {
 		size = SQL_SizeValue(NULL,val);
-		buff = (byte *)xmalloc(size+1);
+		buff = (unsigned char *)xmalloc(size+1);
 		SQL_PackValue(NULL,buff,val);
 		LBS_EmitString(lbs,buff);
 		xfree(buff);

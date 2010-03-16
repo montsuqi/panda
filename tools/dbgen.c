@@ -33,7 +33,6 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"DBparser.h"
@@ -180,7 +179,7 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_BINARY:
 		PutItemName();
-		printf("bytea");
+		printf("unsigned chara");
 		PutDim();
 		break;
 	  case	GL_TYPE_OBJECT:

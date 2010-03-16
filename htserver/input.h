@@ -20,7 +20,7 @@
 #ifndef	__INC_INPUT_H__
 #define	__INC_INPUT_H__
 
-extern	byte		*GetFileBody(char *fname);
+extern	unsigned char		*GetFileBody(char *fname);
 extern	char		*CheckCoding(char **sstr);
 extern	char		*ConvertEncoding(char *tcoding, char *coding, char *istr);
 #endif

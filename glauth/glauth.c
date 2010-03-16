@@ -38,7 +38,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"auth.h"
 #include	"libmondai.h"

@@ -20,7 +20,6 @@
 
 #ifndef	_AUTHSTUB_H
 #define	_AUTHSTUB_H
-#include	"types.h"
 #include	"port.h"
 
 #undef	GLOBAL

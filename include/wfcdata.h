@@ -88,7 +88,7 @@ typedef	struct {
 	,		status
 	,		dbstatus
 	,		rc;
-	byte	puttype;
+	unsigned char	puttype;
 }	MessageHeader;
 
 typedef struct {
