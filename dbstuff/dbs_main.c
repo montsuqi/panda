@@ -446,7 +446,7 @@ DumpItems(
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_BYTE:
-		sprintf(buff,"unsigned char");
+		sprintf(buff,"byte");
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_CHAR:

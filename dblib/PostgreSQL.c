@@ -614,7 +614,7 @@ ENTER_FUNC;
 		}
 		break;
 	  case	GL_TYPE_BINARY:
-		dbgmsg("unsigned char");
+		dbgmsg("byte");
 		fnum = PQfnumber(res,ItemName());
 		if		(  fnum  <  0  ) {
 			if		(  !IS_VALUE_VIRTUAL(val)  ) {

@@ -74,7 +74,7 @@ _DumpItems(
 		printf("bool");
 		break;
 	  case	GL_TYPE_BYTE:
-		printf("unsigned char");
+		printf("byte");
 		break;
 	  case	GL_TYPE_CHAR:
 		printf("char(%d)",(int)ValueStringLength(value));

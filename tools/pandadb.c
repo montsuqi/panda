@@ -162,7 +162,7 @@ TableBody(
 		break;
 	  case	GL_TYPE_BINARY:
 		PutItemName(lbs);
-		LBS_EmitString(lbs,"unsigned chara");
+		LBS_EmitString(lbs,"bytea");
 		PutDim(lbs);
 		break;
 	  case	GL_TYPE_OBJECT:

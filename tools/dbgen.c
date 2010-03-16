@@ -179,7 +179,7 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_BINARY:
 		PutItemName();
-		printf("unsigned chara");
+		printf("bytea");
 		PutDim();
 		break;
 	  case	GL_TYPE_OBJECT:
