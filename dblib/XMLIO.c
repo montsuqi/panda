@@ -37,7 +37,6 @@
 #include	<libxml/parser.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"directory.h"
@@ -75,7 +74,7 @@ _OpenXML(
 	ValueStruct	*obj;
 	ValueStruct	*mode;
 	ValueStruct	*ret;
-	byte		*buff;
+	unsigned char		*buff;
 	size_t		size;
 	xmlNodePtr	root;
 
@@ -158,7 +157,7 @@ ENTER_FUNC;
 	if (XMLmode == MODE_WRITE) {
 		xmlDocDumpFormatMemoryEnc(XMLDoc, &buff, &size, "UTF-8", 0);
 		if (buff != NULL && XMLobj != GL_OBJ_NULL) {
-			wrote = RequestWriteBLOB(NBCONN(dbg),XMLobj, (byte *)buff, size);
+			wrote = RequestWriteBLOB(NBCONN(dbg),XMLobj, (unsigned char *)buff, size);
 			if (wrote == size) {
 				ValueObjectId(obj) = XMLobj;
 				ret = DuplicateValue(ret, TRUE);

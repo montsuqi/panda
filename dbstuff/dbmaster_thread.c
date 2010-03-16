@@ -40,7 +40,6 @@
 #include	<pthread.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"comm.h"
 #include	"dbgroup.h"

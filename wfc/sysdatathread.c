@@ -36,7 +36,6 @@
 #include	<glib.h>
 #include	<pthread.h>
 
-#include	"types.h"
 #include	"enum.h"
 
 #include	"libmondai.h"

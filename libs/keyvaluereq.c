@@ -33,7 +33,6 @@
 #include	<sys/stat.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	<libmondai.h>
 #include	<RecParser.h>
 #include	"enum.h"

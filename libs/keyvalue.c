@@ -38,7 +38,6 @@
 #include	<sys/stat.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"keyvalue.h"

@@ -37,7 +37,6 @@
 
 #define		MARSHALLER
 
-#include	"types.h"
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"net.h"

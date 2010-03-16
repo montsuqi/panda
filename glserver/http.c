@@ -42,7 +42,6 @@
 #include	<ctype.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"glterm.h"
@@ -194,7 +193,7 @@ SendResponse(
 {
 	char buf[1024];
 	char date[50];
-	byte *body;
+	unsigned char *body;
 	int size;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);

@@ -28,7 +28,6 @@
 #include	<stdio.h>
 #include	<unistd.h>
 
-#include	"types.h"
 #include	"const.h"
 
 #include	"glserver.h"

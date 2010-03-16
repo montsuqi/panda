@@ -30,7 +30,6 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"comm.h"
