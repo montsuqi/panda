@@ -82,6 +82,8 @@ static	ARG_TABLE	option[] = {
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
+static char *COMMAND = NULL;
+
 static	void
 SetDefault(void)
 {
@@ -108,7 +110,7 @@ ssl_main(int argc, char **argv, FILE_LIST *fl)
         printf("the specified file was not modified.\n");
         exit(1);
     }
-    if (!stricmp(g_basename(argv[0]),"gluseradd")){
+    if (!stricmp(COMMAND,"gluseradd")){
         if (Subject == NULL || strlen(Subject) == 0){
             if (CertFile == NULL || strlen(CertFile) == 0){
                 printf("must specify -subject or -cert option\n");
@@ -134,7 +136,7 @@ ssl_main(int argc, char **argv, FILE_LIST *fl)
         }
         AuthAddX509(fl->name, Subject);
     }
-    else if (!stricmp(g_basename(argv[0]),"gluserdel")){
+    else if (!stricmp(COMMAND,"gluserdel")){
         AuthDelX509(fl->name);
     }
     else {
@@ -154,7 +156,9 @@ main(
 	PassWord	*pw;
 	char		*p;
 
-	InitMessage(g_basename(argv[0]),NULL);
+	COMMAND = (char*)g_basename(argv[0]);
+
+	InitMessage(COMMAND,NULL);
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
 	
@@ -171,16 +175,16 @@ main(
 #endif /* USE_SSL */
 
 	AuthLoadPasswd(PasswordFile);
-	if		(  !stricmp(g_basename(argv[0]),"gluseradd")  ) {
+	if		(  !stricmp(COMMAND,"gluseradd")  ) {
 		if		(  Uid  ==  0  ) {
 			Uid = AuthMaxUID() + 1;
 		}
 		AuthAddUser(fl->name,crypt(Pass,AuthMakeSalt()),Gid,Uid,Other);
 	} else
-	if		(  !stricmp(g_basename(argv[0]),"gluserdel")  ) {
+	if		(  !stricmp(COMMAND,"gluserdel")  ) {
 		AuthDelUser(fl->name);
 	} else
-	if		(  !stricmp(g_basename(argv[0]),"glusermod")  ) {
+	if		(  !stricmp(COMMAND,"glusermod")  ) {
 		if		(  ( pw = AuthGetUser(fl->name) )  !=  NULL  ) {
 			if		(  Uid  ==  0  ) {
 				Uid = pw->uid;
@@ -199,7 +203,7 @@ main(
 			AuthAddUser(fl->name,p,Gid,Uid,Other);
 		}
 	} else
-	if		(  !stricmp(g_basename(argv[0]),"glauth")  ) {
+	if		(  !stricmp(COMMAND,"glauth")  ) {
 		if		(  AuthAuthUser(fl->name,Pass)  !=  NULL  ) {
 			printf("OK\n");
 		} else {

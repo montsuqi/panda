@@ -199,6 +199,7 @@ SyncWait(
 {
 	int i;
 
+	i = 0;
 	LockTicket(fpLog);
 	while (g_slist_length(TicketList) > 0){
 		sleep(1);
