@@ -246,7 +246,7 @@ ENTER_FUNC;
 				AccessBLOB(BLOB_ACCESS_EXPORT,win->rec->value);
 				GL_SendPacketClass(fpComm,GL_ScreenData,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
-				GL_SendValue(fpComm,win->rec->value,coding,fFeatureBlob,fFeatureExpand,fFeatureNetwork);
+				GL_SendValue(fpComm,win->rec->value,coding,fFeatureNetwork);
 				ON_IO_ERROR(fpComm,badio);
 			} else {
 				GL_SendPacketClass(fpComm,GL_NOT,fFeatureNetwork);
@@ -376,7 +376,7 @@ CheckFeature(
 
 	TermExpandType = EXPAND_PNG;
 	strcpy(TermAgent,"unknown");
-	TermFeature = FEATURE_CORE;
+	TermFeature = FEATURE_NULL;
 	if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
 		p ++;
 		while	(  *p  !=  0  ) {
@@ -386,12 +386,6 @@ CheckFeature(
 			} else {
 				n = p + strlen(p);
 			}
-			if		(  !strlicmp(p,"blob")  ) {
-				TermFeature |= FEATURE_BLOB;
-			}
-			if		(  !strlicmp(p,"expand")  ) {
-				TermFeature |= FEATURE_EXPAND;
-			}
 			if		(  !strlicmp(p,"i18n")  ) {
 				TermFeature |= FEATURE_I18N;
 			}
@@ -400,6 +394,9 @@ CheckFeature(
 			}
 			if		(  !strlicmp(p,"negotiation")  ) {
 				TermFeature |= FEATURE_NEGO;
+			}
+			if		(  !strlicmp(p,"download")  ) {
+				TermFeature |= FEATURE_DOWNLOAD;
 			}
 			if		(  !strlicmp(p,"ps")  ) {
 				TermExpandType = EXPAND_PS;
@@ -417,14 +414,14 @@ CheckFeature(
 			p = n;
 		}
 	}
+	if (!fFeatureDownload) {
+		TermFeature = FEATURE_NULL;
+	}
 #ifdef	DEBUG
-	printf("core		= %s\n",fFeatureCore ? "YES" : "NO");
 	printf("i18n      	= %s\n",fFeatureI18N ? "YES" : "NO");
-	printf("blob      	= %s\n",fFeatureBlob ? "YES" : "NO");
-	printf("expand    	= %s\n",fFeatureExpand ? "YES" : "NO");
 	printf("network   	= %s\n",fFeatureNetwork ? "YES" : "NO");
 	printf("negotiation	= %s\n",fFeatureNego ? "YES" : "NO");
-	printf("old			= %s\n",fFeatureOld ? "YES" : "NO");
+	printf("downlaod	= %s\n",fFeatureDownload ? "YES" : "NO");
 #endif
 }
 
@@ -521,7 +518,7 @@ ENTER_FUNC;
 				GL_RecvString(fpComm, sizeof(name), name, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
-					GL_RecvValue(fpComm,value,coding,fFeatureBlob,fFeatureExpand,fFeatureNetwork);
+					GL_RecvValue(fpComm,value,coding,fFeatureNetwork);
 				} else {
 					Warning("invalid item name [%s]\n",name);
 					goto badio;

@@ -1,3 +1,10 @@
+2010-03-19  yusuke mihara  <yusuke@netlab.jp>
+
+	*  glclient/protocol.c glserver/server.c libs/glcomm.c libs/glcomm.h
+	クライアントのFeatureフラグからBLOB、EXPAND、CORE、OLDを削除した
+	FeatureフラグにDOWNLOADを追加した
+	DOWNLOADフラグのないクライアントは接続不可とした
+
 2010-03-16  yusuke mihara  <yusuke@netlab.jp>
 
 	* libglib-2.23でエラーになるので include/types.h の

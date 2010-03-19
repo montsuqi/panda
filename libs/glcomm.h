@@ -22,21 +22,15 @@
 #include	"net.h"
 
 #define	FEATURE_NULL		(unsigned char)0x0000
-#define	FEATURE_CORE		(unsigned char)0x0001
-#define	FEATURE_I18N		(unsigned char)0x0002
-#define	FEATURE_BLOB		(unsigned char)0x0004
-#define	FEATURE_EXPAND		(unsigned char)0x0008
-#define	FEATURE_NETWORK		(unsigned char)0x0010
-#define	FEATURE_NEGO		(unsigned char)0x0020
-#define	FEATURE_OLD			(unsigned char)0x0040
+#define	FEATURE_I18N		(unsigned char)0x0001
+#define	FEATURE_NETWORK		(unsigned char)0x0002
+#define	FEATURE_NEGO		(unsigned char)0x0004
+#define	FEATURE_DOWNLOAD	(unsigned char)0x0008
 
-#define	fFeatureCore		(((TermFeature & FEATURE_CORE) != 0) ? TRUE : FALSE)
-#define	fFeatureBlob		(((TermFeature & FEATURE_BLOB) != 0) ? TRUE : FALSE)
-#define	fFeatureExpand		(((TermFeature & FEATURE_EXPAND) != 0) ? TRUE : FALSE)
 #define	fFeatureI18N		(((TermFeature & FEATURE_I18N) != 0) ? TRUE : FALSE)
 #define	fFeatureNetwork		(((TermFeature & FEATURE_NETWORK) != 0) ? TRUE : FALSE)
 #define	fFeatureNego		(((TermFeature & FEATURE_NEGO) != 0) ? TRUE : FALSE)
-#define	fFeatureOld			(((TermFeature & FEATURE_OLD) != 0) ? TRUE : FALSE)
+#define	fFeatureDownload	(((TermFeature & FEATURE_DOWNLOAD) != 0) ? TRUE : FALSE)
 
 typedef enum _ExpandType {
 	EXPAND_PS,
@@ -56,8 +50,8 @@ extern	Fixed	*GL_RecvFixed(NETFILE *fp, Bool fNetwork);
 extern	double	GL_RecvFloat(NETFILE *fp, Bool fNetwork);
 extern	Bool	GL_RecvBool(NETFILE *fp, Bool fNetwork);
 
-extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, char *coding, Bool fBlob, Bool fExpand, Bool fNetwork);
-extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, char *coding, Bool fBlob, Bool fExpand, Bool fNetwork);
+extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, char *coding, Bool fNetwork);
+extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, char *coding, Bool fNetwork);
 
 extern	void	InitGL_Comm(void);
 

@@ -671,7 +671,7 @@ GL_SendVersionString(
 	char	buff[256];
 	size_t	size;
 
-	sprintf(version,"version:blob:expand:negotiation");
+	sprintf(version,"version:negotiation:download");
 #ifdef	NETWORK_ORDER
 	strcat(version, ":no");
 #endif
