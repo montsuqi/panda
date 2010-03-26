@@ -85,16 +85,12 @@ void
 show_error_dialog(
 	const char *message)
 {
-	static int have_error = 0;
 	GtkWidget *dialog;
 		
 	if(message == NULL || strlen(message) <= 0) return;
-	if (!have_error) {
-		have_error = 1;
-		dialog = message_dialog(message, FALSE);
-		gnome_dialog_run(GNOME_DIALOG(dialog));
-		exit(1);
-	}
+	dialog = message_dialog(message, FALSE);
+	gnome_dialog_run(GNOME_DIALOG(dialog));
+	exit(1);
 }
 
 static gboolean
