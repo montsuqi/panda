@@ -54,14 +54,16 @@ PassiveKV(
 	PacketClass c;
 	int rc;
 	size_t size;
+	size_t count;
 ENTER_FUNC;
 	c = RecvPacketClass(fp); 	ON_IO_ERROR(fp,badio);
 	rc = MCP_BAD_FUNC;
 	buff = NewLBS();
 	RecvLBS(fp, buff);			ON_IO_ERROR(fp,badio);
-	NativeUnPackValueNew(NULL, LBS_Body(buff), &args);
-	if (args == NULL) {
+	count = NativeUnPackValueNew(NULL, LBS_Body(buff), &args);
+	if (count == 0 || args == NULL) {
 		rc = MCP_BAD_ARG;
+		SendInt(fp, rc);		ON_IO_ERROR(fp,badio);
 	} else {
 		switch	(c) {
 		case KV_GETVALUE:
