@@ -469,7 +469,7 @@ SendTermMessage(
 			break;
 		}
 		if		(  newld  ==  NULL  ) {
-			MessageLogPrintf("exititting panda [%s@%s] change to [%s]",
+			MessageLogPrintf("[%s@%s] change to [%s]",
 				hdr.user,hdr.term,hdr.window);
 		}
 	}
