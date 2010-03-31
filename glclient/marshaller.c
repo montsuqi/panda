@@ -810,6 +810,54 @@ LEAVE_FUNC;
 }
 
 static	Bool
+RecvPandaDownload(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool		ret;
+	char		name[SIZE_BUFF]
+	,			buff[SIZE_BUFF];
+	int			nitem
+	,			i;
+	_Download	*attrs;
+
+ENTER_FUNC;
+	ret = FALSE;
+	attrs = (_Download *)data->attrs;
+	if (attrs == NULL){
+		// new data
+		attrs = g_new0(_Download, 1);
+		attrs->binary = NewLBS();
+		attrs->filename = NULL;
+		data->attrs = attrs;
+	} else {
+		// reset data
+		FreeLBS(attrs->binary);
+		attrs->binary = NewLBS();
+		if (attrs->filename != NULL) {
+			free(attrs->filename);
+		}
+		attrs->filename = NULL;
+	}
+
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if (!stricmp(name,"objectdata")) {
+				RecvBinaryData(fp, attrs->binary);
+			} else if (!stricmp(name,"filename")) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->filename = strdup(buff);
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
 RecvPandaTimer(
 	WidgetData	*data,
 	NETFILE	*fp)
@@ -1352,6 +1400,8 @@ RecvWidgetData(
 		ret = RecvPandaPreview(data, fp); break;
 	case WIDGET_TYPE_PANDA_TIMER:
 		ret = RecvPandaTimer(data, fp); break;
+	case WIDGET_TYPE_PANDA_DOWNLOAD:
+		ret = RecvPandaDownload(data, fp); break;
 	case WIDGET_TYPE_PANDA_HTML:
 		ret = RecvPandaHTML(data, fp); break;
 // gtk+

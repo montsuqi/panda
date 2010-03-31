@@ -51,13 +51,13 @@ LoadWidgetCache(void)
 
 	WidgetCache = NewNameHash();
 	snprintf(fname, sizeof(fname), "%s/%s", 
-		Cache, "widgetcache.txt");
+		ConfDir, "widgetcache.txt");
 	if ((fp = fopen(fname, "r")) != NULL) {
 		while (fgets(buff, sizeof(buff), fp) != NULL) {
-			head = strstr(buff, "::");
+			head = strstr(buff, ":");
 			if (head != NULL) {
 				key = StrnDup(buff, head - buff);
-				head += 2;
+				head += 1;
 				value = StrnDup(head, strlen(head) - 1); /* chop */
 				g_hash_table_insert(WidgetCache, key, value);
 			}
@@ -69,7 +69,7 @@ LoadWidgetCache(void)
 static void
 _SaveWidgetCache(char *key, char *value, FILE *fp)
 {
-	fprintf(fp, "%s::%s\n", key, value);
+	fprintf(fp, "%s:%s\n", key, value);
 }
 
 void
@@ -80,10 +80,9 @@ SaveWidgetCache(void)
 	mode_t permission = 0600;
 
 	if (WidgetCache == NULL) return;
-	MakeCacheDir();
 
 	snprintf(fname, sizeof(fname), "%s/%s", 
-		Cache, "widgetcache.txt");
+		ConfDir, "widgetcache.txt");
 	if ((fp = fopen(fname, "w")) != NULL) {
 		g_hash_table_foreach(WidgetCache, (GHFunc)_SaveWidgetCache, fp);
 		fclose(fp);

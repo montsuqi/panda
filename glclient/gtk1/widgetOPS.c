@@ -52,6 +52,7 @@
 #include	"widgetcache.h"
 #include	"toplevel.h"
 #include	"message.h"
+#include	"download.h"
 #include	"debug.h"
 
 static gchar *
@@ -322,6 +323,19 @@ SetPandaHTML(
 ENTER_FUNC;
 	if (data->uri != NULL) {
 		gtk_panda_html_set_uri (GTK_PANDA_HTML(widget), data->uri);
+	}
+LEAVE_FUNC;
+}
+
+static	void
+SetPandaDownload(
+	GtkWidget			*widget,
+	_Download			*data)
+{
+ENTER_FUNC;
+	g_return_if_fail(data->binary != NULL);
+	if (LBS_Size(data->binary) > 0) {
+		show_download_dialog(widget,data->filename,data->binary);
 	}
 LEAVE_FUNC;
 }
@@ -730,6 +744,8 @@ GetWidgetType(
 			return WIDGET_TYPE_PANDA_PREVIEW;
 		} else if (type == GTK_PANDA_TYPE_TIMER) {
 			return WIDGET_TYPE_PANDA_TIMER;
+		} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
+			return WIDGET_TYPE_PANDA_DOWNLOAD;
 		} else if (type == GTK_PANDA_TYPE_HTML) {
 			return WIDGET_TYPE_PANDA_HTML;
 		} else if (type == GTK_TYPE_WINDOW) {
@@ -860,6 +876,9 @@ UpdateWidget(WidgetData *data)
 		break;
 	case WIDGET_TYPE_PANDA_TIMER:
 		SetPandaTimer(widget, (_Timer *)data->attrs);
+		break;
+	case WIDGET_TYPE_PANDA_DOWNLOAD:
+		SetPandaDownload(widget, (_Download *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_HTML:
 		SetPandaHTML(widget, (_HTML *)data->attrs);

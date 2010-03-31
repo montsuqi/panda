@@ -28,6 +28,7 @@ libuigtk2_la_SOURCES	=				\
 	bootdialog.c	bootdialog.h	\
 	callbacks.c		callbacks.h		\
 	dialogs.c		dialogs.h		\
+	download.c		download.h		\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\
 	widgetOPS.c		widgetOPS.h		\

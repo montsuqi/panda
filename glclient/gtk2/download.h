@@ -17,14 +17,11 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_DIALOGS_H
-#define	_INC_DIALOGS_H
+#ifndef	_INC_DOWNLOAD_H
+#define	_INC_DOWNLOAD_H
 
-extern	GtkWidget*	message_dialog(const char *message, gboolean message_type);
-extern	void		show_error_dialog(const char *message);
-extern	void		show_message_dialog(const char *message);
-extern	int 		askpass(char *buf, size_t buflen, const char *prompt);
-extern	GtkWidget*	question_dialog(const char *message, 
-	GtkSignalFunc clicked_handler, GtkWidget *widget, GtkWindow *window);
+#include <gtk/gtk.h>
+
+void show_download_dialog(GtkWidget *widget,char *filename, LargeByteString *binary);
 
 #endif

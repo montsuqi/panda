@@ -32,6 +32,7 @@
 #include <unistd.h>		    /* fstat, close */
 #include <libgen.h>         /* dirname, basename */
 
+#include "glclient.h"
 #include "gettext.h"
 #include "bd_config.h"
 #include "message.h"
@@ -627,17 +628,12 @@ BDConfig *
 bd_config_load_file()
 {
   BDConfig *config;
-  gchar *dir;
   gchar *file;
 
-  dir = g_strconcat(g_get_home_dir (), G_DIR_SEPARATOR_S, ".glclient", NULL);
-  if (mkdir (dir, 0755) && errno != EEXIST)
-    fprintf(stderr,_("error: could not create per-user config directory\n"));
-  file = g_strconcat(dir, G_DIR_SEPARATOR_S, "glclient.conf", NULL);
+  file = g_strconcat(ConfDir, G_DIR_SEPARATOR_S, "glclient.conf", NULL);
   config = bd_config_new_with_filename (file);
 
   g_free (file);
-  g_free (dir);
   return config;
 }
 

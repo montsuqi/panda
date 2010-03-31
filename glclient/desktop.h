@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2008 Kouji TAKAO & JMA (Japan Medical Association).
+ * Copyright (C) 2009 NaCl & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,14 +17,22 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_DIALOGS_H
-#define	_INC_DIALOGS_H
+#ifndef	_DESKTOP_H
+#define	_DESKTOP_H
 
-extern	GtkWidget*	message_dialog(const char *message, gboolean message_type);
-extern	void		show_error_dialog(const char *message);
-extern	void		show_message_dialog(const char *message);
-extern	int 		askpass(char *buf, size_t buflen, const char *prompt);
-extern	GtkWidget*	question_dialog(const char *message, 
-	GtkSignalFunc clicked_handler, GtkWidget *widget, GtkWindow *window);
+#define DESKTOP_LIST 			"applications.txt"
+#define	DESKTOP_MAX_ARGC		128
+
+#undef	GLOBAL
+#ifdef	DESKTOP_MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+GLOBAL	GHashTable	*DesktopAppTable;
+
+extern void InitDesktop();
+extern int CheckDesktop(char *filename);
+extern void OpenDesktop(char *filename,LargeByteString *binary);
 
 #endif

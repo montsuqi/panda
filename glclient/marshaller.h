@@ -38,6 +38,7 @@ typedef enum _WidgetType {
 	WIDGET_TYPE_PANDA_TEXT,
 	WIDGET_TYPE_PANDA_PREVIEW,
 	WIDGET_TYPE_PANDA_TIMER,
+	WIDGET_TYPE_PANDA_DOWNLOAD,
 	WIDGET_TYPE_PANDA_HTML,
 // gtk
 	WIDGET_TYPE_ENTRY,
@@ -86,6 +87,11 @@ typedef struct __Timer {
 	int 			duration;
 	PacketDataType 	ptype;
 } _Timer;
+
+typedef struct __Download {
+	LargeByteString	*binary;
+	char			*filename;
+} _Download;
 
 typedef struct __NumberEntry{
 	int 			state;

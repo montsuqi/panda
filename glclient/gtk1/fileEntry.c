@@ -159,7 +159,7 @@ browse_dialog_ok (GtkWidget *widget, gpointer data)
 	fname = gnome_file_entry_get_full_path(GNOME_FILE_ENTRY(fentry), FALSE);
 
 	dir = g_dirname(fname);
-	SetWidgetCache(StrDup((char *)glade_get_widget_long_name(GTK_WIDGET(fentry))), dir);
+	SetWidgetCache((char *)glade_get_widget_long_name(GTK_WIDGET(fentry)), dir);
 	binary = gtk_object_get_data(GTK_OBJECT(fentry), "recvobject");
 
 	if ((binary) && (LBS_Size(binary) > 0)){

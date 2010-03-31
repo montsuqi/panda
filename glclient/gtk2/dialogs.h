@@ -21,7 +21,6 @@
 #define	_INC_DIALOGS_H
 
 #include <gtk/gtk.h>
-#include "types.h"
 
 extern	void		message_dialog(GtkMessageType type, const char *message);
 extern	void		message_dialog_printf(GtkMessageType type, 
