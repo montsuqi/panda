@@ -61,7 +61,6 @@ typedef struct {
 extern	char	*CacheDirName(void);
 extern	char	*CacheFileName(char *name);
 extern	void	ExitSystem(void);
-extern  void	MakeCacheDir(void);
 extern  void	SetSessionTitle(char *dname);
 
 GLOBAL	char		*FocusedWindowName;
@@ -86,6 +85,8 @@ GLOBAL	Bool	fMlog;
 GLOBAL	Bool	fKeyBuff;
 GLOBAL	Bool	fTimer;
 GLOBAL	char	*TimerPeriod;
+GLOBAL	char	*TempDir;
+GLOBAL	char	*ConfDir;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
 GLOBAL	char	*KeyFile;

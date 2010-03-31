@@ -55,44 +55,18 @@
 #include	"glterm.h"
 #include	"comm.h"
 #include	"protocol.h"
+#include	"widgetcache.h"
+#include	"desktop.h"
 #include	"message.h"
 #include	"debug.h"
 #include	"interface.h"
 #include	"gettext.h"
-#include	"widgetcache.h"
 
 static	Bool 	fDialog;
 static	char	*Config;
 static	Bool 	fConfigList;
 
 static void GLMessage(int level, char *file, int line, char *msg);
-
-static	void
-InitData(void)
-{
-	InitPool();
-}
-
-static	void
-InitApplications(void)
-{
-	glSession = New(Session);
-	FPCOMM(glSession) = NULL;
-#ifdef	USE_SSL
-	CTX(glSession) = NULL;
-#ifdef  USE_PKCS11
-	ENGINE(glSession) = NULL;
-#endif	//USE_PKCS11
-#endif	//USE_SSL
-	TITLE(glSession) = NULL;
-}
-
-extern	void
-InitSystem(void)
-{
-	InitData();
-	InitApplications();
-}
 
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,	TRUE,		(void*)&PortNumber,
@@ -149,10 +123,10 @@ static	ARG_TABLE	option[] = {
 static	void
 SetDefault(void)
 {
-	char *cachename = g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
+	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
 	PortNumber = g_strconcat(DEFAULT_HOST, ":", DEFAULT_PORT, NULL);
 	CurrentApplication = DEFAULT_APPLICATION;
-	Cache =  cachename;
+	Cache =  g_strconcat(g_get_home_dir(), "/.glclient/cache", NULL);
 	Style = DEFAULT_STYLE;
 	Gtkrc = DEFAULT_GTKRC;
 	User = getenv("USER");
@@ -218,19 +192,34 @@ mkdir_p(
 	g_free (fn);
 }
 
-extern  void
-MakeCacheDir(void)
+static  void
+MakeDir(char *dir)
 {
 	struct stat st;
 
-	if (stat(Cache, &st) == 0){
+	if (stat(dir, &st) == 0){
 		if (S_ISDIR(st.st_mode)) {
 			return ;
 		} else {
-			unlink (Cache);
+			unlink (dir);
 		}
 	}
-	mkdir_p (Cache, 0755);
+	mkdir_p (dir, 0755);
+}
+
+static	void
+MakeDirs(void)
+{
+	char template[256];
+	char *p;
+
+	MakeDir(ConfDir);
+	MakeDir(Cache);
+	sprintf(template,"/tmp/glclient_XXXXXX");
+	if ((p = mkdtemp(template)) == NULL) {
+		Error(_("mkdtemp failure"));
+	}
+	TempDir = StrDup(p); 
 }
 
 extern	void SetSessionTitle(
@@ -356,23 +345,45 @@ askpass(char *pass)
 }
 
 static	void
-InitLauncher(
+InitSystem(
 	int		argc,
 	char	**argv)
 {
 	FILE_LIST	*fl;
 
+	InitMessage("glclient",NULL);
+	bindtextdomain(PACKAGE, LOCALEDIR);
+	textdomain(PACKAGE);
+
 	SetDefault();
 	if	(  ( fl = GetOption(option,argc,argv,NULL) )  !=  NULL  ) {
 		CurrentApplication = fl->name;
 	}
+	MakeDirs();
+	InitDesktop();
 
-	InitMessage("glclient",NULL);
-	InitSystem();
+	glSession = New(Session);
+	FPCOMM(glSession) = NULL;
+#ifdef	USE_SSL
+	CTX(glSession) = NULL;
+#ifdef  USE_PKCS11
+	ENGINE(glSession) = NULL;
+#endif	//USE_PKCS11
+#endif	//USE_SSL
+	TITLE(glSession) = NULL;
+}
 
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
-
+static	void
+FinishSystem(void)
+{
+	char buff[256];
+	
+	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
+		sprintf(buff,"rm -f %s/*",TempDir);
+		system(buff);
+		sprintf(buff,"rmdir %s",TempDir);
+		system(buff);
+	}
 }
 
 static	void
@@ -443,7 +454,7 @@ main(
 		Error("sigaction(2) failure");
 	}
 
-	InitLauncher(argc, argv);
+	InitSystem(argc, argv);
 	if (fDialog) {
 		while(1) {
 			if ((pid = fork()) == 0) {
@@ -460,5 +471,6 @@ main(
 	} else {
 		ExecClient(argc, argv);
 	}
+	FinishSystem();
 	return 0;
 }

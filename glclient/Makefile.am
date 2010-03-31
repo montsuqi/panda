@@ -42,6 +42,7 @@ bin_PROGRAMS = 	\
 
 base_sources =						\
 	client.c		glclient.h		\
+	desktop.c		desktop.h		\
 	protocol.c		protocol.h		\
 	marshaller.c	marshaller.h	\
 	widgetcache.c	widgetcache.h	\
