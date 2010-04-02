@@ -93,7 +93,6 @@ ENTER_FUNC;
 	CloseNet(fp);
   badio:
 LEAVE_FUNC;
-	pthread_exit(NULL);
 }
 
 extern	pthread_t
@@ -119,6 +118,5 @@ extern	void
 InitSysData(void)
 {
 ENTER_FUNC;
-	InitBLOBServ();
 LEAVE_FUNC;
 }

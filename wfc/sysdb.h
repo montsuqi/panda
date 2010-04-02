@@ -21,9 +21,11 @@
 #define	_INC_SYSDB_H
 
 extern	void		SYSDB_Init();
-extern	ValueStruct	*SYSDB_TERM_New(char *termid);
-extern	void		SYSDB_TERM_Delete(ValueStruct *value);
-extern	void		SYSDB_TERM_Update(ValueStruct *value);
+extern	NETFILE*	SYSDB_Connect();
+extern	void		SYSDB_Disconnect(NETFILE *fp);
+extern	ValueStruct	*SYSDB_TERM_New(NETFILE *fp,char *termid);
+extern	void		SYSDB_TERM_Delete(NETFILE *fp,ValueStruct *value);
+extern	void		SYSDB_TERM_Update(NETFILE *fp,ValueStruct *value);
 extern	void		SYSDB_TERM_SetValue(ValueStruct *value, int kid, char *data);
 
 enum {

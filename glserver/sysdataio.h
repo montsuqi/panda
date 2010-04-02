@@ -23,6 +23,8 @@
 #define	BLOB_ACCESS_IMPORT	0
 #define	BLOB_ACCESS_EXPORT	1
 
+extern	void	ConnectSysData();
+extern	void	DisconnectSysData();
 extern	void	AccessBLOB(int mode, ValueStruct *value);
 extern	char*	GetSysDB(char *term, char *key);
 extern	Bool	SetSysDB(char *term, char *key, char *value);

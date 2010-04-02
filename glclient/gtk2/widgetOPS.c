@@ -51,6 +51,7 @@
 #include	"queue.h"
 #include	"widgetcache.h"
 #include	"toplevel.h"
+#include	"download.h"
 #include	"message.h"
 #include	"debug.h"
 

@@ -70,8 +70,8 @@ SYSDB_Init()
 	termkeys[SYSDB_TERM_COUNT]     = "count";
 }
 
-static	NETFILE *
-ConnectSysData()
+extern	NETFILE *
+SYSDB_Connect()
 {
 	int fd;
 	NETFILE *fp;
@@ -89,17 +89,27 @@ LEAVE_FUNC;
 	return fp;
 }
 
+extern	void
+SYSDB_Disconnect(NETFILE *fp)
+{
+	if (fp != NULL && CheckNetFile(fp)) {
+		SendPacketClass(fp, SYSDATA_END);
+		CloseNet(fp);
+	}
+}
+
 extern	ValueStruct	*
-SYSDB_TERM_New(char *termid)
+SYSDB_TERM_New(
+	NETFILE *fp, 
+	char *termid)
 {
 	ValueStruct *ret;
-	NETFILE *fp;
 	int i;
 	char *keys[SYSDB_TERM_LAST];
 	char *values[SYSDB_TERM_LAST];
 ENTER_FUNC;
 	ret = NULL;
-	if ((fp = ConnectSysData()) != NULL) {
+	if (fp != NULL && CheckNetFile(fp)) {
 		for (i = 0; i < SYSDB_TERM_LAST; i++) {
 			keys[i] = termkeys[i];
 			if (i == SYSDB_TERM_HOST) {
@@ -110,8 +120,6 @@ ENTER_FUNC;
 		}
 		ret = KVREQ_NewQueryWithValue(termid,SYSDB_TERM_LAST,keys,values);
 		KVREQ_Request(fp, KV_NEWENTRY, ret);
-		SendPacketClass(fp, SYSDATA_END);
-		CloseNet(fp);
 	}
 LEAVE_FUNC;
 	return ret;
@@ -119,14 +127,12 @@ LEAVE_FUNC;
 
 extern	void
 SYSDB_TERM_Delete(
+	NETFILE *fp,
 	ValueStruct *query)
 {
-	NETFILE *fp;
 ENTER_FUNC;
-	if ((fp = ConnectSysData()) != NULL) {
+	if (fp != NULL && CheckNetFile(fp)) {
 		KVREQ_Request(fp, KV_DELETEENTRY, query);
-		SendPacketClass(fp, SYSDATA_END);
-		CloseNet(fp);
 	}
 	FreeValueStruct(query);
 LEAVE_FUNC;
@@ -134,14 +140,12 @@ LEAVE_FUNC;
 
 extern	void
 SYSDB_TERM_Update(
+	NETFILE *fp,
 	ValueStruct *query)
 {
-	NETFILE *fp;
 ENTER_FUNC;
-	if ((fp = ConnectSysData()) != NULL) {
+	if (fp != NULL && CheckNetFile(fp)) {
 		KVREQ_Request(fp, KV_SETVALUE, query);
-		SendPacketClass(fp, SYSDATA_END);
-		CloseNet(fp);
 	}
 LEAVE_FUNC;
 }

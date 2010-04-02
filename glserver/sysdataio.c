@@ -43,6 +43,34 @@
 #include	"message.h"
 #include	"debug.h"
 
+static	NETFILE	*fp;
+
+void
+ConnectSysData()
+{
+	Port	*port;
+	int		fd;
+ENTER_FUNC;
+	fp = NULL;
+	port = ParPort(PortSysData, SYSDATA_PORT);
+	fd = ConnectSocket(port, SOCK_STREAM);
+	DestroyPort(port);
+	if (fd > 0) {
+		fp = SocketToNet(fd);
+	} else {
+		Error("cannot connect sysdata server");
+	}
+LEAVE_FUNC;
+}
+
+void
+DisconnectSysData()
+{
+	if (fp != NULL && CheckNetFile(fp)) {
+		CloseNet(fp);
+	}
+}
+
 static	void
 _AccessBLOB(
 	NETFILE		*fp,
@@ -104,37 +132,17 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	NETFILE *
-ConnectSysData()
-{
-	Port	*port;
-	int		fd;
-	NETFILE	*fp;
-ENTER_FUNC;
-	fp = NULL;
-	port = ParPort(PortSysData, SYSDATA_PORT);
-	fd = ConnectSocket(port, SOCK_STREAM);
-	DestroyPort(port);
-	if (fd > 0) {
-		fp = SocketToNet(fd);
-	} else {
-		Error("cannot connect sysdata server");
-	}
-LEAVE_FUNC;
-	return fp;
-}
 
 extern	void
 AccessBLOB(
 	int			mode,
 	ValueStruct	*value)
 {
-	NETFILE	*fp;
 ENTER_FUNC;
-	if ((fp = ConnectSysData()) != NULL) {
+	if (fp != NULL && CheckNetFile(fp)) {
 		_AccessBLOB(fp,mode,value);
-		SendPacketClass(fp, SYSDATA_END);
-		CloseNet(fp);
+	} else {
+		Error("AccessBLOB failure");
 	}
 LEAVE_FUNC;
 }
@@ -145,22 +153,21 @@ GetSysDB(
 	char	*k)
 {
 	ValueStruct *q;
-	NETFILE	*fp;
 	char *key[1];
 	char *value[1];
 	char *ret;
 ENTER_FUNC;
 	ret = NULL;
-	key[0] = k;
-	value[0] = "";
-	if ((fp = ConnectSysData()) != NULL) {
+	if (fp != NULL && CheckNetFile(fp)) {
+		key[0] = k;
+		value[0] = "";
 		q = KVREQ_NewQueryWithValue(term,1,key,value);
 		if(KVREQ_Request(fp, KV_GETVALUE, q) == MCP_OK) {
 			ret = StrDup(ValueToString(GetItemLongName(q,"query[0].value"), NULL));
 		}
 		FreeValueStruct(q);
-		SendPacketClass(fp, SYSDATA_END);
-		CloseNet(fp);
+	} else {
+		Error("KV_GETVALUE failure");
 	}
 LEAVE_FUNC;
 	return ret;
@@ -173,23 +180,22 @@ SetSysDB(
 	char	*v)
 {
 	ValueStruct *q;
-	NETFILE	*fp;
 	char *key[1];
 	char *value[1];
 	Bool ret;
 ENTER_FUNC;
-	key[0] = k;
-	value[0] = v;
 	ret = FALSE;
 
-	if ((fp = ConnectSysData()) != NULL) {
+	if (fp != NULL && CheckNetFile(fp)) {
+		key[0] = k;
+		value[0] = v;
 		q = KVREQ_NewQueryWithValue(term,1,key,value);
 		if(KVREQ_Request(fp, KV_SETVALUE, q) == MCP_OK) {
 			ret = TRUE;
 		}
 		FreeValueStruct(q);
-		SendPacketClass(fp, SYSDATA_END);
-		CloseNet(fp);
+	} else {
+		Error("KV_SETVALUE failure");
 	}
 LEAVE_FUNC;
 	return ret;
