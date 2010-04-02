@@ -223,7 +223,7 @@ msgstr "基本"
 
 #: glclient/gtk1/bootdialog.c:864 glclient/gtk2/bootdialog.c:723
 msgid "SSL"
-msgstr ""
+msgstr "SSL"
 
 #: glclient/gtk1/bootdialog.c:869 glclient/gtk2/bootdialog.c:728
 msgid "Details"
@@ -396,7 +396,7 @@ msgstr "通信エラー(サーバがPINGに応答しません)"
 
 #: glclient/protocol.c:756
 msgid "connection start\n"
-msgstr "connection start"
+msgstr "connection start\n"
 
 #: glclient/protocol.c:774
 msgid "can not connect server"
