@@ -117,6 +117,7 @@ ENTER_FUNC;
 	data->apidata->status = WFC_API_OK;
 	data->apidata->rec = NewLBS();
 	data->sysdbval = NULL;
+	data->fpSysData = SYSDB_Connect();
 LEAVE_FUNC;
 	return	(data);
 }
@@ -300,8 +301,9 @@ ENTER_FUNC;
 	FreeLBS(data->apidata->rec);
 	xfree(data->apidata);
 	if (data->sysdbval != NULL) {
-		SYSDB_TERM_Delete(data->sysdbval);
+		SYSDB_TERM_Delete(data->fpSysData,data->sysdbval);
 	}
+	SYSDB_Disconnect(data->fpSysData);
 	xfree(data);
 LEAVE_FUNC;
 }
@@ -359,7 +361,7 @@ InitSysDBValue(
 {
 	char	buff[SIZE_LONGNAME+1];
 ENTER_FUNC;
-	data->sysdbval = SYSDB_TERM_New(term);
+	data->sysdbval = SYSDB_TERM_New(data->fpSysData,term);
 	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_USER, data->hdr->user);
 	_strftime(buff, sizeof(buff), data->create_time.tv_sec);
 	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_CTIME, buff);
@@ -866,7 +868,7 @@ ENTER_FUNC;
 	sprintf(buff, "%d", ++data->count);
 	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_COUNT,buff);
 
-	SYSDB_TERM_Update(data->sysdbval);
+	SYSDB_TERM_Update(data->fpSysData,data->sysdbval);
 LEAVE_FUNC;
 }
 
@@ -886,7 +888,7 @@ ENTER_FUNC;
 	TimevalToString(buff, data->total_process_time);
 	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_TPTIME, buff);
 
-	SYSDB_TERM_Update(data->sysdbval);
+	SYSDB_TERM_Update(data->fpSysData,data->sysdbval);
 LEAVE_FUNC;
 }
 

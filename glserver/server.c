@@ -759,10 +759,12 @@ ENTER_FUNC;
 #endif
 			close(_fd);
 			scr = InitSession();
+			ConnectSysData();
 			strcpy(scr->term,TermName(fd));
 			alarm(TIMEOUT_SEC);
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
+			DisconnectSysData();
 			CloseNet(fpComm);
 			exit(0);
 		}

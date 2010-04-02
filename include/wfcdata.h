@@ -123,6 +123,7 @@ typedef	struct _SessionData	{
 	int						count;
 	ValueStruct				*sysdbval;
 	WindowControl			w;
+	NETFILE					*fpSysData;
 }	SessionData;
 
 

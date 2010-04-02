@@ -20,6 +20,8 @@
 #ifndef	_INC_BLOB_V1_H
 #define	_INC_BLOB_V1_H
 
+#include "lock.h"
+
 #define	BLOB_V1_HEADER		"PNB1"
 #if	BLOB_VERSION == 1
 
@@ -68,6 +70,7 @@ typedef	struct {
 
 typedef	struct	_BLOB_V1_State {
 	BLOB_V1_Space	*blob;
+	LOCKOBJECT;
 }	BLOB_V1_State;
 
 extern	BLOB_V1_Space	*InitBLOB_V1(char *space);

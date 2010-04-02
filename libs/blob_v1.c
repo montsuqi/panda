@@ -141,19 +141,21 @@ LEAVE_FUNC;
 
 extern	BLOB_V1_State	*
 ConnectBLOB_V1(
-	BLOB_V1_Space	*blob)
+	BLOB_V1_Space	*space)
 {
-	BLOB_V1_State	*ret;
+	BLOB_V1_State	*state;
 
-	ret = New(BLOB_V1_State);
-	ret->blob = blob;
-	return	(ret);
+	state = New(BLOB_V1_State);
+	state->blob = space;
+	InitLock(state);
+	return	(state);
 }
 
 extern	void
 DisConnectBLOB_V1(
 	BLOB_V1_State	*state)
 {
+	DestroyLock(state);
 	xfree(state);
 }
 
