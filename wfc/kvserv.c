@@ -62,6 +62,7 @@ ENTER_FUNC;
 	RecvLBS(fp, buff);			ON_IO_ERROR(fp,badio);
 	count = NativeUnPackValueNew(NULL, LBS_Body(buff), &args);
 	if (count == 0 || args == NULL) {
+		args = NULL;
 		rc = MCP_BAD_ARG;
 		SendInt(fp, rc);		ON_IO_ERROR(fp,badio);
 	} else {
@@ -109,10 +110,10 @@ ENTER_FUNC;
 			NativePackValue(NULL, LBS_Body(buff), args);
 			SendLBS(fp, buff);		ON_IO_ERROR(fp,badio);
 		}
-		FreeLBS(buff);
-		if (args != NULL) {
-			FreeValueStruct(args);
-		}
+	}
+	FreeLBS(buff);
+	if (args != NULL) {
+		FreeValueStruct(args);
 	}
 badio:
 LEAVE_FUNC;
