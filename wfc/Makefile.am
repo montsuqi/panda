@@ -70,3 +70,6 @@ moninfo_LDFLAGS	=			\
 	-export-dynamic
 moninfo_SOURCES	=					\
 	moninfo.c
+
+AM_CPPFLAGS =	\
+	-DKEYVALUE_GLOBAL_LOCK=\"\"

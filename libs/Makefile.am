@@ -261,7 +261,8 @@ testblob_LDADD	=				\
 testblob_DEPENDENCIES	=
 
 AM_CPPFLAGS = 					\
-	-DLOCALEDIR=\"$(localedir)\"
+	-DLOCALEDIR=\"$(localedir)\"\
+	-DKEYVALUE_GLOBAL_LOCK=\"\"
 
 DISTCLEANFILES = enum.h
 EXTRA_DIST	=					\
