@@ -44,9 +44,15 @@
 #include	"message.h"
 #include	"debug.h"
 
-#define	KV_LockRead(db)		dbgmsg("KV_LockRead");LockRead(db)
-#define	KV_LockWrite(db)	dbgmsg("KV_LockWrite");LockWrite(db)
-#define	KV_UnLock(db)		dbgmsg("KV_UnLock");UnLock(db)
+#ifdef KEYVALUE_GLOBAL_LOCK
+#	define	KV_LockRead(db)		/**/
+#	define	KV_LockWrite(db)	/**/
+#	define	KV_UnLock(db)		/**/
+#else
+#	define	KV_LockRead(db)		dbgmsg("KV_LockRead");LockRead(db)
+#	define	KV_LockWrite(db)	dbgmsg("KV_LockWrite");LockWrite(db)
+#	define	KV_UnLock(db)		dbgmsg("KV_UnLock");UnLock(db)
+#endif
 
 extern	KV_State *
 InitKV(void)
