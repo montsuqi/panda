@@ -182,30 +182,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	void
-ColumnPrint(
-	int size,
-	char *str)
-{
-	int j;
-	int s;
-	char *buff;
-
-	s = strlen(str);
-	if (s > size - 1) {
-		printf("%s",str);
-	} else {
-		buff = xmalloc(size);
-		strcpy(buff, str);
-		for( j = s; j < size - 1; j++) {
-			buff[j] = ' ';
-		}
-		buff[size - 1] = 0;
-		printf("%s",buff);
-		xfree(buff);
-	}
-}
-
 extern	void
 Who(void)
 {
@@ -230,14 +206,8 @@ ENTER_FUNC;
 		printf("[ERROR] cannot get user list\n");
 		exit(1);
 	}
-	ColumnPrint(11, "USER");
-	ColumnPrint(17, "HOST");
-	ColumnPrint(32, "LOGIN@");
-	ColumnPrint(32, "LAST@");
-	ColumnPrint(17, "WINDOW");
-	ColumnPrint(20, "AGENT");
-	ColumnPrint(129, "ID");
-	printf("\n");
+	printf("|%-11s|%-17s|%-32s|%-32s|%-17s|%-21s|%-129s|\n",
+		"USER", "HOST", "LOGIN@", "LAST@", "WINDOW", "AGENT", "ID");
 	for ( i = 0; i < ValueInteger(GetItemLongName(list, "num")); i++) {
 		sprintf(lname, "query[%d].key", i);
 		if (!strcmp("system", ValueToString(GetItemLongName(list,lname), NULL))) {
@@ -245,14 +215,14 @@ ENTER_FUNC;
 		} 
 		query = KVREQ_NewQueryWithValue(ValueToString(GetItemLongName(list,lname), NULL),6,key,value);
 		if (KVREQ_Request(fp, KV_GETVALUE, query) == MCP_OK) {
-			ColumnPrint(11, ValueToString(GetItemLongName(query,"query[0].value"), NULL));
-			ColumnPrint(17, ValueToString(GetItemLongName(query,"query[1].value"), NULL));
-			ColumnPrint(32, ValueToString(GetItemLongName(query,"query[2].value"), NULL));
-			ColumnPrint(32, ValueToString(GetItemLongName(query,"query[3].value"), NULL));
-			ColumnPrint(17, ValueToString(GetItemLongName(query,"query[4].value"), NULL));
-			ColumnPrint(20, ValueToString(GetItemLongName(query,"query[5].value"), NULL));
-			ColumnPrint(129, ValueToString(GetItemLongName(query,"id"), NULL));
-			printf("\n");
+		printf("|%-11s|%-17s|%-32s|%-32s|%-17s|%-21s|%-129s|\n",
+			ValueToString(GetItemLongName(query,"query[0].value"), NULL),
+			ValueToString(GetItemLongName(query,"query[1].value"), NULL),
+			ValueToString(GetItemLongName(query,"query[2].value"), NULL),
+			ValueToString(GetItemLongName(query,"query[3].value"), NULL),
+			ValueToString(GetItemLongName(query,"query[4].value"), NULL),
+			ValueToString(GetItemLongName(query,"query[5].value"), NULL),
+			ValueToString(GetItemLongName(query,"id"), NULL));
 		}
 		FreeValueStruct(query);
 	}
@@ -267,13 +237,9 @@ print_usage()
 {
 	int i;
 
-	ColumnPrint(16, "command");
-	ColumnPrint(16, "description");
-	printf("\n\n");
+	printf("%-16s%-16s\n\n","command","description");
 	for(i = 0; i < LAST; i++) {
-		ColumnPrint(16, command[i].name);
-		ColumnPrint(16, command[i].desc);
-		printf("\n");
+		printf("%-16s%-16s\n", command[i].name, command[i].desc);
 	}
 }
 
