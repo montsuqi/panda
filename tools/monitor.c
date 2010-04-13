@@ -81,6 +81,10 @@ static	Bool	fDBLog;
 
 static	GList	*ProcessList;
 static	volatile sig_atomic_t	fLoop = TRUE;
+static	volatile sig_atomic_t	fRestart = TRUE;
+static	volatile sig_atomic_t	WfcRestartCount = 0;
+
+#define	MAX_WFC_RESTART_COUNT	5
 
 #define	PTYPE_NULL	(unsigned char)0x00
 #define	PTYPE_APS	(unsigned char)0x01
@@ -100,6 +104,7 @@ typedef	struct {
 	int		state;
 	unsigned char	type;
 	int		argc;
+	int		interval;
 	char	**argv;
 }	Process;
 
@@ -111,9 +116,9 @@ DumpCommand(
 	int		i;
 
 	for	( i = 0 ; argv[i]  !=  NULL ; i ++ ) {
-		dbgprintf("%s ",argv[i]);
+		fprintf(stderr, "%s ",argv[i]);
 	}
-	dbgmsg("");
+	fprintf(stderr,"\n");
 }
 
 static	void
@@ -225,6 +230,37 @@ static	ARG_TABLE	option[] = {
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
+static	Bool
+HerePort(
+	Port	*port)
+{
+	Bool	ret;
+	char	*host;
+
+ENTER_FUNC;
+	if		(  port  ==  NULL  ) {
+		ret = FALSE;
+	} else {
+		switch	(port->type) {
+		  case	PORT_IP:
+			if ((host = IP_HOST(port)) != NULL) {
+				ret = ( strcmp(host,MyHost) == 0 ) ? TRUE : TRUE; // what meaning?
+			} else {
+				ret = FALSE;
+			}
+			break;
+		  case	PORT_UNIX:
+			ret = TRUE;
+			break;
+		  default:
+			ret = FALSE;
+		}
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+
 static	void
 SetDefault(void)
 {
@@ -269,6 +305,7 @@ SetDefault(void)
 	fDBMaster = FALSE;
 }
 
+
 static	void
 InitSystem(void)
 {
@@ -298,8 +335,7 @@ _execv(
 
 static	int
 StartProcess(
-	Process	*proc,
-	int		interval)
+	Process	*proc)
 {
 	pid_t	pid;
 #ifdef	DEBUG
@@ -319,8 +355,8 @@ ENTER_FUNC;
 #endif
 	} else
 	if		(  pid  ==  0  ) {
-		if		(  interval  >  0  ) {
-			sleep(interval);
+		if		(  proc->interval  >  0  ) {
+			sleep(proc->interval);
 		}
 		_execv(proc->argv[0],proc->argv);
 	} else {
@@ -335,7 +371,6 @@ static	void
 StartRedirector(
 	DBG_Struct	*dbg)
 {
-	pid_t	pid;
 	int		argc;
 	char	**argv;
 	Process	*proc;
@@ -382,153 +417,47 @@ ENTER_FUNC;
 	argv[argc ++] = NULL;
 	ProcessList = g_list_append(ProcessList, proc);
 	Message("start redirector:%s",dbg->name);
-	pid = StartProcess(proc,Interval);
+	proc->interval = Interval;
 	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	StartProcess(proc);
 LEAVE_FUNC;
 }
 
-static	void
-StartGlserver(void)
-{
-	pid_t	pid;
-	int		argc;
-	char	**argv;
-	Process	*proc;
-
-ENTER_FUNC;
-	proc = New(Process);
-	argv = (char **)xmalloc(sizeof(char *) * 20);
-	proc->argv = argv;
-	proc->type = PTYPE_GLS;
-	argc = 0;
-	if		(  GlserverPath  !=  NULL  ) {
-		argv[argc ++] = GlserverPath;
-	} else {
-		argv[argc ++] = SERVER_DIR "/glserver";
-	}
-	if		(  RecDir  !=  NULL  ) {
-		argv[argc ++] = "-record";
-		argv[argc ++] = RecDir;
-	} else if (ThisEnv->RecordDir != NULL) {
-		argv[argc ++] = "-record";
-		argv[argc ++] = ThisEnv->RecordDir;
-	}
-	if		(  ScrDir  !=  NULL  ) {
-		argv[argc ++] = "-screen";
-		argv[argc ++] = ScrDir;
-	}
-	if		(  GlCacheDir  !=  NULL  ) {
-		argv[argc ++] = "-cache";
-		argv[argc ++] = GlCacheDir;
-	}
-	if		(  GlAuth  !=  NULL  ) {
-		argv[argc ++] = "-auth";
-		argv[argc ++] = GlAuth;
-	}
-	argv[argc ++] = "-api";
-	if		(  fGlSSL  ) {
-		argv[argc ++] = "-ssl";
-		if		(  GlCert  !=  NULL  ) {
-			argv[argc ++] = "-cert";
-			argv[argc ++] = GlCert;
-		}
-		if		(  GlCAfile  !=  NULL  ) {
-			argv[argc ++] = "-CAfile";
-			argv[argc ++] = GlCAfile;
-		}
-	}
-	
-	proc->argc = argc;
-	argv[argc ++] = NULL;
-	ProcessList = g_list_append(ProcessList, proc);
-	Message("start glserver");
-	pid = StartProcess(proc,Interval);
-LEAVE_FUNC;
-}
 
 static	void
-StartDBLog(
+_StartRedirectors(
 	DBG_Struct	*dbg)
 {
-	pid_t	pid;
-	int		argc;
-	char	**argv;
-	Process	*proc;
 
 ENTER_FUNC;
-	proc = New(Process);
-	argv = (char **)xmalloc(sizeof(char *) * 15);
-	proc->argv = argv;
-	proc->type = PTYPE_LOG;
-	argc = 0;
-	if		(  DBLoggerPath  !=  NULL  ) {
-		argv[argc ++] = DBLoggerPath;
-	} else
-	if		(  ThisEnv->DBLoggerPath  !=  NULL  ) {
-		argv[argc ++] = ThisEnv->DBLoggerPath;
-	} else {
-		argv[argc ++] = SERVER_DIR "/dblogger";
+	if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
+		_StartRedirectors(dbg->redirect);
 	}
-	if		(  Directory  !=  NULL  ) {
-		argv[argc ++] = "-dir";
-		argv[argc ++] = Directory;
+	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{
+		StartRedirector(dbg);
 	}
-	if		(  DDir  !=  NULL  ) {
-		argv[argc ++] = "-ddir";
-		argv[argc ++] = DDir;
-	}
-	if		(  RecDir  !=  NULL  ) {
-		argv[argc ++] = "-record";
-		argv[argc ++] = RecDir;
-	}
-	if		(  fTimer  ) {
-		argv[argc ++] = "-timer";
-	}
-	if		(  fNoSumCheck  ) {
-		argv[argc ++] = "-nosumcheck";
-	}
-	argv[argc ++] = dbg->name;
-	if		(  fQ  ) {
-		argv[argc ++] = "-?";
-	}
-	argv[argc ++] = "-maxretry";
-	argv[argc ++] = IntStrDup(MaxSendRetry);
-	proc->argc = argc;
-	argv[argc ++] = NULL;
-	pid = StartProcess(proc,Interval);
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;	
 LEAVE_FUNC;
 }
 
-static	Bool
-HerePort(
-	Port	*port)
+static	void
+StartRedirectors(void)
 {
-	Bool	ret;
-	char	*host;
+	int		i;
+	DBG_Struct	*dbg;
 
 ENTER_FUNC;
-	if		(  port  ==  NULL  ) {
-		ret = FALSE;
-	} else {
-		switch	(port->type) {
-		  case	PORT_IP:
-			if ((host = IP_HOST(port)) != NULL) {
-				ret = ( strcmp(host,MyHost) == 0 ) ? TRUE : TRUE; // what meaning?
-			} else {
-				ret = FALSE;
-			}
-			break;
-		  case	PORT_UNIX:
-			ret = TRUE;
-			break;
-		  default:
-			ret = FALSE;
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		ThisEnv->DBG[i]->process[DB_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+	}
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		dbg = ThisEnv->DBG[i];
+		if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
+			_StartRedirectors(dbg->redirect);
 		}
 	}
 LEAVE_FUNC;
-	return	(ret);
 }
+
 
 static	void
 StartDBMaster(void)
@@ -583,11 +512,65 @@ ENTER_FUNC;
 		}
 		proc->argc = argc;
 		argv[argc ++] = NULL;
-		StartProcess(proc,Interval);
+		proc->interval = Interval;
+		StartProcess(proc);
 	}
 LEAVE_FUNC;
 }
 
+static	void
+StartDBLog(
+	DBG_Struct	*dbg)
+{
+	int		argc;
+	char	**argv;
+	Process	*proc;
+
+ENTER_FUNC;
+	proc = New(Process);
+	argv = (char **)xmalloc(sizeof(char *) * 15);
+	proc->argv = argv;
+	proc->type = PTYPE_LOG;
+	argc = 0;
+	if		(  DBLoggerPath  !=  NULL  ) {
+		argv[argc ++] = DBLoggerPath;
+	} else
+	if		(  ThisEnv->DBLoggerPath  !=  NULL  ) {
+		argv[argc ++] = ThisEnv->DBLoggerPath;
+	} else {
+		argv[argc ++] = SERVER_DIR "/dblogger";
+	}
+	if		(  Directory  !=  NULL  ) {
+		argv[argc ++] = "-dir";
+		argv[argc ++] = Directory;
+	}
+	if		(  DDir  !=  NULL  ) {
+		argv[argc ++] = "-ddir";
+		argv[argc ++] = DDir;
+	}
+	if		(  RecDir  !=  NULL  ) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = RecDir;
+	}
+	if		(  fTimer  ) {
+		argv[argc ++] = "-timer";
+	}
+	if		(  fNoSumCheck  ) {
+		argv[argc ++] = "-nosumcheck";
+	}
+	argv[argc ++] = dbg->name;
+	if		(  fQ  ) {
+		argv[argc ++] = "-?";
+	}
+	argv[argc ++] = "-maxretry";
+	argv[argc ++] = IntStrDup(MaxSendRetry);
+	proc->argc = argc;
+	argv[argc ++] = NULL;
+	proc->interval = Interval;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;	
+	StartProcess(proc);
+LEAVE_FUNC;
+}
 
 static	void
 _StartDBLogs(
@@ -624,41 +607,82 @@ LEAVE_FUNC;
 }
 
 static	void
-_StartRedirectors(
-	DBG_Struct	*dbg)
+StartEtcServers(void)
 {
-
 ENTER_FUNC;
-	if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
-		_StartRedirectors(dbg->redirect);
+	if		(  fRedirector  ) {
+		StartRedirectors();
 	}
-	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{
-		StartRedirector(dbg);
+	if              (  fDBLog  ) {
+		StartDBLogs();
+	}
+	if              (  fDBMaster  ) {
+		StartDBMaster();
 	}
 LEAVE_FUNC;
 }
 
 static	void
-StartRedirectors(void)
+InitGlserver(void)
 {
-	int		i;
-	DBG_Struct	*dbg;
+	int		argc;
+	char	**argv;
+	Process	*proc;
 
 ENTER_FUNC;
-	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		ThisEnv->DBG[i]->process[DB_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+	proc = New(Process);
+	argv = (char **)xmalloc(sizeof(char *) * 20);
+	proc->argv = argv;
+	proc->type = PTYPE_GLS;
+	argc = 0;
+	if		(  GlserverPath  !=  NULL  ) {
+		argv[argc ++] = GlserverPath;
+	} else {
+		argv[argc ++] = SERVER_DIR "/glserver";
 	}
-	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		dbg = ThisEnv->DBG[i];
-		if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
-			_StartRedirectors(dbg->redirect);
+	if		(  RecDir  !=  NULL  ) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = RecDir;
+	} else if (ThisEnv->RecordDir != NULL) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = ThisEnv->RecordDir;
+	}
+	if		(  ScrDir  !=  NULL  ) {
+		argv[argc ++] = "-screen";
+		argv[argc ++] = ScrDir;
+	}
+	if		(  GlCacheDir  !=  NULL  ) {
+		argv[argc ++] = "-cache";
+		argv[argc ++] = GlCacheDir;
+	}
+	if		(  GlAuth  !=  NULL  ) {
+		argv[argc ++] = "-auth";
+		argv[argc ++] = GlAuth;
+	}
+	argv[argc ++] = "-api";
+	if		(  fGlSSL  ) {
+		argv[argc ++] = "-ssl";
+		if		(  GlCert  !=  NULL  ) {
+			argv[argc ++] = "-cert";
+			argv[argc ++] = GlCert;
+		}
+		if		(  GlCAfile  !=  NULL  ) {
+			argv[argc ++] = "-CAfile";
+			argv[argc ++] = GlCAfile;
 		}
 	}
+	
+	proc->argc = argc;
+	argv[argc ++] = NULL;
+	proc->interval = Interval;
+	ProcessList = g_list_append(ProcessList, proc);
 LEAVE_FUNC;
 }
 
+
+
 static	void
-_StartAps(
+_InitAps(
 	LD_Struct	*ld)
 {
 	int		argc;
@@ -724,15 +748,15 @@ ENTER_FUNC;
 			}
 			proc->argc = argc;
 			argv[argc ++] = NULL;
+			proc->interval = Interval;
 			ProcessList = g_list_append(ProcessList, proc);
-			StartProcess(proc,Interval);
 		}
 	}
 LEAVE_FUNC;
 }
 
 static	void
-StartApss(void)
+InitApss(void)
 {
 	int		i;
 	char	str[512];
@@ -740,7 +764,7 @@ StartApss(void)
 ENTER_FUNC;
 	str[0] = 0;
 	for	(i = 0; i < ThisEnv->cLD; i++) {
-		_StartAps(ThisEnv->ld[i]);
+		_InitAps(ThisEnv->ld[i]);
 		strncat(str, ThisEnv->ld[i]->name,sizeof(str) - strlen(str)-1);
 		strncat(str, " ",sizeof(str) - strlen(str)-1);
 	}
@@ -749,7 +773,7 @@ LEAVE_FUNC;
 }
 
 static	void
-StartWfc(void)
+InitWfc(void)
 {
 	int		argc;
 	char	**argv;
@@ -816,32 +840,23 @@ dbgmsg("*");
 		}
 		proc->argc = argc;
 		argv[argc ++] = NULL;
+		proc->interval = Wfcinterval;
 		ProcessList = g_list_append(ProcessList, proc);
 		Message("start wfc");
-		StartProcess(proc,Wfcinterval);
 	}
 LEAVE_FUNC;
 }
 
 
 static	void
-StartServers(void)
+InitServers(void)
 {
 ENTER_FUNC;
-	if		(  fRedirector  ) {
-		StartRedirectors();
-	}
 	if		(  fGlserver  ) {
-		StartGlserver();
+		InitGlserver();
 	}
-	if              (  fDBLog  ) {
-		StartDBLogs();
-	}
-	if              (  fDBMaster  ) {
-		StartDBMaster();
-	}
-	StartWfc();
-	StartApss();
+	InitWfc();
+	InitApss();
 LEAVE_FUNC;
 }
 
@@ -865,17 +880,31 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+StartServers()
+{
+	int		i;
+	Process	*proc;
+
+ENTER_FUNC;
+	for(i = 0; i < g_list_length(ProcessList); i++) {
+		proc = g_list_nth_data(ProcessList,i);
+		StartProcess(proc);
+	}
+LEAVE_FUNC;
+}
+
 
 static	void
 StopServers(void)
 {
 ENTER_FUNC;
-	KillProcess(PTYPE_APS,SIGHUP);
 #if 0
 	KillProcess(PTYPE_GLS,SIGHUP);
 #else 
 	system("/usr/bin/killall -HUP glserver");
 #endif
+	KillProcess(PTYPE_APS,SIGHUP);
 	KillProcess(PTYPE_RED,SIGUSR1);
 	KillProcess((PTYPE_WFC | PTYPE_LOG | PTYPE_MST),SIGHUP);
 LEAVE_FUNC;
@@ -887,6 +916,7 @@ StopSystem(void)
 {
 ENTER_FUNC;
 	fLoop = FALSE;
+	fRestart = FALSE;
 	StopServers();
 	Message("stop system");
 LEAVE_FUNC;
@@ -896,8 +926,10 @@ static	void
 RestartSystem(void)
 {
 ENTER_FUNC;
+	fRestart = FALSE;
 	StopServers();
 	Message("restart system");
+	WfcRestartCount = 0;
 LEAVE_FUNC;
 }
 
@@ -937,13 +969,13 @@ ENTER_FUNC;
 	while ((pid = waitpid(-1,&status,0)) != -1) {
 		proc = GetProcess(pid);
 		if (proc == NULL) {
-			Error("[BUG] unknown process down:%d",pid);
+			Warning("[BUG] unknown process down:%d",pid);
 			break;
 		}
 		if (proc->state == STATE_RUN) {
 			proc->state = STATE_DOWN;
 		}
-		if (fLoop) {
+		if (fLoop && fRestart) {
 			if (proc->state == STATE_DOWN) {
 				if (WIFSIGNALED(status)) {
 					Message("%s(%d) killed by signal %d"
@@ -961,15 +993,18 @@ ENTER_FUNC;
 			}
 			break;
 		case PTYPE_WFC:
-			if (WIFSIGNALED(status) || 
-				(WIFEXITED(status) && WEXITSTATUS(status) != 0)) {
+			WfcRestartCount ++;
+			if (WfcRestartCount < MAX_WFC_RESTART_COUNT) {
+				Message("wfc restart count:%d", WfcRestartCount);
+			} else {
+				Message("wfc restart count:%d,reached max count,does not restart", WfcRestartCount);
 				StopSystem();
+				break;
 			}
-			break;
 		}
-		if (fLoop) {
+		if (fRestart) {
 			/*What should do to set interval ?*/
-			StartProcess(proc,0);
+			StartProcess(proc);
 		}
 	}
 LEAVE_FUNC;
@@ -994,7 +1029,8 @@ main(
 	InitSystem();
 	Message("start system");
 
-	StartServers();
+	StartEtcServers();
+	InitServers();
 
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = (void *)StopSystem;
@@ -1010,6 +1046,8 @@ main(
 	}
 
 	while (fLoop) {
+		fRestart = TRUE;
+		StartServers();
 		ProcessMonitor();
 	}
 	return	(0);
