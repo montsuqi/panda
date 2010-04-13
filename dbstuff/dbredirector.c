@@ -197,7 +197,7 @@ static void
 SyncWait(
 		NETFILE	*fpLog)
 {
-	int i;
+	int i = 0;
 
 	i = 0;
 	LockTicket(fpLog);
@@ -290,7 +290,7 @@ ENTER_FUNC;
 			ticket = (Ticket *)(first->data);
 			if ( (ticket->status == TICKET_COMMIT)
 				|| (ticket->status == TICKET_ABORT)
-				|| (ticket->status == TICKET_AUDIT)) {
+				|| (ticket->status == TICKET_AUDIT)){
 				pthread_mutex_lock(&ticketlock);
 				TicketList = g_slist_remove_link(TicketList,first);
 				pthread_mutex_unlock(&ticketlock);
@@ -351,6 +351,7 @@ AllAbortTicket(
 	GSList *list;
 	Ticket *ticket;
 ENTER_FUNC;
+	pthread_mutex_lock(&ticketlock);
 	for (list = TicketList; list; list=list->next){
 		ticket = (Ticket *)list->data;
 		if ( (ticket != NULL )
@@ -361,11 +362,32 @@ ENTER_FUNC;
 			dbgprintf("Auto abort %llu\n", ticket->ticket_id);
 		}
 	}
+	pthread_mutex_unlock(&ticketlock);
 	pthread_cond_signal(&redcond);
 LEAVE_FUNC;
 }
 
 static void
+AllAllAbortTicket(void)
+{
+	GSList *list;
+	Ticket *ticket;
+ENTER_FUNC;
+	pthread_mutex_lock(&ticketlock);
+	for (list = TicketList; list; list=list->next){
+		ticket = (Ticket *)list->data;
+		if ( (ticket != NULL)
+			 && ((ticket->status == TICKET_BEGIN)
+					 || (ticket->status == TICKET_DATA)) ) {
+			ticket->status = TICKET_ABORT;
+			dbgprintf("Auto abort %llu\n", ticket->ticket_id);
+		}
+	}
+	pthread_mutex_unlock(&ticketlock);
+LEAVE_FUNC;
+}
+
+	static void
 AuditTicket(
 	NETFILE	*fpLog,
 	LargeByteString	*lbs)
@@ -955,6 +977,7 @@ ENTER_FUNC;
 			ConnectLog(_fhLog);
 		}
 	}
+	AllAllAbortTicket();
 	pthread_cond_signal(&redcond);
 	pthread_join(_FileThread,NULL);
 LEAVE_FUNC;
