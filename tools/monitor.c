@@ -866,7 +866,6 @@ ENTER_FUNC;
 		proc = g_list_nth_data(ProcessList,i);
 		if ((proc->type & type) != 0) {
 			dbgprintf("kill -%d %d\n",sig,proc->pid);
-			Message("kill -%d %d ;%s %s\n",sig,proc->pid,proc->argv[0],proc->argv[1]);
 			kill(proc->pid,sig);
 			proc->state = STATE_STOP;
 		}
@@ -940,6 +939,32 @@ GetProcess(int pid)
 	}
 	return NULL;
 }
+
+static	char*
+GetCommandStr(Process *proc)
+{
+	int	i;
+	int size;
+	char *p;
+	char *command = NULL;
+
+	if (proc == NULL) {
+		return command;
+	}
+	size = 0;
+	for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
+		size += 1 + strlen(proc->argv[i]);
+	}
+	if (size > 0) {
+		p = command = xmalloc(size + 1);
+		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
+			sprintf(p,"%s ",proc->argv[i]);
+			p += strlen(proc->argv[i]) + 1;
+		}
+		*p = 0;
+	}
+	return command;
+}
 	
 static	void
 ProcessMonitor(void)
@@ -948,6 +973,7 @@ ProcessMonitor(void)
 	int status;
 	Process *proc;
 	struct sigaction sa;
+	char *command;
 
 ENTER_FUNC;
 	/* need for catch SYGCHLD  */
@@ -970,13 +996,15 @@ ENTER_FUNC;
 		}
 		if (fLoop && fRestart) {
 			if (proc->state == STATE_DOWN) {
+				command = GetCommandStr(proc);
 				if (WIFSIGNALED(status)) {
-					Message("%s(%d) killed by signal %d"
-							,proc->argv[0], (int)pid, WTERMSIG(status));
+					Message("pid[%d] killed by signal %d;[%s]"
+							,(int)pid, WTERMSIG(status),command);
 				} else {
-					Message("process down pid = %d(%d) Command =[%s]\n"
-							,(int)pid, WEXITSTATUS(status),proc->argv[0]);
+					Message("pid[%d] exit(%d);[%s]"
+							,(int)pid, WEXITSTATUS(status),command);
 				}
+				xfree(command);
 			}
 		}
 		switch	(proc->type) {
