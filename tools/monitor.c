@@ -368,7 +368,7 @@ LEAVE_FUNC;
 }
 
 static	void
-StartRedirector(
+InitRedirector(
 	DBG_Struct	*dbg)
 {
 	int		argc;
@@ -415,32 +415,31 @@ ENTER_FUNC;
 	argv[argc ++] = IntStrDup(MaxSendRetry);
 	proc->argc = argc;
 	argv[argc ++] = NULL;
-	ProcessList = g_list_append(ProcessList, proc);
 	Message("start redirector:%s",dbg->name);
 	proc->interval = Interval;
 	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-	StartProcess(proc);
+	ProcessList = g_list_append(ProcessList, proc);
 LEAVE_FUNC;
 }
 
 
 static	void
-_StartRedirectors(
+_InitRedirectors(
 	DBG_Struct	*dbg)
 {
 
 ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
-		_StartRedirectors(dbg->redirect);
+		_InitRedirectors(dbg->redirect);
 	}
 	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{
-		StartRedirector(dbg);
+		InitRedirector(dbg);
 	}
 LEAVE_FUNC;
 }
 
 static	void
-StartRedirectors(void)
+InitRedirectors(void)
 {
 	int		i;
 	DBG_Struct	*dbg;
@@ -452,7 +451,7 @@ ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
-			_StartRedirectors(dbg->redirect);
+			_InitRedirectors(dbg->redirect);
 		}
 	}
 LEAVE_FUNC;
@@ -460,7 +459,7 @@ LEAVE_FUNC;
 
 
 static	void
-StartDBMaster(void)
+InitDBMaster(void)
 {
 	int		argc;
 	char	**argv;
@@ -513,13 +512,13 @@ ENTER_FUNC;
 		proc->argc = argc;
 		argv[argc ++] = NULL;
 		proc->interval = Interval;
-		StartProcess(proc);
+		ProcessList = g_list_append(ProcessList, proc);
 	}
 LEAVE_FUNC;
 }
 
 static	void
-StartDBLog(
+InitDBLog(
 	DBG_Struct	*dbg)
 {
 	int		argc;
@@ -568,27 +567,27 @@ ENTER_FUNC;
 	argv[argc ++] = NULL;
 	proc->interval = Interval;
 	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;	
-	StartProcess(proc);
+	ProcessList = g_list_append(ProcessList, proc);
 LEAVE_FUNC;
 }
 
 static	void
-_StartDBLogs(
+_InitDBLogs(
 	DBG_Struct *dbg)
 {
 
 ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL  && dbg->redirectorMode == REDIRECTOR_MODE_LOG) {
-		_StartDBLogs(dbg->redirect);
+		_InitDBLogs(dbg->redirect);
 	}
 	if		(  dbg->process[DB_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{	
-		StartDBLog(dbg);
+		InitDBLog(dbg);
 	}
 LEAVE_FUNC;
 }
 
 static	void
-StartDBLogs(void)
+InitDBLogs(void)
 {
 	int		i;
 	DBG_Struct	*dbg;
@@ -600,27 +599,12 @@ ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_LOG ) {
-			_StartDBLogs(dbg->redirect);
+			_InitDBLogs(dbg->redirect);
 		}
 	}
 LEAVE_FUNC;
 }
 
-static	void
-StartEtcServers(void)
-{
-ENTER_FUNC;
-	if		(  fRedirector  ) {
-		StartRedirectors();
-	}
-	if              (  fDBLog  ) {
-		StartDBLogs();
-	}
-	if              (  fDBMaster  ) {
-		StartDBMaster();
-	}
-LEAVE_FUNC;
-}
 
 static	void
 InitGlserver(void)
@@ -852,6 +836,15 @@ static	void
 InitServers(void)
 {
 ENTER_FUNC;
+	if		(  fRedirector  ) {
+		InitRedirectors();
+	}
+	if              (  fDBLog  ) {
+		InitDBLogs();
+	}
+	if              (  fDBMaster  ) {
+		InitDBMaster();
+	}
 	if		(  fGlserver  ) {
 		InitGlserver();
 	}
@@ -873,6 +866,7 @@ ENTER_FUNC;
 		proc = g_list_nth_data(ProcessList,i);
 		if ((proc->type & type) != 0) {
 			dbgprintf("kill -%d %d\n",sig,proc->pid);
+			Message("kill -%d %d ;%s %s\n",sig,proc->pid,proc->argv[0],proc->argv[1]);
 			kill(proc->pid,sig);
 			proc->state = STATE_STOP;
 		}
@@ -905,8 +899,7 @@ ENTER_FUNC;
 	system("/usr/bin/killall -HUP glserver");
 #endif
 	KillProcess(PTYPE_APS,SIGHUP);
-	KillProcess(PTYPE_RED,SIGUSR1);
-	KillProcess((PTYPE_WFC | PTYPE_LOG | PTYPE_MST),SIGHUP);
+	KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST),SIGHUP);
 LEAVE_FUNC;
 }
 
@@ -1029,7 +1022,6 @@ main(
 	InitSystem();
 	Message("start system");
 
-	StartEtcServers();
 	InitServers();
 
 	memset(&sa, 0, sizeof(struct sigaction));

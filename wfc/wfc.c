@@ -302,6 +302,7 @@ StopSystem(void)
 {
 	fShutdown = TRUE;
 	Message("receive stop signal");
+	exit(0);
 }
 
 static	ARG_TABLE	option[] = {
