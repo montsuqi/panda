@@ -880,6 +880,20 @@ LEAVE_FUNC;
 }
 
 static	void
+KillAll()
+{
+	int		i;
+	Process	*proc;
+
+ENTER_FUNC;
+	for(i = 0; i < g_list_length(ProcessList); i++) {
+		proc = g_list_nth_data(ProcessList,i);
+		kill(proc->pid,SIGKILL);
+	}
+LEAVE_FUNC;
+}
+
+static	void
 StartServers()
 {
 	int		i;
@@ -905,6 +919,8 @@ ENTER_FUNC;
 #endif
 	KillProcess(PTYPE_APS,SIGHUP);
 	KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST),SIGHUP);
+	sleep(3);
+	KillAll();
 LEAVE_FUNC;
 }
 
