@@ -397,9 +397,9 @@ ENTER_FUNC;
 
 	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
 
-	gtk_widget_show_all(TopWindow);
-	//gtk_widget_show(TopNoteBook);
-	//gtk_widget_show(child);
+	gtk_widget_show(TopWindow);
+	gtk_widget_show(TopNoteBook);
+	gtk_widget_show(child);
 
 	gtk_window_set_resizable(GTK_WINDOW(TopWindow),
 		GTK_WINDOW(window)->allow_grow);
