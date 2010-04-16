@@ -1086,7 +1086,8 @@ ExecPGSQL(
 	char	buff[SIZE_LONGNAME+1]
 		,	*p
 		,	*q;
-
+	char	*cmdtuples;
+	
 ENTER_FUNC;
 	sql = NewLBS();
 	if	(  src  ==  NULL )	{
@@ -1234,6 +1235,13 @@ ENTER_FUNC;
 						}
 						break;
 					  case	PGRES_COMMAND_OK:
+						cmdtuples = PQcmdTuples(res);
+						if (*cmdtuples != '\0') {
+							ctrl->rcount = atoi(cmdtuples);
+						} else {
+							ctrl->rcount = 0;
+						}
+						Message("cmdTuples %d\n", ctrl->rcount);
 					  case	PGRES_COPY_OUT:
 					  case	PGRES_COPY_IN:
 						dbgmsg("OK");
