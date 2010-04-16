@@ -1241,7 +1241,6 @@ ENTER_FUNC;
 						} else {
 							ctrl->rcount = 0;
 						}
-						Message("cmdTuples %d\n", ctrl->rcount);
 					  case	PGRES_COPY_OUT:
 					  case	PGRES_COPY_IN:
 						dbgmsg("OK");
