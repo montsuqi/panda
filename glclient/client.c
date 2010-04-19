@@ -37,6 +37,7 @@
 #include	<unistd.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
+#include	<dirent.h>
 #ifdef	USE_SSL
 #include	<openssl/crypto.h>
 #include	<openssl/x509.h>
@@ -376,13 +377,22 @@ InitSystem(
 static	void
 FinishSystem(void)
 {
-	char buff[256];
+	DIR *dir;
+	struct dirent *ent;
+	char path[1024];
 	
 	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
-		sprintf(buff,"rm -f %s/*",TempDir);
-		system(buff);
-		sprintf(buff,"rmdir %s",TempDir);
-		system(buff);
+		if ((dir = opendir(TempDir)) != NULL) {
+			while((ent = readdir(dir)) != NULL) {
+				if (ent->d_name[0] != '.') {
+					snprintf(path,sizeof(path),"%s/%s",TempDir,ent->d_name);
+					path[sizeof(path)-1] = 0;
+					remove(path);
+				}
+			}
+			closedir(dir);
+			remove(TempDir);
+		}
 	}
 }
 
