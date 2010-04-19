@@ -37,7 +37,6 @@
 #include 	<gnome.h>
 #include	<gtkpanda/gtkpanda.h>
 
-#include	"types.h"
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"styleParser.h"
@@ -90,7 +89,7 @@ CreateBinaryFile(LargeByteString *binary)
 
 	tmpname = NewTempname();
 	file = CreateTempfile(tmpname);
-	fwrite(LBS_Body(binary), sizeof(byte), LBS_Size(binary), file);
+	fwrite(LBS_Body(binary), sizeof(unsigned char), LBS_Size(binary), file);
 	fclose(file);
 
 	return tmpname;
