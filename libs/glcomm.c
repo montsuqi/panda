@@ -94,10 +94,9 @@ GL_SendInt(
 	unsigned char	buff[sizeof(int)];
 
 	if		(  fNetwork  ) {
-		*(int *)buff = SEND32(data);
-	} else {
-		*(int *)buff = data;
+		data = SEND32(data);
 	}
+	memcpy(buff,&data,sizeof(int));
 	Send(fp,buff,sizeof(int));
 }
 
@@ -157,16 +156,7 @@ GL_SendLength(
 	size_t	data,
 	Bool	fNetwork)
 {
-	unsigned char	buff[sizeof(int)];
-	int		val;
-
-	val = (int)data;
-	if		(  fNetwork  ) {
-		*(int *)buff = SEND32(val);
-	} else {
-		*(int *)buff = data;
-	}
-	Send(fp,buff,sizeof(int));
+	GL_SendInt(fp,data,fNetwork);
 }
 
 extern	int
@@ -178,10 +168,9 @@ GL_RecvInt(
 	int		data;
 
 	Recv(fp,buff,sizeof(int));
+	memcpy(&data,buff,sizeof(int));
 	if		(  fNetwork  ) {
-		data = RECV32(*(int *)buff);
-	} else {
-		data = *(int *)buff;
+		data = RECV32(data);
 	}
 	return	(data);
 }
@@ -191,16 +180,7 @@ GL_RecvLength(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	unsigned char	buff[sizeof(int)];
-	size_t	data;
-
-	Recv(fp,buff,sizeof(int));
-	if		(  fNetwork  ) {
-		data = (size_t)RECV32(*(int *)buff);
-	} else {
-		data = (size_t)*(int *)buff;
-	}
-	return	(data);
+	return (size_t)GL_RecvInt(fp,fNetwork);
 }
 
 static	void

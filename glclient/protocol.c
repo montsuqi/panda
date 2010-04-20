@@ -116,7 +116,8 @@ GL_SendInt(
 {
 	unsigned char	buff[sizeof(int)];
 
-	*(int *)buff = SEND32(data);
+	data = SEND32(data);
+	memcpy(buff,&data,sizeof(int));
 	Send(fp,buff,sizeof(int));
 	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
@@ -128,12 +129,15 @@ GL_RecvInt(
 	NETFILE	*fp)
 {
 	unsigned char	buff[sizeof(int)];
+	int data;
 
 	Recv(fp,buff,sizeof(int));
 	if		(  !CheckNetFile(fp)  ) {
 		GL_Error();
 	}
-	return	(RECV32(*(int *)buff));
+	memcpy(&data,buff,sizeof(int));
+	data = RECV32(data);
+	return data;
 }
 
 static	void
@@ -141,26 +145,14 @@ GL_SendLength(
 	NETFILE	*fp,
 	size_t	data)
 {
-	unsigned char	buff[sizeof(int)];
-
-	*(int *)buff = SEND32(data);
-	Send(fp,buff,sizeof(int));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
+	GL_SendInt(fp,data);
 }
 
 static	size_t
 GL_RecvLength(
 	NETFILE	*fp)
 {
-	unsigned char	buff[sizeof(int)];
-
-	Recv(fp,buff,sizeof(int));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
-	return	((size_t)RECV32(*(int *)buff));
+	return (size_t)GL_RecvInt(fp);
 }
 #if	0
 static	unsigned	int
