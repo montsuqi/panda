@@ -491,9 +491,9 @@ SetNotebook(
 ENTER_FUNC;
 	SetState(widget,(GtkStateType)data->state);
 	SetStyle(widget,GetStyle(data->style));
-	if ((pageno = GetObjectData(widget, "pageno")) == NULL) {
+	if ((pageno = (int *)GetObjectData(widget, "pageno")) == NULL) {
 		pageno = xmalloc(sizeof(int));
-		SetObjectData(widget, "pageno", pageno);
+		SetObjectData(widget, "pageno", (gpointer)pageno);
 	}
 	*pageno = data->pageno;
 	gtk_notebook_set_page(GTK_NOTEBOOK(widget),data->pageno);

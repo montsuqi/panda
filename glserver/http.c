@@ -230,7 +230,7 @@ SendResponse(
 		Send(req->fp, buf, strlen(buf));
 	}
 	if (body != NULL && size > 0) {
-		sprintf(buf, "Content-Length: %ld\r\n", size);
+		sprintf(buf, "Content-Length: %ld\r\n", (long)size);
 		Send(req->fp, buf, strlen(buf));
 	} else {
 		sprintf(buf, "Content-Length: 0\r\n");
