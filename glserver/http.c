@@ -194,7 +194,7 @@ SendResponse(
 	char buf[1024];
 	char date[50];
 	unsigned char *body;
-	int size;
+	size_t size;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
 	ValueStruct *e;
@@ -230,7 +230,7 @@ SendResponse(
 		Send(req->fp, buf, strlen(buf));
 	}
 	if (body != NULL && size > 0) {
-		sprintf(buf, "Content-Length: %d\r\n", size);
+		sprintf(buf, "Content-Length: %ld\r\n", size);
 		Send(req->fp, buf, strlen(buf));
 	} else {
 		sprintf(buf, "Content-Length: 0\r\n");

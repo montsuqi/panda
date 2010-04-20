@@ -144,6 +144,7 @@ askpass(
 		GTK_DIALOG_MODAL,
 		GTK_MESSAGE_QUESTION,
 		GTK_BUTTONS_OK_CANCEL,
+		"%s",
 		prompt);
 	entry = gtk_entry_new();
 	gtk_entry_set_visibility (GTK_ENTRY (entry), FALSE);

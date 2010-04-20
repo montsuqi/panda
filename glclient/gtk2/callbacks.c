@@ -341,20 +341,18 @@ extern	gboolean
 switch_page(
 	GtkNotebook	*widget,
 	GtkNotebookPage *page,
-	gint			page_num,
+	gint			now_pageno,
 	char			*user_data)
 {
-	int			recv_page;
+	int			*pageno;
 	gboolean	rc;
-	gpointer *object;
 
-	object = GetObjectData(GTK_WIDGET(widget), "recv_page");
-	recv_page = (int )(*object);
-	SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
+	pageno = (int *)GetObjectData(GTK_WIDGET(widget), "pageno");
 	AddChangedWidget((GtkWidget *)widget);
 	if ((user_data != NULL ) &&
-		(recv_page != page_num)){
+		(now_pageno != *pageno)){
 		g_signal_stop_emission_by_name (G_OBJECT (widget), "switch_page");
+		*pageno = now_pageno;
 		rc = TRUE;	
 	} else {
 		rc = FALSE;
