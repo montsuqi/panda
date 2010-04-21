@@ -592,28 +592,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	gpointer	*
-GetObjectData(GtkWidget	*widget,
-			  char *object_key)
-{
-	return gtk_object_get_data(GTK_OBJECT(widget), object_key);
-}
-
-extern	void
-SetObjectData(GtkWidget	*widget,
-			  char *object_key,
-			  gpointer	*data)
-{
-	gpointer	*object;	
-	object = gtk_object_get_data(GTK_OBJECT(widget), object_key);
-	if ( object == NULL ) {
-		object = xmalloc(sizeof(data));
-	}
-	memcpy(object, data, sizeof(data));
-	gtk_object_set_data(GTK_OBJECT(widget), object_key, object);
-}
-
-
 extern	GtkWidget*
 GetWidgetByLongName(char *name)
 {

@@ -337,7 +337,7 @@ notebook_send_event(
 	int			*pageno;
 	gboolean	rc;
 
-	pageno = (int *)GetObjectData(GTK_WIDGET(widget), "pageno");
+	pageno = (int *)gtk_object_get_data(GTK_OBJECT(widget), "pageno");
 	AddChangedWidget((GtkWidget *)widget);
 	if ( now_pageno != *pageno ){
 		*pageno = now_pageno;
@@ -347,7 +347,7 @@ notebook_send_event(
 	} else {
 		rc = FALSE;
 	}
-	return TRUE;
+	return rc;
 }
 
 extern void
@@ -478,19 +478,18 @@ extern	gboolean
 switch_page(
 	GtkNotebook	*widget,
 	GtkNotebookPage *page,
-	gint			page_num,
+	gint			now_pageno,
 	char			*user_data)
 {
-	int			recv_page;
 	gboolean	rc;
-	gpointer *object;
+	int			*pageno;
 
-	object = GetObjectData(GTK_WIDGET(widget), "recv_page");
-	recv_page = (int )(*object);
-	SetObjectData((GtkWidget *)widget, "page", (void *)&page_num);
+	pageno = (int *)gtk_object_get_data(GTK_OBJECT(widget), "pageno");
 	AddChangedWidget((GtkWidget *)widget);
 	if ((user_data != NULL ) &&
-		(recv_page != page_num)){
+		(pageno != NULL)	&&
+		(now_pageno != *pageno)){
+		*pageno = now_pageno;
 		gtk_signal_emit_stop_by_name (GTK_OBJECT (widget), "switch_page");
 		rc = TRUE;	
 	} else {

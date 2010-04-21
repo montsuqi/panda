@@ -347,9 +347,10 @@ switch_page(
 	int			*pageno;
 	gboolean	rc;
 
-	pageno = (int *)GetObjectData(GTK_WIDGET(widget), "pageno");
+	pageno = (int *)g_object_get_data(G_OBJECT(widget), "pageno");
 	AddChangedWidget((GtkWidget *)widget);
 	if ((user_data != NULL ) &&
+		(pageno != NULL) &&
 		(now_pageno != *pageno)){
 		g_signal_stop_emission_by_name (G_OBJECT (widget), "switch_page");
 		*pageno = now_pageno;
