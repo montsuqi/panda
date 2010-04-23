@@ -987,7 +987,9 @@ IsRedirectQuery(
 	if ( (strncmp(PQcmdStatus(res), "INSERT ", 7) == 0)
 		 ||(strncmp(PQcmdStatus(res), "UPDATE ", 7) == 0)
 		 ||(strncmp(PQcmdStatus(res), "DELETE ", 7) == 0) ){
-		rc = TRUE;
+		if (atoi(PQcmdTuples(res)) > 0) {
+			rc = TRUE;
+		}
 	}
 	return rc;
 }
@@ -1433,7 +1435,7 @@ ENTER_FUNC;
 		conn = PGCONN(dbg,DB_UPDATE);
 /*		LockDB_Redirect(dbg);	 */
 		BeginDB_Redirect(dbg); 
-		res = _PQexec(dbg,"BEGIN",FALSE,DB_UPDATE);
+		res = _PQexec(dbg,"BEGIN ISOLATION LEVEL SERIALIZABLE",FALSE,DB_UPDATE);
 /*		UnLockDB_Redirect(dbg);  */
 		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
 		_PQclear(res);
@@ -1442,7 +1444,7 @@ ENTER_FUNC;
 	}
 	if		(  dbg->process[PROCESS_READONLY].dbstatus  ==  DB_STATUS_CONNECT  ) {
 		if		(  PGCONN(dbg,DB_READONLY)  !=  conn  ) {
-			res = _PQexec(dbg,"BEGIN",FALSE,DB_READONLY);
+			res = _PQexec(dbg,"BEGIN ISOLATION LEVEL SERIALIZABLE",FALSE,DB_READONLY);
 			if		(  rc  ==  0  ) {
 				rc = CheckResult(dbg, DB_READONLY, res, PGRES_COMMAND_OK);
 			}

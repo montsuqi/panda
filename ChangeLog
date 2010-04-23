@@ -1,3 +1,9 @@
+2010-04-23  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c
+	トランザクションのモードをSERIALIZABLEにした。
+	更新数 0 のときにはリダイレクトしないようにした(順番が前後することがある)。
+
 2010-03-19  yusuke mihara  <yusuke@netlab.jp>
 
 	*  glclient/protocol.c glserver/server.c libs/glcomm.c libs/glcomm.h
