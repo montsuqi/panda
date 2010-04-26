@@ -164,13 +164,8 @@ SetPandaPreview(
 {
 ENTER_FUNC;
 
-#ifdef USE_PDF
-	gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 
-		LBS_Size(data->binary), LBS_Body(data->binary));
-#else
-	gtk_panda_ps_set(GTK_PANDA_PS(widget), 
-		LBS_Size(data->binary), LBS_Body(data->binary));
-#endif
+gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 
+	LBS_Size(data->binary), LBS_Body(data->binary));
 
 LEAVE_FUNC;
 }
@@ -764,13 +759,8 @@ GetWidgetType(
 			return WIDGET_TYPE_PANDA_ENTRY;
 		} else if (type == GTK_PANDA_TYPE_TEXT) {
 			return WIDGET_TYPE_PANDA_TEXT;
-#ifdef USE_PDF
 		} else if (type == GTK_PANDA_TYPE_PDF) {
 			return WIDGET_TYPE_PANDA_PREVIEW;
-#else
-		} else if (type == GTK_PANDA_TYPE_PS) {
-			return WIDGET_TYPE_PANDA_PREVIEW;
-#endif
 		} else if (type == GTK_PANDA_TYPE_TIMER) {
 			return WIDGET_TYPE_PANDA_TIMER;
 		} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
