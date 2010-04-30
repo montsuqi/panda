@@ -684,10 +684,14 @@ SetPixmap(
 	gdouble 		scale
 	, 				xscale
 	, 				yscale;
+	char 			*xpm[] = {
+		"1 1 1 1",
+		"       c #FFFFFF",
+		" "};
 
 ENTER_FUNC;
 	if ( LBS_Size(data->binary) <= 0) {
-		gtk_widget_hide(widget); 
+		gnome_pixmap_load_xpm_d(GNOME_PIXMAP(widget),xpm);
 	} else {
 		tmpname = CreateBinaryFile(data->binary);
 		gtk_widget_size_request(widget, &requisition);
