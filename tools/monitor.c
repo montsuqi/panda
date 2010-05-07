@@ -919,7 +919,7 @@ ENTER_FUNC;
 #endif
 	KillProcess(PTYPE_APS,SIGHUP);
 	KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST),SIGHUP);
-	sleep(3);
+	sleep(1);
 	KillAll();
 LEAVE_FUNC;
 }
