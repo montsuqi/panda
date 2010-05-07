@@ -56,8 +56,6 @@ static struct changed_hander {
 	struct changed_hander *next;
 } *changed_hander_list = NULL;
 
-static Bool TimerFlag = FALSE;
-
 extern	void
 RegisterChangedHandler(
 	GtkObject *object,
@@ -203,55 +201,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	void
-StartTimer(
-	char		*event,
-	int			timeout,
-	GtkFunction function,
-	GtkWidget	*widget)
-{
-	GtkWidget	*window;
-	static gint timeout_handler_id;
-ENTER_FUNC;
-	window = gtk_widget_get_toplevel(widget);
-	gtk_object_set_data(GTK_OBJECT(window), "timeout_event", event);
-	timeout_handler_id = gtk_timeout_add (timeout, function, widget);
-	gtk_object_set_data(GTK_OBJECT(window), "timeout_handler_id", &timeout_handler_id);
-	TimerFlag = TRUE;
-LEAVE_FUNC;
-}
-
-extern	char	*
-GetTimerEvent(
-	GtkWindow	*window)
-{
-	static char *timeout_event;
-ENTER_FUNC;
-	timeout_event = (char *)gtk_object_get_data(GTK_OBJECT(window), "timeout_event");
-LEAVE_FUNC;	
-	return (timeout_event);
-}
-
-extern void
-StopTimer(
-		GtkWindow	*window)
-{
-	gint *timeout_handler_id;
-ENTER_FUNC;	
-	if (TimerFlag) {
-		timeout_handler_id = gtk_object_get_data(GTK_OBJECT(window), 
-												 "timeout_handler_id");
-		if ((timeout_handler_id) && (*timeout_handler_id != 0)) {
-			gtk_timeout_remove(*timeout_handler_id);
-			*timeout_handler_id = 0;
-		}
-		gtk_object_set_data(GTK_OBJECT(window), "timeout_handler_id", 
-							timeout_handler_id);
-		TimerFlag = FALSE;
-	}
-LEAVE_FUNC;
-}
-
 static	void
 _RegistTimer(
 	    GtkWidget	*widget,
@@ -284,6 +233,24 @@ _ResetTimer(
 }
 
 extern	void
+_StopTimerWidgetAll(
+	gpointer	key,
+	gpointer	value,
+	gpointer	data)
+{
+	WindowData *wdata;
+
+	wdata = (WindowData*)value;
+	g_hash_table_foreach(wdata->TimerWidgetTable,_StopTimer,NULL);
+}
+
+extern	void
+StopTimerWidgetAll(void)
+{
+	g_hash_table_foreach(WindowTable,_StopTimerWidgetAll,NULL);
+}
+
+extern	void
 _AddChangedWidget(
 	GtkWidget	*widget)
 {
@@ -308,9 +275,6 @@ ENTER_FUNC;
 		if (g_hash_table_lookup(wdata->ChangedWidgetTable, name) == NULL) {
 			key = StrDup(name);
 			g_hash_table_insert(wdata->ChangedWidgetTable, key, key);
-		}
-		if		(  TimerFlag  )	{
-			g_hash_table_foreach(wdata->TimerWidgetTable, _ResetTimer, NULL);
 		}
 	}
 	free(wname);
@@ -459,9 +423,7 @@ ENTER_FUNC;
 		return;
 	}
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
-	g_hash_table_foreach(data->TimerWidgetTable, _StopTimer, NULL);
 	if (data->fWindow) {
-		StopTimer(GTK_WINDOW(TopWindow));
 		child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
 		HideGtkPandaPS(child,NULL);
 		if (data->fAccelGroup) {
@@ -479,7 +441,6 @@ ENTER_FUNC;
 		gtk_widget_hide(window);
 		HideGtkPandaPS(window,NULL);
 		gtk_widget_set_sensitive(window,FALSE);
-		StopTimer(GTK_WINDOW(window));
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
 		wlist = g_list_find(DialogStack, window);
         if (wlist != NULL && wlist->next != NULL && wlist->next->data != NULL) {

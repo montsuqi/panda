@@ -200,6 +200,33 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static int TimerID = 0;
+static char *TimerEvent = "";
+
+static	void
+StartEventTimer(
+	char		*event,
+	int			timeout,
+	GtkFunction function,
+	GtkWidget	*widget)
+{
+ENTER_FUNC;
+	TimerEvent = event;
+    TimerID = gtk_timeout_add (timeout, function, widget);
+LEAVE_FUNC;
+}
+
+static	void
+StopEventTimer(void)
+{
+ENTER_FUNC;	
+    if (TimerID != 0) {
+		gtk_timeout_remove(TimerID);
+		TimerID = 0;
+	}
+LEAVE_FUNC;
+}
+
 extern	void
 send_event(
 	GtkWidget	*widget,
@@ -212,9 +239,12 @@ send_event(
 ENTER_FUNC;
 	if		(  !fInRecv &&  !ignore_event ) {
 		fInRecv = TRUE;
+
+		StopEventTimer();
+		StopTimerWidgetAll();
+
 		pane = ShowBusyCursor(widget);
 
-		StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
 
 		wname = GetWindowName(widget);
 		/* send event */
@@ -257,16 +287,14 @@ static gint
 send_event_if_kana (gpointer widget)
 {
 	GtkWidget	*window;
-	char *timeout_event;
 	guchar *text = gtk_entry_get_text (GTK_ENTRY (widget));
 	int len = strlen (text);
 ENTER_FUNC;
 	window = gtk_widget_get_toplevel(widget);
 	if (len == 0 || text[len - 1] >= 0x80)
 	{
-		timeout_event = GetTimerEvent(GTK_WINDOW(window));
-		entry_changed (widget, timeout_event);
-		send_event (widget, timeout_event);
+		entry_changed (widget, TimerEvent);
+		send_event (widget, TimerEvent);
 	}
 LEAVE_FUNC;
   return FALSE;
@@ -281,7 +309,7 @@ send_event_when_idle(
 	static int timeout = -1;
 	static int openchanged = 0;
 ENTER_FUNC;
-	StopTimer(GTK_WINDOW(gtk_widget_get_toplevel(widget)));
+	StopEventTimer();
 	if (!registed) {
 		RegisterChangedHandler (GTK_OBJECT (widget), send_event_when_idle, event);
 		registed = 1;
@@ -297,7 +325,7 @@ ENTER_FUNC;
 		if ( openchanged == 0 ) {
 			openchanged += 1;
 		} else {
-			StartTimer(event, timeout, send_event_if_kana, widget);
+			StartEventTimer(event, timeout, send_event_if_kana, widget);
 		}
 	} else {
 		entry_changed (widget, event);

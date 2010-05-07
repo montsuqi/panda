@@ -36,13 +36,9 @@ extern	void		ClearKeyBuffer(void);
 extern	void		_AddChangedWidget(GtkWidget *widget);
 extern	void		AddChangedWidget(GtkWidget *widget);
 extern	GdkWindow	*ShowBusyCursor(GtkWidget *widget);
+extern	void		StopTimerWidgetAll(void);
 extern	void		HideBusyCursor(GdkWindow *pane);
-extern	void		StartTimer( char *event, int timeout,
-							  GtkFunction function, GtkWidget *widget);
-extern	char		*GetTimerEvent(GtkWindow *window);
-extern	void		ResetTimer(GtkWindow *window);
 extern  void 		ResetScrolledWindow(GtkWidget *widget, gpointer user_data);
-extern	void		StopTimer(GtkWindow *window);
 extern  void		SetTitle(GtkWidget *window, char *window_title);
 extern	GtkWidget	*GetWidgetByLongName(char *longName);
 extern	GtkWidget	*GetWidgetByName(char *dataName);
