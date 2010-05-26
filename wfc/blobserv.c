@@ -80,7 +80,7 @@ ENTER_FUNC;
 				size = WriteBLOB(blob,obj,buff,size);
 				CloseBLOB(blob,obj);
 				xfree(buff);
-				SendLength(fp,size);
+				SendLength(fp,size);	ON_IO_ERROR(fp,badio);
 			}
 		} else {
 			SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
@@ -92,11 +92,10 @@ ENTER_FUNC;
 		if		(  OpenBLOB(blob,obj,BLOB_OPEN_READ)  >=  0  ) {
 		dbgmsg("   OpenBLOB end");
 			SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
-			ON_IO_ERROR(fp,badio);
 			buff = ReadBLOB(blob,obj,&size);
 			CloseBLOB(blob,obj);
-			SendLength(fp,size);					ON_IO_ERROR(fp,badio);
-			Send(fp,buff,size);						ON_IO_ERROR(fp,badio);
+			SendLength(fp,size);				ON_IO_ERROR(fp,badio);
+			Send(fp,buff,size);					ON_IO_ERROR(fp,badio);
 			Flush(fp);
 			xfree(buff);
 		} else {
@@ -127,7 +126,7 @@ ENTER_FUNC;
 		if		(  ( obj = NewBLOB(blob,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
 			SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
 			SendObject(fp,obj);						ON_IO_ERROR(fp,badio);
-			ssize = RecvLength(fp);
+			ssize = RecvLength(fp);					ON_IO_ERROR(fp,badio);
 			buff = xmalloc((  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize);
 			while	(  ssize  >  0  ) {
 				size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;

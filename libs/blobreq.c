@@ -189,6 +189,7 @@ ENTER_FUNC;
 			fstat(fileno(fpf),&sb);
 			left = sb.st_size;
 			SendLength(fp,left);
+			Flush(fp);
 			while	(  left  >  0  ) {
 				size = (  left  >  SIZE_BUFF  ) ? SIZE_BUFF : left;
 				fread(buff,size,1,fpf);
@@ -200,6 +201,7 @@ ENTER_FUNC;
 		} else {
 			dbgprintf("could not open for read: %s", fname);
 			SendLength(fp,0);
+			Flush(fp);
 		}
 	}
   badio:
