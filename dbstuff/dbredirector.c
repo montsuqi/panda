@@ -508,15 +508,15 @@ WriteLog(
 	char	*state)
 {
 	time_t	nowtime;
-	struct	tm	*Now;
+	struct	tm	Now;
 ENTER_FUNC;
 	if		(  fp  !=  NULL  ) {
 		time(&nowtime);
-		Now = localtime(&nowtime);
+		localtime_r(&nowtime, &Now);
 		fprintf(fp, "%s %04d/%02d/%02d/%02d:%02d:%02d/ ========== %s ========== %s\n"
 				,ThisDBG->func->commentStart
-				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-				, Now->tm_hour,Now->tm_min,Now->tm_sec,state
+				, Now.tm_year+1900,Now.tm_mon+1,Now.tm_mday
+				, Now.tm_hour,Now.tm_min,Now.tm_sec,state
 				,ThisDBG->func->commentEnd);
 		fflush(fp);
 	}
@@ -530,16 +530,16 @@ WriteLogQuery(
 {
 	static  int count = 0;
 	time_t	nowtime;
-	struct	tm	*Now;
+	struct	tm	Now;
 
 ENTER_FUNC;
 	if		(  fp  !=  NULL  ) {
 		time(&nowtime);
-		Now = localtime(&nowtime);
+		localtime_r(&nowtime, &Now);
 		fprintf(fp,"%s %04d/%02d/%02d/%02d:%02d:%02d/%08d %s"
 				,ThisDBG->func->commentStart
-				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-				, Now->tm_hour,Now->tm_min,Now->tm_sec,count
+				, Now.tm_year+1900,Now.tm_mon+1,Now.tm_mday
+				, Now.tm_hour,Now.tm_min,Now.tm_sec,count
 				,ThisDBG->func->commentEnd);
 		fprintf(fp,"%s\n", query);
 		fflush(fp);

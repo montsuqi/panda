@@ -80,9 +80,9 @@ _strftime(
 	size_t size,
 	time_t time)
 {
-	struct tm *tmp;
-	tmp = localtime(&time);
-	strftime(ret, size, "%a %b %d %H:%M:%S %Y", tmp);
+	struct tm tmp;
+	localtime_r(&time, &tmp);
+	strftime(ret, size, "%a %b %d %H:%M:%S %Y", &tmp);
 }
 
 extern	void

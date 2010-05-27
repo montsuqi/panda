@@ -107,7 +107,7 @@ TermName(
 	int		sock)
 {
 	time_t		nowtime;
-	struct	tm	*Now;
+	struct	tm	Now;
 	socklen_t	len;
 	static	char			name[SIZE_TERM+1];	//	SIZE_TERM == 64
 	struct	sockaddr_storage	addr;
@@ -122,11 +122,11 @@ ENTER_FUNC;
 	if		(  sock  ==  0  ) {
 		time(&nowtime);
 		gettimeofday(&tv,NULL);
-		Now = localtime(&nowtime);
-		Now->tm_year += 1900;
+		localtime_r(&nowtime, &Now);
+		Now.tm_year += 1900;
 		sprintf(name,"T%04d%02d%02d:%02d%02d%02d.%06d",
-				Now->tm_year,Now->tm_mon+1,Now->tm_mday,
-				Now->tm_hour,Now->tm_min,Now->tm_sec,
+				Now.tm_year,Now.tm_mon+1,Now.tm_mday,
+				Now.tm_hour,Now.tm_min,Now.tm_sec,
 				(int)tv.tv_usec);
 	} else {
 		len = sizeof(struct sockaddr_storage);
@@ -134,11 +134,11 @@ ENTER_FUNC;
 		switch	(((struct sockaddr *)&addr)->sa_family) {
 		  case	AF_UNIX:
 			time(&nowtime);
-			Now = localtime(&nowtime);
-			Now->tm_year += 1900;
+			localtime_r(&nowtime, &Now);
+			Now.tm_year += 1900;
 			sprintf(name,"U%04d%02d%02d:%02d%02d%02d:%08X",
-					Now->tm_year,Now->tm_mon+1,Now->tm_mday,
-					Now->tm_hour,Now->tm_min,Now->tm_sec,
+					Now.tm_year,Now.tm_mon+1,Now.tm_mday,
+					Now.tm_hour,Now.tm_min,Now.tm_sec,
 					getpid());
 			break;
 		  case	AF_INET:

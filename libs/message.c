@@ -157,7 +157,7 @@ __Message(
 	Bool	fOut
 	,		fDot;
 	struct	timeval	tv;
-	struct	tm	*Now;
+	struct	tm	Now;
 
 #ifdef USE_SYSLOG
 	syslog(SyslogLevel(level), "%s", msg);
@@ -165,7 +165,7 @@ __Message(
 	
 	if		(  fpLog  !=  NULL  ) {
 		gettimeofday(&tv,NULL);
-		Now = localtime((time_t *)&tv.tv_sec);
+		localtime_r((time_t *)&tv.tv_sec, &Now);
 		p = buff;
 		fOut = TRUE;
 		for	( f = Format ; *f != 0 ; f ++ ) {
@@ -173,22 +173,22 @@ __Message(
 				f ++;
 				switch	(*f) {
 				  case	'Y':
-					p += sprintf(p,"%04d",Now->tm_year+1900);
+					p += sprintf(p,"%04d",Now.tm_year+1900);
 					break;
 				  case	'M':
-					p += sprintf(p,"%02d",Now->tm_mon+1);
+					p += sprintf(p,"%02d",Now.tm_mon+1);
 					break;
 				  case	'D':
-					p += sprintf(p,"%02d",Now->tm_mday);
+					p += sprintf(p,"%02d",Now.tm_mday);
 					break;
 				  case	'h':
-					p += sprintf(p,"%02d",Now->tm_hour);
+					p += sprintf(p,"%02d",Now.tm_hour);
 					break;
 				  case	'm':
-					p += sprintf(p,"%02d",Now->tm_min);
+					p += sprintf(p,"%02d",Now.tm_min);
 					break;
 				  case	's':
-					p += sprintf(p,"%02d",Now->tm_sec);
+					p += sprintf(p,"%02d",Now.tm_sec);
 					break;
 				  case	'p':
 					p += sprintf(p,"%03d",(int)(tv.tv_usec/1000));

@@ -1852,7 +1852,7 @@ _Calendar(
 	,		*sbgcolor
 	,		*sfontcolor;
 	time_t		nowtime;
-	struct	tm	*Now;
+	struct	tm	Now;
 	int		this_yy
 	,		this_mm
 	,		this_dd;
@@ -1860,10 +1860,10 @@ _Calendar(
 
 ENTER_FUNC;
 	time(&nowtime);
-	Now = localtime(&nowtime);
-	this_yy = Now->tm_year + 1900;
-	this_mm = Now->tm_mon + 1;
-	this_dd = Now->tm_mday;
+	localtime_r(&nowtime, &Now);
+	this_yy = Now.tm_year + 1900;
+	this_mm = Now.tm_mon + 1;
+	this_dd = Now.tm_mday;
 	if		(  ( year = HTCGetProp(tag,"year",0) )  ==  NULL  ) {
 		EmitCode(htc,OPC_ICONST);
 		LBS_EmitInt(htc->code,this_yy);
