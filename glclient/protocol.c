@@ -674,11 +674,7 @@ GL_SendVersionString(
 		strcat(version, buff);
 	} else {
 		strcat(version, ":i18n");
-#		ifdef	USE_PDF
-			strcat(version, ":pdf");
-#		else
-			strcat(version, ":ps");
-#		endif
+		strcat(version, ":pdf");
 		sprintf(buff,":agent=glclient2/%s",PACKAGE_VERSION);
 		strcat(version, buff);
 	}
