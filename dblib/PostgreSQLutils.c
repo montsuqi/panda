@@ -252,7 +252,7 @@ sync_wait(pid_t pg_dump_pid, pid_t restore_pid)
 static void
 err_check(int err_fd)
 {
-	int len;
+	size_t len;
 	char buff[SIZE_BUFF];	
 
 	len = read(err_fd, buff, SIZE_BUFF);
@@ -275,7 +275,10 @@ db_dump(int fd, char *pass, char **argv)
 	setenv("PGPASSWORD", pass, 1);
 
 	sql = LockRedirectorQuery();
-	write(fd, sql, strlen(sql));
+	if ((write(fd, sql, strlen(sql))) <= 0){
+		fprintf( stderr, "write error (%s)\n", sql);
+		exit(1);
+	}
 	xfree(sql);
 	execv(command, argv);
 
