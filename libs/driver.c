@@ -131,8 +131,7 @@ SetWindowName(
 	WindowData	*entry;
 	RecordStruct	*rec;
 	char		wname[SIZE_LONGNAME+1]
-		,		path[SIZE_LONGNAME+1]
-		,		msg[SIZE_BUFF];
+		,		path[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
 	dbgprintf("SetWindowName(%s)",name);
@@ -154,8 +153,7 @@ ENTER_FUNC;
 			g_hash_table_insert(ThisScreen->Windows,entry->name,entry);
 			if		(  rec  ==  NULL  ) {
 				entry->PutType = SCREEN_END_SESSION;
-				sprintf(msg,"window not found [%s:%s:%s]\n", name, wname, path);
-				MessageLog(msg);
+				MessageLogPrintf("window not found [%s:%s:%s]\n", name, wname, path);
 			}
 		}
 	} else {

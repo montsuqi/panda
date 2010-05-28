@@ -118,7 +118,6 @@ RecvPanda(
 	int		i;
 	WindowControl	ctl;
 	WindowData		*win;
-	char	msg[SIZE_LONGNAME+1];
 ENTER_FUNC;
 	if		(  RecvTermServerHeader(fp,user,window,widget,&type,&ctl)  ) {
 		ON_IO_ERROR(fp,badio);
@@ -159,8 +158,7 @@ ENTER_FUNC;
 			//Error("Illegal windowData");
 		}
 	} else {
-		snprintf(msg,SIZE_LONGNAME,"window = [%s]",window);
-		MessageLog(msg);
+		MessageLogPrintf("window = [%s]",window);
 		Error("invalid LD");
 	  badio:
 		exit(1);
