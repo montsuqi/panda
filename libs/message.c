@@ -48,8 +48,8 @@
 #endif
 #include	"message.h"
 
-#ifndef	SIZE_BUFF
-#define	SIZE_BUFF		8192
+#ifndef	SIZE_LOG
+#define	SIZE_LOG		8192
 #endif
 #define SIZE_FORMAT		256
 
@@ -80,7 +80,7 @@ _MessageLevelPrintf(
 	char	*format,
 	...)
 {
-	char	buff[SIZE_BUFF - SIZE_FORMAT];
+	char	buff[SIZE_LOG - SIZE_FORMAT];
 	va_list	va;
 
 	va_start(va,format);
@@ -120,7 +120,7 @@ static	void
 PutLog(
 	char	*str)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LOG];
 
 	sprintf(buff,"%s",StringChop(str));
 #ifdef	USE_MSGD
@@ -150,7 +150,7 @@ __Message(
 	int		line,
 	char	*msg)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LOG];
 	char	*f
 	,		*p
 	,		*s;
@@ -261,9 +261,9 @@ InitMessage(
 #endif
 
 #ifdef USE_SYSLOG
-	static char	buff[SIZE_BUFF];
+	static char	buff[SIZE_LOG];
 
-	snprintf(buff, SIZE_BUFF, "%s/%s", PACKAGE, id);
+	snprintf(buff, SIZE_LOG, "%s/%s", PACKAGE, id);
 	openlog(buff, LOG_PID, syslog_facility);
 #endif
 
