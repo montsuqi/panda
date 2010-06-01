@@ -359,7 +359,7 @@ CheckReserved(
 {
 	gpointer	p;
 	int		ret;
-	char	ustr[SIZE_BUFF];
+	char	ustr[SIZE_SYMBOL];
 	char	*s;
 	
 	s = ustr;
@@ -382,7 +382,7 @@ SQL_Lex(
 {
 	int		c;
 	char	*p;
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_SYMBOL];
 
 ENTER_FUNC;
   retry: 
@@ -413,8 +413,7 @@ ENTER_FUNC;
 			*p ++ = c;
 		}
 		*p = 0;
-		in->Symbol = (char *)xmalloc(strlen(buff)+1);
-		strcpy(in->Symbol,buff);
+		in->Symbol = StrDup(buff);
 		in->Token = T_SCONST;
 		break;
 	  case	'\'':
@@ -426,25 +425,21 @@ ENTER_FUNC;
 			*p ++ = c;
 		}
 		*p = 0;
-		in->Symbol = (char *)xmalloc(strlen(buff)+1);
-		strcpy(in->Symbol,buff);
+		in->Symbol = StrDup(buff);
 		in->Token = T_SCONST;
 		break;
 	  default:
 		p = buff;
-		if		(	(  isalpha(c)  )
-				||	(  isdigit(c)  )
+		if		(	(  isalnum(c)  )
 				||	(  c  ==  '$'  ) )	{
 			do {
 				*p ++ = c;
 				c = GetChar(in);
-			}	while	(	(  isalpha(c)  )
-						||	(  isdigit(c)  )
+			}	while	(	(  isalnum(c)  )
 						||	(  c  ==  '_'  ) );
 			UnGetChar(in,c);
 			*p = 0;
-			in->Symbol = (char *)xmalloc(strlen(buff)+1);
-			strcpy(in->Symbol,buff);
+			in->Symbol = StrDup(buff);
 			if		(  fName  ) {
 				in->Token = T_SYMBOL;
 			} else {
