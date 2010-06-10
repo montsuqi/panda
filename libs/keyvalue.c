@@ -396,7 +396,7 @@ KV_Dump(
 	ValueStruct	*args)
 {
 	FILE *fp;
-	char buff[256];
+	char buff[] = "/tmp/sysdata_dump_XXXXXX";
 	int rc;
 	int fd;
 	ValueStruct *id;
@@ -409,7 +409,7 @@ ENTER_FUNC;
 		Warning("does not found id");
 	} else {
 		mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-		if ((fd = mkstemp("/tmp/sysdata_dump_XXXXXX")) != -1) {
+		if ((fd = mkstemp(buff)) != -1) {
 			if ((fp = fdopen(fd, "w")) != NULL) {
 				g_hash_table_foreach(state->table, DumpEntry, fp);
 				fclose(fp);
