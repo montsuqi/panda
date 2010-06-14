@@ -458,6 +458,7 @@ main(
 	pid_t pid;
 	struct sigaction sa;
 
+	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = SIG_DFL;
 	sa.sa_flags |= SA_RESTART;
 	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
