@@ -173,16 +173,19 @@ ResetScrolledWindow(
     }
 }
 
-extern  void
-HideGtkPandaPS(
+static  void
+CntnrForAllOnClose(
     GtkWidget   *widget,
     gpointer    user_data)
 {
     if  (   GTK_IS_PANDA_PS(widget)  ) {
 		gtk_widget_hide(widget);
     }
+    if  (   GTK_IS_PANDA_ENTRY(widget)  ) {
+		gtk_panda_entry_xim_off(GTK_PANDA_ENTRY(widget));
+    }
     if  (   GTK_IS_CONTAINER(widget)    ) {
-        gtk_container_forall(GTK_CONTAINER(widget), HideGtkPandaPS, NULL);
+        gtk_container_forall(GTK_CONTAINER(widget), CntnrForAllOnClose, NULL);
     }
 }
 extern	void
@@ -425,7 +428,7 @@ ENTER_FUNC;
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	if (data->fWindow) {
 		child = (GtkWidget *)gtk_object_get_data(GTK_OBJECT(window), "child");
-		HideGtkPandaPS(child,NULL);
+		CntnrForAllOnClose(child,NULL);
 		if (data->fAccelGroup) {
 			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
 				list != NULL;
@@ -439,7 +442,7 @@ ENTER_FUNC;
 		}
 	} else {
 		gtk_widget_hide(window);
-		HideGtkPandaPS(window,NULL);
+		CntnrForAllOnClose(window,NULL);
 		gtk_widget_set_sensitive(window,FALSE);
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
 		wlist = g_list_find(DialogStack, window);
@@ -511,6 +514,7 @@ ENTER_FUNC;
 				GTK_WINDOW(parent));
 		}
 	}
+	gdk_flush();
 LEAVE_FUNC;
 }
 

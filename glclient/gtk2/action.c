@@ -376,6 +376,19 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static  void
+CntnrForAllOnClose(
+    GtkWidget   *widget,
+    gpointer    user_data)
+{
+    if  (   GTK_IS_PANDA_ENTRY(widget)  ) {
+		gtk_panda_entry_im_off(GTK_PANDA_ENTRY(widget));
+    }
+    if  (   GTK_IS_CONTAINER(widget)    ) {
+        gtk_container_forall(GTK_CONTAINER(widget), CntnrForAllOnClose, NULL);
+    }
+}
+
 extern	void
 CloseWindow(
 	char	*wname)
@@ -397,6 +410,7 @@ ENTER_FUNC;
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	if (data->fWindow) {
 		child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
+		CntnrForAllOnClose(child,NULL);
 		if (data->fAccelGroup) {
 			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
 				list != NULL;
@@ -410,6 +424,7 @@ ENTER_FUNC;
 		}
 	} else {
 		gtk_widget_hide(window);
+		CntnrForAllOnClose(window,NULL);
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
 		wlist = g_list_find(DialogStack, window);
 		if (wlist != NULL && wlist->next != NULL && wlist->next->data != NULL) {
