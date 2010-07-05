@@ -58,6 +58,11 @@ typedef struct {
 	Queue		*UpdateWidgetQueue;
 }	WindowData;
 
+typedef struct {
+	char		*url;
+	char		*title;
+}	PrintRequest;
+
 extern	char	*CacheDirName(void);
 extern	char	*CacheFileName(char *name);
 extern	void	ExitSystem(void);
@@ -66,6 +71,7 @@ extern  void	SetSessionTitle(char *dname);
 GLOBAL	char		*FocusedWindowName;
 GLOBAL	char		*ThisWindowName;
 GLOBAL	GHashTable	*WindowTable;
+GLOBAL	GList		*PrintList;
 
 GLOBAL	char	*CurrentApplication;
 

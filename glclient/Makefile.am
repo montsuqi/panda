@@ -46,6 +46,8 @@ base_sources =						\
 	protocol.c		protocol.h		\
 	marshaller.c	marshaller.h	\
 	widgetcache.c	widgetcache.h	\
+	print.c			print.h			\
+	utils.c			utils.h			\
 	interface.h
 
 base_dependencies =								\

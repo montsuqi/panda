@@ -110,6 +110,21 @@ AC_CANONICAL_HOST
 AM_GNU_GETTEXT
 AM_GNU_GETTEXT_VERSION(0.16.1)
 
+
+dnl ***************************************************************************
+dnl Find lpstat,lpr for glclient1 printing
+dnl ***************************************************************************
+AC_PATH_PROG(LPSTAT_PROG, lpstat, "")
+AC_DEFINE_UNQUOTED(LPSTAT_PATH, "$LPSTAT_PROG", "")
+if test "$LPSTAT_PROG" = ""; then
+	AC_MSG_ERROR([lpstat not found])
+fi
+AC_PATH_PROG(LPR_PROG, lpr)
+AC_DEFINE_UNQUOTED(LPR_PATH, "$LPR_PROG", "")
+if test "$LPR_PROG" = ""; then
+	AC_MSG_ERROR([lpsr not found])
+fi
+
 dnl ***************************************************************************
 dnl Find pkg-config
 dnl ***************************************************************************
@@ -149,6 +164,7 @@ if test "x$enable_client_gtk1" = "xyes"; then
 	PKG_CHECK_MODULES(GTK1CLIENT,
 	[
 		libglade-panda-gnome >= 0.16
+		libcurl              >= 7.0.5
 		gtkpanda             >= 1.0.0
 		libxml               >= 1.7.2
 		libmondai            >= 1.4.0
@@ -162,6 +178,7 @@ if test "x$enable_client_gtk2" = "xyes"; then
 	PKG_CHECK_MODULES(GTK2CLIENT,
 	[
 		libglade-panda-2.0	>= 1.9.0
+		libcurl             >= 7.0.5
 		libmondai			>= 1.4.0
 	])
 fi

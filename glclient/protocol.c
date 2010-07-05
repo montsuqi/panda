@@ -47,12 +47,13 @@
 #include	"comm.h"
 #include	"protocol.h"
 #define		_PROTOCOL_C
-#include	"message.h"
-#include	"debug.h"
 #include	"marshaller.h"
 #include	"interface.h"
 #include	"gettext.h"
 #include	"const.h"
+#include	"print.h"
+#include	"message.h"
+#include	"debug.h"
 
 #ifdef	NETWORK_ORDER
 #define	RECV32(v)	ntohl(v)
@@ -722,12 +723,12 @@ PingTimerFunc(gpointer data)
 	default:
 		break;
 	};
+	CheckPrintList();
 	return 1;
 badio:
 	UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
 	return 1;
 }
-
 
 extern	Bool
 SendConnect(
