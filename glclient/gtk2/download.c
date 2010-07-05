@@ -106,7 +106,6 @@ show_download_dialog(
 {
 	GtkWindow *parent;
 	GtkWidget *dialog;
-	char buff[SIZE_LONGNAME];
 	char hbytes[64];
 	int response;
 	
@@ -117,10 +116,6 @@ show_download_dialog(
 	}
 
 	get_human_bytes(LBS_Size(binary), hbytes);
-	snprintf(buff,sizeof(buff),_("Do you open this file or save it?\n\n"
-		"File Name:%s\n"
-		"Size:%s"
-		),filename,hbytes);
 	dialog = gtk_message_dialog_new(GTK_WINDOW(parent), GTK_DIALOG_MODAL,
 		GTK_MESSAGE_INFO,
 		GTK_BUTTONS_NONE,

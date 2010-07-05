@@ -48,6 +48,7 @@
 #include	"bd_config.h"
 #include	"bootdialog.h"
 #include	"dialogs.h"
+#include	"printdialog.h"
 #include	"styleParser.h"
 #define		TOPLEVEL
 #include	"toplevel.h"
@@ -329,5 +330,5 @@ UI_SetPingTimerFunc(_PingTimerFunc func, gpointer data)
 extern	void
 UI_ShowPrintDialog(char *title,char *fname,size_t size)
 {
-	// not implement
+	show_print_dialog(title,fname,size);
 }

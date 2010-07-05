@@ -131,17 +131,13 @@ SaveFile(
 
 	newpath = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs));
 	oldpath = (char *)gtk_object_get_data(GTK_OBJECT(fs), "oldpath");
-	if (!unlink(newpath) || errno == ENOENT) {
-		if(!rename(oldpath,newpath)) {
-			rc = TRUE;
-		} else {
-			rc = FALSE;
-		}
+	if(!rename(oldpath,newpath)) {
+		rc = TRUE;
 	} else {
 		rc = FALSE;
 	}
 	if (!rc){
-		snprintf(buf, sizeof(buf), _("cannot save %s \n%s"), 
+		snprintf(buf, sizeof(buf), _("Can't save to %s \n%s"), 
 			newpath, strerror(errno));
 		dialog = message_dialog(buf, rc);
 		gtk_window_set_transient_for (GTK_WINDOW (dialog),
@@ -412,6 +408,7 @@ show_print_dialog(char *title,char *fname,size_t size)
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), label,
 		TRUE, TRUE, 0);
 	gtk_widget_show (label);
+	gtk_widget_destroy(pandaps);
 
 	preview = gtk_button_new_with_label (_("Preview"));
 	gtk_widget_set_usize (preview, 80, -1);
