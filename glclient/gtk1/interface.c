@@ -48,6 +48,7 @@
 #include	"bd_config.h"
 #include	"bootdialog.h"
 #include	"dialogs.h"
+#include	"printdialog.h"
 #include	"styleParser.h"
 #define		TOPLEVEL
 #include	"toplevel.h"
@@ -327,4 +328,10 @@ extern	void
 UI_SetPingTimerFunc(_PingTimerFunc func, gpointer data)
 {
 	gtk_timeout_add(PING_TIMER_PERIOD, func, data);
+}
+
+extern	void
+UI_ShowPrintDialog(char *title,char *fname,size_t size)
+{
+	show_print_dialog(title,fname,size);
 }

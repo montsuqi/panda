@@ -1,0 +1,152 @@
+/*
+ * PANDA -- a simple transaction monitor
+ * Copyright (C) 2010 NaCl & JMA (Japan Medical Association).
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ */
+
+/*
+#define	DEBUG
+#define	TRACE
+*/
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<string.h>
+#include	<unistd.h>
+#include	<ctype.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<glib.h>
+#include	<curl/curl.h>
+
+#include	"glclient.h"
+#include	"interface.h"
+#include	"print.h"
+#include	"message.h"
+#include	"debug.h"
+
+static size_t wrote_size = 0;
+
+static size_t 
+WriteData(
+	void *buf,
+	size_t size,
+	size_t nmemb,
+	void *userp)
+{
+	FILE *fp;
+
+	fp = (FILE*)userp;
+	wrote_size += size * nmemb;
+	return fwrite(buf,size,nmemb,fp);
+}
+
+static int 
+DoPrint(
+	char *url,
+	char *title)
+{
+	FILE *fp;
+	int fd;
+	mode_t mode;
+	char fname[256];
+	char userpass[256];
+	CURL *curl;
+	CURLcode ret;
+	int retry;
+
+	retry = 0;
+	curl = curl_easy_init();
+	if (!curl) {
+		printf("couldn't init curl\n");
+		return retry;
+	}
+
+	sprintf(fname,"%s/glclient_print_XXXXXX",TempDir);
+	sprintf(userpass,"%s:%s",User,Pass);
+
+	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+	if ((fd = mkstemp(fname)) != -1) {
+		if ((fp = fdopen(fd, "w")) != NULL) {
+			wrote_size = 0;
+			curl_easy_setopt(curl, CURLOPT_URL, url);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)fp);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
+			curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+			curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+			ret = curl_easy_perform(curl);
+			fclose(fp);
+			curl_easy_cleanup(curl);
+			if (ret == CURLE_OK) {
+				if (wrote_size == 0) {
+					retry = 1;
+				} else {
+					//show_dialog
+					MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
+						url,fname,(long)wrote_size);
+					UI_ShowPrintDialog(title,fname,wrote_size);
+				}
+			}
+		} else {
+			Warning("fdopne failure");
+		}
+	} else {
+		Warning("mkstemp failure");
+	}
+	umask(mode);
+	return retry;
+}
+
+static void
+FreePrintRequest(PrintRequest *req)
+{
+	xfree(req->url);
+	xfree(req->title);
+	xfree(req);
+}
+
+void
+CheckPrintList()
+{
+	int i;
+	GList *list = NULL;
+	PrintRequest *req;
+
+	if (PrintList == NULL) {
+		return;
+	}
+	for (i=0; i < g_list_length(PrintList); i++) {
+		req = (PrintRequest*)g_list_nth_data(PrintList,i);
+		if (req == NULL) {
+			Warning("print request is NULL.");
+			continue;
+		}
+		MessageLogPrintf("donwload url[%s]\n",req->url);
+		if (DoPrint(req->url,req->title)) {
+			// retry
+			list = g_list_append(list,req);
+		} else {
+			// delete request
+			FreePrintRequest(req);
+		}
+	}
+	g_list_free(PrintList);
+	PrintList = list;
+}

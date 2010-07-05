@@ -29,6 +29,7 @@ libuigtk1_la_SOURCES	=				\
 	callbacks.c		callbacks.h		\
 	dialogs.c		dialogs.h		\
 	download.c		download.h		\
+	printdialog.c	printdialog.h	\
 	fileEntry.c		fileEntry.h		\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\

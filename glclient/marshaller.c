@@ -858,6 +858,60 @@ LEAVE_FUNC;
 }
 
 static	Bool
+RecvPandaPrint(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool			ret;
+	PrintRequest	*req;
+	char			name[SIZE_BUFF]
+	,				url[SIZE_BUFF]
+	,				title[SIZE_BUFF];
+	int				nitem
+	,				nitem2
+	,				nitem3
+	,				i,j,k;
+
+ENTER_FUNC;
+	ret = FALSE;
+	data->attrs = NULL;
+
+	if	(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if (!stricmp(name,"item")) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				nitem2 = GL_RecvInt(fp);
+				for	( j = 0 ; j < nitem2 ; j ++ ) {
+					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+					nitem3 = GL_RecvInt(fp);
+					url[0] = 0; title[0] = 0;
+					for	( k = 0 ; k < nitem3 ; k ++ ) {
+						GL_RecvName(fp, sizeof(name), name);
+						if (!stricmp(name,"url")) {
+							RecvStringData(fp,url,SIZE_BUFF);
+						} else if (!stricmp(name,"title")) {
+							RecvStringData(fp,title,SIZE_BUFF);
+						}
+						if (strlen(url) > 0 && strlen(title) > 0) {
+							req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
+							req->url = StrDup(url);
+							req->title = StrDup(title);
+							PrintList = g_list_append(PrintList,req);
+							MessageLogPrintf("add url[%s]\n",url);
+						}
+					}
+				}
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
 RecvPandaTimer(
 	WidgetData	*data,
 	NETFILE	*fp)
@@ -1402,6 +1456,8 @@ RecvWidgetData(
 		ret = RecvPandaTimer(data, fp); break;
 	case WIDGET_TYPE_PANDA_DOWNLOAD:
 		ret = RecvPandaDownload(data, fp); break;
+	case WIDGET_TYPE_PANDA_PRINT:
+		ret = RecvPandaPrint(data, fp); break;
 	case WIDGET_TYPE_PANDA_HTML:
 		ret = RecvPandaHTML(data, fp); break;
 // gtk+

@@ -325,3 +325,9 @@ UI_SetPingTimerFunc(_PingTimerFunc func, gpointer data)
 {
 	g_timeout_add(PING_TIMER_PERIOD, func, data);
 }
+
+extern	void
+UI_ShowPrintDialog(char *title,char *fname,size_t size)
+{
+	// not implement
+}

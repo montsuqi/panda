@@ -757,6 +757,8 @@ GetWidgetType(
 			return WIDGET_TYPE_PANDA_TIMER;
 		} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
 			return WIDGET_TYPE_PANDA_DOWNLOAD;
+		} else if (type == GTK_PANDA_TYPE_PRINT) {
+			return WIDGET_TYPE_PANDA_PRINT;
 		} else if (type == GTK_PANDA_TYPE_HTML) {
 			return WIDGET_TYPE_PANDA_HTML;
 		} else if (type == GTK_TYPE_WINDOW) {

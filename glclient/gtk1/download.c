@@ -44,40 +44,8 @@
 #include	"toplevel.h"
 #include	"widgetcache.h"
 #include	"desktop.h"
+#include	"utils.h"
 #include	"download.h"
-
-static Bool
-CheckAlreadyFile(
-	char *filename)
-{
-	struct stat stbuf;
-	uid_t euid;
-	gid_t egid;
-	gboolean rc = TRUE;
-
-	euid = geteuid ();
-	egid = getegid ();
-
-    /* already file */
-	if	(stat(filename, &stbuf) == 0 ){  
-		rc = FALSE;
-		/* Exception: not writable no error */	
-		if (stbuf.st_uid == euid) {
-			if (!(stbuf.st_mode & S_IWUSR)) {
-				rc = TRUE;
-			}
-		} else if (stbuf.st_gid == egid) {
-			if (!(stbuf.st_mode & S_IWGRP)) {
-				rc = TRUE;
-			}
-		} else {
-			if (!(stbuf.st_mode & S_IWOTH)) {
-				rc = TRUE;
-			}
-		}
-	}
-	return (rc);
-}
 
 static Bool
 SaveFile(
@@ -198,24 +166,6 @@ show_save_dialog(GtkWidget *widget,char *filename, LargeByteString *binary)
 	gtk_widget_show(fs);
 }
 
-static void
-get_human_bytes(size_t size, char *str)
-{
-	const double KB = 1024;
-	const double MB = KB * KB;
-	const double GB = MB * MB;
-	
-	if (size > GB) {
-		sprintf(str, "%.1lf GB",(double)size/GB);
-	} else if (size > MB) {
-		sprintf(str, "%.1lf MB",(double)size/MB);
-	} else if (size > KB) {
-		sprintf(str, "%.1lf KB",(double)size/KB);
-	} else {
-		sprintf(str, "%ld Bytes",(unsigned long)size);
-	}
-}
-
 static gboolean
 on_open (GtkWidget * widget, int *ret)
 {
@@ -311,4 +261,8 @@ show_download_dialog(
 		show_save_dialog(widget,filename,binary);
 	}
 	gtk_widget_destroy(dialog);
+	gtk_widget_destroy(label);
+	gtk_widget_destroy(open);
+	gtk_widget_destroy(save);
+	gtk_widget_destroy(cancel);
 }

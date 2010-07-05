@@ -36,11 +36,16 @@
 #include	"toplevel.h"
 #include	"dialogs.h"
 #include	"desktop.h"
-#include	"utils.h"
-#include	"download.h"
+#include	"printdialog.h"
 #include	"widgetcache.h"
-#include	"message.h"
-#include	"debug.h"
+
+void
+show_print_dialog(char *title,char *fname,size_t size)
+{
+	//not implement
+}
+
+#if 0
 
 static void
 show_save_dialog(
@@ -98,6 +103,26 @@ show_save_dialog(
 	gtk_widget_destroy (dialog);
 }
 
+static void
+get_human_bytes(
+	size_t size,
+	char *str)
+{
+	const double KB = 1024;
+	const double MB = KB * KB;
+	const double GB = MB * MB;
+	
+	if (size > GB) {
+		sprintf(str, "%.1lf GB",(double)size/GB);
+	} else if (size > MB) {
+		sprintf(str, "%.1lf MB",(double)size/MB);
+	} else if (size > KB) {
+		sprintf(str, "%.1lf KB",(double)size/KB);
+	} else {
+		sprintf(str, "%ld Bytes",(unsigned long)size);
+	}
+}
+
 void
 show_download_dialog(
 	GtkWidget		*widget,
@@ -149,3 +174,4 @@ show_download_dialog(
 	}
 	gtk_widget_destroy(dialog);
 }
+#endif
