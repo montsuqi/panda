@@ -20,6 +20,8 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+
+#ifdef HAVE_POSTGRES
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<libpq-fe.h>
@@ -120,3 +122,4 @@ CheckAuditTable(
 	}
 }
 
+#endif /* #ifdef HAVE_POSTGRES */

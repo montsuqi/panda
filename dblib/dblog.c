@@ -27,6 +27,8 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
+
+#ifdef HAVE_POSTGRES
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -658,3 +660,4 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return ret;
 }
+#endif /* #ifdef HAVE_POSTGRES */
