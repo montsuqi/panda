@@ -203,7 +203,7 @@ class	Widget
 	end
 	def	isData
 		case	@klass
-		  when	"GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkCList", "GtkPandaCList", "GtkPandaPS", "GnomePixmap", "GnomeFileEntry"
+		  when	"GtkEntry", "GtkToggleButton", "GtkCheckButton", "GtkRadioButton", "GtkList", "GtkCalendar", "GtkNumberEntry", "GtkText", "GtkPandaEntry", "GtkPandaText" ,"GtkCList", "GtkPandaCList", "GtkPandaPS", "GnomePixmap", "GnomeFileEntry","GtkPandaPDF", "GtkPandaDownload", "GtkPandaPrint"
 			ret = TRUE;
 		  when  "GtkLabel"
 		  	if	@label == "" or
@@ -403,11 +403,33 @@ class	Widget
 			printf("day\tint;\n");
 			putTab(ind);
 			printf("};\n");
-		  when  "GnomePixmap", "GtkPandaPS"
+		  when  "GnomePixmap", "GtkPandaPS", "GtkPandaPDF"
 			putTab(ind);
 			printf("%s\t{\n",vname);
 			putTab(ind+1);
 		        printf("objectdata\tobject;\n");
+			putTab(ind);
+			printf("};\n");
+          when  "GtkPandaDownload"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+			putTab(ind+1);
+		        printf("objectdata\tobject;\n");
+			    putTab(ind+1);
+		        printf("filename\tvarchar(%d);\n",@chars);
+			putTab(ind);
+			printf("};\n");
+          when  "GtkPandaPrint"
+			putTab(ind);
+			printf("%s\t{\n",vname);
+				putTab(ind+1);
+		    	printf("item {\n");
+					putTab(ind+2);
+		    		printf("url\tvarchar(%d)\n",@chars);
+					putTab(ind+2);
+		    		printf("title\tvarchar(%d)\n",@chars);
+				putTab(ind+1);
+		    	printf("}[10];\n");
 			putTab(ind);
 			printf("};\n");
 		  when  "GnomeFileEntry"
