@@ -78,7 +78,7 @@ print_clicked_cb (GtkWidget * widget, int *ret)
 }
 
 static void
-preview_dialog(char *fname)
+preview_dialog(char *title,char *fname)
 {
 	GtkWidget *dialog;
 	GtkWindow *parent;
@@ -93,6 +93,8 @@ preview_dialog(char *fname)
 	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
+	gtk_window_set_title(GTK_WINDOW(dialog),title);
+	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
 
 	pandaps = gtk_panda_ps_new();
 	gtk_panda_ps_load(GTK_PANDA_PS(pandaps),fname);
@@ -266,6 +268,8 @@ show_print_dialog(char *title,char *fname,size_t size)
 	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
+	gtk_window_set_title(GTK_WINDOW(dialog),title);
+	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
 
 	get_human_bytes(size, hbytes);
 	snprintf(buf,sizeof(buf),
@@ -330,7 +334,7 @@ show_print_dialog(char *title,char *fname,size_t size)
 
 	switch(response) {
 	case PREVIEW_CLICKED:
-		preview_dialog(fname);
+		preview_dialog(title,fname);
 		break;
 	case SAVE_CLICKED:
 		save_dialog(fname);

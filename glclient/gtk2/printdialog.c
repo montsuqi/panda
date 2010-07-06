@@ -50,6 +50,7 @@
 
 static void
 show_preview_dialog(
+	char *title,
 	char *fname)
 {
 	GtkWindow *parent;
@@ -66,6 +67,8 @@ show_preview_dialog(
 		GTK_DIALOG_MODAL,
 		GTK_STOCK_OK,
 		GTK_RESPONSE_NONE,NULL);
+	gtk_window_set_title(GTK_WINDOW(dialog),title);
+	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
 	pandapdf = gtk_panda_pdf_new();
 	gtk_panda_pdf_load(GTK_PANDA_PDF(pandapdf),fname);
 	gtk_widget_set_usize(pandapdf,800,600);
@@ -79,6 +82,7 @@ show_preview_dialog(
 #endif
 	gtk_container_add(GTK_CONTAINER(content),pandapdf);
 	gtk_widget_show_all(dialog);
+	gtk_dialog_run(GTK_DIALOG(dialog));
 }
 
 static void
@@ -162,6 +166,7 @@ show_print_dialog(
 		"Size:%s"),
 		title,gtk_panda_pdf_get_page_count(GTK_PANDA_PDF(pandapdf)),hbytes);
 	gtk_widget_destroy(pandapdf);
+	gtk_window_set_title(GTK_WINDOW(dialog),title);
 
 	gtk_dialog_add_buttons(GTK_DIALOG(dialog),
 		GTK_STOCK_PRINT_PREVIEW, GTK_RESPONSE_YES,
@@ -171,10 +176,9 @@ show_print_dialog(
 		NULL);
 
 	response = gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
 	switch (response) {
 	case GTK_RESPONSE_YES:
-		show_preview_dialog(fname);
+		show_preview_dialog(title,fname);
 		break;
 	case GTK_RESPONSE_NO:
 		show_save_dialog(fname);
@@ -183,5 +187,6 @@ show_print_dialog(
 		gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf));
 		break;
 	}
+	gtk_widget_destroy(dialog);
 	gtk_widget_destroy(pandapdf);
 }
