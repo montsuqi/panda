@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2010-04-01 15:21+0900\n"
+"POT-Creation-Date: 2010-07-06 09:45+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -31,12 +31,12 @@ msgstr ""
 
 #: glclient/gtk1/bd_component.c:480 glclient/gtk1/bootdialog.c:279
 #: glclient/gtk2/bd_component.c:473 glclient/gtk2/bootdialog.c:227
-#: glclient/client.c:81
+#: glclient/client.c:82
 msgid "User"
 msgstr ""
 
 #: glclient/gtk1/bd_component.c:489 glclient/gtk2/bd_component.c:482
-#: glclient/client.c:83
+#: glclient/client.c:84
 msgid "Password"
 msgstr ""
 
@@ -45,12 +45,12 @@ msgid "Remember Password"
 msgstr ""
 
 #: glclient/gtk1/bd_component.c:517 glclient/gtk2/bd_component.c:510
-#: glclient/client.c:104
+#: glclient/client.c:105
 msgid "Use SSL"
 msgstr ""
 
 #: glclient/gtk1/bd_component.c:534 glclient/gtk2/bd_component.c:527
-#: glclient/client.c:106
+#: glclient/client.c:107
 msgid "CA Certificate Path"
 msgstr ""
 
@@ -66,7 +66,7 @@ msgid "Open"
 msgstr ""
 
 #: glclient/gtk1/bd_component.c:549 glclient/gtk2/bd_component.c:542
-#: glclient/client.c:108
+#: glclient/client.c:109
 msgid "CA Certificate File"
 msgstr ""
 
@@ -75,7 +75,7 @@ msgid "SSL Key File(pem)"
 msgstr ""
 
 #: glclient/gtk1/bd_component.c:579 glclient/gtk2/bd_component.c:572
-#: glclient/client.c:102
+#: glclient/client.c:103
 msgid "Certificate(pem/p12)"
 msgstr ""
 
@@ -84,12 +84,12 @@ msgid "Cipher Suite"
 msgstr ""
 
 #: glclient/gtk1/bd_component.c:605 glclient/gtk2/bd_component.c:598
-#: glclient/client.c:113
+#: glclient/client.c:114
 msgid "Use Security Device"
 msgstr ""
 
 #: glclient/gtk1/bd_component.c:623 glclient/gtk2/bd_component.c:616
-#: glclient/client.c:115
+#: glclient/client.c:116
 msgid "PKCS#11 Library"
 msgstr ""
 
@@ -114,7 +114,7 @@ msgid "Output Logfile"
 msgstr ""
 
 #: glclient/gtk1/bd_component.c:715 glclient/gtk2/bd_component.c:708
-#: glclient/client.c:91
+#: glclient/client.c:92
 msgid "Enable Keybuffer"
 msgstr ""
 
@@ -175,7 +175,7 @@ msgid "Ok"
 msgstr ""
 
 #: glclient/gtk1/bootdialog.c:179 glclient/gtk1/dialogs.c:150
-#: glclient/gtk1/download.c:295
+#: glclient/gtk1/download.c:245 glclient/gtk1/printdialog.c:317
 msgid "Cancel"
 msgstr ""
 
@@ -189,7 +189,7 @@ msgid "Host"
 msgstr ""
 
 #: glclient/gtk1/bootdialog.c:277 glclient/gtk2/bootdialog.c:225
-#: glclient/client.c:73
+#: glclient/client.c:74
 msgid "Port"
 msgstr ""
 
@@ -202,7 +202,8 @@ msgid "Delete"
 msgstr ""
 
 #: glclient/gtk1/bootdialog.c:486 glclient/gtk1/bootdialog.c:881
-#: glclient/gtk2/bootdialog.c:426 glclient/gtk2/bootdialog.c:742
+#: glclient/gtk1/printdialog.c:104 glclient/gtk2/bootdialog.c:426
+#: glclient/gtk2/bootdialog.c:742
 msgid "Close"
 msgstr ""
 
@@ -252,14 +253,15 @@ msgstr ""
 msgid "Succeeded in writing %s"
 msgstr ""
 
-#: glclient/gtk1/fileEntry.c:104 glclient/gtk1/download.c:110
+#: glclient/gtk1/fileEntry.c:104 glclient/gtk1/download.c:78
 #, c-format
 msgid ""
 "cannot write %s \n"
 "%s"
 msgstr ""
 
-#: glclient/gtk1/fileEntry.c:171 glclient/gtk1/download.c:152
+#: glclient/gtk1/fileEntry.c:171 glclient/gtk1/download.c:120
+#: glclient/gtk1/printdialog.c:180
 msgid "File already exists. Rewrite?"
 msgstr ""
 
@@ -267,12 +269,11 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
-#: glclient/gtk1/download.c:174
+#: glclient/gtk1/download.c:142 glclient/gtk1/printdialog.c:201
 msgid "Please select a file for saving"
 msgstr ""
 
-#: glclient/gtk1/download.c:262 glclient/gtk2/download.c:137
-#: glclient/gtk2/download.c:144
+#: glclient/gtk1/download.c:212 glclient/gtk2/download.c:122
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -281,12 +282,38 @@ msgid ""
 "Size:%s"
 msgstr ""
 
-#: glclient/gtk1/download.c:272
+#: glclient/gtk1/download.c:222
 msgid "Open with App"
 msgstr ""
 
-#: glclient/gtk1/download.c:285
+#: glclient/gtk1/download.c:235 glclient/gtk1/printdialog.c:294
 msgid "Save"
+msgstr ""
+
+#: glclient/gtk1/printdialog.c:140 glclient/gtk2/printdialog.c:123
+#, c-format
+msgid ""
+"Can't save to %s \n"
+"%s"
+msgstr ""
+
+#: glclient/gtk1/printdialog.c:272 glclient/gtk2/printdialog.c:159
+#, c-format
+msgid ""
+"There is the print data.\n"
+"Do you print the data?\n"
+"\n"
+"Title:%s\n"
+"Num of Pages:%d\n"
+"Size:%s"
+msgstr ""
+
+#: glclient/gtk1/printdialog.c:284 glclient/gtk2/printdialog.c:65
+msgid "Preview"
+msgstr ""
+
+#: glclient/gtk1/printdialog.c:304
+msgid "Print"
 msgstr ""
 
 #: glclient/gtk2/bd_component.c:110
@@ -311,115 +338,115 @@ msgstr ""
 msgid "glclient2 Launcher"
 msgstr ""
 
-#: glclient/gtk2/download.c:60
+#: glclient/gtk2/download.c:63 glclient/gtk2/printdialog.c:99
 msgid "Specify filename..."
 msgstr ""
 
-#: glclient/client.c:75
+#: glclient/client.c:76
 msgid "Cache Directory"
 msgstr ""
 
-#: glclient/client.c:77
+#: glclient/client.c:78
 msgid "Style Filename"
 msgstr ""
 
-#: glclient/client.c:79
+#: glclient/client.c:80
 msgid "GtkStyle Filename"
 msgstr ""
 
-#: glclient/client.c:85
+#: glclient/client.c:86
 msgid "Use Protocol Version 1"
 msgstr ""
 
-#: glclient/client.c:87
+#: glclient/client.c:88
 msgid "Use Protocol Version 2"
 msgstr ""
 
-#: glclient/client.c:89
+#: glclient/client.c:90
 msgid "Enable Logging"
 msgstr ""
 
-#: glclient/client.c:93
+#: glclient/client.c:94
 msgid "Use Startup Dialog"
 msgstr ""
 
-#: glclient/client.c:95
+#: glclient/client.c:96
 msgid "Specify Config"
 msgstr ""
 
-#: glclient/client.c:97
+#: glclient/client.c:98
 msgid "List Config"
 msgstr ""
 
-#: glclient/client.c:100
+#: glclient/client.c:101
 msgid "SSL Key File(pem/p12)"
 msgstr ""
 
-#: glclient/client.c:110
+#: glclient/client.c:111
 msgid "SSL Cipher Sweet"
 msgstr ""
 
-#: glclient/client.c:117
+#: glclient/client.c:118
 msgid "Security Device Slot ID"
 msgstr ""
 
-#: glclient/client.c:220
+#: glclient/client.c:221
 msgid "mkdtemp failure"
 msgstr ""
 
-#: glclient/client.c:283
+#: glclient/client.c:284
 msgid "can not connect server(server port not found)"
 msgstr ""
 
-#: glclient/client.c:339
+#: glclient/client.c:340
 msgid "input Password"
 msgstr ""
 
-#: glclient/protocol.c:81
+#: glclient/protocol.c:82
 msgid "Connection lost\n"
 msgstr ""
 
-#: glclient/protocol.c:208
+#: glclient/protocol.c:201
 msgid "error size mismatch !"
 msgstr ""
 
-#: glclient/protocol.c:416
+#: glclient/protocol.c:409
 msgid "invalid protocol sequence"
 msgstr ""
 
-#: glclient/protocol.c:719 glclient/protocol.c:739
+#: glclient/protocol.c:708 glclient/protocol.c:729
 msgid "connection error(server doesn't reply ping)"
 msgstr ""
 
-#: glclient/protocol.c:756
+#: glclient/protocol.c:745
 msgid "connection start\n"
 msgstr ""
 
-#: glclient/protocol.c:774
+#: glclient/protocol.c:763
 msgid "can not connect server"
 msgstr ""
 
-#: glclient/protocol.c:777
+#: glclient/protocol.c:766
 msgid "can not connect server(version not match)"
 msgstr ""
 
-#: glclient/protocol.c:783
+#: glclient/protocol.c:772
 msgid "can not connect server(authentication error)"
 msgstr ""
 
-#: glclient/protocol.c:786 glclient/protocol.c:790
+#: glclient/protocol.c:775 glclient/protocol.c:779
 msgid "can not connect server(user or password is incorrect)"
 msgstr ""
 
-#: glclient/protocol.c:795
+#: glclient/protocol.c:784
 msgid "can not connect server(application name invalid)"
 msgstr ""
 
-#: glclient/protocol.c:799
+#: glclient/protocol.c:788
 msgid "can not connect server(other protocol error)"
 msgstr ""
 
-#: glclient/protocol.c:896 glclient/protocol.c:921 glclient/protocol.c:1152
+#: glclient/protocol.c:885 glclient/protocol.c:910 glclient/protocol.c:1141
 #, c-format
 msgid "invalid data conversion\n"
 msgstr ""
