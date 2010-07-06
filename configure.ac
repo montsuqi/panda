@@ -110,21 +110,6 @@ AC_CANONICAL_HOST
 AM_GNU_GETTEXT
 AM_GNU_GETTEXT_VERSION(0.16.1)
 
-
-dnl ***************************************************************************
-dnl Find lpstat,lpr for glclient1 printing
-dnl ***************************************************************************
-AC_PATH_PROG(LPSTAT_PROG, lpstat, "")
-AC_DEFINE_UNQUOTED(LPSTAT_PATH, "$LPSTAT_PROG", "")
-if test "$LPSTAT_PROG" = ""; then
-	AC_MSG_ERROR([lpstat not found])
-fi
-AC_PATH_PROG(LPR_PROG, lpr)
-AC_DEFINE_UNQUOTED(LPR_PATH, "$LPR_PROG", "")
-if test "$LPR_PROG" = ""; then
-	AC_MSG_ERROR([lpsr not found])
-fi
-
 dnl ***************************************************************************
 dnl Find pkg-config
 dnl ***************************************************************************
