@@ -224,145 +224,16 @@ save_dialog(char *oldpath)
 	gtk_widget_show(fs);
 }
 
-static gboolean
-check_printer(void)
-{
-	char buff[256], cmd[256];
-	char *p;
-	FILE *fp;
-	gboolean ret = FALSE;
-	
-	snprintf(cmd, sizeof(cmd), "%s -a", LPSTAT_PATH);
-	if ((fp = popen(cmd, "r")) != NULL) {
-	  while(1) {
-	    fgets(buff, sizeof(cmd), fp);
-	    if (feof(fp))break;
-	    p = strchr(buff, ' ');
-	    if (p != NULL) *p = '\0';
-		ret = TRUE;
-	  }
-	  pclose(fp);
-	}
-	return ret;
-}
-
-static void
-append_printer_list(GtkWidget *combo)
-{
-	GList *items = NULL;
-	char buff[256], cmd[256];
-	char *p;
-	FILE *fp;
-	int i;
-	
-	snprintf(cmd, sizeof(cmd), "%s -a", LPSTAT_PATH);
-	if ((fp = popen(cmd, "r")) != NULL) {
-	  while(1) {
-	    fgets(buff, sizeof(cmd), fp);
-	    if (feof(fp))break;
-	    p = strchr(buff, ' ');
-	    if (p != NULL) *p = '\0';
-	    items = g_list_append(items, strdup(buff));
-	  }
-	  pclose(fp);
-	}
-	if (items == NULL) {
-		items = g_list_append(items, strdup(" "));
-	}
-	gtk_combo_set_popdown_strings(GTK_COMBO(combo), items);
-	for(i = 0; i < g_list_length(items); i++) {
-		free(g_list_nth_data(items,i));
-	}
-	g_list_free(items);
-}
-
-void
-print_ok_cb (GtkWidget *widget, GtkCombo *combo)
-{
-	int pid;
-	char *argv[5];
-	char *printer;
-	char *filename;
-
-	printer = gtk_entry_get_text(GTK_ENTRY(combo->entry));
-	if (printer == NULL || !strcmp(printer," ")) {
-		gtk_main_quit();
-		return;
-	}
-	
-	filename = (char*)gtk_object_get_data(GTK_OBJECT(combo),"filename");
-	if (filename != NULL) {
-		signal  (SIGCHLD, SIG_IGN);
-		argv[0] = LPR_PATH;
-		argv[1] = "-P";
-		argv[2] = gtk_entry_get_text(
-			GTK_ENTRY(combo->entry));
-		argv[3] = filename;
-		argv[4] = (char *)NULL;
-		if ((pid = fork()) == 0) {
-			execv(LPR_PATH, argv);
-			_exit(0);
-		}
-	}
-	gtk_main_quit();
-}
-
 static void
 select_printer_dialog(char *fname)
 {
-	GtkWidget *dialog;
-	GtkWidget *combo;
-	GtkWidget *label;
-	GtkWidget *ok;
-	GtkWidget *cancel;
-	GtkWindow *parent;
+	GtkWidget *ps;
 
-	if ((parent = (GtkWindow *)g_list_nth_data(DialogStack,
-		g_list_length(DialogStack)-1)) == NULL) {
-		parent = GTK_WINDOW(TopWindow);
+	ps = gtk_panda_ps_new();
+	if (gtk_panda_ps_load(GTK_PANDA_PS(ps),fname)) {
+		gtk_panda_ps_print(GTK_PANDA_PS(ps));
 	}
-
-	dialog = gtk_dialog_new();
-	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
-	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
-	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
-	gtk_widget_set_usize (dialog, 200, 100);
-
-	label = gtk_label_new(_("Select the printer"));
-	gtk_widget_set_usize(label,100,20);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), label,
-		FALSE, FALSE, 0);
-
-	combo = gtk_combo_new();
-	gtk_entry_set_editable(GTK_ENTRY(GTK_COMBO(combo)->entry),FALSE);
-	gtk_widget_set_usize (combo, 80, 20);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), combo,
-		FALSE, FALSE, 0);
-	gtk_object_set_data(GTK_OBJECT(combo),"filename",fname);
-	append_printer_list(combo);
-
-	ok = gtk_button_new_with_label(_("OK"));
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area),
-		ok,FALSE,FALSE,0);
-	gtk_signal_connect(GTK_OBJECT(ok), "clicked",
-		GTK_SIGNAL_FUNC(print_ok_cb),combo);
-	GTK_WIDGET_SET_FLAGS (ok, GTK_CAN_DEFAULT);
-	gtk_widget_grab_default(ok);
-
-	cancel = gtk_button_new_with_label(_("CANCEL"));
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area),
-		cancel,FALSE,FALSE,0);
-	gtk_signal_connect(GTK_OBJECT(cancel), "clicked",
-		GTK_SIGNAL_FUNC(gtk_main_quit),NULL);
-
-	gtk_widget_show(label);
-	gtk_widget_show(combo);
-	gtk_widget_show(ok);
-	gtk_widget_show(cancel);
-	gtk_widget_show(dialog);
-	gtk_main();
-
-	gtk_widget_destroy(dialog);
+	gtk_widget_destroy(ps);
 }
 
 void
@@ -439,7 +310,7 @@ show_print_dialog(char *title,char *fname,size_t size)
 		GTK_SIGNAL_FUNC (print_clicked_cb),
 		&response);
 	gtk_widget_show (print);
-	if (!check_printer()) {
+	if (!gtk_panda_ps_printable()) {
 		gtk_widget_set_sensitive(print,FALSE);
 	}
 
