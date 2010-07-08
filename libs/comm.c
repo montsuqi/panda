@@ -52,9 +52,16 @@ extern	PacketClass
 RecvPacketClass(
 	NETFILE	*fp)
 {
-	PacketClass	c;
+	int tc;
+	PacketClass	c = (PacketClass)0x00;
 
-	c = ngetc(fp);
+	tc = ngetc(fp);
+	tc = -1;
+	if ( tc >= 0 ) {
+		c = tc;
+	} else {
+		Message("error RecvPacket");
+	}
 	return	(c);
 }
 
