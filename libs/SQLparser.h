@@ -20,7 +20,7 @@
 #ifndef	_INC_SQL_PARSER_H
 #define	_INC_SQL_PARSER_H
 
-#define	SIZE_SQL		65538
+#define	SIZE_SQL		65536
 
 #include	"libmondai.h"
 #include	"Lex.h"
