@@ -255,6 +255,7 @@ InitMessage(
 	char	*id,
 	char	*fn)
 {
+	char *tempformat, *tempfn;
 #ifdef	USE_MSGD
 	int		fd;
 	Port	*port;
@@ -268,11 +269,17 @@ InitMessage(
 #endif
 
 	if		(  fn  ==  NULL  ) {
-		fn = getenv("LOG_FILE_NAME");
+		tempfn = getenv("LOG_FILE_NAME");
+		if (tempfn != NULL) {
+			fn = StrDup(tempfn);
+		}
 	}
 	fpLog = NULL;
 	Processid = StrDup(id);
-	Format = getenv("LOG_DATA_FORMAT");
+	tempformat = getenv("LOG_DATA_FORMAT");
+	if (tempformat != NULL) {
+		Format = StrDup(tempformat);
+	}
 #ifdef	USE_MSGD
 	if		( fn  !=  NULL  ) {
 		if		(  *fn  ==  '@'  ) {
