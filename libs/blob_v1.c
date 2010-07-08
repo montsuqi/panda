@@ -69,7 +69,7 @@ ENTER_FUNC;
 		dbgmsg("mode blob open write");
 
 #if	1
-		flag = O_CREAT | O_APPEND | O_TRUNC;
+		flag = O_APPEND | O_TRUNC;
 #else
 		if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
 			flag = O_CREAT;
@@ -89,6 +89,7 @@ ENTER_FUNC;
 
 	if		(  ( mode & BLOB_OPEN_CREATE )  !=  0  ) {
 		dbgmsg("mode blob open create");
+		flag |= O_CREAT;
 		fd = open(longname,flag,0600);
 	} else {
 		dbgmsg("open read or write mode");
