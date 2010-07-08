@@ -56,7 +56,6 @@ RecvPacketClass(
 	PacketClass	c = (PacketClass)0x00;
 
 	tc = ngetc(fp);
-	tc = -1;
 	if ( tc >= 0 ) {
 		c = tc;
 	} else {
