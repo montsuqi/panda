@@ -48,6 +48,7 @@
 #include	"queue.h"
 #include	"gettext.h"
 #include	"toplevel.h"
+#include	"interface.h"
 
 static struct changed_hander {
 	GObject					*object;
@@ -365,13 +366,7 @@ ENTER_FUNC;
 	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(child);
 
-	gtk_window_set_resizable(GTK_WINDOW(TopWindow),
-		GTK_WINDOW(window)->allow_grow);
-#if 0
-	int			width, height;
-	gtk_window_get_default_size(GTK_WINDOW(window), &width, &height);
-	gtk_window_set_default_size(GTK_WINDOW(TopWindow), width, height);
-#endif
+	gtk_window_set_resizable(GTK_WINDOW(TopWindow), TRUE);
 
 LEAVE_FUNC;
 }
@@ -583,3 +578,68 @@ GetWidgetByWindowNameAndName(char *windowName,
 	}
 	return widget;
 }
+
+
+typedef struct {
+	float x;
+	float y;
+} Scale;
+
+static  void
+ScaleWidget(
+    GtkWidget   *widget,
+    gpointer    data)
+{
+	Scale *scale;
+	int *x, *y, *width, *height;
+
+	x = g_object_get_data(G_OBJECT(widget),"x");
+	y = g_object_get_data(G_OBJECT(widget),"y");
+	width = g_object_get_data(G_OBJECT(widget),"width");
+	height = g_object_get_data(G_OBJECT(widget),"height");
+	scale = (Scale *)data;
+
+	if  (   GTK_IS_CONTAINER(widget)    ) {
+		gtk_container_set_resize_mode(GTK_CONTAINER(widget),GTK_RESIZE_IMMEDIATE);
+		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, data);
+	}
+	if (x != NULL && y != NULL && width != NULL && height != NULL) {
+		int _x,_y,_width,_height;
+
+		_x = (int)(*x * scale->x);
+		_y = (int)(*y * scale->y);
+		_width = (int)(*width * scale->x);
+		_height = (int)(*height * scale->y);
+#if 0
+		fprintf(stderr,"[[%d,%d],[%d,%d]]->[[%d,%d],[%d,%d]]\n",
+			*x,*y,*width,*height,
+			_x,_y,_width,_height);
+#endif
+		gtk_widget_set_size_request(widget,_width,_height); 
+		gtk_widget_set_uposition(widget,_x,_y);
+	} 
+}
+
+extern	void
+ScaleWindow(GtkWidget *widget,
+	GtkAllocation *alloc,
+	gpointer data)
+{
+	Scale scale;
+
+	scale.x = (alloc->width * 1.0) / (DEFAULT_WINDOW_WIDTH * 1.0);
+	scale.y = ((alloc->height) * 1.0) / (DEFAULT_WINDOW_HEIGHT - 24 * 1.0);
+#if 0
+	if (scale.x <= 0.8) {
+		scale.x = 0.8;
+	}
+	if (scale.y <= 0.8) {
+		scale.y = 0.8;
+	}
+	fprintf(stderr,"[%d,%d] scale[%f,%f]\n",
+		alloc->x,alloc->y,scale.x,scale.y);
+#endif
+	gtk_widget_set_size_request(TopNoteBook,0,0); 
+	gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, &scale);
+}
+

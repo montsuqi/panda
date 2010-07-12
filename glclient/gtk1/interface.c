@@ -266,17 +266,21 @@ UI_Init(int argc,
 	WindowTable = NewNameHash();
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_default_size(GTK_WINDOW(TopWindow), 1024, 768);
+	gtk_window_set_default_size(GTK_WINDOW(TopWindow),
+		DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
 
 	TopNoteBook = gtk_notebook_new();
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
 	dummyFixed = gtk_fixed_new();
-	gtk_widget_set_usize(dummyFixed, 1024, 768);
+	gtk_widget_set_usize(dummyFixed, 
+		DEFAULT_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT);
 	gtk_notebook_append_page(GTK_NOTEBOOK(TopNoteBook), dummyFixed, gtk_label_new("_dummy_"));
 	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
 
 	gtk_signal_connect(GTK_OBJECT(TopWindow), 
 		"delete_event", (GtkSignalFunc)gtk_true, NULL);
+	gtk_signal_connect(GTK_OBJECT(TopWindow), 
+		"size-allocate", (GtkSignalFunc)ScaleWindow, NULL);
 	DialogStack = NULL;
 }
 

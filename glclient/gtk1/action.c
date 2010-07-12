@@ -47,6 +47,7 @@
 #include	"action.h"
 #include	"toplevel.h"
 #include	"queue.h"
+#include	"interface.h"
 
 static struct changed_hander {
 	GtkObject       *object;
@@ -188,6 +189,7 @@ CntnrForAllOnClose(
         gtk_container_forall(GTK_CONTAINER(widget), CntnrForAllOnClose, NULL);
     }
 }
+
 extern	void
 ClearKeyBuffer(void)
 {
@@ -209,11 +211,12 @@ _RegistTimer(
 	    GtkWidget	*widget,
 	    gpointer	data)
 {
-	if (GTK_IS_CONTAINER (widget))
+	if (GTK_IS_CONTAINER (widget)) {
 		gtk_container_forall (GTK_CONTAINER (widget), _RegistTimer, data);
-	else if (GTK_IS_PANDA_TIMER (widget))
+	} else if (GTK_IS_PANDA_TIMER (widget)) {
 		g_hash_table_insert((GHashTable*)data, 
 			gtk_widget_get_name(widget), widget);
+	}
 }
 
 static	void
@@ -399,10 +402,7 @@ ENTER_FUNC;
 
 	gtk_window_set_modal(GTK_WINDOW(TopWindow),
 		GTK_WINDOW(window)->modal);
-	gtk_window_set_policy(GTK_WINDOW(TopWindow), 
-		GTK_WINDOW(window)->allow_shrink,
-		GTK_WINDOW(window)->allow_grow,
-		GTK_WINDOW(window)->auto_shrink);
+	gtk_window_set_policy(GTK_WINDOW(TopWindow), TRUE, TRUE, FALSE);
 
 LEAVE_FUNC;
 }
@@ -616,4 +616,63 @@ GetWidgetByWindowNameAndName(char *windowName,
 			(GladeXML *)wdata->xml, widgetName);
 	}
 	return widget;
+}
+
+typedef struct {
+	float x;
+	float y;
+} Scale;
+
+static  void
+ScaleWidget(
+    GtkWidget   *widget,
+    gpointer    data)
+{
+	Scale *scale;
+	int *x, *y, *width, *height;
+
+	x = gtk_object_get_data(GTK_OBJECT(widget),"x");
+	y = gtk_object_get_data(GTK_OBJECT(widget),"y");
+	width = gtk_object_get_data(GTK_OBJECT(widget),"width");
+	height = gtk_object_get_data(GTK_OBJECT(widget),"height");
+	scale = (Scale *)data;
+
+	if (x != NULL && y != NULL && width != NULL && height != NULL) {
+		int _x,_y,_width,_height;
+
+		_x = (int)(*x * scale->x);
+		_y = (int)(*y * scale->y);
+		_width = (int)(*width * scale->x);
+		_height = (int)(*height * scale->y);
+#if 0
+		fprintf(stderr,"[[%d,%d],[%d,%d]]->[[%d,%d],[%d,%d]]\n",
+			*x,*y,*width,*height,
+			_x,_y,_width,_height);
+#endif
+		gtk_widget_set_uposition(widget,_x,_y);
+		gtk_widget_set_usize(widget,_width,_height); 
+	} 
+	if  (   GTK_IS_CONTAINER(widget)    ) {
+		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, data);
+	}
+}
+
+extern	void
+ScaleWindow(GtkWidget *widget,
+	GtkAllocation *alloc)
+{
+	Scale scale;
+
+	scale.x = (alloc->width * 1.0) / (DEFAULT_WINDOW_WIDTH * 1.0);
+	scale.y = (alloc->height * 1.0) / (DEFAULT_WINDOW_HEIGHT * 1.0);
+#if 0
+	if (scale.x <= 0.8) {
+		scale.x = 0.8;
+	}
+	if (scale.y <= 0.8) {
+		scale.y = 0.8;
+	}
+	fprintf(stderr,"scale[%f,%f]\n",scale.x,scale.y);
+#endif
+	gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, &scale);
 }

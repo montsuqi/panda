@@ -23,6 +23,9 @@
 #ifndef	_INC_INTERFACE_H
 #define	_INC_INTERFACE_H
 
+#define	DEFAULT_WINDOW_WIDTH	1024
+#define	DEFAULT_WINDOW_HEIGHT	768
+
 typedef	gint		(*_PingTimerFunc)	(gpointer data);
 
 extern	int			UI_Version();

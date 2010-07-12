@@ -663,7 +663,7 @@ ENTER_FUNC;
 			fread(LBS_Body(data->binary),st.st_size,1,fp);
 			fclose(fp);
 			dir = g_dirname(data->path);
-			SetWidgetCache(StrDup((char *)glade_get_widget_long_name(widget)), 
+			SetWidgetCache((char *)glade_get_widget_long_name(widget), 
 				dir);
 			g_free(dir);
 		}
