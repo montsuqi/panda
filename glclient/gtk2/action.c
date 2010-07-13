@@ -49,6 +49,7 @@
 #include	"gettext.h"
 #include	"toplevel.h"
 #include	"interface.h"
+#include	"widgetcache.h"
 
 static struct changed_hander {
 	GObject					*object;
@@ -57,6 +58,9 @@ static struct changed_hander {
 	gint					block_flag;
 	struct changed_hander 	*next;
 } *changed_hander_list = NULL;
+
+static void ScaleWidget(GtkWidget *widget, gpointer data);
+static void ScaleWindow(GtkWidget *widget);
 
 extern	void
 RegisterChangedHandler(
@@ -357,6 +361,10 @@ SwitchWindow(
 ENTER_FUNC;
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
+
+	gtk_widget_set_size_request(TopNoteBook,1,1);
+	ScaleWidget(child,NULL);
+
 	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
 		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
 
@@ -462,6 +470,9 @@ ENTER_FUNC;
 	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;
 		int i;
+
+		ScaleWidget(window, NULL);
+		ScaleWindow(window);
 
 		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
@@ -579,25 +590,17 @@ GetWidgetByWindowNameAndName(char *windowName,
 	return widget;
 }
 
-
-typedef struct {
-	float x;
-	float y;
-} Scale;
-
 static  void
 ScaleWidget(
     GtkWidget   *widget,
     gpointer    data)
 {
-	Scale *scale;
 	int *x, *y, *width, *height;
 
 	x = g_object_get_data(G_OBJECT(widget),"x");
 	y = g_object_get_data(G_OBJECT(widget),"y");
 	width = g_object_get_data(G_OBJECT(widget),"width");
 	height = g_object_get_data(G_OBJECT(widget),"height");
-	scale = (Scale *)data;
 
 	if  (   GTK_IS_CONTAINER(widget)    ) {
 		gtk_container_set_resize_mode(GTK_CONTAINER(widget),GTK_RESIZE_IMMEDIATE);
@@ -606,40 +609,92 @@ ScaleWidget(
 	if (x != NULL && y != NULL && width != NULL && height != NULL) {
 		int _x,_y,_width,_height;
 
-		_x = (int)(*x * scale->x);
-		_y = (int)(*y * scale->y);
-		_width = (int)(*width * scale->x);
-		_height = (int)(*height * scale->y);
+		_x = (int)(*x * TopWindowScale.h);
+		_y = (int)(*y * TopWindowScale.v);
+		_width = (int)(*width * TopWindowScale.h);
+		_height = (int)(*height * TopWindowScale.v);
 #if 0
 		fprintf(stderr,"[[%d,%d],[%d,%d]]->[[%d,%d],[%d,%d]]\n",
 			*x,*y,*width,*height,
 			_x,_y,_width,_height);
 #endif
 		gtk_widget_set_size_request(widget,_width,_height); 
+#if 0
 		gtk_widget_set_uposition(widget,_x,_y);
+#else
+		GtkWidget *parent = gtk_widget_get_parent(widget);
+		if (parent != NULL && GTK_IS_FIXED(parent)) {
+			gtk_fixed_move(GTK_FIXED(parent),widget,_x,_y);
+		}
+#endif
+	} 
+}
+
+static	void
+ScaleWindow(
+	GtkWidget *widget)
+{
+	int *x, *y, *width, *height;
+
+	x = g_object_get_data(G_OBJECT(widget),"x");
+	y = g_object_get_data(G_OBJECT(widget),"y");
+	width = g_object_get_data(G_OBJECT(widget),"width");
+	height = g_object_get_data(G_OBJECT(widget),"height");
+
+	if (x != NULL && y != NULL) {
+		int _x,_y;
+
+		gtk_window_get_position(GTK_WINDOW(TopWindow),&_x,&_y);
+		_x += (int)(*x * TopWindowScale.h);
+		_y += (int)(*y * TopWindowScale.v);
+#if 0
+		fprintf(stderr,"move window [%d,%d]->[%d,%d]\n",
+			*x,*y,_x,_y);
+#endif
+		gtk_widget_set_uposition(widget,_x,_y);
+	} 
+
+	if (width != NULL && height != NULL) {
+		int _width,_height;
+
+		_width = (int)(*width * TopWindowScale.h);
+		_height = (int)(*height * TopWindowScale.v);
+#if 0
+		fprintf(stderr,"scale window [%d,%d]->[%d,%d]\n",
+			*width,*height,_width,_height);
+#endif
+		gtk_widget_set_size_request(widget,_width,_height); 
 	} 
 }
 
 extern	void
-ScaleWindow(GtkWidget *widget,
-	GtkAllocation *alloc,
+ConfigureWindow(GtkWidget *widget,
+	GdkEventConfigure *event,
 	gpointer data)
 {
-	Scale scale;
+	int x,y,width,height;
+	char buf[16];
 
-	scale.x = (alloc->width * 1.0) / (DEFAULT_WINDOW_WIDTH * 1.0);
-	scale.y = ((alloc->height) * 1.0) / (DEFAULT_WINDOW_HEIGHT - 24 * 1.0);
+	gtk_window_get_position(GTK_WINDOW(widget), &x,&y);
+	gtk_window_get_size(GTK_WINDOW(widget), &width,&height);
+
+	TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH * 1.0);
+	TopWindowScale.v = (height * 1.0) / (DEFAULT_WINDOW_HEIGHT * 1.0 - 24);
+
 #if 0
-	if (scale.x <= 0.8) {
-		scale.x = 0.8;
-	}
-	if (scale.y <= 0.8) {
-		scale.y = 0.8;
-	}
-	fprintf(stderr,"[%d,%d] scale[%f,%f]\n",
-		alloc->x,alloc->y,scale.x,scale.y);
+	fprintf(stderr,"[%d,%d][%d,%d][%f,%f]\n",
+		x,y,width,height,TopWindowScale.h,TopWindowScale.v);
 #endif
-	gtk_widget_set_size_request(TopNoteBook,0,0); 
-	gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, &scale);
+	gtk_widget_set_size_request(TopNoteBook,1,1); 
+	gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, NULL);
+
+	sprintf(buf,"%d",x);
+	SetWidgetCache("glclient.topwindow.x",buf);
+	sprintf(buf,"%d",y);
+	SetWidgetCache("glclient.topwindow.y",buf);
+	sprintf(buf,"%d",width);
+	SetWidgetCache("glclient.topwindow.width",buf);
+	sprintf(buf,"%d",height);
+	SetWidgetCache("glclient.topwindow.height",buf);
 }
 

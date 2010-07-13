@@ -52,6 +52,7 @@ extern	void		UI_ShowPrintDialog(char*title,char *fname,size_t size);
 
 extern	void		UI_Init(int argc, char **argv);
 extern	void		UI_InitStyle(void);
+extern	void		UI_InitTopWindow(void);
 extern	void		UI_Main(void);
 
 #endif

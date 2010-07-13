@@ -44,7 +44,7 @@ extern	GtkWidget	*GetWidgetByLongName(char *longName);
 extern	GtkWidget	*GetWidgetByName(char *dataName);
 extern	GtkWidget	*GetWidgetByWindowNameAndLongName(char *wname, char *name);
 extern	GtkWidget	*GetWidgetByWindowNameAndName(char *wname, char *name);
-extern	void		ScaleWindow(GtkWidget *widget,GtkAllocation *alloc, 
+extern	void		ConfigureWindow(GtkWidget *widget,GdkEventConfigure *ev, 
 						gpointer data);
 
 #endif

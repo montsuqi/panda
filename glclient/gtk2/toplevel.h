@@ -26,8 +26,15 @@
 #else
 #define	GLOBAL		extern
 #endif
+
+typedef struct {
+	float v;
+	float h;
+} WindowScale;
+
 GLOBAL	GtkWidget	*TopWindow;
 GLOBAL	GtkWidget	*TopNoteBook;
 GLOBAL	GList		*DialogStack;
+GLOBAL	WindowScale	TopWindowScale;
 
 #endif

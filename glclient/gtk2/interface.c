@@ -50,6 +50,7 @@
 #include	"dialogs.h"
 #include	"printdialog.h"
 #include	"styleParser.h"
+#include	"widgetcache.h"
 #define		TOPLEVEL
 #include	"toplevel.h"
 #include	"message.h"
@@ -266,16 +267,46 @@ UI_Init(int argc,
 	glade_init();
 
 	WindowTable = NewNameHash();
+}
+
+extern  void        
+UI_InitTopWindow(void)
+{
+	char *px, *py, *pwidth, *pheight;
+	int x,y,width,height;
+
+	px = GetWidgetCache("glclient.topwindow.x");
+	py = GetWidgetCache("glclient.topwindow.y");
+	if (px != NULL && py != NULL) {
+		x = atoi(px); y = atoi(py);
+	} else {
+		x = 0; y = 0;
+	}
+	pwidth = GetWidgetCache("glclient.topwindow.width");
+	pheight = GetWidgetCache("glclient.topwindow.height");
+	if (pwidth != NULL && pheight != NULL) {
+		width = atoi(pwidth); height = atoi(pheight);
+	} else {
+		width = DEFAULT_WINDOW_WIDTH;
+		height = DEFAULT_WINDOW_HEIGHT;
+	}
+	TopWindowScale.v = (width * 1.0) / (DEFAULT_WINDOW_WIDTH * 1.0);
+	TopWindowScale.h = (height * 1.0) / (DEFAULT_WINDOW_HEIGHT * 1.0 - 24);
+
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_widget_set_uposition(TopWindow,x,y); // not recommend
+	gtk_widget_set_size_request(TopWindow,width, height);
 
-	gtk_widget_set_size_request(TopWindow,
-		DEFAULT_WINDOW_WIDTH,DEFAULT_WINDOW_HEIGHT);
+	GdkGeometry geometry;
+	geometry.min_width = 100;
+	geometry.min_height = 100;
+	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
+		GDK_HINT_MIN_SIZE);
 
-	gtk_window_set_position(GTK_WINDOW(TopWindow),GTK_WIN_POS_CENTER);
 	g_signal_connect(G_OBJECT(TopWindow), 
 		"delete_event", G_CALLBACK(gtk_true), NULL);
-	g_signal_connect_after(G_OBJECT(TopWindow), 
-		"size_allocate", G_CALLBACK(ScaleWindow), NULL);
+	g_signal_connect(G_OBJECT(TopWindow), 
+		"configure_event", G_CALLBACK(ConfigureWindow), NULL);
 
 	TopNoteBook = gtk_notebook_new();
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
