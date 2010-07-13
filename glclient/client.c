@@ -279,6 +279,9 @@ start_client ()
 {
 	int		fd;
 
+	LoadWidgetCache();
+	UI_InitTopWindow();
+
     glSession->port = ParPort(PortNumber,PORT_GLTERM);
 	if (  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
 		UI_ErrorDialog(_("can not connect server(server port not found)"));
@@ -286,7 +289,6 @@ start_client ()
 	}
 	InitProtocol();
 	if(MakeFPCOMM(fd) != TRUE) return FALSE;
-	LoadWidgetCache();
 
 	if (SendConnect(FPCOMM(glSession),CurrentApplication)) {
 		CheckScreens(FPCOMM(glSession),TRUE);
