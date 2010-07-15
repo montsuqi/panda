@@ -1231,6 +1231,15 @@ table_exec(int argc, VALUE *argv, VALUE self)
     size = NativeSizeValue(NULL, RECORD_STRUCT(data)->value);
     ctrl.blocks = ((size + sizeof(DBCOMM_CTRL)) / SIZE_BLOCK) + 1;
     strcpy(ctrl.func, func);
+    if ( !strcmp(func,"DBOPEN") ||
+	 !strcmp(func,"DBCLOSE") ||
+	 !strcmp(func,"DBSTART") ||
+	 !strcmp(func,"DBCOMMIT") ||
+	 !strcmp(func,"DBDISCONNECT") ) {
+	    ctrl.fDBOperation = TRUE;
+    } else {
+	    ctrl.fDBOperation = FALSE;
+    }
     result = ExecDB_Process(&ctrl, RECORD_STRUCT(data), value);
 #ifdef	DEBUG
 	DumpValueStruct(result);
