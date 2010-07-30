@@ -110,7 +110,8 @@ glclient2_LDADD =								\
 	$(base_LDADD)
 
 AM_CPPFLAGS = 					\
-	-DLOCALEDIR=\"$(localedir)\"
+	-DLOCALEDIR=\"$(localedir)\"\
+	-DGLCLIENT_DATADIR=\"$(datadir)/panda-client\"
 
 EXTRA_DIST = 					\
 	testrc

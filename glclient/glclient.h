@@ -107,8 +107,6 @@ GLOBAL	char	*Slot;
 #endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
 
-#define GLCLIENT_DATADIR			"/usr/share/panda-client"
-
 #define DEFAULT_HOST				"localhost"
 #define DEFAULT_PORT				"8000"
 #define DEFAULT_APPLICATION			"panda:"
