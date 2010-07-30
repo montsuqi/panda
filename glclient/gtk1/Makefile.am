@@ -44,11 +44,15 @@ libuigtk1_la_CFLAGS	=			\
 	-I$(top_srcdir)/glclient	\
 	$(GLIB_CFLAGS)				\
 	$(GTK1CLIENT_CFLAGS)		\
-	$(MONDAI_CFLAGS)			\
-	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
+	$(MONDAI_CFLAGS)
 
 libuigtk1_la_LIBADD	=					\
 	-lm									\
 	$(GLIB_LIBS)						\
 	$(GTK1CLIENT_LIBS)					\
 	$(MONDAI_LIBS)
+
+AM_CPPFLAGS = 					\
+	-DPACKAGE_LOCALE_DIR=\"$(localedir)\"	\
+	-DLOCALEDIR=\"$(localedir)\"			\
+	-DGLCLIENT_DATADIR=\"$(datadir)/panda-client\"
