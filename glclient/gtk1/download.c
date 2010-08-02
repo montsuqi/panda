@@ -261,8 +261,4 @@ show_download_dialog(
 		show_save_dialog(widget,filename,binary);
 	}
 	gtk_widget_destroy(dialog);
-	gtk_widget_destroy(label);
-	gtk_widget_destroy(open);
-	gtk_widget_destroy(save);
-	gtk_widget_destroy(cancel);
 }
