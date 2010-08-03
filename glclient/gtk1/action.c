@@ -636,7 +636,7 @@ ScaleWidget(
 		gtk_widget_set_uposition(widget,_x,_y);
 		gtk_widget_set_usize(widget,_width,_height); 
 	} 
-	if  (   GTK_IS_CONTAINER(widget)    ) {
+	if (GTK_IS_CONTAINER(widget) && !GTK_IS_SCROLLED_WINDOW(widget)) {
 		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, data);
 	}
 }

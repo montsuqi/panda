@@ -602,7 +602,7 @@ ScaleWidget(
 	width = g_object_get_data(G_OBJECT(widget),"width");
 	height = g_object_get_data(G_OBJECT(widget),"height");
 
-	if  (   GTK_IS_CONTAINER(widget)    ) {
+	if (GTK_IS_CONTAINER(widget) && !GTK_IS_SCROLLED_WINDOW(widget)) {
 		gtk_container_set_resize_mode(GTK_CONTAINER(widget),GTK_RESIZE_IMMEDIATE);
 		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, data);
 	}
