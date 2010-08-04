@@ -741,11 +741,6 @@ InitTopWindow(void)
 		height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
 	}
 
-	if (getenv("GLCLIENT_SET_DEFAULT_SIZE") != NULL) {
-		width = DEFAULT_WINDOW_WIDTH;
-		height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
-	}
-
 	TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH);
 	TopWindowScale.v = (height * 1.0) / 
 		(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
@@ -755,8 +750,8 @@ InitTopWindow(void)
 	gtk_window_set_default_size(GTK_WINDOW(TopWindow),width,height);
 
 	GdkGeometry geometry;
-	geometry.min_width = 100;
-	geometry.min_height = 100;
+	geometry.min_width = DEFAULT_WINDOW_WIDTH;
+	geometry.min_height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
 	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
 		GDK_HINT_MIN_SIZE);
 
