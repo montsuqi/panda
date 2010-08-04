@@ -25,6 +25,7 @@
 
 #define	DEFAULT_WINDOW_WIDTH	1024
 #define	DEFAULT_WINDOW_HEIGHT	768
+#define	DEFAULT_WINDOW_FOOTER	24
 
 typedef	gint		(*_PingTimerFunc)	(gpointer data);
 

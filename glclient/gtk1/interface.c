@@ -50,7 +50,6 @@
 #include	"dialogs.h"
 #include	"printdialog.h"
 #include	"styleParser.h"
-#include	"widgetcache.h"
 #define		TOPLEVEL
 #include	"toplevel.h"
 #include	"message.h"
@@ -270,40 +269,7 @@ UI_Init(int argc,
 extern	void
 UI_InitTopWindow(void)
 {
-	char *px, *py, *pwidth, *pheight;
-	int x,y,width,height;
-
-	px = GetWidgetCache("glclient.topwindow.x");
-	py = GetWidgetCache("glclient.topwindow.y");
-	if (px != NULL && py != NULL) {
-		x = atoi(px); y = atoi(py);
-	} else {
-		x = 0; y = 0;
-	}
-	pwidth = GetWidgetCache("glclient.topwindow.width");
-	pheight = GetWidgetCache("glclient.topwindow.height");
-	if (pwidth != NULL && pheight != NULL) {
-		width = atoi(pwidth); height = atoi(pheight);
-	} else {
-		width = DEFAULT_WINDOW_WIDTH;
-		height = DEFAULT_WINDOW_HEIGHT;
-	}
-	TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH);
-	TopWindowScale.v = (height * 1.0) / (DEFAULT_WINDOW_HEIGHT - 24);
-
-	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_widget_set_uposition(TopWindow,x,y);
-	gtk_window_set_default_size(GTK_WINDOW(TopWindow),width,height);
-
-	TopNoteBook = gtk_notebook_new();
-	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
-	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
-
-	gtk_signal_connect(GTK_OBJECT(TopWindow), 
-		"delete_event", (GtkSignalFunc)gtk_true, NULL);
-	gtk_signal_connect(GTK_OBJECT(TopWindow), 
-		"configure_event", (GtkSignalFunc)ConfigureWindow, NULL);
-	DialogStack = NULL;
+	InitTopWindow();
 }
 
 extern	void

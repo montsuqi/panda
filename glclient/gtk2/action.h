@@ -46,5 +46,6 @@ extern	GtkWidget	*GetWidgetByWindowNameAndLongName(char *wname, char *name);
 extern	GtkWidget	*GetWidgetByWindowNameAndName(char *wname, char *name);
 extern	void		ConfigureWindow(GtkWidget *widget,GdkEventConfigure *ev, 
 						gpointer data);
+extern	void		InitTopWindow(void);
 
 #endif

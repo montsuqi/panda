@@ -678,8 +678,9 @@ ConfigureWindow(GtkWidget *widget,
 	gtk_window_get_position(GTK_WINDOW(widget), &x,&y);
 	gtk_window_get_size(GTK_WINDOW(widget), &width,&height);
 
-	TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH * 1.0);
-	TopWindowScale.v = (height * 1.0) / (DEFAULT_WINDOW_HEIGHT * 1.0 - 24);
+	TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH);
+	TopWindowScale.v = (height * 1.0) / 
+		(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
 
 #if 0
 	fprintf(stderr,"[%d,%d][%d,%d][%f,%f]\n",
@@ -698,3 +699,56 @@ ConfigureWindow(GtkWidget *widget,
 	SetWidgetCache("glclient.topwindow.height",buf);
 }
 
+extern	void
+InitTopWindow(void)
+{
+	char *px, *py, *pwidth, *pheight;
+	int x,y,width,height;
+
+	px = GetWidgetCache("glclient.topwindow.x");
+	py = GetWidgetCache("glclient.topwindow.y");
+	if (px != NULL && py != NULL) {
+		x = atoi(px); y = atoi(py);
+	} else {
+		x = 0; y = 0;
+	}
+	pwidth = GetWidgetCache("glclient.topwindow.width");
+	pheight = GetWidgetCache("glclient.topwindow.height");
+	if (pwidth != NULL && pheight != NULL) {
+		width = atoi(pwidth); height = atoi(pheight);
+	} else {
+		width = DEFAULT_WINDOW_WIDTH;
+		height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
+	}
+
+	if (getenv("GLCLIENT_SET_DEFAULT_SIZE") != NULL ||
+		getenv("GLCLIENT2_SET_DEFAULT_SIZE") != NULL) {
+		width = DEFAULT_WINDOW_WIDTH;
+		height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
+	}
+
+	TopWindowScale.v = (width * 1.0) / (DEFAULT_WINDOW_WIDTH );
+	TopWindowScale.h = (height * 1.0) / 
+		(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
+
+	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+	gtk_widget_set_uposition(TopWindow,x,y); // not recommend
+	gtk_widget_set_size_request(TopWindow,width, height);
+
+	GdkGeometry geometry;
+	geometry.min_width = 100;
+	geometry.min_height = 100;
+	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
+		GDK_HINT_MIN_SIZE);
+
+	g_signal_connect(G_OBJECT(TopWindow), 
+		"delete_event", G_CALLBACK(gtk_true), NULL);
+	g_signal_connect(G_OBJECT(TopWindow), 
+		"configure_event", G_CALLBACK(ConfigureWindow), NULL);
+
+	TopNoteBook = gtk_notebook_new();
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
+	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
+	gtk_container_set_resize_mode(GTK_CONTAINER(TopNoteBook),GTK_RESIZE_IMMEDIATE);
+	DialogStack = NULL;
+}
