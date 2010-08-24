@@ -490,42 +490,50 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	GdkCursor *Busycursor;
+static gchar *WindowTitle = NULL;
 
-extern	GdkWindow	*
+extern	void
 ShowBusyCursor(
 	GtkWidget	*widget)
 {
-	static GdkWindow	*pane;
-	GtkWidget	*window;
-	GdkWindowAttr	attr;
+	static GdkCursor *busycursor = NULL;
+	GtkWidget *window;
+	gchar *title;
 ENTER_FUNC;
-	memset (&attr, 0, sizeof (GdkWindowAttr));
-	attr.wclass = GDK_INPUT_ONLY;
-	attr.window_type = GDK_WINDOW_CHILD;
-	Busycursor = gdk_cursor_new (GDK_WATCH);
-	attr.cursor = Busycursor;
-	attr.x = attr.y = 0;
-	attr.width = attr.height = 32767;
-
-	if		(  widget  !=  NULL  ) {
-		window = gtk_widget_get_toplevel(widget);
-	} else {
-		window = NULL;
+	if (widget == NULL) {
+		return;
 	}
-	pane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
-	gdk_window_show (pane);
+	if (busycursor == NULL) {
+		busycursor = gdk_cursor_new (GDK_WATCH);
+	}
+	window = gtk_widget_get_toplevel(widget);
+	gtk_widget_set_sensitive(window,FALSE);
+	title = (gchar*)gtk_window_get_title(GTK_WINDOW(window));
+	if (title != NULL) {
+		WindowTitle = g_strdup(title);
+		gtk_window_set_title(GTK_WINDOW(window),_("Now loading..."));
+	}
+	gdk_window_set_cursor(window->window,busycursor);
 	gdk_flush ();
 LEAVE_FUNC;
-	return	(pane); 
 }
 
 extern	void
-HideBusyCursor(GdkWindow *pane)
+HideBusyCursor(GtkWidget *widget)
 {
 ENTER_FUNC;
-	gdk_cursor_destroy (Busycursor);
-	gdk_window_destroy (pane);
+	GtkWidget	*window;
+	if (widget == NULL) {
+		return;
+	}
+	window = gtk_widget_get_toplevel(widget);
+	if (WindowTitle != NULL) {
+		gtk_window_set_title(GTK_WINDOW(window),WindowTitle);
+		g_free(WindowTitle);
+		WindowTitle = NULL;
+	}
+	gtk_widget_set_sensitive(window,TRUE);
+	gdk_window_set_cursor(window->window,NULL);
 LEAVE_FUNC;
 }
 
