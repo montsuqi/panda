@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2010-07-06 09:45+0900\n"
+"POT-Creation-Date: 2010-08-24 17:05+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -174,7 +174,7 @@ msgid "Ok"
 msgstr "OK"
 
 #: glclient/gtk1/bootdialog.c:179 glclient/gtk1/dialogs.c:150
-#: glclient/gtk1/download.c:245 glclient/gtk1/printdialog.c:317
+#: glclient/gtk1/download.c:245 glclient/gtk1/printdialog.c:321
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -201,7 +201,7 @@ msgid "Delete"
 msgstr "削除"
 
 #: glclient/gtk1/bootdialog.c:486 glclient/gtk1/bootdialog.c:881
-#: glclient/gtk1/printdialog.c:104 glclient/gtk2/bootdialog.c:426
+#: glclient/gtk1/printdialog.c:106 glclient/gtk2/bootdialog.c:426
 #: glclient/gtk2/bootdialog.c:742
 msgid "Close"
 msgstr "閉じる"
@@ -260,7 +260,7 @@ msgid ""
 msgstr "%s ファイルに書き込めませんでした%s"
 
 #: glclient/gtk1/fileEntry.c:171 glclient/gtk1/download.c:120
-#: glclient/gtk1/printdialog.c:180
+#: glclient/gtk1/printdialog.c:182
 msgid "File already exists. Rewrite?"
 msgstr "ファイルが既に存在します。書き換えますか？"
 
@@ -268,7 +268,7 @@ msgstr "ファイルが既に存在します。書き換えますか？"
 msgid "OK"
 msgstr "OK"
 
-#: glclient/gtk1/download.c:142 glclient/gtk1/printdialog.c:201
+#: glclient/gtk1/download.c:142 glclient/gtk1/printdialog.c:203
 msgid "Please select a file for saving"
 msgstr "保存するファイルの選択"
 
@@ -289,19 +289,20 @@ msgstr ""
 msgid "Open with App"
 msgstr "開く"
 
-#: glclient/gtk1/download.c:235 glclient/gtk1/printdialog.c:294
+#: glclient/gtk1/download.c:235 glclient/gtk1/printdialog.c:298
 msgid "Save"
 msgstr "保存"
 
-#: glclient/gtk1/printdialog.c:140 glclient/gtk2/printdialog.c:123
+#: glclient/gtk1/printdialog.c:142 glclient/gtk2/printdialog.c:127
+#, c-format
 msgid ""
 "Can't save to %s \n"
 "%s"
-msgstr 
+msgstr ""
 "%sに書き込めませんでした\n"
 "%s"
 
-#: glclient/gtk1/printdialog.c:272 glclient/gtk2/printdialog.c:159
+#: glclient/gtk1/printdialog.c:276 glclient/gtk2/printdialog.c:163
 #, c-format
 msgid ""
 "There is the print data.\n"
@@ -318,11 +319,11 @@ msgstr ""
 "ページ数:%d\n"
 "サイズ:%s"
 
-#: glclient/gtk1/printdialog.c:284 glclient/gtk2/printdialog.c:65
+#: glclient/gtk1/printdialog.c:288 glclient/gtk2/printdialog.c:66
 msgid "Preview"
 msgstr "プレビュー"
 
-#: glclient/gtk1/printdialog.c:304
+#: glclient/gtk1/printdialog.c:308
 msgid "Print"
 msgstr "印刷"
 
@@ -348,9 +349,13 @@ msgstr "設定 %s はありません"
 msgid "glclient2 Launcher"
 msgstr "glclient2 ランチャー"
 
-#: glclient/gtk2/download.c:63 glclient/gtk2/printdialog.c:99
+#: glclient/gtk2/download.c:63 glclient/gtk2/printdialog.c:103
 msgid "Specify filename..."
 msgstr "保存するファイルの選択"
+
+#: glclient/gtk2/action.c:514
+msgid "Now loading..."
+msgstr "読み込み中..."
 
 #: glclient/client.c:76
 msgid "Cache Directory"
@@ -404,11 +409,11 @@ msgstr "セキュリティデバイスのスロット番号"
 msgid "mkdtemp failure"
 msgstr "mkdtemp に失敗しました"
 
-#: glclient/client.c:284
+#: glclient/client.c:287
 msgid "can not connect server(server port not found)"
 msgstr "サーバに接続できません(サーバまたはポートが見つかりません)"
 
-#: glclient/client.c:340
+#: glclient/client.c:342
 msgid "input Password"
 msgstr "パスワード"
 

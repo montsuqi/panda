@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2010-07-06 09:45+0900\n"
+"POT-Creation-Date: 2010-08-24 17:05+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -175,7 +175,7 @@ msgid "Ok"
 msgstr ""
 
 #: glclient/gtk1/bootdialog.c:179 glclient/gtk1/dialogs.c:150
-#: glclient/gtk1/download.c:245 glclient/gtk1/printdialog.c:317
+#: glclient/gtk1/download.c:245 glclient/gtk1/printdialog.c:321
 msgid "Cancel"
 msgstr ""
 
@@ -202,7 +202,7 @@ msgid "Delete"
 msgstr ""
 
 #: glclient/gtk1/bootdialog.c:486 glclient/gtk1/bootdialog.c:881
-#: glclient/gtk1/printdialog.c:104 glclient/gtk2/bootdialog.c:426
+#: glclient/gtk1/printdialog.c:106 glclient/gtk2/bootdialog.c:426
 #: glclient/gtk2/bootdialog.c:742
 msgid "Close"
 msgstr ""
@@ -261,7 +261,7 @@ msgid ""
 msgstr ""
 
 #: glclient/gtk1/fileEntry.c:171 glclient/gtk1/download.c:120
-#: glclient/gtk1/printdialog.c:180
+#: glclient/gtk1/printdialog.c:182
 msgid "File already exists. Rewrite?"
 msgstr ""
 
@@ -269,7 +269,7 @@ msgstr ""
 msgid "OK"
 msgstr ""
 
-#: glclient/gtk1/download.c:142 glclient/gtk1/printdialog.c:201
+#: glclient/gtk1/download.c:142 glclient/gtk1/printdialog.c:203
 msgid "Please select a file for saving"
 msgstr ""
 
@@ -286,18 +286,18 @@ msgstr ""
 msgid "Open with App"
 msgstr ""
 
-#: glclient/gtk1/download.c:235 glclient/gtk1/printdialog.c:294
+#: glclient/gtk1/download.c:235 glclient/gtk1/printdialog.c:298
 msgid "Save"
 msgstr ""
 
-#: glclient/gtk1/printdialog.c:140 glclient/gtk2/printdialog.c:123
+#: glclient/gtk1/printdialog.c:142 glclient/gtk2/printdialog.c:127
 #, c-format
 msgid ""
 "Can't save to %s \n"
 "%s"
 msgstr ""
 
-#: glclient/gtk1/printdialog.c:272 glclient/gtk2/printdialog.c:159
+#: glclient/gtk1/printdialog.c:276 glclient/gtk2/printdialog.c:163
 #, c-format
 msgid ""
 "There is the print data.\n"
@@ -308,11 +308,11 @@ msgid ""
 "Size:%s"
 msgstr ""
 
-#: glclient/gtk1/printdialog.c:284 glclient/gtk2/printdialog.c:65
+#: glclient/gtk1/printdialog.c:288 glclient/gtk2/printdialog.c:66
 msgid "Preview"
 msgstr ""
 
-#: glclient/gtk1/printdialog.c:304
+#: glclient/gtk1/printdialog.c:308
 msgid "Print"
 msgstr ""
 
@@ -338,8 +338,12 @@ msgstr ""
 msgid "glclient2 Launcher"
 msgstr ""
 
-#: glclient/gtk2/download.c:63 glclient/gtk2/printdialog.c:99
+#: glclient/gtk2/download.c:63 glclient/gtk2/printdialog.c:103
 msgid "Specify filename..."
+msgstr ""
+
+#: glclient/gtk2/action.c:514
+msgid "Now loading..."
 msgstr ""
 
 #: glclient/client.c:76
@@ -394,11 +398,11 @@ msgstr ""
 msgid "mkdtemp failure"
 msgstr ""
 
-#: glclient/client.c:284
+#: glclient/client.c:287
 msgid "can not connect server(server port not found)"
 msgstr ""
 
-#: glclient/client.c:340
+#: glclient/client.c:342
 msgid "input Password"
 msgstr ""
 
