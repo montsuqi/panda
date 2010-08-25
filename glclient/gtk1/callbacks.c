@@ -232,7 +232,6 @@ send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	GdkWindow	*pane;
 	char		*wname;
 	static Bool	ignore_event = FALSE;
 
@@ -243,8 +242,7 @@ ENTER_FUNC;
 		StopEventTimer();
 		StopTimerWidgetAll();
 
-		pane = ShowBusyCursor(widget);
-
+		ShowBusyCursor(widget);
 
 		wname = GetWindowName(widget);
 		/* send event */
@@ -268,7 +266,7 @@ ENTER_FUNC;
 			ClearKeyBuffer();
 			ignore_event = FALSE;
 		}
-		HideBusyCursor(pane); 
+		HideBusyCursor(widget); 
 		fInRecv = FALSE;
 	}
 LEAVE_FUNC;
