@@ -511,7 +511,6 @@ ENTER_FUNC;
 		busycursor = gdk_cursor_new (GDK_WATCH);
 	}
 	window = gtk_widget_get_toplevel(widget);
-	gtk_widget_set_sensitive(window,FALSE);
 	title = (gchar*)gtk_window_get_title(GTK_WINDOW(window));
 	if (title != NULL) {
 		WindowTitle = g_strdup(title);
@@ -536,7 +535,6 @@ ENTER_FUNC;
 		g_free(WindowTitle);
 		WindowTitle = NULL;
 	}
-	gtk_widget_set_sensitive(window,TRUE);
 	gdk_window_set_cursor(window->window,NULL);
 LEAVE_FUNC;
 }
