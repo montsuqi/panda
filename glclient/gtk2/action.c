@@ -58,6 +58,7 @@ static struct changed_hander {
 	gint					block_flag;
 	struct changed_hander 	*next;
 } *changed_hander_list = NULL;
+static gchar *WindowTitle = NULL;
 
 static void ScaleWidget(GtkWidget *widget, gpointer data);
 static void ScaleWindow(GtkWidget *widget);
@@ -296,6 +297,10 @@ SetTitle(GtkWidget	*window,
 		snprintf(buff, sizeof(buff), "%s", window_title);
 	}
 	gtk_window_set_title (GTK_WINDOW(window), buff);
+	if (WindowTitle != NULL) {
+		g_free(WindowTitle);
+	}
+	WindowTitle = g_strdup(buff);
 }
 
 extern	void	
@@ -490,7 +495,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static gchar *WindowTitle = NULL;
 
 extern	void
 ShowBusyCursor(
