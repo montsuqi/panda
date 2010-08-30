@@ -257,7 +257,7 @@ TryRecv(
 	int size;
 
 	if (req->buf_size >= MAX_REQ_SIZE) {
-		req->status = HTTP_UNPROCESSABLE_ENTITY;
+		req->status = HTTP_REQUEST_ENTITY_TOO_LARGE;
 		SendResponse(req, NULL);
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
@@ -480,15 +480,6 @@ ParseReqBody(HTTP_REQUEST *req)
 	}
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Type");
 
-#if 0
-	// FIXME ; delete this check
-	if (strcmp("application/xml", value)) {
-		req->status = HTTP_BAD_REQUEST;
-		Message("invalid Content-Type:%s", value);
-		return;
-	}
-#endif
-
 	p = req->head;
 
 	partsize = strlen(p);
@@ -671,7 +662,7 @@ _HTTP_Method(
 
 	if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
 		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
-		req->status = HTTP_UNAUTHORIZED;
+		req->status = HTTP_FORBIDDEN;
 	}
 	if (req->status != HTTP_OK) {
 		SendResponse(req, NULL);
