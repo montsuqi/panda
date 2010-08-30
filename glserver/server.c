@@ -667,7 +667,6 @@ ENTER_FUNC;
 			break;
 		case HTTP_GET:
 		case HTTP_POST:
-		case HTTP_HEAD:
 			if (fAPI) {
 				alarm(TIMEOUT_SEC);
 				HTTP_Method(klass, fpComm);

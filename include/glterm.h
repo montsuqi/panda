@@ -56,7 +56,6 @@
 #define	GL_Pong						(PacketClass)0x10
 
 #define HTTP_GET					(PacketClass)0x47
-#define HTTP_HEAD					(PacketClass)0x48
 #define HTTP_POST					(PacketClass)0x50
 
 #define	GL_OK						(PacketClass)0x80
