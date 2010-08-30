@@ -351,9 +351,6 @@ ParseReqLine(HTTP_REQUEST *req)
 	case HTTP_GET:
 		cmp = strncmp("ET", head, strlen("ET"));
 		break;
-	case HTTP_HEAD:
-		cmp = strncmp("EAD", head, strlen("EAD"));
-		break;
 	case HTTP_POST:
 		cmp = strncmp("OST", head, strlen("OST"));
 		break;
@@ -667,10 +664,6 @@ _HTTP_Method(
 	if (req->status != HTTP_OK) {
 		SendResponse(req, NULL);
 		return FALSE;
-	}
-	if (req->method == HTTP_HEAD) {
-		SendResponse(req, NULL);
-		return TRUE;
 	}
 	data = MakeMonAPIData(req);
 	if (data == NULL) {
