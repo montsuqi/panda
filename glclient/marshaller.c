@@ -865,7 +865,7 @@ RecvPandaPrint(
 	Bool			ret;
 	PrintRequest	*req;
 	char			name[SIZE_BUFF]
-	,				url[SIZE_BUFF]
+	,				path[SIZE_BUFF]
 	,				title[SIZE_BUFF];
 	int				nitem
 	,				nitem2
@@ -886,20 +886,20 @@ ENTER_FUNC;
 				for	( j = 0 ; j < nitem2 ; j ++ ) {
 					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 					nitem3 = GL_RecvInt(fp);
-					url[0] = 0; title[0] = 0;
+					path[0] = 0; title[0] = 0;
 					for	( k = 0 ; k < nitem3 ; k ++ ) {
 						GL_RecvName(fp, sizeof(name), name);
-						if (!stricmp(name,"url")) {
-							RecvStringData(fp,url,SIZE_BUFF);
+						if (!stricmp(name,"path")) {
+							RecvStringData(fp,path,SIZE_BUFF);
 						} else if (!stricmp(name,"title")) {
 							RecvStringData(fp,title,SIZE_BUFF);
 						}
-						if (strlen(url) > 0 && strlen(title) > 0) {
+						if (strlen(path) > 0 && strlen(title) > 0) {
 							req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
-							req->url = StrDup(url);
+							req->path = StrDup(path);
 							req->title = StrDup(title);
 							PrintList = g_list_append(PrintList,req);
-							MessageLogPrintf("add url[%s]\n",url);
+							MessageLogPrintf("add path[%s]\n",path);
 						}
 					}
 				}

@@ -60,12 +60,13 @@ WriteData(
 
 static int 
 DoPrint(
-	char *url,
+	char *path,
 	char *title)
 {
 	FILE *fp;
 	int fd;
 	mode_t mode;
+	char url[1024+1];
 	char fname[256];
 	char userpass[256];
 	CURL *curl;
@@ -81,6 +82,7 @@ DoPrint(
 
 	sprintf(fname,"%s/glclient_print_XXXXXX",TempDir);
 	sprintf(userpass,"%s:%s",User,Pass);
+	snprintf(url,sizeof(url),"http://%s/%s",PortNumber,path);
 
 	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 	if ((fd = mkstemp(fname)) != -1) {
@@ -117,7 +119,7 @@ DoPrint(
 static void
 FreePrintRequest(PrintRequest *req)
 {
-	xfree(req->url);
+	xfree(req->path);
 	xfree(req->title);
 	xfree(req);
 }
@@ -138,8 +140,8 @@ CheckPrintList()
 			Warning("print request is NULL.");
 			continue;
 		}
-		MessageLogPrintf("donwload url[%s]\n",req->url);
-		if (DoPrint(req->url,req->title)) {
+		MessageLogPrintf("donwload path[%s]\n",req->path);
+		if (DoPrint(req->path,req->title)) {
 			// retry
 			list = g_list_append(list,req);
 		} else {
