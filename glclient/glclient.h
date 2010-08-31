@@ -59,7 +59,7 @@ typedef struct {
 }	WindowData;
 
 typedef struct {
-	char		*url;
+	char		*path;
 	char		*title;
 }	PrintRequest;
 
