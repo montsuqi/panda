@@ -424,6 +424,9 @@ ENTER_FUNC;
 	path = NewPathStruct(usage);
 	paths[pcount] = path;
 	path->name = StrDup(ComSymbol);
+	if ( g_hash_table_lookup(RecordDB(rec)->paths,path->name) != NULL) {
+		Warning("path:%s key:%s duplicate", rec->name, path->name);
+	}
 	g_hash_table_insert(RecordDB(rec)->paths,path->name,(void *)((long)pcount+1));
 	RecordDB(rec)->pcount ++;
 	RecordDB(rec)->path = paths;
