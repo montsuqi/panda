@@ -29,16 +29,20 @@
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
 #include	<openssl/pkcs12.h>
-#ifdef USE_PKCS11
-#include	<opensc/rsaref/unix.h>
-#include	<opensc/rsaref/pkcs11.h>
-#include	<openssl/engine.h>
-#include	<dlfcn.h>
-#define		PKCS11_MAX_SLOT_NUM			16
-#define		PKCS11_MAX_OBJECT_NUM		16
-#define		PKCS11_BUF_SIZE				256
-#define		PKCS11_OBJECT_SIZE			4096
-#endif	/* USE_PKCS11 */
+#	ifdef	USE_PKCS11
+#		ifdef	OLD_OPENSC
+#			include	<opensc/rsaref/unix.h>
+#			include	<opensc/rsaref/pkcs11.h>
+#		else
+#			include	<opensc/pkcs11.h>
+#		endif
+#			include	<openssl/engine.h>
+#			include	<dlfcn.h>
+#		define		PKCS11_MAX_SLOT_NUM			16
+#		define		PKCS11_MAX_OBJECT_NUM		16
+#		define		PKCS11_BUF_SIZE				256
+#		define		PKCS11_OBJECT_SIZE			4096
+#	endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
 
 #include	"libmondai.h"

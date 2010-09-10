@@ -493,23 +493,26 @@ AC_ARG_WITH(pkcs11,
 	else
 		engine_pkcs11=$withval 
  	fi
-	pkcs11_header=""
-	for d in $dir /usr/ /usr/lib/ /opt
-	do 
-		if test -f $d/include/opensc/rsaref/pkcs11.h 
-		then 
-			AC_MSG_RESULT(found pkcs11.h in $d) 
-			pkcs11_header=$d/include/opensc/rsaref/pkcs11.h  
-			break 
-		fi 
-	done 
-	if test x$pkcs11_header = x 
+
+	PKG_CHECK_MODULES(CHECK_GTK_VER, libopensc >= 0.11.4,
+	[
+		enable_pkcs11="yes"
+	],
+	[
+		PKG_CHECK_MODULES(CHECK_GTK_VER, libopensc >= 0.11.1,
+		[
+			enable_pkcs11="yes"
+			AC_DEFINE(OLD_OPENSC, 1, "")
+		],
+		[
+  			AC_MSG_WARN(not found libopensc.pc) 
+		])
+	]) 
+
+	if test $enable_pkcs11 = yes
 	then
-		AC_MSG_WARN(pkcs11 header not used) 
-	else
 		AC_DEFINE(USE_PKCS11,1,"")
 		AC_DEFINE_UNQUOTED(ENGINE_PKCS11_PATH,"$engine_pkcs11","")
-		enable_pkcs11="yes"
 	fi
 ])
 
