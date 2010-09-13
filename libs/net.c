@@ -1547,7 +1547,7 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *pkcs11, const char *slots
     }
     
     /* get certificate and keyid by PKCS#11 */
-    if (slotstr != NULL){
+    if (strcmp("",slotstr)){
         slot = atol(slotstr);
         flag = PKCS11GetCertificate(slot,
             p11funcs,
