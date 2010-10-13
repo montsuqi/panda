@@ -290,7 +290,7 @@ BD_Parser(
 ENTER_FUNC;
 	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  ( in = PushLexInfo(&root,name,D_Dir,Reserved) )  !=  NULL  ) {
+		if		(  ( in = PushLexInfo(&root,name,ThisEnv->D_Dir,Reserved) )  !=  NULL  ) {
 			ret = ParBD(in);
 			DropLexInfo(&in);
 			BindHandler(ret);
