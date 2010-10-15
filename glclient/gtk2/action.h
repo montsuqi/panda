@@ -39,7 +39,7 @@ extern	void		ShowBusyCursor(GtkWidget *widget);
 extern	void		StopTimerWidgetAll(void);
 extern	void		HideBusyCursor(GtkWidget *widget);
 extern  void 		ResetScrolledWindow(GtkWidget *widget, gpointer user_data);
-extern  void		SetTitle(GtkWidget *window, char *window_title);
+extern  void		SetTitle(GtkWidget *window);
 extern	GtkWidget	*GetWidgetByLongName(char *longName);
 extern	GtkWidget	*GetWidgetByName(char *dataName);
 extern	GtkWidget	*GetWidgetByWindowNameAndLongName(char *wname, char *name);

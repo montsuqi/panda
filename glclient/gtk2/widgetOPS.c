@@ -545,14 +545,11 @@ SetWindow(
 	_Window				*data)
 {
 ENTER_FUNC;
-	WindowData *wdata;
-
-	wdata = g_hash_table_lookup(WindowTable, (char *)gtk_widget_get_name(widget));
 	SetState(widget,(GtkStateType)(data->state));
 	SetStyle(widget,GetStyle(data->style));
-	if (data->title != NULL && wdata != NULL) {
+	if (data->title != NULL) {
 		SetSessionTitle(data->title);
-		SetTitle(TopWindow, wdata->title);
+		SetTitle(TopWindow);
 	}
 LEAVE_FUNC;
 }
