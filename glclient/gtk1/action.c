@@ -57,7 +57,6 @@ static struct changed_hander {
 	gint		block_flag;
 	struct changed_hander *next;
 } *changed_hander_list = NULL;
-static gchar *WindowTitle = NULL;
 
 static void ScaleWidget(GtkWidget *widget, gpointer data);
 static void ScaleWindow(GtkWidget *widget);
@@ -303,21 +302,21 @@ AddChangedWidget(
 
 
 extern void
-SetTitle(GtkWidget	*window,
-	char *window_title)
+SetTitle(GtkWidget	*window)
 {
-	char		buff[SIZE_BUFF];
+	char buff[SIZE_BUFF];
+	WindowData *wdata;
 
-	if ( glSession->title != NULL && strlen(glSession->title) > 0 ) {
-		snprintf(buff, sizeof(buff), "%s - %s", window_title, glSession->title);
+	wdata = g_hash_table_lookup(WindowTable, (char *)gtk_widget_get_name(window));
+	if (wdata == NULL || wdata->title == NULL) {
+		return;
+	}
+	if ( window == TopWindow && glSession->title != NULL && strlen(glSession->title) > 0 ) {
+		snprintf(buff, sizeof(buff), "%s - %s", wdata->title, glSession->title);
 	} else {
-		snprintf(buff, sizeof(buff), "%s", window_title);
+		snprintf(buff, sizeof(buff), "%s", wdata->title);
 	}
 	gtk_window_set_title (GTK_WINDOW(window), buff);
-	if (WindowTitle != NULL) {
-		g_free(WindowTitle);
-	}
-	WindowTitle = g_strdup(buff);
 }
 
 extern	void	
@@ -473,7 +472,7 @@ ENTER_FUNC;
 	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
 	if (data->fWindow) {
 	dbgmsg("show primari window\n");
-		SetTitle(TopWindow, data->title);
+		SetTitle(TopWindow);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
 			SwitchWindow(window);
 			if (!data->fAccelGroup) {
@@ -534,14 +533,10 @@ ENTER_FUNC;
 	if (Busycursor == NULL) {
 		Busycursor = gdk_cursor_new (GDK_WATCH);
 	}
-
 	window = gtk_widget_get_toplevel(widget);
 	if (window != NULL) {
 		BusyPane = gdk_window_new(window->window, &attr, GDK_WA_CURSOR);
-		if (GTK_WINDOW(window)->title != NULL) {
-			WindowTitle = g_strdup(GTK_WINDOW(window)->title);
-			gtk_window_set_title(GTK_WINDOW(window),_("Now loading..."));
-		}
+		gtk_window_set_title(GTK_WINDOW(window),_("Now loading..."));
 		gdk_window_show (BusyPane);
 		gdk_flush ();
 	}
@@ -557,14 +552,8 @@ ENTER_FUNC;
 		gdk_window_destroy (BusyPane);
 		BusyPane = NULL;
 	}
-	if (WindowTitle != NULL) {
-		window = gtk_widget_get_toplevel(widget);
-		if (window != NULL) {
-			gtk_window_set_title(GTK_WINDOW(window),WindowTitle);
-		}
-		g_free(WindowTitle);
-		WindowTitle = NULL;
-	}
+	window = gtk_widget_get_toplevel(widget);
+	SetTitle(window);
 	gdk_flush();
 LEAVE_FUNC;
 }
