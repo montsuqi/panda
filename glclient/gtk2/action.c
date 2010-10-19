@@ -603,8 +603,9 @@ ScaleWidget(
 	width = g_object_get_data(G_OBJECT(widget),"width");
 	height = g_object_get_data(G_OBJECT(widget),"height");
 
-	if (GTK_IS_CONTAINER(widget) && !GTK_IS_SCROLLED_WINDOW(widget)) {
-		gtk_container_set_resize_mode(GTK_CONTAINER(widget),GTK_RESIZE_IMMEDIATE);
+
+	if (GTK_IS_CONTAINER(widget) && ! GTK_IS_SCROLLED_WINDOW(widget)) {
+		gtk_container_set_resize_mode(GTK_CONTAINER(widget),GTK_RESIZE_QUEUE);
 		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, data);
 	}
 	if (x != NULL && y != NULL && width != NULL && height != NULL) {
@@ -614,6 +615,7 @@ ScaleWidget(
 		_y = (int)(*y * TopWindowScale.v);
 		_width = (int)(*width * TopWindowScale.h);
 		_height = (int)(*height * TopWindowScale.v);
+
 #if 0
 		fprintf(stderr,"[[%d,%d],[%d,%d]]->[[%d,%d],[%d,%d]]\n",
 			*x,*y,*width,*height,
