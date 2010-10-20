@@ -87,9 +87,7 @@ ENTER_FUNC;
 	DB_Table = ThisDBD->DBD_Table;
 	CurrentProcess = NULL;
 
-	if		(  ThisDBD->cDB  >  0  ) {
-		InitDB_Process(NULL);
-	}
+	InitDB_Process(NULL);
 LEAVE_FUNC;
 }
 

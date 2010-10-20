@@ -184,10 +184,8 @@ ENTER_FUNC;
 		Error("invalid LD name");
 	}
 	InitAPSIO(fpWFC);
-	if		( ThisLD->cDB  >  0 ) {
-		if ( ReadyOnlineDB(fpWFC) < 0 ){
-			Error("Online DB is not ready");
-		}
+	if ( ReadyOnlineDB(fpWFC) < 0 ){
+		Error("Online DB is not ready");
 	}
 	node = MakeProcessNode();
 	for	( tran = MaxTran;(	(  MaxTran  ==  0  )

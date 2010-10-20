@@ -421,9 +421,7 @@ _StopDC(
 	MessageHandler	*handler)
 {
 ENTER_FUNC;
-	if		(  ThisLD->cDB  >  0  ) {
-		_StopDB(handler);
-	}
+	_StopDB(handler);
 LEAVE_FUNC;
 }
 

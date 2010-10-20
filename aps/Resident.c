@@ -399,9 +399,7 @@ _StopDC(
 	MessageHandler	*handler)
 {
 dbgmsg(">StopDC");
-	if		(  ThisLD->cDB  >  0  ) {
-		_StopDB(handler);
-	}
+	_StopDB(handler);
 dbgmsg("<StopDC");
 }
 

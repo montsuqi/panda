@@ -307,9 +307,7 @@ _StopDC(
 	MessageHandler	*handler)
 {
 ENTER_FUNC;
-	if		(  ThisLD->cDB  >  0  ) {
-		_StopDB(handler);
-	}
+	_StopDB(handler);
 	xfree(McpData);
 	xfree(LinkData);
 	xfree(SpaData);

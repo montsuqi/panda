@@ -86,10 +86,8 @@ ENTER_FUNC;
 	if		(  ( Bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		Error("%s application is not in BD.",name);
 	}
-	if		(  ThisBD->cDB  >  0  ) {
-		InitDB_Process(NULL);
-		ReadyHandlerDB(Bind->handler);
-	}
+	InitDB_Process(NULL);
+	ReadyHandlerDB(Bind->handler);
 LEAVE_FUNC;
 }
 
@@ -110,10 +108,8 @@ StopProcess(
 	int		ec)
 {
 ENTER_FUNC;
-	if		(  ThisBD->cDB  >  0  ) {
-		StopHandlerDB(Bind->handler);
-		CleanUpHandlerDB(Bind->handler);
-	}
+	StopHandlerDB(Bind->handler);
+	CleanUpHandlerDB(Bind->handler);
 LEAVE_FUNC;
 	exit(ec);
 }
