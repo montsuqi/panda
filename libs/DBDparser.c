@@ -84,7 +84,7 @@ ParDBDB(
 	char		*p
 	,			*q;
 
-dbgmsg(">ParDBDB");
+ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
@@ -123,7 +123,24 @@ dbgmsg(">ParDBDB");
 		ERROR_BREAK;
 	}
 	xfree(gname);
-dbgmsg("<ParDBDB");
+LEAVE_FUNC;
+}
+
+static	DBD_Struct	*
+NewDBD(void)
+{
+	DBD_Struct	*dbd;
+ENTER_FUNC;
+	dbd = New(DBD_Struct);
+	dbd->name = NULL;
+	dbd->cDB = 1;
+	dbd->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
+	dbd->db[0] = NULL;
+	dbd->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
+	dbd->textsize = SIZE_DEFAULT_TEXT_SIZE;
+	dbd->DBD_Table = NewNameHash();
+LEAVE_FUNC;
+	return (dbd);
 }
 
 static	DBD_Struct	*
@@ -133,7 +150,7 @@ ParDB(
 	DBD_Struct	*ret;
 	char		*gname;
 
-dbgmsg(">ParDB");
+ENTER_FUNC;
 	ret = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
@@ -141,14 +158,8 @@ dbgmsg(">ParDB");
 			if		(  GetName  !=  T_SYMBOL  ) {
 				ParError("no name");
 			} else {
-				ret = New(DBD_Struct);
+				ret = NewDBD();
 				ret->name = StrDup(ComSymbol);
-				ret->cDB = 1;
-				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
-				ret->db[0] = NULL;
-				ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
-				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
-				ret->DBD_Table = NewNameHash();
 			}
 			break;
 		  case	T_ARRAYSIZE:
@@ -189,7 +200,7 @@ dbgmsg(">ParDB");
 		}
 		ERROR_BREAK;
 	}
-dbgmsg("<ParDB");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -202,7 +213,7 @@ DBD_Parser(
 	CURFILE		*in
 		,		root;
 
-dbgmsg(">DBD_Parser");
+ENTER_FUNC;
 	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,D_Dir,Reserved) )  !=  NULL  ) {
@@ -215,7 +226,7 @@ dbgmsg(">DBD_Parser");
 	} else {
 		ret = NULL;
 	}
-dbgmsg("<DBD_Parser");
+LEAVE_FUNC;
 	return	(ret);
 }
 

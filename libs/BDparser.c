@@ -162,6 +162,27 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static  BD_Struct	*
+NewBD(void)
+{
+	BD_Struct	*bd;
+ENTER_FUNC;
+	bd = New(BD_Struct);
+	bd->name = NULL;
+	bd->cDB = 1;
+	bd->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
+	bd->db[0] = NULL;
+	bd->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
+	bd->textsize = SIZE_DEFAULT_TEXT_SIZE;
+	bd->DB_Table = NewNameHash();
+	bd->BatchTable = NewNameHash();
+	bd->home = NULL;
+	bd->loadpath = NULL;
+	bd->handlerpath = NULL;
+LEAVE_FUNC;
+	return (bd);
+}
+
 static	BD_Struct	*
 ParBD(
 	CURFILE	*in)
@@ -177,18 +198,8 @@ ENTER_FUNC;
 			if		(  GetName  !=  T_SYMBOL  ) {
 				ParError("no name");
 			} else {
-				ret = New(BD_Struct);
+				ret = NewBD();
 				ret->name = StrDup(ComSymbol);
-				ret->cDB = 1;
-				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
-				ret->db[0] = NULL;
-				ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
-				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
-				ret->DB_Table = NewNameHash();
-				ret->BatchTable = NewNameHash();
-				ret->home = NULL;
-				ret->loadpath = NULL;
-				ret->handlerpath = NULL;
 			}
 			break;
 		  case	T_ARRAYSIZE:
@@ -258,7 +269,7 @@ ENTER_FUNC;
 		}
 		ERROR_BREAK;
 	}
-dbgmsg("<ParBD");
+LEAVE_FUNC;
 	return	(ret);
 }
 

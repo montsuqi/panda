@@ -329,6 +329,32 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static  LD_Struct   *
+NewLD(void)
+{
+	LD_Struct	*ld;
+ENTER_FUNC;
+	ld = New(LD_Struct);
+	ld->name = NULL;
+	ld->group = "";
+	ld->ports = NULL;
+	ld->whash = NewNameHash();
+	ld->bhash = NewNameHash();
+	ld->nCache = 0;
+	ld->cDB = 1;
+	ld->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
+	ld->db[0] = NULL;
+	ld->cWindow = 0;
+	ld->cBind = 0;
+	ld->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
+	ld->textsize = SIZE_DEFAULT_TEXT_SIZE;
+	ld->DB_Table = NewNameHash();
+	ld->home = NULL;
+	ld->loadpath = NULL;
+	ld->handlerpath = NULL;
+	return (ld);
+}
+
 static	LD_Struct	*
 ParLD(
 	CURFILE	*in)
@@ -337,24 +363,7 @@ ParLD(
 	char		*gname;
 
 ENTER_FUNC;
-    ret = New(LD_Struct);
-    ret->name = NULL;
-    ret->group = "";
-    ret->ports = NULL;
-    ret->whash = NewNameHash();
-    ret->bhash = NewNameHash();
-    ret->nCache = 0;
-    ret->cDB = 1;
-    ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
-    ret->db[0] = NULL;
-    ret->cWindow = 0;
-    ret->cBind = 0;
-    ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
-    ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
-    ret->DB_Table = NewNameHash();
-    ret->home = NULL;
-	ret->loadpath = NULL;
-	ret->handlerpath = NULL;
+	ret = NewLD();
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
 		  case	T_NAME:
