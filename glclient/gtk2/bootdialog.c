@@ -437,7 +437,8 @@ server_dialog_new (BDConfig * config, GtkWidget *parent)
   gtk_widget_set_usize (scroll, 450, 200);
   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), scroll, TRUE, TRUE, 5);
 
-  self->server_list = clist = gtk_panda_clist_new(server_dialog_titles_count);
+  self->server_list = clist = gtk_panda_clist_new();
+  gtk_panda_clist_set_n_columns(GTK_PANDA_CLIST(clist),server_dialog_titles_count);
   gtk_panda_clist_set_selection_mode(GTK_PANDA_CLIST(clist),
     GTK_SELECTION_SINGLE);
   for (i = 0; i < server_dialog_titles_count; i++) {
