@@ -32,7 +32,7 @@ typedef struct table
 {
 	char *name;
 	char relkind;
-	int  count;
+	char *count;
 	char ngkind;
 } Table;
 

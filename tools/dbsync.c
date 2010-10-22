@@ -109,9 +109,9 @@ ms_print(char *name, char *master, char *slave)
 }
 
 static void
-msr_print(char *result, char *master, int m_count, char *slave, int s_count)
+msr_print(char *result, char *master, char *m_count, char *slave, char *s_count)
 {
-	verPrintf("| %-6s   | %-17.17s %8d | ==> | %-17.17s %8d |\n",result, master,m_count,  slave, s_count);
+	verPrintf("| %-6s   | %-17.17s %8s | ==> | %-17.17s %8s |\n",result, master,m_count,  slave, s_count);
 }
 
 static void
@@ -225,24 +225,40 @@ add_ng_list(
 	} else {
 		table->name = NULL;
 		table->relkind = ' ';
-		table->count = 0;
+		table->count = StrDup("0");
 		table->ngkind = ' ';
 	}
 	ng_list->tables[ng_list->count] = table;
 	ng_list->count++;
 }
 
-static void
-void_table_list(
-	TableList *table_list)
+static char*
+table_name(
+	TableList *table_list,
+	int num)
 {
-	Table		*table;
-	table = NewTable();
-	table->name = strdup("");
-	table->relkind = 'z';
-	table_list->tables[0] = table;
+	char *ret;
+	if (table_list->count > num ){
+		ret = table_list->tables[num]->name;
+	} else {
+		ret = strdup("");
+	}
+	return ret;
 }
 
+static char
+table_relkind(
+	TableList *table_list,
+	int num)
+{
+	char ret;
+	if (table_list->count > num ){
+		ret = table_list->tables[num]->relkind;
+	} else {
+		ret = 'z';
+	}
+	return ret;
+}
 
 static TableList *
 table_check(
@@ -261,18 +277,12 @@ table_check(
 
 	ng_list = NewTableList(master_list->count + slave_list->count);
 	m = s = 0;
-	if (slave_list->count <= 0) {
-		void_table_list(slave_list);
-	}
-	if (master_list->count <= 0) {
-		void_table_list(master_list);
-	}
-	
+
 	for ( i=0; (master_list->count > m) || (slave_list->count > s); i++) {
-		cmp = strcmp( master_list->tables[m]->name, slave_list->tables[s]->name);
-		rcmp = (master_list->tables[m]->relkind - slave_list->tables[s]->relkind)* 2 + cmp;
+		cmp = strcmp( table_name(master_list,m), table_name(slave_list,s) );
+		rcmp = (table_relkind(master_list,m) - table_relkind(slave_list,s))*2 + cmp;
 		if ( rcmp == 0 ) {
-			if (master_list->tables[m]->count == slave_list->tables[s]->count) {
+			if (!strcmp(master_list->tables[m]->count,slave_list->tables[s]->count)) {
 				if (fVerbose){
 					msr_print("OK",
 						master_list->tables[m]->name,
@@ -300,7 +310,7 @@ table_check(
 				   master_list->tables[m]->name,
 				   master_list->tables[m]->count,
 				   "",
-				   0);
+				   "0");
 			fVerbose = fOVerbose;
 			add_ng_list(ng_list, master_list->tables[m], 's');
 			m++;
@@ -309,7 +319,7 @@ table_check(
 			pre_print(master_dbg, slave_dbg);
 			msr_print("NG",
 				   "",
-				   0,
+				   "0",
 				   slave_list->tables[s]->name,
 				   slave_list->tables[s]->count);
 			fVerbose = fOVerbose;
@@ -323,6 +333,10 @@ table_check(
 	}
 	separator();
 	fVerbose = fOVerbose;
+
+	pg_disconnect(master_dbg);
+	pg_disconnect(slave_dbg);
+	
 	return ng_list;
 }
 
@@ -452,12 +466,12 @@ main(
 /*		Error("ERROR: database can not access server %s", GetDB_Host(slave_dbg,DB_UPDATE)); */
 	}
 	if (fVerbose){
-		info_print(master_dbg, slave_dbg);
+		pre_print(master_dbg, slave_dbg);
 	}
 	if (!dbexist(master_dbg)){
 		Error("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));
 	}
-	if (!dbexist(slave_dbg)) {
+	if ( !fTablecheck && !dbexist(slave_dbg)) {
 		fAllsync = TRUE;
 	}
 	fp = connect_dbredirector(slave_dbg);

@@ -132,7 +132,7 @@ template1_check(
 	conn = template1_connect(dbg);
 	if (conn){
 		ret = TRUE;
-		PQfinish(conn);		
+		PQfinish(conn);
 	}
 	return ret;
 }
@@ -157,7 +157,7 @@ db_command(
 	Bool ret;
 	PGresult	*res;
 	
-	res = PQexec(conn, query);
+	res = db_exec(conn, query);
 	if ( 	(res != NULL )
 		 && (PQresultStatus(res) == PGRES_COMMAND_OK ) ) {
 		ret = TRUE;
@@ -423,7 +423,7 @@ getDBInfo(DBG_Struct	*dbg,
 	LBS_EmitString(sql, dbname);
 	LBS_EmitString(sql, "';\n");
 	LBS_EmitEnd(sql);
-	res = PQexec(conn, LBS_Body(sql));
+	res = db_exec(conn, LBS_Body(sql));
 	if ( (res == NULL) || (PQresultStatus(res) != PGRES_TUPLES_OK) ) {
 		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 	} else {
@@ -679,7 +679,7 @@ NewTable(void)
 	table = (Table *)malloc(sizeof(Table));
 	table->name = NULL;
 	table->relkind = ' ';
-	table->count = 0;	
+	table->count = NULL;	
 	return table;
 }
 
@@ -715,10 +715,17 @@ void TableCount(
 	PGresult	*res;
 	
 	for (i = 0; i < table_list->count; i++) {
-		if (table_list->tables[i]->relkind == 'i') continue;
+		if (table_list->tables[i]->relkind == 'i') {
+			table_list->tables[i]->count = StrDup("0");
+			continue;
+		}
 		sprintf(buff, "SELECT count(*) FROM %s;\n", table_list->tables[i]->name);
-		res = PQexec(conn, buff);
-		table_list->tables[i]->count = atoi(PQgetvalue(res, 0,0));
+		res = db_exec(conn, buff);
+		if ( (res != NULL) && (PQresultStatus(res) == PGRES_TUPLES_OK) ) {
+			table_list->tables[i]->count = StrDup(PQgetvalue(res, 0,0));
+		} else {
+			table_list->tables[i]->count = StrDup("0");
+		}
 		PQclear(res);
 	}
 }
@@ -728,7 +735,6 @@ TableList *
 getTableList( PGconn	*conn )
 {
 	PGresult	*res;
-	ExecStatusType status;
 	TableList	*table_list;
 	Table		*table;
 	char		*sql;
@@ -736,18 +742,21 @@ getTableList( PGconn	*conn )
 	int			i;
 
 	sql = queryTableList(ALL);
-	res = PQexec(conn, sql);
+	res = db_exec(conn, sql);
 	free(sql);
 	
-	status = PQresultStatus(res);
-	ntuples = PQntuples(res);
-	table_list = NewTableList(ntuples);
-	for (i = 0; i < ntuples; i++) {
-		table = NewTable();
-		table->name = strdup(PQgetvalue(res, i, 0));
-		table->relkind = *(PQgetvalue(res, i, 1));
-		table_list->tables[i] = table;
-		table_list->count++;
+	if ( (res != NULL) && (PQresultStatus(res) == PGRES_TUPLES_OK) ) {
+		ntuples = PQntuples(res);
+		table_list = NewTableList(ntuples);
+		for (i = 0; i < ntuples; i++) {
+			table = NewTable();
+			table->name = strdup(PQgetvalue(res, i, 0));
+			table->relkind = *(PQgetvalue(res, i, 1));
+			table_list->tables[i] = table;
+			table_list->count++;
+		}
+	} else {
+		table_list = NewTableList(0);
 	}
 	PQclear(res);
 
