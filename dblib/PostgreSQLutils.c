@@ -180,7 +180,7 @@ make_pgopts(
 
 	char *option;
 
-	pgoptv = malloc((255)*sizeof(char *));
+	pgoptv = xmalloc((SIZE_ARG)*sizeof(char *));
 
 	pgoptc = 0;	
 	pgoptv[pgoptc++] = strdup(command);
@@ -269,7 +269,7 @@ static void
 db_dump(int fd, char *pass, char **argv)
 {
 	char *sql;
-	char command[SIZE_BUFF];
+	char command[SIZE_BUFF + 1];
 	
 	snprintf(command, SIZE_BUFF, "%s/%s", POSTGRES_BINDIR, PG_DUMP);
 	setenv("PGPASSWORD", pass, 1);
@@ -392,7 +392,7 @@ static DBInfo *
 NewDBInfo(void)
 {
 	DBInfo *dbinfo;
-	dbinfo = (DBInfo *)malloc(sizeof(DBInfo));
+	dbinfo = (DBInfo *)xmalloc(sizeof(DBInfo));
 	dbinfo->tablespace = NULL;
 	dbinfo->template = NULL;
 	dbinfo->encoding = NULL;
@@ -640,7 +640,7 @@ static char *
 tableType( table_TYPE types )
 {
 	char		*type;
-	type = (char *)malloc(1024);
+	type = (char *)xmalloc(SIZE_OTHER);
 
 	switch(types){
 		case ALL:
@@ -665,10 +665,10 @@ TableList	*
 NewTableList(int count)
 {
 	TableList	*table_list;
-	table_list = (TableList *) malloc(sizeof(TableList));
+	table_list = (TableList *) xmalloc(sizeof(TableList));
 	table_list->count = 0;
 	table_list->tables = NULL;
-	table_list->tables = (Table **)malloc(count * sizeof(Table *));
+	table_list->tables = (Table **)xmalloc(count * sizeof(Table *));
 	return table_list;
 }
 
@@ -676,10 +676,10 @@ extern Table *
 NewTable(void)
 {
 	Table		*table;
-	table = (Table *)malloc(sizeof(Table));
+	table = (Table *)xmalloc(sizeof(Table));
 	table->name = NULL;
 	table->relkind = ' ';
-	table->count = NULL;	
+	table->count = NULL;
 	return table;
 }
 
@@ -690,9 +690,9 @@ queryTableList( table_TYPE types )
 	char		*type;
 
 	type = tableType(types);
-	sql = (char *)malloc(1024);
+	sql = (char *)xmalloc(SIZE_BUFF);
 	
-	snprintf(sql, 1024,
+	snprintf(sql, SIZE_BUFF,
 			 " SELECT c.relname,  c.relkind"
 			 "   FROM pg_catalog.pg_class AS c "
 			 "   JOIN pg_catalog.pg_roles r ON r.oid = c.relowner "
@@ -711,7 +711,7 @@ void TableCount(
 	TableList *table_list )
 {
 	int i;
-	char buff[1024];
+	char buff[SIZE_BUFF + 1];
 	PGresult	*res;
 	
 	for (i = 0; i < table_list->count; i++) {
@@ -719,7 +719,7 @@ void TableCount(
 			table_list->tables[i]->count = StrDup("0");
 			continue;
 		}
-		sprintf(buff, "SELECT count(*) FROM %s;\n", table_list->tables[i]->name);
+		snprintf(buff, SIZE_BUFF, "SELECT count(*) FROM %s;\n", table_list->tables[i]->name);
 		res = db_exec(conn, buff);
 		if ( (res != NULL) && (PQresultStatus(res) == PGRES_TUPLES_OK) ) {
 			table_list->tables[i]->count = StrDup(PQgetvalue(res, 0,0));
