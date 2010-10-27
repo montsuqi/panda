@@ -121,7 +121,7 @@ ENTER_FUNC;
 	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
 		*size = RecvLength(fp);				ON_IO_ERROR(fp,badio);
 		if		(  *size  >  0  ) {
-			buff = malloc(*size);
+			buff = xmalloc(*size);
 			red = Recv(fp,buff,*size);
 			*ret = buff;
 		}
