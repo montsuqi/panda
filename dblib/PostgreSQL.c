@@ -92,12 +92,11 @@ EscapeString(
 	LBS_ReserveSize(lbs, size + (len * 2) + 1, TRUE);
 	size += PQescapeStringConn(PGCONN(dbg,DB_UPDATE),
 							   LBS_Body(lbs) + size, str, len, &error);
-	if ( error == 0 ) {
-		LBS_ReserveSize(lbs, size, TRUE);
-		LBS_SetPos(lbs, size);
-	} else {
+	if ( error != 0 ) {
 		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
+	LBS_ReserveSize(lbs, size, TRUE);
+	LBS_SetPos(lbs, size);
 }
 
 static void
@@ -117,16 +116,14 @@ EscapeBytea(
 								bintext,
 								binlen,
 								&to_length);
-	if (to_char != NULL) {
-		LBS_ReserveSize(lbs, old_size + to_length, TRUE);
-		dp = LBS_Body(lbs) + old_size;
-		memcpy(dp, to_char, to_length);
-		PQfreemem(to_char);
-		LBS_SetPos(lbs, old_size + to_length);
-	} else {
-		Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
+	if (to_char == NULL) {
+		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
-
+	LBS_ReserveSize(lbs, old_size + to_length, TRUE);
+	dp = LBS_Body(lbs) + old_size;
+	memcpy(dp, to_char, to_length);
+	PQfreemem(to_char);
+    LBS_SetPos(lbs, old_size + to_length);
 }
 
 static void
@@ -195,7 +192,6 @@ ValueToSQL(
 	static	char	buff[SIZE_BUFF];
 	Numeric	nv;
 	Oid		id;
-	char	*str;
 
 	if		(  IS_VALUE_NIL(val)  ) {
 		LBS_EmitString(lbs,"null");
@@ -219,9 +215,7 @@ ValueToSQL(
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(&ValueFixed(val));
-		str = NumericOutput(nv);
-		LBS_EmitString(lbs, str);
-		xfree(str);
+		LBS_EmitString(lbs,NumericOutput(nv));
 		NumericFree(nv);
 		break;
 	  case	GL_TYPE_INT:
@@ -1510,25 +1504,6 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
-_DBSAVEPOINT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-	PGresult	*res;
-	int			rc;
-	PGconn	*conn;
-ENTER_FUNC;
-	rc = 0;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus  ==  DB_STATUS_CONNECT  ) {
-		conn = PGCONN(dbg,DB_UPDATE);
-		res = _PQexec(dbg,"SAVEPOINT",FALSE,DB_UPDATE);
-		_PQclear(res);
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
 _DBSELECT(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -1980,7 +1955,6 @@ static	DB_OPS	Operations[] = {
 	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
 	{	"DBSTART",		(DB_FUNC)_DBSTART },
 	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
-	{	"DBSAVEPOINT",		(DB_FUNC)_DBSAVEPOINT },
 	/*	table operations	*/
 	{	"DBSELECT",		_DBSELECT },
 	{	"DBFETCH",		_DBFETCH },
