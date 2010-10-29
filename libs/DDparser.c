@@ -73,7 +73,7 @@ ENTER_FUNC;
 	if		(  ( value = RecParseValue(name,&ValueName) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
-		ret->name = StrDup(ValueName);
+		ret->name = ValueName;
 		ret->type = RECORD_NULL;
 	} else {
 		ret = NULL;
@@ -94,7 +94,7 @@ ENTER_FUNC;
 	if		(  ( value = RecParseValueMem(mem,&ValueName) )  !=  NULL  ) {
 		ret = New(RecordStruct);
 		ret->value = value;
-		ret->name = StrDup(ValueName);
+		ret->name = ValueName;
 		ret->type = RECORD_NULL;
 	} else {
 		ret = NULL;
