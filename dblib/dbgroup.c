@@ -529,6 +529,23 @@ GetDB_Sslmode(
 	return	(sslmode);
 }
 
+extern	Bool
+CheckDBOperation(
+	char	*func)
+{
+	Bool ret;
+	if ( !strcmp(func,"DBOPEN") ||
+			 !strcmp(func,"DBCLOSE") ||
+			 !strcmp(func,"DBSTART") ||
+			 !strcmp(func,"DBCOMMIT") ||
+			 !strcmp(func,"DBDISCONNECT") ) {
+		ret = TRUE;
+	} else {
+		ret = FALSE;
+	}
+	return ret;
+}
+
 static	ValueStruct	*
 GetTableFuncValue(
 	RecordStruct	*rec,

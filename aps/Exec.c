@@ -146,15 +146,7 @@ ENTER_FUNC;
 			strcpy(ctrl.func,func);
 			ctrl.limit = 1;
 			ctrl.redirect = 1;
-			if ( !strcmp(func,"DBOPEN") ||
-					!strcmp(func,"DBCLOSE") ||
-					!strcmp(func,"DBSTART") ||
-					!strcmp(func,"DBCOMMIT") ||
-					!strcmp(func,"DBDISCONNECT") ) {
-				ctrl.fDBOperation = TRUE;
-			} else {
-				ctrl.fDBOperation = FALSE;
-			}
+			ctrl.fDBOperation = CheckDBOperation(func);
 			if		(  ( ctrl.rc = ValueInteger(GetItemLongName(recDBCTRL->value,"rc")) )
 						 >=  0  ) {
 				ret = ExecDB_Process(&ctrl,rec,value);

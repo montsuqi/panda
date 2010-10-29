@@ -83,11 +83,8 @@ ENTER_FUNC;
 	ResetUser(mcp);
 	InitializeCTRL(&ctrl);
 	strcpy(ctrl.func,func);
-	if		(  !strcmp(func,"DBOPEN") 		||
-				   !strcmp(func,"DBCLOSE")		||
-				   !strcmp(func,"DBSTART") 		||
-				   !strcmp(func,"DBCOMMIT")		||
-				   !strcmp(func,"DBDISCONNECT")  ) {
+	 
+	if		( CheckDBOperation(func) ){
 		ctrl.fDBOperation = TRUE;
 		rec = NULL;
 		value = NULL;
