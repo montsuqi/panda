@@ -162,9 +162,11 @@ ENTER_FUNC;
 		  case	T_PORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
+				DestroyPort(ThisEnv->WfcApsPort);
 				ThisEnv->WfcApsPort = NewIP_Port(NULL,IntStrDup(ComInt));
 				break;
 			  case	T_SCONST:
+				DestroyPort(ThisEnv->WfcApsPort);
 				ThisEnv->WfcApsPort = ParPort(ComSymbol,PORT_WFC_APS);
 				break;
 			  default:
@@ -176,9 +178,11 @@ ENTER_FUNC;
 		  case	T_TERMPORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
+				DestroyPort(ThisEnv->TermPort);
 				ThisEnv->TermPort = NewIP_Port(NULL,IntStrDup(ComInt));
 				break;
 			  case	T_SCONST:
+				DestroyPort(ThisEnv->TermPort);
 				ThisEnv->TermPort = ParPort(ComSymbol,PORT_WFC);
 				break;
 			  default:
@@ -209,10 +213,12 @@ ENTER_FUNC;
 		  case	T_PORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
+				DestroyPort(ThisEnv->ControlPort);
 				ThisEnv->ControlPort = NewIP_Port(NULL,IntStrDup(ComInt));
 				GetSymbol;
 				break;
 			  case	T_SCONST:
+				DestroyPort(ThisEnv->ControlPort);
 				ThisEnv->ControlPort = ParPort(ComSymbol,PORT_WFC_CONTROL);
 				GetSymbol;
 				break;
@@ -246,10 +252,12 @@ ENTER_FUNC;
 		  case	T_PORT:
 			switch	(GetSymbol) {
 			  case	T_ICONST:
+				DestroyPort(ThisEnv->DBMasterPort);
 				ThisEnv->DBMasterPort = NewIP_Port(NULL,IntStrDup(ComInt));
 				GetSymbol;
 				break;
 			  case	T_SCONST:
+				DestroyPort(ThisEnv->DBMasterPort);
 				ThisEnv->DBMasterPort = ParPort(ComSymbol,PORT_WFC_CONTROL);
 				GetSymbol;
 				break;
@@ -356,7 +364,7 @@ ENTER_FUNC;
 			ParError("sysdata keyword error");
 			break;
 		}
-		if		(  ComToken  !=  ';'  ) {		
+		if		(  ComToken  !=  ';'  ) {
 			ParError("missing ; in sysdata directive");
 		}
 		ERROR_BREAK;
@@ -938,6 +946,7 @@ ENTER_FUNC;
 			break;
 		  case	T_LOGPORT:
 			if		(  GetSymbol  ==  T_SCONST  ) {
+				DestroyPort(dbg->redirectPort);
 				dbg->redirectPort = ParPort(ComSymbol, PORT_LOG);
 			} else {
 				ParError("invalid port");

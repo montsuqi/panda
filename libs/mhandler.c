@@ -177,6 +177,7 @@ BindMessageHandlerCommon(
 ENTER_FUNC;
 	if		(  ( h = (MessageHandler *)g_hash_table_lookup(Handler,*(char **)handler) )
 			   !=  NULL  ) {
+		xfree(*(char **)handler);
 		*handler = h;
 	} else {
 		Error("invalid handler name: %s",*(char **)handler);

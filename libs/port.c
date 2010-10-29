@@ -40,15 +40,22 @@ extern	void
 DestroyPort(
 	Port	*port)
 {
-	switch	(port->type) {
-	  case	PORT_IP:
-		if		(  port->adrs.a_ip.port  !=  NULL  ) {
-			xfree(port->adrs.a_ip.port);
+	if (port != NULL){
+		switch	(port->type) {
+			case	PORT_IP:
+			  if		(  port->adrs.a_ip.port  !=  NULL  ) {
+					xfree(port->adrs.a_ip.port);
+			  }
+			  if		(  port->adrs.a_ip.host  !=  NULL  ) {
+					xfree(port->adrs.a_ip.host);
+			  }
+			  break;
+			case	PORT_UNIX:
+			  if 		(  port->adrs.a_unix.name != NULL  ){
+					xfree(port->adrs.a_unix.name);
+			  }
+			  break;
 		}
-		if		(  port->adrs.a_ip.host  !=  NULL  ) {
-			xfree(port->adrs.a_ip.host);
-		}
-		break;
 	}
 	xfree(port);
 }
