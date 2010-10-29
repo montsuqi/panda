@@ -24,6 +24,8 @@
 #include	"net.h"
 #include	"dblib.h"
 
+#define	SIZE_SQL		1024
+
 #define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
 
 extern	int		OpenRedirectDB(DBG_Struct *dbg);

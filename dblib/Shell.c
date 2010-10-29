@@ -184,7 +184,8 @@ InsertValue(
 	ValueStruct		*val)
 {
 	Numeric	nv;
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_OTHER];
+	char *str;
 
 	if		(  val  ==  NULL  ) {
 	} else
@@ -199,7 +200,9 @@ InsertValue(
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(&ValueFixed(val));
-		LBS_EmitString(lbs,NumericOutput(nv));
+		str = NumericOutput(nv);
+		LBS_EmitString(lbs,str);
+		xfree(str);
 		NumericFree(nv);
 		break;
 	  case	GL_TYPE_INT:

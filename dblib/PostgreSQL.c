@@ -144,10 +144,15 @@ PgInitConnect(
 	PQsetNoticeProcessor(conn, NoticeMessage, NULL);
 	if ( PQserverVersion(conn)  >=  80200 ) {
 		res = PQexec(conn, "set standard_conforming_strings = on;");
+		if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
+			/*  comment for version 8.1 */
+			/*  Warning("PostgreSQL: %s",PQerrorMessage(conn)); */
+		}
+		PQclear(res);
 	}
+	res = PQexec(conn, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE;");
 	if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
-    /*  comment for version 8.1 */
-    /*  Warning("PostgreSQL: %s",PQerrorMessage(conn)); */
+		Warning("PostgreSQL: %s",PQerrorMessage(conn)); 
 	}
 	PQclear(res);
 }
@@ -189,9 +194,9 @@ ValueToSQL(
 	LargeByteString	*lbs,
 	ValueStruct	*val)
 {
-	static	char	buff[SIZE_BUFF];
+	char	buff[SIZE_OTHER];
 	Numeric	nv;
-	Oid		id;
+	char	*str;
 
 	if		(  IS_VALUE_NIL(val)  ) {
 		LBS_EmitString(lbs,"null");
@@ -215,28 +220,29 @@ ValueToSQL(
 		break;
 	  case	GL_TYPE_NUMBER:
 		nv = FixedToNumeric(&ValueFixed(val));
-		LBS_EmitString(lbs,NumericOutput(nv));
+		str = NumericOutput(nv);
+		LBS_EmitString(lbs,str);
+		xfree(str);
 		NumericFree(nv);
 		break;
 	  case	GL_TYPE_INT:
-		sprintf(buff,"%d",ValueToInteger(val));
+		snprintf(buff,sizeof(buff), "%d",ValueToInteger(val));
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_FLOAT:
-		sprintf(buff,"%g",ValueToFloat(val));
+		snprintf(buff,sizeof(buff), "%g",ValueToFloat(val));
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_BOOL:
-		sprintf(buff,"'%s'",ValueToBool(val) ? "t" : "f");
+		snprintf(buff,sizeof(buff), "'%s'",ValueToBool(val) ? "t" : "f");
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_OBJECT:
-		id = ValueOid(ValueObjectId(val));
-		sprintf(buff,"%u",id);
+		snprintf(buff,sizeof(buff), "%u", ValueOid(ValueObjectId(val)));
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_TIMESTAMP:
-		sprintf(buff,"timestamp '%d-%d-%d %d:%d:%d'",
+		snprintf(buff,sizeof(buff), "timestamp '%d-%d-%d %d:%d:%d'",
 				ValueDateTimeYear(val) + 1900,
 				ValueDateTimeMon(val) + 1,
 				ValueDateTimeMDay(val),
@@ -246,14 +252,14 @@ ValueToSQL(
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_DATE:
-		sprintf(buff,"date '%d-%d-%d'",
+		snprintf(buff,sizeof(buff), "date '%d-%d-%d'",
 				ValueDateTimeYear(val) + 1900,
 				ValueDateTimeMon(val) + 1,
 				ValueDateTimeMDay(val));
 		LBS_EmitString(lbs,buff);
 		break;
 	  case	GL_TYPE_TIME:
-		sprintf(buff,"time '%d:%d:%d'",
+		snprintf(buff,sizeof(buff), "time '%d:%d:%d'",
 				ValueDateTimeHour(val),
 				ValueDateTimeMin(val),
 				ValueDateTimeSec(val));
@@ -286,7 +292,7 @@ LEAVE_FUNC;
 static	char	*
 ItemName(void)
 {
-	static	char	buff[SIZE_BUFF];
+	static	char	buff[SIZE_LONGNAME];
 	char	*p;
 	int		i;
 
@@ -533,7 +539,7 @@ GetTable(
 	int		fnum;
 	Numeric	nv;
 	Oid		id;
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_OTHER];
 	char	*str;
 
 ENTER_FUNC;
@@ -548,7 +554,7 @@ ENTER_FUNC;
 				ValueIsNil(val);
 			}
 		} else {
-			SetValueInteger(val,atoi((char *)PQgetvalue(res,ix,fnum)));
+			SetValueInteger(val,atoi(PQgetvalue(res,ix,fnum)));
 		}
 		break;
 	  case	GL_TYPE_BOOL:
@@ -559,7 +565,7 @@ ENTER_FUNC;
 				ValueIsNil(val);
 			}
 		} else {
-			SetValueBool(val,*(char *)PQgetvalue(res,ix,fnum) == 't');
+			SetValueBool(val,*PQgetvalue(res,ix,fnum) == 't');
 		}
 		break;
 	  case	GL_TYPE_TIMESTAMP:
@@ -570,7 +576,7 @@ ENTER_FUNC;
 				ValueIsNil(val);
 			}
 		} else {
-			strcpy(buff,(char *)PQgetvalue(res,ix,fnum));
+			strcpy(buff,PQgetvalue(res,ix,fnum));
 			ParseDate(val,buff,STATE_DATE_YEAR);
 		}
 		break;
@@ -582,7 +588,7 @@ ENTER_FUNC;
 				ValueIsNil(val);
 			}
 		} else {
-			strcpy(buff,(char *)PQgetvalue(res,ix,fnum));
+			strcpy(buff,PQgetvalue(res,ix,fnum));
 			ParseDate(val,buff,STATE_DATE_YEAR);
 		}
 		break;
@@ -594,7 +600,7 @@ ENTER_FUNC;
 				ValueIsNil(val);
 			}
 		} else {
-			strcpy(buff,(char *)PQgetvalue(res,ix,fnum));
+			strcpy(buff,PQgetvalue(res,ix,fnum));
 			ParseDate(val,buff,STATE_DATE_HOUR);
 		}
 		break;
@@ -610,7 +616,7 @@ ENTER_FUNC;
 				ValueIsNil(val);
 			}
 		} else {
-			SetValueString(val,(char *)PQgetvalue(res,ix,fnum),dbg->coding);
+			SetValueString(val,PQgetvalue(res,ix,fnum),dbg->coding);
 		}
 		break;
 	  case	GL_TYPE_BINARY:
@@ -633,7 +639,7 @@ ENTER_FUNC;
 				ValueIsNil(val);
 			}
 		} else {
-			nv = NumericInput((char *)PQgetvalue(res,ix,fnum),
+			nv = NumericInput(PQgetvalue(res,ix,fnum),
 						  ValueFixedLength(val),ValueFixedSlen(val));
 			str = NumericOutput(nv);
 			SetValueString(val,str,NULL);
@@ -671,7 +677,7 @@ ENTER_FUNC;
 				ValueIsNil(val);
 			}
 		} else {
-			id = (Oid)atol((char *)PQgetvalue(res,ix,fnum));
+			id = (Oid)atol(PQgetvalue(res,ix,fnum));
 			SetValueOid(val,dbg,id);
 		}
 		break;
@@ -694,7 +700,7 @@ GetValue(
 {
 	Numeric	nv;
 	char	*str;
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_OTHER];
 
 	if		(  val  ==  NULL  )	return;
 
@@ -705,24 +711,24 @@ ENTER_FUNC;
 		ValueIsNonNil(val);
 		switch	(ValueType(val)) {
 		  case	GL_TYPE_INT:
-			SetValueInteger(val,atoi((char *)PQgetvalue(res,tnum,fnum)));
+			SetValueInteger(val,atoi(PQgetvalue(res,tnum,fnum)));
 			break;
 		  case	GL_TYPE_OBJECT:
-			SetValueOid(val,dbg,(Oid)atol((char *)PQgetvalue(res,tnum,fnum)));
+			SetValueOid(val,dbg,(Oid)atol(PQgetvalue(res,tnum,fnum)));
 			break;
 		  case	GL_TYPE_BOOL:
-			SetValueBool(val,*(char *)PQgetvalue(res,tnum,fnum) == 't');
+			SetValueBool(val,*PQgetvalue(res,tnum,fnum) == 't');
 			break;
 		  case	GL_TYPE_TIMESTAMP:
-			strcpy(buff,(char *)PQgetvalue(res,tnum,fnum));
+			strcpy(buff,PQgetvalue(res,tnum,fnum));
 			ParseDate(val,buff,STATE_DATE_YEAR);
 			break;
 		  case	GL_TYPE_DATE:
-			strcpy(buff,(char *)PQgetvalue(res,tnum,fnum));
+			strcpy(buff,PQgetvalue(res,tnum,fnum));
 			ParseDate(val,buff,STATE_DATE_YEAR);
 			break;
 		  case	GL_TYPE_TIME:
-			strcpy(buff,(char *)PQgetvalue(res,tnum,fnum));
+			strcpy(buff,PQgetvalue(res,tnum,fnum));
 			ParseDate(val,buff,STATE_DATE_HOUR);
 			break;
 		  case	GL_TYPE_BYTE:
@@ -730,14 +736,14 @@ ENTER_FUNC;
 		  case	GL_TYPE_VARCHAR:
 		  case	GL_TYPE_DBCODE:
 		  case	GL_TYPE_TEXT:
-			SetValueString(val,(char *)PQgetvalue(res,tnum,fnum),dbg->coding);
+			SetValueString(val,PQgetvalue(res,tnum,fnum),dbg->coding);
 			break;
 		  case	GL_TYPE_BINARY:
 			SetValueBinary(val, PQgetvalue(res,tnum,fnum),
 										 PQgetlength(res,tnum,fnum));
 			break;
 		  case	GL_TYPE_NUMBER:
-			nv = NumericInput((char *)PQgetvalue(res,tnum,fnum),
+			nv = NumericInput(PQgetvalue(res,tnum,fnum),
 							  ValueFixedLength(val),ValueFixedSlen(val));
 			str = NumericToFixed(nv,ValueFixedLength(val),ValueFixedSlen(val));
 			strcpy(ValueFixedBody(val),str);
@@ -1435,7 +1441,7 @@ ENTER_FUNC;
 		conn = PGCONN(dbg,DB_UPDATE);
 /*		LockDB_Redirect(dbg);	 */
 		BeginDB_Redirect(dbg); 
-		res = _PQexec(dbg,"BEGIN ISOLATION LEVEL SERIALIZABLE",FALSE,DB_UPDATE);
+		res = _PQexec(dbg,"BEGIN",FALSE,DB_UPDATE);
 /*		UnLockDB_Redirect(dbg);  */
 		rc = CheckResult(dbg, DB_UPDATE, res, PGRES_COMMAND_OK);
 		_PQclear(res);
@@ -1886,7 +1892,6 @@ _DBAUDITLOG(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	char	buff[SIZE_BUFF];
 	LargeByteString	*sql;
 	ValueStruct	*ret;
 ENTER_FUNC;
@@ -1895,11 +1900,12 @@ ENTER_FUNC;
 	LBS_EmitString(sql,"INSERT INTO ");
 	LBS_EmitString(sql, AUDITLOG_TABLE);
 	LBS_EmitString(sql," (");
-	LBS_EmitString(sql," id, ");	
+	LBS_EmitString(sql," id, ");
 	InsertNames(sql,args);
 	LBS_EmitString(sql,") VALUES (");
-	sprintf(buff, " nextval('%s_seq'), ", AUDITLOG_TABLE);
-	LBS_EmitString(sql,buff);
+	LBS_EmitString(sql," nextval('");
+	LBS_EmitString(sql, AUDITLOG_TABLE);
+	LBS_EmitString(sql,"_seq'), ");
 	InsertValues(dbg,sql,args);
 	LBS_EmitString(sql,");");
 	LBS_EmitEnd(sql);
