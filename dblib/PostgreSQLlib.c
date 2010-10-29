@@ -59,7 +59,7 @@ _CreateConninfo(
 	int			usage)
 {
 	int portnum;
-	char buff[SIZE_OTHER];
+	char portstr[SIZE_OTHER];
 	
 	AddConninfo(conninfo, "host", GetDB_Host(dbg,usage));
 	if ( GetDB_PortName(dbg,usage) != NULL) {
@@ -74,8 +74,8 @@ _CreateConninfo(
 			 socket = /var/run/postgresql/.s.PGSQL.5432 */
 		portnum = GetDB_PortMode(dbg,usage);
 		if ( portnum != 0 ){
-			snprintf(buff, SIZE_OTHER, "%d", portnum);
-			AddConninfo(conninfo, "port", buff);
+			snprintf(portstr, sizeof(portstr), "%d", portnum);
+			AddConninfo(conninfo, "port", portstr);
 		}
 	}
 	AddConninfo(conninfo, "user", GetDB_User(dbg,usage));

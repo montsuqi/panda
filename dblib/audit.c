@@ -41,8 +41,9 @@ QueryAuditSequence(void)
 {
 	char *buff;
 	
-	buff = (char *)xmalloc(SIZE_BUFF);
-	sprintf(buff, "CREATE SEQUENCE %s_seq START 1; ", AUDITLOG_TABLE);
+	buff = (char *)xmalloc(SIZE_SQL);
+	snprintf(buff, SIZE_SQL,
+					 "CREATE SEQUENCE %s_seq START 1; ", AUDITLOG_TABLE);
 	return buff;
 }
 
@@ -51,7 +52,7 @@ QueryAuditTable(void)
 {
 	char *buff, *p;
 	
-	buff = (char *)xmalloc(SIZE_BUFF);
+	buff = (char *)xmalloc(SIZE_SQL);
 	p = buff;
 	p += sprintf(p, "CREATE TABLE %s                (  ", AUDITLOG_TABLE);
 	p += sprintf(p, "    id bigint PRIMARY KEY,        ");
@@ -97,8 +98,9 @@ CheckAuditTable(
 	Bool rc;
 	int ntuples;
 	
-	buff = (char *)xmalloc(SIZE_BUFF);
-	sprintf(buff, "SELECT tablename FROM pg_tables WHERE tablename ='%s';",
+	buff = (char *)xmalloc(SIZE_SQL);
+	snprintf(buff, SIZE_SQL,
+					 "SELECT tablename FROM pg_tables WHERE tablename ='%s';",
 					AUDITLOG_TABLE);
 	res = PQexec(PGCONN(dbg, DB_UPDATE), buff);
 	xfree(buff);
