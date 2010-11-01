@@ -316,7 +316,7 @@ fileentry_changed(
 {
 	GtkWidget	*fileentry;
 
-    fileentry = find_widget_ancestor(widget, GTK_PANDA_TYPE_FILEENTRY);
+    fileentry = find_widget_ancestor(widget, GTK_PANDA_TYPE_FILE_ENTRY);
     if (fileentry != NULL) {
 	  AddChangedWidget(fileentry);
 	  AddChangedWidget(widget);

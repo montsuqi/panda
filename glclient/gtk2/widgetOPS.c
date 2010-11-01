@@ -598,10 +598,10 @@ SavePreviousFolder(
 	GtkWidget	*widget,
 	gpointer 	data) 
 {
-	GtkPandaFileentry 	*fentry;
+	GtkPandaFileEntry 	*fentry;
 	char				*longname;
 
-	fentry = GTK_PANDA_FILEENTRY(widget);
+	fentry = GTK_PANDA_FILE_ENTRY(widget);
 	longname = (char *)glade_get_widget_long_name(widget);
 	SetWidgetCache(longname, fentry->folder);
 }
@@ -613,7 +613,7 @@ SetFileEntry(
 {
 static GHashTable		*connectlist = NULL;
 
-	GtkPandaFileentry 	*fentry;
+	GtkPandaFileEntry 	*fentry;
 	GtkWidget			*subWidget;
 	WidgetData			*subdata;
 	char				*longname;
@@ -621,7 +621,7 @@ static GHashTable		*connectlist = NULL;
 
 ENTER_FUNC;
 
-	fentry = GTK_PANDA_FILEENTRY(widget);
+	fentry = GTK_PANDA_FILE_ENTRY(widget);
 	g_return_if_fail(data->binary != NULL);
 	longname = (char *)glade_get_widget_long_name(widget);
 
@@ -638,13 +638,13 @@ ENTER_FUNC;
 	if (folder == NULL) {
 		folder = "";
 	}
-	gtk_panda_fileentry_set_folder(fentry, folder);
+	gtk_panda_file_entry_set_folder(fentry, folder);
 
 	if (LBS_Size(data->binary) > 0) {
 		//download
-		gtk_panda_fileentry_set_mode(fentry, 
+		gtk_panda_file_entry_set_mode(fentry, 
 			GTK_FILE_CHOOSER_ACTION_SAVE);
-		gtk_panda_fileentry_set_data(fentry,
+		gtk_panda_file_entry_set_data(fentry,
 			LBS_Size(data->binary), LBS_Body(data->binary));
 		//set subwidget
 		subdata = g_hash_table_lookup(WidgetDataTable, data->subname);
@@ -655,7 +655,7 @@ ENTER_FUNC;
 		g_signal_emit_by_name(G_OBJECT(widget), "browse_clicked", NULL);
 	} else {
 		//upload
-		gtk_panda_fileentry_set_mode(GTK_PANDA_FILEENTRY(widget), 
+		gtk_panda_file_entry_set_mode(GTK_PANDA_FILE_ENTRY(widget), 
 			GTK_FILE_CHOOSER_ACTION_OPEN);
 	}
 LEAVE_FUNC;
@@ -667,14 +667,14 @@ GetFileEntry(
 	_FileEntry			*data)
 {
 	GtkFileChooserAction mode;
-	GtkPandaFileentry *fe;
+	GtkPandaFileEntry *fe;
 	GError *error = NULL;
 	gchar *contents;
 	gsize size;
 
 ENTER_FUNC;
-	fe = GTK_PANDA_FILEENTRY(widget);
-	mode = gtk_panda_fileentry_get_mode(fe);
+	fe = GTK_PANDA_FILE_ENTRY(widget);
+	mode = gtk_panda_file_entry_get_mode(fe);
 	if (mode == GTK_FILE_CHOOSER_ACTION_SAVE) {
 		data->path = NULL;
 	} else {
@@ -792,9 +792,9 @@ GetWidgetType(
 			return WIDGET_TYPE_FRAME;
 		} else if (type == GTK_TYPE_SCROLLED_WINDOW) {
 			return WIDGET_TYPE_SCROLLED_WINDOW;
-		} else if (type == GTK_TYPE_IMAGE) {
+		} else if (type == GTK_PANDA_TYPE_PIXMAP) {
 			return WIDGET_TYPE_PIXMAP;
-		} else if (type == GTK_PANDA_TYPE_FILEENTRY) {
+		} else if (type == GTK_PANDA_TYPE_FILE_ENTRY) {
 			return WIDGET_TYPE_FILE_ENTRY;
 		}
 	}
