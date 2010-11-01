@@ -55,54 +55,6 @@
 #include	"message.h"
 #include	"debug.h"
 
-static gchar *
-NewTempname(void)
-{
-	return g_strconcat(g_get_tmp_dir(), "/__glclientXXXXXX", NULL);
-}
-
-static FILE *
-CreateTempfile(
-	gchar *tmpname)
-{
-    int fildes;
-    FILE *file;
-	mode_t mode;
-
-ENTER_FUNC;
-	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-	if ((fildes = mkstemp(tmpname)) == -1) {
-		Error("Couldn't make tempfile %s",tmpname );
-	}
-	if ((file = fdopen(fildes, "wb")) == NULL ) {
-		Error("Couldn't open tempfile %s",tmpname);
-	}
-	umask(mode);
-LEAVE_FUNC;
-	return file;
-}
-
-static	char *
-CreateBinaryFile(LargeByteString *binary)
-{
-    FILE *file;
-    gchar *tmpname;
-
-	tmpname = NewTempname();
-	file = CreateTempfile(tmpname);
-	fwrite(LBS_Body(binary), sizeof(unsigned char), LBS_Size(binary), file);
-	fclose(file);
-
-	return tmpname;
-}
-
-static	void
-DestroyBinaryFile(char *tmpname)
-{
-	unlink(tmpname);
-	g_free(tmpname);
-}
-
 static	void
 SetState(
 	GtkWidget	*widget,
@@ -696,28 +648,13 @@ SetPixmap(
 	GtkWidget			*widget,
 	_Pixmap				*data)
 {
-	gchar 			*tmpname;
-	GtkRequisition 	requisition;
-	GdkPixbuf		*pixbuf;
-	GError			*error;
-
 ENTER_FUNC;
 	if ( LBS_Size(data->binary) <= 0) {
 		gtk_widget_hide(widget); 
 	} else {
-		error = NULL;
-		tmpname = CreateBinaryFile(data->binary);
-		gtk_widget_size_request(widget, &requisition);
-		pixbuf = gdk_pixbuf_new_from_file_at_size(tmpname,
-			requisition.width, requisition.height, &error);
-		if (error != NULL) {
-			MessageLogPrintf("Unable to load image file: %s", error->message);
-			g_error_free(error);
-		} else {
-			gtk_image_set_from_pixbuf(GTK_IMAGE(widget), pixbuf);
-		}
-		DestroyBinaryFile(tmpname);
 		gtk_widget_show(widget); 
+		gtk_panda_pixmap_set_image(GTK_PANDA_PIXMAP(widget), 
+			(gchar*)LBS_Body(data->binary),(gsize)LBS_Size(data->binary));
 	}
 LEAVE_FUNC;
 }
