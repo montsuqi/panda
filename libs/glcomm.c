@@ -43,6 +43,7 @@
 #include	"libmondai.h"
 #include	"glcomm.h"
 #include	"front.h"
+#include	"message.h"
 #include	"debug.h"
 
 #ifdef	__APPLE__
@@ -339,6 +340,7 @@ GL_SendDataType(
 	nputc(c,fp);
 }
 
+
 extern	PacketDataType
 GL_RecvDataType(
 	NETFILE	*fp,
@@ -366,9 +368,36 @@ ReadFile(char *fname)
 		}
 		fclose(fpf);
 	} else {
-		dbgprintf("could not open for read: %s\n", fname);
+		MessageLogPrintf("could not open for read: %s\n", fname);
 		LBS_ReserveSize(Buff,0,FALSE);
 	}
+}
+
+static	void
+make_ps2pdf_command(
+	gchar *command,
+	gchar *cname,
+	gchar *fname)
+{
+	gchar *buff;
+	gsize size;
+	GRegex *reg;
+	GMatchInfo *match_info;
+
+	if (g_file_get_contents(cname,&buff,&size,NULL)) {
+		reg = g_regex_new("%%DocumentPaperSizes: ([A-Z0-9]+)",0,0,NULL);
+		if (g_regex_match(reg,buff,0,&match_info)) {
+			gchar *matched = g_match_info_fetch(match_info,1);
+			gchar *lower = g_ascii_strdown(matched,-1);
+			sprintf(command,"ps2pdf13 -sPAPERSIZE=%s %s %s",lower,cname,fname);
+			g_free(matched);
+			g_free(lower);
+		}
+		g_regex_unref(reg);
+		g_free(buff);
+		return;
+	}
+	sprintf(command,"ps2pdf13 %s %s.pdf",cname,fname);
 }
 
 static	void
@@ -380,7 +409,7 @@ SendExpandObject(
 	char		fname[SIZE_LONGNAME+1];
 	char		*cname;
 #ifdef	HAVE_LIBMAGIC
-	char		buff[SIZE_LONGNAME+1];
+	char		buff[SIZE_BUFF+1];
 	char		*PSTOPNGPath = BIN_DIR "/pstopng";
 	const char	*type;
 #endif
@@ -406,7 +435,7 @@ ENTER_FUNC;
 			break;
 		case EXPAND_PDF:
 			sprintf(fname,"%s.pdf", cname);
-			sprintf(buff,"ps2pdf13 %s %s", cname, fname);
+			make_ps2pdf_command(buff,cname,fname);
 			system(buff);
 			ReadFile(fname);
 			GL_SendLBS(fp,Buff,fNetwork);
