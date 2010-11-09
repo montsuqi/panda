@@ -270,7 +270,7 @@ SCRIPT_Lex(
 }
 
 static	LargeByteString	*
-ParSCRIPT(
+_ParSCRIPT(
 	CURFILE			*in,
 	RecordStruct	*rec,
 	ValueStruct		*argp,
@@ -325,8 +325,7 @@ ENTER_FUNC;
 	}
 	switch	(db->dbg->func->type) {
 	  case	DB_PARSER_SCRIPT:
-		ret = ParSCRIPT(in,rec,argp,argf);
-		dbgprintf("ret = [%s]",(char *)LBS_Body(ret));
+		ret = _ParSCRIPT(in,rec,argp,argf);
 		break;
 	  case	DB_PARSER_SQL:
 		ret = ParSQL(in,rec,argp,argf);
@@ -364,10 +363,9 @@ ENTER_FUNC;
 		path->ops[ix] = op;
 		path->ocount ++;
 	} else {
-		ix --;
-		op = NewOperation(ComSymbol);
-		path->ops[ix] = op;
+		op = path->ops[ix-1];
 	}
+	
 	if		(  GetSymbol  ==  '('  ) {
 		op->args = NewValue(GL_TYPE_RECORD);
 		GetName;
@@ -501,8 +499,7 @@ ENTER_FUNC;
 		db->ops[db->ocount] = op;
 		db->ocount ++;
 	} else {
-		op = NewOperation(ComSymbol);
-		db->ops[ix-1] = op;
+		op = db->ops[ix-1];
 	}
 	if		(  GetSymbol  == '{'  ) {
 		if		(  op->proc  ==  NULL  ) {
