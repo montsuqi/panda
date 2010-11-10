@@ -765,6 +765,8 @@ InitTopWindow(void)
 	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
 		GDK_HINT_MIN_SIZE);
 
+	gtk_window_set_wmclass(GTK_WINDOW(TopWindow),"Glclient","Glclient");
+
 	TopNoteBook = gtk_notebook_new();
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
 	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);

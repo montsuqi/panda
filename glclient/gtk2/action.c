@@ -738,6 +738,8 @@ InitTopWindow(void)
 	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
 		GDK_HINT_MIN_SIZE);
 
+	gtk_window_set_wmclass(GTK_WINDOW(TopWindow),"Glclient","Glclient");
+
 	g_signal_connect(G_OBJECT(TopWindow), 
 		"delete_event", G_CALLBACK(gtk_true), NULL);
 	g_signal_connect(G_OBJECT(TopWindow), 
