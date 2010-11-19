@@ -463,6 +463,7 @@ ENTER_FUNC;
 			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
 			ON_IO_ERROR(fpComm,badio);
 		} else {
+			ConnectSysData();
 			SetSysDB(scr->term, "agent", TermAgent);
 			if (fFeatureNego) {
 				sprintf(ver,"%s.%02d", PACKAGE_VERSION, 1);
@@ -758,7 +759,6 @@ ENTER_FUNC;
 #endif
 			close(_fd);
 			scr = InitSession();
-			ConnectSysData();
 			strcpy(scr->term,TermName(fd));
 			alarm(TIMEOUT_SEC);
 			while	(  MainLoop(fpComm,scr)  );
