@@ -398,9 +398,9 @@ ENTER_FUNC;
 	GetOption(option,argc,argv,NULL);
 
 	InitSystem();
-	Message("wfc server start");
+	Message("wfc start");
 	ExecuteServer();
-	Message("wfc server end");
+	Message("wfc stop");
 	CleanUp();
 	rc = 0;
 LEAVE_FUNC;
