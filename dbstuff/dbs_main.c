@@ -19,9 +19,10 @@
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
+
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -174,10 +175,10 @@ InitDBSSession(
 {
 	SessionNode	*ses;
 	char	buff[SIZE_BUFF+1];
-	char	*pass;
+	char	*pass = NULL;
 	char	*p
 	,		*q;
-	int		ver;
+	int		ver = 0;
 
 ENTER_FUNC;
 	ses = NewSessionNode();
@@ -186,23 +187,31 @@ ENTER_FUNC;
 	 */
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	p = buff;
-	*(q = strchr(p,' ')) = 0;
-	ver = ParseVersion(p);
-	p = q + 1;
-	*(q = strchr(p,' ')) = 0;
-	strcpy(ses->user,p);
-	p = q + 1;
-	*(q = strchr(p,' ')) = 0;
-	pass = p;
-	if		(  !stricmp(q+1,"binary")  ) {
-		ses->type = COMM_BINARY;
-	} else
-	if		(  !stricmp(q+1,"string")  ) {
-		ses->type = COMM_STRING;
-	} else
-	if		(  !stricmp(q+1,"stringe")  ) {
-		ses->type = COMM_STRINGE;
-	} else {
+	if ((q = strchr(p,' ')) != NULL ){
+		*q = 0;
+		ver = ParseVersion(p);
+		p = q + 1;
+	}
+	if ((q = strchr(p,' ')) != NULL ){
+		*q = 0;
+		strcpy(ses->user,p);
+		p = q + 1;
+	}
+	if ((q = strchr(p,' ')) != NULL){
+		*q = 0;
+		pass = p;
+	}
+	if (q != NULL) {
+		if		(  !stricmp(q+1,"binary")  ) {
+			ses->type = COMM_BINARY;
+		} else
+		if		(  !stricmp(q+1,"string")  ) {
+			ses->type = COMM_STRING;
+		} else
+		if		(  !stricmp(q+1,"stringe")  ) {
+			ses->type = COMM_STRINGE;
+		} else {
+		}
 	}
 	if		(  ver  <  10200  ) {
 		SendStringDelim(fpComm,"Error: version\n");
@@ -226,6 +235,7 @@ ENTER_FUNC;
 		} else  {
 			Encoding = "euc-jisx0213";
 		}
+		dbgprintf("Encoding = [%s]\n", Encoding);
 		if		(  ver  >=  10500  ) {
 			ses->fIgnore = TRUE;
 		}
@@ -241,7 +251,6 @@ ENTER_FUNC;
 		xfree(ses);
 		ses = NULL;
 	}
-	dbgprintf("Encoding = [%s]\n", Encoding);
 LEAVE_FUNC;
 	return	(ses); 
 }
@@ -764,7 +773,7 @@ ENTER_FUNC;
 		dbgmsg("end");
 		ret = FALSE;
 	} else {
-		printf("invalid message [%s]\n",input);
+		Warning("invalid message [%s]\n",input);
 		ret = FALSE;
 	}
 LEAVE_FUNC;
