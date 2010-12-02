@@ -19,9 +19,9 @@
 
 #define	MAIN
 /*
+*/
 #define	DEBUG
 #define	TRACE
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -145,7 +145,7 @@ ParseVersion(
 		micro = micro * 10 + ( *str - '0' );
 		str ++;
 	}
-	dbgprintf("%d.%d.%d",major,minor,micro);
+	dbgprintf("version = [%d.%d.%d]",major,minor,micro);
 	return	(major * 10000 + minor * 100 + micro);
 }
 
@@ -241,6 +241,7 @@ ENTER_FUNC;
 		xfree(ses);
 		ses = NULL;
 	}
+	dbgprintf("Encoding = [%s]\n", Encoding);
 LEAVE_FUNC;
 	return	(ses); 
 }
@@ -593,8 +594,8 @@ GetPathTable(
 	char		*para)
 {
 	RecordStruct	*rec;
-	char			rname[SIZE_RNAME+1]
-		,			buff[SIZE_RNAME+SIZE_PNAME+1];
+	char			rname[SIZE_BUFF+1]
+		,			buff[SIZE_BUFF+1];
 	Bool	ret;
 	int		rno;
 	char	*pname
@@ -616,8 +617,8 @@ GetPathTable(
 
 ENTER_FUNC;
 	if		(  *para  !=  0  ) {
+		dbgprintf("para = [%s]",para);
 		strcpy(rname,para);
-		dbgprintf("rname = [%s]",rname);
 		if		(  ( p = strchr(rname,'$') )  !=  NULL  ) {
 			*p = 0;
 			pname = p + 1;
@@ -742,12 +743,13 @@ do_String(
 	SessionNode	*ses)
 {
 	Bool	ret;
-
+ENTER_FUNC;
 	if		(  strlcmp(input,"Exec: ")  ==  0  ) {
 		dbgmsg("exec");
 		ret = ExecQuery(ses,fpComm,input + 6);
 	} else
 	if		(  strlcmp(input,"PathTables: ")  ==  0  ) {
+		dbgmsg("pathtables");
 		ret = GetPathTable(ses,fpComm,input + 12);
 	} else
 	if		(  strlcmp(input,"Schema: ")  ==  0  ) {
@@ -765,6 +767,7 @@ do_String(
 		printf("invalid message [%s]\n",input);
 		ret = FALSE;
 	}
+LEAVE_FUNC;
 	return	(ret);
 }
 
