@@ -1523,7 +1523,7 @@ _DBSELECT(
 
 ENTER_FUNC;
 	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
+	if		(  (rec == NULL) || (rec->type  !=  RECORD_DB)  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		ctrl->rcount = 0;
 	} else {
@@ -1557,7 +1557,7 @@ _DBFETCH(
 
 ENTER_FUNC;
 	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
+	if		(  (rec == NULL) || (rec->type  !=  RECORD_DB)  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		ctrl->rcount = 0;
 	} else {
@@ -1622,7 +1622,7 @@ _DBCLOSECURSOR(
 
 ENTER_FUNC;
 	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
+	if		(  (rec == NULL) || (rec->type  !=  RECORD_DB)  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		ctrl->rcount = 0;
 	} else {
@@ -1664,7 +1664,7 @@ _DBUPDATE(
 	
 ENTER_FUNC;
 	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
+	if		(  (rec == NULL) || (rec->type  !=  RECORD_DB)  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		ctrl->rcount = 0;
 	} else {
@@ -1742,7 +1742,7 @@ _DBDELETE(
 	
 ENTER_FUNC;
 	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
+	if		(  (rec == NULL) || (rec->type  !=  RECORD_DB)  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		ctrl->rcount = 0;
 	} else {
@@ -1812,7 +1812,7 @@ _DBINSERT(
 	
 ENTER_FUNC;
 	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
+	if		(  (rec == NULL) || (rec->type  !=  RECORD_DB)  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		ctrl->rcount = 0;
 	} else {
@@ -1931,8 +1931,8 @@ _DBACCESS(
 
 ENTER_FUNC;
 	ret = NULL;
-	dbgprintf("[%s]",name); 
-	if		(  rec->type  !=  RECORD_DB  ) {
+	dbgprintf("[%s]",name);
+	if		(  (rec == NULL) || (rec->type  !=  RECORD_DB)  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		ctrl->rcount = 0;
 	} else {

@@ -300,11 +300,12 @@ RecvData(
 ENTER_FUNC;
 	do {
 		RecvStringDelim(fpComm,SIZE_BUFF,buff);
-		dbgprintf("[%s]",buff);
+		dbgprintf("RecvData [%s]",buff);
 		if		(	(  *buff                     !=  0     )
 				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
 			*p = 0;
 			DecodeName(rname,vname,buff);
+			dbgprintf("rname[%s], vname[%s]",rname, vname);
 			DecodeStringURL(str,p+1);
 			value = GetItemLongName(args,vname);
 			if (value != NULL) {
@@ -551,7 +552,6 @@ ENTER_FUNC;
 		} else {
 			strcpy(rname,"");
 		}
-		p = q + 1;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 			ctrl.limit = atoi(q+1);
@@ -562,6 +562,7 @@ ENTER_FUNC;
 			ctrl.limit = 1;
 		}
 		DecodeStringURL(pname,p);
+		dbgprintf("record[%s,%s,%s]",rname,pname,func);
 		if (!GetTableFuncData(&rec,&arg,&ctrl,rname,pname,func)) {
 			Warning("record[%s,%s,%s] not found",rname,pname,func);
 			ctrl.rc = MCP_BAD_ARG;
