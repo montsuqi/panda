@@ -41,6 +41,7 @@
 
 #include	"const.h"
 #include	"enum.h"
+#include	"term.h"
 #include	"dirs.h"
 #include	"net.h"
 #include	"comm.h"
@@ -99,6 +100,7 @@ LEAVE_FUNC;
 
 typedef	struct {
 	char	user[SIZE_USER+1];
+	char	term[SIZE_TERM+1];
 	int		type;
 	Bool	fCount;
 	Bool	fLimit;
@@ -111,10 +113,11 @@ typedef	struct {
 
 static	void
 FinishSession(
-	SessionNode	*node)
+	SessionNode	*ses)
 {
 ENTER_FUNC;
-	xfree(node);
+	Message("[%s@%s] session end",ses->user,TermToHost(ses->term));
+	xfree(ses);
 LEAVE_FUNC;
 }
 
@@ -157,7 +160,8 @@ NewSessionNode(void)
 	SessionNode	*ses;
 
 	ses = New(SessionNode);
-	*ses->user = 0;
+	memclear(ses->user, SIZE_USER+1);
+	memclear(ses->term, SIZE_TERM+1);
 	ses->type = COMM_STRING;
 	ses->fCount = FALSE;
 	ses->fLimit = FALSE;
@@ -172,7 +176,8 @@ NewSessionNode(void)
 
 static	SessionNode	*
 InitDBSSession(
-	NETFILE	*fpComm)
+	NETFILE	*fpComm,
+	char		*term)
 {
 	SessionNode	*ses;
 	char	buff[SIZE_BUFF+1];
@@ -186,6 +191,7 @@ ENTER_FUNC;
 	/*
 	 version user password type\n
 	 */
+	g_strlcpy(ses->term, term, SIZE_TERM);
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	p = buff;
 	if ((q = strchr(p,' ')) != NULL ){
@@ -195,7 +201,7 @@ ENTER_FUNC;
 	}
 	if ((q = strchr(p,' ')) != NULL ){
 		*q = 0;
-		strcpy(ses->user,p);
+		g_strlcpy(ses->user,p,SIZE_USER);
 		p = q + 1;
 	}
 	if ((q = strchr(p,' ')) != NULL){
@@ -216,14 +222,15 @@ ENTER_FUNC;
 	}
 	if		(  ver  <  10200  ) {
 		SendStringDelim(fpComm,"Error: version\n");
- 		Warning("reject client(invalid version %d)",ver);
+ 		Warning("[@%s] reject client(invalid version %d)",TermToHost(ses->term), ver);
 		xfree(ses);
 		ses = NULL;
 	} else
 	if		(  AuthUser(&Auth,ses->user,pass,NULL,NULL)  ) {
 		if		(  ver  >=  10500  ) {
-			sprintf(buff,"Connect: OK;%s\n",DBS_VERSION);
+			snprintf(buff,SIZE_BUFF,"Connect: OK;%s\n",DBS_VERSION);
 			SendStringDelim(fpComm,buff);
+			Message("[%s@%s] [version %d] session start ",ses->user,TermToHost(ses->term),ver);
 		} else {
 			SendStringDelim(fpComm,"Connect: OK\n");
 		}
@@ -248,7 +255,7 @@ ENTER_FUNC;
 		}
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
-		Warning("reject client(authentication error)");
+		Warning("[%s@%s] [version %d] reject client (authentication error)",ses->user,TermToHost(ses->term));
 		xfree(ses);
 		ses = NULL;
 	}
@@ -343,9 +350,9 @@ WriteClientString(
 ENTER_FUNC;
 	SendStringDelim(fpComm,"Exec: ");
 	if		(  ses->fCount  ) {
-		sprintf(buff,"%d:%d\n",ctrl->rc,ctrl->rcount);
+		snprintf(buff,SIZE_BUFF,"%d:%d\n",ctrl->rc,ctrl->rcount);
 	} else {
-		sprintf(buff,"%d\n",ctrl->rc);
+		snprintf(buff,SIZE_BUFF,"%d\n",ctrl->rc);
 		ctrl->rcount = 1;
 	}
 	SendStringDelim(fpComm,buff);
@@ -448,52 +455,48 @@ DumpItems(
 	if		(  value  ==  NULL  )	return;
 	switch	(ValueType(value)) {
 	  case	GL_TYPE_INT:
-		sprintf(buff,"int");
-		SendStringDelim(fp,buff);
+		SendStringDelim(fp,"int");
 		break;
 	  case	GL_TYPE_BOOL:
-		sprintf(buff,"bool");
-		SendStringDelim(fp,buff);
+		SendStringDelim(fp,"bool");
 		break;
 	  case	GL_TYPE_BYTE:
-		sprintf(buff,"byte");
-		SendStringDelim(fp,buff);
+		SendStringDelim(fp,"byte");
 		break;
 	  case	GL_TYPE_CHAR:
-		sprintf(buff,"char(%d)",(int)ValueStringLength(value));
+		snprintf(buff,SIZE_LONGNAME,"char(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_VARCHAR:
-		sprintf(buff,"varchar(%d)",(int)ValueStringLength(value));
+		snprintf(buff,SIZE_LONGNAME,"varchar(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_DBCODE:
-		sprintf(buff,"dbcode(%d)",(int)ValueStringLength(value));
+		snprintf(buff,SIZE_LONGNAME,"dbcode(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_NUMBER:
 		if		(  ValueFixedSlen(value)  ==  0  ) {
-			sprintf(buff,"number(%d)",(int)ValueFixedLength(value));
+			snprintf(buff,SIZE_LONGNAME,"number(%d)",(int)ValueFixedLength(value));
 		} else {
-			sprintf(buff,"number(%d,%d)",
+			snprintf(buff,SIZE_LONGNAME,"number(%d,%d)",
 					(int)ValueFixedLength(value),
 					(int)ValueFixedSlen(value));
 		}
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_TEXT:
-		sprintf(buff,"text");
-		SendStringDelim(fp,buff);
+		SendStringDelim(fp,"text");
 		break;
 	  case	GL_TYPE_ARRAY:
 		DumpItems(fp,ValueArrayItem(value,0));
-		sprintf(buff,"[%d]",(int)ValueArraySize(value));
+		snprintf(buff,SIZE_LONGNAME,"[%d]",(int)ValueArraySize(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_RECORD:
 		SendStringDelim(fp,"{");
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			sprintf(buff,"%s ",ValueRecordName(value,i));
+			snprintf(buff,SIZE_LONGNAME,"%s ",ValueRecordName(value,i));
 			SendStringDelim(fp,buff);
 			DumpItems(fp,ValueRecordItem(value,i));
 			SendStringDelim(fp,";");
@@ -550,7 +553,7 @@ ENTER_FUNC;
 			DecodeStringURL(rname,p);
 			p = q + 1;
 		} else {
-			strcpy(rname,"");
+			g_strlcpy(rname,"", SIZE_RNAME);
 		}
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
@@ -577,15 +580,16 @@ ENTER_FUNC;
 		value = NULL;
 		ret = FALSE;
 	}
-	strcpy(ctrl.func,func);
+	g_strlcpy(ctrl.func,func, SIZE_FUNC);
 	if (arg) InitializeValue(arg);
 	RecvData(fpComm,arg);
 	value = NULL;
 
 	if (ctrl.rc == 0) {
-	  value = ExecDB_Process(&ctrl,rec,arg);
+		value = ExecDB_Process(&ctrl,rec,arg);
+		dbgprintf("record[%s,%s,%s] rc = %d",rname,pname,func,ctrl.rc);
 	} else {
-	  ctrl.rcount = 0;
+		ctrl.rcount = 0;
 	}
 	ret = TRUE;
 	fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
@@ -614,7 +618,7 @@ GetPathTable(
 	void	_SendPathTable(
 		char	*pname)
 	{
-		sprintf(buff,"%s$%s\n",rname,pname);
+		snprintf(buff,SIZE_BUFF,"%s$%s\n",rname,pname);
 		SendStringDelim(fpComm,buff);
 	}
 	void	_SendTable(
@@ -622,14 +626,14 @@ GetPathTable(
 		int		rno)
 	{
 		rec = ThisDB[rno-1];
-		strcpy(rname,name);
+		g_strlcpy(rname,name,SIZE_RNAME);
 		g_hash_table_foreach(rec->opt.db->paths,(GHFunc)_SendPathTable,NULL);
 	}
 
 ENTER_FUNC;
 	if		(  *para  !=  0  ) {
 		dbgprintf("para = [%s]",para);
-		strcpy(rname,para);
+		g_strlcpy(rname,para,SIZE_RNAME);
 		if		(  ( p = strchr(rname,'$') )  !=  NULL  ) {
 			*p = 0;
 			pname = p + 1;
@@ -642,7 +646,7 @@ ENTER_FUNC;
 				g_hash_table_foreach(rec->opt.db->paths,(GHFunc)_SendPathTable,NULL);
 			} else {
 				if		(  g_hash_table_lookup(rec->opt.db->paths,pname)  !=  NULL  ) {
-					sprintf(buff,"%s$%s\n",rname,pname);
+					snprintf(buff,SIZE_BUFF,"%s$%s\n",rname,pname);
 					SendStringDelim(fpComm,buff);
 				}
 			}
@@ -814,6 +818,7 @@ ExecuteServer(void)
 	int		pid;
 	SessionNode	*ses;
 	Port	*port;
+	char	term[SIZE_TERM+1];
 
 ENTER_FUNC;
 	port = ParPortName(PortNumber);
@@ -830,7 +835,8 @@ ENTER_FUNC;
 		if		(  pid  ==  0  )	{	/*	child	*/
 			fp = SocketToNet(fh);
 			close(_fh);
-			if		(  ( ses = InitDBSSession(fp) )  !=  NULL  ) {
+			g_strlcpy(term, TermName(fh), SIZE_TERM);
+			if		(  ( ses = InitDBSSession(fp,term) )  !=  NULL  ) {
 				while	(  MainLoop(fp,ses)  );
 				FinishSession(ses);
 			}
