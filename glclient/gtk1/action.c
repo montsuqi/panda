@@ -688,6 +688,8 @@ ScaleWindow(
 	} 
 }
 
+#define IGNORE_MOVE_COUNT 5
+
 extern	void
 ConfigureWindow(GtkWidget *widget,
 	GdkEventConfigure *event)
@@ -696,6 +698,7 @@ ConfigureWindow(GtkWidget *widget,
 	static int y = 0;
 	static int width = 0;
 	static int height = 0;
+	static int move_count = 0;
 	char buf[16];
 
 	if (width != event->width || height != event->height) {
@@ -719,11 +722,16 @@ fprintf(stderr,"scale [%d,%d] -> [%d,%d]\n",
 #if 0
 fprintf(stderr,"move [%d,%d] -> [%d,%d]\n", x,y,event->x,event->y);
 #endif
+		if (move_count < IGNORE_MOVE_COUNT) {
+			x = event->x;
+			y = event->y;
+			move_count++;
+			return ;
+		}
 		x = event->x;
-		y = event->y;
-
 		sprintf(buf,"%d",x);
 		SetWidgetCache("glclient.topwindow.x",buf);
+		y = event->y;
 		sprintf(buf,"%d",y);
 		SetWidgetCache("glclient.topwindow.y",buf);
 	}
@@ -738,7 +746,10 @@ InitTopWindow(void)
 	px = GetWidgetCache("glclient.topwindow.x");
 	py = GetWidgetCache("glclient.topwindow.y");
 	if (px != NULL && py != NULL) {
-		x = atoi(px); y = atoi(py);
+		x = atoi(px); 
+		// FIXME ; for title bar
+		y = atoi(py) - 24;
+		if (y < 0) y = 0;
 	} else {
 		x = 0; y = 0;
 	}
