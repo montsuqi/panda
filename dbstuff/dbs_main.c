@@ -18,10 +18,11 @@
  */
 
 #define	MAIN
+
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 
 #ifdef HAVE_CONFIG_H
@@ -289,10 +290,10 @@ RecvData(
 	NETFILE		*fpComm,
 	ValueStruct	*args)
 {
-	char	buff[SIZE_LARGE_BUFF+1];
-	char	vname[SIZE_LONGNAME+1]
-	,		rname[SIZE_LONGNAME+1]
-	,		str[SIZE_LARGE_BUFF+1];
+	char	buff[SIZE_BUFF+1];
+	char	vname[SIZE_BUFF+1]
+	,		rname[SIZE_BUFF+1]
+	,		str[SIZE_BUFF+1];
 	char	*p;
 	ValueStruct		*value;
 
@@ -525,9 +526,9 @@ ExecQuery(
 	ValueStruct		*value
 		,			*arg = NULL;
 	RecordStruct	*rec;
-	char			func[SIZE_FUNC+1]
-		,			rname[SIZE_RNAME+1]
-		,			pname[SIZE_PNAME+1];
+	char			func[SIZE_BUFF+1]
+		,			rname[SIZE_BUFF+1]
+		,			pname[SIZE_BUFF+1];
 	Bool		fType
 		,		ret;
 	DBCOMM_CTRL	ctrl;
@@ -662,8 +663,8 @@ GetSchema(
 	char		*para)
 {
 	RecordStruct	*rec;
-	char			rname[SIZE_RNAME+1]
-		,			pname[SIZE_PNAME+1];
+	char			rname[SIZE_BUFF+1]
+		,			pname[SIZE_BUFF+1];
 	int		rno
 		,	pno;
 	char	*p
