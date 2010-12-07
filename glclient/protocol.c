@@ -292,7 +292,7 @@ ENTER_FUNC;
 	xval->flen = GL_RecvLength(fp);
 	xval->slen = GL_RecvLength(fp);
 	xval->sval = (char *)xmalloc(xval->flen+1);
-	GL_RecvString(fp, (xval->flen + 1), xval->sval);
+	GL_RecvString(fp, xval->flen, xval->sval);
 LEAVE_FUNC;
 	return	(xval); 
 }

@@ -203,9 +203,9 @@ ENTER_FUNC;
 	switch	(c = RecvPacketClass(fp)) {
 	  case	WFC_HEADER:
 		dbgmsg(">recv HEADER");
-		RecvnString(fp, SIZE_NAME+1, user);		ON_IO_ERROR(fp,badio);
-		RecvnString(fp, SIZE_NAME+1, window);	ON_IO_ERROR(fp,badio);
-		RecvnString(fp, SIZE_NAME+1, widget);	ON_IO_ERROR(fp,badio);
+		RecvnString(fp, SIZE_NAME, user);		ON_IO_ERROR(fp,badio);
+		RecvnString(fp, SIZE_NAME, window);	ON_IO_ERROR(fp,badio);
+		RecvnString(fp, SIZE_NAME, widget);	ON_IO_ERROR(fp,badio);
 		dbgprintf("window = [%s]",window);
 		*type = RecvChar(fp);					ON_IO_ERROR(fp,badio);
 		ctl->n = RecvInt(fp);					ON_IO_ERROR(fp,badio);
@@ -213,7 +213,7 @@ ENTER_FUNC;
 		for	( i = 0 ; i < ctl->n ; i ++ ) {
 			ctl->control[i].PutType = (unsigned char)RecvInt(fp);
 			ON_IO_ERROR(fp,badio);
-			RecvnString(fp, SIZE_NAME+1, ctl->control[i].window);
+			RecvnString(fp, SIZE_NAME, ctl->control[i].window);
 			ON_IO_ERROR(fp,badio);
 			dbgprintf("wname = [%s]\n",ctl->control[i].window);
 		}
