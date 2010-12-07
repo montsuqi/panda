@@ -191,7 +191,7 @@ GL_RecvString(
 	size_t		lsize;
 ENTER_FUNC;
 	lsize = GL_RecvLength(fp);
-	if		(	maxsize > lsize 	){
+	if		(	maxsize >= lsize 	){
 		Recv(fp,str,lsize);
 		if		(  !CheckNetFile(fp)  ) {
 			GL_Error();

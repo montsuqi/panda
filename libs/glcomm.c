@@ -225,7 +225,7 @@ GL_RecvString(
 
 ENTER_FUNC;
 	lsize = GL_RecvLength(fp,fNetwork);
-	if		(	size > lsize 	){
+	if		(	size >= lsize 	){
 		size = lsize;
 		Recv(fp,str,size);
 		str[size] = 0;
@@ -269,7 +269,7 @@ ENTER_FUNC;
 	xval->flen = GL_RecvLength(fp,fNetwork);
 	xval->slen = GL_RecvLength(fp,fNetwork);
 	xval->sval = (char *)xmalloc(xval->flen+1);
-	GL_RecvString(fp, xval->flen+1, xval->sval,fNetwork);
+	GL_RecvString(fp, xval->flen, xval->sval,fNetwork);
 LEAVE_FUNC;
 	return	(xval); 
 }
