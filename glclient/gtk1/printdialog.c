@@ -205,6 +205,7 @@ save_dialog(char *oldpath)
 		parent = GTK_WINDOW(TopWindow);
 	}
 	gtk_window_set_transient_for(GTK_WINDOW(fs), parent);
+	gtk_window_set_modal(GTK_WINDOW(fs),TRUE);
 	dirname = GetWidgetCache("printdialog");
 	if (dirname != NULL) {
 		snprintf(path,sizeof(path),"%s/%s",dirname,"new.ps");

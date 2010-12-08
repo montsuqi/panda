@@ -144,6 +144,7 @@ show_save_dialog(GtkWidget *widget,char *filename, LargeByteString *binary)
 		parent = GTK_WINDOW(TopWindow);
 	}
 	gtk_window_set_transient_for(GTK_WINDOW(fs), parent);
+	gtk_window_set_modal (GTK_WINDOW(fs), TRUE);
 	dirname = GetWidgetCache((char *)glade_get_widget_long_name(widget));
 	if (dirname != NULL) {
 		snprintf(path,sizeof(path),"%s/%s",dirname,filename);
@@ -206,6 +207,7 @@ show_download_dialog(
 	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
+	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
 
 	get_human_bytes(LBS_Size(binary), hbytes);
 	
