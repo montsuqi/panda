@@ -88,6 +88,7 @@ GL_SendPacketClass(
 	PacketClass	c)
 {
 	nputc(c,fp);
+	Flush(fp);
 }
 
 extern	PacketClass

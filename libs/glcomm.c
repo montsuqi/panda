@@ -70,6 +70,7 @@ GL_SendPacketClass(
 	Bool	fNetwork)
 {
 	nputc(c,fp);
+	Flush(fp);
 }
 
 extern	PacketClass
