@@ -30,7 +30,8 @@
 #define	GLOBAL		extern
 #endif
 
-#define TIMEOUT_SEC 60
+#define API_TIMEOUT_SEC  60
+#define GL_TIMEOUT_SEC   60
 
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;

@@ -425,6 +425,13 @@ CheckFeature(
 #endif
 }
 
+static	void
+OnSIGALRM(
+	int		ec)
+{
+	Warning("session timeout");
+}
+
 static	Bool
 Connect(
 	NETFILE	*fpComm,
@@ -434,7 +441,15 @@ Connect(
 	char	ver[SIZE_BUFF];
     Bool    auth_ok = FALSE;
 	Bool	rc;
+	struct sigaction sa;
 ENTER_FUNC;
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = (void*)OnSIGALRM;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGALRM, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
 	rc = FALSE;
 	GL_RecvString(fpComm, sizeof(ver), ver, FALSE);	ON_IO_ERROR(fpComm,badio);
 	dbgprintf("ver  = [%s]",ver);
@@ -519,7 +534,7 @@ ENTER_FUNC;
 				GL_RecvString(fpComm, sizeof(name), name, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
 				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
 						   !=  NULL  ) {
-					GL_RecvValue(fpComm,value,coding,fFeatureNetwork);
+					GL_RecvValue(fpComm,value,coding,fFeatureNetwork); ON_IO_ERROR(fpComm,badio);
 				} else {
 					Warning("invalid item name [%s]\n",name);
 					goto badio;
@@ -555,6 +570,7 @@ ENTER_FUNC;
 	dbgprintf("window = [%s]\n",scr->window);
 	dbgprintf("event  = [%s]\n",scr->event);
 	RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
+	alarm(0);
 	ApplicationsCall(APL_SESSION_GET,scr);
 	if ( scr->status == APL_SESSION_GET ){
 		ret = SendScreen(fpComm,scr);
@@ -650,18 +666,22 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);			
 			break;
 		case GL_Event:
+			alarm(GL_TIMEOUT_SEC);
 			if (  scr->status  !=  APL_SESSION_NULL  ) {
 				if	(  !Glevent(fpComm, scr)	){
 					scr->status = APL_SESSION_NULL;
 				}
 			}
 			ON_IO_ERROR(fpComm,badio);
+			alarm(0);
 			break;
 		case GL_Ping:
+			alarm(GL_TIMEOUT_SEC);
 			if	(  !Pong(fpComm, scr)	){
 				scr->status = APL_SESSION_NULL;
 			}
 			ON_IO_ERROR(fpComm,badio);
+			alarm(0);
 			break;
 		case GL_END:
 			scr->status = APL_SESSION_NULL;
@@ -669,7 +689,7 @@ ENTER_FUNC;
 		case HTTP_GET:
 		case HTTP_POST:
 			if (fAPI) {
-				alarm(TIMEOUT_SEC);
+				alarm(API_TIMEOUT_SEC);
 				HTTP_Method(klass, fpComm);
 			} else {
 				Warning("invalid class = %X\n",klass);
@@ -714,8 +734,6 @@ ExecuteServer(void)
 	char *ssl_warning;
 #endif
 ENTER_FUNC;
-	signal(SIGCHLD,SIG_IGN);
-
 	port = ParPortName(PortNumber);
 	_fd = InitServerPort(port,Back);
 #ifdef	USE_SSL
@@ -760,11 +778,14 @@ ENTER_FUNC;
 			close(_fd);
 			scr = InitSession();
 			strcpy(scr->term,TermName(fd));
-			alarm(TIMEOUT_SEC);
+			alarm(API_TIMEOUT_SEC);
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
 			DisconnectSysData();
+// FIXME avoid segv gl protocol timeout
+#if 0
 			CloseNet(fpComm);
+#endif
 			exit(0);
 		}
 	}

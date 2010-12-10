@@ -120,7 +120,24 @@ main(
 	int		argc,
 	char	**argv)
 {
-	(void)signal(SIGPIPE,(void *)StopProcess);
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_IGN;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = (void*)StopProcess;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGPIPE, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
 	SetDefault();
 	(void)GetOption(option,argc,argv,NULL);
 	InitMessage("glserver",NULL);
