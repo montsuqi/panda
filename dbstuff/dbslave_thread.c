@@ -282,7 +282,6 @@ PatchLogRecord(
 	PatchFuncArg *arg = (PatchFuncArg *)userdata;
 	DBSlaveThread *ctx = arg->ctx;
 	DBLogCtx *log = arg->log;
-	char *buff = (char *)xmalloc(SIZE_LARGE_BUFF + 1);
 	int rc;
 	Bool ret;
 	Bool update_ok = TRUE;
@@ -295,14 +294,12 @@ ENTER_FUNC;
 			if (!ret) {
 				update_ok = FALSE;
 				dbgprintf("diff [%s] => [%s]", LBS_Body(rec->checkdata), LBS_Body(ctx->dbg->checkData));
-				snprintf(buff, 60, "Difference for the update check %s...", (char *)LBS_Body(rec->data));
-				Warning(buff);
+				Warning("Difference for the update check %s...", (char *)LBS_Body(rec->data));
 			}
 		}
 	} else {
 		update_ok = FALSE;
-		snprintf(buff, SIZE_BUFF, "update error: %s", (char *)LBS_Body(rec->data));
-		Warning(buff);
+		Warning("update error: %s", (char *)LBS_Body(rec->data));
 	}
 	if (update_ok) {
 		ret = UpdateApplyDate_DBLog(log, rec->no);
@@ -311,7 +308,6 @@ ENTER_FUNC;
 			update_ok = FALSE;
 		}
 	}
-	xfree(buff);
 	
 LEAVE_FUNC;		
 	return update_ok;
@@ -328,7 +324,6 @@ RecvLogs(
 	Bool ret;
 	Bool update_ok = TRUE;
 	DBLogRecord rec = { 0 };
-	char *buff = xmalloc(SIZE_LARGE_BUFF + 1);
 ENTER_FUNC;
 	
 	while (TRUE) {
@@ -347,7 +342,6 @@ ENTER_FUNC;
 		}
 	}
 	FreeRecordData(&rec);
-	xfree(buff);
 LEAVE_FUNC;
 	return update_ok;
 }
