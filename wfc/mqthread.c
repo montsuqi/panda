@@ -654,7 +654,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	LD_Node	**LDs;
 static	int		ApsId;
 
 static	int
@@ -680,7 +679,6 @@ ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 		info = ThisEnv->ld[i];
 		ld = New(LD_Node);
-		LDs[i] = ld;
 		ld->nports = info->nports;
 		ld->aps = (APS_Node *)xmalloc(sizeof(APS_Node) * ld->nports);
 		if		(  ThisEnv->mlevel  !=  MULTI_APS  ) {
@@ -787,7 +785,6 @@ InitMessageQueue(void)
 
 	ComponentHash = NewNameHash();
 	APS_Hash = NewNameHash();
-	LDs = (LD_Node **)xmalloc(sizeof(LD_Node *) * ThisEnv->cLD);
 	ApsId = 0;
 	cBind = 0;
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {

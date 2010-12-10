@@ -376,7 +376,7 @@ InitSession(
 	char	*term)
 {
 	SessionData	*data;
-	char	buff[SIZE_LONGNAME+1];
+	char	ldname[SIZE_LONGNAME+1];
 	LD_Node	*ld;
 	int		i;
 	Bool	fKeep;
@@ -396,8 +396,8 @@ ENTER_FUNC;
 		data->hdr->user,data->hdr->term, cTerm+1);
 	dbgprintf("term = [%s]",data->hdr->term);
 	dbgprintf("user = [%s]",data->hdr->user);
-	RecvnString(fp,SIZE_LONGNAME,buff);	/*	LD name	*/	ON_IO_ERROR(fp,badio);
-	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )  !=  NULL  ) {
+	RecvnString(fp,SIZE_LONGNAME,ldname);		ON_IO_ERROR(fp,badio);
+	if		(  ( ld = g_hash_table_lookup(APS_Hash,ldname) )  !=  NULL  ) {
 		SendPacketClass(fp,WFC_OK);
 		data->ld = ld;
 		data->mcpdata = NewMcpData();
@@ -419,7 +419,7 @@ ENTER_FUNC;
 		InitSysDBValue(term, data);
 		RegistSession(data);
 	} else {
-		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,buff);
+		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,ldname);
 	  badio:
 		SendPacketClass(fp,WFC_NOT);
 		FinishSession(data);
