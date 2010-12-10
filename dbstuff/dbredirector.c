@@ -699,7 +699,6 @@ WriteDB(
 	LargeByteString	*orgcheck)
 {
 	int rc;
-	char buff[SIZE_BUFF];
 	LargeByteString	*redcheck;
 ENTER_FUNC;
 	rc = TransactionRedirectStart(ThisDBG);
@@ -711,8 +710,8 @@ ENTER_FUNC;
 		if ( ( !fNoSumCheck) &&  ( LBS_Size(orgcheck) > 0 ) ){
 			rc = CheckRedirectData(orgcheck, redcheck);
 			if ( rc != MCP_OK ) {
-				snprintf(buff, 60, "Difference for the update check %s...",(char *)LBS_Body(query));
-				Warning(buff);
+				Warning("Difference for the update check %s...",
+								LBS_Body(query));
 			}
 		}
 	}
