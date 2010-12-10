@@ -711,7 +711,7 @@ static gboolean
 PrepareNextRequest(
 	HTTP_REQUEST *req)
 {
-	alarm(TIMEOUT_SEC);
+	alarm(API_TIMEOUT_SEC);
 	XFree(&(req->arguments));
 	XFree(&(req->user));
 	XFree(&(req->pass));
