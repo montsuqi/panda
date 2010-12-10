@@ -202,26 +202,34 @@ MainLoop(
 {
 	Bool	ret;
 	char	buff[SIZE_BUFF+1];
-	char	*pass;
+	char	*pass = NULL;
 	char	*p
 		,	*q;
 	tVersionNumber  ver;
 
 ENTER_FUNC;
+	memclear(&ver, sizeof(ver));
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	dbgprintf("[%s]",buff);
 	if		(  strncmp(buff,"Start: ",7)  ==  0  ) {
 		dbgmsg("start");
 		p = buff + 7;
-		*(q = strchr(p,' ')) = 0;
-		ParseVersion(p,&ver);
-		p = q + 1;
-		*(q = strchr(p,' ')) = 0;
-		strcpy(scr->user,p);
-		p = q + 1;
-		*(q = strchr(p,' ')) = 0;
-		pass = p;
-		strcpy(scr->cmd,q+1);
+		if ((q = strchr(p,' ')) != NULL ){
+			*q = 0;
+			ParseVersion(p,&ver);
+			p = q + 1;
+		}
+		if ((q = strchr(p,' ')) != NULL ){
+			*q = 0;
+			g_strlcpy(scr->user,p,SIZE_USER);
+			p = q + 1;
+		}
+		if ((q = strchr(p,' ')) != NULL ){
+			*q = 0;
+			pass = p;
+			p = q + 1;
+		}
+		g_strlcpy(scr->cmd,p,SIZE_LONGNAME);
 		if		(  ( ver.major <  1 ) ||
 				   ( ( ver.major == 1 ) && ( ver.minor <  2 ) ) ||
 				   ( ( ver.major == 1 ) && ( ver.minor == 2 ) && 
@@ -321,7 +329,7 @@ ExecuteServer(void)
 			close(_fh);
 			scr = InitSession();
 			strcpy(scr->term,TermName(fh));
-			Message("[%s@%s] session start",scr->user, TermToHost(scr->term));
+			Message("[@%s] session start",TermToHost(scr->term));
 			while	(  MainLoop(fpComm,scr)  );
 			FinishSession(scr);
 			CloseNet(fpComm);
