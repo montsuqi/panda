@@ -208,6 +208,7 @@ show_download_dialog(
 	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
 	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
+	gtk_window_set_title(GTK_WINDOW(dialog),_("file downloading"));
 
 	get_human_bytes(LBS_Size(binary), hbytes);
 	
