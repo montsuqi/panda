@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2010-08-24 17:05+0900\n"
+"POT-Creation-Date: 2010-12-14 11:35+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -175,7 +175,7 @@ msgid "Ok"
 msgstr ""
 
 #: glclient/gtk1/bootdialog.c:179 glclient/gtk1/dialogs.c:150
-#: glclient/gtk1/download.c:245 glclient/gtk1/printdialog.c:321
+#: glclient/gtk1/download.c:248 glclient/gtk1/printdialog.c:322
 msgid "Cancel"
 msgstr ""
 
@@ -203,11 +203,11 @@ msgstr ""
 
 #: glclient/gtk1/bootdialog.c:486 glclient/gtk1/bootdialog.c:881
 #: glclient/gtk1/printdialog.c:106 glclient/gtk2/bootdialog.c:426
-#: glclient/gtk2/bootdialog.c:742
+#: glclient/gtk2/bootdialog.c:743
 msgid "Close"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:557 glclient/gtk2/bootdialog.c:496
+#: glclient/gtk1/bootdialog.c:557 glclient/gtk2/bootdialog.c:497
 msgid "Custom"
 msgstr ""
 
@@ -215,35 +215,35 @@ msgstr ""
 msgid "glclient Launcher"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:845 glclient/gtk2/bootdialog.c:701
+#: glclient/gtk1/bootdialog.c:845 glclient/gtk2/bootdialog.c:702
 msgid "Server"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:859 glclient/gtk2/bootdialog.c:718
+#: glclient/gtk1/bootdialog.c:859 glclient/gtk2/bootdialog.c:719
 msgid "Basic"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:864 glclient/gtk2/bootdialog.c:723
+#: glclient/gtk1/bootdialog.c:864 glclient/gtk2/bootdialog.c:724
 msgid "SSL"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:869 glclient/gtk2/bootdialog.c:728
+#: glclient/gtk1/bootdialog.c:869 glclient/gtk2/bootdialog.c:729
 msgid "Details"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:874 glclient/gtk2/bootdialog.c:733
+#: glclient/gtk1/bootdialog.c:874 glclient/gtk2/bootdialog.c:734
 msgid "Connect"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:887 glclient/gtk2/bootdialog.c:748
+#: glclient/gtk1/bootdialog.c:887 glclient/gtk2/bootdialog.c:749
 msgid "Configuration"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:894 glclient/gtk2/bootdialog.c:755
+#: glclient/gtk1/bootdialog.c:894 glclient/gtk2/bootdialog.c:756
 msgid "INFOMATION"
 msgstr ""
 
-#: glclient/gtk1/bootdialog.c:922 glclient/gtk2/bootdialog.c:779
+#: glclient/gtk1/bootdialog.c:922 glclient/gtk2/bootdialog.c:780
 #, c-format
 msgid "error: permissions is not 0%o: %s\n"
 msgstr ""
@@ -273,7 +273,11 @@ msgstr ""
 msgid "Please select a file for saving"
 msgstr ""
 
-#: glclient/gtk1/download.c:212 glclient/gtk2/download.c:122
+#: glclient/gtk1/download.c:211
+msgid "file downloading"
+msgstr ""
+
+#: glclient/gtk1/download.c:215 glclient/gtk2/download.c:122
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -282,11 +286,11 @@ msgid ""
 "Size:%s"
 msgstr ""
 
-#: glclient/gtk1/download.c:222
+#: glclient/gtk1/download.c:225
 msgid "Open with App"
 msgstr ""
 
-#: glclient/gtk1/download.c:235 glclient/gtk1/printdialog.c:298
+#: glclient/gtk1/download.c:238 glclient/gtk1/printdialog.c:299
 msgid "Save"
 msgstr ""
 
@@ -297,7 +301,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: glclient/gtk1/printdialog.c:276 glclient/gtk2/printdialog.c:163
+#: glclient/gtk1/printdialog.c:277 glclient/gtk2/printdialog.c:163
 #, c-format
 msgid ""
 "There is the print data.\n"
@@ -308,11 +312,11 @@ msgid ""
 "Size:%s"
 msgstr ""
 
-#: glclient/gtk1/printdialog.c:288 glclient/gtk2/printdialog.c:66
+#: glclient/gtk1/printdialog.c:289 glclient/gtk2/printdialog.c:66
 msgid "Preview"
 msgstr ""
 
-#: glclient/gtk1/printdialog.c:308
+#: glclient/gtk1/printdialog.c:309
 msgid "Print"
 msgstr ""
 
@@ -334,7 +338,7 @@ msgstr ""
 msgid "doesn't exist config:%s"
 msgstr ""
 
-#: glclient/gtk2/bootdialog.c:684 glclient/gtk2/bootdialog.c:693
+#: glclient/gtk2/bootdialog.c:685 glclient/gtk2/bootdialog.c:694
 msgid "glclient2 Launcher"
 msgstr ""
 
@@ -342,7 +346,7 @@ msgstr ""
 msgid "Specify filename..."
 msgstr ""
 
-#: glclient/gtk2/action.c:514
+#: glclient/gtk2/action.c:513
 msgid "Now loading..."
 msgstr ""
 
@@ -410,47 +414,47 @@ msgstr ""
 msgid "Connection lost\n"
 msgstr ""
 
-#: glclient/protocol.c:201
+#: glclient/protocol.c:202
 msgid "error size mismatch !"
 msgstr ""
 
-#: glclient/protocol.c:409
+#: glclient/protocol.c:410
 msgid "invalid protocol sequence"
 msgstr ""
 
-#: glclient/protocol.c:708 glclient/protocol.c:729
+#: glclient/protocol.c:709 glclient/protocol.c:730
 msgid "connection error(server doesn't reply ping)"
 msgstr ""
 
-#: glclient/protocol.c:745
+#: glclient/protocol.c:746
 msgid "connection start\n"
 msgstr ""
 
-#: glclient/protocol.c:763
+#: glclient/protocol.c:764
 msgid "can not connect server"
 msgstr ""
 
-#: glclient/protocol.c:766
+#: glclient/protocol.c:767
 msgid "can not connect server(version not match)"
 msgstr ""
 
-#: glclient/protocol.c:772
+#: glclient/protocol.c:773
 msgid "can not connect server(authentication error)"
 msgstr ""
 
-#: glclient/protocol.c:775 glclient/protocol.c:779
+#: glclient/protocol.c:776 glclient/protocol.c:780
 msgid "can not connect server(user or password is incorrect)"
 msgstr ""
 
-#: glclient/protocol.c:784
+#: glclient/protocol.c:785
 msgid "can not connect server(application name invalid)"
 msgstr ""
 
-#: glclient/protocol.c:788
+#: glclient/protocol.c:789
 msgid "can not connect server(other protocol error)"
 msgstr ""
 
-#: glclient/protocol.c:885 glclient/protocol.c:910 glclient/protocol.c:1141
+#: glclient/protocol.c:886 glclient/protocol.c:911 glclient/protocol.c:1142
 #, c-format
 msgid "invalid data conversion\n"
 msgstr ""

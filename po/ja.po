@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2010-08-24 17:05+0900\n"
+"POT-Creation-Date: 2010-12-14 11:35+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -174,7 +174,7 @@ msgid "Ok"
 msgstr "OK"
 
 #: glclient/gtk1/bootdialog.c:179 glclient/gtk1/dialogs.c:150
-#: glclient/gtk1/download.c:245 glclient/gtk1/printdialog.c:321
+#: glclient/gtk1/download.c:248 glclient/gtk1/printdialog.c:322
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -202,11 +202,11 @@ msgstr "削除"
 
 #: glclient/gtk1/bootdialog.c:486 glclient/gtk1/bootdialog.c:881
 #: glclient/gtk1/printdialog.c:106 glclient/gtk2/bootdialog.c:426
-#: glclient/gtk2/bootdialog.c:742
+#: glclient/gtk2/bootdialog.c:743
 msgid "Close"
 msgstr "閉じる"
 
-#: glclient/gtk1/bootdialog.c:557 glclient/gtk2/bootdialog.c:496
+#: glclient/gtk1/bootdialog.c:557 glclient/gtk2/bootdialog.c:497
 msgid "Custom"
 msgstr "カスタム"
 
@@ -214,35 +214,35 @@ msgstr "カスタム"
 msgid "glclient Launcher"
 msgstr "glclient ランチャー"
 
-#: glclient/gtk1/bootdialog.c:845 glclient/gtk2/bootdialog.c:701
+#: glclient/gtk1/bootdialog.c:845 glclient/gtk2/bootdialog.c:702
 msgid "Server"
 msgstr "サーバ"
 
-#: glclient/gtk1/bootdialog.c:859 glclient/gtk2/bootdialog.c:718
+#: glclient/gtk1/bootdialog.c:859 glclient/gtk2/bootdialog.c:719
 msgid "Basic"
 msgstr "基本"
 
-#: glclient/gtk1/bootdialog.c:864 glclient/gtk2/bootdialog.c:723
+#: glclient/gtk1/bootdialog.c:864 glclient/gtk2/bootdialog.c:724
 msgid "SSL"
 msgstr "SSL"
 
-#: glclient/gtk1/bootdialog.c:869 glclient/gtk2/bootdialog.c:728
+#: glclient/gtk1/bootdialog.c:869 glclient/gtk2/bootdialog.c:729
 msgid "Details"
 msgstr "詳細"
 
-#: glclient/gtk1/bootdialog.c:874 glclient/gtk2/bootdialog.c:733
+#: glclient/gtk1/bootdialog.c:874 glclient/gtk2/bootdialog.c:734
 msgid "Connect"
 msgstr "接続"
 
-#: glclient/gtk1/bootdialog.c:887 glclient/gtk2/bootdialog.c:748
+#: glclient/gtk1/bootdialog.c:887 glclient/gtk2/bootdialog.c:749
 msgid "Configuration"
 msgstr "設定"
 
-#: glclient/gtk1/bootdialog.c:894 glclient/gtk2/bootdialog.c:755
+#: glclient/gtk1/bootdialog.c:894 glclient/gtk2/bootdialog.c:756
 msgid "INFOMATION"
 msgstr "情報"
 
-#: glclient/gtk1/bootdialog.c:922 glclient/gtk2/bootdialog.c:779
+#: glclient/gtk1/bootdialog.c:922 glclient/gtk2/bootdialog.c:780
 #, c-format
 msgid "error: permissions is not 0%o: %s\n"
 msgstr "警告: パーミッションが 0%o ではありません: %s\n"
@@ -272,7 +272,11 @@ msgstr "OK"
 msgid "Please select a file for saving"
 msgstr "保存するファイルの選択"
 
-#: glclient/gtk1/download.c:212 glclient/gtk2/download.c:122
+#: glclient/gtk1/download.c:211
+msgid "file downloading"
+msgstr "ファイルのダウンロード"
+
+#: glclient/gtk1/download.c:215 glclient/gtk2/download.c:122
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -285,11 +289,11 @@ msgstr ""
 "ファイル名:%s\n"
 "サイズ:%s"
 
-#: glclient/gtk1/download.c:222
+#: glclient/gtk1/download.c:225
 msgid "Open with App"
 msgstr "開く"
 
-#: glclient/gtk1/download.c:235 glclient/gtk1/printdialog.c:298
+#: glclient/gtk1/download.c:238 glclient/gtk1/printdialog.c:299
 msgid "Save"
 msgstr "保存"
 
@@ -302,7 +306,7 @@ msgstr ""
 "%sに書き込めませんでした\n"
 "%s"
 
-#: glclient/gtk1/printdialog.c:276 glclient/gtk2/printdialog.c:163
+#: glclient/gtk1/printdialog.c:277 glclient/gtk2/printdialog.c:163
 #, c-format
 msgid ""
 "There is the print data.\n"
@@ -319,11 +323,11 @@ msgstr ""
 "ページ数:%d\n"
 "サイズ:%s"
 
-#: glclient/gtk1/printdialog.c:288 glclient/gtk2/printdialog.c:66
+#: glclient/gtk1/printdialog.c:289 glclient/gtk2/printdialog.c:66
 msgid "Preview"
 msgstr "プレビュー"
 
-#: glclient/gtk1/printdialog.c:308
+#: glclient/gtk1/printdialog.c:309
 msgid "Print"
 msgstr "印刷"
 
@@ -345,7 +349,7 @@ msgstr "警告:%sは既に使用しています\n"
 msgid "doesn't exist config:%s"
 msgstr "設定 %s はありません"
 
-#: glclient/gtk2/bootdialog.c:684 glclient/gtk2/bootdialog.c:693
+#: glclient/gtk2/bootdialog.c:685 glclient/gtk2/bootdialog.c:694
 msgid "glclient2 Launcher"
 msgstr "glclient2 ランチャー"
 
@@ -353,7 +357,7 @@ msgstr "glclient2 ランチャー"
 msgid "Specify filename..."
 msgstr "保存するファイルの選択"
 
-#: glclient/gtk2/action.c:514
+#: glclient/gtk2/action.c:513
 msgid "Now loading..."
 msgstr "読み込み中..."
 
@@ -421,47 +425,47 @@ msgstr "パスワード"
 msgid "Connection lost\n"
 msgstr "接続が切れました\n"
 
-#: glclient/protocol.c:201
+#: glclient/protocol.c:202
 msgid "error size mismatch !"
 msgstr "エラー!サイズが不正です"
 
-#: glclient/protocol.c:409
+#: glclient/protocol.c:410
 msgid "invalid protocol sequence"
 msgstr "プロトコルが不正です"
 
-#: glclient/protocol.c:708 glclient/protocol.c:729
+#: glclient/protocol.c:709 glclient/protocol.c:730
 msgid "connection error(server doesn't reply ping)"
 msgstr "通信エラー(サーバがPINGに応答しません)"
 
-#: glclient/protocol.c:745
+#: glclient/protocol.c:746
 msgid "connection start\n"
 msgstr "connection start\n"
 
-#: glclient/protocol.c:763
+#: glclient/protocol.c:764
 msgid "can not connect server"
 msgstr "サーバに接続できません"
 
-#: glclient/protocol.c:766
+#: glclient/protocol.c:767
 msgid "can not connect server(version not match)"
 msgstr "サーバに接続できません(サーバのバージョンが違います)"
 
-#: glclient/protocol.c:772
+#: glclient/protocol.c:773
 msgid "can not connect server(authentication error)"
 msgstr "サーバに接続できません(認証エラー)"
 
-#: glclient/protocol.c:775 glclient/protocol.c:779
+#: glclient/protocol.c:776 glclient/protocol.c:780
 msgid "can not connect server(user or password is incorrect)"
 msgstr "ユーザまたはパスワードが違います"
 
-#: glclient/protocol.c:784
+#: glclient/protocol.c:785
 msgid "can not connect server(application name invalid)"
 msgstr "サーバに接続できません(アプリケーション名が不正です)"
 
-#: glclient/protocol.c:788
+#: glclient/protocol.c:789
 msgid "can not connect server(other protocol error)"
 msgstr "サーバに接続できません(プロトコルエラー)"
 
-#: glclient/protocol.c:885 glclient/protocol.c:910 glclient/protocol.c:1141
+#: glclient/protocol.c:886 glclient/protocol.c:911 glclient/protocol.c:1142
 #, c-format
 msgid "invalid data conversion\n"
 msgstr "不正なデータ変換です\n"
