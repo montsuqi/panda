@@ -313,11 +313,12 @@ ENTER_FUNC;
 			*p = 0;
 			DecodeName(rname,vname,buff);
 			dbgprintf("rname[%s], vname[%s]",rname, vname);
-			DecodeStringURL(str,p+1);
-			value = GetItemLongName(args,vname);
-			if (value != NULL) {
-				ValueIsUpdate(value);
-				SetValueString(value,str,Encoding);
+			if ( DecodeStringURL(str,p+1) > 0 ) {
+				value = GetItemLongName(args,vname);
+				if (value != NULL) {
+					ValueIsUpdate(value);
+					SetValueString(value,str,Encoding);
+				}
 			}
 		} else {
 			break;
@@ -356,7 +357,7 @@ ENTER_FUNC;
 		ctrl->rcount = 1;
 	}
 	SendStringDelim(fpComm,buff);
-	dbgprintf("[%s]",buff);
+	dbgprintf("Exec: [%s]",buff);
 	if		(	(  ses->fIgnore  )
 			&&	(	(  ctrl->rcount  ==  0     )
 				||	(  args         ==  NULL  ) ) ) {
@@ -690,12 +691,15 @@ ENTER_FUNC;
 			if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
 															  pname) )  ==  0  ) {
 				rec = NULL;
+				Warning("invalid path name [%s]\n", pname);
 			}
 		} else {
 			rec = NULL;
+			Warning("invalid record name [%s]\n", rname);
 		}
 	} else {
 		rec = NULL;
+		Warning("invalid message [%s]\n",para);
 	}
 	if		(  rec  !=  NULL  ) {
 		WriteClientStructure(ses,fpComm,rec);
