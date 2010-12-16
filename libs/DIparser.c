@@ -485,7 +485,7 @@ ENTER_FUNC;
 	}	while	(	(  q   !=  NULL  )
 				&&	(  ld  ==  NULL  ) );
 	if		(  ld  ==  NULL  ) {
-		ParError("ld not found");
+		ParErrorPrintf("ld file not found %s.ld\n", ComSymbol);
 	}
 LEAVE_FUNC;
 }
@@ -550,8 +550,6 @@ ENTER_FUNC;
 				}
 			}
 			if		(  ComToken  !=  ';'  ) {
-				Message("[%c]\n",ComToken);
-				Message("[%s]\n",ComSymbol);
 				ParError("syntax error 2");
 			}
 		}
@@ -1414,7 +1412,7 @@ ENTER_FUNC;
 			break;
 		}
 		if		(  GetSymbol  !=  ';'  ) {
-			ParError("; missing");
+			ParError("; missing ParDI");
 		}
 		ERROR_BREAK;
 	}
