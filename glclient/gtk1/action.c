@@ -472,7 +472,6 @@ ENTER_FUNC;
 	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
 	if (data->fWindow) {
 	dbgmsg("show primari window\n");
-		SetTitle(TopWindow);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
 			SwitchWindow(window);
 			if (!data->fAccelGroup) {
@@ -487,6 +486,7 @@ ENTER_FUNC;
 				data->fAccelGroup = TRUE;
 			}
 		}
+		SetTitle(TopWindow);
 	} else {
 	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;

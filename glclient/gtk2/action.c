@@ -456,7 +456,6 @@ ENTER_FUNC;
 	dbgmsg("show primari window\n");
 		gtk_widget_show(TopWindow);
 		_GrabFocus(TopWindow);
-		SetTitle(TopWindow);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
 			SwitchWindow(window);
 			if (!data->fAccelGroup) {
@@ -471,6 +470,7 @@ ENTER_FUNC;
 				data->fAccelGroup = TRUE;
 			}
 		}
+		SetTitle(TopWindow);
 	} else {
 	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;
