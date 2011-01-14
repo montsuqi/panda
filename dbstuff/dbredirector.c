@@ -130,7 +130,7 @@ LookupTicket(
 {
 	GSList *list;
 	Ticket *ticket;
-	
+
 	list = TicketList;
 	while(list){
 		if (list->data) {
@@ -256,7 +256,7 @@ ENTER_FUNC;
 	RecvLBS(fpLog, veryfydata->checkData);
 	LBS_EmitEnd(veryfydata->checkData);
 	RecvLBS(fpLog, veryfydata->redirectData);
-	LBS_EmitEnd(veryfydata->redirectData);	
+	LBS_EmitEnd(veryfydata->redirectData);
 	ticket = LookupTicket(ticket_id, fpLog->fd);
 	if ( (ticket != NULL)
 		 && (ticket->status == TICKET_BEGIN) ) {
@@ -303,7 +303,7 @@ ENTER_FUNC;
 		}
 		pthread_mutex_unlock(&redlock);
 	}
-LEAVE_FUNC;	
+LEAVE_FUNC;
 	return ticket;
 }
 
@@ -322,6 +322,7 @@ CommitTicket(
 		}
 		SendPacketClass(fpLog,RED_OK);
 	} else {
+		Warning("The transaction (%d) is not found.", ticket_id);
 		SendPacketClass(fpLog,RED_NOT);
 	}
 	pthread_cond_signal(&redcond);
@@ -643,7 +644,7 @@ static  FILE	*
 OpenAuditLogFile(void)
 {
 	FILE	*fp = NULL;
-	
+
 	if		(  AuditLogFile  !=  NULL  ) {
 		umask((mode_t) 0077);
 		if		(  ( fp = fopen(AuditLogFile,"a+") )  ==  NULL  ) {
@@ -732,7 +733,7 @@ ENTER_FUNC;
 	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ) {
 		ReConnectDB();
 	}
-	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){	
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
 		rc = WriteDB(veryfydata->redirectData, veryfydata->checkData);
 	}
 	if ( rc != MCP_OK ) {
@@ -755,7 +756,7 @@ ReRedirect(
 ENTER_FUNC;
 	BeginDB_Redirect(ThisDBG);
 	PutDB_Redirect(ThisDBG, query);
-	PutCheckDataDB_Redirect(ThisDBG, checkData);	
+	PutCheckDataDB_Redirect(ThisDBG, checkData);
 	CommitDB_Redirect(ThisDBG);
 LEAVE_FUNC;
 }
@@ -764,7 +765,7 @@ static void
 WriteRedirectAuditLog(void)
 {
 	VeryfyData	*veryfydata;
-	
+
 	veryfydata = NewVerfyData();
 	veryfydata->checkData = LBS_Duplicate(AuditDBG->checkData);
 	veryfydata->redirectData = LBS_Duplicate(AuditDBG->redirectData);
@@ -810,7 +811,7 @@ WriteAuditLog(
 	int rc;
 	static Bool ExistADBGAuditTable = FALSE;
 	static Bool ExistTDBGAuditTable = FALSE;
-ENTER_FUNC;	
+ENTER_FUNC;
 	while (fSync){
 		Message("auditlog wait...");
 		sleep(1);
@@ -852,24 +853,24 @@ LEAVE_FUNC;
 static void
 HandleRedirector(VeryfyData *veryfydata)
 {
-ENTER_FUNC;		
+ENTER_FUNC;
 	if (ExecDB(veryfydata) == DB_STATUS_UNCONNECT ){
 		/* Retry */
 		ExecDB(veryfydata);
 	}
-LEAVE_FUNC;	
+LEAVE_FUNC;
 }
 
 static void
 HandleLog(VeryfyData *veryfydata)
 {
-ENTER_FUNC;	
+ENTER_FUNC;
 	Put_DBLog(
 		DBLog,
 		LBS_Body(veryfydata->redirectData),
 		LBS_Body(veryfydata->checkData)
 	);
-LEAVE_FUNC;	
+LEAVE_FUNC;
 }
 
 static	void
@@ -885,11 +886,11 @@ ENTER_FUNC;
 	ConnectDB();
 	afp = OpenAuditLogFile();
 	ConnectAuditDB();
-	
+
 	strncpy(header, "dbredirector start", sizeof(header));
 	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
 		strncat(header, "(No database)", sizeof(header) - strlen(header) - 1);
-		/* ReRedirect */		
+		/* ReRedirect */
 		OpenDB_RedirectPort(ThisDBG);
 		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	}
@@ -955,7 +956,7 @@ ExecuteServer(void)
 
 ENTER_FUNC;
 	pthread_mutex_init(&redlock,NULL);
-	pthread_mutex_init(&ticketlock,NULL);	
+	pthread_mutex_init(&ticketlock,NULL);
 	pthread_cond_init(&redcond, NULL);
 	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL);
 	_fhLog = InitServerPort(ThisDBG->redirectPort,Back);
@@ -995,7 +996,7 @@ DumpDBG(
 	dbgprintf("\tDB pass  = [%s]\n",GetDB_Pass(dbg,DB_UPDATE));
  	dbgprintf("\tDB sslmode  = [%s]\n",GetDB_Sslmode(dbg,DB_UPDATE));
 	dbgprintf("\t   redirectorMode = [%d]\n", dbg->redirectorMode);
-	
+
 	if		(  dbg->file  !=  NULL  ) {
 		dbgprintf("\tlog file = [%s]\n",dbg->file);
 	}
@@ -1016,7 +1017,7 @@ _CheckDBG(
 	char *src_port, *dsc_port;
 	char *dbg_dbname = "", *red_dbg_dbname = "";
 	char	*dbname;
-ENTER_FUNC;		
+ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL  ) {
 		red_dbg = dbg->redirect;
 		if ( strcmp(red_dbg->name, red_name ) == 0 ){
@@ -1100,7 +1101,7 @@ ENTER_FUNC;
 	memset( &sa, 0, sizeof(struct sigaction) );
 	sa.sa_flags = 0;
 	sa.sa_handler = SIG_IGN;
-	sigemptyset (&sa.sa_mask);	
+	sigemptyset (&sa.sa_mask);
 	sigaction( SIGPIPE, &sa, NULL );
 
 	sa.sa_handler = StopHandler;
@@ -1112,7 +1113,7 @@ ENTER_FUNC;
 	sa.sa_flags |= SA_RESTART;
 	sigemptyset (&sa.sa_mask);
 	sigaction( SIGUSR1, &sa, NULL );
-	
+
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 	if		( ThisEnv == NULL ) {
@@ -1225,7 +1226,7 @@ SetDefault(void)
 	fNoCheck = FALSE;
 	fNoSumCheck = FALSE;
 	fNoRedirect = FALSE;
-	fNoAudit = FALSE;	
+	fNoAudit = FALSE;
 	MaxSendRetry = 3;
 	RetryInterval = 5;
 }
