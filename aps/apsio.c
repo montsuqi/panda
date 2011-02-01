@@ -322,7 +322,7 @@ ENTER_FUNC;
 			SendPacketClass(fp,APS_PONG);		ON_IO_ERROR(fp,badio);
 			break;
 		  default:
-			dbgmsg("default");
+			Warning("Invalid PacketClass in GetWFCTerm(%02X)",c);
 			SendPacketClass(fp,APS_NOT);		ON_IO_ERROR(fp,badio);
 		  badio:
 			fEnd = TRUE;
@@ -376,7 +376,7 @@ ENTER_FUNC;
 		RecvnString(fp, sizeof(hdr.user), hdr.user);ON_IO_ERROR(fp,badio);
 		c = RecvPacketClass(fp);					ON_IO_ERROR(fp,badio);
 		if (c != APS_MCPDATA) {
-			Warning("Invalid PacketClass(%02X)",c);
+			Warning("Invalid PacketClass in GetWFCAPI(%02X)",c);
 			return FALSE;
 		}
 		RecvLBS(fp, buff);							ON_IO_ERROR(fp,badio);
@@ -434,9 +434,12 @@ ENTER_FUNC;
 		node->messagetype = MESSAGE_TYPE_API;
 		fSuc = GetWFCAPI(fp, node);
 		break;
+	default:
+		Warning("Invalid PacketClass in GetWFC(%02X)",c);
+		break;
 	}
 LEAVE_FUNC;
-	return	(fSuc); 
+	return	(fSuc);
 }
 
 static	void

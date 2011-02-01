@@ -506,10 +506,8 @@ ENTER_FUNC;
 			fExit = TRUE;
 			break;
 		  default:
-			dbgmsg("default");
-			dbgprintf("c = [%X]\n",c);
-			SendPacketClass(fp,WFC_NOT);
-			ON_IO_ERROR(fp,badio);
+			Warning("Invalid PacketClass in ReadTerminal [%X]", c);
+			SendPacketClass(fp,WFC_NOT);			ON_IO_ERROR(fp,badio);
 			fExit = TRUE;
 			data->status = SESSION_STATUS_ABORT;
 			break;
