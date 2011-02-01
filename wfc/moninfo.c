@@ -124,6 +124,7 @@ ENTER_FUNC;
 		exit(1);
 	}
 	FreeValueStruct(q);
+	SendPacketClass(fp, SYSDATA_END); 
 	CloseNet(fp);
 	exit(0);
 LEAVE_FUNC;
@@ -160,6 +161,7 @@ ENTER_FUNC;
 		SetValueStringWithLength(GetItemLongName(q,"id"), id, strlen(id), NULL);
 		rc = KVREQ_Request(fp, KV_SETVALUE, q);
 	}
+	SendPacketClass(fp, SYSDATA_END); 
 	CloseNet(fp);
 	FreeValueStruct(q);
 	if (rc != MCP_OK) {
@@ -227,6 +229,7 @@ ENTER_FUNC;
 		FreeValueStruct(query);
 	}
 	FreeValueStruct(list);
+	SendPacketClass(fp, SYSDATA_END); 
 	CloseNet(fp);
 	exit(0);
 LEAVE_FUNC;

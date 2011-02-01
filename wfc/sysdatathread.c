@@ -61,13 +61,11 @@ static	void
 SysDataThread(
 	void	*para)
 {
-	int		fhSysData = (int)(long)para;
-	NETFILE	*fp;
+	NETFILE	*fp = para;
 	PacketClass c;
 	Bool fLoop;
 
 ENTER_FUNC;
-	fp = SocketToNet(fhSysData);
 	fLoop = TRUE;
 	while	(  fLoop  ) {
 		c = RecvChar(fp);	ON_IO_ERROR(fp,badio);
@@ -90,8 +88,8 @@ ENTER_FUNC;
 			break;
 		}
 	}
-	CloseNet(fp);
   badio:
+	CloseNet(fp);
 LEAVE_FUNC;
 }
 
@@ -101,14 +99,16 @@ ConnectSysData(
 {
 	int		fhSysData;
 	pthread_t	thr;
-
+	pthread_attr_t	attr;
+	NETFILE *fp;
 ENTER_FUNC;
+	pthread_attr_init(&attr);
+	pthread_attr_setstacksize(&attr,256*1024);
 	if		(  ( fhSysData = accept(_fhSysData,0,0) )  <  0  )	{
-		Message("_fhSysData = %d INET Domain Accept",_fhSysData);
-		dbgprintf("_fhSysData = %d INET Domain Accept",_fhSysData);
-		exit(1);
+		Error("accept(2) failure:%s",strerror(errno));
 	}
-	pthread_create(&thr,NULL,(void *(*)(void *))SysDataThread,(void *)(long)fhSysData);
+	fp = SocketToNet(fhSysData);
+	pthread_create(&thr,NULL,(void *(*)(void *))SysDataThread,(void *)fp);
 	pthread_detach(thr);
 LEAVE_FUNC;
 	return	(thr); 
