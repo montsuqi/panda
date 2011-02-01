@@ -1004,8 +1004,7 @@ ENTER_FUNC;
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr,256*1024);
 	if		(  ( fhTerm = accept(_fhTerm,0,0) )  <  0  )	{
-		Message("_fhTerm = %d INET Domain Accept",_fhTerm);
-		exit(1);
+		Error("accept(2) failure:%s",strerror(errno));
 	}
 	term = New(TermNode);
 	term->que = NewQueue();

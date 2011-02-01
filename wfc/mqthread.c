@@ -731,7 +731,7 @@ ConnectAPS(
 
 ENTER_FUNC;
 	if		(  ( fhAps = accept(_fhAps,0,0) )  <  0  )	{
-		Error("INET Domain Accept");
+		Error("accept(2) failure:%s",strerror(errno));
 	}
 	fp = SocketToNet(fhAps);
 	RecvStringDelim(fp,SIZE_BUFF,buff);
