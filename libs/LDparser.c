@@ -79,6 +79,8 @@ static	GHashTable	*Reserved;
 
 static	GHashTable	*Records;
 
+static	GHashTable	*ParsedDB;
+
 extern	RecordStruct	*
 GetWindow(
 	char		*name)
@@ -206,7 +208,11 @@ ENTER_FUNC;
 					*q = 0;
 				}
 				sprintf(name,"%s/%s.db",p,ComSymbol);
-				if		(  (  db = DB_Parser(name,gname,NULL,TRUE) )  !=  NULL  ) {
+				if (  (db = g_hash_table_lookup(ParsedDB, name) ) == NULL ) {
+					db = DB_Parser(name,gname,NULL,TRUE);
+					g_hash_table_insert(ParsedDB, StrDup(name), db);
+				}
+				if ( db != NULL) {
 					if		(  g_hash_table_lookup(ld->DB_Table,ComSymbol)  ==  NULL  ) {
 						rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
 						memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
@@ -503,8 +509,7 @@ ENTER_FUNC;
 			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {
-			printf("[%s]\n",name);
-			ParError("LD file not found");
+			ParErrorPrintf("LD file not found [%s]", name);
 			ret = NULL;
 		}
 	} else {
@@ -521,5 +526,6 @@ LD_ParserInit(void)
 	Reserved = MakeReservedTable(tokentable);
 
 	Records = NewNameHash();
+	ParsedDB = NewNameHash();
 	MessageHandlerInit();
 }
