@@ -131,6 +131,10 @@ LookupTicket(
 	GSList *list;
 	Ticket *ticket;
 
+	if (ticket_id == 0) {
+		Warning("Illegal ticket_id");
+		return NULL;
+	}
 	list = TicketList;
 	while(list){
 		if (list->data) {
@@ -701,6 +705,8 @@ WriteDB(
 {
 	int rc;
 	LargeByteString	*redcheck;
+	char buff[SIZE_BUFF];
+	
 ENTER_FUNC;
 	rc = TransactionRedirectStart(ThisDBG);
 	if ( rc == MCP_OK ) {
@@ -711,8 +717,8 @@ ENTER_FUNC;
 		if ( ( !fNoSumCheck) &&  ( LBS_Size(orgcheck) > 0 ) ){
 			rc = CheckRedirectData(orgcheck, redcheck);
 			if ( rc != MCP_OK ) {
-				Warning("Difference for the update check %s...",
-								LBS_Body(query));
+				snprintf(buff, 60, "Difference for the update check %s...",(char *)LBS_Body(query));
+				Warning(buff);
 			}
 		}
 	}

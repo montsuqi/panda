@@ -41,39 +41,22 @@
 #include	"comm.h"
 #include	"debug.h"
 
-#if	0
-static Bool
-SendQueryData_Redirect(
-	DBG_Struct	*dbg)
-{
-	int rc = FALSE;
-	if		(  dbg->fpLog  !=  NULL  ) {					
-		SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
-		SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
-		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
-			Warning("Redirect Commit error");			
-		}
-	}
-	rc = TRUE;		
-badio:
-	return rc;
-}
-#endif
-
 static Bool
 SendCommit_Redirect(
 	DBG_Struct	*dbg)
 {
-	int rc = FALSE;
-	if		(  dbg->fpLog  !=  NULL  ) {
-		SendPacketClass(dbg->fpLog,RED_COMMIT);	ON_IO_ERROR(dbg->fpLog,badio);
-		SendInt(dbg->fpLog, dbg->ticket_id); ON_IO_ERROR(dbg->fpLog,badio);
-		if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {		
-			Warning("Redirect Commit error");			
-		}
+	Bool rc = TRUE;
+
+	if		(  dbg->fpLog  ==  NULL  ) {
+		return rc;
 	}
-	rc = TRUE;	
+	SendPacketClass(dbg->fpLog,RED_COMMIT);	ON_IO_ERROR(dbg->fpLog,badio);
+	SendInt(dbg->fpLog, dbg->ticket_id);		ON_IO_ERROR(dbg->fpLog,badio);
+	if		(  RecvPacketClass(dbg->fpLog)  !=  RED_OK  ) {
 badio:
+		rc = FALSE;
+		Warning("Redirect Commit error (%d)", dbg->ticket_id);
+	}
 	return rc;
 }
 
@@ -81,7 +64,7 @@ static Bool
 SendVeryfyData_Redirect(
 	DBG_Struct	*dbg)
 {
-	int rc = FALSE;
+	Bool rc = FALSE;
 	if	( (dbg->fpLog  !=  NULL)
 		  && ( dbg->redirectData !=  NULL)
 		  && ( LBS_Size(dbg->redirectData) > 0 ) ) {
@@ -89,7 +72,7 @@ SendVeryfyData_Redirect(
 		LBS_EmitEnd(dbg->redirectData);
 		SendPacketClass(dbg->fpLog,RED_DATA);	ON_IO_ERROR(dbg->fpLog,badio);
 		SendInt(dbg->fpLog, dbg->ticket_id);	ON_IO_ERROR(dbg->fpLog,badio);
-		SendLBS(dbg->fpLog,dbg->checkData);		ON_IO_ERROR(dbg->fpLog,badio);
+		SendLBS(dbg->fpLog,dbg->checkData);	ON_IO_ERROR(dbg->fpLog,badio);
 		SendLBS(dbg->fpLog,dbg->redirectData);	ON_IO_ERROR(dbg->fpLog,badio);
 	}
 	rc = SendCommit_Redirect(dbg);
@@ -114,9 +97,9 @@ RecvSTATUS_Redirect(
 	DBG_Struct	*dbg)
 {
 	int dbstatus;
-	int rc = FALSE;
+	Bool rc = FALSE;
 	if		(  dbg->fpLog  !=  NULL  ) {
-		SendPacketClass(dbg->fpLog, RED_STATUS);ON_IO_ERROR(dbg->fpLog,badio);
+		SendPacketClass(dbg->fpLog, RED_STATUS);	ON_IO_ERROR(dbg->fpLog,badio);
 		dbstatus = RecvChar(dbg->fpLog);	ON_IO_ERROR(dbg->fpLog,badio);		
 		ChangeDBStatus_Redirect(dbg, dbstatus);
 	}
@@ -234,8 +217,11 @@ ENTER_FUNC;
 		return;
 
 	if		(  dbg->fpLog  !=  NULL  ) {
-		SendPacketClass(dbg->fpLog,RED_BEGIN);
+		SendPacketClass(dbg->fpLog,RED_BEGIN);	ON_IO_ERROR(dbg->fpLog,badio);
 		dbg->ticket_id = RecvInt(dbg->fpLog);
+	} else {
+badio:
+		dbg->ticket_id = 0;
 	}
 	if		(  dbg->redirectData  !=  NULL  ) { 
 		LBS_EmitStart(dbg->redirectData);
@@ -253,10 +239,11 @@ ENTER_FUNC;
 	if (  dbg->redirect == NULL )
 		return rc;
 	if		(  dbg->redirectData  !=  NULL  ) {
-		if		(  dbg->fpLog  !=  NULL  ) {				
-			SendPacketClass(dbg->fpLog,RED_PING);
+		if		(  dbg->fpLog  !=  NULL  ) {
+			SendPacketClass(dbg->fpLog,RED_PING); ON_IO_ERROR(dbg->fpLog,badio);
 			if		(  RecvPacketClass(dbg->fpLog)  !=  RED_PONG  ) {
-				Warning("log server down?");
+			badio:
+				Warning("dbredirect server down?");
 				ChangeDBStatus_Redirect(dbg, DB_STATUS_REDFAILURE);
 				CloseDB_RedirectPort(dbg);
 				rc = FALSE;
