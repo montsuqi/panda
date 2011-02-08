@@ -58,12 +58,12 @@ static  char    *Slave = NULL;
 static	ARG_TABLE	option[] = {
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"environment file name"							},
-	
+
 	{	"master",		STRING,		TRUE,	(void*)&Master,
 		"master dbg name"							},
 	{	"slave",		STRING,		TRUE,	(void*)&Slave,
 		"slave dbg name"							},
-	
+
 	{	"allsync",	BOOLEAN,	TRUE,	(void*)&fAllsync,
 		"All Database sync"								},
 	{	"check",	BOOLEAN,	TRUE,	(void*)&fTablecheck,
@@ -99,7 +99,7 @@ SetDefault(void)
 static void
 separator(void)
 {
-	verPrintf(" --------------------------------------------------------------------------\n");	
+	verPrintf(" --------------------------------------------------------------------------\n");
 }
 
 static void
@@ -119,7 +119,7 @@ info_print(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg)
 {
 	separator();
 	ms_print("", "Master", "Slave");
-	separator();	
+	separator();
 	ms_print("type", master_dbg->type, slave_dbg->type);
 	ms_print("host", GetDB_Host(master_dbg,DB_UPDATE), GetDB_Host(slave_dbg,DB_UPDATE));
 	ms_print("name", GetDB_DBname(master_dbg,DB_UPDATE), GetDB_DBname(slave_dbg,DB_UPDATE));
@@ -160,7 +160,7 @@ all_allsync(
 	char *lc_ctype = NULL;
 	char *dump_opt = NULL;
 	int  i = 0;
-	
+
 	ret = dbexist(master_dbg);
 	if (!ret) {
 		Warning("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));
@@ -184,7 +184,7 @@ all_allsync(
 			break;
 		}
 	}
-	
+
 	if ((!template1_check(slave_dbg)) || (dbactivity(slave_dbg) > 0)){
 		dump_opt = StrDup("-c");
 	} else {
@@ -205,7 +205,7 @@ all_allsync(
 		Warning("ERROR: database sync failed.");
 		return;
 	}
-	printf("Success all sync\n");
+	Message("Success all sync\n");
 }
 
 static void
@@ -277,7 +277,6 @@ table_check(
 
 	ng_list = NewTableList(master_list->count + slave_list->count);
 	m = s = 0;
-
 	for ( i=0; (master_list->count > m) || (slave_list->count > s); i++) {
 		cmp = strcmp( table_name(master_list,m), table_name(slave_list,s) );
 		rcmp = (table_relkind(master_list,m) - table_relkind(slave_list,s))*2 + cmp;
@@ -407,7 +406,7 @@ connect_dbredirector(
 {
 	int		fh;
 	NETFILE	*fp = NULL;
-	
+
 	if		( ( rdbg->redirectPort  !=  NULL )
 			&& (( fh = ConnectSocket(rdbg->redirectPort,SOCK_STREAM) )  >  0 ) ) {
 		fp = SocketToNet(fh);
@@ -426,11 +425,11 @@ main(
 	NETFILE	*fp;
 	time_t start, end;
 	int n, h, m, s;
-	
+
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("dbsync",NULL);
-	
+
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 
@@ -451,7 +450,7 @@ main(
 		master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, MASTERDB);
 		slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, SLAVEDB);
 	}
-	
+
 	if (!master_dbg || !slave_dbg){
 		Error("Illegal dbgroup.");
 	}
@@ -482,25 +481,25 @@ main(
 				Error("unknown packet");
 			}
 		}
-		
+
 		ng_list = table_check(master_dbg, slave_dbg);
 		if (ng_list->tables[0]->name != NULL) {
 			if (fTablecheck){
-				printf("NG, synchronization of the database\n");
+				Message("NG, synchronization of the database");
 				exit(2);
 			}
-#if 0			
+#if 0
 			ng_list_sync(master_dbg, slave_dbg, ng_list);
 #else
 			fAllsync = TRUE;
 #endif
 		} else {
 			if (fVerbose){
-				printf("OK, synchronization of the database\n");
+				Message("OK, synchronization of the database");
 			}
 		}
 	}
-	
+
 	if (fAllsync) {
 		if (fp){
 			SendPacketClass(fp,RED_SYNC_WAIT);
@@ -517,11 +516,11 @@ main(
 		h = (n/60/60); m = (n/60)-(h*60) ;s = (n)-(m*60);
 		MessageLogPrintf("Synchronous end. processing time %02d:%02d:%02d\n",
 										 h,m,s);
-		if (fp){		
+		if (fp){
 			SendPacketClass(fp,RED_SYNC_END);
 			CloseNet(fp);
 		}
 	}
-	
+
 	return	0;
 }
