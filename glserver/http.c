@@ -657,6 +657,11 @@ _HTTP_Method(
 	ParseRequest(req);
 	alarm(0);
 
+	if (req->status != HTTP_OK) {
+		SendResponse(req, NULL);
+		return FALSE;
+	}
+
 	if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
 		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
 		req->status = HTTP_FORBIDDEN;
