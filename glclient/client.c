@@ -205,7 +205,7 @@ MakeDir(char *dir)
 			unlink (dir);
 		}
 	}
-	mkdir_p (dir, 0755);
+	mkdir_p (dir, 0700);
 }
 
 static	void
@@ -216,7 +216,7 @@ MakeDirs(void)
 
 	MakeDir(ConfDir);
 	MakeDir(Cache);
-	sprintf(template,"/tmp/glclient_XXXXXX");
+	sprintf(template,"%s/XXXXXX",Cache);
 	if ((p = mkdtemp(template)) == NULL) {
 		Error(_("mkdtemp failure"));
 	}
