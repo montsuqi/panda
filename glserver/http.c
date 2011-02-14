@@ -664,7 +664,7 @@ _HTTP_Method(
 
 	if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
 		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
-		req->status = HTTP_FORBIDDEN;
+		req->status = HTTP_UNAUTHORIZED;
 	}
 	if (req->status != HTTP_OK) {
 		SendResponse(req, NULL);
