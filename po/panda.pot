@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2010-12-14 11:35+0900\n"
+"POT-Creation-Date: 2011-02-16 11:10+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -408,6 +408,15 @@ msgstr ""
 
 #: glclient/client.c:342
 msgid "input Password"
+msgstr ""
+
+#: glclient/desktop.c:185
+msgid "Application start failure"
+msgstr ""
+
+#: glclient/desktop.c:187
+#, c-format
+msgid "can't execute command.\\n\"%s\""
 msgstr ""
 
 #: glclient/protocol.c:82
