@@ -621,15 +621,13 @@ ScaleWidget(
 			*x,*y,*width,*height,
 			_x,_y,_width,_height);
 #endif
-		gtk_widget_set_size_request(widget,_width,_height); 
-#if 0
-		gtk_widget_set_uposition(widget,_x,_y);
-#else
-		GtkWidget *parent = gtk_widget_get_parent(widget);
-		if (parent != NULL && GTK_IS_FIXED(parent)) {
-			gtk_fixed_move(GTK_FIXED(parent),widget,_x,_y);
+		if (!GTK_IS_WINDOW(widget)) {
+			gtk_widget_set_size_request(widget,_width,_height); 
+			GtkWidget *parent = gtk_widget_get_parent(widget);
+			if (parent != NULL && GTK_IS_FIXED(parent)) {
+				gtk_fixed_move(GTK_FIXED(parent),widget,_x,_y);
+			}
 		}
-#endif
 	} 
 }
 
