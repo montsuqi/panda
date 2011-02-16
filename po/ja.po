@@ -428,7 +428,7 @@ msgstr "アプリケーション起動失敗"
 #: glclient/desktop.c:187
 #, c-format
 msgid "can't execute command.\\n\"%s\""
-msgstr "コマンドが実行できません\\n\"%s\""
+msgstr "コマンドを実行できません\\n\"%s\""
 
 #: glclient/protocol.c:82
 msgid "Connection lost\n"
