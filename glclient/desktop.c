@@ -39,6 +39,7 @@
 
 #include	"glclient.h"
 #include	"desktop.h"
+#include	"gettext.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -118,6 +119,7 @@ OpenDesktop(char *filename,LargeByteString *binary)
 	char *argv[DESKTOP_MAX_ARGC];
 	char *p,*q;
 	char path[SIZE_LONGNAME+1];
+	char message[SIZE_BUFF];
 
 	if (filename == NULL || strlen(filename) == 0) {
 		return;
@@ -165,6 +167,16 @@ OpenDesktop(char *filename,LargeByteString *binary)
 				p = q;
 			}
 			execvp(argv[0], argv);
+            argv[0] = "zenity";
+            argv[1] = "--error";
+            argv[2] = "--title";
+            argv[3] = _("Application start failure");
+            argv[4] = "--text";
+            sprintf(message, _("can't execute command.\\n\"%s\""),template);
+            argv[5] = message;
+            argv[6] = NULL;
+			execvp(argv[0], argv);
+			exit(0);
 		} else
 		if (pid < 0) {
 			MessageLogPrintf("fork failure:%s",strerror(errno));
