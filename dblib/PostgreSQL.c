@@ -92,11 +92,12 @@ EscapeString(
 	LBS_ReserveSize(lbs, size + (len * 2) + 1, TRUE);
 	size += PQescapeStringConn(PGCONN(dbg,DB_UPDATE),
 							   LBS_Body(lbs) + size, str, len, &error);
-	if ( error != 0 ) {
+	if ( error == 0 ) {
+		LBS_ReserveSize(lbs, size, TRUE);
+		LBS_SetPos(lbs, size);
+	} else {
 		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
-	LBS_ReserveSize(lbs, size, TRUE);
-	LBS_SetPos(lbs, size);
 }
 
 static void
@@ -116,14 +117,16 @@ EscapeBytea(
 								bintext,
 								binlen,
 								&to_length);
-	if (to_char == NULL) {
-		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
+	if (to_char != NULL) {
+		LBS_ReserveSize(lbs, old_size + to_length, TRUE);
+		dp = LBS_Body(lbs) + old_size;
+		memcpy(dp, to_char, to_length);
+		PQfreemem(to_char);
+		LBS_SetPos(lbs, old_size + to_length);
+	} else {
+		Warning("PostgreSQL: %s", PQerrorMessage(PGCONN(dbg,DB_UPDATE)));
 	}
-	LBS_ReserveSize(lbs, old_size + to_length, TRUE);
-	dp = LBS_Body(lbs) + old_size;
-	memcpy(dp, to_char, to_length);
-	PQfreemem(to_char);
-    LBS_SetPos(lbs, old_size + to_length);
+
 }
 
 static void
@@ -1886,6 +1889,40 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
+_DBLOCK(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	LargeByteString	*sql;
+	DB_Struct	*db;
+	PGresult	*res;
+	PathStruct	*path;
+	ValueStruct	*ret;
+ENTER_FUNC;
+	ret = NULL;
+	if		(  rec == NULL ) {
+		ctrl->rc = MCP_BAD_ARG;
+		ctrl->rcount = 0;
+	} else {
+		db = rec->opt.db;
+		path = db->path[ctrl->pno];
+		sql = NewLBS();
+		LBS_EmitString(sql,"LOCK\tTABLE\t");
+		LBS_EmitString(sql,rec->name);
+		LBS_EmitEnd(sql);
+		ctrl->rcount = 0;
+		res = _PQexec(dbg,LBS_Body(sql),FALSE, DB_UPDATE);
+		ctrl->rc = CheckResult(dbg, path->usage, res, PGRES_COMMAND_OK);
+		_PQclear(res);
+		FreeLBS(sql);
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
 _DBAUDITLOG(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -1969,6 +2006,7 @@ static	DB_OPS	Operations[] = {
 	{	"DBINSERT",		_DBINSERT },
 	{	"DBCLOSECURSOR",_DBCLOSECURSOR },
 	{	"DBESCAPE",		_DBESCAPE },
+	{	"DBLOCK",			_DBLOCK },
 	{	"DBAUDITLOG",		_DBAUDITLOG },
 
 	{	NULL,			NULL }
