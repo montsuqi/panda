@@ -200,6 +200,7 @@ browse_clicked(GnomeFileEntry *fentry, gpointer data)
 		return;
 	}
 	fsw = GTK_FILE_SELECTION(fentry->fsw);
+	gtk_window_set_wmclass(GTK_WINDOW(fsw),"dialog","dialog");
 	dir = GetWidgetCache((char *)glade_get_widget_long_name(GTK_WIDGET(fentry)));
 	base = g_basename(gtk_entry_get_text(GTK_ENTRY(gnome_file_entry_gtk_entry(fentry))));
 	if (base != NULL) {
