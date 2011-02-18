@@ -690,10 +690,14 @@ ConfigureWindow(GtkWidget *widget,
 	gtk_widget_set_size_request(TopNoteBook,1,1); 
 	gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, NULL);
 
-	sprintf(buf,"%d",x);
-	SetWidgetCache("glclient.topwindow.x",buf);
-	sprintf(buf,"%d",y);
-	SetWidgetCache("glclient.topwindow.y",buf);
+	if (x >= 0) {
+		sprintf(buf,"%d",x);
+		SetWidgetCache("glclient.topwindow.x",buf);
+	}
+	if (y >= 0) {
+		sprintf(buf,"%d",y);
+		SetWidgetCache("glclient.topwindow.y",buf);
+	}
 	sprintf(buf,"%d",width);
 	SetWidgetCache("glclient.topwindow.width",buf);
 	sprintf(buf,"%d",height);

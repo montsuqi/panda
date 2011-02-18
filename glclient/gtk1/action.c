@@ -731,11 +731,15 @@ fprintf(stderr,"move [%d,%d] -> [%d,%d]\n", x,y,event->x,event->y);
 			return ;
 		}
 		x = event->x;
-		sprintf(buf,"%d",x);
-		SetWidgetCache("glclient.topwindow.x",buf);
+        if (x >= 0) {
+			sprintf(buf,"%d",x);
+			SetWidgetCache("glclient.topwindow.x",buf);
+        }
 		y = event->y;
-		sprintf(buf,"%d",y);
-		SetWidgetCache("glclient.topwindow.y",buf);
+        if (y >= 0) {
+			sprintf(buf,"%d",y);
+			SetWidgetCache("glclient.topwindow.y",buf);
+		}
 	}
 }
 
