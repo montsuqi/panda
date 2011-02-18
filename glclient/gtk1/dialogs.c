@@ -50,6 +50,7 @@ message_dialog(
 		dialog = gnome_error_dialog_parented(message,parent);
 	}
 	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
+	gtk_window_set_wmclass(GTK_WINDOW(dialog),"dialog","dialog");
 	button = GNOME_DIALOG (dialog)->buttons->data;
 	gtk_widget_grab_focus (button);
 	return (dialog);
@@ -67,6 +68,7 @@ question_dialog(
 	dialog = gnome_question_dialog_modal_parented(message,
 									GTK_SIGNAL_FUNC(clicked_handler), 
 									GTK_WIDGET(widget), GTK_WINDOW(window));
+	gtk_window_set_wmclass(GTK_WINDOW(dialog),"dialog","dialog");
 	return (dialog);
 }
 
@@ -119,6 +121,7 @@ askpass(
 	response = FALSE;
 
 	dialog = gtk_dialog_new();
+	gtk_window_set_wmclass(GTK_WINDOW(dialog),"dialog","dialog");
 	gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
 	gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
 

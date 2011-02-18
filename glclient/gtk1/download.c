@@ -145,6 +145,7 @@ show_save_dialog(GtkWidget *widget,char *filename, LargeByteString *binary)
 	}
 	gtk_window_set_transient_for(GTK_WINDOW(fs), parent);
 	gtk_window_set_modal (GTK_WINDOW(fs), TRUE);
+	gtk_window_set_wmclass(GTK_WINDOW(fs),"dialog","dialog");
 	dirname = GetWidgetCache((char *)glade_get_widget_long_name(widget));
 	if (dirname != NULL) {
 		snprintf(path,sizeof(path),"%s/%s",dirname,filename);
@@ -209,7 +210,7 @@ show_download_dialog(
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
 	gtk_window_set_modal (GTK_WINDOW(dialog), TRUE);
 	gtk_window_set_title(GTK_WINDOW(dialog),_("file downloading"));
-	gtk_window_set_wmclass(GTK_WINDOW(dialog),"download","download");
+	gtk_window_set_wmclass(GTK_WINDOW(dialog),"dialog","dialog");
 
 	get_human_bytes(LBS_Size(binary), hbytes);
 	

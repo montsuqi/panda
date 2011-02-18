@@ -95,6 +95,7 @@ preview_dialog(char *title,char *fname)
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
 	gtk_window_set_title(GTK_WINDOW(dialog),title);
 	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
+	gtk_window_set_wmclass(GTK_WINDOW(dialog),"dialog","dialog");
 
 	pandaps = gtk_panda_ps_new();
 	gtk_panda_ps_load(GTK_PANDA_PS(pandaps),fname);
@@ -206,6 +207,7 @@ save_dialog(char *oldpath)
 	}
 	gtk_window_set_transient_for(GTK_WINDOW(fs), parent);
 	gtk_window_set_modal(GTK_WINDOW(fs),TRUE);
+	gtk_window_set_wmclass(GTK_WINDOW(fs),"dialog","dialog");
 	dirname = GetWidgetCache("printdialog");
 	if (dirname != NULL) {
 		snprintf(path,sizeof(path),"%s/%s",dirname,"new.ps");
@@ -271,6 +273,7 @@ show_print_dialog(char *title,char *fname,size_t size)
 	gtk_window_set_transient_for(GTK_WINDOW(dialog), parent);
 	gtk_window_set_title(GTK_WINDOW(dialog),title);
 	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
+	gtk_window_set_wmclass(GTK_WINDOW(dialog),"dialog","dialog");
 
 	get_human_bytes(size, hbytes);
 	snprintf(buf,sizeof(buf),
