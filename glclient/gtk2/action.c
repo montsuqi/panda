@@ -673,35 +673,44 @@ ConfigureWindow(GtkWidget *widget,
 	GdkEventConfigure *event,
 	gpointer data)
 {
+	static int old_width = 0, old_height = 0;
+	static int old_x = 0, old_y = 0;
 	int x,y,width,height;
 	char buf[16];
 
 	gtk_window_get_position(GTK_WINDOW(widget), &x,&y);
 	gtk_window_get_size(GTK_WINDOW(widget), &width,&height);
 
-	TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH);
-	TopWindowScale.v = (height * 1.0) / 
-		(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
+	if (old_x != x || old_y != y) {
+		if (x >= 0) {
+			sprintf(buf,"%d",x);
+			SetWidgetCache("glclient.topwindow.x",buf);
+		}
+		if (y >= 0) {
+			sprintf(buf,"%d",y);
+			SetWidgetCache("glclient.topwindow.y",buf);
+		}
+	}
 
 #if 0
-	fprintf(stderr,"[%d,%d][%d,%d][%f,%f]\n",
-		x,y,width,height,TopWindowScale.h,TopWindowScale.v);
+	fprintf(stderr,"[%d,%d][%d,%d]->[%d,%d][%d,%d]\n",
+		old_x,old_y,old_width,old_height,x,y,width,height);
 #endif
 	gtk_widget_set_size_request(TopNoteBook,1,1); 
-	gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, NULL);
-
-	if (x >= 0) {
-		sprintf(buf,"%d",x);
-		SetWidgetCache("glclient.topwindow.x",buf);
+	if (old_width != width || old_height != height) {
+		TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH);
+		TopWindowScale.v = (height * 1.0) / 
+			(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
+		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, NULL);
+		sprintf(buf,"%d",width);
+		SetWidgetCache("glclient.topwindow.width",buf);
+		sprintf(buf,"%d",height);
+		SetWidgetCache("glclient.topwindow.height",buf);
 	}
-	if (y >= 0) {
-		sprintf(buf,"%d",y);
-		SetWidgetCache("glclient.topwindow.y",buf);
-	}
-	sprintf(buf,"%d",width);
-	SetWidgetCache("glclient.topwindow.width",buf);
-	sprintf(buf,"%d",height);
-	SetWidgetCache("glclient.topwindow.height",buf);
+	old_x = x;
+	old_y = y;
+	old_width = width;
+	old_height = height;
 }
 
 extern	void
