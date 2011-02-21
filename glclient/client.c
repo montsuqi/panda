@@ -348,6 +348,15 @@ askpass(char *pass)
 }
 
 static	void
+CheckDevilspie()
+{
+	gchar *path;
+	path =  g_strconcat(g_get_home_dir(), "/.devilspie/glclient.ds", NULL);
+	remove(path);
+    g_free(path);
+}
+
+static	void
 InitSystem(
 	int		argc,
 	char	**argv)
@@ -364,6 +373,7 @@ InitSystem(
 	}
 	MakeDirs();
 	InitDesktop();
+	CheckDevilspie();
 
 	glSession = New(Session);
 	FPCOMM(glSession) = NULL;
