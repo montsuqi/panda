@@ -233,7 +233,7 @@ ENTER_FUNC;
 			break;
 		  default:
 		  badio:
-			Message("apd die [%s@%s] %s:%s:%s", hdr->user, TermToHost(hdr->term), hdr->window, hdr->widget, hdr->event);
+			Message("aps die [%s@%s] %s:%s:%s", hdr->user, TermToHost(hdr->term), hdr->window, hdr->widget, hdr->event);
 			done = TRUE;
 			flag = 0;
 			break;
