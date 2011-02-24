@@ -47,6 +47,7 @@
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"directory.h"
+#include	"term.h"
 #include	"message.h"
 #include	"driver.h"
 #include	"debug.h"
