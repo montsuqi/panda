@@ -34,7 +34,6 @@
 
 typedef enum _ExpandType {
 	EXPAND_PS,
-	EXPAND_PNG,
 	EXPAND_PDF,
 } ExpandType;
 

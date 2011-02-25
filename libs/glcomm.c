@@ -411,7 +411,6 @@ SendExpandObject(
 	char		*cname;
 #ifdef	HAVE_LIBMAGIC
 	char		buff[SIZE_BUFF+1];
-	char		*PSTOPNGPath = BIN_DIR "/pstopng";
 	const char	*type;
 #endif
 
@@ -427,13 +426,6 @@ ENTER_FUNC;
 	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  &&
 				!strlcmp(type,"PostScript") ) {
 		switch (TermExpandType) {
-		case EXPAND_PNG:
-			sprintf(fname,"%s.png", cname);
-			sprintf(buff,"%s %s > %s",PSTOPNGPath, cname, fname);
-			system(buff);
-			ReadFile(fname);
-			GL_SendLBS(fp,Buff,fNetwork);
-			break;
 		case EXPAND_PDF:
 			sprintf(fname,"%s.pdf", cname);
 			make_ps2pdf_command(buff,cname,fname);

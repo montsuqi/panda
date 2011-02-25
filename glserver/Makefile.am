@@ -19,9 +19,7 @@
 
 sbin_PROGRAMS = glserver
 
-bin_SCRIPTS = pstopng
 EXTRA_DIST = 							\
-	$(bin_SCRIPTS)						\
 	passwd
 
 glserver_LDFLAGS	=	-export-dynamic

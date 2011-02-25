@@ -374,7 +374,7 @@ CheckFeature(
 		,	*q
 		,	*n;
 
-	TermExpandType = EXPAND_PNG;
+	TermExpandType = EXPAND_PDF;
 	strcpy(TermAgent,"unknown");
 	TermFeature = FEATURE_NULL;
 	if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
