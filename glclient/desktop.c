@@ -192,17 +192,17 @@ OpenDesktop(char *filename,LargeByteString *binary)
 	template = g_hash_table_lookup(DesktopAppTable, suffix);
 	if (template != NULL) {
 		if ((pid = fork()) == 0) {
+			memset(&sa, 0, sizeof(struct sigaction));
+			sa.sa_handler = SIG_IGN;
+			sa.sa_flags |= SA_RESTART;
+			if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+				Error("sigaction(2) failure");
+			}
 			if ((pid = fork()) == 0) {
 				Exec(template,path);
 			} else if (pid < 0) {
 				MessageLogPrintf("fork failure:%s",strerror(errno));
 			} else {
-				memset(&sa, 0, sizeof(struct sigaction));
-				sa.sa_handler = SIG_IGN;
-				sa.sa_flags |= SA_RESTART;
-				if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-					Error("sigaction(2) failure");
-				}
 				_exit(0);
 			}
 		} else if (pid < 0) {
