@@ -28,11 +28,13 @@
 
 #include	<stdio.h>
 #include	<stdlib.h>
-#include	<sys/types.h>
-#include	<sys/stat.h>
 #include	<unistd.h>
 #include	<fcntl.h>
 #include	<sys/time.h>
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<sys/wait.h>
+#include	<signal.h>
 #include	<errno.h>
 
 #define		DESKTOP_MAIN
@@ -46,11 +48,16 @@
 static char *
 GetSuffix(char *path)
 {
+	char *p,*q;
 	char *ret = NULL;
 
 	if (path != NULL) {
-		ret = strchr(path,'.');
-		ret++;
+ 		p = path;
+		while ((q = strchr(p,'.')) != NULL) {
+			q++;
+			ret = q;
+			p = q;
+		}
 	}
 	return ret;
 }
@@ -108,18 +115,57 @@ CheckDesktop(char *filename)
 	}
 }
 
+static void
+Exec(char *command,char *file)
+{
+	int argc;
+	char *argv[DESKTOP_MAX_ARGC];
+	char *p,*q;
+	char message[SIZE_BUFF];
+
+	argc = 0;
+	p = q = command;
+	while (1) {
+		while (*q != ' ' && *q != 0) {q++;}
+		argv[argc] = StrnDup(p, q - p);
+		if (strstr(argv[argc],"%s")) {
+			argv[argc] = file;
+		}
+		argc++;
+		if (argc >= DESKTOP_MAX_ARGC) {
+			MessageLogPrintf("can't exec [%s]; over argc size",command);
+			return;
+		}
+		if (*q == 0) {
+			argv[argc] = NULL;
+			break;
+		}
+		while (*q == ' ') {q++;}
+		p = q;
+	}
+	execvp(argv[0], argv);
+    argv[0] = "zenity";
+    argv[1] = "--error";
+    argv[2] = "--title";
+    argv[3] = _("Application start failure");
+    argv[4] = "--text";
+    sprintf(message, _("can't execute command.\\n\"%s\""),command);
+    argv[5] = message;
+    argv[6] = NULL;
+	execvp(argv[0], argv);
+	_exit(0);
+}
+
 extern void 
 OpenDesktop(char *filename,LargeByteString *binary)
 {
 	int fd;
 	int pid;
-	int argc;
+	int status;
 	char *suffix;
 	char *template;
-	char *argv[DESKTOP_MAX_ARGC];
-	char *p,*q;
 	char path[SIZE_LONGNAME+1];
-	char message[SIZE_BUFF];
+	struct sigaction sa;
 
 	if (filename == NULL || strlen(filename) == 0) {
 		return;
@@ -146,42 +192,23 @@ OpenDesktop(char *filename,LargeByteString *binary)
 	template = g_hash_table_lookup(DesktopAppTable, suffix);
 	if (template != NULL) {
 		if ((pid = fork()) == 0) {
-			argc = 0;
-			p = q = template;
-			while (1) {
-				while (*q != ' ' && *q != 0) {q++;}
-				argv[argc] = StrnDup(p, q - p);
-				if (strstr(argv[argc],"%s")) {
-					argv[argc] = path;
+			if ((pid = fork()) == 0) {
+				Exec(template,path);
+			} else if (pid < 0) {
+				MessageLogPrintf("fork failure:%s",strerror(errno));
+			} else {
+				memset(&sa, 0, sizeof(struct sigaction));
+				sa.sa_handler = SIG_IGN;
+				sa.sa_flags |= SA_RESTART;
+				if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+					Error("sigaction(2) failure");
 				}
-				argc++;
-				if (argc >= DESKTOP_MAX_ARGC) {
-					MessageLogPrintf("can't exec [%s]; over argc size",template);
-					return;
-				}
-				if (*q == 0) {
-					argv[argc] = NULL;
-					break;
-				}
-				while (*q == ' ') {q++;}
-				p = q;
+				_exit(0);
 			}
-			execvp(argv[0], argv);
-            argv[0] = "zenity";
-            argv[1] = "--error";
-            argv[2] = "--title";
-            argv[3] = _("Application start failure");
-            argv[4] = "--text";
-            sprintf(message, _("can't execute command.\\n\"%s\""),template);
-            argv[5] = message;
-            argv[6] = NULL;
-			execvp(argv[0], argv);
-			exit(0);
-		} else
-		if (pid < 0) {
+		} else if (pid < 0) {
 			MessageLogPrintf("fork failure:%s",strerror(errno));
 		} else {
-			//
+			wait(&status);
 		}
 	}
 }
