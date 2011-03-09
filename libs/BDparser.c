@@ -306,7 +306,7 @@ ENTER_FUNC;
 			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {
-			ParError("BD file not found");
+			ParErrorPrintf("BD file not found %s", name);
 			ret = NULL;
 		}
 	} else {
