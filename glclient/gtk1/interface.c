@@ -319,7 +319,7 @@ UI_GetWidgetType(char *windowName,
 extern	void
 UI_SetPingTimerFunc(_PingTimerFunc func, gpointer data)
 {
-	gtk_timeout_add(PING_TIMER_PERIOD, func, data);
+	gtk_timeout_add(PingTimerPeriod, func, data);
 }
 
 extern	void
