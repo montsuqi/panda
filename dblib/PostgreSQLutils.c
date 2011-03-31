@@ -253,11 +253,12 @@ static void
 err_check(int err_fd)
 {
 	size_t len;
-	char buff[SIZE_BUFF];	
+	char buff[SIZE_BUFF];
 
 	len = read(err_fd, buff, SIZE_BUFF);
 	if (len > 0) {
 		buff[len] = '\0';
+		printf("%s\n", buff);
 		if (strncmp(ignore_message, buff, strlen(ignore_message)) != 0 ){
 			fprintf(stderr, "%s\n", buff);
 			exit(1);
@@ -541,7 +542,7 @@ db_sync(
 		close( std_out[1] );
 		close( std_err[0] );
 		close( STDIN_FILENO );
-		dup2(std_out[0], STDIN_FILENO); 
+		dup2(std_out[0], STDIN_FILENO);
 		dup2(std_err[1], STDERR_FILENO);
 		db_restore(STDIN_FILENO, slave_pass, slave_argv);
 	} else {
@@ -558,7 +559,6 @@ db_sync(
 			close( std_out[0] );
 			close( std_out[1] );
 			close( std_err[1] );
-			printf("%d\n", check);
 			if (check){
 				err_check(std_err[0]);
 			}
@@ -591,6 +591,9 @@ all_sync(
 	}
 	master_argv[moptc++] = "-O";
 	master_argv[moptc++] = "-x";
+	if (verbose){
+		master_argv[moptc++] = "-v";
+	}
 	master_argv[moptc++] = GetDB_DBname(master_dbg,DB_UPDATE);
 	master_argv[moptc] = NULL;
 	
@@ -599,8 +602,7 @@ all_sync(
 	if (!verbose){
 		slave_argv[soptc++] = "-q";
 	}
-/*	slave_argv[soptc++] = "-v";
-	slave_argv[soptc++] = "ON_ERROR_STOP=1"; */
+/*	slave_argv[soptc++] = "ON_ERROR_STOP=1"; */
 	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
 	slave_argv[soptc] = NULL;	
 
