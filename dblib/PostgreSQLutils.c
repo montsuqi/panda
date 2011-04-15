@@ -521,7 +521,7 @@ db_sync(
 	int check)
 {
 	struct sigaction sa;
-	int std_out[2], std_err[2];
+	int std_io[2], std_err[2];
 	
 	Bool ret = FALSE;
 	pid_t	pg_dump_pid, restore_pid;
@@ -533,31 +533,31 @@ db_sync(
 		fprintf(stderr,"sigaction(2) failure\n");
 	}
 
-	if ( (pipe(std_out) == -1) || ( pipe(std_err) == -1 ) ) {
+	if ( (pipe(std_io) == -1) || ( pipe(std_err) == -1 ) ) {
 		fprintf( stderr, "cannot open pipe\n");
 		return FALSE;
 	}
 	if ( (restore_pid = fork()) == 0 ){
 		/* |psql */
-		close( std_out[1] );
+		close( std_io[1] );
 		close( std_err[0] );
 		close( STDIN_FILENO );
-		dup2(std_out[0], STDIN_FILENO);
+		dup2(std_io[0], STDIN_FILENO);
 		dup2(std_err[1], STDERR_FILENO);
 		db_restore(STDIN_FILENO, slave_pass, slave_argv);
 	} else {
 		if ( (pg_dump_pid = fork()) == 0 ) {
 			/* pg_dump| */
-			close( std_out[0] );
+			close( std_io[0] );
 			close( std_err[0] );
 			close( std_err[1] );
 			close( STDOUT_FILENO );
-			dup2( std_out[1], STDOUT_FILENO);
-			db_dump(std_out[1], master_pass, master_argv);
+			dup2( std_io[1], STDOUT_FILENO);
+			db_dump(std_io[1], master_pass, master_argv);
 		} else {
 			/* parent */
-			close( std_out[0] );
-			close( std_out[1] );
+			close( std_io[0] );
+			close( std_io[1] );
 			close( std_err[1] );
 			if (check){
 				err_check(std_err[0]);
