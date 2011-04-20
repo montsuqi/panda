@@ -176,6 +176,13 @@ LockRedirectorQuery(void)
 				" (flag int);\n");
 }
 
+static  char	*
+DropLockRedirectorQuery(void)
+{
+	return StrDup("DROP TABLE "
+			   REDIRECT_LOCK_TABLE \
+				";\n");
+}
 
 extern  void
 LockRedirectorConnect(
@@ -183,6 +190,11 @@ LockRedirectorConnect(
 {
 	char *sql;
 	PGresult	*res;
+
+	sql = DropLockRedirectorQuery();
+	res = PQexec(conn, sql);
+	xfree(sql);
+	PQclear(res);
 	
 	sql = LockRedirectorQuery();
 	res = PQexec(conn, sql);
