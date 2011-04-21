@@ -168,20 +168,36 @@ GetPGencoding(
 	return encoding;
 }
 
-extern  char	*
-LockRedirectorQuery(void)
-{
-	return StrDup("CREATE TEMP TABLE "
-			   REDIRECT_LOCK_TABLE \
-				" (flag int);\n");
-}
-
 static  char	*
 DropLockRedirectorQuery(void)
 {
 	return StrDup("DROP TABLE "
 			   REDIRECT_LOCK_TABLE \
 				";\n");
+}
+
+/* Does temp table remain at the trouble? */
+extern  void
+DropLockRedirector(
+	PGconn	*conn)
+{
+	char *sql;
+	PGresult	*res;
+
+	sql = DropLockRedirectorQuery();
+	res = PQexec(conn, sql);
+	if ( (res != NULL) && (PQresultStatus(res) == PGRES_COMMAND_OK) ) {
+		Warning("PostgreSQL: Drop Redirector Lock table");
+	}
+	xfree(sql);
+	PQclear(res);
+}
+extern  char	*
+LockRedirectorQuery(void)
+{
+	return StrDup("CREATE TEMP TABLE "
+			   REDIRECT_LOCK_TABLE \
+				" (flag int);\n");
 }
 
 extern  void
@@ -191,11 +207,7 @@ LockRedirectorConnect(
 	char *sql;
 	PGresult	*res;
 
-	sql = DropLockRedirectorQuery();
-	res = PQexec(conn, sql);
-	xfree(sql);
-	PQclear(res);
-	
+	DropLockRedirector(conn);
 	sql = LockRedirectorQuery();
 	res = PQexec(conn, sql);
 	xfree(sql);
