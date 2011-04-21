@@ -29,6 +29,5 @@ extern PGconn	*PgConnect(	DBG_Struct	*dbg, int usage);
 extern  char	*GetPGencoding(PGconn	*conn);
 extern  void	LockRedirectorConnect(PGconn	*conn);
 extern  char	*LockRedirectorQuery(void);
-extern  void	DropLockRedirector(PGconn	*conn);
 
 #endif
