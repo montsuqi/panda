@@ -157,7 +157,8 @@ typedef struct __Table{
 	float		trowattr;
 	int			tcolumn;
 	gchar 		*tvalue;
-	gchar 		**colors;
+	gchar 		**fgcolors;
+	gchar 		**bgcolors;
 	GList		*tdata;
 } _Table;
 

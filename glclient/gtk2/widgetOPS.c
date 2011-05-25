@@ -321,7 +321,8 @@ ENTER_FUNC;
 		rdata = g_list_nth_data(data->tdata,j);
 		gtk_panda_table_set_row(GTK_PANDA_TABLE(widget),j,rdata);
 	}
-	gtk_panda_table_set_row_colors(GTK_PANDA_TABLE(widget),data->colors);
+	gtk_panda_table_set_fgcolors(GTK_PANDA_TABLE(widget),data->fgcolors);
+	gtk_panda_table_set_bgcolors(GTK_PANDA_TABLE(widget),data->bgcolors);
 	if (data->trow > 0 && data->tcolumn > 0) {
 		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget), 
 			data->trow, data->tcolumn, TRUE, data->trowattr, 0.0); 

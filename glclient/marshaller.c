@@ -1304,9 +1304,13 @@ ENTER_FUNC;
 			g_free(attrs->tvalue);
 			attrs->tvalue = NULL;
 		}
-		if (attrs->colors != NULL) {
-			g_strfreev(attrs->colors);
-			attrs->colors = NULL;
+		if (attrs->bgcolors != NULL) {
+			g_strfreev(attrs->bgcolors);
+			attrs->bgcolors = NULL;
+		}
+		if (attrs->fgcolors != NULL) {
+			g_strfreev(attrs->fgcolors);
+			attrs->fgcolors = NULL;
 		}
 		if (attrs->tdata != NULL) {
 			for(i=0;i<g_list_length(attrs->tdata);i++) {
@@ -1358,17 +1362,31 @@ ENTER_FUNC;
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->tvalue = strdup(buff);
 			} else
-			if		(  !stricmp(name,"colors")  ) {
+			if		(  !stricmp(name,"fgcolors")  ) {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				num = GL_RecvInt(fp);
-				attrs->colors = g_malloc(sizeof(gchar*)*(num+1));
-				attrs->colors[num] = NULL;
+				attrs->fgcolors = g_malloc(sizeof(gchar*)*(num+1));
+				attrs->fgcolors[num] = NULL;
 				for	( j = 0 ; j < num ; j ++ ) {
 					RecvStringData(fp,buff,SIZE_BUFF);
 					if (buff != NULL ) {
-						attrs->colors[j] = g_strdup(buff);
+						attrs->fgcolors[j] = g_strdup(buff);
 					} else {
-						attrs->colors[j] = g_strdup("white");
+						attrs->fgcolors[j] = g_strdup("black");
+					}
+				}
+			} else
+			if		(  !stricmp(name,"bgcolors")  ) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				num = GL_RecvInt(fp);
+				attrs->bgcolors = g_malloc(sizeof(gchar*)*(num+1));
+				attrs->bgcolors[num] = NULL;
+				for	( j = 0 ; j < num ; j ++ ) {
+					RecvStringData(fp,buff,SIZE_BUFF);
+					if (buff != NULL ) {
+						attrs->bgcolors[j] = g_strdup(buff);
+					} else {
+						attrs->bgcolors[j] = g_strdup("black");
 					}
 				}
 			} else
