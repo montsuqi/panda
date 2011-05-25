@@ -46,55 +46,6 @@
 #include	"interface.h"
 #include	"debug.h"
 
-static	void
-FreeBool(
-	gpointer	data,
-	gpointer	user_data)
-{
-	xfree(data);
-}
-
-static	void
-FreeBoolList(
-	GList	*list)
-{
-	g_list_foreach(list,(GFunc)FreeBool,NULL);
-	g_list_free(list);
-}
-
-static	void
-FreeString(
-	gpointer	data,
-	gpointer	user_data)
-{
-	xfree(data);
-}
-
-static	void
-FreeStringList(
-	GList	*list)
-{
-	g_list_foreach(list,(GFunc)FreeString,NULL);
-	g_list_free(list);
-}
-
-static	void
-FreeRow(
-	gpointer	data,
-	gpointer	user_data)
-{
-	g_list_foreach((GList *)data,(GFunc)FreeString,NULL);
-	g_list_free((GList *)data);
-}
-
-static	void
-FreeStringTable(
-	GList	*list)
-{
-	g_list_foreach(list,(GFunc)FreeRow,NULL);
-	g_list_free(list);
-}
-
 /******************************************************************************/
 /* Gtk+ marshaller                                                            */
 /******************************************************************************/
@@ -1059,7 +1010,7 @@ ENTER_FUNC;
 		// reset data
 		g_free(attrs->style);
 		g_free(attrs->subname);
-		FreeStringList(attrs->item_list);
+		g_strfreev(attrs->itemdata);
 	}
 
 	if (GL_RecvDataType(fp)	== GL_TYPE_RECORD) {
@@ -1080,14 +1031,17 @@ ENTER_FUNC;
 				attrs->count = count;
 			} else
 			if		(  !stricmp(name,"item")  ) {
-				attrs->item_list = g_list_append(NULL,StrDup(""));
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				num = GL_RecvInt(fp);
-				for	( j = 0 ; j < num ; j ++ ) {
+				attrs->itemdata = g_malloc(sizeof(gchar*)*(num+2));
+				attrs->itemdata[num+1] = NULL;
+				attrs->itemdata[0] = g_strdup("");
+				for	( j = 1 ; j < num+1 ; j ++ ) {
 					RecvStringData(fp,buff,SIZE_BUFF);
-					if (buff != NULL && j < count) {
-						attrs->item_list = g_list_append(attrs->item_list,
-							StrDup(buff));
+					if (buff != NULL && j - 1 < count) {
+						attrs->itemdata[j] = g_strdup(buff);
+					} else {
+						attrs->itemdata[j] = NULL;
 					}
 				}
 			} else {
@@ -1114,12 +1068,16 @@ SendPandaCList(
 
 ENTER_FUNC;
 	attrs = (_CList *)data->attrs;
-	for	( i = 0; i < g_list_length(attrs->state_list); i ++ ) {
+	for	( i = 0; attrs->states[i] != NULL; i ++ ) {
 		sprintf(iname, "%s.%s[%d]", 
-			data->name, attrs->state_list_name, i + attrs->from);
+			data->name, attrs->states_name, i + attrs->from);
 		GL_SendPacketClass(fp,GL_ScreenData);
 		GL_SendName(fp,iname);
-		row_state = *((Bool *)g_list_nth_data(attrs->state_list,i));
+		if(*(attrs->states[i]) == 'T') {
+			row_state = TRUE;
+		} else {
+			row_state = FALSE;
+		}
 		SendBoolData(fp, GL_TYPE_BOOL, row_state);
 	}
 
@@ -1142,6 +1100,7 @@ RecvPandaCList(
 	,		iname[SIZE_BUFF]
 	,		subname[SIZE_BUFF]
 	,		buff[SIZE_BUFF];
+	char	**rdata;
 	int		count
 	,		nitem
 	,		num
@@ -1153,10 +1112,9 @@ RecvPandaCList(
 	,		i
 	,		j
 	,		k;
-	Bool	*fActive;
+	Bool	fActive;
 	int		state;
 	gfloat	rowattrw;
-	GList	*row_items;
 	_CList	*attrs;
 
 ENTER_FUNC;
@@ -1168,10 +1126,22 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->state_list_name);
-		FreeStringTable(attrs->item_list);
-		FreeBoolList(attrs->state_list);
+		if (attrs->style != NULL) {
+			g_free(attrs->style);
+		}
+		if (attrs->states_name) {
+			g_free(attrs->states_name);
+		}
+		if (attrs->clistdata != NULL) {
+			for(i=0;i<g_list_length(attrs->clistdata);i++) {
+				g_strfreev(g_list_nth_data(attrs->clistdata,i));
+			}
+			g_list_free(attrs->clistdata);
+			attrs->clistdata = NULL;
+		}
+		if (attrs->states != NULL) {
+			g_strfreev(attrs->states);
+		}
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
@@ -1232,32 +1202,191 @@ ENTER_FUNC;
 				if		(  count  <  0  ) {
 					count = num;
 				}
-				attrs->item_list = NULL;
+				attrs->clistdata = NULL;
 				for	( j = 0 ; j < num ; j ++ ) {
 					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 					rnum = GL_RecvInt(fp);
-					row_items = NULL;
+					rdata = g_malloc0(sizeof(gchar*)*(rnum+1));
+					rdata[rnum] = NULL;
 					for	( k = 0 ; k < rnum ; k ++ ) {
 						GL_RecvName(fp, sizeof(iname), iname);
 						(void)RecvStringData(fp,buff,SIZE_BUFF);
-						row_items = g_list_append(row_items, StrDup(buff));
+						rdata[k] = g_strdup(buff);
 					}
-					attrs->item_list = g_list_append(attrs->item_list, 
-						row_items);
+					attrs->clistdata = g_list_append(attrs->clistdata,rdata);
 				}
 			} else {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-				attrs->state_list_name = strdup(name);
+				attrs->states_name = strdup(name);
 				num = GL_RecvInt(fp);
 				if		(  count  <  0  ) {
 					count = num;
 				}
-				attrs->state_list = NULL;
+				attrs->states = g_malloc0(sizeof(gchar*)*(num+1));
+				attrs->states[num] = NULL;
 				for	( j = 0 ; j < num ; j ++ ) {
-					fActive = g_new0(Bool, 1);
-					RecvBoolData(fp,fActive);
-					attrs->state_list = g_list_append(attrs->state_list, 
-						fActive);
+					RecvBoolData(fp,&fActive);
+					if (fActive) {
+						attrs->states[j] = g_strdup("T");
+					} else {
+						attrs->states[j] = g_strdup("F");
+					}
+				}
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
+SendPandaTable(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	char		iname[SIZE_BUFF];
+	 _Table		*attrs;
+
+ENTER_FUNC;
+	attrs = (_Table *)data->attrs;
+	sprintf(iname,"%s.trow", data->name);
+	GL_SendPacketClass(fp,GL_ScreenData);
+	GL_SendName(fp,iname);
+	SendIntegerData(fp, GL_TYPE_INT, attrs->trow+1);
+
+	sprintf(iname,"%s.tcolumn", data->name);
+	GL_SendPacketClass(fp,GL_ScreenData);
+	GL_SendName(fp,iname);
+	SendIntegerData(fp, GL_TYPE_INT, attrs->tcolumn+1);
+
+	sprintf(iname,"%s.tvalue", data->name);
+	GL_SendPacketClass(fp,GL_ScreenData);
+	GL_SendName(fp,iname);
+	SendStringData(fp,GL_TYPE_VARCHAR ,attrs->tvalue);
+LEAVE_FUNC;
+	return TRUE;
+}
+
+static	Bool
+RecvPandaTable(
+	WidgetData	*data,
+	NETFILE		*fp)
+{
+	Bool	ret;
+	gchar	name[SIZE_BUFF]
+	,		iname[SIZE_BUFF]
+	,		buff[SIZE_BUFF];
+	gchar	**rdata;
+	gint	rowattr
+	,		nitem
+	,		num
+	,		rnum
+	,		state
+	,		i
+	,		j
+	,		k;
+	_Table	*attrs;
+
+ENTER_FUNC;
+	ret = FALSE;
+	attrs = (_Table *)data->attrs;
+	if (attrs == NULL){
+		// new data
+		attrs = g_new0(_Table, 1);
+		data->attrs = attrs;
+	} else {
+		// reset data
+		if (attrs->style != NULL) {
+			g_free(attrs->style);
+		}
+		if (attrs->tvalue != NULL) {
+			g_free(attrs->tvalue);
+			attrs->tvalue = NULL;
+		}
+		if (attrs->colors != NULL) {
+			g_strfreev(attrs->colors);
+			attrs->colors = NULL;
+		}
+		if (attrs->tdata != NULL) {
+			for(i=0;i<g_list_length(attrs->tdata);i++) {
+				g_strfreev(g_list_nth_data(attrs->tdata,i));
+			}
+			g_list_free(attrs->tdata);
+			attrs->tdata = NULL;
+		}
+	}
+
+	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
+
+		nitem = GL_RecvInt(fp);
+		attrs->trowattr = 0.0;
+
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  !stricmp(name,"state")  ) {
+				RecvIntegerData(fp,&state);
+				attrs->state = state;
+			} else
+			if		(  !stricmp(name,"style")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->style = strdup(buff);
+			} else
+			if		(  !stricmp(name,"trow")  ) {
+				RecvIntegerData(fp,&(attrs->trow));
+				attrs->trow -= 1;
+			} else
+			if		(  !stricmp(name,"trowattr")  ) {
+				RecvIntegerData(fp,&rowattr);
+				switch	(rowattr) {
+				  case	1: /* DOWN */
+					attrs->trowattr = 1.0;
+					break;
+				  case	2: /* MIDDLE */
+					attrs->trowattr = 0.5;
+					break;
+				  default: /* [0] TOP */
+					attrs->trowattr = 0.0;
+					break;
+				}
+			} else
+			if		(  !stricmp(name,"tcolumn")  ) {
+				RecvIntegerData(fp,&(attrs->tcolumn));
+				attrs->tcolumn -= 1;
+			} else
+			if		(  !stricmp(name,"tvalue")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->tvalue = strdup(buff);
+			} else
+			if		(  !stricmp(name,"colors")  ) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				num = GL_RecvInt(fp);
+				attrs->colors = g_malloc(sizeof(gchar*)*(num+1));
+				attrs->colors[num] = NULL;
+				for	( j = 0 ; j < num ; j ++ ) {
+					RecvStringData(fp,buff,SIZE_BUFF);
+					if (buff != NULL ) {
+						attrs->colors[j] = g_strdup(buff);
+					} else {
+						attrs->colors[j] = g_strdup("white");
+					}
+				}
+			} else
+			if		(  !stricmp(name,"tdata")  ) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				num = GL_RecvInt(fp);
+				attrs->tdata = NULL;
+				for	( j = 0 ; j < num ; j ++ ) {
+					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+					rnum = GL_RecvInt(fp);
+					rdata = g_malloc0(sizeof(gchar*)*(rnum+1));
+                    rdata[rnum] = NULL;
+					for	( k = 0 ; k < rnum ; k ++ ) {
+						GL_RecvName(fp, sizeof(iname), iname);
+						(void)RecvStringData(fp,buff,SIZE_BUFF);
+						rdata[k] = g_strdup(buff);
+					}
+					attrs->tdata = g_list_append(attrs->tdata,rdata);
 				}
 			}
 		}
@@ -1460,6 +1589,8 @@ RecvWidgetData(
 		ret = RecvPandaPrint(data, fp); break;
 	case WIDGET_TYPE_PANDA_HTML:
 		ret = RecvPandaHTML(data, fp); break;
+	case WIDGET_TYPE_PANDA_TABLE:
+		ret = RecvPandaTable(data, fp); break;
 // gtk+
 	case WIDGET_TYPE_ENTRY:
 		ret = RecvEntry(data, fp); break;
@@ -1529,6 +1660,8 @@ ENTER_FUNC;
 		SendText(data, fp); break;
 	case WIDGET_TYPE_PANDA_TIMER:
 		SendPandaTimer(data, fp); break;
+	case WIDGET_TYPE_PANDA_TABLE:
+		SendPandaTable(data, fp); break;
 // gtk+
 	case WIDGET_TYPE_ENTRY:
 		SendEntry(data, fp); break;

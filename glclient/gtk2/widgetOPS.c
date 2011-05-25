@@ -199,7 +199,7 @@ ENTER_FUNC;
 	combo = GTK_PANDA_COMBO(widget);
 	SetState(widget,(GtkStateType)data->state);
 	SetStyle(widget,GetStyle(data->style));
-	gtk_panda_combo_set_popdown_strings(combo,data->item_list);
+	gtk_panda_combo_set_popdown_strings(combo,data->itemdata);
 LEAVE_FUNC;
 }
 
@@ -208,11 +208,8 @@ SetPandaCList(
 	GtkWidget	*widget,
 	_CList		*data)
 {
-	int				j
-	,				k;
+	int				j;
 	char			**rdata;
-	Bool			*fActive;
-	GList			*cell_list;
 
 ENTER_FUNC;
 	SetState(widget,(GtkStateType)data->state);
@@ -221,28 +218,15 @@ ENTER_FUNC;
 	// items
 	gtk_panda_clist_clear(GTK_PANDA_CLIST(widget));
 
-	for	( j = 0 ; j < g_list_length(data->item_list) ; j ++ ) {
-		cell_list = g_list_nth_data(data->item_list, j);
-		rdata = (char **)xmalloc(sizeof(char *) * g_list_length(cell_list));
-		for	( k = 0 ; k < g_list_length(cell_list) ; k ++ ) {
-			if (g_list_nth_data(cell_list, k) == NULL) {
-				rdata[k] = StrDup("null");
-			} else {
-				rdata[k] = StrDup(g_list_nth_data(cell_list,k));
-			}
-		}
+	for	( j = 0 ; j < g_list_length(data->clistdata) ; j ++ ) {
 		if ((j >= data->from) && ((j - data->from) < data->count)) {
+			rdata = g_list_nth_data(data->clistdata,j);
 			gtk_panda_clist_append(GTK_PANDA_CLIST(widget), rdata);
 		}
-		for	( k = 0 ; k < g_list_length(cell_list) ; k ++ ) {
-			xfree(rdata[k]);
-		}
-		xfree(rdata);
 	}
-	for	( j = 0 ; j < g_list_length(data->state_list) ; j ++ ) {
+	for	( j = 0 ; data->states[j] != NULL ; j ++ ) {
 		if ((j >= data->from) && ((j - data->from) < data->count)) {
-			fActive = g_list_nth_data(data->state_list, j);
-			if (*fActive) {
+			if (*(data->states[j]) == 'T') {
 				gtk_panda_clist_select_row(GTK_PANDA_CLIST(widget),
 					(j - data->from),0);
 			} else {
@@ -265,17 +249,25 @@ GetPandaCList(
 {
 	int				i;
 	int				nrows;
-	Bool			*bool;
 	Bool			getRow;
 	GtkVisibility 	visi;
 
 ENTER_FUNC;
 	nrows = gtk_panda_clist_get_n_rows(GTK_PANDA_CLIST(widget));
 	getRow = FALSE;
+
+	if (data->states !=NULL) {
+		g_strfreev(data->states);
+	}
+	data->states = g_malloc0(sizeof(gchar*)*(nrows+1));
+	data->states[nrows] = NULL;
+
 	for( i = 0; i < nrows; i++) {
-		bool = (Bool*)g_list_nth_data(data->state_list, i);
-		*bool = gtk_panda_clist_row_is_selected(
-					GTK_PANDA_CLIST(widget), i);
+		if(gtk_panda_clist_row_is_selected(GTK_PANDA_CLIST(widget),i)) {
+			data->states[i] = g_strdup("T");
+		} else {
+			data->states[i] = g_strdup("F");
+		}
 		if (!getRow) {
 			visi = gtk_panda_clist_row_is_visible(GTK_PANDA_CLIST(widget), i);
 			if (visi == GTK_VISIBILITY_FULL) {
@@ -295,6 +287,44 @@ SetPandaHTML(
 ENTER_FUNC;
 	if (data->uri != NULL) {
 		gtk_panda_html_set_uri (GTK_PANDA_HTML(widget), data->uri);
+	}
+LEAVE_FUNC;
+}
+
+static	void
+GetPandaTable(
+	GtkWidget	*widget,
+	_Table		*data)
+{
+ENTER_FUNC;
+	data->trow = (gint)g_object_get_data(G_OBJECT(widget),
+		"send_data_row");
+	data->tcolumn = (gint)g_object_get_data(G_OBJECT(widget),
+		"send_data_column");
+	data->tvalue = g_strdup((gchar*)g_object_get_data(G_OBJECT(widget),
+		"send_data_value"));
+LEAVE_FUNC;
+}
+
+static	void
+SetPandaTable(
+	GtkWidget	*widget,
+	_Table		*data)
+{
+	int				j;
+	char			**rdata;
+
+ENTER_FUNC;
+	SetState(widget,(GtkStateType)data->state);
+
+	for	( j = 0 ; j < g_list_length(data->tdata) ; j ++ ) {
+		rdata = g_list_nth_data(data->tdata,j);
+		gtk_panda_table_set_row(GTK_PANDA_TABLE(widget),j,rdata);
+	}
+	gtk_panda_table_set_row_colors(GTK_PANDA_TABLE(widget),data->colors);
+	if (data->trow > 0 && data->tcolumn > 0) {
+		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget), 
+			data->trow, data->tcolumn, TRUE, data->trowattr, 0.0); 
 	}
 LEAVE_FUNC;
 }
@@ -703,6 +733,8 @@ GetWidgetType(
 			return WIDGET_TYPE_PANDA_PRINT;
 		} else if (type == GTK_PANDA_TYPE_HTML) {
 			return WIDGET_TYPE_PANDA_HTML;
+		} else if (type == GTK_PANDA_TYPE_TABLE) {
+			return WIDGET_TYPE_PANDA_TABLE;
 		} else if (type == GTK_TYPE_WINDOW) {
 			return WIDGET_TYPE_WINDOW;
 		} else if (type == GTK_TYPE_ENTRY) {
@@ -763,9 +795,8 @@ GetWidgetData(WidgetData	*data)
 	case WIDGET_TYPE_PANDA_TIMER:
 		GetPandaTimer(widget, (_Timer*)data->attrs);
 		break;
-// gtk+
-	case WIDGET_TYPE_ENTRY:
-		GetEntry(widget, (_Entry*)data->attrs);
+	case WIDGET_TYPE_PANDA_TABLE:
+		GetPandaTable(widget, (_Table*)data->attrs);
 		break;
 	case WIDGET_TYPE_TEXT:
 		GetText(widget, (_Text*)data->attrs);
@@ -837,6 +868,9 @@ UpdateWidget(WidgetData *data)
 		break;
 	case WIDGET_TYPE_PANDA_HTML:
 		SetPandaHTML(widget, (_HTML *)data->attrs);
+		break;
+	case WIDGET_TYPE_PANDA_TABLE:
+		SetPandaTable(widget, (_Table *)data->attrs);
 		break;
 // gtk+
 	case WIDGET_TYPE_ENTRY:

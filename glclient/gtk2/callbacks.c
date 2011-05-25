@@ -50,11 +50,12 @@ select_all(
 	GdkEventFocus	*event,
 	gpointer		user_data)
 {
-	GtkEditable *editable = GTK_EDITABLE (widget);
-
 ENTER_FUNC;
+#if 0
+	GtkEditable *editable = GTK_EDITABLE (widget);
 	gtk_editable_select_region(editable, 0, -1);
 	gtk_editable_set_position(editable, 0);
+#endif
 LEAVE_FUNC;
 	return (FALSE);
 }
@@ -65,10 +66,12 @@ unselect_all(
 	GdkEventFocus	*event,
 	gpointer		user_data)
 {
-	GtkEditable *editable = GTK_EDITABLE (widget);
 
 ENTER_FUNC;
+#if 0
+	GtkEditable *editable = GTK_EDITABLE (widget);
 	gtk_editable_select_region(editable, 0, 0);
+#endif
 LEAVE_FUNC;
 	return (FALSE);
 }
@@ -267,6 +270,32 @@ clist_send_event(
 	char		*event)
 {
 	send_event(widget, "SELECT");
+}
+
+extern void
+table_send_event(
+	GtkWidget	*widget,
+	gint		row,
+	gint		column,
+	gchar		*value,
+	gchar		*event)
+{
+	gchar *oldvalue;
+
+	oldvalue = (gchar*)g_object_get_data(G_OBJECT(widget),"send_data_value");
+	if (oldvalue != NULL) {
+		g_free(oldvalue);
+	}
+	
+	g_object_set_data(G_OBJECT(widget),"send_data_row",
+		GINT_TO_POINTER(row));
+	g_object_set_data(G_OBJECT(widget),"send_data_column",
+		GINT_TO_POINTER(column));
+	g_object_set_data(G_OBJECT(widget),"send_data_value",
+		g_strdup(value));
+
+	AddChangedWidget(widget);
+	send_event(widget, event);
 }
 
 extern	void

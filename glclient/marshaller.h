@@ -41,6 +41,7 @@ typedef enum _WidgetType {
 	WIDGET_TYPE_PANDA_DOWNLOAD,
 	WIDGET_TYPE_PANDA_PRINT,
 	WIDGET_TYPE_PANDA_HTML,
+	WIDGET_TYPE_PANDA_TABLE,
 // gtk
 	WIDGET_TYPE_ENTRY,
 	WIDGET_TYPE_TEXT,
@@ -131,7 +132,7 @@ typedef struct __Combo{
 	int 	state;
 	char 	*style;
 	int 	count;
-	GList 	*item_list;
+	char 	**itemdata;
     char 	*subname;
 } _Combo;
 
@@ -143,10 +144,22 @@ typedef struct __CList{
 	int 	row;
 	float 	rowattr;
 	int 	column;
-	GList 	*item_list;
-	GList 	*state_list;
-	char 	*state_list_name;
+	GList 	*clistdata;
+	char 	**states;
+	char 	*states_name;
 } _CList;
+
+typedef struct __Table{
+	int 		state;
+	char 		*style;
+	gboolean	dofocus;
+	int			trow;
+	float		trowattr;
+	int			tcolumn;
+	gchar 		*tvalue;
+	gchar 		**colors;
+	GList		*tdata;
+} _Table;
 
 typedef struct __Calendar{
 	int 	state;

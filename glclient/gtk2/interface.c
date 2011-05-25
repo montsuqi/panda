@@ -255,13 +255,13 @@ extern  void
 UI_Init(int argc, 
 	char **argv)
 {
-	GtkSettings *set;
-
 	gtk_init(&argc, &argv);
+#if 0
 	/* set gtk-entry-select-on-focus */
-	set = gtk_settings_get_default();
+	GtkSettings *set = gtk_settings_get_default();
     gtk_settings_set_long_property(set, "gtk-entry-select-on-focus", 0, 
 		"glclient2");
+#endif
 	gtk_panda_init(&argc,&argv);
 	gtk_set_locale();
 	glade_init();
