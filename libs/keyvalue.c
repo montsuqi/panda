@@ -396,11 +396,8 @@ KV_Dump(
 	ValueStruct	*args)
 {
 	FILE *fp;
-	char buff[] = "/tmp/sysdata_dump_XXXXXX";
 	int rc;
-	int fd;
 	ValueStruct *id;
-	mode_t mode;
 ENTER_FUNC;
 	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
@@ -408,20 +405,13 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 		Warning("does not found id");
 	} else {
-		mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-		if ((fd = mkstemp(buff)) != -1) {
-			if ((fp = fdopen(fd, "w")) != NULL) {
-				g_hash_table_foreach(state->table, DumpEntry, fp);
-				fclose(fp);
-				SetValueStringWithLength(id, buff, strlen(buff), NULL);
-				rc = MCP_OK;
-			} else {
-				Warning("fdopne failure");
-			}
+		if ((fp = fopen(ValueToString(id,NULL),"w"))!=NULL) {
+			g_hash_table_foreach(state->table, DumpEntry, fp);
+			fclose(fp);
+			rc = MCP_OK;
 		} else {
-			Warning("mkstemp failure");
+			Warning("fopen failure");
 		}
-		umask(mode);
 	}
 	KV_UnLock(state);
 LEAVE_FUNC;

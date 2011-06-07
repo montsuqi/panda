@@ -63,10 +63,12 @@ static	GOptionEntry entries[] =
 
 enum {
 	DUMP = 0,
-	SENDMSG,
-	SENDMSGALL,
+	POPUP,
+	POPUP_ALL,
+	DIALOG,
+	DIALOG_ALL,
 	ABORT,
-	ABORTALL,
+	ABORT_ALL,
 	WHO,
 	LAST
 };
@@ -76,12 +78,14 @@ static struct _COMMAND {
 	char *desc;
 } command[] = 
 {
-	{	"dump"		, "command            - dump system database"		},
-	{	"sendmsg"	, "command ID MESSAGE - send message to client"		},
-	{	"sendmsgall", "command MESSAGE    - send message to all client"	},
-	{	"abort"		, "command ID MESSAGE - abort client"				},
-	{	"abortall"	, "command MESSAGE    - abort all client"			},
-	{	"who"		, "command            - show who is using"			},
+	{	"dump"		, "command <file>			- dump system database"	},
+	{	"popup"		, "command <id> <message>	- send popup message"	},
+	{	"popup-all"	, "command <message>		- send popup message"	},
+	{	"dialog"	, "command <id> <message>	- send dialog message"	},
+	{	"dialog-all", "command <message>		- send dialog message"	},
+	{	"abort"		, "command <id> <message>	- send abort message"	},
+	{	"abort-all"	, "command <message>		- send abort message"	},
+	{	"who"		, "command					- show who is using"	},
 	{	""			, ""												}
 };
 
@@ -108,17 +112,17 @@ LEAVE_FUNC;
 }
 
 static	void
-Dump(void)
+Dump(char *fname)
 {
 	NETFILE *fp;
 	ValueStruct *q;
-	ValueStruct *id;
+	char *key[1];
+	char *value[1];
 ENTER_FUNC;
 	fp = ConnectSysData();
-	q = KVREQ_NewQuery(1);
+	q = KVREQ_NewQueryWithValue(fname, 1, key, value);
 	if (KVREQ_Request(fp, KV_DUMP, q) == MCP_OK) {
-		id = GetItemLongName(q, "id");
-		printf("[SUCCESS] dump to %s\n", ValueToString(id, NULL));
+		printf("[SUCCESS] dump to %s\n", fname);
 	} else {
 		printf("[ERROR] dump failure\n");
 		exit(1);
@@ -131,53 +135,35 @@ LEAVE_FUNC;
 }
 
 static	void
-SendMsg(
+SendMessage(
 	char *id,
-	char *msg,
-	Bool fAbort,
-	Bool fAll)
+	char *termid,
+	char *message)
 {
 	NETFILE *fp;
 	ValueStruct *q;
-	char *key[2];
-	char *value[2];
+	char *key[1];
+	char *value[1];
 	int rc;
 	
 ENTER_FUNC;
 	fp = ConnectSysData();
-	key[0] = "message";
-	value[0] = msg;
-	key[1] = "abort";
-	if (fAbort) {
-		value[1] = "T";
-	} else {
-		value[1] = "";
-	}
-	q = KVREQ_NewQueryWithValue(id, 2, key, value);
+	key[0] = id;
+	value[0] = message;
 
-	if (fAll) {
+	q = KVREQ_NewQueryWithValue(id, 1, key, value);
+
+	if (termid == NULL) {
 		rc = KVREQ_Request(fp, KV_SETVALUEALL, q);
 	} else {
-		SetValueStringWithLength(GetItemLongName(q,"id"), id, strlen(id), NULL);
+		SetValueStringWithLength(GetItemLongName(q,"id"), termid, strlen(termid), NULL);
 		rc = KVREQ_Request(fp, KV_SETVALUE, q);
 	}
 	SendPacketClass(fp, SYSDATA_END); 
 	CloseNet(fp);
 	FreeValueStruct(q);
 	if (rc != MCP_OK) {
-		if (fAbort) {
-			if (fAll) {
-				printf("[ERROR] abortall failure\n");
-			} else {
-				printf("[ERROR] abort failure\n");
-			}
-		} else {
-			if (fAll) {
-				printf("[ERROR] sendmsgall failure\n");
-			} else {
-				printf("[ERROR] sendmsg failure\n");
-			}
-		}
+		printf("[ERROR] %s%s failure\n",id,(termid == NULL?"-all":""));
 		exit(1);
 	}
 	exit(0);
@@ -253,7 +239,6 @@ main(
 {
 	int i;
 	int c;
-	Bool fInvalid;
 	GError	*error = NULL;
 	GOptionContext *context;
 
@@ -278,30 +263,39 @@ main(
 			c = i;
 		}
 	}
-	fInvalid = TRUE;
+	if (c == POPUP || c==DIALOG || c==ABORT) {
+		if (argc < 4) {
+			print_usage();
+			exit (1);
+		}
+	} else if (c== DUMP || c==POPUP_ALL || c==DIALOG_ALL || c==ABORT_ALL) {
+		if (argc < 3) {
+			print_usage();
+			exit (1);
+		}
+	}
+
 	switch (c) {
 	case DUMP:
-		Dump();
+		Dump(argv[2]);
 		break;
-	case SENDMSG:
-		if (argc >= 4) {
-			SendMsg(argv[2], argv[3], FALSE, FALSE);
-		}
+	case POPUP:
+		SendMessage("popup",argv[2],argv[3]);
 		break;
-	case SENDMSGALL:
-		if (argc >= 3) {
-			SendMsg(argv[2], argv[2], FALSE, TRUE);
-		}
+	case POPUP_ALL:
+		SendMessage("popup",NULL,argv[2]);
+		break;
+	case DIALOG:
+		SendMessage("dialog",argv[2],argv[3]);
+		break;
+	case DIALOG_ALL:
+		SendMessage("dialog",NULL,argv[2]);
 		break;
 	case ABORT:
-		if (argc >= 4) {
-			SendMsg(argv[2], argv[3], TRUE, FALSE);
-		}
+		SendMessage("abort",argv[2],argv[3]);
 		break;
-	case ABORTALL:
-		if (argc >= 3) {
-			SendMsg(argv[2], argv[2], TRUE, TRUE);
-		}
+	case ABORT_ALL:
+		SendMessage("abort",NULL,argv[2]);
 		break;
 	case WHO:
 		Who();

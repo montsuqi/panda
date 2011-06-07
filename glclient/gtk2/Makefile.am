@@ -34,7 +34,8 @@ libuigtk2_la_SOURCES	=				\
 	styleParser.c	styleParser.h	\
 	widgetOPS.c		widgetOPS.h		\
 	toplevel.h						\
-	interface.c
+	interface.c						\
+	notify.h		notify.c
 
 libuigtk2_la_CFLAGS	=			\
 	-I$(top_srcdir)				\
