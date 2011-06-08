@@ -52,6 +52,7 @@
 #include	"widgetcache.h"
 #include	"toplevel.h"
 #include	"download.h"
+#include	"notify.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -530,9 +531,13 @@ SetWindow(
 ENTER_FUNC;
 	SetState(widget,(GtkStateType)(data->state));
 	SetStyle(widget,GetStyle(data->style));
-	if (data->title != NULL) {
+	if (data->title != NULL && strlen(data->title) > 0) {
 		SetSessionTitle(data->title);
 		SetTitle(TopWindow);
+	}
+	if (data->summary != NULL && strlen(data->summary) > 0 &&
+		data->body != NULL && strlen(data->body) > 0) {
+		Notify(data->summary,data->body,data->icon,data->timeout);
 	}
 LEAVE_FUNC;
 }

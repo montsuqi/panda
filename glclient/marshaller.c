@@ -46,6 +46,12 @@
 #include	"interface.h"
 #include	"debug.h"
 
+static	void
+g_free_nullize(gpointer mem) {
+	g_free(mem);
+	mem = NULL;
+}
+
 /******************************************************************************/
 /* Gtk+ marshaller                                                            */
 /******************************************************************************/
@@ -72,9 +78,9 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->text);
-		g_free(attrs->text_name);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->text);
+		g_free_nullize(attrs->text_name);
 	}
 
 	if (GL_RecvDataType(fp)  ==  GL_TYPE_RECORD) {
@@ -139,9 +145,9 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->text);
-		g_free(attrs->text_name);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->text);
+		g_free_nullize(attrs->text_name);
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -203,9 +209,9 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->text);
-		g_free(attrs->text_name);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->text);
+		g_free_nullize(attrs->text_name);
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -273,9 +279,9 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->label);
-		g_free(attrs->button_state_name);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->label);
+		g_free_nullize(attrs->button_state_name);
 		attrs->have_button_state = FALSE;
 	}
 
@@ -360,7 +366,7 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
+		g_free_nullize(attrs->style);
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
@@ -438,8 +444,8 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->subname);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->subname);
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
@@ -509,7 +515,7 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
+		g_free_nullize(attrs->style);
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
@@ -558,8 +564,12 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->title);
-		g_free(attrs->style);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->title);
+		g_free_nullize(attrs->summary);
+		g_free_nullize(attrs->body);
+		g_free_nullize(attrs->icon);
+ 		attrs->timeout = 0;
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
@@ -577,6 +587,21 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"title")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->title = strdup(buff);
+			} else
+			if		(  !stricmp(name,"popup_summary")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->summary = strdup(buff);
+			} else
+			if		(  !stricmp(name,"popup_body")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->body = strdup(buff);
+			} else
+			if		(  !stricmp(name,"popup_icon")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->icon = strdup(buff);
+			} else
+			if		(  !stricmp(name,"popup_timeout")  ) {
+				RecvIntegerData(fp,&(attrs->timeout));
 			} else {
 				sprintf(longname,"%s.%s", data->name, name);
 				RecvValue(fp, longname);
@@ -610,9 +635,9 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->label);
-		g_free(attrs->subname);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->label);
+		g_free_nullize(attrs->subname);
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
@@ -687,8 +712,8 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->subname);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->subname);
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
@@ -785,10 +810,7 @@ ENTER_FUNC;
 		// reset data
 		FreeLBS(attrs->binary);
 		attrs->binary = NewLBS();
-		if (attrs->filename != NULL) {
-			free(attrs->filename);
-		}
-		attrs->filename = NULL;
+		g_free_nullize(attrs->filename);
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -938,9 +960,9 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
+		g_free_nullize(attrs->style);
 		FreeFixed(attrs->fixed);
-		g_free(attrs->fixed_name);
+		g_free_nullize(attrs->fixed_name);
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -1008,8 +1030,8 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->subname);
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->subname);
 		g_strfreev(attrs->itemdata);
 	}
 
@@ -1126,12 +1148,8 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		if (attrs->style != NULL) {
-			g_free(attrs->style);
-		}
-		if (attrs->states_name) {
-			g_free(attrs->states_name);
-		}
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->states_name);
 		if (attrs->clistdata != NULL) {
 			for(i=0;i<g_list_length(attrs->clistdata);i++) {
 				g_strfreev(g_list_nth_data(attrs->clistdata,i));
@@ -1297,13 +1315,8 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		if (attrs->style != NULL) {
-			g_free(attrs->style);
-		}
-		if (attrs->tvalue != NULL) {
-			g_free(attrs->tvalue);
-			attrs->tvalue = NULL;
-		}
+		g_free_nullize(attrs->style);
+		g_free_nullize(attrs->tvalue);
 		if (attrs->bgcolors != NULL) {
 			g_strfreev(attrs->bgcolors);
 			attrs->bgcolors = NULL;
@@ -1435,7 +1448,7 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->uri);
+		g_free_nullize(attrs->uri);
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -1515,7 +1528,7 @@ ENTER_FUNC;
 		// reset data
 		FreeLBS(attrs->binary);
 		attrs->binary = NewLBS();
-		g_free(attrs->subname);
+		g_free_nullize(attrs->subname);
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {

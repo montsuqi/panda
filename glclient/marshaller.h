@@ -189,6 +189,10 @@ typedef struct __Window{
 	int 	state;
 	char 	*style;
 	char 	*title;
+	char	*summary;
+	char	*body;
+	char	*icon;
+	int		timeout;
 } _Window;
 
 typedef struct __Frame{
