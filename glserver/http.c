@@ -197,11 +197,20 @@ SendResponse(
 	size_t size;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
-	ValueStruct *e;
-	MonObjectType obj;
+	ValueStruct *value;
+	ValueStruct *vstatus;
+	ValueStruct *vbody;
+	MonObjectType obj = GL_OBJ_NULL;
 
 	size = 0;
 	body = NULL;
+
+	if (data != NULL && (value = data->rec->value) != NULL) {
+		vstatus = GetItemLongName(value,"httpstatus");
+		if (vstatus != NULL) {
+			req->status = ValueInteger(vstatus);
+		}
+	}
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
 		req->status, GetReasonPhrase(req->status));
@@ -219,14 +228,17 @@ SendResponse(
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
-	if (data != NULL && (e = data->rec->value) != NULL) {
-		obj = ValueObjectId(GetItemLongName(e, "body"));
+	if (data != NULL && (value = data->rec->value) != NULL && req->status == HTTP_OK) {
+		vbody = GetItemLongName(value, "body");
+		if (vbody != NULL) {
+			obj = ValueObjectId(vbody);
+		}
 		dbgprintf("obj:%d GL_OBJ_NULL:%d", (int)obj, (int)GL_OBJ_NULL);
 		if (obj != GL_OBJ_NULL) {
 			RequestReadBLOB(req->fpSysData, obj, &body, &size);
 		}
 		sprintf(buf, "Content-Type: %s\r\n", 
-			ValueToString(GetItemLongName(e,"content_type"), NULL));
+			ValueToString(GetItemLongName(value,"content_type"), NULL));
 		Send(req->fp, buf, strlen(buf));
 	}
 	if (body != NULL && size > 0) {
@@ -579,6 +591,7 @@ ENTER_FUNC;
 			p = StrDup("HEAD");
 			break;
 	}
+	ValueInteger(GetItemLongName(e,"httpstatus")) = HTTP_OK;
 	SetValueString(GetItemLongName(e,"methodtype"), p,NULL);
 
 	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
