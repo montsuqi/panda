@@ -44,6 +44,7 @@
 #include	"protocol.h"
 #include	"marshaller.h"
 #include	"interface.h"
+#include	"printservice.h"
 #include	"debug.h"
 
 static	void
@@ -843,11 +844,15 @@ RecvPandaPrint(
 	int				nitem
 	,				nitem2
 	,				nitem3
+	,				nretry
+	,				showdialog
 	,				i,j,k;
 
 ENTER_FUNC;
 	ret = FALSE;
 	data->attrs = NULL;
+	nretry = 0;
+	showdialog = 0;
 
 	if	(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
@@ -866,15 +871,22 @@ ENTER_FUNC;
 							RecvStringData(fp,path,SIZE_BUFF);
 						} else if (!stricmp(name,"title")) {
 							RecvStringData(fp,title,SIZE_BUFF);
-						}
-						if (strlen(path) > 0 && strlen(title) > 0) {
-							req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
-							req->path = StrDup(path);
-							req->title = StrDup(title);
-							PrintList = g_list_append(PrintList,req);
-							MessageLogPrintf("add path[%s]\n",path);
+						} else if (!stricmp(name,"nretry")) {
+							RecvIntegerData(fp,&nretry);
+						} else if (!stricmp(name,"showdialog")) {
+							RecvIntegerData(fp,&showdialog);
 						}
 					}
+					if (strlen(path) > 0 && strlen(title) > 0) {
+						req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
+						req->path = StrDup(path);
+						req->title = StrDup(title);
+						req->nretry = nretry;
+						req->showdialog = showdialog;
+						PrintList = g_list_append(PrintList,req);
+						MessageLogPrintf("add path[%s]\n",path);
+					}
+					path[0] = 0; title[0] = 0;
 				}
 			}
 		}

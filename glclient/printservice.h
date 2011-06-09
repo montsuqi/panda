@@ -17,8 +17,15 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_PRINT_H
-#define	_PRINT_H
+#ifndef	_PRINTSERVICE_H
+#define	_PRINTSERVICE_H
+
+typedef struct {
+	char	*path;
+	char	*title;
+	int		nretry;
+	int		showdialog;
+}	PrintRequest;
 
 extern void CheckPrintList();
 

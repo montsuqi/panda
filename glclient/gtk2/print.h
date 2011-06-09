@@ -17,11 +17,12 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_PRINTDIALOG_H
-#define	_INC_PRINTDIALOG_H
+#ifndef	_INC_PRINT_H
+#define	_INC_PRINT_H
 
 #include <gtk/gtk.h>
 
 void show_print_dialog(char *title,char *fname,size_t size);
+void print_with_default_printer(char *fname);
 
 #endif

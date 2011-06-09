@@ -29,7 +29,7 @@ libuigtk2_la_SOURCES	=				\
 	callbacks.c		callbacks.h		\
 	dialogs.c		dialogs.h		\
 	download.c		download.h		\
-	printdialog.c	printdialog.h	\
+	print.c			print.h			\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\
 	widgetOPS.c		widgetOPS.h		\

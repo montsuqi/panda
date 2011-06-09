@@ -48,7 +48,7 @@
 #include	"bd_config.h"
 #include	"bootdialog.h"
 #include	"dialogs.h"
-#include	"printdialog.h"
+#include	"print.h"
 #include	"styleParser.h"
 #include	"widgetcache.h"
 #include	"notify.h"
@@ -332,6 +332,12 @@ UI_ShowPrintDialog(char *title,
 	size_t size)
 {
 	show_print_dialog(title,fname,size);
+}
+
+extern	void
+UI_PrintWithDefaultPrinter(char *fname)
+{
+	print_with_default_printer(fname);
 }
 
 extern	void

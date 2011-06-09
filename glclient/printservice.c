@@ -38,9 +38,10 @@
 
 #include	"glclient.h"
 #include	"interface.h"
-#include	"print.h"
+#include	"printservice.h"
 #include	"message.h"
 #include	"debug.h"
+#include	"gettext.h"
 
 static size_t wrote_size = 0;
 
@@ -61,7 +62,8 @@ WriteData(
 static int 
 DoPrint(
 	char *path,
-	char *title)
+	char *title,
+	int showdialog)
 {
 	FILE *fp;
 	int fd;
@@ -69,15 +71,17 @@ DoPrint(
 	char url[1024+1];
 	char fname[256];
 	char userpass[256];
+	char buf[1024];
 	CURL *curl;
 	CURLcode ret;
-	int retry;
+	int doretry;
+    long http_code;
 
-	retry = 0;
+	doretry = 0;
 	curl = curl_easy_init();
 	if (!curl) {
 		printf("couldn't init curl\n");
-		return retry;
+		return doretry;
 	}
 
 	sprintf(fname,"%s/glclient_print_XXXXXX",TempDir);
@@ -95,17 +99,27 @@ DoPrint(
 			curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 			ret = curl_easy_perform(curl);
 			fclose(fp);
-			curl_easy_cleanup(curl);
+            curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
 			if (ret == CURLE_OK) {
-				if (wrote_size == 0) {
-					retry = 1;
+				if (http_code == 200) {
+					if (wrote_size == 0) {
+						doretry = 1;
+					} else {
+						//show_dialog
+						if (showdialog) {
+							MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
+								url,fname,(long)wrote_size);
+							UI_ShowPrintDialog(title,fname,wrote_size);
+						} else {
+							UI_PrintWithDefaultPrinter(fname);
+						}
+					}
 				} else {
-					//show_dialog
-					MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
-						url,fname,(long)wrote_size);
-					UI_ShowPrintDialog(title,fname,wrote_size);
+					sprintf(buf,_("print failure\ntitle:%s\n"),title);
+					UI_Notify(_("glclient print service"),buf,"gtk-dialog-error",0);
 				}
 			}
+			curl_easy_cleanup(curl);
 		} else {
 			Warning("fdopne failure");
 		}
@@ -113,7 +127,7 @@ DoPrint(
 		Warning("mkstemp failure");
 	}
 	umask(mode);
-	return retry;
+	return doretry;
 }
 
 static void
@@ -130,6 +144,7 @@ CheckPrintList()
 	int i;
 	GList *list = NULL;
 	PrintRequest *req;
+	gchar buf[1024];
 
 	if (PrintList == NULL) {
 		return;
@@ -141,9 +156,20 @@ CheckPrintList()
 			continue;
 		}
 		MessageLogPrintf("donwload path[%s]\n",req->path);
-		if (DoPrint(req->path,req->title)) {
+		if (DoPrint(req->path,req->title,req->showdialog)) {
 			// retry
-			list = g_list_append(list,req);
+			if (req->nretry == 0) {
+				list = g_list_append(list,req);
+			} else {
+				if (req->nretry <= 1) {
+					sprintf(buf,_("print failure\ntitle:%s\n"),req->title);
+					UI_Notify(_("glclient print service"),buf,"gtk-dialog-error",0);
+					FreePrintRequest(req);
+				} else {
+					req->nretry -= 1;
+					list = g_list_append(list,req);
+				}
+			}
 		} else {
 			// delete request
 			FreePrintRequest(req);

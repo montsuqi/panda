@@ -42,7 +42,7 @@
 #include	"toplevel.h"
 #include	"dialogs.h"
 #include	"desktop.h"
-#include	"printdialog.h"
+#include	"print.h"
 #include	"widgetcache.h"
 #include	"utils.h"
 #include	"message.h"
@@ -184,9 +184,24 @@ show_print_dialog(
 		show_save_dialog(fname);
 		break;
 	case GTK_RESPONSE_OK:
-		gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf));
+		gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf),TRUE);
 		break;
 	}
 	gtk_widget_destroy(dialog);
+	gtk_widget_destroy(pandapdf);
+}
+
+void
+print_with_default_printer(
+	char	*fname)
+{
+	GtkWidget *pandapdf;
+
+	pandapdf = gtk_panda_pdf_new();
+	if (!gtk_panda_pdf_load(GTK_PANDA_PDF(pandapdf),fname)) {
+		gtk_widget_destroy(pandapdf);
+		return;
+	}
+	gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf),FALSE);
 	gtk_widget_destroy(pandapdf);
 }
