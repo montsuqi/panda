@@ -116,7 +116,7 @@ DoPrint(
 					}
 				} else {
 					sprintf(buf,_("print failure\ntitle:%s\n"),title);
-					UI_Notify(_("glclient print service"),buf,"gtk-dialog-error",0);
+					UI_Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
 				}
 			}
 			curl_easy_cleanup(curl);
@@ -163,7 +163,7 @@ CheckPrintList()
 			} else {
 				if (req->nretry <= 1) {
 					sprintf(buf,_("print failure\ntitle:%s\n"),req->title);
-					UI_Notify(_("glclient print service"),buf,"gtk-dialog-error",0);
+					UI_Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
 					FreePrintRequest(req);
 				} else {
 					req->nretry -= 1;
