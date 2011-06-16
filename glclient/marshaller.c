@@ -851,8 +851,6 @@ RecvPandaPrint(
 ENTER_FUNC;
 	ret = FALSE;
 	data->attrs = NULL;
-	nretry = 0;
-	showdialog = 0;
 
 	if	(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
@@ -865,6 +863,8 @@ ENTER_FUNC;
 					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 					nitem3 = GL_RecvInt(fp);
 					path[0] = 0; title[0] = 0;
+					nretry = 0;
+					showdialog = 0;
 					for	( k = 0 ; k < nitem3 ; k ++ ) {
 						GL_RecvName(fp, sizeof(name), name);
 						if (!stricmp(name,"path")) {
