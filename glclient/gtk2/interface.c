@@ -257,7 +257,7 @@ UI_Init(int argc,
 	char **argv)
 {
 	gtk_init(&argc, &argv);
-#if 0
+#if 1
 	/* set gtk-entry-select-on-focus */
 	GtkSettings *set = gtk_settings_get_default();
     gtk_settings_set_long_property(set, "gtk-entry-select-on-focus", 0, 
