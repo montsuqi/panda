@@ -51,11 +51,9 @@ select_all(
 	gpointer		user_data)
 {
 ENTER_FUNC;
-#if 0
-	GtkEditable *editable = GTK_EDITABLE (widget);
-	gtk_editable_select_region(editable, 0, -1);
-	gtk_editable_set_position(editable, 0);
-#endif
+	GtkSettings *set = gtk_widget_get_settings(widget);
+	gtk_settings_set_long_property(set, "gtk-entry-select-on-focus", 1, 
+		"glclient2");
 LEAVE_FUNC;
 	return (FALSE);
 }
@@ -68,10 +66,9 @@ unselect_all(
 {
 
 ENTER_FUNC;
-#if 0
-	GtkEditable *editable = GTK_EDITABLE (widget);
-	gtk_editable_select_region(editable, 0, 0);
-#endif
+	GtkSettings *set = gtk_widget_get_settings(widget);
+	gtk_settings_set_long_property(set, "gtk-entry-select-on-focus", 0, 
+		"glclient2");
 LEAVE_FUNC;
 	return (FALSE);
 }
