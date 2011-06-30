@@ -209,7 +209,10 @@ SendResponse(
 		vstatus = GetItemLongName(value,"httpstatus");
 		if (vstatus != NULL) {
 			req->status = ValueInteger(vstatus);
+		} else {
+			req->status = HTTP_OK;
 		}
+		
 	}
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
@@ -591,7 +594,9 @@ ENTER_FUNC;
 			p = StrDup("HEAD");
 			break;
 	}
-	ValueInteger(GetItemLongName(e,"httpstatus")) = HTTP_OK;
+	if ( GetItemLongName(e,"httpstatus") ){
+		ValueInteger(GetItemLongName(e,"httpstatus")) = HTTP_OK;
+	}
 	SetValueString(GetItemLongName(e,"methodtype"), p,NULL);
 
 	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
