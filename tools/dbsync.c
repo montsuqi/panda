@@ -52,6 +52,7 @@ static	Bool	fAllsync;
 static	Bool	fTablecheck;
 static	Bool	fOVerbose;
 static	Bool	fVerbose;
+static	Bool	fReverse;
 static  char    *Master = NULL;
 static  char    *Slave = NULL;
 
@@ -66,6 +67,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"allsync",	BOOLEAN,	TRUE,	(void*)&fAllsync,
 		"All Database sync"								},
+	{	"reverse",	BOOLEAN,	TRUE,	(void*)&fReverse,
+		"Reverse(slave->master) sync"						},
 	{	"check",	BOOLEAN,	TRUE,	(void*)&fTablecheck,
 		"Table compare check only(no sync)"				},
 	{	"v",		BOOLEAN,	TRUE,	(void*)&fOVerbose,
@@ -92,6 +95,7 @@ static	void
 SetDefault(void)
 {
 	fVerbose = FALSE;
+	fReverse = FALSE;
 	D_Dir = NULL;
 	Directory = "./directory";
 }
@@ -392,11 +396,17 @@ lookup_master_slave(
 	DBG_Struct	*dbg,
 	void		*dummy)
 {
-	DBG_Struct	*rdbg;
-	if (dbg->redirect != NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH) {
-		MASTERDB = StrDup(dbg->name);
-		rdbg = dbg->redirect;
-		SLAVEDB = StrDup(rdbg->name);
+	if ((dbg->redirect != NULL)
+			&& (dbg->redirectorMode == REDIRECTOR_MODE_PATCH)) {
+		if (!fReverse) {
+			MASTERDB = StrDup(dbg->name);
+			SLAVEDB = StrDup(dbg->redirect->name);
+		} else {
+			MASTERDB = StrDup(dbg->redirect->name);
+			SLAVEDB = StrDup(dbg->name);
+		}
+		
+		
 	}
 }
 
