@@ -114,7 +114,7 @@ DoPrint(
 							UI_PrintWithDefaultPrinter(fname);
 						}
 					}
-				} else {
+				} else if (http_code != 204) { /* 204 HTTP No Content */
 					sprintf(buf,_("print failure\ntitle:%s\n"),title);
 					UI_Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
 				}
