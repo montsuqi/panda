@@ -35,6 +35,7 @@
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<pthread.h>
+#include	<errno.h>
 
 #include	"enum.h"
 
