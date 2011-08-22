@@ -1148,7 +1148,6 @@ RecvPandaCList(
 	,		k;
 	Bool	fActive;
 	int		state;
-	gfloat	rowattrw;
 	_CList	*attrs;
 
 ENTER_FUNC;
@@ -1180,7 +1179,6 @@ ENTER_FUNC;
 		count = -1;
 		from = 0;
 		row = 0;
-		rowattrw = 0.0;
 
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);

@@ -44,7 +44,7 @@ extern  gchar   *bd_config_section_get_string_default
                                                  gchar *value);
 extern  gboolean bd_config_section_set_bool     (BDConfigSection *self,
                                                  gchar *name,
-                                                 gboolean bool);
+                                                 gboolean data);
 extern  gboolean bd_config_section_set_string   (BDConfigSection *self,
                                                  gchar *name,
                                                  const gchar *str);

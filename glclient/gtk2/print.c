@@ -36,6 +36,7 @@
 #include	<glib.h>
 #include	<gtk/gtk.h>
 #include	<gtkpanda/gtkpanda.h>
+#include	<errno.h>
 
 #include	"glclient.h"
 #include	"gettext.h"
