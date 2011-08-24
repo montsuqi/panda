@@ -371,7 +371,11 @@ SetLabel(
 {
 ENTER_FUNC;
 	SetStyle(widget, GetStyle(data->style));
-	gtk_label_set(GTK_LABEL(widget),data->text);
+	if (pango_parse_markup(data->text,-1,0,NULL,NULL,NULL,NULL)) {
+		gtk_label_set_markup(GTK_LABEL(widget),data->text);
+	} else {
+		gtk_label_set_text(GTK_LABEL(widget),data->text);
+	}
 LEAVE_FUNC;
 }
 
