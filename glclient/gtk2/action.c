@@ -445,7 +445,7 @@ ENTER_FUNC;
 	dbgprintf("show window:%s\n", wname);
 	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
 		// FIXME sometimes comes here.
-		fprintf(stderr,"%s:%d data is NULL\n", __FILE__, __LINE__);
+		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
 		return;
 	}
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
