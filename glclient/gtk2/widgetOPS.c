@@ -251,7 +251,6 @@ GetPandaCList(
 	int				i;
 	int				nrows;
 	Bool			getRow;
-	GtkVisibility 	visi;
 
 ENTER_FUNC;
 	nrows = gtk_panda_clist_get_n_rows(GTK_PANDA_CLIST(widget));
@@ -270,8 +269,7 @@ ENTER_FUNC;
 			data->states[i] = g_strdup("F");
 		}
 		if (!getRow) {
-			visi = gtk_panda_clist_row_is_visible(GTK_PANDA_CLIST(widget), i);
-			if (visi == GTK_VISIBILITY_FULL) {
+			if (gtk_panda_clist_row_is_visible(GTK_PANDA_CLIST(widget), i)) {
 				data->row = i;
 				getRow = TRUE;
 			}
