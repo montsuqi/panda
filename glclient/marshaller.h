@@ -74,6 +74,7 @@ typedef struct __Entry {
 	char 			*style;
 	char 			*text;
 	char 			*text_name;
+	Bool			editable;
 	PacketDataType 	ptype;
 } _Entry;
 
@@ -100,6 +101,7 @@ typedef struct __NumberEntry{
 	char 			*style;
 	Fixed 			*fixed;
 	char 			*fixed_name;
+	Bool			editable;
 	PacketDataType 	ptype;
 } _NumberEntry;
 

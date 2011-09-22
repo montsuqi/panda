@@ -83,6 +83,7 @@ ENTER_FUNC;
 		g_free_nullize(attrs->text);
 		g_free_nullize(attrs->text_name);
 	}
+	attrs->editable = TRUE;
 
 	if (GL_RecvDataType(fp)  ==  GL_TYPE_RECORD) {
 		nitem = GL_RecvInt(fp);
@@ -95,6 +96,9 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"style")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->style = strdup(buff);
+			} else
+			if		(  !stricmp(name,"editable")  ) {
+				RecvBoolData(fp,&(attrs->editable));
 			} else {
 				attrs->ptype = RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->text = strdup(buff);
@@ -976,6 +980,7 @@ ENTER_FUNC;
 		FreeFixed(attrs->fixed);
 		g_free_nullize(attrs->fixed_name);
 	}
+	attrs->editable = TRUE;
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
@@ -988,6 +993,9 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"style")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->style = strdup(buff);
+			} else
+			if		(  !stricmp(name,"editable")  ) {
+				RecvBoolData(fp,&(attrs->editable));
 			} else {
 				attrs->ptype = RecvFixedData(fp,&(attrs->fixed));
 				attrs->fixed_name = strdup(name);

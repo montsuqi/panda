@@ -165,6 +165,7 @@ SetNumberEntry(
 	Numeric	value;
 
 ENTER_FUNC;
+	g_object_set(G_OBJECT(widget),"editable",data->editable,NULL);
 	SetState(widget,(GtkStateType)data->state);
 	SetStyle(widget, GetStyle(data->style));
 	value = FixedToNumeric(data->fixed);
@@ -339,6 +340,7 @@ SetEntry(
 	_Entry			*data)
 {
 ENTER_FUNC;
+	g_object_set(G_OBJECT(widget),"editable",data->editable,NULL);
 	SetState(widget,(GtkStateType)(data->state));
 	SetStyle(widget,GetStyle(data->style));
 	if (strcmp (gtk_entry_get_text(GTK_ENTRY(widget)), data->text)) {
