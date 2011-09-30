@@ -120,17 +120,11 @@ extern	char	*
 GetWindowName(
 	GtkWidget	*widget)
 {
-	GtkWidget	*window;
 	static char	wname[SIZE_LONGNAME];
-
 ENTER_FUNC;
-	window = GetWindow(widget);
-#if	1	/*	This logic is escape code for GTK bug.	*/
+	/*	This logic is escape code for GTK bug.	*/
 	strcpy(wname,glade_get_widget_long_name(widget));
 	*(strchr(wname,'.')) = 0;
-#else
-	strcpy(wname,gtk_widget_get_name(window));
-#endif
 LEAVE_FUNC;
 	return (wname);
 }
@@ -237,11 +231,9 @@ _AddChangedWidget(
 	char		*wname;
 	char		*key;
 	char		*tail;
-	GtkWidget	*window;
 	WindowData	*wdata;
 
 ENTER_FUNC;
-	window = gtk_widget_get_toplevel(widget);
 	name = (char *)glade_get_widget_long_name(widget);
 	tail = strchr(name, '.');
 	if (tail == NULL) {
@@ -390,7 +382,6 @@ CloseWindow(
 {
 	WindowData	*data;
 	GtkWidget	*window;
-	GtkWidget	*child;
 	GSList		*list;
 	int			i;
 	GList		*wlist;
@@ -404,7 +395,6 @@ ENTER_FUNC;
 	}
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	if (data->fWindow) {
-		child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
 		if (data->fAccelGroup) {
 			for(list = ((GladeXML*)data->xml)->priv->accel_groups;
 				list != NULL;

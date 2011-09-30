@@ -80,11 +80,9 @@ keypress_filter(
 	char		*next)
 {
 	GtkWidget	*nextWidget;
-	GtkWidget	*window;
 
 ENTER_FUNC;
 	if		(event->keyval == GDK_KP_Enter) {
-		window = gtk_widget_get_toplevel(widget);
 		nextWidget = GetWidgetByLongName(next);
 		if (nextWidget != NULL) {
 			gtk_widget_grab_focus (nextWidget);
@@ -210,11 +208,9 @@ LEAVE_FUNC;
 static gint
 send_event_if_kana (gpointer widget)
 {
-	GtkWidget   *window;
 	guchar *text = (guchar *)gtk_entry_get_text (GTK_ENTRY (widget));
 	int len = strlen (text);
 ENTER_FUNC;
-	window = gtk_widget_get_toplevel(widget);
 	if (len == 0 || text[len - 1] >= 0x80)
 	{
 		entry_changed (widget, TimerEvent);

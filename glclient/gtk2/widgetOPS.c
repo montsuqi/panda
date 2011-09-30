@@ -297,10 +297,10 @@ GetPandaTable(
 	_Table		*data)
 {
 ENTER_FUNC;
-	data->trow = (gint)g_object_get_data(G_OBJECT(widget),
-		"send_data_row");
-	data->tcolumn = (gint)g_object_get_data(G_OBJECT(widget),
-		"send_data_column");
+	data->trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
+		"send_data_row"));
+	data->tcolumn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
+		"send_data_column"));
 	data->tvalue = g_strdup((gchar*)g_object_get_data(G_OBJECT(widget),
 		"send_data_value"));
 LEAVE_FUNC;
