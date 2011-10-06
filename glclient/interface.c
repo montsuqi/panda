@@ -27,6 +27,8 @@
 #  include <config.h>
 #endif
 
+#define		INTERFACE_MAIN
+
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
@@ -52,8 +54,6 @@
 #include	"styleParser.h"
 #include	"widgetcache.h"
 #include	"notify.h"
-#define		TOPLEVEL
-#include	"toplevel.h"
 #include	"message.h"
 #include	"debug.h"
 

@@ -27,6 +27,25 @@
 #define	DEFAULT_WINDOW_HEIGHT	768
 #define	DEFAULT_WINDOW_FOOTER	24
 
+#undef	GLOBAL
+#ifdef	INTERFACE_MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+typedef struct {
+	float v;
+	float h;
+} WindowScale;
+
+GLOBAL	GtkWidget	*TopWindow;
+GLOBAL	GtkWidget	*TopNoteBook;
+GLOBAL	GList		*DialogStack;
+GLOBAL	WindowScale	TopWindowScale;
+
+
+
 typedef	gint		(*_PingTimerFunc)	(gpointer data);
 
 extern	int			UI_Version();

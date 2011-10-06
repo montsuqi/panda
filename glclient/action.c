@@ -47,7 +47,6 @@
 #include	"action.h"
 #include	"queue.h"
 #include	"gettext.h"
-#include	"toplevel.h"
 #include	"interface.h"
 #include	"widgetcache.h"
 

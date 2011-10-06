@@ -50,7 +50,7 @@
 #include	"marshaller.h"
 #include	"queue.h"
 #include	"widgetcache.h"
-#include	"toplevel.h"
+#include	"interface.h"
 #include	"download.h"
 #include	"notify.h"
 #include	"message.h"
