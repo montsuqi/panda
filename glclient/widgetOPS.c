@@ -72,7 +72,7 @@ SetWidgetLabelRecursive(
 	char		*label)
 {
 	if		(  GTK_IS_LABEL(widget)  ) {
-		gtk_label_set(GTK_LABEL(widget),label);
+		gtk_label_set_text(GTK_LABEL(widget),label);
 	} else {
 		gtk_container_foreach(GTK_CONTAINER(widget),
 			(GtkCallback)SetWidgetLabelRecursive,label);
@@ -346,7 +346,7 @@ ENTER_FUNC;
 	if (strcmp (gtk_entry_get_text(GTK_ENTRY(widget)), data->text)) {
 		gtk_entry_set_text(GTK_ENTRY(widget), data->text);
 	}
-	if (!GTK_WIDGET_HAS_FOCUS(widget)
+	if (!gtk_widget_has_focus(widget)
 		&& (gtk_editable_get_position (GTK_EDITABLE(widget)) != 0)) {
 		gtk_editable_set_position (GTK_EDITABLE(widget), 0);
 	}
@@ -486,7 +486,7 @@ ENTER_FUNC;
 		g_object_set_data(G_OBJECT(widget),"pageno",pageno);
 	}
 	*pageno = data->pageno;
-	gtk_notebook_set_page(GTK_NOTEBOOK(widget),data->pageno);
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),data->pageno);
 LEAVE_FUNC;
 }
 
@@ -513,7 +513,12 @@ SetProgressBar(
 ENTER_FUNC;
 	SetState(widget,(GtkStateType)(data->state));
 	SetStyle(widget,GetStyle(data->style));
+#ifdef LIBGTK_3_0_0
+	gtk_panda_progress_bar_set_value(
+      GTK_PANDA_PROGRESS_BAR(widget),data->value);
+#else
 	gtk_progress_set_value(GTK_PROGRESS(widget),data->value);
+#endif
 LEAVE_FUNC;
 }
 
@@ -523,7 +528,11 @@ GetProgressBar(
 	_ProgressBar			*data)
 {
 ENTER_FUNC;
+#ifdef LIBGTK_3_0_0
+	data->value = gtk_panda_progress_bar_get_value(GTK_PANDA_PROGRESS_BAR(widget));
+#else
 	data->value = gtk_progress_get_value(GTK_PROGRESS(widget));
+#endif
 LEAVE_FUNC;
 }
 
@@ -580,8 +589,8 @@ GetScrolledWindow(
 ENTER_FUNC;
 	vad = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
 	had = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
-	data->hpos = (int)had->value;
-	data->vpos = (int)vad->value;
+	data->hpos = (int)gtk_adjustment_get_value(had);
+	data->vpos = (int)gtk_adjustment_get_value(vad);
 LEAVE_FUNC;
 }
 
@@ -722,7 +731,7 @@ GetWidgetType(
 	}
 
 	if (widget != NULL) {
-		type = (long)(GTK_WIDGET_TYPE(widget));
+		type = (long)(G_OBJECT_TYPE(widget));
 		if (type == GTK_TYPE_NUMBER_ENTRY) {
 			return WIDGET_TYPE_NUMBER_ENTRY;
 		} else if (type == GTK_PANDA_TYPE_COMBO) {

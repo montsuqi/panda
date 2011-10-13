@@ -72,15 +72,10 @@ show_preview_dialog(
 	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
 	pandapdf = gtk_panda_pdf_new();
 	gtk_panda_pdf_load(GTK_PANDA_PDF(pandapdf),fname);
-	gtk_widget_set_usize(pandapdf,800,600);
+	gtk_widget_set_size_request(pandapdf,800,600);
 	g_signal_connect_swapped(dialog,"response",
 		G_CALLBACK(gtk_widget_destroy),dialog);
-#if 0
-	// gtk >= 2.14
 	content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-#else
-	content = GTK_DIALOG(dialog)->vbox;
-#endif
 	gtk_container_add(GTK_CONTAINER(content),pandapdf);
 	gtk_widget_show_all(dialog);
 	gtk_dialog_run(GTK_DIALOG(dialog));

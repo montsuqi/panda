@@ -18,6 +18,7 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#include 	<gtk/gtk.h>
 #include	"marshaller.h"
 
 #ifndef	_INC_INTERFACE_H
@@ -40,7 +41,6 @@ typedef struct {
 } WindowScale;
 
 GLOBAL	GtkWidget	*TopWindow;
-GLOBAL	GtkWidget	*TopNoteBook;
 GLOBAL	GList		*DialogStack;
 GLOBAL	WindowScale	TopWindowScale;
 

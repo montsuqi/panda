@@ -264,7 +264,9 @@ UI_Init(int argc,
 		"glclient2");
 #endif
 	gtk_panda_init(&argc,&argv);
+#ifndef LIBGTK_3_0_0
 	gtk_set_locale();
+#endif
 	glade_init();
 
 	WindowTable = NewNameHash();

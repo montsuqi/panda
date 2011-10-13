@@ -159,22 +159,27 @@ edit_dialog_run (BDConfig * config, gchar * hostname, GtkWidget *parent)
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, 0, 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), table, TRUE, TRUE, 0);
+  gtk_box_pack_start(
+    GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
+    table, TRUE, TRUE, 0);
   gtk_widget_show_all(table);
 
   component = bd_component_new();
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
     component->basictable, TRUE, TRUE, 0);
   gtk_widget_show_all(component->basictable);
   //gtk_widget_hide(component->protocol_v2);
 
 #ifdef USE_SSL
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
     component->ssltable, TRUE, TRUE, 0);
   gtk_widget_show_all(component->ssltable);
 #endif
 
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
     component->othertable, TRUE, TRUE, 0);
   gtk_widget_show_all(component->othertable);
 
@@ -272,7 +277,9 @@ server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
 {
   edit_dialog_run (self->config, NULL, self->dialog);
   server_dialog_server_list_update (self);
+#if 0
   gdk_window_raise (self->dialog->window);
+#endif
 }
 
 static void
@@ -307,8 +314,9 @@ server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
       break;
     }
   }
-
+#if 0
   gdk_window_raise (self->dialog->window);
+#endif
 }
 
 static void
@@ -398,44 +406,51 @@ server_dialog_new (BDConfig * config, GtkWidget *parent)
 
   /* new button */
   button = gtk_button_new_with_label (_("New"));
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_action_area(GTK_DIALOG(dialog))),
     button, TRUE, TRUE, 5);
-  g_signal_connect (GTK_OBJECT (button), "clicked",
+  g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (server_dialog_on_new), self);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button,TRUE);
 
   /* edit button */
   self->edit = button = gtk_button_new_with_label (_("Edit"));
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_action_area(GTK_DIALOG(dialog))),
     button, TRUE, TRUE, 5);
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (server_dialog_on_edit), self);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button,TRUE);
   gtk_widget_set_sensitive (button, FALSE);
 
   /* delete button */
   self->delete = button = gtk_button_new_with_label (_("Delete"));
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_action_area(GTK_DIALOG(dialog))),
     button, TRUE, TRUE, 5);
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (server_dialog_on_delete), self);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button,TRUE);
   gtk_widget_set_sensitive (button, FALSE);
 
   /* close button */
   button = gtk_button_new_with_label (_("Close"));
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), button, TRUE, TRUE, 5);
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_action_area(GTK_DIALOG(dialog))),
+    button, TRUE, TRUE, 5);
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (server_dialog_on_close), self);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button,TRUE);
   gtk_widget_grab_default (button);
 
   /* contents */
   scroll = gtk_scrolled_window_new (NULL, NULL);
   gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll),
                                   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-  gtk_widget_set_usize (scroll, 450, 200);
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), scroll, TRUE, TRUE, 5);
+  gtk_widget_set_size_request (scroll, 450, 200);
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+    scroll, TRUE, TRUE, 5);
 
   self->server_list = clist = gtk_panda_clist_new();
   gtk_panda_clist_set_columns(GTK_PANDA_CLIST(clist),server_dialog_titles_count);
@@ -563,7 +578,11 @@ boot_dialog_combo_changed(GtkComboBox *widget, gpointer user_data)
   gchar *hostname;
   
   self = (BootDialog *)user_data;
+#ifdef LIBGTK_3_0_0
+  desc = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
+#else
   desc = gtk_combo_box_get_active_text(widget);
+#endif
   if (desc) {
     hostname = get_config_hostname_by_desc(config_, desc);
     bd_component_set_value(config_, hostname, self->component);
@@ -584,12 +603,35 @@ boot_dialog_combo_update (BootDialog *self)
   gchar *selected;
   gint i;
   gint custom_index;
-  GtkListStore *store;
   gboolean update = FALSE;
 
   g_signal_handlers_block_by_func(GTK_COMBO_BOX(self->combo),
     boot_dialog_combo_changed, self->combo);
 
+#ifdef LIBGTK_3_0_0
+  gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(self->combo));
+  selected = bd_config_get_string (config_, "global", "hostname");
+  i = custom_index = 0;
+  for (p = bd_config_get_sections (config_); p != NULL; p = g_list_next (p)) {
+      hostname = (gchar *)p->data;
+      if (!strcmp(hostname, "glclient")) {
+        continue;
+      } else if (!strcmp(hostname, "global")) {
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo), _(custom_label));
+        custom_index = i;
+      } else {
+        desc = bd_config_get_string (config_, hostname, "description");
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo), desc);
+      }
+      if (!strcmp(hostname, selected)) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i);
+        bd_component_set_value(config_, hostname, self->component);
+        update = TRUE;
+      }
+      i++;
+  }
+#else
+  GtkListStore *store;
   store = GTK_LIST_STORE(gtk_combo_box_get_model(GTK_COMBO_BOX(self->combo)));
   gtk_list_store_clear(store);
 
@@ -614,6 +656,7 @@ boot_dialog_combo_update (BootDialog *self)
       }
       i++;
   }
+#endif
   if (!update) {
     bd_component_set_value(config_, "global", self->component);
     gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), custom_index);
@@ -630,7 +673,11 @@ boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
   gchar *hostname;
   self->is_connect = TRUE;
   
+#ifdef LIBGTK_3_0_0
+  desc = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(self->combo));
+#else
   desc = gtk_combo_box_get_active_text(GTK_COMBO_BOX(self->combo));
+#endif
   hostname = get_config_hostname_by_desc(config_, desc);
   bd_component_value_to_config(config_, hostname, self->component);
   bd_component_value_to_config(config_, "global", self->component);
@@ -657,7 +704,9 @@ boot_dialog_on_config (GtkWidget * widget, BootDialog * self)
   server_dialog_run (config_, self->dialog);
   bd_config_save (config_, NULL, permissions);
   boot_dialog_combo_update (self);
+#if 0
   gdk_window_raise (self->dialog->window);
+#endif
 }
 
 static gboolean
@@ -689,7 +738,7 @@ boot_dialog_new ()
   g_signal_connect (G_OBJECT (dialog), "delete_event",
                       G_CALLBACK (boot_dialog_on_delete_event), self);
   
-  vbox = GTK_DIALOG (dialog)->vbox;
+  vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
   welcome = gtk_label_new (_("glclient2 Launcher"));
   self->welcome = welcome;
@@ -703,16 +752,23 @@ boot_dialog_new ()
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
   
+#ifdef LIBGTK_3_0_0
+  self->combo = combo = gtk_combo_box_text_new();
+#else
   self->combo = combo = gtk_combo_box_new_text();
+#endif
 
-  gtk_widget_set_usize (combo, 0, 30);
+  gtk_widget_set_size_request (combo, 0, 30);
   boot_dialog_combo_update (self);
   gtk_box_pack_start (GTK_BOX (hbox), combo, TRUE, TRUE, 0);
   g_signal_connect(combo, "changed", 
     G_CALLBACK(boot_dialog_combo_changed), self);
 
   notebook = gtk_notebook_new ();
+/* for gtk3 */
+#if 0 
   gtk_notebook_set_homogeneous_tabs (GTK_NOTEBOOK (notebook), TRUE);
+#endif
   gtk_box_pack_start (GTK_BOX (vbox), notebook, TRUE, TRUE, 5);
 
   /* Basic tab */
@@ -729,14 +785,14 @@ boot_dialog_new ()
   label = gtk_label_new (_("Details"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->othertable, label);
 
-  action_area = GTK_DIALOG (dialog)->action_area;
+  action_area = gtk_dialog_get_action_area(GTK_DIALOG(dialog));
 
   button = gtk_button_new_with_label (_("Connect"));
   gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (boot_dialog_on_connect), self);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_FOCUS);
+  gtk_widget_set_can_default(button,TRUE);
+  gtk_widget_set_can_focus(button,TRUE);
   gtk_widget_grab_default (button);
   gtk_widget_grab_focus (button);
 
@@ -744,13 +800,13 @@ boot_dialog_new ()
   gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (boot_dialog_on_close), self);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button,TRUE);
 
   button = gtk_button_new_with_label (_("Configuration"));
   gtk_box_pack_start (GTK_BOX (action_area), button, TRUE, TRUE, 5);
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (boot_dialog_on_config), self);
-  GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
+  gtk_widget_set_can_default(button,TRUE);
 
   /* INFO tab */
   label = gtk_label_new (_("INFOMATION"));

@@ -158,12 +158,12 @@ ResetScrolledWindow(
     if  (   GTK_IS_SCROLLED_WINDOW(widget)  ) {
 		adj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
 		if	(	adj	) {
-			adj->value = 0.0;
+			gtk_adjustment_set_value(adj,0.0);
 			gtk_adjustment_value_changed(adj);
 		}
 		adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
 		if	(	adj	) {
-			adj->value = 0.0;
+			gtk_adjustment_set_value(adj,0.0);
 			gtk_adjustment_value_changed(adj);
 		}
     }
@@ -323,7 +323,7 @@ ENTER_FUNC;
 	wdata = New(WindowData);
 	wdata->xml = xml;
 	wdata->name = StrDup(wname);
-	wdata->title = StrDup(GTK_WINDOW (window)->title);
+	wdata->title = StrDup((char*)gtk_window_get_title(GTK_WINDOW(window)));
 	wdata->fAccelGroup = FALSE;
 	wdata->ChangedWidgetTable = NewNameHash();
 	wdata->TimerWidgetTable = NewNameHash();
@@ -333,16 +333,23 @@ ENTER_FUNC;
 
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
+	g_object_ref(child);
 	gtk_widget_show_all(child);
 	gtk_container_forall(GTK_CONTAINER(child), _RegistTimer, wdata->TimerWidgetTable);
+#ifdef LIBGTK_3_0_0
+	if (g_object_get_data(G_OBJECT(window),"IS_DIALOG") != NULL) {
+#else
 	if (strstr(GTK_WINDOW(window)->wmclass_class, "dialog") != NULL) {
+#endif
 		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
 		wdata->fWindow = FALSE;
 	} else {
 		dbgprintf("create window:%s\n", wname);
+#if 0
 		gtk_notebook_append_page(GTK_NOTEBOOK(TopNoteBook), 
 			child, gtk_label_new(wname));
+#endif
 		wdata->fWindow = TRUE;
 	}
 LEAVE_FUNC;
@@ -355,22 +362,28 @@ SwitchWindow(
 	GtkWidget	*child;
 
 ENTER_FUNC;
+	child = gtk_bin_get_child(GTK_BIN(TopWindow));
+	if (child != NULL) {
+		gtk_container_remove(GTK_CONTAINER(TopWindow),child);
+	}
+
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
 
-	gtk_widget_set_size_request(TopNoteBook,1,1);
 	ScaleWidget(child,NULL);
 
-	gtk_notebook_set_page(GTK_NOTEBOOK(TopNoteBook), 
-		gtk_notebook_page_num(GTK_NOTEBOOK(TopNoteBook), child));
-
+	gtk_container_add(GTK_CONTAINER(TopWindow),child);
 	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
 
 	gtk_widget_show(TopWindow);
-	gtk_widget_show(TopNoteBook);
 	gtk_widget_show(child);
 
+#ifdef LIBGTK_3_0_0
+	gtk_window_set_resizable(GTK_WINDOW(TopWindow), FALSE);
+#else
 	gtk_window_set_resizable(GTK_WINDOW(TopWindow), TRUE);
+#endif
+
 
 LEAVE_FUNC;
 }
@@ -500,8 +513,10 @@ ENTER_FUNC;
 	}
 	window = gtk_widget_get_toplevel(widget);
 	gtk_window_set_title(GTK_WINDOW(window),_("Now loading..."));
+#ifndef LIBGTK_3_0_0
 	gdk_window_set_cursor(window->window,busycursor);
 	gdk_flush ();
+#endif
 LEAVE_FUNC;
 }
 
@@ -515,7 +530,9 @@ ENTER_FUNC;
 	}
 	window = gtk_widget_get_toplevel(widget);
 	SetTitle(window);
+#ifndef LIBGTK_3_0_0
 	gdk_window_set_cursor(window->window,NULL);
+#endif
 LEAVE_FUNC;
 }
 
@@ -585,29 +602,30 @@ ScaleWidget(
     GtkWidget   *widget,
     gpointer    data)
 {
-	int *x, *y, *width, *height;
+	int x, y, width, height;
+	int _x,_y,_width,_height;
 
-	x = g_object_get_data(G_OBJECT(widget),"x");
-	y = g_object_get_data(G_OBJECT(widget),"y");
-	width = g_object_get_data(G_OBJECT(widget),"width");
-	height = g_object_get_data(G_OBJECT(widget),"height");
-
-
+#ifdef LIBGTK_3_0_0
+	return;
+#endif
 	if (GTK_IS_CONTAINER(widget) && ! GTK_IS_SCROLLED_WINDOW(widget)) {
 		gtk_container_set_resize_mode(GTK_CONTAINER(widget),GTK_RESIZE_QUEUE);
 		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, data);
-	}
-	if (x != NULL && y != NULL && width != NULL && height != NULL) {
-		int _x,_y,_width,_height;
+	} 
 
-		_x = (int)(*x * TopWindowScale.h);
-		_y = (int)(*y * TopWindowScale.v);
-		_width = (int)(*width * TopWindowScale.h);
-		_height = (int)(*height * TopWindowScale.v);
+	x = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"x"));
+	y = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"y"));
+	width = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"width"));
+	height = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"height"));
+	if (width > 0 && height > 0) {
+		_x = (int)(x * TopWindowScale.h);
+		_y = (int)(y * TopWindowScale.v);
+		_width = (int)(width * TopWindowScale.h);
+		_height = (int)(height * TopWindowScale.v);
 
 #if 0
-		fprintf(stderr,"[[%d,%d],[%d,%d]]->[[%d,%d],[%d,%d]]\n",
-			*x,*y,*width,*height,
+		fprintf(stderr,"scalewidget [[%d,%d],[%d,%d]]->[[%d,%d],[%d,%d]]\n",
+			x,y,width,height,
 			_x,_y,_width,_height);
 #endif
 		if (!GTK_IS_WINDOW(widget)) {
@@ -617,41 +635,43 @@ ScaleWidget(
 				gtk_fixed_move(GTK_FIXED(parent),widget,_x,_y);
 			}
 		}
-	} 
+	}
 }
 
 static	void
 ScaleWindow(
 	GtkWidget *widget)
 {
-	int *x, *y, *width, *height;
+	int x, y, width, height;
+	int _x,_y;
 
-	x = g_object_get_data(G_OBJECT(widget),"x");
-	y = g_object_get_data(G_OBJECT(widget),"y");
-	width = g_object_get_data(G_OBJECT(widget),"width");
-	height = g_object_get_data(G_OBJECT(widget),"height");
-
-	if (x != NULL && y != NULL) {
-		int _x,_y;
-
-		gtk_window_get_position(GTK_WINDOW(TopWindow),&_x,&_y);
-		_x += (int)(*x * TopWindowScale.h);
-		_y += (int)(*y * TopWindowScale.v);
-#if 0
-		fprintf(stderr,"move window [%d,%d]->[%d,%d]\n",
-			*x,*y,_x,_y);
+#ifdef LIBGTK_3_0_0
+	return;
 #endif
-		gtk_widget_set_uposition(widget,_x,_y);
-	} 
+	x = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"x"));
+	y = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"y"));
+	width = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"width"));
+	height = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"height"));
 
-	if (width != NULL && height != NULL) {
+	if (x !=0 && y != 0) {
+	gtk_window_get_position(GTK_WINDOW(TopWindow),&_x,&_y);
+		_x += (int)(x * TopWindowScale.h);
+		_y += (int)(y * TopWindowScale.v);
+#if 1
+		fprintf(stderr,"move window [%d,%d]->[%d,%d]\n",
+			x,y,_x,_y);
+#endif
+		gtk_window_move(GTK_WINDOW(widget),_x,_y);
+	}
+
+	if (width > 0 && height > 0) {
 		int _width,_height;
 
-		_width = (int)(*width * TopWindowScale.h);
-		_height = (int)(*height * TopWindowScale.v);
+		_width = (int)(width * TopWindowScale.h);
+		_height = (int)(height * TopWindowScale.v);
 #if 0
 		fprintf(stderr,"scale window [%d,%d]->[%d,%d]\n",
-			*width,*height,_width,_height);
+			width,height,_width,_height);
 #endif
 		gtk_widget_set_size_request(widget,_width,_height); 
 	} 
@@ -682,10 +702,9 @@ ConfigureWindow(GtkWidget *widget,
 	}
 
 #if 0
-	fprintf(stderr,"[%d,%d][%d,%d]->[%d,%d][%d,%d]\n",
+	fprintf(stderr,"configure window[%d,%d][%d,%d]->[%d,%d][%d,%d]\n",
 		old_x,old_y,old_width,old_height,x,y,width,height);
 #endif
-	gtk_widget_set_size_request(TopNoteBook,1,1); 
 	if (old_width != width || old_height != height) {
 		TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH);
 		TopWindowScale.v = (height * 1.0) / 
@@ -729,25 +748,31 @@ InitTopWindow(void)
 		(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_widget_set_uposition(TopWindow,x,y); // not recommend
+	gtk_window_move(GTK_WINDOW(TopWindow),x,y); 
+#if LIBGTK_3_0_0
+#if 0
+    gtk_window_set_default_size(GTK_WINDOW(TopWindow),width,height);
+#else
+    gtk_window_set_default_size(GTK_WINDOW(TopWindow),
+		DEFAULT_WINDOW_WIDTH,
+		DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
+#endif
+	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_QUEUE);
+#else
 	gtk_widget_set_size_request(TopWindow,width, height);
-
 	GdkGeometry geometry;
 	geometry.min_width = DEFAULT_WINDOW_WIDTH;
 	geometry.min_height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
 	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
 		GDK_HINT_MIN_SIZE);
-
 	gtk_window_set_wmclass(GTK_WINDOW(TopWindow),"Glclient","Glclient");
+	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_IMMEDIATE);
+#endif
 
 	g_signal_connect(G_OBJECT(TopWindow), 
 		"delete_event", G_CALLBACK(gtk_true), NULL);
 	g_signal_connect(G_OBJECT(TopWindow), 
 		"configure_event", G_CALLBACK(ConfigureWindow), NULL);
 
-	TopNoteBook = gtk_notebook_new();
-	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
-	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
-	gtk_container_set_resize_mode(GTK_CONTAINER(TopNoteBook),GTK_RESIZE_IMMEDIATE);
 	DialogStack = NULL;
 }

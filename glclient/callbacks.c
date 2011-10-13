@@ -82,7 +82,11 @@ keypress_filter(
 	GtkWidget	*nextWidget;
 
 ENTER_FUNC;
+#ifdef LIBGTK_3_0_0
+	if		(event->keyval == GDK_KEY_KP_Enter) {
+#else
 	if		(event->keyval == GDK_KP_Enter) {
+#endif
 		nextWidget = GetWidgetByLongName(next);
 		if (nextWidget != NULL) {
 			gtk_widget_grab_focus (nextWidget);
@@ -103,7 +107,7 @@ press_filter(
 	gboolean	rc;
 ENTER_FUNC;
 	/* If WIDGET already has focus, do the default action */
-	if (GTK_WIDGET_HAS_FOCUS (widget)) {
+	if (gtk_widget_has_focus(widget)) {
 		rc = FALSE;
 	} else {
 		/* Otherwise, just grab focus */
@@ -122,10 +126,10 @@ find_widget_ancestor(
 	GType		t)
 {
 	GtkWidget	*widget;
-	GtkType		type;
+	GType		type;
 	widget = w;
 	while	(	widget	) {
-		type = (long)GTK_WIDGET_TYPE(widget);
+		type = (long)G_OBJECT_TYPE(widget);
 		if	(	type == t	){
 			return widget;
 		}
@@ -192,6 +196,7 @@ ENTER_FUNC;
 		}
 		SendWindowData();
 		BlockChangedHandlers();
+		HideBusyCursor(widget); 
 		GetScreenData(FPCOMM(glSession));
 		UnblockChangedHandlers();
 		if	( ! fKeyBuff  ) {
@@ -199,7 +204,6 @@ ENTER_FUNC;
 			ClearKeyBuffer();
 			ignore_event = FALSE;
 		}
-		HideBusyCursor(widget); 
 		fInRecv = FALSE;
 	}
 LEAVE_FUNC;
@@ -387,7 +391,7 @@ day_selected(
 extern	gboolean
 switch_page(
 	GtkNotebook	*widget,
-	GtkNotebookPage *page,
+	gpointer		*page,
 	gint			now_pageno,
 	char			*user_data)
 {

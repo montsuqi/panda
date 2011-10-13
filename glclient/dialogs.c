@@ -148,7 +148,8 @@ askpass(
 		prompt);
 	entry = gtk_entry_new();
 	gtk_entry_set_visibility (GTK_ENTRY (entry), FALSE);
-	gtk_box_pack_start (GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+	gtk_box_pack_start (
+		GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
 		entry, TRUE, TRUE, 0);
 	gtk_widget_show_all(dialog);
 	gtk_widget_grab_focus(entry);

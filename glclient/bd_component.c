@@ -437,10 +437,10 @@ bd_component_new()
   gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   self->host = entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 110, 0);
+  gtk_widget_set_size_request (entry, 110, 0);
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   self->port = entry = gtk_entry_new ();
-  gtk_widget_set_usize (entry, 40, 0);
+  gtk_widget_set_size_request (entry, 40, 0);
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   ypos++;
 
@@ -716,7 +716,7 @@ bd_component_new()
   check = gtk_check_button_new_with_label (_("Enable Timer"));
   gtk_container_add (GTK_CONTAINER (alignment), check);
   self->timer = check;
-  g_signal_connect (GTK_OBJECT (check), "clicked",
+  g_signal_connect (G_OBJECT (check), "clicked",
                       G_CALLBACK (on_timer_toggle), self);
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
