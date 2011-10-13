@@ -806,6 +806,7 @@ GetWidgetData(WidgetData	*data)
 		GetPandaCList(widget, (_CList*)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_ENTRY:
+	case WIDGET_TYPE_ENTRY:
 		GetEntry(widget, (_Entry*)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_TEXT:
