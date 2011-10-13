@@ -437,10 +437,10 @@ bd_component_new()
   gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   self->host = entry = gtk_entry_new ();
-  gtk_widget_set_size_request (entry, 110, 0);
+  gtk_widget_set_size_request (entry, 110, 20);
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   self->port = entry = gtk_entry_new ();
-  gtk_widget_set_size_request (entry, 40, 0);
+  gtk_widget_set_size_request (entry, 40, 20);
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   ypos++;
 
