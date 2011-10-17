@@ -657,7 +657,7 @@ ScaleWindow(
 	gtk_window_get_position(GTK_WINDOW(TopWindow),&_x,&_y);
 		_x += (int)(x * TopWindowScale.h);
 		_y += (int)(y * TopWindowScale.v);
-#if 1
+#if 0
 		fprintf(stderr,"move window [%d,%d]->[%d,%d]\n",
 			x,y,_x,_y);
 #endif

@@ -1223,6 +1223,12 @@ ENTER_FUNC;
 				  case	2: /* MIDDLE */
 					attrs->rowattr = 0.5;
 					break;
+				  case	3: /* QUATER */
+					attrs->rowattr = 0.25;
+					break;
+				  case	4: /* THREE QUATER */
+					attrs->rowattr = 0.75;
+					break;
 				  default: /* [0] TOP */
 					attrs->rowattr = 0.0;
 					break;
@@ -1379,6 +1385,12 @@ ENTER_FUNC;
 					break;
 				  case	2: /* MIDDLE */
 					attrs->trowattr = 0.5;
+					break;
+				  case	3: /* QUATER */
+					attrs->trowattr = 0.25;
+					break;
+				  case	4: /* THREE QUATER */
+					attrs->trowattr = 0.75;
 					break;
 				  default: /* [0] TOP */
 					attrs->trowattr = 0.0;
