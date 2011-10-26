@@ -210,8 +210,9 @@ SetPandaCList(
 	GtkWidget	*widget,
 	_CList		*data)
 {
-	int				j;
-	char			**rdata;
+	int j;
+	char **rdata;
+	GtkWidget *parent;
 
 ENTER_FUNC;
 	SetState(widget,(GtkStateType)data->state);
@@ -240,6 +241,11 @@ ENTER_FUNC;
 	if (data->count > 0) {
 		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget), 
 			data->row, 0, data->rowattr, 0.0); 
+	}
+	/* for vscrollbar does not work when first show*/
+	parent = gtk_widget_get_parent(widget);
+	if (GTK_IS_CONTAINER(parent)) {
+		gtk_container_resize_children(GTK_CONTAINER(parent));
 	}
 LEAVE_FUNC;
 }
