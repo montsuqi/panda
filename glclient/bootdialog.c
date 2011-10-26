@@ -460,21 +460,20 @@ boot_dialog_combo_update (BootDialog *self)
 #ifdef LIBGTK_3_0_0
   gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(self->combo));
 
-  gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), "default");
-  for (i = 0,p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
-      confname = (gchar *)p->data;
-      if (!strcmp(confname, "_default")||!strcmp(confname,"default")) {
-        continue;
-      }
-      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo),confname);
-      if (!strcmp(confname, selected)) {
-        gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i);
-        gl_config_set_config_name(confname);
-        bd_component_set_value(self->component);
-        update = TRUE;
-      }
-      i++;
+  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo),"default");
+  for (i = 1,p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
+    confname = (gchar *)p->data;
+    if (!strcmp(confname, "_default")||!strcmp(confname,"default")) {
+      continue;
     }
+    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo),confname);
+    if (!strcmp(confname, selected)) {
+      gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i);
+      gl_config_set_config_name(confname);
+      bd_component_set_value(self->component);
+      update = TRUE;
+    }
+    i++;
   }
 #else
   GtkListStore *store;
@@ -482,19 +481,19 @@ boot_dialog_combo_update (BootDialog *self)
 
   gtk_list_store_clear(store);
   gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), "default");
-  for (i = 0,p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
-      confname = (gchar *)p->data;
-      if (!strcmp(confname, "_default")||!strcmp(confname,"default")) {
-        continue;
-      } 
-      gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), confname);
-      if (!strcmp(confname, selected)) {
-        gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i+1);
-        gl_config_set_config_name(confname);
-        bd_component_set_value(self->component);
-        update = TRUE;
-      }
-      i++;
+  for (i = 1,p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
+    confname = (gchar *)p->data;
+    if (!strcmp(confname, "_default")||!strcmp(confname,"default")) {
+      continue;
+    } 
+    gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), confname);
+    if (!strcmp(confname, selected)) {
+      gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i);
+      gl_config_set_config_name(confname);
+      bd_component_set_value(self->component);
+      update = TRUE;
+    }
+    i++;
   }
 #endif
   if (!update) {

@@ -674,6 +674,7 @@ gl_config_init()
   gchar *value;
   GRegex *reg;
 
+  g_type_init();
   GConfCTX = gconf_client_get_default();
   ConfigName = NULL;
 
