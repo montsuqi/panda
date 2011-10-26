@@ -16,20 +16,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
  
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>         /* strcmp */
 #include <glib.h>
-#include <errno.h> 			/* errno */
-#include <sys/stat.h> 		/* mkdir */
-#include <sys/types.h> 		/* mkdir */
+#include <errno.h>       /* errno */
+#include <sys/stat.h>     /* mkdir */
+#include <sys/types.h>     /* mkdir */
 #include <libxml/tree.h>
 #include <libxml/parser.h>
-#include <sys/types.h>		/* open, fstat, mode_t */
-#include <sys/stat.h>		/* open, fstat */
-#include <fcntl.h>		    /* open */
-#include <unistd.h>		    /* fstat, close */
+#include <sys/types.h>    /* open, fstat, mode_t */
+#include <sys/stat.h>    /* open, fstat */
+#include <fcntl.h>        /* open */
+#include <unistd.h>        /* fstat, close */
 #include <libgen.h>         /* dirname, basename */
 
 #include "glclient.h"
@@ -624,17 +628,297 @@ bd_config_move_section (BDConfig * self, gchar * name, gint to)
   return TRUE;
 }
 
-BDConfig *
-bd_config_load_file()
+typedef struct {
+  gchar *type;
+  gchar *name;
+  gchar *value;
+} GL_CONFIG_ENTRY;
+
+static GL_CONFIG_ENTRY conf_entries[] = {
+{"string", "host",         "localhost"},
+{"string", "port",         "8000"},
+{"string", "application",  "panda:orca00"},
+{"bool",   "protocol_v1",  "T"},
+{"bool",   "protocol_v2",  "F"},
+{"string", "cache",        "$HOME/.glclient/cache"},
+{"string", "style",        ""},
+{"string", "gtkrc",        ""},
+{"bool",   "mlog",         "T"},
+{"bool",   "keybuf",       "F"},
+{"string", "user",         "user"},
+{"bool",   "savepassword", "T"},
+{"string", "password",     ""},
+{"bool",   "timer",        "T"},
+{"string", "timerperiod",  "1000"},
+#ifdef USE_SSL
+{"bool",   "ssl",          "F"},
+{"stirng", "CApath",       ""},
+{"string", "CAfile",       ""},
+{"string", "key",          ""},
+{"string", "cert",         ""},
+{"string", "ciphers",      "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"},
+#ifdef USE_PKCS11
+{"bool",   "pkcs11",       "F"},
+{"string", "pkcs11_lib",   ""},
+{"string", "slot",         ""},
+#endif
+#endif
+{NULL,NULL,NULL}
+};
+
+void
+gl_config_init()
+{
+  int i;
+  gchar *key;
+  gchar *value;
+  GRegex *reg;
+
+  GConfCTX = gconf_client_get_default();
+  ConfigName = NULL;
+
+  reg = g_regex_new("\\$HOME",0,0,NULL);
+  for(i=0;conf_entries[i].name != NULL;i++) {
+    key = g_strconcat(
+      GL_GCONF_SERVERS,"/",
+      "_default","/", 
+      conf_entries[i].name,NULL);
+    if (conf_entries[i].type[0] == 's') {
+      value = g_regex_replace(reg,conf_entries[i].value,-1,0,g_get_home_dir(),0,NULL);
+      gconf_client_set_string(GConfCTX,key,value,NULL);
+      g_free(value);
+    } else {
+      gconf_client_set_bool(GConfCTX,key,
+        conf_entries[i].value[0] == 'T'?TRUE:FALSE,
+        NULL);
+    }
+    g_free(key);
+  }
+  g_regex_unref(reg);
+}
+
+void
+gl_config_convert_config()
 {
   BDConfig *config;
+  BDConfigSection *section, *lastsection;
+  GList *p;
+  gchar *hostname;
+  gchar *lasthost;
   gchar *file;
+  gchar *str, *key;
+  int i;
+  gboolean bvalue;
 
-  file = g_strconcat(ConfDir, G_DIR_SEPARATOR_S, "glclient.conf", NULL);
+  if (gconf_client_get_bool(GConfCTX,GL_GCONF_CONF_CONVERTED,NULL)) {
+    return;
+  }
+  gconf_client_set_bool(GConfCTX,GL_GCONF_CONF_CONVERTED,TRUE,NULL);
+  
+  file = g_strconcat(g_get_home_dir(), "/.glclient/glclient.conf", NULL);
   config = bd_config_new_with_filename (file);
 
-  g_free (file);
-  return config;
+  if (config->names == NULL) {
+    return;
+  }
+ 
+  lasthost = NULL; 
+  for (   p = bd_config_get_sections (config); 
+      p != NULL; 
+      p = g_list_next (p)) 
+  {
+    hostname = (char *) p->data;
+    if (!strcmp (hostname, "glclient")) {
+      continue;
+    }
+    section = bd_config_get_section (config, hostname);
+    if (!strcmp (hostname, "global")) { 
+      lasthost = bd_config_section_get_string (section, "hostname");
+      if (strlen(lasthost) > 0) {
+        lastsection = bd_config_get_section (config, lasthost);
+        hostname = bd_config_section_get_string(lastsection,"description");
+        gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,hostname,NULL);
+      } else {
+        gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,"default",NULL);
+      }
+      hostname = "default";
+    } else {
+      hostname = bd_config_section_get_string(section,"description");
+    }
+    for(i=0;conf_entries[i].name != NULL;i++) {
+      key = g_strconcat(
+        GL_GCONF_SERVERS,"/",
+        hostname,"/", 
+        conf_entries[i].name,NULL);
+      if (conf_entries[i].type[0] == 's') {
+        str = bd_config_section_get_string(section,conf_entries[i].name);
+        gconf_client_set_string(GConfCTX,key,str,NULL);
+      } else {
+        bvalue = bd_config_section_get_bool (section, conf_entries[i].name);
+        gconf_client_set_bool(GConfCTX,key,bvalue,NULL);
+      }
+      g_free(key);
+    }
+  }
+#if 0
+  g_remove(file);
+#endif
+}
+
+gchar* 
+gl_config_get_string(gchar *key)
+{
+  gchar *ret;
+  gchar *keypath;
+
+  keypath = g_strconcat(
+    GL_GCONF_SERVERS,"/",
+    ConfigName,"/", 
+    key,NULL);
+  ret = gconf_client_get_string(GConfCTX,keypath,NULL);
+  g_free(keypath);
+  if (ret == NULL) {
+    keypath = g_strconcat(
+      GL_GCONF_SERVERS,"/",
+      "_default","/", 
+      key,NULL);
+    ret = gconf_client_get_string(GConfCTX,keypath,NULL);
+    g_free(keypath);
+  }
+  if (ret == NULL) {
+    g_warning("cannot load string config %s",key);
+    ret = "";
+  }
+  return ret;
+}
+
+void 
+gl_config_set_string(gchar *key,const gchar *value)
+{
+  gchar *keypath;
+
+  keypath = g_strconcat(
+    GL_GCONF_SERVERS,"/",
+    ConfigName,"/", 
+    key,NULL);
+  if (!gconf_client_set_string(GConfCTX,keypath,value,NULL)){
+    g_warning("cannot save string config %s",key);
+  }
+  gconf_client_suggest_sync(GConfCTX,NULL);
+  g_free(keypath);
+}
+
+void
+gl_config_get_config_name()
+{
+  gchar *name;
+
+  name = gconf_client_get_string(GConfCTX,GL_GCONF_SERVER,NULL);
+  if (name != NULL){
+    ConfigName = g_strdup(name);
+  } else {
+    ConfigName = g_strdup("default");
+  }
+}
+
+void
+gl_config_set_config_name(gchar *name)
+{
+  if (ConfigName != NULL) {
+    g_free(ConfigName);
+  }
+  ConfigName = g_strdup(name);
+}
+
+void
+gl_config_save_config_name(gchar *name)
+{
+  gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,name,NULL);
+  gconf_client_suggest_sync(GConfCTX,NULL);
+}
+
+gboolean 
+gl_config_get_bool(gchar *key)
+{
+  gboolean ret = FALSE;
+  gchar *keypath;
+  GConfValue *value;
+
+  keypath = g_strconcat(
+    GL_GCONF_SERVERS,"/",
+    ConfigName,"/", 
+    key,NULL);
+  value = gconf_client_get(GConfCTX,keypath,NULL);
+  if (value != NULL) {
+    ret = gconf_client_get_bool(GConfCTX,keypath,NULL);
+    g_free(keypath);
+    gconf_value_free(value);
+  } else {
+    g_free(keypath);
+    keypath = g_strconcat(
+      GL_GCONF_SERVERS,"/",
+      "_default","/", 
+      key,NULL);
+    ret = gconf_client_get_bool(GConfCTX,keypath,NULL);
+    g_free(keypath);
+  }
+  return ret;
+}
+
+void 
+gl_config_set_bool(gchar *key,gboolean value)
+{
+  gchar *keypath;
+
+  keypath = g_strconcat(
+    GL_GCONF_SERVERS,"/",
+    ConfigName,"/", 
+    key,NULL);
+  if (!gconf_client_set_bool(GConfCTX,keypath,value,NULL)) {
+    g_warning("cannot save bool config %s",key);
+  }
+  gconf_client_suggest_sync(GConfCTX,NULL);
+  g_free(keypath);
+}
+
+gboolean 
+gl_config_exists(gchar *name)
+{
+  gchar *path;
+  gboolean ret = FALSE;
+
+  path = g_strconcat(GL_GCONF_SERVERS,"/",name,NULL);
+  ret = gconf_client_dir_exists(GConfCTX,path,NULL);
+  return ret;
+}
+
+void 
+gl_config_remove_config(gchar *name)
+{
+  gchar *dir;
+  GConfUnsetFlags flags = 0;
+  
+  dir = g_strconcat(GL_GCONF_SERVERS,"/",name,NULL);
+  gconf_client_recursive_unset(GConfCTX,dir,flags,NULL);
+  gconf_client_suggest_sync(GConfCTX,NULL);
+  g_free(dir);
+}
+
+GList* 
+gl_config_list_config()
+{
+  GList *list = NULL;
+  GSList *slist,*l;
+  gchar *name;
+
+  slist = gconf_client_all_dirs(GConfCTX,GL_GCONF_SERVERS,NULL);
+  for(l=slist;l!=NULL;l=l->next) {
+    name = g_strdup((char*)(l->data + strlen(GL_GCONF_SERVERS) + strlen("/")));
+    list = g_list_append(list,name);
+    g_free(l->data);
+  }
+  g_slist_free(slist);
+  return list;
 }
 
 /*************************************************************

@@ -57,122 +57,76 @@
 #include	"message.h"
 #include	"debug.h"
 
-extern	int
-UI_Version()
-{
-	return UI_VERSION_2;
-}
-
 extern	void
 UI_list_config()
 {
-	BDConfig *config;
-	BDConfigSection *section;
 	GList *p;
-	char *hostname;
-	char *desc;
+	char *confname;
 	
-	config = bd_config_load_file();
-	
-	for (p = bd_config_get_sections (config); p != NULL; p = g_list_next (p)) {
-		hostname = (char *) p->data;
-		if (!strcmp (hostname, "glclient"))
+	for (p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
+		confname = (char *) p->data;
+		if (!strcmp (confname, "_default")) {
 			continue;
-		section = bd_config_get_section (config, hostname);
-		if (!strcmp("global", hostname)) {
-        	desc = _("Custom");
-		} else {
-        	desc = bd_config_section_get_string (section, "description");
         }
+		gl_config_set_config_name(confname);
 		printf("------------------\n");
-		printf("%s\n", desc);
+		printf("%s\n", confname);
 		printf("\thost:\t\t%s\n", 
-        	bd_config_section_get_string (section, "host"));
+        	gl_config_get_string("host"));
 		printf("\tport:\t\t%s\n", 
-        	bd_config_section_get_string (section, "port"));
+        	gl_config_get_string ("port"));
 		printf("\tapplication:\t%s\n", 
-        	bd_config_section_get_string (section, "application"));
+        	gl_config_get_string ("application"));
 		printf("\tuser:\t\t%s\n", 
-        	bd_config_section_get_string (section, "user"));
+        	gl_config_get_string ("user"));
 	}
-	bd_config_free(config);
 }
 
 extern void
 UI_load_config (
-	char *desc)
+	char *confname)
 {
-	BDConfig *config;
-	BDConfigSection *section;
-	GList *p;
-	char *hostname;
-	Bool ret;
-	char *propdesc;
-	char *host;
-	char *port;
-	
-	ret = FALSE;
-	config = bd_config_load_file();
-	
-	if ( !strcmp(_("Custom"), desc) || !strcmp("global", desc)) {
-		section = bd_config_get_section (config, "global");
-		ret = TRUE;
-	} else {
-		for ( 	p = bd_config_get_sections (config); 
-				p != NULL; 
-				p = g_list_next (p)) 
-		{
-			hostname = (char *) p->data;
-			if (!strcmp (hostname, "glclient") || !strcmp("global", desc))
-				continue;
-			section = bd_config_get_section (config, hostname);
-			propdesc = bd_config_section_get_string (section, "description");
-			if (!strcmp(desc, propdesc)) {
-				ret = TRUE;
-				break;
-			}
-		}
+	if (!strcmp("_default",confname)) {
+		g_error(_("cannot load config:%s"), confname);
 	}
-	if (ret) {
-		host = bd_config_section_get_string (section, "host");
-		port = bd_config_section_get_string (section, "port");
-		PortNumber = g_strconcat(host, ":", port, NULL);
-		CurrentApplication = bd_config_section_get_string (section, "application");
-		Protocol1 = bd_config_section_get_bool (section, "protocol_v1");
-		Protocol2 = bd_config_section_get_bool (section, "protocol_v2");
-		Cache = bd_config_section_get_string (section, "cache");
-		Style = bd_config_section_get_string (section, "style");
-		Gtkrc = bd_config_section_get_string (section, "gtkrc");
-		fMlog = bd_config_section_get_bool (section, "mlog");
-		fKeyBuff = bd_config_section_get_bool (section, "keybuff");
-		User = bd_config_section_get_string (section, "user");
-		SavePass = bd_config_section_get_bool (section, "savepassword");
+	if (gl_config_exists(confname)) {
+		Host = gl_config_get_string ("host");
+		PortNum = gl_config_get_string ("port");
+		CurrentApplication = gl_config_get_string ("application");
+		Protocol1 = gl_config_get_bool ("protocol_v1");
+		Protocol2 = gl_config_get_bool ("protocol_v2");
+		Cache = gl_config_get_string ("cache");
+		Style = gl_config_get_string ("style");
+		Gtkrc = gl_config_get_string ("gtkrc");
+		fMlog = gl_config_get_bool ("mlog");
+		fKeyBuff = gl_config_get_bool ("keybuff");
+		User = gl_config_get_string ("user");
+		SavePass = gl_config_get_bool ("savepassword");
 		if (SavePass) {
-			Pass = bd_config_section_get_string (section, "password");
+			Pass = gl_config_get_string ("password");
 		} 
-		fTimer = bd_config_section_get_bool (section, "timer");
-		TimerPeriod = bd_config_section_get_string (section, "timerperiod");
+		fTimer = gl_config_get_bool ("timer");
+		TimerPeriod = gl_config_get_string ("timerperiod");
 #ifdef  USE_SSL
-		fSsl = bd_config_section_get_bool (section, "ssl");
-		CA_Path = bd_config_section_get_string (section, "CApath");
+		fSsl = gl_config_get_bool ("ssl");
+		CA_Path = gl_config_get_string ("CApath");
 		if (!strcmp("", CA_Path)) CA_Path = NULL;
-		CA_File = bd_config_section_get_string (section, "CAfile");
+		CA_File = gl_config_get_string ("CAfile");
 		if (!strcmp("", CA_File)) CA_File = NULL;
-		KeyFile = bd_config_section_get_string (section, "key");
+		KeyFile = gl_config_get_string ("key");
 		if (!strcmp("", KeyFile)) KeyFile = NULL;
-		CertFile = bd_config_section_get_string (section, "cert");
+		CertFile = gl_config_get_string ("cert");
 		if (!strcmp("", CertFile)) CertFile = NULL;
-		Ciphers = bd_config_section_get_string (section, "ciphers");
+		Ciphers = gl_config_get_string ("ciphers");
 #ifdef  USE_PKCS11
-		fPKCS11 = bd_config_section_get_bool (section, "pkcs11");
-		PKCS11_Lib = bd_config_section_get_string (section, "pkcs11_lib");
+		fPKCS11 = gl_config_get_bool ("pkcs11");
+		PKCS11_Lib = gl_config_get_string ("pkcs11_lib");
 		if (!strcmp("", PKCS11_Lib)) PKCS11_Lib = NULL;
-		Slot = bd_config_section_get_string (section, "slot");
+		Slot = gl_config_get_string ("slot");
 #endif
 #endif
 	} else {
-		Warning(_("cannot load config:%s"), desc);
-		exit(0);
+		g_error(_("cannot load config:%s"), confname);
 	}
 }
 
@@ -222,10 +176,10 @@ UI_GrabFocus(char *windowName,
 	}
 }
 
-extern  gboolean    
+extern  void    
 UI_BootDialogRun(void)
 {
-	return boot_dialog_run();
+	boot_dialog_run();
 }
 
 extern  gboolean    
@@ -243,7 +197,7 @@ UI_IsWidgetName2(char *name)
 extern void
 UI_MessageDialog(const char *msg)
 {
-	show_message_dialog(msg);
+	show_info_dialog(msg);
 }
 
 extern void

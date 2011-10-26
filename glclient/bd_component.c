@@ -37,50 +37,6 @@
 #include    "bd_component.h"
 
 /*********************************************************************
- * config function
- ********************************************************************/
-BDConfigSection *
-new_config_section(
-  BDConfig *config,
-  char *hostname)
-{
-  BDConfigSection *section;
-  char *cachename = g_strconcat(g_get_home_dir(), DEFAULT_CACHE_PATH, NULL);
-
-  section = bd_config_append_section (config, hostname);
-  bd_config_section_append_value (section, "host", DEFAULT_HOST);
-  bd_config_section_append_value (section, "port", DEFAULT_PORT);
-  bd_config_section_append_value (section, "application", DEFAULT_APPLICATION);
-  bd_config_section_append_value (section, "protocol_v1", DEFAULT_PROTOCOL_V1_STR);
-  bd_config_section_append_value (section, "protocol_v2", DEFAULT_PROTOCOL_V2_STR);
-  bd_config_section_append_value (section, "cache", cachename);
-  bd_config_section_append_value (section, "style", DEFAULT_STYLE);
-  bd_config_section_append_value (section, "gtkrc", DEFAULT_GTKRC);
-  bd_config_section_append_value (section, "mlog",  DEFAULT_MLOG_STR);
-  bd_config_section_append_value (section, "keybuff", DEFAULT_KEYBUFF_STR);
-  bd_config_section_append_value (section, "timer", DEFAULT_TIMER_STR);
-  bd_config_section_append_value (section, "timerperiod", DEFAULT_TIMERPERIOD);
-  bd_config_section_append_value (section, "user", DEFAULT_USER);
-  bd_config_section_append_value (section, "password", DEFAULT_PASSWORD);
-  bd_config_section_append_value (section, "savepassword", DEFAULT_SAVEPASSWORD_STR);
-#ifdef  USE_SSL
-  bd_config_section_append_value (section, "ssl", DEFAULT_SSL_STR);
-  bd_config_section_append_value (section, "CApath", DEFAULT_CAPATH);
-  bd_config_section_append_value (section, "CAfile", DEFAULT_CAFILE);
-  bd_config_section_append_value (section, "key", DEFAULT_KEY);
-  bd_config_section_append_value (section, "cert", DEFAULT_CERT);
-  bd_config_section_append_value (section, "ciphers", DEFAULT_CIPHERS);
-#ifdef  USE_PKCS11
-  bd_config_section_append_value (section, "pkcs11", DEFAULT_PKCS11_STR);
-  bd_config_section_append_value (section, "pkcs11_lib", DEFAULT_PKCS11_LIB);
-  bd_config_section_append_value (section, "slot", DEFAULT_SLOT);
-#endif
-#endif
-  g_free(cachename);
-  return section;
-}
-
-/*********************************************************************
  * misc function
  ********************************************************************/
 gboolean
@@ -184,48 +140,28 @@ on_timer_toggle (GtkWidget *widget, BDComponent *self) {
  * boot dialog component
  ********************************************************************/
 void
-bd_component_set_value (
-  BDConfig   *config, 
-  char       *hostname,
-  BDComponent *self) 
+bd_component_set_value (BDComponent *self) 
 {
-  BDConfigSection *section;
-  char *host;
-  char *port;
-
-  g_return_if_fail( hostname != NULL );
-
-  if (!bd_config_exist_section (config, hostname)) {
-    section = bd_config_get_section (config, "global");
-  } else {
-    section = bd_config_get_section (config, hostname);
-  }
-
   // basic
   gtk_entry_set_text (GTK_ENTRY (self->host), 
-    bd_config_section_get_string (section, "host"));
+    gl_config_get_string("host"));
   gtk_entry_set_text (GTK_ENTRY (self->port), 
-    bd_config_section_get_string (section, "port"));
-
-  host = bd_config_section_get_string (section, "host");
-  port = bd_config_section_get_string (section, "port");
-  PortNumber = g_strconcat(host, ":", port, NULL);
+    gl_config_get_string("port"));
 
   gtk_entry_set_text (GTK_ENTRY (self->application), 
-    bd_config_section_get_string (section, "application"));
-  CurrentApplication = bd_config_section_get_string (section, "application");
+    gl_config_get_string("application"));
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1), 
-    bd_config_section_get_bool (section, "protocol_v1"));
+    gl_config_get_bool("protocol_v1"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), 
-    bd_config_section_get_bool (section, "protocol_v2"));
+    gl_config_get_bool("protocol_v2"));
   gtk_entry_set_text (GTK_ENTRY (self->user),
-    bd_config_section_get_string (section, "user"));
+    gl_config_get_string("user"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->savepassword), 
-    bd_config_section_get_bool (section, "savepassword"));
-  if ( bd_config_section_get_bool (section, "savepassword") ) {
+    gl_config_get_bool("savepassword"));
+  if ( gl_config_get_bool("savepassword") ) {
     gtk_entry_set_text (GTK_ENTRY (self->password),
-      bd_config_section_get_string (section, "password"));
+      gl_config_get_string ("password"));
   } else {
     gtk_entry_set_text (GTK_ENTRY (self->password), "");
   }
@@ -233,98 +169,79 @@ bd_component_set_value (
 #ifdef USE_SSL
   // ssl
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->ssl),
-    bd_config_section_get_bool (section, "ssl"));
+    gl_config_get_bool ("ssl"));
   gtk_widget_set_sensitive(self->ssl_container, 
-    bd_config_section_get_bool (section, "ssl"));  
+    gl_config_get_bool ("ssl"));  
   gtk_entry_set_text (GTK_ENTRY (self->CApath),
-    bd_config_section_get_string (section, "CApath"));
+    gl_config_get_string ("CApath"));
   gtk_entry_set_text (GTK_ENTRY (self->CAfile),
-    bd_config_section_get_string (section, "CAfile"));
+    gl_config_get_string ("CAfile"));
   gtk_entry_set_text (GTK_ENTRY (self->key),
-    bd_config_section_get_string (section, "key"));
+    gl_config_get_string ("key"));
   gtk_entry_set_text (GTK_ENTRY (self->cert),
-    bd_config_section_get_string (section, "cert"));
+    gl_config_get_string ("cert"));
   gtk_entry_set_text (GTK_ENTRY (self->ciphers),
-    bd_config_section_get_string (section, "ciphers"));
+    gl_config_get_string ("ciphers"));
 #ifdef USE_PKCS11
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
-    bd_config_section_get_bool (section, "pkcs11"));  
+    gl_config_get_bool ("pkcs11"));  
   gtk_widget_set_sensitive(self->pkcs11_container, 
-    bd_config_section_get_bool (section, "pkcs11"));  
+    gl_config_get_bool ("pkcs11"));  
   gtk_entry_set_text (GTK_ENTRY (self->pkcs11_lib),
-    bd_config_section_get_string (section, "pkcs11_lib"));
+    gl_config_get_string ("pkcs11_lib"));
   gtk_entry_set_text (GTK_ENTRY (self->slot),
-    bd_config_section_get_string (section, "slot")); 
+    gl_config_get_string ("slot")); 
 #endif
 #endif
 
   // other
   gtk_entry_set_text (GTK_ENTRY (self->cache),
-    bd_config_section_get_string (section, "cache"));
+    gl_config_get_string ("cache"));
   gtk_entry_set_text (GTK_ENTRY (self->style), 
-    bd_config_section_get_string (section, "style"));
+    gl_config_get_string ("style"));
   gtk_entry_set_text (GTK_ENTRY (self->gtkrc),
-    bd_config_section_get_string (section, "gtkrc"));
+    gl_config_get_string ("gtkrc"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
-    bd_config_section_get_bool (section, "mlog"));
+    gl_config_get_bool ("mlog"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
-    bd_config_section_get_bool (section, "keybuff"));
+    gl_config_get_bool ("keybuff"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
-    bd_config_section_get_bool_default (section, "timer", DEFAULT_TIMER));
+    gl_config_get_bool ("timer"));
   gtk_entry_set_text (GTK_ENTRY (self->timerperiod),
-    bd_config_section_get_string_default (section, "timerperiod", 
-      DEFAULT_TIMERPERIOD));
+    gl_config_get_string ("timerperiod"));
   gtk_widget_set_sensitive(self->timer_container, 
-    bd_config_section_get_bool_default (section, "timer", DEFAULT_TIMER));  
+    gl_config_get_bool("timer"));  
 }
 
 void
-bd_component_value_to_config (
-  BDConfig   *config,
-  char       *hostname,
-  BDComponent *self)
+bd_component_value_to_config(BDComponent *self)
 {
-  BDConfigSection *section;
   gchar *password;
   gboolean savepassword;
-  char *host;
-  char *port;
 
-  section = NULL;
-  if (hostname != NULL) {
-      if (! bd_config_exist_section (config, hostname)) {
-        return;
-      }
-      section = bd_config_get_section (config, hostname);
-  }
-  g_return_if_fail (section != NULL);
-
-  bd_config_section_set_string (section, "host",
-                                gtk_entry_get_text (GTK_ENTRY (self->host)));
-  bd_config_section_set_string (section, "port",
-                                gtk_entry_get_text (GTK_ENTRY (self->port)));
-  bd_config_section_set_string (section, "application",
-                                gtk_entry_get_text (GTK_ENTRY (self->application)));
-  bd_config_section_set_bool
-    (section, "protocol_v1",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v1)));
-  bd_config_section_set_bool
-    (section, "protocol_v2",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
-  bd_config_section_set_string (section, "user",
-                                gtk_entry_get_text (GTK_ENTRY (self->user)));
+  gl_config_set_string ("host",
+    gtk_entry_get_text (GTK_ENTRY (self->host)));
+  gl_config_set_string ("port",
+    gtk_entry_get_text (GTK_ENTRY (self->port)));
+  gl_config_set_string ("application",
+    gtk_entry_get_text (GTK_ENTRY (self->application)));
+  gl_config_set_bool("protocol_v1",
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v1)));
+  gl_config_set_bool("protocol_v2",
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
+  gl_config_set_string ("user",
+    gtk_entry_get_text (GTK_ENTRY (self->user)));
   password = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
   savepassword = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->savepassword));
   if (savepassword) {
-    bd_config_section_set_string (section, "password", password);
+    gl_config_set_string ("password", password);
   } else {
-    bd_config_section_set_string (section, "password", "");
+    gl_config_set_string ("password", "");
   }
-  bd_config_section_set_bool (section, "savepassword", savepassword);
+  gl_config_set_bool ("savepassword", savepassword);
 
-  host = strdup(gtk_entry_get_text (GTK_ENTRY (self->host)));
-  port = strdup(gtk_entry_get_text (GTK_ENTRY (self->port)));
-  PortNumber = g_strconcat(host, ":", port, NULL);
+  Host = strdup(gtk_entry_get_text (GTK_ENTRY (self->host)));
+  PortNum = strdup(gtk_entry_get_text (GTK_ENTRY (self->port)));
   CurrentApplication = strdup(gtk_entry_get_text (GTK_ENTRY (self->application)));
   Protocol1 = gtk_toggle_button_get_active(
     GTK_TOGGLE_BUTTON (self->protocol_v1));
@@ -337,18 +254,17 @@ bd_component_value_to_config (
 
 #ifdef USE_SSL
   // ssl
-  bd_config_section_set_bool
-    (section, "ssl",
-     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
-  bd_config_section_set_string (section, "CApath",
+  gl_config_set_bool ("ssl",
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
+  gl_config_set_string ("CApath",
     gtk_entry_get_text (GTK_ENTRY (self->CApath)));
-  bd_config_section_set_string (section, "CAfile",
+  gl_config_set_string ("CAfile",
     gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
-  bd_config_section_set_string (section, "key",
+  gl_config_set_string ("key",
     gtk_entry_get_text (GTK_ENTRY (self->key)));
-  bd_config_section_set_string (section, "cert",
+  gl_config_set_string ("cert",
     gtk_entry_get_text (GTK_ENTRY (self->cert)));
-  bd_config_section_set_string (section, "ciphers",
+  gl_config_set_string ("ciphers",
     gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
 
   fSsl = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl));
@@ -363,11 +279,11 @@ bd_component_value_to_config (
   Ciphers = strdup(gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
 
 #ifdef  USE_PKCS11
-  bd_config_section_set_bool
-    (section, "pkcs11", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11)));
-  bd_config_section_set_string (section, "pkcs11_lib",
+  gl_config_set_bool
+    ("pkcs11", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11)));
+  gl_config_set_string ("pkcs11_lib",
     gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
-  bd_config_section_set_string (section, "slot",
+  gl_config_set_string ("slot",
     gtk_entry_get_text (GTK_ENTRY (self->slot)));
 
   fPKCS11 = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11));
@@ -378,22 +294,19 @@ bd_component_value_to_config (
 #endif
 
   // other
-  bd_config_section_set_path (section, "cache",
+  gl_config_set_string ("cache",
     gtk_entry_get_text (GTK_ENTRY (self->cache)));
-  bd_config_section_set_path (section, "style",
+  gl_config_set_string ("style",
     gtk_entry_get_text (GTK_ENTRY (self->style)));
-  bd_config_section_set_path (section, "gtkrc",
+  gl_config_set_string ("gtkrc",
     gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
-  bd_config_section_set_bool
-    (section, "mlog",
+  gl_config_set_bool ("mlog",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
-  bd_config_section_set_bool
-    (section, "keybuff",
+  gl_config_set_bool ("keybuff",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
-  bd_config_section_set_bool
-    (section, "timer",
+  gl_config_set_bool ("timer",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer)));
-  bd_config_section_set_path (section, "timerperiod",
+  gl_config_set_string ("timerperiod",
     gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
 
   Cache = strdup(gtk_entry_get_text (GTK_ENTRY (self->cache)));

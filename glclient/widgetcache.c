@@ -33,6 +33,8 @@
 #include	<unistd.h>
 #include	<sys/time.h>
 #include	<errno.h>
+#include	<glib.h>
+#include	<gconf/gconf-client.h>
 
 #define		WIDGETCACHE
 
@@ -40,54 +42,81 @@
 #include	"widgetcache.h"
 
 void
-LoadWidgetCache(void)
+ConvertWidgetCache(void)
 {
 	FILE *fp;
 	char fname[256];
 	char buff[SIZE_BUFF+1];
 	char *head;
 	char *key;
+	char *path;
 	char *value;
 
-	WidgetCache = NewNameHash();
+	if (gconf_client_get_bool(GConfCTX,GL_GCONF_WCACHE_CONVERTED,NULL)) {
+		return;
+	}
+
 	snprintf(fname, sizeof(fname), "%s/%s", 
 		ConfDir, "widgetcache.txt");
 	if ((fp = fopen(fname, "r")) != NULL) {
 		while (fgets(buff, sizeof(buff), fp) != NULL) {
 			head = strstr(buff, ":");
 			if (head != NULL) {
-				key = StrnDup(buff, head - buff);
+				key = g_strndup(buff, head - buff);
 				head += 1;
-				value = StrnDup(head, strlen(head) - 1); /* chop */
-				g_hash_table_insert(WidgetCache, key, value);
+				value = g_strndup(head, strlen(head) - 1); /* chop */
+				path = g_strconcat(GL_GCONF_WCACHE,"/",key,NULL);
+				gconf_client_set_string(GConfCTX,path,value,NULL);
+				g_free(key);
+				g_free(value);
+				g_free(path);
 			}
 		}
 		fclose(fp);
 	}
+	gconf_client_set_bool(GConfCTX,GL_GCONF_WCACHE_CONVERTED,TRUE,NULL);
+	gconf_client_suggest_sync(GConfCTX,NULL);
+}
+
+void
+LoadWidgetCache(void)
+{
+	GSList *list,*l;
+	GConfEntry *entry;
+	gchar *value;
+	gchar *key;
+
+	WidgetCache = NewNameHash();
+	list = gconf_client_all_entries(GConfCTX,GL_GCONF_WCACHE,NULL);
+	for(l=list;l!=NULL;l=l->next) {
+		entry = (GConfEntry*)l->data;
+		key = (char*)(gconf_entry_get_key(entry) + 
+			strlen(GL_GCONF_WCACHE) + strlen("/"));
+		value = gconf_client_get_string(GConfCTX,
+			gconf_entry_get_key(entry),NULL);
+		g_hash_table_insert(WidgetCache,
+			g_strdup(key),
+			g_strdup(value));
+		gconf_entry_free(entry);
+	}
+	g_slist_free(list);
 }
 
 static void
-_SaveWidgetCache(char *key, char *value, FILE *fp)
+_SaveWidgetCache(char *key, char *value, gpointer data)
 {
-	fprintf(fp, "%s:%s\n", key, value);
+	gchar *path;
+
+	path = g_strconcat(GL_GCONF_WCACHE,"/",key,NULL);
+	gconf_client_set_string(GConfCTX,path,value,NULL);
+	g_free(path);
 }
 
 void
 SaveWidgetCache(void)
 {
-	FILE *fp;
-	char fname[256];
-	mode_t permission = 0600;
-
 	if (WidgetCache == NULL) return;
-
-	snprintf(fname, sizeof(fname), "%s/%s", 
-		ConfDir, "widgetcache.txt");
-	if ((fp = fopen(fname, "w")) != NULL) {
-		g_hash_table_foreach(WidgetCache, (GHFunc)_SaveWidgetCache, fp);
-		fclose(fp);
-		chmod(fname, permission);
-	}
+	g_hash_table_foreach(WidgetCache, (GHFunc)_SaveWidgetCache, NULL);
 }
 
 void

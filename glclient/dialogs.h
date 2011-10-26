@@ -23,11 +23,9 @@
 #include <gtk/gtk.h>
 
 extern	void		message_dialog(GtkMessageType type, const char *message);
-extern	void		message_dialog_printf(GtkMessageType type, 
-						const char *format, ...);
-extern	void		show_message_dialog(const char *message);
-extern	void		show_error_dialog(const char *message);
-extern	void		show_error_dialog_printf(const char *format, ...);
+extern	void		show_info_dialog(const char *format,...);
+extern	void		show_warn_dialog(const char *format,...);
+extern	void		show_error_dialog(const char *format,...);
 extern	int 		askpass(char *buf, size_t buflen, const char *prompt);
 
 #endif

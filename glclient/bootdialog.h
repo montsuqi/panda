@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <glib.h>
 
-gboolean boot_dialog_run ();
+void boot_dialog_run ();
 #if 0
 void boot_dialog_term ();
 #endif

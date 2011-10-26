@@ -28,6 +28,7 @@
 #include    <gtk/gtk.h>
 #include    "gettext.h"
 #include	<gtkpanda/gtkpanda.h>
+#include	"glclient.h"
 #include    "port.h"
 #include    "const.h"
 #include    "bd_config.h"
@@ -37,101 +38,29 @@
 #include    "message.h"
 #include    "debug.h"
 
-static mode_t permissions = 0600;
-
 /*********************************************************************
  * EditDialog
  ********************************************************************/
-static gchar *
-get_config_hostname_by_desc(BDConfig *config, gchar *desc)
-{
-  GList *p;
-  gchar *_desc;
-  gchar *host;
-
-  if (desc == NULL) return "global";
-
-  for (p = bd_config_get_sections (config); p != NULL; p = g_list_next (p)) {
-      host = (char *) p->data;
-      if (!strcmp (host, "glclient") || !strcmp (host, "global"))
-        continue;
-      _desc = bd_config_get_string (config, host, "description");
-      if (!strcmp(_desc, desc)) {
-        return host;
-      }
-  }
-  return "global";
-}
-
-
-static gboolean
-check_description(BDConfig *config, gchar *olddesc, gchar *newdesc)
-{
-  GList *p;
-  gchar *desc;
-  gchar *host;
-
-  if (validate_isblank (newdesc))
-    {
-      message_dialog(GTK_MESSAGE_ERROR, _("warning: Description is blank\n"));
-      return FALSE;
-  }
-  if (strcmp(olddesc, newdesc)) {
-    for (p = bd_config_get_sections (config); p != NULL; p = g_list_next (p)) {
-      host = (char *) p->data;
-      if (strcmp (host, "glclient") == 0 || 
-          strcmp (host, "global") == 0)
-        continue;
-      desc = bd_config_get_string (config, host, "description");
-      if (strcmp (desc, newdesc) == 0) {
-          message_dialog_printf(GTK_MESSAGE_ERROR,
-            _("warning: already used description: %s\n"), newdesc);
-          return FALSE;
-      }
-    }
-  }
-  return TRUE;
-}
-
 static void
-edit_dialog_run (BDConfig * config, gchar * hostname, GtkWidget *parent)
+edit_dialog_run(gchar *name, GtkWidget *parent)
 {
   BDComponent *component;
-  BDConfigSection *section;
   GtkWidget *dialog;
   GtkWidget *table;
   GtkWidget *label;
   GtkWidget *entry;
-  GString *newhostname;
   gchar *title;
-  gchar *olddesc;
-  gchar *newdesc;
-  gint i;
-  gboolean create_section = FALSE;
+  gchar *newname;
+  gboolean is_new;
 
-  if (hostname == NULL) {
+  if (name == NULL) {
     title = _("New");
-    newhostname = g_string_new (NULL);
-    for (i = 1; i < 1000; i++) {
-      g_string_sprintf (newhostname, "host%03d", i);
-      if (!bd_config_exist_section (config, newhostname->str)) {
-        new_config_section(config, newhostname->str);
-        create_section = TRUE;
-        break;
-      } 
-    }
-    hostname = newhostname->str;
+    name = "new";
+    is_new = TRUE;
   } else {
+    is_new = FALSE;
     title = _("Edit");
   }
-
-  section = bd_config_get_section (config, hostname);
-  if (section == NULL) {
-    message_dialog_printf(GTK_MESSAGE_ERROR, 
-      _("doesn't exist config:%s"), hostname);
-    return;
-  }
-  olddesc = g_strdup(bd_config_section_get_string(section, "description"));
 
   dialog = gtk_dialog_new_with_buttons (title,
     GTK_WINDOW(parent),
@@ -150,10 +79,10 @@ edit_dialog_run (BDConfig * config, gchar * hostname, GtkWidget *parent)
   table = gtk_table_new (2, 1, FALSE);
   gtk_container_set_border_width (GTK_CONTAINER (table), 5);
   gtk_table_set_row_spacings (GTK_TABLE (table), 4);
-  label = gtk_label_new (_("Description"));
+  label = gtk_label_new (_("ConfigName"));
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
-  gtk_entry_set_text (GTK_ENTRY(entry), olddesc);
+  gtk_entry_set_text (GTK_ENTRY(entry),name);
 
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
@@ -183,26 +112,20 @@ edit_dialog_run (BDConfig * config, gchar * hostname, GtkWidget *parent)
     component->othertable, TRUE, TRUE, 0);
   gtk_widget_show_all(component->othertable);
 
-  bd_component_set_value(config, hostname, component);
-  section = bd_config_get_section (config, hostname);
+  gl_config_set_config_name(name);
+  bd_component_set_value(component);
 
   /* run */
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
-    newdesc = (gchar *)gtk_entry_get_text(GTK_ENTRY(entry));
-    if (check_description(config, olddesc, newdesc)) {
-      section = bd_config_get_section (config, hostname);
-      bd_config_section_set_string (section, "description", newdesc);
-      bd_component_value_to_config(config, hostname, component);
-      bd_config_save (config, NULL, permissions);
-    } else {
-      if (create_section)
-        bd_config_remove_section (config, hostname);
+    newname = (gchar *)gtk_entry_get_text(GTK_ENTRY(entry));
+    gl_config_set_config_name(newname);
+    bd_component_value_to_config(component);
+    if (!is_new && g_strcmp0(name,newname)) {
+      /* rename */
+      gl_config_remove_config(name);
     }
   } else {
-      if (create_section)
-        bd_config_remove_section (config, hostname);
   }
-  g_free(olddesc);
   gtk_widget_destroy (dialog);
 }
 
@@ -217,15 +140,14 @@ struct _ServerDialog {
   GtkWidget *edit;
   GtkWidget *delete;
 
-  BDConfig *config;
   gint is_update;
 };
 
 static struct {
   gchar *title;
-  gchar *value_name;
+  gchar *name;
 } server_dialog_titles[] = {
-  { N_("Description"), "description" },
+  { N_("ConfigName"), "configname" },
   { N_("Host"),           "host" },
   { N_("Port"),           "port" },
   { N_("Application"), "application"},
@@ -240,8 +162,7 @@ server_dialog_server_list_update (ServerDialog * self)
 {
   gchar *text_list[server_dialog_titles_count + 1];
   GList *p;
-  gchar *hostname;
-  BDConfigSection *section;
+  gchar *confname;
   gint i;
   
   g_return_if_fail (self != NULL);
@@ -249,19 +170,18 @@ server_dialog_server_list_update (ServerDialog * self)
   gtk_panda_clist_clear (GTK_PANDA_CLIST (self->server_list));
 
   text_list[server_dialog_titles_count] = NULL;
-  for (p = bd_config_get_sections (self->config); 
+  for (p = gl_config_list_config(); 
     p != NULL; p = g_list_next (p)) {
-    hostname = (gchar *) p->data;
-    if (strcmp (hostname, "glclient") == 0 || 
-      strcmp (hostname, "global") == 0) {
+    confname = (gchar *) p->data;
+    if (!g_strcmp0(confname, "_default")) {
       continue;
     }
-    section = bd_config_get_section (self->config, hostname);
-    for (i = 0; i < server_dialog_titles_count; i++) {
-      text_list[i] = bd_config_section_get_string (section, 
-        server_dialog_titles[i].value_name);
+    gl_config_set_config_name(confname);
+    text_list[0] = confname;
+    for (i = 1; i < server_dialog_titles_count; i++) {
+      text_list[i] = gl_config_get_string(server_dialog_titles[i].name);
     }
-    gtk_panda_clist_append (GTK_PANDA_CLIST (self->server_list), text_list);
+    gtk_panda_clist_append (GTK_PANDA_CLIST(self->server_list), text_list);
   }
 }
 
@@ -275,7 +195,7 @@ server_dialog_on_delete_event (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
 {
-  edit_dialog_run (self->config, NULL, self->dialog);
+  edit_dialog_run (NULL, self->dialog);
   server_dialog_server_list_update (self);
 #if 0
   gdk_window_raise (self->dialog->window);
@@ -286,12 +206,10 @@ static void
 server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
 {
   int i;
-  gchar *hostname;
-  gchar *desc;
+  gchar *confname;
   GtkTreeModel *model;
   GtkTreeIter iter;
   GtkTreePath *path;
-  GValue value = {0};
 
   for (
     i = 0; 
@@ -301,14 +219,9 @@ server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
       path = gtk_tree_path_new_from_indices(i , -1);
       model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->server_list));
       if (gtk_tree_model_get_iter(model, &iter, path)) {
-         gtk_tree_model_get_value(model, &iter, 0, &value);
-         desc = (gchar *)g_value_get_string(&value);
-         hostname = get_config_hostname_by_desc(self->config, desc);
-         if (strcmp(hostname, "global")) {
-           edit_dialog_run (self->config, hostname, self->dialog);
-           server_dialog_server_list_update (self);
-         }
-         g_value_unset(&value);
+         gtk_tree_model_get(model, &iter, 0, &confname,-1);
+         edit_dialog_run (confname, self->dialog);
+         server_dialog_server_list_update(self);
       }
       gtk_tree_path_free(path);
       break;
@@ -323,12 +236,10 @@ static void
 server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
 {
   int i;
-  gchar *hostname;
-  gchar *desc;
+  gchar *confname;
   GtkTreeModel *model;
   GtkTreeIter iter;
   GtkTreePath *path;
-  GValue value = {0};
 
   for (
     i = 0; 
@@ -338,15 +249,9 @@ server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
       path = gtk_tree_path_new_from_indices(i , -1);
       model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->server_list));
       if (gtk_tree_model_get_iter(model, &iter, path)) {
-         gtk_tree_model_get_value(model, &iter, 0, &value);
-         desc = (gchar *)g_value_get_string(&value);
-         hostname = get_config_hostname_by_desc(self->config, desc);
-         if (strcmp(hostname,"global")) {
-           bd_config_remove_section (self->config, hostname);
-           bd_config_save (self->config, NULL, permissions);
-           server_dialog_server_list_update (self);
-         }
-         g_value_unset(&value);
+         gtk_tree_model_get(model, &iter, 0, &confname,-1);
+         gl_config_remove_config(confname);
+         server_dialog_server_list_update (self);
       }
       gtk_tree_path_free(path);
       break;
@@ -381,7 +286,7 @@ server_dialog_on_unselect_row (GtkWidget * widget,
 }
 
 static ServerDialog *
-server_dialog_new (BDConfig * config, GtkWidget *parent)
+server_dialog_new (GtkWidget *parent)
 {
   ServerDialog *self;
   GtkWidget *dialog;
@@ -393,7 +298,6 @@ server_dialog_new (BDConfig * config, GtkWidget *parent)
 
   self = g_new0 (ServerDialog, 1);
   
-  self->config = config;
   self->is_update = FALSE;
 
   self->dialog = dialog = gtk_dialog_new ();
@@ -483,12 +387,12 @@ server_dialog_free (ServerDialog * self)
 }
 
 static gboolean
-server_dialog_run (BDConfig *config, GtkWidget *parent)
+server_dialog_run(GtkWidget *parent)
 {
   ServerDialog *self;
   gboolean is_update;
 
-  self = server_dialog_new (config, parent);
+  self = server_dialog_new (parent);
   gtk_widget_show_all (self->dialog);
   gtk_widget_grab_focus (self->dialog);
   gtk_window_set_modal (GTK_WINDOW (self->dialog), TRUE);
@@ -507,56 +411,6 @@ server_dialog_run (BDConfig *config, GtkWidget *parent)
  * BootDialog
  ********************************************************************/
 
-static BDConfig *config_ = NULL;
-static gboolean is_boot_dialog_init = FALSE;
-static gchar *custom_label = N_("Custom");
-
-static void
-boot_dialog_create_conf (BDConfig *config)
-{
-  BDConfigSection *section;
-  gboolean is_create = FALSE;
-  
-  if (!bd_config_exist_section (config, "glclient"))
-    {
-      section = bd_config_append_section (config, "glclient");
-      bd_config_section_append_value (section, "splash", "");
-      bd_config_section_append_value (section, "caption", "glclient Launcher");
-      bd_config_section_append_value (section, "welcome", "glclient Launcher");
-      
-      is_create = TRUE;
-    }
-  if (!bd_config_exist_section (config, "global"))
-    {
-      section = new_config_section (config, "global");
-      bd_config_section_append_value (section, "hostname", _(custom_label));
-      is_create = TRUE;
-    }
-
-  if (is_create)
-    bd_config_save (config, NULL, permissions);
-
-}
-
-static void
-boot_dialog_init ()
-{
-  if (!is_boot_dialog_init)
-    {
-      config_ = bd_config_load_file ();
-      boot_dialog_create_conf (config_);
-      is_boot_dialog_init = TRUE;
-    }
-}
-
-void
-boot_dialog_term ()
-{
-  bd_config_free (config_);
-  config_ = NULL;
-  is_boot_dialog_init = FALSE;
-}
-
 typedef struct _BootDialog BootDialog;
 
 struct _BootDialog
@@ -572,25 +426,19 @@ struct _BootDialog
 static void
 boot_dialog_combo_changed(GtkComboBox *widget, gpointer user_data)
 {
-  BDConfigSection *global;
   BootDialog *self;
-  gchar *desc;
-  gchar *hostname;
+  gchar *conf;
   
   self = (BootDialog *)user_data;
 #ifdef LIBGTK_3_0_0
-  desc = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
+  conf = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
 #else
-  desc = gtk_combo_box_get_active_text(widget);
+  conf = gtk_combo_box_get_active_text(widget);
 #endif
-  if (desc) {
-    hostname = get_config_hostname_by_desc(config_, desc);
-    bd_component_set_value(config_, hostname, self->component);
-
-    global =  bd_config_get_section (config_, "global");
-    bd_config_section_set_string (global, "hostname", hostname);
-
-    g_free(desc);
+  if (conf) {
+    gl_config_set_config_name(conf);
+    bd_component_set_value(self->component);
+    g_free(conf);
   }
 }
 
@@ -598,69 +446,63 @@ static void
 boot_dialog_combo_update (BootDialog *self)
 {
   GList *p;
-  gchar *hostname;
-  gchar *desc;
+  gchar *confname;
   gchar *selected;
   gint i;
-  gint custom_index;
   gboolean update = FALSE;
 
   g_signal_handlers_block_by_func(GTK_COMBO_BOX(self->combo),
     boot_dialog_combo_changed, self->combo);
 
+  gl_config_get_config_name();
+  selected = ConfigName;
+
 #ifdef LIBGTK_3_0_0
   gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(self->combo));
-  selected = bd_config_get_string (config_, "global", "hostname");
-  i = custom_index = 0;
-  for (p = bd_config_get_sections (config_); p != NULL; p = g_list_next (p)) {
-      hostname = (gchar *)p->data;
-      if (!strcmp(hostname, "glclient")) {
+
+  gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), "default");
+  for (i = 0,p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
+      confname = (gchar *)p->data;
+      if (!strcmp(confname, "_default")||!strcmp(confname,"default")) {
         continue;
-      } else if (!strcmp(hostname, "global")) {
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo), _(custom_label));
-        custom_index = i;
-      } else {
-        desc = bd_config_get_string (config_, hostname, "description");
-        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo), desc);
       }
-      if (!strcmp(hostname, selected)) {
+      gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo),confname);
+      if (!strcmp(confname, selected)) {
         gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i);
-        bd_component_set_value(config_, hostname, self->component);
+        gl_config_set_config_name(confname);
+        bd_component_set_value(self->component);
         update = TRUE;
       }
       i++;
+    }
   }
 #else
   GtkListStore *store;
   store = GTK_LIST_STORE(gtk_combo_box_get_model(GTK_COMBO_BOX(self->combo)));
+
   gtk_list_store_clear(store);
-
-  selected = bd_config_get_string (config_, "global", "hostname");
-
-  i = custom_index = 0;
-  for (p = bd_config_get_sections (config_); p != NULL; p = g_list_next (p)) {
-      hostname = (gchar *)p->data;
-      if (!strcmp(hostname, "glclient")) {
+  gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), "default");
+  for (i = 0,p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
+      confname = (gchar *)p->data;
+      if (!strcmp(confname, "_default")||!strcmp(confname,"default")) {
         continue;
-      } else if (!strcmp(hostname, "global")) {
-        gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), _(custom_label));
-        custom_index = i;
-      } else {
-        desc = bd_config_get_string (config_, hostname, "description");
-        gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), desc);
-      }
-      if (!strcmp(hostname, selected)) {
-        gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i);
-        bd_component_set_value(config_, hostname, self->component);
+      } 
+      gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), confname);
+      if (!strcmp(confname, selected)) {
+        gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i+1);
+        gl_config_set_config_name(confname);
+        bd_component_set_value(self->component);
         update = TRUE;
       }
       i++;
   }
 #endif
   if (!update) {
-    bd_component_set_value(config_, "global", self->component);
-    gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), custom_index);
+    gl_config_set_config_name("default");
+    bd_component_set_value(self->component);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), 0);
   }
+  bd_component_set_value(self->component);
   g_signal_handlers_unblock_by_func(GTK_COMBO_BOX(self->combo),
     boot_dialog_combo_changed, self->combo);
 }
@@ -668,24 +510,23 @@ boot_dialog_combo_update (BootDialog *self)
 static void
 boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
 {
-  BDConfigSection *global;
-  gchar *desc;
-  gchar *hostname;
+  gchar *confname;
   self->is_connect = TRUE;
   
 #ifdef LIBGTK_3_0_0
-  desc = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(self->combo));
+  confname = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(self->combo));
 #else
-  desc = gtk_combo_box_get_active_text(GTK_COMBO_BOX(self->combo));
+  confname = gtk_combo_box_get_active_text(GTK_COMBO_BOX(self->combo));
 #endif
-  hostname = get_config_hostname_by_desc(config_, desc);
-  bd_component_value_to_config(config_, hostname, self->component);
-  bd_component_value_to_config(config_, "global", self->component);
 
-  global =  bd_config_get_section (config_, "global");
-  bd_config_section_set_string (global, "hostname", hostname);
-  bd_config_save (config_, NULL, permissions);
-  
+  if (confname == NULL || strlen(confname) <= 0) {
+    confname = "default";
+  }
+
+  gl_config_set_config_name(confname);
+  gl_config_save_config_name(confname);
+  bd_component_value_to_config(self->component);
+
   gtk_widget_hide (self->dialog);
   gtk_main_quit ();
 }
@@ -701,8 +542,7 @@ boot_dialog_on_close (GtkWidget *close, BootDialog *self)
 static void
 boot_dialog_on_config (GtkWidget * widget, BootDialog * self)
 {
-  server_dialog_run (config_, self->dialog);
-  bd_config_save (config_, NULL, permissions);
+  server_dialog_run (self->dialog);
   boot_dialog_combo_update (self);
 #if 0
   gdk_window_raise (self->dialog->window);
@@ -824,19 +664,10 @@ boot_dialog_free (BootDialog *self)
 /*
   return: TRUE -> connect, FALSE -> close
  */
-gboolean
+void
 boot_dialog_run ()
 {
   BootDialog *self;
-  gboolean res;
-
-  boot_dialog_init ();
-  if (bd_config_permissions (config_) != permissions)
-    {
-      Warning(_("error: permissions is not 0%o: %s\n"),
-               permissions, bd_config_get_filename (config_));
-      return FALSE;
-    }
 
   self = boot_dialog_new ();
   gtk_widget_show_all (self->dialog);
@@ -848,12 +679,13 @@ boot_dialog_run ()
   gtk_main ();
   gtk_window_set_modal (GTK_WINDOW (self->dialog), FALSE);
 
-  res = self->is_connect;
 
   gtk_widget_destroy (self->dialog);
   boot_dialog_free (self);
 
-  return res;
+  if (!self->is_connect) {
+    exit(0);
+  }
 }
 
 /*************************************************************

@@ -28,6 +28,7 @@
 #endif
 GLOBAL	GHashTable	*WidgetCache;
 
+extern void ConvertWidgetCache();
 extern void LoadWidgetCache();
 extern void SaveWidgetCache();
 extern void SetWidgetCache(char *key, char *value);

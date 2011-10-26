@@ -64,49 +64,45 @@ message_dialog(
 }
 
 void
-show_message_dialog(
-	const char *message)
+show_info_dialog(
+	const char *format,...)
 {
-    message_dialog(GTK_MESSAGE_INFO, message);
+	gchar *buf;
+	va_list va;
+
+	va_start(va,format);
+	buf = g_strdup_vprintf(format,va);
+    va_end(va);
+    message_dialog(GTK_MESSAGE_INFO, buf);
+	g_free(buf);
+}
+
+void
+show_warn_dialog(
+	const char *format,...)
+{
+	gchar *buf;
+	va_list va;
+
+	va_start(va,format);
+	buf = g_strdup_vprintf(format,va);
+    va_end(va);
+    message_dialog(GTK_MESSAGE_WARNING, buf);
+	g_free(buf);
 }
 
 void
 show_error_dialog(
-	const char *message)
+	const char *format,...)
 {
-	if(message == NULL || strlen(message) <= 0) return;
-   	message_dialog(GTK_MESSAGE_ERROR, message);
+	gchar *buf;
+	va_list va;
+
+	va_start(va,format);
+	buf = g_strdup_vprintf(format,va);
+    va_end(va);
+   	message_dialog(GTK_MESSAGE_ERROR,buf);
 	exit(1);
-}
-
-void
-message_dialog_printf(
-	GtkMessageType type,
-	const char *format,
-    ...)
-{
-    va_list va;
-    char buff[SIZE_BUFF];
-
-    va_start(va, format);
-    vsnprintf(buff, sizeof(buff), format, va);
-    va_end(va);
-	message_dialog(type, buff);
-}
-
-void
-error_dialog_printf(
-	const char *format,
-    ...)
-{
-    va_list va;
-    char buff[SIZE_BUFF];
-
-    va_start(va, format);
-    vsnprintf(buff, sizeof(buff), format, va);
-    va_end(va);
-	message_dialog(GTK_MESSAGE_ERROR, buff);
-	exit(0);
 }
 
 void

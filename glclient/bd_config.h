@@ -74,12 +74,21 @@ gchar           *bd_config_get_string        (BDConfig * self,
 gchar           *bd_config_get_string        (BDConfig * self,
                                               gchar * section_name,
                                               gchar * value_name);
-gboolean         bd_config_save              (BDConfig *self,
-                                              gchar *filename,
-                                              mode_t mode);
-mode_t           bd_config_permissions       (BDConfig *self);
-gboolean         bd_config_remove_section    (BDConfig *self, gchar * name);
-gboolean         bd_config_move_section      (BDConfig * self, gchar * name, gint to);
+
+/* gconf tool */
+void gl_config_init();
+void gl_config_convert_config();
+void gl_config_save_config_name(gchar *name);
+void gl_config_set_config_name(gchar *name);
+void gl_config_get_config_name();
+gchar* gl_config_get_string(gchar *key);
+void gl_config_set_string(gchar *key,const gchar *value);
+gboolean gl_config_get_bool(gchar *key);
+void gl_config_set_bool(gchar *key,gboolean value);
+
+gboolean gl_config_exists(gchar *);
+void gl_config_remove_config(gchar *configname);
+GList* gl_config_list_config();
 
 #endif /* #ifndef __BD_CONFIG_H_INCLUDED__ */
 

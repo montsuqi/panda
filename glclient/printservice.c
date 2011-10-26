@@ -86,7 +86,7 @@ DoPrint(
 
 	sprintf(fname,"%s/glclient_print_XXXXXX",TempDir);
 	sprintf(userpass,"%s:%s",User,Pass);
-	snprintf(url,sizeof(url),"http://%s/%s",PortNumber,path);
+	snprintf(url,sizeof(url),"http://%s:%s/%s",Host,PortNum,path);
 
 	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 	if ((fd = mkstemp(fname)) != -1) {
