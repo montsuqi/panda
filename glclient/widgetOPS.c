@@ -215,6 +215,8 @@ SetPandaCList(
 	GtkWidget *parent;
 
 ENTER_FUNC;
+	gtk_widget_hide(widget);
+
 	SetState(widget,(GtkStateType)data->state);
 	SetStyle(widget,GetStyle(data->style));
 
@@ -240,13 +242,9 @@ ENTER_FUNC;
 	}
 	if (data->count > 0) {
 		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget), 
-			data->row, 0, data->rowattr, 0.0); 
+			data->row - 1, 0, data->rowattr, 0.0); 
 	}
-	/* for vscrollbar does not work when first show*/
-	parent = gtk_widget_get_parent(widget);
-	if (GTK_IS_CONTAINER(parent)) {
-		gtk_container_resize_children(GTK_CONTAINER(parent));
-	}
+	gtk_widget_show(widget);
 LEAVE_FUNC;
 }
 
