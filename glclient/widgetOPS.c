@@ -275,6 +275,7 @@ ENTER_FUNC;
 		}
 		if (!getRow) {
 			if (gtk_panda_clist_row_is_visible(GTK_PANDA_CLIST(widget), i)) {
+				/*to be 1origin for COBOL*/
 				data->row = i + 1;
 				getRow = TRUE;
 			}
