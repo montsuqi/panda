@@ -212,7 +212,6 @@ SetPandaCList(
 {
 	int j;
 	char **rdata;
-	GtkWidget *parent;
 
 ENTER_FUNC;
 	gtk_widget_hide(widget);
@@ -546,9 +545,34 @@ SetWindow(
 	GtkWidget			*widget,
 	_Window				*data)
 {
+	GtkWidget *window;
+
 ENTER_FUNC;
 	SetState(widget,(GtkStateType)(data->state));
 	SetStyle(widget,GetStyle(data->style));
+
+	/* bgcolor */
+	window = IsDialog(widget) ? widget : TopWindow;
+#ifdef LIBGTK_3_0_0
+	GdkRGBA color;
+	if (data->bgcolor != NULL) {
+		if (gdk_rgba_parse(data->bgcolor,&color)) {
+			gtk_widget_override_background_color(window,GTK_STATE_NORMAL,&color);
+		} else {
+			gtk_widget_override_background_color(window,GTK_STATE_NORMAL,NULL);
+		}
+	}
+#else
+	GdkColor color;
+	if (data->bgcolor != NULL) {
+		if (gdk_color_parse(data->bgcolor,&color)) {
+			gtk_widget_modify_bg(window,GTK_STATE_NORMAL,&color);
+		} else {
+			gtk_widget_modify_bg(window,GTK_STATE_NORMAL,NULL);
+		}
+	}
+#endif
+
 	if (data->title != NULL && strlen(data->title) > 0) {
 		SetSessionTitle(data->title);
 		SetTitle(TopWindow);

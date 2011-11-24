@@ -336,20 +336,12 @@ ENTER_FUNC;
 	g_object_ref(child);
 	gtk_widget_show_all(child);
 	gtk_container_forall(GTK_CONTAINER(child), _RegistTimer, wdata->TimerWidgetTable);
-#ifdef LIBGTK_3_0_0
-	if (g_object_get_data(G_OBJECT(window),"IS_DIALOG") != NULL) {
-#else
-	if (strstr(GTK_WINDOW(window)->wmclass_class, "dialog") != NULL) {
-#endif
+	if (IsDialog(window)) {
 		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
 		wdata->fWindow = FALSE;
 	} else {
 		dbgprintf("create window:%s\n", wname);
-#if 0
-		gtk_notebook_append_page(GTK_NOTEBOOK(TopNoteBook), 
-			child, gtk_label_new(wname));
-#endif
 		wdata->fWindow = TRUE;
 	}
 LEAVE_FUNC;
@@ -775,4 +767,18 @@ InitTopWindow(void)
 		"configure_event", G_CALLBACK(ConfigureWindow), NULL);
 
 	DialogStack = NULL;
+}
+
+extern	gboolean
+IsDialog(GtkWidget *widget)
+{
+#ifdef LIBGTK_3_0_0
+	if (g_object_get_data(G_OBJECT(widget),"IS_DIALOG") != NULL) {
+#else
+	if (strstr(GTK_WINDOW(widget)->wmclass_class, "dialog") != NULL) {
+#endif
+		return TRUE;
+	} else {
+		return FALSE;
+	}
 }

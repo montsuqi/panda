@@ -571,6 +571,7 @@ ENTER_FUNC;
 		// reset data
 		g_free_nullize(attrs->style);
 		g_free_nullize(attrs->title);
+		g_free_nullize(attrs->bgcolor);
 		g_free_nullize(attrs->summary);
 		g_free_nullize(attrs->body);
 		g_free_nullize(attrs->icon);
@@ -588,6 +589,10 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"style")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->style = strdup(buff);
+			} else
+			if		(  !stricmp(name,"bgcolor")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->bgcolor = strdup(buff);
 			} else
 			if		(  !stricmp(name,"title")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);

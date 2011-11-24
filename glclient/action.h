@@ -47,5 +47,6 @@ extern	GtkWidget	*GetWidgetByWindowNameAndName(char *wname, char *name);
 extern	void		ConfigureWindow(GtkWidget *widget,GdkEventConfigure *ev, 
 						gpointer data);
 extern	void		InitTopWindow(void);
+extern	gboolean	IsDialog(GtkWidget *widget);
 
 #endif
