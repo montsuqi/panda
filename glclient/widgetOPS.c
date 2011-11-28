@@ -549,10 +549,6 @@ ENTER_FUNC;
 	SetState(widget,(GtkStateType)(data->state));
 	SetStyle(widget,GetStyle(data->style));
 
-	if (data->bgcolor != NULL && strlen(data->bgcolor) > 0) {
-		SetSessionBGColor(data->bgcolor);
-	}
-
 	if (data->title != NULL && strlen(data->title) > 0) {
 		SetSessionTitle(data->title);
 		SetTitle(TopWindow);

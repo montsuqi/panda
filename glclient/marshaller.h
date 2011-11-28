@@ -191,7 +191,6 @@ typedef struct __Window{
 	int 	state;
 	char 	*style;
 	char 	*title;
-	char	*bgcolor;
 	char	*summary;
 	char	*body;
 	char	*icon;

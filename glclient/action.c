@@ -305,6 +305,8 @@ SetBGColor(GtkWidget *widget)
 		} else {
 			gtk_widget_override_background_color(widget,GTK_STATE_NORMAL,NULL);
 		}
+	} else {
+			gtk_widget_override_background_color(widget,GTK_STATE_NORMAL,NULL);
 	}
 #else
 	GdkColor color;
@@ -314,6 +316,8 @@ SetBGColor(GtkWidget *widget)
 		} else {
 			gtk_widget_modify_bg(widget,GTK_STATE_NORMAL,NULL);
 		}
+	} else {
+			gtk_widget_modify_bg(widget,GTK_STATE_NORMAL,NULL);
 	}
 #endif
 }
