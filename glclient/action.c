@@ -294,6 +294,30 @@ SetTitle(GtkWidget	*window)
 	gtk_window_set_title (GTK_WINDOW(window), buff);
 }
 
+extern	void
+SetBGColor(GtkWidget *widget)
+{
+#ifdef LIBGTK_3_0_0
+	GdkRGBA color;
+	if (BGCOLOR(glSession) != NULL) {
+		if (gdk_rgba_parse(BGCOLOR(glSession),&color)) {
+			gtk_widget_override_background_color(widget,GTK_STATE_NORMAL,&color);
+		} else {
+			gtk_widget_override_background_color(widget,GTK_STATE_NORMAL,NULL);
+		}
+	}
+#else
+	GdkColor color;
+	if (BGCOLOR(glSession) != NULL) {
+		if (gdk_color_parse(BGCOLOR(glSession),&color)) {
+			gtk_widget_modify_bg(widget,GTK_STATE_NORMAL,&color);
+		} else {
+			gtk_widget_modify_bg(widget,GTK_STATE_NORMAL,NULL);
+		}
+	}
+#endif
+}
+
 extern	void	
 CreateWindow(
 	char	*wname,
@@ -465,6 +489,7 @@ ENTER_FUNC;
 			}
 		}
 		SetTitle(TopWindow);
+		SetBGColor(TopWindow);
 	} else {
 	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;
@@ -472,6 +497,7 @@ ENTER_FUNC;
 
 		ScaleWidget(window, NULL);
 		ScaleWindow(window);
+		SetBGColor(window);
 
 		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
