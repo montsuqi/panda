@@ -67,6 +67,44 @@ SetState(
 }
 
 static	void
+SetStyle(
+	GtkWidget	*widget,
+	char	*str)
+{
+	int i;
+	GtkRcStyle *rc_style;
+	GtkStyle *style;
+
+	style = GetStyle(str);
+
+	if (style != NULL) {
+		rc_style = gtk_widget_get_modifier_style(widget);
+		for(i = GTK_STATE_NORMAL ; i <= GTK_STATE_INSENSITIVE; i++) {
+			rc_style->fg[i] = style->fg[i];
+			rc_style->bg[i] = style->bg[i];
+			rc_style->text[i] = style->text[i];
+			rc_style->base[i] = style->base[i];
+			rc_style->color_flags[i] = GTK_RC_FG | GTK_RC_BG | GTK_RC_TEXT | GTK_RC_BASE;
+		}
+		gtk_widget_modify_style(widget, rc_style);
+    	if (GTK_IS_CONTAINER(widget)){
+    	    gtk_container_foreach(GTK_CONTAINER(widget),
+				(GtkCallback)SetStyle,str);
+    	}
+	}
+}
+
+static void
+SetCommon(
+	GtkWidget	*widget,
+	WidgetData	*data)
+{
+	SetState(widget,data->state);
+	SetStyle(widget,data->style);
+	gtk_widget_set_visible(widget,data->visible);
+}
+
+static	void
 SetWidgetLabelRecursive(
 	GtkWidget	*widget,
 	char		*label)
@@ -79,33 +117,6 @@ SetWidgetLabelRecursive(
 	}
 }
 
-static	void
-SetStyle(
-	GtkWidget	*widget,
-	GtkStyle	*style)
-{
-	int i;
-	GtkRcStyle *rc_style;
-
-	if (style != NULL) {
-		rc_style = gtk_widget_get_modifier_style(widget);
-		for(i = GTK_STATE_NORMAL ; i <= GTK_STATE_INSENSITIVE; i++) {
-			rc_style->fg[i] = style->fg[i];
-			rc_style->bg[i] = style->bg[i];
-			rc_style->text[i] = style->text[i];
-			rc_style->base[i] = style->base[i];
-			rc_style->color_flags[i] = GTK_RC_FG | GTK_RC_BG | GTK_RC_TEXT | GTK_RC_BASE;
-		}
-		gtk_widget_modify_style(widget, rc_style);
-#if 1
-    	if (GTK_IS_CONTAINER(widget)){
-    	    gtk_container_foreach(GTK_CONTAINER(widget),
-				(GtkCallback)SetStyle,style);
-    	}
-#endif
-	}
-}
-
 /******************************************************************************/
 /* gtk+panda widget                                                           */
 /******************************************************************************/
@@ -113,22 +124,24 @@ SetStyle(
 static	void
 SetPandaPreview(
 	GtkWidget	*widget,
+	WidgetData	*wdata,
 	_PREVIEW	*data)
 {
 ENTER_FUNC;
-
-gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 
-	LBS_Size(data->binary), LBS_Body(data->binary));
-
+	SetCommon(widget,wdata);
+	gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 
+		LBS_Size(data->binary), LBS_Body(data->binary));
 LEAVE_FUNC;
 }
 
 static	void
 SetPandaTimer(
 	GtkWidget	*widget,
+	WidgetData	*wdata,
 	_Timer		*data)
 {
 ENTER_FUNC;
+	SetCommon(widget,wdata);
 	gtk_panda_timer_set(GTK_PANDA_TIMER(widget),
 		data->duration);
 LEAVE_FUNC;
@@ -137,9 +150,11 @@ LEAVE_FUNC;
 static	void
 SetPandaDownload(
 	GtkWidget	*widget,
+	WidgetData	*wdata,
 	_Download	*data)
 {
 ENTER_FUNC;
+	SetCommon(widget,wdata);
 	g_return_if_fail(data->binary != NULL);
 	if (LBS_Size(data->binary) > 0) {
 		show_download_dialog(widget,data->filename,data->binary);
@@ -160,14 +175,14 @@ LEAVE_FUNC;
 static	void
 SetNumberEntry(
 	GtkWidget		*widget,
+	WidgetData	*wdata,
 	_NumberEntry	*data)
 {
 	Numeric	value;
 
 ENTER_FUNC;
+	SetCommon(widget,wdata);
 	g_object_set(G_OBJECT(widget),"editable",data->editable,NULL);
-	SetState(widget,(GtkStateType)data->state);
-	SetStyle(widget, GetStyle(data->style));
 	value = FixedToNumeric(data->fixed);
 	gtk_number_entry_set_value(GTK_NUMBER_ENTRY(widget), value);
 	NumericFree(value);
@@ -193,14 +208,14 @@ LEAVE_FUNC;
 static	void
 SetPandaCombo(
 	GtkWidget	*widget,
+	WidgetData	*wdata,
 	_Combo		*data)
 {
 	GtkPandaCombo	*combo;
 
 ENTER_FUNC;
+	SetCommon(widget,wdata);
 	combo = GTK_PANDA_COMBO(widget);
-	SetState(widget,(GtkStateType)data->state);
-	SetStyle(widget,GetStyle(data->style));
 	gtk_panda_combo_set_popdown_strings(combo,data->itemdata);
 LEAVE_FUNC;
 }
@@ -208,16 +223,15 @@ LEAVE_FUNC;
 static	void
 SetPandaCList(
 	GtkWidget	*widget,
+	WidgetData	*wdata,
 	_CList		*data)
 {
 	int j;
 	char **rdata;
 
 ENTER_FUNC;
+//	SetCommon(widget,wdata);
 	gtk_widget_hide(widget);
-
-	SetState(widget,(GtkStateType)data->state);
-	SetStyle(widget,GetStyle(data->style));
 
 	// items
 	gtk_panda_clist_clear(GTK_PANDA_CLIST(widget));
@@ -241,7 +255,7 @@ ENTER_FUNC;
 	}
 	if (data->count > 0) {
 		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget), 
-			data->row - 1, 0, data->rowattr, 0.0); 
+			data->row, 0, data->rowattr, 0.0); 
 	}
 	gtk_widget_show(widget);
 LEAVE_FUNC;
@@ -286,9 +300,11 @@ LEAVE_FUNC;
 static	void
 SetPandaHTML(
 	GtkWidget		*widget,
+	WidgetData	*wdata,
 	_HTML			*data)
 {
 ENTER_FUNC;
+	SetCommon(widget,wdata);
 	if (data->uri != NULL) {
 		gtk_panda_html_set_uri (GTK_PANDA_HTML(widget), data->uri);
 	}
@@ -313,14 +329,14 @@ LEAVE_FUNC;
 static	void
 SetPandaTable(
 	GtkWidget	*widget,
+	WidgetData	*wdata,
 	_Table		*data)
 {
 	int				j;
 	char			**rdata;
 
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)data->state);
-
+	SetCommon(widget,wdata);
 	for	( j = 0 ; j < g_list_length(data->tdata) ; j ++ ) {
 		rdata = g_list_nth_data(data->tdata,j);
 		gtk_panda_table_set_row(GTK_PANDA_TABLE(widget),j,rdata);
@@ -341,12 +357,12 @@ LEAVE_FUNC;
 static	void
 SetEntry(
 	GtkWidget		*widget,
+	WidgetData		*wdata,
 	_Entry			*data)
 {
 ENTER_FUNC;
+	SetCommon(widget,wdata);
 	g_object_set(G_OBJECT(widget),"editable",data->editable,NULL);
-	SetState(widget,(GtkStateType)(data->state));
-	SetStyle(widget,GetStyle(data->style));
 	if (strcmp (gtk_entry_get_text(GTK_ENTRY(widget)), data->text)) {
 		gtk_entry_set_text(GTK_ENTRY(widget), data->text);
 	}
@@ -371,11 +387,13 @@ LEAVE_FUNC;
 static	void
 SetLabel(
 	GtkWidget		*widget,
+	WidgetData	*wdata,
 	_Label			*data)
 {
 ENTER_FUNC;
-	SetStyle(widget, GetStyle(data->style));
-	if (pango_parse_markup(data->text,-1,0,NULL,NULL,NULL,NULL)) {
+	SetCommon(widget,wdata);
+	if (data->text != NULL && 
+		pango_parse_markup(data->text,-1,0,NULL,NULL,NULL,NULL)) {
 		gtk_label_set_markup(GTK_LABEL(widget),data->text);
 	} else {
 		gtk_label_set_text(GTK_LABEL(widget),data->text);
@@ -386,13 +404,13 @@ LEAVE_FUNC;
 static	void
 SetText(
 	GtkWidget	*widget,
+	WidgetData	*wdata,
 	_Text		*data)
 {
 	GtkTextBuffer	*buffer;
 	GtkTextIter		iter;
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)data->state);
-	SetStyle(widget,GetStyle(data->style));
+	SetCommon(widget,wdata);
 	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
 	gtk_text_buffer_set_text(buffer, data->text, strlen(data->text));
 	gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(widget), &iter, 0, 0);
@@ -421,11 +439,11 @@ LEAVE_FUNC;
 static	void
 SetButton(
 	GtkWidget			*widget,
+	WidgetData	*wdata,
 	_Button				*data)
 {
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)data->state);
-	SetStyle(widget,GetStyle(data->style));
+	SetCommon(widget,wdata);
 	if (data->label != NULL) {
 		SetWidgetLabelRecursive(widget,data->label);
 	}
@@ -452,11 +470,11 @@ LEAVE_FUNC;
 static	void
 SetCalendar(
 	GtkWidget			*widget,
+	WidgetData	*wdata,
 	_Calendar			*data)
 {
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)data->state);
-	SetStyle(widget,GetStyle(data->style));
+	SetCommon(widget,wdata);
 	if (data->year > 0) {
 		gtk_calendar_select_month(GTK_CALENDAR(widget),
 			data->month - 1, data->year);
@@ -479,12 +497,12 @@ LEAVE_FUNC;
 static	void
 SetNotebook(
 	GtkWidget			*widget,
+	WidgetData	*wdata,
 	_Notebook			*data)
 {
 	int	*pageno;
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)data->state);
-	SetStyle(widget,GetStyle(data->style));
+	SetCommon(widget,wdata);
 	if ((pageno = (int *)g_object_get_data(G_OBJECT(widget),"pageno")) == NULL) {
 		pageno = xmalloc(sizeof(int));
 		g_object_set_data(G_OBJECT(widget),"pageno",pageno);
@@ -512,11 +530,11 @@ LEAVE_FUNC;
 static	void
 SetProgressBar(
 	GtkWidget				*widget,
+	WidgetData	*wdata,
 	_ProgressBar			*data)
 {
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)(data->state));
-	SetStyle(widget,GetStyle(data->style));
+	SetCommon(widget,wdata);
 #ifdef LIBGTK_3_0_0
 	gtk_panda_progress_bar_set_value(
       GTK_PANDA_PROGRESS_BAR(widget),data->value);
@@ -543,12 +561,13 @@ LEAVE_FUNC;
 static	void
 SetWindow(
 	GtkWidget			*widget,
+	WidgetData	*wdata,
 	_Window				*data)
 {
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)(data->state));
-	SetStyle(widget,GetStyle(data->style));
-
+#if 0
+	SetCommon(widget,wdata);
+#endif
 	if (data->title != NULL && strlen(data->title) > 0) {
 		SetSessionTitle(data->title);
 		SetTitle(TopWindow);
@@ -563,11 +582,11 @@ LEAVE_FUNC;
 static	void
 SetFrame(
 	GtkWidget		*widget,
+	WidgetData	*wdata,
 	_Frame			*data)
 {
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)(data->state));
-	SetStyle(widget,GetStyle(data->style));
+	SetCommon(widget,wdata);
 	gtk_frame_set_label(GTK_FRAME(widget),data->label);
 LEAVE_FUNC;
 }
@@ -575,11 +594,11 @@ LEAVE_FUNC;
 static	void
 SetScrolledWindow(
 	GtkWidget					*widget,
+	WidgetData	*wdata,
 	_ScrolledWindow				*data)
 {
 ENTER_FUNC;
-	SetState(widget,(GtkStateType)data->state);
-	SetStyle(widget,GetStyle(data->style));
+	SetCommon(widget,wdata);
 LEAVE_FUNC;
 }
 
@@ -602,6 +621,7 @@ LEAVE_FUNC;
 static	void
 SavePreviousFolder(
 	GtkWidget	*widget,
+	WidgetData	*wdata,
 	gpointer 	data) 
 {
 	GtkPandaFileEntry 	*fentry;
@@ -615,6 +635,7 @@ SavePreviousFolder(
 static	void
 SetFileEntry(
 	GtkWidget			*widget,
+	WidgetData	*wdata,
 	_FileEntry			*data)
 {
 static GHashTable		*connectlist = NULL;
@@ -627,6 +648,7 @@ static GHashTable		*connectlist = NULL;
 
 ENTER_FUNC;
 
+	SetCommon(widget,wdata);
 	fentry = GTK_PANDA_FILE_ENTRY(widget);
 	g_return_if_fail(data->binary != NULL);
 	longname = (char *)glade_get_widget_long_name(widget);
@@ -656,7 +678,7 @@ ENTER_FUNC;
 		subdata = g_hash_table_lookup(WidgetDataTable, data->subname);
 		subWidget = GetWidgetByLongName(data->subname);
 		if (subdata != NULL || subWidget != NULL) {
-			SetEntry(subWidget, (_Entry *)subdata->attrs);
+			SetEntry(subWidget, subdata,(_Entry *)subdata->attrs);
 		}
 		g_signal_emit_by_name(G_OBJECT(widget), "browse_clicked", NULL);
 	} else {
@@ -700,9 +722,11 @@ LEAVE_FUNC;
 static void
 SetPixmap(
 	GtkWidget			*widget,
+	WidgetData	*wdata,
 	_Pixmap				*data)
 {
 ENTER_FUNC;
+	SetCommon(widget,wdata);
 	if ( LBS_Size(data->binary) <= 0) {
 		gtk_widget_hide(widget); 
 	} else {
@@ -868,75 +892,75 @@ UpdateWidget(WidgetData *data)
 	switch (data->type) {
 // gtk+panda
 	case WIDGET_TYPE_NUMBER_ENTRY:
-		SetNumberEntry(widget, (_NumberEntry *)data->attrs);
+		SetNumberEntry(widget, data,(_NumberEntry *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_COMBO:
-		SetPandaCombo(widget, (_Combo *)data->attrs);
+		SetPandaCombo(widget, data,(_Combo *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_CLIST:
-		SetPandaCList(widget, (_CList *)data->attrs);
+		SetPandaCList(widget, data,(_CList *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_ENTRY:
-		SetEntry(widget, (_Entry *)data->attrs);
+		SetEntry(widget, data,(_Entry *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_TEXT:
-		SetText(widget, (_Text *)data->attrs);
+		SetText(widget, data,(_Text *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_PREVIEW:
-		SetPandaPreview(widget, (_PREVIEW *)data->attrs);
+		SetPandaPreview(widget, data,(_PREVIEW *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_TIMER:
-		SetPandaTimer(widget, (_Timer *)data->attrs);
+		SetPandaTimer(widget, data,(_Timer *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_DOWNLOAD:
-		SetPandaDownload(widget, (_Download *)data->attrs);
+		SetPandaDownload(widget, data,(_Download *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_HTML:
-		SetPandaHTML(widget, (_HTML *)data->attrs);
+		SetPandaHTML(widget, data,(_HTML *)data->attrs);
 		break;
 	case WIDGET_TYPE_PANDA_TABLE:
-		SetPandaTable(widget, (_Table *)data->attrs);
+		SetPandaTable(widget, data,(_Table *)data->attrs);
 		break;
 // gtk+
 	case WIDGET_TYPE_ENTRY:
-		SetEntry(widget, (_Entry *)data->attrs);
+		SetEntry(widget, data,(_Entry *)data->attrs);
 		break;
 	case WIDGET_TYPE_TEXT:
-		SetText(widget, (_Text *)data->attrs);
+		SetText(widget, data,(_Text *)data->attrs);
 		break;
 	case WIDGET_TYPE_LABEL:
-		SetLabel(widget, (_Label *)data->attrs);
+		SetLabel(widget, data,(_Label *)data->attrs);
 		break;
 	case WIDGET_TYPE_BUTTON:
 	case WIDGET_TYPE_TOGGLE_BUTTON:
 	case WIDGET_TYPE_CHECK_BUTTON:
 	case WIDGET_TYPE_RADIO_BUTTON:
-		SetButton(widget, (_Button *)data->attrs);
+		SetButton(widget, data,(_Button *)data->attrs);
 		break;
 	case WIDGET_TYPE_CALENDAR:
-		SetCalendar(widget, (_Calendar*)data->attrs);
+		SetCalendar(widget, data,(_Calendar*)data->attrs);
 		break;
 	case WIDGET_TYPE_NOTEBOOK:
-		SetNotebook(widget, (_Notebook*)data->attrs);
+		SetNotebook(widget, data,(_Notebook*)data->attrs);
 		break;
 	case WIDGET_TYPE_PROGRESS_BAR:
-		SetProgressBar(widget, (_ProgressBar*)data->attrs);
+		SetProgressBar(widget, data,(_ProgressBar*)data->attrs);
 		break;
 	case WIDGET_TYPE_WINDOW:
-		SetWindow(widget, (_Window*)data->attrs);
+		SetWindow(widget, data,(_Window*)data->attrs);
 		break;
 	case WIDGET_TYPE_FRAME:
-		SetFrame(widget, (_Frame *)data->attrs);
+		SetFrame(widget, data,(_Frame *)data->attrs);
 		break;
 	case WIDGET_TYPE_SCROLLED_WINDOW:
-		SetScrolledWindow(widget, (_ScrolledWindow *)data->attrs);
+		SetScrolledWindow(widget, data,(_ScrolledWindow *)data->attrs);
 		break;
 // Gnome
 	case WIDGET_TYPE_FILE_ENTRY:
-		SetFileEntry(widget, (_FileEntry *)data->attrs);
+		SetFileEntry(widget, data,(_FileEntry *)data->attrs);
 		break;
 	case WIDGET_TYPE_PIXMAP:
-		SetPixmap(widget, (_Pixmap *)data->attrs);
+		SetPixmap(widget, data,(_Pixmap *)data->attrs);
 		break;
 	default:
 		//MessageLogPrintf("invalid widget [%s]", data->name);

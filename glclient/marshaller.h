@@ -66,12 +66,15 @@ typedef struct _WidgetData {
 	WidgetType	type;
 	char 		*name;
 	WindowData 	*window;
+	/* common attrs */
+	int 		state;
+	char 		*style;
+	gboolean	visible;
+	/* specific attrs*/
 	void 		*attrs;
 } WidgetData;
 
 typedef struct __Entry {
-	int 			state;
-	char 			*style;
 	char 			*text;
 	char 			*text_name;
 	Bool			editable;
@@ -97,8 +100,6 @@ typedef struct __Download {
 } _Download;
 
 typedef struct __NumberEntry{
-	int 			state;
-	char 			*style;
 	Fixed 			*fixed;
 	char 			*fixed_name;
 	Bool			editable;
@@ -106,23 +107,18 @@ typedef struct __NumberEntry{
 } _NumberEntry;
 
 typedef struct __Label{
-	char 			*style;
 	char 			*text;
 	char 			*text_name;
 	PacketDataType 	ptype;
 } _Label;
 
 typedef struct __Text{
-	int 			state;
-	char 			*style;
 	char 			*text;
 	char 			*text_name;
 	PacketDataType 	ptype;
 } _Text;
 
 typedef struct __Button{
-	int 			state;
-	char 			*style;
 	char 			*label;
 	Bool 			have_button_state;
 	Bool 			button_state;
@@ -131,16 +127,12 @@ typedef struct __Button{
 } _Button;
 
 typedef struct __Combo{
-	int 	state;
-	char 	*style;
 	int 	count;
 	char 	**itemdata;
     char 	*subname;
 } _Combo;
 
 typedef struct __CList{
-	int 	state;
-	char 	*style;
 	int 	count;
 	int 	from;
 	int 	row;
@@ -152,8 +144,6 @@ typedef struct __CList{
 } _CList;
 
 typedef struct __Table{
-	int 		state;
-	char 		*style;
 	gboolean	dofocus;
 	int			trow;
 	float		trowattr;
@@ -165,31 +155,23 @@ typedef struct __Table{
 } _Table;
 
 typedef struct __Calendar{
-	int 	state;
-	char 	*style;
 	int 	year;
 	int 	month;
 	int 	day;
 } _Calendar;
 
 typedef struct __Notebook{
-	int 			state;
-	char 			*style;
 	int 			pageno;
 	char 			*subname;
 	PacketDataType 	ptype;
 } _Notebook;
 
 typedef struct __ProgressBar{
-	int 			state;
-	char 			*style;
 	int 			value;
 	PacketDataType 	ptype;
 } _ProgressBar;
 
 typedef struct __Window{
-	int 	state;
-	char 	*style;
 	char 	*title;
 	char	*summary;
 	char	*body;
@@ -198,15 +180,11 @@ typedef struct __Window{
 } _Window;
 
 typedef struct __Frame{
-	int 	state;
-	char 	*style;
 	char 	*label;
 	char 	*subname;
 } _Frame;
 
 typedef struct __ScrolledWindow{
-	int				state;
-	char 			*style;
 	int 			vpos;
 	int 			hpos;
 	char 			*subname;
