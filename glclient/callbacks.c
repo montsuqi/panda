@@ -172,7 +172,6 @@ send_event(
 {
 	char		*wname;
 	static Bool	ignore_event = FALSE;
-
 ENTER_FUNC;
 	if		(  !fInRecv &&  !ignore_event ) {
 		fInRecv = TRUE;
@@ -203,6 +202,12 @@ ENTER_FUNC;
 			ignore_event = TRUE;
 			ClearKeyBuffer();
 			ignore_event = FALSE;
+		}
+		if (ThisWindowName[0] == '_') {
+			SendEvent(FPCOMM(glSession),
+				ThisWindowName,ThisWindowName,"DummyEvent");
+			SendWindowData();
+			GetScreenData(FPCOMM(glSession));
 		}
 		fInRecv = FALSE;
 	}

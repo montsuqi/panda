@@ -123,7 +123,9 @@ GetWindowName(
 ENTER_FUNC;
 	/*	This logic is escape code for GTK bug.	*/
 	strcpy(wname,glade_get_widget_long_name(widget));
-	*(strchr(wname,'.')) = 0;
+	if (strchr(wname,'.')) {
+		*(strchr(wname,'.')) = 0;
+	}
 LEAVE_FUNC;
 	return (wname);
 }
