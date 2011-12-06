@@ -230,8 +230,7 @@ SetPandaCList(
 	char **rdata;
 
 ENTER_FUNC;
-//	SetCommon(widget,wdata);
-	gtk_widget_hide(widget);
+	SetCommon(widget,wdata);
 
 	// items
 	gtk_panda_clist_clear(GTK_PANDA_CLIST(widget));
@@ -257,7 +256,6 @@ ENTER_FUNC;
 		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget), 
 			data->row, 0, data->rowattr, 0.0); 
 	}
-	gtk_widget_show(widget);
 LEAVE_FUNC;
 }
 
