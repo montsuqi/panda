@@ -203,7 +203,7 @@ ENTER_FUNC;
 			ClearKeyBuffer();
 			ignore_event = FALSE;
 		}
-		if (ThisWindowName[0] == '_') {
+		while (ThisWindowName[0] == '_') {
 			SendEvent(FPCOMM(glSession),
 				ThisWindowName,ThisWindowName,"DummyEvent");
 			SendWindowData();
