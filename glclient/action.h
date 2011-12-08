@@ -33,6 +33,7 @@ extern	void		CreateWindow(char *wname,int size,char *buff);
 extern	void		ShowWindow(char *wname);
 extern	void		CloseWindow(char *wname);
 extern	void		ClearKeyBuffer(void);
+extern	void		ResetTimer(char *wname);
 extern	void		_AddChangedWidget(GtkWidget *widget);
 extern	void		AddChangedWidget(GtkWidget *widget);
 extern	void		ShowBusyCursor(GtkWidget *widget);

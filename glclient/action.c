@@ -398,7 +398,7 @@ ENTER_FUNC;
 	gtk_widget_set_name(TopWindow, gtk_widget_get_name(window));
 
 	gtk_widget_show(TopWindow);
-	gtk_widget_show(child);
+	gtk_widget_show_all(child);
 
 #ifdef LIBGTK_3_0_0
 	gtk_window_set_resizable(GTK_WINDOW(TopWindow), FALSE);
@@ -458,6 +458,22 @@ LEAVE_FUNC;
 }
 
 extern	void
+ResetTimer(
+	char	*wname)
+{
+	WindowData	*data;
+
+ENTER_FUNC;
+	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
+		// FIXME sometimes comes here.
+		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
+		return;
+	}
+	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
+LEAVE_FUNC;
+}
+
+extern	void
 ShowWindow(
 	char	*wname)
 {
@@ -475,7 +491,6 @@ ENTER_FUNC;
 	window = glade_xml_get_widget_by_long_name((GladeXML *)data->xml, wname);
 	g_return_if_fail(window != NULL);
 
-	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
 	if (data->fWindow) {
 	dbgmsg("show primari window\n");
 		gtk_widget_show(TopWindow);
