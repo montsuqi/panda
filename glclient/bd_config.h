@@ -78,17 +78,28 @@ gchar           *bd_config_get_string        (BDConfig * self,
 /* gconf tool */
 void gl_config_init();
 void gl_config_convert_config();
-void gl_config_save_config_name(gchar *name);
-void gl_config_set_config_name(gchar *name);
-void gl_config_get_config_name();
-gchar* gl_config_get_string(gchar *key);
-void gl_config_set_string(gchar *key,const gchar *value);
-gboolean gl_config_get_bool(gchar *key);
-void gl_config_set_bool(gchar *key,gboolean value);
+gchar* gl_config_new_server();
+void gl_config_set_default(gchar *serverkey);
+void gl_config_remove_server(gchar *serverkey);
 
-gboolean gl_config_exists(gchar *);
-void gl_config_remove_config(gchar *configname);
-GList* gl_config_list_config();
+void gl_config_set_server(gchar *serverkey);
+gchar* gl_config_get_server();
+
+void gl_config_set_string(
+  const gchar *skey,
+  const gchar *key,
+  const gchar *value);
+gchar* gl_config_get_string(
+  const gchar *skey,
+  const gchar *key);
+void gl_config_set_bool(
+  const gchar *skey,
+  const gchar *key,
+  gboolean value);
+gboolean gl_config_get_bool(
+  const gchar *skey,
+  const gchar *key);
+GSList *gl_config_get_server_list();
 
 #endif /* #ifndef __BD_CONFIG_H_INCLUDED__ */
 

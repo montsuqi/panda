@@ -42,7 +42,10 @@
  * EditDialog
  ********************************************************************/
 static void
-edit_dialog_run(gchar *name, GtkWidget *parent)
+edit_dialog_run(
+  GtkWidget *parent,
+  gchar *serverkey,
+  gboolean isnew)
 {
   BDComponent *component;
   GtkWidget *dialog;
@@ -50,15 +53,11 @@ edit_dialog_run(gchar *name, GtkWidget *parent)
   GtkWidget *label;
   GtkWidget *entry;
   gchar *title;
-  gchar *newname;
-  gboolean is_new;
+  gchar *desc;
 
-  if (name == NULL) {
+  if (isnew) {
     title = _("New");
-    name = "new";
-    is_new = TRUE;
   } else {
-    is_new = FALSE;
     title = _("Edit");
   }
 
@@ -82,7 +81,10 @@ edit_dialog_run(gchar *name, GtkWidget *parent)
   label = gtk_label_new (_("ConfigName"));
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
-  gtk_entry_set_text (GTK_ENTRY(entry),name);
+
+  desc = gl_config_get_string(serverkey,"description");
+  gtk_entry_set_text(GTK_ENTRY(entry),desc);
+  g_free(desc);
 
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
@@ -112,19 +114,17 @@ edit_dialog_run(gchar *name, GtkWidget *parent)
     component->othertable, TRUE, TRUE, 0);
   gtk_widget_show_all(component->othertable);
 
-  gl_config_set_config_name(name);
-  bd_component_set_value(component);
+  bd_component_set_value(component,serverkey);
 
   /* run */
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
-    newname = (gchar *)gtk_entry_get_text(GTK_ENTRY(entry));
-    gl_config_set_config_name(newname);
-    bd_component_value_to_config(component);
-    if (!is_new && g_strcmp0(name,newname)) {
-      /* rename */
-      gl_config_remove_config(name);
-    }
+    gl_config_set_string(serverkey,
+      "description",gtk_entry_get_text(GTK_ENTRY(entry)));
+    bd_component_value_to_config(component,serverkey);
   } else {
+    if (isnew) {
+      gl_config_remove_server(serverkey);
+    }
   }
   gtk_widget_destroy (dialog);
 }
@@ -136,53 +136,59 @@ edit_dialog_run(gchar *name, GtkWidget *parent)
 typedef struct _ServerDialog ServerDialog;
 struct _ServerDialog {
   GtkWidget *dialog;
-  GtkWidget *server_list;
+  GtkWidget *list;
   GtkWidget *edit;
   GtkWidget *delete;
 
   gint is_update;
 };
 
-static struct {
-  gchar *title;
-  gchar *name;
-} server_dialog_titles[] = {
-  { N_("ConfigName"), "configname" },
-  { N_("Host"),           "host" },
-  { N_("Port"),           "port" },
-  { N_("Application"), "application"},
-  { N_("User"),           "user" },
-};
-
-static gint server_dialog_titles_count =
-  sizeof (server_dialog_titles) / sizeof (server_dialog_titles[0]);
-
 static void
 server_dialog_server_list_update (ServerDialog * self)
 {
-  gchar *text_list[server_dialog_titles_count + 1];
-  GList *p;
-  gchar *confname;
-  gint i;
+  GSList *p,*list;
+  GtkListStore *model;
+  GtkTreeIter iter;
+  gchar *serverkey;
+  gchar *value;
   
   g_return_if_fail (self != NULL);
 
-  gtk_panda_clist_clear (GTK_PANDA_CLIST (self->server_list));
+  model = (GtkListStore*)gtk_tree_view_get_model(GTK_TREE_VIEW(self->list));
+  gtk_list_store_clear(model);
 
-  text_list[server_dialog_titles_count] = NULL;
-  for (p = gl_config_list_config(); 
-    p != NULL; p = g_list_next (p)) {
-    confname = (gchar *) p->data;
-    if (!g_strcmp0(confname, "_default")) {
-      continue;
-    }
-    gl_config_set_config_name(confname);
-    text_list[0] = confname;
-    for (i = 1; i < server_dialog_titles_count; i++) {
-      text_list[i] = gl_config_get_string(server_dialog_titles[i].name);
-    }
-    gtk_panda_clist_append (GTK_PANDA_CLIST(self->server_list), text_list);
+  for(
+    p = list = gl_config_get_server_list();
+    p != NULL;
+    p = p->next) 
+  {
+    serverkey = (gchar*)p->data;
+    gtk_list_store_append(model,&iter);
+
+    value = gl_config_get_string(serverkey,"description");
+    gtk_list_store_set(model,&iter,0,value,-1);
+    g_free(value);
+
+    value = gl_config_get_string(serverkey,"host");
+    gtk_list_store_set(model,&iter,1,value,-1);
+    g_free(value);
+
+    value = gl_config_get_string(serverkey,"port");
+    gtk_list_store_set(model,&iter,2,value,-1);
+    g_free(value);
+
+    value = gl_config_get_string(serverkey,"application");
+    gtk_list_store_set(model,&iter,3,value,-1);
+    g_free(value);
+
+    value = gl_config_get_string(serverkey,"user");
+    gtk_list_store_set(model,&iter,4,value,-1);
+    g_free(value);
+
+    gtk_list_store_set(model,&iter,5,serverkey,-1);
+    g_free(serverkey);
   }
+  g_slist_free(list);
 }
 
 static gboolean
@@ -195,7 +201,12 @@ server_dialog_on_delete_event (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
 {
-  edit_dialog_run (NULL, self->dialog);
+  gchar *serverkey;
+
+  serverkey = gl_config_new_server();
+  gl_config_set_string(serverkey,"description","new");
+  edit_dialog_run (self->dialog,serverkey,TRUE);
+  g_free(serverkey);
   server_dialog_server_list_update (self);
 #if 0
   gdk_window_raise (self->dialog->window);
@@ -205,57 +216,40 @@ server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
 {
-  int i;
-  gchar *confname;
   GtkTreeModel *model;
   GtkTreeIter iter;
-  GtkTreePath *path;
+  gchar *serverkey;
 
-  for (
-    i = 0; 
-    i < gtk_panda_clist_get_n_rows(GTK_PANDA_CLIST(self->server_list));
-    i++) {
-    if (gtk_panda_clist_row_is_selected(GTK_PANDA_CLIST(self->server_list),i)){
-      path = gtk_tree_path_new_from_indices(i , -1);
-      model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->server_list));
-      if (gtk_tree_model_get_iter(model, &iter, path)) {
-         gtk_tree_model_get(model, &iter, 0, &confname,-1);
-         edit_dialog_run (confname, self->dialog);
-         server_dialog_server_list_update(self);
-      }
-      gtk_tree_path_free(path);
-      break;
-    }
+  GtkTreeSelection *selection;
+
+  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self->list));
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->list));
+
+  if (gtk_tree_selection_get_selected(selection,&model,&iter)) {
+    gtk_tree_model_get(model,&iter,5,&serverkey,-1);
+    edit_dialog_run (self->dialog,serverkey,FALSE);
+    server_dialog_server_list_update(self);
+    g_free(serverkey);
   }
-#if 0
-  gdk_window_raise (self->dialog->window);
-#endif
 }
 
 static void
 server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
 {
-  int i;
-  gchar *confname;
   GtkTreeModel *model;
   GtkTreeIter iter;
-  GtkTreePath *path;
+  gchar *serverkey;
 
-  for (
-    i = 0; 
-    i < gtk_panda_clist_get_n_rows(GTK_PANDA_CLIST(self->server_list));
-    i++) {
-    if (gtk_panda_clist_row_is_selected(GTK_PANDA_CLIST(self->server_list),i)){
-      path = gtk_tree_path_new_from_indices(i , -1);
-      model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->server_list));
-      if (gtk_tree_model_get_iter(model, &iter, path)) {
-         gtk_tree_model_get(model, &iter, 0, &confname,-1);
-         gl_config_remove_config(confname);
-         server_dialog_server_list_update (self);
-      }
-      gtk_tree_path_free(path);
-      break;
-    }
+  GtkTreeSelection *selection;
+
+  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self->list));
+  model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->list));
+
+  if (gtk_tree_selection_get_selected(selection,&model,&iter)) {
+    gtk_tree_model_get(model,&iter,5,&serverkey,-1);
+    gl_config_remove_server(serverkey);
+    server_dialog_server_list_update(self);
+    g_free(serverkey);
   }
 }
 
@@ -265,25 +259,6 @@ server_dialog_on_close (GtkWidget * widget, ServerDialog * self)
   gtk_main_quit ();
 }
 
-static void
-server_dialog_on_select_row (GtkWidget * widget, 
-  gint row, 
-  gint column,
-  ServerDialog * self)
-{
-  gtk_widget_set_sensitive (self->edit, TRUE);
-  gtk_widget_set_sensitive (self->delete, TRUE);
-}
-
-static void
-server_dialog_on_unselect_row (GtkWidget * widget, 
-  gint row, 
-  gint column,
-  ServerDialog * self)
-{
-  gtk_widget_set_sensitive (self->edit, FALSE);
-  gtk_widget_set_sensitive (self->delete, FALSE);
-}
 
 static ServerDialog *
 server_dialog_new (GtkWidget *parent)
@@ -292,9 +267,9 @@ server_dialog_new (GtkWidget *parent)
   GtkWidget *dialog;
   GtkWidget *button;
   GtkWidget *scroll;
-  GtkWidget *clist;
-  GtkTreeViewColumn *column;
-  gint i;
+  GtkTreeModel *model;
+  GtkTreeSelection *selection;
+  GtkCellRenderer *renderer;
 
   self = g_new0 (ServerDialog, 1);
   
@@ -325,7 +300,6 @@ server_dialog_new (GtkWidget *parent)
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (server_dialog_on_edit), self);
   gtk_widget_set_can_default(button,TRUE);
-  gtk_widget_set_sensitive (button, FALSE);
 
   /* delete button */
   self->delete = button = gtk_button_new_with_label (_("Delete"));
@@ -335,7 +309,6 @@ server_dialog_new (GtkWidget *parent)
   g_signal_connect (G_OBJECT (button), "clicked",
                       G_CALLBACK (server_dialog_on_delete), self);
   gtk_widget_set_can_default(button,TRUE);
-  gtk_widget_set_sensitive (button, FALSE);
 
   /* close button */
   button = gtk_button_new_with_label (_("Close"));
@@ -356,24 +329,25 @@ server_dialog_new (GtkWidget *parent)
     GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
     scroll, TRUE, TRUE, 5);
 
-  self->server_list = clist = gtk_panda_clist_new();
-  gtk_panda_clist_set_columns(GTK_PANDA_CLIST(clist),server_dialog_titles_count);
-  gtk_panda_clist_set_selection_mode(GTK_PANDA_CLIST(clist),
-    GTK_SELECTION_SINGLE);
-  for (i = 0; i < server_dialog_titles_count; i++) {
-    column = gtk_tree_view_get_column(GTK_TREE_VIEW(clist), i);
-    if (column != NULL) {
-      gtk_tree_view_column_set_resizable(column, TRUE);
-      gtk_tree_view_column_set_title (column, _(server_dialog_titles[i].title));
-    }
-  }
-  gtk_container_add (GTK_CONTAINER (scroll), clist);
-  g_signal_connect (G_OBJECT (clist), "select_row",
-    G_CALLBACK (server_dialog_on_select_row),
-    self);
-  g_signal_connect (G_OBJECT (clist), "unselect_row",
-    G_CALLBACK (server_dialog_on_unselect_row),
-    self);
+  model = (GtkTreeModel*)gtk_list_store_new(6,
+    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
+    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  self->list = gtk_tree_view_new_with_model(model);
+  selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self->list));
+  gtk_tree_selection_set_mode(selection,GTK_SELECTION_SINGLE);
+  renderer = gtk_cell_renderer_text_new();
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
+    -1,N_("Description"),renderer,"text",0,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
+    -1,N_("Host"),renderer,"text",1,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
+    -1,N_("Port"),renderer,"text",2,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
+    -1,N_("Application"),renderer,"text",3,NULL);
+  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
+    -1,N_("User"),renderer,"text",4,NULL);
+
+  gtk_container_add (GTK_CONTAINER (scroll), self->list);
 
   server_dialog_server_list_update (self);
     
@@ -427,105 +401,84 @@ static void
 boot_dialog_combo_changed(GtkComboBox *widget, gpointer user_data)
 {
   BootDialog *self;
-  gchar *conf;
+  GtkTreeModel *model;
+  GtkTreeIter iter;
+  gchar *serverkey;
   
   self = (BootDialog *)user_data;
-#ifdef LIBGTK_3_0_0
-  conf = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(widget));
-#else
-  conf = gtk_combo_box_get_active_text(widget);
-#endif
-  if (conf) {
-    gl_config_set_config_name(conf);
-    bd_component_set_value(self->component);
-    g_free(conf);
+  if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(self->combo),&iter)) {
+    model = gtk_combo_box_get_model(GTK_COMBO_BOX(self->combo));
+    gtk_tree_model_get(model,&iter,1,&serverkey,-1);
+    bd_component_set_value(self->component,serverkey);
+    g_free(serverkey);
   }
 }
 
 static void
 boot_dialog_combo_update (BootDialog *self)
 {
-  GList *p;
-  gchar *confname;
-  gchar *selected;
-  gint i;
-  gboolean update = FALSE;
+  GSList *p,*list;
+  gchar *desc,*serverkey,*server,*thisserverkey;
+  GtkListStore *model;
+  GtkComboBox *combo;
+  GtkTreeIter iter;
 
-  g_signal_handlers_block_by_func(GTK_COMBO_BOX(self->combo),
+  combo = GTK_COMBO_BOX(self->combo);
+  g_signal_handlers_block_by_func(combo,
     boot_dialog_combo_changed, self->combo);
 
-  gl_config_get_config_name();
-  selected = ConfigName;
+  model = (GtkListStore*)gtk_combo_box_get_model(combo);
+  gtk_list_store_clear(model);
 
-#ifdef LIBGTK_3_0_0
-  gtk_combo_box_text_remove_all(GTK_COMBO_BOX_TEXT(self->combo));
+  server = gl_config_get_server();
 
-  gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo),"default");
-  for (i = 1,p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
-    confname = (gchar *)p->data;
-    if (!strcmp(confname, "_default")||!strcmp(confname,"default")) {
-      continue;
+  thisserverkey = NULL;
+  for(
+    p = list = gl_config_get_server_list();
+    p != NULL;
+    p = p->next) 
+  {
+    gtk_list_store_append(model,&iter);
+    serverkey = (gchar*)p->data;
+    desc = gl_config_get_string(serverkey,"description");
+    gtk_list_store_set(model,&iter,0,desc,1,serverkey,-1);
+    if (!g_strcmp0(serverkey,server)) {
+      gtk_combo_box_set_active_iter(combo,&iter);
+      thisserverkey = g_strdup(serverkey);
     }
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(self->combo),confname);
-    if (!strcmp(confname, selected)) {
-      gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i);
-      gl_config_set_config_name(confname);
-      bd_component_set_value(self->component);
-      update = TRUE;
-    }
-    i++;
+    g_free(serverkey);
   }
-#else
-  GtkListStore *store;
-  store = GTK_LIST_STORE(gtk_combo_box_get_model(GTK_COMBO_BOX(self->combo)));
+  g_slist_free(list);
 
-  gtk_list_store_clear(store);
-  gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), "default");
-  for (i = 1,p = gl_config_list_config(); p != NULL; p = g_list_next (p)) {
-    confname = (gchar *)p->data;
-    if (!strcmp(confname, "_default")||!strcmp(confname,"default")) {
-      continue;
-    } 
-    gtk_combo_box_append_text(GTK_COMBO_BOX(self->combo), confname);
-    if (!strcmp(confname, selected)) {
-      gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), i);
-      gl_config_set_config_name(confname);
-      bd_component_set_value(self->component);
-      update = TRUE;
-    }
-    i++;
+  if (thisserverkey != NULL) {
+    bd_component_set_value(self->component,thisserverkey);
+    g_free(thisserverkey);
+  } else {
+    bd_component_set_value(self->component,GL_GCONF_DEFAULT_SERVER);
   }
-#endif
-  if (!update) {
-    gl_config_set_config_name("default");
-    bd_component_set_value(self->component);
-    gtk_combo_box_set_active(GTK_COMBO_BOX(self->combo), 0);
-  }
-  bd_component_set_value(self->component);
-  g_signal_handlers_unblock_by_func(GTK_COMBO_BOX(self->combo),
+
+  g_signal_handlers_unblock_by_func(self->combo,
     boot_dialog_combo_changed, self->combo);
 }
 
 static void
 boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
 {
-  gchar *confname;
+  GtkComboBox *combo;
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  gchar *serverkey;
   self->is_connect = TRUE;
-  
-#ifdef LIBGTK_3_0_0
-  confname = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(self->combo));
-#else
-  confname = gtk_combo_box_get_active_text(GTK_COMBO_BOX(self->combo));
-#endif
 
-  if (confname == NULL || strlen(confname) <= 0) {
-    confname = "default";
+  combo = GTK_COMBO_BOX(self->combo);
+
+  if (gtk_combo_box_get_active_iter(combo,&iter)) {
+    model = gtk_combo_box_get_model(combo);
+    gtk_tree_model_get(model,&iter,1,&serverkey,-1);
+    gl_config_set_server(serverkey);
+    bd_component_value_to_config(self->component,serverkey);
+    g_free(serverkey);
   }
-
-  gl_config_set_config_name(confname);
-  gl_config_save_config_name(confname);
-  bd_component_value_to_config(self->component);
-
   gtk_widget_hide (self->dialog);
   gtk_main_quit ();
 }
@@ -563,6 +516,8 @@ boot_dialog_new ()
   BootDialog *self;
   GtkWidget *dialog, *vbox, *welcome, *notebook, *action_area, *button;
   GtkWidget *label, *hbox, *combo;
+  GtkTreeModel *model;
+  GtkCellRenderer *renderer;
 
   self = g_new0 (BootDialog, 1);
   self->is_connect = FALSE;
@@ -591,11 +546,11 @@ boot_dialog_new ()
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
   
-#ifdef LIBGTK_3_0_0
-  self->combo = combo = gtk_combo_box_text_new();
-#else
-  self->combo = combo = gtk_combo_box_new_text();
-#endif
+  model = GTK_TREE_MODEL(gtk_list_store_new(2,G_TYPE_STRING,G_TYPE_STRING));
+  self->combo = combo = gtk_combo_box_new_with_model(model);
+  renderer = gtk_cell_renderer_text_new();
+  gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo),renderer,TRUE);
+  gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(combo),renderer,"text",0,NULL);
 
   gtk_widget_set_size_request (combo, 0, 30);
   boot_dialog_combo_update (self);

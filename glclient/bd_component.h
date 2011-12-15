@@ -79,8 +79,8 @@ typedef struct {
   GtkWidget *entry, *filesel;
 } file_selection_data;
 
-void bd_component_set_value(BDComponent *self);
-void bd_component_value_to_config(BDComponent *self);
+void bd_component_set_value(BDComponent *self,gchar *serverkey);
+void bd_component_value_to_config(BDComponent *self,gchar* serverkey);
 
 BDComponent * bd_component_new();
 

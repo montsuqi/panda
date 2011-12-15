@@ -635,6 +635,7 @@ typedef struct {
 } GL_CONFIG_ENTRY;
 
 static GL_CONFIG_ENTRY conf_entries[] = {
+{"string", "description",  "default"},
 {"string", "host",         "localhost"},
 {"string", "port",         "8000"},
 {"string", "application",  "panda:orca00"},
@@ -667,27 +668,32 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 };
 
 void
-gl_config_init()
+gl_config_set_default(gchar *serverkey)
 {
   int i;
   gchar *key;
-  gchar *value;
-  GRegex *reg;
+  gchar *v1,*v2;
 
-  g_type_init();
-  GConfCTX = gconf_client_get_default();
-  ConfigName = NULL;
-
-  reg = g_regex_new("\\$HOME",0,0,NULL);
+  /* set default config*/
   for(i=0;conf_entries[i].name != NULL;i++) {
     key = g_strconcat(
-      GL_GCONF_SERVERS,"/",
-      "_default","/", 
+      serverkey,"/", 
       conf_entries[i].name,NULL);
     if (conf_entries[i].type[0] == 's') {
-      value = g_regex_replace(reg,conf_entries[i].value,-1,0,g_get_home_dir(),0,NULL);
-      gconf_client_set_string(GConfCTX,key,value,NULL);
-      g_free(value);
+      if (!g_strcmp0(conf_entries[i].name,"cache")) {
+        v1 = (gchar*)g_get_home_dir();
+        v2 = g_strconcat(v1,"/.glclient/cache",NULL);
+        gconf_client_set_string(GConfCTX,key,v2,NULL);
+        g_free(v2);
+        g_free(v1);
+      } else
+      if (!g_strcmp0(conf_entries[i].name,"user")) {
+        v1 = (gchar*)g_get_user_name();
+        gconf_client_set_string(GConfCTX,key,v1,NULL);
+        g_free(v1);
+      } else {
+        gconf_client_set_string(GConfCTX,key,conf_entries[i].value,NULL);
+      }
     } else {
       gconf_client_set_bool(GConfCTX,key,
         conf_entries[i].value[0] == 'T'?TRUE:FALSE,
@@ -695,21 +701,64 @@ gl_config_init()
     }
     g_free(key);
   }
-  g_regex_unref(reg);
+}
+
+gchar *
+gl_config_new_server(void)
+{
+  gint nid;
+  gchar *serverkey;
+
+  nid = gconf_client_get_int(GConfCTX,GL_GCONF_NEXT_ID,NULL);
+  serverkey = g_strdup_printf("%s/%d",GL_GCONF_SERVERS,nid);
+  gl_config_set_default(serverkey);
+  gconf_client_set_int(GConfCTX,GL_GCONF_NEXT_ID,nid+1,NULL);
+  gconf_client_suggest_sync(GConfCTX,NULL);
+
+  return serverkey;
+}
+
+void
+gl_config_init()
+{
+  gint nid;
+  gchar *lastserver;
+
+  g_type_init();
+  GConfCTX = gconf_client_get_default();
+
+  /* set next id*/
+  nid = gconf_client_get_int(GConfCTX,GL_GCONF_NEXT_ID,NULL);
+  if (nid == 0) {
+    gconf_client_set_int(GConfCTX,GL_GCONF_NEXT_ID,2,NULL);
+  }
+  if (!gconf_client_dir_exists(GConfCTX,GL_GCONF_DEFAULT_SERVER,NULL)) {
+    /* set default config*/
+    gl_config_set_default(GL_GCONF_DEFAULT_SERVER);
+  }
+
+  /* set last server*/
+  lastserver = gconf_client_get_string(GConfCTX,GL_GCONF_SERVER,NULL);
+  if (lastserver == NULL) {
+    gconf_client_set_string(GConfCTX,
+      GL_GCONF_SERVER,GL_GCONF_DEFAULT_SERVER,NULL);
+  } else {
+    g_free(lastserver);
+  }
 }
 
 void
 gl_config_convert_config()
 {
   BDConfig *config;
-  BDConfigSection *section, *lastsection;
+  BDConfigSection *section;
   GList *p;
   gchar *hostname;
   gchar *lasthost;
   gchar *file;
-  gchar *str, *key;
+  gchar *sdata, *key, *serverkey;
   int i;
-  gboolean bvalue;
+  gboolean bdata;
 
   if (gconf_client_get_bool(GConfCTX,GL_GCONF_CONF_CONVERTED,NULL)) {
     return;
@@ -733,153 +782,34 @@ gl_config_convert_config()
       continue;
     }
     section = bd_config_get_section (config, hostname);
+
     if (!strcmp (hostname, "global")) { 
+      /* default */
       lasthost = bd_config_section_get_string (section, "hostname");
-      if (strlen(lasthost) > 0) {
-        lastsection = bd_config_get_section (config, lasthost);
-        hostname = bd_config_section_get_string(lastsection,"description");
-        gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,hostname,NULL);
-      } else {
-        gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,"default",NULL);
-      }
-      hostname = "default";
-    } else {
-      hostname = bd_config_section_get_string(section,"description");
+      continue;
     }
+    serverkey = gl_config_new_server();
     for(i=0;conf_entries[i].name != NULL;i++) {
       key = g_strconcat(
-        GL_GCONF_SERVERS,"/",
-        hostname,"/", 
+        serverkey,"/", 
         conf_entries[i].name,NULL);
       if (conf_entries[i].type[0] == 's') {
-        str = bd_config_section_get_string(section,conf_entries[i].name);
-        gconf_client_set_string(GConfCTX,key,str,NULL);
+        sdata = bd_config_section_get_string(section,conf_entries[i].name);
+        gconf_client_set_string(GConfCTX,key,sdata,NULL);
       } else {
-        bvalue = bd_config_section_get_bool (section, conf_entries[i].name);
-        gconf_client_set_bool(GConfCTX,key,bvalue,NULL);
+        bdata = bd_config_section_get_bool (section, conf_entries[i].name);
+        gconf_client_set_bool(GConfCTX,key,bdata,NULL);
       }
       g_free(key);
     }
+    if (!g_strcmp0(lasthost,hostname)) {
+      gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,serverkey,NULL);
+    }
+    g_free(serverkey);
   }
 #if 0
   g_remove(file);
 #endif
-}
-
-gchar* 
-gl_config_get_string(gchar *key)
-{
-  gchar *ret;
-  gchar *keypath;
-
-  keypath = g_strconcat(
-    GL_GCONF_SERVERS,"/",
-    ConfigName,"/", 
-    key,NULL);
-  ret = gconf_client_get_string(GConfCTX,keypath,NULL);
-  g_free(keypath);
-  if (ret == NULL) {
-    keypath = g_strconcat(
-      GL_GCONF_SERVERS,"/",
-      "_default","/", 
-      key,NULL);
-    ret = gconf_client_get_string(GConfCTX,keypath,NULL);
-    g_free(keypath);
-  }
-  if (ret == NULL) {
-    g_warning("cannot load string config %s",key);
-    ret = "";
-  }
-  return ret;
-}
-
-void 
-gl_config_set_string(gchar *key,const gchar *value)
-{
-  gchar *keypath;
-
-  keypath = g_strconcat(
-    GL_GCONF_SERVERS,"/",
-    ConfigName,"/", 
-    key,NULL);
-  if (!gconf_client_set_string(GConfCTX,keypath,value,NULL)){
-    g_warning("cannot save string config %s",key);
-  }
-  gconf_client_suggest_sync(GConfCTX,NULL);
-  g_free(keypath);
-}
-
-void
-gl_config_get_config_name()
-{
-  gchar *name;
-
-  name = gconf_client_get_string(GConfCTX,GL_GCONF_SERVER,NULL);
-  if (name != NULL){
-    ConfigName = g_strdup(name);
-  } else {
-    ConfigName = g_strdup("default");
-  }
-}
-
-void
-gl_config_set_config_name(gchar *name)
-{
-  if (ConfigName != NULL) {
-    g_free(ConfigName);
-  }
-  ConfigName = g_strdup(name);
-}
-
-void
-gl_config_save_config_name(gchar *name)
-{
-  gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,name,NULL);
-  gconf_client_suggest_sync(GConfCTX,NULL);
-}
-
-gboolean 
-gl_config_get_bool(gchar *key)
-{
-  gboolean ret = FALSE;
-  gchar *keypath;
-  GConfValue *value;
-
-  keypath = g_strconcat(
-    GL_GCONF_SERVERS,"/",
-    ConfigName,"/", 
-    key,NULL);
-  value = gconf_client_get(GConfCTX,keypath,NULL);
-  if (value != NULL) {
-    ret = gconf_client_get_bool(GConfCTX,keypath,NULL);
-    g_free(keypath);
-    gconf_value_free(value);
-  } else {
-    g_free(keypath);
-    keypath = g_strconcat(
-      GL_GCONF_SERVERS,"/",
-      "_default","/", 
-      key,NULL);
-    ret = gconf_client_get_bool(GConfCTX,keypath,NULL);
-    g_free(keypath);
-  }
-  return ret;
-}
-
-void 
-gl_config_set_bool(gchar *key,gboolean value)
-{
-  gchar *keypath;
-
-  keypath = g_strconcat(
-    GL_GCONF_SERVERS,"/",
-    ConfigName,"/", 
-    key,NULL);
-  if (!gconf_client_set_bool(GConfCTX,keypath,value,NULL)) {
-    g_warning("cannot save bool config %s",key);
-  }
-  gconf_client_suggest_sync(GConfCTX,NULL);
-  g_free(keypath);
 }
 
 gboolean 
@@ -894,32 +824,127 @@ gl_config_exists(gchar *name)
 }
 
 void 
-gl_config_remove_config(gchar *name)
+gl_config_remove_server(gchar *serverkey)
 {
-  gchar *dir;
   GConfUnsetFlags flags = 0;
   
-  dir = g_strconcat(GL_GCONF_SERVERS,"/",name,NULL);
-  gconf_client_recursive_unset(GConfCTX,dir,flags,NULL);
+  gconf_client_recursive_unset(GConfCTX,serverkey,flags,NULL);
   gconf_client_suggest_sync(GConfCTX,NULL);
-  g_free(dir);
 }
 
-GList* 
-gl_config_list_config()
+void 
+gl_config_set_server(gchar *serverkey)
 {
-  GList *list = NULL;
-  GSList *slist,*l;
-  gchar *name;
+  gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,serverkey,NULL);
+  gconf_client_suggest_sync(GConfCTX,NULL);
+}
 
-  slist = gconf_client_all_dirs(GConfCTX,GL_GCONF_SERVERS,NULL);
-  for(l=slist;l!=NULL;l=l->next) {
-    name = g_strdup((char*)(l->data + strlen(GL_GCONF_SERVERS) + strlen("/")));
-    list = g_list_append(list,name);
-    g_free(l->data);
+gchar* 
+gl_config_get_server()
+{
+  gchar *server;
+
+  server = gconf_client_get_string(GConfCTX,GL_GCONF_SERVER,NULL);
+  if (!gconf_client_dir_exists(GConfCTX,server,NULL)) {
+    g_free(server);
+    server = g_strdup(GL_GCONF_DEFAULT_SERVER);
   }
-  g_slist_free(slist);
-  return list;
+  return server;
+}
+
+void 
+gl_config_set_string(
+  const gchar *serverkey,
+  const gchar *key,
+  const gchar *value)
+{
+  gchar *_key;
+
+  _key = g_strconcat(
+    serverkey,"/", 
+    key,NULL);
+  gconf_client_set_string(GConfCTX,_key,value,NULL);
+  g_free(_key);
+  gconf_client_suggest_sync(GConfCTX,NULL);
+}
+
+gchar* 
+gl_config_get_string(
+  const gchar *serverkey,
+  const gchar *key)
+{
+  gchar *_key;
+  gchar *ret;
+
+  _key = g_strconcat(
+    serverkey,"/", 
+    key,NULL);
+  ret = gconf_client_get_string(GConfCTX,_key,NULL);
+  if (ret == NULL) {
+    g_strdup("");
+  }
+  g_free(_key);
+  return ret;
+}
+
+void 
+gl_config_set_bool(
+  const gchar *serverkey,
+  const gchar *key,
+  gboolean value)
+{
+  gchar *_key;
+
+  _key = g_strconcat(
+    serverkey,"/", 
+    key,NULL);
+  gconf_client_set_bool(GConfCTX,_key,value,NULL);
+  g_free(_key);
+  gconf_client_suggest_sync(GConfCTX,NULL);
+}
+
+gboolean
+gl_config_get_bool(
+  const gchar *serverkey,
+  const gchar *key)
+{
+  gchar *_key;
+  gboolean ret;
+
+  _key = g_strconcat(
+    serverkey,"/", 
+    key,NULL);
+  ret = gconf_client_get_bool(GConfCTX,_key,NULL);
+  g_free(_key);
+  return ret;
+}
+
+gint
+gl_config_server_list_cmp(
+  gconstpointer a,
+  gconstpointer b)
+{
+  gchar *aa,*bb;
+
+  aa = (gchar*)a;
+  bb = (gchar*)b;
+
+  if (strlen(aa) == strlen(bb)){
+    return g_strcmp0(aa,bb);
+  } else if (strlen(aa) < strlen(bb)) {
+    return -1;
+  } else {
+    return 1;
+  }
+}
+
+GSList *
+gl_config_get_server_list()
+{
+  GSList *list;
+
+  list = gconf_client_all_dirs(GConfCTX,GL_GCONF_SERVERS,NULL);
+  return g_slist_sort(list,gl_config_server_list_cmp);
 }
 
 /*************************************************************

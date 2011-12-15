@@ -140,28 +140,38 @@ on_timer_toggle (GtkWidget *widget, BDComponent *self) {
  * boot dialog component
  ********************************************************************/
 void
-bd_component_set_value (BDComponent *self) 
+bd_component_set_value (BDComponent *self,gchar *serverkey) 
 {
-  // basic
-  gtk_entry_set_text (GTK_ENTRY (self->host), 
-    gl_config_get_string("host"));
-  gtk_entry_set_text (GTK_ENTRY (self->port), 
-    gl_config_get_string("port"));
+  gchar *value;
 
-  gtk_entry_set_text (GTK_ENTRY (self->application), 
-    gl_config_get_string("application"));
+  // basic
+  value = gl_config_get_string(serverkey,"host");
+  gtk_entry_set_text (GTK_ENTRY (self->host), value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"port");
+  gtk_entry_set_text (GTK_ENTRY (self->port),value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"application");
+  gtk_entry_set_text (GTK_ENTRY (self->application),value);
+  g_free(value);
 
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1), 
-    gl_config_get_bool("protocol_v1"));
+    gl_config_get_bool(serverkey,"protocol_v1"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), 
-    gl_config_get_bool("protocol_v2"));
-  gtk_entry_set_text (GTK_ENTRY (self->user),
-    gl_config_get_string("user"));
+    gl_config_get_bool(serverkey,"protocol_v2"));
+
+  value = gl_config_get_string(serverkey,"user");
+  gtk_entry_set_text (GTK_ENTRY (self->user),value);
+  g_free(value);
+
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->savepassword), 
-    gl_config_get_bool("savepassword"));
-  if ( gl_config_get_bool("savepassword") ) {
-    gtk_entry_set_text (GTK_ENTRY (self->password),
-      gl_config_get_string ("password"));
+    gl_config_get_bool(serverkey,"savepassword"));
+  if ( gl_config_get_bool(serverkey,"savepassword") ) {
+    value = gl_config_get_string(serverkey,"password");
+    gtk_entry_set_text (GTK_ENTRY (self->password),value);
+    g_free(value);
   } else {
     gtk_entry_set_text (GTK_ENTRY (self->password), "");
   }
@@ -169,76 +179,99 @@ bd_component_set_value (BDComponent *self)
 #ifdef USE_SSL
   // ssl
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->ssl),
-    gl_config_get_bool ("ssl"));
+    gl_config_get_bool(serverkey,"ssl"));
   gtk_widget_set_sensitive(self->ssl_container, 
-    gl_config_get_bool ("ssl"));  
-  gtk_entry_set_text (GTK_ENTRY (self->CApath),
-    gl_config_get_string ("CApath"));
-  gtk_entry_set_text (GTK_ENTRY (self->CAfile),
-    gl_config_get_string ("CAfile"));
-  gtk_entry_set_text (GTK_ENTRY (self->key),
-    gl_config_get_string ("key"));
-  gtk_entry_set_text (GTK_ENTRY (self->cert),
-    gl_config_get_string ("cert"));
-  gtk_entry_set_text (GTK_ENTRY (self->ciphers),
-    gl_config_get_string ("ciphers"));
+    gl_config_get_bool(serverkey,"ssl"));  
+
+  value = gl_config_get_string(serverkey,"CApath");
+  gtk_entry_set_text (GTK_ENTRY (self->CApath),value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"CAfile");
+  gtk_entry_set_text (GTK_ENTRY (self->CAfile),value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"key");
+  gtk_entry_set_text (GTK_ENTRY (self->key),value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"cert");
+  gtk_entry_set_text (GTK_ENTRY (self->cert),value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"ciphers");
+  gtk_entry_set_text (GTK_ENTRY (self->ciphers),value);
+  g_free(value);
 #ifdef USE_PKCS11
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
-    gl_config_get_bool ("pkcs11"));  
+    gl_config_get_bool(serverkey,"pkcs11"));  
   gtk_widget_set_sensitive(self->pkcs11_container, 
-    gl_config_get_bool ("pkcs11"));  
-  gtk_entry_set_text (GTK_ENTRY (self->pkcs11_lib),
-    gl_config_get_string ("pkcs11_lib"));
-  gtk_entry_set_text (GTK_ENTRY (self->slot),
-    gl_config_get_string ("slot")); 
+    gl_config_get_bool(serverkey,"pkcs11"));  
+
+  value = gl_config_get_string(serverkey,"pkcs11_lib");
+  gtk_entry_set_text (GTK_ENTRY (self->pkcs11_lib),value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"slot"); 
+  gtk_entry_set_text (GTK_ENTRY (self->slot),value);
+  g_free(value);
 #endif
 #endif
 
   // other
-  gtk_entry_set_text (GTK_ENTRY (self->cache),
-    gl_config_get_string ("cache"));
-  gtk_entry_set_text (GTK_ENTRY (self->style), 
-    gl_config_get_string ("style"));
-  gtk_entry_set_text (GTK_ENTRY (self->gtkrc),
-    gl_config_get_string ("gtkrc"));
+  value = gl_config_get_string(serverkey,"cache");
+  gtk_entry_set_text (GTK_ENTRY (self->cache),value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"style");
+  gtk_entry_set_text (GTK_ENTRY (self->style),value);
+  g_free(value);
+
+  value = gl_config_get_string(serverkey,"gtkrc");
+  gtk_entry_set_text (GTK_ENTRY (self->gtkrc),value);
+  g_free(value);
+
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
-    gl_config_get_bool ("mlog"));
+    gl_config_get_bool(serverkey,"mlog"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
-    gl_config_get_bool ("keybuff"));
+    gl_config_get_bool(serverkey,"keybuff"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
-    gl_config_get_bool ("timer"));
-  gtk_entry_set_text (GTK_ENTRY (self->timerperiod),
-    gl_config_get_string ("timerperiod"));
+    gl_config_get_bool(serverkey,"timer"));
+
+  value = gl_config_get_string(serverkey,"timerperiod");
+  gtk_entry_set_text (GTK_ENTRY (self->timerperiod),value);
+  g_free(value);
+
   gtk_widget_set_sensitive(self->timer_container, 
-    gl_config_get_bool("timer"));  
+    gl_config_get_bool(serverkey,"timer"));  
 }
 
 void
-bd_component_value_to_config(BDComponent *self)
+bd_component_value_to_config(BDComponent *self,gchar *serverkey)
 {
   gchar *password;
   gboolean savepassword;
 
-  gl_config_set_string ("host",
+  gl_config_set_string(serverkey,"host",
     gtk_entry_get_text (GTK_ENTRY (self->host)));
-  gl_config_set_string ("port",
+  gl_config_set_string(serverkey,"port",
     gtk_entry_get_text (GTK_ENTRY (self->port)));
-  gl_config_set_string ("application",
+  gl_config_set_string(serverkey,"application",
     gtk_entry_get_text (GTK_ENTRY (self->application)));
-  gl_config_set_bool("protocol_v1",
+  gl_config_set_bool(serverkey,"protocol_v1",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v1)));
-  gl_config_set_bool("protocol_v2",
+  gl_config_set_bool(serverkey,"protocol_v2",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
-  gl_config_set_string ("user",
+  gl_config_set_string(serverkey,"user",
     gtk_entry_get_text (GTK_ENTRY (self->user)));
   password = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
   savepassword = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->savepassword));
   if (savepassword) {
-    gl_config_set_string ("password", password);
+    gl_config_set_string(serverkey,"password", password);
   } else {
-    gl_config_set_string ("password", "");
+    gl_config_set_string(serverkey,"password", "");
   }
-  gl_config_set_bool ("savepassword", savepassword);
+  gl_config_set_bool(serverkey,"savepassword", savepassword);
 
   Host = strdup(gtk_entry_get_text (GTK_ENTRY (self->host)));
   PortNum = strdup(gtk_entry_get_text (GTK_ENTRY (self->port)));
@@ -254,17 +287,17 @@ bd_component_value_to_config(BDComponent *self)
 
 #ifdef USE_SSL
   // ssl
-  gl_config_set_bool ("ssl",
+  gl_config_set_bool(serverkey,"ssl",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
-  gl_config_set_string ("CApath",
+  gl_config_set_string(serverkey,"CApath",
     gtk_entry_get_text (GTK_ENTRY (self->CApath)));
-  gl_config_set_string ("CAfile",
+  gl_config_set_string(serverkey,"CAfile",
     gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
-  gl_config_set_string ("key",
+  gl_config_set_string(serverkey,"key",
     gtk_entry_get_text (GTK_ENTRY (self->key)));
-  gl_config_set_string ("cert",
+  gl_config_set_string(serverkey,"cert",
     gtk_entry_get_text (GTK_ENTRY (self->cert)));
-  gl_config_set_string ("ciphers",
+  gl_config_set_string(serverkey,"ciphers",
     gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
 
   fSsl = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl));
@@ -279,11 +312,11 @@ bd_component_value_to_config(BDComponent *self)
   Ciphers = strdup(gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
 
 #ifdef  USE_PKCS11
-  gl_config_set_bool
-    ("pkcs11", gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11)));
-  gl_config_set_string ("pkcs11_lib",
+  gl_config_set_bool(serverkey,"pkcs11", 
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11)));
+  gl_config_set_string(serverkey,"pkcs11_lib",
     gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
-  gl_config_set_string ("slot",
+  gl_config_set_string(serverkey,"slot",
     gtk_entry_get_text (GTK_ENTRY (self->slot)));
 
   fPKCS11 = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11));
@@ -294,19 +327,19 @@ bd_component_value_to_config(BDComponent *self)
 #endif
 
   // other
-  gl_config_set_string ("cache",
+  gl_config_set_string(serverkey,"cache",
     gtk_entry_get_text (GTK_ENTRY (self->cache)));
-  gl_config_set_string ("style",
+  gl_config_set_string(serverkey,"style",
     gtk_entry_get_text (GTK_ENTRY (self->style)));
-  gl_config_set_string ("gtkrc",
+  gl_config_set_string(serverkey,"gtkrc",
     gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
-  gl_config_set_bool ("mlog",
+  gl_config_set_bool(serverkey,"mlog",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
-  gl_config_set_bool ("keybuff",
+  gl_config_set_bool(serverkey,"keybuff",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
-  gl_config_set_bool ("timer",
+  gl_config_set_bool(serverkey,"timer",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer)));
-  gl_config_set_string ("timerperiod",
+  gl_config_set_string(serverkey,"timerperiod",
     gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
 
   Cache = strdup(gtk_entry_get_text (GTK_ENTRY (self->cache)));
