@@ -219,10 +219,6 @@ bd_component_set_value (BDComponent *self,gchar *serverkey)
 #endif
 
   // other
-  value = gl_config_get_string(serverkey,"cache");
-  gtk_entry_set_text (GTK_ENTRY (self->cache),value);
-  g_free(value);
-
   value = gl_config_get_string(serverkey,"style");
   gtk_entry_set_text (GTK_ENTRY (self->style),value);
   g_free(value);
@@ -327,8 +323,6 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
 #endif
 
   // other
-  gl_config_set_string(serverkey,"cache",
-    gtk_entry_get_text (GTK_ENTRY (self->cache)));
   gl_config_set_string(serverkey,"style",
     gtk_entry_get_text (GTK_ENTRY (self->style)));
   gl_config_set_string(serverkey,"gtkrc",
@@ -342,7 +336,6 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
   gl_config_set_string(serverkey,"timerperiod",
     gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
 
-  Cache = strdup(gtk_entry_get_text (GTK_ENTRY (self->cache)));
   Style = strdup(gtk_entry_get_text (GTK_ENTRY (self->style)));
   Gtkrc = strdup(gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
   fMlog = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog));
@@ -594,22 +587,6 @@ bd_component_new()
 
   ypos = 0;
 
-  label = gtk_label_new (_("Cache"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
-  self->cache = entry;
-  button = gtk_button_new_with_label(_("Open"));
-  g_signal_connect(G_OBJECT(button), "clicked",
-             G_CALLBACK(open_dir_chooser), (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
   label = gtk_label_new (_("Style"));
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   entry = gtk_entry_new ();
@@ -702,7 +679,7 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
-  label = gtk_label_new ("Copyright (C) 2009 ORCA Project");
+  label = gtk_label_new ("Copyright (C) 2011 ORCA Project");
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
   gtk_container_add (GTK_CONTAINER (alignment), label);
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,

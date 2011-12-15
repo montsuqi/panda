@@ -60,7 +60,6 @@ struct _BDComponent {
 // other 
   GtkWidget *othertable;
   GtkWidget *mlog;
-  GtkWidget *cache;
   GtkWidget *style;
   GtkWidget *gtkrc;
   GtkWidget *keybuff;

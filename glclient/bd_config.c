@@ -641,7 +641,6 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "application",  "panda:orca00"},
 {"bool",   "protocol_v1",  "T"},
 {"bool",   "protocol_v2",  "F"},
-{"string", "cache",        "$HOME/.glclient/cache"},
 {"string", "style",        ""},
 {"string", "gtkrc",        ""},
 {"bool",   "mlog",         "F"},
@@ -672,7 +671,7 @@ gl_config_set_default(gchar *serverkey)
 {
   int i;
   gchar *key;
-  gchar *v1,*v2;
+  gchar *v;
 
   /* set default config*/
   for(i=0;conf_entries[i].name != NULL;i++) {
@@ -680,17 +679,10 @@ gl_config_set_default(gchar *serverkey)
       serverkey,"/", 
       conf_entries[i].name,NULL);
     if (conf_entries[i].type[0] == 's') {
-      if (!g_strcmp0(conf_entries[i].name,"cache")) {
-        v1 = (gchar*)g_get_home_dir();
-        v2 = g_strconcat(v1,"/.glclient/cache",NULL);
-        gconf_client_set_string(GConfCTX,key,v2,NULL);
-        g_free(v2);
-        g_free(v1);
-      } else
       if (!g_strcmp0(conf_entries[i].name,"user")) {
-        v1 = (gchar*)g_get_user_name();
-        gconf_client_set_string(GConfCTX,key,v1,NULL);
-        g_free(v1);
+        v = (gchar*)g_get_user_name();
+        gconf_client_set_string(GConfCTX,key,v,NULL);
+        g_free(v);
       } else {
         gconf_client_set_string(GConfCTX,key,conf_entries[i].value,NULL);
       }
