@@ -671,7 +671,6 @@ gl_config_set_default(gchar *serverkey)
 {
   int i;
   gchar *key;
-  gchar *v;
 
   /* set default config*/
   for(i=0;conf_entries[i].name != NULL;i++) {
@@ -680,9 +679,7 @@ gl_config_set_default(gchar *serverkey)
       conf_entries[i].name,NULL);
     if (conf_entries[i].type[0] == 's') {
       if (!g_strcmp0(conf_entries[i].name,"user")) {
-        v = (gchar*)g_get_user_name();
-        gconf_client_set_string(GConfCTX,key,v,NULL);
-        g_free(v);
+        gconf_client_set_string(GConfCTX,key,g_get_user_name(),NULL);
       } else {
         gconf_client_set_string(GConfCTX,key,conf_entries[i].value,NULL);
       }
@@ -705,7 +702,9 @@ gl_config_new_server(void)
   serverkey = g_strdup_printf("%s/%d",GL_GCONF_SERVERS,nid);
   gl_config_set_default(serverkey);
   gconf_client_set_int(GConfCTX,GL_GCONF_NEXT_ID,nid+1,NULL);
+#if 0
   gconf_client_suggest_sync(GConfCTX,NULL);
+#endif
 
   return serverkey;
 }
@@ -821,14 +820,18 @@ gl_config_remove_server(gchar *serverkey)
   GConfUnsetFlags flags = 0;
   
   gconf_client_recursive_unset(GConfCTX,serverkey,flags,NULL);
+#if 0
   gconf_client_suggest_sync(GConfCTX,NULL);
+#endif
 }
 
 void 
 gl_config_set_server(gchar *serverkey)
 {
   gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,serverkey,NULL);
+#if 0
   gconf_client_suggest_sync(GConfCTX,NULL);
+#endif
 }
 
 gchar* 
@@ -857,7 +860,9 @@ gl_config_set_string(
     key,NULL);
   gconf_client_set_string(GConfCTX,_key,value,NULL);
   g_free(_key);
+#if 0
   gconf_client_suggest_sync(GConfCTX,NULL);
+#endif
 }
 
 gchar* 
@@ -892,7 +897,9 @@ gl_config_set_bool(
     key,NULL);
   gconf_client_set_bool(GConfCTX,_key,value,NULL);
   g_free(_key);
+#if 0
   gconf_client_suggest_sync(GConfCTX,NULL);
+#endif
 }
 
 gboolean

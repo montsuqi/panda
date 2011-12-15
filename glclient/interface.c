@@ -259,12 +259,10 @@ UI_InitStyle(void)
 	gchar *home;
 
 	StyleParserInit();
-	home = g_get_home_dir();
-	gltermrc = g_strconcat(home,"/gltermrc",NULL);
+	gltermrc = g_strconcat(g_get_home_dir(),"/gltermrc",NULL);
 	StyleParser(gltermrc);
-	g_free(home);
-	g_free(gltermrc);
 	StyleParser("gltermrc");
+	g_free(gltermrc);
 	if (  Style  != NULL  ) {
 		StyleParser(Style);
 	}
