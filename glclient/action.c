@@ -445,13 +445,18 @@ ENTER_FUNC;
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
 		wlist = g_list_find(DialogStack, window);
 		if (wlist != NULL && wlist->next != NULL && wlist->next->data != NULL) {
-			gtk_window_set_transient_for((GtkWindow *)wlist->next->data, NULL);
+			gtk_window_set_transient_for(GTK_WINDOW(wlist->next->data), NULL);
 		}
 		DialogStack = g_list_remove(DialogStack, window);
-		for (i = g_list_length(DialogStack) - 1; i >= 1; i--) {
-			gtk_window_set_transient_for(
-				(GtkWindow *)g_list_nth_data(DialogStack, i),
-				(GtkWindow *)g_list_nth_data(DialogStack, i - 1));
+		for (i = g_list_length(DialogStack) - 1; i >= 0; i--) {
+			if (i >0) {
+				gtk_window_set_transient_for(
+					(GtkWindow *)g_list_nth_data(DialogStack, i),
+					(GtkWindow *)g_list_nth_data(DialogStack, i - 1));
+			} else {
+				gtk_window_set_transient_for(
+					GTK_WINDOW(DialogStack->data), GTK_WINDOW(TopWindow));
+			}
 		}
 	}
 LEAVE_FUNC;
