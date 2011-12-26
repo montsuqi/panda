@@ -661,7 +661,7 @@ ScaleWidget(
 	y = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"y"));
 	width = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"width"));
 	height = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"height"));
-	if (width > 0 && height > 0) {
+	if (width >= 0 && height >= 0) {
 		_x = (int)(x * TopWindowScale.h);
 		_y = (int)(y * TopWindowScale.v);
 		_width = (int)(width * TopWindowScale.h);
