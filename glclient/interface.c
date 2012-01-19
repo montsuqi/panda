@@ -243,6 +243,7 @@ UI_Init(int argc,
 #endif
 	glade_init();
 
+
 	WindowTable = NewNameHash();
 }
 
@@ -256,7 +257,6 @@ extern	void
 UI_InitStyle(void)
 {
 	gchar *gltermrc;
-	gchar *home;
 
 	StyleParserInit();
 	gltermrc = g_strconcat(g_get_home_dir(),"/gltermrc",NULL);
@@ -282,6 +282,9 @@ UI_AskPass(char	*buf,
 extern	void
 UI_Main(void)
 {
+	if (fIMKanaOff) {
+		gtk_panda_entry_force_feature_off();
+	}
 	gtk_main();
 }
 

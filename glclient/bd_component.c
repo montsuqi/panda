@@ -233,6 +233,8 @@ bd_component_set_value (BDComponent *self,gchar *serverkey)
     gl_config_get_bool(serverkey,"keybuff"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
     gl_config_get_bool(serverkey,"timer"));
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->imkanaoff),
+    gl_config_get_bool(serverkey,"im_kana_off"));
 
   value = gl_config_get_string(serverkey,"timerperiod");
   gtk_entry_set_text (GTK_ENTRY (self->timerperiod),value);
@@ -331,6 +333,8 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
   gl_config_set_bool(serverkey,"keybuff",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
+  gl_config_set_bool(serverkey,"im_kana_off",
+    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->imkanaoff)));
   gl_config_set_bool(serverkey,"timer",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer)));
   gl_config_set_string(serverkey,"timerperiod",
@@ -340,6 +344,7 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
   Gtkrc = strdup(gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
   fMlog = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog));
   fKeyBuff = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff));
+  fIMKanaOff = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff));
   fTimer = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer));
   TimerPeriod = strdup(gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
 }
@@ -631,6 +636,14 @@ bd_component_new()
   check = gtk_check_button_new_with_label (_("Enable Keybuffer"));
   gtk_container_add (GTK_CONTAINER (alignment), check);
   self->keybuff = check;
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label (_("Disable IM control and Kana input"));
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->imkanaoff = check;
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;

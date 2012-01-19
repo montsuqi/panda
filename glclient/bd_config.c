@@ -645,6 +645,7 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "gtkrc",        ""},
 {"bool",   "mlog",         "F"},
 {"bool",   "keybuf",       "F"},
+{"bool",   "im_kana_off",  "F"},
 {"string", "user",         "user"},
 {"bool",   "savepassword", "T"},
 {"string", "password",     ""},
