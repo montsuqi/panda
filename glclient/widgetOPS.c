@@ -314,6 +314,11 @@ GetPandaTable(
 	GtkWidget	*widget,
 	_Table		*data)
 {
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	int i,j;
+	gchar *text;
+	gchar **rdata;
 ENTER_FUNC;
 	data->trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
 		"send_data_row"));
@@ -321,6 +326,18 @@ ENTER_FUNC;
 		"send_data_column"));
 	data->tvalue = g_strdup((gchar*)g_object_get_data(G_OBJECT(widget),
 		"send_data_value"));
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
+	gtk_tree_model_get_iter_first(model,&iter);
+	i = 0;
+	do {
+		rdata = (gchar**)(g_list_nth_data(data->tdata,i));
+		for(j=0;rdata[j]!=NULL;j++) {
+			gtk_tree_model_get(model,&iter,j,&text,-1);
+			g_free(rdata[j]);
+			rdata[j] = text;
+		}
+		i+=1;
+	} while(gtk_tree_model_iter_next(model,&iter));
 LEAVE_FUNC;
 }
 
@@ -341,7 +358,7 @@ ENTER_FUNC;
 	}
 	gtk_panda_table_set_fgcolors(GTK_PANDA_TABLE(widget),data->fgcolors);
 	gtk_panda_table_set_bgcolors(GTK_PANDA_TABLE(widget),data->bgcolors);
-	if (data->trow > 0 && data->tcolumn > 0) {
+	if (data->trow >= 0 && data->tcolumn >= 0) {
 		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget), 
 			data->trow, data->tcolumn, TRUE, data->trowattr, 0.0); 
 	}

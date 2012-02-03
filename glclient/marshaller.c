@@ -1091,9 +1091,9 @@ RecvPandaCList(
 	int		count
 	,		nitem
 	,		num
-	,		rnum
 	,		from
 	,		row
+	,		rnum
 	,		column
 	,		rowattr
 	,		i
@@ -1226,7 +1226,9 @@ SendPandaTable(
 	NETFILE	*fp)
 {
 	char		iname[SIZE_BUFF];
+	char		**rdata,**rdataname;
 	 _Table		*attrs;
+	int 		i,j;
 
 ENTER_FUNC;
 	attrs = (_Table *)data->attrs;
@@ -1244,6 +1246,18 @@ ENTER_FUNC;
 	GL_SendPacketClass(fp,GL_ScreenData);
 	GL_SendName(fp,iname);
 	SendStringData(fp,GL_TYPE_VARCHAR ,attrs->tvalue);
+
+	if (attrs->tdata != NULL) {
+		for(i=0;i<g_list_length(attrs->tdata);i++) {
+			rdata = (gchar**)(g_list_nth_data(attrs->tdata,i));
+			rdataname = (gchar**)(g_list_nth_data(attrs->tdataname,i));
+			for(j=0;rdata[j]!=NULL;j++) {
+				GL_SendPacketClass(fp,GL_ScreenData);
+				GL_SendName(fp,rdataname[j]);
+				SendStringData(fp,GL_TYPE_VARCHAR ,rdata[j]);
+			}
+		}
+	}
 LEAVE_FUNC;
 	return TRUE;
 }
@@ -1257,11 +1271,11 @@ RecvPandaTable(
 	gchar	name[SIZE_BUFF]
 	,		iname[SIZE_BUFF]
 	,		buff[SIZE_BUFF];
-	gchar	**rdata;
+	gchar	**rdata,**rdataname;
 	gint	rowattr
 	,		nitem
 	,		num
-	,		rnum
+	,		ncolumn
 	,		i
 	,		j
 	,		k;
@@ -1291,6 +1305,13 @@ ENTER_FUNC;
 			}
 			g_list_free(attrs->tdata);
 			attrs->tdata = NULL;
+		}
+		if (attrs->tdataname != NULL) {
+			for(i=0;i<g_list_length(attrs->tdataname);i++) {
+				g_strfreev(g_list_nth_data(attrs->tdataname,i));
+			}
+			g_list_free(attrs->tdataname);
+			attrs->tdataname = NULL;
 		}
 	}
 
@@ -1370,15 +1391,19 @@ ENTER_FUNC;
 				attrs->tdata = NULL;
 				for	( j = 0 ; j < num ; j ++ ) {
 					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-					rnum = GL_RecvInt(fp);
-					rdata = g_malloc0(sizeof(gchar*)*(rnum+1));
-                    rdata[rnum] = NULL;
-					for	( k = 0 ; k < rnum ; k ++ ) {
+					ncolumn = GL_RecvInt(fp);
+					rdata = g_malloc0(sizeof(gchar*)*(ncolumn+1));
+                    rdata[ncolumn] = NULL;
+					rdataname = g_malloc0(sizeof(gchar*)*(ncolumn+1));
+                    rdataname[ncolumn] = NULL;
+					for	( k = 0 ; k < ncolumn ; k ++ ) {
 						GL_RecvName(fp, sizeof(iname), iname);
+                        rdataname[k] = g_strdup_printf("%s.%s[%d].%s",data->name,name,j,iname);
 						(void)RecvStringData(fp,buff,SIZE_BUFF);
 						rdata[k] = g_strdup(buff);
 					}
 					attrs->tdata = g_list_append(attrs->tdata,rdata);
+					attrs->tdataname = g_list_append(attrs->tdataname,rdataname);
 				}
 			}
 		}

@@ -152,6 +152,7 @@ typedef struct __Table{
 	gchar 		**fgcolors;
 	gchar 		**bgcolors;
 	GList		*tdata;
+	GList		*tdataname;
 } _Table;
 
 typedef struct __Calendar{
