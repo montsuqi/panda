@@ -1270,6 +1270,7 @@ RecvPandaTable(
 	Bool	ret;
 	gchar	name[SIZE_BUFF]
 	,		iname[SIZE_BUFF]
+	,		iiname[SIZE_BUFF]
 	,		buff[SIZE_BUFF];
 	gchar	**rowdata
 	,		**namerowdata
@@ -1282,8 +1283,7 @@ RecvPandaTable(
 	,		i
 	,		j
 	,		k 
-	,		l
-	,		m;
+	,		l;
 	_Table	*attrs;
 
 ENTER_FUNC;
@@ -1376,54 +1376,50 @@ ENTER_FUNC;
 				attrs->fgdata = NULL;
 				attrs->bgdata = NULL;
 				for	( j = 0 ; j < nrows ; j ++ ) {
-					int nitems;
-
 					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-					nitems = GL_RecvInt(fp);
-					for	( k = 0 ; k < nitems ; k ++ ) {
+					ncolumns = GL_RecvInt(fp);
+
+					rowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
+                	rowdata[ncolumns] = NULL;
+					namerowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
+                	namerowdata[ncolumns] = NULL;
+					fgrowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
+                	fgrowdata[ncolumns] = NULL;
+					bgrowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
+                	bgrowdata[ncolumns] = NULL;
+
+					for	( k = 0 ; k < ncolumns ; k ++ ) {
+						int nitems;
+
 						GL_RecvName(fp, sizeof(iname), iname);	/*columndata*/
-						GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-						ncolumns = GL_RecvInt(fp);
+						GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+						nitems = GL_RecvInt(fp);
 
-						rowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
-                    	rowdata[ncolumns] = NULL;
-						namerowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
-                    	namerowdata[ncolumns] = NULL;
-						fgrowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
-                    	fgrowdata[ncolumns] = NULL;
-						bgrowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
-                    	bgrowdata[ncolumns] = NULL;
 
-						for(l=0;l<ncolumns;l++) {
-							int nitems;
-
-							GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-							nitems = GL_RecvInt(fp);
-							for(m=0;m<nitems;m++) {
-								GL_RecvName(fp, sizeof(iname), iname);
-								if (!stricmp(iname,"celldata")){
-									(void)RecvStringData(fp,buff,SIZE_BUFF);
-									rowdata[l] = g_strdup(buff);
-                        			namerowdata[l] = g_strdup_printf("%s.rowdata[%d].columndata[%d].celldata",data->name,j,l);
-								} else
-								if (!stricmp(iname,"fgcolor")){
-									(void)RecvStringData(fp,buff,SIZE_BUFF);
-									fgrowdata[l] = g_strdup(buff);
-								} else 
-								if (!stricmp(iname,"bgcolor")){
-									(void)RecvStringData(fp,buff,SIZE_BUFF);
-									bgrowdata[l] = g_strdup(buff);
-								} else {
-									Warning("does not reach here");
-									(void)RecvStringData(fp,buff,SIZE_BUFF);
-								}
+						for(l=0;l<nitems;l++) {
+							GL_RecvName(fp, sizeof(iiname), iiname);
+							if (!stricmp(iiname,"celldata")){
+								(void)RecvStringData(fp,buff,SIZE_BUFF);
+								rowdata[k] = g_strdup(buff);
+                        		namerowdata[k] = g_strdup_printf("%s.rowdata[%d].%s.celldata",data->name,j,iname);
+							} else
+							if (!stricmp(iiname,"fgcolor")){
+								(void)RecvStringData(fp,buff,SIZE_BUFF);
+								fgrowdata[k] = g_strdup(buff);
+							} else 
+							if (!stricmp(iiname,"bgcolor")){
+								(void)RecvStringData(fp,buff,SIZE_BUFF);
+								bgrowdata[k] = g_strdup(buff);
+							} else {
+								Warning("does not reach here");
+								(void)RecvStringData(fp,buff,SIZE_BUFF);
 							}
 						}
-						attrs->tabledata = g_list_append(attrs->tabledata,rowdata);
-						attrs->namedata = g_list_append(attrs->namedata,namerowdata);
-						attrs->fgdata = g_list_append(attrs->fgdata,fgrowdata);
-						attrs->bgdata = g_list_append(attrs->bgdata,bgrowdata);
 					}
+					attrs->tabledata = g_list_append(attrs->tabledata,rowdata);
+					attrs->namedata = g_list_append(attrs->namedata,namerowdata);
+					attrs->fgdata = g_list_append(attrs->fgdata,fgrowdata);
+					attrs->bgdata = g_list_append(attrs->bgdata,bgrowdata);
 				}
 			}
 		}
