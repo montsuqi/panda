@@ -149,10 +149,10 @@ typedef struct __Table{
 	float		trowattr;
 	int			tcolumn;
 	gchar 		*tvalue;
-	gchar 		**fgcolors;
-	gchar 		**bgcolors;
-	GList		*tdata;
-	GList		*tdataname;
+	GList		*tabledata;
+	GList		*namedata;
+	GList		*fgdata;
+	GList		*bgdata;
 } _Table;
 
 typedef struct __Calendar{
