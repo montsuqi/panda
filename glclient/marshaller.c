@@ -1380,13 +1380,13 @@ ENTER_FUNC;
 					ncolumns = GL_RecvInt(fp);
 
 					rowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
-                	rowdata[ncolumns] = NULL;
+					rowdata[ncolumns] = NULL;
 					namerowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
-                	namerowdata[ncolumns] = NULL;
+					namerowdata[ncolumns] = NULL;
 					fgrowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
-                	fgrowdata[ncolumns] = NULL;
+					fgrowdata[ncolumns] = NULL;
 					bgrowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
-                	bgrowdata[ncolumns] = NULL;
+					bgrowdata[ncolumns] = NULL;
 
 					for	( k = 0 ; k < ncolumns ; k ++ ) {
 						int nitems;
@@ -1401,7 +1401,7 @@ ENTER_FUNC;
 							if (!stricmp(iiname,"celldata")){
 								(void)RecvStringData(fp,buff,SIZE_BUFF);
 								rowdata[k] = g_strdup(buff);
-                        		namerowdata[k] = g_strdup_printf("%s.rowdata[%d].%s.celldata",data->name,j,iname);
+								namerowdata[k] = g_strdup_printf("%s.rowdata[%d].%s.celldata",data->name,j,iname);
 							} else
 							if (!stricmp(iiname,"fgcolor")){
 								(void)RecvStringData(fp,buff,SIZE_BUFF);
