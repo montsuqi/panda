@@ -26,6 +26,8 @@
 extern	gboolean	select_all(GtkWidget *widget, GdkEventFocus *event, gpointer user_data);
 extern	gboolean	unselect_all(GtkWidget *widget, GdkEventFocus *event, gpointer user_data);
 extern	gboolean	press_filter(GtkWidget *widget, GdkEventButton *event, gpointer user_data);
+extern  gboolean	keypress_filter(GtkWidget *widget,GdkEventKey *event,char *next);
+extern  gboolean	switch_page(GtkNotebook *widget,gpointer *page,gint now_pageno,char *user_data); 
 extern	void	send_event(GtkWidget *widget, char *event);
 extern	void	send_event_if_changed(GtkWidget *widget, GdkEventFocus *focus, char *event);
 extern	void	send_event_when_idle(GtkWidget *widget, char *event);
@@ -35,5 +37,19 @@ extern	void	togglebutton_toggled(GtkWidget *entry, gpointer user_data);
 extern	void	entry_set_editable(GtkEntry *entry, gpointer user_data);
 extern	void	map_event(GtkWidget *widget, gpointer user_data);
 extern	void	window_close(GtkWidget *widget, gpointer user_data);
+extern	void	clist_send_event(GtkWidget *widget,gint row,gint column,char *event);
+extern	void	table_send_event(GtkWidget *widget,gint row,gint column,gchar *value,gchar *event);
+extern  void	changed(GtkWidget *entry,gpointer user_data);
+extern  void	text_changed(GtkWidget *entry,gpointer user_data);
+extern  void	button_toggled(GtkWidget *button,gpointer user_data);
+extern  void	selection_changed(GtkWidget *widget,gpointer user_data);
+extern	void	fileentry_changed(GtkWidget *widget,gpointer user_data);
+extern  void	click_column(GtkWidget *button,gpointer user_data);
+extern  void	set_focus(GtkWidget  *widget,gpointer user_data); 
+extern  void	day_selected(GtkCalendar *widget,gpointer user_data); 
+extern  void	window_destroy(GtkWidget *widget,gpointer user_data);
+#ifdef  GTK_PANDA_TYPE_HTML
+extern  void	open_browser(GtkPandaHTML *html,void *data1,void *data2);
+#endif
 
 #endif

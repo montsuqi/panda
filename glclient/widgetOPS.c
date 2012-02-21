@@ -642,6 +642,49 @@ LEAVE_FUNC;
 }
 
 static	void
+SetFileChooserButton(
+	GtkWidget			*widget,
+	WidgetData			*wdata,
+	_FileChooserButton	*data)
+{
+	GtkFileChooserButton 	*fcb;
+ENTER_FUNC;
+	SetCommon(widget,wdata);
+	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
+	gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(fcb));
+	_AddChangedWidget(widget);
+LEAVE_FUNC;
+}
+
+static	void
+GetFileChooserButton(
+	GtkWidget			*widget,
+	_FileChooserButton	*data)
+{
+	GtkFileChooserButton *fcb;
+	GError *error = NULL;
+	gchar *contents;
+	gchar *fname;
+	gsize size;
+ENTER_FUNC;
+	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
+	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fcb));
+	if (fname == NULL) {
+		data->filename = NULL;
+		return;
+	}
+	data->filename = g_path_get_basename(fname);
+	if(!g_file_get_contents(fname, 
+			&contents, &size, &error)) {
+		g_error_free(error);
+		return;
+	}
+	data->binary->body = contents;
+	data->binary->size = data->binary->asize = data->binary->ptr = size;
+LEAVE_FUNC;
+}
+
+static	void
 SavePreviousFolder(
 	GtkWidget	*widget,
 	WidgetData	*wdata,
@@ -832,6 +875,8 @@ GetWidgetType(
 			return WIDGET_TYPE_FRAME;
 		} else if (type == GTK_TYPE_SCROLLED_WINDOW) {
 			return WIDGET_TYPE_SCROLLED_WINDOW;
+		} else if (type == GTK_TYPE_FILE_CHOOSER_BUTTON) {
+			return WIDGET_TYPE_FILE_CHOOSER_BUTTON;
 		} else if (type == GTK_PANDA_TYPE_PIXMAP) {
 			return WIDGET_TYPE_PIXMAP;
 		} else if (type == GTK_PANDA_TYPE_FILE_ENTRY) {
@@ -889,6 +934,9 @@ GetWidgetData(WidgetData	*data)
 		break;
 	case WIDGET_TYPE_SCROLLED_WINDOW:
 		GetScrolledWindow(widget, (_ScrolledWindow*)data->attrs);
+		break;
+	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
+		GetFileChooserButton(widget, (_FileChooserButton*)data->attrs);
 		break;
 // gtk+
 	case WIDGET_TYPE_FILE_ENTRY:
@@ -977,6 +1025,9 @@ UpdateWidget(WidgetData *data)
 		break;
 	case WIDGET_TYPE_SCROLLED_WINDOW:
 		SetScrolledWindow(widget, data,(_ScrolledWindow *)data->attrs);
+		break;
+	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
+		SetFileChooserButton(widget, data,(_FileChooserButton *)data->attrs);
 		break;
 // Gnome
 	case WIDGET_TYPE_FILE_ENTRY:

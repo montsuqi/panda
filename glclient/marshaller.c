@@ -699,6 +699,87 @@ LEAVE_FUNC;
 	return TRUE;
 }
 
+static	Bool
+RecvFileChooserButton(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool				ret;
+	char				name[SIZE_BUFF]
+	,					buff[SIZE_BUFF];
+	int					nitem
+	,					i;
+	_FileChooserButton	*attrs;
+
+ENTER_FUNC;
+	ret = FALSE;
+	attrs = (_FileChooserButton *)data->attrs;
+	if (attrs == NULL){
+		// new data
+		attrs = g_new0(_FileChooserButton, 1);
+		data->attrs = attrs;
+		attrs->binary = NewLBS();
+		attrs->filename = NULL;
+	} else {
+		// reset data
+		FreeLBS(attrs->binary);
+		attrs->binary = NewLBS();
+		if (attrs->filename != NULL) {
+			g_free(attrs->filename);
+		}
+		attrs->filename = NULL;
+	}
+
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
+			if (!stricmp(name,"objectdata")) {
+				LargeByteString *lbs;
+
+				lbs = NewLBS();
+				RecvBinaryData(fp, lbs);
+				FreeLBS(lbs);
+			} else if (!stricmp(name,"filename")){
+				RecvStringData(fp,buff,SIZE_BUFF);
+			} else {
+				Warning("does not reach here");
+				RecvStringData(fp,buff,SIZE_BUFF);
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
+SendFileChooserButton(
+	WidgetData	*data,
+	NETFILE		*netfp)
+{
+	char				iname[SIZE_BUFF];
+	_FileChooserButton	*attrs;
+
+ENTER_FUNC;
+	attrs = (_FileChooserButton *)data->attrs;
+	
+	GL_SendPacketClass(netfp,GL_ScreenData);
+	sprintf(iname,"%s.objectdata", data->name);
+	GL_SendName(netfp,iname);
+	SendBinaryData(netfp, GL_TYPE_OBJECT, attrs->binary);
+
+	GL_SendPacketClass(netfp,GL_ScreenData);
+	sprintf(iname,"%s.filename", data->name);
+	GL_SendName(netfp,iname);
+	SendStringData(netfp,GL_TYPE_VARCHAR ,attrs->filename);
+LEAVE_FUNC;
+	return TRUE;
+}
+
+
 /******************************************************************************/
 /* gtk+panada marshaller                                                      */
 /******************************************************************************/
@@ -1659,6 +1740,8 @@ RecvWidgetData(
 		ret = RecvFrame(data, fp); break;
 	case WIDGET_TYPE_SCROLLED_WINDOW:
 		ret = RecvScrolledWindow(data, fp); break;
+	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
+		ret = RecvFileChooserButton(data, fp); break;
 // gnome
 	case WIDGET_TYPE_FILE_ENTRY:
 		ret = RecvFileEntry(data, fp); break;
@@ -1723,6 +1806,8 @@ ENTER_FUNC;
 		SendProgressBar(data, fp); break;
 	case WIDGET_TYPE_SCROLLED_WINDOW:
 		SendScrolledWindow(data, fp); break;
+	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
+		SendFileChooserButton(data, fp); break;
 // gnome
 	case WIDGET_TYPE_FILE_ENTRY:
 		SendFileEntry(data, fp); break;

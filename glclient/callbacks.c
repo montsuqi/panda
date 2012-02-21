@@ -44,7 +44,7 @@
 #include	"glterm.h"
 #include	"debug.h"
 
-G_MODULE_EXPORT extern	gboolean
+extern	gboolean
 select_all(
 	GtkWidget	*widget,
 	GdkEventFocus	*event,
@@ -58,7 +58,7 @@ LEAVE_FUNC;
 	return (FALSE);
 }
 
-G_MODULE_EXPORT extern	gboolean
+extern	gboolean
 unselect_all(
 	GtkWidget	*widget,
 	GdkEventFocus	*event,
@@ -73,7 +73,7 @@ LEAVE_FUNC;
 	return (FALSE);
 }
 
-G_MODULE_EXPORT extern	gboolean
+extern	gboolean
 keypress_filter(
 	GtkWidget	*widget,
 	GdkEventKey	*event,
@@ -98,7 +98,7 @@ LEAVE_FUNC;
 	return	(FALSE);
 }
 
-G_MODULE_EXPORT extern	gboolean
+extern	gboolean
 press_filter(
 	GtkWidget	*widget,
 	GdkEventButton	*event,
@@ -165,7 +165,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 send_event(
 	GtkWidget	*widget,
 	char		*event)
@@ -229,7 +229,7 @@ LEAVE_FUNC;
 	return FALSE;
 }
 
-G_MODULE_EXPORT extern void
+extern void
 send_event_when_idle(
 	GtkWidget	*widget,
 	char		*event)
@@ -264,7 +264,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-G_MODULE_EXPORT extern void
+extern void
 clist_send_event(
 	GtkWidget	*widget,
 	gint		row,
@@ -274,7 +274,7 @@ clist_send_event(
 	send_event(widget, "SELECT");
 }
 
-G_MODULE_EXPORT extern void
+extern void
 table_send_event(
 	GtkWidget	*widget,
 	gint		row,
@@ -300,7 +300,7 @@ table_send_event(
 	send_event(widget, event);
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 changed(
 	GtkWidget	*entry,
 	gpointer	user_data)
@@ -308,7 +308,7 @@ changed(
 	AddChangedWidget((GtkWidget *)entry);
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 entry_changed(
 	GtkWidget	*entry,
 	gpointer	user_data)
@@ -316,7 +316,7 @@ entry_changed(
 	AddChangedWidget((GtkWidget *)entry);
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 text_changed(
 	GtkWidget	*entry,
 	gpointer	user_data)
@@ -324,7 +324,7 @@ text_changed(
 	AddChangedWidget((GtkWidget *)entry);
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 button_toggled(
 	GtkWidget	*button,
 	gpointer	user_data)
@@ -332,7 +332,7 @@ button_toggled(
 	AddChangedWidget((GtkWidget *)button);
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 selection_changed(
 	GtkWidget	*widget,
 	gpointer	user_data)
@@ -340,7 +340,7 @@ selection_changed(
 	AddChangedWidget(widget);
 }
 
-G_MODULE_EXPORT extern void
+extern void
 fileentry_changed(
 	GtkWidget	*widget,
 	gpointer	user_data)
@@ -354,7 +354,7 @@ fileentry_changed(
     }
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 click_column(
 	GtkWidget	*button,
 	gpointer	user_data)
@@ -362,7 +362,7 @@ click_column(
 	AddChangedWidget((GtkWidget *)button);
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 map_event(
 	GtkWidget	*widget,
 	gpointer	user_data)
@@ -370,7 +370,7 @@ map_event(
 	//fprintf(stderr,"map_event\n");
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 set_focus(
 	GtkWidget	*widget,
 	gpointer	user_data)
@@ -379,7 +379,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 day_selected(
 	GtkCalendar	*widget,
 	gpointer	user_data)
@@ -393,7 +393,7 @@ day_selected(
 #endif
 }
 
-G_MODULE_EXPORT extern	gboolean
+extern	gboolean
 switch_page(
 	GtkNotebook	*widget,
 	gpointer		*page,
@@ -417,7 +417,7 @@ switch_page(
 	return rc;
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 window_close(
 	GtkWidget	*widget,
 	gpointer	user_data)
@@ -434,7 +434,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-G_MODULE_EXPORT extern	void
+extern	void
 window_destroy(
 	GtkWidget	*widget,
 	gpointer	user_data)
@@ -444,7 +444,7 @@ window_destroy(
 }
 
 #ifdef	GTK_PANDA_TYPE_HTML
-G_MODULE_EXPORT extern	void
+extern	void
 open_browser(
 	GtkPandaHTML	*html,
 	void *data1,
