@@ -648,10 +648,18 @@ SetFileChooserButton(
 	_FileChooserButton	*data)
 {
 	GtkFileChooserButton 	*fcb;
+	gchar *folder;
+	char *longname;
 ENTER_FUNC;
 	SetCommon(widget,wdata);
 	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
 	gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(fcb));
+	longname = (char *)glade_get_widget_long_name(widget);
+	folder = GetWidgetCache(longname);
+	if (folder == NULL) {
+		folder = "";
+	}
+	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(fcb),folder);
 	_AddChangedWidget(widget);
 LEAVE_FUNC;
 }
@@ -666,6 +674,8 @@ GetFileChooserButton(
 	gchar *contents;
 	gchar *fname;
 	gsize size;
+	gchar *folder;
+	char *longname;
 ENTER_FUNC;
 	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fcb));
@@ -681,6 +691,12 @@ ENTER_FUNC;
 	}
 	data->binary->body = contents;
 	data->binary->size = data->binary->asize = data->binary->ptr = size;
+	longname = (char *)glade_get_widget_long_name(widget);
+	folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(fcb));
+	if (folder != NULL) {
+		SetWidgetCache(longname,folder);
+		g_free(folder);
+	}
 LEAVE_FUNC;
 }
 
