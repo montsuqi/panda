@@ -397,25 +397,40 @@ extern	gboolean
 switch_page(
 	GtkNotebook	*widget,
 	gpointer		*page,
-	gint			now_pageno,
+	gint			new_pageno,
 	char			*user_data)
 {
-	int			*pageno;
+	int			pageno;
 	gboolean	rc;
 
-	pageno = (int *)g_object_get_data(G_OBJECT(widget), "pageno");
+	pageno = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "pageno"));
 	AddChangedWidget((GtkWidget *)widget);
-	if ((user_data != NULL ) &&
-		(pageno != NULL) &&
-		(now_pageno != *pageno)){
+	if (pageno != new_pageno) {
 		g_signal_stop_emission_by_name (G_OBJECT (widget), "switch_page");
-		*pageno = now_pageno;
+		g_object_set_data(G_OBJECT(widget), "pageno",
+			GINT_TO_POINTER(new_pageno));
 		rc = TRUE;	
 	} else {
 		rc = FALSE;
 	}
 	return rc;
 }
+
+extern	gboolean
+notebook_send_event(
+	GtkNotebook	*widget,
+	gpointer		*page,
+	gint			new_pageno,
+	char			*user_data)
+{
+	AddChangedWidget(GTK_WIDGET(widget));
+	g_object_set_data(G_OBJECT(widget),"new_pageno",
+		GINT_TO_POINTER(new_pageno));
+	send_event(GTK_WIDGET(widget),"switched");
+	return FALSE;
+}
+
+
 
 extern	void
 window_close(

@@ -523,14 +523,12 @@ SetNotebook(
 	WidgetData	*wdata,
 	_Notebook			*data)
 {
-	int	*pageno;
 ENTER_FUNC;
 	SetCommon(widget,wdata);
-	if ((pageno = (int *)g_object_get_data(G_OBJECT(widget),"pageno")) == NULL) {
-		pageno = xmalloc(sizeof(int));
-		g_object_set_data(G_OBJECT(widget),"pageno",pageno);
+	if (!fV47) {
+		g_object_set_data(G_OBJECT(widget),"pageno",
+			GINT_TO_POINTER(data->pageno));
 	}
-	*pageno = data->pageno;
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),data->pageno);
 LEAVE_FUNC;
 }
@@ -540,12 +538,13 @@ GetNotebook(
 	GtkWidget			*widget,
 	_Notebook			*data)
 {
-	int *pageno;
-
 ENTER_FUNC;
-	pageno = (int *)g_object_get_data(G_OBJECT(widget), "pageno");
-	if (pageno != NULL) {
-		data->pageno = *pageno;
+	if (fV47) {
+		data->pageno = GPOINTER_TO_INT(
+			g_object_get_data(G_OBJECT(widget),"new_pageno"));
+	} else {
+		data->pageno = GPOINTER_TO_INT(
+			g_object_get_data(G_OBJECT(widget),"pageno"));
 	}
 LEAVE_FUNC;
 }

@@ -499,6 +499,7 @@ ENTER_FUNC;
 	if (data->fWindow) {
 	dbgmsg("show primari window\n");
 		gtk_widget_show(TopWindow);
+		gtk_widget_set_sensitive(TopWindow,TRUE);
 		_GrabFocus(TopWindow);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
 			SwitchWindow(window);
@@ -526,6 +527,7 @@ ENTER_FUNC;
 		SetBGColor(window);
 
 		gtk_widget_show(window);
+		gtk_widget_set_sensitive(window,TRUE);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
 		for(i = 0; i < g_list_length(DialogStack); i++) {
 			if ((gpointer)window != g_list_nth_data(DialogStack, i)) {
@@ -534,6 +536,7 @@ ENTER_FUNC;
 		}
 		if (g_list_find(DialogStack, window) == NULL) {
 			DialogStack = g_list_append(DialogStack, window);
+			gtk_widget_set_sensitive(parent,FALSE);
 			gtk_window_set_transient_for(GTK_WINDOW(window), 
 				GTK_WINDOW(parent));
 		}
