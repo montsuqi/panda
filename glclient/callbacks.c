@@ -426,7 +426,7 @@ notebook_send_event(
 	AddChangedWidget(GTK_WIDGET(widget));
 	g_object_set_data(G_OBJECT(widget),"new_pageno",
 		GINT_TO_POINTER(new_pageno));
-	send_event(GTK_WIDGET(widget),"switched");
+	send_event(GTK_WIDGET(widget),"SWITCH");
 	return FALSE;
 }
 
