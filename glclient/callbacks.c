@@ -394,6 +394,21 @@ day_selected(
 }
 
 extern	gboolean
+no_switch_page(
+	GtkNotebook	*widget,
+	gpointer		*page,
+	gint			new_pageno,
+	char			*user_data)
+{
+	if (fInRecv) {
+		return FALSE;
+	} else {
+		g_signal_stop_emission_by_name (G_OBJECT (widget), "switch_page");
+		return TRUE;
+	}
+}
+
+extern	gboolean
 switch_page(
 	GtkNotebook	*widget,
 	gpointer		*page,
