@@ -415,11 +415,12 @@ SetLabel(
 {
 ENTER_FUNC;
 	SetCommon(widget,wdata);
-	if (data->text != NULL && 
-		pango_parse_markup(data->text,-1,0,NULL,NULL,NULL,NULL)) {
-		gtk_label_set_markup(GTK_LABEL(widget),data->text);
-	} else {
-		gtk_label_set_text(GTK_LABEL(widget),data->text);
+	if (data->text != NULL) {
+		if (pango_parse_markup(data->text,-1,0,NULL,NULL,NULL,NULL)) {
+			gtk_label_set_markup(GTK_LABEL(widget),data->text);
+		} else {
+			gtk_label_set_text(GTK_LABEL(widget),data->text);
+		}
 	}
 LEAVE_FUNC;
 }

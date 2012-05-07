@@ -167,7 +167,9 @@ ENTER_FUNC;
 	} else {
 		// reset data
 		g_free(attrs->text);
+		attrs->text = NULL;
 		g_free(attrs->text_name);
+		attrs->text_name = NULL;
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
