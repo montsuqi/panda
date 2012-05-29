@@ -173,14 +173,14 @@ send_event(
 	char		*wname;
 	static Bool	ignore_event = FALSE;
 ENTER_FUNC;
-	if		(  !fInRecv &&  !ignore_event ) {
+	wname = GetWindowName(widget);
+	if		(  !fInRecv &&  !ignore_event && !strcmp(wname,ThisWindowName)) {
 		fInRecv = TRUE;
 
 		StopEventTimer();
 		StopTimerWidgetAll();
 
 		ShowBusyCursor(widget);
-		wname = GetWindowName(widget);
 		/* send event */
 		if		(  event  !=  NULL  ) {
 			SendEvent(FPCOMM(glSession),
