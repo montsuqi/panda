@@ -106,8 +106,11 @@ CheckDesktop(char *filename)
 	if (filename == NULL || strlen(filename) == 0) {
 		return 0;
 	}
-	suffix = GetSuffix(filename);
-	template = g_hash_table_lookup(DesktopAppTable, suffix);
+	template = g_hash_table_lookup(DesktopAppTable, filename);
+	if (template == NULL) {
+		suffix = GetSuffix(filename);
+		template = g_hash_table_lookup(DesktopAppTable, suffix);
+    }
 	if (template != NULL) {
 		return 1;
 	} else {

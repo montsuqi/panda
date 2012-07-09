@@ -111,6 +111,7 @@ cb_open(
 	FileInfo *info)
 {
 	OpenDesktop(info->filename,info->binary);
+	gtk_widget_show_all(info->dialog);
 }
 
 void
@@ -119,6 +120,7 @@ cb_save(
 	FileInfo *info)
 {
 	show_save_dialog(info->widget,info->filename,info->binary);
+	gtk_widget_show_all(info->dialog);
 }
 
 void
