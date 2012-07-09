@@ -98,6 +98,38 @@ show_save_dialog(
 	gtk_widget_destroy (dialog);
 }
 
+typedef struct {
+	GtkWidget *dialog;
+	GtkWidget *widget;
+	char *filename;
+	LargeByteString *binary;
+}FileInfo;
+
+void
+cb_open(
+	GtkWidget *button,
+	FileInfo *info)
+{
+	OpenDesktop(info->filename,info->binary);
+}
+
+void
+cb_save(
+	GtkWidget *button,
+	FileInfo *info)
+{
+	show_save_dialog(info->widget,info->filename,info->binary);
+}
+
+void
+cb_close(
+	GtkWidget *button,
+	FileInfo *info)
+{
+	gtk_widget_hide(info->dialog);
+	gtk_main_quit();
+}
+
 void
 show_download_dialog(
 	GtkWidget		*widget,
@@ -106,8 +138,12 @@ show_download_dialog(
 {
 	GtkWindow *parent;
 	GtkWidget *dialog;
+	GtkWidget *open_button;
+	GtkWidget *save_button;
+	GtkWidget *close_button;
 	char hbytes[64];
-	int response;
+	FileInfo *info;
+
 	
 	parent = (GtkWindow *)g_list_nth_data(DialogStack,
 		g_list_length(DialogStack)-1);
@@ -122,25 +158,32 @@ show_download_dialog(
 		_("Do you open this file or save it?\n\n"
 		"File Name:%s\n"
 		"Size:%s"),filename,hbytes);
-	gtk_dialog_add_buttons(GTK_DIALOG(dialog),
-		GTK_STOCK_OPEN, GTK_RESPONSE_YES,
-		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-		GTK_STOCK_SAVE, GTK_RESPONSE_NO,
-		NULL);
+
+	info = g_new0(FileInfo,1);
+	info->dialog = dialog;
+	info->widget = widget;
+	info->filename = filename;
+	info->binary = binary;
+
+	open_button = gtk_dialog_add_button(GTK_DIALOG(dialog),
+		GTK_STOCK_OPEN, GTK_RESPONSE_YES);
+	save_button = gtk_dialog_add_button(GTK_DIALOG(dialog),
+		GTK_STOCK_SAVE, GTK_RESPONSE_NO);
+	close_button = gtk_dialog_add_button(GTK_DIALOG(dialog),
+		GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE);
 
 	if (!CheckDesktop(filename)) {
 		gtk_dialog_set_response_sensitive(GTK_DIALOG(dialog),
 			GTK_RESPONSE_YES,FALSE);
 	}
-
-	response = gtk_dialog_run(GTK_DIALOG(dialog));
-	switch (response) {
-	case GTK_RESPONSE_YES:
-		OpenDesktop(filename,binary);
-		break;
-	case GTK_RESPONSE_NO:
-		show_save_dialog(widget,filename,binary);
-		break;
-	}
+	g_signal_connect(G_OBJECT(open_button),"clicked",
+		G_CALLBACK(cb_open),info);
+	g_signal_connect(G_OBJECT(save_button),"clicked",
+		G_CALLBACK(cb_save),info);
+	g_signal_connect(G_OBJECT(close_button),"clicked",
+		G_CALLBACK(cb_close),info);
+	gtk_widget_show_all(dialog);
+	gtk_main();
+	g_free(info);
 	gtk_widget_destroy(dialog);
 }
