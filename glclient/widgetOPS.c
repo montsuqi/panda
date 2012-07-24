@@ -233,22 +233,22 @@ ENTER_FUNC;
 	SetCommon(widget,wdata);
 
 	// items
+	gtk_widget_hide(widget);
 	gtk_panda_clist_clear(GTK_PANDA_CLIST(widget));
 
 	for	( j = 0 ; j < g_list_length(data->clistdata) ; j ++ ) {
-		if ((j >= data->from) && ((j - data->from) < data->count)) {
+		if (j < data->count) {
 			rdata = g_list_nth_data(data->clistdata,j);
 			gtk_panda_clist_append(GTK_PANDA_CLIST(widget), rdata);
 		}
 	}
+	gtk_widget_show(widget);
 	for	( j = 0 ; data->states[j] != NULL ; j ++ ) {
-		if ((j >= data->from) && ((j - data->from) < data->count)) {
+		if (j < data->count) {
 			if (*(data->states[j]) == 'T') {
-				gtk_panda_clist_select_row(GTK_PANDA_CLIST(widget),
-					(j - data->from),0);
+				gtk_panda_clist_select_row(GTK_PANDA_CLIST(widget),j,0);
 			} else {
-				gtk_panda_clist_unselect_row(GTK_PANDA_CLIST(widget),
-					(j - data->from),0);
+				gtk_panda_clist_unselect_row(GTK_PANDA_CLIST(widget),j,0);
 			}
 		}
 	}

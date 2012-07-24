@@ -135,7 +135,6 @@ typedef struct __Combo{
 
 typedef struct __CList{
 	int 	count;
-	int 	from;
 	int 	row;
 	float 	rowattr;
 	int 	column;

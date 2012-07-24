@@ -1140,7 +1140,7 @@ ENTER_FUNC;
 	attrs = (_CList *)data->attrs;
 	for	( i = 0; attrs->states[i] != NULL; i ++ ) {
 		sprintf(iname, "%s.%s[%d]", 
-			data->name, attrs->states_name, i + attrs->from);
+			data->name, attrs->states_name, i);
 		GL_SendPacketClass(fp,GL_ScreenData);
 		GL_SendName(fp,iname);
 		if(*(attrs->states[i]) == 'T') {
@@ -1174,7 +1174,6 @@ RecvPandaCList(
 	int		count
 	,		nitem
 	,		num
-	,		from
 	,		row
 	,		rnum
 	,		column
@@ -1211,7 +1210,6 @@ ENTER_FUNC;
 
 		nitem = GL_RecvInt(fp);
 		count = -1;
-		from = 0;
 		row = 0;
 
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -1225,10 +1223,6 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"count")  ) {
 				RecvIntegerData(fp,&count);
 				attrs->count = count;
-			} else
-			if		(  !stricmp(name,"from")  ) {
-				RecvIntegerData(fp,&from);
-				attrs->from = from;
 			} else
 			if		(  !stricmp(name,"row")  ) {
 				RecvIntegerData(fp,&row);
