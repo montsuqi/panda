@@ -44,16 +44,6 @@
 #include	"message.h"
 #include	"debug.h"
 
-#ifdef KEYVALUE_GLOBAL_LOCK
-#	define	KV_LockRead(db)		/**/
-#	define	KV_LockWrite(db)	/**/
-#	define	KV_UnLock(db)		/**/
-#else
-#	define	KV_LockRead(db)		dbgmsg("KV_LockRead");LockRead(db)
-#	define	KV_LockWrite(db)	dbgmsg("KV_LockWrite");LockWrite(db)
-#	define	KV_UnLock(db)		dbgmsg("KV_UnLock");UnLock(db)
-#endif
-
 extern	KV_State *
 InitKV(void)
 {
@@ -115,7 +105,6 @@ KV_GetValue(
 	int max;
 	char *val;
 ENTER_FUNC;
-	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL ||
 			(num = GetItemLongName(args, "num")) == NULL ||
@@ -141,7 +130,6 @@ ENTER_FUNC;
 			rc = MCP_OK;
 		}
 	}
-	KV_UnLock(state);
 LEAVE_FUNC;
 	return	rc;
 }
@@ -193,7 +181,6 @@ KV_SetValue(
 	GHashTable	*record;
 	int rc;
 ENTER_FUNC;
-	KV_LockWrite(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL ||
 			(num = GetItemLongName(args, "num")) == NULL ||
@@ -209,7 +196,6 @@ ENTER_FUNC;
 			rc = MCP_OK;
 		}
 	}
-	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
 }
@@ -223,7 +209,6 @@ KV_SetValueALL(
 	ValueStruct	*num;
 	int rc;
 ENTER_FUNC;
-	KV_LockWrite(state);
 	rc = MCP_BAD_OTHER;
 	if ((num = GetItemLongName(args, "num")) == NULL ||
 			(query = GetItemLongName(args, "query")) == NULL) {
@@ -233,7 +218,6 @@ ENTER_FUNC;
 		g_hash_table_foreach(state->table, (GHFunc)SetValue, args);
 		rc = MCP_OK;
 	}
-	KV_UnLock(state);
 LEAVE_FUNC;
 	return	rc;
 }
@@ -271,7 +255,6 @@ KV_ListKey(
 	GHashTable	*record;
 	int rc;
 ENTER_FUNC;
-	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL ||
 			(num = GetItemLongName(args, "num")) == NULL ||
@@ -288,7 +271,6 @@ ENTER_FUNC;
 			rc = MCP_OK;
 		}
 	}
-	KV_UnLock(state);
 LEAVE_FUNC;
 	return	rc;
 }
@@ -302,7 +284,6 @@ KV_ListEntry(
 	ValueStruct	*query;
 	int rc;
 ENTER_FUNC;
-	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
 	if ((num = GetItemLongName(args, "num")) == NULL ||
 			(query = GetItemLongName(args, "query")) == NULL) {
@@ -313,7 +294,6 @@ ENTER_FUNC;
 		g_hash_table_foreach(state->table, (GHFunc)KeyToKey, args);
 		rc = MCP_OK;
 	}
-	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
 }
@@ -326,7 +306,6 @@ KV_NewEntry(
 	ValueStruct	*id;
 	int rc;
 ENTER_FUNC;
-	KV_LockWrite(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL) {
 		rc = MCP_BAD_ARG;
@@ -337,7 +316,6 @@ ENTER_FUNC;
 		}
 		rc = MCP_OK;
 	}
-	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
 }
@@ -352,7 +330,6 @@ KV_DeleteEntry(
 	gpointer	oval;
 	int	rc;
 ENTER_FUNC;
-	KV_LockWrite(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL) {
 		rc = MCP_BAD_ARG;
@@ -366,7 +343,6 @@ ENTER_FUNC;
 			rc = MCP_OK;
 		}
 	}
-	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
 }
@@ -399,7 +375,6 @@ KV_Dump(
 	int rc;
 	ValueStruct *id;
 ENTER_FUNC;
-	KV_LockRead(state);
 	rc = MCP_BAD_OTHER;
 	if ((id = GetItemLongName(args, "id")) == NULL) {
 		rc = MCP_BAD_ARG;
@@ -413,7 +388,6 @@ ENTER_FUNC;
 			Warning("fopen failure");
 		}
 	}
-	KV_UnLock(state);
 LEAVE_FUNC;
 	return rc;
 }

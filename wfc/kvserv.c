@@ -33,7 +33,6 @@
 #include	<sys/stat.h>
 #include	<glib.h>
 
-
 #include	"libmondai.h"
 #include	"enum.h"
 #include	"net.h"
@@ -43,14 +42,6 @@
 #include	"kvserv.h"
 #include	"message.h"
 #include	"debug.h"
-
-#ifdef KEYVALUE_GLOBAL_LOCK
-#	define	KVSERVE_Lock(ctx)	LockWrite(ctx)
-#	define	KVSERVE_UnLock(ctx)	UnLock(ctx)
-#else
-#	define	KVSERVE_Lock(ctx)	/**/
-#	define	KVSERVE_UnLock(ctx)	/**/
-#endif
 
 extern	void
 PassiveKV(
@@ -64,7 +55,7 @@ PassiveKV(
 	size_t size;
 	size_t count;
 ENTER_FUNC;
-	KVSERVE_Lock(state);
+	LockWrite(state);
 	c = RecvPacketClass(fp); 	ON_IO_ERROR(fp,badio);
 	rc = MCP_BAD_FUNC;
 	buff = NewLBS();
@@ -125,6 +116,6 @@ ENTER_FUNC;
 		FreeValueStruct(args);
 	}
 badio:
-	KVSERVE_UnLock(state);
+	UnLock(state);
 LEAVE_FUNC;
 }
