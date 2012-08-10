@@ -40,6 +40,7 @@
 #include	"socket.h"
 #define		_MONAPI
 #include	"monapi.h"
+#include    "message.h"
 #include	"debug.h"
 
 //FIXME ; move another header
