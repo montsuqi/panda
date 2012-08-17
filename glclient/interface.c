@@ -276,7 +276,15 @@ UI_AskPass(char	*buf,
 	size_t		buflen,
 	const char	*prompt)
 {
-	return askpass(buf,buflen,prompt);
+#ifdef USE_SSL
+	int ret;
+
+	ret = askpass(buf,buflen,prompt);
+	Passphrase = StrDup(buf);
+	return ret;
+#else
+	return 0;
+#endif
 }
 
 extern	void

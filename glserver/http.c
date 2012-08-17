@@ -520,6 +520,29 @@ ParseReqAuth(HTTP_REQUEST *req)
 	char *dec;
 	gsize size;
 
+#ifdef	USE_SSL
+	if (fSsl && !strcasecmp(Auth.protocol,"ssl")){
+        char *subject;
+        char user[SIZE_USER+1];
+        if (!req->fp->peer_cert) {
+			MessageLog("can not get peer certificate");
+			req->status = HTTP_INTERNAL_SERVER_ERROR;
+			return;
+		}
+        subject = GetSubjectFromCertificate(req->fp->peer_cert);
+        AuthLoadX509(Auth.file);
+		if (AuthX509(subject, user)) {
+			req->user = StrDup(user);
+			req->pass = StrDup("");
+		} else {
+			MessageLogPrintf("[%s@%s] Authorization Error",subject,req->term);
+			req->status = HTTP_UNAUTHORIZED;
+		}
+        xfree(subject);
+		return;
+	}
+#endif
+
 	head = (char *)g_hash_table_lookup(req->header_hash,"Authorization");
 	if (head == NULL) {
 		req->status = HTTP_UNAUTHORIZED;
@@ -680,9 +703,13 @@ _HTTP_Method(
 		return FALSE;
 	}
 
-	if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
-		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
-		req->status = HTTP_UNAUTHORIZED;
+	if (fSsl && !strcasecmp(Auth.protocol,"ssl")) {
+		// SSL AUTH
+	} else {
+		if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
+			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
+			req->status = HTTP_UNAUTHORIZED;
+		}
 	}
 	if (req->status != HTTP_OK) {
 		SendResponse(req, NULL);

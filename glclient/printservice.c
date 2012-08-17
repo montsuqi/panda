@@ -68,10 +68,11 @@ DoPrint(
 	FILE *fp;
 	int fd;
 	mode_t mode;
-	char url[1024+1];
-	char fname[256];
-	char userpass[256];
-	char buf[1024];
+	gchar *scheme;
+	gchar *url;
+	gchar *fname;
+	gchar *userpass;
+	gchar *msg;
 	CURL *curl;
 	CURLcode ret;
 	int doretry;
@@ -80,23 +81,90 @@ DoPrint(
 	doretry = 0;
 	curl = curl_easy_init();
 	if (!curl) {
-		printf("couldn't init curl\n");
+		Warning("couldn't init curl\n");
 		return doretry;
 	}
 
-	sprintf(fname,"%s/glclient_print_XXXXXX",TempDir);
-	sprintf(userpass,"%s:%s",User,Pass);
-	snprintf(url,sizeof(url),"http://%s:%s/%s",Host,PortNum,path);
-
 	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+
+	fname = g_strdup_printf("%s/glclient_print_XXXXXX",TempDir);
+	userpass = g_strdup_printf("%s:%s",User,Pass);
+	scheme = fSsl ? "https" : "http";
+	url = g_strdup_printf("%s://%s:%s/%s",scheme,Host,PortNum,path);
+
+	if ((fd = mkstemp(fname)) == -1) {
+		Warning("mkstemp failure");
+		goto DO_PRINT_ERROR;
+	}
+
+	if ((fp = fdopen(fd, "w")) == NULL) {
+		Warning("fdopne failure");
+		goto DO_PRINT_ERROR;
+	}
+
+	wrote_size = 0;
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)fp);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
+	if (fSsl) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+		curl_easy_setopt(curl,CURLOPT_SSL_CIPHER_LIST,Ciphers);
+		curl_easy_setopt(curl,CURLOPT_SSLCERT, CertFile); 
+        curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE, "P12");	
+        curl_easy_setopt(curl,CURLOPT_SSLKEYPASSWD, Passphrase); 
+        curl_easy_setopt(curl,CURLOPT_CAINFO, CA_File); 
+	} else {
+		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+	}
+
+	ret = curl_easy_perform(curl);
+	fclose(fp);
+    curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
+	if (ret == CURLE_OK) {
+		if (http_code == 200) {
+			if (wrote_size == 0) {
+				doretry = 1;
+			} else {
+				//show_dialog
+				if (showdialog) {
+					MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
+						url,fname,(long)wrote_size);
+					UI_ShowPrintDialog(title,fname,wrote_size);
+				} else {
+					UI_PrintWithDefaultPrinter(fname);
+				}
+			}
+		} else if (http_code != 204) { /* 204 HTTP No Content */
+			msg = g_strdup_printf(_("print failure\ntitle:%s\n"),title);
+			UI_Notify(_("glclient print notify"),msg,"gtk-dialog-error",0);
+			g_free(msg);
+		}
+	}
+
+DO_PRINT_ERROR:
+	curl_easy_cleanup(curl);
+	umask(mode);
+	g_free(fname);
+	g_free(userpass);
+	g_free(url);
+	return doretry;
+
 	if ((fd = mkstemp(fname)) != -1) {
 		if ((fp = fdopen(fd, "w")) != NULL) {
 			wrote_size = 0;
 			curl_easy_setopt(curl, CURLOPT_URL, url);
 			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)fp);
 			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
-			curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-			curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+			if (fSsl) {
+				
+			} else {
+				curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+				curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+			}
+
 			ret = curl_easy_perform(curl);
 			fclose(fp);
             curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
@@ -115,8 +183,9 @@ DoPrint(
 						}
 					}
 				} else if (http_code != 204) { /* 204 HTTP No Content */
-					sprintf(buf,_("print failure\ntitle:%s\n"),title);
-					UI_Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
+					msg = g_strdup_printf(_("print failure\ntitle:%s\n"),title);
+					UI_Notify(_("glclient print notify"),msg,"gtk-dialog-error",0);
+					g_free(msg);
 				}
 			}
 			curl_easy_cleanup(curl);
@@ -127,6 +196,9 @@ DoPrint(
 		Warning("mkstemp failure");
 	}
 	umask(mode);
+	g_free(fname);
+	g_free(userpass);
+	g_free(url);
 	return doretry;
 }
 
