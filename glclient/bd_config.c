@@ -653,9 +653,7 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "timerperiod",  "1000"},
 #ifdef USE_SSL
 {"bool",   "ssl",          "F"},
-{"stirng", "CApath",       ""},
 {"string", "CAfile",       ""},
-{"string", "key",          ""},
 {"string", "cert",         ""},
 {"string", "ciphers",      "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"},
 #ifdef USE_PKCS11

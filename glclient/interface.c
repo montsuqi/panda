@@ -129,12 +129,8 @@ UI_load_config (
 		TimerPeriod = gl_config_get_string (serverkey,"timerperiod");
 #ifdef  USE_SSL
 		fSsl = gl_config_get_bool (serverkey,"ssl");
-		CA_Path = gl_config_get_string (serverkey,"CApath");
-		if (!strcmp("", CA_Path)) CA_Path = NULL;
 		CA_File = gl_config_get_string (serverkey,"CAfile");
 		if (!strcmp("", CA_File)) CA_File = NULL;
-		KeyFile = gl_config_get_string (serverkey,"key");
-		if (!strcmp("", KeyFile)) KeyFile = NULL;
 		CertFile = gl_config_get_string (serverkey,"cert");
 		if (!strcmp("", CertFile)) CertFile = NULL;
 		Ciphers = gl_config_get_string (serverkey,"ciphers");

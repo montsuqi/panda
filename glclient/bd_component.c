@@ -183,16 +183,8 @@ bd_component_set_value (BDComponent *self,gchar *serverkey)
   gtk_widget_set_sensitive(self->ssl_container, 
     gl_config_get_bool(serverkey,"ssl"));  
 
-  value = gl_config_get_string(serverkey,"CApath");
-  gtk_entry_set_text (GTK_ENTRY (self->CApath),value);
-  g_free(value);
-
   value = gl_config_get_string(serverkey,"CAfile");
   gtk_entry_set_text (GTK_ENTRY (self->CAfile),value);
-  g_free(value);
-
-  value = gl_config_get_string(serverkey,"key");
-  gtk_entry_set_text (GTK_ENTRY (self->key),value);
   g_free(value);
 
   value = gl_config_get_string(serverkey,"cert");
@@ -287,24 +279,16 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
   // ssl
   gl_config_set_bool(serverkey,"ssl",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
-  gl_config_set_string(serverkey,"CApath",
-    gtk_entry_get_text (GTK_ENTRY (self->CApath)));
   gl_config_set_string(serverkey,"CAfile",
     gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
-  gl_config_set_string(serverkey,"key",
-    gtk_entry_get_text (GTK_ENTRY (self->key)));
   gl_config_set_string(serverkey,"cert",
     gtk_entry_get_text (GTK_ENTRY (self->cert)));
   gl_config_set_string(serverkey,"ciphers",
     gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
 
   fSsl = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl));
-  CA_Path = strdup(gtk_entry_get_text (GTK_ENTRY (self->CApath)));
-  if (!strcmp("", CA_Path)) CA_Path = NULL;
   CA_File = strdup(gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
   if (!strcmp("", CA_File)) CA_File = NULL;
-  KeyFile = strdup(gtk_entry_get_text (GTK_ENTRY (self->key)));
-  if (!strcmp("", KeyFile)) KeyFile = NULL;
   CertFile = strdup(gtk_entry_get_text (GTK_ENTRY (self->cert)));
   if (!strcmp("", CertFile)) CertFile = NULL;
   Ciphers = strdup(gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
@@ -468,21 +452,6 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos = 0;
 
-  label = gtk_label_new (_("CA Certificate Path"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->CApath = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  g_signal_connect(G_OBJECT(button), "clicked",
-             G_CALLBACK(open_dir_chooser), (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
   label = gtk_label_new (_("CA Certificate File"));
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->CAfile = entry = gtk_entry_new ();
@@ -498,22 +467,7 @@ bd_component_new()
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
   ypos++;
 
-  label = gtk_label_new (_("SSL Key File(pem)"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->key = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  g_signal_connect(G_OBJECT(button), "clicked",
-             G_CALLBACK(open_file_chooser), (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Certificate(pem/p12)"));
+  label = gtk_label_new (_("Certificate(*.p12)"));
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   self->cert = entry = gtk_entry_new ();
   button = gtk_button_new_with_label(_("Open"));

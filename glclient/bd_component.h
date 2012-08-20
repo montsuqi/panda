@@ -45,9 +45,7 @@ struct _BDComponent {
   GtkWidget *ssltable;
   GtkWidget *ssl_container;
   GtkWidget *ssl;
-  GtkWidget *key;
   GtkWidget *cert;
-  GtkWidget *CApath;
   GtkWidget *CAfile;
   GtkWidget *ciphers;
 #ifdef  USE_PKCS11
