@@ -429,7 +429,6 @@ main(
 	int		argc,
 	char	**argv)
 {
-	FILE_LIST	*fl;
 	DBG_Struct	*master_dbg, *slave_dbg;
 	TableList *ng_list;
 	NETFILE	*fp;
@@ -437,7 +436,7 @@ main(
 	int n, h, m, s;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv,NULL);
+	GetOption(option,argc,argv,NULL);
 	InitMessage("dbsync",NULL);
 
 	InitDirectory();
