@@ -781,6 +781,75 @@ LEAVE_FUNC;
 	return TRUE;
 }
 
+static	Bool
+RecvColorButton(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool			ret;
+	char			name[SIZE_BUFF]
+	,				buff[SIZE_BUFF];
+	int				nitem
+	,				i;
+	_ColorButton	*attrs;
+
+ENTER_FUNC;
+	ret = FALSE;
+	attrs = (_ColorButton *)data->attrs;
+	if (attrs == NULL){
+		// new data
+		attrs = g_new0(_ColorButton, 1);
+		data->attrs = attrs;
+		attrs->color = NULL;
+		attrs->color_name = NULL;
+	} else {
+		// reset data
+		if (attrs->color != NULL) {
+			g_free(attrs->color);
+		}
+		attrs->color = NULL;
+		if (attrs->color_name != NULL) {
+			g_free(attrs->color_name);
+		}
+		attrs->color_name = NULL;
+	}
+
+	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else {
+				attrs->color_name = g_strdup(name);
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->color = g_strdup(buff);
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
+SendColorButton(
+	WidgetData	*data,
+	NETFILE		*netfp)
+{
+	char			iname[SIZE_BUFF];
+	_ColorButton	*attrs;
+
+ENTER_FUNC;
+	attrs = (_ColorButton *)data->attrs;
+	
+	GL_SendPacketClass(netfp,GL_ScreenData);
+	sprintf(iname,"%s.%s", data->name,attrs->color_name);
+	GL_SendName(netfp,iname);
+	SendStringData(netfp,GL_TYPE_VARCHAR ,attrs->color);
+LEAVE_FUNC;
+	return TRUE;
+}
+
 
 /******************************************************************************/
 /* gtk+panada marshaller                                                      */
@@ -1738,6 +1807,8 @@ RecvWidgetData(
 		ret = RecvScrolledWindow(data, fp); break;
 	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
 		ret = RecvFileChooserButton(data, fp); break;
+	case WIDGET_TYPE_COLOR_BUTTON:
+		ret = RecvColorButton(data, fp); break;
 // gnome
 	case WIDGET_TYPE_FILE_ENTRY:
 		ret = RecvFileEntry(data, fp); break;
@@ -1804,6 +1875,8 @@ ENTER_FUNC;
 		SendScrolledWindow(data, fp); break;
 	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
 		SendFileChooserButton(data, fp); break;
+	case WIDGET_TYPE_COLOR_BUTTON:
+		SendColorButton(data, fp); break;
 // gnome
 	case WIDGET_TYPE_FILE_ENTRY:
 		SendFileEntry(data, fp); break;

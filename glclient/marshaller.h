@@ -57,6 +57,7 @@ typedef enum _WidgetType {
 	WIDGET_TYPE_FRAME,
 	WIDGET_TYPE_SCROLLED_WINDOW,
 	WIDGET_TYPE_FILE_CHOOSER_BUTTON,
+	WIDGET_TYPE_COLOR_BUTTON,
 // gnome
 	WIDGET_TYPE_FILE_ENTRY,
 	WIDGET_TYPE_PIXMAP,
@@ -206,6 +207,11 @@ typedef struct __FileChooserButton{
 	LargeByteString	*binary;
 	char 			*filename;
 } _FileChooserButton;
+
+typedef struct __ColorButton {
+	char		*color;
+	char		*color_name;
+} _ColorButton;
 
 
 extern	Bool	RecvWidgetData(char *widgetName,NETFILE *fp);

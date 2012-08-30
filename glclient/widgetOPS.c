@@ -715,6 +715,41 @@ SavePreviousFolder(
 }
 
 static	void
+SetColorButton(
+	GtkWidget		*widget,
+	WidgetData		*wdata,
+	_ColorButton	*data)
+{
+	GtkColorButton 	*cb;
+	GdkColor color;
+ENTER_FUNC;
+	SetCommon(widget,wdata);
+	cb = GTK_COLOR_BUTTON(widget);
+	if (gdk_color_parse(data->color,&color)) {
+		gtk_color_button_set_color(cb,&color);
+	}
+LEAVE_FUNC;
+}
+
+static	void
+GetColorButton(
+	GtkWidget		*widget,
+	_ColorButton	*data)
+{
+	GtkColorButton *cb;
+	GdkColor color;
+ENTER_FUNC;
+	cb = GTK_COLOR_BUTTON(widget);
+	gtk_color_button_get_color(cb,&color);
+	data->color = g_strdup_printf("#%02X%02X%02X",
+		(guint)(color.red/256.0),
+		(guint)(color.green/256.0),
+		(guint)(color.blue/256.0)
+		);
+LEAVE_FUNC;
+}
+
+static	void
 SetFileEntry(
 	GtkWidget			*widget,
 	WidgetData	*wdata,
@@ -893,6 +928,8 @@ GetWidgetType(
 			return WIDGET_TYPE_SCROLLED_WINDOW;
 		} else if (type == GTK_TYPE_FILE_CHOOSER_BUTTON) {
 			return WIDGET_TYPE_FILE_CHOOSER_BUTTON;
+		} else if (type == GTK_TYPE_COLOR_BUTTON) {
+			return WIDGET_TYPE_COLOR_BUTTON;
 		} else if (type == GTK_PANDA_TYPE_PIXMAP) {
 			return WIDGET_TYPE_PIXMAP;
 		} else if (type == GTK_PANDA_TYPE_FILE_ENTRY) {
@@ -953,6 +990,9 @@ GetWidgetData(WidgetData	*data)
 		break;
 	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
 		GetFileChooserButton(widget, (_FileChooserButton*)data->attrs);
+		break;
+	case WIDGET_TYPE_COLOR_BUTTON:
+		GetColorButton(widget, (_ColorButton*)data->attrs);
 		break;
 // gtk+
 	case WIDGET_TYPE_FILE_ENTRY:
@@ -1044,6 +1084,9 @@ UpdateWidget(WidgetData *data)
 		break;
 	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
 		SetFileChooserButton(widget, data,(_FileChooserButton *)data->attrs);
+		break;
+	case WIDGET_TYPE_COLOR_BUTTON:
+		SetColorButton(widget, data,(_ColorButton *)data->attrs);
 		break;
 // Gnome
 	case WIDGET_TYPE_FILE_ENTRY:
