@@ -679,7 +679,6 @@ _EXEC(
 static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
-	char			*name,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
