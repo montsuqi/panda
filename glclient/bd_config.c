@@ -646,7 +646,7 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"bool",   "mlog",         "F"},
 {"bool",   "keybuf",       "F"},
 {"bool",   "im_kana_off",  "F"},
-{"string", "user",         "user"},
+{"string", "user",         "ormaster"},
 {"bool",   "savepassword", "T"},
 {"string", "password",     ""},
 {"bool",   "timer",        "T"},
@@ -677,11 +677,7 @@ gl_config_set_default(gchar *serverkey)
       serverkey,"/", 
       conf_entries[i].name,NULL);
     if (conf_entries[i].type[0] == 's') {
-      if (!g_strcmp0(conf_entries[i].name,"user")) {
-        gconf_client_set_string(GConfCTX,key,g_get_user_name(),NULL);
-      } else {
-        gconf_client_set_string(GConfCTX,key,conf_entries[i].value,NULL);
-      }
+      gconf_client_set_string(GConfCTX,key,conf_entries[i].value,NULL);
     } else {
       gconf_client_set_bool(GConfCTX,key,
         conf_entries[i].value[0] == 'T'?TRUE:FALSE,
