@@ -745,7 +745,6 @@ gl_config_convert_config()
   gchar *sdata, *key, *serverkey;
   int i;
   gboolean bdata;
-  gboolean make_default = TRUE;
 
   if (gconf_client_get_bool(GConfCTX,GL_GCONF_CONF_CONVERTED,NULL)) {
     return;
@@ -756,6 +755,7 @@ gl_config_convert_config()
   config = bd_config_new_with_filename (file);
 
   if (config->names == NULL) {
+    gl_config_set_default(GL_GCONF_DEFAULT_SERVER);
     return;
   }
  
@@ -774,7 +774,6 @@ gl_config_convert_config()
       /* default */
       lasthost = bd_config_section_get_string (section, "hostname");
       bd_config_section_set_string(section,"description","default");
-      make_default = FALSE;
     }
     serverkey = gl_config_new_server();
     for(i=0;conf_entries[i].name != NULL;i++) {
@@ -794,10 +793,6 @@ gl_config_convert_config()
       gconf_client_set_string(GConfCTX,GL_GCONF_SERVER,serverkey,NULL);
     }
     g_free(serverkey);
-  }
-  if (make_default) {
-    /* set default config*/
-    gl_config_set_default(GL_GCONF_DEFAULT_SERVER);
   }
 #if 0
   g_remove(file);
