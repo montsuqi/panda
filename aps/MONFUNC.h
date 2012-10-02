@@ -31,6 +31,6 @@ extern void InitMONFUNC(
 	MONFUNC_UnPackFunc unpackfunc, 
 	MONFUNC_SizeFunc sizefunc);
 extern int MONFUNC(char *mcpdata, char *data); 
-extern int MONFUNCRuby(char *mcpdata,char *data,char **,char **);
+extern int RubyMONFUNC(char *mcpdata,char *data,char **,char **);
 
 #endif
