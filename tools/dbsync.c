@@ -245,7 +245,7 @@ table_name(
 	if (table_list->count > num ){
 		ret = table_list->tables[num]->name;
 	} else {
-		ret = strdup("");
+		ret = "";
 	}
 	return ret;
 }
@@ -282,8 +282,9 @@ table_check(
 	ng_list = NewTableList(master_list->count + slave_list->count);
 	m = s = 0;
 	for ( i=0; (master_list->count > m) || (slave_list->count > s); i++) {
-		cmp = strcmp( table_name(master_list,m), table_name(slave_list,s) );
-		rcmp = (table_relkind(master_list,m) - table_relkind(slave_list,s))*2 + cmp;
+		cmp = strcmp( table_name(master_list,m),table_name(slave_list,s) );
+		cmp = ((cmp > 0)?(1):((cmp < 0)?(-1):cmp));
+		rcmp = (table_relkind(master_list,m) - table_relkind(slave_list,s))*10 + cmp;
 		if ( rcmp == 0 ) {
 			if (!strcmp(master_list->tables[m]->count,slave_list->tables[s]->count)) {
 				if (fVerbose){
@@ -339,7 +340,7 @@ table_check(
 
 	pg_disconnect(master_dbg);
 	pg_disconnect(slave_dbg);
-	
+
 	return ng_list;
 }
 
@@ -405,8 +406,6 @@ lookup_master_slave(
 			MASTERDB = StrDup(dbg->redirect->name);
 			SLAVEDB = StrDup(dbg->name);
 		}
-		
-		
 	}
 }
 
