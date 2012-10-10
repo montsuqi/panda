@@ -66,42 +66,46 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 		SendInt(fp, rc);		ON_IO_ERROR(fp,badio);
 	} else {
-		switch	(c) {
-		case KV_GETVALUE:
-			dbgmsg("GETVALUE");
-			rc = KV_GetValue(state, args);
-			break;
-		case KV_SETVALUE:
-			dbgmsg("SETVALUE");
-			rc = KV_SetValue(state, args);
-			break;
-		case KV_SETVALUEALL:
-			dbgmsg("SETVALUEALL");
-			rc = KV_SetValueALL(state, args);
-			break;
-		case KV_LISTKEY:
-			dbgmsg("LISTKEY");
-			rc = KV_ListKey(state, args);
-			break;
-		case KV_LISTENTRY:
-			dbgmsg("LISTENTRY");
-			rc = KV_ListEntry(state, args);
-			break;
-		case KV_NEWENTRY:
-			dbgmsg("NEWENTRY");
-			rc = KV_NewEntry(state, args);
-			break;
-		case KV_DELETEENTRY:
-			dbgmsg("DELETEENTRY");
-			rc = KV_DeleteEntry(state, args);
-			break;
-		case KV_DUMP:
-			dbgmsg("DUMP");
-			rc = KV_Dump(state, args);
-			break;
-		default:
-			Warning("invalid packet class[%d]", c);
-			break;
+		if(!getenv("DISABLE_KV_SERVER")) {
+			switch	(c) {
+			case KV_GETVALUE:
+				dbgmsg("GETVALUE");
+				rc = KV_GetValue(state, args);
+				break;
+			case KV_SETVALUE:
+				dbgmsg("SETVALUE");
+				rc = KV_SetValue(state, args);
+				break;
+			case KV_SETVALUEALL:
+				dbgmsg("SETVALUEALL");
+				rc = KV_SetValueALL(state, args);
+				break;
+			case KV_LISTKEY:
+				dbgmsg("LISTKEY");
+				rc = KV_ListKey(state, args);
+				break;
+			case KV_LISTENTRY:
+				dbgmsg("LISTENTRY");
+				rc = KV_ListEntry(state, args);
+				break;
+			case KV_NEWENTRY:
+				dbgmsg("NEWENTRY");
+				rc = KV_NewEntry(state, args);
+				break;
+			case KV_DELETEENTRY:
+				dbgmsg("DELETEENTRY");
+				rc = KV_DeleteEntry(state, args);
+				break;
+			case KV_DUMP:
+				dbgmsg("DUMP");
+				rc = KV_Dump(state, args);
+				break;
+			default:
+				Warning("invalid packet class[%d]", c);
+				break;
+			}
+		} else {
+			rc = MCP_OK;
 		}
 		SendInt(fp, rc);		ON_IO_ERROR(fp,badio);
 		if (rc == MCP_OK) {
