@@ -643,6 +643,7 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"bool",   "protocol_v2",  "F"},
 {"string", "style",        ""},
 {"string", "gtkrc",        ""},
+{"string", "fontname",     "Takaoゴシック 10"},
 {"bool",   "mlog",         "F"},
 {"bool",   "keybuf",       "F"},
 {"bool",   "im_kana_off",  "F"},

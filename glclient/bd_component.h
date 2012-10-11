@@ -60,6 +60,7 @@ struct _BDComponent {
   GtkWidget *mlog;
   GtkWidget *style;
   GtkWidget *gtkrc;
+  GtkWidget *fontbutton;
   GtkWidget *keybuff;
   GtkWidget *imkanaoff;
   GtkWidget *timer;

@@ -253,6 +253,7 @@ extern	void
 UI_InitStyle(void)
 {
 	gchar *gltermrc;
+	gchar *rcstr;
 
 	StyleParserInit();
 	gltermrc = g_strconcat(g_get_home_dir(),"/gltermrc",NULL);
@@ -262,8 +263,18 @@ UI_InitStyle(void)
 	if (  Style  != NULL  ) {
 		StyleParser(Style);
 	}
-	if (Gtkrc != NULL) {
+	if (Gtkrc != NULL && strlen(Gtkrc)) {
 		gtk_rc_parse(Gtkrc);
+	} else {
+		rcstr = g_strdup_printf(
+			"style \"glclient2\" {"
+			"  font_name=\"%s\""
+			"}"
+			"widget_class \"*.*\" style \"glclient2\""
+			,FontName);
+		gtk_rc_parse_string(rcstr);
+		gtk_rc_reset_styles(gtk_settings_get_default());
+		g_free(rcstr);
 	}
 }
 

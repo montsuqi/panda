@@ -219,6 +219,12 @@ bd_component_set_value (BDComponent *self,gchar *serverkey)
   gtk_entry_set_text (GTK_ENTRY (self->gtkrc),value);
   g_free(value);
 
+  value = gl_config_get_string(serverkey,"fontname");
+  if (value == NULL || !strlen(value)) {
+    value = "Takaoゴシック 10";
+  }
+  gtk_font_button_set_font_name (GTK_FONT_BUTTON (self->fontbutton),value);
+
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
     gl_config_get_bool(serverkey,"mlog"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
@@ -313,6 +319,8 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
     gtk_entry_get_text (GTK_ENTRY (self->style)));
   gl_config_set_string(serverkey,"gtkrc",
     gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
+  gl_config_set_string(serverkey,"fontname",
+    gtk_font_button_get_font_name (GTK_FONT_BUTTON (self->fontbutton)));
   gl_config_set_bool(serverkey,"mlog",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
   gl_config_set_bool(serverkey,"keybuff",
@@ -326,6 +334,7 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
 
   Style = strdup(gtk_entry_get_text (GTK_ENTRY (self->style)));
   Gtkrc = strdup(gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
+  FontName = strdup(gtk_font_button_get_font_name(GTK_FONT_BUTTON(self->fontbutton)));
   fMlog = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog));
   fKeyBuff = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff));
   fIMKanaOff = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff));
@@ -576,6 +585,17 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
   gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
+  ypos++;
+
+  label = gtk_label_new (_("FontName"));
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  button = gtk_font_button_new ();
+  self->fontbutton = button;
+  hbox = gtk_hbox_new (FALSE, 5);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), button, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
