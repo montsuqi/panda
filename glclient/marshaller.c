@@ -914,12 +914,17 @@ ENTER_FUNC;
 		attrs = g_new0(_Download, 1);
 		attrs->binary = NewLBS();
 		attrs->filename = NULL;
+		attrs->description = NULL;
 		data->attrs = attrs;
 	} else {
 		// reset data
 		FreeLBS(attrs->binary);
 		attrs->binary = NewLBS();
 		g_free(attrs->filename);
+		if (attrs->description) {
+			g_free(attrs->description);
+			attrs->description = NULL;
+		}
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
@@ -932,6 +937,9 @@ ENTER_FUNC;
 			} else if (!stricmp(name,"filename")) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->filename = strdup(buff);
+			} else if (!stricmp(name,"description")) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->description = strdup(buff);
 			}
 		}
 		ret = TRUE;

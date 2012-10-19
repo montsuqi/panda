@@ -22,6 +22,10 @@
 
 #include <gtk/gtk.h>
 
-void show_download_dialog(GtkWidget *widget,char *filename, LargeByteString *binary);
+void show_download_dialog(
+	GtkWidget *widget,
+	char *filename, 
+	char *description, 
+	LargeByteString *binary);
 
 #endif

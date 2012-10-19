@@ -99,6 +99,7 @@ typedef struct __Timer {
 typedef struct __Download {
 	LargeByteString	*binary;
 	char			*filename;
+	char			*description;
 } _Download;
 
 typedef struct __NumberEntry{

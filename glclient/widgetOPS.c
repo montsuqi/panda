@@ -157,7 +157,10 @@ ENTER_FUNC;
 	SetCommon(widget,wdata);
 	g_return_if_fail(data->binary != NULL);
 	if (LBS_Size(data->binary) > 0) {
-		show_download_dialog(widget,data->filename,data->binary);
+		show_download_dialog(widget,
+			data->filename,
+			data->description,
+			data->binary);
 	}
 LEAVE_FUNC;
 }
