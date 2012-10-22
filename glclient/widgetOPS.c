@@ -373,6 +373,7 @@ ENTER_FUNC;
 		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget), 
 			data->trow, data->tcolumn, TRUE, data->trowattr, 0.0); 
 	}
+	_AddChangedWidget(widget);
 LEAVE_FUNC;
 }
 
