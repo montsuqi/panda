@@ -323,6 +323,7 @@ GetPandaTable(
 	gchar *text;
 	gchar **rowdata;
 ENTER_FUNC;
+	gtk_widget_child_focus(widget,GTK_DIR_TAB_FORWARD);
 	data->trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
 		"send_data_row"));
 	data->tcolumn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
