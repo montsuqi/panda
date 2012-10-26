@@ -35,8 +35,6 @@ struct _BDComponent {
   GtkWidget *host;
   GtkWidget *port;
   GtkWidget *application;
-  GtkWidget *protocol_v1;
-  GtkWidget *protocol_v2;
   GtkWidget *user;
   GtkWidget *password;
   GtkWidget *savepassword;

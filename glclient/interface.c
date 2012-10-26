@@ -114,8 +114,6 @@ UI_load_config (
 		Host = gl_config_get_string (serverkey,"host");
 		PortNum = gl_config_get_string (serverkey,"port");
 		CurrentApplication = gl_config_get_string (serverkey,"application");
-		Protocol1 = gl_config_get_bool (serverkey,"protocol_v1");
-		Protocol2 = gl_config_get_bool (serverkey,"protocol_v2");
 		Style = gl_config_get_string (serverkey,"style");
 		Gtkrc = gl_config_get_string (serverkey,"gtkrc");
 		fMlog = gl_config_get_bool (serverkey,"mlog");

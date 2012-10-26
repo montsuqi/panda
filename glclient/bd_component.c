@@ -157,11 +157,6 @@ bd_component_set_value (BDComponent *self,gchar *serverkey)
   gtk_entry_set_text (GTK_ENTRY (self->application),value);
   g_free(value);
 
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v1), 
-    gl_config_get_bool(serverkey,"protocol_v1"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->protocol_v2), 
-    gl_config_get_bool(serverkey,"protocol_v2"));
-
   value = gl_config_get_string(serverkey,"user");
   gtk_entry_set_text (GTK_ENTRY (self->user),value);
   g_free(value);
@@ -254,10 +249,6 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
     gtk_entry_get_text (GTK_ENTRY (self->port)));
   gl_config_set_string(serverkey,"application",
     gtk_entry_get_text (GTK_ENTRY (self->application)));
-  gl_config_set_bool(serverkey,"protocol_v1",
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v1)));
-  gl_config_set_bool(serverkey,"protocol_v2",
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->protocol_v2)));
   gl_config_set_string(serverkey,"user",
     gtk_entry_get_text (GTK_ENTRY (self->user)));
   password = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
@@ -272,10 +263,6 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
   Host = strdup(gtk_entry_get_text (GTK_ENTRY (self->host)));
   PortNum = strdup(gtk_entry_get_text (GTK_ENTRY (self->port)));
   CurrentApplication = strdup(gtk_entry_get_text (GTK_ENTRY (self->application)));
-  Protocol1 = gtk_toggle_button_get_active(
-    GTK_TOGGLE_BUTTON (self->protocol_v1));
-  Protocol2 = gtk_toggle_button_get_active(
-    GTK_TOGGLE_BUTTON (self->protocol_v2));
   User = strdup(gtk_entry_get_text (GTK_ENTRY (self->user)));
   Pass = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
   SavePass = gtk_toggle_button_get_active (
@@ -387,23 +374,6 @@ bd_component_new()
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Protocol"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  hbox = gtk_hbox_new (TRUE, 5);
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  self->protocol_v1 = check = gtk_check_button_new_with_label ("v1");
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_box_pack_start (GTK_BOX (hbox), alignment, TRUE, TRUE, 0);
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  self->protocol_v2 = check = gtk_check_button_new_with_label ("v2");
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  gtk_box_pack_start (GTK_BOX (hbox), alignment, TRUE, TRUE, 0);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 

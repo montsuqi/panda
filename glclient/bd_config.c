@@ -639,8 +639,6 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "host",         "localhost"},
 {"string", "port",         "8000"},
 {"string", "application",  "panda:orca00"},
-{"bool",   "protocol_v1",  "T"},
-{"bool",   "protocol_v2",  "F"},
 {"string", "style",        ""},
 {"string", "gtkrc",        ""},
 {"string", "fontname",     "Takaoゴシック 10"},
