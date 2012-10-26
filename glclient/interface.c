@@ -268,7 +268,9 @@ UI_InitStyle(void)
 	} else {
 		rcstr = g_strdup_printf(
 			"style \"glclient2\" {"
-			"  font_name=\"%s\""
+			"  font_name = \"%s\""
+			"  fg[NORMAL] = \"#000000\""
+			"  text[NORMAL] = \"#000000\""
 			"}"
 			"widget_class \"*.*\" style \"glclient2\""
 			,FontName);
