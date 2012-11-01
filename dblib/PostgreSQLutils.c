@@ -47,7 +47,7 @@ pg_connect(
 	DBG_Struct	*dbg)
 {
 	PGconn *conn = NULL;
-	
+
 	if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
 		/* database is already connected. */
 		conn = PGCONN(dbg, DB_UPDATE);
@@ -156,7 +156,7 @@ db_command(
 {
 	Bool ret;
 	PGresult	*res;
-	
+
 	res = db_exec(conn, query);
 	if ( 	(res != NULL )
 		 && (PQresultStatus(res) == PGRES_COMMAND_OK ) ) {
@@ -182,7 +182,7 @@ make_pgopts(
 
 	pgoptv = xmalloc((SIZE_ARG)*sizeof(char *));
 
-	pgoptc = 0;	
+	pgoptc = 0;
 	pgoptv[pgoptc++] = strdup(command);
 
 	if ((option = GetDB_Host(dbg, DB_UPDATE)) != NULL){
@@ -199,14 +199,14 @@ make_pgopts(
 	}
 
 	pgoptv[pgoptc] = NULL;
-	
+
 	return pgoptv;
 }
 
 int optsize(char **optv)
 {
 	int i;
-	
+
 	for (i=0; optv[i] != NULL; i++ ){};
 	return i;
 }
@@ -271,7 +271,7 @@ db_dump(int fd, char *pass, char **argv)
 {
 	char *sql;
 	char command[SIZE_BUFF + 1];
-	
+
 	snprintf(command, SIZE_BUFF, "%s/%s", POSTGRES_BINDIR, PG_DUMP);
 	setenv("PGPASSWORD", pass, 1);
 
@@ -292,7 +292,7 @@ static void
 db_restore(int fd, char *pass, char **argv)
 {
 	char command[SIZE_BUFF];
-	
+
 	snprintf(command, SIZE_BUFF, "%s/%s", POSTGRES_BINDIR, PSQL);
 
 	setenv("PGPASSWORD", pass, 1);
@@ -309,7 +309,7 @@ dbexist(DBG_Struct	*dbg)
 	PGconn	*conn;
 	PGresult	*res;
 	Bool ret = FALSE;
-	char sql[SIZE_BUFF];	
+	char sql[SIZE_BUFF];
 
 	conn = template1_connect(dbg);
 	if (conn){
@@ -478,22 +478,22 @@ createdb(DBG_Struct	*dbg,
 				LBS_EmitString(sql," LC_COLLATE ");
 				LBS_EmitString(sql, "'");
 				LBS_EmitString(sql, lc_collate);
-				LBS_EmitString(sql, "' ");			
+				LBS_EmitString(sql, "' ");
 			}
 			if (lc_ctype) {
-				LBS_EmitString(sql," LC_CTYPE ");		
+				LBS_EmitString(sql," LC_CTYPE ");
 				LBS_EmitString(sql, "'");
 				LBS_EmitString(sql, lc_ctype);
-				LBS_EmitString(sql, "' ");			
+				LBS_EmitString(sql, "' ");
 			}
 		}
 		LBS_EmitString(sql,";\n");
 		LBS_EmitEnd(sql);
 		ret = db_command(conn, LBS_Body(sql));
-		FreeLBS(sql);		
+		FreeLBS(sql);
 		PQfinish(conn);
 	}
-	
+
 	return ret;
 }
 
@@ -522,10 +522,10 @@ db_sync(
 {
 	struct sigaction sa;
 	int std_io[2], std_err[2];
-	
+
 	Bool ret = FALSE;
 	pid_t	pg_dump_pid, restore_pid;
-	
+
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = SIG_DFL;
 	sa.sa_flags |= SA_RESTART;
@@ -579,9 +579,9 @@ all_sync(
 	int moptc, soptc;
 	char **master_argv, **slave_argv;
 	char *master_pass, *slave_pass;
-	
+
 	master_pass = GetDB_Pass(master_dbg, DB_UPDATE);
-	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);	
+	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);
 
 	master_argv = make_pgopts(PG_DUMP, master_dbg);
 	moptc = optsize(master_argv);
@@ -596,7 +596,7 @@ all_sync(
 	}
 	master_argv[moptc++] = GetDB_DBname(master_dbg,DB_UPDATE);
 	master_argv[moptc] = NULL;
-	
+
 	slave_argv = make_pgopts(PSQL, slave_dbg);
 	soptc = optsize(slave_argv);
 	if (!verbose){
@@ -604,7 +604,7 @@ all_sync(
 	}
 /*	slave_argv[soptc++] = "ON_ERROR_STOP=1"; */
 	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
-	slave_argv[soptc] = NULL;	
+	slave_argv[soptc] = NULL;
 
 	return db_sync(master_argv, master_pass, slave_argv, slave_pass, check);
 }
@@ -617,7 +617,7 @@ table_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, char *table_name)
 	char **master_argv, **slave_argv;
 
 	master_pass = GetDB_Pass(master_dbg, DB_UPDATE);
-	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);	
+	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);
 
 	master_argv = make_pgopts(PG_DUMP, master_dbg);
 	moptc = optsize(master_argv);
@@ -626,7 +626,7 @@ table_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, char *table_name)
 	master_argv[moptc++] = table_name;
 	master_argv[moptc++] = GetDB_DBname(master_dbg,DB_UPDATE);
 	master_argv[moptc] = NULL;
-	
+
 	slave_argv = make_pgopts(PSQL, slave_dbg);
 	soptc = optsize(slave_argv);
 	slave_argv[soptc++] = "-q";
@@ -634,7 +634,7 @@ table_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, char *table_name)
 	slave_argv[soptc++] = "ON_ERROR_STOP=1";
 	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
 	slave_argv[soptc] = NULL;
-	
+
 	return db_sync(master_argv, master_pass, slave_argv, slave_pass, TRUE);
 }
 
@@ -715,7 +715,7 @@ void TableCount(
 	int i;
 	char buff[SIZE_BUFF + 1];
 	PGresult	*res;
-	
+
 	for (i = 0; i < table_list->count; i++) {
 		if (table_list->tables[i]->relkind == 'i') {
 			table_list->tables[i]->count = StrDup("0");
@@ -772,11 +772,11 @@ get_table_info(
 {
 	PGconn	*conn;
 	TableList *tablelist;
-	
+
 	conn = PGCONN(dbg, DB_UPDATE);
-	
+
 	tablelist = getTableList(conn);
-	
+
 	if (opt == 'c'){
 		TableCount(conn, tablelist);
 	}

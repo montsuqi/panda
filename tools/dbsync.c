@@ -446,11 +446,10 @@ main(
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-
-	if ((Master != NULL && Slave == NULL) || (Master == NULL && Slave != NULL)) {
-		Error("master dbg or slave dbg is null");
+	if (Master == NULL ) {
+		Master = StrDup("");
 	}
-	if (Master != NULL && Slave != NULL)  {
+	if (Slave != NULL)  {
 		master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, Master);
 		slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, Slave);
 	} else {
