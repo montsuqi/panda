@@ -270,7 +270,12 @@ UI_InitStyle(void)
 			"  fg[NORMAL] = \"#000000\""
 			"  text[NORMAL] = \"#000000\""
 			"}"
+			"style \"tooltip\" {"
+			"  fg[NORMAL] = \"#000000\""
+			"  bg[NORMAL] = \"#ffffaf\""
+			"}"
 			"widget_class \"*.*\" style \"glclient2\""
+			"widget \"gtk-tooltip*\" style \"tooltip\""
 			,FontName);
 		gtk_rc_parse_string(rcstr);
 		gtk_rc_reset_styles(gtk_settings_get_default());
