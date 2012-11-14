@@ -41,10 +41,9 @@ typedef struct {
 } WindowScale;
 
 GLOBAL	GtkWidget	*TopWindow;
+GLOBAL	GtkWidget	*TopNoteBook;
 GLOBAL	GList		*DialogStack;
 GLOBAL	WindowScale	TopWindowScale;
-
-
 
 typedef	gint		(*_PingTimerFunc)	(gpointer data);
 
