@@ -902,16 +902,14 @@ ScaleWindow(
 	width = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"width"));
 	height = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"height"));
 
-	if (x !=0 && y != 0) {
 	gtk_window_get_position(GTK_WINDOW(TopWindow),&_x,&_y);
 		_x += (int)(x * TopWindowScale.h);
 		_y += (int)(y * TopWindowScale.v);
 #if 0
-		fprintf(stderr,"move window [%d,%d]->[%d,%d]\n",
-			x,y,_x,_y);
+	fprintf(stderr,"move window [%d,%d]->[%d,%d]\n",
+		x,y,_x,_y);
 #endif
-		gtk_window_move(GTK_WINDOW(widget),_x,_y);
-	}
+	gtk_window_move(GTK_WINDOW(widget),_x,_y);
 
 	if (width > 0 && height > 0) {
 		int _width,_height;
