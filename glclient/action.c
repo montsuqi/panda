@@ -1028,7 +1028,8 @@ InitTopWindow(void)
 	SetWindowIcon(GTK_WINDOW(TopWindow));
 
 	TopNoteBook = gtk_notebook_new();
-	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook), FALSE);
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook),FALSE);
+	gtk_notebook_set_show_border(GTK_NOTEBOOK(TopNoteBook),FALSE);
 	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
 	gtk_container_set_resize_mode(GTK_CONTAINER(TopNoteBook),GTK_RESIZE_IMMEDIATE);
 
