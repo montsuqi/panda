@@ -81,6 +81,10 @@ _CreateConninfo(
 	AddConninfo(conninfo, "user", GetDB_User(dbg,usage));
 	AddConninfo(conninfo, "password", GetDB_Pass(dbg,usage));
 	AddConninfo(conninfo, "sslmode", GetDB_Sslmode(dbg,usage));
+	AddConninfo(conninfo, "sslcert", GetDB_Sslcert(dbg,usage));
+	AddConninfo(conninfo, "sslkey", GetDB_Sslkey(dbg,usage));
+	AddConninfo(conninfo, "sslrootcert", GetDB_Sslrootcert(dbg,usage));
+	AddConninfo(conninfo, "sslcrl", GetDB_Sslcrl(dbg,usage));
 	return conninfo;
 }
 	

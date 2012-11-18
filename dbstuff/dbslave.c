@@ -259,8 +259,6 @@ static	ARG_TABLE	option[] = {
 		"DB user name"									},
 	{	"pass",		STRING,		TRUE,	(void*)&DB_Pass,
 		"DB password"									},
-	{	"sslmode",	STRING,		TRUE,	(void*)&DB_Sslmode,
-		"DB SSL mode"									},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
 		"no count dbredirector updates"							},
 */
@@ -294,7 +292,6 @@ SetDefault(void)
 	DB_Pass = NULL;
 	DB_Host = NULL;
 	DB_Port = NULL;
-	DB_Sslmode = NULL;
 	DB_Name = DB_User;
 	
 	DBSlave = NULL;

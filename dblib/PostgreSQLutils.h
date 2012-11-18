@@ -51,6 +51,15 @@ typedef struct dbinfo
 	char	*lc_ctype;
 } DBInfo;
 
+typedef struct authinfo
+{
+	char *pass;
+	char *sslcert;
+	char *sslkey;
+	char *sslrootcert;
+	char *sslcrl;
+} AuthInfo;
+
 extern 	Bool	template1_check(DBG_Struct *dbg);
 extern 	DBInfo *getDBInfo(DBG_Struct	*dbg, char *dbname);
 extern 	Bool	dropdb(DBG_Struct	*dbg);

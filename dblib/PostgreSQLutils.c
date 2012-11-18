@@ -37,7 +37,12 @@
 #include	"PostgreSQLutils.h"
 #include	"debug.h"
 
-static char *ignore_message = "ERROR:  must be owner of schema public";
+static char *ignore_message[] = {
+	"ERROR:  must be owner of schema public",
+	"ERROR:  must be owner of extension plpgsql",
+	"ERROR:  must be owner of extension public",
+	NULL
+};
 
 const char *PG_DUMP = "pg_dump";
 const char *PSQL = "psql";
@@ -76,7 +81,7 @@ pg_trans_begin(
 {
 	Bool ret = FALSE;
 	PGconn *conn = NULL;
-	
+
 	conn = pg_connect(dbg);
 	ret = db_command(conn, "BEGIN;");
 	return ret;
@@ -88,7 +93,7 @@ pg_trans_commit(
 {
 	Bool ret = FALSE;
 	PGconn *conn = NULL;
-	
+
 	conn = PGCONN(dbg, DB_UPDATE);
 	ret = db_command(conn, "COMMIT;");
 	return ret;
@@ -114,11 +119,10 @@ template1_connect(
 	conninfo = Template1Conninfo(dbg,DB_UPDATE);
 	conn = PQconnectdb(LBS_Body(conninfo));
 	if		(  PQstatus(conn)  !=  CONNECTION_OK  ) {
-		Message("%s", PQerrorMessage(conn));
 		conn = NULL;
 	}
 	FreeLBS(conninfo);
-	
+
 	return conn;
 }
 
@@ -128,7 +132,7 @@ template1_check(
 {
 	Bool ret = FALSE;
 	PGconn	*conn;
-	
+
 	conn = template1_connect(dbg);
 	if (conn){
 		ret = TRUE;
@@ -253,27 +257,50 @@ static void
 err_check(int err_fd)
 {
 	size_t len;
+	char *ignore;
 	char buff[SIZE_BUFF];
-
+	int i;
+	Bool err_flg = FALSE;
 	len = read(err_fd, buff, SIZE_BUFF);
 	if (len > 0) {
 		buff[len] = '\0';
-		printf("%s\n", buff);
-		if (strncmp(ignore_message, buff, strlen(ignore_message)) != 0 ){
-			fprintf(stderr, "%s\n", buff);
-			exit(1);
+		for ( i = 0; ignore_message[i] != NULL; i++) {
+			ignore = ignore_message[i];
+			if (strncmp(ignore, buff, strlen(ignore)) != 0 ){
+				err_flg = TRUE;
+				break;
+			}
 		}
+	}
+	if (!err_flg){
+		fprintf(stderr, "error %s\n", buff );
+		exit(1);
 	}
 }
 
 static void
-db_dump(int fd, char *pass, char **argv)
+set_envauth(
+	AuthInfo *authinfo)
+{
+	setenv("PGPASSWORD", authinfo->pass, 1);
+	if (authinfo->sslcert)
+		setenv("PGSSLCERT", authinfo->sslcert, 1);
+	if (authinfo->sslkey)
+		setenv("PGSSLKEY", authinfo->sslkey, 1);
+	if (authinfo->sslrootcert)
+		setenv("PGSSLROOTCERT", authinfo->sslrootcert, 1);
+	if (authinfo->sslcrl)
+		setenv("PGSSLCRL", authinfo->sslcrl, 1);
+}
+
+static void
+db_dump(int fd, AuthInfo *authinfo, char **argv)
 {
 	char *sql;
 	char command[SIZE_BUFF + 1];
 
 	snprintf(command, SIZE_BUFF, "%s/%s", POSTGRES_BINDIR, PG_DUMP);
-	setenv("PGPASSWORD", pass, 1);
+	set_envauth(authinfo);
 
 	sql = LockRedirectorQuery();
 	if ((write(fd, sql, strlen(sql))) <= 0){
@@ -289,13 +316,12 @@ db_dump(int fd, char *pass, char **argv)
 }
 
 static void
-db_restore(int fd, char *pass, char **argv)
+db_restore(int fd, AuthInfo *authinfo, char **argv)
 {
 	char command[SIZE_BUFF];
 
 	snprintf(command, SIZE_BUFF, "%s/%s", POSTGRES_BINDIR, PSQL);
-
-	setenv("PGPASSWORD", pass, 1);
+	set_envauth(authinfo);
 	execv(command, argv);
 
 	fprintf( stderr, "load program psql\n" );
@@ -321,7 +347,7 @@ dbexist(DBG_Struct	*dbg)
 		PQclear(res);
 		PQfinish(conn);
 	}
-	
+
 	return ret;
 }
 
@@ -342,7 +368,7 @@ dbactivity(DBG_Struct	*dbg)
 		PQclear(res);
 		PQfinish(conn);
 	}
-	
+
 	return ret;
 }
 
@@ -368,7 +394,7 @@ redirector_check(DBG_Struct	*dbg)
 		PQclear(res);
 		pg_disconnect(dbg);
 	}
-	
+
 	return ret;
 }
 
@@ -385,7 +411,7 @@ dropdb(DBG_Struct	*dbg)
 		ret = db_command(conn, sql);
 		PQfinish(conn);
 	}
-	
+
 	return ret;
 }
 
@@ -402,6 +428,19 @@ NewDBInfo(void)
 	return dbinfo;
 }
 
+static AuthInfo *
+NewAuthInfo(void)
+{
+	AuthInfo *authinfo;
+	authinfo = (AuthInfo *)xmalloc(sizeof(AuthInfo));
+	authinfo->pass = NULL;
+	authinfo->sslcert = NULL;
+	authinfo->sslkey = NULL;
+	authinfo->sslrootcert = NULL;
+	authinfo->sslcrl = NULL;
+	return authinfo;
+}
+
 extern DBInfo *
 getDBInfo(DBG_Struct	*dbg,
 	char *dbname)
@@ -413,7 +452,7 @@ getDBInfo(DBG_Struct	*dbg,
 
 	sql = NewLBS();
 	dbinfo = NewDBInfo();
-	
+
 	conn = template1_connect(dbg);
 	LBS_EmitString(sql, "SELECT pg_encoding_to_char(encoding) ");
 	if ( PQserverVersion(conn)  >=  80400 ) {
@@ -505,19 +544,19 @@ delete_table(DBG_Struct	*dbg, char *table_name)
 	char sql[SIZE_BUFF];
 
 	conn = pg_connect(dbg);
-	
+
 	snprintf(sql, SIZE_BUFF, "DELETE FROM %s;\n", table_name);
 	ret = db_command(conn, sql);
-	
+
 	return ret;
 }
 
 extern Bool
 db_sync(
 	char **master_argv,
-	char *master_pass,
+	AuthInfo *master_authinfo,
 	char **slave_argv,
-	char *slave_pass,
+	AuthInfo *slave_authinfo,
 	int check)
 {
 	struct sigaction sa;
@@ -544,7 +583,7 @@ db_sync(
 		close( STDIN_FILENO );
 		dup2(std_io[0], STDIN_FILENO);
 		dup2(std_err[1], STDERR_FILENO);
-		db_restore(STDIN_FILENO, slave_pass, slave_argv);
+		db_restore(STDIN_FILENO, slave_authinfo, slave_argv);
 	} else {
 		if ( (pg_dump_pid = fork()) == 0 ) {
 			/* pg_dump| */
@@ -553,7 +592,7 @@ db_sync(
 			close( std_err[1] );
 			close( STDOUT_FILENO );
 			dup2( std_io[1], STDOUT_FILENO);
-			db_dump(std_io[1], master_pass, master_argv);
+			db_dump(std_io[1], master_authinfo, master_argv);
 		} else {
 			/* parent */
 			close( std_io[0] );
@@ -575,13 +614,24 @@ all_sync(
 	char *dump_opt,
 	Bool verbose)
 {
+	AuthInfo *master_authinfo,*slave_authinfo;
 	int check = TRUE;
 	int moptc, soptc;
 	char **master_argv, **slave_argv;
-	char *master_pass, *slave_pass;
 
-	master_pass = GetDB_Pass(master_dbg, DB_UPDATE);
-	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);
+	master_authinfo = NewAuthInfo();
+	master_authinfo->pass = GetDB_Pass(master_dbg, DB_UPDATE);
+	master_authinfo->sslcert = GetDB_Sslcert(master_dbg, DB_UPDATE);
+	master_authinfo->sslkey = GetDB_Sslkey(master_dbg, DB_UPDATE);
+	master_authinfo->sslrootcert = GetDB_Sslrootcert(master_dbg, DB_UPDATE);
+	master_authinfo->sslcrl = GetDB_Sslcrl(master_dbg, DB_UPDATE);
+
+	slave_authinfo = NewAuthInfo();
+	slave_authinfo->pass = GetDB_Pass(slave_dbg, DB_UPDATE);
+	slave_authinfo->sslcert = GetDB_Sslcert(slave_dbg, DB_UPDATE);
+	slave_authinfo->sslkey = GetDB_Sslkey(slave_dbg, DB_UPDATE);
+	slave_authinfo->sslrootcert = GetDB_Sslrootcert(slave_dbg, DB_UPDATE);
+	slave_authinfo->sslcrl = GetDB_Sslcrl(slave_dbg, DB_UPDATE);
 
 	master_argv = make_pgopts(PG_DUMP, master_dbg);
 	moptc = optsize(master_argv);
@@ -606,18 +656,29 @@ all_sync(
 	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
 	slave_argv[soptc] = NULL;
 
-	return db_sync(master_argv, master_pass, slave_argv, slave_pass, check);
+	return db_sync(master_argv, master_authinfo, slave_argv, slave_authinfo, check);
 }
 
 extern Bool
 table_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, char *table_name)
 {
 	int moptc, soptc;
-	char *master_pass, *slave_pass;
+	AuthInfo *master_authinfo,*slave_authinfo;
 	char **master_argv, **slave_argv;
 
-	master_pass = GetDB_Pass(master_dbg, DB_UPDATE);
-	slave_pass = GetDB_Pass(slave_dbg, DB_UPDATE);
+	master_authinfo = NewAuthInfo();
+	master_authinfo->pass = GetDB_Pass(master_dbg, DB_UPDATE);
+	master_authinfo->sslcert = GetDB_Sslcert(master_dbg, DB_UPDATE);
+	master_authinfo->sslkey = GetDB_Sslkey(master_dbg, DB_UPDATE);
+	master_authinfo->sslrootcert = GetDB_Sslrootcert(master_dbg, DB_UPDATE);
+	master_authinfo->sslcrl = GetDB_Sslcrl(master_dbg, DB_UPDATE);
+
+	slave_authinfo = NewAuthInfo();
+	slave_authinfo->pass = GetDB_Pass(slave_dbg, DB_UPDATE);
+	slave_authinfo->sslcert = GetDB_Sslcert(slave_dbg, DB_UPDATE);
+	slave_authinfo->sslkey = GetDB_Sslkey(slave_dbg, DB_UPDATE);
+	slave_authinfo->sslrootcert = GetDB_Sslrootcert(slave_dbg, DB_UPDATE);
+	slave_authinfo->sslcrl = GetDB_Sslcrl(slave_dbg, DB_UPDATE);
 
 	master_argv = make_pgopts(PG_DUMP, master_dbg);
 	moptc = optsize(master_argv);
@@ -635,7 +696,7 @@ table_sync(DBG_Struct	*master_dbg, DBG_Struct *slave_dbg, char *table_name)
 	slave_argv[soptc++] = GetDB_DBname(slave_dbg,DB_UPDATE);
 	slave_argv[soptc] = NULL;
 
-	return db_sync(master_argv, master_pass, slave_argv, slave_pass, TRUE);
+	return db_sync(master_argv, master_authinfo, slave_argv, slave_authinfo, TRUE);
 }
 
 static char *
