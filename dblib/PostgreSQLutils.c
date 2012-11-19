@@ -264,15 +264,16 @@ err_check(int err_fd)
 	len = read(err_fd, buff, SIZE_BUFF);
 	if (len > 0) {
 		buff[len] = '\0';
+		err_flg = TRUE;
 		for ( i = 0; ignore_message[i] != NULL; i++) {
 			ignore = ignore_message[i];
 			if (strncmp(ignore, buff, strlen(ignore)) != 0 ){
-				err_flg = TRUE;
+				err_flg = FALSE;
 				break;
 			}
 		}
 	}
-	if (!err_flg){
+	if (err_flg){
 		fprintf(stderr, "error %s\n", buff );
 		exit(1);
 	}
