@@ -150,7 +150,7 @@ dbtype_check(DBG_Struct	*dbg)
 	return rc;
 }
 
-static	void
+static	Bool
 all_allsync(
 	DBG_Struct	*master_dbg,
 	DBG_Struct	*slave_dbg)
@@ -168,7 +168,7 @@ all_allsync(
 	ret = dbexist(master_dbg);
 	if (!ret) {
 		Warning("ERROR: database \"%s\" does not exist.", GetDB_DBname(master_dbg,DB_UPDATE));
-		return;
+		return FALSE;
 	}
 	dbinfo = getDBInfo(master_dbg, GetDB_DBname(master_dbg,DB_UPDATE));
 	if	( slave_dbg->coding != NULL ) {
@@ -200,16 +200,17 @@ all_allsync(
 		ret = createdb(slave_dbg, tablespace, template, encoding, lc_collate, lc_ctype);
 		if (!ret) {
 			Warning("ERROR: create database \"%s\" failed.", GetDB_DBname(slave_dbg,DB_UPDATE));
-			return;
+			return FALSE;
 		}
 	}
 	verPrintf("Database sync start\n");
 	ret = all_sync(master_dbg, slave_dbg, dump_opt, fVerbose);
 	if (!ret) {
 		Warning("ERROR: database sync failed.");
-		return;
+		return FALSE;
 	}
 	Message("Success all sync\n");
+	return TRUE;
 }
 
 static void
@@ -437,6 +438,7 @@ main(
 	NETFILE	*fp;
 	time_t start, end;
 	int n, h, m, s;
+	Bool ret = TRUE;
 
 	SetDefault();
 	GetOption(option,argc,argv,NULL);
@@ -521,7 +523,7 @@ main(
 		}
 		Message("Synchronous begin.");
 		time(&start);
-		all_allsync(master_dbg, slave_dbg);
+		ret = all_allsync(master_dbg, slave_dbg);
 		time(&end);
 		n = (int)difftime(end, start);
 		h = (n/60/60); m = (n/60)-(h*60) ;s = (n)-(m*60);
@@ -532,6 +534,9 @@ main(
 			CloseNet(fp);
 		}
 	}
-
+	if (!ret){
+		return	2;
+	}
+	printf("Done.\n");
 	return	0;
 }
