@@ -466,7 +466,7 @@ main(
 	if (!master_dbg || !slave_dbg){
 		Error("Illegal dbgroup.");
 	}
-
+	Message("Start master[\"%s\"] -> slave[\"%s\"]", master_dbg->name, slave_dbg->name);
 	if (!dbtype_check(master_dbg) || !dbtype_check(slave_dbg) ){
 		Error("Sorry, does not support Database type.");
 	}
@@ -536,6 +536,6 @@ main(
 	if (!ret){
 		return	2;
 	}
-	printf("Done.\n");
+	Message("Done.");
 	return	0;
 }
