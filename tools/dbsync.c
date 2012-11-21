@@ -398,18 +398,17 @@ lookup_master_slave(
 	DBG_Struct	*dbg,
 	void		*dummy)
 {
-	static	Bool lookup_flag = FALSE;
+	static	int  lookup_id = 0;
 
-	if ( (dbg->redirect != NULL) && (lookup_flag == FALSE)
+	if ( (dbg->redirect != NULL) && (dbg->id <= lookup_id)
 		&& (dbg->redirectorMode == REDIRECTOR_MODE_PATCH) ) {
+		lookup_id = dbg->id;
 		if (!fReverse) {
 			MASTERDB = StrDup(dbg->name);
 			SLAVEDB = StrDup(dbg->redirect->name);
-			lookup_flag = TRUE;
 		} else {
 			MASTERDB = StrDup(dbg->redirect->name);
 			SLAVEDB = StrDup(dbg->name);
-			lookup_flag = TRUE;
 		}
 	}
 }
