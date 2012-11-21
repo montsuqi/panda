@@ -731,8 +731,11 @@ NewTableList(int count)
 	TableList	*table_list;
 	table_list = (TableList *) xmalloc(sizeof(TableList));
 	table_list->count = 0;
-	table_list->tables = NULL;
-	table_list->tables = (Table **)xmalloc(count * sizeof(Table *));
+	if (count > 0){
+		table_list->tables = (Table **)xmalloc(count * sizeof(Table *));
+	} else {
+		table_list->tables = NULL;
+	}
 	return table_list;
 }
 
@@ -808,7 +811,7 @@ getTableList( PGconn	*conn )
 	sql = queryTableList(ALL);
 	res = db_exec(conn, sql);
 	free(sql);
-	
+
 	if ( (res != NULL) && (PQresultStatus(res) == PGRES_TUPLES_OK) ) {
 		ntuples = PQntuples(res);
 		table_list = NewTableList(ntuples);
