@@ -852,8 +852,10 @@ ScaleWidget(
     GtkWidget   *widget,
     gpointer    data)
 {
-	int x, y, width, height;
-	int _x,_y,_width,_height;
+	int has_x,x,_x;
+	int has_y,y,_y;
+	int has_w,w,_w;
+	int has_h,h,_h;
 
 #ifdef LIBGTK_3_0_0
 	return;
@@ -862,24 +864,33 @@ ScaleWidget(
 		gtk_container_set_resize_mode(GTK_CONTAINER(widget),GTK_RESIZE_QUEUE);
 		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, data);
 	} 
+	has_x = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"has_x"));
+	has_y = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"has_y"));
+	has_w = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"has_width"));
+	has_h = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"has_height"));
+
+	if (!has_x || !has_y || !has_w || !has_h) {
+      return;
+    }
 
 	x = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"x"));
 	y = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"y"));
-	width = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"width"));
-	height = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"height"));
-	if (width > 0 && height > 0) {
+	w = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"width"));
+	h = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"height"));
+
+	if (w >= 0 && h >= 0) {
 		_x = (int)(x * TopWindowScale.h);
 		_y = (int)(y * TopWindowScale.v);
-		_width = (int)(width * TopWindowScale.h);
-		_height = (int)(height * TopWindowScale.v);
+		_w = (int)(w * TopWindowScale.h);
+		_h = (int)(h * TopWindowScale.v);
 
 #if 0
 		fprintf(stderr,"scalewidget [[%d,%d],[%d,%d]]->[[%d,%d],[%d,%d]]\n",
-			x,y,width,height,
-			_x,_y,_width,_height);
+			x,y,w,h,
+			_x,_y,_w,_h);
 #endif
 		if (!GTK_IS_WINDOW(widget)) {
-			gtk_widget_set_size_request(widget,_width,_height); 
+			gtk_widget_set_size_request(widget,_w,_h); 
 			GtkWidget *parent = gtk_widget_get_parent(widget);
 			if (parent != NULL && GTK_IS_FIXED(parent)) {
 				gtk_fixed_move(GTK_FIXED(parent),widget,_x,_y);
@@ -892,16 +903,19 @@ static	void
 ScaleWindow(
 	GtkWidget *widget)
 {
-	int x, y, width, height;
-	int _x,_y;
+
+	int x,_x;
+	int y,_y;
+	int w,_w;
+	int h,_h;
 
 #ifdef LIBGTK_3_0_0
 	return;
 #endif
 	x = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"x"));
 	y = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"y"));
-	width = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"width"));
-	height = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"height"));
+	w = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"width"));
+	h = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"height"));
 
 	if (x != 0 || y != 0) {
 		gtk_window_get_position(GTK_WINDOW(TopWindow),&_x,&_y);
@@ -914,16 +928,14 @@ ScaleWindow(
 		gtk_window_move(GTK_WINDOW(widget),_x,_y);
 	}
 
-	if (width > 0 && height > 0) {
-		int _width,_height;
-
-		_width = (int)(width * TopWindowScale.h);
-		_height = (int)(height * TopWindowScale.v);
+	if (w > 0 && h > 0) {
+		_w = (int)(w * TopWindowScale.h);
+		_h = (int)(h * TopWindowScale.v);
 #if 0
 		fprintf(stderr,"scale window [%d,%d]->[%d,%d]\n",
-			width,height,_width,_height);
+			w,h,_w,_h);
 #endif
-		gtk_widget_set_size_request(widget,_width,_height); 
+		gtk_widget_set_size_request(widget,_w,_h); 
 	} 
 }
 
