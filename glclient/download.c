@@ -195,6 +195,8 @@ show_download_dialog(
 		G_CALLBACK(cb_save),info);
 	g_signal_connect(G_OBJECT(close_button),"clicked",
 		G_CALLBACK(cb_close),info);
+	g_signal_connect(G_OBJECT(dialog), 
+		"delete_event", G_CALLBACK(gtk_true), NULL);
 	gtk_widget_show_all(dialog);
 	gtk_main();
 	g_free(info);
