@@ -408,7 +408,7 @@ dropdb(DBG_Struct	*dbg)
 
 	conn = template1_connect(dbg);
 	if (conn){
-		snprintf(sql, SIZE_BUFF, "DROP DATABASE %s;\n", GetDB_DBname(dbg,DB_UPDATE));
+		snprintf(sql, SIZE_BUFF, "DROP DATABASE \"%s\";\n", GetDB_DBname(dbg,DB_UPDATE));
 		ret = db_command(conn, sql);
 		PQfinish(conn);
 	}
@@ -498,7 +498,9 @@ createdb(DBG_Struct	*dbg,
 	conn = template1_connect(dbg);
 	if (conn) {
 		LBS_EmitString(sql, "CREATE DATABASE ");
+		LBS_EmitString(sql, "\"");
 		LBS_EmitString(sql, GetDB_DBname(dbg,DB_UPDATE));
+		LBS_EmitString(sql, "\" ");
 		if (tablespace) {
 			LBS_EmitString(sql," TABLESPACE ");
 			LBS_EmitString(sql, tablespace);
