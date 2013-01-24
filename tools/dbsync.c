@@ -403,13 +403,8 @@ lookup_master_slave(
 	if ( (dbg->redirect != NULL) && (dbg->id <= lookup_id)
 		&& (dbg->redirectorMode == REDIRECTOR_MODE_PATCH) ) {
 		lookup_id = dbg->id;
-		if (!fReverse) {
-			MASTERDB = StrDup(dbg->name);
-			SLAVEDB = StrDup(dbg->redirect->name);
-		} else {
-			MASTERDB = StrDup(dbg->redirect->name);
-			SLAVEDB = StrDup(dbg->name);
-		}
+		MASTERDB = StrDup(dbg->name);
+		SLAVEDB = StrDup(dbg->redirect->name);
 	}
 }
 
@@ -432,7 +427,7 @@ main(
 	int		argc,
 	char	**argv)
 {
-	DBG_Struct	*master_dbg, *slave_dbg;
+	DBG_Struct	*master_dbg, *slave_dbg, *tmp_dbg;
 	TableList *ng_list;
 	NETFILE	*fp;
 	time_t start, end;
@@ -451,20 +446,26 @@ main(
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	if (Master == NULL ) {
-		Master = StrDup("");
+	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)lookup_master_slave,NULL);
+	if (Master != NULL ) {
+		xfree(MASTERDB);
+		MASTERDB = Master;
 	}
 	if (Slave != NULL)  {
-		master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, Master);
-		slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, Slave);
-	} else {
-		g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)lookup_master_slave,NULL);
-		master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, MASTERDB);
-		slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, SLAVEDB);
+		xfree(SLAVEDB);
+		SLAVEDB = Slave;
 	}
+	master_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, MASTERDB);
+	slave_dbg = g_hash_table_lookup(ThisEnv->DBG_Table, SLAVEDB);
 
 	if (!master_dbg || !slave_dbg){
 		Error("Illegal dbgroup.");
+	}
+
+	if (fReverse) {
+		tmp_dbg = slave_dbg;
+		slave_dbg = master_dbg;
+		master_dbg = tmp_dbg;
 	}
 	Message("Start [\"%s\"] -> [\"%s\"]", master_dbg->name, slave_dbg->name);
 	if (!dbtype_check(master_dbg) || !dbtype_check(slave_dbg) ){
