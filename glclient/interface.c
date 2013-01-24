@@ -125,6 +125,7 @@ UI_load_config (
 		} 
 		fTimer = gl_config_get_bool (serverkey,"timer");
 		TimerPeriod = gl_config_get_string (serverkey,"timerperiod");
+		FontName = gl_config_get_string (serverkey,"fontname");
 #ifdef  USE_SSL
 		fSsl = gl_config_get_bool (serverkey,"ssl");
 		CA_File = gl_config_get_string (serverkey,"CAfile");
