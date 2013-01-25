@@ -1278,6 +1278,14 @@ ENTER_FUNC;
 			g_list_free(attrs->clistdata);
 			attrs->clistdata = NULL;
 		}
+		if (attrs->fgcolors != NULL) {
+			g_strfreev(attrs->fgcolors);
+			attrs->fgcolors = NULL;
+		}
+		if (attrs->bgcolors != NULL) {
+			g_strfreev(attrs->bgcolors);
+			attrs->bgcolors = NULL;
+		}
 		if (attrs->states != NULL) {
 			g_strfreev(attrs->states);
 		}
@@ -1327,8 +1335,8 @@ ENTER_FUNC;
 				}
 			} else
 			if		(  !stricmp(name,"column")  ) {
+				/* dummy */
 				RecvIntegerData(fp,&column);
-				attrs->column = column;
 			} else
 			if		(  !stricmp(name,"item")  ) {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
@@ -1348,6 +1356,26 @@ ENTER_FUNC;
 						rdata[k] = g_strdup(buff);
 					}
 					attrs->clistdata = g_list_append(attrs->clistdata,rdata);
+				}
+			} else
+			if		(  !stricmp(name,"fgcolor")  ) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				num = GL_RecvInt(fp);
+				attrs->fgcolors = g_malloc0(sizeof(gchar*)*(num+1));
+				attrs->fgcolors[num] = NULL;
+				for	( j = 0 ; j < num ; j ++ ) {
+					(void)RecvStringData(fp,buff,SIZE_BUFF);
+					attrs->fgcolors[j] = g_strdup(buff);
+				}
+			} else
+			if		(  !stricmp(name,"bgcolor")  ) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				num = GL_RecvInt(fp);
+				attrs->bgcolors = g_malloc0(sizeof(gchar*)*(num+1));
+				attrs->bgcolors[num] = NULL;
+				for	( j = 0 ; j < num ; j ++ ) {
+					(void)RecvStringData(fp,buff,SIZE_BUFF);
+					attrs->bgcolors[j] = g_strdup(buff);
 				}
 			} else {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/

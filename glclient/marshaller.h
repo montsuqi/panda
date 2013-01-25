@@ -139,9 +139,10 @@ typedef struct __CList{
 	int 	count;
 	int 	row;
 	float 	rowattr;
-	int 	column;
 	GList 	*clistdata;
 	char 	**states;
+	char 	**bgcolors;
+	char 	**fgcolors;
 	char 	*states_name;
 } _CList;
 

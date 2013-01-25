@@ -245,6 +245,16 @@ ENTER_FUNC;
 			gtk_panda_clist_append(GTK_PANDA_CLIST(widget), rdata);
 		}
 	}
+	if (data->fgcolors != NULL) {
+		for	(j = 0;data->fgcolors[j] != NULL;j ++) {
+			gtk_panda_clist_set_fgcolor(GTK_PANDA_CLIST(widget),j,data->fgcolors[j]);
+		}
+	}
+	if (data->bgcolors != NULL) {
+		for	(j = 0;data->bgcolors[j] != NULL;j ++) {
+			gtk_panda_clist_set_bgcolor(GTK_PANDA_CLIST(widget),j,data->bgcolors[j]);
+		}
+	}
 	gtk_widget_show(widget);
 	for	( j = 0 ; data->states[j] != NULL ; j ++ ) {
 		if (j < data->count) {
