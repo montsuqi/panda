@@ -60,7 +60,7 @@ _CreateConninfo(
 {
 	int portnum;
 	char portstr[SIZE_OTHER];
-	
+
 	AddConninfo(conninfo, "host", GetDB_Host(dbg,usage));
 	if ( GetDB_PortName(dbg,usage) != NULL) {
 		AddConninfo(conninfo, "port",GetDB_PortName(dbg,usage));
@@ -85,9 +85,13 @@ _CreateConninfo(
 	AddConninfo(conninfo, "sslkey", GetDB_Sslkey(dbg,usage));
 	AddConninfo(conninfo, "sslrootcert", GetDB_Sslrootcert(dbg,usage));
 	AddConninfo(conninfo, "sslcrl", GetDB_Sslcrl(dbg,usage));
+#ifdef POSTGRES_APPLICATIONNAME
+	AddConninfo(conninfo, "application_name", dbg->appname);
+	AddConninfo(conninfo, "fallback_application_name", APPLICATION_NAME);
+#endif /* ifdef POSTGRES_APPLICATIONNAME */
 	return conninfo;
 }
-	
+
 extern LargeByteString	*
 CreateConninfo(
 	DBG_Struct	*dbg,
@@ -117,7 +121,7 @@ ENTER_FUNC;
 	AddConninfo(conninfo, "dbname", "template1");
 	LBS_EmitEnd(conninfo);
 LEAVE_FUNC;
-	return conninfo;	
+	return conninfo;
 }
 
 extern	PGconn	*

@@ -186,7 +186,7 @@ ENTER_FUNC;
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	InitDB_Process(NULL);
+	InitDB_Process("dbmaster");
 	CheckDBG(name);
 	
 	if		(  PortNumber  ==  NULL  ) {

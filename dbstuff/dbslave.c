@@ -211,7 +211,7 @@ ENTER_FUNC;
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	InitDB_Process(NULL);
+	InitDB_Process("dbslave");
 	
 	dbgprintf("replica dbg => %s", dbg_name);
 	dbgprintf("log dbg => %s", log_name);
