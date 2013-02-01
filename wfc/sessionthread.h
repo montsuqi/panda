@@ -17,30 +17,14 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_SYSDB_H
-#define	_INC_SYSDB_H
+#ifndef	_INC_SESSIONTHREAD_H
+#define	_INC_SESSIONTHREAD_H
 
-extern	void		SYSDB_Init();
-extern	NETFILE*	SYSDB_Connect();
-extern	void		SYSDB_Disconnect(NETFILE *fp);
-extern	ValueStruct	*SYSDB_TERM_New(NETFILE *fp,char *termid);
-extern	void		SYSDB_TERM_Delete(NETFILE *fp,ValueStruct *value);
-extern	void		SYSDB_TERM_Update(NETFILE *fp,ValueStruct *value);
-extern	void		SYSDB_TERM_SetValue(ValueStruct *value, int kid, char *data);
+#include	"wfcdata.h"
 
-enum {
-	SYSDB_TERM_USER	= 0,
-	SYSDB_TERM_HOST,
-	SYSDB_TERM_WINDOW,
-	SYSDB_TERM_WIDGET,
-	SYSDB_TERM_EVENT,
-	SYSDB_TERM_INPROCESS,
-	SYSDB_TERM_CTIME,
-	SYSDB_TERM_ATIME,
-	SYSDB_TERM_PTIME,
-	SYSDB_TERM_TPTIME,
-	SYSDB_TERM_COUNT,
-	SYSDB_TERM_LAST
-};	
+extern	SessionCtrl	*NewSessionCtrl(SessionCtrlType type);
+extern	void		FreeSessionCtrl(SessionCtrl *ctrl);
+extern	void		SessionEnqueue(SessionCtrl *ctrl);
+extern	void		StartSessionThread(void);
 
 #endif

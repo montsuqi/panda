@@ -49,13 +49,11 @@
 #include	"wfc.h"
 #include	"auth.h"
 #include	"authstub.h"
-#include	"blobcom.h"
+#include	"sysdatacom.h"
 #include	"blobserv.h"
-#include	"keyvaluecom.h"
-#include	"kvserv.h"
+#include	"sysdbserv.h"
 #include	"message.h"
 #include	"debug.h"
-#define 	MAIN
 #include	"sysdatathread.h"
 
 static	void
@@ -72,15 +70,15 @@ ENTER_FUNC;
 		c = RecvChar(fp);	ON_IO_ERROR(fp,badio);
 		switch(c) {
 		case SYSDATA_BLOB:
-			dbgmsg("Call PassiveBLOB");
-			PassiveBLOB(fp,BlobState);	ON_IO_ERROR(fp,badio);
+			dbgmsg("Call ServeBLOB");
+			ServeBLOB(fp,BlobState);	ON_IO_ERROR(fp,badio);
 			break;
-		case SYSDATA_KV:
-			dbgmsg("Call PassiveKV");
-			PassiveKV(fp,KVState);		ON_IO_ERROR(fp,badio);
+		case SYSDATA_SYSDB:
+			dbgmsg("Call ServeSysDB");
+			ServeSysDB(fp);		ON_IO_ERROR(fp,badio);
 			break;
 		case SYSDATA_END:
-			dbgmsg("SYSDATA END");
+			dbgmsg("SYSDATA_END");
 			fLoop = FALSE;
 			break;
 		default:

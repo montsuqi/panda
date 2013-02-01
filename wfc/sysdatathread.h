@@ -24,11 +24,10 @@ extern	pthread_t	ConnectSysData(int _fhSysData);
 extern	void		InitSysData(void);
 
 #undef	GLOBAL
-#ifdef	MAIN
+#ifdef	SYSDATA_MAIN
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern
 #endif
-GLOBAL	LOCKOBJECT;
 
 #endif

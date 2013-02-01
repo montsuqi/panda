@@ -17,21 +17,13 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_KEYVALUEREQ_H
-#define	_INC_KEYVALUEREQ_H
+#ifndef	_INC_SYSDBSERV_H
+#define	_INC_SYSDBSERV_H
 
 #include	"libmondai.h"
-#include	"keyvaluecom.h"
 #include	"net.h"
 
-#define	KVREQ_TEXT_SIZE	256
-
-extern	int			KVREQ_Request(NETFILE *fp, PacketClass c, ValueStruct *args);
-extern	ValueStruct	*KVREQ_NewQuery(int num);
-extern	ValueStruct	*KVREQ_NewQueryWithValue(char *id, int num, char **keys, char **values);
-extern	int			KVREQ_GetNum(ValueStruct *value);
-extern	char		*KVREQ_GetValue(ValueStruct *value,int num);
-extern	char		*KVREQ_GetKey(ValueStruct *value,int num);
+extern	void	ServeSysDB(NETFILE *fp);
 
 #undef	GLOBAL
 #ifdef	MAIN

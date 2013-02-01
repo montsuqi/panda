@@ -47,7 +47,8 @@
 #include	"dirs.h"
 #include	"wfcdata.h"
 #include	"dbgroup.h"
-#include	"keyvaluereq.h"
+#include	"sysdatacom.h"
+#include	"sysdbreq.h"
 #include	"socket.h"
 #include	"message.h"
 #include	"debug.h"
@@ -78,7 +79,7 @@ static struct _COMMAND {
 	char *desc;
 } command[] = 
 {
-	{	"dump"		, "command <file>			- dump system database"	},
+	{	"dump"		, "command 					- dump system database"	},
 	{	"popup"		, "command <id> <message>	- send popup message"	},
 	{	"popup-all"	, "command <message>		- send popup message"	},
 	{	"dialog"	, "command <id> <message>	- send dialog message"	},
@@ -112,60 +113,54 @@ LEAVE_FUNC;
 }
 
 static	void
-Dump(char *fname)
+Dump()
 {
 	NETFILE *fp;
-	ValueStruct *q;
-	char *key[1];
-	char *value[1];
+	int i,j,n;
+	ValueStruct *vals,*a,*v,*w;
+	PacketClass rc;
+	char *keys[] = {
+		"id",
+		"user",
+		"host",
+		"agent",
+		"window",
+		"widget",
+		"event",
+		"in_process",
+		"create_time",
+		"access_time",
+		"process_time",
+		"total_process_time",
+		"count",
+		"popup",
+		"dialog",
+		"abort",
+		NULL
+	};
 ENTER_FUNC;
+	printf("---\n");
 	fp = ConnectSysData();
-	q = KVREQ_NewQueryWithValue(fname, 1, key, value);
-	if (KVREQ_Request(fp, KV_DUMP, q) == MCP_OK) {
-		printf("[SUCCESS] dump to %s\n", fname);
-	} else {
-		printf("[ERROR] dump failure\n");
-		exit(1);
+	vals = RecParseValueMem(SYSDBVALS_DEF,NULL);
+	InitializeValue(vals);
+	rc = SYSDB_GetDataAll(fp,&n,vals);
+	a = GetRecordItem(vals,"values");
+	if (rc == SESSION_CONTROL_OK) {
+		for(i=0;i<n;i++) {
+			v = GetArrayItem(a,i);
+			for(j=0;keys[j]!=NULL;j++){
+				w = GetRecordItem(v,keys[j]);
+				if (j==0) {
+					printf("- :%s: %s\n",keys[j],ValueToString(w,NULL));
+				} else {
+					printf("  :%s: %s\n",keys[j],ValueToString(w,NULL));
+				}
+			}
+		}
 	}
-	FreeValueStruct(q);
 	SendPacketClass(fp, SYSDATA_END); 
 	CloseNet(fp);
-	exit(0);
-LEAVE_FUNC;
-}
-
-static	void
-SendMessage(
-	char *id,
-	char *termid,
-	char *message)
-{
-	NETFILE *fp;
-	ValueStruct *q;
-	char *key[1];
-	char *value[1];
-	int rc;
-	
-ENTER_FUNC;
-	fp = ConnectSysData();
-	key[0] = id;
-	value[0] = message;
-
-	q = KVREQ_NewQueryWithValue(id, 1, key, value);
-
-	if (termid == NULL) {
-		rc = KVREQ_Request(fp, KV_SETVALUEALL, q);
-	} else {
-		SetValueStringWithLength(GetItemLongName(q,"id"), termid, strlen(termid), NULL);
-		rc = KVREQ_Request(fp, KV_SETVALUE, q);
-	}
-	SendPacketClass(fp, SYSDATA_END); 
-	CloseNet(fp);
-	FreeValueStruct(q);
-	if (rc != MCP_OK) {
-		printf("[ERROR] %s%s failure\n",id,(termid == NULL?"-all":""));
-		exit(1);
-	}
+	FreeValueStruct(vals);
 	exit(0);
 LEAVE_FUNC;
 }
@@ -174,52 +169,84 @@ extern	void
 Who(void)
 {
 	NETFILE *fp;
-	ValueStruct *list;
-	ValueStruct *query;
-	char lname[128];
-	char *key[6] =  {
-		"user",
-		"host",
-		"create_time",
-		"access_time",
-		"window",
-		"agent"
-	};
-	char *value[6] = {"","","","","",""};
-	int i;
+	int i,n;
+	ValueStruct *vals,*a,*v;
+	PacketClass rc;
 ENTER_FUNC;
 	fp = ConnectSysData();
-	list = KVREQ_NewQuery(MAX_USER);
-	if (KVREQ_Request(fp, KV_LISTENTRY, list) != MCP_OK) {
-		printf("[ERROR] cannot get user list\n");
-		exit(1);
-	}
+	vals = RecParseValueMem(SYSDBVALS_DEF,NULL);
+	InitializeValue(vals);
+	rc = SYSDB_GetDataAll(fp,&n,vals);
+	a = GetRecordItem(vals,"values");
 	printf("|%-11s|%-17s|%-32s|%-32s|%-17s|%-21s|%-129s|\n",
 		"USER", "HOST", "LOGIN@", "LAST@", "WINDOW", "AGENT", "ID");
-	for ( i = 0; i < ValueInteger(GetItemLongName(list, "num")); i++) {
-		sprintf(lname, "query[%d].key", i);
-		if (!strcmp("system", ValueToString(GetItemLongName(list,lname), NULL))) {
-			continue;
-		} 
-		query = KVREQ_NewQueryWithValue(ValueToString(GetItemLongName(list,lname), NULL),6,key,value);
-		if (KVREQ_Request(fp, KV_GETVALUE, query) == MCP_OK) {
-		printf("|%-11s|%-17s|%-32s|%-32s|%-17s|%-21s|%-129s|\n",
-			ValueToString(GetItemLongName(query,"query[0].value"), NULL),
-			ValueToString(GetItemLongName(query,"query[1].value"), NULL),
-			ValueToString(GetItemLongName(query,"query[2].value"), NULL),
-			ValueToString(GetItemLongName(query,"query[3].value"), NULL),
-			ValueToString(GetItemLongName(query,"query[4].value"), NULL),
-			ValueToString(GetItemLongName(query,"query[5].value"), NULL),
-			ValueToString(GetItemLongName(query,"id"), NULL));
+	if (rc == SESSION_CONTROL_OK) {
+		for(i=0;i<n;i++) {
+			v = GetArrayItem(a,i);
+			printf("|%-11s|%-17s|%-32s|%-32s|%-17s|%-21s|%-129s|\n",
+				ValueToString(GetRecordItem(v,"user"),NULL),
+				ValueToString(GetRecordItem(v,"host"),NULL),
+				ValueToString(GetRecordItem(v,"create_time"),NULL),
+				ValueToString(GetRecordItem(v,"access_time"),NULL),
+				ValueToString(GetRecordItem(v,"window"),NULL),
+				ValueToString(GetRecordItem(v,"agent"),NULL),
+				ValueToString(GetRecordItem(v,"id"),NULL));
 		}
-		FreeValueStruct(query);
 	}
-	FreeValueStruct(list);
 	SendPacketClass(fp, SYSDATA_END); 
 	CloseNet(fp);
+	FreeValueStruct(vals);
 	exit(0);
 LEAVE_FUNC;
 }
+
+static	void
+SendMessage(
+	char *key,
+	char *termid,
+	char *message)
+{
+	NETFILE *fp;
+	ValueStruct *val,*v;
+	PacketClass rc;
+ENTER_FUNC;
+	fp = ConnectSysData();
+	val = RecParseValueMem(SYSDBVAL_DEF,NULL);
+	InitializeValue(val);
+	v = GetRecordItem(val,"id");
+	SetValueString(v,termid,NULL);
+	v = GetRecordItem(val,key);
+	SetValueString(v,message,NULL);
+	rc = SYSDB_SetMessage(fp,val);
+	SendPacketClass(fp, SYSDATA_END); 
+	CloseNet(fp);
+	FreeValueStruct(val);
+	exit(0);
+LEAVE_FUNC;
+}
+
+static	void
+SendMessageAll(
+	char *key,
+	char *message)
+{
+	NETFILE *fp;
+	ValueStruct *val,*v;
+	PacketClass rc;
+ENTER_FUNC;
+	fp = ConnectSysData();
+	val = RecParseValueMem(SYSDBVAL_DEF,NULL);
+	InitializeValue(val);
+	v = GetRecordItem(val,key);
+	SetValueString(v,message,NULL);
+	rc = SYSDB_SetMessageAll(fp,val);
+	SendPacketClass(fp, SYSDATA_END); 
+	CloseNet(fp);
+	FreeValueStruct(val);
+	exit(0);
+LEAVE_FUNC;
+}
+
 
 static	void
 print_usage()
@@ -244,6 +271,7 @@ main(
 
 	InitMessage("moninfo",NULL);
 	InitNET();
+	RecParserInit();
 
 	context = g_option_context_new("- montsuqi system database utility");
 	g_option_context_add_main_entries (context, entries, NULL);
@@ -268,7 +296,7 @@ main(
 			print_usage();
 			exit (1);
 		}
-	} else if (c== DUMP || c==POPUP_ALL || c==DIALOG_ALL || c==ABORT_ALL) {
+	} else if (c==POPUP_ALL || c==DIALOG_ALL || c==ABORT_ALL) {
 		if (argc < 3) {
 			print_usage();
 			exit (1);
@@ -277,25 +305,25 @@ main(
 
 	switch (c) {
 	case DUMP:
-		Dump(argv[2]);
+		Dump();
 		break;
 	case POPUP:
 		SendMessage("popup",argv[2],argv[3]);
 		break;
 	case POPUP_ALL:
-		SendMessage("popup",NULL,argv[2]);
+		SendMessageAll("popup",argv[2]);
 		break;
 	case DIALOG:
 		SendMessage("dialog",argv[2],argv[3]);
 		break;
 	case DIALOG_ALL:
-		SendMessage("dialog",NULL,argv[2]);
+		SendMessageAll("dialog",argv[2]);
 		break;
 	case ABORT:
 		SendMessage("abort",argv[2],argv[3]);
 		break;
 	case ABORT_ALL:
-		SendMessage("abort",NULL,argv[2]);
+		SendMessageAll("abort",argv[2]);
 		break;
 	case WHO:
 		Who();

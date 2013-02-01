@@ -32,12 +32,15 @@
 
 #include	"glserver.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"front.h"
 #include	"socket.h"
+#include	"wfcdata.h"
+#include	"sysdatacom.h"
 #include	"blobreq.h"
-#include	"keyvaluereq.h"
+#include	"sysdbreq.h"
 #include	"sysdataio.h"
 #include	"enum.h"
 #include	"message.h"
@@ -147,56 +150,55 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	char*
-GetSysDB(
-	char	*term,
-	char	*k)
+static ValueStruct *val = NULL;
+
+extern	void
+GetSessionMessage(
+	const char *term,
+	char **popup,
+	char **dialog,
+	char **abort)
 {
-	ValueStruct *q;
-	char *key[1];
-	char *value[1];
-	char *ret;
+	ValueStruct *v;
+	PacketClass rc;
 ENTER_FUNC;
-	ret = NULL;
 	if (fp != NULL && CheckNetFile(fp)) {
-		key[0] = k;
-		value[0] = "";
-		q = KVREQ_NewQueryWithValue(term,1,key,value);
-		if(KVREQ_Request(fp, KV_GETVALUE, q) == MCP_OK) {
-			ret = StrDup(ValueToString(GetItemLongName(q,"query[0].value"), NULL));
+		if (val == NULL) {
+			val = RecParseValueMem(SYSDBVAL_DEF,NULL);
 		}
-		FreeValueStruct(q);
+		InitializeValue(val);
+		v = GetRecordItem(val,"id");
+		SetValueString(v,term,NULL);
+		rc = SYSDB_GetMessage(fp,val);
+		v = GetRecordItem(val,"popup");
+		*popup = g_strdup(ValueToString(v,NULL));
+		v = GetRecordItem(val,"dialog");
+		*dialog = g_strdup(ValueToString(v,NULL));
+		v = GetRecordItem(val,"abort");
+		*abort = g_strdup(ValueToString(v,NULL));
 	} else {
-		Error("KV_GETVALUE failure");
+		Error("GetSessionMessage failure");
 	}
 LEAVE_FUNC;
-	return ret;
 }
 
-extern	Bool
-SetSysDB(
-	char	*term,
-	char	*k,
-	char	*v)
+extern	void
+ResetSessionMessage(
+	const char *term)
 {
-	ValueStruct *q;
-	char *key[1];
-	char *value[1];
-	Bool ret;
+	ValueStruct *v;
+	PacketClass rc;
 ENTER_FUNC;
-	ret = FALSE;
-
 	if (fp != NULL && CheckNetFile(fp)) {
-		key[0] = k;
-		value[0] = v;
-		q = KVREQ_NewQueryWithValue(term,1,key,value);
-		if(KVREQ_Request(fp, KV_SETVALUE, q) == MCP_OK) {
-			ret = TRUE;
+		if (val == NULL) {
+			val = RecParseValueMem(SYSDBVAL_DEF,NULL);
 		}
-		FreeValueStruct(q);
+		InitializeValue(val);
+		v = GetRecordItem(val,"id");
+		SetValueString(v,term,NULL);
+		rc = SYSDB_ResetMessage(fp,val);
 	} else {
-		Error("KV_SETVALUE failure");
+		Error("ResetSessionMessage failure");
 	}
 LEAVE_FUNC;
-	return ret;
 }
