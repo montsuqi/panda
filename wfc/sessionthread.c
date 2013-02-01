@@ -331,7 +331,6 @@ _SetMessage(
 		return;
 	}
 	v = GetRecordItem(session->sysdbval,"popup");
-	SetValueString(v,"uhhy0----",NULL);
 	w = GetRecordItem(ctrl->sysdbval,"popup");
 	SetValueString(v,ValueToString(w,NULL),NULL);
 	v = GetRecordItem(session->sysdbval,"dialog");
