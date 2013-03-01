@@ -30,6 +30,7 @@ typedef	struct {
 	char			window[SIZE_NAME+1];
 	char			user[SIZE_USER+1];
 	char			term[SIZE_TERM+1];
+	char			host[SIZE_HOST+1];
 	RecordStruct	*rec;
 }	MonAPIData;
 

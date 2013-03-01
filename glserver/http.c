@@ -41,6 +41,7 @@
 #include	<unistd.h>
 #include	<ctype.h>
 #include	<glib.h>
+#include	<uuid/uuid.h>
 
 #include	"enum.h"
 #include	"libmondai.h"
@@ -65,7 +66,7 @@
 
 typedef struct {
 	NETFILE		*fp;
-	char		*term;
+	char		host[SIZE_HOST];
 	PacketClass	method;
 	int			buf_size;
 	char		*buf;
@@ -93,7 +94,7 @@ HTTP_Init(
 
 	req = New(HTTP_REQUEST);
 	req->fp = fp;
-	req->term = TermName(fp->fd);
+	RemoteIP(fp->fd,req->host,SIZE_HOST);
 	req->method = klass;
 	req->buf_size = 0;
 	req->buf = req->head = xmalloc(sizeof(char) * MAX_REQ_SIZE);
@@ -218,7 +219,7 @@ SendResponse(
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
 		req->status, GetReasonPhrase(req->status));
 	Send(req->fp, buf, strlen(buf)); 
-	MessageLogPrintf("[%s@%s] %s", req->user, req->term ,buf);
+	MessageLogPrintf("[%s@%s] %s", req->user, req->host ,buf);
 
 	gmtime_r(&t, &cur);
 	cur_p = &cur;
@@ -535,7 +536,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 			req->user = StrDup(user);
 			req->pass = StrDup("");
 		} else {
-			MessageLogPrintf("[%s@%s] Authorization Error",subject,req->term);
+			MessageLogPrintf("[%s@%s] Authorization Error",subject,req->host);
 			req->status = HTTP_UNAUTHORIZED;
 		}
         xfree(subject);
@@ -667,6 +668,7 @@ MakeMonAPIData(
 {
 	MonAPIData *data;
 	RecordStruct *rec;
+	uuid_t u;
 
 	if ((rec = SetWindowRecord(req->window)) == NULL) {
 		return NULL;
@@ -677,7 +679,9 @@ MakeMonAPIData(
 	strncpy(data->ld, req->ld, sizeof(data->ld));
 	strncpy(data->window, req->window, sizeof(data->window));
 	strncpy(data->user, req->user, sizeof(data->user));
-	strncpy(data->term, req->term, sizeof(data->term));
+	strncpy(data->host, req->host, sizeof(data->host));
+	uuid_generate(u);
+	uuid_unparse(u,data->term);
 	PackRequestRecord(data->rec, req);
 	return data;
 }
@@ -707,7 +711,7 @@ _HTTP_Method(
 		// SSL AUTH
 	} else {
 		if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
-			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
+			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
 			req->status = HTTP_UNAUTHORIZED;
 		}
 	}
