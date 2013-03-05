@@ -523,15 +523,12 @@ ParseReqAuth(HTTP_REQUEST *req)
 
 #ifdef	USE_SSL
 	if (fSsl && fVerifyPeer){
-		char *cn;
 		if (!req->fp->peer_cert) {
 			MessageLog("can not get peer certificate");
 			req->status = HTTP_INTERNAL_SERVER_ERROR;
 			return;
 		}
-		cn = GetCommonNameFromCertificate(req->fp->peer_cert);
-		strcpy(req->user, cn);
-		xfree(cn);
+		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
 		return;
 	}
 #endif
