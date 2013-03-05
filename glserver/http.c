@@ -207,7 +207,7 @@ SendResponse(
 	body = NULL;
 
 	if (data != NULL && (value = data->rec->value) != NULL) {
-		vstatus = GetItemLongName(value,"httpstatus");
+		vstatus = GetItemLongName(value,"http_status");
 		if (vstatus != NULL) {
 			req->status = ValueInteger(vstatus);
 		} else {
@@ -522,24 +522,16 @@ ParseReqAuth(HTTP_REQUEST *req)
 	gsize size;
 
 #ifdef	USE_SSL
-	if (fSsl && !strcasecmp(Auth.protocol,"ssl")){
-        char *subject;
-        char user[SIZE_USER+1];
-        if (!req->fp->peer_cert) {
+	if (fSsl && fVerifyPeer){
+		char *cn;
+		if (!req->fp->peer_cert) {
 			MessageLog("can not get peer certificate");
 			req->status = HTTP_INTERNAL_SERVER_ERROR;
 			return;
 		}
-        subject = GetSubjectFromCertificate(req->fp->peer_cert);
-        AuthLoadX509(Auth.file);
-		if (AuthX509(subject, user)) {
-			req->user = StrDup(user);
-			req->pass = StrDup("");
-		} else {
-			MessageLogPrintf("[%s@%s] Authorization Error",subject,req->host);
-			req->status = HTTP_UNAUTHORIZED;
-		}
-        xfree(subject);
+		cn = GetCommonNameFromCertificate(req->fp->peer_cert);
+		strcpy(req->user, cn);
+		xfree(cn);
 		return;
 	}
 #endif
@@ -608,21 +600,16 @@ ENTER_FUNC;
 
 	p = NULL;
 	switch(req->method) {
-		case 'G':
-			p = StrDup("GET");
-			break;
-		case 'P':
-			p = StrDup("POST");
-			break;
-		case 'H':
-			p = StrDup("HEAD");
-			break;
+	case 'G':
+		SetValueString(GetItemLongName(e,"http_method"), "GET",NULL);
+		break;
+	case 'P':
+		SetValueString(GetItemLongName(e,"http_method"), "POST",NULL);
+		break;
 	}
-	if ( GetItemLongName(e,"httpstatus") ){
-		ValueInteger(GetItemLongName(e,"httpstatus")) = HTTP_OK;
+	if ( GetItemLongName(e,"http_status") ){
+		ValueInteger(GetItemLongName(e,"http_status")) = HTTP_OK;
 	}
-	SetValueString(GetItemLongName(e,"methodtype"), p,NULL);
-
 	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
 	if (p != NULL) {
 		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
@@ -644,7 +631,7 @@ ENTER_FUNC;
 			return;
 		}
 		key = StrnDup(head, tail - head);
-		snprintf(buf, sizeof(buf), "argument.%s", key);
+		snprintf(buf, sizeof(buf), "arguments.%s", key);
 		xfree(key);
 		head = tail + 1;
 		
@@ -707,10 +694,10 @@ _HTTP_Method(
 		return FALSE;
 	}
 
-	if (fSsl && !strcasecmp(Auth.protocol,"ssl")) {
+	if (fSsl && fVerifyPeer) {
 		// SSL AUTH
 	} else {
-		if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
+		if (!AuthUser(&Auth, req->user, req->pass, "api", NULL)) {
 			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
 			req->status = HTTP_UNAUTHORIZED;
 		}
