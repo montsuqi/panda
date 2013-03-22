@@ -187,7 +187,7 @@ UI_GrabFocus(char *windowName,
 
 	widget = GetWidgetByWindowNameAndName(windowName,widgetName);
 	if (widget != NULL) {
-		GrabFocus(widget);
+		gtk_widget_grab_focus(widget);
 	}
 }
 

@@ -334,26 +334,6 @@ LEAVE_FUNC;
 	return (wname);
 }
 
-static	gint
-_GrabFocus(gpointer data)
-{
-	gtk_widget_grab_focus(data);
-	return FALSE;
-}
-
-extern	void
-GrabFocus(GtkWidget *widget)
-{
-	static guint tag = 0;
-
-	gtk_widget_grab_focus(widget);
-	if (tag != 0) {
-		g_source_remove (tag);	
-	}
-	/* Do not erase.  The interval is necessary in GtkCombo. */
-	tag = g_idle_add(_GrabFocus, widget);
-}
-
 extern  void
 ResetScrolledWindow(
     GtkWidget   *widget,
@@ -705,7 +685,7 @@ ENTER_FUNC;
 	if (data->fWindow) {
 	dbgmsg("show primari window\n");
 		gtk_widget_show(TopWindow);
-		_GrabFocus(TopWindow);
+		gtk_widget_grab_focus(TopWindow);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
 			SwitchWindow(window);
 			if (!data->fAccelGroup) {
