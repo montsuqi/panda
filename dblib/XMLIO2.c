@@ -67,7 +67,7 @@ typedef struct {
 	int num;
 } XMLCtx;
 
-static GHashTable *XMLCtxTable;
+static GHashTable *XMLCtxTable = NULL;
 
 static void
 FreeXMLCtx(XMLCtx *ctx)
@@ -624,7 +624,9 @@ XML_BEGIN(
 {
 ENTER_FUNC;
 	SYSDATA_DBSTART(dbg,ctrl);
-	XMLCtxTable = g_hash_table_new(g_direct_hash,g_direct_equal);
+    if (XMLCtxTable == NULL){
+		XMLCtxTable = g_hash_table_new(g_direct_hash,g_direct_equal);
+	}
 LEAVE_FUNC;
 	return	(NULL);
 }
@@ -646,7 +648,6 @@ XML_END(
 ENTER_FUNC;
 	SYSDATA_DBCOMMIT(dbg,ctrl);
 	g_hash_table_foreach_remove(XMLCtxTable,EachRemoveCtx,NULL);
-    g_hash_table_destroy(XMLCtxTable);
 LEAVE_FUNC;
 	return	(NULL);
 }
