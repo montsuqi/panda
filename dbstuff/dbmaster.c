@@ -182,7 +182,7 @@ ENTER_FUNC;
 	sigaction( SIGHUP, &sa, NULL );
 	
 	InitDirectory();
-	SetUpDirectory(Directory, NULL, NULL, NULL, FALSE);
+	SetUpDirectory(Directory, NULL, NULL, NULL, P_NONE);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
