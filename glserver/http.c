@@ -80,6 +80,7 @@ typedef struct {
 	char		*ld;
 	char		*window;
 	int			status;
+	ScreenData	*scr;
 	NETFILE		*fpSysData;
 } HTTP_REQUEST;
 
@@ -109,6 +110,7 @@ HTTP_Init(
 	req->ld = NULL;
 	req->window = NULL;
 	req->status = HTTP_OK;
+	req->scr = NewScreenData();
 
 	port = ParPort(PortSysData, SYSDATA_PORT);
 	fd = ConnectSocket(port,SOCK_STREAM);
@@ -654,7 +656,7 @@ MakeMonAPIData(
 	RecordStruct *rec;
 	uuid_t u;
 
-	if ((rec = SetWindowRecord(req->window)) == NULL) {
+	if ((rec = SetWindowRecord(req->scr,req->window)) == NULL) {
 		return NULL;
 	}
 	InitializeValue(rec->value);
@@ -755,6 +757,8 @@ PrepareNextRequest(
 	XFree(&(req->pass));
 	XFree(&(req->ld));
 	XFree(&(req->window));
+	FreeScreenData(req->scr);
+	req->scr = NewScreenData();
 	req->status = HTTP_OK;
 	req->body_size = 0;
 	g_hash_table_foreach_remove(req->header_hash, RemoveHeader, NULL);
@@ -796,8 +800,6 @@ HTTP_Method(
 	if(sigaction(SIGALRM, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	} 
-
-	ThisScreen = NewScreenData();
 
 	klass = _klass;
 	req = HTTP_Init(klass, fpComm);
