@@ -33,7 +33,7 @@
 #include	<signal.h>
 #include	<dlfcn.h>
 #include	<fcntl.h>
-#include    <sys/types.h>
+#include	<sys/types.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<glib.h>
@@ -52,7 +52,7 @@
 #include	"driver.h"
 #include	"debug.h"
 
-static	const char	*TermPort;
+static	char	*TermPort;
 
 static	NETFILE	*
 OpenPanda(
@@ -62,8 +62,7 @@ OpenPanda(
 	NETFILE	*fp;
 
 ENTER_FUNC;
-	fp = ConnectTermServer(
-		(char*)TermPort,scr,arg);
+	fp = ConnectTermServer(TermPort,scr,arg);
 	if		(  fp  ==  NULL  ) {
 		fprintf(stderr,"can't connect wfc\n");
 		exit(1);
@@ -224,7 +223,7 @@ SessionMain(
 	NETFILE	*fp;
 
 ENTER_FUNC;
-	port = ParPort((char*)TermPort,PORT_WFC);
+	port = ParPort(TermPort,PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
 	if ( fd > 0 ){
@@ -250,7 +249,7 @@ SessionExit(
 	NETFILE	*fp;
 
 ENTER_FUNC;
-	port = ParPort((char*)TermPort,PORT_WFC);
+	port = ParPort(TermPort,PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
 	if ( fd > 0 ){
