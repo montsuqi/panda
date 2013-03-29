@@ -24,7 +24,7 @@
 */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#	include <config.h>
 #endif
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -52,7 +52,7 @@
 #include	"driver.h"
 #include	"debug.h"
 
-static	char	*TermPort;
+static	char	*TermPort = NULL;
 
 static	NETFILE	*
 OpenPanda(
@@ -165,7 +165,7 @@ ENTER_FUNC;
 			}
 		} else {
 			scr->status = APL_SESSION_END;
-			//Error("Illegal windowData");
+			Warning("Illegal windowData");
 		}
 	} else {
 		MessageLogPrintf("window = [%s]",scr->window);
