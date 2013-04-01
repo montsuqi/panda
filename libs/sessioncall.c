@@ -181,7 +181,7 @@ void
 SessionCallInit(
 	const char *port)
 {
-	TermPort = port;
+	TermPort = (char*)port;
 	if (TermPort == NULL) {
 		TermPort = getenv("WFC_TERM_PORT");
 	}
