@@ -151,6 +151,7 @@ typedef struct __Table{
 	int			trow;
 	float		trowattr;
 	int			tcolumn;
+	gint		ncolumns;
 	gchar 		*tvalue;
 	GList		*tabledata;
 	GList		*namedata;

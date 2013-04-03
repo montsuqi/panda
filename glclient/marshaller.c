@@ -1433,10 +1433,12 @@ ENTER_FUNC;
 		for(i=0;i<g_list_length(attrs->tabledata);i++) {
 			rowdata = (gchar**)(g_list_nth_data(attrs->tabledata,i));
 			namerowdata = (gchar**)(g_list_nth_data(attrs->namedata,i));
-			for(j=0;rowdata[j]!=NULL;j++) {
+			for(j=0;j<attrs->ncolumns+1;j++) {
+				if (rowdata[j] != NULL) {
 				GL_SendPacketClass(fp,GL_ScreenData);
 				GL_SendName(fp,namerowdata[j]);
 				SendStringData(fp,GL_TYPE_VARCHAR ,rowdata[j]);
+				}
 			}
 		}
 	}
@@ -1480,7 +1482,13 @@ ENTER_FUNC;
 		g_free(attrs->tvalue);
 		if (attrs->tabledata != NULL) {
 			for(i=0;i<g_list_length(attrs->tabledata);i++) {
-				g_strfreev(g_list_nth_data(attrs->tabledata,i));
+				rowdata = (char**)g_list_nth_data(attrs->tabledata,i);
+				for(j=0;j<attrs->ncolumns+1;j++) {
+					if (rowdata[j] != NULL) {
+						g_free(rowdata[j]);
+					}
+				}
+				g_free(rowdata);
 			}
 			g_list_free(attrs->tabledata);
 			attrs->tabledata = NULL;
@@ -1559,7 +1567,7 @@ ENTER_FUNC;
 				attrs->bgdata = NULL;
 				for	( j = 0 ; j < nrows ; j ++ ) {
 					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-					ncolumns = GL_RecvInt(fp);
+					attrs->ncolumns = ncolumns = GL_RecvInt(fp);
 
 					rowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
 					rowdata[ncolumns] = NULL;

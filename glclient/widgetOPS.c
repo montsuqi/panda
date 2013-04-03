@@ -329,7 +329,7 @@ GetPandaTable(
 {
 	GtkTreeModel *model;
 	GtkTreeIter iter;
-	int i,j;
+	int i,j,diff;
 	gchar *text;
 	gchar **rowdata;
 ENTER_FUNC;
@@ -347,8 +347,14 @@ ENTER_FUNC;
 		rowdata = (gchar**)(g_list_nth_data(data->tabledata,i));
 		for(j=0;rowdata[j]!=NULL;j++) {
 			gtk_tree_model_get(model,&iter,j,&text,-1);
+			diff = strcmp(rowdata[j],text);
 			g_free(rowdata[j]);
-			rowdata[j] = text;
+			if (!diff) {
+				g_free(text);
+				rowdata[j] = NULL;
+			} else {
+				rowdata[j] = text;
+			}
 		}
 		i+=1;
 	} while(gtk_tree_model_iter_next(model,&iter));
