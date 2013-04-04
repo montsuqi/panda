@@ -37,7 +37,7 @@
 #include	<curl/curl.h>
 
 #include	"glclient.h"
-#include	"interface.h"
+#include	"print.h"
 #include	"printservice.h"
 #include	"message.h"
 #include	"debug.h"
@@ -132,9 +132,9 @@ DoPrint(
 				if (showdialog) {
 					MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
 						url,fname,(long)wrote_size);
-					UI_ShowPrintDialog(title,fname,wrote_size);
+					ShowPrintDialog(title,fname,wrote_size);
 				} else {
-					UI_PrintWithDefaultPrinter(fname);
+					PrintWithDefaultPrinter(fname);
 				}
 			}
 		} else if (http_code != 204) { /* 204 HTTP No Content */
@@ -177,9 +177,9 @@ DO_PRINT_ERROR:
 						if (showdialog) {
 							MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
 								url,fname,(long)wrote_size);
-							UI_ShowPrintDialog(title,fname,wrote_size);
+							ShowPrintDialog(title,fname,wrote_size);
 						} else {
-							UI_PrintWithDefaultPrinter(fname);
+							PrintWithDefaultPrinter(fname);
 						}
 					}
 				} else if (http_code != 204) { /* 204 HTTP No Content */

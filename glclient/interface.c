@@ -329,20 +329,6 @@ UI_SetPingTimerFunc(_PingTimerFunc func, gpointer data)
 }
 
 extern	void
-UI_ShowPrintDialog(char *title,
-	char *fname,
-	size_t size)
-{
-	show_print_dialog(title,fname,size);
-}
-
-extern	void
-UI_PrintWithDefaultPrinter(char *fname)
-{
-	print_with_default_printer(fname);
-}
-
-extern	void
 UI_Notify(char *summary,
 	char *body,
 	char *icon,

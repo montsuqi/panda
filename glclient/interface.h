@@ -65,8 +65,6 @@ extern	void		UI_ErrorDialog(const char *msg);
 extern	int			UI_AskPass(char *buff, size_t buflen, const char *prmpt);
 extern	void		UI_BootDialogRun(void);
 extern	void		UI_SetPingTimerFunc(_PingTimerFunc func, gpointer data);
-extern	void		UI_ShowPrintDialog(char*title,char *fname,size_t size);
-extern	void		UI_PrintWithDefaultPrinter(char *fname);
 extern	void		UI_Notify(char *summary,char *body, char *icon,int timeout);
 
 extern	void		UI_Init(int argc, char **argv);

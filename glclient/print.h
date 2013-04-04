@@ -22,7 +22,7 @@
 
 #include <gtk/gtk.h>
 
-void show_print_dialog(char *title,char *fname,size_t size);
-void print_with_default_printer(char *fname);
+void ShowPrintDialog(char *title,char *fname,size_t size);
+void PrintWithDefaultPrinter(char *fname);
 
 #endif
