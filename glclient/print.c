@@ -77,7 +77,7 @@ ShowPrintDialog(
 
 	dialog = gtk_dialog_new_with_buttons(_("Preview"),parent,
 		GTK_DIALOG_MODAL,
-		GTK_STOCK_OK,
+		GTK_STOCK_CLOSE,
 		GTK_RESPONSE_NONE,NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog),_title);
 	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
