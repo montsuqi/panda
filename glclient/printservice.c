@@ -39,6 +39,7 @@
 #include	"glclient.h"
 #include	"print.h"
 #include	"printservice.h"
+#include	"notify.h"
 #include	"message.h"
 #include	"debug.h"
 #include	"gettext.h"
@@ -139,7 +140,7 @@ DoPrint(
 			}
 		} else if (http_code != 204) { /* 204 HTTP No Content */
 			msg = g_strdup_printf(_("print failure\ntitle:%s\n"),title);
-			UI_Notify(_("glclient print notify"),msg,"gtk-dialog-error",0);
+			Notify(_("glclient print notify"),msg,"gtk-dialog-error",0);
 			g_free(msg);
 		}
 	}
@@ -184,7 +185,7 @@ DO_PRINT_ERROR:
 					}
 				} else if (http_code != 204) { /* 204 HTTP No Content */
 					msg = g_strdup_printf(_("print failure\ntitle:%s\n"),title);
-					UI_Notify(_("glclient print notify"),msg,"gtk-dialog-error",0);
+					Notify(_("glclient print notify"),msg,"gtk-dialog-error",0);
 					g_free(msg);
 				}
 			}
@@ -218,11 +219,11 @@ CheckPrintList()
 	PrintRequest *req;
 	gchar buf[1024];
 
-	if (PrintList == NULL) {
+	if (PRINTLIST(Session) == NULL) {
 		return;
 	}
-	for (i=0; i < g_list_length(PrintList); i++) {
-		req = (PrintRequest*)g_list_nth_data(PrintList,i);
+	for (i=0; i < g_list_length(PRINTLIST(Session)); i++) {
+		req = (PrintRequest*)g_list_nth_data(PRINTLIST(Session),i);
 		if (req == NULL) {
 			Warning("print request is NULL.");
 			continue;
@@ -235,7 +236,7 @@ CheckPrintList()
 			} else {
 				if (req->nretry <= 1) {
 					sprintf(buf,_("print failure\ntitle:%s\n"),req->title);
-					UI_Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
+					Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
 					FreePrintRequest(req);
 				} else {
 					req->nretry -= 1;
@@ -247,6 +248,6 @@ CheckPrintList()
 			FreePrintRequest(req);
 		}
 	}
-	g_list_free(PrintList);
-	PrintList = list;
+	g_list_free(PRINTLIST(Session));
+	PRINTLIST(Session) = list;
 }

@@ -21,6 +21,30 @@
 #ifndef	_INC_ACTION_H
 #define	_INC_ACTION_H
 #include	"glclient.h"
+#include	"marshaller.h"
+
+#define	DEFAULT_WINDOW_WIDTH	1024
+#define	DEFAULT_WINDOW_HEIGHT	768
+#define	DEFAULT_WINDOW_FOOTER	24
+
+#undef	GLOBAL
+#ifdef	ACTION_MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+typedef struct {
+	float v;
+	float h;
+} WindowScale;
+
+GLOBAL	GtkWidget	*TopWindow;
+GLOBAL	GtkWidget	*TopNoteBook;
+GLOBAL	GList		*DialogStack;
+GLOBAL	WindowScale	TopWindowScale;
+
+typedef	gint		(*_PingTimerFunc)	(gpointer data);
 
 extern	void		RegisterChangedHandler(GObject *object, 
 						GCallback func, gpointer data);
@@ -38,7 +62,7 @@ extern	void		AddChangedWidget(GtkWidget *widget);
 extern	void		ShowBusyCursor(GtkWidget *widget);
 extern	void		StopTimerWidgetAll(void);
 extern	void		HideBusyCursor(GtkWidget *widget);
-extern  void 		ResetScrolledWindow(GtkWidget *widget, gpointer user_data);
+extern	void		ResetScrolledWindow(char *windowName);
 extern  void		SetTitle(GtkWidget *window);
 extern  void		SetBGColor(GtkWidget *window);
 extern	GtkWidget	*GetWidgetByLongName(char *longName);
@@ -49,5 +73,19 @@ extern	void		ConfigureWindow(GtkWidget *widget,GdkEventConfigure *ev,
 						gpointer data);
 extern	void		InitTopWindow(void);
 extern	gboolean	IsDialog(GtkWidget *widget);
+extern  gboolean    IsWidgetName(char *name);
+extern  gboolean    IsWidgetName2(char *name);
+
+extern	void		ListConfig();
+extern	void		LoadConfig(const char *configname);
+extern  void 		GrabFocus(char *windowName,char *widgetName);
+extern  void        UI_Init(int argc, char **argv);
+extern	void		UI_Main(void);
+extern	void		InitStyle(void);
+extern	int			AskPass(char *buf, size_t buflen,const char	*prompt);
+extern	void		SetPingTimerFunc(_PingTimerFunc func, gpointer data);
+extern	WindowData	*GetWindowData(const char *wname);
+extern	WidgetData	*GetWidgetData( const char *wname);
 
 #endif
+

@@ -27,7 +27,6 @@
 #else
 #define	GLOBAL		extern
 #endif
-GLOBAL	GHashTable	*WidgetDataTable;
 
 typedef enum _WidgetType {
 // gtk+panda

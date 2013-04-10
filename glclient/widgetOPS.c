@@ -50,7 +50,6 @@
 #include	"marshaller.h"
 #include	"queue.h"
 #include	"widgetcache.h"
-#include	"interface.h"
 #include	"download.h"
 #include	"notify.h"
 #include	"message.h"
@@ -813,7 +812,7 @@ ENTER_FUNC;
 		gtk_panda_file_entry_set_data(fentry,
 			LBS_Size(data->binary), LBS_Body(data->binary));
 		//set subwidget
-		subdata = g_hash_table_lookup(WidgetDataTable, data->subname);
+		subdata = GetWidgetData(data->subname);
 		subWidget = GetWidgetByLongName(data->subname);
 		if (subdata != NULL || subWidget != NULL) {
 			SetEntry(subWidget, subdata,(_Entry *)subdata->attrs);
@@ -888,7 +887,7 @@ GetWidgetType(
 	GtkWidget	*widget;
 	long 		type;
 
-	wdata = g_hash_table_lookup(WindowTable, wname);
+	wdata = GetWindowData(wname);
 	if (wdata != NULL && wdata->xml != NULL) {
 		widget = glade_xml_get_widget_by_long_name(
     				(GladeXML *)wdata->xml, name);
@@ -961,7 +960,7 @@ GetWidgetType(
 }
 
 extern	void
-GetWidgetData(WidgetData	*data)
+UpdateWidgetData(WidgetData	*data)
 {
 	GtkWidget	*widget;
 
@@ -1128,7 +1127,7 @@ UpdateWindow(char *windowName)
 	WindowData	*wdata;
 	WidgetData	*data;
 
-	wdata = (WindowData *)g_hash_table_lookup(WindowTable, windowName);
+	wdata = GetWindowData(windowName);
 	g_return_if_fail(wdata != NULL);
 	while(
 		(data = (WidgetData *)DeQueueNoWait(wdata->UpdateWidgetQueue)) != NULL

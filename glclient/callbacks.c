@@ -174,8 +174,10 @@ send_event(
 	static Bool	ignore_event = FALSE;
 ENTER_FUNC;
 	wname = GetWindowName(widget);
-	if		(  !fInRecv &&  !ignore_event && !strcmp(wname,ThisWindowName)) {
-		fInRecv = TRUE;
+	if (	!ISRECV(Session) &&  
+			!ignore_event && 
+			!strcmp(wname,THISWINDOW(Session))) {
+		ISRECV(Session) = TRUE;
 
 		StopEventTimer();
 		StopTimerWidgetAll();
@@ -183,12 +185,12 @@ ENTER_FUNC;
 		ShowBusyCursor(widget);
 		/* send event */
 		if		(  event  !=  NULL  ) {
-			SendEvent(FPCOMM(glSession),
+			SendEvent(FPCOMM(Session),
 					  wname,
 					  (char *)gtk_widget_get_name(widget),
 					  event);
 		} else {
-			SendEvent(FPCOMM(glSession),
+			SendEvent(FPCOMM(Session),
 					  wname,
 					  (char *)gtk_widget_get_name(widget),
 					  (char *)gtk_widget_get_name(widget));
@@ -196,20 +198,20 @@ ENTER_FUNC;
 		SendWindowData();
 		BlockChangedHandlers();
 		HideBusyCursor(widget); 
-		GetScreenData(FPCOMM(glSession));
+		GetScreenData(FPCOMM(Session));
 		UnblockChangedHandlers();
 		if	( ! fKeyBuff  ) {
 			ignore_event = TRUE;
 			ClearKeyBuffer();
 			ignore_event = FALSE;
 		}
-		while (ThisWindowName[0] == '_') {
-			SendEvent(FPCOMM(glSession),
-				ThisWindowName,ThisWindowName,"DummyEvent");
+		while (THISWINDOW(Session)[0] == '_') {
+			SendEvent(FPCOMM(Session),
+				THISWINDOW(Session),THISWINDOW(Session),"DummyEvent");
 			SendWindowData();
-			GetScreenData(FPCOMM(glSession));
+			GetScreenData(FPCOMM(Session));
 		}
-		fInRecv = FALSE;
+		ISRECV(Session) = FALSE;
 	}
 LEAVE_FUNC;
 }
@@ -400,7 +402,7 @@ no_switch_page(
 	gint			new_pageno,
 	char			*user_data)
 {
-	if (fInRecv) {
+	if (ISRECV(Session)) {
 		return FALSE;
 	} else {
 		g_signal_stop_emission_by_name (G_OBJECT (widget), "switch_page");
@@ -469,7 +471,7 @@ window_destroy(
 	GtkWidget	*widget,
 	gpointer	user_data)
 {
-	fInRecv = TRUE;
+	ISRECV(Session) = TRUE;
 	gtk_main_quit();
 }
 

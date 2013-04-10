@@ -40,7 +40,7 @@
 
 #include	"glclient.h"
 #include	"gettext.h"
-#include	"interface.h"
+#include	"action.h"
 #include	"dialogs.h"
 #include	"desktop.h"
 #include	"print.h"

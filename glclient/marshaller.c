@@ -35,16 +35,15 @@
 #include	<sys/time.h>
 #include	<errno.h>
 
-#define		MARSHALLER
-
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"protocol.h"
 #include	"marshaller.h"
-#include	"interface.h"
+#include	"action.h"
 #include	"printservice.h"
+#include	"widgetOPS.h"
 #include	"dialogs.h"
 #include	"gettext.h"
 #include	"debug.h"
@@ -1002,7 +1001,7 @@ ENTER_FUNC;
 						req->title = StrDup(title);
 						req->nretry = nretry;
 						req->showdialog = showdialog;
-						PrintList = g_list_append(PrintList,req);
+						PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
 						MessageLogPrintf("add path[%s]\n",path);
 					}
 					path[0] = 0; title[0] = 0;
@@ -1188,12 +1187,11 @@ ENTER_FUNC;
 				}
 			} else {
 				sprintf(buff,"%s.%s", data->name, name);
-				if (UI_IsWidgetName(buff)) {
+				if (IsWidgetName(buff)) {
 					attrs->subname = strdup(buff);
 					RecvWidgetData(buff,fp);
 				} else {
-					show_error_dialog(
-					_("protocol error\ninvalid data\n%s"),buff);
+					ShowErrorDialog(_("protocol error\ninvalid data\n%s"),buff);
 				}
 			}
 		}
@@ -1300,7 +1298,7 @@ ENTER_FUNC;
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
 			sprintf(subname,"%s.%s",data->name, name);
-			if (UI_IsWidgetName(subname)) {
+			if (IsWidgetName(subname)) {
 				RecvWidgetData(subname,fp);
 			} else
 			if		(  RecvCommon(name,data,fp)  ) {
@@ -1786,18 +1784,18 @@ RecvWidgetData(
 
 	ENTER_FUNC;
 
-	type = UI_GetWidgetType(ThisWindowName, widgetName);
-	data = (WidgetData *)g_hash_table_lookup(WidgetDataTable, widgetName);
+	type = GetWidgetType(THISWINDOW(Session),widgetName);
+	data = (WidgetData *)g_hash_table_lookup(WIDGETTABLE(Session), widgetName);
 	if (data == NULL){
 		// new data
 		data = g_new0(WidgetData, 1);
 		data->type = type;
 		data->name = strdup(widgetName);
-		data->window = g_hash_table_lookup(WindowTable, ThisWindowName);
+		data->window = GetWindowData(THISWINDOW(Session));
 		data->state = 0;
 		data->visible = TRUE;
 		data->style = NULL;
-		g_hash_table_insert(WidgetDataTable, strdup(widgetName), data);
+		g_hash_table_insert(WIDGETTABLE(Session), strdup(widgetName), data);
 	}
 	EnQueue(data->window->UpdateWidgetQueue, data);
 
@@ -1878,13 +1876,13 @@ SendWidgetData(
 ENTER_FUNC;
 	widgetName = (char *)key;
 	fp = (NETFILE *)user_data;
-	data = (WidgetData *)g_hash_table_lookup(WidgetDataTable, widgetName);
+	data = GetWidgetData(widgetName);
 	if (data == NULL) {
 		MessageLogPrintf("widget data [%s] is not found",widgetName);
 		return;
 	}
 
-	UI_GetWidgetData(data);
+	UpdateWidgetData(data);
 
 	switch(data->type) {
 // gtk+panda

@@ -619,7 +619,7 @@ boot_dialog_free (BootDialog *self)
   return: TRUE -> connect, FALSE -> close
  */
 void
-boot_dialog_run ()
+BootDialogRun ()
 {
   BootDialog *self;
 

@@ -27,10 +27,7 @@
 #include <stdio.h>
 #include <glib.h>
 
-void boot_dialog_run ();
-#if 0
-void boot_dialog_term ();
-#endif
+void BootDialogRun ();
 
 #endif /* #ifndef __BOOTDIALOG_H_INCLUDED__ */
 

@@ -32,7 +32,7 @@
 #endif
 
 extern  void		UpdateWindow(char *windowName);
-extern	void		GetWidgetData(WidgetData *data);
+extern	void		UpdateWidgetData(WidgetData *data);
 extern	WidgetType	GetWidgetType(char *wname, char *name);
 
 #endif

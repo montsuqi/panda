@@ -43,11 +43,11 @@
 #include	"message.h"
 #include	"debug.h"
 #include	"marshaller.h"
-#define		_ACTION_C
+#define		ACTION_MAIN
+#include	"bd_config.h"
 #include	"action.h"
 #include	"queue.h"
 #include	"gettext.h"
-#include	"interface.h"
 #include	"widgetcache.h"
 
 /* GdkPixbuf RGBA C-Source image dump 1-byte-run-length-encoded */
@@ -334,8 +334,8 @@ LEAVE_FUNC;
 	return (wname);
 }
 
-extern  void
-ResetScrolledWindow(
+static  void
+_ResetScrolledWindow(
     GtkWidget   *widget,
     gpointer    user_data)
 {
@@ -354,8 +354,18 @@ ResetScrolledWindow(
 		}
     }
     if  (   GTK_IS_CONTAINER(widget)    ) {
-        gtk_container_forall(GTK_CONTAINER(widget), ResetScrolledWindow, NULL);
+        gtk_container_forall(GTK_CONTAINER(widget), _ResetScrolledWindow, NULL);
     }
+}
+
+extern	void
+ResetScrolledWindow(char *windowName)
+{
+	GtkWidget *widget;
+
+	widget = GetWidgetByLongName(windowName);
+	g_return_if_fail(widget != NULL);
+	_ResetScrolledWindow(widget, NULL);
 }
 
 static	void
@@ -405,7 +415,7 @@ _StopTimerWidgetAll(
 extern	void
 StopTimerWidgetAll(void)
 {
-	g_hash_table_foreach(WindowTable,_StopTimerWidgetAll,NULL);
+	g_hash_table_foreach(WINDOWTABLE(Session),_StopTimerWidgetAll,NULL);
 }
 
 extern	void
@@ -426,7 +436,7 @@ ENTER_FUNC;
 	} else {
 		wname = StrnDup(name, tail - name);
 	}
-	if ((wdata = g_hash_table_lookup(WindowTable,wname)) != NULL) {
+	if ((wdata = GetWindowData(wname)) != NULL) {
 		if (g_hash_table_lookup(wdata->ChangedWidgetTable, name) == NULL) {
 			key = StrDup(name);
 			g_hash_table_insert(wdata->ChangedWidgetTable, key, key);
@@ -440,7 +450,7 @@ extern	void
 AddChangedWidget(
 	GtkWidget	*widget)
 {
-	if		(  !fInRecv  ) {
+	if (!ISRECV(Session)) {
 		_AddChangedWidget(widget);
 	}
 }
@@ -467,13 +477,13 @@ SetTitle(GtkWidget	*window)
 	char		buff[SIZE_BUFF];
 	WindowData *wdata;
 
-	wdata = g_hash_table_lookup(WindowTable, (char *)gtk_widget_get_name(window));
+	wdata = GetWindowData((char *)gtk_widget_get_name(window));
 	if (wdata == NULL||wdata->title == NULL) {
 		return;
 	} 
 
-	if ( window == TopWindow && glSession->title != NULL && strlen(glSession->title) > 0 ) {
-		snprintf(buff, sizeof(buff), "%s - %s", wdata->title, glSession->title);
+	if ( window == TopWindow && Session->title != NULL && strlen(Session->title) > 0 ) {
+		snprintf(buff, sizeof(buff), "%s - %s", wdata->title, Session->title);
 	} else {
 		snprintf(buff, sizeof(buff), "%s", wdata->title);
 	}
@@ -485,8 +495,8 @@ SetBGColor(GtkWidget *widget)
 {
 #ifdef LIBGTK_3_0_0
 	GdkRGBA color;
-	if (BGCOLOR(glSession) != NULL) {
-		if (gdk_rgba_parse(BGCOLOR(glSession),&color)) {
+	if (BGCOLOR(Session) != NULL) {
+		if (gdk_rgba_parse(BGCOLOR(Session),&color)) {
 			gtk_widget_override_background_color(widget,GTK_STATE_NORMAL,&color);
 		} else {
 			gtk_widget_override_background_color(widget,GTK_STATE_NORMAL,NULL);
@@ -496,8 +506,8 @@ SetBGColor(GtkWidget *widget)
 	}
 #else
 	GdkColor color;
-	if (BGCOLOR(glSession) != NULL) {
-		if (gdk_color_parse(BGCOLOR(glSession),&color)) {
+	if (BGCOLOR(Session) != NULL) {
+		if (gdk_color_parse(BGCOLOR(Session),&color)) {
 			gtk_widget_modify_bg(widget,GTK_STATE_NORMAL,&color);
 		} else {
 			gtk_widget_modify_bg(widget,GTK_STATE_NORMAL,NULL);
@@ -520,7 +530,7 @@ CreateWindow(
 	GtkWidget	*child;
 
 ENTER_FUNC;
-	if (g_hash_table_lookup(WindowTable,wname) != NULL) {
+	if (GetWindowData(wname) != NULL) {
 		dbgprintf("%s already in WindowTable", wname);
 		return;
 	}
@@ -543,7 +553,7 @@ ENTER_FUNC;
 	wdata->TimerWidgetTable = NewNameHash();
 	wdata->UpdateWidgetQueue = NewQueue();
 	glade_xml_signal_autoconnect(xml);
-	g_hash_table_insert(WindowTable,strdup(wname),wdata);
+	g_hash_table_insert(WINDOWTABLE(Session),strdup(wname),wdata);
 
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
@@ -608,7 +618,7 @@ CloseWindow(
 
 ENTER_FUNC;
 	dbgprintf("close window:%s\n", wname);
-	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
+	if ((data = GetWindowData(wname)) == NULL) {
 		// FIXME sometimes comes here.
 		fprintf(stderr,"%s:%d data %s is NULL\n", __FILE__, __LINE__, wname);
 		return;
@@ -655,7 +665,7 @@ ResetTimer(
 	WindowData	*data;
 
 ENTER_FUNC;
-	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
+	if ((data = GetWindowData(wname)) == NULL) {
 		// FIXME sometimes comes here.
 		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
 		return;
@@ -674,7 +684,7 @@ ShowWindow(
 
 ENTER_FUNC;
 	dbgprintf("show window:%s\n", wname);
-	if ((data = g_hash_table_lookup(WindowTable,wname)) == NULL) {
+	if ((data = GetWindowData(wname)) == NULL) {
 		// FIXME sometimes comes here.
 		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
 		return;
@@ -773,7 +783,7 @@ GetWidgetByLongName(char *name)
 	GtkWidget	*widget;
 	
 	widget = NULL;
-	data = g_hash_table_lookup(WidgetDataTable, name);
+	data = GetWidgetData(name);
 	if (data != NULL) {
 	    widget = glade_xml_get_widget_by_long_name(
 			(GladeXML *)data->window->xml, name);
@@ -788,7 +798,7 @@ GetWidgetByName(char *name)
 	GtkWidget	*widget;
 	
 	widget = NULL;
-	wdata = g_hash_table_lookup(WindowTable,ThisWindowName);
+	wdata = GetWindowData(THISWINDOW(Session));
 	if (wdata != NULL && wdata->xml != NULL) {
 	    widget = glade_xml_get_widget((GladeXML *)wdata->xml, name);
 	}
@@ -803,7 +813,7 @@ GetWidgetByWindowNameAndLongName(char *windowName,
 	GtkWidget	*widget;
 	
 	widget = NULL;
-	wdata = g_hash_table_lookup(WindowTable,windowName);
+	wdata = GetWindowData(windowName);
 	if (wdata != NULL && wdata->xml != NULL) {
 	    widget = glade_xml_get_widget_by_long_name(
 			(GladeXML *)wdata->xml, widgetName);
@@ -819,7 +829,7 @@ GetWidgetByWindowNameAndName(char *windowName,
 	GtkWidget	*widget;
 	
 	widget = NULL;
-	wdata = g_hash_table_lookup(WindowTable,windowName);
+	wdata = GetWindowData(windowName);
 	if (wdata != NULL && wdata->xml != NULL) {
 	    widget = glade_xml_get_widget(
 			(GladeXML *)wdata->xml, widgetName);
@@ -1042,3 +1052,214 @@ IsDialog(GtkWidget *widget)
 	}
 }
 
+extern  gboolean    
+IsWidgetName(char *name)
+{
+	return (GetWidgetByWindowNameAndLongName(THISWINDOW(Session), name) != NULL);
+}
+
+extern  gboolean    
+IsWidgetName2(char *name)
+{
+	return (GetWidgetByWindowNameAndName(THISWINDOW(Session), name) != NULL);
+}
+
+extern	void
+ListConfig()
+{
+	GSList *p;
+	gchar *serverkey;
+	gchar *key;
+	
+	for (
+		p = gconf_client_all_dirs(GConfCTX,GL_GCONF_SERVERS,NULL); 
+		p != NULL; 
+		p = p->next
+	) {
+		serverkey = (gchar*)p->data;
+		key = serverkey + strlen(GL_GCONF_SERVERS) + 1;
+		printf("------------------\n");
+		printf("[%s]\n", key);
+		printf("\tdescription:\t%s\n", 
+			gl_config_get_string(serverkey,"description"));
+		printf("\thost:\t\t%s\n", gl_config_get_string(serverkey,"host"));
+		printf("\tport:\t\t%s\n", gl_config_get_string(serverkey,"port"));
+		printf("\tapplication:\t%s\n", 
+			gl_config_get_string(serverkey,"application"));
+		printf("\tuser:\t\t%s\n",gl_config_get_string(serverkey,"user"));
+		printf("\tgconfkey:\t%s\n",serverkey);
+	}
+}
+
+extern void
+LoadConfig (
+	const char *confnum)
+{
+	GSList *list,*p;
+	gchar *serverkey;
+	gchar *value;
+
+	serverkey = g_strconcat(GL_GCONF_SERVERS,"/",confnum,NULL);
+	/* description */
+	if (!gconf_client_dir_exists(GConfCTX,serverkey,NULL)) {
+		for(
+			p = list = gl_config_get_server_list();
+			p != NULL;
+			p = p->next) 
+		{
+			value = gl_config_get_string((gchar*)p->data,"description");
+			if (!g_strcmp0(confnum,value)) {
+				serverkey = g_strdup((gchar*)p->data);
+			}
+			g_free(value);
+			g_free(p->data);
+		}
+		g_slist_free(list);
+	}
+	if (gconf_client_dir_exists(GConfCTX,serverkey,NULL)) {
+		gl_config_set_server(serverkey);
+		Host = gl_config_get_string (serverkey,"host");
+		PortNum = gl_config_get_string (serverkey,"port");
+		CurrentApplication = gl_config_get_string (serverkey,"application");
+		Style = gl_config_get_string (serverkey,"style");
+		Gtkrc = gl_config_get_string (serverkey,"gtkrc");
+		fMlog = gl_config_get_bool (serverkey,"mlog");
+		fKeyBuff = gl_config_get_bool (serverkey,"keybuff");
+		User = gl_config_get_string (serverkey,"user");
+		SavePass = gl_config_get_bool (serverkey,"savepassword");
+		if (SavePass) {
+			Pass = gl_config_get_string (serverkey,"password");
+		} 
+		fTimer = gl_config_get_bool (serverkey,"timer");
+		TimerPeriod = gl_config_get_string (serverkey,"timerperiod");
+		FontName = gl_config_get_string (serverkey,"fontname");
+#ifdef  USE_SSL
+		fSsl = gl_config_get_bool (serverkey,"ssl");
+		CA_File = gl_config_get_string (serverkey,"CAfile");
+		if (!strcmp("", CA_File)) CA_File = NULL;
+		CertFile = gl_config_get_string (serverkey,"cert");
+		if (!strcmp("", CertFile)) CertFile = NULL;
+		Ciphers = gl_config_get_string (serverkey,"ciphers");
+#ifdef  USE_PKCS11
+		fPKCS11 = gl_config_get_bool (serverkey,"pkcs11");
+		PKCS11_Lib = gl_config_get_string (serverkey,"pkcs11_lib");
+		if (!strcmp("", PKCS11_Lib)) PKCS11_Lib = NULL;
+		Slot = gl_config_get_string (serverkey,"slot");
+#endif
+#endif
+	} else {
+		g_error(_("cannot load config:%s"), confnum);
+	}
+}
+
+extern  void
+GrabFocus(
+	char *windowName, 
+	char *widgetName)
+{
+	GtkWidget 	*widget;
+
+	widget = GetWidgetByWindowNameAndName(windowName,widgetName);
+	if (widget != NULL) {
+		gtk_widget_grab_focus(widget);
+	}
+}
+
+extern  void        
+UI_Init(int argc, 
+	char **argv)
+{
+	gtk_init(&argc, &argv);
+#if 1
+	/* set gtk-entry-select-on-focus */
+	GtkSettings *set = gtk_settings_get_default();
+    gtk_settings_set_long_property(set, "gtk-entry-select-on-focus", 0, 
+		"glclient2");
+#endif
+	gtk_panda_init(&argc,&argv);
+#ifndef LIBGTK_3_0_0
+	gtk_set_locale();
+#endif
+	glade_init();
+}
+
+extern	void
+UI_Main(void)
+{
+	if (fIMKanaOff) {
+		gtk_panda_entry_force_feature_off();
+	}
+	gtk_main();
+}
+
+extern	void
+InitStyle(void)
+{
+	gchar *gltermrc;
+	gchar *rcstr;
+
+	StyleParserInit();
+	gltermrc = g_strconcat(g_get_home_dir(),"/gltermrc",NULL);
+	StyleParser(gltermrc);
+	StyleParser("gltermrc");
+	g_free(gltermrc);
+	if (  Style  != NULL  ) {
+		StyleParser(Style);
+	}
+	if (Gtkrc != NULL && strlen(Gtkrc)) {
+		gtk_rc_parse(Gtkrc);
+	} else {
+		rcstr = g_strdup_printf(
+			"style \"glclient2\" {"
+			"  font_name = \"%s\""
+			"  fg[NORMAL] = \"#000000\""
+			"  text[NORMAL] = \"#000000\""
+			"}"
+			"style \"tooltip\" {"
+			"  fg[NORMAL] = \"#000000\""
+			"  bg[NORMAL] = \"#ffffaf\""
+			"}"
+			"widget_class \"*.*\" style \"glclient2\""
+			"widget \"gtk-tooltip*\" style \"tooltip\""
+			,FontName);
+		gtk_rc_parse_string(rcstr);
+		gtk_rc_reset_styles(gtk_settings_get_default());
+		g_free(rcstr);
+	}
+}
+
+extern	int
+AskPass(char	*buf,
+	size_t		buflen,
+	const char	*prompt)
+{
+#ifdef USE_SSL
+	int ret;
+
+	ret = ShowAskPassDialog(buf,buflen,prompt);
+	Passphrase = StrDup(buf);
+	return ret;
+#else
+	return 0;
+#endif
+}
+
+extern	void
+SetPingTimerFunc(_PingTimerFunc func, gpointer data)
+{
+	g_timeout_add(PingTimerPeriod, func, data);
+}
+
+extern	WindowData *
+GetWindowData(
+	const char *wname)
+{
+	return (WindowData*)g_hash_table_lookup(WINDOWTABLE(Session),wname);
+}
+
+extern	WidgetData *
+GetWidgetData(
+	const char *wname)
+{
+	return (WidgetData*)g_hash_table_lookup(WIDGETTABLE(Session),wname);
+}
