@@ -40,15 +40,17 @@
 #include	"types.h"
 #include	"glclient.h"
 #include	"glterm.h"
-#include	"message.h"
-#include	"debug.h"
 #include	"marshaller.h"
 #define		ACTION_MAIN
 #include	"bd_config.h"
 #include	"action.h"
+#include	"dialogs.h"
+#include	"styleParser.h"
 #include	"queue.h"
 #include	"gettext.h"
 #include	"widgetcache.h"
+#include	"message.h"
+#include	"debug.h"
 
 /* GdkPixbuf RGBA C-Source image dump 1-byte-run-length-encoded */
 
