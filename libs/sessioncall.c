@@ -76,38 +76,20 @@ SendPanda(
 	ScreenData	*scr,
 	NETFILE		*fp)
 {
-	RecordStruct	*rec;
 	Bool		rc;
-	char	buff[SIZE_LONGNAME+1];
-	char	*p;
 	ValueStruct	*value;
-
 ENTER_FUNC;
 	dbgprintf("ThisWindow = [%s]",scr->window);
-	strcpy(buff,scr->window);
-	rec = NULL;
-	while	(  strlen(buff)  >  0  ) {
-		if		(  ( rec = GetWindowRecord(scr,buff) )  !=  NULL  )	break;
-		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
-			*p = 0;
-		} else {
-			rec = GetWindowRecord(scr,buff);
-			break;
-		}
-	}
-	dbgprintf("Window = [%s]",buff);
-	if		(  rec  !=  NULL  ) {
-		dbgprintf("rec = [%s]",rec->name);
-		value = rec->value;
-	} else {
-		value = NULL;
+	value = GetWindowValue(scr,scr->window);
+	if (value == NULL) {
+		Error("SendPanda invalid window[%s]",scr->window);
 	}
 #ifdef	DEBUG
 	DumpValueStruct(value);
 #endif
 	rc = SendTermServer(fp,scr,value);
 LEAVE_FUNC;
-	return	(rc); 
+	return	rc; 
 }
 
 
@@ -124,22 +106,21 @@ RecvPanda(
 	ScreenData	*scr,
 	NETFILE		*fp)
 {
-	char	old_window[SIZE_NAME+1];
-	int		type;
-	int		i;
+	char			old_window[SIZE_NAME+1];
+	int				type;
+	int				i;
 	WindowControl	ctl;
-	WindowData		*win;
 ENTER_FUNC;
 	strncpy(old_window,scr->window,SIZE_NAME);
 	old_window[SIZE_NAME] = 0;
 	if (RecvTermServerHeader(fp,scr,&type,&ctl)) {
 		ON_IO_ERROR(fp,badio);
-		if		(  scr->Windows  !=  NULL  ) {
+		if (scr->Windows != NULL) {
 			g_hash_table_foreach(scr->Windows,(GHFunc)ClearPutType,NULL);
 		}
-		for	( i = 0 ; i < ctl.n ; i ++ ) {
-			if		(  ctl.control[i].PutType  ==  SCREEN_CLOSE_WINDOW  ) {
-				win = PutWindowByName(scr,ctl.control[i].window,SCREEN_CLOSE_WINDOW);
+		for	(i = 0 ; i < ctl.n ; i ++ ) {
+			if (ctl.control[i].PutType == SCREEN_CLOSE_WINDOW) {
+				PutWindow(scr,ctl.control[i].window,SCREEN_CLOSE_WINDOW);
 			}
 		}
 		dbgprintf("type =     [%d]",type);
@@ -148,7 +129,7 @@ ENTER_FUNC;
 		dbgprintf("user =     [%s]",scr->user);
 		switch	(type) {
 		  case	SCREEN_CHANGE_WINDOW:
-			win = PutWindowByName(scr,old_window,SCREEN_CLOSE_WINDOW);
+			PutWindow(scr,old_window,SCREEN_CLOSE_WINDOW);
 			type = SCREEN_NEW_WINDOW;
 			break;
 		  case	SCREEN_JOIN_WINDOW:
@@ -157,19 +138,14 @@ ENTER_FUNC;
 		  default:
 			break;
 		}
-		win = PutWindowByName(scr,scr->window,type);
-		if		(  win  !=  NULL  )	{
+		if (RegisterWindow(scr,scr->window) != NULL) {
+			PutWindow(scr,scr->window,type);
 			RecvTermServerData(fp,scr);	ON_IO_ERROR(fp,badio);
-			if		(  win->rec  ==  NULL  ) {
-				scr->status = APL_SESSION_END;
-			}
 		} else {
-			scr->status = APL_SESSION_END;
-			Warning("Illegal windowData");
+			scr->status = APL_SESSION_NULL; /*glserver exit*/
 		}
 	} else {
-		MessageLogPrintf("window = [%s]",scr->window);
-		Error("invalid LD");
+		Error("invalid LD; window = [%s]",scr->window);
 	}
 LEAVE_FUNC;
 	return;
@@ -228,7 +204,7 @@ ENTER_FUNC;
 	DestroyPort(port);
 	if ( fd > 0 ){
 		fp = SocketToNet(fd);
-		if		(  SendPanda(scr,fp)  ) {
+		if (SendPanda(scr,fp)) {
 			RecvPanda(scr,fp);
 			CloseNet(fp);
 		} else {

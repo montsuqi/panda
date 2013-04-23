@@ -200,7 +200,6 @@ SendResponse(
 	size_t size;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
-	ValueStruct *value;
 	ValueStruct *vstatus;
 	ValueStruct *vbody;
 	MonObjectType obj = GL_OBJ_NULL;
@@ -208,8 +207,8 @@ SendResponse(
 	size = 0;
 	body = NULL;
 
-	if (data != NULL && (value = data->rec->value) != NULL) {
-		vstatus = GetItemLongName(value,"http_status");
+	if (data != NULL && data->value != NULL) {
+		vstatus = GetItemLongName(data->value,"http_status");
 		if (vstatus != NULL) {
 			req->status = ValueInteger(vstatus);
 		} else {
@@ -234,8 +233,8 @@ SendResponse(
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
-	if (data != NULL && (value = data->rec->value) != NULL && req->status == HTTP_OK) {
-		vbody = GetItemLongName(value, "body");
+	if (data != NULL && data->value != NULL && req->status == HTTP_OK) {
+		vbody = GetItemLongName(data->value, "body");
 		if (vbody != NULL) {
 			obj = ValueObjectId(vbody);
 		}
@@ -244,7 +243,7 @@ SendResponse(
 			RequestReadBLOB(req->fpSysData, obj, &body, &size);
 		}
 		sprintf(buf, "Content-Type: %s\r\n", 
-			ValueToString(GetItemLongName(value,"content_type"), NULL));
+			ValueToString(GetItemLongName(data->value,"content_type"), NULL));
 		Send(req->fp, buf, strlen(buf));
 	}
 	if (body != NULL && size > 0) {
@@ -581,20 +580,20 @@ ParseRequest(
 
 static	void
 PackRequestRecord(
-	RecordStruct *rec,
-	HTTP_REQUEST *req)
+	ValueStruct		*value,
+	HTTP_REQUEST	*req)
 {
 	char *head;
 	char *tail;
 	char *key;
-	char *value;
+	char *val;
 	char buf[SIZE_BUFF+1];
 	ValueStruct *e;
 	char *p;
 	MonObjectType obj;
 
 ENTER_FUNC;
-	e = rec->value;
+	e = value;
 	InitializeValue(e);
 
 	p = NULL;
@@ -614,7 +613,8 @@ ENTER_FUNC;
 		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
 	}
 	if (req->body != NULL && req->body_size > 0) {
-		ValueObjectId(GetItemLongName(e,"body")) = obj = RequestNewBLOB(req->fpSysData,BLOB_OPEN_WRITE);
+		obj = RequestNewBLOB(req->fpSysData,BLOB_OPEN_WRITE);
+		ValueObjectId(GetItemLongName(e,"body")) = obj;
 		if (obj != GL_OBJ_NULL) {
 			RequestWriteBLOB(req->fpSysData, obj, req->body, req->body_size);
 		}
@@ -636,9 +636,9 @@ ENTER_FUNC;
 		
 		tail = strstr(head, "&");
 		if (tail != NULL) {
-			value = StrnDup(head, tail - head);
-			SetValueString(GetItemLongName(e, buf), value, NULL);
-			xfree(value);
+			val = StrnDup(head, tail - head);
+			SetValueString(GetItemLongName(e, buf), val, NULL);
+			xfree(val);
 			head = tail + 1;
 		} else {
 			SetValueString(GetItemLongName(e, buf), head, NULL);
@@ -653,22 +653,23 @@ MakeMonAPIData(
 	HTTP_REQUEST *req)
 {
 	MonAPIData *data;
-	RecordStruct *rec;
+	ValueStruct *value;
 	uuid_t u;
 
-	if ((rec = SetWindowRecord(req->scr,req->window)) == NULL) {
+	if (RegisterWindow(req->scr,req->window) == NULL) {
 		return NULL;
 	}
-	InitializeValue(rec->value);
+	value = GetWindowValue(req->scr,req->window);
+	InitializeValue(value);
 	data = NewMonAPIData();
-	data->rec = rec;
+	data->value = value;
 	strncpy(data->ld, req->ld, sizeof(data->ld));
 	strncpy(data->window, req->window, sizeof(data->window));
 	strncpy(data->user, req->user, sizeof(data->user));
 	strncpy(data->host, req->host, sizeof(data->host));
 	uuid_generate(u);
 	uuid_unparse(u,data->term);
-	PackRequestRecord(data->rec, req);
+	PackRequestRecord(value, req);
 	return data;
 }
 

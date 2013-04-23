@@ -57,7 +57,7 @@ ENTER_FUNC;
 	memclear(data->user,sizeof(data->user));
 	memclear(data->host,sizeof(data->host));
 	memclear(data->term,sizeof(data->term));
-	data->rec = NULL;
+	data->value = NULL;
 LEAVE_FUNC;
 	return	(data); 
 }
@@ -95,14 +95,14 @@ ENTER_FUNC;
 		SendString(fp, data->term);			ON_IO_ERROR(fp,badio);
 		SendString(fp, data->host);			ON_IO_ERROR(fp,badio);
 		buff = NewLBS();
-		LBS_ReserveSize(buff,NativeSizeValue(NULL,data->rec->value),FALSE);
-		NativePackValue(NULL,LBS_Body(buff),data->rec->value);
+		LBS_ReserveSize(buff,NativeSizeValue(NULL,data->value),FALSE);
+		NativePackValue(NULL,LBS_Body(buff),data->value);
 		SendLBS(fp, buff);					ON_IO_ERROR(fp,badio);
 		
 		status = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
 		if (status == WFC_API_OK) {
 			RecvLBS(fp, buff);		ON_IO_ERROR(fp,badio);
-			NativeUnPackValue(NULL,LBS_Body(buff),data->rec->value);
+			NativeUnPackValue(NULL,LBS_Body(buff),data->value);
 		}
 		CloseNet(fp);
 	} else {
