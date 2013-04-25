@@ -156,7 +156,7 @@ ENTER_FUNC;
 	SetCommon(widget,wdata);
 	g_return_if_fail(data->binary != NULL);
 	if (LBS_Size(data->binary) > 0) {
-		show_download_dialog(widget,
+		ShowDownloadDialog(widget,
 			data->filename,
 			data->description,
 			data->binary);
@@ -914,6 +914,8 @@ GetWidgetType(
 			return WIDGET_TYPE_PANDA_TIMER;
 		} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
 			return WIDGET_TYPE_PANDA_DOWNLOAD;
+		} else if (type == GTK_PANDA_TYPE_DOWNLOAD2) {
+			return WIDGET_TYPE_PANDA_DOWNLOAD2;
 		} else if (type == GTK_PANDA_TYPE_PRINT) {
 			return WIDGET_TYPE_PANDA_PRINT;
 		} else if (type == GTK_PANDA_TYPE_HTML) {

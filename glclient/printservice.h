@@ -27,6 +27,14 @@ typedef struct {
 	int		showdialog;
 }	PrintRequest;
 
+typedef struct {
+	char	*path;
+	char	*filename;
+	char	*description;
+	int		nretry;
+}	DLRequest;
+
 extern void CheckPrintList();
+extern void CheckDLList();
 
 #endif

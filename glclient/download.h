@@ -22,7 +22,7 @@
 
 #include <gtk/gtk.h>
 
-void show_download_dialog(
+void ShowDownloadDialog(
 	GtkWidget *widget,
 	char *filename, 
 	char *description, 
