@@ -1308,21 +1308,18 @@ RecvPandaCList(
 	NETFILE		*fp)
 {
 	Bool	ret;
-	char	name[SIZE_BUFF]
-	,		iname[SIZE_BUFF]
-	,		subname[SIZE_BUFF]
-	,		buff[SIZE_BUFF];
+	char	name[SIZE_BUFF];
+	char	iname[SIZE_BUFF];
+	char	subname[SIZE_BUFF];
+	char	buff[SIZE_BUFF];
 	char	**rdata;
-	int		count
-	,		nitem
-	,		num
-	,		row
-	,		rnum
-	,		column
-	,		rowattr
-	,		i
-	,		j
-	,		k;
+	int		nitem;
+	int		num;
+	int		row;
+	int		rnum;
+	int		column;
+	int		rowattr;
+	int		i,j,k;
 	Bool	fActive;
 	_CList	*attrs;
 
@@ -1359,7 +1356,7 @@ ENTER_FUNC;
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
 
 		nitem = GL_RecvInt(fp);
-		count = -1;
+		attrs->count = -1;
 		row = 0;
 
 		for	( i = 0 ; i < nitem ; i ++ ) {
@@ -1367,19 +1364,14 @@ ENTER_FUNC;
 			sprintf(subname,"%s.%s",data->name, name);
 			if (IsWidgetName(subname)) {
 				RecvWidgetData(subname,fp);
-			} else
-			if		(  RecvCommon(name,data,fp)  ) {
-			} else 
-			if		(  !stricmp(name,"count")  ) {
-				RecvIntegerData(fp,&count);
-				attrs->count = count;
-			} else
-			if		(  !stricmp(name,"row")  ) {
+			} else if (RecvCommon(name,data,fp)) {
+			} else if (!stricmp(name,"count")) {
+				RecvIntegerData(fp,&attrs->count);
+			} else if (!stricmp(name,"row")) {
 				RecvIntegerData(fp,&row);
 				/* for 1origin cobol */
 				attrs->row = row > 1 ? row - 1 : 0;
-			} else
-			if		(  !stricmp(name,"rowattr")  ) {
+			} else if (!stricmp(name,"rowattr")) {
 				RecvIntegerData(fp,&rowattr);
 				switch	(rowattr) {
 				  case	1: /* DOWN */
@@ -1398,16 +1390,14 @@ ENTER_FUNC;
 					attrs->rowattr = 0.0;
 					break;
 				}
-			} else
-			if		(  !stricmp(name,"column")  ) {
+			} else if (!stricmp(name,"column")) {
 				/* dummy */
 				RecvIntegerData(fp,&column);
-			} else
-			if		(  !stricmp(name,"item")  ) {
+			} else if (!stricmp(name,"item")) {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				num = GL_RecvInt(fp);
-				if		(  count  <  0  ) {
-					count = num;
+				if (attrs->count < 0) {
+					attrs->count = num;
 				}
 				attrs->clistdata = NULL;
 				for	( j = 0 ; j < num ; j ++ ) {
@@ -1422,8 +1412,7 @@ ENTER_FUNC;
 					}
 					attrs->clistdata = g_list_append(attrs->clistdata,rdata);
 				}
-			} else
-			if		(  !stricmp(name,"fgcolor")  ) {
+			} else if (!stricmp(name,"fgcolor")) {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				num = GL_RecvInt(fp);
 				attrs->fgcolors = g_malloc0(sizeof(gchar*)*(num+1));
@@ -1432,8 +1421,7 @@ ENTER_FUNC;
 					(void)RecvStringData(fp,buff,SIZE_BUFF);
 					attrs->fgcolors[j] = g_strdup(buff);
 				}
-			} else
-			if		(  !stricmp(name,"bgcolor")  ) {
+			} else if (!stricmp(name,"bgcolor")) {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				num = GL_RecvInt(fp);
 				attrs->bgcolors = g_malloc0(sizeof(gchar*)*(num+1));
@@ -1446,8 +1434,8 @@ ENTER_FUNC;
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				attrs->states_name = strdup(name);
 				num = GL_RecvInt(fp);
-				if		(  count  <  0  ) {
-					count = num;
+				if (attrs->count < 0) {
+					attrs->count = num;
 				}
 				attrs->states = g_malloc0(sizeof(gchar*)*(num+1));
 				attrs->states[num] = NULL;

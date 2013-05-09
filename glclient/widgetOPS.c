@@ -236,12 +236,11 @@ ENTER_FUNC;
 
 	// items
 	gtk_widget_hide(widget);
-	gtk_panda_clist_clear(GTK_PANDA_CLIST(widget));
-
+	gtk_panda_clist_set_rows(GTK_PANDA_CLIST(widget),data->count);
 	for	( j = 0 ; j < g_list_length(data->clistdata) ; j ++ ) {
 		if (j < data->count) {
 			rdata = g_list_nth_data(data->clistdata,j);
-			gtk_panda_clist_append(GTK_PANDA_CLIST(widget), rdata);
+			gtk_panda_clist_set_row(GTK_PANDA_CLIST(widget),j,rdata);
 		}
 	}
 	if (data->fgcolors != NULL) {
@@ -264,7 +263,7 @@ ENTER_FUNC;
 			}
 		}
 	}
-	if (data->count > 0) {
+	if (data->count > 0 && data->row < data->count) {
 		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget), 
 			data->row, 0, data->rowattr, 0.0); 
 	}
@@ -281,7 +280,7 @@ GetPandaCList(
 	Bool			getRow;
 
 ENTER_FUNC;
-	nrows = gtk_panda_clist_get_n_rows(GTK_PANDA_CLIST(widget));
+	nrows = gtk_panda_clist_get_rows(GTK_PANDA_CLIST(widget));
 	getRow = FALSE;
 
 	if (data->states !=NULL) {
