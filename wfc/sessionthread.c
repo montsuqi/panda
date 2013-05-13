@@ -28,8 +28,8 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<unistd.h>
-#include    <sys/types.h>
-#include    <sys/socket.h>
+#include	<sys/types.h>
+#include	<sys/socket.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<glib.h>
@@ -430,22 +430,22 @@ ENTER_FUNC;
 			GetSessionNum(hash,ctrl);
 			break;
 		case SESSION_CONTROL_GET_DATA:
-            GetData(hash,ctrl);
+			GetData(hash,ctrl);
 			break;
 		case SESSION_CONTROL_GET_MESSAGE:
-            GetMessage(hash,ctrl);
+			GetMessage(hash,ctrl);
 			break;
 		case SESSION_CONTROL_RESET_MESSAGE:
-            ResetMessage(hash,ctrl);
+			ResetMessage(hash,ctrl);
 			break;
 		case SESSION_CONTROL_SET_MESSAGE:
-            SetMessage(hash,ctrl);
+			SetMessage(hash,ctrl);
 			break;
 		case SESSION_CONTROL_SET_MESSAGE_ALL:
-            SetMessageAll(hash,ctrl);
+			SetMessageAll(hash,ctrl);
 			break;
 		case SESSION_CONTROL_GET_DATA_ALL:
-            GetDataAll(hash,ctrl);
+			GetDataAll(hash,ctrl);
 			break;
 		}
 		EnQueue(ctrl->waitq,ctrl);
