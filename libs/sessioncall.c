@@ -63,7 +63,7 @@ OpenPanda(
 
 ENTER_FUNC;
 	fp = ConnectTermServer(TermPort,scr,arg);
-	if		(  fp  ==  NULL  ) {
+	if (fp == NULL) {
 		fprintf(stderr,"can't connect wfc\n");
 		exit(1);
 	}
@@ -142,7 +142,7 @@ ENTER_FUNC;
 			PutWindow(scr,scr->window,type);
 			RecvTermServerData(fp,scr);	ON_IO_ERROR(fp,badio);
 		} else {
-			scr->status = APL_SESSION_NULL; /*glserver exit*/
+			scr->status = SCREEN_DATA_NULL; /*glserver exit*/
 		}
 	} else {
 		Error("invalid LD; window = [%s]",scr->window);
@@ -182,11 +182,14 @@ ENTER_FUNC;
 		p++;
 	}
 	while (*p && isspace(*p)) p++;
-
 	fp = OpenPanda(scr,p);
-	RecvPanda(scr,fp);
-	CloseNet(fp);
-	scr->fConnect = TRUE;
+	if (fp != NULL) {
+		scr->status = SCREEN_DATA_CONNECT;
+		RecvPanda(scr,fp);
+		CloseNet(fp);
+	} else {
+		scr->status = SCREEN_DATA_NULL;
+	}
 LEAVE_FUNC;
 }
 
@@ -208,10 +211,10 @@ ENTER_FUNC;
 			RecvPanda(scr,fp);
 			CloseNet(fp);
 		} else {
-			scr->status = APL_SESSION_RESEND;
+			scr->status = SCREEN_DATA_END;
 		}
 	} else {
-		scr->status = APL_SESSION_RESEND;
+		scr->status = SCREEN_DATA_END;
 	}
 LEAVE_FUNC;
 }
@@ -232,7 +235,7 @@ ENTER_FUNC;
 		fp = SocketToNet(fd);
 		SendTermServerEnd(fp,scr);
 	} else {
-		scr->status = APL_SESSION_NULL;
+		scr->status = SCREEN_DATA_NULL;
 	}
 LEAVE_FUNC;
 }

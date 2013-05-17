@@ -5,18 +5,13 @@
 #define	APL_SESSION_NULL			0
 #define	APL_SESSION_LINK			1
 #define	APL_SESSION_GET				2
-#define	APL_SESSION_PUT				3
-#define	APL_SESSION_RESEND			4
-#define	APL_SESSION_END				5
 #define	APL_SYSTEM_END				9
-
 
 #define	WIDGET_STATE_NORMAL			0
 #define	WIDGET_STATE_ACTIVE			1
 #define	WIDGET_STATE_PRELIGHT		2
 #define	WIDGET_STATE_SELECTED		3
 #define	WIDGET_STATE_INSENSITIVE	4
-
 
 #define	MCP_OK						 0
 #define	MCP_EOF						 1
