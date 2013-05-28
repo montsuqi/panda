@@ -122,6 +122,7 @@ ENTER_FUNC;
 		dbgprintf("user =     [%s]",scr->user);
 		for	(i=0;i<scr->w.sp;i++) {
 			if (scr->w.s[i].puttype == SCREEN_CLOSE_WINDOW) {
+				RegisterWindow(scr,scr->w.s[i].window);
 				PutWindow(scr,scr->w.s[i].window,SCREEN_CLOSE_WINDOW);
 				scr->w.s[i].puttype = SCREEN_NULL;
 			}
