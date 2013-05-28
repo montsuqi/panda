@@ -2,10 +2,9 @@
 #ifndef	_INC_ENUM_H
 #define	_INC_ENUM_H
 
-#define	APL_SESSION_NULL			0
-#define	APL_SESSION_LINK			1
-#define	APL_SESSION_GET				2
-#define	APL_SYSTEM_END				9
+#define	APL_COMMAND_NULL			0
+#define	APL_COMMAND_LINK			1
+#define	APL_COMMAND_GET				2
 
 #define	WIDGET_STATE_NORMAL			0
 #define	WIDGET_STATE_ACTIVE			1

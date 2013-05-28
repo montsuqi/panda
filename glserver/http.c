@@ -41,7 +41,6 @@
 #include	<unistd.h>
 #include	<ctype.h>
 #include	<glib.h>
-#include	<uuid/uuid.h>
 
 #include	"enum.h"
 #include	"libmondai.h"
@@ -654,7 +653,6 @@ MakeMonAPIData(
 {
 	MonAPIData *data;
 	ValueStruct *value;
-	uuid_t u;
 
 	if (RegisterWindow(req->scr,req->window) == NULL) {
 		return NULL;
@@ -667,8 +665,6 @@ MakeMonAPIData(
 	strncpy(data->window, req->window, sizeof(data->window));
 	strncpy(data->user, req->user, sizeof(data->user));
 	strncpy(data->host, req->host, sizeof(data->host));
-	uuid_generate(u);
-	uuid_unparse(u,data->term);
 	PackRequestRecord(value, req);
 	return data;
 }

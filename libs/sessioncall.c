@@ -98,7 +98,7 @@ ClearPutType(
 	char		*wname,
 	WindowData	*win)
 {
-	win->PutType = SCREEN_NULL;
+	win->puttype = SCREEN_NULL;
 }
 
 static	void
@@ -107,39 +107,37 @@ RecvPanda(
 	NETFILE		*fp)
 {
 	char			old_window[SIZE_NAME+1];
-	int				type;
 	int				i;
-	WindowControl	ctl;
 ENTER_FUNC;
 	strncpy(old_window,scr->window,SIZE_NAME);
 	old_window[SIZE_NAME] = 0;
-	if (RecvTermServerHeader(fp,scr,&type,&ctl)) {
+	if (RecvTermServerHeader(fp,scr)) {
 		ON_IO_ERROR(fp,badio);
 		if (scr->Windows != NULL) {
 			g_hash_table_foreach(scr->Windows,(GHFunc)ClearPutType,NULL);
-		}
-		for	(i = 0 ; i < ctl.n ; i ++ ) {
-			if (ctl.control[i].PutType == SCREEN_CLOSE_WINDOW) {
-				PutWindow(scr,ctl.control[i].window,SCREEN_CLOSE_WINDOW);
-			}
 		}
 		dbgprintf("type =     [%d]",type);
 		dbgprintf("ThisWindow [%s]",old_window);
 		dbgprintf("window     [%s]",scr->window);
 		dbgprintf("user =     [%s]",scr->user);
-		switch	(type) {
-		  case	SCREEN_CHANGE_WINDOW:
-			PutWindow(scr,old_window,SCREEN_CLOSE_WINDOW);
-			type = SCREEN_NEW_WINDOW;
+		for	(i=0;i<scr->w.sp;i++) {
+			if (scr->w.s[i].puttype == SCREEN_CLOSE_WINDOW) {
+				PutWindow(scr,scr->w.s[i].window,SCREEN_CLOSE_WINDOW);
+				scr->w.s[i].puttype = SCREEN_NULL;
+			}
+		}
+		switch (scr->puttype) {
+		case SCREEN_CHANGE_WINDOW:
+			scr->puttype = SCREEN_NEW_WINDOW;
 			break;
-		  case	SCREEN_JOIN_WINDOW:
-			type = SCREEN_CURRENT_WINDOW;
+		case SCREEN_JOIN_WINDOW:
+			scr->puttype = SCREEN_CURRENT_WINDOW;
 			break;
-		  default:
+		default:
 			break;
 		}
 		if (RegisterWindow(scr,scr->window) != NULL) {
-			PutWindow(scr,scr->window,type);
+			PutWindow(scr,scr->window,scr->puttype);
 			RecvTermServerData(fp,scr);	ON_IO_ERROR(fp,badio);
 		} else {
 			scr->status = SCREEN_DATA_NULL; /*glserver exit*/
@@ -150,6 +148,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return;
 badio:
+	Warning("badio");
 	exit(1);
 }
 

@@ -106,7 +106,7 @@ SetSysdbval(
 	char buf[128];
 
 	v = GetRecordItem(sysdbval,"id");
-	SetValueString(v,session->hdr->term,NULL);
+	SetValueString(v,session->hdr->uuid,NULL);
 	v = GetRecordItem(sysdbval,"user");
 	SetValueString(v,session->hdr->user,NULL);
 	v = GetRecordItem(sysdbval,"host");
@@ -148,12 +148,12 @@ InsertSession(
 		Warning("ctrl->session is NULL");
 		return;
 	}
-	if (g_hash_table_lookup(hash,ctrl->session->hdr->term) != NULL) {
-		Warning("[%s] is already exist",ctrl->session->hdr->term);
+	if (g_hash_table_lookup(hash,ctrl->session->hdr->uuid) != NULL) {
+		Warning("[%s] is already exist",ctrl->session->hdr->uuid);
 		return;
 	}
 	SetSysdbval(ctrl->session,ctrl->session->sysdbval);
-	g_hash_table_insert(hash,StrDup(ctrl->session->hdr->term),ctrl->session);
+	g_hash_table_insert(hash,StrDup(ctrl->session->hdr->uuid),ctrl->session);
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
@@ -181,8 +181,8 @@ DeleteSession(
 		Warning("ctrl->session is NULL");
 		return;
 	}
-	if (g_hash_table_lookup(hash,ctrl->session->hdr->term) != NULL) {
-		g_hash_table_remove(hash,ctrl->session->hdr->term);
+	if (g_hash_table_lookup(hash,ctrl->session->hdr->uuid) != NULL) {
+		g_hash_table_remove(hash,ctrl->session->hdr->uuid);
 	}
 	ctrl->rc = SESSION_CONTROL_OK;
 }
