@@ -643,7 +643,7 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "gtkrc",        ""},
 {"string", "fontname",     "Takaoゴシック 10"},
 {"bool",   "mlog",         "F"},
-{"bool",   "keybuf",       "F"},
+{"bool",   "keybuff",      "F"},
 {"bool",   "im_kana_off",  "F"},
 {"string", "user",         "ormaster"},
 {"bool",   "savepassword", "T"},
