@@ -56,13 +56,12 @@ static	char	*TermPort = NULL;
 
 static	NETFILE	*
 OpenPanda(
-	ScreenData	*scr,
-	char		*arg)
+	ScreenData	*scr)
 {
 	NETFILE	*fp;
 
 ENTER_FUNC;
-	fp = ConnectTermServer(TermPort,scr,arg);
+	fp = ConnectTermServer(TermPort,scr);
 	if (fp == NULL) {
 		fprintf(stderr,"can't connect wfc\n");
 		exit(1);
@@ -171,18 +170,8 @@ SessionLink(
 	ScreenData 	*scr)
 {
 	NETFILE	*fp;
-	char	*p;
-
 ENTER_FUNC;
-	/* extract LDNAME -> 'panda:<LDNAME>' */
-	p = strchr(scr->cmd,':');
-	if (p == NULL){
-		p = scr->cmd;
-	} else {
-		p++;
-	}
-	while (*p && isspace(*p)) p++;
-	fp = OpenPanda(scr,p);
+	fp = OpenPanda(scr);
 	if (fp != NULL) {
 		scr->status = SCREEN_DATA_CONNECT;
 		RecvPanda(scr,fp);
