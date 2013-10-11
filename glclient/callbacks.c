@@ -182,7 +182,7 @@ ENTER_FUNC;
 		StopEventTimer();
 		StopTimerWidgetAll();
 
-		ShowBusyCursor(TopWindow);
+		ShowBusyCursor(widget);
 		/* send event */
 		if		(  event  !=  NULL  ) {
 			SendEvent(FPCOMM(Session),
@@ -198,13 +198,13 @@ ENTER_FUNC;
 		SendWindowData();
 		BlockChangedHandlers();
 		GetScreenData(FPCOMM(Session));
-		HideBusyCursor(TopWindow); 
-		UnblockChangedHandlers();
 		if	( ! fKeyBuff  ) {
 			ignore_event = TRUE;
 			ClearKeyBuffer();
 			ignore_event = FALSE;
 		}
+		HideBusyCursor(widget); 
+		UnblockChangedHandlers();
 		while (THISWINDOW(Session)[0] == '_') {
 			SendEvent(FPCOMM(Session),
 				THISWINDOW(Session),THISWINDOW(Session),"DummyEvent");
