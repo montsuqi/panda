@@ -635,11 +635,10 @@ BootDialogRun ()
 
 
   gtk_widget_destroy (self->dialog);
-  boot_dialog_free (self);
-
   if (!self->is_connect) {
     exit(0);
   }
+  boot_dialog_free (self);
 }
 
 /*************************************************************
