@@ -468,6 +468,7 @@ ENTER_FUNC;
  			gdk_event_free(event); 
 		} else {
 			gtk_main_do_event(event);
+ 			gdk_event_free(event); 
 		}
 	}
 LEAVE_FUNC;
