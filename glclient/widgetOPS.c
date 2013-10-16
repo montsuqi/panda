@@ -364,6 +364,7 @@ SetPandaTable(
 
 ENTER_FUNC;
 	SetCommon(widget,wdata);
+	gtk_panda_table_set_xim_enabled(GTK_PANDA_TABLE(widget),data->ximenabled);
 	for	( j = 0 ; j < g_list_length(data->tabledata) ; j ++ ) {
 		rowdata = g_list_nth_data(data->tabledata,j);
 		gtk_panda_table_set_row(GTK_PANDA_TABLE(widget),j,rowdata);
