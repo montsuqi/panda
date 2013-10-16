@@ -207,11 +207,11 @@ ENTER_FUNC;
 	sigaction( SIGHUP, &sa, NULL );
 	
 	InitDirectory();
-	SetUpDirectory(Directory, NULL, NULL, NULL, P_NONE);
+	SetUpDirectory(Directory, NULL, NULL, NULL, FALSE);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	InitDB_Process("dbslave");
+	InitDB_Process(NULL);
 	
 	dbgprintf("replica dbg => %s", dbg_name);
 	dbgprintf("log dbg => %s", log_name);

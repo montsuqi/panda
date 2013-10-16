@@ -1,0 +1,11 @@
+*.lo
+*.la
+.deps
+.libs
+Makefile
+Makefile.in
+aps
+dbredirector
+dbs
+dbstub
+defaults.h

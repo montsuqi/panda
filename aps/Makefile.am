@@ -19,25 +19,28 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = aps dbstub
-pkglib_LTLIBRARIES = MONFUNC.la $(HANDLER_OBJECTS)
+lib_LTLIBRARIES = MONFUNC.la $(HANDLER_OBJECTS)
 
-
-libpandadbincludedir = $(pkgincludedir)
+libpandadbincludedir = $(includedir)/panda
 libpandadbinclude_HEADERS =	\
 	apslib.h
 
+
 MONFUNC_la_LDFLAGS	=			\
 	-module 					\
-	-avoid-version				\
+	-version-info $(LTVERSION)	\
 	-export-dynamic
 
 LDADD 		=							\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a  \
-	$(top_builddir)/libs/libpanda.la	\
-	$(COMMON_LIBS)						\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(GLIB_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
+	$(MONDAI_LIBS)						\
 	$(OPENCOBOL_LIBS)					\
 	$(RUBY_LIBS)						
 
@@ -49,36 +52,71 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
+	$(OPENCOBOL100_CFLAGS)	\
+	$(OPENCOBOL08_CFLAGS)	\
 	$(RUBY_CFLAGS)			\
 	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(COMMON_CFLAGS)
+	$(MONDAI_CFLAGS)		\
+	$(GLIB_CFLAGS)
 
 OpenCOBOLla = 
+if OPENCOBOL
 OpenCOBOLla += OpenCOBOL.la
+endif
+if OPENCOBOL100
+OpenCOBOLla += OpenCOBOL100.la
+endif
+if OPENCOBOL08
+OpenCOBOLla += OpenCOBOL08.la
+endif
 
 HANDLER_OBJECTS	=	\
+	dotCOBOL.la		\
 	C.la			\
 	Exec.la			\
 	Resident.la		\
 	Ruby.la			\
-	OpenCOBOL.la
+	$(OpenCOBOLla)
 
-OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic -avoid-version
-C_la_LDFLAGS			=	-module -export-dynamic -avoid-version
-Exec_la_LDFLAGS			=	-module -export-dynamic -avoid-version
-Resident_la_LDFLAGS		=	-module -export-dynamic -avoid-version
-Ruby_la_LDFLAGS			=   -module -export-dynamic -avoid-version
+dotCOBOL_la_LDFLAGS		=	-module -export-dynamic
+if OPENCOBOL
+OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic
+endif
+if OPENCOBOL100
+OpenCOBOL100_la_LDFLAGS	=	-module -export-dynamic
+endif
+if OPENCOBOL08
+OpenCOBOL08_la_LDFLAGS	=	-module -export-dynamic
+endif
+C_la_LDFLAGS			=	-module -export-dynamic
+Exec_la_LDFLAGS			=	-module -export-dynamic
+Resident_la_LDFLAGS		=	-module -export-dynamic
+Ruby_la_LDFLAGS			=   -module -export-dynamic
+
+dotCOBOL_la_SOURCES		=	dotCOBOL.c
 
 C_la_SOURCES			=	\
 	C.c						\
 	apslib.c
 
+if OPENCOBOL100
+OpenCOBOL100_la_SOURCES	=	OpenCOBOL.c
+OpenCOBOL100_la_LIBADD		=	\
+	$(OPENCOBOL100_LIBS)
+endif
+if OPENCOBOL08
+OpenCOBOL08_la_SOURCES	=	OpenCOBOL.c
+OpenCOBOL08_la_LIBADD		=	\
+	$(OPENCOBOL08_LIBS)
+endif
+if OPENCOBOL
 OpenCOBOL_la_SOURCES	=	\
 	MONFUNC.c				\
 	MONFUNC.h				\
 	OpenCOBOL.c
 OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
+endif
 
 Ruby_la_SOURCES			=	\
 	MONFUNC.c				\
@@ -89,7 +127,8 @@ Ruby_la_LIBADD			=	$(RUBY_LIBS)
 
 Exec_la_SOURCES			=	Exec.c
 Exec_la_LIBADD			=	\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/comm.lo \
+	$(top_builddir)/libs/comms.lo
 
 Resident_la_SOURCES		=	Resident.c
 
@@ -102,7 +141,9 @@ aps_SOURCES	=	\
 aps_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a
 
 dbstub_LDFLAGS	=			\
 	-export-dynamic
@@ -112,7 +153,9 @@ dbstub_SOURCES	=	\
 dbstub_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a
 
 MONFUNC_la_SOURCES	=			\
 	MONFUNC.c					\

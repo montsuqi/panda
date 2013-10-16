@@ -36,6 +36,7 @@
 #include	"comms.h"
 #include	"wfcdata.h"
 #include	"wfcio.h"
+#include	"front.h"
 #include	"socket.h"
 #define		_MONAPI
 #include	"monapi.h"
@@ -54,8 +55,8 @@ ENTER_FUNC;
 	memclear(data->ld,sizeof(data->ld));
 	memclear(data->window,sizeof(data->window));
 	memclear(data->user,sizeof(data->user));
-	memclear(data->host,sizeof(data->host));
-	data->value = NULL;
+	memclear(data->term,sizeof(data->term));
+	data->rec = NULL;
 LEAVE_FUNC;
 	return	(data); 
 }
@@ -90,16 +91,16 @@ ENTER_FUNC;
 		SendString(fp, data->ld);			ON_IO_ERROR(fp,badio);
 		SendString(fp, data->window);		ON_IO_ERROR(fp,badio);
 		SendString(fp, data->user);			ON_IO_ERROR(fp,badio);
-		SendString(fp, data->host);			ON_IO_ERROR(fp,badio);
+		SendString(fp, data->term);			ON_IO_ERROR(fp,badio);
 		buff = NewLBS();
-		LBS_ReserveSize(buff,NativeSizeValue(NULL,data->value),FALSE);
-		NativePackValue(NULL,LBS_Body(buff),data->value);
+		LBS_ReserveSize(buff,NativeSizeValue(NULL,data->rec->value),FALSE);
+		NativePackValue(NULL,LBS_Body(buff),data->rec->value);
 		SendLBS(fp, buff);					ON_IO_ERROR(fp,badio);
 		
 		status = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
 		if (status == WFC_API_OK) {
 			RecvLBS(fp, buff);		ON_IO_ERROR(fp,badio);
-			NativeUnPackValue(NULL,LBS_Body(buff),data->value);
+			NativeUnPackValue(NULL,LBS_Body(buff),data->rec->value);
 		}
 		CloseNet(fp);
 	} else {

@@ -65,6 +65,141 @@ InitAPSIO(
 	Head = NULL;
 	Tail = NULL;
 	cTerm = 0;
+	if		(  nCache  ==  0  ) {
+		nCache = ThisLD->nCache;
+	}
+}
+
+static	Bool
+CheckCache(
+	ProcessNode	*node,
+	char		*term)
+{
+	Bool	ret;
+	SessionCache	*ent;
+
+ENTER_FUNC;
+	if		(  ( ent = g_hash_table_lookup(CacheTable,term) )  !=  NULL  ) {
+		if		(  node->linkrec  !=  NULL  ) {
+			NativeUnPackValue(NULL,ent->linkdata->body,node->linkrec->value);
+		}
+		if		(  node->sparec  !=  NULL  ) {
+			NativeUnPackValue(NULL,ent->spadata->body,node->sparec->value);
+		}
+		ret = TRUE;
+	} else {
+		ret = FALSE;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	unsigned char
+SaveCache(
+	ProcessNode	*node)
+{
+	unsigned char		flag;
+	SessionCache	*ent;
+	size_t		size;
+
+ENTER_FUNC;
+	flag = 0;
+	dbgprintf("node->term = [%s]\n",node->term);
+	if		(  ( ent = g_hash_table_lookup(CacheTable,node->term) )  ==  NULL  ) {
+		dbgmsg("empty");
+		/*	cache purge logic here	*/
+		if		(  cTerm  ==  nCache  ) {
+			if		(  Tail  !=  NULL  ) {
+				if		(  Tail->prev  !=  NULL  ) {
+					Tail->prev->next = NULL;
+				}
+				ent = Tail->prev;
+				xfree(Tail->linkdata);
+				xfree(Tail->spadata);
+				xfree(Tail->term);
+				xfree(Tail);
+				if		(  Head  ==  Tail  ) {
+					Head = NULL;
+					Tail = NULL;
+				} else {
+					Tail = ent;
+				}
+			}
+		} else {
+			cTerm ++;
+		}
+		ent = New(SessionCache);
+		ent->term = StrDup(node->term);
+		g_hash_table_insert(CacheTable,ent->term,ent);
+		ent->linkdata = NULL;
+		ent->spadata = NULL;
+		ent->next = Head;
+		if		(  Tail  ==  NULL  ) {
+			Tail = ent;
+		}
+	} else {
+		if		(  ent  !=  Head  ) {
+			if		(  ent->next  !=  NULL  ) {
+				ent->next->prev = ent->prev;
+			}
+			if		(  ent->prev  !=  NULL  ) {
+				ent->prev->next = ent->next;
+			}
+			if		(  ent  ==  Tail  ) {
+				Tail = ent->prev;
+			}
+			ent->next = Head;
+		}
+	}
+	if		(  Head  !=  NULL  ) {
+		Head->prev = ent;
+	}
+	ent->prev = NULL;
+	Head = ent;
+#ifdef	DEBUG
+	{
+		SessionCache	*p;
+		printf("*** term dump Head -> Tail ***\n");
+		for	( p = Head ; p != NULL ; p = p->next ) {
+			printf("[%s]\n",p->term);
+		}
+		printf("*****************\n");
+		printf("*** term dump Tail -> Head  ***\n");
+		for	( p = Tail ; p != NULL ; p = p->prev ) {
+			printf("[%s]\n",p->term);
+		}
+		printf("*****************\n");
+	}
+#endif
+
+	if		(  node->linkrec  !=  NULL  ) {
+		size =  NativeSizeValue(NULL,node->linkrec->value);
+		LBS_ReserveSize(buff,size,FALSE);
+		NativePackValue(NULL,buff->body,node->linkrec->value);
+		if		(	(  ent->linkdata  ==  NULL  )
+				||	(  memcmp(buff->body,ent->linkdata->body,size)  ) ) {
+			flag |= APS_LINKDATA;
+			if		(  ent->linkdata  !=  NULL  ) {
+				FreeLBS(ent->linkdata);
+			}
+			ent->linkdata = LBS_Duplicate(buff);
+		}
+	}
+	if		(  node->sparec  !=  NULL  ) {
+		size =  NativeSizeValue(NULL,node->sparec->value);
+		LBS_ReserveSize(buff,size,FALSE);
+		NativePackValue(NULL,buff->body,node->sparec->value);
+		if		(	(  ent->spadata  ==  NULL  )
+				||	(  memcmp(buff->body,ent->spadata->body,size)  ) ) {
+			flag |= APS_SPADATA;
+			if		(  ent->spadata  !=  NULL  ) {
+				FreeLBS(ent->spadata);
+			}
+			ent->spadata = LBS_Duplicate(buff);
+		}
+	}
+LEAVE_FUNC;
+	return	(flag);
 }
 
 static  Bool
@@ -74,9 +209,8 @@ SendRecord(
 {
 	Bool	ret;
 	
-	if (rec != NULL) {
-		dbgprintf("Send rec = [%s] size[%d]\n",
-			rec->name, NativeSizeValue(NULL,rec->value));
+	if		(  rec  !=  NULL  ) {
+		dbgprintf("Send rec = [%s] size[%d]\n",rec->name, NativeSizeValue(NULL,rec->value));
 		LBS_ReserveSize(buff,NativeSizeValue(NULL,rec->value),FALSE);
 		NativePackValue(NULL,LBS_Body(buff),rec->value);
 		ret = TRUE;
@@ -97,11 +231,11 @@ RecvRecord(
 	Bool		ret;
 
 	RecvLBS(fp,buff);
-	if (rec != NULL) {
+	if ( rec != NULL) {
 		dbgprintf("Recv rec = [%s] size[%d]\n",rec->name, LBS_Size(buff));
 		NativeUnPackValue(NULL,LBS_Body(buff),rec->value);
 #ifdef	DEBUG
-		DumpValueStruct(rec->value);
+//		DumpValueStruct(rec->value);
 #endif
 		ret = TRUE;
 	} else {
@@ -115,90 +249,124 @@ GetWFCTerm(
 	NETFILE	*fp,
 	ProcessNode	*node)
 {
+	int			i;
+	PacketClass	c;
+	Bool		fSuc;
+	Bool		fEnd;
 	MessageHeader	hdr;
-	int				i;
-	PacketClass		c;
-	ValueStruct		*e;
+	char		term[SIZE_TERM+1];
+	unsigned char		flag;
+	ValueStruct	*e;
 
 ENTER_FUNC;
-	while (1) {
-		c = RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
-		switch (c) {
-		case APS_EVENTDATA:
-			dbgmsg("EVENTDATA");
-			hdr.command = RecvChar(fp);
-				ON_IO_ERROR(fp,badio);
-			RecvnString(fp,sizeof(hdr.uuid),  hdr.uuid);
-				ON_IO_ERROR(fp,badio);
-			RecvnString(fp,sizeof(hdr.tempdir),hdr.tempdir);
-				ON_IO_ERROR(fp,badio);
-			RecvnString(fp,sizeof(hdr.user),  hdr.user);
-				ON_IO_ERROR(fp,badio);
-			RecvnString(fp,sizeof(hdr.window),hdr.window);	
-				ON_IO_ERROR(fp,badio);
-			RecvnString(fp,sizeof(hdr.widget),hdr.widget);
-				ON_IO_ERROR(fp,badio);
-			RecvnString(fp,sizeof(hdr.event), hdr.event);
-				ON_IO_ERROR(fp,badio);
-			hdr.dbstatus = RecvChar(fp);
-				ON_IO_ERROR(fp,badio);
+	fEnd = FALSE;
+	fSuc = FALSE;
+	flag = APS_EVENTDATA | APS_MCPDATA | APS_SCRDATA;
 
+	dbgmsg("REQ");
+	RecvnString(fp, sizeof(term), term);			ON_IO_ERROR(fp,badio2);
+	dbgprintf("term = [%s]\n",term);
+	if		(  nCache  >  0  ) {
+		if		(  !CheckCache(node,term)  ) {
+			flag |= APS_SPADATA;
+			flag |= APS_LINKDATA;
+		}
+	} else {
+		flag |= APS_SPADATA | APS_LINKDATA;
+	}
+	SendChar(fp,flag);					ON_IO_ERROR(fp,badio2);
+	while	(  !fEnd  ) {
+		switch	(c = RecvPacketClass(fp)) {
+		  case	APS_EVENTDATA:
+			dbgmsg("EVENTDATA");
+			hdr.status = RecvChar(fp);					ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_TERM, hdr.term);		ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_USER, hdr.user);		ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_NAME, hdr.window);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_NAME, hdr.widget);	ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_EVENT, hdr.event);	ON_IO_ERROR(fp,badio);
+			hdr.dbstatus = RecvChar(fp);				ON_IO_ERROR(fp,badio);
+#ifdef	DEBUG
+			dbgprintf("status = [%c]\n",hdr.status);
+			dbgprintf("term   = [%s]\n",hdr.term);
+			dbgprintf("user   = [%s]\n",hdr.user);
+			dbgprintf("window = [%s]\n",hdr.window);
+			dbgprintf("widget = [%s]\n",hdr.widget);
+			dbgprintf("event  = [%s]\n",hdr.event);
+			dbgprintf("dbstatus=[%c]\n",hdr.dbstatus);
+#endif
+			fSuc = TRUE;
+			break;
+		  case	APS_MCPDATA:
+			dbgmsg("MCPDATA");
+			RecvRecord(fp, node->mcprec);		ON_IO_ERROR(fp,badio);
+			node->tnest = (int)RecvChar(fp);	ON_IO_ERROR(fp,badio);
 			e = node->mcprec->value;
-			SetValueString(GetItemLongName(e,"dc.term"),hdr.uuid,NULL);
-			SetValueString(GetItemLongName(e,"dc.tempdir"),hdr.tempdir,NULL);
+			SetValueChar(GetItemLongName(e,"private.pstatus"),hdr.status);
+			SetValueString(GetItemLongName(e,"dc.term"),hdr.term,NULL);
 			SetValueString(GetItemLongName(e,"dc.user"),hdr.user,NULL);
 			SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
 			SetValueString(GetItemLongName(e,"dc.widget"),hdr.widget,NULL);
 			SetValueString(GetItemLongName(e,"dc.event"),hdr.event,NULL);
 			SetValueChar(GetItemLongName(e,"dc.dbstatus"),hdr.dbstatus);
 
-			node->command = hdr.command;
+			node->pstatus = hdr.status;
 			node->dbstatus = hdr.dbstatus;
-			strcpy(node->uuid,hdr.uuid);
+			strcpy(node->term,hdr.term);
 			strcpy(node->user,hdr.user);
 			strcpy(node->window,hdr.window);
 			strcpy(node->widget,hdr.widget);
 			strcpy(node->event,hdr.event);
 			break;
-		case APS_WINDOW_STACK:
-			node->w.sp = RecvInt(fp);			ON_IO_ERROR(fp,badio);
-			for (i=0;i<node->w.sp ;i++) {
-				node->w.s[i].puttype = RecvChar(fp);	ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,node->w.s[i].window);
-					ON_IO_ERROR(fp,badio);
-			}
-			break;
-		case APS_LINKDATA:
+		  case	APS_LINKDATA:
 			dbgmsg("LINKDATA");
 			RecvRecord(fp,node->linkrec);		ON_IO_ERROR(fp,badio);
 			break;
-		case APS_SPADATA:
+		  case	APS_SPADATA:
 			dbgmsg("SPADATA");
 			RecvRecord(fp,node->sparec);		ON_IO_ERROR(fp,badio);
 			break;
-		case APS_SCRDATA:
+		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
 			for	( i = 0 ; i < node->cWindow ; i ++ ) {
 				RecvRecord(fp,node->scrrec[i]);		ON_IO_ERROR(fp,badio);
 			}
 			break;
-		case APS_END:
+		  case	APS_END:
 			dbgmsg("END");
-			return TRUE;
-		case APS_PING:
+			SetValueInteger(GetItemLongName(node->mcprec->value,"private.prc"),0);
+			fEnd = TRUE;
+			break;
+		  case	APS_STOP:
+			dbgmsg("STOP");
+			node->pstatus = APL_SYSTEM_END;
+			fSuc = TRUE;
+			fEnd = TRUE;
+			break;
+		  case	APS_PING:
 			dbgmsg("PING");
 			SendPacketClass(fp,APS_PONG);		ON_IO_ERROR(fp,badio);
 			break;
-		default:
+		  default:
 			Warning("Invalid PacketClass in GetWFCTerm(%02X)",c);
 			SendPacketClass(fp,APS_NOT);		ON_IO_ERROR(fp,badio);
-badio:
-			return FALSE;
+		  badio:
+			fEnd = TRUE;
+			break;
 		}
 	}
+#ifdef	DEBUG
+	dbgprintf("mcp  = %d\n",NativeSizeValue(NULL,node->mcprec->value));
+	if		(  node->linkrec  !=  NULL  ) {
+		dbgprintf("link = %d\n",NativeSizeValue(NULL,node->linkrec->value));
+	}
+	if		(  node->sparec  !=  NULL  ) {
+		dbgprintf("spa  = %d\n",NativeSizeValue(NULL,node->sparec->value));
+	}
+#endif
+  badio2:
 LEAVE_FUNC;
-	Warning("does not reach");
-	return TRUE;
+	return	(fSuc); 
 }
 
 static	Bool
@@ -207,37 +375,50 @@ GetWFCAPI(
 	ProcessNode	*node)
 {
 ENTER_FUNC;
+	PacketClass		c;
+	Bool			fSuc;
+	MessageHeader	hdr;
 	ValueStruct		*e;
 	WindowBind		*bind;
 	int 			i;
-	MessageHeader	hdr;
 
 	dbgmsg("API");
 
-	RecvnString(fp,sizeof(hdr.window),hdr.window); 		ON_IO_ERROR(fp,badio);
+	fSuc = FALSE;
+
+	node->pstatus = APL_SESSION_GET;
+	RecvnString(fp, sizeof(hdr.term), hdr.term);	ON_IO_ERROR(fp,badio);
+	dbgprintf("term = [%s]\n",hdr.term);
+	SendChar(fp, 0xFE);							ON_IO_ERROR(fp,badio);
+
+	RecvnString(fp, sizeof(hdr.window),hdr.window);	ON_IO_ERROR(fp,badio);
 	dbgprintf("window = [%s]\n",hdr.window);
-	bind = g_hash_table_lookup(node->bhash, hdr.window);
-	if (bind == NULL || !bind->fAPI) {
-		SendChar(fp,APS_NULL);		 					ON_IO_ERROR(fp,badio);
+	if ((bind = g_hash_table_lookup(node->bhash, hdr.window)) == NULL ||
+         !bind->fAPI) {
+		SendChar(fp, 0x0);							ON_IO_ERROR(fp,badio);
+		node->pstatus = APL_SYSTEM_END;
 	} else {
-		SendChar(fp,APS_OK);		 					ON_IO_ERROR(fp,badio);
-		RecvnString(fp, sizeof(hdr.uuid), hdr.uuid); 	
-			ON_IO_ERROR(fp,badio);
-		RecvnString(fp, sizeof(hdr.tempdir),hdr.tempdir);
-			ON_IO_ERROR(fp,badio);
-		RecvnString(fp, sizeof(hdr.user), hdr.user); 	
-			ON_IO_ERROR(fp,badio);
+		SendChar(fp, 0xFE);							ON_IO_ERROR(fp,badio);
+		RecvnString(fp, sizeof(hdr.user), hdr.user);ON_IO_ERROR(fp,badio);
+		c = RecvPacketClass(fp);					ON_IO_ERROR(fp,badio);
+		if (c != APS_MCPDATA) {
+			Warning("Invalid PacketClass in GetWFCAPI(%02X)",c);
+			return FALSE;
+		}
+		RecvLBS(fp, buff);							ON_IO_ERROR(fp,badio);
 		e = node->mcprec->value;
-		SetValueString(GetItemLongName(e,"dc.term"),hdr.uuid,NULL);
-		SetValueString(GetItemLongName(e,"dc.tempdir"),hdr.tempdir,NULL);
+		NativeUnPackValue(NULL, LBS_Body(buff), e);
+		node->tnest = (int)RecvChar(fp);			ON_IO_ERROR(fp,badio);
+		SetValueString(GetItemLongName(e,"dc.term"),hdr.term,NULL);
 		SetValueString(GetItemLongName(e,"dc.user"),hdr.user,NULL);
 		SetValueString(GetItemLongName(e,"dc.window"),hdr.window,NULL);
+		SetValueChar(GetItemLongName(e,"private.pstatus"),TO_CHAR(APL_SESSION_LINK));
 
-		strcpy(node->uuid,hdr.uuid);
+		strcpy(node->term,hdr.term);
 		strcpy(node->user,hdr.user);
 		strcpy(node->window,hdr.window);
 
-        RecvLBS(fp,buff);								ON_IO_ERROR(fp,badio);
+        RecvLBS(fp,buff);     					ON_IO_ERROR(fp,badio);
 
 		e = NULL;
 		for(i = 0; i < node->cWindow; i++) {
@@ -252,11 +433,10 @@ ENTER_FUNC;
 		}
 		NativeUnPackValue(NULL, LBS_Body(buff), e);
 	}
+	fSuc = TRUE;
 LEAVE_FUNC;
-	return TRUE;
 badio:
-LEAVE_FUNC;
-	return FALSE;
+	return fSuc;
 }
 
 extern	Bool
@@ -265,27 +445,27 @@ GetWFC(
 	ProcessNode	*node)
 {
 	PacketClass	c;
-	Bool		ret;
+	Bool		fSuc;
 
 ENTER_FUNC;
-	ret = FALSE;
+	fSuc = FALSE;
 
 	c = RecvPacketClass(fp);
 	switch(c){
 	case APS_REQ:
-		node->messageType = MESSAGE_TYPE_TERM;
-		ret = GetWFCTerm(fp,node);
+		node->messagetype = MESSAGE_TYPE_TERM;
+		fSuc = GetWFCTerm(fp, node);
 		break;
 	case APS_API:
-		node->messageType = MESSAGE_TYPE_API;
-		ret = GetWFCAPI(fp,node);
+		node->messagetype = MESSAGE_TYPE_API;
+		fSuc = GetWFCAPI(fp, node);
 		break;
 	default:
 		Warning("Invalid PacketClass in GetWFC(%02X)",c);
 		break;
 	}
 LEAVE_FUNC;
-	return ret;
+	return	(fSuc);
 }
 
 static	void
@@ -293,63 +473,84 @@ PutWFCTerm(
 	NETFILE	*fp,
 	ProcessNode	*node)
 {
-	int			i;
-	PacketClass	c;
+	int				i;
+	PacketClass		c;
+	Bool			fEnd;
+	unsigned char		flag;
 	ValueStruct	*e;
 
 ENTER_FUNC;
-	e = node->mcprec->value;
-	SendPacketClass(fp,APS_CTRLDATA);				ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.user")));
-		ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.window")));
-		ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));
-		ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.event")));
-		ON_IO_ERROR(fp,badio);
-	SendChar(fp,node->dbstatus);					ON_IO_ERROR(fp,badio);
-	SendChar(fp,node->puttype);						ON_IO_ERROR(fp,badio);
+	flag = APS_MCPDATA | APS_SCRDATA;
+	flag |= ( node->w.n > 0 ) ? APS_WINCTRL : 0;
+	if		(  nCache  >  0  ) {
+		flag |= SaveCache(node);
+	} else {
+		flag |= APS_LINKDATA | APS_SPADATA;
+	}
 
-	while (1) {
-		c = RecvPacketClass(fp);					ON_IO_ERROR(fp,badio);
-		switch(c) {
-		case APS_WINDOW_STACK:
-			dbgmsg("WINDOW_STACK");
-			SendInt(fp,node->w.sp);					ON_IO_ERROR(fp,badio);
-			for	(i=0;i<node->w.sp;i++) {
-				SendChar(fp,node->w.s[i].puttype);
-				SendString(fp,node->w.s[i].window);
+	e = node->mcprec->value;
+	SendPacketClass(fp,APS_CTRLDATA);		ON_IO_ERROR(fp,badio);
+	SendChar(fp,flag);						ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.user")));
+	ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.window")));
+	ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));
+	ON_IO_ERROR(fp,badio);
+	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.event")));
+	ON_IO_ERROR(fp,badio);
+	SendChar(fp,node->dbstatus);			ON_IO_ERROR(fp,badio);
+	dbgprintf("private.pputtype = %02X",
+			  ValueInteger(GetItemLongName(e,"private.pputtype")));
+	SendInt(fp,ValueInteger(GetItemLongName(e,"private.pputtype")));
+	ON_IO_ERROR(fp,badio);
+	fEnd = FALSE; 
+	while	(  !fEnd  ) {
+		switch	(c = RecvPacketClass(fp)) {
+		  case	APS_WINCTRL:
+			dbgmsg("WINCTRL");
+			SendInt(fp,node->w.n);					ON_IO_ERROR(fp,badio);
+			for	( i = 0 ; i < node->w.n ; i ++ ) {
+				SendInt(fp,node->w.control[i].PutType);
+				SendString(fp,node->w.control[i].window);
 			}
 			break;
-		case APS_LINKDATA:
+		  case	APS_MCPDATA:
+			dbgmsg("MCPDATA");
+			SendRecord(fp, node->mcprec);				ON_IO_ERROR(fp,badio);
+			SendChar(fp,(char)node->tnest);			ON_IO_ERROR(fp,badio);
+			break;
+		  case	APS_LINKDATA:
 			dbgmsg("LINKDATA");
 			SendRecord(fp, node->linkrec);			ON_IO_ERROR(fp,badio);
 			break;
-		case APS_SPADATA:
+		  case	APS_SPADATA:
 			dbgmsg("SPADATA");
-			SendRecord(fp, node->sparec);			ON_IO_ERROR(fp,badio);
+			SendRecord(fp, node->sparec);				ON_IO_ERROR(fp,badio);
 			break;
-		case APS_SCRDATA:
+		  case	APS_SCRDATA:
 			dbgmsg("SCRDATA");
-			for	(i=0;i<ThisLD->cWindow;i++) {
-				SendRecord(fp,node->scrrec[i]);		ON_IO_ERROR(fp,badio);
+			for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
+				SendRecord(fp, node->scrrec[i]);				ON_IO_ERROR(fp,badio);
 			}
 			break;
-		case APS_END:
+		  case	APS_END:
 			dbgmsg("END");
-			return;
-		case APS_PING:
+			fEnd = TRUE;
+			break;
+		  case	APS_PING:
 			dbgmsg("PING");
 			SendPacketClass(fp,APS_PONG);			ON_IO_ERROR(fp,badio);
 			break;
-		default:
+		  default:
 			dbgmsg("default");
 			SendPacketClass(fp,APS_NOT);			ON_IO_ERROR(fp,badio);
-			return;
-badio:
-			Warning("badio");
-			return;
+			fEnd = TRUE;
+			break;
+		  badio:
+			dbgmsg("badio");
+			fEnd = TRUE;
+			break;
 		}
 	}
 LEAVE_FUNC;
@@ -365,7 +566,7 @@ ENTER_FUNC;
 	for(i = 0; i < node->cWindow; i++) {
 		if (node->scrrec[i] != NULL &&
 			!strcmp(node->scrrec[i]->name, node->window)) {
-			SendRecord(fp, node->scrrec[i]); ON_IO_ERROR(fp,badio);
+			SendRecord(fp, node->scrrec[i]);			ON_IO_ERROR(fp,badio);
 			break;
 		}
 	}
@@ -379,7 +580,7 @@ PutWFC(
 	ProcessNode	*node)
 {
 ENTER_FUNC;
-	if (node->messageType == MESSAGE_TYPE_API) {
+	if (node->messagetype == MESSAGE_TYPE_API) {
 		PutWFCAPI(fp, node);
 	} else {
 		PutWFCTerm(fp, node);

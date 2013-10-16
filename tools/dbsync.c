@@ -439,7 +439,7 @@ main(
 	InitMessage("dbsync",NULL);
 
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 
 	fVerbose = fOVerbose;
 

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2013-04-25 17:22+0900\n"
+"POT-Creation-Date: 2013-03-25 12:31+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -203,11 +203,11 @@ msgstr "設定"
 msgid "INFOMATION"
 msgstr "情報"
 
-#: glclient/download.c:64
+#: glclient/download.c:63
 msgid "Specify filename..."
 msgstr "保存するファイルの選択"
 
-#: glclient/download.c:166
+#: glclient/download.c:162
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -222,7 +222,7 @@ msgstr ""
 "説明: %s\n"
 "サイズ: %s"
 
-#: glclient/download.c:174
+#: glclient/download.c:170
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -235,17 +235,11 @@ msgstr ""
 "ファイル名: %s\n"
 "サイズ: %s"
 
-#: glclient/action.c:757
+#: glclient/action.c:745
 msgid "Now loading..."
 msgstr "読み込み中..."
 
-#: glclient/action.c:1153
-#, c-format
-msgid "cannot load config:%s"
-msgstr "設定が読み込みできません:%s"
-
 #: glclient/print.c:76
-#, c-format
 msgid "client printing - %s"
 msgstr "クライアント印刷 - %s"
 
@@ -253,15 +247,15 @@ msgstr "クライアント印刷 - %s"
 msgid "Preview"
 msgstr "プレビュー"
 
-#: glclient/client.c:135
+#: glclient/client.c:133
 msgid "mkdtemp failure"
 msgstr "mkdtemp に失敗しました"
 
-#: glclient/client.c:219
+#: glclient/client.c:216
 msgid "can not connect server(server port not found)"
 msgstr "サーバに接続できません(サーバまたはポートが見つかりません)"
 
-#: glclient/client.c:276
+#: glclient/client.c:273
 msgid "input Password"
 msgstr "パスワード"
 
@@ -274,11 +268,11 @@ msgstr "アプリケーション起動失敗"
 msgid "can't execute command.\\n\"%s\""
 msgstr "コマンドを実行できません\\n\"%s\""
 
-#: glclient/protocol.c:85
+#: glclient/protocol.c:84
 msgid "Connection lost\n"
 msgstr "接続が切れました\n"
 
-#: glclient/protocol.c:206
+#: glclient/protocol.c:205
 #, c-format
 msgid "GL_RecvString invalid size %ld > %ld(max size)"
 msgstr ""
@@ -287,65 +281,53 @@ msgstr ""
 msgid "invalid protocol sequence"
 msgstr "プロトコルが不正です"
 
-#: glclient/protocol.c:698
+#: glclient/protocol.c:697
 msgid "glclient message notify"
 msgstr "glclientメッセージ通知"
 
-#: glclient/protocol.c:709
+#: glclient/protocol.c:708
 msgid "connection error(invalid pong packet)"
 msgstr "通信エラー(サーバがPINGに応答しません)"
 
-#: glclient/protocol.c:716 glclient/protocol.c:742
+#: glclient/protocol.c:715 glclient/protocol.c:740
 msgid "connection error(server doesn't reply ping)"
 msgstr "通信エラー(サーバがPINGに応答しません)"
 
-#: glclient/protocol.c:758
+#: glclient/protocol.c:756
 msgid "connection start\n"
 msgstr "connection start\n"
 
-#: glclient/protocol.c:781
+#: glclient/protocol.c:779
 msgid "can not connect server"
 msgstr "サーバに接続できません"
 
-#: glclient/protocol.c:784
+#: glclient/protocol.c:782
 msgid "can not connect server(version not match)"
 msgstr "サーバに接続できません(サーバのバージョンが違います)"
 
-#: glclient/protocol.c:790
+#: glclient/protocol.c:788
 msgid "can not connect server(authentication error)"
 msgstr "サーバに接続できません(認証エラー)"
 
-#: glclient/protocol.c:793 glclient/protocol.c:797
+#: glclient/protocol.c:791 glclient/protocol.c:795
 msgid "can not connect server(user or password is incorrect)"
 msgstr "ユーザまたはパスワードが違います"
 
-#: glclient/protocol.c:802
+#: glclient/protocol.c:800
 msgid "can not connect server(application name invalid)"
 msgstr "サーバに接続できません(アプリケーション名が不正です)"
 
-#: glclient/protocol.c:806
+#: glclient/protocol.c:804
 msgid "can not connect server(other protocol error)"
 msgstr "サーバに接続できません(プロトコルエラー)"
 
-#: glclient/protocol.c:899 glclient/protocol.c:924 glclient/protocol.c:1155
+#: glclient/protocol.c:900 glclient/protocol.c:925 glclient/protocol.c:1156
 #, c-format
 msgid "invalid data conversion\n"
 msgstr "不正なデータ変換です\n"
 
-#: glclient/printservice.c:142
-#, c-format
-msgid ""
-"download failure\n"
-"path:%s\n"
-msgstr ""
-"ダウンロードに失敗しました\n"
-"パス:%s\n"
-
-#: glclient/printservice.c:143 glclient/printservice.c:292
-msgid "glclient download notify"
-msgstr "glclientファイル保存通知"
-
-#: glclient/printservice.c:210
+#: glclient/printservice.c:141 glclient/printservice.c:186
+#: glclient/printservice.c:237
 #, c-format
 msgid ""
 "print failure\n"
@@ -354,22 +336,12 @@ msgstr ""
 "印刷に失敗しました\n"
 "印刷物のタイトル:%s\n"
 
-#: glclient/printservice.c:211
+#: glclient/printservice.c:142 glclient/printservice.c:187
+#: glclient/printservice.c:238
 msgid "glclient print notify"
 msgstr "glclient印刷通知"
 
-#: glclient/printservice.c:290
-#, c-format
-msgid ""
-"download failure\n"
-"filename:%s\n"
-"description:%s"
-msgstr ""
-"ダウンロード失敗\n"
-"ファイル名:%s\n"
-"説明:%s"
-
-#: glclient/marshaller.c:1261
+#: glclient/marshaller.c:1196
 #, c-format
 msgid ""
 "protocol error\n"
@@ -680,3 +652,4 @@ msgstr ""
 "ENGINE_load_private_keyに失敗しました:\n"
 " %s\n"
 "「PKCS#11ライブラリ」が不正な可能性があります。\n"
+

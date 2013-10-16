@@ -17,12 +17,11 @@
 # 02111-1307, USA
 
 noinst_LIBRARIES	=	libpandadb.a libpostgresqlutils.a libdblog.a
-pkglib_LTLIBRARIES 	=	$(DB_OBJECTS)
+lib_LTLIBRARIES 	=	$(DB_OBJECTS)
 
 libpandadb_a_LIBADD	=
 
-
-libpandadbincludedir = $(pkgincludedir)
+libpandadbincludedir = $(includedir)/panda
 libpandadbinclude_HEADERS =	\
 	dblib.h
 
@@ -32,7 +31,10 @@ INCLUDES 			=		\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
 	$(RUBY_CFLAGS)			\
-	$(COMMON_CFLAGS)
+	$(OSEKI_CFLAGS)			\
+	$(MONDAI_CFLAGS)		\
+	$(XML2_CFLAGS)			\
+	$(GLIB_CFLAGS)
 
 libpandadb_a_CFLAGS = $(AM_CFLAGS)
 libpandadb_a_SOURCES	=	\
@@ -51,16 +53,18 @@ libpostgresqlutils_a_SOURCES = \
 	PostgreSQLlib.c PostgreSQLlib.h	\
 	PostgreSQLutils.c audit.c
 
+
 DB_OBJECTS			=		\
 	PostgreSQL.la			\
 	Shell.la				\
 	System.la				\
+	Oseki.la				\
 	NativeBLOB.la			\
 	XMLIO.la				\
 	XMLIO2.la
 
-PostgreSQL_la_LDFLAGS	=		\
-	-avoid-version				\
+PostgreSQL_la_LDFLAGS	=	\
+	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
 PostgreSQL_la_SOURCES	=			\
@@ -68,15 +72,15 @@ PostgreSQL_la_SOURCES	=			\
 	redirect.c	redirect.h			\
 	PostgreSQLlib.c PostgreSQLlib.h \
 	PostgreSQL.c
-PostgreSQL_la_LIBADD	=				\
-	$(top_builddir)/libs/libpanda.la	\
+PostgreSQL_la_LIBADD	=			\
+	$(top_builddir)/libs/net.lo		\
+	$(top_builddir)/libs/socket.lo	\
 	$(POSTGRES_LIBS)
-PostgreSQL_la_DEPENDENCIES	=			\
-	$(top_builddir)/libs/libpanda.la	\
+PostgreSQL_la_DEPENDENCIES	=		\
 	$(top_builddir)/defaults.h
 
 Shell_la_LDFLAGS		=		\
-	-avoid-version				\
+	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
 Shell_la_SOURCES		=	\
@@ -86,7 +90,7 @@ Shell_la_SOURCES		=	\
 Shell_la_LIBADD	=
 
 System_la_LDFLAGS		=		\
-	-avoid-version				\
+	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
 System_la_SOURCES		=		\
@@ -95,10 +99,10 @@ System_la_SOURCES		=		\
 	redirect.c	redirect.h		\
 	System.c
 System_la_LIBADD	=			\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/keyvaluereq.lo
 
 NativeBLOB_la_LDFLAGS	=		\
-	-avoid-version				\
+	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
 NativeBLOB_la_SOURCES	=		\
@@ -107,10 +111,21 @@ NativeBLOB_la_SOURCES	=		\
 	redirect.c	redirect.h		\
 	NativeBLOB.c	
 NativeBLOB_la_LIBADD	=		\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/blobreq.lo
+
+Oseki_la_LDFLAGS	=			\
+	-version-info $(LTVERSION)	\
+	-module						\
+	-export-dynamic
+Oseki_la_SOURCES	=	\
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	Oseki.c
+Oseki_la_LIBADD		=	\
+	$(OSEKI_LIBS)
 
 XMLIO_la_LDFLAGS	=	\
-	-avoid-version				\
+	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
 XMLIO_la_SOURCES	=	\
@@ -118,12 +133,12 @@ XMLIO_la_SOURCES	=	\
 	redirect.c	redirect.h	\
 	sysdata.c	sysdata.h	\
 	XMLIO.c
-XMLIO_la_LIBADD			=				\
-	$(top_builddir)/libs/libpanda.la	\
+XMLIO_la_LIBADD			=	\
+	$(top_builddir)/libs/blobreq.lo	\
 	$(XML2_LIBS)
 
 XMLIO2_la_LDFLAGS	=	\
-	-avoid-version				\
+	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
 XMLIO2_la_SOURCES	=	\
@@ -131,6 +146,6 @@ XMLIO2_la_SOURCES	=	\
 	redirect.c	redirect.h	\
 	sysdata.c	sysdata.h	\
 	XMLIO2.c
-XMLIO2_la_LIBADD			=			\
-	$(top_builddir)/libs/libpanda.la	\
+XMLIO2_la_LIBADD			=	\
+	$(top_builddir)/libs/blobreq.lo	\
 	$(XML2_LIBS)

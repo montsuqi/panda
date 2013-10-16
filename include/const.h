@@ -49,13 +49,13 @@
 
 #define	SIZE_BLOCK		1024
 
+#define	SIZE_HOST		255
+
 #define	SIZE_NAME		64
 #define	SIZE_EVENT		64
 #define	SIZE_TERM		64
-#define	SIZE_HOST		64
 #define	SIZE_FUNC		16
 #define	SIZE_USER		16
-#define	SIZE_USER_STR	"16"
 #define	SIZE_RNAME		16
 #define	SIZE_PNAME		16
 #define	SIZE_STATUS	4
@@ -65,8 +65,8 @@
 #define	SIZE_SESID		16
 #define	SIZE_AUTHID		16
 #define	SIZE_ARG		255
+#define	SIZE_FUNC		16
 #define	SIZE_COMMENT	255
-#define	SIZE_PATH		1024
 
 #ifndef	SIZE_LONGNAME
 #define	SIZE_LONGNAME		1024
@@ -78,7 +78,5 @@
 
 #define	SIZE_DEFAULT_ARRAY_SIZE		64
 #define	SIZE_DEFAULT_TEXT_SIZE		256
-
-#define SIZE_SYSDB		256
 
 #endif

@@ -122,8 +122,7 @@ class  Widget
         "GtkPandaText" ,"GtkCList", "GtkPandaCList", 
         "GtkPandaPS", "GnomePixmap", "GnomeFileEntry",
 		"GtkFileChooserButton","GtkColorButton",
-        "GtkPandaPDF", "GtkPandaDownload","GtkPandaDownload2",
-        "GtkPandaPrint","GtkPandaTable",
+        "GtkPandaPDF", "GtkPandaDownload", "GtkPandaPrint","GtkPandaTable",
         "GtkWindow","GtkNotebook"
         ret = TRUE;
       when  "GtkLabel"
@@ -222,10 +221,6 @@ class  Widget
         printf("}\t[??];\n");
         putTab(ind+1);
         printf("select\tbool[??];\n");
-        putTab(ind+1);
-        printf("fgcolor\tvarchar(16)[??];\n");
-        putTab(ind+1);
-        printf("bgcolor\tvarchar(16)[??];\n");
 
         putTab(ind);
         printf("};\n");
@@ -370,30 +365,13 @@ class  Widget
           printf("description\tvarchar(%d);\n",@chars);
         putTab(ind);
         printf("};\n");
-      when  "GtkPandaDownload2"
-        putTab(ind);
-        printf("%s\t{\n",vname);
-          putTab(ind+1);
-          printf("item {\n");
-            putTab(ind+2);
-            printf("path\tvarchar(%d);\n",@chars);
-            putTab(ind+2);
-            printf("filename\tvarchar(%d);\n",@chars);
-            putTab(ind+2);
-            printf("description\tvarchar(%d);\n",@chars);
-            putTab(ind+2);
-            printf("nretry\tint;\n");
-          putTab(ind+1);
-          printf("}[10];\n");
-        putTab(ind);
-        printf("};\n");
       when  "GtkPandaPrint"
         putTab(ind);
         printf("%s\t{\n",vname);
           putTab(ind+1);
           printf("item {\n");
             putTab(ind+2);
-            printf("path\tvarchar(%d);\n",@chars);
+            printf("url\tvarchar(%d);\n",@chars);
             putTab(ind+2);
             printf("title\tvarchar(%d);\n",@chars);
             putTab(ind+2);
@@ -553,6 +531,8 @@ begin
         when  /\/widget\/name$/i
         widget.name = data;
         when  /\/text_max_length$/i
+        widget.chars = Integer(data);
+        when  /\/max_length$/i
         widget.chars = Integer(data);
         when  /\/widget\/label$/i
         widget.label = data;

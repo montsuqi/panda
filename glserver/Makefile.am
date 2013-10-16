@@ -25,28 +25,29 @@ EXTRA_DIST = 							\
 glserver_LDFLAGS	=	-export-dynamic
 glserver_LDADD 		=					\
 	-lm 								\
-	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/libs/libpandas.a	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandagl.a	\
 	$(MAGIC_LIBS)						\
+	$(GLIB2_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(COMMON_LIBS)
-
+	$(MONDAI_LIBS)						
 glserver_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpandas.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandagl.a
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
+	$(GLIB2_CFLAGS)			\
 	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(COMMON_CFLAGS)
+	$(MONDAI_CFLAGS)
 
 glserver_SOURCES	=				\
 	glserver.c		glserver.h		\
 	http.c			http.h			\
 	sysdataio.c		sysdataio.h		\
-	blobcache.c		blobcache.h		\
-	sessioncall.c	sessioncall.h	\
-	driver.c		driver.h		\
-	glcomm.c		glcomm.h		\
 	server.c

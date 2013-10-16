@@ -22,10 +22,10 @@
 
 #include <gtk/gtk.h>
 
-extern	void		MessageDialog(GtkMessageType type, const char *message);
-extern	void		ShowInfoDialog(const char *format,...);
-extern	void		ShowWarnDialog(const char *format,...);
-extern	void		ShowErrorDialog(const char *format,...);
-extern	int 		ShowAskPassDialog(char *buf, size_t buflen, const char *prompt);
+extern	void		message_dialog(GtkMessageType type, const char *message);
+extern	void		show_info_dialog(const char *format,...);
+extern	void		show_warn_dialog(const char *format,...);
+extern	void		show_error_dialog(const char *format,...);
+extern	int 		askpass(char *buf, size_t buflen, const char *prompt);
 
 #endif

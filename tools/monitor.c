@@ -64,6 +64,7 @@ static	Bool	fRedirector;
 static	Bool	fNoApsConnectRetry;
 static	int		Interval;
 static	int		Wfcinterval;
+static	int		MaxTran;
 static	int		MaxTransactionRetry;
 static	int		Sleep;
 static	int		SesNum;
@@ -205,10 +206,14 @@ static	ARG_TABLE	option[] = {
 		"wfc start interval time(for slowCPU)"			},
 	{	"sesnum",	INTEGER,	TRUE,	(void*)&SesNum,
 		"terminal session number"							},
+	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
+		"session keep directory"	 					},
 
 	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
 		"my host name"				 					},
 
+	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
+		"aps process transaction count"					},
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
 		"transaction retry count"						},
 	{	"no-aps-retry",	BOOLEAN,	TRUE,	(void*)&fNoApsConnectRetry,
@@ -275,6 +280,7 @@ SetDefault(void)
 	Log = NULL;
 	Interval = 0;
 	Wfcinterval = 0;
+	MaxTran = 0;
 	MaxTransactionRetry = 0;
 	MaxSendRetry = 3;
 	Sleep = 0;
@@ -289,6 +295,7 @@ SetDefault(void)
 	fTimer = FALSE;
 	fNoApsConnectRetry = FALSE;
 	SesNum = 0;
+	SesDir = NULL;
 
 	fGlserver = FALSE;
 	fGlSSL = FALSE;
@@ -307,7 +314,7 @@ InitSystem(void)
 ENTER_FUNC;
 	ProcessList = NULL;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
@@ -716,6 +723,8 @@ ENTER_FUNC;
 				argv[argc ++] = "-connect-retry";
 			}
 			argv[argc ++] = ld->name;
+			argv[argc ++] = "-maxtran";
+			argv[argc ++] = IntStrDup(MaxTran);
 			argv[argc ++] = "-sleep";
 			argv[argc ++] = IntStrDup(Sleep);
 			argv[argc ++] = "-maxretry";
@@ -794,6 +803,10 @@ ENTER_FUNC;
 		if		(  SesNum  >  0  ) {
 			argv[argc ++] = "-sesnum";
 			argv[argc ++] = IntStrDup(SesNum);
+		}
+		if		(  SesDir  !=  NULL  ) {
+			argv[argc ++] = "-sesdir";
+			argv[argc ++] = SesDir;
 		}
 
 		if		(  Directory  !=  NULL  ) {

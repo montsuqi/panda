@@ -109,7 +109,7 @@ InitSystem(void)
 {
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,"","",P_NONE);
+	SetUpDirectory(Directory,NULL,"","",FALSE);
 	InitNET();
 LEAVE_FUNC;
 }

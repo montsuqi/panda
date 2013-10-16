@@ -49,6 +49,7 @@
 #include	"directory.h"
 #include	"dblib.h"
 #include	"dbgroup.h"
+#include	"front.h"
 #include	"dbs_main.h"
 #include	"RecParser.h"
 #include	"option.h"
@@ -60,7 +61,6 @@
  */
 #define DBS_VERSION "1.5.1"
 
-static	char	AppName[128];
 static	DBD_Struct	*ThisDBD;
 static	sigset_t	hupset;
 static	char		*PortNumber;
@@ -79,7 +79,7 @@ ENTER_FUNC;
 	sigaddset(&hupset,SIGHUP);
 
 	InitDirectory();
-	SetUpDirectory(Directory,"","",name,P_ALL);
+	SetUpDirectory(Directory,"","",name,TRUE);
 	if		(  ( ThisDBD = GetDBD(name) )  ==  NULL  ) {
 		fprintf(stderr,"DBD \"%s\" not found.\n",name);
 		exit(1);
@@ -89,7 +89,7 @@ ENTER_FUNC;
 	DB_Table = ThisDBD->DBD_Table;
 	CurrentProcess = NULL;
 
-	InitDB_Process(AppName);
+	InitDB_Process(NULL);
 LEAVE_FUNC;
 }
 
@@ -99,7 +99,7 @@ LEAVE_FUNC;
 
 typedef	struct {
 	char	user[SIZE_USER+1];
-	char	remote[SIZE_HOST+1];
+	char	term[SIZE_TERM+1];
 	int		type;
 	Bool	fCount;
 	Bool	fLimit;
@@ -115,7 +115,7 @@ FinishSession(
 	SessionNode	*ses)
 {
 ENTER_FUNC;
-	Message("[%s@%s] session end",ses->user,ses->remote);
+	Message("[%s@%s] session end",ses->user,TermToHost(ses->term));
 	xfree(ses);
 LEAVE_FUNC;
 }
@@ -160,7 +160,7 @@ NewSessionNode(void)
 
 	ses = New(SessionNode);
 	memclear(ses->user, SIZE_USER+1);
-	memclear(ses->remote, SIZE_HOST+1);
+	memclear(ses->term, SIZE_TERM+1);
 	ses->type = COMM_STRING;
 	ses->fCount = FALSE;
 	ses->fLimit = FALSE;
@@ -176,7 +176,7 @@ NewSessionNode(void)
 static	SessionNode	*
 InitDBSSession(
 	NETFILE	*fpComm,
-	char		*remote)
+	char		*term)
 {
 	SessionNode	*ses;
 	char	buff[SIZE_BUFF+1];
@@ -190,7 +190,7 @@ ENTER_FUNC;
 	/*
 	 version user password type\n
 	 */
-	g_strlcpy(ses->remote, remote, SIZE_HOST);
+	g_strlcpy(ses->term, term, SIZE_TERM);
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	p = buff;
 	if ((q = strchr(p,' ')) != NULL ){
@@ -221,15 +221,15 @@ ENTER_FUNC;
 	}
 	if		(  ver  <  10200  ) {
 		SendStringDelim(fpComm,"Error: version\n");
- 		Warning("[@%s] reject client(invalid version %d)",ses->remote, ver);
+ 		Warning("[@%s] reject client(invalid version %d)",TermToHost(ses->term), ver);
 		xfree(ses);
 		ses = NULL;
 	} else
-	if		(  AuthUser(&Auth,ses->user,pass,"dbs",NULL)  ) {
+	if		(  AuthUser(&Auth,ses->user,pass,NULL,NULL)  ) {
 		if		(  ver  >=  10500  ) {
 			snprintf(buff,SIZE_BUFF,"Connect: OK;%s\n",DBS_VERSION);
 			SendStringDelim(fpComm,buff);
-			Message("[%s@%s] [version:%d] session start ",ses->user,ses->remote,ver);
+			Message("[%s@%s] [version:%d] session start ",ses->user,TermToHost(ses->term),ver);
 		} else {
 			SendStringDelim(fpComm,"Connect: OK\n");
 		}
@@ -254,7 +254,7 @@ ENTER_FUNC;
 		}
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
-		Warning("[%s@%s] [version %d] reject client (authentication error)",ses->user,ses->remote);
+		Warning("[%s@%s] [version %d] reject client (authentication error)",ses->user,TermToHost(ses->term));
 		xfree(ses);
 		ses = NULL;
 	}
@@ -817,7 +817,7 @@ ExecuteServer(void)
 	int		pid;
 	SessionNode	*ses;
 	Port	*port;
-	char	remote[SIZE_HOST+1];
+	char	*term;
 
 ENTER_FUNC;
 	port = ParPortName(PortNumber);
@@ -831,8 +831,8 @@ ENTER_FUNC;
 		} else
 		if		(  pid  ==  0  )	{	/*	child	*/
 			fp = SocketToNet(fh);
-			RemoteIP(fh,remote,SIZE_HOST);
-			if		(  ( ses = InitDBSSession(fp,remote) )  !=  NULL  ) {
+			term = StrDup(TermName(fh));
+			if		(  ( ses = InitDBSSession(fp,term) )  !=  NULL  ) {
 				while	(  MainLoop(fp,ses)  );
 				FinishSession(ses);
 			}
@@ -933,7 +933,6 @@ main(
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
 		InitNET();
-		snprintf(AppName, sizeof(AppName), "dbs-%s",fl->name);
 		InitSystem(fl->name);
 		ExecuteServer();
 		StopProcess(0);

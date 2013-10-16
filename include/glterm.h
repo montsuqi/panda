@@ -31,6 +31,11 @@
 #define	SCREEN_CLOSE_WINDOW			(unsigned char)0x03
 #define	SCREEN_CHANGE_WINDOW		(unsigned char)0x04
 #define	SCREEN_JOIN_WINDOW			(unsigned char)0x05
+#define	SCREEN_FORK_WINDOW			(unsigned char)0x06
+#define	SCREEN_END_SESSION			(unsigned char)0x07
+#define	SCREEN_BACK_WINDOW			(unsigned char)0x08
+#define	SCREEN_RETURN_COMPONENT		(unsigned char)0x09
+#define	SCREEN_CALL_COMPONENT		(unsigned char)0x10
 
 #define	GL_Null						(PacketClass)0x00
 #define	GL_Connect					(PacketClass)0x01

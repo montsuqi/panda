@@ -48,6 +48,7 @@
 
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
+
 static	ValueStruct	*
 _NewBLOB(
 	DBG_Struct		*dbg,
@@ -61,11 +62,11 @@ _NewBLOB(
 
 ENTER_FUNC;
 	ret = NULL;
-	if (rec->type != RECORD_DB) {
+	if		(  rec->type  !=  RECORD_DB  ) {
 		rc = MCP_BAD_ARG;
 	} else {
-		if ((e = GetItemLongName(args,"object")) != NULL) {
-			if ((ValueObjectId(e) = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE) ) != GL_OBJ_NULL) {
+		if		(  ( e = GetItemLongName(args,"object") )  !=  NULL  ) {
+			if		(  ( ValueObjectId(e) = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
 				ret = DuplicateValue(args,TRUE);
 				rc = MCP_OK;
 			} else {
@@ -75,7 +76,7 @@ ENTER_FUNC;
 			rc = MCP_BAD_ARG;
 		}
 	}
-	if (ctrl != NULL) {
+	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
@@ -96,12 +97,13 @@ _ExportBLOB(
 
 ENTER_FUNC;
 	ret = NULL;
-	if (rec->type != RECORD_DB) {
+	if		(  rec->type  !=  RECORD_DB  ) {
 		rc = MCP_BAD_ARG;
 	} else {
-		if (((obj = GetItemLongName(args,"object")) != NULL) &&
-			((f = GetItemLongName(args,"file")) != NULL)) {
-			if (RequestExportBLOB(NBCONN(dbg),ValueObjectId(obj),ValueToString(f,NULL))) {
+		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
+				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
+			if		(  RequestExportBLOB(NBCONN(dbg),
+										 ValueObjectId(obj),ValueToString(f,NULL))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_BAD_OTHER;
@@ -110,7 +112,7 @@ ENTER_FUNC;
 			rc = MCP_BAD_ARG;
 		}
 	}
-	if (ctrl != NULL) {
+	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
@@ -131,14 +133,13 @@ _ImportBLOB(
 
 ENTER_FUNC;
 	ret = NULL;
-	if (rec->type != RECORD_DB) {
+	if		(  rec->type  !=  RECORD_DB  ) {
 		rc = MCP_BAD_ARG;
 	} else {
-		if (((obj = GetItemLongName(args,"object")) != NULL)
-				&&	((f = GetItemLongName(args,"file")) != NULL)) {
-			ValueObjectId(obj) = RequestImportBLOB(NBCONN(dbg),
-				ValueToString(f,NULL));
-			if (ValueObjectId(obj) != GL_OBJ_NULL) {
+		if		(	(  ( obj = GetItemLongName(args,"object") )  !=  NULL  )
+				&&	(  ( f   = GetItemLongName(args,"file") )    !=  NULL  ) ) {
+			if		(  ( ValueObjectId(obj) = RequestImportBLOB(NBCONN(dbg),
+																ValueToString(f,NULL)) )  !=  GL_OBJ_NULL  ) {
                 ValueIsNonNil(obj);
 				ret = DuplicateValue(args,TRUE);
 				rc = MCP_OK;
@@ -149,7 +150,7 @@ ENTER_FUNC;
 			rc = MCP_BAD_ARG;
 		}
 	}
-	if (ctrl != NULL) {
+	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
@@ -169,11 +170,11 @@ _CheckBLOB(
 
 ENTER_FUNC;
 	ret = NULL;
-	if (rec->type != RECORD_DB) {
+	if		(  rec->type  !=  RECORD_DB  ) {
 		rc = MCP_BAD_ARG;
 	} else {
-		if ((obj = GetItemLongName(args,"object")) != NULL) {
-			if (RequestCheckBLOB(NBCONN(dbg),ValueObjectId(obj))) {
+		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
+			if		(  RequestCheckBLOB(NBCONN(dbg),ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
@@ -182,7 +183,7 @@ ENTER_FUNC;
 			rc = MCP_BAD_ARG;
 		}
 	}
-	if (ctrl != NULL) {
+	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
@@ -202,11 +203,11 @@ _DestroyBLOB(
 
 ENTER_FUNC;
 	ret = NULL;
-	if (rec->type != RECORD_DB) {
+	if		(  rec->type  !=  RECORD_DB  ) {
 		rc = MCP_BAD_ARG;
 	} else {
-		if ((obj = GetItemLongName(args,"object")) != NULL) {
-			if (RequestDestroyBLOB(NBCONN(dbg),ValueObjectId(obj))) {
+		if		(  ( obj = GetItemLongName(args,"object") )  !=  NULL  ) {
+			if		(  RequestDestroyBLOB(NBCONN(dbg),ValueObjectId(obj))  ) {
 				rc = MCP_OK;
 			} else {
 				rc = MCP_EOF;
@@ -215,12 +216,44 @@ ENTER_FUNC;
 			rc = MCP_BAD_ARG;
 		}
 	}
-	if (ctrl != NULL) {
+	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
 LEAVE_FUNC;
 	return	(ret);
 }
+
+#if BLOB_VERSION == 1
+static	ValueStruct	*
+_RegisterBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*ret;
+ENTER_FUNC;
+	ret = NULL;
+	ctrl->rc = MCP_BAD_ARG;
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_LookupBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*ret;
+ENTER_FUNC;
+	ret = NULL;
+	ctrl->rc = MCP_BAD_ARG;
+LEAVE_FUNC;
+	return	(ret);
+}
+#endif
 
 static	int
 _EXEC(
@@ -264,6 +297,10 @@ static	DB_OPS	Operations[] = {
 	{	"BLOBIMPORT",	_ImportBLOB		},
 	{	"BLOBCHECK",	_CheckBLOB		},
 	{	"BLOBDESTROY",	_DestroyBLOB	},
+#if BLOB_VERSION == 1
+	{	"BLOBREGISTER",	_RegisterBLOB	},
+	{	"BLOBLOOKUP",	_LookupBLOB  	},
+#endif
 
 	{	NULL,			NULL }
 };

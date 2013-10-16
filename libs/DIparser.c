@@ -28,7 +28,6 @@
 #endif
 
 #define	_DI_PARSER
-#define DIRS_MAIN
 
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -89,12 +88,12 @@
 #define	T_SSLMODE		(T_YYBASE +38)
 #define	T_SSLCERT		(T_YYBASE +39)
 #define	T_SSLKEY		(T_YYBASE +40)
-#define	T_SSLROOTCERT	(T_YYBASE +41)
+#define	T_SSLROOTCERT		(T_YYBASE +41)
 #define	T_SSLCRL		(T_YYBASE +42)
 #define	T_BLOB			(T_YYBASE +43)
 
 #define	T_LOGDBNAME		(T_YYBASE +44)
-#define	T_LOGTABLENAME	(T_YYBASE +45)
+#define	T_LOGTABLENAME		(T_YYBASE +45)
 #define	T_LOGPORT		(T_YYBASE +46)
 #define	T_LOGPATH		(T_YYBASE +47)
 #define	T_MSTPATH		(T_YYBASE +48)
@@ -104,11 +103,8 @@
 #define	T_AUDITLOG		(T_YYBASE +52)
 #define	T_SUMCHECK		(T_YYBASE +53)
 
-#define	T_INITIAL_LD	(T_YYBASE +54)
-
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
-	{	"initial_ld"		,T_INITIAL_LD	},
 	{	"bd"				,T_BD		},
 	{	"db"				,T_DB		},
 	{	"name"				,T_NAME 	},
@@ -159,8 +155,6 @@ static	TokenTable	tokentable[] = {
 	{	"mstport"			,T_MSTPORT	},
 	{	"dbmaster"			,T_DBMASTER	},
 	{	"auditlog"			,T_AUDITLOG	},
-	{	"sumcheck"			,T_SUMCHECK	},
-
 	{	"sumcheck"			,T_SUMCHECK	},
 	
 	{	""					,0			}
@@ -392,7 +386,7 @@ LEAVE_FUNC;
 static	void
 ParLD_Elements(
 	CURFILE	*in,
-	int		parse_type)
+	Bool    parse_ld)
 {
 	char		buff[SIZE_BUFF];
 	char		name[SIZE_BUFF];
@@ -413,8 +407,8 @@ ENTER_FUNC;
 		}
 		sprintf(name,"%s/%s.ld",p,ComSymbol);
 		dbgprintf("[%s]\n",name);
-		if ( parse_type >= P_LD ) {
-			ld = LD_Parser(name, parse_type);
+		if ( parse_ld ) {
+			ld = LD_Parser(name); 
 		} else {
 			ld = LD_DummyParser(in);
 		}
@@ -548,7 +542,7 @@ static	void
 ParLD(
 	CURFILE	*in,
 	char	*dname,
-	int    parse_type)
+	Bool    parse_ld)
 {
 ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
@@ -560,7 +554,7 @@ ENTER_FUNC;
 			} else {
 				if		(	(  dname  ==  NULL  )
 						||	(  !strcmp(ComSymbol,dname)  ) ) {
-					ParLD_Elements(in,parse_type);
+					ParLD_Elements(in,parse_ld);
 				} else {
 					SkipLD(in);
 				}
@@ -578,7 +572,7 @@ static	void
 ParBD(
 	CURFILE	*in,
 	char	*dname,
-	int 	parse_type)
+	Bool    parse_ld)
 {
 	char		name[SIZE_BUFF];
 	BD_Struct	*bd;
@@ -602,7 +596,7 @@ ENTER_FUNC;
 							*q = 0;
 						}
 						sprintf(name,"%s/%s.bd",p,ComSymbol);
-						if ( parse_type >= P_LD ) {
+						if ( parse_ld ) {
 							bd = BD_Parser(name);
 							if		(  bd  !=  NULL  ) {
 								if		(  g_hash_table_lookup(ThisEnv->BD_Table,ComSymbol)  ==  NULL  ) {
@@ -737,7 +731,6 @@ NewDBG_Struct(
 	dbg->server = NULL;
 	dbg->file = NULL;
 	dbg->sumcheck = 1;
-	dbg->appname = NULL;
 	dbg->redirect = NULL;
 	dbg->redirectName = NULL;
 	dbg->logTableName = NULL;
@@ -1106,7 +1099,7 @@ ENTER_FUNC;
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
 		dbgprintf("%d DB group name = [%s]\n",dbg->priority,dbg->name);
-		dbgprintf("  redirectorMode => %d", dbg->redirectorMode);
+		dbgprintf("  redirectorMode => %d", dbg->redirectorMode);		
 		_AssignDBG(in,dbg->name,dbg);
 	}
 LEAVE_FUNC;
@@ -1153,16 +1146,16 @@ BuildMcpArea(
 	p += sprintf(p,		"func varchar(%d);",SIZE_FUNC);
 	p += sprintf(p,		"rc int;");
 	p += sprintf(p,		"dc	{");
-	p += sprintf(p,			"window		varchar(%d);",SIZE_NAME);
-	p += sprintf(p,			"widget		varchar(%d);",SIZE_NAME);
-	p += sprintf(p,			"event		varchar(%d);",SIZE_EVENT);
-	p += sprintf(p,			"module		varchar(%d);",SIZE_NAME);
-	p += sprintf(p,			"status		varchar(%d);",SIZE_STATUS);
-	p += sprintf(p,			"dbstatus	varchar(%d);",SIZE_STATUS);
-	p += sprintf(p,			"puttype	varchar(%d);",SIZE_PUTTYPE);
-	p += sprintf(p,			"term		varchar(%d);",SIZE_TERM);
-	p += sprintf(p,			"user		varchar(%d);",SIZE_USER);
-	p += sprintf(p,			"tempdir	varchar(%d);",SIZE_PATH);
+	p += sprintf(p,			"window	 varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"widget	 varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"event	 varchar(%d);",SIZE_EVENT);
+	p += sprintf(p,			"module	 varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"fromwin varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"status	 varchar(%d);",SIZE_STATUS);
+	p += sprintf(p,			"dbstatus varchar(%d);",SIZE_STATUS);
+	p += sprintf(p,			"puttype varchar(%d);",SIZE_PUTTYPE);
+	p += sprintf(p,			"term	 varchar(%d);",SIZE_TERM);
+	p += sprintf(p,			"user	 varchar(%d);",SIZE_USER);
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"db	{");
 	p += sprintf(p,			"path	{");
@@ -1170,13 +1163,21 @@ BuildMcpArea(
 	p += sprintf(p,				"rname	int;");
 	p += sprintf(p,				"pname	int;");
 	p += sprintf(p,			"};");
-	p += sprintf(p,			"table		varchar(%d);",SIZE_NAME);
-	p += sprintf(p,			"pathname	varchar(%d);",SIZE_NAME);
-	p += sprintf(p,			"limit		int;");
-	p += sprintf(p,			"rcount		int;");
- 	p += sprintf(p,			"redirect	int;");
-	p += sprintf(p,			"logflag	int;");
+	p += sprintf(p,			"table      varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"pathname   varchar(%d);",SIZE_NAME);
+	p += sprintf(p,			"limit      int;");
+	p += sprintf(p,			"rcount     int;");
+ 	p += sprintf(p,			"redirect   int;");
+	p += sprintf(p,			"logflag    int;");
 	p += sprintf(p,			"logcomment	varchar(%d);",SIZE_COMMENT);	
+	p += sprintf(p,		"};");
+	p += sprintf(p,		"private	{");
+	p += sprintf(p,			"count	int;");
+	p += sprintf(p,			"swindow	char(%d)[%d];",SIZE_NAME,(int)stacksize);
+	p += sprintf(p,			"state		char(1)[%d];",(int)stacksize);
+	p += sprintf(p,			"pstatus	char(1);");
+	p += sprintf(p,			"pputtype 	int;");
+	p += sprintf(p,			"prc		char(1);");
 	p += sprintf(p,		"};");
 	p += sprintf(p,	"};");
 	rec = ParseRecordMem(buff);
@@ -1235,7 +1236,7 @@ ParDI(
 	char	*ld,
 	char	*bd,
 	char	*db,
-	int		parse_type)
+	Bool    parse_ld)
 {
 	char	gname[SIZE_LONGNAME+1]
 		,	buff[SIZE_LONGNAME+1];
@@ -1266,7 +1267,7 @@ ENTER_FUNC;
 			break;
 		  case	T_LINKAGE:
 			if		(  GetSymbol   ==  T_SYMBOL  ) {
-				if ( parse_type >= P_LD ) {
+				if ( parse_ld ) {
 					sprintf(buff,"%s.rec",ComSymbol);
 					ThisEnv->linkrec = ReadRecordDefine(buff);
 				} else {
@@ -1411,18 +1412,14 @@ ENTER_FUNC;
 			break;
 		  case	T_LD:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParLD(in,ld, parse_type);
+				ParLD(in,ld, parse_ld);
 			} else {
 				ParError("syntax error in ld directive");
 			}
 			break;
-		  case	T_INITIAL_LD:
-			GetName;
-			ThisEnv->InitialLD = StrDup(ComSymbol);
-			break;
 		  case	T_BD:
 			if		(  GetSymbol  ==  '{'  ) {
-				ParBD(in,bd, parse_type);
+				ParBD(in,bd, parse_ld);
 			} else {
 				ParError("syntax error in bd directive");
 			}

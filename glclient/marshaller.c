@@ -35,15 +35,16 @@
 #include	<sys/time.h>
 #include	<errno.h>
 
+#define		MARSHALLER
+
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"protocol.h"
 #include	"marshaller.h"
-#include	"action.h"
+#include	"interface.h"
 #include	"printservice.h"
-#include	"widgetOPS.h"
 #include	"dialogs.h"
 #include	"gettext.h"
 #include	"debug.h"
@@ -948,73 +949,6 @@ LEAVE_FUNC;
 }
 
 static	Bool
-RecvPandaDownload2(
-	WidgetData	*data,
-	NETFILE	*fp)
-{
-	Bool			ret;
-	DLRequest		*req;
-	char			name[SIZE_BUFF]
-	,				path[SIZE_BUFF]
-	,				filename[SIZE_BUFF]
-	,				description[SIZE_BUFF];
-	int				nitem
-	,				nitem2
-	,				nitem3
-	,				nretry
-	,				i,j,k;
-
-ENTER_FUNC;
-	ret = FALSE;
-	data->attrs = NULL;
-
-	if	(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = GL_RecvInt(fp);
-		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp, sizeof(name), name);
-			if		(  RecvCommon(name,data,fp)  ) {
-			} else 
-			if (!stricmp(name,"item")) {
-				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-				nitem2 = GL_RecvInt(fp);
-				for	( j = 0 ; j < nitem2 ; j ++ ) {
-					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
-					nitem3 = GL_RecvInt(fp);
-					path[0] = 0; 
-					filename[0] = 0;
-					description[0] = 0;
-					nretry = 0;
-					for	( k = 0 ; k < nitem3 ; k ++ ) {
-						GL_RecvName(fp, sizeof(name), name);
-						if (!stricmp(name,"path")) {
-							RecvStringData(fp,path,SIZE_BUFF);
-						} else if (!stricmp(name,"filename")) {
-							RecvStringData(fp,filename,SIZE_BUFF);
-						} else if (!stricmp(name,"description")) {
-							RecvStringData(fp,description,SIZE_BUFF);
-						} else if (!stricmp(name,"nretry")) {
-							RecvIntegerData(fp,&nretry);
-						}
-					}
-					if (strlen(path) > 0 && strlen(filename) > 0) {
-						req = (DLRequest*)xmalloc(sizeof(DLRequest));
-						req->path = StrDup(path);
-						req->filename = StrDup(filename);
-						req->description = StrDup(description);
-						req->nretry = nretry;
-						DLLIST(Session) = g_list_append(DLLIST(Session),req);
-						MessageLogPrintf("add path[%s]\n",path);
-					}
-				}
-			}
-		}
-		ret = TRUE;
-	}
-LEAVE_FUNC;
-	return ret;
-}
-
-static	Bool
 RecvPandaPrint(
 	WidgetData	*data,
 	NETFILE	*fp)
@@ -1068,7 +1002,7 @@ ENTER_FUNC;
 						req->title = StrDup(title);
 						req->nretry = nretry;
 						req->showdialog = showdialog;
-						PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
+						PrintList = g_list_append(PrintList,req);
 						MessageLogPrintf("add path[%s]\n",path);
 					}
 					path[0] = 0; title[0] = 0;
@@ -1254,11 +1188,12 @@ ENTER_FUNC;
 				}
 			} else {
 				sprintf(buff,"%s.%s", data->name, name);
-				if (IsWidgetName(buff)) {
+				if (UI_IsWidgetName(buff)) {
 					attrs->subname = strdup(buff);
 					RecvWidgetData(buff,fp);
 				} else {
-					ShowErrorDialog(_("protocol error\ninvalid data\n%s"),buff);
+					show_error_dialog(
+					_("protocol error\ninvalid data\n%s"),buff);
 				}
 			}
 		}
@@ -1308,18 +1243,20 @@ RecvPandaCList(
 	NETFILE		*fp)
 {
 	Bool	ret;
-	char	name[SIZE_BUFF];
-	char	iname[SIZE_BUFF];
-	char	subname[SIZE_BUFF];
-	char	buff[SIZE_BUFF];
+	char	name[SIZE_BUFF]
+	,		iname[SIZE_BUFF]
+	,		subname[SIZE_BUFF]
+	,		buff[SIZE_BUFF];
 	char	**rdata;
-	int		nitem;
-	int		num;
-	int		row;
-	int		rnum;
-	int		column;
-	int		rowattr;
-	int		i,j,k;
+	int		nitem
+	,		num
+	,		row
+	,		rnum
+	,		column
+	,		rowattr
+	,		i
+	,		j
+	,		k;
 	Bool	fActive;
 	_CList	*attrs;
 
@@ -1340,14 +1277,6 @@ ENTER_FUNC;
 			g_list_free(attrs->clistdata);
 			attrs->clistdata = NULL;
 		}
-		if (attrs->fgcolors != NULL) {
-			g_strfreev(attrs->fgcolors);
-			attrs->fgcolors = NULL;
-		}
-		if (attrs->bgcolors != NULL) {
-			g_strfreev(attrs->bgcolors);
-			attrs->bgcolors = NULL;
-		}
 		if (attrs->states != NULL) {
 			g_strfreev(attrs->states);
 		}
@@ -1362,16 +1291,20 @@ ENTER_FUNC;
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
 			sprintf(subname,"%s.%s",data->name, name);
-			if (IsWidgetName(subname)) {
+			if (UI_IsWidgetName(subname)) {
 				RecvWidgetData(subname,fp);
-			} else if (RecvCommon(name,data,fp)) {
-			} else if (!stricmp(name,"count")) {
+			} else
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
+			if		(  !stricmp(name,"count")  ) {
 				RecvIntegerData(fp,&attrs->count);
-			} else if (!stricmp(name,"row")) {
+			} else
+			if		(  !stricmp(name,"row")  ) {
 				RecvIntegerData(fp,&row);
 				/* for 1origin cobol */
 				attrs->row = row > 1 ? row - 1 : 0;
-			} else if (!stricmp(name,"rowattr")) {
+			} else
+			if		(  !stricmp(name,"rowattr")  ) {
 				RecvIntegerData(fp,&rowattr);
 				switch	(rowattr) {
 				  case	1: /* DOWN */
@@ -1390,13 +1323,15 @@ ENTER_FUNC;
 					attrs->rowattr = 0.0;
 					break;
 				}
-			} else if (!stricmp(name,"column")) {
-				/* dummy */
+			} else
+			if		(  !stricmp(name,"column")  ) {
 				RecvIntegerData(fp,&column);
-			} else if (!stricmp(name,"item")) {
+				attrs->column = column;
+			} else
+			if		(  !stricmp(name,"item")  ) {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				num = GL_RecvInt(fp);
-				if (attrs->count < 0) {
+				if		(  attrs->count  <  0  ) {
 					attrs->count = num;
 				}
 				attrs->clistdata = NULL;
@@ -1412,29 +1347,11 @@ ENTER_FUNC;
 					}
 					attrs->clistdata = g_list_append(attrs->clistdata,rdata);
 				}
-			} else if (!stricmp(name,"fgcolor")) {
-				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-				num = GL_RecvInt(fp);
-				attrs->fgcolors = g_malloc0(sizeof(gchar*)*(num+1));
-				attrs->fgcolors[num] = NULL;
-				for	( j = 0 ; j < num ; j ++ ) {
-					(void)RecvStringData(fp,buff,SIZE_BUFF);
-					attrs->fgcolors[j] = g_strdup(buff);
-				}
-			} else if (!stricmp(name,"bgcolor")) {
-				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-				num = GL_RecvInt(fp);
-				attrs->bgcolors = g_malloc0(sizeof(gchar*)*(num+1));
-				attrs->bgcolors[num] = NULL;
-				for	( j = 0 ; j < num ; j ++ ) {
-					(void)RecvStringData(fp,buff,SIZE_BUFF);
-					attrs->bgcolors[j] = g_strdup(buff);
-				}
 			} else {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				attrs->states_name = strdup(name);
 				num = GL_RecvInt(fp);
-				if (attrs->count < 0) {
+				if		(  attrs->count  <  0  ) {
 					attrs->count = num;
 				}
 				attrs->states = g_malloc0(sizeof(gchar*)*(num+1));
@@ -1839,18 +1756,18 @@ RecvWidgetData(
 
 	ENTER_FUNC;
 
-	type = GetWidgetType(THISWINDOW(Session),widgetName);
-	data = (WidgetData *)g_hash_table_lookup(WIDGETTABLE(Session), widgetName);
+	type = UI_GetWidgetType(ThisWindowName, widgetName);
+	data = (WidgetData *)g_hash_table_lookup(WidgetDataTable, widgetName);
 	if (data == NULL){
 		// new data
 		data = g_new0(WidgetData, 1);
 		data->type = type;
 		data->name = strdup(widgetName);
-		data->window = GetWindowData(THISWINDOW(Session));
+		data->window = g_hash_table_lookup(WindowTable, ThisWindowName);
 		data->state = 0;
 		data->visible = TRUE;
 		data->style = NULL;
-		g_hash_table_insert(WIDGETTABLE(Session), strdup(widgetName), data);
+		g_hash_table_insert(WidgetDataTable, strdup(widgetName), data);
 	}
 	EnQueue(data->window->UpdateWidgetQueue, data);
 
@@ -1872,8 +1789,6 @@ RecvWidgetData(
 		ret = RecvPandaTimer(data, fp); break;
 	case WIDGET_TYPE_PANDA_DOWNLOAD:
 		ret = RecvPandaDownload(data, fp); break;
-	case WIDGET_TYPE_PANDA_DOWNLOAD2:
-		ret = RecvPandaDownload2(data, fp); break;
 	case WIDGET_TYPE_PANDA_PRINT:
 		ret = RecvPandaPrint(data, fp); break;
 	case WIDGET_TYPE_PANDA_HTML:
@@ -1933,13 +1848,13 @@ SendWidgetData(
 ENTER_FUNC;
 	widgetName = (char *)key;
 	fp = (NETFILE *)user_data;
-	data = GetWidgetData(widgetName);
+	data = (WidgetData *)g_hash_table_lookup(WidgetDataTable, widgetName);
 	if (data == NULL) {
 		MessageLogPrintf("widget data [%s] is not found",widgetName);
 		return;
 	}
 
-	UpdateWidgetData(data);
+	UI_GetWidgetData(data);
 
 	switch(data->type) {
 // gtk+panda

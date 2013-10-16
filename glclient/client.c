@@ -58,15 +58,64 @@
 #include	"protocol.h"
 #include	"widgetcache.h"
 #include	"desktop.h"
-#include	"bootdialog.h"
 #include	"message.h"
 #include	"debug.h"
-#include	"action.h"
-#include	"dialogs.h"
+#include	"interface.h"
 #include	"gettext.h"
 
 static gboolean fDialog;
 static void GLMessage(int level, char *file, int line, char *msg);
+
+extern  void
+mkdir_p(
+	char    *dname,
+	int    mode)
+{
+	gchar *fn, *p;
+
+	fn = g_strdup(dname);
+	if (g_path_is_absolute (fn))
+		p = (gchar *) g_path_skip_root (fn);	
+	else
+		p = fn;	
+
+	do {
+		while (*p && !(G_DIR_SEPARATOR == (*p)))
+			p++;
+		if (!*p)
+			p = NULL;
+		else
+			*p = '\0';
+
+		if (fn)
+			mkdir (fn, mode);
+
+		if (p)
+		{
+			*p++ = G_DIR_SEPARATOR;
+			while (*p && (G_DIR_SEPARATOR == (*p)))
+				p++;
+		}
+    }
+	while (p);
+
+	g_free (fn);
+}
+
+static  void
+MakeDir(char *dir)
+{
+	struct stat st;
+
+	if (stat(dir, &st) == 0){
+		if (S_ISDIR(st.st_mode)) {
+			return ;
+		} else {
+			unlink (dir);
+		}
+	}
+	mkdir_p (dir, 0700);
+}
 
 static	void
 MakeDirs(void)
@@ -77,7 +126,7 @@ MakeDirs(void)
 	gchar *p;
 
 	tmpdir = g_strconcat(g_get_home_dir(),"/.glclient/tmp",NULL);
-	MakeDir(tmpdir,0700);
+	MakeDir(tmpdir);
 	template = g_strconcat(tmpdir,"/XXXXXX",NULL);
 	g_free(tmpdir);
 	if ((p = mkdtemp(template)) == NULL) {
@@ -90,24 +139,23 @@ MakeDirs(void)
 #endif
 }
 
-extern	void 
-SetSessionTitle(
-	const char *title)
+extern	void SetSessionTitle(
+	char *title)
 {
-	if ( TITLE(Session) ) {
-		xfree(TITLE(Session));
+	if ( TITLE(glSession) ) {
+		xfree(TITLE(glSession));
 	}
-	TITLE(Session) = StrDup(title);
+	TITLE(glSession) = StrDup(title);
 }
 
 extern	void
 SetSessionBGColor(
-	const char *bgcolor)
+	char *bgcolor)
 {
-	if ( BGCOLOR(Session) ) {
-		xfree(BGCOLOR(Session));
+	if ( BGCOLOR(glSession) ) {
+		xfree(BGCOLOR(glSession));
 	}
-	BGCOLOR(Session) = StrDup(bgcolor);
+	BGCOLOR(glSession) = StrDup(bgcolor);
 }
 
 #ifdef	USE_SSL
@@ -116,13 +164,13 @@ _MakeSSL_CTX()
 {
 #ifdef  USE_PKCS11
 	if (fPKCS11 == TRUE){
-		CTX(Session) = MakeSSL_CTX_PKCS11(&ENGINE(Session), PKCS11_Lib,Slot,CA_File,NULL/*capath*/,Ciphers);
+		CTX(glSession) = MakeSSL_CTX_PKCS11(&ENGINE(glSession), PKCS11_Lib,Slot,CA_File,NULL/*capath*/,Ciphers);
 	}
 	else{
-		CTX(Session) = MakeSSL_CTX(NULL/*keyfile*/,CertFile,CA_File,NULL/*capth*/,Ciphers);
+		CTX(glSession) = MakeSSL_CTX(NULL/*keyfile*/,CertFile,CA_File,NULL/*capth*/,Ciphers);
 	}
 #else
-    CTX(Session) = MakeSSL_CTX(NULL/*keyfile*/,CertFile,CA_File,NULL/*capath*/,Ciphers);
+    CTX(glSession) = MakeSSL_CTX(NULL/*keyfile*/,CertFile,CA_File,NULL/*capath*/,Ciphers);
 #endif 	//USE_PKCS11
 }
 #endif	//USE_SSL	
@@ -132,21 +180,21 @@ MakeFPCOMM (int fd)
 {
 #ifdef	USE_SSL
     if (!fSsl) {
-        FPCOMM(Session) = SocketToNet(fd);
+        FPCOMM(glSession) = SocketToNet(fd);
     } else {
 		_MakeSSL_CTX();
 
-        if (CTX(Session) == NULL){
-			ShowErrorDialog(GetSSLErrorMessage());
+        if (CTX(glSession) == NULL){
+			UI_ErrorDialog(GetSSLErrorMessage());
         }
-        if ((FPCOMM(Session) = MakeSSL_Net(CTX(Session),fd)) != NULL){
-            if (StartSSLClientSession(FPCOMM(Session), IP_HOST(Session->port)) != TRUE){
-				ShowErrorDialog(GetSSLErrorMessage());
+        if ((FPCOMM(glSession) = MakeSSL_Net(CTX(glSession),fd)) != NULL){
+            if (StartSSLClientSession(FPCOMM(glSession), IP_HOST(glSession->port)) != TRUE){
+				UI_ErrorDialog(GetSSLErrorMessage());
             }
         }
     }
 #else
-	FPCOMM(Session) = SocketToNet(fd);
+	FPCOMM(glSession) = SocketToNet(fd);
 #endif	//USE_SSL
 	return TRUE;
 }
@@ -159,23 +207,23 @@ start_client ()
 
 	ConvertWidgetCache();
 	LoadWidgetCache();
-	InitTopWindow();
+	UI_InitTopWindow();
 
 	portnum = g_strconcat(Host,":",PortNum,NULL);
-    Session->port = ParPort(portnum,PORT_GLTERM);
+    glSession->port = ParPort(portnum,PORT_GLTERM);
 	g_free(portnum);
-	if (  ( fd = ConnectSocket(Session->port,SOCK_STREAM) )  <  0  ) {
-		ShowErrorDialog(_("can not connect server(server port not found)"));
+	if (  ( fd = ConnectSocket(glSession->port,SOCK_STREAM) )  <  0  ) {
+		UI_ErrorDialog(_("can not connect server(server port not found)"));
         return FALSE;
 	}
 	InitProtocol();
 	if(MakeFPCOMM(fd) != TRUE) return FALSE;
 
-	if (SendConnect(FPCOMM(Session),CurrentApplication)) {
-		CheckScreens(FPCOMM(Session),TRUE);
-		ISRECV(Session) = TRUE;
-		(void)GetScreenData(FPCOMM(Session));
-		ISRECV(Session) = FALSE;
+	if (SendConnect(FPCOMM(glSession),CurrentApplication)) {
+		CheckScreens(FPCOMM(glSession),TRUE);
+		fInRecv = TRUE;
+		(void)GetScreenData(FPCOMM(glSession));
+		fInRecv = FALSE;
 		UI_Main();
 	}
 	
@@ -185,22 +233,22 @@ start_client ()
 static void
 stop_client ()
 {
-	GL_SendPacketClass(FPCOMM(Session),GL_END);
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
 	if	(  fMlog  ) {
 		MessageLog("connection end\n");
 	}
-    CloseNet(FPCOMM(Session));
+    CloseNet(FPCOMM(glSession));
 #ifdef	USE_SSL
-    if (CTX(Session) != NULL)
-        SSL_CTX_free (CTX(Session));
+    if (CTX(glSession) != NULL)
+        SSL_CTX_free (CTX(glSession));
 #ifdef  USE_PKCS11
-    if (ENGINE(Session) != NULL){
-        ENGINE_free(ENGINE(Session));
+    if (ENGINE(glSession) != NULL){
+        ENGINE_free(ENGINE(glSession));
         ENGINE_cleanup();
     }
 #endif	//USE_PKCS11
 #endif	//USE_SSL
-    DestroyPort (Session->port);
+    DestroyPort (glSession->port);
 	SaveWidgetCache();
 }
 
@@ -210,7 +258,7 @@ GLMessage(int level, char *file, int line, char *msg)
 	switch(level){
 	  case MESSAGE_WARN:
 	  case MESSAGE_ERROR:
-		ShowErrorDialog(msg);
+		UI_ErrorDialog(msg);
 		break;
 	  default:
 		__Message(level, file, line, msg);
@@ -219,15 +267,24 @@ GLMessage(int level, char *file, int line, char *msg)
 }
 
 static	void
-ThisAskPass(char *pass)
+askpass(char *pass)
 {
 	if (!SavePass) {
-		if(AskPass(pass, SIZE_BUFF, _("input Password")) != -1) {
+		if(UI_AskPass(pass, SIZE_BUFF, _("input Password")) != -1) {
 			Pass = pass;
 		} else {
 			exit(0);
 		}
 	}
+}
+
+static	void
+CheckDevilspie()
+{
+	gchar *path;
+	path =  g_strconcat(g_get_home_dir(), "/.devilspie/glclient.ds", NULL);
+	remove(path);
+    g_free(path);
 }
 
 #define DEFAULT_PING_TIMER_PERIOD   (3000)
@@ -253,26 +310,39 @@ InitSystem()
 
 	MakeDirs();
 	InitDesktop();
+	CheckDevilspie();
 
-	Session = New(GLSession);
-	FPCOMM(Session) = NULL;
+	glSession = New(Session);
+	FPCOMM(glSession) = NULL;
 #ifdef	USE_SSL
-	CTX(Session) = NULL;
+	CTX(glSession) = NULL;
 #ifdef  USE_PKCS11
-	ENGINE(Session) = NULL;
+	ENGINE(glSession) = NULL;
 #endif	//USE_PKCS11
 #endif	//USE_SSL
-	TITLE(Session) = NULL;
-	BGCOLOR(Session) = NULL;
-	PRINTLIST(Session) = NULL;
-	DLLIST(Session) = NULL;
+	TITLE(glSession) = NULL;
+	BGCOLOR(glSession) = NULL;
 }
 
 static	void
 FinishSystem(void)
 {
-	if (!getenv("GLCLIENT_KEEP_TEMPDIR")) {
-		rm_r(TempDir);
+	DIR *dir;
+	struct dirent *ent;
+	char path[1024];
+	
+	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
+		if ((dir = opendir(TempDir)) != NULL) {
+			while((ent = readdir(dir)) != NULL) {
+				if (ent->d_name[0] != '.') {
+					snprintf(path,sizeof(path),"%s/%s",TempDir,ent->d_name);
+					path[sizeof(path)-1] = 0;
+					remove(path);
+				}
+			}
+			closedir(dir);
+			remove(TempDir);
+		}
 	}
 }
 
@@ -286,14 +356,14 @@ ExecClient(int argc, char **argv)
 	UI_Init(argc, argv);
 
 	if (fDialog) {
-		BootDialogRun();
+		UI_BootDialogRun();
 	} else {
 		fDialog = FALSE;
-		LoadConfig(ConfigName);
-		ThisAskPass(_password);
+		UI_load_config(ConfigName);
+		askpass(_password);
 	}
 
-	InitStyle();
+	UI_InitStyle();
 
 	delay_str = getenv ("GL_SEND_EVENT_DELAY");
 	if (delay_str) {
@@ -310,7 +380,7 @@ ExecClient(int argc, char **argv)
 
 	InitNET();
 #ifdef	USE_SSL
-	SetAskPassFunction(AskPass);
+	SetAskPassFunction(UI_AskPass);
 #endif
 	start_client();
 	stop_client();
@@ -351,7 +421,7 @@ main(
 	gl_config_convert_config();
 
 	if (fListConfig) {
-		ListConfig();
+		UI_list_config();
 		exit(0);
 	}
 

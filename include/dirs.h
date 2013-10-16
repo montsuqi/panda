@@ -23,7 +23,7 @@
 #include	"port.h"
 
 #undef	GLOBAL
-#ifdef	DIRS_MAIN
+#ifdef	MAIN
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern
@@ -35,5 +35,4 @@ GLOBAL	char	*DirectoryDir;
 GLOBAL	char	*PasswordFile;
 GLOBAL	char	*SesDir;
 GLOBAL	char	*D_Dir;
-GLOBAL	char	*TempDirRoot;
 #endif

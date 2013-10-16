@@ -51,6 +51,7 @@
 #include	"dblib.h"
 #include	"dbgroup.h"
 #include	"queue.h"
+#include	"driver.h"
 #include	"message.h"
 #include	"debug.h"
 

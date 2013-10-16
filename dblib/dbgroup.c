@@ -67,25 +67,11 @@ InitializeCTRL(
 	ctrl->src = NULL;
 }
 
-static void
-SetApplicationName(
-	DBG_Struct	*dbg,
-	char		*appname)
-{
-	if (appname != NULL){
-		dbg->appname = appname;
-	}
-}
-
 extern	void
 InitDB_Process(
-	char *appname)
+	NETFILE	*fp)
 {
-	int i;
 ENTER_FUNC;
-	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		SetApplicationName(ThisEnv->DBG[i], appname);
-	}
 LEAVE_FUNC;
 }
 

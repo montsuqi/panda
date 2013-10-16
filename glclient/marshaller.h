@@ -27,6 +27,7 @@
 #else
 #define	GLOBAL		extern
 #endif
+GLOBAL	GHashTable	*WidgetDataTable;
 
 typedef enum _WidgetType {
 // gtk+panda
@@ -38,7 +39,6 @@ typedef enum _WidgetType {
 	WIDGET_TYPE_PANDA_PREVIEW,
 	WIDGET_TYPE_PANDA_TIMER,
 	WIDGET_TYPE_PANDA_DOWNLOAD,
-	WIDGET_TYPE_PANDA_DOWNLOAD2,
 	WIDGET_TYPE_PANDA_PRINT,
 	WIDGET_TYPE_PANDA_HTML,
 	WIDGET_TYPE_PANDA_TABLE,
@@ -139,10 +139,9 @@ typedef struct __CList{
 	int 	count;
 	int 	row;
 	float 	rowattr;
+	int 	column;
 	GList 	*clistdata;
 	char 	**states;
-	char 	**bgcolors;
-	char 	**fgcolors;
 	char 	*states_name;
 } _CList;
 

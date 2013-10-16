@@ -37,16 +37,15 @@
 #include	"const.h"
 #include	"enum.h"
 #include	"libmondai.h"
-#include	"RecParser.h"
 #include	"dbgroup.h"
 #include	"term.h"
 #include	"directory.h"
-#include	"wfcdata.h"
 #include	"redirect.h"
+#include	"keyvaluereq.h"
+#include	"keyvaluecom.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"sysdata.h"
-#include	"sysdbreq.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -81,163 +80,57 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
-static	ValueStruct	*
-GETDATA(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct *ret;
-	PacketClass rc;
-ENTER_FUNC;
-	ret = NULL;
-	ctrl->rc = MCP_BAD_OTHER;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		rc = SYSDB_GetData(NBCONN(dbg), args);
-		if (rc == SESSION_CONTROL_OK) {
-			ctrl->rc = MCP_OK;
-			ret = DuplicateValue(args,TRUE);
-		} else {
-			ctrl->rc = MCP_BAD_OTHER;
-		}
-	}
-LEAVE_FUNC;
-	return	ret;
+#define DEFFUNC(pklass) \
+static	ValueStruct	*											\
+_ ## pklass(													\
+	DBG_Struct		*dbg,										\
+	DBCOMM_CTRL		*ctrl,										\
+	RecordStruct	*rec,										\
+	ValueStruct		*args)										\
+{																\
+	ValueStruct *ret;											\
+ENTER_FUNC;														\
+	ret = NULL;													\
+	ctrl->rc = MCP_BAD_OTHER;									\
+	if		(  rec->type  !=  RECORD_DB  ) {					\
+		ctrl->rc = MCP_BAD_ARG;									\
+	} else {													\
+		ctrl->rc = KVREQ_Request(NBCONN(dbg), (pklass), args);	\
+		ret = DuplicateValue(args, TRUE);						\
+	}															\
+LEAVE_FUNC;														\
+	return	ret;												\
 }
 
-static	ValueStruct	*
-SETMESSAGE(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct *ret;
-	PacketClass rc;
-ENTER_FUNC;
-	ret = NULL;
-	ctrl->rc = MCP_BAD_OTHER;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		rc = SYSDB_SetMessage(NBCONN(dbg), args);
-		ctrl->rc = rc == SESSION_CONTROL_OK ? MCP_OK : MCP_BAD_OTHER;
-	}
-LEAVE_FUNC;
-	return	ret;
-}
+DEFFUNC(KV_GETVALUE)
+DEFFUNC(KV_SETVALUE)
+DEFFUNC(KV_SETVALUEALL)
+DEFFUNC(KV_LISTKEY)
+DEFFUNC(KV_LISTENTRY)
+#if 0
+DEFFUNC(KV_NEWENTRY)
+DEFFUNC(KV_DELETEENTRY)
+#endif
 
-static	ValueStruct	*
-SETMESSAGEALL(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct *ret;
-	PacketClass rc;
-ENTER_FUNC;
-	ret = NULL;
-	ctrl->rc = MCP_BAD_OTHER;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		rc = SYSDB_SetMessageAll(NBCONN(dbg), args);
-		ctrl->rc = rc == SESSION_CONTROL_OK ? MCP_OK : MCP_BAD_OTHER;
-	}
-LEAVE_FUNC;
-	return	ret;
-}
-
-static	int				idx = 0;
-static	int				numData = 0;
-static	Bool			hasData = FALSE;
-static	ValueStruct *	sysdbvals = NULL;
-
-static	ValueStruct	*
-SELECTALL(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct *ret;
-	PacketClass rc;
-ENTER_FUNC;
-	ret = NULL;
-	ctrl->rc = MCP_BAD_OTHER;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		if (sysdbvals == NULL) {
-			sysdbvals = RecParseValueMem(SYSDBVALS_DEF,NULL);
-			InitializeValue(sysdbvals);
-		}
-		rc = SYSDB_GetDataAll(NBCONN(dbg),&numData, sysdbvals);
-		if (rc == SESSION_CONTROL_OK) {
-			hasData = TRUE;
-			idx = 0;
-			ctrl->rc = MCP_OK;
-		} else {
-			hasData = FALSE;
-			ctrl->rc = MCP_BAD_OTHER;
-		}
-	}
-LEAVE_FUNC;
-	return	ret;
-}
-
-static	ValueStruct	*
-FETCH(
-	DBG_Struct		*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct *ret,*v;
-	char vname[256];
-ENTER_FUNC;
-	ret = NULL;
-	ctrl->rc = MCP_BAD_OTHER;
-	if (rec->type != RECORD_DB || !hasData){
-		ctrl->rc = MCP_BAD_ARG;
-		return ret;
-	}
-	if (idx >= numData) {
-		ctrl->rc = MCP_EOF;
-		return ret;
-	}
-	if (sysdbvals == NULL) {
-		ctrl->rc = MCP_EOF;
-		return ret;
-	}
-	snprintf(vname,sizeof(vname),"values[%d]",idx);
-	v = GetItemLongName(sysdbvals,vname); 
-	if (v != NULL) {
-		ret = DuplicateValue(v,TRUE); 
-	}
-	idx += 1;
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	ret;
-}
+#undef DEFFUNC
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",			(DB_FUNC)SYSDATA_DBOPEN },
-	{	"DBDISCONNECT",		(DB_FUNC)SYSDATA_DBDISCONNECT },
-	{	"DBSTART",			(DB_FUNC)SYSDATA_DBSTART },
-	{	"DBCOMMIT",			(DB_FUNC)SYSDATA_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT },
+	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
 	/*	table operations	*/
-	{	"GETDATA",			GETDATA },
-	{	"SETMESSAGE",		SETMESSAGE },
-	{	"SETMESSAGEALL",	SETMESSAGEALL },
-	{	"SELECTALL",		SELECTALL },
-	{	"FETCH",			FETCH },
-	{	NULL,				NULL }
+	{	"GETVALUE",		_KV_GETVALUE },
+	{	"SETVALUE",		_KV_SETVALUE },
+	{	"SETVALUEALL",	_KV_SETVALUEALL },
+	{	"LISTKEY",		_KV_LISTKEY },
+	{	"LISTENTRY",	_KV_LISTENTRY },
+#if 0
+	{	"NEWENTRY",		_KV_NEWENTRY },
+	{	"DELETEENTRY",	_KV_DELETEENTRY },
+#endif
+	{	NULL,			NULL }
 };
 
 static	DB_Primitives	Core = {

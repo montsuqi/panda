@@ -51,7 +51,7 @@ _message_dialog(
 }
 
 void
-MessageDialog(
+message_dialog(
 	GtkMessageType type,
 	const char *message)
 {
@@ -64,7 +64,7 @@ MessageDialog(
 }
 
 void
-ShowInfoDialog(
+show_info_dialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -73,12 +73,12 @@ ShowInfoDialog(
 	va_start(va,format);
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
-    MessageDialog(GTK_MESSAGE_INFO, buf);
+    message_dialog(GTK_MESSAGE_INFO, buf);
 	g_free(buf);
 }
 
 void
-ShowWarnDialog(
+show_warn_dialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -87,12 +87,12 @@ ShowWarnDialog(
 	va_start(va,format);
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
-    MessageDialog(GTK_MESSAGE_WARNING, buf);
+    message_dialog(GTK_MESSAGE_WARNING, buf);
 	g_free(buf);
 }
 
 void
-ShowErrorDialog(
+show_error_dialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -101,7 +101,7 @@ ShowErrorDialog(
 	va_start(va,format);
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
-   	MessageDialog(GTK_MESSAGE_ERROR,buf);
+   	message_dialog(GTK_MESSAGE_ERROR,buf);
 	exit(1);
 }
 
@@ -125,7 +125,7 @@ askpass_entry_activate(GtkEntry *entry, gpointer user_data)
 }
 
 int
-ShowAskPassDialog(
+askpass(
 	char *buf,
 	size_t	buflen,
 	const char *prompt)

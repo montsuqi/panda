@@ -148,32 +148,31 @@ typedef	struct {
 #define	REDIRECTOR_MODE_LOG	1
 
 typedef	struct _DBG_Struct	{
-	int					id;
-	char				*name;			/*	group name				*/
-	char				*type;			/*	DBMS type name			*/
-	struct	_DB_Func	*func;
-	GHashTable			*dbt;			/*	DBs in this DBG, if this
+	int			id;
+	char		*name;					/*	group name				*/
+	char		*type;					/*	DBMS type name			*/
+	struct	_DB_Func		*func;
+	GHashTable	*dbt;					/*	DBs in this DBG, if this
 										  value is NULL, this DBG has no DB	*/
-	int					priority;		/*	commit priority			*/
-	char				*coding;		/*	DB backend coding		*/
+	int			priority;				/*	commit priority			*/
+	char		*coding;				/*	DB backend coding		*/
 	/*	DB redirect variable	*/
-	Port				*redirectPort;
-	char				*redirectName;
+	Port		*redirectPort;
+	char		*redirectName;
 	struct	_DBG_Struct	*redirect;
-	int					redirectorMode;
-	int					auditlog;
-	char				*logTableName;
-	NETFILE				*fpLog;
-	LargeByteString		*redirectData;
-	LargeByteString		*checkData;
-	uint64_t			ticket_id;
-	LargeByteString		*last_query;
-	char				*file;
-	int					sumcheck;
-	char				*appname;
-	DB_Server			*server;
-	DB_Process			process[2];
-	int					nServer;
+	int		redirectorMode;
+	int		auditlog;
+	char		*logTableName;
+	NETFILE		*fpLog;
+	LargeByteString	*redirectData;
+	LargeByteString	*checkData;
+	uint64_t	ticket_id;
+	LargeByteString	*last_query;
+	char		*file;
+	int			sumcheck;
+	DB_Server	*server;
+	DB_Process	process[2];
+	int			nServer;
 }	DBG_Struct;
 
 typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
@@ -201,39 +200,37 @@ typedef	struct {
 	DB_FUNC	func;
 }	DB_OPS;
 
-#define WINDOW_STACK_SIZE 16
-
 typedef	struct {
-	size_t	sp;
+	size_t	n;
 	struct {
-		unsigned char	puttype;
-		char			window[SIZE_NAME];
-	}	s[WINDOW_STACK_SIZE];
-}	WindowStack;
+		unsigned char	PutType;
+		char	window[SIZE_NAME];
+	}	control[15];
+}	WindowControl;
 
 #define MESSAGE_TYPE_TERM	0
 #define MESSAGE_TYPE_API	1
 
 typedef	struct _ProcessNode	{
-	char			uuid[SIZE_TERM+1]
-	,				user[SIZE_USER+1];
-	char			window[SIZE_NAME+1]
-	,				widget[SIZE_NAME+1]
-	,				event[SIZE_EVENT]
-	,				command
-	,				dbstatus;
-	unsigned char	puttype;
+	char		term[SIZE_TERM+1]
+	,			user[SIZE_USER+1];
+	char		window[SIZE_NAME+1]
+	,			widget[SIZE_NAME+1]
+	,			event[SIZE_EVENT]
+	,			pstatus
+	,			dbstatus;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
 	RecordStruct	*sparec;
 	RecordStruct	**scrrec;
 	RecordStruct	*thisscrrec;
-	size_t			cWindow;
-	GHashTable		*bhash;
-	size_t			cBind;
-	size_t			textsize;
-	int				messageType;
-	WindowStack		w;
+	size_t		cWindow;
+	GHashTable	*bhash;
+	size_t		cBind;
+	size_t		textsize;
+	WindowControl	w;
+	int			tnest;
+	int			messagetype;
 }	ProcessNode;
 
 typedef	struct	{
@@ -343,7 +340,7 @@ typedef	struct {
 	,			*TermPort
 	,			*ControlPort
 	,			*DBMasterPort;
-	char		*DBMasterAuth;
+	char			*DBMasterAuth;
 	size_t		cLD
 	,			cBD
 	,			cDBD
@@ -352,7 +349,6 @@ typedef	struct {
 	RecordStruct	*auditrec;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
-	char		*InitialLD;
 	GHashTable	*LD_Table;
 	GHashTable	*BD_Table;
 	GHashTable	*DBD_Table;
@@ -373,17 +369,5 @@ typedef	struct {
 
 	char           *DBMasterLogDBName;
 }	DI_Struct;
-
-typedef	struct {
-	char			window[SIZE_NAME+1];
-	char			widget[SIZE_NAME+1];
-	char			event[SIZE_EVENT+1];
-	char			uuid[SIZE_TERM+1];
-	char			user[SIZE_USER+1];
-	char			tempdir[SIZE_PATH+1];
-	char			command;
-	unsigned char	dbstatus;
-	unsigned char	puttype;
-}	MessageHeader;
 
 #endif

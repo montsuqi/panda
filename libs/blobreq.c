@@ -183,15 +183,15 @@ RequestImportBLOB(
 ENTER_FUNC;
 	obj = GL_OBJ_NULL;
 	RequestBLOB(fp,BLOB_IMPORT);		ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+	if (RecvPacketClass(fp) == BLOB_OK) {
 		obj = RecvObject(fp);				ON_IO_ERROR(fp,badio);
-		if		(  ( fpf = fopen(fname,"r") )  !=  NULL  ) {
+		if ((fpf = fopen(fname,"r")) != NULL) {
 			fstat(fileno(fpf),&sb);
 			left = sb.st_size;
 			SendLength(fp,left);
 			Flush(fp);
-			while	(  left  >  0  ) {
-				size = (  left  >  SIZE_BUFF  ) ? SIZE_BUFF : left;
+			while (left > 0) {
+				size = (left > SIZE_BUFF) ? SIZE_BUFF : left;
 				fread(buff,size,1,fpf);
 				Send(fp,buff,size);			ON_IO_ERROR(fp,badio);
 				Flush(fp);
@@ -220,7 +220,7 @@ ENTER_FUNC;
 	rc = FALSE;
 	RequestBLOB(fp,BLOB_CHECK);			ON_IO_ERROR(fp,badio);
 	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+	if (RecvPacketClass(fp) == BLOB_OK) {
 		rc = TRUE;
 	}
   badio:
@@ -239,7 +239,7 @@ ENTER_FUNC;
 	rc = FALSE;
 	RequestBLOB(fp,BLOB_DESTROY);		ON_IO_ERROR(fp,badio);
 	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+	if (RecvPacketClass(fp) == BLOB_OK) {
 		rc = TRUE;
 	}
   badio:
@@ -256,7 +256,7 @@ RequestStartBLOB(
 ENTER_FUNC;
 	rc = FALSE;
 	RequestBLOB(fp,BLOB_START);			ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+	if (RecvPacketClass(fp) == BLOB_OK) {
 		rc = TRUE;
 	}
   badio:
@@ -273,7 +273,7 @@ RequestCommitBLOB(
 ENTER_FUNC;
 	rc = FALSE;
 	RequestBLOB(fp,BLOB_COMMIT);		ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+	if (RecvPacketClass(fp) == BLOB_OK) {
 		rc = TRUE;
 	}
   badio:
@@ -290,7 +290,7 @@ RequestAbortBLOB(
 ENTER_FUNC;
 	rc = FALSE;
 	RequestBLOB(fp,BLOB_ABORT);			ON_IO_ERROR(fp,badio);
-	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+	if (RecvPacketClass(fp) == BLOB_OK) {
 		rc = TRUE;
 	}
   badio:

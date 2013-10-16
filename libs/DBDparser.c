@@ -72,7 +72,7 @@ static	TokenTable	tokentable[] = {
 static	GHashTable	*Reserved;
 
 static	void
-DBD_Par(
+ParDBDB(
 	CURFILE		*in,
 	DBD_Struct	*dbd,
 	char		*gname)
@@ -96,7 +96,7 @@ ENTER_FUNC;
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,ComSymbol);
-					if		(  (  db = DB_Parser(name,gname,TRUE) )  !=  NULL  ) {
+					if		(  (  db = DB_Parser(name,gname,NULL,TRUE) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(dbd->DBD_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( dbd->cDB + 1));
 							memcpy(rtmp,dbd->db,sizeof(RecordStruct *) * dbd->cDB);
@@ -189,7 +189,7 @@ ENTER_FUNC;
 				gname = NULL;
 				ParError("syntax error 4");
 			}
-			DBD_Par(in,ret,gname);
+			ParDBDB(in,ret,gname);
 			break;
 		  default:
 			ParError("syntax error 3");

@@ -25,7 +25,8 @@
 #include	"RecParser.h"
 
 extern	void			 DB_ParserInit(void);
-extern	RecordStruct	*DB_Parser(char *name, char *gname, Bool fScript);
+extern	RecordStruct	*DB_Parser(char *name, char *gname, char **ValueName,
+								   Bool fScript);
 
 #undef	GLOBAL
 #ifdef	_DB_PARSER

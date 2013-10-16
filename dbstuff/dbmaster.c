@@ -182,11 +182,11 @@ ENTER_FUNC;
 	sigaction( SIGHUP, &sa, NULL );
 	
 	InitDirectory();
-	SetUpDirectory(Directory, NULL, NULL, NULL, P_NONE);
+	SetUpDirectory(Directory, NULL, NULL, NULL, FALSE);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	InitDB_Process("dbmaster");
+	InitDB_Process(NULL);
 	CheckDBG(name);
 	
 	if		(  PortNumber  ==  NULL  ) {

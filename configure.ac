@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([panda],[1.4.8])
+AC_INIT([panda],[1.4.7])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 AC_CONFIG_SRCDIR([aps/C.c])
@@ -56,6 +56,7 @@ AM_PROG_LIBTOOL
 AM_PROG_CC_C_O
 
 AC_CHECK_LIB([m], [pow])
+AC_CHECK_LIB([pandas], [SendChar])
 AC_CHECK_LIB([dl],[dlopen])
 AC_CHECK_LIB([pthread],[pthread_create])
 AC_CHECK_LIB([crypt],[crypt])
@@ -112,12 +113,11 @@ if test x$PKG_CONFIG = xno ; then
 fi
 
 dnl ***************************************************************************
-dnl checking for server common library
+dnl checking for xml2
 dnl ***************************************************************************
-PKG_CHECK_MODULES(COMMON,
+PKG_CHECK_MODULES(XML2,
 [
-	uuid		>= 2.17.0
-	libmondai 	>= 1.4.8
+	libxml-2.0	>= 2.6.27
 ])
 
 dnl ***************************************************************************
@@ -131,6 +131,7 @@ if test "x$enable_client" = "xyes"; then
 	[
 		libglade-panda-2.0	>= 2.0.3
 		libcurl             >= 7.0.5
+		libmondai			>= 1.4.6
 		libnotify			>= 0.4.5
 		gmodule-2.0			>= 2.0.0
 		gconf-2.0			>= 2.28.1
@@ -178,7 +179,7 @@ if test x"$enable_postgres" = "xyes"; then
       AC_PATH_PROGS(PG_CONFIG, pg_config, no, "$pgsql_path/bin")
    fi
    if test x"$PG_CONFIG" = "xno"; then
-     AC_MSG_ERROR(Could not find pg_config)
+     AC_MSG_ERROR(Couldn't find pg_config)
    else
       postgres_bindir=`$PG_CONFIG --bindir`
       postgres_libdir=`$PG_CONFIG --libdir`
@@ -187,16 +188,30 @@ if test x"$enable_postgres" = "xyes"; then
       POSTGRES_CFLAGS="-I$postgres_includedir"
       AC_DEFINE(HAVE_POSTGRES,1,"") 
       AC_DEFINE_UNQUOTED(POSTGRES_BINDIR,"$postgres_bindir","")
-      POSTGRES_MAJOR_VERSION=`$PG_CONFIG --version | sed 's/[[A-Za-z ]]*//' | cut -d. -f1 | sed 's/[[^0-9]]//g'` 
-      dnl POSTGRES_MINOR_VERSION=`$PG_CONFIG --version | sed 's/[[A-Za-z ]]*//' | cut -d. -f2 | sed 's/[[^0-9]]//g'`
-      if test "$POSTGRES_MAJOR_VERSION" -ge 9; then
-        AC_DEFINE(POSTGRES_APPLICATIONNAME,1,"")
-      fi
    fi
 fi
 AM_CONDITIONAL(POSTGRESQL, test "x$enable_postgres" = "xyes")
 AC_SUBST(POSTGRES_LIBS) 
 AC_SUBST(POSTGRES_CFLAGS) 
+
+dnl *************************************************************************** 
+dnl Add all the cflags & libs needed for the Oseki
+dnl *************************************************************************** 
+enable_oseki="no"
+AC_PATH_PROG(OSEKI_CONFIG,oseki-config,no)
+AC_ARG_WITH(oseki, 
+	[  --with-oseki use Oseki/Search backend in <directory>],[
+	if test x$withval = xyes; then
+        enable_oseki="yes"
+		AC_MSG_CHECKING(for Oseki files) 
+		OSEKI_LIBS=`oseki-config --libs`
+		OSEKI_CFLAGS=`oseki-config --cflags`
+	fi 
+	#AM_CONDITIONAL(OSEKI, test x$osekidir != x) 
+    AC_DEFINE(HAVE_OSEKI,1,"") 
+	AC_SUBST(OSEKI_LIBS) 
+	AC_SUBST(OSEKI_CFLAGS) 
+])
 
 dnl ***************************************************************************
 dnl shell driver
@@ -207,6 +222,103 @@ AC_ARG_ENABLE(shell,
 if test "x$enable_shell" = "xyes"; then
    AC_DEFINE(USE_SHELL,1,"")
 fi
+
+dnl *************************************************************************** 
+dnl for the dotCOBOL
+dnl *************************************************************************** 
+ 
+enable_dotcobol="no"
+AC_ARG_WITH(dotcobol, 
+[  --with-dotcobol=<directory> use dotCOBOL in <directory>],[
+	if test $withval != yes 
+	then 
+	  dir=$withval 
+	else 
+	  dir="/usr/local" 
+	fi 
+	AC_MSG_CHECKING(for dotCOBOL files) 
+	dotcoboldir="" 
+	for d in $dir /usr /usr/local /usr/local/dotcobol /opt/dotcobol /opt/packages/dotcobol /disk/dotcobol
+	do 
+	  if test -f $d/bin/fcu
+	  then 
+	      AC_MSG_RESULT(found dotCOBOL in $d) 
+	      dotcoboldir=$d 
+	      break 
+	  fi 
+	done 
+	if test x$dotcoboldir = x 
+	then 
+	  AC_MSG_WARN(dotCOBOL not used) 
+	else 
+	  DOTCOBOL_COMMAND="${dotcoboldir}/bin/fcu"
+	  AC_DEFINE(HAVE_DOTCOBOL,,"")
+          enable_dotcobol="yes"
+	fi 
+ 
+#	AM_CONDITIONAL(DOTCOBOL, test x$dotcoboldir != x) 
+	AC_SUBST(DOTCOBOL_COMMAND) 
+]) 
+
+dnl *************************************************************************** 
+dnl for the OpenCOBOL 1.0
+dnl *************************************************************************** 
+AC_ARG_ENABLE(opencobol100,
+  [  --enable-opencobol100     enable OpenCOBOL100 [[disable]]],,[enable_opencobol100="no"])
+if test "x$enable_opencobol100" = "xyes"; then
+    AC_MSG_CHECKING(for OpenCOBOL100)
+    cob100_exists=yes
+    cob-config100 --version > /dev/null 2> /dev/null || cob_exists=no
+    if test "x$cob100_exists" = "xyes"; then
+        COB_CFLAGS="`cob-config100 --cflags`"
+        COB_LIBS="`cob-config100 --libs`"
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_OPENCOBOL100,1,"")
+        AC_DEFINE(HAVE_OPENCOBOL,1,"")
+    else
+        AC_MSG_RESULT(no)
+        enable_opencobol100="no"
+    fi
+    AC_SUBST(COB100_CFLAGS)
+    AC_SUBST(COB100_LIBS)
+    
+    OPENCOBOL100_CFLAGS="$COB_CFLAGS"
+    OPENCOBOL100_LIBS="$COB_LIBS"
+    
+    AC_SUBST(OPENCOBOL100_LIBS) 
+    AC_SUBST(OPENCOBOL100_CFLAGS) 
+fi
+AM_CONDITIONAL(OPENCOBOL100, test "x$enable_opencobol100" = "xyes") 
+
+dnl *************************************************************************** 
+dnl for the OpenCOBOL08
+dnl *************************************************************************** 
+AC_ARG_ENABLE(opencobol08,
+  [  --enable-opencobol08      enable OpenCOBOL08 [[disable]]],,[enable_opencobol08="no"])
+if test "x$enable_opencobol08" = "xyes"; then
+    AC_MSG_CHECKING(for OpenCOBOL08)
+    cob08_exists=yes
+    cob-config08 --version > /dev/null 2> /dev/null || cob_exists=no
+    if test "x$cob08_exists" = "xyes"; then
+        COB_CFLAGS="`cob-config08 --cflags`"
+        COB_LIBS="`cob-config08 --libs`"
+        AC_MSG_RESULT(yes)
+        AC_DEFINE(HAVE_OPENCOBOL08,1,"")
+        AC_DEFINE(HAVE_OPENCOBOL,1,"")
+    else
+        AC_MSG_RESULT(no)
+        enable_opencobol08="no"
+    fi
+    AC_SUBST(COB08_CFLAGS)
+    AC_SUBST(COB08_LIBS)
+    
+    OPENCOBOL08_CFLAGS="$COB_CFLAGS"
+    OPENCOBOL08_LIBS="$COB_LIBS"
+    
+    AC_SUBST(OPENCOBOL08_LIBS) 
+    AC_SUBST(OPENCOBOL08_CFLAGS) 
+fi
+AM_CONDITIONAL(OPENCOBOL08, test "x$enable_opencobol08" = "xyes") 
 
 dnl *************************************************************************** 
 dnl for the OpenCOBOL
@@ -305,6 +417,16 @@ AC_ARG_WITH(ruby,
 ])
 
 dnl ***************************************************************************
+dnl pty message display
+dnl ***************************************************************************
+
+AC_ARG_ENABLE(pty,
+  [  --enable-pty            enable pty message [[disable]]],,[enable_pty="no"])
+if test "x$enable_pty" = "xyes"; then
+    AC_DEFINE(USE_PTY,1,"")
+fi
+
+dnl ***************************************************************************
 dnl IP v6
 dnl ***************************************************************************
 
@@ -361,6 +483,55 @@ AC_ARG_WITH(pkcs11,
 ])
 
 dnl ***************************************************************************
+dnl eRuby
+dnl ***************************************************************************
+
+enable_eruby="no"
+AC_ARG_WITH(eruby,
+	[  --with-eruby=<path>  use ERuby in <path>],[
+    if test "x$withval" = "xyes"; then
+      ERUBY_PATH="/usr/bin/eruby";
+    else
+      AC_MSG_CHECKING(for ruby)
+      ERUBY_PATH="$withval"
+    fi
+    enable_eruby="yes"
+    AC_SUBST(ERUBY_PATH)
+    AC_DEFINE_UNQUOTED(ERUBY_PATH,"$ERUBY_PATH","")
+    AC_DEFINE(USE_ERUBY,1,"")
+])		
+
+dnl ***************************************************************************
+dnl dorobune wo oki de shizumeru
+dnl ***************************************************************************
+
+AC_ARG_ENABLE(oki,
+  [  --enable-oki            DOROBUNE WO OKI DE SHIZUMERU [[disable]]],,[enable_oki="no"])
+if test "x$enable_oki" = "xyes"; then
+    AC_DEFINE(OKI,1,"")
+fi
+
+dnl ***************************************************************************
+dnl tinyMCE support
+dnl ***************************************************************************
+
+AC_ARG_ENABLE(mce,
+  [  --enable-mce            MCE input  [[disable]]],,[enable_mce="no"])
+if test "x$enable_mce" = "xyes"; then
+    AC_DEFINE(USE_MCE,1,"")
+fi
+
+dnl ***************************************************************************
+dnl IE5.x support
+dnl ***************************************************************************
+
+AC_ARG_ENABLE(ie5,
+  [  --enable-ie5            IE 5.x compatibility [[disable]]],,[enable_ie5="no"])
+if test "x$enable_ie5" = "xyes"; then
+    AC_DEFINE(USE_IE5,1,"")
+fi
+
+dnl ***************************************************************************
 dnl use msgd for message output
 dnl ***************************************************************************
 
@@ -379,6 +550,52 @@ AC_ARG_ENABLE(syslog,
 if test "x$enable_syslog" = "xyes"; then
     AC_DEFINE(USE_SYSLOG,1,"")
 fi
+
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the glib modules.
+dnl ***************************************************************************
+
+PKG_CHECK_MODULES(GLIB2,
+[
+	glib-2.0	>= 2.12.0
+])
+
+dnl *************************************************************************** 
+dnl Add all the cflags & libs needed for the GD modules. 
+dnl *************************************************************************** 
+ 
+AC_PATH_PROG(GD_CONFIG,gdlib-config,no) 
+if test x$GD_CONFIG = xno; then 
+  AC_MSG_WARN(Couldn't find gdlib-config) 
+  GDLIB_LDFLAGS=
+  GDLIB_CFLAGS=
+ else 
+  GDLIB_LDFLAGS=`gdlib-config --ldflags`' -lgd'
+  GDLIB_CFLAGS=`gdlib-config --cflags` 
+  AC_DEFINE(HAVE_GD,1,"") 
+fi 
+AC_SUBST(GDLIB_LDFLAGS) 
+AC_SUBST(GDLIB_CFLAGS) 
+ 
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the XML2 modules.
+dnl ***************************************************************************
+
+AC_PATH_PROG(XSLT_CONFIG,xslt-config,no)
+if test x$XSLT_CONFIG = xno; then
+  AC_MSG_ERROR(Couldn't find xslt-config)
+fi
+XSLT_LIBS=`xslt-config --libs`' -lexslt'
+XSLT_CFLAGS=`xslt-config --cflags`' -I /usr/include/libexslt'
+AC_SUBST(XSLT_LIBS)
+AC_SUBST(XSLT_CFLAGS)
+
+dnl ***************************************************************************
+dnl Add all the cflags & libs needed for the libmondai modules.
+dnl ***************************************************************************
+PKG_CHECK_MODULES(MONDAI, libmondai >= 1.4.0 )
+AC_SUBST(MONDAI_LIBS)
+AC_SUBST(MONDAI_CFLAGS)
 
 dnl ***************************************************************************
 dnl MONTSUQI_LIBRARY_PATH setting
@@ -407,24 +624,25 @@ else
 fi
 AC_SUBST(MONTSUQI_LOAD_PATH)
 
-AC_CONFIG_FILES([
-Makefile 
-intl/Makefile 
-po/Makefile.in
-Doc/Makefile
-aps/Makefile
-glauth/Makefile
-cobol/Makefile
-dblib/Makefile
-dbstuff/Makefile
-fdd/Makefile
-glclient/Makefile
-glserver/Makefile
-include/Makefile
-libs/Makefile
-tools/Makefile
-wfc/Makefile
-panda.pc
+AC_CONFIG_FILES([Makefile 
+                 intl/Makefile 
+                 po/Makefile.in
+                 Doc/Makefile
+                 aps/Makefile
+                 glauth/Makefile
+                 cobol/Makefile
+                 dblib/Makefile
+                 dbstuff/Makefile
+                 fdd/Makefile
+                 glclient/Makefile
+                 glserver/Makefile
+                 htserver/Makefile
+                 include/Makefile
+                 libs/Makefile
+                 monpls_demo/Makefile
+                 pgserver/Makefile
+                 tools/Makefile
+                 wfc/Makefile
 ])
 AC_OUTPUT
 
@@ -439,11 +657,20 @@ echo "  VERSION:               $VERSION"
 echo "  glclient support:      $enable_client"
 echo "  PostgreSQL support:    $enable_postgres"
 echo "  shell driver support:  $enable_shell"
+echo "  Oseki/Search support:  $enable_oseki"
+echo "  dotCOBOL support:      $enable_dotcobol"
+echo "  OpenCOBOL100 support:  $enable_opencobol100"
+echo "  OpenCOBOL08 support:   $enable_opencobol08"
 echo "  OpenCOBOL support:     $enable_opencobol"
 echo "  Ruby support:          $enable_ruby"
+echo "  pty message support:   $enable_pty"
 echo "  IP v6 support:         $enable_ipv6"
 echo "  SSL support:           $enable_ssl"
 echo "  PKCS11 support:        $enable_pkcs11"
+echo "  OKI support:           $enable_oki"
 echo "  msgd support:          $enable_msgd"
 echo "  syslog support:        $enable_syslog"
+echo "  IE5 support:           $enable_ie5"
+echo "  MCE support:           $enable_mce"
+echo "  ERUBY support:         $enable_eruby"
 echo ""

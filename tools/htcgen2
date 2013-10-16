@@ -1,0 +1,3 @@
+#! /bin/sh
+
+lv -Ou $1 | xsltproc /usr/local/lib/htcgen.xsl - > $2

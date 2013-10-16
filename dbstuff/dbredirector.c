@@ -45,7 +45,6 @@
 
 #include	"libmondai.h"
 #include	"RecParser.h"
-#include	"enum.h"
 #include	"comm.h"
 #include	"dirs.h"
 #include	"redirect.h"
@@ -64,7 +63,6 @@
 static	char	*PortNumber;
 static	int		Back;
 static	char	*Directory;
-static	char	AppName[128];
 
 static	DBG_Struct	*ThisDBG;
 static	DBG_Struct	*AuditDBG;
@@ -1157,11 +1155,11 @@ ENTER_FUNC;
 	sigaction( SIGUSR1, &sa, NULL );
 
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	InitDB_Process(AppName);
+	InitDB_Process(NULL);
 
 	CheckDBG(name);
 	if (!fNoAudit) {
@@ -1287,7 +1285,6 @@ main(
 	} else {
 		name = "";
 	}
-	snprintf(AppName, sizeof(AppName), "dbredirector-%s",fl->name);
 	InitSystem(name, argv[0]);
 
 	Message("dbredirector start");

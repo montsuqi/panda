@@ -39,8 +39,6 @@
 #include	"glclient.h"
 #include	"print.h"
 #include	"printservice.h"
-#include	"notify.h"
-#include	"download.h"
 #include	"message.h"
 #include	"debug.h"
 #include	"gettext.h"
@@ -62,10 +60,10 @@ WriteData(
 }
 
 static int 
-Download(
-	char	*path,
-	char	**outfile,
-	size_t	*size)
+DoPrint(
+	char *path,
+	char *title,
+	int showdialog)
 {
 	FILE *fp;
 	int fd;
@@ -81,8 +79,6 @@ Download(
     long http_code;
 
 	doretry = 0;
-	*outfile = NULL;
-	*size = 0;
 	curl = curl_easy_init();
 	if (!curl) {
 		Warning("couldn't init curl\n");
@@ -91,7 +87,7 @@ Download(
 
 	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
-	fname = g_strdup_printf("%s/glclient_download_XXXXXX",TempDir);
+	fname = g_strdup_printf("%s/glclient_print_XXXXXX",TempDir);
 	userpass = g_strdup_printf("%s:%s",User,Pass);
 	scheme = fSsl ? "https" : "http";
 	url = g_strdup_printf("%s://%s:%s/%s",scheme,Host,PortNum,path);
@@ -131,16 +127,19 @@ Download(
 		if (http_code == 200) {
 			if (wrote_size == 0) {
 				doretry = 1;
-				remove(fname);
 			} else {
-				MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
-					url,fname,(long)wrote_size);
-				*size = wrote_size;
-				*outfile = fname;
+				//show_dialog
+				if (showdialog) {
+					MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
+						url,fname,(long)wrote_size);
+					ShowPrintDialog(title,fname,wrote_size);
+				} else {
+					PrintWithDefaultPrinter(fname);
+				}
 			}
 		} else if (http_code != 204) { /* 204 HTTP No Content */
-			msg = g_strdup_printf(_("download failure\npath:%s\n"),path);
-			Notify(_("glclient download notify"),msg,"gtk-dialog-error",0);
+			msg = g_strdup_printf(_("print failure\ntitle:%s\n"),title);
+			UI_Notify(_("glclient print notify"),msg,"gtk-dialog-error",0);
 			g_free(msg);
 		}
 	}
@@ -148,30 +147,58 @@ Download(
 DO_PRINT_ERROR:
 	curl_easy_cleanup(curl);
 	umask(mode);
+	g_free(fname);
 	g_free(userpass);
 	g_free(url);
 	return doretry;
-}
 
-static int 
-DoPrint(
-	PrintRequest	*req)
-{
-	int	doretry;
-	char *fname;
-	size_t size;
-
-	doretry = Download(req->path,&fname,&size);
-	if (doretry == 0) {
-		if (fname != NULL && size > 0) {
-			if (req->showdialog) {
-				ShowPrintDialog(req->title,fname,size);
+	if ((fd = mkstemp(fname)) != -1) {
+		if ((fp = fdopen(fd, "w")) != NULL) {
+			wrote_size = 0;
+			curl_easy_setopt(curl, CURLOPT_URL, url);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)fp);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
+			if (fSsl) {
+				
 			} else {
-				PrintWithDefaultPrinter(fname);
+				curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+				curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 			}
-			g_free(fname);
+
+			ret = curl_easy_perform(curl);
+			fclose(fp);
+            curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
+			if (ret == CURLE_OK) {
+				if (http_code == 200) {
+					if (wrote_size == 0) {
+						doretry = 1;
+					} else {
+						//show_dialog
+						if (showdialog) {
+							MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
+								url,fname,(long)wrote_size);
+							ShowPrintDialog(title,fname,wrote_size);
+						} else {
+							PrintWithDefaultPrinter(fname);
+						}
+					}
+				} else if (http_code != 204) { /* 204 HTTP No Content */
+					msg = g_strdup_printf(_("print failure\ntitle:%s\n"),title);
+					UI_Notify(_("glclient print notify"),msg,"gtk-dialog-error",0);
+					g_free(msg);
+				}
+			}
+			curl_easy_cleanup(curl);
+		} else {
+			Warning("fdopne failure");
 		}
+	} else {
+		Warning("mkstemp failure");
 	}
+	umask(mode);
+	g_free(fname);
+	g_free(userpass);
+	g_free(url);
 	return doretry;
 }
 
@@ -191,24 +218,24 @@ CheckPrintList()
 	PrintRequest *req;
 	gchar buf[1024];
 
-	if (PRINTLIST(Session) == NULL) {
+	if (PrintList == NULL) {
 		return;
 	}
-	for (i=0; i < g_list_length(PRINTLIST(Session)); i++) {
-		req = (PrintRequest*)g_list_nth_data(PRINTLIST(Session),i);
+	for (i=0; i < g_list_length(PrintList); i++) {
+		req = (PrintRequest*)g_list_nth_data(PrintList,i);
 		if (req == NULL) {
 			Warning("print request is NULL.");
 			continue;
 		}
 		MessageLogPrintf("donwload path[%s]\n",req->path);
-		if (DoPrint(req)) {
+		if (DoPrint(req->path,req->title,req->showdialog)) {
 			// retry
 			if (req->nretry == 0) {
 				list = g_list_append(list,req);
 			} else {
 				if (req->nretry <= 1) {
 					sprintf(buf,_("print failure\ntitle:%s\n"),req->title);
-					Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
+					UI_Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
 					FreePrintRequest(req);
 				} else {
 					req->nretry -= 1;
@@ -220,88 +247,6 @@ CheckPrintList()
 			FreePrintRequest(req);
 		}
 	}
-	g_list_free(PRINTLIST(Session));
-	PRINTLIST(Session) = list;
-}
-
-static void
-FreeDLRequest(DLRequest *req)
-{
-	xfree(req->path);
-	xfree(req->filename);
-	xfree(req->description);
-	xfree(req);
-}
-
-static int 
-DoDownload(
-	DLRequest	*req)
-{
-	int				doretry;
-	char			*fname;
-	size_t			size;
-	LargeByteString	*lbs;
-	FILE 			*fp;
-
-	doretry = Download(req->path,&fname,&size);
-	if (doretry == 0) {
-		if (fname != NULL && size > 0) {
-			if ((fp = fopen(fname,"r")) != NULL) {
-				lbs = NewLBS();
-				LBS_ReserveSize(lbs,size,FALSE);
-				fread(LBS_Body(lbs),size,1,fp);
-				fclose(fp);
-				ShowDownloadDialog(NULL,req->filename,req->description,lbs);
-				FreeLBS(lbs);
-			} else {
-				Error("does not reach here;temporary file can not read");
-			}
-			xfree(fname);
-		}
-	}
-	return doretry;
-}
-
-void
-CheckDLList()
-{
-	int i;
-	GList *list = NULL;
-	DLRequest *req;
-	gchar buf[1024];
-
-	if (DLLIST(Session) == NULL) {
-		return;
-	}
-	for (i=0; i < g_list_length(DLLIST(Session)); i++) {
-		req = (DLRequest*)g_list_nth_data(DLLIST(Session),i);
-		if (req == NULL) {
-			Warning("download request is NULL.");
-			continue;
-		}
-		MessageLogPrintf("donwload path[%s]\n",req->path);
-		if (DoDownload(req)) {
-			// retry
-			if (req->nretry == 0) {
-				list = g_list_append(list,req);
-			} else {
-				if (req->nretry <= 1) {
-					sprintf(buf,
-						_("download failure\nfilename:%s\ndescription:%s"),
-						req->filename,req->description);
-					Notify(_("glclient download notify"),
-						buf,"gtk-dialog-error",0);
-					FreeDLRequest(req);
-				} else {
-					req->nretry -= 1;
-					list = g_list_append(list,req);
-				}
-			}
-		} else {
-			// delete request
-			FreeDLRequest(req);
-		}
-	}
-	g_list_free(DLLIST(Session));
-	DLLIST(Session) = list;
+	g_list_free(PrintList);
+	PrintList = list;
 }

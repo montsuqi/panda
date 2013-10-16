@@ -41,7 +41,7 @@
 #include	"sysdata.h"
 #include	"comm.h"
 #include	"comms.h"
-#include	"sysdatacom.h"
+#include	"blobcom.h"
 #include	"redirect.h"
 #include	"debug.h"
 

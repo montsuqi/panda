@@ -257,14 +257,14 @@ SetUpDirectory(
 	char	*ld,
 	char	*bd,
 	char	*db,
-	int		parse_type)
+	Bool    parse_ld)
 {
 	DI_Struct	*di;
 ENTER_FUNC;
 	InitDBG();
-	di = DI_Parser(name,ld,bd,db,parse_type);
-	if ( (parse_type >= P_ALL) && di ) {
-		AssignDBG(di);
+	di = DI_Parser(name,ld,bd,db,parse_ld);
+	if ( parse_ld && di ) {
+		AssignDBG(di); 
 	}
 LEAVE_FUNC;
 }

@@ -619,7 +619,7 @@ boot_dialog_free (BootDialog *self)
   return: TRUE -> connect, FALSE -> close
  */
 void
-BootDialogRun ()
+boot_dialog_run ()
 {
   BootDialog *self;
 
@@ -635,10 +635,11 @@ BootDialogRun ()
 
 
   gtk_widget_destroy (self->dialog);
+  boot_dialog_free (self);
+
   if (!self->is_connect) {
     exit(0);
   }
-  boot_dialog_free (self);
 }
 
 /*************************************************************

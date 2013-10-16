@@ -28,17 +28,26 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/dblib	\
 	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(COMMON_CFLAGS)
+	$(GLIB2_CFLAGS)			\
+	$(MONDAI_CFLAGS)
 
 LDADD 			=						\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpandablob.a	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(COMMON_LIBS)
+	$(GLIB2_LIBS)						\
+	$(MONDAI_LIBS)						
 DEPENDENCIES	=						\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpandablob.a
+
 
 wfc_LDFLAGS	=			\
 	-export-dynamic
@@ -49,9 +58,9 @@ wfc_SOURCES	=							\
 	sysdatathread.c	sysdatathread.h		\
 	controlthread.c	controlthread.h		\
 	blobserv.c		blobserv.h			\
-	sysdbserv.c		sysdbserv.h			\
+	kvserv.c		kvserv.h			\
 	termthread.c	termthread.h		\
-	sessionthread.c	sessionthread.h	
+	sysdb.c			sysdb.h
 
 wfccontrol_LDFLAGS	=			\
 	-export-dynamic

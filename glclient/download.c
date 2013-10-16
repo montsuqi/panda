@@ -33,7 +33,7 @@
 
 #include	"glclient.h"
 #include	"gettext.h"
-#include	"action.h"
+#include	"interface.h"
 #include	"dialogs.h"
 #include	"desktop.h"
 #include	"utils.h"
@@ -54,7 +54,6 @@ show_save_dialog(
 	GError *error = NULL;
 	char *dirname;
 	char *fname;
-	char *lname;
 
 	parent = (GtkWindow *)g_list_nth_data(DialogStack,
 		g_list_length(DialogStack)-1);
@@ -68,24 +67,21 @@ show_save_dialog(
 		NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation (
 		GTK_FILE_CHOOSER (dialog), TRUE);
-
-	if (widget == NULL) {
-		lname = "__glcient2_download_";
-	} else {
-		lname = (char*)glade_get_widget_long_name(widget);
-	}
     
-	dirname = GetWidgetCache(lname);
+	dirname = GetWidgetCache((char*)glade_get_widget_long_name(widget));
 	if (dirname != NULL) {
 		gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER (dialog), dirname);
 	}
 	gtk_file_chooser_set_current_name (GTK_FILE_CHOOSER (dialog), filename);
 
 	if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-		fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
+		fname = gtk_file_chooser_get_filename(
+			GTK_FILE_CHOOSER (dialog));
         if (g_file_set_contents(fname, LBS_Body(binary), LBS_Size(binary),
 			&error)) {
-			SetWidgetCache(lname,g_path_get_dirname(fname));
+			SetWidgetCache(
+				((char *)glade_get_widget_long_name(widget)),
+				g_path_get_dirname(fname));
 		} else {
 			error_dialog = gtk_message_dialog_new (GTK_WINDOW(dialog),
 				GTK_DIALOG_MODAL,
@@ -93,9 +89,9 @@ show_save_dialog(
 				GTK_BUTTONS_CLOSE,
 				"%s",
 				error->message);
-			gtk_dialog_run (GTK_DIALOG (error_dialog));
-			gtk_widget_destroy (error_dialog);
-			g_error_free(error);
+				gtk_dialog_run (GTK_DIALOG (error_dialog));
+				gtk_widget_destroy (error_dialog);
+				g_error_free(error);
         }
 		g_free(fname);
 	}
@@ -137,7 +133,7 @@ cb_close(
 }
 
 void
-ShowDownloadDialog(
+show_download_dialog(
 	GtkWidget		*widget,
 	char			*filename,
 	char			*description,

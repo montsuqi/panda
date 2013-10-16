@@ -147,7 +147,7 @@ db_exec(
 	char *query)
 {
 	PGresult	*res;
-
+	
 	res = PQexec(conn, query);
 
 	return res;
@@ -221,14 +221,14 @@ sync_wait(pid_t pg_dump_pid, pid_t restore_pid)
 	pid_t	pid;
 	int status;
 	Bool ret = FALSE;
-
+	
 	for (;;)
 	{
 		pid = wait(&status);
 		if ( pg_dump_pid ==  pid ) {
 			if ( WIFEXITED(status) && (WEXITSTATUS(status) != 0) ) {
 				fprintf(stderr, "Dump error(%d)\n", pid );
-				break;
+				break;				
 			}
 		} else if (restore_pid ==  pid ) {
 			if ( WIFEXITED(status) && (WEXITSTATUS(status) != 0) ) {
@@ -283,9 +283,6 @@ static void
 set_envauth(
 	AuthInfo *authinfo)
 {
-#ifdef POSTGRES_APPLICATIONNAME
-	setenv("PGAPPNAME", "dbsync", 1);
-#endif /* ifdef POSTGRES_APPLICATIONNAME */
 	setenv("PGPASSWORD", authinfo->pass, 1);
 	if (authinfo->sslcert)
 		setenv("PGSSLCERT", authinfo->sslcert, 1);

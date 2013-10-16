@@ -44,6 +44,7 @@
 #include	"glserver.h"
 #include	"dirs.h"
 #include	"RecParser.h"
+#include	"front.h"
 #include	"glcomm.h"
 #include	"option.h"
 #include	"message.h"
@@ -76,8 +77,6 @@ static	ARG_TABLE	option[] = {
 		N_("Certificate(pem/p12)")	 					},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
 		N_("Use SSL")				 					},
-	{	"verifypeer",BOOLEAN,	TRUE,	(void*)&fVerifyPeer,
-		N_("Use Client Certification")					},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
 		N_("CA Certificate Path")						},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
@@ -103,7 +102,6 @@ SetDefault(void)
 	fNumericHOST = FALSE;
 #ifdef	USE_SSL
 	fSsl = FALSE;
-	fVerifyPeer = TRUE;
 	KeyFile = NULL;
 	CertFile = NULL;
 	CA_Path = NULL;
@@ -152,11 +150,6 @@ main(
 #ifdef	USE_SSL
 	if ( fSsl ){
 		Message("glserver start (ssl)");
-		if ( fVerifyPeer ){
-			Message("verify peer");
-		} else {
-			Message("no verify peer");
-		}
 	} else {
 		Message("glserver start");
 	}

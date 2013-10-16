@@ -50,6 +50,7 @@
 #include	"marshaller.h"
 #include	"queue.h"
 #include	"widgetcache.h"
+#include	"interface.h"
 #include	"download.h"
 #include	"notify.h"
 #include	"message.h"
@@ -156,7 +157,7 @@ ENTER_FUNC;
 	SetCommon(widget,wdata);
 	g_return_if_fail(data->binary != NULL);
 	if (LBS_Size(data->binary) > 0) {
-		ShowDownloadDialog(widget,
+		show_download_dialog(widget,
 			data->filename,
 			data->description,
 			data->binary);
@@ -237,20 +238,11 @@ ENTER_FUNC;
 	// items
 	gtk_widget_hide(widget);
 	gtk_panda_clist_set_rows(GTK_PANDA_CLIST(widget),data->count);
+
 	for	( j = 0 ; j < g_list_length(data->clistdata) ; j ++ ) {
 		if (j < data->count) {
 			rdata = g_list_nth_data(data->clistdata,j);
 			gtk_panda_clist_set_row(GTK_PANDA_CLIST(widget),j,rdata);
-		}
-	}
-	if (data->fgcolors != NULL) {
-		for	(j = 0;data->fgcolors[j] != NULL;j ++) {
-			gtk_panda_clist_set_fgcolor(GTK_PANDA_CLIST(widget),j,data->fgcolors[j]);
-		}
-	}
-	if (data->bgcolors != NULL) {
-		for	(j = 0;data->bgcolors[j] != NULL;j ++) {
-			gtk_panda_clist_set_bgcolor(GTK_PANDA_CLIST(widget),j,data->bgcolors[j]);
 		}
 	}
 	gtk_widget_show(widget);
@@ -263,7 +255,7 @@ ENTER_FUNC;
 			}
 		}
 	}
-	if (data->count > 0 && data->row < data->count) {
+	if (data->count > 0) {
 		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget), 
 			data->row, 0, data->rowattr, 0.0); 
 	}
@@ -811,7 +803,7 @@ ENTER_FUNC;
 		gtk_panda_file_entry_set_data(fentry,
 			LBS_Size(data->binary), LBS_Body(data->binary));
 		//set subwidget
-		subdata = GetWidgetData(data->subname);
+		subdata = g_hash_table_lookup(WidgetDataTable, data->subname);
 		subWidget = GetWidgetByLongName(data->subname);
 		if (subdata != NULL || subWidget != NULL) {
 			SetEntry(subWidget, subdata,(_Entry *)subdata->attrs);
@@ -886,7 +878,7 @@ GetWidgetType(
 	GtkWidget	*widget;
 	long 		type;
 
-	wdata = GetWindowData(wname);
+	wdata = g_hash_table_lookup(WindowTable, wname);
 	if (wdata != NULL && wdata->xml != NULL) {
 		widget = glade_xml_get_widget_by_long_name(
     				(GladeXML *)wdata->xml, name);
@@ -913,8 +905,6 @@ GetWidgetType(
 			return WIDGET_TYPE_PANDA_TIMER;
 		} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
 			return WIDGET_TYPE_PANDA_DOWNLOAD;
-		} else if (type == GTK_PANDA_TYPE_DOWNLOAD2) {
-			return WIDGET_TYPE_PANDA_DOWNLOAD2;
 		} else if (type == GTK_PANDA_TYPE_PRINT) {
 			return WIDGET_TYPE_PANDA_PRINT;
 		} else if (type == GTK_PANDA_TYPE_HTML) {
@@ -961,7 +951,7 @@ GetWidgetType(
 }
 
 extern	void
-UpdateWidgetData(WidgetData	*data)
+GetWidgetData(WidgetData	*data)
 {
 	GtkWidget	*widget;
 
@@ -1128,7 +1118,7 @@ UpdateWindow(char *windowName)
 	WindowData	*wdata;
 	WidgetData	*data;
 
-	wdata = GetWindowData(windowName);
+	wdata = (WindowData *)g_hash_table_lookup(WindowTable, windowName);
 	g_return_if_fail(wdata != NULL);
 	while(
 		(data = (WidgetData *)DeQueueNoWait(wdata->UpdateWidgetQueue)) != NULL

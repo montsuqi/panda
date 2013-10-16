@@ -48,12 +48,11 @@
 #include	"protocol.h"
 #define		_PROTOCOL_C
 #include	"marshaller.h"
+#include	"interface.h"
 #include	"gettext.h"
 #include	"const.h"
-#include	"notify.h"
 #include	"printservice.h"
 #include	"dialogs.h"
-#include	"widgetOPS.h"
 #include	"action.h"
 #include	"message.h"
 #include	"debug.h"
@@ -82,7 +81,7 @@ static	LargeByteString	*LargeBuff;
 static void
 GL_Error(void)
 {
-	ShowErrorDialog(_("Connection lost\n"));
+	UI_ErrorDialog(_("Connection lost\n"));
 }
 
 extern	void
@@ -202,7 +201,7 @@ ENTER_FUNC;
 		}
 		str[lsize] = 0;
 	} else {
-		ShowErrorDialog(
+		show_error_dialog(
 		_("GL_RecvString invalid size %ld > %ld(max size)"),
 		(unsigned long)lsize,(unsigned long)maxsize);
 	}
@@ -392,26 +391,27 @@ GL_SendLBS(
 
 static	Bool
 RecvFile(
-	NETFILE	*fp,
+	NETFILE	*fpC,
 	char	*name)
 {
 	char 		*buff;
 	Bool		ret;
 
 ENTER_FUNC;
-	GL_SendString(fp,name);
-	if (fMlog) {
+	GL_SendPacketClass(fpC,GL_GetScreen);
+	GL_SendString(fpC,name);
+	if		(  fMlog  ) {
 		MessageLogPrintf("recv screen file [%s]\n",name);
 	}
-	if (GL_RecvPacketClass(fp) == GL_ScreenDefine) {
+	if		(  GL_RecvPacketClass(fpC)  ==  GL_ScreenDefine  ) {
 		// download
 		buff = xmalloc(SIZE_LARGE_BUFF);
-		GL_RecvString(fp, SIZE_LARGE_BUFF, buff);
-		CreateWindow(name,strlen(buff),buff);
+		GL_RecvString(fpC, SIZE_LARGE_BUFF, buff);
+		UI_CreateWindow(name,strlen(buff),buff);
 		xfree(buff);
 		ret = TRUE;
 	} else {
-		ShowErrorDialog(_("invalid protocol sequence"));
+		UI_ErrorDialog(_("invalid protocol sequence"));
 		ret = FALSE;
 	}
 LEAVE_FUNC;
@@ -427,20 +427,20 @@ CheckScreens(
 	PacketClass	klass;
 
 ENTER_FUNC;
-	while ((klass = GL_RecvPacketClass(fp)) == GL_QueryScreen) {
+	while		(  ( klass = GL_RecvPacketClass(fp) )  ==  GL_QueryScreen  ) {
+dbgmsg("*");
 		GL_RecvString(fp, sizeof(sname), sname);
 		GL_RecvInt(fp);  /*stsize*/
 		GL_RecvInt(fp);  /*stctime*/
 		GL_RecvInt(fp);  /*stmtime*/
 
-		if (GetWindowData(sname) == NULL) {
-			GL_SendPacketClass(fp,GL_GetScreen);
+		if (g_hash_table_lookup(WindowTable, sname) == NULL) {
 			RecvFile(fp, sname);
 		} else {
 			GL_SendPacketClass(fp, GL_NOT);
 		}
-		if (fInit) {
-			ShowWindow(sname);
+		if		(  fInit  ) {
+			UI_ShowWindow(sname);
 			fInit = FALSE;
 		}
 	}
@@ -544,8 +544,8 @@ RecvValue(
 {
 ENTER_FUNC;
 	dbgprintf("WidgetName = [%s]\n",widgetName);
-	if (IsWidgetName(THISWINDOW(Session))) {
-		if (IsWidgetName(widgetName)) {
+	if (UI_IsWidgetName(ThisWindowName)) {
+		if (UI_IsWidgetName(widgetName)) {
 			if (RecvWidgetData(widgetName,fp)) {
 			} else {
 				RecvNodeValue(fp,widgetName);
@@ -563,27 +563,26 @@ extern	Bool
 GetScreenData(
 	NETFILE		*fp)
 {
-	char			window[SIZE_NAME+1];
-	char			widgetName[SIZE_LONGNAME+1];
-	PacketClass		c;
-	gboolean 		isdummy;
-	unsigned char	type;
+	char		window[SIZE_NAME+1]
+	,			widgetName[SIZE_LONGNAME+1];
+	PacketClass	c;
+	gboolean 	isdummy;
+	unsigned char		type;
 
 ENTER_FUNC;
-	if (THISWINDOW(Session) != NULL) {
-		g_free(THISWINDOW(Session));
-	}
+	if (ThisWindowName != NULL)
+		g_free(ThisWindowName);
 	isdummy = FALSE;
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
-	GL_SendInt(fp,0);/*get all data*/
-	if (fMlog) {
+	GL_SendInt(fp,0);				/*	get all data	*/
+	if		(  fMlog  ) {
 		MessageLog("====");
 	}
-	while ((c = GL_RecvPacketClass(fp)) == GL_WindowName) {
+	while	(  ( c = GL_RecvPacketClass(fp) )  ==  GL_WindowName  ) {
 		GL_RecvString(fp, sizeof(window), window);
 		dbgprintf("[%s]\n",window);
-		type = (unsigned char)GL_RecvInt(FPCOMM(Session)); 
+		type = (unsigned char)GL_RecvInt(FPCOMM(glSession)); 
 		if		(  fMlog  ) {
 			switch	(type) {
 			  case	SCREEN_NEW_WINDOW:
@@ -603,25 +602,25 @@ ENTER_FUNC;
 		  case	SCREEN_CHANGE_WINDOW:
 		  case	SCREEN_CURRENT_WINDOW:
 			if ((c = GL_RecvPacketClass(fp)) == GL_ScreenData) {
-				THISWINDOW(Session) = strdup(window);
+				ThisWindowName = strdup(window);
 				RecvValue(fp,window);
 				isdummy = window[0] == '_';
 				if (!isdummy) {
-					ShowWindow(window);
+					UI_ShowWindow(window);
 				}
-				UpdateWindow(window);
+				UI_UpdateScreen(window);
 				ResetTimer(window);
 			}
 			if (type == SCREEN_CHANGE_WINDOW) {
-				ResetScrolledWindow(window);
+				UI_ResetScrolledWindow(window);
 			}
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
-			CloseWindow(window);
+			UI_CloseWindow(window);
 			c = GL_RecvPacketClass(fp);
 			break;
 		  default:
-			CloseWindow(window);
+			UI_CloseWindow(window);
 			c = GL_RecvPacketClass(fp);
 			break;
 		}
@@ -636,7 +635,7 @@ ENTER_FUNC;
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
 		if (!isdummy) {
-			GrabFocus(window, widgetName);
+			UI_GrabFocus(window, widgetName);
 		}
 		c = GL_RecvPacketClass(fp);
 	}
@@ -652,7 +651,7 @@ GL_SendVersionString(
 	char	buff[256];
 	size_t	size;
 
-	sprintf(version,"version:blob:expand:pdf:download:negotiation:v47:v48:i18n");
+	sprintf(version,"version:blob:expand:pdf:download:negotiation:v47:i18n");
 #ifdef	NETWORK_ORDER
 	strcat(version, ":no");
 #endif
@@ -678,10 +677,10 @@ PingTimerFunc(gpointer data)
 	PacketClass	c;
 	char buff[CLIENT_SIZE_BUFF];
 
-	if (ISRECV(Session)) {
+	if (fInRecv) {
 		return 1;
 	}
-	ISRECV(Session) = TRUE;
+	fInRecv = TRUE;
 	fp = (NETFILE *)data;
 	if (fV47) {
 		GL_SendPacketClass(fp,GL_Ping);ON_IO_ERROR(fp,badio);
@@ -689,57 +688,56 @@ PingTimerFunc(gpointer data)
 		switch (c) {
 		case GL_Pong_Dialog:
 			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ISRECV(Session) = FALSE;
-			ShowInfoDialog(buff);
+			fInRecv = FALSE;
+			UI_MessageDialog(buff);
 			break;
 		case GL_Pong_Popup:
 			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ISRECV(Session) = FALSE;
-			Notify(_("glclient message notify"),buff,"gtk-dialog-info",0);
+			fInRecv = FALSE;
+			UI_Notify(_("glclient message notify"),buff,"gtk-dialog-info",0);
 			break;
 		case GL_Pong_Abort:
 			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ShowInfoDialog(buff);
+			UI_MessageDialog(buff);
 			exit(1);
 			break;
 		case GL_Pong:
-			ISRECV(Session) = FALSE;
+			fInRecv = FALSE;
 			break;
 		default:
-			ShowErrorDialog(_("connection error(invalid pong packet)"));
+			UI_ErrorDialog(_("connection error(invalid pong packet)"));
 			break;
 		}
 	} else {
 		GL_SendPacketClass(fp,GL_Ping);ON_IO_ERROR(fp,badio);
 		c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
 		if (c != GL_Pong) {
-			ShowErrorDialog(_("connection error(server doesn't reply ping)"));
+			UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
 			return 1;
 		}
 		c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
 		switch (c) {
 		case GL_STOP:
 			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ShowInfoDialog(buff);
+			UI_MessageDialog(buff);
 			exit(1);
 			break;
 		case GL_CONTINUE:
 			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ISRECV(Session) = FALSE;
-			ShowInfoDialog(buff);
+			fInRecv = FALSE;
+			UI_MessageDialog(buff);
 			break;
 		case GL_END:
 		default:
-			ISRECV(Session) = FALSE;
+			fInRecv = FALSE;
 			break;
 		};
 	}
-	ISRECV(Session) = FALSE;
 	CheckPrintList();
-	CheckDLList();
+	fInRecv = FALSE;
 	return 1;
 badio:
-	ShowErrorDialog(_("connection error(server doesn't reply ping)"));
+	UI_ErrorDialog(_("connection error(server doesn't reply ping)"));
 	return 1;
 }
 
@@ -767,7 +765,7 @@ ENTER_FUNC;
 	} else if (pc == GL_ServerVersion) {
 		GL_RecvString(fp, sizeof(ver), ver);
 		if (strcmp(ver, "1.4.4.01") >= 0) {
-			SetPingTimerFunc(PingTimerFunc, fp);
+			UI_SetPingTimerFunc(PingTimerFunc, fp);
 		}
 		if (strcmp(ver, "1.4.6.99") >= 0) {
 			fV47 = TRUE;
@@ -778,32 +776,32 @@ ENTER_FUNC;
 		rc = FALSE;
 		switch	(pc) {
 		  case	GL_NOT:
-			ShowErrorDialog(_("can not connect server"));
+			UI_ErrorDialog(_("can not connect server"));
 			break;
 		  case	GL_E_VERSION:
-			ShowErrorDialog(_("can not connect server(version not match)"));
+			UI_ErrorDialog(_("can not connect server(version not match)"));
 			break;
 		  case	GL_E_AUTH:
 #ifdef USE_SSL
 			if 	(fSsl) {
-				ShowErrorDialog(
+				UI_ErrorDialog(
 					_("can not connect server(authentication error)"));
 			} else {
-				ShowErrorDialog(
+				UI_ErrorDialog(
 					_("can not connect server(user or password is incorrect)"));
 			}
 #else
-			ShowErrorDialog(
+			UI_ErrorDialog(
 				_("can not connect server(user or password is incorrect)"));
 #endif
 			break;
 		  case	GL_E_APPL:
-			ShowErrorDialog(
+			UI_ErrorDialog(
 				_("can not connect server(application name invalid)"));
 			break;
 		  default:
 			dbgprintf("[%X]\n",pc);
-			ShowErrorDialog(_("can not connect server(other protocol error)"));
+			UI_ErrorDialog(_("can not connect server(other protocol error)"));
 			break;
 		}
 	}
@@ -837,9 +835,12 @@ InitProtocol(void)
 {
 ENTER_FUNC;
 	LargeBuff = NewLBS();
-	THISWINDOW(Session) = NULL;
-	WINDOWTABLE(Session) = NewNameHash();
-	WIDGETTABLE(Session) = NewNameHash();
+#if	0
+	InitScreenStack();
+#endif
+	ThisWindowName = NULL;
+	WindowTable = NewNameHash();
+	WidgetDataTable = NewNameHash();
 LEAVE_FUNC;
 }
 
@@ -858,11 +859,11 @@ _SendWindowData(
 	gpointer	user_data)
 {
 ENTER_FUNC;
-	GL_SendPacketClass(FPCOMM(Session),GL_WindowName);
-	GL_SendString(FPCOMM(Session),wname);
+	GL_SendPacketClass(FPCOMM(glSession),GL_WindowName);
+	GL_SendString(FPCOMM(glSession),wname);
 	g_hash_table_foreach(wdata->ChangedWidgetTable,
-		(GHFunc)SendWidgetData,FPCOMM(Session));
-	GL_SendPacketClass(FPCOMM(Session),GL_END);
+		(GHFunc)SendWidgetData,FPCOMM(glSession));
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
 
 	if (wdata->ChangedWidgetTable != NULL) {
 		g_hash_table_foreach_remove(wdata->ChangedWidgetTable, 
@@ -877,8 +878,8 @@ extern	void
 SendWindowData(void)
 {
 ENTER_FUNC;
-	g_hash_table_foreach(WINDOWTABLE(Session),(GHFunc)_SendWindowData,NULL);
-	GL_SendPacketClass(FPCOMM(Session),GL_END);
+	g_hash_table_foreach(WindowTable,(GHFunc)_SendWindowData,NULL);
+	GL_SendPacketClass(FPCOMM(glSession),GL_END);
 LEAVE_FUNC;
 }
 

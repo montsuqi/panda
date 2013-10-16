@@ -23,6 +23,7 @@
 
 #include	"LDparser.h"
 #include	"DIparser.h"
+#include	"wfcio.h"
 
 #undef	GLOBAL
 #ifdef	_DIRECTORY
@@ -48,9 +49,5 @@ extern	DB_Func		*EnterDB_Function(char *name, DB_OPS *ops, int type,
 									  DB_Primitives *primitive,
 									  char *commentStart, char *commentEnd);
 extern	RecordStruct	*GetTableDBG(char *gname, char *tname);
-
-#define P_NONE    0
-#define P_LD      1
-#define P_ALL     2
 
 #endif

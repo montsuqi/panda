@@ -33,7 +33,6 @@
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<netinet/in.h>
-#include	<arpa/inet.h>
 #include	<fcntl.h>
 #include	<time.h>
 #include	<errno.h>
@@ -50,42 +49,129 @@
 #include	"debug.h"
 
 extern	char	*
-RemoteIP(
-	int		sock,
-	char	*remote,
-	size_t	size)
+TermToHost(
+	char	*term)
 {
-	socklen_t len;
+	struct	sockaddr_in		in;
+#ifdef	USE_IPv6
+	struct	sockaddr_in6	in6;
+	char	buff[NI_MAXHOST];
+	int		i;
+#endif
+	int		errcd, flags;
+	char	*p;
+	static	char	host[NI_MAXHOST+2];
+	
+ENTER_FUNC;
+	p = term;
+	flags = fNumericHOST ? NI_NUMERICHOST : 0;
+	switch	(*p) {
+	  case	'4':
+		p ++;
+		in.sin_port = HexToInt(p,4);
+		p = strchr(p,':') + 1;
+		in.sin_addr.s_addr = HexToInt(p,8);
+		in.sin_family = AF_INET;
+		if ((errcd = getnameinfo((struct sockaddr *)&in,sizeof(in),host
+								 ,NI_MAXHOST,NULL,0,flags)) != 0) {
+			Warning("getnameinfo error: %s\n",gai_strerror(errcd));
+		}
+		break;
+#ifdef	USE_IPv6
+	  case	'6':
+		p ++;
+		in6.sin6_port = HexToInt(p,4);
+		p = strchr(p,':') + 1;
+		for	( i = 0 ; i < 4 ; i ++ ) {
+			in6.sin6_addr.s6_addr32[i] = HexToInt(p,8);
+			p += 8;
+		}
+		p ++;
+		in6.sin6_scope_id = HexToInt(p,8);
+		in6.sin6_family = AF_INET6;
+		if ((errcd = getnameinfo((struct sockaddr *)&in6,sizeof(in6),buff
+								 ,NI_MAXHOST,NULL,0,flags)) != 0) {
+			Warning("getnameinfo error: %s\n",gai_strerror(errcd));
+		}
+		if	(	strchr(buff,':')	!=  NULL  ) {
+			sprintf(host,"[%s]",buff);
+		} else {
+			strcpy(host,buff);
+		}
+		break;
+#endif
+	  case	'U':	/*	UNIX domain	*/
+		strcpy(host,"localhost");
+		break;
+	  default:
+		*host = 0;
+		break;
+	}
+LEAVE_FUNC;
+	return	(host);
+}
+
+extern	char	*
+TermName(
+	int		sock)
+{
+	time_t		nowtime;
+	struct	tm	Now;
+	socklen_t	len;
+	static	char			name[SIZE_TERM+1];	//	SIZE_TERM == 64
 	union sockaddr_s {
 		struct  sockaddr 			sa;
-		struct	sockaddr_in			sa_in;
+		struct	sockaddr_in		sa_in;
 #ifdef	USE_IPv6
 		struct	sockaddr_in6		sa_in6;
 #endif
 		struct	sockaddr_storage	sa_stor;
 	} u;
+	struct	timeval	tv;
 
 ENTER_FUNC;
-	memclear(remote,size);
+	memclear(name,SIZE_TERM+1);
 	if		(  sock  ==  0  ) {
-		snprintf(remote,size,"something wrong;sock = 0");
+		time(&nowtime);
+		gettimeofday(&tv,NULL);
+		localtime_r(&nowtime, &Now);
+		Now.tm_year += 1900;
+		sprintf(name,"T%04d%02d%02d:%02d%02d%02d.%06d",
+				Now.tm_year,Now.tm_mon+1,Now.tm_mday,
+				Now.tm_hour,Now.tm_min,Now.tm_sec,
+				(int)tv.tv_usec);
 	} else {
 		len = sizeof(u);
 		if ((getpeername(sock,&(u.sa),&len)) != 0 ){
 			Warning(("getpeername error: %s\n"),strerror(errno));
-			snprintf(remote,size,"getpeername error");
-			return remote;
+			return name;
 		}
 		switch	(u.sa.sa_family) {
 		  case	AF_UNIX:
-			snprintf(remote,size,"AF_UNIX pid:%d", getpid());
+			time(&nowtime);
+			localtime_r(&nowtime, &Now);
+			Now.tm_year += 1900;
+			sprintf(name,"U%04d%02d%02d:%02d%02d%02d:%08X",
+					Now.tm_year,Now.tm_mon+1,Now.tm_mday,
+					Now.tm_hour,Now.tm_min,Now.tm_sec,
+					getpid());
 			break;
 		  case	AF_INET:
-			snprintf(remote,size,"%s",inet_ntoa(u.sa_in.sin_addr));
+			sprintf(name,"4%04X:%08X:%08X",
+					(unsigned int)u.sa_in.sin_port,
+					(unsigned int)(u.sa_in.sin_addr.s_addr),
+					getpid());
 			break;
 #ifdef	USE_IPv6
 		  case	AF_INET6:
-			inet_ntop(AF_INET6, &(u.sa_in6.sin6_addr),remote,size);
+			sprintf(name,"6%04X:%08X%08X%08X%08X%08X:%08X",
+					(unsigned int)u.sa_in6.sin6_port,
+					(unsigned int)(u.sa_in6.sin6_addr.s6_addr32[0]),
+					(unsigned int)(u.sa_in6.sin6_addr.s6_addr32[1]),
+					(unsigned int)(u.sa_in6.sin6_addr.s6_addr32[2]),
+					(unsigned int)(u.sa_in6.sin6_addr.s6_addr32[3]),
+					(unsigned int)(u.sa_in6.sin6_scope_id),
+					getpid());
 			break;
 #endif
 		  default:
@@ -93,9 +179,9 @@ ENTER_FUNC;
 		}
 	}
 #ifdef	DEBUG
-	fprintf(STDERR,"remote ip = [%s]\n",remote);
+	printf("term name = [%s]\n",name);
 #endif
 LEAVE_FUNC;
-	return	remote;
+	return	name;
 }
 

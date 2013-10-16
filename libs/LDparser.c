@@ -79,6 +79,8 @@ static	GHashTable	*Reserved;
 
 static	GHashTable	*Records;
 
+static	GHashTable	*ParsedDB;
+
 extern	RecordStruct	*
 GetWindow(
 	char		*name)
@@ -86,16 +88,16 @@ GetWindow(
 	RecordStruct	*rec
 		,			*rec2;
 	ValueStruct		*value;
-	char			fname[SIZE_LONGNAME+1]
-		,			buff[SIZE_LONGNAME+1];
-	char			*p
-		,			*iname
-		,			*wname;
+	char		fname[SIZE_LONGNAME+1]
+		,		buff[SIZE_LONGNAME+1];
+	char		*p
+		,		*iname
+		,		*wname;
 
 ENTER_FUNC;
 	dbgprintf("GetWindow(%s)",name);
 	strcpy(buff,name);
-	if ((p = strchr(buff,'.')) != NULL) {
+	if		(  ( p = strchr(buff,'.') )  !=  NULL  ) {
 		*p = 0;
 		iname = p + 1;
 	} else {
@@ -103,13 +105,15 @@ ENTER_FUNC;
 	}
 	wname = buff;
 		
-	if (name != NULL) {
-		rec = (RecordStruct *)g_hash_table_lookup(Records,name);
-		if (rec == NULL) {
-			rec2 = (RecordStruct *)g_hash_table_lookup(Records,wname);
-			if (rec2 == NULL) {
+	if		(  name  !=  NULL  ) {
+		if		(  ( rec = 
+					 (RecordStruct *)g_hash_table_lookup(Records,name) )
+				   ==  NULL  ) {
+			if		(  ( rec2 = 
+						 (RecordStruct *)g_hash_table_lookup(Records,wname) )
+					   ==  NULL  ) {
 				sprintf(fname,"%s.rec",wname);
-				if ((rec2 = ReadRecordDefine(fname)) != NULL) {
+				if		(  ( rec2 = ReadRecordDefine(fname) )  !=  NULL  ) {
 					g_hash_table_insert(Records,rec2->name,rec2);
 					InitializeValue(rec2->value);
 				} else {
@@ -117,10 +121,10 @@ ENTER_FUNC;
 					rec = NULL;
 				}
 			}
-			if (iname == NULL) {
+			if		(  iname  ==  NULL  ) {
 				rec = rec2;
 			} else {
-				if (rec2 != NULL) {
+				if		(  rec2  !=  NULL  ) {
 					value = GetItemLongName(rec2->value,iname);
 					rec = New(RecordStruct);
 					rec->name = StrDup(name);
@@ -181,63 +185,53 @@ LEAVE_FUNC;
 }
 
 static	void
-_ParDB(
-	CURFILE		*in,
-	LD_Struct	*ld,
-	char		*dbgname,
-	char		*table_name)
-{
-	char		name[SIZE_BUFF];
-	char		buff[SIZE_BUFF];
-	char		*p
-	,			*q;
-	RecordStruct	*db = NULL;
-	RecordStruct	**rtmp;
-
-	strcpy(buff,RecordDir);
-	p = buff;
-	do {
-		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-			*q = 0;
-		}
-		sprintf(name,"%s/%s.db",p,table_name);
-		if		(  g_hash_table_lookup(ld->DB_Table,table_name)  ==  NULL  ) {
-			db = DB_Parser(name,dbgname,TRUE);
-			if ( db != NULL ) {
-				rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
-				memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
-				if		(  ld->db  !=  NULL  ) {
-					xfree(ld->db);
-				}
-				ld->db = rtmp;
-				ld->db[ld->cDB] = db;
-				ld->cDB ++;
-				g_hash_table_insert(ld->DB_Table,StrDup(table_name),(void *)ld->cDB);
-			}
-		} else {
-			ParError("same db appier");
-		}
-		p = q + 1;
-	}	while	(	(  q   !=  NULL  )
-					&&	(  db  ==  NULL  ) );
-	if		(  db  ==  NULL  ) {
-		ParError("db not found");
-	}
-}
-
-static	void
 ParDB(
 	CURFILE		*in,
 	LD_Struct	*ld,
-	char		*dbgname,
-	int			parse_type)
+	char		*gname)
 {
+	RecordStruct	*db;
+	RecordStruct	**rtmp;
+	char			name[SIZE_BUFF];
+	char		buff[SIZE_BUFF];
+	char		*p
+	,			*q;
+
 ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
-			if (parse_type >= P_ALL) {
-				_ParDB(in,ld,dbgname,ComSymbol);
+			strcpy(buff,RecordDir);
+			p = buff;
+			do {
+				if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+					*q = 0;
+				}
+				sprintf(name,"%s/%s.db",p,ComSymbol);
+				if (  (db = g_hash_table_lookup(ParsedDB, name) ) == NULL ) {
+					db = DB_Parser(name,gname,NULL,TRUE);
+					g_hash_table_insert(ParsedDB, StrDup(name), db);
+				}
+				if ( db != NULL) {
+					if		(  g_hash_table_lookup(ld->DB_Table,ComSymbol)  ==  NULL  ) {
+						rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( ld->cDB + 1));
+						memcpy(rtmp,ld->db,sizeof(RecordStruct *) * ld->cDB);
+						if		(  ld->db  !=  NULL  ) {
+							xfree(ld->db);
+						}
+						ld->db = rtmp;
+						ld->db[ld->cDB] = db;
+						ld->cDB ++;
+						g_hash_table_insert(ld->DB_Table,StrDup(ComSymbol),(void *)ld->cDB);
+					} else {
+						ParError("same db appier");
+					}
+				}
+				p = q + 1;
+			}	while	(	(  q   !=  NULL  )
+						&&	(  db  ==  NULL  ) );
+			if		(  db  ==  NULL  ) {
+				ParError("db not found");
 			}
 		}
 		if		(  GetSymbol  !=  ';'  ) {
@@ -245,7 +239,7 @@ ENTER_FUNC;
 		}
 		ERROR_BREAK;
 	}
-	xfree(dbgname);
+	xfree(gname);
 LEAVE_FUNC;
 }
 
@@ -368,9 +362,8 @@ ENTER_FUNC;
 }
 
 static	LD_Struct	*
-LD_Par(
-	CURFILE	*in,
-	int parse_type)
+ParLD(
+	CURFILE	*in)
 {
 	LD_Struct	*ret;
 	char		*gname;
@@ -425,7 +418,7 @@ ENTER_FUNC;
 				gname = NULL;
 				ParError("DB error");
 			}
-			ParDB(in,ret,gname, parse_type);
+			ParDB(in,ret,gname);
 			break;
 		  case	T_DATA:
             if (ret->name == NULL) {
@@ -500,8 +493,7 @@ LEAVE_FUNC;
 
 extern	LD_Struct	*
 LD_Parser(
-	char	*name,
-	int		parse_type)
+	char	*name)
 {
 	LD_Struct	*ret;
 	struct	stat	stbuf;
@@ -513,7 +505,7 @@ ENTER_FUNC;
 	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,ThisEnv->D_Dir,Reserved) )  !=  NULL  ) {
-			ret = LD_Par(in, parse_type);
+			ret = ParLD(in);
 			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {
@@ -534,5 +526,6 @@ LD_ParserInit(void)
 	Reserved = MakeReservedTable(tokentable);
 
 	Records = NewNameHash();
+	ParsedDB = NewNameHash();
 	MessageHandlerInit();
 }

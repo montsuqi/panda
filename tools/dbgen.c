@@ -472,17 +472,17 @@ main(
 		RecParserInit();
 		DB_ParserInit();
 		if		( fDrop ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL,FALSE) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
 				MakeDrop(rec);
 			}
 		}
 		if		(  fCreate  ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL,FALSE) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
 		}
 		if		( fInsert ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL,FALSE) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
 				MakeInsert(rec);
 			}
 		}

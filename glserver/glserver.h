@@ -36,10 +36,8 @@
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
 GLOBAL	char	*PortSysData;
-GLOBAL	char	*CacheDir;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
-GLOBAL	Bool	fVerifyPeer;
 GLOBAL	char	*KeyFile;
 GLOBAL	char	*CertFile;
 GLOBAL	char	*CA_Path;

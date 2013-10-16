@@ -52,8 +52,6 @@
 #include	"debug.h"
 
 static	char	*CommandParameter;
-static	char	AppName[128];
-
 static	char	*BD_Name;
 static	BatchBind	*Bind;
 
@@ -63,7 +61,7 @@ InitData(
 {
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,"",name,"",P_ALL);
+	SetUpDirectory(Directory,"",name,"",TRUE);
 LEAVE_FUNC;
 }
 
@@ -74,7 +72,7 @@ InitSystem(
 ENTER_FUNC;
 	InitData(BD_Name);
 	if		(  ( ThisBD = GetBD(BD_Name) )  ==  NULL  ) {
-		Error("BD file not found.");
+		Error("BD (%s) not found.", BD_Name);
 	}
 	if		(  ThisBD->home  !=  NULL  ) {
 		chdir(ThisBD->home);
@@ -88,7 +86,7 @@ ENTER_FUNC;
 	if		(  ( Bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		Error("%s application is not in BD.",name);
 	}
-	InitDB_Process(AppName);
+	InitDB_Process(NULL);
 	ReadyHandlerDB(Bind->handler);
 LEAVE_FUNC;
 }
@@ -240,7 +238,6 @@ ENTER_FUNC;
 	if		( fl == NULL ) {
 		Error("module name is not specified.");
 	}
-	snprintf(AppName, sizeof(AppName), "dbstub-%s",fl->name);
 	InitSystem(fl->name);
 	Message("module %s: %.20s", fl->name, CommandParameter);
 	rc = ExecuteSubProcess(fl->name);

@@ -23,7 +23,7 @@
 #include	"libmondai.h"
 #include	"net.h"
 #include	"blob.h"
-#include	"sysdatacom.h"
+#include	"blobcom.h"
 
 extern	MonObjectType	RequestNewBLOB(NETFILE *fp, int mode);
 extern	size_t			RequestWriteBLOB(NETFILE *fp, MonObjectType obj, unsigned char *buff, size_t size);

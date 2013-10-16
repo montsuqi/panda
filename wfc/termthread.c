@@ -29,19 +29,18 @@
 #include	<stdlib.h>
 #include	<unistd.h>
 #include	<string.h>
-#include	<sys/types.h>
-#include	<sys/socket.h>
+#include    <sys/types.h>
+#include    <sys/socket.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<pthread.h>
 #include	<time.h>
 #include	<errno.h>
-#include	<uuid/uuid.h>
 
 #include	"enum.h"
+
 #include	"libmondai.h"
-#include	"RecParser.h"
 #include	"lock.h"
 #include	"socket.h"
 #include	"net.h"
@@ -52,13 +51,40 @@
 #include	"wfcdata.h"
 #include	"wfcio.h"
 #include	"wfc.h"
-#include	"glterm.h"
 #include	"termthread.h"
 #include	"corethread.h"
-#include	"sessionthread.h"
+#include	"driver.h"
 #include	"dirs.h"
+#include	"sysdb.h"
 #include	"message.h"
 #include	"debug.h"
+
+static	struct {
+	LOCKOBJECT;
+	GHashTable	*Hash;
+}	Terminal;
+	
+static	int			cTerm;
+static	Queue		*RemoveQueue;
+
+static	void
+TimevalToString(
+	char *buff,
+	struct timeval tv)
+{
+	sprintf(buff,"%lld.%06d", (long long)tv.tv_sec, (int)tv.tv_usec);
+}
+
+static	void
+_strftime(
+	char *ret, 
+	size_t size,
+	time_t time)
+{
+	struct tm tmp;
+	localtime_r(&time, &tmp);
+	strftime(ret, size, "%a %b %d %H:%M:%S %Y", &tmp);
+}
 
 extern	void
 TermEnqueue(
@@ -69,7 +95,7 @@ TermEnqueue(
 }
 
 static	SessionData	*
-NewSessionData(void)
+MakeSessionData(void)
 {
 	SessionData	*data;
 
@@ -77,10 +103,10 @@ ENTER_FUNC;
 	data = New(SessionData);
 	memclear(data,sizeof(SessionData));
 	data->type = SESSION_TYPE_TERM;
-	data->status = SESSION_STATUS_NORMAL;
 	data->hdr = New(MessageHeader);
+	data->name = NULL;
 	memclear(data->hdr,sizeof(MessageHeader));
-	data->hdr->command = APL_COMMAND_LINK;
+	data->status = SESSION_STATUS_NORMAL;
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
@@ -91,78 +117,33 @@ ENTER_FUNC;
 	data->apidata = New(APIData);
 	data->apidata->status = WFC_API_OK;
 	data->apidata->rec = NewLBS();
-	data->sysdbval = RecParseValueMem(SYSDBVAL_DEF,NULL);
-	InitializeValue(data->sysdbval);
-	data->count = 0;
-	data->w.sp = 0;
+	data->sysdbval = NULL;
+	data->fpSysData = SYSDB_Connect();
 LEAVE_FUNC;
 	return	(data);
 }
 
-static	guint
-FreeSpa(
-	char	*name,
-	LargeByteString	*spa,
-	void		*dummy)
+static LargeByteString	*
+NewMcpData(void)
 {
-	if (name != NULL) {
-		xfree(name);
+	LargeByteString *mcpdata;
+	if		(  ThisEnv->mcprec  !=  NULL  ) {
+		mcpdata = NewLBS();
+		LBS_ReserveSize(mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
+		NativePackValue(NULL,LBS_Body(mcpdata),ThisEnv->mcprec->value);
+	} else {
+		mcpdata = NULL;
 	}
-	if (spa != NULL) {
-		FreeLBS(spa);
-	}
-	return	TRUE;
-}
-
-static	guint
-FreeScr(
-	char	*name,
-	LargeByteString	*scr,
-	void		*dummy)
-{
-	if (name != NULL) {
-		xfree(name);
-	}
-	if (scr != NULL) {
-		FreeLBS(scr);
-	}
-	return	TRUE;
-}
-
-static	void
-FreeSessionData(
-	SessionData	*data)
-{
-ENTER_FUNC;
-	if (data->type != SESSION_TYPE_API) {
-		MessageLogPrintf("[%s@%s] session end",data->hdr->user,data->hdr->uuid);
-	}
-	if (data->linkdata != NULL) {
-		FreeLBS(data->linkdata);
-	}
-	xfree(data->hdr);
-	g_hash_table_foreach_remove(data->spadata,(GHRFunc)FreeSpa,NULL);
-	g_hash_table_destroy(data->spadata);
-	g_hash_table_foreach_remove(data->scrpool,(GHRFunc)FreeScr,NULL);
-	g_hash_table_destroy(data->scrpool);
-	xfree(data->scrdata);
-	FreeLBS(data->apidata->rec);
-	xfree(data->apidata);
-	FreeValueStruct(data->sysdbval);
-	xfree(data);
-LEAVE_FUNC;
+	return mcpdata;
 }
 
 static LargeByteString	*
 NewLinkData(void)
 {
 	LargeByteString *linkdata;
-	size_t size;
-
-	if (ThisEnv->linkrec != NULL) {
+	if		(  ThisEnv->linkrec  !=  NULL  ) {
 		linkdata = NewLBS();
-		size = NativeSizeValue(NULL,ThisEnv->linkrec->value);
-		LBS_ReserveSize(linkdata,size,FALSE);
+		LBS_ReserveSize(linkdata,NativeSizeValue(NULL,ThisEnv->linkrec->value),FALSE);
 		NativePackValue(NULL,LBS_Body(linkdata),ThisEnv->linkrec->value);
 	} else {
 		linkdata = NULL;
@@ -171,185 +152,324 @@ NewLinkData(void)
 }
 
 static	void
-RegisterSession(
+_UnrefSession(
 	SessionData	*data)
 {
-	SessionCtrl *ctrl;
-ENTER_FUNC;
-	snprintf(data->hdr->tempdir,SIZE_PATH,"%s/%s",TempDirRoot,data->hdr->uuid);
-	if (!MakeDir(data->hdr->tempdir,0700)) {
-		Error("cannot make session tempdir %s",data->hdr->tempdir);
+	data->fInProcess = FALSE;
+	if		(	(  data->name  !=  NULL  )
+			&&	(  g_hash_table_lookup(Terminal.Hash,data->name)  !=  NULL  ) ) {
+		cTerm --;
+		g_hash_table_remove(Terminal.Hash,data->name);
 	}
+	EnQueue(RemoveQueue,data);
+}
 
-	ctrl = NewSessionCtrl(SESSION_CONTROL_INSERT);
-	ctrl->session = data;
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
-	FreeSessionCtrl(ctrl);
-LEAVE_FUNC;
+static void
+CheckAccessTime(
+	char *name,
+	SessionData *data,
+	SessionData **candidate)
+{
+	if (!data->fInProcess) {
+		if (*candidate == NULL) {
+			*candidate = data;
+		} else {
+			if (timercmp(&(*candidate)->access_time,&data->access_time, >)) {
+				*candidate = data;
+			}
+		}
+	}
+}
+
+static	void
+DiscardSession()
+{
+	SessionData *data;
+
+	data = NULL;
+	g_hash_table_foreach(Terminal.Hash, 
+		(GHFunc)CheckAccessTime, (gpointer)(&data));
+	if (data != NULL) {
+		Message("[%s@%s] discard session", 
+			data->hdr->user, data->hdr->term);
+		_UnrefSession(data);
+	}
+}
+
+static	void
+RegistSession(
+	SessionData	*data)
+{
+	LockWrite(&Terminal);
+	if		(  g_hash_table_lookup(Terminal.Hash,data->name)  ==  NULL  ) {
+		if (SesNum != 0 && cTerm >= SesNum) {
+			DiscardSession();
+		}
+		cTerm ++;
+		g_hash_table_insert(Terminal.Hash,data->name,data);
+	}
+	UnLock(&Terminal);
 }
 
 static	SessionData	*
 LookupSession(
-	char	*term)
+	char	*term,
+	Bool	*fInProcess)
 {
-	SessionData *data;
-	SessionCtrl *ctrl;
+	SessionData	*data;
+
 ENTER_FUNC;
-	ctrl = NewSessionCtrl(SESSION_CONTROL_LOOKUP);
-	strcpy(ctrl->id,term);
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
-	data = ctrl->session;
-	FreeSessionCtrl(ctrl);
+	LockRead(&Terminal);
+	if		(  ( data = g_hash_table_lookup(Terminal.Hash,term) )  !=  NULL  ) {
+		*fInProcess = data->fInProcess;
+		data->fInProcess = TRUE;
+	} else {
+		*fInProcess = FALSE;
+	}
+	UnLock(&Terminal);
 LEAVE_FUNC;
 	return	(data);
 }
 
 static	void
-DeregisterSession(
-	SessionData *data)
+FinishSession(
+	SessionData	*data)
 {
-	SessionCtrl *ctrl;
-ENTER_FUNC;
-#if 0
-	if (!getenv("WFC_KEEP_TEMPDIR")) {
-		if (!rm_r(data->hdr->tempdir)) {
-			Error("cannot remove session tempdir %s",data->hdr->tempdir);
-		}
+	char	fname[SIZE_LONGNAME+1];
+
+	dbgprintf("unref name = [%s]\n",data->name);
+	if		(  SesDir  !=  NULL  ) {
+		sprintf(fname,"%s/%s.ses",SesDir,data->name);
+		remove(fname);
 	}
-#endif
-	ctrl = NewSessionCtrl(SESSION_CONTROL_DELETE);
-	ctrl->session = data;
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
-	FreeSessionCtrl(ctrl);
-	FreeSessionData(data);
-LEAVE_FUNC;
+	LockWrite(&Terminal);
+	_UnrefSession(data);
+	UnLock(&Terminal);
+}
+
+static	guint
+FreeSpa(
+	char	*name,
+	LargeByteString	*spa,
+	void		*dummy)
+{
+	if		(  name  !=  NULL  ) {
+		xfree(name);
+	}
+	if		(  spa  !=  NULL  ) {
+		FreeLBS(spa);
+	}
+	return	(TRUE);
+}
+
+static	guint
+FreeScr(
+	char	*name,
+	LargeByteString	*scr,
+	void		*dummy)
+{
+	if		(  name  !=  NULL  ) {
+		xfree(name);
+	}
+	if		(  scr  !=  NULL  ) {
+		FreeLBS(scr);
+	}
+	return	(TRUE);
 }
 
 static	void
-UpdateSession(
-	SessionData *data)
+FreeSession(
+	SessionData	*data)
 {
-	SessionCtrl *ctrl;
 ENTER_FUNC;
-	ctrl = NewSessionCtrl(SESSION_CONTROL_UPDATE);
-	ctrl->session = data;
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
-	FreeSessionCtrl(ctrl);
+	if (data->type != SESSION_TYPE_API) {
+		MessageLogPrintf("[%s@%s] session end",data->hdr->user,data->hdr->term);
+	}
+	xfree(data->name);
+	xfree(data->hdr);
+	if		(  data->mcpdata  !=  NULL  ) {
+		FreeLBS(data->mcpdata);
+	}
+	if		(  data->linkdata  !=  NULL  ) {
+		FreeLBS(data->linkdata);
+	}
+	g_hash_table_foreach_remove(data->spadata,(GHRFunc)FreeSpa,NULL);
+	g_hash_table_destroy(data->spadata);
+	g_hash_table_foreach_remove(data->scrpool,(GHRFunc)FreeScr,NULL);
+	g_hash_table_destroy(data->scrpool);
+	xfree(data->scrdata);
+	FreeLBS(data->apidata->rec);
+	xfree(data->apidata);
+	if (data->sysdbval != NULL) {
+		SYSDB_TERM_Delete(data->fpSysData,data->sysdbval);
+	}
+	SYSDB_Disconnect(data->fpSysData);
+	xfree(data);
 LEAVE_FUNC;
-}
-
-static unsigned int
-GetSessionNum()
-{
-	SessionCtrl *ctrl;
-	unsigned int size;
-ENTER_FUNC;
-	ctrl = NewSessionCtrl(SESSION_CONTROL_GET_SESSION_NUM);
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
-	size = ctrl->size;
-	FreeSessionCtrl(ctrl);
-LEAVE_FUNC;
-	return size;
 }
 
 static	SessionData	*
 InitAPISession(
+	char *term,
+	Bool fKeep,
 	char *user,
 	char *ldname,
-	char *wname,
-	char *host)
+	char *wname)
 {
 	SessionData		*data;
 	LD_Node			*ld;
 	RecordStruct	*rec;
-	size_t			size;
-	uuid_t			u;
 
 ENTER_FUNC;
-	data = NewSessionData();
+	data = MakeSessionData();
 	data->type = SESSION_TYPE_API;
-	uuid_generate(u);
-	uuid_unparse(u,data->hdr->uuid);
 	strcpy(data->hdr->window,wname);
+	strcpy(data->hdr->term,term);
 	strcpy(data->hdr->user,user);
-	strcpy(data->host,host);
+	data->fKeep = fKeep;
 	data->fInProcess = TRUE;
 	if ((ld = g_hash_table_lookup(APS_Hash, ldname)) != NULL) {
 		data->ld = ld;
+		if		(  ThisEnv->mcprec  !=  NULL  ) {
+			data->mcpdata = NewLBS();
+			LBS_ReserveSize(data->mcpdata,NativeSizeValue(NULL,ThisEnv->mcprec->value),FALSE);
+			NativePackValue(NULL,LBS_Body(data->mcpdata),ThisEnv->mcprec->value);
+		}
 		data->linkdata = NULL;
 		data->cWindow = ld->info->cWindow;
 		data->scrdata = NULL;
+		data->name = StrDup(data->hdr->term);
 		data->hdr->puttype = SCREEN_NULL;
+		data->w.n = 0;
 		rec = GetWindow(wname);
-		size = NativeSizeValue(NULL,rec->value);
-		LBS_ReserveSize(data->apidata->rec, size,FALSE);
+		LBS_ReserveSize(data->apidata->rec, NativeSizeValue(NULL,rec->value),FALSE);
 		NativePackValue(NULL,LBS_Body(data->apidata->rec),rec->value);
 	} else {
-		Warning("[%s] session fail LD [%s] not found.",data->hdr->uuid,ldname);
+		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,ldname);
 		data = NULL;
 	}
 LEAVE_FUNC;
 	return	(data);
 }
 
+static	void
+InitSysDBValue(
+	char 		*term,
+	SessionData	*data)
+{
+	char	buff[SIZE_LONGNAME+1];
+ENTER_FUNC;
+	data->sysdbval = SYSDB_TERM_New(data->fpSysData,term);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_USER, data->hdr->user);
+	_strftime(buff, sizeof(buff), data->create_time.tv_sec);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_CTIME, buff);
+	_strftime(buff, sizeof(buff), data->access_time.tv_sec);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME, buff);
+LEAVE_FUNC;
+}
+
+static	SessionData	*
+InitSession(
+	NETFILE	*fp,
+	char	*term)
+{
+	SessionData	*data;
+	char	ldname[SIZE_LONGNAME+1];
+	LD_Node	*ld;
+	int		i;
+	Bool	fKeep;
+
+ENTER_FUNC;
+	data = MakeSessionData();
+	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
+		fKeep = TRUE;
+	} else {
+		fKeep = FALSE;
+	}
+	strcpy(data->hdr->term,term);
+	RecvnString(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
+	data->fKeep = fKeep;
+	data->fInProcess = TRUE;
+	MessageLogPrintf("[%s@%s] session start(%d)",
+		data->hdr->user,data->hdr->term, cTerm+1);
+	dbgprintf("term = [%s]",data->hdr->term);
+	dbgprintf("user = [%s]",data->hdr->user);
+	RecvnString(fp,SIZE_LONGNAME,ldname);		ON_IO_ERROR(fp,badio);
+	if		(  ( ld = g_hash_table_lookup(APS_Hash,ldname) )  !=  NULL  ) {
+		SendPacketClass(fp,WFC_OK);
+		data->ld = ld;
+		data->mcpdata = NewMcpData();
+		data->linkdata = NewLinkData();
+		data->cWindow = ld->info->cWindow;
+		data->scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
+													* data->cWindow);
+		for	( i = 0 ; i < data->cWindow ; i ++ ) {
+			if		(  data->ld->info->windows[i]  !=  NULL  ) {
+				dbgprintf("[%s]",data->ld->info->windows[i]->name);
+				data->scrdata[i] = GetScreenData(data,data->ld->info->windows[i]->name);
+			} else {
+				data->scrdata[i] = NULL;
+			}
+		}
+		data->name = StrDup(data->hdr->term);
+		data->hdr->puttype = SCREEN_NULL;
+		data->w.n = 0;
+		InitSysDBValue(term, data);
+		RegistSession(data);
+	} else {
+		Warning("[%s] session fail LD [%s] not found.",data->hdr->term,ldname);
+	  badio:
+		SendPacketClass(fp,WFC_NOT);
+		FinishSession(data);
+		data = NULL;
+	}
+LEAVE_FUNC;
+	return	(data);
+}
 
 static	SessionData	*
 ReadTerminal(
 	NETFILE		*fp,
 	SessionData	*data)
 {
-	LD_Node			*ld;
-	Bool			fExit;
-	int				c;
+	LD_Node	*ld;
+	Bool		fExit;
+	int			c;
 	LargeByteString	*scrdata;
-	int				i;
+	char		window[SIZE_LONGNAME+1]
+		,		comp[SIZE_LONGNAME+1];
+
 ENTER_FUNC;
 	fExit = FALSE;
-	while (!fExit) {
-		switch (c = RecvPacketClass(fp)) {
-		case WFC_DATA:
+	while	(  !fExit  ) {
+		switch	(c = RecvPacketClass(fp)) {
+		  case	WFC_DATA:
 			dbgmsg("recv DATA");
-			if (data != NULL) {
-				RecvnString(fp,SIZE_NAME,data->hdr->window);
-					ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,data->hdr->widget);
-					ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,data->hdr->event);
-					ON_IO_ERROR(fp,badio);
-
-				data->w.sp = RecvInt(fp);					
-					ON_IO_ERROR(fp,badio);
-				for (i=0;i<data->w.sp ;i++) {
-					data->w.s[i].puttype = RecvChar(fp);
-						ON_IO_ERROR(fp,badio);
-					RecvnString(fp,SIZE_NAME,data->w.s[i].window);
-						ON_IO_ERROR(fp,badio);
-				}
-
+			if		(  data  !=  NULL  ) {
+				RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
+				RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
+				RecvnString(fp,SIZE_NAME,data->hdr->event);		ON_IO_ERROR(fp,badio);
 				dbgprintf("window = [%s]",data->hdr->window);
 				dbgprintf("widget = [%s]",data->hdr->widget);
 				dbgprintf("event  = [%s]",data->hdr->event);
-				ld = g_hash_table_lookup(ComponentHash,data->hdr->window);
-				if (ld != NULL) {
+				PureComponentName(data->hdr->window,comp);
+				if		(  ( ld = g_hash_table_lookup(ComponentHash,comp) )
+						   !=  NULL  ) {
 					dbgprintf("ld = [%s]",ld->info->name);
-					dbgprintf("window = [%s]",data->hdr->window);
-					scrdata = GetScreenData(data,data->hdr->window);
-					if (scrdata != NULL) {
-						SendPacketClass(fp,WFC_OK);	ON_IO_ERROR(fp,badio);
+					PureWindowName(data->hdr->window,window);
+					dbgprintf("window = [%s]",window);
+					if		(  ( scrdata = GetScreenData(data,window) )  !=  NULL  ) {
+						SendPacketClass(fp,WFC_OK);				ON_IO_ERROR(fp,badio);
 						dbgmsg("send OK");
-						if (RecvPacketClass(fp) == WFC_DATA) {
-							RecvLBS(fp,scrdata);ON_IO_ERROR(fp,badio);
+						if		(  RecvPacketClass(fp)  ==  WFC_DATA  ) {
+							RecvLBS(fp,scrdata);					ON_IO_ERROR(fp,badio);
 						}
+						data->hdr->rc = TO_CHAR(0);
 						data->hdr->puttype = SCREEN_NULL;
 					} else {
-						Error("invalid window [%s]",data->hdr->window);
+						Error("invalid window [%s]",window);
 					}
-					if (data->ld != ld) {
+					if		(  data->ld  !=  ld  ) {
 						ChangeLD(data,ld);
 					}
 				} else {
@@ -360,15 +480,19 @@ ENTER_FUNC;
 				fExit = TRUE;
 			}
 			break;
-		case WFC_OK:
+		  case	WFC_PING:
+			dbgmsg("recv PING");
+			SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
+			dbgmsg("send PONG");
+			break;
+		  case	WFC_OK:
 			dbgmsg("OK");
 			fExit = TRUE;
 			break;
-		case WFC_END:
+		  case	WFC_END:
 			dbgmsg("END");
-			if ((ld = g_hash_table_lookup(APS_Hash, "session"))  !=  NULL) {
-				strncpy(data->hdr->window,"session_end",
-					sizeof(data->hdr->window));
+			if ((ld = g_hash_table_lookup(APS_Hash, "sessionend"))  !=  NULL) {
+				data->hdr->window[0] = 0;
 				data->hdr->widget[0] = 0;
 				sprintf(data->hdr->event,"SESSIONEND");
 				data->hdr->puttype = SCREEN_NULL;
@@ -379,15 +503,15 @@ ENTER_FUNC;
 			}
 			fExit = TRUE;
 			break;
-		default:
+		  default:
 			Warning("Invalid PacketClass in ReadTerminal [%X]", c);
-			SendPacketClass(fp,WFC_NOT);ON_IO_ERROR(fp,badio);
+			SendPacketClass(fp,WFC_NOT);			ON_IO_ERROR(fp,badio);
 			fExit = TRUE;
 			data->status = SESSION_STATUS_ABORT;
 			break;
 		}
 	}
-badio:
+  badio:
 LEAVE_FUNC;
 	return(data);
 }
@@ -397,59 +521,82 @@ SendTerminal(
 	NETFILE		*fp,
 	SessionData	*data)
 {
-	unsigned char	c;
-	char			wname[SIZE_LONGNAME+1];
+	MessageHeader	*hdr;
+	int			i
+		,		c;
+	Bool		rc;
+	Bool		fExit;
+	char		wname[SIZE_LONGNAME+1]
+		,		buff[SIZE_LONGNAME+1];
 	LargeByteString	*scrdata;
-	int 			i;
 
 ENTER_FUNC;
-	SendPacketClass(fp,WFC_HEADER);		ON_IO_ERROR(fp,badio);
-	dbgmsg("send DATA");
-	SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
-	SendString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
-	SendString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
-	SendChar  (fp,data->hdr->puttype);	ON_IO_ERROR(fp,badio);
-	dbgprintf("window    = [%s]",data->hdr->window);
-	SendInt(fp,data->w.sp);				ON_IO_ERROR(fp,badio);
-	for (i=0;i<data->w.sp;i++) {
-		SendChar(fp,data->w.s[i].puttype);ON_IO_ERROR(fp,badio);
-		SendString(fp,data->w.s[i].window);ON_IO_ERROR(fp,badio);
-	}
-	while (1) {
-		c = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-		switch (c) {
-		case WFC_DATA:
-			dbgmsg(">DATA");
-			RecvnString(fp,SIZE_LONGNAME,wname);ON_IO_ERROR(fp,badio);
-			if ((scrdata = GetScreenData(data,wname)) != NULL) {
-				dbgmsg("send OK");
-				SendPacketClass(fp,WFC_OK);	ON_IO_ERROR(fp,badio);
-				SendLBS(fp,scrdata);		ON_IO_ERROR(fp,badio);
-			} else {
-				dbgmsg("send NODATA");
-				SendPacketClass(fp,WFC_NODATA);	ON_IO_ERROR(fp,badio);
-			}
-			dbgmsg("<DATA");
-			break;
-		case WFC_DONE:
-			dbgmsg("DONE");
-			return TRUE;
-		case WFC_END:
-			dbgmsg("END");
-			return FALSE;
-		default:
-			Warning("[%s] session failure packet [%X]",data->hdr->uuid,c);
-			dbgprintf("c = [%X]\n",c);
-			return FALSE;
+	rc = FALSE;
+	SendPacketClass(fp,WFC_PING);		ON_IO_ERROR(fp,badio);
+	dbgmsg("send PING");
+	if		(  RecvPacketClass(fp)  ==  WFC_PONG  ) {
+		dbgmsg("recv PONG");
+		ON_IO_ERROR(fp,badio);
+		SendPacketClass(fp,WFC_HEADER);		ON_IO_ERROR(fp,badio);
+		dbgmsg("send DATA");
+		hdr = data->hdr;
+		SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
+		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
+		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
+		SendChar(fp,hdr->puttype);			ON_IO_ERROR(fp,badio);
+		SendInt(fp,data->w.n);				ON_IO_ERROR(fp,badio);
+		dbgprintf("window    = [%s]",hdr->window);
+		dbgprintf("data->w.n = %d",data->w.n);
+		for	( i = 0 ; i < data->w.n ; i ++ ) {
+			SendInt(fp,data->w.control[i].PutType);			ON_IO_ERROR(fp,badio);
+			SendString(fp,data->w.control[i].window);		ON_IO_ERROR(fp,badio);
 		}
+		data->w.n = 0;
+		fExit = FALSE;
+		do {
+			rc = TRUE;
+			switch	(c = RecvPacketClass(fp))	{
+			  case	WFC_PING:
+				dbgmsg("PING");
+				SendPacketClass(fp,WFC_PONG);		ON_IO_ERROR(fp,badio);
+				break;
+			  case	WFC_DATA:
+				dbgmsg(">DATA");
+				RecvnString(fp,SIZE_NAME,buff);				ON_IO_ERROR(fp,badio);
+				PureWindowName(buff,wname);
+				if		(  ( scrdata = GetScreenData(data,wname) )  !=  NULL  ) {
+					dbgmsg("send OK");
+					SendPacketClass(fp,WFC_OK);			ON_IO_ERROR(fp,badio);
+					SendLBS(fp,scrdata);				ON_IO_ERROR(fp,badio);
+				} else {
+					dbgmsg("send NODATA");
+					SendPacketClass(fp,WFC_NODATA);			ON_IO_ERROR(fp,badio);
+				}
+				dbgmsg("<DATA");
+				break;
+			  case	WFC_DONE:
+				dbgmsg("DONE");
+				fExit = TRUE;
+				break;
+			  case	WFC_END:
+				dbgmsg("END");
+				fExit = TRUE;
+				rc = FALSE;
+				break;
+			  default:
+				Warning("[%s] session failure packet [%X]",data->hdr->term, c);
+				dbgprintf("c = [%X]\n",c);
+				fExit = TRUE;
+				rc = FALSE;
+				break;
+			}
+		}	while	(  !fExit  );
+	} else {
+	  badio:
+		Warning("[%s] session recv failure",data->hdr->term);
 	}
-	Warning("does not reach");
 LEAVE_FUNC;
-	return FALSE;
-badio:
-	Warning("[%s] session recv failure",data->hdr->uuid);
-LEAVE_FUNC;
-	return FALSE;
+	return	(rc); 
 }
 
 static	SessionData	*
@@ -460,9 +607,13 @@ Process(
 	struct	timeval	tv2;
 ENTER_FUNC;
 	gettimeofday(&tv1,NULL);
-	CoreEnqueue(data);
+	if		(  !fLoopBack  ) {
+		CoreEnqueue(data);
+	} else {
+		EnQueue(data->term->que,data);
+	}
 	data = DeQueue(data->term->que);
-	data->count += 1;
+
 	gettimeofday(&tv2,NULL);
 	timersub(&tv2, &tv1, &(data->process_time));
 	timeradd(&(data->total_process_time), &(data->process_time), &tv1);
@@ -471,32 +622,215 @@ LEAVE_FUNC;
 	return	(data);
 }
 
+#define	RECORD_SPA		1
+#define	RECORD_SCRPOOL	2
+#define	RECORD_SCRDATA	3
+
+static	SessionData	*
+LoadSession(
+	char	*term)
+{
+	FILE		*fp;
+	SessionData	*data;
+	char	fname[SIZE_LONGNAME+1]
+		,	name[SIZE_LONGNAME+1];
+	size_t	size;
+	LargeByteString	*lbs;
+	LD_Node	*ld;
+	int		flag;
+
+ENTER_FUNC;
+	if		(  SesDir  ==  NULL  ) {
+		data = NULL;
+	} else {
+		sprintf(fname,"%s/%s.ses",SesDir,term);
+		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
+			data = MakeSessionData();
+			strcpy(data->hdr->term,term);
+			fread(&data->fKeep,sizeof(Bool),1,fp);
+#if	0
+			fread(&data->fInProcess,sizeof(Bool),1,fp);
+#else
+			data->fInProcess = TRUE;
+#endif
+			fread(data->hdr,sizeof(MessageHeader),1,fp);
+			fread(&size,sizeof(size_t),1,fp);	/*	ld		*/
+			fread(name,size,1,fp);
+			ld = g_hash_table_lookup(APS_Hash,name);
+			fread(&data->w,sizeof(WindowControl),1,fp);	/*	w		*/
+			while	(  ( flag = fgetc(fp) )  ==  RECORD_SPA  ) {
+				fread(&size,sizeof(size_t),1,fp);	/*	spa name	*/
+				fread(name,size,1,fp);
+				lbs = NewLBS();
+				fread(&size,sizeof(size_t),1,fp);	/*	spa data	*/
+				LBS_ReserveSize(lbs,size,FALSE);
+				fread(LBS_Body(lbs),size,1,fp);
+				dbgprintf("spa name = [%s]",name);
+				if		(  data->spadata  !=  NULL  ) {
+					g_hash_table_insert(data->spadata,StrDup(name),lbs);
+				}
+			}
+			ungetc(flag,fp);
+			data->mcpdata = NewLBS();
+			fread(&size,sizeof(size_t),1,fp);	/*	mcp data	*/
+			LBS_ReserveSize(data->mcpdata,size,FALSE);
+			fread(LBS_Body(data->mcpdata),size,1,fp);
+			fread(&size,sizeof(size_t),1,fp);	/*	link data	*/
+			if		(  size  >  0  ) {
+				data->linkdata = NewLBS();
+				LBS_ReserveSize(data->linkdata,size,FALSE);
+				fread(LBS_Body(data->linkdata),size,1,fp);
+			} else {
+				data->linkdata = NULL;
+			}
+			while	(  ( flag = fgetc(fp) )  ==  RECORD_SCRPOOL  ) {
+				fread(&size,sizeof(size_t),1,fp);	/*	screen name	*/
+				fread(name,size,1,fp);
+				lbs = NewLBS();
+				fread(&size,sizeof(size_t),1,fp);	/*	scr data	*/
+				LBS_ReserveSize(lbs,size,FALSE);
+				fread(LBS_Body(lbs),size,1,fp);
+				dbgprintf("scr name = [%s]",name);
+				if		(  data->scrpool  !=  NULL  ) {
+					g_hash_table_insert(data->scrpool,StrDup(name),lbs);
+				}
+			}
+			ungetc(flag,fp);
+			ChangeLD(data,ld);
+			data->name = StrDup(data->hdr->term);
+			RegistSession(data);
+			fclose(fp);
+		} else {
+			data = NULL;
+		}
+	}
+LEAVE_FUNC;
+	return	(data);
+}
+
+static	void
+_SaveSpa(
+	char	*name,
+	LargeByteString	*lbs,
+	FILE	*fp)
+{
+	size_t	size;
+
+	dbgprintf("[%s] size = %d\n",name,LBS_Size(lbs));
+	fputc(RECORD_SPA,fp);
+	size = strlen(name) + 1;
+	fwrite(&size,sizeof(size_t),1,fp);	/*	spa name	*/
+	fwrite(name,size,1,fp);
+	size = LBS_Size(lbs);
+	fwrite(&size,sizeof(size_t),1,fp);	/*	spa data	*/
+	fwrite(LBS_Body(lbs),size,1,fp);
+}
+
+static	void
+_SaveScrpool(
+	char	*name,
+	LargeByteString	*lbs,
+	FILE	*fp)
+{
+	size_t	size;
+
+	dbgprintf("[%s] size = %d",name,LBS_Size(lbs));
+	fputc(RECORD_SCRPOOL,fp);
+	size = strlen(name) + 1;
+	fwrite(&size,sizeof(size_t),1,fp);	/*	spa name	*/
+	fwrite(name,size,1,fp);
+	size = LBS_Size(lbs);
+	fwrite(&size,sizeof(size_t),1,fp);	/*	spa data	*/
+	fwrite(LBS_Body(lbs),size,1,fp);
+}
+
+static	void
+SaveSession(
+	SessionData	*data)
+{
+	char	fname[SIZE_LONGNAME+1];
+	FILE	*fp;
+	size_t	size;
+
+ENTER_FUNC;
+	if		(  SesDir  !=  NULL  ) {
+		sprintf(fname,"%s/%s.ses",SesDir,data->name);
+		if		(  ( fp = Fopen(fname,"w") )  !=  NULL  ) {
+			fwrite(&data->fKeep,sizeof(Bool),1,fp);
+#if	0
+			fwrite(&data->fInProcess,sizeof(Bool),1,fp);
+#endif
+			fwrite(data->hdr,sizeof(MessageHeader),1,fp);
+			size = strlen(data->ld->info->name) + 1;
+			fwrite(&size,sizeof(size_t),1,fp);				/*	ld		*/
+			fwrite(data->ld->info->name,size,1,fp);
+			fwrite(&data->w,sizeof(WindowControl),1,fp);	/*	w		*/
+			if		(  data->spadata  !=  NULL  ) {
+				g_hash_table_foreach(data->spadata,(GHFunc)_SaveSpa,fp);
+			}
+			size = LBS_Size(data->mcpdata);
+			fwrite(&size,sizeof(size_t),1,fp);				/*	mcp data	*/
+			fwrite(LBS_Body(data->mcpdata),LBS_Size(data->mcpdata),1,fp);
+			if		(  data->linkdata  !=  NULL  ) {
+				size = LBS_Size(data->linkdata);
+				fwrite(&size,sizeof(size_t),1,fp);				/*	link data	*/
+				fwrite(LBS_Body(data->linkdata),LBS_Size(data->linkdata),1,fp);
+			} else {
+				size = 0;
+				fwrite(&size,sizeof(size_t),1,fp);
+			}
+			if		(  data->scrpool  !=  NULL  ) {
+				g_hash_table_foreach(data->scrpool,(GHFunc)_SaveScrpool,fp);
+			}
+			fclose(fp);
+		}
+	}
+LEAVE_FUNC;
+}
+
 static	SessionData	*
 CheckSession(
 	NETFILE	*fp,
 	char	*term)
 {
 	SessionData	*data;
+	Bool		fError
+		,		fInProcess;
 ENTER_FUNC;
-	if ((data = LookupSession(term)) != NULL) {
-		if (!data->fInProcess) {
+	fError = TRUE;
+	if		(  ( data = LookupSession(term,&fInProcess) )  !=  NULL  ) {
+		if		(  !fInProcess  ) {
+			dbgmsg("TRUE");
 			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
-			data->hdr->command = APL_COMMAND_GET;
-			gettimeofday(&data->access_time,NULL);
+			data->hdr->status = TO_CHAR(APL_SESSION_GET);
 		} else {
+			dbgmsg("FALSE");
 			Warning("Error: Other threads are processing it.");
 			SendPacketClass(fp,WFC_FALSE);			ON_IO_ERROR(fp,badio);
 			data = NULL;
 		}
 	} else {
-		Warning("session [%s] does not found",term);
+		if		(  ( data = LoadSession(term) )  ==  NULL  ) {
+			dbgmsg("INIT");
+			if		(  ( data = InitSession(fp,term) )  !=  NULL  )	{
+				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+			}
+		} else {
+			dbgmsg("TRUE");
+			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
+			data->hdr->status = TO_CHAR(APL_SESSION_GET);
+		}
+	}
+	if (data != NULL) {
+		gettimeofday(&data->access_time,NULL);
+	}
+	fError = FALSE;
+  badio:
+	if		(  fError  ) {
+		data = NULL;
 	}
 LEAVE_FUNC;
-	return data;
-badio:
-LEAVE_FUNC;
-	Warning("CheckSession failure: io error");
-	return NULL;
+	return	(data);
 }
 
 static	void
@@ -504,94 +838,54 @@ KeepSession(
 	SessionData	*data)
 {
 ENTER_FUNC;
+	dbgprintf("data->name = [%s]\n",data->name);
+	LockWrite(&Terminal);
+	SaveSession(data);
 	data->fInProcess = FALSE;
+	dbgprintf("cTerm  = %d",cTerm);
+	dbgprintf("SesNum = %d",SesNum);
+	UnLock(&Terminal);
 LEAVE_FUNC;
 }
 
 static	void
-TermMain(
-	TermNode	*term,
-	SessionData	*data)
+UpdateSysDBPreProcess(
+	SessionData *data)
 {
-	if (data != NULL) {
-		if (data->status != SESSION_STATUS_ABORT) {
-			UpdateSession(data);
-			data = Process(data);
-		}
-		if (data->status != SESSION_STATUS_NORMAL) {
-			DeregisterSession(data);
-		} else {
-			if (SendTerminal(term->fp,data)) {
-				KeepSession(data);
-				UpdateSession(data);
-			} else {
-				DeregisterSession(data);
-			}
-		}
-	}
-	SendPacketClass(term->fp,WFC_DONE);
-}
-
-static	void
-TermInit(
-	TermNode	*term)
-{
-	SessionData	*data;
-	LD_Node		*ld;
-	int			i;
-	uuid_t		u;
+	char buff[128];
 ENTER_FUNC;
-	data = NewSessionData();
-	data->term = term;
-	data->fInProcess = TRUE;
-	uuid_generate(u);
-	uuid_unparse(u,data->hdr->uuid);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_WINDOW, data->hdr->window);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_WIDGET, data->hdr->widget);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_EVENT, data->hdr->event);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_INPROCESS, "T");
 
-	if ((ld = g_hash_table_lookup(APS_Hash,ThisEnv->InitialLD)) == NULL) {
-		Error("cannot find initial ld:%s.check directory",ThisEnv->InitialLD);
-	}
+	_strftime(buff, sizeof(buff), data->access_time.tv_sec);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_ATIME,buff);
+	sprintf(buff, "%d", ++data->count);
+	SYSDB_TERM_SetValue(data->sysdbval,SYSDB_TERM_COUNT,buff);
 
-	RecvnString(term->fp,SIZE_NAME,data->hdr->user);ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp,SIZE_HOST,data->host);	ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp,SIZE_NAME,data->agent);ON_IO_ERROR(term->fp,badio);
-
-	MessageLogPrintf("[%s:%s] session start",data->hdr->user,data->hdr->uuid);
-	dbgprintf("uuid   = [%s]",data->hdr->uuid);
-	dbgprintf("user   = [%s]",data->hdr->user);
-	dbgprintf("host   = [%s]",data->host);
-	dbgprintf("agent  = [%s]",data->agent);
-
-	if (SesNum != 0 && GetSessionNum() >= SesNum) {
-		Warning("Discard new session(%s);max session number(%d)",term,SesNum);
-		SendPacketClass(term->fp,WFC_NOT);
-		CloseNet(term->fp);
-		return;
-	}
-
-	SendPacketClass(term->fp,WFC_OK);	ON_IO_ERROR(term->fp,badio);
-	SendString(term->fp,data->hdr->uuid);	ON_IO_ERROR(term->fp,badio);
-
-	data->ld = ld;
-	data->linkdata = NewLinkData();
-	data->cWindow = ld->info->cWindow;
-	data->scrdata = 
-		(LargeByteString **)xmalloc(sizeof(void*)*data->cWindow);
-	for	(i = 0 ; i < data->cWindow ; i ++) {
-		if (data->ld->info->windows[i] != NULL) {
-			dbgprintf("[%s]",data->ld->info->windows[i]->name);
-			data->scrdata[i] = 
-				GetScreenData(data,data->ld->info->windows[i]->name);
-		} else {
-			data->scrdata[i] = NULL;
-		}
-	}
-	data->hdr->puttype = SCREEN_NULL;
-	RegisterSession(data);
-	TermMain(term,data);
-	CloseNet(term->fp);
-badio:
+	SYSDB_TERM_Update(data->fpSysData,data->sysdbval);
 LEAVE_FUNC;
-	return;
+}
+
+static	void
+UpdateSysDBPostProcess(
+	SessionData *data)
+{
+	char buff[128];
+ENTER_FUNC;
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_WINDOW, data->hdr->window);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_WIDGET, data->hdr->widget);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_EVENT, data->hdr->event);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_INPROCESS, "F");
+
+	TimevalToString(buff, data->process_time);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_PTIME, buff);
+	TimevalToString(buff, data->total_process_time);
+	SYSDB_TERM_SetValue(data->sysdbval, SYSDB_TERM_TPTIME, buff);
+
+	SYSDB_TERM_Update(data->fpSysData,data->sysdbval);
+LEAVE_FUNC;
 }
 
 static	void
@@ -599,18 +893,31 @@ TermSession(
 	TermNode	*term)
 {
 	SessionData	*data;
-	char		buff[SIZE_TERM+1];
+	char	buff[SIZE_TERM+1];
 	
 	RecvnString(term->fp,SIZE_TERM,buff);
 	data = CheckSession(term->fp,buff);
 	if (data != NULL) {
 		data = ReadTerminal(term->fp,data);
+		SaveSession(data);
 		data->term = term;
 		data->retry = 0;
-		TermMain(term,data);
+		if		(  data->status != SESSION_STATUS_ABORT  ) {
+			UpdateSysDBPreProcess(data);
+			data = Process(data);
+			UpdateSysDBPostProcess(data);
+		}
+		if		(	(  data->status != SESSION_STATUS_NORMAL  )
+				||	(  !SendTerminal(term->fp,data)  ) ) {
+			FinishSession(data);
+		} else {
+			KeepSession(data);
+		}
 	}
+	SendPacketClass(term->fp,WFC_DONE);
 	CloseNet(term->fp);
 }
+
 
 static	void
 APISession(
@@ -621,7 +928,7 @@ APISession(
 	char ld[SIZE_NAME+1];
 	char window[SIZE_NAME+1];
 	char user[SIZE_USER+1];
-	char host[SIZE_HOST+1];
+	char sterm[SIZE_TERM+1];
 
 	data = NULL;
 	RecvnString(term->fp, sizeof(ld), ld);			
@@ -630,31 +937,29 @@ APISession(
 		ON_IO_ERROR(term->fp,badio);
 	RecvnString(term->fp, sizeof(user), user);		
 		ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp, sizeof(host), host);	
+	RecvnString(term->fp, sizeof(sterm), sterm);	
 		ON_IO_ERROR(term->fp,badio);
 
-	data = InitAPISession(user,ld,window,host);
+	data = InitAPISession(sterm, FALSE, user, ld, window);
 	if (data != NULL) {
 		data->term = term;
 		data->retry = 0;
 		api = data->apidata;
 		RecvLBS(term->fp, api->rec);
+		RegistSession(data);
 
 		data = Process(data);
 		api = data->apidata;
 
-		SendPacketClass(term->fp, api->status);
-			ON_IO_ERROR(term->fp,badio2);
+		SendPacketClass(term->fp, api->status);	ON_IO_ERROR(term->fp,badio2);
 		if (api->status == WFC_API_OK) {
-			SendLBS(term->fp, api->rec);
-				ON_IO_ERROR(term->fp,badio2);
+			SendLBS(term->fp, api->rec);	ON_IO_ERROR(term->fp,badio2);
 		}
 		CloseNet(term->fp);
 	badio2:
-		FreeSessionData(data);
+		FinishSession(data);
 	} else {
-		SendPacketClass(term->fp,WFC_API_NOT_FOUND);
-			ON_IO_ERROR(term->fp,badio2);
+		SendPacketClass(term->fp, WFC_API_NOT_FOUND);ON_IO_ERROR(term->fp,badio2);
 		CloseNet(term->fp);
 	}
 	badio:
@@ -670,9 +975,6 @@ TermThread(
 ENTER_FUNC;
 	klass = RecvPacketClass(term->fp);
 	switch (klass) {
-	case WFC_TERM_INIT:
-		TermInit(term);
-		break;
 	case WFC_TERM:
 		TermSession(term);
 		break;
@@ -689,15 +991,15 @@ extern	int
 ConnectTerm(
 	int		_fhTerm)
 {
-	int				fhTerm;
-	pthread_t		thr;
+	int		fhTerm;
+	pthread_t	thr;
 	pthread_attr_t	attr;
-	TermNode		*term;
+	TermNode	*term;
 
 ENTER_FUNC;
 	pthread_attr_init(&attr);
 	pthread_attr_setstacksize(&attr,256*1024);
-	if ((fhTerm = accept(_fhTerm,0,0)) < 0) {
+	if		(  ( fhTerm = accept(_fhTerm,0,0) )  <  0  )	{
 		Error("accept(2) failure:%s",strerror(errno));
 	}
 	term = New(TermNode);
@@ -709,12 +1011,37 @@ LEAVE_FUNC;
 	return	(fhTerm); 
 }
 
+static	void
+RemoveThread(void)
+{
+	SessionData	*data;
+
+	while	(TRUE)	{
+		data = (SessionData *)DeQueue(RemoveQueue);
+		FreeSession(data);
+	}
+}
+
 extern	void
 InitTerm(void)
 {
+	pthread_t	thr;
+
 ENTER_FUNC;
-	RecParserInit();
-	if (ThisEnv->linkrec != NULL) {
+	cTerm = 0;
+	RemoveQueue = NewQueue();
+	InitLock(&Terminal);
+	LockWrite(&Terminal);
+	Terminal.Hash = NewNameHash();
+	UnLock(&Terminal);
+
+	pthread_create(&thr,NULL,(void *(*)(void *))RemoveThread,NULL);
+	pthread_detach(thr);
+
+	if		(  ThisEnv->mcprec  !=  NULL  ) {
+		InitializeValue(ThisEnv->mcprec->value);
+	}
+	if		(  ThisEnv->linkrec  !=  NULL  ) {
 		InitializeValue(ThisEnv->linkrec->value);
 	}
 LEAVE_FUNC;

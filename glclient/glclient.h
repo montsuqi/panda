@@ -44,40 +44,13 @@ typedef struct {
 	Port		*port;
 	char		*title;
 	char		*bgcolor;
-	Bool		IsRecv;
-	char		*FocusedWindow;
-	char		*FocusedWidget;
-	char		*ThisWindow;
-	GHashTable	*WindowTable;
-	GHashTable	*WidgetTable;
-	GList		*PrintList;
-	GList		*DLList;
 #ifdef	USE_SSL
 	SSL_CTX		*ctx;
 #ifdef  USE_PKCS11
 	ENGINE		*engine;
 #endif  /* USE_PKCS11 */
 #endif  /* USE_SSL */
-}	GLSession;
-
-#define	FPCOMM(session)			((session)->fpComm)
-#define PORT(session)			((session)->port)
-#define	TITLE(session)			((session)->title)
-#define	BGCOLOR(session)		((session)->bgcolor)
-#define	ISRECV(session)			((session)->IsRecv)
-#define	FOCUSEDWINDOW(session)	((session)->FocusedWindow)
-#define	FOCUSEDWIDGET(session)	((session)->FocusedWidget)
-#define	THISWINDOW(session)		((session)->ThisWindow)
-#define	WINDOWTABLE(session)	((session)->WindowTable)
-#define	WIDGETTABLE(session)	((session)->WidgetTable)
-#define	PRINTLIST(session)		((session)->PrintList)
-#define	DLLIST(session)			((session)->DLList)
-#ifdef	USE_SSL
-#define	CTX(session)			((session)->ctx)
-#ifdef	USE_PKCS11
-#define	ENGINE(session)			((session)->engine)
-#endif	/* USE_PKCS11 */
-#endif	/* USE_SSL */
+}	Session;
 
 typedef struct {
 	char		*name;
@@ -90,44 +63,52 @@ typedef struct {
 	Queue		*UpdateWidgetQueue;
 }	WindowData;
 
-extern	void		ExitSystem(void);
-extern  void		SetSessionTitle(const char *title);
-extern  void		SetSessionBGColor(const char *color);
+extern	char	*CacheDirName(void);
+extern	char	*CacheFileName(char *name);
+extern	void	ExitSystem(void);
+extern  void	SetSessionTitle(char *title);
+extern  void	SetSessionBGColor(char *color);
 
-GLOBAL	char		*CurrentApplication;
-GLOBAL	Bool		fV47;
-GLOBAL	char		*TempDir;
+GLOBAL	char		*FocusedWindowName;
+GLOBAL	char		*ThisWindowName;
+GLOBAL	GHashTable	*WindowTable;
+GLOBAL	GList		*PrintList;
 GLOBAL	char		*ConfDir;
-GLOBAL	GLSession	*Session;
 
-GLOBAL	char		*Host;
-GLOBAL	char		*PortNum;
-GLOBAL	char		*User;
-GLOBAL	char		*Pass;
-GLOBAL	Bool		SavePass;
-GLOBAL	char		*Style; 
-GLOBAL	char		*Gtkrc; 
-GLOBAL	Bool		fMlog;
-GLOBAL	Bool		fKeyBuff;
-GLOBAL	Bool		fIMKanaOff;
-GLOBAL	Bool		fTimer;
-GLOBAL	char		*TimerPeriod;
-GLOBAL	int			PingTimerPeriod;
-GLOBAL	char		*FontName;
+GLOBAL	char	*CurrentApplication;
+
+GLOBAL	Bool	fInRecv;
+GLOBAL	Bool	fV47;
+GLOBAL	char	*TempDir;
+GLOBAL	Session	*glSession;
+
+GLOBAL	char	*Host;
+GLOBAL	char	*PortNum;
+GLOBAL	char	*User;
+GLOBAL	char	*Pass;
+GLOBAL	Bool	SavePass;
+GLOBAL	char	*Style; 
+GLOBAL	char	*Gtkrc; 
+GLOBAL	Bool	fMlog;
+GLOBAL	Bool	fKeyBuff;
+GLOBAL	Bool	fIMKanaOff;
+GLOBAL	Bool	fTimer;
+GLOBAL	char	*TimerPeriod;
+GLOBAL	int		PingTimerPeriod;
+GLOBAL	char	*FontName;
 #ifdef	USE_SSL
-GLOBAL	Bool		fSsl;
-GLOBAL	char		*CertFile;
-GLOBAL	char		*CA_File;
-GLOBAL	char		*Ciphers;
-GLOBAL	char		*Passphrase;
+GLOBAL	Bool	fSsl;
+GLOBAL	char	*CertFile;
+GLOBAL	char	*CA_File;
+GLOBAL	char	*Ciphers;
+GLOBAL	char	*Passphrase;
 #ifdef  USE_PKCS11
-GLOBAL	Bool		fPKCS11;
-GLOBAL	char		*PKCS11_Lib;
-GLOBAL	char		*Slot;
+GLOBAL	Bool	fPKCS11;
+GLOBAL	char	*PKCS11_Lib;
+GLOBAL	char	*Slot;
 #endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
 
-/* gconf */
 GLOBAL	GConfClient *GConfCTX;
 GLOBAL	gchar	*ConfigName;
 
@@ -139,5 +120,15 @@ GLOBAL	gchar	*ConfigName;
 #define GL_GCONF_CONF_CONVERTED		(GL_GCONF_BASE "/confconverted")
 #define GL_GCONF_WCACHE				(GL_GCONF_BASE "/widgetcache")
 #define GL_GCONF_WCACHE_CONVERTED	(GL_GCONF_BASE "/wcacheconverted")
+
+#define	FPCOMM(session)		((session)->fpComm)
+#define	TITLE(session)		((session)->title)
+#define	BGCOLOR(session)	((session)->bgcolor)
+#ifdef	USE_SSL
+#define	CTX(session)		((session)->ctx)
+#ifdef	USE_PKCS11
+#define	ENGINE(session)		((session)->engine)
+#endif	/* USE_PKCS11 */
+#endif	/* USE_SSL */
 
 #endif

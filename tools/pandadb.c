@@ -39,7 +39,6 @@
 #include	"RecParser.h"
 #include	"DBparser.h"
 #include	"dbgroup.h"
-#include	"enum.h"
 #include	"dirs.h"
 #include	"directory.h"
 #include	"gettext.h"
@@ -438,7 +437,7 @@ InitSystem(
 	char	*name)
 {
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,name,P_ALL);
+	SetUpDirectory(Directory,NULL,NULL,name,TRUE);
 	if		(  ( ThisDBD = GetDBD(name) )  ==  NULL  ) {
 		fprintf(stderr,N_("DBD \"%s\" not found.\n"),name);
 		exit(1);
@@ -449,7 +448,7 @@ InitSystem(
 	CurrentProcess = NULL;
 
 	if		(  ThisDBD->cDB  >  0  ) {
-		InitDB_Process("pandadb");
+		InitDB_Process(NULL);
 	}
 }
 

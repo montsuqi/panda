@@ -26,7 +26,7 @@
 extern	void	ConnectSysData();
 extern	void	DisconnectSysData();
 extern	void	AccessBLOB(int mode, ValueStruct *value);
-extern	void	GetSessionMessage(const char*,char**,char**,char**);
-extern	void	ResetSessionMessage(const char*);
+extern	char*	GetSysDB(char *term, char *key);
+extern	Bool	SetSysDB(char *term, char *key, char *value);
 
 #endif

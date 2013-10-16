@@ -105,7 +105,7 @@ ENTER_FUNC;
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,ComSymbol);
-					if		(  (  db = DB_Parser(name,gname,TRUE) )  !=  NULL  ) {
+					if		(  (  db = DB_Parser(name,gname,NULL,TRUE) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(bd->DB_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( bd->cDB + 1));
 							memcpy(rtmp,bd->db,sizeof(RecordStruct *) * bd->cDB);
@@ -184,7 +184,7 @@ LEAVE_FUNC;
 }
 
 static	BD_Struct	*
-BD_Par(
+ParBD(
 	CURFILE	*in)
 {
 	BD_Struct	*ret;
@@ -302,7 +302,7 @@ ENTER_FUNC;
 	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,ThisEnv->D_Dir,Reserved) )  !=  NULL  ) {
-			ret = BD_Par(in);
+			ret = ParBD(in);
 			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {

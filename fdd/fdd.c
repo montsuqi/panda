@@ -130,7 +130,6 @@ Process(
 		} else
 			break;
 	}	while	(  *buff  !=  0  );
-	printf("size  = [%d]\n",(int)left);
 	sprintf(buff,"%s/XXXXXX",WorkDir);
 	fd = mkstemp(buff);
 	fp = fdopen(fd,"w");
@@ -173,6 +172,9 @@ Process(
 
 	ac = fdd_system(name, command, tempname, filename);
 	unlink(tempname);
+	xfree(tempname);
+	xfree(filename);
+	xfree(command);
 	if ( ac == -1){
 		SendChar(fpComm,127);
 	} else {
@@ -183,7 +185,7 @@ Process(
 
 void cache_SIGCHLD(int signo)
 {
-	pid_t child_pid = 0;	
+	pid_t child_pid = 0;
 	do {
 		int child_ret;
 		waitpid(-1, &child_ret, WNOHANG);
@@ -194,8 +196,9 @@ extern	void
 ExecuteServer(void)
 {
 	int		pid;
-	int		fd
-	,		_fd;
+	int		fd;
+	int		soc_len;
+	int		soc[MAX_SOCKET];
 	Port	*port;
 	NETFILE	*fpComm;
 #ifdef	USE_SSL
@@ -204,7 +207,7 @@ ExecuteServer(void)
 
 ENTER_FUNC;
 	port = ParPortName(PortNumber);
-	_fd = InitServerPort(port,Back);
+	soc_len = InitServerMultiPort(port,Back,soc);
 #ifdef	USE_SSL
 	ctx = NULL;
 	if		(  fSsl  ) {
@@ -216,9 +219,8 @@ ENTER_FUNC;
 	}
 #endif
 	while	(TRUE)	{
-		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
-			printf("_fd = %d\n",_fd);
-			Error("INET Domain Accept");
+		if		(  ( fd = AcceptLoop(soc,soc_len) )  <  0  )	{
+			continue;
 		}
 		if		(  ( pid = fork() )  >  0  )	{	/*	parent	*/
 			close(fd);
@@ -237,13 +239,13 @@ ENTER_FUNC;
 #else
 			fpComm = SocketToNet(fd);
 #endif
-			close(_fd);
 			Process(fpComm);
 			CloseNet(fpComm);
+			DestroyPort(port);
 			exit(0);
 		}
 	}
-	close(_fd);
+	DestroyPort(port);
 LEAVE_FUNC;
 }
 
@@ -305,10 +307,8 @@ main(
 	int		argc,
 	char	**argv)
 {
-	FILE_LIST	*fl;
-
 	SetDefault();
-	fl = GetOption(option,argc,argv,NULL);
+	GetOption(option,argc,argv,NULL);
 	InitMessage("fdd",NULL);
 
 	InitSystem();

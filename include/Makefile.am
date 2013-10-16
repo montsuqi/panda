@@ -16,17 +16,10 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-
-libpandaincludedir = $(pkgincludedir)
-libpandainclude_HEADERS = const.h	\
-	enum.h					\
-	dirs.h					\
-	glterm.h				\
-	struct.h				\
-	wfcdata.h
+libpandaincludedir = $(includedir)/panda
+libpandainclude_HEADERS = const.h
 
 EXTRA_DIST =				\
-	enum.h					\
 	dirs.h					\
 	glterm.h				\
 	struct.h				\

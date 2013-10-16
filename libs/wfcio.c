@@ -34,115 +34,128 @@
 #include	"comm.h"
 #include	"comms.h"
 #include	"wfcdata.h"
-#include	"glterm.h"
 #include	"wfcio.h"
+#include	"front.h"
 #include	"debug.h"
 #include	"socket.h"
 
 static	Bool
 _SendTermServer(
-	NETFILE		*fp,
-	ScreenData	*scr,
+	NETFILE	*fp,
+	char	*window,
+	char	*widget,
+	char	*event,
 	ValueStruct	*value)
 {
-	size_t			size;
+	size_t	size;
+	Bool	rc;
 	LargeByteString	*buff;
-	PacketClass		c;
-	int				i;
 
 ENTER_FUNC;
-	dbgmsg("send DATA");
-	dbgprintf("window = [%s]",scr->window);
-	dbgprintf("widget = [%s]",scr->widget);
-	dbgprintf("event  = [%s]",scr->event);
-
+	rc = FALSE;
 	SendPacketClass(fp,WFC_DATA);	ON_IO_ERROR(fp,badio);
-	SendString(fp,scr->window);		ON_IO_ERROR(fp,badio);
-	SendString(fp,scr->widget);		ON_IO_ERROR(fp,badio);
-	SendString(fp,scr->event);		ON_IO_ERROR(fp,badio);
-
-	SendInt(fp,scr->w.sp);			ON_IO_ERROR(fp,badio);
-	for (i=0;i<scr->w.sp;i++) {
-		SendChar(fp,scr->w.s[i].puttype);ON_IO_ERROR(fp,badio);
-		SendString(fp,scr->w.s[i].window);ON_IO_ERROR(fp,badio);
+	dbgmsg("send DATA");
+	dbgprintf("window = [%s]",window);
+	SendString(fp,window);			ON_IO_ERROR(fp,badio);
+	dbgprintf("widget = [%s]",widget);
+	SendString(fp,widget);			ON_IO_ERROR(fp,badio);
+	dbgprintf("event  = [%s]",event);
+	SendString(fp,event);			ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_OK  ) {
+		ON_IO_ERROR(fp,badio);
+		dbgmsg("recv OK");
+		if		(  value  !=  NULL  ) {
+			SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
+			size = NativeSizeValue(NULL,value);
+			buff = NewLBS();
+			LBS_ReserveSize(buff,size,FALSE);
+			NativePackValue(NULL,LBS_Body(buff),value);
+			SendLBS(fp,buff);				ON_IO_ERROR(fp,badio);
+			FreeLBS(buff);
+		} else {
+			SendPacketClass(fp,WFC_NODATA);	ON_IO_ERROR(fp,badio);
+		}
+		SendPacketClass(fp,WFC_OK);		ON_IO_ERROR(fp,badio);
+		rc = TRUE;
 	}
-
-	c = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-	if (c != WFC_OK) {
-		return FALSE;
-	}
-	dbgmsg("recv OK");
-	if (value != NULL) {
-		SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
-		size = NativeSizeValue(NULL,value);
-		buff = NewLBS();
-		LBS_ReserveSize(buff,size,FALSE);
-		NativePackValue(NULL,LBS_Body(buff),value);
-		SendLBS(fp,buff);				ON_IO_ERROR(fp,badio);
-		FreeLBS(buff);
-	} else {
-		SendPacketClass(fp,WFC_NODATA);	ON_IO_ERROR(fp,badio);
-	}
-	SendPacketClass(fp,WFC_OK);		ON_IO_ERROR(fp,badio);
+  badio:
 LEAVE_FUNC;
-	return TRUE; 
-badio:
-LEAVE_FUNC;
-	return FALSE; 
+	return	(rc); 
 }
 
 extern	NETFILE	*
 ConnectTermServer(
-	char		*url,
-	ScreenData	*scr)
+	char	*url,
+	char	*term,
+	char	*user,
+	char	*window,
+	Bool	fKeep,
+	char	*arg)
 {
 	int		fd;
 	Port	*port;
 	NETFILE	*fp;
 	PacketClass	klass;
+	RecordStruct	*rec;
+
 ENTER_FUNC;
 	port = ParPort(url,PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
-	if (fd <= 0){
-		Warning("can not connect wfc server");
-		return NULL;
-	}
-	fp = SocketToNet(fd);
-	SendPacketClass(fp,WFC_TERM_INIT);
-	SendString(fp,scr->user);		ON_IO_ERROR(fp,badio);
-	SendString(fp,scr->host);		ON_IO_ERROR(fp,badio);
-	SendString(fp,scr->agent);		ON_IO_ERROR(fp,badio);
-	klass = RecvPacketClass(fp);	ON_IO_ERROR(fp,badio);
-	if (klass == WFC_OK) {
-		RecvnString(fp,SIZE_TERM,scr->term);ON_IO_ERROR(fp,badio);
+	if ( fd > 0 ){
+		fp = SocketToNet(fd);
+		SendPacketClass(fp,WFC_TERM);
+		SendString(fp,term);		ON_IO_ERROR(fp,badio);
+		if		(  fKeep  ) {
+			SendPacketClass(fp,WFC_TRUE);
+		} else {
+			SendPacketClass(fp,WFC_FALSE);
+		}		
+		SendString(fp,user);		ON_IO_ERROR(fp,badio);
+		SendString(fp,arg);			ON_IO_ERROR(fp,badio);
+		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
+		if		(  klass  !=  WFC_OK  ) {
+			CloseNet(fp);
+			fp = NULL;
+		} else {
+			dbgprintf("[%s]",window);
+			dbgprintf("[%p %p]",ThisScreen, ThisScreen->Records);
+			if		(  ( rec = GetWindowRecord(window) )  !=  NULL  ) {
+				_SendTermServer(fp,window,"","",rec->value);
+			} else {
+				dbgmsg("*");
+				SendPacketClass(fp,WFC_OK);
+			}
+			dbgmsg("*");
+		}
 	} else {
-		CloseNet(fp);
+	  badio:
+		Warning("can not connect wfc server");
 		fp = NULL;
 	}
 LEAVE_FUNC;
-	return fp; 
-badio:
-	Warning("badio");
-LEAVE_FUNC;
-	return NULL;
+	return	(fp); 
 }
 
 extern	Bool
 SendTermServer(
-	NETFILE		*fp,
-	ScreenData	*scr,
+	NETFILE	*fp,
+	char	*term,
+	char	*window,
+	char	*widget,
+	char	*event,
 	ValueStruct	*value)
 {
 	Bool	rc;
 
 ENTER_FUNC;
 	rc = FALSE;
-	dbgprintf("term = [%s]",scr->term);
+	dbgprintf("term = [%s]",term);
 	SendPacketClass(fp,WFC_TERM);
-	SendString(fp,scr->term);				ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == WFC_TRUE) {
-		rc = _SendTermServer(fp,scr,value);
+	SendString(fp,term);				ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
+		dbgmsg("recv PONG");
+		rc = _SendTermServer(fp,window,widget,event,value);
 	}
   badio:
 LEAVE_FUNC;
@@ -151,8 +164,8 @@ LEAVE_FUNC;
 
 extern	Bool
 SendTermServerEnd(
-	NETFILE		*fp,
-	ScreenData	*scr)
+	NETFILE	*fp,
+	char	*term)
 {
 	Bool	rc;
 
@@ -160,8 +173,8 @@ ENTER_FUNC;
 	rc = FALSE;
 
 	SendPacketClass(fp,WFC_TERM);
-	SendString(fp,scr->term);				ON_IO_ERROR(fp,badio);
-	if (RecvPacketClass(fp) == WFC_TRUE) {
+	SendString(fp,term);				ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  WFC_TRUE  ) {
 		SendPacketClass(fp,WFC_END);	ON_IO_ERROR(fp,badio);
 		RecvPacketClass(fp); // WFC_DONE
 		rc = TRUE;
@@ -173,46 +186,58 @@ LEAVE_FUNC;
 
 extern	Bool
 RecvTermServerHeader(
-	NETFILE			*fp,
-	ScreenData		*scr)
+	NETFILE	*fp,
+	char	*user,
+	char	*window,
+	char	*widget,
+	int		*type,
+	WindowControl	*ctl)
 {
+	Bool	rc;
 	PacketClass	c;
-	int i;
+	int		i;
+
 ENTER_FUNC;
-	while(1) {
-		c = RecvPacketClass(fp);						ON_IO_ERROR(fp,badio);
-		switch (c) {
-		case WFC_HEADER:
-			dbgmsg(">recv HEADER");
-			RecvnString(fp, SIZE_USER, scr->user);		ON_IO_ERROR(fp,badio);
-			RecvnString(fp, SIZE_NAME, scr->window);	ON_IO_ERROR(fp,badio);
-			RecvnString(fp, SIZE_NAME, scr->widget);	ON_IO_ERROR(fp,badio);
-			dbgprintf("window = [%s]",scr->window);
-			scr->puttype = RecvChar(fp);				ON_IO_ERROR(fp,badio);
-			scr->w.sp = RecvInt(fp);					ON_IO_ERROR(fp,badio);
-			for (i=0;i<scr->w.sp ;i++) {
-				scr->w.s[i].puttype = RecvChar(fp);		ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,scr->w.s[i].window);
-					ON_IO_ERROR(fp,badio);
-				dbgprintf("wname = [%s]\n",scr->w.s[i].window);
-			}
-			dbgmsg("<recv HEADER");
-			return TRUE;
-		default:
-			Warning("Recv packet failure [%x]", c);
-			dbgmsg("recv default");
-			SendPacketClass(fp,WFC_NOT);
-			dbgmsg("send NOT");
-			return FALSE;
+  top: 
+	rc = FALSE;
+	switch	(c = RecvPacketClass(fp)) {
+	  case	WFC_HEADER:
+		dbgmsg(">recv HEADER");
+		RecvnString(fp, SIZE_NAME, user);		ON_IO_ERROR(fp,badio);
+		RecvnString(fp, SIZE_NAME, window);	ON_IO_ERROR(fp,badio);
+		RecvnString(fp, SIZE_NAME, widget);	ON_IO_ERROR(fp,badio);
+		dbgprintf("window = [%s]",window);
+		*type = RecvChar(fp);					ON_IO_ERROR(fp,badio);
+		ctl->n = RecvInt(fp);					ON_IO_ERROR(fp,badio);
+		dbgprintf("ctl->n = %d\n",ctl->n);
+		for	( i = 0 ; i < ctl->n ; i ++ ) {
+			ctl->control[i].PutType = (unsigned char)RecvInt(fp);
+			ON_IO_ERROR(fp,badio);
+			RecvnString(fp, SIZE_NAME, ctl->control[i].window);
+			ON_IO_ERROR(fp,badio);
+			dbgprintf("wname = [%s]\n",ctl->control[i].window);
 		}
+		rc = TRUE;
+		dbgmsg("<recv HEADER");
+		break;
+	  case	WFC_PING:
+		dbgmsg("recv PING");
+		SendPacketClass(fp,WFC_PONG);
+		dbgmsg("send PONG");
+		goto	top;
+		break;
+	  default:
+		Warning("Recv packet failure [%x]", c);
+		dbgmsg("recv default");
+		SendPacketClass(fp,WFC_NOT);
+		dbgmsg("send NOT");
+		break;
 	}
+  badio:
 LEAVE_FUNC;
-	Warning("does not reach");
-	return FALSE;
-badio:
-LEAVE_FUNC;
-	return FALSE;
+	return	(rc);
 }
+
 
 static	void
 _RecvWindow(
@@ -226,26 +251,26 @@ _RecvWindow(
 ENTER_FUNC;
 	dbgprintf("name = [%s]",wname);
 	dbgprintf("puttype = %02X",win->PutType);
-	switch (win->puttype) {
-	case SCREEN_NULL:
+	switch	(win->PutType) {
+	  case	SCREEN_NULL:
 		break;
-	default:
+	  default:
 		dbgmsg("recv");
 		SendPacketClass(fp,WFC_DATA);		ON_IO_ERROR(fp,badio);
 		SendString(fp,wname);				ON_IO_ERROR(fp,badio);
 		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-		switch (klass) {
-		case WFC_OK:
+		switch	(klass)	{
+		  case	WFC_OK:
 			buff = NewLBS();
 			RecvLBS(fp,buff);				ON_IO_ERROR(fp,badio);
-			if (win->rec != NULL) {
+			if		(  win->rec  !=  NULL  ) {
 				NativeUnPackValue(NULL,LBS_Body(buff),win->rec->value);
 			}
 			FreeLBS(buff);
 			break;
-		case WFC_NODATA:
+		  case	WFC_NODATA:
 			break;
-		case WFC_NOT:
+		  case	WFC_NOT:
 			break;
 		}
 	}

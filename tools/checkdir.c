@@ -35,6 +35,7 @@
 #include	<glib.h>
 #include	"libmondai.h"
 #include	"RecParser.h"
+#include	"front.h"
 #include	"directory.h"
 #include	"dbgroup.h"
 #include	"dirs.h"
@@ -490,7 +491,7 @@ DumpDirectory(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 
 	printf("name     = [%s]\n",ThisEnv->name);
 	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);

@@ -51,6 +51,7 @@
 #include	"dblib.h"
 #include	"dbgroup.h"
 #include	"queue.h"
+#include	"driver.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -104,6 +105,7 @@ ENTER_FUNC;
 	conv = handler->serialize;
 	while	(TRUE) {
 		dbgmsg("read");
+		InitializeCTRL(&ctrl);
 		LBS_EmitStart(dbbuff);
 		RecvLargeString(fpDBR,dbbuff);		ON_IO_ERROR(fpDBR,badio);
 		ConvSetRecName(handler->conv,recDBCTRL->name);
@@ -126,6 +128,7 @@ ENTER_FUNC;
 														pname) )  !=  0  ) {
 				ctrl.pno = pno - 1;
 				path = rec->opt.db->path[pno-1];
+				ctrl.usage = path->usage;
 				value = ( path->args != NULL ) ? path->args : value;
 			} else {
 				ctrl.pno = 0;

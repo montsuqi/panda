@@ -16,122 +16,260 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-lib_LTLIBRARIES = libpanda.la
+lib_LTLIBRARIES = panda.la libpanda.la
+
+noinst_LIBRARIES	=		\
+	libpanda.a				\
+	libpandas.a				\
+	libpandacom.a			\
+	libpandagl.a			\
+	libpandamisc.a			\
+	libpandablob.a
+
+BUILT_SOURCES = enum.h
 
 noinst_PROGRAMS		=		\
+	enum					\
 	testnet					\
 	testblob
 
-libpanda_la_CFLAGS = $(AM_CFLAGS)
-libpanda_la_LDFLAGS	=			\
+panda_la_LDFLAGS	=			\
 	-version-info $(LTVERSION)	\
+	-module						\
 	-export-dynamic
 
-libpanda_la_SOURCES	=				\
-	BDparser.c		BDparser.h		\
-	DBDparser.c		DBDparser.h		\
-	DBparser.c		DBparser.h		\
-	DDparser.c		DDparser.h		\
-	DIparser.c		DIparser.h		\
+panda_la_DEPENDENCIES =				\
+	enum.h
+panda_la_SOURCES	=				\
 	Dlex.h							\
-	LDparser.c		LDparser.h		\
-	SQLlex.c		SQLlex.h		\
-	SQLparser.c		SQLparser.h		\
-	auth.c			auth.h			\
-	authstub.c		authstub.h		\
-	blob.c			blob.h			\
-	blobreq.c		blobreq.h		\
-	comm.c			comm.h			\
-	comms.c			comms.h			\
-	debug.h							\
-	directory.c		directory.h		\
-	load.c			load.h			\
-	message.c		message.h		\
-	mhandler.c		mhandler.h		\
-	monapi.c		monapi.h		\
-	net.c			net.h			\
-	option.c		option.h		\
-	panda.h							\
-	port.c			port.h			\
-	queue.c			queue.h			\
-	socket.c		socket.h		\
-	sysdatacom.h					\
-	sysdbreq.c		sysdbreq.h		\
-	term.c			term.h			\
-	wfcio.c			wfcio.h
+	mhandler.c	mhandler.h			\
+	DDparser.c	DDparser.h			\
+	BDparser.c	BDparser.h			\
+	LDparser.c	LDparser.h			\
+	DBDparser.c	DBDparser.h			\
+	DIparser.c	DIparser.h			\
+	DBparser.c	DBparser.h			\
+	SQLlex.c	SQLlex.h			\
+	SQLparser.c	SQLparser.h			\
+	blobreq.c	blobreq.h			\
+	blobcom.h						\
+	keyvaluereq.c					\
+	keyvaluereq.h					\
+	keyvaluecom.h					\
+	directory.c	directory.h			\
+	driver.c	driver.h	enum.h	\
+	load.c		load.h				\
+	applications.c applications.h	\
+	comm.c		comm.h				\
+	comms.c		comms.h				\
+	net.c		net.h				\
+	term.c		term.h				\
+	socket.c	socket.h			\
+	port.c		port.h				\
+	pty.c		pty.h				\
+	wfcio.c		wfcio.h				\
+	panda.c
 
-libpanda_la_LIBADD		=	\
+
+panda_la_LIBADD		=	\
 	-lm									\
 	$(SSL_LIBS)							\
 	$(P11_LIBS)							\
-	$(COMMON_LIBS)
+	$(GLIB_LIBS)						\
+	$(MONDAI_LIBS)
 
-
-libpandaincludedir = $(pkgincludedir)
+libpandaincludedir = $(includedir)/panda
 libpandainclude_HEADERS =	\
-	BDparser.h			\
-	DBDparser.h			\
-	DBparser.h			\
-	DDparser.h			\
-	DIparser.h			\
-	Dlex.h				\
-	LDparser.h			\
-	SQLlex.h			\
-	SQLparser.h			\
-	auth.h				\
-	authstub.h			\
-	blob.h				\
-	blobreq.h			\
-	comm.h				\
-	comms.h				\
-	debug.h				\
-	directory.h			\
-	load.h				\
-	message.h			\
-	mhandler.h			\
-	monapi.h			\
-	net.h				\
-	option.h			\
-	panda.h				\
-	port.h				\
-	queue.h				\
-	socket.h			\
-	sysdatacom.h		\
-	sysdbreq.h			\
-	term.h				\
-	wfcio.h
-
+	enum.h
+libpanda_a_DEPENDENCIES =	\
+	enum.h
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
+	$(GTK_CFLAGS)			\
+	$(GLIB_CFLAGS)			\
 	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(COMMON_CFLAGS)		\
+	$(MONDAI_CFLAGS)		\
 	-DBIN_DIR=\"$(bindir)\"
+
+enum_LDADD	= 	\
+	 -lm	\
+	$(GLADE_LIBS)			\
+	$(GLIB_LIBS)			\
+	$(MONDAI_LIBS)
 
 testnet_LDADD	= 	\
 	-lm									\
-	$(top_builddir)/libs/libpanda.la	\
-	$(COMMON_LIBS)						\
+	$(GLIB_LIBS) 						\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(MONDAI_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)
 
-testnet_DEPENDENCIES	=				\
-	$(top_builddir)/libs/libpanda.la
+testnet_DEPENDENCIES	=		\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a
 
-testblob_LDADD	=						\
-	-lm									\
-	$(top_builddir)/libs/libpanda.la	\
-	$(P11_LIBS)							\
-	$(SSL_LIBS)							\
-	$(COMMON_LIBS)
+libpanda_la_CFLAGS = $(AM_CFLAGS)
+libpanda_la_LDFLAGS	=	\
+	-version-info $(LTVERSION)	\
+	-export-dynamic
+libpanda_la_SOURCES	=		\
+	Dlex.h							\
+	mhandler.c		mhandler.h		\
+	DDparser.c		DDparser.h		\
+	BDparser.c		BDparser.h		\
+	LDparser.c		LDparser.h		\
+	DBDparser.c		DBDparser.h		\
+	DIparser.c		DIparser.h		\
+	DBparser.c		DBparser.h		\
+	SQLlex.c		SQLlex.h		\
+	SQLparser.c		SQLparser.h		\
+	term.c			term.h			\
+	blobreq.c		blobreq.h		\
+	blobcom.h						\
+	keyvaluereq.c					\
+	keyvaluereq.h					\
+	keyvaluecom.h					\
+	directory.c		directory.h		\
+	driver.c		driver.h		\
+	enum.h							\
+	load.c			load.h			\
+	debug.h							\
+	applications.c	applications.h	\
+	front.c			front.h			\
+	comm.c			comm.h			\
+	comms.c			comms.h			\
+	auth.c			auth.h			\
+	authstub.c		authstub.h		\
+	net.c			net.h			\
+	socket.c		socket.h		\
+	port.c			port.h			\
+	pty.c			pty.h			\
+	option.c		option.h		\
+	message.c		message.h		\
+	queue.c			queue.h
+
+libpanda_a_CFLAGS = $(AM_CFLAGS)
+libpanda_a_SOURCES	=				\
+	Dlex.h							\
+	mhandler.c		mhandler.h		\
+	DDparser.c		DDparser.h		\
+	BDparser.c		BDparser.h		\
+	LDparser.c		LDparser.h		\
+	DBDparser.c		DBDparser.h		\
+	DIparser.c		DIparser.h		\
+	DBparser.c		DBparser.h		\
+	SQLlex.c		SQLlex.h		\
+	SQLparser.c		SQLparser.h		\
+	term.c			term.h			\
+	blobreq.c		blobreq.h		\
+	blobcom.h						\
+	keyvaluereq.c	keyvaluereq.h	\
+	keyvaluecom.h					\
+	directory.c		directory.h		\
+	driver.c		driver.h		\
+	enum.h							\
+	load.c			load.h			\
+	debug.h
+
+libpandas_a_CFLAGS = $(AM_CFLAGS)
+libpandas_a_SOURCES	=			\
+	applications.c applications.h	\
+	DDparser.c		DDparser.h		\
+	driver.c		driver.h		\
+	enum.h							\
+	term.c			term.h			\
+	front.c			front.h			\
+	comm.c			comm.h			\
+	comms.c			comms.h			\
+	glcomm.c		glcomm.h		\
+	auth.c			auth.h			\
+	authstub.c		authstub.h		\
+	blobreq.c		blobreq.h		\
+	keyvaluereq.c	keyvaluereq.h	\
+	keyvaluecom.h					\
+	blobcom.h						\
+	monapi.c	monapi.h			\
+	load.c		load.h
+
+libpandas_a_DEPENDENCIES	=		\
+	$(top_builddir)/defaults.h
+
+#libpandacominclude_HEADERS =	\
+#	comm.h			\
+#	comms.h			\
+#	socket.h		\
+#	pty.h			\
+#	queue.h
+
+libpandacom_a_CFLAGS = $(AM_CFLAGS)
+libpandacom_a_SOURCES	=			\
+	auth.c			auth.h			\
+	authstub.c		authstub.h		\
+	net.c			net.h			\
+	comm.c			comm.h			\
+	comms.c			comms.h			\
+	socket.c		socket.h		\
+	port.c			port.h			\
+	pty.c			pty.h			\
+	queue.c			queue.h
+
+libpandagl_a_CFLAGS = $(AM_CFLAGS)
+libpandagl_a_SOURCES	=			\
+	net.c			net.h			\
+	socket.c		socket.h		\
+	port.c			port.h			\
+	queue.c			queue.h
+
+enum.h:	enum enum.c
+	./enum > enum.h
+
+libpandablobincludedir = $(includedir)/panda
+libpandablobinclude_HEADERS =	\
+	blob_v1.h					\
+	blob_v2.h					\
+	blob.h
+
+libpandablob_a_CFLAGS = $(AM_CFLAGS)
+libpandablob_a_SOURCES	=			\
+	blob_v1.c		blob_v1.h		\
+					blob_v2.h		\
+	table.c			table.h			\
+	blob.c			blob.h			\
+	keyvalue.c		keyvalue.h
+
+libpandablob_a_DEPENDENCIES	=		\
+	$(top_builddir)/defaults.h
+
+libpandamisc_a_CFLAGS = $(AM_CFLAGS)
+libpandamisc_a_SOURCES	=		\
+	option.c		option.h	\
+	net.c			net.h		\
+	socket.c		socket.h	\
+	port.c			port.h		\
+	message.c		message.h
+
+testblob_LDADD	=				\
+	-lm							\
+	libpandablob.a				\
+	libpandacom.a				\
+	libpandamisc.a				\
+	$(GLIB_LIBS)				\
+	$(P11_LIBS)					\
+	$(SSL_LIBS)					\
+	$(MONDAI_LIBS)				
 
 testblob_DEPENDENCIES	=
 
 AM_CPPFLAGS = 					\
 	-DLOCALEDIR=\"$(localedir)\"
 
+DISTCLEANFILES = enum.h
 EXTRA_DIST	=					\
-	option_parser.txt
+	blobup.c					\
+	option.doc

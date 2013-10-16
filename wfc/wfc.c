@@ -20,7 +20,6 @@
 #define	MAIN
 #define __FD_SETSIZE	8192
 #define SOMAXCONN		1024
-#define	DEFAULT_LD		"orca00"
 
 /*
 #define	DEBUG
@@ -45,6 +44,7 @@
 #include	<glib.h>
 #include	<pthread.h>
 
+
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"net.h"
@@ -57,10 +57,11 @@
 #include	"termthread.h"
 #include	"controlthread.h"
 #include	"sysdatathread.h"
-#include	"sessionthread.h"
 #include	"dbgroup.h"
 #include	"blob.h"
+#include	"keyvalue.h"
 #include	"option.h"
+#include	"sysdb.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -139,31 +140,29 @@ ChangeLD(
 	LargeByteString	**scrdata;
 
 ENTER_FUNC;
-	if (newld != NULL) {
-		data->spa = g_hash_table_lookup(data->spadata,newld->info->name);
-		if (data->spa == NULL) {
-			if (newld->info->sparec != NULL) {
+	if		(  newld  !=  NULL  ) {
+		if		(  ( data->spa = g_hash_table_lookup(data->spadata,newld->info->name) )
+				   ==  NULL  ) {
+			if		(  newld->info->sparec  !=  NULL  ) {
 				data->spa = NewLBS();
-				g_hash_table_insert(data->spadata,
-					StrDup(newld->info->name),data->spa);
+				g_hash_table_insert(data->spadata,StrDup(newld->info->name),data->spa);
 				LBS_ReserveSize(data->spa,
-					NativeSizeValue(NULL,newld->info->sparec->value),FALSE);
-				NativePackValue(NULL,LBS_Body(data->spa),
-					newld->info->sparec->value);
+								NativeSizeValue(NULL,newld->info->sparec->value),FALSE);
+				NativePackValue(NULL,LBS_Body(data->spa),newld->info->sparec->value);
 			}
 		} else {
 			if (getenv("FORCE_CLEAR_SPA")) {
 				Warning("FORCE_CLEAR_SPA for %s",newld->info->name);
 				InitializeValue(newld->info->sparec->value);
-				NativePackValue(NULL,
-					LBS_Body(data->spa),newld->info->sparec->value);
+				NativePackValue(NULL,LBS_Body(data->spa),newld->info->sparec->value);
 			}
 		}
-		if (data->scrdata != NULL) {
+		if		(  data->scrdata  !=  NULL  ) {
 			xfree(data->scrdata);
 		}
-		scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *) * newld->info->cWindow);
-		for	(i=0;i<newld->info->cWindow;i++) {
+		scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
+											  * newld->info->cWindow);
+		for	( i = 0 ; i < newld->info->cWindow ; i ++ ) {
 			scrdata[i] = GetScreenData(data,newld->info->windows[i]->name);
 		}
 		data->cWindow = newld->info->cWindow;
@@ -242,13 +241,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	void
-SetUpTempDirRoot()
-{
-	if (!MakeDir(TempDirRoot,0700)) {
-		Error("cannot make TempDirRoot:%s",TempDirRoot);
-	}
-}
 
 static	void
 InitSystem(void)
@@ -257,13 +249,9 @@ ENTER_FUNC;
 	fNumericHOST = TRUE;
 	fShutdown = FALSE;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,"","",P_LD);
-	SetUpTempDirRoot();
+	SetUpDirectory(Directory,NULL,"","",TRUE);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
-	}
-	if		( ThisEnv->InitialLD == NULL ) {
-		ThisEnv->InitialLD = StrDup(DEFAULT_LD);
 	}
 	if		(  ApsPortNumber  ==  NULL  ) {
 		ApsPort = ThisEnv->WfcApsPort;
@@ -287,16 +275,18 @@ ENTER_FUNC;
 			Blob = InitBLOB(ThisEnv->sysdata->dir);
 			BlobState = ConnectBLOB(Blob);
 		}
+		KVState = InitKV();
 	} else {
 		Blob = NULL;
 		BlobState = NULL;
+		KVState = NULL;
 	}
+	SYSDB_Init();
 	InitMessageQueue();
 	ReadyAPS();
 	SetupMessageQueue();
 	InitTerm();
 	StartCoreThread();
-	StartSessionThread();
 	InitControl();
 LEAVE_FUNC;
 }
@@ -308,11 +298,9 @@ CleanUp(void)
 		DisConnectBLOB(BlobState);
 		FinishBLOB(Blob);
 	}
-#if 0
-	if (!getenv("WFC_KEEP_TEMPDIR")) {
-		rm_r(TempDirRoot);
+	if (KVState != NULL) {
+		FinishKV(KVState);
 	}
-#endif
 	CleanUNIX_Socket(ApsPort);
  	CleanUNIX_Socket(WfcPort);
  	CleanUNIX_Socket(ControlPort);
@@ -344,13 +332,16 @@ static	ARG_TABLE	option[] = {
 		"LD directory"				 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"environment file name"							},
-	{	"tempdirroot",STRING,	TRUE,	(void*)&TempDirRoot,
-		"root of temporary directory" 					},
+	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
+		"session variable keep directory" 				},
 
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
 		"maximun retry count"							},
 	{	"sesnum",	INTEGER,	TRUE,	(void*)&SesNum,
 		"terminal cache number"							},
+
+	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
+		"loopback test"									},
 
 	{	NULL,		0,			TRUE,	NULL		 	}
 };
@@ -366,10 +357,11 @@ ENTER_FUNC;
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
-	TempDirRoot = "/tmp/panda_root/";
 	MaxTransactionRetry = 0;
 	ControlPort = NULL;
+	fLoopBack = FALSE;
 	SesNum = 0;
+	SesDir = NULL;
 LEAVE_FUNC;
 }
 

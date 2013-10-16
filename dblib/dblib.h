@@ -24,7 +24,7 @@
 #include	<libmondai.h>
 #include	"blob.h"
 
-extern	void	InitDB_Process(char *appname);
+extern	void	InitDB_Process(NETFILE *fp);
 extern	int		ExecDBOP(DBG_Struct *dbg, char *sql, int usage);
 extern	ValueStruct	*ExecDB_Process(DBCOMM_CTRL *ctrl, RecordStruct *rec, ValueStruct *args);
 extern	int	TransactionStart(DBG_Struct *dbg);

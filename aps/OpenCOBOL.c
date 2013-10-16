@@ -41,6 +41,7 @@
 #include	"enum.h"
 #include	"dblib.h"
 #include	"queue.h"
+#include	"driver.h"
 #include	"libcob.h"
 #define		_OPENCOBOL
 #include	"OpenCOBOL.h"

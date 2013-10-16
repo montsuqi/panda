@@ -47,10 +47,10 @@
 #include	"comm.h"
 #include	"comms.h"
 #include	"directory.h"
-#include	"wfcdata.h"
 #include	"dblib.h"
 #include	"dbgroup.h"
 #include	"handler.h"
+#include	"wfcdata.h"
 #include	"apsio.h"
 #include	"aps_main.h"
 #include	"option.h"
@@ -58,8 +58,8 @@
 #include	"debug.h"
 
 static	char	*WfcPortNumber;
-static	char	AppName[128];
 
+static	int		MaxTran;
 static	int		Sleep;
 static	Bool	fConnectRetry;
 
@@ -71,7 +71,7 @@ InitSystem(
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,name,"","",P_ALL);
+	SetUpDirectory(Directory,name,"","",TRUE);
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		Error("LD \"%s\" not found.",name);
 	}
@@ -126,6 +126,12 @@ ENTER_FUNC;
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		node->scrrec[i] = ThisLD->windows[i];
 	}
+
+	/*	get initialize memory area	*/
+
+	SetValueInteger(GetItemLongName(node->mcprec->value,"private.pstatus"),APL_SESSION_LINK);
+	SetValueInteger(GetItemLongName(node->mcprec->value,"private.pputtype"),0);
+	SetValueInteger(GetItemLongName(node->mcprec->value,"private.prc"),0);
 LEAVE_FUNC;
 	return	(node);
 }
@@ -135,7 +141,7 @@ FinishSession(
 	ProcessNode	*node)
 {
 ENTER_FUNC;
-	xfree(node->scrrec);
+	xfree(node->scrrec); 
 	xfree(node);
 LEAVE_FUNC;
 }
@@ -143,15 +149,17 @@ LEAVE_FUNC;
 static	int
 ExecuteServer(void)
 {
-	int			fhWFC,rc;
-	Port		*port;
+	int		fhWFC
+		,	rc;
+	Port	*port;
 	NETFILE		*fpWFC;
 	ProcessNode	*node;
 	WindowBind	*bind;
-	char		*wname;
+	int		tran;
+	char	wname[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-	if (WfcPortNumber == NULL) {
+	if		(  WfcPortNumber  ==  NULL  ) {
 		port = ThisEnv->WfcApsPort;
 	} else {
 		port = ParPortName(WfcPortNumber);
@@ -159,47 +167,55 @@ ENTER_FUNC;
   retry:
 	fpWFC = NULL;
 	rc = 0;
-	while ((fhWFC = ConnectSocket(port,SOCK_STREAM)) < 0) {
-		if (!fConnectRetry) {
-			goto quit;
-		}
+	while	(  ( fhWFC = ConnectSocket(port,SOCK_STREAM) )  <  0  ) {
+		if		(  !fConnectRetry  )	goto	quit;
 		dbgmsg("WFC connection retry");
 		sleep(1);
 	}
 	fpWFC = SocketToNet(fhWFC);
 	SendStringDelim(fpWFC,ThisLD->name);
 	SendStringDelim(fpWFC,"\n");
-	if (RecvPacketClass(fpWFC) != APS_OK) {
-		if (!CheckNetFile(fpWFC)) {
+	if		(  RecvPacketClass(fpWFC)  !=  APS_OK  ) {
+		if		(  !CheckNetFile(fpWFC) ) {
 			Warning("WFC connection lost");
 			CloseNet(fpWFC);
-			goto retry;
+			goto	retry;
 		}
 		Error("invalid LD name");
 	}
 	InitAPSIO(fpWFC);
-	if ( ReadyOnlineDB(AppName) < 0 ){
+	if ( ReadyOnlineDB(fpWFC) < 0 ){
 		Error("Online DB is not ready");
 	}
 	node = MakeProcessNode();
-	while (1) {
-		if (!GetWFC(fpWFC,node)) {
+	for	( tran = MaxTran;(	(  MaxTran  ==  0  )
+						||	(  tran     >   0  ) ); tran -- ) {
+		if		(  !GetWFC(fpWFC,node)	) {
 			Message("GetWFC failure");
 			rc = -1;
 			break;
 		}
+		if		(  node->pstatus  ==  APL_SYSTEM_END  ) {
+			if (node->messagetype == MESSAGE_TYPE_API) {
+				continue;
+			} else {
+				Message("system stop");
+				rc = 0;
+			}
+			break;
+		}
 		dbgprintf("ld     = [%s]",ThisLD->name);
 		dbgprintf("window = [%s]",ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
-		wname = ValueStringPointer(
-					GetItemLongName(node->mcprec->value,"dc.window"));
-		bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname);
-		if (bind == NULL) {
+		PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),wname);
+
+		if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname) )
+				   ==  NULL  ) {
 			Message("window [%s] not found.",wname);
 			rc = 2;
 			break;
 		}
 		SetValueString(GetItemLongName(node->mcprec->value,"dc.module"),bind->module,NULL);
-		if (node->dbstatus == DB_STATUS_REDFAILURE) {
+		if ( node->dbstatus == DB_STATUS_REDFAILURE ) {
 			RedirectError();
 		} else {
 			node->dbstatus = GetDBRedirectStatus(0);
@@ -208,7 +224,7 @@ ENTER_FUNC;
 		strcpy(CurrentTerm, ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.term")));
 		TransactionStart(NULL);
 		ExecuteProcess(node);
-		if (Sleep > 0) {
+		if		(  Sleep  >  0  ) {
 			sleep(Sleep);
 		}
 		TransactionEnd(NULL);
@@ -216,9 +232,9 @@ ENTER_FUNC;
 	}
 	MessageLogPrintf("exiting APS (%s)",ThisLD->name);
 	FinishSession(node);
-quit:
+  quit:
 #if	1
-	if (fpWFC != NULL) {
+	if		(  fpWFC  !=  NULL  ) {
 		CloseNet(fpWFC);
 	}
 #endif
@@ -269,6 +285,11 @@ static	ARG_TABLE	option[] = {
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
 		"DB password"									},
 
+	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
+		"aps process transaction count"					},
+	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
+		"cache terminal number"							},
+
 	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
 		"aps sleep time(for debug)"						},
 	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
@@ -301,6 +322,8 @@ SetDefault(void)
 	D_Dir = NULL;
 	Directory = "./directory";
 	LibPath = NULL;
+	MaxTran = 0;
+	nCache = 0;
 	Sleep = 0;
 
 	DB_User = NULL;
@@ -323,6 +346,7 @@ main(
 {
 	FILE_LIST	*fl;
 	int			rc;
+	char		id[128];
 	struct sigaction	sa;
 
 	memset(&sa, 0, sizeof(struct sigaction));
@@ -343,8 +367,8 @@ main(
 	fl = GetOption(option,argc,argv,NULL);
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
-		snprintf(AppName, sizeof(AppName), "aps-%s",fl->name);
-		InitMessage(AppName,NULL);
+		snprintf(id, sizeof(id), "aps-%s",fl->name);
+		InitMessage(id,NULL);
 		InitNET();
 		InitSystem(fl->name);
 		rc = ExecuteServer();

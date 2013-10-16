@@ -69,7 +69,7 @@ ENTER_FUNC;
 		dbgmsg("de queue");
 		if (data->ld == NULL) {
 			MessageLogPrintf("invalid session data [%s:%s:%s]",
-				data->hdr->uuid,data->hdr->user,data->hdr->window);
+				data->hdr->term,data->hdr->user,data->hdr->window);
 			data->status = SESSION_STATUS_ABORT;
 			TermEnqueue(data->term,data);
 			continue;
@@ -79,7 +79,7 @@ ENTER_FUNC;
 		} else {
 			MessageLogPrintf("LD not found [%s]",data->ld->info->name);
 		}
-	}	while (mq != NULL);
+	}	while	(  mq  !=  NULL  );
 	pthread_exit(NULL);
 LEAVE_FUNC;
 }

@@ -62,7 +62,6 @@ AuthUser(
 	char	buff[SIZE_OTHER+1];
 
 ENTER_FUNC;
-	rc = FALSE;
 	if		(  strcmp(auth->protocol,"trust")  ==  0  ) {
 		rc = TRUE;
 	} else {
@@ -76,20 +75,22 @@ ENTER_FUNC;
 				SendString(fp,user);
 				SendString(fp,pass);
 				if		(  ( rc = RecvBool(fp) )  ) {
-					/* for protocol interchangebility; 'other' is not using*/
 					RecvnString(fp, sizeof(buff), buff);
+					if		(  other  !=  NULL  ) {
+						strcpy(other,buff);
+					}
 				}
 				CloseNet(fp);
 			} else{
 				Warning("can not connect glauth server");
 				rc = FALSE;
 			}
-		} else if (!stricmp(auth->protocol,"api")) {
-			rc = AuthAPI(user,pass,other,id);
-		} else if (!stricmp(auth->protocol,"file")) {
-			rc = AuthSingle(auth->file,user,pass,NULL);
 		} else {
-			rc = FALSE;
+			if		(  !stricmp(auth->protocol,"file")  ) {
+				rc = AuthSingle(auth->file,user,pass,NULL);
+			} else {
+				rc = FALSE;
+			}
 		}
 	}
 
@@ -101,6 +102,13 @@ ENTER_FUNC;
 			*id = 0;
 		}
 	}
+#ifdef	DEBUG
+	if		(  rc ) {
+		printf("OK\n");
+	} else {
+		printf("NG\n");
+	}
+#endif
 LEAVE_FUNC;
 	return	(rc);
 }

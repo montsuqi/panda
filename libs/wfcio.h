@@ -21,38 +21,41 @@
 #define	_WFCIO_H
 #include	"const.h"
 #include	"enum.h"
+#include	"driver.h"
 #include	"wfcdata.h"
 #include	"net.h"
 
-#define	SCREEN_DATA_NULL		0
-#define	SCREEN_DATA_CONNECT		1
-#define	SCREEN_DATA_END			2
+#ifndef	PacketClass
+#define	PacketClass		unsigned char
+#endif
 
-typedef	struct {
-	char			window[SIZE_NAME+1];
-	char			widget[SIZE_NAME+1];
-	char			event[SIZE_EVENT+1];
-	char			cmd[SIZE_LONGNAME+1];
-	char			user[SIZE_USER+1];
-	char			term[SIZE_TERM+1];
-	char			host[SIZE_HOST+1];
-	char			agent[SIZE_TERM+1];
-	int				status;
-	unsigned char	puttype;
-	unsigned char	feature;
-	WindowStack		w;
-	GHashTable		*Windows;
-}	ScreenData;
+#define	WFC_Null		(PacketClass)0x00
+#define	WFC_DATA		(PacketClass)0x01
+#define	WFC_PING		(PacketClass)0x02
+#define	WFC_HEADER		(PacketClass)0x04
+#define	WFC_TERM		(PacketClass)0x05
+#define	WFC_API			(PacketClass)0x06
 
-typedef	struct {
-	unsigned char	puttype;
-	RecordStruct	*rec;
-}	WindowData;
+#define	WFC_FALSE		(PacketClass)0xE0
+#define	WFC_TRUE		(PacketClass)0xE1
+#define	WFC_NOT			(PacketClass)0xF0
+#define	WFC_PONG		(PacketClass)0xF2
+#define	WFC_NODATA		(PacketClass)0xFC
+#define	WFC_DONE		(PacketClass)0xFD
+#define	WFC_OK			(PacketClass)0xFE
+#define	WFC_END			(PacketClass)0xFF
 
-extern	NETFILE	*ConnectTermServer(char *url,ScreenData *scr);
-extern	Bool	SendTermServer(NETFILE *fp, ScreenData *scr, ValueStruct *value);
-extern	Bool	RecvTermServerHeader(NETFILE *fp,ScreenData *scr);
+#define WFC_API_OK			(WFC_TRUE)
+#define WFC_API_ERROR		(WFC_FALSE)
+#define WFC_API_NOT_FOUND	(WFC_Null)
+
+extern	NETFILE	*ConnectTermServer(char *url, char *term, char *user, char *window, Bool fKeep, char *arg);
+extern	Bool	SendTermServer(NETFILE *fp, char *term, char *window, char *widget,
+							   char *event,
+							   ValueStruct *value);
+extern	Bool	RecvTermServerHeader(NETFILE *fp, char *user, char *window, char *widget,
+									 int *type, WindowControl *ctl);
 extern	void	RecvTermServerData(NETFILE *fp, ScreenData *scr);
-extern	Bool	SendTermServerEnd(NETFILE *fp, ScreenData *scr);
+extern	Bool	SendTermServerEnd(NETFILE *fp, char *term);
 
 #endif

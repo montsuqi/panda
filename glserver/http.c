@@ -53,9 +53,9 @@
 #include	"authstub.h"
 #include	"glserver.h"
 #include	"glcomm.h"
+#include	"front.h"
 #include	"term.h"
 #include	"http.h"
-#include	"driver.h"
 #include	"monapi.h"
 #include	"blobreq.h"
 #include	"message.h"
@@ -65,7 +65,7 @@
 
 typedef struct {
 	NETFILE		*fp;
-	char		host[SIZE_HOST];
+	char		*term;
 	PacketClass	method;
 	int			buf_size;
 	char		*buf;
@@ -79,7 +79,6 @@ typedef struct {
 	char		*ld;
 	char		*window;
 	int			status;
-	ScreenData	*scr;
 	NETFILE		*fpSysData;
 } HTTP_REQUEST;
 
@@ -94,7 +93,7 @@ HTTP_Init(
 
 	req = New(HTTP_REQUEST);
 	req->fp = fp;
-	RemoteIP(fp->fd,req->host,SIZE_HOST);
+	req->term = TermName(fp->fd);
 	req->method = klass;
 	req->buf_size = 0;
 	req->buf = req->head = xmalloc(sizeof(char) * MAX_REQ_SIZE);
@@ -109,7 +108,6 @@ HTTP_Init(
 	req->ld = NULL;
 	req->window = NULL;
 	req->status = HTTP_OK;
-	req->scr = NewScreenData();
 
 	port = ParPort(PortSysData, SYSDATA_PORT);
 	fd = ConnectSocket(port,SOCK_STREAM);
@@ -199,6 +197,7 @@ SendResponse(
 	size_t size;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
+	ValueStruct *value;
 	ValueStruct *vstatus;
 	ValueStruct *vbody;
 	MonObjectType obj = GL_OBJ_NULL;
@@ -206,8 +205,8 @@ SendResponse(
 	size = 0;
 	body = NULL;
 
-	if (data != NULL && data->value != NULL) {
-		vstatus = GetItemLongName(data->value,"http_status");
+	if (data != NULL && (value = data->rec->value) != NULL) {
+		vstatus = GetItemLongName(value,"httpstatus");
 		if (vstatus != NULL) {
 			req->status = ValueInteger(vstatus);
 		} else {
@@ -219,7 +218,7 @@ SendResponse(
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
 		req->status, GetReasonPhrase(req->status));
 	Send(req->fp, buf, strlen(buf)); 
-	MessageLogPrintf("[%s@%s] %s", req->user, req->host ,buf);
+	MessageLogPrintf("[%s@%s] %s", req->user, req->term ,buf);
 
 	gmtime_r(&t, &cur);
 	cur_p = &cur;
@@ -232,8 +231,8 @@ SendResponse(
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
-	if (data != NULL && data->value != NULL && req->status == HTTP_OK) {
-		vbody = GetItemLongName(data->value, "body");
+	if (data != NULL && (value = data->rec->value) != NULL && req->status == HTTP_OK) {
+		vbody = GetItemLongName(value, "body");
 		if (vbody != NULL) {
 			obj = ValueObjectId(vbody);
 		}
@@ -242,7 +241,7 @@ SendResponse(
 			RequestReadBLOB(req->fpSysData, obj, &body, &size);
 		}
 		sprintf(buf, "Content-Type: %s\r\n", 
-			ValueToString(GetItemLongName(data->value,"content_type"), NULL));
+			ValueToString(GetItemLongName(value,"content_type"), NULL));
 		Send(req->fp, buf, strlen(buf));
 	}
 	if (body != NULL && size > 0) {
@@ -522,13 +521,24 @@ ParseReqAuth(HTTP_REQUEST *req)
 	gsize size;
 
 #ifdef	USE_SSL
-	if (fSsl && fVerifyPeer){
-		if (!req->fp->peer_cert) {
+	if (fSsl && !strcasecmp(Auth.protocol,"ssl")){
+        char *subject;
+        char user[SIZE_USER+1];
+        if (!req->fp->peer_cert) {
 			MessageLog("can not get peer certificate");
 			req->status = HTTP_INTERNAL_SERVER_ERROR;
 			return;
 		}
-		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
+        subject = GetSubjectFromCertificate(req->fp->peer_cert);
+        AuthLoadX509(Auth.file);
+		if (AuthX509(subject, user)) {
+			req->user = StrDup(user);
+			req->pass = StrDup("");
+		} else {
+			MessageLogPrintf("[%s@%s] Authorization Error",subject,req->term);
+			req->status = HTTP_UNAUTHORIZED;
+		}
+        xfree(subject);
 		return;
 	}
 #endif
@@ -579,41 +589,45 @@ ParseRequest(
 
 static	void
 PackRequestRecord(
-	ValueStruct		*value,
-	HTTP_REQUEST	*req)
+	RecordStruct *rec,
+	HTTP_REQUEST *req)
 {
 	char *head;
 	char *tail;
 	char *key;
-	char *val;
+	char *value;
 	char buf[SIZE_BUFF+1];
 	ValueStruct *e;
 	char *p;
 	MonObjectType obj;
 
 ENTER_FUNC;
-	e = value;
+	e = rec->value;
 	InitializeValue(e);
 
 	p = NULL;
 	switch(req->method) {
-	case 'G':
-		SetValueString(GetItemLongName(e,"http_method"), "GET",NULL);
-		break;
-	case 'P':
-		SetValueString(GetItemLongName(e,"http_method"), "POST",NULL);
-		break;
+		case 'G':
+			p = StrDup("GET");
+			break;
+		case 'P':
+			p = StrDup("POST");
+			break;
+		case 'H':
+			p = StrDup("HEAD");
+			break;
 	}
-	if ( GetItemLongName(e,"http_status") ){
-		ValueInteger(GetItemLongName(e,"http_status")) = HTTP_OK;
+	if ( GetItemLongName(e,"httpstatus") ){
+		ValueInteger(GetItemLongName(e,"httpstatus")) = HTTP_OK;
 	}
+	SetValueString(GetItemLongName(e,"methodtype"), p,NULL);
+
 	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
 	if (p != NULL) {
 		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
 	}
 	if (req->body != NULL && req->body_size > 0) {
-		obj = RequestNewBLOB(req->fpSysData,BLOB_OPEN_WRITE);
-		ValueObjectId(GetItemLongName(e,"body")) = obj;
+		ValueObjectId(GetItemLongName(e,"body")) = obj = RequestNewBLOB(req->fpSysData,BLOB_OPEN_WRITE);
 		if (obj != GL_OBJ_NULL) {
 			RequestWriteBLOB(req->fpSysData, obj, req->body, req->body_size);
 		}
@@ -629,15 +643,15 @@ ENTER_FUNC;
 			return;
 		}
 		key = StrnDup(head, tail - head);
-		snprintf(buf, sizeof(buf), "arguments.%s", key);
+		snprintf(buf, sizeof(buf), "argument.%s", key);
 		xfree(key);
 		head = tail + 1;
 		
 		tail = strstr(head, "&");
 		if (tail != NULL) {
-			val = StrnDup(head, tail - head);
-			SetValueString(GetItemLongName(e, buf), val, NULL);
-			xfree(val);
+			value = StrnDup(head, tail - head);
+			SetValueString(GetItemLongName(e, buf), value, NULL);
+			xfree(value);
 			head = tail + 1;
 		} else {
 			SetValueString(GetItemLongName(e, buf), head, NULL);
@@ -652,20 +666,19 @@ MakeMonAPIData(
 	HTTP_REQUEST *req)
 {
 	MonAPIData *data;
-	ValueStruct *value;
+	RecordStruct *rec;
 
-	if (RegisterWindow(req->scr,req->window) == NULL) {
+	if ((rec = SetWindowRecord(req->window)) == NULL) {
 		return NULL;
 	}
-	value = GetWindowValue(req->scr,req->window);
-	InitializeValue(value);
+	InitializeValue(rec->value);
 	data = NewMonAPIData();
-	data->value = value;
+	data->rec = rec;
 	strncpy(data->ld, req->ld, sizeof(data->ld));
 	strncpy(data->window, req->window, sizeof(data->window));
 	strncpy(data->user, req->user, sizeof(data->user));
-	strncpy(data->host, req->host, sizeof(data->host));
-	PackRequestRecord(value, req);
+	strncpy(data->term, req->term, sizeof(data->term));
+	PackRequestRecord(data->rec, req);
 	return data;
 }
 
@@ -690,11 +703,11 @@ _HTTP_Method(
 		return FALSE;
 	}
 
-	if (fSsl && fVerifyPeer) {
+	if (fSsl && !strcasecmp(Auth.protocol,"ssl")) {
 		// SSL AUTH
 	} else {
-		if (!AuthUser(&Auth, req->user, req->pass, "api", NULL)) {
-			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
+		if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
+			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
 			req->status = HTTP_UNAUTHORIZED;
 		}
 	}
@@ -754,8 +767,6 @@ PrepareNextRequest(
 	XFree(&(req->pass));
 	XFree(&(req->ld));
 	XFree(&(req->window));
-	FreeScreenData(req->scr);
-	req->scr = NewScreenData();
 	req->status = HTTP_OK;
 	req->body_size = 0;
 	g_hash_table_foreach_remove(req->header_hash, RemoveHeader, NULL);
@@ -797,6 +808,8 @@ HTTP_Method(
 	if(sigaction(SIGALRM, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	} 
+
+	ThisScreen = NewScreenData();
 
 	klass = _klass;
 	req = HTTP_Init(klass, fpComm);

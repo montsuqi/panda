@@ -42,6 +42,7 @@
 #include	"DBparser.h"
 #include	"directory.h"
 #include	"dbgroup.h"
+#include	"driver.h"
 #include	"dirs.h"
 #include	"option.h"
 #include	"message.h"
@@ -423,15 +424,16 @@ MakeFromRecord(
 	char	*name)
 {
 	RecordStruct	*rec;
+	char			*ValueName;
 
 ENTER_FUNC;
 	level = Top;
 	RecParserInit();
 	DB_ParserInit();
-	if		(  ( rec = DB_Parser(name,NULL,FALSE) )  !=  NULL  ) {
+	if		(  ( rec = DB_Parser(name,NULL,&ValueName,FALSE) )  !=  NULL  ) {
 		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
-			PutString(rec->name);
+			PutString(ValueName);
 		} else {
 			PutString(RecName);
 		}
@@ -462,7 +464,7 @@ MakeLD(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,LD_Name,"","",P_LD);
+	SetUpDirectory(Directory,LD_Name,"","",TRUE);
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -629,7 +631,7 @@ MakeLinkage(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,LD_Name,"","",P_LD);
+	SetUpDirectory(Directory,LD_Name,"","",TRUE);
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -686,7 +688,7 @@ MakeDB(void)
 	size_t	cDB;
 
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -787,7 +789,7 @@ MakeDBREC(
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -886,7 +888,7 @@ MakeDBCOMM(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -1006,7 +1008,7 @@ MakeDBPATH(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
+	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -1073,7 +1075,7 @@ MakeMCPAREA(void)
 {
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,"","","",P_NONE);
+	SetUpDirectory(Directory,"","","",TRUE);
 
 	Prefix = "";
 	PutLevel(Top,TRUE);

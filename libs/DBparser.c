@@ -365,7 +365,7 @@ ENTER_FUNC;
 	} else {
 		op = path->ops[ix-1];
 	}
-
+	
 	if		(  GetSymbol  ==  '('  ) {
 		op->args = NewValue(GL_TYPE_RECORD);
 		GetName;
@@ -698,6 +698,7 @@ extern	RecordStruct	*
 DB_Parser(
 	char	*name,
 	char	*gname,
+	char	**ValueName,
 	Bool	fScript)
 {
 	struct	stat	stbuf;
@@ -709,9 +710,12 @@ ENTER_FUNC;
 	root.next = NULL;
 	dbgprintf("name  = [%s]",name);
 	dbgprintf("gname = [%s]",gname);
-	if		(  stat(name,&stbuf)  ==  0  ) {
+	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,RecordDir,DB_Reserved) )  !=  NULL  ) {
 			ret = DB_Parse(in,name,gname,fScript);
+			if		(  ValueName  !=  NULL  ) {
+				*ValueName = StrDup(in->ValueName);
+			}
 			DropLexInfo(&in);
 			ResolveAlias(ret,ret->value);
 		} else {

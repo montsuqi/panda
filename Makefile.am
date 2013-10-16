@@ -23,11 +23,14 @@ SUBDIRS		=	\
 	dblib		\
 	include 	\
 	dbstuff		\
+	monpls_demo	\
 	fdd			\
 	tools		\
 	glauth 		\
 	glserver	\
 	@GLCLIENT@	\
+	htserver	\
+	pgserver	\
 	wfc			\
 	aps			\
 	cobol		\
@@ -82,6 +85,3 @@ my-distcheck: dist
 	echo "$$dashes"
 
 ACLOCAL_AMFLAGS = -I m4
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = panda.pc

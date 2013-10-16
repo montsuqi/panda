@@ -23,21 +23,28 @@ dbredirector_LDADD 		=				\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpanda.la	\
-	$(POSTGRES_LIBS)					\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(GLIB_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(COMMON_LIBS)						
+	$(MONDAI_LIBS)						\
+	$(POSTGRES_LIBS)					
 
 
 dbs_LDADD 		=						\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
-	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandas.a	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	\
+	$(GLIB_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(COMMON_LIBS)						
+	$(MONDAI_LIBS)						
 
 INCLUDES 			= 					\
 	-I$(top_srcdir)					\
@@ -48,7 +55,8 @@ INCLUDES 			= 					\
 	$(POSTGRES_CFLAGS)					\
 	$(P11_CFLAGS)						\
 	$(SSL_CFLAGS)						\
-	$(COMMON_CFLAGS)
+	$(MONDAI_CFLAGS)					\
+	$(GLIB_CFLAGS)
 
 dbs_LDFLAGS	=	-export-dynamic
 dbs_SOURCES	=							\
@@ -58,7 +66,10 @@ dbs_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.a	\
+	$(top_builddir)/libs/libpandas.a	\
+	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpandacom.a	
 
 dbredirector_LDFLAGS	=	-export-dynamic
 dbredirector_SOURCES	=	\
@@ -69,7 +80,8 @@ dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a
 
 
 dblogger_LDADD 		= $(dbredirector_LDADD)
@@ -87,7 +99,9 @@ dbmaster_DEPENDENCIES	=			\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a
+
 
 dbslave_LDADD 		= $(dbredirector_LDADD)
 dbslave_LDFLAGS	=	-export-dynamic
@@ -98,7 +112,8 @@ dbslave_DEPENDENCIES	=			\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamisc.a
 
 
 EXTRA_DIST = 							\
