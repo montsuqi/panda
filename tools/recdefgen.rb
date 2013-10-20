@@ -424,6 +424,8 @@ class  Widget
         putTab(ind+1);
         printf("tvalue\tvarchar(%d);\n",@chars);
         putTab(ind+1);
+        printf("ximenabled\tbool;\n");
+        putTab(ind+1);
         printf("rowdata {\n");
         @columns.times{|i|
           putTab(ind+2);
