@@ -1499,7 +1499,11 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"trow")  ) {
 				RecvIntegerData(fp,&(attrs->trow));
 				/* for 1origin cobol */
-				attrs->trow = attrs->trow > 1 ? attrs->trow - 1 : 0;
+				if (attrs->trow >= 1) {
+					attrs->trow -= 1;
+				} else {
+					// do nothing
+				}
 			} else
 			if		(  !stricmp(name,"trowattr")  ) {
 				RecvIntegerData(fp,&rowattr);
@@ -1523,7 +1527,11 @@ ENTER_FUNC;
 			} else
 			if		(  !stricmp(name,"tcolumn")  ) {
 				RecvIntegerData(fp,&(attrs->tcolumn));
-				attrs->tcolumn -= 1;
+				if (attrs->tcolumn >= 1) {
+					attrs->tcolumn -= 1;
+				} else {
+					// do nothing
+				}
 			} else
 			if		(  !stricmp(name,"tvalue")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);

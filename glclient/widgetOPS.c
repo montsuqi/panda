@@ -380,6 +380,8 @@ ENTER_FUNC;
 	if (data->trow >= 0 && data->tcolumn >= 0) {
 		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget), 
 			data->trow, data->tcolumn, TRUE, data->trowattr, 0.0); 
+	} else {
+		gtk_panda_table_stay(GTK_PANDA_TABLE(widget));
 	}
 	_AddChangedWidget(widget);
 LEAVE_FUNC;
