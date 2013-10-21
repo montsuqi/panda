@@ -20,6 +20,7 @@
 #ifndef	_INC_LIBPANDA_H
 #define	_INC_LIBPANDA_H
 
+#include "dirs.h"
 #include "Dlex.h"
 #include "mhandler.h"
 #include "DDparser.h"
@@ -36,13 +37,14 @@
 #include "directory.h"
 #include "driver.h"
 #include "load.h"
-#include "sessioncall.h"
 #include "comm.h"
 #include "comms.h"
 #include "net.h"
 #include "term.h"
 #include "socket.h"
 #include "port.h"
-#include "wfcio.h"
+#include "queue.h"
+#include "message.h"
+#include "debug.h"
 
 #endif
