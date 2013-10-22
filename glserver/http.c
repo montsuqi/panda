@@ -39,13 +39,14 @@
 #include	<sys/wait.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
+#include	<ctype.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"glterm.h"
 #include	"socket.h"
+#include	"port.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"auth.h"
@@ -54,29 +55,32 @@
 #include	"glcomm.h"
 #include	"front.h"
 #include	"term.h"
-#include	"message.h"
-#include	"debug.h"
 #include	"http.h"
 #include	"monapi.h"
+#include	"blobreq.h"
+#include	"message.h"
+#include	"debug.h"
 
-#define MAX_REQ_SIZE 1024*1024
+#define MAX_REQ_SIZE 1024*1024+1
 
 typedef struct {
 	NETFILE		*fp;
-	char		*term;
+	char		host[SIZE_HOST];
 	PacketClass	method;
 	int			buf_size;
-	char		buf[MAX_REQ_SIZE];
+	char		*buf;
 	char		*head;
-	int			body_size;
-	char		body[MAX_REQ_SIZE];
 	char		*arguments;
-	GHashTable 	*header_hash;
-	char		*headers;
+	int			body_size;
+	char		*body;
+	GHashTable	*header_hash;
 	char		*user;
 	char		*pass;
 	char		*ld;
+	char		*window;
 	int			status;
+	ScreenData	*scr;
+	NETFILE		*fpSysData;
 } HTTP_REQUEST;
 
 HTTP_REQUEST *
@@ -85,23 +89,36 @@ HTTP_Init(
 	NETFILE *fp)
 {
 	HTTP_REQUEST *req;
+	Port *port;
+	int fd;
 
 	req = New(HTTP_REQUEST);
 	req->fp = fp;
-	req->term = TermName(fp->fd);
+	RemoteIP(fp->fd,req->host,SIZE_HOST);
 	req->method = klass;
 	req->buf_size = 0;
-	req->buf[0] = '\0';
-	req->head = req->buf;
+	req->buf = req->head = xmalloc(sizeof(char) * MAX_REQ_SIZE);
+	memset(req->buf, 0x0, MAX_REQ_SIZE);
 	req->body_size = 0;
-	req->body[0] = '\0';
+	req->body = xmalloc(sizeof(char) * MAX_REQ_SIZE);
+	memset(req->body, 0x0, MAX_REQ_SIZE);
 	req->arguments = NULL;
 	req->header_hash = NewNameHash();
-	req->headers = NULL;
 	req->user = NULL;
 	req->pass = NULL;
 	req->ld = NULL;
+	req->window = NULL;
 	req->status = HTTP_OK;
+	req->scr = NewScreenData();
+
+	port = ParPort(PortSysData, SYSDATA_PORT);
+	fd = ConnectSocket(port,SOCK_STREAM);
+	DestroyPort(port);
+	if ( fd > 0 ){
+		req->fpSysData = SocketToNet(fd);
+	} else {
+		Error("cannot connect sysdata");
+	}
 	return req;
 }
 
@@ -174,39 +191,79 @@ HTTP_CODE2REASON(HTTP_NOT_EXTENDED,"Not Extended")
 void
 SendResponse(
 	HTTP_REQUEST *req,
-	LargeByteString *headers,
-	LargeByteString *body)
+	MonAPIData *data)
 {
-	char buf[256];
+	char buf[1024];
 	char date[50];
+	unsigned char *body;
+	size_t size;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
+	ValueStruct *vstatus;
+	ValueStruct *vbody;
+	MonObjectType obj = GL_OBJ_NULL;
+
+	size = 0;
+	body = NULL;
+
+	if (data != NULL && data->value != NULL) {
+		vstatus = GetItemLongName(data->value,"http_status");
+		if (vstatus != NULL) {
+			req->status = ValueInteger(vstatus);
+		} else {
+			req->status = HTTP_OK;
+		}
+		
+	}
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
 		req->status, GetReasonPhrase(req->status));
-	Send(req->fp, buf, strlen(buf));
-	MessageLogPrintf("[%s@%s] %s", req->user, req->term ,buf);
+	Send(req->fp, buf, strlen(buf)); 
+	MessageLogPrintf("[%s@%s] %s", req->user, req->host ,buf);
 
 	gmtime_r(&t, &cur);
 	cur_p = &cur;
 	if (strftime(date, sizeof(date),
 			"%a, %d %b %Y %H:%M:%S GMT", cur_p) != 0) {
 		sprintf(buf, "Date: %s\r\n", date);
-		Send(req->fp, buf, strlen(buf));
+		Send(req->fp, buf, strlen(buf)); 
 	}
 	
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
-	if (headers != NULL && LBS_Body(headers) != NULL) {
-		Send(req->fp, LBS_Body(headers), LBS_Size(headers));
+	if (data != NULL && data->value != NULL && req->status == HTTP_OK) {
+		vbody = GetItemLongName(data->value, "body");
+		if (vbody != NULL) {
+			obj = ValueObjectId(vbody);
+		}
+		dbgprintf("obj:%d GL_OBJ_NULL:%d", (int)obj, (int)GL_OBJ_NULL);
+		if (obj != GL_OBJ_NULL) {
+			RequestReadBLOB(req->fpSysData, obj, &body, &size);
+		}
+		sprintf(buf, "Content-Type: %s\r\n", 
+			ValueToString(GetItemLongName(data->value,"content_type"), NULL));
+		Send(req->fp, buf, strlen(buf));
+	}
+	if (body != NULL && size > 0) {
+		sprintf(buf, "Content-Length: %ld\r\n", (long)size);
+		Send(req->fp, buf, strlen(buf));
+	} else {
+		sprintf(buf, "Content-Length: 0\r\n");
+		Send(req->fp, buf, strlen(buf));
+	}
+
+	if (req->status == HTTP_UNAUTHORIZED) {
+		const char *str = "WWW-Authenticate: Basic realm=\"glserver\"\r\n";
+		Send(req->fp, (char *)str, strlen(str));
 	}
 
 	Send(req->fp, "\r\n", strlen("\r\n"));
-
-	if (body != NULL && LBS_Body(body) != NULL) {
-		Send(req->fp, LBS_Body(body), LBS_Size(body));
+	if (body != NULL && size > 0) {
+		Send(req->fp, (char *)body, size);
+		xfree(body);
 	}
+	Flush(req->fp);
 }
 
 int
@@ -216,14 +273,14 @@ TryRecv(
 	int size;
 
 	if (req->buf_size >= MAX_REQ_SIZE) {
-		req->status = HTTP_UNPROCESSABLE_ENTITY;
-		SendResponse(req, 0, NULL);
+		req->status = HTTP_REQUEST_ENTITY_TOO_LARGE;
+		SendResponse(req, NULL);
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
-
 	size = RecvAtOnce(req->fp, 
 		req->buf + req->buf_size , 
 		MAX_REQ_SIZE - req->buf_size);
+	ON_IO_ERROR(req->fp,badio);	
 	if (size >= 0) {
 		req->buf_size += size;
 		req->buf[req->buf_size] = '\0';
@@ -231,6 +288,9 @@ TryRecv(
 		Error("can't read request");
 	}
 	return size;
+badio:
+	Error("client termination");
+	return 0;
 }
 
 char *
@@ -238,76 +298,61 @@ GetNextLine(HTTP_REQUEST *req)
 {
 	char *p;
 	char *ret;
+	char *head;
 	int len;
 
 	while(1) {
-		p = strstr(req->head, "\r\n");
-		if (p != NULL) {
-			len =  p - req->head;
-			if (len <= 0) {
-				return NULL;
+		if (req->buf_size > 0) {
+			head = req->head;
+			p = strstr(head, "\r\n");
+			if (p != NULL) {
+				req->head = p + 2;
+				len = p - head;
+				if (len <= 0) {
+					return NULL;
+				}
+				ret = StrnDup(head, len);
+				return ret;
 			}
-			ret = strndup(req->head, len);
-			req->head = p + strlen("\r\n");
-
-			MessageLogPrintf("[%s]:%s", req->term, ret);
-
-			return ret;
 		}
 		TryRecv(req);
 	}
 }
 
-#if 0
 static char *
-ParseReqArgument(HTTP_REQUEST *req, char *argument)
+decode_uri(const char *uri)
 {
-	char *head;
-	char *tail;
-	char *key;
-	char *value;
+	char c, *ret;
+	int i, j, in_query = 0;
+	
+	ret = xmalloc(strlen(uri) + 1);
 
-	head = argument;
-
-	while(1) {
-		tail = strstr(head, "=");
-		if (tail == NULL) {
-			Message("Invalid HTTP Argument :%s", argument);
-			req->status = HTTP_BAD_REQUEST;
-			return head;
+	for (i = j = 0; uri[i] != '\0'; i++) {
+		c = uri[i];
+		if (c == '?') {
+			in_query = 1;
+		} else if (c == '+' && in_query) {
+			c = ' ';
+		} else if (c == '%' && isxdigit((unsigned char)uri[i+1]) &&
+		    isxdigit((unsigned char)uri[i+2])) {
+			char tmp[] = { uri[i+1], uri[i+2], '\0' };
+			c = (char)strtol(tmp, NULL, 16);
+			i += 2;
 		}
-		key = strndup(head, tail - head);
-		head = tail + 1;
-		
-		tail = strstr(head, "&");
-		if (tail != NULL) {
-				value = strndup(head, tail - head);
-				head = tail + 1;
-				g_hash_table_insert(req->arguments, key, value);
-				dbgprintf("argument key:%s value:%s\n", key, value);
-		} else {
-			tail = strstr(head, " ");
-			if (tail == NULL) {
-				Message("Invalid HTTP Argument :%s", argument);
-				req->status = HTTP_BAD_REQUEST;
-			} else {
-				value = strndup(head, tail - head);
-				head = tail + 1;
-				g_hash_table_insert(req->arguments, key, value);
-				dbgprintf("argument key:%s value:%s\n", key, value);
-			}
-			return head;
-		}
+		ret[j++] = c;
 	}
+	ret[j] = '\0';
+	
+	return (ret);
 }
-#endif
 
 void
 ParseReqLine(HTTP_REQUEST *req)
 {
+	char *line;
 	char *head;
 	char *tail;
-	char *line;
+	char *args;
 	int cmp = 1;
 
 	line = head = GetNextLine(req);
@@ -322,9 +367,6 @@ ParseReqLine(HTTP_REQUEST *req)
 	case HTTP_GET:
 		cmp = strncmp("ET", head, strlen("ET"));
 		break;
-	case HTTP_HEAD:
-		cmp = strncmp("EAD", head, strlen("EAD"));
-		break;
 	case HTTP_POST:
 		cmp = strncmp("OST", head, strlen("OST"));
 		break;
@@ -334,7 +376,7 @@ ParseReqLine(HTTP_REQUEST *req)
 		req->status = HTTP_BAD_REQUEST;
 		return;
 	}
-	head = tail + strlen(" ");
+	head = tail + 1;
 	while (head[0] == ' ') { head++; }
 
 	tail = strstr(head, "/");
@@ -343,20 +385,30 @@ ParseReqLine(HTTP_REQUEST *req)
 		req->status = HTTP_BAD_REQUEST;
 		return;
 	}
-	head = tail + strlen("/");
-	
+	head = tail + 1;
+
+	tail = strstr(head, "/");
+	if (tail == NULL) {
+		Warning("Invalid LD Name :%s", line);
+		req->status = HTTP_BAD_REQUEST;
+		return;
+	} else {
+		req->ld = StrnDup(head, tail - head);
+		head = tail + 1;
+	}
+
 	tail = strstr(head, "?");
 	if (tail == NULL) {
 		tail = strstr(head, " ");
 		if (tail == NULL) {
-			Warning("Invalid Panda Command :%s", line);
+			Warning("Invalid Window :%s", line);
 			req->status = HTTP_BAD_REQUEST;
 			return;
 		}
-		req->ld = strndup(head, tail - head);
+		req->window = StrnDup(head, tail - head);
 		head = tail + 1;
 	} else {
-		req->ld = strndup(head, tail - head);
+		req->window = StrnDup(head, tail - head);
 		head = tail + 1;
 		tail = strstr(head, " ");
 		if (tail == NULL) {
@@ -364,7 +416,9 @@ ParseReqLine(HTTP_REQUEST *req)
 			req->status = HTTP_BAD_REQUEST;
 			return;
 		}
-		req->arguments = strndup(head, tail - head);
+		args = StrnDup(head, tail - head);
+		req->arguments = decode_uri(args);
+		xfree(args);
 		head = tail + 1;
 	}
 	while (head[0] == ' ') { head++; }
@@ -373,8 +427,11 @@ ParseReqLine(HTTP_REQUEST *req)
 
 	tail = strstr(head, "HTTP/1.1");
 	if (tail == NULL) {
-		Message("Invalid HTTP Version :%s", head);
-		req->status = HTTP_BAD_REQUEST;
+		tail = strstr(head, "HTTP/1.0");
+		if (tail == NULL) {
+			Message("Invalid HTTP Version :%s", head);
+			req->status = HTTP_BAD_REQUEST;
+		}
 	}
 	free(line);
 }
@@ -388,8 +445,9 @@ ParseReqHeader(HTTP_REQUEST *req)
 	char *key;
 	char *value;
 
+ENTER_FUNC;
 	line = head = GetNextLine(req);
-	if ( line == NULL) {
+	if (line == NULL) {
 		return FALSE;
 	}
 
@@ -399,24 +457,16 @@ ParseReqHeader(HTTP_REQUEST *req)
 		req->status = HTTP_BAD_REQUEST;
 		return FALSE;
 	}
-	key = strndup(head, tail - head);
+	key = StrnDup(head, tail - head);
 	head = tail + 1;
 	while(head[0] == ' '){ head++; }
 
-	value = strdup(head);
+	value = StrDup(head);
 	g_hash_table_insert(req->header_hash, key, value);
 	dbgprintf("header key:%s value:%s\n", key, value);
 
-	if (req->headers != NULL) {
-		tail = xmalloc(strlen(req->headers) + strlen(line) + strlen("\r\n") + 1);
-		sprintf(tail, "%s\r\n%s", req->headers, line);
-		xfree(req->headers);
-		req->headers = tail;
-	} else {
-		req->headers = strdup(line);
-	}
-
 	xfree(line);
+LEAVE_FUNC;
 	return TRUE;
 }
 
@@ -425,6 +475,9 @@ ParseReqBody(HTTP_REQUEST *req)
 {
 	char *value;
 	int size;
+	int partsize;
+	char *p;
+	char *q;
 	
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
 	size = atoi(value);
@@ -440,14 +493,23 @@ ParseReqBody(HTTP_REQUEST *req)
 	}
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Type");
 
-	// FIXME ; delete this check
-	if (strcmp("application/xml", value)) {
-		req->status = HTTP_BAD_REQUEST;
-		Message("invalid Content-Type:%s", value);
-		return;
-	}
+	p = req->head;
 
-	req->body_size = Recv(req->fp, req->body, size);
+	partsize = strlen(p);
+	if (partsize > 0) {
+		if (partsize >= size) {
+			memcpy(req->body, p, size);
+			req->head += size;
+		} else {
+			memcpy(req->body, p, partsize);
+			q = req->body + partsize;
+			Recv(req->fp, q, size - partsize);
+			req->head += partsize;
+		}
+	} else {
+		Recv(req->fp, req->body, size);
+	}
+	req->body_size = size;
 	dbgprintf("body :%s\n", req->body);
 }
 
@@ -458,6 +520,18 @@ ParseReqAuth(HTTP_REQUEST *req)
 	char *tail;
 	char *dec;
 	gsize size;
+
+#ifdef	USE_SSL
+	if (fSsl && fVerifyPeer){
+		if (!req->fp->peer_cert) {
+			MessageLog("can not get peer certificate");
+			req->status = HTTP_INTERNAL_SERVER_ERROR;
+			return;
+		}
+		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
+		return;
+	}
+#endif
 
 	head = (char *)g_hash_table_lookup(req->header_hash,"Authorization");
 	if (head == NULL) {
@@ -482,13 +556,12 @@ ParseReqAuth(HTTP_REQUEST *req)
 
 	tail = strstr(dec, ":");
 	if (tail == NULL) {
-
 		req->status = HTTP_UNAUTHORIZED;
 		Message("Invalid Basic Authorization data:%s", dec);
 		return;
 	}
-	req->user = strndup(dec, tail - dec);
-	req->pass = strndup(dec, size - (tail - dec + 1));
+	req->user = StrnDup(dec, tail - dec);
+	req->pass = StrnDup(tail + 1, size - (tail - dec + 1));
 	g_free(dec);
 }
 
@@ -504,75 +577,234 @@ ParseRequest(
 	ParseReqAuth(req);
 }
 
+static	void
+PackRequestRecord(
+	ValueStruct		*value,
+	HTTP_REQUEST	*req)
+{
+	char *head;
+	char *tail;
+	char *key;
+	char *val;
+	char buf[SIZE_BUFF+1];
+	ValueStruct *e;
+	char *p;
+	MonObjectType obj;
+
+ENTER_FUNC;
+	e = value;
+	InitializeValue(e);
+
+	p = NULL;
+	switch(req->method) {
+	case 'G':
+		SetValueString(GetItemLongName(e,"http_method"), "GET",NULL);
+		break;
+	case 'P':
+		SetValueString(GetItemLongName(e,"http_method"), "POST",NULL);
+		break;
+	}
+	if ( GetItemLongName(e,"http_status") ){
+		ValueInteger(GetItemLongName(e,"http_status")) = HTTP_OK;
+	}
+	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
+	if (p != NULL) {
+		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
+	}
+	if (req->body != NULL && req->body_size > 0) {
+		obj = RequestNewBLOB(req->fpSysData,BLOB_OPEN_WRITE);
+		ValueObjectId(GetItemLongName(e,"body")) = obj;
+		if (obj != GL_OBJ_NULL) {
+			RequestWriteBLOB(req->fpSysData, obj, req->body, req->body_size);
+		}
+	}
+
+	head = req->arguments;
+	while(1) {
+		if (head == NULL || head == '\0') {
+			return;
+		}
+		tail = strstr(head, "=");
+		if (tail == NULL) {
+			return;
+		}
+		key = StrnDup(head, tail - head);
+		snprintf(buf, sizeof(buf), "arguments.%s", key);
+		xfree(key);
+		head = tail + 1;
+		
+		tail = strstr(head, "&");
+		if (tail != NULL) {
+			val = StrnDup(head, tail - head);
+			SetValueString(GetItemLongName(e, buf), val, NULL);
+			xfree(val);
+			head = tail + 1;
+		} else {
+			SetValueString(GetItemLongName(e, buf), head, NULL);
+			head = NULL;
+		}
+	}
+LEAVE_FUNC;
+}
+
 MonAPIData *
 MakeMonAPIData(
 	HTTP_REQUEST *req)
 {
-	MonAPIData * data;
-	int size;
+	MonAPIData *data;
+	ValueStruct *value;
 
+	if (RegisterWindow(req->scr,req->window) == NULL) {
+		return NULL;
+	}
+	value = GetWindowValue(req->scr,req->window);
+	InitializeValue(value);
 	data = NewMonAPIData();
+	data->value = value;
 	strncpy(data->ld, req->ld, sizeof(data->ld));
+	strncpy(data->window, req->window, sizeof(data->window));
 	strncpy(data->user, req->user, sizeof(data->user));
-	strncpy(data->term, req->term, sizeof(data->term));
-	data->method = req->method;
-
-	if (req->arguments != NULL &&
-		(size = strlen(req->arguments)) > 0) {
-		LBS_ReserveSize(data->arguments, size + 1,FALSE);
-		strcpy(LBS_Body(data->arguments),req->arguments);
-	}
-	if (req->headers != NULL &&
-		(size = strlen(req->headers)) > 0) {
-		LBS_ReserveSize(data->headers, size + 1,FALSE);
-		strcpy(LBS_Body(data->headers),req->headers);
-	}
-	if (req->body_size > 0) {
-		LBS_ReserveSize(data->body, req->body_size, FALSE);
-		memcpy(LBS_Body(data->body), req->body, req->body_size);
-	}
+	strncpy(data->host, req->host, sizeof(data->host));
+	PackRequestRecord(value, req);
 	return data;
+}
+
+static void timeout(int i)
+{
+	Warning("request timeout");
+	exit(0);
+}
+
+static gboolean
+_HTTP_Method(
+	HTTP_REQUEST *req)
+{
+	MonAPIData *data;
+	PacketClass result;
+
+	ParseRequest(req);
+	alarm(0);
+
+	if (req->status != HTTP_OK) {
+		SendResponse(req, NULL);
+		return FALSE;
+	}
+
+	if (fSsl && fVerifyPeer) {
+		// SSL AUTH
+	} else {
+		if (!AuthUser(&Auth, req->user, req->pass, "api", NULL)) {
+			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
+			req->status = HTTP_UNAUTHORIZED;
+		}
+	}
+	if (req->status != HTTP_OK) {
+		SendResponse(req, NULL);
+		return FALSE;
+	}
+	data = MakeMonAPIData(req);
+	if (data == NULL) {
+		req->status = HTTP_NOT_FOUND; 
+		SendResponse(req, NULL);
+		return FALSE;
+	}
+	result = CallMonAPI(data);
+	switch(result) {
+	case WFC_API_OK:
+		SendResponse(req, data);
+		break;
+	case WFC_API_NOT_FOUND:
+		req->status = HTTP_NOT_FOUND; 
+		SendResponse(req, NULL);
+		break;
+	default:
+		req->status = HTTP_INTERNAL_SERVER_ERROR; 
+		SendResponse(req, NULL);
+		break;
+	}
+	FreeMonAPIData(data);
+	return TRUE;
+}
+
+static void
+XFree(char **ptr)
+{
+	xfree(*ptr);
+	*ptr = NULL;
+}
+
+static gboolean
+RemoveHeader(
+	gpointer key,
+	gpointer value,
+	gpointer data)
+{
+	xfree(key);
+	xfree(value);
+	return TRUE;
+}
+
+static gboolean
+PrepareNextRequest(
+	HTTP_REQUEST *req)
+{
+	alarm(API_TIMEOUT_SEC);
+	XFree(&(req->arguments));
+	XFree(&(req->user));
+	XFree(&(req->pass));
+	XFree(&(req->ld));
+	XFree(&(req->window));
+	FreeScreenData(req->scr);
+	req->scr = NewScreenData();
+	req->status = HTTP_OK;
+	req->body_size = 0;
+	g_hash_table_foreach_remove(req->header_hash, RemoveHeader, NULL);
+
+	if (req->head != NULL && strlen(req->head)> 1) {
+		req->method = req->head[0];
+		req->head ++;
+		req->buf_size -= strlen(req->head);
+		memmove(req->buf, req->head, req->buf_size);
+		memset(req->head + 1, 0, MAX_REQ_SIZE - req->buf_size);
+		req->buf[req->buf_size] = '\0';
+		req->head = req->buf;
+	} else {
+		req->buf_size = 0;
+		req->head = req->buf;
+		memset(req->buf , 0, MAX_REQ_SIZE);
+
+		req->method = RecvPacketClass(req->fp);
+		ON_IO_ERROR(req->fp,badio);	
+	}
+	return TRUE;
+badio:
+	return FALSE;
 }
 
 void
 HTTP_Method(
-	PacketClass klass,
+	PacketClass _klass,
 	NETFILE *fpComm)
 {
 	HTTP_REQUEST *req;
-	MonAPIData *data;
+	PacketClass klass;
+	struct sigaction sa;
 
+	memset(&sa, 0, sizeof(struct sigaction));  
+	sa.sa_handler = timeout;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	if(sigaction(SIGALRM, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	} 
+
+	klass = _klass;
 	req = HTTP_Init(klass, fpComm);
-
-	ParseRequest(req);
-	if (!AuthUser(&Auth, req->user, req->pass, NULL, NULL)) {
-		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->term);
-		req->status = HTTP_UNAUTHORIZED;
+	if (_HTTP_Method(req)) {
+		do {
+			if (!PrepareNextRequest(req)) {
+				break;
+			}
+		} while(_HTTP_Method(req));
 	}
-	if (req->status != HTTP_OK) {
-		if (req->status == HTTP_UNAUTHORIZED) {
-			const char *str = "WWW-Authenticate: Basic realm=\"glserver\"\r\n";
-			char *p;
-			LargeByteString *headers;
-
-			headers = NewLBS();
-			LBS_ReserveSize(headers,strlen(str)+1,FALSE);
-			p = LBS_Body(headers);
-			strcpy(p, str);
-			SendResponse(req, headers, NULL);
-			FreeLBS(headers);
-		} else {
-			SendResponse(req, NULL , NULL);
-		}
-		return;
-	}
-	data = MakeMonAPIData(req);
-
-	if (!CallMonAPI(data)) { 
-		req->status = HTTP_INTERNAL_SERVER_ERROR; 
-		SendResponse(req, NULL , NULL);
-		return;
-	}
-
-	SendResponse(req, data->headers, data->body);
 }

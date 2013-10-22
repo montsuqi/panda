@@ -32,7 +32,6 @@
 #include	<ctype.h>
 #include	<glib.h>
 #define		_SQL_PARSER
-#include	"types.h"
 #include	"libmondai.h"
 #include	"Lex.h"
 #include	"SQLlex.h"
@@ -208,11 +207,6 @@ ENTER_FUNC;
 				if		(  strcmp(ComSymbol,"$limit")  ==  0  ) {
 					LBS_Emit(sql,SQL_OP_ESC);
 					LBS_Emit(sql,SQL_OP_LIMIT);
-					GetName;
-				} else
-				if		(  strcmp(ComSymbol,"$offset")  ==  0  ) {
-					LBS_Emit(sql,SQL_OP_ESC);
-					LBS_Emit(sql,SQL_OP_OFFSET);
 					GetName;
 				} else {
 					if		(  fInto  ) {

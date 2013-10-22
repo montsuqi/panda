@@ -23,26 +23,26 @@ glauth_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 user_LDADD 		=						\
 	-lm									\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 INCLUDES 			= 					\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/include				\
 	-I$(top_srcdir)/libs				\
 	-I$(top_srcdir)/datalib				\
+	$(P11_CFLAGS)						\
 	$(SSL_CFLAGS)						\
-	$(GLIB_CFLAGS)						\
-	$(MONDAI_CFLAGS)
+	$(COMMON_CFLAGS)
 
 glauth_SOURCES	=	\
 	glauth.c
@@ -51,7 +51,7 @@ user_SOURCES	=	\
 	user.c
 
 glauth_DEPENDENCIES	=					\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 user_DEPENDENCIES	=					\

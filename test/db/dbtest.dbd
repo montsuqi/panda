@@ -1,7 +1,0 @@
-name	dbtest;
-
-db	"Test"	{
-	metadb;
-	test1;
-};
-

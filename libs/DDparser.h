@@ -25,5 +25,5 @@
 extern	RecordStruct	*DD_Parse(CURFILE *in);
 extern	RecordStruct	*ParseRecordFile(char *name);
 extern	RecordStruct	*ParseRecordMem(char *mem);
-extern	RecordStruct	*ReadRecordDefine(char *name, char *base);
+extern	RecordStruct	*ReadRecordDefine(char *name);
 #endif

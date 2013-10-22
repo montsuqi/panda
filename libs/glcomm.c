@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2004-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2004-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,9 +29,6 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<errno.h>
-#ifdef	HAVE_LIBMAGIC
-#include	<magic.h>
-#endif
 #include	<string.h>
 #include	<strings.h>
 #include	<netinet/in.h>
@@ -40,10 +37,10 @@
 #include	<glib.h>
 #include	<math.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"glcomm.h"
 #include	"front.h"
+#include	"message.h"
 #include	"debug.h"
 
 #ifdef	__APPLE__
@@ -57,26 +54,11 @@
 #define	SEND32(v)	htonl(v)
 #define	SEND16(v)	htons(v)
 
-#define	GL_OLDTYPE_INT			(PacketDataType)0x10
-#define	GL_OLDTYPE_BOOL			(PacketDataType)0x11
-#define	GL_OLDTYPE_FLOAT		(PacketDataType)0x20
-#define	GL_OLDTYPE_CHAR			(PacketDataType)0x30
-#define	GL_OLDTYPE_TEXT			(PacketDataType)0x31
-#define	GL_OLDTYPE_VARCHAR		(PacketDataType)0x32
-#define	GL_OLDTYPE_BYTE			(PacketDataType)0x40
-#define	GL_OLDTYPE_NUMBER		(PacketDataType)0x50
-#define	GL_OLDTYPE_DBCODE		(PacketDataType)0x60
-#define	GL_OLDTYPE_ARRAY		(PacketDataType)0x90
-#define	GL_OLDTYPE_RECORD		(PacketDataType)0xA0
-
 static	LargeByteString	*Buff;
 
 #ifdef	HAVE_LIBMAGIC
 static	struct	magic_set	*Magic;
 #endif
-
-static	PacketDataType	ToOldType[256];
-static	PacketDataType	ToNewType[256];
 
 extern	void
 GL_SendPacketClass(
@@ -85,6 +67,7 @@ GL_SendPacketClass(
 	Bool	fNetwork)
 {
 	nputc(c,fp);
+	Flush(fp);
 }
 
 extern	PacketClass
@@ -107,23 +90,23 @@ GL_SendInt(
 	int		data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 
 	if		(  fNetwork  ) {
-		*(int *)buff = SEND32(data);
-	} else {
-		*(int *)buff = data;
+		data = SEND32(data);
 	}
+	memcpy(buff,&data,sizeof(int));
 	Send(fp,buff,sizeof(int));
 }
 
+#if 0
 static	void
 GL_SendUInt(
 	NETFILE	*fp,
 	unsigned	int	data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(unsigned int)];
+	unsigned char	buff[sizeof(unsigned int)];
 
 	if		(  fNetwork  ) {
 		*(unsigned int *)buff = SEND32(data);
@@ -138,7 +121,7 @@ GL_RecvUInt(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(unsigned int)];
+	unsigned char	buff[sizeof(unsigned int)];
 	unsigned	int	data;
 
 	Recv(fp,buff,sizeof(unsigned int));
@@ -149,14 +132,14 @@ GL_RecvUInt(
 	}
 	return	(data);
 }
-#if	0
+
 extern	void
 GL_SendLong(
 	NETFILE	*fp,
 	long	data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(long)];
+	unsigned char	buff[sizeof(long)];
 
 	if		(  fNetwork  ) {
 		*(long *)buff = SEND32(data);
@@ -172,16 +155,7 @@ GL_SendLength(
 	size_t	data,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
-	int		val;
-
-	val = (int)data;
-	if		(  fNetwork  ) {
-		*(int *)buff = SEND32(val);
-	} else {
-		*(int *)buff = data;
-	}
-	Send(fp,buff,sizeof(int));
+	GL_SendInt(fp,data,fNetwork);
 }
 
 extern	int
@@ -189,14 +163,13 @@ GL_RecvInt(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
+	unsigned char	buff[sizeof(int)];
 	int		data;
 
 	Recv(fp,buff,sizeof(int));
+	memcpy(&data,buff,sizeof(int));
 	if		(  fNetwork  ) {
-		data = RECV32(*(int *)buff);
-	} else {
-		data = *(int *)buff;
+		data = RECV32(data);
 	}
 	return	(data);
 }
@@ -206,16 +179,7 @@ GL_RecvLength(
 	NETFILE	*fp,
 	Bool	fNetwork)
 {
-	byte	buff[sizeof(int)];
-	size_t	data;
-
-	Recv(fp,buff,sizeof(int));
-	if		(  fNetwork  ) {
-		data = (size_t)RECV32(*(int *)buff);
-	} else {
-		data = (size_t)*(int *)buff;
-	}
-	return	(data);
+	return (size_t)GL_RecvInt(fp,fNetwork);
 }
 
 static	void
@@ -259,7 +223,7 @@ GL_RecvString(
 
 ENTER_FUNC;
 	lsize = GL_RecvLength(fp,fNetwork);
-	if		(	size > lsize 	){
+	if		(	size >= lsize 	){
 		size = lsize;
 		Recv(fp,str,size);
 		str[size] = 0;
@@ -291,26 +255,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	void
-GL_SendObject(
-	NETFILE	*fp,
-	MonObjectType	obj,
-	Bool	fNetwork)
-{
-	unsigned int	iobj;
-
-	iobj = (unsigned int)obj;
-	GL_SendUInt(fp,iobj,fNetwork);
-}
-
-static	MonObjectType
-GL_RecvObject(
-	NETFILE	*fp,
-	Bool	fNetwork)
-{
-	return	((MonObjectType)GL_RecvUInt(fp,fNetwork));
-}
-
 extern	Fixed	*
 GL_RecvFixed(
 	NETFILE	*fp,
@@ -323,7 +267,7 @@ ENTER_FUNC;
 	xval->flen = GL_RecvLength(fp,fNetwork);
 	xval->slen = GL_RecvLength(fp,fNetwork);
 	xval->sval = (char *)xmalloc(xval->flen+1);
-	GL_RecvString(fp, xval->flen+1, xval->sval,fNetwork);
+	GL_RecvString(fp, xval->flen, xval->sval,fNetwork);
 LEAVE_FUNC;
 	return	(xval); 
 }
@@ -391,11 +335,9 @@ GL_SendDataType(
 #ifdef	DEBUG
 	printf("SendDataType = %X\n",c);
 #endif
-	if		(  fFeatureOld  ) {
-		c = ToOldType[c];
-	}
 	nputc(c,fp);
 }
+
 
 extern	PacketDataType
 GL_RecvDataType(
@@ -405,9 +347,6 @@ GL_RecvDataType(
 	PacketClass	c;
 
 	c = ngetc(fp);
-	if		(  fFeatureOld  ) {
-		c = ToNewType[c];
-	}
 	return	(c);
 }
 
@@ -427,7 +366,7 @@ ReadFile(char *fname)
 		}
 		fclose(fpf);
 	} else {
-		dbgprintf("could not open for read: %s\n", fname);
+		MessageLogPrintf("could not open for read: %s\n", fname);
 		LBS_ReserveSize(Buff,0,FALSE);
 	}
 }
@@ -435,53 +374,22 @@ ReadFile(char *fname)
 static	void
 SendExpandObject(
 	NETFILE	*fp,
-	char	*cname,
+	ValueStruct	*value,
 	Bool	fNetwork)
 {
-	char	fname[SIZE_LONGNAME+1];
-#ifdef	HAVE_LIBMAGIC
-	char	buff[SIZE_LONGNAME+1];
-	char	*PSTOPNGPath = BIN_DIR "/pstopng";
-	const	char	*type;
-#endif
-
+	char		*fname;
 ENTER_FUNC;
-	strcpy(fname,cname);
-#ifdef	HAVE_LIBMAGIC
-	if		(  ( type = magic_file(Magic,cname) )  !=  NULL  &&
-				!strlcmp(type,"PostScript") ) {
-		switch (TermExpandType) {
-		case EXPAND_PNG:
-			sprintf(fname,"%s.png", cname);
-			sprintf(buff,"%s %s > %s",PSTOPNGPath, cname, fname);
-			system(buff);
-			ReadFile(fname);
-			GL_SendLBS(fp,Buff,fNetwork);
-			break;
-		case EXPAND_PDF:
-			sprintf(fname,"%s.pdf", cname);
-			sprintf(buff,"ps2pdf13 %s %s", cname, fname);
-			system(buff);
-			ReadFile(fname);
-			GL_SendLBS(fp,Buff,fNetwork);
-			break;
-		case EXPAND_PS:
-			ReadFile(cname);
-			GL_SendLBS(fp,Buff,fNetwork);
-			break;
-		default:
-			ReadFile(cname);
-			GL_SendLBS(fp,Buff,fNetwork);
-			break;
-		}
-	} else {
-		ReadFile(cname);
+	if (IS_OBJECT_NULL(ValueObjectId(value))) {
+		LBS_ReserveSize(Buff,0,FALSE);
 		GL_SendLBS(fp,Buff,fNetwork);
+		return;
 	}
-#endif
+	fname = BlobCacheFileName(value);
+	ReadFile(fname);
+	GL_SendLBS(fp,Buff,fNetwork);
 LEAVE_FUNC;
 }
-  
+
 /*
  *	This function sends value with valiable name.
  */
@@ -490,8 +398,6 @@ GL_SendValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
 	char		*coding,
-	Bool		fBlob,
-	Bool		fExpand,
 	Bool		fNetwork)
 {
 	int		i;
@@ -525,38 +431,19 @@ ENTER_FUNC;
 		GL_SendFixed(fp,&ValueFixed(value),fNetwork);
 		break;
 	  case	GL_TYPE_OBJECT:
-		if		(  fBlob  ) {
-			if		(  fExpand  ) {
-				SendExpandObject(fp, BlobCacheFileName(value), fNetwork);
-			} else {
-				GL_SendObject(fp,ValueObjectId(value),fNetwork);
-			}
-		}
+		SendExpandObject(fp, value, fNetwork);
 		break;
 	  case	GL_TYPE_ARRAY:
 		GL_SendInt(fp,ValueArraySize(value),fNetwork);
 		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			GL_SendValue(fp,ValueArrayItem(value,i),coding,fBlob,fExpand,fNetwork);
+			GL_SendValue(fp,ValueArrayItem(value,i),coding,fNetwork);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
 		GL_SendInt(fp,ValueRecordSize(value),fNetwork);
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			if		(  fFeatureOld  ) {
-				if		(	(  stricmp(ValueRecordName(value,i),"row")      ==  0  )
-						||	(  stricmp(ValueRecordName(value,i),"column")   ==  0  ) )	{
-					GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-				} else
-				if		(  stricmp(ValueRecordName(value,i),"rowattr")  ==  0  ) {
-					GL_SendString(fp,"row",fNetwork);
-				} else {
-					GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-					GL_SendValue(fp,ValueRecordItem(value,i),coding,fBlob,fExpand,fNetwork);
-				}
-			} else {
-				GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-				GL_SendValue(fp,ValueRecordItem(value,i),coding,fBlob,fExpand,fNetwork);
-			}
+			GL_SendString(fp,ValueRecordName(value,i),fNetwork);
+			GL_SendValue(fp,ValueRecordItem(value,i),coding,fNetwork);
 		}
 		break;
 	  default:
@@ -570,8 +457,6 @@ GL_RecvValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
 	char		*coding,
-	Bool		fBlob,
-	Bool		fExpand,
 	Bool		fNetwork)
 {
 	PacketDataType	type;
@@ -592,8 +477,8 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		dbgmsg("strings");
-		GL_RecvString(fp, sizeof(str), str,fNetwork);		ON_IO_ERROR(fp,badio);
-		SetValueString(value,str,coding);	ON_IO_ERROR(fp,badio);
+		GL_RecvString(fp,sizeof(str),str,fNetwork);	ON_IO_ERROR(fp,badio);
+		SetValueString(value,str,coding);			ON_IO_ERROR(fp,badio);
 		break;
 	  case	GL_TYPE_NUMBER:
 		dbgmsg("NUMBER");
@@ -605,16 +490,10 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_OBJECT:
 		dbgmsg("OBJECT");
-		if		(  fBlob  ) {
-			if		(  fExpand  ) {
-				GL_RecvLBS(fp,Buff,fNetwork);
-				if		(  ( fpf = Fopen(BlobCacheFileName(value),"w") )  !=  NULL  ) {
-					fwrite(LBS_Body(Buff),LBS_Size(Buff),1,fpf);
-					fclose(fpf);	
-				}
-			} else {
-				ValueObjectId(value) = GL_RecvObject(fp,fNetwork);
-			}
+		GL_RecvLBS(fp,Buff,fNetwork);
+		if		(  ( fpf = Fopen(BlobCacheFileName(value),"w") )  !=  NULL  ) {
+			fwrite(LBS_Body(Buff),LBS_Size(Buff),1,fpf);
+			fclose(fpf);	
 		}
 		break;
 	  case	GL_TYPE_INT:
@@ -646,42 +525,9 @@ LEAVE_FUNC;
 extern	void
 InitGL_Comm(void)
 {
-	int		i;
-
 	Buff = NewLBS();
-#define	TO_OLDTYPE(t)	ToOldType[GL_TYPE_##t] = GL_OLDTYPE_##t
-#define	TO_NEWTYPE(t)	ToNewType[GL_OLDTYPE_##t] = GL_TYPE_##t
-
-	for	( i = 0 ; i < 256 ; i ++ ) {
-		ToOldType[i] = GL_TYPE_NULL;
-		ToNewType[i] = GL_TYPE_NULL;
-	}
-
-	TO_OLDTYPE(INT);
-	TO_OLDTYPE(BOOL);
-	TO_OLDTYPE(FLOAT);
-	TO_OLDTYPE(CHAR);
-	TO_OLDTYPE(TEXT);
-	TO_OLDTYPE(VARCHAR);
-	TO_OLDTYPE(BYTE);
-	TO_OLDTYPE(NUMBER);
-	TO_OLDTYPE(DBCODE);
-	TO_OLDTYPE(ARRAY);
-	TO_OLDTYPE(RECORD);
-
-	TO_NEWTYPE(INT);
-	TO_NEWTYPE(BOOL);
-	TO_NEWTYPE(FLOAT);
-	TO_NEWTYPE(CHAR);
-	TO_NEWTYPE(TEXT);
-	TO_NEWTYPE(VARCHAR);
-	TO_NEWTYPE(BYTE);
-	TO_NEWTYPE(NUMBER);
-	TO_NEWTYPE(DBCODE);
-	TO_NEWTYPE(ARRAY);
-	TO_NEWTYPE(RECORD);
 #ifdef	HAVE_LIBMAGIC
-	if		(  ( Magic = magic_open(MAGIC_SYMLINK|MAGIC_COMPRESS|MAGIC_PRESERVE_ATIME) )
+	if		(  ( Magic = magic_open(MAGIC_SYMLINK|MAGIC_COMPRESS|MAGIC_PRESERVE_ATIME|MAGIC_CONTINUE) )
 			   ==  NULL  ) {
 		Error("magic: %s", strerror(errno));
 	}
@@ -690,3 +536,4 @@ InitGL_Comm(void)
 	}
 #endif
 }
+

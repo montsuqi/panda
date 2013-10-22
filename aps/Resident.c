@@ -40,7 +40,6 @@
 #include	<glib.h>
 #include	<setjmp.h>
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"net.h"
 #include	"comm.h"
@@ -75,10 +74,10 @@ DumpNode(
 	ProcessNode	*node)
 {
 #ifdef	DEBUG
-dbgmsg(">DumpNode");
+ENTER_FUNC;
 	printf("node = %p\n",node); 
 //	DumpValueStruct(node->mcprec->value); 
-dbgmsg("<DumpNode");
+LEAVE_FUNC;
 #endif
 }
 
@@ -101,7 +100,8 @@ ExecuteDB_Server(
 	,				*func;
 	ConvFuncs		*conv;
 
-dbgmsg(">ExecuteDB_Server");
+ENTER_FUNC;
+	InitializeCTRL(&ctrl);
 	conv = handler->serialize;
 	while	(TRUE) {
 		dbgmsg("read");
@@ -111,6 +111,7 @@ dbgmsg(">ExecuteDB_Server");
 		InitializeValue(recDBCTRL->value);
 		conv->UnPackValue(handler->conv,LBS_Body(dbbuff),recDBCTRL->value);
 		rname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"rname"));
+		strncpy(ctrl.rname,rname,SIZE_NAME);
 		value = NULL;
 		ret = NULL;
 		if		(	(  rname  !=  NULL  ) 
@@ -119,6 +120,7 @@ dbgmsg(">ExecuteDB_Server");
 			rec = ThisDB[ctrl.rno];
 			value = rec->value;
 			pname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"pname"));
+			strncpy(ctrl.pname,pname,SIZE_NAME);
 			if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
 															  pname) )  !=  0  ) {
 				ctrl.pno = pno - 1;
@@ -141,8 +143,8 @@ dbgmsg(">ExecuteDB_Server");
 			ConvSetRecName(handler->conv,rec->name);
 			InitializeValue(value);
 			conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
-			strcpy(ctrl.func,func);
-			ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
+			strncpy(ctrl.func,func,SIZE_FUNC);
+			ret = ExecDB_Process(&ctrl,rec,value);
 		} else {
 			ctrl.rc = 0;
 		}
@@ -169,27 +171,27 @@ dbgmsg(">ExecuteDB_Server");
 		Send(fpDBW,conv->bsep,strlen(conv->bsep));		ON_IO_ERROR(fpDBW,badio);
 	}
   badio:
-dbgmsg("<ExecuteDB_Server");
+LEAVE_FUNC;
 }
 
 static	void
 StartDB(
 	MessageHandler	*handler)
 {
-dbgmsg(">StartDB");
+ENTER_FUNC;
 	pthread_create(&_DB_Thread,NULL,(void *(*)(void *))ExecuteDB_Server,handler);
-dbgmsg("<StartDB");
+LEAVE_FUNC;	
 }
 
 static	void
 CancelDB(void)
 {
-dbgmsg(">CancelDB");
+ENTER_FUNC;	
 	if		(  pthread_kill(_DB_Thread,0)  ==  0  ) {
 		pthread_cancel(_DB_Thread);
 		pthread_join(_DB_Thread,NULL);
 	}
-dbgmsg("<CancelDB");
+LEAVE_FUNC;
 }
 
 static	void
@@ -202,7 +204,7 @@ PutApplication(
 	size_t	size;
 	ConvFuncs	*conv;
 
-dbgmsg(">PutApplication");
+ENTER_FUNC;
 	DumpNode(node);
 	conv = handler->serialize;
 
@@ -252,7 +254,7 @@ dbgmsg(">PutApplication");
 	}
 	Send(fp,conv->bsep,strlen(conv->bsep));		ON_IO_ERROR(fp,badio);
   badio:
-dbgmsg("<PutApplication");
+LEAVE_FUNC;	
 }
 
 static	void
@@ -264,7 +266,7 @@ GetApplication(
 	int		i;
 	ConvFuncs	*conv;
 
-dbgmsg(">GetApplication");
+ENTER_FUNC;
 	conv = handler->serialize;
 
 	LBS_EmitStart(iobuff);
@@ -289,7 +291,7 @@ dbgmsg(">GetApplication");
 	}
 	DumpNode(node);
   badio:
-dbgmsg("<GetApplication");
+LEAVE_FUNC;
 }
 
 static	jmp_buf	SubError;
@@ -319,7 +321,7 @@ _ExecuteProcess(
 	,		**cmd;
 
 
-dbgmsg(">ExecuteProcess");
+ENTER_FUNC;
 	if		(  handler->loadpath  ==  NULL  ) {
 		handler->loadpath = ExecPath;
 	}
@@ -383,8 +385,8 @@ dbgmsg(">ExecuteProcess");
 	} else {
 		rc = FALSE;
 	}
-dbgmsg("<ExecuteProcess");
-	return	(rc); 
+LEAVE_FUNC;	
+	return	(rc);
 }
 
 static	void
@@ -399,11 +401,9 @@ static	void
 _StopDC(
 	MessageHandler	*handler)
 {
-dbgmsg(">StopDC");
-	if		(  ThisLD->cDB  >  0  ) {
-		_StopDB(handler);
-	}
-dbgmsg("<StopDC");
+ENTER_FUNC;
+	_StopDB(handler);
+LEAVE_FUNC;
 }
 
 static	void
@@ -438,7 +438,7 @@ _StartBatch(
 	int		pAPR[2]
 	,		pAPW[2];
 
-dbgmsg(">StartBatch");
+ENTER_FUNC;
 	if		(  handler->loadpath  ==  NULL  ) {
 		handler->loadpath = ExecPath;
 	}
@@ -499,7 +499,7 @@ dbgmsg(">StartBatch");
 	} else {
 		rc = FALSE;
 	}
-dbgmsg("<StartBatch");
+LEAVE_FUNC;
 	return	(rc);
 }
 

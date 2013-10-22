@@ -34,7 +34,6 @@
 #include	<ctype.h>
 #include	<glib.h>
 #include	<sys/stat.h>	/*	for stbuf	*/
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"Lex.h"
@@ -271,7 +270,7 @@ SCRIPT_Lex(
 }
 
 static	LargeByteString	*
-ParSCRIPT(
+_ParSCRIPT(
 	CURFILE			*in,
 	RecordStruct	*rec,
 	ValueStruct		*argp,
@@ -326,8 +325,7 @@ ENTER_FUNC;
 	}
 	switch	(db->dbg->func->type) {
 	  case	DB_PARSER_SCRIPT:
-		ret = ParSCRIPT(in,rec,argp,argf);
-		dbgprintf("ret = [%s]",(char *)LBS_Body(ret));
+		ret = _ParSCRIPT(in,rec,argp,argf);
 		break;
 	  case	DB_PARSER_SQL:
 		ret = ParSQL(in,rec,argp,argf);
@@ -365,10 +363,9 @@ ENTER_FUNC;
 		path->ops[ix] = op;
 		path->ocount ++;
 	} else {
-		ix --;
-		op = NewOperation(ComSymbol);
-		path->ops[ix] = op;
+		op = path->ops[ix-1];
 	}
+
 	if		(  GetSymbol  ==  '('  ) {
 		op->args = NewValue(GL_TYPE_RECORD);
 		GetName;
@@ -425,6 +422,9 @@ ENTER_FUNC;
 	path = NewPathStruct(usage);
 	paths[pcount] = path;
 	path->name = StrDup(ComSymbol);
+	if ( g_hash_table_lookup(RecordDB(rec)->paths,path->name) != NULL) {
+		Warning("path:%s key:%s duplicate", rec->name, path->name);
+	}
 	g_hash_table_insert(RecordDB(rec)->paths,path->name,(void *)((long)pcount+1));
 	RecordDB(rec)->pcount ++;
 	RecordDB(rec)->path = paths;
@@ -499,8 +499,7 @@ ENTER_FUNC;
 		db->ops[db->ocount] = op;
 		db->ocount ++;
 	} else {
-		op = NewOperation(ComSymbol);
-		db->ops[ix-1] = op;
+		op = db->ops[ix-1];
 	}
 	if		(  GetSymbol  == '{'  ) {
 		if		(  op->proc  ==  NULL  ) {
@@ -548,7 +547,7 @@ ENTER_FUNC;
 			switch	(GetName) {
 			  case	T_SYMBOL:
 				sprintf(buff,"%s.db",ComSymbol);
-				use = ReadRecordDefine(buff,ThisEnv->BaseDir);
+				use = ReadRecordDefine(buff);
 				if		(  use  ==  NULL  ) {
 					ParError("define not found");
 				} else {
@@ -699,7 +698,6 @@ extern	RecordStruct	*
 DB_Parser(
 	char	*name,
 	char	*gname,
-	char	**ValueName,
 	Bool	fScript)
 {
 	struct	stat	stbuf;
@@ -711,12 +709,9 @@ ENTER_FUNC;
 	root.next = NULL;
 	dbgprintf("name  = [%s]",name);
 	dbgprintf("gname = [%s]",gname);
-	if		(  stat(name,&stbuf)  ==  0  ) { 
+	if		(  stat(name,&stbuf)  ==  0  ) {
 		if		(  ( in = PushLexInfo(&root,name,RecordDir,DB_Reserved) )  !=  NULL  ) {
 			ret = DB_Parse(in,name,gname,fScript);
-			if		(  ValueName  !=  NULL  ) {
-				*ValueName = StrDup(in->ValueName);
-			}
 			DropLexInfo(&in);
 			ResolveAlias(ret,ret->value);
 		} else {

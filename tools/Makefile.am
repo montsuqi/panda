@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2009  ogochan
+# Copyright (C) 2005-2008  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = pandadb copygen dbgen checkdir gnumerictodb gnumerictorec
+bin_PROGRAMS = pandadb copygen dbgen checkdir $(dbsyncbin)
 sbin_PROGRAMS = monitor msgd
 bin_SCRIPTS = recdefgen.rb recgen.rb
 noinst_SCRIPTS = copy
@@ -27,99 +27,80 @@ copygen_LDFLAGS	=			\
 
 copygen_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 dbgen_LDFLAGS	=			\
 	-export-dynamic
 dbgen_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 pandadb_LDFLAGS	=			\
 	-export-dynamic
 pandadb_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 checkdir_LDFLAGS	=			\
 	-export-dynamic
 checkdir_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 monitor_LDFLAGS	=			\
 	-export-dynamic
 monitor_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 msgd_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
-
-gnumerictodb_LDADD 		=				\
-	-lm									\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
-	$(XML2_LIBS)						\
-	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
-
-gnumerictorec_LDADD 	=				\
-	-lm									\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
-	$(XML2_LIBS)						\
-	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
-	$(GLIB_CFLAGS)			\
+	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(XML2_CFLAGS)			\
-	$(MONDAI_CFLAGS)		\
+	$(COMMON_CFLAGS)		\
+	$(POSTGRES_CFLAGS)		\
 	-DSERVER_DIR=\"$(sbindir)\"
 
 monitor_DEPENDENCIES	=				\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
@@ -139,19 +120,40 @@ monitor_SOURCES		=	\
 msgd_SOURCES		=	\
 	msgd.c
 
-gnumerictodb_SOURCES	=	\
-	xxml.c	xxml.h			\
-	gnumerictodb.c
-gnumerictorec_SOURCES	=	\
-	xxml.c	xxml.h			\
-	gnumerictorec.c
+if POSTGRESQL
+dbsyncbin = dbsync
+
+dbsync_SOURCES	= \
+	$(top_builddir)/defaults.h			\
+	dbsync.c
+
+dbsync_LDADD			=		\
+	-lm		\
+	$(top_builddir)/dblib/libpandadb.a			\
+	$(top_builddir)/libs/libpandamain.a			\
+	$(top_builddir)/libs/libpandamisc.a			\
+	$(top_builddir)/libs/libpandacom.a			\
+	$(top_builddir)/dblib/libpostgresqlutils.a	\
+	$(P11_LIBS)									\
+	$(SSL_LIBS)									\
+	$(COMMON_LIBS)								\
+	$(POSTGRES_LIBS)			
+
+dbsync_LDFLAGS	=	-export-dynamic
+
+dbsync_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpandamain.a			\
+	$(top_builddir)/libs/libpandamisc.a			\
+	$(top_builddir)/dblib/libpostgresqlutils.a	
+
+else
+dbsyncbin = 
+dbsync_SOURCES	=
+endif
+
 
 EXTRA_DIST =				\
 	recdefgen.rb			\
 	recgen.rb				\
-	copy					\
-	htcgen.rb				\
-	htcgen.xsl				\
-	htcgen2					\
-	test.def				\
-	test.gnumeric
+	copy

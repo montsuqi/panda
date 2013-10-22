@@ -16,8 +16,6 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-bin_SCRIPTS = panda-config
-
 SUBDIRS		=	\
 	intl		\
 	po			\
@@ -25,14 +23,11 @@ SUBDIRS		=	\
 	dblib		\
 	include 	\
 	dbstuff		\
-	monpls_demo	\
 	fdd			\
 	tools		\
 	glauth 		\
 	glserver	\
 	@GLCLIENT@	\
-	htserver	\
-	pgserver	\
 	wfc			\
 	aps			\
 	cobol		\
@@ -87,3 +82,6 @@ my-distcheck: dist
 	echo "$$dashes"
 
 ACLOCAL_AMFLAGS = -I m4
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = panda.pc

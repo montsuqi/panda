@@ -19,17 +19,13 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = aps dbstub
-lib_LTLIBRARIES = MCPSUB.la MONFUNC.la $(HANDLER_OBJECTS)
+lib_LTLIBRARIES = MONFUNC.la $(HANDLER_OBJECTS)
 
 libpandadbincludedir = $(includedir)/panda
 libpandadbinclude_HEADERS =	\
 	apslib.h
 
 
-MCPSUB_la_LDFLAGS	=			\
-	-module 					\
-	-version-info $(LTVERSION)	\
-	-export-dynamic
 MONFUNC_la_LDFLAGS	=			\
 	-module 					\
 	-version-info $(LTVERSION)	\
@@ -38,16 +34,15 @@ MONFUNC_la_LDFLAGS	=			\
 LDADD 		=							\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a  \
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(COMMON_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						\
 	$(OPENCOBOL_LIBS)					\
 	$(RUBY_LIBS)						
 
-MCPSUB_la_LIBADD	=
 MONFUNC_la_LIBADD	=
 
 INCLUDES 			= 		\
@@ -56,78 +51,47 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
-	$(OPENCOBOL23_CFLAGS)	\
-	$(OPENCOBOL08_CFLAGS)	\
 	$(RUBY_CFLAGS)			\
+	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(MONDAI_CFLAGS)		\
-	$(GLIB_CFLAGS)
+	$(COMMON_CFLAGS)
 
 OpenCOBOLla = 
-if OPENCOBOL
 OpenCOBOLla += OpenCOBOL.la
-endif
-if OPENCOBOL23
-OpenCOBOLla += OpenCOBOL23.la
-endif
-if OPENCOBOL08
-OpenCOBOLla += OpenCOBOL08.la
-endif
 
 HANDLER_OBJECTS	=	\
-	dotCOBOL.la		\
 	C.la			\
 	Exec.la			\
 	Resident.la		\
 	Ruby.la			\
-	$(OpenCOBOLla)
+	OpenCOBOL.la
 
-dotCOBOL_la_LDFLAGS		=	-module -export-dynamic
-if OPENCOBOL
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic
-endif
-if OPENCOBOL23
-OpenCOBOL23_la_LDFLAGS	=	-module -export-dynamic
-endif
-if OPENCOBOL08
-OpenCOBOL08_la_LDFLAGS	=	-module -export-dynamic
-endif
 C_la_LDFLAGS			=	-module -export-dynamic
 Exec_la_LDFLAGS			=	-module -export-dynamic
 Resident_la_LDFLAGS		=	-module -export-dynamic
 Ruby_la_LDFLAGS			=   -module -export-dynamic
 
-dotCOBOL_la_SOURCES		=	dotCOBOL.c
-
 C_la_SOURCES			=	\
 	C.c						\
 	apslib.c
 
-if OPENCOBOL23
-OpenCOBOL23_la_SOURCES	=	OpenCOBOL.c
-OpenCOBOL23_la_LIBADD		=	\
-	$(OPENCOBOL23_LIBS)
-endif
-if OPENCOBOL08
-OpenCOBOL08_la_SOURCES	=	OpenCOBOL.c
-OpenCOBOL08_la_LIBADD		=	\
-	$(OPENCOBOL08_LIBS)
-endif
-if OPENCOBOL
 OpenCOBOL_la_SOURCES	=	\
+	MONFUNC.c				\
+	MONFUNC.h				\
 	OpenCOBOL.c
 OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
-endif
 
 Ruby_la_SOURCES			=	\
+	MONFUNC.c				\
+	MONFUNC.h				\
 	Ruby.c					\
 	apslib.c
 Ruby_la_LIBADD			=	$(RUBY_LIBS)
 
 Exec_la_SOURCES			=	Exec.c
 Exec_la_LIBADD			=	\
-	$(top_builddir)/libs/comm.lo \
-	$(top_builddir)/libs/comms.lo
+	$(top_builddir)/libs/libpandacom.a
 
 Resident_la_SOURCES		=	Resident.c
 
@@ -140,7 +104,7 @@ aps_SOURCES	=	\
 aps_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
@@ -151,19 +115,14 @@ dbstub_SOURCES	=	\
 	handler.c		handler.h
 dbstub_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
-	MCPSUB.la							\
 	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a
 
-MCPSUB_la_SOURCES	=			\
-	MCPSUB.c					\
-	OpenCOBOL.h					\
-	apslib.c
 MONFUNC_la_SOURCES	=			\
 	MONFUNC.c					\
-	OpenCOBOL.h					\
+	MONFUNC.h					\
 	apslib.c
 
 EXTRA_DIST = apslib.rb

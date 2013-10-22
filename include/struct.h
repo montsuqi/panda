@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -76,7 +76,7 @@ typedef	struct {
 	GHashTable		*opHash;
 	int				ocount;
 	DB_Operation	**ops;
-	struct	_DBG_Class	*dbg;
+	struct	_DBG_Struct	*dbg;
 	char		*gname;
 }	DB_Struct;
 
@@ -96,13 +96,21 @@ typedef	struct _RecordStruct	{
 
 typedef	struct {
 	char	func[SIZE_FUNC];
+	char	rname[SIZE_NAME+1];
+	char	pname[SIZE_NAME+1];
 	int		rc;
 	int		blocks;
 	int		rno;
 	int		pno;
-	int		count;
+	int		rcount;
 	int		limit;
-	int		offset;
+	int		redirect;
+	int		usage;
+	int		fDBOperation;
+	long		time;
+	RecordStruct	*rec;
+	ValueStruct	*value;
+	LargeByteString	*src;
 }	DBCOMM_CTRL;
 
 typedef	struct {
@@ -113,6 +121,10 @@ typedef	struct {
 	char		*user;
 	char		*pass;
 	char		*sslmode;
+	char		*sslcert;
+	char		*sslkey;
+	char		*sslrootcert;
+	char		*sslcrl;
 }	DB_Server;
 
 #define DB_STATUS_NOCONNECT		0x00
@@ -121,61 +133,55 @@ typedef	struct {
 #define DB_STATUS_FAILURE		0x03
 #define DB_STATUS_DISCONNECT	0x04
 #define DB_STATUS_REDFAILURE	0x05
-#define	DB_STATUS_START			0x06
-#define	DB_STATUS_PREPARE		0x07
-
-#define	IS_DB_STATUS_CONNECT(status)	(((status) & DB_STATUS_CONNECT) == DB_STATUS_CONNECT)
+#define DB_STATUS_LOCKEDRED		0x06
+#define DB_STATUS_SYNC			0x07
 
 typedef	struct {
 	void		*conn;
 	int			dbstatus;
 }	DB_Process;
 
-typedef	struct {
-	struct	_DBG_Class		*class;
-	struct	_DB_Environment	*env;
-	NETFILE					*fpLog;
-	LargeByteString			*redirectData;
-	LargeByteString			*checkData;
-	DB_Process				update
-	,						readonly;
-}	DBG_Instance;
+#define	PROCESS_UPDATE		0
+#define	PROCESS_READONLY	1
 
-typedef	struct _DB_Environment	{
-	int				nNode;
-	int				dbstatus;
-	char			id[SIZE_TERM+1];	/*	transaction id (= term id)	*/
-	DBG_Instance	*entry[0];
-}	DB_Environment;
+#define	REDIRECTOR_MODE_PATCH	0
+#define	REDIRECTOR_MODE_LOG	1
 
-#define	TRANSACTION_MODE_NULL		0
-#define	TRANSACTION_MODE_SINGLE		1
-#define	TRANSACTION_MODE_2PHASE		2
-
-typedef	struct _DBG_Class	{
-	int			id;
-	char		*name;					/*	group name				*/
-	char		*type;					/*	DBMS type name			*/
-	struct	_DB_Func		*func;
-	GHashTable	*dbt;					/*	DBs in this DBG, if this
+typedef	struct _DBG_Struct	{
+	int					id;
+	char				*name;			/*	group name				*/
+	char				*type;			/*	DBMS type name			*/
+	struct	_DB_Func	*func;
+	GHashTable			*dbt;			/*	DBs in this DBG, if this
 										  value is NULL, this DBG has no DB	*/
-	int			priority;				/*	commit priority			*/
-	char		*coding;				/*	DB backend coding		*/
+	int					priority;		/*	commit priority			*/
+	char				*coding;		/*	DB backend coding		*/
 	/*	DB redirect variable	*/
-	Port		*redirectPort;
-	struct	_DBG_Class	*redirect;
-	char		*file;
-	DB_Server	*server;
-	int			nServer;
-	int			mode;					/*	transaction mode		*/
-}	DBG_Class;
+	Port				*redirectPort;
+	char				*redirectName;
+	struct	_DBG_Struct	*redirect;
+	int					redirectorMode;
+	int					auditlog;
+	char				*logTableName;
+	NETFILE				*fpLog;
+	LargeByteString		*redirectData;
+	LargeByteString		*checkData;
+	uint64_t			ticket_id;
+	LargeByteString		*last_query;
+	char				*file;
+	int					sumcheck;
+	char				*appname;
+	DB_Server			*server;
+	DB_Process			process[2];
+	int					nServer;
+}	DBG_Struct;
 
-typedef	ValueStruct	*(*DB_FUNC)(DBG_Instance *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
 
 typedef struct	{
-	int		(*exec)(DBG_Instance *, char *, Bool, int);
-	ValueStruct	*(*access)(DBG_Instance *, char *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
-	Bool	(*record)(DBG_Instance *, char *, RecordStruct *);
+	int		(*exec)(DBG_Struct *, char *, Bool, int);
+	ValueStruct	*(*access)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
 }	DB_Primitives;
 
 #define	DB_PARSER_NULL		0
@@ -195,39 +201,44 @@ typedef	struct {
 	DB_FUNC	func;
 }	DB_OPS;
 
+#define WINDOW_STACK_SIZE 16
+
 typedef	struct {
-	size_t	n;
+	size_t	sp;
 	struct {
-		byte	PutType;
-		char	window[SIZE_NAME];
-	}	control[15];
-}	WindowControl;
+		unsigned char	puttype;
+		char			window[SIZE_NAME];
+	}	s[WINDOW_STACK_SIZE];
+}	WindowStack;
+
+#define MESSAGE_TYPE_TERM	0
+#define MESSAGE_TYPE_API	1
 
 typedef	struct _ProcessNode	{
-	char		term[SIZE_TERM+1]
-	,			user[SIZE_USER+1];
-	char		window[SIZE_NAME+1]
-	,			widget[SIZE_NAME+1]
-	,			event[SIZE_EVENT]
-	,			lang[SIZE_NAME+1]
-	,			pstatus
-	,			dbstatus;
+	char			uuid[SIZE_TERM+1]
+	,				user[SIZE_USER+1];
+	char			window[SIZE_NAME+1]
+	,				widget[SIZE_NAME+1]
+	,				event[SIZE_EVENT]
+	,				command
+	,				dbstatus;
+	unsigned char	puttype;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
 	RecordStruct	*sparec;
 	RecordStruct	**scrrec;
 	RecordStruct	*thisscrrec;
-	size_t		cWindow;
-	GHashTable	*bhash;
-	size_t		cBind;
-	size_t		textsize;
-	WindowControl	w;
-	int			tnest;
+	size_t			cWindow;
+	GHashTable		*bhash;
+	size_t			cBind;
+	size_t			textsize;
+	int				messageType;
+	WindowStack		w;
 }	ProcessNode;
 
 typedef	struct	{
 	char	*name;
-	byte	fInit;
+	unsigned char	fInit;
 	struct	_MessageHandlerClass	*klass;
 	ConvFuncs			*serialize;
 	CONVOPT				*conv;
@@ -265,6 +276,7 @@ typedef	struct {
 	MessageHandler	*handler;
 	char			*module;
 	RecordStruct	*rec;
+	Bool			fAPI;
 }	WindowBind;
 
 typedef	struct {
@@ -320,8 +332,7 @@ typedef	struct {
 typedef	struct {
 	char		*dir;
 	Port		*port;
-	URL			*auth;
-}	BLOB_Struct;
+}	SysData_Struct;
 
 typedef	struct {
 	char		*name;
@@ -330,14 +341,18 @@ typedef	struct {
 	,			*RecordDir;
 	Port		*WfcApsPort
 	,			*TermPort
-	,			*ControlPort;
+	,			*ControlPort
+	,			*DBMasterPort;
+	char		*DBMasterAuth;
 	size_t		cLD
 	,			cBD
 	,			cDBD
 	,			stacksize;
-	BLOB_Struct		*blob;
+	SysData_Struct	*sysdata;
+	RecordStruct	*auditrec;
 	RecordStruct	*mcprec;
 	RecordStruct	*linkrec;
+	char		*InitialLD;
 	GHashTable	*LD_Table;
 	GHashTable	*BD_Table;
 	GHashTable	*DBD_Table;
@@ -346,12 +361,29 @@ typedef	struct {
 	DBD_Struct	**db;
 	int			mlevel;
 	int			cDBG;
-	DBG_Class	**DBG;
+	DBG_Struct	**DBG;
 	GHashTable	*DBG_Table;
 	char		*ApsPath
 		,		*WfcPath
 		,		*RedPath
-		,		*DbPath;
+		,		*DbPath
+		,		*DBLoggerPath
+		,		*DBMasterPath
+		,		*DBSlavePath;
+
+	char           *DBMasterLogDBName;
 }	DI_Struct;
+
+typedef	struct {
+	char			window[SIZE_NAME+1];
+	char			widget[SIZE_NAME+1];
+	char			event[SIZE_EVENT+1];
+	char			uuid[SIZE_TERM+1];
+	char			user[SIZE_USER+1];
+	char			tempdir[SIZE_PATH+1];
+	char			command;
+	unsigned char	dbstatus;
+	unsigned char	puttype;
+}	MessageHeader;
 
 #endif

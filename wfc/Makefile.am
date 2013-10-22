@@ -18,31 +18,30 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = wfc
-bin_PROGRAMS = wfccontrol
+bin_PROGRAMS = wfccontrol	\
+	moninfo
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
+	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(GLIB_CFLAGS)			\
-	$(UUID_CFLAGS)			\
-	$(MONDAI_CFLAGS)
+	$(COMMON_CFLAGS)
 
 LDADD 			=						\
 	-lm									\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
 	$(top_builddir)/libs/libpandablob.a	\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(GLIB_LIBS)						\
-	$(UUID_LIBS)						\
-	$(MONDAI_LIBS)						
+	$(COMMON_LIBS)
 DEPENDENCIES	=						\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpanda.a		\
+	$(top_builddir)/libs/libpandamain.a	\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
 	$(top_builddir)/libs/libpandablob.a
@@ -54,10 +53,12 @@ wfc_SOURCES	=							\
 	wfc.c		wfc.h						\
 	mqthread.c		mqthread.h			\
 	corethread.c	corethread.h		\
-	blobthread.c	blobthread.h		\
+	sysdatathread.c	sysdatathread.h		\
 	controlthread.c	controlthread.h		\
 	blobserv.c		blobserv.h			\
-	termthread.c	termthread.h
+	sysdbserv.c		sysdbserv.h			\
+	termthread.c	termthread.h		\
+	sessionthread.c	sessionthread.h	
 
 wfccontrol_LDFLAGS	=			\
 	-export-dynamic
@@ -65,3 +66,7 @@ wfccontrol_SOURCES	=					\
 	wfccontrol.c						\
 	controlthread.h
 
+moninfo_LDFLAGS	=			\
+	-export-dynamic
+moninfo_SOURCES	=					\
+	moninfo.c

@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,12 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
+#define	APS_STICK
+
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -31,9 +33,9 @@
 #include	<unistd.h>
 #include	<glib.h>
 #include	<pthread.h>
-#include	<sys/time.h>
+#include	<signal.h>
+#include	<errno.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"socket.h"
 #include	"net.h"
@@ -46,13 +48,10 @@
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"directory.h"
-#include	"blob.h"
-#include	"blobserv.h"
+#include	"term.h"
+#include	"message.h"
 #include	"driver.h"
 #include	"debug.h"
-
-static	LD_Node	**LDs;
-static	APS_Node	**APS_Table;
 
 static	void
 ClearAPS_Node(
@@ -62,7 +61,7 @@ ClearAPS_Node(
 	APS_Node	*aps;
 
 	aps = &ld->aps[ix];
-	if		(  aps->fp  !=  NULL  ) {
+	if (aps->fp != NULL) {
 		CloseNet(aps->fp);
 		aps->fp = NULL;
 	}
@@ -77,41 +76,25 @@ ActivateAPS_Node(
 ENTER_FUNC;
 	aps->count = 0;
 	aps->fp = fp;
-	if		(  fp  !=  NULL  ) {
-		SendInt(fp,aps->id);
-	}
 LEAVE_FUNC;
 }
 
-static	byte
+static	Bool
 CheckAPS(
+	PacketClass	klass,
 	LD_Node		*ld,
 	int			ix,
-	char		*term)
+	char		*uuid)
 {
-	APS_Node	*aps;
-	byte	flag;
-	NETFILE	*fp;
+	APS_Node		*aps;
 
 	aps = &ld->aps[ix];
-	fp = aps->fp;
-	if		(  fp  !=  NULL  ) {
-		SendPacketClass(fp,APS_REQ);		ON_IO_ERROR(fp,badio);
-		SendString(fp,term);				ON_IO_ERROR(fp,badio);
-		SendPacketClass(fp,APS_START);		ON_IO_ERROR(fp,badio);
-		if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
-			SendPacketClass(fp,APS_REQ);		ON_IO_ERROR(fp,badio);
-			SendString(fp,term);				ON_IO_ERROR(fp,badio);
-			SendPacketClass(fp,APS_EVENT);		ON_IO_ERROR(fp,badio);
-			flag = RecvChar(fp);				ON_IO_ERROR(fp,badio);
-		} else {
-			flag = 0;
-		}
-	} else {
-	  badio:
-		flag = 0;
+	if (aps->fp != NULL ) {
+		SendPacketClass(aps->fp,klass);ON_IO_ERROR(aps->fp,badio);
+		return TRUE;
 	}
-	return	(flag);
+badio:
+	return FALSE;
 }
 
 static	void
@@ -121,7 +104,7 @@ WaitConnect(
 {
 ENTER_FUNC;
 	pthread_mutex_lock(&ld->lock);
-	if		(  ld->aps[ix].fp  ==  NULL  ) {
+	if (ld->aps[ix].fp == NULL) {
 		pthread_cond_wait(&ld->conn, &ld->lock);
 	}
 	pthread_mutex_unlock(&ld->lock);
@@ -130,195 +113,162 @@ LEAVE_FUNC;
 
 static	Bool
 PutAPS(
-	LD_Node		*ld,
-	int			ix,
-	SessionData	*data,
-	byte		flag)
+	LD_Node			*ld,
+	int				ix,
+	SessionData		*data)
 {
-	MessageHeader	*hdr;
 	APS_Node	*aps;
-	int		i;
-	Bool	fOK;
+	int			i;
 	NETFILE		*fp;
 
 ENTER_FUNC;
 #ifdef	DEBUG
-	printf("term = [%s]\n",data->hdr->term);
+	printf("uuid = [%s]\n",data->hdr->uuid);
 	printf("user = [%s]\n",data->hdr->user);
 #endif
 
 	dbgprintf("ld = [%s]",data->ld->info->name);
 	aps = &ld->aps[ix];
+	data->apsid = aps->id;
 	fp = aps->fp;
-	hdr = data->hdr;
-	fOK = FALSE;
-	if		(  data->apsid  !=  aps->id  ) {
-		flag |= APS_LINKDATA;
-		flag |= APS_SPADATA;
-		data->apsid = aps->id;
+
+	dbgmsg("EVENTDATA");
+	SendPacketClass(fp,APS_EVENTDATA);	ON_IO_ERROR(fp,badio);
+	SendChar  (fp,data->hdr->command);	ON_IO_ERROR(fp,badio);
+	SendString(fp,data->hdr->uuid);		ON_IO_ERROR(fp,badio);
+	SendString(fp,data->hdr->tempdir);	ON_IO_ERROR(fp,badio);
+	SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
+	SendString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
+	SendString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
+	SendString(fp,data->hdr->event);	ON_IO_ERROR(fp,badio);
+	SendChar  (fp,data->hdr->dbstatus);	ON_IO_ERROR(fp,badio);
+
+	dbgmsg("WINDOW_STACK");
+	SendPacketClass(fp,APS_WINDOW_STACK);	ON_IO_ERROR(fp,badio);
+	SendInt(fp,data->w.sp);					ON_IO_ERROR(fp,badio);
+	for (i=0;i<data->w.sp;i++) {
+		SendChar(fp,data->w.s[i].puttype);	ON_IO_ERROR(fp,badio);
+		SendString(fp,data->w.s[i].window);	ON_IO_ERROR(fp,badio);
 	}
-	if		(  ( flag & APS_EVENTDATA )  !=  0  ) {
-		dbgmsg("EVENTDATA");
-		SendPacketClass(fp,APS_EVENTDATA);	ON_IO_ERROR(fp,badio);
-		SendChar(fp,hdr->status);			ON_IO_ERROR(fp,badio);
-		SendString(fp,hdr->term);			ON_IO_ERROR(fp,badio);
-		SendString(fp,hdr->user);			ON_IO_ERROR(fp,badio);
-		SendString(fp,hdr->window);			ON_IO_ERROR(fp,badio);
-		SendString(fp,hdr->widget);			ON_IO_ERROR(fp,badio);
-		SendString(fp,hdr->event);			ON_IO_ERROR(fp,badio);
-		SendString(fp,hdr->lang);			ON_IO_ERROR(fp,badio);
-		SendChar(fp,hdr->dbstatus);			ON_IO_ERROR(fp,badio);
-	}
-	if		(  ( flag & APS_MCPDATA )  !=  0  ) {
-		dbgmsg("MCPDATA");
-		SendPacketClass(fp,APS_MCPDATA);	ON_IO_ERROR(fp,badio);
-		SendLBS(fp,data->mcpdata);			ON_IO_ERROR(fp,badio);
-		SendChar(fp,data->tnest);			ON_IO_ERROR(fp,badio);
-	}
-	if		(  ( flag & APS_SCRDATA )  !=  0  ) {
-		dbgmsg("SCRDATA");
-		SendPacketClass(fp,APS_SCRDATA);	ON_IO_ERROR(fp,badio);
-		for	( i = 0 ; i < data->ld->info->cWindow ; i ++ ) {
-			if		(  data->scrdata[i]  !=  NULL  ) {
-				dbgprintf("[%s]",data->ld->info->windows[i]->name);
-				SendLBS(fp,data->scrdata[i]);		ON_IO_ERROR(fp,badio);
-			}
+
+	dbgmsg("SCRDATA");
+	SendPacketClass(fp,APS_SCRDATA);		ON_IO_ERROR(fp,badio);
+	for	(i=0;i<data->ld->info->cWindow;i++) {
+		if (data->scrdata[i] != NULL) {
+			dbgprintf("[%s]",data->ld->info->windows[i]->name);
+			SendLBS(fp,data->scrdata[i]);	ON_IO_ERROR(fp,badio);
 		}
 	}
-	if		(  ( flag & APS_LINKDATA )  !=  0  ) {
-		dbgmsg("LINKDATA");
-		if		(  data->linkdata  !=  NULL  ) {
-			SendPacketClass(fp,APS_LINKDATA);	ON_IO_ERROR(fp,badio);
-			SendLBS(fp,data->linkdata);			ON_IO_ERROR(fp,badio);
-		}
+
+	dbgmsg("LINKDATA");
+	if (data->linkdata != NULL) {
+		SendPacketClass(fp,APS_LINKDATA);	ON_IO_ERROR(fp,badio);
+		SendLBS(fp,data->linkdata);			ON_IO_ERROR(fp,badio);
 	}
-	if		(  ( flag & APS_SPADATA )  !=  0  ) {
-		dbgmsg("SPADATA");
-		if		(  ( data->spa = g_hash_table_lookup(data->spadata,data->ld->info->name) )
-				   ==  NULL  ) {
-			data->spa = NewLBS();
-			g_hash_table_insert(data->spadata,StrDup(data->ld->info->name),data->spa);
-			InitializeValue(ld->info->sparec->value);
-			LBS_ReserveSize(data->spa,
-							NativeSizeValue(NULL,ld->info->sparec->value),FALSE);
-			NativePackValue(NULL,LBS_Body(data->spa),ld->info->sparec->value);
-		}
-		SendPacketClass(fp,APS_SPADATA);	ON_IO_ERROR(fp,badio);
-		SendLBS(fp,data->spa);				ON_IO_ERROR(fp,badio);
+
+	dbgmsg("SPADATA");
+	data->spa = g_hash_table_lookup(data->spadata,data->ld->info->name);
+	if (data->spa == NULL) {
+		data->spa = NewLBS();
+		g_hash_table_insert(data->spadata,
+			StrDup(data->ld->info->name),data->spa);
+		InitializeValue(ld->info->sparec->value);
+		LBS_ReserveSize(data->spa,
+			NativeSizeValue(NULL,ld->info->sparec->value),FALSE);
+		NativePackValue(NULL,LBS_Body(data->spa),ld->info->sparec->value);
 	}
-	SendPacketClass(fp,APS_END);		ON_IO_ERROR(fp,badio);
+	SendPacketClass(fp,APS_SPADATA);		ON_IO_ERROR(fp,badio);
+	SendLBS(fp,data->spa);					ON_IO_ERROR(fp,badio);
+
+	dbgmsg("END");
+	SendPacketClass(fp,APS_END);			ON_IO_ERROR(fp,badio);
+
 	aps->count ++;
-	fOK = TRUE;
-  badio:
 LEAVE_FUNC;
-	return(fOK);
+	return TRUE;
+badio:
+LEAVE_FUNC;
+	return FALSE;
 }
 
-static	byte
+static	Bool
 GetAPS_Control(
 	LD_Node			*ld,
 	int				ix,
-	MessageHeader	*hdr)
+	SessionData		*data)
 {
-	APS_Node	*aps;
-	PacketClass	c;
-	NETFILE		*fp;
-	byte		flag;
-	Bool		done;
+	APS_Node		*aps;
+	PacketClass		c;
+	NETFILE			*fp;
 
 ENTER_FUNC;
 	aps = &ld->aps[ix];
 	fp = aps->fp;
-	done = FALSE;
-	while	(  !done  )	{
-		switch	( c = RecvPacketClass(fp) ) { 
-		  case	APS_CTRLDATA:
-			flag = RecvChar(fp);				ON_IO_ERROR(fp,badio);
-			RecvnString(fp,SIZE_NAME,hdr->user);			ON_IO_ERROR(fp,badio);
-			RecvnString(fp,SIZE_NAME,hdr->window);			ON_IO_ERROR(fp,badio);
-			RecvnString(fp,SIZE_NAME,hdr->widget);			ON_IO_ERROR(fp,badio);
-			RecvnString(fp,SIZE_NAME,hdr->event);			ON_IO_ERROR(fp,badio);
-			RecvnString(fp,SIZE_NAME,hdr->lang);			ON_IO_ERROR(fp,badio);
-			hdr->dbstatus = (char)RecvChar(fp);				ON_IO_ERROR(fp,badio);
-			hdr->puttype = (byte)RecvInt(fp);				ON_IO_ERROR(fp,badio);
-			dbgprintf("hdr->window  = [%s]",hdr->window);
-			dbgprintf("hdr->puttype = %02X",(int)hdr->puttype);
-			done = TRUE;
-			break;
-		  case	APS_BLOB:
-			PassiveBLOB(fp,BlobState);			ON_IO_ERROR(fp,badio);
-			flag = 0;
-			break;
-		  default:
-		  badio:
-			dbgprintf("%02X",c);
-			MessageLog("aps die ?");
-			done = TRUE;
-			flag = 0;
-			break;
-		}
+
+	c = RecvPacketClass(fp);						ON_IO_ERROR(fp,badio);
+	if (c != APS_CTRLDATA) {
+		Message("aps die [%s@%s] %s:%s:%s",
+			data->hdr->user,data->hdr->uuid, 
+			data->hdr->window,data->hdr->widget,data->hdr->event);
+		return FALSE;
 	}
+	RecvnString(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
+	RecvnString(fp,SIZE_NAME,data->hdr->event);		ON_IO_ERROR(fp,badio);
+	data->hdr->dbstatus = (char)RecvChar(fp);		ON_IO_ERROR(fp,badio);
+	data->hdr->puttype = RecvChar(fp);				ON_IO_ERROR(fp,badio);
+
+	dbgprintf("hdr->window  = [%s]",data->hdr->window);
+	dbgprintf("hdr->puttype = %02X",(int)data->hdr->puttype);
 LEAVE_FUNC;
-	return	(flag); 
+	return TRUE;
+badio:
+LEAVE_FUNC;
+	return FALSE;
 }
 
-static	void
+static	Bool
 GetAPS_Value(
-	NETFILE	*fpLD,
-	SessionData	*data,
-	PacketClass	c,
-	byte		flag)
+	NETFILE			*fpLD,
+	SessionData		*data)
 {
-	int		i
-	,		n;
+	int	i;
 
 ENTER_FUNC;
-	if		(  ( flag & c )  !=  0  ) {
-		dbgmsg("send");
-		SendPacketClass(fpLD,c);		ON_IO_ERROR(fpLD,badio);
-		switch	(c) {
-		  case	APS_WINCTRL:
-			dbgmsg("WINCTRL");
-			n = RecvInt(fpLD);		ON_IO_ERROR(fpLD,badio);
-			for	( i = 0 ; i < n ; i ++ ) {
-				data->w.control[data->w.n].PutType = (byte)RecvInt(fpLD);
-				ON_IO_ERROR(fpLD,badio);
-				RecvnString(fpLD,SIZE_NAME,data->w.control[data->w.n].window);
-				ON_IO_ERROR(fpLD,badio);
-				data->w.n ++;
-			}
-			break;
-		  case	APS_MCPDATA:
-			dbgmsg("MCPDATA");
-			RecvLBS(fpLD,data->mcpdata);		ON_IO_ERROR(fpLD,badio);
-			data->tnest = (int)RecvChar(fpLD);	ON_IO_ERROR(fpLD,badio);
-			break;
-		  case	APS_LINKDATA:
-			dbgmsg("LINKDATA");
-			RecvLBS(fpLD,data->linkdata);	ON_IO_ERROR(fpLD,badio);
-			break;
-		  case	APS_SPADATA:
-			dbgmsg("SPADATA");
-			RecvLBS(fpLD,data->spa);
+	dbgmsg("WINDOW_STACK");
+	SendPacketClass(fpLD,APS_WINDOW_STACK);ON_IO_ERROR(fpLD,badio);
+	data->w.sp = RecvInt(fpLD);			ON_IO_ERROR(fpLD,badio);
+	for (i=0;i<data->w.sp;i++) {
+		data->w.s[i].puttype = RecvChar(fpLD);
 			ON_IO_ERROR(fpLD,badio);
-			break;
-		  case	APS_SCRDATA:
-			dbgmsg("SCRDATA");
-			dbgprintf("cWindow = %d",data->cWindow);
-			for	( i = 0 ; i < data->cWindow ; i ++ ) {
-				if		(  data->scrdata[i]  !=  NULL  ) {
-					dbgprintf("i = %d",i);
-					RecvLBS(fpLD,data->scrdata[i]);	ON_IO_ERROR(fpLD,badio);
-				}
-			}
-			break;
-		  default:
-		  badio:
-			Message("protocol error, class = [%X]", (int)c);
-			break;
+		RecvnString(fpLD,SIZE_NAME,data->w.s[i].window);
+			ON_IO_ERROR(fpLD,badio);
+	}
+
+	dbgmsg("LINKDATA");
+	SendPacketClass(fpLD,APS_LINKDATA);	ON_IO_ERROR(fpLD,badio);
+	RecvLBS(fpLD,data->linkdata);		ON_IO_ERROR(fpLD,badio);
+
+	dbgmsg("SPADATA");
+	SendPacketClass(fpLD,APS_SPADATA);	ON_IO_ERROR(fpLD,badio);
+	RecvLBS(fpLD,data->spa);			ON_IO_ERROR(fpLD,badio);
+
+	dbgmsg("SCRDATA");
+	SendPacketClass(fpLD,APS_SCRDATA);	ON_IO_ERROR(fpLD,badio);
+	for	(i=0;i<data->cWindow;i++) {
+		if (data->scrdata[i] != NULL) {
+			RecvLBS(fpLD,data->scrdata[i]);	ON_IO_ERROR(fpLD,badio);
 		}
 	}
+	dbgmsg("END");
+	SendPacketClass(fpLD,APS_END);		ON_IO_ERROR(fpLD,badio);
 LEAVE_FUNC;
+	return TRUE;
+badio:
+	Warning("badio");
+LEAVE_FUNC;
+	return FALSE;
 }
 
 extern	void
@@ -332,104 +282,73 @@ LEAVE_FUNC;
 }
 
 typedef	struct {
-	int		no
-	,		id;
+	int		no;
 	MQ_Node	*mq;
 }	APS_Start;
 
 static	SessionData	*
 SelectData(
 	Queue	*que,
-	int		ix,
-	int		id)
+	int		ix)
 {
 	SessionData	*data;
+#ifdef	APS_STICK
 	LD_Node		*ld;
+#endif
 
 ENTER_FUNC;
+#ifndef	APS_STICK
+	data = DeQueue(que); 
+#else
 	OpenQueue(que);
 	WaitQueue(que);
-#ifdef	DEBUG
-#if	0
-	{
-		RewindQueue(que);
-		while	(  ( data = GetElement(que) )  !=  NULL  ) {
-			ld = data->ld;
-			dbgprintf("apsid = %d\nid    = %d\n",data->apsid,ld->aps[ix].id);
-		}
-	}
-#endif
-#endif
 	RewindQueue(que);
-	while	(	( data = GetElement(que) )  !=  NULL  ) {
-		if		(	(  ThisEnv->mlevel  ==  MULTI_NO  )
-				||	(  ThisEnv->mlevel  ==  MULTI_ID  ) )	break;
-		if		(  data->mtype  ==  MESSAGE_TYPE_EVENT  ) {
-			ld = data->ld;
-			if		(  data->apsid  ==  -1  )	break;
-			if		(  data->apsid  ==  ld->aps[ix].id  )	break;
-		} else {
-			if		(  data->dbstatus[id]  !=  DB_STATUS_NOCONNECT  )	break;
+	while ((data = GetElement(que)) != NULL) {
+		ld = data->ld;
+		if (data->apsid == -1){
+			break;
+		}
+		if (data->apsid == ld->aps[ix].id){
+			break;
+		}
+		if ((ThisEnv->mlevel == MULTI_NO) ||
+			(ThisEnv->mlevel == MULTI_ID)) {
+			break;
 		}
 	}
-	if		(  data  !=  NULL  ) {
-		dbgprintf("data->apsid = %d apsid = %d",data->apsid,id);
-		if		(  data->mtype  ==  MESSAGE_TYPE_EVENT  ) {
-			if		(  data->apsid  ==  -1  ) {
-				dbgmsg("virgin data");
-			}
-			if		(  data->apsid  ==  ld->aps[ix].id  ) {
-				dbgmsg("same aps selected");
-			}
+	if (data != NULL) {
+		if (data->apsid == -1) {
+			dbgmsg("virgin data");
+		}
+		if (data->apsid == ld->aps[ix].id) {
+			dbgmsg("same aps selected");
 		}
 		data = WithdrawQueue(que);
 	}
-	if		(  data  ==  NULL  ){
+	if (data == NULL){
+		dbgmsg("null");
 		ReleaseQueue(que);
 	}
 	CloseQueue(que);
-
+#endif
 LEAVE_FUNC;
 	return	(data);
 }
 
 static	void
-ReleaseProcess(
-	SessionData	*data)
-{
-	struct	timeval	tv;
-
-ENTER_FUNC;
-	gettimeofday(&tv,NULL);
-	timersub(&tv,&data->start,&data->elapse);
-	UnLock(data);
-LEAVE_FUNC;
-}
-
-static	void
-HandleTermMessage(
+SendTermMessage(
 	SessionData *data,
 	MQ_Node		*mq,
-	int			ix)
+	int	ix)
 {
-	MessageHeader	hdr;
-	LD_Node		*ld
-	,			*newld;
-	NETFILE		*fp;
-	byte		puttype;
-	byte		flag;
-	char		buff[SIZE_LONGNAME+1];
+	LD_Node			*ld,*newld;
+	NETFILE			*fp;
 
 	fp = NULL; 
-	puttype = 0;
 	ld = data->ld;
-	if ((flag = CheckAPS(ld,ix,data->name)) != 0) {
-		memcpy(&hdr,data->hdr,sizeof(MessageHeader));
-		puttype = hdr.puttype;
-		if ((PutAPS(ld,ix,data,flag)) && 
-			((flag = GetAPS_Control(ld,ix,&hdr)) != 0)) {
+	if (CheckAPS(APS_REQ, ld,ix,data->hdr->uuid)) {
+		if (PutAPS(ld,ix,data) && GetAPS_Control(ld,ix,data)) {
 			fp = ld->aps[ix].fp;
-			data->dbstatus[data->apsid] = DB_STATUS_START;
 		}
 	}
 	if (fp == NULL) {
@@ -439,8 +358,8 @@ HandleTermMessage(
 		if ((MaxTransactionRetry > 0) && 
 			(MaxTransactionRetry < data->retry)) {
 			Warning("transaction abort %s", mq->name);
-			data->fAbort = TRUE;
-			ReleaseProcess(data);
+			data->status = SESSION_STATUS_ABORT;
+			TermEnqueue(data->term,data);
 		} else {
 			Warning("transaction retry %s", mq->name);
 			EnQueue(mq->que,data);
@@ -448,123 +367,98 @@ HandleTermMessage(
 		WaitConnect(ld,ix);
 		sched_yield();
 	} else {
-		memcpy(data->hdr,&hdr,sizeof(MessageHeader));
-		PureComponentName(hdr.window,buff);
-		newld = g_hash_table_lookup(ComponentHash,buff);
-		GetAPS_Value(fp,data,APS_WINCTRL,flag);
-		GetAPS_Value(fp,data,APS_MCPDATA,flag);
-		GetAPS_Value(fp,data,APS_LINKDATA,flag);
-		GetAPS_Value(fp,data,APS_SPADATA,flag);
-		GetAPS_Value(fp,data,APS_SCRDATA,flag);
-		SendPacketClass(fp,APS_END);
-		if		(  puttype  ==  SCREEN_NULL  ) {
-			puttype = SCREEN_CURRENT_WINDOW;
+		dbgprintf("before data->puttype = %02X",data->hdr->puttype);
+		newld = g_hash_table_lookup(ComponentHash,data->hdr->window);
+		if (!GetAPS_Value(fp,data)) {
+			Warning("GetAPS_Value failure %s -> session end",data->hdr->window);
+			data->status = SESSION_STATUS_ABORT;
+			TermEnqueue(data->term,data);
+			return;
 		}
-		dbgprintf("           puttype = %02X",puttype);
-		dbgprintf("data->hdr->puttype = %02X",data->hdr->puttype);
-		switch	(data->hdr->puttype) {
-		  case	SCREEN_CHANGE_WINDOW:
-		  case	SCREEN_JOIN_WINDOW:
-		  case	SCREEN_FORK_WINDOW:
+		dbgprintf("after data->puttype = %02X",data->hdr->puttype);
+
+		if (newld == NULL) {
+			Warning("ld not found for %s -> session end",data->hdr->window);
+			data->status = SESSION_STATUS_ABORT;
+			TermEnqueue(data->term,data);
+			return;
+		}
+
+		switch (data->hdr->puttype) {
+		case SCREEN_CHANGE_WINDOW:
+		case SCREEN_JOIN_WINDOW:
 			dbgmsg("transition");
-			data->hdr->status = TO_CHAR(APL_SESSION_LINK);
-			if		(  newld  !=  ld  ) {
-					ChangeLD(data,newld);
-			}
-			CoreEnqueue(data);
-			break;
-		  case	SCREEN_RETURN_COMPONENT:
-			dbgmsg("return");
-			data->hdr->status = TO_CHAR(APL_SESSION_GET);
-			data->hdr->puttype = SCREEN_NULL;
-			if		(  newld  !=  ld  ) {
+			data->hdr->command = APL_COMMAND_LINK;
+			if (newld != ld) {
 				ChangeLD(data,newld);
 			}
 			CoreEnqueue(data);
 			break;
-		  case	SCREEN_NEW_WINDOW:
+		case SCREEN_NEW_WINDOW:
 			dbgmsg("new");
-			if		(  newld  ==  ld  ) {
-				ReleaseProcess(data);
+			if (newld == ld) {
+				TermEnqueue(data->term,data);
 			} else {
-				data->hdr->status = TO_CHAR(APL_SESSION_LINK);
+				data->hdr->command = APL_COMMAND_LINK;
 				ChangeLD(data,newld);
 				CoreEnqueue(data);
 			}
 			break;
-		  case	SCREEN_CURRENT_WINDOW:
+		case SCREEN_CURRENT_WINDOW:
 			dbgmsg("current");
-			//	data->hdr->puttype = puttype;		??? change at 2008/12/26
-			ReleaseProcess(data);
+			TermEnqueue(data->term,data);
 			break;
-		  case	SCREEN_CLOSE_WINDOW:
+		case SCREEN_CLOSE_WINDOW:
 			dbgmsg("close");
-			ReleaseProcess(data);
+			TermEnqueue(data->term,data);
 			break;
-		  case	SCREEN_END_SESSION:
-			dbgmsg("end");
-			ReleaseProcess(data);
+		default:
+			Warning("invalid puttype [%d]",data->hdr->puttype);
 			break;
-		  case	SCREEN_CHANGE_LD:
-			dbgmsg("change LD");
-			ReleaseProcess(data);
-			break;
-		  default:
-			/*	don't reach here	*/
-			break;
-		}
-		if		(  newld  ==  NULL  ) {
-			MessageLogPrintf("exititting panda [%s@%s] change to [%s]",
-				hdr.user,hdr.term,hdr.window);
 		}
 	}
 }
 
 static	void
-HandleTransactionMessage(
+SendAPIMessage(
 	SessionData *data,
-	int			id)
+	MQ_Node		*mq,
+	int	ix)
 {
-	APS_Node	*aps;
+	LD_Node		*ld;
 	NETFILE		*fp;
+	PacketClass	c;
 
-	aps = APS_Table[id];
-	if		(  ( fp = aps->fp )  !=  NULL  ) {
-		SendPacketClass(fp,APS_REQ);		ON_IO_ERROR(fp,badio);
-		SendString(fp,data->name);			ON_IO_ERROR(fp,badio);
-		switch	(data->mtype) {
-		  case	MESSAGE_TYPE_START:	/*	not send here	*/
-			SendPacketClass(fp,APS_START);		ON_IO_ERROR(fp,badio);
-			if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
-				data->dbstatus[id] = DB_STATUS_START;
-			}
-			break;
-		  case	MESSAGE_TYPE_PREPARE:
-			SendPacketClass(fp,APS_PREPARE);	ON_IO_ERROR(fp,badio);
-			if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
-				data->dbstatus[id] = DB_STATUS_PREPARE;
-			}
-			break;
-		  case	MESSAGE_TYPE_COMMIT:
-			SendPacketClass(fp,APS_COMMIT);		ON_IO_ERROR(fp,badio);
-			if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
-				data->dbstatus[id] = DB_STATUS_CONNECT;
-			}
-			break;
-		  case	MESSAGE_TYPE_ROLLBACK:
-			SendPacketClass(fp,APS_ROLLBACK);	ON_IO_ERROR(fp,badio);
-			if		(  RecvPacketClass(fp)  ==  APS_OK  ) {
-				data->dbstatus[id] = DB_STATUS_CONNECT;
-			}
-			break;
-		  default:
-			Error("invalid mtype");
-			break;
-		}
-		ReleaseProcess(data);
+	fp = NULL;
+	ld = data->ld;
+	if (!CheckAPS(APS_API,ld,ix,data->hdr->uuid)) {
+		data->apidata->status = WFC_API_NOT_FOUND;
 	} else {
-	  badio:;
-	}
+		fp = ld->aps[ix].fp;
+		SendString(fp,data->hdr->window);		ON_IO_ERROR(fp,badio);
+		c = RecvChar(fp);						ON_IO_ERROR(fp,badio);
+		if (c == APS_NULL) {
+			Warning("api[%s] not found",data->hdr->window);
+			data->apidata->status = WFC_API_NOT_FOUND;
+		} else {
+			SendString(fp,data->hdr->uuid);		ON_IO_ERROR(fp,badio);
+			SendString(fp,data->hdr->tempdir);	ON_IO_ERROR(fp,badio);
+			SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
+			SendLBS(fp,data->apidata->rec);		ON_IO_ERROR(fp,badio);
+			RecvLBS(fp,data->apidata->rec);		ON_IO_ERROR(fp,badio);
+			data->apidata->status = WFC_API_OK;
+		}
+	}	
+	TermEnqueue(data->term,data);
+	return;
+badio:
+	ClearAPS_Node(ld,ix);
+	Warning("transaction abort %s", mq->name);
+	data->status = SESSION_STATUS_ABORT;
+	data->apidata->status = WFC_API_ERROR;
+	TermEnqueue(data->term,data);
+	WaitConnect(ld,ix);
+	sched_yield();
 }
 
 static	void
@@ -572,37 +466,28 @@ MessageThread(
 	APS_Start	*aps)
 {
 	SessionData	*data;
-	int			ix
-		,		id;
+	int			ix;
 	MQ_Node		*mq;
 
 ENTER_FUNC;
 	mq = aps->mq; 
 	ix = aps->no;
-	id = aps->id;
 	dbgprintf("start %s(%d)\n",mq->name,ix);
 	do {
-		if		(  ( data = SelectData(mq->que,ix,id) )  !=  NULL  )	{
+		if ((data = SelectData(mq->que,ix)) != NULL) {
 			dbgprintf("act %s\n",mq->name);
 			switch(data->type) {
-			  case	SESSION_TYPE_TERM:
-				HandleTermMessage(data,mq,ix);
+			case SESSION_TYPE_TERM:
+				SendTermMessage(data,mq,ix);
 				break;
-			  case	SESSION_TYPE_TRANSACTION:
-				HandleTransactionMessage(data,id);
-				break;
-#if 0
-			  case SESSION_TYPE_API:
-				HandleAPIMessage();
-#else
-				ReleaseProcess(data);
-#endif
+			case SESSION_TYPE_API:
+				SendAPIMessage(data,mq,ix);
 				break;
 			}
 		} else {
 			sched_yield();
 		}
-	}	while	(TRUE);
+	} while(TRUE);
 LEAVE_FUNC;
 }
 
@@ -610,33 +495,31 @@ static	void
 StartMessageThread(
 	char	*name,
 	MQ_Node	*mq,
-	int		*id)
+	void	*dummy)
 {
 	APS_Start	*aps;
-	int		i;
+	int			i;
 	LD_Struct	*ld;
 
 ENTER_FUNC;
-	dbgprintf("start thread for %s",name);
-	switch	(ThisEnv->mlevel) { 
-	  case	MULTI_NO:
-	  case	MULTI_ID:
+#ifdef	TRACE
+	printf("start thread for %s\n",name);
+#endif
+	switch (ThisEnv->mlevel) { 
+	case MULTI_NO:
+	case MULTI_ID:
 		aps = New(APS_Start);
 		aps->mq = mq;
 		aps->no = 0;
-		aps->id = (*id) ++;
-		dbgprintf("id = %d",*id);
 		pthread_create(&mq->thr,NULL,(void *(*)(void *))MessageThread,aps);
 		break;
-	  case	MULTI_LD:
-	  case	MULTI_APS:
-		if		(  ( ld =  g_hash_table_lookup(ThisEnv->LD_Table,name) )  !=  NULL  ) {
+	case MULTI_LD:
+	case MULTI_APS:
+		if ((ld =  g_hash_table_lookup(ThisEnv->LD_Table,name)) != NULL) {
 			for	( i = 0 ; i < ld->nports ; i ++ ) {
 				aps = New(APS_Start);
 				aps->mq = mq;
 				aps->no = i;
-				dbgprintf("id = %d",*id);
-				aps->id = (*id) ++;
 				pthread_create(&mq->thr,NULL,(void *(*)(void *))MessageThread,aps);
 			}
 		}
@@ -645,62 +528,54 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	GHashTable	*mqs;
 extern	void
 SetupMessageQueue(void)
 {
-	int		i
-		,	j
-		,	id;
+	int		i;
 	MQ_Node	*mq;
-	MQ_Node	**mqs;
-	GHashTable	*mqh;
 
 ENTER_FUNC;
 	MQ_Hash = NewNameHash();
-	mqh = NewNameHash();
-	mqs = (MQ_Node **)xmalloc(sizeof(MQ_Node *) * ApsId);
-	j = 0;
-	switch	(ThisEnv->mlevel) {
-	  case	MULTI_NO:
+	mqs = NewNameHash();
+	switch (ThisEnv->mlevel) {
+	case MULTI_NO:
 		mq = New(MQ_Node);
 		mq->name = "";
 		mq->que = NewQueue();
 		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
-			if		(  g_hash_table_lookup(MQ_Hash, ThisEnv->ld[i]->name)  ==  NULL  ) {
+			if (g_hash_table_lookup(MQ_Hash, ThisEnv->ld[i]->name) == NULL) {
 				(void)g_hash_table_insert(MQ_Hash,ThisEnv->ld[i]->name,mq);
 			}
-			if		(  g_hash_table_lookup(mqh,mq->name)  ==  NULL  ) {
-				g_hash_table_insert(mqh,mq->name,mq);
-				mqs[j ++] = mq;
+			if (g_hash_table_lookup(mqs,mq->name) == NULL) {
+				g_hash_table_insert(mqs,mq->name,mq);
 			}
 		}
 		break;
-	  case	MULTI_LD:
-	  case	MULTI_APS:
+	case MULTI_LD:
+	case MULTI_APS:
 		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 			mq = New(MQ_Node);
 			mq->name = ThisEnv->ld[i]->name;
 			mq->que = NewQueue();
-			if		(  g_hash_table_lookup(MQ_Hash, ThisEnv->ld[i]->name)  ==  NULL  ) {
+			if (g_hash_table_lookup(MQ_Hash, ThisEnv->ld[i]->name) == NULL) {
 				(void)g_hash_table_insert(MQ_Hash,ThisEnv->ld[i]->name,mq);
 			}
-			if		(  g_hash_table_lookup(mqh,mq->name)  ==  NULL  ) {
-				g_hash_table_insert(mqh,mq->name,mq);
-				mqs[j ++] = mq;
+			if (g_hash_table_lookup(mqs,mq->name) == NULL) {
+				g_hash_table_insert(mqs,mq->name,mq);
 			}
 		}
 		break;
-	  case	MULTI_ID:
+	case MULTI_ID:
 		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
-			if		(  ( mq = g_hash_table_lookup(mqh,ThisEnv->ld[i]->group) )
-					   ==  NULL  ) {
+			mq = g_hash_table_lookup(mqs,ThisEnv->ld[i]->group);
+			if (mq == NULL) {
 				mq = New(MQ_Node);
 				mq->name = ThisEnv->ld[i]->group;
 				mq->que = NewQueue();
-				g_hash_table_insert(mqh,mq->name,mq);
-				mqs[j ++] = mq;
+				g_hash_table_insert(mqs,mq->name,mq);
 			}
-			if		(  g_hash_table_lookup(MQ_Hash,ThisEnv->ld[i]->name)  ==  NULL  ) {
+			if (g_hash_table_lookup(MQ_Hash,ThisEnv->ld[i]->name) == NULL) {
 				g_hash_table_insert(MQ_Hash,ThisEnv->ld[i]->name,mq);
 			}
 		}
@@ -709,14 +584,11 @@ ENTER_FUNC;
 		Error("not supported");
 		break;
 	}
-	id = 0;
-	for	( i = 0 ; i < j ; i ++ ) {
-		StartMessageThread(mqs[i]->name,mqs[i],&id);
-	}
-	g_hash_table_destroy(mqh);
-	xfree(mqs);
+	g_hash_table_foreach(mqs,(GHFunc)StartMessageThread,NULL);
 LEAVE_FUNC;
 }
+
+static	int		ApsId;
 
 static	int
 TableComp(
@@ -729,50 +601,39 @@ TableComp(
 extern	void
 ReadyAPS(void)
 {
-	int		i
-		,	j
-		,	k
-		,	naps;
+	int			i,j,k;
 	LD_Struct	*info;
-	LD_Node	*ld;
-	char	cname[SIZE_LONGNAME+1];
-
+	LD_Node		*ld;
+	char		*cname;
 ENTER_FUNC;
-	naps = 0;
-	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
-		naps += ThisEnv->ld[i]->nports;
-	}
-	APS_Table = (APS_Node **)xmalloc(sizeof(APS_Node *) * naps);
 	k = 0;
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 		info = ThisEnv->ld[i];
 		ld = New(LD_Node);
-		LDs[i] = ld;
 		ld->nports = info->nports;
-		if		(  ThisEnv->mlevel  !=  MULTI_APS  ) {
+		ld->aps = (APS_Node *)xmalloc(sizeof(APS_Node) * ld->nports);
+		if (ThisEnv->mlevel != MULTI_APS) {
 			ld->nports = 1;
 		}
-		ld->aps = (APS_Node *)xmalloc(sizeof(APS_Node) * ld->nports);
 		for	( j = 0 ; j < ld->nports ; j ++ ) {
 			ld->aps[j].fp = NULL;
-			APS_Table[ApsId] = &ld->aps[j];
 			ld->aps[j].id = ApsId ++;
 			ClearAPS_Node(ld,j);
 		}
+
 		ld->info = info;
 		pthread_mutex_init(&ld->lock,NULL);
 		pthread_cond_init(&ld->conn,NULL);
 
-		if		(  g_hash_table_lookup(APS_Hash,info->name)  ==  NULL  ) {
+		if (g_hash_table_lookup(APS_Hash,info->name) == NULL) {
 			g_hash_table_insert(APS_Hash,info->name,ld);
 		}
 		dbgprintf("info->cBind = %d",info->cBind);
 		dbgprintf("LD [%s]",info->name);
 		for	( j = 0 ; j < info->cBind ; j ++ ) {
-			PureComponentName(info->binds[j]->name,cname);
-			if		(	(  *cname  !=  0  )
-					&&	(  g_hash_table_lookup(ComponentHash,cname)  ==  NULL  ) ) {
-				dbgprintf("add component [%s]",cname);
+			cname = info->binds[j]->name;
+			dbgprintf("add component [%s]",cname);
+			if (g_hash_table_lookup(ComponentHash,cname) == NULL) {
 				BindTable[k] = info->binds[j]->name;
 				k ++;
 				g_hash_table_insert(ComponentHash,StrDup(cname),ld);
@@ -780,7 +641,7 @@ ENTER_FUNC;
 		}
 	}
 	qsort(BindTable,k,sizeof(char *),
-		  (int (*)(const void *,const void *))TableComp);
+		(int (*)(const void *,const void *))TableComp);
 #ifdef	DEBUG
 	for	( i = 0 ; i < k ; i ++ ) {
 		printf("[%s]\n",BindTable[i]);
@@ -800,31 +661,33 @@ ConnectAPS(
 	LD_Node	*ld;
 
 ENTER_FUNC;
-	if		(  ( fhAps = accept(_fhAps,0,0) )  <  0  )	{
-		Error("INET Domain Accept");
+	if ((fhAps = accept(_fhAps,0,0)) < 0) {
+		Error("accept(2) failure:%s",strerror(errno));
 	}
 	fp = SocketToNet(fhAps);
 	RecvStringDelim(fp,SIZE_BUFF,buff);
 #ifdef	DEBUG
 	printf("connect %s\n",buff);
 #endif
-	if		(  ( ld = g_hash_table_lookup(APS_Hash,buff) )  !=  NULL  ) {
-		if		(  ThisEnv->mlevel  !=  MULTI_APS  ) {
+	if ((ld = g_hash_table_lookup(APS_Hash,buff)) != NULL) {
+		if (ThisEnv->mlevel != MULTI_APS) {
 			ld->nports = 1;
 		}
 		SendPacketClass(fp,APS_OK);
 		for	( i = 0 ; i < ld->nports ; i ++ ) {
-			if		(  ld->aps[i].fp  ==  NULL  )	break;
+			if (ld->aps[i].fp == NULL) {
+				break;
+			}
 		}
-		if		(  i  <  ld->nports  ) {
+		if (i < ld->nports) {
 			ClearAPS_Node(ld,i);
 			ActivateAPS_Node(&ld->aps[i],fp);
 			pthread_cond_signal(&ld->conn);
 		} else {
 			for	( i = 0 ; i < ld->nports ; i ++ ) {
 				SendPacketClass(ld->aps[i].fp,APS_PING);
-				ON_IO_ERROR(ld->aps[i].fp,deadaps);
-				if		(  RecvPacketClass(ld->aps[i].fp) !=  APS_PONG  ) {
+					ON_IO_ERROR(ld->aps[i].fp,deadaps);
+				if (RecvPacketClass(ld->aps[i].fp) != APS_PONG) {
 				  deadaps:
 					ClearAPS_Node(ld,i);
 					ActivateAPS_Node(&ld->aps[i],fp);
@@ -832,11 +695,11 @@ ENTER_FUNC;
 					break;
 				}
 			}
-			if		(  i  ==  ld->nports  ) {
+			if (i == ld->nports) {
 				/*	if you need permitte more APS connection,
 					you should expand ld->fp.
 				*/
-				Error("too many aps tasks");
+				Warning("too many aps tasks");
 			}
 		}
 	} else {
@@ -850,20 +713,18 @@ LEAVE_FUNC;
 extern	void
 InitMessageQueue(void)
 {
-	int		i
-		,	cBind;
+	int	i,cBind;
 
 	ComponentHash = NewNameHash();
 	APS_Hash = NewNameHash();
-	LDs = (LD_Node **)xmalloc(sizeof(LD_Node *) * ThisEnv->cLD);
 	ApsId = 0;
 	cBind = 0;
 	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
 		cBind += ThisEnv->ld[i]->cBind;
 	}
-	if		(  cBind  >  0  ) {
+	if (cBind > 0) {
 		BindTable = (char **)xmalloc(cBind * sizeof(char *));
 	} else {
-		Error("no binds.");
+		Error("No LD defintion. Please check Directory and dbgroup.");
 	}
 }

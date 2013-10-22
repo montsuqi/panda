@@ -38,7 +38,6 @@
 #include    <sys/socket.h>
 #include	<signal.h>
 #include	<errno.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
@@ -51,42 +50,61 @@ static	char	*Directory;
 static	char	*ApsPath;
 static	char	*WfcPath;
 static	char	*RedirectorPath;
+static	char	*GlserverPath;
+static	char	*DBLoggerPath;
+static	char	*DBMasterPath;
+static	char	*DBSlavePath;
 static	char	*DDir;
 static	char	*RecDir;
+static	char	*ScrDir;
 static	char	*MyHost;
 static	char	*Log;
 static	Bool	fQ;
 static	Bool	fRedirector;
-static	Bool	fRestart;
-static	Bool	fAllRestart;
-static	Bool	fTimer;
 static	Bool	fNoApsConnectRetry;
 static	int		Interval;
-static	int		wfcinterval;
-static	int		MaxTran;
+static	int		Wfcinterval;
 static	int		MaxTransactionRetry;
 static	int		Sleep;
-static	int		nCache;
+static	int		SesNum;
+static	Bool	fGlserver;
+static	Bool	fGlSSL;
+static	char	*GlCacheDir;
+static	char	*GlAuth;
+static	char	*GlCert;
+static	char	*GlCAfile;
 
-static	GHashTable	*ProcessTable;
+static	Bool	fDBMaster;
+static	Bool	fDBLog;
 
-#define	PTYPE_NULL	(byte)0x00
-#define	PTYPE_APS	(byte)0x01
-#define	PTYPE_WFC	(byte)0x02
-#define	PTYPE_RED	(byte)0x04
+static	GList	*ProcessList;
+static	volatile sig_atomic_t	fLoop = TRUE;
+static	volatile sig_atomic_t	fRestart = TRUE;
+static	volatile sig_atomic_t	WfcRestartCount = 0;
 
-#define	STATE_RUN	1
-#define	STATE_DOWN	2
+#define	MAX_WFC_RESTART_COUNT	5
+
+#define	PTYPE_NULL	(unsigned char)0x00
+#define	PTYPE_APS	(unsigned char)0x01
+#define	PTYPE_WFC	(unsigned char)0x02
+#define	PTYPE_RED	(unsigned char)0x04
+#define	PTYPE_GLS	(unsigned char)0x08
+#define	PTYPE_LOG	(unsigned char)0x10
+#define	PTYPE_MST	(unsigned char)0x20
+#define	PTYPE_SLV	(unsigned char)0x40
+
+#define	STATE_RUN		1
+#define	STATE_DOWN		2
+#define STATE_STOP		3
 
 typedef	struct {
 	pid_t	pid;
 	int		state;
-	byte	type;
+	unsigned char	type;
 	int		argc;
+	int		interval;
 	char	**argv;
 }	Process;
-
-static	void	StopSystem(void);
 
 #ifdef	DEBUG
 static	void
@@ -96,29 +114,205 @@ DumpCommand(
 	int		i;
 
 	for	( i = 0 ; argv[i]  !=  NULL ; i ++ ) {
-		dbgprintf("%s ",argv[i]);
+		fprintf(stderr, "%s ",argv[i]);
 	}
-	dbgmsg("");
+	fprintf(stderr,"\n");
 }
 
 static	void
-_DumpProcess(
-	pid_t		pid,
-	Process		*proc,
-	void		*dummy)
+DumpProcess(Process *proc)
 {
-	printf("pid = %d\n",(int)pid);
+	fprintf(stderr, "pid:%d status:%s\n",
+		(int)proc->pid,
+		proc->state == STATE_RUN ? "RUN" : "DOWN");
 	DumpCommand(proc->argv);
 }
+
 static	void
-DumpProcess(void)
+DumpProcessAll(void)
 {
+	int 	i;
+	Process	*proc;
+
 	printf("*** process table dump ***\n");
-	g_int_hash_table_foreach(ProcessTable,(GHFunc)_DumpProcess,NULL);
+	for(i=0;i<g_list_length(ProcessList);i++) {
+		proc = g_list_nth_data(ProcessList,i);
+		DumpProcess(proc);
+	}
 	printf("**************************\n");
 }
 #endif
 
+static	ARG_TABLE	option[] = {
+	{	"ApsPath",	STRING,		TRUE,	(void*)&ApsPath,
+		"aps command path"		 						},
+	{	"WfcPath",	STRING,		TRUE,	(void*)&WfcPath,
+		"wfc command path"		 						},
+	{	"RedPath",	STRING,		TRUE,	(void*)&RedirectorPath,
+		"redirector command path"						},
+	{	"GlsPath",	STRING,		TRUE,	(void*)&GlserverPath,
+		"glserver command path"						},
+
+	{	"DBLoggerPath",	STRING,		TRUE,	(void*)&DBLoggerPath,
+		"dblogger command path"							},
+
+	{	"DBMasterPath",	STRING,		TRUE,	(void*)&DBMasterPath,
+		"dbmaster command path"							},
+
+	{	"DBSlavePath",	STRING,		TRUE,	(void*)&DBSlavePath,
+		"dbslave command path"							},
+
+	{	"dir",		STRING,		TRUE,	(void*)&Directory,
+		"directory file name"		 					},
+	{	"record",	STRING,		TRUE,	(void*)&RecDir,
+		"record directory"								},
+	{	"screen",	STRING,		TRUE,	(void*)&ScrDir,
+		"screen directory"								},
+	{	"ddir",		STRING,		TRUE,	(void*)&DDir,
+		"LD file directory"			 					},
+
+	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
+		"start dbredirector"		 					},
+	{	"dblogger", BOOLEAN,	TRUE,	(void*)&fDBLog,
+		"start dblogger"		 					},
+	{	"dbmaster", BOOLEAN,	TRUE,	(void*)&fDBMaster,
+		"start dbmaster"		 					},
+	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
+		"no check dbredirector start"					},
+	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
+		"no count dbredirector updates"					},
+	{	"numeric",	BOOLEAN,	TRUE,	(void*)&fNumericHOST,
+		"Numeric form of the hostname"					},
+	{	"sendretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
+		"send retry dbredirector"						},
+
+	{	"glserver",BOOLEAN,		TRUE,	(void*)&fGlserver,
+		"start glserver"		 						},
+	{	"glcache",	STRING,		TRUE,	(void*)&GlCacheDir,
+		"glserver cache directory"		 				},
+	{	"glauth",	STRING,		TRUE,	(void*)&GlAuth,
+		"glserver authentication"						},
+	{	"glssl",	BOOLEAN,	TRUE,	(void*)&fGlSSL,
+		"use ssl connection"		 					},
+	{	"glcert",	STRING,		TRUE,	(void*)&GlCert,
+		"ssl certificate(p12)"							},
+	{	"glcafile",	STRING,		TRUE,	(void*)&GlCAfile,
+		"ca certificate(pem)"							},
+
+	{	"interval",	INTEGER,	TRUE,	(void*)&Interval,
+		"process start interval time" 					},
+	{	"wfcwait",	INTEGER,	TRUE,	(void*)&Wfcinterval,
+		"wfc start interval time(for slowCPU)"			},
+	{	"sesnum",	INTEGER,	TRUE,	(void*)&SesNum,
+		"terminal session number"							},
+
+	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
+		"my host name"				 					},
+
+	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
+		"transaction retry count"						},
+	{	"no-aps-retry",	BOOLEAN,	TRUE,	(void*)&fNoApsConnectRetry,
+		"don't retry aps commection"					},
+
+	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
+		"show sub-program options"	 					},
+	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
+		"time measuring"								},
+	{	"log",		STRING,		TRUE,	(void*)&Log,
+		"monitor log file name"							},
+	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
+		"aps sleep time(for debug)"						},
+
+	{	NULL,		0,			FALSE,	NULL,	NULL 	}
+};
+
+static	Bool
+HerePort(
+	Port	*port)
+{
+	Bool	ret;
+	char	*host;
+
+ENTER_FUNC;
+	if		(  port  ==  NULL  ) {
+		ret = FALSE;
+	} else {
+		switch	(port->type) {
+		  case	PORT_IP:
+			if ((host = IP_HOST(port)) != NULL) {
+				ret = ( strcmp(host,MyHost) == 0 ) ? TRUE : TRUE; // what meaning?
+			} else {
+				ret = FALSE;
+			}
+			break;
+		  case	PORT_UNIX:
+			ret = TRUE;
+			break;
+		  default:
+			ret = FALSE;
+		}
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+
+static	void
+SetDefault(void)
+{
+	ApsPath = NULL;
+	WfcPath = NULL;
+	RedirectorPath = NULL;
+	GlserverPath = NULL;
+	DBLoggerPath = NULL;
+	DBMasterPath = NULL;
+	DBSlavePath = NULL;
+	
+	Directory = "./directory";
+	DDir = NULL;
+	RecDir = NULL;
+	ScrDir = NULL;
+	Log = NULL;
+	Interval = 0;
+	Wfcinterval = 0;
+	MaxTransactionRetry = 0;
+	MaxSendRetry = 3;
+	Sleep = 0;
+
+	MyHost = "localhost";
+
+	fRedirector = FALSE;
+	fNoCheck = FALSE;
+	fNoSumCheck = FALSE;
+	fNumericHOST = FALSE;
+	fQ = FALSE;
+	fTimer = FALSE;
+	fNoApsConnectRetry = FALSE;
+	SesNum = 0;
+
+	fGlserver = FALSE;
+	fGlSSL = FALSE;
+	GlCacheDir = NULL;
+	GlAuth = NULL;
+	GlCert = NULL;
+	GlCAfile = NULL;
+	fDBLog = FALSE;
+	fDBMaster = FALSE;
+}
+
+
+static	void
+InitSystem(void)
+{
+ENTER_FUNC;
+	ProcessList = NULL;
+	InitDirectory();
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	if		( ThisEnv == NULL ) {
+		Error("DI file parse error.");
+	}
+LEAVE_FUNC;
+}
 
 static	void
 _execv(
@@ -136,8 +330,7 @@ _execv(
 
 static	int
 StartProcess(
-	Process	*proc,
-	int		interval)
+	Process	*proc)
 {
 	pid_t	pid;
 #ifdef	DEBUG
@@ -149,7 +342,6 @@ ENTER_FUNC;
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
 		proc->state = STATE_RUN;
-		g_int_hash_table_insert(ProcessTable,(long)pid,proc);
 #ifdef	DEBUG
 		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
 			dbgprintf("%s ",proc->argv[i]);
@@ -158,12 +350,12 @@ ENTER_FUNC;
 #endif
 	} else
 	if		(  pid  ==  0  ) {
-		if		(  interval  >  0  ) {
-			sleep(interval);
+		if		(  proc->interval  >  0  ) {
+			sleep(proc->interval);
 		}
 		_execv(proc->argv[0],proc->argv);
 	} else {
-		Message("can't start process\n");
+		Message("can't start process");
 		goto	retry;
 	}
 LEAVE_FUNC;
@@ -171,11 +363,9 @@ LEAVE_FUNC;
 }
 
 static	void
-StartRedirector(
-	DBG_Instance	*inst,
-	DBG_Class		*dbg)
+InitRedirector(
+	DBG_Struct	*dbg)
 {
-	pid_t	pid;
 	int		argc;
 	char	**argv;
 	Process	*proc;
@@ -208,7 +398,159 @@ ENTER_FUNC;
 	}
 	if		(  fTimer  ) {
 		argv[argc ++] = "-timer";
-	}		
+	}
+	if 		(	dbg->sumcheck == 0	) {
+		argv[argc ++] = "-nosumcheck";
+	} else if	(  fNoSumCheck  ) {
+		argv[argc ++] = "-nosumcheck";
+	}
+	argv[argc ++] = dbg->name;
+	if		(  fQ  ) {
+		argv[argc ++] = "-?";
+	}
+	argv[argc ++] = "-maxretry";
+	argv[argc ++] = IntStrDup(MaxSendRetry);
+	proc->argc = argc;
+	argv[argc ++] = NULL;
+	Message("start redirector:%s",dbg->name);
+	proc->interval = Interval;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	ProcessList = g_list_append(ProcessList, proc);
+LEAVE_FUNC;
+}
+
+
+static	void
+_InitRedirectors(
+	DBG_Struct	*dbg)
+{
+
+ENTER_FUNC;
+	if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
+		_InitRedirectors(dbg->redirect);
+	}
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{
+		InitRedirector(dbg);
+	}
+LEAVE_FUNC;
+}
+
+static	void
+InitRedirectors(void)
+{
+	int		i;
+	DBG_Struct	*dbg;
+
+ENTER_FUNC;
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		ThisEnv->DBG[i]->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+	}
+	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
+		dbg = ThisEnv->DBG[i];
+		if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_PATCH ) {
+			_InitRedirectors(dbg->redirect);
+		}
+	}
+LEAVE_FUNC;
+}
+
+
+static	void
+InitDBMaster(void)
+{
+	int		argc;
+	char	**argv;
+	Process	*proc;
+	int		back;
+	int		i;
+
+ENTER_FUNC;
+	if		(  HerePort(ThisEnv->DBMasterPort)  ) {
+		back = 0;
+		for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
+			back += ThisEnv->ld[i]->nports;
+		}
+		proc = New(Process);
+		proc->type = PTYPE_MST;
+		argv = (char **)xmalloc(sizeof(char *) * 24);
+		proc->argv = argv;
+		argc = 0;
+		if		(  DBMasterPath  !=  NULL  ) {
+			argv[argc ++] = DBMasterPath;
+		} else
+		if		(  ThisEnv->DBMasterPath  !=  NULL  ) {
+			argv[argc ++] = ThisEnv->DBMasterPath;
+		} else {
+			argv[argc ++] = SERVER_DIR "/dbmaster";
+		}
+		if		(  Directory  !=  NULL  ) {
+			argv[argc ++] = "-dir";
+			argv[argc ++] = Directory;
+		}
+		if		(  DDir  !=  NULL  ) {
+			argv[argc ++] = "-ddir";
+			argv[argc ++] = DDir;
+		}
+		if		(  RecDir  !=  NULL  ) {
+			argv[argc ++] = "-record";
+			argv[argc ++] = RecDir;
+		}
+		if		(  ThisEnv->DBMasterAuth  !=  NULL  ) {
+			argv[argc ++] = "-auth";
+			argv[argc ++] = ThisEnv->DBMasterAuth;
+		}
+		argv[argc ++] = "-port";
+		argv[argc ++] = StrDup(StringPortName(ThisEnv->DBMasterPort));
+		argv[argc ++] = ThisEnv->DBMasterLogDBName;
+		
+		if		(  fQ  ) {
+			argv[argc ++] = "-?";
+		}
+		proc->argc = argc;
+		argv[argc ++] = NULL;
+		proc->interval = Interval;
+		ProcessList = g_list_append(ProcessList, proc);
+	}
+LEAVE_FUNC;
+}
+
+static	void
+InitDBLog(
+	DBG_Struct	*dbg)
+{
+	int		argc;
+	char	**argv;
+	Process	*proc;
+
+ENTER_FUNC;
+	proc = New(Process);
+	argv = (char **)xmalloc(sizeof(char *) * 15);
+	proc->argv = argv;
+	proc->type = PTYPE_LOG;
+	argc = 0;
+	if		(  DBLoggerPath  !=  NULL  ) {
+		argv[argc ++] = DBLoggerPath;
+	} else
+	if		(  ThisEnv->DBLoggerPath  !=  NULL  ) {
+		argv[argc ++] = ThisEnv->DBLoggerPath;
+	} else {
+		argv[argc ++] = SERVER_DIR "/dblogger";
+	}
+	if		(  Directory  !=  NULL  ) {
+		argv[argc ++] = "-dir";
+		argv[argc ++] = Directory;
+	}
+	if		(  DDir  !=  NULL  ) {
+		argv[argc ++] = "-ddir";
+		argv[argc ++] = DDir;
+	}
+	if		(  RecDir  !=  NULL  ) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = RecDir;
+	}
+	if		(  fTimer  ) {
+		argv[argc ++] = "-timer";
+	}
 	if		(  fNoSumCheck  ) {
 		argv[argc ++] = "-nosumcheck";
 	}
@@ -220,75 +562,111 @@ ENTER_FUNC;
 	argv[argc ++] = IntStrDup(MaxSendRetry);
 	proc->argc = argc;
 	argv[argc ++] = NULL;
-	pid = StartProcess(proc,Interval);
-	inst->update.dbstatus = DB_STATUS_CONNECT;
+	proc->interval = Interval;
+	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
+	ProcessList = g_list_append(ProcessList, proc);
 LEAVE_FUNC;
-}
-
-static	Bool
-HerePort(
-	Port	*port)
-{
-	Bool	ret;
-
-ENTER_FUNC;
-	if		(  port  ==  NULL  ) {
-		ret = FALSE;
-	} else {
-		switch	(port->type) {
-		  case	PORT_IP:
-			ret = ( strcmp(IP_HOST(port),MyHost) == 0 ) ? TRUE : TRUE;
-			break;
-		  case	PORT_UNIX:
-			ret = TRUE;
-			break;
-		  default:
-			ret = FALSE;
-		}
-	}
-LEAVE_FUNC;
-	return	(ret);
 }
 
 static	void
-_StartRedirectors(
-	DBG_Instance	*inst,
-	DBG_Class		*class)
+_InitDBLogs(
+	DBG_Struct *dbg)
 {
 
 ENTER_FUNC;
-	if		(  class->redirect  !=  NULL  ) {
-		_StartRedirectors(inst,class->redirect);
+	if		(  dbg->redirect  !=  NULL  && dbg->redirectorMode == REDIRECTOR_MODE_LOG) {
+		_InitDBLogs(dbg->redirect);
 	}
-	if		(  inst->update.dbstatus  !=  DB_STATUS_CONNECT  )	{
-		StartRedirector(inst,class);
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus  !=  DB_STATUS_CONNECT  )	{	
+		InitDBLog(dbg);
 	}
 LEAVE_FUNC;
 }
 
 static	void
-StartRedirectors(void)
+InitDBLogs(void)
 {
 	int		i;
-	DBG_Class	*dbg;
-	DB_Environment	*env;
+	DBG_Struct	*dbg;
 
 ENTER_FUNC;
-	env = NewDB_Environment(ThisEnv->cDBG);
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
-		env->entry[ThisEnv->DBG[i]->id] = NewDBG_Instance(ThisEnv->DBG[i],env);
+		ThisEnv->DBG[i]->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
 	}
 	for	( i = 0 ; i < ThisEnv->cDBG ; i ++ ) {
 		dbg = ThisEnv->DBG[i];
-		if		(  dbg->redirect  !=  NULL  ) {
-			_StartRedirectors(env->entry[i],dbg->redirect);
+		if		(  dbg->redirect  !=  NULL && dbg->redirectorMode == REDIRECTOR_MODE_LOG ) {
+			_InitDBLogs(dbg->redirect);
 		}
 	}
 LEAVE_FUNC;
 }
 
+
 static	void
-_StartAps(
+InitGlserver(void)
+{
+	int		argc;
+	char	**argv;
+	Process	*proc;
+
+ENTER_FUNC;
+	proc = New(Process);
+	argv = (char **)xmalloc(sizeof(char *) * 20);
+	proc->argv = argv;
+	proc->type = PTYPE_GLS;
+	argc = 0;
+	if		(  GlserverPath  !=  NULL  ) {
+		argv[argc ++] = GlserverPath;
+	} else {
+		argv[argc ++] = SERVER_DIR "/glserver";
+	}
+	if		(  RecDir  !=  NULL  ) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = RecDir;
+	} else if (ThisEnv->RecordDir != NULL) {
+		argv[argc ++] = "-record";
+		argv[argc ++] = ThisEnv->RecordDir;
+	}
+	if		(  ScrDir  !=  NULL  ) {
+		argv[argc ++] = "-screen";
+		argv[argc ++] = ScrDir;
+	}
+	if		(  GlCacheDir  !=  NULL  ) {
+		argv[argc ++] = "-cache";
+		argv[argc ++] = GlCacheDir;
+	}
+	if		(  GlAuth  !=  NULL  ) {
+		argv[argc ++] = "-auth";
+		argv[argc ++] = GlAuth;
+	}
+	argv[argc ++] = "-api";
+	if		(  fNumericHOST  ) {
+		argv[argc ++] = "-numeric";
+	}
+	if		(  fGlSSL  ) {
+		argv[argc ++] = "-ssl";
+		if		(  GlCert  !=  NULL  ) {
+			argv[argc ++] = "-cert";
+			argv[argc ++] = GlCert;
+		}
+		if		(  GlCAfile  !=  NULL  ) {
+			argv[argc ++] = "-CAfile";
+			argv[argc ++] = GlCAfile;
+		}
+	}
+	
+	proc->argc = argc;
+	argv[argc ++] = NULL;
+	proc->interval = Interval;
+	ProcessList = g_list_append(ProcessList, proc);
+LEAVE_FUNC;
+}
+
+
+
+static	void
+_InitAps(
 	LD_Struct	*ld)
 {
 	int		argc;
@@ -338,8 +716,6 @@ ENTER_FUNC;
 				argv[argc ++] = "-connect-retry";
 			}
 			argv[argc ++] = ld->name;
-			argv[argc ++] = "-maxtran";
-			argv[argc ++] = IntStrDup(MaxTran);
 			argv[argc ++] = "-sleep";
 			argv[argc ++] = IntStrDup(Sleep);
 			argv[argc ++] = "-maxretry";
@@ -354,26 +730,32 @@ ENTER_FUNC;
 			}
 			proc->argc = argc;
 			argv[argc ++] = NULL;
-			StartProcess(proc,Interval);
+			proc->interval = Interval;
+			ProcessList = g_list_append(ProcessList, proc);
 		}
 	}
 LEAVE_FUNC;
 }
 
 static	void
-StartApss(void)
+InitApss(void)
 {
 	int		i;
+	char	str[512];
 
 ENTER_FUNC;
-	for	( i = 0 ; i < ThisEnv->cLD ; i ++ ) {
-		_StartAps(ThisEnv->ld[i]);
+	str[0] = 0;
+	for	(i = 0; i < ThisEnv->cLD; i++) {
+		_InitAps(ThisEnv->ld[i]);
+		strncat(str, ThisEnv->ld[i]->name,sizeof(str) - strlen(str)-1);
+		strncat(str, " ",sizeof(str) - strlen(str)-1);
 	}
+	Message("start aps:%s",str);
 LEAVE_FUNC;
 }
 
 static	void
-StartWfc(void)
+InitWfc(void)
 {
 	int		argc;
 	char	**argv;
@@ -409,13 +791,9 @@ ENTER_FUNC;
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->TermPort));
 		argv[argc ++] = "-apsport";
 		argv[argc ++] = StrDup(StringPortName(ThisEnv->WfcApsPort));
-		if		(  nCache  >  0  ) {
-			argv[argc ++] = "-cache";
-			argv[argc ++] = IntStrDup(nCache);
-		}
-		if		(  SesDir  !=  NULL  ) {
-			argv[argc ++] = "-sesdir";
-			argv[argc ++] = SesDir;
+		if		(  SesNum  >  0  ) {
+			argv[argc ++] = "-sesnum";
+			argv[argc ++] = IntStrDup(SesNum);
 		}
 
 		if		(  Directory  !=  NULL  ) {
@@ -440,260 +818,233 @@ dbgmsg("*");
 		}
 		proc->argc = argc;
 		argv[argc ++] = NULL;
-		StartProcess(proc,wfcinterval);
+		proc->interval = Wfcinterval;
+		ProcessList = g_list_append(ProcessList, proc);
+		Message("start wfc");
 	}
 LEAVE_FUNC;
 }
 
 
 static	void
-StartServers(void)
+InitServers(void)
 {
 ENTER_FUNC;
-	ProcessTable = NewIntHash();
 	if		(  fRedirector  ) {
-		StartRedirectors();
+		InitRedirectors();
 	}
-	StartWfc();
-	StartApss();
+	if              (  fDBLog  ) {
+		InitDBLogs();
+	}
+	if              (  fDBMaster  ) {
+		InitDBMaster();
+	}
+	if		(  fGlserver  ) {
+		InitGlserver();
+	}
+	InitWfc();
+	InitApss();
 LEAVE_FUNC;
 }
 
 static	void
-StartPrograms(void)
-{
-ENTER_FUNC;
-	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
-	if		( ThisEnv == NULL ) {
-		Error("DI file parse error.");
-	}
-	StartServers();
-#ifdef	DEBUG
-	DumpProcess();
-#endif
-LEAVE_FUNC;
-}
-
-typedef	struct {
-	byte	type;
-	int		sig;
-}	KILLALL;
-
-static	void
-_KillProcess(
-	pid_t		pid,
-	Process		*proc,
-	KILLALL		*kills)
-{
-	if		(  ( kills->type & proc->type )  !=  0  ) {
-		dbgprintf("kill -%d %d\n",kills->sig,pid);
-		kill(pid,kills->sig);
-	}
-}
-
-static	void
-KillAllProcess(
-	byte	type,
+KillProcess(
+	unsigned char	type,
 	int		sig)
 {
-	KILLALL	kills;
-
-ENTER_FUNC;
-	kills.type = type;
-	kills.sig = sig;
-	g_int_hash_table_foreach(ProcessTable,(GHFunc)_KillProcess,(void *)&kills);
-LEAVE_FUNC;
-}
-
-static	void
-ProcessMonitor(void)
-{
-	pid_t	pid;
-	int		status;
+	int		i;
 	Process	*proc;
-	Bool	fStop;
+	char command[1024];
 
 ENTER_FUNC;
-	signal(SIGCHLD, SIG_DFL);
-	do {
-		while	(  ( pid = waitpid(-1,&status,0) )  !=  -1  ) {
-			dbgprintf("pid = %d is down",pid);
-			if		(  ( proc = g_int_hash_table_lookup(ProcessTable,(long)pid) )  !=  NULL  ) {
-				if (WIFSIGNALED(status) ) {
-					Message("%s(%d) killed by signal %d"
-							,proc->argv[0], (int)pid, WTERMSIG(status));
-				} else {
-					Message("process down pid = %d(%d) Command =[%s]\n"
-							,(int)pid, WEXITSTATUS(status),proc->argv[0]);
-				}
-				switch	(proc->type) {
-				  case	PTYPE_APS:
-					if		(	(  fRestart     )
-							||	(  fAllRestart  ) ) {
-						if		(	(  WIFEXITED(status)  )
-								&&	(  WEXITSTATUS(status)  <  2  )	) {
-							if		(  fAllRestart  ) {
-								fStop = FALSE;
-							} else {
-								fStop = TRUE;
-							}
-						} else {
-							fStop = FALSE;
-						}
-					} else {
-						fStop = TRUE;
-					}
-					break;
-				  default:
-					if		(  fAllRestart  ) {
-						fStop = FALSE;
-					} else {
-						fStop = TRUE;
-					}
-					break;
-				}
-				if		(  fStop  ) {
-					StopSystem();
-				} else {
-					g_int_hash_table_remove(ProcessTable,(long)pid);
-					StartProcess(proc,Interval);
-				}
-			} else {
-				Message("unknown process down pid = %d(%d)\n"
- 						,(int)pid,WEXITSTATUS(status));
+	for(i = 0; i < g_list_length(ProcessList); i++) {
+		proc = g_list_nth_data(ProcessList,i);
+		if ((proc->type & type) != 0) {
+			dbgprintf("kill -%d %d\n",sig,proc->pid);
+			if (kill(proc->pid,sig) == -1) {
+				sprintf(command,"killall -HUP %s",proc->argv[0]);
+				system(command);
+				Message("kill(2) failure: %s",strerror(errno));
+				Message("%s",command);
 			}
+			proc->state = STATE_STOP;
 		}
-	}	while	(TRUE);
+	}
 LEAVE_FUNC;
 }
 
 static	void
-InitSystem(void)
+KillAll()
+{
+	int		i;
+	Process	*proc;
+
+ENTER_FUNC;
+	for(i = 0; i < g_list_length(ProcessList); i++) {
+		proc = g_list_nth_data(ProcessList,i);
+		kill(proc->pid,SIGKILL);
+	}
+LEAVE_FUNC;
+}
+
+static	void
+StartServers()
+{
+	int		i;
+	Process	*proc;
+
+ENTER_FUNC;
+	for(i = 0; i < g_list_length(ProcessList); i++) {
+		proc = g_list_nth_data(ProcessList,i);
+		StartProcess(proc);
+	}
+LEAVE_FUNC;
+}
+
+
+static	void
+StopServers(void)
 {
 ENTER_FUNC;
+#if 0
+	KillProcess(PTYPE_GLS,SIGHUP);
+#else 
+	system("/usr/bin/killall -HUP glserver");
+#endif
+	KillProcess(PTYPE_APS,SIGHUP);
+	KillProcess((PTYPE_WFC | PTYPE_RED | PTYPE_LOG | PTYPE_MST),SIGHUP);
+	sleep(1);
+	KillAll();
 LEAVE_FUNC;
 }
 
-static	void
-WaitStop(void)
-{
-	while	(  waitpid(-1,0,WNOHANG)  >  0  );
-}
 
 static	void
 StopSystem(void)
 {
 ENTER_FUNC;
+	fLoop = FALSE;
 	fRestart = FALSE;
-	fAllRestart = FALSE;
-	Message("Stop system");
-	signal(SIGCHLD,(void *)WaitStop);
-	KillAllProcess((PTYPE_APS | PTYPE_RED ),SIGKILL);
-	KillAllProcess(PTYPE_WFC,SIGUSR1);
+	StopServers();
+	Message("stop system");
 LEAVE_FUNC;
-	exit(0);
 }
 
 static	void
-StopApss(void)
+RestartSystem(void)
 {
 ENTER_FUNC;
-	sleep(Interval);
-	KillAllProcess(PTYPE_APS,SIGKILL);
+	fRestart = FALSE;
+	StopServers();
+	Message("restart system");
+	WfcRestartCount = 0;
 LEAVE_FUNC;
 }
 
-static	ARG_TABLE	option[] = {
-	{	"ApsPath",	STRING,		TRUE,	(void*)&ApsPath,
-		"aps command path"		 						},
-	{	"WfcPath",	STRING,		TRUE,	(void*)&WfcPath,
-		"wfc command path"		 						},
-	{	"RedPath",	STRING,		TRUE,	(void*)&RedirectorPath,
-		"redirector command path"						},
-
-	{	"dir",		STRING,		TRUE,	(void*)&Directory,
-		"directory file name"		 					},
-	{	"record",	STRING,		TRUE,	(void*)&RecDir,
-		"record directory"								},
-	{	"ddir",		STRING,		TRUE,	(void*)&DDir,
-		"LD file directory"			 					},
-
-	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
-		"start dbredirector"		 					},
-	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
-		"no check dbredirector start"					},
-	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
-		"no count dbredirector updates"					},
-	{	"sendretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
-		"send retry dbredirector"						},
-
-	{	"restart",	BOOLEAN,	TRUE,	(void*)&fRestart,
-		"restart aps when aborted" 						},
-	{	"allrestart",BOOLEAN,	TRUE,	(void*)&fAllRestart,
-		"restart all process when aborted"			 	},
-
-	{	"interval",	INTEGER,	TRUE,	(void*)&Interval,
-		"process start interval time" 					},
-	{	"wfcwait",	INTEGER,	TRUE,	(void*)&wfcinterval,
-		"wfc start interval time(for slowCPU)"			},
-	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
-		"terminal cache number"							},
-	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
-		"session keep directory"	 					},
-
-	{	"myhost",	STRING,		TRUE,	(void*)&MyHost,
-		"my host name"				 					},
-
-	{	"maxtran",	INTEGER,	TRUE,	(void*)&MaxTran,
-		"aps process transaction count"					},
-	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
-		"transaction retry count"						},
-	{	"no-aps-retry",	BOOLEAN,	TRUE,	(void*)&fNoApsConnectRetry,
-		"don't retry aps commection"					},
-
-	{	"q",		BOOLEAN,	TRUE,	(void*)&fQ,
-		"show sub-program options"	 					},
-	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"time measuring"								},
-	{	"log",		STRING,		TRUE,	(void*)&Log,
-		"monitor log file name"							},
-	{	"sleep",	INTEGER,	TRUE,	(void*)&Sleep,
-		"aps sleep time(for debug)"						},
-
-	{	NULL,		0,			FALSE,	NULL,	NULL 	}
-};
-
-static	void
-SetDefault(void)
+static	Process*
+GetProcess(int pid)
 {
-	ApsPath = NULL;
-	WfcPath = NULL;
-	RedirectorPath = NULL;
+	Process *proc;
+	int i;
 
-	Directory = "./directory";
-	DDir = NULL;
-	RecDir = NULL;
-	Log = NULL;
-	Interval = 0;
-	wfcinterval = 0;
-	MaxTran = 0;
-	MaxTransactionRetry = 0;
-	MaxSendRetry = 3;
-	Sleep = 0;
+	for(i=0;i<g_list_length(ProcessList);i++) {
+		proc = (Process*)g_list_nth_data(ProcessList,i);
+		if (pid == proc->pid) {
+			return proc;
+		}
+	}
+	return NULL;
+}
 
-	MyHost = "localhost";
+static	char*
+GetCommandStr(Process *proc)
+{
+	int	i;
+	int size;
+	char *p;
+	char *command = NULL;
 
-	fRedirector = FALSE;
-	fNoCheck = FALSE;
-	fNoSumCheck = FALSE;
-	fRestart = FALSE;
-	fAllRestart = FALSE;
-	fQ = FALSE;
-	fTimer = FALSE;
-	fNoApsConnectRetry = FALSE;
-	nCache = 0;
-	SesDir = NULL;
+	if (proc == NULL) {
+		return command;
+	}
+	size = 0;
+	for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
+		size += 1 + strlen(proc->argv[i]);
+	}
+	if (size > 0) {
+		p = command = xmalloc(size + 1);
+		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
+			sprintf(p,"%s ",proc->argv[i]);
+			p += strlen(proc->argv[i]) + 1;
+		}
+		*p = 0;
+	}
+	return command;
+}
+	
+static	void
+ProcessMonitor(void)
+{
+	int pid;
+	int status;
+	Process *proc;
+	struct sigaction sa;
+	char *command;
+
+ENTER_FUNC;
+	/* need for catch SYGCHLD  */
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_DFL;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	proc = NULL;
+	while ((pid = waitpid(-1,&status,0)) != -1) {
+		proc = GetProcess(pid);
+		if (proc == NULL) {
+			Warning("[BUG] unknown process down:%d",pid);
+			break;
+		}
+		if (proc->state == STATE_RUN) {
+			proc->state = STATE_DOWN;
+		}
+		if (fLoop && fRestart) {
+			if (proc->state == STATE_DOWN) {
+				command = GetCommandStr(proc);
+				if (WIFSIGNALED(status)) {
+					Message("pid[%d] killed by signal %d;[%s]"
+							,(int)pid, WTERMSIG(status),command);
+				} else {
+					Message("pid[%d] exit(%d);[%s]"
+							,(int)pid, WEXITSTATUS(status),command);
+				}
+				xfree(command);
+			}
+		}
+		switch	(proc->type) {
+		case PTYPE_APS:
+			if (WIFEXITED(status) && WEXITSTATUS(status) < 2) {
+				StopSystem();
+			}
+			break;
+		case PTYPE_WFC:
+			WfcRestartCount ++;
+			if (WfcRestartCount < MAX_WFC_RESTART_COUNT) {
+				Message("wfc restart count:%d", WfcRestartCount);
+			} else {
+				Message("wfc restart count:%d,reached max count,does not restart", WfcRestartCount);
+				StopSystem();
+				break;
+			}
+		}
+		if (fRestart) {
+			/*What should do to set interval ?*/
+			StartProcess(proc);
+		}
+	}
+LEAVE_FUNC;
 }
 
 extern	int
@@ -701,13 +1052,10 @@ main(
 	int		argc,
 	char	**argv)
 {
-	FILE_LIST	*fl;
+	struct sigaction	sa;
 
 	SetDefault();
-	fl = GetOption(option,argc,argv,NULL);
-	if		(  fAllRestart  ) {
-		fRestart = TRUE;
-	}
+	GetOption(option,argc,argv,NULL);
 	InitMessage("monitor",Log);
 
 	if		(  !fRedirector  ) {
@@ -715,13 +1063,28 @@ main(
 	}
 
 	InitSystem();
-	signal(SIGUSR1,(void *)StopSystem);
-	signal(SIGHUP,(void *)StopApss);
+	MessagePrintf("%s %s",PACKAGE_STRING, PACKAGE_DATE);
+	Message("start system");
 
-	Message("Start system");
- 	StartPrograms();
+	InitServers();
 
-	ProcessMonitor();
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = (void *)StopSystem;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGUSR1, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
 
+	sa.sa_handler = (void *)RestartSystem;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGHUP, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	while (fLoop) {
+		fRestart = TRUE;
+		StartServers();
+		ProcessMonitor();
+	}
 	return	(0);
 }

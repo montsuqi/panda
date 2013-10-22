@@ -1,5 +1,5 @@
 # PANDA -- a simple transaction monitor
-# Copyright (C) 2005-2009  ogochan
+# Copyright (C) 2005-2008  ogochan
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 
 sbin_PROGRAMS = glserver
 
-bin_SCRIPTS = pstopng
 EXTRA_DIST = 							\
-	$(bin_SCRIPTS)						\
 	passwd
 
 glserver_LDFLAGS	=	-export-dynamic
@@ -31,10 +29,10 @@ glserver_LDADD 		=					\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandagl.a	\
 	$(MAGIC_LIBS)						\
-	$(GLIB2_LIBS)						\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)						
+	$(COMMON_LIBS)
+
 glserver_DEPENDENCIES	=				\
 	$(top_builddir)/libs/libpandas.a		\
 	$(top_builddir)/libs/libpandamisc.a	\
@@ -43,11 +41,12 @@ INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
-	$(GLIB2_CFLAGS)			\
+	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(MONDAI_CFLAGS)
+	$(COMMON_CFLAGS)
 
-glserver_SOURCES	=		\
-	glserver.c	glserver.h	\
-	http.c		http.h		\
+glserver_SOURCES	=				\
+	glserver.c		glserver.h		\
+	http.c			http.h			\
+	sysdataio.c		sysdataio.h		\
 	server.c

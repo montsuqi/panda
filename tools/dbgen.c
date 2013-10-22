@@ -33,7 +33,6 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"DBparser.h"
@@ -473,17 +472,17 @@ main(
 		RecParserInit();
 		DB_ParserInit();
 		if		( fDrop ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,FALSE) )  !=  NULL  ) {
 				MakeDrop(rec);
 			}
 		}
 		if		(  fCreate  ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,FALSE) )  !=  NULL  ) {
 				MakeCreate(rec);
 			}
 		}
 		if		( fInsert ) {
-			if		(  ( rec = DB_Parser(fl->name,NULL,NULL,FALSE) )  !=  NULL  ) {
+			if		(  ( rec = DB_Parser(fl->name,NULL,FALSE) )  !=  NULL  ) {
 				MakeInsert(rec);
 			}
 		}

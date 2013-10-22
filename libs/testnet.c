@@ -37,7 +37,6 @@
 #include	<pthread.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"net.h"
 #include	"comm.h"
@@ -85,7 +84,7 @@ ExecuteServer(void)
 		,	fd;
 	size_t	len;
 	NETFILE	*fp;
-	byte	buff[SIZE_BUFF];
+	unsigned char	buff[SIZE_BUFF];
 
 ENTER_FUNC;
 	port = ParPortName(PortNumber);
@@ -115,7 +114,7 @@ ExecuteClient(void)
 	int		i
 		,	j;
 	NETFILE	*fp;
-	byte	sbuff[SIZE_BUFF]
+	unsigned char	sbuff[SIZE_BUFF]
 		,	rbuff[SIZE_BUFF];
 
 ENTER_FUNC;

@@ -31,7 +31,6 @@
 #include	<stdlib.h>
 #include	<signal.h>
 #include	<string.h>
-#include	<setjmp.h>
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<fcntl.h>
@@ -40,8 +39,10 @@
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<glib.h>
+#include	<iconv.h>
 
-#include	"types.h"
+#define		FRONT_H_MAIN
+
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"glterm.h"
@@ -50,7 +51,7 @@
 #include	"comm.h"
 #include	"auth.h"
 #include	"authstub.h"
-#include	"applications.h"
+#include	"sessioncall.h"
 #include	"driver.h"
 #include	"glserver.h"
 #include	"glcomm.h"
@@ -58,36 +59,52 @@
 #include	"term.h"
 #include	"dirs.h"
 #include	"RecParser.h"
-#include	"message.h"
 #include	"http.h"
+#include	"sysdataio.h"
+#include	"message.h"
 #include	"debug.h"
+
+static	ScreenData *
+InitSession()
+{
+	ScreenData *scr;
+	
+	scr = NewScreenData();
+	scr->status = SCREEN_DATA_NULL;
+	return scr;
+}
 
 static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	Message("[%s@%s] session end",scr->user,TermToHost(scr->term));
+	if (scr->status == SCREEN_DATA_END) {
+		SessionExit(scr);
+		Message("[%s@%s] session end",scr->user,scr->host);
+	}
+	FreeScreenData(scr);
 }
 
 static	Bool
 CheckCache(
 	NETFILE	*fpComm,
-	char	*name,
-	off_t	stsize,
-	time_t	stmtime,
-	time_t	stctime)
+	char	*name)
 {
 	Bool	ret;
 	int		klass;
 
 ENTER_FUNC;
 	GL_SendPacketClass(fpComm,GL_QueryScreen,fFeatureNetwork);
-	ON_IO_ERROR(fpComm,badio);
-	GL_SendString(fpComm,name,fFeatureNetwork);			ON_IO_ERROR(fpComm,badio);
-	GL_SendInt(fpComm,(long)stsize,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-	GL_SendInt(fpComm,(long)stmtime,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-	GL_SendInt(fpComm,(long)stctime,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-	switch	(  klass = GL_RecvPacketClass(fpComm,fFeatureNetwork)  ) {
+		ON_IO_ERROR(fpComm,badio);
+	GL_SendString(fpComm,name,fFeatureNetwork);			
+		ON_IO_ERROR(fpComm,badio);
+	GL_SendInt(fpComm,0L,fFeatureNetwork);	
+		ON_IO_ERROR(fpComm,badio);
+	GL_SendInt(fpComm,0L,fFeatureNetwork);	
+		ON_IO_ERROR(fpComm,badio);
+	GL_SendInt(fpComm,0L,fFeatureNetwork);	
+		ON_IO_ERROR(fpComm,badio);
+	switch (klass = GL_RecvPacketClass(fpComm,fFeatureNetwork)) {
 	  case	GL_GetScreen:
 		dbgmsg("GetScreen");
 		ret = TRUE;
@@ -98,6 +115,8 @@ ENTER_FUNC;
 		break;
 	  default:
 		dbgprintf("klass = [%d]\n",klass);
+		ret = FALSE;
+		break;
 	  badio:
 		dbgmsg("error");
 		ret = FALSE;
@@ -113,91 +132,74 @@ SendFile(
 	char	*fname,
 	char	*wname)
 {
-	char	buff[SIZE_BUFF];
-	struct	stat	stbuf;
-	size_t	size
-	,		left;
-	FILE	*fp;
-	Bool	rc;
+	char			*buff;
+	char			*gladecoding;
+	size_t			size;
+	Bool			rc;
+	ValueStruct		*value;
+	static GRegex	*regex = NULL;
 
 ENTER_FUNC;
-	stat(fname,&stbuf);
-	if		(  CheckCache(fpComm,
-						  wname,
-						  stbuf.st_size, stbuf.st_mtime, stbuf.st_ctime)  ) {
+	if (regex == NULL) {
+		regex = g_regex_new("^<\\?xml.+encoding=.UTF-8.",0,0,NULL);
+	}
+	if (CheckCache(fpComm, wname)) {
 		rc = FALSE;
-		fp = NULL;
-		GL_RecvString(fpComm, SIZE_NAME, wname,fFeatureNetwork);	/*	dummy	*/ 
-		ON_IO_ERROR(fpComm,badio);
-		if		(  ( fp = fopen(fname,"r") )  !=  NULL  ) {
-			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFeatureNetwork);
+		GL_RecvString(fpComm, SIZE_NAME, wname,fFeatureNetwork);/*dummy*/ 
 			ON_IO_ERROR(fpComm,badio);
-			GL_SendInt(fpComm,(int)stbuf.st_size,fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-			left = stbuf.st_size;
-			do {
-				if		(  left  >  SIZE_BUFF  ) {
-					size = SIZE_BUFF;
-				} else {
-					size = left;
-				}
-				size = fread(buff,1,size,fp);
-				if		(  size  >  0  ) {
-					Send(fpComm,buff,size);			ON_IO_ERROR(fpComm,badio);
-					left -= size;
-				}
-			}	while	(  left  >  0  );
-			rc = TRUE;
-		  badio:
-			if		(  fp  !=  NULL  ) {
-				fclose(fp);
+		if(g_file_get_contents(fname,&buff, &size, NULL)) {
+			if (g_regex_match_full(regex,buff,size,0,0,NULL,NULL)) {
+				gladecoding = NULL;
+			} else {
+				gladecoding = "euc-jisx0213";
+				Warning("encoding EUC-JP is deprecated : %s",fname);
 			}
+
+			GL_SendPacketClass(fpComm,GL_ScreenDefine,fFeatureNetwork);
+				ON_IO_ERROR(fpComm,badio);
+
+			value = NewValue(GL_TYPE_CHAR);
+			SetValueStringWithLength(value,buff,size,gladecoding);
+			GL_SendString(fpComm, ValueToString(value,NULL),fFeatureNetwork);
+            FreeValueStruct(value);
+            g_free(buff);
+			rc = TRUE;
 		}
 	} else {
 		rc = TRUE;
 	}
+badio:
 LEAVE_FUNC;
-	return	(rc);
+	return rc;
 }
 
-static	jmp_buf	envCheckScreen;
 static	void
 CheckScreen(
 	char		*wname,
 	WindowData	*win,
 	NETFILE		*fpComm)
 {
-	char	fname[SIZE_BUFF]
-	,		dir[SIZE_BUFF];
-	struct	stat	stbuf;
-	char	*p
-	,		*q;
-	Bool	fDone
-	,		fExit;
-
+	gchar 			*fname;
+	static gchar	**dirs = NULL;
+	int 			i;
+	Bool			hasWindow;
 ENTER_FUNC;
-	if		(  win->fNew  ) {
-		strcpy(dir,ScreenDir);
-		p = dir;
-		fDone = FALSE;
-		do {
-			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-				*q = 0;
-				fExit = FALSE;
-			} else {
-				fExit = TRUE;
-			}
-			sprintf(fname,"%s/%s.glade",p,wname);
-			if		(  stat(fname,&stbuf)  ==  0  ) {
-				if		(  ( fDone = SendFile(fpComm,fname,wname) )  )	break;
-			}
-			p = q + 1;
-		}	while	(  !fExit  );
-		if		(  !fDone  ) {
-			Warning("[%s] screen file not exitsts.",wname);
-			longjmp(envCheckScreen,1);
+	hasWindow = FALSE;
+	if (dirs == NULL) {
+		dirs = g_strsplit_set(ScreenDir,":",-1);
+	}
+	for (i=0; dirs[i]!=NULL; i++) {
+		fname = g_strdup_printf("%s/%s.glade",dirs[i],wname);
+		if (g_file_test(fname,G_FILE_TEST_IS_REGULAR)) {
+			SendFile(fpComm,fname,wname);
+			hasWindow = TRUE;
+			g_free(fname);
+			break;
 		}
-		win->fNew = FALSE;
+		g_free(fname);
+	}
+	if (!hasWindow) {
+		Error("[%s] screen file not exitsts.",wname);
 	}
 LEAVE_FUNC;
 }
@@ -208,14 +210,11 @@ CheckScreens(
 	ScreenData	*scr)
 {
 ENTER_FUNC;
-	if		(  setjmp(envCheckScreen)  ==  0  ) {
-		g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
-	}
+	g_hash_table_foreach(scr->Windows,(GHFunc)CheckScreen,fpComm);
 	GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
 LEAVE_FUNC;
 }
 
-static	jmp_buf	envSendWindow;
 static	void
 SendWindow(
 	char		*wname,
@@ -224,45 +223,42 @@ SendWindow(
 {
 	Bool	rc;
 ENTER_FUNC;
-
 	rc = FALSE; 
-	if		(  win->PutType  !=  SCREEN_NULL  ) {
+	if (win->puttype != SCREEN_NULL) {
 		GL_SendPacketClass(fpComm,GL_WindowName,fFeatureNetwork);
-		ON_IO_ERROR(fpComm,badio);
-		GL_SendString(fpComm,win->name,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-		dbgprintf("wname = [%s]\n",win->name);
-		GL_SendInt(fpComm,win->PutType,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-		switch	(win->PutType) {
-		  case	SCREEN_CURRENT_WINDOW:
-		  case	SCREEN_NEW_WINDOW:
-		  case	SCREEN_CHANGE_WINDOW:
-			if		(  win->rec->value  !=  NULL  ) {
+			ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,wname,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		GL_SendInt(fpComm,win->puttype,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		dbgprintf("wname = [%s]\n",wname);
+		switch	(win->puttype) {
+		case SCREEN_CURRENT_WINDOW:
+		case SCREEN_NEW_WINDOW:
+		case SCREEN_CHANGE_WINDOW:
+			if (win->rec->value != NULL) {
+				AccessBLOB(BLOB_ACCESS_EXPORT,win->rec->value);
 				GL_SendPacketClass(fpComm,GL_ScreenData,fFeatureNetwork);
-				ON_IO_ERROR(fpComm,badio);
-				if		(  fFeatureI18N  ) {
-					GL_SendValue(fpComm,win->rec->value,NULL,
-								 fFeatureBlob,fFeatureExpand,fFeatureNetwork);
 					ON_IO_ERROR(fpComm,badio);
-				} else {
-					GL_SendValue(fpComm,win->rec->value,"euc-jp",
-								 fFeatureBlob,fFeatureExpand,fFeatureNetwork);
+				GL_SendValue(fpComm,win->rec->value,NULL,fFeatureNetwork);
 					ON_IO_ERROR(fpComm,badio);
-				}
 			} else {
 				GL_SendPacketClass(fpComm,GL_NOT,fFeatureNetwork);
-				ON_IO_ERROR(fpComm,badio);
+					ON_IO_ERROR(fpComm,badio);
 			}
 			break;
-		  default:
+		default:
 			GL_SendPacketClass(fpComm,GL_NOT,fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
+				ON_IO_ERROR(fpComm,badio);
 			break;
 		}
-		win->PutType = SCREEN_NULL;
+		win->puttype = SCREEN_NULL;
 	}
 	rc = TRUE;
   badio:
-	if		(  !rc  )	longjmp(envSendWindow,1);
+	if (!rc) {
+		Error("SendWindow failure:%s", wname);
+	}
 LEAVE_FUNC;
 }
 
@@ -274,23 +270,22 @@ SendScreenAll(
 	Bool	rc;
 ENTER_FUNC;
 	rc = FALSE;
-	if		(  setjmp(envSendWindow)  ==  0  ) {
-		g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,fpComm);
-	} else {
-		goto	badio;
-	}
-	if		(	(  *scr->window  !=  0  )
-			&&	(  *scr->widget  !=  0  ) ) {
+	g_hash_table_foreach(scr->Windows,(GHFunc)SendWindow,fpComm);
+	if ((*scr->window != 0) &&
+		(*scr->widget != 0)) {
 		GL_SendPacketClass(fpComm,GL_FocusName,fFeatureNetwork);
-		ON_IO_ERROR(fpComm,badio);
-		GL_SendString(fpComm,scr->window,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-		GL_SendString(fpComm,scr->widget,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
+			ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,scr->window,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm,scr->widget,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
 	}
-	GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);		ON_IO_ERROR(fpComm,badio);
+	GL_SendPacketClass(fpComm,GL_END,fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
 	rc = TRUE;
-  badio:
+badio:
 LEAVE_FUNC;
-	return	(rc); 
+	return	rc;
 }
 
 static	Bool
@@ -299,43 +294,37 @@ SendScreenData(
 	ScreenData	*scr)
 {
 	Bool	rc;
-
 ENTER_FUNC;
-	if		(  GL_RecvPacketClass(fpComm,fFeatureNetwork)  ==  GL_GetData  ) {
-		if		(  GL_RecvInt(fpComm,fFeatureNetwork)  ==  0  ) {	/*	get all data	*/
+	if (GL_RecvPacketClass(fpComm,fFeatureNetwork) == GL_GetData) {
+		if (GL_RecvInt(fpComm,fFeatureNetwork) == 0) {	
 			dbgmsg("get all data");
 			rc = SendScreenAll(fpComm,scr);
 		} else {
 			rc = TRUE;
 			dbgmsg("get partial");
 		}
-		dbgmsg("*");
 	} else {
-		dbgmsg("*");
 		rc = FALSE;
 	}
 LEAVE_FUNC;
-	return	(rc);
+	return	rc;
 }
 
-static	Bool
+static	void
 SendScreen(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
-	Bool	ret;
-
 ENTER_FUNC;
+	dbgprintf("scr->status[%d]\n",scr->status);
 	CheckScreens(fpComm,scr);
-	ret = SendScreenData(fpComm,scr);
-	if		(  !ret  ) {
-		if		( scr->window  !=  NULL  )	{
-			Warning("SendScreen [%s] failed.", scr->window);
-		}
-		Warning("SendScreenData invalid");
+	if (!SendScreenData(fpComm,scr)) {
+		Warning("SendScreenData failed");
+		scr->status = SCREEN_DATA_END;
 	}
+	dbgprintf("scr->window[%s]\n",scr->window);
 LEAVE_FUNC;
-	return	(ret);
+	return;
 }
 
 #ifdef	USE_SSL
@@ -348,15 +337,15 @@ ThisAuth(
 {
 	Bool	ret;
 
-	if (fSsl && !strcasecmp(Auth.protocol,"ssl")){
-        char *subject;
-        char tmp[SIZE_USER+1];
+	ret = FALSE;
+	if (fSsl && fVerifyPeer){
+        char *cn;
+
         if (!fpComm->peer_cert) return FALSE;
-        subject = GetSubjectFromCertificate(fpComm->peer_cert);
-        AuthLoadX509(Auth.file);
-        ret = AuthX509(subject, tmp);
-        xfree(subject);
-        if (ret == TRUE) strcpy(user, tmp);
+		cn = GetCommonNameFromCertificate(fpComm->peer_cert);
+        strcpy(user, cn);
+        xfree(cn);
+		ret = TRUE;
 	}
     else {
 		ret = AuthUser(&Auth, user, pass, other, NULL);
@@ -365,131 +354,132 @@ ThisAuth(
 	return	(ret);
 }
 #else
-#define	ThisAuth(fp,user,pass,other)	AuthUser(&Auth,(user),(pass),(other),NULL)
+#define ThisAuth(fp,user,pass,other) AuthUser(&Auth,(user),(pass),(other),NULL)
 #endif
 
 static	void
 CheckFeature(
-	char	*ver)
+	ScreenData	*scr,
+	char		*ver)
 {
-	char	*p
-		,	*q
-		,	*n;
+	char	*p,*q,*n;
 
+	strcpy(scr->agent,"unknown");
 	TermFeature = FEATURE_NULL;
-	TermExpandType = EXPAND_PNG;
-	if		(  strlcmp(ver,"1.2")    ==  0  ) {
-		TermFeature |= FEATURE_CORE;
-	} else
-	  if	(	(  strlcmp(ver,"1.1.1")  ==  0  )
-			||	(  strlcmp(ver,"1.1.2")  ==  0  ) ) {
-		TermFeature |= FEATURE_CORE;
-		TermFeature |= FEATURE_OLD;
-	} else {
-		TermFeature = FEATURE_CORE;
-		if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
-			p ++;
-			while	(  *p  !=  0  ) {
-				if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-					*q = 0;
-					n = q + 1;
-				} else {
-					n = p + strlen(p);
-				}
-				if		(  !strlicmp(p,"blob")  ) {
-					TermFeature |= FEATURE_BLOB;
-				}
-				if		(  !strlicmp(p,"expand")  ) {
-					TermFeature |= FEATURE_EXPAND;
-				}
-				if		(  !strlicmp(p,"i18n")  ) {
-					TermFeature |= FEATURE_I18N;
-				}
-				if		(  !strlicmp(p,"no")  ) {
-					TermFeature |= FEATURE_NETWORK;
-				}
-				if		(  !strlicmp(p,"negotiation")  ) {
-					TermFeature |= FEATURE_NEGO;
-				}
-				if		(  !strlicmp(p,"ps")  ) {
-					TermExpandType = EXPAND_PS;
-				}
-				if		(  !strlicmp(p,"pdf")  ) {
-					TermExpandType = EXPAND_PDF;
-				}
-				p = n;
+	if		(  ( p = strchr(ver,':') )  !=  NULL  ) {
+		p ++;
+		while	(  *p  !=  0  ) {
+			if		(  ( q = strchr(p,':') )  !=  NULL  ) {
+				*q = 0;
+				n = q + 1;
+			} else {
+				n = p + strlen(p);
 			}
+			if		(  !strlicmp(p,"no")  ) {
+				TermFeature |= FEATURE_NETWORK;
+			}
+			if		(  !strlicmp(p,"negotiation")  ) {
+				TermFeature |= FEATURE_NEGO;
+			}
+			if		(  !strlicmp(p,"v48")  ) {
+				TermFeature |= FEATURE_V48;
+			}
+			if		(  !strlicmp(p,"agent")  ) {
+				if ((q = strchr(p,'=')) != NULL) {
+					q++;
+					strncpy(scr->agent,q,sizeof(scr->agent));
+					scr->agent[sizeof(scr->agent)-1] = 0;
+				}
+			}
+			p = n;
 		}
 	}
-#ifdef	DEBUG
-	printf("core      = %s\n",fFeatureCore ? "YES" : "NO");
-	printf("i18n      = %s\n",fFeatureI18N ? "YES" : "NO");
-	printf("blob      = %s\n",fFeatureBlob ? "YES" : "NO");
-	printf("expand    = %s\n",fFeatureExpand ? "YES" : "NO");
-	printf("network   = %s\n",fFeatureNetwork ? "YES" : "NO");
-	printf("network   = %s\n",fFeatureNego ? "YES" : "NO");
-	printf("old       = %s\n",fFeatureOld ? "YES" : "NO");
-#endif
+	if (!fFeatureV48) {
+		TermFeature = FEATURE_NULL;
+	}
 }
 
-static	Bool
+static	void
+OnSIGALRM(
+	int		ec)
+{
+	Warning("session timeout");
+}
+
+static	void
 Connect(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
 	char	pass[SIZE_PASS+1];
 	char	ver[SIZE_BUFF];
-    Bool    auth_ok = FALSE;
-	Bool	rc;
+	struct sigaction sa;
 ENTER_FUNC;
-	rc = FALSE;
-	GL_RecvString(fpComm, sizeof(ver), ver, FALSE);	ON_IO_ERROR(fpComm,badio);
-	dbgprintf("ver  = [%s]",ver);
-	CheckFeature(ver);
-	GL_RecvString(fpComm, sizeof(scr->user), scr->user,fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-	dbgprintf("user = [%s]",scr->user);
-	GL_RecvString(fpComm, sizeof(pass), pass, fFeatureNetwork);		ON_IO_ERROR(fpComm,badio);
-	dbgprintf("pass = [%s]",pass);
-	GL_RecvString(fpComm, sizeof(scr->cmd), scr->cmd, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-	dbgprintf("cmd  = [%s]",scr->cmd);
-	Message("[%s@%s] session start",scr->user, TermToHost(scr->term));
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = (void*)OnSIGALRM;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGALRM, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
 
-	if		(  TermFeature  ==  FEATURE_NULL  ) {
+	GL_RecvString(fpComm, sizeof(ver), ver, FALSE);	
+		ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->user), scr->user,fFeatureNetwork);	
+		ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(pass), pass, fFeatureNetwork);		
+		ON_IO_ERROR(fpComm,badio);
+	GL_RecvString(fpComm, sizeof(scr->cmd), scr->cmd, fFeatureNetwork);	
+		ON_IO_ERROR(fpComm,badio);
+
+	dbgprintf("ver  = [%s]",ver);
+	dbgprintf("user = [%s]",scr->user);
+	dbgprintf("pass = [%s]",pass);
+	dbgprintf("cmd  = [%s]",scr->cmd);
+
+	CheckFeature(scr,ver);
+
+	if (TermFeature == FEATURE_NULL) {
 		GL_SendPacketClass(fpComm,GL_E_VERSION,fFeatureNetwork);
 		ON_IO_ERROR(fpComm,badio);
-		Warning("[%s@%s] reject client(invalid version)",scr->user,TermToHost(scr->term));
+		Warning("[%s@%s] reject client(invalid version)",scr->user,scr->host);
+		return;
 	}
-    else {
-	    auth_ok = ThisAuth(fpComm, scr->user, pass, scr->other);
-    }
 
-	if (auth_ok){
-		Message("[%s@%s] client authenticated", scr->user,TermToHost(scr->term));
-		ApplicationsCall(APL_SESSION_LINK,scr);
-		if		(  scr->status  ==  APL_SESSION_NULL  ) {
-			GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
-			ON_IO_ERROR(fpComm,badio);
-		} else {
-			if (fFeatureNego) {
-				sprintf(ver,"%s.%02d", PACKAGE_VERSION, 0);
-				GL_SendPacketClass(fpComm,GL_ServerVersion,fFeatureNetwork);
-				GL_SendString(fpComm, ver,fFeatureNetwork);
-				ON_IO_ERROR(fpComm,badio);
-			} else {
-				GL_SendPacketClass(fpComm,GL_OK,fFeatureNetwork);
-			}
-			ON_IO_ERROR(fpComm,badio);
-			CheckScreens(fpComm,scr);
-			rc = SendScreen(fpComm,scr);
-		}
-	} else {
+	if (!ThisAuth(fpComm, scr->user, pass, "glserver")) {
+		Warning("[%s@%s] reject client(authentication error)",
+			scr->user,scr->host);
 		GL_SendPacketClass(fpComm,GL_E_AUTH,fFeatureNetwork);
-		ON_IO_ERROR(fpComm,badio);
-		Warning("[%s@%s] reject client(authentication error)",scr->user,TermToHost(scr->term));
+			ON_IO_ERROR(fpComm,badio);
+		scr->status = SCREEN_DATA_NULL;
+		return;
 	}
-  badio:
+
+	Message("[%s@%s] \"%s\" session start",scr->user, scr->host, scr->agent);
+	Message("[%s@%s] client authenticated", scr->user,scr->host);
+
+	SessionLink(scr);
+	if (scr->status == SCREEN_DATA_NULL) {
+		GL_SendPacketClass(fpComm,GL_E_APPL,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		return;
+	}
+
+	ConnectSysData();
+	sprintf(ver,"%s.%02d", PACKAGE_VERSION, 0);
+	GL_SendPacketClass(fpComm,GL_ServerVersion,fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+	GL_SendString(fpComm, ver,fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+
+	/*dummy check screens*/
+	CheckScreens(fpComm,scr);
+	SendScreen(fpComm,scr);
 LEAVE_FUNC;
-	return (rc);
+	return;
+  badio:
+	Warning("Connect badio");
+	scr->status = SCREEN_DATA_NULL;
+	return;
 }
 
 static	Bool
@@ -497,70 +487,125 @@ RecvScreenData(
 	NETFILE		*fpComm,
 	ScreenData	*scr)
 {
-	int		c;
-	char		wname[SIZE_NAME+1]
-		,		name[SIZE_NAME+1]
-		,		buff[SIZE_BUFF];
+	int			i;
+	char		wname[SIZE_LONGNAME+1];
+	char		name[SIZE_LONGNAME+1];
+	char		buff[SIZE_BUFF];
 	WindowData	*win;
 	ValueStruct	*value;
 	Bool		rc;
-	char		*coding;
 
 ENTER_FUNC;
 	rc = FALSE;
-	if		(  fFeatureI18N  ) {
-		coding = NULL;
-	} else {
-		coding = "euc-jp";
-	}
-	while	(  GL_RecvPacketClass(fpComm,fFeatureNetwork)  ==  GL_WindowName  ) {
-		ON_IO_ERROR(fpComm,badio);
-		GL_RecvString(fpComm, sizeof(buff), buff, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-		PureWindowName(buff,wname);
-		if		(  ( win = g_hash_table_lookup(scr->Windows,wname) )  !=  NULL  ) {
-			while	(  ( c = GL_RecvPacketClass(fpComm,fFeatureNetwork) )
-					   ==  GL_ScreenData  ) {
+	while (GL_RecvPacketClass(fpComm,fFeatureNetwork) == GL_WindowName) {
+			ON_IO_ERROR(fpComm,badio);
+		GL_RecvString(fpComm, sizeof(buff),buff,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+
+		for(i=0;i<SIZE_LONGNAME;i++) {
+			if (buff[i] == '.') {
+				wname[i] = 0;
+			} else {
+				wname[i] = buff[i];
+			}
+		}
+		wname[SIZE_LONGNAME] = 0;
+
+		if ((win = g_hash_table_lookup(scr->Windows,wname)) != NULL) {
+			while(GL_RecvPacketClass(fpComm,fFeatureNetwork) == GL_ScreenData){
 				ON_IO_ERROR(fpComm,badio);
-				GL_RecvString(fpComm, sizeof(name), name, fFeatureNetwork);	ON_IO_ERROR(fpComm,badio);
-				if		(  ( value = GetItemLongName(win->rec->value,name+strlen(wname)+1) )
-						   !=  NULL  ) {
-					GL_RecvValue(fpComm,value,coding,fFeatureBlob,fFeatureExpand,fFeatureNetwork);
+				GL_RecvString(fpComm, sizeof(name), name, fFeatureNetwork);	
+					ON_IO_ERROR(fpComm,badio);
+				value = GetItemLongName(win->rec->value,name+strlen(wname)+1);
+				if (value != NULL) {
+					GL_RecvValue(fpComm,value,NULL,fFeatureNetwork);
+						ON_IO_ERROR(fpComm,badio);
 				} else {
-					Error("invalid item name [%s]\n",name);
+					Warning("invalid item name [%s]\n",name);
+					goto badio;
 				}
 			}
+			AccessBLOB(BLOB_ACCESS_IMPORT, win->rec->value);
 		} else {
-			Error("invalid window name [%s]\n",wname);
+			Message("invalid window name [%s]\n",wname);
+			goto badio;
 		}
 	}
 	rc = TRUE;
-  badio:
+badio:
 LEAVE_FUNC;
-	return	(rc);
+	return	rc;
 }
 
-static  Bool
-Glevent(
+static  void
+Event(
 	NETFILE	*fpComm,
 	ScreenData	*scr)
 {
-	Bool	ret;
-	
-	ret = FALSE;
 ENTER_FUNC;
 	GL_RecvString(fpComm, sizeof(scr->window), scr->window, fFeatureNetwork);
-	ON_IO_ERROR(fpComm,badio);
+		ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm, sizeof(scr->widget), scr->widget, fFeatureNetwork);
-	ON_IO_ERROR(fpComm,badio);
+		ON_IO_ERROR(fpComm,badio);
 	GL_RecvString(fpComm, sizeof(scr->event), scr->event, fFeatureNetwork);
-	ON_IO_ERROR(fpComm,badio);
+		ON_IO_ERROR(fpComm,badio);
 	dbgprintf("window = [%s]\n",scr->window);
+	dbgprintf("widget = [%s]\n",scr->widget);
 	dbgprintf("event  = [%s]\n",scr->event);
-	RecvScreenData(fpComm,scr);			ON_IO_ERROR(fpComm,badio);
-	ApplicationsCall(APL_SESSION_GET,scr);
-	if ( scr->status == APL_SESSION_GET ){
-		ret = SendScreen(fpComm,scr);
+	RecvScreenData(fpComm,scr);
+		ON_IO_ERROR(fpComm,badio);
+	alarm(0);
+	SessionMain(scr);
+	if (scr->status == SCREEN_DATA_CONNECT) {
+		SendScreen(fpComm,scr);
 	}
+badio:
+LEAVE_FUNC;
+	return;
+}
+
+static  Bool
+Pong(
+	NETFILE		*fpComm,
+	ScreenData	*scr)
+{
+	char		*abort;
+	char		*dialog;
+	char		*popup;
+	Bool		ret;
+	
+ENTER_FUNC;
+	ret = TRUE;
+
+	GetSessionMessage(scr->term,&popup,&dialog,&abort);
+
+	if (strlen(abort) > 0) {
+		GL_SendPacketClass(fpComm,GL_Pong_Abort,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm, abort, fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		ret = FALSE;
+	} else if (strlen(dialog) > 0) {
+		GL_SendPacketClass(fpComm,GL_Pong_Dialog,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm, dialog, fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+	} else if (strlen(popup) > 0) {
+		GL_SendPacketClass(fpComm,GL_Pong_Popup,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+		GL_SendString(fpComm, popup, fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+	} else {
+		GL_SendPacketClass(fpComm,GL_Pong,fFeatureNetwork);
+			ON_IO_ERROR(fpComm,badio);
+	}
+	Flush(fpComm);
+
+	xfree(abort);
+	xfree(dialog);
+	xfree(popup);
+
+	ResetSessionMessage(scr->term);
 badio:
 LEAVE_FUNC;
 	return ret;
@@ -573,65 +618,82 @@ MainLoop(
 {
 	Bool	ret;
 	PacketClass	klass;
-	
+
 ENTER_FUNC;
-	klass = GL_RecvPacketClass(fpComm,fFeatureNetwork); ON_IO_ERROR(fpComm,badio);
+	ret = FALSE;
+	klass = GL_RecvPacketClass(fpComm,fFeatureNetwork);
+		ON_IO_ERROR(fpComm,badio);
+	alarm(0);
 	dbgprintf("class = %X\n",(int)klass);
-	if		(  klass  !=  GL_Null  ) {
-		switch	(klass) {
-		case GL_Connect:
-			if (!Connect(fpComm,scr)){
-				scr->status = APL_SESSION_NULL;
-			}
-			ON_IO_ERROR(fpComm,badio);			
+
+	switch	(klass) {
+	case GL_Connect:
+		alarm(GL_TIMEOUT_SEC);
+		Connect(fpComm,scr);
+		ON_IO_ERROR(fpComm,badio);
+		alarm(0);
+		break;
+	case GL_Event:
+		if (scr->status != SCREEN_DATA_CONNECT) {
 			break;
-		case GL_Event:
-			if (  scr->status  !=  APL_SESSION_NULL  ) {
-				if	(  !Glevent(fpComm, scr)	){
-					scr->status = APL_SESSION_NULL;
-				}
-			}
-			ON_IO_ERROR(fpComm,badio);
+		}
+		alarm(GL_TIMEOUT_SEC);
+		Event(fpComm, scr);
+		ON_IO_ERROR(fpComm,badio);
+		alarm(0);
+		break;
+	case GL_Ping:
+		if (scr->status != SCREEN_DATA_CONNECT) {
 			break;
-		case GL_END:
-			scr->status = APL_SESSION_NULL;
-			break;
-		case HTTP_GET:
-		case HTTP_POST:
-		case HTTP_HEAD:
+		}
+		alarm(GL_TIMEOUT_SEC);
+		Pong(fpComm,scr);
+		ON_IO_ERROR(fpComm,badio);
+		alarm(0);
+		break;
+	case GL_END:
+		if (scr->status == SCREEN_DATA_CONNECT) {
+			scr->status = SCREEN_DATA_END;
+		}
+		break;
+	case HTTP_GET:
+	case HTTP_POST:
+		if (fAPI) {
+			alarm(API_TIMEOUT_SEC);
 			HTTP_Method(klass, fpComm);
-			scr->status = APL_SESSION_NULL;
-			ret = FALSE;
-			break;
-		default:
+		} else {
 			Warning("invalid class = %X\n",klass);
-			scr->status = APL_SESSION_NULL;
-			break;
 		}
-		switch	(scr->status) {
-		  case	APL_SESSION_NULL:
-			ret = FALSE;
-			break;
-		  default:
-			ret = TRUE;
-			break;
-		}
-	} else {
-	  badio:
-		ret = FALSE;
-		Message("[%s@%s] abnormal client termination",scr->user,TermToHost(scr->term));
+		// does not reach here
+		exit(-1);
+		break;
+	default:
+		Warning("invalid class = %X\n",klass);
+		scr->status = SCREEN_DATA_NULL;
+		break;
 	}
 
+	if (scr->status != SCREEN_DATA_CONNECT) {
+		ret = FALSE;
+	} else {
+		ret = TRUE;
+	}
 LEAVE_FUNC;
-	return	(ret);
+	return ret;
+badio:
+	Message("[%s@%s] abnormal client termination",scr->user,scr->host);
+LEAVE_FUNC;
+	return FALSE;
 }
 
 extern	void
 ExecuteServer(void)
 {
 	int		pid;
-	int		fd
-	,		_fd;
+	int		fd;
+	int		soc_len;
+	int		soc[MAX_SOCKET];
+
 	NETFILE	*fpComm;
 	ScreenData	*scr;
 	Port	*port;
@@ -640,37 +702,35 @@ ExecuteServer(void)
 	char *ssl_warning;
 #endif
 ENTER_FUNC;
-	signal(SIGCHLD,SIG_IGN);
-
 	port = ParPortName(PortNumber);
-	_fd = InitServerPort(port,Back);
+	soc_len = InitServerMultiPort(port,Back,soc);
 #ifdef	USE_SSL
 	ctx = NULL;
-	if		(  fSsl  ) {
-		if		(  ( ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers) )
-				   ==  NULL  ) {
+	if (fSsl) {
+		ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
+		if (ctx == NULL) {
 			Warning(GetSSLErrorMessage());
 			Error("CTX make error");
 		}
-	    if (strcasecmp(Auth.protocol, "ssl") != 0){
+	    if (!fVerifyPeer){
             SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
         }
 		ssl_warning = GetSSLWarningMessage();
-		if 	(strlen(ssl_warning) > 0) Warning(ssl_warning);
+		if (strlen(ssl_warning) > 0){
+			 Warning(ssl_warning);
+		}
 	}
 #endif
-	while	(TRUE)	{
-		if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
-			dbgprintf("_fd = %d\n",_fd);
-			Error("INET Domain Accept");
+	while (TRUE) {
+		if ((fd = AcceptLoop(soc,soc_len)) < 0) {
+			continue;
 		}
-
-		if		(  ( pid = fork() )  >  0  )	{	/*	parent	*/
+		if ((pid = fork()) > 0) {	/*	parent	*/
 			close(fd);
 		} else
-		if		(  pid  ==  0  )	{	/*	child	*/
+		if (pid == 0) {	/*	child	*/
 #ifdef	USE_SSL
-			if		(  fSsl  ) {
+			if (fSsl) {
 				fpComm = MakeSSL_Net(ctx, fd);
 				if (StartSSLServerSession(fpComm) != TRUE){
 			        CloseNet(fpComm);
@@ -683,12 +743,16 @@ ENTER_FUNC;
 #else
 			fpComm = SocketToNet(fd);
 #endif
-			close(_fd);
 			scr = InitSession();
-			strcpy(scr->term,TermName(fd));
-			while	(  MainLoop(fpComm,scr)  );
+			RemoteIP(fd,scr->host,SIZE_HOST);
+			alarm(API_TIMEOUT_SEC);
+			while (MainLoop(fpComm,scr));
 			FinishSession(scr);
+			DisconnectSysData();
+// FIXME avoid segv gl protocol timeout
+#if 0
 			CloseNet(fpComm);
+#endif
 			exit(0);
 		}
 	}
@@ -714,6 +778,6 @@ ENTER_FUNC;
 	InitNET();
 	InitData();
 	InitGL_Comm();
-	ApplicationsInit(argc,argv);
-LEAVE_FUNC;
+	SessionCallInit(NULL);
+	LEAVE_FUNC;
 }

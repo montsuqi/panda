@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,38 +24,43 @@
 #include	"net.h"
 #include	"dblib.h"
 
-extern	void	InitDB_Process(NETFILE *fp);
-extern	int		ExecDBOP(DBG_Instance *dbg, char *sql, int usage);
-extern	int		ExecRedirectDBOP(DBG_Instance *dbg, char *sql, int usage);
+#define	SIZE_SQL		1024
 
-extern	int		OpenRedirectDB(DBG_Instance *dbg);
-extern	int		CloseRedirectDB(DBG_Instance *dbg);
-extern	int		TransactionRedirectStart(DBG_Instance *dbg);
-extern	int		TransactionRedirectEnd(DBG_Instance *dbg);
-extern	int		TransactionRedirectRollback(DBG_Instance *dbg);
-extern	int		TransactionRedirectPrepare(DBG_Instance *dbg);
-extern	DBG_Instance	*NewDBG_Instance(DBG_Class *class, DB_Environment *env);
-extern	DB_Environment	*NewDB_Environment(int n);
+#define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
 
-extern	void	CloseDB_RedirectPort(DBG_Instance *dbg);
+extern	void	InitializeCTRL(DBCOMM_CTRL*ctrl);
 
-extern	Port	*GetDB_Port(DBG_Class *dbg, int usage);
-extern	char	*GetDB_Host(DBG_Class *dbg, int usage);
-extern	char	*GetDB_PortName(DBG_Class *dbg, int usage);
-extern	char	*GetDB_DBname(DBG_Class *dbg, int usage);
-extern	char	*GetDB_User(DBG_Class *dbg, int usage);
-extern	char	*GetDB_Pass(DBG_Class *dbg, int usage);
-extern	char	*GetDB_Sslmode(DBG_Class *dbg, int usage);
+extern	int		OpenRedirectDB(DBG_Struct *dbg);
+extern	int		CloseRedirectDB(DBG_Struct *dbg);
+extern	int		ExecRedirectDBOP(DBG_Struct *dbg, char *sql, int usage);
+extern	int		TransactionRedirectStart(DBG_Struct *dbg);
+extern	int		TransactionRedirectEnd(DBG_Struct *dbg);
 
-extern	ValueStruct	*_GetDB_Argument(RecordStruct *rec, char *pname, char *func, int *apno);
-extern	void	MakeCTRL(DBCOMM_CTRL *ctrl, ValueStruct *mcp);
-extern	RecordStruct	*MakeCTRLbyName(ValueStruct **value, DBCOMM_CTRL *ctrl,
-										char *rname, char *pname, char *func);
-extern	void	MakeMCP(ValueStruct *mcp, DBCOMM_CTRL *ctrl);
+extern	void	CloseDB_RedirectPort(DBG_Struct *dbg);
+
+extern	Port	*GetDB_Port(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Host(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_PortName(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_DBname(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_User(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Pass(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Sslmode(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Sslcert(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Sslkey(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Sslrootcert(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Sslcrl(DBG_Struct *dbg, int usage);
+extern	int	GetDB_PortMode(DBG_Struct *dbg, int usage);
+extern	int	GetTableFuncData(RecordStruct **rec, ValueStruct **value,
+														 DBCOMM_CTRL *ctrl);
+extern	Bool	SetDBCTRLRecord(DBCOMM_CTRL *ctrl, char *rname);
+extern	Bool	SetDBCTRLValue(DBCOMM_CTRL *ctrl, char *pname);
+
 extern	RecordStruct	*BuildDBCTRL(void);
 extern	void	DumpDB_Node(DBCOMM_CTRL *ctrl);
+extern	void	AuditLog(ValueStruct *mcp);
 
-#define	GetDB_Argument(rec,pname,func)	_GetDB_Argument((rec),(pname),(func),NULL)
+extern	Bool	IsDBOperation(char *func);
+extern	Bool	IsDBUpdateFunc(char *func);
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -71,15 +76,13 @@ GLOBAL	char	*DB_Port;
 GLOBAL	char	*DB_Name;
 GLOBAL	char	*DB_User;
 GLOBAL	char	*DB_Pass;
-GLOBAL	char	*DB_Sslmode;
 
 GLOBAL	Bool	fNoCheck;
 GLOBAL	Bool	fNoRedirect;
 GLOBAL	Bool	fNoSumCheck;
+GLOBAL	Bool	fNoAudit;
 GLOBAL	int		MaxSendRetry;
 GLOBAL	int		RetryInterval;
-GLOBAL	NETFILE	*fpBlob;
-
-GLOBAL	DB_Environment	*ThisDB_Environment;
+GLOBAL	char	*AuditLogFile;
 
 #endif

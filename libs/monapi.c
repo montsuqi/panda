@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,6 @@
 #include	<stdlib.h>
 #include	<string.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"enum.h"
 #include	"libmondai.h"
 #include	"comm.h"
@@ -49,16 +48,15 @@
 extern	MonAPIData	*
 NewMonAPIData(void)
 {
-	MonAPIData	*data;
+	MonAPIData *data;
 
 ENTER_FUNC;
 	data = New(MonAPIData);
 	memclear(data->ld,sizeof(data->ld));
+	memclear(data->window,sizeof(data->window));
 	memclear(data->user,sizeof(data->user));
-	memclear(data->term,sizeof(data->term));
-	data->arguments = NewLBS();
-	data->headers = NewLBS();
-	data->body = NewLBS();
+	memclear(data->host,sizeof(data->host));
+	data->value = NULL;
 LEAVE_FUNC;
 	return	(data); 
 }
@@ -68,23 +66,22 @@ FreeMonAPIData(
 	MonAPIData *data)
 {
 ENTER_FUNC;
-	FreeLBS(data->arguments);
-	FreeLBS(data->headers);
-	FreeLBS(data->body);
 	xfree(data);
 LEAVE_FUNC;
 }
 
-extern gboolean
+extern PacketClass
 CallMonAPI(
 	MonAPIData *data)
 {
 	int fd;
 	Port *port;
 	NETFILE *fp;
-	PacketClass klass;
+	PacketClass status;
+	LargeByteString *buff;
 
 ENTER_FUNC;
+	status = WFC_API_ERROR;
 	port = ParPort(TermPort, PORT_WFC);
 	fd = ConnectSocket(port,SOCK_STREAM);
 	DestroyPort(port);
@@ -92,23 +89,24 @@ ENTER_FUNC;
 		fp = SocketToNet(fd);
 		SendPacketClass(fp,WFC_API);		ON_IO_ERROR(fp,badio);
 		SendString(fp, data->ld);			ON_IO_ERROR(fp,badio);
+		SendString(fp, data->window);		ON_IO_ERROR(fp,badio);
 		SendString(fp, data->user);			ON_IO_ERROR(fp,badio);
-		SendString(fp, data->term);			ON_IO_ERROR(fp,badio);
-		SendPacketClass(fp, data->method);	ON_IO_ERROR(fp,badio);
-		SendLBS(fp, data->arguments);		ON_IO_ERROR(fp,badio);
-		SendLBS(fp, data->headers);			ON_IO_ERROR(fp,badio);
-		SendLBS(fp, data->body);			ON_IO_ERROR(fp,badio);
-		klass = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-		if (klass == WFC_TRUE) {
-			RecvLBS(fp, data->headers);    ON_IO_ERROR(fp,badio);
-			RecvLBS(fp, data->body);			ON_IO_ERROR(fp,badio);
+		SendString(fp, data->host);			ON_IO_ERROR(fp,badio);
+		buff = NewLBS();
+		LBS_ReserveSize(buff,NativeSizeValue(NULL,data->value),FALSE);
+		NativePackValue(NULL,LBS_Body(buff),data->value);
+		SendLBS(fp, buff);					ON_IO_ERROR(fp,badio);
+		
+		status = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
+		if (status == WFC_API_OK) {
+			RecvLBS(fp, buff);		ON_IO_ERROR(fp,badio);
+			NativeUnPackValue(NULL,LBS_Body(buff),data->value);
 		}
 		CloseNet(fp);
 	} else {
 		badio:
 		Message("can not connect wfc server");
-		return FALSE;
 	}
-	return TRUE;
+	return status;
 LEAVE_FUNC;
 }

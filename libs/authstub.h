@@ -20,7 +20,6 @@
 
 #ifndef	_AUTHSTUB_H
 #define	_AUTHSTUB_H
-#include	"types.h"
 #include	"port.h"
 
 #undef	GLOBAL
@@ -30,9 +29,8 @@
 #define	GLOBAL		extern
 #endif
 
-extern	char	*MakeAuthID(char *id, char *user);
 extern	Bool	AuthUser(URL *auth, char *user, char *pass, char *other, char *id);
-extern	Bool	CheckAuthID(URL *method, char *id, char *user, char *other);
-extern	Bool	SaveAuthID(URL *method, char *id, char *user, char *other);
+extern	Bool	CheckAuthID(URL *zone, char *id, char *user, char *other);
+extern	Bool	SaveAuthID(URL *zone, char *id, char *user, char *other);
 
 #endif

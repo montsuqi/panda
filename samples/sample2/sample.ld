@@ -2,7 +2,9 @@ name	sample;
 
 # bind <window name> <hander name> <module name> ;
 
-home	"=/samples/sample2";
+HandlerPath	".:/home/ogochan/panda/aps/.libs";
+
+home	"=/sample2";
 
 handler	"RubyExec"	{
 	class		"Exec";
@@ -14,7 +16,7 @@ handler	"RubyExec"	{
 
 handler	"Ruby"	{
 	class		"Ruby";
-    loadpath	"=/samples/sample2";
+    loadpath	"=/sample2";
 	locale		"euc-jp";
 };
 

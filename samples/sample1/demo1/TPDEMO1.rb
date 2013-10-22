@@ -22,17 +22,17 @@ class Main < PandaDC
 	aps["project1.vbox1.entry3.style"] = "blue";
 
 	aps["project1.vbox1.combo1.item[0]"] = "おごちゃん";
-	aps["project1.vbox1.combo1.item[1]"] = "うほほ";
-	aps["project1.vbox1.combo1.item[2]"] = "aaa";
+	aps["project1.vbox1.combo1.item[1]"] = "えりさ";
+	aps["project1.vbox1.combo1.item[2]"] = "ques";
 	aps["project1.vbox1.combo1.name.style"] = "blue";
 	aps["project1.vbox1.combo1.count"] = 3;
 
 	aps["project1.vbox1.swin2.vp1.list1.item[0]"] = "おごちゃん";
-	aps["project1.vbox1.swin2.vp1.list1.item[1]"] = "うほほ";
-	aps["project1.vbox1.swin2.vp1.list1.item[2]"] = "aaa";
-	aps["project1.vbox1.swin2.vp1.list1.item[3]"] = "bbb";
-	aps["project1.vbox1.swin2.vp1.list1.item[4]"] = "ccc";
-	aps["project1.vbox1.swin2.vp1.list1.item[5]"] = "ＤＤＤ";
+	aps["project1.vbox1.swin2.vp1.list1.item[1]"] = "えりさ";
+	aps["project1.vbox1.swin2.vp1.list1.item[2]"] = "ques";
+	aps["project1.vbox1.swin2.vp1.list1.item[3]"] = "void_No2";
+	aps["project1.vbox1.swin2.vp1.list1.item[4]"] = "Mul6";
+	aps["project1.vbox1.swin2.vp1.list1.item[5]"] = "末広";
 	aps["project1.vbox1.swin2.vp1.list1.select[2]"] = "T";
 	aps["project1.vbox1.swin2.vp1.list1.count"] = 6;
 

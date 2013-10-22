@@ -48,8 +48,8 @@
 #endif
 #include	"message.h"
 
-#ifndef	SIZE_BUFF
-#define	SIZE_BUFF		8192
+#ifndef	SIZE_LOG
+#define	SIZE_LOG		8192
 #endif
 #define SIZE_FORMAT		256
 
@@ -62,6 +62,10 @@ static	NETFILE	*fpLog = NULL;
 #else
 static	FILE	*fpLog = NULL;
 #endif
+
+Bool	fTimer = FALSE;
+
+Bool	fNumericHOST = FALSE;
 
 static	char	*Format = "%Y/%M/%D/%h:%m:%s %F:%f:%L:%B";
 
@@ -80,7 +84,7 @@ _MessageLevelPrintf(
 	char	*format,
 	...)
 {
-	char	buff[SIZE_BUFF - SIZE_FORMAT];
+	char	buff[SIZE_LOG - SIZE_FORMAT];
 	va_list	va;
 
 	va_start(va,format);
@@ -120,7 +124,7 @@ static	void
 PutLog(
 	char	*str)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LOG];
 
 	sprintf(buff,"%s",StringChop(str));
 #ifdef	USE_MSGD
@@ -150,14 +154,14 @@ __Message(
 	int		line,
 	char	*msg)
 {
-	char	buff[SIZE_BUFF];
+	char	buff[SIZE_LOG];
 	char	*f
 	,		*p
 	,		*s;
 	Bool	fOut
 	,		fDot;
 	struct	timeval	tv;
-	struct	tm	*Now;
+	struct	tm	Now;
 
 #ifdef USE_SYSLOG
 	syslog(SyslogLevel(level), "%s", msg);
@@ -165,7 +169,7 @@ __Message(
 	
 	if		(  fpLog  !=  NULL  ) {
 		gettimeofday(&tv,NULL);
-		Now = localtime((time_t *)&tv.tv_sec);
+		localtime_r((time_t *)&tv.tv_sec, &Now);
 		p = buff;
 		fOut = TRUE;
 		for	( f = Format ; *f != 0 ; f ++ ) {
@@ -173,22 +177,22 @@ __Message(
 				f ++;
 				switch	(*f) {
 				  case	'Y':
-					p += sprintf(p,"%04d",Now->tm_year+1900);
+					p += sprintf(p,"%04d",Now.tm_year+1900);
 					break;
 				  case	'M':
-					p += sprintf(p,"%02d",Now->tm_mon+1);
+					p += sprintf(p,"%02d",Now.tm_mon+1);
 					break;
 				  case	'D':
-					p += sprintf(p,"%02d",Now->tm_mday);
+					p += sprintf(p,"%02d",Now.tm_mday);
 					break;
 				  case	'h':
-					p += sprintf(p,"%02d",Now->tm_hour);
+					p += sprintf(p,"%02d",Now.tm_hour);
 					break;
 				  case	'm':
-					p += sprintf(p,"%02d",Now->tm_min);
+					p += sprintf(p,"%02d",Now.tm_min);
 					break;
 				  case	's':
-					p += sprintf(p,"%02d",Now->tm_sec);
+					p += sprintf(p,"%02d",Now.tm_sec);
 					break;
 				  case	'p':
 					p += sprintf(p,"%03d",(int)(tv.tv_usec/1000));
@@ -255,24 +259,31 @@ InitMessage(
 	char	*id,
 	char	*fn)
 {
+	char *tempformat, *tempfn;
 #ifdef	USE_MSGD
 	int		fd;
 	Port	*port;
 #endif
 
 #ifdef USE_SYSLOG
-	static char	buff[SIZE_BUFF];
+	static char	buff[SIZE_LOG];
 
-	snprintf(buff, SIZE_BUFF, "%s/%s", PACKAGE, id);
+	snprintf(buff, SIZE_LOG, "%s/%s", PACKAGE, id);
 	openlog(buff, LOG_PID, syslog_facility);
 #endif
 
 	if		(  fn  ==  NULL  ) {
-		fn = getenv("LOG_FILE_NAME");
+		tempfn = getenv("LOG_FILE_NAME");
+		if (tempfn != NULL) {
+			fn = StrDup(tempfn);
+		}
 	}
 	fpLog = NULL;
 	Processid = StrDup(id);
-	Format = getenv("LOG_DATA_FORMAT");
+	tempformat = getenv("LOG_DATA_FORMAT");
+	if (tempformat != NULL) {
+		Format = StrDup(tempformat);
+	}
 #ifdef	USE_MSGD
 	if		( fn  !=  NULL  ) {
 		if		(  *fn  ==  '@'  ) {
@@ -313,4 +324,31 @@ SetMessageFunction(
 	void	(*func)(int level, char *file, int line, char *msg))
 {
 	MessageFunction = func;
+}
+
+extern long
+GetNowTime(void)
+{
+	struct	timeval	tv;
+	
+	gettimeofday(&tv,NULL);
+	return tv.tv_sec * 1000L + tv.tv_usec / 1000L;
+}
+
+extern	void
+TimerPrintf(
+	long	start,
+	long	end,
+	char	*format,
+	...)
+{
+	char	buff[SIZE_LOG - SIZE_FORMAT];
+	va_list	va;
+
+	if (fTimer){
+		va_start(va,format);
+		vsnprintf(buff, sizeof(buff), format, va);
+		va_end(va);
+		printf(" %6ld(ms) %s", (end - start), buff);
+	}
 }

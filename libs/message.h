@@ -40,6 +40,12 @@ extern	void	_Message(int level, char *file, int line, char *msg);
 extern	void	__Message(int level, char *file, int line, char *msg);
 extern	void	InitMessage(char *id,char *fn);
 extern	void	SetMessageFunction(void (*func)(int level, char *file, int line, char *msg));
+extern	long	GetNowTime(void);
+extern	void	TimerPrintf(long start, long end, char *format, ...);
+
+#ifndef Bool
+#define Bool            int
+#endif
 
 #undef	GLOBAL
 #ifdef	MAIN
@@ -48,6 +54,8 @@ extern	void	SetMessageFunction(void (*func)(int level, char *file, int line, cha
 #define	GLOBAL		extern
 #endif
 
+GLOBAL	Bool	fTimer;
+GLOBAL	Bool	fNumericHOST;
 
 #undef	GLOBAL
 

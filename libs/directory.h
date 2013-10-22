@@ -23,7 +23,6 @@
 
 #include	"LDparser.h"
 #include	"DIparser.h"
-#include	"wfcio.h"
 
 #undef	GLOBAL
 #ifdef	_DIRECTORY
@@ -34,18 +33,24 @@
 GLOBAL	DI_Struct	*ThisEnv;
 #undef	GLOBAL
 
+#define	AUDITLOG_TABLE	"montsuqi_auditlog"
+
 extern	void		InitDirectory(void);
 extern	void		SetUpDirectory(char *name, char *ld, char *bd, char *db, Bool parse_ld);
 extern	LD_Struct	*SearchWindowToLD(char *wname);
 extern	LD_Struct	*GetLD(char *name);
 extern	BD_Struct	*GetBD(char *name);
 extern	DBD_Struct	*GetDBD(char *name);
-extern	DBG_Class	*GetDBG(char *name);
-extern	void		RegistDBG(DBG_Class *dbg);
+extern	DBG_Struct	*GetDBG(char *name);
+extern	void		RegistDBG(DBG_Struct *dbg);
 extern	void		SetDBGPath(char *path);
 extern	DB_Func		*EnterDB_Function(char *name, DB_OPS *ops, int type,
 									  DB_Primitives *primitive,
 									  char *commentStart, char *commentEnd);
 extern	RecordStruct	*GetTableDBG(char *gname, char *tname);
+
+#define P_NONE    0
+#define P_LD      1
+#define P_ALL     2
 
 #endif

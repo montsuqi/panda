@@ -1,3 +1,0 @@
-metadb	{
-	host	varchar(1024);
-};

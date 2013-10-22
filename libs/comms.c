@@ -33,7 +33,6 @@
 #include	<glib.h>
 #include	<math.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"comm.h"
 #define	_COMMS
@@ -151,6 +150,9 @@ SendValueString(
 	int		i;
 
 ENTER_FUNC;
+	if 	( value == NULL ) {
+		Error("value is null");
+	}
 	if		(  name  ==  NULL  ) { 
 		name = namebuff + strlen(namebuff);
 	}

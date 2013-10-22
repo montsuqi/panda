@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,13 +35,13 @@
 #include	<glib.h>
 #include	<pthread.h>
 
-#include	"types.h"
 
 #include	"libmondai.h"
 #include	"LDparser.h"
 #include	"queue.h"
 #include	"wfcdata.h"
 #include	"wfc.h"
+#include	"termthread.h"
 #include	"mqthread.h"
 #include	"debug.h"
 
@@ -59,22 +59,27 @@ CoreThread(
 	void	*para)
 {
 	SessionData	*data;
-	char		msg[SIZE_BUFF];
 	MQ_Node		*mq;
 
 ENTER_FUNC;
+	mq = NULL;
 	CoreQueue = NewQueue();
 	do {
 		data = (SessionData *)DeQueue(CoreQueue);
 		dbgmsg("de queue");
-		if		(  ( mq = g_hash_table_lookup(MQ_Hash,data->ld->info->name) )
-				   !=  NULL  ) {
+		if (data->ld == NULL) {
+			MessageLogPrintf("invalid session data [%s:%s:%s]",
+				data->hdr->uuid,data->hdr->user,data->hdr->window);
+			data->status = SESSION_STATUS_ABORT;
+			TermEnqueue(data->term,data);
+			continue;
+		}
+		if ((mq = g_hash_table_lookup(MQ_Hash,data->ld->info->name)) != NULL) {
 			MessageEnqueue(mq,data);
 		} else {
-			sprintf(msg,"LD not found [%s]\n",data->ld->info->name);
-			MessageLog(msg);
+			MessageLogPrintf("LD not found [%s]",data->ld->info->name);
 		}
-	}	while	(  mq  !=  NULL  );
+	}	while (mq != NULL);
 	pthread_exit(NULL);
 LEAVE_FUNC;
 }

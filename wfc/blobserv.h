@@ -24,7 +24,7 @@
 #include	"net.h"
 #include	"blob.h"
 
-extern	void	PassiveBLOB(NETFILE *fp, BLOB_State *state);
+extern	void	ServeBLOB(NETFILE *fp, BLOB_State *state);
 
 #undef	GLOBAL
 #ifdef	MAIN

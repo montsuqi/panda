@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,16 +34,13 @@
 extern	void	ChangeLD(SessionData *data, LD_Node *newld);
 extern	LargeByteString	*GetScreenData(SessionData *data, char *name);
 
-GLOBAL	char		**BindTable;
-GLOBAL	int			cBind;
-GLOBAL	int			ApsId;
-GLOBAL	GHashTable	*ComponentHash;
-GLOBAL	Bool		fShutdown;
-GLOBAL	int			MaxTransactionRetry;
-GLOBAL	int			nCache;
-GLOBAL	BLOB_State	*BlobState;
-GLOBAL	Bool		fLoopBack;
-GLOBAL	Bool		fTimer;
+GLOBAL	char						**BindTable;
+GLOBAL	int							cBind;
+GLOBAL	GHashTable					*ComponentHash;
+GLOBAL	volatile sig_atomic_t		fShutdown;
+GLOBAL	int							MaxTransactionRetry;
+GLOBAL	int							SesNum;
+GLOBAL	BLOB_State					*BlobState;
 
 #undef	GLOBAL
 

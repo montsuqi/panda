@@ -32,7 +32,6 @@
 #include	<string.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"comm.h"
@@ -46,6 +45,8 @@
 #include	"libcob.h"
 #define		_OPENCOBOL
 #include	"OpenCOBOL.h"
+#include	"MONFUNC.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	void	*McpData;
@@ -55,12 +56,37 @@ static	void	*ScrData;
 
 static	char	*ModuleLoadPath;
 
+typedef	struct _ScreenCache	{
+	size_t	size;
+ 	void	*scr;
+}	ScreenCache;
+
+static	GHashTable		*CacheScreen;
+
+static	size_t
+IsCacheScreen(
+	char	*name,
+	char 	*scr)
+{
+	size_t	ret = 0;
+	ScreenCache	*sch;
+	
+	if ((sch = g_hash_table_lookup(CacheScreen,name)) != NULL){
+		if (memcmp(sch->scr, scr, sch->size) == 0){
+			ret = sch->size;
+		}
+	}
+	return ret;
+}
+
 static	void
 PutApplication(
 	ProcessNode	*node)
 {
 	int		i;
-	char	*p;
+	char	*scr;
+	size_t size;
+	ScreenCache	*sch;
 
 ENTER_FUNC;
 	if		(  node->mcprec  !=  NULL  ) {
@@ -72,9 +98,13 @@ ENTER_FUNC;
 	if		(  node->sparec  !=  NULL  ) {
 		OpenCOBOL_PackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
 	}
-	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
+	for	( i = 0 , scr = (char *)ScrData ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
-			p += OpenCOBOL_PackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
+			size = OpenCOBOL_PackValue(OpenCOBOL_Conv,scr,node->scrrec[i]->value);
+			if ((sch = g_hash_table_lookup(CacheScreen,node->scrrec[i]->name)) != NULL){
+				memcpy(sch->scr, scr, sch->size);
+			}
+			scr += size;
 		}
 	}
 LEAVE_FUNC;
@@ -84,9 +114,10 @@ static	void
 GetApplication(
 	ProcessNode	*node)
 {
-	char	*p;
+	char	*scr;
 	int		i;
-
+	size_t	size;
+	
 ENTER_FUNC;
 	if		(  node->mcprec  !=  NULL  ) {
 		OpenCOBOL_UnPackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
@@ -97,9 +128,13 @@ ENTER_FUNC;
 	if		(  node->sparec  !=  NULL  ) {
 		OpenCOBOL_UnPackValue(OpenCOBOL_Conv,SpaData,node->sparec->value);
 	}
-	for	( i = 0 , p = (char *)ScrData ; i < node->cWindow ; i ++ ) {
+	for	( i = 0 , scr = (char *)ScrData ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
-			p += OpenCOBOL_UnPackValue(OpenCOBOL_Conv,p,node->scrrec[i]->value);
+			if ((size = IsCacheScreen(node->scrrec[i]->name, scr)) != 0) {
+				scr += size;
+			} else {
+				scr += OpenCOBOL_UnPackValue(OpenCOBOL_Conv,scr,node->scrrec[i]->value);
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -112,16 +147,25 @@ _ExecuteProcess(
 {
 	int		(*apl)(char *, char *, char *, char *);
 	char	*module;
+	long	start
+		,	end;
 	Bool	rc;
 
 ENTER_FUNC;
 	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
+		start = GetNowTime();
 		PutApplication(node);
-		dbgmsg(">OpenCOBOL application");
+		end = GetNowTime();
+		TimerPrintf(start,end, "PutApplication\n");
+		start = GetNowTime();
 		(void)apl(McpData,SpaData,LinkData,ScrData);
-		dbgmsg("<OpenCOBOL application");
+		end = GetNowTime();
+		TimerPrintf(start,end, "OpenCOBOL %s:%s:%s\n",module, node->widget, node->event);
+		start = GetNowTime();
 		GetApplication(node);
+		end = GetNowTime();
+		TimerPrintf(start,end, "GetApplication\n");
 		if		(  ValueInteger(GetItemLongName(node->mcprec->value,"rc"))  <  0  ) {
 			rc = FALSE;
 		} else {
@@ -132,7 +176,7 @@ ENTER_FUNC;
 		rc = FALSE;
 	}
 LEAVE_FUNC;
-	return	(rc); 
+	return	(rc);
 }
 
 static	void
@@ -141,15 +185,22 @@ _ReadyDC(
 {
 	int		i;
 	size_t	scrsize;
-
+	ScreenCache	*sch;
+	
 ENTER_FUNC;
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
 	ConvSetCodeset(OpenCOBOL_Conv,ConvCodeset(handler->conv));
 	OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
 
+	InitMONFUNC(OpenCOBOL_Conv,
+		OpenCOBOL_PackValue,
+		OpenCOBOL_UnPackValue,
+		OpenCOBOL_SizeValue);
+
 	if		(  ThisEnv->mcprec  !=  NULL  ) {
 		McpData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisEnv->mcprec->value));
+		OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,ThisEnv->mcprec->value);
 	} else {
 		McpData = NULL;
 	}
@@ -161,10 +212,15 @@ ENTER_FUNC;
 	if		(  ThisLD->sparec  !=  NULL  ) {
 		SpaData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->sparec->value));
 	}
+	CacheScreen = NewNameHash();
 	scrsize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 		if		(  ThisLD->windows[i]  !=  NULL  ) {
-			scrsize += OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->windows[i]->value);
+			sch = New(ScreenCache);
+			sch->size = OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->windows[i]->value);
+			sch->scr = malloc(sch->size);
+			scrsize += sch->size;
+			g_hash_table_insert(CacheScreen,ThisLD->windows[i]->name,sch);
 		}
 	}
 	ScrData = xmalloc(scrsize);
@@ -203,9 +259,10 @@ _StartBatch(
 	char	*name,
 	char	*param)
 {
-	int		(*apl)(char *);
-	int		rc;
-	char	*arg;
+	int			(*apl)(char *);
+	int			rc;
+	ValueStruct	*val;
+	char		*arg;
 
 ENTER_FUNC;
 	OpenCOBOL_Conv = NewConvOpt();
@@ -213,16 +270,22 @@ ENTER_FUNC;
 	ConvSetCodeset(OpenCOBOL_Conv,ConvCodeset(handler->conv));
 	OpenCOBOL_Conv->fBigEndian = handler->conv->fBigEndian;
 
+	InitMONFUNC(OpenCOBOL_Conv,
+		OpenCOBOL_PackValue,
+		OpenCOBOL_UnPackValue,
+		OpenCOBOL_SizeValue);
+
 #ifdef	DEBUG
 	printf("starting [%s][%s]\n",name,param);
 #endif
 	if		(  ( apl = cob_resolve(name) )  !=  NULL  ) {
-		arg = (char *)xmalloc(ThisBD->textsize);
-		memclear(arg,ThisBD->textsize);
-		strncpy(arg,param,ThisBD->textsize+1);
-		arg[ThisBD->textsize] = 0;
+		val = NewValue(GL_TYPE_CHAR);
+		SetValueStringWithLength(val, param, ThisBD->textsize, NULL);
+		arg = StrnDup(ValueToString(val,"euc-jisx0213"), ThisBD->textsize);
 		StringC2Cobol(arg,ThisBD->textsize);
 		rc = apl(arg);
+		FreeValueStruct(val);
+		xfree(arg);
 	} else {
 		Warning( "%s - %s is not found.", cob_resolve_error(),name);
 		rc = -1;
@@ -253,9 +316,6 @@ ENTER_FUNC;
 		handler->loadpath = ModuleLoadPath;
 	}
 	cob_init(0,NULL);
-	if		(  handler->loadpath  !=  NULL  ) {
-		cob_set_library_path(handler->loadpath);
-	}
 LEAVE_FUNC;
 }
 

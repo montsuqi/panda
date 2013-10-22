@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2003-2009 Ogochan.
+ * Copyright (C) 2003-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@
 #include	<glib.h>
 #include	<setjmp.h>
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"net.h"
 #include	"comm.h"
@@ -112,6 +111,7 @@ ENTER_FUNC;
 		InitializeValue(recDBCTRL->value);
 		conv->UnPackValue(handler->conv,LBS_Body(dbbuff),recDBCTRL->value);
 		rname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"rname"));
+		strncpy(ctrl.rname,rname,SIZE_NAME);
 		value = NULL;
 		path = NULL;
 		rec = NULL;
@@ -122,6 +122,7 @@ ENTER_FUNC;
 			rec = ThisDB[ctrl.rno];
 			value = rec->value;
 			pname = ValueStringPointer(GetItemLongName(recDBCTRL->value,"pname"));
+			strncpy(ctrl.pname,pname,SIZE_NAME);
 			if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
 														pname) )  !=  0  ) {
 				ctrl.pno = pno - 1;
@@ -144,11 +145,13 @@ ENTER_FUNC;
 				InitializeValue(value);
 				conv->UnPackValue(handler->conv,LBS_Body(dbbuff), value);
 			}
+			strncpy(ctrl.func,func,SIZE_FUNC);
 			ctrl.limit = 1;
-			strcpy(ctrl.func,func);
+			ctrl.redirect = 1;
+			ctrl.fDBOperation = IsDBOperation(func);
 			if		(  ( ctrl.rc = ValueInteger(GetItemLongName(recDBCTRL->value,"rc")) )
 						 >=  0  ) {
-				ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
+				ret = ExecDB_Process(&ctrl,rec,value);
 			}
 		} else {
 			ctrl.rc = 0;
@@ -396,7 +399,7 @@ ENTER_FUNC;
 		rc = FALSE;
 	}
 LEAVE_FUNC;
-	return	(rc); 
+	return	(rc);
 }
 
 static	void
@@ -412,9 +415,7 @@ _StopDC(
 	MessageHandler	*handler)
 {
 ENTER_FUNC;
-	if		(  ThisLD->cDB  >  0  ) {
-		_StopDB(handler);
-	}
+	_StopDB(handler);
 LEAVE_FUNC;
 }
 
@@ -511,7 +512,7 @@ ENTER_FUNC;
 	} else {
 		rc = FALSE;
 	}
-ENTER_FUNC;
+LEAVE_FUNC;
 	return	(rc);
 }
 

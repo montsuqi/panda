@@ -32,7 +32,7 @@
 #undef	GLOBAL
 
 extern	void			LD_ParserInit(void);
-extern	LD_Struct		*LD_Parser(char *name);
+extern	LD_Struct		*LD_Parser(char *name, int parse_type);
 extern	RecordStruct	*GetWindow(char *name);
 
 #endif

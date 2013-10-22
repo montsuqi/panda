@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,19 +29,22 @@
 #include	<openssl/ssl.h>
 #include	<openssl/err.h>
 #include	<openssl/pkcs12.h>
-#ifdef USE_PKCS11
-#include	<opensc/rsaref/unix.h>
-#include	<opensc/rsaref/pkcs11.h>
-#include	<openssl/engine.h>
-#include	<dlfcn.h>
-#define		PKCS11_MAX_SLOT_NUM			16
-#define		PKCS11_MAX_OBJECT_NUM		16
-#define		PKCS11_BUF_SIZE				256
-#define		PKCS11_OBJECT_SIZE			4096
-#endif	/* USE_PKCS11 */
+
+#	ifdef	USE_PKCS11
+#			include <libp11.h>
+#			include	<openssl/engine.h>
+#			include	<dlfcn.h>
+#		define		PKCS11_MAX_SLOT_NUM			16
+#		define		PKCS11_MAX_OBJECT_NUM		16
+#		define		PKCS11_BUF_SIZE				256
+#		define		PKCS11_OBJECT_SIZE			4096
+#	endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
 
+#include	"libmondai.h"
 #include	"socket.h"
+
+#define	MAX_SOCKET		8
 
 typedef	struct _NETFILE	{
 	int		fd;
@@ -59,8 +62,7 @@ typedef	struct _NETFILE	{
 	int		err;
 	size_t	size
 	,		ptr;
-	byte	*buff;
-	int		back;
+	unsigned char	*buff;
 #ifdef	MT_NET
 	pthread_mutex_t	lock;
 #endif
@@ -75,14 +77,12 @@ extern	int			Recv(NETFILE *fp, void *buff, size_t size);
 extern	int			RecvAtOnce(NETFILE *fp, char *buff, size_t size);
 extern	int			nputc(int c, NETFILE *fp);
 extern	int			ngetc(NETFILE *fp);
-extern	int			unngetc(int c, NETFILE *fp);
 
 extern	void		FreeNet(NETFILE *fp);
 extern	void		CloseNet(NETFILE *fp);
 extern	NETFILE		*NewNet(void);
 extern	NETFILE		*SocketToNet(int s);
 extern	NETFILE		*FileToNet(int f);
-extern	NETFILE		*StringToNet(byte *str, size_t size);
 extern	void		NetSetFD(NETFILE *fp, int fd);
 extern	void		InitNET(void);
 #define	NetGetFD(fp)	((fp)->fd)
@@ -113,6 +113,8 @@ extern	SSL_CTX		*MakeSSL_CTX_PKCS11(ENGINE **e,
 #endif	/* USE_SSL */
 extern	NETFILE		*OpenPort(char *url, char *defport);
 extern	int			InitServerPort(Port *port, int back);
+extern	int			InitServerMultiPort(Port *port, int back, int *soc);
+extern	int			AcceptLoop(int *soc,int soc_len);
 
 extern	Bool		CheckNetFile(NETFILE *fp);
 #define	SetErrorNetFile(fp)		(fp)->fOK = FALSE

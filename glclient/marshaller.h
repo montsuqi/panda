@@ -22,12 +22,11 @@
 #define	_MARSHALLER_H
 
 #undef	GLOBAL
-#ifdef	_PROTOCOL_C
+#ifdef	MARSHALLER
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern
 #endif
-GLOBAL	GHashTable	*WidgetDataTable;
 
 typedef enum _WidgetType {
 // gtk+panda
@@ -38,7 +37,11 @@ typedef enum _WidgetType {
 	WIDGET_TYPE_PANDA_TEXT,
 	WIDGET_TYPE_PANDA_PREVIEW,
 	WIDGET_TYPE_PANDA_TIMER,
+	WIDGET_TYPE_PANDA_DOWNLOAD,
+	WIDGET_TYPE_PANDA_DOWNLOAD2,
+	WIDGET_TYPE_PANDA_PRINT,
 	WIDGET_TYPE_PANDA_HTML,
+	WIDGET_TYPE_PANDA_TABLE,
 // gtk
 	WIDGET_TYPE_ENTRY,
 	WIDGET_TYPE_TEXT,
@@ -53,6 +56,8 @@ typedef enum _WidgetType {
 	WIDGET_TYPE_WINDOW,
 	WIDGET_TYPE_FRAME,
 	WIDGET_TYPE_SCROLLED_WINDOW,
+	WIDGET_TYPE_FILE_CHOOSER_BUTTON,
+	WIDGET_TYPE_COLOR_BUTTON,
 // gnome
 	WIDGET_TYPE_FILE_ENTRY,
 	WIDGET_TYPE_PIXMAP,
@@ -63,14 +68,18 @@ typedef struct _WidgetData {
 	WidgetType	type;
 	char 		*name;
 	WindowData 	*window;
+	/* common attrs */
+	int 		state;
+	char 		*style;
+	gboolean	visible;
+	/* specific attrs*/
 	void 		*attrs;
 } WidgetData;
 
 typedef struct __Entry {
-	int 			state;
-	char 			*style;
 	char 			*text;
 	char 			*text_name;
+	Bool			editable;
 	PacketDataType 	ptype;
 } _Entry;
 
@@ -87,32 +96,32 @@ typedef struct __Timer {
 	PacketDataType 	ptype;
 } _Timer;
 
+typedef struct __Download {
+	LargeByteString	*binary;
+	char			*filename;
+	char			*description;
+} _Download;
+
 typedef struct __NumberEntry{
-	int 			state;
-	char 			*style;
 	Fixed 			*fixed;
 	char 			*fixed_name;
+	Bool			editable;
 	PacketDataType 	ptype;
 } _NumberEntry;
 
 typedef struct __Label{
-	char 			*style;
 	char 			*text;
 	char 			*text_name;
 	PacketDataType 	ptype;
 } _Label;
 
 typedef struct __Text{
-	int 			state;
-	char 			*style;
 	char 			*text;
 	char 			*text_name;
 	PacketDataType 	ptype;
 } _Text;
 
 typedef struct __Button{
-	int 			state;
-	char 			*style;
 	char 			*label;
 	Bool 			have_button_state;
 	Bool 			button_state;
@@ -121,65 +130,66 @@ typedef struct __Button{
 } _Button;
 
 typedef struct __Combo{
-	int 	state;
-	char 	*style;
 	int 	count;
-	GList 	*item_list;
+	char 	**itemdata;
     char 	*subname;
 } _Combo;
 
 typedef struct __CList{
-	int 	state;
-	char 	*style;
 	int 	count;
-	int 	from;
 	int 	row;
 	float 	rowattr;
-	int 	column;
-	GList 	*item_list;
-	GList 	*state_list;
-	char 	*state_list_name;
+	GList 	*clistdata;
+	char 	**states;
+	char 	**bgcolors;
+	char 	**fgcolors;
+	char 	*states_name;
 } _CList;
 
+typedef struct __Table{
+	gboolean	dofocus;
+	int			trow;
+	float		trowattr;
+	int			tcolumn;
+	gint		ncolumns;
+	gchar 		*tvalue;
+	GList		*tabledata;
+	GList		*namedata;
+	GList		*fgdata;
+	GList		*bgdata;
+} _Table;
+
 typedef struct __Calendar{
-	int 	state;
-	char 	*style;
 	int 	year;
 	int 	month;
 	int 	day;
 } _Calendar;
 
 typedef struct __Notebook{
-	int 			state;
-	char 			*style;
 	int 			pageno;
 	char 			*subname;
 	PacketDataType 	ptype;
 } _Notebook;
 
 typedef struct __ProgressBar{
-	int 			state;
-	char 			*style;
 	int 			value;
 	PacketDataType 	ptype;
 } _ProgressBar;
 
 typedef struct __Window{
-	int 	state;
-	char 	*style;
 	char 	*title;
+	char	*summary;
+	char	*body;
+	char	*icon;
+	int		timeout;
 } _Window;
 
 typedef struct __Frame{
-	int 	state;
-	char 	*style;
 	char 	*label;
 	char 	*subname;
 } _Frame;
 
 typedef struct __ScrolledWindow{
-	int				state;
-	char 			*style;
 	int 			vpos;
 	int 			hpos;
 	char 			*subname;
@@ -195,6 +205,16 @@ typedef struct __FileEntry{
 	char 			*subname;
 	char 			*path;
 } _FileEntry;
+
+typedef struct __FileChooserButton{
+	LargeByteString	*binary;
+	char 			*filename;
+} _FileChooserButton;
+
+typedef struct __ColorButton {
+	char		*color;
+	char		*color_name;
+} _ColorButton;
 
 
 extern	Bool	RecvWidgetData(char *widgetName,NETFILE *fp);

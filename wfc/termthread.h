@@ -22,6 +22,7 @@
 
 #include	"wfcdata.h"
 
+extern	void		TermEnqueue(TermNode *term, SessionData *data);
 extern	int			ConnectTerm(int _fhTerm);
 extern	void		InitTerm(void);
 

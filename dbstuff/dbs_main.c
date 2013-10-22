@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +18,11 @@
  */
 
 #define	MAIN
+
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -37,9 +38,9 @@
 #include    <sys/socket.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"enum.h"
+#include	"term.h"
 #include	"dirs.h"
 #include	"net.h"
 #include	"comm.h"
@@ -55,6 +56,12 @@
 #include	"message.h"
 #include	"debug.h"
 
+/*
+#define DBS_VERSION VERSION
+ */
+#define DBS_VERSION "1.5.1"
+
+static	char	AppName[128];
 static	DBD_Struct	*ThisDBD;
 static	sigset_t	hupset;
 static	char		*PortNumber;
@@ -62,6 +69,7 @@ static	int			Back;
 static	char		*Directory;
 static	char		*AuthURL;
 static	URL			Auth;
+static	char		*Encoding;
 
 static	void
 InitSystem(
@@ -72,7 +80,7 @@ ENTER_FUNC;
 	sigaddset(&hupset,SIGHUP);
 
 	InitDirectory();
-	SetUpDirectory(Directory,"","",name,TRUE);
+	SetUpDirectory(Directory,"","",name,P_ALL);
 	if		(  ( ThisDBD = GetDBD(name) )  ==  NULL  ) {
 		fprintf(stderr,"DBD \"%s\" not found.\n",name);
 		exit(1);
@@ -82,9 +90,7 @@ ENTER_FUNC;
 	DB_Table = ThisDBD->DBD_Table;
 	CurrentProcess = NULL;
 
-	if		(  ThisDBD->cDB  >  0  ) {
-		InitDB_Process(NULL);
-	}
+	InitDB_Process(AppName);
 LEAVE_FUNC;
 }
 
@@ -94,19 +100,24 @@ LEAVE_FUNC;
 
 typedef	struct {
 	char	user[SIZE_USER+1];
+	char	remote[SIZE_HOST+1];
 	int		type;
 	Bool	fCount;
 	Bool	fLimit;
 	Bool	fIgnore;		/*	ignore no data request	*/
-	DB_Environment	*env;
+	Bool	fSendTermLF;
+	Bool	fCmdTuples;
+  	Bool	fFixFieldName;
+  	Bool	fLimitResult;
 }	SessionNode;
 
 static	void
 FinishSession(
-	SessionNode	*node)
+	SessionNode	*ses)
 {
 ENTER_FUNC;
-	xfree(node);
+	Message("[%s@%s] session end",ses->user,ses->remote);
+	xfree(ses);
 LEAVE_FUNC;
 }
 
@@ -139,7 +150,7 @@ ParseVersion(
 		micro = micro * 10 + ( *str - '0' );
 		str ++;
 	}
-	dbgprintf("%d.%d.%d",major,minor,micro);
+	dbgprintf("version = [%d.%d.%d]",major,minor,micro);
 	return	(major * 10000 + minor * 100 + micro);
 }
 
@@ -149,62 +160,77 @@ NewSessionNode(void)
 	SessionNode	*ses;
 
 	ses = New(SessionNode);
-	*ses->user = 0;
+	memclear(ses->user, SIZE_USER+1);
+	memclear(ses->remote, SIZE_HOST+1);
 	ses->type = COMM_STRING;
 	ses->fCount = FALSE;
 	ses->fLimit = FALSE;
 	ses->fIgnore = FALSE;
-	ses->env = NULL;
+	ses->fSendTermLF = FALSE;
+	ses->fCmdTuples = FALSE;
+	ses->fFixFieldName = FALSE;
+	ses->fLimitResult = FALSE;
 
 	return	(ses);
 }
 
 static	SessionNode	*
 InitDBSSession(
-	NETFILE	*fpComm)
+	NETFILE	*fpComm,
+	char		*remote)
 {
 	SessionNode	*ses;
 	char	buff[SIZE_BUFF+1];
-	char	*pass;
+	char	*pass = NULL;
 	char	*p
 	,		*q;
-	int		ver;
+	int		ver = 0;
 
 ENTER_FUNC;
 	ses = NewSessionNode();
 	/*
 	 version user password type\n
 	 */
+	g_strlcpy(ses->remote, remote, SIZE_HOST);
 	RecvStringDelim(fpComm,SIZE_BUFF,buff);
 	p = buff;
-	*(q = strchr(p,' ')) = 0;
-	ver = ParseVersion(p);
-	p = q + 1;
-	*(q = strchr(p,' ')) = 0;
-	strcpy(ses->user,p);
-	p = q + 1;
-	*(q = strchr(p,' ')) = 0;
-	pass = p;
-	if		(  !stricmp(q+1,"binary")  ) {
-		ses->type = COMM_BINARY;
-	} else
-	if		(  !stricmp(q+1,"string")  ) {
-		ses->type = COMM_STRING;
-	} else
-	if		(  !stricmp(q+1,"stringe")  ) {
-		ses->type = COMM_STRINGE;
-	} else {
+	if ((q = strchr(p,' ')) != NULL ){
+		*q = 0;
+		ver = ParseVersion(p);
+		p = q + 1;
+	}
+	if ((q = strchr(p,' ')) != NULL ){
+		*q = 0;
+		g_strlcpy(ses->user,p,SIZE_USER);
+		p = q + 1;
+	}
+	if ((q = strchr(p,' ')) != NULL){
+		*q = 0;
+		pass = p;
+	}
+	if (q != NULL) {
+		if		(  !stricmp(q+1,"binary")  ) {
+			ses->type = COMM_BINARY;
+		} else
+		if		(  !stricmp(q+1,"string")  ) {
+			ses->type = COMM_STRING;
+		} else
+		if		(  !stricmp(q+1,"stringe")  ) {
+			ses->type = COMM_STRINGE;
+		} else {
+		}
 	}
 	if		(  ver  <  10200  ) {
 		SendStringDelim(fpComm,"Error: version\n");
- 		Warning("reject client(invalid version %d)",ver);
+ 		Warning("[@%s] reject client(invalid version %d)",ses->remote, ver);
 		xfree(ses);
 		ses = NULL;
 	} else
-	if		(  AuthUser(&Auth,ses->user,pass,NULL,NULL)  ) {
+	if		(  AuthUser(&Auth,ses->user,pass,"dbs",NULL)  ) {
 		if		(  ver  >=  10500  ) {
-			sprintf(buff,"Connect: OK;%s\n",VERSION);
+			snprintf(buff,SIZE_BUFF,"Connect: OK;%s\n",DBS_VERSION);
 			SendStringDelim(fpComm,buff);
+			Message("[%s@%s] [version:%d] session start ",ses->user,ses->remote,ver);
 		} else {
 			SendStringDelim(fpComm,"Connect: OK\n");
 		}
@@ -212,12 +238,24 @@ ENTER_FUNC;
 			ses->fCount = TRUE;
 			ses->fLimit = TRUE;
 		}
+		if		(  ver  >=  10405  ) {
+			Encoding = NULL;
+		} else  {
+			Encoding = "euc-jisx0213";
+		}
+		dbgprintf("Encoding = [%s]\n", Encoding);
 		if		(  ver  >=  10500  ) {
 			ses->fIgnore = TRUE;
 		}
+		if (ver >= 10501) {
+			ses->fSendTermLF = TRUE;
+			ses->fCmdTuples = TRUE;
+			ses->fFixFieldName = TRUE;
+			ses->fLimitResult = TRUE;
+		}
 	} else {
 		SendStringDelim(fpComm,"Error: authentication\n");
-		Warning("reject client(authentication error)");
+		Warning("[%s@%s] [version %d] reject client (authentication error)",ses->user,ses->remote);
 		xfree(ses);
 		ses = NULL;
 	}
@@ -259,29 +297,31 @@ RecvData(
 	NETFILE		*fpComm,
 	ValueStruct	*args)
 {
-	char	buff[SIZE_LARGE_BUFF+1];
-	char	vname[SIZE_LONGNAME+1]
-	,		rname[SIZE_LONGNAME+1]
-	,		str[SIZE_LARGE_BUFF+1];
+	char	buff[SIZE_BUFF+1];
+	char	vname[SIZE_BUFF+1]
+	,		rname[SIZE_BUFF+1]
+	,		str[SIZE_BUFF+1];
 	char	*p;
 	ValueStruct		*value;
 
 ENTER_FUNC;
 	do {
 		RecvStringDelim(fpComm,SIZE_BUFF,buff);
-		dbgprintf("[%s]",buff);
+		dbgprintf("RecvData [%s]",buff);
 		if		(	(  *buff                     !=  0     )
 				&&	(  ( p = strchr(buff,':') )  !=  NULL  ) ) {
 			*p = 0;
 			DecodeName(rname,vname,buff);
+			dbgprintf("rname[%s], vname[%s]",rname, vname);
 			DecodeStringURL(str,p+1);
 			value = GetItemLongName(args,vname);
-			if		(  value  !=  NULL  ) {
+			if (value != NULL) {
 				ValueIsUpdate(value);
-				SetValueString(value,str,DB_LOCALE);
+				SetValueString(value,str,Encoding);
 			}
-		} else
+		} else {
 			break;
+		}
 	}	while	(TRUE);
 LEAVE_FUNC;
 }
@@ -305,20 +345,20 @@ WriteClientString(
 	Bool	fName;
 	int		ix
 		,	i
-		,	limit;
+		,	limit = INT_MAX;
 
 ENTER_FUNC;
 	SendStringDelim(fpComm,"Exec: ");
 	if		(  ses->fCount  ) {
-		sprintf(buff,"%d:%d\n",ctrl->rc,ctrl->count);
+		snprintf(buff,SIZE_BUFF,"%d:%d\n",ctrl->rc,ctrl->rcount);
 	} else {
-		sprintf(buff,"%d\n",ctrl->rc);
-		ctrl->count = 1;
+		snprintf(buff,SIZE_BUFF,"%d\n",ctrl->rc);
+		ctrl->rcount = 1;
 	}
 	SendStringDelim(fpComm,buff);
-	dbgprintf("[%s]",buff);
+	dbgprintf("Exec: [%s]",buff);
 	if		(	(  ses->fIgnore  )
-			&&	(	(  ctrl->count  ==  0     )
+			&&	(	(  ctrl->rcount  ==  0     )
 				||	(  args         ==  NULL  ) ) ) {
 LEAVE_FUNC;
 		return;
@@ -328,7 +368,8 @@ LEAVE_FUNC;
 	while	(  RecvStringDelim(fpComm,SIZE_BUFF,name)  ) {
 		if		(  *name  ==  0  )	{
 			ix ++;
-			if		(  ix  >=  ctrl->count  )	break;
+			if		(  ix  >=  ctrl->rcount  )	break;
+			if		(ses->fLimitResult &&  ix  >=  limit  )	break;
 		}
 		dbgprintf("name = [%s]",name);
 		if		(  ( p = strchr(name,';') )  !=  NULL  ) {
@@ -343,7 +384,7 @@ LEAVE_FUNC;
 			limit = 1;
 		}
 		if		(  limit  <  0  ) {
-			limit = ctrl->count;
+			limit = ctrl->rcount;
 		}
 		if		(  ( p = strchr(q,':') )  !=  NULL  ) {
 			*p = 0;
@@ -354,7 +395,7 @@ LEAVE_FUNC;
 		dbgprintf("limit = %d",limit);
 		dbgprintf("name  = [%s]",name);
 		DecodeName(rname,vname,name);
-		if		(  limit  >  1  ) {
+		if		(  limit  > 1  ) {
 			for	( i = 0 ; i < limit ; i ++ ) {
 				rec = ValueArrayItem(args,ix);
 				if		(  *vname  !=  0  ) {
@@ -363,26 +404,37 @@ LEAVE_FUNC;
 					value = rec;
 				}
 				SetValueName(name);
-				SendValueString(fpComm,value,NULL,fName,fType,NULL);
+				SendValueString(fpComm,value,NULL,fName,fType,Encoding);
 				if		(  fName  ) {
 					SendStringDelim(fpComm,"\n");
 				}
 				ix ++;
-				if		(  ix  ==  ctrl->count  )	break;
+				if		(  ix  ==  ctrl->rcount  )	break;
 			}
 		} else {
 			if		(  *vname  !=  0  ) {
 				value = GetItemLongName(args,vname);
 			} else {
-				value = args;
+			  if (ses->fFixFieldName) {
+			    if (IS_VALUE_RECORD(args)) {
+			      value = args;
+			    } else {
+			      value = ValueArrayItem(args,0);
+			    }
+			  } else {
+			    value = args;
+			  }
 			}
 #ifdef	DEBUG
 			DumpValueStruct(value);
 #endif
-			if		(  value  !=  NULL  ) {
+			if 	( value != NULL ) {
 				SetValueName(name);
 				dbgmsg("*");
-				SendValueString(fpComm,value,NULL,fName,fType,NULL);
+				SendValueString(fpComm,value,NULL,fName,fType,Encoding);
+			}
+			if (ses->fSendTermLF && fName) {
+			  SendStringDelim(fpComm,"\n");
 			}
 		}
 		if		(  fName  ) {
@@ -403,52 +455,48 @@ DumpItems(
 	if		(  value  ==  NULL  )	return;
 	switch	(ValueType(value)) {
 	  case	GL_TYPE_INT:
-		sprintf(buff,"int");
-		SendStringDelim(fp,buff);
+		SendStringDelim(fp,"int");
 		break;
 	  case	GL_TYPE_BOOL:
-		sprintf(buff,"bool");
-		SendStringDelim(fp,buff);
+		SendStringDelim(fp,"bool");
 		break;
 	  case	GL_TYPE_BYTE:
-		sprintf(buff,"byte");
-		SendStringDelim(fp,buff);
+		SendStringDelim(fp,"byte");
 		break;
 	  case	GL_TYPE_CHAR:
-		sprintf(buff,"char(%d)",(int)ValueStringLength(value));
+		snprintf(buff,SIZE_LONGNAME,"char(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_VARCHAR:
-		sprintf(buff,"varchar(%d)",(int)ValueStringLength(value));
+		snprintf(buff,SIZE_LONGNAME,"varchar(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_DBCODE:
-		sprintf(buff,"dbcode(%d)",(int)ValueStringLength(value));
+		snprintf(buff,SIZE_LONGNAME,"dbcode(%d)",(int)ValueStringLength(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_NUMBER:
 		if		(  ValueFixedSlen(value)  ==  0  ) {
-			sprintf(buff,"number(%d)",(int)ValueFixedLength(value));
+			snprintf(buff,SIZE_LONGNAME,"number(%d)",(int)ValueFixedLength(value));
 		} else {
-			sprintf(buff,"number(%d,%d)",
+			snprintf(buff,SIZE_LONGNAME,"number(%d,%d)",
 					(int)ValueFixedLength(value),
 					(int)ValueFixedSlen(value));
 		}
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_TEXT:
-		sprintf(buff,"text");
-		SendStringDelim(fp,buff);
+		SendStringDelim(fp,"text");
 		break;
 	  case	GL_TYPE_ARRAY:
 		DumpItems(fp,ValueArrayItem(value,0));
-		sprintf(buff,"[%d]",(int)ValueArraySize(value));
+		snprintf(buff,SIZE_LONGNAME,"[%d]",(int)ValueArraySize(value));
 		SendStringDelim(fp,buff);
 		break;
 	  case	GL_TYPE_RECORD:
 		SendStringDelim(fp,"{");
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			sprintf(buff,"%s ",ValueRecordName(value,i));
+			snprintf(buff,SIZE_LONGNAME,"%s ",ValueRecordName(value,i));
 			SendStringDelim(fp,buff);
 			DumpItems(fp,ValueRecordItem(value,i));
 			SendStringDelim(fp,";");
@@ -479,12 +527,10 @@ ExecQuery(
 	NETFILE	*fpComm,
 	char		*para)
 {
-	ValueStruct		*value
-		,			*arg;
-	RecordStruct	*rec;
-	char			func[SIZE_FUNC+1]
-		,			rname[SIZE_RNAME+1]
-		,			pname[SIZE_PNAME+1];
+	ValueStruct		*retvalue;
+	char			func[SIZE_BUFF+1]
+		,			rname[SIZE_BUFF+1]
+		,			pname[SIZE_BUFF+1];
 	Bool		fType
 		,		ret;
 	DBCOMM_CTRL	ctrl;
@@ -492,19 +538,21 @@ ExecQuery(
 		,	*q;
 
 ENTER_FUNC;
-	ctrl.count = 0;
+	InitializeCTRL(&ctrl);
+	printf("para => [%s]\n", para);
 	if		(  ( q = strchr(para,':') )  !=  NULL  ) {
 		*q = 0;
 		DecodeStringURL(func,para);
+		g_strlcpy(ctrl.func,func, SIZE_FUNC);
 		p = q + 1;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 			DecodeStringURL(rname,p);
+			SetDBCTRLRecord(&ctrl, rname);
 			p = q + 1;
 		} else {
-			strcpy(rname,"");
+			g_strlcpy(rname,"", SIZE_NAME);
 		}
-		p = q + 1;
 		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
 			*q = 0;
 			ctrl.limit = atoi(q+1);
@@ -515,45 +563,38 @@ ENTER_FUNC;
 			ctrl.limit = 1;
 		}
 		DecodeStringURL(pname,p);
-		rec = MakeCTRLbyName(&arg,&ctrl,rname,pname,func);
+		SetDBCTRLValue(&ctrl, pname);
+		dbgprintf("func[%s] record[%s,%s] rc = %d",ctrl.func,ctrl.rname,ctrl.pname,ctrl.rc);
+		if (ctrl.rec == NULL){
+			Warning("func[%s] record[%s,%s] not fund",ctrl.func,ctrl.rname,ctrl.pname);
+			ctrl.rc = MCP_BAD_ARG;
+		}
 	} else {
 		DecodeStringURL(func,para);
-		ctrl.rno = 0;
-		ctrl.pno = 0;
-		ctrl.rc = 0;
-		strcpy(ctrl.func,func);
-		rec = NULL;
-		value = NULL;
+		g_strlcpy(ctrl.func,func, SIZE_FUNC);
+		ctrl.fDBOperation = TRUE;
+		ret = FALSE;
 	}
-	RecvData(fpComm,arg);
-	value = NULL;
-	dbgprintf("func = [%s]",func);
-	if		(  stricmp(func,"DBOPEN")  ==  0  ) {
-		ses->env = OpenAllDB();
-	} else
-	if		(  stricmp(func,"DBCLOSE")  ==  0  ) {
-		ctrl.rc = CloseAllDB(ses->env);
-	} else
-	if		(  stricmp(func,"DBSTART")  ==  0  ) {
-		ctrl.rc = TransactionAllStart(ses->env);
-	} else
-	if		(  strcmp(func,"DBCOMMIT")  ==  0  ) {
-		ctrl.rc = TransactionAllEnd(ses->env);
-	} else
-	if		(  strcmp(func,"DBDISCONNECT")  ==  0  ) {
-		ctrl.rc = CloseAllDB(ses->env);
+	if (ctrl.value) InitializeValue(ctrl.value);
+	RecvData(fpComm,ctrl.value);
+	retvalue = NULL;
+
+	if (ctrl.rc == 0) {
+		dbgprintf("func[%s] record[%s,%s] rc = %d\n",ctrl.func,ctrl.rname,ctrl.pname,ctrl.rc);
+		retvalue = ExecDB_Process(&ctrl,ctrl.rec,ctrl.value);
 	} else {
-		value = ExecDB_Process(&ctrl,rec,arg,ses->env);
+		ctrl.rcount = 0;
 	}
-	fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
-	WriteClientString(ses,fpComm,fType,&ctrl,value);
-	FreeValueStruct(value);
 	ret = TRUE;
+	fType = ( ses->type == COMM_STRINGE ) ? TRUE : FALSE;
+	WriteClientString(ses,fpComm,fType,&ctrl,retvalue);
+	if (retvalue) {
+	  FreeValueStruct(retvalue);
+	}
 LEAVE_FUNC;
 
 	return	(ret);
 }
-
 
 static	Bool
 GetPathTable(
@@ -562,16 +603,17 @@ GetPathTable(
 	char		*para)
 {
 	RecordStruct	*rec;
-	char			rname[SIZE_RNAME+1]
-		,			buff[SIZE_RNAME+SIZE_PNAME+1];
+	char			rname[SIZE_BUFF+1]
+		,			buff[SIZE_BUFF+1];
 	Bool	ret;
 	int		rno;
 	char	*pname
 		,	*p;
+	
 	void	_SendPathTable(
 		char	*pname)
 	{
-		sprintf(buff,"%s$%s\n",rname,pname);
+		snprintf(buff,SIZE_BUFF,"%s$%s\n",rname,pname);
 		SendStringDelim(fpComm,buff);
 	}
 	void	_SendTable(
@@ -579,14 +621,14 @@ GetPathTable(
 		int		rno)
 	{
 		rec = ThisDB[rno-1];
-		strcpy(rname,name);
+		g_strlcpy(rname,name,SIZE_NAME);
 		g_hash_table_foreach(rec->opt.db->paths,(GHFunc)_SendPathTable,NULL);
 	}
 
 ENTER_FUNC;
 	if		(  *para  !=  0  ) {
-		strcpy(rname,para);
-		dbgprintf("rname = [%s]",rname);
+		dbgprintf("para = [%s]",para);
+		g_strlcpy(rname,para,SIZE_NAME);
 		if		(  ( p = strchr(rname,'$') )  !=  NULL  ) {
 			*p = 0;
 			pname = p + 1;
@@ -599,7 +641,7 @@ ENTER_FUNC;
 				g_hash_table_foreach(rec->opt.db->paths,(GHFunc)_SendPathTable,NULL);
 			} else {
 				if		(  g_hash_table_lookup(rec->opt.db->paths,pname)  !=  NULL  ) {
-					sprintf(buff,"%s$%s\n",rname,pname);
+					snprintf(buff,SIZE_BUFF,"%s$%s\n",rname,pname);
 					SendStringDelim(fpComm,buff);
 				}
 			}
@@ -621,14 +663,14 @@ GetSchema(
 	char		*para)
 {
 	RecordStruct	*rec;
-	char			rname[SIZE_RNAME+1]
-		,			pname[SIZE_PNAME+1];
+	char			rname[SIZE_BUFF+1]
+		,			pname[SIZE_BUFF+1];
 	int		rno
 		,	pno;
 	char	*p
 		,	*q;
 	DBCOMM_CTRL	ctrl;
-	Bool	ret;
+	Bool	ret = FALSE;
 
 ENTER_FUNC;
 	if		(  ( q = strchr(para,':') )  !=  NULL  ) {
@@ -636,25 +678,29 @@ ENTER_FUNC;
 		DecodeStringURL(rname,para);
 		p = q + 1;
 		DecodeStringURL(pname,p);
+		dbgprintf("rname => [%s], pname => [%s]\n", rname, pname);
 		if		(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) {
 			ctrl.rno = rno - 1;
 			rec = ThisDB[ctrl.rno];
 			if		(  ( pno = (int)(long)g_hash_table_lookup(rec->opt.db->paths,
 															  pname) )  ==  0  ) {
 				rec = NULL;
+				Warning("invalid path name [%s]\n", pname);
 			}
 		} else {
 			rec = NULL;
+			Warning("invalid record name [%s]\n", rname);
 		}
 	} else {
 		rec = NULL;
+		Warning("invalid message [%s]\n",para);
 	}
 	if		(  rec  !=  NULL  ) {
 		WriteClientStructure(ses,fpComm,rec);
-		ret = TRUE;
 	} else {
-		ret = FALSE;
+		SendStringDelim(fpComm,"\n");
 	}
+	ret = TRUE;
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -710,12 +756,13 @@ do_String(
 	SessionNode	*ses)
 {
 	Bool	ret;
-
+ENTER_FUNC;
 	if		(  strlcmp(input,"Exec: ")  ==  0  ) {
 		dbgmsg("exec");
 		ret = ExecQuery(ses,fpComm,input + 6);
 	} else
 	if		(  strlcmp(input,"PathTables: ")  ==  0  ) {
+		dbgmsg("pathtables");
 		ret = GetPathTable(ses,fpComm,input + 12);
 	} else
 	if		(  strlcmp(input,"Schema: ")  ==  0  ) {
@@ -730,9 +777,10 @@ do_String(
 		dbgmsg("end");
 		ret = FALSE;
 	} else {
-		printf("invalid message [%s]\n",input);
+		Warning("invalid message [%s]\n",input);
 		ret = FALSE;
 	}
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -742,18 +790,19 @@ MainLoop(
 	SessionNode	*ses)
 {
 	char	buff[SIZE_BUFF+1];
-	Bool	ret;
+	Bool	ret = FALSE;
 
 ENTER_FUNC;
-	RecvStringDelim(fpComm,SIZE_BUFF,buff);
-	switch	(ses->type) {
-	  case	COMM_STRING:
-	  case	COMM_STRINGE:
-		ret = do_String(fpComm,buff,ses);
-		break;
-	  default:
-		ret = FALSE;
-		break;
+	if ( RecvStringDelim(fpComm,SIZE_BUFF,buff) ){
+		switch	(ses->type) {
+		  case	COMM_STRING:
+		  case	COMM_STRINGE:
+			ret = do_String(fpComm,buff,ses);
+			break;
+		  default:
+			ret = FALSE;
+			break;
+		}
 	}
 LEAVE_FUNC;
 	return	(ret);
@@ -762,29 +811,29 @@ LEAVE_FUNC;
 static	void
 ExecuteServer(void)
 {
-	int		fh
-	,		_fh;
+	int		fh;
+	int		soc_len;
+	int		soc[MAX_SOCKET];
 	NETFILE	*fp;
 	int		pid;
 	SessionNode	*ses;
 	Port	*port;
+	char	remote[SIZE_HOST+1];
 
 ENTER_FUNC;
 	port = ParPortName(PortNumber);
-	_fh = InitServerPort(port,Back);
+	soc_len = InitServerMultiPort(port,Back,soc);
 	while	(TRUE)	{
-		if		(  ( fh = accept(_fh,0,0) )  <  0  )	{
-			printf("_fh = %d\n",_fh);
-			Error("INET Domain Accept");
+		if		(  ( fh = AcceptLoop(soc,soc_len) )  <  0  )	{
+			continue;
 		}
-
 		if		(  ( pid = fork() )  >  0  )	{	/*	parent	*/
 			close(fh);
 		} else
 		if		(  pid  ==  0  )	{	/*	child	*/
 			fp = SocketToNet(fh);
-			close(_fh);
-			if		(  ( ses = InitDBSSession(fp) )  !=  NULL  ) {
+			RemoteIP(fh,remote,SIZE_HOST);
+			if		(  ( ses = InitDBSSession(fp,remote) )  !=  NULL  ) {
 				while	(  MainLoop(fp,ses)  );
 				FinishSession(ses);
 			}
@@ -829,8 +878,6 @@ static	ARG_TABLE	option[] = {
 		"DB user name(for override)"					},
 	{	"dbpass",	STRING,		TRUE,	(void*)&DB_Pass,
 		"DB password(for override)"						},
-	{	"dbsslmode",STRING,		TRUE,	(void*)&DB_Sslmode,
-		"DB SSL mode(for override)"						},
 
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		"authentication server"		 					},
@@ -839,6 +886,8 @@ static	ARG_TABLE	option[] = {
 		"no check dbredirector"							},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
 		"no DB redirection"								},
+	{	"numeric",	BOOLEAN,	TRUE,	(void*)&fNumericHOST,
+		"Numeric form of hostname"						},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -859,11 +908,11 @@ SetDefault(void)
 	DB_Pass = NULL;
 	DB_Host = NULL;
 	DB_Port = NULL;
-	DB_Sslmode = NULL;
 	DB_Name = DB_User;
 
 	fNoCheck = FALSE;
 	fNoRedirect = FALSE;
+	fNumericHOST = FALSE;
 }
 
 extern	int
@@ -885,6 +934,7 @@ main(
 	if		(	(  fl  !=  NULL  )
 			&&	(  fl->name  !=  NULL  ) ) {
 		InitNET();
+		snprintf(AppName, sizeof(AppName), "dbs-%s",fl->name);
 		InitSystem(fl->name);
 		ExecuteServer();
 		StopProcess(0);

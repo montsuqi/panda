@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"auth.h"
 #include	"libmondai.h"
@@ -56,20 +55,22 @@ static	void
 Session(
 	NETFILE	*fp)
 {
+	size_t	size;
 	char	user[SIZE_USER+1]
 	,		pass[SIZE_PASS+1];
 	PassWord	*pw;
 
 ENTER_FUNC;
-	RecvnString(fp, sizeof(user), user);	ON_IO_ERROR(fp,badio);
-	dbgprintf("user = [%s]",user);
-	RecvnString(fp, sizeof(pass), pass);	ON_IO_ERROR(fp,badio);
-	dbgprintf("pass = [%s]",pass);
-	if		(  ( pw = AuthAuthUser(user,pass) )  ==  NULL  ) {
-		SendBool(fp,FALSE);				ON_IO_ERROR(fp,badio);
-	} else {
-		SendBool(fp,TRUE);				ON_IO_ERROR(fp,badio);
-		SendString(fp,pw->other);		ON_IO_ERROR(fp,badio);
+	if		(  Recv(fp,&size,sizeof(size))  >  0  ) {
+		Recv(fp,user,size);
+		user[size] = 0;
+		RecvnString(fp, sizeof(pass), pass);	ON_IO_ERROR(fp,badio);
+		if		(  ( pw = AuthAuthUser(user,pass) )  ==  NULL  ) {
+			SendBool(fp,FALSE);				ON_IO_ERROR(fp,badio);
+		} else {
+			SendBool(fp,TRUE);				ON_IO_ERROR(fp,badio);
+			SendString(fp,pw->other);		ON_IO_ERROR(fp,badio);
+		}
 	}
   badio:
 LEAVE_FUNC;

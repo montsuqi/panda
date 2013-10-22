@@ -1,3 +1,490 @@
+2011-08-08  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/net.[ch], libs/socket.[ch]
+	複数(IPv6/IPv4)を待つInitServerMultiPort,AcceptLoopの追加
+
+2010-04-23  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c
+	トランザクションのモードをSERIALIZABLEにした。
+	更新数 0 のときにはリダイレクトしないようにした(順番が前後することがある)。
+
+2010-03-19  yusuke mihara  <yusuke@netlab.jp>
+
+	*  glclient/protocol.c glserver/server.c libs/glcomm.c libs/glcomm.h
+	クライアントのFeatureフラグからBLOB、EXPAND、CORE、OLDを削除した
+	FeatureフラグにDOWNLOADを追加した
+	DOWNLOADフラグのないクライアントは接続不可とした
+
+2010-03-16  yusuke mihara  <yusuke@netlab.jp>
+
+	* libglib-2.23でエラーになるので include/types.h の
+	byte、word、dword、ulong型を削除した
+	* include/types.hを削除した(libmondai/types.hを使用する)
+
+2010-02-19  yusuke mihara  <yusuke@netlab.jp>
+
+	* Ver 1.4.5 release
+
+2010-02-19  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.h, tools/dbsync.c, dbstuff/dbredirector.c
+	同期するタイミングをあわせるために RED_SYNC_WAITを追加した
+
+	* dbstuff/dbredirector.c
+	監査ログのredirectが間違っていたのを修正した
+
+	* dblib/PostgreSQLutils.c, dblib/PostgreSQLutils.h, tools/dbsync.c
+	同期時に dbredirectorの接続とそれ以外の接続を分けて処理するようにした
+
+2010-02-18  Noboru Saitou  <noborus@netlab.jp>
+
+	*  dblib/PostgreSQL.c, dblib/PostgreSQLlib.c,
+	dblib/PostgreSQLlib.h, dblib/PostgreSQLutils.c,
+	dblib/PostgreSQLutils.h, dblib/dbgroup.h, tools/dbsync.c
+	同期時にも従サーバにロックが掛かるように修正
+	テーブル比較時はトランザクション内で実行するようにした
+	dropdb出来ない場合は pg_dump -c(clean)を利用するようにした
+
+2010-02-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c
+	CheckRedirectorConnect の廃止。
+
+2010-02-16  Noboru Saitou  <noborus@netlab.jp>
+
+	* libs/DIparser.c
+	dbgroup に auditlog を追加。1以上の数値を指定すると監査ログを取る(デフォルト無効)
+	* dbstuff/dbredirector.c
+	auditlogがない場合にSegvするのを修正
+
+	* aps/handler.c, dblib/PostgreSQLutils.c,
+	dblib/PostgreSQLutils.h, dblib/redirect.h,
+	dbstuff/dbredirector.c, include/struct.h,
+	tools/dbsync.c
+	dbsyncをdbredirectorと連携させ動作中に同期が取れるようにした。
+	DBSTATUS 「SYNC」を追加した。
+
+2010-02-15  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/MONFUNC.c
+	funcにAUDITLOGを追加した。
+
+2010-02-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/audit.h, dblib/audit.c, dbstuff/dbredirector.c
+	auditテーブルがない場合に作成するようにした(仮)。
+
+	* aps/MONFUNC.c, dblib/PostgreSQL.c, dblib/dbgroup.c,
+	 dblib/dbgroup.h, dblib/redirect.c, dblib/redirect.h,
+	 dbstuff/dbredirector.c, dbstuff/dbredirector.h,
+	include/struct.h, libs/DIparser.c, libs/directory.h
+	監査ログの追加
+
+2010-02-10  Noboru Saitou  <noborus@netlab.jp>
+
+	* include/struct.h, libs/DIparser.c, dblib/dbgroup.h,
+	dblib/dbgroup.c, dblib/PostgreSQL.c, dblib/Shell.c, Osek.c
+	監査ログのためクエリーを保存するようにした
+
+2010-02-09  Noboru Saitou  <noborus@netlab.jp>
+
+	* tools/dbsync.c, dblib/PostgreSQLlib.c, dblib/PostgreSQLlib.h,
+	dblib/PostgreSQLutils.c, dblib/PostgreSQLutils.h,
+	dblib/PostgreSQL.c
+	dbgroup{coding}, masterのDBの優先順で encodingを指定するようにした。
+
+2010-02-08  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/aps_main.c
+	終了時にDB接続にいかないように修正
+
+	* libs/comm.c (SendPacketClass):
+	即時応答が要求される場合が多いのでFlushを追加した。
+
+	* dbstuff/dbredirector.c
+	signalによる再Openを出来るようにした。
+
+2010-02-06  Noboru Saitou  <noborus@netlab.jp>
+
+	* PostgreSQLlib.c, dbgroup.h, dbgroup.c
+	PostgreSQLのUNIXドメインソケットを指定できるようにした。
+
+2010-02-02  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.h, dblib/redirect.c, dbstuff/dbredirector.c,
+	dblib/PostgreSQL.c
+	dbredirectorにロックを掛け順番を前後しないようにした。
+
+	* aps/handler.h, aps_main.c, MONFUNC.c
+	DB操作時にユーザを再セットするように変更
+	(認証無しに権限昇格しないようにした)
+	MONFUNCをMonDBfuncとMonGLfuncに分割
+
+2010-01-15  Yusuke Mihara  <mihara@netlab.jp>
+
+	* aps/MONFUNC.c cobol/MCPMAIN.CBL 
+	dblib/PostgreSQL.c dblib/dbgroup.c dbstuff/dbs_main.c 
+	include/struct.h libs/DIparser.c tools/pandadb.c
+	DBCOMM_CTRL->tuples、MCPAREA-TUPLES を削除
+	DBCOMM_CTRL->count を DBCOMM_CTRL->rcountに変更
+	dbgroup.c の MakeCTRLbyName を GetTableFuncData に変更
+	MONFUNC.c のDB funcとTABLE funcの振り分けのあたりを整理
+
+	* aps/apslib.c
+	使用していない MCP_ExecFunction を削除
+
+	* aps/Makefile.am aps/MCPSUB.c
+	MCPSUB を削除
+
+2009-12-21  Kazuya Nagadomi  <nagadomi@wasp-corp.co.jp>
+
+	* dblib/PostgreSQL.c
+	SetDBGcodingで接続が増えていたので切断するように修正
+
+	* tools/dbsync.c
+	-slave, -masterオプションで同期元と先を指定できるように変更
+
+	* dblib/PostgreSQLutil.h
+	接続関係の関数を他から使えるように変更
+
+	* dbstuff/dbredirector.c
+	"dblogger"として起動された場合にログを保存する処理を追加
+	
+	* dbstuff/dbmaster.c dbstuff/dbmaster_thread.c dbstuff/dbmaster_thread.h
+	dbstuff/dbreplication.h dbstuff/dbslave.c dbstuff/dbslave_thread.c
+	dbstuff/dbslave_thread.h
+	dbstuff/Makefile.am dbstuff/dbredirector.c dbstuff/dbredirector.h
+	dblib/Makefile.am dblib/dblog.c dblib/dblog.h include/const.h
+	include/struct.h libs/DIparser.c tools/monitor.c
+	非同期マスタースレーブのレプリケーション機能を追加
+
+	* Doc/memo.dbreplication
+	 Doc/memo.source.replication
+	レプリケーション機能のメモを追加
+	
+2009-10-14  Kazuya Nagadomi  <nagadomi@wasp-corp.co.jp>
+	
+	* dbstuff/dbs_main.c:
+	スキーマを取得する機能を追加
+	リクエストのパラメータをリクエスト毎にクリアするよう修正
+	dbsのバージョンをpandaと別に設定するよう変更
+	クライアントのdbsバージョンが1.5.1以降の場合に以下のプロトコルを変更
+	DBSELECT,DBFETCHの結果が1行の場合もN行の場合と同じく2改行で1レコードの通信を終えるよう変更
+	DBSELECTの結果が1行の場合のフィールド名を修正
+	DBUPDATE,DBINSERT,DBDELETEで影響のあった行数をcountとして返すよう変更
+
+	* dblib/dbgroup.c (MakeCTRLbyName): 指定されたpathが無かった場合にエラーコードを設定するよう変更
+	
+	* include/struct.h: DBCOMM_CTLにDBUPDATE,DBINSERT,DBDELETEで影響のあった行数を保存する変数を追加
+
+	* dblib/PostgreSQL.c: _DBUPDATE,_DBINSERT,_DBDELETEで影響のあった行数を結果に設定するよう変更
+
+	* dblib/dbslib.rb: dbs変更分の対応
+
+2009-09-14  Yusuke Mihara  <mihara@netlab.jp>
+
+	* aps/OpenCOBOL.c: dbstubの引数をUTF-8からeuc-jisx0213に変換する。
+	日レセのバッチが動作可能。
+
+2009-08-31  Yusuke Mihara  <mihara@netlab.jp>
+
+	* dblib/XMLIO.c glserver/http.c glserver/server.c
+	include/const.h libs/glcomm.c libs/glcomm.h libs/mhandler.c
+	wfc/moninfo.c:
+	libmondaiのi18nを利用して内部コードをUTF-8に変更。
+	COBOLまわりだけeuc-jisx0213に変換する。日レセのバッチはまだ動作しない。
+
+2009-08-25  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glclient/client.c glclient/protocol.c
+	glclient/gtk1/bd_component.c glclient/gtk1/bd_component.h
+	glclient/gtk1/bootdialog.c glclient/gtk2/action.c
+	glclient/gtk2/bd_component.c glclient/gtk2/bd_component.h
+	glclient/gtk2/bootdialog.c glserver/server.c libs/glcomm.c
+	libs/glcomm.h po/POTFILES.in po/ja.po po/panda.pot:
+	glserverについて、クライアントのバージョン文字列のi18nの有無でクライアントの文字コードに合わせて文字列、gladeファイルを変換するよう修正
+	glclientのコンソールへのバナー表示を廃止、代わりにランチャーに情報タブを追加
+
+2009-08-18  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glserver/Makefile.am glserver/server.c
+	libs/Makefile.am libs/keyvaluereq.c libs/keyvaluereq.h
+	glserver/sysdataio.c glserver/sysdataio.h:
+	glserverがシステムDBの"message","abort"を参照してクライアントにメッセージと終了命令を発行するようにした。
+
+2009-08-17  Yusuke Mihara  <mihara@netlab.jp>
+
+	* configure.ac dblib/System.c glserver/Makefile.am
+	libs/keyvalue.c libs/keyvalue.h libs/keyvaluecom.h
+	libs/keyvaluereq.c libs/keyvaluereq.h 
+	wfc/Makefile.am wfc/kvserv.c wfc/sysdb.c wfc/termthread.c
+	wfc/wfc.c wfc/moninfo.c:
+	セッション管理コマンドmoninfoを追加。
+	システムDBのいくつかの致命的なバグを修正。
+	システムDBのcreate_time、access_timeの形式を変更。
+
+2009-08-07  Yusuke Mihara  <mihara@netlab.jp>
+
+	* cobol/MCPMAIN.CBL dblib/DBRuby.c dblib/Makefile.am
+	dblib/NativeBLOB.c dblib/System.c dblib/XMLIO.c
+	dblib/dbgroup.h glserver/blobaccess.c include/wfcdata.h
+	libs/DIparser.c libs/auth.c libs/blobcom.h libs/blobreq.c
+	libs/keyvalue.c libs/keyvalue.h libs/keyvaluecom.h
+	libs/keyvaluereq.c libs/keyvaluereq.h libs/net.c
+	tools/monitor.c wfc/Makefile.am wfc/kvserv.c
+	wfc/sysdatathread.c wfc/termthread.c wfc/wfc.c wfc/wfc.h
+	dblib/sysdata.c dblib/sysdata.h wfc/sysdb.c wfc/sysdb.h:
+	termthreadでセッションの以下の情報をシステムDBに格納するようにした。
+		* user, host, window, widget, event, create_time, access_time,
+		process_time, total_process_time, count
+	glserverのBLOBのやりとりをlibs/wfcio.cからglserver/blobaccess.cに移動。
+	sysdatathreadとdblib/{NativeBLOB,System,XMLIO}.soとのプロトコルを変更。
+
+2009-08-04  Yusuke Mihara  <mihara@netlab.jp>
+
+	* dblib/NativeBLOB.c dblib/System.c
+	dblib/XMLIO.c glserver/Makefile.am glserver/glserver.c
+	glserver/glserver.h glserver/http.c glserver/server.c
+	include/const.h include/struct.h libs/DIparser.c
+	libs/Makefile.am libs/blob.h libs/blobcom.h libs/blobreq.c
+	libs/blobreq.h libs/driver.h libs/monapi.c libs/monapi.h
+	libs/panda.c libs/wfcio.c libs/wfcio.h wfc/Makefile.am
+	wfc/blobserv.c wfc/mqthread.c wfc/termthread.c wfc/wfc.c
+	wfc/wfc.h glserver/blobaccess.c glserver/blobaccess.h libs/keyvalue.c
+	libs/keyvalue.h libs/keyvaluecom.h libs/keyvaluereq.c
+	libs/keyvaluereq.h wfc/kvserv.c wfc/kvserv.h
+	wfc/sysdatathread.c wfc/sysdatathread.h:
+	dblib/System.cをGHashTableを利用したキーバリュー型DBに変更。
+	blobthreadをsysdatathreadに変更して、BLOBに加えてキーバリューDBのサーバを追加。
+	apsとglserverからのBLOBのリクエストを{term,mq}threadではなく、sysdatathreadで受けるよう変更。
+
+2009-07-17  Yusuke Mihara  <mihara@netlab.jp>
+
+	* configure.ac aps/apsio.c cobol/MCPMAIN.CBL dblib/NativeBLOB.c
+	dblib/XMLIO.c dblib/dbgroup.c glserver/http.c libs/DIparser.c 
+	libs/Makefile.am libs/blob_v1.c libs/blobreq.c libs/debug.h
+	libs/message.c libs/monapi.c libs/monapi.h libs/port.c
+	libs/wfcio.h wfc/blobserv.c wfc/blobthread.c wfc/mqthread.c
+	wfc/termthread.c:
+	APIセッションの内部のプロトコルを修正。
+	リクエスト/レスポンスのボディをBLOBでやりとりするようにした。
+
+2009-07-13  Yusuke Mihara  <mihara@netlab.jp>
+
+	* configure.ac dblib/Makefile.am dblib/NativeBLOB.c libs/blob_v1.c
+	libs/blob_v1.h libs/blobreq.c libs/blobreq.h wfc/blobserv.c:
+	COBOLから利用可能なXML DOMパーサ、DOMライタであるXMLIO.so を追加。
+	NativeBLOB より使用されていない BLOBOPEN, BLOBCLOSE, BLOBREAD, BLOBWRITE, BLOBSAVE を削除。
+
+2009-07-07  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c: トランザクション状態でROLLBACKしているか判断する
+	ように変更。
+
+2009-06-25  Yusuke Mihara  <mihara@netlab.jp>
+	* dblib/NativeBLOB.c libs/blob_v1.c libs/blobreq.c libs/comm.c
+	libs/front.c libs/glcomm.c libs/wfcio.c wfc/blobserv.c:
+	NativeBLOBにBLOBREGISTER,BLOBLOOKUPを追加。
+
+
+2009-06-16  Yusuke Mihara  <mihara@netlab.jp>
+    * glclient/client.c glclient/protocol.c glclient/gtk1/dialogs.c
+	glclient/gtk1/interface.c glclient/gtk2/dialogs.c
+	glclient/gtk2/interface.c glserver/server.c include/glterm.h:
+	クライアントへのメッセージ通知機能を追加した。client-glserver間で Ping
+	Pong を行うようにした。
+
+2009-05-20  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glclient/protocol.c glclient/gtk1/action.c glclient/gtk1/interface.c
+	glclient/gtk1/widgetOPS.c glclient/gtk2/action.c
+	glclient/gtk2/bd_component.c glclient/gtk2/interface.c
+	glclient/gtk2widgetOPS.c:
+	画面切り替えにGtkWindowの代わりにGtkNotebookを利用するようにした。
+
+2009-04-27  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glclient/Makefile.am, glclient/client.c, glclient/marshaller.c,
+	gtk1/fileEntry.c, gtk1/widgetOPS.c, gtk2/widgetOPS.c:
+	ウィジェットの情報をためるキャッシュ(NameHash)を追加した。
+	キャッシュは[cachedir]/widgetcache.txtに保存する。
+	ウィジェットキャッシュを利用してFileEntryの参照ディレクトリを保存するようにした。
+
+2009-04-13  Yusuke Mihara  <mihara@netlab.jp>
+
+	* aps/apsio.c, glserver/http.c, include/struct.h, libs/Dlex.h,
+	libs/LDparser.c, libs/monapi.c, libs/monapi.h, wfc/mqthread.c,
+	wfc/termthread.c:
+	APIのモジュール名を任意に設定できるよう変更、URIはhttp://server:port/LD/module?argumentsのようになる
+
+2009-03-27  Noboru Saitou  <noborus@netlab.jp>
+
+	* Ver 1.4.4 release
+
+2009-03-24  Noboru Saitou  <noborus@netlab.jp>
+
+	* tools/dbsync.c: DB同期ツール dbsync の追加
+
+2009-03-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/aps_main.c, aps/handler.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dblib/dblib.h: dbredirectorが接続しているかどうかチェック修正
+
+2009-03-17  Noboru Saitou  <noborus@netlab.jp>
+
+	*  aps/Exec.c, aps/MONFUNC.c, aps/Ruby.c, dblib/Oseki.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dbstuff/dbs_main.c, include/struct.h, libs/DIparser.c:
+	DBG->redirectによりリダイレクトの制御を出来るようにした
+
+2009-03-14  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.c, dblib/PostgreSQL.c, dbstuff/dbredirector.c, libs/DIparser.c: 2台目以降のリダイレクトが出来るように checkData の初期化場所を変更
+
+2009-03-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.c: リダイレクト先のdbstatusをそれぞれのDBGにセットするように修正
+	* dblib/dbgroup.c: dblib/GetDBStatus -> dblib/GetDBRedirectStatus に変更(リダイレクトの状態なので)
+	
+2009-03-11  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQL.c: redirectする接続は同じdbへのdbredirectorの接続を確認するようにした
+
+2009-03-10  Noboru Saitou  <noborus@netlab.jp>
+
+	* dbstuff/dbredirector.c: 終了シグナルをサポート、キューの処理を直接チケット処理になるように変更
+
+2009-03-05  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/redirect.c, dblib/redirect.h, dbstuff/dbredirector.c,
+	dbstuff/dbredirector.h: dbredirectorのトランザクション順を正しくなるようにした
+
+2009-03-04  Yusuke Mihara  <mihara@netlab.jp>
+
+	* configure.ac aps/OpenCOBOL.c aps/aps_main.c aps/apsio.c
+	aps/handler.c glserver/Makefile.am glserver/http.c 
+	include/wfcdata.h libs/DIparser.c libs/monapi.c 
+	libs/wfcio.h wfc/mqthread.c wfc/termthread.c:
+	API対応その2
+		* wfc
+			* APIセッションをapiという特別なLDに振り分け
+		* aps
+			* API用にwfc-aps間プロトコルを拡張
+			* APIリクエストをAPI用レコードにパッキングして
+			アプリケーションに渡す
+			* アプリケーションからの応答をvalueconvで変換
+			してwfcへ返す
+		* glserver
+			* リクエストパラメータの文字コード変換
+				* UTF-8 -> EUC-JP
+			* レスポンスXMLの文字エンコード変換
+				* EUC-JP -> UTF-8
+
+2009-02-20  Noboru Saitou  <noborus@netlab.jp>
+
+	* dblib/PostgreSQLlib.[ch]: dblib/PostgreSQL.c を分割
+
+2009-02-20  Yusuke Mihara  <mihara@netlab.jp>
+
+	* glserver/Makefile.am glserver/server.c include/glterm.h
+	include/wfcdata.h libs/Makefile.am libs/wfcio.c
+	libs/wfcio.h tools/Makefile.am wfc/termthread.c
+	glserver/http.c glserver/http.h libs/monapi.c libs/monapi.h:
+	API対応
+		* glserverにHTTPサーバ機能を追加
+			* GLプロトコルとHTTPのマルチプロトコル化(glserver/http.c)
+		* glserverはHTTPリクエストをpanda.soを経由せずwfcに直接送信
+			* glserver-wfc間に新プロトコルを追加(libs/monapi.c)
+		* wfcのsession dataをAPI用に拡張
+		* HTTPリクエストの解析はapsで実施(未実装)
+			* 現状はリクエストをwfcでエコーバック
+
+2009-01-26  Noboru Saitou  <noborus@netlab.jp>
+
+	* glauth/glauth.c: パスワードの再読み込みを自動にした。
+
+2008-12-19  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/gtk2/widgetOPS.c:
+	GtkPandaPDFが使えない環境(etch)ではGtkPandaPSを使用する
+
+2008-12-12  yusuke mihara  <mihara@netlab.jp>
+
+	* r_gkt2_branchとマージ
+
+2008-12-10  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/glcomm.c: "pngpdf"のフラグ定数を削除 
+
+2008-11-27  yusuke mihara  <mihara@netlab.jp>
+
+	*  glclient/marshaller.c, glclient/protocol.c. glclient/gtk1/widgetOPS.c,
+	glclient/gtk2/bd_config.c glclient/gtk2/widgetOPS.c:
+	glclient2のプレビューをPostScriptからPDFに変更
+
+2008-11-13  yusuke mihara  <mihara@netlab.jp>
+
+    * glclient/gtk1, glclient/gtk2:
+	glclientのGtk2対応版の追加。gtk+panda2とlibglade-panda2が必要。
+	* gtk+panda2
+		* http://www.montsuqi.org/svn/gtk+panda2/
+	* libglade-panda2
+		* http://www.montsuqi.org/svn/libglade-panda2/
+
+2008-11-13  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/glcomm.c: "pngpdf"を一旦廃止。フラグ定数のみ残し再検討する。
+
+2008-11-04  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/widgetOPS.c: gtk_panda_ps_loadをgtk_panda_ps_setに変更した。
+
+2008-10-31  yusuke mihara  <mihara@netlab.jp>
+
+	* glserver/server.c, include/glterm.h, libs/glcomm.c, libs/glcomm.h: monsiajのプレビューウィジェットにpngとPDFを渡すように変更した。
+	バージョン文字列に"negotiation"と"pngpdf"を追加した。クライアントが"negotiation"を指定した場合、認証結果GL_OKを送る代わりに、GL_ServerVersionを送信する。 
+
+2008-09-04  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/bd_component.c, bd_component.c, client.c:
+	タイマー設定をデフォルト有効にするようにした
+
+2008-08-18  Noboru Saitou  <noborus@netlab.jp>
+
+	* glserver/pstopng: 画像の大きさを2倍にして antialias を掛けるようにした
+2008-08-12  Noboru Saitou  <noborus@netlab.jp>
+
+	* glclient/widgetOPS.c(RecvEntry): INSENSITIVE のときに表示位置を左詰めにした
+
+2008-06-19  yusuke mihara  <mihara@netlab.jp>
+
+	* libs/net.c:
+	SSLのパスフレーズ入力を組込み関数からのみ行うように変更した。環境変数指定の外部コマンドからの入力は廃止。
+
+2008-06-13  yusuke mihara  <mihara@netlab.jp>
+
+	* bd_component.c bd_config.c bootdialog.c dialogs.c:
+	glclientのコマンドラインオプションにランチャーの設定を指定するオプション(-config)を追加した
+
+2008-06-13  Noboru Saitou  <noborus@netlab.jp>
+
+	* aps/aps_main.c, dblib/PostgreSQL.c, dblib/dbgroup.c, dblib/dbgroup.h,
+	  dbstuff/dbredirector.c, dbstuff/dbs_main.c, include/struct.h,
+	  libs/DIparser.c, tools/checkdir.c: sslmodeの追加(PostgreSQL)
+
+2008-06-12  yusuke mihara  <mihara@netlab.jp>
+
+	* bd_component.c bootdialog.c callbacks.c client.c: ランチャーにsend_event_when_idleのタイマー設定を追加した
+
+
+2008-06-11  Noboru Saitou  <noborus@netlab.jp>
+
+	* action.c, client.c, glclient.h, protocol.c, widgetOPS.c (RecvWindow):
+	セッション毎にタイトルを設定可能にした
+
+2008-06-11  yusuke mihara  <mihara@netlab.jp>
+
+	* glclient/bootdialog.c, glclient/bd_component.c:glclientランチャーのリファクタリング、ランチャーとサーバリスト設定の共通部分をbd_component.cにまとめた
+	ランチャーでの変更をサーバリストの設定に反映可能にした
+
 2009-05-15  Masami Ogoshi  <ogochan@nurs.or.jp>
 
 	* configure.ac: バージョン番号を1.5.0に

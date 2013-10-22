@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,15 +28,14 @@ extern	void	InitiateHandler(void);
 extern	void	InitiateBatchHandler(void);
 extern	void	ReadyDC(void);
 extern	void	ReadyHandlerDB(MessageHandler *handler);
-extern	DB_Environment	*ReadyOnlineDB(NETFILE *fp);
-extern	void	ExecuteProcess(ProcessNode *node, DB_Environment *env);
+extern	int		ReadyOnlineDB(char *appname);
+extern	void	ExecuteProcess(ProcessNode *node);
 extern	void	StopDC(void);
 extern	void	StopHandlerDB(MessageHandler *handler);
-extern	void	StopOnlineDB(DB_Environment *env);
+extern	void	StopOnlineDB(void);
 extern	void	CleanUpHandlerDB(MessageHandler *handler);
 extern	void	CleanUpOnlineDB(void);
 extern	void	CleanUpOnlineDC(void);
-extern	void	SetPutType(ProcessNode *node, char *wname, byte type);
 
 extern	int		StartBatch(char *name, char *para);
 
@@ -58,7 +57,9 @@ GLOBAL	DBD_Struct	*ThisDBD;
 GLOBAL	char		*LibPath;
 
 GLOBAL	size_t		TextSize;
-GLOBAL	int			nCache;
+
+GLOBAL	char		*CurrentUser;
+GLOBAL	char		*CurrentTerm;
 
 #undef	GLOBAL
 #endif

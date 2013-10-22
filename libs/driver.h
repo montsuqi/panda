@@ -26,53 +26,35 @@
 #include	"struct.h"
 #include	"glterm.h"
 
+#define	SCREEN_DATA_NULL		0
+#define	SCREEN_DATA_CONNECT		1
+#define	SCREEN_DATA_END			2
+
 typedef	struct {
-	char		window[SIZE_NAME+1];
-	char		widget[SIZE_NAME+1];
-	char		event[SIZE_EVENT+1];
-	char		cmd[SIZE_LONGNAME+1];
-	char		user[SIZE_USER+1];
-	char		term[SIZE_TERM+1];
-	char		other[SIZE_OTHER+1];
-	int			status;
-	GHashTable	*Windows;			/*	for WindowData		*/
-	GHashTable	*Records;			/*	for	RecordStruct	*/
-	char		lang[SIZE_NAME+1];
-	char		*encoding;
+	char			window[SIZE_NAME+1];
+	char			widget[SIZE_NAME+1];
+	char			event[SIZE_EVENT+1];
+	char			cmd[SIZE_LONGNAME+1];
+	char			user[SIZE_USER+1];
+	char			term[SIZE_TERM+1];
+	char			host[SIZE_HOST+1];
+	char			agent[SIZE_TERM+1];
+	int				status;
+	unsigned char	puttype;
+	WindowStack		w;
+	GHashTable		*Windows;
 }	ScreenData;
 
 typedef	struct {
-	Bool			fNew;
-	byte			PutType;
-	char			*name;
+	unsigned char	puttype;
 	RecordStruct	*rec;
 }	WindowData;
 
-extern	WindowData		*SetWindowName(char *name);
-extern	Bool			PutWindow(WindowData *win, byte type);
-extern	RecordStruct	*GetWindowRecord(char *wname);
-extern	RecordStruct	*SetWindowRecord(char *wname);
-extern	void			LinkModule(char *name);
-extern	ScreenData		*NewScreenData(void);
-extern	char			*PureWindowName(char *comp, char *buff);
-extern	char			*PureComponentName(char *comp, char *buff);
-extern	void			RemoveWindowRecord(char *name);
-extern	void			SaveScreenData(ScreenData *scr, Bool fSaveRecords);
-extern	ScreenData		*LoadScreenData(char *term);
-extern	void			FreeScreenData(ScreenData *scr);
-extern	void			PargeScreenData(ScreenData *scr);
-extern	void			DumpScreenData(ScreenData *scr);
-
-/*	C API	*/
-extern	ValueStruct	*GetWindowValue(char *name);
-extern	WindowData	*PutWindowByName(char *wname, byte type);
-
-#define	ThisWindow	(ThisScreen->window)
-#define	ThisWidget	(ThisScreen->widget)
-#define	ThisEvent	(ThisScreen->event)
-#define	ThisUser	(ThisScreen->user)
-#define	ThisTerm	(ThisScreen->term)
-#define	ThisLang	(ThisScreen->lang)
+extern	ScreenData	*NewScreenData(void);
+extern	void		FreeScreenData(ScreenData *scr);
+extern	WindowData	*RegisterWindow(ScreenData *scr,const char *name);
+extern	ValueStruct	*GetWindowValue(ScreenData *scr,const char *name);
+extern	void		PutWindow(ScreenData *scr,const char *wname, unsigned char type);
 
 #undef	GLOBAL
 #ifdef	_DRIVER
@@ -80,6 +62,5 @@ extern	WindowData	*PutWindowByName(char *wname, byte type);
 #else
 #define	GLOBAL	extern
 #endif
-GLOBAL	ScreenData	*ThisScreen;	/*	current applications ScreenData		*/
 #undef	GLOBAL
 #endif

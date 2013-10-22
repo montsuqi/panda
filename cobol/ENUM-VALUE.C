@@ -5,7 +5,8 @@ start-cobol
       * PANDA -- a simple transaction monitor
       *
       * Copyright (C) 1993-1999 Ogochan.
-      *               2000-2008 Ogochan & JMARI.
+      *               2000-2003 Ogochan & JMARI.
+      *               2004-2007 Ogochan.
       *
       * This program is free software; you can redistribute it and/or modify
       * it under the terms of the GNU General Public License as published by

@@ -35,7 +35,6 @@
 #include	<glib.h>
 #include	<pthread.h>
 
-#include	"types.h"
 
 #include	"libmondai.h"
 #include	"struct.h"
@@ -52,10 +51,6 @@
 #define	OB_NUMBER	20
 
 #define	TEST_PACK
-#if	BLOB_VERSION == 2
-#define	TEST_LINER
-#define	TEST_TREE
-#endif
 
 //#define	TEST_INIT
 //#define	TEST_CREAT
@@ -67,9 +62,6 @@
 //#define	TEST_READWRITE2
 //#define	TEST_DESTROY2
 //#define	TEST_TRANSACTION
-//#if	BLOB_VERSION == 2
-//#define	TEST_SHORT
-//#endif
 
 extern	int
 main(

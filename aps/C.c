@@ -33,7 +33,6 @@
 #include	<dlfcn.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"comm.h"
@@ -237,9 +236,7 @@ static	MessageHandlerClass	Handler = {
 extern	MessageHandlerClass	*
 C(void)
 {
-	GHashTable	*table;
 ENTER_FUNC;
-	table = NewNameHash();
 LEAVE_FUNC;
 	return	(&Handler);
 }

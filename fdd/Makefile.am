@@ -25,18 +25,18 @@ LDADD 		=							\
 	-lm									\
 	$(top_builddir)/libs/libpandamisc.a	\
 	$(top_builddir)/libs/libpandacom.a	\
-	$(GLIB_LIBS)						\
+	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(MONDAI_LIBS)
+	$(COMMON_LIBS)
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
-	$(GLIB_CFLAGS)			\
+	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
-	$(MONDAI_CFLAGS)
+	$(COMMON_CFLAGS)
 
 fdw_SOURCES		=	\
 	fdw.c	fdd.h

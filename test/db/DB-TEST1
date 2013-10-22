@@ -1,4 +1,0 @@
-              03  TST.
-                04  TST-ID  PIC X(40).
-                04  TST-CLASS   PIC X(20).
-                04  TST-CODE    PIC S9(9)   BINARY.

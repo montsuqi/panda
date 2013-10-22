@@ -31,6 +31,7 @@ extern	int		BindSocket(Port *port, int type);
 /*	lower level	*/
 extern	int		BindIP_Socket(char *port, int type);
 extern	int		BindUNIX_Socket(char *name, int type, int mode);
+extern	int		BindIP_Multi_Listen(char *port, int back, int *soc);
 extern	int		ConnectIP_Socket(char *port, int type, char *host);
 extern	int		ConnectUNIX_Socket(char *name, int type);
 extern	void	CleanUNIX_Socket(Port *port);

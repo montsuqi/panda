@@ -22,6 +22,8 @@
 #define	_INC_PROTOCOL_H
 #include	"queue.h"
 
+#define CLIENT_SIZE_BUFF (256*1024)
+
 extern	void			InitProtocol(void);
 extern  void        	TermProtocol(void);
 extern	void			CheckScreens(NETFILE *fp, Bool);

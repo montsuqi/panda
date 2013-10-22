@@ -20,7 +20,6 @@
 #ifndef	_APS_MAIN_H
 #define	_APS_MAIN_H
 
-
 #undef	GLOBAL
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -28,6 +27,5 @@
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	Bool	fTimer;
-
 #endif
+

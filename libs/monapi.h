@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +23,19 @@
 #include	"const.h"
 #include	"enum.h"
 #include	"libmondai.h"
+#include	"wfcio.h"
 
 typedef	struct {
-	char			ld[SIZE_NAME+1];
-	char			user[SIZE_USER+1];
-	char			term[SIZE_TERM+1];
-	PacketClass		method;
-	LargeByteString	*arguments;
-	LargeByteString	*headers;
-	LargeByteString	*body;
+	char		ld[SIZE_NAME+1];
+	char		window[SIZE_NAME+1];
+	char		user[SIZE_USER+1];
+	char		host[SIZE_HOST+1];
+	ValueStruct	*value;
 }	MonAPIData;
 
-extern	MonAPIData	*NewMonAPIData(void);
-extern	void		FreeMonAPIData(MonAPIData *data);
-extern	gboolean	CallMonAPI(MonAPIData *data);
+extern	MonAPIData		*NewMonAPIData(void);
+extern	void			FreeMonAPIData(MonAPIData *data);
+extern	PacketClass		CallMonAPI(MonAPIData *data);
 
 #undef	GLOBAL
 #ifdef	_MONAPI

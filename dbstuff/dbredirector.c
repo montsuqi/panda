@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 #define	MAIN
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -31,6 +31,8 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
+#include	<strings.h>
+#include	<errno.h>
 #include	<sys/types.h>
 #include	<sys/stat.h>
 #include	<sys/time.h>
@@ -41,9 +43,9 @@
 #include	<pthread.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
+#include	"enum.h"
 #include	"comm.h"
 #include	"dirs.h"
 #include	"redirect.h"
@@ -52,115 +54,376 @@
 #include	"directory.h"
 #include	"queue.h"
 #include	"socket.h"
+#include	"dbredirector.h"
 #include	"option.h"
 #include	"message.h"
+#include	"dblog.h"
+#include	"audit.h"
 #include	"debug.h"
-
-#define		CONNECT_INTERVAL		60
 
 static	char	*PortNumber;
 static	int		Back;
 static	char	*Directory;
-static	int		nPool;
+static	char	AppName[128];
 
-static	sigset_t		hupset;
-static	DBG_Instance	*ThisDBG_Instance;
-#define	ThisDBG_Class	(ThisDBG_Instance->class)
-static	pthread_t		_FileThread;
-static	Queue			*FileQueue;
-static	GHashTable		*DataHash;
-static	int				cPool;
+static	DBG_Struct	*ThisDBG;
+static	DBG_Struct	*AuditDBG;
+static	pthread_t	_FileThread;
+static int               RedirectorMode;
 
-typedef	struct {
-	char			id[SIZE_TERM + 1];
-	LargeByteString	*CheckData;
-	LargeByteString	*RedirectData;
-}	VeryfyData;
-
-static	Port		*RedirectPort;
 static  pthread_mutex_t redlock;
+static  pthread_mutex_t ticketlock;
+static  pthread_cond_t redcond;
+
+static  GSList *TicketList;
+static  volatile int TICKETID = 1;
+
+static  Bool fDbsyncstatus = TRUE;
+volatile sig_atomic_t 	fShutdown = FALSE;
+volatile sig_atomic_t	fReopen = FALSE;
+volatile static Bool	fSync = FALSE;
+volatile static int	LOCKFD = 0;
+volatile static int	SYNCFD = 0;
+
+static 	DBLogCtx *DBLog;
+
+#define DBLOG_PROGRAM "dblogger"
+#define FILE_SEP      '/'
+
+static VeryfyData	*
+NewVerfyData(void)
+{
+	VeryfyData *veryfydata;
+	veryfydata = New(VeryfyData);
+	veryfydata->checkData = NewLBS();
+	veryfydata->redirectData = NewLBS();
+	return veryfydata;
+}
 
 static	void
 FreeVeryfyData(
-	VeryfyData	*vdata)
+	VeryfyData	*veryfydata)
 {
-	pthread_mutex_lock(&redlock);
-	g_hash_table_remove(DataHash,vdata->id);
-	pthread_mutex_unlock(&redlock);
-	FreeLBS(vdata->CheckData);
-	FreeLBS(vdata->RedirectData);
-	xfree(vdata);
-	cPool ++;
+	FreeLBS(veryfydata->checkData);
+	FreeLBS(veryfydata->redirectData);
+	xfree(veryfydata);
+	veryfydata = NULL;
 }
+
+static Ticket *
+NewTicket(void)
+{
+	Ticket *ticket;
+ENTER_FUNC;
+	ticket = New(Ticket);
+	ticket->ticket_id = 0;
+	ticket->fd = 0;
+	ticket->veryfydata = NULL;
+	ticket->auditlog = NULL;
+	ticket->status = TICKET_BEGIN;
+LEAVE_FUNC;
+	return ticket;
+}
+
+static Ticket *
+LookupTicket(
+	int	ticket_id,
+	int fd)
+{
+	GSList *list;
+	Ticket *ticket;
+
+	if (ticket_id == 0) {
+		Warning("Illegal ticket_id");
+		return NULL;
+	}
+	pthread_mutex_lock(&ticketlock);
+	list = TicketList;
+	while(list){
+		if (list->data) {
+			ticket = (Ticket *)list->data;
+			if ( (ticket->ticket_id == ticket_id)
+				 && (ticket->fd == fd) ) {
+				pthread_mutex_unlock(&ticketlock);
+				return ticket;
+			}
+		}
+		list = list->next;
+	}
+	pthread_mutex_unlock(&ticketlock);
+	return NULL;
+}
+
+static void
+LockTicket(
+	NETFILE	*fpLog)
+{
+	pthread_mutex_lock(&ticketlock);
+	LOCKFD = fpLog->fd;
+}
+
+static void
+UnLockTicket(
+	NETFILE	*fpLog)
+{
+	LOCKFD = 0;
+	pthread_mutex_unlock(&ticketlock);
+}
+
+static void
+CleanLock(
+	NETFILE	*fpLog)
+{
+	if ( (LOCKFD > 0) && (LOCKFD == fpLog->fd) ){
+		Message("clean lock %d\n", fpLog->fd);
+		UnLockTicket(fpLog);
+		LOCKFD = 0;
+	}
+}
+
+static void
+SyncModeStart(
+		NETFILE	*fpLog)
+{
+	Message("Sync mode start");
+	fSync = TRUE;
+	SYNCFD = fpLog->fd;
+	pthread_cond_signal(&redcond);
+}
+
+static void
+SyncModeEnd(
+		NETFILE	*fpLog)
+{
+	if ( fSync ){
+		fSync = FALSE;
+		Message("Sync mode end");
+	}
+	SYNCFD = 0;
+}
+
+static void
+SyncWait(
+		NETFILE	*fpLog)
+{
+	int i = 0;
+
+	LockTicket(fpLog);
+	while (g_slist_length(TicketList) > 0){
+		sleep(1);
+		i++;
+		if (i>5){
+			Warning("The ticket processing doesn't end.");
+			break;
+		}
+	}
+	SendPacketClass(fpLog,RED_SYNC_WAIT);
+	sleep(1);
+	UnLockTicket(fpLog);
+}
+
+static void
+CleanSyncMode(
+	NETFILE	*fpLog)
+{
+	if ( (SYNCFD > 0) && (SYNCFD == fpLog->fd) ){
+		Message("clean Sync mode");
+		fSync = FALSE;
+	}
+	SYNCFD = 0;
+}
+
+static void
+OrderTicket(
+	NETFILE	*fpLog)
+{
+	Ticket *ticket;
+ENTER_FUNC;
+	ticket = NewTicket();
+	ticket->fd = fpLog->fd;
+	ticket->ticket_id = TICKETID++;
+	TicketList = g_slist_append(TicketList, ticket);
+	SendInt(fpLog, ticket->ticket_id);
+LEAVE_FUNC;
+}
+
 
 static void
 RecvRedData(
 	NETFILE	*fpLog)
 {
-	VeryfyData *vdata;
-	char		id[SIZE_TERM + 1];
-
+	int		ticket_id;
+	Ticket		*ticket;
+	VeryfyData	*veryfydata;
 ENTER_FUNC;
-	RecvnString(fpLog,SIZE_TERM,id);
-	pthread_mutex_lock(&redlock);
-	vdata = (VeryfyData *)g_hash_table_lookup(DataHash,id);
-	if		(  vdata  ==  NULL  ) {
-		vdata = New(VeryfyData);
-		vdata->CheckData = NewLBS();
-		vdata->RedirectData = NewLBS();
-		strcpy(vdata->id,id);
-		g_hash_table_insert(DataHash,vdata,vdata->id);
-		cPool ++;
+	veryfydata = NewVerfyData();
+	ticket_id = RecvInt(fpLog);
+
+	RecvLBS(fpLog, veryfydata->checkData);
+	LBS_EmitEnd(veryfydata->checkData);
+
+	RecvLBS(fpLog, veryfydata->redirectData);
+	LBS_EmitEnd(veryfydata->redirectData);
+
+	ticket = LookupTicket(ticket_id, fpLog->fd);
+	if ( (ticket != NULL)
+		 && (ticket->status == TICKET_BEGIN) ) {
+		ticket->veryfydata = veryfydata;
+		ticket->status = TICKET_DATA;
+	} else {
+		FreeVeryfyData(veryfydata);
 	}
-	pthread_mutex_unlock(&redlock);
-
-	RecvLBS(fpLog,vdata->CheckData);
-	LBS_EmitEnd(vdata->CheckData);
-
-	RecvLBS(fpLog,vdata->RedirectData);
-	LBS_EmitEnd(vdata->RedirectData);
-	SendPacketClass(fpLog,RED_OK);
 LEAVE_FUNC;
 }
 
-static	void
-CommitRedData(
+static Ticket *
+DequeueTicket(void)
+{
+	GSList *first = NULL;
+	Ticket *ticket = NULL;
+ENTER_FUNC;
+	while ( ticket == NULL ) {
+		pthread_mutex_lock(&redlock);
+		pthread_mutex_lock(&ticketlock);
+		first = g_slist_nth(TicketList,0);
+		pthread_mutex_unlock(&ticketlock);
+		if ( first == NULL ){
+			if ( fShutdown||fReopen||fSync ) {
+				pthread_mutex_unlock(&redlock);
+				break;
+			}
+		}
+		if ( first ) {
+			ticket = (Ticket *)(first->data);
+			if ( (ticket->status == TICKET_COMMIT)
+				|| (ticket->status == TICKET_ABORT)
+				|| (ticket->status == TICKET_AUDIT)){
+				pthread_mutex_lock(&ticketlock);
+				TicketList = g_slist_remove_link(TicketList,first);
+				pthread_mutex_unlock(&ticketlock);
+				g_slist_free_1(first);
+			} else {
+				ticket = NULL;
+			}
+		}
+		if ( ticket == NULL ) {
+			pthread_cond_wait(&redcond,&redlock);
+		}
+		pthread_mutex_unlock(&redlock);
+	}
+LEAVE_FUNC;
+	return ticket;
+}
+
+static void
+CommitTicket(
 	NETFILE	*fpLog)
 {
-	VeryfyData *vdata;
-	char		id[SIZE_TERM + 1];
+	int		ticket_id;
+	Ticket		*ticket;
 
-ENTER_FUNC;
-	RecvnString(fpLog,SIZE_TERM,id);
-	pthread_mutex_lock(&redlock);
-	if		(  ( vdata = (VeryfyData *)g_hash_table_lookup(DataHash,id) )  !=  NULL  ) {
-		EnQueue(FileQueue, vdata);
-		dbgmsg("*");
+	ticket_id = RecvInt(fpLog);
+	ticket = LookupTicket(ticket_id, fpLog->fd);
+	if (ticket) {
+		if (ticket->status != TICKET_ABORT) {
+			ticket->status = TICKET_COMMIT;
+		}
 		SendPacketClass(fpLog,RED_OK);
 	} else {
-		dbgmsg("*");
+		Warning("The transaction (%d) is not found. List count (%d). Current maximum ID is (%d)", ticket_id, g_slist_length(TicketList), TICKETID);
 		SendPacketClass(fpLog,RED_NOT);
 	}
-	pthread_mutex_unlock(&redlock);
+	pthread_cond_signal(&redcond);
+}
+
+static void
+AbortTicket(
+	NETFILE	*fpLog)
+{
+	Ticket *ticket;
+	int	ticket_id;
+ENTER_FUNC;
+	ticket_id = RecvInt(fpLog);
+	ticket = LookupTicket(ticket_id, fpLog->fd);
+	if (ticket) {
+		ticket->status = TICKET_ABORT;
+	}
+	pthread_cond_signal(&redcond);
 LEAVE_FUNC;
 }
 
-static	void
-AbortRedData(
+static void
+AllAbortTicket(
 	NETFILE	*fpLog)
 {
-	VeryfyData *vdata;
-	char		id[SIZE_TERM + 1];
-
+	GSList *list;
+	Ticket *ticket;
 ENTER_FUNC;
-	RecvnString(fpLog,SIZE_TERM,id);
-	pthread_mutex_lock(&redlock);
-	if		(  ( vdata = (VeryfyData *)g_hash_table_lookup(DataHash,id) )  !=  NULL  ) {
-		SendPacketClass(fpLog,RED_OK);
-		RewindLBS(vdata->CheckData);
-		RewindLBS(vdata->RedirectData);
+	pthread_mutex_lock(&ticketlock);
+	for (list = TicketList; list; list=list->next){
+		ticket = (Ticket *)list->data;
+		if ( (ticket != NULL )
+			 && (ticket->fd == fpLog->fd)
+			 && ((ticket->status == TICKET_BEGIN)
+				 || (ticket->status == TICKET_DATA)) ) {
+			ticket->status = TICKET_ABORT;
+			dbgprintf("Auto abort %llu\n", ticket->ticket_id);
+		}
 	}
-	pthread_mutex_unlock(&redlock);
+	pthread_mutex_unlock(&ticketlock);
+	pthread_cond_signal(&redcond);
+LEAVE_FUNC;
+}
+
+static void
+AllAllAbortTicket(void)
+{
+	GSList *list;
+	Ticket *ticket;
+ENTER_FUNC;
+	pthread_mutex_lock(&ticketlock);
+	for (list = TicketList; list; list=list->next){
+		ticket = (Ticket *)list->data;
+		if ( (ticket != NULL)
+			 && ((ticket->status == TICKET_BEGIN)
+					 || (ticket->status == TICKET_DATA)) ) {
+			ticket->status = TICKET_ABORT;
+			dbgprintf("Auto abort %llu\n", ticket->ticket_id);
+		}
+	}
+	pthread_mutex_unlock(&ticketlock);
+LEAVE_FUNC;
+}
+
+	static void
+AuditTicket(
+	NETFILE	*fpLog,
+	LargeByteString	*lbs)
+{
+	Ticket *ticket;
+ENTER_FUNC;
+	ticket = NewTicket();
+	ticket->status = TICKET_AUDIT;
+	ticket->auditlog = lbs;
+	LockTicket(fpLog);
+	TicketList = g_slist_append(TicketList, ticket);
+	UnLockTicket(fpLog);
+LEAVE_FUNC;
+}
+
+static void
+RecvAuditLog(
+	NETFILE	*fpLog)
+{
+	LargeByteString	*lbs;
+ENTER_FUNC;
+    lbs = NewLBS();
+	RecvLBS(fpLog, lbs);
+	if (LBS_Size(lbs) > 0 ){
+		AuditTicket(fpLog, lbs);
+	} else {
+		FreeLBS(lbs);
+	}
 LEAVE_FUNC;
 }
 
@@ -172,86 +435,87 @@ LogThread(
 	NETFILE	*fpLog;
 	PacketClass	c;
 	Bool	fSuc = TRUE;
-	char		id[SIZE_TERM + 1];
-
 ENTER_FUNC;
 	dbgmsg("log thread!\n");
 	fpLog = SocketToNet(fhLog);
 	do {
 		switch	( c = RecvPacketClass(fpLog) ) {
+		  case	RED_BEGIN:
+			OrderTicket(fpLog);
+			break;
 		  case	RED_DATA:
-			dbgmsg("RED_DATA");
 			RecvRedData(fpLog);
-			fSuc = fpLog->fOK;
 			break;
 		  case	RED_COMMIT:
-			dbgmsg("RED_COMMIT");
-			CommitRedData(fpLog);
-			fSuc = fpLog->fOK;
+			CommitTicket(fpLog);
 			break;
 		  case	RED_ABORT:
-			dbgmsg("RED_ABORT");
-			AbortRedData(fpLog);
-			fSuc = fpLog->fOK;
+			AbortTicket(fpLog);
 			break;
 		  case	RED_PING:
-			dbgmsg("RED_PING");
 			SendPacketClass(fpLog,RED_PONG);
-			fSuc = fpLog->fOK;
 			break;
 		  case	RED_STATUS:
-			dbgmsg("RED_STATUS");
-			RecvnString(fpLog,SIZE_TERM,id);
-			SendChar(fpLog, ThisDBG_Instance->update.dbstatus);
-			fSuc = fpLog->fOK;
+			SendChar(fpLog, ThisDBG->process[PROCESS_UPDATE].dbstatus);
+			break;
+		  case	RED_LOCK:
+			LockTicket(fpLog);
+			break;
+		  case	RED_UNLOCK:
+			UnLockTicket(fpLog);
+			break;
+		  case	RED_AUDIT:
+			RecvAuditLog(fpLog);
+			break;
+		  case	RED_SYNC_START:
+			SyncModeStart(fpLog);
+			break;
+		  case	RED_SYNC_END:
+			SyncModeEnd(fpLog);
+			break;
+		  case	RED_SYNC_WAIT:
+			SyncWait(fpLog);
 			break;
 		  case	RED_END:
-			dbgmsg("RED_END");
 			fSuc = FALSE;
 			break;
 		  default:
-			dbgprintf("default %02X",c);
 			SendPacketClass(fpLog,RED_NOT);
 			fSuc = FALSE;
 			break;
 		}
-	}	while	(  fSuc  );
+	}	while	(  !fShutdown && fSuc && fpLog->fOK );
+	CleanLock(fpLog);
+	CleanSyncMode(fpLog);
+	AllAbortTicket(fpLog);
 	CloseNet(fpLog);
 	dbgmsg("log thread close!\n");
 LEAVE_FUNC;
 }
 
 extern	pthread_t
-ConnectLog(
-	int		_fhLog)
+ConnectServer(
+	int		_fh)
 {
-	int		fhLog;
+	int		fh;
 	pthread_t	thr;
 
 ENTER_FUNC;
-	if		(  ( fhLog = accept(_fhLog,0,0) )  <  0  )	{
-		printf("_fhLog = %d\n",_fhLog);
-		Error("INET Domain Accept");
-	}
-	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)(long)fhLog);
-	pthread_detach(thr);
-LEAVE_FUNC;
-	return	(thr); 
-}
 
-static  FILE	*
-OpenLogFile(
-	char	*file)
-{
-	FILE	*fp = NULL;
-
-	if		(  ThisDBG_Class->file  !=  NULL  ) {
-		umask((mode_t) 0077);
-		if		(  ( fp = fopen(ThisDBG_Class->file,"a+") )  ==  NULL  ) {
-			Error("can not open log file :%s", ThisDBG_Class->file);
+	for (;;){
+		if		(  ( fh = accept(_fh,0,0) ) < 0 )	{
+			if (errno == EINTR) {
+				continue;
+			}
+			Error("accept: %s", strerror(errno));
+		} else {
+			break;
 		}
 	}
-	return fp;
+	pthread_create(&thr,NULL,(void *(*)(void *))LogThread,(void *)(long)fh);
+	pthread_detach(thr);
+LEAVE_FUNC;
+	return	(thr);
 }
 
 static  void
@@ -260,16 +524,16 @@ WriteLog(
 	char	*state)
 {
 	time_t	nowtime;
-	struct	tm	*Now;
+	struct	tm	Now;
 ENTER_FUNC;
 	if		(  fp  !=  NULL  ) {
 		time(&nowtime);
-		Now = localtime(&nowtime);
+		localtime_r(&nowtime, &Now);
 		fprintf(fp, "%s %04d/%02d/%02d/%02d:%02d:%02d/ ========== %s ========== %s\n"
-				,ThisDBG_Class->func->commentStart
-				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-				, Now->tm_hour,Now->tm_min,Now->tm_sec,state
-				,ThisDBG_Class->func->commentEnd);
+				,ThisDBG->func->commentStart
+				, Now.tm_year+1900,Now.tm_mon+1,Now.tm_mday
+				, Now.tm_hour,Now.tm_min,Now.tm_sec,state
+				,ThisDBG->func->commentEnd);
 		fflush(fp);
 	}
 LEAVE_FUNC;
@@ -282,17 +546,17 @@ WriteLogQuery(
 {
 	static  int count = 0;
 	time_t	nowtime;
-	struct	tm	*Now;
+	struct	tm	Now;
 
 ENTER_FUNC;
 	if		(  fp  !=  NULL  ) {
 		time(&nowtime);
-		Now = localtime(&nowtime);
+		localtime_r(&nowtime, &Now);
 		fprintf(fp,"%s %04d/%02d/%02d/%02d:%02d:%02d/%08d %s"
-				,ThisDBG_Class->func->commentStart
-				, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-				, Now->tm_hour,Now->tm_min,Now->tm_sec,count
-				,ThisDBG_Class->func->commentEnd);
+				,ThisDBG->func->commentStart
+				, Now.tm_year+1900,Now.tm_mon+1,Now.tm_mday
+				, Now.tm_hour,Now.tm_min,Now.tm_sec,count
+				,ThisDBG->func->commentEnd);
 		fprintf(fp,"%s\n", query);
 		fflush(fp);
 		count ++;
@@ -304,13 +568,38 @@ static  Bool
 ConnectDB(void)
 {
 	Bool rc = TRUE;
+	DBG_Struct	*rdbg;
+	int	retry = 0;
 ENTER_FUNC;
-	if ( OpenRedirectDB(ThisDBG_Instance) == MCP_OK ) {
-		Message("connect to database successed");
-		ThisDBG_Instance->checkData = NewLBS();
-	} else {
-		Message("connect to database failed");
-		rc = FALSE;
+	if (GetDB_DBname(ThisDBG,DB_UPDATE) == NULL){
+		return rc;
+	}
+	if (  ThisDBG->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT ) {
+		OpenRedirectDB(ThisDBG);
+		if (ThisDBG->redirect != NULL) {
+			/* ReRedirect ReConnect */
+			rdbg = ThisDBG->redirect;
+			while (ThisDBG->fpLog == NULL){
+				retry ++;
+				if ( retry > MaxSendRetry ){
+					break;
+				}
+				sleep (1);
+				OpenDB_RedirectPort(ThisDBG);
+			}
+			if (ThisDBG->fpLog != NULL) {
+				Message("ReRedirect Server (%s) connected.", rdbg->name);
+			} else {
+				Warning("ReRedirect Server (%s) not found.", rdbg->name);
+			}
+		}
+		if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+			Message("connect to database successed");
+			LBS_EmitStart(ThisDBG->checkData);
+		} else {
+			Message("connect to database failed");
+			rc = FALSE;
+		}
 	}
 LEAVE_FUNC;
 	return rc;
@@ -328,10 +617,98 @@ ENTER_FUNC;
 		}
 		sleep (CONNECT_INTERVAL);
 	}
-	if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_UNCONNECT ){
-		ThisDBG_Instance->update.dbstatus = DB_STATUS_FAILURE;
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ){
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
 	}
 LEAVE_FUNC;
+}
+
+static  Bool
+DisConnectDB(void)
+{
+	Bool rc = TRUE;
+ENTER_FUNC;
+	CloseRedirectDB(ThisDBG);
+	if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_DISCONNECT ) {
+		Message("disconnect to database successed");
+	} else {
+		rc = FALSE;
+		Message("disconnect to database failed");
+	}
+	return rc;
+LEAVE_FUNC;
+}
+
+static  FILE	*
+OpenLogFile(void)
+{
+	FILE	*fp = NULL;
+
+	if		(  ThisDBG->file  !=  NULL  ) {
+		umask((mode_t) 0077);
+		if		(  ( fp = fopen(ThisDBG->file,"a+") )  ==  NULL  ) {
+			Warning("can not open log file :%s", ThisDBG->file);
+		}
+	}
+	return fp;
+}
+
+extern  Bool
+ConnectAuditDB(void)
+{
+	Bool rc = TRUE;
+ENTER_FUNC;
+	if (  AuditDBG == NULL) {
+		return rc;
+	}
+	if (  AuditDBG->process[PROCESS_UPDATE].dbstatus != DB_STATUS_CONNECT ) {
+		OpenRedirectDB(AuditDBG);
+		if (  AuditDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+			Message("connect to audit database successed");
+		} else {
+			Message("connect to audit database failed");
+			rc = FALSE;
+		}
+	}
+LEAVE_FUNC;
+	return rc;
+}
+
+static  FILE	*
+OpenAuditLogFile(void)
+{
+	FILE	*fp = NULL;
+
+	if		(  AuditLogFile  !=  NULL  ) {
+		umask((mode_t) 0077);
+		if		(  ( fp = fopen(AuditLogFile,"a+") )  ==  NULL  ) {
+			Warning("can not open audit log file :%s", AuditLogFile);
+		}
+	}
+	return fp;
+}
+
+static	int
+CloseLogFile(
+	FILE	*fp)
+{
+	return fclose(fp);
+}
+
+static  FILE	*
+ReopenSystem(
+	FILE	*fp)
+{
+	FILE	*rfp = NULL;
+ENTER_FUNC;
+	DisConnectDB();
+	if ( fp != NULL) {
+		CloseLogFile(fp);
+	}
+	ConnectDB();
+	rfp = OpenLogFile();
+LEAVE_FUNC;
+	return rfp;
 }
 
 static int
@@ -344,78 +721,195 @@ ENTER_FUNC;
 	if ( strcmp(LBS_Body(src), LBS_Body(dsc)) == 0){
 		rc = MCP_OK;
 	} else {
+		Warning("CheckData difference %s<>%s", LBS_Body(src), LBS_Body(dsc));
 		rc = MCP_BAD_OTHER;
 	}
 LEAVE_FUNC;
 	return	rc;
 }
 
-static	int
+extern	int
 WriteDB(
-	char	*query,
+	LargeByteString	*query,
 	LargeByteString	*orgcheck)
 {
 	int rc;
-	char buff[SIZE_BUFF];
 	LargeByteString	*redcheck;
+	char buff[SIZE_BUFF];
+
 ENTER_FUNC;
-	rc = TransactionRedirectStart(ThisDBG_Instance);
+	rc = TransactionRedirectStart(ThisDBG);
 	if ( rc == MCP_OK ) {
-		rc = ExecRedirectDBOP(ThisDBG_Instance, query, DB_UPDATE);
-		redcheck = ThisDBG_Instance->checkData;
+		rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), DB_UPDATE);
+		redcheck = ThisDBG->checkData;
 	}
 	if ( rc == MCP_OK ) {
 		if ( ( !fNoSumCheck) &&  ( LBS_Size(orgcheck) > 0 ) ){
 			rc = CheckRedirectData(orgcheck, redcheck);
 			if ( rc != MCP_OK ) {
-				snprintf(buff, 60, "Difference for the update check %s...", query);
+				snprintf(buff, 60, "Difference for the update check %s...",(char *)LBS_Body(query));
 				Warning(buff);
 			}
 		}
 	}
 	if ( rc == MCP_OK ) {
-		rc = TransactionRedirectPrepare(ThisDBG_Instance);
-	}
-	if ( rc == MCP_OK ) {
-		rc = TransactionRedirectEnd(ThisDBG_Instance);
+		rc = TransactionRedirectEnd(ThisDBG);
 	}
 LEAVE_FUNC;
 	return rc;
 }
 
 
-static	void
+static	int
 ExecDB(
-	char	*query,
-	LargeByteString	*orgcheck)
+	VeryfyData *veryfydata)
 {
-	int rc;
-	
+	int rc = MCP_OK;
 ENTER_FUNC;
-	rc = WriteDB(query, orgcheck);
-	if ( rc == MCP_BAD_CONN ) {
-		CloseRedirectDB(ThisDBG_Instance);
-		ThisDBG_Instance->update.dbstatus = DB_STATUS_UNCONNECT;
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_UNCONNECT ) {
 		ReConnectDB();
-		if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_CONNECT ){
-			rc = WriteDB(query, orgcheck);
-		}
-	} else
+	}
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ){
+		rc = WriteDB(veryfydata->redirectData, veryfydata->checkData);
+	}
 	if ( rc != MCP_OK ) {
-		CloseRedirectDB(ThisDBG_Instance);
-		ThisDBG_Instance->update.dbstatus = DB_STATUS_FAILURE;
+		CloseRedirectDB(ThisDBG);
+		if ( rc == MCP_BAD_CONN ) {
+			ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;
+		} else {
+			ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_FAILURE;
+		}
 	}
 LEAVE_FUNC;
+	return ThisDBG->process[PROCESS_UPDATE].dbstatus;
 }
 
 static  void
 ReRedirect(
-	char	*query)
+	char	*query,
+	char	*checkData)
 {
 ENTER_FUNC;
-	BeginDB_Redirect(ThisDBG_Instance);
-	PutDB_Redirect(ThisDBG_Instance, query);
-	CommitDB_Redirect(ThisDBG_Instance);
+	if (  ThisDBG->redirect == NULL )
+		return;
+	LockDB_Redirect(ThisDBG);
+	BeginDB_Redirect(ThisDBG);
+	UnLockDB_Redirect(ThisDBG);
+	PutDB_Redirect(ThisDBG, query);
+	CopyCheckDataDB_Redirect(ThisDBG, checkData);
+	CommitDB_Redirect(ThisDBG);
+LEAVE_FUNC;
+}
+
+static void
+WriteRedirectAuditLog(void)
+{
+	VeryfyData	*veryfydata;
+
+	veryfydata = NewVerfyData();
+	veryfydata->checkData = LBS_Duplicate(AuditDBG->checkData);
+	veryfydata->redirectData = LBS_Duplicate(AuditDBG->redirectData);
+	ExecDB(veryfydata);
+	ReRedirect(LBS_Body(veryfydata->redirectData),
+						 LBS_Body(veryfydata->checkData));
+	FreeVeryfyData(veryfydata);
+}
+
+static	void
+SyncMode(
+	FILE	*fp)
+{
+	DisConnectDB();
+	ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_SYNC;
+	while (fSync) {
+		sleep(1);
+	}
+	ConnectDB();
+	fDbsyncstatus = TRUE;
+	WriteLog(fp, "The database synchronized again. ");
+}
+
+static void
+CheckFailure(
+	FILE	*fp)
+{
+	char *failure = "DB synchronous failure";
+	if ( ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_FAILURE ){
+		WriteLog(fp, failure);
+		Warning(failure);
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
+		fDbsyncstatus = FALSE;
+	}
+}
+
+extern	void
+WriteAuditLog(
+	FILE	*afp,
+	FILE	*fp,
+	Ticket *ticket)
+{
+	int rc;
+	static Bool ExistADBGAuditTable = FALSE;
+	static Bool ExistTDBGAuditTable = FALSE;
+ENTER_FUNC;
+	while (fSync){
+		Message("auditlog wait...");
+		sleep(1);
+	}
+
+	if (ticket->auditlog != NULL ) {
+		if (LBS_Size(ticket->auditlog) > 0 ) {
+			if (  AuditDBG != NULL) {
+				if (!ExistADBGAuditTable){
+					CheckAuditTable(AuditDBG);
+					ExistADBGAuditTable = TRUE;
+				}
+				LBS_EmitStart(AuditDBG->redirectData);
+				LBS_EmitStart(AuditDBG->checkData);
+				TransactionStart(AuditDBG);
+				rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), DB_UPDATE);
+				TransactionEnd(AuditDBG);
+				LBS_EmitEnd(AuditDBG->redirectData);
+				LBS_EmitEnd(AuditDBG->checkData);
+				if (rc == MCP_OK){
+					if (!ExistTDBGAuditTable){
+						CheckAuditTable(ThisDBG);
+						ExistTDBGAuditTable = TRUE;
+					}
+					WriteRedirectAuditLog();
+					CheckFailure(fp);
+				}
+			}
+			if		(	afp != NULL) {
+				fprintf(afp,"%s\n",(char *)LBS_Body(ticket->auditlog));
+				fflush(afp);
+			}
+		}
+		FreeLBS(ticket->auditlog);
+	}
+LEAVE_FUNC;
+}
+
+static void
+HandleRedirector(VeryfyData *veryfydata)
+{
+ENTER_FUNC;
+	if (ExecDB(veryfydata) == DB_STATUS_UNCONNECT ){
+		/* Retry */
+		ExecDB(veryfydata);
+	}
+LEAVE_FUNC;
+}
+
+static void
+HandleLog(VeryfyData *veryfydata)
+{
+ENTER_FUNC;
+	Put_DBLog(
+		DBLog,
+		LBS_Body(veryfydata->redirectData),
+		LBS_Body(veryfydata->checkData)
+	);
 LEAVE_FUNC;
 }
 
@@ -423,77 +917,110 @@ static	void
 FileThread(
 	void	*dummy)
 {
-	VeryfyData *vdata;
-	char	*query
-		,	*dbname;
-	FILE	*fp;
-
+	VeryfyData *veryfydata;
+	FILE	*fp, *afp;
+	Ticket *ticket;
+	char header[SIZE_BUFF];
 ENTER_FUNC;
-	fp = OpenLogFile(ThisDBG_Class->file);
-	if		(  ( dbname = GetDB_DBname(ThisDBG_Class,DB_UPDATE) )  !=  NULL  ) {
-		if (!fNoSumCheck) {
-			WriteLog(fp, "dbredirector start");
-		} else {
-			WriteLog(fp, "dbredirector start(No sum check)");
-		}
-		ConnectDB();
-	} else {
-		WriteLog(fp, "dbredirector start(No database)");
-		OpenDB_RedirectPort(ThisDBG_Instance);
-		ThisDBG_Instance->update.dbstatus = DB_STATUS_NOCONNECT;
+	fp = OpenLogFile();
+	ConnectDB();
+	afp = OpenAuditLogFile();
+	ConnectAuditDB();
+
+	strncpy(header, "dbredirector start", sizeof(header));
+	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
+		strncat(header, "(No database)", sizeof(header) - strlen(header) - 1);
+		/* ReRedirect */
+		OpenDB_RedirectPort(ThisDBG);
+		ThisDBG->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 	}
+	if	( fNoSumCheck) {
+		strncat(header, "(No sum check)", sizeof(header)- strlen(header) - 1);
+	}
+	WriteLog(fp, header);
 	while	( TRUE )	{
-		vdata = (VeryfyData *)DeQueue(FileQueue);
-		query = LBS_Body(vdata->RedirectData);
-		if		(  *query  !=  0 ) {
-			if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_UNCONNECT ) {
-				ReConnectDB();
+		ticket = DequeueTicket();
+		if ( ticket == NULL ){
+			if ( fSync ){
+				SyncMode(fp);
+				continue;
 			}
-			if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_CONNECT ){
-				ExecDB(query, vdata->CheckData);
-			}
-			if ( ThisDBG_Instance->update.dbstatus == DB_STATUS_FAILURE ){
-				Warning("DB synchronous failure");
-				WriteLog(fp, "DB synchronous failure");
-				ThisDBG_Instance->update.dbstatus = DB_STATUS_DISCONNECT;
-			}
-			ReRedirect(query);
-			WriteLogQuery(fp, query);
-			if		(  cPool  >=  nPool  ) {
-				FreeVeryfyData(vdata);
+			if ( fReopen ){
+				fp = ReopenSystem(fp);
+				WriteLog(fp, header);
+				fReopen = FALSE;
+				continue;
+			} else {
+				break;
 			}
 		}
+		if ( ticket->status == TICKET_COMMIT ) {
+			veryfydata = ticket->veryfydata;
+			if (veryfydata != NULL) {
+				if (LBS_Size(veryfydata->redirectData) > 0) {
+					if (RedirectorMode == REDIRECTOR_MODE_LOG) {
+						HandleLog(veryfydata);
+					} else {
+						HandleRedirector(veryfydata);
+						CheckFailure(fp);
+					}
+					ReRedirect(LBS_Body(veryfydata->redirectData),
+							   LBS_Body(veryfydata->checkData));
+					WriteLogQuery(fp, LBS_Body(veryfydata->redirectData));
+				}
+				FreeVeryfyData(veryfydata);
+			}
+		} else if ( ticket->status == TICKET_AUDIT ) {
+			WriteAuditLog(afp, fp, ticket);
+		}
+		xfree(ticket);
 	}
-	if		(  dbname  ==  NULL  ) {
-		CloseDB_RedirectPort(ThisDBG_Instance);
+	if	(  GetDB_DBname(ThisDBG,DB_UPDATE) ==  NULL  ) {
+		/* ReRedirect */
+		CloseDB_RedirectPort(ThisDBG);
 	}
-	WriteLog(fp, "dbredirector stop");
-	exit(0);
+	CleanUNIX_Socket(ThisDBG->redirectPort);
+	WriteLog(fp, "dbredirector stop ");
+	if (!fDbsyncstatus) {
+		WriteLog(fp, "DB synchronous failure");
+	}
 LEAVE_FUNC;
 }
-
 
 extern	void
 ExecuteServer(void)
 {
-	int		_fhLog;
+	int		_fh;
 	fd_set	ready;
 	int		maxfd;
 
 ENTER_FUNC;
 	pthread_mutex_init(&redlock,NULL);
-	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL); 
-	_fhLog = InitServerPort(RedirectPort,Back);
-	maxfd = _fhLog;
+	pthread_mutex_init(&ticketlock,NULL);
+	pthread_cond_init(&redcond, NULL);
 
-	while	(TRUE)	{
+	_fh = InitServerPort(ThisDBG->redirectPort,Back);
+	maxfd = _fh;
+
+	pthread_create(&_FileThread,NULL,(void *(*)(void *))FileThread,NULL);
+
+	while	(!fShutdown)	{
 		FD_ZERO(&ready);
-		FD_SET(_fhLog,&ready);
-		select(maxfd+1,&ready,NULL,NULL,NULL);
-		if		(  FD_ISSET(_fhLog,&ready)  ) {
-			ConnectLog(_fhLog);
+		FD_SET(_fh,&ready);
+		if (select(maxfd+1,&ready,NULL,NULL,NULL) < 0) {
+			if (errno == EINTR) {
+				pthread_cond_signal(&redcond);
+				continue;
+			}
+			Error("select: ", strerror(errno));
+		}
+		if		(  FD_ISSET(_fh,&ready)  ) {
+			ConnectServer(_fh);
 		}
 	}
+	AllAllAbortTicket();
+	pthread_cond_signal(&redcond);
+	pthread_join(_FileThread,NULL);
 LEAVE_FUNC;
 }
 
@@ -501,22 +1028,23 @@ LEAVE_FUNC;
 static	void
 DumpDBG(
 	char		*name,
-	DBG_Class	*dbg,
+	DBG_Struct	*dbg,
 	void		*dummy)
 {
-	printf("name     = [%s]\n",dbg->name);
-	printf("\ttype     = [%s]\n",dbg->type);
-	printf("\tDB name  = [%s]\n",GetDB_DBname(dbg,DB_UPDATE));
-	printf("\tDB user  = [%s]\n",GetDB_User(dbg,DB_UPDATE));
-	printf("\tDB pass  = [%s]\n",GetDB_Pass(dbg,DB_UPDATE));
- 	printf("\tDB sslmode  = [%s]\n",GetDB_Sslmode(dbg,DB_UPDATE));
+	dbgprintf("name     = [%s]\n",dbg->name);
+	dbgprintf("\ttype     = [%s]\n",dbg->type);
+	dbgprintf("\tDB name  = [%s]\n",GetDB_DBname(dbg,DB_UPDATE));
+	dbgprintf("\tDB user  = [%s]\n",GetDB_User(dbg,DB_UPDATE));
+	dbgprintf("\tDB pass  = [%s]\n",GetDB_Pass(dbg,DB_UPDATE));
+ 	dbgprintf("\tDB sslmode  = [%s]\n",GetDB_Sslmode(dbg,DB_UPDATE));
+	dbgprintf("\t   redirectorMode = [%d]\n", dbg->redirectorMode);
 
 	if		(  dbg->file  !=  NULL  ) {
-		printf("\tlog file = [%s]\n",dbg->file);
+		dbgprintf("\tlog file = [%s]\n",dbg->file);
 	}
 	if		(  dbg->redirect  !=  NULL  ) {
 		dbg = dbg->redirect;
-		printf("\tredirect = [%s]\n",dbg->name);
+		dbgprintf("\tredirect = [%s]\n",dbg->name);
 	}
 }
 #endif
@@ -524,17 +1052,14 @@ DumpDBG(
 static	void
 _CheckDBG(
 	char		*name,
-	DBG_Class	*dbg,
+	DBG_Struct	*dbg,
 	char		*red_name)
 {
-	DBG_Class	*red_dbg;
-	char		*src_port
-		,		*dsc_port;
-	char		*dbg_dbname = ""
-		,		*red_dbg_dbname = "";
+	DBG_Struct	*red_dbg;
+	char *src_port, *dsc_port;
+	char *dbg_dbname = "", *red_dbg_dbname = "";
 	char	*dbname;
-
-ENTER_FUNC;		
+ENTER_FUNC;
 	if		(  dbg->redirect  !=  NULL  ) {
 		red_dbg = dbg->redirect;
 		if ( strcmp(red_dbg->name, red_name ) == 0 ){
@@ -562,55 +1087,117 @@ static	void
 CheckDBG(
 	char		*name)
 {
-	DBG_Class	*dbg;
-
 #ifdef	DEBUG
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)DumpDBG,NULL);
 #endif
-	if		(  ( dbg = (DBG_Class *)g_hash_table_lookup(ThisEnv->DBG_Table,name) )
+	if		(  ( ThisDBG = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name) )
 			   ==  NULL  ) {
 		Error("DB group not found");
-	} else {
-		ThisDBG_Instance = OpenDB(dbg,NULL);
 	}
 	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)_CheckDBG,name);
 }
 
+static	void
+LookupAuditDBG(
+	char		*name,
+	DBG_Struct	*dbg,
+	void 		*dummy)
+{
+	if ((dbg->auditlog > 0) && (AuditDBG == NULL)) {
+		AuditDBG = dbg;
+	}
+}
+
+extern	void
+SetAuditDBG(void)
+{
+	g_hash_table_foreach(ThisEnv->DBG_Table,(GHFunc)LookupAuditDBG,NULL);
+	/* The audit log is not issued with the dbredirector. */
+	if (AuditDBG != NULL) {
+		AuditDBG->auditlog = 0;
+	}
+}
+
+void StopHandler( int no ) {
+    ( void )no;
+	fShutdown = TRUE;
+	Message("receive stop signal");
+}
+
+void ReopenHandler( int no ) {
+    ( void )no;
+	fReopen = TRUE;
+	Message("receive reopen signal");
+}
 
 extern	void
 InitSystem(
-	char	*name)
+	char	*name,
+	char    *program)
 {
-
+	struct sigaction sa;
+	char *filename;
 ENTER_FUNC;
 	InitNET();
-	sigemptyset(&hupset); 
-	sigaddset(&hupset,SIGHUP);
-	//(void)signal(SIGUSR2, SIG_IGN);
-	(void)signal(SIGPIPE, SIG_IGN);
+
+	memset( &sa, 0, sizeof(struct sigaction) );
+	sa.sa_flags = 0;
+	sa.sa_handler = SIG_IGN;
+	sigemptyset (&sa.sa_mask);
+	sigaction( SIGPIPE, &sa, NULL );
+
+	sa.sa_handler = StopHandler;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	sigaction( SIGHUP, &sa, NULL );
+
+	sa.sa_handler = ReopenHandler;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	sigaction( SIGUSR1, &sa, NULL );
 
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,FALSE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	InitDB_Process(NULL);
+	InitDB_Process(AppName);
 
 	CheckDBG(name);
+	if (!fNoAudit) {
+		SetAuditDBG();
+	}
 
-	if		(  PortNumber  ==  NULL  ) {
-		if		(  ( ThisDBG_Class != NULL) 
-				   && (ThisDBG_Class->redirectPort  !=  NULL )) {
-			RedirectPort = ThisDBG_Class->redirectPort;
-		} else {
-			RedirectPort = ParPortName(PORT_REDIRECT);
+	if		(  PortNumber  !=  NULL  ) {
+		ThisDBG->redirectPort = ParPortName(PortNumber);
+	}
+	if (ThisDBG->redirectPort == NULL) {
+		ThisDBG->redirectPort = ParPortName(PORT_REDIRECT);
+	}
+	dbgprintf("cmd filename => %s", program);
+	filename = rindex(program, FILE_SEP);
+	if (filename) {
+		++filename;
+		dbgprintf("cmd filename => %s", filename);
+		RedirectorMode = strcasecmp(filename, DBLOG_PROGRAM) == 0 ? REDIRECTOR_MODE_LOG:REDIRECTOR_MODE_PATCH;
+	} else {
+		RedirectorMode = strcasecmp(program, DBLOG_PROGRAM) == 0 ? REDIRECTOR_MODE_LOG:REDIRECTOR_MODE_PATCH;
+	}
+
+	if (RedirectorMode == REDIRECTOR_MODE_LOG) {
+		dbgmsg("log mode");
+		if (stricmp(ThisDBG->type, "postgresql") != 0) {
+			Error("invalid db type");
+		}
+		DBLog = Open_DBLog(ThisDBG, ThisDBG->logTableName);
+		if (!DBLog) {
+			Error("open logdb failed");
 		}
 	} else {
-		RedirectPort = ParPortName(PortNumber);
+		dbgmsg("redirect mode");
 	}
-	FileQueue = NewQueue();
-	cPool = 0;
-	DataHash = NewNameHash();
+	//	TicketList = g_slist_alloc();
+
 LEAVE_FUNC;
 }
 
@@ -639,21 +1226,21 @@ static	ARG_TABLE	option[] = {
 		"DB user name"									},
 	{	"pass",		STRING,		TRUE,	(void*)&DB_Pass,
 		"DB password"									},
-	{	"sslmode",	STRING,		TRUE,	(void*)&DB_Sslmode,
-		"DB SSL mode"									},
 
+	{	"auditlog",		STRING,	TRUE,	(void*)&AuditLogFile,
+		"audit log file name"							},
 	{	"nocheck",	BOOLEAN,	TRUE,	(void*)&fNoCheck,
 		"no check dbredirector start"					},
 	{	"noredirect",BOOLEAN,	TRUE,	(void*)&fNoRedirect,
 		"don't use dbredirector"						},
 	{	"nosumcheck",BOOLEAN,	TRUE,	(void*)&fNoSumCheck,
-		"no count dbredirector updates"					},
+		"no count dbredirector updates"				},
+	{	"noaudit",BOOLEAN,	TRUE,		(void*)&fNoAudit,
+		"don't write audit log"						},
 	{	"maxretry",	INTEGER,	TRUE,	(void*)&MaxSendRetry,
 		"send retry dbredirector"						},
 	{	"retryint",	INTEGER,	TRUE,	(void*)&RetryInterval,
 		"retry interval of dbredirector(sec)"			},
-	{	"pool",	INTEGER,	TRUE,		(void*)&nPool,
-		"max number of transaction hold pool"			},
 
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
@@ -667,18 +1254,18 @@ SetDefault(void)
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
-	nPool = 1;
 
 	DB_User = NULL;
 	DB_Pass = NULL;
 	DB_Host = NULL;
 	DB_Port = NULL;
-	DB_Sslmode = NULL;
 	DB_Name = DB_User;
 
+	AuditLogFile = NULL;
 	fNoCheck = FALSE;
 	fNoSumCheck = FALSE;
 	fNoRedirect = FALSE;
+	fNoAudit = FALSE;
 	MaxSendRetry = 3;
 	RetryInterval = 5;
 }
@@ -691,16 +1278,18 @@ main(
 	FILE_LIST	*fl;
 	char		*name;
 
+	InitMessage("dbredirector", NULL);
+
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
-	InitMessage("dbredirector",NULL);
-
 	if		(	fl	&&	fl->name  ) {
 		name = fl->name;
 	} else {
 		name = "";
 	}
-	InitSystem(name);
+	snprintf(AppName, sizeof(AppName), "dbredirector-%s",fl->name);
+	InitSystem(name, argv[0]);
+
 	Message("dbredirector start");
 	ExecuteServer();
 	Message("dbredirector end");

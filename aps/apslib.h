@@ -38,8 +38,7 @@
 #define	MCP_PUT_CALL		"CALL"
 #define	MCP_PUT_RETURN		"RETURN"
 
-extern	int			MCP_PutWindow(ProcessNode *node, char *wname, char *type, char *widget);
-extern	int			MCP_PutData(ProcessNode *node, char *rname);
+extern	int			MCP_PutWindow(ProcessNode *node, char *wname, char *type);
 extern	int			MCP_ReturnComponent(ProcessNode *node, char *event);
 extern	RecordStruct	*MCP_GetWindowRecord(ProcessNode *node, char *name);
 extern	int			MCP_ExecFunction(ProcessNode *node, char *rname,

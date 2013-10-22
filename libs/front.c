@@ -31,12 +31,23 @@
 #include	<stdlib.h>
 #include	<string.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #include	"front.h"
 #include	"debug.h"
 
-static	unsigned int	rseed;
+extern	size_t
+BlobCacheFileSize(
+	ValueStruct	*value)
+{
+	struct stat st;
+
+	if (!stat(BlobCacheFileName(value), &st)) {
+		return st.st_size; 
+	}
+	return 0;
+}
+
+
 extern	char	*
 BlobCacheFileName(
 	ValueStruct	*value)
@@ -45,8 +56,7 @@ BlobCacheFileName(
 
 	if		(  ValueObjectFile(value)  ==  NULL  ) {
 		if		(  IS_OBJECT_NULL(ValueObjectId(value))  ) {
-			srand(rseed);
-			sprintf(buf,"%s/%d",CacheDir,rand());
+			sprintf(buf,"%s/%p",CacheDir, value);
 		} else {
 			sprintf(buf,"%s/%s",CacheDir,ValueToString(value,NULL));
 		}
@@ -60,22 +70,6 @@ BlobCacheCleanUp(void)
 {
 	char	buf[SIZE_BUFF];
 
-	if		(  CacheDir  !=  NULL  ) {
-		sprintf(buf,"rm -f %s/*",CacheDir);
-		system(buf);
-	}
+	sprintf(buf,"rm -f %s/*",CacheDir);
+	system(buf);
 }
-
-extern	ScreenData	*
-InitSession(void)
-{
-	ScreenData	*scr;
-
-ENTER_FUNC;
-	scr = NewScreenData();
-	scr->status = APL_SESSION_LINK;
-	rseed = (int)(long)scr;
-LEAVE_FUNC;
-	return	(scr); 
-}
-

@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-noinst_LIBRARIES	=	libpandadb.a 
+noinst_LIBRARIES	=	libpandadb.a libpostgresqlutils.a libdblog.a
 lib_LTLIBRARIES 	=	$(DB_OBJECTS)
 
 libpandadb_a_LIBADD	=
@@ -31,22 +31,33 @@ INCLUDES 			=		\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
 	$(RUBY_CFLAGS)			\
-	$(OSEKI_CFLAGS)			\
-	$(MONDAI_CFLAGS)		\
-	$(GLIB_CFLAGS)
+	$(COMMON_CFLAGS)
 
 libpandadb_a_CFLAGS = $(AM_CFLAGS)
 libpandadb_a_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h
 
+libdblog_a_CFLAGS = $(AM_CFLAGS)
+libdblog_a_SOURCES	=	\
+	dblog.c         dblog.h
+
+libpostgresqlutils_a_LIBADD = 
+libpostgresqlutils_a_CFLAGS = $(AM_CFLAGS)
+libpostgresqlutils_a_SOURCES = \
+	dbgroup.c	dbgroup.h	\
+	redirect.c	redirect.h	\
+	PostgreSQLlib.c PostgreSQLlib.h	\
+	PostgreSQLutils.c audit.c
+
+
 DB_OBJECTS			=		\
 	PostgreSQL.la			\
 	Shell.la				\
 	System.la				\
-	Oseki.la				\
 	NativeBLOB.la			\
-	DBRuby.la
+	XMLIO.la				\
+	XMLIO2.la
 
 PostgreSQL_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
@@ -57,9 +68,8 @@ PostgreSQL_la_SOURCES	=			\
 	redirect.c	redirect.h			\
 	PostgreSQLlib.c PostgreSQLlib.h \
 	PostgreSQL.c
-PostgreSQL_la_LIBADD	=			\
-	$(top_builddir)/libs/net.lo		\
-	$(top_builddir)/libs/socket.lo	\
+PostgreSQL_la_LIBADD	=				\
+	$(top_builddir)/libs/libpandacom.a	\
 	$(POSTGRES_LIBS)
 PostgreSQL_la_DEPENDENCIES	=		\
 	$(top_builddir)/defaults.h
@@ -80,10 +90,11 @@ System_la_LDFLAGS		=		\
 	-export-dynamic
 System_la_SOURCES		=		\
 	dbgroup.c	dbgroup.h		\
+	sysdata.c	sysdata.h		\
 	redirect.c	redirect.h		\
 	System.c
 System_la_LIBADD	=			\
-	$(top_builddir)/libs/term.lo
+	$(top_builddir)/libs/libpandas.a
 
 NativeBLOB_la_LDFLAGS	=		\
 	-version-info $(LTVERSION)	\
@@ -91,31 +102,34 @@ NativeBLOB_la_LDFLAGS	=		\
 	-export-dynamic
 NativeBLOB_la_SOURCES	=		\
 	dbgroup.c	dbgroup.h		\
+	sysdata.c	sysdata.h		\
 	redirect.c	redirect.h		\
-	NativeBLOB.c
+	NativeBLOB.c	
 NativeBLOB_la_LIBADD	=		\
-	$(top_builddir)/libs/blobreq.lo
+	$(top_builddir)/libs/libpandas.a
 
-
-Oseki_la_LDFLAGS	=			\
+XMLIO_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
-Oseki_la_SOURCES	=	\
+XMLIO_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
-	Oseki.c
-Oseki_la_LIBADD		=	\
-	$(OSEKI_LIBS)
+	sysdata.c	sysdata.h	\
+	XMLIO.c
+XMLIO_la_LIBADD			=	\
+	$(top_builddir)/libs/libpandas.a
+	$(XML2_LIBS)
 
-DBRuby_la_LDFLAGS	=			\
+XMLIO2_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
 	-module						\
 	-export-dynamic
-DBRuby_la_SOURCES	=	\
+XMLIO2_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h	\
-	DBRuby.c
-DBRuby_la_LIBADD		=	\
-	$(RUBY_LIBS)
-
+	sysdata.c	sysdata.h	\
+	XMLIO2.c
+XMLIO2_la_LIBADD			=	\
+	$(top_builddir)/libs/libpandas.a
+	$(XML2_LIBS)

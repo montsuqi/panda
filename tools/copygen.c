@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"struct.h"
@@ -425,16 +424,15 @@ MakeFromRecord(
 	char	*name)
 {
 	RecordStruct	*rec;
-	char			*ValueName;
 
 ENTER_FUNC;
 	level = Top;
 	RecParserInit();
 	DB_ParserInit();
-	if		(  ( rec = DB_Parser(name,NULL,&ValueName,FALSE) )  !=  NULL  ) {
+	if		(  ( rec = DB_Parser(name,NULL,FALSE) )  !=  NULL  ) {
 		PutLevel(level,TRUE);
 		if		(  *RecName  ==  0  ) {
-			PutString(ValueName);
+			PutString(rec->name);
 		} else {
 			PutString(RecName);
 		}
@@ -465,7 +463,7 @@ MakeLD(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,LD_Name,"","",TRUE);
+	SetUpDirectory(Directory,LD_Name,"","",P_LD);
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -632,7 +630,7 @@ MakeLinkage(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,LD_Name,"","",TRUE);
+	SetUpDirectory(Directory,LD_Name,"","",P_LD);
 	if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 		Error("LD not found.\n");
 	}
@@ -689,7 +687,7 @@ MakeDB(void)
 	size_t	cDB;
 
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -790,7 +788,7 @@ MakeDBREC(
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -889,7 +887,7 @@ MakeDBCOMM(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -1009,7 +1007,7 @@ MakeDBPATH(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
 	if		(  LD_Name  !=  NULL  ) {
 		if		(  ( ld = GetLD(LD_Name) )  ==  NULL  ) {
 			Error("LD not found.\n");
@@ -1076,7 +1074,7 @@ MakeMCPAREA(void)
 {
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,"","","",TRUE);
+	SetUpDirectory(Directory,"","","",P_NONE);
 
 	Prefix = "";
 	PutLevel(Top,TRUE);

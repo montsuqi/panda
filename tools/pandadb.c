@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2007-2009 Ogochan.
+ * Copyright (C) 2007-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,11 +35,11 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"DBparser.h"
 #include	"dbgroup.h"
+#include	"enum.h"
 #include	"dirs.h"
 #include	"directory.h"
 #include	"gettext.h"
@@ -218,7 +218,7 @@ TableBody(
 
 static	void
 MakeCreate(
-	DBG_Instance	*dbg,
+	DBG_Struct		*dbg,
 	RecordStruct	*rec)
 {
 	char	***item
@@ -275,7 +275,7 @@ static	void
 _MakeCreate(
 	char	*name,
 	RecordStruct	*rec,
-	DBG_Instance	*dbg)
+	DBG_Struct	*dbg)
 {
 	MakeCreate(dbg,rec);
 }
@@ -285,25 +285,24 @@ CreateTables(
 	char	*gname,
 	char	*tname)
 {
-	DBG_Class		*dbg;
+	DBG_Struct	*dbg;
 	RecordStruct	*rec;
-	DBG_Instance	*inst;
 
 ENTER_FUNC;
 	if		( ( dbg = GetDBG(gname) )  !=  NULL  ) {
-		inst = OpenDB(dbg,NULL);
+		OpenDB(dbg);
 		if		(	(  tname  !=  NULL  )
 				&&	(  ( rec = GetTableDBG(gname,tname) )  !=  NULL  ) ) {
-			MakeCreate(inst,rec);
+			MakeCreate(dbg,rec);
 		} else
 		if		(  tname  ==  NULL  ) {
 			if		(  dbg->dbt  !=  NULL  ) {
-				g_hash_table_foreach(dbg->dbt,(GHFunc)_MakeCreate,inst);
+				g_hash_table_foreach(dbg->dbt,(GHFunc)_MakeCreate,dbg);
 			}
 		} else {
 			fprintf(stderr,N_("table %s not found.\n"),tname);
 		}
-		CloseDB(inst);
+		CloseDB(dbg);
 	} else {
 		fprintf(stderr,N_("db group %s not found.\n"),gname);
 	}
@@ -322,13 +321,9 @@ Insert(
 	struct	stat	sb;
 	ssize_t		left;
 	size_t		size;
-	byte		*p;
-	RecordStruct	*rec;
-	DBG_Class	*dbg;
-	DBG_Instance	*inst;
-	ValueStruct	*value;
+	unsigned char		*p;
+	DBG_Struct	*dbg;
 	DBCOMM_CTRL	ctrl;
-	DB_FUNC	func;
 
 ENTER_FUNC;
 	type = 0;
@@ -362,21 +357,20 @@ ENTER_FUNC;
 		}
 	}
 	if		( ( dbg = GetDBG(gname) )  !=  NULL  ) {
-		inst = OpenDB(dbg,NULL);
+		OpenDB(dbg);
 		fstat(fileno(stdin),&sb);
 		if		(  ( p = mmap(NULL,sb.st_size,PROT_READ,MAP_PRIVATE,fileno(stdin),0) )
 				   !=  NULL  ) {
 			left = sb.st_size;
 			while	(  left  >  0  ) {
-				if		(  ( rec = MakeCTRLbyName(&value,&ctrl,rname,pname,"DBINSERT") )  !=  NULL  ) {
-					size = infunc->UnPackValue(inopt,p,value);
+				strncpy(ctrl.func, "DBINSERT", SIZE_FUNC);
+				if 	(SetDBCTRLRecord(&ctrl, rname) ){
+					SetDBCTRLValue(&ctrl, pname);
+					size = infunc->UnPackValue(inopt,p,ctrl.value);
 #ifdef	TRACE
-					DumpValueStruct(value);
+					DumpValueStruct(ctrl.value);
 #endif
-					if		(  ( func = g_hash_table_lookup(dbg->func->table,"DBINSERT") )
-							   !=  NULL  ) {
-						(*func)(inst,&ctrl,rec,value);
-					}
+					ExecDB_Process(&ctrl, ctrl.rec, ctrl.value);
 					left -= size + strlen(infunc->bsep);
 					p += size + strlen(infunc->bsep);
 				} else
@@ -384,7 +378,7 @@ ENTER_FUNC;
 			}
 			munmap(p,sb.st_size);
 		}
-		CloseDB(inst);
+		CloseDB(dbg);
 	} else {
 		fprintf(stderr,N_("db group %s not found.\n"),gname);
 	}
@@ -444,7 +438,7 @@ InitSystem(
 	char	*name)
 {
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,name,TRUE);
+	SetUpDirectory(Directory,NULL,NULL,name,P_ALL);
 	if		(  ( ThisDBD = GetDBD(name) )  ==  NULL  ) {
 		fprintf(stderr,N_("DBD \"%s\" not found.\n"),name);
 		exit(1);
@@ -455,7 +449,7 @@ InitSystem(
 	CurrentProcess = NULL;
 
 	if		(  ThisDBD->cDB  >  0  ) {
-		InitDB_Process(NULL);
+		InitDB_Process("pandadb");
 	}
 }
 

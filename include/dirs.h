@@ -35,4 +35,5 @@ GLOBAL	char	*DirectoryDir;
 GLOBAL	char	*PasswordFile;
 GLOBAL	char	*SesDir;
 GLOBAL	char	*D_Dir;
+GLOBAL	char	*TempDirRoot;
 #endif

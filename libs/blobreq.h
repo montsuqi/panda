@@ -23,23 +23,18 @@
 #include	"libmondai.h"
 #include	"net.h"
 #include	"blob.h"
-#include	"blobcom.h"
+#include	"sysdatacom.h"
 
-extern	MonObjectType	RequestNewBLOB(NETFILE *fp, PacketClass flag, int mode);
-extern	Bool	RequestOpenBLOB(NETFILE *fp, PacketClass flag, int mode, MonObjectType obj);
-extern	Bool	RequestCloseBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
-extern	size_t	RequestWriteBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj,
-								 byte *buff, size_t size);
-extern	size_t	RequestReadBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj,
-								byte *buff, size_t size);
-extern	Bool	RequestExportBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *fname);
-extern	MonObjectType	RequestImportBLOB(NETFILE *fp, PacketClass flag, char *fname);
-extern	Bool	RequestSaveBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj, char *fname);
-extern	Bool	RequestCheckBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
-extern	Bool	RequestDestroyBLOB(NETFILE *fp, PacketClass flag, MonObjectType obj);
-extern	Bool	RequestStartBLOB(NETFILE *fp, PacketClass flag);
-extern	Bool	RequestCommitBLOB(NETFILE *fp, PacketClass flag);
-extern	Bool	RequestAbortBLOB(NETFILE *fp, PacketClass flag);
+extern	MonObjectType	RequestNewBLOB(NETFILE *fp, int mode);
+extern	size_t			RequestWriteBLOB(NETFILE *fp, MonObjectType obj, unsigned char *buff, size_t size);
+extern	size_t			RequestReadBLOB(NETFILE *fp, MonObjectType obj, unsigned char **buff, size_t *size);
+extern	Bool			RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname);
+extern	MonObjectType	RequestImportBLOB(NETFILE *fp, char *fname);
+extern	Bool			RequestCheckBLOB(NETFILE *fp, MonObjectType obj);
+extern	Bool			RequestDestroyBLOB(NETFILE *fp, MonObjectType obj);
+extern	Bool			RequestStartBLOB(NETFILE *fp);
+extern	Bool			RequestCommitBLOB(NETFILE *fp);
+extern	Bool			RequestAbortBLOB(NETFILE *fp);
 
 #undef	GLOBAL
 #ifdef	MAIN

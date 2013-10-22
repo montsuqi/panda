@@ -1,7 +1,0 @@
-#! /bin/sh
-
-. ./conf
-
-./prepare_db.sh
-
-$DBSTUB -bd dbtest Test1

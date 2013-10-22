@@ -17,12 +17,17 @@
 # 02111-1307, USA
 
 libpandaincludedir = $(includedir)/panda
-libpandainclude_HEADERS = const.h
-
-EXTRA_DIST =				\
+libpandainclude_HEADERS = const.h	\
+	enum.h					\
 	dirs.h					\
 	glterm.h				\
 	struct.h				\
-	types.h					\
+	wfcdata.h
+
+EXTRA_DIST =				\
+	enum.h					\
+	dirs.h					\
+	glterm.h				\
+	struct.h				\
 	wfcdata.h				\
 	gettext.h

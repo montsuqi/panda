@@ -32,7 +32,6 @@
 #include	<unistd.h>
 #include	<dlfcn.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"defaults.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
@@ -105,19 +104,19 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	DBG_Class	*
+extern	DBG_Struct	*
 GetDBG(
 	char	*name)
 {
-	DBG_Class	*dbg;
+	DBG_Struct	*dbg;
 
-	dbg = (DBG_Class *)g_hash_table_lookup(ThisEnv->DBG_Table,name);
+	dbg = (DBG_Struct *)g_hash_table_lookup(ThisEnv->DBG_Table,name);
 	return	(dbg);
 }
 
 static	void
 LoadDBG(
-	DBG_Class	*dbg)
+	DBG_Struct	*dbg)
 {
 	DB_Func	*func;
 	char		funcname[SIZE_LONGNAME+1]
@@ -154,15 +153,15 @@ LEAVE_FUNC;
 
 extern	void
 RegistDBG(
-	DBG_Class	*dbg)
+	DBG_Struct	*dbg)
 {
-	DBG_Class	**dbga;
+	DBG_Struct	**dbga;
 
 ENTER_FUNC;
-	dbga = (DBG_Class **)xmalloc(sizeof(DBG_Class *) *
+	dbga = (DBG_Struct **)xmalloc(sizeof(DBG_Struct *) *
 										  ( ThisEnv->cDBG + 1 ));
 	if		(  ThisEnv->cDBG  >  0  ) {
-		memcpy(dbga,ThisEnv->DBG,sizeof(DBG_Class *) * ThisEnv->cDBG);
+		memcpy(dbga,ThisEnv->DBG,sizeof(DBG_Struct *) * ThisEnv->cDBG);
 		xfree(ThisEnv->DBG);
 	}
 	ThisEnv->DBG = dbga;
@@ -182,7 +181,7 @@ _AssignDBG(
 {
 	int		i;
 	char	*gname;
-	DBG_Class	*dbg;
+	DBG_Struct	*dbg;
 
 ENTER_FUNC;
 	for	( i = 1 ; i < n ; i ++ ) {
@@ -258,14 +257,14 @@ SetUpDirectory(
 	char	*ld,
 	char	*bd,
 	char	*db,
-	Bool    parse_ld)
+	int		parse_type)
 {
 	DI_Struct	*di;
 ENTER_FUNC;
 	InitDBG();
-	di = DI_Parser(name,ld,bd,db,parse_ld);
-	if ( parse_ld && di ) {
-		AssignDBG(di); 
+	di = DI_Parser(name,ld,bd,db,parse_type);
+	if ( (parse_type >= P_ALL) && di ) {
+		AssignDBG(di);
 	}
 LEAVE_FUNC;
 }
@@ -308,7 +307,7 @@ GetTableDBG(
 	char	*gname,
 	char	*tname)
 {
-	DBG_Class		*dbg;
+	DBG_Struct	*dbg;
 	RecordStruct	*db;
 
 	if		(  ( dbg = GetDBG(gname) )  !=  NULL  ) {

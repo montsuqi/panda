@@ -20,10 +20,14 @@
 
 #ifndef	_INC_FRONT_H
 #define	_INC_FRONT_H
+#include 	<sys/types.h>
+#include 	<sys/stat.h>
+#include 	<unistd.h>
 #include	"driver.h"
 
+
 #undef	GLOBAL
-#if	defined(MAIN) || defined(_PANDA)
+#if	defined(FRONT_H_MAIN)
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern
@@ -33,8 +37,8 @@ GLOBAL	char	*CacheDir;
 
 #undef	GLOBAL
 
-extern	ScreenData	*InitSession(void);
 extern	char		*BlobCacheFileName(ValueStruct *value);
 extern	void		BlobCacheCleanUp(void);
+extern	size_t		BlobCacheFileSize(ValueStruct *value);
 
 #endif

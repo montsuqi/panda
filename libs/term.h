@@ -21,7 +21,6 @@
 #ifndef	_INC_TERM_H
 #define	_INC_TERM_H
 
-extern	char		*TermName(int sock);
-extern	char		*TermToHost(char *term);
+extern	char		*RemoteIP(int sock,char *,size_t size);
 
 #endif

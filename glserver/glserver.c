@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,7 +40,6 @@
 #include	<signal.h>
 
 #include	"gettext.h"
-#include	"types.h"
 #include	"const.h"
 #include	"glserver.h"
 #include	"dirs.h"
@@ -55,6 +54,8 @@ static	char		*AuthURL;
 static	ARG_TABLE	option[] = {
 	{	"port",		STRING,		TRUE,	(void*)&PortNumber,
 		N_("waiting port name")							},
+	{	"sysdata",	STRING,		TRUE,	(void*)&PortSysData,
+		N_("sysdata port")								},
 	{	"back",		INTEGER,	TRUE,	(void*)&Back,
 		N_("connection waiting queue number")			},
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
@@ -65,8 +66,10 @@ static	ARG_TABLE	option[] = {
 		N_("BLOB cache directory")						},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		N_("authentication server")	 					},
-	{	"lang",		STRING,		TRUE,	(void*)&Lang,
-		N_("language")				 					},
+	{	"api",		BOOLEAN,	TRUE,	(void*)&fAPI,
+		N_("Use API")				 					},
+	{	"numeric",	BOOLEAN,	TRUE,	(void*)&fNumericHOST,
+		N_("Numeric form of the hostname")		},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
 		N_("SSL Key File(pem/p12)")		 				},
@@ -74,6 +77,8 @@ static	ARG_TABLE	option[] = {
 		N_("Certificate(pem/p12)")	 					},
 	{	"ssl",		BOOLEAN,	TRUE,	(void*)&fSsl,
 		N_("Use SSL")				 					},
+	{	"verifypeer",BOOLEAN,	TRUE,	(void*)&fVerifyPeer,
+		N_("Use Client Certification")					},
 	{	"CApath",	STRING,		TRUE,	(void*)&CA_Path,
 		N_("CA Certificate Path")						},
 	{	"CAfile",	STRING,		TRUE,	(void*)&CA_File,
@@ -89,14 +94,17 @@ static	void
 SetDefault(void)
 {
 	PortNumber = PORT_GLTERM;
+	PortSysData = SYSDATA_PORT;
 	Back = 5;
 	ScreenDir = ".";
 	RecordDir = ".";
 	AuthURL = "glauth://localhost:" PORT_GLAUTH;
 	CacheDir = "cache";
-	Lang = NULL;
+	fAPI = FALSE;
+	fNumericHOST = FALSE;
 #ifdef	USE_SSL
 	fSsl = FALSE;
+	fVerifyPeer = TRUE;
 	KeyFile = NULL;
 	CertFile = NULL;
 	CA_Path = NULL;
@@ -118,7 +126,24 @@ main(
 	int		argc,
 	char	**argv)
 {
-	(void)signal(SIGPIPE,(void *)StopProcess);
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_IGN;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = (void*)StopProcess;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGPIPE, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
 	SetDefault();
 	(void)GetOption(option,argc,argv,NULL);
 	InitMessage("glserver",NULL);
@@ -128,6 +153,11 @@ main(
 #ifdef	USE_SSL
 	if ( fSsl ){
 		Message("glserver start (ssl)");
+		if ( fVerifyPeer ){
+			Message("verify peer");
+		} else {
+			Message("no verify peer");
+		}
 	} else {
 		Message("glserver start");
 	}

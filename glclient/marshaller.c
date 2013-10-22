@@ -35,63 +35,45 @@
 #include	<sys/time.h>
 #include	<errno.h>
 
-#include	"types.h"
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"net.h"
 #include	"comm.h"
 #include	"protocol.h"
 #include	"marshaller.h"
-#include	"interface.h"
+#include	"action.h"
+#include	"printservice.h"
+#include	"widgetOPS.h"
+#include	"dialogs.h"
+#include	"gettext.h"
 #include	"debug.h"
 
-static	void
-FreeBool(
-	gpointer	data,
-	gpointer	user_data)
+static	gboolean
+RecvCommon(char *name,
+	WidgetData *data,
+	NETFILE *fp)
 {
-	xfree(data);
-}
+	gboolean ret = FALSE;
+	char buff[SIZE_BUFF];
+	int state;
 
-static	void
-FreeBoolList(
-	GList	*list)
-{
-	g_list_foreach(list,(GFunc)FreeBool,NULL);
-	g_list_free(list);
-}
-
-static	void
-FreeString(
-	gpointer	data,
-	gpointer	user_data)
-{
-	xfree(data);
-}
-
-static	void
-FreeStringList(
-	GList	*list)
-{
-	g_list_foreach(list,(GFunc)FreeString,NULL);
-	g_list_free(list);
-}
-
-static	void
-FreeRow(
-	gpointer	data,
-	gpointer	user_data)
-{
-	g_list_foreach((GList *)data,(GFunc)FreeString,NULL);
-	g_list_free((GList *)data);
-}
-
-static	void
-FreeStringTable(
-	GList	*list)
-{
-	g_list_foreach(list,(GFunc)FreeRow,NULL);
-	g_list_free(list);
+	if		(  !stricmp(name,"state")  ) {
+		RecvIntegerData(fp,&state);
+		data->state = state;
+		ret = TRUE;
+	} else
+	if		(  !stricmp(name,"style")  ) {
+		g_free(data->style);
+		data->style = NULL;
+		RecvStringData(fp,buff,SIZE_BUFF);
+		data->style = strdup(buff);
+		ret = TRUE;
+	} else
+	if		(  !stricmp(name,"visible")  ) {
+		RecvBoolData(fp,&(data->visible));
+		ret = TRUE;
+	}
+	return ret;
 }
 
 /******************************************************************************/
@@ -108,7 +90,6 @@ RecvEntry(
 	,		name[SIZE_BUFF];
 	int		nitem
 	,		i;
-	int		state;
 	_Entry	*attrs;
 
 ENTER_FUNC;
@@ -120,22 +101,19 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		g_free(attrs->text);
 		g_free(attrs->text_name);
 	}
+	attrs->editable = TRUE;
 
 	if (GL_RecvDataType(fp)  ==  GL_TYPE_RECORD) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
+			if		(  RecvCommon(name,data,fp)  ) {
 			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
+			if		(  !stricmp(name,"editable")  ) {
+				RecvBoolData(fp,&(attrs->editable));
 			} else {
 				attrs->ptype = RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->text = strdup(buff);
@@ -187,18 +165,17 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		g_free(attrs->text);
+		attrs->text = NULL;
 		g_free(attrs->text_name);
+		attrs->text_name = NULL;
 	}
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
+			if		(  RecvCommon(name,data,fp)  ) {
 			} else {
 				attrs->ptype = RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->text = strdup(buff);
@@ -239,7 +216,6 @@ RecvText(
 	,			name[SIZE_BUFF];
 	int			nitem
 	,			i;
-	int			state;
 	_Text		*attrs;
 
 ENTER_FUNC;
@@ -251,7 +227,6 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		g_free(attrs->text);
 		g_free(attrs->text_name);
 	}
@@ -260,13 +235,7 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
+			if		(  RecvCommon(name,data,fp)  ) {
 			} else {
 				attrs->ptype = RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->text = strdup(buff);
@@ -308,7 +277,6 @@ RecvButton(
 	,			buff[SIZE_BUFF];
 	int			nitem
 	,			i;
-	int			state;
 	_Button		*attrs;
 
 ENTER_FUNC;
@@ -321,7 +289,6 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		g_free(attrs->label);
 		g_free(attrs->button_state_name);
 		attrs->have_button_state = FALSE;
@@ -331,14 +298,8 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
-			} else
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if		(  !stricmp(name,"label")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->label = strdup(buff);
@@ -389,14 +350,12 @@ RecvCalendar(
 	NETFILE	*fp)
 {
 	Bool		ret;
-	char		name[SIZE_BUFF]
-	,			buff[SIZE_BUFF];
+	char		name[SIZE_BUFF];
 	int			nitem
 	,			i;
 	int			year
 	,			month
 	,			day;
-	int			state;
 	_Calendar	*attrs;
 
 ENTER_FUNC;
@@ -408,21 +367,14 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
-			} else
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if		(  !stricmp(name,"year")  ) {
 				RecvIntegerData(fp,&year);
 				attrs->year = year;
@@ -469,12 +421,10 @@ RecvNotebook(
 {
 	Bool		ret;
 	char		name[SIZE_BUFF]
-	,			subname[SIZE_BUFF]
-	,			buff[SIZE_BUFF];
+	,			subname[SIZE_BUFF];
 	int			nitem
 	,			i;
 	int			page;
-	int			state;
 	_Notebook	*attrs;
 
 ENTER_FUNC;
@@ -486,7 +436,6 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		g_free(attrs->subname);
 	}
 
@@ -494,14 +443,8 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
-			} else
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if		(  !stricmp(name,"pageno")  ) {
 				attrs->ptype = RecvIntegerData(fp,&page);
 				attrs->pageno = page;
@@ -540,12 +483,10 @@ RecvProgressBar(
 	NETFILE	*fp)
 {
 	Bool			ret;
-	char			name[SIZE_BUFF]
-	,				buff[SIZE_BUFF];
+	char			name[SIZE_BUFF];
 	int				nitem
 	,				i;
 	int				value;
-	int				state;
 	_ProgressBar	*attrs;
 
 ENTER_FUNC;
@@ -557,21 +498,14 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
-			} else
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if		(  !stricmp(name,"value")  ) {
 				attrs->ptype = RecvIntegerData(fp,&value);
 				attrs->value = value;
@@ -593,8 +527,7 @@ RecvWindow(
 	,			longname[SIZE_BUFF]
 	,			buff[SIZE_BUFF];
 	int			i
-	,			nitem
-	,			state;
+	,			nitem;
 	_Window		*attrs;
 
 ENTER_FUNC;
@@ -607,24 +540,40 @@ ENTER_FUNC;
 	} else {
 		// reset data
 		g_free(attrs->title);
-		g_free(attrs->style);
+		g_free(attrs->summary);
+		g_free(attrs->body);
+		g_free(attrs->icon);
+ 		attrs->timeout = 0;
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
+			if		(  !stricmp(name,"bgcolor")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
+				SetSessionBGColor(buff);
 			} else
 			if		(  !stricmp(name,"title")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->title = strdup(buff);
+			} else
+			if		(  !stricmp(name,"popup_summary")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->summary = strdup(buff);
+			} else
+			if		(  !stricmp(name,"popup_body")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->body = strdup(buff);
+			} else
+			if		(  !stricmp(name,"popup_icon")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->icon = strdup(buff);
+			} else
+			if		(  !stricmp(name,"popup_timeout")  ) {
+				RecvIntegerData(fp,&(attrs->timeout));
 			} else {
 				sprintf(longname,"%s.%s", data->name, name);
 				RecvValue(fp, longname);
@@ -646,7 +595,6 @@ RecvFrame(
 	,		buff[SIZE_BUFF];
 	int		nitem
 	,		i;
-	int		state;
 	_Frame	*attrs;
 
 ENTER_FUNC;
@@ -658,7 +606,6 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		g_free(attrs->label);
 		g_free(attrs->subname);
 	}
@@ -667,14 +614,8 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
-			} else
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if		(  !stricmp(name,"label")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->label = strdup(buff);
@@ -718,13 +659,11 @@ RecvScrolledWindow(
 	NETFILE	*fp)
 {
 	char			name[SIZE_LONGNAME+1]
-	,				subname[SIZE_BUFF]
-	,				buff[SIZE_BUFF];
+	,				subname[SIZE_BUFF];
 	int				nitem
 	,				i;
 	int				vpos
 	,				hpos;
-	int				state;
 	_ScrolledWindow	*attrs;
 
 ENTER_FUNC;
@@ -735,7 +674,6 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		g_free(attrs->subname);
 	}
 
@@ -743,14 +681,8 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if (!stricmp(name,"state")) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if (!stricmp(name,"style")) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
-			} else
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if (!stricmp(name,"vpos")) {
 				attrs->ptype = RecvIntegerData(fp,&vpos);
 				attrs->vpos = vpos;
@@ -767,6 +699,156 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return TRUE;
 }
+
+static	Bool
+RecvFileChooserButton(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool				ret;
+	char				name[SIZE_BUFF]
+	,					buff[SIZE_BUFF];
+	int					nitem
+	,					i;
+	_FileChooserButton	*attrs;
+
+ENTER_FUNC;
+	ret = FALSE;
+	attrs = (_FileChooserButton *)data->attrs;
+	if (attrs == NULL){
+		// new data
+		attrs = g_new0(_FileChooserButton, 1);
+		data->attrs = attrs;
+		attrs->binary = NewLBS();
+		attrs->filename = NULL;
+	} else {
+		// reset data
+		FreeLBS(attrs->binary);
+		attrs->binary = NewLBS();
+		if (attrs->filename != NULL) {
+			g_free(attrs->filename);
+		}
+		attrs->filename = NULL;
+	}
+
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
+			if (!stricmp(name,"objectdata")) {
+				LargeByteString *lbs;
+
+				lbs = NewLBS();
+				RecvBinaryData(fp, lbs);
+				FreeLBS(lbs);
+			} else if (!stricmp(name,"filename")){
+				RecvStringData(fp,buff,SIZE_BUFF);
+			} else {
+				Warning("does not reach here");
+				RecvStringData(fp,buff,SIZE_BUFF);
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
+SendFileChooserButton(
+	WidgetData	*data,
+	NETFILE		*netfp)
+{
+	char				iname[SIZE_BUFF];
+	_FileChooserButton	*attrs;
+
+ENTER_FUNC;
+	attrs = (_FileChooserButton *)data->attrs;
+	
+	GL_SendPacketClass(netfp,GL_ScreenData);
+	sprintf(iname,"%s.objectdata", data->name);
+	GL_SendName(netfp,iname);
+	SendBinaryData(netfp, GL_TYPE_OBJECT, attrs->binary);
+
+	GL_SendPacketClass(netfp,GL_ScreenData);
+	sprintf(iname,"%s.filename", data->name);
+	GL_SendName(netfp,iname);
+	SendStringData(netfp,GL_TYPE_VARCHAR ,attrs->filename);
+LEAVE_FUNC;
+	return TRUE;
+}
+
+static	Bool
+RecvColorButton(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool			ret;
+	char			name[SIZE_BUFF]
+	,				buff[SIZE_BUFF];
+	int				nitem
+	,				i;
+	_ColorButton	*attrs;
+
+ENTER_FUNC;
+	ret = FALSE;
+	attrs = (_ColorButton *)data->attrs;
+	if (attrs == NULL){
+		// new data
+		attrs = g_new0(_ColorButton, 1);
+		data->attrs = attrs;
+		attrs->color = NULL;
+		attrs->color_name = NULL;
+	} else {
+		// reset data
+		if (attrs->color != NULL) {
+			g_free(attrs->color);
+		}
+		attrs->color = NULL;
+		if (attrs->color_name != NULL) {
+			g_free(attrs->color_name);
+		}
+		attrs->color_name = NULL;
+	}
+
+	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else {
+				attrs->color_name = g_strdup(name);
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->color = g_strdup(buff);
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
+SendColorButton(
+	WidgetData	*data,
+	NETFILE		*netfp)
+{
+	char			iname[SIZE_BUFF];
+	_ColorButton	*attrs;
+
+ENTER_FUNC;
+	attrs = (_ColorButton *)data->attrs;
+	
+	GL_SendPacketClass(netfp,GL_ScreenData);
+	sprintf(iname,"%s.%s", data->name,attrs->color_name);
+	GL_SendName(netfp,iname);
+	SendStringData(netfp,GL_TYPE_VARCHAR ,attrs->color);
+LEAVE_FUNC;
+	return TRUE;
+}
+
 
 /******************************************************************************/
 /* gtk+panada marshaller                                                      */
@@ -799,13 +881,204 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			attrs->binary = NewLBS();
-			RecvBinaryData(fp, attrs->binary);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else {
+				attrs->binary = NewLBS();
+				RecvBinaryData(fp, attrs->binary);
+			}
 		}
 		ret = TRUE;
 	}
 LEAVE_FUNC;
 	return	ret;
+}
+
+static	Bool
+RecvPandaDownload(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool		ret;
+	char		name[SIZE_BUFF]
+	,			buff[SIZE_BUFF];
+	int			nitem
+	,			i;
+	_Download	*attrs;
+
+ENTER_FUNC;
+	ret = FALSE;
+	attrs = (_Download *)data->attrs;
+	if (attrs == NULL){
+		// new data
+		attrs = g_new0(_Download, 1);
+		attrs->binary = NewLBS();
+		attrs->filename = NULL;
+		attrs->description = NULL;
+		data->attrs = attrs;
+	} else {
+		// reset data
+		FreeLBS(attrs->binary);
+		attrs->binary = NewLBS();
+		g_free(attrs->filename);
+		if (attrs->description) {
+			g_free(attrs->description);
+			attrs->description = NULL;
+		}
+	}
+
+	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else if (!stricmp(name,"objectdata")) {
+				RecvBinaryData(fp, attrs->binary);
+			} else if (!stricmp(name,"filename")) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->filename = strdup(buff);
+			} else if (!stricmp(name,"description")) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->description = strdup(buff);
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
+RecvPandaDownload2(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool			ret;
+	DLRequest		*req;
+	char			name[SIZE_BUFF]
+	,				path[SIZE_BUFF]
+	,				filename[SIZE_BUFF]
+	,				description[SIZE_BUFF];
+	int				nitem
+	,				nitem2
+	,				nitem3
+	,				nretry
+	,				i,j,k;
+
+ENTER_FUNC;
+	ret = FALSE;
+	data->attrs = NULL;
+
+	if	(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
+			if (!stricmp(name,"item")) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				nitem2 = GL_RecvInt(fp);
+				for	( j = 0 ; j < nitem2 ; j ++ ) {
+					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+					nitem3 = GL_RecvInt(fp);
+					path[0] = 0; 
+					filename[0] = 0;
+					description[0] = 0;
+					nretry = 0;
+					for	( k = 0 ; k < nitem3 ; k ++ ) {
+						GL_RecvName(fp, sizeof(name), name);
+						if (!stricmp(name,"path")) {
+							RecvStringData(fp,path,SIZE_BUFF);
+						} else if (!stricmp(name,"filename")) {
+							RecvStringData(fp,filename,SIZE_BUFF);
+						} else if (!stricmp(name,"description")) {
+							RecvStringData(fp,description,SIZE_BUFF);
+						} else if (!stricmp(name,"nretry")) {
+							RecvIntegerData(fp,&nretry);
+						}
+					}
+					if (strlen(path) > 0 && strlen(filename) > 0) {
+						req = (DLRequest*)xmalloc(sizeof(DLRequest));
+						req->path = StrDup(path);
+						req->filename = StrDup(filename);
+						req->description = StrDup(description);
+						req->nretry = nretry;
+						DLLIST(Session) = g_list_append(DLLIST(Session),req);
+						MessageLogPrintf("add path[%s]\n",path);
+					}
+				}
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
+RecvPandaPrint(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	Bool			ret;
+	PrintRequest	*req;
+	char			name[SIZE_BUFF]
+	,				path[SIZE_BUFF]
+	,				title[SIZE_BUFF];
+	int				nitem
+	,				nitem2
+	,				nitem3
+	,				nretry
+	,				showdialog
+	,				i,j,k;
+
+ENTER_FUNC;
+	ret = FALSE;
+	data->attrs = NULL;
+
+	if	(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
+		nitem = GL_RecvInt(fp);
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
+			if (!stricmp(name,"item")) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				nitem2 = GL_RecvInt(fp);
+				for	( j = 0 ; j < nitem2 ; j ++ ) {
+					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+					nitem3 = GL_RecvInt(fp);
+					path[0] = 0; title[0] = 0;
+					nretry = 0;
+					showdialog = 0;
+					for	( k = 0 ; k < nitem3 ; k ++ ) {
+						GL_RecvName(fp, sizeof(name), name);
+						if (!stricmp(name,"path")) {
+							RecvStringData(fp,path,SIZE_BUFF);
+						} else if (!stricmp(name,"title")) {
+							RecvStringData(fp,title,SIZE_BUFF);
+						} else if (!stricmp(name,"nretry")) {
+							RecvIntegerData(fp,&nretry);
+						} else if (!stricmp(name,"showdialog")) {
+							RecvIntegerData(fp,&showdialog);
+						}
+					}
+					if (strlen(path) > 0 && strlen(title) > 0) {
+						req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
+						req->path = StrDup(path);
+						req->title = StrDup(title);
+						req->nretry = nretry;
+						req->showdialog = showdialog;
+						PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
+						MessageLogPrintf("add path[%s]\n",path);
+					}
+					path[0] = 0; title[0] = 0;
+				}
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
 }
 
 static	Bool
@@ -834,6 +1107,8 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if		(  !stricmp(name,"duration")  ) {
 				attrs->ptype = RecvIntegerData(fp,&(attrs->duration));
 			}
@@ -868,11 +1143,9 @@ RecvNumberEntry(
 	NETFILE	*fp)
 {
 	Bool			ret;
-	char			buff[SIZE_BUFF]
-	,				name[SIZE_BUFF];
+	char			name[SIZE_BUFF];
 	int				nitem
 	,				i;
-	int				state;
 	_NumberEntry	*attrs;
 
 ENTER_FUNC;
@@ -884,22 +1157,19 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		FreeFixed(attrs->fixed);
 		g_free(attrs->fixed_name);
 	}
+	attrs->editable = TRUE;
 
 	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
+			if		(  !stricmp(name,"editable")  ) {
+				RecvBoolData(fp,&(attrs->editable));
 			} else {
 				attrs->ptype = RecvFixedData(fp,&(attrs->fixed));
 				attrs->fixed_name = strdup(name);
@@ -942,7 +1212,6 @@ RecvPandaCombo(
 	,			num
 	,			i
 	,			j;
-	int			state;
 	_Combo		*attrs;
 
 ENTER_FUNC;
@@ -954,9 +1223,8 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
 		g_free(attrs->subname);
-		FreeStringList(attrs->item_list);
+		g_strfreev(attrs->itemdata);
 	}
 
 	if (GL_RecvDataType(fp)	== GL_TYPE_RECORD) {
@@ -964,33 +1232,34 @@ ENTER_FUNC;
 		count = 0;
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
-			} else
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if		(  !stricmp(name,"count")  ) {
 				RecvIntegerData(fp,&count);
 				attrs->count = count;
 			} else
 			if		(  !stricmp(name,"item")  ) {
-				attrs->item_list = g_list_append(NULL,StrDup(""));
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				num = GL_RecvInt(fp);
-				for	( j = 0 ; j < num ; j ++ ) {
+				attrs->itemdata = g_malloc(sizeof(gchar*)*(num+2));
+				attrs->itemdata[num+1] = NULL;
+				attrs->itemdata[0] = g_strdup("");
+				for	( j = 1 ; j < num+1 ; j ++ ) {
 					RecvStringData(fp,buff,SIZE_BUFF);
-					if (buff != NULL && j < count) {
-						attrs->item_list = g_list_append(attrs->item_list,
-							StrDup(buff));
+					if (buff != NULL && j - 1 < count) {
+						attrs->itemdata[j] = g_strdup(buff);
+					} else {
+						attrs->itemdata[j] = NULL;
 					}
 				}
 			} else {
 				sprintf(buff,"%s.%s", data->name, name);
-				attrs->subname = strdup(buff);
-				RecvWidgetData(buff,fp);
+				if (IsWidgetName(buff)) {
+					attrs->subname = strdup(buff);
+					RecvWidgetData(buff,fp);
+				} else {
+					ShowErrorDialog(_("protocol error\ninvalid data\n%s"),buff);
+				}
 			}
 		}
 		ret = TRUE;
@@ -1011,12 +1280,16 @@ SendPandaCList(
 
 ENTER_FUNC;
 	attrs = (_CList *)data->attrs;
-	for	( i = 0; i < g_list_length(attrs->state_list); i ++ ) {
+	for	( i = 0; attrs->states[i] != NULL; i ++ ) {
 		sprintf(iname, "%s.%s[%d]", 
-			data->name, attrs->state_list_name, i + attrs->from);
+			data->name, attrs->states_name, i);
 		GL_SendPacketClass(fp,GL_ScreenData);
 		GL_SendName(fp,iname);
-		row_state = *((Bool *)g_list_nth_data(attrs->state_list,i));
+		if(*(attrs->states[i]) == 'T') {
+			row_state = TRUE;
+		} else {
+			row_state = FALSE;
+		}
 		SendBoolData(fp, GL_TYPE_BOOL, row_state);
 	}
 
@@ -1035,25 +1308,19 @@ RecvPandaCList(
 	NETFILE		*fp)
 {
 	Bool	ret;
-	char	name[SIZE_BUFF]
-	,		iname[SIZE_BUFF]
-	,		subname[SIZE_BUFF]
-	,		buff[SIZE_BUFF];
-	int		count
-	,		nitem
-	,		num
-	,		rnum
-	,		from
-	,		row
-	,		column
-	,		rowattr
-	,		i
-	,		j
-	,		k;
-	Bool	*fActive;
-	int		state;
-	gfloat	rowattrw;
-	GList	*row_items;
+	char	name[SIZE_BUFF];
+	char	iname[SIZE_BUFF];
+	char	subname[SIZE_BUFF];
+	char	buff[SIZE_BUFF];
+	char	**rdata;
+	int		nitem;
+	int		num;
+	int		row;
+	int		rnum;
+	int		column;
+	int		rowattr;
+	int		i,j,k;
+	Bool	fActive;
 	_CList	*attrs;
 
 ENTER_FUNC;
@@ -1065,47 +1332,46 @@ ENTER_FUNC;
 		data->attrs = attrs;
 	} else {
 		// reset data
-		g_free(attrs->style);
-		g_free(attrs->state_list_name);
-		FreeStringTable(attrs->item_list);
-		FreeBoolList(attrs->state_list);
+		g_free(attrs->states_name);
+		if (attrs->clistdata != NULL) {
+			for(i=0;i<g_list_length(attrs->clistdata);i++) {
+				g_strfreev(g_list_nth_data(attrs->clistdata,i));
+			}
+			g_list_free(attrs->clistdata);
+			attrs->clistdata = NULL;
+		}
+		if (attrs->fgcolors != NULL) {
+			g_strfreev(attrs->fgcolors);
+			attrs->fgcolors = NULL;
+		}
+		if (attrs->bgcolors != NULL) {
+			g_strfreev(attrs->bgcolors);
+			attrs->bgcolors = NULL;
+		}
+		if (attrs->states != NULL) {
+			g_strfreev(attrs->states);
+		}
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
 
 		nitem = GL_RecvInt(fp);
-		count = -1;
-		from = 0;
+		attrs->count = -1;
 		row = 0;
-		rowattrw = 0.0;
 
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
 			sprintf(subname,"%s.%s",data->name, name);
-			if (UI_IsWidgetName(subname)) {
+			if (IsWidgetName(subname)) {
 				RecvWidgetData(subname,fp);
-			} else
-			if		(  !stricmp(name,"count")  ) {
-				RecvIntegerData(fp,&count);
-				attrs->count = count;
-			} else
-			if		(  !stricmp(name,"from")  ) {
-				RecvIntegerData(fp,&from);
-				attrs->from = from;
-			} else
-			if		(  !stricmp(name,"state")  ) {
-				RecvIntegerData(fp,&state);
-				attrs->state = state;
-			} else
-			if		(  !stricmp(name,"style")  ) {
-				RecvStringData(fp,buff,SIZE_BUFF);
-				attrs->style = strdup(buff);
-			} else
-			if		(  !stricmp(name,"row")  ) {
+			} else if (RecvCommon(name,data,fp)) {
+			} else if (!stricmp(name,"count")) {
+				RecvIntegerData(fp,&attrs->count);
+			} else if (!stricmp(name,"row")) {
 				RecvIntegerData(fp,&row);
-				attrs->row = row;
-			} else
-			if		(  !stricmp(name,"rowattr")  ) {
+				/* for 1origin cobol */
+				attrs->row = row > 1 ? row - 1 : 0;
+			} else if (!stricmp(name,"rowattr")) {
 				RecvIntegerData(fp,&rowattr);
 				switch	(rowattr) {
 				  case	1: /* DOWN */
@@ -1114,47 +1380,289 @@ ENTER_FUNC;
 				  case	2: /* MIDDLE */
 					attrs->rowattr = 0.5;
 					break;
+				  case	3: /* QUATER */
+					attrs->rowattr = 0.25;
+					break;
+				  case	4: /* THREE QUATER */
+					attrs->rowattr = 0.75;
+					break;
 				  default: /* [0] TOP */
 					attrs->rowattr = 0.0;
 					break;
 				}
-			} else
-			if		(  !stricmp(name,"column")  ) {
+			} else if (!stricmp(name,"column")) {
+				/* dummy */
 				RecvIntegerData(fp,&column);
-				attrs->column = column;
-			} else
-			if		(  !stricmp(name,"item")  ) {
+			} else if (!stricmp(name,"item")) {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				num = GL_RecvInt(fp);
-				if		(  count  <  0  ) {
-					count = num;
+				if (attrs->count < 0) {
+					attrs->count = num;
 				}
-				attrs->item_list = NULL;
+				attrs->clistdata = NULL;
 				for	( j = 0 ; j < num ; j ++ ) {
 					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
 					rnum = GL_RecvInt(fp);
-					row_items = NULL;
+					rdata = g_malloc0(sizeof(gchar*)*(rnum+1));
+					rdata[rnum] = NULL;
 					for	( k = 0 ; k < rnum ; k ++ ) {
 						GL_RecvName(fp, sizeof(iname), iname);
 						(void)RecvStringData(fp,buff,SIZE_BUFF);
-						row_items = g_list_append(row_items, StrDup(buff));
+						rdata[k] = g_strdup(buff);
 					}
-					attrs->item_list = g_list_append(attrs->item_list, 
-						row_items);
+					attrs->clistdata = g_list_append(attrs->clistdata,rdata);
+				}
+			} else if (!stricmp(name,"fgcolor")) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				num = GL_RecvInt(fp);
+				attrs->fgcolors = g_malloc0(sizeof(gchar*)*(num+1));
+				attrs->fgcolors[num] = NULL;
+				for	( j = 0 ; j < num ; j ++ ) {
+					(void)RecvStringData(fp,buff,SIZE_BUFF);
+					attrs->fgcolors[j] = g_strdup(buff);
+				}
+			} else if (!stricmp(name,"bgcolor")) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				num = GL_RecvInt(fp);
+				attrs->bgcolors = g_malloc0(sizeof(gchar*)*(num+1));
+				attrs->bgcolors[num] = NULL;
+				for	( j = 0 ; j < num ; j ++ ) {
+					(void)RecvStringData(fp,buff,SIZE_BUFF);
+					attrs->bgcolors[j] = g_strdup(buff);
 				}
 			} else {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
-				attrs->state_list_name = strdup(name);
+				attrs->states_name = strdup(name);
 				num = GL_RecvInt(fp);
-				if		(  count  <  0  ) {
-					count = num;
+				if (attrs->count < 0) {
+					attrs->count = num;
 				}
-				attrs->state_list = NULL;
+				attrs->states = g_malloc0(sizeof(gchar*)*(num+1));
+				attrs->states[num] = NULL;
 				for	( j = 0 ; j < num ; j ++ ) {
-					fActive = g_new0(Bool, 1);
-					RecvBoolData(fp,fActive);
-					attrs->state_list = g_list_append(attrs->state_list, 
-						fActive);
+					RecvBoolData(fp,&fActive);
+					if (fActive) {
+						attrs->states[j] = g_strdup("T");
+					} else {
+						attrs->states[j] = g_strdup("F");
+					}
+				}
+			}
+		}
+		ret = TRUE;
+	}
+LEAVE_FUNC;
+	return ret;
+}
+
+static	Bool
+SendPandaTable(
+	WidgetData	*data,
+	NETFILE	*fp)
+{
+	char		iname[SIZE_BUFF];
+	char		**rowdata,**namerowdata;
+	 _Table		*attrs;
+	int 		i,j;
+
+ENTER_FUNC;
+	attrs = (_Table *)data->attrs;
+	sprintf(iname,"%s.trow", data->name);
+	GL_SendPacketClass(fp,GL_ScreenData);
+	GL_SendName(fp,iname);
+	SendIntegerData(fp, GL_TYPE_INT, attrs->trow+1);
+
+	sprintf(iname,"%s.tcolumn", data->name);
+	GL_SendPacketClass(fp,GL_ScreenData);
+	GL_SendName(fp,iname);
+	SendIntegerData(fp, GL_TYPE_INT, attrs->tcolumn+1);
+
+	sprintf(iname,"%s.tvalue", data->name);
+	GL_SendPacketClass(fp,GL_ScreenData);
+	GL_SendName(fp,iname);
+	SendStringData(fp,GL_TYPE_VARCHAR ,attrs->tvalue);
+
+	if (attrs->tabledata != NULL) {
+		for(i=0;i<g_list_length(attrs->tabledata);i++) {
+			rowdata = (gchar**)(g_list_nth_data(attrs->tabledata,i));
+			namerowdata = (gchar**)(g_list_nth_data(attrs->namedata,i));
+			for(j=0;j<attrs->ncolumns+1;j++) {
+				if (rowdata[j] != NULL) {
+				GL_SendPacketClass(fp,GL_ScreenData);
+				GL_SendName(fp,namerowdata[j]);
+				SendStringData(fp,GL_TYPE_VARCHAR ,rowdata[j]);
+				}
+			}
+		}
+	}
+LEAVE_FUNC;
+	return TRUE;
+}
+
+static	Bool
+RecvPandaTable(
+	WidgetData	*data,
+	NETFILE		*fp)
+{
+	Bool	ret;
+	gchar	name[SIZE_BUFF]
+	,		iname[SIZE_BUFF]
+	,		iiname[SIZE_BUFF]
+	,		buff[SIZE_BUFF];
+	gchar	**rowdata
+	,		**namerowdata
+	,		**fgrowdata
+	,		**bgrowdata;
+	gint	rowattr
+	,		nitem
+	,		nrows
+	,		ncolumns
+	,		i
+	,		j
+	,		k 
+	,		l;
+	_Table	*attrs;
+
+ENTER_FUNC;
+	ret = FALSE;
+	attrs = (_Table *)data->attrs;
+	if (attrs == NULL){
+		// new data
+		attrs = g_new0(_Table, 1);
+		data->attrs = attrs;
+	} else {
+		// reset data
+		g_free(attrs->tvalue);
+		if (attrs->tabledata != NULL) {
+			for(i=0;i<g_list_length(attrs->tabledata);i++) {
+				rowdata = (char**)g_list_nth_data(attrs->tabledata,i);
+				for(j=0;j<attrs->ncolumns+1;j++) {
+					if (rowdata[j] != NULL) {
+						g_free(rowdata[j]);
+					}
+				}
+				g_free(rowdata);
+			}
+			g_list_free(attrs->tabledata);
+			attrs->tabledata = NULL;
+		}
+		if (attrs->namedata != NULL) {
+			for(i=0;i<g_list_length(attrs->namedata);i++) {
+				g_strfreev(g_list_nth_data(attrs->namedata,i));
+			}
+			g_list_free(attrs->namedata);
+			attrs->namedata = NULL;
+		}
+		if (attrs->fgdata != NULL) {
+			for(i=0;i<g_list_length(attrs->fgdata);i++) {
+				g_strfreev(g_list_nth_data(attrs->fgdata,i));
+			}
+			g_list_free(attrs->fgdata);
+			attrs->fgdata = NULL;
+		}
+		if (attrs->bgdata != NULL) {
+			for(i=0;i<g_list_length(attrs->bgdata);i++) {
+				g_strfreev(g_list_nth_data(attrs->bgdata,i));
+			}
+			g_list_free(attrs->bgdata);
+			attrs->bgdata = NULL;
+		}
+	}
+
+	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
+
+		nitem = GL_RecvInt(fp);
+		attrs->trowattr = 0.0;
+
+		for	( i = 0 ; i < nitem ; i ++ ) {
+			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
+			if		(  !stricmp(name,"trow")  ) {
+				RecvIntegerData(fp,&(attrs->trow));
+				/* for 1origin cobol */
+				attrs->trow = attrs->trow > 1 ? attrs->trow - 1 : 0;
+			} else
+			if		(  !stricmp(name,"trowattr")  ) {
+				RecvIntegerData(fp,&rowattr);
+				switch	(rowattr) {
+				  case	1: /* DOWN */
+					attrs->trowattr = 1.0;
+					break;
+				  case	2: /* MIDDLE */
+					attrs->trowattr = 0.5;
+					break;
+				  case	3: /* QUATER */
+					attrs->trowattr = 0.25;
+					break;
+				  case	4: /* THREE QUATER */
+					attrs->trowattr = 0.75;
+					break;
+				  default: /* [0] TOP */
+					attrs->trowattr = 0.0;
+					break;
+				}
+			} else
+			if		(  !stricmp(name,"tcolumn")  ) {
+				RecvIntegerData(fp,&(attrs->tcolumn));
+				attrs->tcolumn -= 1;
+			} else
+			if		(  !stricmp(name,"tvalue")  ) {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->tvalue = strdup(buff);
+			} else
+			if		(  !stricmp(name,"rowdata")  ) {
+				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
+				nrows = GL_RecvInt(fp);
+				attrs->tabledata = NULL;
+				attrs->namedata = NULL;
+				attrs->fgdata = NULL;
+				attrs->bgdata = NULL;
+				for	( j = 0 ; j < nrows ; j ++ ) {
+					GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+					attrs->ncolumns = ncolumns = GL_RecvInt(fp);
+
+					rowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
+					rowdata[ncolumns] = NULL;
+					namerowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
+					namerowdata[ncolumns] = NULL;
+					fgrowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
+					fgrowdata[ncolumns] = NULL;
+					bgrowdata = g_malloc0(sizeof(gchar*)*(ncolumns+1));
+					bgrowdata[ncolumns] = NULL;
+
+					for	( k = 0 ; k < ncolumns ; k ++ ) {
+						int nitems;
+
+						GL_RecvName(fp, sizeof(iname), iname);	/*columndata*/
+						GL_RecvDataType(fp);	/*	GL_TYPE_RECORD	*/
+						nitems = GL_RecvInt(fp);
+
+
+						for(l=0;l<nitems;l++) {
+							GL_RecvName(fp, sizeof(iiname), iiname);
+							if (!stricmp(iiname,"celldata")){
+								(void)RecvStringData(fp,buff,SIZE_BUFF);
+								rowdata[k] = g_strdup(buff);
+								namerowdata[k] = g_strdup_printf("%s.rowdata[%d].%s.celldata",data->name,j,iname);
+							} else
+							if (!stricmp(iiname,"fgcolor")){
+								(void)RecvStringData(fp,buff,SIZE_BUFF);
+								fgrowdata[k] = g_strdup(buff);
+							} else 
+							if (!stricmp(iiname,"bgcolor")){
+								(void)RecvStringData(fp,buff,SIZE_BUFF);
+								bgrowdata[k] = g_strdup(buff);
+							} else {
+								Warning("does not reach here");
+								(void)RecvStringData(fp,buff,SIZE_BUFF);
+							}
+						}
+					}
+					attrs->tabledata = g_list_append(attrs->tabledata,rowdata);
+					attrs->namedata = g_list_append(attrs->namedata,namerowdata);
+					attrs->fgdata = g_list_append(attrs->fgdata,fgrowdata);
+					attrs->bgdata = g_list_append(attrs->bgdata,bgrowdata);
 				}
 			}
 		}
@@ -1192,8 +1700,11 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			RecvStringData(fp,buff,SIZE_BUFF);
-			attrs->uri = strdup(buff);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else {
+				RecvStringData(fp,buff,SIZE_BUFF);
+				attrs->uri = strdup(buff);
+			}
 		}
 		ret = TRUE;
 	}
@@ -1232,8 +1743,11 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
-			attrs->binary = NewLBS();
-			RecvBinaryData(fp, attrs->binary);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else {
+				attrs->binary = NewLBS();
+				RecvBinaryData(fp, attrs->binary);
+			}
 		}
 		ret = TRUE;
 	}
@@ -1272,6 +1786,8 @@ ENTER_FUNC;
 		nitem = GL_RecvInt(fp);
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
+			if		(  RecvCommon(name,data,fp)  ) {
+			} else 
 			if (!stricmp(name,"objectdata")) {
 				RecvBinaryData(fp, attrs->binary);
 			} else {
@@ -1323,15 +1839,18 @@ RecvWidgetData(
 
 	ENTER_FUNC;
 
-	type = UI_GetWidgetType(ThisWindowName, widgetName);
-	data = (WidgetData *)g_hash_table_lookup(WidgetDataTable, widgetName);
+	type = GetWidgetType(THISWINDOW(Session),widgetName);
+	data = (WidgetData *)g_hash_table_lookup(WIDGETTABLE(Session), widgetName);
 	if (data == NULL){
 		// new data
 		data = g_new0(WidgetData, 1);
 		data->type = type;
 		data->name = strdup(widgetName);
-		data->window = g_hash_table_lookup(WindowTable, ThisWindowName);
-		g_hash_table_insert(WidgetDataTable, strdup(widgetName), data);
+		data->window = GetWindowData(THISWINDOW(Session));
+		data->state = 0;
+		data->visible = TRUE;
+		data->style = NULL;
+		g_hash_table_insert(WIDGETTABLE(Session), strdup(widgetName), data);
 	}
 	EnQueue(data->window->UpdateWidgetQueue, data);
 
@@ -1351,8 +1870,16 @@ RecvWidgetData(
 		ret = RecvPandaPreview(data, fp); break;
 	case WIDGET_TYPE_PANDA_TIMER:
 		ret = RecvPandaTimer(data, fp); break;
+	case WIDGET_TYPE_PANDA_DOWNLOAD:
+		ret = RecvPandaDownload(data, fp); break;
+	case WIDGET_TYPE_PANDA_DOWNLOAD2:
+		ret = RecvPandaDownload2(data, fp); break;
+	case WIDGET_TYPE_PANDA_PRINT:
+		ret = RecvPandaPrint(data, fp); break;
 	case WIDGET_TYPE_PANDA_HTML:
 		ret = RecvPandaHTML(data, fp); break;
+	case WIDGET_TYPE_PANDA_TABLE:
+		ret = RecvPandaTable(data, fp); break;
 // gtk+
 	case WIDGET_TYPE_ENTRY:
 		ret = RecvEntry(data, fp); break;
@@ -1377,6 +1904,10 @@ RecvWidgetData(
 		ret = RecvFrame(data, fp); break;
 	case WIDGET_TYPE_SCROLLED_WINDOW:
 		ret = RecvScrolledWindow(data, fp); break;
+	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
+		ret = RecvFileChooserButton(data, fp); break;
+	case WIDGET_TYPE_COLOR_BUTTON:
+		ret = RecvColorButton(data, fp); break;
 // gnome
 	case WIDGET_TYPE_FILE_ENTRY:
 		ret = RecvFileEntry(data, fp); break;
@@ -1402,13 +1933,13 @@ SendWidgetData(
 ENTER_FUNC;
 	widgetName = (char *)key;
 	fp = (NETFILE *)user_data;
-	data = (WidgetData *)g_hash_table_lookup(WidgetDataTable, widgetName);
+	data = GetWidgetData(widgetName);
 	if (data == NULL) {
 		MessageLogPrintf("widget data [%s] is not found",widgetName);
 		return;
 	}
 
-	UI_GetWidgetData(data);
+	UpdateWidgetData(data);
 
 	switch(data->type) {
 // gtk+panda
@@ -1422,6 +1953,8 @@ ENTER_FUNC;
 		SendText(data, fp); break;
 	case WIDGET_TYPE_PANDA_TIMER:
 		SendPandaTimer(data, fp); break;
+	case WIDGET_TYPE_PANDA_TABLE:
+		SendPandaTable(data, fp); break;
 // gtk+
 	case WIDGET_TYPE_ENTRY:
 		SendEntry(data, fp); break;
@@ -1439,6 +1972,10 @@ ENTER_FUNC;
 		SendProgressBar(data, fp); break;
 	case WIDGET_TYPE_SCROLLED_WINDOW:
 		SendScrolledWindow(data, fp); break;
+	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
+		SendFileChooserButton(data, fp); break;
+	case WIDGET_TYPE_COLOR_BUTTON:
+		SendColorButton(data, fp); break;
 // gnome
 	case WIDGET_TYPE_FILE_ENTRY:
 		SendFileEntry(data, fp); break;

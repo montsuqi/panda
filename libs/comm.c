@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,6 @@
 #include	<glib.h>
 #include	<math.h>
 
-#include	"types.h"
 #include	"libmondai.h"
 #define	_COMM
 #include	"comm.h"
@@ -46,15 +45,22 @@ SendPacketClass(
 	PacketClass	c)
 {
 	nputc(c,fp);
+	Flush(fp);
 }
 
 extern	PacketClass
 RecvPacketClass(
 	NETFILE	*fp)
 {
-	PacketClass	c;
+	int tc;
+	PacketClass	c = (PacketClass)0x00;
 
-	c = ngetc(fp);
+	tc = ngetc(fp);
+	if ( tc >= 0 ) {
+		c = tc;
+	} else {
+		Message("error RecvPacket");
+	}
 	return	(c);
 }
 
@@ -63,7 +69,7 @@ SendLength(
 	NETFILE	*fp,
 	size_t	size)
 {
-	SendUInt(fp,(unsigned int)size);
+	Send(fp,&size,sizeof(size));
 }
 
 extern	size_t
@@ -72,7 +78,9 @@ RecvLength(
 {
 	size_t	size;
 
-	size =(size_t)RecvUInt(fp);
+	if		(  Recv(fp,&size,sizeof(size))  <  0  ) {
+		size = 0;
+	}
 	return	(size);
 }
 
@@ -130,12 +138,26 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+extern	char *
+RecvStringNew(
+	NETFILE *fp)
+{
+	size_t	size;
+	char *ret;
+ENTER_FUNC;
+	size = RecvLength(fp);
+	ret = xmalloc(size + 1);
+	Recv(fp,ret,size);
+	ret[size] = 0;
+	return ret;
+LEAVE_FUNC;
+}
+
 extern	void
 SendLBS(
 	NETFILE	*fp,
 	LargeByteString	*lbs)
 {
-	dbgprintf("size = %d",(int)LBS_Size(lbs));
 	SendLength(fp,LBS_Size(lbs));
 	if		(  LBS_Size(lbs)  >  0  ) {
 		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
@@ -150,7 +172,6 @@ RecvLBS(
 	size_t	size;
 
 	size = RecvLength(fp);
-	dbgprintf("size = %d",(int)size);
 	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
 		Recv(fp,LBS_Body(lbs),size);
@@ -180,22 +201,8 @@ RecvUInt(
 	NETFILE	*fp)
 {
 	unsigned	int		data;
-	byte	buff[sizeof(unsigned int)];
 
-	data = 0;
-#if	1
-	Recv(fp,buff,sizeof(unsigned int));
-	{
-		int		i;
-
-		for	( i = 0 ; i < sizeof(unsigned int) ; i ++ ) {
-			dbgprintf("[%d]",(int)buff[i]);
-		}
-	}
-	memcpy(&data,buff,sizeof(unsigned int));
-#else
 	Recv(fp,&data,sizeof(data));
-#endif
 	return	(data);
 }
 
@@ -229,7 +236,7 @@ extern	int
 RecvChar(
 	NETFILE	*fp)
 {
-	byte	data;
+	unsigned char	data;
 	int		ret;
 
 	if		(  Recv(fp,&data,sizeof(data))  ==  sizeof(data)  ) {
@@ -245,9 +252,9 @@ SendChar(
 	NETFILE	*fp,
 	int		data)
 {
-	byte	buf;
+	unsigned char	buf;
 
-	buf = (byte)data;
+	buf = (unsigned char)data;
 	Send(fp,&buf,sizeof(buf));
 }
 
@@ -258,7 +265,6 @@ RecvBool(
 	char	buf[1];
 
 	Recv(fp,buf,1);
-	dbgprintf("Bool [%c]",buf[0]);
 	return	((buf[0] == 'T' ) ? TRUE : FALSE);
 }
 
@@ -270,7 +276,6 @@ SendBool(
 	char	buf[1];
 
 	buf[0] = data ? 'T' : 'F';
-	dbgprintf("Bool [%c]",buf[0]);
 	Send(fp,buf,1);
 }
 

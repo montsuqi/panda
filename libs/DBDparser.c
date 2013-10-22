@@ -36,7 +36,6 @@
 #include	<glib.h>
 #include	<unistd.h>
 #include	<sys/stat.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"dbgroup.h"
 #include	"DBparser.h"
@@ -73,7 +72,7 @@ static	TokenTable	tokentable[] = {
 static	GHashTable	*Reserved;
 
 static	void
-ParDBDB(
+DBD_Par(
 	CURFILE		*in,
 	DBD_Struct	*dbd,
 	char		*gname)
@@ -85,7 +84,7 @@ ParDBDB(
 	char		*p
 	,			*q;
 
-dbgmsg(">ParDBDB");
+ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
@@ -97,7 +96,7 @@ dbgmsg(">ParDBDB");
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,ComSymbol);
-					if		(  (  db = DB_Parser(name,gname,NULL,TRUE) )  !=  NULL  ) {
+					if		(  (  db = DB_Parser(name,gname,TRUE) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(dbd->DBD_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( dbd->cDB + 1));
 							memcpy(rtmp,dbd->db,sizeof(RecordStruct *) * dbd->cDB);
@@ -124,7 +123,24 @@ dbgmsg(">ParDBDB");
 		ERROR_BREAK;
 	}
 	xfree(gname);
-dbgmsg("<ParDBDB");
+LEAVE_FUNC;
+}
+
+static	DBD_Struct	*
+NewDBD(void)
+{
+	DBD_Struct	*dbd;
+ENTER_FUNC;
+	dbd = New(DBD_Struct);
+	dbd->name = NULL;
+	dbd->cDB = 1;
+	dbd->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
+	dbd->db[0] = NULL;
+	dbd->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
+	dbd->textsize = SIZE_DEFAULT_TEXT_SIZE;
+	dbd->DBD_Table = NewNameHash();
+LEAVE_FUNC;
+	return (dbd);
 }
 
 static	DBD_Struct	*
@@ -134,7 +150,7 @@ ParDB(
 	DBD_Struct	*ret;
 	char		*gname;
 
-dbgmsg(">ParDB");
+ENTER_FUNC;
 	ret = NULL;
 	while	(  GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
@@ -142,14 +158,8 @@ dbgmsg(">ParDB");
 			if		(  GetName  !=  T_SYMBOL  ) {
 				ParError("no name");
 			} else {
-				ret = New(DBD_Struct);
+				ret = NewDBD();
 				ret->name = StrDup(ComSymbol);
-				ret->cDB = 1;
-				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
-				ret->db[0] = NULL;
-				ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
-				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
-				ret->DBD_Table = NewNameHash();
 			}
 			break;
 		  case	T_ARRAYSIZE:
@@ -179,7 +189,7 @@ dbgmsg(">ParDB");
 				gname = NULL;
 				ParError("syntax error 4");
 			}
-			ParDBDB(in,ret,gname);
+			DBD_Par(in,ret,gname);
 			break;
 		  default:
 			ParError("syntax error 3");
@@ -190,7 +200,7 @@ dbgmsg(">ParDB");
 		}
 		ERROR_BREAK;
 	}
-dbgmsg("<ParDB");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -203,7 +213,7 @@ DBD_Parser(
 	CURFILE		*in
 		,		root;
 
-dbgmsg(">DBD_Parser");
+ENTER_FUNC;
 	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
 		if		(  ( in = PushLexInfo(&root,name,D_Dir,Reserved) )  !=  NULL  ) {
@@ -216,7 +226,7 @@ dbgmsg(">DBD_Parser");
 	} else {
 		ret = NULL;
 	}
-dbgmsg("<DBD_Parser");
+LEAVE_FUNC;
 	return	(ret);
 }
 

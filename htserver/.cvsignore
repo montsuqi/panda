@@ -1,9 +1,0 @@
-.deps
-.libs
-Makefile
-Makefile.in
-htserver
-mon
-htcproc
-mce
-makefont

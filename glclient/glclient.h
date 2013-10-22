@@ -21,7 +21,14 @@
 #ifndef	_INC_GLCLIENT_H
 #define	_INC_GLCLIENT_H
 
-#include 	<glade/glade.h>
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include	<glade/glade.h>
+#include	<glib.h>
+#include	<gconf/gconf-client.h>
+
 #include	"libmondai.h"
 #include	"net.h"
 #include	"queue.h"
@@ -32,115 +39,105 @@
 #define	GLOBAL		extern
 #endif
 
-#define UI_VERSION_1 1
-#define UI_VERSION_2 2
-
 typedef struct {
 	NETFILE		*fpComm;
 	Port		*port;
 	char		*title;
+	char		*bgcolor;
+	Bool		IsRecv;
+	char		*FocusedWindow;
+	char		*FocusedWidget;
+	char		*ThisWindow;
+	GHashTable	*WindowTable;
+	GHashTable	*WidgetTable;
+	GList		*PrintList;
+	GList		*DLList;
 #ifdef	USE_SSL
 	SSL_CTX		*ctx;
 #ifdef  USE_PKCS11
 	ENGINE		*engine;
 #endif  /* USE_PKCS11 */
 #endif  /* USE_SSL */
-}	Session;
+}	GLSession;
+
+#define	FPCOMM(session)			((session)->fpComm)
+#define PORT(session)			((session)->port)
+#define	TITLE(session)			((session)->title)
+#define	BGCOLOR(session)		((session)->bgcolor)
+#define	ISRECV(session)			((session)->IsRecv)
+#define	FOCUSEDWINDOW(session)	((session)->FocusedWindow)
+#define	FOCUSEDWIDGET(session)	((session)->FocusedWidget)
+#define	THISWINDOW(session)		((session)->ThisWindow)
+#define	WINDOWTABLE(session)	((session)->WindowTable)
+#define	WIDGETTABLE(session)	((session)->WidgetTable)
+#define	PRINTLIST(session)		((session)->PrintList)
+#define	DLLIST(session)			((session)->DLList)
+#ifdef	USE_SSL
+#define	CTX(session)			((session)->ctx)
+#ifdef	USE_PKCS11
+#define	ENGINE(session)			((session)->engine)
+#endif	/* USE_PKCS11 */
+#endif	/* USE_SSL */
 
 typedef struct {
 	char		*name;
 	char		*title;
 	void		*xml;
+	Bool		fWindow;
+	Bool		fAccelGroup;
 	GHashTable	*ChangedWidgetTable;
+	GHashTable	*TimerWidgetTable;
 	Queue		*UpdateWidgetQueue;
 }	WindowData;
 
-extern	char	*CacheDirName(void);
-extern	char	*CacheFileName(char *name);
-extern	void	ExitSystem(void);
-extern  void	MakeCacheDir(void);
-extern  void	SetSessionTitle(char *dname);
+extern	void		ExitSystem(void);
+extern  void		SetSessionTitle(const char *title);
+extern  void		SetSessionBGColor(const char *color);
 
-GLOBAL	char		*FocusedWindowName;
-GLOBAL	char		*ThisWindowName;
-GLOBAL	GHashTable	*WindowTable;
+GLOBAL	char		*CurrentApplication;
+GLOBAL	Bool		fV47;
+GLOBAL	char		*TempDir;
+GLOBAL	char		*ConfDir;
+GLOBAL	GLSession	*Session;
 
-GLOBAL	char	*CurrentApplication;
-
-GLOBAL	Bool	fInRecv;
-
-GLOBAL	Session	*glSession;
-GLOBAL	char	*PortNumber;
-GLOBAL	Bool	Protocol1;
-GLOBAL	Bool	Protocol2;
-GLOBAL	char	*User;
-GLOBAL	char	*Pass;
-GLOBAL	Bool	SavePass;
-GLOBAL	char	*Cache; 
-GLOBAL	char	*Style; 
-GLOBAL	char	*Gtkrc; 
-GLOBAL	Bool	fMlog;
-GLOBAL	Bool	fKeyBuff;
-GLOBAL	Bool	fTimer;
-GLOBAL	char	*TimerPeriod;
+GLOBAL	char		*Host;
+GLOBAL	char		*PortNum;
+GLOBAL	char		*User;
+GLOBAL	char		*Pass;
+GLOBAL	Bool		SavePass;
+GLOBAL	char		*Style; 
+GLOBAL	char		*Gtkrc; 
+GLOBAL	Bool		fMlog;
+GLOBAL	Bool		fKeyBuff;
+GLOBAL	Bool		fIMKanaOff;
+GLOBAL	Bool		fTimer;
+GLOBAL	char		*TimerPeriod;
+GLOBAL	int			PingTimerPeriod;
+GLOBAL	char		*FontName;
 #ifdef	USE_SSL
-GLOBAL	Bool	fSsl;
-GLOBAL	char	*KeyFile;
-GLOBAL	char	*CertFile;
-GLOBAL	char	*CA_Path;
-GLOBAL	char	*CA_File;
-GLOBAL	char	*Ciphers;
+GLOBAL	Bool		fSsl;
+GLOBAL	char		*CertFile;
+GLOBAL	char		*CA_File;
+GLOBAL	char		*Ciphers;
+GLOBAL	char		*Passphrase;
 #ifdef  USE_PKCS11
-GLOBAL	Bool	fPKCS11;
-GLOBAL	char	*PKCS11_Lib;
-GLOBAL	char	*Slot;
+GLOBAL	Bool		fPKCS11;
+GLOBAL	char		*PKCS11_Lib;
+GLOBAL	char		*Slot;
 #endif	/* USE_PKCS11 */
 #endif	/* USE_SSL */
 
-#define DEFAULT_HOST				"localhost"
-#define DEFAULT_PORT				"8000"
-#define DEFAULT_APPLICATION			"panda:"
-#define DEFAULT_CACHE_PATH			"/.glclient/cache"
-#define DEFAULT_PROTOCOL_V1			TRUE
-#define DEFAULT_PROTOCOL_V1_STR		"true" 
-#define DEFAULT_PROTOCOL_V2			FALSE
-#define DEFAULT_PROTOCOL_V2_STR		"false"
-#define DEFAULT_MLOG				TRUE 
-#define DEFAULT_MLOG_STR			"true"
-#define DEFAULT_KEYBUFF				FALSE
-#define DEFAULT_KEYBUFF_STR			"false" 
-#define DEFAULT_TIMER				TRUE
-#define DEFAULT_TIMER_STR			"true"
-#define DEFAULT_TIMERPERIOD			"1000"
-#define DEFAULT_STYLE				""
-#define DEFAULT_GTKRC				""
-#define DEFAULT_USER				(getenv("USER"))
-#define DEFAULT_PASSWORD			""
-#define DEFAULT_SAVEPASSWORD		FALSE
-#define DEFAULT_SAVEPASSWORD_STR	"false"
-#ifdef USE_SSL
-#define DEFAULT_SSL					FALSE
-#define DEFAULT_SSL_STR				"false"
-#define DEFAULT_CAPATH				""
-#define DEFAULT_CAFILE				""
-#define DEFAULT_KEY					""
-#define DEFAULT_CERT				""
-#define DEFAULT_CIPHERS				"ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"
-#ifdef USE_PKCS11
-#define DEFAULT_PKCS11				FALSE
-#define DEFAULT_PKCS11_STR			"false"
-#define DEFAULT_PKCS11_LIB			""
-#define DEFAULT_SLOT				""
-#endif
-#endif
+/* gconf */
+GLOBAL	GConfClient *GConfCTX;
+GLOBAL	gchar	*ConfigName;
 
-#define	FPCOMM(session)		((session)->fpComm)
-#define	TITLE(session)		((session)->title)
-#ifdef	USE_SSL
-#define	CTX(session)		((session)->ctx)
-#ifdef	USE_PKCS11
-#define	ENGINE(session)		((session)->engine)
-#endif	/* USE_PKCS11 */
-#endif	/* USE_SSL */
+#define GL_GCONF_BASE				"/apps/glclient"
+#define GL_GCONF_SERVERS			(GL_GCONF_BASE "/servers")
+#define GL_GCONF_DEFAULT_SERVER		(GL_GCONF_BASE "/servers/1")
+#define GL_GCONF_SERVER				(GL_GCONF_BASE "/server")
+#define GL_GCONF_NEXT_ID			(GL_GCONF_BASE "/next_id")
+#define GL_GCONF_CONF_CONVERTED		(GL_GCONF_BASE "/confconverted")
+#define GL_GCONF_WCACHE				(GL_GCONF_BASE "/widgetcache")
+#define GL_GCONF_WCACHE_CONVERTED	(GL_GCONF_BASE "/wcacheconverted")
 
 #endif

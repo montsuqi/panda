@@ -40,7 +40,6 @@
 #include	<glib.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"comms.h"
 #include	"queue.h"
@@ -105,7 +104,7 @@ FileThread(
 	char	*p;
 	FILE	*fp;
 	time_t	nowtime;
-	struct	tm	*Now;
+	struct	tm	Now;
 
 ENTER_FUNC;
 	if		(  fn  !=  NULL  ) { 
@@ -120,16 +119,16 @@ ENTER_FUNC;
 		dbgmsg("de queue");
 		if		(  fDate  ) {
 			time(&nowtime);
-			Now = localtime(&nowtime);
+			localtime_r(&nowtime, &Now);
 			if		(  fp  !=  NULL  ) {
 				fprintf(fp,"%04d/%02d/%02d/%02d:%02d:%02d "
-						, Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-						, Now->tm_hour,Now->tm_min,Now->tm_sec);
+						, Now.tm_year+1900,Now.tm_mon+1,Now.tm_mday
+						, Now.tm_hour,Now.tm_min,Now.tm_sec);
 			}
 			if		(  fStdout  ) {
 				printf("%04d/%02d/%02d/%02d:%02d:%02d "
-					   , Now->tm_year+1900,Now->tm_mon+1,Now->tm_mday
-					   , Now->tm_hour,Now->tm_min,Now->tm_sec);
+					   , Now.tm_year+1900,Now.tm_mon+1,Now.tm_mday
+					   , Now.tm_hour,Now.tm_min,Now.tm_sec);
 			}
 		}
 		if		(  fp  !=  NULL  ) {

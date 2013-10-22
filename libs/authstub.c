@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,27 +40,12 @@
 #include	<glib.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"auth.h"
 #include	"comm.h"
 #include	"socket.h"
 #include	"option.h"
 #include	"debug.h"
-
-extern  char    *
-MakeAuthID(
-	char    *id,
-	char    *user)
-{
-	struct  timeval tv;
-
-	if      (  id  !=  NULL  ) {
-		gettimeofday(&tv, (struct timezone *) 0);
-		strcpy(id,crypt(user,l64a(tv.tv_sec + getpid() + clock())));
-	}
-	return  (id);
-}
 
 extern	Bool
 AuthUser(
@@ -77,6 +62,7 @@ AuthUser(
 	char	buff[SIZE_OTHER+1];
 
 ENTER_FUNC;
+	rc = FALSE;
 	if		(  strcmp(auth->protocol,"trust")  ==  0  ) {
 		rc = TRUE;
 	} else {
@@ -90,22 +76,20 @@ ENTER_FUNC;
 				SendString(fp,user);
 				SendString(fp,pass);
 				if		(  ( rc = RecvBool(fp) )  ) {
+					/* for protocol interchangebility; 'other' is not using*/
 					RecvnString(fp, sizeof(buff), buff);
-					if		(  other  !=  NULL  ) {
-						strcpy(other,buff);
-					}
 				}
 				CloseNet(fp);
 			} else{
 				Warning("can not connect glauth server");
 				rc = FALSE;
 			}
+		} else if (!stricmp(auth->protocol,"api")) {
+			rc = AuthAPI(user,pass,other,id);
+		} else if (!stricmp(auth->protocol,"file")) {
+			rc = AuthSingle(auth->file,user,pass,NULL);
 		} else {
-			if		(  !stricmp(auth->protocol,"file")  ) {
-				rc = AuthSingle(auth->file,user,pass,NULL);
-			} else {
-				rc = FALSE;
-			}
+			rc = FALSE;
 		}
 	}
 
@@ -117,13 +101,6 @@ ENTER_FUNC;
 			*id = 0;
 		}
 	}
-#ifdef	DEBUG
-	if		(  rc ) {
-		printf("OK\n");
-	} else {
-		printf("NG\n");
-	}
-#endif
 LEAVE_FUNC;
 	return	(rc);
 }

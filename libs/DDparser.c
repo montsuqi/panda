@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@
 #include	<ctype.h>
 #include	<glib.h>
 #include	<sys/stat.h>	/*	for stbuf	*/
-#include	"types.h"
 #include	<libmondai.h>
 #include	<RecParser.h>
 #include	"struct.h"
@@ -71,10 +70,10 @@ ParseRecordFile(
 
 ENTER_FUNC;
 	dbgprintf("name = [%s]\n",name);
-	if		(  ( value = RecParseValue(name,&ValueName) )  !=  NULL  ) {
+	if	((value = RecParseValue(name,&ValueName)) != NULL) {
 		ret = New(RecordStruct);
 		ret->value = value;
-		ret->name = StrDup(ValueName);
+		ret->name = ValueName;
 		ret->type = RECORD_NULL;
 	} else {
 		ret = NULL;
@@ -92,57 +91,39 @@ ParseRecordMem(
 	char			*ValueName;
 
 ENTER_FUNC;
-	if		(  ( value = RecParseValueMem(mem,&ValueName) )  !=  NULL  ) {
+	if ((value = RecParseValueMem(mem,&ValueName)) != NULL) {
 		ret = New(RecordStruct);
 		ret->value = value;
-		ret->name = StrDup(ValueName);
+		ret->name = ValueName;
 		ret->type = RECORD_NULL;
 	} else {
 		ret = NULL;
 	}
 LEAVE_FUNC;
-	return	(ret);
+	return	ret;
 }
 
 extern	RecordStruct	*
 ReadRecordDefine(
-	char	*name,
-	char	*base)
+	char	*name)
 {
+	gchar 			*fname;
+	static gchar	**dirs = NULL;
+	int 			i;
 	RecordStruct	*rec;
-	char		buf[SIZE_LONGNAME+1]
-	,			dir[SIZE_LONGNAME+1];
-	char		*p
-	,			*q;
-	Bool		fExit;
-
 ENTER_FUNC;
-	strcpy(dir,RecordDir);
-	p = dir;
 	rec = NULL;
-	do {
-		if		(  ( q = strchr(p,':') )  !=  NULL  ) {
-			*q = 0;
-			fExit = FALSE;
-		} else {
-			fExit = TRUE;
-		}
-		sprintf(buf,"%s/%s",ExpandPath(p,base),name);
-		dbgprintf("[%s]",buf);
-		if		(  ( rec = ParseRecordFile(buf) )  !=  NULL  ) {
+	dirs = g_strsplit_set(RecordDir,":",-1);
+	for (i=0; dirs[i]!=NULL; i++) {
+		fname = g_strdup_printf("%s/%s",dirs[i],name);
+		if ((rec = ParseRecordFile(fname)) != NULL) {
+			g_free(fname);
 			break;
+		} else {
+			g_free(fname);
 		}
-		p = q + 1;
-	}	while	(  !fExit  );
-#if	0
-	if		(  rec  ==  NULL  ) {
-		rec = New(RecordStruct);
-		rec->name = StrDup(name);
-		rec->value = NULL;
-		rec->type = RECORD_NULL;
 	}
-#endif
+	g_strfreev(dirs);
 LEAVE_FUNC;
-	return	(rec);
+	return rec;
 }
-

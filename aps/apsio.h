@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,10 +32,8 @@
 #define	GLOBAL		extern
 #endif
 
-GLOBAL	int		ApsId;
-
 extern	void	InitAPSIO(NETFILE *fpWFC);
-extern	Bool	GetWFC(NETFILE *fpWFC, ProcessNode *node, char *term);
+extern	Bool	GetWFC(NETFILE *fpWFC, ProcessNode *node);
 extern	void	PutWFC(NETFILE *fpWFC, ProcessNode *node);
 
 #endif

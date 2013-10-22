@@ -3,6 +3,9 @@
 Makefile
 Makefile.in
 glclient
+glclient2
 cache
 testdialogs
 testfileentry
+*.lo
+*.la

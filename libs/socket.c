@@ -65,54 +65,6 @@ extern	int
 BindIP_Socket(
 	char	*port,
 	int		type)
-#ifdef	USE_IPv6
-{
-	int		s
-	,		ld;
-	int		rc;
-	int		one;
-	struct	addrinfo	*info
-			,			hints
-			,			*head;
-	struct	sockaddr_in	*name;
-
-ENTER_FUNC;
-	memclear(&hints,sizeof(struct addrinfo));
-	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = type;
-	hints.ai_flags = AI_PASSIVE;
-	if		(  ( rc = getaddrinfo(NULL,port,&hints,&info) )  !=  0  ) {
-		printf("%s [%s]\n",gai_strerror(rc),port);
-		Error("error resolv");
-	}
-	ld = -1;
-	head = info;
-	for	( ; info != NULL ; info = info->ai_next ) {
-		name = (struct sockaddr_in *)info->ai_addr;
-#ifdef	DEBUG
-		printf("family   = %d\n",info->ai_family);
-		printf("socktype = %d\n",info->ai_socktype);
-		printf("protocol = %d\n",info->ai_protocol);
-#endif
-		s = socket(info->ai_family,info->ai_socktype,info->ai_protocol);
-		one = 1;
-		setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *) &one, sizeof(one));
-		if		(  bind(s,info->ai_addr,info->ai_addrlen)  <  0  )	{
-			close(s);
-			continue;
-		}
-		ld = s;
-		break;
-	}
-	freeaddrinfo(head);
-	if		( ld  <  0  ) {
-		fprintf(stderr,"port = [%s]\n",port);
-		Error("error bind");
-	}
-LEAVE_FUNC;
-	return	(ld);
-}
-#else
 {	int		ld;
 	struct	sockaddr_in	name;
 	int		iport;
@@ -120,7 +72,7 @@ LEAVE_FUNC;
 
 ENTER_FUNC;
 	if		(  ( ld = socket(PF_INET,type,0) )  <  0  )	{
-		Error("error socket");
+		Error("error socket %s", strerror(errno));
 	}
 	iport = atoi(port);
 	one = 1;
@@ -135,7 +87,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(ld);
 }
-#endif
 
 extern	int
 BindUNIX_Socket(
@@ -149,7 +100,7 @@ BindUNIX_Socket(
 
 ENTER_FUNC;
 	if		(  ( sock = socket(PF_UNIX,type,0) )  <  0  )	{
-		Error("error socket");
+		Error("error socket %s", strerror(errno));
 	}
 	unlink(name);
 	addr.sun_family = AF_UNIX;
@@ -167,6 +118,70 @@ LEAVE_FUNC;
 }
 
 extern	int
+BindIP_Multi_Listen(
+	char	*port,
+	int	back,
+	int 	*soc)
+{
+	int		i;
+	int		rc;
+	int		one;
+	struct	addrinfo	*info
+			,			hints
+			,			*head;
+
+ENTER_FUNC;
+	memclear(&hints,sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
+	if		(  ( rc = getaddrinfo(NULL,port,&hints,&head) )  !=  0  ) {
+		Error("error resolv %s [%s]", gai_strerror(rc),port);
+	}
+	i = 0;
+	for	( info = head; info != NULL ; info = info->ai_next ) {
+		dbgprintf("family   = %d\n",info->ai_family);
+		dbgprintf("socktype = %d\n",info->ai_socktype);
+		dbgprintf("protocol = %d\n",info->ai_protocol);
+		if ((soc[i] = socket(info->ai_family,info->ai_socktype,info->ai_protocol)) == -1){
+			dbgprintf("error socket[%d]: %s", info->ai_family, strerror(errno));
+			close(soc[i]);
+			continue;
+		}
+#ifdef IPV6_V6ONLY
+		if (info->ai_family == AF_INET6) {
+			one = 1;
+			if ( setsockopt(soc[i], IPPROTO_IPV6, IPV6_V6ONLY, (void *)&one, sizeof(one)) < 0 ){
+				Warning("IPV6_V6ONLY: %s", strerror(errno))
+			}
+			
+		}
+#endif		
+		one = 1;
+		if ( setsockopt(soc[i], SOL_SOCKET, SO_REUSEADDR, (void *)&one, sizeof(one)) < 0){
+			Warning("SO_REUSEADDR[%d]: %s", info->ai_family, strerror(errno))			
+		}
+		if ( bind(soc[i],info->ai_addr,info->ai_addrlen)  <  0  )	{
+			dbgprintf("error bind[%d]: %s", info->ai_family, strerror(errno));
+			close(soc[i]);
+			continue;
+		}
+		if ( listen(soc[i],back)  <  0  ) {
+			dbgprintf("error listen[%d]: %s", info->ai_family, strerror(errno));
+			close(soc[i]);
+			continue;
+		}
+		i++;
+	}
+	freeaddrinfo(head);
+	if		( i ==  0  ) {
+		Error("no socket, port = [%s]", port);
+	}
+LEAVE_FUNC;
+	return	(i);
+}
+
+extern	int
 ConnectIP_Socket(
 	char	*port,
 	int		type,
@@ -179,28 +194,20 @@ ConnectIP_Socket(
 	struct	addrinfo	*info
 			,			hints
 			,			*head;
-	struct	sockaddr_in	*name;
 
 ENTER_FUNC;
-#ifdef	DEBUG
-	printf("port = %s\n",port);
-	printf("type = %d\n",type);
-	printf("host = %s\n",host);
-#endif
+	dbgprintf("port = %s\n",port);
+	dbgprintf("type = %d\n",type);
+	dbgprintf("host = %s\n",host);
 	memclear(&hints,sizeof(struct addrinfo));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = type;
 	if		(  ( rc = getaddrinfo(host,port,&hints,&info) )  !=  0  ) {
-		printf("port = %s\n",port);
-		printf("type = %d\n",type);
-		printf("host = %s\n",host);
-		printf("%s\n",gai_strerror(rc));
-		Error("error resolv");
+		Error("error resolv %s [%s]", gai_strerror(rc),port);		
 	}
 	ld = -1;
 	head = info;
 	for	( ; info != NULL ; info = info->ai_next ) {
-		name = (struct sockaddr_in *)info->ai_addr;
 		s = socket(info->ai_family,info->ai_socktype,info->ai_protocol);
 		if		(  connect(s,info->ai_addr,info->ai_addrlen)  <  0  )	{
 			close(s);
@@ -217,7 +224,6 @@ LEAVE_FUNC;
 {
 	int		ld;
 	int		iport;
-	struct	sockaddr_in	*ptr;
 	struct	sockaddr	addr;
 	struct	hostent		*hp;
 	struct	sockaddr_in	name;
@@ -232,7 +238,6 @@ ENTER_FUNC;
 		name.sin_port = htons(iport);
 
 		if		(  ( hp = gethostbyname(host) )  !=  NULL  ) {
-			ptr = (struct sockaddr_in *)&addr;
 			memcpy(&name.sin_addr.s_addr,hp->h_addr,hp->h_length);
 			if		(  connect(ld,(struct sockaddr *)&name,sizeof(name))  <  0  )	{
 				ld = -1;
@@ -318,7 +323,7 @@ CleanUNIX_Socket(
 
 	if(port->type == PORT_UNIX) {
 		if ((stat(port->adrs.a_unix.name,&sb) == 0 )
-			&& ( S_ISSOCK(sb.st_mode))) {
+		&& ( S_ISSOCK(sb.st_mode))) {
 			unlink(port->adrs.a_unix.name);
 		}	
 	}

@@ -16,35 +16,30 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-if GTK1CLIENT
-gtk1bin	=	glclient
-gtk1dir	=	gtk1
-else
-gtk1bin	=	
-gtk1dir	=	
-endif
-
-if GTK2CLIENT
-gtk2bin	=	glclient2
-gtk2dir	=	gtk2
-else
-gtk2bin	=	
-gtk2dir	=	
-endif
-
-SUBDIRS	=		\
-	$(gtk1dir)	\
-	$(gtk2dir)	
-
 bin_PROGRAMS = 	\
-	$(gtk1bin)	\
-	$(gtk2bin)
+	glclient2
 
 base_sources =						\
 	client.c		glclient.h		\
+	desktop.c		desktop.h		\
 	protocol.c		protocol.h		\
 	marshaller.c	marshaller.h	\
-	interface.h
+	widgetcache.c	widgetcache.h	\
+	print.c			print.h			\
+	utils.c			utils.h			\
+	action.c		action.h		\
+	bd_config.c		bd_config.h		\
+	bd_component.c	bd_component.h	\
+	bootdialog.c	bootdialog.h	\
+	callbacks.c		callbacks.h		\
+	dialogs.c		dialogs.h		\
+	download.c		download.h		\
+	styleLex.c		styleLex.h		\
+	styleParser.c	styleParser.h	\
+	notify.c		notify.h		\
+	printservice.c	printservice.h	\
+	widgetOPS.c		widgetOPS.h		\
+	toplevel.h
 
 base_dependencies =								\
 	$(top_builddir)/libs/libpandamisc.a			\
@@ -54,36 +49,18 @@ base_CFLAGS =					\
 	-I$(top_srcdir)				\
 	-I$(top_srcdir)/include		\
 	-I$(top_srcdir)/libs		\
+	$(COMMON_CFLAGS)			\
 	$(SSL_CFLAGS)				\
+	$(P11_CFLAGS)				\
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
 base_LDADD =									\
 	-lm											\
 	$(top_builddir)/libs/libpandamisc.a			\
 	$(top_builddir)/libs/libpandagl.a			\
-	$(SSL_LIBS)									\
-	$(MONDAI_LIBS)
-
-#################################################
-# glclient1
-#################################################
-	
-glclient_SOURCES =		\
-	$(base_sources)
-
-glclient_DEPENDENCIES =							\
-	$(base_dependencies)						\
-	$(top_builddir)/glclient/gtk1/libuigtk1.la
-
-glclient_CFLAGS =				\
-	$(GTK1CLIENT_CFLAGS)		\
-	$(base_CFLAGS)
-
-glclient_LDADD =								\
-	$(GLIB_LIBS)								\
-	$(GTK1CLIENT_LIBS)							\
-	$(base_LDADD)								\
-	$(top_builddir)/glclient/gtk1/libuigtk1.la
+	$(COMMON_LIBS)								\
+	$(P11_LIBS)									\
+	$(SSL_LIBS)			
 
 #################################################
 # glclient2
@@ -93,20 +70,16 @@ glclient2_SOURCES =		\
 	$(base_sources)
 
 glclient2_DEPENDENCIES =						\
-	$(top_builddir)/glclient/gtk2/libuigtk2.la	\
 	$(base_dependencies)
 
-glclient2_CFLAGS =				\
-	$(GTK2CLIENT_CFLAGS)		\
-	$(base_CFLAGS)
+glclient2_CFLAGS =			\
+	$(base_CFLAGS)			\
+	$(GLCLIENT_CFLAGS)
 
 glclient2_LDADD =								\
-	$(GTK2CLIENT_LIBS)							\
-	$(top_builddir)/glclient/gtk2/libuigtk2.la	\
+	$(GLCLIENT_LIBS)							\
 	$(base_LDADD)
 
 AM_CPPFLAGS = 					\
-	-DLOCALEDIR=\"$(localedir)\"
-
-EXTRA_DIST = 					\
-	testrc
+	-DLOCALEDIR=\"$(localedir)\"\
+	-DGLCLIENT_DATADIR=\"$(datadir)/panda-client\"

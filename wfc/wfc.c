@@ -20,6 +20,7 @@
 #define	MAIN
 #define __FD_SETSIZE	8192
 #define SOMAXCONN		1024
+#define	DEFAULT_LD		"orca00"
 
 /*
 #define	DEBUG
@@ -44,8 +45,6 @@
 #include	<glib.h>
 #include	<pthread.h>
 
-#include	"types.h"
-
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"net.h"
@@ -57,7 +56,8 @@
 #include	"corethread.h"
 #include	"termthread.h"
 #include	"controlthread.h"
-#include	"blobthread.h"
+#include	"sysdatathread.h"
+#include	"sessionthread.h"
 #include	"dbgroup.h"
 #include	"blob.h"
 #include	"option.h"
@@ -130,7 +130,6 @@ LEAVE_FUNC;
 	return	(scrdata);
 }
 
-
 extern	void
 ChangeLD(
 	SessionData	*data,
@@ -140,23 +139,31 @@ ChangeLD(
 	LargeByteString	**scrdata;
 
 ENTER_FUNC;
-	if		(  newld  !=  NULL  ) {
-		if		(  ( data->spa = g_hash_table_lookup(data->spadata,newld->info->name) )
-				   ==  NULL  ) {
-			if		(  newld->info->sparec  !=  NULL  ) {
+	if (newld != NULL) {
+		data->spa = g_hash_table_lookup(data->spadata,newld->info->name);
+		if (data->spa == NULL) {
+			if (newld->info->sparec != NULL) {
 				data->spa = NewLBS();
-				g_hash_table_insert(data->spadata,StrDup(newld->info->name),data->spa);
+				g_hash_table_insert(data->spadata,
+					StrDup(newld->info->name),data->spa);
 				LBS_ReserveSize(data->spa,
-								NativeSizeValue(NULL,newld->info->sparec->value),FALSE);
-				NativePackValue(NULL,LBS_Body(data->spa),newld->info->sparec->value);
+					NativeSizeValue(NULL,newld->info->sparec->value),FALSE);
+				NativePackValue(NULL,LBS_Body(data->spa),
+					newld->info->sparec->value);
+			}
+		} else {
+			if (getenv("FORCE_CLEAR_SPA")) {
+				Warning("FORCE_CLEAR_SPA for %s",newld->info->name);
+				InitializeValue(newld->info->sparec->value);
+				NativePackValue(NULL,
+					LBS_Body(data->spa),newld->info->sparec->value);
 			}
 		}
-		if		(  data->scrdata  !=  NULL  ) {
+		if (data->scrdata != NULL) {
 			xfree(data->scrdata);
 		}
-		scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *)
-											  * newld->info->cWindow);
-		for	( i = 0 ; i < newld->info->cWindow ; i ++ ) {
+		scrdata = (LargeByteString **)xmalloc(sizeof(LargeByteString *) * newld->info->cWindow);
+		for	(i=0;i<newld->info->cWindow;i++) {
 			scrdata[i] = GetScreenData(data,newld->info->windows[i]->name);
 		}
 		data->cWindow = newld->info->cWindow;
@@ -173,8 +180,8 @@ ExecuteServer(void)
 	int		_fhTerm
 		,	_fhAps
 		,	_fhControl
-		,	_fhBlob;
-	fd_set	ready;
+		,	_fhSysData;
+	fd_set	ready, fds;
 	int		maxfd;
     int		ret;
 	struct	timespec	timeout;
@@ -190,60 +197,73 @@ ENTER_FUNC;
 	} else {
 		_fhControl = -1;
 	}
-	if		(	(  ThisEnv->blob        !=  NULL  )
-			&&	(  ThisEnv->blob->port  !=  NULL  )
-			&&	(  ThisEnv->blob->auth  !=  NULL  ) ) {
-		_fhBlob = InitServerPort(ThisEnv->blob->port,Back);
-		maxfd = maxfd < _fhBlob ? _fhBlob : maxfd;
+	if		(	(  ThisEnv->sysdata        !=  NULL  )
+			&&	(  ThisEnv->sysdata->port  !=  NULL  ) ) {
+		_fhSysData = InitServerPort(ThisEnv->sysdata->port,Back);
+		maxfd = maxfd < _fhSysData ? _fhSysData : maxfd;
 	} else {
-		_fhBlob = -1;
+		_fhSysData = -1;
 	}
-	fShutdown = FALSE;
-	do {
-		timeout.tv_sec = 1;
-		timeout.tv_nsec = 0;
-		FD_ZERO(&ready);
-		FD_SET(_fhTerm,&ready);
-		FD_SET(_fhAps,&ready);
-		if		(  _fhControl  >=  0  ) {
-			FD_SET(_fhControl,&ready);
-		}
-		if		(  _fhBlob  >=  0  ) {
-			FD_SET(_fhBlob,&ready);
-		}
-		ret = pselect(maxfd+1,&ready,NULL,NULL,&timeout,&SigMask);
+
+	timeout.tv_sec = 1;
+	timeout.tv_nsec = 0;
+	FD_ZERO(&ready);
+	FD_SET(_fhTerm,&ready);
+	FD_SET(_fhAps,&ready);
+	if		(  _fhControl  >=  0  ) {
+		FD_SET(_fhControl,&ready);
+	}
+	if		(  _fhSysData  >=  0  ) {
+		FD_SET(_fhSysData,&ready);
+	}
+	while	(!fShutdown) {
+		memcpy(&fds, &ready, sizeof(fd_set));
+		ret = pselect(maxfd+1,&fds,NULL,NULL,&timeout,&SigMask);
         if (ret == -1) {
             if (errno == EINTR)
                 continue;
-            Error("select: ", strerror(errno));
+            Error("select: %s", strerror(errno));
         }
-		if		(  FD_ISSET(_fhTerm,&ready)  ) {		/*	term connect	*/
+		if		(  FD_ISSET(_fhTerm,&fds)  ) {		/*	term connect	*/
 			ConnectTerm(_fhTerm);
 		}
-		if		(  FD_ISSET(_fhAps,&ready)  ) {			/*	APS connect		*/
+		if		(  FD_ISSET(_fhAps,&fds)  ) {			/*	APS connect	*/
 			ConnectAPS(_fhAps);
 		}
 		if		(	(  _fhControl  >=  0  )
-				&&	(  FD_ISSET(_fhControl,&ready)  ) ) {	/*	control connect		*/
+				&&	(  FD_ISSET(_fhControl,&fds)  ) ) {	/*	control connect		*/
 			ConnectControl(_fhControl);
 		}
-		if		(	(  _fhBlob  >=  0  )
-				&&	(  FD_ISSET(_fhBlob,&ready)  ) ) {		/*	blob connect		*/
-			ConnectBlob(_fhBlob);
+		if		(	(  _fhSysData  >=  0  )
+				&&	(  FD_ISSET(_fhSysData,&fds)  ) ) {	/*	sysdata connect		*/
+			ConnectSysData(_fhSysData);
 		}
-	}	while	(!fShutdown);
+	}
 LEAVE_FUNC;
 }
 
+static	void
+SetUpTempDirRoot()
+{
+	if (!MakeDir(TempDirRoot,0700)) {
+		Error("cannot make TempDirRoot:%s",TempDirRoot);
+	}
+}
 
 static	void
 InitSystem(void)
 {
 ENTER_FUNC;
+	fNumericHOST = TRUE;
+	fShutdown = FALSE;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,"","",TRUE);
+	SetUpDirectory(Directory,NULL,"","",P_LD);
+	SetUpTempDirRoot();
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
+	}
+	if		( ThisEnv->InitialLD == NULL ) {
+		ThisEnv->InitialLD = StrDup(DEFAULT_LD);
 	}
 	if		(  ApsPortNumber  ==  NULL  ) {
 		ApsPort = ThisEnv->WfcApsPort;
@@ -261,10 +281,12 @@ ENTER_FUNC;
 		ControlPort = ParPortName(ControlPortNumber);
 	}
 	InitNET();
-	if		(	(  ThisEnv->blob       !=  NULL  )
-			&&	(  ThisEnv->blob->dir  !=  NULL  ) ) {
-		Blob = InitBLOB(ThisEnv->blob->dir);
-		BlobState = ConnectBLOB(Blob);
+	InitSysData();
+	if		(  ThisEnv->sysdata       !=  NULL  ) {
+		if 		(  ThisEnv->sysdata->dir  !=  NULL  ) {
+			Blob = InitBLOB(ThisEnv->sysdata->dir);
+			BlobState = ConnectBLOB(Blob);
+		}
 	} else {
 		Blob = NULL;
 		BlobState = NULL;
@@ -274,6 +296,7 @@ ENTER_FUNC;
 	SetupMessageQueue();
 	InitTerm();
 	StartCoreThread();
+	StartSessionThread();
 	InitControl();
 LEAVE_FUNC;
 }
@@ -285,6 +308,11 @@ CleanUp(void)
 		DisConnectBLOB(BlobState);
 		FinishBLOB(Blob);
 	}
+#if 0
+	if (!getenv("WFC_KEEP_TEMPDIR")) {
+		rm_r(TempDirRoot);
+	}
+#endif
 	CleanUNIX_Socket(ApsPort);
  	CleanUNIX_Socket(WfcPort);
  	CleanUNIX_Socket(ControlPort);
@@ -295,6 +323,7 @@ StopSystem(void)
 {
 	fShutdown = TRUE;
 	Message("receive stop signal");
+	exit(0);
 }
 
 static	ARG_TABLE	option[] = {
@@ -315,18 +344,13 @@ static	ARG_TABLE	option[] = {
 		"LD directory"				 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"environment file name"							},
-	{	"sesdir",	STRING,		TRUE,	(void*)&SesDir,
-		"session variable keep directory" 				},
+	{	"tempdirroot",STRING,	TRUE,	(void*)&TempDirRoot,
+		"root of temporary directory" 					},
 
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
 		"maximun retry count"							},
-	{	"cache",	INTEGER,	TRUE,	(void*)&nCache,
+	{	"sesnum",	INTEGER,	TRUE,	(void*)&SesNum,
 		"terminal cache number"							},
-
-	{	"loopback",	BOOLEAN,	TRUE,	(void*)&fLoopBack,
-		"loopback test"									},
-	{	"timer",	BOOLEAN,	TRUE,	(void*)&fTimer,
-		"timer"											},
 
 	{	NULL,		0,			TRUE,	NULL		 	}
 };
@@ -342,11 +366,10 @@ ENTER_FUNC;
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
+	TempDirRoot = "/tmp/panda_root/";
 	MaxTransactionRetry = 0;
 	ControlPort = NULL;
-	fLoopBack = FALSE;
-	nCache = 0;
-	SesDir = NULL;
+	SesNum = 0;
 LEAVE_FUNC;
 }
 
@@ -357,14 +380,34 @@ main(
 {
 	int			rc;
     sigset_t sigmask;
+	struct sigaction sa;
 
     sigemptyset(&sigmask);
     sigaddset(&sigmask, SIGUSR1);
     sigprocmask(SIG_BLOCK, &sigmask, &SigMask);
 
-	(void)signal(SIGPIPE, SIG_IGN);
-	(void)signal(SIGUSR1,(void *)StopSystem);
-	(void)signal(SIGUSR2, SIG_IGN);
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_IGN;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGPIPE, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	sa.sa_handler = (void *)StopSystem;
+	if (sigaction(SIGHUP, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	sa.sa_handler = SIG_IGN;
+	if (sigaction(SIGUSR1, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	sa.sa_handler = SIG_IGN;
+	if (sigaction(SIGUSR2, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
 	InitMessage("wfc",NULL);
 ENTER_FUNC;
 
@@ -372,9 +415,9 @@ ENTER_FUNC;
 	GetOption(option,argc,argv,NULL);
 
 	InitSystem();
-	Message("wfc server start");
+	Message("wfc start");
 	ExecuteServer();
-	Message("wfc server end");
+	Message("wfc stop");
 	CleanUp();
 	rc = 0;
 LEAVE_FUNC;

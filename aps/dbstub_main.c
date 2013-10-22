@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 #define	MAIN
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -37,7 +37,6 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 
 #include	"dirs.h"
 #include	"const.h"
@@ -53,6 +52,8 @@
 #include	"debug.h"
 
 static	char	*CommandParameter;
+static	char	AppName[128];
+
 static	char	*BD_Name;
 static	BatchBind	*Bind;
 
@@ -62,7 +63,7 @@ InitData(
 {
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,"",name,"",TRUE);
+	SetUpDirectory(Directory,"",name,"",P_ALL);
 LEAVE_FUNC;
 }
 
@@ -87,10 +88,8 @@ ENTER_FUNC;
 	if		(  ( Bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		Error("%s application is not in BD.",name);
 	}
-	if		(  ThisBD->cDB  >  0  ) {
-		InitDB_Process(NULL);
-		ReadyHandlerDB(Bind->handler);
-	}
+	InitDB_Process(AppName);
+	ReadyHandlerDB(Bind->handler);
 LEAVE_FUNC;
 }
 
@@ -111,13 +110,36 @@ StopProcess(
 	int		ec)
 {
 ENTER_FUNC;
-	if		(  ThisBD->cDB  >  0  ) {
-		StopHandlerDB(Bind->handler);
-		CleanUpHandlerDB(Bind->handler);
-	}
+	StopHandlerDB(Bind->handler);
+	CleanUpHandlerDB(Bind->handler);
 LEAVE_FUNC;
 	exit(ec);
 }
+
+static void
+SegvProcess(
+	int			sn,
+	siginfo_t	*si,
+	void		*uc)
+{
+	MessageLogPrintf("Received signal %d errno %d", si->si_signo,si->si_errno);
+	switch(si->si_code)
+	{
+		case 1:
+			MessageLogPrintf(" SI code = %d (Address not mapped to object)\n",
+							 si->si_code);
+             break;
+		case 2:
+			MessageLogPrintf(" SI code = %d (Invalid permissions for \
+                       mapped object)\n",si->si_code);
+           break;
+		default:
+			MessageLogPrintf("SI code = %d (Unknown SI Code)\n", si->si_code);
+            break;
+	}	
+	Error("Fault addr = 0x%08x \n",si->si_addr);
+}
+
 static	ARG_TABLE	option[] = {
 	{	"host",		STRING,		TRUE,	(void*)&DB_Host,
 		"PostgreSQL稼働ホスト名"						},
@@ -188,21 +210,37 @@ main(
 	int		argc,
 	char	**argv)
 {
+	struct sigaction sa_segv, sa_stop;
 	FILE_LIST	*fl;
 	int		rc;
+
+ENTER_FUNC;
+	InitNET();
+
+	memset( &sa_segv, 0, sizeof(struct sigaction) );
+	sa_segv.sa_flags = SA_SIGINFO;
+	sa_segv.sa_sigaction = SegvProcess;
+	sigemptyset (&sa_segv.sa_mask);	
+	sigaction( SIGSEGV, &sa_segv, NULL );
+
+	memset( &sa_stop, 0, sizeof(struct sigaction) );
+	sigemptyset (&sa_stop.sa_mask);
+	sa_stop.sa_flags = 0;
+	sa_stop.sa_handler = StopProcess;
+	sigaction( SIGHUP, &sa_stop, NULL );
 
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
 	InitMessage("dbstub",NULL);
 	InitNET();
 
-	(void)signal(SIGHUP,(void *)StopProcess);
 	if		(  BD_Name  ==  NULL  ) {
 		Error("BD name is not specified.");
 	}
 	if		( fl == NULL ) {
 		Error("module name is not specified.");
 	}
+	snprintf(AppName, sizeof(AppName), "dbstub-%s",fl->name);
 	InitSystem(fl->name);
 	Message("module %s: %.20s", fl->name, CommandParameter);
 	rc = ExecuteSubProcess(fl->name);

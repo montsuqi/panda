@@ -22,9 +22,9 @@
 */
 
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -40,7 +40,6 @@
 #include	<glib.h>
 #include	<unistd.h>
 #include	<sys/stat.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"dbgroup.h"
 #include	"mhandler.h"
@@ -98,7 +97,7 @@ ENTER_FUNC;
 	while	(  GetSymbol  !=  '}'  ) {
 		if		(	(  ComToken  ==  T_SYMBOL  )
 				||	(  ComToken  ==  T_SCONST  ) ) {
-			if		(  stricmp(ComSymbol,"metadb")  !=  0  ) {
+			if		(  stricmp(ComSymbol,"metadb")  ) {
 				strcpy(buff,RecordDir);
 				p = buff;
 				do {
@@ -106,8 +105,7 @@ ENTER_FUNC;
 						*q = 0;
 					}
 					sprintf(name,"%s/%s.db",p,ComSymbol);
-					dbgprintf("[%s]",name);
-					if		(  (  db = DB_Parser(name,gname,NULL,TRUE) )  !=  NULL  ) {
+					if		(  (  db = DB_Parser(name,gname,TRUE) )  !=  NULL  ) {
 						if		(  g_hash_table_lookup(bd->DB_Table,ComSymbol)  ==  NULL  ) {
 							rtmp = (RecordStruct **)xmalloc(sizeof(RecordStruct *) * ( bd->cDB + 1));
 							memcpy(rtmp,bd->db,sizeof(RecordStruct *) * bd->cDB);
@@ -164,8 +162,29 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static  BD_Struct	*
+NewBD(void)
+{
+	BD_Struct	*bd;
+ENTER_FUNC;
+	bd = New(BD_Struct);
+	bd->name = NULL;
+	bd->cDB = 1;
+	bd->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
+	bd->db[0] = NULL;
+	bd->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
+	bd->textsize = SIZE_DEFAULT_TEXT_SIZE;
+	bd->DB_Table = NewNameHash();
+	bd->BatchTable = NewNameHash();
+	bd->home = NULL;
+	bd->loadpath = NULL;
+	bd->handlerpath = NULL;
+LEAVE_FUNC;
+	return (bd);
+}
+
 static	BD_Struct	*
-ParBD(
+BD_Par(
 	CURFILE	*in)
 {
 	BD_Struct	*ret;
@@ -179,17 +198,8 @@ ENTER_FUNC;
 			if		(  GetName  !=  T_SYMBOL  ) {
 				ParError("no name");
 			} else {
-				ret = New(BD_Struct);
+				ret = NewBD();
 				ret->name = StrDup(ComSymbol);
-				ret->cDB = 1;
-				ret->db = (RecordStruct **)xmalloc(sizeof(RecordStruct *));
-				ret->db[0] = NULL;
-				ret->arraysize = SIZE_DEFAULT_ARRAY_SIZE;
-				ret->textsize = SIZE_DEFAULT_TEXT_SIZE;
-				ret->DB_Table = NewNameHash();
-				ret->BatchTable = NewNameHash();
-				ret->loadpath = NULL;
-				ret->handlerpath = NULL;
 			}
 			break;
 		  case	T_ARRAYSIZE:
@@ -259,7 +269,7 @@ ENTER_FUNC;
 		}
 		ERROR_BREAK;
 	}
-dbgmsg("<ParBD");
+LEAVE_FUNC;
 	return	(ret);
 }
 
@@ -291,12 +301,12 @@ BD_Parser(
 ENTER_FUNC;
 	root.next = NULL;
 	if		(  stat(name,&stbuf)  ==  0  ) { 
-		if		(  ( in = PushLexInfo(&root,name,D_Dir,Reserved) )  !=  NULL  ) {
-			ret = ParBD(in);
+		if		(  ( in = PushLexInfo(&root,name,ThisEnv->D_Dir,Reserved) )  !=  NULL  ) {
+			ret = BD_Par(in);
 			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {
-			ParError("BD file not found");
+			ParErrorPrintf("BD file not found %s", name);
 			ret = NULL;
 		}
 	} else {

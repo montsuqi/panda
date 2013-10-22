@@ -22,9 +22,14 @@
 
 #include	"libmondai.h"
 
-extern LargeByteString	*CreateConninfo(DBG_Class *dbg, int usage);
-extern LargeByteString	*Template1Conninfo(DBG_Class *dbg, int usage);
-extern PGconn	*PGCONN(DBG_Instance *dbg, int usage);
-extern PGconn	*PgConnect(DBG_Instance *dbg, int usage);
+#define APPLICATION_NAME "montsuqi"
+
+extern LargeByteString	*CreateConninfo(DBG_Struct	*dbg, int usage);
+extern LargeByteString	*Template1Conninfo(DBG_Struct	*dbg, int usage);
+extern PGconn	*PGCONN( DBG_Struct	*dbg, int usage);
+extern PGconn	*PgConnect(	DBG_Struct	*dbg, int usage);
+extern  char	*GetPGencoding(PGconn	*conn);
+extern  void	LockRedirectorConnect(PGconn	*conn);
+extern  char	*LockRedirectorQuery(void);
 
 #endif

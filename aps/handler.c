@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,9 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 /*
-*/
 #define	DEBUG
 #define	TRACE
+*/
 
 /*
 #define	NEW_SEQUENCT
@@ -32,13 +32,13 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
+#include	<strings.h>
 #include	<dlfcn.h>
 #include	<glib.h>
 #include	<unistd.h>
 #include	<sys/time.h>
 
 #include	"defaults.h"
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"struct.h"
@@ -56,13 +56,6 @@
 #include	"BDparser.h"
 #include	"debug.h"
 
-static	char	*STATUS[4] = {
-	"LINK",
-	"PUTG",
-	"PUTG",
-	"RSND"
-};
-
 static	char	*DBSTATUS[8] = {
 	"NORE",
 	"CONN",
@@ -70,14 +63,13 @@ static	char	*DBSTATUS[8] = {
 	"FAIL",
 	"DISC",
 	"RERR",
-	"STAR",
-	"PREP"
+	"REDL",
+	"SYNC"
 };
 
 static	char	*APS_HandlerLoadPath;
 
 static	GHashTable	*HandlerClassTable;
-static	GHashTable	*TypeHash;
 
 static	MessageHandlerClass	*
 EnterHandlerClass(
@@ -89,22 +81,21 @@ EnterHandlerClass(
 	char			filename[SIZE_LONGNAME+1];
 
 ENTER_FUNC;
-	if		(  ( klass = g_hash_table_lookup(HandlerClassTable,name) )  ==  NULL  ) {
-		MessageLogPrintf("%s handlerClass invoke.", name);
+	if ((klass = g_hash_table_lookup(HandlerClassTable,name)) == NULL) {
+		dbgprintf("%s handlerClass invoke.", name);
 		sprintf(filename,"%s." SO_SUFFIX,name);
 		klass = NULL;
-		if		(  ( dlhandle = LoadFile(APS_HandlerLoadPath,filename) )  !=  NULL  ) {
-			if		(  ( finit = (void *)dlsym(dlhandle,name) )
-					   ==  NULL  )	{
+		if ((dlhandle = LoadFile(APS_HandlerLoadPath,filename)) != NULL) {
+			if ((finit = (void *)dlsym(dlhandle,name)) == NULL) {
 				Warning("[%s] is invalid.",name);
 			} else {
 				klass = (*finit)();
-				if		(  g_hash_table_lookup(HandlerClassTable,name)  ==  NULL  ) {
+				if (g_hash_table_lookup(HandlerClassTable,name) == NULL) {
 					g_hash_table_insert(HandlerClassTable,StrDup(name),klass);
 				}
 			}
 		} else {
-			Warning("[%s] not found.",name);
+			Error("[%s] not found.",name);
 		}
 	}
 LEAVE_FUNC;
@@ -125,14 +116,14 @@ _InitiateHandler(
 {
 	MessageHandlerClass	*klass;
 
-	if		(  ( handler->fInit & INIT_LOAD )  ==  0  ) {
+	if ((handler->fInit & INIT_LOAD) == 0) {
 		handler->fInit |= INIT_LOAD;
-		if		(  ( klass = EnterHandlerClass((char *)handler->klass) )  ==  NULL  ) {
+		if ((klass = EnterHandlerClass((char *)handler->klass)) == NULL) {
 			Message("[%s] is invalid handler class.",(char *)handler->klass);
 		} else {
 			handler->klass = klass;
 		}
-		if		(  handler->serialize  !=  NULL  ) {
+		if (handler->serialize != NULL) {
 			handler->serialize = GetConvFunc((char *)handler->serialize);
 		}
 	}
@@ -151,9 +142,9 @@ extern	void
 InitiateHandler(void)
 {
 ENTER_FUNC;
-	if		(  ( APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH") )
-			   ==  NULL  ) {
-		if		(  ThisLD->handlerpath  !=  NULL  ) {
+	APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH");
+	if (APS_HandlerLoadPath == NULL) {
+		if (ThisLD->handlerpath != NULL) {
 			APS_HandlerLoadPath = ThisLD->handlerpath;
 		} else {
 			APS_HandlerLoadPath = MONTSUQI_LIBRARY_PATH;
@@ -162,20 +153,6 @@ ENTER_FUNC;
 	InitHandler();
 	dbgprintf("LD = [%s]",ThisLD->name);
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_OnlineInit,NULL);
-
-	TypeHash = NewNameiHash();
-	g_hash_table_insert(TypeHash,"CURRENT",(gpointer)SCREEN_CURRENT_WINDOW);
-	g_hash_table_insert(TypeHash,"NEW",(gpointer)SCREEN_NEW_WINDOW);
-	g_hash_table_insert(TypeHash,"CLOSE",(gpointer)SCREEN_CLOSE_WINDOW);
-	g_hash_table_insert(TypeHash,"CHANGE",(gpointer)SCREEN_CHANGE_WINDOW);
-	g_hash_table_insert(TypeHash,"JOIN",(gpointer)SCREEN_JOIN_WINDOW);
-	g_hash_table_insert(TypeHash,"FORK",(gpointer)SCREEN_FORK_WINDOW);
-	g_hash_table_insert(TypeHash,"EXIT",(gpointer)SCREEN_END_SESSION);
-	g_hash_table_insert(TypeHash,"BACK",(gpointer)SCREEN_BACK_WINDOW);
-
-	g_hash_table_insert(TypeHash,"CALL",(gpointer)SCREEN_CALL_COMPONENT);
-	g_hash_table_insert(TypeHash,"RETURN",(gpointer)SCREEN_RETURN_COMPONENT);
-	g_hash_table_insert(TypeHash,"CHANGELD",(gpointer)SCREEN_CHANGE_LD);
 LEAVE_FUNC;
 }
 
@@ -192,9 +169,9 @@ extern	void
 InitiateBatchHandler(void)
 {
 ENTER_FUNC;
-	if		(  ( APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH") )
-			   ==  NULL  ) {
-		if		(  ThisBD->handlerpath  !=  NULL  ) {
+	APS_HandlerLoadPath = getenv("APS_HANDLER_LOAD_PATH");
+	if (APS_HandlerLoadPath == NULL) {
+		if (ThisBD->handlerpath != NULL) {
 			APS_HandlerLoadPath = ThisBD->handlerpath;
 		} else {
 			APS_HandlerLoadPath = MONTSUQI_LIBRARY_PATH;
@@ -259,18 +236,57 @@ _ReadyOnlineDB(
 	ReadyHandlerDB(bind->handler);
 }
 
-extern	DB_Environment	*
+extern	int
 ReadyOnlineDB(
-	NETFILE	*fp)
+	char *application_name)
 {
-	DB_Environment	*env;
+	int	rc;
 ENTER_FUNC;
-	InitDB_Process(fp);
-	env = OpenAllDB();
+	InitDB_Process(application_name);
+	rc = OpenDB(NULL);
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_ReadyOnlineDB,NULL);
 LEAVE_FUNC;
-	return	env;
+	return	rc;
 }
+
+static	const char*
+CommandString(
+	char	command)
+{
+	switch(command) {
+	case APL_COMMAND_LINK:
+		return "LINK";
+	case APL_COMMAND_GET:
+		return "PUTG";
+	default:
+		return "";
+	}
+	return "";
+}
+
+#ifdef DEBUG
+static const char*
+strputtype(
+	unsigned char p)
+{
+	switch(p) {
+	case SCREEN_CURRENT_WINDOW:
+		return "current";
+	case SCREEN_NEW_WINDOW:
+		return "new";
+	case SCREEN_CLOSE_WINDOW:
+		return "close";
+	case SCREEN_CHANGE_WINDOW:
+		return "change";
+	case SCREEN_JOIN_WINDOW:
+		return "join";
+	case SCREEN_NULL:
+		return "null";
+	default:
+		return "nondef";
+	}
+}
+#endif
 
 static	void
 CallBefore(
@@ -278,246 +294,208 @@ CallBefore(
 	ProcessNode		*node)
 {
 	ValueStruct	*mcp;
+	WindowStack	w;
+	int			i,sp;
 
 ENTER_FUNC;
+#ifdef DEBUG
+	fprintf(stderr,"==== callbefore 1\n");
+	for (i=0;i<node->w.sp;i++) {
+		fprintf(stderr,"%02d %-16s %s\n",
+			i,node->w.s[i].window,strputtype(node->w.s[i].puttype));
+	}
+#endif
 	mcp = node->mcprec->value; 
 	SetValueString(GetItemLongName(mcp,"dc.status"),
-				   STATUS[*ValueStringPointer(GetItemLongName(mcp,"private.pstatus")) - '1'],
-				   NULL);
-	dbgprintf("node->dbstatus = %d",(int)node->dbstatus);
+		CommandString(node->command),NULL);
+	dbgprintf("node->dbstatus = %d",node->dbstatus);
 	SetValueString(GetItemLongName(mcp,"dc.dbstatus"),
-				   DBSTATUS[(unsigned char)node->dbstatus],NULL);
+		DBSTATUS[(int)node->dbstatus],NULL);
 	SetValueInteger(GetItemLongName(mcp,"db.rcount"),0);
 	SetValueInteger(GetItemLongName(mcp,"db.limit"),1);
-	SetValueInteger(GetItemLongName(mcp,"db.offset"),0);
-	node->w.n = 0;
 	node->thisscrrec = bind->rec;
 	CurrentProcess = node;
+
+	/* SCREEN_NULLを除去  */
+	w.sp = 0;
+	for (i=0;i<node->w.sp;i++) {
+		if (node->w.s[i].puttype != SCREEN_NULL) {
+			w.s[w.sp].puttype = node->w.s[i].puttype;
+			strncpy(w.s[w.sp].window,node->w.s[i].window,SIZE_NAME);
+			w.sp++;
+		}
+	}
+	node->w.sp = w.sp;
+	for (i=0;i<w.sp;i++) {
+		node->w.s[i].puttype = w.s[i].puttype;
+		strncpy(node->w.s[i].window,w.s[i].window,SIZE_NAME);
+	}
+
+	/* windowがあるかどうかチェック */
+	sp = -1;
+	for (i=0;i<node->w.sp;i++) {
+		if (!strcmp(node->window,node->w.s[i].window)) {
+			sp = i;
+			break;
+		}
+	}
+	/* なければtopに追加 */
+	if (sp == -1 && strlen(node->window) > 0) {
+		if (node->w.sp > WINDOW_STACK_SIZE) {
+			Warning("window stack size over[%d],can't add [%s]",
+				WINDOW_STACK_SIZE,node->window);
+			Warning("---- window stack ----");
+			for(i=0;i<node->w.sp;i++) {
+				Warning("[%02d] [%s] [%d]",
+					i,node->w.s[i].window,node->w.s[i].puttype);
+			}
+			Warning("---- window stack end ----");
+			return;
+		}
+		strncpy(node->w.s[node->w.sp].window,node->window,SIZE_NAME);
+		node->w.s[node->w.sp].puttype = node->puttype;
+		node->w.sp++;
+	}
+#ifdef DEBUG
+	fprintf(stderr,"==== callbefore 2\n");
+	for (i=0;i<node->w.sp;i++) {
+		fprintf(stderr,"%02d %-16s %s\n",
+			i,node->w.s[i].window,strputtype(node->w.s[i].puttype));
+	}
+#endif
 LEAVE_FUNC;
 }
 
-extern	void
-SetPutType(
-	ProcessNode	*node,
-	char		*wname,
-	byte		type)
-{	
-	int		i;
-
-	for	( i = 0 ; i < node->w.n  ; i ++ ) {
-		if		(  strcmp(node->w.control[i].window,wname)  ==  0  )	break;
-	}
-	strcpy(node->w.control[i].window,wname);
-	node->w.control[i].PutType = type;
-	if		(  i  ==  node->w.n  ) {
-		node->w.n ++;
-	}
-}
 
 static	void
 CallAfter(
 	ProcessNode	*node)
 {
-	int		i
-		,	winfrom
-		,	winend
-		,	sindex;	/*	sindex orgine is 1	*/
-	char	buff[SIZE_LONGNAME+1]
-		,	*p;
-	int		PutType;
-
-	ValueStruct	*mcp_swindow;
-	ValueStruct	*mcp_sindex;
-	ValueStruct	*mcp_puttype;
-	ValueStruct	*mcp_pputtype;
-	ValueStruct	*mcp_dcwindow;
-	ValueStruct	*mcp;
-
+	int			i,sp;
+	char		*dc_puttype;
+	char		*dc_window;
 ENTER_FUNC;
-	mcp = node->mcprec->value; 
-	mcp_sindex 	= GetItemLongName(mcp,"private.count");
-	mcp_swindow = GetItemLongName(mcp,"private.swindow");
-	mcp_puttype = GetItemLongName(mcp,"dc.puttype");
-	mcp_pputtype = GetItemLongName(mcp,"private.pputtype");
-	mcp_dcwindow = GetItemLongName(mcp,"dc.window");
-
-	winfrom = 0;
-	winend = 0;
-	if		(  ( PutType = (int)(long)g_hash_table_lookup(TypeHash,ValueToString(mcp_puttype,NULL)) )
-			   ==  0  ) {
-		PutType = SCREEN_CURRENT_WINDOW;
+#ifdef DEBUG
+	fprintf(stderr,"---- callafter 1 ----\n");
+	for (i=0;i<node->w.sp;i++) {
+		fprintf(stderr,"%02d %-16s %s\n",
+			i,node->w.s[i].window,strputtype(node->w.s[i].puttype));
 	}
-	if		(  ( sindex = ValueInteger(mcp_sindex) )  ==  0  ) {
-		SetValueString(GetArrayItem(mcp_swindow,0),ValueStringPointer(mcp_dcwindow),NULL);
-		sindex = 1;
-	}
-
-	if		(  sindex  >  1  ) {
-		SetValueString(GetItemLongName(mcp,"dc.fromwin"),
-					   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 2)),NULL);
+	fprintf(stderr,"---- callafter 1 end ----\n");
+#endif
+	dc_window = ValueStringPointer(
+		GetItemLongName(node->mcprec->value,"dc.window"));
+	dc_puttype = ValueStringPointer(
+		GetItemLongName(node->mcprec->value,"dc.puttype"));
+	if (!strcasecmp(dc_puttype,"CURRENT")) {
+		node->puttype = SCREEN_CURRENT_WINDOW;
+	} else if (!strcasecmp(dc_puttype,"NEW")) {
+		node->puttype = SCREEN_NEW_WINDOW;
+	} else if (!strcasecmp(dc_puttype,"CLOSE")) {
+		node->puttype = SCREEN_CLOSE_WINDOW;
+	} else if (!strcasecmp(dc_puttype,"CHANGE")) {
+		node->puttype = SCREEN_CHANGE_WINDOW;
+	} else if (!strcasecmp(dc_puttype,"JOIN")) {
+		node->puttype = SCREEN_JOIN_WINDOW;
 	} else {
-		SetValueString(GetItemLongName(mcp,"dc.fromwin"),"",NULL);
+		node->puttype = SCREEN_CURRENT_WINDOW;
 	}
 
-	switch	(PutType) {
-	  case	SCREEN_BACK_WINDOW:
-		dbgmsg("back");
-		sindex --;
-		SetValueString(GetItemLongName(mcp,"dc.window"),
-					   ValueStringPointer(GetArrayItem(mcp_swindow,sindex - 1)),NULL);
-		PutType = SCREEN_CHANGE_WINDOW;
-		SetValueString(GetItemLongName(mcp,"dc.puttype"),"CHANGE",NULL);
-		break;
-	  case	SCREEN_RETURN_COMPONENT:
-		dbgmsg("return");
-		sindex --;
-		strcpy(buff,ValueStringPointer(GetItemLongName(mcp,"dc.window")));
-		if		(  ( p = strrchr(buff,'.') )  !=  NULL  ) {
-			*p = 0;
-		}
-		SetValueString(GetItemLongName(mcp,"dc.window"),buff,NULL);
-		break;
-	  default:
-		dbgmsg("other");
-		if		(  strcmp(ValueStringPointer(
-							  GetArrayItem(mcp_swindow,sindex - 1)),
-						  ValueStringPointer(mcp_dcwindow))  !=  0  ) {
-			for	( i = 0 ; i < sindex ; i ++ ) {
-				if		(  strcmp(ValueStringPointer(
-									  GetArrayItem(mcp_swindow,i)),
-								  ValueStringPointer(mcp_dcwindow))  ==  0  )
-					break;
+#ifdef DEBUG
+	fprintf(stderr,"[%s] -> [%s] [%s]\n",
+		node->window,dc_window,strputtype(node->puttype));
+#endif
+	switch (node->puttype) {
+	case SCREEN_CLOSE_WINDOW:
+		/* 前のリスト要素をCLOSEに  */
+		for (i=0;i<node->w.sp;i++) {
+			if (!strcmp(node->window,node->w.s[i].window)) {
+				node->w.s[i].puttype = SCREEN_CLOSE_WINDOW;
 			}
-			if		(  i  <  sindex  ) {
-				winfrom = i + 1;
-			} else {
-				winfrom = 0;
-				SetValueString(GetArrayItem(mcp_swindow,i),
-							   ValueStringPointer(mcp_dcwindow),NULL);
+		}
+		break;
+	case SCREEN_CURRENT_WINDOW:
+	case SCREEN_NEW_WINDOW:
+		/* do nothing  */
+		break;
+	case SCREEN_CHANGE_WINDOW:
+		/* ひとつ前のウィンドウをCLOSE  */
+		if (node->w.sp >= 1) {
+			node->w.s[node->w.sp-1].puttype = SCREEN_CLOSE_WINDOW;
+		}
+		break;
+	case SCREEN_JOIN_WINDOW:
+		/* windowがあるかどうかチェック */
+		sp = -1;
+		for (i=0;i<node->w.sp;i++) {
+			if (!strcmp(dc_window,node->w.s[i].window)) {
+				sp = i;
+				break;
 			}
-			winend  = sindex;
-			sindex = i + 1;
+		}
+		if (sp == -1) {
+		/* なければ全CLOSE  */
+			for (i=0;i<node->w.sp;i++) {
+				node->w.s[i].puttype = SCREEN_CLOSE_WINDOW;
+			}
+		} else {
+		/* あればそれ以降をCLOSE  */
+			for (i=sp+1;i<node->w.sp;i++) {
+				node->w.s[i].puttype = SCREEN_CLOSE_WINDOW;
+			}
 		}
 		break;
 	}
-
-	switch	(PutType) {
-	  case	SCREEN_JOIN_WINDOW:
-		for	( i = winfrom ; i < winend ; i ++  ) {
-			SetPutType(node,
-					   ValueStringPointer(GetArrayItem(mcp_swindow,i)),
-					   SCREEN_CLOSE_WINDOW);
-		}
-		break;
-	  default:
-		break;
+#ifdef DEBUG
+	fprintf(stderr,"---- callafter 2 ----\n");
+	for (i=0;i<node->w.sp;i++) {
+		fprintf(stderr,"%02d %-16s %s\n",
+			i,node->w.s[i].window,strputtype(node->w.s[i].puttype));
 	}
-	dbgprintf("PutType = %d",PutType);
-	SetValueInteger(mcp_pputtype,PutType);
-	if		(  strcmp(ValueStringPointer(mcp_dcwindow), node->window)  !=  0  )	{
-		SetValueInteger(mcp_sindex,sindex);
-	}
-#ifdef	DEBUG
-	dbgprintf("mcp_sindex = %d",sindex);
-	dbgprintf("mcp->dc.window = [%s]",ValueStringPointer(mcp_dcwindow));
-	dbgmsg("**** window stack dump *****************");
-	for	( i = 0 ; i < sindex ; i ++ ) {
-		dbgprintf("[%d:%s]",i,(ValueStringPointer(
-								   GetArrayItem(mcp_swindow,i))));
-	}
-	dbgmsg("----------------------------------------");
+	fprintf(stderr,"---- callafter 2 end ----\n");
 #endif
 LEAVE_FUNC;
 }
 
-#ifdef	DEBUG
-static	void
-DumpProcessNode(
-	ProcessNode	*node)
-{
-	int		i;
-	int		sindex;
-	ValueStruct	*mcp;
-	ValueStruct	*mcp_dcwindow;
-	ValueStruct	*mcp_swindow;
-	ValueStruct	*mcp_sindex;
-
-	mcp = node->mcprec->value; 
-	mcp_dcwindow = GetItemLongName(mcp,"dc.window");
-	mcp_swindow = GetItemLongName(mcp,"private.swindow");
-	mcp_sindex 	= GetItemLongName(mcp,"private.count");
-	sindex = ValueInteger(mcp_sindex);
-
-	printf("mcp_sindex = %d\n",sindex);
-	printf("mcp->dc.window = [%s]\n",ValueStringPointer(mcp_dcwindow));
-	printf("**** window stack dump *****************\n");
-	for	( i = 0 ; i < sindex ; i ++ ) {
-		printf("[%d:%s]\n",i,(ValueStringPointer(
-								   GetArrayItem(mcp_swindow,i))));
-	}
-#if	0
-	printf("term   = [%s]\n",node->term);
-	printf("user   = [%s]\n",node->user);
-	printf("window = [%s]\n",node->window);
-	printf("widget = [%s]\n",node->widget);
-	printf("event  = [%s]\n",node->event);
-	printf("*** mcprec ***\n");
-	DumpValueStruct(node->mcprec->value);
-	printf("*** sparec ***\n");
-	DumpValueStruct(node->sparec->value);
-	for	( i = 0 ; i < node->cWindow ; i ++ ) {
-		printf(" *** [%s] ***\n",node->scrrec[i]->name);
-		DumpValueStruct(node->scrrec[i]->value);
-	}
-#endif
-}
-#endif
-
 extern	void
 ExecuteProcess(
-	ProcessNode	*node,
-	DB_Environment	*env)
+	ProcessNode	*node)
 {
-	WindowBind	*bind;
+	WindowBind		*bind;
 	MessageHandler	*handler;
-	char		compo[SIZE_LONGNAME+1];
-	struct	timeval	tv;
-	long	ever
-		,	now;
+	char			*window;
+	long			start,end;
 
 ENTER_FUNC;
-	ever = 0;
-	PureComponentName(ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")),
-					  compo);
-	dbgprintf("component [%s]",compo);
-	if		(  ( bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,compo) )
-			   !=  NULL  ) {
-		dbgprintf("calling [%s] widget [%s] event [%s]",bind->module, node->widget, node->event);
-		handler = bind->handler;
-		if		(  ((MessageHandlerClass *)bind->handler)->ExecuteDC  !=  NULL  ) {
-			ThisDB_Environment = env;
-			CallBefore(bind,node);
-			if		(  fTimer  ) {
-				gettimeofday(&tv,NULL);
-				ever = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
-			}
-			if		(  !(handler->klass->ExecuteDC(handler,node))  ) {
-				MessageLog("application process illegular execution");
-				exit(2);
-			}
-			CallAfter(node);
-			if		(  fTimer  ) {
-				gettimeofday(&tv,NULL);
-				now = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
-				printf("aps %s@%s:%s process time %6ld(ms)\n",
-					   node->user,node->term,compo,(now - ever));
-				dbgprintf("aps %s@%s:%s process time %6ld(ms)\n",
-						  node->user,node->term,compo,(now - ever));
-			}
-		}
-	} else {
-		Error("invalid event request [%s]",compo);
+	window = ValueStringPointer(
+		GetItemLongName(node->mcprec->value,"dc.window"));
+	dbgprintf("window [%s]",window);
+	bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,window);
+	if (bind == NULL) {
+		Warning("invalid event request [%s]",window);
+		exit(2);
 	}
+	dbgprintf("calling [%s] widget [%s] event [%s]",
+		bind->module, node->widget, node->event);
+	handler = bind->handler;
+	if (((MessageHandlerClass *)bind->handler)->ExecuteDC == NULL) {
+		Warning("No such handler [%s] widget [%s] event [%s]",
+			bind->module, node->widget, node->event);
+		exit(2);
+	}
+	
+	CallBefore(bind,node);
+	start = GetNowTime();
+	/* _ExecuteProcess */
+	if (!(handler->klass->ExecuteDC(handler,node))) {
+		Warning("Illegular execution [%s] widget [%s] event [%s]",
+			bind->module, node->widget, node->event);
+		exit(2);
+	}
+	end = GetNowTime();
+	TimerPrintf(start,end, "aps %s %s:%s:%s:%s\n",
+		node->user,bind->module,window,node->widget, node->event);
+	CallAfter(node);
 LEAVE_FUNC;
 }
 
@@ -526,10 +504,10 @@ StopHandlerDC(
 	MessageHandler	*handler)
 {
 ENTER_FUNC;
-	if		(	(  ( handler->fInit & INIT_READYDC )  !=  0  )
-			&&	(  ( handler->fInit & INIT_STOPDC  )  ==  0  ) ) {
+	if (	((handler->fInit & INIT_READYDC) != 0) &&
+			((handler->fInit & INIT_STOPDC) == 0)) {
 		handler->fInit |= INIT_STOPDC;
-		if		(  handler->klass->StopDC  !=  NULL  ) {
+		if (handler->klass->StopDC != NULL) {
 			handler->klass->StopDC(handler);
 		}
 	}
@@ -630,7 +608,8 @@ LEAVE_FUNC;
 static	void
 _StopOnlineDB(
 	char		*name,
-	WindowBind	*bind)
+	WindowBind	*bind,
+	void		*dummy)
 {
 ENTER_FUNC;
 	StopHandlerDB(bind->handler);
@@ -638,11 +617,10 @@ LEAVE_FUNC;
 }
 
 extern	void
-StopOnlineDB(
-	DB_Environment	*env)
+StopOnlineDB(void)
 {
 ENTER_FUNC;
-	CloseAllDB(env);
+	CloseDB(NULL);
 	g_hash_table_foreach(ThisLD->bhash,(GHFunc)_StopOnlineDB,NULL);
 LEAVE_FUNC;
 }
@@ -676,7 +654,6 @@ ENTER_FUNC;
 	if		(  ( bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		Error("%s application is not in BD.\n",name);
 	}
-	ThisDB_Environment = NULL;
 	CurrentProcess = NULL;
 	handler = bind->handler;
 	if		(  handler->klass->ReadyExecute  !=  NULL  ) {

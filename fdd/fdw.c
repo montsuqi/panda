@@ -44,7 +44,6 @@
 
 #include	"gettext.h"
 #include	"const.h"
-#include	"types.h"
 #include	"libmondai.h"
 #include	"comm.h"
 #include	"comms.h"

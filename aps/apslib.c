@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2000-2009 Ogochan.
+ * Copyright (C) 2000-2008 Ogochan.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@
 #include	<string.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"directory.h"
@@ -44,8 +43,7 @@ extern	int
 MCP_PutWindow(
 	ProcessNode	*node,
 	char		*wname,
-	char		*type,
-	char		*widget)
+	char		*type)
 {
 	ValueStruct	*mcp;
 
@@ -55,25 +53,10 @@ ENTER_FUNC;
 		dbgprintf("window = [%s]",wname);
 		SetValueString(GetItemLongName(mcp,"dc.window"),wname,NULL);
 	}
-	if		(  widget  ==  NULL  ) {
-		SetValueString(GetItemLongName(mcp,"dc.widget"),"",NULL);
-	} else {
-		SetValueString(GetItemLongName(mcp,"dc.widget"),widget,NULL);
-	}
+	SetValueString(GetItemLongName(mcp,"dc.widget"),"",NULL);
 	SetValueString(GetItemLongName(mcp,"dc.puttype"),type,NULL);
 	SetValueString(GetItemLongName(mcp,"dc.status"),"PUTG",NULL);
 	SetValueInteger(GetItemLongName(mcp,"rc"),0);
-LEAVE_FUNC;
-	return	(0);
-}
-
-extern	int
-MCP_PutData(
-	ProcessNode	*node,
-	char		*rname)
-{
-ENTER_FUNC;
-	SetPutType(node,rname,SCREEN_SEND_DATA);
 LEAVE_FUNC;
 	return	(0);
 }
@@ -163,39 +146,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	int
-MCP_ExecFunction(
-	ProcessNode	*node,
-	char	*rname,
-	char	*pname,
-	char	*func,
-	ValueStruct	*data)
-{
-	DBCOMM_CTRL		ctrl;
-	RecordStruct	*rec;
-	ValueStruct		*value
-		,			*ret;
-
-ENTER_FUNC;
-	dbgprintf("rname = [%s]",rname); 
-	dbgprintf("pname = [%s]",pname); 
-	dbgprintf("func  = [%s]",func); 
-	rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
-	if		(  rec  !=  NULL  ) {
-		CopyValue(value,data);
-	}
-	ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
-	if		(  ret  !=  NULL  ) {
-		CopyValue(data,ret);
-		FreeValueStruct(ret);
-	}
-	if		(  node  !=  NULL  ) {
-		MakeMCP(node->mcprec->value,&ctrl);
-	}
-LEAVE_FUNC;
-	return	(ctrl.rc);
-}
-
 extern	ValueStruct	*
 MCP_GetDB_Define(
 	char	*name)
@@ -210,13 +160,11 @@ MCP_GetDB_Define(
 	ValueStruct		*val
 		,			*ret;
 	char			*p
-		,			*rname
 		,			*pname
 		,			*oname;
 
 ENTER_FUNC;
 	strcpy(buff,name);
-	rname = buff;
 	if		(  ( p = strchr(buff,':') )  !=  NULL  ) {
 		*p = 0;
 		pname = p + 1;

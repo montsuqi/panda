@@ -7,418 +7,380 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2008-11-10 16:08+0900\n"
+"POT-Creation-Date: 2013-04-25 17:22+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=EUC-JP\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
 
-#: glclient/gtk1/bd_component.c:432 glclient/gtk2/bd_component.c:428
-msgid "Host(Port)"
-msgstr "ホスト(ポート)"
-
-#: glclient/gtk1/bd_component.c:447 glclient/gtk1/bootdialog.c:277
-#: glclient/gtk2/bd_component.c:443 glclient/gtk2/bootdialog.c:225
-msgid "Application"
-msgstr "アプリケーション"
-
-#: glclient/gtk1/bd_component.c:456 glclient/gtk2/bd_component.c:452
-msgid "Protocol"
-msgstr "プロトコル"
-
-#: glclient/gtk1/bd_component.c:473 glclient/gtk1/bootdialog.c:278
-#: glclient/gtk2/bd_component.c:469 glclient/gtk2/bootdialog.c:226
-#: glclient/client.c:107
-msgid "User"
-msgstr "ユーザ名"
-
-#: glclient/gtk1/bd_component.c:482 glclient/gtk2/bd_component.c:478
-#: glclient/client.c:109
-msgid "Password"
-msgstr "パスワード"
-
-#: glclient/gtk1/bd_component.c:493 glclient/gtk2/bd_component.c:489
-msgid "Remember Password"
-msgstr "パスワードの保存"
-
-#: glclient/gtk1/bd_component.c:510 glclient/gtk2/bd_component.c:506
-#: glclient/client.c:130
-msgid "Use SSL"
-msgstr "SSLを使う"
-
-#: glclient/gtk1/bd_component.c:527 glclient/gtk2/bd_component.c:523
-#: glclient/client.c:132
-msgid "CA Certificate Path"
-msgstr "CA証明書へのパス"
-
-#: glclient/gtk1/bd_component.c:530 glclient/gtk1/bd_component.c:545
-#: glclient/gtk1/bd_component.c:560 glclient/gtk1/bd_component.c:575
-#: glclient/gtk1/bd_component.c:619 glclient/gtk1/bd_component.c:655
-#: glclient/gtk1/bd_component.c:671 glclient/gtk1/bd_component.c:687
-#: glclient/gtk2/bd_component.c:526 glclient/gtk2/bd_component.c:541
-#: glclient/gtk2/bd_component.c:556 glclient/gtk2/bd_component.c:571
-#: glclient/gtk2/bd_component.c:615 glclient/gtk2/bd_component.c:651
-#: glclient/gtk2/bd_component.c:667 glclient/gtk2/bd_component.c:683
-msgid "Open"
-msgstr "参照"
-
-#: glclient/gtk1/bd_component.c:542 glclient/gtk2/bd_component.c:538
-#: glclient/client.c:134
-msgid "CA Certificate File"
-msgstr "CA証明書ファイル"
-
-#: glclient/gtk1/bd_component.c:557 glclient/gtk2/bd_component.c:553
-msgid "SSL Key File(pem)"
-msgstr "鍵ファイル名(pem)"
-
-#: glclient/gtk1/bd_component.c:572 glclient/gtk2/bd_component.c:568
-#: glclient/client.c:128
-msgid "Certificate(pem/p12)"
-msgstr "証明書ファイル名(pem/p12)"
-
-#: glclient/gtk1/bd_component.c:587 glclient/gtk2/bd_component.c:583
-msgid "Cipher Suite"
-msgstr "暗号スイート"
-
-#: glclient/gtk1/bd_component.c:598 glclient/gtk2/bd_component.c:594
-#: glclient/client.c:139
-msgid "Use Security Device"
-msgstr "セキュリティデバイスを使う"
-
-#: glclient/gtk1/bd_component.c:616 glclient/gtk2/bd_component.c:612
-#: glclient/client.c:141
-msgid "PKCS#11 Library"
-msgstr "PKCS#11ライブラリ"
-
-#: glclient/gtk1/bd_component.c:631 glclient/gtk2/bd_component.c:627
-msgid "Slot ID"
-msgstr "スロットID"
-
-#: glclient/gtk1/bd_component.c:651 glclient/gtk2/bd_component.c:647
-msgid "Cache"
-msgstr "キャッシュ"
-
-#: glclient/gtk1/bd_component.c:667 glclient/gtk2/bd_component.c:663
-msgid "Style"
-msgstr "スタイル"
-
-#: glclient/gtk1/bd_component.c:683 glclient/gtk2/bd_component.c:679
-msgid "Gtkrc"
-msgstr ""
-
-#: glclient/gtk1/bd_component.c:700 glclient/gtk2/bd_component.c:696
-msgid "Output Logfile"
-msgstr "ログ出力"
-
-#: glclient/gtk1/bd_component.c:708 glclient/gtk2/bd_component.c:704
-#: glclient/client.c:117
-msgid "Enable Keybuffer"
-msgstr "キーバッファを有効にする"
-
-#: glclient/gtk1/bd_component.c:716 glclient/gtk2/bd_component.c:712
-msgid "Enable Timer"
-msgstr "タイマー処理を有効にする"
-
-#: glclient/gtk1/bd_component.c:734 glclient/gtk2/bd_component.c:730
-msgid "Timer Period(ms)"
-msgstr "タイマー起動時間(ミリ秒)"
-
-#: glclient/gtk1/bd_config.c:260 glclient/gtk2/bd_config.c:258
-#, c-format
-msgid "error: `%s' don't exist or could not read.\n"
-msgstr ""
-
-#: glclient/gtk1/bd_config.c:269 glclient/gtk2/bd_config.c:267
-#, c-format
-msgid "error: `%s' is directory.\n"
-msgstr ""
-
-#: glclient/gtk1/bd_config.c:289 glclient/gtk1/bd_config.c:295
-#: glclient/gtk2/bd_config.c:288 glclient/gtk2/bd_config.c:295
-#, c-format
-msgid "error: `%s' unknown file type."
-msgstr ""
-
-#: glclient/gtk1/bd_config.c:302 glclient/gtk2/bd_config.c:302
-#, c-format
-msgid "error: `%s' is not glclient config file."
-msgstr ""
-
-#: glclient/gtk1/bd_config.c:512 glclient/gtk2/bd_config.c:523
-#, c-format
-msgid "error: could not open for write: %s\n"
-msgstr ""
-
-#: glclient/gtk1/bd_config.c:593 glclient/gtk2/bd_config.c:604
-#, c-format
-msgid "error: could not create per-user config directory\n"
-msgstr ""
-
-#: glclient/gtk1/bootdialog.c:68 glclient/gtk2/bootdialog.c:78
-msgid "warning: Description is blank\n"
-msgstr ""
-
-#: glclient/gtk1/bootdialog.c:81
-msgid "warning: already used description\n"
-msgstr ""
-
-#: glclient/gtk1/bootdialog.c:145 glclient/gtk1/bootdialog.c:468
-#: glclient/gtk2/bootdialog.c:115 glclient/gtk2/bootdialog.c:398
-msgid "New"
-msgstr "新規作成"
-
-#: glclient/gtk1/bootdialog.c:156 glclient/gtk1/bootdialog.c:473
-#: glclient/gtk2/bootdialog.c:127 glclient/gtk2/bootdialog.c:406
-msgid "Edit"
-msgstr "編集"
-
-#: glclient/gtk1/bootdialog.c:173
-msgid "Ok"
-msgstr ""
-
-#: glclient/gtk1/bootdialog.c:179 glclient/gtk1/dialogs.c:131
-msgid "Cancel"
-msgstr "キャンセル"
-
-#: glclient/gtk1/bootdialog.c:189 glclient/gtk1/bootdialog.c:274
-#: glclient/gtk2/bootdialog.c:155 glclient/gtk2/bootdialog.c:222
-msgid "Description"
-msgstr "説明"
-
-#: glclient/gtk1/bootdialog.c:275 glclient/gtk2/bootdialog.c:223
-msgid "Host"
-msgstr "ホスト"
-
-#: glclient/gtk1/bootdialog.c:276 glclient/gtk2/bootdialog.c:224
-#: glclient/client.c:99
-msgid "Port"
-msgstr "ポート"
-
-#: glclient/gtk1/bootdialog.c:460 glclient/gtk2/bootdialog.c:390
-msgid "Server Setting"
-msgstr "サーバ設定"
-
-#: glclient/gtk1/bootdialog.c:479 glclient/gtk2/bootdialog.c:415
-msgid "Delete"
-msgstr "削除"
-
-#: glclient/gtk1/bootdialog.c:485 glclient/gtk1/bootdialog.c:880
-#: glclient/gtk2/bootdialog.c:424 glclient/gtk2/bootdialog.c:737
-msgid "Close"
-msgstr "閉じる"
-
-#: glclient/gtk1/bootdialog.c:556 glclient/gtk2/bootdialog.c:495
-msgid "Custom"
-msgstr "カスタム"
-
-#: glclient/gtk1/bootdialog.c:827 glclient/gtk1/bootdialog.c:836
-#: glclient/gtk2/bootdialog.c:681 glclient/gtk2/bootdialog.c:690
-msgid "glclient Launcher"
-msgstr "glclient ランチャー"
-
-#: glclient/gtk1/bootdialog.c:844 glclient/gtk2/bootdialog.c:698
-msgid "Server"
-msgstr "サーバ"
-
-#: glclient/gtk1/bootdialog.c:858 glclient/gtk2/bootdialog.c:715
-msgid "Basic"
-msgstr "基本"
-
-#: glclient/gtk1/bootdialog.c:863 glclient/gtk2/bootdialog.c:720
-msgid "SSL"
-msgstr ""
-
-#: glclient/gtk1/bootdialog.c:868 glclient/gtk2/bootdialog.c:725
-msgid "Details"
-msgstr "詳細"
-
-#: glclient/gtk1/bootdialog.c:873 glclient/gtk2/bootdialog.c:730
-msgid "Connect"
-msgstr "接続"
-
-#: glclient/gtk1/bootdialog.c:886 glclient/gtk2/bootdialog.c:743
-msgid "Configuration"
-msgstr "設定"
-
-#: glclient/gtk1/bootdialog.c:917 glclient/gtk2/bootdialog.c:770
-#, c-format
-msgid "error: permissions is not 0%o: %s\n"
-msgstr ""
-
-#: glclient/gtk1/fileEntry.c:96 glclient/gtk2/fileEntry.c:94
-#, c-format
-msgid "Succeeded in writing %s"
-msgstr "%s 書き込み終了"
-
-#: glclient/gtk1/fileEntry.c:100 glclient/gtk2/fileEntry.c:96
-#, c-format
-msgid ""
-"cannot write %s \n"
-"%s"
-msgstr "%s ファイルに書き込めませんでした%s"
-
-#: glclient/gtk1/fileEntry.c:163 glclient/gtk2/fileEntry.c:147
-msgid "File already exists. Rewrite?"
-msgstr "ファイルが既に存在します。書き換えますか？"
-
-#: glclient/gtk1/dialogs.c:121
-msgid "OK"
-msgstr ""
-
-#: glclient/gtk2/bd_component.c:111
+#: glclient/bd_component.c:66
 msgid "Open File"
 msgstr "参照"
 
-#: glclient/gtk2/bd_component.c:134
+#: glclient/bd_component.c:92
 msgid "Open Directory"
 msgstr "キャッシュディレクトリ名"
 
-#: glclient/gtk2/bootdialog.c:90
+#: glclient/bd_component.c:356
+msgid "Host(Port)"
+msgstr "ホスト(ポート)"
+
+#: glclient/bd_component.c:371 glclient/bootdialog.c:346
+msgid "Application"
+msgstr "アプリケーション"
+
+#: glclient/bd_component.c:380 glclient/bootdialog.c:348
+msgid "User"
+msgstr "ユーザ名"
+
+#: glclient/bd_component.c:389
+msgid "Password"
+msgstr "パスワード"
+
+#: glclient/bd_component.c:400
+msgid "Remember Password"
+msgstr "パスワードの保存"
+
+#: glclient/bd_component.c:417
+msgid "Use SSL"
+msgstr "SSLを使う"
+
+#: glclient/bd_component.c:434
+msgid "CA Certificate File"
+msgstr "CA証明書ファイル"
+
+#: glclient/bd_component.c:437 glclient/bd_component.c:452
+#: glclient/bd_component.c:496 glclient/bd_component.c:532
+#: glclient/bd_component.c:548
+msgid "Open"
+msgstr "参照"
+
+#: glclient/bd_component.c:449
+msgid "Certificate(*.p12)"
+msgstr "証明書ファイル名(*.p12)"
+
+#: glclient/bd_component.c:464
+msgid "Cipher Suite"
+msgstr "暗号スイート"
+
+#: glclient/bd_component.c:475
+msgid "Use Security Device"
+msgstr "セキュリティデバイスを使う"
+
+#: glclient/bd_component.c:493
+msgid "PKCS#11 Library"
+msgstr "PKCS#11ライブラリ"
+
+#: glclient/bd_component.c:508
+msgid "Slot ID"
+msgstr "スロットID"
+
+#: glclient/bd_component.c:528
+msgid "Style"
+msgstr "スタイル"
+
+#: glclient/bd_component.c:544
+msgid "Gtkrc"
+msgstr "Gtkrc"
+
+#: glclient/bd_component.c:560
+msgid "FontName"
+msgstr "フォント"
+
+#: glclient/bd_component.c:572
+msgid "Output Logfile"
+msgstr "ログ出力"
+
+#: glclient/bd_component.c:580
+msgid "Enable Keybuffer"
+msgstr "キーバッファを有効にする"
+
+#: glclient/bd_component.c:588
+msgid "Disable IM control and Kana input"
+msgstr "入力メソッドの制御とカタカナ入力を無効にする"
+
+#: glclient/bd_component.c:596
+msgid "Enable Timer"
+msgstr "タイマー処理を有効にする"
+
+#: glclient/bd_component.c:614
+msgid "Timer Period(ms)"
+msgstr "タイマー起動時間(ミリ秒)"
+
+#: glclient/bd_config.c:293
 #, c-format
-msgid "warning: already used description: %s\n"
-msgstr ""
+msgid "error: `%s' don't exist or could not read.\n"
+msgstr "エラー: %s が存在しないか、読み込みできません\n"
 
-#: glclient/gtk2/bootdialog.c:133
+#: glclient/bd_config.c:302
 #, c-format
-msgid "doesn't exist config:%s"
-msgstr ""
+msgid "error: `%s' is directory.\n"
+msgstr "エラー: %s はディレクトリです\n"
 
-#: glclient/client.c:101
-msgid "Cache Directory"
-msgstr "キャッシュディレクトリ名"
-
-#: glclient/client.c:103
-msgid "Style Filename"
-msgstr "スタイルファイル名"
-
-#: glclient/client.c:105
-msgid "GtkStyle Filename"
-msgstr ""
-
-#: glclient/client.c:111
-msgid "Use Protocol Version 1"
-msgstr "データ処理プロトコルバージョン 1 を使う"
-
-#: glclient/client.c:113
-msgid "Use Protocol Version 2"
-msgstr "データ処理プロトコルバージョン 2 を使う"
-
-#: glclient/client.c:115
-msgid "Enable Logging"
-msgstr "実行ログの取得を行う"
-
-#: glclient/client.c:119
-msgid "Use Startup Dialog"
-msgstr "起動ダイアログを表示する"
-
-#: glclient/client.c:121
-msgid "Specify Config"
-msgstr ""
-
-#: glclient/client.c:123
-msgid "List Config"
-msgstr ""
-
-#: glclient/client.c:126
-msgid "SSL Key File(pem/p12)"
-msgstr "鍵ファイル名(pem/p12)"
-
-#: glclient/client.c:136
-msgid "SSL Cipher Sweet"
-msgstr "SSLで使用する暗号スイート"
-
-#: glclient/client.c:143
-msgid "Security Device Slot ID"
-msgstr "セキュリティデバイスのスロット番号"
-
-#: glclient/client.c:246
-msgid "could not write cache dir"
-msgstr ""
-
-#: glclient/client.c:262
+#: glclient/bd_config.c:324 glclient/bd_config.c:331
 #, c-format
-msgid "glclient ver %s\n"
-msgstr ""
+msgid "error: `%s' unknown file type."
+msgstr "エラー: %s は不明なファイルタイプです"
 
-#: glclient/client.c:263
+#: glclient/bd_config.c:338
 #, c-format
-msgid "Copyright (c) 1998-1999 Masami Ogoshi <ogochan@nurs.or.jp>\n"
-msgstr ""
+msgid "error: `%s' is not glclient config file."
+msgstr "エラー: %s は設定ファイルではありません"
 
-#: glclient/client.c:264
+#: glclient/bd_config.c:559
 #, c-format
-msgid "              2000-2003 Masami Ogoshi & JMA.\n"
-msgstr ""
+msgid "error: could not open for write: %s\n"
+msgstr "エラー: %s に書き込みできません\n"
 
-#: glclient/client.c:265
+#: glclient/bootdialog.c:59 glclient/bootdialog.c:287
+msgid "New"
+msgstr "新規作成"
+
+#: glclient/bootdialog.c:61 glclient/bootdialog.c:296
+msgid "Edit"
+msgstr "編集"
+
+#: glclient/bootdialog.c:81
+msgid "ConfigName"
+msgstr "設定"
+
+#: glclient/bootdialog.c:279
+msgid "Server Setting"
+msgstr "サーバ設定"
+
+#: glclient/bootdialog.c:305
+msgid "Delete"
+msgstr "削除"
+
+#: glclient/bootdialog.c:314 glclient/bootdialog.c:593
+msgid "Close"
+msgstr "閉じる"
+
+#: glclient/bootdialog.c:340
+msgid "Description"
+msgstr "説明"
+
+#: glclient/bootdialog.c:342
+msgid "Host"
+msgstr "ホスト"
+
+#: glclient/bootdialog.c:344
+msgid "Port"
+msgstr "ポート"
+
+#: glclient/bootdialog.c:528 glclient/bootdialog.c:537
+msgid "glclient2 Launcher"
+msgstr "glclient2 ランチャー"
+
+#: glclient/bootdialog.c:545
+msgid "Server"
+msgstr "サーバ"
+
+#: glclient/bootdialog.c:569
+msgid "Basic"
+msgstr "基本"
+
+#: glclient/bootdialog.c:574
+msgid "SSL"
+msgstr "SSL"
+
+#: glclient/bootdialog.c:579
+msgid "Details"
+msgstr "詳細"
+
+#: glclient/bootdialog.c:584
+msgid "Connect"
+msgstr "接続"
+
+#: glclient/bootdialog.c:599
+msgid "Configuration"
+msgstr "設定"
+
+#: glclient/bootdialog.c:606
+msgid "INFOMATION"
+msgstr "情報"
+
+#: glclient/download.c:64
+msgid "Specify filename..."
+msgstr "保存するファイルの選択"
+
+#: glclient/download.c:166
 #, c-format
-msgid "              2004-2007 Masami Ogoshi\n"
+msgid ""
+"Do you open this file or save it?\n"
+"\n"
+"File Name: %s\n"
+"Description: %s\n"
+"Size: %s"
 msgstr ""
+"このファイルを開くか、または保存しますか?\n"
+"\n"
+"ファイル名: %s\n"
+"説明: %s\n"
+"サイズ: %s"
 
-#: glclient/client.c:317
+#: glclient/download.c:174
+#, c-format
+msgid ""
+"Do you open this file or save it?\n"
+"\n"
+"File Name: %s\n"
+"Size: %s"
+msgstr ""
+"このファイルを開くか、または保存しますか?\n"
+"\n"
+"ファイル名: %s\n"
+"サイズ: %s"
+
+#: glclient/action.c:757
+msgid "Now loading..."
+msgstr "読み込み中..."
+
+#: glclient/action.c:1153
+#, c-format
+msgid "cannot load config:%s"
+msgstr "設定が読み込みできません:%s"
+
+#: glclient/print.c:76
+#, c-format
+msgid "client printing - %s"
+msgstr "クライアント印刷 - %s"
+
+#: glclient/print.c:78
+msgid "Preview"
+msgstr "プレビュー"
+
+#: glclient/client.c:135
+msgid "mkdtemp failure"
+msgstr "mkdtemp に失敗しました"
+
+#: glclient/client.c:219
 msgid "can not connect server(server port not found)"
 msgstr "サーバに接続できません(サーバまたはポートが見つかりません)"
 
-#: glclient/client.c:371
+#: glclient/client.c:276
 msgid "input Password"
 msgstr "パスワード"
 
-#: glclient/protocol.c:170
+#: glclient/desktop.c:153
+msgid "Application start failure"
+msgstr "アプリケーション起動失敗"
+
+#: glclient/desktop.c:155
+#, c-format
+msgid "can't execute command.\\n\"%s\""
+msgstr "コマンドを実行できません\\n\"%s\""
+
+#: glclient/protocol.c:85
 msgid "Connection lost\n"
 msgstr "接続が切れました\n"
 
-#: glclient/protocol.c:310
-msgid "error size mismatch !"
-msgstr "エラー!サイズが不正です"
+#: glclient/protocol.c:206
+#, c-format
+msgid "GL_RecvString invalid size %ld > %ld(max size)"
+msgstr ""
 
-#: glclient/protocol.c:575 glclient/protocol.c:599
-msgid "could not write tmp file"
-msgstr "一時ファイルが書き込めません"
-
-#: glclient/protocol.c:578 glclient/protocol.c:602
-msgid "could not write cache file"
-msgstr "キャッシュファイルが書き込めません"
-
-#: glclient/protocol.c:613
+#: glclient/protocol.c:414
 msgid "invalid protocol sequence"
 msgstr "プロトコルが不正です"
 
-#: glclient/protocol.c:898
-msgid "connection start\n"
-msgstr ""
+#: glclient/protocol.c:698
+msgid "glclient message notify"
+msgstr "glclientメッセージ通知"
 
-#: glclient/protocol.c:911
+#: glclient/protocol.c:709
+msgid "connection error(invalid pong packet)"
+msgstr "通信エラー(サーバがPINGに応答しません)"
+
+#: glclient/protocol.c:716 glclient/protocol.c:742
+msgid "connection error(server doesn't reply ping)"
+msgstr "通信エラー(サーバがPINGに応答しません)"
+
+#: glclient/protocol.c:758
+msgid "connection start\n"
+msgstr "connection start\n"
+
+#: glclient/protocol.c:781
 msgid "can not connect server"
 msgstr "サーバに接続できません"
 
-#: glclient/protocol.c:914
+#: glclient/protocol.c:784
 msgid "can not connect server(version not match)"
 msgstr "サーバに接続できません(サーバのバージョンが違います)"
 
-#: glclient/protocol.c:920
+#: glclient/protocol.c:790
 msgid "can not connect server(authentication error)"
 msgstr "サーバに接続できません(認証エラー)"
 
-#: glclient/protocol.c:923 glclient/protocol.c:927
+#: glclient/protocol.c:793 glclient/protocol.c:797
 msgid "can not connect server(user or password is incorrect)"
 msgstr "ユーザまたはパスワードが違います"
 
-#: glclient/protocol.c:932
+#: glclient/protocol.c:802
 msgid "can not connect server(application name invalid)"
 msgstr "サーバに接続できません(アプリケーション名が不正です)"
 
-#: glclient/protocol.c:936
+#: glclient/protocol.c:806
 msgid "can not connect server(other protocol error)"
 msgstr "サーバに接続できません(プロトコルエラー)"
 
-#: glclient/protocol.c:1036 glclient/protocol.c:1061 glclient/protocol.c:1292
+#: glclient/protocol.c:899 glclient/protocol.c:924 glclient/protocol.c:1155
 #, c-format
 msgid "invalid data conversion\n"
-msgstr ""
+msgstr "不正なデータ変換です\n"
 
-#: libs/net.c:297
+#: glclient/printservice.c:142
+#, c-format
+msgid ""
+"download failure\n"
+"path:%s\n"
+msgstr ""
+"ダウンロードに失敗しました\n"
+"パス:%s\n"
+
+#: glclient/printservice.c:143 glclient/printservice.c:292
+msgid "glclient download notify"
+msgstr "glclientファイル保存通知"
+
+#: glclient/printservice.c:210
+#, c-format
+msgid ""
+"print failure\n"
+"title:%s\n"
+msgstr ""
+"印刷に失敗しました\n"
+"印刷物のタイトル:%s\n"
+
+#: glclient/printservice.c:211
+msgid "glclient print notify"
+msgstr "glclient印刷通知"
+
+#: glclient/printservice.c:290
+#, c-format
+msgid ""
+"download failure\n"
+"filename:%s\n"
+"description:%s"
+msgstr ""
+"ダウンロード失敗\n"
+"ファイル名:%s\n"
+"説明:%s"
+
+#: glclient/marshaller.c:1261
+#, c-format
+msgid ""
+"protocol error\n"
+"invalid data\n"
+"%s"
+msgstr ""
+"プロトコルエラー\n"
+"不正なデータ\n"
+"%s"
+
+#: libs/net.c:290
 #, c-format
 msgid ""
 "read error:\n"
@@ -427,7 +389,7 @@ msgstr ""
 "readエラー:\n"
 " %s\n"
 
-#: libs/net.c:315
+#: libs/net.c:308
 #, c-format
 msgid ""
 "write error:\n"
@@ -436,11 +398,11 @@ msgstr ""
 "writeエラー\n"
 " %s\n"
 
-#: libs/net.c:430
+#: libs/net.c:424
 msgid "Please input key passphrase:"
 msgstr "秘密鍵のパスフレーズを入力してください。"
 
-#: libs/net.c:431
+#: libs/net.c:425
 msgid ""
 "Verify ERROR!\n"
 "Please input key passphrase:"
@@ -448,7 +410,7 @@ msgstr ""
 "検証エラー\n"
 "秘密鍵のパスフレーズを再入力してください。"
 
-#: libs/net.c:480
+#: libs/net.c:474
 #, c-format
 msgid ""
 "SSL read error:\n"
@@ -457,7 +419,7 @@ msgstr ""
 "SSL readエラー:\n"
 " %s\n"
 
-#: libs/net.c:501
+#: libs/net.c:495
 #, c-format
 msgid ""
 "SSL write error:\n"
@@ -466,7 +428,7 @@ msgstr ""
 "SSL writeエラー:\n"
 " %s\n"
 
-#: libs/net.c:548
+#: libs/net.c:543
 #, c-format
 msgid ""
 "BIO_new failure:\n"
@@ -475,7 +437,7 @@ msgstr ""
 "BIO_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:552
+#: libs/net.c:547
 #, c-format
 msgid ""
 "X509_NAME_print_ex failure:\n"
@@ -484,7 +446,7 @@ msgstr ""
 "X509_NAME_print_exに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:581
+#: libs/net.c:577
 #, c-format
 msgid ""
 "X509_NAME_oneline failure:\n"
@@ -493,7 +455,7 @@ msgstr ""
 "X509_NAME_onelineに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:709
+#: libs/net.c:705
 #, c-format
 msgid ""
 "SSL_connect failure:\n"
@@ -502,12 +464,12 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:716
+#: libs/net.c:712
 #, c-format
 msgid "The hostname does not match %s.\n"
 msgstr "接続先のホスト名(%s)が証明書と一致しません。\n"
 
-#: libs/net.c:732
+#: libs/net.c:728
 #, c-format
 msgid ""
 "SSL_accept failure:\n"
@@ -516,7 +478,7 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:757
+#: libs/net.c:753
 #, c-format
 msgid ""
 "SSL_new failure:\n"
@@ -525,7 +487,7 @@ msgstr ""
 "SSL_CTX_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:762
+#: libs/net.c:758
 #, c-format
 msgid ""
 "SSL_set_fd failure:\n"
@@ -534,7 +496,7 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:817
+#: libs/net.c:813
 #, c-format
 msgid ""
 "The certificate(%s) will be expired in %d days.\n"
@@ -543,7 +505,7 @@ msgstr ""
 "証明書(%s)の期限切れまであと%d日です。\n"
 "証明書を更新してください。\n"
 
-#: libs/net.c:844
+#: libs/net.c:838
 #, c-format
 msgid ""
 " Unable to get issuer cert.\n"
@@ -552,7 +514,7 @@ msgstr ""
 " 発行者(CA)の証明書が取得できません。\n"
 " 発行者= %s\n"
 
-#: libs/net.c:848
+#: libs/net.c:842
 msgid ""
 " Error in cert not_before field.\n"
 " notBefore="
@@ -560,7 +522,7 @@ msgstr ""
 " 証明書の有効期限開始前です。\n"
 " 有効期限の開始時刻="
 
-#: libs/net.c:856
+#: libs/net.c:850
 msgid ""
 " Error in cert not_after field.\n"
 " notAfter="
@@ -568,7 +530,7 @@ msgstr ""
 " 証明書の有効期限が切れています。\n"
 " 有効期限の終了時刻="
 
-#: libs/net.c:882
+#: libs/net.c:876
 #, c-format
 msgid ""
 "Verification error of local entity certificate:\n"
@@ -579,7 +541,7 @@ msgstr ""
 " depth=%d\n"
 " %s:%s\n"
 
-#: libs/net.c:904
+#: libs/net.c:898
 #, c-format
 msgid ""
 "Verification error of remote entity certificate:\n"
@@ -590,7 +552,7 @@ msgstr ""
 " depth=%d\n"
 " %s:%s\n"
 
-#: libs/net.c:1039 libs/net.c:1605
+#: libs/net.c:1033 libs/net.c:1309
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate failure:\n"
@@ -599,7 +561,7 @@ msgstr ""
 "SSL_CTX_use_certificateに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1043 libs/net.c:1609
+#: libs/net.c:1037 libs/net.c:1313
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey failure:\n"
@@ -608,7 +570,7 @@ msgstr ""
 "SSL_CTX_use_PrivateKeyに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1047 libs/net.c:1135 libs/net.c:1613
+#: libs/net.c:1041 libs/net.c:1129 libs/net.c:1317
 #, c-format
 msgid ""
 "SSL_CTX_check_private_key failure:\n"
@@ -618,7 +580,7 @@ msgstr ""
 " %s\n"
 "鍵ファイルが不正な可能性があります。\n"
 
-#: libs/net.c:1071 libs/net.c:1636
+#: libs/net.c:1065 libs/net.c:1339
 #, c-format
 msgid ""
 "SSL_CTX_new failure:\n"
@@ -627,7 +589,7 @@ msgstr ""
 "SSL_CTX_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:1079 libs/net.c:1641
+#: libs/net.c:1073 libs/net.c:1344
 #, c-format
 msgid ""
 "SSL_CTX_set_cipher_list(%s) failure:\n"
@@ -637,7 +599,7 @@ msgstr ""
 " %s\n"
 "「SSL暗号スイート」が不正な可能性があります。\n"
 
-#: libs/net.c:1092 libs/net.c:1654
+#: libs/net.c:1086 libs/net.c:1357
 #, c-format
 msgid ""
 "SSL_CTX_set_default_verify_paths error:\n"
@@ -647,14 +609,14 @@ msgstr ""
 " %s\n"
 "システムのデフォルト検証パスを使おうとしましたが失敗しました。\n"
 
-#: libs/net.c:1098 libs/net.c:1660
+#: libs/net.c:1092 libs/net.c:1363
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s)\n"
 msgstr ""
 "SSL_CTX_load_verify_locations(%s)でエラーが発生しました:\n"
 "「CA証明書へのパス」または「CA証明書ファイル」が不正な可能性があります。\n"
 
-#: libs/net.c:1115
+#: libs/net.c:1109
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate_file(%s) failure:\n"
@@ -664,7 +626,7 @@ msgstr ""
 " %s\n"
 "「証明書ファイル名」またはファイルの中身が不正な可能性があります。\n"
 
-#: libs/net.c:1125
+#: libs/net.c:1119
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey_file(%s) failure:\n"
@@ -674,122 +636,11 @@ msgstr ""
 " %s\n"
 "「鍵ファイル名」またはファイルの中身が不正な可能性があります。\n"
 
-#: libs/net.c:1142
+#: libs/net.c:1136
 msgid "Please specify certificate file"
 msgstr "証明書ファイル名を指定してください。"
 
-#: libs/net.c:1264
-#, c-format
-msgid ""
-"Cannot open PKCS#11 library :\n"
-" %s\n"
-msgstr ""
-"PKCS#11ライブラリが開けません:\n"
-" %s\n"
-
-#: libs/net.c:1271
-#, c-format
-msgid ""
-"Cannot get C_GetFunctionList address :\n"
-" %s\n"
-msgstr ""
-"C_GetFunctionListのアドレスが得られませんでした:\n"
-" %s\n"
-"「PKCS#11ライブラリ」が不正な可能性があります。\n"
-
-#: libs/net.c:1278
-#, c-format
-msgid ""
-"C_GetFunctionList :\n"
-" %s\n"
-msgstr ""
-"C_GetFunctionListでエラーが発生しました:\n"
-" %s\n"
-
-#: libs/net.c:1287
-#, c-format
-msgid ""
-"C_Initialize :\n"
-" %s\n"
-msgstr ""
-"C_Initializeでエラーが発生しました:\n"
-" %s\n"
-
-#: libs/net.c:1343
-#, c-format
-msgid ""
-"Cannot find private key ID :\n"
-" %s\n"
-msgstr ""
-"秘密鍵IDが見付かりませんでした:\n"
-" %s\n"
-"セキュリティデバイスに証明書が格納されていない可能性があります。\n"
-
-#: libs/net.c:1370
-#, c-format
-msgid ""
-"C_OpenSession :\n"
-" %s\n"
-msgstr ""
-"C_OpenSessionが失敗しました:\n"
-" %s\n"
-
-#: libs/net.c:1375
-#, c-format
-msgid ""
-"C_Login :\n"
-" %s\n"
-msgstr ""
-"セキュリティデバイスへのログインに失敗しました:\n"
-" %s\n"
-"デバイスが初期化されていないか，PINが間違っている可能性があります。\n"
-
-#: libs/net.c:1386
-#, c-format
-msgid ""
-"C_FindObjectsInit :\n"
-" %s\n"
-msgstr ""
-"C_FindObjectsInitに失敗しました:\n"
-" %s\n"
-
-#: libs/net.c:1391
-#, c-format
-msgid ""
-"C_FindObjects :\n"
-" %s\n"
-msgstr ""
-"C_FindObjectsに失敗しました:\n"
-" %s\n"
-
-#: libs/net.c:1396 libs/net.c:1429
-#, c-format
-msgid ""
-"C_FindObjectsFinal :\n"
-" %s\n"
-msgstr ""
-"C_FindObjectsFinalに失敗しました:\n"
-" %s\n"
-
-#: libs/net.c:1412
-#, c-format
-msgid ""
-"C_GetAttributeValue :\n"
-" %s\n"
-msgstr ""
-"C_GetAttributeValueに失敗しました:\n"
-" %s\n"
-
-#: libs/net.c:1453 libs/net.c:1459
-#, c-format
-msgid ""
-"C_GetSlotList :\n"
-" %s\n"
-msgstr ""
-"C_GetSlotListに失敗しました:\n"
-" %s\n"
-
-#: libs/net.c:1476
+#: libs/net.c:1159
 #, c-format
 msgid ""
 "Engine_by_id:\n"
@@ -798,7 +649,7 @@ msgstr ""
 "Engine_by_idに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1486
+#: libs/net.c:1169
 #, c-format
 msgid ""
 "Engine_ctrl_cmd_string failure:\n"
@@ -807,7 +658,7 @@ msgstr ""
 "Engine_ctrl_cmd_stringに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1492
+#: libs/net.c:1175
 #, c-format
 msgid ""
 "Engine_init failure:\n"
@@ -816,28 +667,11 @@ msgstr ""
 "Engine_initに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1500
+#: libs/net.c:1183
 msgid "Please input security device PIN:"
 msgstr "セキュリティデバイスの PIN を入力してください。"
 
-#: libs/net.c:1528
-msgid "Cannot find available security device"
-msgstr "利用可能なセキュリティデバイスが接続されていません。"
-
-#: libs/net.c:1565
-msgid "Cannot find certificate in the security device"
-msgstr "セキュリティデバイスに証明書が格納されていません。"
-
-#: libs/net.c:1588
-#, c-format
-msgid ""
-"d2i_X509 failure:\n"
-" %s"
-msgstr ""
-"d2i_X509に失敗しました:\n"
-" %s"
-
-#: libs/net.c:1598
+#: libs/net.c:1302
 #, c-format
 msgid ""
 "ENGINE_load_private_key failure:\n"
@@ -846,41 +680,3 @@ msgstr ""
 "ENGINE_load_private_keyに失敗しました:\n"
 " %s\n"
 "「PKCS#11ライブラリ」が不正な可能性があります。\n"
-
-#~ msgid "cannot load config:%s"
-#~ msgstr "設定 %s を読み込めませんでした"
-
-#~ msgid ""
-#~ "pipe error:\n"
-#~ " %s\n"
-#~ msgstr ""
-#~ "pipeエラー\n"
-#~ " %s\n"
-
-#~ msgid ""
-#~ "fork error:\n"
-#~ " %s\n"
-#~ msgstr ""
-#~ "forkエラー:\n"
-#~ " %s\n"
-
-#~ msgid ""
-#~ "dup2 error:\n"
-#~ " %s\n"
-#~ msgstr ""
-#~ "dup2エラー:\n"
-#~ " %s\n"
-
-#~ msgid ""
-#~ "exec(%s) error:\n"
-#~ " %s\n"
-#~ msgstr ""
-#~ "exec(%s)エラー:\n"
-#~ " %s\n"
-
-#~ msgid ""
-#~ "waitpid error:\n"
-#~ " %s\n"
-#~ msgstr ""
-#~ "waitpidエラー:\n"
-#~ " %s\n"

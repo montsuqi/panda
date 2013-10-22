@@ -1,6 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
- * Copyright (C) 2001-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2001-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
-#ifdef	HAVE_OPENCOBOL
 #include	<signal.h>
 #include	<stdio.h>
 #include	<stdlib.h>
@@ -33,25 +32,177 @@
 #include	<unistd.h>
 #include	<glib.h>
 
-#include	"types.h"
 #include	"const.h"
 #include	"libmondai.h"
 #include	"dblib.h"
 #include	"dbgroup.h"
 #include	"handler.h"
-#include	"OpenCOBOL.h"
 #include	"directory.h"
+#include	"MONFUNC.h"
+#include	"message.h"
 #include	"debug.h"
 
+static MONFUNC_PackFunc PackFunc;
+static MONFUNC_UnPackFunc UnPackFunc;
+static MONFUNC_SizeFunc SizeFunc;
+static CONVOPT *Conv;
+
 static	void
-CheckArg(
-	char		*func,
+ResetUser(
+	ValueStruct		*mcp)
+{
+	if ( CurrentTerm ){
+		SetValueString(GetItemLongName(mcp,"dc.term"),CurrentTerm,NULL);
+	}
+	if ( CurrentUser ){
+		SetValueString(GetItemLongName(mcp,"dc.user"),CurrentUser,NULL);
+	}
+}
+
+static	void
+CTRLtoMCP(
+	ValueStruct	*mcp,
 	DBCOMM_CTRL	*ctrl)
 {
-	if		(	(  ctrl->rno  !=  0  )
-			||	(  ctrl->pno  !=  0  ) ) {
-		Warning("argument invalid on %s\n",func);
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"func")),ctrl->func);
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"db.table")),ctrl->rname);
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"db.pathname")),ctrl->pname);
+	ValueInteger(GetItemLongName(mcp,"rc")) = ctrl->rc;
+	ValueInteger(GetItemLongName(mcp,"db.rcount")) = ctrl->rcount;
+	ValueInteger(GetItemLongName(mcp,"db.limit")) = ctrl->limit;
+}
+
+static	void
+MCPtoCTRL(
+	DBCOMM_CTRL	*ctrl,
+	ValueStruct	*mcp)
+{
+	char			*rname
+		,			*pname;
+	
+	if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
+		ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
+		ctrl->redirect = ValueInteger(GetItemLongName(mcp,"db.redirect"));
 	}
+	rname = ValueStringPointer(GetItemLongName(mcp,"db.table"));
+	SetDBCTRLRecord(ctrl, rname);
+	pname = ValueStringPointer(GetItemLongName(mcp,"db.pathname"));
+	SetDBCTRLValue(ctrl, pname);
+}
+
+static int
+MonDBOperation(
+	ValueStruct	*mcp,
+	char		*func)
+{
+	DBCOMM_CTRL	ctrl;
+ENTER_FUNC;
+	ResetUser(mcp);
+	InitializeCTRL(&ctrl);
+	strncpy(ctrl.func,func,SIZE_FUNC);
+	ctrl.fDBOperation = TRUE;
+	ExecDB_Process(&ctrl, ctrl.rec, ctrl.value);
+	CTRLtoMCP(mcp,&ctrl);
+LEAVE_FUNC;
+	return ctrl.rc;
+}
+
+static int
+MonDBFunc(
+	ValueStruct	*mcp,
+	char		*func,
+	char		*data,
+	ValueStruct **retval)
+{
+	DBCOMM_CTRL	ctrl;
+ENTER_FUNC;
+	*retval = NULL;
+	ResetUser(mcp);
+	InitializeCTRL(&ctrl);
+	strncpy(ctrl.func,func,SIZE_FUNC);
+
+	MCPtoCTRL(&ctrl,mcp);
+	if (IsDBUpdateFunc(ctrl.func)){
+		UnPackFunc(Conv, data, ctrl.value);
+	}
+	*retval = ExecDB_Process(&ctrl, ctrl.rec, ctrl.value);
+	CTRLtoMCP(mcp,&ctrl);
+LEAVE_FUNC;
+	return ctrl.rc;
+}
+
+static	int
+MonLOGFunc(
+	ValueStruct		*mcp)
+{
+ENTER_FUNC;
+	ValueInteger(GetItemLongName(mcp,"rc")) = 0;
+LEAVE_FUNC;
+	return 0;
+}
+
+static	int
+MonGLFunc(
+	ValueStruct		*mcp)
+{
+ENTER_FUNC;
+	strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),"PUTG");
+	ValueInteger(GetItemLongName(mcp,"rc")) = 0;
+LEAVE_FUNC;
+	return 0;
+}
+
+static	int
+_MONFUNC(
+	char		*mcpdata,
+	char		*data,
+	ValueStruct	**retval)
+{
+	ValueStruct	*mcp;
+	ValueStruct	*audit;
+	char		*func;
+	int			ret;
+	
+ENTER_FUNC;
+	*retval = NULL;
+	mcp = ThisEnv->mcprec->value;
+	audit = ThisEnv->auditrec->value;
+	InitializeValue(audit);
+	UnPackFunc(Conv, mcpdata, mcp);
+	func  = ValueStringPointer(GetItemLongName(mcp,"func"));
+	if (  !strcmp(func,"PUTWINDOW") ) {
+		ret = MonGLFunc(mcp);
+	} else
+	if (  !strcmp(func,"AUDITLOG")  ) {
+		ret = MonLOGFunc(mcp);
+	} else 
+	if (  IsDBOperation(func)  ) {
+		ret = MonDBOperation(mcp, func);
+	} else {
+		ret = MonDBFunc(mcp,func,data,retval);
+	}
+	if ( ValueInteger(GetItemLongName(mcp,"db.logflag")) > 0 ){
+		AuditLog(mcp);
+		ValueInteger(GetItemLongName(mcp,"db.logflag")) = 0;
+	}
+#ifdef	DEBUG
+	DumpValueStruct(mcp);
+#endif
+LEAVE_FUNC;
+	return ret;
+}
+
+extern	void
+InitMONFUNC(
+	CONVOPT *conv,
+	MONFUNC_PackFunc packfunc,
+	MONFUNC_UnPackFunc unpackfunc,
+	MONFUNC_SizeFunc sizefunc)
+{
+	Conv = conv;
+	PackFunc = packfunc;
+	UnPackFunc = unpackfunc;
+	SizeFunc = sizefunc;
 }
 
 extern	int
@@ -59,104 +210,44 @@ MONFUNC(
 	char	*mcpdata,
 	char	*data)
 {
-	DBCOMM_CTRL		ctrl;
-	RecordStruct	*rec;
-	ValueStruct		*mcp
-		,			*value
-		,			*ret;
-	char			*func
-		,			*rname
-		,			*pname;
+	int rc;
+	ValueStruct *retval;
+	ValueStruct *mcp;
 
-ENTER_FUNC;
-	mcp = ThisEnv->mcprec->value; 
-	OpenCOBOL_UnPackValue(OpenCOBOL_Conv,mcpdata,mcp);
-	func  = ValueStringPointer(GetItemLongName(mcp,"func"));
-
-	if		(  !strcmp(func,"PUTWINDOW")  ) {
-		strcpy(ValueStringPointer(GetItemLongName(mcp,"dc.status")),"PUTG");
-		ValueInteger(GetItemLongName(mcp,"rc")) = 0;
-	} else {
-		rname = ValueStringPointer(GetItemLongName(mcp,"db.table"));
-		pname = ValueStringPointer(GetItemLongName(mcp,"db.pathname"));
-		value = NULL;
-		dbgprintf("%s:%s:%s",rname,pname,func);
-		rec = MakeCTRLbyName(&value,&ctrl,rname,pname,func);
-		ctrl.count = ValueInteger(GetItemLongName(mcp,"db.rcount"));
-#if	0
-		ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
-#else
-		if		(  ValueInteger(GetItemLongName(mcp,"version"))  >=  2  ) {
-			ctrl.limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
-		} else {
-			ctrl.limit = 1;
+	rc = _MONFUNC(mcpdata,data,&retval);
+	mcp = ThisEnv->mcprec->value;
+	PackFunc(Conv,mcpdata,mcp);
+	if (retval != NULL) {
+		if (rc == MCP_OK) {
+			PackFunc(Conv,data,retval);
 		}
-		if		(  ValueInteger(GetItemLongName(mcp,"version"))  >=  3  ) {
-			ctrl.offset = ValueInteger(GetItemLongName(mcp,"db.offset"));
-		} else {
-			ctrl.offset = 0;
-		}
-#endif
-		ctrl.rc = 0;
-		if		(  !strcmp(func,"DBOPEN")  ) {
-			ctrl.limit = 1;
-			ctrl.count = 0;
-			ctrl.offset = 0;
-			CheckArg(func,&ctrl);
-			ThisDB_Environment = OpenAllDB();
-			ret = NULL;
-		} else
-		if		(  !strcmp(func,"DBCLOSE")  ) {
-			CheckArg(func,&ctrl);
-			ctrl.rc = CloseAllDB(ThisDB_Environment);
-			ret = NULL;
-		} else
-		if		(  !strcmp(func,"DBSTART")  ) {
-			ctrl.limit = 1;
-			ctrl.count = 0;
-			ctrl.offset = 0;
-			CheckArg(func,&ctrl);
-			ctrl.rc = TransactionAllStart(ThisDB_Environment);
-			ret = NULL;
-		} else
-		if		(  !strcmp(func,"DBCOMMIT")  ) {
-			CheckArg(func,&ctrl);
-			ctrl.rc = TransactionAllEnd(ThisDB_Environment);
-			ret = NULL;
-		} else
-		if		(  !strcmp(func,"DBDISCONNECT")  ) {
-			CheckArg(func,&ctrl);
-			ctrl.rc = CloseAllDB(ThisDB_Environment);
-			ret = NULL;
-		} else {
-#ifdef	DEBUG
-			{
-				size_t	size = OpenCOBOL_SizeValue(OpenCOBOL_Conv, value);
-				int		i;
-
-				for ( i = 0 ; i < size ; i ++ ) {
-					printf("%02X:",data[i]);
-				}
-			}
-#endif				
-			OpenCOBOL_UnPackValue(OpenCOBOL_Conv, data, value);
-			ret = ExecDB_Process(&ctrl,rec,value,ThisDB_Environment);
-		}
-		if		(	(  ret      !=  NULL    )
-				&&	(  ctrl.rc  ==  MCP_OK  ) )	{
-			OpenCOBOL_PackValue(OpenCOBOL_Conv, data, ret);
-		}
-		if		(  ret  !=  NULL  ) {
-			FreeValueStruct(ret);
-		}
-		MakeMCP(mcp,&ctrl);
+		FreeValueStruct(retval);
 	}
-#ifdef	DEBUG
-	DumpValueStruct(mcp);
-#endif
-	OpenCOBOL_PackValue(OpenCOBOL_Conv, mcpdata, mcp);
-LEAVE_FUNC;
-	return ctrl.rc;
+	return rc;
 }
 
-#endif
+extern	int
+RubyMONFUNC(
+	char	*mcpdata,
+	char	*data,
+	char	**retmcpdata,
+	char	**retdata)
+{
+	int rc;
+	ValueStruct *retval;
+	ValueStruct *mcp;
+
+	rc = _MONFUNC(mcpdata,data,&retval);
+	mcp = ThisEnv->mcprec->value;
+	*retmcpdata = xmalloc(SizeFunc(Conv,mcp));
+	PackFunc(Conv,*retmcpdata,mcp);
+	*retdata = NULL;
+	if (retval != NULL) {
+		if (rc == MCP_OK) {
+			*retdata = xmalloc(SizeFunc(Conv,retval));
+			PackFunc(Conv,*retdata,retval);
+		}
+		FreeValueStruct(retval);
+	}
+	return rc;
+}

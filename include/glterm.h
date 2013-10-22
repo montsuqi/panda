@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,19 +25,12 @@
 #ifndef	_INC_GLTERM_H
 #define	_INC_GLTERM_H
 
-#define	SCREEN_NULL					(byte)0x00
-#define	SCREEN_CURRENT_WINDOW		(byte)0x01
-#define	SCREEN_NEW_WINDOW			(byte)0x02
-#define	SCREEN_CLOSE_WINDOW			(byte)0x03
-#define	SCREEN_CHANGE_WINDOW		(byte)0x04
-#define	SCREEN_JOIN_WINDOW			(byte)0x05
-#define	SCREEN_FORK_WINDOW			(byte)0x06
-#define	SCREEN_END_SESSION			(byte)0x07
-#define	SCREEN_BACK_WINDOW			(byte)0x08
-#define	SCREEN_RETURN_COMPONENT		(byte)0x09
-#define	SCREEN_CALL_COMPONENT		(byte)0x0A
-#define	SCREEN_CHANGE_LD			(byte)0x0B
-#define	SCREEN_SEND_DATA			(byte)0x0C
+#define	SCREEN_NULL					(unsigned char)0x00
+#define	SCREEN_CURRENT_WINDOW		(unsigned char)0x01
+#define	SCREEN_NEW_WINDOW			(unsigned char)0x02
+#define	SCREEN_CLOSE_WINDOW			(unsigned char)0x03
+#define	SCREEN_CHANGE_WINDOW		(unsigned char)0x04
+#define	SCREEN_JOIN_WINDOW			(unsigned char)0x05
 
 #define	GL_Null						(PacketClass)0x00
 #define	GL_Connect					(PacketClass)0x01
@@ -54,20 +47,24 @@
 #define	GL_Session					(PacketClass)0x0C
 #define	GL_RedirectName				(PacketClass)0x0D
 #define	GL_ServerVersion			(PacketClass)0x0E
-#define	GL_CloseWindow				(PacketClass)0x0F
+#define	GL_Ping						(PacketClass)0x0F
+#define	GL_Pong						(PacketClass)0x10
+#define	GL_Pong_Dialog				(PacketClass)0x11
+#define	GL_Pong_Popup				(PacketClass)0x12
+#define	GL_Pong_Abort				(PacketClass)0x13
 
 #define HTTP_GET					(PacketClass)0x47
-#define HTTP_HEAD					(PacketClass)0x48
 #define HTTP_POST					(PacketClass)0x50
 
 #define	GL_OK						(PacketClass)0x80
 #define	GL_END						(PacketClass)0x81
 #define	GL_NOT						(PacketClass)0x83
+#define	GL_CONTINUE					(PacketClass)0x84
+#define	GL_STOP						(PacketClass)0x85
 
 #define	GL_E_VERSION				(PacketClass)0xF1
 #define	GL_E_AUTH					(PacketClass)0xF2
 #define	GL_E_APPL					(PacketClass)0xF3
 #define	GL_E_Session				(PacketClass)0xF4
-
 
 #endif

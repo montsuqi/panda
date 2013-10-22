@@ -32,231 +32,212 @@
 #include	<glib.h>
 #include	<numeric.h>
 #include	<netdb.h>
+#include	<pthread.h>
 
 #include	"const.h"
-#include	"types.h"
 #include	"enum.h"
-#include	"SQLparser.h"
 #include	"libmondai.h"
+#include	"RecParser.h"
 #include	"dbgroup.h"
 #include	"term.h"
 #include	"directory.h"
+#include	"wfcdata.h"
 #include	"redirect.h"
+#include	"comm.h"
+#include	"comms.h"
+#include	"sysdata.h"
+#include	"sysdbreq.h"
+#include	"message.h"
 #include	"debug.h"
+
+#define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
 static	int
 _EXEC(
-	DBG_Instance	*dbg,
-	char			*sql,
-	Bool			fRedirect,
-	int				usage)
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRedirect,
+	int			usage)
 {
 	return	(MCP_OK);
-}
-
-static	ValueStruct	*
-_DBOPEN(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl)
-{
-ENTER_FUNC;
-	OpenDB_RedirectPort(dbg);
-	dbg->update.conn = NULL;
-	dbg->update.dbstatus = DB_STATUS_CONNECT;
-	dbg->readonly.dbstatus = DB_STATUS_NOCONNECT;
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
-_DBDISCONNECT(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl)
-{
-ENTER_FUNC;
-	if		(  dbg->update.dbstatus == DB_STATUS_CONNECT ) { 
-		CloseDB_RedirectPort(dbg);
-		dbg->update.dbstatus = DB_STATUS_DISCONNECT;
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
-_DBSTART(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl)
-{
-ENTER_FUNC;
-	BeginDB_Redirect(dbg); 
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
-_DBCOMMIT(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl)
-{
-ENTER_FUNC;
-	CheckDB_Redirect(dbg);
-	CommitDB_Redirect(dbg);
-	ctrl->rc = MCP_OK;
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
-_DBSELECT(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct	*ret;
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_OK;
-		ret = DuplicateValue(args,TRUE);
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-static	int
-SetValues(
-	ValueStruct	*value)
-{
-	ValueStruct	*e;
-
-ENTER_FUNC;
-	if		(  ( e = GetItemLongName(value,"host") )  !=  NULL  ) {
-		if		(  CurrentProcess  !=  NULL  ) {
-			dbgprintf("term = [%s]",CurrentProcess->term);
-			dbgprintf("host = [%s]",TermToHost(CurrentProcess->term));
-			SetValueString(e,TermToHost(CurrentProcess->term),NULL);
-		} else {
-			SetValueString(e,"",NULL);
-		}
-	}
-LEAVE_FUNC;
-	return	(MCP_OK);
-}
-
-static	ValueStruct	*
-_DBFETCH(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-	ValueStruct	*ret;
-ENTER_FUNC;
-	ret = NULL;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = SetValues(args);
-		ret = DuplicateValue(args,TRUE);
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-static	ValueStruct	*
-_DBUPDATE(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-ENTER_FUNC;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_BAD_OTHER;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
-_DBDELETE(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-ENTER_FUNC;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_BAD_OTHER;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
-_DBINSERT(
-	DBG_Instance	*dbg,
-	DBCOMM_CTRL		*ctrl,
-	RecordStruct	*rec,
-	ValueStruct		*args)
-{
-ENTER_FUNC;
-	if		(  rec->type  !=  RECORD_DB  ) {
-		ctrl->rc = MCP_BAD_ARG;
-	} else {
-		ctrl->rc = MCP_BAD_OTHER;
-	}
-LEAVE_FUNC;
-	return	(NULL);
 }
 
 static	ValueStruct	*
 _DBACCESS(
-	DBG_Instance	*dbg,
-	char			*name,
+	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+	ValueStruct	*ret;
 ENTER_FUNC;
-#ifdef	TRACE
-	printf("[%s]\n",name); 
-#endif
+	ret = NULL;
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 	} else {
-		ctrl->rc = MCP_BAD_OTHER;
+		ctrl->rc = MCP_OK;
 	}
 LEAVE_FUNC;
-	return	(NULL);
+	return	(ret);
+}
+
+static	ValueStruct	*
+GETDATA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct *ret;
+	PacketClass rc;
+ENTER_FUNC;
+	ret = NULL;
+	ctrl->rc = MCP_BAD_OTHER;
+	if		(  rec->type  !=  RECORD_DB  ) {
+		ctrl->rc = MCP_BAD_ARG;
+	} else {
+		rc = SYSDB_GetData(NBCONN(dbg), args);
+		if (rc == SESSION_CONTROL_OK) {
+			ctrl->rc = MCP_OK;
+			ret = DuplicateValue(args,TRUE);
+		} else {
+			ctrl->rc = MCP_BAD_OTHER;
+		}
+	}
+LEAVE_FUNC;
+	return	ret;
+}
+
+static	ValueStruct	*
+SETMESSAGE(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct *ret;
+	PacketClass rc;
+ENTER_FUNC;
+	ret = NULL;
+	ctrl->rc = MCP_BAD_OTHER;
+	if		(  rec->type  !=  RECORD_DB  ) {
+		ctrl->rc = MCP_BAD_ARG;
+	} else {
+		rc = SYSDB_SetMessage(NBCONN(dbg), args);
+		ctrl->rc = rc == SESSION_CONTROL_OK ? MCP_OK : MCP_BAD_OTHER;
+	}
+LEAVE_FUNC;
+	return	ret;
+}
+
+static	ValueStruct	*
+SETMESSAGEALL(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct *ret;
+	PacketClass rc;
+ENTER_FUNC;
+	ret = NULL;
+	ctrl->rc = MCP_BAD_OTHER;
+	if		(  rec->type  !=  RECORD_DB  ) {
+		ctrl->rc = MCP_BAD_ARG;
+	} else {
+		rc = SYSDB_SetMessageAll(NBCONN(dbg), args);
+		ctrl->rc = rc == SESSION_CONTROL_OK ? MCP_OK : MCP_BAD_OTHER;
+	}
+LEAVE_FUNC;
+	return	ret;
+}
+
+static	int				idx = 0;
+static	int				numData = 0;
+static	Bool			hasData = FALSE;
+static	ValueStruct *	sysdbvals = NULL;
+
+static	ValueStruct	*
+SELECTALL(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct *ret;
+	PacketClass rc;
+ENTER_FUNC;
+	ret = NULL;
+	ctrl->rc = MCP_BAD_OTHER;
+	if		(  rec->type  !=  RECORD_DB  ) {
+		ctrl->rc = MCP_BAD_ARG;
+	} else {
+		if (sysdbvals == NULL) {
+			sysdbvals = RecParseValueMem(SYSDBVALS_DEF,NULL);
+			InitializeValue(sysdbvals);
+		}
+		rc = SYSDB_GetDataAll(NBCONN(dbg),&numData, sysdbvals);
+		if (rc == SESSION_CONTROL_OK) {
+			hasData = TRUE;
+			idx = 0;
+			ctrl->rc = MCP_OK;
+		} else {
+			hasData = FALSE;
+			ctrl->rc = MCP_BAD_OTHER;
+		}
+	}
+LEAVE_FUNC;
+	return	ret;
+}
+
+static	ValueStruct	*
+FETCH(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct *ret,*v;
+	char vname[256];
+ENTER_FUNC;
+	ret = NULL;
+	ctrl->rc = MCP_BAD_OTHER;
+	if (rec->type != RECORD_DB || !hasData){
+		ctrl->rc = MCP_BAD_ARG;
+		return ret;
+	}
+	if (idx >= numData) {
+		ctrl->rc = MCP_EOF;
+		return ret;
+	}
+	if (sysdbvals == NULL) {
+		ctrl->rc = MCP_EOF;
+		return ret;
+	}
+	snprintf(vname,sizeof(vname),"values[%d]",idx);
+	v = GetItemLongName(sysdbvals,vname); 
+	if (v != NULL) {
+		ret = DuplicateValue(v,TRUE); 
+	}
+	idx += 1;
+	ctrl->rc = MCP_OK;
+LEAVE_FUNC;
+	return	ret;
 }
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
+	{	"DBOPEN",			(DB_FUNC)SYSDATA_DBOPEN },
+	{	"DBDISCONNECT",		(DB_FUNC)SYSDATA_DBDISCONNECT },
+	{	"DBSTART",			(DB_FUNC)SYSDATA_DBSTART },
+	{	"DBCOMMIT",			(DB_FUNC)SYSDATA_DBCOMMIT },
 	/*	table operations	*/
-	{	"DBSELECT",		_DBSELECT },
-	{	"DBFETCH",		_DBFETCH },
-	{	"DBUPDATE",		_DBUPDATE },
-	{	"DBDELETE",		_DBDELETE },
-	{	"DBINSERT",		_DBINSERT },
-
-	{	NULL,			NULL }
+	{	"GETDATA",			GETDATA },
+	{	"SETMESSAGE",		SETMESSAGE },
+	{	"SETMESSAGEALL",	SETMESSAGEALL },
+	{	"SELECTALL",		SELECTALL },
+	{	"FETCH",			FETCH },
+	{	NULL,				NULL }
 };
 
 static	DB_Primitives	Core = {

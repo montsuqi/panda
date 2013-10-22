@@ -33,7 +33,6 @@
 #include	<ctype.h>
 #include	<unistd.h>
 #include	<glib.h>
-#include	"types.h"
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"front.h"
@@ -270,7 +269,7 @@ DumpDB(
 	int		i;
 
 ENTER_FUNC;
-	printf("\t\tDB group = [%s]\n",((DBG_Class *)db->dbg)->name);
+	printf("\t\tDB group = [%s]\n",((DBG_Struct *)db->dbg)->name);
 	DumpKey(db->pkey);
 	if		(  db->pcount  >  0  ) {
 		printf("\t\tpath ------\n");
@@ -454,7 +453,7 @@ DumpDBD(
 static	void
 DumpDBG(
 	char		*name,
-	DBG_Class	*dbg,
+	DBG_Struct	*dbg,
 	void		*dummy)
 {
 	int		i;
@@ -469,7 +468,7 @@ DumpDBG(
 		}
 		printf("\t\tDB name  = [%s]\n",dbg->server[i].dbname);
 		printf("\t\tDB user  = [%s]\n",dbg->server[i].user);
-		printf("\t\tDB pass  = [%s]\n",dbg->server[i].pass);fflush(stdout);
+		printf("\t\tDB pass  = [%s]\n",dbg->server[i].pass);
 		printf("\t\tDB sslmode = [%s]\n",dbg->server[i].sslmode);
 		fflush(stdout);
 	}
@@ -492,7 +491,7 @@ DumpDirectory(void)
 
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,NULL,NULL,TRUE);
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_ALL);
 
 	printf("name     = [%s]\n",ThisEnv->name);
 	printf("mlevel   = %d\n"  ,ThisEnv->mlevel);

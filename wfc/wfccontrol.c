@@ -36,7 +36,6 @@
 #include	<glib.h>
 #include	<pthread.h>
 
-#include	"types.h"
 
 #include	"libmondai.h"
 #include	"RecParser.h"
@@ -110,7 +109,7 @@ InitSystem(void)
 {
 ENTER_FUNC;
 	InitDirectory();
-	SetUpDirectory(Directory,NULL,"","",FALSE);
+	SetUpDirectory(Directory,NULL,"","",P_NONE);
 	InitNET();
 LEAVE_FUNC;
 }

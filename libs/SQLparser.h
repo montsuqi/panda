@@ -20,8 +20,6 @@
 #ifndef	_INC_SQL_PARSER_H
 #define	_INC_SQL_PARSER_H
 
-#define	SIZE_SQL		65538
-
 #include	"libmondai.h"
 #include	"Lex.h"
 #include	"struct.h"
@@ -35,7 +33,6 @@
 #define	SQL_OP_VCHAR	0x06
 #define	SQL_OP_SYMBOL	0x07
 #define	SQL_OP_LIMIT	0x08
-#define	SQL_OP_OFFSET	0x09
 
 extern	LargeByteString	*ParSQL(CURFILE *in,RecordStruct *rec, ValueStruct *argp,
 								ValueStruct *argf);

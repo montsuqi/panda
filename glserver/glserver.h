@@ -1,7 +1,7 @@
 /*
  * PANDA -- a simple transaction monitor
  * Copyright (C) 1998-1999 Ogochan.
- * Copyright (C) 2000-2009 Ogochan & JMA (Japan Medical Association).
+ * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 #ifndef	_SERVER_H
 #define	_SERVER_H
+#include	"libmondai.h"
 #include	"port.h"
 
 #undef	GLOBAL
@@ -29,10 +30,15 @@
 #define	GLOBAL		extern
 #endif
 
+#define API_TIMEOUT_SEC  60
+#define GL_TIMEOUT_SEC   60
+
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
+GLOBAL	char	*PortSysData;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
+GLOBAL	Bool	fVerifyPeer;
 GLOBAL	char	*KeyFile;
 GLOBAL	char	*CertFile;
 GLOBAL	char	*CA_Path;
@@ -40,7 +46,7 @@ GLOBAL	char	*CA_File;
 GLOBAL	char	*Ciphers;
 #endif
 GLOBAL	URL		Auth;
-GLOBAL	char	*Lang;
+GLOBAL	Bool	fAPI;
 
 extern	void	InitSystem(int argc, char **argv);
 extern	void	ExecuteServer(void);

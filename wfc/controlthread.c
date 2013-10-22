@@ -35,8 +35,8 @@
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<pthread.h>
+#include	<errno.h>
 
-#include	"types.h"
 #include	"enum.h"
 
 #include	"libmondai.h"
@@ -127,8 +127,7 @@ ConnectControl(
 
 ENTER_FUNC;
 	if		(  ( fhControl = accept(_fhControl,0,0) )  <  0  )	{
-		Message("_fhControl = %d INET Domain Accept",_fhControl);
-		exit(1);
+		Error("accept(2) failure:%s",strerror(errno));
 	}
 	pthread_create(&thr,NULL,(void *(*)(void *))ControlThread,(void *)(long)fhControl);
 	pthread_detach(thr);
