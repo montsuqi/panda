@@ -56,7 +56,6 @@ AM_PROG_LIBTOOL
 AM_PROG_CC_C_O
 
 AC_CHECK_LIB([m], [pow])
-AC_CHECK_LIB([pandas], [SendChar])
 AC_CHECK_LIB([dl],[dlopen])
 AC_CHECK_LIB([pthread],[pthread_create])
 AC_CHECK_LIB([crypt],[crypt])
