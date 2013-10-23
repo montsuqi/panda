@@ -28,6 +28,7 @@
 #endif
 
 #define	_DI_PARSER
+#define DIRS_MAIN
 
 #include	<stdio.h>
 #include	<stdlib.h>

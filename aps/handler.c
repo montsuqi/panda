@@ -47,7 +47,6 @@
 #include	"load.h"
 #define		_HANDLER
 #include	"dbgroup.h"
-#include	"driver.h"
 #include	"handler.h"
 #include	"aps_main.h"
 #include	"apsio.h"

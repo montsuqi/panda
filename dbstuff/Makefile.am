@@ -23,9 +23,7 @@ dbredirector_LDADD 		=				\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandacom.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(POSTGRES_LIBS)					\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
@@ -36,10 +34,7 @@ dbs_LDADD 		=						\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandas.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)						
@@ -63,10 +58,7 @@ dbs_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandas.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	
+	$(top_builddir)/libs/libpanda.la
 
 dbredirector_LDFLAGS	=	-export-dynamic
 dbredirector_SOURCES	=	\
@@ -77,8 +69,7 @@ dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a
+	$(top_builddir)/libs/libpanda.la
 
 
 dblogger_LDADD 		= $(dbredirector_LDADD)
@@ -96,9 +87,7 @@ dbmaster_DEPENDENCIES	=			\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a
-
+	$(top_builddir)/libs/libpanda.la
 
 dbslave_LDADD 		= $(dbredirector_LDADD)
 dbslave_LDFLAGS	=	-export-dynamic
@@ -109,8 +98,7 @@ dbslave_DEPENDENCIES	=			\
 	$(top_builddir)/dblib/libpandadb.a	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a
+	$(top_builddir)/libs/libpanda.la
 
 
 EXTRA_DIST = 							\

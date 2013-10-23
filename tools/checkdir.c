@@ -35,7 +35,6 @@
 #include	<glib.h>
 #include	"libmondai.h"
 #include	"RecParser.h"
-#include	"front.h"
 #include	"directory.h"
 #include	"dbgroup.h"
 #include	"dirs.h"

@@ -42,7 +42,6 @@
 #include	"DBparser.h"
 #include	"directory.h"
 #include	"dbgroup.h"
-#include	"driver.h"
 #include	"dirs.h"
 #include	"option.h"
 #include	"message.h"

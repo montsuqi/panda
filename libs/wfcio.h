@@ -21,9 +21,33 @@
 #define	_WFCIO_H
 #include	"const.h"
 #include	"enum.h"
-#include	"driver.h"
 #include	"wfcdata.h"
 #include	"net.h"
+
+#define	SCREEN_DATA_NULL		0
+#define	SCREEN_DATA_CONNECT		1
+#define	SCREEN_DATA_END			2
+
+typedef	struct {
+	char			window[SIZE_NAME+1];
+	char			widget[SIZE_NAME+1];
+	char			event[SIZE_EVENT+1];
+	char			cmd[SIZE_LONGNAME+1];
+	char			user[SIZE_USER+1];
+	char			term[SIZE_TERM+1];
+	char			host[SIZE_HOST+1];
+	char			agent[SIZE_TERM+1];
+	int				status;
+	unsigned char	puttype;
+	unsigned char	feature;
+	WindowStack		w;
+	GHashTable		*Windows;
+}	ScreenData;
+
+typedef	struct {
+	unsigned char	puttype;
+	RecordStruct	*rec;
+}	WindowData;
 
 extern	NETFILE	*ConnectTermServer(char *url,ScreenData *scr);
 extern	Bool	SendTermServer(NETFILE *fp, ScreenData *scr, ValueStruct *value);

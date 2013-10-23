@@ -18,14 +18,6 @@
 
 lib_LTLIBRARIES = libpanda.la
 
-noinst_LIBRARIES	=		\
-	libpandamain.a			\
-	libpandas.a				\
-	libpandacom.a			\
-	libpandagl.a			\
-	libpandamisc.a			\
-	libpandablob.a
-
 noinst_PROGRAMS		=		\
 	testnet					\
 	testblob
@@ -36,32 +28,37 @@ libpanda_la_LDFLAGS	=			\
 	-export-dynamic
 
 libpanda_la_SOURCES	=				\
-	Dlex.h							\
-	mhandler.c		mhandler.h		\
-	DDparser.c		DDparser.h		\
 	BDparser.c		BDparser.h		\
-	LDparser.c		LDparser.h		\
 	DBDparser.c		DBDparser.h		\
-	DIparser.c		DIparser.h		\
 	DBparser.c		DBparser.h		\
+	DDparser.c		DDparser.h		\
+	DIparser.c		DIparser.h		\
+	Dlex.h							\
+	LDparser.c		LDparser.h		\
 	SQLlex.c		SQLlex.h		\
 	SQLparser.c		SQLparser.h		\
+	auth.c			auth.h			\
+	authstub.c		authstub.h		\
+	blob.c			blob.h			\
 	blobreq.c		blobreq.h		\
-	sysdbreq.c		sysdbreq.h		\
-	sysdatacom.h					\
-	directory.c		directory.h		\
-	driver.c		driver.h		\
-	load.c			load.h			\
 	comm.c			comm.h			\
 	comms.c			comms.h			\
+	debug.h							\
+	directory.c		directory.h		\
+	load.c			load.h			\
+	message.c		message.h		\
+	mhandler.c		mhandler.h		\
+	monapi.c		monapi.h		\
 	net.c			net.h			\
-	term.c			term.h			\
-	socket.c		socket.h		\
+	option.c		option.h		\
+	panda.h							\
 	port.c			port.h			\
 	queue.c			queue.h			\
-	message.c		message.h		\
-	debug.h							\
-	panda.h
+	socket.c		socket.h		\
+	sysdatacom.h					\
+	sysdbreq.c		sysdbreq.h		\
+	term.c			term.h			\
+	wfcio.c			wfcio.h
 
 libpanda_la_LIBADD		=	\
 	-lm									\
@@ -72,32 +69,37 @@ libpanda_la_LIBADD		=	\
 libpandaincludedir = $(includedir)/panda
 
 libpandainclude_HEADERS =	\
-	Dlex.h				\
-	mhandler.h			\
-	DDparser.h			\
 	BDparser.h			\
-	LDparser.h			\
 	DBDparser.h			\
-	DIparser.h			\
 	DBparser.h			\
+	DDparser.h			\
+	DIparser.h			\
+	Dlex.h				\
+	LDparser.h			\
 	SQLlex.h			\
 	SQLparser.h			\
+	auth.h				\
+	authstub.h			\
+	blob.h				\
 	blobreq.h			\
-	sysdbreq.h			\
-	sysdatacom.h		\
-	directory.h			\
-	driver.h			\
-	load.h				\
 	comm.h				\
 	comms.h				\
+	debug.h				\
+	directory.h			\
+	load.h				\
+	message.h			\
+	mhandler.h			\
+	monapi.h			\
 	net.h				\
-	term.h				\
-	socket.h			\
+	option.h			\
+	panda.h				\
 	port.h				\
 	queue.h				\
-	message.h			\
-	debug.h				\
-	panda.h
+	socket.h			\
+	sysdatacom.h		\
+	sysdbreq.h			\
+	term.h				\
+	wfcio.h
 
 INCLUDES 			= 		\
 	-I$(top_srcdir)			\
@@ -111,111 +113,19 @@ INCLUDES 			= 		\
 
 testnet_LDADD	= 	\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(COMMON_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)
 
-testnet_DEPENDENCIES	=		\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a
+testnet_DEPENDENCIES	=				\
+	$(top_builddir)/libs/libpanda.la
 
-libpandamain_a_CFLAGS = $(AM_CFLAGS)	\
-	-fPIC
-libpandamain_a_SOURCES	=				\
-	Dlex.h							\
-	mhandler.c		mhandler.h		\
-	DDparser.c		DDparser.h		\
-	BDparser.c		BDparser.h		\
-	LDparser.c		LDparser.h		\
-	DBDparser.c		DBDparser.h		\
-	DIparser.c		DIparser.h		\
-	DBparser.c		DBparser.h		\
-	SQLlex.c		SQLlex.h		\
-	SQLparser.c		SQLparser.h		\
-	term.c			term.h			\
-	blobreq.c		blobreq.h		\
-	sysdbreq.c		sysdbreq.h		\
-	sysdatacom.h					\
-	directory.c		directory.h		\
-	driver.c		driver.h		\
-	load.c			load.h			\
-	debug.h
-
-libpandas_a_CFLAGS = $(AM_CFLAGS)	\
-	-fPIC
-libpandas_a_SOURCES	=				\
-	sessioncall.c 	sessioncall.h	\
-	DDparser.c		DDparser.h		\
-	driver.c		driver.h		\
-	term.c			term.h			\
-	front.c			front.h			\
-	comm.c			comm.h			\
-	comms.c			comms.h			\
-	glcomm.c		glcomm.h		\
-	auth.c			auth.h			\
-	authstub.c		authstub.h		\
-	blobreq.c		blobreq.h		\
-	sysdbreq.c		sysdbreq.h		\
-	sysdatacom.h					\
-	monapi.c		monapi.h		\
-	load.c			load.h			\
-	wfcio.c			wfcio.h	
-
-libpandas_a_DEPENDENCIES	=		\
-	$(top_builddir)/defaults.h
-
-libpandacom_a_CFLAGS = $(AM_CFLAGS)	\
-	-fPIC
-libpandacom_a_SOURCES	=			\
-	DDparser.c		DDparser.h		\
-	auth.c			auth.h			\
-	authstub.c		authstub.h		\
-	net.c			net.h			\
-	comm.c			comm.h			\
-	comms.c			comms.h			\
-	socket.c		socket.h		\
-	port.c			port.h			\
-	monapi.c		monapi.h		\
-	queue.c			queue.h
-
-libpandagl_a_CFLAGS = $(AM_CFLAGS)	\
-	-fPIC
-libpandagl_a_SOURCES	=			\
-	net.c			net.h			\
-	socket.c		socket.h		\
-	port.c			port.h			\
-	queue.c			queue.h
-
-libpandablobincludedir = $(includedir)/panda
-libpandablobinclude_HEADERS =	\
-	blob.h
-
-libpandablob_a_CFLAGS = $(AM_CFLAGS)	\
-	-fPIC
-libpandablob_a_SOURCES	=			\
-	blob.c			blob.h	
-
-libpandablob_a_DEPENDENCIES	=		\
-	$(top_builddir)/defaults.h
-
-libpandamisc_a_CFLAGS = $(AM_CFLAGS)	\
-	-fPIC
-libpandamisc_a_SOURCES	=		\
-	option.c		option.h	\
-	net.c			net.h		\
-	socket.c		socket.h	\
-	port.c			port.h		\
-	message.c		message.h
-
-testblob_LDADD	=				\
-	-lm							\
-	libpandablob.a				\
-	libpandacom.a				\
-	libpandamisc.a				\
-	$(P11_LIBS)					\
-	$(SSL_LIBS)					\
+testblob_LDADD	=						\
+	-lm									\
+	$(top_builddir)/libs/libpanda.la	\
+	$(P11_LIBS)							\
+	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
 testblob_DEPENDENCIES	=

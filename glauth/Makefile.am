@@ -21,16 +21,14 @@ sbin_PROGRAMS = glauth user
 
 glauth_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
 user_LDADD 		=						\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
@@ -51,11 +49,9 @@ user_SOURCES	=	\
 	user.c
 
 glauth_DEPENDENCIES	=					\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a
+	$(top_builddir)/libs/libpanda.la
 user_DEPENDENCIES	=					\
-	$(top_builddir)/libs/libpandamisc.a
+	$(top_builddir)/libs/libpanda.la
 
 install-exec-hook:
 	cd $(DESTDIR)$(sbindir)/ && $(LN_S) -f user$(EXEEXT) gluseradd$(EXEEXT)

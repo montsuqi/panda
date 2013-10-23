@@ -48,7 +48,6 @@
 #include	"sessioncall.h"
 #include	"wfcdata.h"
 #include	"wfcio.h"
-#include	"front.h"
 #include	"driver.h"
 #include	"debug.h"
 

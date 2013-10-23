@@ -47,8 +47,6 @@
 #include	"directory.h"
 #include	"wfcdata.h"
 #include	"wfc.h"
-#include	"auth.h"
-#include	"authstub.h"
 #include	"sysdatacom.h"
 #include	"blobserv.h"
 #include	"sysdbserv.h"

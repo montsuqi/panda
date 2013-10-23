@@ -40,7 +40,6 @@
 #include	<uuid/uuid.h>
 
 #include	"enum.h"
-
 #include	"libmondai.h"
 #include	"RecParser.h"
 #include	"lock.h"
@@ -53,10 +52,10 @@
 #include	"wfcdata.h"
 #include	"wfcio.h"
 #include	"wfc.h"
+#include	"glterm.h"
 #include	"termthread.h"
 #include	"corethread.h"
 #include	"sessionthread.h"
-#include	"driver.h"
 #include	"dirs.h"
 #include	"message.h"
 #include	"debug.h"

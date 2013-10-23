@@ -24,7 +24,7 @@
 */
 
 #ifdef HAVE_CONFIG_H
-#  include <config.h>
+#	include <config.h>
 #endif
 
 #include	<stdio.h>
@@ -32,8 +32,10 @@
 #include	<string.h>
 
 #include	"libmondai.h"
-#include	"front.h"
+#include	"blobcache.h"
 #include	"debug.h"
+
+static char *CacheDir;
 
 extern	size_t
 BlobCacheFileSize(
@@ -46,7 +48,6 @@ BlobCacheFileSize(
 	}
 	return 0;
 }
-
 
 extern	char	*
 BlobCacheFileName(
@@ -66,10 +67,17 @@ BlobCacheFileName(
 }
 
 extern	void
-BlobCacheCleanUp(void)
+BlobCacheCleanUp()
 {
 	char	buf[SIZE_BUFF];
 
 	sprintf(buf,"rm -f %s/*",CacheDir);
 	system(buf);
+}
+
+extern	void
+SetCacheDir(
+	char* dir)
+{
+	CacheDir = g_strdup(dir);
 }

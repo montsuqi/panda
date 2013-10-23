@@ -41,9 +41,8 @@ base_sources =						\
 	widgetOPS.c		widgetOPS.h		\
 	toplevel.h
 
-base_dependencies =								\
-	$(top_builddir)/libs/libpandamisc.a			\
-	$(top_builddir)/libs/libpandagl.a
+base_dependencies =						\
+	$(top_builddir)/libs/libpanda.la
 
 base_CFLAGS =					\
 	-I$(top_srcdir)				\
@@ -56,8 +55,7 @@ base_CFLAGS =					\
 
 base_LDADD =									\
 	-lm											\
-	$(top_builddir)/libs/libpandamisc.a			\
-	$(top_builddir)/libs/libpandagl.a			\
+	$(top_builddir)/libs/libpanda.la			\
 	$(COMMON_LIBS)								\
 	$(P11_LIBS)									\
 	$(SSL_LIBS)			

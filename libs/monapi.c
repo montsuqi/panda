@@ -36,7 +36,6 @@
 #include	"comms.h"
 #include	"wfcdata.h"
 #include	"wfcio.h"
-#include	"front.h"
 #include	"socket.h"
 #define		_MONAPI
 #include	"monapi.h"

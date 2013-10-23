@@ -23,7 +23,7 @@
 #include	"port.h"
 
 #undef	GLOBAL
-#ifdef	MAIN
+#ifdef	DIRS_MAIN
 #define	GLOBAL		/*	*/
 #else
 #define	GLOBAL		extern

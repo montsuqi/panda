@@ -34,8 +34,8 @@
 #include	"comm.h"
 #include	"comms.h"
 #include	"wfcdata.h"
+#include	"glterm.h"
 #include	"wfcio.h"
-#include	"front.h"
 #include	"debug.h"
 #include	"socket.h"
 

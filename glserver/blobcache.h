@@ -18,8 +18,8 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_FRONT_H
-#define	_INC_FRONT_H
+#ifndef	_INC_BLOBCACHE_H
+#define	_INC_BLOBCACHE_H
 #include 	<sys/types.h>
 #include 	<sys/stat.h>
 #include 	<unistd.h>
@@ -27,18 +27,17 @@
 
 
 #undef	GLOBAL
-#if	defined(FRONT_H_MAIN)
-#define	GLOBAL		/*	*/
+#ifdef FRONT_MAIN
+#	define	GLOBAL		/*	*/
 #else
-#define	GLOBAL		extern
+#	define	GLOBAL		extern
 #endif
-
-GLOBAL	char	*CacheDir;
 
 #undef	GLOBAL
 
+extern	void		SetCacheDir(char* cachedir);
 extern	char		*BlobCacheFileName(ValueStruct *value);
-extern	void		BlobCacheCleanUp(void);
+extern	void		BlobCacheCleanUp();
 extern	size_t		BlobCacheFileSize(ValueStruct *value);
 
 #endif

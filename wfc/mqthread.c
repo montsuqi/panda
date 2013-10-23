@@ -49,8 +49,9 @@
 #include	"corethread.h"
 #include	"directory.h"
 #include	"term.h"
+#include	"glterm.h"
+#include	"enum.h"
 #include	"message.h"
-#include	"driver.h"
 #include	"debug.h"
 
 static	void

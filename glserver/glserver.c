@@ -44,7 +44,6 @@
 #include	"glserver.h"
 #include	"dirs.h"
 #include	"RecParser.h"
-#include	"front.h"
 #include	"glcomm.h"
 #include	"option.h"
 #include	"message.h"

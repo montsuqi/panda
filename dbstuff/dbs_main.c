@@ -49,7 +49,6 @@
 #include	"directory.h"
 #include	"dblib.h"
 #include	"dbgroup.h"
-#include	"front.h"
 #include	"dbs_main.h"
 #include	"RecParser.h"
 #include	"option.h"

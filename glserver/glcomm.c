@@ -39,7 +39,7 @@
 
 #include	"libmondai.h"
 #include	"glcomm.h"
-#include	"front.h"
+#include	"blobcache.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -55,16 +55,12 @@
 #define	SEND16(v)	htons(v)
 
 static	LargeByteString	*Buff;
-
-#ifdef	HAVE_LIBMAGIC
-static	struct	magic_set	*Magic;
-#endif
+static	Bool fNetwork;
 
 extern	void
 GL_SendPacketClass(
 	NETFILE	*fp,
-	PacketClass	c,
-	Bool	fNetwork)
+	PacketClass	c)
 {
 	nputc(c,fp);
 	Flush(fp);
@@ -72,8 +68,7 @@ GL_SendPacketClass(
 
 extern	PacketClass
 GL_RecvPacketClass(
-	NETFILE	*fp,
-	Bool	fNetwork)
+	NETFILE	*fp)
 {
 	PacketClass	c;
 
@@ -87,8 +82,7 @@ GL_RecvPacketClass(
 extern	void
 GL_SendInt(
 	NETFILE	*fp,
-	int		data,
-	Bool	fNetwork)
+	int		data)
 {
 	unsigned char	buff[sizeof(int)];
 
@@ -103,8 +97,7 @@ GL_SendInt(
 static	void
 GL_SendUInt(
 	NETFILE	*fp,
-	unsigned	int	data,
-	Bool	fNetwork)
+	unsigned	int	data)
 {
 	unsigned char	buff[sizeof(unsigned int)];
 
@@ -136,8 +129,7 @@ GL_RecvUInt(
 extern	void
 GL_SendLong(
 	NETFILE	*fp,
-	long	data,
-	Bool	fNetwork)
+	long	data)
 {
 	unsigned char	buff[sizeof(long)];
 
@@ -152,16 +144,14 @@ GL_SendLong(
 static	void
 GL_SendLength(
 	NETFILE	*fp,
-	size_t	data,
-	Bool	fNetwork)
+	size_t	data)
 {
-	GL_SendInt(fp,data,fNetwork);
+	GL_SendInt(fp,data);
 }
 
 extern	int
 GL_RecvInt(
-	NETFILE	*fp,
-	Bool	fNetwork)
+	NETFILE	*fp)
 {
 	unsigned char	buff[sizeof(int)];
 	int		data;
@@ -176,21 +166,19 @@ GL_RecvInt(
 
 static	size_t
 GL_RecvLength(
-	NETFILE	*fp,
-	Bool	fNetwork)
+	NETFILE	*fp)
 {
-	return (size_t)GL_RecvInt(fp,fNetwork);
+	return (size_t)GL_RecvInt(fp);
 }
 
 static	void
 GL_RecvLBS(
 	NETFILE	*fp,
-	LargeByteString	*lbs,
-	Bool	fNetwork)
+	LargeByteString	*lbs)
 {
 	size_t	size;
 ENTER_FUNC;
-	size = GL_RecvLength(fp,fNetwork);
+	size = GL_RecvLength(fp);
 	LBS_ReserveSize(lbs,size,FALSE);
 	if		(  size  >  0  ) {
 		Recv(fp,LBS_Body(lbs),size);
@@ -201,11 +189,10 @@ LEAVE_FUNC;
 static	void
 GL_SendLBS(
 	NETFILE	*fp,
-	LargeByteString	*lbs,
-	Bool	fNetwork)
+	LargeByteString	*lbs)
 {
 ENTER_FUNC;
-	GL_SendLength(fp,LBS_Size(lbs),fNetwork);
+	GL_SendLength(fp,LBS_Size(lbs));
 	if		(  LBS_Size(lbs)  >  0  ) {
 		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
 	}
@@ -216,13 +203,12 @@ extern	void
 GL_RecvString(
 	NETFILE	*fp,
 	size_t  size,
-	char	*str,
-	Bool	fNetwork)
+	char	*str)
 {
 	size_t	lsize;
 
 ENTER_FUNC;
-	lsize = GL_RecvLength(fp,fNetwork);
+	lsize = GL_RecvLength(fp);
 	if		(	size >= lsize 	){
 		size = lsize;
 		Recv(fp,str,size);
@@ -237,8 +223,7 @@ LEAVE_FUNC;
 extern	void
 GL_SendString(
 	NETFILE	*fp,
-	char	*str,
-	Bool	fNetwork)
+	char	*str)
 {
 	size_t	size;
 
@@ -248,7 +233,7 @@ ENTER_FUNC;
 	} else {
 		size = 0;
 	}
-	GL_SendLength(fp,size,fNetwork);
+	GL_SendLength(fp,size);
 	if		(  size  >  0  ) {
 		Send(fp,str,size);
 	}
@@ -257,17 +242,16 @@ LEAVE_FUNC;
 
 extern	Fixed	*
 GL_RecvFixed(
-	NETFILE	*fp,
-	Bool	fNetwork)
+	NETFILE	*fp)
 {
 	Fixed	*xval;
 
 ENTER_FUNC;
 	xval = New(Fixed);
-	xval->flen = GL_RecvLength(fp,fNetwork);
-	xval->slen = GL_RecvLength(fp,fNetwork);
+	xval->flen = GL_RecvLength(fp);
+	xval->slen = GL_RecvLength(fp);
 	xval->sval = (char *)xmalloc(xval->flen+1);
-	GL_RecvString(fp, xval->flen, xval->sval,fNetwork);
+	GL_RecvString(fp, xval->flen, xval->sval);
 LEAVE_FUNC;
 	return	(xval); 
 }
@@ -275,18 +259,16 @@ LEAVE_FUNC;
 static	void
 GL_SendFixed(
 	NETFILE	*fp,
-	Fixed	*xval,
-	Bool	fNetwork)
+	Fixed	*xval)
 {
-	GL_SendLength(fp,xval->flen,fNetwork);
-	GL_SendLength(fp,xval->slen,fNetwork);
-	GL_SendString(fp,xval->sval,fNetwork);
+	GL_SendLength(fp,xval->flen);
+	GL_SendLength(fp,xval->slen);
+	GL_SendString(fp,xval->sval);
 }
 
 extern	double
 GL_RecvFloat(
-	NETFILE	*fp,
-	Bool	fNetwork)
+	NETFILE	*fp)
 {
 	double	data;
 
@@ -297,16 +279,14 @@ GL_RecvFloat(
 static	void
 GL_SendFloat(
 	NETFILE	*fp,
-	double	data,
-	Bool	fNetwork)
+	double	data)
 {
 	Send(fp,&data,sizeof(data));
 }
 
 extern	Bool
 GL_RecvBool(
-	NETFILE	*fp,
-	Bool	fNetwork)
+	NETFILE	*fp)
 {
 	char	buf[1];
 
@@ -317,8 +297,7 @@ GL_RecvBool(
 static	void
 GL_SendBool(
 	NETFILE	*fp,
-	Bool	data,
-	Bool	fNetwork)
+	Bool	data)
 {
 	char	buf[1];
 
@@ -329,8 +308,7 @@ GL_SendBool(
 static	void
 GL_SendDataType(
 	NETFILE	*fp,
-	PacketClass	c,
-	Bool	fNetwork)
+	PacketClass	c)
 {
 #ifdef	DEBUG
 	printf("SendDataType = %X\n",c);
@@ -341,8 +319,7 @@ GL_SendDataType(
 
 extern	PacketDataType
 GL_RecvDataType(
-	NETFILE	*fp,
-	Bool	fNetwork)
+	NETFILE	*fp)
 {
 	PacketClass	c;
 
@@ -351,7 +328,8 @@ GL_RecvDataType(
 }
 
 static void
-ReadFile(char *fname)
+ReadFile(
+	char *fname)
 {
 	FILE	*fpf;
 	struct	stat	sb;
@@ -374,19 +352,18 @@ ReadFile(char *fname)
 static	void
 SendExpandObject(
 	NETFILE	*fp,
-	ValueStruct	*value,
-	Bool	fNetwork)
+	ValueStruct	*value)
 {
 	char		*fname;
 ENTER_FUNC;
 	if (IS_OBJECT_NULL(ValueObjectId(value))) {
 		LBS_ReserveSize(Buff,0,FALSE);
-		GL_SendLBS(fp,Buff,fNetwork);
+		GL_SendLBS(fp,Buff);
 		return;
 	}
 	fname = BlobCacheFileName(value);
 	ReadFile(fname);
-	GL_SendLBS(fp,Buff,fNetwork);
+	GL_SendLBS(fp,Buff);
 LEAVE_FUNC;
 }
 
@@ -397,53 +374,52 @@ extern	void
 GL_SendValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
-	char		*coding,
-	Bool		fNetwork)
+	char		*coding)
 {
 	int		i;
 
 ENTER_FUNC;
 	ValueIsNotUpdate(value);
-	GL_SendDataType(fp,ValueType(value),fNetwork);
+	GL_SendDataType(fp,ValueType(value));
 	switch	(ValueType(value)) {
 	  case	GL_TYPE_INT:
-		GL_SendInt(fp,ValueInteger(value),fNetwork);
+		GL_SendInt(fp,ValueInteger(value));
 		break;
 	  case	GL_TYPE_BOOL:
-		GL_SendBool(fp,ValueBool(value),fNetwork);
+		GL_SendBool(fp,ValueBool(value));
 		break;
 	  case	GL_TYPE_BINARY:
 	  case	GL_TYPE_BYTE:
 		LBS_ReserveSize(Buff,ValueByteLength(value),FALSE);
 		memcpy(LBS_Body(Buff),ValueByte(value),ValueByteLength(value));
-		GL_SendLBS(fp,Buff,fNetwork);
+		GL_SendLBS(fp,Buff);
 		break;
 	  case	GL_TYPE_CHAR:
 	  case	GL_TYPE_VARCHAR:
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
-		GL_SendString(fp,ValueToString(value,coding),fNetwork);
+		GL_SendString(fp,ValueToString(value,coding));
 		break;
 	  case	GL_TYPE_FLOAT:
-		GL_SendFloat(fp,ValueFloat(value),fNetwork);
+		GL_SendFloat(fp,ValueFloat(value));
 		break;
 	  case	GL_TYPE_NUMBER:
-		GL_SendFixed(fp,&ValueFixed(value),fNetwork);
+		GL_SendFixed(fp,&ValueFixed(value));
 		break;
 	  case	GL_TYPE_OBJECT:
-		SendExpandObject(fp, value, fNetwork);
+		SendExpandObject(fp, value);
 		break;
 	  case	GL_TYPE_ARRAY:
-		GL_SendInt(fp,ValueArraySize(value),fNetwork);
+		GL_SendInt(fp,ValueArraySize(value));
 		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			GL_SendValue(fp,ValueArrayItem(value,i),coding,fNetwork);
+			GL_SendValue(fp,ValueArrayItem(value,i),coding);
 		}
 		break;
 	  case	GL_TYPE_RECORD:
-		GL_SendInt(fp,ValueRecordSize(value),fNetwork);
+		GL_SendInt(fp,ValueRecordSize(value));
 		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			GL_SendString(fp,ValueRecordName(value,i),fNetwork);
-			GL_SendValue(fp,ValueRecordItem(value,i),coding,fNetwork);
+			GL_SendString(fp,ValueRecordName(value,i));
+			GL_SendValue(fp,ValueRecordItem(value,i),coding);
 		}
 		break;
 	  default:
@@ -456,8 +432,7 @@ extern	void
 GL_RecvValue(
 	NETFILE		*fp,
 	ValueStruct	*value,
-	char		*coding,
-	Bool		fNetwork)
+	char		*coding)
 {
 	PacketDataType	type;
 	Fixed		*xval;
@@ -469,7 +444,7 @@ GL_RecvValue(
 
 ENTER_FUNC;
 	ValueIsUpdate(value);
-	type = GL_RecvDataType(fp,fNetwork);
+	type = GL_RecvDataType(fp);
 	ON_IO_ERROR(fp,badio);
 	switch	(type)	{
 	  case	GL_TYPE_CHAR:
@@ -477,12 +452,12 @@ ENTER_FUNC;
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		dbgmsg("strings");
-		GL_RecvString(fp,sizeof(str),str,fNetwork);	ON_IO_ERROR(fp,badio);
+		GL_RecvString(fp,sizeof(str),str);	ON_IO_ERROR(fp,badio);
 		SetValueString(value,str,coding);			ON_IO_ERROR(fp,badio);
 		break;
 	  case	GL_TYPE_NUMBER:
 		dbgmsg("NUMBER");
-		xval = GL_RecvFixed(fp,fFeatureNetwork);
+		xval = GL_RecvFixed(fp);
 		ON_IO_ERROR(fp,badio);
 		SetValueFixed(value,xval);
 		xfree(xval->sval);
@@ -490,7 +465,7 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_OBJECT:
 		dbgmsg("OBJECT");
-		GL_RecvLBS(fp,Buff,fNetwork);
+		GL_RecvLBS(fp,Buff);
 		if		(  ( fpf = Fopen(BlobCacheFileName(value),"w") )  !=  NULL  ) {
 			fwrite(LBS_Body(Buff),LBS_Size(Buff),1,fpf);
 			fclose(fpf);	
@@ -498,19 +473,19 @@ ENTER_FUNC;
 		break;
 	  case	GL_TYPE_INT:
 		dbgmsg("INT");
-		ival = GL_RecvInt(fp,fFeatureNetwork);
+		ival = GL_RecvInt(fp);
 		ON_IO_ERROR(fp,badio);
 		SetValueInteger(value,ival);
 		break;
 	  case	GL_TYPE_FLOAT:
 		dbgmsg("FLOAT");
-		fval = GL_RecvFloat(fp,fFeatureNetwork);
+		fval = GL_RecvFloat(fp);
 		ON_IO_ERROR(fp,badio);
 		SetValueFloat(value,fval);
 		break;
 	  case	GL_TYPE_BOOL:
 		dbgmsg("BOOL");
-		bval = GL_RecvBool(fp,fFeatureNetwork);
+		bval = GL_RecvBool(fp);
 		ON_IO_ERROR(fp,badio);
 		SetValueBool(value,bval);
 		break;
@@ -523,17 +498,14 @@ LEAVE_FUNC;
 }
 
 extern	void
-InitGL_Comm(void)
+InitGL_Comm()
 {
 	Buff = NewLBS();
-#ifdef	HAVE_LIBMAGIC
-	if		(  ( Magic = magic_open(MAGIC_SYMLINK|MAGIC_COMPRESS|MAGIC_PRESERVE_ATIME|MAGIC_CONTINUE) )
-			   ==  NULL  ) {
-		Error("magic: %s", strerror(errno));
-	}
-	if		(  magic_load(Magic, NULL)  <  0  )	{
-		Error("magic: %s", magic_error(Magic));
-	}
-#endif
 }
 
+extern	void
+SetfNetwork(
+	Bool f)
+{
+	fNetwork = f;
+}

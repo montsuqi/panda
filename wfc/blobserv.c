@@ -51,8 +51,7 @@ ServeBLOB(
 	int				mode;
 	size_t			size;
 	ssize_t			ssize;
-	unsigned char			*buff;
-	char			*str;
+	unsigned char	*buff;
 
 ENTER_FUNC;
 	LockWrite(blob);

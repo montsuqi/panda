@@ -69,9 +69,10 @@ PostgreSQL_la_SOURCES	=			\
 	PostgreSQLlib.c PostgreSQLlib.h \
 	PostgreSQL.c
 PostgreSQL_la_LIBADD	=				\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(POSTGRES_LIBS)
-PostgreSQL_la_DEPENDENCIES	=		\
+PostgreSQL_la_DEPENDENCIES	=			\
+	$(top_builddir)/libs/libpanda.la	\
 	$(top_builddir)/defaults.h
 
 Shell_la_LDFLAGS		=		\
@@ -94,7 +95,7 @@ System_la_SOURCES		=		\
 	redirect.c	redirect.h		\
 	System.c
 System_la_LIBADD	=			\
-	$(top_builddir)/libs/libpandas.a
+	$(top_builddir)/libs/libpanda.la
 
 NativeBLOB_la_LDFLAGS	=		\
 	-version-info $(LTVERSION)	\
@@ -106,7 +107,7 @@ NativeBLOB_la_SOURCES	=		\
 	redirect.c	redirect.h		\
 	NativeBLOB.c	
 NativeBLOB_la_LIBADD	=		\
-	$(top_builddir)/libs/libpandas.a
+	$(top_builddir)/libs/libpanda.la
 
 XMLIO_la_LDFLAGS	=	\
 	-version-info $(LTVERSION)	\
@@ -117,8 +118,8 @@ XMLIO_la_SOURCES	=	\
 	redirect.c	redirect.h	\
 	sysdata.c	sysdata.h	\
 	XMLIO.c
-XMLIO_la_LIBADD			=	\
-	$(top_builddir)/libs/libpandas.a
+XMLIO_la_LIBADD			=				\
+	$(top_builddir)/libs/libpanda.la	\
 	$(XML2_LIBS)
 
 XMLIO2_la_LDFLAGS	=	\
@@ -130,6 +131,6 @@ XMLIO2_la_SOURCES	=	\
 	redirect.c	redirect.h	\
 	sysdata.c	sysdata.h	\
 	XMLIO2.c
-XMLIO2_la_LIBADD			=	\
-	$(top_builddir)/libs/libpandas.a
+XMLIO2_la_LIBADD			=			\
+	$(top_builddir)/libs/libpanda.la	\
 	$(XML2_LIBS)

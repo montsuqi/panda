@@ -27,9 +27,7 @@ copygen_LDFLAGS	=			\
 
 copygen_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
@@ -38,9 +36,7 @@ dbgen_LDFLAGS	=			\
 	-export-dynamic
 dbgen_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
@@ -50,9 +46,7 @@ pandadb_LDFLAGS	=			\
 pandadb_LDADD 		=					\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
@@ -61,9 +55,7 @@ checkdir_LDFLAGS	=			\
 	-export-dynamic
 checkdir_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
@@ -72,17 +64,14 @@ monitor_LDFLAGS	=			\
 	-export-dynamic
 monitor_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
 msgd_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
@@ -100,9 +89,7 @@ INCLUDES 			= 		\
 
 monitor_DEPENDENCIES	=				\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a
+	$(top_builddir)/libs/libpanda.la
 
 copygen_SOURCES		=	\
 	copygen.c
@@ -130,10 +117,8 @@ dbsync_SOURCES	= \
 dbsync_LDADD			=		\
 	-lm		\
 	$(top_builddir)/dblib/libpandadb.a			\
-	$(top_builddir)/libs/libpandamain.a			\
-	$(top_builddir)/libs/libpandamisc.a			\
-	$(top_builddir)/libs/libpandacom.a			\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
+	$(top_builddir)/libs/libpanda.la			\
 	$(P11_LIBS)									\
 	$(SSL_LIBS)									\
 	$(COMMON_LIBS)								\
@@ -143,8 +128,7 @@ dbsync_LDFLAGS	=	-export-dynamic
 
 dbsync_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/libs/libpandamain.a			\
-	$(top_builddir)/libs/libpandamisc.a			\
+	$(top_builddir)/libs/libpanda.la			\
 	$(top_builddir)/dblib/libpostgresqlutils.a	
 
 else

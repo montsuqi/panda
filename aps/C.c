@@ -44,7 +44,6 @@
 #include	"load.h"
 #include	"dbgroup.h"
 #include	"queue.h"
-#include	"driver.h"
 #include	"apslib.h"
 #include	"debug.h"
 

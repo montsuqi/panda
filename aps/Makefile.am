@@ -34,9 +34,7 @@ MONFUNC_la_LDFLAGS	=			\
 LDADD 		=							\
 	-lm									\
 	$(top_builddir)/dblib/libpandadb.a  \
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a	\
+	$(top_builddir)/libs/libpanda.la	\
 	$(COMMON_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
@@ -91,7 +89,7 @@ Ruby_la_LIBADD			=	$(RUBY_LIBS)
 
 Exec_la_SOURCES			=	Exec.c
 Exec_la_LIBADD			=	\
-	$(top_builddir)/libs/libpandacom.a
+	$(top_builddir)/libs/libpanda.la
 
 Resident_la_SOURCES		=	Resident.c
 
@@ -104,9 +102,7 @@ aps_SOURCES	=	\
 aps_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a
+	$(top_builddir)/libs/libpanda.la
 
 dbstub_LDFLAGS	=			\
 	-export-dynamic
@@ -116,9 +112,7 @@ dbstub_SOURCES	=	\
 dbstub_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.a	\
-	$(top_builddir)/libs/libpandamain.a	\
-	$(top_builddir)/libs/libpandamisc.a	\
-	$(top_builddir)/libs/libpandacom.a
+	$(top_builddir)/libs/libpanda.la
 
 MONFUNC_la_SOURCES	=			\
 	MONFUNC.c					\
