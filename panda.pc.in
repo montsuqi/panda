@@ -8,5 +8,5 @@ Name: panda
 Description: OLTP monitor Library
 Version: @VERSION@
 Requires: libmondai libssl libp11
-Libs: -L@libdir@ -lmondai -lm -lpanda
+Libs: -L@libdir@/@PACKAGE@ -lmondai -lm -lpanda
 Cflags: -I@includedir@
