@@ -19,16 +19,16 @@
 ## Process this file with automake to produce Makefile.in
 
 sbin_PROGRAMS = aps dbstub
-lib_LTLIBRARIES = MONFUNC.la $(HANDLER_OBJECTS)
+pkglib_LTLIBRARIES = MONFUNC.la $(HANDLER_OBJECTS)
 
-libpandadbincludedir = $(includedir)/panda
+
+libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
 	apslib.h
 
-
 MONFUNC_la_LDFLAGS	=			\
 	-module 					\
-	-version-info $(LTVERSION)	\
+	-avoid-version				\
 	-export-dynamic
 
 LDADD 		=							\
@@ -64,11 +64,11 @@ HANDLER_OBJECTS	=	\
 	Ruby.la			\
 	OpenCOBOL.la
 
-OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic
-C_la_LDFLAGS			=	-module -export-dynamic
-Exec_la_LDFLAGS			=	-module -export-dynamic
-Resident_la_LDFLAGS		=	-module -export-dynamic
-Ruby_la_LDFLAGS			=   -module -export-dynamic
+OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic -avoid-version
+C_la_LDFLAGS			=	-module -export-dynamic -avoid-version
+Exec_la_LDFLAGS			=	-module -export-dynamic -avoid-version
+Resident_la_LDFLAGS		=	-module -export-dynamic -avoid-version
+Ruby_la_LDFLAGS			=   -module -export-dynamic -avoid-version
 
 C_la_SOURCES			=	\
 	C.c						\

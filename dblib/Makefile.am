@@ -17,11 +17,12 @@
 # 02111-1307, USA
 
 noinst_LIBRARIES	=	libpandadb.a libpostgresqlutils.a libdblog.a
-lib_LTLIBRARIES 	=	$(DB_OBJECTS)
+pkglib_LTLIBRARIES 	=	$(DB_OBJECTS)
 
 libpandadb_a_LIBADD	=
 
-libpandadbincludedir = $(includedir)/panda
+
+libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
 	dblib.h
 
@@ -50,7 +51,6 @@ libpostgresqlutils_a_SOURCES = \
 	PostgreSQLlib.c PostgreSQLlib.h	\
 	PostgreSQLutils.c audit.c
 
-
 DB_OBJECTS			=		\
 	PostgreSQL.la			\
 	Shell.la				\
@@ -59,8 +59,8 @@ DB_OBJECTS			=		\
 	XMLIO.la				\
 	XMLIO2.la
 
-PostgreSQL_la_LDFLAGS	=	\
-	-version-info $(LTVERSION)	\
+PostgreSQL_la_LDFLAGS	=		\
+	-avoid-version				\
 	-module						\
 	-export-dynamic
 PostgreSQL_la_SOURCES	=			\
@@ -76,7 +76,7 @@ PostgreSQL_la_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h
 
 Shell_la_LDFLAGS		=		\
-	-version-info $(LTVERSION)	\
+	-avoid-version				\
 	-module						\
 	-export-dynamic
 Shell_la_SOURCES		=	\
@@ -86,7 +86,7 @@ Shell_la_SOURCES		=	\
 Shell_la_LIBADD	=
 
 System_la_LDFLAGS		=		\
-	-version-info $(LTVERSION)	\
+	-avoid-version				\
 	-module						\
 	-export-dynamic
 System_la_SOURCES		=		\
@@ -98,7 +98,7 @@ System_la_LIBADD	=			\
 	$(top_builddir)/libs/libpanda.la
 
 NativeBLOB_la_LDFLAGS	=		\
-	-version-info $(LTVERSION)	\
+	-avoid-version				\
 	-module						\
 	-export-dynamic
 NativeBLOB_la_SOURCES	=		\
@@ -110,7 +110,7 @@ NativeBLOB_la_LIBADD	=		\
 	$(top_builddir)/libs/libpanda.la
 
 XMLIO_la_LDFLAGS	=	\
-	-version-info $(LTVERSION)	\
+	-avoid-version				\
 	-module						\
 	-export-dynamic
 XMLIO_la_SOURCES	=	\
@@ -123,7 +123,7 @@ XMLIO_la_LIBADD			=				\
 	$(XML2_LIBS)
 
 XMLIO2_la_LDFLAGS	=	\
-	-version-info $(LTVERSION)	\
+	-avoid-version				\
 	-module						\
 	-export-dynamic
 XMLIO2_la_SOURCES	=	\

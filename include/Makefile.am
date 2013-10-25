@@ -16,7 +16,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-libpandaincludedir = $(includedir)/panda
+
+libpandaincludedir = $(pkgincludedir)
 libpandainclude_HEADERS = const.h	\
 	enum.h					\
 	dirs.h					\

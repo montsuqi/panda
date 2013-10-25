@@ -66,8 +66,8 @@ libpanda_la_LIBADD		=	\
 	$(P11_LIBS)							\
 	$(COMMON_LIBS)
 
-libpandaincludedir = $(includedir)/panda
 
+libpandaincludedir = $(pkgincludedir)
 libpandainclude_HEADERS =	\
 	BDparser.h			\
 	DBDparser.h			\
