@@ -12,6 +12,7 @@ ltmain.sh
 panda-config
 autom4te.cache
 stamp-h1
+*.swp
 *.tar.gz
 *.o
 *.lo
