@@ -22,17 +22,8 @@
 #define	_WIDGET_OPS_H
 
 #include	<glade/glade.h>
-#include	"marshaller.h"
+#include	<json.h>
 
-#undef	GLOBAL
-#ifdef	_PROTOCOL_C
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
-
-extern  void		UpdateWindow(char *windowName);
-extern	void		UpdateWidgetData(WidgetData *data);
-extern	WidgetType	GetWidgetType(char *wname, char *name);
-
+extern	void UpdateWidget(const char *longname,struct json_object *w);
+extern	struct json_object*	MakeScreenData(const char *wname); 
 #endif

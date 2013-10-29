@@ -20,47 +20,14 @@
 
 #ifndef	_INC_PROTOCOL_H
 #define	_INC_PROTOCOL_H
-#include	"queue.h"
 
-#define CLIENT_SIZE_BUFF (256*1024)
-
-extern	void			InitProtocol(void);
-extern  void        	TermProtocol(void);
-extern	void			CheckScreens(NETFILE *fp, Bool);
-extern	Bool			SendConnect(NETFILE *fpComm, char *apl);
-extern	void			RecvValue(NETFILE *fp, char *longname);
-extern	Bool			GetScreenData(NETFILE *fpComm);
-extern  void			SendWindowData(void);
-extern	void			SendEvent(NETFILE *fpComm, char *window, char *widget, char *event);
-
-extern	void			GL_SendPacketClass(NETFILE *fp, PacketClass c);
-extern	PacketClass		GL_RecvPacketClass(NETFILE *fp);
-extern	PacketDataType	GL_RecvDataType(NETFILE *fp);
-extern	void			GL_SendInt(NETFILE *fp, int data);
-extern	int				GL_RecvInt(NETFILE *fp);
-extern	void			GL_SendDataType(NETFILE *fp, PacketClass c);
-extern	void			GL_RecvName(NETFILE *fp, size_t size, char *name);
-extern	void			GL_SendName(NETFILE *fp, char *name);
-
-extern	PacketDataType	RecvPacketDataType(NETFILE *fp);
-extern	void			SendStringData(NETFILE *fp, PacketDataType type, char *str);
-extern	PacketDataType	RecvStringData(NETFILE *fp, char *str, size_t size);
-extern	void			SendIntegerData(NETFILE *fp, PacketDataType type, int val);
-extern	PacketDataType	RecvIntegerData(NETFILE *fp, int *val);
-extern	void			SendBoolData(NETFILE *fp, PacketDataType type, Bool val);
-extern	PacketDataType	RecvBoolData(NETFILE *fp, Bool *val);
-extern	void			SendFloatData(NETFILE *fp, PacketDataType type, double val);
-extern	PacketDataType	RecvFloatData(NETFILE *fp, double *val);
-extern	void			SendFixedData(NETFILE *fp, PacketDataType type, Fixed *xval);
-extern	PacketDataType	RecvFixedData(NETFILE *fp, Fixed **xval);
-extern  PacketDataType	RecvBinaryData(NETFILE *fp, LargeByteString *binary);
-extern  void			SendBinaryData(NETFILE *fp, PacketDataType type, LargeByteString *binary);
-
-#undef	GLOBAL
-#ifdef	MAIN
-#define	GLOBAL		/*	*/
-#else
-#define	GLOBAL		extern
-#endif
+void 				RPC_StartSession();
+void 				RPC_GetWindow();
+void 				RPC_EndSession();
+void				RPC_SendEvent(json_object *params);
+void				RPC_GetMessage(char**d,char**p,char**a);
+char*				REST_PostBLOB(LargeByteString *);
+LargeByteString*	REST_GetBLOB(const char *);
+void				InitProtocol();
 
 #endif

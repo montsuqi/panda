@@ -29,7 +29,6 @@
 #include    "gettext.h"
 #include	<gtkpanda/gtkpanda.h>
 #include	"glclient.h"
-#include    "port.h"
 #include    "const.h"
 #include    "bd_config.h"
 #include    "bd_component.h"
@@ -102,13 +101,6 @@ edit_dialog_run(
   gtk_widget_show_all(component->basictable);
   //gtk_widget_hide(component->protocol_v2);
 
-#ifdef USE_SSL
-  gtk_box_pack_start (
-    GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
-    component->ssltable, TRUE, TRUE, 0);
-  gtk_widget_show_all(component->ssltable);
-#endif
-
   gtk_box_pack_start (
     GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
     component->othertable, TRUE, TRUE, 0);
@@ -169,23 +161,16 @@ server_dialog_server_list_update (ServerDialog * self)
     gtk_list_store_set(model,&iter,0,value,-1);
     g_free(value);
 
-    value = gl_config_get_string(serverkey,"host");
+    value = gl_config_get_string(serverkey,"authuri");
     gtk_list_store_set(model,&iter,1,value,-1);
     g_free(value);
 
-    value = gl_config_get_string(serverkey,"port");
+    value = gl_config_get_string(serverkey,"user");
     gtk_list_store_set(model,&iter,2,value,-1);
     g_free(value);
 
-    value = gl_config_get_string(serverkey,"application");
-    gtk_list_store_set(model,&iter,3,value,-1);
-    g_free(value);
+    gtk_list_store_set(model,&iter,3,serverkey,-1);
 
-    value = gl_config_get_string(serverkey,"user");
-    gtk_list_store_set(model,&iter,4,value,-1);
-    g_free(value);
-
-    gtk_list_store_set(model,&iter,5,serverkey,-1);
     g_free(serverkey);
   }
   g_slist_free(list);
@@ -226,7 +211,7 @@ server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->list));
 
   if (gtk_tree_selection_get_selected(selection,&model,&iter)) {
-    gtk_tree_model_get(model,&iter,5,&serverkey,-1);
+    gtk_tree_model_get(model,&iter,3,&serverkey,-1);
     edit_dialog_run (self->dialog,serverkey,FALSE);
     server_dialog_server_list_update(self);
     g_free(serverkey);
@@ -246,7 +231,7 @@ server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->list));
 
   if (gtk_tree_selection_get_selected(selection,&model,&iter)) {
-    gtk_tree_model_get(model,&iter,5,&serverkey,-1);
+    gtk_tree_model_get(model,&iter,3,&serverkey,-1);
     gl_config_remove_server(serverkey);
     server_dialog_server_list_update(self);
     g_free(serverkey);
@@ -329,9 +314,8 @@ server_dialog_new (GtkWidget *parent)
     GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
     scroll, TRUE, TRUE, 5);
 
-  model = (GtkTreeModel*)gtk_list_store_new(6,
-    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING,
-    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  model = (GtkTreeModel*)gtk_list_store_new(4,
+    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
   self->list = gtk_tree_view_new_with_model(model);
   selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self->list));
   gtk_tree_selection_set_mode(selection,GTK_SELECTION_SINGLE);
@@ -339,13 +323,9 @@ server_dialog_new (GtkWidget *parent)
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
     -1,N_("Description"),renderer,"text",0,NULL);
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
-    -1,N_("Host"),renderer,"text",1,NULL);
+    -1,N_("AuthURI"),renderer,"text",1,NULL);
   gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
-    -1,N_("Port"),renderer,"text",2,NULL);
-  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
-    -1,N_("Application"),renderer,"text",3,NULL);
-  gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(self->list),
-    -1,N_("User"),renderer,"text",4,NULL);
+    -1,N_("User"),renderer,"text",2,NULL);
 
   gtk_container_add (GTK_CONTAINER (scroll), self->list);
 
@@ -525,7 +505,7 @@ boot_dialog_new ()
 
   dialog = gtk_dialog_new ();
   self->dialog = dialog;
-  gtk_window_set_title (GTK_WINDOW (dialog), _("glclient2 Launcher"));
+  gtk_window_set_title (GTK_WINDOW (dialog), _("glclient2j Launcher"));
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_wmclass (GTK_WINDOW (dialog), "lancher", "glclient");
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
@@ -534,7 +514,7 @@ boot_dialog_new ()
   
   vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
-  welcome = gtk_label_new (_("glclient2 Launcher"));
+  welcome = gtk_label_new (_("glclient2j Launcher"));
   self->welcome = welcome;
   gtk_misc_set_alignment (GTK_MISC (welcome), 0.5, 0.5);
   gtk_box_pack_start (GTK_BOX (vbox), welcome, TRUE, TRUE, 5);
@@ -568,12 +548,6 @@ boot_dialog_new ()
   /* Basic tab */
   label = gtk_label_new (_("Basic"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->basictable, label);
-
-#ifdef USE_SSL
-  /* SSL tab */
-  label = gtk_label_new (_("SSL"));
-  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->ssltable, label);
-#endif
 
   /* Other tab */
   label = gtk_label_new (_("Details"));
@@ -635,10 +609,13 @@ BootDialogRun ()
 
 
   gtk_widget_destroy (self->dialog);
+
   if (!self->is_connect) {
     exit(0);
   }
+
   boot_dialog_free (self);
+
 }
 
 /*************************************************************

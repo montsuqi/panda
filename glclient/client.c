@@ -38,24 +38,11 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<dirent.h>
-#ifdef	USE_SSL
-#include	<openssl/crypto.h>
-#include	<openssl/x509.h>
-#include	<openssl/pem.h>
-#include	<openssl/ssl.h>
-#include	<openssl/err.h>
-#ifdef  USE_PKCS11
-#include	<openssl/engine.h>
-#endif	//USE_PKCS11
-#endif	//USE_SSL
 #define		MAIN
 #include	"glclient.h"
+#include	"protocol.h"
 #include	"bd_config.h"
 #include	"const.h"
-#include	"socket.h"
-#include	"glterm.h"
-#include	"comm.h"
-#include	"protocol.h"
 #include	"widgetcache.h"
 #include	"desktop.h"
 #include	"bootdialog.h"
@@ -94,7 +81,7 @@ extern	void
 SetSessionTitle(
 	const char *title)
 {
-	if ( TITLE(Session) ) {
+	if (TITLE(Session)) {
 		xfree(TITLE(Session));
 	}
 	TITLE(Session) = StrDup(title);
@@ -104,103 +91,33 @@ extern	void
 SetSessionBGColor(
 	const char *bgcolor)
 {
-	if ( BGCOLOR(Session) ) {
+	if (BGCOLOR(Session)) {
 		xfree(BGCOLOR(Session));
 	}
 	BGCOLOR(Session) = StrDup(bgcolor);
 }
 
-#ifdef	USE_SSL
-static void
-_MakeSSL_CTX()
-{
-#ifdef  USE_PKCS11
-	if (fPKCS11 == TRUE){
-		CTX(Session) = MakeSSL_CTX_PKCS11(&ENGINE(Session), PKCS11_Lib,Slot,CA_File,NULL/*capath*/,Ciphers);
-	}
-	else{
-		CTX(Session) = MakeSSL_CTX(NULL/*keyfile*/,CertFile,CA_File,NULL/*capth*/,Ciphers);
-	}
-#else
-    CTX(Session) = MakeSSL_CTX(NULL/*keyfile*/,CertFile,CA_File,NULL/*capath*/,Ciphers);
-#endif 	//USE_PKCS11
-}
-#endif	//USE_SSL	
-
-static Bool
-MakeFPCOMM (int fd)
-{
-#ifdef	USE_SSL
-    if (!fSsl) {
-        FPCOMM(Session) = SocketToNet(fd);
-    } else {
-		_MakeSSL_CTX();
-
-        if (CTX(Session) == NULL){
-			ShowErrorDialog(GetSSLErrorMessage());
-        }
-        if ((FPCOMM(Session) = MakeSSL_Net(CTX(Session),fd)) != NULL){
-            if (StartSSLClientSession(FPCOMM(Session), IP_HOST(Session->port)) != TRUE){
-				ShowErrorDialog(GetSSLErrorMessage());
-            }
-        }
-    }
-#else
-	FPCOMM(Session) = SocketToNet(fd);
-#endif	//USE_SSL
-	return TRUE;
-}
-
 static gboolean
-start_client ()
+StartClient ()
 {
-	int		fd;
-	gchar *portnum;
-
+	InitProtocol();
 	ConvertWidgetCache();
 	LoadWidgetCache();
 	InitTopWindow();
 
-	portnum = g_strconcat(Host,":",PortNum,NULL);
-    Session->port = ParPort(portnum,PORT_GLTERM);
-	g_free(portnum);
-	if (  ( fd = ConnectSocket(Session->port,SOCK_STREAM) )  <  0  ) {
-		ShowErrorDialog(_("can not connect server(server port not found)"));
-        return FALSE;
-	}
-	InitProtocol();
-	if(MakeFPCOMM(fd) != TRUE) return FALSE;
+	RPC_StartSession();
+	RPC_GetWindow();
+	UpdateScreen();
+	SetPingTimerFunc();
+	UI_Main();
 
-	if (SendConnect(FPCOMM(Session),CurrentApplication)) {
-		CheckScreens(FPCOMM(Session),TRUE);
-		ISRECV(Session) = TRUE;
-		(void)GetScreenData(FPCOMM(Session));
-		ISRECV(Session) = FALSE;
-		UI_Main();
-	}
-	
 	return FALSE;
 }
 
 static void
-stop_client ()
+StopClient ()
 {
-	GL_SendPacketClass(FPCOMM(Session),GL_END);
-	if	(  fMlog  ) {
-		MessageLog("connection end\n");
-	}
-    CloseNet(FPCOMM(Session));
-#ifdef	USE_SSL
-    if (CTX(Session) != NULL)
-        SSL_CTX_free (CTX(Session));
-#ifdef  USE_PKCS11
-    if (ENGINE(Session) != NULL){
-        ENGINE_free(ENGINE(Session));
-        ENGINE_cleanup();
-    }
-#endif	//USE_PKCS11
-#endif	//USE_SSL
-    DestroyPort (Session->port);
+	RPC_EndSession();
 	SaveWidgetCache();
 }
 
@@ -218,19 +135,7 @@ GLMessage(int level, char *file, int line, char *msg)
 	}
 }
 
-static	void
-ThisAskPass(char *pass)
-{
-	if (!SavePass) {
-		if(AskPass(pass, SIZE_BUFF, _("input Password")) != -1) {
-			Pass = pass;
-		} else {
-			exit(0);
-		}
-	}
-}
-
-#define DEFAULT_PING_TIMER_PERIOD   (3000)
+#define DEFAULT_PING_TIMER_PERIOD   (30000)
 static	void
 InitSystem()
 {
@@ -254,44 +159,28 @@ InitSystem()
 	MakeDirs();
 	InitDesktop();
 
-	Session = New(GLSession);
-	FPCOMM(Session) = NULL;
-#ifdef	USE_SSL
-	CTX(Session) = NULL;
-#ifdef  USE_PKCS11
-	ENGINE(Session) = NULL;
-#endif	//USE_PKCS11
-#endif	//USE_SSL
-	TITLE(Session) = NULL;
-	BGCOLOR(Session) = NULL;
-	PRINTLIST(Session) = NULL;
-	DLLIST(Session) = NULL;
+	Session = g_new0(GLSession,1);
+#if 0
+	srand((unsigned int)Session);
+	RPCID(Session) = rand();
+#else
+	RPCID(Session) = 1;
+#endif
 }
 
 static	void
 FinishSystem(void)
 {
-	if (!getenv("GLCLIENT_KEEP_TEMPDIR")) {
+	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
 		rm_r(TempDir);
 	}
 }
 
 static	void
-ExecClient(int argc, char **argv)
+ExecClient()
 {
-	char		_password[SIZE_BUFF];
 	char		*delay_str;
 	int			delay;
-
-	UI_Init(argc, argv);
-
-	if (fDialog) {
-		BootDialogRun();
-	} else {
-		fDialog = FALSE;
-		LoadConfig(ConfigName);
-		ThisAskPass(_password);
-	}
 
 	InitStyle();
 
@@ -308,12 +197,8 @@ ExecClient(int argc, char **argv)
 
 	SetMessageFunction(GLMessage);
 
-	InitNET();
-#ifdef	USE_SSL
-	SetAskPassFunction(AskPass);
-#endif
-	start_client();
-	stop_client();
+	StartClient();
+	StopClient();
 
 	exit(0);
 }
@@ -321,10 +206,24 @@ ExecClient(int argc, char **argv)
 static gboolean fListConfig = FALSE;
 static GOptionEntry entries[] =
 {
-	{ "list-config",'l',0,G_OPTION_ARG_NONE,&fListConfig,"show config list",NULL},
-	{ "config",'c',0,G_OPTION_ARG_STRING,&ConfigName,"connect by the specified config",NULL},
+	{ "list-config",'l',0,G_OPTION_ARG_NONE,&fListConfig,
+		"show config list",NULL},
+	{ "config",'c',0,G_OPTION_ARG_STRING,&ConfigName,
+		"connect by the specified config",NULL},
 	{ NULL}
 };
+
+static	void
+ThisAskPass(char *pass)
+{
+	if (!SavePass) {
+		if(AskPass(pass, SIZE_PASS, _("input Password")) != -1) {
+			Pass = pass;
+		} else {
+			exit(0);
+		}
+	}
+}
 
 extern	int
 main(
@@ -332,10 +231,10 @@ main(
 	char	**argv)
 {
 	GOptionContext *ctx;
-	int status;
-	pid_t pid;
 	struct sigaction sa;
+	char _password[SIZE_PASS+1];
 
+	memset(_password,0,SIZE_PASS+1);
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = SIG_DFL;
 	sa.sa_flags |= SA_RESTART;
@@ -358,21 +257,14 @@ main(
 	fDialog = ConfigName == NULL ? TRUE : FALSE;
 
 	InitSystem();
+	UI_Init(argc,argv);
 	if (fDialog) {
-		while(1) {
-			if ((pid = fork()) == 0) {
-				ExecClient(argc, argv);
-			} else if (pid > 0) {
-				wait(&status);
-				if (WEXITSTATUS(status) == 0) {
-					break;
-				}
-			} else {
-				Error("fork failed");
-			}
-		}
+		BootDialogRun();
+		ExecClient();
 	} else {
-		ExecClient(argc, argv);
+		LoadConfig(ConfigName);
+		ThisAskPass(_password);
+		ExecClient();
 	}
 	FinishSystem();
 	return 0;

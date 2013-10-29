@@ -22,16 +22,15 @@
 #endif
 
 #include    <stdio.h>
-#include    <string.h> /* strlen */
-#include    <errno.h> /* errno */
-#include    <ctype.h> /* isblank */
-#include    <sys/stat.h> /* mkdir */
-#include    <sys/types.h> /* mkdir */
+#include    <string.h> 
+#include    <errno.h>
+#include    <ctype.h>
+#include    <sys/stat.h>
+#include    <sys/types.h>
 #include    <glib.h>
 #include    <gtk/gtk.h>
 #include    "gettext.h"
 #include	"glclient.h"
-#include    "port.h"
 #include    "const.h"
 #include    "bd_config.h"
 #include    "bd_component.h"
@@ -107,27 +106,6 @@ open_dir_chooser(GtkWidget *w, gpointer entry)
   gtk_widget_destroy (dialog);
 }
 
-#ifdef USE_SSL
-static void
-on_ssl_toggle (GtkWidget *widget, BDComponent *self)
-{
-  gboolean sensitive;
-
-  sensitive = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl));
-  gtk_widget_set_sensitive(self->ssl_container, sensitive);
-}
-
-#ifdef  USE_PKCS11
-static void
-on_pkcs11_toggle (GtkWidget *widget, BDComponent *self) {
-  gboolean sensitive;
-
-  sensitive = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11));
-  gtk_widget_set_sensitive(self->pkcs11_container, sensitive);
-}
-#endif 
-#endif
-
 static void
 on_timer_toggle (GtkWidget *widget, BDComponent *self) {
   gboolean sensitive;
@@ -145,16 +123,8 @@ bd_component_set_value (BDComponent *self,gchar *serverkey)
   gchar *value;
 
   // basic
-  value = gl_config_get_string(serverkey,"host");
-  gtk_entry_set_text (GTK_ENTRY (self->host), value);
-  g_free(value);
-
-  value = gl_config_get_string(serverkey,"port");
-  gtk_entry_set_text (GTK_ENTRY (self->port),value);
-  g_free(value);
-
-  value = gl_config_get_string(serverkey,"application");
-  gtk_entry_set_text (GTK_ENTRY (self->application),value);
+  value = gl_config_get_string(serverkey,"authuri");
+  gtk_entry_set_text (GTK_ENTRY (self->authuri),value);
   g_free(value);
 
   value = gl_config_get_string(serverkey,"user");
@@ -170,40 +140,6 @@ bd_component_set_value (BDComponent *self,gchar *serverkey)
   } else {
     gtk_entry_set_text (GTK_ENTRY (self->password), "");
   }
-
-#ifdef USE_SSL
-  // ssl
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->ssl),
-    gl_config_get_bool(serverkey,"ssl"));
-  gtk_widget_set_sensitive(self->ssl_container, 
-    gl_config_get_bool(serverkey,"ssl"));  
-
-  value = gl_config_get_string(serverkey,"CAfile");
-  gtk_entry_set_text (GTK_ENTRY (self->CAfile),value);
-  g_free(value);
-
-  value = gl_config_get_string(serverkey,"cert");
-  gtk_entry_set_text (GTK_ENTRY (self->cert),value);
-  g_free(value);
-
-  value = gl_config_get_string(serverkey,"ciphers");
-  gtk_entry_set_text (GTK_ENTRY (self->ciphers),value);
-  g_free(value);
-#ifdef USE_PKCS11
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->pkcs11),
-    gl_config_get_bool(serverkey,"pkcs11"));  
-  gtk_widget_set_sensitive(self->pkcs11_container, 
-    gl_config_get_bool(serverkey,"pkcs11"));  
-
-  value = gl_config_get_string(serverkey,"pkcs11_lib");
-  gtk_entry_set_text (GTK_ENTRY (self->pkcs11_lib),value);
-  g_free(value);
-
-  value = gl_config_get_string(serverkey,"slot"); 
-  gtk_entry_set_text (GTK_ENTRY (self->slot),value);
-  g_free(value);
-#endif
-#endif
 
   // other
   value = gl_config_get_string(serverkey,"style");
@@ -243,12 +179,8 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
   gchar *password;
   gboolean savepassword;
 
-  gl_config_set_string(serverkey,"host",
-    gtk_entry_get_text (GTK_ENTRY (self->host)));
-  gl_config_set_string(serverkey,"port",
-    gtk_entry_get_text (GTK_ENTRY (self->port)));
-  gl_config_set_string(serverkey,"application",
-    gtk_entry_get_text (GTK_ENTRY (self->application)));
+  gl_config_set_string(serverkey,"authuri",
+    gtk_entry_get_text (GTK_ENTRY (self->authuri)));
   gl_config_set_string(serverkey,"user",
     gtk_entry_get_text (GTK_ENTRY (self->user)));
   password = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
@@ -260,46 +192,11 @@ bd_component_value_to_config(BDComponent *self,gchar *serverkey)
   }
   gl_config_set_bool(serverkey,"savepassword", savepassword);
 
-  Host = strdup(gtk_entry_get_text (GTK_ENTRY (self->host)));
-  PortNum = strdup(gtk_entry_get_text (GTK_ENTRY (self->port)));
-  CurrentApplication = strdup(gtk_entry_get_text (GTK_ENTRY (self->application)));
+  AUTHURI(Session) = strdup(gtk_entry_get_text (GTK_ENTRY (self->authuri)));
   User = strdup(gtk_entry_get_text (GTK_ENTRY (self->user)));
   Pass = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
   SavePass = gtk_toggle_button_get_active (
     GTK_TOGGLE_BUTTON (self->savepassword));
-
-#ifdef USE_SSL
-  // ssl
-  gl_config_set_bool(serverkey,"ssl",
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl)));
-  gl_config_set_string(serverkey,"CAfile",
-    gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
-  gl_config_set_string(serverkey,"cert",
-    gtk_entry_get_text (GTK_ENTRY (self->cert)));
-  gl_config_set_string(serverkey,"ciphers",
-    gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
-
-  fSsl = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->ssl));
-  CA_File = strdup(gtk_entry_get_text (GTK_ENTRY (self->CAfile)));
-  if (!strcmp("", CA_File)) CA_File = NULL;
-  CertFile = strdup(gtk_entry_get_text (GTK_ENTRY (self->cert)));
-  if (!strcmp("", CertFile)) CertFile = NULL;
-  Ciphers = strdup(gtk_entry_get_text (GTK_ENTRY (self->ciphers)));
-
-#ifdef  USE_PKCS11
-  gl_config_set_bool(serverkey,"pkcs11", 
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11)));
-  gl_config_set_string(serverkey,"pkcs11_lib",
-    gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
-  gl_config_set_string(serverkey,"slot",
-    gtk_entry_get_text (GTK_ENTRY (self->slot)));
-
-  fPKCS11 = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11));
-  PKCS11_Lib = strdup(gtk_entry_get_text (GTK_ENTRY (self->pkcs11_lib)));
-  if (!strcmp("", PKCS11_Lib)) PKCS11_Lib = NULL;
-  Slot = strdup(gtk_entry_get_text (GTK_ENTRY (self->slot)));
-#endif
-#endif
 
   // other
   gl_config_set_string(serverkey,"style",
@@ -353,24 +250,9 @@ bd_component_new()
 
   ypos = 0;
 
-  label = gtk_label_new (_("Host(Port)"));
+  label = gtk_label_new (_("AuthURI"));
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  self->host = entry = gtk_entry_new ();
-  gtk_widget_set_size_request (entry, 110, -1);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  self->port = entry = gtk_entry_new ();
-  gtk_widget_set_size_request (entry, 40, -1);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Application"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->application = entry = gtk_entry_new ();
+  self->authuri = entry = gtk_entry_new ();
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
@@ -402,120 +284,6 @@ bd_component_new()
   self->savepassword = check;
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-
-#ifdef USE_SSL
-  // ssl
-  table = gtk_table_new (3, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
-  self->ssltable = table;
-
-
-  ypos = 0;
-
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Use SSL"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  g_signal_connect (G_OBJECT (check), "clicked",
-                      G_CALLBACK (on_ssl_toggle), self);
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  self->ssl = check;
-  ypos++;
-
-  table = gtk_table_new (3, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
-  self->ssl_container = table;
-  gtk_table_attach (GTK_TABLE(self->ssltable), table, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos = 0;
-
-  label = gtk_label_new (_("CA Certificate File"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->CAfile = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  g_signal_connect(G_OBJECT(button), "clicked",
-             G_CALLBACK(open_file_chooser), (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Certificate(*.p12)"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->cert = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  g_signal_connect(G_OBJECT(button), "clicked",
-             G_CALLBACK(open_file_chooser), (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Cipher Suite"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->ciphers = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-#ifdef  USE_PKCS11
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Use Security Device"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  self->pkcs11 = check;
-  g_signal_connect (G_OBJECT (check), "clicked",
-                      G_CALLBACK (on_pkcs11_toggle), self);
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-  /* pkcs11 container */
-  table = gtk_table_new (3, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 0);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 0);
-  self->pkcs11_container = table;
-  gtk_table_attach (GTK_TABLE(self->ssl_container), table, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos = 0;
-
-  label = gtk_label_new (_("PKCS#11 Library"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->pkcs11_lib = entry = gtk_entry_new ();
-  button = gtk_button_new_with_label(_("Open"));
-  g_signal_connect(G_OBJECT(button), "clicked",
-             G_CALLBACK(open_file_chooser), (gpointer)entry);
-  hbox = gtk_hbox_new (FALSE, 5);
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
-  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
-  ypos++;
-
-  label = gtk_label_new (_("Slot ID"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  self->slot = entry = gtk_entry_new ();
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
-
-#endif
-#endif
 
   // other
   table = gtk_table_new (3, 1, FALSE);

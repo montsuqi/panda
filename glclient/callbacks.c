@@ -37,11 +37,9 @@
 #include	"callbacks.h"
 #include	"types.h"
 #include	"libmondai.h"
-#include	"comm.h"
 #include	"glclient.h"
 #include	"action.h"
 #include	"protocol.h"
-#include	"glterm.h"
 #include	"debug.h"
 
 extern	gboolean
@@ -83,9 +81,9 @@ keypress_filter(
 
 ENTER_FUNC;
 #ifdef LIBGTK_3_0_0
-	if		(event->keyval == GDK_KEY_KP_Enter) {
+	if (event->keyval == GDK_KEY_KP_Enter) {
 #else
-	if		(event->keyval == GDK_KP_Enter) {
+	if (event->keyval == GDK_KP_Enter) {
 #endif
 		nextWidget = GetWidgetByLongName(next);
 		if (nextWidget != NULL) {
@@ -128,9 +126,9 @@ find_widget_ancestor(
 	GtkWidget	*widget;
 	GType		type;
 	widget = w;
-	while	(	widget	) {
+	while (widget) {
 		type = (long)G_OBJECT_TYPE(widget);
-		if	(	type == t	){
+		if	(type == t){
 			return widget;
 		}
 		widget = gtk_widget_get_parent(widget);
@@ -170,47 +168,42 @@ send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	char		*wname;
+	char		*window_name;
+	char		*widget_name;
 	static Bool	ignore_event = FALSE;
 ENTER_FUNC;
-	wname = GetWindowName(widget);
-	if (	!ISRECV(Session) &&  
-			!ignore_event && 
-			!strcmp(wname,THISWINDOW(Session))) {
+	window_name = GetWindowName(widget);
+	widget_name = (char *)gtk_widget_get_name(widget);
+	event = event != NULL ? event : widget_name;
+	if (!ISRECV(Session) && 
+		!ignore_event && 
+		!strcmp(window_name,THISWINDOW(Session))) {
 		ISRECV(Session) = TRUE;
 
 		StopEventTimer();
 		StopTimerWidgetAll();
 
 		ShowBusyCursor(widget);
-		/* send event */
-		if		(  event  !=  NULL  ) {
-			SendEvent(FPCOMM(Session),
-					  wname,
-					  (char *)gtk_widget_get_name(widget),
-					  event);
-		} else {
-			SendEvent(FPCOMM(Session),
-					  wname,
-					  (char *)gtk_widget_get_name(widget),
-					  (char *)gtk_widget_get_name(widget));
-		}
-		SendWindowData();
 		BlockChangedHandlers();
-		GetScreenData(FPCOMM(Session));
-		if	( ! fKeyBuff  ) {
+
+		SendEvent(window_name,widget_name,event);
+		UpdateScreen();
+
+		while (THISWINDOW(Session)[0] == '_') {
+			SendEvent(THISWINDOW(Session),THISWINDOW(Session),"DummyEvent");
+			UpdateScreen();
+		}
+
+
+		if (!fKeyBuff) {
 			ignore_event = TRUE;
 			ClearKeyBuffer();
 			ignore_event = FALSE;
 		}
-		HideBusyCursor(widget); 
+
 		UnblockChangedHandlers();
-		while (THISWINDOW(Session)[0] == '_') {
-			SendEvent(FPCOMM(Session),
-				THISWINDOW(Session),THISWINDOW(Session),"DummyEvent");
-			SendWindowData();
-			GetScreenData(FPCOMM(Session));
-		}
+		HideBusyCursor(widget); 
+
 		ISRECV(Session) = FALSE;
 	}
 LEAVE_FUNC;

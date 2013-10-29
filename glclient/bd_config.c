@@ -636,9 +636,7 @@ typedef struct {
 
 static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "description",  "default"},
-{"string", "host",         "localhost"},
-{"string", "port",         "8000"},
-{"string", "application",  "panda:orca00"},
+{"string", "authuri",      "http://localhost:9292"},
 {"string", "style",        ""},
 {"string", "gtkrc",        ""},
 {"string", "fontname",     "Takaoゴシック 10"},
@@ -650,17 +648,6 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "password",     ""},
 {"bool",   "timer",        "T"},
 {"string", "timerperiod",  "1000"},
-#ifdef USE_SSL
-{"bool",   "ssl",          "F"},
-{"string", "CAfile",       ""},
-{"string", "cert",         ""},
-{"string", "ciphers",      "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"},
-#ifdef USE_PKCS11
-{"bool",   "pkcs11",       "F"},
-{"string", "pkcs11_lib",   ""},
-{"string", "slot",         ""},
-#endif
-#endif
 {NULL,NULL,NULL}
 };
 

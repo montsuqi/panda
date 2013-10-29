@@ -28,10 +28,9 @@
 #include	<glade/glade.h>
 #include	<glib.h>
 #include	<gconf/gconf-client.h>
+#include	<json.h>
 
 #include	"libmondai.h"
-#include	"net.h"
-#include	"queue.h"
 
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -40,28 +39,26 @@
 #endif
 
 typedef struct {
-	NETFILE		*fpComm;
-	Port		*port;
-	char		*title;
-	char		*bgcolor;
-	Bool		IsRecv;
-	char		*FocusedWindow;
-	char		*FocusedWidget;
-	char		*ThisWindow;
-	GHashTable	*WindowTable;
-	GHashTable	*WidgetTable;
-	GList		*PrintList;
-	GList		*DLList;
-#ifdef	USE_SSL
-	SSL_CTX		*ctx;
-#ifdef  USE_PKCS11
-	ENGINE		*engine;
-#endif  /* USE_PKCS11 */
-#endif  /* USE_SSL */
+	char			*AuthURI;
+	char			*RPCURI;
+	char			*RESTURI;
+	char			*title;
+	char			*bgcolor;
+	Bool			IsRecv;
+	char			*FocusedWindow;
+	char			*FocusedWidget;
+	char			*ThisWindow;
+	GHashTable		*WindowTable;
+	GList			*PrintList;
+	GList			*DLList;
+	unsigned int	RPCID;
+	char			*SessionID;
+	json_object		*ScreenData;
 }	GLSession;
 
-#define	FPCOMM(session)			((session)->fpComm)
-#define PORT(session)			((session)->port)
+#define	AUTHURI(session)		((session)->AuthURI)
+#define RPCURI(session)			((session)->RPCURI)
+#define RESTURI(session)		((session)->RESTURI)
 #define	TITLE(session)			((session)->title)
 #define	BGCOLOR(session)		((session)->bgcolor)
 #define	ISRECV(session)			((session)->IsRecv)
@@ -69,15 +66,11 @@ typedef struct {
 #define	FOCUSEDWIDGET(session)	((session)->FocusedWidget)
 #define	THISWINDOW(session)		((session)->ThisWindow)
 #define	WINDOWTABLE(session)	((session)->WindowTable)
-#define	WIDGETTABLE(session)	((session)->WidgetTable)
 #define	PRINTLIST(session)		((session)->PrintList)
 #define	DLLIST(session)			((session)->DLList)
-#ifdef	USE_SSL
-#define	CTX(session)			((session)->ctx)
-#ifdef	USE_PKCS11
-#define	ENGINE(session)			((session)->engine)
-#endif	/* USE_PKCS11 */
-#endif	/* USE_SSL */
+#define	RPCID(session)			((session)->RPCID)
+#define	SESSIONID(session)		((session)->SessionID)
+#define	SCREENDATA(session)		((session)->ScreenData)
 
 typedef struct {
 	char		*name;
@@ -87,7 +80,6 @@ typedef struct {
 	Bool		fAccelGroup;
 	GHashTable	*ChangedWidgetTable;
 	GHashTable	*TimerWidgetTable;
-	Queue		*UpdateWidgetQueue;
 }	WindowData;
 
 extern	void		ExitSystem(void);
@@ -100,8 +92,6 @@ GLOBAL	char		*TempDir;
 GLOBAL	char		*ConfDir;
 GLOBAL	GLSession	*Session;
 
-GLOBAL	char		*Host;
-GLOBAL	char		*PortNum;
 GLOBAL	char		*User;
 GLOBAL	char		*Pass;
 GLOBAL	Bool		SavePass;
@@ -114,18 +104,6 @@ GLOBAL	Bool		fTimer;
 GLOBAL	char		*TimerPeriod;
 GLOBAL	int			PingTimerPeriod;
 GLOBAL	char		*FontName;
-#ifdef	USE_SSL
-GLOBAL	Bool		fSsl;
-GLOBAL	char		*CertFile;
-GLOBAL	char		*CA_File;
-GLOBAL	char		*Ciphers;
-GLOBAL	char		*Passphrase;
-#ifdef  USE_PKCS11
-GLOBAL	Bool		fPKCS11;
-GLOBAL	char		*PKCS11_Lib;
-GLOBAL	char		*Slot;
-#endif	/* USE_PKCS11 */
-#endif	/* USE_SSL */
 
 /* gconf */
 GLOBAL	GConfClient *GConfCTX;

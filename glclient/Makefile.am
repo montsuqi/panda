@@ -23,7 +23,6 @@ base_sources =						\
 	client.c		glclient.h		\
 	desktop.c		desktop.h		\
 	protocol.c		protocol.h		\
-	marshaller.c	marshaller.h	\
 	widgetcache.c	widgetcache.h	\
 	print.c			print.h			\
 	utils.c			utils.h			\
@@ -49,16 +48,14 @@ base_CFLAGS =					\
 	-I$(top_srcdir)/include		\
 	-I$(top_srcdir)/libs		\
 	$(COMMON_CFLAGS)			\
-	$(SSL_CFLAGS)				\
-	$(P11_CFLAGS)				\
+	$(SSL_CFLAGS)
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\"
 
 base_LDADD =									\
 	-lm											\
 	$(top_builddir)/libs/libpanda.la			\
 	$(COMMON_LIBS)								\
-	$(P11_LIBS)									\
-	$(SSL_LIBS)			
+	$(SSL_LIBS)
 
 #################################################
 # glclient2
@@ -71,6 +68,7 @@ glclient2_DEPENDENCIES =						\
 	$(base_dependencies)
 
 glclient2_CFLAGS =			\
+	-std=gnu99				\
 	$(base_CFLAGS)			\
 	$(GLCLIENT_CFLAGS)
 

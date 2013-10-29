@@ -32,27 +32,10 @@ typedef struct _BDComponent BDComponent;
 struct _BDComponent {
 // basic
   GtkWidget *basictable;
-  GtkWidget *host;
-  GtkWidget *port;
-  GtkWidget *application;
+  GtkWidget *authuri;
   GtkWidget *user;
   GtkWidget *password;
   GtkWidget *savepassword;
-// ssl
-#ifdef USE_SSL
-  GtkWidget *ssltable;
-  GtkWidget *ssl_container;
-  GtkWidget *ssl;
-  GtkWidget *cert;
-  GtkWidget *CAfile;
-  GtkWidget *ciphers;
-#ifdef  USE_PKCS11
-  GtkWidget *pkcs11;
-  GtkWidget *pkcs11_lib;
-  GtkWidget *pkcs11_container;
-  GtkWidget *slot;
-#endif
-#endif
 // other 
   GtkWidget *othertable;
   GtkWidget *mlog;
@@ -64,7 +47,7 @@ struct _BDComponent {
   GtkWidget *timer;
   GtkWidget *timerperiod;
   GtkWidget *timer_container;
-// other 
+// info 
   GtkWidget *infotable;
 };
 

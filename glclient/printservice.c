@@ -79,6 +79,7 @@ Download(
 	CURLcode ret;
 	int doretry;
     long http_code;
+	gboolean fSSL;
 
 	doretry = 0;
 	*outfile = NULL;
@@ -93,8 +94,10 @@ Download(
 
 	fname = g_strdup_printf("%s/glclient_download_XXXXXX",TempDir);
 	userpass = g_strdup_printf("%s:%s",User,Pass);
-	scheme = fSsl ? "https" : "http";
-	url = g_strdup_printf("%s://%s:%s/%s",scheme,Host,PortNum,path);
+
+	fSSL = !strncmp("https",RESTURI(Session),5);
+
+	url = g_strdup_printf("%s/%s",RESTURI(Session),path);
 
 	if ((fd = mkstemp(fname)) == -1) {
 		Warning("mkstemp failure");
@@ -110,18 +113,12 @@ Download(
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)fp);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
-	if (fSsl) {
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
-		curl_easy_setopt(curl,CURLOPT_SSL_CIPHER_LIST,Ciphers);
-		curl_easy_setopt(curl,CURLOPT_SSLCERT, CertFile); 
-        curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE, "P12");	
-        curl_easy_setopt(curl,CURLOPT_SSLKEYPASSWD, Passphrase); 
-        curl_easy_setopt(curl,CURLOPT_CAINFO, CA_File); 
-	} else {
-		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 	}
 
 	ret = curl_easy_perform(curl);

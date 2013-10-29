@@ -39,15 +39,11 @@
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<sys/time.h>
-#include	<netinet/in.h>
-#include	<iconv.h>
+#include	<ctype.h>
+#include	<json.h>
+#include	<curl/curl.h>
 
-#include	"glterm.h"
 #include	"glclient.h"
-#include	"comm.h"
-#include	"protocol.h"
-#define		_PROTOCOL_C
-#include	"marshaller.h"
 #include	"gettext.h"
 #include	"const.h"
 #include	"notify.h"
@@ -58,1184 +54,794 @@
 #include	"message.h"
 #include	"debug.h"
 
-#ifdef	NETWORK_ORDER
-#define	RECV32(v)	ntohl(v)
-#define	RECV16(v)	ntohs(v)
-#define	SEND32(v)	htonl(v)
-#define	SEND16(v)	htons(v)
-#else
-#define	RECV32(v)	(v)
-#define	RECV16(v)	(v)
-#define	SEND32(v)	(v)
-#define	SEND16(v)	(v)
-#endif
+LargeByteString *readbuf;
+LargeByteString *writebuf;
 
-static	LargeByteString	*LargeBuff;
-
-/*
- *	send/recv functions
- */
-
-#define	SendChar(fp,c)	nputc((c),(fp))
-#define	RecvChar(fp)	ngetc(fp)
-
-static void
-GL_Error(void)
+size_t write_data(
+	void *buf,
+	size_t size,
+	size_t nmemb,
+	void *userp)
 {
-	ShowErrorDialog(_("Connection lost\n"));
-}
+	size_t buf_size;
+	LargeByteString *lbs;
+	unsigned char *p;
+	int i;
 
-extern	void
-GL_SendPacketClass(
-	NETFILE	*fp,
-	PacketClass	c)
-{
-	nputc(c,fp);
-	Flush(fp);
-}
-
-extern	PacketClass
-GL_RecvPacketClass(
-	NETFILE	*fp)
-{
-	PacketClass	c;
-
-	c = ngetc(fp);
-	return	(c);
-}
-
-extern	PacketDataType
-GL_RecvDataType(
-	NETFILE	*fp)
-{
-	PacketClass	c;
-
-	c = ngetc(fp);
-	return	(c);
-}
-
-extern	void
-GL_SendInt(
-	NETFILE	*fp,
-	int		data)
-{
-	unsigned char	buff[sizeof(int)];
-
-	data = SEND32(data);
-	memcpy(buff,&data,sizeof(int));
-	Send(fp,buff,sizeof(int));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
+	lbs = (LargeByteString*)userp;
+	buf_size = size * nmemb;
+	for(i=0,p=(unsigned char*)buf;i<buf_size;i++,p++) {
+		LBS_EmitChar(lbs,*p);
 	}
+	return buf_size;
 }
 
-extern	int
-GL_RecvInt(
-	NETFILE	*fp)
+size_t read_text_data(
+	void *buf,
+	size_t size,
+	size_t nmemb,
+	void *userp)
 {
-	unsigned char	buff[sizeof(int)];
-	int data;
+	size_t read_size;
+	char *p;
+	int i;
+	LargeByteString *lbs;
 
-	Recv(fp,buff,sizeof(int));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
-	memcpy(&data,buff,sizeof(int));
-	data = RECV32(data);
-	return data;
-}
+	p = (char*)buf;
+	lbs = (LargeByteString*)userp;
+	read_size = 0;
 
-static	void
-GL_SendLength(
-	NETFILE	*fp,
-	size_t	data)
-{
-	GL_SendInt(fp,data);
-}
-
-static	size_t
-GL_RecvLength(
-	NETFILE	*fp)
-{
-	return (size_t)GL_RecvInt(fp);
-}
-#if	0
-static	unsigned	int
-GL_RecvUInt(
-	NETFILE	*fp)
-{
-	unsigned char	buff[sizeof(int)];
-
-	Recv(fp,buff,sizeof(unsigned int));
-	return	(RECV32(*(unsigned int *)buff));
-}
-
-static	void
-GL_SendUInt(
-	NETFILE	*fp,
-	unsigned	int		data)
-{
-	unsigned char	buff[sizeof(int)];
-
-	*(unsigned int *)buff = SEND32(data);
-	Send(fp,buff,sizeof(unsigned int));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
-}
-
-#endif
-
-static	void
-GL_RecvString(
-	NETFILE	*fp,
-	size_t  maxsize,
-	char	*str)
-{
-	size_t		lsize;
-ENTER_FUNC;
-	lsize = GL_RecvLength(fp);
-	if		(	maxsize >= lsize 	){
-		Recv(fp,str,lsize);
-		if		(  !CheckNetFile(fp)  ) {
-			GL_Error();
+	for (i=0;i<size*nmemb;i++) {
+		*p = (char)LBS_FetchChar(lbs);
+		if (*p == 0) {
+			break;
 		}
-		str[lsize] = 0;
-	} else {
-		ShowErrorDialog(
-		_("GL_RecvString invalid size %ld > %ld(max size)"),
-		(unsigned long)lsize,(unsigned long)maxsize);
+		p++;
+		read_size++;
 	}
-LEAVE_FUNC;
+	return read_size;
 }
 
-extern	void
-GL_RecvName(
-	NETFILE	*fp,
-	size_t  size,
-	char	*name)
+size_t read_binary_data(
+	void *buf,
+	size_t size,
+	size_t nmemb,
+	void *userp)
 {
-ENTER_FUNC;
-	GL_RecvString( fp, size, name);
-LEAVE_FUNC;
+	size_t read_size,buf_size,rest_size;
+	char *p;
+	LargeByteString *lbs;
+
+	p = (char*)buf;
+	lbs = (LargeByteString*)userp;
+	read_size = 0;
+
+	buf_size = size*nmemb;
+	rest_size = LBS_Size(lbs) - LBS_GetPos(lbs);
+	if (rest_size <= 0) {
+		return 0;
+	}
+
+	if (buf_size > rest_size) {
+		read_size = rest_size;
+	} else {
+		read_size = buf_size;
+	}
+	memcpy(p,LBS_Ptr(lbs),read_size);
+	LBS_SetPos(lbs,LBS_GetPos(lbs)+read_size);
+
+	return read_size;
+}
+
+static	json_object*
+MakeJSONRPCRequest(
+	const char *method,
+	json_object *params)
+{
+	json_object *obj;
+
+	obj = json_object_new_object();
+	json_object_object_add(obj,"jsonrpc",json_object_new_string("2.0"));
+	json_object_object_add(obj,"id",json_object_new_int(RPCID(Session)));
+	json_object_object_add(obj,"method",json_object_new_string(method));
+	json_object_object_add(obj,"params",params);
+	RPCID(Session) += 1;
+	return obj;
 }
 
 static	void
-GL_SendString(
-	NETFILE	*fp,
-	char	*str)
+CheckJSONRPCResponse(
+	json_object *obj)
 {
-	size_t		size;
+	json_object *obj2,*obj3;
+	int code,id;
+	char *message;
 
-ENTER_FUNC;
-	if (str != NULL) { 
-		size = strlen(str);
-	} else {
-		size = 0;
+	obj2 = json_object_object_get(obj,"jsonrpc");
+	if (obj2 == NULL || is_error(obj2)) {
+		Error(_("invalid jsonrpc"));
 	}
-	GL_SendLength(fp,size);
-	if (!CheckNetFile(fp)) {
-		GL_Error();
+	if (strcmp("2.0",json_object_get_string(obj2))) {
+		Error(_("invalid jsonrpc version"));
 	}
-	if (size > 0) {
-		Send(fp,str,size);
-		if (!CheckNetFile(fp)) {
-			GL_Error();
+
+	obj2 = json_object_object_get(obj,"id");
+	if (obj2 == NULL || is_error(obj2)) {
+		Error(_("invalid jsonrpc id"));
+	}
+	id = json_object_get_int(obj2);
+	if (id != RPCID(Session) - 1) {
+		Error(_("invalid jsonrpc id"));
+	}
+
+	obj2 = json_object_object_get(obj,"error");
+	if (obj2 != NULL && !is_error(obj2)) {
+		code = 0;
+		message = NULL;
+		obj3 = json_object_object_get(obj2,"code");
+		if (obj3 != NULL || !is_error(obj3)) {
+			code = json_object_get_int(obj3);
 		}
-	}
-LEAVE_FUNC;
-}
-
-extern	void
-GL_SendName(
-	NETFILE	*fp,
-	char	*name)
-{
-	size_t	size;
-
-ENTER_FUNC;
-	if		(   name  !=  NULL  ) { 
-		size = strlen(name);
-	} else {
-		size = 0;
-	}
-	GL_SendLength(fp,size);
-	if		(  size  >  0  ) {
-		Send(fp,name,size);
-		if		(  !CheckNetFile(fp)  ) {
-			GL_Error();
+		obj3 = json_object_object_get(obj2,"message");
+		if (obj3 != NULL || !is_error(obj3)) {
+			message = (char*)json_object_get_string(obj3);
 		}
+		Error(_("jsonrpc error code:%d message:%s"),code,message);
 	}
-LEAVE_FUNC;
-}
 
-extern	void
-GL_SendDataType(
-	NETFILE	*fp,
-	PacketClass	c)
-{
-	nputc(c,fp);
-}
-
-static	void
-GL_SendFixed(
-	NETFILE	*fp,
-	Fixed	*xval)
-{
-	GL_SendLength(fp,xval->flen);
-	GL_SendLength(fp,xval->slen);
-	GL_SendString(fp,xval->sval);
-}
-
-static	Fixed	*
-GL_RecvFixed(
-	NETFILE	*fp)
-{
-	Fixed	*xval;
-
-ENTER_FUNC;
-	xval = New(Fixed);
-	xval->flen = GL_RecvLength(fp);
-	xval->slen = GL_RecvLength(fp);
-	xval->sval = (char *)xmalloc(xval->flen+1);
-	GL_RecvString(fp, xval->flen, xval->sval);
-LEAVE_FUNC;
-	return	(xval); 
-}
-
-static	double
-GL_RecvFloat(
-	NETFILE	*fp)
-{
-	double	data;
-
-	Recv(fp,&data,sizeof(data));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
-	}
-	return	(data);
-}
-
-static	void
-GL_SendFloat(
-	NETFILE	*fp,
-	double	data)
-{
-	Send(fp,&data,sizeof(data));
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
+	obj2 = json_object_object_get(obj,"result");
+	if (obj2 == NULL || is_error(obj2)) {
+		Error(_("no result object"));
 	}
 }
-
-static	Bool
-GL_RecvBool(
-	NETFILE	*fp)
+ 
+void
+RPC_StartSession()
 {
-	char	buf[1];
+	CURL *curl;
+	struct curl_slist *headers = NULL;
+	json_object *obj,*params,*child,*result,*meta;
+	char userpass[2048],*ctype,*jsonstr;
+	gboolean fSSL;
+	long http_code;
+	size_t jsonsize;
 
-	Recv(fp,buf,1);
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
+	params = json_object_new_object();
+	child = json_object_new_object();
+	json_object_object_add(child,"client_version",
+		json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(params,"meta",child);
+	obj = MakeJSONRPCRequest("start_session",params);
+	
+	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
+	userpass[sizeof(userpass)-1] = 0;
+
+	if (readbuf == NULL) {
+		readbuf = NewLBS();
 	}
-	return	((buf[0] == 'T' ) ? TRUE : FALSE);
-}
+	jsonstr = (char*)json_object_to_json_string(obj);
+	jsonsize = strlen(jsonstr);
+	LBS_EmitStart(readbuf);
+	LBS_EmitString(readbuf,jsonstr);
+	json_object_put(obj);
+	LBS_EmitEnd(readbuf);
+	LBS_SetPos(readbuf,0);
 
-static	void
-GL_SendBool(
-	NETFILE	*fp,
-	Bool	data)
-{
-	char	buf[1];
-
-	buf[0] = data ? 'T' : 'F';
-	Send(fp,buf,1);
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
+	if (writebuf == NULL) {
+		writebuf = NewLBS();
 	}
-}
+	LBS_EmitStart(writebuf);
+	LBS_SetPos(writebuf,0);
 
-static	void
-GL_RecvLBS(
-	NETFILE	*fp,
-	LargeByteString	*lbs)
-{
-	size_t	size;
-ENTER_FUNC;
-	size = GL_RecvLength(fp);
-	LBS_ReserveSize(lbs,size,FALSE);
-	if		(  size  >  0  ) {
-		Recv(fp,LBS_Body(lbs),size);
-		if		(  !CheckNetFile(fp)  ) {
-			GL_Error();
+	curl = curl_easy_init();
+	if (!curl) {
+		Error(_("could not init curl"));
+	}
+
+	fSSL = !strncmp("https",AUTHURI(Session),5);
+
+	headers = curl_slist_append(headers, "Content-Type: application/json");
+
+	curl_easy_setopt(curl, CURLOPT_URL, AUTHURI(Session));
+	curl_easy_setopt(curl, CURLOPT_POST, 1);
+
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+
+	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION,read_text_data);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
+
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	if (fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Error(_("curl_easy_perform failure"));
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code) == CURLE_OK) {
+		if (http_code != 200) {
+			Error(_("http status code[%d]"),http_code);
 		}
 	} else {
-		dbgmsg("Recv LBS 0 size.");
+		Error(_("curl_easy_getinfo failure"));
 	}
-LEAVE_FUNC;
-}
-
-static	void
-GL_SendLBS(
-	NETFILE	*fp,
-	LargeByteString	*lbs)
-{
-	GL_SendLength(fp,LBS_Size(lbs));
-	if		(  LBS_Size(lbs)  >  0  ) {
-		Send(fp,LBS_Body(lbs),LBS_Size(lbs));
-		if		(  !CheckNetFile(fp)  ) {
-			GL_Error();
-		}
-	}
-}
-
-//////////////////////////////////////////////////////////////////////
-
-static	Bool
-RecvFile(
-	NETFILE	*fp,
-	char	*name)
-{
-	char 		*buff;
-	Bool		ret;
-
-ENTER_FUNC;
-	GL_SendString(fp,name);
-	if (fMlog) {
-		MessageLogPrintf("recv screen file [%s]\n",name);
-	}
-	if (GL_RecvPacketClass(fp) == GL_ScreenDefine) {
-		// download
-		buff = xmalloc(SIZE_LARGE_BUFF);
-		GL_RecvString(fp, SIZE_LARGE_BUFF, buff);
-		CreateWindow(name,strlen(buff),buff);
-		xfree(buff);
-		ret = TRUE;
-	} else {
-		ShowErrorDialog(_("invalid protocol sequence"));
-		ret = FALSE;
-	}
-LEAVE_FUNC;
-	return	(ret);
-}
-
-extern	void
-CheckScreens(
-	NETFILE		*fp,
-	Bool		fInit)
-{	
-	char		sname[SIZE_NAME];
-	PacketClass	klass;
-
-ENTER_FUNC;
-	while ((klass = GL_RecvPacketClass(fp)) == GL_QueryScreen) {
-		GL_RecvString(fp, sizeof(sname), sname);
-		GL_RecvInt(fp);  /*stsize*/
-		GL_RecvInt(fp);  /*stctime*/
-		GL_RecvInt(fp);  /*stmtime*/
-
-		if (GetWindowData(sname) == NULL) {
-			GL_SendPacketClass(fp,GL_GetScreen);
-			RecvFile(fp, sname);
-		} else {
-			GL_SendPacketClass(fp, GL_NOT);
-		}
-		if (fInit) {
-			ShowWindow(sname);
-			fInit = FALSE;
-		}
-	}
-LEAVE_FUNC;
-}
-
-static	void
-RecvValueSkip(
-	NETFILE			*fp,
-	PacketDataType	type)
-{
-	char			name[CLIENT_SIZE_BUFF];
-	char			buff[CLIENT_SIZE_BUFF];
-	int				count
-	,				i;
-
-ENTER_FUNC;
-	if		(  type  ==  GL_TYPE_NULL  ) {
-		type = GL_RecvDataType(fp);
-	}
-	switch	(type) {
-	  case	GL_TYPE_INT:
-		(void)GL_RecvInt(fp);
-		break;
-	  case	GL_TYPE_BOOL:
-		(void)GL_RecvBool(fp);
-		break;
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp, sizeof(buff), buff);
-		break;
-	  case	GL_TYPE_BINARY:
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_OBJECT:
-		GL_RecvLBS(fp, LargeBuff);
-		break;
-	  case	GL_TYPE_NUMBER:
-		FreeFixed(GL_RecvFixed(fp));
-		break;
-	  case	GL_TYPE_ARRAY:
-		count = GL_RecvInt(fp);
-		for	(  i = 0 ; i < count ; i ++ ) {
-			RecvValueSkip(fp,GL_TYPE_NULL);
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		count = GL_RecvInt(fp);
-		for	(  i = 0 ; i < count ; i ++ ) {
-			GL_RecvString(fp, sizeof(name), name);
-			RecvValueSkip(fp,GL_TYPE_NULL);
-		}
-		break;
-	  default:
-		break;
-	}
-LEAVE_FUNC;
-}
-
-static	void
-RecvNodeValue(
-	NETFILE		*fp,
-	char		*widgetName)
-{
-	PacketDataType	type;
-	int				count
-	,				i;
-	char			name[CLIENT_SIZE_BUFF]
-	,				childWidgetName[CLIENT_SIZE_BUFF];
-
-ENTER_FUNC;
-	type = GL_RecvDataType(fp);
-	switch	(type) {
-	  case	GL_TYPE_RECORD:
-		count = GL_RecvInt(fp);
-		for	(  i = 0 ; i < count ; i ++ ) {
-			GL_RecvString(fp, sizeof(name), name);
-			sprintf(childWidgetName,"%s.%s",widgetName,name);
-			RecvValue(fp,childWidgetName);
-		}
-		break;
-	  case	GL_TYPE_ARRAY:
-		count = GL_RecvInt(fp);
-		for	(  i = 0 ; i < count ; i ++ ) {
-			sprintf(childWidgetName, "%s[%d]",widgetName, i);
-			RecvValue(fp,childWidgetName);
-		}
-		break;
-	  default:
-		RecvValueSkip(fp,type);
-		break;
-	}
-LEAVE_FUNC;
-}
-
-extern	void
-RecvValue(
-	NETFILE		*fp,
-	char		*widgetName)
-{
-ENTER_FUNC;
-	dbgprintf("WidgetName = [%s]\n",widgetName);
-	if (IsWidgetName(THISWINDOW(Session))) {
-		if (IsWidgetName(widgetName)) {
-			if (RecvWidgetData(widgetName,fp)) {
-			} else {
-				RecvNodeValue(fp,widgetName);
-			}
-		} else {
-			RecvValueSkip(fp,GL_TYPE_NULL);
+	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
+		if (strstr(ctype,"json") == NULL) {
+			Error(_("invalid content type:%s"),ctype);
 		}
 	} else {
-		RecvValueSkip(fp,GL_TYPE_NULL);
+		Error(_("curl_easy_getinfo failure"));
 	}
-LEAVE_FUNC;
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
+
+	// json parse
+	LBS_EmitEnd(writebuf);
+	obj = json_tokener_parse(LBS_Body(writebuf));
+	if (is_error(obj)) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(obj);
+
+	result = json_object_object_get(obj,"result");
+	meta = json_object_object_get(result,"meta");
+	if (meta == NULL || is_error(meta)) {
+		Error(_("no meta object"));
+	}
+	child = json_object_object_get(meta,"session_id");
+	if (child == NULL || is_error(child)) {
+		Error(_("no session_id object"));
+	}
+	SESSIONID(Session) = g_strdup(json_object_get_string(child));
+
+	child = json_object_object_get(result,"app_rpc_endpoint_uri");
+	if (child == NULL || is_error(child)) {
+		Error(_("no jsonrpc_uri object"));
+	}
+	RPCURI(Session) = g_strdup(json_object_get_string(child));
+
+	child = json_object_object_get(result,"app_rest_api_uri_root");
+	if (child == NULL || is_error(child)) {
+		Error(_("no rest_uri object"));
+	}
+	RESTURI(Session) = g_strdup(json_object_get_string(child));
+
+	json_object_put(obj);
 }
 
-extern	Bool
-GetScreenData(
-	NETFILE		*fp)
+void
+RPC_EndSession()
 {
-	char			window[SIZE_NAME+1];
-	char			widgetName[SIZE_LONGNAME+1];
-	PacketClass		c;
-	gboolean 		isdummy;
-	unsigned char	type;
+	CURL *curl;
+	struct curl_slist *headers = NULL;
+	json_object *obj,*params,*child;
+	char *ctype,*jsonstr;
+	long http_code;
+	gboolean fSSL;
+	size_t jsonsize;
 
-ENTER_FUNC;
-	if (THISWINDOW(Session) != NULL) {
-		g_free(THISWINDOW(Session));
+	params = json_object_new_object();
+	child = json_object_new_object();
+	json_object_object_add(child,"client_version",
+		json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"session_id",
+		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(params,"meta",child);
+
+	obj = MakeJSONRPCRequest("end_session",params);
+	
+	if (readbuf == NULL) {
+		readbuf = NewLBS();
 	}
-	isdummy = FALSE;
-	CheckScreens(fp,FALSE);	 
-	GL_SendPacketClass(fp,GL_GetData);
-	GL_SendInt(fp,0);/*get all data*/
-	if (fMlog) {
-		MessageLog("====");
+	jsonstr = (char*)json_object_to_json_string(obj);
+	jsonsize = strlen(jsonstr);
+	LBS_EmitStart(readbuf);
+	LBS_EmitString(readbuf,jsonstr);
+	json_object_put(obj);
+	LBS_EmitEnd(readbuf);
+	LBS_SetPos(readbuf,0);
+
+	if (writebuf == NULL) {
+		writebuf = NewLBS();
 	}
-	while ((c = GL_RecvPacketClass(fp)) == GL_WindowName) {
-		GL_RecvString(fp, sizeof(window), window);
-		dbgprintf("[%s]\n",window);
-		type = (unsigned char)GL_RecvInt(FPCOMM(Session)); 
-		if		(  fMlog  ) {
-			switch	(type) {
-			  case	SCREEN_NEW_WINDOW:
-				MessageLogPrintf("new window [%s]\n",window);break;
-			  case	SCREEN_CHANGE_WINDOW:
-				MessageLogPrintf("change window [%s]\n",window);break;
-			  case	SCREEN_CURRENT_WINDOW:
-				MessageLogPrintf("current window [%s]\n",window);break;
-			  case	SCREEN_CLOSE_WINDOW:
-				MessageLogPrintf("close window [%s]\n",window);break;
-			  case	SCREEN_JOIN_WINDOW:
-				MessageLogPrintf("join window [%s]\n",window);break;
-			}
-		}
-		switch	(type) {
-		  case	SCREEN_NEW_WINDOW:
-		  case	SCREEN_CHANGE_WINDOW:
-		  case	SCREEN_CURRENT_WINDOW:
-			if ((c = GL_RecvPacketClass(fp)) == GL_ScreenData) {
-				THISWINDOW(Session) = strdup(window);
-				RecvValue(fp,window);
-				isdummy = window[0] == '_';
-				if (!isdummy) {
-					ShowWindow(window);
-				}
-				UpdateWindow(window);
-				ResetTimer(window);
-			}
-			if (type == SCREEN_CHANGE_WINDOW) {
-				ResetScrolledWindow(window);
-			}
-			break;
-		  case	SCREEN_CLOSE_WINDOW:
-			CloseWindow(window);
-			c = GL_RecvPacketClass(fp);
-			break;
-		  default:
-			CloseWindow(window);
-			c = GL_RecvPacketClass(fp);
-			break;
-		}
-		if		(  c  ==  GL_NOT  ) {
-			/*	no screen data	*/
-		} else {
-			/*	fatal error	*/
-		}
+	LBS_EmitStart(writebuf);
+	LBS_SetPos(writebuf,0);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Error(_("could not init curl"));
 	}
 
-	if (c == GL_FocusName) {
-		GL_RecvString(fp, sizeof(window), window);
-		GL_RecvString(fp, sizeof(widgetName), widgetName);
-		if (!isdummy) {
-			GrabFocus(window, widgetName);
-		}
-		c = GL_RecvPacketClass(fp);
+	fSSL = !strncmp("https",RPCURI(Session),5);
+
+	headers = curl_slist_append(headers, "Content-Type: application/json");
+
+	curl_easy_setopt(curl, CURLOPT_URL,RPCURI(Session));
+	curl_easy_setopt(curl, CURLOPT_POST,1);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION,read_text_data);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER,headers);
+	if (fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
 	}
-LEAVE_FUNC;
-	return TRUE;
-}
-
-static	void
-GL_SendVersionString(
-	NETFILE		*fp)
-{
-	char	version[256];
-	char	buff[256];
-	size_t	size;
-
-	sprintf(version,"version:blob:expand:pdf:download:negotiation:v47:v48:i18n");
-#ifdef	NETWORK_ORDER
-	strcat(version, ":no");
-#endif
-
-	sprintf(buff,":agent=glclient2/%s",PACKAGE_VERSION);
-	strcat(version, buff);
-
-	size = strlen(version);
-	SendChar(fp,(size&0xFF));
-	SendChar(fp,0);
-	SendChar(fp,0);
-	SendChar(fp,0);
-	Send(fp,version,size);
-	if		(  !CheckNetFile(fp)  ) {
-		GL_Error();
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Error(_("curl_easy_perform failure"));
 	}
-}
-
-static gint
-PingTimerFunc(gpointer data)
-{
-	NETFILE *fp = (NETFILE *)data;
-	PacketClass	c;
-	char buff[CLIENT_SIZE_BUFF];
-
-	if (ISRECV(Session)) {
-		return 1;
-	}
-	ISRECV(Session) = TRUE;
-	fp = (NETFILE *)data;
-	if (fV47) {
-		GL_SendPacketClass(fp,GL_Ping);ON_IO_ERROR(fp,badio);
-		c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
-		switch (c) {
-		case GL_Pong_Dialog:
-			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ISRECV(Session) = FALSE;
-			ShowInfoDialog(buff);
-			break;
-		case GL_Pong_Popup:
-			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ISRECV(Session) = FALSE;
-			Notify(_("glclient message notify"),buff,"gtk-dialog-info",0);
-			break;
-		case GL_Pong_Abort:
-			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ShowInfoDialog(buff);
-			exit(1);
-			break;
-		case GL_Pong:
-			ISRECV(Session) = FALSE;
-			break;
-		default:
-			ShowErrorDialog(_("connection error(invalid pong packet)"));
-			break;
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code) == CURLE_OK) {
+		if (http_code != 200) {
+			Error(_("http status code[%d]"),http_code);
 		}
 	} else {
-		GL_SendPacketClass(fp,GL_Ping);ON_IO_ERROR(fp,badio);
-		c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
-		if (c != GL_Pong) {
-			ShowErrorDialog(_("connection error(server doesn't reply ping)"));
-			return 1;
-		}
-		c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
-		switch (c) {
-		case GL_STOP:
-			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ShowInfoDialog(buff);
-			exit(1);
-			break;
-		case GL_CONTINUE:
-			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ISRECV(Session) = FALSE;
-			ShowInfoDialog(buff);
-			break;
-		case GL_END:
-		default:
-			ISRECV(Session) = FALSE;
-			break;
-		};
+		Error(_("curl_easy_getinfo"));
 	}
-	ISRECV(Session) = FALSE;
-	CheckPrintList();
-	CheckDLList();
-	return 1;
-badio:
-	ShowErrorDialog(_("connection error(server doesn't reply ping)"));
-	return 1;
-}
-
-extern	Bool
-SendConnect(
-	NETFILE		*fp,
-	char		*apl)
-{
-	Bool		rc;
-	PacketClass	pc;
-	char		ver[16];
-
-ENTER_FUNC;
-	rc = TRUE;
-	if		(  fMlog  ) {
-		MessageLog(_("connection start\n"));
-	}
-	GL_SendPacketClass(fp,GL_Connect);
-	GL_SendVersionString(fp);
-	GL_SendString(fp,User);
-	GL_SendString(fp,Pass);
-	GL_SendString(fp,apl);
-	pc = GL_RecvPacketClass(fp);
-	if		(  pc  ==  GL_OK  ) {
-	} else if (pc == GL_ServerVersion) {
-		GL_RecvString(fp, sizeof(ver), ver);
-		if (strcmp(ver, "1.4.4.01") >= 0) {
-			SetPingTimerFunc(PingTimerFunc, fp);
-		}
-		if (strcmp(ver, "1.4.6.99") >= 0) {
-			fV47 = TRUE;
-		} else {
-			fV47 = FALSE;
+	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
+		if (strstr(ctype,"json") == NULL) {
+			Error(_("invalid content type:%s"),ctype);
 		}
 	} else {
-		rc = FALSE;
-		switch	(pc) {
-		  case	GL_NOT:
-			ShowErrorDialog(_("can not connect server"));
-			break;
-		  case	GL_E_VERSION:
-			ShowErrorDialog(_("can not connect server(version not match)"));
-			break;
-		  case	GL_E_AUTH:
-#ifdef USE_SSL
-			if 	(fSsl) {
-				ShowErrorDialog(
-					_("can not connect server(authentication error)"));
-			} else {
-				ShowErrorDialog(
-					_("can not connect server(user or password is incorrect)"));
-			}
-#else
-			ShowErrorDialog(
-				_("can not connect server(user or password is incorrect)"));
-#endif
-			break;
-		  case	GL_E_APPL:
-			ShowErrorDialog(
-				_("can not connect server(application name invalid)"));
-			break;
-		  default:
-			dbgprintf("[%X]\n",pc);
-			ShowErrorDialog(_("can not connect server(other protocol error)"));
-			break;
-		}
+		Error(_("curl_easy_getinfo failure"));
 	}
-LEAVE_FUNC;
-	return	(rc);
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
+
+	// json parse
+	LBS_EmitEnd(writebuf);
+	obj = json_tokener_parse(LBS_Body(writebuf));
+	if (is_error(obj)) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(obj);
+	json_object_put(obj);
 }
 
-extern	void
-SendEvent(
-	NETFILE		*fp,
-	char		*window,
-	char		*widget,
-	char		*event)
+void
+RPC_GetWindow()
 {
-ENTER_FUNC;
-	dbgprintf("window = [%s]",window); 
-	dbgprintf("widget = [%s]",widget); 
-	dbgprintf("event  = [%s]",event);
-	if		(  fMlog  ) {
-		MessageLogPrintf("send event  [%s:%s:%s]\n",window,widget,event);
+	CURL *curl;
+	struct curl_slist *headers = NULL;
+	json_object *obj,*params,*child;
+	char *ctype,*jsonstr;
+	gboolean fSSL;
+	long http_code;
+	size_t jsonsize;
+
+	params = json_object_new_object();
+	child = json_object_new_object();
+	json_object_object_add(child,"client_version",
+		json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"session_id",
+		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(params,"meta",child);
+
+	obj = MakeJSONRPCRequest("get_window",params);
+	
+	if (readbuf == NULL) {
+		readbuf = NewLBS();
 	}
-	GL_SendPacketClass(fp,GL_Event);
-	GL_SendString(fp,window);
-	GL_SendString(fp,widget);
-	GL_SendString(fp,event);
-LEAVE_FUNC;
+	jsonstr = (char*)json_object_to_json_string(obj);
+	jsonsize = strlen(jsonstr);
+	LBS_EmitStart(readbuf);
+	LBS_EmitString(readbuf,jsonstr);
+	json_object_put(obj);
+	LBS_EmitEnd(readbuf);
+	LBS_SetPos(readbuf,0);
+
+	if (writebuf == NULL) {
+		writebuf = NewLBS();
+	}
+	LBS_EmitStart(writebuf);
+	LBS_SetPos(writebuf,0);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Error(_("could not init curl"));
+	}
+
+	fSSL = !strncmp("https",RPCURI(Session),5);
+
+	headers = curl_slist_append(headers, "Content-Type: application/json");
+
+	curl_easy_setopt(curl, CURLOPT_URL, RPCURI(Session));
+	curl_easy_setopt(curl, CURLOPT_POST, 1);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
+
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	if (fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Error(_("curl_easy_perform"));
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code) == CURLE_OK) {
+		if (http_code != 200) {
+			Error(_("http status code[%d]"),http_code);
+		}
+	} else {
+		Error(_("curl_easy_getinfo"));
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
+		if (strstr(ctype,"json") == NULL) {
+			Error(_("invalid content type:%s"),ctype);
+		}
+	} else {
+		Error(_("curl_easy_getinfo"));
+	}
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
+
+	// json parse
+	LBS_EmitEnd(writebuf);
+	if (SCREENDATA(Session) != NULL) {
+		json_object_put(SCREENDATA(Session));
+	}
+	SCREENDATA(Session) = json_tokener_parse(LBS_Body(writebuf));
+	if (is_error(SCREENDATA(Session))) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(SCREENDATA(Session));
+}
+
+void
+RPC_SendEvent(
+	json_object *params)
+{
+	CURL *curl;
+	struct curl_slist *headers = NULL;
+	json_object *obj;
+	char *ctype,*jsonstr;
+	long http_code;
+	gboolean fSSL;
+	size_t jsonsize;
+
+	obj = MakeJSONRPCRequest("send_event",params);
+	
+	if (readbuf == NULL) {
+		readbuf = NewLBS();
+	}
+	jsonstr = (char*)json_object_to_json_string(obj);
+	jsonsize = strlen(jsonstr);
+	LBS_EmitStart(readbuf);
+	LBS_EmitString(readbuf,jsonstr);
+	json_object_put(obj);
+	LBS_EmitEnd(readbuf);
+	LBS_SetPos(readbuf,0);
+
+	if (writebuf == NULL) {
+		writebuf = NewLBS();
+	}
+	LBS_EmitStart(writebuf);
+	LBS_SetPos(writebuf,0);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Error(_("could not init curl"));
+	}
+
+	fSSL = !strncmp("https",RPCURI(Session),5);
+
+	headers = curl_slist_append(headers, "Content-Type: application/json");
+
+	curl_easy_setopt(curl, CURLOPT_URL, RPCURI(Session));
+	curl_easy_setopt(curl, CURLOPT_POST, 1);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	if (fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Error(_("curl_easy_perform failure"));
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+		if (http_code != 200) {
+			Error(_("http status code[%d]"),http_code);
+		}
+	} else {
+		Error(_("curl_easy_getinfo"));
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
+		if (strstr(ctype,"json") == NULL) {
+			Error(_("invalid content type:%s"),ctype);
+		}
+	} else {
+		Error(_("curl_easy_getinfo failure"));
+	}
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
+
+	// json parse
+	LBS_EmitEnd(writebuf);
+	if (SCREENDATA(Session) != NULL) {
+		json_object_put(SCREENDATA(Session));
+	}
+	SCREENDATA(Session) = json_tokener_parse(LBS_Body(writebuf));
+	if (is_error(SCREENDATA(Session))) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(SCREENDATA(Session));
+}
+
+void
+RPC_GetMessage(
+	char **dialog,
+	char **popup,
+	char **abort)
+{
+	CURL *curl;
+	struct curl_slist *headers = NULL;
+	json_object *obj,*params,*child,*result;
+	char *ctype,*jsonstr;
+	gboolean fSSL;
+	long http_code;
+	size_t jsonsize;
+
+	params = json_object_new_object();
+	child = json_object_new_object();
+	json_object_object_add(child,"client_version",
+		json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"session_id",
+		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(params,"meta",child);
+
+	obj = MakeJSONRPCRequest("get_message",params);
+	
+	if (readbuf == NULL) {
+		readbuf = NewLBS();
+	}
+	jsonstr = (char*)json_object_to_json_string(obj);
+	jsonsize = strlen(jsonstr);
+	LBS_EmitStart(readbuf);
+	LBS_EmitString(readbuf,jsonstr);
+	json_object_put(obj);
+	LBS_EmitEnd(readbuf);
+	LBS_SetPos(readbuf,0);
+
+	if (writebuf == NULL) {
+		writebuf = NewLBS();
+	}
+	LBS_EmitStart(writebuf);
+	LBS_SetPos(writebuf,0);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Error(_("could not init curl"));
+	}
+
+	fSSL = !strncmp("https",RPCURI(Session),5);
+
+	headers = curl_slist_append(headers, "Content-Type: application/json");
+
+	curl_easy_setopt(curl, CURLOPT_URL, RPCURI(Session));
+	curl_easy_setopt(curl, CURLOPT_POST, 1);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	if (fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Error(_("curl_easy_perform"));
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code) == CURLE_OK) {
+		if (http_code != 200) {
+			Error(_("http status code[%d]"),http_code);
+		}
+	} else {
+		Error(_("curl_easy_getinfo"));
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
+		if (strstr(ctype,"json") == NULL) {
+			Error(_("invalid content type:%s"),ctype);
+		}
+	} else {
+		Error(_("curl_easy_getinfo"));
+	}
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
+
+	// json parse
+	LBS_EmitEnd(writebuf);
+	obj = json_tokener_parse(LBS_Body(writebuf));
+	if (is_error(SCREENDATA(Session))) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(obj);
+	result = json_object_object_get(obj,"result");
+
+	child = json_object_object_get(result,"dialog");
+	if (child == NULL || is_error(child) ||
+        !json_object_is_type(child,json_type_string)) {
+		Error(_("invalid message data:dialog"));
+	}
+	*dialog = g_strdup((char*)json_object_get_string(child));
+
+	child = json_object_object_get(result,"popup");
+	if (child == NULL || is_error(child) ||
+        !json_object_is_type(child,json_type_string)) {
+		Error(_("invalid message data:popup"));
+	}
+	*popup = g_strdup((char*)json_object_get_string(child));
+
+	child = json_object_object_get(result,"abort");
+	if (child == NULL || is_error(child) ||
+        !json_object_is_type(child,json_type_string)) {
+		Error(_("invalid message data:abort"));
+	}
+	*abort = g_strdup((char*)json_object_get_string(child));
+	json_object_put(obj);
+}
+
+size_t
+HeaderPostBLOB(
+	void *ptr,
+	size_t size,
+	size_t nmemb,
+	void *userdata)
+{
+	static char buf[SIZE_NAME+1];
+	size_t all = size * nmemb;
+	char **oid;
+	char *target = "X-BLOB-ID:";
+	char *p;
+	int i;
+
+	oid = (char**)userdata;
+	*oid = buf;
+	if (all <= strlen(target)) {
+		return all;
+	}
+	if (strncasecmp(ptr,target,strlen(target))) {
+		return all;
+	}
+	for(p=ptr+strlen(target);isspace(*p);p++);
+	for(i=0;isdigit(*p)&&i<SIZE_NAME;p++,i++) {
+		buf[i] = *p;
+	}
+	buf[i] = 0;
+
+	return all;
+}
+
+#define SIZE_URL_BUF 256
+
+char *
+REST_PostBLOB(
+	LargeByteString *lbs)
+{
+	CURL *curl;
+	struct curl_slist *headers = NULL;
+	char *oid,url[SIZE_URL_BUF+1];
+	gboolean fSSL;
+	long http_code;
+
+	oid = NULL;
+
+	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/",
+		RESTURI(Session),SESSIONID(Session));
+	url[sizeof(url)-1] = 0;
+
+	fSSL = !strncmp("https",url,5);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Error(_("could not init curl"));
+	}
+
+	headers = curl_slist_append(headers, 
+		"Content-Type: application/octet-stream");
+
+	LBS_SetPos(lbs,0);
+
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_POST, 1);
+	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)lbs);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_binary_data);
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,LBS_Size(lbs));
+
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
+	curl_easy_setopt(curl, CURLOPT_WRITEHEADER,(void*)&oid);
+	if (fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Error(_("curl_easy_perfrom failure"));
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+		if (http_code != 200) {
+			Error(_("http status code[%d]"),http_code);
+		}
+	} else {
+		Error(_("curl_easy_getinfo"));
+	}
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
+
+	return oid;
+}
+
+LargeByteString*
+REST_GetBLOB(
+	const char *oid)
+{
+	CURL *curl;
+	char url[SIZE_URL_BUF+1];
+	LargeByteString *lbs;
+	gboolean fSSL;
+	long http_code;
+
+	lbs = NewLBS();
+
+	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",
+		RESTURI(Session),SESSIONID(Session),oid);
+	url[sizeof(url)-1] = 0;
+
+	fSSL = !strncmp("https",url,5);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Warning(_("could not get blob oid[%s]"),oid);
+		return NULL;
+	}
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)lbs);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+	if (fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Warning(_("curl_easy_perfom failure"));
+		return NULL;
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+		if (http_code != 200) {
+			Warning(_("GETBLOB http status code[%d]"),http_code);
+			return NULL;
+		}
+	} else {
+		Error(_("curl_easy_getinfo"));
+	}
+	curl_easy_cleanup(curl);
+
+	return lbs;
 }
 
 extern	void
 InitProtocol(void)
 {
 ENTER_FUNC;
-	LargeBuff = NewLBS();
 	THISWINDOW(Session) = NULL;
 	WINDOWTABLE(Session) = NewNameHash();
-	WIDGETTABLE(Session) = NewNameHash();
-LEAVE_FUNC;
-}
-
-static gboolean RemoveChangedWidget(gpointer	key,
-	gpointer	value,
-	gpointer	user_data) 
-{
-	g_free((char *)key);
-	return TRUE;
-}
-
-static	void
-_SendWindowData(
-	char		*wname,
-	WindowData	*wdata,
-	gpointer	user_data)
-{
-ENTER_FUNC;
-	GL_SendPacketClass(FPCOMM(Session),GL_WindowName);
-	GL_SendString(FPCOMM(Session),wname);
-	g_hash_table_foreach(wdata->ChangedWidgetTable,
-		(GHFunc)SendWidgetData,FPCOMM(Session));
-	GL_SendPacketClass(FPCOMM(Session),GL_END);
-
-	if (wdata->ChangedWidgetTable != NULL) {
-		g_hash_table_foreach_remove(wdata->ChangedWidgetTable, 
-			RemoveChangedWidget, NULL);
-		g_hash_table_destroy(wdata->ChangedWidgetTable);
-	}
-    wdata->ChangedWidgetTable = NewNameHash();
-LEAVE_FUNC;
-}
-
-extern	void
-SendWindowData(void)
-{
-ENTER_FUNC;
-	g_hash_table_foreach(WINDOWTABLE(Session),(GHFunc)_SendWindowData,NULL);
-	GL_SendPacketClass(FPCOMM(Session),GL_END);
-LEAVE_FUNC;
-}
-
-extern	PacketDataType
-RecvFixedData(
-	NETFILE	*fp,
-	Fixed	**xval)
-{
-	PacketDataType	type;
-	
-	type = GL_RecvDataType(fp);
-
-	switch	(type) {
-	  case	GL_TYPE_NUMBER:
-		*xval = GL_RecvFixed(fp);
-		break;
-	  default:
-		printf(_("invalid data conversion\n"));
-		exit(1);
-		break;
-	}
-	return type;
-}
-
-extern	void
-SendFixedData(
-	NETFILE			*fp,
-	PacketDataType	type,
-	Fixed			*xval)
-{
-	GL_SendDataType(fp,type);
-	switch	(type) {
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		GL_SendString(fp,(char *)xval->sval);
-		break;
-	  case	GL_TYPE_NUMBER:
-		GL_SendFixed(fp,xval);
-		break;
-	  default:
-		printf(_("invalid data conversion\n"));
-		exit(1);
-		break;
-	}
-}
-
-extern	void
-SendStringData(
-	NETFILE			*fp,
-	PacketDataType	type,
-	char			*str)
-{
-ENTER_FUNC;
-	GL_SendDataType(fp,type);
-	switch	(type) {
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		GL_SendString(fp,(char *)str);
-		break;
-	  case	GL_TYPE_BINARY:
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_OBJECT:
-		LBS_ReserveSize(LargeBuff,strlen(str)+1,FALSE);
-		strcpy(LBS_Body(LargeBuff),str);
-		GL_SendLBS(fp,LargeBuff);
-		break;
-	  case	GL_TYPE_INT:
-		GL_SendInt(fp,atoi(str));
-		break;
-	  case	GL_TYPE_FLOAT:
-		GL_SendFloat(fp,atof(str));
-		break;
-	  case	GL_TYPE_BOOL:
-		GL_SendBool(fp,(( *str == 'T' ) ? TRUE: FALSE ));
-		break;
-	  default:
-		break;
-	}
-LEAVE_FUNC;
-}
-
-extern	PacketDataType
-RecvStringData(
-	NETFILE	*fp,
-	char	*str,
-	size_t	size)
-{
-	PacketDataType	type;
-
-ENTER_FUNC;
-	type = GL_RecvDataType(fp);
-	switch	(type) {
-	  case	GL_TYPE_INT:
-		dbgmsg("int");
-		sprintf(str,"%d",GL_RecvInt(fp));
-		break;
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp, size, str);
-		break;
-	  case	GL_TYPE_BINARY:
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_OBJECT:
-		dbgmsg("LBS");
-		GL_RecvLBS(fp,LargeBuff);
-		if		(  LBS_Size(LargeBuff)  >  0  ) {
-			memcpy(str,LBS_Body(LargeBuff),LBS_Size(LargeBuff));
-			str[LBS_Size(LargeBuff)] = 0;
-		} else {
-			*str = 0;
-		}
-		break;
-	}
-LEAVE_FUNC;
-	return type;
-}
-
-
-extern	void
-SendIntegerData(
-	NETFILE			*fp,
-	PacketDataType	type,
-	int				val)
-{
-	char	buff[CLIENT_SIZE_BUFF];
-	
-	GL_SendDataType(fp,type);
-	switch	(type) {
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		sprintf(buff,"%d",val);
-		GL_SendString(fp,(char *)buff);
-		break;
-	  case	GL_TYPE_NUMBER:
-		GL_SendFloat(fp,(double)val);
-		break;
-	  case	GL_TYPE_INT:
-		GL_SendInt(fp,val);
-		break;
-	  case	GL_TYPE_FLOAT:
-		GL_SendFloat(fp,(double)val);
-		break;
-	  case	GL_TYPE_BOOL:
-		GL_SendBool(fp,(( val == 0 ) ? FALSE : TRUE ));
-		break;
-	  default:
-		break;
-	}
-}
-
-extern	PacketDataType
-RecvIntegerData(
-	NETFILE	*fp,
-	int		*val)
-{
-	PacketDataType type;
-	char	buff[CLIENT_SIZE_BUFF];
-	
-	type = GL_RecvDataType(fp);
-
-	switch	(type) {
-	  case	GL_TYPE_INT:
-		*val = GL_RecvInt(fp);
-		break;
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp, sizeof(buff), buff);
-		*val = atoi(buff);
-		break;
-	}
-	return type;
-}
-
-extern	void
-SendBoolData(
-	NETFILE			*fp,
-	PacketDataType	type,
-	Bool			val)
-{
-	GL_SendDataType(fp,type);
-	switch	(type) {
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		GL_SendString(fp,( val ? "T" : "F" ));
-		break;
-	  case	GL_TYPE_INT:
-		GL_SendInt(fp,(int)val);
-		break;
-	  case	GL_TYPE_FLOAT:
-		GL_SendFloat(fp,(double)val);
-		break;
-	  case	GL_TYPE_BOOL:
-		GL_SendBool(fp,val);
-		break;
-	  default:
-		break;
-	}
-}
-
-extern	PacketDataType
-RecvBoolData(
-	NETFILE	*fp,
-	Bool	*val)
-{
-	PacketDataType	type;
-	char	buff[CLIENT_SIZE_BUFF];
-	
-	type = GL_RecvDataType(fp);
-
-	switch	(type) {
-	  case	GL_TYPE_INT:
-		*val = ( GL_RecvInt(fp) == 0 ) ? FALSE : TRUE;
-		break;
-	  case	GL_TYPE_BOOL:
-		*val = GL_RecvBool(fp);
-		break;
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp, sizeof(buff), buff);
-		*val = (  buff[0]  ==  'T'  ) ? TRUE : FALSE;
-		break;
-	}
-	return	type;
-}
-
-extern	void
-SendFloatData(
-	NETFILE			*fp,
-	PacketDataType	type,
-	double			val)
-{
-	char	buff[CLIENT_SIZE_BUFF];
-	
-	GL_SendDataType(fp,type);
-	switch	(type) {
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		sprintf(buff,"%g",val);
-		GL_SendString(fp,(char *)buff);
-		break;
-#if	0
-	  case	GL_TYPE_NUMBER:
-		xval = DoubleToFixed(val);
-		GL_SendFixed(fp,xval);
-		FreeFixed(xval);
-		break;
-#endif
-	  case	GL_TYPE_INT:
-		GL_SendInt(fp,(int)val);
-		break;
-	  case	GL_TYPE_FLOAT:
-		GL_SendFloat(fp,val);
-		break;
-	  case	GL_TYPE_BOOL:
-		GL_SendBool(fp,(( val == 0 ) ? FALSE : TRUE ));
-		break;
-	  default:
-		printf(_("invalid data conversion\n"));
-		exit(1);
-		break;
-	}
-}
-
-extern	PacketDataType
-RecvFloatData(
-	NETFILE	*fp,
-	double	*val)
-{
-	PacketDataType	type;
-	char	buff[CLIENT_SIZE_BUFF];
-	Fixed	*xval;
-
-ENTER_FUNC;
-	type = GL_RecvDataType(fp);
-
-	switch	(type)	{
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-		GL_RecvString(fp, sizeof(buff), buff);
-		*val = atof(buff);
-		break;
-	  case	GL_TYPE_NUMBER:
-		xval = GL_RecvFixed(fp);
-		*val = atof(xval->sval) / pow(10.0, xval->slen);
-		xfree(xval);
-		break;
-	  case	GL_TYPE_INT:
-		*val = (double)GL_RecvInt(fp);
-		break;
-	  case	GL_TYPE_FLOAT:
-		*val = GL_RecvFloat(fp);
-		break;
-	}
-LEAVE_FUNC;
-	return type;
-}
-
-extern PacketDataType
-RecvBinaryData(NETFILE *fp, LargeByteString *binary)
-{
-	PacketDataType	type;
-
-ENTER_FUNC;
-    type = GL_RecvDataType(fp);
-    switch (type) {
-    case  GL_TYPE_CHAR:
-    case  GL_TYPE_VARCHAR:
-    case  GL_TYPE_DBCODE:
-    case  GL_TYPE_TEXT:
-    case  GL_TYPE_BINARY:
-    case  GL_TYPE_BYTE:
-    case  GL_TYPE_OBJECT:
-        GL_RecvLBS(fp, binary);
-        break;
-    default:
-        Warning("unsupported data type: %d\n", type);
-        break;
-    }
-LEAVE_FUNC;
-	return type;
-}
-
-extern void
-SendBinaryData(
-	NETFILE 		*fp, 
-	PacketDataType 	type, 
-	LargeByteString	*binary)
-{
-ENTER_FUNC;
-    switch (type) {
-    case  GL_TYPE_BINARY:
-    case  GL_TYPE_BYTE:
-    case  GL_TYPE_OBJECT:
-		GL_SendDataType(fp, GL_TYPE_OBJECT);
-        GL_SendLBS(fp, binary);
-        break;
-    default:
-        Warning("unsupported data type: %d\n", type);
-        break;
-    }
+	SCREENDATA(Session) = NULL;
 LEAVE_FUNC;
 }

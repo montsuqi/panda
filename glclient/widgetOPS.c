@@ -41,24 +41,23 @@
 #include	<gdk-pixbuf/gdk-pixbuf.h>
 
 #include	"types.h"
-#include	"glterm.h"
 #include	"glclient.h"
 #include	"styleParser.h"
 #include	"protocol.h"
 #include	"widgetOPS.h"
 #include	"action.h"
-#include	"marshaller.h"
-#include	"queue.h"
 #include	"widgetcache.h"
 #include	"download.h"
+#include	"dialogs.h"
+#include	"printservice.h"
 #include	"notify.h"
 #include	"message.h"
 #include	"debug.h"
 
 static	void
 SetState(
-	GtkWidget	*widget,
-	GtkStateType	state)
+	GtkWidget *widget,
+	GtkStateType state)
 {
 	if (state != GTK_STATE_INSENSITIVE)
 		gtk_widget_set_sensitive(widget,TRUE);
@@ -67,14 +66,14 @@ SetState(
 
 static	void
 SetStyle(
-	GtkWidget	*widget,
-	char	*str)
+	GtkWidget *widget,
+	const char *str)
 {
 	int i;
 	GtkRcStyle *rc_style;
 	GtkStyle *style;
 
-	style = GetStyle(str);
+	style = GetStyle((char*)str);
 
 	if (style != NULL) {
 		rc_style = gtk_widget_get_modifier_style(widget);
@@ -88,7 +87,7 @@ SetStyle(
 		gtk_widget_modify_style(widget, rc_style);
     	if (GTK_IS_CONTAINER(widget)){
     	    gtk_container_foreach(GTK_CONTAINER(widget),
-				(GtkCallback)SetStyle,str);
+				(GtkCallback)SetStyle,(gpointer)str);
     	}
 	}
 }
@@ -96,11 +95,33 @@ SetStyle(
 static void
 SetCommon(
 	GtkWidget	*widget,
-	WidgetData	*data)
+	json_object *obj)
 {
-	SetState(widget,data->state);
-	SetStyle(widget,data->style);
-	gtk_widget_set_visible(widget,data->visible);
+	json_object *child;
+
+	child = json_object_object_get(obj,"state");
+	if (child != NULL && 
+		!is_error(child) &&
+		json_object_is_type(child,json_type_int)) {
+
+		SetState(widget,json_object_get_int(child));
+	}
+
+	child = json_object_object_get(obj,"style");
+	if (child != NULL && 
+		!is_error(child) &&
+		json_object_is_type(child,json_type_string)) {
+
+		SetStyle(widget,json_object_get_string(child));
+	}
+
+	child = json_object_object_get(obj,"visible");
+	if (child != NULL && 
+		!is_error(child) &&
+		json_object_is_type(child,json_type_boolean)) {
+
+		gtk_widget_set_visible(widget,json_object_get_boolean(child));
+	}
 }
 
 static	void
@@ -108,11 +129,26 @@ SetWidgetLabelRecursive(
 	GtkWidget	*widget,
 	char		*label)
 {
-	if		(  GTK_IS_LABEL(widget)  ) {
+	if (GTK_IS_LABEL(widget)) {
 		gtk_label_set_text(GTK_LABEL(widget),label);
 	} else {
 		gtk_container_foreach(GTK_CONTAINER(widget),
 			(GtkCallback)SetWidgetLabelRecursive,label);
+	}
+}
+
+static	Bool
+IsCommon(
+	char *key)
+{
+	if (!strcmp("state",key)) {
+		return TRUE;
+	} else if (!strcmp("style",key)) {
+		return TRUE;
+	} else if (!strcmp("visible",key)) {
+		return TRUE;
+	} else {
+		return FALSE;
 	}
 }
 
@@ -121,45 +157,39 @@ SetWidgetLabelRecursive(
 /******************************************************************************/
 
 static	void
-SetPandaPreview(
+SetPandaPDF(
 	GtkWidget	*widget,
-	WidgetData	*wdata,
-	_PREVIEW	*data)
+	json_object	*obj)
 {
+	LargeByteString *lbs;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 
-		LBS_Size(data->binary), LBS_Body(data->binary));
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (!IsCommon(k) && json_object_is_type(v,json_type_string)) {
+			lbs = REST_GetBLOB((char*)json_object_get_string(v));
+			if (lbs != NULL) {
+				gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 
+					LBS_Size(lbs), LBS_Body(lbs));
+				FreeLBS(lbs);
+			}
+		}
+	}
 LEAVE_FUNC;
 }
 
 static	void
 SetPandaTimer(
 	GtkWidget	*widget,
-	WidgetData	*wdata,
-	_Timer		*data)
+	json_object	*obj)
 {
+	json_object *child;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	gtk_panda_timer_set(GTK_PANDA_TIMER(widget),
-		data->duration);
-LEAVE_FUNC;
-}
-
-static	void
-SetPandaDownload(
-	GtkWidget	*widget,
-	WidgetData	*wdata,
-	_Download	*data)
-{
-ENTER_FUNC;
-	SetCommon(widget,wdata);
-	g_return_if_fail(data->binary != NULL);
-	if (LBS_Size(data->binary) > 0) {
-		ShowDownloadDialog(widget,
-			data->filename,
-			data->description,
-			data->binary);
+	SetCommon(widget,obj);
+	child = json_object_object_get(obj,"duration");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		gtk_panda_timer_set(GTK_PANDA_TIMER(widget),
+			json_object_get_int(child));
 	}
 LEAVE_FUNC;
 }
@@ -167,105 +197,377 @@ LEAVE_FUNC;
 static	void
 GetPandaTimer(
 	GtkWidget	*widget,
-	_Timer*		data)
+	json_object	*obj)
 {
 ENTER_FUNC;
-	data->duration = GTK_PANDA_TIMER(widget)->duration / 1000;
+	json_object_object_del(obj,"duration");
+	json_object_object_add(obj,"duration",
+		json_object_new_int(GTK_PANDA_TIMER(widget)->duration / 1000));
+LEAVE_FUNC;
+}
+
+static	void
+SetPandaDownload(
+	GtkWidget	*widget,
+	json_object	*obj)
+{
+	json_object *child;
+	const char *filename, *desc;
+	LargeByteString *lbs;
+ENTER_FUNC;
+	filename = desc = NULL;
+
+	SetCommon(widget,obj);
+	child = json_object_object_get(obj,"filename");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		filename = json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"description");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		desc = json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"objectdata");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		lbs = REST_GetBLOB(json_object_get_string(child));
+		if (lbs != NULL) {
+			ShowDownloadDialog(widget,(char*)filename,(char*)desc,lbs);
+			FreeLBS(lbs);
+		}
+	}
+LEAVE_FUNC;
+}
+
+static	void
+SetPandaDownload2(
+	GtkWidget	*widget,
+	json_object	*obj)
+{
+	json_object *child;
+	char *filename,*desc,*path;
+	int nretry;
+	DLRequest *req;
+ENTER_FUNC;
+	path = filename = desc = NULL;
+	nretry = 0;
+
+	child = json_object_object_get(obj,"path");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		path = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"filename");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		filename = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"description");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		desc = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"nretry");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		nretry = json_object_get_int(child);
+	}
+	if (path != NULL && filename != NULL) {
+			req = (DLRequest*)xmalloc(sizeof(DLRequest));
+			req->path = StrDup(path);
+			req->filename = StrDup(filename);
+			req->description = StrDup(desc);
+			req->nretry = nretry;
+			DLLIST(Session) = g_list_append(DLLIST(Session),req);
+			MessageLogPrintf("add path[%s]\n",path);
+	}
+LEAVE_FUNC;
+}
+
+static	void
+SetPandaPrint(
+	GtkWidget	*widget,
+	json_object	*obj)
+{
+	json_object *child;
+	char *title,*path;
+	int nretry,showdialog;
+	PrintRequest *req;
+ENTER_FUNC;
+	path = title = NULL;
+	nretry = showdialog = 0;
+
+	child = json_object_object_get(obj,"path");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		path = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"title");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		title = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"nretry");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		nretry = json_object_get_int(child);
+	}
+	child = json_object_object_get(obj,"showdialog");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		showdialog = json_object_get_int(child);
+	}
+	if (path != NULL && title != NULL) {
+			req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
+			req->path = StrDup(path);
+			req->title = StrDup(title);
+			req->nretry = nretry;
+			req->showdialog = showdialog;
+			PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
+			MessageLogPrintf("add path[%s]\n",path);
+	}
 LEAVE_FUNC;
 }
 
 static	void
 SetNumberEntry(
-	GtkWidget		*widget,
-	WidgetData	*wdata,
-	_NumberEntry	*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
-	Numeric	value;
-
+	Numeric	num;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	g_object_set(G_OBJECT(widget),"editable",data->editable,NULL);
-	value = FixedToNumeric(data->fixed);
-	gtk_number_entry_set_value(GTK_NUMBER_ENTRY(widget), value);
-	NumericFree(value);
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else if (!strcmp(k,"editable")) {
+			if (json_object_is_type(v,json_type_boolean)) {
+				g_object_set(G_OBJECT(widget),"editable",
+					json_object_get_boolean(v),NULL);
+			}
+		} else {
+			if (json_object_is_type(v,json_type_double)) {
+				num =DoubleToNumeric(json_object_get_double(v));
+				gtk_number_entry_set_value(GTK_NUMBER_ENTRY(widget),num);
+				NumericFree(num);
+			}
+		}
+	}
 LEAVE_FUNC;
 }
 
 static	void
 GetNumberEntry(
-	GtkWidget		*widget,
-	_NumberEntry	*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
-	Numeric	value;
-
+	Numeric	num;
 ENTER_FUNC;
-	value = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
-	xfree(data->fixed->sval);
-	data->fixed->sval = NumericToFixed(value,
-		data->fixed->flen,data->fixed->slen);
-	NumericFree(value);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else if (!strcmp(k,"editable")) {
+		} else {
+			num = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
+			json_object_object_del(obj,k);
+			json_object_object_add(obj,k,
+				json_object_new_double(NumericToDouble(num)));
+			NumericFree(num);
+		}
+	}
 LEAVE_FUNC;
 }
+
+#define MAX_COMBO_ITEM (256)
 
 static	void
 SetPandaCombo(
 	GtkWidget	*widget,
-	WidgetData	*wdata,
-	_Combo		*data)
+	json_object	*obj)
 {
-	GtkPandaCombo	*combo;
-
+	GtkPandaCombo *combo;
+	json_object *child,*val;
+	int count,n,i;
+	char *item[MAX_COMBO_ITEM];
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	combo = GTK_PANDA_COMBO(widget);
-	gtk_panda_combo_set_popdown_strings(combo,data->itemdata);
+	SetCommon(widget,obj);
+	count = 0;
+	child = json_object_object_get(obj,"count");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		count = json_object_get_int(child);
+	}
+	child = json_object_object_get(obj,"item");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_array)) {
+		n = json_object_array_length(child);
+		if (count > 0) {
+			n = n > count ? count : n;
+		}
+		for(i=0;i<MAX_COMBO_ITEM;i++) {
+			item[i] = NULL;
+		}
+		item[0] = "";
+		for(i=0;i<n;i++) {
+			val = json_object_array_get_idx(child,i);
+			if (json_object_is_type(val,json_type_string)) {
+				item[i+1] = g_strdup(json_object_get_string(val));
+			}
+		}
+		combo = GTK_PANDA_COMBO(widget);
+		gtk_panda_combo_set_popdown_strings(combo,item);
+	}
 LEAVE_FUNC;
 }
+
+#define MAX_CLIST_COLUMNS (256)
 
 static	void
 SetPandaCList(
 	GtkWidget	*widget,
-	WidgetData	*wdata,
-	_CList		*data)
+	json_object	*obj)
 {
-	int j;
-	char **rdata;
-
+	int count,n,i,j,row;
+	double rowattr;
+	char *rdata[MAX_CLIST_COLUMNS];
+	json_object *child,*rowobj,*val;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
+	SetCommon(widget,obj);
 
-	// items
 	gtk_widget_hide(widget);
-	gtk_panda_clist_set_rows(GTK_PANDA_CLIST(widget),data->count);
-	for	( j = 0 ; j < g_list_length(data->clistdata) ; j ++ ) {
-		if (j < data->count) {
-			rdata = g_list_nth_data(data->clistdata,j);
-			gtk_panda_clist_set_row(GTK_PANDA_CLIST(widget),j,rdata);
+
+	count = 0;
+	child = json_object_object_get(obj,"count");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		count = json_object_get_int(child);
+	}
+	gtk_panda_clist_set_rows(GTK_PANDA_CLIST(widget),count);
+
+	row = 0;
+	child = json_object_object_get(obj,"row");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		row = json_object_get_int(child);
+		row = row > 1 ? row - 1 : 0;
+	}
+
+	rowattr = 0.0;
+	child = json_object_object_get(obj,"rowattr");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		switch(json_object_get_int(child)) {
+		case 1: /* DOWN */
+			rowattr = 1.0;
+			break;
+		case 2: /* MIDDLE */
+			rowattr = 0.5;
+			break;
+		case 3: /* QUATER */
+			rowattr = 0.25;
+			break;
+		case 4: /* THREE QUATER */
+			rowattr = 0.75;
+			break;
+		default: /* [0] TOP */
+			rowattr = 0.0;
+			break;
 		}
 	}
-	if (data->fgcolors != NULL) {
-		for	(j = 0;data->fgcolors[j] != NULL;j ++) {
-			gtk_panda_clist_set_fgcolor(GTK_PANDA_CLIST(widget),j,data->fgcolors[j]);
+
+	child = json_object_object_get(obj,"item");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_array)) {
+		n = json_object_array_length(child);
+		if (count > 0) {
+			n = n > count ? count : n;
 		}
-	}
-	if (data->bgcolors != NULL) {
-		for	(j = 0;data->bgcolors[j] != NULL;j ++) {
-			gtk_panda_clist_set_bgcolor(GTK_PANDA_CLIST(widget),j,data->bgcolors[j]);
-		}
-	}
-	gtk_widget_show(widget);
-	for	( j = 0 ; data->states[j] != NULL ; j ++ ) {
-		if (j < data->count) {
-			if (*(data->states[j]) == 'T') {
-				gtk_panda_clist_select_row(GTK_PANDA_CLIST(widget),j,0);
-			} else {
-				gtk_panda_clist_unselect_row(GTK_PANDA_CLIST(widget),j,0);
+		for(i=0;i<n;i++) {
+			rowobj = json_object_array_get_idx(child,i);
+			if (json_object_is_type(rowobj,json_type_object)) {
+				for(j=0;j<MAX_CLIST_COLUMNS;j++) {
+					rdata[j] = NULL;
+				}
+				j = 0;
+				json_object_object_foreach(rowobj,k,v) {
+					if (v != NULL && 
+						json_object_is_type(v,json_type_string)) {
+						rdata[j] = (char*)json_object_get_string(v);
+					}
+					j++;
+				}
+				gtk_panda_clist_set_row(GTK_PANDA_CLIST(widget),i,rdata);
 			}
 		}
 	}
-	if (data->count > 0 && data->row < data->count) {
-		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget), 
-			data->row, 0, data->rowattr, 0.0); 
+
+	child = json_object_object_get(obj,"fgcolor");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_array)) {
+		n = json_object_array_length(child);
+		for(i=0;i<n;i++) {
+			val = json_object_array_get_idx(child,i);
+			if (json_object_is_type(val,json_type_string)) {
+				gtk_panda_clist_set_fgcolor(GTK_PANDA_CLIST(widget),
+					i,(char*)json_object_get_string(val));
+			}
+		}
+	}
+
+	child = json_object_object_get(obj,"bgcolor");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_array)) {
+		n = json_object_array_length(child);
+		for(i=0;i<n;i++) {
+			val = json_object_array_get_idx(child,i);
+			if (json_object_is_type(val,json_type_string)) {
+				gtk_panda_clist_set_bgcolor(GTK_PANDA_CLIST(widget),
+					i,(char*)json_object_get_string(val));
+			}
+		}
+	}
+
+	gtk_widget_show(widget);
+
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else if (!strcmp(k,"count")) {
+			// do nothing
+		} else if (!strcmp(k,"row")) {
+			// do nothing
+		} else if (!strcmp(k,"rowattr")) {
+			// do nothing
+		} else if (!strcmp(k,"column")) {
+			// do nothing
+		} else if (!strcmp(k,"item")) {
+			// do nothing
+		} else if (!strcmp(k,"fgcolor")) {
+			// do nothing
+		} else if (!strcmp(k,"bgcolor")) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_array)) {
+				n = json_object_array_length(v);
+				for(i=0;i<n;i++) {
+					child = json_object_array_get_idx(v,i);
+					if (json_object_is_type(child,json_type_boolean)) {
+						if (json_object_get_boolean(child)) {
+							gtk_panda_clist_select_row(
+								GTK_PANDA_CLIST(widget),i,0);
+						} else {
+							gtk_panda_clist_unselect_row(
+								GTK_PANDA_CLIST(widget),i,0);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (count > 0 && row < count) {
+		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget),row,0,rowattr,0.0); 
 	}
 LEAVE_FUNC;
 }
@@ -273,33 +575,49 @@ LEAVE_FUNC;
 static	void
 GetPandaCList(
 	GtkWidget	*widget,
-	_CList		*data)
+	json_object	*obj)
 {
-	int				i;
-	int				nrows;
-	Bool			getRow;
-
+	int i,nrows,visible,row,selected;
 ENTER_FUNC;
+	visible = 0;
 	nrows = gtk_panda_clist_get_rows(GTK_PANDA_CLIST(widget));
-	getRow = FALSE;
-
-	if (data->states !=NULL) {
-		g_strfreev(data->states);
-	}
-	data->states = g_malloc0(sizeof(gchar*)*(nrows+1));
-	data->states[nrows] = NULL;
-
-	for( i = 0; i < nrows; i++) {
-		if(gtk_panda_clist_row_is_selected(GTK_PANDA_CLIST(widget),i)) {
-			data->states[i] = g_strdup("T");
-		} else {
-			data->states[i] = g_strdup("F");
+	for(i=0;i<nrows;i++) {
+		if (!visible && 
+			gtk_panda_clist_row_is_visible(GTK_PANDA_CLIST(widget),i)) {
+			row = i+1;
+			visible = 1;
 		}
-		if (!getRow) {
-			if (gtk_panda_clist_row_is_visible(GTK_PANDA_CLIST(widget), i)) {
-				/*to be 1origin for COBOL*/
-				data->row = i + 1;
-				getRow = TRUE;
+	}
+
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else if (!strcmp(k,"count")) {
+			// do nothing
+		} else if (!strcmp(k,"row")) {
+			if (visible) {
+				json_object_object_del(obj,k);
+				json_object_object_add(obj,k,
+					json_object_new_int(row));
+			}
+		} else if (!strcmp(k,"rowattr")) {
+			// do nothing
+		} else if (!strcmp(k,"column")) {
+			// do nothing
+		} else if (!strcmp(k,"item")) {
+			// do nothing
+		} else if (!strcmp(k,"fgcolor")) {
+			// do nothing
+		} else if (!strcmp(k,"bgcolor")) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_array)) {
+				for(i=0;i<nrows;i++) {
+					selected = gtk_panda_clist_row_is_selected(
+						GTK_PANDA_CLIST(widget),i);
+					json_object_array_put_idx(v,i,
+						json_object_new_boolean(selected));
+				}
 			}
 		}
 	}
@@ -308,87 +626,199 @@ LEAVE_FUNC;
 
 static	void
 SetPandaHTML(
-	GtkWidget		*widget,
-	WidgetData	*wdata,
-	_HTML			*data)
-{
-ENTER_FUNC;
-	SetCommon(widget,wdata);
-	if (data->uri != NULL) {
-		gtk_panda_html_set_uri (GTK_PANDA_HTML(widget), data->uri);
-	}
-LEAVE_FUNC;
-}
-
-static	void
-GetPandaTable(
 	GtkWidget	*widget,
-	_Table		*data)
+	json_object	*obj)
 {
-	GtkTreeModel *model;
-	GtkTreeIter iter;
-	int i,j,diff;
-	gchar *text;
-	gchar **rowdata;
 ENTER_FUNC;
-	gtk_widget_child_focus(widget,GTK_DIR_TAB_FORWARD);
-	data->trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
-		"send_data_row"));
-	data->tcolumn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
-		"send_data_column"));
-	data->tvalue = g_strdup((gchar*)g_object_get_data(G_OBJECT(widget),
-		"send_data_value"));
-	model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
-	gtk_tree_model_get_iter_first(model,&iter);
-	i = 0;
-	do {
-		rowdata = (gchar**)(g_list_nth_data(data->tabledata,i));
-		for(j=0;rowdata[j]!=NULL;j++) {
-			gtk_tree_model_get(model,&iter,j,&text,-1);
-			diff = strcmp(rowdata[j],text);
-			g_free(rowdata[j]);
-			if (!diff) {
-				g_free(text);
-				rowdata[j] = NULL;
-			} else {
-				rowdata[j] = text;
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_string)) {
+				gtk_panda_html_set_uri(GTK_PANDA_HTML(widget),
+					json_object_get_string(v));
 			}
 		}
-		i+=1;
-	} while(gtk_tree_model_iter_next(model,&iter));
+	}
 LEAVE_FUNC;
 }
 
 static	void
 SetPandaTable(
 	GtkWidget	*widget,
-	WidgetData	*wdata,
-	_Table		*data)
+	json_object	*obj)
 {
-	int				j;
-	char			**rowdata;
-	char			**fgrowdata;
-	char			**bgrowdata;
-
+	int			i,j,trow,tcolumn;
+	double		trowattr;
+	json_object	*child,*rowdata;
+	char		*rowval[GTK_PANDA_TABLE_MAX_COLS];
+	char		*fgval[GTK_PANDA_TABLE_MAX_COLS];
+	char		*bgval[GTK_PANDA_TABLE_MAX_COLS];
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	for	( j = 0 ; j < g_list_length(data->tabledata) ; j ++ ) {
-		rowdata = g_list_nth_data(data->tabledata,j);
-		gtk_panda_table_set_row(GTK_PANDA_TABLE(widget),j,rowdata);
+	SetCommon(widget,obj);
+
+	trow = 0;
+	child = json_object_object_get(obj,"trow");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		trow = json_object_get_int(child);
+		trow = trow > 1 ? trow - 1 : 0;
 	}
-	for	( j = 0 ; j < g_list_length(data->fgdata) ; j ++ ) {
-		fgrowdata = g_list_nth_data(data->fgdata,j);
-		gtk_panda_table_set_fgcolor(GTK_PANDA_TABLE(widget),j,fgrowdata);
+
+	trowattr = 0.0;
+	child = json_object_object_get(obj,"trowattr");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		switch(json_object_get_int(child)) {
+		case 1: /* DOWN */
+			trowattr = 1.0;
+			break;
+		case 2: /* MIDDLE */
+			trowattr = 0.5;
+			break;
+		case 3: /* QUATER */
+			trowattr = 0.25;
+			break;
+		case 4: /* THREE QUATER */
+			trowattr = 0.75;
+			break;
+		default: /* [0] TOP */
+			trowattr = 0.0;
+			break;
+		}
 	}
-	for	( j = 0 ; j < g_list_length(data->bgdata) ; j ++ ) {
-		bgrowdata = g_list_nth_data(data->bgdata,j);
-		gtk_panda_table_set_bgcolor(GTK_PANDA_TABLE(widget),j,bgrowdata);
+
+	tcolumn = 0;
+	child = json_object_object_get(obj,"tcolumn");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		tcolumn = json_object_get_int(child);
+		tcolumn -= 1;
 	}
-	if (data->trow >= 0 && data->tcolumn >= 0) {
-		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget), 
-			data->trow, data->tcolumn, TRUE, data->trowattr, 0.0); 
+
+	child = json_object_object_get(obj,"rowdata");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_array)) {
+		for(i=0;i<json_object_array_length(child);i++) {
+			rowdata = json_object_array_get_idx(child,i);
+			if (!json_object_is_type(rowdata,json_type_object)) {
+				continue;
+			}
+			for(j=0;j<GTK_PANDA_TABLE_MAX_COLS;j++) {
+				rowval[j] = NULL;
+				fgval[j] = NULL;
+				bgval[j] = NULL;
+			}
+			j = 0;
+			json_object_object_foreach(rowdata,k,v) {
+				if (!json_object_is_type(v,json_type_object)) {
+					continue;
+				}
+				json_object_object_foreach(v,k2,v2) {
+					if (!json_object_is_type(v2,json_type_string)) {
+						continue;
+					}
+					if (json_object_is_type(v2,json_type_string)) {
+						if (!strcmp(k2,"celldata")) {
+							rowval[j] = (char*)json_object_get_string(v2);
+						} else if (!strcmp(k2,"fgcolor")) {
+							fgval[j] = (char*)json_object_get_string(v2);
+						} else if (!strcmp(k2,"bgcolor")) {
+							bgval[j] = (char*)json_object_get_string(v2);
+						}
+					}
+				}
+				j++;
+			}
+			gtk_panda_table_set_row(GTK_PANDA_TABLE(widget),i,rowval);
+			gtk_panda_table_set_fgcolor(GTK_PANDA_TABLE(widget),i,fgval);
+			gtk_panda_table_set_bgcolor(GTK_PANDA_TABLE(widget),i,bgval);
+		}
+	}
+	if (trow >=0 && tcolumn >= 0) {
+		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget),trow,tcolumn,TRUE,trowattr,0.0);
 	}
 	_AddChangedWidget(widget);
+LEAVE_FUNC;
+}
+
+static	void
+GetPandaTable(
+	GtkWidget	*widget,
+	json_object	*obj)
+{
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	int i,j,trow,tcolumn;
+	gchar *tvalue;
+	json_object *child,*rowdata;
+ENTER_FUNC;
+	gtk_widget_child_focus(widget,GTK_DIR_TAB_FORWARD);
+	trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
+		"send_data_row"));
+	tcolumn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
+		"send_data_column"));
+	tvalue = (gchar*)g_object_get_data(G_OBJECT(widget),
+		"send_data_value");;
+	tvalue = tvalue == NULL ? (gchar*)"" : tvalue;
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
+	gtk_tree_model_get_iter_first(model,&iter);
+
+	child = json_object_object_get(obj,"trow");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		json_object_object_del(obj,"trow");
+		json_object_object_add(obj,"trow",
+			json_object_new_int(trow));
+	}
+
+	child = json_object_object_get(obj,"tcolumn");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		json_object_object_del(obj,"tcolumn");
+		json_object_object_add(obj,"tcolumn",
+			json_object_new_int(tcolumn));
+	}
+
+	child = json_object_object_get(obj,"tvalue");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		json_object_object_del(obj,"tvalue");
+		json_object_object_add(obj,"tvalue",
+			json_object_new_string(tvalue));
+	}
+
+	child = json_object_object_get(obj,"rowdata");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_array)) {
+		i = 0;
+		do {
+			rowdata = json_object_array_get_idx(child,i);
+			if (!json_object_is_type(rowdata,json_type_object)) {
+				continue;
+			}
+			j = 0;
+			json_object_object_foreach(rowdata,k,v) {
+				if (!json_object_is_type(v,json_type_object)) {
+					continue;
+				}
+				json_object_object_foreach(v,k2,v2) {
+					if (json_object_is_type(v2,json_type_string)) {
+						if (!strcmp(k2,"celldata")) {
+							gtk_tree_model_get(model,&iter,j,&tvalue,-1);
+							json_object_object_del(v,"celldata");
+							json_object_object_add(v,"celldata",
+								json_object_new_string(tvalue));
+							g_free(tvalue);
+						}
+					}
+				}
+				j++;
+			}
+			i+=1;
+		} while(gtk_tree_model_iter_next(model,&iter));
+	}
 LEAVE_FUNC;
 }
 
@@ -398,15 +828,30 @@ LEAVE_FUNC;
 
 static	void
 SetEntry(
-	GtkWidget		*widget,
-	WidgetData		*wdata,
-	_Entry			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	char *prev,*next;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	g_object_set(G_OBJECT(widget),"editable",data->editable,NULL);
-	if (strcmp (gtk_entry_get_text(GTK_ENTRY(widget)), data->text)) {
-		gtk_entry_set_text(GTK_ENTRY(widget), data->text);
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else if (!strcmp(k,"editable")) {
+			if (json_object_is_type(v,json_type_boolean)) {
+				g_object_set(G_OBJECT(widget),"editable",
+					json_object_get_boolean(v),NULL);
+			}
+		} else {
+			if (json_object_is_type(v,json_type_string)) {
+				prev = gtk_editable_get_chars(GTK_EDITABLE(widget),0 , -1);
+				next = (char*)json_object_get_string(v);
+				if (strcmp(prev,next)) {
+					gtk_entry_set_text(GTK_ENTRY(widget),next);
+				}
+				g_free(prev);
+			}
+		}
 	}
 	if (!gtk_widget_has_focus(widget)
 		&& (gtk_editable_get_position (GTK_EDITABLE(widget)) != 0)) {
@@ -417,28 +862,48 @@ LEAVE_FUNC;
 
 static	void
 GetEntry(
-	GtkWidget		*widget,
-	_Entry			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	char *text;
 ENTER_FUNC;
-	xfree(data->text);
-	data->text = gtk_editable_get_chars(GTK_EDITABLE(widget),0 , -1);
+	text = gtk_editable_get_chars(GTK_EDITABLE(widget),0 , -1);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else if (!strcmp(k,"editable")) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_string)) {
+				json_object_object_del(obj,k);
+				json_object_object_add(obj,k,json_object_new_string(text));
+			}
+		}
+	}
+	g_free(text);
 LEAVE_FUNC;
 }
 
 static	void
 SetLabel(
-	GtkWidget		*widget,
-	WidgetData	*wdata,
-	_Label			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	char *text;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	if (data->text != NULL) {
-		if (pango_parse_markup(data->text,-1,0,NULL,NULL,NULL,NULL)) {
-			gtk_label_set_markup(GTK_LABEL(widget),data->text);
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
 		} else {
-			gtk_label_set_text(GTK_LABEL(widget),data->text);
+			if (json_object_is_type(v,json_type_string)) {
+				text = (char*)json_object_get_string(v);
+				if (pango_parse_markup(text,-1,0,NULL,NULL,NULL,NULL)) {
+					gtk_label_set_markup(GTK_LABEL(widget),text);
+				} else {
+					gtk_label_set_text(GTK_LABEL(widget),text);
+				}
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -447,230 +912,332 @@ LEAVE_FUNC;
 static	void
 SetText(
 	GtkWidget	*widget,
-	WidgetData	*wdata,
-	_Text		*data)
+	json_object	*obj)
 {
-	GtkTextBuffer	*buffer;
-	GtkTextIter		iter;
+	char *text;
+	GtkTextBuffer *buffer;
+	GtkTextIter iter;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
-	gtk_text_buffer_set_text(buffer, data->text, strlen(data->text));
-	gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(widget), &iter, 0, 0);
-	gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(widget), &iter, 
-		0.0, TRUE, 0.0, 0.0);
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_string)) {
+				text = (char*)json_object_get_string(v);
+				buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+				gtk_text_buffer_set_text(buffer,text, strlen(text));
+				gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(widget),
+					&iter, 0, 0);
+				gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(widget),&iter, 
+					0.0, TRUE, 0.0, 0.0);
+			}
+		}
+	}
 LEAVE_FUNC;
 }
 
 static	void
 GetText(
-	GtkWidget		*widget,
-	_Text			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
-	GtkTextBuffer	*buffer;
-	GtkTextIter		start;
-	GtkTextIter		end;
+	char *text;
+	GtkTextBuffer *buffer;
+	GtkTextIter start;
+	GtkTextIter end;
 ENTER_FUNC;
-	g_free(data->text);
-	buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
-	gtk_text_buffer_get_start_iter(buffer, &start);
-	gtk_text_buffer_get_end_iter(buffer, &end);
-	data->text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_string)) {
+				buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+				gtk_text_buffer_get_start_iter(buffer, &start);
+				gtk_text_buffer_get_end_iter(buffer, &end);
+				text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+				json_object_object_del(obj,k);
+				json_object_object_add(obj,k,json_object_new_string(text));
+				g_free(text);
+			}
+		}
+	}
 LEAVE_FUNC;
 }
 
 static	void
 SetButton(
-	GtkWidget			*widget,
-	WidgetData	*wdata,
-	_Button				*data)
+	GtkWidget	*widget,
+	json_object *obj)
 {
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	if (data->label != NULL) {
-		SetWidgetLabelRecursive(widget,data->label);
-	}
-	if (data->have_button_state == TRUE) {
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), 
-			data->button_state);
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else if(!strcmp(k,"label")) {
+			if (!json_object_is_type(v,json_type_string)) {
+				continue;
+			}
+			SetWidgetLabelRecursive(widget,(char*)json_object_get_string(v));
+		} else {
+			if (!json_object_is_type(v,json_type_boolean)) {
+				continue;
+			}
+			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget), 
+				json_object_get_boolean(v));
+		}
 	}
 LEAVE_FUNC;
 }
 
 static	void
 GetButton(
-	GtkWidget			*widget,
-	_Button				*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
 ENTER_FUNC;
-	if (data->have_button_state) {
-		data->button_state = 
-			gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else if(!strcmp(k,"label")) {
+			// do nothing
+		} else {
+			if (!json_object_is_type(v,json_type_boolean)) {
+				continue;
+			}
+			json_object_object_del(obj,k);
+			json_object_object_add(obj,k,
+				json_object_new_boolean(
+					gtk_toggle_button_get_active(
+						GTK_TOGGLE_BUTTON(widget))));
+		}
 	}
 LEAVE_FUNC;
 }
 
 static	void
 SetCalendar(
-	GtkWidget			*widget,
-	WidgetData	*wdata,
-	_Calendar			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	json_object *child;
+	int y,m,d;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	if (data->year > 0) {
-		gtk_calendar_select_month(GTK_CALENDAR(widget),
-			data->month - 1, data->year);
-		gtk_calendar_select_day(GTK_CALENDAR(widget),data->day);
+	SetCommon(widget,obj);
+	y = m = d = 0;
+	child = json_object_object_get(obj,"year");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		y = json_object_get_int(child);
+	}
+
+	child = json_object_object_get(obj,"month");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		m = json_object_get_int(child);
+	}
+
+	child = json_object_object_get(obj,"day");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		d = json_object_get_int(child);
+	}
+
+	if (y > 0) {
+		gtk_calendar_select_month(GTK_CALENDAR(widget),m - 1,y);
+		gtk_calendar_select_day(GTK_CALENDAR(widget),d);
 	}
 LEAVE_FUNC;
 }
 
 static	void
 GetCalendar(
-	GtkWidget			*widget,
-	_Calendar			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	json_object *child;
+	int y,m,d;
 ENTER_FUNC;
-	gtk_calendar_get_date(GTK_CALENDAR(widget), 
-		&(data->year),&(data->month),&(data->day));
+	gtk_calendar_get_date(GTK_CALENDAR(widget),&y,&m,&d);
+	child = json_object_object_get(obj,"year");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		json_object_object_del(obj,"year");
+		json_object_object_add(obj,"year",json_object_new_int(y));
+	}
+
+	child = json_object_object_get(obj,"month");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		json_object_object_del(obj,"month");
+		json_object_object_add(obj,"month",json_object_new_int(m));
+	}
+
+	child = json_object_object_get(obj,"day");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		json_object_object_del(obj,"day");
+		json_object_object_add(obj,"day",json_object_new_int(d));
+	}
 LEAVE_FUNC;
 }
 
 static	void
 SetNotebook(
-	GtkWidget			*widget,
-	WidgetData	*wdata,
-	_Notebook			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	json_object *child;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	if (!fV47) {
-		g_object_set_data(G_OBJECT(widget),"pageno",
-			GINT_TO_POINTER(data->pageno));
+	SetCommon(widget,obj);
+	child = json_object_object_get(obj,"pageno");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
+			json_object_get_int(child));
 	}
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),data->pageno);
 LEAVE_FUNC;
 }
 
 static	void
 GetNotebook(
-	GtkWidget			*widget,
-	_Notebook			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	json_object *child;
 ENTER_FUNC;
-	if (fV47) {
-		data->pageno = GPOINTER_TO_INT(
-			g_object_get_data(G_OBJECT(widget),"new_pageno"));
-	} else {
-		data->pageno = GPOINTER_TO_INT(
-			g_object_get_data(G_OBJECT(widget),"pageno"));
+	child = json_object_object_get(obj,"pageno");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		json_object_object_del(obj,"pageno");
+		json_object_object_add(obj,"pageno",
+			json_object_new_int(
+				GPOINTER_TO_INT(
+					g_object_get_data(G_OBJECT(widget),"new_pageno"))));
 	}
 LEAVE_FUNC;
 }
 
 static	void
 SetProgressBar(
-	GtkWidget				*widget,
-	WidgetData	*wdata,
-	_ProgressBar			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	json_object *child;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
+	SetCommon(widget,obj);
+	child = json_object_object_get(obj,"value");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
 #ifdef LIBGTK_3_0_0
-	gtk_panda_progress_bar_set_value(
-      GTK_PANDA_PROGRESS_BAR(widget),data->value);
+		gtk_panda_progress_bar_set_value(
+    	  GTK_PANDA_PROGRESS_BAR(widget),
+			json_object_get_int(child));
 #else
-	gtk_progress_set_value(GTK_PROGRESS(widget),data->value);
+		gtk_progress_set_value(GTK_PROGRESS(widget),
+			json_object_get_int(child));
 #endif
-LEAVE_FUNC;
-}
-
-static	void
-GetProgressBar(
-	GtkWidget				*widget,
-	_ProgressBar			*data)
-{
-ENTER_FUNC;
-#ifdef LIBGTK_3_0_0
-	data->value = gtk_panda_progress_bar_get_value(GTK_PANDA_PROGRESS_BAR(widget));
-#else
-	data->value = gtk_progress_get_value(GTK_PROGRESS(widget));
-#endif
+	}
 LEAVE_FUNC;
 }
 
 static	void
 SetWindow(
-	GtkWidget			*widget,
-	WidgetData	*wdata,
-	_Window				*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	json_object *child;
+	char *summary,*body,*icon;
+	int timeout;
 ENTER_FUNC;
 #if 0
-	SetCommon(widget,wdata);
+	SetCommon(widget,obj);
 #endif
-	if (data->title != NULL && strlen(data->title) > 0) {
-		SetSessionTitle(data->title);
+	child = json_object_object_get(obj,"bgcolor");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		SetSessionBGColor(json_object_get_string(child));
+	}
+
+	child = json_object_object_get(obj,"title");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		SetSessionTitle(json_object_get_string(child));
 		SetTitle(TopWindow);
 	}
-	if (data->summary != NULL && strlen(data->summary) > 0 &&
-		data->body != NULL && strlen(data->body) > 0) {
-		Notify(data->summary,data->body,data->icon,data->timeout);
+
+	summary = NULL;
+	child = json_object_object_get(obj,"popup_summary");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		summary = (char*)json_object_get_string(child);
+	}
+
+	body = NULL;
+	child = json_object_object_get(obj,"popup_body");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		body = (char*)json_object_get_string(child);
+	}
+
+	icon = NULL;
+	child = json_object_object_get(obj,"popup_icon");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		icon = (char*)json_object_get_string(child);
+	}
+
+	timeout = 0;
+	child = json_object_object_get(obj,"popup_icon");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_int)) {
+		timeout = json_object_get_int(child);
+	}
+
+	if (summary != NULL && strlen(summary) > 0 &&
+		body != NULL && strlen(body) > 0) {
+		Notify(summary,body,icon,timeout);
 	}
 LEAVE_FUNC;
 }
 
 static	void
 SetFrame(
-	GtkWidget		*widget,
-	WidgetData	*wdata,
-	_Frame			*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	json_object *child;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	gtk_frame_set_label(GTK_FRAME(widget),data->label);
+	SetCommon(widget,obj);
+	child = json_object_object_get(obj,"label");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		gtk_frame_set_label(GTK_FRAME(widget),json_object_get_string(child));
+	}
 LEAVE_FUNC;
 }
 
 static	void
 SetScrolledWindow(
-	GtkWidget					*widget,
-	WidgetData	*wdata,
-	_ScrolledWindow				*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-LEAVE_FUNC;
-}
-
-static	void
-GetScrolledWindow(
-	GtkWidget					*widget,
-	_ScrolledWindow				*data)
-{
-	GtkAdjustment	*vad
-	,				*had;
-
-ENTER_FUNC;
-	vad = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
-	had = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
-	data->hpos = (int)gtk_adjustment_get_value(had);
-	data->vpos = (int)gtk_adjustment_get_value(vad);
+	SetCommon(widget,obj);
 LEAVE_FUNC;
 }
 
 static	void
 SetFileChooserButton(
-	GtkWidget			*widget,
-	WidgetData			*wdata,
-	_FileChooserButton	*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
-	GtkFileChooserButton 	*fcb;
+	GtkFileChooserButton *fcb;
 	gchar *folder;
 	char *longname;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
+	SetCommon(widget,obj);
 	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
 	gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(fcb));
 	longname = (char *)glade_get_widget_long_name(widget);
@@ -685,31 +1252,53 @@ LEAVE_FUNC;
 
 static	void
 GetFileChooserButton(
-	GtkWidget			*widget,
-	_FileChooserButton	*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
 	GtkFileChooserButton *fcb;
 	GError *error = NULL;
 	gchar *contents;
-	gchar *fname;
+	gchar *fname,*basename;
 	gsize size;
 	gchar *folder;
-	char *longname;
+	char *longname,*oid;
+	LargeByteString *lbs;
+	json_object *child;
 ENTER_FUNC;
 	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fcb));
 	if (fname == NULL) {
-		data->filename = NULL;
 		return;
 	}
-	data->filename = g_path_get_basename(fname);
 	if(!g_file_get_contents(fname, 
 			&contents, &size, &error)) {
 		g_error_free(error);
 		return;
 	}
-	data->binary->body = contents;
-	data->binary->size = data->binary->asize = data->binary->ptr = size;
+	lbs = NewLBS();
+	LBS_ReserveSize(lbs,size,FALSE);
+	memcpy(LBS_Body(lbs),contents,size);
+	g_free(contents);
+	oid = REST_PostBLOB(lbs);
+	FreeLBS(lbs);
+
+	child = json_object_object_get(obj,"objectdata");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		if (oid != NULL) {
+		json_object_object_del(obj,"objectdata");
+		json_object_object_add(obj,"objectdata",json_object_new_string(oid));
+		}
+	}
+	child = json_object_object_get(obj,"filename");
+	if (child != NULL && !is_error(child) && 
+		json_object_is_type(child,json_type_string)) {
+		basename = g_path_get_basename(fname);
+		json_object_object_del(obj,"filename");
+		json_object_object_add(obj,"filename",json_object_new_string(basename));
+		g_free(basename);
+	}
+
 	longname = (char *)glade_get_widget_long_name(widget);
 	folder = gtk_file_chooser_get_current_folder(GTK_FILE_CHOOSER(fcb));
 	if (folder != NULL) {
@@ -720,419 +1309,329 @@ LEAVE_FUNC;
 }
 
 static	void
-SavePreviousFolder(
-	GtkWidget	*widget,
-	WidgetData	*wdata,
-	gpointer 	data) 
-{
-	GtkPandaFileEntry 	*fentry;
-	char				*longname;
-
-	fentry = GTK_PANDA_FILE_ENTRY(widget);
-	longname = (char *)glade_get_widget_long_name(widget);
-	SetWidgetCache(longname, fentry->folder);
-}
-
-static	void
 SetColorButton(
-	GtkWidget		*widget,
-	WidgetData		*wdata,
-	_ColorButton	*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
 	GtkColorButton 	*cb;
 	GdkColor color;
+	char *strcolor;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
 	cb = GTK_COLOR_BUTTON(widget);
-	if (gdk_color_parse(data->color,&color)) {
-		gtk_color_button_set_color(cb,&color);
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_string)) {
+				strcolor = (char*)json_object_get_string(v);
+				if (gdk_color_parse(strcolor,&color)) {
+					gtk_color_button_set_color(cb,&color);
+				}
+			}
+		}
 	}
 LEAVE_FUNC;
 }
 
 static	void
 GetColorButton(
-	GtkWidget		*widget,
-	_ColorButton	*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
 	GtkColorButton *cb;
 	GdkColor color;
+	char strcolor[256];
 ENTER_FUNC;
 	cb = GTK_COLOR_BUTTON(widget);
 	gtk_color_button_get_color(cb,&color);
-	data->color = g_strdup_printf("#%02X%02X%02X",
+	sprintf(strcolor,"#%02X%02X%02X",
 		(guint)(color.red/256.0),
 		(guint)(color.green/256.0),
 		(guint)(color.blue/256.0)
 		);
-LEAVE_FUNC;
-}
-
-static	void
-SetFileEntry(
-	GtkWidget			*widget,
-	WidgetData	*wdata,
-	_FileEntry			*data)
-{
-static GHashTable		*connectlist = NULL;
-
-	GtkPandaFileEntry 	*fentry;
-	GtkWidget			*subWidget;
-	WidgetData			*subdata;
-	char				*longname;
-	char				*folder;
-
-ENTER_FUNC;
-
-	SetCommon(widget,wdata);
-	fentry = GTK_PANDA_FILE_ENTRY(widget);
-	g_return_if_fail(data->binary != NULL);
-	longname = (char *)glade_get_widget_long_name(widget);
-
-	if (connectlist == NULL) {
-		connectlist = NewNameHash();
-	}
-    if (g_hash_table_lookup(connectlist, longname) == NULL) {
-		g_hash_table_insert(connectlist, longname, longname);
-		g_signal_connect_after(G_OBJECT(widget), "done_action", 
-			G_CALLBACK(SavePreviousFolder), NULL);
-	}
-
-	folder = GetWidgetCache(longname);
-	if (folder == NULL) {
-		folder = "";
-	}
-	gtk_panda_file_entry_set_folder(fentry, folder);
-
-	if (LBS_Size(data->binary) > 0) {
-		//download
-		gtk_panda_file_entry_set_mode(fentry, 
-			GTK_FILE_CHOOSER_ACTION_SAVE);
-		gtk_panda_file_entry_set_data(fentry,
-			LBS_Size(data->binary), LBS_Body(data->binary));
-		//set subwidget
-		subdata = GetWidgetData(data->subname);
-		subWidget = GetWidgetByLongName(data->subname);
-		if (subdata != NULL || subWidget != NULL) {
-			SetEntry(subWidget, subdata,(_Entry *)subdata->attrs);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_string)) {
+				json_object_object_del(obj,k);
+				json_object_object_add(obj,k,
+					json_object_new_string(strcolor));
+			}
 		}
-		g_signal_emit_by_name(G_OBJECT(widget), "browse_clicked", NULL);
-	} else {
-		//upload
-		gtk_panda_file_entry_set_mode(GTK_PANDA_FILE_ENTRY(widget), 
-			GTK_FILE_CHOOSER_ACTION_OPEN);
-	}
-LEAVE_FUNC;
-}
-
-static	void
-GetFileEntry(
-	GtkWidget			*widget,
-	_FileEntry			*data)
-{
-	GtkFileChooserAction mode;
-	GtkPandaFileEntry *fe;
-	GError *error = NULL;
-	gchar *contents;
-	gsize size;
-
-ENTER_FUNC;
-	fe = GTK_PANDA_FILE_ENTRY(widget);
-	mode = gtk_panda_file_entry_get_mode(fe);
-	if (mode == GTK_FILE_CHOOSER_ACTION_SAVE) {
-		data->path = NULL;
-	} else {
-		data->path = gtk_editable_get_chars(
-			GTK_EDITABLE(fe->entry),0,-1);
-		if(!g_file_get_contents(data->path, 
-				&contents, &size, &error)) {
-			g_error_free(error);
-			return;
-		}
-		data->binary->body = contents;
-		data->binary->size = data->binary->asize = data->binary->ptr = size;
 	}
 LEAVE_FUNC;
 }
 
 static void
 SetPixmap(
-	GtkWidget			*widget,
-	WidgetData	*wdata,
-	_Pixmap				*data)
+	GtkWidget	*widget,
+	json_object	*obj)
 {
+	LargeByteString *lbs;
 ENTER_FUNC;
-	SetCommon(widget,wdata);
-	if ( LBS_Size(data->binary) <= 0) {
-		gtk_widget_hide(widget); 
-	} else {
-		gtk_widget_show(widget); 
-		gtk_panda_pixmap_set_image(GTK_PANDA_PIXMAP(widget), 
-			(gchar*)LBS_Body(data->binary),(gsize)LBS_Size(data->binary));
+	SetCommon(widget,obj);
+	json_object_object_foreach(obj,k,v) {
+		if (IsCommon(k)) {
+			// do nothing
+		} else {
+			if (json_object_is_type(v,json_type_string)) {
+				lbs = REST_GetBLOB(json_object_get_string(v));
+				if (lbs != NULL && LBS_Size(lbs) > 0) {
+					gtk_widget_show(widget); 
+					gtk_panda_pixmap_set_image(GTK_PANDA_PIXMAP(widget), 
+						(gchar*)LBS_Body(lbs),(gsize)LBS_Size(lbs));
+					FreeLBS(lbs);
+				} else {
+					gtk_widget_hide(widget); 
+				}
+			}
+		}
 	}
 LEAVE_FUNC;
 }
 
-/******************************************************************************/
-/* api                                                                        */
-/******************************************************************************/
-
-extern	WidgetType
-GetWidgetType(
-	char	*wname,
-	char	*name)
+static	void
+SetWidgetData(
+	GtkWidget *widget,
+	json_object *info)
 {
-	WindowData	*wdata;
-	GtkWidget	*widget;
 	long 		type;
 
-	wdata = GetWindowData(wname);
-	if (wdata != NULL && wdata->xml != NULL) {
-		widget = glade_xml_get_widget_by_long_name(
-    				(GladeXML *)wdata->xml, name);
-	} else {
-		MessageLogPrintf("window data [%s] is not found", wname);
-		return WIDGET_TYPE_UNKNOWN;
+	if (widget == NULL) {
+		return;
+	}
+	if (!json_object_is_type(info,json_type_object)) {
+		return;
 	}
 
-	if (widget != NULL) {
-		type = (long)(G_OBJECT_TYPE(widget));
-		if (type == GTK_TYPE_NUMBER_ENTRY) {
-			return WIDGET_TYPE_NUMBER_ENTRY;
-		} else if (type == GTK_PANDA_TYPE_COMBO) {
-			return WIDGET_TYPE_PANDA_COMBO;
-		} else if (type == GTK_PANDA_TYPE_CLIST) {
-			return WIDGET_TYPE_PANDA_CLIST;
-		} else if (type == GTK_PANDA_TYPE_ENTRY) {
-			return WIDGET_TYPE_PANDA_ENTRY;
-		} else if (type == GTK_PANDA_TYPE_TEXT) {
-			return WIDGET_TYPE_PANDA_TEXT;
-		} else if (type == GTK_PANDA_TYPE_PDF) {
-			return WIDGET_TYPE_PANDA_PREVIEW;
-		} else if (type == GTK_PANDA_TYPE_TIMER) {
-			return WIDGET_TYPE_PANDA_TIMER;
-		} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
-			return WIDGET_TYPE_PANDA_DOWNLOAD;
-		} else if (type == GTK_PANDA_TYPE_DOWNLOAD2) {
-			return WIDGET_TYPE_PANDA_DOWNLOAD2;
-		} else if (type == GTK_PANDA_TYPE_PRINT) {
-			return WIDGET_TYPE_PANDA_PRINT;
-		} else if (type == GTK_PANDA_TYPE_HTML) {
-			return WIDGET_TYPE_PANDA_HTML;
-		} else if (type == GTK_PANDA_TYPE_TABLE) {
-			return WIDGET_TYPE_PANDA_TABLE;
-		} else if (type == GTK_TYPE_WINDOW) {
-			return WIDGET_TYPE_WINDOW;
-		} else if (type == GTK_TYPE_ENTRY) {
-			return WIDGET_TYPE_ENTRY;
-		} else if (type == GTK_PANDA_TYPE_TEXT) {
-			return WIDGET_TYPE_TEXT;
-		} else if (type == GTK_TYPE_LABEL) {
-			return WIDGET_TYPE_LABEL;
-		} else if (type == GTK_TYPE_BUTTON) {
-			return WIDGET_TYPE_BUTTON;
-		} else if (type == GTK_TYPE_TOGGLE_BUTTON) {
-			return WIDGET_TYPE_TOGGLE_BUTTON;
-		} else if (type == GTK_TYPE_CHECK_BUTTON) {
-			return WIDGET_TYPE_CHECK_BUTTON;
-		} else if (type == GTK_TYPE_RADIO_BUTTON) {
-			return WIDGET_TYPE_RADIO_BUTTON;
-		} else if (type == GTK_TYPE_CALENDAR) {
-			return WIDGET_TYPE_CALENDAR;
-		} else if (type == GTK_TYPE_NOTEBOOK) {
-			return WIDGET_TYPE_NOTEBOOK;
-		} else if (type == GTK_TYPE_PROGRESS_BAR) {
-			return WIDGET_TYPE_PROGRESS_BAR;
-		} else if (type == GTK_TYPE_FRAME) {
-			return WIDGET_TYPE_FRAME;
-		} else if (type == GTK_TYPE_SCROLLED_WINDOW) {
-			return WIDGET_TYPE_SCROLLED_WINDOW;
-		} else if (type == GTK_TYPE_FILE_CHOOSER_BUTTON) {
-			return WIDGET_TYPE_FILE_CHOOSER_BUTTON;
-		} else if (type == GTK_TYPE_COLOR_BUTTON) {
-			return WIDGET_TYPE_COLOR_BUTTON;
-		} else if (type == GTK_PANDA_TYPE_PIXMAP) {
-			return WIDGET_TYPE_PIXMAP;
-		} else if (type == GTK_PANDA_TYPE_FILE_ENTRY) {
-			return WIDGET_TYPE_FILE_ENTRY;
-		}
+	type = (long)(G_OBJECT_TYPE(widget));
+	if (type == GTK_TYPE_NUMBER_ENTRY) {
+		SetNumberEntry(widget,info);
+	} else if (type == GTK_PANDA_TYPE_COMBO) {
+		SetPandaCombo(widget,info);
+	} else if (type == GTK_PANDA_TYPE_CLIST) {
+		SetPandaCList(widget,info);
+	} else if (type == GTK_PANDA_TYPE_ENTRY) {
+		SetEntry(widget,info);
+	} else if (type == GTK_PANDA_TYPE_TEXT) {
+		SetText(widget,info);
+	} else if (type == GTK_PANDA_TYPE_PDF) {
+		SetPandaPDF(widget,info);
+	} else if (type == GTK_PANDA_TYPE_TIMER) {
+		SetPandaTimer(widget,info);
+	} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
+		SetPandaDownload(widget,info);
+	} else if (type == GTK_PANDA_TYPE_DOWNLOAD2) {
+		SetPandaDownload2(widget,info);
+	} else if (type == GTK_PANDA_TYPE_PRINT) {
+		SetPandaPrint(widget,info);
+	} else if (type == GTK_PANDA_TYPE_HTML) {
+		SetPandaHTML(widget,info);
+	} else if (type == GTK_PANDA_TYPE_TABLE) {
+		SetPandaTable(widget,info);
+	} else if (type == GTK_TYPE_WINDOW) {
+		SetWindow(widget,info);
+	} else if (type == GTK_TYPE_LABEL) {
+		SetLabel(widget,info);
+	} else if (type == GTK_TYPE_BUTTON) {
+		SetButton(widget,info);
+	} else if (type == GTK_TYPE_TOGGLE_BUTTON) {
+		SetButton(widget,info);
+	} else if (type == GTK_TYPE_CHECK_BUTTON) {
+		SetButton(widget,info);
+	} else if (type == GTK_TYPE_RADIO_BUTTON) {
+		SetButton(widget,info);
+	} else if (type == GTK_TYPE_CALENDAR) {
+		SetCalendar(widget,info);
+	} else if (type == GTK_TYPE_NOTEBOOK) {
+		SetNotebook(widget,info);
+	} else if (type == GTK_TYPE_PROGRESS_BAR) {
+		SetProgressBar(widget,info);
+	} else if (type == GTK_TYPE_FRAME) {
+		SetFrame(widget,info);
+	} else if (type == GTK_TYPE_SCROLLED_WINDOW) {
+		SetScrolledWindow(widget,info);
+	} else if (type == GTK_TYPE_FILE_CHOOSER_BUTTON) {
+		SetFileChooserButton(widget,info);
+	} else if (type == GTK_TYPE_COLOR_BUTTON) {
+		SetColorButton(widget,info);
+	} else if (type == GTK_PANDA_TYPE_PIXMAP) {
+		SetPixmap(widget,info);
 	}
-	return WIDGET_TYPE_UNKNOWN;
 }
 
 extern	void
-UpdateWidgetData(WidgetData	*data)
+UpdateWidget(
+	const char *longname,
+	json_object *w)
 {
-	GtkWidget	*widget;
+	GtkWidget *widget;
+	json_object *val;
+	char childname[SIZE_LONGNAME+1];
+	int i,length;
+	enum json_type type;
 
-	widget = GetWidgetByLongName(data->name);
-	g_return_if_fail(widget != NULL);
-
-	switch (data->type) {
-// gtk+panda
-	case WIDGET_TYPE_NUMBER_ENTRY:
-		GetNumberEntry(widget, (_NumberEntry*)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_CLIST:
-		GetPandaCList(widget, (_CList*)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_ENTRY:
-	case WIDGET_TYPE_ENTRY:
-		GetEntry(widget, (_Entry*)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_TEXT:
-		GetText(widget, (_Text*)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_TIMER:
-		GetPandaTimer(widget, (_Timer*)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_TABLE:
-		GetPandaTable(widget, (_Table*)data->attrs);
-		break;
-	case WIDGET_TYPE_TEXT:
-		GetText(widget, (_Text*)data->attrs);
-		break;
-	case WIDGET_TYPE_TOGGLE_BUTTON:
-	case WIDGET_TYPE_CHECK_BUTTON:
-	case WIDGET_TYPE_RADIO_BUTTON:
-		GetButton(widget, (_Button*)data->attrs);
-		break;
-	case WIDGET_TYPE_CALENDAR:
-		GetCalendar(widget, (_Calendar*)data->attrs);
-		break;
-	case WIDGET_TYPE_NOTEBOOK:
-		GetNotebook(widget, (_Notebook*)data->attrs);
-		break;
-	case WIDGET_TYPE_PROGRESS_BAR:
-		GetProgressBar(widget, (_ProgressBar*)data->attrs);
-		break;
-	case WIDGET_TYPE_SCROLLED_WINDOW:
-		GetScrolledWindow(widget, (_ScrolledWindow*)data->attrs);
-		break;
-	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
-		GetFileChooserButton(widget, (_FileChooserButton*)data->attrs);
-		break;
-	case WIDGET_TYPE_COLOR_BUTTON:
-		GetColorButton(widget, (_ColorButton*)data->attrs);
-		break;
-// gtk+
-	case WIDGET_TYPE_FILE_ENTRY:
-		GetFileEntry(widget, (_FileEntry*)data->attrs);
-		break;
-	default:
-		MessageLogPrintf("invalid widget [%s]", data->name);
-		break;
+	widget = GetWidgetByLongName(longname);
+	if (widget != NULL) {
+		SetWidgetData(widget,w);
+	}
+	type = json_object_get_type(w);
+	if (type == json_type_object) {
+		{
+			json_object_object_foreach(w,k,v) {
+				snprintf(childname,SIZE_LONGNAME,"%s.%s",longname,k);
+				childname[SIZE_LONGNAME] = 0;
+				UpdateWidget(childname,v);
+			}
+		}
+	} else if (type == json_type_array) {
+		length = json_object_array_length(w);
+		for(i=0;i<length;i++) {
+			val = json_object_array_get_idx(w,i);
+			snprintf(childname,SIZE_LONGNAME,"%s[%d]",longname,i);
+			childname[SIZE_LONGNAME] = 0;
+			UpdateWidget(childname,val);
+		}
 	}
 }
 
 static	void
-UpdateWidget(WidgetData *data)
+GetWidgetData(
+	GtkWidget *widget,
+	json_object *obj)
 {
-	GtkWidget	*widget;
+	long 		type;
 
-	g_return_if_fail(data != NULL);
-	widget = GetWidgetByLongName(data->name);
 	if (widget == NULL) {
-		MessagePrintf("widget [%s] is not found", data->name);
+		return;
+	}
+	if (obj == NULL || !json_object_is_type(obj,json_type_object)) {
 		return;
 	}
 
-	switch (data->type) {
+	type = (long)(G_OBJECT_TYPE(widget));
 // gtk+panda
-	case WIDGET_TYPE_NUMBER_ENTRY:
-		SetNumberEntry(widget, data,(_NumberEntry *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_COMBO:
-		SetPandaCombo(widget, data,(_Combo *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_CLIST:
-		SetPandaCList(widget, data,(_CList *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_ENTRY:
-		SetEntry(widget, data,(_Entry *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_TEXT:
-		SetText(widget, data,(_Text *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_PREVIEW:
-		SetPandaPreview(widget, data,(_PREVIEW *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_TIMER:
-		SetPandaTimer(widget, data,(_Timer *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_DOWNLOAD:
-		SetPandaDownload(widget, data,(_Download *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_HTML:
-		SetPandaHTML(widget, data,(_HTML *)data->attrs);
-		break;
-	case WIDGET_TYPE_PANDA_TABLE:
-		SetPandaTable(widget, data,(_Table *)data->attrs);
-		break;
-// gtk+
-	case WIDGET_TYPE_ENTRY:
-		SetEntry(widget, data,(_Entry *)data->attrs);
-		break;
-	case WIDGET_TYPE_TEXT:
-		SetText(widget, data,(_Text *)data->attrs);
-		break;
-	case WIDGET_TYPE_LABEL:
-		SetLabel(widget, data,(_Label *)data->attrs);
-		break;
-	case WIDGET_TYPE_BUTTON:
-	case WIDGET_TYPE_TOGGLE_BUTTON:
-	case WIDGET_TYPE_CHECK_BUTTON:
-	case WIDGET_TYPE_RADIO_BUTTON:
-		SetButton(widget, data,(_Button *)data->attrs);
-		break;
-	case WIDGET_TYPE_CALENDAR:
-		SetCalendar(widget, data,(_Calendar*)data->attrs);
-		break;
-	case WIDGET_TYPE_NOTEBOOK:
-		SetNotebook(widget, data,(_Notebook*)data->attrs);
-		break;
-	case WIDGET_TYPE_PROGRESS_BAR:
-		SetProgressBar(widget, data,(_ProgressBar*)data->attrs);
-		break;
-	case WIDGET_TYPE_WINDOW:
-		SetWindow(widget, data,(_Window*)data->attrs);
-		break;
-	case WIDGET_TYPE_FRAME:
-		SetFrame(widget, data,(_Frame *)data->attrs);
-		break;
-	case WIDGET_TYPE_SCROLLED_WINDOW:
-		SetScrolledWindow(widget, data,(_ScrolledWindow *)data->attrs);
-		break;
-	case WIDGET_TYPE_FILE_CHOOSER_BUTTON:
-		SetFileChooserButton(widget, data,(_FileChooserButton *)data->attrs);
-		break;
-	case WIDGET_TYPE_COLOR_BUTTON:
-		SetColorButton(widget, data,(_ColorButton *)data->attrs);
-		break;
-// Gnome
-	case WIDGET_TYPE_FILE_ENTRY:
-		SetFileEntry(widget, data,(_FileEntry *)data->attrs);
-		break;
-	case WIDGET_TYPE_PIXMAP:
-		SetPixmap(widget, data,(_Pixmap *)data->attrs);
-		break;
-	default:
-		//MessageLogPrintf("invalid widget [%s]", data->name);
-		break;
+	if (type == GTK_TYPE_NUMBER_ENTRY) {
+		GetNumberEntry(widget,obj);
+	} else if (type == GTK_PANDA_TYPE_CLIST) {
+		GetPandaCList(widget,obj);
+	} else if (type == GTK_PANDA_TYPE_ENTRY) {
+		GetEntry(widget,obj);
+	} else if (type == GTK_PANDA_TYPE_TEXT) {
+		GetText(widget,obj);
+	} else if (type == GTK_PANDA_TYPE_TIMER) {
+		GetPandaTimer(widget,obj);
+	} else if (type == GTK_PANDA_TYPE_TABLE) {
+		GetPandaTable(widget,obj);
+	} else if (
+		type == GTK_TYPE_BUTTON ||
+		type == GTK_TYPE_TOGGLE_BUTTON ||
+		type == GTK_TYPE_CHECK_BUTTON ||
+		type == GTK_TYPE_RADIO_BUTTON) {
+		GetButton(widget,obj);
+	} else if (type == GTK_TYPE_CALENDAR) {
+		GetCalendar(widget,obj);
+	} else if (type == GTK_TYPE_NOTEBOOK) {
+		GetNotebook(widget,obj);
+	} else if (type == GTK_TYPE_FILE_CHOOSER_BUTTON) {
+		GetFileChooserButton(widget,obj);
+	} else if (type == GTK_TYPE_COLOR_BUTTON) {
+		GetColorButton(widget,obj);
+	} else {
+		MessageLogPrintf("invalid widget [%s]", gtk_widget_get_name(widget));
 	}
 }
 
-extern	void
-UpdateWindow(char *windowName)
+extern	json_object *
+_MakeScreenData(
+	const char *longname,
+	json_object *w,
+	WindowData *wdata)
 {
-	WindowData	*wdata;
-	WidgetData	*data;
+	GtkWidget *widget;
+	char childname[SIZE_LONGNAME+1];
+	json_object *val,*obj,*child;
+	int i,length;
+	enum json_type type;
 
-	wdata = GetWindowData(windowName);
-	g_return_if_fail(wdata != NULL);
-	while(
-		(data = (WidgetData *)DeQueueNoWait(wdata->UpdateWidgetQueue)) != NULL
-	) {
-		UpdateWidget(data);
+	obj = NULL;
+	type = json_object_get_type(w);
+	if (type == json_type_object) {
+		obj = json_object_new_object();
+		json_object_object_foreach(w,k,v) {
+			snprintf(childname,SIZE_LONGNAME,"%s.%s",longname,k);
+			childname[SIZE_LONGNAME] = 0;
+			child = _MakeScreenData(childname,v,wdata);
+			json_object_object_add(obj,k,child);
+		}
+	} else if (type == json_type_array) {
+		obj = json_object_new_array();
+		length = json_object_array_length(w);
+		for(i=0;i<length;i++) {
+			val = json_object_array_get_idx(w,i);
+			snprintf(childname,SIZE_LONGNAME,"%s[%d]",longname,i);
+			childname[SIZE_LONGNAME] = 0;
+			child = _MakeScreenData(childname,val,wdata);
+			json_object_array_add(obj,child);
+		}
+	} else if (type == json_type_boolean) {
+		obj = json_object_new_boolean(json_object_get_boolean(w));
+	} else if (type == json_type_int) {
+		obj = json_object_new_int(json_object_get_int(w));
+	} else if (type == json_type_double) {
+		obj = json_object_new_double(json_object_get_double(w));
+	} else if (type == json_type_string) {
+		obj = json_object_new_string(json_object_get_string(w));
+	} else {
+		obj = json_object_new_object();
 	}
+	widget = GetWidgetByLongName(longname);
+	if (widget != NULL) {
+		if (g_hash_table_lookup(wdata->ChangedWidgetTable,longname) != NULL) {
+			GetWidgetData(widget,obj);
+		}
+	}
+	return obj;
+}
+
+static gboolean
+RemoveChangedWidget(
+	gpointer	key,
+	gpointer	value,
+	gpointer	user_data) 
+{
+	g_free((char *)key);
+	return TRUE;
+}
+
+extern struct json_object *
+MakeScreenData(
+	const char *wname)
+{
+	json_object *ret,*result,*window_data,*windows,*w,*window,*screen_data;
+	int i,length;
+	WindowData *wdata;
+
+	ret = NULL;
+	result = json_object_object_get(SCREENDATA(Session),"result");
+	window_data = json_object_object_get(result,"window_data");
+	windows = json_object_object_get(window_data,"windows");
+	length = json_object_array_length(windows);
+	for(i=0;i<length;i++) {
+		w = json_object_array_get_idx(windows,i);
+		window = json_object_object_get(w,"window");
+		if (!strcmp(wname,json_object_get_string(window))) {
+			screen_data = json_object_object_get(w,"screen_data");
+			wdata = GetWindowData(wname);
+	 		ret = _MakeScreenData(wname,screen_data,wdata);
+			g_hash_table_foreach_remove(wdata->ChangedWidgetTable, 
+				RemoveChangedWidget, NULL);
+		}
+	}
+	if (ret == NULL) {
+		Error("could not make screen_data for window[%s]",wname);
+	}
+	return ret;
 }

@@ -331,36 +331,6 @@ AC_ARG_WITH(ssl,
 ])		
 
 dnl ***************************************************************************
-dnl PKCS11
-dnl ***************************************************************************
-enable_pkcs11="no"
-AC_ARG_WITH(pkcs11,
-	[  --with-pkcs11=<directory>  use engine_pkcs11.$SO_SUFFIX in <directory>],[
-	if test x$withval = xyes
-	then
-		engine_pkcs11="/usr/lib/opensc/engine_pkcs11.$SO_SUFFIX" 
-	else
-		engine_pkcs11=$withval 
- 	fi
-
-	PKG_CHECK_MODULES(P11, libp11 >= 0.2.7,
-	[
-		enable_pkcs11="yes"
-		AC_SUBST(P11_LIBS) 
-		AC_SUBST(P11_CFLAGS) 
-	],
-	[
-  		AC_MSG_WARN(not found libopensc.pc) 
-	])
-
-	if test $enable_pkcs11 = yes
-	then
-		AC_DEFINE(USE_PKCS11,1,"")
-		AC_DEFINE_UNQUOTED(ENGINE_PKCS11_PATH,"$engine_pkcs11","")
-	fi
-])
-
-dnl ***************************************************************************
 dnl use msgd for message output
 dnl ***************************************************************************
 
@@ -443,7 +413,6 @@ echo "  OpenCOBOL support:     $enable_opencobol"
 echo "  Ruby support:          $enable_ruby"
 echo "  IP v6 support:         $enable_ipv6"
 echo "  SSL support:           $enable_ssl"
-echo "  PKCS11 support:        $enable_pkcs11"
 echo "  msgd support:          $enable_msgd"
 echo "  syslog support:        $enable_syslog"
 echo ""

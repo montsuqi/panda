@@ -21,7 +21,6 @@
 #ifndef	_INC_ACTION_H
 #define	_INC_ACTION_H
 #include	"glclient.h"
-#include	"marshaller.h"
 
 #define	DEFAULT_WINDOW_WIDTH	1024
 #define	DEFAULT_WINDOW_HEIGHT	768
@@ -44,17 +43,12 @@ GLOBAL	GtkWidget	*TopNoteBook;
 GLOBAL	GList		*DialogStack;
 GLOBAL	WindowScale	TopWindowScale;
 
-typedef	gint		(*_PingTimerFunc)	(gpointer data);
-
 extern	void		RegisterChangedHandler(GObject *object, 
 						GCallback func, gpointer data);
 extern	void		BlockChangedHandlers(void);
 extern	void		UnblockChangedHandlers(void);
 extern	GtkWidget	*GetWindow(	GtkWidget	*widget);
 extern	char		*GetWindowName(	GtkWidget	*widget);
-extern	void		CreateWindow(char *wname,int size,char *buff);
-extern	void		ShowWindow(char *wname);
-extern	void		CloseWindow(char *wname);
 extern	void		ClearKeyBuffer(void);
 extern	void		ResetTimer(char *wname);
 extern	void		_AddChangedWidget(GtkWidget *widget);
@@ -65,10 +59,8 @@ extern	void		HideBusyCursor(GtkWidget *widget);
 extern	void		ResetScrolledWindow(char *windowName);
 extern  void		SetTitle(GtkWidget *window);
 extern  void		SetBGColor(GtkWidget *window);
-extern	GtkWidget	*GetWidgetByLongName(char *longName);
-extern	GtkWidget	*GetWidgetByName(char *dataName);
-extern	GtkWidget	*GetWidgetByWindowNameAndLongName(char *wname, char *name);
-extern	GtkWidget	*GetWidgetByWindowNameAndName(char *wname, char *name);
+extern	GtkWidget	*GetWidgetByLongName(const char *longName);
+extern	GtkWidget	*GetWidgetByName(const char *dataName);
 extern	void		ConfigureWindow(GtkWidget *widget,GdkEventConfigure *ev, 
 						gpointer data);
 extern	void		InitTopWindow(void);
@@ -78,14 +70,15 @@ extern  gboolean    IsWidgetName2(char *name);
 
 extern	void		ListConfig();
 extern	void		LoadConfig(const char *configname);
-extern  void 		GrabFocus(char *windowName,char *widgetName);
 extern  void        UI_Init(int argc, char **argv);
 extern	void		UI_Main(void);
 extern	void		InitStyle(void);
 extern	int			AskPass(char *buf, size_t buflen,const char	*prompt);
-extern	void		SetPingTimerFunc(_PingTimerFunc func, gpointer data);
+extern	void		SetPingTimerFunc();
 extern	WindowData	*GetWindowData(const char *wname);
-extern	WidgetData	*GetWidgetData( const char *wname);
+extern	void		SendEvent(const char*window,const char*widget,
+						const char*event);
+extern	void		UpdateScreen();
 
 #endif
 

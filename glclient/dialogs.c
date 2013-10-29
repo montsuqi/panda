@@ -56,8 +56,8 @@ MessageDialog(
 	const char *message)
 {
 	GtkWidget *dialog;
-		
-	if(strlen(message) <= 0) return;
+
+	if (message == NULL || strlen(message) <= 0) return;
 	dialog = _message_dialog(type, message);
 	gtk_dialog_run(GTK_DIALOG(dialog));
     gtk_widget_destroy(dialog);

@@ -36,19 +36,24 @@
 #include	<sys/time.h>
 #include 	<gtk/gtk.h>
 #include	<gtkpanda/gtkpanda.h>
+#include	<json.h>
 
 #include	"types.h"
 #include	"glclient.h"
+#if 0
 #include	"glterm.h"
-#include	"marshaller.h"
+#endif
 #define		ACTION_MAIN
 #include	"bd_config.h"
 #include	"action.h"
 #include	"dialogs.h"
 #include	"styleParser.h"
-#include	"queue.h"
 #include	"gettext.h"
 #include	"widgetcache.h"
+#include	"widgetOPS.h"
+#include	"protocol.h"
+#include	"notify.h"
+#include	"printservice.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -521,11 +526,10 @@ SetBGColor(GtkWidget *widget)
 #endif
 }
 
-extern	void	
+static	void	
 CreateWindow(
-	char	*wname,
-	int		size,
-	char	*buff)
+	const char	*wname,
+	const char	*gladedata)
 {
 	GladeXML	*xml;
 	WindowData	*wdata;
@@ -537,15 +541,13 @@ ENTER_FUNC;
 		dbgprintf("%s already in WindowTable", wname);
 		return;
 	}
-	xml = glade_xml_new_from_memory(buff,size,NULL,NULL);
+	xml = glade_xml_new_from_memory((char*)gladedata,strlen(gladedata),NULL,NULL);
 	if ( xml == NULL ) {
-		dbgmsg("no xml");
-		return;
+		Error("invalid glade data");
 	}
 	window = glade_xml_get_widget_by_long_name(xml, wname);
 	if (window == NULL) {
-		Warning("Window %s not found", wname);
-		return;
+		Error("Window %s not found", wname);
 	}
 	wdata = New(WindowData);
 	wdata->xml = xml;
@@ -554,15 +556,17 @@ ENTER_FUNC;
 	wdata->fAccelGroup = FALSE;
 	wdata->ChangedWidgetTable = NewNameHash();
 	wdata->TimerWidgetTable = NewNameHash();
-	wdata->UpdateWidgetQueue = NewQueue();
 	glade_xml_signal_autoconnect(xml);
 	g_hash_table_insert(WINDOWTABLE(Session),strdup(wname),wdata);
 
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
-	g_return_if_fail(child != NULL);
+	if (child == NULL) {
+		Error("invalid glade:no child");
+	}
 	g_object_ref(child);
 	gtk_widget_show_all(child);
-	gtk_container_forall(GTK_CONTAINER(child), _RegistTimer, wdata->TimerWidgetTable);
+	gtk_container_forall(GTK_CONTAINER(child),
+		_RegistTimer,wdata->TimerWidgetTable);
 	if (IsDialog(window)) {
 		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
@@ -611,7 +615,7 @@ LEAVE_FUNC;
 
 extern	void
 CloseWindow(
-	char	*wname)
+	const char *wname)
 {
 	WindowData	*data;
 	GtkWidget	*window;
@@ -679,7 +683,7 @@ LEAVE_FUNC;
 
 extern	void
 ShowWindow(
-	char	*wname)
+	const char *wname)
 {
 	WindowData	*data;
 	GtkWidget	*window;
@@ -779,38 +783,10 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	GtkWidget*
-GetWidgetByLongName(char *name)
-{
-	WidgetData	*data;
-	GtkWidget	*widget;
-	
-	widget = NULL;
-	data = GetWidgetData(name);
-	if (data != NULL) {
-	    widget = glade_xml_get_widget_by_long_name(
-			(GladeXML *)data->window->xml, name);
-	}
-	return widget;
-}
-
-extern	GtkWidget*
-GetWidgetByName(char *name)
-{
-	WindowData	*wdata;
-	GtkWidget	*widget;
-	
-	widget = NULL;
-	wdata = GetWindowData(THISWINDOW(Session));
-	if (wdata != NULL && wdata->xml != NULL) {
-	    widget = glade_xml_get_widget((GladeXML *)wdata->xml, name);
-	}
-	return widget;
-}
-
-extern	GtkWidget*
-GetWidgetByWindowNameAndLongName(char *windowName,
-	char *widgetName)
+static GtkWidget*
+GetWidgetByWindowNameAndLongName(
+	const char *windowName,
+	const char *widgetName)
 {
 	WindowData	*wdata;
 	GtkWidget	*widget;
@@ -824,9 +800,10 @@ GetWidgetByWindowNameAndLongName(char *windowName,
 	return widget;
 }
 
-extern	GtkWidget*
-GetWidgetByWindowNameAndName(char *windowName,
-	char *widgetName)
+static GtkWidget*
+GetWidgetByWindowNameAndName(
+	const char *windowName,
+	const char *widgetName)
 {
 	WindowData	*wdata;
 	GtkWidget	*widget;
@@ -839,6 +816,39 @@ GetWidgetByWindowNameAndName(char *windowName,
 	}
 	return widget;
 }
+
+extern	GtkWidget*
+GetWidgetByLongName(const char *lname)
+{
+	char *wname,*p;
+	GtkWidget *widget;
+	
+	wname = g_strdup(lname);
+	for(p=wname;*p != 0;p++) {
+		if (*p == '.') {
+			*p = 0;
+			break;
+		}
+	}
+	widget = GetWidgetByWindowNameAndLongName(wname,lname);
+	g_free(wname);
+	return widget;
+}
+
+extern	GtkWidget*
+GetWidgetByName(const char *name)
+{
+	WindowData	*wdata;
+	GtkWidget	*widget;
+	
+	widget = NULL;
+	wdata = GetWindowData(THISWINDOW(Session));
+	if (wdata != NULL && wdata->xml != NULL) {
+	    widget = glade_xml_get_widget((GladeXML *)wdata->xml, name);
+	}
+	return widget;
+}
+
 
 static  void
 ScaleWidget(
@@ -1085,10 +1095,7 @@ ListConfig()
 		printf("[%s]\n", key);
 		printf("\tdescription:\t%s\n", 
 			gl_config_get_string(serverkey,"description"));
-		printf("\thost:\t\t%s\n", gl_config_get_string(serverkey,"host"));
-		printf("\tport:\t\t%s\n", gl_config_get_string(serverkey,"port"));
-		printf("\tapplication:\t%s\n", 
-			gl_config_get_string(serverkey,"application"));
+		printf("\tauthuri:\t\t%s\n", gl_config_get_string(serverkey,"authuri"));
 		printf("\tuser:\t\t%s\n",gl_config_get_string(serverkey,"user"));
 		printf("\tgconfkey:\t%s\n",serverkey);
 	}
@@ -1121,9 +1128,7 @@ LoadConfig (
 	}
 	if (gconf_client_dir_exists(GConfCTX,serverkey,NULL)) {
 		gl_config_set_server(serverkey);
-		Host = gl_config_get_string (serverkey,"host");
-		PortNum = gl_config_get_string (serverkey,"port");
-		CurrentApplication = gl_config_get_string (serverkey,"application");
+		AUTHURI(Session) = gl_config_get_string (serverkey,"authuri");
 		Style = gl_config_get_string (serverkey,"style");
 		Gtkrc = gl_config_get_string (serverkey,"gtkrc");
 		fMlog = gl_config_get_bool (serverkey,"mlog");
@@ -1136,29 +1141,15 @@ LoadConfig (
 		fTimer = gl_config_get_bool (serverkey,"timer");
 		TimerPeriod = gl_config_get_string (serverkey,"timerperiod");
 		FontName = gl_config_get_string (serverkey,"fontname");
-#ifdef  USE_SSL
-		fSsl = gl_config_get_bool (serverkey,"ssl");
-		CA_File = gl_config_get_string (serverkey,"CAfile");
-		if (!strcmp("", CA_File)) CA_File = NULL;
-		CertFile = gl_config_get_string (serverkey,"cert");
-		if (!strcmp("", CertFile)) CertFile = NULL;
-		Ciphers = gl_config_get_string (serverkey,"ciphers");
-#ifdef  USE_PKCS11
-		fPKCS11 = gl_config_get_bool (serverkey,"pkcs11");
-		PKCS11_Lib = gl_config_get_string (serverkey,"pkcs11_lib");
-		if (!strcmp("", PKCS11_Lib)) PKCS11_Lib = NULL;
-		Slot = gl_config_get_string (serverkey,"slot");
-#endif
-#endif
 	} else {
 		g_error(_("cannot load config:%s"), confnum);
 	}
 }
 
-extern  void
+static  void
 GrabFocus(
-	char *windowName, 
-	char *widgetName)
+	const char *windowName, 
+	const char *widgetName)
 {
 	GtkWidget 	*widget;
 
@@ -1236,21 +1227,42 @@ AskPass(char	*buf,
 	size_t		buflen,
 	const char	*prompt)
 {
-#ifdef USE_SSL
-	int ret;
-
-	ret = ShowAskPassDialog(buf,buflen,prompt);
-	Passphrase = StrDup(buf);
-	return ret;
-#else
 	return 0;
-#endif
+}
+
+static gint
+PingTimerFunc(
+	gpointer data)
+{
+	char *dialog,*popup,*abort;
+
+	if (ISRECV(Session)) {
+		return 1;
+	}
+	ISRECV(Session) = TRUE;
+	RPC_GetMessage(&dialog,&popup,&abort);
+	if (strlen(abort) > 0) {
+		ShowInfoDialog(abort);
+		exit(1);
+	} else if (strlen(popup) > 0) {
+		Notify(_("glclient message notify"),popup,"gtk-dialog-info",0);
+	} else if (strlen(dialog) > 0) {
+		ShowInfoDialog(dialog);
+	}
+	g_free(abort);
+	g_free(popup);
+	g_free(dialog);
+	ISRECV(Session) = FALSE;
+
+	CheckPrintList();
+	CheckDLList();
+	return 1;
 }
 
 extern	void
-SetPingTimerFunc(_PingTimerFunc func, gpointer data)
+SetPingTimerFunc()
 {
-	g_timeout_add(PingTimerPeriod, func, data);
+	g_timeout_add(PingTimerPeriod,PingTimerFunc,NULL);
 }
 
 extern	WindowData *
@@ -1260,9 +1272,129 @@ GetWindowData(
 	return (WindowData*)g_hash_table_lookup(WINDOWTABLE(Session),wname);
 }
 
-extern	WidgetData *
-GetWidgetData(
-	const char *wname)
+extern	void
+SendEvent(
+	const char *window,
+	const char *widget,
+	const char *event)
 {
-	return (WidgetData*)g_hash_table_lookup(WIDGETTABLE(Session),wname);
+	json_object *params,*meta,*event_data;
+
+	meta = json_object_new_object();
+	json_object_object_add(meta,"client_version",
+		json_object_new_string(VERSION));
+	json_object_object_add(meta,"session_id",
+		json_object_new_string(SESSIONID(Session)));
+
+	event_data = json_object_new_object();
+	json_object_object_add(event_data,"window",
+		json_object_new_string(window));
+	json_object_object_add(event_data,"widget",
+		json_object_new_string(widget));
+	json_object_object_add(event_data,"event",
+		json_object_new_string(event));
+	json_object_object_add(event_data,"screen_data",
+		MakeScreenData(window));
+	
+	params = json_object_new_object();
+	json_object_object_add(params,"meta",meta);
+	json_object_object_add(params,"event_data",event_data);
+	RPC_SendEvent(params);
+}
+
+static	void
+UpdateWindow(
+	json_object *w,
+	int idx)
+{
+	json_object *child;
+	gboolean isdummy;
+	const char *put_type;
+	const char *wname;
+	const char *gladedata;
+
+	child = json_object_object_get(w,"put_type");
+	if (child == NULL ||is_error(child)) {
+		Error("invalid json part:put_type");
+	}
+	put_type = (char*)json_object_get_string(child);
+
+	child = json_object_object_get(w,"window");
+	if (child == NULL ||is_error(child)) {
+		Error("invalid json part:window");
+	}
+	wname = json_object_get_string(child);
+	isdummy = wname[0] == '_';
+
+	if (fMlog) {
+		MessageLogPrintf("window[%s] put_type[%s]\n",wname,put_type);
+	}
+
+	if (isdummy) {
+		return;
+	}
+	
+	if (GetWindowData(wname) == NULL) {
+		child = json_object_object_get(w,"screen_define");
+		if (child == NULL ||is_error(child)) {
+			Error("invalid json part:screeen_define");
+		}
+		gladedata = json_object_get_string(child);
+		CreateWindow(wname,gladedata);
+	}
+	if (!strcmp("new",put_type)||!strcmp("current",put_type)) {
+		child = json_object_object_get(w,"screen_data");
+		if (child == NULL ||is_error(child)) {
+			Error("invalid json part:screeen_data");
+		}
+		UpdateWidget(wname,child);
+		ShowWindow(wname);
+	} else {
+		CloseWindow(wname);
+	}
+}
+
+extern	void
+UpdateScreen()
+{
+	json_object *result,*window_data,*windows,*child;
+	const char *f_window;
+	const char *f_widget;
+	int i;
+	
+	result = json_object_object_get(SCREENDATA(Session),"result");
+	window_data = json_object_object_get(result,"window_data");
+	if (window_data == NULL ||is_error(window_data)) {
+		Error("invalid json part:window_data");
+	}
+
+	child = json_object_object_get(window_data,"focused_window");
+	if (child == NULL ||is_error(child)) {
+		Error("invalid json part:focused_window");
+	}
+	f_window = json_object_get_string(child);
+	if (THISWINDOW(Session) != NULL) {
+		g_free(THISWINDOW(Session));
+	}
+	THISWINDOW(Session) = g_strdup(f_window);
+
+	child = json_object_object_get(window_data,"focused_widget");
+	if (child == NULL ||is_error(child)) {
+		Error("invalid json part:focused_widget");
+	}
+	f_widget = json_object_get_string(child);
+
+	windows = json_object_object_get(window_data,"windows");
+	if (windows == NULL ||
+		is_error(windows) ||
+		json_object_get_type(windows) != json_type_array) {
+		Error("invalid json part:windows");
+	}
+	for(i=0;i<json_object_array_length(windows);i++) {
+		child = json_object_array_get_idx(windows,i);
+		UpdateWindow(child,i);
+	}
+	if (f_window != NULL && f_window[0] != '_') {
+		GrabFocus(f_window,f_widget);
+	}
 }
