@@ -125,16 +125,6 @@ ENTER_FUNC;
 				scr->w.s[i].puttype = SCREEN_NULL;
 			}
 		}
-		switch (scr->puttype) {
-		case SCREEN_CHANGE_WINDOW:
-			scr->puttype = SCREEN_NEW_WINDOW;
-			break;
-		case SCREEN_JOIN_WINDOW:
-			scr->puttype = SCREEN_CURRENT_WINDOW;
-			break;
-		default:
-			break;
-		}
 		if (RegisterWindow(scr,scr->window) != NULL) {
 			PutWindow(scr,scr->window,scr->puttype);
 			RecvTermServerData(fp,scr);	ON_IO_ERROR(fp,badio);
