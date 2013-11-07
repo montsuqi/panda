@@ -444,6 +444,9 @@ ParseReqHeader(HTTP_REQUEST *req)
 	char *tail;
 	char *key;
 	char *value;
+	char *p;
+	size_t size;
+	int i;
 
 ENTER_FUNC;
 	line = head = GetNextLine(req);
@@ -457,7 +460,12 @@ ENTER_FUNC;
 		req->status = HTTP_BAD_REQUEST;
 		return FALSE;
 	}
-	key = StrnDup(head, tail - head);
+	size = tail - head + 1;
+	key = xmalloc(size);
+	memset(key,0,size);
+	for(i=0,p=head;i<size-1;i++,p++) {
+		key[i] = tolower(*p);
+	}
 	head = tail + 1;
 	while(head[0] == ' '){ head++; }
 
@@ -479,7 +487,7 @@ ParseReqBody(HTTP_REQUEST *req)
 	char *p;
 	char *q;
 	
-	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
+	value = (char *)g_hash_table_lookup(req->header_hash,"content-length");
 	size = atoi(value);
 	if (size <= 0) {
 		req->status = HTTP_BAD_REQUEST;
@@ -491,7 +499,7 @@ ParseReqBody(HTTP_REQUEST *req)
 		Message("invalid Content-Length:%s", value);
 		return;
 	}
-	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Type");
+	value = (char *)g_hash_table_lookup(req->header_hash,"content-type");
 
 	p = req->head;
 
@@ -533,7 +541,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 	}
 #endif
 
-	head = (char *)g_hash_table_lookup(req->header_hash,"Authorization");
+	head = (char *)g_hash_table_lookup(req->header_hash,"authorization");
 	if (head == NULL) {
 		req->status = HTTP_UNAUTHORIZED;
 		Message("does not have Authorization");
@@ -607,7 +615,7 @@ ENTER_FUNC;
 	if ( GetItemLongName(e,"http_status") ){
 		ValueInteger(GetItemLongName(e,"http_status")) = HTTP_OK;
 	}
-	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
+	p = (char *)g_hash_table_lookup(req->header_hash, "content-cype");
 	if (p != NULL) {
 		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
 	}
