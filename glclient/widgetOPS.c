@@ -372,6 +372,7 @@ SetPandaTable(
 
 ENTER_FUNC;
 	SetCommon(widget,wdata);
+	gtk_panda_table_set_xim_enabled(GTK_PANDA_TABLE(widget),data->ximenabled);
 	for	( j = 0 ; j < g_list_length(data->tabledata) ; j ++ ) {
 		rowdata = g_list_nth_data(data->tabledata,j);
 		gtk_panda_table_set_row(GTK_PANDA_TABLE(widget),j,rowdata);
@@ -387,6 +388,8 @@ ENTER_FUNC;
 	if (data->trow >= 0 && data->tcolumn >= 0) {
 		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget), 
 			data->trow, data->tcolumn, TRUE, data->trowattr, 0.0); 
+	} else {
+		gtk_panda_table_stay(GTK_PANDA_TABLE(widget));
 	}
 	_AddChangedWidget(widget);
 LEAVE_FUNC;
