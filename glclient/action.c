@@ -1278,13 +1278,7 @@ SendEvent(
 	const char *widget,
 	const char *event)
 {
-	json_object *params,*meta,*event_data;
-
-	meta = json_object_new_object();
-	json_object_object_add(meta,"client_version",
-		json_object_new_string(VERSION));
-	json_object_object_add(meta,"session_id",
-		json_object_new_string(SESSIONID(Session)));
+	json_object *params,*event_data;
 
 	event_data = json_object_new_object();
 	json_object_object_add(event_data,"window",
@@ -1297,7 +1291,6 @@ SendEvent(
 		MakeScreenData(window));
 	
 	params = json_object_new_object();
-	json_object_object_add(params,"meta",meta);
 	json_object_object_add(params,"event_data",event_data);
 	RPC_SendEvent(params);
 }

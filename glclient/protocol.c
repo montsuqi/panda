@@ -503,11 +503,18 @@ RPC_SendEvent(
 {
 	CURL *curl;
 	struct curl_slist *headers = NULL;
-	json_object *obj;
+	json_object *obj,*meta;
 	char *ctype,*jsonstr;
 	long http_code;
 	gboolean fSSL;
 	size_t jsonsize;
+
+	meta = json_object_new_object();
+	json_object_object_add(meta,"client_version",
+		json_object_new_string(VERSION));
+	json_object_object_add(meta,"session_id",
+		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(params,"meta",meta);
 
 	obj = MakeJSONRPCRequest("send_event",params);
 	
