@@ -147,6 +147,8 @@ IsCommon(
 		return TRUE;
 	} else if (!strcmp("visible",key)) {
 		return TRUE;
+	} else if (!strcmp("__keys__",key)) {
+		return TRUE;
 	} else {
 		return FALSE;
 	}
@@ -428,10 +430,10 @@ SetPandaCList(
 	GtkWidget	*widget,
 	json_object	*obj)
 {
-	int count,n,i,j,row;
+	int count,n,m,i,j,row;
 	double rowattr;
 	char *rdata[MAX_CLIST_COLUMNS];
-	json_object *child,*rowobj,*val;
+	json_object *child,*val,*rowobj,*colobj,*keys,*key;
 ENTER_FUNC;
 	SetCommon(widget,obj);
 
@@ -489,13 +491,19 @@ ENTER_FUNC;
 				for(j=0;j<MAX_CLIST_COLUMNS;j++) {
 					rdata[j] = NULL;
 				}
-				j = 0;
-				json_object_object_foreach(rowobj,k,v) {
-					if (v != NULL && 
-						json_object_is_type(v,json_type_string)) {
-						rdata[j] = (char*)json_object_get_string(v);
+				keys = json_object_object_get(rowobj,"__keys__");
+				if (keys != NULL && !is_error(keys) &&
+					json_object_is_type(keys,json_type_array)) {
+					m = json_object_array_length(keys);
+					for(j=0;j<m;j++) {
+						key = json_object_array_get_idx(keys,j);
+						colobj = json_object_object_get(rowobj,
+							(char*)json_object_get_string(key));
+						if (colobj != NULL && !is_error(colobj) &&
+							json_object_is_type(colobj,json_type_string)) {
+							rdata[j] = (char*)json_object_get_string(colobj);
+						}
 					}
-					j++;
 				}
 				gtk_panda_clist_set_row(GTK_PANDA_CLIST(widget),i,rdata);
 			}
@@ -649,9 +657,9 @@ SetPandaTable(
 	GtkWidget	*widget,
 	json_object	*obj)
 {
-	int			i,j,trow,tcolumn;
+	int			n,i,j,trow,tcolumn;
 	double		trowattr;
-	json_object	*child,*rowdata;
+	json_object	*child,*rowobj,*colobj,*keys,*key;
 	char		*rowval[GTK_PANDA_TABLE_MAX_COLS];
 	char		*fgval[GTK_PANDA_TABLE_MAX_COLS];
 	char		*bgval[GTK_PANDA_TABLE_MAX_COLS];
@@ -701,8 +709,8 @@ ENTER_FUNC;
 	if (child != NULL && !is_error(child) && 
 		json_object_is_type(child,json_type_array)) {
 		for(i=0;i<json_object_array_length(child);i++) {
-			rowdata = json_object_array_get_idx(child,i);
-			if (!json_object_is_type(rowdata,json_type_object)) {
+			rowobj = json_object_array_get_idx(child,i);
+			if (!json_object_is_type(rowobj,json_type_object)) {
 				continue;
 			}
 			for(j=0;j<GTK_PANDA_TABLE_MAX_COLS;j++) {
@@ -710,26 +718,35 @@ ENTER_FUNC;
 				fgval[j] = NULL;
 				bgval[j] = NULL;
 			}
-			j = 0;
-			json_object_object_foreach(rowdata,k,v) {
-				if (!json_object_is_type(v,json_type_object)) {
-					continue;
-				}
-				json_object_object_foreach(v,k2,v2) {
-					if (!json_object_is_type(v2,json_type_string)) {
+			keys = json_object_object_get(rowobj,"__keys__");
+			if (keys != NULL && !is_error(keys) && 
+				json_object_is_type(keys,json_type_array)) {
+				n = json_object_array_length(keys);
+				for(j=0;j<n;j++) {
+					key = json_object_array_get_idx(keys,j);
+					if (!json_object_is_type(key,json_type_string)) {
 						continue;
 					}
-					if (json_object_is_type(v2,json_type_string)) {
-						if (!strcmp(k2,"celldata")) {
-							rowval[j] = (char*)json_object_get_string(v2);
-						} else if (!strcmp(k2,"fgcolor")) {
-							fgval[j] = (char*)json_object_get_string(v2);
-						} else if (!strcmp(k2,"bgcolor")) {
-							bgval[j] = (char*)json_object_get_string(v2);
+					colobj = json_object_object_get(rowobj,
+						(char*)json_object_get_string(key));
+					if (!json_object_is_type(colobj,json_type_object)) {
+						continue;
+					}
+					json_object_object_foreach(colobj,k2,v2) {
+						if (!json_object_is_type(v2,json_type_string)) {
+							continue;
+						}
+						if (json_object_is_type(v2,json_type_string)) {
+							if (!strcmp(k2,"celldata")) {
+								rowval[j] = (char*)json_object_get_string(v2);
+							} else if (!strcmp(k2,"fgcolor")) {
+								fgval[j] = (char*)json_object_get_string(v2);
+							} else if (!strcmp(k2,"bgcolor")) {
+								bgval[j] = (char*)json_object_get_string(v2);
+							}
 						}
 					}
 				}
-				j++;
 			}
 			gtk_panda_table_set_row(GTK_PANDA_TABLE(widget),i,rowval);
 			gtk_panda_table_set_fgcolor(GTK_PANDA_TABLE(widget),i,fgval);
