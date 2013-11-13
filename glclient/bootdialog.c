@@ -505,7 +505,7 @@ boot_dialog_new ()
 
   dialog = gtk_dialog_new ();
   self->dialog = dialog;
-  gtk_window_set_title (GTK_WINDOW (dialog), _("glclient2j Launcher"));
+  gtk_window_set_title (GTK_WINDOW (dialog), _("glclient2 Launcher"));
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_window_set_wmclass (GTK_WINDOW (dialog), "lancher", "glclient");
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
@@ -514,7 +514,7 @@ boot_dialog_new ()
   
   vbox = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 
-  welcome = gtk_label_new (_("glclient2j Launcher"));
+  welcome = gtk_label_new (_("glclient2 Launcher"));
   self->welcome = welcome;
   gtk_misc_set_alignment (GTK_MISC (welcome), 0.5, 0.5);
   gtk_box_pack_start (GTK_BOX (vbox), welcome, TRUE, TRUE, 5);
