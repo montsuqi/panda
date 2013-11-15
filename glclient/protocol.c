@@ -675,7 +675,7 @@ RPC_GetMessage(
 	// json parse
 	LBS_EmitEnd(writebuf);
 	obj = json_tokener_parse(LBS_Body(writebuf));
-	if (is_error(SCREENDATA(Session))) {
+	if (obj == NULL || is_error(obj)) {
 		Error(_("invalid json"));
 	}
 	CheckJSONRPCResponse(obj);

@@ -135,7 +135,7 @@ GLMessage(int level, char *file, int line, char *msg)
 	}
 }
 
-#define DEFAULT_PING_TIMER_PERIOD   (30000)
+#define DEFAULT_PING_TIMER_PERIOD   (3000)
 static	void
 InitSystem()
 {
