@@ -446,7 +446,6 @@ InitSystem(
 
 	ThisDB = ThisDBD->db;
 	DB_Table = ThisDBD->DBD_Table;
-	CurrentProcess = NULL;
 
 	if		(  ThisDBD->cDB  >  0  ) {
 		InitDB_Process("pandadb");
