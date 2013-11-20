@@ -313,7 +313,6 @@ ENTER_FUNC;
 	SetValueInteger(GetItemLongName(mcp,"db.rcount"),0);
 	SetValueInteger(GetItemLongName(mcp,"db.limit"),1);
 	node->thisscrrec = bind->rec;
-	CurrentProcess = node;
 
 	/* SCREEN_NULLを除去  */
 	w.sp = 0;
@@ -653,7 +652,6 @@ ENTER_FUNC;
 	if		(  ( bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		Error("%s application is not in BD.\n",name);
 	}
-	CurrentProcess = NULL;
 	handler = bind->handler;
 	if		(  handler->klass->ReadyExecute  !=  NULL  ) {
 		handler->klass->ReadyExecute(handler,ThisBD->loadpath);
