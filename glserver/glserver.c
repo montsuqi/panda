@@ -98,7 +98,7 @@ SetDefault(void)
 	ScreenDir = ".";
 	RecordDir = ".";
 	AuthURL = "glauth://localhost:" PORT_GLAUTH;
-	CacheDir = "cache";
+	CacheDir = "/tmp/glserver/cache";
 	fAPI = FALSE;
 	fNumericHOST = FALSE;
 #ifdef	USE_SSL

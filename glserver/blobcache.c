@@ -68,10 +68,5 @@ BlobCacheFileName(
 extern	void
 BlobCacheCleanUp()
 {
-	char	buf[SIZE_BUFF];
-
-	if ( CacheDir ) {
-		sprintf(buf,"rm -f %s/*",CacheDir);
-		system(buf);
-	}
+	MakeDir(CacheDir,0700);
 }
