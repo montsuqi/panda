@@ -16,15 +16,19 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-noinst_LIBRARIES	=	libpandadb.a libpostgresqlutils.a libdblog.a
-pkglib_LTLIBRARIES 	=	$(DB_OBJECTS)
+noinst_LIBRARIES = libpostgresqlutils.a libdblog.a
+pkglib_LTLIBRARIES = $(DB_OBJECTS)
+lib_LTLIBRARIES = libpandadb.la
 
-libpandadb_a_LIBADD	=
+libpandadb_la_LIBADD =
 
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
-	dblib.h
+	dblib.h \
+	dbgroup.h
+
+noinst_PROGRAMS		=
 
 INCLUDES 			=		\
 	-I$(top_srcdir)			\
@@ -34,8 +38,12 @@ INCLUDES 			=		\
 	$(RUBY_CFLAGS)			\
 	$(COMMON_CFLAGS)
 
-libpandadb_a_CFLAGS = $(AM_CFLAGS)
-libpandadb_a_SOURCES	=	\
+libpandadb_la_CFLAGS = $(AM_CFLAGS)
+libpandadb_la_LDFLAGS	=			\
+	-version-info $(LTVERSION)	\
+	-export-dynamic
+
+libpandadb_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h
 
@@ -44,10 +52,10 @@ libdblog_a_SOURCES	=	\
 	dblog.c         dblog.h
 
 libpostgresqlutils_a_LIBADD = 
+
+
 libpostgresqlutils_a_CFLAGS = $(AM_CFLAGS)
 libpostgresqlutils_a_SOURCES = \
-	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h	\
 	PostgreSQLlib.c PostgreSQLlib.h	\
 	PostgreSQLutils.c audit.c
 
@@ -64,15 +72,15 @@ PostgreSQL_la_LDFLAGS	=		\
 	-module						\
 	-export-dynamic
 PostgreSQL_la_SOURCES	=			\
-	dbgroup.c	dbgroup.h			\
-	redirect.c	redirect.h			\
 	PostgreSQLlib.c PostgreSQLlib.h \
 	PostgreSQL.c
 PostgreSQL_la_LIBADD	=				\
 	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(POSTGRES_LIBS)
 PostgreSQL_la_DEPENDENCIES	=			\
 	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/defaults.h
 
 Shell_la_LDFLAGS		=		\
@@ -80,46 +88,43 @@ Shell_la_LDFLAGS		=		\
 	-module						\
 	-export-dynamic
 Shell_la_SOURCES		=	\
-	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h	\
 	Shell.c
-Shell_la_LIBADD	=
+Shell_la_LIBADD	= \
+	$(top_builddir)/libs/libpanda.la \
+	$(top_builddir)/dblib/libpandadb.la
 
 System_la_LDFLAGS		=		\
 	-avoid-version				\
 	-module						\
 	-export-dynamic
 System_la_SOURCES		=		\
-	dbgroup.c	dbgroup.h		\
 	sysdata.c	sysdata.h		\
-	redirect.c	redirect.h		\
 	System.c
 System_la_LIBADD	=			\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.la \
+	$(top_builddir)/dblib/libpandadb.la
 
 NativeBLOB_la_LDFLAGS	=		\
 	-avoid-version				\
 	-module						\
 	-export-dynamic
 NativeBLOB_la_SOURCES	=		\
-	dbgroup.c	dbgroup.h		\
 	sysdata.c	sysdata.h		\
-	redirect.c	redirect.h		\
-	NativeBLOB.c	
+	NativeBLOB.c
 NativeBLOB_la_LIBADD	=		\
-	$(top_builddir)/libs/libpanda.la
+	$(top_builddir)/libs/libpanda.la \
+	$(top_builddir)/dblib/libpandadb.la
 
 XMLIO_la_LDFLAGS	=	\
 	-avoid-version				\
 	-module						\
 	-export-dynamic
 XMLIO_la_SOURCES	=	\
-	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h	\
 	sysdata.c	sysdata.h	\
 	XMLIO.c
 XMLIO_la_LIBADD			=				\
 	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(XML2_LIBS)
 
 XMLIO2_la_LDFLAGS	=	\
@@ -127,10 +132,9 @@ XMLIO2_la_LDFLAGS	=	\
 	-module						\
 	-export-dynamic
 XMLIO2_la_SOURCES	=	\
-	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h	\
 	sysdata.c	sysdata.h	\
 	XMLIO2.c
 XMLIO2_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(XML2_LIBS)

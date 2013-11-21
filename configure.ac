@@ -393,7 +393,7 @@ AC_ARG_WITH(mon-libpath,
 if test "$mon_libpath" != ""; then
    MONTSUQI_LIBRARY_PATH=$mon_libpath
 else
-   MONTSUQI_LIBRARY_PATH=$libdir
+   MONTSUQI_LIBRARY_PATH=$libdir/$PACKAGE
 fi
 AC_SUBST(MONTSUQI_LIBRARY_PATH)
 
@@ -403,7 +403,7 @@ AC_ARG_WITH(mon-loadpath,
 if test "$mon_loadpath" != ""; then
    MONTSUQI_LOAD_PATH=$mon_loadpath
 else
-   MONTSUQI_LOAD_PATH=$libdir
+   MONTSUQI_LOAD_PATH=$libdir/$PACKAGE
 fi
 AC_SUBST(MONTSUQI_LOAD_PATH)
 

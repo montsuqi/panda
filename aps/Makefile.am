@@ -33,7 +33,7 @@ MONFUNC_la_LDFLAGS	=			\
 
 LDADD 		=							\
 	-lm									\
-	$(top_builddir)/dblib/libpandadb.a  \
+	$(top_builddir)/dblib/libpandadb.la  \
 	$(top_builddir)/libs/libpanda.la	\
 	$(COMMON_LIBS)						\
 	$(P11_LIBS)							\
@@ -101,7 +101,7 @@ aps_SOURCES	=	\
 	handler.c	handler.h
 aps_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la
 
 dbstub_LDFLAGS	=			\
@@ -111,7 +111,7 @@ dbstub_SOURCES	=	\
 	handler.c		handler.h
 dbstub_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la
 
 MONFUNC_la_SOURCES	=			\

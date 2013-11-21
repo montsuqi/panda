@@ -98,6 +98,8 @@ typedef	struct {
 	char	func[SIZE_FUNC];
 	char	rname[SIZE_NAME+1];
 	char	pname[SIZE_NAME+1];
+	char    user[SIZE_USER+1];
+	char    term[SIZE_TERM+1];
 	int		rc;
 	int		blocks;
 	int		rno;

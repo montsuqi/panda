@@ -32,10 +32,9 @@
 #include	<string.h>
 
 #include	"libmondai.h"
+#include	"glserver.h"
 #include	"blobcache.h"
 #include	"debug.h"
-
-static char *CacheDir;
 
 extern	size_t
 BlobCacheFileSize(
@@ -71,13 +70,8 @@ BlobCacheCleanUp()
 {
 	char	buf[SIZE_BUFF];
 
-	sprintf(buf,"rm -f %s/*",CacheDir);
-	system(buf);
-}
-
-extern	void
-SetCacheDir(
-	char* dir)
-{
-	CacheDir = g_strdup(dir);
+	if ( CacheDir ) {
+		sprintf(buf,"rm -f %s/*",CacheDir);
+		system(buf);
+	}
 }
