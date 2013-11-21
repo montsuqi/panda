@@ -236,6 +236,7 @@ ENTER_FUNC;
 		strcpy(node->uuid,hdr.uuid);
 		strcpy(node->user,hdr.user);
 		strcpy(node->window,hdr.window);
+		node->w.sp = 0;
 
         RecvLBS(fp,buff);								ON_IO_ERROR(fp,badio);
 
