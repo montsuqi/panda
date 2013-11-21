@@ -78,10 +78,7 @@ static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	if (scr->status == SCREEN_DATA_END) {
-		SessionExit(scr);
-		Message("[%s@%s] session end",scr->user,scr->host);
-	}
+	SessionExit(scr);
 	FreeScreenData(scr);
 }
 
