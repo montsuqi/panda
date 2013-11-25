@@ -1342,6 +1342,7 @@ UpdateWindow(
 		}
 		UpdateWidget(wname,child);
 		ShowWindow(wname);
+		ResetTimer((char*)wname);
 	} else {
 		CloseWindow(wname);
 	}

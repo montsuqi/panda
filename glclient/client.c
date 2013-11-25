@@ -126,6 +126,8 @@ GLMessage(int level, char *file, int line, char *msg)
 {
 	switch(level){
 	  case MESSAGE_WARN:
+		__Message(level, file, line, msg);
+		break;
 	  case MESSAGE_ERROR:
 		ShowErrorDialog(msg);
 		break;

@@ -175,9 +175,12 @@ ENTER_FUNC;
 	window_name = GetWindowName(widget);
 	widget_name = (char *)gtk_widget_get_name(widget);
 	event = event != NULL ? event : widget_name;
-	if (!ISRECV(Session) && 
-		!ignore_event && 
-		!strcmp(window_name,THISWINDOW(Session))) {
+	if (strcmp(window_name,THISWINDOW(Session))) {
+		Warning("window name unmatched glade[%s],session[%s]",
+			window_name,THISWINDOW(Session));
+		return;
+	}
+	if (!ISRECV(Session) && !ignore_event) {
 		ISRECV(Session) = TRUE;
 
 		StopEventTimer();

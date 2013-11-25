@@ -173,6 +173,8 @@ ENTER_FUNC;
 				gtk_panda_pdf_set(GTK_PANDA_PDF(widget), 
 					LBS_Size(lbs), LBS_Body(lbs));
 				FreeLBS(lbs);
+			} else {
+				gtk_panda_pdf_set(GTK_PANDA_PDF(widget),0,NULL);
 			}
 		}
 	}
@@ -214,7 +216,7 @@ SetPandaDownload(
 	json_object	*obj)
 {
 	json_object *child;
-	const char *filename, *desc;
+	const char *filename, *desc, *oid;
 	LargeByteString *lbs;
 ENTER_FUNC;
 	filename = desc = NULL;
@@ -233,10 +235,13 @@ ENTER_FUNC;
 	child = json_object_object_get(obj,"objectdata");
 	if (child != NULL && !is_error(child) && 
 		json_object_is_type(child,json_type_string)) {
-		lbs = REST_GetBLOB(json_object_get_string(child));
-		if (lbs != NULL) {
-			ShowDownloadDialog(widget,(char*)filename,(char*)desc,lbs);
-			FreeLBS(lbs);
+		oid = json_object_get_string(child);
+		if (oid != NULL && strlen(oid) > 0 && strcmp(oid,"0")) {
+			lbs = REST_GetBLOB(oid);
+			if (lbs != NULL && LBS_Size(lbs) > 0) {
+				ShowDownloadDialog(widget,(char*)filename,(char*)desc,lbs);
+				FreeLBS(lbs);
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -365,18 +370,23 @@ GetNumberEntry(
 	json_object	*obj)
 {
 	Numeric	num;
+	char *key;
 ENTER_FUNC;
+	key = NULL;
 	json_object_object_foreach(obj,k,v) {
 		if (IsCommon(k)) {
 			// do nothing
 		} else if (!strcmp(k,"editable")) {
 		} else {
-			num = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
-			json_object_object_del(obj,k);
-			json_object_object_add(obj,k,
-				json_object_new_double(NumericToDouble(num)));
-			NumericFree(num);
+			key = g_strdup(k);
 		}
+	}
+	if (key != NULL) {
+		num = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
+		json_object_object_add(obj,key,
+			json_object_new_double(NumericToDouble(num)));
+		NumericFree(num);
+		g_free(key);
 	}
 LEAVE_FUNC;
 }
@@ -604,8 +614,7 @@ ENTER_FUNC;
 			// do nothing
 		} else if (!strcmp(k,"row")) {
 			if (visible) {
-				json_object_object_del(obj,k);
-				json_object_object_add(obj,k,
+				json_object_object_add(obj,"row",
 					json_object_new_int(row));
 			}
 		} else if (!strcmp(k,"rowattr")) {
@@ -671,7 +680,9 @@ ENTER_FUNC;
 	if (child != NULL && !is_error(child) && 
 		json_object_is_type(child,json_type_int)) {
 		trow = json_object_get_int(child);
-		trow = trow > 1 ? trow - 1 : 0;
+		if (trow > 1) {
+			trow -= 1;
+		}
 	}
 
 	trowattr = 0.0;
@@ -755,6 +766,8 @@ ENTER_FUNC;
 	}
 	if (trow >=0 && tcolumn >= 0) {
 		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget),trow,tcolumn,TRUE,trowattr,0.0);
+	} else {
+		gtk_panda_table_stay(GTK_PANDA_TABLE(widget));
 	}
 	_AddChangedWidget(widget);
 LEAVE_FUNC;
@@ -882,8 +895,9 @@ GetEntry(
 	GtkWidget	*widget,
 	json_object	*obj)
 {
-	char *text;
+	char *text,*key;
 ENTER_FUNC;
+	key = NULL;
 	text = gtk_editable_get_chars(GTK_EDITABLE(widget),0 , -1);
 	json_object_object_foreach(obj,k,v) {
 		if (IsCommon(k)) {
@@ -892,10 +906,13 @@ ENTER_FUNC;
 			// do nothing
 		} else {
 			if (json_object_is_type(v,json_type_string)) {
-				json_object_object_del(obj,k);
-				json_object_object_add(obj,k,json_object_new_string(text));
+				key = g_strdup(k);
 			}
 		}
+	}
+	if (key != NULL) {
+		json_object_object_add(obj,key,json_object_new_string(text));
+		g_free(key);
 	}
 	g_free(text);
 LEAVE_FUNC;
@@ -959,25 +976,29 @@ GetText(
 	GtkWidget	*widget,
 	json_object	*obj)
 {
-	char *text;
+	char *text,*key;
 	GtkTextBuffer *buffer;
 	GtkTextIter start;
 	GtkTextIter end;
 ENTER_FUNC;
+	key = NULL;
 	json_object_object_foreach(obj,k,v) {
 		if (IsCommon(k)) {
 			// do nothing
 		} else {
 			if (json_object_is_type(v,json_type_string)) {
-				buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
-				gtk_text_buffer_get_start_iter(buffer, &start);
-				gtk_text_buffer_get_end_iter(buffer, &end);
-				text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
-				json_object_object_del(obj,k);
-				json_object_object_add(obj,k,json_object_new_string(text));
-				g_free(text);
+				key = g_strdup(k);
 			}
 		}
+	}
+	if (key != NULL) {
+		buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+		gtk_text_buffer_get_start_iter(buffer, &start);
+		gtk_text_buffer_get_end_iter(buffer, &end);
+		text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+		json_object_object_add(obj,key,json_object_new_string(text));
+		g_free(text);
+		g_free(key);
 	}
 LEAVE_FUNC;
 }
@@ -1013,7 +1034,9 @@ GetButton(
 	GtkWidget	*widget,
 	json_object	*obj)
 {
+	char *key;
 ENTER_FUNC;
+	key = NULL;
 	json_object_object_foreach(obj,k,v) {
 		if (IsCommon(k)) {
 			// do nothing
@@ -1023,12 +1046,15 @@ ENTER_FUNC;
 			if (!json_object_is_type(v,json_type_boolean)) {
 				continue;
 			}
-			json_object_object_del(obj,k);
-			json_object_object_add(obj,k,
-				json_object_new_boolean(
-					gtk_toggle_button_get_active(
-						GTK_TOGGLE_BUTTON(widget))));
+			key = g_strdup(k);
 		}
+	}
+	if (key != NULL) {
+		json_object_object_add(obj,key,
+			json_object_new_boolean(
+				gtk_toggle_button_get_active(
+					GTK_TOGGLE_BUTTON(widget))));
+		g_free(key);
 	}
 LEAVE_FUNC;
 }
@@ -1127,7 +1153,6 @@ ENTER_FUNC;
 	child = json_object_object_get(obj,"pageno");
 	if (child != NULL && !is_error(child) && 
 		json_object_is_type(child,json_type_int)) {
-		json_object_object_del(obj,"pageno");
 		json_object_object_add(obj,"pageno",
 			json_object_new_int(
 				GPOINTER_TO_INT(
@@ -1358,8 +1383,9 @@ GetColorButton(
 {
 	GtkColorButton *cb;
 	GdkColor color;
-	char strcolor[256];
+	char strcolor[256],*key;
 ENTER_FUNC;
+	key = NULL;
 	cb = GTK_COLOR_BUTTON(widget);
 	gtk_color_button_get_color(cb,&color);
 	sprintf(strcolor,"#%02X%02X%02X",
@@ -1372,11 +1398,14 @@ ENTER_FUNC;
 			// do nothing
 		} else {
 			if (json_object_is_type(v,json_type_string)) {
-				json_object_object_del(obj,k);
-				json_object_object_add(obj,k,
-					json_object_new_string(strcolor));
+				key = g_strdup(k);
 			}
 		}
+	}
+	if (key != NULL) {
+		json_object_object_add(obj,key,
+			json_object_new_string(strcolor));
+		g_free(key);
 	}
 LEAVE_FUNC;
 }
