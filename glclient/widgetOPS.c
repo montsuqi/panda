@@ -1598,48 +1598,33 @@ _MakeScreenData(
 {
 	GtkWidget *widget;
 	char childname[SIZE_LONGNAME+1];
-	json_object *val,*obj,*child;
+	json_object *val;
 	int i,length;
 	enum json_type type;
 
-	obj = NULL;
 	type = json_object_get_type(w);
 	if (type == json_type_object) {
-		obj = json_object_new_object();
 		json_object_object_foreach(w,k,v) {
 			snprintf(childname,SIZE_LONGNAME,"%s.%s",longname,k);
 			childname[SIZE_LONGNAME] = 0;
-			child = _MakeScreenData(childname,v,wdata);
-			json_object_object_add(obj,k,child);
+			_MakeScreenData(childname,v,wdata);
 		}
 	} else if (type == json_type_array) {
-		obj = json_object_new_array();
 		length = json_object_array_length(w);
 		for(i=0;i<length;i++) {
 			val = json_object_array_get_idx(w,i);
 			snprintf(childname,SIZE_LONGNAME,"%s[%d]",longname,i);
 			childname[SIZE_LONGNAME] = 0;
-			child = _MakeScreenData(childname,val,wdata);
-			json_object_array_add(obj,child);
+			_MakeScreenData(childname,val,wdata);
 		}
-	} else if (type == json_type_boolean) {
-		obj = json_object_new_boolean(json_object_get_boolean(w));
-	} else if (type == json_type_int) {
-		obj = json_object_new_int(json_object_get_int(w));
-	} else if (type == json_type_double) {
-		obj = json_object_new_double(json_object_get_double(w));
-	} else if (type == json_type_string) {
-		obj = json_object_new_string(json_object_get_string(w));
-	} else {
-		obj = json_object_new_object();
 	}
 	widget = GetWidgetByLongName(longname);
 	if (widget != NULL) {
 		if (g_hash_table_lookup(wdata->ChangedWidgetTable,longname) != NULL) {
-			GetWidgetData(widget,obj);
+			GetWidgetData(widget,w);
 		}
 	}
-	return obj;
+	return w;
 }
 
 static gboolean
