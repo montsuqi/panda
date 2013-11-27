@@ -524,6 +524,9 @@ ENTER_FUNC;
 	if (child != NULL && !is_error(child) && 
 		json_object_is_type(child,json_type_array)) {
 		n = json_object_array_length(child);
+		if (count > 0) {
+			n = n > count ? count : n;
+		}
 		for(i=0;i<n;i++) {
 			val = json_object_array_get_idx(child,i);
 			if (json_object_is_type(val,json_type_string)) {
@@ -537,6 +540,9 @@ ENTER_FUNC;
 	if (child != NULL && !is_error(child) && 
 		json_object_is_type(child,json_type_array)) {
 		n = json_object_array_length(child);
+		if (count > 0) {
+			n = n > count ? count : n;
+		}
 		for(i=0;i<n;i++) {
 			val = json_object_array_get_idx(child,i);
 			if (json_object_is_type(val,json_type_string)) {
@@ -568,6 +574,9 @@ ENTER_FUNC;
 		} else {
 			if (json_object_is_type(v,json_type_array)) {
 				n = json_object_array_length(v);
+				if (count > 0) {
+					n = n > count ? count : n;
+				}
 				for(i=0;i<n;i++) {
 					child = json_object_array_get_idx(v,i);
 					if (json_object_is_type(child,json_type_boolean)) {
