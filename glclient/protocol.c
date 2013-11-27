@@ -194,28 +194,27 @@ CheckJSONRPCResponse(
 		Error(_("no result object"));
 	}
 }
- 
-void
-RPC_StartSession()
+
+#define AUTH 0
+#define RPC 1
+
+static	void
+JSONRPC(
+	int type,
+	json_object *obj)
 {
 	CURL *curl;
 	struct curl_slist *headers = NULL;
-	json_object *obj,*params,*child,*result,*meta;
-	char userpass[2048],*ctype,*jsonstr;
-	gboolean fSSL;
+	char userpass[2048],*ctype,clength[256],*url,*jsonstr;
 	long http_code;
+	gboolean fSSL;
 	size_t jsonsize;
 
-	params = json_object_new_object();
-	child = json_object_new_object();
-	json_object_object_add(child,"client_version",
-		json_object_new_string(PACKAGE_VERSION));
-	json_object_object_add(params,"meta",child);
-	obj = MakeJSONRPCRequest("start_session",params);
-	
-	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
-	userpass[sizeof(userpass)-1] = 0;
-
+	if (type == AUTH) {
+		url = AUTHURI(Session);
+	} else {
+		url = RPCURI(Session);
+	}
 	if (readbuf == NULL) {
 		readbuf = NewLBS();
 	}
@@ -223,9 +222,9 @@ RPC_StartSession()
 	jsonsize = strlen(jsonstr);
 	LBS_EmitStart(readbuf);
 	LBS_EmitString(readbuf,jsonstr);
-	json_object_put(obj);
 	LBS_EmitEnd(readbuf);
 	LBS_SetPos(readbuf,0);
+	json_object_put(obj);
 
 	if (writebuf == NULL) {
 		writebuf = NewLBS();
@@ -238,23 +237,26 @@ RPC_StartSession()
 		Error(_("could not init curl"));
 	}
 
-	fSSL = !strncmp("https",AUTHURI(Session),5);
+	fSSL = !strncmp("https",url,5);
 
 	headers = curl_slist_append(headers, "Content-Type: application/json");
+	snprintf(clength,sizeof(clength),"Content-Length: %d",jsonsize);
+	headers = curl_slist_append(headers, clength);
 
-	curl_easy_setopt(curl, CURLOPT_URL, AUTHURI(Session));
-	curl_easy_setopt(curl, CURLOPT_POST, 1);
-
+	curl_easy_setopt(curl, CURLOPT_URL,url);
+	curl_easy_setopt(curl, CURLOPT_POST,1);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
-
 	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
-	curl_easy_setopt(curl, CURLOPT_READFUNCTION,read_text_data);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
-
-	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	if (type == AUTH) {
+		snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
+		userpass[sizeof(userpass)-1] = 0;
+		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	}
 	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
@@ -263,12 +265,12 @@ RPC_StartSession()
 	if (curl_easy_perform(curl) != CURLE_OK) {
 		Error(_("curl_easy_perform failure"));
 	}
-	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code) == CURLE_OK) {
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		if (http_code != 200) {
 			Error(_("http status code[%d]"),http_code);
 		}
 	} else {
-		Error(_("curl_easy_getinfo failure"));
+		Error(_("curl_easy_getinfo"));
 	}
 	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
 		if (strstr(ctype,"json") == NULL) {
@@ -279,7 +281,22 @@ RPC_StartSession()
 	}
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
+}
 
+void
+RPC_StartSession()
+{
+	json_object *obj,*params,*child,*result,*meta;
+
+	params = json_object_new_object();
+	child = json_object_new_object();
+	json_object_object_add(child,"client_version",
+		json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(params,"meta",child);
+	obj = MakeJSONRPCRequest("start_session",params);
+
+	JSONRPC(AUTH,obj);
+	
 	// json parse
 	LBS_EmitEnd(writebuf);
 	obj = json_tokener_parse(LBS_Body(writebuf));
@@ -310,20 +327,13 @@ RPC_StartSession()
 		Error(_("no rest_uri object"));
 	}
 	RESTURI(Session) = g_strdup(json_object_get_string(child));
-
 	json_object_put(obj);
 }
 
 void
 RPC_EndSession()
 {
-	CURL *curl;
-	struct curl_slist *headers = NULL;
 	json_object *obj,*params,*child;
-	char *ctype,*jsonstr;
-	long http_code;
-	gboolean fSSL;
-	size_t jsonsize;
 
 	params = json_object_new_object();
 	child = json_object_new_object();
@@ -335,64 +345,7 @@ RPC_EndSession()
 
 	obj = MakeJSONRPCRequest("end_session",params);
 	
-	if (readbuf == NULL) {
-		readbuf = NewLBS();
-	}
-	jsonstr = (char*)json_object_to_json_string(obj);
-	jsonsize = strlen(jsonstr);
-	LBS_EmitStart(readbuf);
-	LBS_EmitString(readbuf,jsonstr);
-	json_object_put(obj);
-	LBS_EmitEnd(readbuf);
-	LBS_SetPos(readbuf,0);
-
-	if (writebuf == NULL) {
-		writebuf = NewLBS();
-	}
-	LBS_EmitStart(writebuf);
-	LBS_SetPos(writebuf,0);
-
-	curl = curl_easy_init();
-	if (!curl) {
-		Error(_("could not init curl"));
-	}
-
-	fSSL = !strncmp("https",RPCURI(Session),5);
-
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-
-	curl_easy_setopt(curl, CURLOPT_URL,RPCURI(Session));
-	curl_easy_setopt(curl, CURLOPT_POST,1);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
-	curl_easy_setopt(curl, CURLOPT_READFUNCTION,read_text_data);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER,headers);
-	if (fSSL) {
-		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
-	}
-	if (curl_easy_perform(curl) != CURLE_OK) {
-		Error(_("curl_easy_perform failure"));
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code) == CURLE_OK) {
-		if (http_code != 200) {
-			Error(_("http status code[%d]"),http_code);
-		}
-	} else {
-		Error(_("curl_easy_getinfo"));
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
-		if (strstr(ctype,"json") == NULL) {
-			Error(_("invalid content type:%s"),ctype);
-		}
-	} else {
-		Error(_("curl_easy_getinfo failure"));
-	}
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
+	JSONRPC(RPC,obj);
 
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -407,13 +360,7 @@ RPC_EndSession()
 void
 RPC_GetWindow()
 {
-	CURL *curl;
-	struct curl_slist *headers = NULL;
 	json_object *obj,*params,*child;
-	char *ctype,*jsonstr;
-	gboolean fSSL;
-	long http_code;
-	size_t jsonsize;
 
 	params = json_object_new_object();
 	child = json_object_new_object();
@@ -424,66 +371,7 @@ RPC_GetWindow()
 	json_object_object_add(params,"meta",child);
 
 	obj = MakeJSONRPCRequest("get_window",params);
-	
-	if (readbuf == NULL) {
-		readbuf = NewLBS();
-	}
-	jsonstr = (char*)json_object_to_json_string(obj);
-	jsonsize = strlen(jsonstr);
-	LBS_EmitStart(readbuf);
-	LBS_EmitString(readbuf,jsonstr);
-	json_object_put(obj);
-	LBS_EmitEnd(readbuf);
-	LBS_SetPos(readbuf,0);
-
-	if (writebuf == NULL) {
-		writebuf = NewLBS();
-	}
-	LBS_EmitStart(writebuf);
-	LBS_SetPos(writebuf,0);
-
-	curl = curl_easy_init();
-	if (!curl) {
-		Error(_("could not init curl"));
-	}
-
-	fSSL = !strncmp("https",RPCURI(Session),5);
-
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-
-	curl_easy_setopt(curl, CURLOPT_URL, RPCURI(Session));
-	curl_easy_setopt(curl, CURLOPT_POST, 1);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
-	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
-
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	if (fSSL) {
-		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
-	}
-	if (curl_easy_perform(curl) != CURLE_OK) {
-		Error(_("curl_easy_perform"));
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code) == CURLE_OK) {
-		if (http_code != 200) {
-			Error(_("http status code[%d]"),http_code);
-		}
-	} else {
-		Error(_("curl_easy_getinfo"));
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
-		if (strstr(ctype,"json") == NULL) {
-			Error(_("invalid content type:%s"),ctype);
-		}
-	} else {
-		Error(_("curl_easy_getinfo"));
-	}
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
+	JSONRPC(RPC,obj);
 
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -501,13 +389,7 @@ void
 RPC_SendEvent(
 	json_object *params)
 {
-	CURL *curl;
-	struct curl_slist *headers = NULL;
 	json_object *obj,*meta;
-	char *ctype,*jsonstr;
-	long http_code;
-	gboolean fSSL;
-	size_t jsonsize;
 
 	meta = json_object_new_object();
 	json_object_object_add(meta,"client_version",
@@ -517,65 +399,7 @@ RPC_SendEvent(
 	json_object_object_add(params,"meta",meta);
 
 	obj = MakeJSONRPCRequest("send_event",params);
-	
-	if (readbuf == NULL) {
-		readbuf = NewLBS();
-	}
-	jsonstr = (char*)json_object_to_json_string(obj);
-	jsonsize = strlen(jsonstr);
-	LBS_EmitStart(readbuf);
-	LBS_EmitString(readbuf,jsonstr);
-	json_object_put(obj);
-	LBS_EmitEnd(readbuf);
-	LBS_SetPos(readbuf,0);
-
-	if (writebuf == NULL) {
-		writebuf = NewLBS();
-	}
-	LBS_EmitStart(writebuf);
-	LBS_SetPos(writebuf,0);
-
-	curl = curl_easy_init();
-	if (!curl) {
-		Error(_("could not init curl"));
-	}
-
-	fSSL = !strncmp("https",RPCURI(Session),5);
-
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-
-	curl_easy_setopt(curl, CURLOPT_URL, RPCURI(Session));
-	curl_easy_setopt(curl, CURLOPT_POST, 1);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
-	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	if (fSSL) {
-		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
-	}
-	if (curl_easy_perform(curl) != CURLE_OK) {
-		Error(_("curl_easy_perform failure"));
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		if (http_code != 200) {
-			Error(_("http status code[%d]"),http_code);
-		}
-	} else {
-		Error(_("curl_easy_getinfo"));
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
-		if (strstr(ctype,"json") == NULL) {
-			Error(_("invalid content type:%s"),ctype);
-		}
-	} else {
-		Error(_("curl_easy_getinfo failure"));
-	}
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
+	JSONRPC(RPC,obj);
 
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -595,13 +419,7 @@ RPC_GetMessage(
 	char **popup,
 	char **abort)
 {
-	CURL *curl;
-	struct curl_slist *headers = NULL;
 	json_object *obj,*params,*child,*result;
-	char *ctype,*jsonstr;
-	gboolean fSSL;
-	long http_code;
-	size_t jsonsize;
 
 	params = json_object_new_object();
 	child = json_object_new_object();
@@ -612,65 +430,7 @@ RPC_GetMessage(
 	json_object_object_add(params,"meta",child);
 
 	obj = MakeJSONRPCRequest("get_message",params);
-	
-	if (readbuf == NULL) {
-		readbuf = NewLBS();
-	}
-	jsonstr = (char*)json_object_to_json_string(obj);
-	jsonsize = strlen(jsonstr);
-	LBS_EmitStart(readbuf);
-	LBS_EmitString(readbuf,jsonstr);
-	json_object_put(obj);
-	LBS_EmitEnd(readbuf);
-	LBS_SetPos(readbuf,0);
-
-	if (writebuf == NULL) {
-		writebuf = NewLBS();
-	}
-	LBS_EmitStart(writebuf);
-	LBS_SetPos(writebuf,0);
-
-	curl = curl_easy_init();
-	if (!curl) {
-		Error(_("could not init curl"));
-	}
-
-	fSSL = !strncmp("https",RPCURI(Session),5);
-
-	headers = curl_slist_append(headers, "Content-Type: application/json");
-
-	curl_easy_setopt(curl, CURLOPT_URL, RPCURI(Session));
-	curl_easy_setopt(curl, CURLOPT_POST, 1);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
-	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,jsonsize);
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	if (fSSL) {
-		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
-	}
-	if (curl_easy_perform(curl) != CURLE_OK) {
-		Error(_("curl_easy_perform"));
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code) == CURLE_OK) {
-		if (http_code != 200) {
-			Error(_("http status code[%d]"),http_code);
-		}
-	} else {
-		Error(_("curl_easy_getinfo"));
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
-		if (strstr(ctype,"json") == NULL) {
-			Error(_("invalid content type:%s"),ctype);
-		}
-	} else {
-		Error(_("curl_easy_getinfo"));
-	}
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
+	JSONRPC(RPC,obj);
 
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -743,7 +503,7 @@ REST_PostBLOB(
 {
 	CURL *curl;
 	struct curl_slist *headers = NULL;
-	char *oid,url[SIZE_URL_BUF+1];
+	char *oid,url[SIZE_URL_BUF+1],clength[256];
 	gboolean fSSL;
 	long http_code;
 
@@ -762,6 +522,8 @@ REST_PostBLOB(
 
 	headers = curl_slist_append(headers, 
 		"Content-Type: application/octet-stream");
+	snprintf(clength,sizeof(clength),"Content-Length: %d",LBS_Size(lbs));
+	headers = curl_slist_append(headers, clength);
 
 	LBS_SetPos(lbs,0);
 
@@ -769,7 +531,6 @@ REST_PostBLOB(
 	curl_easy_setopt(curl, CURLOPT_POST, 1);
 	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)lbs);
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_binary_data);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,LBS_Size(lbs));
 
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);

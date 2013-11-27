@@ -1392,3 +1392,19 @@ UpdateScreen()
 		GrabFocus(f_window,f_widget);
 	}
 }
+
+extern	void
+TimeSet(
+	const char *str)
+{
+	static struct timeval t0;
+	struct timeval t1;
+	struct timeval d;
+	long ms;
+	
+	gettimeofday(&t1,NULL);
+	timersub(&t1,&t0,&d);
+	t0 = t1;
+	ms = d.tv_sec * 1000L + d.tv_usec/1000L;
+	fprintf(stderr,"%s[%ld]\n",str,ms);
+}
