@@ -61,4 +61,14 @@ wfc/wfccontrol
 po/*.gmo
 po/stamp-po
 po/POTFILES
+htserver/htcproc
+htserver/htserver
+htserver/makefont
+htserver/mce
+htserver/mon
+libs/enum
+libs/enum.h
+pgserver/pgserver
+tools/gnumerictodb
+tools/gnumerictorec
 
