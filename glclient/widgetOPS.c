@@ -243,6 +243,7 @@ ENTER_FUNC;
 			gtk_panda_clist_set_row(GTK_PANDA_CLIST(widget),j,rdata);
 		}
 	}
+#if 0
 	if (data->fgcolors != NULL) {
 		for	(j = 0;data->fgcolors[j] != NULL;j ++) {
 			gtk_panda_clist_set_fgcolor(GTK_PANDA_CLIST(widget),j,data->fgcolors[j]);
@@ -253,6 +254,7 @@ ENTER_FUNC;
 			gtk_panda_clist_set_bgcolor(GTK_PANDA_CLIST(widget),j,data->bgcolors[j]);
 		}
 	}
+#endif
 	gtk_widget_show(widget);
 	for	( j = 0 ; data->states[j] != NULL ; j ++ ) {
 		if (j < data->count) {
@@ -916,8 +918,10 @@ GetWidgetType(
 			return WIDGET_TYPE_PANDA_TIMER;
 		} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
 			return WIDGET_TYPE_PANDA_DOWNLOAD;
+#if 0
 		} else if (type == GTK_PANDA_TYPE_DOWNLOAD2) {
 			return WIDGET_TYPE_PANDA_DOWNLOAD2;
+#endif
 		} else if (type == GTK_PANDA_TYPE_PRINT) {
 			return WIDGET_TYPE_PANDA_PRINT;
 		} else if (type == GTK_PANDA_TYPE_HTML) {
