@@ -78,10 +78,7 @@ static	void
 FinishSession(
 	ScreenData	*scr)
 {
-	if (scr->status == SCREEN_DATA_END) {
-		SessionExit(scr);
-		Message("[%s@%s] session end",scr->user,scr->host);
-	}
+	SessionExit(scr);
 	FreeScreenData(scr);
 }
 
@@ -566,7 +563,7 @@ LEAVE_FUNC;
 	return;
 }
 
-static  Bool
+static  void
 Pong(
 	NETFILE		*fpComm,
 	ScreenData	*scr)
@@ -574,11 +571,8 @@ Pong(
 	char		*abort;
 	char		*dialog;
 	char		*popup;
-	Bool		ret;
 	
 ENTER_FUNC;
-	ret = TRUE;
-
 	GetSessionMessage(scr->term,&popup,&dialog,&abort);
 
 	if (strlen(abort) > 0) {
@@ -586,7 +580,7 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 		GL_SendString(fpComm, abort);
 			ON_IO_ERROR(fpComm,badio);
-		ret = FALSE;
+		scr->status = SCREEN_DATA_END;
 	} else if (strlen(dialog) > 0) {
 		GL_SendPacketClass(fpComm,GL_Pong_Dialog);
 			ON_IO_ERROR(fpComm,badio);
@@ -610,7 +604,6 @@ ENTER_FUNC;
 	ResetSessionMessage(scr->term);
 badio:
 LEAVE_FUNC;
-	return ret;
 }
 
 static	Bool

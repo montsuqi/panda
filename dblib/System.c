@@ -254,6 +254,10 @@ IsValidKey(
 {
 	int i;
 
+	if (key == NULL) {
+		return FALSE;
+	}
+
 	for(i=0;SYSDB_KEYS[i] != NULL;i++) {
 		if (!strcmp(key,SYSDB_KEYS[i])) {
 			return TRUE;
@@ -266,6 +270,9 @@ static	Bool
 IsMessageKey(
 	const char *key)
 {
+	if (key == NULL) {
+		return FALSE;
+	}
 	if (
 		!strcmp(key,"popup") ||
 		!strcmp(key,"dialog") ||
@@ -351,10 +358,10 @@ ENTER_FUNC;
 		n = n > SYSDB_MAX_SIZE ? SYSDB_MAX_SIZE : n;
 		for (i = 0; i < n; i++) {
 			snprintf(lname,sizeof(lname),"query[%d].key",i);
-			k = GetItemLongName(ret,lname);
+			k = GetItemLongName(args,lname);
 			key = ValueToString(k,NULL);
 			snprintf(lname,sizeof(lname),"query[%d].value",i);
-			v = GetItemLongName(ret,lname);
+			v = GetItemLongName(args,lname);
 			if (IsMessageKey(key)) {
 				SetValueString(
 					GetItemLongName(sysdbval,key),
@@ -393,10 +400,10 @@ ENTER_FUNC;
 		n = n > SYSDB_MAX_SIZE ? SYSDB_MAX_SIZE : n;
 		for (i = 0; i < n; i++) {
 			snprintf(lname,sizeof(lname),"query[%d].key",i);
-			k = GetItemLongName(ret,lname);
+			k = GetItemLongName(args,lname);
 			key = ValueToString(k,NULL);
 			snprintf(lname,sizeof(lname),"query[%d].value",i);
-			v = GetItemLongName(ret,lname);
+			v = GetItemLongName(args,lname);
 			if (IsMessageKey(key)) {
 				SetValueString(
 					GetItemLongName(sysdbval,key),
