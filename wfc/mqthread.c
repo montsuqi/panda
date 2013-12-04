@@ -137,7 +137,6 @@ ENTER_FUNC;
 	SendPacketClass(fp,APS_EVENTDATA);	ON_IO_ERROR(fp,badio);
 	SendChar  (fp,data->hdr->command);	ON_IO_ERROR(fp,badio);
 	SendString(fp,data->hdr->uuid);		ON_IO_ERROR(fp,badio);
-	SendString(fp,data->hdr->tempdir);	ON_IO_ERROR(fp,badio);
 	SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
 	SendString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
 	SendString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
@@ -443,7 +442,6 @@ SendAPIMessage(
 			data->apidata->status = WFC_API_NOT_FOUND;
 		} else {
 			SendString(fp,data->hdr->uuid);		ON_IO_ERROR(fp,badio);
-			SendString(fp,data->hdr->tempdir);	ON_IO_ERROR(fp,badio);
 			SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
 			SendLBS(fp,data->apidata->rec);		ON_IO_ERROR(fp,badio);
 			RecvLBS(fp,data->apidata->rec);		ON_IO_ERROR(fp,badio);

@@ -207,7 +207,7 @@ SendResponse(
 	body = NULL;
 
 	if (data != NULL && data->value != NULL) {
-		vstatus = GetItemLongName(data->value,"http_status");
+		vstatus = GetItemLongName(data->value,"httpstatus");
 		if (vstatus != NULL) {
 			req->status = ValueInteger(vstatus);
 		} else {
@@ -606,14 +606,14 @@ ENTER_FUNC;
 	p = NULL;
 	switch(req->method) {
 	case 'G':
-		SetValueString(GetItemLongName(e,"http_method"), "GET",NULL);
+		SetValueString(GetItemLongName(e,"methodtype"), "GET",NULL);
 		break;
 	case 'P':
-		SetValueString(GetItemLongName(e,"http_method"), "POST",NULL);
+		SetValueString(GetItemLongName(e,"methodtype"), "POST",NULL);
 		break;
 	}
-	if ( GetItemLongName(e,"http_status") ){
-		ValueInteger(GetItemLongName(e,"http_status")) = HTTP_OK;
+	if ( GetItemLongName(e,"httpstatus") ){
+		ValueInteger(GetItemLongName(e,"httpstatus")) = HTTP_OK;
 	}
 	p = (char *)g_hash_table_lookup(req->header_hash, "content-cype");
 	if (p != NULL) {
@@ -637,7 +637,7 @@ ENTER_FUNC;
 			return;
 		}
 		key = StrnDup(head, tail - head);
-		snprintf(buf, sizeof(buf), "arguments.%s", key);
+		snprintf(buf, sizeof(buf), "argument.%s", key);
 		xfree(key);
 		head = tail + 1;
 		

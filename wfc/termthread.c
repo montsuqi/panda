@@ -176,11 +176,6 @@ RegisterSession(
 {
 	SessionCtrl *ctrl;
 ENTER_FUNC;
-	snprintf(data->hdr->tempdir,SIZE_PATH,"%s/%s",TempDirRoot,data->hdr->uuid);
-	if (!MakeDir(data->hdr->tempdir,0700)) {
-		Error("cannot make session tempdir %s",data->hdr->tempdir);
-	}
-
 	ctrl = NewSessionCtrl(SESSION_CONTROL_INSERT);
 	ctrl->session = data;
 	SessionEnqueue(ctrl);
@@ -366,9 +361,8 @@ ENTER_FUNC;
 			break;
 		case WFC_END:
 			dbgmsg("END");
-			if ((ld = g_hash_table_lookup(APS_Hash, "session"))  !=  NULL) {
-				strncpy(data->hdr->window,"session_end",
-					sizeof(data->hdr->window));
+			if ((ld = g_hash_table_lookup(APS_Hash, "sessionend"))  !=  NULL) {
+				data->hdr->window[0] = 0;
 				data->hdr->widget[0] = 0;
 				sprintf(data->hdr->event,"SESSIONEND");
 				data->hdr->puttype = SCREEN_NULL;
