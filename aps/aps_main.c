@@ -85,9 +85,9 @@ ENTER_FUNC;
 	ThisDB = ThisLD->db;
 	DB_Table = ThisLD->DB_Table;
 	TextSize = ThisLD->textsize;
-	CurrentUser = (char *)xmalloc(SIZE_USER);
-	CurrentTerm = (char *)xmalloc(SIZE_TERM);
-	InitializeValue(ThisEnv->mcprec->value);
+	if		(  ThisEnv->mcprec  !=  NULL  ) {
+		InitializeValue(ThisEnv->mcprec->value);
+	}
 	if		(  ThisEnv->linkrec  !=  NULL  ) {
 		InitializeValue(ThisEnv->linkrec->value);
 	}
@@ -204,8 +204,6 @@ ENTER_FUNC;
 		} else {
 			node->dbstatus = GetDBRedirectStatus(0);
 		}
-		strcpy(CurrentUser, ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.user")));
-		strcpy(CurrentTerm, ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.term")));
 		TransactionStart(NULL);
 		ExecuteProcess(node);
 		if (Sleep > 0) {

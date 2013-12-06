@@ -71,6 +71,8 @@ extern	void
 InitSystem(
 	char	*name)
 {
+	char *user = NULL;
+	char *term = NULL;
 ENTER_FUNC;
 	InitData(BD_Name);
 	if		(  ( ThisBD = GetBD(BD_Name) )  ==  NULL  ) {
@@ -85,6 +87,16 @@ ENTER_FUNC;
 	ThisDB = ThisBD->db;
 	DB_Table = ThisBD->DB_Table;
 	TextSize = ThisBD->textsize;
+	if		(  ThisEnv->mcprec  !=  NULL  ) {
+		InitializeValue(ThisEnv->mcprec->value);
+	}
+	SetValueString(GetItemLongName(ThisEnv->mcprec->value,"dc.module"),name,NULL);
+	if ((user = getenv("MONTSUQIUSER")) != NULL) {
+		SetValueString(GetItemLongName(ThisEnv->mcprec->value,"dc.user"),user,NULL);
+	}
+	if ((term = getenv("MONTSUQITERM")) != NULL) {
+		SetValueString(GetItemLongName(ThisEnv->mcprec->value,"dc.term"),term,NULL);
+	}
 	if		(  ( Bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
 		Error("%s application is not in BD.",name);
 	}
@@ -102,7 +114,7 @@ ENTER_FUNC;
 	dbgprintf("[%s][%s]\n",name,CommandParameter);
 	rc = StartBatch(name,CommandParameter);
 LEAVE_FUNC;
-	return	(rc); 
+	return	(rc);
 }
 
 static	void

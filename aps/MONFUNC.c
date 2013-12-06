@@ -48,15 +48,28 @@ static MONFUNC_SizeFunc SizeFunc;
 static CONVOPT *Conv;
 
 static	void
-ResetUser(
-	ValueStruct		*mcp)
+ReturnBackMCP(
+	ValueStruct		*mcp,
+	ValueStruct		*mcporg)
 {
-	if ( CurrentTerm ){
-		SetValueString(GetItemLongName(mcp,"dc.term"),CurrentTerm,NULL);
-	}
-	if ( CurrentUser ){
-		SetValueString(GetItemLongName(mcp,"dc.user"),CurrentUser,NULL);
-	}
+	CopyValue(GetItemLongName(mcp, "dc.module"), GetItemLongName(mcporg, "dc.module"));
+	CopyValue(GetItemLongName(mcp, "dc.user"), GetItemLongName(mcporg, "dc.user"));
+	CopyValue(GetItemLongName(mcp, "dc.term"), GetItemLongName(mcporg, "dc.term"));
+}
+
+static	ValueStruct	*
+UnPackMCP(
+	char *mcpdata)
+{
+	ValueStruct	*mcp;
+	ValueStruct	*mcporg;
+
+	mcp = ThisEnv->mcprec->value;
+	mcporg = DuplicateValue(mcp, TRUE);
+	UnPackFunc(Conv, mcpdata, mcp);
+	ReturnBackMCP(mcp,mcporg);
+	FreeValueStruct(mcporg);
+	return mcp;
 }
 
 static	void
@@ -79,7 +92,10 @@ MCPtoCTRL(
 {
 	char			*rname
 		,			*pname;
-	
+
+	strncpy(ctrl->func,ValueStringPointer(GetItemLongName(mcp,"func")),SIZE_FUNC);
+	strncpy(ctrl->user,ValueStringPointer(GetItemLongName(mcp,"dc.user")),SIZE_USER);
+	strncpy(ctrl->term,ValueStringPointer(GetItemLongName(mcp,"dc.term")),SIZE_TERM);
 	if		(  ValueInteger(GetItemLongName(mcp,"version"))  ==  2  ) {
 		ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 		ctrl->redirect = ValueInteger(GetItemLongName(mcp,"db.redirect"));
@@ -97,9 +113,8 @@ MonDBOperation(
 {
 	DBCOMM_CTRL	ctrl;
 ENTER_FUNC;
-	ResetUser(mcp);
 	InitializeCTRL(&ctrl);
-	strncpy(ctrl.func,func,SIZE_FUNC);
+	MCPtoCTRL(&ctrl,mcp);
 	ctrl.fDBOperation = TRUE;
 	ExecDB_Process(&ctrl, ctrl.rec, ctrl.value);
 	CTRLtoMCP(mcp,&ctrl);
@@ -117,9 +132,7 @@ MonDBFunc(
 	DBCOMM_CTRL	ctrl;
 ENTER_FUNC;
 	*retval = NULL;
-	ResetUser(mcp);
 	InitializeCTRL(&ctrl);
-	strncpy(ctrl.func,func,SIZE_FUNC);
 
 	MCPtoCTRL(&ctrl,mcp);
 	if (IsDBUpdateFunc(ctrl.func)){
@@ -162,20 +175,20 @@ _MONFUNC(
 	ValueStruct	*audit;
 	char		*func;
 	int			ret;
-	
+
 ENTER_FUNC;
 	*retval = NULL;
-	mcp = ThisEnv->mcprec->value;
+	mcp = UnPackMCP(mcpdata);
+
 	audit = ThisEnv->auditrec->value;
 	InitializeValue(audit);
-	UnPackFunc(Conv, mcpdata, mcp);
 	func  = ValueStringPointer(GetItemLongName(mcp,"func"));
 	if (  !strcmp(func,"PUTWINDOW") ) {
 		ret = MonGLFunc(mcp);
 	} else
 	if (  !strcmp(func,"AUDITLOG")  ) {
 		ret = MonLOGFunc(mcp);
-	} else 
+	} else
 	if (  IsDBOperation(func)  ) {
 		ret = MonDBOperation(mcp, func);
 	} else {
