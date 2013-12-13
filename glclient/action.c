@@ -1239,6 +1239,7 @@ PingTimerFunc(
 	if (ISRECV(Session)) {
 		return 1;
 	}
+#if 0
 	ISRECV(Session) = TRUE;
 	RPC_GetMessage(&dialog,&popup,&abort);
 	if (strlen(abort) > 0) {
@@ -1253,7 +1254,7 @@ PingTimerFunc(
 	g_free(popup);
 	g_free(dialog);
 	ISRECV(Session) = FALSE;
-
+#endif
 	CheckPrintList();
 	CheckDLList();
 	return 1;

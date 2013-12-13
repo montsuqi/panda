@@ -255,7 +255,6 @@ SetPandaDownload2(
 	json_object *child;
 	char *filename,*desc,*path;
 	int nretry;
-	DLRequest *req;
 ENTER_FUNC;
 	path = filename = desc = NULL;
 	nretry = 0;
@@ -281,13 +280,16 @@ ENTER_FUNC;
 		nretry = json_object_get_int(child);
 	}
 	if (path != NULL && filename != NULL) {
-			req = (DLRequest*)xmalloc(sizeof(DLRequest));
-			req->path = StrDup(path);
-			req->filename = StrDup(filename);
-			req->description = StrDup(desc);
-			req->nretry = nretry;
-			DLLIST(Session) = g_list_append(DLLIST(Session),req);
-			MessageLogPrintf("add path[%s]\n",path);
+#if 0
+		DLRequest *req;
+		req = (DLRequest*)xmalloc(sizeof(DLRequest));
+		req->path = StrDup(path);
+		req->filename = StrDup(filename);
+		req->description = StrDup(desc);
+		req->nretry = nretry;
+		DLLIST(Session) = g_list_append(DLLIST(Session),req);
+		MessageLogPrintf("add path[%s]\n",path);
+#endif
 	}
 LEAVE_FUNC;
 }
@@ -300,7 +302,6 @@ SetPandaPrint(
 	json_object *child;
 	char *title,*path;
 	int nretry,showdialog;
-	PrintRequest *req;
 ENTER_FUNC;
 	path = title = NULL;
 	nretry = showdialog = 0;
@@ -326,13 +327,16 @@ ENTER_FUNC;
 		showdialog = json_object_get_int(child);
 	}
 	if (path != NULL && title != NULL) {
-			req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
-			req->path = StrDup(path);
-			req->title = StrDup(title);
-			req->nretry = nretry;
-			req->showdialog = showdialog;
-			PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
-			MessageLogPrintf("add path[%s]\n",path);
+#if 0
+		PrintRequest *req;
+		req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
+		req->path = StrDup(path);
+		req->title = StrDup(title);
+		req->nretry = nretry;
+		req->showdialog = showdialog;
+		PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
+		MessageLogPrintf("add path[%s]\n",path);
+#endif
 	}
 LEAVE_FUNC;
 }

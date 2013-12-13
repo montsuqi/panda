@@ -25,7 +25,9 @@ void 				RPC_StartSession();
 void 				RPC_GetWindow();
 void 				RPC_EndSession();
 void				RPC_SendEvent(json_object *params);
+#if 0
 void				RPC_GetMessage(char**d,char**p,char**a);
+#endif
 char*				REST_PostBLOB(LargeByteString *);
 LargeByteString*	REST_GetBLOB(const char *);
 void				InitProtocol();

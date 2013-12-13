@@ -413,6 +413,7 @@ RPC_SendEvent(
 	CheckJSONRPCResponse(SCREENDATA(Session));
 }
 
+#if 0
 void
 RPC_GetMessage(
 	char **dialog,
@@ -463,6 +464,7 @@ RPC_GetMessage(
 	*abort = g_strdup((char*)json_object_get_string(child));
 	json_object_put(obj);
 }
+#endif
 
 size_t
 HeaderPostBLOB(
