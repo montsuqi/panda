@@ -27,8 +27,7 @@ libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
 	dblib.h
 
-noinst_PROGRAMS		= \
-	testdb
+noinst_PROGRAMS		=
 
 INCLUDES 			=		\
 	-I$(top_srcdir)			\
@@ -37,18 +36,6 @@ INCLUDES 			=		\
 	$(POSTGRES_CFLAGS)		\
 	$(RUBY_CFLAGS)			\
 	$(COMMON_CFLAGS)
-
-testdb_LDADD = \
-	-lm \
-	$(top_builddir)/dblib/libpandadb.la \
-	$(top_builddir)/libs/libpanda.la \
-	$(COMMON_LIBS) \
-	$(SSL_LIBS)
-
-testdb_DEPENDENCIES = \
-	$(top_builddir)/dblib/libpandadb.la \
-	$(top_builddir)/libs/libpanda.la
-
 
 libpandadb_la_CFLAGS = $(AM_CFLAGS)
 libpandadb_la_LDFLAGS	=			\
