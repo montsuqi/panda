@@ -16,15 +16,19 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-noinst_LIBRARIES	=	libpandadb.a libpostgresqlutils.a libdblog.a
-pkglib_LTLIBRARIES 	=	$(DB_OBJECTS)
+noinst_LIBRARIES = libpostgresqlutils.a libdblog.a
+pkglib_LTLIBRARIES = $(DB_OBJECTS)
+lib_LTLIBRARIES = libpandadb.la
 
-libpandadb_a_LIBADD	=
+libpandadb_la_LIBADD =
 
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
 	dblib.h
+
+noinst_PROGRAMS		= \
+	testdb
 
 INCLUDES 			=		\
 	-I$(top_srcdir)			\
@@ -34,8 +38,24 @@ INCLUDES 			=		\
 	$(RUBY_CFLAGS)			\
 	$(COMMON_CFLAGS)
 
-libpandadb_a_CFLAGS = $(AM_CFLAGS)
-libpandadb_a_SOURCES	=	\
+testdb_LDADD = \
+	-lm \
+	$(top_builddir)/dblib/libpandadb.la \
+	$(top_builddir)/libs/libpanda.la \
+	$(COMMON_LIBS) \
+	$(SSL_LIBS)
+
+testdb_DEPENDENCIES = \
+	$(top_builddir)/dblib/libpandadb.la \
+	$(top_builddir)/libs/libpanda.la
+
+
+libpandadb_la_CFLAGS = $(AM_CFLAGS)
+libpandadb_la_LDFLAGS	=			\
+	-version-info $(LTVERSION)	\
+	-export-dynamic
+
+libpandadb_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
 	redirect.c	redirect.h
 
