@@ -45,7 +45,7 @@ pandadb_LDFLAGS	=			\
 	-export-dynamic
 pandadb_LDADD 		=					\
 	-lm									\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
@@ -116,7 +116,7 @@ dbsync_SOURCES	= \
 
 dbsync_LDADD			=		\
 	-lm		\
-	$(top_builddir)/dblib/libpandadb.a			\
+	$(top_builddir)/dblib/libpandadb.la			\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.la			\
 	$(P11_LIBS)									\

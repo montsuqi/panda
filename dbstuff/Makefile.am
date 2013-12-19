@@ -20,7 +20,7 @@ sbin_PROGRAMS =  dbredirector dbs dbmaster dbslave dblogger
 
 dbredirector_LDADD 		=				\
 	-lm									\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.la	\
@@ -32,7 +32,7 @@ dbredirector_LDADD 		=				\
 
 dbs_LDADD 		=						\
 	-lm									\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
@@ -56,7 +56,7 @@ dbs_SOURCES	=							\
 
 dbs_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/libs/libpanda.la
 
@@ -66,7 +66,7 @@ dbredirector_SOURCES	=	\
 
 dbredirector_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.la
@@ -84,7 +84,7 @@ dbmaster_SOURCES	=	\
 	dbmaster.c dbmaster_thread.c 
 dbmaster_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.la
@@ -95,7 +95,7 @@ dbslave_SOURCES	=	\
 	dbslave.c dbslave_thread.c 
 dbslave_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
-	$(top_builddir)/dblib/libpandadb.a	\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/dblib/libdblog.a	\
 	$(top_builddir)/dblib/libpostgresqlutils.a	\
 	$(top_builddir)/libs/libpanda.la
