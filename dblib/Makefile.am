@@ -25,7 +25,8 @@ libpandadb_la_LIBADD =
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
-	dblib.h
+	dblib.h \
+	dbgroup.h
 
 noinst_PROGRAMS		=
 
