@@ -35,8 +35,6 @@
 #include	"blobcache.h"
 #include	"debug.h"
 
-static char *CacheDir;
-
 extern	size_t
 BlobCacheFileSize(
 	ValueStruct	*value)
@@ -71,8 +69,10 @@ BlobCacheCleanUp()
 {
 	char	buf[SIZE_BUFF];
 
-	sprintf(buf,"rm -f %s/*",CacheDir);
-	system(buf);
+	if ( CacheDir ) {
+		sprintf(buf,"rm -f %s/*",CacheDir);
+		system(buf);
+	}
 }
 
 extern	void

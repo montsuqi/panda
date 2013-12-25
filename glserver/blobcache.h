@@ -27,13 +27,13 @@
 
 
 #undef	GLOBAL
-#ifdef FRONT_MAIN
+#ifdef FRONT_H_MAIN
 #	define	GLOBAL		/*	*/
 #else
 #	define	GLOBAL		extern
 #endif
 
-#undef	GLOBAL
+GLOBAL char *CacheDir;
 
 extern	void		SetCacheDir(char* cachedir);
 extern	char		*BlobCacheFileName(ValueStruct *value);
