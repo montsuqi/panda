@@ -51,9 +51,8 @@ libdblog_a_CFLAGS = $(AM_CFLAGS)
 libdblog_a_SOURCES	=	\
 	dblog.c         dblog.h
 
-libpostgresqlutils_a_LIBADD = \
-	$(top_builddir)/dblib/libpandadb.la \
-	$(top_builddir)/libs/libpanda.la
+libpostgresqlutils_a_LIBADD = 
+
 
 libpostgresqlutils_a_CFLAGS = $(AM_CFLAGS)
 libpostgresqlutils_a_SOURCES = \
