@@ -778,7 +778,6 @@ InitSystem(
 {
 ENTER_FUNC;
 	InitNET();
-	SetCacheDir(CacheDir);
 	InitData();
 	InitGL_Comm();
 	SessionCallInit(NULL);

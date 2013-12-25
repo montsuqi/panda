@@ -33,8 +33,6 @@
 #	define	GLOBAL		extern
 #endif
 
-GLOBAL char *CacheDir;
-
 extern	void		SetCacheDir(char* cachedir);
 extern	char		*BlobCacheFileName(ValueStruct *value);
 extern	void		BlobCacheCleanUp();

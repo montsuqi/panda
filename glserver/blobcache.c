@@ -32,6 +32,7 @@
 #include	<string.h>
 
 #include	"libmondai.h"
+#include	"glserver.h"
 #include	"blobcache.h"
 #include	"debug.h"
 
@@ -73,11 +74,4 @@ BlobCacheCleanUp()
 		sprintf(buf,"rm -f %s/*",CacheDir);
 		system(buf);
 	}
-}
-
-extern	void
-SetCacheDir(
-	char* dir)
-{
-	CacheDir = g_strdup(dir);
 }
