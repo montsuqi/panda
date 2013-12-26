@@ -208,7 +208,6 @@ SendMessage(
 {
 	NETFILE *fp;
 	ValueStruct *val,*v;
-	PacketClass rc;
 ENTER_FUNC;
 	fp = ConnectSysData();
 	val = RecParseValueMem(SYSDBVAL_DEF,NULL);
@@ -217,7 +216,7 @@ ENTER_FUNC;
 	SetValueString(v,termid,NULL);
 	v = GetRecordItem(val,key);
 	SetValueString(v,message,NULL);
-	rc = SYSDB_SetMessage(fp,val);
+	SYSDB_SetMessage(fp,val);
 	SendPacketClass(fp, SYSDATA_END); 
 	CloseNet(fp);
 	FreeValueStruct(val);
@@ -232,14 +231,13 @@ SendMessageAll(
 {
 	NETFILE *fp;
 	ValueStruct *val,*v;
-	PacketClass rc;
 ENTER_FUNC;
 	fp = ConnectSysData();
 	val = RecParseValueMem(SYSDBVAL_DEF,NULL);
 	InitializeValue(val);
 	v = GetRecordItem(val,key);
 	SetValueString(v,message,NULL);
-	rc = SYSDB_SetMessageAll(fp,val);
+	SYSDB_SetMessageAll(fp,val);
 	SendPacketClass(fp, SYSDATA_END); 
 	CloseNet(fp);
 	FreeValueStruct(val);
