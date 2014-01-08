@@ -1225,6 +1225,7 @@ NewEnv(
 	env->DBMasterPort = NULL;
 	env->DBMasterAuth = NULL;
 	env->DBMasterLogDBName = NULL;
+	env->InitialLD = NULL;
 
 	return	(env);
 }
