@@ -1190,7 +1190,7 @@ extern	void
 UI_Main(void)
 {
 	if (fIMKanaOff) {
-		gtk_panda_entry_force_feature_off();
+		set_im_control_enabled(FALSE);
 	}
 	gtk_main();
 }

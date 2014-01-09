@@ -148,7 +148,6 @@ typedef struct __CList{
 
 typedef struct __Table{
 	gboolean	dofocus;
-	gboolean	ximenabled;
 	int			trow;
 	float		trowattr;
 	int			tcolumn;
