@@ -1570,11 +1570,8 @@ ENTER_FUNC;
 	}
 
 	if (GL_RecvDataType(fp) == GL_TYPE_RECORD) {
-
 		nitem = GL_RecvInt(fp);
 		attrs->trowattr = 0.0;
-		attrs->ximenabled = FALSE;
-
 		for	( i = 0 ; i < nitem ; i ++ ) {
 			GL_RecvName(fp, sizeof(name), name);
 			if		(  RecvCommon(name,data,fp)  ) {
@@ -1619,9 +1616,6 @@ ENTER_FUNC;
 			if		(  !stricmp(name,"tvalue")  ) {
 				RecvStringData(fp,buff,SIZE_BUFF);
 				attrs->tvalue = strdup(buff);
-			} else
-			if		(  !stricmp(name,"ximenabled")  ) {
-				RecvBoolData(fp,&(attrs->ximenabled));
 			} else
 			if		(  !stricmp(name,"rowdata")  ) {
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
