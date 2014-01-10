@@ -100,10 +100,12 @@ MCPtoCTRL(
 		ctrl->limit = ValueInteger(GetItemLongName(mcp,"db.limit"));
 		ctrl->redirect = ValueInteger(GetItemLongName(mcp,"db.redirect"));
 	}
-	rname = ValueStringPointer(GetItemLongName(mcp,"db.table"));
-	SetDBCTRLRecord(ctrl, rname);
-	pname = ValueStringPointer(GetItemLongName(mcp,"db.pathname"));
-	SetDBCTRLValue(ctrl, pname);
+	if (  !IsDBOperation(ctrl->func) ) {
+		rname = ValueStringPointer(GetItemLongName(mcp,"db.table"));
+		SetDBCTRLRecord(ctrl, rname);
+		pname = ValueStringPointer(GetItemLongName(mcp,"db.pathname"));
+		SetDBCTRLValue(ctrl, pname);
+	}
 }
 
 static int
