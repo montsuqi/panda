@@ -380,7 +380,7 @@ CheckFeature(
 			if		(  !strlicmp(p,"negotiation")  ) {
 				/* do nothing */
 			}
-			if		(  !strlicmp(p,"v48")  ) {
+			if		(  !strlicmp(p,"v48")  || !strlicmp(p,"v47")) {
 				fV48 = TRUE;
 			}
 			if		(  !strlicmp(p,"agent")  ) {
