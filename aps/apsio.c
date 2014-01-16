@@ -182,10 +182,6 @@ ENTER_FUNC;
 		case APS_END:
 			dbgmsg("END");
 			return TRUE;
-		case APS_PING:
-			dbgmsg("PING");
-			SendPacketClass(fp,APS_PONG);		ON_IO_ERROR(fp,badio);
-			break;
 		default:
 			Warning("Invalid PacketClass in GetWFCTerm(%02X)",c);
 			SendPacketClass(fp,APS_NOT);		ON_IO_ERROR(fp,badio);
@@ -334,10 +330,6 @@ ENTER_FUNC;
 		case APS_END:
 			dbgmsg("END");
 			return;
-		case APS_PING:
-			dbgmsg("PING");
-			SendPacketClass(fp,APS_PONG);			ON_IO_ERROR(fp,badio);
-			break;
 		default:
 			dbgmsg("default");
 			SendPacketClass(fp,APS_NOT);			ON_IO_ERROR(fp,badio);
