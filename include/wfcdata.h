@@ -42,8 +42,6 @@
 #define	APS_BLOB			(PacketClass)0x80
 
 #define	APS_NOT				(PacketClass)0xF0
-#define	APS_PONG			(PacketClass)0xF1
-#define	APS_PING			(PacketClass)0xF2
 #define	APS_STOP			(PacketClass)0xF3
 #define	APS_REQ				(PacketClass)0xF4
 #define	APS_API				(PacketClass)0xF5

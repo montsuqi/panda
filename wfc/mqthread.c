@@ -685,23 +685,8 @@ ENTER_FUNC;
 			ActivateAPS_Node(&ld->aps[i],fp);
 			pthread_cond_signal(&ld->conn);
 		} else {
-			for	( i = 0 ; i < ld->nports ; i ++ ) {
-				SendPacketClass(ld->aps[i].fp,APS_PING);
-					ON_IO_ERROR(ld->aps[i].fp,deadaps);
-				if (RecvPacketClass(ld->aps[i].fp) != APS_PONG) {
-				  deadaps:
-					ClearAPS_Node(ld,i);
-					ActivateAPS_Node(&ld->aps[i],fp);
-					pthread_cond_signal(&ld->conn);
-					break;
-				}
-			}
-			if (i == ld->nports) {
-				/*	if you need permitte more APS connection,
-					you should expand ld->fp.
-				*/
-				Warning("too many aps tasks");
-			}
+			Warning("aps connection overflow");
+			CloseNet(fp);
 		}
 	} else {
 		SendPacketClass(fp,APS_NOT);
