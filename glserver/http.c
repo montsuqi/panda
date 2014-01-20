@@ -103,7 +103,7 @@ HTTP_Init(
 	req->body = xmalloc(sizeof(char) * MAX_REQ_SIZE);
 	memset(req->body, 0x0, MAX_REQ_SIZE);
 	req->arguments = NULL;
-	req->header_hash = NewNameHash();
+	req->header_hash = NewNameiHash();
 	req->user = NULL;
 	req->pass = NULL;
 	req->ld = NULL;
