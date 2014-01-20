@@ -456,7 +456,6 @@ ENTER_FUNC;
 			host = IP_HOST((GetDB_Port(dbg,usage)));
 		}
 	}
-	printf("HOST:%s\n", host);
 LEAVE_FUNC;
 	return (host);
 }
@@ -482,7 +481,6 @@ ENTER_FUNC;
 			}
 		}
 	}
-	printf("portname:%s\n", portname);
 LEAVE_FUNC;
 	return (portname);
 }
