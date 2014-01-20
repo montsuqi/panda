@@ -27,6 +27,7 @@
 #define	SIZE_SQL		1024
 
 #define REDIRECT_LOCK_TABLE "montsuqi_redirector_lock_table"
+#define MONDB	"mondb_"
 
 extern	void	InitializeCTRL(DBCOMM_CTRL*ctrl);
 
