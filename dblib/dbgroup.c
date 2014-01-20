@@ -421,9 +421,6 @@ GetMONDB_ENV(
 	sprintf(buff,"%s%s%s", MONDB,dbg->name,itemname);
 	to_upperstr(buff);
 	str = getenv(buff);
-	if (str) {
-		printf("%s:%s\n", buff, str);
-	}
 	return str;
 }
 
