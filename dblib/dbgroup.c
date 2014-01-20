@@ -29,6 +29,7 @@
 #endif
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<ctype.h>
 #include	<string.h>
 #include	<signal.h>
 #include	<fcntl.h>
@@ -392,6 +393,40 @@ UsageNum(
 	}
 	return i;
 };
+
+static void
+to_upperstr(
+	char   *org)
+{
+	char	ustr[SIZE_OTHER];
+	char	*str, *up;
+
+	str = org;
+	up = ustr;
+	while ( ( *up = toupper(*str) ) != 0 ) {
+		up ++;
+		str ++;
+	}
+	strcpy(org, ustr);
+}
+
+static char		*
+GetMONDB_ENV(
+	DBG_Struct	*dbg,
+	char *itemname)
+{
+	char	buff[SIZE_OTHER];
+	char	*str;
+
+	sprintf(buff,"%s%s%s", MONDB,dbg->name,itemname);
+	to_upperstr(buff);
+	str = getenv(buff);
+	if (str) {
+		printf("%s:%s\n", buff, str);
+	}
+	return str;
+}
+
 extern	Port	*
 GetDB_Port(
 	DBG_Struct	*dbg,
@@ -419,11 +454,14 @@ GetDB_Host(
 	char	*host;
 
 ENTER_FUNC;
-	if		(  DB_Host  !=  NULL  ) {
+	if	(  DB_Host  !=  NULL  ) {
 		host = DB_Host;
 	} else {
-		host = IP_HOST((GetDB_Port(dbg,usage)));
+		if	( (host = GetMONDB_ENV(dbg, "HOST")) == NULL  ){
+			host = IP_HOST((GetDB_Port(dbg,usage)));
+		}
 	}
+	printf("HOST:%s\n", host);
 LEAVE_FUNC;
 	return (host);
 }
@@ -437,16 +475,19 @@ GetDB_PortName(
 	char	*portname;
 
 ENTER_FUNC;
-	if		(  DB_Port  !=  NULL  ) {
+	if	(  DB_Port  !=  NULL  ) {
 		portname = DB_Port;
 	} else {
-		port = GetDB_Port(dbg,usage);
-		if ( (port != NULL) && (port->type == PORT_IP)) {
-			portname = IP_PORT(port);
-		} else {
-			portname = NULL;
+		if	( (portname = GetMONDB_ENV(dbg, "PORT")) == NULL ){
+			port = GetDB_Port(dbg,usage);
+			if ( (port != NULL) && (port->type == PORT_IP)) {
+				portname = IP_PORT(port);
+			} else {
+				portname = NULL;
+			}
 		}
 	}
+	printf("portname:%s\n", portname);
 LEAVE_FUNC;
 	return (portname);
 }
@@ -480,9 +521,11 @@ GetDB_DBname(
 	if		(  DB_Name  !=  NULL  ) {
 		name = DB_Name;
 	} else {
-		num = UsageNum(dbg, usage);
-		if		(  num  <  dbg->nServer  ) {
-			name = dbg->server[num].dbname;
+		if	( (name = GetMONDB_ENV(dbg, "NAME")) == NULL ){
+			num = UsageNum(dbg, usage);
+			if		(  num  <  dbg->nServer  ) {
+				name = dbg->server[num].dbname;
+			}
 		}
 	}
 	return	(name);
@@ -493,18 +536,20 @@ GetDB_User(
 	DBG_Struct	*dbg,
 	int			usage)
 {
-	char	*name = NULL;
+	char	*user = NULL;
 	int		num;
 
 	if		(  DB_User  !=  NULL  ) {
-		name = DB_User;
+		user = DB_User;
 	} else {
-		num = UsageNum(dbg, usage);
-		if		(  num  <  dbg->nServer  ) {
-			name = dbg->server[num].user;
+		if	( (user = GetMONDB_ENV(dbg, "USER")) == NULL  ){
+			num = UsageNum(dbg, usage);
+			if		(  num  <  dbg->nServer  ) {
+				user = dbg->server[num].user;
+			}
 		}
 	}
-	return	(name);
+	return	(user);
 }
 
 extern	char	*
@@ -518,9 +563,11 @@ GetDB_Pass(
 	if		(  DB_Pass  !=  NULL  ) {
 		pass = DB_Pass;
 	} else {
-		num = UsageNum(dbg, usage);
-		if		(  num  <  dbg->nServer  ) {
-			pass = dbg->server[num].pass;
+		if	( (pass = GetMONDB_ENV(dbg, "PASS")) == NULL  ){
+			num = UsageNum(dbg, usage);
+			if		(  num  <  dbg->nServer  ) {
+				pass = dbg->server[num].pass;
+			}
 		}
 	}
 	return	(pass);
@@ -536,7 +583,9 @@ GetDB_Sslmode(
 
 	num = UsageNum(dbg, usage);
 	if		(  num  <  dbg->nServer  ) {
-		sslmode = dbg->server[num].sslmode;
+		if	( (sslmode = GetMONDB_ENV(dbg, "SSLMODE")) == NULL ){
+			sslmode = dbg->server[num].sslmode;
+		}
 	}
 	return	(sslmode);
 }
@@ -551,7 +600,9 @@ GetDB_Sslcert(
 
 	num = UsageNum(dbg, usage);
 	if		(  num  <  dbg->nServer  ) {
-		sslcert = dbg->server[num].sslcert;
+		if	( (sslcert = GetMONDB_ENV(dbg, "SSLCERT")) == NULL ){
+			sslcert = dbg->server[num].sslcert;
+		}
 	}
 	return	(sslcert);
 }
@@ -566,7 +617,9 @@ GetDB_Sslkey(
 
 	num = UsageNum(dbg, usage);
 	if		(  num  <  dbg->nServer  ) {
-		sslkey = dbg->server[num].sslkey;
+		if	( (sslkey = GetMONDB_ENV(dbg, "SSLKEY")) == NULL ){
+			sslkey = dbg->server[num].sslkey;
+		}
 	}
 	return	(sslkey);
 }
@@ -581,7 +634,9 @@ GetDB_Sslrootcert(
 
 	num = UsageNum(dbg, usage);
 	if		(  num  <  dbg->nServer  ) {
-		sslrootcert = dbg->server[num].sslrootcert;
+		if	( (sslrootcert = GetMONDB_ENV(dbg, "SSLROOTCERT")) == NULL ){
+			sslrootcert = dbg->server[num].sslrootcert;
+		}
 	}
 	return	(sslrootcert);
 }
@@ -596,7 +651,9 @@ GetDB_Sslcrl(
 
 	num = UsageNum(dbg, usage);
 	if		(  num  <  dbg->nServer  ) {
-		sslcrl = dbg->server[num].sslcrl;
+		if	( (sslcrl = GetMONDB_ENV(dbg, "SSLCRL")) == NULL ){
+			sslcrl = dbg->server[num].sslcrl;
+		}
 	}
 	return	(sslcrl);
 }
