@@ -610,6 +610,7 @@ GetPandaCList(
 {
 	int i,nrows,visible,row,selected;
 ENTER_FUNC;
+	row = 0;
 	visible = 0;
 	nrows = gtk_panda_clist_get_rows(GTK_PANDA_CLIST(widget));
 	for(i=0;i<nrows;i++) {

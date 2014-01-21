@@ -240,7 +240,7 @@ JSONRPC(
 	fSSL = !strncmp("https",url,5);
 
 	headers = curl_slist_append(headers, "Content-Type: application/json");
-	snprintf(clength,sizeof(clength),"Content-Length: %d",jsonsize);
+	snprintf(clength,sizeof(clength),"Content-Length: %ld",jsonsize);
 	headers = curl_slist_append(headers, clength);
 
 	curl_easy_setopt(curl, CURLOPT_URL,url);
@@ -524,7 +524,7 @@ REST_PostBLOB(
 
 	headers = curl_slist_append(headers, 
 		"Content-Type: application/octet-stream");
-	snprintf(clength,sizeof(clength),"Content-Length: %d",LBS_Size(lbs));
+	snprintf(clength,sizeof(clength),"Content-Length: %ld",LBS_Size(lbs));
 	headers = curl_slist_append(headers, clength);
 
 	LBS_SetPos(lbs,0);

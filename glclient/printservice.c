@@ -70,7 +70,6 @@ Download(
 	FILE *fp;
 	int fd;
 	mode_t mode;
-	gchar *scheme;
 	gchar *url;
 	gchar *fname;
 	gchar *userpass;
