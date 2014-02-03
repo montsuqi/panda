@@ -195,8 +195,8 @@ CheckJSONRPCResponse(
 	}
 }
 
-#define AUTH 0
-#define RPC 1
+#define TYPE_AUTH 0
+#define TYPE_APP  1
 
 static	void
 JSONRPC(
@@ -210,7 +210,7 @@ JSONRPC(
 	gboolean fSSL;
 	size_t jsonsize;
 
-	if (type == AUTH) {
+	if (type == TYPE_AUTH) {
 		url = AUTHURI(Session);
 	} else {
 		url = RPCURI(Session);
@@ -250,7 +250,7 @@ JSONRPC(
 	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	if (type == AUTH) {
+	if (type == TYPE_AUTH) {
 		snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
 		userpass[sizeof(userpass)-1] = 0;
 		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
@@ -284,6 +284,45 @@ JSONRPC(
 }
 
 void
+RPC_GetServerInfo()
+{
+	json_object *obj,*params,*child,*result;
+
+	params = json_object_new_object();
+	obj = MakeJSONRPCRequest("get_server_info",params);
+
+	JSONRPC(TYPE_AUTH,obj);
+	
+	// json parse
+	LBS_EmitEnd(writebuf);
+	obj = json_tokener_parse(LBS_Body(writebuf));
+	if (is_error(obj)) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(obj);
+
+	result = json_object_object_get(obj,"result");
+	child = json_object_object_get(result,"protocol_version");
+	if (child == NULL || is_error(child)) {
+		Error(_("no protocol_version object"));
+	}
+	PROTOVER(Session) = g_strdup(json_object_get_string(child));
+
+	child = json_object_object_get(result,"application_version");
+	if (child == NULL || is_error(child)) {
+		Error(_("no application_version object"));
+	}
+	APPVER(Session) = g_strdup(json_object_get_string(child));
+
+	child = json_object_object_get(result,"server_type");
+	if (child == NULL || is_error(child)) {
+		Error(_("no server_type object"));
+	}
+	SERVERTYPE(Session) = g_strdup(json_object_get_string(child));
+	json_object_put(obj);
+}
+
+void
 RPC_StartSession()
 {
 	json_object *obj,*params,*child,*result,*meta;
@@ -295,7 +334,7 @@ RPC_StartSession()
 	json_object_object_add(params,"meta",child);
 	obj = MakeJSONRPCRequest("start_session",params);
 
-	JSONRPC(AUTH,obj);
+	JSONRPC(TYPE_AUTH,obj);
 	
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -345,7 +384,7 @@ RPC_EndSession()
 
 	obj = MakeJSONRPCRequest("end_session",params);
 	
-	JSONRPC(RPC,obj);
+	JSONRPC(TYPE_APP,obj);
 
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -371,7 +410,7 @@ RPC_GetWindow()
 	json_object_object_add(params,"meta",child);
 
 	obj = MakeJSONRPCRequest("get_window",params);
-	JSONRPC(RPC,obj);
+	JSONRPC(TYPE_APP,obj);
 
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -383,6 +422,35 @@ RPC_GetWindow()
 		Error(_("invalid json"));
 	}
 	CheckJSONRPCResponse(SCREENDATA(Session));
+}
+
+json_object *
+RPC_GetScreenDefine(
+	const char*wname)
+{
+	json_object *obj,*params,*child;
+
+	params = json_object_new_object();
+	child = json_object_new_object();
+	json_object_object_add(child,"client_version",
+		json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"session_id",
+		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(params,"meta",child);
+	json_object_object_add(params,"window",
+		json_object_new_string(wname));
+
+	obj = MakeJSONRPCRequest("get_screen_define",params);
+	JSONRPC(TYPE_APP,obj);
+
+	// json parse
+	LBS_EmitEnd(writebuf);
+	obj = json_tokener_parse(LBS_Body(writebuf));
+	if (is_error(obj)) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(obj);
+	return obj;
 }
 
 void
@@ -399,7 +467,7 @@ RPC_SendEvent(
 	json_object_object_add(params,"meta",meta);
 
 	obj = MakeJSONRPCRequest("send_event",params);
-	JSONRPC(RPC,obj);
+	JSONRPC(TYPE_APP,obj);
 
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -413,7 +481,6 @@ RPC_SendEvent(
 	CheckJSONRPCResponse(SCREENDATA(Session));
 }
 
-#if 0
 void
 RPC_GetMessage(
 	char **dialog,
@@ -431,7 +498,7 @@ RPC_GetMessage(
 	json_object_object_add(params,"meta",child);
 
 	obj = MakeJSONRPCRequest("get_message",params);
-	JSONRPC(RPC,obj);
+	JSONRPC(TYPE_APP,obj);
 
 	// json parse
 	LBS_EmitEnd(writebuf);
@@ -464,7 +531,6 @@ RPC_GetMessage(
 	*abort = g_strdup((char*)json_object_get_string(child));
 	json_object_put(obj);
 }
-#endif
 
 size_t
 HeaderPostBLOB(

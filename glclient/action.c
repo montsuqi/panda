@@ -40,9 +40,6 @@
 
 #include	"types.h"
 #include	"glclient.h"
-#if 0
-#include	"glterm.h"
-#endif
 #define		ACTION_MAIN
 #include	"bd_config.h"
 #include	"action.h"
@@ -1283,7 +1280,7 @@ UpdateWindow(
 	json_object *w,
 	int idx)
 {
-	json_object *child;
+	json_object *child,*obj,*result;
 	gboolean isdummy;
 	const char *put_type;
 	const char *wname;
@@ -1311,12 +1308,15 @@ UpdateWindow(
 	}
 	
 	if (GetWindowData(wname) == NULL) {
-		child = json_object_object_get(w,"screen_define");
+		obj = RPC_GetScreenDefine(wname);
+		result = json_object_object_get(obj,"result");
+		child = json_object_object_get(result,"screen_define");
 		if (child == NULL ||is_error(child)) {
-			Error("invalid json part:screeen_define");
+			Error("can't get screen define:%s",wname);
 		}
 		gladedata = json_object_get_string(child);
 		CreateWindow(wname,gladedata);
+		json_object_put(obj);
 	}
 	if (!strcmp("new",put_type)||!strcmp("current",put_type)) {
 		child = json_object_object_get(w,"screen_data");

@@ -42,6 +42,9 @@ typedef struct {
 	char			*AuthURI;
 	char			*RPCURI;
 	char			*RESTURI;
+	char			*ProtocolVersion;
+	char			*AppVersion;
+	char			*ServerType;
 	char			*title;
 	char			*bgcolor;
 	Bool			IsRecv;
@@ -59,6 +62,9 @@ typedef struct {
 #define	AUTHURI(session)		((session)->AuthURI)
 #define RPCURI(session)			((session)->RPCURI)
 #define RESTURI(session)		((session)->RESTURI)
+#define PROTOVER(session)		((session)->ProtocolVersion)
+#define APPVER(session)			((session)->AppVersion)
+#define SERVERTYPE(session)		((session)->ServerType)
 #define	TITLE(session)			((session)->title)
 #define	BGCOLOR(session)		((session)->bgcolor)
 #define	ISRECV(session)			((session)->IsRecv)

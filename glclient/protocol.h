@@ -21,9 +21,11 @@
 #ifndef	_INC_PROTOCOL_H
 #define	_INC_PROTOCOL_H
 
+void 				RPC_GetServerInfo();
 void 				RPC_StartSession();
-void 				RPC_GetWindow();
+json_object* 		RPC_GetScreenDefine(const char*);
 void 				RPC_EndSession();
+void 				RPC_GetWindow();
 void				RPC_SendEvent(json_object *params);
 #if 0
 void				RPC_GetMessage(char**d,char**p,char**a);

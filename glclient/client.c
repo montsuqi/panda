@@ -105,6 +105,7 @@ StartClient ()
 	LoadWidgetCache();
 	InitTopWindow();
 
+	RPC_GetServerInfo();
 	RPC_StartSession();
 	RPC_GetWindow();
 	UpdateScreen();
