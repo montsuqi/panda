@@ -282,16 +282,12 @@ table_send_event(
 {
 	gchar *oldvalue;
 
-	oldvalue = (gchar*)g_object_get_data(G_OBJECT(widget),"send_data_value");
+	oldvalue = (gchar*)g_object_get_data(G_OBJECT(widget),"changed_value");
 	if (oldvalue != NULL) {
 		g_free(oldvalue);
 	}
 	
-	g_object_set_data(G_OBJECT(widget),"send_data_row",
-		GINT_TO_POINTER(row));
-	g_object_set_data(G_OBJECT(widget),"send_data_column",
-		GINT_TO_POINTER(column));
-	g_object_set_data(G_OBJECT(widget),"send_data_value",
+	g_object_set_data(G_OBJECT(widget),"changed_value",
 		g_strdup(value));
 
 	AddChangedWidget(widget);

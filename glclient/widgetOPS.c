@@ -800,11 +800,11 @@ GetPandaTable(
 ENTER_FUNC;
 	gtk_widget_child_focus(widget,GTK_DIR_TAB_FORWARD);
 	trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
-		"send_data_row"));
+		"changed_row"));
 	tcolumn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
-		"send_data_column"));
+		"changed_column"));
 	tvalue = (gchar*)g_object_get_data(G_OBJECT(widget),
-		"send_data_value");;
+		"changed_value");;
 	tvalue = tvalue == NULL ? (gchar*)"" : tvalue;
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
 	gtk_tree_model_get_iter_first(model,&iter);
