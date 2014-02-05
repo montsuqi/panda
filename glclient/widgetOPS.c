@@ -335,11 +335,11 @@ GetPandaTable(
 ENTER_FUNC;
 	gtk_widget_child_focus(widget,GTK_DIR_TAB_FORWARD);
 	data->trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
-		"send_data_row"));
+		"changed_row"));
 	data->tcolumn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
-		"send_data_column"));
+		"changed_column"));
 	data->tvalue = g_strdup((gchar*)g_object_get_data(G_OBJECT(widget),
-		"send_data_value"));
+		"changed_value"));
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
 	gtk_tree_model_get_iter_first(model,&iter);
 	i = 0;
