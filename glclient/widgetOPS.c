@@ -609,6 +609,7 @@ GetPandaCList(
 	json_object	*obj)
 {
 	int i,nrows,visible,row,selected;
+	json_object *child;
 ENTER_FUNC;
 	row = 0;
 	visible = 0;
@@ -621,16 +622,21 @@ ENTER_FUNC;
 		}
 	}
 
+	child = json_object_object_get(obj,"row");
+	if (child != NULL && !is_error(child)) {
+		if (visible) {
+			json_object_object_add(obj,"row",
+				json_object_new_int(row));
+		}
+	}
+
 	json_object_object_foreach(obj,k,v) {
 		if (IsCommon(k)) {
 			// do nothing
 		} else if (!strcmp(k,"count")) {
 			// do nothing
 		} else if (!strcmp(k,"row")) {
-			if (visible) {
-				json_object_object_add(obj,"row",
-					json_object_new_int(row));
-			}
+			// do nothing
 		} else if (!strcmp(k,"rowattr")) {
 			// do nothing
 		} else if (!strcmp(k,"column")) {
@@ -847,17 +853,10 @@ ENTER_FUNC;
 				if (!json_object_is_type(v,json_type_object)) {
 					continue;
 				}
-				json_object_object_foreach(v,k2,v2) {
-					if (json_object_is_type(v2,json_type_string)) {
-						if (!strcmp(k2,"celldata")) {
-							gtk_tree_model_get(model,&iter,j,&tvalue,-1);
-							json_object_object_del(v,"celldata");
-							json_object_object_add(v,"celldata",
-								json_object_new_string(tvalue));
-							g_free(tvalue);
-						}
-					}
-				}
+				gtk_tree_model_get(model,&iter,j,&tvalue,-1);
+	 			json_object_object_add(v,"celldata",
+	 				json_object_new_string(tvalue));
+	 			g_free(tvalue);
 				j++;
 			}
 			i+=1;
