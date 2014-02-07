@@ -806,9 +806,9 @@ GetPandaTable(
 ENTER_FUNC;
 	gtk_widget_child_focus(widget,GTK_DIR_TAB_FORWARD);
 	trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
-		"changed_row"));
+		"changed_row")) + 1;
 	tcolumn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),
-		"changed_column"));
+		"changed_column")) + 1;
 	tvalue = (gchar*)g_object_get_data(G_OBJECT(widget),
 		"changed_value");;
 	tvalue = tvalue == NULL ? (gchar*)"" : tvalue;
