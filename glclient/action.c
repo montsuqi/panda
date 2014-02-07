@@ -344,6 +344,9 @@ _ResetScrolledWindow(
     gpointer    user_data)
 {
     GtkAdjustment   *adj;
+	GtkWidget		*child;
+
+	child = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "child");
 
     if  (   GTK_IS_SCROLLED_WINDOW(widget)  ) {
 		adj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
@@ -359,11 +362,14 @@ _ResetScrolledWindow(
     }
     if  (   GTK_IS_CONTAINER(widget)    ) {
         gtk_container_forall(GTK_CONTAINER(widget), _ResetScrolledWindow, NULL);
+		if (child != NULL) {
+			gtk_container_forall(GTK_CONTAINER(child), _ResetScrolledWindow, NULL);
+		}
     }
 }
 
-extern	void
-ResetScrolledWindow(char *windowName)
+static	void
+ResetScrolledWindow(const char *windowName)
 {
 	GtkWidget *widget;
 
@@ -1326,6 +1332,9 @@ UpdateWindow(
 		UpdateWidget(wname,child);
 		ShowWindow(wname);
 		ResetTimer((char*)wname);
+		if (strcmp("current",put_type)) {
+			ResetScrolledWindow(wname);
+		}
 	} else {
 		CloseWindow(wname);
 	}
