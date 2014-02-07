@@ -612,7 +612,7 @@ ENTER_FUNC;
 				UpdateWindow(window);
 				ResetTimer(window);
 			}
-			if (type == SCREEN_CHANGE_WINDOW) {
+			if (type != SCREEN_CURRENT_WINDOW) {
 				ResetScrolledWindow(window);
 			}
 			break;
