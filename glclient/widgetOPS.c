@@ -424,11 +424,15 @@ ENTER_FUNC;
 		for(i=0;i<MAX_COMBO_ITEM;i++) {
 			item[i] = NULL;
 		}
-		item[0] = "";
+		item[0] = g_strdup("");
 		for(i=0;i<n;i++) {
-			val = json_object_array_get_idx(child,i);
-			if (json_object_is_type(val,json_type_string)) {
-				item[i+1] = g_strdup(json_object_get_string(val));
+			if (i < count) {
+				val = json_object_array_get_idx(child,i);
+				if (json_object_is_type(val,json_type_string)) {
+					item[i+1] = g_strdup(json_object_get_string(val));
+				}
+			} else {
+				item[i+1] = NULL;
 			}
 		}
 		combo = GTK_PANDA_COMBO(widget);
