@@ -637,6 +637,7 @@ ENTER_FUNC;
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
 		if (!isdummy) {
 			GrabFocus(window, widgetName);
+			PandaTableFocusCell(widgetName);
 		}
 		c = GL_RecvPacketClass(fp);
 	}
