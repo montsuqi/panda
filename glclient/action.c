@@ -1363,12 +1363,14 @@ UpdateScreen()
 		g_free(THISWINDOW(Session));
 	}
 	THISWINDOW(Session) = g_strdup(f_window);
+	FOCUSEDWINDOW(Session) = (char*)f_window;
 
 	child = json_object_object_get(window_data,"focused_widget");
 	if (child == NULL ||is_error(child)) {
 		Error("invalid json part:focused_widget");
 	}
 	f_widget = json_object_get_string(child);
+	FOCUSEDWIDGET(Session) = (char*)f_widget;
 
 	windows = json_object_object_get(window_data,"windows");
 	if (windows == NULL ||

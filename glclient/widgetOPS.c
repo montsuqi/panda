@@ -779,10 +779,12 @@ ENTER_FUNC;
 			gtk_panda_table_set_bgcolor(GTK_PANDA_TABLE(widget),i,bgval);
 		}
 	}
-	if (trow >=0 && tcolumn >= 0) {
-		gtk_panda_table_moveto(GTK_PANDA_TABLE(widget),trow,tcolumn,TRUE,trowattr,0.0);
-	} else {
-		gtk_panda_table_stay(GTK_PANDA_TABLE(widget));
+	if (!strcmp(gtk_widget_get_name(widget),FOCUSEDWIDGET(Session))) {
+		if (trow >=0 && tcolumn >= 0) {
+			gtk_panda_table_moveto(GTK_PANDA_TABLE(widget),trow,tcolumn,TRUE,trowattr,0.0);
+		} else {
+			gtk_panda_table_stay(GTK_PANDA_TABLE(widget));
+		}
 	}
 	_AddChangedWidget(widget);
 LEAVE_FUNC;
