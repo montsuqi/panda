@@ -34,5 +34,6 @@
 extern  void		UpdateWindow(char *windowName);
 extern	void		UpdateWidgetData(WidgetData *data);
 extern	WidgetType	GetWidgetType(char *wname, char *name);
+extern	void		PandaTableFocusCell(char *wname);
 
 #endif

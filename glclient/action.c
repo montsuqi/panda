@@ -729,8 +729,6 @@ ENTER_FUNC;
 		ScaleWindow(window);
 		SetBGColor(window);
 
-		gtk_widget_show(window);
-		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
 		for(i = 0; i < g_list_length(DialogStack); i++) {
 			if ((gpointer)window != g_list_nth_data(DialogStack, i)) {
 				parent = (GtkWidget *)g_list_nth_data(DialogStack, i);
@@ -741,6 +739,8 @@ ENTER_FUNC;
 			gtk_window_set_transient_for(GTK_WINDOW(window), 
 				GTK_WINDOW(parent));
 		}
+		gtk_widget_show(window);
+		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
 	}
 LEAVE_FUNC;
 }
