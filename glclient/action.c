@@ -1332,9 +1332,6 @@ UpdateWindow(
 		UpdateWidget(wname,child);
 		ShowWindow(wname);
 		ResetTimer((char*)wname);
-		if (strcmp("current",put_type)) {
-			ResetScrolledWindow(wname);
-		}
 	} else {
 		CloseWindow(wname);
 	}
@@ -1344,8 +1341,8 @@ extern	void
 UpdateScreen()
 {
 	json_object *result,*window_data,*windows,*child;
-	const char *f_window;
-	const char *f_widget;
+	const char *f_window,*f_widget;
+	static char *prev_window = NULL;
 	int i;
 	
 	result = json_object_object_get(SCREENDATA(Session),"result");
@@ -1383,7 +1380,14 @@ UpdateScreen()
 		UpdateWindow(child,i);
 	}
 	if (f_window != NULL && f_window[0] != '_') {
+		if (prev_window != NULL) {
+			if (strcmp(f_window,prev_window)) {
+				ResetScrolledWindow(f_window);
+			}
+			free(prev_window);
+		}
 		GrabFocus(f_window,f_widget);
+		prev_window = strdup(f_window);
 	}
 }
 
