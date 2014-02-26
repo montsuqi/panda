@@ -571,10 +571,6 @@ GetScreenData(
 	unsigned char	type;
 
 ENTER_FUNC;
-	if (prevWindow != NULL) {
-		free(prevWindow);
-	}
-	prevWindow = THISWINDOW(Session) ? strdup(THISWINDOW(Session)) : NULL;
 	isdummy = FALSE;
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
@@ -617,9 +613,6 @@ ENTER_FUNC;
 				UpdateWindow(window);
 				ResetTimer(window);
 			}
-			if (prevWindow != NULL && strcmp(prevWindow,window)) {
-				ResetScrolledWindow(window);
-			}
 			break;
 		  case	SCREEN_CLOSE_WINDOW:
 			CloseWindow(window);
@@ -641,6 +634,13 @@ ENTER_FUNC;
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
 		if (!isdummy) {
+			if (prevWindow != NULL) {
+				if (strcmp(prevWindow,window)) {
+					ResetScrolledWindow(window);
+				}
+				free(prevWindow);
+			}
+			prevWindow = strdup(window);
 			GrabFocus(window, widgetName);
 			PandaTableFocusCell(widgetName);
 		}
