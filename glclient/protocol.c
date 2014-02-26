@@ -563,6 +563,7 @@ extern	Bool
 GetScreenData(
 	NETFILE		*fp)
 {
+	static char		*prevWindow = NULL;
 	char			window[SIZE_NAME+1];
 	char			widgetName[SIZE_LONGNAME+1];
 	PacketClass		c;
@@ -570,9 +571,10 @@ GetScreenData(
 	unsigned char	type;
 
 ENTER_FUNC;
-	if (THISWINDOW(Session) != NULL) {
-		g_free(THISWINDOW(Session));
+	if (prevWindow != NULL) {
+		free(prevWindow);
 	}
+	prevWindow = THISWINDOW(Session) ? strdup(THISWINDOW(Session)) : NULL;
 	isdummy = FALSE;
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
@@ -603,6 +605,9 @@ ENTER_FUNC;
 		  case	SCREEN_CHANGE_WINDOW:
 		  case	SCREEN_CURRENT_WINDOW:
 			if ((c = GL_RecvPacketClass(fp)) == GL_ScreenData) {
+				if (THISWINDOW(Session) != NULL) {
+					free(THISWINDOW(Session));
+				}
 				THISWINDOW(Session) = strdup(window);
 				RecvValue(fp,window);
 				isdummy = window[0] == '_';
@@ -612,7 +617,7 @@ ENTER_FUNC;
 				UpdateWindow(window);
 				ResetTimer(window);
 			}
-			if (type != SCREEN_CURRENT_WINDOW) {
+			if (prevWindow != NULL && strcmp(prevWindow,window)) {
 				ResetScrolledWindow(window);
 			}
 			break;
