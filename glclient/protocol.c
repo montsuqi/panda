@@ -563,7 +563,6 @@ extern	Bool
 GetScreenData(
 	NETFILE		*fp)
 {
-	static char		*prevWindow = NULL;
 	char			window[SIZE_NAME+1];
 	char			widgetName[SIZE_LONGNAME+1];
 	PacketClass		c;
@@ -634,13 +633,6 @@ ENTER_FUNC;
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
 		if (!isdummy) {
-			if (prevWindow != NULL) {
-				if (strcmp(prevWindow,window)) {
-					ResetScrolledWindow(window);
-				}
-				free(prevWindow);
-			}
-			prevWindow = strdup(window);
 			GrabFocus(window, widgetName);
 			PandaTableFocusCell(widgetName);
 		}

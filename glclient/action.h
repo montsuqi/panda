@@ -62,7 +62,6 @@ extern	void		AddChangedWidget(GtkWidget *widget);
 extern	void		ShowBusyCursor(GtkWidget *widget);
 extern	void		StopTimerWidgetAll(void);
 extern	void		HideBusyCursor(GtkWidget *widget);
-extern	void		ResetScrolledWindow(char *windowName);
 extern  void		SetTitle(GtkWidget *window);
 extern  void		SetBGColor(GtkWidget *window);
 extern	GtkWidget	*GetWidgetByLongName(char *longName);
