@@ -338,46 +338,6 @@ LEAVE_FUNC;
 	return (wname);
 }
 
-static  void
-_ResetScrolledWindow(
-    GtkWidget   *widget,
-    gpointer    user_data)
-{
-    GtkAdjustment   *adj;
-	GtkWidget		*child;
-
-	child = (GtkWidget *)g_object_get_data(G_OBJECT(widget), "child");
-
-    if  (   GTK_IS_SCROLLED_WINDOW(widget)  ) {
-		adj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(widget));
-		if	(	adj	) {
-			gtk_adjustment_set_value(adj,0.0);
-			gtk_adjustment_value_changed(adj);
-		}
-		adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(widget));
-		if	(	adj	) {
-			gtk_adjustment_set_value(adj,0.0);
-			gtk_adjustment_value_changed(adj);
-		}
-    }
-    if  (   GTK_IS_CONTAINER(widget)    ) {
-        gtk_container_forall(GTK_CONTAINER(widget), _ResetScrolledWindow, NULL);
-		if (child != NULL) {
-			gtk_container_forall(GTK_CONTAINER(child), _ResetScrolledWindow, NULL);
-		}
-    }
-}
-
-static	void
-ResetScrolledWindow(const char *windowName)
-{
-	GtkWidget *widget;
-
-	widget = GetWidgetByLongName(windowName);
-	g_return_if_fail(widget != NULL);
-	_ResetScrolledWindow(widget, NULL);
-}
-
 static	void
 _RegistTimer(
 	GtkWidget	*widget,
@@ -1342,7 +1302,6 @@ UpdateScreen()
 {
 	json_object *result,*window_data,*windows,*child;
 	const char *f_window,*f_widget;
-	static char *prev_window = NULL;
 	int i;
 	
 	result = json_object_object_get(SCREENDATA(Session),"result");
@@ -1380,14 +1339,7 @@ UpdateScreen()
 		UpdateWindow(child,i);
 	}
 	if (f_window != NULL && f_window[0] != '_') {
-		if (prev_window != NULL) {
-			if (strcmp(f_window,prev_window)) {
-				ResetScrolledWindow(f_window);
-			}
-			free(prev_window);
-		}
 		GrabFocus(f_window,f_widget);
-		prev_window = strdup(f_window);
 	}
 }
 

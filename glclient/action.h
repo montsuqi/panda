@@ -43,8 +43,7 @@ GLOBAL	GtkWidget	*TopNoteBook;
 GLOBAL	GList		*DialogStack;
 GLOBAL	WindowScale	TopWindowScale;
 
-extern	void		RegisterChangedHandler(GObject *object, 
-						GCallback func, gpointer data);
+extern	void		RegisterChangedHandler(GObject *object,GCallback func, gpointer data);
 extern	void		BlockChangedHandlers(void);
 extern	void		UnblockChangedHandlers(void);
 extern	GtkWidget	*GetWindow(	GtkWidget	*widget);
@@ -60,8 +59,7 @@ extern  void		SetTitle(GtkWidget *window);
 extern  void		SetBGColor(GtkWidget *window);
 extern	GtkWidget	*GetWidgetByLongName(const char *longName);
 extern	GtkWidget	*GetWidgetByName(const char *dataName);
-extern	void		ConfigureWindow(GtkWidget *widget,GdkEventConfigure *ev, 
-						gpointer data);
+extern	void		ConfigureWindow(GtkWidget *widget,GdkEventConfigure *ev, gpointer data);
 extern	void		InitTopWindow(void);
 extern	gboolean	IsDialog(GtkWidget *widget);
 extern  gboolean    IsWidgetName(char *name);
