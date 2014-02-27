@@ -1269,10 +1269,6 @@ UpdateWindow(
 		MessageLogPrintf("window[%s] put_type[%s]\n",wname,put_type);
 	}
 
-	if (isdummy) {
-		return;
-	}
-	
 	if (GetWindowData(wname) == NULL) {
 		obj = RPC_GetScreenDefine(wname);
 		result = json_object_object_get(obj,"result");
@@ -1290,6 +1286,9 @@ UpdateWindow(
 			Error("invalid json part:screeen_data");
 		}
 		UpdateWidget(wname,child);
+		if (isdummy) {
+			return;
+		}
 		ShowWindow(wname);
 		ResetTimer((char*)wname);
 	} else {
