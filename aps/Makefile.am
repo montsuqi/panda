@@ -38,8 +38,7 @@ LDADD 		=							\
 	$(COMMON_LIBS)						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
-	$(OPENCOBOL_LIBS)					\
-	$(RUBY_LIBS)						
+	$(OPENCOBOL_LIBS)
 
 MONFUNC_la_LIBADD	=
 
@@ -49,7 +48,6 @@ AM_CPPFLAGS 			= 		\
 	-I$(top_srcdir)/libs	\
 	-I$(top_srcdir)/dblib	\
 	$(OPENCOBOL_CFLAGS)		\
-	$(RUBY_CFLAGS)			\
 	$(P11_CFLAGS)			\
 	$(SSL_CFLAGS)			\
 	$(COMMON_CFLAGS)
@@ -61,14 +59,12 @@ HANDLER_OBJECTS	=	\
 	C.la			\
 	Exec.la			\
 	Resident.la		\
-	Ruby.la			\
 	OpenCOBOL.la
 
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic -avoid-version
 C_la_LDFLAGS			=	-module -export-dynamic -avoid-version
 Exec_la_LDFLAGS			=	-module -export-dynamic -avoid-version
 Resident_la_LDFLAGS		=	-module -export-dynamic -avoid-version
-Ruby_la_LDFLAGS			=   -module -export-dynamic -avoid-version
 
 C_la_SOURCES			=	\
 	C.c						\
@@ -79,13 +75,6 @@ OpenCOBOL_la_SOURCES	=	\
 	MONFUNC.h				\
 	OpenCOBOL.c
 OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
-
-Ruby_la_SOURCES			=	\
-	MONFUNC.c				\
-	MONFUNC.h				\
-	Ruby.c					\
-	apslib.c
-Ruby_la_LIBADD			=	$(RUBY_LIBS)
 
 Exec_la_SOURCES			=	Exec.c
 Exec_la_LIBADD			=	\
