@@ -142,9 +142,9 @@ ENTER_FUNC;
 	}
 	xfree(data->hdr);
 	g_hash_table_foreach_remove(data->spadata,(GHRFunc)FreeSpa,NULL);
-	g_hash_table_destroy(data->spadata);
+	DestroyHashTable(data->spadata);
 	g_hash_table_foreach_remove(data->scrpool,(GHRFunc)FreeScr,NULL);
-	g_hash_table_destroy(data->scrpool);
+	DestroyHashTable(data->scrpool);
 	xfree(data->scrdata);
 	FreeLBS(data->apidata->rec);
 	xfree(data->apidata);
