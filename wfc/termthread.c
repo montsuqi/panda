@@ -532,9 +532,17 @@ TermInit(
 {
 	SessionData	*data;
 	LD_Node		*ld;
-	int			i;
+	int			i,sesnum;
 	uuid_t		u;
 ENTER_FUNC;
+	sesnum = GetSessionNum();
+	if (SesNum != 0 && sesnum >= SesNum) {
+		Warning("Discard new session;max session number(%d) reached", SesNum);
+		SendPacketClass(term->fp,WFC_NOT);
+		CloseNet(term->fp);
+		return;
+	}
+
 	data = NewSessionData();
 	data->term = term;
 	data->fInProcess = TRUE;
@@ -549,18 +557,12 @@ ENTER_FUNC;
 	RecvnString(term->fp,SIZE_HOST,data->host);	ON_IO_ERROR(term->fp,badio);
 	RecvnString(term->fp,SIZE_NAME,data->agent);ON_IO_ERROR(term->fp,badio);
 
-	MessageLogPrintf("[%s:%s] session start",data->hdr->user,data->hdr->uuid);
+	MessageLogPrintf("[%s:%s] session start(%d)",
+		data->hdr->user,data->hdr->uuid,sesnum+1);
 	dbgprintf("uuid   = [%s]",data->hdr->uuid);
 	dbgprintf("user   = [%s]",data->hdr->user);
 	dbgprintf("host   = [%s]",data->host);
 	dbgprintf("agent  = [%s]",data->agent);
-
-	if (SesNum != 0 && GetSessionNum() >= SesNum) {
-		Warning("Discard new session(%s);max session number(%d)",term,SesNum);
-		SendPacketClass(term->fp,WFC_NOT);
-		CloseNet(term->fp);
-		return;
-	}
 
 	SendPacketClass(term->fp,WFC_OK);	ON_IO_ERROR(term->fp,badio);
 	SendString(term->fp,data->hdr->uuid);	ON_IO_ERROR(term->fp,badio);
