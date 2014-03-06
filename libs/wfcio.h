@@ -31,7 +31,7 @@
 typedef	struct {
 	char			window[SIZE_NAME+1];
 	char			widget[SIZE_NAME+1];
-	char			event[SIZE_EVENT+1];
+	char			event[SIZE_NAME+1];
 	char			cmd[SIZE_LONGNAME+1];
 	char			user[SIZE_USER+1];
 	char			term[SIZE_TERM+1];

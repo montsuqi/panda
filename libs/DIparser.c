@@ -1155,7 +1155,7 @@ BuildMcpArea(
 	p += sprintf(p,		"dc	{");
 	p += sprintf(p,			"window	 varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"widget	 varchar(%d);",SIZE_NAME);
-	p += sprintf(p,			"event	 varchar(%d);",SIZE_EVENT);
+	p += sprintf(p,			"event	 varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"module	 varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"fromwin varchar(%d);",SIZE_NAME);
 	p += sprintf(p,			"status	 varchar(%d);",SIZE_STATUS);

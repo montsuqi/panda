@@ -48,7 +48,7 @@ ENTER_FUNC;
 	scr = New(ScreenData);
 	memclear(scr->window,SIZE_NAME+1);
 	memclear(scr->widget,SIZE_NAME+1);
-	memclear(scr->event,SIZE_EVENT+1);
+	memclear(scr->event,SIZE_NAME+1);
 	memclear(scr->cmd,SIZE_LONGNAME+1);
 	memclear(scr->term,SIZE_TERM+1);
 	memclear(scr->host,SIZE_HOST+1);
