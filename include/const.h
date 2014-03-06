@@ -50,7 +50,6 @@
 #define	SIZE_BLOCK		1024
 
 #define	SIZE_NAME		64
-#define	SIZE_EVENT		64
 #define	SIZE_TERM		64
 #define	SIZE_HOST		64
 #define	SIZE_FUNC		16
