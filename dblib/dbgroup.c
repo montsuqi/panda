@@ -54,6 +54,8 @@ InitializeCTRL(
 	*ctrl->func = '\0';
 	*ctrl->rname = '\0';
 	*ctrl->pname = '\0';
+	*ctrl->user = '\0';
+	*ctrl->term = '\0';
 	ctrl->rno = 0;
 	ctrl->pno = 0;
 	ctrl->rcount = 0;

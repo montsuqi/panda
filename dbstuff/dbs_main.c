@@ -316,6 +316,8 @@ ENTER_FUNC;
 			if (value != NULL) {
 				ValueIsUpdate(value);
 				SetValueString(value,str,Encoding);
+			} else {
+				Warning("invalid record name [%s:%s]\n", rname, vname);
 			}
 		} else {
 			break;
