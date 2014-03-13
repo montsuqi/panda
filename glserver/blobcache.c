@@ -32,6 +32,7 @@
 #include	<string.h>
 
 #include	"libmondai.h"
+#include	"glserver.h"
 #include	"blobcache.h"
 #include	"glserver.h"
 #include	"debug.h"

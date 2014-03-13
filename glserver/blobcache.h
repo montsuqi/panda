@@ -27,7 +27,7 @@
 
 
 #undef	GLOBAL
-#ifdef FRONT_MAIN
+#ifdef FRONT_H_MAIN
 #	define	GLOBAL		/*	*/
 #else
 #	define	GLOBAL		extern

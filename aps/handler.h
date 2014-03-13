@@ -58,9 +58,6 @@ GLOBAL	char		*LibPath;
 
 GLOBAL	size_t		TextSize;
 
-GLOBAL	char		*CurrentUser;
-GLOBAL	char		*CurrentTerm;
-
 #undef	GLOBAL
 #endif
 

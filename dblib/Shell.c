@@ -42,6 +42,14 @@
 
 #include	"directory.h"
 
+static void
+SetMonenv(
+	DBCOMM_CTRL	*ctrl)
+{
+	setenv("MONTSUQIUSER", ctrl->user, 1);
+	setenv("MONTSUQITERM", ctrl->term, 1);
+}
+
 static	int
 _EXEC(
 	DBG_Struct	*dbg,
@@ -302,6 +310,7 @@ ENTER_FUNC;
 		} else {
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
+				SetMonenv(ctrl);
 				ret = ExecShell(ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
