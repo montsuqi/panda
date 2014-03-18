@@ -20,13 +20,10 @@
 #ifndef	_SYSDATAIO_H
 #define	_SYSDATAIO_H
 
-#define	BLOB_ACCESS_IMPORT	0
-#define	BLOB_ACCESS_EXPORT	1
-
-extern	void	ConnectSysData();
-extern	void	DisconnectSysData();
-extern	void	AccessBLOB(int mode, ValueStruct *value);
-extern	void	GetSessionMessage(const char*,char**,char**,char**);
-extern	void	ResetSessionMessage(const char*);
+extern	void			GLExportBLOB(MonObjectType obj,char**,size_t*);
+extern	MonObjectType	GLImportBLOB(char *,size_t);
+extern	void			GetSessionMessage(const char*,char**,char**,char**);
+extern	void			ResetSessionMessage(const char*);
+extern	gboolean		CheckSession(const char *term);
 
 #endif

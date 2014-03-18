@@ -86,6 +86,7 @@ size_t read_text_data(
 	char *p;
 	int i;
 	LargeByteString *lbs;
+Time("start read_text_data");
 
 	p = (char*)buf;
 	lbs = (LargeByteString*)userp;
@@ -99,6 +100,7 @@ size_t read_text_data(
 		p++;
 		read_size++;
 	}
+Time("end read_text_data");
 	return read_size;
 }
 
@@ -210,6 +212,8 @@ JSONRPC(
 	gboolean fSSL;
 	size_t jsonsize;
 
+Time("start JSONRPC");
+
 	if (type == TYPE_AUTH) {
 		url = AUTHURI(Session);
 	} else {
@@ -220,10 +224,12 @@ JSONRPC(
 	}
 	jsonstr = (char*)json_object_to_json_string(obj);
 	jsonsize = strlen(jsonstr);
+
 	LBS_EmitStart(readbuf);
 	LBS_EmitString(readbuf,jsonstr);
 	LBS_EmitEnd(readbuf);
 	LBS_SetPos(readbuf,0);
+
 	json_object_put(obj);
 
 	if (writebuf == NULL) {
@@ -242,6 +248,8 @@ JSONRPC(
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 	snprintf(clength,sizeof(clength),"Content-Length: %ld",jsonsize);
 	headers = curl_slist_append(headers, clength);
+	snprintf(clength,sizeof(clength),"Expect:");
+	headers = curl_slist_append(headers, clength);
 
 	curl_easy_setopt(curl, CURLOPT_URL,url);
 	curl_easy_setopt(curl, CURLOPT_POST,1);
@@ -249,8 +257,11 @@ JSONRPC(
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
 	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
+#if 1
+	curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+#endif
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	if (type == TYPE_AUTH) {
+	if (type == TYPE_AUTH || !strcmp(SERVERTYPE(Session),"glserver")) {
 		snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
 		userpass[sizeof(userpass)-1] = 0;
 		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
@@ -262,9 +273,11 @@ JSONRPC(
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
 	}
+Time("start curl_easy_perform");
 	if (curl_easy_perform(curl) != CURLE_OK) {
 		Error(_("curl_easy_perform failure"));
 	}
+Time("end curl_easy_perform");
 	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		if (http_code != 200) {
 			Error(_("http status code[%d]"),http_code);
@@ -281,6 +294,9 @@ JSONRPC(
 	}
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
+Time("end curl");
+
+Time("end JSONRPC");
 }
 
 void
@@ -326,6 +342,8 @@ void
 RPC_StartSession()
 {
 	json_object *obj,*params,*child,*result,*meta;
+	gchar *rpcuri,*resturi;
+	GRegex *re;
 
 	params = json_object_new_object();
 	child = json_object_new_object();
@@ -359,13 +377,23 @@ RPC_StartSession()
 	if (child == NULL || is_error(child)) {
 		Error(_("no jsonrpc_uri object"));
 	}
-	RPCURI(Session) = g_strdup(json_object_get_string(child));
+	rpcuri = (char*)json_object_get_string(child);
 
 	child = json_object_object_get(result,"app_rest_api_uri_root");
 	if (child == NULL || is_error(child)) {
 		Error(_("no rest_uri object"));
 	}
-	RESTURI(Session) = g_strdup(json_object_get_string(child));
+	resturi = (char*)json_object_get_string(child);
+
+	if (!strcmp(SERVERTYPE(Session),"ginbee")) {
+		RPCURI(Session) = g_strdup(rpcuri);
+		RESTURI(Session) = g_strdup(resturi);
+	} else {
+		RPCURI(Session) = g_strdup(AUTHURI(Session));
+		re = g_regex_new("/rpc/",G_REGEX_CASELESS,0,NULL);
+		RESTURI(Session) = g_regex_replace(re,AUTHURI(Session),-1,0,"/blob/",0,NULL);
+		g_regex_unref(re);
+	}
 	json_object_put(obj);
 }
 
@@ -475,7 +503,7 @@ RPC_SendEvent(
 		json_object_put(SCREENDATA(Session));
 	}
 	SCREENDATA(Session) = json_tokener_parse(LBS_Body(writebuf));
-	if (is_error(SCREENDATA(Session))) {
+	if (SCREENDATA(Session) == NULL||is_error(SCREENDATA(Session))) {
 		Error(_("invalid json"));
 	}
 	CheckJSONRPCResponse(SCREENDATA(Session));

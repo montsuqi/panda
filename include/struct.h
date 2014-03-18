@@ -219,7 +219,7 @@ typedef	struct _ProcessNode	{
 	,				user[SIZE_USER+1];
 	char			window[SIZE_NAME+1]
 	,				widget[SIZE_NAME+1]
-	,				event[SIZE_EVENT]
+	,				event[SIZE_NAME+1]
 	,				command
 	,				dbstatus;
 	unsigned char	puttype;
@@ -377,7 +377,7 @@ typedef	struct {
 typedef	struct {
 	char			window[SIZE_NAME+1];
 	char			widget[SIZE_NAME+1];
-	char			event[SIZE_EVENT+1];
+	char			event[SIZE_NAME+1];
 	char			uuid[SIZE_TERM+1];
 	char			user[SIZE_USER+1];
 	char			tempdir[SIZE_PATH+1];

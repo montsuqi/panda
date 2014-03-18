@@ -84,8 +84,6 @@ ENTER_FUNC;
 				Warning("can not connect glauth server");
 				rc = FALSE;
 			}
-		} else if (!stricmp(auth->protocol,"api")) {
-			rc = AuthAPI(user,pass,other,id);
 		} else if (!stricmp(auth->protocol,"file")) {
 			rc = AuthSingle(auth->file,user,pass,NULL);
 		} else {

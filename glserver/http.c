@@ -29,6 +29,7 @@
 
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<stdarg.h>
 #include	<signal.h>
 #include	<string.h>
 #include	<setjmp.h>
@@ -41,6 +42,7 @@
 #include	<unistd.h>
 #include	<ctype.h>
 #include	<glib.h>
+#include	<json.h>
 
 #include	"enum.h"
 #include	"libmondai.h"
@@ -52,50 +54,55 @@
 #include	"auth.h"
 #include	"authstub.h"
 #include	"glserver.h"
-#include	"glcomm.h"
 #include	"term.h"
 #include	"http.h"
-#include	"driver.h"
-#include	"monapi.h"
 #include	"blobreq.h"
+#include	"sysdataio.h"
+#include	"wfcio.h"
+#include	"dirs.h"
 #include	"message.h"
 #include	"debug.h"
 
 #define MAX_REQ_SIZE 1024*1024+1
 
+#define REQUEST_TYPE_NONE        0
+#define REQUEST_TYPE_JSONRPC     1
+#define REQUEST_TYPE_BLOB_IMPORT 2
+#define REQUEST_TYPE_BLOB_EXPORT 3
+#define REQUEST_TYPE_API         4
+
 typedef struct {
-	NETFILE		*fp;
-	char		host[SIZE_HOST];
-	PacketClass	method;
-	int			buf_size;
-	char		*buf;
-	char		*head;
-	char		*arguments;
-	int			body_size;
-	char		*body;
-	GHashTable	*header_hash;
-	char		*user;
-	char		*pass;
-	char		*ld;
-	char		*window;
-	int			status;
-	ScreenData	*scr;
-	NETFILE		*fpSysData;
+	NETFILE			*fp;
+	int 			type;
+	char			host[SIZE_HOST];
+	PacketClass		method;
+	size_t			buf_size;
+	char			*buf;
+	char			*head;
+	char			*arguments;
+	int				body_size;
+	char			*body;
+	GHashTable		*header_hash;
+	char			*user;
+	char			*pass;
+	char			*ld;
+	char			*window;
+	char			*session_id;
+	char			*oid;
+	int				status;
 } HTTP_REQUEST;
 
 HTTP_REQUEST *
 HTTP_Init(
-	PacketClass klass,
 	NETFILE *fp)
 {
 	HTTP_REQUEST *req;
-	Port *port;
-	int fd;
 
 	req = New(HTTP_REQUEST);
 	req->fp = fp;
 	RemoteIP(fp->fd,req->host,SIZE_HOST);
-	req->method = klass;
+	req->type = REQUEST_TYPE_NONE;
+	req->method = 0;
 	req->buf_size = 0;
 	req->buf = req->head = xmalloc(sizeof(char) * MAX_REQ_SIZE);
 	memset(req->buf, 0x0, MAX_REQ_SIZE);
@@ -103,22 +110,14 @@ HTTP_Init(
 	req->body = xmalloc(sizeof(char) * MAX_REQ_SIZE);
 	memset(req->body, 0x0, MAX_REQ_SIZE);
 	req->arguments = NULL;
-	req->header_hash = NewNameHash();
+	req->header_hash = NewNameiHash();
 	req->user = NULL;
 	req->pass = NULL;
 	req->ld = NULL;
 	req->window = NULL;
 	req->status = HTTP_OK;
-	req->scr = NewScreenData();
-
-	port = ParPort(PortSysData, SYSDATA_PORT);
-	fd = ConnectSocket(port,SOCK_STREAM);
-	DestroyPort(port);
-	if ( fd > 0 ){
-		req->fpSysData = SocketToNet(fd);
-	} else {
-		Error("cannot connect sysdata");
-	}
+	req->session_id = NULL;
+	req->oid = 0;
 	return req;
 }
 
@@ -191,35 +190,20 @@ HTTP_CODE2REASON(HTTP_NOT_EXTENDED,"Not Extended")
 void
 SendResponse(
 	HTTP_REQUEST *req,
-	MonAPIData *data)
+	int status,
+	char *body,
+	size_t body_size,
+	...)
 {
-	char buf[1024];
-	char date[50];
-	unsigned char *body;
-	size_t size;
+	va_list ap;
+	char buf[1024],date[50],*header,*h,*v;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
-	ValueStruct *vstatus;
-	ValueStruct *vbody;
-	MonObjectType obj = GL_OBJ_NULL;
+Time("start SendResponse");
 
-	size = 0;
-	body = NULL;
-
-	if (data != NULL && data->value != NULL) {
-		vstatus = GetItemLongName(data->value,"http_status");
-		if (vstatus != NULL) {
-			req->status = ValueInteger(vstatus);
-		} else {
-			req->status = HTTP_OK;
-		}
-		
-	}
-
-	sprintf(buf, "HTTP/1.1 %d %s\r\n", 
-		req->status, GetReasonPhrase(req->status));
-	Send(req->fp, buf, strlen(buf)); 
-	MessageLogPrintf("[%s@%s] %s", req->user, req->host ,buf);
+	sprintf(buf, "HTTP/1.1 %d %s\r\n",status,GetReasonPhrase(status));
+	Send(req->fp,buf,strlen(buf)); 
+	MessageLogPrintf("[%s@%s] %s",req->user,req->host,buf);
 
 	gmtime_r(&t, &cur);
 	cur_p = &cur;
@@ -232,40 +216,43 @@ SendResponse(
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
-	if (data != NULL && data->value != NULL && req->status == HTTP_OK) {
-		vbody = GetItemLongName(data->value, "body");
-		if (vbody != NULL) {
-			obj = ValueObjectId(vbody);
-		}
-		dbgprintf("obj:%d GL_OBJ_NULL:%d", (int)obj, (int)GL_OBJ_NULL);
-		if (obj != GL_OBJ_NULL) {
-			RequestReadBLOB(req->fpSysData, obj, &body, &size);
-		}
-		sprintf(buf, "Content-Type: %s\r\n", 
-			ValueToString(GetItemLongName(data->value,"content_type"), NULL));
-		Send(req->fp, buf, strlen(buf));
-	}
-	if (body != NULL && size > 0) {
-		sprintf(buf, "Content-Length: %ld\r\n", (long)size);
+	if (body != NULL && body_size > 0) {
+		sprintf(buf, "Content-Length: %zd\r\n", body_size);
 		Send(req->fp, buf, strlen(buf));
 	} else {
 		sprintf(buf, "Content-Length: 0\r\n");
 		Send(req->fp, buf, strlen(buf));
 	}
 
-	if (req->status == HTTP_UNAUTHORIZED) {
+	if (status == HTTP_UNAUTHORIZED) {
 		const char *str = "WWW-Authenticate: Basic realm=\"glserver\"\r\n";
 		Send(req->fp, (char *)str, strlen(str));
 	}
 
+	va_start(ap,NULL);
+	while(1) {
+		h = va_arg(ap,char*);
+		if (h == NULL) {
+			break;
+		}
+		v = va_arg(ap,char*);
+		if (v == NULL) {
+			break;
+		}
+		header = g_strdup_printf("%s: %s\r\n",h,v);
+		Send(req->fp, header, strlen(header));
+		g_free(header);
+	}
+	va_end(ap);
+
 	Send(req->fp, "\r\n", strlen("\r\n"));
-	if (body != NULL && size > 0) {
-		Send(req->fp, (char *)body, size);
-		xfree(body);
+	if (body != NULL && body_size > 0) {
+		Send(req->fp, (char *)body, body_size);
 	}
 	Flush(req->fp);
+Time("end SendResponse");
 }
-
+	
 int
 TryRecv(
 	HTTP_REQUEST *req)
@@ -273,8 +260,7 @@ TryRecv(
 	int size;
 
 	if (req->buf_size >= MAX_REQ_SIZE) {
-		req->status = HTTP_REQUEST_ENTITY_TOO_LARGE;
-		SendResponse(req, NULL);
+		SendResponse(req,HTTP_REQUEST_ENTITY_TOO_LARGE,NULL,0,NULL);
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
 	size = RecvAtOnce(req->fp, 
@@ -319,154 +305,102 @@ GetNextLine(HTTP_REQUEST *req)
 	}
 }
 
-static char *
-decode_uri(const char *uri)
-{
-	char c, *ret;
-	int i, j, in_query = 0;
-	
-	ret = xmalloc(strlen(uri) + 1);
-
-	for (i = j = 0; uri[i] != '\0'; i++) {
-		c = uri[i];
-		if (c == '?') {
-			in_query = 1;
-		} else if (c == '+' && in_query) {
-			c = ' ';
-		} else if (c == '%' && isxdigit((unsigned char)uri[i+1]) &&
-		    isxdigit((unsigned char)uri[i+2])) {
-			char tmp[] = { uri[i+1], uri[i+2], '\0' };
-			c = (char)strtol(tmp, NULL, 16);
-			i += 2;
-		}
-		ret[j++] = c;
-	}
-	ret[j] = '\0';
-	
-	return (ret);
-}
-
 void
 ParseReqLine(HTTP_REQUEST *req)
 {
+	GRegex *re;
+	GMatchInfo *match;
+
 	char *line;
-	char *head;
-	char *tail;
-	char *args;
-	int cmp = 1;
 
-	line = head = GetNextLine(req);
+	line = GetNextLine(req);
 
-	tail = strstr(head, " ");
-	if (tail == NULL) {
-		Warning("Invalid HTTP Method :%s", line);
-		req->status = HTTP_BAD_REQUEST;
+	/*jsonrpc*/
+	if (g_regex_match_simple("^post\\s+/rpc/*\\s",line,G_REGEX_CASELESS,0)) {
+		req->type = REQUEST_TYPE_JSONRPC;
+		req->method = HTTP_POST;
+		free(line);
 		return;
 	}
-	switch(req->method) {
-	case HTTP_GET:
-		cmp = strncmp("ET", head, strlen("ET"));
-		break;
-	case HTTP_POST:
-		cmp = strncmp("OST", head, strlen("OST"));
-		break;
-	}
-	if (cmp != 0) {
-		Warning("Invalid HTTP Method :%s", line);
-		req->status = HTTP_BAD_REQUEST;
+
+	/*blob export*/
+	re = g_regex_new("^get\\s+/rest/sessions/([a-zA-Z0-9-]+)/blob/(\\d+)",G_REGEX_CASELESS,0,NULL);
+	if (g_regex_match(re,line,0,&match)) {
+		req->session_id = g_match_info_fetch(match,1);
+		req->oid = g_match_info_fetch(match,2);
+		req->type = REQUEST_TYPE_BLOB_EXPORT;
+		req->method = HTTP_GET;
+		g_match_info_free(match);
+		g_regex_unref(re);
+		free(line);
 		return;
 	}
-	head = tail + 1;
-	while (head[0] == ' ') { head++; }
+	g_regex_unref(re);
 
-	tail = strstr(head, "/");
-	if (tail == NULL) {
-		Warning("Invalid URI :%s", line);
-		req->status = HTTP_BAD_REQUEST;
+	/*blob import*/
+	re = g_regex_new("^post\\s+/rest/sessions/([a-zA-Z0-9-]+)/blob/*\\s",G_REGEX_CASELESS,0,NULL);
+	if (g_regex_match(re,line,0,&match)) {
+		req->session_id = g_match_info_fetch(match,1);
+		req->type = REQUEST_TYPE_BLOB_IMPORT;
+		req->method = HTTP_POST;
+		g_match_info_free(match);
+		g_regex_unref(re);
+		free(line);
 		return;
 	}
-	head = tail + 1;
+	g_regex_unref(re);
 
-	tail = strstr(head, "/");
-	if (tail == NULL) {
-		Warning("Invalid LD Name :%s", line);
-		req->status = HTTP_BAD_REQUEST;
-		return;
-	} else {
-		req->ld = StrnDup(head, tail - head);
-		head = tail + 1;
-	}
-
-	tail = strstr(head, "?");
-	if (tail == NULL) {
-		tail = strstr(head, " ");
-		if (tail == NULL) {
-			Warning("Invalid Window :%s", line);
-			req->status = HTTP_BAD_REQUEST;
-			return;
+	/*api*/
+	re = g_regex_new("^(get|post)\\s+/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)(/*|\\?([a-zA-Z0-9&=]+))\\s",G_REGEX_CASELESS,0,NULL);
+	if (g_regex_match(re,line,0,&match)) {
+		if (*line == 'g' || *line == 'G') {
+			req->method = HTTP_GET;
+		} else {
+			req->method = HTTP_POST;
 		}
-		req->window = StrnDup(head, tail - head);
-		head = tail + 1;
-	} else {
-		req->window = StrnDup(head, tail - head);
-		head = tail + 1;
-		tail = strstr(head, " ");
-		if (tail == NULL) {
-			Warning("Missing HTTP-Version :%s", line);
-			req->status = HTTP_BAD_REQUEST;
-			return;
-		}
-		args = StrnDup(head, tail - head);
-		req->arguments = decode_uri(args);
-		xfree(args);
-		head = tail + 1;
+		req->ld = g_match_info_fetch(match,2);
+		req->window = g_match_info_fetch(match,3);
+		req->arguments = g_match_info_fetch(match,5);
+		req->type = REQUEST_TYPE_API;
+		g_match_info_free(match);
+		g_regex_unref(re);
+		free(line);
+		return;
 	}
-	while (head[0] == ' ') { head++; }
-	dbgprintf("ld :%s", req->ld);
-	dbgprintf("arguments :%s", req->arguments);
-
-	tail = strstr(head, "HTTP/1.1");
-	if (tail == NULL) {
-		tail = strstr(head, "HTTP/1.0");
-		if (tail == NULL) {
-			Message("Invalid HTTP Version :%s", head);
-			req->status = HTTP_BAD_REQUEST;
-		}
-	}
+	g_regex_unref(re);
+	Warning("Invalid HTTP Request Line:%s", line);
+	req->status = HTTP_BAD_REQUEST;
 	free(line);
 }
 
 gboolean
 ParseReqHeader(HTTP_REQUEST *req)
 {
-	char *line;
-	char *head;
-	char *tail;
-	char *key;
-	char *value;
+	GRegex *re;
+	GMatchInfo *match;
+	gchar *line,*key,*value;
 
-ENTER_FUNC;
-	line = head = GetNextLine(req);
+	line =  GetNextLine(req);
 	if (line == NULL) {
 		return FALSE;
 	}
 
-	tail = strstr(head, ":");
-	if (tail == NULL) {
+	re = g_regex_new("^([\\w-]+)\\s*:\\s*(.+)",0,0,NULL);
+	if (g_regex_match(re,line,0,&match)) {
+		key = g_match_info_fetch(match,1);
+		value = g_match_info_fetch(match,2);
+		g_hash_table_insert(req->header_hash, key, value);
+		g_match_info_free(match);
+	} else {
 		Message("invalid HTTP Header:%s", line);
 		req->status = HTTP_BAD_REQUEST;
+		free(line);
+		g_regex_unref(re);
 		return FALSE;
 	}
-	key = StrnDup(head, tail - head);
-	head = tail + 1;
-	while(head[0] == ' '){ head++; }
-
-	value = StrDup(head);
-	g_hash_table_insert(req->header_hash, key, value);
-	dbgprintf("header key:%s value:%s\n", key, value);
-
 	xfree(line);
-LEAVE_FUNC;
+	g_regex_unref(re);
+
 	return TRUE;
 }
 
@@ -474,13 +408,12 @@ void
 ParseReqBody(HTTP_REQUEST *req)
 {
 	char *value;
-	int size;
-	int partsize;
-	char *p;
-	char *q;
+	size_t size,left_size;
+
+Time("start ParseReqBody");
 	
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
-	size = atoi(value);
+	size = (size_t)atoi(value);
 	if (size <= 0) {
 		req->status = HTTP_BAD_REQUEST;
 		Message("invalid Content-Length:%s", value);
@@ -492,33 +425,40 @@ ParseReqBody(HTTP_REQUEST *req)
 		return;
 	}
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Type");
-
-	p = req->head;
-
-	partsize = strlen(p);
-	if (partsize > 0) {
-		if (partsize >= size) {
-			memcpy(req->body, p, size);
-			req->head += size;
-		} else {
-			memcpy(req->body, p, partsize);
-			q = req->body + partsize;
-			Recv(req->fp, q, size - partsize);
-			req->head += partsize;
-		}
-	} else {
-		Recv(req->fp, req->body, size);
+	if (value == NULL) {
+		req->status = HTTP_BAD_REQUEST;
+		Message("does not have content-type");
+		return;
 	}
+
+Time("start copy or recv");
+	left_size = size - (req->buf_size - (req->head - req->buf));
+fprintf(stderr,"size:%zd left_size:%zd\n",size,left_size);
+	if (left_size>0) {
+Time("start tryrecv");
+		while(left_size>0) {
+			req->buf_size += TryRecv(req);
+			left_size = size - (req->buf_size - (req->head - req->buf));
+		}
+Time("end tryrecv");
+	}
+Time("start full copy");
+	memcpy(req->body, req->head, size);
+Time("end full copy");
+	req->head += size;
 	req->body_size = size;
+
 	dbgprintf("body :%s\n", req->body);
+	fprintf(stderr,"body :%s\n", req->body);
+Time("end copy or recv");
 }
 
 void
 ParseReqAuth(HTTP_REQUEST *req)
 {
-	char *head;
-	char *tail;
-	char *dec;
+	GRegex *re;
+	GMatchInfo *match;
+	gchar *head,*base64,*userpass;
 	gsize size;
 
 #ifdef	USE_SSL
@@ -533,140 +473,70 @@ ParseReqAuth(HTTP_REQUEST *req)
 	}
 #endif
 
-	head = (char *)g_hash_table_lookup(req->header_hash,"Authorization");
+	head = (gchar *)g_hash_table_lookup(req->header_hash,"authorization");
 	if (head == NULL) {
 		req->status = HTTP_UNAUTHORIZED;
 		Message("does not have Authorization");
 		return;
 	}
-	tail = strstr(head, "Basic");
-	if (tail == NULL) {
+
+	userpass = NULL;
+	re = g_regex_new("^basic\\s+(.+)",G_REGEX_CASELESS,0,NULL);
+	if (g_regex_match(re,head,0,&match)) {
+		base64 = g_match_info_fetch(match,1);
+		size = strlen(base64);
+	    userpass = g_base64_decode(base64,&size);
+		g_match_info_free(match);
+	} else {
+		g_regex_unref(re);
 		req->status = HTTP_UNAUTHORIZED;
-		Message("does not support Authorization method:%s", head);
 		return;
 	}
-	head = tail + strlen("Basic");
-	while (head[0] == ' ') { head++; }
-	dec = (char *)g_base64_decode(head, &size);
-	if (size <= 0 || dec == NULL) {
+	g_free(base64);
+	g_regex_unref(re);
+
+	if (userpass == NULL || strlen(userpass) <= 0) {
+		Warning("Invalid userpass");
 		req->status = HTTP_UNAUTHORIZED;
-		Message("can not base64_decode :%s", head);
 		return;
 	}
 
-	tail = strstr(dec, ":");
-	if (tail == NULL) {
+	re = g_regex_new("^(\\w+):(\\S+)",0,0,NULL);
+	if (g_regex_match(re,userpass,0,&match)) {
+		req->user = g_match_info_fetch(match,1);
+		req->pass = g_match_info_fetch(match,2);
+		g_match_info_free(match);
+	} else {
+		g_free(userpass);
+		g_regex_unref(re);
+		Warning("Invalid userpass");
 		req->status = HTTP_UNAUTHORIZED;
-		Message("Invalid Basic Authorization data:%s", dec);
 		return;
 	}
-	req->user = StrnDup(dec, tail - dec);
-	req->pass = StrnDup(tail + 1, size - (tail - dec + 1));
-	g_free(dec);
+	g_free(userpass);
+	g_regex_unref(re);
 }
 
 void
 ParseRequest(
 	HTTP_REQUEST *req)
 {
+Time("start ParseReqLine");
 	ParseReqLine(req);
-	while(ParseReqHeader(req));
+Time("end ParseReqLine");
+
+Time("start ParseReqHeaders");
+
+	while(ParseReqHeader(req)){};
+
+Time("end ParseReqHeaders");
+
 	if (req->method == HTTP_POST) {
+Time("start ParseReqBody");
 		ParseReqBody(req);
+Time("end ParseReqBody");
 	}
 	ParseReqAuth(req);
-}
-
-static	void
-PackRequestRecord(
-	ValueStruct		*value,
-	HTTP_REQUEST	*req)
-{
-	char *head;
-	char *tail;
-	char *key;
-	char *val;
-	char buf[SIZE_BUFF+1];
-	ValueStruct *e;
-	char *p;
-	MonObjectType obj;
-
-ENTER_FUNC;
-	e = value;
-	InitializeValue(e);
-
-	p = NULL;
-	switch(req->method) {
-	case 'G':
-		SetValueString(GetItemLongName(e,"http_method"), "GET",NULL);
-		break;
-	case 'P':
-		SetValueString(GetItemLongName(e,"http_method"), "POST",NULL);
-		break;
-	}
-	if ( GetItemLongName(e,"http_status") ){
-		ValueInteger(GetItemLongName(e,"http_status")) = HTTP_OK;
-	}
-	p = (char *)g_hash_table_lookup(req->header_hash, "Content-Type");
-	if (p != NULL) {
-		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
-	}
-	if (req->body != NULL && req->body_size > 0) {
-		obj = RequestNewBLOB(req->fpSysData,BLOB_OPEN_WRITE);
-		ValueObjectId(GetItemLongName(e,"body")) = obj;
-		if (obj != GL_OBJ_NULL) {
-			RequestWriteBLOB(req->fpSysData, obj, req->body, req->body_size);
-		}
-	}
-
-	head = req->arguments;
-	while(1) {
-		if (head == NULL || head == '\0') {
-			return;
-		}
-		tail = strstr(head, "=");
-		if (tail == NULL) {
-			return;
-		}
-		key = StrnDup(head, tail - head);
-		snprintf(buf, sizeof(buf), "arguments.%s", key);
-		xfree(key);
-		head = tail + 1;
-		
-		tail = strstr(head, "&");
-		if (tail != NULL) {
-			val = StrnDup(head, tail - head);
-			SetValueString(GetItemLongName(e, buf), val, NULL);
-			xfree(val);
-			head = tail + 1;
-		} else {
-			SetValueString(GetItemLongName(e, buf), head, NULL);
-			head = NULL;
-		}
-	}
-LEAVE_FUNC;
-}
-
-MonAPIData *
-MakeMonAPIData(
-	HTTP_REQUEST *req)
-{
-	MonAPIData *data;
-	ValueStruct *value;
-
-	if (RegisterWindow(req->scr,req->window) == NULL) {
-		return NULL;
-	}
-	value = GetWindowValue(req->scr,req->window);
-	InitializeValue(value);
-	data = NewMonAPIData();
-	data->value = value;
-	strncpy(data->ld, req->ld, sizeof(data->ld));
-	strncpy(data->window, req->window, sizeof(data->window));
-	strncpy(data->user, req->user, sizeof(data->user));
-	strncpy(data->host, req->host, sizeof(data->host));
-	PackRequestRecord(value, req);
-	return data;
 }
 
 static void timeout(int i)
@@ -675,55 +545,520 @@ static void timeout(int i)
 	exit(0);
 }
 
+static	Bool
+CheckJSONObject(
+	json_object *obj,
+	enum json_type type)
+{
+	if (obj == NULL) {
+		return FALSE;
+	}
+	if (is_error(obj)) {
+		return FALSE;
+	}
+	if (!json_object_is_type(obj,type)) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static	json_object *
+ParseReqArguments(
+	char *args)
+{
+	json_object *obj;
+	gchar **kvs,**kv;
+	int i;
+ENTER_FUNC;
+	obj = json_object_new_object();
+	kvs = g_strsplit(args,"&",128);
+	for(i=0;kvs[i]!=NULL;i++) {
+		kv = g_strsplit(kvs[i],"=",2);
+		if (kv[0] != NULL || kv[1] != NULL) {
+			json_object_object_add(obj,kv[0],json_object_new_string(kv[1]));
+		}
+		g_strfreev(kv);
+	}
+	g_strfreev(kvs);
+LEAVE_FUNC;
+	return obj;
+}
+
+json_object *
+MakeAPIReqJSON(
+	HTTP_REQUEST *req)
+{
+	json_object *obj,*params,*meta,*arguments;
+	gchar *ctype,oid[256];
+	MonObjectType mon;
+
+	obj = json_object_new_object();
+	json_object_object_add(obj,"jsonrpc",json_object_new_string("2.0"));
+	json_object_object_add(obj,"id",json_object_new_int(0));
+	json_object_object_add(obj,"method",json_object_new_string("panda_api"));
+
+	params = json_object_new_object();
+
+	meta = json_object_new_object();
+	json_object_object_add(meta,"user",json_object_new_string(req->user));
+	json_object_object_add(meta,"ld",json_object_new_string(req->ld));
+	json_object_object_add(meta,"window",json_object_new_string(req->window));
+	json_object_object_add(meta,"host",json_object_new_string(req->host));
+	json_object_object_add(params,"meta",meta);
+
+	arguments = ParseReqArguments(req->arguments);
+	json_object_object_add(params,"arguments",arguments);
+	if (req->method == HTTP_POST) {
+		json_object_object_add(params,"http_method",json_object_new_string("POST"));
+	} else {
+		json_object_object_add(params,"http_method",json_object_new_string("GET"));
+	}
+	ctype = (gchar *)g_hash_table_lookup(req->header_hash,"Content-Type");
+	if (ctype) {
+		json_object_object_add(params,"content_type",json_object_new_string(ctype));
+	} else {
+		json_object_object_add(params,"content_type",json_object_new_string(""));
+	}
+
+	mon = GL_OBJ_NULL;
+	if (req->method == HTTP_POST) {
+		mon = GLImportBLOB(req->body,req->body_size);
+	}
+	sprintf(oid,"%lu",mon);
+	json_object_object_add(params,"body",json_object_new_string(oid));
+	json_object_object_add(obj,"params",params);
+
+	return obj;
+}
+
+void
+APISendResponse(
+	HTTP_REQUEST *req,
+	json_object *obj)
+{
+	json_object *result,*http_status,*body,*ctype;
+	int status;
+	char *blob;
+	size_t blob_size;
+	MonObjectType mon;
+
+	if (!CheckJSONObject(obj,json_type_object)) {
+		Error("panda_api response json is invalid");
+	}
+	result = json_object_object_get(obj,"result");
+	if (!CheckJSONObject(result,json_type_object)) {
+		Error("panda_api response json result is invalid");
+	}
+	http_status = json_object_object_get(result,"http_status");
+	if (!CheckJSONObject(http_status,json_type_int)) {
+		Error("panda_api response json http_status is invalid");
+	}
+	status = json_object_get_int(http_status);
+	if (status == 200) {
+		ctype = json_object_object_get(result,"content_type");
+		if (!CheckJSONObject(ctype,json_type_string)) {
+			Error("panda_api response json content_type is invalid");
+		}
+		body = json_object_object_get(result,"body");
+		if (!CheckJSONObject(body,json_type_string)) {
+			Error("panda_api response json body is invalid");
+		}
+		mon = (MonObjectType)atoll(json_object_get_string(body));
+		GLExportBLOB(mon,&blob,&blob_size);
+		SendResponse(req,status,blob,blob_size,"Content-Type",json_object_get_string(ctype),NULL);
+		xfree(blob);
+	} else {
+		SendResponse(req,status,NULL,0,NULL);
+	}
+	json_object_put(obj);
+}
+
+static gboolean
+APIHandler(
+	HTTP_REQUEST *req)
+{
+	json_object *obj,*res;
+
+	obj = MakeAPIReqJSON(req);
+	res = WFCIO_JSONRPC(obj);
+	json_object_put(obj);
+	APISendResponse(req,res);
+	json_object_put(res);
+	return TRUE;
+}
+
+static gboolean
+BLOBImportHandler(
+	HTTP_REQUEST *req)
+{
+	MonObjectType obj;
+	char oid[256];
+
+	if (!CheckSession(req->session_id)) {
+		SendResponse(req,HTTP_FORBIDDEN,NULL,0,NULL);
+		MessageLogPrintf("invalid session id %s@%s %s",req->user,req->host,req->session_id);
+		return FALSE;
+	}
+
+	obj = GLImportBLOB(req->body,req->body_size);
+	if (obj == GL_OBJ_NULL) {
+		SendResponse(req,HTTP_INTERNAL_SERVER_ERROR,NULL,0,NULL);
+		return TRUE;
+	}
+	sprintf(oid,"%lu",obj);
+	SendResponse(req,HTTP_OK,NULL,0,"X-BLOB-ID",oid,NULL);
+	return TRUE;
+}
+
+static gboolean
+BLOBExportHandler(
+	HTTP_REQUEST *req)
+{
+	MonObjectType obj;
+	char *body;
+	size_t size;
+
+	if (!CheckSession(req->session_id)) {
+		SendResponse(req,HTTP_FORBIDDEN,NULL,0,NULL);
+		MessageLogPrintf("invalid session id %s@%s %s",req->user,req->host,req->session_id);
+		return FALSE;
+	}
+
+	obj = (MonObjectType)atoll(req->oid);
+	if (obj == GL_OBJ_NULL) {
+		SendResponse(req,HTTP_NOT_FOUND,NULL,0,NULL);
+		return TRUE;
+	}
+	GLExportBLOB(obj,&body,&size);
+	if (body == NULL || size == 0) {
+		SendResponse(req,HTTP_NOT_FOUND,NULL,0,NULL);
+		return TRUE;
+	} else {
+		SendResponse(req,HTTP_OK,body,size,NULL);
+		xfree(body);
+	}
+	return TRUE;
+}
+
+static	json_object*
+MakeJSONResponseTemplate(
+	json_object *obj)
+{
+	json_object *res,*child;
+
+	res = json_object_new_object();
+	json_object_object_add(res,"jsonrpc",json_object_new_string("2.0"));
+	child = json_object_object_get(obj,"id");
+	json_object_object_add(res,"id",json_object_new_int(json_object_get_int(child)));
+
+	return res;
+}
+
+static	json_object*
+GetServerInfo(
+	json_object *obj)
+{
+	json_object *result,*res;
+ENTER_FUNC;
+	res = MakeJSONResponseTemplate(obj);
+
+	result = json_object_new_object();
+	json_object_object_add(result,"protocol_version",json_object_new_string("1.0"));
+	json_object_object_add(result,"application_version",json_object_new_string("4.8.0"));
+	json_object_object_add(result,"server_type",json_object_new_string("glserver"));
+	json_object_object_add(res,"result",result);
+LEAVE_FUNC;
+	return res;
+}
+
+static	char*
+_GetScreenDefine(
+	const char *wname)
+{
+	static gchar **dirs = NULL;
+	gchar *fname,*ret,*buff;
+	size_t size;
+	int i;
+ENTER_FUNC;
+	ret = NULL;
+	if (dirs == NULL) {
+		dirs = g_strsplit_set(ScreenDir,":",-1);
+	}
+	for (i=0; dirs[i]!=NULL; i++) {
+		fname = g_strdup_printf("%s/%s.glade",dirs[i],wname);
+		if(g_file_get_contents(fname,&buff, &size, NULL)) {
+			ret = strndup(buff,size);
+			g_free(buff);
+			g_free(fname);
+			break;
+		}
+		g_free(fname);
+	}
+	return ret;
+LEAVE_FUNC;
+}
+
+static	json_object*
+GetScreenDefine(
+	json_object *obj)
+{
+	json_object *params,*child,*result,*res,*error;
+	char *scrdef,*window;
+ENTER_FUNC;
+	params = json_object_object_get(obj,"params");
+	child = json_object_object_get(params,"window");
+	if (CheckJSONObject(child,json_type_string)) {
+		window = (char*)json_object_get_string(child);
+	} else {
+		window = "";
+	}
+
+	res = MakeJSONResponseTemplate(obj);
+	scrdef = _GetScreenDefine(window);
+	if (scrdef != NULL) {
+		result = json_object_new_object();
+		json_object_object_add(result,"screen_define",json_object_new_string(scrdef));
+		json_object_object_add(res,"result",result);
+		free(scrdef);
+	} else {
+		error = json_object_new_object();
+		json_object_object_add(error,"code",json_object_new_int(-20003));
+		json_object_object_add(error,"message",json_object_new_string("invalid window"));
+		json_object_object_add(res,"error",error);
+	}
+LEAVE_FUNC;
+	return res;
+}
+
+static	json_object*
+GetMessage(
+	json_object *obj)
+{
+	json_object *params,*meta,*child,*result,*res,*error;
+	char *session_id,*popup,*dialog,*abort;
+ENTER_FUNC;
+	params = json_object_object_get(obj,"params");
+	meta = json_object_object_get(params,"meta");
+	session_id = NULL;
+	if (CheckJSONObject(meta,json_type_object)) {
+		child = json_object_object_get(meta,"session_id");
+		if (CheckJSONObject(child,json_type_string)) {
+			session_id = (char*)json_object_get_string(child);
+		}
+	}
+	res = MakeJSONResponseTemplate(obj);
+	if (session_id != NULL) {
+		GetSessionMessage(session_id,&popup,&dialog,&abort);
+		result = json_object_new_object();
+		json_object_object_add(result,"popup",json_object_new_string(popup));
+		json_object_object_add(result,"dialog",json_object_new_string(dialog));
+		json_object_object_add(result,"abort",json_object_new_string(abort));
+		g_free(popup);
+		g_free(dialog);
+		g_free(abort);
+		json_object_object_add(res,"result",result);
+		ResetSessionMessage(session_id);
+	} else {
+		error = json_object_new_object();
+		json_object_object_add(error,"code",json_object_new_int(-20004));
+		json_object_object_add(error,"message",json_object_new_string("invalid session"));
+		json_object_object_add(res,"error",error);
+	}
+LEAVE_FUNC;
+	return res;
+}
+
+static gboolean
+JSONRPCHandler(
+	HTTP_REQUEST *req)
+{
+	char *reqjson,*resjson,*method;
+	json_object *obj,*params,*meta,*child,*res;
+
+Time("start JSONRPCHandler");
+
+	reqjson = StrnDup(req->body,req->body_size);
+	obj = json_tokener_parse(reqjson);
+	xfree(reqjson);
+	if (!CheckJSONObject(obj,json_type_object)) {
+		Warning("invalid json");
+		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		return FALSE;
+	}
+	child = json_object_object_get(obj,"jsonrpc");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("invalid json");
+		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		return FALSE;
+	}
+	if (strcmp(json_object_get_string(child),"2.0")) {
+		Warning("invalid json");
+		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		return FALSE;
+	}
+	child = json_object_object_get(obj,"id");
+	if (!CheckJSONObject(child,json_type_int)) {
+		Warning("invalid json");
+		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		return FALSE;
+	}
+	child = json_object_object_get(obj,"method");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("invalid json");
+		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		return FALSE;
+	}
+	method = (char*)json_object_get_string(child);
+	params = json_object_object_get(obj,"params");
+	if (!CheckJSONObject(params,json_type_object)) {
+		Warning("invalid json");
+		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		return FALSE;
+	}
+	if (!strcmp(method,"get_server_info")) {
+		res = GetServerInfo(obj);
+		resjson = (char*)json_object_to_json_string(res);
+		SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
+		json_object_put(res);
+	} else if (!strcmp(method,"get_screen_define")) {
+		res = GetScreenDefine(obj);
+		resjson = (char*)json_object_to_json_string(res);
+		SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
+		json_object_put(res);
+	} else if (!strcmp(method,"get_message")) {
+		res = GetMessage(obj);
+		resjson = (char*)json_object_to_json_string(res);
+		SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
+		json_object_put(res);
+	} else {
+		meta = json_object_object_get(params,"meta");
+		if (!CheckJSONObject(meta,json_type_object)) {
+			SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+			return FALSE;
+		}
+
+		json_object_object_add(meta,"host",json_object_new_string(req->host));
+		json_object_object_add(meta,"user",json_object_new_string(req->user));
+
+		if ((res = WFCIO_JSONRPC(obj)) != NULL) {
+			resjson = (char*)json_object_to_json_string(res);
+			SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
+			json_object_put(res);
+		} else {
+			SendResponse(req,HTTP_INTERNAL_SERVER_ERROR,NULL,0,NULL);
+		}
+	}
+	json_object_put(obj);
+	return TRUE;
+}
+
+static gboolean
+AuthAPI(
+	const char *user,
+	const char *password)
+{
+	json_object *obj,*params,*meta,*arguments;
+	json_object *res,*result,*http_status;
+	int status;
+
+Time("start AuthAPI");
+
+	obj = json_object_new_object();
+	json_object_object_add(obj,"jsonrpc",json_object_new_string("2.0"));
+	json_object_object_add(obj,"id",json_object_new_int(1));
+	json_object_object_add(obj,"method",json_object_new_string("panda_api"));
+
+	params = json_object_new_object();
+
+	meta = json_object_new_object();
+	json_object_object_add(meta,"user",json_object_new_string(""));
+	json_object_object_add(meta,"ld",json_object_new_string("session"));
+	json_object_object_add(meta,"window",json_object_new_string("session_start"));
+	json_object_object_add(meta,"host",json_object_new_string(""));
+	json_object_object_add(params,"meta",meta);
+
+	arguments = json_object_new_object();
+	json_object_object_add(arguments,"user",json_object_new_string(user));
+	json_object_object_add(arguments,"password",json_object_new_string(password));
+	json_object_object_add(arguments,"session_type",json_object_new_string(""));
+	json_object_object_add(params,"arguments",arguments);
+
+	json_object_object_add(params,"http_method",json_object_new_string("GET"));
+	json_object_object_add(params,"content_type",json_object_new_string(""));
+
+	json_object_object_add(params,"body",json_object_new_string("0"));
+	json_object_object_add(obj,"params",params);
+
+	res = WFCIO_JSONRPC(obj);
+	json_object_put(obj);
+
+	if (!CheckJSONObject(res,json_type_object)) {
+		Error("panda_api response json is invalid");
+	}
+	result = json_object_object_get(res,"result");
+	if (!CheckJSONObject(result,json_type_object)) {
+		Error("panda_api response json result is invalid");
+	}
+	http_status = json_object_object_get(result,"http_status");
+	if (!CheckJSONObject(http_status,json_type_int)) {
+		Error("panda_api response json http_status is invalid");
+	}
+	status = json_object_get_int(http_status);
+	json_object_put(res);
+Time("end AuthAPI");
+	return status == 200;
+}
+
+static gboolean
+GLAuth(
+	HTTP_REQUEST *req)
+{
+#ifdef	USE_SSL
+	if (fSsl && fVerifyPeer){
+        if (!req->fp->peer_cert) return FALSE;
+		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
+		return TRUE;
+	}
+#endif
+	if (!strncmp(Auth.protocol,"api",strlen("api"))) {
+		return AuthAPI(req->user,req->pass);
+	} else {
+		return AuthUser(&Auth,req->user,req->pass,"",NULL);
+	}
+}
+
 static gboolean
 _HTTP_Method(
 	HTTP_REQUEST *req)
 {
-	MonAPIData *data;
-	PacketClass result;
-
+Time("start _HTTP_Method");
 	ParseRequest(req);
+Time("end ParseRequest");
 	alarm(0);
 
 	if (req->status != HTTP_OK) {
-		SendResponse(req, NULL);
+		SendResponse(req,req->status,NULL,0,NULL);
+		return FALSE;
+	}
+	if (!GLAuth(req)) {
+		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
+		req->status = HTTP_FORBIDDEN;
+		SendResponse(req,req->status,NULL,0,NULL);
 		return FALSE;
 	}
 
-	if (fSsl && fVerifyPeer) {
-		// SSL AUTH
-	} else {
-		if (!AuthUser(&Auth, req->user, req->pass, "api", NULL)) {
-			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
-			req->status = HTTP_UNAUTHORIZED;
-		}
+Time("start handler");
+	switch(req->type) {
+	case REQUEST_TYPE_API:
+		return APIHandler(req);
+	case REQUEST_TYPE_JSONRPC:
+		return JSONRPCHandler(req);
+	case REQUEST_TYPE_BLOB_IMPORT:
+		return BLOBImportHandler(req);
+	case REQUEST_TYPE_BLOB_EXPORT:
+		return BLOBExportHandler(req);
 	}
-	if (req->status != HTTP_OK) {
-		SendResponse(req, NULL);
-		return FALSE;
-	}
-	data = MakeMonAPIData(req);
-	if (data == NULL) {
-		req->status = HTTP_NOT_FOUND; 
-		SendResponse(req, NULL);
-		return FALSE;
-	}
-	result = CallMonAPI(data);
-	switch(result) {
-	case WFC_API_OK:
-		SendResponse(req, data);
-		break;
-	case WFC_API_NOT_FOUND:
-		req->status = HTTP_NOT_FOUND; 
-		SendResponse(req, NULL);
-		break;
-	default:
-		req->status = HTTP_INTERNAL_SERVER_ERROR; 
-		SendResponse(req, NULL);
-		break;
-	}
-	FreeMonAPIData(data);
-	return TRUE;
+	Error("do not reach");
 }
 
 static void
@@ -754,15 +1089,12 @@ PrepareNextRequest(
 	XFree(&(req->pass));
 	XFree(&(req->ld));
 	XFree(&(req->window));
-	FreeScreenData(req->scr);
-	req->scr = NewScreenData();
+	XFree(&(req->session_id));
 	req->status = HTTP_OK;
 	req->body_size = 0;
 	g_hash_table_foreach_remove(req->header_hash, RemoveHeader, NULL);
 
 	if (req->head != NULL && strlen(req->head)> 1) {
-		req->method = req->head[0];
-		req->head ++;
 		req->buf_size -= strlen(req->head);
 		memmove(req->buf, req->head, req->buf_size);
 		memset(req->head + 1, 0, MAX_REQ_SIZE - req->buf_size);
@@ -783,11 +1115,9 @@ badio:
 
 void
 HTTP_Method(
-	PacketClass _klass,
 	NETFILE *fpComm)
 {
 	HTTP_REQUEST *req;
-	PacketClass klass;
 	struct sigaction sa;
 
 	memset(&sa, 0, sizeof(struct sigaction));  
@@ -798,13 +1128,10 @@ HTTP_Method(
 		Error("sigaction(2) failure");
 	} 
 
-	klass = _klass;
-	req = HTTP_Init(klass, fpComm);
-	if (_HTTP_Method(req)) {
-		do {
-			if (!PrepareNextRequest(req)) {
-				break;
-			}
-		} while(_HTTP_Method(req));
+	req = HTTP_Init(fpComm);
+	while (_HTTP_Method(req)) {
+		if (!PrepareNextRequest(req)) {
+			break;
+		}
 	}
 }

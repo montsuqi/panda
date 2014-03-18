@@ -352,3 +352,15 @@ TimerPrintf(
 		printf(" %6ld(ms) %s", (end - start), buff);
 	}
 }
+
+extern	void
+Time(
+	char	*str)
+{
+	static long last = 0;
+	long now;
+
+	now = GetNowTime();
+	fprintf(stderr,"%6ld(ms) %s\n",now - last,str);
+	last = now;
+}

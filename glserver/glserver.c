@@ -43,8 +43,8 @@
 #include	"const.h"
 #include	"glserver.h"
 #include	"dirs.h"
+#include	"net.h"
 #include	"RecParser.h"
-#include	"glcomm.h"
 #include	"option.h"
 #include	"message.h"
 #include	"debug.h"
@@ -59,16 +59,10 @@ static	ARG_TABLE	option[] = {
 		N_("connection waiting queue number")			},
 	{	"screen",	STRING,		TRUE,	(void*)&ScreenDir,
 		N_("screen directory")	 						},
-	{	"record",	STRING,		TRUE,	(void*)&RecordDir,
-		N_("record directory")		 					},
-	{	"cache",	STRING,		TRUE,	(void*)&CacheDir,
-		N_("BLOB cache directory")						},
 	{	"auth",		STRING,		TRUE,	(void*)&AuthURL,
 		N_("authentication server")	 					},
 	{	"api",		BOOLEAN,	TRUE,	(void*)&fAPI,
 		N_("Use API")				 					},
-	{	"numeric",	BOOLEAN,	TRUE,	(void*)&fNumericHOST,
-		N_("Numeric form of the hostname")		},
 #ifdef	USE_SSL
 	{	"key",		STRING,		TRUE,	(void*)&KeyFile,
 		N_("SSL Key File(pem/p12)")		 				},
@@ -95,12 +89,8 @@ SetDefault(void)
 	PortNumber = PORT_GLTERM;
 	PortSysData = SYSDATA_PORT;
 	Back = 5;
-	ScreenDir = ".";
-	RecordDir = ".";
 	AuthURL = "glauth://localhost:" PORT_GLAUTH;
-	CacheDir = "/tmp/glserver/cache";
 	fAPI = FALSE;
-	fNumericHOST = FALSE;
 #ifdef	USE_SSL
 	fSsl = FALSE;
 	fVerifyPeer = TRUE;
@@ -112,6 +102,7 @@ SetDefault(void)
 #endif	
 }
 
+
 static	void
 StopProcess(
 	int		ec)
@@ -120,6 +111,76 @@ dbgmsg(">StopProcess");
 dbgmsg("<StopProcess");
 	exit(ec);
 }
+
+static	void
+ExecuteServer(void)
+{
+	int		pid;
+	int		fd;
+	int		soc_len;
+	int		soc[MAX_SOCKET];
+
+	NETFILE	*fpComm;
+	Port	*port;
+#ifdef	USE_SSL
+	SSL_CTX	*ctx;
+	char *ssl_warning;
+#endif
+ENTER_FUNC;
+	port = ParPortName(PortNumber);
+	soc_len = InitServerMultiPort(port,Back,soc);
+#ifdef	USE_SSL
+	ctx = NULL;
+	if (fSsl) {
+		ctx = MakeSSL_CTX(KeyFile,CertFile,CA_File,CA_Path,Ciphers);
+		if (ctx == NULL) {
+			Warning(GetSSLErrorMessage());
+			Error("CTX make error");
+		}
+	    if (!fVerifyPeer){
+            SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+        }
+		ssl_warning = GetSSLWarningMessage();
+		if (strlen(ssl_warning) > 0){
+			 Warning(ssl_warning);
+		}
+	}
+#endif
+	while (TRUE) {
+		if ((fd = AcceptLoop(soc,soc_len)) < 0) {
+			continue;
+		}
+		if ((pid = fork()) > 0) {	/*	parent	*/
+			close(fd);
+		} else
+		if (pid == 0) {	/*	child	*/
+#ifdef	USE_SSL
+			if (fSsl) {
+				fpComm = MakeSSL_Net(ctx, fd);
+				if (StartSSLServerSession(fpComm) != TRUE){
+			        CloseNet(fpComm);
+					Warning(GetSSLErrorMessage());
+                    exit(0);
+                }
+			} else {
+				fpComm = SocketToNet(fd);
+			}
+#else
+			fpComm = SocketToNet(fd);
+#endif
+			alarm(API_TIMEOUT_SEC);
+			HTTP_Method(fpComm);
+// FIXME avoid segv gl protocol timeout
+#if 0
+			CloseNet(fpComm);
+#endif
+			exit(0);
+		}
+	}
+	DestroyPort(port);
+LEAVE_FUNC;
+}
+
 extern	int
 main(
 	int		argc,
@@ -148,7 +209,9 @@ main(
 	InitMessage("glserver",NULL);
 
 	ParseURL(&Auth,AuthURL,"file");
-	InitSystem(argc,argv);
+
+	InitNET();
+	RecParserInit();
 #ifdef	USE_SSL
 	if ( fSsl ){
 		Message("glserver start (ssl)");

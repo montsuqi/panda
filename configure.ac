@@ -416,3 +416,5 @@ echo "  SSL support:           $enable_ssl"
 echo "  msgd support:          $enable_msgd"
 echo "  syslog support:        $enable_syslog"
 echo ""
+
+CFLAGS += -g -pg -O0

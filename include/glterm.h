@@ -26,11 +26,12 @@
 #define	_INC_GLTERM_H
 
 #define	SCREEN_NULL					(unsigned char)0x00
-#define	SCREEN_CURRENT_WINDOW		(unsigned char)0x01
-#define	SCREEN_NEW_WINDOW			(unsigned char)0x02
-#define	SCREEN_CLOSE_WINDOW			(unsigned char)0x03
-#define	SCREEN_CHANGE_WINDOW		(unsigned char)0x04
-#define	SCREEN_JOIN_WINDOW			(unsigned char)0x05
+#define	SCREEN_INIT					(unsigned char)0x01
+#define	SCREEN_CURRENT_WINDOW		(unsigned char)0x02
+#define	SCREEN_NEW_WINDOW			(unsigned char)0x03
+#define	SCREEN_CLOSE_WINDOW			(unsigned char)0x04
+#define	SCREEN_CHANGE_WINDOW		(unsigned char)0x05
+#define	SCREEN_JOIN_WINDOW			(unsigned char)0x06
 
 #define	GL_Null						(PacketClass)0x00
 #define	GL_Connect					(PacketClass)0x01

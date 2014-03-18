@@ -36,7 +36,6 @@
 GLOBAL	char	*PortNumber;
 GLOBAL	int		Back;
 GLOBAL	char	*PortSysData;
-GLOBAL	char	*CacheDir;
 #ifdef	USE_SSL
 GLOBAL	Bool	fSsl;
 GLOBAL	Bool	fVerifyPeer;
@@ -48,8 +47,5 @@ GLOBAL	char	*Ciphers;
 #endif
 GLOBAL	URL		Auth;
 GLOBAL	Bool	fAPI;
-
-extern	void	InitSystem(int argc, char **argv);
-extern	void	ExecuteServer(void);
 
 #endif
