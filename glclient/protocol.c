@@ -242,6 +242,8 @@ JSONRPC(
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 	snprintf(clength,sizeof(clength),"Content-Length: %ld",jsonsize);
 	headers = curl_slist_append(headers, clength);
+	snprintf(clength,sizeof(clength),"Expect:");
+	headers = curl_slist_append(headers, clength);
 
 	curl_easy_setopt(curl, CURLOPT_URL,url);
 	curl_easy_setopt(curl, CURLOPT_POST,1);
@@ -249,6 +251,9 @@ JSONRPC(
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
 	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
+#if 0
+	curl_easy_setopt(curl, CURLOPT_VERBOSE,1);
+#endif
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 	if (type == TYPE_AUTH || !strcmp(SERVERTYPE(Session),"glserver")) {
 		snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
