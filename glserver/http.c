@@ -199,7 +199,6 @@ SendResponse(
 	char buf[1024],date[50],*header,*h,*v;
 	struct tm cur, *cur_p;
 	time_t t = time(NULL);
-Time("start SendResponse");
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n",status,GetReasonPhrase(status));
 	Send(req->fp,buf,strlen(buf)); 
@@ -250,7 +249,6 @@ Time("start SendResponse");
 		Send(req->fp, (char *)body, body_size);
 	}
 	Flush(req->fp);
-Time("end SendResponse");
 }
 	
 int
@@ -410,8 +408,6 @@ ParseReqBody(HTTP_REQUEST *req)
 	char *value;
 	size_t size,left_size;
 
-Time("start ParseReqBody");
-	
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
 	size = (size_t)atoi(value);
 	if (size <= 0) {
@@ -431,26 +427,18 @@ Time("start ParseReqBody");
 		return;
 	}
 
-Time("start copy or recv");
 	left_size = size - (req->buf_size - (req->head - req->buf));
-fprintf(stderr,"size:%zd left_size:%zd\n",size,left_size);
 	if (left_size>0) {
-Time("start tryrecv");
 		while(left_size>0) {
 			req->buf_size += TryRecv(req);
 			left_size = size - (req->buf_size - (req->head - req->buf));
 		}
-Time("end tryrecv");
 	}
-Time("start full copy");
 	memcpy(req->body, req->head, size);
-Time("end full copy");
 	req->head += size;
 	req->body_size = size;
 
 	dbgprintf("body :%s\n", req->body);
-	fprintf(stderr,"body :%s\n", req->body);
-Time("end copy or recv");
 }
 
 void
@@ -521,20 +509,12 @@ void
 ParseRequest(
 	HTTP_REQUEST *req)
 {
-Time("start ParseReqLine");
 	ParseReqLine(req);
-Time("end ParseReqLine");
-
-Time("start ParseReqHeaders");
 
 	while(ParseReqHeader(req)){};
 
-Time("end ParseReqHeaders");
-
 	if (req->method == HTTP_POST) {
-Time("start ParseReqBody");
 		ParseReqBody(req);
-Time("end ParseReqBody");
 	}
 	ParseReqAuth(req);
 }
@@ -875,8 +855,6 @@ JSONRPCHandler(
 	char *reqjson,*resjson,*method;
 	json_object *obj,*params,*meta,*child,*res;
 
-Time("start JSONRPCHandler");
-
 	reqjson = StrnDup(req->body,req->body_size);
 	obj = json_tokener_parse(reqjson);
 	xfree(reqjson);
@@ -961,8 +939,6 @@ AuthAPI(
 	json_object *res,*result,*http_status;
 	int status;
 
-Time("start AuthAPI");
-
 	obj = json_object_new_object();
 	json_object_object_add(obj,"jsonrpc",json_object_new_string("2.0"));
 	json_object_object_add(obj,"id",json_object_new_int(1));
@@ -1005,7 +981,6 @@ Time("start AuthAPI");
 	}
 	status = json_object_get_int(http_status);
 	json_object_put(res);
-Time("end AuthAPI");
 	return status == 200;
 }
 
@@ -1031,9 +1006,7 @@ static gboolean
 _HTTP_Method(
 	HTTP_REQUEST *req)
 {
-Time("start _HTTP_Method");
 	ParseRequest(req);
-Time("end ParseRequest");
 	alarm(0);
 
 	if (req->status != HTTP_OK) {
@@ -1047,7 +1020,6 @@ Time("end ParseRequest");
 		return FALSE;
 	}
 
-Time("start handler");
 	switch(req->type) {
 	case REQUEST_TYPE_API:
 		return APIHandler(req);

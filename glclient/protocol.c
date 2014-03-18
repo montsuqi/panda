@@ -86,7 +86,6 @@ size_t read_text_data(
 	char *p;
 	int i;
 	LargeByteString *lbs;
-Time("start read_text_data");
 
 	p = (char*)buf;
 	lbs = (LargeByteString*)userp;
@@ -100,7 +99,6 @@ Time("start read_text_data");
 		p++;
 		read_size++;
 	}
-Time("end read_text_data");
 	return read_size;
 }
 
@@ -212,8 +210,6 @@ JSONRPC(
 	gboolean fSSL;
 	size_t jsonsize;
 
-Time("start JSONRPC");
-
 	if (type == TYPE_AUTH) {
 		url = AUTHURI(Session);
 	} else {
@@ -273,11 +269,9 @@ Time("start JSONRPC");
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
 	}
-Time("start curl_easy_perform");
 	if (curl_easy_perform(curl) != CURLE_OK) {
 		Error(_("curl_easy_perform failure"));
 	}
-Time("end curl_easy_perform");
 	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		if (http_code != 200) {
 			Error(_("http status code[%d]"),http_code);
@@ -294,9 +288,6 @@ Time("end curl_easy_perform");
 	}
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
-Time("end curl");
-
-Time("end JSONRPC");
 }
 
 void

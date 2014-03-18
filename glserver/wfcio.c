@@ -67,7 +67,6 @@ WFCIO_JSONRPC(
 	json_object *res;
 	char *str;
 ENTER_FUNC;
-Time("start WFCIO_JSONRPC");
 	if (TermPort == NULL) {
 		TermPort = getenv("WFC_TERM_PORT");
 	}
@@ -88,7 +87,6 @@ Time("start WFCIO_JSONRPC");
 	if (res == NULL || is_error(res)) {
 		Error("WFCIO_JSONRPC invalid json object");
 	}
-Time("end WFCIO_JSONRPC");
 	return res;
 badio:
 	Error("WFCIO_JSONRPC connection error");
