@@ -319,176 +319,77 @@ GetNextLine(HTTP_REQUEST *req)
 	}
 }
 
-static char *
-decode_uri(const char *uri)
-{
-	char c, *ret;
-	int i, j, in_query = 0;
-	
-	ret = xmalloc(strlen(uri) + 1);
-
-	for (i = j = 0; uri[i] != '\0'; i++) {
-		c = uri[i];
-		if (c == '?') {
-			in_query = 1;
-		} else if (c == '+' && in_query) {
-			c = ' ';
-		} else if (c == '%' && isxdigit((unsigned char)uri[i+1]) &&
-		    isxdigit((unsigned char)uri[i+2])) {
-			char tmp[] = { uri[i+1], uri[i+2], '\0' };
-			c = (char)strtol(tmp, NULL, 16);
-			i += 2;
-		}
-		ret[j++] = c;
-	}
-	ret[j] = '\0';
-	
-	return (ret);
-}
-
 void
 ParseReqLine(HTTP_REQUEST *req)
 {
+	GRegex *re;
+	GMatchInfo *match;
 	char *line;
-	char *head;
-	char *tail;
-	char *args;
-	int cmp = 1;
 
-	line = head = GetNextLine(req);
+	line = GetNextLine(req);
+	MessageLogPrintf("%s",line);
 
-	tail = strstr(head, " ");
-	if (tail == NULL) {
-		Warning("Invalid HTTP Method :%s", line);
-		req->status = HTTP_BAD_REQUEST;
-		return;
-	}
-	switch(req->method) {
-	case HTTP_GET:
-		cmp = strncmp("ET", head, strlen("ET"));
-		break;
-	case HTTP_POST:
-		cmp = strncmp("OST", head, strlen("OST"));
-		break;
-	}
-	if (cmp != 0) {
-		Warning("Invalid HTTP Method :%s", line);
-		req->status = HTTP_BAD_REQUEST;
-		return;
-	}
-	head = tail + 1;
-	while (head[0] == ' ') { head++; }
-
-	tail = strstr(head, "/");
-	if (tail == NULL) {
-		Warning("Invalid URI :%s", line);
-		req->status = HTTP_BAD_REQUEST;
-		return;
-	}
-	head = tail + 1;
-
-	tail = strstr(head, "/");
-	if (tail == NULL) {
-		Warning("Invalid LD Name :%s", line);
-		req->status = HTTP_BAD_REQUEST;
+	/*api*/
+	re = g_regex_new("^(et|ost)\\s+/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)(/*|\\?([a-zA-Z0-9&=]+))\\s",G_REGEX_CASELESS,0,NULL);
+	if (g_regex_match(re,line,0,&match)) {
+		req->ld = g_match_info_fetch(match,2);
+		req->window = g_match_info_fetch(match,3);
+		req->arguments = g_match_info_fetch(match,5);
+		g_match_info_free(match);
 		return;
 	} else {
-		req->ld = StrnDup(head, tail - head);
-		head = tail + 1;
+		Warning("Invalid HTTP Request Line:%s", line);
+		req->status = HTTP_BAD_REQUEST;
 	}
-
-	tail = strstr(head, "?");
-	if (tail == NULL) {
-		tail = strstr(head, " ");
-		if (tail == NULL) {
-			Warning("Invalid Window :%s", line);
-			req->status = HTTP_BAD_REQUEST;
-			return;
-		}
-		req->window = StrnDup(head, tail - head);
-		head = tail + 1;
-	} else {
-		req->window = StrnDup(head, tail - head);
-		head = tail + 1;
-		tail = strstr(head, " ");
-		if (tail == NULL) {
-			Warning("Missing HTTP-Version :%s", line);
-			req->status = HTTP_BAD_REQUEST;
-			return;
-		}
-		args = StrnDup(head, tail - head);
-		req->arguments = decode_uri(args);
-		xfree(args);
-		head = tail + 1;
-	}
-	while (head[0] == ' ') { head++; }
-	dbgprintf("ld :%s", req->ld);
-	dbgprintf("arguments :%s", req->arguments);
-
-	tail = strstr(head, "HTTP/1.1");
-	if (tail == NULL) {
-		tail = strstr(head, "HTTP/1.0");
-		if (tail == NULL) {
-			Message("Invalid HTTP Version :%s", head);
-			req->status = HTTP_BAD_REQUEST;
-		}
-	}
+	g_regex_unref(re);
 	free(line);
 }
 
 gboolean
 ParseReqHeader(HTTP_REQUEST *req)
 {
-	char *line;
-	char *head;
-	char *tail;
-	char *key;
-	char *value;
-	char *p;
-	size_t size;
-	int i;
+	GRegex *re;
+	GMatchInfo *match;
+	gchar *line,*key,*value;
+	gboolean ret;
 
-ENTER_FUNC;
-	line = head = GetNextLine(req);
+	ret = FALSE;
+	line =  GetNextLine(req);
 	if (line == NULL) {
 		return FALSE;
 	}
 
-	tail = strstr(head, ":");
-	if (tail == NULL) {
+	re = g_regex_new("^([\\w-]+)\\s*:\\s*(.+)",0,0,NULL);
+	if (g_regex_match(re,line,0,&match)) {
+		key = g_match_info_fetch(match,1);
+		value = g_match_info_fetch(match,2);
+		g_hash_table_insert(req->header_hash, key, value);
+		g_match_info_free(match);
+		ret = TRUE;
+	} else {
 		Message("invalid HTTP Header:%s", line);
 		req->status = HTTP_BAD_REQUEST;
-		return FALSE;
+		ret = FALSE;
 	}
-	size = tail - head + 1;
-	key = xmalloc(size);
-	memset(key,0,size);
-	for(i=0,p=head;i<size-1;i++,p++) {
-		key[i] = tolower(*p);
-	}
-	head = tail + 1;
-	while(head[0] == ' '){ head++; }
-
-	value = StrDup(head);
-	g_hash_table_insert(req->header_hash, key, value);
-	dbgprintf("header key:%s value:%s\n", key, value);
-
 	xfree(line);
-LEAVE_FUNC;
-	return TRUE;
+	g_regex_unref(re);
+
+	return ret;
 }
 
 void
 ParseReqBody(HTTP_REQUEST *req)
 {
 	char *value;
-	int size;
-	int partsize;
-	char *p;
-	char *q;
-	
-	value = (char *)g_hash_table_lookup(req->header_hash,"content-length");
-	size = atoi(value);
+	size_t size,left_size;
+
+	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
+	if (value == NULL) {
+		req->status = HTTP_BAD_REQUEST;
+		Message("invalid Content-Length:%s", value);
+		return;
+	}
+	size = (size_t)atoi(value);
 	if (size <= 0) {
 		req->status = HTTP_BAD_REQUEST;
 		Message("invalid Content-Length:%s", value);
@@ -499,34 +400,33 @@ ParseReqBody(HTTP_REQUEST *req)
 		Message("invalid Content-Length:%s", value);
 		return;
 	}
-	value = (char *)g_hash_table_lookup(req->header_hash,"content-type");
-
-	p = req->head;
-
-	partsize = strlen(p);
-	if (partsize > 0) {
-		if (partsize >= size) {
-			memcpy(req->body, p, size);
-			req->head += size;
-		} else {
-			memcpy(req->body, p, partsize);
-			q = req->body + partsize;
-			Recv(req->fp, q, size - partsize);
-			req->head += partsize;
-		}
-	} else {
-		Recv(req->fp, req->body, size);
+	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Type");
+	if (value == NULL) {
+		req->status = HTTP_BAD_REQUEST;
+		Message("does not have content-type");
+		return;
 	}
+
+	left_size = size - (req->buf_size - (req->head - req->buf));
+	if (left_size>0) {
+		while(left_size>0) {
+			req->buf_size += TryRecv(req);
+			left_size = size - (req->buf_size - (req->head - req->buf));
+		}
+	}
+	memcpy(req->body, req->head, size);
+	req->head += size;
 	req->body_size = size;
+
 	dbgprintf("body :%s\n", req->body);
 }
 
 void
 ParseReqAuth(HTTP_REQUEST *req)
 {
-	char *head;
-	char *tail;
-	char *dec;
+	GRegex *re;
+	GMatchInfo *match;
+	gchar *head,*base64,*userpass;
 	gsize size;
 
 #ifdef	USE_SSL
@@ -541,36 +441,48 @@ ParseReqAuth(HTTP_REQUEST *req)
 	}
 #endif
 
-	head = (char *)g_hash_table_lookup(req->header_hash,"authorization");
+	head = (gchar *)g_hash_table_lookup(req->header_hash,"authorization");
 	if (head == NULL) {
 		req->status = HTTP_UNAUTHORIZED;
 		Message("does not have Authorization");
 		return;
 	}
-	tail = strstr(head, "Basic");
-	if (tail == NULL) {
+
+	userpass = NULL;
+	re = g_regex_new("^basic\\s+(.+)",G_REGEX_CASELESS,0,NULL);
+	if (g_regex_match(re,head,0,&match)) {
+		base64 = g_match_info_fetch(match,1);
+		size = strlen(base64);
+	    userpass = g_base64_decode(base64,&size);
+		g_match_info_free(match);
+	} else {
+		g_regex_unref(re);
 		req->status = HTTP_UNAUTHORIZED;
-		Message("does not support Authorization method:%s", head);
 		return;
 	}
-	head = tail + strlen("Basic");
-	while (head[0] == ' ') { head++; }
-	dec = (char *)g_base64_decode(head, &size);
-	if (size <= 0 || dec == NULL) {
+	g_free(base64);
+	g_regex_unref(re);
+
+	if (userpass == NULL || strlen(userpass) <= 0) {
+		Warning("Invalid userpass");
 		req->status = HTTP_UNAUTHORIZED;
-		Message("can not base64_decode :%s", head);
 		return;
 	}
 
-	tail = strstr(dec, ":");
-	if (tail == NULL) {
+	re = g_regex_new("^(\\w+):(\\S+)",0,0,NULL);
+	if (g_regex_match(re,userpass,0,&match)) {
+		req->user = g_match_info_fetch(match,1);
+		req->pass = g_match_info_fetch(match,2);
+		g_match_info_free(match);
+	} else {
+		g_free(userpass);
+		g_regex_unref(re);
+		Warning("Invalid userpass");
 		req->status = HTTP_UNAUTHORIZED;
-		Message("Invalid Basic Authorization data:%s", dec);
 		return;
 	}
-	req->user = StrnDup(dec, tail - dec);
-	req->pass = StrnDup(tail + 1, size - (tail - dec + 1));
-	g_free(dec);
+	g_free(userpass);
+	g_regex_unref(re);
 }
 
 void
