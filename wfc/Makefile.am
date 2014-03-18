@@ -21,7 +21,7 @@ sbin_PROGRAMS = wfc
 bin_PROGRAMS = wfccontrol	\
 	moninfo
 
-INCLUDES 			= 		\
+AM_CPPFLAGS 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
@@ -36,6 +36,7 @@ LDADD 			=						\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
+
 DEPENDENCIES	=						\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/libs/libpanda.la
