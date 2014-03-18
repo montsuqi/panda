@@ -76,7 +76,7 @@ msgd_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
-INCLUDES 			= 		\
+AM_CPPFLAGS 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\
