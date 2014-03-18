@@ -43,7 +43,7 @@ LDADD 		=							\
 
 MONFUNC_la_LIBADD	=
 
-INCLUDES 			= 		\
+AM_CPPFLAGS 			= 		\
 	-I$(top_srcdir)			\
 	-I$(top_srcdir)/include	\
 	-I$(top_srcdir)/libs	\

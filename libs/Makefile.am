@@ -101,15 +101,16 @@ libpandainclude_HEADERS =	\
 	term.h				\
 	wfcio.h
 
-INCLUDES 			= 		\
-	-I$(top_srcdir)			\
-	-I$(top_srcdir)/include	\
-	-I$(top_srcdir)/libs	\
-	-I$(top_srcdir)/dblib	\
-	$(P11_CFLAGS)			\
-	$(SSL_CFLAGS)			\
-	$(COMMON_CFLAGS)		\
-	-DBIN_DIR=\"$(bindir)\"
+AM_CPPFLAGS 			= 	\
+	-I$(top_srcdir)					\
+	-I$(top_srcdir)/include			\
+	-I$(top_srcdir)/libs			\
+	-I$(top_srcdir)/dblib			\
+	$(P11_CFLAGS)					\
+	$(SSL_CFLAGS)					\
+	$(COMMON_CFLAGS)				\
+	-DBIN_DIR=\"$(bindir)\"			\
+	-DLOCALEDIR=\"$(localedir)\"
 
 testnet_LDADD	= 	\
 	-lm									\
@@ -129,9 +130,6 @@ testblob_LDADD	=						\
 	$(COMMON_LIBS)
 
 testblob_DEPENDENCIES	=
-
-AM_CPPFLAGS = 					\
-	-DLOCALEDIR=\"$(localedir)\"
 
 EXTRA_DIST	=					\
 	option_parser.txt
