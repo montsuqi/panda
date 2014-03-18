@@ -409,6 +409,11 @@ ParseReqBody(HTTP_REQUEST *req)
 	size_t size,left_size;
 
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
+	if (value == NULL) {
+		req->status = HTTP_BAD_REQUEST;
+		Message("invalid Content-Length:%s", value);
+		return;
+	}
 	size = (size_t)atoi(value);
 	if (size <= 0) {
 		req->status = HTTP_BAD_REQUEST;
