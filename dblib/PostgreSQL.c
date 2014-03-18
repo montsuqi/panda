@@ -165,7 +165,7 @@ PgInitConnect(
 		}
 		PQclear(res);
 	}
-	res = PQexec(conn, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE;");
+	res = PQexec(conn, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE_READ;");
 	if ( (res == NULL) || (PQresultStatus(res) != PGRES_COMMAND_OK) ) {
 		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 	}

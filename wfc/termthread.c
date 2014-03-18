@@ -389,6 +389,7 @@ RPC_StartSession(
 	json_object *params,*meta,*child,*result,*res;
 	SessionData *data;
 	uuid_t u;
+	int sesnum;
 ENTER_FUNC;
 	params = json_object_object_get(obj,"params");
 	if (!CheckJSONObject(params,json_type_object)) {
@@ -414,7 +415,8 @@ ENTER_FUNC;
 		return;
 	}
 
-	if (SesNum != 0 && GetSessionNum() >= SesNum) {
+	sesnum = GetSessionNum();
+	if (SesNum != 0 && sesnum >= SesNum) {
 		Warning("Discard new session(%s);max session number(%d)",term,SesNum);
 		CloseNet(term->fp);
 		return;
@@ -445,7 +447,7 @@ ENTER_FUNC;
 
 	memset(data->agent,0,SIZE_NAME+1);
 
-	MessageLogPrintf("[%s:%s] session start",data->hdr->user,data->hdr->uuid);
+	MessageLogPrintf("[%s:%s] session start(%d)",data->hdr->user,data->hdr->uuid,sesnum+1);
 	dbgprintf("uuid   = [%s]",data->hdr->uuid);
 	dbgprintf("user   = [%s]",data->hdr->user);
 	dbgprintf("host   = [%s]",data->host);

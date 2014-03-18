@@ -1678,6 +1678,10 @@ MakeScreenData(
 	int i,length;
 	WindowData *wdata;
 
+	if (*wname == '_') {
+		return json_object_new_object();
+	}
+
 	ret = NULL;
 	result = json_object_object_get(SCREENDATA(Session),"result");
 	window_data = json_object_object_get(result,"window_data");
