@@ -255,13 +255,13 @@ JSONRPC(
 	curl_easy_setopt(curl, CURLOPT_VERBOSE,1);
 #endif
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	if (type == TYPE_AUTH || !strcmp(SERVERTYPE(Session),"glserver")) {
-		snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
-		userpass[sizeof(userpass)-1] = 0;
-		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
-		curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	}
+
+	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
+	userpass[sizeof(userpass)-1] = 0;
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
 	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
@@ -380,7 +380,7 @@ RPC_StartSession()
 	} else {
 		RPCURI(Session) = g_strdup(AUTHURI(Session));
 		re = g_regex_new("/rpc/",G_REGEX_CASELESS,0,NULL);
-		RESTURI(Session) = g_regex_replace(re,AUTHURI(Session),-1,0,"/blob/",0,NULL);
+		RESTURI(Session) = g_regex_replace(re,AUTHURI(Session),-1,0,"/rest/",0,NULL);
 		g_regex_unref(re);
 	}
 	json_object_put(obj);
@@ -588,7 +588,7 @@ REST_PostBLOB(
 {
 	CURL *curl;
 	struct curl_slist *headers = NULL;
-	char *oid,url[SIZE_URL_BUF+1],clength[256];
+	char *oid,url[SIZE_URL_BUF+1],clength[256],userpass[2048];
 	gboolean fSSL;
 	long http_code;
 
@@ -620,6 +620,12 @@ REST_PostBLOB(
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
 	curl_easy_setopt(curl, CURLOPT_WRITEHEADER,(void*)&oid);
+
+	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
+	userpass[sizeof(userpass)-1] = 0;
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+
 	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
@@ -646,7 +652,7 @@ REST_GetBLOB(
 	const char *oid)
 {
 	CURL *curl;
-	char url[SIZE_URL_BUF+1];
+	char userpass[2048],url[SIZE_URL_BUF+1];
 	LargeByteString *lbs;
 	gboolean fSSL;
 	long http_code;
@@ -667,6 +673,12 @@ REST_GetBLOB(
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)lbs);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+
+	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
+	userpass[sizeof(userpass)-1] = 0;
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+
 	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
