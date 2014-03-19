@@ -312,6 +312,7 @@ ParseReqLine(HTTP_REQUEST *req)
 	char *line;
 
 	line = GetNextLine(req);
+	MessageLogPrintf("%s",line);
 
 	/*jsonrpc*/
 	if (g_regex_match_simple("^post\\s+/rpc/*\\s",line,G_REGEX_CASELESS,0)) {
