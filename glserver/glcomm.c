@@ -344,7 +344,9 @@ ReadFile(
 		}
 		fclose(fpf);
 	} else {
+#if 0
 		MessageLogPrintf("could not open for read: %s\n", fname);
+#endif
 		LBS_ReserveSize(Buff,0,FALSE);
 	}
 }

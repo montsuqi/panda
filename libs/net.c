@@ -22,9 +22,7 @@
 #define	TRACE
 */
 
-/*
 #define	MT_NET
-*/
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -49,9 +47,9 @@
 #include	"gettext.h"
 
 #ifdef	MT_NET
-#define	LockNet(fp)		{				\
-	dbgmsg("lock");						\
-	pthread_mutex_lock(&(fp)->lock);	\
+#define	LockNet(fp)		{											\
+	dbgmsg("lock");													\
+	pthread_mutex_lock(&(fp)->lock);								\
 }
 #define	UnLockNet(fp)	{				\
 	dbgmsg("unlock");					\

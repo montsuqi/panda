@@ -639,7 +639,7 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "host",         "localhost"},
 {"string", "port",         "8000"},
 {"string", "application",  "panda:orca00"},
-{"string", "style",        ""},
+{"string", "style",        "/usr/share/panda-client/jma-receipt.rc"},
 {"string", "gtkrc",        ""},
 {"string", "fontname",     "Takaoゴシック 10"},
 {"bool",   "mlog",         "F"},
@@ -652,12 +652,12 @@ static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "timerperiod",  "1000"},
 #ifdef USE_SSL
 {"bool",   "ssl",          "F"},
-{"string", "CAfile",       ""},
+{"string", "CAfile",       "/etc/ssl/certs/gl-cacert.pem"},
 {"string", "cert",         ""},
 {"string", "ciphers",      "ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"},
 #ifdef USE_PKCS11
 {"bool",   "pkcs11",       "F"},
-{"string", "pkcs11_lib",   ""},
+{"string", "pkcs11_lib",   "/usr/lib/opensc/opensc-pkcs11.so"},
 {"string", "slot",         ""},
 #endif
 #endif
