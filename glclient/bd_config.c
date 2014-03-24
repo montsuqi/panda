@@ -637,7 +637,7 @@ typedef struct {
 static GL_CONFIG_ENTRY conf_entries[] = {
 {"string", "description",  "default"},
 {"string", "authuri",      "http://localhost:9292"},
-{"string", "style",        ""},
+{"string", "style",        "/usr/share/panda-client/jma-receipt.rc"},
 {"string", "gtkrc",        ""},
 {"string", "fontname",     "Takaoゴシック 10"},
 {"bool",   "mlog",         "F"},
