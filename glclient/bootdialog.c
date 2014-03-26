@@ -43,8 +43,7 @@
 static void
 edit_dialog_run(
   GtkWidget *parent,
-  gchar *serverkey,
-  gboolean isnew)
+  int n)
 {
   BDComponent *component;
   GtkWidget *dialog;
@@ -52,15 +51,19 @@ edit_dialog_run(
   GtkWidget *label;
   GtkWidget *entry;
   gchar *title;
-  gchar *desc;
+  const gchar *desc;
+  gboolean new;
 
-  if (isnew) {
+  if (n == -1) {
     title = _("New");
+    n = gl_config_add_server();
+    new = TRUE;
   } else {
     title = _("Edit");
+    new = FALSE;
   }
 
-  dialog = gtk_dialog_new_with_buttons (title,
+  dialog = gtk_dialog_new_with_buttons(title,
     GTK_WINDOW(parent),
     GTK_DIALOG_MODAL,
     GTK_STOCK_OK,
@@ -69,25 +72,24 @@ edit_dialog_run(
     GTK_RESPONSE_CANCEL,
     NULL);
 
-  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
-  gtk_window_set_wmclass (GTK_WINDOW (dialog), "edit", "glclient");
+  gtk_window_set_position(GTK_WINDOW(dialog),GTK_WIN_POS_CENTER);
+  gtk_window_set_wmclass(GTK_WINDOW(dialog),"edit", "glclient");
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 5);
 
   /* contents */
-  table = gtk_table_new (2, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
-  label = gtk_label_new (_("ConfigName"));
-  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
-  entry = gtk_entry_new ();
+  table = gtk_table_new(2,1,FALSE);
+  gtk_container_set_border_width(GTK_CONTAINER (table),5);
+  gtk_table_set_row_spacings(GTK_TABLE (table),4);
+  label = gtk_label_new(_("ConfigName"));
+  gtk_misc_set_alignment(GTK_MISC (label),0,0.5);
+  entry = gtk_entry_new();
 
-  desc = gl_config_get_string(serverkey,"description");
+  desc = gl_config_get_string(n,"description");
   gtk_entry_set_text(GTK_ENTRY(entry),desc);
-  g_free(desc);
 
-  gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1,
+  gtk_table_attach(GTK_TABLE(table),label, 0, 1, 0, 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  gtk_table_attach (GTK_TABLE (table), entry, 1, 2, 0, 1,
+  gtk_table_attach(GTK_TABLE(table), entry, 1, 2, 0, 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_box_pack_start(
     GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
@@ -99,23 +101,22 @@ edit_dialog_run(
     GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
     component->basictable, TRUE, TRUE, 0);
   gtk_widget_show_all(component->basictable);
-  //gtk_widget_hide(component->protocol_v2);
 
   gtk_box_pack_start (
     GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
     component->othertable, TRUE, TRUE, 0);
   gtk_widget_show_all(component->othertable);
 
-  bd_component_set_value(component,serverkey);
+  bd_component_set_value(component,n);
 
   /* run */
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
-    gl_config_set_string(serverkey,
+    gl_config_set_string(n,
       "description",gtk_entry_get_text(GTK_ENTRY(entry)));
-    bd_component_value_to_config(component,serverkey);
+    bd_component_value_to_config(component,n);
   } else {
-    if (isnew) {
-      gl_config_remove_server(serverkey);
+    if (new) {
+      gl_config_del_server(n);
     }
   }
   gtk_widget_destroy (dialog);
@@ -138,42 +139,24 @@ struct _ServerDialog {
 static void
 server_dialog_server_list_update (ServerDialog * self)
 {
-  GSList *p,*list;
   GtkListStore *model;
   GtkTreeIter iter;
-  gchar *serverkey;
-  gchar *value;
+  int i;
   
   g_return_if_fail (self != NULL);
 
   model = (GtkListStore*)gtk_tree_view_get_model(GTK_TREE_VIEW(self->list));
   gtk_list_store_clear(model);
 
-  for(
-    p = list = gl_config_get_server_list();
-    p != NULL;
-    p = p->next) 
-  {
-    serverkey = (gchar*)p->data;
+  for(i=0;i<gl_config_get_config_nums();i++) {
+    if (gl_config_have_config(i)) {
     gtk_list_store_append(model,&iter);
-
-    value = gl_config_get_string(serverkey,"description");
-    gtk_list_store_set(model,&iter,0,value,-1);
-    g_free(value);
-
-    value = gl_config_get_string(serverkey,"authuri");
-    gtk_list_store_set(model,&iter,1,value,-1);
-    g_free(value);
-
-    value = gl_config_get_string(serverkey,"user");
-    gtk_list_store_set(model,&iter,2,value,-1);
-    g_free(value);
-
-    gtk_list_store_set(model,&iter,3,serverkey,-1);
-
-    g_free(serverkey);
+    gtk_list_store_set(model,&iter,0,gl_config_get_string(i,"description"),-1);
+    gtk_list_store_set(model,&iter,1,gl_config_get_string(i,"authuri"),-1);
+    gtk_list_store_set(model,&iter,2,gl_config_get_string(i,"user"),-1);
+    gtk_list_store_set(model,&iter,3,i,-1);
+    }
   }
-  g_slist_free(list);
 }
 
 static gboolean
@@ -186,16 +169,8 @@ server_dialog_on_delete_event (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_new (GtkWidget * widget, ServerDialog * self)
 {
-  gchar *serverkey;
-
-  serverkey = gl_config_new_server();
-  gl_config_set_string(serverkey,"description","new");
-  edit_dialog_run (self->dialog,serverkey,TRUE);
-  g_free(serverkey);
-  server_dialog_server_list_update (self);
-#if 0
-  gdk_window_raise (self->dialog->window);
-#endif
+  edit_dialog_run (self->dialog,-1);
+  server_dialog_server_list_update(self);
 }
 
 static void
@@ -203,7 +178,7 @@ server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
 {
   GtkTreeModel *model;
   GtkTreeIter iter;
-  gchar *serverkey;
+  int n;
 
   GtkTreeSelection *selection;
 
@@ -211,10 +186,9 @@ server_dialog_on_edit (GtkWidget * widget, ServerDialog * self)
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->list));
 
   if (gtk_tree_selection_get_selected(selection,&model,&iter)) {
-    gtk_tree_model_get(model,&iter,3,&serverkey,-1);
-    edit_dialog_run (self->dialog,serverkey,FALSE);
+    gtk_tree_model_get(model,&iter,3,&n,-1);
+    edit_dialog_run (self->dialog,n);
     server_dialog_server_list_update(self);
-    g_free(serverkey);
   }
 }
 
@@ -223,18 +197,16 @@ server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
 {
   GtkTreeModel *model;
   GtkTreeIter iter;
-  gchar *serverkey;
-
   GtkTreeSelection *selection;
+  int n;
 
   selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self->list));
   model = gtk_tree_view_get_model(GTK_TREE_VIEW(self->list));
 
   if (gtk_tree_selection_get_selected(selection,&model,&iter)) {
-    gtk_tree_model_get(model,&iter,3,&serverkey,-1);
-    gl_config_remove_server(serverkey);
+    gtk_tree_model_get(model,&iter,3,&n,-1);
+    gl_config_del_server(n);
     server_dialog_server_list_update(self);
-    g_free(serverkey);
   }
 }
 
@@ -315,7 +287,7 @@ server_dialog_new (GtkWidget *parent)
     scroll, TRUE, TRUE, 5);
 
   model = (GtkTreeModel*)gtk_list_store_new(4,
-    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+    G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_INT);
   self->list = gtk_tree_view_new_with_model(model);
   selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(self->list));
   gtk_tree_selection_set_mode(selection,GTK_SELECTION_SINGLE);
@@ -383,62 +355,44 @@ boot_dialog_combo_changed(GtkComboBox *widget, gpointer user_data)
   BootDialog *self;
   GtkTreeModel *model;
   GtkTreeIter iter;
-  gchar *serverkey;
+  int n;
   
   self = (BootDialog *)user_data;
   if (gtk_combo_box_get_active_iter(GTK_COMBO_BOX(self->combo),&iter)) {
     model = gtk_combo_box_get_model(GTK_COMBO_BOX(self->combo));
-    gtk_tree_model_get(model,&iter,1,&serverkey,-1);
-    bd_component_set_value(self->component,serverkey);
-    g_free(serverkey);
+    gtk_tree_model_get(model,&iter,1,&n,-1);
+    bd_component_set_value(self->component,n);
   }
 }
 
 static void
 boot_dialog_combo_update (BootDialog *self)
 {
-  GSList *p,*list;
-  gchar *desc,*serverkey,*server,*thisserverkey;
   GtkListStore *model;
   GtkComboBox *combo;
   GtkTreeIter iter;
+  int i,index;
 
   combo = GTK_COMBO_BOX(self->combo);
+
   g_signal_handlers_block_by_func(combo,
     boot_dialog_combo_changed, self->combo);
 
   model = (GtkListStore*)gtk_combo_box_get_model(combo);
   gtk_list_store_clear(model);
 
-  server = gl_config_get_server();
-
-  thisserverkey = NULL;
-  for(
-    p = list = gl_config_get_server_list();
-    p != NULL;
-    p = p->next) 
-  {
-    gtk_list_store_append(model,&iter);
-    serverkey = (gchar*)p->data;
-    desc = gl_config_get_string(serverkey,"description");
-    gtk_list_store_set(model,&iter,0,desc,1,serverkey,-1);
-    if (!g_strcmp0(serverkey,server)) {
-      gtk_combo_box_set_active_iter(combo,&iter);
-      thisserverkey = g_strdup(serverkey);
+  index = gl_config_get_index();
+  for (i=0;i<gl_config_get_config_nums();i++) {
+    if (gl_config_have_config(i)) {
+      gtk_list_store_append(model,&iter);
+      gtk_list_store_set(model,&iter,0,gl_config_get_string(i,"description"),1,i,-1);
+      if (i == index) {
+        gtk_combo_box_set_active_iter(combo,&iter);
+      }
     }
-    g_free(serverkey);
   }
-  g_slist_free(list);
-
-  if (thisserverkey != NULL) {
-    bd_component_set_value(self->component,thisserverkey);
-    g_free(thisserverkey);
-  } else {
-    bd_component_set_value(self->component,GL_GCONF_DEFAULT_SERVER);
-  }
-
-  g_signal_handlers_unblock_by_func(self->combo,
-    boot_dialog_combo_changed, self->combo);
+  bd_component_set_value(self->component,index);
+  g_signal_handlers_unblock_by_func(self->combo,boot_dialog_combo_changed, self->combo);
 }
 
 static void
@@ -447,17 +401,18 @@ boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
   GtkComboBox *combo;
   GtkTreeIter iter;
   GtkTreeModel *model;
-  gchar *serverkey;
+  int n;
+
   self->is_connect = TRUE;
 
   combo = GTK_COMBO_BOX(self->combo);
 
   if (gtk_combo_box_get_active_iter(combo,&iter)) {
     model = gtk_combo_box_get_model(combo);
-    gtk_tree_model_get(model,&iter,1,&serverkey,-1);
-    gl_config_set_server(serverkey);
-    bd_component_value_to_config(self->component,serverkey);
-    g_free(serverkey);
+    gtk_tree_model_get(model,&iter,1,&n,-1);
+    gl_config_set_index(n);
+    bd_component_value_to_config(self->component,n);
+    gl_config_save();
   }
   gtk_widget_hide (self->dialog);
   gtk_main_quit ();
@@ -526,7 +481,7 @@ boot_dialog_new ()
   gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
   gtk_box_pack_start (GTK_BOX (hbox), label, FALSE, TRUE, 0);
   
-  model = GTK_TREE_MODEL(gtk_list_store_new(2,G_TYPE_STRING,G_TYPE_STRING));
+  model = GTK_TREE_MODEL(gtk_list_store_new(2,G_TYPE_STRING,G_TYPE_INT));
   self->combo = combo = gtk_combo_box_new_with_model(model);
   renderer = gtk_cell_renderer_text_new();
   gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(combo),renderer,TRUE);

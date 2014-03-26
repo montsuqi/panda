@@ -101,7 +101,6 @@ static gboolean
 StartClient ()
 {
 	InitProtocol();
-	ConvertWidgetCache();
 	LoadWidgetCache();
 	InitTopWindow();
 
@@ -192,7 +191,7 @@ ExecClient()
 		delay = atoi(delay_str);
 		if (delay > 0) {
 			fTimer = TRUE;
-			TimerPeriod = delay_str;
+			TimerPeriod = delay;
 		} else {
 			fTimer = FALSE;
 		}
@@ -250,7 +249,6 @@ main(
 	g_option_context_parse(ctx,&argc,&argv,NULL);
 
     gl_config_init();
-	gl_config_convert_config();
 
 	if (fListConfig) {
 		ListConfig();

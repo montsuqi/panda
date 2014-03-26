@@ -22,6 +22,7 @@
 #endif
 
 #include    <stdio.h>
+#include    <stdlib.h>
 #include    <string.h> 
 #include    <errno.h>
 #include    <ctype.h>
@@ -118,112 +119,98 @@ on_timer_toggle (GtkWidget *widget, BDComponent *self) {
  * boot dialog component
  ********************************************************************/
 void
-bd_component_set_value (BDComponent *self,gchar *serverkey) 
+bd_component_set_value(
+	BDComponent *self,
+	int n) 
 {
-  gchar *value;
+  gchar buf[256];
 
   // basic
-  value = gl_config_get_string(serverkey,"authuri");
-  gtk_entry_set_text (GTK_ENTRY (self->authuri),value);
-  g_free(value);
+  gtk_entry_set_text(GTK_ENTRY (self->authuri),gl_config_get_string(n,"authuri"));
+  gtk_entry_set_text(GTK_ENTRY(self->user),gl_config_get_string(n,"user"));
 
-  value = gl_config_get_string(serverkey,"user");
-  gtk_entry_set_text (GTK_ENTRY (self->user),value);
-  g_free(value);
-
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->savepassword), 
-    gl_config_get_bool(serverkey,"savepassword"));
-  if ( gl_config_get_bool(serverkey,"savepassword") ) {
-    value = gl_config_get_string(serverkey,"password");
-    gtk_entry_set_text (GTK_ENTRY (self->password),value);
-    g_free(value);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (self->savepassword), 
+    gl_config_get_boolean(n,"savepassword"));
+  if ( gl_config_get_boolean(n,"savepassword") ) {
+    gtk_entry_set_text(GTK_ENTRY (self->password),gl_config_get_string(n,"password"));
   } else {
-    gtk_entry_set_text (GTK_ENTRY (self->password), "");
+    gtk_entry_set_text(GTK_ENTRY(self->password),"");
   }
 
   // other
-  value = gl_config_get_string(serverkey,"style");
-  gtk_entry_set_text (GTK_ENTRY (self->style),value);
-  g_free(value);
-
-  value = gl_config_get_string(serverkey,"gtkrc");
-  gtk_entry_set_text (GTK_ENTRY (self->gtkrc),value);
-  g_free(value);
-
-  value = gl_config_get_string(serverkey,"fontname");
-  if (value == NULL || !strlen(value)) {
-    value = "Takaoゴシック 10";
-  }
-  gtk_font_button_set_font_name (GTK_FONT_BUTTON (self->fontbutton),value);
-
+  gtk_entry_set_text(GTK_ENTRY (self->style),gl_config_get_string(n,"style"));
+  gtk_entry_set_text (GTK_ENTRY(self->gtkrc),gl_config_get_string(n,"gtkrc"));
+  gtk_font_button_set_font_name(GTK_FONT_BUTTON(self->fontbutton),gl_config_get_string(n,"fontname"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
-    gl_config_get_bool(serverkey,"mlog"));
+    gl_config_get_boolean(n,"mlog"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
-    gl_config_get_bool(serverkey,"keybuff"));
+    gl_config_get_boolean(n,"keybuff"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
-    gl_config_get_bool(serverkey,"timer"));
+    gl_config_get_boolean(n,"timer"));
   gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->imkanaoff),
-    gl_config_get_bool(serverkey,"im_kana_off"));
+    gl_config_get_boolean(n,"im_kana_off"));
 
-  value = gl_config_get_string(serverkey,"timerperiod");
-  gtk_entry_set_text (GTK_ENTRY (self->timerperiod),value);
-  g_free(value);
+  memset(buf,0,sizeof(buf));
+  snprintf(buf,sizeof(buf)-1,"%d",gl_config_get_int(n,"timerperiod"));
+  gtk_entry_set_text (GTK_ENTRY (self->timerperiod),buf);
 
   gtk_widget_set_sensitive(self->timer_container, 
-    gl_config_get_bool(serverkey,"timer"));  
+    gl_config_get_boolean(n,"timer"));  
 }
 
 void
-bd_component_value_to_config(BDComponent *self,gchar *serverkey)
+bd_component_value_to_config(
+	BDComponent *self,
+	int n)
 {
-  gchar *password;
+  const gchar *password;
   gboolean savepassword;
 
-  gl_config_set_string(serverkey,"authuri",
+  //basic
+  gl_config_set_string(n,"authuri",
     gtk_entry_get_text (GTK_ENTRY (self->authuri)));
-  gl_config_set_string(serverkey,"user",
+  gl_config_set_string(n,"user",
     gtk_entry_get_text (GTK_ENTRY (self->user)));
-  password = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
+  password = gtk_entry_get_text (GTK_ENTRY (self->password));
   savepassword = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->savepassword));
   if (savepassword) {
-    gl_config_set_string(serverkey,"password", password);
+    gl_config_set_string(n,"password", password);
   } else {
-    gl_config_set_string(serverkey,"password", "");
+    gl_config_set_string(n,"password", "");
   }
-  gl_config_set_bool(serverkey,"savepassword", savepassword);
+  gl_config_set_boolean(n,"savepassword", savepassword);
 
-  AUTHURI(Session) = strdup(gtk_entry_get_text (GTK_ENTRY (self->authuri)));
-  User = strdup(gtk_entry_get_text (GTK_ENTRY (self->user)));
-  Pass = strdup(gtk_entry_get_text (GTK_ENTRY (self->password)));
-  SavePass = gtk_toggle_button_get_active (
-    GTK_TOGGLE_BUTTON (self->savepassword));
+  AUTHURI(Session) = (char*)gtk_entry_get_text(GTK_ENTRY(self->authuri));
+  User = (char*)gtk_entry_get_text(GTK_ENTRY(self->user));
+  Pass = (char*)gtk_entry_get_text(GTK_ENTRY(self->password));
+  SavePass = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->savepassword));
 
   // other
-  gl_config_set_string(serverkey,"style",
+  gl_config_set_string(n,"style",
     gtk_entry_get_text (GTK_ENTRY (self->style)));
-  gl_config_set_string(serverkey,"gtkrc",
+  gl_config_set_string(n,"gtkrc",
     gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
-  gl_config_set_string(serverkey,"fontname",
+  gl_config_set_string(n,"fontname",
     gtk_font_button_get_font_name (GTK_FONT_BUTTON (self->fontbutton)));
-  gl_config_set_bool(serverkey,"mlog",
+  gl_config_set_boolean(n,"mlog",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
-  gl_config_set_bool(serverkey,"keybuff",
+  gl_config_set_boolean(n,"keybuff",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
-  gl_config_set_bool(serverkey,"im_kana_off",
+  gl_config_set_boolean(n,"im_kana_off",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->imkanaoff)));
-  gl_config_set_bool(serverkey,"timer",
+  gl_config_set_boolean(n,"timer",
     gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer)));
-  gl_config_set_string(serverkey,"timerperiod",
-    gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
+  gl_config_set_int(n,"timerperiod",
+    atoi(gtk_entry_get_text (GTK_ENTRY (self->timerperiod))));
 
-  Style = strdup(gtk_entry_get_text (GTK_ENTRY (self->style)));
-  Gtkrc = strdup(gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
-  FontName = strdup(gtk_font_button_get_font_name(GTK_FONT_BUTTON(self->fontbutton)));
+  Style = (char*)gtk_entry_get_text (GTK_ENTRY (self->style));
+  Gtkrc = (char*)gtk_entry_get_text (GTK_ENTRY (self->gtkrc));
+  FontName = (char*)gtk_font_button_get_font_name(GTK_FONT_BUTTON(self->fontbutton));
   fMlog = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog));
   fKeyBuff = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff));
   fIMKanaOff = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff));
   fTimer = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer));
-  TimerPeriod = strdup(gtk_entry_get_text (GTK_ENTRY (self->timerperiod)));
+  TimerPeriod = atoi(gtk_entry_get_text(GTK_ENTRY(self->timerperiod)));
 }
 
 BDComponent *

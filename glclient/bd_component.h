@@ -51,16 +51,14 @@ struct _BDComponent {
   GtkWidget *infotable;
 };
 
-BDConfigSection * new_config_section(BDConfig *config, char *hostname);
-
 gboolean validate_isblank (gchar *str);
 
 typedef struct {
   GtkWidget *entry, *filesel;
 } file_selection_data;
 
-void bd_component_set_value(BDComponent *self,gchar *serverkey);
-void bd_component_value_to_config(BDComponent *self,gchar* serverkey);
+void bd_component_set_value(BDComponent *self,int n);
+void bd_component_value_to_config(BDComponent *self,int n);
 
 BDComponent * bd_component_new();
 

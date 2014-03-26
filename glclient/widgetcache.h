@@ -26,13 +26,10 @@
 #else
 #define	GLOBAL		extern
 #endif
-GLOBAL	GHashTable	*WidgetCache;
 
-extern void ConvertWidgetCache();
 extern void LoadWidgetCache();
 extern void SaveWidgetCache();
-extern void SetWidgetCache(char *key, char *value);
-extern char *GetWidgetCache(char *key);
-
+extern void SetWidgetCache(const char *key,const char *value);
+extern const char *GetWidgetCache(const char *key);
 
 #endif

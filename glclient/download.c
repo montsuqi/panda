@@ -52,7 +52,7 @@ show_save_dialog(
 	GtkWidget *dialog;
 	GtkWidget *error_dialog;
 	GError *error = NULL;
-	char *dirname;
+	const char *dirname;
 	char *fname;
 	char *lname;
 
