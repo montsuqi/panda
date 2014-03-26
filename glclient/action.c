@@ -953,7 +953,7 @@ ConfigureWindow(GtkWidget *widget,
 extern	void
 InitTopWindow(void)
 {
-	char *px, *py, *pwidth, *pheight;
+	const char *px, *py, *pwidth, *pheight;
 	int x,y,width,height;
 
 	px = GetWidgetCache("glclient.topwindow.x");
@@ -1043,70 +1043,51 @@ IsWidgetName2(char *name)
 extern	void
 ListConfig()
 {
-	GSList *p;
-	gchar *serverkey;
-	gchar *key;
-	
-	for (
-		p = gconf_client_all_dirs(GConfCTX,GL_GCONF_SERVERS,NULL); 
-		p != NULL; 
-		p = p->next
-	) {
-		serverkey = (gchar*)p->data;
-		key = serverkey + strlen(GL_GCONF_SERVERS) + 1;
+	int i;
+
+	for(i=0;i<gl_config_get_config_nums();i++) {
+		if (gl_config_have_config(i)) {
 		printf("------------------\n");
-		printf("[%s]\n", key);
+		printf("[%d]\n", i);
 		printf("\tdescription:\t%s\n", 
-			gl_config_get_string(serverkey,"description"));
-		printf("\tauthuri:\t\t%s\n", gl_config_get_string(serverkey,"authuri"));
-		printf("\tuser:\t\t%s\n",gl_config_get_string(serverkey,"user"));
-		printf("\tgconfkey:\t%s\n",serverkey);
+			gl_config_get_string(i,"description"));
+		printf("\tauthuri:\t\t%s\n", gl_config_get_string(i,"authuri"));
+		printf("\tuser:\t\t%s\n",gl_config_get_string(i,"user"));
+		}
 	}
 }
 
 extern void
 LoadConfig (
-	const char *confnum)
+	const char *desc)
 {
-	GSList *list,*p;
-	gchar *serverkey;
-	gchar *value;
+	int i,n = -1;
 
-	serverkey = g_strconcat(GL_GCONF_SERVERS,"/",confnum,NULL);
-	/* description */
-	if (!gconf_client_dir_exists(GConfCTX,serverkey,NULL)) {
-		for(
-			p = list = gl_config_get_server_list();
-			p != NULL;
-			p = p->next) 
-		{
-			value = gl_config_get_string((gchar*)p->data,"description");
-			if (!g_strcmp0(confnum,value)) {
-				serverkey = g_strdup((gchar*)p->data);
+	for(i=0;i<gl_config_get_config_nums();i++) {
+		if (gl_config_have_config(i)) {
+			if (!strcmp(desc,gl_config_get_string(i,"description"))) {
+				n = i;
+				break;
 			}
-			g_free(value);
-			g_free(p->data);
 		}
-		g_slist_free(list);
 	}
-	if (gconf_client_dir_exists(GConfCTX,serverkey,NULL)) {
-		gl_config_set_server(serverkey);
-		AUTHURI(Session) = gl_config_get_string (serverkey,"authuri");
-		Style = gl_config_get_string (serverkey,"style");
-		Gtkrc = gl_config_get_string (serverkey,"gtkrc");
-		fMlog = gl_config_get_bool (serverkey,"mlog");
-		fKeyBuff = gl_config_get_bool (serverkey,"keybuff");
-		User = gl_config_get_string (serverkey,"user");
-		SavePass = gl_config_get_bool (serverkey,"savepassword");
-		if (SavePass) {
-			Pass = gl_config_get_string (serverkey,"password");
-		} 
-		fTimer = gl_config_get_bool (serverkey,"timer");
-		TimerPeriod = gl_config_get_string (serverkey,"timerperiod");
-		FontName = gl_config_get_string (serverkey,"fontname");
-	} else {
-		g_error(_("cannot load config:%s"), confnum);
+	if (n == -1) {
+		Error("could not found setting:%s",desc);
 	}
+
+	AUTHURI(Session) = g_strdup(gl_config_get_string(n,"authuri"));
+	Style = g_strdup(gl_config_get_string(n,"style"));
+	Gtkrc = g_strdup(gl_config_get_string(n,"gtkrc"));
+	fMlog = gl_config_get_boolean(n,"mlog");
+	fKeyBuff = gl_config_get_boolean(n,"keybuff");
+	User = g_strdup(gl_config_get_string(n,"user"));
+	SavePass = gl_config_get_boolean(n,"savepassword");
+	if (SavePass) {
+		Pass = g_strdup(gl_config_get_string(n,"password"));
+	} 
+	fTimer = gl_config_get_boolean(n,"timer");
+	TimerPeriod = gl_config_get_int(n,"timerperiod");
+	FontName = g_strdup(gl_config_get_string(n,"fontname"));
 }
 
 static  void

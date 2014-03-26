@@ -34,107 +34,68 @@
 #include	<sys/time.h>
 #include	<errno.h>
 #include	<glib.h>
-#include	<gconf/gconf-client.h>
+#include	<json.h>
 
 #define		WIDGETCACHE
 
 #include	"glclient.h"
 #include	"widgetcache.h"
+#include	"message.h"
+#include	"debug.h"
 
-void
-ConvertWidgetCache(void)
-{
-	FILE *fp;
-	char fname[256];
-	char buff[SIZE_BUFF+1];
-	char *head;
-	char *key;
-	char *path;
-	char *value;
-
-	if (gconf_client_get_bool(GConfCTX,GL_GCONF_WCACHE_CONVERTED,NULL)) {
-		return;
-	}
-
-	snprintf(fname, sizeof(fname), "%s/%s", 
-		ConfDir, "widgetcache.txt");
-	if ((fp = fopen(fname, "r")) != NULL) {
-		while (fgets(buff, sizeof(buff), fp) != NULL) {
-			head = strstr(buff, ":");
-			if (head != NULL) {
-				key = g_strndup(buff, head - buff);
-				head += 1;
-				value = g_strndup(head, strlen(head) - 1); /* chop */
-				path = g_strconcat(GL_GCONF_WCACHE,"/",key,NULL);
-				gconf_client_set_string(GConfCTX,path,value,NULL);
-				g_free(key);
-				g_free(value);
-				g_free(path);
-			}
-		}
-		fclose(fp);
-	}
-	gconf_client_set_bool(GConfCTX,GL_GCONF_WCACHE_CONVERTED,TRUE,NULL);
-	gconf_client_suggest_sync(GConfCTX,NULL);
-}
+static json_object *obj;
 
 void
 LoadWidgetCache(void)
 {
-	GSList *list,*l;
-	GConfEntry *entry;
-	gchar *value;
-	gchar *key;
+	gchar *path,*buf;
+	size_t size;
 
-	WidgetCache = NewNameHash();
-	list = gconf_client_all_entries(GConfCTX,GL_GCONF_WCACHE,NULL);
-	for(l=list;l!=NULL;l=l->next) {
-		entry = (GConfEntry*)l->data;
-		key = (char*)(gconf_entry_get_key(entry) + 
-			strlen(GL_GCONF_WCACHE) + strlen("/"));
-		value = gconf_client_get_string(GConfCTX,
-			gconf_entry_get_key(entry),NULL);
-		g_hash_table_insert(WidgetCache,
-			g_strdup(key),
-			g_strdup(value));
-		gconf_entry_free(entry);
+	path = g_strdup_printf("%s/widgetcache.json",ConfDir);
+	if (!g_file_get_contents(path,&buf,&size,NULL)) {
+		obj = json_object_new_object();
+	} else {
+		obj = json_tokener_parse(buf);
+		g_free(buf);
+		if (obj == NULL || is_error(obj) || !json_object_is_type(obj,json_type_object)) {
+			obj = json_object_new_object();
+		}
 	}
-	g_slist_free(list);
-}
-
-static void
-_SaveWidgetCache(char *key, char *value, gpointer data)
-{
-	gchar *path;
-
-	path = g_strconcat(GL_GCONF_WCACHE,"/",key,NULL);
-	gconf_client_set_string(GConfCTX,path,value,NULL);
 	g_free(path);
 }
 
 void
 SaveWidgetCache(void)
 {
-	if (WidgetCache == NULL) return;
-	g_hash_table_foreach(WidgetCache, (GHFunc)_SaveWidgetCache, NULL);
+	gchar *path;
+	const char *jsonstr;
+
+	jsonstr = json_object_to_json_string(obj);
+	path = g_strdup_printf("%s/widgetcache.json",ConfDir);
+	if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {
+		Error("could not create %s",path);
+	}
+	g_free(path);
 }
 
 void
-SetWidgetCache(char *key, char *value)
+SetWidgetCache(
+	const char *key,
+	const char *value)
 {
-	gpointer oldvalue;
-	gpointer oldkey;
-
-	if (g_hash_table_lookup_extended(WidgetCache, key, &oldkey, &oldvalue)) {
-		g_hash_table_remove(WidgetCache, key);
-		xfree(oldkey);
-		xfree(oldvalue);
-	}
-	g_hash_table_insert(WidgetCache, StrDup(key), StrDup(value));
+	json_object_object_add(obj,key,json_object_new_string(value));
 }
 
-char *
-GetWidgetCache(char *key)
+const char *
+GetWidgetCache(
+	const char *key)
 {
-	return (char*)g_hash_table_lookup(WidgetCache, key);
+	json_object *val;
+
+	val = json_object_object_get(obj,key);
+	if (val == NULL || is_error(val) || !json_object_is_type(val,json_type_string)) {
+		return NULL;
+	} else {
+		return json_object_get_string(val);
+	}
 }

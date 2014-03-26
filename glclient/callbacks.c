@@ -245,7 +245,7 @@ ENTER_FUNC;
 	}
 	if (timeout == -1) {
 		if (fTimer)
-			timeout = atoi (TimerPeriod);
+			timeout = TimerPeriod;
 		else
 			timeout = 0;
 	}

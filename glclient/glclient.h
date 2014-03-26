@@ -107,7 +107,7 @@ GLOBAL	Bool		fMlog;
 GLOBAL	Bool		fKeyBuff;
 GLOBAL	Bool		fIMKanaOff;
 GLOBAL	Bool		fTimer;
-GLOBAL	char		*TimerPeriod;
+GLOBAL	int			TimerPeriod;
 GLOBAL	int			PingTimerPeriod;
 GLOBAL	char		*FontName;
 
