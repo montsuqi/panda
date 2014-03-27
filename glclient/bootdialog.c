@@ -213,6 +213,7 @@ server_dialog_on_delete (GtkWidget * widget, ServerDialog * self)
 static void
 server_dialog_on_close (GtkWidget * widget, ServerDialog * self)
 {
+  gl_config_save();
   gtk_main_quit ();
 }
 
