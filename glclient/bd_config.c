@@ -151,7 +151,7 @@ new_server(int i)
 
 	sprintf(desc,"server%d",i);
 	child = json_object_new_object();
-	json_object_object_add(child,"description",json_object_new_string(DEFAULT_DESCRIPTION));
+	json_object_object_add(child,"description",json_object_new_string(desc));
 	json_object_object_add(child,"authuri",json_object_new_string(DEFAULT_AUTHURI));
 	json_object_object_add(child,"style",json_object_new_string(DEFAULT_STYLE));
 	json_object_object_add(child,"gtkrc",json_object_new_string(DEFAULT_GTKRC));
