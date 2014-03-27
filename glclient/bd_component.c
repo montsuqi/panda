@@ -139,23 +139,18 @@ bd_component_set_value(
 
   // other
   gtk_entry_set_text(GTK_ENTRY (self->style),gl_config_get_string(n,"style"));
-  gtk_entry_set_text (GTK_ENTRY(self->gtkrc),gl_config_get_string(n,"gtkrc"));
+  gtk_entry_set_text(GTK_ENTRY(self->gtkrc),gl_config_get_string(n,"gtkrc"));
   gtk_font_button_set_font_name(GTK_FONT_BUTTON(self->fontbutton),gl_config_get_string(n,"fontname"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->mlog),
-    gl_config_get_boolean(n,"mlog"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->keybuff),
-    gl_config_get_boolean(n,"keybuff"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->timer),
-    gl_config_get_boolean(n,"timer"));
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (self->imkanaoff),
-    gl_config_get_boolean(n,"im_kana_off"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->mlog), gl_config_get_boolean(n,"mlog"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->keybuff), gl_config_get_boolean(n,"keybuff"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->timer), gl_config_get_boolean(n,"timer"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->imkanaoff), gl_config_get_boolean(n,"im_kana_off"));
 
   memset(buf,0,sizeof(buf));
   snprintf(buf,sizeof(buf)-1,"%d",gl_config_get_int(n,"timerperiod"));
-  gtk_entry_set_text (GTK_ENTRY (self->timerperiod),buf);
+  gtk_entry_set_text (GTK_ENTRY(self->timerperiod),buf);
 
-  gtk_widget_set_sensitive(self->timer_container, 
-    gl_config_get_boolean(n,"timer"));  
+  gtk_widget_set_sensitive(self->timer_container,gl_config_get_boolean(n,"timer"));  
 }
 
 void
@@ -168,11 +163,11 @@ bd_component_value_to_config(
 
   //basic
   gl_config_set_string(n,"authuri",
-    gtk_entry_get_text (GTK_ENTRY (self->authuri)));
+    gtk_entry_get_text(GTK_ENTRY(self->authuri)));
   gl_config_set_string(n,"user",
-    gtk_entry_get_text (GTK_ENTRY (self->user)));
-  password = gtk_entry_get_text (GTK_ENTRY (self->password));
-  savepassword = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->savepassword));
+    gtk_entry_get_text(GTK_ENTRY(self->user)));
+  password = gtk_entry_get_text(GTK_ENTRY(self->password));
+  savepassword = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->savepassword));
   if (savepassword) {
     gl_config_set_string(n,"password", password);
   } else {
@@ -180,36 +175,28 @@ bd_component_value_to_config(
   }
   gl_config_set_boolean(n,"savepassword", savepassword);
 
-  AUTHURI(Session) = (char*)gtk_entry_get_text(GTK_ENTRY(self->authuri));
-  User = (char*)gtk_entry_get_text(GTK_ENTRY(self->user));
-  Pass = (char*)gtk_entry_get_text(GTK_ENTRY(self->password));
+  AUTHURI(Session) = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->authuri)));
+  User = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->user)));
+  Pass = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->password)));
   SavePass = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->savepassword));
 
   // other
-  gl_config_set_string(n,"style",
-    gtk_entry_get_text (GTK_ENTRY (self->style)));
-  gl_config_set_string(n,"gtkrc",
-    gtk_entry_get_text (GTK_ENTRY (self->gtkrc)));
-  gl_config_set_string(n,"fontname",
-    gtk_font_button_get_font_name (GTK_FONT_BUTTON (self->fontbutton)));
-  gl_config_set_boolean(n,"mlog",
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog)));
-  gl_config_set_boolean(n,"keybuff",
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff)));
-  gl_config_set_boolean(n,"im_kana_off",
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->imkanaoff)));
-  gl_config_set_boolean(n,"timer",
-    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer)));
-  gl_config_set_int(n,"timerperiod",
-    atoi(gtk_entry_get_text (GTK_ENTRY (self->timerperiod))));
+  gl_config_set_string(n,"style", gtk_entry_get_text(GTK_ENTRY(self->style)));
+  gl_config_set_string(n,"gtkrc", gtk_entry_get_text(GTK_ENTRY(self->gtkrc)));
+  gl_config_set_string(n,"fontname", gtk_font_button_get_font_name(GTK_FONT_BUTTON(self->fontbutton)));
+  gl_config_set_boolean(n,"mlog", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->mlog)));
+  gl_config_set_boolean(n,"keybuff", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->keybuff)));
+  gl_config_set_boolean(n,"im_kana_off", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff)));
+  gl_config_set_boolean(n,"timer", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->timer)));
+  gl_config_set_int(n,"timerperiod", atoi(gtk_entry_get_text(GTK_ENTRY(self->timerperiod))));
 
-  Style = (char*)gtk_entry_get_text (GTK_ENTRY (self->style));
-  Gtkrc = (char*)gtk_entry_get_text (GTK_ENTRY (self->gtkrc));
-  FontName = (char*)gtk_font_button_get_font_name(GTK_FONT_BUTTON(self->fontbutton));
-  fMlog = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->mlog));
-  fKeyBuff = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->keybuff));
+  Style = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->style)));
+  Gtkrc = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->gtkrc)));
+  FontName = g_strdup(gtk_font_button_get_font_name(GTK_FONT_BUTTON(self->fontbutton)));
+  fMlog = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->mlog));
+  fKeyBuff = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->keybuff));
   fIMKanaOff = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff));
-  fTimer = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->timer));
+  fTimer = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->timer));
   TimerPeriod = atoi(gtk_entry_get_text(GTK_ENTRY(self->timerperiod)));
 }
 
@@ -230,9 +217,9 @@ bd_component_new()
   self = g_new0(BDComponent, 1);
 
   // basic
-  table = gtk_table_new (2, 1, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 5);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 4);
+  table = gtk_table_new(2, 1, FALSE);
+  gtk_container_set_border_width(GTK_CONTAINER(table), 5);
+  gtk_table_set_row_spacings(GTK_TABLE(table), 4);
   self->basictable = table;
 
   ypos = 0;
