@@ -248,7 +248,8 @@ main(
 	g_option_context_add_main_entries(ctx, entries, NULL);
 	g_option_context_parse(ctx,&argc,&argv,NULL);
 
-    gl_config_init();
+	InitSystem();
+	gl_config_init();
 
 	if (fListConfig) {
 		ListConfig();
@@ -257,7 +258,6 @@ main(
 
 	fDialog = ConfigName == NULL ? TRUE : FALSE;
 
-	InitSystem();
 	UI_Init(argc,argv);
 	if (fDialog) {
 		BootDialogRun();
