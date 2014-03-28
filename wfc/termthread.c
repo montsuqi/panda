@@ -37,6 +37,7 @@
 #include	<pthread.h>
 #include	<time.h>
 #include	<errno.h>
+#include	<json.h>
 #include	<uuid/uuid.h>
 
 #include	"enum.h"
@@ -50,7 +51,6 @@
 #include	"queue.h"
 #include	"directory.h"
 #include	"wfcdata.h"
-#include	"wfcio.h"
 #include	"wfc.h"
 #include	"glterm.h"
 #include	"termthread.h"
@@ -191,7 +191,7 @@ LEAVE_FUNC;
 
 static	SessionData	*
 LookupSession(
-	char	*term)
+	const char	*term)
 {
 	SessionData *data;
 	SessionCtrl *ctrl;
@@ -259,10 +259,10 @@ LEAVE_FUNC;
 
 static	SessionData	*
 InitAPISession(
-	char *user,
-	char *ldname,
-	char *wname,
-	char *host)
+	const char *user,
+	const char *ldname,
+	const char *wname,
+	const char *host)
 {
 	SessionData		*data;
 	LD_Node			*ld;
@@ -278,14 +278,13 @@ ENTER_FUNC;
 	strcpy(data->hdr->window,wname);
 	strcpy(data->hdr->user,user);
 	strcpy(data->host,host);
-	data->fInProcess = TRUE;
 	if ((ld = g_hash_table_lookup(APS_Hash, ldname)) != NULL) {
 		data->ld = ld;
 		data->linkdata = NULL;
 		data->cWindow = ld->info->cWindow;
 		data->scrdata = NULL;
 		data->hdr->puttype = SCREEN_NULL;
-		rec = GetWindow(wname);
+		rec = GetWindow((char*)wname);
 		size = NativeSizeValue(NULL,rec->value);
 		LBS_ReserveSize(data->apidata->rec, size,FALSE);
 		NativePackValue(NULL,LBS_Body(data->apidata->rec),rec->value);
@@ -299,166 +298,13 @@ LEAVE_FUNC;
 
 
 static	SessionData	*
-ReadTerminal(
-	NETFILE		*fp,
-	SessionData	*data)
-{
-	LD_Node			*ld;
-	Bool			fExit;
-	int				c;
-	LargeByteString	*scrdata;
-	int				i;
-ENTER_FUNC;
-	fExit = FALSE;
-	while (!fExit) {
-		switch (c = RecvPacketClass(fp)) {
-		case WFC_DATA:
-			dbgmsg("recv DATA");
-			if (data != NULL) {
-				RecvnString(fp,SIZE_NAME,data->hdr->window);
-					ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,data->hdr->widget);
-					ON_IO_ERROR(fp,badio);
-				RecvnString(fp,SIZE_NAME,data->hdr->event);
-					ON_IO_ERROR(fp,badio);
-
-				data->w.sp = RecvInt(fp);					
-					ON_IO_ERROR(fp,badio);
-				for (i=0;i<data->w.sp ;i++) {
-					data->w.s[i].puttype = RecvChar(fp);
-						ON_IO_ERROR(fp,badio);
-					RecvnString(fp,SIZE_NAME,data->w.s[i].window);
-						ON_IO_ERROR(fp,badio);
-				}
-
-				dbgprintf("window = [%s]",data->hdr->window);
-				dbgprintf("widget = [%s]",data->hdr->widget);
-				dbgprintf("event  = [%s]",data->hdr->event);
-				ld = g_hash_table_lookup(ComponentHash,data->hdr->window);
-				if (ld != NULL) {
-					dbgprintf("ld = [%s]",ld->info->name);
-					dbgprintf("window = [%s]",data->hdr->window);
-					scrdata = GetScreenData(data,data->hdr->window);
-					if (scrdata != NULL) {
-						SendPacketClass(fp,WFC_OK);	ON_IO_ERROR(fp,badio);
-						dbgmsg("send OK");
-						if (RecvPacketClass(fp) == WFC_DATA) {
-							RecvLBS(fp,scrdata);ON_IO_ERROR(fp,badio);
-						}
-						data->hdr->puttype = SCREEN_NULL;
-					} else {
-						Error("invalid window [%s]",data->hdr->window);
-					}
-					if (data->ld != ld) {
-						ChangeLD(data,ld);
-					}
-				} else {
-					Error("component [%s] not found.",data->hdr->window);
-					fExit = TRUE;
-				}
-			} else {
-				fExit = TRUE;
-			}
-			break;
-		case WFC_OK:
-			dbgmsg("OK");
-			fExit = TRUE;
-			break;
-		case WFC_END:
-			dbgmsg("END");
-			if ((ld = g_hash_table_lookup(APS_Hash, "session"))  !=  NULL) {
-				strncpy(data->hdr->window,"session_end",
-					sizeof(data->hdr->window));
-				data->hdr->widget[0] = 0;
-				sprintf(data->hdr->event,"SESSIONEND");
-				data->hdr->puttype = SCREEN_NULL;
-				ChangeLD(data,ld);
-				data->status = SESSION_STATUS_END;
-			} else {
-				data->status = SESSION_STATUS_ABORT;
-			}
-			fExit = TRUE;
-			break;
-		default:
-			Warning("Invalid PacketClass in ReadTerminal [%X]", c);
-			SendPacketClass(fp,WFC_NOT);ON_IO_ERROR(fp,badio);
-			fExit = TRUE;
-			data->status = SESSION_STATUS_ABORT;
-			break;
-		}
-	}
-badio:
-LEAVE_FUNC;
-	return(data);
-}
-
-static	Bool
-SendTerminal(
-	NETFILE		*fp,
-	SessionData	*data)
-{
-	unsigned char	c;
-	char			wname[SIZE_LONGNAME+1];
-	LargeByteString	*scrdata;
-	int 			i;
-
-ENTER_FUNC;
-	SendPacketClass(fp,WFC_HEADER);		ON_IO_ERROR(fp,badio);
-	dbgmsg("send DATA");
-	SendString(fp,data->hdr->user);		ON_IO_ERROR(fp,badio);
-	SendString(fp,data->hdr->window);	ON_IO_ERROR(fp,badio);
-	SendString(fp,data->hdr->widget);	ON_IO_ERROR(fp,badio);
-	SendChar  (fp,data->hdr->puttype);	ON_IO_ERROR(fp,badio);
-	dbgprintf("window    = [%s]",data->hdr->window);
-	SendInt(fp,data->w.sp);				ON_IO_ERROR(fp,badio);
-	for (i=0;i<data->w.sp;i++) {
-		SendChar(fp,data->w.s[i].puttype);ON_IO_ERROR(fp,badio);
-		SendString(fp,data->w.s[i].window);ON_IO_ERROR(fp,badio);
-	}
-	while (1) {
-		c = RecvPacketClass(fp);		ON_IO_ERROR(fp,badio);
-		switch (c) {
-		case WFC_DATA:
-			dbgmsg(">DATA");
-			RecvnString(fp,SIZE_LONGNAME,wname);ON_IO_ERROR(fp,badio);
-			if ((scrdata = GetScreenData(data,wname)) != NULL) {
-				dbgmsg("send OK");
-				SendPacketClass(fp,WFC_OK);	ON_IO_ERROR(fp,badio);
-				SendLBS(fp,scrdata);		ON_IO_ERROR(fp,badio);
-			} else {
-				dbgmsg("send NODATA");
-				SendPacketClass(fp,WFC_NODATA);	ON_IO_ERROR(fp,badio);
-			}
-			dbgmsg("<DATA");
-			break;
-		case WFC_DONE:
-			dbgmsg("DONE");
-			return TRUE;
-		case WFC_END:
-			dbgmsg("END");
-			return FALSE;
-		default:
-			Warning("[%s] session failure packet [%X]",data->hdr->uuid,c);
-			dbgprintf("c = [%X]\n",c);
-			return FALSE;
-		}
-	}
-	Warning("does not reach");
-LEAVE_FUNC;
-	return FALSE;
-badio:
-	Warning("[%s] session recv failure",data->hdr->uuid);
-LEAVE_FUNC;
-	return FALSE;
-}
-
-static	SessionData	*
 Process(
 	SessionData	*data)
 {
 	struct	timeval	tv1;
 	struct	timeval	tv2;
 ENTER_FUNC;
+	data->fInProcess = TRUE;
 	gettimeofday(&tv1,NULL);
 	CoreEnqueue(data);
 	data = DeQueue(data->term->que);
@@ -467,117 +313,362 @@ ENTER_FUNC;
 	timersub(&tv2, &tv1, &(data->process_time));
 	timeradd(&(data->total_process_time), &(data->process_time), &tv1);
 	data->total_process_time = tv1;
-LEAVE_FUNC;
-	return	(data);
-}
-
-static	SessionData	*
-CheckSession(
-	NETFILE	*fp,
-	char	*term)
-{
-	SessionData	*data;
-ENTER_FUNC;
-	if ((data = LookupSession(term)) != NULL) {
-		if (!data->fInProcess) {
-			SendPacketClass(fp,WFC_TRUE);			ON_IO_ERROR(fp,badio);
-			data->hdr->command = APL_COMMAND_GET;
-			gettimeofday(&data->access_time,NULL);
-		} else {
-			Warning("Error: Other threads are processing it.");
-			SendPacketClass(fp,WFC_FALSE);			ON_IO_ERROR(fp,badio);
-			data = NULL;
-		}
-	} else {
-		Warning("session [%s] does not found",term);
-	}
-LEAVE_FUNC;
-	return data;
-badio:
-LEAVE_FUNC;
-	Warning("CheckSession failure: io error");
-	return NULL;
-}
-
-static	void
-KeepSession(
-	SessionData	*data)
-{
-ENTER_FUNC;
 	data->fInProcess = FALSE;
 LEAVE_FUNC;
+	return data;
 }
 
-static	void
-TermMain(
-	TermNode	*term,
-	SessionData	*data)
+static	Bool
+CheckJSONObject(
+	json_object *obj,
+	enum json_type type)
 {
-	if (data != NULL) {
-		if (data->status != SESSION_STATUS_ABORT) {
-			UpdateSession(data);
-			data = Process(data);
-		}
-		if (data->status != SESSION_STATUS_NORMAL) {
-			DeregisterSession(data);
-		} else {
-			if (SendTerminal(term->fp,data)) {
-				KeepSession(data);
-				UpdateSession(data);
-			} else {
-				DeregisterSession(data);
-			}
-		}
+	if (obj == NULL) {
+		return FALSE;
 	}
-	SendPacketClass(term->fp,WFC_DONE);
+	if (is_error(obj)) {
+		return FALSE;
+	}
+	if (!json_object_is_type(obj,type)) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static	json_object*
+MakeJSONResponseTemplate(
+	json_object *obj)
+{
+	json_object *res,*child;
+
+	res = json_object_new_object();
+	json_object_object_add(res,"jsonrpc",json_object_new_string("2.0"));
+	child = json_object_object_get(obj,"id");
+	json_object_object_add(res,"id",json_object_new_int(json_object_get_int(child)));
+
+	return res;
 }
 
 static	void
-TermInit(
-	TermNode	*term)
+JSONRPC_Error(
+	TermNode *term,
+	json_object *obj,
+	int no,
+	const char *msg)
 {
-	SessionData	*data;
-	LD_Node		*ld;
-	int			i,sesnum;
-	uuid_t		u;
+	json_object *error,*res;
+
+	res = MakeJSONResponseTemplate(obj);
+	error = json_object_new_object();
+	json_object_object_add(error,"code",json_object_new_int(no));
+	json_object_object_add(error,"message",json_object_new_string(msg));
+	json_object_object_add(res,"error",error);
+
+	SendString(term->fp,(char*)json_object_to_json_string(res));
+	if (CheckNetFile(term->fp)) {
+		CloseNet(term->fp);
+	}
+	json_object_put(res);
+}
+
+static	gboolean
+CheckClientVersion(
+	char *version)
+{
+	if (!strncmp("1.4.8",version,strlen("1.4.8"))) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static	void
+RPC_StartSession(
+	TermNode *term,
+	json_object *obj)
+{
+	json_object *params,*meta,*child,*result,*res;
+	SessionData *data;
+	uuid_t u;
+	int sesnum;
 ENTER_FUNC;
+	params = json_object_object_get(obj,"params");
+	if (!CheckJSONObject(params,json_type_object)) {
+		Warning("request have not params");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	meta = json_object_object_get(params,"meta");
+	if (!CheckJSONObject(meta,json_type_object)) {
+		Warning("request have not meta");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	child = json_object_object_get(meta,"client_version");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not client_version");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	if (!CheckClientVersion((char*)json_object_get_string(child))) {
+		Warning("invalid client version:%s",json_object_get_string(child));
+		JSONRPC_Error(term,obj,-20001,"Invalid Client Version");
+		return;
+	}
+
 	sesnum = GetSessionNum();
 	if (SesNum != 0 && sesnum >= SesNum) {
-		Warning("Discard new session;max session number(%d) reached", SesNum);
-		SendPacketClass(term->fp,WFC_NOT);
+		Warning("Discard new session(%s);max session number(%d)",term,SesNum);
 		CloseNet(term->fp);
 		return;
 	}
 
 	data = NewSessionData();
 	data->term = term;
-	data->fInProcess = TRUE;
 	uuid_generate(u);
 	uuid_unparse(u,data->hdr->uuid);
 
-	if ((ld = g_hash_table_lookup(APS_Hash,ThisEnv->InitialLD)) == NULL) {
-		Error("cannot find initial ld:%s.check directory",ThisEnv->InitialLD);
+	child = json_object_object_get(meta,"user");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not user");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
 	}
+	memset(data->hdr->user,0,SIZE_USER+1);
+	strncpy(data->hdr->user,(char*)json_object_get_string(child),SIZE_USER);
 
-	RecvnString(term->fp,SIZE_NAME,data->hdr->user);ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp,SIZE_HOST,data->host);	ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp,SIZE_NAME,data->agent);ON_IO_ERROR(term->fp,badio);
+	child = json_object_object_get(meta,"host");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not host");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	memset(data->host,0,SIZE_HOST+1);
+	strncpy(data->host,json_object_get_string(child),SIZE_HOST);
 
-	MessageLogPrintf("[%s:%s] session start(%d)",
-		data->hdr->user,data->hdr->uuid,sesnum+1);
+	memset(data->agent,0,SIZE_NAME+1);
+
+	MessageLogPrintf("[%s:%s] session start(%d)",data->hdr->user,data->hdr->uuid,sesnum+1);
 	dbgprintf("uuid   = [%s]",data->hdr->uuid);
 	dbgprintf("user   = [%s]",data->hdr->user);
 	dbgprintf("host   = [%s]",data->host);
 	dbgprintf("agent  = [%s]",data->agent);
 
-	SendPacketClass(term->fp,WFC_OK);	ON_IO_ERROR(term->fp,badio);
-	SendString(term->fp,data->hdr->uuid);	ON_IO_ERROR(term->fp,badio);
+	data->hdr->puttype = SCREEN_INIT;
+	RegisterSession(data);
 
+	res = MakeJSONResponseTemplate(obj);
+	result = json_object_new_object();
+	meta = json_object_new_object();
+	json_object_object_add(meta,"session_id",json_object_new_string(data->hdr->uuid));
+	json_object_object_add(result,"meta",meta);
+	json_object_object_add(result,"app_rpc_endpoint_uri",json_object_new_string(""));
+	json_object_object_add(result,"app_rest_api_uri_root",json_object_new_string(""));
+	json_object_object_add(res,"result",result);
+
+	SendString(term->fp,(char*)json_object_to_json_string(res));
+	if (CheckNetFile(term->fp)) {
+		CloseNet(term->fp);
+	} else {
+		DeregisterSession(data);
+	}
+	json_object_put(res);
+LEAVE_FUNC;
+}
+
+static	void
+RPC_EndSession(
+	TermNode *term,
+	json_object *obj)
+{
+	json_object *params,*meta,*child,*result,*res;
+	SessionData *data;
+	LD_Node		*ld;
+	const char *session_id;
+ENTER_FUNC;
+	params = json_object_object_get(obj,"params");
+	if (!CheckJSONObject(params,json_type_object)) {
+		Warning("request have not params");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	meta = json_object_object_get(params,"meta");
+	if (!CheckJSONObject(meta,json_type_object)) {
+		Warning("request have not meta");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	child = json_object_object_get(meta,"session_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not session_id");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	session_id = json_object_get_string(child);
+	data = LookupSession(session_id);
+	if (data == NULL) {
+		Warning("session [%s] does not found",session_id);
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+
+	data->term = term;
+
+	if ((ld = g_hash_table_lookup(APS_Hash, "session"))  !=  NULL) {
+		strncpy(data->hdr->window,"session_end",
+			sizeof(data->hdr->window));
+		data->hdr->widget[0] = 0;
+		sprintf(data->hdr->event,"SESSIONEND");
+		data->hdr->puttype = SCREEN_NULL;
+		ChangeLD(data,ld);
+		data->status = SESSION_STATUS_END;
+		data = Process(data);
+	}
+
+
+	DeregisterSession(data);
+
+	res = MakeJSONResponseTemplate(obj);
+	result = json_object_new_object();
+	json_object_object_add(res,"result",result);
+
+	SendString(term->fp,(char*)json_object_to_json_string(res));
+	json_object_put(res);
+
+	CloseNet(term->fp);
+LEAVE_FUNC;
+}
+
+static	json_object*
+MakeEventResponse(
+	json_object *obj,
+	SessionData *data)
+{
+	json_object *result,*res,*window_data,*windows,*w,*child;
+	RecordStruct *rec;
+	LargeByteString *scrdata;
+	char *buf;
+	const char *puttype;
+	int i;
+
+	res = MakeJSONResponseTemplate(obj);
+	result = json_object_new_object();
+	json_object_object_add(res,"result",result);
+
+	window_data = json_object_new_object();
+	json_object_object_add(window_data,"focused_window",
+		json_object_new_string(data->hdr->window));
+	json_object_object_add(window_data,"focused_widget",
+		json_object_new_string(data->hdr->widget));
+
+	windows = json_object_new_array();
+	for(i=0;i<data->w.sp;i++) {
+		w = json_object_new_object();
+
+		switch(data->w.s[i].puttype) {
+		case SCREEN_CURRENT_WINDOW:
+			puttype = "current";
+			break;
+		case SCREEN_NEW_WINDOW:
+			puttype = "new";
+			break;
+		case SCREEN_CLOSE_WINDOW:
+			puttype = "close";
+			break;
+		default:
+			Warning("invalid puttype %s:%d",data->w.s[i].window,data->w.s[i].puttype);
+			puttype = "new";
+			break;
+		}
+		json_object_object_add(w,"put_type",
+			json_object_new_string(puttype));
+		json_object_object_add(w,"window",
+			json_object_new_string(data->w.s[i].window));
+
+		scrdata = GetScreenData(data,data->w.s[i].window);
+		if (scrdata == NULL) {
+			Warning("scrdata %s null",data->w.s[i].window);
+			json_object_object_add(w,"screen_data",
+				json_object_new_object());
+		} else {
+			rec = GetWindow(data->w.s[i].window);
+			NativeUnPackValue(NULL,LBS_Body(scrdata),rec->value);
+			buf = xmalloc(JSON_SizeValue(NULL,rec->value));
+			JSON_PackValue(NULL,buf,rec->value);
+			child = json_tokener_parse(buf);
+			xfree(buf);
+			if (child == NULL || is_error(child)) {
+				json_object_object_add(w,"screen_data",
+					json_object_new_object());
+			} else {
+				json_object_object_add(w,"screen_data",
+					child);
+			}
+		}
+		json_object_array_add(windows,w);
+	}
+	json_object_object_add(window_data,"windows",windows);
+	json_object_object_add(result,"window_data",window_data);
+	return res;
+}
+
+static	void
+RPC_GetWindow(
+	TermNode *term,
+	json_object *obj)
+{
+	json_object *params,*meta,*child,*res;
+	SessionData *data;
+	LD_Node		*ld;
+	const char *session_id;
+	int i;
+ENTER_FUNC;
+	params = json_object_object_get(obj,"params");
+	if (!CheckJSONObject(params,json_type_object)) {
+		Warning("request have not params");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	meta = json_object_object_get(params,"meta");
+	if (!CheckJSONObject(meta,json_type_object)) {
+		Warning("request have not meta");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	child = json_object_object_get(meta,"session_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not session_id");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	session_id = json_object_get_string(child);
+	data = LookupSession(session_id);
+	if (data == NULL) {
+		Warning("session [%s] does not found",session_id);
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+
+	if (data->fInProcess) {
+		Warning("Error: %s is proccesing in other thread",session_id);
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+
+	if (data->hdr->puttype != SCREEN_INIT) {
+		Warning("Error: %s recall get_window",session_id);
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+
+	if ((ld = g_hash_table_lookup(APS_Hash,ThisEnv->InitialLD)) == NULL) {
+		Error("cannot find initial ld:%s.check directory",ThisEnv->InitialLD);
+	}
+
+	data->term = term;
 	data->ld = ld;
 	data->linkdata = NewLinkData();
 	data->cWindow = ld->info->cWindow;
-	data->scrdata = 
-		(LargeByteString **)xmalloc(sizeof(void*)*data->cWindow);
+	data->scrdata = (LargeByteString **)xmalloc(sizeof(void*)*data->cWindow);
 	for	(i = 0 ; i < data->cWindow ; i ++) {
 		if (data->ld->info->windows[i] != NULL) {
 			dbgprintf("[%s]",data->ld->info->windows[i]->name);
@@ -588,100 +679,351 @@ ENTER_FUNC;
 		}
 	}
 	data->hdr->puttype = SCREEN_NULL;
-	RegisterSession(data);
-	TermMain(term,data);
-	CloseNet(term->fp);
-badio:
-LEAVE_FUNC;
-	return;
-}
+	UpdateSession(data);
+	data = Process(data);
 
-static	void
-TermSession(
-	TermNode	*term)
-{
-	SessionData	*data;
-	char		buff[SIZE_TERM+1];
-	
-	RecvnString(term->fp,SIZE_TERM,buff);
-	data = CheckSession(term->fp,buff);
-	if (data != NULL) {
-		data = ReadTerminal(term->fp,data);
-		data->term = term;
-		data->retry = 0;
-		TermMain(term,data);
+	if (data->status != SESSION_STATUS_NORMAL) {
+		Warning("Error: %s Session Abort",data->hdr->uuid);
+		JSONRPC_Error(term,obj,-20002,"Session Abort");
+		DeregisterSession(data);
+		return;
+	} else {
+		UpdateSession(data);
 	}
-	CloseNet(term->fp);
+
+	res = MakeEventResponse(obj,data);
+	SendString(term->fp,(char*)json_object_to_json_string(res));
+	if (CheckNetFile(term->fp)) {
+		CloseNet(term->fp);
+	} else {
+		DeregisterSession(data);
+	}
+	json_object_put(res);
+LEAVE_FUNC;
 }
 
 static	void
-APISession(
-	TermNode	*term)
+RPC_SendEvent(
+	TermNode *term,
+	json_object *obj)
 {
+	json_object *params,*meta,*child,*res,*event_data;
 	SessionData *data;
-	APIData *api;
-	char ld[SIZE_NAME+1];
-	char window[SIZE_NAME+1];
-	char user[SIZE_USER+1];
-	char host[SIZE_HOST+1];
+	LD_Node		*ld;
+	RecordStruct *rec;
+	LargeByteString *scrdata;
+	const char *session_id,*window,*widget,*event;
+	size_t	size;
+	int i;
+ENTER_FUNC;
+	params = json_object_object_get(obj,"params");
+	if (!CheckJSONObject(params,json_type_object)) {
+		Warning("request have not params");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	meta = json_object_object_get(params,"meta");
+	if (!CheckJSONObject(meta,json_type_object)) {
+		Warning("request have not meta");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	child = json_object_object_get(meta,"session_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not session_id");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	session_id = json_object_get_string(child);
+	data = LookupSession(session_id);
+	if (data == NULL) {
+		Warning("session [%s] does not found",session_id);
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
 
-	data = NULL;
-	RecvnString(term->fp, sizeof(ld), ld);			
-		ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp, sizeof(window), window);			
-		ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp, sizeof(user), user);		
-		ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp, sizeof(host), host);	
-		ON_IO_ERROR(term->fp,badio);
+	if (data->fInProcess) {
+		Warning("Error: %s is proccesing in other thread",session_id);
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+
+	data->term = term;
+
+	// readterminal
+	event_data = json_object_object_get(params,"event_data");
+	if (!CheckJSONObject(event_data,json_type_object)) {
+		Warning("request have not event_data");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	child = json_object_object_get(event_data,"window");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not event_data->window");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	window = json_object_get_string(child);
+
+	child = json_object_object_get(event_data,"widget");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not event_data->widget");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	widget = json_object_get_string(child);
+
+	child = json_object_object_get(event_data,"event");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not event_data->event");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	event = json_object_get_string(child);
+
+	child = json_object_object_get(event_data,"event");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not event_data->event");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	event = json_object_get_string(child);
+
+	child = json_object_object_get(event_data,"screen_data");
+	if (!CheckJSONObject(child,json_type_object)) {
+		Warning("request have not event_data->screen_data");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+
+	memset(data->hdr->window,0,SIZE_NAME+1);
+	memset(data->hdr->widget,0,SIZE_NAME+1);
+	memset(data->hdr->event,0,SIZE_NAME+1);
+
+	strncpy(data->hdr->window,window,SIZE_NAME);
+	strncpy(data->hdr->widget,widget,SIZE_NAME);
+	strncpy(data->hdr->event,event,SIZE_NAME);
+
+	ld = g_hash_table_lookup(ComponentHash,data->hdr->window);
+	if (ld == NULL) {
+		Warning("invalid window name:%s",data->hdr->window);
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	dbgprintf("ld = [%s]",ld->info->name);
+	dbgprintf("window = [%s]",data->hdr->window);
+
+	rec = GetWindow(data->hdr->window);
+	scrdata = GetScreenData(data,data->hdr->window);
+	JSON_UnPackValue(NULL,(char*)json_object_to_json_string(child),rec->value);
+	size = NativeSizeValue(NULL,rec->value);
+	LBS_ReserveSize(scrdata,size,FALSE);
+	NativePackValue(NULL,LBS_Body(scrdata),rec->value);
+
+	data->hdr->puttype = SCREEN_NULL;
+	data->hdr->command = APL_COMMAND_GET;
+	data->term = term;
+	data->retry = 0;
+
+	UpdateSession(data);
+	data = Process(data);
+
+	if (data->status != SESSION_STATUS_NORMAL) {
+		Warning("Error: %s Session Abort",data->hdr->uuid);
+		JSONRPC_Error(term,obj,-20002,"Session Abort");
+		DeregisterSession(data);
+		return;
+	} else {
+		UpdateSession(data);
+	}
+
+	res = MakeEventResponse(obj,data);
+
+	for (i=0;i<data->w.sp;i++) {
+		if (data->w.s[i].puttype == SCREEN_CLOSE_WINDOW) {
+			data->w.s[i].puttype = SCREEN_NULL;
+		}
+	}
+
+	SendString(term->fp,(char*)json_object_to_json_string(res));
+	if (CheckNetFile(term->fp)) {
+		CloseNet(term->fp);
+	} else {
+		DeregisterSession(data);
+	}
+	json_object_put(res);
+LEAVE_FUNC;
+}
+
+static	void
+RPC_PandaAPI(
+	TermNode *term,
+	json_object *obj)
+{
+	json_object *params,*meta,*child,*res;
+	SessionData *data;
+	RecordStruct *rec;
+	APIData *api;
+	const char *user,*host,*ld,*window;
+	char *buf;
+	size_t size;
+ENTER_FUNC;
+	params = json_object_object_get(obj,"params");
+	if (!CheckJSONObject(params,json_type_object)) {
+		Warning("request have not params");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	meta = json_object_object_get(params,"meta");
+	if (!CheckJSONObject(meta,json_type_object)) {
+		Warning("request have not meta");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	child = json_object_object_get(meta,"user");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not user");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	user = json_object_get_string(child);
+
+	child = json_object_object_get(meta,"host");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not host");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	host = json_object_get_string(child);
+
+	child = json_object_object_get(meta,"ld");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not ld");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	ld = json_object_get_string(child);
+
+	child = json_object_object_get(meta,"window");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not window");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	window = json_object_get_string(child);
 
 	data = InitAPISession(user,ld,window,host);
-	if (data != NULL) {
-		data->term = term;
-		data->retry = 0;
-		api = data->apidata;
-		RecvLBS(term->fp, api->rec);
+	if (data == NULL) {
+		Warning("api %s not found",ld);
+		JSONRPC_Error(term,obj,-20003,"Invalid Window");
+		return;
+	}
+	data->term = term;
+	data->retry = 0;
+	api = data->apidata;
 
-		data = Process(data);
-		api = data->apidata;
+	rec = GetWindow((char*)window);
+	JSON_UnPackValue(NULL,(char*)json_object_to_json_string(params),rec->value);
+	size = NativeSizeValue(NULL,rec->value);
+	LBS_ReserveSize(api->rec,size,FALSE);
+	NativePackValue(NULL,LBS_Body(api->rec),rec->value);
 
-		SendPacketClass(term->fp, api->status);
-			ON_IO_ERROR(term->fp,badio2);
-		if (api->status == WFC_API_OK) {
-			SendLBS(term->fp, api->rec);
-				ON_IO_ERROR(term->fp,badio2);
-		}
-		CloseNet(term->fp);
-	badio2:
-		FreeSessionData(data);
-	} else {
-		SendPacketClass(term->fp,WFC_API_NOT_FOUND);
-			ON_IO_ERROR(term->fp,badio2);
+	data = Process(data);
+	api = data->apidata;
+
+	res = MakeJSONResponseTemplate(obj);
+	NativeUnPackValue(NULL,LBS_Body(api->rec),rec->value);
+	buf = xmalloc(JSON_SizeValue(NULL,rec->value));
+	JSON_PackValue(NULL,buf,rec->value);
+	child = json_tokener_parse(buf);
+	xfree(buf);
+
+	json_object_object_add(res,"result",child);
+
+	SendString(term->fp,(char*)json_object_to_json_string(res));
+	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
 	}
-	badio:
-		;
+	FreeSessionData(data);
+	json_object_put(res);
+LEAVE_FUNC;
+}
+
+static	void
+JSONRPCHandler(
+	TermNode *term)
+{
+	char *reqjson,*method;
+	json_object *obj,*child;
+ENTER_FUNC;
+	reqjson =  RecvStringNew(term->fp); ON_IO_ERROR(term->fp,badio);
+	obj = json_tokener_parse(reqjson);
+	xfree(reqjson);
+	if (!CheckJSONObject(obj,json_type_object)) {
+		Warning("jsonrpc json parse error");
+		JSONRPC_Error(term,NULL,-32700,"Parse Error");
+		return;
+	}
+	child = json_object_object_get(obj,"jsonrpc");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("jsonrpc invalid reqeust");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		json_object_put(obj);
+		return;
+	}
+	if (strcmp((char*)json_object_get_string(child),"2.0")) {
+		Warning("jsonrpc invalid reqeust");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		json_object_put(obj);
+		return;
+	}
+	child = json_object_object_get(obj,"id");
+	if (!CheckJSONObject(child,json_type_int)) {
+		Warning("jsonrpc invalid reqeust");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		json_object_put(obj);
+		return;
+	}
+	child = json_object_object_get(obj,"params");
+	if (!CheckJSONObject(child,json_type_object)) {
+		Warning("jsonrpc invalid reqeust");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		json_object_put(obj);
+		return;
+	}
+	child = json_object_object_get(obj,"method");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("jsonrpc method not found");
+		JSONRPC_Error(term,obj,-32601,"Method not found");
+		json_object_put(obj);
+		return;
+	}
+	method = (char*)json_object_get_string(child);
+	if (!strcmp(method,"start_session")) {
+		RPC_StartSession(term,obj);
+	} else if (!strcmp(method,"end_session")) {
+		RPC_EndSession(term,obj);
+	} else if (!strcmp(method,"get_window")) {
+		RPC_GetWindow(term,obj);
+	} else if (!strcmp(method,"send_event")) {
+		RPC_SendEvent(term,obj);
+	} else if (!strcmp(method,"panda_api")) {
+		RPC_PandaAPI(term,obj);
+	} else {
+		Warning("jsonrpc method(%s) not found",method);
+		JSONRPC_Error(term,obj,-32601,"Method not found");
+	}
+	json_object_put(obj);
+badio:
+LEAVE_FUNC;
 }
 
 static	void
 TermThread(
 	TermNode	*term)
 {
-	PacketClass klass;
-
 ENTER_FUNC;
-	klass = RecvPacketClass(term->fp);
-	switch (klass) {
-	case WFC_TERM_INIT:
-		TermInit(term);
-		break;
-	case WFC_TERM:
-		TermSession(term);
-		break;
-	case WFC_API:
-		APISession(term);
-		break;
-	}
+	JSONRPCHandler(term);
 	FreeQueue(term->que);
 	xfree(term);
 LEAVE_FUNC;

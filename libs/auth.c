@@ -44,7 +44,6 @@
 
 #include	"libmondai.h"
 #include	"RecParser.h"
-#include	"monapi.h"
 #include	"DDparser.h"
 #include	"auth.h"
 #include	"message.h"
@@ -247,56 +246,6 @@ AuthLoadPasswd(char *fname)
 "	content_type			varchar(64);\n"					\
 "	body					object;\n"						\
 "};"
-
-static RecordStruct *rec = NULL;
-
-extern	Bool
-AuthAPI(
-	char	*user,
-	char	*password,
-	char	*type,
-	char	*id)
-{
-	MonAPIData *data;
-	Bool rc = FALSE;
-	ValueStruct *v;
-
-	if (rec == NULL) {
-		RecParserInit();
-		rec = ParseRecordMem(SESSION_START_DEF);
-	}
-
-	if (user == NULL || strlen(user) <= 0 || password == NULL) {
-		return rc;
-	}
-
-	data = NewMonAPIData();
-	strncpy(data->ld,     "session",sizeof(data->ld));
-	strncpy(data->window, "session_start",sizeof(data->ld));
-	strncpy(data->user,   "auth", sizeof(data->user));
-	strncpy(data->host,   "", sizeof(data->host));
-	data->value = rec->value;
-	v = rec->value;
-	InitializeValue(v);
-	ValueInteger(GetItemLongName(v,"http_status")) = 200;
-	SetValueString(GetItemLongName(v,"http_method"), "GET",NULL);
-	SetValueString(GetItemLongName(v,"arguments.user"),user,NULL);
-	SetValueString(GetItemLongName(v,"arguments.password"),password,NULL);
-	SetValueString(GetItemLongName(v,"arguments.session_type"),type,NULL);
-	switch(CallMonAPI(data)) {
-	case WFC_API_OK:
-		if (ValueInteger(GetItemLongName(v,"http_status")) == 200) {
-			rc = TRUE;
-		}
-		break;
-	case WFC_API_NOT_FOUND:
-		break;
-	default:
-		break;
-	}
-	FreeMonAPIData(data);
-    return rc;
-}
 
 extern	Bool
 AuthSingle(

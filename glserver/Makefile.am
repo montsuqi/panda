@@ -44,9 +44,5 @@ AM_CPPFLAGS 			= 		\
 glserver_SOURCES	=				\
 	glserver.c		glserver.h		\
 	http.c			http.h			\
-	sysdataio.c		sysdataio.h		\
-	blobcache.c		blobcache.h		\
-	sessioncall.c	sessioncall.h	\
-	driver.c		driver.h		\
-	glcomm.c		glcomm.h		\
-	server.c
+	wfcio.c			wfcio.h			\
+	sysdataio.c		sysdataio.h

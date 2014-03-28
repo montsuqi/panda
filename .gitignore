@@ -61,4 +61,11 @@ wfc/wfccontrol
 po/*.gmo
 po/stamp-po
 po/POTFILES
-
+po/Makevars.template
+INSTALL
+compile
+config.guess
+config.sub
+depcomp
+install-sh
+missing

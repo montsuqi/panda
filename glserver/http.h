@@ -87,6 +87,6 @@
 #define HTTP_BANDWIDTH_LIMIT_EXCEEDED 509
 #define HTTP_NOT_EXTENDED 510
 
-void HTTP_Method(PacketClass klass, NETFILE *fpComm);
+void HTTP_Method(NETFILE *fpComm);
 
 #endif

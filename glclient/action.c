@@ -1295,6 +1295,7 @@ UpdateScreen()
 		Error("invalid json part:focused_window");
 	}
 	f_window = json_object_get_string(child);
+fprintf(stderr,"f_window:%s -> %s\n",THISWINDOW(Session),f_window);
 	if (THISWINDOW(Session) != NULL) {
 		g_free(THISWINDOW(Session));
 	}

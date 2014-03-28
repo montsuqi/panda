@@ -220,10 +220,12 @@ JSONRPC(
 	}
 	jsonstr = (char*)json_object_to_json_string(obj);
 	jsonsize = strlen(jsonstr);
+
 	LBS_EmitStart(readbuf);
 	LBS_EmitString(readbuf,jsonstr);
 	LBS_EmitEnd(readbuf);
 	LBS_SetPos(readbuf,0);
+
 	json_object_put(obj);
 
 	if (writebuf == NULL) {

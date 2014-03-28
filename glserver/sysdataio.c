@@ -35,7 +35,6 @@
 #include	"RecParser.h"
 #include	"comm.h"
 #include	"comms.h"
-#include	"blobcache.h"
 #include	"socket.h"
 #include	"wfcdata.h"
 #include	"sysdatacom.h"
@@ -43,14 +42,14 @@
 #include	"sysdbreq.h"
 #include	"sysdataio.h"
 #include	"enum.h"
+#include	"net.h"
 #include	"message.h"
 #include	"debug.h"
 
-static	NETFILE	*fp;
-
-void
+static NETFILE *
 ConnectSysData()
 {
+	NETFILE *fp;
 	Port	*port;
 	int		fd;
 ENTER_FUNC;
@@ -64,93 +63,73 @@ ENTER_FUNC;
 		Error("cannot connect sysdata server");
 	}
 LEAVE_FUNC;
+	return fp;
 }
 
-void
-DisconnectSysData()
+static void
+DisconnectSysData(NETFILE *fp)
 {
 	if (fp != NULL && CheckNetFile(fp)) {
 		CloseNet(fp);
 	}
 }
 
-static	void
-_AccessBLOB(
-	NETFILE		*fp,
-	int			mode,
-	ValueStruct	*value)
+void
+GLExportBLOB(
+	MonObjectType	obj,
+	char			**out,
+	size_t			*size)
 {
-	int		i;
+	NETFILE *fp;
 
-ENTER_FUNC;
-	if		(  value  ==  NULL  )	return;
-	if		(  IS_VALUE_NIL(value)  )	return;
-	switch	(ValueType(value)) {
-	  case	GL_TYPE_ARRAY:
-		for	( i = 0 ; i < ValueArraySize(value) ; i ++ ) {
-			_AccessBLOB(fp, mode, ValueArrayItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_VALUES:
-		for	( i = 0 ; i < ValueValuesSize(value) ; i ++ ) {
-			_AccessBLOB(fp, mode, ValueValuesItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_RECORD:
-		for	( i = 0 ; i < ValueRecordSize(value) ; i ++ ) {
-			_AccessBLOB(fp, mode, ValueRecordItem(value,i));
-		}
-		break;
-	  case	GL_TYPE_INT:
-	  case	GL_TYPE_FLOAT:
-	  case	GL_TYPE_BOOL:
-	  case	GL_TYPE_BYTE:
-	  case	GL_TYPE_CHAR:
-	  case	GL_TYPE_VARCHAR:
-	  case	GL_TYPE_DBCODE:
-	  case	GL_TYPE_TEXT:
-	  case	GL_TYPE_BINARY:
-	  case	GL_TYPE_NUMBER:
-		break;
-	  case	GL_TYPE_OBJECT:
-		switch(mode) {
-		case BLOB_ACCESS_IMPORT:
-			if (IS_OBJECT_NULL(ValueObjectId(value))) {
-				if (BlobCacheFileSize(value) > 0) {
-					ValueObjectId(value) = RequestImportBLOB(fp,BlobCacheFileName(value));
-				}
-			}
-			break;
-		case BLOB_ACCESS_EXPORT:
-			if (!IS_OBJECT_NULL(ValueObjectId(value))) {
-				RequestExportBLOB(fp,ValueObjectId(value),BlobCacheFileName(value));
-			}
-			break;
-		}
-		break;
-	  case	GL_TYPE_ALIAS:
-	  default:
-		break;
-	}
-LEAVE_FUNC;
+	fp = ConnectSysData();
+	RequestExportBLOBMem(fp,obj,out,size);
+	DisconnectSysData(fp);
 }
 
-
-extern	void
-AccessBLOB(
-	int			mode,
-	ValueStruct	*value)
+MonObjectType
+GLImportBLOB(
+	char	*in,
+	size_t	size)
 {
-ENTER_FUNC;
-	if (fp != NULL && CheckNetFile(fp)) {
-		_AccessBLOB(fp,mode,value);
-	} else {
-		Error("AccessBLOB failure");
-	}
-LEAVE_FUNC;
+	NETFILE *fp;
+	MonObjectType ret;
+
+	fp = ConnectSysData();
+	ret = RequestImportBLOBMem(fp,in,size);
+	DisconnectSysData(fp);
+	return ret;
 }
 
 static ValueStruct *val = NULL;
+
+extern	gboolean
+CheckSession(
+	const char *term)
+{
+	ValueStruct *v;
+	PacketClass rc;
+	NETFILE *fp;
+	gboolean ret;
+ENTER_FUNC;
+	ret = FALSE;
+	fp = ConnectSysData();
+	if (fp != NULL && CheckNetFile(fp)) {
+		if (val == NULL) {
+			val = RecParseValueMem(SYSDBVAL_DEF,NULL);
+		}
+		InitializeValue(val);
+		v = GetRecordItem(val,"id");
+		SetValueString(v,term,NULL);
+		rc = SYSDB_GetMessage(fp,val);
+		ret = rc == SESSION_CONTROL_OK;
+	} else {
+		Error("GetSessionMessage failure");
+	}
+	DisconnectSysData(fp);
+LEAVE_FUNC;
+	return ret;
+}
 
 extern	void
 GetSessionMessage(
@@ -161,7 +140,9 @@ GetSessionMessage(
 {
 	ValueStruct *v;
 	PacketClass rc;
+	NETFILE *fp;
 ENTER_FUNC;
+	fp = ConnectSysData();
 	if (fp != NULL && CheckNetFile(fp)) {
 		if (val == NULL) {
 			val = RecParseValueMem(SYSDBVAL_DEF,NULL);
@@ -170,6 +151,9 @@ ENTER_FUNC;
 		v = GetRecordItem(val,"id");
 		SetValueString(v,term,NULL);
 		rc = SYSDB_GetMessage(fp,val);
+		if (rc != SESSION_CONTROL_OK) {
+			Error("GetSessionMessage failure");
+		}
 		v = GetRecordItem(val,"popup");
 		*popup = g_strdup(ValueToString(v,NULL));
 		v = GetRecordItem(val,"dialog");
@@ -179,6 +163,7 @@ ENTER_FUNC;
 	} else {
 		Error("GetSessionMessage failure");
 	}
+	DisconnectSysData(fp);
 LEAVE_FUNC;
 }
 
@@ -188,7 +173,9 @@ ResetSessionMessage(
 {
 	ValueStruct *v;
 	PacketClass rc;
+	NETFILE *fp;
 ENTER_FUNC;
+	fp = ConnectSysData();
 	if (fp != NULL && CheckNetFile(fp)) {
 		if (val == NULL) {
 			val = RecParseValueMem(SYSDBVAL_DEF,NULL);
@@ -197,8 +184,12 @@ ENTER_FUNC;
 		v = GetRecordItem(val,"id");
 		SetValueString(v,term,NULL);
 		rc = SYSDB_ResetMessage(fp,val);
+		if (rc != SESSION_CONTROL_OK) {
+			Error("ResetSessionMessage failure");
+		}
 	} else {
 		Error("ResetSessionMessage failure");
 	}
+	DisconnectSysData(fp);
 LEAVE_FUNC;
 }

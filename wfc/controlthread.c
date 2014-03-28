@@ -47,7 +47,6 @@
 #include	"queue.h"
 #include	"directory.h"
 #include	"wfcdata.h"
-#include	"wfcio.h"
 #include	"wfc.h"
 #include	"termthread.h"
 #include	"corethread.h"

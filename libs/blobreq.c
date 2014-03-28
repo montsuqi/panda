@@ -168,6 +168,33 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
+extern	void
+RequestExportBLOBMem(
+	NETFILE			*fp,
+	MonObjectType	obj,
+	char			**out,
+	size_t			*size)
+{
+	char	*p;
+
+ENTER_FUNC;
+	*out = NULL;
+	RequestBLOB(fp,BLOB_EXPORT);		ON_IO_ERROR(fp,badio);
+	SendObject(fp,obj);					ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+			*size = RecvLength(fp);
+			p = xmalloc(*size);
+			Recv(fp,p,*size);			ON_IO_ERROR(fp,badio);
+			*out = p;
+	}
+LEAVE_FUNC;
+	return;
+  badio:
+	if (p != NULL) {
+		xfree(p);
+	}
+}
+
 extern	MonObjectType
 RequestImportBLOB(
 	NETFILE	*fp,
@@ -203,6 +230,27 @@ ENTER_FUNC;
 			SendLength(fp,0);
 			Flush(fp);
 		}
+	}
+  badio:
+LEAVE_FUNC;
+	return	(obj);
+}
+
+extern	MonObjectType
+RequestImportBLOBMem(
+	NETFILE	*fp,
+	char	*in,
+	size_t	size)
+{
+	MonObjectType	obj;
+
+ENTER_FUNC;
+	obj = GL_OBJ_NULL;
+	RequestBLOB(fp,BLOB_IMPORT);	ON_IO_ERROR(fp,badio);
+	if		(  RecvPacketClass(fp)  ==  BLOB_OK  ) {
+		obj = RecvObject(fp);		ON_IO_ERROR(fp,badio);
+		SendLength(fp,size);
+		Send(fp,in,size);			ON_IO_ERROR(fp,badio);
 	}
   badio:
 LEAVE_FUNC;

@@ -1,5 +1,6 @@
 /*
  * PANDA -- a simple transaction monitor
+ * Copyright (C) 1998-1999 Ogochan.
  * Copyright (C) 2000-2008 Ogochan & JMA (Japan Medical Association).
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -17,27 +18,8 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_DRIVER_H
-#define	_INC_DRIVER_H
-
-#include	"const.h"
-#include	"enum.h"
-#include	"libmondai.h"
-#include	"struct.h"
-#include	"glterm.h"
-#include	"wfcio.h"
-
-extern	ScreenData	*NewScreenData(void);
-extern	void		FreeScreenData(ScreenData *scr);
-extern	WindowData	*RegisterWindow(ScreenData *scr,const char *name);
-extern	ValueStruct	*GetWindowValue(ScreenData *scr,const char *name);
-extern	void		PutWindow(ScreenData *scr,const char *wname, unsigned char type);
-
-#undef	GLOBAL
-#ifdef	_DRIVER
-#define	GLOBAL	/*	*/
-#else
-#define	GLOBAL	extern
-#endif
-#undef	GLOBAL
+#ifndef	_INC_WFCIO_H
+#define	_INC_WFCIO_H
+void WFCIO_SetTermPort(const char*);
+json_object* WFCIO_JSONRPC(json_object *);
 #endif

@@ -48,7 +48,6 @@ libpanda_la_SOURCES	=				\
 	load.c			load.h			\
 	message.c		message.h		\
 	mhandler.c		mhandler.h		\
-	monapi.c		monapi.h		\
 	net.c			net.h			\
 	option.c		option.h		\
 	panda.h							\
@@ -57,8 +56,7 @@ libpanda_la_SOURCES	=				\
 	socket.c		socket.h		\
 	sysdatacom.h					\
 	sysdbreq.c		sysdbreq.h		\
-	term.c			term.h			\
-	wfcio.c			wfcio.h
+	term.c			term.h
 
 libpanda_la_LIBADD		=	\
 	-lm									\
@@ -89,7 +87,6 @@ libpandainclude_HEADERS =	\
 	load.h				\
 	message.h			\
 	mhandler.h			\
-	monapi.h			\
 	net.h				\
 	option.h			\
 	panda.h				\
@@ -98,8 +95,7 @@ libpandainclude_HEADERS =	\
 	socket.h			\
 	sysdatacom.h		\
 	sysdbreq.h			\
-	term.h				\
-	wfcio.h
+	term.h
 
 AM_CPPFLAGS 			= 	\
 	-I$(top_srcdir)					\
