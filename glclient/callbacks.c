@@ -176,8 +176,10 @@ ENTER_FUNC;
 	widget_name = (char *)gtk_widget_get_name(widget);
 	event = event != NULL ? event : widget_name;
 	if (strcmp(window_name,THISWINDOW(Session))) {
+#if 0
 		Warning("window name unmatched glade[%s],session[%s]",
 			window_name,THISWINDOW(Session));
+#endif
 		return;
 	}
 	if (!ISRECV(Session) && !ignore_event) {
