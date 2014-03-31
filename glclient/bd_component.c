@@ -158,14 +158,20 @@ bd_component_value_to_config(
 	BDComponent *self,
 	int n)
 {
-  const gchar *password;
+  const gchar *password,*uri,*newuri;
   gboolean savepassword;
 
   //basic
-  gl_config_set_string(n,"authuri",
-    gtk_entry_get_text(GTK_ENTRY(self->authuri)));
-  gl_config_set_string(n,"user",
-    gtk_entry_get_text(GTK_ENTRY(self->user)));
+  uri = gtk_entry_get_text(GTK_ENTRY(self->authuri));
+  if (g_regex_match_simple("/$",uri,G_REGEX_CASELESS,0)) {
+    newuri = g_strdup(uri);
+  } else {
+    newuri = g_strdup_printf("%s/",uri);
+  }
+  gl_config_set_string(n,"authuri",newuri);
+  g_free(newuri);
+
+  gl_config_set_string(n,"user",gtk_entry_get_text(GTK_ENTRY(self->user)));
   password = gtk_entry_get_text(GTK_ENTRY(self->password));
   savepassword = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->savepassword));
   if (savepassword) {
@@ -174,11 +180,6 @@ bd_component_value_to_config(
     gl_config_set_string(n,"password", "");
   }
   gl_config_set_boolean(n,"savepassword", savepassword);
-
-  AUTHURI(Session) = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->authuri)));
-  User = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->user)));
-  Pass = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->password)));
-  SavePass = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->savepassword));
 
   // other
   gl_config_set_string(n,"style", gtk_entry_get_text(GTK_ENTRY(self->style)));
@@ -189,15 +190,6 @@ bd_component_value_to_config(
   gl_config_set_boolean(n,"im_kana_off", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff)));
   gl_config_set_boolean(n,"timer", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->timer)));
   gl_config_set_int(n,"timerperiod", atoi(gtk_entry_get_text(GTK_ENTRY(self->timerperiod))));
-
-  Style = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->style)));
-  Gtkrc = g_strdup(gtk_entry_get_text(GTK_ENTRY(self->gtkrc)));
-  FontName = g_strdup(gtk_font_button_get_font_name(GTK_FONT_BUTTON(self->fontbutton)));
-  fMlog = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->mlog));
-  fKeyBuff = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->keybuff));
-  fIMKanaOff = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff));
-  fTimer = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->timer));
-  TimerPeriod = atoi(gtk_entry_get_text(GTK_ENTRY(self->timerperiod)));
 }
 
 BDComponent *

@@ -263,7 +263,7 @@ main(
 		BootDialogRun();
 		ExecClient();
 	} else {
-		LoadConfig(ConfigName);
+		LoadConfigByDesc(ConfigName);
 		ThisAskPass(_password);
 		ExecClient();
 	}

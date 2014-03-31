@@ -66,7 +66,8 @@ extern  gboolean    IsWidgetName(char *name);
 extern  gboolean    IsWidgetName2(char *name);
 
 extern	void		ListConfig();
-extern	void		LoadConfig(const char *configname);
+extern	void		LoadConfig(int n);
+extern	void		LoadConfigByDesc(const char *configname);
 extern  void        UI_Init(int argc, char **argv);
 extern	void		UI_Main(void);
 extern	void		InitStyle(void);

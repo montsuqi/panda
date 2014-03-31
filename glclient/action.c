@@ -1059,20 +1059,11 @@ ListConfig()
 
 extern void
 LoadConfig (
-	const char *desc)
+	int n)
 {
-	int i,n = -1;
-
-	for(i=0;i<gl_config_get_config_nums();i++) {
-		if (gl_config_have_config(i)) {
-			if (!strcmp(desc,gl_config_get_string(i,"description"))) {
-				n = i;
-				break;
-			}
-		}
-	}
-	if (n == -1) {
-		Error("could not found setting:%s",desc);
+	if (!gl_config_have_config(n)) {
+		Warning("no server setting:%d",n);
+		return;
 	}
 
 	AUTHURI(Session) = g_strdup(gl_config_get_string(n,"authuri"));
@@ -1088,6 +1079,26 @@ LoadConfig (
 	fTimer = gl_config_get_boolean(n,"timer");
 	TimerPeriod = gl_config_get_int(n,"timerperiod");
 	FontName = g_strdup(gl_config_get_string(n,"fontname"));
+}
+
+extern void
+LoadConfigByDesc (
+	const char *desc)
+{
+	int i,n = -1;
+
+	for(i=0;i<gl_config_get_config_nums();i++) {
+		if (gl_config_have_config(i)) {
+			if (!strcmp(desc,gl_config_get_string(i,"description"))) {
+				n = i;
+				break;
+			}
+		}
+	}
+	if (n == -1) {
+		Error("could not found setting:%s",desc);
+	}
+	LoadConfig(n);
 }
 
 static  void

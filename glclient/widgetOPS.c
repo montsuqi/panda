@@ -280,7 +280,7 @@ ENTER_FUNC;
 		nretry = json_object_get_int(child);
 	}
 	if (path != NULL && filename != NULL) {
-#if 0
+		if (strcmp(SERVERTYPE(Session),"ginbee")) {
 		DLRequest *req;
 		req = (DLRequest*)xmalloc(sizeof(DLRequest));
 		req->path = StrDup(path);
@@ -289,7 +289,7 @@ ENTER_FUNC;
 		req->nretry = nretry;
 		DLLIST(Session) = g_list_append(DLLIST(Session),req);
 		MessageLogPrintf("add path[%s]\n",path);
-#endif
+		}
 	}
 LEAVE_FUNC;
 }

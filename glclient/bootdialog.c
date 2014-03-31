@@ -26,13 +26,15 @@
 #include    <ctype.h> /* isblank */
 #include    <glib.h>
 #include    <gtk/gtk.h>
-#include    "gettext.h"
 #include	<gtkpanda/gtkpanda.h>
+
+#include    "gettext.h"
 #include	"glclient.h"
 #include    "const.h"
 #include    "bd_config.h"
 #include    "bd_component.h"
 #include    "bootdialog.h"
+#include	"action.h"
 #include    "dialogs.h"
 #include    "message.h"
 #include    "debug.h"
@@ -111,8 +113,7 @@ edit_dialog_run(
 
   /* run */
   if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK) {
-    gl_config_set_string(n,
-      "description",gtk_entry_get_text(GTK_ENTRY(entry)));
+    gl_config_set_string(n,"description",gtk_entry_get_text(GTK_ENTRY(entry)));
     bd_component_value_to_config(component,n);
   } else {
     if (new) {
@@ -414,6 +415,7 @@ boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
     gl_config_set_index(n);
     bd_component_value_to_config(self->component,n);
     gl_config_save();
+    LoadConfig(gl_config_get_index());
   }
   gtk_widget_hide (self->dialog);
   gtk_main_quit ();
