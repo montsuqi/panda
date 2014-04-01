@@ -669,7 +669,7 @@ REST_GetBLOB(
 
 	curl = curl_easy_init();
 	if (!curl) {
-		Warning(_("could not get blob oid[%s]"),oid);
+		Warning("curl_easy_init failure");
 		return NULL;
 	}
 	curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -701,6 +701,111 @@ REST_GetBLOB(
 	curl_easy_cleanup(curl);
 
 	return lbs;
+}
+
+void
+WriteAPIOutputFile(
+	char **f,
+	LargeByteString *lbs,
+	const char *path)
+{
+	FILE *fp;
+	int fd;
+	mode_t mode;
+
+	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+	*f = g_strdup_printf("%s/glclient_download_XXXXXX",TempDir);
+	if ((fd = mkstemp(*f)) == -1) {
+		Warning("mkstemp failure; drop path:%s",path);
+		*f = NULL;
+		umask(mode);
+		return;
+	}
+	if ((fp = fdopen(fd,"w")) == NULL) {
+		Warning("fdopne failure; drop path:%s",path);
+		*f = NULL;
+		umask(mode);
+		return;
+	}
+	fclose(fp);
+	umask(mode);
+}
+
+gboolean
+REST_APIDownload(
+	const char*path,
+	char **f,
+	size_t *s)
+{
+	CURL *curl;
+	char userpass[2048],url[SIZE_URL_BUF+1],*msg;
+	LargeByteString *lbs;
+	gboolean fSSL,doRetry;
+	long http_code;
+
+	*f = NULL;
+	*s = 0;
+
+	lbs = NewLBS();
+	snprintf(url,sizeof(url)-1,"%s%s",
+		RESTURI(Session),path);
+	url[sizeof(url)-1] = 0;
+
+	fSSL = !strncmp("https",url,5);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Warning("curl_easy_init failure");
+		return FALSE;
+	}
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)lbs);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+
+	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
+	userpass[sizeof(userpass)-1] = 0;
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+
+	if (fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Error("curl_easy_getinfo");
+	}
+	if (!curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+		Error("curl_easy_getinfo");
+	}
+	curl_easy_cleanup(curl);
+
+	if (fMlog) {
+		MessageLogPrintf("REST_APIDownload http_code:%ld",http_code);
+	}
+
+	if (http_code == 200) {
+		if (LBS_Size(lbs)>0) {
+			WriteAPIOutputFile(f,lbs,path);
+			if (*f == NULL) {
+				*s = 0;
+			} else {
+				*s = LBS_Size(lbs);
+			}
+			doRetry = FALSE;
+		} else {
+			doRetry = TRUE;
+		}
+	} else if (http_code == 204) {
+		doRetry = FALSE;
+	} else {
+		msg = g_strdup_printf(_("download failure\npath:%s\n"),path);
+		Notify(_("glclient download notify"),msg,"gtk-dialog-error",0);
+		g_free(msg);
+		doRetry = FALSE;
+	}
+	FreeLBS(lbs);
+	return doRetry;
 }
 
 extern	void

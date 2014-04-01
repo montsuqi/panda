@@ -1185,6 +1185,25 @@ AskPass(char	*buf,
 	return 0;
 }
 
+static void
+Ping()
+{
+	char *popup,*dialog,*abort;
+
+	RPC_GetMessage(&popup,&dialog,&abort);
+	if (strlen(abort)>0) {
+		ShowInfoDialog(abort);
+		exit(1);
+	} else if (strlen(dialog)>0) {
+		ShowInfoDialog(dialog);
+	} else if (strlen(popup)>0) {
+		Notify(_("glclient message notify"),popup,"gtk-dialog-info",0);
+	}
+	g_free(popup);
+	g_free(dialog);
+	g_free(abort);
+}
+
 static gint
 PingTimerFunc(
 	gpointer data)
@@ -1192,6 +1211,7 @@ PingTimerFunc(
 	if (ISRECV(Session)) {
 		return 1;
 	}
+	Ping();
 	CheckPrintList();
 	CheckDLList();
 	return 1;
@@ -1281,7 +1301,9 @@ UpdateWindow(
 		if (isdummy) {
 			return;
 		}
-		ShowWindow(wname);
+		if (!strcmp(wname,FOCUSEDWINDOW(Session))) {
+			ShowWindow(wname);
+		}
 		ResetTimer((char*)wname);
 	} else {
 		CloseWindow(wname);
@@ -1294,6 +1316,10 @@ UpdateScreen()
 	json_object *result,*window_data,*windows,*child;
 	const char *f_window,*f_widget;
 	int i;
+
+	if (fMlog) {
+		MessageLog("====");
+	}
 	
 	result = json_object_object_get(SCREENDATA(Session),"result");
 	window_data = json_object_object_get(result,"window_data");
@@ -1311,6 +1337,9 @@ UpdateScreen()
 	}
 	THISWINDOW(Session) = g_strdup(f_window);
 	FOCUSEDWINDOW(Session) = (char*)f_window;
+	if (fMlog) {
+		MessageLogPrintf("focused_window[%s]",f_window);
+	}
 
 	child = json_object_object_get(window_data,"focused_widget");
 	if (child == NULL ||is_error(child)) {

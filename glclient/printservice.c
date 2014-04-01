@@ -34,120 +34,16 @@
 #include	<sys/types.h>
 #include	<sys/stat.h>
 #include	<glib.h>
-#include	<curl/curl.h>
 
 #include	"glclient.h"
 #include	"print.h"
 #include	"printservice.h"
 #include	"notify.h"
 #include	"download.h"
+#include	"protocol.h"
 #include	"message.h"
 #include	"debug.h"
 #include	"gettext.h"
-
-static size_t wrote_size = 0;
-
-static size_t 
-WriteData(
-	void *buf,
-	size_t size,
-	size_t nmemb,
-	void *userp)
-{
-	FILE *fp;
-
-	fp = (FILE*)userp;
-	wrote_size += size * nmemb;
-	return fwrite(buf,size,nmemb,fp);
-}
-
-static int 
-Download(
-	char	*path,
-	char	**outfile,
-	size_t	*size)
-{
-	FILE *fp;
-	int fd;
-	mode_t mode;
-	gchar *url;
-	gchar *fname;
-	gchar *userpass;
-	gchar *msg;
-	CURL *curl;
-	CURLcode ret;
-	int doretry;
-    long http_code;
-	gboolean fSSL;
-
-	doretry = 0;
-	*outfile = NULL;
-	*size = 0;
-	curl = curl_easy_init();
-	if (!curl) {
-		Warning("couldn't init curl\n");
-		return doretry;
-	}
-
-	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-
-	fname = g_strdup_printf("%s/glclient_download_XXXXXX",TempDir);
-	userpass = g_strdup_printf("%s:%s",User,Pass);
-
-	fSSL = !strncmp("https",RESTURI(Session),5);
-
-	url = g_strdup_printf("%s/%s",RESTURI(Session),path);
-
-	if ((fd = mkstemp(fname)) == -1) {
-		Warning("mkstemp failure");
-		goto DO_PRINT_ERROR;
-	}
-
-	if ((fp = fdopen(fd, "w")) == NULL) {
-		Warning("fdopne failure");
-		goto DO_PRINT_ERROR;
-	}
-
-	wrote_size = 0;
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)fp);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
-	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
-	if (fSSL) {
-		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
-	}
-
-	ret = curl_easy_perform(curl);
-	fclose(fp);
-    curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
-	if (ret == CURLE_OK) {
-		if (http_code == 200) {
-			if (wrote_size == 0) {
-				doretry = 1;
-				remove(fname);
-			} else {
-				MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
-					url,fname,(long)wrote_size);
-				*size = wrote_size;
-				*outfile = fname;
-			}
-		} else if (http_code != 204) { /* 204 HTTP No Content */
-			msg = g_strdup_printf(_("download failure\npath:%s\n"),path);
-			Notify(_("glclient download notify"),msg,"gtk-dialog-error",0);
-			g_free(msg);
-		}
-	}
-
-DO_PRINT_ERROR:
-	curl_easy_cleanup(curl);
-	umask(mode);
-	g_free(userpass);
-	g_free(url);
-	return doretry;
-}
 
 static int 
 DoPrint(
@@ -157,7 +53,7 @@ DoPrint(
 	char *fname;
 	size_t size;
 
-	doretry = Download(req->path,&fname,&size);
+	doretry = REST_APIDownload(req->path,&fname,&size);
 	if (doretry == 0) {
 		if (fname != NULL && size > 0) {
 			if (req->showdialog) {
@@ -239,7 +135,7 @@ DoDownload(
 	LargeByteString	*lbs;
 	FILE 			*fp;
 
-	doretry = Download(req->path,&fname,&size);
+	doretry = REST_APIDownload(req->path,&fname,&size);
 	if (doretry == 0) {
 		if (fname != NULL && size > 0) {
 			if ((fp = fopen(fname,"r")) != NULL) {

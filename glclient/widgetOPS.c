@@ -252,43 +252,53 @@ SetPandaDownload2(
 	GtkWidget	*widget,
 	json_object	*obj)
 {
-	json_object *child;
+	json_object *arr,*item,*child;
 	char *filename,*desc,*path;
-	int nretry;
+	int i,nretry;
 ENTER_FUNC;
-	path = filename = desc = NULL;
-	nretry = 0;
+	arr = json_object_object_get(obj,"item");
+	if (arr == NULL && is_error(arr) && !json_object_is_type(arr,json_type_array)) {
+		return;
+	}
+	for (i=0;i<json_object_array_length(arr);i++) {
+		item = json_object_array_get_idx(arr,i);
+		if (item == NULL && is_error(item) && !json_object_is_type(item,json_type_object)) {
+			continue;
+		}
+		path = filename = desc = NULL;
+		nretry = 0;
 
-	child = json_object_object_get(obj,"path");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_string)) {
-		path = (char*)json_object_get_string(child);
-	}
-	child = json_object_object_get(obj,"filename");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_string)) {
-		filename = (char*)json_object_get_string(child);
-	}
-	child = json_object_object_get(obj,"description");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_string)) {
-		desc = (char*)json_object_get_string(child);
-	}
-	child = json_object_object_get(obj,"nretry");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_int)) {
-		nretry = json_object_get_int(child);
-	}
-	if (path != NULL && filename != NULL) {
-		if (strcmp(SERVERTYPE(Session),"ginbee")) {
-		DLRequest *req;
-		req = (DLRequest*)xmalloc(sizeof(DLRequest));
-		req->path = StrDup(path);
-		req->filename = StrDup(filename);
-		req->description = StrDup(desc);
-		req->nretry = nretry;
-		DLLIST(Session) = g_list_append(DLLIST(Session),req);
-		MessageLogPrintf("add path[%s]\n",path);
+		child = json_object_object_get(item,"path");
+		if (child != NULL && !is_error(child) && 
+			json_object_is_type(child,json_type_string)) {
+			path = (char*)json_object_get_string(child);
+		}
+		child = json_object_object_get(item,"filename");
+		if (child != NULL && !is_error(child) && 
+			json_object_is_type(child,json_type_string)) {
+			filename = (char*)json_object_get_string(child);
+		}
+		child = json_object_object_get(item,"description");
+		if (child != NULL && !is_error(child) && 
+			json_object_is_type(child,json_type_string)) {
+			desc = (char*)json_object_get_string(child);
+		}
+		child = json_object_object_get(item,"nretry");
+		if (child != NULL && !is_error(child) && 
+			json_object_is_type(child,json_type_int)) {
+			nretry = json_object_get_int(child);
+		}
+		if (path != NULL && strlen(path) > 0 && filename != NULL) {
+			if (strcmp(SERVERTYPE(Session),"ginbee")) {
+			DLRequest *req;
+			req = (DLRequest*)xmalloc(sizeof(DLRequest));
+			req->path = StrDup(path);
+			req->filename = StrDup(filename);
+			req->description = StrDup(desc);
+			req->nretry = nretry;
+			DLLIST(Session) = g_list_append(DLLIST(Session),req);
+			MessageLogPrintf("add path[%s]\n",path);
+			}
 		}
 	}
 LEAVE_FUNC;
@@ -299,44 +309,55 @@ SetPandaPrint(
 	GtkWidget	*widget,
 	json_object	*obj)
 {
-	json_object *child;
+	json_object *arr,*item,*child;
 	char *title,*path;
-	int nretry,showdialog;
+	int i,nretry,showdialog;
 ENTER_FUNC;
-	path = title = NULL;
-	nretry = showdialog = 0;
 
-	child = json_object_object_get(obj,"path");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_string)) {
-		path = (char*)json_object_get_string(child);
+	arr = json_object_object_get(obj,"item");
+	if (arr == NULL && is_error(arr) && !json_object_is_type(arr,json_type_array)) {
+		return;
 	}
-	child = json_object_object_get(obj,"title");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_string)) {
-		title = (char*)json_object_get_string(child);
-	}
-	child = json_object_object_get(obj,"nretry");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_int)) {
-		nretry = json_object_get_int(child);
-	}
-	child = json_object_object_get(obj,"showdialog");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_int)) {
-		showdialog = json_object_get_int(child);
-	}
-	if (path != NULL && title != NULL) {
-#if 0
-		PrintRequest *req;
-		req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
-		req->path = StrDup(path);
-		req->title = StrDup(title);
-		req->nretry = nretry;
-		req->showdialog = showdialog;
-		PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
-		MessageLogPrintf("add path[%s]\n",path);
-#endif
+	for (i=0;i<json_object_array_length(arr);i++) {
+		item = json_object_array_get_idx(arr,i);
+		if (item == NULL && is_error(item) && !json_object_is_type(item,json_type_object)) {
+			continue;
+		}
+		path = title = NULL;
+		nretry = showdialog = 0;
+
+		child = json_object_object_get(item,"path");
+		if (child != NULL && !is_error(child) && 
+			json_object_is_type(child,json_type_string)) {
+			path = (char*)json_object_get_string(child);
+		}
+		child = json_object_object_get(item,"title");
+		if (child != NULL && !is_error(child) && 
+			json_object_is_type(child,json_type_string)) {
+			title = (char*)json_object_get_string(child);
+		}
+		child = json_object_object_get(item,"nretry");
+		if (child != NULL && !is_error(child) && 
+			json_object_is_type(child,json_type_int)) {
+			nretry = json_object_get_int(child);
+		}
+		child = json_object_object_get(item,"showdialog");
+		if (child != NULL && !is_error(child) && 
+			json_object_is_type(child,json_type_int)) {
+			showdialog = json_object_get_int(child);
+		}
+		if (path != NULL && strlen(path) > 0 && title != NULL) {
+			if (strcmp(SERVERTYPE(Session),"ginbee")) {
+			PrintRequest *req;
+			req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
+			req->path = StrDup(path);
+			req->title = StrDup(title);
+			req->nretry = nretry;
+			req->showdialog = showdialog;
+			PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
+			MessageLogPrintf("add path[%s]\n",path);
+			}
+		}
 	}
 LEAVE_FUNC;
 }
@@ -1286,14 +1307,13 @@ SetFileChooserButton(
 	json_object	*obj)
 {
 	GtkFileChooserButton *fcb;
-	gchar *folder;
-	char *longname;
+	gchar *folder,*longname;
 ENTER_FUNC;
 	SetCommon(widget,obj);
 	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
 	gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(fcb));
 	longname = (char *)glade_get_widget_long_name(widget);
-	folder = GetWidgetCache(longname);
+	folder = (char*)GetWidgetCache(longname);
 	if (folder == NULL) {
 		folder = "";
 	}

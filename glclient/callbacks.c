@@ -170,7 +170,6 @@ send_event(
 {
 	char		*window_name;
 	char		*widget_name;
-	static Bool	ignore_event = FALSE;
 ENTER_FUNC;
 	window_name = GetWindowName(widget);
 	widget_name = (char *)gtk_widget_get_name(widget);
@@ -182,7 +181,7 @@ ENTER_FUNC;
 #endif
 		return;
 	}
-	if (!ISRECV(Session) && !ignore_event) {
+	if (!ISRECV(Session)) {
 		ISRECV(Session) = TRUE;
 
 		StopEventTimer();
@@ -199,11 +198,8 @@ ENTER_FUNC;
 			UpdateScreen();
 		}
 
-
 		if (!fKeyBuff) {
-			ignore_event = TRUE;
 			ClearKeyBuffer();
-			ignore_event = FALSE;
 		}
 
 		UnblockChangedHandlers();
