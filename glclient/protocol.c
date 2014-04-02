@@ -206,7 +206,7 @@ JSONRPC(
 {
 	CURL *curl;
 	struct curl_slist *headers = NULL;
-	char userpass[2048],*ctype,clength[256],*url,*jsonstr;
+	char userpass[2048],*ctype,clength[256],*url,*jsonstr,errbuf[CURL_ERROR_SIZE+1];
 	long http_code;
 	gboolean fSSL;
 	size_t jsonsize;
@@ -265,27 +265,38 @@ JSONRPC(
 	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
+	memset(errbuf,0,CURL_ERROR_SIZE+1);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+
 	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
 	}
 	if (curl_easy_perform(curl) != CURLE_OK) {
-		Error(_("curl_easy_perform failure"));
+		Error(_("comm error:%s"),errbuf);
 	}
 	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		if (http_code != 200) {
+		switch (http_code) {
+		case 200:
+			break;
+		case 401:
+		case 403:
+			Error(_("authentication error:incorrect user or password"));
+			break;
+		default:
 			Error(_("http status code[%d]"),http_code);
+			break;
 		}
 	} else {
-		Error(_("curl_easy_getinfo"));
+		Error(_("comm error:%s"),errbuf);
 	}
 	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
 		if (strstr(ctype,"json") == NULL) {
 			Error(_("invalid content type:%s"),ctype);
 		}
 	} else {
-		Error(_("curl_easy_getinfo failure"));
+		Error(_("comm error:%s"),errbuf);
 	}
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
@@ -591,7 +602,7 @@ REST_PostBLOB(
 {
 	CURL *curl;
 	struct curl_slist *headers = NULL;
-	char *oid,url[SIZE_URL_BUF+1],clength[256],userpass[2048];
+	char *oid,url[SIZE_URL_BUF+1],clength[256],userpass[2048],errbuf[CURL_ERROR_SIZE+1];
 	gboolean fSSL;
 	long http_code;
 
@@ -629,20 +640,31 @@ REST_PostBLOB(
 	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 
+	memset(errbuf,0,CURL_ERROR_SIZE+1);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+
 	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
 	}
 	if (curl_easy_perform(curl) != CURLE_OK) {
-		Error(_("curl_easy_perfrom failure"));
+		Error(_("comm error:%s"),errbuf);
 	}
 	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		if (http_code != 200) {
+		switch (http_code) {
+		case 200:
+			break;
+		case 401:
+		case 403:
+			Error(_("authentication error:incorrect user or password"));
+			break;
+		default:
 			Error(_("http status code[%d]"),http_code);
+			break;
 		}
 	} else {
-		Error(_("curl_easy_getinfo"));
+		Error(_("comm error:%s"),errbuf);
 	}
 	curl_slist_free_all(headers);
 	curl_easy_cleanup(curl);
@@ -655,10 +677,14 @@ REST_GetBLOB(
 	const char *oid)
 {
 	CURL *curl;
-	char userpass[2048],url[SIZE_URL_BUF+1];
+	char userpass[2048],url[SIZE_URL_BUF+1],errbuf[CURL_ERROR_SIZE+1];
 	LargeByteString *lbs;
 	gboolean fSSL;
 	long http_code;
+
+	if (oid == NULL || !strcmp(oid,"0")) {
+		return NULL;
+	}
 
 	lbs = NewLBS();
 
@@ -682,22 +708,32 @@ REST_GetBLOB(
 	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 
+	memset(errbuf,0,CURL_ERROR_SIZE+1);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+
 	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
 	}
 	if (curl_easy_perform(curl) != CURLE_OK) {
-		Warning(_("curl_easy_perfom failure"));
+		Warning(_("comm error:can not get blob:%s"),oid);
 		return NULL;
 	}
 	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		if (http_code != 200) {
-			Warning(_("GETBLOB http status code[%d]"),http_code);
+		switch (http_code) {
+		case 200:
+			break;
+		case 401:
+		case 403:
+			Warning(_("authentication error:incorrect user or password"));
+			return NULL;
+		default:
+			Warning(_("http status code[%d]"),http_code);
 			return NULL;
 		}
 	} else {
-		Error(_("curl_easy_getinfo"));
+		Error(_("comm error:%s"),errbuf);
 	}
 	curl_easy_cleanup(curl);
 
@@ -713,7 +749,6 @@ WriteAPIOutputFile(
 	FILE *fp;
 	int fd;
 	mode_t mode;
-	size_t wrote;
 
 	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 	*f = g_strdup_printf("%s/glclient_download_XXXXXX",TempDir);
@@ -744,7 +779,7 @@ REST_APIDownload(
 	size_t *s)
 {
 	CURL *curl;
-	char userpass[2048],url[SIZE_URL_BUF+1],*msg;
+	char userpass[2048],url[SIZE_URL_BUF+1],*msg,errbuf[CURL_ERROR_SIZE+1];
 	LargeByteString *lbs;
 	gboolean fSSL,doRetry;
 	long http_code;
@@ -773,16 +808,19 @@ REST_APIDownload(
 	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
 
+	memset(errbuf,0,CURL_ERROR_SIZE+1);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+
 	if (fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
 	}
 	if (curl_easy_perform(curl) != CURLE_OK) {
-		Error("curl_easy_getinfo");
+		Error(_("comm error:%s"),errbuf);
 	}
-	if (!curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		Error("curl_easy_getinfo");
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)!=CURLE_OK) {
+		Error(_("comm error:%s"),errbuf);
 	}
 	curl_easy_cleanup(curl);
 

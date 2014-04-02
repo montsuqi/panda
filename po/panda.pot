@@ -8,152 +8,128 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2013-11-13 15:01+0900\n"
+"POT-Creation-Date: 2014-04-02 14:26+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: glclient/bd_component.c:65
+#: glclient/bd_component.c:66
 msgid "Open File"
 msgstr ""
 
-#: glclient/bd_component.c:91
+#: glclient/bd_component.c:92
 msgid "Open Directory"
 msgstr ""
 
-#: glclient/bd_component.c:253 glclient/bootdialog.c:326
+#: glclient/bd_component.c:219 glclient/bootdialog.c:300
 msgid "AuthURI"
 msgstr ""
 
-#: glclient/bd_component.c:262 glclient/bootdialog.c:328
+#: glclient/bd_component.c:228 glclient/bootdialog.c:302
 msgid "User"
 msgstr ""
 
-#: glclient/bd_component.c:271
+#: glclient/bd_component.c:237
 msgid "Password"
 msgstr ""
 
-#: glclient/bd_component.c:282
+#: glclient/bd_component.c:248
 msgid "Remember Password"
 msgstr ""
 
-#: glclient/bd_component.c:296
+#: glclient/bd_component.c:262
 msgid "Style"
 msgstr ""
 
-#: glclient/bd_component.c:300 glclient/bd_component.c:316
+#: glclient/bd_component.c:266 glclient/bd_component.c:282
 msgid "Open"
 msgstr ""
 
-#: glclient/bd_component.c:312
+#: glclient/bd_component.c:278
 msgid "Gtkrc"
 msgstr ""
 
-#: glclient/bd_component.c:328
+#: glclient/bd_component.c:294
 msgid "FontName"
 msgstr ""
 
-#: glclient/bd_component.c:340
+#: glclient/bd_component.c:306
 msgid "Output Logfile"
 msgstr ""
 
-#: glclient/bd_component.c:348
+#: glclient/bd_component.c:314
 msgid "Enable Keybuffer"
 msgstr ""
 
-#: glclient/bd_component.c:356
+#: glclient/bd_component.c:322
 msgid "Disable IM control and Kana input"
 msgstr ""
 
-#: glclient/bd_component.c:364
+#: glclient/bd_component.c:330
 msgid "Enable Timer"
 msgstr ""
 
-#: glclient/bd_component.c:382
+#: glclient/bd_component.c:348
 msgid "Timer Period(ms)"
 msgstr ""
 
-#: glclient/bd_config.c:293
-#, c-format
-msgid "error: `%s' don't exist or could not read.\n"
-msgstr ""
-
-#: glclient/bd_config.c:302
-#, c-format
-msgid "error: `%s' is directory.\n"
-msgstr ""
-
-#: glclient/bd_config.c:324 glclient/bd_config.c:331
-#, c-format
-msgid "error: `%s' unknown file type."
-msgstr ""
-
-#: glclient/bd_config.c:338
-#, c-format
-msgid "error: `%s' is not glclient config file."
-msgstr ""
-
-#: glclient/bd_config.c:559
-#, c-format
-msgid "error: could not open for write: %s\n"
-msgstr ""
-
-#: glclient/bootdialog.c:58 glclient/bootdialog.c:272
+#: glclient/bootdialog.c:60 glclient/bootdialog.c:246
 msgid "New"
 msgstr ""
 
-#: glclient/bootdialog.c:60 glclient/bootdialog.c:281
+#: glclient/bootdialog.c:64 glclient/bootdialog.c:255
 msgid "Edit"
 msgstr ""
 
-#: glclient/bootdialog.c:80
+#: glclient/bootdialog.c:85
 msgid "ConfigName"
 msgstr ""
 
-#: glclient/bootdialog.c:264
+#: glclient/bootdialog.c:238
 msgid "Server Setting"
 msgstr ""
 
-#: glclient/bootdialog.c:290
+#: glclient/bootdialog.c:264
 msgid "Delete"
 msgstr ""
 
-#: glclient/bootdialog.c:299 glclient/bootdialog.c:567
+#: glclient/bootdialog.c:273 glclient/bootdialog.c:525
 msgid "Close"
 msgstr ""
 
-#: glclient/bootdialog.c:324
+#: glclient/bootdialog.c:298
 msgid "Description"
 msgstr ""
 
-#: glclient/bootdialog.c:508 glclient/bootdialog.c:517
+#: glclient/bootdialog.c:466 glclient/bootdialog.c:475
 msgid "glclient2 Launcher"
 msgstr ""
 
-#: glclient/bootdialog.c:525
+#: glclient/bootdialog.c:483
 msgid "Server"
 msgstr ""
 
-#: glclient/bootdialog.c:549
+#: glclient/bootdialog.c:507
 msgid "Basic"
 msgstr ""
 
-#: glclient/bootdialog.c:553
+#: glclient/bootdialog.c:511
 msgid "Details"
 msgstr ""
 
-#: glclient/bootdialog.c:558
+#: glclient/bootdialog.c:516
 msgid "Connect"
 msgstr ""
 
-#: glclient/bootdialog.c:573
+#: glclient/bootdialog.c:531
 msgid "Configuration"
 msgstr ""
 
-#: glclient/bootdialog.c:580
+#: glclient/bootdialog.c:538
 msgid "INFOMATION"
 msgstr ""
 
@@ -180,16 +156,11 @@ msgid ""
 "Size: %s"
 msgstr ""
 
-#: glclient/action.c:762
+#: glclient/action.c:725
 msgid "Now loading..."
 msgstr ""
 
-#: glclient/action.c:1145
-#, c-format
-msgid "cannot load config:%s"
-msgstr ""
-
-#: glclient/action.c:1248
+#: glclient/action.c:1200
 msgid "glclient message notify"
 msgstr ""
 
@@ -206,7 +177,7 @@ msgstr ""
 msgid "mkdtemp failure"
 msgstr ""
 
-#: glclient/client.c:220
+#: glclient/client.c:222
 msgid "input Password"
 msgstr ""
 
@@ -219,137 +190,126 @@ msgstr ""
 msgid "can't execute command.\\n\"%s\""
 msgstr ""
 
-#: glclient/protocol.c:162
+#: glclient/protocol.c:163
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:165
+#: glclient/protocol.c:166
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:170 glclient/protocol.c:174
+#: glclient/protocol.c:171 glclient/protocol.c:175
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:189
+#: glclient/protocol.c:190
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:194
+#: glclient/protocol.c:195
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:238 glclient/protocol.c:357 glclient/protocol.c:447
-#: glclient/protocol.c:540 glclient/protocol.c:635 glclient/protocol.c:760
+#: glclient/protocol.c:240 glclient/protocol.c:619
 msgid "could not init curl"
 msgstr ""
 
-#: glclient/protocol.c:264 glclient/protocol.c:378 glclient/protocol.c:561
-msgid "curl_easy_perform failure"
+#: glclient/protocol.c:277 glclient/protocol.c:292 glclient/protocol.c:299
+#: glclient/protocol.c:652 glclient/protocol.c:667 glclient/protocol.c:736
+#: glclient/protocol.c:821 glclient/protocol.c:824
+#, c-format
+msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:268 glclient/protocol.c:382 glclient/protocol.c:473
-#: glclient/protocol.c:565 glclient/protocol.c:660 glclient/protocol.c:787
+#: glclient/protocol.c:285 glclient/protocol.c:660 glclient/protocol.c:729
+msgid "authentication error:incorrect user or password"
+msgstr ""
+
+#: glclient/protocol.c:288 glclient/protocol.c:663 glclient/protocol.c:732
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:271 glclient/protocol.c:278 glclient/protocol.c:392
-#: glclient/protocol.c:575
-msgid "curl_easy_getinfo failure"
-msgstr ""
-
-#: glclient/protocol.c:275 glclient/protocol.c:389 glclient/protocol.c:480
-#: glclient/protocol.c:572 glclient/protocol.c:667
+#: glclient/protocol.c:296
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:287 glclient/protocol.c:401 glclient/protocol.c:495
-#: glclient/protocol.c:587 glclient/protocol.c:679
+#: glclient/protocol.c:319 glclient/protocol.c:364 glclient/protocol.c:424
+#: glclient/protocol.c:453 glclient/protocol.c:481 glclient/protocol.c:510
+#: glclient/protocol.c:538
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:294
+#: glclient/protocol.c:326
+msgid "no protocol_version object"
+msgstr ""
+
+#: glclient/protocol.c:332
+msgid "no application_version object"
+msgstr ""
+
+#: glclient/protocol.c:338
+msgid "no server_type object"
+msgstr ""
+
+#: glclient/protocol.c:371
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:298
+#: glclient/protocol.c:375
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:304
+#: glclient/protocol.c:381
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:310
+#: glclient/protocol.c:387
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:385 glclient/protocol.c:476 glclient/protocol.c:483
-#: glclient/protocol.c:568 glclient/protocol.c:663 glclient/protocol.c:670
-#: glclient/protocol.c:790 glclient/protocol.c:839
-msgid "curl_easy_getinfo"
-msgstr ""
-
-#: glclient/protocol.c:469 glclient/protocol.c:656
-msgid "curl_easy_perform"
-msgstr ""
-
-#: glclient/protocol.c:687
+#: glclient/protocol.c:546
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:694
+#: glclient/protocol.c:553
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:701
+#: glclient/protocol.c:560
 msgid "invalid message data:abort"
 msgstr ""
 
-#: glclient/protocol.c:783
-msgid "curl_easy_perfrom failure"
-msgstr ""
-
-#: glclient/protocol.c:818
+#: glclient/protocol.c:720
 #, c-format
-msgid "could not get blob oid[%s]"
+msgid "comm error:can not get blob:%s"
 msgstr ""
 
-#: glclient/protocol.c:830
-msgid "curl_easy_perfom failure"
-msgstr ""
-
-#: glclient/protocol.c:835
-#, c-format
-msgid "GETBLOB http status code[%d]"
-msgstr ""
-
-#: glclient/printservice.c:139
+#: glclient/protocol.c:848
 #, c-format
 msgid ""
 "download failure\n"
 "path:%s\n"
 msgstr ""
 
-#: glclient/printservice.c:140 glclient/printservice.c:289
+#: glclient/protocol.c:849 glclient/printservice.c:182
 msgid "glclient download notify"
 msgstr ""
 
-#: glclient/printservice.c:207
+#: glclient/printservice.c:101
 #, c-format
 msgid ""
 "print failure\n"
 "title:%s\n"
 msgstr ""
 
-#: glclient/printservice.c:208
+#: glclient/printservice.c:102
 msgid "glclient print notify"
 msgstr ""
 
-#: glclient/printservice.c:287
+#: glclient/printservice.c:180
 #, c-format
 msgid ""
 "download failure\n"
@@ -357,125 +317,125 @@ msgid ""
 "description:%s"
 msgstr ""
 
-#: libs/net.c:290
+#: libs/net.c:288
 #, c-format
 msgid ""
 "read error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:308
+#: libs/net.c:306
 #, c-format
 msgid ""
 "write error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:424
+#: libs/net.c:422
 msgid "Please input key passphrase:"
 msgstr ""
 
-#: libs/net.c:425
+#: libs/net.c:423
 msgid ""
 "Verify ERROR!\n"
 "Please input key passphrase:"
 msgstr ""
 
-#: libs/net.c:474
+#: libs/net.c:472
 #, c-format
 msgid ""
 "SSL read error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:495
+#: libs/net.c:493
 #, c-format
 msgid ""
 "SSL write error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:543
+#: libs/net.c:541
 #, c-format
 msgid ""
 "BIO_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:547
+#: libs/net.c:545
 #, c-format
 msgid ""
 "X509_NAME_print_ex failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:577
+#: libs/net.c:575
 #, c-format
 msgid ""
 "X509_NAME_oneline failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:705
+#: libs/net.c:703
 #, c-format
 msgid ""
 "SSL_connect failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:712
+#: libs/net.c:710
 #, c-format
 msgid "The hostname does not match %s.\n"
 msgstr ""
 
-#: libs/net.c:728
+#: libs/net.c:726
 #, c-format
 msgid ""
 "SSL_accept failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:753
+#: libs/net.c:751
 #, c-format
 msgid ""
 "SSL_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:758
+#: libs/net.c:756
 #, c-format
 msgid ""
 "SSL_set_fd failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:813
+#: libs/net.c:811
 #, c-format
 msgid ""
 "The certificate(%s) will be expired in %d days.\n"
 "Please update the certificate.\n"
 msgstr ""
 
-#: libs/net.c:838
+#: libs/net.c:836
 #, c-format
 msgid ""
 " Unable to get issuer cert.\n"
 " issuer= %s\n"
 msgstr ""
 
-#: libs/net.c:842
+#: libs/net.c:840
 msgid ""
 " Error in cert not_before field.\n"
 " notBefore="
 msgstr ""
 
-#: libs/net.c:850
+#: libs/net.c:848
 msgid ""
 " Error in cert not_after field.\n"
 " notAfter="
 msgstr ""
 
-#: libs/net.c:876
+#: libs/net.c:874
 #, c-format
 msgid ""
 "Verification error of local entity certificate:\n"
@@ -483,7 +443,7 @@ msgid ""
 " %s:%s\n"
 msgstr ""
 
-#: libs/net.c:898
+#: libs/net.c:896
 #, c-format
 msgid ""
 "Verification error of remote entity certificate:\n"
@@ -491,97 +451,97 @@ msgid ""
 " %s:%s\n"
 msgstr ""
 
-#: libs/net.c:1033 libs/net.c:1309
+#: libs/net.c:1031 libs/net.c:1307
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1037 libs/net.c:1313
+#: libs/net.c:1035 libs/net.c:1311
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1041 libs/net.c:1129 libs/net.c:1317
+#: libs/net.c:1039 libs/net.c:1127 libs/net.c:1315
 #, c-format
 msgid ""
 "SSL_CTX_check_private_key failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1065 libs/net.c:1339
+#: libs/net.c:1063 libs/net.c:1337
 #, c-format
 msgid ""
 "SSL_CTX_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1073 libs/net.c:1344
+#: libs/net.c:1071 libs/net.c:1342
 #, c-format
 msgid ""
 "SSL_CTX_set_cipher_list(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1086 libs/net.c:1357
+#: libs/net.c:1084 libs/net.c:1355
 #, c-format
 msgid ""
 "SSL_CTX_set_default_verify_paths error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1092 libs/net.c:1363
+#: libs/net.c:1090 libs/net.c:1361
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s)\n"
 msgstr ""
 
-#: libs/net.c:1109
+#: libs/net.c:1107
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate_file(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1119
+#: libs/net.c:1117
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey_file(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1136
+#: libs/net.c:1134
 msgid "Please specify certificate file"
 msgstr ""
 
-#: libs/net.c:1159
+#: libs/net.c:1157
 #, c-format
 msgid ""
 "Engine_by_id:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1169
+#: libs/net.c:1167
 #, c-format
 msgid ""
 "Engine_ctrl_cmd_string failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1175
+#: libs/net.c:1173
 #, c-format
 msgid ""
 "Engine_init failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1183
+#: libs/net.c:1181
 msgid "Please input security device PIN:"
 msgstr ""
 
-#: libs/net.c:1302
+#: libs/net.c:1300
 #, c-format
 msgid ""
 "ENGINE_load_private_key failure:\n"

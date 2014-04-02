@@ -62,6 +62,7 @@ po/*.gmo
 po/stamp-po
 po/POTFILES
 po/Makevars.template
+po/remove-potcdate.sed
 INSTALL
 compile
 config.guess
