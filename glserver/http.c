@@ -202,7 +202,6 @@ SendResponse(
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n",status,GetReasonPhrase(status));
 	Send(req->fp,buf,strlen(buf)); 
-	MessageLogPrintf("[%s@%s] %s",req->user,req->host,buf);
 
 	gmtime_r(&t, &cur);
 	cur_p = &cur;
@@ -312,7 +311,6 @@ ParseReqLine(HTTP_REQUEST *req)
 	char *line;
 
 	line = GetNextLine(req);
-	MessageLogPrintf("%s",line);
 
 	/*jsonrpc*/
 	if (g_regex_match_simple("^post\\s+/rpc/*\\s",line,G_REGEX_CASELESS,0)) {
@@ -350,16 +348,16 @@ ParseReqLine(HTTP_REQUEST *req)
 	g_regex_unref(re);
 
 	/*api*/
-	re = g_regex_new("^(get|post)\\s+/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)(/*|\\?([a-zA-Z0-9&=]+))\\s",G_REGEX_CASELESS,0,NULL);
+	re = g_regex_new("^(get|post)\\s+(/rest)?/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)(/*|\\?(\\S+))\\s",G_REGEX_CASELESS,0,NULL);
 	if (g_regex_match(re,line,0,&match)) {
 		if (*line == 'g' || *line == 'G') {
 			req->method = HTTP_GET;
 		} else {
 			req->method = HTTP_POST;
 		}
-		req->ld = g_match_info_fetch(match,2);
-		req->window = g_match_info_fetch(match,3);
-		req->arguments = g_match_info_fetch(match,5);
+		req->ld = g_match_info_fetch(match,3);
+		req->window = g_match_info_fetch(match,4);
+		req->arguments = g_match_info_fetch(match,6);
 		req->type = REQUEST_TYPE_API;
 		g_match_info_free(match);
 		g_regex_unref(re);
@@ -599,6 +597,7 @@ MakeAPIReqJSON(
 	} else {
 		json_object_object_add(params,"http_method",json_object_new_string("GET"));
 	}
+	json_object_object_add(params,"http_status",json_object_new_int(200));
 	ctype = (gchar *)g_hash_table_lookup(req->header_hash,"Content-Type");
 	if (ctype) {
 		json_object_object_add(params,"content_type",json_object_new_string(ctype));
@@ -657,6 +656,8 @@ APISendResponse(
 		SendResponse(req,status,NULL,0,NULL);
 	}
 	json_object_put(obj);
+
+	MessageLogPrintf("api %d /%s/%s/%s %s@%s",status,req->ld,req->window,req->arguments,req->user,req->host);
 }
 
 static gboolean

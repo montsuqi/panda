@@ -297,7 +297,6 @@ ENTER_FUNC;
 			req->description = StrDup(desc);
 			req->nretry = nretry;
 			DLLIST(Session) = g_list_append(DLLIST(Session),req);
-			MessageLogPrintf("add path[%s]\n",path);
 			}
 		}
 	}
@@ -355,7 +354,6 @@ ENTER_FUNC;
 			req->nretry = nretry;
 			req->showdialog = showdialog;
 			PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
-			MessageLogPrintf("add path[%s]\n",path);
 			}
 		}
 	}

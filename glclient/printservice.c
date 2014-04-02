@@ -92,7 +92,6 @@ CheckPrintList()
 			Warning("print request is NULL.");
 			continue;
 		}
-		MessageLogPrintf("donwload path[%s]\n",req->path);
 		if (DoPrint(req)) {
 			// retry
 			if (req->nretry == 0) {
@@ -171,7 +170,6 @@ CheckDLList()
 			Warning("download request is NULL.");
 			continue;
 		}
-		MessageLogPrintf("donwload path[%s]\n",req->path);
 		if (DoDownload(req)) {
 			// retry
 			if (req->nretry == 0) {

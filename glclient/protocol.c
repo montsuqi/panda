@@ -42,6 +42,7 @@
 #include	<ctype.h>
 #include	<json.h>
 #include	<curl/curl.h>
+#include	<errno.h>
 
 #include	"glclient.h"
 #include	"gettext.h"
@@ -712,20 +713,25 @@ WriteAPIOutputFile(
 	FILE *fp;
 	int fd;
 	mode_t mode;
+	size_t wrote;
 
 	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 	*f = g_strdup_printf("%s/glclient_download_XXXXXX",TempDir);
 	if ((fd = mkstemp(*f)) == -1) {
-		Warning("mkstemp failure; drop path:%s",path);
+		Warning("mkstemp failure %s; drop path:%s",strerror(errno),path);
 		*f = NULL;
 		umask(mode);
 		return;
 	}
 	if ((fp = fdopen(fd,"w")) == NULL) {
-		Warning("fdopne failure; drop path:%s",path);
+		Warning("fdopne failure %s; drop path:%s",strerror(errno),path);
 		*f = NULL;
 		umask(mode);
 		return;
+	}
+	if (fwrite(LBS_Body(lbs),LBS_Size(lbs),1,fp) != 1) {
+		Warning("fwite failure %s",strerror(errno));
+		*f = NULL;
 	}
 	fclose(fp);
 	umask(mode);
@@ -781,7 +787,7 @@ REST_APIDownload(
 	curl_easy_cleanup(curl);
 
 	if (fMlog) {
-		MessageLogPrintf("REST_APIDownload http_code:%ld",http_code);
+		MessageLogPrintf("api download %ld %s",http_code,path);
 	}
 
 	if (http_code == 200) {
@@ -789,10 +795,11 @@ REST_APIDownload(
 			WriteAPIOutputFile(f,lbs,path);
 			if (*f == NULL) {
 				*s = 0;
+				doRetry = TRUE;
 			} else {
 				*s = LBS_Size(lbs);
+				doRetry = FALSE;
 			}
-			doRetry = FALSE;
 		} else {
 			doRetry = TRUE;
 		}
