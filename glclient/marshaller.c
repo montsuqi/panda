@@ -1434,7 +1434,7 @@ ENTER_FUNC;
 				GL_RecvDataType(fp);	/*	GL_TYPE_ARRAY	*/
 				attrs->states_name = strdup(name);
 				num = GL_RecvInt(fp);
-				if (attrs->count < 0) {
+				if (attrs->count < 0 || attrs->count > num) {
 					attrs->count = num;
 				}
 				attrs->states = g_malloc0(sizeof(gchar*)*(num+1));
