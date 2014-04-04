@@ -272,7 +272,11 @@ TryRecv(
 	}
 	return size;
 badio:
+#if 0
 	Error("client termination");
+#else
+	exit(0);
+#endif
 	return 0;
 }
 
@@ -1083,8 +1087,6 @@ PrepareNextRequest(
 		req->buf_size = 0;
 		req->head = req->buf;
 		memset(req->buf , 0, MAX_REQ_SIZE);
-
-		req->method = RecvPacketClass(req->fp);
 		ON_IO_ERROR(req->fp,badio);	
 	}
 	return TRUE;
