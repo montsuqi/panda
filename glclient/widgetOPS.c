@@ -475,13 +475,12 @@ ENTER_FUNC;
 	SetCommon(widget,obj);
 	gtk_widget_hide(widget);
 
-	count = 0;
+	count = -1;
 	child = json_object_object_get(obj,"count");
 	if (child != NULL && !is_error(child) && 
 		json_object_is_type(child,json_type_int)) {
 		count = json_object_get_int(child);
 	}
-	gtk_panda_clist_set_rows(GTK_PANDA_CLIST(widget),count);
 
 	row = 0;
 	child = json_object_object_get(obj,"row");
@@ -515,9 +514,12 @@ ENTER_FUNC;
 	}
 
 	child = json_object_object_get(obj,"item");
-	if (child != NULL && !is_error(child) && 
-		json_object_is_type(child,json_type_array)) {
+	if (child != NULL && !is_error(child) && json_object_is_type(child,json_type_array)) {
 		n = json_object_array_length(child);
+		if (count < 0 || count > n) {
+			count = n;
+		}
+		gtk_panda_clist_set_rows(GTK_PANDA_CLIST(widget),count);
 		n = n > count ? count : n;
 		for(i=0;i<n;i++) {
 			rowobj = json_object_array_get_idx(child,i);
