@@ -330,7 +330,7 @@ ParseReqLine(HTTP_REQUEST *req)
 	MessageLogPrintf("%s",line);
 
 	/*api*/
-	re = g_regex_new("^(et|ost)\\s+/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)(/*|\\?([a-zA-Z0-9&=]+))\\s",G_REGEX_CASELESS,0,NULL);
+	re = g_regex_new("^(et|ost)\\s+/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)(/*|\\?(\\S+))\\s",G_REGEX_CASELESS,0,NULL);
 	if (g_regex_match(re,line,0,&match)) {
 		req->ld = g_match_info_fetch(match,2);
 		req->window = g_match_info_fetch(match,3);
