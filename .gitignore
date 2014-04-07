@@ -12,6 +12,13 @@ ltmain.sh
 panda-config
 autom4te.cache
 stamp-h1
+INSTALL
+compile
+config.guess
+config.sub
+depcomp
+install-sh
+missing
 *.swp
 *.tar.gz
 *.o
@@ -61,4 +68,4 @@ wfc/wfccontrol
 po/*.gmo
 po/stamp-po
 po/POTFILES
-
+po/Makevars.template
