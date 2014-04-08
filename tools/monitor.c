@@ -69,6 +69,7 @@ static	int		Sleep;
 static	int		SesNum;
 static	Bool	fGlserver;
 static	Bool	fGlSSL;
+static	Bool	fVerifyPeer;
 static	char	*GlAuth;
 static	char	*GlCert;
 static	char	*GlCAfile;
@@ -191,6 +192,8 @@ static	ARG_TABLE	option[] = {
 		"glserver authentication"						},
 	{	"glssl",	BOOLEAN,	TRUE,	(void*)&fGlSSL,
 		"use ssl connection"		 					},
+	{	"verifypeer",	BOOLEAN,	TRUE,	(void*)&fVerifyPeer,
+		"verify peer"		 					},
 	{	"glcert",	STRING,		TRUE,	(void*)&GlCert,
 		"ssl certificate(p12)"							},
 	{	"glcafile",	STRING,		TRUE,	(void*)&GlCAfile,
@@ -289,6 +292,7 @@ SetDefault(void)
 
 	fGlserver = FALSE;
 	fGlSSL = FALSE;
+	fVerifyPeer = TRUE;
 	GlAuth = NULL;
 	GlCert = NULL;
 	GlCAfile = NULL;
@@ -645,6 +649,9 @@ ENTER_FUNC;
 		if		(  GlCAfile  !=  NULL  ) {
 			argv[argc ++] = "-CAfile";
 			argv[argc ++] = GlCAfile;
+		}
+		if		(fVerifyPeer) {
+			argv[argc ++] = "-verifypeer";
 		}
 	}
 	
