@@ -46,6 +46,7 @@
 #include	"net.h"
 #include	"RecParser.h"
 #include	"option.h"
+#include	"http.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -212,6 +213,7 @@ main(
 
 	InitNET();
 	RecParserInit();
+
 #ifdef	USE_SSL
 	if ( fSsl ){
 		Message("glserver start (ssl)");
