@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2014-04-02 14:26+0900\n"
+"POT-Creation-Date: 2014-04-08 15:11+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,63 +25,88 @@ msgstr ""
 msgid "Open Directory"
 msgstr ""
 
-#: glclient/bd_component.c:219 glclient/bootdialog.c:300
+#: glclient/bd_component.c:260 glclient/bootdialog.c:305
 msgid "AuthURI"
 msgstr ""
 
-#: glclient/bd_component.c:228 glclient/bootdialog.c:302
+#: glclient/bd_component.c:269 glclient/bootdialog.c:307
 msgid "User"
 msgstr ""
 
-#: glclient/bd_component.c:237
+#: glclient/bd_component.c:278
 msgid "Password"
 msgstr ""
 
-#: glclient/bd_component.c:248
+#: glclient/bd_component.c:289
 msgid "Remember Password"
 msgstr ""
 
-#: glclient/bd_component.c:262
-msgid "Style"
+#: glclient/bd_component.c:304
+msgid "Use SSL"
 msgstr ""
 
-#: glclient/bd_component.c:266 glclient/bd_component.c:282
+#: glclient/bd_component.c:321
+msgid "CA Certificate File"
+msgstr ""
+
+#: glclient/bd_component.c:324 glclient/bd_component.c:339
+#: glclient/bd_component.c:390 glclient/bd_component.c:406
 msgid "Open"
 msgstr ""
 
-#: glclient/bd_component.c:278
+#: glclient/bd_component.c:336
+msgid "Certificate(*.p12)"
+msgstr ""
+
+#: glclient/bd_component.c:351
+msgid "Certificate Password"
+msgstr ""
+
+#: glclient/bd_component.c:362
+msgid "Remember Certificate Password"
+msgstr ""
+
+#: glclient/bd_component.c:369
+msgid "Cipher Suite"
+msgstr ""
+
+#: glclient/bd_component.c:386
+msgid "Style"
+msgstr ""
+
+#: glclient/bd_component.c:402
 msgid "Gtkrc"
 msgstr ""
 
-#: glclient/bd_component.c:294
+#: glclient/bd_component.c:418
 msgid "FontName"
 msgstr ""
 
-#: glclient/bd_component.c:306
+#: glclient/bd_component.c:430
 msgid "Output Logfile"
 msgstr ""
 
-#: glclient/bd_component.c:314
+#: glclient/bd_component.c:438
 msgid "Enable Keybuffer"
 msgstr ""
 
-#: glclient/bd_component.c:322
+#: glclient/bd_component.c:446
 msgid "Disable IM control and Kana input"
 msgstr ""
 
-#: glclient/bd_component.c:330
+#: glclient/bd_component.c:454
 msgid "Enable Timer"
 msgstr ""
 
-#: glclient/bd_component.c:348
+#: glclient/bd_component.c:472
 msgid "Timer Period(ms)"
 msgstr ""
 
-#: glclient/bootdialog.c:60 glclient/bootdialog.c:246
+#: glclient/bootdialog.c:60 glclient/bootdialog.c:251
 msgid "New"
 msgstr ""
 
-#: glclient/bootdialog.c:64 glclient/bootdialog.c:255
+#: glclient/bootdialog.c:64 glclient/bootdialog.c:260
 msgid "Edit"
 msgstr ""
 
@@ -89,47 +114,51 @@ msgstr ""
 msgid "ConfigName"
 msgstr ""
 
-#: glclient/bootdialog.c:238
+#: glclient/bootdialog.c:243
 msgid "Server Setting"
 msgstr ""
 
-#: glclient/bootdialog.c:264
+#: glclient/bootdialog.c:269
 msgid "Delete"
 msgstr ""
 
-#: glclient/bootdialog.c:273 glclient/bootdialog.c:525
+#: glclient/bootdialog.c:278 glclient/bootdialog.c:534
 msgid "Close"
 msgstr ""
 
-#: glclient/bootdialog.c:298
+#: glclient/bootdialog.c:303
 msgid "Description"
 msgstr ""
 
-#: glclient/bootdialog.c:466 glclient/bootdialog.c:475
+#: glclient/bootdialog.c:471 glclient/bootdialog.c:480
 msgid "glclient2 Launcher"
 msgstr ""
 
-#: glclient/bootdialog.c:483
+#: glclient/bootdialog.c:488
 msgid "Server"
 msgstr ""
 
-#: glclient/bootdialog.c:507
+#: glclient/bootdialog.c:512
 msgid "Basic"
 msgstr ""
 
-#: glclient/bootdialog.c:511
+#: glclient/bootdialog.c:516
+msgid "SSL"
+msgstr ""
+
+#: glclient/bootdialog.c:520
 msgid "Details"
 msgstr ""
 
-#: glclient/bootdialog.c:516
+#: glclient/bootdialog.c:525
 msgid "Connect"
 msgstr ""
 
-#: glclient/bootdialog.c:531
+#: glclient/bootdialog.c:540
 msgid "Configuration"
 msgstr ""
 
-#: glclient/bootdialog.c:538
+#: glclient/bootdialog.c:547
 msgid "INFOMATION"
 msgstr ""
 
@@ -160,7 +189,7 @@ msgstr ""
 msgid "Now loading..."
 msgstr ""
 
-#: glclient/action.c:1200
+#: glclient/action.c:1210
 msgid "glclient message notify"
 msgstr ""
 
@@ -177,8 +206,12 @@ msgstr ""
 msgid "mkdtemp failure"
 msgstr ""
 
-#: glclient/client.c:222
-msgid "input Password"
+#: glclient/client.c:223
+msgid "input certificate password"
+msgstr ""
+
+#: glclient/client.c:231
+msgid "input password"
 msgstr ""
 
 #: glclient/desktop.c:153
@@ -211,90 +244,90 @@ msgstr ""
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:240 glclient/protocol.c:619
+#: glclient/protocol.c:240 glclient/protocol.c:632
 msgid "could not init curl"
 msgstr ""
 
-#: glclient/protocol.c:277 glclient/protocol.c:292 glclient/protocol.c:299
-#: glclient/protocol.c:652 glclient/protocol.c:667 glclient/protocol.c:736
-#: glclient/protocol.c:821 glclient/protocol.c:824
+#: glclient/protocol.c:290 glclient/protocol.c:305 glclient/protocol.c:312
+#: glclient/protocol.c:675 glclient/protocol.c:690 glclient/protocol.c:767
+#: glclient/protocol.c:861 glclient/protocol.c:864
 #, c-format
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:285 glclient/protocol.c:660 glclient/protocol.c:729
+#: glclient/protocol.c:298 glclient/protocol.c:683 glclient/protocol.c:760
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:288 glclient/protocol.c:663 glclient/protocol.c:732
+#: glclient/protocol.c:301 glclient/protocol.c:686 glclient/protocol.c:763
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:296
+#: glclient/protocol.c:309
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:319 glclient/protocol.c:364 glclient/protocol.c:424
-#: glclient/protocol.c:453 glclient/protocol.c:481 glclient/protocol.c:510
-#: glclient/protocol.c:538
+#: glclient/protocol.c:332 glclient/protocol.c:377 glclient/protocol.c:437
+#: glclient/protocol.c:466 glclient/protocol.c:494 glclient/protocol.c:523
+#: glclient/protocol.c:551
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:326
+#: glclient/protocol.c:339
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:332
+#: glclient/protocol.c:345
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:338
+#: glclient/protocol.c:351
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:371
+#: glclient/protocol.c:384
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:375
+#: glclient/protocol.c:388
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:381
+#: glclient/protocol.c:394
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:387
+#: glclient/protocol.c:400
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:546
+#: glclient/protocol.c:559
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:553
+#: glclient/protocol.c:566
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:560
+#: glclient/protocol.c:573
 msgid "invalid message data:abort"
 msgstr ""
 
-#: glclient/protocol.c:720
+#: glclient/protocol.c:751
 #, c-format
 msgid "comm error:can not get blob:%s"
 msgstr ""
 
-#: glclient/protocol.c:848
+#: glclient/protocol.c:888
 #, c-format
 msgid ""
 "download failure\n"
 "path:%s\n"
 msgstr ""
 
-#: glclient/protocol.c:849 glclient/printservice.c:182
+#: glclient/protocol.c:889 glclient/printservice.c:182
 msgid "glclient download notify"
 msgstr ""
 
