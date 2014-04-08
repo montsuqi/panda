@@ -254,7 +254,7 @@ JSONRPC(
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
 	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
-#if 1
+#if 0
 	curl_easy_setopt(curl, CURLOPT_VERBOSE,1);
 #endif
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);

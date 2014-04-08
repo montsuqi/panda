@@ -114,6 +114,7 @@ GLOBAL	char		*FontName;
 GLOBAL	Bool		fSSL;
 GLOBAL	char		*CertFile;
 GLOBAL	char		*CertPass;
+GLOBAL	Bool		SaveCertPass;
 GLOBAL	char		*CAFile;
 GLOBAL	char		*Ciphers;
 

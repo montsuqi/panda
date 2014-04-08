@@ -52,50 +52,32 @@ check_json_object(
 	return TRUE;
 }
 
-#define DEFAULT_DESCRIPTION		"default"
-#define DEFAULT_AUTHURI			"http://localhost:8000/rpc/"
-#define DEFAULT_STYLE 			"/usr/share/panda-client/jma-receipt.rc"
-#define DEFAULT_GTKRC 			""
-#define DEFAULT_FONTNAME 		"Takaoゴシック 10"
-#define DEFAULT_MLOG 			FALSE
-#define DEFAULT_KEYBUFF 		FALSE
-#define DEFAULT_IM_KANA_OFF 	FALSE
-#define DEFAULT_USER 			"ormaster"
-#define DEFAULT_SAVEPASSWORD 	TRUE
-#define DEFAULT_PASSWORD 		""
-#define DEFAULT_TIMER 			TRUE
-#define DEFAULT_TIMERPERIOD		1000
-#define DEFAULT_SSL				FALSE
-#define DEFAULT_CAFILE			"/etc/ssl/certs/gl-cacert.pem"
-#define DEFAULT_CERTFILE		""
-#define DEFAULT_CIPHERS			"ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"
-#define DEFAULT_CERTPASSWORD	""
-
 static json_object*
 _new_server()
 {
 	json_object *child;
 
 	child = json_object_new_object();
-	json_object_object_add(child,"description",json_object_new_string(DEFAULT_DESCRIPTION));
-	json_object_object_add(child,"authuri",json_object_new_string(DEFAULT_AUTHURI));
-	json_object_object_add(child,"style",json_object_new_string(DEFAULT_STYLE));
-	json_object_object_add(child,"gtkrc",json_object_new_string(DEFAULT_GTKRC));
-	json_object_object_add(child,"fontname",json_object_new_string(DEFAULT_FONTNAME));
-	json_object_object_add(child,"mlog",json_object_new_boolean(DEFAULT_MLOG));
-	json_object_object_add(child,"keybuff",json_object_new_boolean(DEFAULT_KEYBUFF));
-	json_object_object_add(child,"im_kana_off",json_object_new_boolean(DEFAULT_IM_KANA_OFF));
-	json_object_object_add(child,"user",json_object_new_string(DEFAULT_USER));
-	json_object_object_add(child,"savepassword",json_object_new_boolean(DEFAULT_SAVEPASSWORD));
-	json_object_object_add(child,"password",json_object_new_string(DEFAULT_PASSWORD));
-	json_object_object_add(child,"timer",json_object_new_boolean(DEFAULT_TIMER));
-	json_object_object_add(child,"timerperiod",json_object_new_int(DEFAULT_TIMERPERIOD));
+	json_object_object_add(child,"description",json_object_new_string("default"));
+	json_object_object_add(child,"authuri",json_object_new_string("http://localhost:8000/rpc/"));
+	json_object_object_add(child,"style",json_object_new_string("/usr/share/panda-client/jma-receipt.rc"));
+	json_object_object_add(child,"gtkrc",json_object_new_string(""));
+	json_object_object_add(child,"fontname",json_object_new_string("Takaoゴシック 10"));
+	json_object_object_add(child,"mlog",json_object_new_boolean(FALSE));
+	json_object_object_add(child,"keybuff",json_object_new_boolean(FALSE));
+	json_object_object_add(child,"im_kana_off",json_object_new_boolean(FALSE));
+	json_object_object_add(child,"user",json_object_new_string("ormaster"));
+	json_object_object_add(child,"savepassword",json_object_new_boolean(TRUE));
+	json_object_object_add(child,"password",json_object_new_string(""));
+	json_object_object_add(child,"timer",json_object_new_boolean(TRUE));
+	json_object_object_add(child,"timerperiod",json_object_new_int(1000));
 
-	json_object_object_add(child,"ssl",json_object_new_boolean(DEFAULT_SSL));
-	json_object_object_add(child,"cafile",json_object_new_string(DEFAULT_CAFILE));
-	json_object_object_add(child,"certfile",json_object_new_string(DEFAULT_CERTFILE));
-	json_object_object_add(child,"ciphers",json_object_new_string(DEFAULT_CIPHERS));
-	json_object_object_add(child,"certpassword",json_object_new_string(DEFAULT_CERTPASSWORD));
+	json_object_object_add(child,"ssl",json_object_new_boolean(FALSE));
+	json_object_object_add(child,"cafile",json_object_new_string("/etc/ssl/certs/gl-cacert.pem"));
+	json_object_object_add(child,"certfile",json_object_new_string(""));
+	json_object_object_add(child,"ciphers",json_object_new_string("ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"));
+	json_object_object_add(child,"certpassword",json_object_new_string(""));
+	json_object_object_add(child,"savecertpassword",json_object_new_boolean(TRUE));
 
 	return child;
 }

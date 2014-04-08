@@ -133,14 +133,15 @@ bd_component_set_value(
 	int n) 
 {
   gchar buf[256];
+  gboolean save;
 
   // basic
   gtk_entry_set_text(GTK_ENTRY (self->authuri),gl_config_get_string(n,"authuri"));
   gtk_entry_set_text(GTK_ENTRY(self->user),gl_config_get_string(n,"user"));
 
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (self->savepassword), 
-    gl_config_get_boolean(n,"savepassword"));
-  if ( gl_config_get_boolean(n,"savepassword") ) {
+  save = gl_config_get_boolean(n,"savepassword");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->savepassword),save);
+  if (save) {
     gtk_entry_set_text(GTK_ENTRY (self->password),gl_config_get_string(n,"password"));
   } else {
     gtk_entry_set_text(GTK_ENTRY(self->password),"");
@@ -152,7 +153,13 @@ bd_component_set_value(
   gtk_entry_set_text(GTK_ENTRY(self->cafile),gl_config_get_string(n,"cafile"));
   gtk_entry_set_text(GTK_ENTRY(self->certfile),gl_config_get_string(n,"certfile"));
   gtk_entry_set_text(GTK_ENTRY(self->ciphers),gl_config_get_string(n,"ciphers"));
-  gtk_entry_set_text(GTK_ENTRY(self->certpass),gl_config_get_string(n,"certpassword"));
+  save = gl_config_get_boolean(n,"savecertpassword");
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->savecertpass),save);
+  if (save) {
+    gtk_entry_set_text(GTK_ENTRY(self->certpass),gl_config_get_string(n,"certpassword"));
+  } else {
+    gtk_entry_set_text(GTK_ENTRY(self->certpass),"");
+  }
 
   // other
   gtk_entry_set_text(GTK_ENTRY (self->style),gl_config_get_string(n,"style"));
@@ -175,9 +182,9 @@ bd_component_value_to_config(
 	BDComponent *self,
 	int n)
 {
-  const gchar *password,*uri;
+  const gchar *password,*certpassword,*uri;
   gchar *newuri;
-  gboolean savepassword;
+  gboolean save;
 
   //basic
   uri = gtk_entry_get_text(GTK_ENTRY(self->authuri));
@@ -191,20 +198,29 @@ bd_component_value_to_config(
 
   gl_config_set_string(n,"user",gtk_entry_get_text(GTK_ENTRY(self->user)));
   password = gtk_entry_get_text(GTK_ENTRY(self->password));
-  savepassword = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->savepassword));
-  if (savepassword) {
+  save = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->savepassword));
+  if (save) {
     gl_config_set_string(n,"password", password);
   } else {
     gl_config_set_string(n,"password", "");
+  	Pass = g_strdup(password);
   }
-  gl_config_set_boolean(n,"savepassword", savepassword);
+  gl_config_set_boolean(n,"savepassword", save);
 
   // ssl
   gl_config_set_boolean(n,"ssl", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->ssl)));
   gl_config_set_string(n,"cafile", gtk_entry_get_text(GTK_ENTRY(self->cafile)));
   gl_config_set_string(n,"certfile", gtk_entry_get_text(GTK_ENTRY(self->certfile)));
   gl_config_set_string(n,"ciphers", gtk_entry_get_text(GTK_ENTRY(self->ciphers)));
-  gl_config_set_string(n,"certpassword", gtk_entry_get_text(GTK_ENTRY(self->certpass)));
+  certpassword = gtk_entry_get_text(GTK_ENTRY(self->certpass));
+  save = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->savecertpass));
+  if (save) {
+    gl_config_set_string(n,"certpassword", certpassword);
+  } else {
+    gl_config_set_string(n,"certpassword", "");
+	CertPass = g_strdup(certpassword);
+  }
+  gl_config_set_boolean(n,"savecertpassword", save);
 
   // other
   gl_config_set_string(n,"style", gtk_entry_get_text(GTK_ENTRY(self->style)));
@@ -339,6 +355,14 @@ bd_component_new()
   gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   gtk_table_attach (GTK_TABLE (table), entry, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label (_("Remember Certificate Password"));
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->savecertpass = check;
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 

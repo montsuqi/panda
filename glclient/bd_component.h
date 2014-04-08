@@ -55,6 +55,7 @@ struct _BDComponent {
   GtkWidget *cafile;
   GtkWidget *ciphers;
   GtkWidget *certpass;
+  GtkWidget *savecertpass;
 // info 
   GtkWidget *infotable;
 };

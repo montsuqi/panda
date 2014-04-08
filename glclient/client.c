@@ -218,11 +218,21 @@ static GOptionEntry entries[] =
 static	void
 ThisAskPass(char *pass)
 {
-	if (!SavePass) {
-		if(AskPass(pass, SIZE_PASS, _("input Password")) != -1) {
-			Pass = pass;
-		} else {
-			exit(0);
+	if (fSSL) {
+		if (!SaveCertPass) {
+			if(AskPass(pass, SIZE_PASS, _("input certificate password")) != -1) {
+				Pass = g_strdup(pass);
+			} else {
+				exit(0);
+			}
+		}
+	} else {
+		if (!SavePass) {
+			if(AskPass(pass, SIZE_PASS, _("input password")) != -1) {
+				Pass = g_strdup(pass);
+			} else {
+				exit(0);
+			}
 		}
 	}
 }
