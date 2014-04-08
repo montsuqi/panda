@@ -461,7 +461,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 	if (fSsl && fVerifyPeer){
 		if (!req->fp->peer_cert) {
 			MessageLog("can not get peer certificate");
-			req->status = HTTP_INTERNAL_SERVER_ERROR;
+			req->status = HTTP_FORBIDDEN;
 			return;
 		}
 		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
