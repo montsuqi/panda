@@ -208,7 +208,7 @@ JSONRPC(
 	struct curl_slist *headers = NULL;
 	char userpass[2048],*ctype,clength[256],*url,*jsonstr,errbuf[CURL_ERROR_SIZE+1];
 	long http_code;
-	gboolean fSSL;
+	gboolean fHTTPS;
 	size_t jsonsize;
 
 	if (type == TYPE_AUTH) {
@@ -240,7 +240,7 @@ JSONRPC(
 		Error(_("could not init curl"));
 	}
 
-	fSSL = !strncmp("https",url,5);
+	fHTTPS = !strncmp("https",url,5);
 
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 	snprintf(clength,sizeof(clength),"Content-Length: %ld",jsonsize);
@@ -254,7 +254,7 @@ JSONRPC(
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
 	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
-#if 0
+#if 1
 	curl_easy_setopt(curl, CURLOPT_VERBOSE,1);
 #endif
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -268,10 +268,23 @@ JSONRPC(
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (fSSL) {
+	if (fHTTPS || fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+		if (fSSL) {
+			if (strlen(CertFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_SSLCERT,CertFile);
+				curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"P12");
+				curl_easy_setopt(curl,CURLOPT_SSLCERTPASSWD,CertPass);
+			}
+			if (strlen(CAFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_CAINFO,CAFile);
+			}
+			if (strlen(Ciphers) > 0) {
+				curl_easy_setopt(curl,CURLOPT_SSL_CIPHER_LIST,Ciphers);
+			}
+		}
 	}
 	if (curl_easy_perform(curl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);
@@ -603,7 +616,7 @@ REST_PostBLOB(
 	CURL *curl;
 	struct curl_slist *headers = NULL;
 	char *oid,url[SIZE_URL_BUF+1],clength[256],userpass[2048],errbuf[CURL_ERROR_SIZE+1];
-	gboolean fSSL;
+	gboolean fHTTPS;
 	long http_code;
 
 	oid = NULL;
@@ -612,7 +625,7 @@ REST_PostBLOB(
 		RESTURI(Session),SESSIONID(Session));
 	url[sizeof(url)-1] = 0;
 
-	fSSL = !strncmp("https",url,5);
+	fHTTPS = !strncmp("https",url,5);
 
 	curl = curl_easy_init();
 	if (!curl) {
@@ -643,10 +656,20 @@ REST_PostBLOB(
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (fSSL) {
+	if (fHTTPS || fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+		if (fSSL) {
+			if (strlen(CertFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_SSLCERT,CertFile);
+				curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"P12");
+				curl_easy_setopt(curl,CURLOPT_SSLCERTPASSWD,CertPass);
+			}
+			if (strlen(CAFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_CAINFO,CAFile);
+			}
+		}
 	}
 	if (curl_easy_perform(curl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);
@@ -679,7 +702,7 @@ REST_GetBLOB(
 	CURL *curl;
 	char userpass[2048],url[SIZE_URL_BUF+1],errbuf[CURL_ERROR_SIZE+1];
 	LargeByteString *lbs;
-	gboolean fSSL;
+	gboolean fHTTPS;
 	long http_code;
 
 	if (oid == NULL || !strcmp(oid,"0")) {
@@ -688,11 +711,9 @@ REST_GetBLOB(
 
 	lbs = NewLBS();
 
-	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",
-		RESTURI(Session),SESSIONID(Session),oid);
+	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",RESTURI(Session),SESSIONID(Session),oid);
 	url[sizeof(url)-1] = 0;
-
-	fSSL = !strncmp("https",url,5);
+	fHTTPS = !strncmp("https",url,5);
 
 	curl = curl_easy_init();
 	if (!curl) {
@@ -711,10 +732,20 @@ REST_GetBLOB(
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (fSSL) {
+	if (fHTTPS || fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+		if (fSSL) {
+			if (strlen(CertFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_SSLCERT,CertFile);
+				curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"P12");
+				curl_easy_setopt(curl,CURLOPT_SSLCERTPASSWD,CertPass);
+			}
+			if (strlen(CAFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_CAINFO,CAFile);
+			}
+		}
 	}
 	if (curl_easy_perform(curl) != CURLE_OK) {
 		Warning(_("comm error:can not get blob:%s"),oid);
@@ -781,7 +812,7 @@ REST_APIDownload(
 	CURL *curl;
 	char userpass[2048],url[SIZE_URL_BUF+1],*msg,errbuf[CURL_ERROR_SIZE+1];
 	LargeByteString *lbs;
-	gboolean fSSL,doRetry;
+	gboolean fHTTPS,doRetry;
 	long http_code;
 
 	*f = NULL;
@@ -792,7 +823,7 @@ REST_APIDownload(
 		RESTURI(Session),path);
 	url[sizeof(url)-1] = 0;
 
-	fSSL = !strncmp("https",url,5);
+	fHTTPS = !strncmp("https",url,5);
 
 	curl = curl_easy_init();
 	if (!curl) {
@@ -811,10 +842,20 @@ REST_APIDownload(
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
 	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (fSSL) {
+	if (fHTTPS || fSSL) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+		if (fSSL) {
+			if (strlen(CertFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_SSLCERT,CertFile);
+				curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"P12");
+				curl_easy_setopt(curl,CURLOPT_SSLCERTPASSWD,CertPass);
+			}
+			if (strlen(CAFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_CAINFO,CAFile);
+			}
+		}
 	}
 	if (curl_easy_perform(curl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);

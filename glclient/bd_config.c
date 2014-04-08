@@ -65,18 +65,18 @@ check_json_object(
 #define DEFAULT_PASSWORD 		""
 #define DEFAULT_TIMER 			TRUE
 #define DEFAULT_TIMERPERIOD		1000
+#define DEFAULT_SSL				FALSE
+#define DEFAULT_CAFILE			"/etc/ssl/certs/gl-cacert.pem"
+#define DEFAULT_CERTFILE		""
+#define DEFAULT_CIPHERS			"ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"
+#define DEFAULT_CERTPASSWORD	""
 
-static void
-load_default()
+static json_object*
+_new_server()
 {
-	json_object *array,*child;
-
-	obj = json_object_new_object();
-	array = json_object_new_array();
-    json_object_object_add(obj,"list",array);
+	json_object *child;
 
 	child = json_object_new_object();
-	json_object_array_add(array,child);
 	json_object_object_add(child,"description",json_object_new_string(DEFAULT_DESCRIPTION));
 	json_object_object_add(child,"authuri",json_object_new_string(DEFAULT_AUTHURI));
 	json_object_object_add(child,"style",json_object_new_string(DEFAULT_STYLE));
@@ -91,6 +91,24 @@ load_default()
 	json_object_object_add(child,"timer",json_object_new_boolean(DEFAULT_TIMER));
 	json_object_object_add(child,"timerperiod",json_object_new_int(DEFAULT_TIMERPERIOD));
 
+	json_object_object_add(child,"ssl",json_object_new_boolean(DEFAULT_SSL));
+	json_object_object_add(child,"cafile",json_object_new_string(DEFAULT_CAFILE));
+	json_object_object_add(child,"certfile",json_object_new_string(DEFAULT_CERTFILE));
+	json_object_object_add(child,"ciphers",json_object_new_string(DEFAULT_CIPHERS));
+	json_object_object_add(child,"certpassword",json_object_new_string(DEFAULT_CERTPASSWORD));
+
+	return child;
+}
+
+static void
+load_default()
+{
+	json_object *obj,*array;
+
+	obj = json_object_new_object();
+	array = json_object_new_array();
+    json_object_object_add(obj,"list",array);
+	json_object_array_add(array,_new_server());
 	json_object_object_add(obj,"index",json_object_new_int(0));
 }
 
@@ -150,21 +168,8 @@ new_server(int i)
 	char desc[256];
 
 	sprintf(desc,"server%d",i);
-	child = json_object_new_object();
+	child = _new_server();
 	json_object_object_add(child,"description",json_object_new_string(desc));
-	json_object_object_add(child,"authuri",json_object_new_string(DEFAULT_AUTHURI));
-	json_object_object_add(child,"style",json_object_new_string(DEFAULT_STYLE));
-	json_object_object_add(child,"gtkrc",json_object_new_string(DEFAULT_GTKRC));
-	json_object_object_add(child,"fontname",json_object_new_string(DEFAULT_FONTNAME));
-	json_object_object_add(child,"mlog",json_object_new_boolean(DEFAULT_MLOG));
-	json_object_object_add(child,"keybuff",json_object_new_boolean(DEFAULT_KEYBUFF));
-	json_object_object_add(child,"im_kana_off",json_object_new_boolean(DEFAULT_IM_KANA_OFF));
-	json_object_object_add(child,"user",json_object_new_string(DEFAULT_USER));
-	json_object_object_add(child,"savepassword",json_object_new_boolean(DEFAULT_SAVEPASSWORD));
-	json_object_object_add(child,"password",json_object_new_string(DEFAULT_PASSWORD));
-	json_object_object_add(child,"timer",json_object_new_boolean(DEFAULT_TIMER));
-	json_object_object_add(child,"timerperiod",json_object_new_int(DEFAULT_TIMERPERIOD));
-	
 	return child;
 }
 
@@ -275,11 +280,11 @@ gl_config_get_string(
 	list = json_object_object_get(obj,"list");
 	server = json_object_array_get_idx(list,i);
 	if (!check_json_object(server,json_type_object)) {
-		return NULL;
+		return "";
 	}
 	child = json_object_object_get(server,key);
 	if (!check_json_object(child,json_type_string)) {
-		return NULL;
+		return "";
 	}
 	return json_object_get_string(child);
 }

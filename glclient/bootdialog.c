@@ -106,6 +106,11 @@ edit_dialog_run(
 
   gtk_box_pack_start (
     GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
+    component->ssltable, TRUE, TRUE, 0);
+  gtk_widget_show_all(component->ssltable);
+
+  gtk_box_pack_start (
+    GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), 
     component->othertable, TRUE, TRUE, 0);
   gtk_widget_show_all(component->othertable);
 
@@ -506,6 +511,10 @@ boot_dialog_new ()
   /* Basic tab */
   label = gtk_label_new (_("Basic"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->basictable, label);
+
+  /* ssl tab */
+  label = gtk_label_new (_("SSL"));
+  gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->ssltable, label);
 
   /* Other tab */
   label = gtk_label_new (_("Details"));

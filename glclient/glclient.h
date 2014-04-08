@@ -111,6 +111,12 @@ GLOBAL	int			TimerPeriod;
 GLOBAL	int			PingTimerPeriod;
 GLOBAL	char		*FontName;
 
+GLOBAL	Bool		fSSL;
+GLOBAL	char		*CertFile;
+GLOBAL	char		*CertPass;
+GLOBAL	char		*CAFile;
+GLOBAL	char		*Ciphers;
+
 /* gconf */
 GLOBAL	GConfClient *GConfCTX;
 GLOBAL	gchar	*ConfigName;

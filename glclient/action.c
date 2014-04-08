@@ -1076,6 +1076,13 @@ LoadConfig (
 	if (SavePass) {
 		Pass = g_strdup(gl_config_get_string(n,"password"));
 	} 
+
+	fSSL = gl_config_get_boolean(n,"ssl");
+	CAFile = g_strdup(gl_config_get_string(n,"cafile"));
+	CertFile = g_strdup(gl_config_get_string(n,"certfile"));
+	Ciphers = g_strdup(gl_config_get_string(n,"ciphers"));
+	CertPass = g_strdup(gl_config_get_string(n,"certpassword"));
+
 	fTimer = gl_config_get_boolean(n,"timer");
 	TimerPeriod = gl_config_get_int(n,"timerperiod");
 	FontName = g_strdup(gl_config_get_string(n,"fontname"));
