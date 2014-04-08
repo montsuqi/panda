@@ -69,7 +69,6 @@ static	int		Sleep;
 static	int		SesNum;
 static	Bool	fGlserver;
 static	Bool	fGlSSL;
-static	char	*GlCacheDir;
 static	char	*GlAuth;
 static	char	*GlCert;
 static	char	*GlCAfile;
@@ -188,8 +187,6 @@ static	ARG_TABLE	option[] = {
 
 	{	"glserver",BOOLEAN,		TRUE,	(void*)&fGlserver,
 		"start glserver"		 						},
-	{	"glcache",	STRING,		TRUE,	(void*)&GlCacheDir,
-		"glserver cache directory"		 				},
 	{	"glauth",	STRING,		TRUE,	(void*)&GlAuth,
 		"glserver authentication"						},
 	{	"glssl",	BOOLEAN,	TRUE,	(void*)&fGlSSL,
@@ -292,7 +289,6 @@ SetDefault(void)
 
 	fGlserver = FALSE;
 	fGlSSL = FALSE;
-	GlCacheDir = NULL;
 	GlAuth = NULL;
 	GlCert = NULL;
 	GlCAfile = NULL;
@@ -632,10 +628,6 @@ ENTER_FUNC;
 		argv[argc ++] = "-screen";
 		argv[argc ++] = ScrDir;
 	}
-	if		(  GlCacheDir  !=  NULL  ) {
-		argv[argc ++] = "-cache";
-		argv[argc ++] = GlCacheDir;
-	}
 	if		(  GlAuth  !=  NULL  ) {
 		argv[argc ++] = "-auth";
 		argv[argc ++] = GlAuth;
@@ -662,8 +654,6 @@ ENTER_FUNC;
 	ProcessList = g_list_append(ProcessList, proc);
 LEAVE_FUNC;
 }
-
-
 
 static	void
 _InitAps(
