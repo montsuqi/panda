@@ -292,7 +292,7 @@ SetDefault(void)
 
 	fGlserver = FALSE;
 	fGlSSL = FALSE;
-	fVerifyPeer = TRUE;
+	fVerifyPeer = FALSE;
 	GlAuth = NULL;
 	GlCert = NULL;
 	GlCAfile = NULL;
