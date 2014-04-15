@@ -85,7 +85,7 @@ _new_server()
 static void
 load_default()
 {
-	json_object *obj,*array;
+	json_object *array;
 
 	obj = json_object_new_object();
 	array = json_object_new_array();
