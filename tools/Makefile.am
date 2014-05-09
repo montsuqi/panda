@@ -17,10 +17,21 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = pandadb copygen dbgen checkdir $(dbsyncbin)
+bin_PROGRAMS = recdefgen pandadb copygen dbgen checkdir $(dbsyncbin)
 sbin_PROGRAMS = monitor msgd
-bin_SCRIPTS = recdefgen.rb recgen.rb
 noinst_SCRIPTS = copy
+
+recdefgen_SOURCES = \
+	recdefgen.c
+recdefgen_CFLAGS = \
+	$(RECDEFGEN_CFLAGS)	\
+	$(COMMON_CFLAGS)
+recdefgen_LDADD =		\
+	$(RECDEFGEN_LIBS)	\
+	$(COMMON_LIBS)
+
+copygen_SOURCES		=	\
+	copygen.c
 
 copygen_LDFLAGS	=			\
 	-export-dynamic
@@ -91,8 +102,6 @@ monitor_DEPENDENCIES	=				\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/libs/libpanda.la
 
-copygen_SOURCES		=	\
-	copygen.c
 
 dbgen_SOURCES		=	\
 	dbgen.c
@@ -138,6 +147,4 @@ endif
 
 
 EXTRA_DIST =				\
-	recdefgen.rb			\
-	recgen.rb				\
 	copy
