@@ -69,3 +69,4 @@ po/*.gmo
 po/stamp-po
 po/POTFILES
 po/Makevars.template
+tools/recdefgen
