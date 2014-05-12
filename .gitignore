@@ -70,3 +70,4 @@ config.sub
 depcomp
 install-sh
 missing
+tools/recdefgen
