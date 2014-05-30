@@ -54,7 +54,7 @@ GenRecord(
     putLevel(level+1);
     printf("popup_icon varchar(%d);\n",DEFAULT_CHAR_SIZE);
     putLevel(level+1);
-    printf("popup_timeout int;\n",DEFAULT_CHAR_SIZE);
+    printf("popup_timeout int;\n");
   } else if (type == GTK_PANDA_TYPE_CLIST) {
     putLevel(level+1);
     printf("count int;\n");
@@ -99,7 +99,7 @@ GenRecord(
         putLevel(level+3);
         printf("bgcolor varchar(%d);\n",DEFAULT_CHAR_SIZE);
       putLevel(level+2);
-      printf("};\n\n",i+1);
+      printf("};\n\n");
     }
     putLevel(level+1);
     printf("};\n");

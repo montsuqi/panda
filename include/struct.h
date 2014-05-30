@@ -380,8 +380,10 @@ typedef	struct {
 	char			window[SIZE_NAME+1];
 	char			widget[SIZE_NAME+1];
 	char			event[SIZE_NAME+1];
-	char			uuid[SIZE_TERM+1];
+	char			tenant[SIZE_TERM+1];
 	char			user[SIZE_USER+1];
+	char			uuid[SIZE_TERM+1];
+	char			host[SIZE_HOST+1];
 	char			tempdir[SIZE_PATH+1];
 	char			command;
 	unsigned char	dbstatus;

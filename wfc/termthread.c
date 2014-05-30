@@ -81,6 +81,7 @@ ENTER_FUNC;
 	data->hdr = New(MessageHeader);
 	memclear(data->hdr,sizeof(MessageHeader));
 	data->hdr->command = APL_COMMAND_LINK;
+	strcpy(data->hdr->tenant,MCP_DC_TENANT);
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
@@ -277,7 +278,7 @@ ENTER_FUNC;
 	uuid_unparse(u,data->hdr->uuid);
 	strcpy(data->hdr->window,wname);
 	strcpy(data->hdr->user,user);
-	strcpy(data->host,host);
+	strcpy(data->hdr->host,host);
 	data->fInProcess = TRUE;
 	if ((ld = g_hash_table_lookup(APS_Hash, ldname)) != NULL) {
 		data->ld = ld;
@@ -560,14 +561,14 @@ ENTER_FUNC;
 	}
 
 	RecvnString(term->fp,SIZE_NAME,data->hdr->user);ON_IO_ERROR(term->fp,badio);
-	RecvnString(term->fp,SIZE_HOST,data->host);	ON_IO_ERROR(term->fp,badio);
+	RecvnString(term->fp,SIZE_HOST,data->hdr->host);ON_IO_ERROR(term->fp,badio);
 	RecvnString(term->fp,SIZE_NAME,data->agent);ON_IO_ERROR(term->fp,badio);
 
 	MessageLogPrintf("[%s:%s] session start(%d)",
 		data->hdr->user,data->hdr->uuid,sesnum+1);
 	dbgprintf("uuid   = [%s]",data->hdr->uuid);
 	dbgprintf("user   = [%s]",data->hdr->user);
-	dbgprintf("host   = [%s]",data->host);
+	dbgprintf("host   = [%s]",data->hdr->host);
 	dbgprintf("agent  = [%s]",data->agent);
 
 	SendPacketClass(term->fp,WFC_OK);	ON_IO_ERROR(term->fp,badio);

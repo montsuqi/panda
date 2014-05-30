@@ -20,7 +20,7 @@
 #ifndef	_INC_CONST_H
 #define	_INC_CONST_H
 
-#define	DB_LOCALE		NULL
+#define	DB_LOCALE			NULL
 
 #define	PORT_GLTERM			"8000"
 #define	PORT_GLAUTH			"8001"
@@ -35,14 +35,15 @@
 #define	PORT_POSTGRES		5432
 #define	PORT_REDIRECT		"8010"
 #define	PORT_LOG			"8016"
-#define	PORT_MASTER		"8017"
-
+#define	PORT_MASTER			"8017"
 
 #define	PORT_MSGD			"8514"
 #define	PORT_FDD			"8515"
 
 #define	CONTROL_PORT	"/tmp/wfc.control:0600"
 #define	SYSDATA_PORT	"/tmp/sysdata:0600"
+
+#define MCP_DC_TENANT	"1"
 
 #define	SIZE_PASS		(3+8+1+22)
 #define	SIZE_OTHER		128
