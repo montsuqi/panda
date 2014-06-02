@@ -110,7 +110,7 @@ SetSysdbval(
 	v = GetRecordItem(sysdbval,"user");
 	SetValueString(v,session->hdr->user,NULL);
 	v = GetRecordItem(sysdbval,"host");
-	SetValueString(v,session->host,NULL);
+	SetValueString(v,session->hdr->host,NULL);
 	v = GetRecordItem(sysdbval,"agent");
 	SetValueString(v,session->agent,NULL);
 	v = GetRecordItem(sysdbval,"window");

@@ -81,6 +81,7 @@ ENTER_FUNC;
 	data->hdr = New(MessageHeader);
 	memclear(data->hdr,sizeof(MessageHeader));
 	data->hdr->command = APL_COMMAND_LINK;
+	strcpy(data->hdr->tenant,MCP_TENANT);
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
@@ -277,7 +278,7 @@ ENTER_FUNC;
 	uuid_unparse(u,data->hdr->uuid);
 	strcpy(data->hdr->window,wname);
 	strcpy(data->hdr->user,user);
-	strcpy(data->host,host);
+	strcpy(data->hdr->host,host);
 	if ((ld = g_hash_table_lookup(APS_Hash, ldname)) != NULL) {
 		data->ld = ld;
 		data->linkdata = NULL;
@@ -442,15 +443,15 @@ ENTER_FUNC;
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	memset(data->host,0,SIZE_HOST+1);
-	strncpy(data->host,json_object_get_string(child),SIZE_HOST);
+	memset(data->hdr->host,0,SIZE_HOST+1);
+	strncpy(data->hdr->host,json_object_get_string(child),SIZE_HOST);
 
 	memset(data->agent,0,SIZE_NAME+1);
 
 	MessageLogPrintf("[%s:%s] session start(%d)",data->hdr->user,data->hdr->uuid,sesnum+1);
 	dbgprintf("uuid   = [%s]",data->hdr->uuid);
 	dbgprintf("user   = [%s]",data->hdr->user);
-	dbgprintf("host   = [%s]",data->host);
+	dbgprintf("host   = [%s]",data->hdr->host);
 	dbgprintf("agent  = [%s]",data->agent);
 
 	data->hdr->puttype = SCREEN_INIT;

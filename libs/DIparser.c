@@ -1160,8 +1160,10 @@ BuildMcpArea(
 	p += sprintf(p,			"status		varchar(%d);",SIZE_STATUS);
 	p += sprintf(p,			"dbstatus	varchar(%d);",SIZE_STATUS);
 	p += sprintf(p,			"puttype	varchar(%d);",SIZE_PUTTYPE);
-	p += sprintf(p,			"term		varchar(%d);",SIZE_TERM);
+	p += sprintf(p,			"tenant		varchar(%d);",SIZE_TERM);
 	p += sprintf(p,			"user		varchar(%d);",SIZE_USER);
+	p += sprintf(p,			"term		varchar(%d);",SIZE_TERM);
+	p += sprintf(p,			"host		varchar(%d);",SIZE_HOST);
 	p += sprintf(p,			"tempdir	varchar(%d);",SIZE_PATH);
 	p += sprintf(p,		"};");
 	p += sprintf(p,		"db	{");

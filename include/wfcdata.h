@@ -108,7 +108,6 @@ typedef struct {
 
 typedef	struct _SessionData	{
 	int				type;
-	char			host[SIZE_HOST+1];
 	char			agent[SIZE_NAME+1];
 	TermNode		*term;
 	int				apsid;

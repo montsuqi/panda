@@ -140,6 +140,27 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+SetMCPEnv(ValueStruct *val)
+{
+	setenv("MCP_WINDOW",
+		ValueStringPointer(GetItemLongName(val,"dc.window")),1);
+	setenv("MCP_WIDGET",
+		ValueStringPointer(GetItemLongName(val,"dc.widget")),1);
+	setenv("MCP_EVENT",
+		ValueStringPointer(GetItemLongName(val,"dc.event")),1);
+	setenv("MCP_TENANT",
+		ValueStringPointer(GetItemLongName(val,"dc.tenant")),1);
+	setenv("MCP_TERM",
+		ValueStringPointer(GetItemLongName(val,"dc.term")),1);
+	setenv("MCP_USER",
+		ValueStringPointer(GetItemLongName(val,"dc.user")),1);
+	setenv("MCP_HOST",
+		ValueStringPointer(GetItemLongName(val,"dc.host")),1);
+	setenv("MCP_TEMPDIR",
+		ValueStringPointer(GetItemLongName(val,"dc.tempdir")),1);
+}
+
 static	int
 ExecuteServer(void)
 {
@@ -188,10 +209,9 @@ ENTER_FUNC;
 			rc = -1;
 			break;
 		}
+		wname = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"));
 		dbgprintf("ld     = [%s]",ThisLD->name);
-		dbgprintf("window = [%s]",ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window")));
-		wname = ValueStringPointer(
-					GetItemLongName(node->mcprec->value,"dc.window"));
+		dbgprintf("window = [%s]",wname);
 		bind = (WindowBind *)g_hash_table_lookup(ThisLD->bhash,wname);
 		if (bind == NULL) {
 			Message("window [%s] not found.",wname);
@@ -204,6 +224,7 @@ ENTER_FUNC;
 		} else {
 			node->dbstatus = GetDBRedirectStatus(0);
 		}
+		SetMCPEnv(node->mcprec->value);
 		TransactionStart(NULL);
 		ExecuteProcess(node);
 		if (Sleep > 0) {
