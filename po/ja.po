@@ -7,14 +7,14 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2013-04-25 17:22+0900\n"
+"POT-Creation-Date: 2014-06-02 16:19+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=EUC-JP\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: \n"
 
 #: glclient/bd_component.c:66
 msgid "Open File"
@@ -203,9 +203,18 @@ msgstr "設定"
 msgid "INFOMATION"
 msgstr "情報"
 
-#: glclient/download.c:64
+#: glclient/download.c:61
 msgid "Specify filename..."
 msgstr "保存するファイルの選択"
+
+#: glclient/download.c:85
+#, c-format
+msgid "%s saved"
+msgstr "%s に保存しました"
+
+#: glclient/download.c:86
+msgid "save complete"
+msgstr "保存完了"
 
 #: glclient/download.c:166
 #, c-format
@@ -235,11 +244,11 @@ msgstr ""
 "ファイル名: %s\n"
 "サイズ: %s"
 
-#: glclient/action.c:757
+#: glclient/action.c:724
 msgid "Now loading..."
 msgstr "読み込み中..."
 
-#: glclient/action.c:1153
+#: glclient/action.c:1120
 #, c-format
 msgid "cannot load config:%s"
 msgstr "設定が読み込みできません:%s"
@@ -253,15 +262,15 @@ msgstr "クライアント印刷 - %s"
 msgid "Preview"
 msgstr "プレビュー"
 
-#: glclient/client.c:135
+#: glclient/client.c:84
 msgid "mkdtemp failure"
 msgstr "mkdtemp に失敗しました"
 
-#: glclient/client.c:219
+#: glclient/client.c:168
 msgid "can not connect server(server port not found)"
 msgstr "サーバに接続できません(サーバまたはポートが見つかりません)"
 
-#: glclient/client.c:276
+#: glclient/client.c:225
 msgid "input Password"
 msgstr "パスワード"
 
@@ -287,47 +296,47 @@ msgstr ""
 msgid "invalid protocol sequence"
 msgstr "プロトコルが不正です"
 
-#: glclient/protocol.c:698
+#: glclient/protocol.c:696
 msgid "glclient message notify"
 msgstr "glclientメッセージ通知"
 
-#: glclient/protocol.c:709
+#: glclient/protocol.c:707
 msgid "connection error(invalid pong packet)"
 msgstr "通信エラー(サーバがPINGに応答しません)"
 
-#: glclient/protocol.c:716 glclient/protocol.c:742
+#: glclient/protocol.c:714 glclient/protocol.c:740
 msgid "connection error(server doesn't reply ping)"
 msgstr "通信エラー(サーバがPINGに応答しません)"
 
-#: glclient/protocol.c:758
+#: glclient/protocol.c:756
 msgid "connection start\n"
 msgstr "connection start\n"
 
-#: glclient/protocol.c:781
+#: glclient/protocol.c:779
 msgid "can not connect server"
 msgstr "サーバに接続できません"
 
-#: glclient/protocol.c:784
+#: glclient/protocol.c:782
 msgid "can not connect server(version not match)"
 msgstr "サーバに接続できません(サーバのバージョンが違います)"
 
-#: glclient/protocol.c:790
+#: glclient/protocol.c:788
 msgid "can not connect server(authentication error)"
 msgstr "サーバに接続できません(認証エラー)"
 
-#: glclient/protocol.c:793 glclient/protocol.c:797
+#: glclient/protocol.c:791 glclient/protocol.c:795
 msgid "can not connect server(user or password is incorrect)"
 msgstr "ユーザまたはパスワードが違います"
 
-#: glclient/protocol.c:802
+#: glclient/protocol.c:800
 msgid "can not connect server(application name invalid)"
 msgstr "サーバに接続できません(アプリケーション名が不正です)"
 
-#: glclient/protocol.c:806
+#: glclient/protocol.c:804
 msgid "can not connect server(other protocol error)"
 msgstr "サーバに接続できません(プロトコルエラー)"
 
-#: glclient/protocol.c:899 glclient/protocol.c:924 glclient/protocol.c:1155
+#: glclient/protocol.c:897 glclient/protocol.c:922 glclient/protocol.c:1153
 #, c-format
 msgid "invalid data conversion\n"
 msgstr "不正なデータ変換です\n"
@@ -380,7 +389,7 @@ msgstr ""
 "不正なデータ\n"
 "%s"
 
-#: libs/net.c:290
+#: libs/net.c:288
 #, c-format
 msgid ""
 "read error:\n"
@@ -389,7 +398,7 @@ msgstr ""
 "readエラー:\n"
 " %s\n"
 
-#: libs/net.c:308
+#: libs/net.c:306
 #, c-format
 msgid ""
 "write error:\n"
@@ -398,11 +407,11 @@ msgstr ""
 "writeエラー\n"
 " %s\n"
 
-#: libs/net.c:424
+#: libs/net.c:422
 msgid "Please input key passphrase:"
 msgstr "秘密鍵のパスフレーズを入力してください。"
 
-#: libs/net.c:425
+#: libs/net.c:423
 msgid ""
 "Verify ERROR!\n"
 "Please input key passphrase:"
@@ -410,7 +419,7 @@ msgstr ""
 "検証エラー\n"
 "秘密鍵のパスフレーズを再入力してください。"
 
-#: libs/net.c:474
+#: libs/net.c:472
 #, c-format
 msgid ""
 "SSL read error:\n"
@@ -419,7 +428,7 @@ msgstr ""
 "SSL readエラー:\n"
 " %s\n"
 
-#: libs/net.c:495
+#: libs/net.c:493
 #, c-format
 msgid ""
 "SSL write error:\n"
@@ -428,7 +437,7 @@ msgstr ""
 "SSL writeエラー:\n"
 " %s\n"
 
-#: libs/net.c:543
+#: libs/net.c:541
 #, c-format
 msgid ""
 "BIO_new failure:\n"
@@ -437,7 +446,7 @@ msgstr ""
 "BIO_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:547
+#: libs/net.c:545
 #, c-format
 msgid ""
 "X509_NAME_print_ex failure:\n"
@@ -446,7 +455,7 @@ msgstr ""
 "X509_NAME_print_exに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:577
+#: libs/net.c:575
 #, c-format
 msgid ""
 "X509_NAME_oneline failure:\n"
@@ -455,7 +464,7 @@ msgstr ""
 "X509_NAME_onelineに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:705
+#: libs/net.c:703
 #, c-format
 msgid ""
 "SSL_connect failure:\n"
@@ -464,12 +473,12 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:712
+#: libs/net.c:710
 #, c-format
 msgid "The hostname does not match %s.\n"
 msgstr "接続先のホスト名(%s)が証明書と一致しません。\n"
 
-#: libs/net.c:728
+#: libs/net.c:726
 #, c-format
 msgid ""
 "SSL_accept failure:\n"
@@ -478,7 +487,7 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:753
+#: libs/net.c:751
 #, c-format
 msgid ""
 "SSL_new failure:\n"
@@ -487,7 +496,7 @@ msgstr ""
 "SSL_CTX_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:758
+#: libs/net.c:756
 #, c-format
 msgid ""
 "SSL_set_fd failure:\n"
@@ -496,7 +505,7 @@ msgstr ""
 "SSL接続失敗:\n"
 " %s\n"
 
-#: libs/net.c:813
+#: libs/net.c:811
 #, c-format
 msgid ""
 "The certificate(%s) will be expired in %d days.\n"
@@ -505,7 +514,7 @@ msgstr ""
 "証明書(%s)の期限切れまであと%d日です。\n"
 "証明書を更新してください。\n"
 
-#: libs/net.c:838
+#: libs/net.c:836
 #, c-format
 msgid ""
 " Unable to get issuer cert.\n"
@@ -514,7 +523,7 @@ msgstr ""
 " 発行者(CA)の証明書が取得できません。\n"
 " 発行者= %s\n"
 
-#: libs/net.c:842
+#: libs/net.c:840
 msgid ""
 " Error in cert not_before field.\n"
 " notBefore="
@@ -522,7 +531,7 @@ msgstr ""
 " 証明書の有効期限開始前です。\n"
 " 有効期限の開始時刻="
 
-#: libs/net.c:850
+#: libs/net.c:848
 msgid ""
 " Error in cert not_after field.\n"
 " notAfter="
@@ -530,7 +539,7 @@ msgstr ""
 " 証明書の有効期限が切れています。\n"
 " 有効期限の終了時刻="
 
-#: libs/net.c:876
+#: libs/net.c:874
 #, c-format
 msgid ""
 "Verification error of local entity certificate:\n"
@@ -541,7 +550,7 @@ msgstr ""
 " depth=%d\n"
 " %s:%s\n"
 
-#: libs/net.c:898
+#: libs/net.c:896
 #, c-format
 msgid ""
 "Verification error of remote entity certificate:\n"
@@ -552,7 +561,7 @@ msgstr ""
 " depth=%d\n"
 " %s:%s\n"
 
-#: libs/net.c:1033 libs/net.c:1309
+#: libs/net.c:1031 libs/net.c:1307
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate failure:\n"
@@ -561,7 +570,7 @@ msgstr ""
 "SSL_CTX_use_certificateに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1037 libs/net.c:1313
+#: libs/net.c:1035 libs/net.c:1311
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey failure:\n"
@@ -570,7 +579,7 @@ msgstr ""
 "SSL_CTX_use_PrivateKeyに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1041 libs/net.c:1129 libs/net.c:1317
+#: libs/net.c:1039 libs/net.c:1127 libs/net.c:1315
 #, c-format
 msgid ""
 "SSL_CTX_check_private_key failure:\n"
@@ -580,7 +589,7 @@ msgstr ""
 " %s\n"
 "鍵ファイルが不正な可能性があります。\n"
 
-#: libs/net.c:1065 libs/net.c:1339
+#: libs/net.c:1063 libs/net.c:1337
 #, c-format
 msgid ""
 "SSL_CTX_new failure:\n"
@@ -589,7 +598,7 @@ msgstr ""
 "SSL_CTX_newに失敗しました:\n"
 " %s\n"
 
-#: libs/net.c:1073 libs/net.c:1344
+#: libs/net.c:1071 libs/net.c:1342
 #, c-format
 msgid ""
 "SSL_CTX_set_cipher_list(%s) failure:\n"
@@ -599,7 +608,7 @@ msgstr ""
 " %s\n"
 "「SSL暗号スイート」が不正な可能性があります。\n"
 
-#: libs/net.c:1086 libs/net.c:1357
+#: libs/net.c:1084 libs/net.c:1355
 #, c-format
 msgid ""
 "SSL_CTX_set_default_verify_paths error:\n"
@@ -609,14 +618,14 @@ msgstr ""
 " %s\n"
 "システムのデフォルト検証パスを使おうとしましたが失敗しました。\n"
 
-#: libs/net.c:1092 libs/net.c:1363
+#: libs/net.c:1090 libs/net.c:1361
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s)\n"
 msgstr ""
 "SSL_CTX_load_verify_locations(%s)でエラーが発生しました:\n"
 "「CA証明書へのパス」または「CA証明書ファイル」が不正な可能性があります。\n"
 
-#: libs/net.c:1109
+#: libs/net.c:1107
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate_file(%s) failure:\n"
@@ -626,7 +635,7 @@ msgstr ""
 " %s\n"
 "「証明書ファイル名」またはファイルの中身が不正な可能性があります。\n"
 
-#: libs/net.c:1119
+#: libs/net.c:1117
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey_file(%s) failure:\n"
@@ -636,11 +645,11 @@ msgstr ""
 " %s\n"
 "「鍵ファイル名」またはファイルの中身が不正な可能性があります。\n"
 
-#: libs/net.c:1136
+#: libs/net.c:1134
 msgid "Please specify certificate file"
 msgstr "証明書ファイル名を指定してください。"
 
-#: libs/net.c:1159
+#: libs/net.c:1157
 #, c-format
 msgid ""
 "Engine_by_id:\n"
@@ -649,7 +658,7 @@ msgstr ""
 "Engine_by_idに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1169
+#: libs/net.c:1167
 #, c-format
 msgid ""
 "Engine_ctrl_cmd_string failure:\n"
@@ -658,7 +667,7 @@ msgstr ""
 "Engine_ctrl_cmd_stringに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1175
+#: libs/net.c:1173
 #, c-format
 msgid ""
 "Engine_init failure:\n"
@@ -667,11 +676,11 @@ msgstr ""
 "Engine_initに失敗しました:\n"
 " %s"
 
-#: libs/net.c:1183
+#: libs/net.c:1181
 msgid "Please input security device PIN:"
 msgstr "セキュリティデバイスの PIN を入力してください。"
 
-#: libs/net.c:1302
+#: libs/net.c:1300
 #, c-format
 msgid ""
 "ENGINE_load_private_key failure:\n"

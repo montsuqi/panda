@@ -8,10 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2013-04-25 17:22+0900\n"
+"POT-Creation-Date: 2014-06-02 16:19+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -203,8 +204,17 @@ msgstr ""
 msgid "INFOMATION"
 msgstr ""
 
-#: glclient/download.c:64
+#: glclient/download.c:61
 msgid "Specify filename..."
+msgstr ""
+
+#: glclient/download.c:85
+#, c-format
+msgid "%s saved"
+msgstr ""
+
+#: glclient/download.c:86
+msgid "save complete"
 msgstr ""
 
 #: glclient/download.c:166
@@ -226,11 +236,11 @@ msgid ""
 "Size: %s"
 msgstr ""
 
-#: glclient/action.c:757
+#: glclient/action.c:724
 msgid "Now loading..."
 msgstr ""
 
-#: glclient/action.c:1153
+#: glclient/action.c:1120
 #, c-format
 msgid "cannot load config:%s"
 msgstr ""
@@ -244,15 +254,15 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
-#: glclient/client.c:135
+#: glclient/client.c:84
 msgid "mkdtemp failure"
 msgstr ""
 
-#: glclient/client.c:219
+#: glclient/client.c:168
 msgid "can not connect server(server port not found)"
 msgstr ""
 
-#: glclient/client.c:276
+#: glclient/client.c:225
 msgid "input Password"
 msgstr ""
 
@@ -278,47 +288,47 @@ msgstr ""
 msgid "invalid protocol sequence"
 msgstr ""
 
-#: glclient/protocol.c:698
+#: glclient/protocol.c:696
 msgid "glclient message notify"
 msgstr ""
 
-#: glclient/protocol.c:709
+#: glclient/protocol.c:707
 msgid "connection error(invalid pong packet)"
 msgstr ""
 
-#: glclient/protocol.c:716 glclient/protocol.c:742
+#: glclient/protocol.c:714 glclient/protocol.c:740
 msgid "connection error(server doesn't reply ping)"
 msgstr ""
 
-#: glclient/protocol.c:758
+#: glclient/protocol.c:756
 msgid "connection start\n"
 msgstr ""
 
-#: glclient/protocol.c:781
+#: glclient/protocol.c:779
 msgid "can not connect server"
 msgstr ""
 
-#: glclient/protocol.c:784
+#: glclient/protocol.c:782
 msgid "can not connect server(version not match)"
 msgstr ""
 
-#: glclient/protocol.c:790
+#: glclient/protocol.c:788
 msgid "can not connect server(authentication error)"
 msgstr ""
 
-#: glclient/protocol.c:793 glclient/protocol.c:797
+#: glclient/protocol.c:791 glclient/protocol.c:795
 msgid "can not connect server(user or password is incorrect)"
 msgstr ""
 
-#: glclient/protocol.c:802
+#: glclient/protocol.c:800
 msgid "can not connect server(application name invalid)"
 msgstr ""
 
-#: glclient/protocol.c:806
+#: glclient/protocol.c:804
 msgid "can not connect server(other protocol error)"
 msgstr ""
 
-#: glclient/protocol.c:899 glclient/protocol.c:924 glclient/protocol.c:1155
+#: glclient/protocol.c:897 glclient/protocol.c:922 glclient/protocol.c:1153
 #, c-format
 msgid "invalid data conversion\n"
 msgstr ""
@@ -361,125 +371,125 @@ msgid ""
 "%s"
 msgstr ""
 
-#: libs/net.c:290
+#: libs/net.c:288
 #, c-format
 msgid ""
 "read error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:308
+#: libs/net.c:306
 #, c-format
 msgid ""
 "write error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:424
+#: libs/net.c:422
 msgid "Please input key passphrase:"
 msgstr ""
 
-#: libs/net.c:425
+#: libs/net.c:423
 msgid ""
 "Verify ERROR!\n"
 "Please input key passphrase:"
 msgstr ""
 
-#: libs/net.c:474
+#: libs/net.c:472
 #, c-format
 msgid ""
 "SSL read error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:495
+#: libs/net.c:493
 #, c-format
 msgid ""
 "SSL write error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:543
+#: libs/net.c:541
 #, c-format
 msgid ""
 "BIO_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:547
+#: libs/net.c:545
 #, c-format
 msgid ""
 "X509_NAME_print_ex failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:577
+#: libs/net.c:575
 #, c-format
 msgid ""
 "X509_NAME_oneline failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:705
+#: libs/net.c:703
 #, c-format
 msgid ""
 "SSL_connect failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:712
+#: libs/net.c:710
 #, c-format
 msgid "The hostname does not match %s.\n"
 msgstr ""
 
-#: libs/net.c:728
+#: libs/net.c:726
 #, c-format
 msgid ""
 "SSL_accept failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:753
+#: libs/net.c:751
 #, c-format
 msgid ""
 "SSL_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:758
+#: libs/net.c:756
 #, c-format
 msgid ""
 "SSL_set_fd failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:813
+#: libs/net.c:811
 #, c-format
 msgid ""
 "The certificate(%s) will be expired in %d days.\n"
 "Please update the certificate.\n"
 msgstr ""
 
-#: libs/net.c:838
+#: libs/net.c:836
 #, c-format
 msgid ""
 " Unable to get issuer cert.\n"
 " issuer= %s\n"
 msgstr ""
 
-#: libs/net.c:842
+#: libs/net.c:840
 msgid ""
 " Error in cert not_before field.\n"
 " notBefore="
 msgstr ""
 
-#: libs/net.c:850
+#: libs/net.c:848
 msgid ""
 " Error in cert not_after field.\n"
 " notAfter="
 msgstr ""
 
-#: libs/net.c:876
+#: libs/net.c:874
 #, c-format
 msgid ""
 "Verification error of local entity certificate:\n"
@@ -487,7 +497,7 @@ msgid ""
 " %s:%s\n"
 msgstr ""
 
-#: libs/net.c:898
+#: libs/net.c:896
 #, c-format
 msgid ""
 "Verification error of remote entity certificate:\n"
@@ -495,97 +505,97 @@ msgid ""
 " %s:%s\n"
 msgstr ""
 
-#: libs/net.c:1033 libs/net.c:1309
+#: libs/net.c:1031 libs/net.c:1307
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1037 libs/net.c:1313
+#: libs/net.c:1035 libs/net.c:1311
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1041 libs/net.c:1129 libs/net.c:1317
+#: libs/net.c:1039 libs/net.c:1127 libs/net.c:1315
 #, c-format
 msgid ""
 "SSL_CTX_check_private_key failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1065 libs/net.c:1339
+#: libs/net.c:1063 libs/net.c:1337
 #, c-format
 msgid ""
 "SSL_CTX_new failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1073 libs/net.c:1344
+#: libs/net.c:1071 libs/net.c:1342
 #, c-format
 msgid ""
 "SSL_CTX_set_cipher_list(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1086 libs/net.c:1357
+#: libs/net.c:1084 libs/net.c:1355
 #, c-format
 msgid ""
 "SSL_CTX_set_default_verify_paths error:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1092 libs/net.c:1363
+#: libs/net.c:1090 libs/net.c:1361
 #, c-format
 msgid "SSL_CTX_load_verify_locations(%s)\n"
 msgstr ""
 
-#: libs/net.c:1109
+#: libs/net.c:1107
 #, c-format
 msgid ""
 "SSL_CTX_use_certificate_file(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1119
+#: libs/net.c:1117
 #, c-format
 msgid ""
 "SSL_CTX_use_PrivateKey_file(%s) failure:\n"
 " %s\n"
 msgstr ""
 
-#: libs/net.c:1136
+#: libs/net.c:1134
 msgid "Please specify certificate file"
 msgstr ""
 
-#: libs/net.c:1159
+#: libs/net.c:1157
 #, c-format
 msgid ""
 "Engine_by_id:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1169
+#: libs/net.c:1167
 #, c-format
 msgid ""
 "Engine_ctrl_cmd_string failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1175
+#: libs/net.c:1173
 #, c-format
 msgid ""
 "Engine_init failure:\n"
 " %s"
 msgstr ""
 
-#: libs/net.c:1183
+#: libs/net.c:1181
 msgid "Please input security device PIN:"
 msgstr ""
 
-#: libs/net.c:1302
+#: libs/net.c:1300
 #, c-format
 msgid ""
 "ENGINE_load_private_key failure:\n"
