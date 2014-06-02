@@ -309,8 +309,6 @@ PutWFCTerm(
 ENTER_FUNC;
 	e = node->mcprec->value;
 	SendPacketClass(fp,APS_CTRLDATA);				ON_IO_ERROR(fp,badio);
-	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.user")));
-		ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.window")));
 		ON_IO_ERROR(fp,badio);
 	SendString(fp,ValueStringPointer(GetItemLongName(e,"dc.widget")));

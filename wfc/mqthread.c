@@ -215,7 +215,6 @@ ENTER_FUNC;
 			data->hdr->window,data->hdr->widget,data->hdr->event);
 		return FALSE;
 	}
-	RecvnString(fp,SIZE_NAME,data->hdr->user);		ON_IO_ERROR(fp,badio);
 	RecvnString(fp,SIZE_NAME,data->hdr->window);	ON_IO_ERROR(fp,badio);
 	RecvnString(fp,SIZE_NAME,data->hdr->widget);	ON_IO_ERROR(fp,badio);
 	RecvnString(fp,SIZE_NAME,data->hdr->event);		ON_IO_ERROR(fp,badio);
