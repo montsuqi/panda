@@ -143,21 +143,21 @@ LEAVE_FUNC;
 static	void
 SetMCPEnv(ValueStruct *val)
 {
-	setenv("MCP_DC_WINDOW",
+	setenv("MCP_WINDOW",
 		ValueStringPointer(GetItemLongName(val,"dc.window")),1);
-	setenv("MCP_DC_WIDGET",
+	setenv("MCP_WIDGET",
 		ValueStringPointer(GetItemLongName(val,"dc.widget")),1);
-	setenv("MCP_DC_EVENT",
+	setenv("MCP_EVENT",
 		ValueStringPointer(GetItemLongName(val,"dc.event")),1);
-	setenv("MCP_DC_TENANT",
+	setenv("MCP_TENANT",
 		ValueStringPointer(GetItemLongName(val,"dc.tenant")),1);
-	setenv("MCP_DC_TERM",
+	setenv("MCP_TERM",
 		ValueStringPointer(GetItemLongName(val,"dc.term")),1);
-	setenv("MCP_DC_USER",
+	setenv("MCP_USER",
 		ValueStringPointer(GetItemLongName(val,"dc.user")),1);
-	setenv("MCP_DC_HOST",
+	setenv("MCP_HOST",
 		ValueStringPointer(GetItemLongName(val,"dc.host")),1);
-	setenv("MCP_DC_TEMPDIR",
+	setenv("MCP_TEMPDIR",
 		ValueStringPointer(GetItemLongName(val,"dc.tempdir")),1);
 }
 
