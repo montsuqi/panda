@@ -81,7 +81,7 @@ ENTER_FUNC;
 	data->hdr = New(MessageHeader);
 	memclear(data->hdr,sizeof(MessageHeader));
 	data->hdr->command = APL_COMMAND_LINK;
-	strcpy(data->hdr->tenant,MCP_DC_TENANT);
+	strcpy(data->hdr->tenant,MCP_TENANT);
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();

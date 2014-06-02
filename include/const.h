@@ -43,7 +43,7 @@
 #define	CONTROL_PORT	"/tmp/wfc.control:0600"
 #define	SYSDATA_PORT	"/tmp/sysdata:0600"
 
-#define MCP_DC_TENANT	"1"
+#define MCP_TENANT		"1"
 
 #define	SIZE_PASS		(3+8+1+22)
 #define	SIZE_OTHER		128
