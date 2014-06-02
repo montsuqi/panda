@@ -641,7 +641,7 @@ ENTER_FUNC;
 	child = json_object_object_get(obj,"trow");
 	if (CheckJSONObject(child,json_type_int)) {
 		trow = json_object_get_int(child);
-		if (trow > 1) {
+		if (trow >= 1) {
 			trow -= 1;
 		}
 	}
@@ -672,7 +672,9 @@ ENTER_FUNC;
 	child = json_object_object_get(obj,"tcolumn");
 	if (CheckJSONObject(child,json_type_int)) {
 		tcolumn = json_object_get_int(child);
-		tcolumn -= 1;
+		if (tcolumn >= 1) {
+			tcolumn -= 1;
+		}
 	}
 
 	n = gtk_panda_table_get_columns(GTK_PANDA_TABLE(widget));
