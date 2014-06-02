@@ -39,6 +39,7 @@
 #include	"utils.h"
 #include	"download.h"
 #include	"widgetcache.h"
+#include	"notify.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -48,13 +49,9 @@ show_save_dialog(
 	char *filename,
 	LargeByteString *binary)
 {
-	GtkWindow *parent;
-	GtkWidget *dialog;
-	GtkWidget *error_dialog;
+	GtkWindow *parent,*dialog,*error_dialog;
 	GError *error = NULL;
-	const char *dirname;
-	char *fname;
-	char *lname;
+	gchar *dirname,*fname,*lname,*msg;
 
 	parent = (GtkWindow *)g_list_nth_data(DialogStack,
 		g_list_length(DialogStack)-1);
@@ -85,6 +82,9 @@ show_save_dialog(
 		fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER (dialog));
         if (g_file_set_contents(fname, LBS_Body(binary), LBS_Size(binary),
 			&error)) {
+			msg =g_strdup_printf(_("%s saved"),fname);
+			Notify(_("save complete"),msg,"gtk-dialog-info",0);
+			g_free(msg);
 			SetWidgetCache(lname,g_path_get_dirname(fname));
 		} else {
 			error_dialog = gtk_message_dialog_new (GTK_WINDOW(dialog),

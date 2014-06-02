@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: panda 1.2.10\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2014-04-08 15:11+0900\n"
+"POT-Creation-Date: 2014-06-02 17:00+0900\n"
 "PO-Revision-Date: 2007-07-26 14:41+0900\n"
 "Last-Translator: ORCA support <support@orca.med.or.jp>\n"
 "Language-Team: ORCA support <support@orca.med.or.jp>\n"
@@ -161,9 +161,18 @@ msgstr "設定"
 msgid "INFOMATION"
 msgstr "情報"
 
-#: glclient/download.c:64
+#: glclient/download.c:61
 msgid "Specify filename..."
 msgstr "保存するファイルの選択"
+
+#: glclient/download.c:85
+#, c-format
+msgid "%s saved"
+msgstr "%s に保存しました"
+
+#: glclient/download.c:86
+msgid "save complete"
+msgstr "保存完了"
 
 #: glclient/download.c:166
 #, c-format
