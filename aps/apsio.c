@@ -325,12 +325,10 @@ ENTER_FUNC;
 		switch(c) {
 		case APS_WINDOW_STACK:
 			dbgmsg("WINDOW_STACK");
-fprintf(stderr,"putwfcterm w.sp[%zd]\n",node->w.sp);
 			SendInt(fp,node->w.sp);					ON_IO_ERROR(fp,badio);
 			for	(i=0;i<node->w.sp;i++) {
 				SendChar(fp,node->w.s[i].puttype);
 				SendString(fp,node->w.s[i].window);
-fprintf(stderr,"w.s[%d].window[%s]\n",i,node->w.s[i].window);
 			}
 			break;
 		case APS_LINKDATA:
