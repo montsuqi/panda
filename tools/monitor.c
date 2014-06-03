@@ -47,6 +47,7 @@
 #include	"debug.h"
 
 static	char	*Directory;
+static	char	*TempDir;
 static	char	*ApsPath;
 static	char	*WfcPath;
 static	char	*RedirectorPath;
@@ -170,6 +171,8 @@ static	ARG_TABLE	option[] = {
 		"screen directory"								},
 	{	"ddir",		STRING,		TRUE,	(void*)&DDir,
 		"LD file directory"			 					},
+	{	"tempdirroot",STRING,	TRUE,	(void*)&TempDir,
+		"root of temporary directory" 					},
 
 	{	"redirector",BOOLEAN,	TRUE,	(void*)&fRedirector,
 		"start dbredirector"		 					},
@@ -269,6 +272,7 @@ SetDefault(void)
 	DBSlavePath = NULL;
 	
 	Directory = "./directory";
+	TempDir = NULL;
 	DDir = NULL;
 	RecDir = NULL;
 	ScrDir = NULL;
@@ -799,6 +803,10 @@ ENTER_FUNC;
 		if		(  Directory  !=  NULL  ) {
 			argv[argc ++] = "-dir";
 			argv[argc ++] = Directory;
+		}
+		if		(  TempDir  !=  NULL  ) {
+			argv[argc ++] = "-tempdirroot";
+			argv[argc ++] = TempDir;
 		}
 		if		(  DDir  !=  NULL  ) {
 			argv[argc ++] = "-ddir";
