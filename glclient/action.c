@@ -1221,7 +1221,11 @@ PingTimerFunc(
 	if (ISRECV(Session)) {
 		return 1;
 	}
-	Ping();
+	if (!strcmp(SERVERTYPE(Session),"ginbee")) {
+		RPC_ListReports();
+	} else {
+		Ping();
+	}
 	CheckPrintList();
 	CheckDLList();
 	return 1;
@@ -1387,4 +1391,24 @@ TimeSet(
 	t0 = t1;
 	ms = d.tv_sec * 1000L + d.tv_usec/1000L;
 	fprintf(stderr,"%s[%ld]\n",str,ms);
+}
+
+extern	void
+PrintReport(
+	const char *printer,
+	const char *oid)
+{
+	static GtkPandaPDF *pdf = NULL;
+	LargeByteString *lbs;
+
+	if (pdf == NULL) {
+		pdf = GTK_PANDA_PDF(gtk_panda_pdf_new());
+	}
+
+	lbs = REST_GetBLOB(oid);
+	if (lbs != NULL) {
+		gtk_panda_pdf_set(pdf,LBS_Size(lbs),LBS_Body(lbs));
+		gtk_panda_pdf_print_with_printer(pdf,printer);
+		FreeLBS(lbs);
+	}
 }

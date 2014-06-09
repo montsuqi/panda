@@ -58,7 +58,7 @@ show_save_dialog(
 	if (parent == NULL) {
 		parent = GTK_WINDOW(TopWindow);
 	}
-	dialog = gtk_file_chooser_dialog_new (_("Specify filename..."),
+	dialog = gtk_file_chooser_dialog_new(_("Specify filename..."),
 		parent, GTK_FILE_CHOOSER_ACTION_SAVE,
     	GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
     	GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
@@ -93,13 +93,13 @@ show_save_dialog(
 				GTK_BUTTONS_CLOSE,
 				"%s",
 				error->message);
-			gtk_dialog_run (GTK_DIALOG (error_dialog));
-			gtk_widget_destroy (error_dialog);
+			gtk_dialog_run(GTK_DIALOG (error_dialog));
+			gtk_widget_destroy(GTK_WIDGET(error_dialog));
 			g_error_free(error);
         }
 		g_free(fname);
 	}
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
 typedef struct {

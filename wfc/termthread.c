@@ -319,23 +319,6 @@ LEAVE_FUNC;
 	return data;
 }
 
-static	Bool
-CheckJSONObject(
-	json_object *obj,
-	enum json_type type)
-{
-	if (obj == NULL) {
-		return FALSE;
-	}
-	if (is_error(obj)) {
-		return FALSE;
-	}
-	if (!json_object_is_type(obj,type)) {
-		return FALSE;
-	}
-	return TRUE;
-}
-
 static	json_object*
 MakeJSONResponseTemplate(
 	json_object *obj)

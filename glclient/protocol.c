@@ -159,7 +159,7 @@ CheckJSONRPCResponse(
 	char *message;
 
 	obj2 = json_object_object_get(obj,"jsonrpc");
-	if (obj2 == NULL || is_error(obj2)) {
+	if (!CheckJSONObject(obj2,json_type_string)) {
 		Error(_("invalid jsonrpc"));
 	}
 	if (strcmp("2.0",json_object_get_string(obj2))) {
@@ -167,7 +167,7 @@ CheckJSONRPCResponse(
 	}
 
 	obj2 = json_object_object_get(obj,"id");
-	if (obj2 == NULL || is_error(obj2)) {
+	if (!CheckJSONObject(obj2,json_type_int)) {
 		Error(_("invalid jsonrpc id"));
 	}
 	id = json_object_get_int(obj2);
@@ -176,15 +176,15 @@ CheckJSONRPCResponse(
 	}
 
 	obj2 = json_object_object_get(obj,"error");
-	if (obj2 != NULL && !is_error(obj2)) {
+	if (CheckJSONObject(obj2,json_type_object)) {
 		code = 0;
 		message = NULL;
 		obj3 = json_object_object_get(obj2,"code");
-		if (obj3 != NULL || !is_error(obj3)) {
+		if (CheckJSONObject(obj3,json_type_int)) {
 			code = json_object_get_int(obj3);
 		}
 		obj3 = json_object_object_get(obj2,"message");
-		if (obj3 != NULL || !is_error(obj3)) {
+		if (CheckJSONObject(obj3,json_type_string)) {
 			message = (char*)json_object_get_string(obj3);
 		}
 		Error(_("jsonrpc error code:%d message:%s"),code,message);
@@ -335,19 +335,19 @@ RPC_GetServerInfo()
 
 	result = json_object_object_get(obj,"result");
 	child = json_object_object_get(result,"protocol_version");
-	if (child == NULL || is_error(child)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("no protocol_version object"));
 	}
 	PROTOVER(Session) = g_strdup(json_object_get_string(child));
 
 	child = json_object_object_get(result,"application_version");
-	if (child == NULL || is_error(child)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("no application_version object"));
 	}
 	APPVER(Session) = g_strdup(json_object_get_string(child));
 
 	child = json_object_object_get(result,"server_type");
-	if (child == NULL || is_error(child)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("no server_type object"));
 	}
 	SERVERTYPE(Session) = g_strdup(json_object_get_string(child));
@@ -380,23 +380,23 @@ RPC_StartSession()
 
 	result = json_object_object_get(obj,"result");
 	meta = json_object_object_get(result,"meta");
-	if (meta == NULL || is_error(meta)) {
+	if (!CheckJSONObject(meta,json_type_object)) {
 		Error(_("no meta object"));
 	}
 	child = json_object_object_get(meta,"session_id");
-	if (child == NULL || is_error(child)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("no session_id object"));
 	}
 	SESSIONID(Session) = g_strdup(json_object_get_string(child));
 
 	child = json_object_object_get(result,"app_rpc_endpoint_uri");
-	if (child == NULL || is_error(child)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("no jsonrpc_uri object"));
 	}
 	rpcuri = (char*)json_object_get_string(child);
 
 	child = json_object_object_get(result,"app_rest_api_uri_root");
-	if (child == NULL || is_error(child)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("no rest_uri object"));
 	}
 	resturi = (char*)json_object_get_string(child);
@@ -554,27 +554,77 @@ RPC_GetMessage(
 	result = json_object_object_get(obj,"result");
 
 	child = json_object_object_get(result,"dialog");
-	if (child == NULL || is_error(child) ||
-        !json_object_is_type(child,json_type_string)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("invalid message data:dialog"));
 	}
 	*dialog = g_strdup((char*)json_object_get_string(child));
 
 	child = json_object_object_get(result,"popup");
-	if (child == NULL || is_error(child) ||
-        !json_object_is_type(child,json_type_string)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("invalid message data:popup"));
 	}
 	*popup = g_strdup((char*)json_object_get_string(child));
 
 	child = json_object_object_get(result,"abort");
-	if (child == NULL || is_error(child) ||
-        !json_object_is_type(child,json_type_string)) {
+	if (!CheckJSONObject(child,json_type_string)) {
 		Error(_("invalid message data:abort"));
 	}
 	*abort = g_strdup((char*)json_object_get_string(child));
 	json_object_put(obj);
 }
+
+void
+RPC_ListReports()
+{
+	json_object *obj,*params,*child,*result,*item;
+	char *printer,*oid;
+	int i;
+
+	params = json_object_new_object();
+	child = json_object_new_object();
+	json_object_object_add(child,"client_version",
+		json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"session_id",
+		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(params,"meta",child);
+
+	obj = MakeJSONRPCRequest("list_reports",params);
+	JSONRPC(TYPE_APP,obj);
+
+	// json parse
+	LBS_EmitEnd(writebuf);
+	obj = json_tokener_parse(LBS_Body(writebuf));
+	if (obj == NULL || is_error(obj)) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(obj);
+	result = json_object_object_get(obj,"result");
+	if (!CheckJSONObject(result,json_type_array)) {
+		Error(_("invalid list_report response"));
+	}
+	for (i=0;i<json_object_array_length(result);i++) {
+		item = json_object_array_get_idx(result,i);
+		printer = NULL;
+		oid = NULL;
+		if (!CheckJSONObject(item,json_type_object)) {
+			continue;
+		}
+		child = json_object_object_get(item,"printer");
+		if (CheckJSONObject(child,json_type_string)) {
+			printer = (char*)json_object_get_string(child);
+		}
+		child = json_object_object_get(item,"object_id");
+		if (CheckJSONObject(child,json_type_string)) {
+			oid = (char*)json_object_get_string(child);
+		}
+		if (printer != NULL && oid != NULL) {
+			PrintReport(printer,oid);
+		}
+	}
+	json_object_put(obj);
+}
+
+
 
 size_t
 HeaderPostBLOB(

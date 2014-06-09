@@ -28,6 +28,7 @@ void 				RPC_EndSession();
 void 				RPC_GetWindow();
 void				RPC_SendEvent(json_object *params);
 void				RPC_GetMessage(char**d,char**p,char**a);
+void				RPC_ListReports();
 char*				REST_PostBLOB(LargeByteString *);
 LargeByteString*	REST_GetBLOB(const char *);
 gboolean			REST_APIDownload(const char*path,char **f,size_t *s);
