@@ -52,6 +52,5 @@
 #include "sysdatacom.h"
 #include "sysdbreq.h"
 #include "term.h"
-#include "wfcio.h"
 
 #endif
