@@ -98,7 +98,7 @@ CheckPrintList()
 				list = g_list_append(list,req);
 			} else {
 				if (req->nretry <= 1) {
-					sprintf(buf,_("print failure\ntitle:%s\n"),req->title);
+					snprintf(buf,sizeof(buf),_("print failure\ntitle:%s\n"),req->title);
 					Notify(_("glclient print notify"),buf,"gtk-dialog-error",0);
 					FreePrintRequest(req);
 				} else {
@@ -176,7 +176,7 @@ CheckDLList()
 				list = g_list_append(list,req);
 			} else {
 				if (req->nretry <= 1) {
-					sprintf(buf,
+					snprintf(buf,sizeof(buf),
 						_("download failure\nfilename:%s\ndescription:%s"),
 						req->filename,req->description);
 					Notify(_("glclient download notify"),

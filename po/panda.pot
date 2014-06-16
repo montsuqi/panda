@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2014-06-02 17:00+0900\n"
+"POT-Creation-Date: 2014-06-16 10:43+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -202,6 +202,24 @@ msgstr ""
 msgid "glclient message notify"
 msgstr ""
 
+#: glclient/action.c:1414
+#, c-format
+msgid ""
+"starting print\n"
+"printer:%s\n"
+msgstr ""
+
+#: glclient/action.c:1415 glclient/action.c:1418
+msgid "glclient server print notify"
+msgstr ""
+
+#: glclient/action.c:1417
+#, c-format
+msgid ""
+"print failure\n"
+"printer:%s\n"
+msgstr ""
+
 #: glclient/print.c:76
 #, c-format
 msgid "client printing - %s"
@@ -253,22 +271,22 @@ msgstr ""
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:240 glclient/protocol.c:632
+#: glclient/protocol.c:240 glclient/protocol.c:682
 msgid "could not init curl"
 msgstr ""
 
 #: glclient/protocol.c:290 glclient/protocol.c:305 glclient/protocol.c:312
-#: glclient/protocol.c:675 glclient/protocol.c:690 glclient/protocol.c:767
-#: glclient/protocol.c:861 glclient/protocol.c:864
+#: glclient/protocol.c:725 glclient/protocol.c:740 glclient/protocol.c:817
+#: glclient/protocol.c:911 glclient/protocol.c:914
 #, c-format
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:298 glclient/protocol.c:683 glclient/protocol.c:760
+#: glclient/protocol.c:298 glclient/protocol.c:733 glclient/protocol.c:810
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:301 glclient/protocol.c:686 glclient/protocol.c:763
+#: glclient/protocol.c:301 glclient/protocol.c:736 glclient/protocol.c:813
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
@@ -280,7 +298,7 @@ msgstr ""
 
 #: glclient/protocol.c:332 glclient/protocol.c:377 glclient/protocol.c:437
 #: glclient/protocol.c:466 glclient/protocol.c:494 glclient/protocol.c:523
-#: glclient/protocol.c:551
+#: glclient/protocol.c:551 glclient/protocol.c:598
 msgid "invalid json"
 msgstr ""
 
@@ -312,31 +330,35 @@ msgstr ""
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:559
+#: glclient/protocol.c:558
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:566
+#: glclient/protocol.c:564
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:573
+#: glclient/protocol.c:570
 msgid "invalid message data:abort"
 msgstr ""
 
-#: glclient/protocol.c:751
+#: glclient/protocol.c:603
+msgid "invalid list_report response"
+msgstr ""
+
+#: glclient/protocol.c:801
 #, c-format
 msgid "comm error:can not get blob:%s"
 msgstr ""
 
-#: glclient/protocol.c:888
+#: glclient/protocol.c:938
 #, c-format
 msgid ""
 "download failure\n"
 "path:%s\n"
 msgstr ""
 
-#: glclient/protocol.c:889 glclient/printservice.c:182
+#: glclient/protocol.c:939 glclient/printservice.c:182
 msgid "glclient download notify"
 msgstr ""
 

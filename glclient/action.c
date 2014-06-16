@@ -1399,6 +1399,7 @@ PrintReport(
 	const char *oid)
 {
 	static GtkPandaPDF *pdf = NULL;
+	char buf[1024];
 	LargeByteString *lbs;
 
 	if (pdf == NULL) {
@@ -1410,5 +1411,10 @@ PrintReport(
 		gtk_panda_pdf_set(pdf,LBS_Size(lbs),LBS_Body(lbs));
 		gtk_panda_pdf_print_with_printer(pdf,printer);
 		FreeLBS(lbs);
+		snprintf(buf,sizeof(buf),_("starting print\nprinter:%s\n"),printer);
+		Notify(_("glclient server print notify"),buf,"gtk-print",0);
+	} else {
+		snprintf(buf,sizeof(buf),_("print failure\nprinter:%s\n"),printer);
+		Notify(_("glclient server print notify"),buf,"gtk-print",0);
 	}
 }
