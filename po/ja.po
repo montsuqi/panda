@@ -217,7 +217,7 @@ msgid ""
 "printer:%s\n"
 msgstr ""
 "印刷開始しました\n"
-"プリンタ:%s\n"
+"出力先プリンタ:%s\n"
 
 #: glclient/action.c:1415 glclient/action.c:1418
 msgid "glclient server print notify"
