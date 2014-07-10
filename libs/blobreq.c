@@ -170,8 +170,8 @@ LEAVE_FUNC;
 
 extern	MonObjectType
 RequestImportBLOB(
-	NETFILE	*fp,
-	char			*fname)
+	NETFILE		*fp,
+	const char	*fname)
 {
 	MonObjectType	obj;
 	char	buff[SIZE_BUFF];
