@@ -46,6 +46,7 @@
 #include	"print.h"
 #include	"widgetcache.h"
 #include	"utils.h"
+#include	"notify.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -96,6 +97,7 @@ Print(
 	LargeByteString	*lbs)
 {
 	GtkWidget *pandapdf;
+	char buf[1024];
 
 	pandapdf = gtk_panda_pdf_new();
 	if (!gtk_panda_pdf_set(GTK_PANDA_PDF(pandapdf),LBS_Size(lbs),LBS_Body(lbs))) {
@@ -104,8 +106,12 @@ Print(
 	}
 	if (printer == NULL) {
 		gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf),FALSE);
+		snprintf(buf,sizeof(buf),_("starting print\nprinter:%s\n"),"default");
+		Notify(_("glclient print notify"),buf,"gtk-print",0);
 	} else {
 		gtk_panda_pdf_print_with_printer(GTK_PANDA_PDF(pandapdf),printer);
+		snprintf(buf,sizeof(buf),_("starting print\nprinter:%s\n"),printer);
+		Notify(_("glclient print notify"),buf,"gtk-print",0);
 	}
 
 	gtk_widget_destroy(pandapdf);
