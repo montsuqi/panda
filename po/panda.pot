@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2014-07-11 11:28+0900\n"
+"POT-Creation-Date: 2014-07-11 11:44+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -254,14 +254,16 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
-#: glclient/print.c:109 glclient/print.c:113
+#: glclient/print.c:111 glclient/print.c:118
 #, c-format
 msgid ""
 "starting print\n"
+"\n"
+"title:%s\n"
 "printer:%s\n"
 msgstr ""
 
-#: glclient/print.c:110 glclient/print.c:114
+#: glclient/print.c:114 glclient/print.c:121
 msgid "glclient print notify"
 msgstr ""
 

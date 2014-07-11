@@ -93,8 +93,9 @@ ShowPrintDialog(
 
 void
 Print(
-	const char		*printer,
-	LargeByteString	*lbs)
+	const char *title,
+	const char *printer,
+	LargeByteString *lbs)
 {
 	GtkWidget *pandapdf;
 	char buf[1024];
@@ -106,11 +107,17 @@ Print(
 	}
 	if (printer == NULL) {
 		gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf),FALSE);
-		snprintf(buf,sizeof(buf),_("starting print\nprinter:%s\n"),"default");
+		snprintf(buf,sizeof(buf),_(
+			"starting print\n\n"
+			"title:%s\n"
+			"printer:%s\n"),title,"default");
 		Notify(_("glclient print notify"),buf,"gtk-print",0);
 	} else {
 		gtk_panda_pdf_print_with_printer(GTK_PANDA_PDF(pandapdf),printer);
-		snprintf(buf,sizeof(buf),_("starting print\nprinter:%s\n"),printer);
+		snprintf(buf,sizeof(buf),_(
+			"starting print\n\n"
+			"title:%s\n"
+			"printer:%s\n"),title,printer);
 		Notify(_("glclient print notify"),buf,"gtk-print",0);
 	}
 

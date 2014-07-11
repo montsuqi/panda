@@ -718,7 +718,7 @@ PrintReport(
 	if (showdialog) {
 		ShowPrintDialog(title,lbs);
 	} else {
-		Print(printer,lbs);
+		Print(title,printer,lbs);
 	}
 	FreeLBS(lbs);
 }

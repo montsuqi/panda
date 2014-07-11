@@ -23,6 +23,6 @@
 #include <gtk/gtk.h>
 
 void ShowPrintDialog(const char *title,LargeByteString *);
-void Print(const char *printer,LargeByteString *);
+void Print(const char *title,const char *printer,LargeByteString *);
 
 #endif
