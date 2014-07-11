@@ -51,9 +51,8 @@
 
 void
 ShowPrintDialog(
-	char	*title,
-	char	*fname,
-	size_t	size)
+	const char		*title,
+	LargeByteString	*lbs)
 {
 	GtkWindow *parent;
 	GtkWidget *dialog;
@@ -62,7 +61,7 @@ ShowPrintDialog(
 	gchar *_title;
 
 	pandapdf = gtk_panda_pdf_new();
-	if (!gtk_panda_pdf_load(GTK_PANDA_PDF(pandapdf),fname)) {
+	if (!gtk_panda_pdf_set(GTK_PANDA_PDF(pandapdf),LBS_Size(lbs),LBS_Body(lbs))) {
 		gtk_widget_destroy(pandapdf);
 		return;
 	}
@@ -81,8 +80,6 @@ ShowPrintDialog(
 		GTK_RESPONSE_NONE,NULL);
 	gtk_window_set_title(GTK_WINDOW(dialog),_title);
 	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
-	pandapdf = gtk_panda_pdf_new();
-	gtk_panda_pdf_load(GTK_PANDA_PDF(pandapdf),fname);
 	gtk_widget_set_size_request(pandapdf,800,600);
 	content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	gtk_container_add(GTK_CONTAINER(content),pandapdf);
@@ -94,16 +91,22 @@ ShowPrintDialog(
 }
 
 void
-PrintWithDefaultPrinter(
-	char	*fname)
+Print(
+	const char		*printer,
+	LargeByteString	*lbs)
 {
 	GtkWidget *pandapdf;
 
 	pandapdf = gtk_panda_pdf_new();
-	if (!gtk_panda_pdf_load(GTK_PANDA_PDF(pandapdf),fname)) {
+	if (!gtk_panda_pdf_set(GTK_PANDA_PDF(pandapdf),LBS_Size(lbs),LBS_Body(lbs))) {
 		gtk_widget_destroy(pandapdf);
 		return;
 	}
-	gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf),FALSE);
+	if (printer == NULL) {
+		gtk_panda_pdf_print(GTK_PANDA_PDF(pandapdf),FALSE);
+	} else {
+		gtk_panda_pdf_print_with_printer(GTK_PANDA_PDF(pandapdf),printer);
+	}
+
 	gtk_widget_destroy(pandapdf);
 }

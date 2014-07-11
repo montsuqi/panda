@@ -50,8 +50,6 @@ typedef struct {
 	char		*ThisWindow;
 	GHashTable	*WindowTable;
 	GHashTable	*WidgetTable;
-	GList		*PrintList;
-	GList		*DLList;
 #ifdef	USE_SSL
 	SSL_CTX		*ctx;
 #ifdef  USE_PKCS11
@@ -70,8 +68,6 @@ typedef struct {
 #define	THISWINDOW(session)		((session)->ThisWindow)
 #define	WINDOWTABLE(session)	((session)->WindowTable)
 #define	WIDGETTABLE(session)	((session)->WidgetTable)
-#define	PRINTLIST(session)		((session)->PrintList)
-#define	DLLIST(session)			((session)->DLList)
 #ifdef	USE_SSL
 #define	CTX(session)			((session)->ctx)
 #ifdef	USE_PKCS11

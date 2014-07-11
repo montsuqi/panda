@@ -35,6 +35,7 @@ typedef	struct {
 	char			cmd[SIZE_LONGNAME+1];
 	char			user[SIZE_USER+1];
 	char			term[SIZE_TERM+1];
+	char			tempdir[SIZE_PATH+1];
 	char			host[SIZE_HOST+1];
 	char			agent[SIZE_TERM+1];
 	int				status;

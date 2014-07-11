@@ -264,8 +264,6 @@ InitSystem()
 #endif	//USE_SSL
 	TITLE(Session) = NULL;
 	BGCOLOR(Session) = NULL;
-	PRINTLIST(Session) = NULL;
-	DLLIST(Session) = NULL;
 }
 
 static	void

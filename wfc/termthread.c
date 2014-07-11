@@ -177,10 +177,6 @@ RegisterSession(
 {
 	SessionCtrl *ctrl;
 ENTER_FUNC;
-	snprintf(data->hdr->tempdir,SIZE_PATH,"%s/%s",TempDirRoot,data->hdr->uuid);
-	if (!MakeDir(data->hdr->tempdir,0700)) {
-		Error("cannot make session tempdir %s",data->hdr->tempdir);
-	}
 
 	ctrl = NewSessionCtrl(SESSION_CONTROL_INSERT);
 	ctrl->session = data;
@@ -556,6 +552,11 @@ ENTER_FUNC;
 	uuid_generate(u);
 	uuid_unparse(u,data->hdr->uuid);
 
+	snprintf(data->hdr->tempdir,SIZE_PATH,"%s/%s",TempDirRoot,data->hdr->uuid);
+	if (!MakeDir(data->hdr->tempdir,0700)) {
+		Error("cannot make session tempdir %s",data->hdr->tempdir);
+	}
+
 	if ((ld = g_hash_table_lookup(APS_Hash,ThisEnv->InitialLD)) == NULL) {
 		Error("cannot find initial ld:%s.check directory",ThisEnv->InitialLD);
 	}
@@ -573,6 +574,7 @@ ENTER_FUNC;
 
 	SendPacketClass(term->fp,WFC_OK);	ON_IO_ERROR(term->fp,badio);
 	SendString(term->fp,data->hdr->uuid);	ON_IO_ERROR(term->fp,badio);
+	SendString(term->fp,data->hdr->tempdir);	ON_IO_ERROR(term->fp,badio);
 
 	data->ld = ld;
 	data->linkdata = NewLinkData();

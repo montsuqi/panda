@@ -32,6 +32,7 @@ extern	void	GL_RecvString(NETFILE *fp, size_t size, char *str);
 extern	Fixed	*GL_RecvFixed(NETFILE *fp);
 extern	double	GL_RecvFloat(NETFILE *fp);
 extern	Bool	GL_RecvBool(NETFILE *fp);
+extern	void	GL_SendLBS(NETFILE *fp,LargeByteString *lbs);
 
 extern	void	GL_SendValue(NETFILE *fp, ValueStruct *value, char *coding);
 extern	void	GL_RecvValue(NETFILE *fp, ValueStruct *value, char *coding);

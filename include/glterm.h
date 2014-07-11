@@ -52,6 +52,8 @@
 #define	GL_Pong_Dialog				(PacketClass)0x11
 #define	GL_Pong_Popup				(PacketClass)0x12
 #define	GL_Pong_Abort				(PacketClass)0x13
+#define	GL_ListDownloads			(PacketClass)0x14
+#define	GL_GetBLOB					(PacketClass)0x15
 
 #define HTTP_GET					(PacketClass)0x47
 #define HTTP_POST					(PacketClass)0x50

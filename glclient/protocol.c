@@ -51,10 +51,11 @@
 #include	"gettext.h"
 #include	"const.h"
 #include	"notify.h"
-#include	"printservice.h"
 #include	"dialogs.h"
 #include	"widgetOPS.h"
 #include	"action.h"
+#include	"print.h"
+#include	"download.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -223,7 +224,7 @@ LEAVE_FUNC;
 static	void
 GL_SendString(
 	NETFILE	*fp,
-	char	*str)
+	const char	*str)
 {
 	size_t		size;
 
@@ -238,7 +239,7 @@ ENTER_FUNC;
 		GL_Error();
 	}
 	if (size > 0) {
-		Send(fp,str,size);
+		Send(fp,(void*)str,size);
 		if (!CheckNetFile(fp)) {
 			GL_Error();
 		}
@@ -669,6 +670,140 @@ GL_SendVersionString(
 	}
 }
 
+static LargeByteString*
+RecvBLOB(
+	NETFILE *fp,
+	const char *oid)
+{
+	LargeByteString *lbs;
+
+	lbs = NewLBS();
+	GL_SendPacketClass(fp,GL_GetBLOB);ON_IO_ERROR(fp,badio);
+	GL_SendString(fp,oid);ON_IO_ERROR(fp,badio);
+	GL_RecvLBS(fp,lbs);
+badio:
+	return lbs;
+}
+
+static void
+PrintReport(
+	NETFILE *fp,
+	json_object *obj)
+{
+	json_object *child;
+	char *printer,*oid,*title;
+	gboolean showdialog;
+	LargeByteString *lbs;
+
+	printer = NULL;
+	title = "";
+	showdialog = FALSE;
+
+	child = json_object_object_get(obj,"object_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		return;
+	}
+	oid = (char*)json_object_get_string(child);
+
+	child = json_object_object_get(obj,"printer");
+	if (CheckJSONObject(child,json_type_string)) {
+		printer = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"title");
+	if (CheckJSONObject(child,json_type_string)) {
+		title = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"showdialog");
+	if (CheckJSONObject(child,json_type_boolean)) {
+		showdialog = json_object_get_boolean(child);
+	}
+	lbs = RecvBLOB(fp,oid);
+	if (LBS_Size(lbs) == 0) {
+		FreeLBS(lbs);
+		return;
+	}
+	if (showdialog) {
+		ShowPrintDialog(title,lbs);
+	} else {
+		Print(printer,lbs);
+	}
+	FreeLBS(lbs);
+}
+
+static void
+DownloadFile(
+	NETFILE *fp,
+	json_object *obj)
+{
+	json_object *child;
+	char *oid,*filename,*desc;
+	LargeByteString *lbs;
+
+	filename = "foo.dat";
+	desc = "";
+
+	child = json_object_object_get(obj,"object_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		return;
+	}
+	oid = (char*)json_object_get_string(child);
+
+	child = json_object_object_get(obj,"filename");
+	if (CheckJSONObject(child,json_type_string)) {
+		filename = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"description");
+	if (CheckJSONObject(child,json_type_string)) {
+		desc = (char*)json_object_get_string(child);
+	}
+	lbs = RecvBLOB(fp,oid);
+	if (LBS_Size(lbs) == 0) {
+		FreeLBS(lbs);
+		return;
+	}
+	ShowDownloadDialog(NULL,filename,desc,lbs);
+	FreeLBS(lbs);
+}
+
+static void
+CheckDownloads(
+	NETFILE *fp)
+{
+	char buff[CLIENT_SIZE_BUFF];
+	json_object *obj,*result,*child,*type;
+	int i;
+
+	GL_SendPacketClass(fp,GL_ListDownloads);ON_IO_ERROR(fp,badio);
+	GL_RecvString(fp,sizeof(buff),buff);ON_IO_ERROR(fp,badio);
+	obj = json_tokener_parse(buff);
+	if (is_error(obj)) {
+		return;
+	}
+	result = json_object_object_get(obj,"result");
+	if (!CheckJSONObject(result,json_type_array)) {
+		json_object_put(obj);
+		return;
+	}
+	for(i=0;i<json_object_array_length(result);i++) {
+		child = json_object_array_get_idx(result,i);
+		if (!CheckJSONObject(child,json_type_object)) {
+			continue;
+		}
+		type = json_object_object_get(child,"type");
+		if (!CheckJSONObject(type,json_type_string)) {
+			continue;
+		}
+		if (!strcmp(json_object_get_string(type),"report")) {
+			PrintReport(fp,child);
+		} else {
+			DownloadFile(fp,child);
+		}
+	}
+	json_object_put(obj);
+badio:
+	return;
+}
+
 static gint
 PingTimerFunc(gpointer data)
 {
@@ -707,34 +842,9 @@ PingTimerFunc(gpointer data)
 			ShowErrorDialog(_("connection error(invalid pong packet)"));
 			break;
 		}
-	} else {
-		GL_SendPacketClass(fp,GL_Ping);ON_IO_ERROR(fp,badio);
-		c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
-		if (c != GL_Pong) {
-			ShowErrorDialog(_("connection error(server doesn't reply ping)"));
-			return 1;
-		}
-		c = GL_RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
-		switch (c) {
-		case GL_STOP:
-			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ShowInfoDialog(buff);
-			exit(1);
-			break;
-		case GL_CONTINUE:
-			GL_RecvString(fp, sizeof(buff), buff);ON_IO_ERROR(fp,badio);
-			ISRECV(Session) = FALSE;
-			ShowInfoDialog(buff);
-			break;
-		case GL_END:
-		default:
-			ISRECV(Session) = FALSE;
-			break;
-		};
 	}
+	CheckDownloads(fp);
 	ISRECV(Session) = FALSE;
-	CheckPrintList();
-	CheckDLList();
 	return 1;
 badio:
 	ShowErrorDialog(_("connection error(server doesn't reply ping)"));
