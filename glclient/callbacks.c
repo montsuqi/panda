@@ -205,6 +205,12 @@ ENTER_FUNC;
 		}
 		HideBusyCursor(widget); 
 		UnblockChangedHandlers();
+		while (THISWINDOW(Session)[0] == '_') {
+			SendEvent(FPCOMM(Session),
+				THISWINDOW(Session),THISWINDOW(Session),"DummyEvent");
+			SendWindowData();
+			GetScreenData(FPCOMM(Session));
+		}
 		ISRECV(Session) = FALSE;
 	}
 LEAVE_FUNC;

@@ -55,6 +55,7 @@
 #include	"widgetOPS.h"
 #include	"action.h"
 #include	"print.h"
+#include	"printservice.h"
 #include	"download.h"
 #include	"message.h"
 #include	"debug.h"
@@ -567,9 +568,11 @@ GetScreenData(
 	char			window[SIZE_NAME+1];
 	char			widgetName[SIZE_LONGNAME+1];
 	PacketClass		c;
+	gboolean 		isdummy;
 	unsigned char	type;
 
 ENTER_FUNC;
+	isdummy = FALSE;
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
 	GL_SendInt(fp,0);/*get all data*/
@@ -604,7 +607,10 @@ ENTER_FUNC;
 				}
 				THISWINDOW(Session) = strdup(window);
 				RecvValue(fp,window);
-				ShowWindow(window);
+				isdummy = window[0] == '_';
+				if (!isdummy) {
+					ShowWindow(window);
+				}
 				UpdateWindow(window);
 				ResetTimer(window);
 			}
@@ -628,8 +634,10 @@ ENTER_FUNC;
 	if (c == GL_FocusName) {
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
-		GrabFocus(window, widgetName);
-		PandaTableFocusCell(widgetName);
+		if (!isdummy) {
+			GrabFocus(window, widgetName);
+			PandaTableFocusCell(widgetName);
+		}
 		c = GL_RecvPacketClass(fp);
 	}
 LEAVE_FUNC;
@@ -836,8 +844,12 @@ PingTimerFunc(gpointer data)
 			break;
 		}
 	}
-	CheckDownloads(fp);
+	if (fV49) {
+		CheckDownloads(fp);
+	}
 	ISRECV(Session) = FALSE;
+	CheckPrintList();
+	CheckDLList();
 	return 1;
 badio:
 	ShowErrorDialog(_("connection error(server doesn't reply ping)"));
@@ -874,6 +886,11 @@ ENTER_FUNC;
 			fV47 = TRUE;
 		} else {
 			fV47 = FALSE;
+		}
+		if (strcmp(ver, "1.4.9.00") >= 0) {
+			fV49 = TRUE;
+		} else {
+			fV49 = FALSE;
 		}
 	} else {
 		rc = FALSE;
@@ -1102,7 +1119,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return type;
 }
-
 
 extern	void
 SendIntegerData(

@@ -35,6 +35,7 @@
 #include	<sys/time.h>
 #include	<errno.h>
 
+#include	"gettext.h"
 #include	"glterm.h"
 #include	"glclient.h"
 #include	"net.h"
@@ -44,7 +45,8 @@
 #include	"action.h"
 #include	"widgetOPS.h"
 #include	"dialogs.h"
-#include	"gettext.h"
+#include	"printservice.h"
+#include	"message.h"
 #include	"debug.h"
 
 static	gboolean
@@ -951,16 +953,17 @@ RecvPandaDownload2(
 	WidgetData	*data,
 	NETFILE	*fp)
 {
-	Bool			ret;
-	char			name[SIZE_BUFF]
-	,				path[SIZE_BUFF]
-	,				filename[SIZE_BUFF]
-	,				description[SIZE_BUFF];
-	int				nitem
-	,				nitem2
-	,				nitem3
-	,				nretry
-	,				i,j,k;
+	Bool		ret;
+	DLRequest	*req;
+	char		name[SIZE_BUFF]
+	,			path[SIZE_BUFF]
+	,			filename[SIZE_BUFF]
+	,			description[SIZE_BUFF];
+	int			nitem
+	,			nitem2
+	,			nitem3
+	,			nretry
+	,			i,j,k;
 
 ENTER_FUNC;
 	ret = FALSE;
@@ -995,7 +998,6 @@ ENTER_FUNC;
 						}
 					}
 					if (strlen(path) > 0 && strlen(filename) > 0) {
-#if 0
 						req = (DLRequest*)xmalloc(sizeof(DLRequest));
 						req->path = StrDup(path);
 						req->filename = StrDup(filename);
@@ -1003,7 +1005,6 @@ ENTER_FUNC;
 						req->nretry = nretry;
 						DLLIST(Session) = g_list_append(DLLIST(Session),req);
 						MessageLogPrintf("add path[%s]\n",path);
-#endif
 					}
 				}
 			}
@@ -1019,16 +1020,17 @@ RecvPandaPrint(
 	WidgetData	*data,
 	NETFILE	*fp)
 {
-	Bool	ret;
-	char	name[SIZE_BUFF]
-	,		path[SIZE_BUFF]
-	,		title[SIZE_BUFF];
-	int		nitem
-	,		nitem2
-	,		nitem3
-	,		nretry
-	,		showdialog
-	,		i,j,k;
+	Bool			ret;
+	PrintRequest	*req;
+	char			name[SIZE_BUFF]
+	,				path[SIZE_BUFF]
+	,				title[SIZE_BUFF];
+	int				nitem
+	,				nitem2
+	,				nitem3
+	,				nretry
+	,				showdialog
+	,				i,j,k;
 
 ENTER_FUNC;
 	ret = FALSE;
@@ -1062,7 +1064,6 @@ ENTER_FUNC;
 						}
 					}
 					if (strlen(path) > 0 && strlen(title) > 0) {
-#if 0
 						req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
 						req->path = StrDup(path);
 						req->title = StrDup(title);
@@ -1070,7 +1071,6 @@ ENTER_FUNC;
 						req->showdialog = showdialog;
 						PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
 						MessageLogPrintf("add path[%s]\n",path);
-#endif
 					}
 					path[0] = 0; title[0] = 0;
 				}
