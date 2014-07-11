@@ -567,11 +567,9 @@ GetScreenData(
 	char			window[SIZE_NAME+1];
 	char			widgetName[SIZE_LONGNAME+1];
 	PacketClass		c;
-	gboolean 		isdummy;
 	unsigned char	type;
 
 ENTER_FUNC;
-	isdummy = FALSE;
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
 	GL_SendInt(fp,0);/*get all data*/
@@ -606,10 +604,7 @@ ENTER_FUNC;
 				}
 				THISWINDOW(Session) = strdup(window);
 				RecvValue(fp,window);
-				isdummy = window[0] == '_';
-				if (!isdummy) {
-					ShowWindow(window);
-				}
+				ShowWindow(window);
 				UpdateWindow(window);
 				ResetTimer(window);
 			}
@@ -633,10 +628,8 @@ ENTER_FUNC;
 	if (c == GL_FocusName) {
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
-		if (!isdummy) {
-			GrabFocus(window, widgetName);
-			PandaTableFocusCell(widgetName);
-		}
+		GrabFocus(window, widgetName);
+		PandaTableFocusCell(widgetName);
 		c = GL_RecvPacketClass(fp);
 	}
 LEAVE_FUNC;
