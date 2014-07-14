@@ -45,71 +45,62 @@
 #include	"debug.h"
 #include	"gettext.h"
 
-static size_t wrote_size = 0;
+static size_t wrote_size;
+static LargeByteString *buf = NULL;
 
 static size_t 
-WriteData(
+write_data(
 	void *buf,
 	size_t size,
 	size_t nmemb,
 	void *userp)
 {
-	FILE *fp;
+	size_t buf_size;
+	LargeByteString *lbs;
+	unsigned char *p;
+	int i;
 
-	fp = (FILE*)userp;
-	wrote_size += size * nmemb;
-	return fwrite(buf,size,nmemb,fp);
+	lbs = (LargeByteString*)userp;
+	buf_size = size * nmemb;
+	for(i=0,p=(unsigned char*)buf;i<buf_size;i++,p++) {
+		LBS_EmitChar(lbs,*p);
+	}
+	wrote_size += buf_size;
+	return buf_size;
 }
 
-static int 
+static int
 Download(
-	char	*path,
-	char	**outfile,
-	size_t	*size)
+	char *path)
 {
-	FILE *fp;
-	int fd;
-	mode_t mode;
-	gchar *scheme;
-	gchar *url;
-	gchar *fname;
-	gchar *userpass;
-	gchar *msg;
+	gchar *scheme,*url,*userpass,*msg;
 	CURL *curl;
 	CURLcode ret;
 	int doretry;
     long http_code;
 
 	doretry = 0;
-	*outfile = NULL;
-	*size = 0;
+	wrote_size = 0;
+
+	if (buf == NULL) {
+		buf = NewLBS();
+	}
+	LBS_EmitStart(buf);
+	LBS_SetPos(buf,0);
+
 	curl = curl_easy_init();
 	if (!curl) {
 		Warning("couldn't init curl\n");
 		return doretry;
 	}
 
-	mode = umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-
-	fname = g_strdup_printf("%s/glclient_download_XXXXXX",TempDir);
 	userpass = g_strdup_printf("%s:%s",User,Pass);
 	scheme = fSsl ? "https" : "http";
 	url = g_strdup_printf("%s://%s:%s/%s",scheme,Host,PortNum,path);
 
-	if ((fd = mkstemp(fname)) == -1) {
-		Warning("mkstemp failure");
-		goto DO_PRINT_ERROR;
-	}
-
-	if ((fp = fdopen(fd, "w")) == NULL) {
-		Warning("fdopne failure");
-		goto DO_PRINT_ERROR;
-	}
-
-	wrote_size = 0;
 	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)fp);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteData);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)buf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
 	if (fSsl) {
 		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
@@ -125,18 +116,11 @@ Download(
 	}
 
 	ret = curl_easy_perform(curl);
-	fclose(fp);
     curl_easy_getinfo (curl, CURLINFO_RESPONSE_CODE, &http_code);
 	if (ret == CURLE_OK) {
 		if (http_code == 200) {
 			if (wrote_size == 0) {
 				doretry = 1;
-				remove(fname);
-			} else {
-				MessageLogPrintf("url[%s] fname[%s] size:[%ld]\n",
-					url,fname,(long)wrote_size);
-				*size = wrote_size;
-				*outfile = fname;
 			}
 		} else if (http_code != 204) { /* 204 HTTP No Content */
 			msg = g_strdup_printf(_("download failure\npath:%s\n"),path);
@@ -145,9 +129,7 @@ Download(
 		}
 	}
 
-DO_PRINT_ERROR:
 	curl_easy_cleanup(curl);
-	umask(mode);
 	g_free(userpass);
 	g_free(url);
 	return doretry;
@@ -158,18 +140,13 @@ DoPrint(
 	PrintRequest	*req)
 {
 	int	doretry;
-	char *fname;
-	size_t size;
 
-	doretry = Download(req->path,&fname,&size);
+	doretry = Download(req->path);
 	if (doretry == 0) {
-		if (fname != NULL && size > 0) {
-			if (req->showdialog) {
-				ShowPrintDialog(req->title,fname,size);
-			} else {
-				PrintWithDefaultPrinter(fname);
-			}
-			g_free(fname);
+		if (req->showdialog) {
+			ShowPrintDialog(req->title,buf);
+		} else {
+			Print(req->title,NULL,buf);
 		}
 	}
 	return doretry;
@@ -238,26 +215,10 @@ DoDownload(
 	DLRequest	*req)
 {
 	int				doretry;
-	char			*fname;
-	size_t			size;
-	LargeByteString	*lbs;
-	FILE 			*fp;
 
-	doretry = Download(req->path,&fname,&size);
+	doretry = Download(req->path);
 	if (doretry == 0) {
-		if (fname != NULL && size > 0) {
-			if ((fp = fopen(fname,"r")) != NULL) {
-				lbs = NewLBS();
-				LBS_ReserveSize(lbs,size,FALSE);
-				fread(LBS_Body(lbs),size,1,fp);
-				fclose(fp);
-				ShowDownloadDialog(NULL,req->filename,req->description,lbs);
-				FreeLBS(lbs);
-			} else {
-				Error("does not reach here;temporary file can not read");
-			}
-			xfree(fname);
-		}
+		ShowDownloadDialog(NULL,req->filename,req->description,buf);
 	}
 	return doretry;
 }

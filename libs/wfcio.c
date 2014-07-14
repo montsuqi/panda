@@ -116,6 +116,7 @@ ENTER_FUNC;
 	klass = RecvPacketClass(fp);	ON_IO_ERROR(fp,badio);
 	if (klass == WFC_OK) {
 		RecvnString(fp,SIZE_TERM,scr->term);ON_IO_ERROR(fp,badio);
+		RecvnString(fp,SIZE_PATH,scr->tempdir);ON_IO_ERROR(fp,badio);
 	} else {
 		CloseNet(fp);
 		fp = NULL;

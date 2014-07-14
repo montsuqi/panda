@@ -96,6 +96,7 @@ extern  void		SetSessionBGColor(const char *color);
 
 GLOBAL	char		*CurrentApplication;
 GLOBAL	Bool		fV47;
+GLOBAL	Bool		fV49;
 GLOBAL	char		*TempDir;
 GLOBAL	char		*ConfDir;
 GLOBAL	GLSession	*Session;

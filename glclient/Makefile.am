@@ -37,8 +37,8 @@ base_sources =						\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\
 	notify.c		notify.h		\
-	printservice.c	printservice.h	\
 	widgetOPS.c		widgetOPS.h		\
+	printservice.c	printservice.h	\
 	toplevel.h
 
 base_dependencies =						\

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2014-06-02 16:19+0900\n"
+"POT-Creation-Date: 2014-07-11 11:44+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -254,6 +254,19 @@ msgstr ""
 msgid "Preview"
 msgstr ""
 
+#: glclient/print.c:111 glclient/print.c:118
+#, c-format
+msgid ""
+"starting print\n"
+"\n"
+"title:%s\n"
+"printer:%s\n"
+msgstr ""
+
+#: glclient/print.c:114 glclient/print.c:121
+msgid "glclient print notify"
+msgstr ""
+
 #: glclient/client.c:84
 msgid "mkdtemp failure"
 msgstr ""
@@ -275,95 +288,65 @@ msgstr ""
 msgid "can't execute command.\\n\"%s\""
 msgstr ""
 
-#: glclient/protocol.c:85
+#: glclient/protocol.c:86
 msgid "Connection lost\n"
 msgstr ""
 
-#: glclient/protocol.c:206
+#: glclient/protocol.c:207
 #, c-format
 msgid "GL_RecvString invalid size %ld > %ld(max size)"
 msgstr ""
 
-#: glclient/protocol.c:414
+#: glclient/protocol.c:415
 msgid "invalid protocol sequence"
 msgstr ""
 
-#: glclient/protocol.c:696
+#: glclient/protocol.c:824
 msgid "glclient message notify"
 msgstr ""
 
-#: glclient/protocol.c:707
+#: glclient/protocol.c:835
 msgid "connection error(invalid pong packet)"
 msgstr ""
 
-#: glclient/protocol.c:714 glclient/protocol.c:740
+#: glclient/protocol.c:843
 msgid "connection error(server doesn't reply ping)"
 msgstr ""
 
-#: glclient/protocol.c:756
+#: glclient/protocol.c:859
 msgid "connection start\n"
 msgstr ""
 
-#: glclient/protocol.c:779
+#: glclient/protocol.c:882
 msgid "can not connect server"
 msgstr ""
 
-#: glclient/protocol.c:782
+#: glclient/protocol.c:885
 msgid "can not connect server(version not match)"
 msgstr ""
 
-#: glclient/protocol.c:788
+#: glclient/protocol.c:891
 msgid "can not connect server(authentication error)"
 msgstr ""
 
-#: glclient/protocol.c:791 glclient/protocol.c:795
+#: glclient/protocol.c:894 glclient/protocol.c:898
 msgid "can not connect server(user or password is incorrect)"
 msgstr ""
 
-#: glclient/protocol.c:800
+#: glclient/protocol.c:903
 msgid "can not connect server(application name invalid)"
 msgstr ""
 
-#: glclient/protocol.c:804
+#: glclient/protocol.c:907
 msgid "can not connect server(other protocol error)"
 msgstr ""
 
-#: glclient/protocol.c:897 glclient/protocol.c:922 glclient/protocol.c:1153
+#: glclient/protocol.c:1000 glclient/protocol.c:1025 glclient/protocol.c:1256
 #, c-format
 msgid "invalid data conversion\n"
 msgstr ""
 
-#: glclient/printservice.c:142
-#, c-format
-msgid ""
-"download failure\n"
-"path:%s\n"
-msgstr ""
-
-#: glclient/printservice.c:143 glclient/printservice.c:292
-msgid "glclient download notify"
-msgstr ""
-
-#: glclient/printservice.c:210
-#, c-format
-msgid ""
-"print failure\n"
-"title:%s\n"
-msgstr ""
-
-#: glclient/printservice.c:211
-msgid "glclient print notify"
-msgstr ""
-
-#: glclient/printservice.c:290
-#, c-format
-msgid ""
-"download failure\n"
-"filename:%s\n"
-"description:%s"
-msgstr ""
-
-#: glclient/marshaller.c:1261
+#: glclient/marshaller.c:1262
 #, c-format
 msgid ""
 "protocol error\n"

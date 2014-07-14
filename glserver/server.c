@@ -36,6 +36,7 @@
 #include	<fcntl.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
+#include	<sys/file.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<glib.h>
@@ -61,6 +62,7 @@
 #include	"RecParser.h"
 #include	"http.h"
 #include	"sysdataio.h"
+#include	"blobreq.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -563,7 +565,7 @@ LEAVE_FUNC;
 	return;
 }
 
-static  Bool
+static  void
 Pong(
 	NETFILE		*fpComm,
 	ScreenData	*scr)
@@ -571,11 +573,7 @@ Pong(
 	char		*abort;
 	char		*dialog;
 	char		*popup;
-	Bool		ret;
-	
 ENTER_FUNC;
-	ret = TRUE;
-
 	GetSessionMessage(scr->term,&popup,&dialog,&abort);
 
 	if (strlen(abort) > 0) {
@@ -583,7 +581,6 @@ ENTER_FUNC;
 			ON_IO_ERROR(fpComm,badio);
 		GL_SendString(fpComm, abort);
 			ON_IO_ERROR(fpComm,badio);
-		ret = FALSE;
 	} else if (strlen(dialog) > 0) {
 		GL_SendPacketClass(fpComm,GL_Pong_Dialog);
 			ON_IO_ERROR(fpComm,badio);
@@ -607,7 +604,85 @@ ENTER_FUNC;
 	ResetSessionMessage(scr->term);
 badio:
 LEAVE_FUNC;
-	return ret;
+}
+
+static  void
+ListDownloads(
+	NETFILE		*fpComm,
+	ScreenData	*scr)
+{
+	char *lockfile,*metafile,*buf,*buf2;
+	size_t size;
+	int fd;
+
+	/* lock */
+	lockfile = g_strdup_printf("%s/__download.lock",scr->tempdir);
+	metafile = g_strdup_printf("%s/__download.json",scr->tempdir);
+	if ((fd = open(lockfile,O_RDONLY)) == -1) {
+		GL_SendString(fpComm,"{}");ON_IO_ERROR(fpComm,badio);
+		g_free(lockfile);
+		g_free(metafile);
+		return;
+    }
+	if (flock(fd,LOCK_EX|LOCK_NB) == -1) {
+		GL_SendString(fpComm,"{}");ON_IO_ERROR(fpComm,badio);
+		g_free(lockfile);
+		g_free(metafile);
+		return;
+	}
+
+	if (g_file_get_contents(metafile,&buf,&size,NULL)) {
+		buf2 = strndup(buf,size);
+		GL_SendString(fpComm,buf2);ON_IO_ERROR(fpComm,badio);
+		g_free(buf);
+		g_free(buf2);
+		if (unlink(metafile) == -1) {
+			Error("unlink(2) failure %s %s",metafile,strerror(errno));
+		}
+	} else {
+		GL_SendString(fpComm,"{}");ON_IO_ERROR(fpComm,badio);
+	}
+
+	/* unlock  */
+	if (flock(fd,LOCK_UN) == -1) {
+		Error("flock(2) failure %s %s",lockfile,strerror(errno));
+	}
+	if ((close(fd)) == -1) {
+		Error("close(2) failure %s %s",lockfile,strerror(errno));
+    }
+badio:
+	g_free(lockfile);
+	g_free(metafile);
+}
+
+static  void
+GetBLOB(
+	NETFILE		*fpComm,
+	ScreenData	*scr)
+{
+	char stroid[SIZE_BUFF],*buf;
+	MonObjectType oid;
+	NETFILE *fp;
+	size_t size;
+	LargeByteString *lbs;
+
+	GL_RecvString(fpComm, sizeof(stroid), stroid);
+		ON_IO_ERROR(fpComm,badio);
+	oid = (MonObjectType)atoi(stroid);
+
+	fp = _ConnectSysData();
+	RequestExportBLOBMem(fp,oid,&buf,&size);
+	_DisconnectSysData(fp);
+
+	lbs = NewLBS();
+	LBS_ReserveSize(lbs,size,FALSE);
+	memcpy(LBS_Body(lbs),buf,size);
+	xfree(buf);
+
+	GL_SendLBS(fpComm,lbs);
+	FreeLBS(lbs);
+badio:
+	return;
 }
 
 static	Bool
@@ -647,6 +722,24 @@ ENTER_FUNC;
 		}
 		alarm(GL_TIMEOUT_SEC);
 		Pong(fpComm,scr);
+		ON_IO_ERROR(fpComm,badio);
+		alarm(0);
+		break;
+	case GL_ListDownloads:
+		if (scr->status != SCREEN_DATA_CONNECT) {
+			break;
+		}
+		alarm(GL_TIMEOUT_SEC);
+		ListDownloads(fpComm,scr);
+		ON_IO_ERROR(fpComm,badio);
+		alarm(0);
+		break;
+	case GL_GetBLOB:
+		if (scr->status != SCREEN_DATA_CONNECT) {
+			break;
+		}
+		alarm(GL_TIMEOUT_SEC);
+		GetBLOB(fpComm,scr);
 		ON_IO_ERROR(fpComm,badio);
 		alarm(0);
 		break;

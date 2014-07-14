@@ -62,6 +62,7 @@ tools/dbsync
 tools/monitor
 tools/msgd
 tools/pandadb
+tools/monupload
 wfc/moninfo
 wfc/wfc
 wfc/wfccontrol

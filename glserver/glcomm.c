@@ -186,7 +186,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-static	void
+void
 GL_SendLBS(
 	NETFILE	*fp,
 	LargeByteString	*lbs)

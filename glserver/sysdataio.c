@@ -48,6 +48,34 @@
 
 static	NETFILE	*fp;
 
+NETFILE *
+_ConnectSysData()
+{
+	Port	*port;
+	int		fd;
+	NETFILE *fp;
+ENTER_FUNC;
+	fp = NULL;
+	port = ParPort(PortSysData, SYSDATA_PORT);
+	fd = ConnectSocket(port, SOCK_STREAM);
+	DestroyPort(port);
+	if (fd > 0) {
+		fp = SocketToNet(fd);
+	} else {
+		Error("cannot connect sysdata server");
+	}
+LEAVE_FUNC;
+	return fp;
+}
+
+void
+_DisconnectSysData(NETFILE *fp)
+{
+	if (fp != NULL && CheckNetFile(fp)) {
+		CloseNet(fp);
+	}
+}
+
 void
 ConnectSysData()
 {
