@@ -37,9 +37,11 @@
 #include	<gtkpanda/gtkpanda.h>
 #include	<gdk/gdk.h>
 #include	<gtk/gtk.h>
-#include 	"gettext.h"
 #include	<gdk-pixbuf/gdk-pixbuf.h>
+#include	<json.h>
+#include	<json_object_private.h> /*for json_object_object_foreachC()*/
 
+#include 	"gettext.h"
 #include	"types.h"
 #include	"glclient.h"
 #include	"styleParser.h"
@@ -49,7 +51,6 @@
 #include	"widgetcache.h"
 #include	"download.h"
 #include	"dialogs.h"
-#include	"printservice.h"
 #include	"notify.h"
 #include	"message.h"
 #include	"debug.h"
@@ -215,119 +216,6 @@ ENTER_FUNC;
 			if (lbs != NULL && LBS_Size(lbs) > 0) {
 				ShowDownloadDialog(widget,(char*)filename,(char*)desc,lbs);
 				FreeLBS(lbs);
-			}
-		}
-	}
-LEAVE_FUNC;
-}
-
-static	void
-SetPandaDownload2(
-	GtkWidget	*widget,
-	json_object	*obj)
-{
-	json_object *arr,*item,*child;
-	char *filename,*desc,*path;
-	int i,nretry;
-ENTER_FUNC;
-	arr = json_object_object_get(obj,"item");
-	if (!CheckJSONObject(arr,json_type_array)) {
-		return;
-	}
-	for (i=0;i<json_object_array_length(arr);i++) {
-		item = json_object_array_get_idx(arr,i);
-		if (!CheckJSONObject(item,json_type_object)) {
-			continue;
-		}
-		path = filename = desc = NULL;
-		nretry = 0;
-
-		child = json_object_object_get(item,"path");
-		if (CheckJSONObject(child,json_type_string)) {
-			path = (char*)json_object_get_string(child);
-		}
-
-		child = json_object_object_get(item,"filename");
-		if (CheckJSONObject(child,json_type_string)) {
-			filename = (char*)json_object_get_string(child);
-		}
-
-		child = json_object_object_get(item,"description");
-		if (CheckJSONObject(child,json_type_string)) {
-			desc = (char*)json_object_get_string(child);
-		}
-
-		child = json_object_object_get(item,"nretry");
-		if (CheckJSONObject(child,json_type_int)) {
-			nretry = json_object_get_int(child);
-		}
-
-		if (path != NULL && strlen(path) > 0 && filename != NULL) {
-			if (strcmp(SERVERTYPE(Session),"ginbee")) {
-			DLRequest *req;
-			req = (DLRequest*)xmalloc(sizeof(DLRequest));
-			req->path = StrDup(path);
-			req->filename = StrDup(filename);
-			req->description = StrDup(desc);
-			req->nretry = nretry;
-			DLLIST(Session) = g_list_append(DLLIST(Session),req);
-			}
-		}
-	}
-LEAVE_FUNC;
-}
-
-static	void
-SetPandaPrint(
-	GtkWidget	*widget,
-	json_object	*obj)
-{
-	json_object *arr,*item,*child;
-	char *title,*path;
-	int i,nretry,showdialog;
-ENTER_FUNC;
-
-	arr = json_object_object_get(obj,"item");
-	if (!CheckJSONObject(arr,json_type_array)) {
-		return;
-	}
-	for (i=0;i<json_object_array_length(arr);i++) {
-		item = json_object_array_get_idx(arr,i);
-		if (!CheckJSONObject(item,json_type_object)) {
-			continue;
-		}
-		path = title = NULL;
-		nretry = showdialog = 0;
-
-		child = json_object_object_get(item,"path");
-		if (CheckJSONObject(child,json_type_string)) {
-			path = (char*)json_object_get_string(child);
-		}
-
-		child = json_object_object_get(item,"title");
-		if (CheckJSONObject(child,json_type_string)) {
-			title = (char*)json_object_get_string(child);
-		}
-
-		child = json_object_object_get(item,"nretry");
-		if (CheckJSONObject(child,json_type_int)) {
-			nretry = json_object_get_int(child);
-		}
-
-		child = json_object_object_get(item,"showdialog");
-		if (CheckJSONObject(child,json_type_int)) {
-			showdialog = json_object_get_int(child);
-		}
-
-		if (path != NULL && strlen(path) > 0 && title != NULL) {
-			if (strcmp(SERVERTYPE(Session),"ginbee")) {
-			PrintRequest *req;
-			req = (PrintRequest*)xmalloc(sizeof(PrintRequest));
-			req->path = StrDup(path);
-			req->title = StrDup(title);
-			req->nretry = nretry;
-			req->showdialog = showdialog;
-			PRINTLIST(Session) = g_list_append(PRINTLIST(Session),req);
 			}
 		}
 	}
@@ -1306,10 +1194,6 @@ SetWidgetData(
 		SetPandaTimer(widget,info);
 	} else if (type == GTK_PANDA_TYPE_DOWNLOAD) {
 		SetPandaDownload(widget,info);
-	} else if (type == GTK_PANDA_TYPE_DOWNLOAD2) {
-		SetPandaDownload2(widget,info);
-	} else if (type == GTK_PANDA_TYPE_PRINT) {
-		SetPandaPrint(widget,info);
 	} else if (type == GTK_PANDA_TYPE_HTML) {
 		SetPandaHTML(widget,info);
 	} else if (type == GTK_PANDA_TYPE_TABLE) {
@@ -1352,6 +1236,7 @@ UpdateWidget(
 {
 	GtkWidget *widget;
 	json_object *val;
+	json_object_iter iter;
 	char childname[SIZE_LONGNAME+1];
 	int i,length;
 	enum json_type type;
@@ -1363,10 +1248,10 @@ UpdateWidget(
 	type = json_object_get_type(w);
 	if (type == json_type_object) {
 		{
-			json_object_object_foreach(w,k,v) {
-				snprintf(childname,SIZE_LONGNAME,"%s.%s",longname,k);
+			json_object_object_foreachC(w,iter) {
+				snprintf(childname,SIZE_LONGNAME,"%s.%s",longname,iter.key);
 				childname[SIZE_LONGNAME] = 0;
-				UpdateWidget(childname,v);
+				UpdateWidget(childname,iter.val);
 			}
 		}
 	} else if (type == json_type_array) {
@@ -1436,6 +1321,7 @@ _MakeScreenData(
 	GtkWidget *widget;
 	char childname[SIZE_LONGNAME+1];
 	json_object *obj,*child,*v;
+	json_object_iter iter;
 	int i,length;
 	enum json_type type;
 
@@ -1466,11 +1352,11 @@ _MakeScreenData(
 		break;
 	case json_type_object:
 		obj = json_object_new_object();
-		json_object_object_foreach(w,k,v) {
-			snprintf(childname,SIZE_LONGNAME,"%s.%s",longname,k);
+		json_object_object_foreachC(w,iter) {
+			snprintf(childname,SIZE_LONGNAME,"%s.%s",longname,iter.key);
 			childname[SIZE_LONGNAME] = 0;
-			child = _MakeScreenData(childname,v,wdata);
-			json_object_object_add(obj,k,child);
+			child = _MakeScreenData(childname,iter.val,wdata);
+			json_object_object_add(obj,iter.key,child);
 		}
 		break;
 	default:

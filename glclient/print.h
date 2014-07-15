@@ -20,9 +20,7 @@
 #ifndef	_INC_PRINT_H
 #define	_INC_PRINT_H
 
-#include <gtk/gtk.h>
-
-void ShowPrintDialog(char *title,char *fname,size_t size);
-void PrintWithDefaultPrinter(char *fname);
+void ShowPrintDialog(const char *title,LargeByteString *);
+void Print(const char *title,const char *printer,LargeByteString *);
 
 #endif

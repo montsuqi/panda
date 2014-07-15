@@ -52,8 +52,6 @@ typedef struct {
 	char			*FocusedWidget;
 	char			*ThisWindow;
 	GHashTable		*WindowTable;
-	GList			*PrintList;
-	GList			*DLList;
 	unsigned int	RPCID;
 	char			*SessionID;
 	json_object		*ScreenData;
@@ -72,8 +70,6 @@ typedef struct {
 #define	FOCUSEDWIDGET(session)	((session)->FocusedWidget)
 #define	THISWINDOW(session)		((session)->ThisWindow)
 #define	WINDOWTABLE(session)	((session)->WindowTable)
-#define	PRINTLIST(session)		((session)->PrintList)
-#define	DLLIST(session)			((session)->DLList)
 #define	RPCID(session)			((session)->RPCID)
 #define	SESSIONID(session)		((session)->SessionID)
 #define	SCREENDATA(session)		((session)->ScreenData)

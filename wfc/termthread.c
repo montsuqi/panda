@@ -30,9 +30,12 @@
 #include	<unistd.h>
 #include	<string.h>
 #include	<sys/types.h>
+#include	<sys/stat.h>
 #include	<sys/socket.h>
 #include	<sys/time.h>
 #include	<sys/wait.h>
+#include	<sys/file.h>
+#include	<fcntl.h>
 #include	<glib.h>
 #include	<pthread.h>
 #include	<time.h>
@@ -933,6 +936,128 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	json_object*
+ReadDownloadMetaFile(
+	const char *metafile)
+{
+	json_object *obj,*result;
+	char *buf,*buf2;
+	size_t size;
+
+	if (g_file_get_contents(metafile,&buf,&size,NULL)) {
+		buf2 = strndup(buf,size);
+		obj = json_tokener_parse(buf2);
+		if (!is_error(obj)) {
+			result = json_object_object_get(obj,"result");
+			if (CheckJSONObject(result,json_type_array)) {
+				json_object_get(result);
+			} else {
+				result = json_object_new_array();
+			}
+			json_object_put(obj);
+		} else {
+			result = json_object_new_array();
+		}
+		g_free(buf);
+		g_free(buf2);
+		if (unlink(metafile) == -1) {
+			Error("unlink(2) failure %s %s",metafile,strerror(errno));
+		}
+	} else {
+		result = json_object_new_array();
+	}
+	return result;
+}
+
+static	json_object*
+CheckDownloadList(
+	json_object *obj,
+	SessionData *data)
+{
+	json_object *res,*result;
+	char *lockfile,*metafile;
+	int fd;
+
+	res = MakeJSONResponseTemplate(obj);
+
+	/* lock */
+	lockfile = g_strdup_printf("%s/__download.lock",data->hdr->tempdir);
+	metafile = g_strdup_printf("%s/__download.json",data->hdr->tempdir);
+	if ((fd = open(lockfile,O_RDONLY)) == -1) {
+		result = json_object_new_array();
+		json_object_object_add(res,"result",result);
+		goto postproc;
+    }
+	if (flock(fd,LOCK_EX|LOCK_NB) == -1) {
+		result = json_object_new_array();
+		json_object_object_add(res,"result",result);
+		if ((close(fd)) == -1) {
+			Error("close(2) failure %s %s",lockfile,strerror(errno));
+    	}
+		goto postproc;
+	}
+
+	result = ReadDownloadMetaFile(metafile);
+	json_object_object_add(res,"result",result);
+
+	/* unlock  */
+	if (flock(fd,LOCK_UN) == -1) {
+		Error("flock(2) failure %s %s",lockfile,strerror(errno));
+	}
+	if ((close(fd)) == -1) {
+		Error("close(2) failure %s %s",lockfile,strerror(errno));
+    }
+postproc:
+	g_free(lockfile);
+	g_free(metafile);
+
+	return res;
+}
+
+static	void
+RPC_ListDownloads(
+	TermNode *term,
+	json_object *obj)
+{
+	json_object *params,*meta,*child,*res;
+	SessionData *data;
+	const char *session_id;
+ENTER_FUNC;
+	params = json_object_object_get(obj,"params");
+	if (!CheckJSONObject(params,json_type_object)) {
+		Warning("request have not params");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	meta = json_object_object_get(params,"meta");
+	if (!CheckJSONObject(meta,json_type_object)) {
+		Warning("request have not meta");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	child = json_object_object_get(meta,"session_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not session_id");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	session_id = json_object_get_string(child);
+	data = LookupSession(session_id);
+	if (data == NULL) {
+		Warning("session [%s] does not found",session_id);
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	res = CheckDownloadList(obj,data);
+	SendString(term->fp,(char*)json_object_to_json_string(res));
+fprintf(stderr,"response [%s]\n",(char*)json_object_to_json_string(res));
+	if (CheckNetFile(term->fp)) {
+		CloseNet(term->fp);
+	}
+	json_object_put(res);
+LEAVE_FUNC;
+}
+
 static	void
 JSONRPCHandler(
 	TermNode *term)
@@ -993,6 +1118,9 @@ ENTER_FUNC;
 		RPC_SendEvent(term,obj);
 	} else if (!strcmp(method,"panda_api")) {
 		RPC_PandaAPI(term,obj);
+	} else if (!strcmp(method,"list_downloads")) {
+fprintf(stderr,"call list_downloads\n");
+		RPC_ListDownloads(term,obj);
 	} else {
 		Warning("jsonrpc method(%s) not found",method);
 		JSONRPC_Error(term,obj,-32601,"Method not found");

@@ -49,9 +49,11 @@ show_save_dialog(
 	char *filename,
 	LargeByteString *binary)
 {
-	GtkWindow *parent,*dialog,*error_dialog;
+	GtkWindow *parent;
+	GtkWidget *dialog,*error_dialog;
 	GError *error = NULL;
-	gchar *dirname,*fname,*lname,*msg;
+	gchar *fname,*lname,*msg;
+	const gchar *dirname;
 
 	parent = (GtkWindow *)g_list_nth_data(DialogStack,
 		g_list_length(DialogStack)-1);

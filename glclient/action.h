@@ -78,6 +78,5 @@ extern	void		SendEvent(const char*window,const char*widget,
 						const char*event);
 extern	void		UpdateScreen();
 extern	void		TimeSet(const char*);
-extern	void		PrintReport(const char *printer,const char *oid);
 #endif
 

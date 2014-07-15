@@ -50,7 +50,6 @@
 #include	"widgetOPS.h"
 #include	"protocol.h"
 #include	"notify.h"
-#include	"printservice.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -1221,13 +1220,10 @@ PingTimerFunc(
 	if (ISRECV(Session)) {
 		return 1;
 	}
-	if (!strcmp(SERVERTYPE(Session),"ginbee")) {
-		RPC_ListReports();
-	} else {
+	RPC_ListDownloads();
+	if (strcmp(SERVERTYPE(Session),"ginbee")) {
 		Ping();
 	}
-	CheckPrintList();
-	CheckDLList();
 	return 1;
 }
 
@@ -1391,30 +1387,4 @@ TimeSet(
 	t0 = t1;
 	ms = d.tv_sec * 1000L + d.tv_usec/1000L;
 	fprintf(stderr,"%s[%ld]\n",str,ms);
-}
-
-extern	void
-PrintReport(
-	const char *printer,
-	const char *oid)
-{
-	static GtkPandaPDF *pdf = NULL;
-	char buf[1024];
-	LargeByteString *lbs;
-
-	if (pdf == NULL) {
-		pdf = GTK_PANDA_PDF(gtk_panda_pdf_new());
-	}
-
-	lbs = REST_GetBLOB(oid);
-	if (lbs != NULL) {
-		gtk_panda_pdf_set(pdf,LBS_Size(lbs),LBS_Body(lbs));
-		gtk_panda_pdf_print_with_printer(pdf,printer);
-		FreeLBS(lbs);
-		snprintf(buf,sizeof(buf),_("starting print\nprinter:%s\n"),printer);
-		Notify(_("glclient server print notify"),buf,"gtk-print",0);
-	} else {
-		snprintf(buf,sizeof(buf),_("print failure\nprinter:%s\n"),printer);
-		Notify(_("glclient server print notify"),buf,"gtk-print",0);
-	}
 }

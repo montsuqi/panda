@@ -48,10 +48,11 @@
 #include	"gettext.h"
 #include	"const.h"
 #include	"notify.h"
-#include	"printservice.h"
 #include	"dialogs.h"
 #include	"widgetOPS.h"
 #include	"action.h"
+#include	"print.h"
+#include	"download.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -132,6 +133,201 @@ size_t read_binary_data(
 	LBS_SetPos(lbs,LBS_GetPos(lbs)+read_size);
 
 	return read_size;
+}
+
+size_t
+HeaderPostBLOB(
+	void *ptr,
+	size_t size,
+	size_t nmemb,
+	void *userdata)
+{
+	static char buf[SIZE_NAME+1];
+	size_t all = size * nmemb;
+	char **oid;
+	char *target = "X-BLOB-ID:";
+	char *p;
+	int i;
+
+	oid = (char**)userdata;
+	*oid = buf;
+	if (all <= strlen(target)) {
+		return all;
+	}
+	if (strncasecmp(ptr,target,strlen(target))) {
+		return all;
+	}
+	for(p=ptr+strlen(target);isspace(*p);p++);
+	for(i=0;isdigit(*p)&&i<SIZE_NAME;p++,i++) {
+		buf[i] = *p;
+	}
+	buf[i] = 0;
+
+	return all;
+}
+
+#define SIZE_URL_BUF 256
+
+char *
+REST_PostBLOB(
+	LargeByteString *lbs)
+{
+	CURL *curl;
+	struct curl_slist *headers = NULL;
+	char *oid,url[SIZE_URL_BUF+1],clength[256],userpass[2048],errbuf[CURL_ERROR_SIZE+1];
+	gboolean fHTTPS;
+	long http_code;
+
+	oid = NULL;
+
+	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/",
+		RESTURI(Session),SESSIONID(Session));
+	url[sizeof(url)-1] = 0;
+
+	fHTTPS = !strncmp("https",url,5);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Error(_("could not init curl"));
+	}
+
+	headers = curl_slist_append(headers, 
+		"Content-Type: application/octet-stream");
+	snprintf(clength,sizeof(clength),"Content-Length: %ld",LBS_Size(lbs));
+	headers = curl_slist_append(headers, clength);
+
+	LBS_SetPos(lbs,0);
+
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_POST, 1);
+	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)lbs);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_binary_data);
+
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
+	curl_easy_setopt(curl, CURLOPT_WRITEHEADER,(void*)&oid);
+
+	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
+	userpass[sizeof(userpass)-1] = 0;
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+
+	memset(errbuf,0,CURL_ERROR_SIZE+1);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+
+	if (fHTTPS || fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+		if (fSSL) {
+			if (strlen(CertFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_SSLCERT,CertFile);
+				curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"P12");
+				curl_easy_setopt(curl,CURLOPT_SSLCERTPASSWD,CertPass);
+			}
+			if (strlen(CAFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_CAINFO,CAFile);
+			}
+		}
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Error(_("comm error:%s"),errbuf);
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+		switch (http_code) {
+		case 200:
+			break;
+		case 401:
+		case 403:
+			Error(_("authentication error:incorrect user or password"));
+			break;
+		default:
+			Error(_("http status code[%d]"),http_code);
+			break;
+		}
+	} else {
+		Error(_("comm error:%s"),errbuf);
+	}
+	curl_slist_free_all(headers);
+	curl_easy_cleanup(curl);
+
+	return oid;
+}
+
+LargeByteString*
+REST_GetBLOB(
+	const char *oid)
+{
+	CURL *curl;
+	char userpass[2048],url[SIZE_URL_BUF+1],errbuf[CURL_ERROR_SIZE+1];
+	LargeByteString *lbs;
+	gboolean fHTTPS;
+	long http_code;
+
+	if (oid == NULL || !strcmp(oid,"0")) {
+		return NULL;
+	}
+
+	lbs = NewLBS();
+
+	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",RESTURI(Session),SESSIONID(Session),oid);
+	url[sizeof(url)-1] = 0;
+	fHTTPS = !strncmp("https",url,5);
+
+	curl = curl_easy_init();
+	if (!curl) {
+		Warning("curl_easy_init failure");
+		return NULL;
+	}
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)lbs);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+
+	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
+	userpass[sizeof(userpass)-1] = 0;
+	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+
+	memset(errbuf,0,CURL_ERROR_SIZE+1);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
+
+	if (fHTTPS || fSSL) {
+		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
+		if (fSSL) {
+			if (strlen(CertFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_SSLCERT,CertFile);
+				curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"P12");
+				curl_easy_setopt(curl,CURLOPT_SSLCERTPASSWD,CertPass);
+			}
+			if (strlen(CAFile) > 0) {
+				curl_easy_setopt(curl,CURLOPT_CAINFO,CAFile);
+			}
+		}
+	}
+	if (curl_easy_perform(curl) != CURLE_OK) {
+		Warning(_("comm error:can not get blob:%s"),oid);
+		return NULL;
+	}
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+		switch (http_code) {
+		case 200:
+			break;
+		case 401:
+		case 403:
+			Warning(_("authentication error:incorrect user or password"));
+			return NULL;
+		default:
+			Warning(_("http status code[%d]"),http_code);
+			return NULL;
+		}
+	} else {
+		Error(_("comm error:%s"),errbuf);
+	}
+	curl_easy_cleanup(curl);
+
+	return lbs;
 }
 
 static	json_object*
@@ -573,11 +769,96 @@ RPC_GetMessage(
 	json_object_put(obj);
 }
 
-void
-RPC_ListReports()
+
+static	void
+PrintReport(
+	json_object *obj)
 {
-	json_object *obj,*params,*child,*result,*item;
-	char *printer,*oid;
+	json_object *child;
+	char *printer,*oid,*title;
+	gboolean showdialog;
+	LargeByteString *lbs;
+
+	printer = NULL;
+	title = "";
+	showdialog = FALSE;
+
+	child = json_object_object_get(obj,"object_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		return;
+	}
+	oid = (char*)json_object_get_string(child);
+
+	child = json_object_object_get(obj,"printer");
+	if (CheckJSONObject(child,json_type_string)) {
+		printer = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"title");
+	if (CheckJSONObject(child,json_type_string)) {
+		title = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"showdialog");
+	if (CheckJSONObject(child,json_type_boolean)) {
+		showdialog = json_object_get_boolean(child);
+	}
+	if (oid == NULL || strlen(oid) <= 0) {
+		return;
+	}
+	lbs = REST_GetBLOB(oid);
+	if (lbs != NULL) {
+		if (LBS_Size(lbs) > 0) {
+			if (showdialog) {
+				ShowPrintDialog(title,lbs);
+			} else {
+				Print(title,printer,lbs);
+			}
+		}
+		FreeLBS(lbs);
+	}
+}
+
+static	void
+DownloadFile(
+	json_object *obj)
+{
+	json_object *child;
+	char *oid,*filename,*desc;
+	LargeByteString *lbs;
+
+	filename = "foo.dat";
+	desc = "";
+
+	child = json_object_object_get(obj,"object_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		return;
+	}
+	oid = (char*)json_object_get_string(child);
+
+	child = json_object_object_get(obj,"filename");
+	if (CheckJSONObject(child,json_type_string)) {
+		filename = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"description");
+	if (CheckJSONObject(child,json_type_string)) {
+		desc = (char*)json_object_get_string(child);
+	}
+
+	if (oid == NULL || strlen(oid) <= 0) {
+		return;
+	}
+	lbs = REST_GetBLOB(oid);
+	if (lbs != NULL) {
+		if (LBS_Size(lbs) > 0) {
+			ShowDownloadDialog(NULL,filename,desc,lbs);
+		}
+		FreeLBS(lbs);
+	}
+}
+
+void
+RPC_ListDownloads()
+{
+	json_object *obj,*params,*child,*result,*item,*type;
 	int i;
 
 	params = json_object_new_object();
@@ -588,7 +869,7 @@ RPC_ListReports()
 		json_object_new_string(SESSIONID(Session)));
 	json_object_object_add(params,"meta",child);
 
-	obj = MakeJSONRPCRequest("list_reports",params);
+	obj = MakeJSONRPCRequest("list_downloads",params);
 	JSONRPC(TYPE_APP,obj);
 
 	// json parse
@@ -604,222 +885,22 @@ RPC_ListReports()
 	}
 	for (i=0;i<json_object_array_length(result);i++) {
 		item = json_object_array_get_idx(result,i);
-		printer = NULL;
-		oid = NULL;
 		if (!CheckJSONObject(item,json_type_object)) {
 			continue;
 		}
-		child = json_object_object_get(item,"printer");
-		if (CheckJSONObject(child,json_type_string)) {
-			printer = (char*)json_object_get_string(child);
+		type = json_object_object_get(item,"type");
+		if (!CheckJSONObject(type,json_type_string)) {
+			continue;
 		}
-		child = json_object_object_get(item,"object_id");
-		if (CheckJSONObject(child,json_type_string)) {
-			oid = (char*)json_object_get_string(child);
-		}
-		if (printer != NULL && oid != NULL) {
-			PrintReport(printer,oid);
+		if (!strcmp(json_object_get_string(type),"report")) {
+			PrintReport(item);
+		} else {
+			DownloadFile(item);
 		}
 	}
 	json_object_put(obj);
 }
 
-
-
-size_t
-HeaderPostBLOB(
-	void *ptr,
-	size_t size,
-	size_t nmemb,
-	void *userdata)
-{
-	static char buf[SIZE_NAME+1];
-	size_t all = size * nmemb;
-	char **oid;
-	char *target = "X-BLOB-ID:";
-	char *p;
-	int i;
-
-	oid = (char**)userdata;
-	*oid = buf;
-	if (all <= strlen(target)) {
-		return all;
-	}
-	if (strncasecmp(ptr,target,strlen(target))) {
-		return all;
-	}
-	for(p=ptr+strlen(target);isspace(*p);p++);
-	for(i=0;isdigit(*p)&&i<SIZE_NAME;p++,i++) {
-		buf[i] = *p;
-	}
-	buf[i] = 0;
-
-	return all;
-}
-
-#define SIZE_URL_BUF 256
-
-char *
-REST_PostBLOB(
-	LargeByteString *lbs)
-{
-	CURL *curl;
-	struct curl_slist *headers = NULL;
-	char *oid,url[SIZE_URL_BUF+1],clength[256],userpass[2048],errbuf[CURL_ERROR_SIZE+1];
-	gboolean fHTTPS;
-	long http_code;
-
-	oid = NULL;
-
-	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/",
-		RESTURI(Session),SESSIONID(Session));
-	url[sizeof(url)-1] = 0;
-
-	fHTTPS = !strncmp("https",url,5);
-
-	curl = curl_easy_init();
-	if (!curl) {
-		Error(_("could not init curl"));
-	}
-
-	headers = curl_slist_append(headers, 
-		"Content-Type: application/octet-stream");
-	snprintf(clength,sizeof(clength),"Content-Length: %ld",LBS_Size(lbs));
-	headers = curl_slist_append(headers, clength);
-
-	LBS_SetPos(lbs,0);
-
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_POST, 1);
-	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)lbs);
-	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_binary_data);
-
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
-	curl_easy_setopt(curl, CURLOPT_WRITEHEADER,(void*)&oid);
-
-	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
-	userpass[sizeof(userpass)-1] = 0;
-	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
-
-	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
-
-	if (fHTTPS || fSSL) {
-		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
-		if (fSSL) {
-			if (strlen(CertFile) > 0) {
-				curl_easy_setopt(curl,CURLOPT_SSLCERT,CertFile);
-				curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"P12");
-				curl_easy_setopt(curl,CURLOPT_SSLCERTPASSWD,CertPass);
-			}
-			if (strlen(CAFile) > 0) {
-				curl_easy_setopt(curl,CURLOPT_CAINFO,CAFile);
-			}
-		}
-	}
-	if (curl_easy_perform(curl) != CURLE_OK) {
-		Error(_("comm error:%s"),errbuf);
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		switch (http_code) {
-		case 200:
-			break;
-		case 401:
-		case 403:
-			Error(_("authentication error:incorrect user or password"));
-			break;
-		default:
-			Error(_("http status code[%d]"),http_code);
-			break;
-		}
-	} else {
-		Error(_("comm error:%s"),errbuf);
-	}
-	curl_slist_free_all(headers);
-	curl_easy_cleanup(curl);
-
-	return oid;
-}
-
-LargeByteString*
-REST_GetBLOB(
-	const char *oid)
-{
-	CURL *curl;
-	char userpass[2048],url[SIZE_URL_BUF+1],errbuf[CURL_ERROR_SIZE+1];
-	LargeByteString *lbs;
-	gboolean fHTTPS;
-	long http_code;
-
-	if (oid == NULL || !strcmp(oid,"0")) {
-		return NULL;
-	}
-
-	lbs = NewLBS();
-
-	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",RESTURI(Session),SESSIONID(Session),oid);
-	url[sizeof(url)-1] = 0;
-	fHTTPS = !strncmp("https",url,5);
-
-	curl = curl_easy_init();
-	if (!curl) {
-		Warning("curl_easy_init failure");
-		return NULL;
-	}
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)lbs);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
-
-	snprintf(userpass,sizeof(userpass),"%s:%s",User,Pass);
-	userpass[sizeof(userpass)-1] = 0;
-	curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
-
-	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
-
-	if (fHTTPS || fSSL) {
-		curl_easy_setopt(curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(curl,CURLOPT_SSL_VERIFYHOST,2);
-		if (fSSL) {
-			if (strlen(CertFile) > 0) {
-				curl_easy_setopt(curl,CURLOPT_SSLCERT,CertFile);
-				curl_easy_setopt(curl,CURLOPT_SSLCERTTYPE,"P12");
-				curl_easy_setopt(curl,CURLOPT_SSLCERTPASSWD,CertPass);
-			}
-			if (strlen(CAFile) > 0) {
-				curl_easy_setopt(curl,CURLOPT_CAINFO,CAFile);
-			}
-		}
-	}
-	if (curl_easy_perform(curl) != CURLE_OK) {
-		Warning(_("comm error:can not get blob:%s"),oid);
-		return NULL;
-	}
-	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
-		switch (http_code) {
-		case 200:
-			break;
-		case 401:
-		case 403:
-			Warning(_("authentication error:incorrect user or password"));
-			return NULL;
-		default:
-			Warning(_("http status code[%d]"),http_code);
-			return NULL;
-		}
-	} else {
-		Error(_("comm error:%s"),errbuf);
-	}
-	curl_easy_cleanup(curl);
-
-	return lbs;
-}
 
 void
 WriteAPIOutputFile(

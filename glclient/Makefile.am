@@ -36,7 +36,6 @@ base_sources =						\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\
 	notify.c		notify.h		\
-	printservice.c	printservice.h	\
 	widgetOPS.c		widgetOPS.h		\
 	toplevel.h
 
@@ -68,7 +67,6 @@ glclient2_DEPENDENCIES =						\
 	$(base_dependencies)
 
 glclient2_CFLAGS =			\
-	-std=gnu99				\
 	$(base_CFLAGS)			\
 	$(GLCLIENT_CFLAGS)
 

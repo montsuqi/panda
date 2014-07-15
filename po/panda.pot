@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2014-06-16 10:43+0900\n"
+"POT-Creation-Date: 2014-07-15 10:58+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -162,20 +162,20 @@ msgstr ""
 msgid "INFOMATION"
 msgstr ""
 
-#: glclient/download.c:61
+#: glclient/download.c:63
 msgid "Specify filename..."
 msgstr ""
 
-#: glclient/download.c:85
+#: glclient/download.c:87
 #, c-format
 msgid "%s saved"
 msgstr ""
 
-#: glclient/download.c:86
+#: glclient/download.c:88
 msgid "save complete"
 msgstr ""
 
-#: glclient/download.c:166
+#: glclient/download.c:168
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -185,7 +185,7 @@ msgid ""
 "Size: %s"
 msgstr ""
 
-#: glclient/download.c:174
+#: glclient/download.c:176
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -202,24 +202,6 @@ msgstr ""
 msgid "glclient message notify"
 msgstr ""
 
-#: glclient/action.c:1414
-#, c-format
-msgid ""
-"starting print\n"
-"printer:%s\n"
-msgstr ""
-
-#: glclient/action.c:1415 glclient/action.c:1418
-msgid "glclient server print notify"
-msgstr ""
-
-#: glclient/action.c:1417
-#, c-format
-msgid ""
-"print failure\n"
-"printer:%s\n"
-msgstr ""
-
 #: glclient/print.c:76
 #, c-format
 msgid "client printing - %s"
@@ -227,6 +209,19 @@ msgstr ""
 
 #: glclient/print.c:78
 msgid "Preview"
+msgstr ""
+
+#: glclient/print.c:111 glclient/print.c:118
+#, c-format
+msgid ""
+"starting print\n"
+" \n"
+"title:%s\n"
+"printer:%s\n"
+msgstr ""
+
+#: glclient/print.c:114 glclient/print.c:121 glclient/printservice.c:102
+msgid "glclient print notify"
 msgstr ""
 
 #: glclient/client.c:71
@@ -250,115 +245,115 @@ msgstr ""
 msgid "can't execute command.\\n\"%s\""
 msgstr ""
 
-#: glclient/protocol.c:163
-msgid "invalid jsonrpc"
-msgstr ""
-
-#: glclient/protocol.c:166
-msgid "invalid jsonrpc version"
-msgstr ""
-
-#: glclient/protocol.c:171 glclient/protocol.c:175
-msgid "invalid jsonrpc id"
-msgstr ""
-
-#: glclient/protocol.c:190
-#, c-format
-msgid "jsonrpc error code:%d message:%s"
-msgstr ""
-
-#: glclient/protocol.c:195
-msgid "no result object"
-msgstr ""
-
-#: glclient/protocol.c:240 glclient/protocol.c:682
+#: glclient/protocol.c:191 glclient/protocol.c:436
 msgid "could not init curl"
 msgstr ""
 
-#: glclient/protocol.c:290 glclient/protocol.c:305 glclient/protocol.c:312
-#: glclient/protocol.c:725 glclient/protocol.c:740 glclient/protocol.c:817
-#: glclient/protocol.c:911 glclient/protocol.c:914
+#: glclient/protocol.c:234 glclient/protocol.c:249 glclient/protocol.c:326
+#: glclient/protocol.c:486 glclient/protocol.c:501 glclient/protocol.c:508
+#: glclient/protocol.c:992 glclient/protocol.c:995
 #, c-format
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:298 glclient/protocol.c:733 glclient/protocol.c:810
+#: glclient/protocol.c:242 glclient/protocol.c:319 glclient/protocol.c:494
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:301 glclient/protocol.c:736 glclient/protocol.c:813
+#: glclient/protocol.c:245 glclient/protocol.c:322 glclient/protocol.c:497
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:309
-#, c-format
-msgid "invalid content type:%s"
-msgstr ""
-
-#: glclient/protocol.c:332 glclient/protocol.c:377 glclient/protocol.c:437
-#: glclient/protocol.c:466 glclient/protocol.c:494 glclient/protocol.c:523
-#: glclient/protocol.c:551 glclient/protocol.c:598
-msgid "invalid json"
-msgstr ""
-
-#: glclient/protocol.c:339
-msgid "no protocol_version object"
-msgstr ""
-
-#: glclient/protocol.c:345
-msgid "no application_version object"
-msgstr ""
-
-#: glclient/protocol.c:351
-msgid "no server_type object"
-msgstr ""
-
-#: glclient/protocol.c:384
-msgid "no meta object"
-msgstr ""
-
-#: glclient/protocol.c:388
-msgid "no session_id object"
-msgstr ""
-
-#: glclient/protocol.c:394
-msgid "no jsonrpc_uri object"
-msgstr ""
-
-#: glclient/protocol.c:400
-msgid "no rest_uri object"
-msgstr ""
-
-#: glclient/protocol.c:558
-msgid "invalid message data:dialog"
-msgstr ""
-
-#: glclient/protocol.c:564
-msgid "invalid message data:popup"
-msgstr ""
-
-#: glclient/protocol.c:570
-msgid "invalid message data:abort"
-msgstr ""
-
-#: glclient/protocol.c:603
-msgid "invalid list_report response"
-msgstr ""
-
-#: glclient/protocol.c:801
+#: glclient/protocol.c:310
 #, c-format
 msgid "comm error:can not get blob:%s"
 msgstr ""
 
-#: glclient/protocol.c:938
+#: glclient/protocol.c:359
+msgid "invalid jsonrpc"
+msgstr ""
+
+#: glclient/protocol.c:362
+msgid "invalid jsonrpc version"
+msgstr ""
+
+#: glclient/protocol.c:367 glclient/protocol.c:371
+msgid "invalid jsonrpc id"
+msgstr ""
+
+#: glclient/protocol.c:386
+#, c-format
+msgid "jsonrpc error code:%d message:%s"
+msgstr ""
+
+#: glclient/protocol.c:391
+msgid "no result object"
+msgstr ""
+
+#: glclient/protocol.c:505
+#, c-format
+msgid "invalid content type:%s"
+msgstr ""
+
+#: glclient/protocol.c:528 glclient/protocol.c:573 glclient/protocol.c:633
+#: glclient/protocol.c:662 glclient/protocol.c:690 glclient/protocol.c:719
+#: glclient/protocol.c:747 glclient/protocol.c:879
+msgid "invalid json"
+msgstr ""
+
+#: glclient/protocol.c:535
+msgid "no protocol_version object"
+msgstr ""
+
+#: glclient/protocol.c:541
+msgid "no application_version object"
+msgstr ""
+
+#: glclient/protocol.c:547
+msgid "no server_type object"
+msgstr ""
+
+#: glclient/protocol.c:580
+msgid "no meta object"
+msgstr ""
+
+#: glclient/protocol.c:584
+msgid "no session_id object"
+msgstr ""
+
+#: glclient/protocol.c:590
+msgid "no jsonrpc_uri object"
+msgstr ""
+
+#: glclient/protocol.c:596
+msgid "no rest_uri object"
+msgstr ""
+
+#: glclient/protocol.c:754
+msgid "invalid message data:dialog"
+msgstr ""
+
+#: glclient/protocol.c:760
+msgid "invalid message data:popup"
+msgstr ""
+
+#: glclient/protocol.c:766
+msgid "invalid message data:abort"
+msgstr ""
+
+#: glclient/protocol.c:884
+msgid "invalid list_report response"
+msgstr ""
+
+#: glclient/protocol.c:1019
 #, c-format
 msgid ""
 "download failure\n"
 "path:%s\n"
 msgstr ""
 
-#: glclient/protocol.c:939 glclient/printservice.c:182
+#: glclient/protocol.c:1020 glclient/printservice.c:182
 msgid "glclient download notify"
 msgstr ""
 
@@ -367,10 +362,6 @@ msgstr ""
 msgid ""
 "print failure\n"
 "title:%s\n"
-msgstr ""
-
-#: glclient/printservice.c:102
-msgid "glclient print notify"
 msgstr ""
 
 #: glclient/printservice.c:180
