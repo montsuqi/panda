@@ -1050,7 +1050,6 @@ ENTER_FUNC;
 	}
 	res = CheckDownloadList(obj,data);
 	SendString(term->fp,(char*)json_object_to_json_string(res));
-fprintf(stderr,"response [%s]\n",(char*)json_object_to_json_string(res));
 	if (CheckNetFile(term->fp)) {
 		CloseNet(term->fp);
 	}
@@ -1119,7 +1118,6 @@ ENTER_FUNC;
 	} else if (!strcmp(method,"panda_api")) {
 		RPC_PandaAPI(term,obj);
 	} else if (!strcmp(method,"list_downloads")) {
-fprintf(stderr,"call list_downloads\n");
 		RPC_ListDownloads(term,obj);
 	} else {
 		Warning("jsonrpc method(%s) not found",method);
