@@ -37,6 +37,7 @@
 #include	<glib.h>
 #include	<pthread.h>
 #include	<sys/file.h>
+#include	<locale.h>
 
 #include	"enum.h"
 #include	"net.h"
@@ -239,6 +240,7 @@ main(
 	GError	*error = NULL;
 	GOptionContext *context;
 
+	setlocale(LC_CTYPE,"ja_JP.UTF-8");
 	context = g_option_context_new("file");
 	g_option_context_add_main_entries (context, entries, NULL);
 	if (!g_option_context_parse (context, &argc, &argv, &error))
