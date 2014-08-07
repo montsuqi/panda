@@ -159,6 +159,10 @@ SetMCPEnv(ValueStruct *val)
 		ValueStringPointer(GetItemLongName(val,"dc.host")),1);
 	setenv("MCP_TEMPDIR",
 		ValueStringPointer(GetItemLongName(val,"dc.tempdir")),1);
+	setenv("MCP_MIDDLEWARE_NAME",
+		ValueStringPointer(GetItemLongName(val,"dc.middleware_name")),1);
+	setenv("MCP_MIDDLEWARE_VERSION",
+		ValueStringPointer(GetItemLongName(val,"dc.middleware_version")),1);
 }
 
 static	int
