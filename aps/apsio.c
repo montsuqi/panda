@@ -158,6 +158,9 @@ ENTER_FUNC;
 			SetValueString(GetItemLongName(e,"dc.event"),hdr.event,NULL);
 			SetValueChar(GetItemLongName(e,"dc.dbstatus"),hdr.dbstatus);
 
+			SetValueString(GetItemLongName(e,"dc.middleware_name"),"panda",NULL);
+			SetValueString(GetItemLongName(e,"dc.middleware_version"),PACKAGE_VERSION,NULL);
+
 			node->command = hdr.command;
 			node->dbstatus = hdr.dbstatus;
 			strcpy(node->uuid,hdr.uuid);
