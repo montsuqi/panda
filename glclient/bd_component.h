@@ -56,11 +56,13 @@ struct _BDComponent {
   GtkWidget *ciphers;
   GtkWidget *certpass;
   GtkWidget *savecertpass;
+// pkcs11
+  GtkWidget *pkcs11_container;
+  GtkWidget *pkcs11;
+  GtkWidget *pkcs11lib;
 // info 
   GtkWidget *infotable;
 };
-
-gboolean validate_isblank (gchar *str);
 
 typedef struct {
   GtkWidget *entry, *filesel;

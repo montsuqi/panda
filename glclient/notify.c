@@ -56,11 +56,7 @@ Notify(gchar *summary,
 		fInit = TRUE;
 	}
 
-#if LIBNOTIFY_0_7_3
 	n = notify_notification_new (summary, body, icon);
-#else
-	n = notify_notification_new (summary, body, icon,NULL);
-#endif
 
 	if (timeout > 0) {
 		to = timeout * 1000;

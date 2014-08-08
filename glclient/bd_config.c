@@ -79,6 +79,9 @@ _new_server()
 	json_object_object_add(child,"certpassword",json_object_new_string(""));
 	json_object_object_add(child,"savecertpassword",json_object_new_boolean(TRUE));
 
+	json_object_object_add(child,"pkcs11",json_object_new_boolean(FALSE));
+	json_object_object_add(child,"pkcs11lib",json_object_new_string(""));
+
 	return child;
 }
 
@@ -339,6 +342,81 @@ gl_config_get_boolean(
 		return FALSE;
 	}
 	return json_object_get_boolean(child);
+}
+
+
+extern	void
+ListConfig()
+{
+	int i;
+
+	for(i=0;i<gl_config_get_config_nums();i++) {
+		if (gl_config_have_config(i)) {
+		printf("------------------\n");
+		printf("[%d]\n", i);
+		printf("\tdescription:\t%s\n", 
+			gl_config_get_string(i,"description"));
+		printf("\tauthuri:\t%s\n", gl_config_get_string(i,"authuri"));
+		printf("\tuser:\t\t%s\n",gl_config_get_string(i,"user"));
+		}
+	}
+}
+
+extern void
+LoadConfig (
+	int n)
+{
+	if (!gl_config_have_config(n)) {
+		Warning("no server setting:%d",n);
+		return;
+	}
+
+	AUTHURI(Session) = g_strdup(gl_config_get_string(n,"authuri"));
+	Style = g_strdup(gl_config_get_string(n,"style"));
+	Gtkrc = g_strdup(gl_config_get_string(n,"gtkrc"));
+	fMlog = gl_config_get_boolean(n,"mlog");
+	fKeyBuff = gl_config_get_boolean(n,"keybuff");
+	User = g_strdup(gl_config_get_string(n,"user"));
+	SavePass = gl_config_get_boolean(n,"savepassword");
+	if (SavePass) {
+		Pass = g_strdup(gl_config_get_string(n,"password"));
+	} 
+
+	fSSL = gl_config_get_boolean(n,"ssl");
+	CAFile = g_strdup(gl_config_get_string(n,"cafile"));
+	CertFile = g_strdup(gl_config_get_string(n,"certfile"));
+	Ciphers = g_strdup(gl_config_get_string(n,"ciphers"));
+	SaveCertPass = gl_config_get_boolean(n,"savecertpassword");
+	if (SaveCertPass) {
+		CertPass = g_strdup(gl_config_get_string(n,"certpassword"));
+	}
+
+	fPKCS11 = gl_config_get_boolean(n,"pkcs11");
+	PKCS11Lib = g_strdup(gl_config_get_string(n,"pkcs11lib"));
+
+	fTimer = gl_config_get_boolean(n,"timer");
+	TimerPeriod = gl_config_get_int(n,"timerperiod");
+	FontName = g_strdup(gl_config_get_string(n,"fontname"));
+}
+
+extern void
+LoadConfigByDesc (
+	const char *desc)
+{
+	int i,n = -1;
+
+	for(i=0;i<gl_config_get_config_nums();i++) {
+		if (gl_config_have_config(i)) {
+			if (!strcmp(desc,gl_config_get_string(i,"description"))) {
+				n = i;
+				break;
+			}
+		}
+	}
+	if (n == -1) {
+		Error("could not found setting:%s",desc);
+	}
+	LoadConfig(n);
 }
 
 /*************************************************************

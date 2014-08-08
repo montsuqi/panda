@@ -193,11 +193,6 @@ ENTER_FUNC;
 		SendEvent(window_name,widget_name,event);
 		UpdateScreen();
 
-		while (THISWINDOW(Session)[0] == '_') {
-			SendEvent(THISWINDOW(Session),THISWINDOW(Session),"DummyEvent");
-			UpdateScreen();
-		}
-
 		if (!fKeyBuff) {
 			ClearKeyBuffer();
 		}

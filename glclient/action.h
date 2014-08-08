@@ -20,7 +20,6 @@
 
 #ifndef	_INC_ACTION_H
 #define	_INC_ACTION_H
-#include	"glclient.h"
 
 #define	DEFAULT_WINDOW_WIDTH	1024
 #define	DEFAULT_WINDOW_HEIGHT	768
@@ -65,9 +64,6 @@ extern	gboolean	IsDialog(GtkWidget *widget);
 extern  gboolean    IsWidgetName(char *name);
 extern  gboolean    IsWidgetName2(char *name);
 
-extern	void		ListConfig();
-extern	void		LoadConfig(int n);
-extern	void		LoadConfigByDesc(const char *configname);
 extern  void        UI_Init(int argc, char **argv);
 extern	void		UI_Main(void);
 extern	void		InitStyle(void);

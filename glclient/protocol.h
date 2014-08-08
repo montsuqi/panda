@@ -33,5 +33,6 @@ char*				REST_PostBLOB(LargeByteString *);
 LargeByteString*	REST_GetBLOB(const char *);
 gboolean			REST_APIDownload(const char*path,char **f,size_t *s);
 void				InitProtocol();
+void				FinalProtocol();
 
 #endif

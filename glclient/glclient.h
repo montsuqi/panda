@@ -25,10 +25,10 @@
 #  include <config.h>
 #endif
 
-#include	<glade/glade.h>
 #include	<glib.h>
-#include	<gconf/gconf-client.h>
 #include	<json.h>
+#include	<curl/curl.h>
+#include	<openssl/engine.h>
 
 #include	"libmondai.h"
 
@@ -88,6 +88,8 @@ extern	void		ExitSystem(void);
 extern  void		SetSessionTitle(const char *title);
 extern  void		SetSessionBGColor(const char *color);
 
+GLOBAL	char		*ConfigName;
+
 GLOBAL	char		*CurrentApplication;
 GLOBAL	Bool		fV47;
 GLOBAL	char		*TempDir;
@@ -114,17 +116,10 @@ GLOBAL	Bool		SaveCertPass;
 GLOBAL	char		*CAFile;
 GLOBAL	char		*Ciphers;
 
-/* gconf */
-GLOBAL	GConfClient *GConfCTX;
-GLOBAL	gchar	*ConfigName;
-
-#define GL_GCONF_BASE				"/apps/glclient"
-#define GL_GCONF_SERVERS			(GL_GCONF_BASE "/servers")
-#define GL_GCONF_DEFAULT_SERVER		(GL_GCONF_BASE "/servers/1")
-#define GL_GCONF_SERVER				(GL_GCONF_BASE "/server")
-#define GL_GCONF_NEXT_ID			(GL_GCONF_BASE "/next_id")
-#define GL_GCONF_CONF_CONVERTED		(GL_GCONF_BASE "/confconverted")
-#define GL_GCONF_WCACHE				(GL_GCONF_BASE "/widgetcache")
-#define GL_GCONF_WCACHE_CONVERTED	(GL_GCONF_BASE "/wcacheconverted")
+GLOBAL	Bool		fPKCS11;
+GLOBAL	char		*PKCS11Lib;
+GLOBAL	ENGINE		*Engine;
+GLOBAL	CURL		*Curl;
+GLOBAL	char		*Pin;
 
 #endif

@@ -26,6 +26,6 @@ extern	void		MessageDialog(GtkMessageType type, const char *message);
 extern	void		ShowInfoDialog(const char *format,...);
 extern	void		ShowWarnDialog(const char *format,...);
 extern	void		ShowErrorDialog(const char *format,...);
-extern	int 		ShowAskPassDialog(char *buf, size_t buflen, const char *prompt);
+extern	char* 		ShowAskPassDialog(const char *prompt);
 
 #endif

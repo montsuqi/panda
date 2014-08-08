@@ -124,41 +124,37 @@ askpass_entry_activate(GtkEntry *entry, gpointer user_data)
 	gtk_dialog_response(dialog, GTK_RESPONSE_OK);
 }
 
-int
+char*
 ShowAskPassDialog(
-	char *buf,
-	size_t	buflen,
 	const char *prompt)
 {
-	GtkWidget 		*dialog;
-	GtkWidget		*entry;
-	gint			response;
-	char			*str;
-    int				ret;
+	GtkWidget *dialog,*entry;
+	gint response;
+	char *ret;
+
+	ret = NULL;
 
 	dialog = gtk_message_dialog_new(NULL,
 		GTK_DIALOG_MODAL,
-		GTK_MESSAGE_QUESTION,
+		GTK_MESSAGE_OTHER,
 		GTK_BUTTONS_OK_CANCEL,
-		"%s",
-		prompt);
+		"%s",prompt);
+
 	entry = gtk_entry_new();
-	gtk_entry_set_visibility (GTK_ENTRY (entry), FALSE);
-	gtk_box_pack_start (
-		GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
-		entry, TRUE, TRUE, 0);
-	gtk_widget_show_all(dialog);
+	gtk_entry_set_visibility(GTK_ENTRY (entry), FALSE);
 	gtk_widget_grab_focus(entry);
 	g_signal_connect(G_OBJECT(entry), "activate", 
 		G_CALLBACK(askpass_entry_activate), dialog);
-    response = gtk_dialog_run(GTK_DIALOG (dialog));
 
-    ret = -1;
+	gtk_box_pack_start(
+		GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+		entry, TRUE, TRUE, 0);
+
+	gtk_widget_show_all(dialog);
+    response = gtk_dialog_run(GTK_DIALOG(dialog));
+
 	if (response == GTK_RESPONSE_OK) {
-		str = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
-		strncpy(buf, str, buflen);
-		g_free(str);
-		ret = strlen(buf);
+		ret = gtk_editable_get_chars(GTK_EDITABLE(entry), 0, -1);
 	}
     gtk_widget_destroy(dialog);
     return ret;

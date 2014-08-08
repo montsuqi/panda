@@ -38,6 +38,8 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<dirent.h>
+#include	<gtk/gtk.h>
+
 #define		MAIN
 #include	"glclient.h"
 #include	"protocol.h"
@@ -52,7 +54,6 @@
 #include	"dialogs.h"
 #include	"gettext.h"
 
-static gboolean fDialog;
 static void GLMessage(int level, char *file, int line, char *msg);
 
 static	void
@@ -142,6 +143,7 @@ static	void
 InitSystem()
 {
 	char *p;
+	int delay;
 
 	InitMessage("glclient",NULL);
 	bindtextdomain(PACKAGE, LOCALEDIR);
@@ -158,37 +160,9 @@ InitSystem()
 		PingTimerPeriod = DEFAULT_PING_TIMER_PERIOD;
 	}
 
-	MakeDirs();
-	InitDesktop();
-
-	Session = g_new0(GLSession,1);
-#if 0
-	srand((unsigned int)Session);
-	RPCID(Session) = rand();
-#else
-	RPCID(Session) = 1;
-#endif
-}
-
-static	void
-FinishSystem(void)
-{
-	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
-		rm_r(TempDir);
-	}
-}
-
-static	void
-ExecClient()
-{
-	char		*delay_str;
-	int			delay;
-
-	InitStyle();
-
-	delay_str = getenv ("GL_SEND_EVENT_DELAY");
-	if (delay_str) {
-		delay = atoi(delay_str);
+	p = getenv ("GL_SEND_EVENT_DELAY");
+	if (p) {
+		delay = atoi(p);
 		if (delay > 0) {
 			fTimer = TRUE;
 			TimerPeriod = delay;
@@ -197,12 +171,41 @@ ExecClient()
 		}
 	}
 
-	SetMessageFunction(GLMessage);
+	MakeDirs();
+	InitDesktop();
 
-	StartClient();
-	StopClient();
+	Session = g_new0(GLSession,1);
+	RPCID(Session) = 0;
+}
 
-	exit(0);
+static	void
+FinalSystem(void)
+{
+	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
+		rm_r(TempDir);
+	}
+}
+
+static	void
+ThisAskPass(
+	gboolean fDialog)
+{
+	if (fPKCS11) {
+		Pass = ShowAskPassDialog(_("pin:"));
+	}
+	if (fDialog) {
+		return;
+	} else {
+		if (fSSL && !SaveCertPass) {
+			Pass = ShowAskPassDialog(_("certificate password:"));
+		}
+		if (!fSSL && !SavePass) {
+			Pass = ShowAskPassDialog(_("password:"));
+		}
+	}
+	if (Pass == NULL) {
+		exit(0);
+	}
 }
 
 static gboolean fListConfig = FALSE;
@@ -215,38 +218,15 @@ static GOptionEntry entries[] =
 	{ NULL}
 };
 
-static	void
-ThisAskPass(char *pass)
-{
-	if (fSSL) {
-		if (!SaveCertPass) {
-			if(AskPass(pass, SIZE_PASS, _("input certificate password")) != -1) {
-				Pass = g_strdup(pass);
-			} else {
-				exit(0);
-			}
-		}
-	} else {
-		if (!SavePass) {
-			if(AskPass(pass, SIZE_PASS, _("input password")) != -1) {
-				Pass = g_strdup(pass);
-			} else {
-				exit(0);
-			}
-		}
-	}
-}
-
 extern	int
 main(
-	int		argc,
-	char	**argv)
+	int argc,
+	char **argv)
 {
 	GOptionContext *ctx;
+	gboolean fDialog;
 	struct sigaction sa;
-	char _password[SIZE_PASS+1];
 
-	memset(_password,0,SIZE_PASS+1);
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = SIG_DFL;
 	sa.sa_flags |= SA_RESTART;
@@ -271,12 +251,17 @@ main(
 	UI_Init(argc,argv);
 	if (fDialog) {
 		BootDialogRun();
-		ExecClient();
 	} else {
 		LoadConfigByDesc(ConfigName);
-		ThisAskPass(_password);
-		ExecClient();
 	}
-	FinishSystem();
+	ThisAskPass(fDialog);
+
+	InitStyle();
+	SetMessageFunction(GLMessage);
+
+	StartClient();
+	StopClient();
+
+	FinalSystem();
 	return 0;
 }

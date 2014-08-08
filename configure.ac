@@ -143,12 +143,7 @@ if test "x$enable_client" = "xyes"; then
 		libnotify			>= 0.4.5
 		gmodule-2.0			>= 2.0.0
 		gconf-2.0			>= 2.28.1
-	])
-	PKG_CHECK_MODULES(LIBNOTIFY,libnotify >= 0.7.3,
-	[AC_DEFINE(LIBNOTIFY_0_7_3,1,"")],
-	[
-		PKG_CHECK_MODULES(LIBNOTIFY,libnotify >= 0.4.5,
-		[])
+		libp11				>= 0.2.8
 	])
 	PKG_CHECK_MODULES(LIBGTKCHECK, libglade-panda-2.0 >= 3.0.0,
 	[AC_DEFINE(LIBGTK_3_0_0,1,"")],
@@ -318,6 +313,17 @@ else
    MONTSUQI_LOAD_PATH=$libdir/$PACKAGE
 fi
 AC_SUBST(MONTSUQI_LOAD_PATH)
+
+
+dnl ***************************************************************************
+dnl ENGINE_PKCS11_PATH
+dnl ***************************************************************************
+engine_pkcs11="/usr/lib/engines/engine_pkcs11.so"
+AC_ARG_WITH(engine_pkcs11,
+	[  --with-engine-pkcs11=<file>  use engine_pkcs11.$SO_SUFFIX ],[
+	engine_pkcs11=$withval 
+])
+AC_DEFINE_UNQUOTED(ENGINE_PKCS11_PATH,"$engine_pkcs11","")
 
 AC_CONFIG_FILES([
 Makefile 

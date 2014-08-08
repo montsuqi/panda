@@ -11,6 +11,5 @@ glclient/client.c
 glclient/desktop.c
 glclient/widgetcache.c
 glclient/protocol.c
-glclient/printservice.c
 libs/option.c
 libs/net.c

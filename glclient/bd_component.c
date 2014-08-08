@@ -36,27 +36,6 @@
 #include    "bd_config.h"
 #include    "bd_component.h"
 
-/*********************************************************************
- * misc function
- ********************************************************************/
-gboolean
-validate_isblank (gchar *str)
-{
-  gint i;
-#if 0
-  extern int isblank(int c);
-#endif
-
-  if (str == NULL || str[0] == '\0')
-    return TRUE;
-  for (i = strlen (str) - 1; i >= 0; i--)
-    {
-      if (!isblank (str[i]))
-        return FALSE;
-    }
-  return TRUE;
-}
-
 void
 open_file_chooser(GtkWidget *w, gpointer entry)
 {
@@ -117,6 +96,15 @@ on_ssl_toggle (GtkWidget *widget, BDComponent *self)
 }
 
 static void
+on_pkcs11_toggle (GtkWidget *widget, BDComponent *self)
+{
+  gboolean sensitive;
+
+  sensitive = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (self->pkcs11));
+  gtk_widget_set_sensitive(self->pkcs11_container, sensitive);
+}
+
+static void
 on_timer_toggle (GtkWidget *widget, BDComponent *self) {
   gboolean sensitive;
 
@@ -160,6 +148,10 @@ bd_component_set_value(
   } else {
     gtk_entry_set_text(GTK_ENTRY(self->certpass),"");
   }
+  // pkcs11
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->pkcs11),gl_config_get_boolean(n,"pkcs11"));
+  gtk_widget_set_sensitive(self->pkcs11_container,gl_config_get_boolean(n,"pkcs11"));  
+  gtk_entry_set_text(GTK_ENTRY(self->pkcs11lib),gl_config_get_string(n,"pkcs11lib"));
 
   // other
   gtk_entry_set_text(GTK_ENTRY (self->style),gl_config_get_string(n,"style"));
@@ -221,6 +213,9 @@ bd_component_value_to_config(
 	CertPass = g_strdup(certpassword);
   }
   gl_config_set_boolean(n,"savecertpassword", save);
+  // pkcs11
+  gl_config_set_boolean(n,"pkcs11", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->pkcs11)));
+  gl_config_set_string(n,"pkcs11lib", gtk_entry_get_text(GTK_ENTRY(self->pkcs11lib)));
 
   // other
   gl_config_set_string(n,"style", gtk_entry_get_text(GTK_ENTRY(self->style)));
@@ -375,6 +370,41 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
+  // pkcs11
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label (_("Use Security Device"));
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  g_signal_connect (G_OBJECT (check), "clicked",
+                      G_CALLBACK (on_pkcs11_toggle), self);
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  self->pkcs11 = check;
+  ypos++;
+
+  table = gtk_table_new (3, 1, FALSE);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 0);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 0);
+  self->pkcs11_container = table;
+  gtk_table_attach (GTK_TABLE(self->ssl_container), table, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+
+  ypos = 0;
+
+  label = gtk_label_new (_("PKCS#11 Library"));
+  gtk_misc_set_alignment (GTK_MISC (label), 0, 0.5);
+  self->pkcs11lib = entry = gtk_entry_new ();
+  button = gtk_button_new_with_label(_("Open"));
+  g_signal_connect(G_OBJECT(button), "clicked",
+             G_CALLBACK(open_file_chooser), (gpointer)entry);
+  hbox = gtk_hbox_new (FALSE, 5);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_table_attach (GTK_TABLE (table), hbox, 1, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), entry, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX (hbox), button, TRUE, TRUE, 0);
+  ypos++;
+
   // other
   table = gtk_table_new (3, 1, FALSE);
   gtk_container_set_border_width (GTK_CONTAINER (table), 5);
@@ -494,7 +524,7 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
-  label = gtk_label_new ("Copyright (C) 2011 ORCA Project");
+  label = gtk_label_new ("Copyright (C) 2014 ORCA Project");
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
   gtk_container_add (GTK_CONTAINER (alignment), label);
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
