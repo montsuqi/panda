@@ -362,7 +362,7 @@ static	gboolean
 CheckClientVersion(
 	char *version)
 {
-	if (!strncmp("1.4.8",version,strlen("1.4.8"))) {
+	if (strcmp("2.0.0",version) <= 0) {
 		return TRUE;
 	}
 	return FALSE;
