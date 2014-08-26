@@ -120,6 +120,5 @@ GLOBAL	Bool		fPKCS11;
 GLOBAL	char		*PKCS11Lib;
 GLOBAL	ENGINE		*Engine;
 GLOBAL	CURL		*Curl;
-GLOBAL	char		*Pin;
 
 #endif

@@ -861,7 +861,7 @@ InitCURLPKCS11()
 		Error("PKCS11_open_session failure");
 	}
 
-	rc = PKCS11_login(slot, 0, Pin);
+	rc = PKCS11_login(slot, 0, Pass);
 	if (rc != 0) {
 		Error("PKCS11_login failure");
 	}
@@ -916,7 +916,7 @@ InitCURLPKCS11()
 		!ENGINE_ctrl_cmd_string(Engine, "LIST_ADD", "1", 0) ||
 		!ENGINE_ctrl_cmd_string(Engine, "LOAD", NULL, 0) ||
 		!ENGINE_ctrl_cmd_string(Engine, "MODULE_PATH", PKCS11Lib, 0) ||
-		!ENGINE_ctrl_cmd_string(Engine, "PIN", Pin, 0) ) {
+		!ENGINE_ctrl_cmd_string(Engine, "PIN", Pass, 0) ) {
 		Error("ENGINE_ctrl_cmd_string failure");
 	}
 	if (!ENGINE_init(Engine)) {
