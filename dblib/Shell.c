@@ -175,7 +175,6 @@ ENTER_FUNC;
 	cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
 	rc = DoShell(cmdv);
 	CommitDB_Redirect(dbg);
-	printf("dbg->count:%d\n",dbg->count);
 	for (i=0; i< dbg->count; i++) {
 		xfree(cmdv[i]);
 	}
