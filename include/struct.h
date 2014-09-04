@@ -169,6 +169,7 @@ typedef	struct _DBG_Struct	{
 	LargeByteString		*redirectData;
 	LargeByteString		*checkData;
 	uint64_t			ticket_id;
+	int					count;
 	LargeByteString		*last_query;
 	char				*file;
 	int					sumcheck;
