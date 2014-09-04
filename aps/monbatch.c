@@ -51,6 +51,15 @@ registdb(
 	pid_t pgid)
 {
 	printf("PGID=%d\n", pgid);
+	printf("mcp_window:%s\n", getenv("MCP_WINDOW"));
+	printf("mcp_widget:%s\n", getenv("MCP_WIDGET"));
+	printf("mcp_event:%s\n", getenv("MCP_EVENT"));
+	printf("mcp_tenant:%s\n", getenv("MCP_TENANT"));
+	printf("mcp_term:%s\n", getenv("MCP_TERM"));
+	printf("mcp_user:%s\n", getenv("MCP_USER"));
+	printf("mcp_host:%s\n", getenv("MCP_HOST"));
+	printf("mcp_middleware_name:%s\n", getenv("MCP_MIDDLEWARE_NAME"));
+	printf("mcp_middleware_version:%s\n", getenv("MCP_MIDDLEWARE_VERSION"));
 	printf("mcp_batch_name:%s\n", getenv("MCP_BATCH_NAME"));
 	printf("mcp_batch_comment:%s\n", getenv("MCP_BATCH_COMMENT"));
 	return 0;
@@ -64,16 +73,56 @@ unregistdb(
 	return 0;
 }
 
+extern  int
+exec_shell(
+	int		argc,
+	char	**argv)
+{
+	pid_t pid, wpid;
+	int i, rc = 0;
+	int status;
+	char *cmdv[4];
+	char *sh;
+
+	for ( i=1; i<argc; i++ ) {
+		if ( ( pid = fork() ) == 0 ) {
+			sh = "/bin/sh";
+			cmdv[0] = sh;
+			cmdv[1] = "-c";
+			cmdv[2] = argv[i];
+			cmdv[3] = NULL;
+			execve(sh, cmdv, environ);
+		} else if ( pid < 0) {
+			perror("fork");
+			rc = -1;
+			break;
+		}
+		wpid = waitpid(pid, &status, 0);
+		if (wpid < 0) {
+			perror("waitpid");
+			rc = -1;
+			break;
+		}
+		if (WIFEXITED(status)) {
+			rc = WEXITSTATUS(status);
+		} else {
+			rc = status;
+		}
+		if (exit_flag) {
+			printf("signal exit\n");
+			break;
+		}
+	}
+	return rc;
+}
+
 extern	int
 main(
 	int		argc,
 	char	**argv)
 {
-	int i;
-	char *cmdv[4];
-	char *sh;
-	int status;
-	pid_t pid, wpid, pgid;
+	int rc;
+	pid_t pgid;
 	struct sigaction sa;
 
 	memset(&sa, 0, sizeof(struct sigaction));
@@ -86,25 +135,9 @@ main(
 	pgid = getpgrp();
 	registdb(pgid);
 
-	for (i=1; i<argc; i++) {
-		printf("[%s]\n", argv[i]);
-		if ( ( pid = fork() ) == 0 ) {
-			sh = "/bin/sh";
-			cmdv[0] = sh;
-			cmdv[1] = "-c";
-			cmdv[2] = argv[i];
-			cmdv[3] = NULL;
-			execve(sh, cmdv, environ);
-		} else if ( pid < 0) {
-			perror("fork");
-		}
-		printf("wait %d\n", pid);
-		wpid = waitpid(pid, &status, 0);
-		if (exit_flag) {
-			printf("exit\n");
-			break;
-		}
-	}
+	rc = exec_shell(argc, argv);
+	printf("status=%d\n", rc);
+
 	unregistdb(pgid);
 	return 0;
 }
