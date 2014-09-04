@@ -33,14 +33,17 @@
 #include	<sys/wait.h>
 #include	<signal.h>
 
+#include	"libmondai.h"
 #include	"message.h"
 #include	"debug.h"
 
+static	volatile Bool exit_flag = FALSE;
 extern char **environ;
 
 void signal_handler (int signo )
 {
-  printf("trap %d\n", signo);
+	exit_flag = TRUE;
+	printf("stop signal\n");
 }
 
 static int
@@ -97,6 +100,10 @@ main(
 		}
 		printf("wait %d\n", pid);
 		wpid = waitpid(pid, &status, 0);
+		if (exit_flag) {
+			printf("exit\n");
+			break;
+		}
 	}
 	unregistdb(pgid);
 	return 0;
