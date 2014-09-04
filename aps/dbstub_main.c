@@ -91,10 +91,10 @@ ENTER_FUNC;
 		InitializeValue(ThisEnv->mcprec->value);
 	}
 	SetValueString(GetItemLongName(ThisEnv->mcprec->value,"dc.module"),name,NULL);
-	if ((user = getenv("MONTSUQIUSER")) != NULL) {
+	if ((user = getenv("MCP_USER")) != NULL) {
 		SetValueString(GetItemLongName(ThisEnv->mcprec->value,"dc.user"),user,NULL);
 	}
-	if ((term = getenv("MONTSUQITERM")) != NULL) {
+	if ((term = getenv("MCP_TERM")) != NULL) {
 		SetValueString(GetItemLongName(ThisEnv->mcprec->value,"dc.term"),term,NULL);
 	}
 	if		(  ( Bind = g_hash_table_lookup(ThisBD->BatchTable,name) )  ==  NULL  ) {
