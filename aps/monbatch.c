@@ -28,11 +28,38 @@
 #endif
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<string.h>
 #include	<unistd.h>
 #include	<sys/wait.h>
 #include	<signal.h>
 
+#include	"message.h"
+#include	"debug.h"
+
 extern char **environ;
+
+void signal_handler (int signo )
+{
+  printf("trap %d\n", signo);
+}
+
+static int
+registdb(
+	pid_t pgid)
+{
+	printf("PGID=%d\n", pgid);
+	printf("mcp_batch_name:%s\n", getenv("MCP_BATCH_NAME"));
+	printf("mcp_batch_comment:%s\n", getenv("MCP_BATCH_COMMENT"));
+	return 0;
+}
+
+static int
+unregistdb(
+	pid_t pgid)
+{
+	printf("finish %d\n", pgid);
+	return 0;
+}
 
 extern	int
 main(
@@ -44,11 +71,17 @@ main(
 	char *sh;
 	int status;
 	pid_t pid, wpid, pgid;
+	struct sigaction sa;
 
-	printf("mcp_batch_name:%s\n", getenv("MCP_BATCH_NAME"));
-	printf("mcp_batch_comment:%s\n", getenv("MCP_BATCH_COMMENT"));
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = signal_handler;
+	sa.sa_flags |= SA_RESTART;
+	if (sigaction(SIGHUP, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
 	pgid = getpgrp();
-	printf("PGID=%d\n", pgid);
+	registdb(pgid);
 
 	for (i=1; i<argc; i++) {
 		printf("[%s]\n", argv[i]);
@@ -62,8 +95,9 @@ main(
 		} else if ( pid < 0) {
 			perror("fork");
 		}
+		printf("wait %d\n", pid);
 		wpid = waitpid(pid, &status, 0);
-		printf("wait %d\n", wpid);
 	}
+	unregistdb(pgid);
 	return 0;
 }
