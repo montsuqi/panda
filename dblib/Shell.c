@@ -62,7 +62,7 @@ _DBOPEN(
 {
 ENTER_FUNC;
 	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = (void *)NewLBS();
+	dbg->process[PROCESS_UPDATE].conn = xmalloc((SIZE_ARG)*sizeof(char *));
 	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
@@ -78,9 +78,9 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+		xfree(dbg->process[PROCESS_UPDATE].conn);
 		CloseDB_RedirectPort(dbg);
-		FreeLBS((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
@@ -95,8 +95,14 @@ _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
+	char 		**cmdv;
 ENTER_FUNC;
-	LBS_EmitStart((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
+	dbg->count = 0;
+	cmdv = dbg->process[PROCESS_UPDATE].conn;
+	cmdv[dbg->count] = NULL;
+	unsetenv("MCP_BATCH_NAME");
+	unsetenv("MCP_BATCH_COMMENT");
+
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -106,29 +112,38 @@ LEAVE_FUNC;
 
 static	int
 DoShell(
-	char	*command)
+	char	**cmdv)
 {
-	char	*argv[4];
+	char	**cmd;
+	char	*argv[256];
 	char	*sh;
+	pid_t	pgid;
 	int		pid;
 	int		rc;
+	int 	ret;
+	int 	i;
 	extern	char	**environ;
 
 ENTER_FUNC;
 #ifdef	DEBUG
 	printf("command --------------------------------\n");
-	printf("%s\n",command);
+	for (cmd = cmdv; *cmd; cmd++) {
+		printf("command: %s\n", *cmd);
+	}
 	printf("----------------------------------------\n");
 #endif
-	if		(  *command  !=  0  ) {
+	if		(  *cmdv  !=  NULL  ) {
 		if		(  ( pid = fork() )  ==  0  )	{
-			if		(  ( sh = getenv("SHELL") )  ==  NULL  ) {
-				sh = "/bin/sh";
-			}
+			setpgid(0,0);
+			sh = BIN_DIR "/monbatch";
+			pgid = getpgrp();
+			printf("****************************************** %d\n", pgid);
 			argv[0] = sh;
-			argv[1] = "-c";
-			argv[2] = command;
-			argv[3] = NULL;
+			i = 1;
+			for (cmd = cmdv; *cmd; cmd++) {
+				argv[i++] = *cmd;
+			}
+			argv[i] = NULL;
 			execve(sh, argv, environ);
 			rc = MCP_BAD_OTHER;
 		} else
@@ -149,29 +164,22 @@ _DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
+	int			i;
 	int			rc;
 	char		*p
 	,			*q;
-	LargeByteString	*lbs;
+	char 		**cmdv;
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
-	rc = 0;
-	if (LBS_Size(lbs) > 0){
-		LBS_EmitEnd(lbs);
-		RewindLBS(lbs);
-		p = (char *)LBS_Body(lbs);
-		while	(  ( q = strchr(p,0xFF) )  !=  NULL  ) {
-			*q = 0;
-			rc += DoShell(p);
-			p = q + 1;
-		}
-		rc += DoShell(p);
-		LBS_String(dbg->last_query,p);
-		LBS_Clear(lbs);
-	}
+	cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
+	rc = DoShell(cmdv);
 	CommitDB_Redirect(dbg);
+	printf("dbg->count:%d\n",dbg->count);
+	for (i=0; i< dbg->count; i++) {
+		xfree(cmdv[i]);
+	}
+	dbg->count = 0;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
@@ -197,7 +205,7 @@ InsertValue(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		LBS_EmitChar(lbs,'"');
-		LBS_EmitString(lbs,ValueToString(val,dbg->coding));
+		LBS_EmitString(lbs, ValueToString(val,dbg->coding));
 		LBS_EmitChar(lbs,'"');
 		break;
 	  case	GL_TYPE_NUMBER:
@@ -229,7 +237,7 @@ InsertValue(
 }
 
 static	ValueStruct	*
-ExecShell(
+RegistShell(
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	LargeByteString	*src,
@@ -240,15 +248,18 @@ ExecShell(
 	DBG_Struct	*dbg;
 	ValueStruct	*ret;
 	LargeByteString	*lbs;
+	char 		**cmdv;
+	char 		**cmd;
 
 ENTER_FUNC;
 	ret = NULL;
 	dbg =  rec->opt.db->dbg;
-	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
+	cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
 	if	(  src  ==  NULL )	{
 		Error("function \"%s\" is not found.",ctrl->func);
 	}
 	RewindLBS(src);
+	lbs = NewLBS();
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
 		if		(  c  !=  SQL_OP_ESC  ) {
 			LBS_EmitChar(lbs,c);
@@ -262,12 +273,18 @@ ENTER_FUNC;
 			  case	SQL_OP_EOL:
 			  case	0:
 				LBS_EmitChar(lbs,';');
+				LBS_EmitEnd(lbs);
+				cmdv[dbg->count] = StrDup(LBS_Body(lbs));
+				dbg->count++;
+				RewindLBS(lbs);
 				break;
 			  default:
 				break;
 			}
 		}
 	}
+	FreeLBS(lbs);
+	cmdv[dbg->count] = NULL;
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -279,6 +296,7 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+	char *name, *comment;
 	DB_Struct	*db;
 	PathStruct	*path;
 	LargeByteString	*src;
@@ -291,6 +309,11 @@ ENTER_FUNC;
 	printf("[%s]\n",ctrl->func);
 #endif
 	ret = NULL;
+	name = ValueToString(GetItemLongName(args,"name"),dbg->coding);
+	setenv("MCP_BATCH_NAME", name, 0);
+	comment = ValueToString(GetItemLongName(args,"comment"),dbg->coding);
+	setenv("MCP_BATCH_COMMENT", comment, 0);
+
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		rc = TRUE;
@@ -302,7 +325,7 @@ ENTER_FUNC;
 		} else {
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
-				ret = ExecShell(ctrl,rec,src,args);
+				ret = RegistShell(ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
 				rc = FALSE;

@@ -36,7 +36,8 @@ AM_CPPFLAGS 			=		\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
 	$(RUBY_CFLAGS)			\
-	$(COMMON_CFLAGS)
+	$(COMMON_CFLAGS)                \
+	-DBIN_DIR=\"$(bindir)\"
 
 libpandadb_la_CFLAGS = $(AM_CFLAGS)
 libpandadb_la_LDFLAGS	=			\
