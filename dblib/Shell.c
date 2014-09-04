@@ -120,7 +120,6 @@ DoShell(
 	pid_t	pgid;
 	int		pid;
 	int		rc;
-	int 	ret;
 	int 	i;
 	extern	char	**environ;
 
@@ -166,8 +165,6 @@ _DBCOMMIT(
 {
 	int			i;
 	int			rc;
-	char		*p
-	,			*q;
 	char 		**cmdv;
 
 ENTER_FUNC;
@@ -248,7 +245,6 @@ RegistShell(
 	ValueStruct	*ret;
 	LargeByteString	*lbs;
 	char 		**cmdv;
-	char 		**cmd;
 
 ENTER_FUNC;
 	ret = NULL;
