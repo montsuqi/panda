@@ -72,6 +72,7 @@ InitSystem(
 ENTER_FUNC;
 	InitDirectory();
 	SetUpDirectory(Directory,name,"","",P_ALL);
+	setenv("MCP_DIRECTORY_PATH", Directory, 1);
 	if		(  ( ThisLD = GetLD(name) )  ==  NULL  ) {
 		Error("LD \"%s\" not found.",name);
 	}
