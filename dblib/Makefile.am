@@ -46,7 +46,8 @@ libpandadb_la_LDFLAGS	=			\
 
 libpandadb_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h
+	redirect.c	redirect.h	\
+	monsys.c	monsys.h
 
 libdblog_a_CFLAGS = $(AM_CFLAGS)
 libdblog_a_SOURCES	=	\
