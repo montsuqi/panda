@@ -167,9 +167,11 @@ unregistdb(
 	TransactionStart(dbg);
 
 	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len, "DELETE FROM batch WHERE pgid = '%d';", (int)pgid);
+	snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid = '%d';",
+			 BATCH_TABLE, (int)pgid);
 	ExecDBOP(dbg, sql, DB_UPDATE);
-	snprintf(sql, sql_len, "UPDATE batch_log SET endtime = '%s' WHERE pgid = '%d';", date, (int)pgid);
+	snprintf(sql, sql_len, "UPDATE %s SET endtime = '%s' WHERE pgid = '%d';",
+			 BATCH_LOG_TABLE, date, (int)pgid);
 	ExecDBOP(dbg, sql, DB_UPDATE);
 	xfree(sql);
 
