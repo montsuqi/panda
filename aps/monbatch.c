@@ -108,7 +108,7 @@ registdb(
 	GHashTable *table)
 {
 	char *sql;
-	size_t sql_len;
+	size_t sql_len = SIZE_SQL;
 	name_value_t kv;
 
 	if (!dbg) {
@@ -128,18 +128,15 @@ registdb(
 	LBS_EmitEnd(kv.name);
 	LBS_EmitEnd(kv.value);
 
-	sql_len = LBS_Size(kv.name) + LBS_Size(kv.value) + 40;
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len, "INSERT INTO %s (%s) VALUES (%s);",
 			 BATCH_TABLE,
 			 (char *)LBS_Body(kv.name),(char *)LBS_Body(kv.value));
-	printf("%s\n", sql);
 	ExecDBOP(dbg, sql, DB_UPDATE);
 
 	snprintf(sql, sql_len, "INSERT INTO %s (%s) VALUES (%s);",
 			 BATCH_LOG_TABLE,
 			 (char *)LBS_Body(kv.name),(char *)LBS_Body(kv.value));
-	printf("%s\n", sql);
 	ExecDBOP(dbg, sql, DB_UPDATE);
 
 	xfree(sql);
@@ -159,7 +156,7 @@ unregistdb(
 	struct	tm	tm_now;
 	char	date[50];
 	char	*sql;
-	size_t sql_len = 1024;
+	size_t sql_len = SIZE_SQL;
 
 	now = time(NULL);
 	localtime_r(&now, &tm_now);
@@ -171,10 +168,8 @@ unregistdb(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len, "DELETE FROM batch WHERE pgid = '%d';", (int)pgid);
-	printf("sql:%s\n", sql);
 	ExecDBOP(dbg, sql, DB_UPDATE);
 	snprintf(sql, sql_len, "UPDATE batch_log SET endtime = '%s' WHERE pgid = '%d';", date, (int)pgid);
-	printf("sql:%s\n", sql);
 	ExecDBOP(dbg, sql, DB_UPDATE);
 	xfree(sql);
 
