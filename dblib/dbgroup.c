@@ -200,6 +200,22 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(ctrl.rc);
 }
+extern	ValueStruct *
+ExecDBESCAPE(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DB_FUNC	func;
+	ValueStruct	*ret;
+
+	func = LookupFUNC(dbg, "DBESCAPE");
+	if		(  func !=  NULL  ) {
+		ret = (*func)(dbg,ctrl,rec,args);
+	}
+	return ret;
+}
 
 extern	int
 ExecDBOP(

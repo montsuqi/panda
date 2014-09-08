@@ -45,3 +45,28 @@ GetDBG_monsys(void)
 	}
 	return dbg;
 }
+
+extern char *
+Escape_monsys(
+	DBG_Struct	*dbg,
+	char *src)
+{
+	char *dest;
+	ValueStruct	*value, *ret, *recval, *retval;
+	DBCOMM_CTRL		*ctrl = NULL;
+	RecordStruct	*rec = NULL;
+
+	value = NewValue(GL_TYPE_CHAR);
+	SetValueStringWithLength(value, src, strlen(src), NULL);
+
+	recval = NewValue(GL_TYPE_RECORD);
+	ValueAddRecordItem(recval, "dbescapestring", value);
+
+	retval = ExecDBESCAPE(dbg, ctrl, rec, recval);
+	if ( (ret = GetItemLongName(retval,"dbescapestring")) != NULL) {
+		dest = StrDup(ValueToString(ret, dbg->coding));
+	}
+	FreeValueStruct(retval);
+	FreeValueStruct(recval);
+	return dest;
+}
