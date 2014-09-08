@@ -119,8 +119,17 @@ GetWFCTerm(
 	int				i;
 	PacketClass		c;
 	ValueStruct		*e;
+	char			*mwname,*mwver;
 
 ENTER_FUNC;
+	mwname = getenv("__MCP_MIDDLEWARE_NAME");
+	if (mwname == NULL) {
+		mwname = "panda";
+	} 
+	mwver = getenv("__MCP_MIDDLEWARE_VERSION");
+	if (mwver == NULL) {
+		mwver = PACKAGE_VERSION;
+	} 
 	while (1) {
 		c = RecvPacketClass(fp);ON_IO_ERROR(fp,badio);
 		switch (c) {
@@ -158,8 +167,8 @@ ENTER_FUNC;
 			SetValueString(GetItemLongName(e,"dc.event"),hdr.event,NULL);
 			SetValueChar(GetItemLongName(e,"dc.dbstatus"),hdr.dbstatus);
 
-			SetValueString(GetItemLongName(e,"dc.middleware_name"),"panda",NULL);
-			SetValueString(GetItemLongName(e,"dc.middleware_version"),PACKAGE_VERSION,NULL);
+			SetValueString(GetItemLongName(e,"dc.middleware_name"),mwname,NULL);
+			SetValueString(GetItemLongName(e,"dc.middleware_version"),mwver,NULL);
 
 			node->command = hdr.command;
 			node->dbstatus = hdr.dbstatus;
