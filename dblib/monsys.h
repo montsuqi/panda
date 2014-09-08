@@ -22,5 +22,6 @@
 #include	"dbgroup.h"
 
 extern	DBG_Struct *GetDBG_monsys(void);
+extern	char       *Escape_monsys(DBG_Struct *dbg, char *src);
 
 #endif

@@ -92,7 +92,7 @@ insert_table(
 	char *value,
 	name_value_t *kv)
 {
-	ValueStruct		*v;
+	char *evalue;
 
 	if (LBS_Size(kv->name) > 0) {
 		LBS_EmitChar(kv->name,',');
@@ -105,10 +105,9 @@ insert_table(
 		LBS_EmitSpace(kv->value);
 	}
 	LBS_EmitChar(kv->value,'\'');
-	v = NewValue(GL_TYPE_CHAR);
-	SetValueStringWithLength(v, value, strlen(value), NULL);
-	LBS_EmitString(kv->value, ValueToString(v,kv->dbg->coding));
-	FreeValueStruct(v);
+	evalue = Escape_monsys(kv->dbg, value);
+	LBS_EmitString(kv->value, evalue);
+	xfree(evalue);
 	LBS_EmitChar(kv->value,'\'');
 }
 
@@ -150,6 +149,8 @@ registdb(
 	ExecDBOP(dbg, sql, DB_UPDATE);
 
 	xfree(sql);
+	FreeLBS(kv.name);
+	FreeLBS(kv.value);
 
 	TransactionEnd(dbg);
 	CloseDB(dbg);
