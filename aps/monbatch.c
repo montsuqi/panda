@@ -48,8 +48,8 @@ static	char	*Directory;
 static	volatile Bool exit_flag = FALSE;
 extern char **environ;
 
-#define BATCH_TABLE "batch"
-#define BATCH_LOG_TABLE "batch_log"
+#define BATCH_TABLE "monbatch"
+#define BATCH_LOG_TABLE "monbatch_log"
 
 typedef struct {
 	DBG_Struct	*dbg;
