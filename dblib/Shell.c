@@ -379,19 +379,25 @@ OnChildExit(
 {
 ENTER_FUNC;
 	while( waitpid(-1, NULL, WNOHANG) > 0 );
-	(void)signal(SIGCHLD, (void *)OnChildExit);
 LEAVE_FUNC;
 }
 
 extern	DB_Func	*
 InitShell(void)
 {
+	struct sigaction sa;
 	DB_Func	*ret;
 ENTER_FUNC;
-	(void)signal(SIGCHLD, (void *)OnChildExit);
+	memset(&sa, 0, sizeof(struct sigaction));
+	sigemptyset (&sa.sa_mask);
+	sa.sa_flags |= SA_RESTART;
+	sa.sa_handler = (void *)OnChildExit;
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		fprintf(stderr,"sigaction(2) failure\n");
+	}
 
 	ret = EnterDB_Function("Shell",Operations,DB_PARSER_SQL,&Core,"# ","\n");
 LEAVE_FUNC;
-	return	(ret); 
+	return	(ret);
 }
 
