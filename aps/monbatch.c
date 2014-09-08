@@ -50,6 +50,7 @@ extern char **environ;
 
 #define BATCH_TABLE "monbatch"
 #define BATCH_LOG_TABLE "monbatch_log"
+#define BATCH_TIMEOUT 86400
 
 typedef struct {
 	DBG_Struct	*dbg;
@@ -57,10 +58,19 @@ typedef struct {
 	LargeByteString *value;
 } name_value_t;
 
-void signal_handler (int signo )
+void
+signal_handler (int signo )
 {
 	exit_flag = TRUE;
 	printf("stop signal\n");
+}
+
+void
+alrm_handler (int signo)
+{
+	exit_flag = TRUE;
+	printf("time out\n");
+	killpg(0, SIGHUP);
 }
 
 static	void
@@ -278,11 +288,19 @@ main(
 	GHashTable *batch;
 
 	memset(&sa, 0, sizeof(struct sigaction));
-	sa.sa_handler = signal_handler;
+	sigemptyset (&sa.sa_mask);
 	sa.sa_flags |= SA_RESTART;
+	sa.sa_handler = signal_handler;
 	if (sigaction(SIGHUP, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
+
+	sa.sa_handler = alrm_handler;
+	if (sigaction(SIGALRM, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	alarm(BATCH_TIMEOUT);
 
 	InitSystem();
 
