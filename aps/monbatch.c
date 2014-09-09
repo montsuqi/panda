@@ -111,6 +111,19 @@ insert_table(
 	LBS_EmitChar(kv->value,'\'');
 }
 
+static void
+timestamp(
+	char *daytime,
+	size_t size)
+{
+	time_t now;
+	struct	tm	tm_now;
+
+	now = time(NULL);
+	localtime_r(&now, &tm_now);
+	strftime(daytime, size, "%F %T %z", &tm_now);
+}
+
 static int
 registdb(
 	DBG_Struct	*dbg,
@@ -163,16 +176,11 @@ unregistdb(
 	DBG_Struct	*dbg,
 	pid_t pgid)
 {
-	time_t now;
-	struct	tm	tm_now;
-	char	date[50];
+	char	endtime[50];
 	char	*sql;
 	size_t sql_len = SIZE_SQL;
 
-	now = time(NULL);
-	localtime_r(&now, &tm_now);
-	strftime(date, sizeof(date),
-			 "%F %T %z", &tm_now);
+	timestamp(endtime, sizeof(endtime));
 
 	OpenDB(dbg);
 	TransactionStart(dbg);
@@ -182,7 +190,7 @@ unregistdb(
 			 BATCH_TABLE, (int)pgid);
 	ExecDBOP(dbg, sql, DB_UPDATE);
 	snprintf(sql, sql_len, "UPDATE %s SET endtime = '%s' WHERE pgid = '%d';",
-			 BATCH_LOG_TABLE, date, (int)pgid);
+			 BATCH_LOG_TABLE, endtime, (int)pgid);
 	ExecDBOP(dbg, sql, DB_UPDATE);
 	xfree(sql);
 
@@ -197,14 +205,11 @@ static	GHashTable *
 get_batch_info(
 	pid_t pgid)
 {
-	time_t now;
-	struct	tm	tm_now;
 	uuid_t	u;
 	char	uuid[SIZE_TERM+1];
 	char	pid_s[10];
-	char	date[50];
+	char	starttime[50];
 	GHashTable *table;
-
 
 	table = NewNameHash();
 
@@ -215,11 +220,8 @@ get_batch_info(
 	snprintf(pid_s, sizeof(pid_s), "%d", (int)pgid);
 	g_hash_table_insert(table, "pgid", StrDup(pid_s));
 
-	now = time(NULL);
-	localtime_r(&now, &tm_now);
-	strftime(date, sizeof(date),
-			 "%F %T %z", &tm_now);
-	g_hash_table_insert(table, "starttime", StrDup(date));
+	timestamp(starttime, sizeof(starttime));
+	g_hash_table_insert(table, "starttime", StrDup(starttime));
 
 	g_hash_table_insert(table, "tenant", getenv("MCP_TENANT"));
 	g_hash_table_insert(table, "name", getenv("MCP_BATCH_NAME"));
@@ -233,7 +235,7 @@ get_batch_info(
 	return table;
 }
 
-extern  int
+static int
 exec_shell(
 	int		argc,
 	char	**argv)
@@ -268,7 +270,6 @@ exec_shell(
 		} else {
 			rc = status;
 		}
-		printf("status=%d\n", rc);
 		if (exit_flag) {
 			printf("signal exit\n");
 			break;
