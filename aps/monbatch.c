@@ -209,30 +209,30 @@ get_batch_info(
 	char	uuid[SIZE_TERM+1];
 	char	pid_s[10];
 	char	starttime[50];
-	GHashTable *table;
+	GHashTable *batch;
 
-	table = NewNameHash();
+	batch = NewNameHash();
 
 	uuid_generate(u);
 	uuid_unparse(u, uuid);
-	g_hash_table_insert(table, "id", StrDup(uuid));
+	g_hash_table_insert(batch, "id", StrDup(uuid));
 
 	snprintf(pid_s, sizeof(pid_s), "%d", (int)pgid);
-	g_hash_table_insert(table, "pgid", StrDup(pid_s));
+	g_hash_table_insert(batch, "pgid", StrDup(pid_s));
 
 	timestamp(starttime, sizeof(starttime));
-	g_hash_table_insert(table, "starttime", StrDup(starttime));
+	g_hash_table_insert(batch, "starttime", StrDup(starttime));
 
-	g_hash_table_insert(table, "tenant", getenv("MCP_TENANT"));
-	g_hash_table_insert(table, "name", getenv("MCP_BATCH_NAME"));
-	g_hash_table_insert(table, "comment", getenv("MCP_BATCH_COMMENT"));
-	g_hash_table_insert(table, "exwindow", getenv("MCP_WINDOW"));
-	g_hash_table_insert(table, "exwidget", getenv("MCP_WIDGET"));
-	g_hash_table_insert(table, "exevent", getenv("MCP_EVENT"));
-	g_hash_table_insert(table, "exterm", getenv("MCP_TERM"));
-	g_hash_table_insert(table, "exuser", getenv("MCP_USER"));
-	g_hash_table_insert(table, "exhost", getenv("MCP_HOST"));
-	return table;
+	g_hash_table_insert(batch, "tenant", getenv("MCP_TENANT"));
+	g_hash_table_insert(batch, "name", getenv("MCP_BATCH_NAME"));
+	g_hash_table_insert(batch, "comment", getenv("MCP_BATCH_COMMENT"));
+	g_hash_table_insert(batch, "exwindow", getenv("MCP_WINDOW"));
+	g_hash_table_insert(batch, "exwidget", getenv("MCP_WIDGET"));
+	g_hash_table_insert(batch, "exevent", getenv("MCP_EVENT"));
+	g_hash_table_insert(batch, "exterm", getenv("MCP_TERM"));
+	g_hash_table_insert(batch, "exuser", getenv("MCP_USER"));
+	g_hash_table_insert(batch, "exhost", getenv("MCP_HOST"));
+	return batch;
 }
 
 static int
