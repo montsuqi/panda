@@ -117,8 +117,7 @@ DoShell(
 	char	**cmd;
 	char	*argv[256];
 	char	*sh;
-	pid_t	pgid;
-	int		pid;
+	pid_t	pid;
 	int		rc;
 	int 	i;
 	extern	char	**environ;
@@ -133,10 +132,10 @@ ENTER_FUNC;
 #endif
 	if		(  *cmdv  !=  NULL  ) {
 		if		(  ( pid = fork() )  ==  0  )	{
-			setpgid(0,0);
+			if (setpgid(0,0) != 0) {
+				perror("setpgid");
+			}
 			sh = BIN_DIR "/monbatch";
-			pgid = getpgrp();
-			printf("****************************************** %d\n", pgid);
 			argv[0] = sh;
 			i = 1;
 			for (cmd = cmdv; *cmd; cmd++) {
