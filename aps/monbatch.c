@@ -62,15 +62,13 @@ void
 signal_handler (int signo )
 {
 	exit_flag = TRUE;
-	printf("stop signal\n");
 }
 
 void
 alrm_handler (int signo)
 {
 	exit_flag = TRUE;
-	printf("time out\n");
-	killpg(0, SIGHUP);
+	killpg(0, SIGKILL);
 }
 
 static	void
@@ -174,30 +172,49 @@ registdb(
 static int
 unregistdb(
 	DBG_Struct	*dbg,
-	pid_t pgid)
+	pid_t pgid,
+	json_object *cmd_results)
 {
+	json_object *child;
+	int		rc;
+	char	*message;
 	char	endtime[50];
-	char	*sql;
+	char	*sql, *exec_record;
 	size_t sql_len = SIZE_SQL;
 
 	timestamp(endtime, sizeof(endtime));
+	child = json_object_object_get(cmd_results,"rc");
+	if (CheckJSONObject(child,json_type_int)) {
+		rc = json_object_get_int(child);
+	} else {
+		rc = 999;
+	}
+	child = json_object_object_get(cmd_results,"result_message");
+	if (CheckJSONObject(child,json_type_string)) {
+		message = (char *)json_object_get_string(child);
+	} else {
+		message = "";
+	}
 
 	OpenDB(dbg);
 	TransactionStart(dbg);
 
+	exec_record = Escape_monsys(dbg, json_object_to_json_string(cmd_results));
+	sql_len = sql_len + strlen(exec_record);
 	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+      "UPDATE %s SET endtime = '%s',rc = '%d', message = '%s', exec_record = '%s' WHERE pgid = '%d';",
+			 BATCH_LOG_TABLE, endtime, rc, message, exec_record, (int)pgid);
+	ExecDBOP(dbg, sql, DB_UPDATE);
+
 	snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid = '%d';",
 			 BATCH_TABLE, (int)pgid);
-	ExecDBOP(dbg, sql, DB_UPDATE);
-	snprintf(sql, sql_len, "UPDATE %s SET endtime = '%s' WHERE pgid = '%d';",
-			 BATCH_LOG_TABLE, endtime, (int)pgid);
 	ExecDBOP(dbg, sql, DB_UPDATE);
 	xfree(sql);
 
 	TransactionEnd(dbg);
 	CloseDB(dbg);
 
-	printf("finish %d\n", pgid);
 	return 0;
 }
 
@@ -235,18 +252,30 @@ get_batch_info(
 	return batch;
 }
 
-static int
+static json_object *
 exec_shell(
+	pid_t pgid,
 	int		argc,
 	char	**argv)
 {
 	pid_t pid, wpid;
-	int i, rc = 0;
+	char starttime[50], endtime[50];
+	int i, rc = 0, rrc = 0;
 	int status;
 	char *cmdv[4];
 	char *sh;
+	char *error = NULL;
+	char *str_results;
+	json_object *cmd_results, *result, *child;
 
+	cmd_results = json_object_new_object();
+	json_object_object_add(cmd_results,"pgid",json_object_new_int((int)pgid));
+	result = json_object_new_array();
+	json_object_object_add(cmd_results,"command",result);
 	for ( i=1; i<argc; i++ ) {
+		child = json_object_new_object();
+		timestamp(starttime, sizeof(starttime));
+		json_object_object_add(child,"starttime",json_object_new_string(starttime));
 		if ( ( pid = fork() ) == 0 ) {
 			sh = "/bin/sh";
 			cmdv[0] = sh;
@@ -255,27 +284,46 @@ exec_shell(
 			cmdv[3] = NULL;
 			execve(sh, cmdv, environ);
 		} else if ( pid < 0) {
-			perror("fork");
+			error = strerror(errno);
 			rc = -1;
 			break;
 		}
 		wpid = waitpid(pid, &status, 0);
 		if (wpid < 0) {
-			perror("waitpid");
+			error = strerror(errno);
 			rc = -1;
 			break;
 		}
 		if (WIFEXITED(status)) {
 			rc = WEXITSTATUS(status);
+		} else if (WIFSIGNALED(status)) {
+			rc = -WTERMSIG(status);
 		} else {
 			rc = status;
 		}
+		rrc += rc;
+		timestamp(endtime, sizeof(endtime));
+		json_object_object_add(child,"pid",json_object_new_int((int)pid));
+		json_object_object_add(child,"name",json_object_new_string(argv[i]));
+		json_object_object_add(child,"result",json_object_new_int(rc));
+		json_object_object_add(child,"endtime",json_object_new_string(endtime));
+		json_object_array_add(result,child);
 		if (exit_flag) {
-			printf("signal exit\n");
 			break;
 		}
 	}
-	return rc;
+	if (error) {
+		str_results = error;
+	} else if (exit_flag) {
+		str_results = "signal stop";
+	} else if (rrc != 0) {
+		str_results = "some failure";
+	} else {
+		str_results = "ok";
+	}
+	json_object_object_add(cmd_results,"rc",json_object_new_int(rrc));
+	json_object_object_add(cmd_results,"result_message",json_object_new_string(str_results));
+	return cmd_results;
 }
 
 extern	int
@@ -283,11 +331,11 @@ main(
 	int		argc,
 	char	**argv)
 {
-	int rc;
 	pid_t pgid;
 	struct sigaction sa;
 	DBG_Struct	*dbg;
 	GHashTable *batch;
+	json_object *cmd_results;
 
 	memset(&sa, 0, sizeof(struct sigaction));
 	sigemptyset (&sa.sa_mask);
@@ -312,12 +360,9 @@ main(
 
 	registdb(dbg, batch);
 
-	rc = exec_shell(argc, argv);
-	if (rc == 0) {
-		printf("OK\n");
-	}else {
-		printf("NG\n");
-	}
-	unregistdb(dbg, pgid);
+	cmd_results = exec_shell(pgid, argc, argv);
+
+	unregistdb(dbg, pgid, cmd_results);
+
 	return 0;
 }
