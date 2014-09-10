@@ -51,7 +51,7 @@ Escape_monsys(
 	DBG_Struct	*dbg,
 	const char *src)
 {
-	char *dest;
+	char *dest = NULL;
 	ValueStruct	*value, *ret, *recval, *retval;
 	DBCOMM_CTRL		*ctrl = NULL;
 	RecordStruct	*rec = NULL;
