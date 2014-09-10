@@ -111,7 +111,8 @@ MakeProcessNode(void)
 {
 	ProcessNode	*node;
 	int			i;
-
+	char		*mwname,*mwver;
+	ValueStruct	*e;
 ENTER_FUNC;
 	node = New(ProcessNode);
 	node->mcprec = ThisEnv->mcprec;
@@ -126,6 +127,18 @@ ENTER_FUNC;
 	for	( i = 0 ; i < node->cWindow ; i ++ ) {
 		node->scrrec[i] = ThisLD->windows[i];
 	}
+
+	mwname = getenv("__MCP_MIDDLEWARE_NAME");
+	if (mwname == NULL) {
+		mwname = "panda";
+	} 
+	mwver = getenv("__MCP_MIDDLEWARE_VERSION");
+	if (mwver == NULL) {
+		mwver = PACKAGE_VERSION;
+	} 
+	e = node->mcprec->value;
+	SetValueString(GetItemLongName(e,"dc.middleware_name"),mwname,NULL);
+	SetValueString(GetItemLongName(e,"dc.middleware_version"),mwver,NULL);
 LEAVE_FUNC;
 	return	(node);
 }
