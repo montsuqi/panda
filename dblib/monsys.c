@@ -49,7 +49,7 @@ GetDBG_monsys(void)
 extern char *
 Escape_monsys(
 	DBG_Struct	*dbg,
-	char *src)
+	const char *src)
 {
 	char *dest;
 	ValueStruct	*value, *ret, *recval, *retval;
