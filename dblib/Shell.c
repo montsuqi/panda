@@ -37,6 +37,7 @@
 #include	"enum.h"
 #include	"SQLparser.h"
 #include	"dbgroup.h"
+#include	"monsys.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -53,6 +54,16 @@ _EXEC(
 
 	rc = MCP_OK;
 	return	(rc);
+}
+
+static	ValueStruct	*
+_QUERY(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	return NULL;
 }
 
 static	ValueStruct	*
@@ -284,6 +295,75 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
+SetRetvalue(
+	ValueStruct		*mondbg_value,
+	ValueStruct		*shell_value)
+{
+	int i;
+	char *name;
+	ValueStruct		*val;
+
+	for	( i = 0 ; i < ValueRecordSize(mondbg_value) ; i ++ ) {
+		name = ValueRecordName(mondbg_value,i);
+		val = GetItemLongName(shell_value, name);
+		if (val) {
+			CopyValue(val, ValueRecordItem(mondbg_value,i));
+		}
+	}
+	return shell_value;
+}
+
+static void
+CheckExist(
+	DBG_Struct		*mondbg,
+	int pgid)
+{
+	size_t sql_len = SIZE_SQL;
+	char *sql;
+
+	if (killpg(pgid, 0) < 0) {
+		Warning("Shell: not exist [%d]", pgid);
+		sql = (char *)xmalloc(sql_len);
+		snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid='%d';",
+				 BATCH_TABLE, pgid);
+		ExecDBOP(mondbg, sql, DB_UPDATE);
+		xfree(sql);
+	}
+}
+
+static void
+CheckPg(void)
+{
+	DBG_Struct		*mondbg;
+	size_t sql_len  = SIZE_SQL;
+	char *sql;
+	ValueStruct	*ret, *value;
+	int i, pgid;
+
+	mondbg = GetDBG_monsys();
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "SELECT pgid FROM %s ;",
+			 BATCH_TABLE);
+	ret = ExecDBQuery(mondbg, sql, DB_UPDATE);
+	xfree(sql);
+	if (!ret) {
+		return;
+	}
+
+	if (ValueType(ret) == GL_TYPE_ARRAY) {
+		for (i=0; i<ValueArraySize(ret); i++) {
+			value = ValueArrayItem(ret,i);
+			pgid = ValueToInteger(GetItemLongName(value,"pgid"));
+			CheckExist(mondbg, pgid);
+		}
+	} else {
+		pgid = ValueToInteger(GetItemLongName(ret,"pgid"));
+		CheckExist(mondbg, pgid);
+	}
+	FreeValueStruct(ret);
+}
+
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -334,6 +414,107 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
+_DBSELECT(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct		*mondbg;
+	ValueStruct	*ret = NULL;
+	size_t sql_len  = SIZE_SQL;
+	char *sql;
+
+	CheckPg();
+
+	mondbg = GetDBG_monsys();
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "DECLARE %s_csr CURSOR FOR SELECT * FROM %s ;",
+			 BATCH_TABLE, BATCH_TABLE);
+	ret = ExecDBQuery(mondbg, sql, DB_UPDATE);
+	xfree(sql);
+	return ret;
+}
+
+static	ValueStruct	*
+_DBFETCH(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct		*mondbg;
+	ValueStruct	*ret = NULL;
+	ValueStruct	*mondbg_val;
+	size_t sql_len  = SIZE_SQL;
+	char *sql;
+
+	ctrl->rcount = 0;
+	mondbg = GetDBG_monsys();
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "FETCH 1 FROM %s_csr;",
+			 BATCH_TABLE);
+	mondbg_val = ExecDBQuery(mondbg, sql, DB_UPDATE);
+	xfree(sql);
+	if (mondbg_val) {
+		ctrl->rc = MCP_OK;
+		ctrl->rcount = 1;
+		ret = SetRetvalue(mondbg_val, DuplicateValue(args,TRUE));
+	} else {
+		ctrl->rc = MCP_EOF;
+	}
+	FreeValueStruct(mondbg_val);
+	return ret;
+}
+
+static	ValueStruct	*
+_DBDELETE(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct		*mondbg;
+	ValueStruct	*ret = NULL;
+	int pgid;
+
+	CheckPg();
+
+	ctrl->rc = MCP_OK;
+	pgid = ValueToInteger(GetItemLongName(args,"pgid"));
+	killpg(pgid, SIGHUP);
+
+	return ret;
+}
+
+static	ValueStruct	*
+_DBCLOSECURSOR(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct		*mondbg;
+	size_t sql_len = SIZE_SQL;
+	char *sql;
+
+	ValueStruct	*ret;
+
+	ret = NULL;
+	ctrl->rc = MCP_OK;
+	ctrl->rcount = 0;
+	mondbg = GetDBG_monsys();
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "CLOSE %s_csr;",
+			 BATCH_TABLE);
+	ExecDBOP(mondbg, sql, DB_UPDATE);
+	xfree(sql);
+
+	return	(ret);
+}
+
+static	ValueStruct	*
 _DBERROR(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -357,11 +538,12 @@ static	DB_OPS	Operations[] = {
 	{	"DBSTART",		(DB_FUNC)_DBSTART },
 	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
 	/*	table operations	*/
-	{	"DBSELECT",		_DBERROR },
-	{	"DBFETCH",		_DBERROR },
+	{	"DBSELECT",		_DBSELECT },
+	{	"DBFETCH",		_DBFETCH },
 	{	"DBUPDATE",		_DBERROR },
-	{	"DBDELETE",		_DBERROR },
+	{	"DBDELETE",		_DBDELETE },
 	{	"DBINSERT",		_DBERROR },
+	{	"DBCLOSECURSOR",_DBCLOSECURSOR },
 
 	{	NULL,			NULL }
 };
@@ -369,6 +551,7 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	_QUERY,
 	NULL,
 };
 
