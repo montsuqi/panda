@@ -184,6 +184,7 @@ typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, Val
 typedef struct	{
 	int		(*exec)(DBG_Struct *, char *, Bool, int);
 	ValueStruct	*(*access)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+	ValueStruct	*(*query)(DBG_Struct *, char *, Bool, int);
 	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
 }	DB_Primitives;
 

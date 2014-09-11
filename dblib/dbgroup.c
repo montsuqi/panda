@@ -240,6 +240,17 @@ ExecRedirectDBOP(
 	return	(rc);
 }
 
+extern 	ValueStruct	*
+ExecDBQuery(
+	DBG_Struct	*dbg,
+	char		*sql,
+	int			usage)
+{
+	ValueStruct *ret;
+	ret = dbg->func->primitive->query(dbg,sql,FALSE, usage);
+	return	ret;
+}
+
 extern	ValueStruct	*
 ExecDB_Process(
 	DBCOMM_CTRL		*ctrl,

@@ -317,6 +317,7 @@ exec_shell(
 	} else {
 		str_results = "ok";
 	}
+
 	json_object_object_add(cmd_results,"rc",json_object_new_int(rrc));
 	json_object_object_add(cmd_results,"result_message",json_object_new_string(str_results));
 	return cmd_results;

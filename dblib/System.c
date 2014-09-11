@@ -63,6 +63,16 @@ _EXEC(
 }
 
 static	ValueStruct	*
+_QUERY(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	return NULL;
+}
+
+static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -243,6 +253,7 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	_QUERY,
 	NULL
 };
 
