@@ -21,6 +21,10 @@
 #define	_INC_MONSYS_H
 #include	"dbgroup.h"
 
+#define BATCH_TABLE "monbatch"
+#define BATCH_LOG_TABLE "monbatch_log"
+#define BATCH_TIMEOUT 86400
+
 extern	DBG_Struct *GetDBG_monsys(void);
 extern	char       *Escape_monsys(DBG_Struct *dbg, const char *src);
 

@@ -48,10 +48,6 @@ static	char	*Directory;
 static	volatile Bool exit_flag = FALSE;
 extern char **environ;
 
-#define BATCH_TABLE "monbatch"
-#define BATCH_LOG_TABLE "monbatch_log"
-#define BATCH_TIMEOUT 86400
-
 typedef struct {
 	DBG_Struct	*dbg;
 	LargeByteString	*name;
