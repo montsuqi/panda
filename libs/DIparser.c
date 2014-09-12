@@ -735,6 +735,7 @@ NewDBG_Struct(
 	dbg->func = NULL;
 	dbg->nServer = 0;
 	dbg->server = NULL;
+	dbg->transaction_id = NULL;
 	dbg->file = NULL;
 	dbg->sumcheck = 1;
 	dbg->appname = NULL;

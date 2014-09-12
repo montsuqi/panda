@@ -32,6 +32,7 @@
 #include	<unistd.h>
 #include	<glib.h>
 #include	<signal.h>
+#include	<uuid/uuid.h>
 
 #include	"libmondai.h"
 #include	"enum.h"
@@ -111,10 +112,13 @@ ENTER_FUNC;
 	dbg->count = 0;
 	cmdv = dbg->process[PROCESS_UPDATE].conn;
 	cmdv[dbg->count] = NULL;
+	unsetenv("MON_BATCH_ID");
 	unsetenv("MON_BATCH_NAME");
 	unsetenv("MON_BATCH_COMMENT");
 	unsetenv("MON_BATCH_EXTRA");
-
+	if(dbg->transaction_id) {
+		xfree(dbg->transaction_id);
+	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -290,6 +294,10 @@ ENTER_FUNC;
 		}
 	}
 	FreeLBS(lbs);
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		SetValueString(val, dbg->transaction_id, dbg->coding);
+	}
+	ret = DuplicateValue(args,TRUE);
 	cmdv[dbg->count] = NULL;
 LEAVE_FUNC;
 	return	(ret);
@@ -372,6 +380,7 @@ _DBACCESS(
 	ValueStruct		*args)
 {
 	char *name, *comment, *extra;
+	uuid_t	u;
 	DB_Struct	*db;
 	PathStruct	*path;
 	LargeByteString	*src;
@@ -384,13 +393,18 @@ ENTER_FUNC;
 	printf("[%s]\n",ctrl->func);
 #endif
 	ret = NULL;
-	name = ValueToString(GetItemLongName(args,"name"),dbg->coding);
-	setenv("MON_BATCH_NAME", name, 0);
-	comment = ValueToString(GetItemLongName(args,"comment"),dbg->coding);
-	setenv("MON_BATCH_COMMENT", comment, 0);
-	extra = ValueToString(GetItemLongName(args,"extra"),dbg->coding);
-	setenv("MON_BATCH_EXTRA", extra, 0);
-
+	if (dbg->count == 0) {
+		name = ValueToString(GetItemLongName(args,"name"),dbg->coding);
+		setenv("MON_BATCH_NAME", name, 1);
+		comment = ValueToString(GetItemLongName(args,"comment"),dbg->coding);
+		setenv("MON_BATCH_COMMENT", comment, 1);
+		extra = ValueToString(GetItemLongName(args,"extra"),dbg->coding);
+		setenv("MON_BATCH_EXTRA", extra, 1);
+		dbg->transaction_id = xmalloc(SIZE_TERM+1);
+		uuid_generate(u);
+		uuid_unparse(u, dbg->transaction_id);
+		setenv("MON_BATCH_ID", dbg->transaction_id, 1);
+	}
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		rc = TRUE;
@@ -477,7 +491,6 @@ _DBDELETE(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	DBG_Struct		*mondbg;
 	ValueStruct	*ret = NULL;
 	int pgid;
 

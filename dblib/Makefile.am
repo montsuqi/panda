@@ -93,7 +93,8 @@ Shell_la_SOURCES		=	\
 	Shell.c
 Shell_la_LIBADD	= \
 	$(top_builddir)/libs/libpanda.la \
-	$(top_builddir)/dblib/libpandadb.la
+	$(top_builddir)/dblib/libpandadb.la \
+	-luuid
 
 System_la_LDFLAGS		=		\
 	-avoid-version				\
