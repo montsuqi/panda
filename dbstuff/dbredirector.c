@@ -595,7 +595,6 @@ ENTER_FUNC;
 		}
 		if (  ThisDBG->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
 			Message("connect to database successed");
-			LBS_EmitStart(ThisDBG->checkData);
 		} else {
 			Message("connect to database failed");
 			rc = FALSE;
@@ -734,20 +733,22 @@ WriteDB(
 	LargeByteString	*orgcheck)
 {
 	int rc;
-	LargeByteString	*redcheck;
+	LargeByteString	*redcheck = NULL;
 	char buff[SIZE_BUFF];
 
 ENTER_FUNC;
+	LBS_EmitStart(ThisDBG->checkData);
 	rc = TransactionRedirectStart(ThisDBG);
 	if ( rc == MCP_OK ) {
 		rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), DB_UPDATE);
+		LBS_EmitEnd(ThisDBG->checkData);
 		redcheck = ThisDBG->checkData;
 	}
 	if ( rc == MCP_OK ) {
 		if ( ( !fNoSumCheck) &&  ( LBS_Size(orgcheck) > 0 ) ){
 			rc = CheckRedirectData(orgcheck, redcheck);
 			if ( rc != MCP_OK ) {
-				snprintf(buff, 60, "Difference for the update check %s...",(char *)LBS_Body(query));
+				snprintf(buff, SIZE_BUFF, "Difference for the update check %s...",(char *)LBS_Body(query));
 				Warning(buff);
 			}
 		}
