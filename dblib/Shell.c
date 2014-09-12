@@ -111,8 +111,9 @@ ENTER_FUNC;
 	dbg->count = 0;
 	cmdv = dbg->process[PROCESS_UPDATE].conn;
 	cmdv[dbg->count] = NULL;
-	unsetenv("MCP_BATCH_NAME");
-	unsetenv("MCP_BATCH_COMMENT");
+	unsetenv("MON_BATCH_NAME");
+	unsetenv("MON_BATCH_COMMENT");
+	unsetenv("MON_BATCH_EXTRA");
 
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
@@ -370,7 +371,7 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	char *name, *comment;
+	char *name, *comment, *extra;
 	DB_Struct	*db;
 	PathStruct	*path;
 	LargeByteString	*src;
@@ -384,9 +385,11 @@ ENTER_FUNC;
 #endif
 	ret = NULL;
 	name = ValueToString(GetItemLongName(args,"name"),dbg->coding);
-	setenv("MCP_BATCH_NAME", name, 0);
+	setenv("MON_BATCH_NAME", name, 0);
 	comment = ValueToString(GetItemLongName(args,"comment"),dbg->coding);
-	setenv("MCP_BATCH_COMMENT", comment, 0);
+	setenv("MON_BATCH_COMMENT", comment, 0);
+	extra = ValueToString(GetItemLongName(args,"extra"),dbg->coding);
+	setenv("MON_BATCH_EXTRA", extra, 0);
 
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
