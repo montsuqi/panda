@@ -208,7 +208,7 @@ ExecDBESCAPE(
 	ValueStruct		*args)
 {
 	DB_FUNC	func;
-	ValueStruct	*ret;
+	ValueStruct	*ret = NULL;
 
 	func = LookupFUNC(dbg, "DBESCAPE");
 	if		(  func !=  NULL  ) {

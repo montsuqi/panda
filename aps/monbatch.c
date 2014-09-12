@@ -34,7 +34,6 @@
 #include	<signal.h>
 #include	<time.h>
 #include	<errno.h>
-#include	<uuid/uuid.h>
 
 #include	"libmondai.h"
 #include	"directory.h"
@@ -218,18 +217,13 @@ static	GHashTable *
 get_batch_info(
 	pid_t pgid)
 {
-	uuid_t	u;
-	char	uuid[SIZE_TERM+1];
 	char	pid_s[10];
 	char	starttime[50];
 	GHashTable *batch;
 
 	batch = NewNameHash();
 
-	uuid_generate(u);
-	uuid_unparse(u, uuid);
-	g_hash_table_insert(batch, "id", StrDup(uuid));
-
+	g_hash_table_insert(batch, "id", getenv("MON_BATCH_ID"));
 	snprintf(pid_s, sizeof(pid_s), "%d", (int)pgid);
 	g_hash_table_insert(batch, "pgid", StrDup(pid_s));
 

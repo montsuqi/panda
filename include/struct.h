@@ -170,6 +170,7 @@ typedef	struct _DBG_Struct	{
 	LargeByteString		*checkData;
 	uint64_t			ticket_id;
 	int					count;
+	char				*transaction_id;
 	LargeByteString		*last_query;
 	char				*file;
 	int					sumcheck;
