@@ -1379,7 +1379,6 @@ _EXEC(
 	int			rc = MCP_OK;
 
 ENTER_FUNC;
-	LBS_EmitStart(dbg->checkData);
 	if	( _PQsendQuery(dbg,sql,usage) == TRUE ) {
 		while ( (res = _PQgetResult(dbg,usage)) != NULL ){
 			rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
@@ -1395,7 +1394,6 @@ ENTER_FUNC;
 		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,usage)));
 		rc = MCP_BAD_OTHER;
 	}
-	LBS_EmitEnd(dbg->checkData);
 LEAVE_FUNC;
 	return	rc;
 }
