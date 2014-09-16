@@ -17,7 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = recdefgen pandadb copygen dbgen checkdir monupload $(dbsyncbin)
+bin_PROGRAMS = recdefgen pandadb copygen dbgen checkdir monupload monsql $(dbsyncbin)
 sbin_PROGRAMS = monitor msgd
 noinst_SCRIPTS = copy
 
@@ -75,6 +75,22 @@ monupload_LDFLAGS	=			\
 	-export-dynamic
 monupload_LDADD 		=					\
 	-lm									\
+	$(top_builddir)/libs/libpanda.la	\
+	$(P11_LIBS)							\
+	$(SSL_LIBS)							\
+	$(COMMON_LIBS)
+
+monsql_SOURCES = \
+	monsql.c
+monsql_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(top_builddir)/libs/libpanda.la
+monsql_LDFLAGS	=			\
+	-export-dynamic
+monsql_LDADD 		=					\
+	-lm									\
+	$(top_builddir)/dblib/libpandadb.la	\
 	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
