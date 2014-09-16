@@ -335,7 +335,7 @@ CheckExist(
 		sql = (char *)xmalloc(sql_len);
 		snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid='%d';",
 				 BATCH_TABLE, pgid);
-		ExecDBOP(mondbg, sql, DB_UPDATE);
+		ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
 		xfree(sql);
 	}
 }
@@ -353,7 +353,7 @@ CheckPg(void)
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len, "SELECT pgid FROM %s ;",
 			 BATCH_TABLE);
-	ret = ExecDBQuery(mondbg, sql, DB_UPDATE);
+	ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (!ret) {
 		return;
@@ -430,6 +430,59 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+Bool
+KeyValueToWhere(
+	LargeByteString	*lbs,
+	DBG_Struct		*dbg,
+	Bool first,
+	char *key,
+	char *value)
+{
+	char	buff[SIZE_OTHER];
+
+	if ((value != NULL) && (strlen(value) > 0)) {
+		if ( first ) {
+			LBS_EmitString(lbs," WHERE ");
+		} else {
+			LBS_EmitString(lbs," AND ");
+		}
+		sprintf(buff,"%s = '%s'",key, Escape_monsys(dbg, value));
+		LBS_EmitString(lbs,buff);
+		first = FALSE;
+	}
+	return first;
+}
+
+static	char *
+ValueToWhere(
+	DBG_Struct		*dbg,
+	ValueStruct		*value)
+{
+	char *keys[] = {"id", "tenant", "name", "comment", "extra", NULL};
+	char pgid_s[10];
+	char *where, *k, *v;
+	Bool first = TRUE;
+	LargeByteString	*lbs;
+	int i, pgid;
+
+	lbs = NewLBS();
+	i = 0;
+	pgid = ValueToInteger(GetItemLongName(value,"pgid"));
+	if ((pgid > 0) && (pgid < 99999) ){
+		snprintf(pgid_s, 10, "%d", pgid);
+		first = KeyValueToWhere(lbs, dbg, first, "pgid", pgid_s);
+	}
+	while ((k = keys[i]) != NULL) {
+		v = ValueToString(GetItemLongName(value,k),NULL);
+		first = KeyValueToWhere(lbs, dbg, first, k, v);
+		i++;
+	}
+	LBS_EmitEnd(lbs);
+	where = StrDup(LBS_Body(lbs));
+	FreeLBS(lbs);
+	return where;
+}
+
 static	ValueStruct	*
 _DBSELECT(
 	DBG_Struct		*dbg,
@@ -437,6 +490,7 @@ _DBSELECT(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+	char *where;
 	DBG_Struct		*mondbg;
 	ValueStruct	*ret = NULL;
 	size_t sql_len  = SIZE_SQL;
@@ -445,10 +499,12 @@ _DBSELECT(
 	CheckPg();
 
 	mondbg = GetDBG_monsys();
+	where = ValueToWhere(mondbg, args);
 	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len, "DECLARE %s_csr CURSOR FOR SELECT * FROM %s ;",
-			 BATCH_TABLE, BATCH_TABLE);
-	ret = ExecDBQuery(mondbg, sql, DB_UPDATE);
+	snprintf(sql, sql_len, "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s;",
+			 BATCH_TABLE, BATCH_TABLE, where);
+	ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+	xfree(where);
 	xfree(sql);
 	return ret;
 }
@@ -471,7 +527,7 @@ _DBFETCH(
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len, "FETCH 1 FROM %s_csr;",
 			 BATCH_TABLE);
-	mondbg_val = ExecDBQuery(mondbg, sql, DB_UPDATE);
+	mondbg_val = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (mondbg_val) {
 		ctrl->rc = MCP_OK;
@@ -496,9 +552,8 @@ _DBDELETE(
 
 	CheckPg();
 
-	ctrl->rc = MCP_OK;
 	pgid = ValueToInteger(GetItemLongName(args,"pgid"));
-	killpg(pgid, SIGHUP);
+	ctrl->rc = killpg(pgid, SIGHUP);
 
 	return ret;
 }
@@ -524,7 +579,7 @@ _DBCLOSECURSOR(
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len, "CLOSE %s_csr;",
 			 BATCH_TABLE);
-	ExecDBOP(mondbg, sql, DB_UPDATE);
+	ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
 	return	(ret);
