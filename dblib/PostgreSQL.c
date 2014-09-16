@@ -1383,9 +1383,9 @@ ENTER_FUNC;
 		while ( (res = _PQgetResult(dbg,usage)) != NULL ){
 			rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
 			if		( rc == MCP_OK ) {
-				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 				if		( fRed ) {
 					PutDB_Redirect(dbg,sql);
+					PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 				}
 			}
 			_PQclear(res);

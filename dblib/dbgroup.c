@@ -221,10 +221,11 @@ extern	int
 ExecDBOP(
 	DBG_Struct	*dbg,
 	char		*sql,
+	Bool		fRed,
 	int			usage)
 {
 	int		rc;
-	rc = dbg->func->primitive->exec(dbg,sql,TRUE, usage);
+	rc = dbg->func->primitive->exec(dbg,sql,fRed, usage);
 	return	(rc);
 }
 
@@ -232,11 +233,12 @@ extern	int
 ExecRedirectDBOP(
 	DBG_Struct	*dbg,
 	char		*sql,
+	Bool		fRed,
 	int			usage)
 {
 	int		rc;
 
-	rc = dbg->func->primitive->exec(dbg,sql,FALSE, usage);
+	rc = dbg->func->primitive->exec(dbg,sql,fRed, usage);
 	return	(rc);
 }
 
@@ -244,10 +246,11 @@ extern 	ValueStruct	*
 ExecDBQuery(
 	DBG_Struct	*dbg,
 	char		*sql,
+	Bool		fRed,
 	int			usage)
 {
 	ValueStruct *ret;
-	ret = dbg->func->primitive->query(dbg,sql,FALSE, usage);
+	ret = dbg->func->primitive->query(dbg,sql,fRed, usage);
 	return	ret;
 }
 

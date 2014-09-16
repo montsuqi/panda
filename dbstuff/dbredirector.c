@@ -740,7 +740,7 @@ ENTER_FUNC;
 	LBS_EmitStart(ThisDBG->checkData);
 	rc = TransactionRedirectStart(ThisDBG);
 	if ( rc == MCP_OK ) {
-		rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), DB_UPDATE);
+		rc = ExecRedirectDBOP(ThisDBG, LBS_Body(query), TRUE, DB_UPDATE);
 		LBS_EmitEnd(ThisDBG->checkData);
 		redcheck = ThisDBG->checkData;
 	}
@@ -868,7 +868,7 @@ ENTER_FUNC;
 				LBS_EmitStart(AuditDBG->redirectData);
 				LBS_EmitStart(AuditDBG->checkData);
 				TransactionStart(AuditDBG);
-				rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), DB_UPDATE);
+				rc = ExecDBOP(AuditDBG, LBS_Body(ticket->auditlog), TRUE, DB_UPDATE);
 				TransactionEnd(AuditDBG);
 				LBS_EmitEnd(AuditDBG->redirectData);
 				LBS_EmitEnd(AuditDBG->checkData);
