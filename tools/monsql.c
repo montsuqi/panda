@@ -61,7 +61,7 @@ static	ARG_TABLE	option[] = {
 	{	"c",		STRING,		TRUE,	(void*)&Command,
 		N_("run only single command")					},
 	{	"o",		STRING,		TRUE,	(void*)&Output,
-		N_("out put type")								},
+		N_("out put type [JSON] [XML] [CSV]...")		},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -87,23 +87,6 @@ InitSystem(void)
 	}
 }
 
-static ValueStruct *
-SingleCommand(
-	DBG_Struct	*dbg,
-	Bool		redirect,
-	char *sql)
-{
-	ValueStruct	*ret;
-
-	OpenDB(dbg);
-	TransactionStart(dbg);
-	ret = ExecDBQuery(dbg, sql, redirect, DB_UPDATE);
-	TransactionEnd(dbg);
-	CloseDB(dbg);
-
-	return ret;
-}
-
 static void
 OutPutValue(
 	char *type,
@@ -113,6 +96,9 @@ OutPutValue(
 	static CONVOPT *ConvOpt;
 	char *buf;
 
+	if (!value) {
+		return;
+	}
 	conv = GetConvFunc(type);
 	if ( conv == NULL) {
 		Error("Output type error. [%s] does not support.", type);
@@ -124,13 +110,32 @@ OutPutValue(
 	xfree(buf);
 }
 
+static void
+SingleCommand(
+	DBG_Struct	*dbg,
+	Bool		redirect,
+	char *sql)
+{
+	ValueStruct	*ret;
+
+
+	OpenDB(dbg);
+	TransactionStart(dbg);
+
+	ret = ExecDBQuery(dbg, sql, redirect, DB_UPDATE);
+	OutPutValue(Output, ret);
+	FreeValueStruct(ret);
+
+	TransactionEnd(dbg);
+	CloseDB(dbg);
+}
+
 extern	int
 main(
 	int		argc,
 	char	**argv)
 {
 	DBG_Struct	*dbg;
-	ValueStruct	*ret;
 
 	SetDefault();
 	GetOption(option,argc,argv,NULL);
@@ -147,10 +152,9 @@ main(
 	}
 
 	dbg->dbt = 	NewNameHash();
-
-	ret = SingleCommand(dbg, Redirect, Command);
-	OutPutValue(Output, ret);
-	FreeValueStruct(ret);
+	if ( Command ) {
+		SingleCommand(dbg, Redirect, Command);
+	}
 
 	return 0;
 }

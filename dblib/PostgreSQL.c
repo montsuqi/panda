@@ -1138,7 +1138,9 @@ ENTER_FUNC;
 			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 		}
 	}
-	LBS_String(dbg->last_query,sql);
+	if (sql) {
+		LBS_String(dbg->last_query,sql);
+	}
 LEAVE_FUNC;
 	return	(res);
 }
@@ -1411,6 +1413,7 @@ _QUERY(
 
 ENTER_FUNC;
 	ret = NULL;
+
 	res = _PQexec(dbg, sql, fRed, usage);
 	if ( ( res ==  NULL)
 		 ||	(  ( status = PQresultStatus(res) ) == PGRES_BAD_RESPONSE )
