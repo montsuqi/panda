@@ -77,7 +77,7 @@ InitSystem(void)
 {
 	char *dir;
 	InitMessage("monsql",NULL);
-	if ((dir = getenv("MCP_DIRECTORY_PATH")) != NULL) {
+	if ((dir = getenv("MON_DIRECTORY_PATH")) != NULL) {
 		Directory = dir;
 	}
 	InitDirectory();

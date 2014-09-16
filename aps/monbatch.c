@@ -70,7 +70,7 @@ static	void
 InitSystem(void)
 {
 	InitMessage("monbatch",NULL);
-	if ( (Directory = getenv("MCP_DIRECTORY_PATH")) != NULL ) {
+	if ( (Directory = getenv("MON_DIRECTORY_PATH")) != NULL ) {
 		InitDirectory();
 		SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
 		if		( ThisEnv == NULL ) {
