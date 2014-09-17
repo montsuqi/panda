@@ -104,6 +104,7 @@ OutPutValue(
 		Error("Output type error. [%s] does not support.", type);
 	}
 	ConvOpt = NewConvOpt();
+	ConvSetRecName(ConvOpt, "RECORD");
 	buf = xmalloc(conv->SizeValue(ConvOpt,value));
 	conv->PackValue(ConvOpt,buf,value);
 	printf("%s\n", buf);
