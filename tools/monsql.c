@@ -45,6 +45,8 @@
 #include	"message.h"
 #include	"debug.h"
 
+#define	DefaultOutput "JSON"
+
 static	char	*Directory;
 static	char	*DBG_Name;
 static	char	*Command;
@@ -98,6 +100,9 @@ OutPutValue(
 
 	if (!value) {
 		return;
+	}
+	if (!type) {
+		type = DefaultOutput;
 	}
 	conv = GetConvFunc(type);
 	if ( conv == NULL) {
