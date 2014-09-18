@@ -105,6 +105,7 @@ OutPutValue(
 	}
 	ConvOpt = NewConvOpt();
 	ConvSetRecName(ConvOpt, "RECORD");
+	ConvOpt->fNewLine = TRUE;
 
 	buf = xmalloc(conv->SizeValue(ConvOpt,value));
 	conv->PackValue(ConvOpt,buf,value);
