@@ -47,6 +47,22 @@ GetDBG_monsys(void)
 }
 
 extern char *
+Coding_monsys(
+	DBG_Struct	*dbg,
+	const char *src)
+{
+	char *dest;
+	ValueStruct	*value;
+
+	value = NewValue(GL_TYPE_CHAR);
+	SetValueStringWithLength(value, src, strlen(src), NULL);
+	dest = StrDup(ValueToString(value, dbg->coding));
+	FreeValueStruct(value);
+
+	return dest;
+}
+
+extern char *
 Escape_monsys(
 	DBG_Struct	*dbg,
 	const char *src)

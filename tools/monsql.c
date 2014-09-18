@@ -105,6 +105,7 @@ OutPutValue(
 	}
 	ConvOpt = NewConvOpt();
 	ConvSetRecName(ConvOpt, "RECORD");
+
 	buf = xmalloc(conv->SizeValue(ConvOpt,value));
 	conv->PackValue(ConvOpt,buf,value);
 	printf("%s\n", buf);
@@ -117,15 +118,17 @@ SingleCommand(
 	Bool		redirect,
 	char *sql)
 {
-	ValueStruct	*ret;
-
+	ValueStruct *ret;
+	char *sql_c;
 
 	OpenDB(dbg);
 	TransactionStart(dbg);
 
-	ret = ExecDBQuery(dbg, sql, redirect, DB_UPDATE);
+	sql_c = Coding_monsys(dbg, sql);
+	ret = ExecDBQuery(dbg, sql_c, redirect, DB_UPDATE);
 	OutPutValue(Output, ret);
 	FreeValueStruct(ret);
+	xfree(sql_c);
 
 	TransactionEnd(dbg);
 	CloseDB(dbg);
