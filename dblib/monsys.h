@@ -26,6 +26,7 @@
 #define BATCH_TIMEOUT 86400
 
 extern	DBG_Struct *GetDBG_monsys(void);
+extern	char	   *Coding_monsys(DBG_Struct *dbg,const char *src);
 extern	char       *Escape_monsys(DBG_Struct *dbg, const char *src);
 
 #endif
