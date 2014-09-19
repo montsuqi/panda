@@ -1481,9 +1481,11 @@ ENTER_FUNC;
 		dbgmsg("READONLY SERVER is none.");
 #if	1
 		dbgmsg("using UPDATE SERVER.");
-		dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
-		dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
-		rc = MCP_OK;
+		if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+			dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
+			dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
+			rc = MCP_OK;
+		}
 #else
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 		rc = MCP_BAD_CONN;
