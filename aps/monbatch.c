@@ -56,7 +56,10 @@ typedef struct {
 void
 signal_handler (int signo )
 {
-	exit_flag = TRUE;
+	if (!exit_flag) {
+		exit_flag = TRUE;
+		killpg(0, SIGHUP);
+	}
 }
 
 void
