@@ -42,6 +42,7 @@
 #include	"monsys.h"
 #include	"gettext.h"
 #include	"option.h"
+#include	"enum.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -127,7 +128,9 @@ SingleCommand(
 	ValueStruct *ret;
 	char *sql_c;
 
-	OpenDB(dbg);
+	if (OpenDB(dbg) != MCP_OK ) {
+		return;
+	}
 	TransactionStart(dbg);
 
 	sql_c = Coding_monsys(dbg, sql);

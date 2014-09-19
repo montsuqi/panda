@@ -42,6 +42,7 @@
 #include	"monsys.h"
 #include	"gettext.h"
 #include	"option.h"
+#include	"enum.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -147,8 +148,9 @@ main(
 	}
 
 	dbg->dbt = 	NewNameHash();
-	OpenDB(dbg);
-	Batch_view(dbg);
+	if (OpenDB(dbg) == MCP_OK ) {
+		Batch_view(dbg);
+	}
 	CloseDB(dbg);
 
 	return 0;
