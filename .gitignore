@@ -65,6 +65,7 @@ tools/msgd
 tools/pandadb
 tools/monupload
 tools/monsql
+tools/monbatch_ps
 wfc/moninfo
 wfc/wfc
 wfc/wfccontrol
