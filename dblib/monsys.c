@@ -28,6 +28,57 @@
 #include	"directory.h"
 #include	"dbgroup.h"
 #include	"monsys.h"
+#include	"debug.h"
+
+extern void
+CheckBatchExist(
+	DBG_Struct		*dbg,
+	int pgid)
+{
+	size_t sql_len = SIZE_SQL;
+	char *sql;
+
+	if (killpg(pgid, 0) < 0) {
+		Warning("Shell: not exist [%d]", pgid);
+		sql = (char *)xmalloc(sql_len);
+		snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid='%d';",
+				 BATCH_TABLE, pgid);
+		ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+		xfree(sql);
+	}
+}
+
+extern void
+CheckBatchPg(void)
+{
+	DBG_Struct		*mondbg;
+	size_t sql_len  = SIZE_SQL;
+	char *sql;
+	ValueStruct	*ret, *value;
+	int i, pgid;
+
+	mondbg = GetDBG_monsys();
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "SELECT pgid FROM %s ;",
+			 BATCH_TABLE);
+	ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (!ret) {
+		return;
+	}
+
+	if (ValueType(ret) == GL_TYPE_ARRAY) {
+		for (i=0; i<ValueArraySize(ret); i++) {
+			value = ValueArrayItem(ret,i);
+			pgid = ValueToInteger(GetItemLongName(value,"pgid"));
+			CheckBatchExist(mondbg, pgid);
+		}
+	} else {
+		pgid = ValueToInteger(GetItemLongName(ret,"pgid"));
+		CheckBatchExist(mondbg, pgid);
+	}
+	FreeValueStruct(ret);
+}
 
 extern DBG_Struct *
 GetDBG_monsys(void)
