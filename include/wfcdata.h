@@ -42,14 +42,17 @@
 #define	APS_BLOB			(PacketClass)0x80
 
 #define	APS_NOT				(PacketClass)0xF0
+#define	APS_CHECK			(PacketClass)0xF1
 #define	APS_STOP			(PacketClass)0xF3
 #define	APS_REQ				(PacketClass)0xF4
 #define	APS_API				(PacketClass)0xF5
+#define	APS_WAIT			(PacketClass)0xFD
 #define	APS_OK				(PacketClass)0xFE
 #define	APS_END				(PacketClass)0xFF
 
 #define SESSION_TYPE_TERM	0
 #define SESSION_TYPE_API	1
+#define SESSION_TYPE_CHECK	2
 
 #define	SESSION_STATUS_NORMAL 	0
 #define	SESSION_STATUS_END 		1

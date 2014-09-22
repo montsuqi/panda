@@ -187,6 +187,7 @@ ExecuteServer(void)
 	ProcessNode	*node;
 	WindowBind	*bind;
 	char		*wname;
+	PacketClass pc;
 
 ENTER_FUNC;
 	if (WfcPortNumber == NULL) {
@@ -207,14 +208,26 @@ ENTER_FUNC;
 	fpWFC = SocketToNet(fhWFC);
 	SendStringDelim(fpWFC,ThisLD->name);
 	SendStringDelim(fpWFC,"\n");
-	if (RecvPacketClass(fpWFC) != APS_OK) {
+
+	pc = RecvPacketClass(fpWFC);
+	switch(pc) {
+	case APS_OK:
+		break;
+	case APS_NOT:
 		if (!CheckNetFile(fpWFC)) {
 			Warning("WFC connection lost");
 			CloseNet(fpWFC);
 			goto retry;
 		}
 		Error("invalid LD name");
+		break;
+	case APS_WAIT:
+		CloseNet(fpWFC);
+		sleep(1);
+		Warning("wfc suspend connection; retry");
+		goto retry;
 	}
+
 	InitAPSIO(fpWFC);
 	if ( ReadyOnlineDB(AppName) < 0 ){
 		Error("Online DB is not ready");
@@ -225,6 +238,9 @@ ENTER_FUNC;
 			Message("GetWFC failure");
 			rc = -1;
 			break;
+		}
+		if (node->messageType == MESSAGE_TYPE_CHECK) {
+			continue;
 		}
 		wname = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.window"));
 		dbgprintf("ld     = [%s]",ThisLD->name);
@@ -377,8 +393,7 @@ main(
 
 	SetDefault();
 	fl = GetOption(option,argc,argv,NULL);
-	if		(	(  fl  !=  NULL  )
-			&&	(  fl->name  !=  NULL  ) ) {
+	if ((fl != NULL) && (fl->name != NULL)) {
 		snprintf(AppName, sizeof(AppName), "aps-%s",fl->name);
 		InitMessage(AppName,NULL);
 		InitNET();
