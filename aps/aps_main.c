@@ -186,7 +186,7 @@ ENTER_FUNC;
 	case APS_WAIT:
 		CloseNet(fpWFC);
 		sleep(1);
-		Warning("wfc suspend connection; retry");
+		Warning("connection suspended by wfc; retry");
 		goto retry;
 	}
 
