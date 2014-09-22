@@ -333,21 +333,35 @@ StartProcess(
 	Process	*proc)
 {
 	pid_t	pid;
-#ifdef	DEBUG
+	char	*msg,*p;
 	int		i;
-#endif
+	size_t	size;
 
 ENTER_FUNC;
   retry:
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
 		proc->state = STATE_RUN;
-#ifdef	DEBUG
-		for	( i = 0 ; proc->argv[i]  !=  NULL ; i ++ ) {
-			dbgprintf("%s ",proc->argv[i]);
+		
+		if (getenv("MONITOR_START_PROCESS_LOGGING") != NULL) {
+			size = 0;
+			for(i=0;proc->argv[i]!=NULL;i++) {
+				size += strlen(proc->argv[i]) + 1;
+			}
+			msg = malloc(size+10);
+			memset(msg,0,size+10);
+			p = msg;
+			sprintf(p,"(%d) ",pid);
+			p += strlen(p);
+			for(i=0;proc->argv[i]!=NULL;i++) {
+				memcpy(p,proc->argv[i],strlen(proc->argv[i]));
+				p += strlen(proc->argv[i]);
+				memcpy(p," ",1);
+				p += 1;
+			}
+			Warning(msg);
+			free(msg);
 		}
-		dbgprintf("(%d)\n",pid);
-#endif
 	} else
 	if		(  pid  ==  0  ) {
 		if		(  proc->interval  >  0  ) {

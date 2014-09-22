@@ -271,6 +271,10 @@ ENTER_FUNC;
 		node->messageType = MESSAGE_TYPE_API;
 		ret = GetWFCAPI(fp,node);
 		break;
+	case APS_CHECK:
+		node->messageType = MESSAGE_TYPE_CHECK;
+		ret = TRUE;
+		break;
 	default:
 		Warning("Invalid PacketClass in GetWFC(%02X)",c);
 		break;

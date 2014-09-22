@@ -215,6 +215,7 @@ typedef	struct {
 
 #define MESSAGE_TYPE_TERM	0
 #define MESSAGE_TYPE_API	1
+#define MESSAGE_TYPE_CHECK	2
 
 typedef	struct _ProcessNode	{
 	char			uuid[SIZE_TERM+1]
