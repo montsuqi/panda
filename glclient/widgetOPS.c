@@ -493,6 +493,11 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static GtkWidget *panda_table = NULL;
+static int panda_table_row;
+static int panda_table_column;
+static double panda_table_rowattr;
+
 static	void
 SetPandaTable(
 	GtkWidget	*widget,
@@ -593,8 +598,31 @@ ENTER_FUNC;
 			gtk_panda_table_stay(GTK_PANDA_TABLE(widget));
 		}
 	}
+
+	panda_table = widget;
+	panda_table_row = trow;
+	panda_table_column = tcolumn;
+	panda_table_rowattr = trowattr;
+
 	_AddChangedWidget(widget);
 LEAVE_FUNC;
+}
+
+void
+PandaTableFocusCell(const char *wname)
+{
+	if (panda_table == NULL) {
+		return;
+	}
+	if (!strcmp(wname,gtk_widget_get_name(panda_table))) {
+		if (panda_table_row >= 0 && panda_table_column >= 0) {
+			gtk_panda_table_moveto(GTK_PANDA_TABLE(panda_table), 
+				panda_table_row, panda_table_column, TRUE, 
+				panda_table_rowattr, 0.0); 
+		} else {
+			gtk_panda_table_stay(GTK_PANDA_TABLE(panda_table));
+		}
+	}
 }
 
 static	void

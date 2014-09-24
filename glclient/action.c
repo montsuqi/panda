@@ -1198,7 +1198,6 @@ UpdateWindow(
 	int idx)
 {
 	json_object *child,*obj,*result;
-	gboolean isdummy;
 	const char *put_type;
 	const char *wname;
 	const char *gladedata;
@@ -1214,7 +1213,6 @@ UpdateWindow(
 		Error("invalid json part:window");
 	}
 	wname = json_object_get_string(child);
-	isdummy = wname[0] == '_';
 
 	if (fMlog) {
 		MessageLogPrintf("window[%s] put_type[%s]\n",wname,put_type);
@@ -1237,9 +1235,6 @@ UpdateWindow(
 			Error("invalid json part:screeen_data");
 		}
 		UpdateWidget(wname,child);
-		if (isdummy) {
-			return;
-		}
 		if (!strcmp(wname,FOCUSEDWINDOW(Session))) {
 			ShowWindow(wname);
 		}
@@ -1299,6 +1294,7 @@ UpdateScreen()
 	}
 	if (f_window != NULL) {
 		GrabFocus(f_window,f_widget);
+		PandaTableFocusCell(f_widget);
 	}
 }
 
