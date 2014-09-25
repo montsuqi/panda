@@ -1080,7 +1080,7 @@ _PQexec(
 
 ENTER_FUNC;
 	dbgprintf("%s;",sql);
-	res = PQexec(PGCONN(dbg,usage),sql);
+	res = PQexecParams(PGCONN(dbg,usage),sql,0,NULL,NULL,NULL,NULL,0);
 	if ( res != NULL) {
 		if		(	(  fRed                  )
 				&&	(  IsUsageUpdate(usage)  )
