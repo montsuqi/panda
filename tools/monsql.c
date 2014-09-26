@@ -51,6 +51,7 @@
 static	char	*Directory;
 static	char	*DBG_Name;
 static	char	*Command;
+static	char	*SQLFile;
 static	char	*Output;
 static	Bool	Redirect = FALSE;
 
@@ -63,6 +64,8 @@ static	ARG_TABLE	option[] = {
 		N_("redirect query")						},
 	{	"c",		STRING,		TRUE,	(void*)&Command,
 		N_("run only single command")					},
+	{	"f",		STRING,		TRUE,	(void*)&SQLFile,
+		N_(" execute commands from file")				},
 	{	"o",		STRING,		TRUE,	(void*)&Output,
 		N_("out put type [JSON] [XML] [CSV]...")		},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -89,6 +92,53 @@ InitSystem(void)
 		Error("DI file parse error.");
 	}
 }
+
+static char *
+ReadSQLFile(
+	DBG_Struct	*dbg,
+	char *sqlfile)
+{
+	char buff[SIZE_BUFF];
+	LargeByteString *lbs;
+	char *sql;
+	FILE *fp;
+
+    if ((fp = fopen(sqlfile,"r")) == NULL){
+        Warning("[%s] can not open file", sqlfile);
+        return NULL;
+    }
+	lbs = NewLBS();
+	while (fgets(buff, SIZE_BUFF, fp) != NULL){
+		LBS_EmitString(lbs, buff);
+	}
+	LBS_EmitEnd(lbs);
+	sql = Coding_monsys(dbg, LBS_Body(lbs));
+	LBS_Clear(lbs);
+
+	return sql;
+}
+
+static void
+FileCommands(
+	DBG_Struct	*dbg,
+	Bool		redirect,
+	char *sqlfile)
+{
+	char *sql;
+
+	if (OpenDB(dbg) != MCP_OK ) {
+		return;
+	}
+	TransactionStart(dbg);
+	sql = ReadSQLFile(dbg, sqlfile);
+	if ( sql ) {
+		ExecDBOP(dbg, sql, redirect, DB_UPDATE);
+		xfree(sql);
+	}
+	TransactionEnd(dbg);
+	CloseDB(dbg);
+}
+
 
 static void
 OutPutValue(
@@ -123,21 +173,21 @@ static void
 SingleCommand(
 	DBG_Struct	*dbg,
 	Bool		redirect,
-	char *sql)
+	char *str)
 {
 	ValueStruct *ret;
-	char *sql_c;
+	char *sql;
 
 	if (OpenDB(dbg) != MCP_OK ) {
 		return;
 	}
 	TransactionStart(dbg);
 
-	sql_c = Coding_monsys(dbg, sql);
-	ret = ExecDBQuery(dbg, sql_c, redirect, DB_UPDATE);
+	sql = Coding_monsys(dbg, str);
+	ret = ExecDBQuery(dbg, sql, redirect, DB_UPDATE);
 	OutPutValue(Output, ret);
 	FreeValueStruct(ret);
-	xfree(sql_c);
+	xfree(sql);
 
 	TransactionEnd(dbg);
 	CloseDB(dbg);
@@ -163,10 +213,12 @@ main(
 	if (!dbg) {
 		Error("DBG [%s] does not found.", DBG_Name);
 	}
-
 	dbg->dbt = 	NewNameHash();
+
 	if ( Command ) {
 		SingleCommand(dbg, Redirect, Command);
+	} else if ( SQLFile ) {
+		FileCommands(dbg, Redirect, SQLFile);
 	}
 
 	return 0;
