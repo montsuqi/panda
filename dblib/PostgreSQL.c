@@ -1384,13 +1384,13 @@ ENTER_FUNC;
 	if	( _PQsendQuery(dbg,sql,usage) == TRUE ) {
 		while ( (res = _PQgetResult(dbg,usage)) != NULL ){
 			rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
-			if		( rc == MCP_OK ) {
-				if		( fRed ) {
-					PutDB_Redirect(dbg,sql);
-					PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-				}
+			if		( (rc == MCP_OK) && fRed ) {
+				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 			}
 			_PQclear(res);
+		}
+		if		( fRed ) {
+			PutDB_Redirect(dbg,sql);
 		}
 	} else {
 		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,usage)));
