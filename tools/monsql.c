@@ -112,6 +112,8 @@ ReadSQLFile(
 		LBS_EmitString(lbs, buff);
 	}
 	LBS_EmitEnd(lbs);
+	fclose(fp);
+
 	sql = Coding_monsys(dbg, LBS_Body(lbs));
 	LBS_Clear(lbs);
 
