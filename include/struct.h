@@ -169,6 +169,8 @@ typedef	struct _DBG_Struct	{
 	LargeByteString		*redirectData;
 	LargeByteString		*checkData;
 	uint64_t			ticket_id;
+	int					count;
+	char				*transaction_id;
 	LargeByteString		*last_query;
 	char				*file;
 	int					sumcheck;
@@ -183,6 +185,7 @@ typedef	ValueStruct	*(*DB_FUNC)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, Val
 typedef struct	{
 	int		(*exec)(DBG_Struct *, char *, Bool, int);
 	ValueStruct	*(*access)(DBG_Struct *, DBCOMM_CTRL *, RecordStruct *, ValueStruct *);
+	ValueStruct	*(*query)(DBG_Struct *, char *, Bool, int);
 	Bool	(*record)(DBG_Struct *, char *, RecordStruct *);
 }	DB_Primitives;
 

@@ -55,6 +55,7 @@ static	char	*GlserverPath;
 static	char	*DBLoggerPath;
 static	char	*DBMasterPath;
 static	char	*DBSlavePath;
+static	char	*MONSetupPath;
 static	char	*DDir;
 static	char	*RecDir;
 static	char	*ScrDir;
@@ -162,7 +163,8 @@ static	ARG_TABLE	option[] = {
 
 	{	"DBSlavePath",	STRING,		TRUE,	(void*)&DBSlavePath,
 		"dbslave command path"							},
-
+	{	"MONSetupPath",	STRING,		TRUE,	(void*)&MONSetupPath,
+		"monsetup command path"							},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"directory file name"		 					},
 	{	"record",	STRING,		TRUE,	(void*)&RecDir,
@@ -270,7 +272,7 @@ SetDefault(void)
 	DBLoggerPath = NULL;
 	DBMasterPath = NULL;
 	DBSlavePath = NULL;
-	
+	MONSetupPath = NULL;
 	Directory = "./directory";
 	TempDir = NULL;
 	DDir = NULL;
@@ -327,7 +329,7 @@ _execv(
 	DumpCommand(argv);
 #endif
  	if (execv(cmd,argv) < 0 ){
- 		int errsv = errno;	
+ 		int errsv = errno;
  		Error("%s: %s", strerror(errsv), cmd);
  	}
 }
@@ -346,7 +348,7 @@ ENTER_FUNC;
 	if		(  ( pid = fork() )  >  0  ) {
 		proc->pid = pid;
 		proc->state = STATE_RUN;
-		
+
 		if (getenv("MONITOR_START_PROCESS_LOGGING") != NULL) {
 			size = 0;
 			for(i=0;proc->argv[i]!=NULL;i++) {
@@ -910,6 +912,43 @@ LEAVE_FUNC;
 }
 
 static	void
+StartSetup()
+{
+	pid_t	pid;
+	char	*cmd;
+	int		argc;
+	char	**argv;
+	int 	status;
+
+ENTER_FUNC;
+	if (MONSetupPath) {
+		cmd = MONSetupPath;
+	} else {
+		cmd = BIN_DIR "/monsetup";
+	}
+	argv = (char **)xmalloc(sizeof(char *) * 4);
+	argc = 0;
+	argv[argc ++] = cmd;
+	argv[argc ++] = "-dir";
+	argv[argc ++] = Directory;
+	argv[argc ++] = NULL;
+
+	if		(  ( pid = fork() )  >  0  ) {
+		waitpid(pid,&status,0);
+		if (!WIFEXITED(status)) {
+			Error("monsetup failure");
+		}
+	} else
+	if		(  pid  ==  0  ) {
+		_execv(cmd, argv);
+	} else {
+		Error("can't start monsetup");
+	}
+	xfree(argv);
+LEAVE_FUNC;
+}
+
+static	void
 StartServers()
 {
 	int		i;
@@ -1102,6 +1141,8 @@ main(
 	if (sigaction(SIGHUP, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
+
+	StartSetup();
 
 	while (fLoop) {
 		fRestart = TRUE;

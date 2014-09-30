@@ -33,7 +33,7 @@ extern	void	InitializeCTRL(DBCOMM_CTRL*ctrl);
 
 extern	int		OpenRedirectDB(DBG_Struct *dbg);
 extern	int		CloseRedirectDB(DBG_Struct *dbg);
-extern	int		ExecRedirectDBOP(DBG_Struct *dbg, char *sql, int usage);
+extern	int		ExecRedirectDBOP(DBG_Struct *dbg, char *sql, Bool fRed, int usage);
 extern	int		TransactionRedirectStart(DBG_Struct *dbg);
 extern	int		TransactionRedirectEnd(DBG_Struct *dbg);
 

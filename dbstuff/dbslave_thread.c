@@ -287,7 +287,7 @@ PatchLogRecord(
 	Bool update_ok = TRUE;
 	
 ENTER_FUNC;	
-	rc = ExecRedirectDBOP(ctx->dbg, LBS_Body(rec->data), DB_UPDATE);
+	rc = ExecRedirectDBOP(ctx->dbg, LBS_Body(rec->data), TRUE, DB_UPDATE);
 	if (rc == MCP_OK) {
 		if ((!ctx->no_checksum) && (LBS_Size(rec->checkdata) > 0)) {
 			ret = CheckRedirectData(ctx->dbg->checkData, rec->checkdata);

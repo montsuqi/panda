@@ -263,7 +263,7 @@ ENTER_FUNC;
 #ifdef	DEBUG
 		printf("[%s]",(char *)LBS_Body(lbs));
 #endif
-		if		(  ExecDBOP(dbg,(char *)LBS_Body(lbs),DB_UPDATE)  !=  MCP_OK  ) {
+		if		(  ExecDBOP(dbg,(char *)LBS_Body(lbs),TRUE,DB_UPDATE)  !=  MCP_OK  ) {
 			fprintf(stderr,N_("create table error on %s\n"),rec->name);
 		}
 		FreeLBS(lbs);
