@@ -500,7 +500,7 @@ _DBDELETE(
 	ValueStruct	*ret = NULL;
 	int pgid;
 
-	CheckPg();
+	CheckBatchPg();
 
 	pgid = ValueToInteger(GetItemLongName(args,"pgid"));
 	ctrl->rc = killpg(pgid, SIGHUP);
