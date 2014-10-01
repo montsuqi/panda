@@ -1606,6 +1606,7 @@ ENTER_FUNC;
 		if ( (fCommit == TRUE) && (rc == MCP_OK) ) {
 			CommitDB_Redirect(dbg);
 		} else {
+			rc = MCP_NONFATAL;
 			AbortDB_Redirect(dbg);
 		}
 	} else {

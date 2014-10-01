@@ -120,16 +120,18 @@ ReadSQLFile(
 	return sql;
 }
 
-static void
+static int
 FileCommands(
 	DBG_Struct	*dbg,
 	Bool		redirect,
 	char *sqlfile)
 {
+	int rc;
 	char *sql;
 
-	if (OpenDB(dbg) != MCP_OK ) {
-		return;
+	rc = OpenDB(dbg);
+	if ( rc != MCP_OK ) {
+		return rc;
 	}
 	TransactionStart(dbg);
 	sql = ReadSQLFile(dbg, sqlfile);
@@ -137,8 +139,9 @@ FileCommands(
 		ExecDBOP(dbg, sql, redirect, DB_UPDATE);
 		xfree(sql);
 	}
-	TransactionEnd(dbg);
+	rc = TransactionEnd(dbg);
 	CloseDB(dbg);
+	return rc;
 }
 
 
@@ -171,17 +174,19 @@ OutPutValue(
 	xfree(buf);
 }
 
-static void
+static int
 SingleCommand(
 	DBG_Struct	*dbg,
 	Bool		redirect,
 	char *str)
 {
+	int rc;
 	ValueStruct *ret;
 	char *sql;
 
-	if (OpenDB(dbg) != MCP_OK ) {
-		return;
+	rc = OpenDB(dbg);
+	if ( rc != MCP_OK ) {
+		return rc;
 	}
 	TransactionStart(dbg);
 
@@ -191,8 +196,9 @@ SingleCommand(
 	FreeValueStruct(ret);
 	xfree(sql);
 
-	TransactionEnd(dbg);
+	rc = TransactionEnd(dbg);
 	CloseDB(dbg);
+	return rc;
 }
 
 extern	int
@@ -200,6 +206,7 @@ main(
 	int		argc,
 	char	**argv)
 {
+	Bool rc;
 	DBG_Struct	*dbg;
 
 	SetDefault();
@@ -218,10 +225,10 @@ main(
 	dbg->dbt = 	NewNameHash();
 
 	if ( Command ) {
-		SingleCommand(dbg, Redirect, Command);
+		rc = SingleCommand(dbg, Redirect, Command);
 	} else if ( SQLFile ) {
-		FileCommands(dbg, Redirect, SQLFile);
+		rc = FileCommands(dbg, Redirect, SQLFile);
 	}
-
-	return 0;
+	printf("%d\n", rc);
+	return rc;
 }
