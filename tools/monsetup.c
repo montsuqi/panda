@@ -73,7 +73,9 @@ SetDefault(void)
 static	void
 InitSystem(void)
 {
-	char *dir;
+	char *dir, *env;
+	int days;
+
 	InitMessage("monsetup",NULL);
 	if ((dir = getenv("MON_DIRECTORY_PATH")) != NULL) {
 		Directory = dir;
@@ -82,6 +84,12 @@ InitSystem(void)
 	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
+	}
+	if ((env = getenv("MONBATCH_LOG_EXPIRE")) != NULL) {
+		days = atoi(env);
+		if (days > 0) {
+			DelDays = days;
+		}
 	}
 }
 
