@@ -150,12 +150,18 @@ OutPutValue(
 	char *type,
 	ValueStruct	*value)
 {
+	ValueStruct *invalue;
 	ConvFuncs	*conv;
 	static CONVOPT *ConvOpt;
 	char *buf;
 
 	if (!value) {
-		return;
+		invalue = NewValue(GL_TYPE_ARRAY);
+	} else if (ValueType(value) == GL_TYPE_RECORD) {
+		invalue = NewValue(GL_TYPE_ARRAY);
+		ValueAddArrayItem(invalue, 0, value);
+	} else {
+		invalue = value;
 	}
 	if (!type) {
 		type = DefaultOutput;
@@ -168,8 +174,8 @@ OutPutValue(
 	ConvSetRecName(ConvOpt, "RECORD");
 	ConvOpt->fNewLine = TRUE;
 
-	buf = xmalloc(conv->SizeValue(ConvOpt,value));
-	conv->PackValue(ConvOpt,buf,value);
+	buf = xmalloc(conv->SizeValue(ConvOpt,invalue));
+	conv->PackValue(ConvOpt,buf,invalue);
 	printf("%s\n", buf);
 	xfree(buf);
 }
@@ -229,6 +235,5 @@ main(
 	} else if ( SQLFile ) {
 		rc = FileCommands(dbg, Redirect, SQLFile);
 	}
-	printf("%d\n", rc);
 	return rc;
 }
