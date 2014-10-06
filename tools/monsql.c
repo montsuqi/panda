@@ -212,7 +212,7 @@ main(
 	int		argc,
 	char	**argv)
 {
-	Bool rc;
+	Bool rc = 0;
 	DBG_Struct	*dbg;
 
 	SetDefault();
