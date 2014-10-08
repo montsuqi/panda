@@ -69,7 +69,7 @@ IsCacheScreen(
 {
 	size_t	ret = 0;
 	ScreenCache	*sch;
-	
+
 	if ((sch = g_hash_table_lookup(CacheScreen,name)) != NULL){
 		if (memcmp(sch->scr, scr, sch->size) == 0){
 			ret = sch->size;
@@ -79,15 +79,29 @@ IsCacheScreen(
 }
 
 static	void
+AddCacheScreen(
+	char *name,
+	char *scr)
+{
+	ScreenCache	*sch;
+
+	if ((sch = g_hash_table_lookup(CacheScreen, name)) != NULL){
+		memcpy(sch->scr, scr, sch->size);
+	}
+}
+
+static	void
 PutApplication(
 	ProcessNode	*node)
 {
 	int		i;
 	char	*scr;
 	size_t size;
-	ScreenCache	*sch;
+	long	start
+		,	end;
 
 ENTER_FUNC;
+	start = GetNowTime();
 	if		(  node->mcprec  !=  NULL  ) {
 		OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
 	}
@@ -100,12 +114,11 @@ ENTER_FUNC;
 	for	( i = 0 , scr = (char *)ScrData ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
 			size = OpenCOBOL_PackValue(OpenCOBOL_Conv,scr,node->scrrec[i]->value);
-			if ((sch = g_hash_table_lookup(CacheScreen,node->scrrec[i]->name)) != NULL){
-				memcpy(sch->scr, scr, sch->size);
-			}
 			scr += size;
 		}
 	}
+	end = GetNowTime();
+	TimerPrintf(start,end, "PutApplication\n");
 LEAVE_FUNC;
 }
 
@@ -116,8 +129,11 @@ GetApplication(
 	char	*scr;
 	int		i;
 	size_t	size;
-	
+	long	start
+		,	end;
+
 ENTER_FUNC;
+	start = GetNowTime();
 	if		(  node->mcprec  !=  NULL  ) {
 		OpenCOBOL_UnPackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
 	}
@@ -132,10 +148,13 @@ ENTER_FUNC;
 			if ((size = IsCacheScreen(node->scrrec[i]->name, scr)) != 0) {
 				scr += size;
 			} else {
+				AddCacheScreen(node->scrrec[i]->name, scr);
 				scr += OpenCOBOL_UnPackValue(OpenCOBOL_Conv,scr,node->scrrec[i]->value);
 			}
 		}
 	}
+	end = GetNowTime();
+	TimerPrintf(start,end, "GetApplication\n");
 LEAVE_FUNC;
 }
 
@@ -153,18 +172,14 @@ _ExecuteProcess(
 ENTER_FUNC;
 	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
-		start = GetNowTime();
 		PutApplication(node);
-		end = GetNowTime();
-		TimerPrintf(start,end, "PutApplication\n");
+
 		start = GetNowTime();
 		(void)apl(McpData,SpaData,LinkData,ScrData);
 		end = GetNowTime();
 		TimerPrintf(start,end, "OpenCOBOL %s:%s:%s\n",module, node->widget, node->event);
-		start = GetNowTime();
+
 		GetApplication(node);
-		end = GetNowTime();
-		TimerPrintf(start,end, "GetApplication\n");
 		if		(  ValueInteger(GetItemLongName(node->mcprec->value,"rc"))  <  0  ) {
 			rc = FALSE;
 		} else {
