@@ -38,7 +38,9 @@
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
+#include	"option.h"
 #include	"monsys.h"
+#include	"gettext.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -52,6 +54,12 @@ typedef struct {
 	LargeByteString	*name;
 	LargeByteString *value;
 } name_value_t;
+
+static	ARG_TABLE	option[] = {
+	{	"dir",		STRING,		TRUE,	(void*)&Directory,
+		N_("directory file name")						},
+	{	NULL,		0,			FALSE,	NULL,	NULL 	}
+};
 
 void
 signal_handler (int signo )
@@ -72,13 +80,16 @@ alrm_handler (int signo)
 static	void
 InitSystem(void)
 {
+	char *dir;
 	InitMessage("monbatch",NULL);
-	if ( (Directory = getenv("MON_DIRECTORY_PATH")) != NULL ) {
-		InitDirectory();
-		SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
-		if		( ThisEnv == NULL ) {
-			Error("DI file parse error.");
-		}
+
+	if ( (dir = getenv("MON_DIRECTORY_PATH")) != NULL ) {
+		Directory = dir;
+	}
+	InitDirectory();
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	if		( ThisEnv == NULL ) {
+		Error("DI file parse error.");
 	}
 }
 
@@ -101,9 +112,11 @@ insert_table(
 		LBS_EmitSpace(kv->value);
 	}
 	LBS_EmitChar(kv->value,'\'');
-	evalue = Escape_monsys(kv->dbg, value);
-	LBS_EmitString(kv->value, evalue);
-	xfree(evalue);
+	if (value != NULL) {
+		evalue = Escape_monsys(kv->dbg, value);
+		LBS_EmitString(kv->value, evalue);
+		xfree(evalue);
+	}
 	LBS_EmitChar(kv->value,'\'');
 }
 
@@ -326,6 +339,8 @@ main(
 	int		argc,
 	char	**argv)
 {
+	FILE_LIST	*fl;
+
 	pid_t pgid;
 	struct sigaction sa;
 	DBG_Struct	*dbg;
@@ -347,7 +362,14 @@ main(
 
 	alarm(BATCH_TIMEOUT);
 
+	fl = GetOption(option,argc,argv,NULL);
 	InitSystem();
+	if ((fl == NULL) || (fl->name == NULL)) {
+		PrintUsage(option,argv[0],NULL);
+	}
+	if (getenv("MON_BATCH_ID") == NULL) {
+		Error("MON_BATCH_ID has not been set");
+	}
 
 	dbg = GetDBG_monsys();
 	pgid = getpgrp();
