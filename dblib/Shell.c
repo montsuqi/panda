@@ -32,11 +32,13 @@
 #include	<unistd.h>
 #include	<glib.h>
 #include	<signal.h>
+#include	<uuid/uuid.h>
 
 #include	"libmondai.h"
 #include	"enum.h"
 #include	"SQLparser.h"
 #include	"dbgroup.h"
+#include	"monsys.h"
 #include	"redirect.h"
 #include	"debug.h"
 
@@ -56,13 +58,23 @@ _EXEC(
 }
 
 static	ValueStruct	*
+_QUERY(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	return NULL;
+}
+
+static	ValueStruct	*
 _DBOPEN(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
 	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = (void *)NewLBS();
+	dbg->process[PROCESS_UPDATE].conn = xmalloc((SIZE_ARG)*sizeof(char *));
 	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
 	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
 	if		(  ctrl  !=  NULL  ) {
@@ -78,9 +90,9 @@ _DBDISCONNECT(
 	DBCOMM_CTRL	*ctrl)
 {
 ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) { 
+	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
+		xfree(dbg->process[PROCESS_UPDATE].conn);
 		CloseDB_RedirectPort(dbg);
-		FreeLBS((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
 		if		(  ctrl  !=  NULL  ) {
 			ctrl->rc = MCP_OK;
@@ -95,8 +107,18 @@ _DBSTART(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
+	char 		**cmdv;
 ENTER_FUNC;
-	LBS_EmitStart((LargeByteString *)dbg->process[PROCESS_UPDATE].conn);
+	dbg->count = 0;
+	cmdv = dbg->process[PROCESS_UPDATE].conn;
+	cmdv[dbg->count] = NULL;
+	unsetenv("MON_BATCH_ID");
+	unsetenv("MON_BATCH_NAME");
+	unsetenv("MON_BATCH_COMMENT");
+	unsetenv("MON_BATCH_EXTRA");
+	if(dbg->transaction_id) {
+		xfree(dbg->transaction_id);
+	}
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -106,29 +128,36 @@ LEAVE_FUNC;
 
 static	int
 DoShell(
-	char	*command)
+	char	**cmdv)
 {
-	char	*argv[4];
+	char	**cmd;
+	char	*argv[256];
 	char	*sh;
-	int		pid;
+	pid_t	pid;
 	int		rc;
+	int 	i;
 	extern	char	**environ;
 
 ENTER_FUNC;
 #ifdef	DEBUG
 	printf("command --------------------------------\n");
-	printf("%s\n",command);
+	for (cmd = cmdv; *cmd; cmd++) {
+		printf("command: %s\n", *cmd);
+	}
 	printf("----------------------------------------\n");
 #endif
-	if		(  *command  !=  0  ) {
+	if		(  *cmdv  !=  NULL  ) {
 		if		(  ( pid = fork() )  ==  0  )	{
-			if		(  ( sh = getenv("SHELL") )  ==  NULL  ) {
-				sh = "/bin/sh";
+			if (setpgid(0,0) != 0) {
+				perror("setpgid");
 			}
+			sh = BIN_DIR "/monbatch";
 			argv[0] = sh;
-			argv[1] = "-c";
-			argv[2] = command;
-			argv[3] = NULL;
+			i = 1;
+			for (cmd = cmdv; *cmd; cmd++) {
+				argv[i++] = *cmd;
+			}
+			argv[i] = NULL;
 			execve(sh, argv, environ);
 			rc = MCP_BAD_OTHER;
 		} else
@@ -149,29 +178,19 @@ _DBCOMMIT(
 	DBG_Struct	*dbg,
 	DBCOMM_CTRL	*ctrl)
 {
+	int			i;
 	int			rc;
-	char		*p
-	,			*q;
-	LargeByteString	*lbs;
+	char 		**cmdv;
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
-	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
-	rc = 0;
-	if (LBS_Size(lbs) > 0){
-		LBS_EmitEnd(lbs);
-		RewindLBS(lbs);
-		p = (char *)LBS_Body(lbs);
-		while	(  ( q = strchr(p,0xFF) )  !=  NULL  ) {
-			*q = 0;
-			rc += DoShell(p);
-			p = q + 1;
-		}
-		rc += DoShell(p);
-		LBS_String(dbg->last_query,p);
-		LBS_Clear(lbs);
-	}
+	cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
+	rc = DoShell(cmdv);
 	CommitDB_Redirect(dbg);
+	for (i=0; i< dbg->count; i++) {
+		xfree(cmdv[i]);
+	}
+	dbg->count = 0;
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = rc;
 	}
@@ -197,7 +216,7 @@ InsertValue(
 	  case	GL_TYPE_DBCODE:
 	  case	GL_TYPE_TEXT:
 		LBS_EmitChar(lbs,'"');
-		LBS_EmitString(lbs,ValueToString(val,dbg->coding));
+		LBS_EmitString(lbs, ValueToString(val,dbg->coding));
 		LBS_EmitChar(lbs,'"');
 		break;
 	  case	GL_TYPE_NUMBER:
@@ -229,7 +248,7 @@ InsertValue(
 }
 
 static	ValueStruct	*
-ExecShell(
+RegistShell(
 	DBCOMM_CTRL		*ctrl,
 	RecordStruct	*rec,
 	LargeByteString	*src,
@@ -240,15 +259,17 @@ ExecShell(
 	DBG_Struct	*dbg;
 	ValueStruct	*ret;
 	LargeByteString	*lbs;
+	char 		**cmdv;
 
 ENTER_FUNC;
 	ret = NULL;
 	dbg =  rec->opt.db->dbg;
-	lbs = (LargeByteString *)dbg->process[PROCESS_UPDATE].conn;
+	cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
 	if	(  src  ==  NULL )	{
 		Error("function \"%s\" is not found.",ctrl->func);
 	}
 	RewindLBS(src);
+	lbs = NewLBS();
 	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
 		if		(  c  !=  SQL_OP_ESC  ) {
 			LBS_EmitChar(lbs,c);
@@ -262,14 +283,43 @@ ENTER_FUNC;
 			  case	SQL_OP_EOL:
 			  case	0:
 				LBS_EmitChar(lbs,';');
+				LBS_EmitEnd(lbs);
+				cmdv[dbg->count] = StrDup(LBS_Body(lbs));
+				dbg->count++;
+				RewindLBS(lbs);
 				break;
 			  default:
 				break;
 			}
 		}
 	}
+	FreeLBS(lbs);
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		SetValueString(val, dbg->transaction_id, dbg->coding);
+	}
+	ret = DuplicateValue(args,TRUE);
+	cmdv[dbg->count] = NULL;
 LEAVE_FUNC;
 	return	(ret);
+}
+
+static	ValueStruct	*
+SetRetvalue(
+	ValueStruct		*mondbg_value,
+	ValueStruct		*shell_value)
+{
+	int i;
+	char *name;
+	ValueStruct		*val;
+
+	for	( i = 0 ; i < ValueRecordSize(mondbg_value) ; i ++ ) {
+		name = ValueRecordName(mondbg_value,i);
+		val = GetItemLongName(shell_value, name);
+		if (val) {
+			CopyValue(val, ValueRecordItem(mondbg_value,i));
+		}
+	}
+	return shell_value;
 }
 
 static	ValueStruct	*
@@ -279,6 +329,8 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
+	char *name, *comment, *extra;
+	uuid_t	u;
 	DB_Struct	*db;
 	PathStruct	*path;
 	LargeByteString	*src;
@@ -291,6 +343,18 @@ ENTER_FUNC;
 	printf("[%s]\n",ctrl->func);
 #endif
 	ret = NULL;
+	if (dbg->count == 0) {
+		name = ValueToString(GetItemLongName(args,"name"),dbg->coding);
+		setenv("MON_BATCH_NAME", name, 1);
+		comment = ValueToString(GetItemLongName(args,"comment"),dbg->coding);
+		setenv("MON_BATCH_COMMENT", comment, 1);
+		extra = ValueToString(GetItemLongName(args,"extra"),dbg->coding);
+		setenv("MON_BATCH_EXTRA", extra, 1);
+		dbg->transaction_id = xmalloc(SIZE_TERM+1);
+		uuid_generate(u);
+		uuid_unparse(u, dbg->transaction_id);
+		setenv("MON_BATCH_ID", dbg->transaction_id, 1);
+	}
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
 		rc = TRUE;
@@ -302,7 +366,7 @@ ENTER_FUNC;
 		} else {
 			src = path->ops[ix-1]->proc;
 			if		(  src  !=  NULL  ) {
-				ret = ExecShell(ctrl,rec,src,args);
+				ret = RegistShell(ctrl,rec,src,args);
 				rc = TRUE;
 			} else {
 				rc = FALSE;
@@ -313,6 +377,161 @@ ENTER_FUNC;
 		ctrl->rc = rc ? MCP_OK : MCP_BAD_FUNC;
 	}
 LEAVE_FUNC;
+	return	(ret);
+}
+
+Bool
+KeyValueToWhere(
+	LargeByteString	*lbs,
+	DBG_Struct		*dbg,
+	Bool first,
+	char *key,
+	char *value)
+{
+	char	buff[SIZE_OTHER];
+
+	if ((value != NULL) && (strlen(value) > 0)) {
+		if ( first ) {
+			LBS_EmitString(lbs," WHERE ");
+		} else {
+			LBS_EmitString(lbs," AND ");
+		}
+		sprintf(buff,"%s = '%s'",key, Escape_monsys(dbg, value));
+		LBS_EmitString(lbs,buff);
+		first = FALSE;
+	}
+	return first;
+}
+
+static	char *
+ValueToWhere(
+	DBG_Struct		*dbg,
+	ValueStruct		*value)
+{
+	char *keys[] = {"id", "tenant", "name", "comment", "extra", NULL};
+	char pgid_s[10];
+	char *where, *k, *v;
+	Bool first = TRUE;
+	LargeByteString	*lbs;
+	int i, pgid;
+
+	lbs = NewLBS();
+	i = 0;
+	pgid = ValueToInteger(GetItemLongName(value,"pgid"));
+	if ((pgid > 0) && (pgid < 99999) ){
+		snprintf(pgid_s, 10, "%d", pgid);
+		first = KeyValueToWhere(lbs, dbg, first, "pgid", pgid_s);
+	}
+	while ((k = keys[i]) != NULL) {
+		v = ValueToString(GetItemLongName(value,k),NULL);
+		first = KeyValueToWhere(lbs, dbg, first, k, v);
+		i++;
+	}
+	LBS_EmitEnd(lbs);
+	where = StrDup(LBS_Body(lbs));
+	FreeLBS(lbs);
+	return where;
+}
+
+static	ValueStruct	*
+_DBSELECT(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	char *where;
+	DBG_Struct		*mondbg;
+	ValueStruct	*ret = NULL;
+	size_t sql_len  = SIZE_SQL;
+	char *sql;
+
+	CheckBatchPg();
+
+	mondbg = GetDBG_monsys();
+	where = ValueToWhere(mondbg, args);
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s;",
+			 BATCH_TABLE, BATCH_TABLE, where);
+	ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+	xfree(where);
+	xfree(sql);
+	return ret;
+}
+
+static	ValueStruct	*
+_DBFETCH(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct		*mondbg;
+	ValueStruct	*ret = NULL;
+	ValueStruct	*mondbg_val;
+	size_t sql_len  = SIZE_SQL;
+	char *sql;
+
+	ctrl->rcount = 0;
+	mondbg = GetDBG_monsys();
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "FETCH 1 FROM %s_csr;",
+			 BATCH_TABLE);
+	mondbg_val = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (mondbg_val) {
+		ctrl->rc = MCP_OK;
+		ctrl->rcount = 1;
+		ret = SetRetvalue(mondbg_val, DuplicateValue(args,TRUE));
+	} else {
+		ctrl->rc = MCP_EOF;
+	}
+	FreeValueStruct(mondbg_val);
+	return ret;
+}
+
+static	ValueStruct	*
+_DBDELETE(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*ret = NULL;
+	int pgid;
+
+	CheckBatchPg();
+
+	pgid = ValueToInteger(GetItemLongName(args,"pgid"));
+	ctrl->rc = killpg(pgid, SIGHUP);
+
+	return ret;
+}
+
+static	ValueStruct	*
+_DBCLOSECURSOR(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct		*mondbg;
+	size_t sql_len = SIZE_SQL;
+	char *sql;
+
+	ValueStruct	*ret;
+
+	ret = NULL;
+	ctrl->rc = MCP_OK;
+	ctrl->rcount = 0;
+	mondbg = GetDBG_monsys();
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len, "CLOSE %s_csr;",
+			 BATCH_TABLE);
+	ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+
 	return	(ret);
 }
 
@@ -340,11 +559,12 @@ static	DB_OPS	Operations[] = {
 	{	"DBSTART",		(DB_FUNC)_DBSTART },
 	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
 	/*	table operations	*/
-	{	"DBSELECT",		_DBERROR },
-	{	"DBFETCH",		_DBERROR },
+	{	"DBSELECT",		_DBSELECT },
+	{	"DBFETCH",		_DBFETCH },
 	{	"DBUPDATE",		_DBERROR },
-	{	"DBDELETE",		_DBERROR },
+	{	"DBDELETE",		_DBDELETE },
 	{	"DBINSERT",		_DBERROR },
+	{	"DBCLOSECURSOR",_DBCLOSECURSOR },
 
 	{	NULL,			NULL }
 };
@@ -352,6 +572,7 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	_QUERY,
 	NULL,
 };
 
@@ -361,19 +582,25 @@ OnChildExit(
 {
 ENTER_FUNC;
 	while( waitpid(-1, NULL, WNOHANG) > 0 );
-	(void)signal(SIGCHLD, (void *)OnChildExit);
 LEAVE_FUNC;
 }
 
 extern	DB_Func	*
 InitShell(void)
 {
+	struct sigaction sa;
 	DB_Func	*ret;
 ENTER_FUNC;
-	(void)signal(SIGCHLD, (void *)OnChildExit);
+	memset(&sa, 0, sizeof(struct sigaction));
+	sigemptyset (&sa.sa_mask);
+	sa.sa_flags |= SA_RESTART;
+	sa.sa_handler = (void *)OnChildExit;
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		fprintf(stderr,"sigaction(2) failure\n");
+	}
 
 	ret = EnterDB_Function("Shell",Operations,DB_PARSER_SQL,&Core,"# ","\n");
 LEAVE_FUNC;
-	return	(ret); 
+	return	(ret);
 }
 

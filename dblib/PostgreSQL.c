@@ -840,6 +840,54 @@ PGresToValue(
 	return ret;
 }
 
+static	ValueStruct *
+_PGresToValue2(
+	DBG_Struct	*dbg,
+	int		tnum,
+	PGresult *res)
+{
+	ValueStruct	*value
+	,			*tuple;
+	int i, fnum;
+	char *str;
+
+	fnum = PQnfields(res);
+	tuple = NewValue(GL_TYPE_RECORD);
+	for (i=0; i<fnum; i++){
+		value = NewValue(GL_TYPE_VARCHAR);
+		str = PQgetvalue(res,tnum,i);
+		SetValueString(value, str, dbg->coding);
+		ValueAddRecordItem(tuple, PQfname(res,i), value);
+	}
+	return tuple;
+}
+
+static	ValueStruct *
+PGresToValue2(
+	DBG_Struct	*dbg,
+	PGresult *res)
+{
+	ValueStruct	*ret
+	,			*tuple;
+	int		i, tnum;
+
+	tnum = PQntuples(res);
+	if (tnum <= 0) {
+		return NULL;
+	}
+	if (tnum == 1) {
+		ret = _PGresToValue2(dbg, 0, res);
+	} else {
+		ret = NewValue(GL_TYPE_ARRAY);
+		for (i=0; i<tnum; i++){
+			tuple = _PGresToValue2(dbg, i, res);
+			ValueAddArrayItem(ret, i, tuple);
+		}
+	}
+	return ret;
+}
+
+
 static	void
 UpdateValue(
 	DBG_Struct	*dbg,
@@ -1080,7 +1128,7 @@ _PQexec(
 
 ENTER_FUNC;
 	dbgprintf("%s;",sql);
-	res = PQexec(PGCONN(dbg,usage),sql);
+	res = PQexecParams(PGCONN(dbg,usage),sql,0,NULL,NULL,NULL,NULL,0);
 	if ( res != NULL) {
 		if		(	(  fRed                  )
 				&&	(  IsUsageUpdate(usage)  )
@@ -1090,7 +1138,9 @@ ENTER_FUNC;
 			PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
 		}
 	}
-	LBS_String(dbg->last_query,sql);
+	if (sql) {
+		LBS_String(dbg->last_query,sql);
+	}
 LEAVE_FUNC;
 	return	(res);
 }
@@ -1331,25 +1381,52 @@ _EXEC(
 	int			rc = MCP_OK;
 
 ENTER_FUNC;
-	LBS_EmitStart(dbg->checkData);
 	if	( _PQsendQuery(dbg,sql,usage) == TRUE ) {
 		while ( (res = _PQgetResult(dbg,usage)) != NULL ){
 			rc = CheckResult(dbg, usage, res, PGRES_COMMAND_OK);
-			if		( rc == MCP_OK ) {
+			if		( (rc == MCP_OK) && fRed ) {
 				PutCheckDataDB_Redirect(dbg, PQcmdTuples(res));
-				if		( fRed ) {
-					PutDB_Redirect(dbg,sql);
-				}
 			}
 			_PQclear(res);
+		}
+		if		( fRed ) {
+			PutDB_Redirect(dbg,sql);
 		}
 	} else {
 		Warning("PostgreSQL: %s",PQerrorMessage(PGCONN(dbg,usage)));
 		rc = MCP_BAD_OTHER;
 	}
-	LBS_EmitEnd(dbg->checkData);
 LEAVE_FUNC;
 	return	rc;
+}
+
+static	ValueStruct	*
+_QUERY(
+	DBG_Struct	*dbg,
+	char		*sql,
+	Bool		fRed,
+	int			usage)
+{
+	PGresult	*res;
+	ValueStruct	*ret;
+	ExecStatusType	status;
+
+ENTER_FUNC;
+	ret = NULL;
+
+	res = _PQexec(dbg, sql, fRed, usage);
+	if ( ( res ==  NULL)
+		 ||	(  ( status = PQresultStatus(res) ) == PGRES_BAD_RESPONSE )
+		 ||	(  status  ==  PGRES_FATAL_ERROR     )
+		 ||	(  status  ==  PGRES_NONFATAL_ERROR  ) ) {
+		Warning("PostgreSQL: %s:%s", sql, PQerrorMessage(PGCONN(dbg,usage)));
+		ret = NULL;
+	} else {
+		ret = PGresToValue2(dbg, res);
+	}
+	_PQclear(res);
+LEAVE_FUNC;
+	return	ret;
 }
 
 static	ValueStruct	*
@@ -1404,9 +1481,11 @@ ENTER_FUNC;
 		dbgmsg("READONLY SERVER is none.");
 #if	1
 		dbgmsg("using UPDATE SERVER.");
-		dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
-		dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
-		rc = MCP_OK;
+		if (dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT) {
+			dbg->process[PROCESS_READONLY].conn = dbg->process[PROCESS_UPDATE].conn;
+			dbg->process[PROCESS_READONLY].dbstatus = dbg->process[PROCESS_UPDATE].dbstatus;
+			rc = MCP_OK;
+		}
 #else
 		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_NOCONNECT;
 		rc = MCP_BAD_CONN;
@@ -1527,6 +1606,7 @@ ENTER_FUNC;
 		if ( (fCommit == TRUE) && (rc == MCP_OK) ) {
 			CommitDB_Redirect(dbg);
 		} else {
+			rc = MCP_NONFATAL;
 			AbortDB_Redirect(dbg);
 		}
 	} else {
@@ -1986,6 +2066,7 @@ static	DB_OPS	Operations[] = {
 static	DB_Primitives	Core = {
 	_EXEC,
 	_DBACCESS,
+	_QUERY,
 	NULL,
 };
 

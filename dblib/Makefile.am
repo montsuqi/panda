@@ -36,7 +36,8 @@ AM_CPPFLAGS 			=		\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
 	$(RUBY_CFLAGS)			\
-	$(COMMON_CFLAGS)
+	$(COMMON_CFLAGS)                \
+	-DBIN_DIR=\"$(bindir)\"
 
 libpandadb_la_CFLAGS = $(AM_CFLAGS)
 libpandadb_la_LDFLAGS	=			\
@@ -45,7 +46,8 @@ libpandadb_la_LDFLAGS	=			\
 
 libpandadb_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
-	redirect.c	redirect.h
+	redirect.c	redirect.h	\
+	monsys.c	monsys.h
 
 libdblog_a_CFLAGS = $(AM_CFLAGS)
 libdblog_a_SOURCES	=	\
@@ -91,7 +93,8 @@ Shell_la_SOURCES		=	\
 	Shell.c
 Shell_la_LIBADD	= \
 	$(top_builddir)/libs/libpanda.la \
-	$(top_builddir)/dblib/libpandadb.la
+	$(top_builddir)/dblib/libpandadb.la \
+	-luuid
 
 System_la_LDFLAGS		=		\
 	-avoid-version				\

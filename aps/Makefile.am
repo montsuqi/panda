@@ -18,9 +18,17 @@
 
 ## Process this file with automake to produce Makefile.in
 
+bin_PROGRAMS = monbatch
 sbin_PROGRAMS = aps dbstub
 pkglib_LTLIBRARIES = MONFUNC.la $(HANDLER_OBJECTS)
 
+monbatch_SOURCES = \
+	monbatch.c
+monbatch_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la
+monbatch_LDFLAGS	=			\
+	-export-dynamic
 
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\

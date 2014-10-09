@@ -55,29 +55,6 @@ static	void	*ScrData;
 
 static	char	*ModuleLoadPath;
 
-typedef	struct _ScreenCache	{
-	size_t	size;
- 	void	*scr;
-}	ScreenCache;
-
-static	GHashTable		*CacheScreen;
-
-static	size_t
-IsCacheScreen(
-	char	*name,
-	char 	*scr)
-{
-	size_t	ret = 0;
-	ScreenCache	*sch;
-	
-	if ((sch = g_hash_table_lookup(CacheScreen,name)) != NULL){
-		if (memcmp(sch->scr, scr, sch->size) == 0){
-			ret = sch->size;
-		}
-	}
-	return ret;
-}
-
 static	void
 PutApplication(
 	ProcessNode	*node)
@@ -85,9 +62,11 @@ PutApplication(
 	int		i;
 	char	*scr;
 	size_t size;
-	ScreenCache	*sch;
+	long	start
+		,	end;
 
 ENTER_FUNC;
+	start = GetNowTime();
 	if		(  node->mcprec  !=  NULL  ) {
 		OpenCOBOL_PackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
 	}
@@ -100,12 +79,11 @@ ENTER_FUNC;
 	for	( i = 0 , scr = (char *)ScrData ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
 			size = OpenCOBOL_PackValue(OpenCOBOL_Conv,scr,node->scrrec[i]->value);
-			if ((sch = g_hash_table_lookup(CacheScreen,node->scrrec[i]->name)) != NULL){
-				memcpy(sch->scr, scr, sch->size);
-			}
 			scr += size;
 		}
 	}
+	end = GetNowTime();
+	TimerPrintf(start,end, "PutApplication\n");
 LEAVE_FUNC;
 }
 
@@ -116,8 +94,11 @@ GetApplication(
 	char	*scr;
 	int		i;
 	size_t	size;
-	
+	long	start
+		,	end;
+
 ENTER_FUNC;
+	start = GetNowTime();
 	if		(  node->mcprec  !=  NULL  ) {
 		OpenCOBOL_UnPackValue(OpenCOBOL_Conv,McpData,node->mcprec->value);
 	}
@@ -129,13 +110,11 @@ ENTER_FUNC;
 	}
 	for	( i = 0 , scr = (char *)ScrData ; i < node->cWindow ; i ++ ) {
 		if		(  node->scrrec[i]  !=  NULL  ) {
-			if ((size = IsCacheScreen(node->scrrec[i]->name, scr)) != 0) {
-				scr += size;
-			} else {
-				scr += OpenCOBOL_UnPackValue(OpenCOBOL_Conv,scr,node->scrrec[i]->value);
-			}
+			scr += OpenCOBOL_UnPackValue(OpenCOBOL_Conv,scr,node->scrrec[i]->value);
 		}
 	}
+	end = GetNowTime();
+	TimerPrintf(start,end, "GetApplication\n");
 LEAVE_FUNC;
 }
 
@@ -153,18 +132,14 @@ _ExecuteProcess(
 ENTER_FUNC;
 	module = ValueStringPointer(GetItemLongName(node->mcprec->value,"dc.module"));
 	if		(  ( apl = cob_resolve(module) )  !=  NULL  ) {
-		start = GetNowTime();
 		PutApplication(node);
-		end = GetNowTime();
-		TimerPrintf(start,end, "PutApplication\n");
+
 		start = GetNowTime();
 		(void)apl(McpData,SpaData,LinkData,ScrData);
 		end = GetNowTime();
 		TimerPrintf(start,end, "OpenCOBOL %s:%s:%s\n",module, node->widget, node->event);
-		start = GetNowTime();
+
 		GetApplication(node);
-		end = GetNowTime();
-		TimerPrintf(start,end, "GetApplication\n");
 		if		(  ValueInteger(GetItemLongName(node->mcprec->value,"rc"))  <  0  ) {
 			rc = FALSE;
 		} else {
@@ -184,8 +159,7 @@ _ReadyDC(
 {
 	int		i;
 	size_t	scrsize;
-	ScreenCache	*sch;
-	
+
 ENTER_FUNC;
 	OpenCOBOL_Conv = NewConvOpt();
 	ConvSetSize(OpenCOBOL_Conv,ThisLD->textsize,ThisLD->arraysize);
@@ -211,15 +185,10 @@ ENTER_FUNC;
 	if		(  ThisLD->sparec  !=  NULL  ) {
 		SpaData = xmalloc(OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->sparec->value));
 	}
-	CacheScreen = NewNameHash();
 	scrsize = 0;
 	for	( i = 0 ; i < ThisLD->cWindow ; i ++ ) {
 		if		(  ThisLD->windows[i]  !=  NULL  ) {
-			sch = New(ScreenCache);
-			sch->size = OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->windows[i]->value);
-			sch->scr = malloc(sch->size);
-			scrsize += sch->size;
-			g_hash_table_insert(CacheScreen,ThisLD->windows[i]->name,sch);
+			scrsize +=  OpenCOBOL_SizeValue(OpenCOBOL_Conv,ThisLD->windows[i]->value);
 		}
 	}
 	ScrData = xmalloc(scrsize);
