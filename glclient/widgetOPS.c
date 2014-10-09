@@ -750,20 +750,6 @@ LEAVE_FUNC;
 }
 
 static	void
-SavePreviousFolder(
-	GtkWidget	*widget,
-	WidgetData	*wdata,
-	gpointer 	data) 
-{
-	GtkPandaFileEntry 	*fentry;
-	char				*longname;
-
-	fentry = GTK_PANDA_FILE_ENTRY(widget);
-	longname = (char *)glade_get_widget_long_name(widget);
-	SetWidgetCache(longname, fentry->folder);
-}
-
-static	void
 SetColorButton(
 	GtkWidget		*widget,
 	WidgetData		*wdata,
@@ -795,93 +781,6 @@ ENTER_FUNC;
 		(guint)(color.green/256.0),
 		(guint)(color.blue/256.0)
 		);
-LEAVE_FUNC;
-}
-
-static	void
-SetFileEntry(
-	GtkWidget			*widget,
-	WidgetData	*wdata,
-	_FileEntry			*data)
-{
-static GHashTable		*connectlist = NULL;
-
-	GtkPandaFileEntry 	*fentry;
-	GtkWidget			*subWidget;
-	WidgetData			*subdata;
-	char				*longname;
-	char				*folder;
-
-ENTER_FUNC;
-
-	SetCommon(widget,wdata);
-	fentry = GTK_PANDA_FILE_ENTRY(widget);
-	g_return_if_fail(data->binary != NULL);
-	longname = (char *)glade_get_widget_long_name(widget);
-
-	if (connectlist == NULL) {
-		connectlist = NewNameHash();
-	}
-    if (g_hash_table_lookup(connectlist, longname) == NULL) {
-		g_hash_table_insert(connectlist, longname, longname);
-		g_signal_connect_after(G_OBJECT(widget), "done_action", 
-			G_CALLBACK(SavePreviousFolder), NULL);
-	}
-
-	folder = GetWidgetCache(longname);
-	if (folder == NULL) {
-		folder = "";
-	}
-	gtk_panda_file_entry_set_folder(fentry, folder);
-
-	if (LBS_Size(data->binary) > 0) {
-		//download
-		gtk_panda_file_entry_set_mode(fentry, 
-			GTK_FILE_CHOOSER_ACTION_SAVE);
-		gtk_panda_file_entry_set_data(fentry,
-			LBS_Size(data->binary), LBS_Body(data->binary));
-		//set subwidget
-		subdata = GetWidgetData(data->subname);
-		subWidget = GetWidgetByLongName(data->subname);
-		if (subdata != NULL || subWidget != NULL) {
-			SetEntry(subWidget, subdata,(_Entry *)subdata->attrs);
-		}
-		g_signal_emit_by_name(G_OBJECT(widget), "browse_clicked", NULL);
-	} else {
-		//upload
-		gtk_panda_file_entry_set_mode(GTK_PANDA_FILE_ENTRY(widget), 
-			GTK_FILE_CHOOSER_ACTION_OPEN);
-	}
-LEAVE_FUNC;
-}
-
-static	void
-GetFileEntry(
-	GtkWidget			*widget,
-	_FileEntry			*data)
-{
-	GtkFileChooserAction mode;
-	GtkPandaFileEntry *fe;
-	GError *error = NULL;
-	gchar *contents;
-	gsize size;
-
-ENTER_FUNC;
-	fe = GTK_PANDA_FILE_ENTRY(widget);
-	mode = gtk_panda_file_entry_get_mode(fe);
-	if (mode == GTK_FILE_CHOOSER_ACTION_SAVE) {
-		data->path = NULL;
-	} else {
-		data->path = gtk_editable_get_chars(
-			GTK_EDITABLE(fe->entry),0,-1);
-		if(!g_file_get_contents(data->path, 
-				&contents, &size, &error)) {
-			g_error_free(error);
-			return;
-		}
-		data->binary->body = contents;
-		data->binary->size = data->binary->asize = data->binary->ptr = size;
-	}
 LEAVE_FUNC;
 }
 
@@ -983,8 +882,6 @@ GetWidgetType(
 			return WIDGET_TYPE_COLOR_BUTTON;
 		} else if (type == GTK_PANDA_TYPE_PIXMAP) {
 			return WIDGET_TYPE_PIXMAP;
-		} else if (type == GTK_PANDA_TYPE_FILE_ENTRY) {
-			return WIDGET_TYPE_FILE_ENTRY;
 		}
 	}
 	return WIDGET_TYPE_UNKNOWN;
@@ -1046,9 +943,6 @@ UpdateWidgetData(WidgetData	*data)
 		GetColorButton(widget, (_ColorButton*)data->attrs);
 		break;
 // gtk+
-	case WIDGET_TYPE_FILE_ENTRY:
-		GetFileEntry(widget, (_FileEntry*)data->attrs);
-		break;
 	default:
 		MessageLogPrintf("invalid widget [%s]", data->name);
 		break;
@@ -1140,9 +1034,6 @@ UpdateWidget(WidgetData *data)
 		SetColorButton(widget, data,(_ColorButton *)data->attrs);
 		break;
 // Gnome
-	case WIDGET_TYPE_FILE_ENTRY:
-		SetFileEntry(widget, data,(_FileEntry *)data->attrs);
-		break;
 	case WIDGET_TYPE_PIXMAP:
 		SetPixmap(widget, data,(_Pixmap *)data->attrs);
 		break;

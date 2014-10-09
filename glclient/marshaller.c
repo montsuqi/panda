@@ -1762,75 +1762,6 @@ LEAVE_FUNC;
 	return ret;
 }
 
-static	Bool
-RecvFileEntry(
-	WidgetData	*data,
-	NETFILE	*fp)
-{
-	Bool		ret;
-	char		name[SIZE_BUFF]
-	,			subname[SIZE_BUFF];
-	int			nitem
-	,			i;
-	_FileEntry	*attrs;
-
-ENTER_FUNC;
-	ret = FALSE;
-	attrs = (_FileEntry *)data->attrs;
-	if (attrs == NULL){
-		// new data
-		attrs = g_new0(_FileEntry, 1);
-		attrs->binary = NewLBS();
-		data->attrs = attrs;
-	} else {
-		// reset data
-		FreeLBS(attrs->binary);
-		attrs->binary = NewLBS();
-		g_free(attrs->subname);
-	}
-
-	if		(  GL_RecvDataType(fp)  ==  GL_TYPE_RECORD  ) {
-		nitem = GL_RecvInt(fp);
-		for	( i = 0 ; i < nitem ; i ++ ) {
-			GL_RecvName(fp, sizeof(name), name);
-			if		(  RecvCommon(name,data,fp)  ) {
-			} else 
-			if (!stricmp(name,"objectdata")) {
-				RecvBinaryData(fp, attrs->binary);
-			} else {
-				sprintf(subname,"%s.%s", data->name, name);
-				attrs->subname = strdup(subname);
-				RecvWidgetData(subname,fp);
-			}
-		}
-		ret = TRUE;
-	}
-LEAVE_FUNC;
-	return ret;
-}
-
-static	Bool
-SendFileEntry(
-	WidgetData	*data,
-	NETFILE		*netfp)
-{
-	char			iname[SIZE_BUFF];
-	_FileEntry		*attrs;
-
-ENTER_FUNC;
-	attrs = (_FileEntry *)data->attrs;
-	if (attrs->path == NULL){
-		return TRUE;
-	}
-	
-	GL_SendPacketClass(netfp,GL_ScreenData);
-	sprintf(iname,"%s.objectdata", data->name);
-	GL_SendName(netfp,iname);
-	SendBinaryData(netfp, GL_TYPE_OBJECT, attrs->binary);
-LEAVE_FUNC;
-	return TRUE;
-}
-
 /******************************************************************************/
 /* API                                                                        */
 /******************************************************************************/
@@ -1916,8 +1847,6 @@ RecvWidgetData(
 	case WIDGET_TYPE_COLOR_BUTTON:
 		ret = RecvColorButton(data, fp); break;
 // gnome
-	case WIDGET_TYPE_FILE_ENTRY:
-		ret = RecvFileEntry(data, fp); break;
 	case WIDGET_TYPE_PIXMAP:
 		ret = RecvPixmap(data, fp); break;
 	default:
@@ -1983,9 +1912,6 @@ ENTER_FUNC;
 		SendFileChooserButton(data, fp); break;
 	case WIDGET_TYPE_COLOR_BUTTON:
 		SendColorButton(data, fp); break;
-// gnome
-	case WIDGET_TYPE_FILE_ENTRY:
-		SendFileEntry(data, fp); break;
 	default:
 		break;
 	}

@@ -58,11 +58,12 @@ show_save_dialog(
 	if (parent == NULL) {
 		parent = GTK_WINDOW(TopWindow);
 	}
-	dialog = gtk_file_chooser_dialog_new (_("Specify filename..."),
-		parent, GTK_FILE_CHOOSER_ACTION_SAVE,
-    	GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-    	GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-		NULL);
+	dialog = GTK_WINDOW(
+		gtk_file_chooser_dialog_new (_("Specify filename..."),
+			parent, GTK_FILE_CHOOSER_ACTION_SAVE,
+    		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+    		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+			NULL));
 	gtk_file_chooser_set_do_overwrite_confirmation (
 		GTK_FILE_CHOOSER (dialog), TRUE);
 
@@ -87,19 +88,20 @@ show_save_dialog(
 			g_free(msg);
 			SetWidgetCache(lname,g_path_get_dirname(fname));
 		} else {
-			error_dialog = gtk_message_dialog_new (GTK_WINDOW(dialog),
-				GTK_DIALOG_MODAL,
-				GTK_MESSAGE_ERROR,
-				GTK_BUTTONS_CLOSE,
-				"%s",
-				error->message);
+			error_dialog = GTK_WINDOW(
+				gtk_message_dialog_new (GTK_WINDOW(dialog),
+					GTK_DIALOG_MODAL,
+					GTK_MESSAGE_ERROR,
+					GTK_BUTTONS_CLOSE,
+					"%s",
+					error->message));
 			gtk_dialog_run (GTK_DIALOG (error_dialog));
-			gtk_widget_destroy (error_dialog);
+			gtk_widget_destroy (GTK_WIDGET(error_dialog));
 			g_error_free(error);
         }
 		g_free(fname);
 	}
-	gtk_widget_destroy (dialog);
+	gtk_widget_destroy (GTK_WIDGET(dialog));
 }
 
 typedef struct {

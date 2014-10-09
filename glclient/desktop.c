@@ -162,7 +162,6 @@ Exec(char *command,char *file)
 extern void 
 OpenDesktop(char *filename,LargeByteString *binary)
 {
-	int fd;
 	int pid;
 	int status;
 	char *suffix;

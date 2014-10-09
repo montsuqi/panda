@@ -59,7 +59,6 @@ typedef enum _WidgetType {
 	WIDGET_TYPE_FILE_CHOOSER_BUTTON,
 	WIDGET_TYPE_COLOR_BUTTON,
 // gnome
-	WIDGET_TYPE_FILE_ENTRY,
 	WIDGET_TYPE_PIXMAP,
 	WIDGET_TYPE_UNKNOWN
 } WidgetType;
@@ -199,12 +198,6 @@ typedef struct __ScrolledWindow{
 typedef struct __Pixmap{
 	LargeByteString	*binary;
 } _Pixmap;
-
-typedef struct __FileEntry{
-	LargeByteString	*binary;
-	char 			*subname;
-	char 			*path;
-} _FileEntry;
 
 typedef struct __FileChooserButton{
 	LargeByteString	*binary;
