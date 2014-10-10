@@ -36,6 +36,7 @@
 #include	<sys/time.h>
 #include 	<gtk/gtk.h>
 #include	<gtkpanda/gtkpanda.h>
+#include	<glade/glade.h>
 #include	<json.h>
 
 #include	"types.h"

@@ -30,6 +30,7 @@
 #include	<stdlib.h>
 #include	<stdarg.h>
 #include	<gtk/gtk.h>
+#include	<glade/glade.h>
 
 #include	"glclient.h"
 #include	"gettext.h"
@@ -89,12 +90,13 @@ show_save_dialog(
 			g_free(msg);
 			SetWidgetCache(lname,g_path_get_dirname(fname));
 		} else {
-			error_dialog = gtk_message_dialog_new (GTK_WINDOW(dialog),
-				GTK_DIALOG_MODAL,
-				GTK_MESSAGE_ERROR,
-				GTK_BUTTONS_CLOSE,
-				"%s",
-				error->message);
+			error_dialog = 
+				gtk_message_dialog_new (GTK_WINDOW(dialog),
+					GTK_DIALOG_MODAL,
+					GTK_MESSAGE_ERROR,
+					GTK_BUTTONS_CLOSE,
+					"%s",
+					error->message);
 			gtk_dialog_run(GTK_DIALOG (error_dialog));
 			gtk_widget_destroy(GTK_WIDGET(error_dialog));
 			g_error_free(error);

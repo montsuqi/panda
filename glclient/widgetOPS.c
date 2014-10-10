@@ -34,9 +34,10 @@
 #include	<unistd.h>
 #include	<sys/time.h>
 #include	<errno.h>
-#include	<gtkpanda/gtkpanda.h>
 #include	<gdk/gdk.h>
 #include	<gtk/gtk.h>
+#include	<gtkpanda/gtkpanda.h>
+#include	<glade/glade.h>
 #include	<gdk-pixbuf/gdk-pixbuf.h>
 #include	<json.h>
 #include	<json_object_private.h> /*for json_object_object_foreachC()*/
