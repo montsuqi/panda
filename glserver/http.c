@@ -89,6 +89,7 @@ typedef struct {
 	char			*window;
 	char			*session_id;
 	char			*oid;
+	gboolean		require_auth;
 	int				status;
 } HTTP_REQUEST;
 
@@ -118,6 +119,7 @@ HTTP_Init(
 	req->status = HTTP_OK;
 	req->session_id = NULL;
 	req->oid = 0;
+	req->require_auth = FALSE;
 	return req;
 }
 
@@ -202,6 +204,9 @@ SendResponse(
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n",status,GetReasonPhrase(status));
 	Send(req->fp,buf,strlen(buf)); 
+	if (fDebug) {
+		Warning("%s",buf);
+	}
 
 	gmtime_r(&t, &cur);
 	cur_p = &cur;
@@ -306,6 +311,7 @@ GetNextLine(HTTP_REQUEST *req)
 	}
 }
 
+
 void
 ParseReqLine(HTTP_REQUEST *req)
 {
@@ -315,6 +321,10 @@ ParseReqLine(HTTP_REQUEST *req)
 	char *line;
 
 	line = GetNextLine(req);
+
+	if (fDebug) {
+		Warning("%s",line);
+	}
 
 	/*jsonrpc*/
 	if (g_regex_match_simple("^post\\s+/rpc/*\\s",line,G_REGEX_CASELESS,0)) {
@@ -363,6 +373,7 @@ ParseReqLine(HTTP_REQUEST *req)
 		req->window = g_match_info_fetch(match,4);
 		req->arguments = g_match_info_fetch(match,6);
 		req->type = REQUEST_TYPE_API;
+		req->require_auth = TRUE;
 		g_match_info_free(match);
 		g_regex_unref(re);
 		free(line);
@@ -855,29 +866,34 @@ JSONRPCHandler(
 	if (!CheckJSONObject(obj,json_type_object)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
 	child = json_object_object_get(obj,"jsonrpc");
 	if (!CheckJSONObject(child,json_type_string)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
 	if (strcmp(json_object_get_string(child),"2.0")) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
 	child = json_object_object_get(obj,"id");
 	if (!CheckJSONObject(child,json_type_int)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
 	child = json_object_object_get(obj,"method");
 	if (!CheckJSONObject(child,json_type_string)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
 	}
 	method = (char*)json_object_get_string(child);
@@ -885,7 +901,11 @@ JSONRPCHandler(
 	if (!CheckJSONObject(params,json_type_object)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+		json_object_put(obj);
 		return FALSE;
+	}
+	if (fDebug) {
+		Warning("jsonrpc:%s",method);
 	}
 	if (!strcmp(method,"get_server_info")) {
 		res = GetServerInfo(obj);
@@ -906,6 +926,7 @@ JSONRPCHandler(
 		meta = json_object_object_get(params,"meta");
 		if (!CheckJSONObject(meta,json_type_object)) {
 			SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
+			json_object_put(obj);
 			return FALSE;
 		}
 
@@ -996,6 +1017,28 @@ GLAuth(
 	}
 }
 
+void
+CheckJSONRPCMethod(
+	HTTP_REQUEST *req)
+{
+	char *reqjson,*method;
+	json_object *obj,*child;
+
+	reqjson = StrnDup(req->body,req->body_size);
+	obj = json_tokener_parse(reqjson);
+	xfree(reqjson);
+	child = json_object_object_get(obj,"method");
+	if (CheckJSONObject(child,json_type_string)) {
+		method = (char*)json_object_get_string(child);
+		if (!strcmp(method,"start_session")) {
+			req->require_auth = TRUE;
+		} else {
+			req->require_auth = FALSE;
+		}
+	}
+	json_object_put(obj);
+}
+
 static gboolean
 _HTTP_Method(
 	HTTP_REQUEST *req)
@@ -1007,11 +1050,18 @@ _HTTP_Method(
 		SendResponse(req,req->status,NULL,0,NULL);
 		return FALSE;
 	}
-	if (!GLAuth(req)) {
-		MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
-		req->status = HTTP_FORBIDDEN;
-		SendResponse(req,req->status,NULL,0,NULL);
-		return FALSE;
+
+	if (req->type == REQUEST_TYPE_JSONRPC) {
+		CheckJSONRPCMethod(req);
+	}
+
+	if (req->require_auth) {
+		if (!GLAuth(req)) {
+			MessageLogPrintf("[%s@%s] Authorization Error", req->user, req->host);
+			req->status = HTTP_FORBIDDEN;
+			SendResponse(req,req->status,NULL,0,NULL);
+			return FALSE;
+		}
 	}
 
 	switch(req->type) {
@@ -1058,6 +1108,7 @@ PrepareNextRequest(
 	XFree(&(req->session_id));
 	req->status = HTTP_OK;
 	req->body_size = 0;
+	req->require_auth = FALSE;
 	g_hash_table_foreach_remove(req->header_hash, RemoveHeader, NULL);
 
 	if (req->head != NULL && strlen(req->head)> 1) {
