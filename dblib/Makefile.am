@@ -59,7 +59,8 @@ libpostgresqlutils_a_LIBADD =
 libpostgresqlutils_a_CFLAGS = $(AM_CFLAGS)
 libpostgresqlutils_a_SOURCES = \
 	PostgreSQLlib.c PostgreSQLlib.h	\
-	PostgreSQLutils.c audit.c
+	PostgreSQLutils.c PostgreSQLutils.h \
+	audit.c audit.h 
 
 DB_OBJECTS			=		\
 	PostgreSQL.la			\

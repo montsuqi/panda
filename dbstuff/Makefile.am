@@ -81,7 +81,7 @@ dblogger_DEPENDENCIES	= $(dbredirector_DEPENDENCIES)
 dbmaster_LDADD 		= $(dbredirector_LDADD)
 dbmaster_LDFLAGS	=	-export-dynamic
 dbmaster_SOURCES	=	\
-	dbmaster.c dbmaster_thread.c 
+	dbmaster.c dbmaster_thread.c dbmaster_thread.h dbreplication.h
 dbmaster_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.la	\
@@ -92,7 +92,7 @@ dbmaster_DEPENDENCIES	=			\
 dbslave_LDADD 		= $(dbredirector_LDADD)
 dbslave_LDFLAGS	=	-export-dynamic
 dbslave_SOURCES	=	\
-	dbslave.c dbslave_thread.c 
+	dbslave.c dbslave_thread.c dbslave_thread.h dbreplication.h
 dbslave_DEPENDENCIES	=			\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/dblib/libpandadb.la	\
