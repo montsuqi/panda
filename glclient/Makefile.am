@@ -38,8 +38,7 @@ base_sources =						\
 	styleParser.c	styleParser.h	\
 	notify.c		notify.h		\
 	widgetOPS.c		widgetOPS.h		\
-	printservice.c	printservice.h	\
-	toplevel.h
+	printservice.c	printservice.h
 
 base_dependencies =						\
 	$(top_builddir)/libs/libpanda.la
@@ -58,7 +57,7 @@ base_LDADD =									\
 	$(top_builddir)/libs/libpanda.la			\
 	$(COMMON_LIBS)								\
 	$(P11_LIBS)									\
-	$(SSL_LIBS)			
+	$(SSL_LIBS)
 
 #################################################
 # glclient2
