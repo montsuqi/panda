@@ -43,7 +43,6 @@ extern  void	changed(GtkWidget *entry,gpointer user_data);
 extern  void	text_changed(GtkWidget *entry,gpointer user_data);
 extern  void	button_toggled(GtkWidget *button,gpointer user_data);
 extern  void	selection_changed(GtkWidget *widget,gpointer user_data);
-extern	void	fileentry_changed(GtkWidget *widget,gpointer user_data);
 extern  void	click_column(GtkWidget *button,gpointer user_data);
 extern  void	set_focus(GtkWidget  *widget,gpointer user_data); 
 extern  void	day_selected(GtkCalendar *widget,gpointer user_data); 

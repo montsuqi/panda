@@ -118,24 +118,6 @@ LEAVE_FUNC;
 	return	(rc);
 }
 
-G_MODULE_EXPORT static GtkWidget*
-find_widget_ancestor(
-	GtkWidget	*w,
-	GType		t)
-{
-	GtkWidget	*widget;
-	GType		type;
-	widget = w;
-	while (widget) {
-		type = (long)G_OBJECT_TYPE(widget);
-		if	(type == t){
-			return widget;
-		}
-		widget = gtk_widget_get_parent(widget);
-	}
-	return NULL;
-}
-
 static int TimerID = 0;
 static char *TimerEvent = "";
 
@@ -325,20 +307,6 @@ selection_changed(
 	gpointer	user_data)
 {
 	AddChangedWidget(widget);
-}
-
-extern void
-fileentry_changed(
-	GtkWidget	*widget,
-	gpointer	user_data)
-{
-	GtkWidget	*fileentry;
-
-    fileentry = find_widget_ancestor(widget, GTK_PANDA_TYPE_FILE_ENTRY);
-    if (fileentry != NULL) {
-	  AddChangedWidget(fileentry);
-	  AddChangedWidget(widget);
-    }
 }
 
 extern	void
