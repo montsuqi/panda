@@ -512,9 +512,11 @@ boot_dialog_new ()
   label = gtk_label_new (_("Basic"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->basictable, label);
 
+#ifdef USE_SSL
   /* ssl tab */
   label = gtk_label_new (_("SSL"));
   gtk_notebook_append_page (GTK_NOTEBOOK (notebook), self->component->ssltable, label);
+#endif
 
   /* Other tab */
   label = gtk_label_new (_("Details"));

@@ -39,6 +39,7 @@
 #include <json.h>
 #include <curl/curl.h>
 #include <errno.h>
+#ifdef USE_SSL
 #include <libp11.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
@@ -48,6 +49,7 @@
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
 #include <openssl/engine.h>
+#endif
 
 #include "glclient.h"
 #include "gettext.h"
@@ -811,6 +813,7 @@ RPC_ListDownloads()
 	json_object_put(obj);
 }
 
+#ifdef USE_SSL
 static	void
 InitCURLPKCS11()
 {
@@ -934,6 +937,7 @@ InitCURLPKCS11()
 	g_free(cacertfile);
 	free(certid);
 }
+#endif
 
 static	void
 InitCURL()
@@ -950,6 +954,7 @@ InitCURL()
 		curl_easy_setopt(Curl,CURLOPT_VERBOSE,1);
 	}
 
+#ifdef USE_SSL
 	if (fSSL) {
 		curl_easy_setopt(Curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
 		curl_easy_setopt(Curl,CURLOPT_SSL_VERIFYPEER,1);
@@ -972,16 +977,24 @@ InitCURL()
 		curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 		curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
 	}
+#else
+	memset(userpass,0,sizeof(userpass));
+	snprintf(userpass,sizeof(userpass)-1,"%s:%s",User,Pass);
+	curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+#endif
 }
 
 void FinalCURL()
 {
+#ifdef USE_SSL
 	if (fPKCS11) {
 		if (Engine != NULL) {
 			ENGINE_finish(Engine);
 		}
 		ENGINE_cleanup();
 	}
+#endif
 	if (Curl != NULL) {
 		curl_easy_cleanup(Curl);
 		curl_global_cleanup();

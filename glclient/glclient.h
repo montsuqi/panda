@@ -28,7 +28,9 @@
 #include	<glib.h>
 #include	<json.h>
 #include	<curl/curl.h>
+#ifdef USE_SSL
 #include	<openssl/engine.h>
+#endif
 
 #include	"libmondai.h"
 
@@ -118,7 +120,9 @@ GLOBAL	char		*Ciphers;
 
 GLOBAL	Bool		fPKCS11;
 GLOBAL	char		*PKCS11Lib;
+#ifdef USE_SSL
 GLOBAL	ENGINE		*Engine;
+#endif
 GLOBAL	CURL		*Curl;
 
 #endif
