@@ -36,8 +36,8 @@ base_sources =						\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\
 	notify.c		notify.h		\
-	widgetOPS.c		widgetOPS.h		\
-	toplevel.h
+	widgetOPS.c		widgetOPS.h
+
 
 base_dependencies =						\
 	$(top_builddir)/libs/libpanda.la
