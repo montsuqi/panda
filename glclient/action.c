@@ -1194,6 +1194,38 @@ SendEvent(
 }
 
 static	void
+CheckCloseWindow(
+	json_object *w,
+	int idx)
+{
+	json_object *child;
+	const char *put_type;
+	const char *wname;
+
+	child = json_object_object_get(w,"put_type");
+	if (child == NULL ||is_error(child)) {
+		Error("invalid json part:put_type");
+	}
+	put_type = (char*)json_object_get_string(child);
+
+	child = json_object_object_get(w,"window");
+	if (child == NULL ||is_error(child)) {
+		Error("invalid json part:window");
+	}
+	wname = json_object_get_string(child);
+
+	if (GetWindowData(wname) == NULL) {
+		return;
+	}
+	if (strcmp("new",put_type) && strcmp("current",put_type)) {
+		if (fMlog) {
+			MessageLogPrintf("close window[%s] put_type[%s]\n",wname,put_type);
+		}
+		CloseWindow(wname);
+	}
+}
+
+static	void
 UpdateWindow(
 	json_object *w,
 	int idx)
@@ -1214,10 +1246,6 @@ UpdateWindow(
 		Error("invalid json part:window");
 	}
 	wname = json_object_get_string(child);
-
-	if (fMlog) {
-		MessageLogPrintf("window[%s] put_type[%s]\n",wname,put_type);
-	}
 
 	if (GetWindowData(wname) == NULL) {
 		obj = RPC_GetScreenDefine(wname);
@@ -1240,8 +1268,9 @@ UpdateWindow(
 			ShowWindow(wname);
 		}
 		ResetTimer((char*)wname);
-	} else {
-		CloseWindow(wname);
+		if (fMlog) {
+			MessageLogPrintf("show  window[%s] put_type[%s]\n",wname,put_type);
+		}
 	}
 }
 
@@ -1291,11 +1320,16 @@ UpdateScreen()
 	}
 	for(i=0;i<json_object_array_length(windows);i++) {
 		child = json_object_array_get_idx(windows,i);
+		CheckCloseWindow(child,i);
+	}
+	for(i=0;i<json_object_array_length(windows);i++) {
+		child = json_object_array_get_idx(windows,i);
 		UpdateWindow(child,i);
 	}
 	if (f_window != NULL) {
-		GrabFocus(f_window,f_widget);
-		PandaTableFocusCell(f_widget);
+		if (!PandaTableFocusCell(f_widget)) {
+			GrabFocus(f_window,f_widget);
+		}
 	}
 }
 

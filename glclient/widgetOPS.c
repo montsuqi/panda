@@ -609,13 +609,10 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-void
+Bool
 PandaTableFocusCell(const char *wname)
 {
-	if (panda_table == NULL) {
-		return;
-	}
-	if (!strcmp(wname,gtk_widget_get_name(panda_table))) {
+	if (panda_table != NULL && !strcmp(wname,gtk_widget_get_name(panda_table))) {
 		if (panda_table_row >= 0 && panda_table_column >= 0) {
 			gtk_panda_table_moveto(GTK_PANDA_TABLE(panda_table), 
 				panda_table_row, panda_table_column, TRUE, 
@@ -623,7 +620,10 @@ PandaTableFocusCell(const char *wname)
 		} else {
 			gtk_panda_table_stay(GTK_PANDA_TABLE(panda_table));
 		}
+		panda_table = NULL;
+		return TRUE;
 	}
+	return FALSE;
 }
 
 static	void
