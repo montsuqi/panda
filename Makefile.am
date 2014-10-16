@@ -51,7 +51,7 @@ defaults.h: Makefile.am $(top_builddir)/config.status
 	@echo "#define DOTCOBOL_COMMAND			\"@DOTCOBOL_COMMAND@\""			>> defaults.h
 	@echo "#define MONTSUQI_LOAD_PATH		\".:@MONTSUQI_LOAD_PATH@\""		>> defaults.h
 
-DISTCLEANFILES = defaults.h
+DISTCLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =			\
 	config.rpath		\
