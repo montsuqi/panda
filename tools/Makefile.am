@@ -182,7 +182,6 @@ if POSTGRESQL
 dbsyncbin = dbsync
 
 dbsync_SOURCES	= \
-	$(top_builddir)/defaults.h			\
 	dbsync.c
 
 dbsync_LDADD			=		\

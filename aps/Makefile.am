@@ -85,7 +85,9 @@ C_la_SOURCES			=	\
 OpenCOBOL_la_SOURCES	=	\
 	MONFUNC.c				\
 	MONFUNC.h				\
-	OpenCOBOL.c
+	OpenCOBOL.c				\
+	OpenCOBOL.h
+
 OpenCOBOL_la_LIBADD		=	$(OPENCOBOL_LIBS)
 
 Ruby_la_SOURCES			=	\
