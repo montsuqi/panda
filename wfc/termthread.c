@@ -565,7 +565,7 @@ ENTER_FUNC;
 	RecvnString(term->fp,SIZE_HOST,data->hdr->host);ON_IO_ERROR(term->fp,badio);
 	RecvnString(term->fp,SIZE_NAME,data->agent);ON_IO_ERROR(term->fp,badio);
 
-	MessageLogPrintf("[%s:%s] session start(%d)",
+	MessageLogPrintf("[%s@%s] session start(%d)",
 		data->hdr->user,data->hdr->uuid,sesnum+1);
 	dbgprintf("uuid   = [%s]",data->hdr->uuid);
 	dbgprintf("user   = [%s]",data->hdr->user);
