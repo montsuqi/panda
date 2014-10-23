@@ -434,7 +434,7 @@ ENTER_FUNC;
 
 	memset(data->agent,0,SIZE_NAME+1);
 
-	MessageLogPrintf("[%s:%s] session start(%d)",data->hdr->user,data->hdr->uuid,sesnum+1);
+	MessageLogPrintf("[%s@%s] session start(%d)",data->hdr->user,data->hdr->uuid,sesnum+1);
 	dbgprintf("uuid   = [%s]",data->hdr->uuid);
 	dbgprintf("user   = [%s]",data->hdr->user);
 	dbgprintf("host   = [%s]",data->hdr->host);
