@@ -565,13 +565,16 @@ extern	Bool
 GetScreenData(
 	NETFILE		*fp)
 {
-	char			window[SIZE_NAME+1];
+#	define	SIZE_STACK	16
+	char			window[SIZE_NAME+1],stack[SIZE_STACK][SIZE_NAME+1];
 	char			widgetName[SIZE_LONGNAME+1];
 	PacketClass		c;
 	gboolean 		isdummy;
 	unsigned char	type;
+	int				i,nwindow;
 
 ENTER_FUNC;
+	nwindow = 0;
 	isdummy = FALSE;
 	CheckScreens(fp,FALSE);	 
 	GL_SendPacketClass(fp,GL_GetData);
@@ -597,29 +600,25 @@ ENTER_FUNC;
 				MessageLogPrintf("join window [%s]\n",window);break;
 			}
 		}
-		switch	(type) {
-		  case	SCREEN_NEW_WINDOW:
-		  case	SCREEN_CHANGE_WINDOW:
-		  case	SCREEN_CURRENT_WINDOW:
+		switch (type) {
+		case SCREEN_NEW_WINDOW:
+		case SCREEN_CHANGE_WINDOW:
+		case SCREEN_CURRENT_WINDOW:
 			if ((c = GL_RecvPacketClass(fp)) == GL_ScreenData) {
 				if (THISWINDOW(Session) != NULL) {
 					free(THISWINDOW(Session));
 				}
 				THISWINDOW(Session) = strdup(window);
 				RecvValue(fp,window);
-				isdummy = window[0] == '_';
-				if (!isdummy) {
-					ShowWindow(window);
-				}
-				UpdateWindow(window);
-				ResetTimer(window);
+				strcpy(stack[nwindow],window);
+				nwindow += 1;
 			}
 			break;
-		  case	SCREEN_CLOSE_WINDOW:
+		case SCREEN_CLOSE_WINDOW:
 			CloseWindow(window);
 			c = GL_RecvPacketClass(fp);
 			break;
-		  default:
+		default:
 			CloseWindow(window);
 			c = GL_RecvPacketClass(fp);
 			break;
@@ -630,7 +629,14 @@ ENTER_FUNC;
 			/*	fatal error	*/
 		}
 	}
-
+	for (i=0;i<nwindow;i++) {
+		isdummy = stack[i][0] == '_';
+		if (!isdummy) {
+			ShowWindow(stack[i]);
+		}
+		UpdateWindow(stack[i]);
+		ResetTimer(stack[i]);
+	}
 	if (c == GL_FocusName) {
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
