@@ -415,7 +415,7 @@ ENTER_FUNC;
 	GetOption(option,argc,argv,NULL);
 
 	InitSystem();
-	Message("wfc start");
+	MessageLogPrintf("wfc start %s %s",PACKAGE_VERSION,PACKAGE_DATE);
 	ExecuteServer();
 	Message("wfc stop");
 	CleanUp();
