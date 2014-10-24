@@ -628,7 +628,7 @@ bd_component_new()
 
   ypos = 0;
   
-  sprintf(buff, "glclient2 ver %s", PACKAGE_VERSION);
+  sprintf(buff, "glclient2 ver %s %s", PACKAGE_VERSION,PACKAGE_DATE);
   label = gtk_label_new (buff);
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
   gtk_container_add (GTK_CONTAINER (alignment), label);
