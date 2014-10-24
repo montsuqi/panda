@@ -928,9 +928,8 @@ ConfigureWindow(GtkWidget *widget,
 #endif
 	gtk_widget_set_size_request(TopNoteBook,1,1); 
 	if (old_width != width || old_height != height) {
-		TopWindowScale.h = (width * 1.0) / (DEFAULT_WINDOW_WIDTH);
-		TopWindowScale.v = (height * 1.0) / 
-			(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
+		TopWindowScale.h = (width  * 1.0) / ORIGIN_WINDOW_WIDTH;
+		TopWindowScale.v = (height * 1.0) / ORIGIN_WINDOW_HEIGHT;
 		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, NULL);
 		sprintf(buf,"%d",width);
 		SetWidgetCache("glclient.topwindow.width",buf);
@@ -962,12 +961,11 @@ InitTopWindow(void)
 		width = atoi(pwidth); height = atoi(pheight);
 	} else {
 		width = DEFAULT_WINDOW_WIDTH;
-		height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
+		height = DEFAULT_WINDOW_HEIGHT;
 	}
 
-	TopWindowScale.v = (width * 1.0) / (DEFAULT_WINDOW_WIDTH );
-	TopWindowScale.h = (height * 1.0) / 
-		(DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
+	TopWindowScale.h = (ORIGIN_WINDOW_WIDTH  * 1.0) / width;
+	TopWindowScale.v = (ORIGIN_WINDOW_HEIGHT * 1.0) / height;
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_move(GTK_WINDOW(TopWindow),x,y); 
@@ -977,14 +975,14 @@ InitTopWindow(void)
 #else
     gtk_window_set_default_size(GTK_WINDOW(TopWindow),
 		DEFAULT_WINDOW_WIDTH,
-		DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER);
+		DEFAULT_WINDOW_HEIGHT);
 #endif
 	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_QUEUE);
 #else
 	gtk_widget_set_size_request(TopWindow,width, height);
 	GdkGeometry geometry;
 	geometry.min_width = DEFAULT_WINDOW_WIDTH;
-	geometry.min_height = DEFAULT_WINDOW_HEIGHT - DEFAULT_WINDOW_FOOTER;
+	geometry.min_height = DEFAULT_WINDOW_HEIGHT;
 	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
 		GDK_HINT_MIN_SIZE);
 	gtk_window_set_wmclass(GTK_WINDOW(TopWindow),"Glclient","Glclient");

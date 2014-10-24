@@ -23,9 +23,10 @@
 #include	"glclient.h"
 #include	"marshaller.h"
 
-#define	DEFAULT_WINDOW_WIDTH	1024
-#define	DEFAULT_WINDOW_HEIGHT	768
-#define	DEFAULT_WINDOW_FOOTER	24
+#define	ORIGIN_WINDOW_WIDTH		1024
+#define	ORIGIN_WINDOW_HEIGHT	744
+#define	DEFAULT_WINDOW_WIDTH	1000
+#define	DEFAULT_WINDOW_HEIGHT	720
 
 #undef	GLOBAL
 #ifdef	ACTION_MAIN
