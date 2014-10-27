@@ -22,9 +22,9 @@
 
 #include	"wfcdata.h"
 
+extern	void		InitSessionCtrl();
 extern	SessionCtrl	*NewSessionCtrl(SessionCtrlType type);
 extern	void		FreeSessionCtrl(SessionCtrl *ctrl);
-extern	void		SessionEnqueue(SessionCtrl *ctrl);
-extern	void		StartSessionThread(void);
+extern	SessionCtrl *ExecSessionCtrl(SessionCtrl *ctrl);
 
 #endif

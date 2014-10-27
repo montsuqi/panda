@@ -57,7 +57,7 @@
 #include	"termthread.h"
 #include	"controlthread.h"
 #include	"sysdatathread.h"
-#include	"sessionthread.h"
+#include	"sessionctrl.h"
 #include	"dbgroup.h"
 #include	"blob.h"
 #include	"option.h"
@@ -296,7 +296,7 @@ ENTER_FUNC;
 	SetupMessageQueue();
 	InitTerm();
 	StartCoreThread();
-	StartSessionThread();
+	InitSessionCtrl();
 	InitControl();
 LEAVE_FUNC;
 }

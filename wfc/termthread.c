@@ -58,7 +58,7 @@
 #include	"glterm.h"
 #include	"termthread.h"
 #include	"corethread.h"
-#include	"sessionthread.h"
+#include	"sessionctrl.h"
 #include	"dirs.h"
 #include	"message.h"
 #include	"debug.h"
@@ -187,8 +187,7 @@ ENTER_FUNC;
 
 	ctrl = NewSessionCtrl(SESSION_CONTROL_INSERT);
 	ctrl->session = data;
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
+	ctrl = ExecSessionCtrl(ctrl);
 	FreeSessionCtrl(ctrl);
 LEAVE_FUNC;
 }
@@ -202,8 +201,7 @@ LookupSession(
 ENTER_FUNC;
 	ctrl = NewSessionCtrl(SESSION_CONTROL_LOOKUP);
 	strcpy(ctrl->id,term);
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
+	ctrl = ExecSessionCtrl(ctrl);
 	data = ctrl->session;
 	FreeSessionCtrl(ctrl);
 LEAVE_FUNC;
@@ -225,8 +223,7 @@ ENTER_FUNC;
 #endif
 	ctrl = NewSessionCtrl(SESSION_CONTROL_DELETE);
 	ctrl->session = data;
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
+	ctrl = ExecSessionCtrl(ctrl);
 	FreeSessionCtrl(ctrl);
 	FreeSessionData(data);
 LEAVE_FUNC;
@@ -240,8 +237,7 @@ UpdateSession(
 ENTER_FUNC;
 	ctrl = NewSessionCtrl(SESSION_CONTROL_UPDATE);
 	ctrl->session = data;
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
+	ctrl = ExecSessionCtrl(ctrl);
 	FreeSessionCtrl(ctrl);
 LEAVE_FUNC;
 }
@@ -253,8 +249,7 @@ GetSessionNum()
 	unsigned int size;
 ENTER_FUNC;
 	ctrl = NewSessionCtrl(SESSION_CONTROL_GET_SESSION_NUM);
-	SessionEnqueue(ctrl);
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
+	ctrl = ExecSessionCtrl(ctrl);
 	size = ctrl->size;
 	FreeSessionCtrl(ctrl);
 LEAVE_FUNC;

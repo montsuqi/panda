@@ -52,12 +52,12 @@ wfc_SOURCES	=							\
 	blobserv.c		blobserv.h			\
 	sysdbserv.c		sysdbserv.h			\
 	termthread.c	termthread.h		\
-	sessionthread.c	sessionthread.h	
+	sessionctrl.c	sessionctrl.h	
 
 wfccontrol_LDFLAGS	=			\
 	-export-dynamic
 wfccontrol_SOURCES	=					\
-	wfccontrol.c						\
+	wfcctrl.c						\
 	controlthread.h
 
 moninfo_LDFLAGS	=			\

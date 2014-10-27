@@ -36,10 +36,10 @@
 #include	<glib.h>
 #include	<pthread.h>
 #include	<errno.h>
+#include	<libmondai.h>
 
 #include	"enum.h"
 
-#include	"libmondai.h"
 #include	"socket.h"
 #include	"net.h"
 #include	"comm.h"

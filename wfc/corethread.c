@@ -34,9 +34,8 @@
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<pthread.h>
+#include	<libmondai.h>
 
-
-#include	"libmondai.h"
 #include	"LDparser.h"
 #include	"queue.h"
 #include	"wfcdata.h"

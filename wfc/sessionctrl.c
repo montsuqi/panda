@@ -34,9 +34,9 @@
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<pthread.h>
+#include	<libmondai.h>
+#include	<RecParser.h>
 
-#include	"libmondai.h"
-#include	"RecParser.h"
 #include	"LDparser.h"
 #include	"queue.h"
 #include	"term.h"
@@ -44,7 +44,8 @@
 #include	"wfc.h"
 #include	"debug.h"
 
-static	Queue		*workq;
+static	GHashTable	*hash;
+static	pthread_mutex_t lock;
 
 extern	SessionCtrl*
 NewSessionCtrl(
@@ -394,72 +395,58 @@ GetDataAll(
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
-extern	void
-SessionEnqueue(
+extern	SessionCtrl *
+ExecSessionCtrl(
 	SessionCtrl	*ctrl)
 {
-	EnQueue(workq,ctrl);
-}
-
-static	void
-SessionThread(
-	void	*para)
-{
-	SessionCtrl *ctrl;
-	GHashTable *hash;
-ENTER_FUNC;
-	workq = NewQueue();
-	hash = NewNameHash();
-	RecParserInit();
-	while (TRUE) {
-		ctrl = (SessionCtrl *)DeQueue(workq);
-		switch (ctrl->type) {
-		case SESSION_CONTROL_INSERT:
-			InsertSession(hash,ctrl);
-			break;
-		case SESSION_CONTROL_UPDATE:
-			UpdateSession(hash,ctrl);
-			break;
-		case SESSION_CONTROL_DELETE:
-			DeleteSession(hash,ctrl);
-			break;
-		case SESSION_CONTROL_LOOKUP:
-			LookupSession(hash,ctrl);
-			break;
-		case SESSION_CONTROL_GET_SESSION_NUM:
-			GetSessionNum(hash,ctrl);
-			break;
-		case SESSION_CONTROL_GET_DATA:
-			GetData(hash,ctrl);
-			break;
-		case SESSION_CONTROL_GET_MESSAGE:
-			GetMessage(hash,ctrl);
-			break;
-		case SESSION_CONTROL_RESET_MESSAGE:
-			ResetMessage(hash,ctrl);
-			break;
-		case SESSION_CONTROL_SET_MESSAGE:
-			SetMessage(hash,ctrl);
-			break;
-		case SESSION_CONTROL_SET_MESSAGE_ALL:
-			SetMessageAll(hash,ctrl);
-			break;
-		case SESSION_CONTROL_GET_DATA_ALL:
-			GetDataAll(hash,ctrl);
-			break;
-		}
-		EnQueue(ctrl->waitq,ctrl);
+	pthread_mutex_lock(&lock);
+	switch (ctrl->type) {
+	case SESSION_CONTROL_INSERT:
+		InsertSession(hash,ctrl);
+		break;
+	case SESSION_CONTROL_UPDATE:
+		UpdateSession(hash,ctrl);
+		break;
+	case SESSION_CONTROL_DELETE:
+		DeleteSession(hash,ctrl);
+		break;
+	case SESSION_CONTROL_LOOKUP:
+		LookupSession(hash,ctrl);
+		break;
+	case SESSION_CONTROL_GET_SESSION_NUM:
+		GetSessionNum(hash,ctrl);
+		break;
+	case SESSION_CONTROL_GET_DATA:
+		GetData(hash,ctrl);
+		break;
+	case SESSION_CONTROL_GET_MESSAGE:
+		GetMessage(hash,ctrl);
+		break;
+	case SESSION_CONTROL_RESET_MESSAGE:
+		ResetMessage(hash,ctrl);
+		break;
+	case SESSION_CONTROL_SET_MESSAGE:
+		SetMessage(hash,ctrl);
+		break;
+	case SESSION_CONTROL_SET_MESSAGE_ALL:
+		SetMessageAll(hash,ctrl);
+		break;
+	case SESSION_CONTROL_GET_DATA_ALL:
+		GetDataAll(hash,ctrl);
+		break;
+	default:
+		Warning("do not reach");
+		ctrl->rc = SESSION_CONTROL_NG;
+		break;
 	}
-	pthread_exit(NULL);
-LEAVE_FUNC;
+	pthread_mutex_unlock(&lock);
+	return ctrl;
 }
 
 extern	void
-StartSessionThread(void)
+InitSessionCtrl()
 {
-	static	pthread_t	ses;
-ENTER_FUNC;
-	pthread_create(&ses,NULL,(void *(*)(void *))SessionThread,NULL);
-LEAVE_FUNC;
+	RecParserInit();
+	hash = NewNameHash();
+	pthread_mutex_init(&lock,NULL);
 }
-
