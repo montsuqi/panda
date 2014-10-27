@@ -1127,9 +1127,9 @@ AskPass(char	*buf,
 static void
 Ping()
 {
-	char *popup,*dialog,*abort;
+	char *dialog,*popup,*abort;
 
-	RPC_GetMessage(&popup,&dialog,&abort);
+	RPC_GetMessage(&dialog,&popup,&abort);
 	if (strlen(abort)>0) {
 		ShowInfoDialog(abort);
 		exit(1);
