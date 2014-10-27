@@ -369,7 +369,7 @@ static	void
 CallAfter(
 	ProcessNode	*node)
 {
-	int			i,dc_sp;
+	int			i,dc_sp,org_sp;
 	char		*dc_puttype;
 	char		*dc_window;
 	gboolean	has_window;
@@ -404,6 +404,15 @@ ENTER_FUNC;
 	fprintf(stderr,"[%s] -> [%s] [%s]\n",
 		node->window,dc_window,strputtype(node->puttype));
 #endif
+
+	/* org window sp*/
+	org_sp = -1;
+	for (i=0;i<node->w.sp;i++) {
+		if (!strcmp(node->window,node->w.s[i].window)) {
+			org_sp = i;
+			break;
+		}
+	}
 
 	/* windowがあるかどうかチェック */
 	has_window = FALSE;
@@ -444,8 +453,8 @@ ENTER_FUNC;
 		break;
 	case SCREEN_CHANGE_WINDOW:
 		/* ひとつ前のウィンドウをCLOSE  */
-		if (dc_sp >= 1) {
-			node->w.s[dc_sp-1].puttype = SCREEN_CLOSE_WINDOW;
+		if (org_sp != -1) {
+			node->w.s[org_sp].puttype = SCREEN_CLOSE_WINDOW;
 		}
 		node->w.s[dc_sp].puttype = SCREEN_CURRENT_WINDOW;
 		break;
