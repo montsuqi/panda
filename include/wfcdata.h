@@ -165,7 +165,6 @@ typedef struct _SessionCtrl {
 	SessionData		*session;
 	ValueStruct		*sysdbval;
 	ValueStruct		*sysdbvals;
-	Queue			*waitq;
 }	SessionCtrl;
 
 #define SYSDBVAL_DEF ""												\

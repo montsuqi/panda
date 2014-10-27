@@ -38,7 +38,6 @@
 #include	<RecParser.h>
 
 #include	"LDparser.h"
-#include	"queue.h"
 #include	"term.h"
 #include	"wfcdata.h"
 #include	"wfc.h"
@@ -55,7 +54,6 @@ NewSessionCtrl(
 	
 	ctrl = g_new0(SessionCtrl,1);
 	ctrl->type = type;
-	ctrl->waitq = NewQueue();
 	ctrl->sysdbval = RecParseValueMem(SYSDBVAL_DEF,NULL);
 	InitializeValue(ctrl->sysdbval);
 	ctrl->sysdbvals = RecParseValueMem(SYSDBVALS_DEF,NULL);
@@ -74,7 +72,6 @@ FreeSessionCtrl(
 	if (ctrl->sysdbvals != NULL) {
 		FreeValueStruct(ctrl->sysdbvals);
 	}
-	FreeQueue(ctrl->waitq);
 	g_free(ctrl);
 }
 
