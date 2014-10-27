@@ -483,7 +483,6 @@ ParseReqAuth(HTTP_REQUEST *req)
 	head = (gchar *)g_hash_table_lookup(req->header_hash,"authorization");
 	if (head == NULL) {
 		req->status = HTTP_UNAUTHORIZED;
-		Message("does not have Authorization");
 		return;
 	}
 

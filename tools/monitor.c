@@ -1121,7 +1121,6 @@ main(
 	}
 
 	InitSystem();
-	MessagePrintf("%s %s",PACKAGE_STRING, PACKAGE_DATE);
 	Message("start system");
 
 	InitServers();
