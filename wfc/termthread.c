@@ -970,41 +970,35 @@ CheckDownloadList(
 	SessionData *data)
 {
 	json_object *res,*result;
-	char *lockfile,*metafile;
+	char lockfile[1024],metafile[1024];
 	int fd;
 
 	res = MakeJSONResponseTemplate(obj);
 
+	snprintf(lockfile,sizeof(lockfile),"%s/__download.lock",data->hdr->tempdir);
+	snprintf(metafile,sizeof(metafile),"%s/__download.json",data->hdr->tempdir);
+	lockfile[sizeof(lockfile)-1] = 0;
+	metafile[sizeof(metafile)-1] = 0;
+
 	/* lock */
-	lockfile = g_strdup_printf("%s/__download.lock",data->hdr->tempdir);
-	metafile = g_strdup_printf("%s/__download.json",data->hdr->tempdir);
-	if ((fd = open(lockfile,O_RDONLY)) == -1) {
-		result = json_object_new_array();
-		json_object_object_add(res,"result",result);
-		goto postproc;
-    }
-	if (flock(fd,LOCK_EX|LOCK_NB) == -1) {
-		result = json_object_new_array();
-		json_object_object_add(res,"result",result);
+	if ((fd = open(lockfile,O_RDONLY)) != -1) {
+		if (flock(fd,LOCK_EX|LOCK_NB) != -1) {
+			/* read file */
+			result = ReadDownloadMetaFile(metafile);
+			/* unlock  */
+			if (flock(fd,LOCK_UN) == -1) {
+				Error("flock(2) failure %s %s",lockfile,strerror(errno));
+			}
+		} else {
+			result = json_object_new_array();
+		}
 		if ((close(fd)) == -1) {
 			Error("close(2) failure %s %s",lockfile,strerror(errno));
     	}
-		goto postproc;
-	}
-
-	result = ReadDownloadMetaFile(metafile);
-	json_object_object_add(res,"result",result);
-
-	/* unlock  */
-	if (flock(fd,LOCK_UN) == -1) {
-		Error("flock(2) failure %s %s",lockfile,strerror(errno));
-	}
-	if ((close(fd)) == -1) {
-		Error("close(2) failure %s %s",lockfile,strerror(errno));
+	} else {
+		result = json_object_new_array();
     }
-postproc:
-	g_free(lockfile);
-	g_free(metafile);
+	json_object_object_add(res,"result",result);
 
 	return res;
 }
