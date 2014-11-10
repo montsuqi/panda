@@ -377,6 +377,7 @@ LoadConfig (
 	fMlog = gl_config_get_boolean(n,"mlog");
 	fKeyBuff = gl_config_get_boolean(n,"keybuff");
 	User = g_strdup(gl_config_get_string(n,"user"));
+	fIMKanaOff = gl_config_get_boolean(n,"im_kana_off");
 	SavePass = gl_config_get_boolean(n,"savepassword");
 	if (SavePass) {
 		Pass = g_strdup(gl_config_get_string(n,"password"));
