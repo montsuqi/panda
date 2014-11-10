@@ -367,8 +367,7 @@ LoadConfig (
 	int n)
 {
 	if (!gl_config_have_config(n)) {
-		Warning("no server setting:%d",n);
-		return;
+		Error("no server setting:%d",n);
 	}
 
 	AUTHURI(Session) = g_strdup(gl_config_get_string(n,"authuri"));
@@ -405,6 +404,11 @@ LoadConfigByDesc (
 	const char *desc)
 {
 	int i,n = -1;
+
+	if (g_regex_match_simple("^\\d+$",desc,0,0)) {
+		n = atoi(desc);
+		LoadConfig(n);
+	}
 
 	for(i=0;i<gl_config_get_config_nums();i++) {
 		if (gl_config_have_config(i)) {
