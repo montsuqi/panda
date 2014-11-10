@@ -1100,6 +1100,8 @@ LoadConfig (
 		fTimer = gl_config_get_bool (serverkey,"timer");
 		TimerPeriod = gl_config_get_string (serverkey,"timerperiod");
 		FontName = gl_config_get_string (serverkey,"fontname");
+
+    	fIMKanaOff = gl_config_get_bool(serverkey,"im_kana_off");
 #ifdef  USE_SSL
 		fSsl = gl_config_get_bool (serverkey,"ssl");
 		CA_File = gl_config_get_string (serverkey,"CAfile");
