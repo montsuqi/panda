@@ -588,17 +588,20 @@ LEAVE_FUNC;
 extern	DB_Func	*
 InitShell(void)
 {
-	struct sigaction sa;
+	struct sigaction sa, orgsa;
 	DB_Func	*ret;
 ENTER_FUNC;
-	memset(&sa, 0, sizeof(struct sigaction));
-	sigemptyset (&sa.sa_mask);
-	sa.sa_flags |= SA_RESTART;
-	sa.sa_handler = (void *)OnChildExit;
-	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-		fprintf(stderr,"sigaction(2) failure\n");
+	memset(&orgsa, 0, sizeof(struct sigaction));
+	sigaction(SIGCHLD, NULL, &orgsa);
+	if (orgsa.sa_handler == SIG_DFL) {
+		memset(&sa, 0, sizeof(struct sigaction));
+		sigemptyset (&sa.sa_mask);
+		sa.sa_flags |= SA_RESTART;
+		sa.sa_handler = (void *)OnChildExit;
+		if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+			fprintf(stderr,"sigaction(2) failure\n");
+		}
 	}
-
 	ret = EnterDB_Function("Shell",Operations,DB_PARSER_SQL,&Core,"# ","\n");
 LEAVE_FUNC;
 	return	(ret);

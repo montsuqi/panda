@@ -78,6 +78,14 @@ alrm_handler (int signo)
 	killpg(0, SIGKILL);
 }
 
+void
+chld_handler (int signo)
+{
+	/* dummy */
+	/* Auto in waitpid is executed If you do not have to register */
+	/* (default Shell.c of montsuqi) */
+}
+
 static	void
 InitSystem(void)
 {
@@ -356,6 +364,11 @@ main(
 	sa.sa_flags |= SA_RESTART;
 	sa.sa_handler = signal_handler;
 	if (sigaction(SIGHUP, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
+	sa.sa_handler = chld_handler;
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
 
