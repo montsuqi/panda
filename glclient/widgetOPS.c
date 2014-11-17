@@ -1097,7 +1097,7 @@ ENTER_FUNC;
 
 	child = json_object_object_get(obj,"objectdata");
 	if (CheckJSONObject(child,json_type_string)) {
-		if (oid != NULL) {
+		if (strlen(oid) > 0) {
 		json_object_object_del(obj,"objectdata");
 		json_object_object_add(obj,"objectdata",json_object_new_string(oid));
 		}
@@ -1116,6 +1116,7 @@ ENTER_FUNC;
 		SetWidgetCache(longname,folder);
 		g_free(folder);
 	}
+	g_free(oid);
 LEAVE_FUNC;
 }
 

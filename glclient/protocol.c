@@ -149,15 +149,11 @@ HeaderPostBLOB(
 	size_t nmemb,
 	void *userdata)
 {
-	static char buf[SIZE_NAME+1];
 	size_t all = size * nmemb;
-	char **oid;
-	char *target = "X-BLOB-ID:";
-	char *p;
+	char *oid,*p,*q,*target = "X-BLOB-ID:";
 	int i;
 
-	oid = (char**)userdata;
-	*oid = buf;
+	oid = (char*)userdata;
 	if (all <= strlen(target)) {
 		return all;
 	}
@@ -165,10 +161,14 @@ HeaderPostBLOB(
 		return all;
 	}
 	for(p=ptr+strlen(target);isspace(*p);p++);
+	q = oid;
 	for(i=0;isdigit(*p)&&i<SIZE_NAME;p++,i++) {
-		buf[i] = *p;
+		*q = *p;
+		q++;
+		if (i == SIZE_NAME) {
+			return all;
+		}
 	}
-	buf[i] = 0;
 
 	return all;
 }
@@ -183,8 +183,8 @@ REST_PostBLOB(
 	char *oid,url[SIZE_URL_BUF+1],clength[256],errbuf[CURL_ERROR_SIZE+1];
 	long http_code;
 
-	oid = NULL;
-
+	oid = malloc(SIZE_NAME+1);
+	memset(oid,0,SIZE_NAME+1);
 	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/",
 		RESTURI(Session),SESSIONID(Session));
 	url[sizeof(url)-1] = 0;
@@ -202,7 +202,7 @@ REST_PostBLOB(
 
 	curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(Curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
-	curl_easy_setopt(Curl, CURLOPT_WRITEHEADER,(void*)&oid);
+	curl_easy_setopt(Curl, CURLOPT_WRITEHEADER,(void*)oid);
 
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
 	curl_easy_setopt(Curl, CURLOPT_ERRORBUFFER, errbuf);
@@ -364,6 +364,7 @@ JSONRPC(
 	}
 	jsonstr = (char*)json_object_to_json_string(obj);
 	jsonsize = strlen(jsonstr);
+fprintf(stderr,"\n----\n%s\n",jsonstr);
 
 	LBS_EmitStart(readbuf);
 	LBS_EmitString(readbuf,jsonstr);
