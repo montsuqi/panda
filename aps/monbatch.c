@@ -35,6 +35,7 @@
 #include	<time.h>
 #include	<errno.h>
 
+#include	<uuid/uuid.h>
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
@@ -183,7 +184,7 @@ registdb(
 static int
 unregistdb(
 	DBG_Struct	*dbg,
-	pid_t pgid,
+	char *batch_id,
 	json_object *cmd_results)
 {
 	json_object *child;
@@ -214,12 +215,12 @@ unregistdb(
 	sql_len = sql_len + strlen(exec_record);
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-      "UPDATE %s SET endtime = '%s',rc = '%d', message = '%s', exec_record = '%s' WHERE pgid = '%d';",
-			 BATCH_LOG_TABLE, endtime, rc, message, exec_record, (int)pgid);
+      "UPDATE %s SET endtime = '%s',rc = '%d', message = '%s', exec_record = '%s' WHERE id = '%s';",
+			 BATCH_LOG_TABLE, endtime, rc, message, exec_record, batch_id);
 	ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 
-	snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid = '%d';",
-			 BATCH_TABLE, (int)pgid);
+	snprintf(sql, sql_len, "DELETE FROM %s WHERE id = '%s';",
+			 BATCH_TABLE, batch_id);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -231,6 +232,7 @@ unregistdb(
 
 static	GHashTable *
 get_batch_info(
+	char *batch_id,
 	pid_t pgid)
 {
 	char	pid_s[10];
@@ -239,7 +241,7 @@ get_batch_info(
 
 	batch = NewNameHash();
 
-	g_hash_table_insert(batch, "id", getenv("MON_BATCH_ID"));
+	g_hash_table_insert(batch, "id", batch_id);
 	snprintf(pid_s, sizeof(pid_s), "%d", (int)pgid);
 	g_hash_table_insert(batch, "pgid", StrDup(pid_s));
 
@@ -341,9 +343,11 @@ main(
 {
 	FILE_LIST	*fl;
 
-	pid_t pgid;
 	struct sigaction sa;
 	DBG_Struct	*dbg;
+	char *batch_id;
+	uuid_t uu;
+	pid_t pgid;
 	GHashTable *batch;
 	json_object *cmd_results;
 
@@ -367,19 +371,22 @@ main(
 	if ((fl == NULL) || (fl->name == NULL)) {
 		PrintUsage(option,argv[0],NULL);
 	}
-	if (getenv("MON_BATCH_ID") == NULL) {
+
+	if ((batch_id = getenv("MON_BATCH_ID")) == NULL) {
 		Error("MON_BATCH_ID has not been set");
+	}
+	if (uuid_parse(batch_id, uu) == -1) {
+		Error("MON_BATCH_ID is invalid");
 	}
 
 	dbg = GetDBG_monsys();
 	pgid = getpgrp();
-	batch = get_batch_info(pgid);
-
+	batch = get_batch_info(batch_id, pgid);
 	registdb(dbg, batch);
 
 	cmd_results = exec_shell(pgid, argc, argv);
 
-	unregistdb(dbg, pgid, cmd_results);
+	unregistdb(dbg, batch_id, cmd_results);
 
 	return 0;
 }
