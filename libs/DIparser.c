@@ -149,7 +149,6 @@ static	TokenTable	tokentable[] = {
 	{	"update"			,T_UPDATE	},
 	{	"readonly"			,T_READONLY	},
 	{	"blob"				,T_BLOB		},
-	
 	{	"logdb_name"			,T_LOGDBNAME	},
 	{	"logtable_name"			,T_LOGTABLENAME	},
 	{	"logport"			,T_LOGPORT	},
@@ -160,9 +159,6 @@ static	TokenTable	tokentable[] = {
 	{	"dbmaster"			,T_DBMASTER	},
 	{	"auditlog"			,T_AUDITLOG	},
 	{	"sumcheck"			,T_SUMCHECK	},
-
-	{	"sumcheck"			,T_SUMCHECK	},
-	
 	{	""					,0			}
 };
 
