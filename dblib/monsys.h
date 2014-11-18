@@ -23,7 +23,10 @@
 
 #define BATCH_TABLE "monbatch"
 #define BATCH_LOG_TABLE "monbatch_log"
+#define BATCH_CLOG_TABLE "monbatch_clog"
 #define BATCH_TIMEOUT 86400
+#define BATCH_LOG_SIZE 1024
+#define BATCH_LOG_LEN  400
 
 extern	DBG_Struct *GetDBG_monsys(void);
 extern	void		CheckBatchExist(DBG_Struct	*dbg,int pgid);

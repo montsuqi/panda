@@ -114,6 +114,47 @@ table_exist(
 }
 
 static 	Bool
+create_clog(
+	DBG_Struct	*dbg)
+{
+	Bool rc;
+	char *sql, *p;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	p = sql;
+	p += sprintf(p, "CREATE TABLE %s (", BATCH_CLOG_TABLE);
+	p += sprintf(p, "       id    varchar(37),");
+	p += sprintf(p, "       num   int,");
+	p += sprintf(p, "       clog text,");
+	p += sprintf(p, "PRIMARY KEY(id, num)");
+	p += sprintf(p, ");");
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	xfree(sql);
+	return rc;
+}
+
+static Bool
+create_clog_setup(
+	DBG_Struct	*dbg)
+{
+	Bool	exist;
+	int		rc;
+	char	sql[SIZE_SQL+1];
+
+	TransactionStart(dbg);
+	exist = table_exist(dbg, BATCH_CLOG_TABLE);
+	if ( !exist ) {
+		create_clog(dbg);
+	} else if ( exist && fRECREATE ) {
+		snprintf(sql, SIZE_SQL, "DROP TABLE %s;",BATCH_CLOG_TABLE);
+		ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+		create_clog(dbg);
+	}
+	rc = TransactionEnd(dbg);
+	return (rc == MCP_OK);
+}
+
+static 	Bool
 create_monbatch_log(
 	DBG_Struct	*dbg)
 {
@@ -195,6 +236,7 @@ delete_monbatch_log(
 	timestamp(nowtime, sizeof(nowtime));
 
 	TransactionStart(dbg);
+	snprintf(sql, SIZE_SQL, "DELETE FROM %s AS c USING %s AS l WHERE c.id = l.id AND l.starttime + '%d days' < '%s';", BATCH_CLOG_TABLE, BATCH_LOG_TABLE, days, nowtime);
 	snprintf(sql, SIZE_SQL, "DELETE FROM %s WHERE starttime + '%d days' < '%s';",BATCH_LOG_TABLE, days,  nowtime);
 	ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 
@@ -267,6 +309,9 @@ monsysdb_setup(
 	rc = monbatch_setup(dbg);
 	if (rc) {
 		rc = monbatch_log_setup(dbg);
+	}
+	if (rc) {
+		rc = create_clog_setup(dbg);
 	}
 	if (rc) {
 		rc = delete_monbatch_log(dbg, DelDays);
