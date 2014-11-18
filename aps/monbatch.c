@@ -35,6 +35,7 @@
 #include	<time.h>
 #include	<errno.h>
 
+#include	<iconv.h>
 #include	<uuid/uuid.h>
 #include	"libmondai.h"
 #include	"directory.h"
@@ -47,7 +48,8 @@
 
 static	char	*Directory;
 
-static	volatile Bool exit_flag = FALSE;
+static volatile int child_exit_flag = FALSE;
+static volatile Bool exit_flag = FALSE;
 extern char **environ;
 
 typedef struct {
@@ -81,9 +83,7 @@ alrm_handler (int signo)
 void
 chld_handler (int signo)
 {
-	/* dummy */
-	/* Auto in waitpid is executed If you do not have to register */
-	/* (default Shell.c of montsuqi) */
+	child_exit_flag = TRUE;
 }
 
 static	void
@@ -140,6 +140,127 @@ timestamp(
 	now = time(NULL);
 	localtime_r(&now, &tm_now);
 	strftime(daytime, size, "%F %T %z", &tm_now);
+}
+
+static char *
+conv_charset(
+	char *buff)
+{
+	iconv_t cd;
+	size_t	sob
+	,		sib;
+	char	*istr
+	,		*ostr
+	,		*ret;
+
+	cd = iconv_open("utf8","euc-jisx0213");
+	istr = buff;
+	sib = strlen(buff);
+	sob = sib*2;
+	ret = (char *)xmalloc(sob);
+	ostr = ret;
+	iconv(cd, &istr, &sib, (void*)&ostr, &sob);
+	*ostr = '\0';
+	iconv_close(cd);
+	return ret;
+}
+
+static char *
+read_tmpfile(
+	DBG_Struct	*dbg,
+	FILE *fd)
+{
+	LargeByteString	*lbs;
+	char buff[BATCH_LOG_SIZE];
+	char buff2[BATCH_LOG_SIZE*2];
+	int		size;
+	size_t	sob
+	,		sib;
+	char	*istr
+	,		*ostr;
+	char 	*cbuff;
+	char	*ebuff;
+	char 	*ret;
+	iconv_t cd;
+	int 	line = 0;
+
+	cd = iconv_open("utf8","utf8");
+	lbs = NewLBS();
+	while(fgets(buff, BATCH_LOG_SIZE, fd) != NULL){
+		istr = buff;
+		sib = strlen(buff);
+		ostr = buff2;
+		sob = BATCH_LOG_SIZE;
+		size = iconv(cd, &istr, &sib, (void*)&ostr, &sob);
+		if ( size < 0 ){
+			cbuff = conv_charset(buff);
+			ebuff = Escape_monsys(dbg, cbuff);
+			LBS_EmitString(lbs, ebuff);
+			xfree(ebuff);
+			xfree(cbuff);
+		} else {
+			ebuff = Escape_monsys(dbg, buff);
+			LBS_EmitString(lbs, ebuff);
+			xfree(ebuff);
+		}
+		line += 1;
+		if (line > BATCH_LOG_LEN) {
+			break;
+		}
+	}
+	iconv_close(cd);
+	if (LBS_StringLength(lbs) > 0) {
+		ret = LBS_ToString(lbs);
+	} else {
+		ret = NULL;
+	}
+	FreeLBS(lbs);
+	return ret;
+}
+
+static void
+clog_db(
+	DBG_Struct	*dbg,
+	char *batch_id,
+	json_object *json,
+	int logfd)
+{
+	char *log;
+	static int num=0;
+	char nums[sizeof(int)];
+	FILE *fd;
+	LargeByteString	*lbs;
+
+	if (!dbg) {
+		return;
+	}
+
+	OpenDB(dbg);
+	TransactionStart(dbg);
+
+	fd = fdopen(logfd, "rt");
+
+	lbs = NewLBS();
+	while((log = read_tmpfile(dbg, fd)) != NULL) {
+		RewindLBS(lbs);
+		num += 1;
+		LBS_EmitString(lbs, "INSERT INTO ");
+		LBS_EmitString(lbs, BATCH_CLOG_TABLE);
+		LBS_EmitString(lbs, " (id, num, clog) VALUES ('");
+		LBS_EmitString(lbs, batch_id);
+		LBS_EmitString(lbs, "', '");
+		snprintf(nums, sizeof(int), "%d", num);
+		LBS_EmitString(lbs, nums);
+		LBS_EmitString(lbs, "', '");
+		LBS_EmitString(lbs, log);
+		LBS_EmitString(lbs, "');");
+		LBS_EmitEnd(lbs);
+		ExecDBOP(dbg, (char *)LBS_Body(lbs), TRUE, DB_UPDATE);
+	}
+	FreeLBS(lbs);
+
+	TransactionEnd(dbg);
+	CloseDB(dbg);
 }
 
 static int
@@ -230,6 +351,7 @@ unregistdb(
 	snprintf(sql, sql_len, "DELETE FROM %s WHERE id = '%s';",
 			 BATCH_TABLE, batch_id);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	xfree(exec_record);
 	xfree(sql);
 
 	TransactionEnd(dbg);
@@ -270,9 +392,43 @@ get_batch_info(
 	return batch;
 }
 
+static int
+write_tmpfile(
+	int std_in)
+{
+	char buff[SIZE_BUFF+1];
+	char tmpfile[21] = "/tmp/monbatch_XXXXXX";
+	ssize_t len;
+	int logfd;
+
+	if ((logfd = mkstemp(tmpfile)) < 0 ){
+		Error("mkstemp: can not create tmpfile %s", strerror(errno));
+	}
+	unlink(tmpfile);
+	while ( child_exit_flag != TRUE ) {
+		len = read(std_in, buff, SIZE_BUFF);
+		if (len < 0) {
+			if (errno != EINTR) {
+				Warning("Erorr read STDIN:%s", strerror(errno));
+			}
+		} else if (len > 0) {
+			if (write(logfd, buff, len) < 0) {
+				Warning("Erorr write log:%s", strerror(errno));
+			}
+			if (write(STDOUT_FILENO, buff, len) < 0) {
+				Warning("Erorr write STDOUT:%s", strerror(errno));
+			}
+		}
+	}
+	lseek(logfd, 0, 0);
+	return logfd;
+}
+
 static json_object *
 exec_shell(
-	pid_t pgid,
+	DBG_Struct	*dbg,
+	pid_t	pgid,
+	char 	*batch_id,
 	int		argc,
 	char	**argv)
 {
@@ -285,16 +441,29 @@ exec_shell(
 	char *error = NULL;
 	char *str_results;
 	json_object *cmd_results, *result, *child;
+	int std_io[2], logfd;
 
 	cmd_results = json_object_new_object();
 	json_object_object_add(cmd_results,"pgid",json_object_new_int((int)pgid));
 	result = json_object_new_array();
 	json_object_object_add(cmd_results,"command",result);
 	for ( i=1; i<argc; i++ ) {
+		if (pipe(std_io) == -1 ){
+			error = strerror(errno);
+			rc = -1;
+			break;
+		}
+		child_exit_flag = FALSE;
 		child = json_object_new_object();
 		timestamp(starttime, sizeof(starttime));
 		json_object_object_add(child,"starttime",json_object_new_string(starttime));
 		if ( ( pid = fork() ) == 0 ) {
+			close(std_io[0]);
+			close(STDOUT_FILENO);
+			close(STDERR_FILENO);
+			dup2(std_io[1], STDOUT_FILENO);
+			dup2(std_io[1], STDERR_FILENO);
+			close(std_io[1]);
 			sh = "/bin/sh";
 			cmdv[0] = sh;
 			cmdv[1] = "-c";
@@ -306,6 +475,7 @@ exec_shell(
 			rc = -1;
 			break;
 		}
+		logfd = write_tmpfile(std_io[0]);
 		wpid = waitpid(pid, &status, 0);
 		if (wpid < 0) {
 			error = strerror(errno);
@@ -326,6 +496,8 @@ exec_shell(
 		json_object_object_add(child,"result",json_object_new_int(rc));
 		json_object_object_add(child,"endtime",json_object_new_string(endtime));
 		json_object_array_add(result,child);
+		clog_db(dbg, batch_id, child, logfd);
+		close(logfd);
 		if (exit_flag) {
 			break;
 		}
@@ -362,12 +534,14 @@ main(
 
 	memset(&sa, 0, sizeof(struct sigaction));
 	sigemptyset (&sa.sa_mask);
-	sa.sa_flags |= SA_RESTART;
+	sa.sa_flags = 0;
 	sa.sa_handler = signal_handler;
 	if (sigaction(SIGHUP, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
-
+	/* Don't delete SIGCHLD */
+	/* Auto in waitpid is executed If you do not have to register */
+	/* (default Shell.c of montsuqi) */
 	sa.sa_handler = chld_handler;
 	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
@@ -398,7 +572,7 @@ main(
 	batch = get_batch_info(batch_id, pgid);
 	registdb(dbg, batch);
 
-	cmd_results = exec_shell(pgid, argc, argv);
+	cmd_results = exec_shell(dbg, pgid, batch_id, argc, argv);
 
 	unregistdb(dbg, batch_id, cmd_results);
 
