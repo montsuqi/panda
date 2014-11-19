@@ -35,8 +35,8 @@
 #include	<time.h>
 #include	<errno.h>
 
+#include	<iconv.h>
 #include	<uuid/uuid.h>
-
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
@@ -145,23 +145,73 @@ timestamp(
 }
 
 static char *
+conv_charset(
+	char *buff)
+{
+	iconv_t cd;
+	int		size;
+	size_t	sob
+	,		sib;
+	char	*istr
+	,		*ostr
+	,		*ret;
+
+	cd = iconv_open("utf8","euc-jisx0213");
+	istr = buff;
+	sib = strlen(buff);
+	ret = (char *)xmalloc(sib*2);
+	ostr = ret;
+	sob = sib*2;
+	size = iconv(cd, &istr, &sib, (void*)&ostr, &sob);
+	*ostr = '\0';
+	iconv_close(cd);
+	return ret;
+}
+
+static char *
 read_tmpfile(
 	DBG_Struct	*dbg,
 	FILE *fd)
 {
 	LargeByteString	*lbs;
 	char buff[BATCH_LOG_SIZE];
-	char *ret;
-	int line = 0;
+	char buff2[BATCH_LOG_SIZE*2];
+	int		size;
+	size_t	sob
+	,		sib;
+	char	*istr
+	,		*ostr;
+	char 	*cbuff;
+	char	*ebuff;
+	char 	*ret;
+	iconv_t cd;
+	int 	line = 0;
 
+	cd = iconv_open("utf8","utf8");
 	lbs = NewLBS();
 	while(fgets(buff, BATCH_LOG_SIZE, fd) != NULL){
-		LBS_EmitString(lbs, Escape_monsys(dbg, buff));
+		istr = buff;
+		sib = strlen(buff);
+		ostr = buff2;
+		sob = BATCH_LOG_SIZE;
+		size = iconv(cd, &istr, &sib, (void*)&ostr, &sob);
+		if ( size < 0 ){
+			cbuff = conv_charset(buff);
+			ebuff = Escape_monsys(dbg, cbuff);
+			LBS_EmitString(lbs, ebuff);
+			xfree(ebuff);
+			xfree(cbuff);
+		} else {
+			ebuff = Escape_monsys(dbg, buff);
+			LBS_EmitString(lbs, ebuff);
+			xfree(ebuff);
+		}
 		line += 1;
 		if (line > BATCH_LOG_LEN) {
 			break;
 		}
 	}
+	iconv_close(cd);
 	if (LBS_StringLength(lbs) > 0) {
 		ret = LBS_ToString(lbs);
 	} else {
