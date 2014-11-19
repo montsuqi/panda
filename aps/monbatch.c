@@ -149,7 +149,6 @@ conv_charset(
 	char *buff)
 {
 	iconv_t cd;
-	int		size;
 	size_t	sob
 	,		sib;
 	char	*istr
@@ -159,10 +158,10 @@ conv_charset(
 	cd = iconv_open("utf8","euc-jisx0213");
 	istr = buff;
 	sib = strlen(buff);
-	ret = (char *)xmalloc(sib*2);
-	ostr = ret;
 	sob = sib*2;
-	size = iconv(cd, &istr, &sib, (void*)&ostr, &sob);
+	ret = (char *)xmalloc(sob);
+	ostr = ret;
+	iconv(cd, &istr, &sib, (void*)&ostr, &sob);
 	*ostr = '\0';
 	iconv_close(cd);
 	return ret;
@@ -400,12 +399,13 @@ write_tmpfile(
 	int std_in)
 {
 	char buff[SIZE_BUFF+1];
-	char tmpfile[SIZE_BUFF+1];
+	char tmpfile[21] = "/tmp/monbatch_XXXXXX";
 	ssize_t len;
 	int logfd;
 
-	sprintf(tmpfile, "/tmp/monbatch_XXXXXX");
-	logfd = mkstemp(tmpfile);
+	if ((logfd = mkstemp(tmpfile)) < 0 ){
+		Error("mkstemp: can not create tmpfile %s", strerror(errno));
+	}
 	unlink(tmpfile);
 	while ( child_exit_flag != TRUE ) {
 		len = read(std_in, buff, SIZE_BUFF);
