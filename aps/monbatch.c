@@ -46,6 +46,8 @@
 #include	"message.h"
 #include	"debug.h"
 
+#define 	MAX_LINE 1024
+
 static	char	*Directory;
 
 static volatile int child_exit_flag = FALSE;
