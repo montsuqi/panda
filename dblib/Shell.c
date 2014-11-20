@@ -116,6 +116,7 @@ ENTER_FUNC;
 	unsetenv("MON_BATCH_NAME");
 	unsetenv("MON_BATCH_COMMENT");
 	unsetenv("MON_BATCH_EXTRA");
+	unsetenv("MON_BATCH_GROUPNAME");
 	if(dbg->transaction_id) {
 		xfree(dbg->transaction_id);
 	}
@@ -329,7 +330,7 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	char *name, *comment, *extra;
+	char *name, *comment, *extra, *groupname;
 	uuid_t	u;
 	DB_Struct	*db;
 	PathStruct	*path;
@@ -350,6 +351,8 @@ ENTER_FUNC;
 		setenv("MON_BATCH_COMMENT", comment, 1);
 		extra = ValueToString(GetItemLongName(args,"extra"),dbg->coding);
 		setenv("MON_BATCH_EXTRA", extra, 1);
+		groupname = ValueToString(GetItemLongName(args,"groupname"),dbg->coding);
+		setenv("MON_BATCH_GROUPNAME", groupname, 1);
 		dbg->transaction_id = xmalloc(SIZE_TERM+1);
 		uuid_generate(u);
 		uuid_unparse(u, dbg->transaction_id);
@@ -408,7 +411,7 @@ ValueToWhere(
 	DBG_Struct		*dbg,
 	ValueStruct		*value)
 {
-	char *keys[] = {"id", "tenant", "name", "comment", "extra", NULL};
+	char *keys[] = {"id", "tenant", "name", "comment", "extra", "groupname", NULL};
 	char pgid_s[10];
 	char *where, *k, *v;
 	Bool first = TRUE;

@@ -113,13 +113,56 @@ table_exist(
 	return rc;
 }
 
+static Bool
+column_exist(
+	DBG_Struct	*dbg,
+	char *table_name,
+	char *column_name)
+{
+	Bool rc;
+	char *sql, *p;
+	ValueStruct *ret;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	p = sql;
+	p += sprintf(p, "SELECT 1");
+	p += sprintf(p, " FROM pg_tables JOIN information_schema.columns on pg_tables.tablename = columns.table_name ");
+	p += sprintf(p, " WHERE table_name = '%s' AND column_name = '%s';", table_name, column_name);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	if (ret) {
+		rc = TRUE;
+		FreeValueStruct(ret);
+	} else {
+		rc = FALSE;
+	}
+	return rc;
+}
+
 static 	Bool
-create_monbatch_log(
+check_monbatch_log(
 	DBG_Struct	*dbg)
 {
 	Bool rc;
 	char *sql, *p;
 
+	if (column_exist(dbg, BATCH_LOG_TABLE, "groupname")) {
+		return TRUE;
+	}
+	sql = (char *)xmalloc(SIZE_BUFF);
+	p = sql;
+	p += sprintf(p, "ALTER TABLE %s ADD", BATCH_LOG_TABLE);
+	p += sprintf(p, "       groupname    varchar(64);");
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	xfree(sql);
+	return rc;
+}
+
+static         Bool
+create_monbatch_log(
+        DBG_Struct      *dbg)
+ {
+	Bool rc;
+	char *sql, *p;
 	sql = (char *)xmalloc(SIZE_BUFF);
 	p = sql;
 	p += sprintf(p, "CREATE TABLE %s (", BATCH_LOG_TABLE);
@@ -131,6 +174,7 @@ create_monbatch_log(
 	p += sprintf(p, "       endtime  timestamp  with time zone,");
 	p += sprintf(p, "       tenant int,");
 	p += sprintf(p, "       name varchar(256),");
+	p += sprintf(p, "       groupname varchar(64),");
 	p += sprintf(p, "       comment varchar(512),");
 	p += sprintf(p, "       extra varchar(512),");
 	p += sprintf(p, "       exwindow varchar(256),");
@@ -145,10 +189,8 @@ create_monbatch_log(
 	p += sprintf(p,"CREATE INDEX %s_start ON %s (starttime);",BATCH_LOG_TABLE, BATCH_LOG_TABLE);
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	xfree(sql);
-
 	return rc;
-
-}
+ }
 
 static Bool
 monbatch_log_setup(
@@ -166,6 +208,8 @@ monbatch_log_setup(
 		snprintf(sql, SIZE_SQL, "DROP TABLE %s;",BATCH_LOG_TABLE);
 		ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 		create_monbatch_log(dbg);
+	} else if ( exist && !fRECREATE ){
+		check_monbatch_log(dbg);
 	}
 	rc = TransactionEnd(dbg);
 	return (rc == MCP_OK);
@@ -217,6 +261,7 @@ create_monbatch(
 	p += sprintf(p, "       starttime  timestamp with time zone,");
 	p += sprintf(p, "       tenant int,");
 	p += sprintf(p, "       name varchar(256),");
+	p += sprintf(p, "       groupname varchar(64),");
 	p += sprintf(p, "       comment varchar(512),");
 	p += sprintf(p, "       extra varchar(512),");
 	p += sprintf(p, "       exwindow varchar(256),");
@@ -232,6 +277,25 @@ create_monbatch(
 	xfree(sql);
 
 	return 	rc;
+}
+
+static 	Bool
+check_monbatch(
+	DBG_Struct	*dbg)
+{
+	Bool rc;
+	char *sql, *p;
+
+	if (column_exist(dbg, BATCH_TABLE, "groupname")) {
+		return TRUE;
+	}
+	sql = (char *)xmalloc(SIZE_BUFF);
+	p = sql;
+	p += sprintf(p, "ALTER TABLE %s ADD", BATCH_TABLE);
+	p += sprintf(p, "       groupname    varchar(64);");
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	xfree(sql);
+	return rc;
 }
 
 static Bool
@@ -250,6 +314,8 @@ monbatch_setup(
 		snprintf(sql, SIZE_SQL, "DROP TABLE %s;",BATCH_TABLE);
 		ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 		create_monbatch(dbg);
+	} else if ( exist && !fRECREATE ){
+		check_monbatch(dbg);
 	}
 	rc = TransactionEnd(dbg);
 	return (rc == MCP_OK);

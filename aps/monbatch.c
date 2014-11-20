@@ -259,6 +259,7 @@ get_batch_info(
 	g_hash_table_insert(batch, "tenant", getenv("MCP_TENANT"));
 	g_hash_table_insert(batch, "name", getenv("MON_BATCH_NAME"));
 	g_hash_table_insert(batch, "comment", getenv("MON_BATCH_COMMENT"));
+	g_hash_table_insert(batch, "groupname", getenv("MON_BATCH_GROUPNAME"));
 	g_hash_table_insert(batch, "extra", getenv("MON_BATCH_EXTRA"));
 	g_hash_table_insert(batch, "exwindow", getenv("MCP_WINDOW"));
 	g_hash_table_insert(batch, "exwidget", getenv("MCP_WIDGET"));
