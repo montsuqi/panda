@@ -180,7 +180,7 @@ create_clog_setup(
 }
 
 static 	Bool
-create_monbatch_log(
+check_monbatch_log(
 	DBG_Struct	*dbg)
 {
 	Bool rc;
