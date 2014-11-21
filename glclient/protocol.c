@@ -584,22 +584,7 @@ ENTER_FUNC;
 	}
 	while ((c = GL_RecvPacketClass(fp)) == GL_WindowName) {
 		GL_RecvString(fp, sizeof(window), window);
-		dbgprintf("[%s]\n",window);
 		type = (unsigned char)GL_RecvInt(FPCOMM(Session)); 
-		if		(  fMlog  ) {
-			switch	(type) {
-			  case	SCREEN_NEW_WINDOW:
-				MessageLogPrintf("new window [%s]\n",window);break;
-			  case	SCREEN_CHANGE_WINDOW:
-				MessageLogPrintf("change window [%s]\n",window);break;
-			  case	SCREEN_CURRENT_WINDOW:
-				MessageLogPrintf("current window [%s]\n",window);break;
-			  case	SCREEN_CLOSE_WINDOW:
-				MessageLogPrintf("close window [%s]\n",window);break;
-			  case	SCREEN_JOIN_WINDOW:
-				MessageLogPrintf("join window [%s]\n",window);break;
-			}
-		}
 		switch (type) {
 		case SCREEN_NEW_WINDOW:
 		case SCREEN_CHANGE_WINDOW:
@@ -615,23 +600,21 @@ ENTER_FUNC;
 			}
 			break;
 		case SCREEN_CLOSE_WINDOW:
-			CloseWindow(window);
-			c = GL_RecvPacketClass(fp);
-			break;
 		default:
+			if (fMlog) {
+				MessageLogPrintf("close window [%s]\n",window);
+			}
 			CloseWindow(window);
 			c = GL_RecvPacketClass(fp);
 			break;
-		}
-		if		(  c  ==  GL_NOT  ) {
-			/*	no screen data	*/
-		} else {
-			/*	fatal error	*/
 		}
 	}
 	for (i=0;i<nwindow;i++) {
 		isdummy = stack[i][0] == '_';
 		if (!isdummy) {
+			if (fMlog) {
+				MessageLogPrintf("show window [%s]\n",stack[i]);
+			}
 			ShowWindow(stack[i]);
 		}
 		UpdateWindow(stack[i]);
