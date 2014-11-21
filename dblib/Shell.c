@@ -454,7 +454,7 @@ _DBSELECT(
 	mondbg = GetDBG_monsys();
 	where = ValueToWhere(mondbg, args);
 	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len, "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s;",
+	snprintf(sql, sql_len, "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s ORDER BY groupname, starttime;",
 			 BATCH_TABLE, BATCH_TABLE, where);
 	ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
 	xfree(where);
