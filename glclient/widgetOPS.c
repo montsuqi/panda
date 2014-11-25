@@ -591,14 +591,6 @@ ENTER_FUNC;
 			gtk_panda_table_set_bgcolor(GTK_PANDA_TABLE(widget),i,bgval);
 		}
 	}
-	if (!strcmp(gtk_widget_get_name(widget),FOCUSEDWIDGET(Session))) {
-		if (trow >=0 && tcolumn >= 0) {
-			gtk_panda_table_moveto(GTK_PANDA_TABLE(widget),
-				trow,tcolumn,TRUE,trowattr,0.0);
-		} else {
-			gtk_panda_table_stay(GTK_PANDA_TABLE(widget));
-		}
-	}
 
 	panda_table = widget;
 	panda_table_row = trow;
@@ -617,9 +609,8 @@ PandaTableFocusCell(const char *wname)
 			gtk_panda_table_moveto(GTK_PANDA_TABLE(panda_table), 
 				panda_table_row, panda_table_column, TRUE, 
 				panda_table_rowattr, 0.0); 
-		} else {
-			gtk_panda_table_stay(GTK_PANDA_TABLE(panda_table));
 		}
+		gtk_panda_table_start_editing(GTK_PANDA_TABLE(panda_table));
 		panda_table = NULL;
 		return TRUE;
 	}

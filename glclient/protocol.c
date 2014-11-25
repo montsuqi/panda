@@ -364,7 +364,6 @@ JSONRPC(
 	}
 	jsonstr = (char*)json_object_to_json_string(obj);
 	jsonsize = strlen(jsonstr);
-fprintf(stderr,"\n----\n%s\n",jsonstr);
 
 	LBS_EmitStart(readbuf);
 	LBS_EmitString(readbuf,jsonstr);
