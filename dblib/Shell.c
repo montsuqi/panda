@@ -449,8 +449,6 @@ _DBSELECT(
 	size_t sql_len  = SIZE_SQL;
 	char *sql;
 
-	CheckBatchPg();
-
 	mondbg = GetDBG_monsys();
 	where = ValueToWhere(mondbg, args);
 	sql = (char *)xmalloc(sql_len);
