@@ -111,6 +111,8 @@ GLOBAL	int			TimerPeriod;
 GLOBAL	int			PingTimerPeriod;
 GLOBAL	char		*FontName;
 
+GLOBAL	Bool		fDialog;
+
 GLOBAL	Bool		fSSL;
 GLOBAL	char		*CertFile;
 GLOBAL	char		*CertPass;
@@ -120,9 +122,11 @@ GLOBAL	char		*Ciphers;
 
 GLOBAL	Bool		fPKCS11;
 GLOBAL	char		*PKCS11Lib;
-#ifdef USE_SSL
+GLOBAL	char		*PIN;
+GLOBAL	Bool		fSavePIN;
+#	ifdef USE_SSL
 GLOBAL	ENGINE		*Engine;
-#endif
+#	endif
 GLOBAL	CURL		*Curl;
 
 #endif

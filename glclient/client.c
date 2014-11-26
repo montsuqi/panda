@@ -186,28 +186,6 @@ FinalSystem(void)
 	}
 }
 
-static	void
-ThisAskPass(
-	gboolean fDialog)
-{
-	if (fPKCS11) {
-		Pass = ShowAskPassDialog(_("pin:"));
-	}
-	if (fDialog) {
-		return;
-	} else {
-		if (fSSL && !SaveCertPass) {
-			Pass = ShowAskPassDialog(_("certificate password:"));
-		}
-		if (!fSSL && !SavePass) {
-			Pass = ShowAskPassDialog(_("password:"));
-		}
-	}
-	if (Pass == NULL) {
-		exit(0);
-	}
-}
-
 static gboolean fListConfig = FALSE;
 static GOptionEntry entries[] =
 {
@@ -224,7 +202,6 @@ main(
 	char **argv)
 {
 	GOptionContext *ctx;
-	gboolean fDialog;
 	struct sigaction sa;
 
 	memset(&sa, 0, sizeof(struct sigaction));
@@ -251,10 +228,10 @@ main(
 	UI_Init(argc,argv);
 	if (fDialog) {
 		BootDialogRun();
+    	LoadConfig(gl_config_get_index());
 	} else {
 		LoadConfigByDesc(ConfigName);
 	}
-	ThisAskPass(fDialog);
 
 	InitStyle();
 	SetMessageFunction(GLMessage);

@@ -27,5 +27,6 @@ extern	void		ShowInfoDialog(const char *format,...);
 extern	void		ShowWarnDialog(const char *format,...);
 extern	void		ShowErrorDialog(const char *format,...);
 extern	char* 		ShowAskPassDialog(const char *prompt);
+extern	char* 		ShowAskPINDialog();
 
 #endif

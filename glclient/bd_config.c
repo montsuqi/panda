@@ -81,6 +81,8 @@ _new_server()
 
 	json_object_object_add(child,"pkcs11",json_object_new_boolean(FALSE));
 	json_object_object_add(child,"pkcs11lib",json_object_new_string(""));
+	json_object_object_add(child,"pin",json_object_new_string(""));
+	json_object_object_add(child,"savepin",json_object_new_boolean(FALSE));
 
 	return child;
 }
@@ -380,6 +382,8 @@ LoadConfig (
 	SavePass = gl_config_get_boolean(n,"savepassword");
 	if (SavePass) {
 		Pass = g_strdup(gl_config_get_string(n,"password"));
+	} else {
+		Pass = g_strdup("");
 	} 
 
 	fSSL = gl_config_get_boolean(n,"ssl");
@@ -393,6 +397,8 @@ LoadConfig (
 
 	fPKCS11 = gl_config_get_boolean(n,"pkcs11");
 	PKCS11Lib = g_strdup(gl_config_get_string(n,"pkcs11lib"));
+	PIN = g_strdup(gl_config_get_string(n,"pin"));
+	fSavePIN = gl_config_get_boolean(n,"savepin");
 
 	fTimer = gl_config_get_boolean(n,"timer");
 	TimerPeriod = gl_config_get_int(n,"timerperiod");

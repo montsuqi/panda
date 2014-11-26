@@ -420,7 +420,6 @@ boot_dialog_on_connect (GtkWidget *connect, BootDialog *self)
     gl_config_set_index(n);
     bd_component_value_to_config(self->component,n);
     gl_config_save();
-    LoadConfig(gl_config_get_index());
   }
   gtk_widget_hide (self->dialog);
   gtk_main_quit ();

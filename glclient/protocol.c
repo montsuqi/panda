@@ -60,6 +60,7 @@
 #include "action.h"
 #include "print.h"
 #include "download.h"
+#include "bd_config.h"
 #include "message.h"
 #include "debug.h"
 
@@ -817,7 +818,7 @@ RPC_ListDownloads()
 static	void
 InitCURLPKCS11()
 {
-	int i,rc,fd;
+	int i,rc,fd,n;
 	unsigned int nslots,nslot,ncerts;
 	char part[3],*id,*p,*cacertfile,*certid;
 	PKCS11_CTX *p11ctx;
@@ -864,10 +865,20 @@ InitCURLPKCS11()
 		Error("PKCS11_open_session failure");
 	}
 
-	rc = PKCS11_login(slot, 0, Pass);
+	n = gl_config_get_index();
+   	gl_config_set_boolean(n,"savepin", FALSE);
+   	gl_config_set_string(n,"pin", "");
+
+	rc = PKCS11_login(slot, 0, PIN);
 	if (rc != 0) {
 		Error("PKCS11_login failure");
+	} else {
+		if (fSavePIN) {
+    		gl_config_set_boolean(n,"savepin", TRUE);
+    		gl_config_set_string(n,"pin", PIN);
+		}
 	}
+	gl_config_save();
 
 	id = getenv("GLCLIENT_PKCS11_CERTID");
 	if (id == NULL) {
@@ -919,7 +930,7 @@ InitCURLPKCS11()
 		!ENGINE_ctrl_cmd_string(Engine, "LIST_ADD", "1", 0) ||
 		!ENGINE_ctrl_cmd_string(Engine, "LOAD", NULL, 0) ||
 		!ENGINE_ctrl_cmd_string(Engine, "MODULE_PATH", PKCS11Lib, 0) ||
-		!ENGINE_ctrl_cmd_string(Engine, "PIN", Pass, 0) ) {
+		!ENGINE_ctrl_cmd_string(Engine, "PIN", PIN, 0) ) {
 		Error("ENGINE_ctrl_cmd_string failure");
 	}
 	if (!ENGINE_init(Engine)) {
@@ -940,10 +951,49 @@ InitCURLPKCS11()
 #endif
 
 static	void
-InitCURL()
+ThisAskPass()
+{
+	if (fPKCS11) {
+		if (!fSavePIN) {
+			PIN = ShowAskPINDialog(_("pin:"));
+		}
+		if (PIN == NULL) {
+			exit(0);
+		}
+		return;
+	}
+	if (fDialog) {
+		return;
+	} else {
+		if (fSSL) {
+			if (!SaveCertPass) {
+				Pass = ShowAskPassDialog(_("certificate password:"));
+			}
+		} else {
+			if (!SavePass) {
+				Pass = ShowAskPassDialog(_("password:"));
+			}
+		}
+	}
+	if (Pass == NULL) {
+		exit(0);
+	}
+}
+
+static	void
+SetHTTPAuth()
 {
 	char userpass[1024];
+	
+	memset(userpass,0,sizeof(userpass));
+	snprintf(userpass,sizeof(userpass)-1,"%s:%s",User,Pass);
+	curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+}
 
+static	void
+InitCURL()
+{
 	curl_global_init(CURL_GLOBAL_ALL);
 	Curl = curl_easy_init();
 	if (!Curl) {
@@ -969,19 +1019,14 @@ InitCURL()
 			}
 			if (strlen(CAFile) > 0) {
 				curl_easy_setopt(Curl,CURLOPT_CAINFO,CAFile);
+				SetHTTPAuth();
 			}
 		}
 	} else {
-		memset(userpass,0,sizeof(userpass));
-		snprintf(userpass,sizeof(userpass)-1,"%s:%s",User,Pass);
-		curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-		curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+		SetHTTPAuth();
 	}
 #else
-	memset(userpass,0,sizeof(userpass));
-	snprintf(userpass,sizeof(userpass)-1,"%s:%s",User,Pass);
-	curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+	SetHTTPAuth();
 #endif
 }
 
@@ -1008,6 +1053,7 @@ ENTER_FUNC;
 	THISWINDOW(Session) = NULL;
 	WINDOWTABLE(Session) = NewNameHash();
 	SCREENDATA(Session) = NULL;
+	ThisAskPass();
 	InitCURL();
 LEAVE_FUNC;
 }

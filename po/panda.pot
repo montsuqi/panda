@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: support@orca.med.or.jp\n"
-"POT-Creation-Date: 2014-08-08 14:38+0900\n"
+"POT-Creation-Date: 2014-11-26 09:31+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -131,7 +131,7 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: glclient/bootdialog.c:278 glclient/bootdialog.c:534
+#: glclient/bootdialog.c:278 glclient/bootdialog.c:536
 msgid "Close"
 msgstr ""
 
@@ -151,40 +151,48 @@ msgstr ""
 msgid "Basic"
 msgstr ""
 
-#: glclient/bootdialog.c:516
+#: glclient/bootdialog.c:517
 msgid "SSL"
 msgstr ""
 
-#: glclient/bootdialog.c:520
+#: glclient/bootdialog.c:522
 msgid "Details"
 msgstr ""
 
-#: glclient/bootdialog.c:525
+#: glclient/bootdialog.c:527
 msgid "Connect"
 msgstr ""
 
-#: glclient/bootdialog.c:540
+#: glclient/bootdialog.c:542
 msgid "Configuration"
 msgstr ""
 
-#: glclient/bootdialog.c:547
+#: glclient/bootdialog.c:549
 msgid "INFOMATION"
 msgstr ""
 
-#: glclient/download.c:63
+#: glclient/dialogs.c:177 glclient/protocol.c:958
+msgid "pin:"
+msgstr ""
+
+#: glclient/dialogs.c:185
+msgid "save pin"
+msgstr ""
+
+#: glclient/download.c:64
 msgid "Specify filename..."
 msgstr ""
 
-#: glclient/download.c:87
+#: glclient/download.c:88
 #, c-format
 msgid "%s saved"
 msgstr ""
 
-#: glclient/download.c:88
+#: glclient/download.c:89
 msgid "save complete"
 msgstr ""
 
-#: glclient/download.c:168
+#: glclient/download.c:170
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -194,7 +202,7 @@ msgid ""
 "Size: %s"
 msgstr ""
 
-#: glclient/download.c:176
+#: glclient/download.c:178
 #, c-format
 msgid ""
 "Do you open this file or save it?\n"
@@ -203,11 +211,11 @@ msgid ""
 "Size: %s"
 msgstr ""
 
-#: glclient/action.c:724
+#: glclient/action.c:725
 msgid "Now loading..."
 msgstr ""
 
-#: glclient/action.c:1138
+#: glclient/action.c:1137
 msgid "glclient message notify"
 msgstr ""
 
@@ -237,18 +245,6 @@ msgstr ""
 msgid "mkdtemp failure"
 msgstr ""
 
-#: glclient/client.c:194
-msgid "pin:"
-msgstr ""
-
-#: glclient/client.c:200
-msgid "certificate password:"
-msgstr ""
-
-#: glclient/client.c:203
-msgid "password:"
-msgstr ""
-
 #: glclient/desktop.c:153
 msgid "Application start failure"
 msgstr ""
@@ -258,100 +254,108 @@ msgstr ""
 msgid "can't execute command.\\n\"%s\""
 msgstr ""
 
-#: glclient/protocol.c:209 glclient/protocol.c:224 glclient/protocol.c:274
-#: glclient/protocol.c:397 glclient/protocol.c:412 glclient/protocol.c:419
+#: glclient/protocol.c:212 glclient/protocol.c:227 glclient/protocol.c:277
+#: glclient/protocol.c:400 glclient/protocol.c:415 glclient/protocol.c:422
 #, c-format
 msgid "comm error:%s"
 msgstr ""
 
-#: glclient/protocol.c:217 glclient/protocol.c:267 glclient/protocol.c:405
+#: glclient/protocol.c:220 glclient/protocol.c:270 glclient/protocol.c:408
 msgid "authentication error:incorrect user or password"
 msgstr ""
 
-#: glclient/protocol.c:220 glclient/protocol.c:270 glclient/protocol.c:408
+#: glclient/protocol.c:223 glclient/protocol.c:273 glclient/protocol.c:411
 #, c-format
 msgid "http status code[%d]"
 msgstr ""
 
-#: glclient/protocol.c:258
+#: glclient/protocol.c:261
 #, c-format
 msgid "comm error:can not get blob:%s"
 msgstr ""
 
-#: glclient/protocol.c:306
+#: glclient/protocol.c:309
 msgid "invalid jsonrpc"
 msgstr ""
 
-#: glclient/protocol.c:309
+#: glclient/protocol.c:312
 msgid "invalid jsonrpc version"
 msgstr ""
 
-#: glclient/protocol.c:314 glclient/protocol.c:318
+#: glclient/protocol.c:317 glclient/protocol.c:321
 msgid "invalid jsonrpc id"
 msgstr ""
 
-#: glclient/protocol.c:333
+#: glclient/protocol.c:336
 #, c-format
 msgid "jsonrpc error code:%d message:%s"
 msgstr ""
 
-#: glclient/protocol.c:338
+#: glclient/protocol.c:341
 msgid "no result object"
 msgstr ""
 
-#: glclient/protocol.c:416
+#: glclient/protocol.c:419
 #, c-format
 msgid "invalid content type:%s"
 msgstr ""
 
-#: glclient/protocol.c:438 glclient/protocol.c:483 glclient/protocol.c:543
-#: glclient/protocol.c:572 glclient/protocol.c:600 glclient/protocol.c:629
-#: glclient/protocol.c:657 glclient/protocol.c:789
+#: glclient/protocol.c:441 glclient/protocol.c:486 glclient/protocol.c:546
+#: glclient/protocol.c:575 glclient/protocol.c:603 glclient/protocol.c:632
+#: glclient/protocol.c:660 glclient/protocol.c:792
 msgid "invalid json"
 msgstr ""
 
-#: glclient/protocol.c:445
+#: glclient/protocol.c:448
 msgid "no protocol_version object"
 msgstr ""
 
-#: glclient/protocol.c:451
+#: glclient/protocol.c:454
 msgid "no application_version object"
 msgstr ""
 
-#: glclient/protocol.c:457
+#: glclient/protocol.c:460
 msgid "no server_type object"
 msgstr ""
 
-#: glclient/protocol.c:490
+#: glclient/protocol.c:493
 msgid "no meta object"
 msgstr ""
 
-#: glclient/protocol.c:494
+#: glclient/protocol.c:497
 msgid "no session_id object"
 msgstr ""
 
-#: glclient/protocol.c:500
+#: glclient/protocol.c:503
 msgid "no jsonrpc_uri object"
 msgstr ""
 
-#: glclient/protocol.c:506
+#: glclient/protocol.c:509
 msgid "no rest_uri object"
 msgstr ""
 
-#: glclient/protocol.c:664
+#: glclient/protocol.c:667
 msgid "invalid message data:dialog"
 msgstr ""
 
-#: glclient/protocol.c:670
+#: glclient/protocol.c:673
 msgid "invalid message data:popup"
 msgstr ""
 
-#: glclient/protocol.c:676
+#: glclient/protocol.c:679
 msgid "invalid message data:abort"
 msgstr ""
 
-#: glclient/protocol.c:794
+#: glclient/protocol.c:797
 msgid "invalid list_report response"
+msgstr ""
+
+#: glclient/protocol.c:969
+msgid "certificate password:"
+msgstr ""
+
+#: glclient/protocol.c:972
+msgid "password:"
 msgstr ""
 
 #: libs/net.c:288
