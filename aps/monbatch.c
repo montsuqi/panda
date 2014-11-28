@@ -35,10 +35,13 @@
 #include	<time.h>
 #include	<errno.h>
 
+#include	<uuid/uuid.h>
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
+#include	"option.h"
 #include	"monsys.h"
+#include	"gettext.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -52,6 +55,12 @@ typedef struct {
 	LargeByteString	*name;
 	LargeByteString *value;
 } name_value_t;
+
+static	ARG_TABLE	option[] = {
+	{	"dir",		STRING,		TRUE,	(void*)&Directory,
+		N_("directory file name")						},
+	{	NULL,		0,			FALSE,	NULL,	NULL 	}
+};
 
 void
 signal_handler (int signo )
@@ -69,16 +78,27 @@ alrm_handler (int signo)
 	killpg(0, SIGKILL);
 }
 
+void
+chld_handler (int signo)
+{
+	/* dummy */
+	/* Auto in waitpid is executed If you do not have to register */
+	/* (default Shell.c of montsuqi) */
+}
+
 static	void
 InitSystem(void)
 {
+	char *dir;
 	InitMessage("monbatch",NULL);
-	if ( (Directory = getenv("MON_DIRECTORY_PATH")) != NULL ) {
-		InitDirectory();
-		SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
-		if		( ThisEnv == NULL ) {
-			Error("DI file parse error.");
-		}
+
+	if ( (dir = getenv("MON_DIRECTORY_PATH")) != NULL ) {
+		Directory = dir;
+	}
+	InitDirectory();
+	SetUpDirectory(Directory,NULL,NULL,NULL,P_NONE);
+	if		( ThisEnv == NULL ) {
+		Error("DI file parse error.");
 	}
 }
 
@@ -101,9 +121,11 @@ insert_table(
 		LBS_EmitSpace(kv->value);
 	}
 	LBS_EmitChar(kv->value,'\'');
-	evalue = Escape_monsys(kv->dbg, value);
-	LBS_EmitString(kv->value, evalue);
-	xfree(evalue);
+	if (value != NULL) {
+		evalue = Escape_monsys(kv->dbg, value);
+		LBS_EmitString(kv->value, evalue);
+		xfree(evalue);
+	}
 	LBS_EmitChar(kv->value,'\'');
 }
 
@@ -170,7 +192,7 @@ registdb(
 static int
 unregistdb(
 	DBG_Struct	*dbg,
-	pid_t pgid,
+	char *batch_id,
 	json_object *cmd_results)
 {
 	json_object *child;
@@ -201,12 +223,12 @@ unregistdb(
 	sql_len = sql_len + strlen(exec_record);
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-      "UPDATE %s SET endtime = '%s',rc = '%d', message = '%s', exec_record = '%s' WHERE pgid = '%d';",
-			 BATCH_LOG_TABLE, endtime, rc, message, exec_record, (int)pgid);
+      "UPDATE %s SET endtime = '%s',rc = '%d', message = '%s', exec_record = '%s' WHERE id = '%s';",
+			 BATCH_LOG_TABLE, endtime, rc, message, exec_record, batch_id);
 	ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 
-	snprintf(sql, sql_len, "DELETE FROM %s WHERE pgid = '%d';",
-			 BATCH_TABLE, (int)pgid);
+	snprintf(sql, sql_len, "DELETE FROM %s WHERE id = '%s';",
+			 BATCH_TABLE, batch_id);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -218,6 +240,7 @@ unregistdb(
 
 static	GHashTable *
 get_batch_info(
+	char *batch_id,
 	pid_t pgid)
 {
 	char	pid_s[10];
@@ -226,7 +249,7 @@ get_batch_info(
 
 	batch = NewNameHash();
 
-	g_hash_table_insert(batch, "id", getenv("MON_BATCH_ID"));
+	g_hash_table_insert(batch, "id", batch_id);
 	snprintf(pid_s, sizeof(pid_s), "%d", (int)pgid);
 	g_hash_table_insert(batch, "pgid", StrDup(pid_s));
 
@@ -236,6 +259,7 @@ get_batch_info(
 	g_hash_table_insert(batch, "tenant", getenv("MCP_TENANT"));
 	g_hash_table_insert(batch, "name", getenv("MON_BATCH_NAME"));
 	g_hash_table_insert(batch, "comment", getenv("MON_BATCH_COMMENT"));
+	g_hash_table_insert(batch, "groupname", getenv("MON_BATCH_GROUPNAME"));
 	g_hash_table_insert(batch, "extra", getenv("MON_BATCH_EXTRA"));
 	g_hash_table_insert(batch, "exwindow", getenv("MCP_WINDOW"));
 	g_hash_table_insert(batch, "exwidget", getenv("MCP_WIDGET"));
@@ -326,9 +350,13 @@ main(
 	int		argc,
 	char	**argv)
 {
-	pid_t pgid;
+	FILE_LIST	*fl;
+
 	struct sigaction sa;
 	DBG_Struct	*dbg;
+	char *batch_id;
+	uuid_t uu;
+	pid_t pgid;
 	GHashTable *batch;
 	json_object *cmd_results;
 
@@ -340,6 +368,11 @@ main(
 		Error("sigaction(2) failure");
 	}
 
+	sa.sa_handler = chld_handler;
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		Error("sigaction(2) failure");
+	}
+
 	sa.sa_handler = alrm_handler;
 	if (sigaction(SIGALRM, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
@@ -347,17 +380,27 @@ main(
 
 	alarm(BATCH_TIMEOUT);
 
+	fl = GetOption(option,argc,argv,NULL);
 	InitSystem();
+	if ((fl == NULL) || (fl->name == NULL)) {
+		PrintUsage(option,argv[0],NULL);
+	}
+
+	if ((batch_id = getenv("MON_BATCH_ID")) == NULL) {
+		Error("MON_BATCH_ID has not been set");
+	}
+	if (uuid_parse(batch_id, uu) == -1) {
+		Error("MON_BATCH_ID is invalid");
+	}
 
 	dbg = GetDBG_monsys();
 	pgid = getpgrp();
-	batch = get_batch_info(pgid);
-
+	batch = get_batch_info(batch_id, pgid);
 	registdb(dbg, batch);
 
 	cmd_results = exec_shell(pgid, argc, argv);
 
-	unregistdb(dbg, pgid, cmd_results);
+	unregistdb(dbg, batch_id, cmd_results);
 
 	return 0;
 }

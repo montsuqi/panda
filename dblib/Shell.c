@@ -116,6 +116,7 @@ ENTER_FUNC;
 	unsetenv("MON_BATCH_NAME");
 	unsetenv("MON_BATCH_COMMENT");
 	unsetenv("MON_BATCH_EXTRA");
+	unsetenv("MON_BATCH_GROUPNAME");
 	if(dbg->transaction_id) {
 		xfree(dbg->transaction_id);
 	}
@@ -329,7 +330,7 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	char *name, *comment, *extra;
+	char *name, *comment, *extra, *groupname;
 	uuid_t	u;
 	DB_Struct	*db;
 	PathStruct	*path;
@@ -350,6 +351,8 @@ ENTER_FUNC;
 		setenv("MON_BATCH_COMMENT", comment, 1);
 		extra = ValueToString(GetItemLongName(args,"extra"),dbg->coding);
 		setenv("MON_BATCH_EXTRA", extra, 1);
+		groupname = ValueToString(GetItemLongName(args,"groupname"),dbg->coding);
+		setenv("MON_BATCH_GROUPNAME", groupname, 1);
 		dbg->transaction_id = xmalloc(SIZE_TERM+1);
 		uuid_generate(u);
 		uuid_unparse(u, dbg->transaction_id);
@@ -408,7 +411,7 @@ ValueToWhere(
 	DBG_Struct		*dbg,
 	ValueStruct		*value)
 {
-	char *keys[] = {"id", "tenant", "name", "comment", "extra", NULL};
+	char *keys[] = {"id", "tenant", "name", "comment", "extra", "groupname", NULL};
 	char pgid_s[10];
 	char *where, *k, *v;
 	Bool first = TRUE;
@@ -446,12 +449,10 @@ _DBSELECT(
 	size_t sql_len  = SIZE_SQL;
 	char *sql;
 
-	CheckBatchPg();
-
 	mondbg = GetDBG_monsys();
 	where = ValueToWhere(mondbg, args);
 	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len, "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s;",
+	snprintf(sql, sql_len, "DECLARE %s_csr CURSOR FOR SELECT * FROM %s %s ORDER BY groupname, starttime;",
 			 BATCH_TABLE, BATCH_TABLE, where);
 	ret = ExecDBQuery(mondbg, sql, FALSE, DB_UPDATE);
 	xfree(where);
@@ -588,17 +589,20 @@ LEAVE_FUNC;
 extern	DB_Func	*
 InitShell(void)
 {
-	struct sigaction sa;
+	struct sigaction sa, orgsa;
 	DB_Func	*ret;
 ENTER_FUNC;
-	memset(&sa, 0, sizeof(struct sigaction));
-	sigemptyset (&sa.sa_mask);
-	sa.sa_flags |= SA_RESTART;
-	sa.sa_handler = (void *)OnChildExit;
-	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-		fprintf(stderr,"sigaction(2) failure\n");
+	memset(&orgsa, 0, sizeof(struct sigaction));
+	sigaction(SIGCHLD, NULL, &orgsa);
+	if (orgsa.sa_handler == SIG_DFL) {
+		memset(&sa, 0, sizeof(struct sigaction));
+		sigemptyset (&sa.sa_mask);
+		sa.sa_flags |= SA_RESTART;
+		sa.sa_handler = (void *)OnChildExit;
+		if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+			fprintf(stderr,"sigaction(2) failure\n");
+		}
 	}
-
 	ret = EnterDB_Function("Shell",Operations,DB_PARSER_SQL,&Core,"# ","\n");
 LEAVE_FUNC;
 	return	(ret);

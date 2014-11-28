@@ -93,7 +93,6 @@ GetApplication(
 {
 	char	*scr;
 	int		i;
-	size_t	size;
 	long	start
 		,	end;
 
