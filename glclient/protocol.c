@@ -1016,10 +1016,11 @@ InitCURL()
 				curl_easy_setopt(Curl,CURLOPT_SSLCERT,CertFile);
 				curl_easy_setopt(Curl,CURLOPT_SSLCERTTYPE,"P12");
 				curl_easy_setopt(Curl,CURLOPT_SSLCERTPASSWD,CertPass);
+			} else {
+				SetHTTPAuth();
 			}
 			if (strlen(CAFile) > 0) {
 				curl_easy_setopt(Curl,CURLOPT_CAINFO,CAFile);
-				SetHTTPAuth();
 			}
 		}
 	} else {
