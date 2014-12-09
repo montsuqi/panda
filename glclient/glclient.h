@@ -127,6 +127,7 @@ GLOBAL	Bool		fSavePIN;
 #	ifdef USE_SSL
 GLOBAL	ENGINE		*Engine;
 #	endif
-GLOBAL	CURL		*Curl;
+GLOBAL	CURL		*AuthCurl;
+GLOBAL	CURL		*RPCurl;
 
 #endif

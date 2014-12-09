@@ -196,22 +196,22 @@ REST_PostBLOB(
 
 	LBS_SetPos(lbs,0);
 
-	curl_easy_setopt(Curl, CURLOPT_URL, url);
-	curl_easy_setopt(Curl, CURLOPT_POST, 1);
-	curl_easy_setopt(Curl, CURLOPT_READDATA,(void*)lbs);
-	curl_easy_setopt(Curl, CURLOPT_READFUNCTION, read_binary_data);
+	curl_easy_setopt(RPCurl, CURLOPT_URL, url);
+	curl_easy_setopt(RPCurl, CURLOPT_POST, 1);
+	curl_easy_setopt(RPCurl, CURLOPT_READDATA,(void*)lbs);
+	curl_easy_setopt(RPCurl, CURLOPT_READFUNCTION, read_binary_data);
 
-	curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(Curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
-	curl_easy_setopt(Curl, CURLOPT_WRITEHEADER,(void*)oid);
+	curl_easy_setopt(RPCurl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(RPCurl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
+	curl_easy_setopt(RPCurl, CURLOPT_WRITEHEADER,(void*)oid);
 
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(Curl, CURLOPT_ERRORBUFFER, errbuf);
+	curl_easy_setopt(RPCurl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (curl_easy_perform(Curl) != CURLE_OK) {
+	if (curl_easy_perform(RPCurl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);
 	}
-	if (curl_easy_getinfo(Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+	if (curl_easy_getinfo(RPCurl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
 			break;
@@ -248,20 +248,20 @@ REST_GetBLOB(
 	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",RESTURI(Session),SESSIONID(Session),oid);
 	url[sizeof(url)-1] = 0;
 
-	curl_easy_setopt(Curl, CURLOPT_URL, url);
-	curl_easy_setopt(Curl, CURLOPT_POST,0);
-	curl_easy_setopt(Curl, CURLOPT_WRITEDATA,(void*)lbs);
-	curl_easy_setopt(Curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, NULL);
+	curl_easy_setopt(RPCurl, CURLOPT_URL, url);
+	curl_easy_setopt(RPCurl, CURLOPT_POST,0);
+	curl_easy_setopt(RPCurl, CURLOPT_WRITEDATA,(void*)lbs);
+	curl_easy_setopt(RPCurl, CURLOPT_WRITEFUNCTION,write_data);
+	curl_easy_setopt(RPCurl, CURLOPT_HTTPHEADER, NULL);
 
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(Curl, CURLOPT_ERRORBUFFER, errbuf);
+	curl_easy_setopt(RPCurl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (curl_easy_perform(Curl) != CURLE_OK) {
+	if (curl_easy_perform(RPCurl) != CURLE_OK) {
 		Warning(_("comm error:can not get blob:%s"),oid);
 		return NULL;
 	}
-	if (curl_easy_getinfo(Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+	if (curl_easy_getinfo(RPCurl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
 			break;
@@ -350,6 +350,7 @@ JSONRPC(
 	int type,
 	json_object *obj)
 {
+	CURL *curl;
 	struct curl_slist *headers = NULL;
 	char *ctype,clength[256],*url,*jsonstr,errbuf[CURL_ERROR_SIZE+1];
 	long http_code;
@@ -357,8 +358,10 @@ JSONRPC(
 
 	if (type == TYPE_AUTH) {
 		url = AUTHURI(Session);
+		curl = AuthCurl;
 	} else {
 		url = RPCURI(Session);
+		curl = RPCurl;
 	}
 	if (readbuf == NULL) {
 		readbuf = NewLBS();
@@ -385,21 +388,21 @@ JSONRPC(
 	snprintf(clength,sizeof(clength),"Expect:");
 	headers = curl_slist_append(headers, clength);
 
-	curl_easy_setopt(Curl, CURLOPT_URL, url);
-	curl_easy_setopt(Curl, CURLOPT_POST,1);
-	curl_easy_setopt(Curl, CURLOPT_WRITEDATA,(void*)writebuf);
-	curl_easy_setopt(Curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(Curl, CURLOPT_READDATA,(void*)readbuf);
-	curl_easy_setopt(Curl, CURLOPT_READFUNCTION, read_text_data);
-	curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_POST,1);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA,(void*)writebuf);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,write_data);
+	curl_easy_setopt(curl, CURLOPT_READDATA,(void*)readbuf);
+	curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_text_data);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(Curl, CURLOPT_ERRORBUFFER, errbuf);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (curl_easy_perform(Curl) != CURLE_OK) {
+	if (curl_easy_perform(curl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);
 	}
-	if (curl_easy_getinfo(Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+	if (curl_easy_getinfo(curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
 			break;
@@ -414,7 +417,7 @@ JSONRPC(
 	} else {
 		Error(_("comm error:%s"),errbuf);
 	}
-	if (curl_easy_getinfo(Curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
+	if (curl_easy_getinfo(curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
 		if (strstr(ctype,"json") == NULL) {
 			Error(_("invalid content type:%s"),ctype);
 		}
@@ -503,6 +506,7 @@ RPC_StartSession()
 		Error(_("no jsonrpc_uri object"));
 	}
 	rpcuri = (char*)json_object_get_string(child);
+fprintf(stderr,"rpcuri:%s\n",rpcuri);
 
 	child = json_object_object_get(result,"app_rest_api_uri_root");
 	if (!CheckJSONObject(child,json_type_string)) {
@@ -513,11 +517,24 @@ RPC_StartSession()
 	if (!strcmp(SERVERTYPE(Session),"ginbee")) {
 		RPCURI(Session) = g_strdup(rpcuri);
 		RESTURI(Session) = g_strdup(resturi);
+		RPCurl = curl_easy_init();
+		if (!RPCurl) {
+			Warning("curl_easy_init failure");
+			exit(0);
+		}
+		if (getenv("GLCLIENT_CURL_DEBUG") != NULL) {
+			curl_easy_setopt(RPCurl,CURLOPT_VERBOSE,1);
+		}
 	} else {
 		RPCURI(Session) = g_strdup(AUTHURI(Session));
 		re = g_regex_new("/rpc/",G_REGEX_CASELESS,0,NULL);
 		RESTURI(Session) = g_regex_replace(re,AUTHURI(Session),-1,0,"/rest/",0,NULL);
 		g_regex_unref(re);
+		RPCurl = AuthCurl;
+	}
+	if (fMlog) {
+		MessageLogPrintf("RPCURI[%s]\n",RPCURI(Session));
+		MessageLogPrintf("RESTURI[%s]\n",RESTURI(Session));
 	}
 	json_object_put(obj);
 }
@@ -937,13 +954,13 @@ InitCURLPKCS11()
 		Error("ENGINE_init failure");
 	}
 
-	curl_easy_setopt(Curl,CURLOPT_SSLCERT,certid);
-	curl_easy_setopt(Curl,CURLOPT_SSLKEY,certid);
-	curl_easy_setopt(Curl,CURLOPT_SSLENGINE,"pkcs11");
-	curl_easy_setopt(Curl,CURLOPT_SSLKEYTYPE,"ENG");
-	curl_easy_setopt(Curl,CURLOPT_SSLCERTTYPE,"ENG");
-	curl_easy_setopt(Curl,CURLOPT_SSLENGINE_DEFAULT,1L);
-	curl_easy_setopt(Curl,CURLOPT_CAINFO,cacertfile);
+	curl_easy_setopt(AuthCurl,CURLOPT_SSLCERT,certid);
+	curl_easy_setopt(AuthCurl,CURLOPT_SSLKEY,certid);
+	curl_easy_setopt(AuthCurl,CURLOPT_SSLENGINE,"pkcs11");
+	curl_easy_setopt(AuthCurl,CURLOPT_SSLKEYTYPE,"ENG");
+	curl_easy_setopt(AuthCurl,CURLOPT_SSLCERTTYPE,"ENG");
+	curl_easy_setopt(AuthCurl,CURLOPT_SSLENGINE_DEFAULT,1L);
+	curl_easy_setopt(AuthCurl,CURLOPT_CAINFO,cacertfile);
 
 	g_free(cacertfile);
 	free(certid);
@@ -987,40 +1004,40 @@ SetHTTPAuth()
 	
 	memset(userpass,0,sizeof(userpass));
 	snprintf(userpass,sizeof(userpass)-1,"%s:%s",User,Pass);
-	curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+	curl_easy_setopt(AuthCurl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(AuthCurl, CURLOPT_USERPWD, userpass);
 }
 
 static	void
 InitCURL()
 {
 	curl_global_init(CURL_GLOBAL_ALL);
-	Curl = curl_easy_init();
-	if (!Curl) {
+	AuthCurl = curl_easy_init();
+	if (!AuthCurl) {
 		Warning("curl_easy_init failure");
 		exit(0);
 	}
 	if (getenv("GLCLIENT_CURL_DEBUG") != NULL) {
-		curl_easy_setopt(Curl,CURLOPT_VERBOSE,1);
+		curl_easy_setopt(AuthCurl,CURLOPT_VERBOSE,1);
 	}
 
 #ifdef USE_SSL
 	if (fSSL) {
-		curl_easy_setopt(Curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(Curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(Curl,CURLOPT_SSL_VERIFYHOST,2);
+		curl_easy_setopt(AuthCurl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+		curl_easy_setopt(AuthCurl,CURLOPT_SSL_VERIFYPEER,1);
+		curl_easy_setopt(AuthCurl,CURLOPT_SSL_VERIFYHOST,2);
 		if (fPKCS11) {
 			InitCURLPKCS11();
 		} else {
 			if (strlen(CertFile) > 0) {
-				curl_easy_setopt(Curl,CURLOPT_SSLCERT,CertFile);
-				curl_easy_setopt(Curl,CURLOPT_SSLCERTTYPE,"P12");
-				curl_easy_setopt(Curl,CURLOPT_SSLCERTPASSWD,CertPass);
+				curl_easy_setopt(AuthCurl,CURLOPT_SSLCERT,CertFile);
+				curl_easy_setopt(AuthCurl,CURLOPT_SSLCERTTYPE,"P12");
+				curl_easy_setopt(AuthCurl,CURLOPT_SSLCERTPASSWD,CertPass);
 			} else {
 				SetHTTPAuth();
 			}
 			if (strlen(CAFile) > 0) {
-				curl_easy_setopt(Curl,CURLOPT_CAINFO,CAFile);
+				curl_easy_setopt(AuthCurl,CURLOPT_CAINFO,CAFile);
 			}
 		}
 	} else {
@@ -1041,10 +1058,15 @@ void FinalCURL()
 		ENGINE_cleanup();
 	}
 #endif
-	if (Curl != NULL) {
-		curl_easy_cleanup(Curl);
-		curl_global_cleanup();
+	if (AuthCurl != NULL) {
+		curl_easy_cleanup(AuthCurl);
 	}
+	if (!strcmp(SERVERTYPE(Session),"ginbee")) {
+		if (RPCurl != NULL) {
+			curl_easy_cleanup(RPCurl);
+		}	
+	}
+	curl_global_cleanup();
 }
 
 extern	void
