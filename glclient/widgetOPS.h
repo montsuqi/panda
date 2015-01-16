@@ -23,7 +23,7 @@
 
 #include	<json.h>
 
-extern	void UpdateWidget(const char *longname,struct json_object *w);
+extern	void UpdateWidget(GtkWidget *,struct json_object *w);
 extern	struct json_object*	MakeScreenData(const char *wname); 
 extern	Bool PandaTableFocusCell(const char *wname);
 #endif

@@ -1285,36 +1285,30 @@ SetWidgetData(
 
 extern	void
 UpdateWidget(
-	const char *longname,
+	GtkWidget *widget,
 	json_object *w)
 {
-	GtkWidget *widget;
-	json_object *val;
 	json_object_iter iter;
 	char childname[SIZE_LONGNAME+1];
-	int i,length;
 	enum json_type type;
+	GtkWidget *child;
 
-	widget = GetWidgetByLongName(longname);
-	if (widget != NULL) {
-		SetWidgetData(widget,w);
+	if (widget == NULL) {
+		Warning("do not reach");
+		return;
 	}
+	SetWidgetData(widget,w);
 	type = json_object_get_type(w);
 	if (type == json_type_object) {
 		{
 			json_object_object_foreachC(w,iter) {
-				snprintf(childname,SIZE_LONGNAME,"%s.%s",longname,iter.key);
+				snprintf(childname,SIZE_LONGNAME,"%s.%s",glade_get_widget_long_name(widget),iter.key);
 				childname[SIZE_LONGNAME] = 0;
-				UpdateWidget(childname,iter.val);
+				child = GetWidgetByLongName(childname);
+				if (child!=NULL) {
+					UpdateWidget(child,iter.val);
+				}
 			}
-		}
-	} else if (type == json_type_array) {
-		length = json_object_array_length(w);
-		for(i=0;i<length;i++) {
-			val = json_object_array_get_idx(w,i);
-			snprintf(childname,SIZE_LONGNAME,"%s[%d]",longname,i);
-			childname[SIZE_LONGNAME] = 0;
-			UpdateWidget(childname,val);
 		}
 	}
 }

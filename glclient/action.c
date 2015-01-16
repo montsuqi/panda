@@ -1261,7 +1261,7 @@ UpdateWindow(
 		if (child == NULL ||is_error(child)) {
 			Error("invalid json part:screeen_data");
 		}
-		UpdateWidget(wname,child);
+		UpdateWidget(GetWidgetByLongName(wname),child);
 		if (!strcmp(wname,FOCUSEDWINDOW(Session))) {
 			ShowWindow(wname);
 		}
