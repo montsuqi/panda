@@ -506,7 +506,6 @@ RPC_StartSession()
 		Error(_("no jsonrpc_uri object"));
 	}
 	rpcuri = (char*)json_object_get_string(child);
-fprintf(stderr,"rpcuri:%s\n",rpcuri);
 
 	child = json_object_object_get(result,"app_rest_api_uri_root");
 	if (!CheckJSONObject(child,json_type_string)) {
@@ -628,7 +627,6 @@ RPC_SendEvent(
 	json_object *params)
 {
 	json_object *obj,*meta;
-
 	meta = json_object_new_object();
 	json_object_object_add(meta,"client_version",
 		json_object_new_string(VERSION));
@@ -637,6 +635,7 @@ RPC_SendEvent(
 	json_object_object_add(params,"meta",meta);
 
 	obj = MakeJSONRPCRequest("send_event",params);
+
 	JSONRPC(TYPE_APP,obj);
 
 	// json parse

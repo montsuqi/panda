@@ -150,8 +150,9 @@ send_event(
 	GtkWidget	*widget,
 	char		*event)
 {
-	char		*window_name;
-	char		*widget_name;
+	char	*window_name;
+	char	*widget_name;
+	long	t1,t2,t3,t4,t5;
 ENTER_FUNC;
 	window_name = GetWindowName(widget);
 	widget_name = (char *)gtk_widget_get_name(widget);
@@ -165,6 +166,7 @@ ENTER_FUNC;
 	}
 	if (!ISRECV(Session)) {
 		ISRECV(Session) = TRUE;
+		t1 = GetNowTime();
 
 		StopEventTimer();
 		StopTimerWidgetAll();
@@ -172,8 +174,15 @@ ENTER_FUNC;
 		ShowBusyCursor(widget);
 		BlockChangedHandlers();
 
+		if (fMlog) {
+			Warning("windowName:%s widgetName:%s event:%s",window_name,widget_name,event);
+		}
+
+		t2 = GetNowTime();
 		SendEvent(window_name,widget_name,event);
+		t3 = GetNowTime();
 		UpdateScreen();
+		t4 = GetNowTime();
 
 		if (!fKeyBuff) {
 			ClearKeyBuffer();
@@ -183,6 +192,10 @@ ENTER_FUNC;
 		HideBusyCursor(widget); 
 
 		ISRECV(Session) = FALSE;
+		t5 = GetNowTime();
+		if (getenv("GLCLIENT_DO_PROFILE")!=NULL) {
+			fprintf(stderr,"total:%ldms SendEvent:%ldms UpdateScreen:%ldms\n",(t5-t1),(t3-t2),(t4-t3));
+		}
 	}
 LEAVE_FUNC;
 }
