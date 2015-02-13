@@ -465,11 +465,11 @@ ParseReqAuth(HTTP_REQUEST *req)
 
 	if (userpass == NULL || strlen(userpass) <= 0) {
 		Warning("Invalid userpass");
-		req->status = HTTP_UNAUTHORIZED;
+		req->status = HTTP_FORBIDDEN;
 		return;
 	}
 
-	re = g_regex_new("^(\\w+):(\\S+)",0,0,NULL);
+	re = g_regex_new("^(\\w+):(.*)",0,0,NULL);
 	if (g_regex_match(re,userpass,0,&match)) {
 		req->user = g_match_info_fetch(match,1);
 		req->pass = g_match_info_fetch(match,2);
@@ -478,7 +478,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 		g_free(userpass);
 		g_regex_unref(re);
 		Warning("Invalid userpass");
-		req->status = HTTP_UNAUTHORIZED;
+		req->status = HTTP_FORBIDDEN;
 		return;
 	}
 	g_free(userpass);
