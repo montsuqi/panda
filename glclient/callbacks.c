@@ -169,7 +169,7 @@ ENTER_FUNC;
 		t1 = GetNowTime();
 
 		StopEventTimer();
-		StopTimerWidgetAll();
+		StopTimersAll();
 
 		ShowBusyCursor(widget);
 		BlockChangedHandlers();

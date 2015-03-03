@@ -83,7 +83,7 @@ typedef struct {
 	Bool		fWindow;
 	Bool		fAccelGroup;
 	GHashTable	*ChangedWidgetTable;
-	GHashTable	*TimerWidgetTable;
+	GList		*Timers;
 }	WindowData;
 
 extern	void		ExitSystem(void);
