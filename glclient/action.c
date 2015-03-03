@@ -337,53 +337,62 @@ LEAVE_FUNC;
 }
 
 static	void
-_RegistTimer(
-	GtkWidget	*widget,
-	gpointer	data)
+RegisterWidgets(
+	GtkWidget *widget,
+	gpointer data)
 {
-	if(GTK_IS_CONTAINER(widget))
-		gtk_container_forall(GTK_CONTAINER(widget), _RegistTimer, data);
-	else if (GTK_IS_PANDA_TIMER(widget))
-		g_hash_table_insert((GHashTable*)data, 
-			(char *)gtk_widget_get_name(widget), widget);
+	WindowData *wdata;
+
+
+	wdata = (WindowData*)data;
+	if(GTK_IS_CONTAINER(widget)) {
+		gtk_container_forall(GTK_CONTAINER(widget),RegisterWidgets,data);
+	} 
+	if (GTK_IS_PANDA_TIMER(widget)) {
+		wdata->Timers = g_list_append(wdata->Timers,widget);
+	}
+}
+
+extern	void
+ResetTimers(
+	char	*wname)
+{
+	WindowData *data;
+	GList *l;
+
+ENTER_FUNC;
+	if ((data = GetWindowData(wname)) == NULL) {
+		// FIXME sometimes comes here.
+		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
+		return;
+	}
+	for(l=data->Timers;l!=NULL;l=l->next) {
+		gtk_widget_show(GTK_WIDGET(l->data));
+		gtk_panda_timer_reset (GTK_PANDA_TIMER(l->data));
+	}
+LEAVE_FUNC;
 }
 
 static	void
-_ResetTimer(
-	gpointer	key,
-	gpointer	value,
-	gpointer	data)
-{
-	gtk_widget_show(GTK_WIDGET(value));
-	gtk_panda_timer_reset (GTK_PANDA_TIMER(value));
-}
-
-static	void
-_StopTimer(
-	gpointer	key,
-	gpointer	value,
-	gpointer	data)
-{
-	gtk_widget_hide(GTK_WIDGET(value));
-	gtk_panda_timer_stop(GTK_PANDA_TIMER(value));
-}
-
-static	void
-_StopTimerWidgetAll(
+_StopTimersAll(
 	gpointer	key,
 	gpointer	value,
 	gpointer	data)
 {
 	WindowData *wdata;
-	
+	GList *l;
+
 	wdata = (WindowData*)value;
-	g_hash_table_foreach(wdata->TimerWidgetTable,_StopTimer,NULL);
+	for(l=wdata->Timers;l!=NULL;l=l->next) {
+		gtk_widget_hide(GTK_WIDGET(l->data));
+		gtk_panda_timer_stop(GTK_PANDA_TIMER(l->data));
+	}
 }
 
 extern	void
-StopTimerWidgetAll(void)
+StopTimersAll(void)
 {
-	g_hash_table_foreach(WINDOWTABLE(Session),_StopTimerWidgetAll,NULL);
+	g_hash_table_foreach(WINDOWTABLE(Session),_StopTimersAll,NULL);
 }
 
 extern	void
@@ -519,7 +528,7 @@ ENTER_FUNC;
 	wdata->title = StrDup((char*)gtk_window_get_title(GTK_WINDOW(window)));
 	wdata->fAccelGroup = FALSE;
 	wdata->ChangedWidgetTable = NewNameHash();
-	wdata->TimerWidgetTable = NewNameHash();
+	wdata->Timers = NULL;
 	wdata->UpdateWidgetQueue = NewQueue();
 	glade_xml_signal_autoconnect(xml);
 	g_hash_table_insert(WINDOWTABLE(Session),strdup(wname),wdata);
@@ -528,7 +537,7 @@ ENTER_FUNC;
 	g_return_if_fail(child != NULL);
 	g_object_ref(child);
 	gtk_widget_show_all(child);
-	gtk_container_forall(GTK_CONTAINER(child), _RegistTimer, wdata->TimerWidgetTable);
+	RegisterWidgets(child,wdata);
 	if (IsDialog(window)) {
 		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
@@ -627,21 +636,6 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-extern	void
-ResetTimer(
-	char	*wname)
-{
-	WindowData	*data;
-
-ENTER_FUNC;
-	if ((data = GetWindowData(wname)) == NULL) {
-		// FIXME sometimes comes here.
-		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
-		return;
-	}
-	g_hash_table_foreach(data->TimerWidgetTable, _ResetTimer, NULL);
-LEAVE_FUNC;
-}
 
 extern	void
 ShowWindow(

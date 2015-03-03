@@ -86,7 +86,7 @@ typedef struct {
 	Bool		fWindow;
 	Bool		fAccelGroup;
 	GHashTable	*ChangedWidgetTable;
-	GHashTable	*TimerWidgetTable;
+	GList		*Timers;
 	Queue		*UpdateWidgetQueue;
 }	WindowData;
 

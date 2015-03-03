@@ -162,7 +162,7 @@ ENTER_FUNC;
 		ISRECV(Session) = TRUE;
 
 		StopEventTimer();
-		StopTimerWidgetAll();
+		StopTimersAll();
 
 		ShowBusyCursor(widget);
 		/* send event */

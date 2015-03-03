@@ -618,7 +618,7 @@ ENTER_FUNC;
 			ShowWindow(stack[i]);
 		}
 		UpdateWindow(stack[i]);
-		ResetTimer(stack[i]);
+		ResetTimers(stack[i]);
 	}
 	if (c == GL_FocusName) {
 		GL_RecvString(fp, sizeof(window), window);
