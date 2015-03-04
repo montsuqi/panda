@@ -255,6 +255,7 @@ static struct changed_hander {
 
 static void ScaleWidget(GtkWidget *widget, gpointer data);
 static void ScaleWindow(GtkWidget *widget);
+static void BitScaleWindow(void);
 
 static void
 SetWindowIcon(GtkWindow *window)
@@ -696,6 +697,9 @@ ENTER_FUNC;
 			gtk_window_set_transient_for(GTK_WINDOW(window), 
 				GTK_WINDOW(parent));
 		}
+		gtk_widget_show(window);
+		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+		BitScaleWindow();
 	}
 LEAVE_FUNC;
 }
@@ -896,6 +900,22 @@ ScaleWindow(
 #endif
 		gtk_widget_set_size_request(widget,_w,_h); 
 	} 
+}
+
+static	void
+BitScaleWindow(void)
+{
+#define WINC (1)
+	static int i = 0;
+	int width,height;
+
+	gtk_window_get_size(GTK_WINDOW(TopWindow),&width,&height);
+	if (i%2 == 0) {
+		gtk_window_resize(GTK_WINDOW(TopWindow),width, height-WINC);
+	} else {
+		gtk_window_resize(GTK_WINDOW(TopWindow),width, height+WINC);
+	}
+	i++;
 }
 
 extern	void
