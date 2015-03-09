@@ -902,11 +902,13 @@ BitScaleWindow(void)
 	int width,height;
 
 	gtk_window_get_size(GTK_WINDOW(TopWindow),&width,&height);
+    g_signal_handlers_block_by_func(TopWindow,ConfigureWindow,NULL);
 	if (i%2 == 0) {
 		gtk_window_resize(GTK_WINDOW(TopWindow),width, height-WINC);
 	} else {
 		gtk_window_resize(GTK_WINDOW(TopWindow),width, height+WINC);
 	}
+    g_signal_handlers_unblock_by_func(TopWindow,ConfigureWindow,NULL);
 	i++;
 }
 
