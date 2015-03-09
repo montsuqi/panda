@@ -930,6 +930,10 @@ ConfigureWindow(GtkWidget *widget,
 	int x,y,width,height;
 	char buf[16];
 
+	if (getenv("GLCLIENT_CANCEL_SCALE_WINDOW") != NULL) {
+		return;
+	}
+
 	gtk_window_get_position(GTK_WINDOW(widget), &x,&y);
 	gtk_window_get_size(GTK_WINDOW(widget), &width,&height);
 
@@ -988,6 +992,13 @@ InitTopWindow(void)
 
 	TopWindowScale.h = (ORIGIN_WINDOW_WIDTH  * 1.0) / width;
 	TopWindowScale.v = (ORIGIN_WINDOW_HEIGHT * 1.0) / height;
+
+	if (getenv("GLCLIENT_CANCEL_SCALE_WINDOW") != NULL) {
+		width = ORIGIN_WINDOW_WIDTH;
+		height = ORIGIN_WINDOW_HEIGHT;
+		TopWindowScale.h = 1.0;
+		TopWindowScale.v = 1.0;
+	}
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_move(GTK_WINDOW(TopWindow),x,y); 
