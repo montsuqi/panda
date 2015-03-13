@@ -993,7 +993,7 @@ InitTopWindow(void)
 	TopWindowScale.h = (ORIGIN_WINDOW_WIDTH  * 1.0) / width;
 	TopWindowScale.v = (ORIGIN_WINDOW_HEIGHT * 1.0) / height;
 
-	if (!CancelScaleWindow) {
+	if (CancelScaleWindow) {
 		width = ORIGIN_WINDOW_WIDTH;
 		height = ORIGIN_WINDOW_HEIGHT;
 		TopWindowScale.h = 1.0;
