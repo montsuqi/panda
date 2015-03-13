@@ -255,12 +255,11 @@ static struct changed_hander {
 
 static void ScaleWidget(GtkWidget *widget, gpointer data);
 static void ScaleWindow(GtkWidget *widget);
-static void BitScaleWindow(void);
+static void ReDrawTopWindow(void);
 
 static void
 SetWindowIcon(GtkWindow *window)
 {
-
 	GdkPixbuf *pixbuf;
 
 	pixbuf = gdk_pixbuf_new_from_inline (-1, glclient_icon, FALSE, NULL);
@@ -676,6 +675,9 @@ ENTER_FUNC;
 		}
 		SetTitle(TopWindow);
 		SetBGColor(TopWindow);
+		if (DelayDrawWindow) {
+			ReDrawTopWindow();
+		}
 	} else {
 	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;
@@ -699,7 +701,9 @@ ENTER_FUNC;
 		}
 		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
-		BitScaleWindow();
+		if (DelayDrawWindow) {
+			ReDrawTopWindow();
+		}
 	}
 LEAVE_FUNC;
 }
@@ -903,7 +907,7 @@ ScaleWindow(
 }
 
 static	void
-BitScaleWindow(void)
+ReDrawTopWindow(void)
 {
 #define WINC (1)
 	static int i = 0;
@@ -930,10 +934,6 @@ ConfigureWindow(GtkWidget *widget,
 	int x,y,width,height;
 	char buf[16];
 
-	if (getenv("GLCLIENT_CANCEL_SCALE_WINDOW") != NULL) {
-		return;
-	}
-
 	gtk_window_get_position(GTK_WINDOW(widget), &x,&y);
 	gtk_window_get_size(GTK_WINDOW(widget), &width,&height);
 
@@ -956,7 +956,7 @@ ConfigureWindow(GtkWidget *widget,
 	if (old_width != width || old_height != height) {
 		TopWindowScale.h = (width  * 1.0) / ORIGIN_WINDOW_WIDTH;
 		TopWindowScale.v = (height * 1.0) / ORIGIN_WINDOW_HEIGHT;
-		gtk_container_forall(GTK_CONTAINER(widget), ScaleWidget, NULL);
+		ScaleWidget(widget,NULL);
 		sprintf(buf,"%d",width);
 		SetWidgetCache("glclient.topwindow.width",buf);
 		sprintf(buf,"%d",height);
@@ -993,7 +993,7 @@ InitTopWindow(void)
 	TopWindowScale.h = (ORIGIN_WINDOW_WIDTH  * 1.0) / width;
 	TopWindowScale.v = (ORIGIN_WINDOW_HEIGHT * 1.0) / height;
 
-	if (getenv("GLCLIENT_CANCEL_SCALE_WINDOW") != NULL) {
+	if (!CancelScaleWindow) {
 		width = ORIGIN_WINDOW_WIDTH;
 		height = ORIGIN_WINDOW_HEIGHT;
 		TopWindowScale.h = 1.0;
@@ -1003,13 +1003,13 @@ InitTopWindow(void)
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_move(GTK_WINDOW(TopWindow),x,y); 
 #if LIBGTK_3_0_0
-#if 0
+#  if 0
     gtk_window_set_default_size(GTK_WINDOW(TopWindow),width,height);
-#else
+#  else
     gtk_window_set_default_size(GTK_WINDOW(TopWindow),
 		DEFAULT_WINDOW_WIDTH,
 		DEFAULT_WINDOW_HEIGHT);
-#endif
+#  endif
 	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_QUEUE);
 #else
 	gtk_widget_set_size_request(TopWindow,width, height);
@@ -1024,8 +1024,10 @@ InitTopWindow(void)
 
 	g_signal_connect(G_OBJECT(TopWindow), 
 		"delete_event", G_CALLBACK(gtk_true), NULL);
-	g_signal_connect(G_OBJECT(TopWindow), 
-		"configure_event", G_CALLBACK(ConfigureWindow), NULL);
+	if (!CancelScaleWindow) {
+		g_signal_connect(G_OBJECT(TopWindow), 
+			"configure_event", G_CALLBACK(ConfigureWindow), NULL);
+	}
 
 	SetWindowIcon(GTK_WINDOW(TopWindow));
 

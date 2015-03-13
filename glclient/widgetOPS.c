@@ -515,6 +515,9 @@ SetPandaTable(
 	char		*bgval[GTK_PANDA_TABLE_MAX_COLS];
 	char		name[16];
 ENTER_FUNC;
+	if (DelayDrawWindow) {
+		gtk_widget_set_sensitive(widget,TRUE);
+	}
 	SetCommon(widget,obj);
 
 	trow = 0;
@@ -708,6 +711,9 @@ ENTER_FUNC;
 		for(l=list;l!=NULL;l=l->next) {
 			g_free(l->data);
 		}
+	}
+	if (DelayDrawWindow) {
+		gtk_widget_set_sensitive(widget,FALSE);
 	}
 LEAVE_FUNC;
 }
