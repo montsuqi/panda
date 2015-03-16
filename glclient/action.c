@@ -994,6 +994,7 @@ InitTopWindow(void)
 
 	TopWindow = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_move(GTK_WINDOW(TopWindow),x,y); 
+	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_QUEUE);
 #if LIBGTK_3_0_0
 #  if 0
     gtk_window_set_default_size(GTK_WINDOW(TopWindow),width,height);
@@ -1002,7 +1003,6 @@ InitTopWindow(void)
 		DEFAULT_WINDOW_WIDTH,
 		DEFAULT_WINDOW_HEIGHT);
 #  endif
-	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_QUEUE);
 #else
 	gtk_widget_set_size_request(TopWindow,width, height);
 	GdkGeometry geometry;
@@ -1011,7 +1011,6 @@ InitTopWindow(void)
 	gtk_window_set_geometry_hints(GTK_WINDOW(TopWindow),NULL,&geometry,
 		GDK_HINT_MIN_SIZE);
 	gtk_window_set_wmclass(GTK_WINDOW(TopWindow),"Glclient","Glclient");
-	gtk_container_set_resize_mode(GTK_CONTAINER(TopWindow),GTK_RESIZE_IMMEDIATE);
 #endif
 
 	g_signal_connect(G_OBJECT(TopWindow), 
@@ -1027,7 +1026,7 @@ InitTopWindow(void)
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(TopNoteBook),FALSE);
 	gtk_notebook_set_show_border(GTK_NOTEBOOK(TopNoteBook),FALSE);
 	gtk_container_add(GTK_CONTAINER(TopWindow), TopNoteBook);
-	gtk_container_set_resize_mode(GTK_CONTAINER(TopNoteBook),GTK_RESIZE_IMMEDIATE);
+	gtk_container_set_resize_mode(GTK_CONTAINER(TopNoteBook),GTK_RESIZE_QUEUE);
 
 	DialogStack = NULL;
 }
