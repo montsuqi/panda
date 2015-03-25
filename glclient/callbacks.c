@@ -182,7 +182,7 @@ ENTER_FUNC;
 		StopEventTimer();
 		StopTimerWidgetAll();
 
-		ShowBusyCursor(widget);
+		ShowBusyCursor(TopWindow);
 		/* send event */
 		if		(  event  !=  NULL  ) {
 			SendEvent(FPCOMM(Session),
@@ -203,7 +203,7 @@ ENTER_FUNC;
 			ClearKeyBuffer();
 			ignore_event = FALSE;
 		}
-		HideBusyCursor(widget); 
+		HideBusyCursor(TopWindow); 
 		UnblockChangedHandlers();
 		while (THISWINDOW(Session)[0] == '_') {
 			SendEvent(FPCOMM(Session),

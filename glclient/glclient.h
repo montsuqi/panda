@@ -128,8 +128,8 @@ GLOBAL	char		*Slot;
 #endif	/* USE_SSL */
 
 /* gconf */
-GLOBAL	GConfClient *GConfCTX;
-GLOBAL	gchar	*ConfigName;
+GLOBAL	GConfClient	*GConfCTX;
+GLOBAL	gchar		*ConfigName;
 
 #define GL_GCONF_BASE				"/apps/glclient"
 #define GL_GCONF_SERVERS			(GL_GCONF_BASE "/servers")
