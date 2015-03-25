@@ -171,7 +171,7 @@ ENTER_FUNC;
 		StopEventTimer();
 		StopTimersAll();
 
-		ShowBusyCursor(widget);
+		ShowBusyCursor(TopWindow);
 		BlockChangedHandlers();
 
 		if (fMlog) {
@@ -191,9 +191,8 @@ ENTER_FUNC;
 		if (!fKeyBuff) {
 			ClearKeyBuffer();
 		}
-
 		UnblockChangedHandlers();
-		HideBusyCursor(widget); 
+		HideBusyCursor(TopWindow); 
 
 		ISRECV(Session) = FALSE;
 		t5 = GetNowTime();

@@ -39,7 +39,6 @@ typedef struct {
 } WindowScale;
 
 GLOBAL	GtkWidget	*TopWindow;
-GLOBAL	GtkWidget	*TopNoteBook;
 GLOBAL	GList		*DialogStack;
 GLOBAL	WindowScale	TopWindowScale;
 
