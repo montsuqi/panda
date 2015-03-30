@@ -233,7 +233,6 @@ SetPandaCList(
 
 ENTER_FUNC;
 	SetCommon(widget,wdata);
-
 	// items
 	gtk_widget_hide(widget);
 	gtk_panda_clist_set_rows(GTK_PANDA_CLIST(widget),data->count);
@@ -245,12 +244,16 @@ ENTER_FUNC;
 	}
 	if (data->fgcolors != NULL) {
 		for	(j = 0;data->fgcolors[j] != NULL;j ++) {
+			if (j < data->count) {
 			gtk_panda_clist_set_fgcolor(GTK_PANDA_CLIST(widget),j,data->fgcolors[j]);
+			}
 		}
 	}
 	if (data->bgcolors != NULL) {
 		for	(j = 0;data->bgcolors[j] != NULL;j ++) {
+			if (j < data->count) {
 			gtk_panda_clist_set_bgcolor(GTK_PANDA_CLIST(widget),j,data->bgcolors[j]);
+			}
 		}
 	}
 	gtk_widget_show(widget);
