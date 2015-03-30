@@ -51,6 +51,7 @@ fdd/fdd
 fdd/fdw
 glauth/glauth
 glauth/user
+glclient/cpanda
 glclient/glclient2
 glserver/glserver
 libs/testblob

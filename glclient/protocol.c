@@ -54,12 +54,6 @@
 #include "glclient.h"
 #include "gettext.h"
 #include "const.h"
-#include "notify.h"
-#include "dialogs.h"
-#include "widgetOPS.h"
-#include "action.h"
-#include "print.h"
-#include "download.h"
 #include "bd_config.h"
 #include "message.h"
 #include "debug.h"
@@ -516,7 +510,6 @@ RPC_StartSession()
 	if (!strcmp(SERVERTYPE(Session),"ginbee")) {
 		RPCURI(Session) = g_strdup(rpcuri);
 		RESTURI(Session) = g_strdup(resturi);
-		RPCurl = curl_easy_init();
 		if (!RPCurl) {
 			Warning("curl_easy_init failure");
 			exit(0);
@@ -524,6 +517,7 @@ RPC_StartSession()
 		if (getenv("GLCLIENT_CURL_DEBUG") != NULL) {
 			curl_easy_setopt(RPCurl,CURLOPT_VERBOSE,1);
 		}
+		RPCurl = curl_easy_init();
 	} else {
 		RPCURI(Session) = g_strdup(AUTHURI(Session));
 		re = g_regex_new("/rpc/",G_REGEX_CASELESS,0,NULL);
@@ -698,97 +692,10 @@ RPC_GetMessage(
 	json_object_put(obj);
 }
 
-
-static	void
-PrintReport(
-	json_object *obj)
-{
-	json_object *child;
-	char *printer,*oid,*title;
-	gboolean showdialog;
-	LargeByteString *lbs;
-
-	printer = NULL;
-	title = "";
-	showdialog = FALSE;
-
-	child = json_object_object_get(obj,"object_id");
-	if (!CheckJSONObject(child,json_type_string)) {
-		return;
-	}
-	oid = (char*)json_object_get_string(child);
-
-	child = json_object_object_get(obj,"printer");
-	if (CheckJSONObject(child,json_type_string)) {
-		printer = (char*)json_object_get_string(child);
-	}
-	child = json_object_object_get(obj,"title");
-	if (CheckJSONObject(child,json_type_string)) {
-		title = (char*)json_object_get_string(child);
-	}
-	child = json_object_object_get(obj,"showdialog");
-	if (CheckJSONObject(child,json_type_boolean)) {
-		showdialog = json_object_get_boolean(child);
-	}
-	if (oid == NULL || strlen(oid) <= 0) {
-		return;
-	}
-	lbs = REST_GetBLOB(oid);
-	if (lbs != NULL) {
-		if (LBS_Size(lbs) > 0) {
-			if (showdialog) {
-				ShowPrintDialog(title,lbs);
-			} else {
-				Print(title,printer,lbs);
-			}
-		}
-		FreeLBS(lbs);
-	}
-}
-
-static	void
-DownloadFile(
-	json_object *obj)
-{
-	json_object *child;
-	char *oid,*filename,*desc;
-	LargeByteString *lbs;
-
-	filename = "foo.dat";
-	desc = "";
-
-	child = json_object_object_get(obj,"object_id");
-	if (!CheckJSONObject(child,json_type_string)) {
-		return;
-	}
-	oid = (char*)json_object_get_string(child);
-
-	child = json_object_object_get(obj,"filename");
-	if (CheckJSONObject(child,json_type_string)) {
-		filename = (char*)json_object_get_string(child);
-	}
-	child = json_object_object_get(obj,"description");
-	if (CheckJSONObject(child,json_type_string)) {
-		desc = (char*)json_object_get_string(child);
-	}
-
-	if (oid == NULL || strlen(oid) <= 0) {
-		return;
-	}
-	lbs = REST_GetBLOB(oid);
-	if (lbs != NULL) {
-		if (LBS_Size(lbs) > 0) {
-			ShowDownloadDialog(NULL,filename,desc,lbs);
-		}
-		FreeLBS(lbs);
-	}
-}
-
-void
+json_object *
 RPC_ListDownloads()
 {
-	json_object *obj,*params,*child,*result,*item,*type;
-	int i;
+	json_object *obj,*params,*child;
 
 	params = json_object_new_object();
 	child = json_object_new_object();
@@ -808,26 +715,7 @@ RPC_ListDownloads()
 		Error(_("invalid json"));
 	}
 	CheckJSONRPCResponse(obj);
-	result = json_object_object_get(obj,"result");
-	if (!CheckJSONObject(result,json_type_array)) {
-		Error(_("invalid list_report response"));
-	}
-	for (i=0;i<json_object_array_length(result);i++) {
-		item = json_object_array_get_idx(result,i);
-		if (!CheckJSONObject(item,json_type_object)) {
-			continue;
-		}
-		type = json_object_object_get(item,"type");
-		if (!CheckJSONObject(type,json_type_string)) {
-			continue;
-		}
-		if (!strcmp(json_object_get_string(type),"report")) {
-			PrintReport(item);
-		} else {
-			DownloadFile(item);
-		}
-	}
-	json_object_put(obj);
+	return obj;
 }
 
 #ifdef USE_SSL
@@ -967,36 +855,6 @@ InitCURLPKCS11()
 #endif
 
 static	void
-ThisAskPass()
-{
-	if (fPKCS11) {
-		if (!fSavePIN) {
-			PIN = ShowAskPINDialog(_("pin:"));
-		}
-		if (PIN == NULL) {
-			exit(0);
-		}
-		return;
-	}
-	if (fDialog) {
-		return;
-	} else {
-		if (fSSL) {
-			if (!SaveCertPass) {
-				Pass = ShowAskPassDialog(_("certificate password:"));
-			}
-		} else {
-			if (!SavePass) {
-				Pass = ShowAskPassDialog(_("password:"));
-			}
-		}
-	}
-	if (Pass == NULL) {
-		exit(0);
-	}
-}
-
-static	void
 SetHTTPAuth()
 {
 	char userpass[1024];
@@ -1012,6 +870,7 @@ InitCURL()
 {
 	curl_global_init(CURL_GLOBAL_ALL);
 	AuthCurl = curl_easy_init();
+	RPCurl = AuthCurl;
 	if (!AuthCurl) {
 		Warning("curl_easy_init failure");
 		exit(0);
@@ -1060,11 +919,9 @@ void FinalCURL()
 	if (AuthCurl != NULL) {
 		curl_easy_cleanup(AuthCurl);
 	}
-	if (!strcmp(SERVERTYPE(Session),"ginbee")) {
-		if (RPCurl != NULL) {
-			curl_easy_cleanup(RPCurl);
-		}	
-	}
+	if (RPCurl != NULL && RPCurl != AuthCurl) {
+		curl_easy_cleanup(RPCurl);
+	}	
 	curl_global_cleanup();
 }
 
@@ -1075,7 +932,6 @@ ENTER_FUNC;
 	THISWINDOW(Session) = NULL;
 	WINDOWTABLE(Session) = NewNameHash();
 	SCREENDATA(Session) = NULL;
-	ThisAskPass();
 	InitCURL();
 LEAVE_FUNC;
 }

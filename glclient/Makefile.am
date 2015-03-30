@@ -17,7 +17,8 @@
 # 02111-1307, USA
 
 bin_PROGRAMS = 	\
-	glclient2
+	glclient2	\
+	cpanda
 
 base_sources =						\
 	client.c		glclient.h		\
@@ -36,8 +37,7 @@ base_sources =						\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\
 	notify.c		notify.h		\
-	widgetOPS.c		widgetOPS.h
-
+	widgetOPS.c		widgetOPS.h	
 
 base_dependencies =						\
 	$(top_builddir)/libs/libpanda.la
@@ -63,15 +63,40 @@ base_LDADD =									\
 glclient2_SOURCES =		\
 	$(base_sources)
 
-glclient2_DEPENDENCIES =						\
+glclient2_DEPENDENCIES =	\
 	$(base_dependencies)
 
 glclient2_CFLAGS =			\
 	$(base_CFLAGS)			\
 	$(GLCLIENT_CFLAGS)
 
-glclient2_LDADD =								\
-	$(GLCLIENT_LIBS)							\
+glclient2_LDADD =			\
+	$(GLCLIENT_LIBS)		\
+	$(base_LDADD)
+
+#################################################
+# cpanda
+#################################################
+
+cpanda_sources =	\
+	glclient.h						\
+	bd_config.c		bd_config.h		\
+	protocol.c		protocol.h		\
+	utils.c			utils.h			\
+	cpanda.c
+
+cpanda_SOURCES =		\
+	$(cpanda_sources)
+
+cpanda_DEPENDENCIES =	\
+	$(base_dependencies)
+
+cpanda_CFLAGS =			\
+	$(base_CFLAGS)			\
+	$(GLCLIENT_CFLAGS)
+
+cpanda_LDADD =			\
+	$(GLCLIENT_LIBS)		\
 	$(base_LDADD)
 
 AM_CPPFLAGS = 					\

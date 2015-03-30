@@ -197,6 +197,37 @@ FinalSystem(void)
 	}
 }
 
+
+static	void
+ThisAskPass()
+{
+	if (fPKCS11) {
+		if (!fSavePIN) {
+			PIN = ShowAskPINDialog(_("pin:"));
+		}
+		if (PIN == NULL) {
+			exit(0);
+		}
+		return;
+	}
+	if (fDialog) {
+		return;
+	} else {
+		if (fSSL) {
+			if (!SaveCertPass) {
+				Pass = ShowAskPassDialog(_("certificate password:"));
+			}
+		} else {
+			if (!SavePass) {
+				Pass = ShowAskPassDialog(_("password:"));
+			}
+		}
+	}
+	if (Pass == NULL) {
+		exit(0);
+	}
+}
+
 static gboolean fListConfig = FALSE;
 static GOptionEntry entries[] =
 {
@@ -246,6 +277,8 @@ main(
 
 	InitStyle();
 	SetMessageFunction(GLMessage);
+
+	ThisAskPass();
 
 	StartClient();
 	StopClient();

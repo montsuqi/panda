@@ -51,6 +51,8 @@
 #include	"widgetOPS.h"
 #include	"protocol.h"
 #include	"notify.h"
+#include	"download.h"
+#include	"print.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -1168,14 +1170,129 @@ Ping()
 	g_free(abort);
 }
 
+static	void
+PrintReport(
+	json_object *obj)
+{
+	json_object *child;
+	char *printer,*oid,*title;
+	gboolean showdialog;
+	LargeByteString *lbs;
+
+	printer = NULL;
+	title = "";
+	showdialog = FALSE;
+
+	child = json_object_object_get(obj,"object_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		return;
+	}
+	oid = (char*)json_object_get_string(child);
+
+	child = json_object_object_get(obj,"printer");
+	if (CheckJSONObject(child,json_type_string)) {
+		printer = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"title");
+	if (CheckJSONObject(child,json_type_string)) {
+		title = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"showdialog");
+	if (CheckJSONObject(child,json_type_boolean)) {
+		showdialog = json_object_get_boolean(child);
+	}
+	if (oid == NULL || strlen(oid) <= 0) {
+		return;
+	}
+	lbs = REST_GetBLOB(oid);
+	if (lbs != NULL) {
+		if (LBS_Size(lbs) > 0) {
+			if (showdialog) {
+				ShowPrintDialog(title,lbs);
+			} else {
+				Print(title,printer,lbs);
+			}
+		}
+		FreeLBS(lbs);
+	}
+}
+
+static	void
+DownloadFile(
+	json_object *obj)
+{
+	json_object *child;
+	char *oid,*filename,*desc;
+	LargeByteString *lbs;
+
+	filename = "foo.dat";
+	desc = "";
+
+	child = json_object_object_get(obj,"object_id");
+	if (!CheckJSONObject(child,json_type_string)) {
+		return;
+	}
+	oid = (char*)json_object_get_string(child);
+
+	child = json_object_object_get(obj,"filename");
+	if (CheckJSONObject(child,json_type_string)) {
+		filename = (char*)json_object_get_string(child);
+	}
+	child = json_object_object_get(obj,"description");
+	if (CheckJSONObject(child,json_type_string)) {
+		desc = (char*)json_object_get_string(child);
+	}
+
+	if (oid == NULL || strlen(oid) <= 0) {
+		return;
+	}
+	lbs = REST_GetBLOB(oid);
+	if (lbs != NULL) {
+		if (LBS_Size(lbs) > 0) {
+			ShowDownloadDialog(NULL,filename,desc,lbs);
+		}
+		FreeLBS(lbs);
+	}
+}
+
+static void
+ListDownloads()
+{
+	int i;
+	json_object *obj,*item,*result,*type;
+
+	obj = RPC_ListDownloads();
+	result = json_object_object_get(obj,"result");
+	if (!CheckJSONObject(result,json_type_array)) {
+		Error(_("invalid list_report response"));
+	}
+	for (i=0;i<json_object_array_length(result);i++) {
+		item = json_object_array_get_idx(result,i);
+		if (!CheckJSONObject(item,json_type_object)) {
+			continue;
+		}
+		type = json_object_object_get(item,"type");
+		if (!CheckJSONObject(type,json_type_string)) {
+			continue;
+		}
+		if (!strcmp(json_object_get_string(type),"report")) {
+			PrintReport(item);
+		} else {
+			DownloadFile(item);
+		}
+	}
+	json_object_put(obj);
+}
+
 static gint
 PingTimerFunc(
 	gpointer data)
 {
+
 	if (ISRECV(Session)) {
 		return 1;
 	}
-	RPC_ListDownloads();
+	ListDownloads();
 	if (strcmp(SERVERTYPE(Session),"ginbee")) {
 		Ping();
 	}
