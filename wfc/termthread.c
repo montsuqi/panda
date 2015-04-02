@@ -405,6 +405,7 @@ ENTER_FUNC;
 	}
 
 	data = NewSessionData();
+	data->linkdata = NewLinkData();
 	data->term = term;
 	uuid_generate(u);
 	uuid_unparse(u,data->hdr->uuid);
@@ -648,7 +649,6 @@ ENTER_FUNC;
 
 	data->term = term;
 	data->ld = ld;
-	data->linkdata = NewLinkData();
 	data->cWindow = ld->info->cWindow;
 	data->scrdata = (LargeByteString **)xmalloc(sizeof(void*)*data->cWindow);
 	for	(i = 0 ; i < data->cWindow ; i ++) {
