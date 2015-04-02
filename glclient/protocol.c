@@ -534,13 +534,11 @@ RPC_StartSession()
 		if (getenv("GLCLIENT_CURL_DEBUG") != NULL) {
 			curl_easy_setopt(RPCurl,CURLOPT_VERBOSE,1);
 		}
-		RPCurl = curl_easy_init();
 	} else {
 		RPCURI(Session) = g_strdup(AUTHURI(Session));
 		re = g_regex_new("/rpc/",G_REGEX_CASELESS,0,NULL);
 		RESTURI(Session) = g_regex_replace(re,AUTHURI(Session),-1,0,"/rest/",0,NULL);
 		g_regex_unref(re);
-		RPCurl = AuthCurl;
 	}
 	if (fMlog) {
 		MessageLogPrintf("RPCURI[%s]\n",RPCURI(Session));
