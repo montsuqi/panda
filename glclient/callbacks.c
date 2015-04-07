@@ -177,6 +177,10 @@ ENTER_FUNC;
 		if (fMlog) {
 			Warning("windowName:%s widgetName:%s event:%s",window_name,widget_name,event);
 		}
+	
+		#if 0
+		fprintf(stderr,"==== \"%s\",\"%s\",\"%s\"\n",window_name,widget_name,event);
+		#endif
 
 		t2 = GetNowTime();
 		SendEvent(window_name,widget_name,event);

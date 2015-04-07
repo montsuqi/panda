@@ -58,8 +58,10 @@
 #include "message.h"
 #include "debug.h"
 
-LargeByteString *readbuf;
-LargeByteString *writebuf;
+static LargeByteString *readbuf;
+static LargeByteString *writebuf;
+static gboolean Logging = FALSE;
+static char *LogDir;
 
 size_t write_data(
 	void *buf,
@@ -309,7 +311,7 @@ CheckJSONRPCResponse(
 {
 	json_object *obj2,*obj3;
 	int code,id;
-	char *message;
+	char *message,*jsonstr,*path;
 
 	obj2 = json_object_object_get(obj,"jsonrpc");
 	if (!CheckJSONObject(obj2,json_type_string)) {
@@ -347,21 +349,31 @@ CheckJSONRPCResponse(
 	if (obj2 == NULL || is_error(obj2)) {
 		Error(_("no result object"));
 	}
+
+	if (Logging) {
+		jsonstr = (char*)json_object_to_json_string(obj);
+		path = g_strdup_printf("%s/res_%05d.json",LogDir,RPCID(Session));
+		if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {
+			Error("could not create %s",path);
+		}
+		g_free(path);
+	}
 }
 
 #define TYPE_AUTH 0
 #define TYPE_APP  1
 
-static	void
+static	json_object*
 JSONRPC(
 	int type,
 	json_object *obj)
 {
 	CURL *curl;
 	struct curl_slist *headers = NULL;
-	char *ctype,clength[256],*url,*jsonstr,errbuf[CURL_ERROR_SIZE+1];
+	char *ctype,clength[256],*url,*jsonstr,errbuf[CURL_ERROR_SIZE+1],*path;
 	long http_code;
 	size_t jsonsize;
+	json_object *ret;
 
 	if (type == TYPE_AUTH) {
 		url = AUTHURI(Session);
@@ -379,6 +391,14 @@ JSONRPC(
 	}
 	jsonstr = (char*)json_object_to_json_string(obj);
 	jsonsize = strlen(jsonstr);
+
+	if (Logging) {
+		path = g_strdup_printf("%s/req_%05d.json",LogDir,RPCID(Session));
+		if (!g_file_set_contents(path,jsonstr,jsonsize,NULL)) {
+			Error("could not create %s",path);
+		}
+		g_free(path);
+	}
 
 	LBS_EmitStart(readbuf);
 	LBS_EmitString(readbuf,jsonstr);
@@ -436,6 +456,14 @@ JSONRPC(
 		Error(_("comm error:%s"),errbuf);
 	}
 	curl_slist_free_all(headers);
+
+	LBS_EmitEnd(writebuf);
+	ret = json_tokener_parse(LBS_Body(writebuf));
+	if (is_error(ret)) {
+		Error(_("invalid json"));
+	}
+	CheckJSONRPCResponse(ret);
+	return ret;
 }
 
 void
@@ -445,17 +473,7 @@ RPC_GetServerInfo()
 
 	params = json_object_new_object();
 	obj = MakeJSONRPCRequest("get_server_info",params);
-
-	JSONRPC(TYPE_AUTH,obj);
-	
-	// json parse
-	LBS_EmitEnd(writebuf);
-	obj = json_tokener_parse(LBS_Body(writebuf));
-	if (is_error(obj)) {
-		Error(_("invalid json"));
-	}
-	CheckJSONRPCResponse(obj);
-
+	obj = JSONRPC(TYPE_AUTH,obj);
 	result = json_object_object_get(obj,"result");
 	child = json_object_object_get(result,"protocol_version");
 	if (!CheckJSONObject(child,json_type_string)) {
@@ -490,17 +508,7 @@ RPC_StartSession()
 		json_object_new_string(PACKAGE_VERSION));
 	json_object_object_add(params,"meta",child);
 	obj = MakeJSONRPCRequest("start_session",params);
-
-	JSONRPC(TYPE_AUTH,obj);
-	
-	// json parse
-	LBS_EmitEnd(writebuf);
-	obj = json_tokener_parse(LBS_Body(writebuf));
-	if (is_error(obj)) {
-		Error(_("invalid json"));
-	}
-	CheckJSONRPCResponse(obj);
-
+	obj = JSONRPC(TYPE_AUTH,obj);
 	result = json_object_object_get(obj,"result");
 	meta = json_object_object_get(result,"meta");
 	if (!CheckJSONObject(meta,json_type_object)) {
@@ -559,18 +567,8 @@ RPC_EndSession()
 	json_object_object_add(child,"session_id",
 		json_object_new_string(SESSIONID(Session)));
 	json_object_object_add(params,"meta",child);
-
 	obj = MakeJSONRPCRequest("end_session",params);
-	
-	JSONRPC(TYPE_APP,obj);
-
-	// json parse
-	LBS_EmitEnd(writebuf);
-	obj = json_tokener_parse(LBS_Body(writebuf));
-	if (is_error(obj)) {
-		Error(_("invalid json"));
-	}
-	CheckJSONRPCResponse(obj);
+	obj = JSONRPC(TYPE_APP,obj);
 	json_object_put(obj);
 }
 
@@ -588,18 +586,12 @@ RPC_GetWindow()
 	json_object_object_add(params,"meta",child);
 
 	obj = MakeJSONRPCRequest("get_window",params);
-	JSONRPC(TYPE_APP,obj);
+	obj = JSONRPC(TYPE_APP,obj);
 
-	// json parse
-	LBS_EmitEnd(writebuf);
 	if (SCREENDATA(Session) != NULL) {
 		json_object_put(SCREENDATA(Session));
 	}
-	SCREENDATA(Session) = json_tokener_parse(LBS_Body(writebuf));
-	if (is_error(SCREENDATA(Session))) {
-		Error(_("invalid json"));
-	}
-	CheckJSONRPCResponse(SCREENDATA(Session));
+	SCREENDATA(Session) = obj;
 }
 
 json_object *
@@ -617,17 +609,8 @@ RPC_GetScreenDefine(
 	json_object_object_add(params,"meta",child);
 	json_object_object_add(params,"window",
 		json_object_new_string(wname));
-
 	obj = MakeJSONRPCRequest("get_screen_define",params);
-	JSONRPC(TYPE_APP,obj);
-
-	// json parse
-	LBS_EmitEnd(writebuf);
-	obj = json_tokener_parse(LBS_Body(writebuf));
-	if (is_error(obj)) {
-		Error(_("invalid json"));
-	}
-	CheckJSONRPCResponse(obj);
+	obj = JSONRPC(TYPE_APP,obj);
 	return obj;
 }
 
@@ -636,27 +619,19 @@ RPC_SendEvent(
 	json_object *params)
 {
 	json_object *obj,*meta;
+
 	meta = json_object_new_object();
 	json_object_object_add(meta,"client_version",
 		json_object_new_string(VERSION));
 	json_object_object_add(meta,"session_id",
 		json_object_new_string(SESSIONID(Session)));
 	json_object_object_add(params,"meta",meta);
-
 	obj = MakeJSONRPCRequest("send_event",params);
-
-	JSONRPC(TYPE_APP,obj);
-
-	// json parse
-	LBS_EmitEnd(writebuf);
+	obj = JSONRPC(TYPE_APP,obj);
 	if (SCREENDATA(Session) != NULL) {
 		json_object_put(SCREENDATA(Session));
 	}
-	SCREENDATA(Session) = json_tokener_parse(LBS_Body(writebuf));
-	if (SCREENDATA(Session) == NULL||is_error(SCREENDATA(Session))) {
-		Error(_("invalid json"));
-	}
-	CheckJSONRPCResponse(SCREENDATA(Session));
+	SCREENDATA(Session) = obj;
 }
 
 void
@@ -674,17 +649,8 @@ RPC_GetMessage(
 	json_object_object_add(child,"session_id",
 		json_object_new_string(SESSIONID(Session)));
 	json_object_object_add(params,"meta",child);
-
 	obj = MakeJSONRPCRequest("get_message",params);
-	JSONRPC(TYPE_APP,obj);
-
-	// json parse
-	LBS_EmitEnd(writebuf);
-	obj = json_tokener_parse(LBS_Body(writebuf));
-	if (obj == NULL || is_error(obj)) {
-		Error(_("invalid json"));
-	}
-	CheckJSONRPCResponse(obj);
+	obj = JSONRPC(TYPE_APP,obj);
 	result = json_object_object_get(obj,"result");
 
 	child = json_object_object_get(result,"dialog");
@@ -721,15 +687,8 @@ RPC_ListDownloads()
 	json_object_object_add(params,"meta",child);
 
 	obj = MakeJSONRPCRequest("list_downloads",params);
-	JSONRPC(TYPE_APP,obj);
+	obj = JSONRPC(TYPE_APP,obj);
 
-	// json parse
-	LBS_EmitEnd(writebuf);
-	obj = json_tokener_parse(LBS_Body(writebuf));
-	if (obj == NULL || is_error(obj)) {
-		Error(_("invalid json"));
-	}
-	CheckJSONRPCResponse(obj);
 	return obj;
 }
 
@@ -940,6 +899,29 @@ void FinalCURL()
 	curl_global_cleanup();
 }
 
+static	void
+MakeLogDir(void)
+{
+#if 1
+	gchar *template;
+	gchar *tmpdir;
+	gchar *p;
+
+	tmpdir = g_strconcat(g_get_home_dir(),"/.glclient/jsonrpc",NULL);
+	MakeDir(tmpdir,0700);
+	template = g_strconcat(tmpdir,"/XXXXXX",NULL);
+	g_free(tmpdir);
+	if ((p = mkdtemp(template)) == NULL) {
+		Error(_("mkdtemp failure"));
+	}
+	LogDir = p; 
+	printf("LogDir:%s\n",LogDir);
+#else
+	/* glib >= 2.26*/
+	TempDir = g_mkdtemp(g_strdup("glclient_XXXXXX"));
+#endif
+}
+
 extern	void
 InitProtocol()
 {
@@ -948,6 +930,10 @@ ENTER_FUNC;
 	WINDOWTABLE(Session) = NewNameHash();
 	SCREENDATA(Session) = NULL;
 	InitCURL();
+	if (getenv("GLCLIENT_DO_JSONRPC_LOGGING") != NULL) {
+		Logging = TRUE;
+		MakeLogDir();
+	}
 LEAVE_FUNC;
 }
 

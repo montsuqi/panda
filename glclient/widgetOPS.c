@@ -1368,6 +1368,11 @@ GetWidgetData(
 	} else {
 		MessageLogPrintf("invalid widget [%s]", gtk_widget_get_name(widget));
 	}
+#if 0
+	fprintf(stderr,"%s\n",glade_get_widget_long_name(widget));
+	fprintf(stderr,"%s\n",json_object_to_json_string(obj));
+	fprintf(stderr,"\n");
+#endif
 }
 
 extern	json_object *
