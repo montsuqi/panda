@@ -1178,7 +1178,18 @@ InitStyle(void)
 			"  fg[NORMAL] = \"#000000\""
 			"  bg[NORMAL] = \"#ffffaf\""
 			"}"
+			"style \"panda-entry\" = \"entry\" {"
+			"  text[INSENSITIVE] = @text_color"
+			"  base[INSENSITIVE] = \"#ffffff\""
+			"}"
+			"style \"panda-clist\" {"
+			"  text[ACTIVE] = @selected_fg_color"
+			"  base[ACTIVE] = @selected_bg_color"
+			"}"
 			"widget_class \"*.*\" style \"glclient2\""
+			"widget_class \"*<GtkPandaEntry>\" style \"panda-entry\""
+			"widget_class \"*<GtkNumberEntry>\" style \"panda-entry\""
+			"widget_class \"*<GtkPandaCList>\" style \"panda-clist\""
 			"widget \"gtk-tooltip*\" style \"tooltip\""
 			,FontName);
 		gtk_rc_parse_string(rcstr);
