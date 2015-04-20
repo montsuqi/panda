@@ -902,7 +902,6 @@ ENTER_FUNC;
 	if (CheckJSONObject(child,json_type_int)) {
 		d = json_object_get_int(child);
 	}
-fprintf(stderr,"---- y:%d m:%d d:%d\n",y,m,d);
 
 	if (y > 0) {
 		gtk_calendar_select_month(GTK_CALENDAR(widget),m-1,y);
