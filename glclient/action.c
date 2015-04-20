@@ -1208,6 +1208,7 @@ PrintReport(
 	if (oid == NULL || strlen(oid) <= 0) {
 		return;
 	}
+
 	lbs = REST_GetBLOB(oid);
 	if (lbs != NULL) {
 		if (LBS_Size(lbs) > 0) {
@@ -1270,6 +1271,11 @@ ListDownloads()
 	if (!CheckJSONObject(result,json_type_array)) {
 		Error(_("invalid list_report response"));
 	}
+
+	if (fMlog) {
+		MessageLogPrintf("ListDownloads %s", (char*)json_object_to_json_string(result));
+	}
+
 	for (i=0;i<json_object_array_length(result);i++) {
 		item = json_object_array_get_idx(result,i);
 		if (!CheckJSONObject(item,json_type_object)) {
