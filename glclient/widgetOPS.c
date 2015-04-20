@@ -902,9 +902,10 @@ ENTER_FUNC;
 	if (CheckJSONObject(child,json_type_int)) {
 		d = json_object_get_int(child);
 	}
+fprintf(stderr,"---- y:%d m:%d d:%d\n",y,m,d);
 
 	if (y > 0) {
-		gtk_calendar_select_month(GTK_CALENDAR(widget),m - 1,y);
+		gtk_calendar_select_month(GTK_CALENDAR(widget),m-1,y);
 		gtk_calendar_select_day(GTK_CALENDAR(widget),d);
 	}
 LEAVE_FUNC;
@@ -929,7 +930,7 @@ ENTER_FUNC;
 	child = json_object_object_get(tmpl,"month");
 	if (CheckJSONObject(child,json_type_int)) {
 		json_object_object_del(obj,"month");
-		json_object_object_add(obj,"month",json_object_new_int(m));
+		json_object_object_add(obj,"month",json_object_new_int(m+1));
 	}
 
 	child = json_object_object_get(tmpl,"day");
