@@ -1202,6 +1202,9 @@ PrintReport(
 	if (CheckJSONObject(child,json_type_boolean)) {
 		showdialog = json_object_get_boolean(child);
 	}
+	if (getenv("GLCLIENT_PRINTREPORT_SHOWDIALOG")!=NULL) {
+		showdialog = true;
+	}
 	if (oid == NULL || strlen(oid) <= 0) {
 		return;
 	}
