@@ -88,6 +88,7 @@ ENTER_FUNC;
 	data->apsid = -1;
 	data->spadata = NewNameHash();
 	data->scrpool = NewNameHash();
+	data->window_table = NewNameHash();
 	gettimeofday(&(data->create_time), NULL);
 	gettimeofday(&(data->access_time), NULL);
 	timerclear(&(data->process_time));
@@ -133,6 +134,18 @@ FreeScr(
 	return	TRUE;
 }
 
+static	guint
+FreeWindowTable(
+	char	*name,
+	void	*data,
+	void	*dummy)
+{
+	if (name != NULL) {
+		xfree(name);
+	}
+	return	TRUE;
+}
+
 static	void
 FreeSessionData(
 	SessionData	*data)
@@ -149,6 +162,8 @@ ENTER_FUNC;
 	DestroyHashTable(data->spadata);
 	g_hash_table_foreach_remove(data->scrpool,(GHRFunc)FreeScr,NULL);
 	DestroyHashTable(data->scrpool);
+	g_hash_table_foreach_remove(data->window_table,(GHRFunc)FreeWindowTable,NULL);
+	DestroyHashTable(data->window_table);
 	xfree(data->scrdata);
 	FreeLBS(data->apidata->rec);
 	xfree(data->apidata);
@@ -529,7 +544,7 @@ MakeEventResponse(
 	json_object *result,*res,*window_data,*windows,*w,*child;
 	RecordStruct *rec;
 	LargeByteString *scrdata;
-	char *buf;
+	char *buf,*wname;
 	const char *puttype;
 	int i;
 
@@ -575,10 +590,22 @@ MakeEventResponse(
 		} else {
 			rec = GetWindow(data->w.s[i].window);
 			NativeUnPackValue(NULL,LBS_Body(scrdata),rec->value);
-			buf = xmalloc(JSON_SizeValue(NULL,rec->value));
-			JSON_PackValue(NULL,buf,rec->value);
-			child = json_tokener_parse(buf);
-			xfree(buf);
+
+			if ((g_hash_table_lookup(data->window_table,data->w.s[i].window)) == NULL) {
+				wname = g_strdup(data->w.s[i].window);
+				g_hash_table_insert(data->window_table,wname,wname);
+				buf = xmalloc(JSON_SizeValue(NULL,rec->value));
+				JSON_PackValue(NULL,buf,rec->value);
+				child = json_tokener_parse(buf);
+				xfree(buf);
+
+			} else {
+				buf = xmalloc(JSON_SizeValueOmmit(NULL,rec->value));
+				JSON_PackValueOmmit(NULL,buf,rec->value);
+				child = json_tokener_parse(buf);
+				xfree(buf);
+			}
+
 			if (child == NULL || is_error(child)) {
 				json_object_object_add(w,"screen_data",
 					json_object_new_object());

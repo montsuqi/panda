@@ -122,6 +122,7 @@ typedef	struct _SessionData	{
 	MessageHeader	*hdr;
 	GHashTable		*spadata;
 	GHashTable		*scrpool;
+	GHashTable		*window_table;
 	LargeByteString	*spa;
 	LargeByteString	*linkdata;
 	LargeByteString	**scrdata;

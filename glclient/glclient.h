@@ -84,6 +84,7 @@ typedef struct {
 	Bool		fAccelGroup;
 	GHashTable	*ChangedWidgetTable;
 	GList		*Timers;
+	json_object	*tmpl;
 }	WindowData;
 
 extern	void		ExitSystem(void);

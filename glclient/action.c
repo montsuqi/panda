@@ -500,7 +500,7 @@ SetBGColor(GtkWidget *widget)
 #endif
 }
 
-static	void	
+static	WindowData*	
 CreateWindow(
 	const char	*wname,
 	const char	*gladedata)
@@ -530,6 +530,7 @@ ENTER_FUNC;
 	wdata->fAccelGroup = FALSE;
 	wdata->ChangedWidgetTable = NewNameHash();
 	wdata->Timers = NULL;
+	wdata->tmpl = NULL;
 	glade_xml_signal_autoconnect(xml);
 	g_hash_table_insert(WINDOWTABLE(Session),strdup(wname),wdata);
 
@@ -550,6 +551,7 @@ ENTER_FUNC;
 		wdata->fWindow = TRUE;
 	}
 LEAVE_FUNC;
+	return wdata;
 }
 
 static	void
@@ -1377,6 +1379,49 @@ CheckCloseWindow(
 	}
 }
 
+static json_object *
+CopyJSON(
+	json_object *obj)
+{
+	json_object_iter iter;
+	json_object *ret;
+	int i,length;
+
+	ret = NULL;
+	switch(json_object_get_type(obj)) {
+	case json_type_boolean:
+		ret = json_object_new_boolean(json_object_get_boolean(obj));
+		break;
+	case json_type_double:
+		ret = json_object_new_double(json_object_get_double(obj));
+		break;
+	case json_type_int:
+		ret = json_object_new_int(json_object_get_int(obj));
+		break;
+	case json_type_string:
+		ret = json_object_new_string(json_object_get_string(obj));
+		break;
+	case json_type_array:
+		length = json_object_array_length(obj);
+		ret = json_object_new_array();
+		for(i=0;i<length;i++) {
+			json_object_array_add(ret,CopyJSON(json_object_array_get_idx(obj,i)));
+		}
+		break;
+	case json_type_object:
+		ret = json_object_new_object();
+		json_object_object_foreachC(obj,iter) {
+			json_object_object_add(ret,iter.key,CopyJSON(iter.val));
+		}
+		break;
+	default:
+		ret = json_object_new_object();
+		break;
+	}
+
+	return ret;
+}
+
 static	void
 UpdateWindow(
 	json_object *w,
@@ -1386,6 +1431,7 @@ UpdateWindow(
 	const char *put_type;
 	const char *wname;
 	const char *gladedata;
+	WindowData *wdata;
 
 	child = json_object_object_get(w,"put_type");
 	if (child == NULL ||is_error(child)) {
@@ -1399,7 +1445,8 @@ UpdateWindow(
 	}
 	wname = json_object_get_string(child);
 
-	if (GetWindowData(wname) == NULL) {
+	wdata = GetWindowData(wname);
+	if (wdata == NULL) {
 		obj = RPC_GetScreenDefine(wname);
 		result = json_object_object_get(obj,"result");
 		child = json_object_object_get(result,"screen_define");
@@ -1407,15 +1454,21 @@ UpdateWindow(
 			Error("can't get screen define:%s",wname);
 		}
 		gladedata = json_object_get_string(child);
-		CreateWindow(wname,gladedata);
+		wdata = CreateWindow(wname,gladedata);
 		json_object_put(obj);
 	}
+
+	child = json_object_object_get(w,"screen_data");
+	if (wdata->tmpl == NULL && child != NULL && !is_error(child)) {
+		wdata->tmpl = CopyJSON(child);
+	}
+
+
 	if (!strcmp("new",put_type)||!strcmp("current",put_type)) {
-		child = json_object_object_get(w,"screen_data");
 		if (child == NULL ||is_error(child)) {
 			Error("invalid json part:screeen_data");
 		}
-		UpdateWidget(GetWidgetByLongName(wname),child);
+		UpdateWidget(GetWidgetByLongName(wname),wdata->tmpl,child);
 		if (!strcmp(wname,FOCUSEDWINDOW(Session))) {
 			ShowWindow(wname);
 		}
