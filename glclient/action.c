@@ -513,7 +513,7 @@ CreateWindow(
 ENTER_FUNC;
 	if (GetWindowData(wname) != NULL) {
 		dbgprintf("%s already in WindowTable", wname);
-		return;
+		return NULL;
 	}
 	xml = glade_xml_new_from_memory((char*)gladedata,strlen(gladedata),NULL,NULL);
 	if ( xml == NULL ) {
@@ -1422,12 +1422,92 @@ CopyJSON(
 	return ret;
 }
 
+
+json_object *
+UpdateTemplate(
+	json_object *tmpl,
+	json_object *obj,
+	int level)
+{
+	json_object_iter iter;
+	json_object *ret,*c1,*c2;
+	int i;
+
+
+	ret = NULL;
+	if (tmpl == NULL) {
+		return NULL;
+	}
+	switch(json_object_get_type(tmpl)) {
+	case json_type_boolean:
+		if (CheckJSONObject(obj,json_type_boolean)) {
+			ret = json_object_new_boolean(json_object_get_boolean(obj));
+		} else {
+			ret = json_object_new_boolean(TRUE);
+		}
+		break;
+	case json_type_double:
+		if (CheckJSONObject(obj,json_type_double)) {
+			ret = json_object_new_double(json_object_get_double(obj));
+		} else {
+			ret = json_object_new_double(0.0);
+		}
+		break;
+	case json_type_int:
+		if (CheckJSONObject(obj,json_type_int)) {
+			ret = json_object_new_int(json_object_get_int(obj));
+		} else {
+			ret = json_object_new_int(0);
+		}
+		break;
+	case json_type_string:
+		if (CheckJSONObject(obj,json_type_string)) {
+			ret = json_object_new_string(json_object_get_string(obj));
+		} else {
+			ret = json_object_new_string("");
+		}
+		break;
+	case json_type_array:
+		ret = json_object_new_array();
+		if (CheckJSONObject(obj,json_type_array)) {
+			for(i=0;i<json_object_array_length(tmpl);i++) {
+				c1 = json_object_array_get_idx(tmpl,i);
+				c2 = json_object_array_get_idx(obj,i);
+				json_object_array_add(ret,UpdateTemplate(c1,c2,level+1));
+			}
+		} else {
+			for(i=0;i<json_object_array_length(tmpl);i++) {
+				c1 = json_object_array_get_idx(tmpl,i);
+				json_object_array_add(ret,UpdateTemplate(c1,NULL,level+1));
+			}
+		}
+		break;
+	case json_type_object:
+		ret = json_object_new_object();
+		if (CheckJSONObject(obj,json_type_object)) {
+			json_object_object_foreachC(tmpl,iter) {
+				c1 = iter.val;
+				c2 = json_object_object_get(obj,iter.key);
+				json_object_object_add(ret,iter.key,UpdateTemplate(c1,c2,level+1));
+			}
+		} else {
+			json_object_object_foreachC(tmpl,iter) {
+				c1 = iter.val;
+				json_object_object_add(ret,iter.key,UpdateTemplate(c1,NULL,level+1));
+			}
+		}
+	default:
+		break;
+	}
+	return ret;
+}
+
 static	void
 UpdateWindow(
 	json_object *w,
 	int idx)
 {
-	json_object *child,*obj,*result;
+	json_object *child,*obj,*result,*old;
 	const char *put_type;
 	const char *wname;
 	const char *gladedata;
@@ -1459,22 +1539,29 @@ UpdateWindow(
 	}
 
 	child = json_object_object_get(w,"screen_data");
-	if (wdata->tmpl == NULL && child != NULL && !is_error(child)) {
-		wdata->tmpl = CopyJSON(child);
+	if (CheckJSONObject(child,json_type_object)) {
+		if (wdata->tmpl == NULL) {
+			if (json_object_object_length(child) > 0) {
+				wdata->tmpl = CopyJSON(child);
+			}
+		} else {
+			old = wdata->tmpl;
+			wdata->tmpl = UpdateTemplate(old,child,0);
+			json_object_put(old);
+		}
 	}
-
 
 	if (!strcmp("new",put_type)||!strcmp("current",put_type)) {
 		if (child == NULL ||is_error(child)) {
 			Error("invalid json part:screeen_data");
 		}
-		UpdateWidget(GetWidgetByLongName(wname),wdata->tmpl,child);
+		UpdateWidget(GetWidgetByLongName(wname),wdata->tmpl);
 		if (!strcmp(wname,FOCUSEDWINDOW(Session))) {
 			ShowWindow(wname);
 		}
 		ResetTimers((char*)wname);
 		if (fMlog) {
-			MessageLogPrintf("show  window[%s] put_type[%s]\n",wname,put_type);
+			MessageLogPrintf("show window[%s] put_type[%s]\n",wname,put_type);
 		}
 	}
 }
