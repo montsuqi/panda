@@ -790,14 +790,6 @@ ENTER_FUNC;
 	}
 	event = json_object_get_string(child);
 
-	child = json_object_object_get(event_data,"event");
-	if (!CheckJSONObject(child,json_type_string)) {
-		Warning("request have not event_data->event");
-		JSONRPC_Error(term,obj,-32600,"Invalid Request");
-		return;
-	}
-	event = json_object_get_string(child);
-
 	child = json_object_object_get(event_data,"screen_data");
 	if (!CheckJSONObject(child,json_type_object)) {
 		Warning("request have not event_data->screen_data");
