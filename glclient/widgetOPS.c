@@ -115,8 +115,7 @@ SetCommon(
 
 	child = json_object_object_get(obj,"visible");
 	if (CheckJSONObject(child,json_type_boolean)) {
-		SetState(widget,json_object_get_int(child));
-		gtk_widget_set_visible(widget,TRUE);
+		gtk_widget_set_visible(widget,json_object_get_boolean(child));
 	}
 }
 
@@ -1309,7 +1308,6 @@ UpdateWidget(
 	json_object *data)
 {
 	json_object_iter iter;
-	json_object *child_data;
 	char childname[SIZE_LONGNAME+1];
 	GtkWidget *child;
 
