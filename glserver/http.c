@@ -552,15 +552,17 @@ ParseReqArguments(
 	int i;
 ENTER_FUNC;
 	obj = json_object_new_object();
-	kvs = g_strsplit(args,"&",128);
-	for(i=0;kvs[i]!=NULL;i++) {
-		kv = g_strsplit(kvs[i],"=",2);
-		if (kv[0] != NULL || kv[1] != NULL) {
-			json_object_object_add(obj,kv[0],json_object_new_string(kv[1]));
+	if (args != NULL && strlen(args) > 0) {
+		kvs = g_strsplit(args,"&",128);
+		for(i=0;kvs[i]!=NULL;i++) {
+			kv = g_strsplit(kvs[i],"=",2);
+			if (kv[0] != NULL || kv[1] != NULL) {
+				json_object_object_add(obj,kv[0],json_object_new_string(kv[1]));
+			}
+			g_strfreev(kv);
 		}
-		g_strfreev(kv);
+		g_strfreev(kvs);
 	}
-	g_strfreev(kvs);
 LEAVE_FUNC;
 	return obj;
 }
