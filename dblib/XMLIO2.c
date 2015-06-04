@@ -116,7 +116,7 @@ ResetArgValue(ValueStruct *val)
 	int i;
 	gchar *name;
 
-	if (val == NULL || IS_VALUE_RECORD(val)) {
+	if (val == NULL || !IS_VALUE_RECORD(val)) {
 		return ;
 	}
 	for(i=0;i<ValueRecordSize(val);i++) {
