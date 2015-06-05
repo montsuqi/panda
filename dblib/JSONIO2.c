@@ -53,25 +53,6 @@
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 #define CAST_BAD(arg)	(char*)(arg)
 
-static	void
-ResetArgValue(
-	ValueStruct *args)
-{
-	ValueStruct *v;
-	int obj;
-
-	if (args == NULL || IS_VALUE_RECORD(args)) {
-		return;
-	} 
-	v = GetItemLongName(args,"object");
-	if (v == NULL) {
-		return;
-	}
-	obj = ValueObjectId(v);
-	InitializeValue(args);
-	ValueObjectId(v) = obj;
-}
-
 static	ValueStruct	*
 _ReadJSON2(
 	DBG_Struct		*dbg,
@@ -86,7 +67,6 @@ _ReadJSON2(
 ENTER_FUNC;
 	ret = NULL;
 	ctrl->rc = MCP_BAD_OTHER;
-	ResetArgValue(args);
 	if (rec->type != RECORD_DB) {
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
