@@ -75,6 +75,7 @@ _new_server()
 	json_object_object_add(child,"ssl",json_object_new_boolean(FALSE));
 	json_object_object_add(child,"cafile",json_object_new_string("/etc/ssl/certs/gl-cacert.pem"));
 	json_object_object_add(child,"certfile",json_object_new_string(""));
+	json_object_object_add(child,"certkey",json_object_new_string(""));
 	json_object_object_add(child,"ciphers",json_object_new_string("ALL:!ADH:!LOW:!MD5:!SSLv2:@STRENGTH"));
 	json_object_object_add(child,"certpassword",json_object_new_string(""));
 	json_object_object_add(child,"savecertpassword",json_object_new_boolean(TRUE));
@@ -389,6 +390,7 @@ LoadConfig (
 	fSSL = gl_config_get_boolean(n,"ssl");
 	CAFile = g_strdup(gl_config_get_string(n,"cafile"));
 	CertFile = g_strdup(gl_config_get_string(n,"certfile"));
+	CertKeyFile = g_strdup(gl_config_get_string(n,"certkeyfile"));
 	Ciphers = g_strdup(gl_config_get_string(n,"ciphers"));
 	SaveCertPass = gl_config_get_boolean(n,"savecertpassword");
 	if (SaveCertPass) {

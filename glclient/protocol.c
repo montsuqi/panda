@@ -632,6 +632,7 @@ RPC_SendEvent(
 		json_object_put(SCREENDATA(Session));
 	}
 	SCREENDATA(Session) = obj;
+fprintf(stderr,"%s\n",(char*)json_object_to_json_string(obj));
 }
 
 void
@@ -863,8 +864,10 @@ InitCURL()
 		} else {
 			if (strlen(CertFile) > 0) {
 				curl_easy_setopt(AuthCurl,CURLOPT_SSLCERT,CertFile);
-				curl_easy_setopt(AuthCurl,CURLOPT_SSLCERTTYPE,"P12");
-				curl_easy_setopt(AuthCurl,CURLOPT_SSLCERTPASSWD,CertPass);
+				curl_easy_setopt(AuthCurl,CURLOPT_SSLCERTTYPE,"PEM");
+				curl_easy_setopt(AuthCurl,CURLOPT_SSLKEY,CertKeyFile);
+				curl_easy_setopt(AuthCurl,CURLOPT_SSLKEYTYPE,"PEM");
+				curl_easy_setopt(AuthCurl,CURLOPT_SSLKEYPASSWD,CertPass);
 			} else {
 				SetHTTPAuth();
 			}

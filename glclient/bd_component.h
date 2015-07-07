@@ -52,6 +52,7 @@ struct _BDComponent {
   GtkWidget *ssl_container;
   GtkWidget *ssl;
   GtkWidget *certfile;
+  GtkWidget *certkeyfile;
   GtkWidget *cafile;
   GtkWidget *ciphers;
   GtkWidget *certpass;

@@ -117,6 +117,7 @@ GLOBAL	Bool		fDialog;
 
 GLOBAL	Bool		fSSL;
 GLOBAL	char		*CertFile;
+GLOBAL	char		*CertKeyFile;
 GLOBAL	char		*CertPass;
 GLOBAL	Bool		SaveCertPass;
 GLOBAL	char		*CAFile;
