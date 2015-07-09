@@ -632,7 +632,6 @@ RPC_SendEvent(
 		json_object_put(SCREENDATA(Session));
 	}
 	SCREENDATA(Session) = obj;
-fprintf(stderr,"%s\n",(char*)json_object_to_json_string(obj));
 }
 
 void
