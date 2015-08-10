@@ -1205,10 +1205,13 @@ PrintReport(
 		showdialog = json_object_get_boolean(child);
 	}
 	if (getenv("GLCLIENT_PRINTREPORT_SHOWDIALOG")!=NULL) {
-		showdialog = true;
+		showdialog = TRUE;
 	}
 	if (oid == NULL || strlen(oid) <= 0) {
 		return;
+	}
+	if (printer == NULL || strlen(printer) <=0 ) {
+		showdialog = TRUE;
 	}
 
 	lbs = REST_GetBLOB(oid);
