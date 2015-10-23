@@ -36,7 +36,7 @@ AM_CPPFLAGS 			=		\
 	-I$(top_srcdir)/libs	\
 	$(POSTGRES_CFLAGS)		\
 	$(RUBY_CFLAGS)			\
-	$(COMMON_CFLAGS)                \
+	$(COMMON_CFLAGS)		\
 	-DBIN_DIR=\"$(bindir)\"
 
 libpandadb_la_CFLAGS = $(AM_CFLAGS)
@@ -70,7 +70,8 @@ DB_OBJECTS			=		\
 	XMLIO.la				\
 	XMLIO2.la				\
 	JSONIO.la				\
-	JSONIO2.la
+	JSONIO2.la				\
+	PushEvent.la
 
 PostgreSQL_la_LDFLAGS	=		\
 	-avoid-version				\
@@ -130,8 +131,7 @@ XMLIO_la_SOURCES	=	\
 	XMLIO.c
 XMLIO_la_LIBADD			=				\
 	$(top_builddir)/libs/libpanda.la	\
-	$(top_builddir)/dblib/libpandadb.la	\
-	$(XML2_LIBS)
+	$(top_builddir)/dblib/libpandadb.la
 
 XMLIO2_la_LDFLAGS	=	\
 	-avoid-version				\
@@ -142,8 +142,7 @@ XMLIO2_la_SOURCES	=	\
 	XMLIO2.c
 XMLIO2_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
-	$(top_builddir)/dblib/libpandadb.la	\
-	$(XML2_LIBS)
+	$(top_builddir)/dblib/libpandadb.la
 
 JSONIO_la_LDFLAGS	=					\
 	-avoid-version						\
@@ -166,3 +165,14 @@ JSONIO2_la_SOURCES	=					\
 JSONIO2_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
 	$(top_builddir)/dblib/libpandadb.la
+
+PushEvent_la_LDFLAGS	=				\
+	-avoid-version						\
+	-module								\
+	-export-dynamic
+PushEvent_la_SOURCES	=				\
+	PushEvent.c
+PushEvent_la_LIBADD			=			\
+	$(top_builddir)/libs/libpanda.la	\
+	$(top_builddir)/dblib/libpandadb.la	\
+	$(AMQP_LIBS)
