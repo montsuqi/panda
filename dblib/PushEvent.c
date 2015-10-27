@@ -260,6 +260,7 @@ AMQPSend(
 			return MCP_BAD_OTHER;
 		}
 	}
+	g_free(routingkey);
 	
 	reply = amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
 	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
