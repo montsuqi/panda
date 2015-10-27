@@ -63,8 +63,9 @@ SetState(
 {
 	if (state != GTK_STATE_INSENSITIVE) {
 		gtk_widget_set_sensitive(widget,TRUE);
+	} else {
+		gtk_widget_set_sensitive(widget,FALSE);
 	}
-	gtk_widget_set_state(widget,state);
 }
 
 static	void
