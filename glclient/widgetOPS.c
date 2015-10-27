@@ -60,9 +60,7 @@ SetState(
 	GtkWidget	*widget,
 	GtkStateType	state)
 {
-	if (state != GTK_STATE_INSENSITIVE)
-		gtk_widget_set_sensitive(widget,TRUE);
-	gtk_widget_set_state(widget,state);
+	gtk_widget_set_sensitive(widget,state != GTK_STATE_INSENSITIVE);
 }
 
 static	void
