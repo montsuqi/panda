@@ -475,8 +475,6 @@ ParseReqAuth(HTTP_REQUEST *req)
 			req->status = HTTP_FORBIDDEN;
 			return;
 		}
-		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
-		return;
 	}
 #endif
 
@@ -1007,8 +1005,6 @@ GLAuth(
 #ifdef	USE_SSL
 	if (fSsl && fVerifyPeer){
         if (!req->fp->peer_cert) return FALSE;
-		req->user = GetCommonNameFromCertificate(req->fp->peer_cert);
-		return TRUE;
 	}
 #endif
 	if (!strncmp(Auth.protocol,"api",strlen("api"))) {

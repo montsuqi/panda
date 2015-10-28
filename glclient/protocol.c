@@ -874,9 +874,8 @@ InitCURL()
 				curl_easy_setopt(AuthCurl,CURLOPT_CAINFO,CAFile);
 			}
 		}
-	} else {
-		SetHTTPAuth();
 	}
+	SetHTTPAuth();
 #else
 	SetHTTPAuth();
 #endif
