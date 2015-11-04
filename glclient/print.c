@@ -93,12 +93,24 @@ ShowPrintDialog(
 
 void
 Print(
+	const char *oid,
 	const char *title,
 	const char *printer,
 	LargeByteString *lbs)
 {
 	GtkWidget *pandapdf;
-	char buf[1024];
+	char buf[1024],path[1024];
+	struct tm cur;
+	time_t t;
+
+	if (getenv("GLCLIENT_SAVE_PRINT_DATA") != NULL) {
+		t = time(NULL);
+		gmtime_r(&t,&cur);
+		strftime(buf,sizeof(buf),"%Y%m%d%H%M%S",&cur);
+		snprintf(path,sizeof(path),"%s/%s_%s_%p.pdf",TempDir,oid,buf,lbs);
+		Warning(path);
+		g_file_set_contents(path,LBS_Body(lbs),LBS_Size(lbs),NULL);
+	}
 
 	pandapdf = gtk_panda_pdf_new();
 	if (!gtk_panda_pdf_set(GTK_PANDA_PDF(pandapdf),LBS_Size(lbs),LBS_Body(lbs))) {

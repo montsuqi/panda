@@ -21,6 +21,6 @@
 #define	_INC_PRINT_H
 
 void ShowPrintDialog(const char *title,LargeByteString *);
-void Print(const char *title,const char *printer,LargeByteString *);
+void Print(const char *oid,const char *title,const char *printer,LargeByteString *);
 
 #endif
