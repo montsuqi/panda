@@ -94,7 +94,6 @@ extern	void		ExitSystem(void);
 extern  void		SetSessionTitle(const char *title);
 extern  void		SetSessionBGColor(const char *color);
 
-GLOBAL	Bool		DelayDrawWindow;
 GLOBAL	Bool		CancelScaleWindow;
 GLOBAL	char		*CurrentApplication;
 GLOBAL	Bool		fV47;

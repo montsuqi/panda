@@ -357,9 +357,6 @@ ENTER_FUNC;
 		}
 		i+=1;
 	} while(gtk_tree_model_iter_next(model,&iter));
-	if (DelayDrawWindow) {
-		gtk_widget_set_sensitive(widget,FALSE);
-	}
 LEAVE_FUNC;
 }
 
@@ -380,9 +377,6 @@ SetPandaTable(
 	char			**bgrowdata;
 
 ENTER_FUNC;
-	if (DelayDrawWindow) {
-		gtk_widget_set_sensitive(widget,TRUE);
-	}
 	SetCommon(widget,wdata);
 	for	( j = 0 ; j < g_list_length(data->tabledata) ; j ++ ) {
 		rowdata = g_list_nth_data(data->tabledata,j);
@@ -418,7 +412,6 @@ PandaTableFocusCell(char *wname)
 				panda_table_row, panda_table_column, TRUE, 
 				panda_table_rowattr, 0.0); 
 		}
-		gtk_panda_table_start_editing(GTK_PANDA_TABLE(panda_table));
 	}
 }
 

@@ -253,7 +253,6 @@ static struct changed_hander {
 
 static void ScaleWidget(GtkWidget *widget, gpointer data);
 static void ScaleWindow(GtkWidget *widget);
-static void ReDrawTopWindow(void);
 
 static void
 SetWindowIcon(GtkWindow *window)
@@ -614,20 +613,25 @@ ENTER_FUNC;
 		}
 	} else {
 		gtk_widget_hide(window);
-		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
 		wlist = g_list_find(DialogStack, window);
 		if (wlist != NULL && wlist->next != NULL && wlist->next->data != NULL) {
+#if 0
 			gtk_window_set_transient_for(GTK_WINDOW(wlist->next->data), NULL);
+#endif
 		}
 		DialogStack = g_list_remove(DialogStack, window);
 		for (i = g_list_length(DialogStack) - 1; i >= 0; i--) {
 			if (i >0) {
+#if 0
 				gtk_window_set_transient_for(
 					(GtkWindow *)g_list_nth_data(DialogStack, i),
 					(GtkWindow *)g_list_nth_data(DialogStack, i - 1));
+#endif
 			} else {
+#if 0
 				gtk_window_set_transient_for(
 					GTK_WINDOW(DialogStack->data), GTK_WINDOW(TopWindow));
+#endif
 			}
 		}
 	}
@@ -673,9 +677,6 @@ ENTER_FUNC;
 		}
 		SetTitle(TopWindow);
 		SetBGColor(TopWindow);
-		if (DelayDrawWindow) {
-			ReDrawTopWindow();
-		}
 	} else {
 	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;
@@ -692,14 +693,13 @@ ENTER_FUNC;
 		}
 		if (g_list_find(DialogStack, window) == NULL) {
 			DialogStack = g_list_append(DialogStack, window);
+#if 0
 			gtk_window_set_transient_for(GTK_WINDOW(window), 
 				GTK_WINDOW(parent));
+#endif
 		}
 		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
-		if (DelayDrawWindow) {
-			ReDrawTopWindow();
-		}
 	}
 LEAVE_FUNC;
 }
@@ -894,24 +894,6 @@ ScaleWindow(
 #endif
 		gtk_widget_set_size_request(widget,_w,_h); 
 	} 
-}
-
-static	void
-ReDrawTopWindow(void)
-{
-#define WINC (1)
-	static int i = 0;
-	int width,height;
-
-	gtk_window_get_size(GTK_WINDOW(TopWindow),&width,&height);
-    g_signal_handlers_block_by_func(TopWindow,ConfigureWindow,NULL);
-	if (i%2 == 0) {
-		gtk_window_resize(GTK_WINDOW(TopWindow),width, height-WINC);
-	} else {
-		gtk_window_resize(GTK_WINDOW(TopWindow),width, height+WINC);
-	}
-    g_signal_handlers_unblock_by_func(TopWindow,ConfigureWindow,NULL);
-	i++;
 }
 
 extern	void
