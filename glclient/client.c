@@ -171,11 +171,6 @@ InitSystem()
 		}
 	}
 
-	if (getenv("GLCLIENT_DELAY_DRAW_WINDOW") != NULL) {
-		DelayDrawWindow = TRUE;
-	} else {
-		DelayDrawWindow = FALSE;
-	}
 	if (getenv("GLCLIENT_CANCEL_SCALE_WINDOW") != NULL) {
 		CancelScaleWindow = TRUE;
 	} else {

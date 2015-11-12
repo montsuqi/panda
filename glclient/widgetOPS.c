@@ -523,9 +523,6 @@ SetPandaTable(
 	char		*bgval[GTK_PANDA_TABLE_MAX_COLS];
 	char		name[16];
 ENTER_FUNC;
-	if (DelayDrawWindow) {
-		gtk_widget_set_sensitive(widget,TRUE);
-	}
 	SetCommon(widget,obj);
 
 	trow = 0;
@@ -625,7 +622,6 @@ PandaTableFocusCell(const char *wname)
 				panda_table_row, panda_table_column, TRUE, 
 				panda_table_rowattr, 0.0); 
 		}
-		gtk_panda_table_start_editing(GTK_PANDA_TABLE(panda_table));
 		panda_table = NULL;
 		return TRUE;
 	}
@@ -720,9 +716,6 @@ ENTER_FUNC;
 		for(l=list;l!=NULL;l=l->next) {
 			g_free(l->data);
 		}
-	}
-	if (DelayDrawWindow) {
-		gtk_widget_set_sensitive(widget,FALSE);
 	}
 LEAVE_FUNC;
 }
