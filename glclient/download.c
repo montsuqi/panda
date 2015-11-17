@@ -49,18 +49,13 @@ show_save_dialog(
 	char *filename,
 	LargeByteString *binary)
 {
-	GtkWindow *parent,*dialog,*error_dialog;
+	GtkWindow *dialog,*error_dialog;
 	GError *error = NULL;
 	gchar *dirname,*fname,*lname,*msg;
 
-	parent = (GtkWindow *)g_list_nth_data(DialogStack,
-		g_list_length(DialogStack)-1);
-	if (parent == NULL) {
-		parent = GTK_WINDOW(TopWindow);
-	}
 	dialog = GTK_WINDOW(
 		gtk_file_chooser_dialog_new (_("Specify filename..."),
-			parent, GTK_FILE_CHOOSER_ACTION_SAVE,
+			GTK_WINDOW(TopWindow), GTK_FILE_CHOOSER_ACTION_SAVE,
     		GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
     		GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
 			NULL));
@@ -145,24 +140,16 @@ ShowDownloadDialog(
 	char			*description,
 	LargeByteString	*binary)
 {
-	GtkWindow *parent;
 	GtkWidget *dialog;
 	GtkWidget *open_button;
 	GtkWidget *save_button;
 	GtkWidget *close_button;
 	char hbytes[64];
 	FileInfo *info;
-
 	
-	parent = (GtkWindow *)g_list_nth_data(DialogStack,
-		g_list_length(DialogStack)-1);
-	if (parent == NULL) {
-		parent = GTK_WINDOW(TopWindow);
-	}
-
 	get_human_bytes(LBS_Size(binary), hbytes);
 	if (description && strlen(description) > 0) {
-		dialog = gtk_message_dialog_new(GTK_WINDOW(parent), GTK_DIALOG_MODAL,
+		dialog = gtk_message_dialog_new(GTK_WINDOW(TopWindow), GTK_DIALOG_MODAL,
 			GTK_MESSAGE_INFO,
 			GTK_BUTTONS_NONE,
 			_("Do you open this file or save it?\n\n"
@@ -170,7 +157,7 @@ ShowDownloadDialog(
 			"Description: %s\n"
 			"Size: %s"),filename,description,hbytes);
 	} else {
-		dialog = gtk_message_dialog_new(GTK_WINDOW(parent), GTK_DIALOG_MODAL,
+		dialog = gtk_message_dialog_new(GTK_WINDOW(TopWindow), GTK_DIALOG_MODAL,
 			GTK_MESSAGE_INFO,
 			GTK_BUTTONS_NONE,
 			_("Do you open this file or save it?\n\n"
