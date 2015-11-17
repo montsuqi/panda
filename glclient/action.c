@@ -592,8 +592,6 @@ CloseWindow(
 	WindowData	*data;
 	GtkWidget	*window;
 	GSList		*list;
-	int			i;
-	GList		*wlist;
 
 ENTER_FUNC;
 	dbgprintf("close window:%s\n", wname);
@@ -618,21 +616,6 @@ ENTER_FUNC;
 	} else {
 		gtk_widget_hide(window);
 		gtk_window_set_modal(GTK_WINDOW(window), FALSE);
-		wlist = g_list_find(DialogStack, window);
-		if (wlist != NULL && wlist->next != NULL && wlist->next->data != NULL) {
-			gtk_window_set_transient_for(GTK_WINDOW(wlist->next->data), NULL);
-		}
-		DialogStack = g_list_remove(DialogStack, window);
-		for (i = g_list_length(DialogStack) - 1; i >= 0; i--) {
-			if (i >0) {
-				gtk_window_set_transient_for(
-					(GtkWindow *)g_list_nth_data(DialogStack, i),
-					(GtkWindow *)g_list_nth_data(DialogStack, i - 1));
-			} else {
-				gtk_window_set_transient_for(
-					GTK_WINDOW(DialogStack->data), GTK_WINDOW(TopWindow));
-			}
-		}
 	}
 LEAVE_FUNC;
 }
@@ -678,27 +661,14 @@ ENTER_FUNC;
 		SetBGColor(TopWindow);
 	} else {
 	dbgmsg("show dialog\n");
-		GtkWidget *parent = TopWindow;
-		int i;
-
 		ScaleWidget(window, NULL);
 		ScaleWindow(window);
 		SetBGColor(window);
 
 		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
-		for(i = 0; i < g_list_length(DialogStack); i++) {
-			if ((gpointer)window != g_list_nth_data(DialogStack, i)) {
-				parent = (GtkWidget *)g_list_nth_data(DialogStack, i);
-			}
-		}
-		if (g_list_find(DialogStack, window) == NULL) {
-			DialogStack = g_list_append(DialogStack, window);
-			gtk_window_set_transient_for(GTK_WINDOW(window), 
-				GTK_WINDOW(parent));
-		}
 		gtk_widget_show(window);
-		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+		gtk_window_set_transient_for(GTK_WINDOW(window),GTK_WINDOW(TopWindow));
 	}
 LEAVE_FUNC;
 }
@@ -1005,7 +975,6 @@ InitTopWindow(void)
 	}
 
 	SetWindowIcon(GTK_WINDOW(TopWindow));
-	DialogStack = NULL;
 }
 
 extern	gboolean

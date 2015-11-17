@@ -55,7 +55,6 @@ ShowPrintDialog(
 	const char		*title,
 	LargeByteString	*lbs)
 {
-	GtkWindow *parent;
 	GtkWidget *dialog;
 	GtkWidget *content;
 	GtkWidget *pandapdf;
@@ -67,15 +66,9 @@ ShowPrintDialog(
 		return;
 	}
 	
-	parent = (GtkWindow *)g_list_nth_data(DialogStack,
-		g_list_length(DialogStack)-1);
-	if (parent == NULL) {
-		parent = GTK_WINDOW(TopWindow);
-	}
-
 	_title = g_strdup_printf(_("client printing - %s"),title);
 
-	dialog = gtk_dialog_new_with_buttons(_("Preview"),parent,
+	dialog = gtk_dialog_new_with_buttons(_("Preview"),GTK_WINDOW(TopWindow),
 		GTK_DIALOG_MODAL,
 		GTK_STOCK_CLOSE,
 		GTK_RESPONSE_NONE,NULL);
