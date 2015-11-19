@@ -39,6 +39,7 @@ typedef struct {
 } WindowScale;
 
 GLOBAL	GtkWidget	*TopWindow;
+GLOBAL	GList		*DialogStack;
 GLOBAL	WindowScale	TopWindowScale;
 
 extern	void		RegisterChangedHandler(GObject *object,GCallback func, gpointer data);
