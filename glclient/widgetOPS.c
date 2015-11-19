@@ -613,7 +613,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
-Bool
+void
 PandaTableFocusCell(const char *wname)
 {
 	if (panda_table != NULL && !strcmp(wname,gtk_widget_get_name(panda_table))) {
@@ -623,9 +623,7 @@ PandaTableFocusCell(const char *wname)
 				panda_table_rowattr, 0.0); 
 		}
 		panda_table = NULL;
-		return TRUE;
 	}
-	return FALSE;
 }
 
 static	void

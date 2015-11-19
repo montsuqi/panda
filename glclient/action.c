@@ -1597,9 +1597,8 @@ UpdateScreen()
 		UpdateWindow(child,i);
 	}
 	if (f_window != NULL) {
-		if (!PandaTableFocusCell(f_widget)) {
-			GrabFocus(f_window,f_widget);
-		}
+		GrabFocus(f_window,f_widget);
+		PandaTableFocusCell(f_widget);
 	}
 }
 

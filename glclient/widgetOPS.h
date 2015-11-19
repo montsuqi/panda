@@ -25,5 +25,5 @@
 
 extern	void UpdateWidget(GtkWidget *,json_object *);
 extern	struct json_object*	MakeScreenData(const char *wname); 
-extern	Bool PandaTableFocusCell(const char *wname);
+extern	void PandaTableFocusCell(const char *wname);
 #endif
