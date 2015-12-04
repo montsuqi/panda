@@ -624,6 +624,9 @@ ENTER_FUNC;
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
 		if (!isdummy) {
+			while(gtk_events_pending()) {
+				gtk_main_iteration();
+			}
 			GrabFocus(window, widgetName);
 			PandaTableFocusCell(widgetName);
 		}
