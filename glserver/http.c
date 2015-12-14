@@ -527,7 +527,7 @@ ENTER_FUNC;
 	if ( GetItemLongName(e,"http_status") ){
 		ValueInteger(GetItemLongName(e,"http_status")) = HTTP_OK;
 	}
-	p = (char *)g_hash_table_lookup(req->header_hash, "content-cype");
+	p = (char *)g_hash_table_lookup(req->header_hash, "content-type");
 	if (p != NULL) {
 		SetValueString(GetItemLongName(e, "content_type"), p, NULL);
 	}
