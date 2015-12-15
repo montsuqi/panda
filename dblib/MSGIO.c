@@ -520,9 +520,10 @@ _WriteMSG_JSON(
 	ValueStruct *ret)
 {
 	ValueStruct *val,*obj;
-	unsigned char *buff;
+	char *buff;
 	size_t size;
 	int rc,oid,wrote;
+	json_object *root,*data;
 
 	obj = GetItemLongName(ret,"object");
 	val = GetRecordItem(ret,"data");
@@ -534,12 +535,25 @@ _WriteMSG_JSON(
 	size = JSON_SizeValueOmmit(NULL,val);
 	buff = g_malloc(size);
 	JSON_PackValueOmmit(NULL,buff,val);
-	wrote = RequestWriteBLOB(NBCONN(dbg),oid,buff,size);
+
+	data = json_tokener_parse(buff);
 	g_free(buff);
+	if (is_error(data)) {
+		Warning("json_tokener_parse failure");
+		return MCP_BAD_OTHER;
+	}
+	root = json_object_new_object();
+	json_object_object_add(root,"data",data);
+	buff = (char*)json_object_to_json_string(root);
+	size = strlen(buff);
+
+	wrote = RequestWriteBLOB(NBCONN(dbg),oid,buff,size);
+	json_object_put(root);
 	if (wrote == size) {
 		ValueObjectId(obj) = oid;
 		rc = MCP_OK;
 	} else {
+		Warning("does not match wrote size %ld:%ld",wrote,size);
 		ValueObjectId(obj) = GL_OBJ_NULL;
 		rc = MCP_BAD_OTHER;
 	}
