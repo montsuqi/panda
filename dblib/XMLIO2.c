@@ -625,14 +625,16 @@ _WriteXML_JSON(
 	XMLCtx *ctx,
 	ValueStruct *ret)
 {
-	ValueStruct *rname,*val,*obj;
-	unsigned char *buff;
+	ValueStruct *val,*obj;
+	char *buff,*rname;
 	size_t size;
 	int rc,oid,wrote;
+	json_object *root,*jobj;
 
 	obj = GetItemLongName(ret,"object");
-	rname = GetItemLongName(ret,"recordname");
-	val = GetRecordItem(ret,ValueToString(rname,NULL));
+	val = GetItemLongName(ret,"recordname");
+	rname = ValueToString(val,NULL);
+	val = GetRecordItem(ret,rname);
 	oid = RequestNewBLOB(NBCONN(dbg),BLOB_OPEN_WRITE);
 	if (oid == GL_OBJ_NULL) {
 		Warning("RequestNewBLOB failure");
@@ -641,12 +643,25 @@ _WriteXML_JSON(
 	size = JSON_SizeValueOmmit(NULL,val);
 	buff = g_malloc(size);
 	JSON_PackValueOmmit(NULL,buff,val);
-	wrote = RequestWriteBLOB(NBCONN(dbg),oid,buff,size);
+
+	jobj = json_tokener_parse(buff);
 	g_free(buff);
+	if (is_error(jobj)) {
+		Warning("json_tokener_parse failure");
+		return MCP_BAD_OTHER;
+	}
+	root = json_object_new_object();
+	json_object_object_add(root,rname,jobj);
+	buff = (char*)json_object_to_json_string(root);
+	size = strlen(buff);
+
+	wrote = RequestWriteBLOB(NBCONN(dbg),oid,buff,size);
+	json_object_put(root);
 	if (wrote == size) {
 		ValueObjectId(obj) = oid;
 		rc = MCP_OK;
 	} else {
+		Warning("does not match wrote size %ld:%ld",wrote,size);
 		ValueObjectId(obj) = GL_OBJ_NULL;
 		rc = MCP_BAD_OTHER;
 	}
