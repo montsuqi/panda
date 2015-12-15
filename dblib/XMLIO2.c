@@ -35,6 +35,8 @@
 #include	<signal.h>
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>
+#include	<json.h>
+#include	<json_object_private.h> /*for json_object_object_foreachC()*/
 
 #include	"const.h"
 #include	"enum.h"
