@@ -69,8 +69,7 @@ DB_OBJECTS			=		\
 	NativeBLOB.la			\
 	XMLIO.la				\
 	XMLIO2.la				\
-	JSONIO.la				\
-	JSONIO2.la				\
+	MSGIO.la				\
 	PushEvent.la
 
 PostgreSQL_la_LDFLAGS	=		\
@@ -144,27 +143,17 @@ XMLIO2_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
 	$(top_builddir)/dblib/libpandadb.la
 
-JSONIO_la_LDFLAGS	=					\
-	-avoid-version						\
-	-module								\
+MSGIO_la_LDFLAGS	=	\
+	-avoid-version				\
+	-module						\
 	-export-dynamic
-JSONIO_la_SOURCES	=					\
-	sysdata.c	sysdata.h				\
-	JSONIO.c
-JSONIO_la_LIBADD			=			\
+MSGIO_la_SOURCES	=	\
+	sysdata.c	sysdata.h	\
+	MSGIO.c
+MSGIO_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
 	$(top_builddir)/dblib/libpandadb.la
 
-JSONIO2_la_LDFLAGS	=					\
-	-avoid-version						\
-	-module								\
-	-export-dynamic
-JSONIO2_la_SOURCES	=					\
-	sysdata.c	sysdata.h				\
-	JSONIO2.c
-JSONIO2_la_LIBADD			=			\
-	$(top_builddir)/libs/libpanda.la	\
-	$(top_builddir)/dblib/libpandadb.la
 
 PushEvent_la_LDFLAGS	=				\
 	-avoid-version						\
