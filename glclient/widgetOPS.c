@@ -616,14 +616,23 @@ LEAVE_FUNC;
 void
 PandaTableFocusCell(const char *wname)
 {
-	if (panda_table != NULL && !strcmp(wname,gtk_widget_get_name(panda_table))) {
-		if (panda_table_row >= 0 && panda_table_column >= 0) {
-			gtk_panda_table_moveto(GTK_PANDA_TABLE(panda_table), 
-				panda_table_row, panda_table_column, TRUE, 
-				panda_table_rowattr, 0.0); 
-		}
-		panda_table = NULL;
+	if (panda_table == NULL) {
+		return;
 	}
+	if (strcmp(wname,gtk_widget_get_name(panda_table))) {
+		return;
+	}
+	if (panda_table_row >= 0 && panda_table_column >= 0) {
+		gtk_panda_table_moveto(GTK_PANDA_TABLE(panda_table), 
+			panda_table_row, panda_table_column, TRUE, 
+			panda_table_rowattr, 0.0); 
+	}
+	if (fKeyBuff) {
+		if (GTK_WIDGET_VISIBLE(panda_table) && GTK_WIDGET_DRAWABLE(panda_table)) {
+    		gdk_window_process_updates(panda_table->window, FALSE);
+		}
+	}
+	panda_table = NULL;
 }
 
 static	void
