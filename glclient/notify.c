@@ -36,11 +36,31 @@
 #include	<glib.h>
 
 #include	"glclient.h"
-#include	"notify.h"
+#include	"action.h"
 
 #define DEFAULT_TIMEOUT 3000
 
-static gboolean fInit = FALSE;
+static int yy = 0;
+static int n = 0;
+
+static gboolean
+DestroyDialog(gpointer data)
+{
+	gtk_widget_destroy(GTK_WIDGET(data));
+	if (n > 0) {
+		n -= 1;
+	}
+	return FALSE;
+}
+
+static gboolean
+cb_enter(GtkWidget *widget,
+	GdkEvent *e,
+	gpointer data)
+{
+	gtk_widget_hide(widget);
+	return FALSE;
+}
 
 void
 Notify(gchar *summary,
@@ -48,28 +68,31 @@ Notify(gchar *summary,
 	gchar *icon,
 	gint timeout)
 {
-	static NotifyNotification *n = NULL;
-	gint to = DEFAULT_TIMEOUT;
+	GtkWidget *widget;
+	int x,y,w,h;
 
-	if (!fInit) {
-		notify_init("glclient2");
-		fInit = TRUE;
+	widget = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_OTHER,GTK_BUTTONS_NONE,"%s\n\n%s",summary,body);
+	gtk_window_set_decorated(GTK_WINDOW(widget),FALSE);
+	gtk_window_set_modal(GTK_WINDOW(widget),FALSE);
+	gtk_window_set_focus_on_map(GTK_WINDOW(widget),FALSE);
+	gtk_window_set_accept_focus(GTK_WINDOW(widget),FALSE);
+
+	gtk_window_get_position(GTK_WINDOW(TopWindow),&x,&y);
+	gtk_window_get_size(GTK_WINDOW(TopWindow),&w,&h);
+	if (n == 0) {
+		yy = y;
 	}
+	gtk_window_move(GTK_WINDOW(widget),x+w,yy);
 
-#if LIBNOTIFY_0_7_3
-	n = notify_notification_new (summary, body, icon);
-#else
-	n = notify_notification_new (summary, body, icon,NULL);
-#endif
+	g_signal_connect(G_OBJECT(widget),"enter-notify-event",G_CALLBACK(cb_enter),NULL);
 
-	if (timeout > 0) {
-		to = timeout * 1000;
+	gtk_widget_show(widget);
+	gtk_window_get_position(GTK_WINDOW(widget),&x,&y);
+	gtk_window_get_size(GTK_WINDOW(widget),&w,&h);
+	if (timeout < 1) {
+		timeout = 5;
 	}
-	notify_notification_set_timeout (n, to); 
-
-	if (!notify_notification_show (n, NULL)) {
-		fprintf(stderr, "failed to send notification\n");
-	}
-	g_object_unref(G_OBJECT(n));
+	gtk_timeout_add(timeout*1000,DestroyDialog,widget);
+	n += 1;
+	yy = yy + h;
 }
-

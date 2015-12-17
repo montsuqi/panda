@@ -149,15 +149,8 @@ if test "x$enable_client" = "xyes"; then
 	[
 		libglade-panda-2.0	>= 2.0.3
 		libcurl             >= 7.0.5
-		libnotify			>= 0.4.5
 		gmodule-2.0			>= 2.0.0
 		gconf-2.0			>= 2.28.1
-	])
-	PKG_CHECK_MODULES(LIBNOTIFY,libnotify >= 0.7.3,
-	[AC_DEFINE(LIBNOTIFY_0_7_3,1,"")],
-	[
-		PKG_CHECK_MODULES(LIBNOTIFY,libnotify >= 0.4.5,
-		[])
 	])
 	PKG_CHECK_MODULES(LIBGTKCHECK, libglade-panda-2.0 >= 3.0.0,
 	[AC_DEFINE(LIBGTK_3_0_0,1,"")],
