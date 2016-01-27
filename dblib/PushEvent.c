@@ -54,6 +54,8 @@
 
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
+static gboolean LOGGING=FALSE;
+
 extern	ValueStruct	*
 _DBOPEN(
 	DBG_Struct	*dbg,
@@ -243,6 +245,9 @@ AMQPSend(
 		return MCP_BAD_OTHER;
 	}
 	{
+		if (LOGGING) {
+			Warning("PushEvent %s %s %s",exchange,routingkey,msg);
+		}
 		amqp_basic_properties_t props;
 		props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
 		props.content_type = amqp_cstring_bytes("application/json");
@@ -378,6 +383,9 @@ static	DB_Primitives	Core = {
 extern	DB_Func	*
 InitPushEvent(void)
 {
+	if (getenv("APS_PUSHEVENT_DEBUG")) {
+		LOGGING=TRUE;
+	}
 	return	(EnterDB_Function("PushEvent",Operations,DB_PARSER_NULL,&Core,"",""));
 }
 
