@@ -574,6 +574,10 @@ Pong(
 	char		*dialog;
 	char		*popup;
 ENTER_FUNC;
+	if (getenv("GLSERVER_DISABLE_MESSAGE")) {
+		GL_SendPacketClass(fpComm,GL_Pong);
+			ON_IO_ERROR(fpComm,badio);
+	} else {
 	GetSessionMessage(scr->term,&popup,&dialog,&abort);
 
 	if (strlen(abort) > 0) {
@@ -602,6 +606,7 @@ ENTER_FUNC;
 	xfree(popup);
 
 	ResetSessionMessage(scr->term);
+	}
 badio:
 LEAVE_FUNC;
 }
