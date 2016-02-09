@@ -333,7 +333,11 @@ enable_ssl="no"
 AC_ARG_WITH(ssl,
 	[  --with-ssl=<directory>  use SSL in <directory>],[
 	if test x$withval = xyes; then
-		PKG_CHECK_MODULES(SSL,[libssl >= 0.9.8])
+		PKG_CHECK_MODULES(SSL,
+			[
+				libssl >= 0.9.8
+				libcrypto
+			])
 		AC_SUBST(SSL_LIBS) 
 		AC_SUBST(SSL_CFLAGS) 
 		AC_DEFINE(USE_SSL,1,"")
