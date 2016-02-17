@@ -624,11 +624,13 @@ ENTER_FUNC;
 		GL_RecvString(fp, sizeof(window), window);
 		GL_RecvString(fp, sizeof(widgetName), widgetName);
 		if (!isdummy) {
+#ifdef GTK_2_24_23
 			if (!fKeyBuff) {
 				while(gtk_events_pending()) {
 					gtk_main_iteration();
 				}
 			}
+#endif
 			GrabFocus(window, widgetName);
 			PandaTableFocusCell(widgetName);
 		}

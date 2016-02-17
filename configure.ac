@@ -158,6 +158,14 @@ if test "x$enable_client" = "xyes"; then
 		PKG_CHECK_MODULES(LIBGTKCHECK,libglade-panda-2.0 >= 2.0.3,
 		[])
 	])
+
+	PKG_CHECK_MODULES(CHECK_GTK_VER,gtk+-2.0 >= 2.24.23,
+	[
+		AC_DEFINE(GTK_2_24_23,1,"")
+	], [
+		PKG_CHECK_MODULES(CHECK_GTK_VER,gtk+-2.0 >= 2.24.10,
+		[])
+	])
 fi
 
 if test "x$enable_client" = "xyes"
@@ -167,6 +175,7 @@ else
 	GLCLIENT=
 fi
 AC_SUBST(GLCLIENT)
+
 
 dnl *************************************************************************** 
 dnl Add all the cflags & libs needed for the PostgreSQL 
