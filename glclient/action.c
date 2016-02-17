@@ -1596,11 +1596,13 @@ UpdateScreen()
 		UpdateWindow(child,i);
 	}
 	if (f_window != NULL) {
+#ifdef GTK_2_24_23
 		if (!fKeyBuff) {
 			while(gtk_events_pending()) {
 				gtk_main_iteration();
 			}
 		}
+#endif
 		GrabFocus(f_window,f_widget);
 		PandaTableFocusCell(f_widget);
 	}
