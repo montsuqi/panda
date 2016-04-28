@@ -17,7 +17,7 @@
 # 02111-1307, USA
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = recdefgen pandadb copygen dbgen checkdir monupload monsql monsetup monbatch_ps $(dbsyncbin)
+bin_PROGRAMS = recdefgen pandadb copygen dbgen checkdir monupload monsql monsetup monbatch_ps monpushevent $(dbsyncbin)
 sbin_PROGRAMS = monitor msgd
 noinst_SCRIPTS = copy
 
@@ -128,6 +128,15 @@ monbatch_ps_LDADD 		=					\
 	$(SSL_LIBS)							\
 	$(COMMON_LIBS)
 
+monpushevent_LDFLAGS	=			\
+	-export-dynamic
+monpushevent_LDADD 		=					\
+	-lm									\
+	$(top_builddir)/libs/libpanda.la	\
+	$(P11_LIBS)							\
+	$(SSL_LIBS)							\
+	$(COMMON_LIBS)
+
 monitor_LDFLAGS	=			\
 	-export-dynamic
 monitor_LDADD 		=					\
@@ -172,6 +181,9 @@ checkdir_SOURCES	=	\
 
 monupload_SOURCES	=	\
 	monupload.c
+
+monpushevent_SOURCES	=	\
+	monpushevent.c
 
 monitor_SOURCES		=	\
 	monitor.c

@@ -161,5 +161,4 @@ PushEvent_la_SOURCES	=				\
 	PushEvent.c
 PushEvent_la_LIBADD			=			\
 	$(top_builddir)/libs/libpanda.la	\
-	$(top_builddir)/dblib/libpandadb.la	\
-	$(AMQP_LIBS)
+	$(top_builddir)/dblib/libpandadb.la

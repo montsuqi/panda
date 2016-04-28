@@ -58,13 +58,15 @@ libpanda_la_SOURCES	=				\
 	sysdatacom.h					\
 	sysdbreq.c		sysdbreq.h		\
 	term.c			term.h			\
-	wfcio.c			wfcio.h
+	wfcio.c			wfcio.h			\
+	pushevent.c		pushevent.h
 
 libpanda_la_LIBADD		=	\
 	-lm									\
 	$(SSL_LIBS)							\
 	$(P11_LIBS)							\
-	$(COMMON_LIBS)
+	$(COMMON_LIBS)						\
+	$(AMQP_LIBS)
 
 
 libpandaincludedir = $(pkgincludedir)
@@ -99,7 +101,8 @@ libpandainclude_HEADERS =	\
 	sysdatacom.h		\
 	sysdbreq.h			\
 	term.h				\
-	wfcio.h
+	wfcio.h				\
+	pushevent.h
 
 AM_CPPFLAGS 			= 	\
 	-I$(top_srcdir)					\
