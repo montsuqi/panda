@@ -49,6 +49,7 @@
 #include	"comm.h"
 #include	"comms.h"
 #include	"redirect.h"
+#include	"pushevent.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -109,179 +110,6 @@ LEAVE_FUNC;
 	return	(NULL);
 }
 
-static	json_object*
-MakeBodyJSON(
-	ValueStruct *v)
-{
-	json_object *obj,*child;
-	int i;
-
-	if (v == NULL) {
-		return NULL;
-	}
-	switch (v->type) {
-	case GL_TYPE_CHAR:
-	case GL_TYPE_VARCHAR:
-	case GL_TYPE_DBCODE:
-	case GL_TYPE_TEXT:
-	case GL_TYPE_SYMBOL:
-	case GL_TYPE_ALIAS:
-	case GL_TYPE_OBJECT:
-	case GL_TYPE_BYTE:
-	case GL_TYPE_BINARY:
-	case GL_TYPE_TIMESTAMP:
-	case GL_TYPE_DATE:
-	case GL_TYPE_TIME:
-		return json_object_new_string(ValueToString(v,NULL));
-	case GL_TYPE_BOOL:
-		return json_object_new_boolean(ValueBool(v));
-	case GL_TYPE_INT:
-		return json_object_new_int(ValueInteger(v));
-	case GL_TYPE_NUMBER:
-	case GL_TYPE_FLOAT:
-		return json_object_new_double(ValueToFloat(v));
-	case GL_TYPE_ARRAY:
-		obj = json_object_new_array();
-		for (i = 0; i < ValueArraySize(v); i++) {
-			child = MakeBodyJSON(ValueArrayItem(v,i));
-			if (child != NULL) {
-				json_object_array_add(obj,child);
-			}
-		}
-		return obj;
-	case GL_TYPE_RECORD:
-		obj = json_object_new_object();
-		for	(i = 0; i < ValueRecordSize(v); i++) {
-			child = MakeBodyJSON(ValueRecordItem(v,i));
-			if (child != NULL) {
-				json_object_object_add(obj,ValueRecordName(v,i),child);
-			}
-		}
-		return obj;
-	}
-	return NULL;
-}
-
-static	json_object*
-MakeJSON(
-	const char *event,
-	ValueStruct *v)
-{
-	json_object *obj,*body;
-	time_t now;
-	struct tm tm_now;
-	char str_now[128];
-
-	obj = json_object_new_object();
-	json_object_object_add(obj,"event",json_object_new_string(event));
-
-	body = MakeBodyJSON(v);
-	json_object_object_add(obj,"body",body);
-
-	now = time(NULL);
-	localtime_r(&now, &tm_now);
-	strftime(str_now,sizeof(str_now),"%FT%T%z",&tm_now);
-	json_object_object_add(obj,"time",json_object_new_string(str_now));
-	return obj;
-}
-
-static	int
-AMQPSend(
-	const char* event,
-	const char* msg)
-{
-	char *p,*hostname,*exchange,*routingkey;
-	char *user,*pass;
-	int port, status,x;
-	amqp_socket_t *socket = NULL;
-	amqp_connection_state_t conn;
-	amqp_rpc_reply_t reply;
-
-	hostname = "localhost";
-	if ((p = getenv("MON_AMQP_SERVER_HOST")) != NULL) {
-		hostname = p;
-	}
-	port = 5672;
-	if ((p = getenv("MON_AMQP_SERVER_PORT")) != NULL) {
-		port = atoi(p);
-	}
-	exchange = "amq.topic";
-	if ((p = getenv("MON_AMQP_EXCHANGE")) != NULL) {
-		exchange = p;
-	}
-	routingkey = g_strdup_printf("tenant.%s.%s",getenv("MCP_TENANT"),event);
-	user = "guest";
-	if ((p = getenv("MON_AMQP_USER")) != NULL) {
-		user = p;
-	}
-	pass = "guest";
-	if ((p = getenv("MON_AMQP_PASS")) != NULL) {
-		pass = p;
-	}
-
-	conn = amqp_new_connection();
-	socket = amqp_tcp_socket_new(conn);
-	if (!socket) {
-		Warning("creating TCP socket");
-		return MCP_BAD_OTHER;
-	}
-	status = amqp_socket_open(socket, hostname, port);
-	if (status) {
-		Warning("opening TCP socket");
-		return MCP_BAD_OTHER;
-	}
-
-	reply = amqp_login(conn,"/",0,131072,0,AMQP_SASL_METHOD_PLAIN,user,pass);
-	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-		Warning("amqp_login");
-		return MCP_BAD_OTHER;
-	}
-	amqp_channel_open(conn, 1);
-	reply = amqp_get_rpc_reply(conn);
-	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-		Warning("amqp_get_rpc_reply");
-		return MCP_BAD_OTHER;
-	}
-	{
-		amqp_basic_properties_t props;
-		props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
-		props.content_type = amqp_cstring_bytes("application/json");
-		props.delivery_mode = 2; /* persistent delivery mode */
-		x = amqp_basic_publish(conn,
-				1,
-				amqp_cstring_bytes(exchange),
-				amqp_cstring_bytes(routingkey),
-				0,
-				0,
-				&props,
-				amqp_cstring_bytes(msg));
-		if (x < 0) {
-			Warning("amqp_basic_publish");
-			return MCP_BAD_OTHER;
-		}
-	}
-	g_free(routingkey);
-	
-	reply = amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-		Warning("amqp_channel_close");
-		return MCP_BAD_OTHER;
-	}
-
-	reply = amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
-	if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-		Warning("amqp_connection_close");
-		return MCP_BAD_OTHER;
-	}
-
-	x = amqp_destroy_connection(conn);
-	if (x < 0) {
-		Warning("amqp_destroy_connection");
-		return MCP_BAD_OTHER;
-	}
-	return MCP_OK;
-}
-
 static	ValueStruct	*
 _PushEvent(
 	DBG_Struct		*dbg,
@@ -289,9 +117,6 @@ _PushEvent(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct *v,*body;
-	json_object *obj;
-	char *event;
 ENTER_FUNC;
 	if (ctrl == NULL) {
 		return NULL;
@@ -300,18 +125,11 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if ((v = GetItemLongName(args,"event"))  ==  NULL) {
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
+	if (PushEvent(args)) {
+		ctrl->rc = MCP_OK;
+	} else {
+		ctrl->rc = MCP_BAD_OTHER;
 	}
-	event = ValueToString(v,NULL);
-	if ((body = GetItemLongName(args,"body"))  ==  NULL) {
-		ctrl->rc = MCP_BAD_ARG;
-		return NULL;
-	}
-	obj = MakeJSON(event,body);
-	ctrl->rc = AMQPSend(event,(const char*)json_object_to_json_string(obj));
-	json_object_put(obj);
 LEAVE_FUNC;
 	return	NULL;
 }

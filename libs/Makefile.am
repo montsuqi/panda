@@ -56,13 +56,15 @@ libpanda_la_SOURCES	=				\
 	socket.c		socket.h		\
 	sysdatacom.h					\
 	sysdbreq.c		sysdbreq.h		\
-	term.c			term.h
+	term.c			term.h			\
+	pushevent.c		pushevent.h
 
 libpanda_la_LIBADD		=	\
 	-lm									\
 	$(SSL_LIBS)							\
 	$(P11_LIBS)							\
-	$(COMMON_LIBS)
+	$(COMMON_LIBS)						\
+	$(AMQP_LIBS)
 
 
 libpandaincludedir = $(pkgincludedir)
@@ -95,7 +97,8 @@ libpandainclude_HEADERS =	\
 	socket.h			\
 	sysdatacom.h		\
 	sysdbreq.h			\
-	term.h
+	term.h				\
+	pushevent.h
 
 AM_CPPFLAGS 			= 	\
 	-I$(top_srcdir)					\
