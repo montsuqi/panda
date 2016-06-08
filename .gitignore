@@ -68,6 +68,7 @@ tools/monupload
 tools/monsql
 tools/monbatch_ps
 tools/monsetup
+tools/monpushevent
 wfc/moninfo
 wfc/wfc
 wfc/wfccontrol

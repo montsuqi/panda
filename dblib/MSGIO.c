@@ -35,8 +35,6 @@
 #include	<signal.h>
 #include	<libxml/tree.h>
 #include	<libxml/parser.h>
-#include	<json.h>
-#include	<json_object_private.h> /*for json_object_object_foreachC()*/
 
 #include	"const.h"
 #include	"enum.h"
@@ -361,29 +359,17 @@ _ReadMSG_JSON(
 {
 	unsigned char *jsonstr;
 	ValueStruct *val;
-	json_object *obj;
-	json_object_iter iter;
+	size_t s;
 
 	jsonstr = g_malloc0(size+1);
 	memcpy(jsonstr,buff,size);
-	obj = json_tokener_parse(jsonstr);
-	g_free(jsonstr);
-	if (is_error(obj)) {
-		Warning("_ReadXML_JSON failure");
-		return MCP_BAD_ARG;
-	}
-	if (json_object_get_type(obj) != json_type_object) {
-		Warning("invalid json type");
-		return MCP_BAD_ARG;
-	}
 	val = GetRecordItem(ret,"data");
-	json_object_object_foreachC(obj,iter) {
-		if (!strcmp(iter.key,"data")) {
-			JSON_UnPackValueOmmit(NULL,(unsigned char*)json_object_to_json_string(iter.val),val);
-			break;
-		}
+	s = JSON_UnPackValueOmmit(NULL,jsonstr,val);
+	g_free(jsonstr);
+
+	if (s == 0) {
+		return MCP_BAD_ARG;
 	}
-	json_object_put(obj);
 	return MCP_OK;
 }
 
@@ -523,7 +509,6 @@ _WriteMSG_JSON(
 	char *buff;
 	size_t size;
 	int rc,oid,wrote;
-	json_object *root,*data;
 
 	obj = GetItemLongName(ret,"object");
 	val = GetRecordItem(ret,"data");
@@ -535,20 +520,8 @@ _WriteMSG_JSON(
 	size = JSON_SizeValueOmmit(NULL,val);
 	buff = g_malloc(size);
 	JSON_PackValueOmmit(NULL,buff,val);
-
-	data = json_tokener_parse(buff);
-	g_free(buff);
-	if (is_error(data)) {
-		Warning("json_tokener_parse failure");
-		return MCP_BAD_OTHER;
-	}
-	root = json_object_new_object();
-	json_object_object_add(root,"data",data);
-	buff = (char*)json_object_to_json_string(root);
-	size = strlen(buff);
-
 	wrote = RequestWriteBLOB(NBCONN(dbg),oid,buff,size);
-	json_object_put(root);
+
 	if (wrote == size) {
 		ValueObjectId(obj) = oid;
 		rc = MCP_OK;

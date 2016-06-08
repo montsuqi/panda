@@ -107,10 +107,12 @@ MakeJSON(
 	json_object *obj,*body;
 	time_t now;
 	struct tm tm_now;
-	char str_now[128];
+	char str_now[128],*user;
 
 	obj = json_object_new_object();
 	json_object_object_add(obj,"event",json_object_new_string(event));
+	user = getenv("MCP_USER");
+	json_object_object_add(obj,"user",json_object_new_string(user));
 
 	body = MakeBodyJSON(v);
 	json_object_object_add(obj,"body",body);
