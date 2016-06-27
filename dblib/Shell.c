@@ -33,6 +33,8 @@
 #include	<glib.h>
 #include	<signal.h>
 #include	<uuid/uuid.h>
+#include 	<errno.h>
+#include	<string.h>
 
 #include	"libmondai.h"
 #include	"enum.h"
@@ -163,6 +165,7 @@ ENTER_FUNC;
 			rc = MCP_BAD_OTHER;
 		} else
 		if		(  pid  <  0  ) {
+			Warning("DoShell fork error:%s",strerror(errno));
 			rc = MCP_BAD_OTHER;
 		} else {
 			rc = MCP_OK;
