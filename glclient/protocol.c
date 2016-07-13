@@ -870,9 +870,10 @@ InitCURL()
 			} else {
 				SetHTTPAuth();
 			}
-			if (strlen(CAFile) > 0) {
-				curl_easy_setopt(AuthCurl,CURLOPT_CAINFO,CAFile);
+			if (CAFile == NULL || strlen(CAFile) <= 0) {
+				Error("set CAFile option");
 			}
+			curl_easy_setopt(AuthCurl,CURLOPT_CAINFO,CAFile);
 		}
 	}
 	SetHTTPAuth();
