@@ -108,8 +108,7 @@ HTTP_Init(
 	req->buf = req->head = xmalloc(sizeof(char) * MAX_REQ_SIZE);
 	memset(req->buf, 0x0, MAX_REQ_SIZE);
 	req->body_size = 0;
-	req->body = xmalloc(sizeof(char) * MAX_REQ_SIZE);
-	memset(req->body, 0x0, MAX_REQ_SIZE);
+	req->body = NULL;
 	req->arguments = NULL;
 	req->header_hash = NewNameiHash();
 	req->user = NULL;
@@ -420,7 +419,7 @@ void
 ParseReqBody(HTTP_REQUEST *req)
 {
 	char *value;
-	size_t size,left_size;
+	size_t size,left;
 
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
 	if (value == NULL) {
@@ -429,12 +428,7 @@ ParseReqBody(HTTP_REQUEST *req)
 		return;
 	}
 	size = (size_t)atoi(value);
-	if (size <= 0) {
-		req->status = HTTP_BAD_REQUEST;
-		Message("invalid Content-Length:%s", value);
-		return;
-	}
-	if (size >= MAX_REQ_SIZE) {
+	if ((size + req->buf_size) >= MAX_REQ_SIZE) {
 		req->status = HTTP_REQUEST_ENTITY_TOO_LARGE;
 		Message("invalid Content-Length:%s", value);
 		return;
@@ -445,18 +439,15 @@ ParseReqBody(HTTP_REQUEST *req)
 		Message("does not have content-type");
 		return;
 	}
-
-	left_size = size - (req->buf_size - (req->head - req->buf));
-	if (left_size>0) {
-		while(left_size>0) {
-			req->buf_size += TryRecv(req);
-			left_size = size - (req->buf_size - (req->head - req->buf));
-		}
-	}
-	memcpy(req->body, req->head, size);
-	req->head += size;
+ 	req->body = req->head;
 	req->body_size = size;
-
+	left = size;
+	while (left > 0) {
+		size = TryRecv(req);
+		req->buf_size += size;
+		req->head += size;
+		left -= size;
+	}
 	dbgprintf("body :%s\n", req->body);
 }
 
