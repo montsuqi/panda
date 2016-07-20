@@ -441,12 +441,14 @@ ParseReqBody(HTTP_REQUEST *req)
 	}
  	req->body = req->head;
 	req->body_size = size;
-	left = size;
-	while (left > 0) {
-		size = TryRecv(req);
-		req->buf_size += size;
-		req->head += size;
-		left -= size;
+
+	left = size - (req->buf_size - (req->head - req->buf));
+	if (left > 0) {
+		while (left > 0) {
+			size = TryRecv(req);
+			req->head += size;
+			left -= size;
+		}
 	}
 	dbgprintf("body :%s\n", req->body);
 }
