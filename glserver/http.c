@@ -419,7 +419,7 @@ void
 ParseReqBody(HTTP_REQUEST *req)
 {
 	char *value;
-	size_t size,left;
+	size_t body_size,size,left;
 
 	value = (char *)g_hash_table_lookup(req->header_hash,"Content-Length");
 	if (value == NULL) {
@@ -427,8 +427,8 @@ ParseReqBody(HTTP_REQUEST *req)
 		Message("invalid Content-Length:%s", value);
 		return;
 	}
-	size = (size_t)atoi(value);
-	if ((size + req->buf_size) >= MAX_REQ_SIZE) {
+	body_size = (size_t)atoi(value);
+	if ((body_size + req->buf_size) >= MAX_REQ_SIZE) {
 		req->status = HTTP_REQUEST_ENTITY_TOO_LARGE;
 		Message("invalid Content-Length:%s", value);
 		return;
@@ -439,17 +439,23 @@ ParseReqBody(HTTP_REQUEST *req)
 		Message("does not have content-type");
 		return;
 	}
- 	req->body = req->head;
-	req->body_size = size;
 
-	left = size - (req->buf_size - (req->head - req->buf));
+	left = body_size - (req->buf_size - (req->head - req->buf));
 	if (left > 0) {
 		while (left > 0) {
 			size = TryRecv(req);
-			req->head += size;
-			left -= size;
+			if (left < size) {
+				left = 0;
+			} else {
+				left -= size;
+			}
 		}
 	}
+
+ 	req->body = req->head;
+	req->body_size = body_size;
+	req->head += body_size;
+
 	dbgprintf("body :%s\n", req->body);
 }
 
