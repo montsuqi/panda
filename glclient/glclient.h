@@ -40,6 +40,8 @@
 #define	GLOBAL		extern
 #endif
 
+#define DEFAULT_PING_TIMER_PERIOD   (7000) //7sec
+
 typedef struct {
 	char			*AuthURI;
 	char			*RPCURI;
