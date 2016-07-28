@@ -105,6 +105,7 @@
 #define	T_SUMCHECK		(T_YYBASE +53)
 
 #define	T_INITIAL_LD	(T_YYBASE +54)
+#define	T_CRYPTOPASS	(T_YYBASE +55)
 
 static	TokenTable	tokentable[] = {
 	{	"ld"				,T_LD		},
@@ -127,6 +128,7 @@ static	TokenTable	tokentable[] = {
 	{	"file"				,T_FILE		},
 	{	"redirect"			,T_REDIRECT	},
 	{	"redirect_port"		,T_REDIRECTPORT	},
+	{	"crypto_password"	,T_CRYPTOPASS	},
 	{	"ddir"				,T_DDIR		},
 	{	"record"			,T_RECDIR	},
 	{	"base"				,T_BASEDIR	},
@@ -1227,6 +1229,7 @@ NewEnv(
 	env->DBMasterAuth = NULL;
 	env->DBMasterLogDBName = NULL;
 	env->InitialLD = NULL;
+	env->CryptoPass = NULL;
 
 	return	(env);
 }
@@ -1489,6 +1492,10 @@ ENTER_FUNC;
 			} else {
 				ParError("syntax error in dbmaster directive");
 			}
+			break;
+		  case	T_CRYPTOPASS:
+			GetName;
+			ThisEnv->CryptoPass = StrDup(ComSymbol);
 			break;
 		  default:
 			ParErrorPrintf("misc syntax error [%X][%s]\n",ComToken,ComSymbol);

@@ -149,6 +149,25 @@ cmdTuples(
 	return ret;
 }
 
+static Bool
+ExistFunc(
+	PGconn	*conn,
+	char *func )
+{
+	char	sql[SIZE_SQL+1];
+	PGresult	*res;
+	Bool ret = FALSE;
+
+	sprintf(sql, "SELECT proname FROM pg_proc WHERE proname = '%s';", func);
+	res = PQexec(conn, sql);
+	if ( (res != NULL) || (PQresultStatus(res) == PGRES_TUPLES_OK) ) {
+		if (PQntuples(res) > 0) {
+			ret = TRUE;
+		}
+		PQclear(res);
+	}
+	return ret;
+}
 
 static	void
 PgInitConnect(
@@ -170,6 +189,24 @@ PgInitConnect(
 		Warning("PostgreSQL: %s",PQerrorMessage(conn));
 	}
 	PQclear(res);
+
+}
+
+static void
+CryptoMode(
+	DBG_Struct	*dbg)
+{
+	char	*crypto;
+	char	sql[SIZE_SQL+1];
+	PGresult	*res;
+
+	if ( (crypto = GetDB_Crypt(dbg,DB_UPDATE)) != NULL ) {
+		if ( ExistFunc(PGCONN(dbg, DB_UPDATE), "crypto_mode") ) {
+			sprintf(sql, "SELECT crypto_mode('%s');", crypto);
+			res = PQexec(PGCONN(dbg, DB_UPDATE), sql);
+			PQclear(res);
+		}
+	}
 }
 
 static	void
@@ -1466,6 +1503,7 @@ ENTER_FUNC;
 			if (dbg->redirectPort != NULL) {
 				LockRedirectorConnect(conn);
 			}
+			CryptoMode(dbg);
 			rc = MCP_OK;
 		} else {
 			dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_UNCONNECT;

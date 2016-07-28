@@ -599,6 +599,22 @@ GetDB_Pass(
 }
 
 extern	char	*
+GetDB_Crypt(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	char	*crypto = NULL;
+	int		num;
+
+	if		(  ThisEnv->CryptoPass  !=  NULL  ) {
+		crypto = ThisEnv->CryptoPass;
+	} else {
+		crypto = GetMONDB_ENV(dbg, "CRYPTOPASS");
+	}
+	return	(crypto);
+}
+
+extern	char	*
 GetDB_Sslmode(
 	DBG_Struct	*dbg,
 	int			usage)

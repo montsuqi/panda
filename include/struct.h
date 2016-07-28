@@ -378,6 +378,7 @@ typedef	struct {
 		,		*DBSlavePath;
 
 	char           *DBMasterLogDBName;
+	char		*CryptoPass;
 }	DI_Struct;
 
 typedef	struct {

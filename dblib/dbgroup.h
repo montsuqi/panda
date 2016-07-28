@@ -50,6 +50,7 @@ extern	char	*GetDB_Sslcert(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_Sslkey(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_Sslrootcert(DBG_Struct *dbg, int usage);
 extern	char	*GetDB_Sslcrl(DBG_Struct *dbg, int usage);
+extern	char	*GetDB_Crypt(DBG_Struct *dbg, int usage);
 extern	int	GetDB_PortMode(DBG_Struct *dbg, int usage);
 extern	int	GetTableFuncData(RecordStruct **rec, ValueStruct **value,
 														 DBCOMM_CTRL *ctrl);
