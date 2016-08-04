@@ -590,28 +590,33 @@ MakeEventResponse(
 		} else {
 			rec = GetWindow(data->w.s[i].window);
 			NativeUnPackValue(NULL,LBS_Body(scrdata),rec->value);
-
 			if ((g_hash_table_lookup(data->window_table,data->w.s[i].window)) == NULL) {
 				wname = g_strdup(data->w.s[i].window);
 				g_hash_table_insert(data->window_table,wname,wname);
 				buf = xmalloc(JSON_SizeValue(NULL,rec->value));
 				JSON_PackValue(NULL,buf,rec->value);
 				child = json_tokener_parse(buf);
+				if (child == NULL || is_error(child)) {
+					Warning("JSON_PackValue Error see /tmp/wfc_error.json");
+					g_file_set_contents("/tmp/wfc_error.json",buf,strlen(buf),NULL);
+				}
 				xfree(buf);
 
 			} else {
 				buf = xmalloc(JSON_SizeValueOmmit(NULL,rec->value));
 				JSON_PackValueOmmit(NULL,buf,rec->value);
 				child = json_tokener_parse(buf);
+				if (child == NULL || is_error(child)) {
+					Warning("JSON_PackValueOmmit Error see /tmp/wfc_error.json");
+					g_file_set_contents("/tmp/wfc_error.json",buf,strlen(buf),NULL);
+				}
 				xfree(buf);
 			}
 
 			if (child == NULL || is_error(child)) {
-				json_object_object_add(w,"screen_data",
-					json_object_new_object());
+				json_object_object_add(w,"screen_data",json_object_new_object());
 			} else {
-				json_object_object_add(w,"screen_data",
-					child);
+				json_object_object_add(w,"screen_data",child);
 			}
 		}
 		json_object_array_add(windows,w);
@@ -725,6 +730,7 @@ RPC_SendEvent(
 	size_t	size;
 	int i;
 ENTER_FUNC;
+
 	params = json_object_object_get(obj,"params");
 	if (!CheckJSONObject(params,json_type_object)) {
 		Warning("request have not params");
@@ -813,6 +819,7 @@ ENTER_FUNC;
 	}
 	dbgprintf("ld = [%s]",ld->info->name);
 	dbgprintf("window = [%s]",data->hdr->window);
+
 
 	rec = GetWindow(data->hdr->window);
 	scrdata = GetScreenData(data,data->hdr->window);

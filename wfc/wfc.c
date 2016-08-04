@@ -381,6 +381,7 @@ main(
 	int			rc;
     sigset_t sigmask;
 	struct sigaction sa;
+	char *stdout_path,*stderr_path;
 
     sigemptyset(&sigmask);
     sigaddset(&sigmask, SIGUSR1);
@@ -408,6 +409,17 @@ main(
 	if (sigaction(SIGUSR2, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
+
+	stdout_path = getenv("WFC_DEBUG_STDOUT_PATH");
+	if (stdout_path != NULL) {
+		freopen(stdout_path,"w",stdout);
+	}
+
+	stderr_path = getenv("WFC_DEBUG_STDERR_PATH");
+	if (stderr_path != NULL) {
+		freopen(stderr_path,"w",stderr);
+	}
+
 	InitMessage("wfc",NULL);
 ENTER_FUNC;
 

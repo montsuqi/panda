@@ -376,7 +376,8 @@ main(
 {
 	FILE_LIST	*fl;
 	int			rc;
-	struct sigaction	sa;
+	struct		sigaction	sa;
+	char		*stderr_path,*stdout_path;
 
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = (void *)HungUp;
@@ -390,6 +391,16 @@ main(
 	sa.sa_flags |= SA_RESTART;
 	if (sigaction(SIGUSR2, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
+	}
+
+	stdout_path = getenv("APS_DEBUG_STDOUT_PATH");
+	if (stdout_path != NULL) {
+		freopen(stdout_path,"w",stdout);
+	}
+
+	stderr_path = getenv("APS_DEBUG_STDERR_PATH");
+	if (stderr_path != NULL) {
+		freopen(stderr_path,"w",stderr);
 	}
 
 	SetDefault();
