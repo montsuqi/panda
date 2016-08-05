@@ -536,6 +536,21 @@ ENTER_FUNC;
 LEAVE_FUNC;
 }
 
+static	void
+MakeErrorLog(
+	const char *buf)
+{
+	uuid_t u;
+	char uuid[128],fname[256]; 
+
+	uuid_generate(u);
+	uuid_unparse(u,uuid);
+
+	snprintf(fname,sizeof(fname),"/tmp/%s.log",uuid);
+	g_file_set_contents(fname,buf,strlen(buf),NULL);
+	Warning("make error log.see %s",fname);
+}
+
 static	json_object*
 MakeEventResponse(
 	json_object *obj,
@@ -597,8 +612,8 @@ MakeEventResponse(
 				JSON_PackValue(NULL,buf,rec->value);
 				child = json_tokener_parse(buf);
 				if (child == NULL || is_error(child)) {
-					Warning("JSON_PackValue Error see /tmp/wfc_error.json");
-					g_file_set_contents("/tmp/wfc_error.json",buf,strlen(buf),NULL);
+					Warning("JSON_PackValue Error");
+					MakeErrorLog(buf);
 				}
 				xfree(buf);
 
@@ -608,7 +623,7 @@ MakeEventResponse(
 				child = json_tokener_parse(buf);
 				if (child == NULL || is_error(child)) {
 					Warning("JSON_PackValueOmmit Error see /tmp/wfc_error.json");
-					g_file_set_contents("/tmp/wfc_error.json",buf,strlen(buf),NULL);
+					MakeErrorLog(buf);
 				}
 				xfree(buf);
 			}
