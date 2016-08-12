@@ -295,6 +295,7 @@ ENTER_FUNC;
 	SetupMessageQueue();
 	InitTerm();
 	StartCoreThread();
+	InitSessionCtrl();
 	InitControl();
 LEAVE_FUNC;
 }
