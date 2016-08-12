@@ -38,8 +38,8 @@
 #include	"net.h"
 #include	"comm.h"
 #include	"wfcdata.h"
+#include	"sessionctrl.h"
 #include	"sysdatacom.h"
-#include	"sessionthread.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -75,8 +75,7 @@ ENTER_FUNC;
 	RecvLBS(fp,buf);
 		ON_IO_ERROR(fp,badio);
 	NativeUnPackValue(NULL,LBS_Body(buf),ctrl->sysdbval);
-	SessionEnqueue(ctrl);	
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
+	ctrl = ExecSessionCtrl(ctrl);	
     LBS_ReserveSize(buf,NativeSizeValue(NULL,ctrl->sysdbval),FALSE);
 	NativePackValue(NULL,LBS_Body(buf),ctrl->sysdbval);	
 	SendPacketClass(fp,ctrl->rc);
@@ -97,8 +96,7 @@ ServeGetDataAll(
 	LargeByteString *buf;
 ENTER_FUNC;
 	ctrl = NewSessionCtrl(SESSION_CONTROL_GET_DATA_ALL);
-	SessionEnqueue(ctrl);	
-	ctrl = (SessionCtrl*)DeQueue(ctrl->waitq);
+	ctrl = ExecSessionCtrl(ctrl);	
 	buf = NewLBS();
 	LBS_ReserveSize(buf,NativeSizeValue(NULL,ctrl->sysdbvals),FALSE);
 	NativePackValue(NULL,LBS_Body(buf),ctrl->sysdbvals);
