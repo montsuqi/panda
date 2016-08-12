@@ -112,6 +112,10 @@ MakeJSON(
 	obj = json_object_new_object();
 	json_object_object_add(obj,"event",json_object_new_string(event));
 	user = getenv("MCP_USER");
+	if (user == NULL) {
+		Warning("MCP_USER empty.set __nobody");
+		user = "__nobody";
+	}
 	json_object_object_add(obj,"user",json_object_new_string(user));
 
 	body = MakeBodyJSON(v);
