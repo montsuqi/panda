@@ -100,7 +100,7 @@ main(
 		g_print("%% monpushevent <recfile> <COBOL data file>\n");
 		exit(1);
 	}
-
+	InitMessage("monpushevent",NULL);
 	MonPushEvent(argv[1],argv[2]);
 
 	return 0;

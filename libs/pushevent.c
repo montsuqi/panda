@@ -26,15 +26,18 @@
 #  include <config.h>
 #endif
 
+#include	<errno.h>
 #include	<stdio.h>
 #include	<stdlib.h>
-#include	<errno.h>
+#include	<string.h>
+#include	<stdarg.h>
 #include	<string.h>
 #include	<ctype.h>
 #include	<glib.h>
 #include	<signal.h>
 #include	<time.h>
 #include	<sys/time.h>
+#include	<unistd.h>
 
 #include	<amqp_tcp_socket.h>
 #include	<amqp.h>
@@ -113,7 +116,7 @@ MakeJSON(
 	json_object_object_add(obj,"event",json_object_new_string(event));
 	user = getenv("MCP_USER");
 	if (user == NULL) {
-		Warning("MCP_USER empty.set __nobody");
+		Warning("MCP_USER set __nobody");
 		user = "__nobody";
 	}
 	json_object_object_add(obj,"user",json_object_new_string(user));
