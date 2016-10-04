@@ -420,6 +420,7 @@ ENTER_FUNC;
 		if (!strcmp(dc_window,node->w.s[i].window)) {
 			dc_sp = i;
 			has_window = TRUE;
+			node->w.s[i].puttype = node->puttype;
 			break;
 		}
 	}
