@@ -110,30 +110,31 @@ typedef struct {
 }	APIData;
 
 typedef	struct _SessionData	{
-	int				type;
-	char			agent[SIZE_NAME+1];
-	TermNode		*term;
-	int				apsid;
-	Bool			fInProcess;
-	LD_Node			*ld;
-	size_t			cWindow;
-	int				retry;
-	int				status;
-	MessageHeader	*hdr;
-	GHashTable		*spadata;
-	GHashTable		*scrpool;
-	GHashTable		*window_table;
-	LargeByteString	*spa;
-	LargeByteString	*linkdata;
-	LargeByteString	**scrdata;
-	APIData			*apidata;
-	struct timeval	create_time;
-	struct timeval	access_time;
-	struct timeval	process_time;
-	struct timeval	total_process_time;
-	int				count;
-	ValueStruct		*sysdbval;
-	WindowStack		w;
+	int					type;
+	char				agent[SIZE_NAME+1];
+	TermNode			*term;
+	int					apsid;
+	Bool				fInProcess;
+	LD_Node				*ld;
+	size_t				cWindow;
+	int					retry;
+	int					status;
+	MessageHeader		*hdr;
+	GHashTable			*spadata;
+	GHashTable			*scrpool;
+	GHashTable			*window_table;
+	LargeByteString		*spa;
+	LargeByteString		*linkdata;
+	LargeByteString		**scrdata;
+	APIData				*apidata;
+	struct timeval		create_time;
+	struct timeval		access_time;
+	struct timeval		process_time;
+	struct timeval		total_process_time;
+	int					count;
+	ValueStruct			*sysdbval;
+	WindowStack			w;
+	struct _SessionData	*next;
 }	SessionData;
 
 typedef enum _SessionCtrlType {
