@@ -188,7 +188,6 @@ GetSessionMessage(
 	char **abort)
 {
 	ValueStruct *v;
-	PacketClass rc;
 ENTER_FUNC;
 	if (fp != NULL && CheckNetFile(fp)) {
 		if (val == NULL) {
@@ -197,7 +196,7 @@ ENTER_FUNC;
 		InitializeValue(val);
 		v = GetRecordItem(val,"id");
 		SetValueString(v,term,NULL);
-		rc = SYSDB_GetMessage(fp,val);
+		SYSDB_GetMessage(fp,val);
 		v = GetRecordItem(val,"popup");
 		*popup = g_strdup(ValueToString(v,NULL));
 		v = GetRecordItem(val,"dialog");
@@ -215,7 +214,6 @@ ResetSessionMessage(
 	const char *term)
 {
 	ValueStruct *v;
-	PacketClass rc;
 ENTER_FUNC;
 	if (fp != NULL && CheckNetFile(fp)) {
 		if (val == NULL) {
@@ -224,7 +222,7 @@ ENTER_FUNC;
 		InitializeValue(val);
 		v = GetRecordItem(val,"id");
 		SetValueString(v,term,NULL);
-		rc = SYSDB_ResetMessage(fp,val);
+		SYSDB_ResetMessage(fp,val);
 	} else {
 		Error("ResetSessionMessage failure");
 	}

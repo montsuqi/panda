@@ -57,6 +57,7 @@
 #include	"termthread.h"
 #include	"controlthread.h"
 #include	"sysdatathread.h"
+#include	"sessionctrl.h"
 #include	"dbgroup.h"
 #include	"blob.h"
 #include	"option.h"
