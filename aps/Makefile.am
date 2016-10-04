@@ -66,22 +66,16 @@ OpenCOBOLla += OpenCOBOL.la
 HANDLER_OBJECTS	=	\
 	C.la			\
 	Exec.la			\
-	Ruby.la			\
 	Resident.la		\
 	OpenCOBOL.la
 
 OpenCOBOL_la_LDFLAGS	=	-module -export-dynamic -avoid-version
 C_la_LDFLAGS			=	-module -export-dynamic -avoid-version
-Ruby_la_LDFLAGS			=	-module -export-dynamic -avoid-version
 Exec_la_LDFLAGS			=	-module -export-dynamic -avoid-version
 Resident_la_LDFLAGS		=	-module -export-dynamic -avoid-version
 
 C_la_SOURCES			=	\
 	C.c						\
-	apslib.c
-
-Ruby_la_SOURCES			=	\
-	Ruby.c					\
 	apslib.c
 
 OpenCOBOL_la_SOURCES	=	\

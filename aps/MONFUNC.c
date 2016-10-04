@@ -240,29 +240,3 @@ MONFUNC(
 	}
 	return rc;
 }
-
-extern	int
-RubyMONFUNC(
-	char	*mcpdata,
-	char	*data,
-	char	**retmcpdata,
-	char	**retdata)
-{
-	int rc;
-	ValueStruct *retval;
-	ValueStruct *mcp;
-
-	rc = _MONFUNC(mcpdata,data,&retval);
-	mcp = ThisEnv->mcprec->value;
-	*retmcpdata = xmalloc(SizeFunc(Conv,mcp));
-	PackFunc(Conv,*retmcpdata,mcp);
-	*retdata = NULL;
-	if (retval != NULL) {
-		if (rc == MCP_OK) {
-			*retdata = xmalloc(SizeFunc(Conv,retval));
-			PackFunc(Conv,*retdata,retval);
-		}
-		FreeValueStruct(retval);
-	}
-	return rc;
-}
