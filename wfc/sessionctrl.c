@@ -43,7 +43,7 @@
 #include	"wfc.h"
 #include	"debug.h"
 
-static	GHashTable	*hash;
+static	SessionData	*head;
 static	pthread_mutex_t lock;
 
 extern	SessionCtrl*
@@ -97,12 +97,12 @@ _strftime(
 
 static	void
 SetSysdbval(
-	SessionData *session,
-	ValueStruct *sysdbval)
+	SessionData *session)
 {
-	ValueStruct *v;
+	ValueStruct *v,*sysdbval;
 	char buf[128];
 
+	sysdbval = session->sysdbval;
 	v = GetRecordItem(sysdbval,"id");
 	SetValueString(v,session->hdr->uuid,NULL);
 	v = GetRecordItem(sysdbval,"user");
@@ -138,134 +138,160 @@ SetSysdbval(
 
 static	void
 InsertSession(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
+	SessionData *p;
+
 	ctrl->rc = SESSION_CONTROL_NG;
 	if (ctrl->session == NULL) {
 		Warning("ctrl->session is NULL");
 		return;
 	}
-	if (g_hash_table_lookup(hash,ctrl->session->hdr->uuid) != NULL) {
-		Warning("[%s] is already exist",ctrl->session->hdr->uuid);
-		return;
+	p = head;
+	while(p!=NULL) {
+		if (!strcmp(p->hdr->uuid,ctrl->session->hdr->uuid)) {
+			Warning("[%s] is already exist",ctrl->session->hdr->uuid);
+			return;
+		}
+		p = p->next;
 	}
-	SetSysdbval(ctrl->session,ctrl->session->sysdbval);
-	g_hash_table_insert(hash,StrDup(ctrl->session->hdr->uuid),ctrl->session);
+	ctrl->session->next = NULL;
+	SetSysdbval(ctrl->session);
+
+	if (head == NULL) {
+		head = ctrl->session;
+	} else {
+		p = head;
+		while(p->next != NULL) { p = p->next; }
+		p->next = ctrl->session;
+	}
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
 static	void
 UpdateSession(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
 	ctrl->rc = SESSION_CONTROL_NG;
+
 	if (ctrl->session == NULL) {
 		Warning("ctrl->session is NULL");
 		return;
 	}
-	SetSysdbval(ctrl->session,ctrl->session->sysdbval);
+	SetSysdbval(ctrl->session);
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
 static	void
 DeleteSession(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
+	SessionData *p,*q;
+
 	ctrl->rc = SESSION_CONTROL_NG;
 	if (ctrl->session == NULL) {
 		Warning("ctrl->session is NULL");
 		return;
 	}
-	if (g_hash_table_lookup(hash,ctrl->session->hdr->uuid) != NULL) {
-		g_hash_table_remove(hash,ctrl->session->hdr->uuid);
+
+	p = NULL;
+	q = head;
+	while(q!=NULL) {
+		if (!strcmp(q->hdr->uuid,ctrl->session->hdr->uuid)) {
+			if (p == NULL) {
+				head = q->next;
+			} else {
+				p->next = q->next;
+			}
+			break;
+		}
+		p = q;
+		q = q->next;
 	}
+
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
 static	void
 LookupSession(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
+	SessionData *p;
+
 	ctrl->rc = SESSION_CONTROL_NG;
+	ctrl->session = NULL;
 	if (ctrl->id == NULL) {
 		Warning("ctrl->id is NULL");
 		return;
 	}
-	if ((ctrl->session = g_hash_table_lookup(hash,ctrl->id)) == NULL) {
-		return;
+	p = head;
+	while(p != NULL) {
+		if (!strcmp(p->hdr->uuid,ctrl->id)) {
+			ctrl->session = p;
+			break;
+		}
+		p = p->next;
 	}
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
 static	void
 GetSessionNum(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
-	ctrl->size = g_hash_table_size(hash);
+	SessionData *p;
+
+	ctrl->size = 0;
+	p = head;
+	while(p != NULL) {
+		p = p->next;
+		ctrl->size += 1;
+	}
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
 static	void
 GetData(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
+	SessionData *p;
 	ValueStruct *v;
+	char *id;
 
 	ctrl->rc = SESSION_CONTROL_NG;
 	if (ctrl->sysdbval == NULL) {
 		Warning("ctrl->sysdbval is NULL");
 		return;
 	}
+
 	v = GetRecordItem(ctrl->sysdbval,"id");
-	if ((ctrl->session = g_hash_table_lookup(hash,ValueToString(v,NULL))) == NULL) {
-		return;
+	id = ValueToString(v,NULL);
+	p = head;
+	while(p != NULL) {
+		if (!strcmp(p->hdr->uuid,id)) {
+			CopyValue(ctrl->sysdbval,p->sysdbval);
+			break;
+		}
+		p = p->next;
 	}
-	if (ctrl->sysdbval != NULL) {
-		CopyValue(ctrl->sysdbval,ctrl->session->sysdbval);
-	}
+
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
 static	void
 GetMessage(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
-	ValueStruct *v,*w;
-
-	ctrl->rc = SESSION_CONTROL_NG;
-	if (ctrl->sysdbval == NULL) {
-		Warning("ctrl->sysdbval is NULL");
-		return;
-	}
-	v = GetRecordItem(ctrl->sysdbval,"id");
-	if ((ctrl->session = g_hash_table_lookup(hash,ValueToString(v,NULL))) == NULL) {
-		return;
-	}
-	v = GetRecordItem(ctrl->session->sysdbval,"popup");
-	w = GetRecordItem(ctrl->sysdbval,"popup");
-	SetValueString(w,ValueToString(v,NULL),NULL);
-	v = GetRecordItem(ctrl->session->sysdbval,"dialog");
-	w = GetRecordItem(ctrl->sysdbval,"dialog");
-	SetValueString(w,ValueToString(v,NULL),NULL);
-	v = GetRecordItem(ctrl->session->sysdbval,"abort");
-	w = GetRecordItem(ctrl->sysdbval,"abort");
-	SetValueString(w,ValueToString(v,NULL),NULL);
-	ctrl->rc = SESSION_CONTROL_OK;
+	GetData(ctrl);
 }
 
 static	void
 ResetMessage(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
+	SessionData *session,*p;
 	ValueStruct *v;
+	char *id;
 
 	ctrl->rc = SESSION_CONTROL_NG;
 	if (ctrl->sysdbval == NULL) {
@@ -273,24 +299,35 @@ ResetMessage(
 		return;
 	}
 	v = GetRecordItem(ctrl->sysdbval,"id");
-	if ((ctrl->session = g_hash_table_lookup(hash,ValueToString(v,NULL))) == NULL) {
+	id = ValueToString(v,NULL);
+	session = NULL;
+	p = head;
+	while(p != NULL) {
+		if (!strcmp(p->hdr->uuid,id)) {
+			session = p;
+			break;
+		}
+		p = p->next;
+	}
+	if (session == NULL) {
 		return;
 	}
-	v = GetRecordItem(ctrl->session->sysdbval,"popup");
+	v = GetRecordItem(session->sysdbval,"popup");
 	SetValueString(v,"",NULL);
-	v = GetRecordItem(ctrl->session->sysdbval,"dialog");
+	v = GetRecordItem(session->sysdbval,"dialog");
 	SetValueString(v,"",NULL);
-	v = GetRecordItem(ctrl->session->sysdbval,"abort");
+	v = GetRecordItem(session->sysdbval,"abort");
 	SetValueString(v,"",NULL);
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
 static	void
 SetMessage(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
 	ValueStruct *v,*w;
+	SessionData *session,*p;
+	char *id;
 
 	ctrl->rc = SESSION_CONTROL_NG;
 	if (ctrl->sysdbval == NULL) {
@@ -298,16 +335,26 @@ SetMessage(
 		return;
 	}
 	v = GetRecordItem(ctrl->sysdbval,"id");
-	if ((ctrl->session = g_hash_table_lookup(hash,ValueToString(v,NULL))) == NULL) {
+	id = ValueToString(v,NULL);
+	session = NULL;
+	p = head;
+	while(p != NULL) {
+		if (!strcmp(p->hdr->uuid,id)) {
+			session = p;
+			break;
+		}
+		p = p->next;
+	}
+	if (session == NULL) {
 		return;
 	}
-	v = GetRecordItem(ctrl->session->sysdbval,"popup");
+	v = GetRecordItem(session->sysdbval,"popup");
 	w = GetRecordItem(ctrl->sysdbval,"popup");
 	SetValueString(v,ValueToString(w,NULL),NULL);
-	v = GetRecordItem(ctrl->session->sysdbval,"dialog");
+	v = GetRecordItem(session->sysdbval,"dialog");
 	w = GetRecordItem(ctrl->sysdbval,"dialog");
 	SetValueString(v,ValueToString(w,NULL),NULL);
-	v = GetRecordItem(ctrl->session->sysdbval,"abort");
+	v = GetRecordItem(session->sysdbval,"abort");
 	w = GetRecordItem(ctrl->sysdbval,"abort");
 	SetValueString(v,ValueToString(w,NULL),NULL);
 	ctrl->rc = SESSION_CONTROL_OK;
@@ -315,7 +362,6 @@ SetMessage(
 
 static	void
 _SetMessage(
-	char *id,
 	SessionData *session,
 	SessionCtrl *ctrl)
 {
@@ -341,17 +387,21 @@ _SetMessage(
 
 static	void
 SetMessageAll(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
+	SessionData *p;
+
 	ctrl->rc = SESSION_CONTROL_NG;
-	g_hash_table_foreach(hash,(GHFunc)_SetMessage,ctrl);
+	p = head;
+	while(p != NULL) {
+		_SetMessage(p,ctrl);
+		p = p->next;
+	}
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
 static	void
 _GetData(
-	char *id,
 	SessionData *session,
 	SessionCtrl *ctrl)
 {
@@ -383,12 +433,17 @@ _GetData(
 
 static	void
 GetDataAll(
-	GHashTable *hash,
 	SessionCtrl *ctrl)
 {
+	SessionData *p;
+
 	ctrl->rc = SESSION_CONTROL_NG;
 	ctrl->size = 0;
-	g_hash_table_foreach(hash,(GHFunc)_GetData,ctrl);
+	p = head;
+	while(p != NULL) {
+		_GetData(p,ctrl);
+		p = p->next;
+	}
 	ctrl->rc = SESSION_CONTROL_OK;
 }
 
@@ -399,37 +454,37 @@ ExecSessionCtrl(
 	pthread_mutex_lock(&lock);
 	switch (ctrl->type) {
 	case SESSION_CONTROL_INSERT:
-		InsertSession(hash,ctrl);
+		InsertSession(ctrl);
 		break;
 	case SESSION_CONTROL_UPDATE:
-		UpdateSession(hash,ctrl);
+		UpdateSession(ctrl);
 		break;
 	case SESSION_CONTROL_DELETE:
-		DeleteSession(hash,ctrl);
+		DeleteSession(ctrl);
 		break;
 	case SESSION_CONTROL_LOOKUP:
-		LookupSession(hash,ctrl);
+		LookupSession(ctrl);
 		break;
 	case SESSION_CONTROL_GET_SESSION_NUM:
-		GetSessionNum(hash,ctrl);
+		GetSessionNum(ctrl);
 		break;
 	case SESSION_CONTROL_GET_DATA:
-		GetData(hash,ctrl);
+		GetData(ctrl);
 		break;
 	case SESSION_CONTROL_GET_MESSAGE:
-		GetMessage(hash,ctrl);
+		GetMessage(ctrl);
 		break;
 	case SESSION_CONTROL_RESET_MESSAGE:
-		ResetMessage(hash,ctrl);
+		ResetMessage(ctrl);
 		break;
 	case SESSION_CONTROL_SET_MESSAGE:
-		SetMessage(hash,ctrl);
+		SetMessage(ctrl);
 		break;
 	case SESSION_CONTROL_SET_MESSAGE_ALL:
-		SetMessageAll(hash,ctrl);
+		SetMessageAll(ctrl);
 		break;
 	case SESSION_CONTROL_GET_DATA_ALL:
-		GetDataAll(hash,ctrl);
+		GetDataAll(ctrl);
 		break;
 	default:
 		Warning("do not reach");
@@ -444,6 +499,6 @@ extern	void
 InitSessionCtrl()
 {
 	RecParserInit();
-	hash = NewNameHash();
+	head = NULL;
 	pthread_mutex_init(&lock,NULL);
 }

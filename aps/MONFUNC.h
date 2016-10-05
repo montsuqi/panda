@@ -19,7 +19,7 @@
 
 #ifndef	_MONFUNC_H
 #define	_MONFUNC_H
-#include	"libmondai.h"
+#include "libmondai.h"
 
 typedef size_t (*MONFUNC_UnPackFunc)(CONVOPT *opt,unsigned char *p,ValueStruct *value);
 typedef size_t (*MONFUNC_PackFunc)(CONVOPT *opt,unsigned char *p,ValueStruct *value);
@@ -31,6 +31,5 @@ extern void InitMONFUNC(
 	MONFUNC_UnPackFunc unpackfunc, 
 	MONFUNC_SizeFunc sizefunc);
 extern int MONFUNC(char *mcpdata, char *data); 
-extern int RubyMONFUNC(char *mcpdata,char *data,char **,char **);
 
 #endif
