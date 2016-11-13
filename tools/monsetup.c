@@ -39,6 +39,7 @@
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
+#include	"dbutils.h"
 #include	"monsys.h"
 #include	"gettext.h"
 #include	"option.h"
@@ -91,26 +92,6 @@ InitSystem(void)
 			DelDays = days;
 		}
 	}
-}
-
-static Bool
-table_exist(
-	DBG_Struct	*dbg,
-	char *table_name)
-{
-	ValueStruct *ret;
-	char	sql[SIZE_SQL+1];
-	Bool 	rc;
-
-	snprintf(sql, SIZE_SQL, "SELECT 1 FROM  pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = '%s' AND c.relkind = 'r';", table_name);
-	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-	if (ret) {
-		rc = TRUE;
-		FreeValueStruct(ret);
-	} else {
-		rc = FALSE;
-	}
-	return rc;
 }
 
 static Bool
