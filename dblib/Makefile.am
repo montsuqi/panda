@@ -26,6 +26,7 @@ libpandadb_la_LIBADD =
 libpandadbincludedir = $(pkgincludedir)
 libpandadbinclude_HEADERS =	\
 	dblib.h \
+	dbutils.h \
 	dbgroup.h
 
 noinst_PROGRAMS		=
@@ -46,6 +47,7 @@ libpandadb_la_LDFLAGS	=			\
 
 libpandadb_la_SOURCES	=	\
 	dbgroup.c	dbgroup.h	\
+	dbutils.c	dbutils.h	\
 	redirect.c	redirect.h	\
 	monsys.c	monsys.h
 

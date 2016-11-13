@@ -128,6 +128,18 @@ EscapeBytea(
 }
 
 static void
+UnEscapeBytea(
+	ValueStruct	*val,
+	unsigned char *from)
+{
+	unsigned char *bintext;
+	size_t to_length;
+
+	bintext = PQunescapeBytea(from, &to_length);
+	SetValueBinary(val, bintext, to_length);
+}
+
+static void
 NoticeMessage(
 	void * arg,
 	const char * message)
@@ -1985,6 +1997,57 @@ LEAVE_FUNC;
 }
 
 static	ValueStruct	*
+_DBESCAPEBYTEA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+    LargeByteString	*lbs;
+	ValueStruct	*ret, *bytea;
+	ValueStruct	*val;
+ENTER_FUNC;
+	ret = NewValue(GL_TYPE_RECORD);
+	if ( (val = GetItemLongName(args,"dbescapebytea")) == NULL) {
+		Warning("dbescapebytea is not found.");
+		ValueAddRecordItem(ret, "dbescapebytea", val);
+		return ret;
+	}
+	lbs = NewLBS();
+	EscapeBytea(dbg, lbs, ValueByte(val), ValueByteLength(val));
+	LBS_EmitEnd(lbs);
+	bytea = NewValue(GL_TYPE_TEXT);
+	SetValueString(bytea, LBS_Body(lbs), dbg->coding);
+	ValueAddRecordItem(ret, "dbescapebytea", bytea);
+	FreeLBS(lbs);
+LEAVE_FUNC;
+	return ret;
+}
+
+static	ValueStruct	*
+_DBUNESCAPEBYTEA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*ret, *bin;
+	ValueStruct	*val;
+ENTER_FUNC;
+	ret = NewValue(GL_TYPE_RECORD);
+	if ( (val = GetItemLongName(args,"dbunescapebytea")) == NULL) {
+		Warning("dbunescapebytea is not found.");
+		ValueAddRecordItem(ret, "dbunescapebytea", val);
+		return ret;
+	}
+	bin = NewValue(GL_TYPE_BINARY);
+	UnEscapeBytea(bin, ValueStringPointer(val));
+	ValueAddRecordItem(ret, "dbunescapebytea", bin);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
 _DBLOCK(
 	DBG_Struct		*dbg,
 	DBCOMM_CTRL		*ctrl,
@@ -2095,6 +2158,8 @@ static	DB_OPS	Operations[] = {
 	{	"DBINSERT",		_DBINSERT },
 	{	"DBCLOSECURSOR",_DBCLOSECURSOR },
 	{	"DBESCAPE",		_DBESCAPE },
+	{	"DBESCAPEBYTEA",	_DBESCAPEBYTEA },
+	{	"DBUNESCAPEBYTEA",	_DBUNESCAPEBYTEA },
 	{	"DBLOCK",			_DBLOCK },
 	{	"DBAUDITLOG",		_DBAUDITLOG },
 

@@ -40,6 +40,7 @@ Doc/*.log
 aps/aps
 aps/dbstub
 aps/monbatch
+aps/monblob
 cobol/ENUM-VALUE
 cobol/MCPMAIN.CBL
 dbstuff/dblogger
