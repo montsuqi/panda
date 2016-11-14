@@ -354,7 +354,6 @@ glauth/Makefile
 cobol/Makefile
 dblib/Makefile
 dbstuff/Makefile
-fdd/Makefile
 glclient/Makefile
 glserver/Makefile
 include/Makefile
