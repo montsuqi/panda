@@ -23,7 +23,6 @@ SUBDIRS		=	\
 	dblib		\
 	include 	\
 	dbstuff		\
-	fdd			\
 	tools		\
 	glauth 		\
 	glserver	\
