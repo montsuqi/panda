@@ -31,6 +31,7 @@ static	char	*Directory;
 static	char	*ImportFile;
 static	char	*ExportID;
 static	char	*OutputFile;
+static	unsigned int	LifeType;
 
 static	ARG_TABLE	option[] = {
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
@@ -41,6 +42,8 @@ static	ARG_TABLE	option[] = {
 		"Export ID"										},
 	{	"output",	STRING,		TRUE,	(void*)&OutputFile,
 		"output file name"								},
+	{	"lifetype",	INTEGER,	TRUE,	(void*)&LifeType,
+		"lifetime type"									},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
 };
 
@@ -51,6 +54,7 @@ SetDefault(void)
 	ImportFile = NULL;
 	ExportID = NULL;
 	OutputFile = NULL;
+	LifeType = 0;
 }
 
 static	void
@@ -58,7 +62,6 @@ InitSystem(void)
 {
 	char *dir;
 	InitMessage("monblob",NULL);
-
 	if ( (dir = getenv("MON_DIRECTORY_PATH")) != NULL ) {
 		Directory = dir;
 	}
@@ -78,9 +81,11 @@ create_monblob(
 	sql = (char *)xmalloc(SIZE_BUFF);
 	p = sql;
 	p += sprintf(p, "CREATE TABLE monblob (");
-	p += sprintf(p, "       uuid    varchar(37)  primary key,");
-	p += sprintf(p, "       filename	varchar(4096),");
-	p += sprintf(p, "       file_data	bytea");
+	p += sprintf(p, "       uuid        varchar(37)  primary key,");
+	p += sprintf(p, "       importtime  timestamp  with time zone,");
+	p += sprintf(p, "       lifetype    int,");
+	p += sprintf(p, "       filename    varchar(4096),");
+	p += sprintf(p, "       file_data   bytea");
 	p += sprintf(p, ");");
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	xfree(sql);
@@ -173,7 +178,8 @@ file_to_bytea(
 static char *
 file_import(
 	DBG_Struct	*dbg,
-	char *filename)
+	char *filename,
+	unsigned int lifetype)
 {
 	char	*sql, *sql_p;
 	static	char *uuid;
@@ -181,6 +187,7 @@ file_import(
 	size_t 	size;
 	size_t	sql_len = SIZE_SQL;
 	LargeByteString	*lbs;
+	char	importtime[50];
 
 	uuid = xmalloc(SIZE_TERM+1);
 	uuid_generate(u);
@@ -189,12 +196,16 @@ file_import(
 	if ((lbs = file_to_bytea(dbg, filename)) == NULL){
 		return NULL;
 	}
+	if (lifetype > 2) {
+		lifetype = 2;
+	}
+	timestamp(importtime, sizeof(importtime));
 	sql = xmalloc(LBS_Size(lbs) + sql_len);
 	sql_p = sql;
 	size = snprintf(sql_p, sql_len, \
 		   "INSERT INTO monblob \
-                        (uuid, filename, file_data) \
-                 VALUES ('%s', '%s', '",uuid, filename);
+                        (uuid, importtime, lifetype, filename, file_data) \
+                 VALUES ('%s', '%s', %d, '%s', '",uuid, importtime, lifetype, filename);
 	sql_p = sql_p + size;
 	strncpy(sql_p, LBS_Body(lbs), LBS_Size(lbs));
 	sql_p = sql_p + LBS_Size(lbs) - 1;
@@ -206,12 +217,13 @@ file_import(
 static	char *
 blob_import(
 	DBG_Struct	*dbg,
-	char *filename)
+	char *filename,
+	unsigned int lifetype)
 {
 	char *uuid;
 
 	TransactionStart(dbg);
-	uuid = file_import(dbg, filename);
+	uuid = file_import(dbg, filename, lifetype);
 	TransactionEnd(dbg);
 
 	return uuid;
@@ -316,7 +328,7 @@ main(
 	monblob_setup(dbg);
 
 	if (ImportFile) {
-		uuid = blob_import(dbg, ImportFile);
+		uuid = blob_import(dbg, ImportFile, LifeType);
 		if ( !uuid ){
 			exit(1);
 		}

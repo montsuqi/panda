@@ -65,7 +65,7 @@ static	ARG_TABLE	option[] = {
 	{	"c",		STRING,		TRUE,	(void*)&Command,
 		N_("run only single command")					},
 	{	"f",		STRING,		TRUE,	(void*)&SQLFile,
-		N_(" execute commands from file")				},
+		N_("execute commands from file")				},
 	{	"o",		STRING,		TRUE,	(void*)&Output,
 		N_("out put type [JSON] [XML] [CSV]...")		},
 	{	NULL,		0,			FALSE,	NULL,	NULL 	}
@@ -228,7 +228,7 @@ main(
 	if (!dbg) {
 		Error("DBG [%s] does not found.", DBG_Name);
 	}
-	dbg->dbt = 	NewNameHash();
+	dbg->dbt = NewNameHash();
 
 	if ( Command ) {
 		rc = SingleCommand(dbg, Redirect, Command);

@@ -196,19 +196,6 @@ monbatch_log_setup(
 	return (rc == MCP_OK);
 }
 
-static void
-timestamp(
-	char *daytime,
-	size_t size)
-{
-	time_t now;
-	struct	tm	tm_now;
-
-	now = time(NULL);
-	localtime_r(&now, &tm_now);
-	strftime(daytime, size, "%F %T %z", &tm_now);
-}
-
 static Bool
 delete_monbatch_log(
 	DBG_Struct	*dbg,

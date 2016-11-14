@@ -39,9 +39,10 @@
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
-#include	"option.h"
+#include	"dbutils.h"
 #include	"monsys.h"
 #include	"gettext.h"
+#include	"option.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -127,19 +128,6 @@ insert_table(
 		xfree(evalue);
 	}
 	LBS_EmitChar(kv->value,'\'');
-}
-
-static void
-timestamp(
-	char *daytime,
-	size_t size)
-{
-	time_t now;
-	struct	tm	tm_now;
-
-	now = time(NULL);
-	localtime_r(&now, &tm_now);
-	strftime(daytime, size, "%F %T %z", &tm_now);
 }
 
 static int

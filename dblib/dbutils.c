@@ -48,3 +48,16 @@ table_exist(
 	}
 	return rc;
 }
+
+extern void
+timestamp(
+	char *daytime,
+	size_t size)
+{
+	time_t now;
+	struct	tm	tm_now;
+
+	now = time(NULL);
+	localtime_r(&now, &tm_now);
+	strftime(daytime, size, "%F %T %z", &tm_now);
+}
