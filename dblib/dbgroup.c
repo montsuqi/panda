@@ -200,6 +200,7 @@ ENTER_FUNC;
 LEAVE_FUNC;
 	return	(ctrl.rc);
 }
+
 extern	ValueStruct *
 ExecDBESCAPE(
 	DBG_Struct		*dbg,
@@ -211,6 +212,40 @@ ExecDBESCAPE(
 	ValueStruct	*ret = NULL;
 
 	func = LookupFUNC(dbg, "DBESCAPE");
+	if		(  func !=  NULL  ) {
+		ret = (*func)(dbg,ctrl,rec,args);
+	}
+	return ret;
+}
+
+extern	ValueStruct *
+ExecDBESCAPEBYTEA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DB_FUNC	func;
+	ValueStruct	*ret = NULL;
+
+	func = LookupFUNC(dbg, "DBESCAPEBYTEA");
+	if		(  func !=  NULL  ) {
+		ret = (*func)(dbg,ctrl,rec,args);
+	}
+	return ret;
+}
+
+extern	ValueStruct *
+ExecDBUNESCAPEBYTEA(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DB_FUNC	func;
+	ValueStruct	*ret = NULL;
+
+	func = LookupFUNC(dbg, "DBUNESCAPEBYTEA");
 	if		(  func !=  NULL  ) {
 		ret = (*func)(dbg,ctrl,rec,args);
 	}
@@ -596,6 +631,21 @@ GetDB_Pass(
 		}
 	}
 	return	(pass);
+}
+
+extern	char	*
+GetDB_Crypt(
+	DBG_Struct	*dbg,
+	int			usage)
+{
+	char	*crypto = NULL;
+
+	if		(  ThisEnv->CryptoPass  !=  NULL  ) {
+		crypto = ThisEnv->CryptoPass;
+	} else {
+		crypto = GetMONDB_ENV(dbg, "CRYPTOPASS");
+	}
+	return	(crypto);
 }
 
 extern	char	*

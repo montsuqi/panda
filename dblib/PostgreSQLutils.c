@@ -763,7 +763,7 @@ queryTableList( table_TYPE types )
 
 	type = tableType(types);
 	sql = (char *)xmalloc(SIZE_BUFF);
-	
+
 	snprintf(sql, SIZE_BUFF,
 			 " SELECT c.relname,  c.relkind"
 			 "   FROM pg_catalog.pg_class AS c "
@@ -774,7 +774,7 @@ queryTableList( table_TYPE types )
 			 "    AND pg_catalog.pg_table_is_visible(c.oid) "
 			 "  ORDER BY c.relkind, c.relname ;", type );
 	free(type);
-	
+
 	return (sql);
 }
 
