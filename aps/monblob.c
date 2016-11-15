@@ -30,6 +30,9 @@
 static	char	*Directory;
 static	char	*ImportFile;
 static	char	*ExportID;
+static	Bool	List;
+static	char	*DeleteID;
+
 static	char	*OutputFile;
 static	unsigned int	LifeType;
 
@@ -40,6 +43,10 @@ static	ARG_TABLE	option[] = {
 		"Import file name"								},
 	{	"export",	STRING,		TRUE,	(void*)&ExportID,
 		"Export ID"										},
+	{	"list",		BOOLEAN,	TRUE,	(void*)&List,
+		"list of imported file"							},
+	{	"delete",	STRING,		TRUE,	(void*)&DeleteID,
+		"Delete imported file"							},
 	{	"output",	STRING,		TRUE,	(void*)&OutputFile,
 		"output file name"								},
 	{	"lifetype",	INTEGER,	TRUE,	(void*)&LifeType,
@@ -211,6 +218,7 @@ file_import(
 	sql_p = sql_p + LBS_Size(lbs) - 1;
 	snprintf(sql_p, sql_len, "');");
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
 	return uuid;
 }
 
@@ -301,6 +309,81 @@ blob_export(
 	return filename;
 }
 
+static char *
+valstr(
+	ValueStruct *value,
+	char *name)
+{
+	return ValueToString(GetItemLongName(value, name),NULL);
+
+}
+
+static void
+_list_print(
+	ValueStruct *value)
+{
+	printf("%s\t%s\t%s\n",
+		   valstr(value,"uuid"),
+		   valstr(value,"importtime"),
+		   valstr(value,"filename"));
+}
+
+static  void
+list_print(
+	ValueStruct *ret)
+{
+	int i;
+	ValueStruct *value;
+
+	if (ret == NULL) {
+		return;
+	}
+	if (ValueType(ret) == GL_TYPE_ARRAY) {
+		for	( i = 0 ; i < ValueArraySize(ret) ; i ++ ) {
+			value = ValueArrayItem(ret,i);
+			_list_print(value);
+		}
+	} else if (ValueType(ret) == GL_TYPE_RECORD) {
+		_list_print(ret);
+	}
+}
+
+static	void
+blob_list(
+	DBG_Struct	*dbg)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+	ValueStruct *ret;
+
+	TransactionStart(dbg);
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "SELECT importtime, uuid, filename FROM monblob ORDER BY importtime;");
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	list_print(ret);
+	xfree(sql);
+	TransactionEnd(dbg);
+}
+
+static	void
+blob_delete(
+	DBG_Struct	*dbg,
+	char *uuid)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "DELETE FROM monblob WHERE uuid = '%s'", uuid);
+	TransactionStart(dbg);
+	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	TransactionEnd(dbg);
+	xfree(sql);
+}
+
 extern	int
 main(
 	int		argc,
@@ -314,7 +397,10 @@ main(
 	GetOption(option,argc,argv,NULL);
 	InitSystem();
 
-	if ( (ImportFile == NULL) && (ExportID == NULL) ) {
+	if ( (ImportFile == NULL)
+		 && (ExportID == NULL)
+		 && (List == FALSE )
+		 && (DeleteID == NULL) ) {
 		PrintUsage(option,argv[0],NULL);
 		exit(1);
 	}
@@ -327,18 +413,22 @@ main(
 	}
 	monblob_setup(dbg);
 
-	if (ImportFile) {
+	if (List) {
+		blob_list(dbg);
+	} else if (ImportFile) {
 		uuid = blob_import(dbg, ImportFile, LifeType);
 		if ( !uuid ){
 			exit(1);
 		}
 		printf("%s\n", uuid);
-	} else {
+	} else if (ExportID) {
 		filename = blob_export(dbg, ExportID, OutputFile);
 		if ( !filename ) {
 			exit(1);
 		}
 		printf("export: %s\n", filename);
+	} else if (DeleteID){
+		blob_delete(dbg, DeleteID);
 	}
 	CloseDB(dbg);
 
