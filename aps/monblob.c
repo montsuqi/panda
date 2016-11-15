@@ -284,7 +284,7 @@ file_export(
 		return NULL;
 	}
 	if (export_file == NULL) {
-		export_file = ValueToString(GetItemLongName(ret,"filename"),dbg->coding);
+		export_file = StrDup(ValueToString(GetItemLongName(ret,"filename"),dbg->coding));
 	}
 	value = GetItemLongName(ret,"file_data");
 	recval = NewValue(GL_TYPE_RECORD);
@@ -305,6 +305,7 @@ blob_export(
 	char *export_file)
 {
 	char *filename;
+
 	TransactionStart(dbg);
 	filename = file_export(dbg, uuid, export_file);
 	TransactionEnd(dbg);
