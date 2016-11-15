@@ -137,6 +137,7 @@ UnEscapeBytea(
 
 	bintext = PQunescapeBytea(from, &to_length);
 	SetValueBinary(val, bintext, to_length);
+	PQfreemem(bintext);
 }
 
 static void

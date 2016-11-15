@@ -115,7 +115,7 @@ monblob_setup(
 }
 
 extern LargeByteString	*
-EscapeBYTEA(
+escape_bytea(
 	DBG_Struct	*dbg,
 	unsigned char *src,
 	size_t len)
@@ -178,7 +178,8 @@ file_to_bytea(
 		}
 	}	while	(  left  >  0  );
 	fclose(fp);
-	lbs = EscapeBYTEA(dbg, src, fsize);
+	lbs = escape_bytea(dbg, src, fsize);
+	xfree(src);
 	return lbs;
 }
 
@@ -218,6 +219,7 @@ file_import(
 	sql_p = sql_p + LBS_Size(lbs) - 1;
 	snprintf(sql_p, sql_len, "');");
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	FreeLBS(lbs);
 	xfree(sql);
 	return uuid;
 }
@@ -267,7 +269,7 @@ file_export(
 	char *uuid,
 	char *export_file)
 {
-	char	*filename;
+	static char	*filename;
 	char	*sql;
 	size_t	sql_len = SIZE_SQL;
 	ValueStruct	*ret, *value;
@@ -286,10 +288,11 @@ file_export(
 	}
 	value = GetItemLongName(ret,"file_data");
 	recval = NewValue(GL_TYPE_RECORD);
-	ValueAddRecordItem(recval, "dbunescapebytea", value);
+	ValueAddRecordItem(recval, "dbunescapebytea", DuplicateValue(value,TRUE));
 	retval = ExecDBUNESCAPEBYTEA(dbg, NULL, NULL, recval);
 	tvalue = GetItemLongName(retval,"dbunescapebytea");
 	filename = bytea_to_file(export_file, tvalue);
+	FreeValueStruct(ret);
 	FreeValueStruct(recval);
 	FreeValueStruct(retval);
 	return filename;
@@ -363,6 +366,7 @@ blob_list(
 			 "SELECT importtime, uuid, filename FROM monblob ORDER BY importtime;");
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
+	FreeValueStruct(ret);
 	xfree(sql);
 	TransactionEnd(dbg);
 }
