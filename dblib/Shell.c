@@ -119,6 +119,9 @@ ENTER_FUNC;
 	unsetenv("MON_BATCH_COMMENT");
 	unsetenv("MON_BATCH_EXTRA");
 	unsetenv("MON_BATCH_GROUPNAME");
+	unsetenv("GINBEE_DOCKER_REG_URL");
+	unsetenv("GINBEE_DOCKER_REPOS_NAME");
+
 	if(dbg->transaction_id) {
 		xfree(dbg->transaction_id);
 	}
@@ -333,7 +336,7 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	char *name, *comment, *extra, *groupname;
+	char *name, *comment, *extra, *groupname, *reg_url, *repos_name;
 	uuid_t	u;
 	DB_Struct	*db;
 	PathStruct	*path;
@@ -356,6 +359,10 @@ ENTER_FUNC;
 		setenv("MON_BATCH_EXTRA", extra, 1);
 		groupname = ValueToString(GetItemLongName(args,"groupname"),dbg->coding);
 		setenv("MON_BATCH_GROUPNAME", groupname, 1);
+		reg_url = ValueToString(GetItemLongName(args,"reg_url"),dbg->coding);
+		setenv("GINBEE_DOCKER_REG_URL", reg_url, 1);
+		repos_name = ValueToString(GetItemLongName(args,"repos_name"),dbg->coding);
+		setenv("GINBEE_DOCKER_REPOS_NAME", repos_name, 1);
 		dbg->transaction_id = xmalloc(SIZE_TERM+1);
 		uuid_generate(u);
 		uuid_unparse(u, dbg->transaction_id);
