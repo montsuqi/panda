@@ -88,7 +88,7 @@ create_monblob(
 	sql = (char *)xmalloc(SIZE_BUFF);
 	p = sql;
 	p += sprintf(p, "CREATE TABLE monblob (");
-	p += sprintf(p, "       uuid        varchar(37)  primary key,");
+	p += sprintf(p, "       id        varchar(37)  primary key,");
 	p += sprintf(p, "       importtime  timestamp  with time zone,");
 	p += sprintf(p, "       lifetype    int,");
 	p += sprintf(p, "       filename    varchar(4096),");
@@ -190,16 +190,16 @@ file_import(
 	unsigned int lifetype)
 {
 	char	*sql, *sql_p;
-	static	char *uuid;
+	static	char *id;
 	uuid_t	u;
 	size_t 	size;
 	size_t	sql_len = SIZE_SQL;
 	LargeByteString	*lbs;
 	char	importtime[50];
 
-	uuid = xmalloc(SIZE_TERM+1);
+	id = xmalloc(SIZE_TERM+1);
 	uuid_generate(u);
-	uuid_unparse(u, uuid);
+	uuid_unparse(u, id);
 
 	if ((lbs = file_to_bytea(dbg, filename)) == NULL){
 		return NULL;
@@ -212,8 +212,8 @@ file_import(
 	sql_p = sql;
 	size = snprintf(sql_p, sql_len, \
 		   "INSERT INTO monblob \
-                        (uuid, importtime, lifetype, filename, file_data) \
-                 VALUES ('%s', '%s', %d, '%s', '",uuid, importtime, lifetype, filename);
+                        (id, importtime, lifetype, filename, file_data) \
+                 VALUES ('%s', '%s', %d, '%s', '",id, importtime, lifetype, filename);
 	sql_p = sql_p + size;
 	strncpy(sql_p, LBS_Body(lbs), LBS_Size(lbs));
 	sql_p = sql_p + LBS_Size(lbs) - 1;
@@ -221,7 +221,7 @@ file_import(
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	FreeLBS(lbs);
 	xfree(sql);
-	return uuid;
+	return id;
 }
 
 static	char *
@@ -230,13 +230,13 @@ blob_import(
 	char *filename,
 	unsigned int lifetype)
 {
-	char *uuid;
+	char *id;
 
 	TransactionStart(dbg);
-	uuid = file_import(dbg, filename, lifetype);
+	id = file_import(dbg, filename, lifetype);
 	TransactionEnd(dbg);
 
-	return uuid;
+	return id;
 }
 
 static char *
@@ -266,7 +266,7 @@ bytea_to_file(
 static char *
 file_export(
 	DBG_Struct	*dbg,
-	char *uuid,
+	char *id,
 	char *export_file)
 {
 	static char	*filename;
@@ -277,7 +277,7 @@ file_export(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT filename, file_data FROM monblob WHERE uuid = '%s'", uuid);
+			 "SELECT filename, file_data FROM monblob WHERE id = '%s'", id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (!ret) {
@@ -301,13 +301,13 @@ file_export(
 static	char *
 blob_export(
 	DBG_Struct	*dbg,
-	char *uuid,
+	char *id,
 	char *export_file)
 {
 	char *filename;
 
 	TransactionStart(dbg);
-	filename = file_export(dbg, uuid, export_file);
+	filename = file_export(dbg, id, export_file);
 	TransactionEnd(dbg);
 
 	return filename;
@@ -327,7 +327,7 @@ _list_print(
 	ValueStruct *value)
 {
 	printf("%s\t%s\t%s\n",
-		   valstr(value,"uuid"),
+		   valstr(value,"id"),
 		   valstr(value,"importtime"),
 		   valstr(value,"filename"));
 }
@@ -364,7 +364,7 @@ blob_list(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT importtime, uuid, filename FROM monblob ORDER BY importtime;");
+			 "SELECT importtime, id, filename FROM monblob ORDER BY importtime;");
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	list_print(ret);
 	FreeValueStruct(ret);
@@ -375,14 +375,14 @@ blob_list(
 static	void
 blob_delete(
 	DBG_Struct	*dbg,
-	char *uuid)
+	char *id)
 {
 	char	*sql;
 	size_t	sql_len = SIZE_SQL;
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "DELETE FROM monblob WHERE uuid = '%s'", uuid);
+			 "DELETE FROM monblob WHERE id = '%s'", id);
 	TransactionStart(dbg);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	TransactionEnd(dbg);
@@ -395,7 +395,7 @@ main(
 	char	**argv)
 {
 	DBG_Struct	*dbg;
-	char *uuid;
+	char *id;
 	char *filename;
 
 	SetDefault();
@@ -421,11 +421,11 @@ main(
 	if (List) {
 		blob_list(dbg);
 	} else if (ImportFile) {
-		uuid = blob_import(dbg, ImportFile, LifeType);
-		if ( !uuid ){
+		id = blob_import(dbg, ImportFile, LifeType);
+		if ( !id ){
 			exit(1);
 		}
-		printf("%s\n", uuid);
+		printf("%s\n", id);
 	} else if (ExportID) {
 		filename = blob_export(dbg, ExportID, OutputFile);
 		if ( !filename ) {
