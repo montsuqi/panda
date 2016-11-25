@@ -317,10 +317,10 @@ ENTER_FUNC;
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
-	if (!MakeDir(TempDirRoot,0700)) {
-		Error("cannot make TempDirRoot:%s",TempDirRoot);
+	if (!MakeDir(TempDir,0700)) {
+		Error("cannot make TempDirRoot:%s",TempDir);
 	}
-	setenv("MCP_TEMPDIR_ROOT",TempDirRoot,1);
+	setenv("MCP_TEMPDIR_ROOT",TempDir,1);
 LEAVE_FUNC;
 }
 
