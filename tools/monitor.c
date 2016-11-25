@@ -274,7 +274,7 @@ SetDefault(void)
 	DBSlavePath = NULL;
 	MONSetupPath = NULL;
 	Directory = "./directory";
-	TempDir = NULL;
+	TempDir = "/tmp/panda_root/";
 	DDir = NULL;
 	RecDir = NULL;
 	ScrDir = NULL;
@@ -317,6 +317,10 @@ ENTER_FUNC;
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
+	if (!MakeDir(TempDirRoot,0700)) {
+		Error("cannot make TempDirRoot:%s",TempDirRoot);
+	}
+	setenv("MCP_TEMPDIR_ROOT",TempDirRoot,1);
 LEAVE_FUNC;
 }
 
@@ -816,10 +820,6 @@ ENTER_FUNC;
 		if		(  Directory  !=  NULL  ) {
 			argv[argc ++] = "-dir";
 			argv[argc ++] = Directory;
-		}
-		if		(  TempDir  !=  NULL  ) {
-			argv[argc ++] = "-tempdirroot";
-			argv[argc ++] = TempDir;
 		}
 		if		(  DDir  !=  NULL  ) {
 			argv[argc ++] = "-ddir";

@@ -243,14 +243,6 @@ LEAVE_FUNC;
 }
 
 static	void
-SetUpTempDirRoot()
-{
-	if (!MakeDir(TempDirRoot,0700)) {
-		Error("cannot make TempDirRoot:%s",TempDirRoot);
-	}
-}
-
-static	void
 InitSystem(void)
 {
 ENTER_FUNC;
@@ -258,7 +250,6 @@ ENTER_FUNC;
 	fShutdown = FALSE;
 	InitDirectory();
 	SetUpDirectory(Directory,NULL,"","",P_LD);
-	SetUpTempDirRoot();
 	if		( ThisEnv == NULL ) {
 		Error("DI file parse error.");
 	}
@@ -308,11 +299,6 @@ CleanUp(void)
 		DisConnectBLOB(BlobState);
 		FinishBLOB(Blob);
 	}
-#if 0
-	if (!getenv("WFC_KEEP_TEMPDIR")) {
-		rm_r(TempDirRoot);
-	}
-#endif
 	CleanUNIX_Socket(ApsPort);
  	CleanUNIX_Socket(WfcPort);
  	CleanUNIX_Socket(ControlPort);
@@ -344,9 +330,6 @@ static	ARG_TABLE	option[] = {
 		"LD directory"				 					},
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		"environment file name"							},
-	{	"tempdirroot",STRING,	TRUE,	(void*)&TempDirRoot,
-		"root of temporary directory" 					},
-
 	{	"retry",	INTEGER,	TRUE,	(void*)&MaxTransactionRetry,
 		"maximun retry count"							},
 	{	"sesnum",	INTEGER,	TRUE,	(void*)&SesNum,
@@ -366,7 +349,10 @@ ENTER_FUNC;
 	RecordDir = NULL;
 	D_Dir = NULL;
 	Directory = "./directory";
-	TempDirRoot = "/tmp/panda_root/";
+	TempDirRoot = getenv("MCP_TEMPDIR_ROOT");
+	if (TempDirRoot == NULL) {
+		TempDirRoot = "/tmp/panda_root/";
+	}
 	MaxTransactionRetry = 0;
 	ControlPort = NULL;
 	SesNum = 0;
