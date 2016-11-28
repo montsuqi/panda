@@ -822,6 +822,7 @@ InitCURLPKCS11()
 	curl_easy_setopt(AuthCurl,CURLOPT_SSLCERTTYPE,"ENG");
 	curl_easy_setopt(AuthCurl,CURLOPT_SSLENGINE_DEFAULT,1L);
 	curl_easy_setopt(AuthCurl,CURLOPT_CAINFO,cacertfile);
+	curl_easy_setopt(RPCurl,CURLOPT_CAINFO,cacertfile);
 
 	g_free(cacertfile);
 	free(certid);
@@ -874,6 +875,7 @@ InitCURL()
 				Error("set CAFile option");
 			}
 			curl_easy_setopt(AuthCurl,CURLOPT_CAINFO,CAFile);
+			curl_easy_setopt(RPCurl,CURLOPT_CAINFO,CAFile);
 		}
 	}
 	SetHTTPAuth();
