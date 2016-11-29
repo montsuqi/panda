@@ -48,7 +48,6 @@ typedef struct {
 	char			*RESTURI;
 	char			*ProtocolVersion;
 	char			*AppVersion;
-	char			*ServerType;
 	char			*title;
 	char			*bgcolor;
 	Bool			IsRecv;
@@ -66,7 +65,6 @@ typedef struct {
 #define RESTURI(session)		((session)->RESTURI)
 #define PROTOVER(session)		((session)->ProtocolVersion)
 #define APPVER(session)			((session)->AppVersion)
-#define SERVERTYPE(session)		((session)->ServerType)
 #define	TITLE(session)			((session)->title)
 #define	BGCOLOR(session)		((session)->bgcolor)
 #define	ISRECV(session)			((session)->IsRecv)
@@ -131,7 +129,6 @@ GLOBAL	Bool		fSavePIN;
 #	ifdef USE_SSL
 GLOBAL	ENGINE		*Engine;
 #	endif
-GLOBAL	CURL		*AuthCurl;
-GLOBAL	CURL		*RPCurl;
+GLOBAL	CURL		*Curl;
 
 #endif
