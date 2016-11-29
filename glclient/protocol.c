@@ -356,6 +356,8 @@ CheckJSONRPCResponse(
 		if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {
 			Error("could not create %s",path);
 		}
+		fprintf(stderr,"----\n");
+		fprintf(stderr,"%s\n",jsonstr);
 		g_free(path);
 	}
 }
@@ -500,12 +502,10 @@ RPC_StartSession()
 {
 	json_object *obj,*params,*child,*result,*meta;
 	gchar *rpcuri,*resturi;
-	GRegex *re;
 
 	params = json_object_new_object();
 	child = json_object_new_object();
-	json_object_object_add(child,"client_version",
-		json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"client_version",json_object_new_string(PACKAGE_VERSION));
 	json_object_object_add(params,"meta",child);
 	obj = MakeJSONRPCRequest("start_session",params);
 	obj = JSONRPC(TYPE_AUTH,obj);
@@ -532,21 +532,14 @@ RPC_StartSession()
 	}
 	resturi = (char*)json_object_get_string(child);
 
-	if (!strcmp(SERVERTYPE(Session),"ginbee")) {
-		RPCURI(Session) = g_strdup(rpcuri);
-		RESTURI(Session) = g_strdup(resturi);
-		if (!RPCurl) {
-			Warning("curl_easy_init failure");
-			exit(0);
-		}
-		if (getenv("GLCLIENT_CURL_DEBUG") != NULL) {
-			curl_easy_setopt(RPCurl,CURLOPT_VERBOSE,1);
-		}
-	} else {
-		RPCURI(Session) = g_strdup(AUTHURI(Session));
-		re = g_regex_new("/rpc/",G_REGEX_CASELESS,0,NULL);
-		RESTURI(Session) = g_regex_replace(re,AUTHURI(Session),-1,0,"/rest/",0,NULL);
-		g_regex_unref(re);
+	RPCURI(Session) = g_strdup(rpcuri);
+	RESTURI(Session) = g_strdup(resturi);
+	if (!RPCurl) {
+		Warning("curl_easy_init failure");
+		exit(0);
+	}
+	if (getenv("GLCLIENT_CURL_DEBUG") != NULL) {
+		curl_easy_setopt(RPCurl,CURLOPT_VERBOSE,1);
 	}
 	if (fMlog) {
 		MessageLogPrintf("RPCURI[%s]\n",RPCURI(Session));
