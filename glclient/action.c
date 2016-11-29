@@ -1284,9 +1284,7 @@ PingTimerFunc(
 		return 1;
 	}
 	ListDownloads();
-	if (strcmp(SERVERTYPE(Session),"ginbee")) {
-		Ping();
-	}
+	Ping();
 	return 1;
 }
 

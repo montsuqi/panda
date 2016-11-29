@@ -178,12 +178,6 @@ main(
 	Session = g_new0(GLSession,1);
 	RPCID(Session) = 0;
 
-	if (OpGinbee) {
-		SERVERTYPE(Session) = "ginbee";
-	} else {
-		SERVERTYPE(Session) = "glserver";
-	}
-
 	InitMessage(NULL,NULL);
 	if (argc < 2) {
 		PrintArgError();

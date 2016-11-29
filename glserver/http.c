@@ -75,6 +75,7 @@ typedef struct {
 	NETFILE			*fp;
 	int 			type;
 	char			host[SIZE_HOST];
+	char			*server_host;
 	PacketClass		method;
 	size_t			buf_size;
 	char			*buf;
@@ -532,6 +533,12 @@ ParseRequest(
 		ParseReqBody(req);
 	}
 	ParseReqAuth(req);
+
+	req->server_host = (gchar *)g_hash_table_lookup(req->header_hash,"host");
+	if (req->server_host == NULL) {
+		req->status = HTTP_BAD_REQUEST;
+		return;
+	}
 }
 
 static void timeout(int i)
@@ -855,7 +862,7 @@ static gboolean
 JSONRPCHandler(
 	HTTP_REQUEST *req)
 {
-	char *reqjson,*resjson,*method;
+	char *reqjson,*resjson,*method,*prefix;
 	json_object *obj,*params,*meta,*child,*res;
 
 	reqjson = StrnDup(req->body,req->body_size);
@@ -928,8 +935,20 @@ JSONRPCHandler(
 			return FALSE;
 		}
 
+#ifdef  USE_SSL
+		if (fSsl) {
+			prefix = g_strdup_printf("https://%s",req->server_host);
+		} else {
+			prefix = g_strdup_printf("http://%s",req->server_host);
+		}
+#else
+		prefix = g_strdup_printf("http://%s",req->server_host);
+#endif
+
 		json_object_object_add(meta,"host",json_object_new_string(req->host));
 		json_object_object_add(meta,"user",json_object_new_string(req->user));
+		json_object_object_add(meta,"server_url_prefix",json_object_new_string(prefix));
+		g_free(prefix);
 
 		if ((res = WFCIO_JSONRPC(obj)) != NULL) {
 			resjson = (char*)json_object_to_json_string(res);

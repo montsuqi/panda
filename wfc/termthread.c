@@ -387,6 +387,7 @@ RPC_StartSession(
 	SessionData *data;
 	uuid_t u;
 	int sesnum;
+	gchar *prefix,*rpcuri,*resturi;
 ENTER_FUNC;
 	params = json_object_object_get(obj,"params");
 	if (!CheckJSONObject(params,json_type_object)) {
@@ -411,6 +412,13 @@ ENTER_FUNC;
 		JSONRPC_Error(term,obj,-20001,"Invalid Client Version");
 		return;
 	}
+	child = json_object_object_get(meta,"server_url_prefix");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not client_version");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	prefix = (char*)json_object_get_string(child);
 
 	sesnum = GetSessionNum();
 	if (SesNum != 0 && sesnum >= SesNum) {
@@ -459,9 +467,14 @@ ENTER_FUNC;
 	meta = json_object_new_object();
 	json_object_object_add(meta,"session_id",json_object_new_string(data->hdr->uuid));
 	json_object_object_add(result,"meta",meta);
-	json_object_object_add(result,"app_rpc_endpoint_uri",json_object_new_string(""));
-	json_object_object_add(result,"app_rest_api_uri_root",json_object_new_string(""));
+	rpcuri  = g_strdup_printf("%s/rpc/",prefix);
+	resturi = g_strdup_printf("%s/rest/",prefix);
+	json_object_object_add(result,"app_rpc_endpoint_uri",json_object_new_string(rpcuri));
+	json_object_object_add(result,"app_rest_api_uri_root",json_object_new_string(resturi));
+	g_free(rpcuri);
+	g_free(resturi);
 	json_object_object_add(res,"result",result);
+
 
 	SendString(term->fp,(char*)json_object_to_json_string(res));
 	if (CheckNetFile(term->fp)) {
