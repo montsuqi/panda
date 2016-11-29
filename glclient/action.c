@@ -1284,6 +1284,7 @@ PingTimerFunc(
 		return 1;
 	}
 	ListDownloads();
+	Ping();
 	return 1;
 }
 
