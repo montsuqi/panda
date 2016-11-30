@@ -1308,7 +1308,6 @@ ENTER_FUNC;
 						xfree(tuple);
 					}
 					tuple = (ValueStruct **)xmalloc(sizeof(ValueStruct *) * n);
-					printf("malloc(%d)\n", n);
 					items = 0;
 					fIntoAster = FALSE;
 				} else {
