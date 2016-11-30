@@ -46,6 +46,51 @@
 
 #include	"directory.h"
 
+static	void
+OnChildExit(
+	int		ec)
+{
+ENTER_FUNC;
+	while( waitpid(-1, NULL, WNOHANG) > 0 );
+LEAVE_FUNC;
+}
+
+static	void
+SetSigChild(void)
+{
+	struct sigaction sa, orgsa;
+
+	memset(&orgsa, 0, sizeof(struct sigaction));
+	sigaction(SIGCHLD, NULL, &orgsa);
+	if (orgsa.sa_handler == SIG_DFL) {
+		memset(&sa, 0, sizeof(struct sigaction));
+		sigemptyset (&sa.sa_mask);
+		sa.sa_flags |= SA_RESTART;
+		sa.sa_handler = (void *)OnChildExit;
+		if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+			fprintf(stderr,"sigaction(2) failure\n");
+		}
+	}
+}
+
+static	void
+SetSigChildDFL(void)
+{
+	struct sigaction sa, orgsa;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sigaction(SIGCHLD, NULL, &orgsa);
+	if (orgsa.sa_handler != SIG_DFL) {
+		memset(&sa, 0, sizeof(struct sigaction));
+		sigemptyset (&sa.sa_mask);
+		sa.sa_handler = SIG_DFL;
+		sa.sa_flags |= SA_RESTART;
+		if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+			fprintf(stderr,"sigaction(2) failure\n");
+		}
+	}
+}
+
 static	int
 _EXEC(
 	DBG_Struct	*dbg,
@@ -190,6 +235,7 @@ _DBCOMMIT(
 
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
+	SetSigChild();
 	cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
 	rc = DoShell(cmdv);
 	CommitDB_Redirect(dbg);
@@ -251,6 +297,87 @@ InsertValue(
 	  default:
 		break;
 	}
+}
+
+static int
+ExSystem(
+	char	*command)
+{
+	int		pid;
+	int		rc;
+	char	*sh;
+	char	*argv[3];
+	extern	char	**environ;
+
+	SetSigChildDFL();
+	if		(  command  !=  NULL  ) {
+		if		(  ( pid = fork() )  <  0  )	{
+			rc = -1;
+		} else
+		if		(  pid  ==  0  )	{	/*	child	*/
+			sh = BIN_DIR "/monbatch";
+			argv[0] = sh;
+			argv[1] = command;
+			argv[2] = NULL;
+			execve(sh, argv, environ);
+			rc = MCP_BAD_OTHER;
+		} else
+		if		(  pid   >  0  )	{	/*	parent	*/
+			while(waitpid(pid, &rc, 0) <0){
+				if (errno != EINTR){
+					rc = -1;
+					break;
+				}
+			}
+		}
+	} else {
+		rc = -1;
+	}
+	return (rc);
+}
+
+static	int
+ExCommand(
+	RecordStruct	*rec,
+	LargeByteString	*src)
+{
+	int		c;
+	int		rc;
+	ValueStruct	*val;
+	DBG_Struct	*dbg;
+	LargeByteString	*lbs;
+	char *command;
+
+	dbg =  rec->opt.db->dbg;
+	RewindLBS(src);
+	lbs = NewLBS();
+
+	while	(  ( c = LBS_FetchByte(src) )  >=  0  ) {
+		if		(  c  !=  SQL_OP_ESC  ) {
+			LBS_EmitChar(lbs,c);
+		} else {
+			c = LBS_FetchByte(src);
+			switch	(c) {
+			  case	SQL_OP_REF:
+				val = (ValueStruct *)LBS_FetchPointer(src);
+				InsertValue(dbg,lbs,val);
+				break;
+			  case	SQL_OP_EOL:
+			  case	0:
+				LBS_EmitChar(lbs,';');
+				LBS_EmitEnd(lbs);
+				RewindLBS(lbs);
+				break;
+			  default:
+				break;
+			}
+		}
+	}
+	command = StrDup(LBS_Body(lbs));
+	FreeLBS(lbs);
+	rc = ExSystem(command);
+	xfree(command);
+	return	(rc);
 }
 
 static	ValueStruct	*
@@ -328,6 +455,25 @@ SetRetvalue(
 	return shell_value;
 }
 
+static	void
+SetBatchEnv(
+	DBG_Struct		*dbg,
+	ValueStruct		*args)
+{
+	char *name, *comment, *extra, *groupname, *repos_name;
+
+	name = ValueToString(GetItemLongName(args,"name"),dbg->coding);
+	setenv("MON_BATCH_NAME", name, 1);
+	comment = ValueToString(GetItemLongName(args,"comment"),dbg->coding);
+	setenv("MON_BATCH_COMMENT", comment, 1);
+	extra = ValueToString(GetItemLongName(args,"extra"),dbg->coding);
+	setenv("MON_BATCH_EXTRA", extra, 1);
+	groupname = ValueToString(GetItemLongName(args,"groupname"),dbg->coding);
+	setenv("MON_BATCH_GROUPNAME", groupname, 1);
+	repos_name = ValueToString(GetItemLongName(args,"repos_name"),dbg->coding);
+	setenv("GINBEE_DOCKER_REPOS_NAME", repos_name, 1);
+}
+
 static	ValueStruct	*
 _DBACCESS(
 	DBG_Struct		*dbg,
@@ -335,7 +481,6 @@ _DBACCESS(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	char *name, *comment, *extra, *groupname, *repos_name;
 	uuid_t	u;
 	DB_Struct	*db;
 	PathStruct	*path;
@@ -345,21 +490,11 @@ _DBACCESS(
 	ValueStruct	*ret;
 
 ENTER_FUNC;
-#ifdef	TRACE
-	printf("[%s]\n",ctrl->func);
-#endif
+	dbgprintf("[%s]\n",ctrl->func);
 	ret = NULL;
+
 	if (dbg->count == 0) {
-		name = ValueToString(GetItemLongName(args,"name"),dbg->coding);
-		setenv("MON_BATCH_NAME", name, 1);
-		comment = ValueToString(GetItemLongName(args,"comment"),dbg->coding);
-		setenv("MON_BATCH_COMMENT", comment, 1);
-		extra = ValueToString(GetItemLongName(args,"extra"),dbg->coding);
-		setenv("MON_BATCH_EXTRA", extra, 1);
-		groupname = ValueToString(GetItemLongName(args,"groupname"),dbg->coding);
-		setenv("MON_BATCH_GROUPNAME", groupname, 1);
-		repos_name = ValueToString(GetItemLongName(args,"repos_name"),dbg->coding);
-		setenv("GINBEE_DOCKER_REPOS_NAME", repos_name, 1);
+		SetBatchEnv(dbg, args);
 		dbg->transaction_id = xmalloc(SIZE_TERM+1);
 		uuid_generate(u);
 		uuid_unparse(u, dbg->transaction_id);
@@ -438,9 +573,58 @@ ValueToWhere(
 		i++;
 	}
 	LBS_EmitEnd(lbs);
-	where = StrDup(LBS_Body(lbs));
+	where = StrDup((char *)LBS_Body(lbs));
 	FreeLBS(lbs);
 	return where;
+}
+
+static	ValueStruct	*
+_EXCOMMAND(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	uuid_t	u;
+	DB_Struct	*db;
+	PathStruct	*path;
+	LargeByteString	*src;
+	ValueStruct		*ret;
+	int		ix;
+	int		rc;
+	char *uuid;
+
+ENTER_FUNC;
+	SetBatchEnv(dbg, args);
+	uuid = xmalloc(SIZE_TERM+1);
+	uuid_generate(u);
+	uuid_unparse(u, uuid);
+	setenv("MON_BATCH_ID", uuid, 1);
+
+	if		(  rec->type  !=  RECORD_DB  ) {
+		ctrl->rc = MCP_BAD_ARG;
+		rc = TRUE;
+	} else {
+		db = rec->opt.db;
+		path = db->path[ctrl->pno];
+		if		(  ( ix = (int)(long)g_hash_table_lookup(path->opHash,ctrl->func) )  ==  0  ) {
+			rc = FALSE;
+		} else {
+			src = path->ops[ix-1]->proc;
+			if		(  src  !=  NULL  ) {
+				rc = ExCommand(rec,src);
+			} else {
+				rc = FALSE;
+			}
+		}
+	}
+	if		(  ctrl  !=  NULL  ) {
+		ctrl->rc = rc;
+	}
+	xfree(uuid);
+	ret = DuplicateValue(args,TRUE);
+LEAVE_FUNC;
+	return	(ret);
 }
 
 static	ValueStruct	*
@@ -567,6 +751,7 @@ static	DB_OPS	Operations[] = {
 	{	"DBSTART",		(DB_FUNC)_DBSTART },
 	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
 	/*	table operations	*/
+	{	"EXCOMMAND",	_EXCOMMAND },
 	{	"DBSELECT",		_DBSELECT },
 	{	"DBFETCH",		_DBFETCH },
 	{	"DBUPDATE",		_DBERROR },
@@ -584,34 +769,12 @@ static	DB_Primitives	Core = {
 	NULL,
 };
 
-static	void
-OnChildExit(
-	int		ec)
-{
-ENTER_FUNC;
-	while( waitpid(-1, NULL, WNOHANG) > 0 );
-LEAVE_FUNC;
-}
-
 extern	DB_Func	*
 InitShell(void)
 {
-	struct sigaction sa, orgsa;
 	DB_Func	*ret;
 ENTER_FUNC;
-	memset(&orgsa, 0, sizeof(struct sigaction));
-	sigaction(SIGCHLD, NULL, &orgsa);
-	if (orgsa.sa_handler == SIG_DFL) {
-		memset(&sa, 0, sizeof(struct sigaction));
-		sigemptyset (&sa.sa_mask);
-		sa.sa_flags |= SA_RESTART;
-		sa.sa_handler = (void *)OnChildExit;
-		if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-			fprintf(stderr,"sigaction(2) failure\n");
-		}
-	}
 	ret = EnterDB_Function("Shell",Operations,DB_PARSER_SQL,&Core,"# ","\n");
 LEAVE_FUNC;
 	return	(ret);
 }
-
