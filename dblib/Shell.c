@@ -164,7 +164,7 @@ ENTER_FUNC;
 	unsetenv("MON_BATCH_COMMENT");
 	unsetenv("MON_BATCH_EXTRA");
 	unsetenv("MON_BATCH_GROUPNAME");
-	unsetenv("GINBEE_DOCKER_REPOS_NAME");
+	unsetenv("GINBEE_CUSTOM_BATCH_REPOS_NAME");
 
 	if(dbg->transaction_id) {
 		xfree(dbg->transaction_id);
@@ -471,7 +471,7 @@ SetBatchEnv(
 	groupname = ValueToString(GetItemLongName(args,"groupname"),dbg->coding);
 	setenv("MON_BATCH_GROUPNAME", groupname, 1);
 	repos_name = ValueToString(GetItemLongName(args,"repos_name"),dbg->coding);
-	setenv("GINBEE_DOCKER_REPOS_NAME", repos_name, 1);
+	setenv("GINBEE_CUSTOM_BATCH_REPOS_NAME", repos_name, 1);
 }
 
 static	ValueStruct	*
