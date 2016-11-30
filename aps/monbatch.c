@@ -78,12 +78,6 @@ signal_handler (int signo )
 }
 
 void
-child_handler (int signo)
-{
-	child_exit_flag = TRUE;
-}
-
-void
 alrm_handler (int signo)
 {
 	exit_flag = TRUE;
@@ -120,6 +114,10 @@ insert_table(
 {
 	char *evalue;
 
+	if (value == NULL ) {
+		return;
+	}
+
 	if (LBS_Size(kv->name) > 0) {
 		LBS_EmitChar(kv->name,',');
 		LBS_EmitSpace(kv->name);
@@ -131,11 +129,9 @@ insert_table(
 		LBS_EmitSpace(kv->value);
 	}
 	LBS_EmitChar(kv->value,'\'');
-	if (value != NULL) {
-		evalue = Escape_monsys(kv->dbg, value);
-		LBS_EmitString(kv->value, evalue);
-		xfree(evalue);
-	}
+	evalue = Escape_monsys(kv->dbg, value);
+	LBS_EmitString(kv->value, evalue);
+	xfree(evalue);
 	LBS_EmitChar(kv->value,'\'');
 }
 
@@ -253,6 +249,7 @@ clog_db(
 		LBS_EmitString(lbs, "');");
 		LBS_EmitEnd(lbs);
 		ExecDBOP(dbg, (char *)LBS_Body(lbs), TRUE, DB_UPDATE);
+		xfree(log);
 	}
 	FreeLBS(lbs);
 
@@ -397,7 +394,6 @@ write_tmpfile(
 	char tmpfile[] = "/tmp/monbatch_XXXXXX";
 	ssize_t len;
 	int logfd;
-
 	if ((logfd = mkstemp(tmpfile)) < 0 ){
 		Error("mkstemp: can not create tmpfile %s", strerror(errno));
 	}
@@ -413,7 +409,11 @@ write_tmpfile(
 				Warning("Erorr write log:%s", strerror(errno));
 			}
 			if (write(STDOUT_FILENO, buff, len) < 0) {
-				Warning("Erorr write STDOUT:%s", strerror(errno));
+				Warning("stdout write error");
+				freopen ("/dev/tty", "wb", stdout);
+				if (fwrite(buff, len,1, stdout) < 0) {
+					Warning("Erorr write %s", strerror(errno));
+				}
 			}
 		}
 	}
@@ -443,6 +443,7 @@ exec_shell(
 	json_object_object_add(cmd_results,"pgid",json_object_new_int((int)pgid));
 	result = json_object_new_array();
 	json_object_object_add(cmd_results,"command",result);
+
 	for ( i=1; i<argc; i++ ) {
 		if (pipe(std_io) == -1 ){
 			error = strerror(errno);
@@ -547,20 +548,15 @@ main(
 	if (sigaction(SIGALRM, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
-	sa.sa_handler = alrm_handler;
-	if (sigaction(SIGALRM, &sa, NULL) != 0) {
+	sa.sa_handler = SIG_IGN;
+	if (sigaction(SIGPIPE, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
 	}
-	sa.sa_flags = 0;
-	sa.sa_handler = child_handler;
-	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
-		Error("sigaction(2) failure");
-	}
-
 	alarm(BATCH_TIMEOUT);
 
 	fl = GetOption(option,argc,argv,NULL);
 	InitSystem();
+
 	if ((fl == NULL) || (fl->name == NULL)) {
 		PrintUsage(option,argv[0],NULL);
 	}
@@ -580,6 +576,5 @@ main(
 	cmd_results = exec_shell(dbg, pgid, batch_id, argc, argv);
 
 	unregistdb(dbg, batch_id, cmd_results);
-
 	return 0;
 }
