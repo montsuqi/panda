@@ -61,7 +61,6 @@
 static LargeByteString *readbuf;
 static LargeByteString *writebuf;
 static gboolean Logging = FALSE;
-static gboolean Ginbee = FALSE;
 static char *LogDir;
 
 static void UnSetHTTPAuth();

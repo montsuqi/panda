@@ -43,6 +43,7 @@ gboolean gl_config_get_boolean(int,const char*);
 void ListConfig();
 void LoadConfig(int n);
 void LoadConfigByDesc(const char *configname);
+int GetConfigIndexByDesc(const char *configname);
 
 #endif /* #ifndef __BD_CONFIG_H_INCLUDED__ */
 

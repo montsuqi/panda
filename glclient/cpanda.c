@@ -43,29 +43,45 @@
 #define		MAIN
 #include	"glclient.h"
 #include	"protocol.h"
+#include	"bd_config.h"
 #include	"const.h"
 #include	"message.h"
 #include	"debug.h"
 
-static char *OpURI       = NULL;
-static char *OpSessionID = NULL;
-static gboolean OpGinbee = FALSE;
+static int conf_idx;
+
+static void
+_LoadConfig()
+{
+	RPCID(Session)     =        gl_config_get_int   (conf_idx,"rpc_id");
+	SESSIONID(Session) = (char*)gl_config_get_string(conf_idx,"session_id");
+	RPCURI(Session)    = (char*)gl_config_get_string(conf_idx,"app_rpc_endpoint_uri");
+	RESTURI(Session)   = (char*)gl_config_get_string(conf_idx,"app_rest_api_uri_root");
+}
+
+static void
+_UpdateConfig()
+{
+	gl_config_set_int   (conf_idx,"rpc_id"               ,(int)RPCID(Session));
+	gl_config_set_string(conf_idx,"session_id"           ,SESSIONID(Session));
+	gl_config_set_string(conf_idx,"app_rpc_endpoint_uri" ,RPCURI(Session));
+	gl_config_set_string(conf_idx,"app_rest_api_uri_root",RESTURI(Session));
+	gl_config_save();
+}
 
 static void
 StartSession()
 {
 	json_object *obj;
 
-	AUTHURI(Session) = OpURI;
-
 	InitProtocol();
 	RPC_StartSession();
+	_UpdateConfig();
 
 	obj = json_object_new_object();
 	json_object_object_add(obj,"session_id",json_object_new_string(SESSIONID(Session)));
 	json_object_object_add(obj,"app_rpc_endpoint_uri",json_object_new_string(RPCURI(Session)));
 	json_object_object_add(obj,"app_rest_api_uri_root",json_object_new_string(RESTURI(Session)));
-
 	printf("%s",json_object_to_json_string(obj));
 	json_object_put(obj);
 
@@ -75,15 +91,10 @@ StartSession()
 static void
 GetWindow()
 {
-	if (OpSessionID == NULL) {
-		fprintf(stderr,"specify sessionid. use -s option\n");
-		exit(1);
-	}
-	RPCURI(Session) = OpURI;
-	SESSIONID(Session) = OpSessionID;
-
+	_LoadConfig();
 	InitProtocol();
 	RPC_GetWindow();
+	_UpdateConfig();
 	printf("%s",json_object_to_json_string(SCREENDATA(Session)));
 	FinalProtocol();
 }
@@ -96,12 +107,6 @@ SendEvent(
 	gchar *buf,*jsonstr;
 	gsize size;
 
-	if (OpSessionID == NULL) {
-		fprintf(stderr,"specify sessionid. use -s option\n");
-		exit(1);
-	}
-	RPCURI(Session) = OpURI;
-	SESSIONID(Session) = OpSessionID;
 
 	if(!g_file_get_contents(file,&buf,&size,NULL)) {
 		fprintf(stderr,"cant read %s\n",file);
@@ -118,8 +123,10 @@ SendEvent(
 		exit(1);
 	}
 
+	_LoadConfig();
 	InitProtocol();
 	RPC_SendEvent(obj);
+	_UpdateConfig();
 	printf("%s",json_object_to_json_string(SCREENDATA(Session)));
 	FinalProtocol();
 }
@@ -127,40 +134,25 @@ SendEvent(
 static void
 EndSession()
 {
-	if (OpSessionID == NULL) {
-		fprintf(stderr,"specify sessionid. use -s option\n");
-		exit(1);
-	}
-	RPCURI(Session) = OpURI;
-	SESSIONID(Session) = OpSessionID;
-
+	_LoadConfig();
 	InitProtocol();
 	RPC_EndSession();
+	RPCID(Session)     = 0;
+	SESSIONID(Session) = "";
+	RPCURI(Session)    = "";
+	RESTURI(Session)   = "";
+	_UpdateConfig();
 	FinalProtocol();
 }
-
-static GOptionEntry entries[] =
-{
-	{ "user",'u',0,G_OPTION_ARG_STRING,&User,
-		"user",NULL},
-	{ "password",'p',0,G_OPTION_ARG_STRING,&Pass,
-		"password",NULL},
-	{ "URI",'U',0,G_OPTION_ARG_STRING,&OpURI,
-		"password",NULL},
-	{ "sessionid",'i',0,G_OPTION_ARG_STRING,&OpSessionID,
-		"sessionid",NULL},
-	{ "ginbee",'g',0,G_OPTION_ARG_NONE,&OpGinbee,
-		"ginbee",NULL},
-	{ NULL}
-};
 
 static void
 PrintArgError()
 {
 	fprintf(stderr,
-		"$ cpanda <command> options\n"
-		"<command>: start_session | get_window | send_event | end_session\n"
+		"$ cpanda <config_name> <command> [param.json]\n"
+		"<command>: start_session | get_window | send_event | end_session\n\n"
 	);
+	ListConfig();
 }
 
 extern	int
@@ -168,37 +160,33 @@ main(
 	int argc,
 	char **argv)
 {
-	GOptionContext *ctx;
-
 	setlocale(LC_CTYPE,"ja_JP.UTF-8");
-	ctx = g_option_context_new("");
-	g_option_context_add_main_entries(ctx, entries, NULL);
-	g_option_context_parse(ctx,&argc,&argv,NULL);
+	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
+	gl_config_init();
 
-	Session = g_new0(GLSession,1);
-	RPCID(Session) = 0;
-
-	InitMessage(NULL,NULL);
-	if (argc < 2) {
+	if (argc < 3) {
 		PrintArgError();
 		exit(1);
 	}
 
-	if (OpURI == NULL) {
-		fprintf(stderr,"specify URL. use -U option\n");
-		exit(1);
-	}
-	if (!strcmp(argv[1],"start_session")) {
+	Session = g_new0(GLSession,1);
+	RPCID(Session) = 0;
+	InitMessage(NULL,NULL);
+
+	conf_idx = GetConfigIndexByDesc(argv[1]);
+	LoadConfig(conf_idx);
+
+	if (!strcmp(argv[2],"start_session")) {
 		StartSession();
-	} else if (!strcmp(argv[1],"get_window")) {
+	} else if (!strcmp(argv[2],"get_window")) {
 		GetWindow();
-	} else if (!strcmp(argv[1],"send_event")) {
-		if (argc < 3) {
-			fprintf(stderr,"$ cpanda send_event param.json\n");
+	} else if (!strcmp(argv[2],"send_event")) {
+		if (argc < 4) {
+			fprintf(stderr,"start_session need param.json\n");
 			exit(1);
 		}
-		SendEvent(argv[2]);
-	} else if (!strcmp(argv[1],"end_session")) {
+		SendEvent(argv[3]);
+	} else if (!strcmp(argv[2],"end_session")) {
 		EndSession();
 	} else {
 		PrintArgError();

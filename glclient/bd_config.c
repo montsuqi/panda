@@ -407,25 +407,35 @@ LoadConfig (
 	FontName = g_strdup(gl_config_get_string(n,"fontname"));
 }
 
+extern int
+GetConfigIndexByDesc (
+	const char *desc)
+{
+	int i,n;
+
+	n = -1;
+	if (g_regex_match_simple("^\\d+$",desc,0,0)) {
+		n = atoi(desc);
+	} else {
+		for(i=0;i<gl_config_get_config_nums();i++) {
+			if (gl_config_have_config(i)) {
+				if (!strcmp(desc,gl_config_get_string(i,"description"))) {
+					n = i;
+					break;
+				}
+			}
+		}
+	}
+	return n;
+}
+
 extern void
 LoadConfigByDesc (
 	const char *desc)
 {
-	int i,n = -1;
+	int n;
 
-	if (g_regex_match_simple("^\\d+$",desc,0,0)) {
-		n = atoi(desc);
-		LoadConfig(n);
-	}
-
-	for(i=0;i<gl_config_get_config_nums();i++) {
-		if (gl_config_have_config(i)) {
-			if (!strcmp(desc,gl_config_get_string(i,"description"))) {
-				n = i;
-				break;
-			}
-		}
-	}
+	n = GetConfigIndexByDesc(desc);
 	if (n == -1) {
 		Error("could not found setting:%s",desc);
 	}
