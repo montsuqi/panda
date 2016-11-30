@@ -131,4 +131,6 @@ GLOBAL	ENGINE		*Engine;
 #	endif
 GLOBAL	CURL		*Curl;
 
+GLOBAL	Bool		Ginbee;
+
 #endif
