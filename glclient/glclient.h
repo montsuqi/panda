@@ -92,6 +92,7 @@ extern  void		SetSessionTitle(const char *title);
 extern  void		SetSessionBGColor(const char *color);
 
 GLOBAL	char		*ConfigName;
+GLOBAL	Bool		DelayDrawWindow;
 GLOBAL	Bool		CancelScaleWindow;
 GLOBAL	char		*CurrentApplication;
 GLOBAL	Bool		fV47;
