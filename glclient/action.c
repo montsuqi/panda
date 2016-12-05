@@ -253,6 +253,7 @@ static struct changed_hander {
 
 static void ScaleWidget(GtkWidget *widget, gpointer data);
 static void ScaleWindow(GtkWidget *widget);
+static void ReDrawTopWindow(void);
 
 static void
 SetWindowIcon(GtkWindow *window)
@@ -671,6 +672,9 @@ ENTER_FUNC;
 		}
 		SetTitle(TopWindow);
 		SetBGColor(TopWindow);
+		if (DelayDrawWindow) {
+			ReDrawTopWindow();
+		}
 	} else {
 	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;
@@ -692,10 +696,30 @@ ENTER_FUNC;
 		}
 		gtk_widget_show(window);
 		gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+		if (DelayDrawWindow) {
+			ReDrawTopWindow();
+		}
 	}
 LEAVE_FUNC;
 }
 
+static	void
+ReDrawTopWindow(void)
+{
+#define WINC (1)
+	static int i = 0;
+	int width,height;
+
+	gtk_window_get_size(GTK_WINDOW(TopWindow),&width,&height);
+    g_signal_handlers_block_by_func(TopWindow,ConfigureWindow,NULL);
+	if (i%2 == 0) {
+		gtk_window_resize(GTK_WINDOW(TopWindow),width, height-WINC);
+	} else {
+		gtk_window_resize(GTK_WINDOW(TopWindow),width, height+WINC);
+	}
+    g_signal_handlers_unblock_by_func(TopWindow,ConfigureWindow,NULL);
+	i++;
+}
 
 extern	void
 ShowBusyCursor(
