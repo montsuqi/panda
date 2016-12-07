@@ -1162,6 +1162,7 @@ Ping()
 
 	RPC_GetMessage(&dialog,&popup,&abort);
 	if (strlen(abort)>0) {
+		RPC_EndSession();
 		ShowInfoDialog(abort);
 		exit(1);
 	} else if (strlen(dialog)>0) {
@@ -1276,10 +1277,6 @@ ListDownloads()
 	result = json_object_object_get(obj,"result");
 	if (!CheckJSONObject(result,json_type_array)) {
 		Error(_("invalid list_report response"));
-	}
-
-	if (fMlog) {
-		MessageLogPrintf("ListDownloads %s", (char*)json_object_to_json_string(result));
 	}
 
 	for (i=0;i<json_object_array_length(result);i++) {
