@@ -111,7 +111,6 @@ typedef struct {
 
 typedef	struct _SessionData	{
 	int					type;
-	char				agent[SIZE_NAME+1];
 	TermNode			*term;
 	int					apsid;
 	Bool				fInProcess;
@@ -119,6 +118,7 @@ typedef	struct _SessionData	{
 	size_t				cWindow;
 	int					retry;
 	int					status;
+	char				*agent;
 	MessageHeader		*hdr;
 	GHashTable			*spadata;
 	GHashTable			*scrpool;

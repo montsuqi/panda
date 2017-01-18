@@ -360,7 +360,8 @@ JSONRPC(
 	json_object *obj)
 {
 	struct curl_slist *headers = NULL;
-	char *ctype,clength[256],*url,*jsonstr,errbuf[CURL_ERROR_SIZE+1],*path;
+	char *ctype,*url,*jsonstr,*path;
+	char buf[256],errbuf[CURL_ERROR_SIZE+1];
 	long http_code;
 	size_t jsonsize;
 	json_object *ret;
@@ -397,11 +398,13 @@ JSONRPC(
 	LBS_EmitStart(writebuf);
 	LBS_SetPos(writebuf,0);
 
+	snprintf(buf,sizeof(buf),"User-Agent: glclient2_%s_%s",PACKAGE_VERSION,PACKAGE_DATE);
+	headers = curl_slist_append(headers, buf);
 	headers = curl_slist_append(headers, "Content-Type: application/json");
-	snprintf(clength,sizeof(clength),"Content-Length: %ld",jsonsize);
-	headers = curl_slist_append(headers, clength);
-	snprintf(clength,sizeof(clength),"Expect:");
-	headers = curl_slist_append(headers, clength);
+	snprintf(buf,sizeof(buf),"Content-Length: %ld",jsonsize);
+	headers = curl_slist_append(headers, buf);
+	snprintf(buf,sizeof(buf),"Expect:");
+	headers = curl_slist_append(headers, buf);
 
 	curl_easy_setopt(Curl, CURLOPT_URL, url);
 	curl_easy_setopt(Curl, CURLOPT_POST,1);

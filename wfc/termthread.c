@@ -152,10 +152,13 @@ FreeSessionData(
 {
 ENTER_FUNC;
 	if (data->type != SESSION_TYPE_API) {
-		MessageLogPrintf("[%s@%s] %s session end",data->hdr->user,data->hdr->host,data->hdr->uuid);
+		MessageLogPrintf("session end %s [%s@%s] %s",data->hdr->uuid,data->hdr->user,data->hdr->host,data->agent);
 	}
 	if (data->linkdata != NULL) {
 		FreeLBS(data->linkdata);
+	}
+	if (data->agent != NULL) {
+		xfree(data->agent);
 	}
 	xfree(data->hdr);
 	g_hash_table_foreach_remove(data->spadata,(GHRFunc)FreeSpa,NULL);
@@ -451,13 +454,15 @@ ENTER_FUNC;
 	memset(data->hdr->host,0,SIZE_HOST+1);
 	strncpy(data->hdr->host,json_object_get_string(child),SIZE_HOST);
 
-	memset(data->agent,0,SIZE_NAME+1);
+	child = json_object_object_get(meta,"agent");
+	if (!CheckJSONObject(child,json_type_string)) {
+		Warning("request have not agent");
+		JSONRPC_Error(term,obj,-32600,"Invalid Request");
+		return;
+	}
+	data->agent = strdup(json_object_get_string(child));
 
-	MessageLogPrintf("[%s@%s] %s session start(%d)",data->hdr->user,data->hdr->host,data->hdr->uuid,sesnum+1);
-	dbgprintf("uuid   = [%s]",data->hdr->uuid);
-	dbgprintf("user   = [%s]",data->hdr->user);
-	dbgprintf("host   = [%s]",data->hdr->host);
-	dbgprintf("agent  = [%s]",data->agent);
+	MessageLogPrintf("session start(%d) %s [%s@%s] %s",sesnum+1,data->hdr->uuid,data->hdr->user,data->hdr->host,data->agent);
 
 	data->hdr->puttype = SCREEN_INIT;
 	RegisterSession(data);

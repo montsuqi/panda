@@ -74,7 +74,8 @@
 typedef struct {
 	NETFILE			*fp;
 	int 			type;
-	char			host[SIZE_HOST];
+	char			host[SIZE_HOST+1];
+	char			*agent;
 	char			*server_host;
 	PacketClass		method;
 	size_t			buf_size;
@@ -114,6 +115,7 @@ HTTP_Init(
 	req->header_hash = NewNameiHash();
 	req->user = NULL;
 	req->pass = NULL;
+	req->agent = NULL;
 	req->ld = NULL;
 	req->window = NULL;
 	req->status = HTTP_OK;
@@ -468,6 +470,13 @@ ParseReqAuth(HTTP_REQUEST *req)
 	gchar *head,*base64,*userpass;
 	gsize size;
 
+	head = (gchar *)g_hash_table_lookup(req->header_hash,"user-agent");
+	if (head != NULL) {
+		req->agent = strdup(head);
+	} else {
+		req->agent = strdup("unknown");
+	}
+
 #ifdef	USE_SSL
 	if (fSsl && fVerifyPeer){
 		if (!req->fp->peer_cert) {
@@ -590,6 +599,7 @@ MakeAPIReqJSON(
 	json_object_object_add(meta,"ld",json_object_new_string(req->ld));
 	json_object_object_add(meta,"window",json_object_new_string(req->window));
 	json_object_object_add(meta,"host",json_object_new_string(req->host));
+	json_object_object_add(meta,"agent",json_object_new_string(req->agent));
 	json_object_object_add(params,"meta",meta);
 
 	arguments = ParseReqArguments(req->arguments);
@@ -676,7 +686,7 @@ APISendResponse(
 	}
 	json_object_put(obj);
 
-	MessageLogPrintf("api %d /%s/%s/%s %s@%s",status,req->ld,req->window,req->arguments,req->user,req->host);
+	MessageLogPrintf("api %d /%s/%s/%s %s@%s %s",status,req->ld,req->window,req->arguments,req->user,req->host,req->agent);
 }
 
 static gboolean
@@ -963,6 +973,7 @@ JSONRPCHandler(
 
 		json_object_object_add(meta,"host",json_object_new_string(req->host));
 		json_object_object_add(meta,"user",json_object_new_string(req->user));
+		json_object_object_add(meta,"agent",json_object_new_string(req->agent));
 		json_object_object_add(meta,"server_url_prefix",json_object_new_string(prefix));
 		g_free(prefix);
 
@@ -1136,6 +1147,7 @@ PrepareNextRequest(
 	XFree(&(req->pass));
 	XFree(&(req->ld));
 	XFree(&(req->window));
+	XFree(&(req->agent));
 	XFree(&(req->session_id));
 	req->status = HTTP_OK;
 	req->body_size = 0;
