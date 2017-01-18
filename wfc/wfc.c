@@ -152,12 +152,8 @@ ENTER_FUNC;
 					newld->info->sparec->value);
 			}
 		} else {
-			if (getenv("FORCE_CLEAR_SPA")) {
-				Warning("FORCE_CLEAR_SPA for %s",newld->info->name);
-				InitializeValue(newld->info->sparec->value);
-				NativePackValue(NULL,
-					LBS_Body(data->spa),newld->info->sparec->value);
-			}
+			InitializeValue(newld->info->sparec->value);
+			NativePackValue(NULL,LBS_Body(data->spa),newld->info->sparec->value);
 		}
 		if (data->scrdata != NULL) {
 			xfree(data->scrdata);
