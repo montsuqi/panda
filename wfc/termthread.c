@@ -152,7 +152,7 @@ FreeSessionData(
 {
 ENTER_FUNC;
 	if (data->type != SESSION_TYPE_API) {
-		MessageLogPrintf("[%s@%s] session end",data->hdr->user,data->hdr->uuid);
+		MessageLogPrintf("[%s@%s] %s session end",data->hdr->user,data->hdr->host,data->hdr->uuid);
 	}
 	if (data->linkdata != NULL) {
 		FreeLBS(data->linkdata);
@@ -453,7 +453,7 @@ ENTER_FUNC;
 
 	memset(data->agent,0,SIZE_NAME+1);
 
-	MessageLogPrintf("[%s@%s] session start(%d)",data->hdr->user,data->hdr->uuid,sesnum+1);
+	MessageLogPrintf("[%s@%s] %s session start(%d)",data->hdr->user,data->hdr->host,data->hdr->uuid,sesnum+1);
 	dbgprintf("uuid   = [%s]",data->hdr->uuid);
 	dbgprintf("user   = [%s]",data->hdr->user);
 	dbgprintf("host   = [%s]",data->hdr->host);

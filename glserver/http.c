@@ -543,7 +543,6 @@ ParseRequest(
 
 static void timeout(int i)
 {
-	Warning("request timeout");
 	exit(0);
 }
 
@@ -624,36 +623,53 @@ APISendResponse(
 	HTTP_REQUEST *req,
 	json_object *obj)
 {
-	json_object *result,*http_status,*body,*ctype;
+	json_object *json_result,*json_status,*json_body,*json_ctype;
 	int status;
 	char *blob;
+	const char* ctype;
 	size_t blob_size;
 	MonObjectType mon;
 
 	if (!CheckJSONObject(obj,json_type_object)) {
-		Error("panda_api response json is invalid");
+		Warning("panda_api response json is invalid");
+		SendResponse(req,500,NULL,0,NULL);
+		return;
 	}
-	result = json_object_object_get(obj,"result");
-	if (!CheckJSONObject(result,json_type_object)) {
-		Error("panda_api response json result is invalid");
+	json_result = json_object_object_get(obj,"result");
+	if (!CheckJSONObject(json_result,json_type_object)) {
+		Warning("panda_api response json result is invalid");
+		SendResponse(req,500,NULL,0,NULL);
+		return;
 	}
-	http_status = json_object_object_get(result,"http_status");
-	if (!CheckJSONObject(http_status,json_type_int)) {
-		Error("panda_api response json http_status is invalid");
+
+	status = 200;
+	json_status = json_object_object_get(json_result,"http_status");
+	if (CheckJSONObject(json_status,json_type_int)) {
+		status = json_object_get_int(json_status);
 	}
-	status = json_object_get_int(http_status);
-	if (status == 200) {
-		ctype = json_object_object_get(result,"content_type");
-		if (!CheckJSONObject(ctype,json_type_string)) {
-			Error("panda_api response json content_type is invalid");
-		}
-		body = json_object_object_get(result,"body");
-		if (!CheckJSONObject(body,json_type_string)) {
-			Error("panda_api response json body is invalid");
-		}
-		mon = (MonObjectType)atoll(json_object_get_string(body));
+	json_status = json_object_object_get(json_result,"httpstatus");
+	if (CheckJSONObject(json_status,json_type_int)) {
+		status = json_object_get_int(json_status);
+	}
+
+	ctype = "";
+	json_ctype = json_object_object_get(json_result,"content_type");
+	if (CheckJSONObject(json_ctype,json_type_string)) {
+		ctype = (const char*)json_object_get_string(json_ctype);
+	}
+	json_ctype = json_object_object_get(json_result,"contenttype");
+	if (CheckJSONObject(json_ctype,json_type_string)) {
+		ctype = (const char*)json_object_get_string(json_ctype);
+	}
+	mon = 0;
+	json_body = json_object_object_get(json_result,"body");
+	if (CheckJSONObject(json_body,json_type_string)) {
+		mon = (MonObjectType)atoll(json_object_get_string(json_body));
+	}
+
+	if (status == 200 && mon != 0) {
 		GLExportBLOB(mon,&blob,&blob_size);
-		SendResponse(req,status,blob,blob_size,"Content-Type",json_object_get_string(ctype),NULL);
+		SendResponse(req,status,blob,blob_size,"Content-Type",ctype,NULL);
 		xfree(blob);
 	} else {
 		SendResponse(req,status,NULL,0,NULL);
