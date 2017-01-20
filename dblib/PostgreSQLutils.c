@@ -286,7 +286,8 @@ set_envauth(
 #ifdef POSTGRES_APPLICATIONNAME
 	setenv("PGAPPNAME", "dbsync", 1);
 #endif /* ifdef POSTGRES_APPLICATIONNAME */
-	setenv("PGPASSWORD", authinfo->pass, 1);
+	if (authinfo->pass)
+		setenv("PGPASSWORD", authinfo->pass, 1);
 	if (authinfo->sslcert)
 		setenv("PGSSLCERT", authinfo->sslcert, 1);
 	if (authinfo->sslkey)
