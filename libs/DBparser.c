@@ -532,7 +532,7 @@ ENTER_FUNC;
 	dbgprintf("fScript = %d",fScript);
 	ret = DD_Parse(in);
 	if		(  ret  ==  NULL  ) {
-		exit(1);
+		Error("DB_Parse Error (%s).", name);
     }
 	if		(  !stricmp(strrchr(name,'.'),".db")  ) {
 		ret->type = RECORD_DB;
@@ -540,7 +540,7 @@ ENTER_FUNC;
 	} else {
 		ret->type = RECORD_NULL;
 	}
-	SetReserved(in,DB_Reserved); 
+	SetReserved(in,DB_Reserved);
 	while	(  	GetSymbol  !=  T_EOF  ) {
 		switch	(ComToken) {
 		  case	T_USE:
@@ -617,8 +617,7 @@ ENTER_FUNC;
 			break;
 		  default:
 			ParError("syntax error(other)");
-			printf("token = [%X]\n",ComToken);
-			exit(1);
+			Error("DB_Parse Error: token = [%X]%s).", ComToken);
 			break;
 		}
 		ERROR_BREAK;
@@ -692,7 +691,7 @@ ENTER_FUNC;
 		}
 	}
 LEAVE_FUNC;
-}	
+}
 
 extern	RecordStruct	*
 DB_Parser(
