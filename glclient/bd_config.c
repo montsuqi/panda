@@ -388,6 +388,17 @@ LoadConfig (
 	} 
 
 	fSSL = gl_config_get_boolean(n,"ssl");
+	if (fSSL) {
+		gchar *oldauth;
+		GRegex *reg;
+
+		oldauth = AUTHURI(Session);
+		reg = g_regex_new("http://",0,0,NULL);
+		AUTHURI(Session) = g_regex_replace(reg,oldauth,-1,0,"https://",0,NULL);
+
+		g_free(oldauth);
+		g_regex_unref(reg);
+	}
 	CAFile = g_strdup(gl_config_get_string(n,"cafile"));
 	CertFile = g_strdup(gl_config_get_string(n,"certfile"));
 	CertKeyFile = g_strdup(gl_config_get_string(n,"certkeyfile"));
