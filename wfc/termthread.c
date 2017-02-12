@@ -758,6 +758,7 @@ RPC_SendEvent(
 	SessionData *data;
 	LD_Node		*ld;
 	RecordStruct *rec;
+	ValueStruct *val;
 	LargeByteString *scrdata;
 	const char *session_id,*window,*widget,*event;
 	size_t	size;
@@ -853,13 +854,17 @@ ENTER_FUNC;
 	dbgprintf("ld = [%s]",ld->info->name);
 	dbgprintf("window = [%s]",data->hdr->window);
 
-
-	rec = GetWindow(data->hdr->window);
-	scrdata = GetScreenData(data,data->hdr->window);
-	JSON_UnPackValue(NULL,(char*)json_object_to_json_string(child),rec->value);
-	size = NativeSizeValue(NULL,rec->value);
-	LBS_ReserveSize(scrdata,size,FALSE);
-	NativePackValue(NULL,LBS_Body(scrdata),rec->value);
+	{
+		rec = GetWindow(data->hdr->window);
+		scrdata = GetScreenData(data,data->hdr->window);
+		val = DuplicateValue(rec->value,FALSE);
+		NativeUnPackValue(NULL,LBS_Body(scrdata),val);
+		JSON_UnPackValue(NULL,(char*)json_object_to_json_string(child),val);
+		size = NativeSizeValue(NULL,val);
+		LBS_ReserveSize(scrdata,size,FALSE);
+		NativePackValue(NULL,LBS_Body(scrdata),val);
+		FreeValueStruct(val);
+	}
 
 	data->hdr->puttype = SCREEN_NULL;
 	data->hdr->command = APL_COMMAND_GET;
@@ -904,6 +909,7 @@ RPC_PandaAPI(
 	json_object *params,*meta,*child,*res;
 	SessionData *data;
 	RecordStruct *rec;
+	ValueStruct *val;
 	APIData *api;
 	const char *user,*host,*ld,*window;
 	char *buf;
@@ -963,11 +969,15 @@ ENTER_FUNC;
 	data->retry = 0;
 	api = data->apidata;
 
-	rec = GetWindow((char*)window);
-	JSON_UnPackValue(NULL,(char*)json_object_to_json_string(params),rec->value);
-	size = NativeSizeValue(NULL,rec->value);
-	LBS_ReserveSize(api->rec,size,FALSE);
-	NativePackValue(NULL,LBS_Body(api->rec),rec->value);
+	{
+		rec = GetWindow((char*)window);
+		val = DuplicateValue(rec->value,FALSE);
+		JSON_UnPackValue(NULL,(char*)json_object_to_json_string(params),val);
+		size = NativeSizeValue(NULL,val);
+		LBS_ReserveSize(api->rec,size,FALSE);
+		NativePackValue(NULL,LBS_Body(api->rec),val);
+		FreeValueStruct(val);
+	}
 
 	data = Process(data);
 	api = data->apidata;
