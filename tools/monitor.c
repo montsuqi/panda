@@ -1125,13 +1125,6 @@ main(
 
 	InitServers();
 
-	memset(&sa, 0, sizeof(struct sigaction));
-	sa.sa_handler = (void *)StopSystem;
-	sa.sa_flags |= SA_RESTART;
-	if (sigaction(SIGUSR1, &sa, NULL) != 0) {
-		Error("sigaction(2) failure");
-	}
-
 	sa.sa_handler = (void *)RestartSystem;
 	sa.sa_flags |= SA_RESTART;
 	if (sigaction(SIGHUP, &sa, NULL) != 0) {
