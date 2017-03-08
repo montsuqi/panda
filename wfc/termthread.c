@@ -277,14 +277,11 @@ LEAVE_FUNC;
 static	SessionData	*
 InitAPISession(
 	const char *user,
-	const char *ldname,
 	const char *wname,
 	const char *host)
 {
 	SessionData		*data;
 	LD_Node			*ld;
-	RecordStruct	*rec;
-	size_t			size;
 	uuid_t			u;
 
 ENTER_FUNC;
@@ -295,18 +292,15 @@ ENTER_FUNC;
 	strcpy(data->hdr->window,wname);
 	strcpy(data->hdr->user,user);
 	strcpy(data->hdr->host,host);
-	if ((ld = g_hash_table_lookup(APS_Hash, ldname)) != NULL) {
+
+	if ((ld = g_hash_table_lookup(ComponentHash,wname)) != NULL) {
 		data->ld = ld;
 		data->linkdata = NULL;
 		data->cWindow = ld->info->cWindow;
 		data->scrdata = NULL;
 		data->hdr->puttype = SCREEN_NULL;
-		rec = GetWindow((char*)wname);
-		size = NativeSizeValue(NULL,rec->value);
-		LBS_ReserveSize(data->apidata->rec, size,FALSE);
-		NativePackValue(NULL,LBS_Body(data->apidata->rec),rec->value);
 	} else {
-		Warning("[%s] session fail LD [%s] not found.",data->hdr->uuid,ldname);
+		Warning("[%s] session fail Window [%s] not found.",data->hdr->uuid,wname);
 		data = NULL;
 	}
 LEAVE_FUNC;
@@ -959,7 +953,7 @@ ENTER_FUNC;
 	}
 	window = json_object_get_string(child);
 
-	data = InitAPISession(user,ld,window,host);
+	data = InitAPISession(user,window,host);
 	if (data == NULL) {
 		Warning("api %s not found",ld);
 		JSONRPC_Error(term,obj,-20003,"Invalid Window");
