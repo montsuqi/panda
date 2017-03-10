@@ -164,11 +164,12 @@ ENTER_FUNC;
 	unsetenv("MON_BATCH_COMMENT");
 	unsetenv("MON_BATCH_EXTRA");
 	unsetenv("MON_BATCH_GROUPNAME");
-	unsetenv("GINBEE_CUSTOM_BATCH_REPOS_NAME");
+	unsetenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES");
 
 	if(dbg->transaction_id) {
 		xfree(dbg->transaction_id);
 	}
+	LBS_EmitStart(dbg->checkData);
 	if		(  ctrl  !=  NULL  ) {
 		ctrl->rc = MCP_OK;
 	}
@@ -236,6 +237,9 @@ _DBCOMMIT(
 ENTER_FUNC;
 	CheckDB_Redirect(dbg);
 	SetSigChild();
+	LBS_EmitEnd(dbg->checkData);
+	setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", LBS_Body(dbg->checkData), 1);
+
 	cmdv = (char **)dbg->process[PROCESS_UPDATE].conn;
 	rc = DoShell(cmdv);
 	CommitDB_Redirect(dbg);
@@ -393,6 +397,7 @@ RegistShell(
 	ValueStruct	*ret;
 	LargeByteString	*lbs;
 	char 		**cmdv;
+	char		*repos_name;
 
 ENTER_FUNC;
 	ret = NULL;
@@ -420,6 +425,9 @@ ENTER_FUNC;
 				cmdv[dbg->count] = StrDup(LBS_Body(lbs));
 				dbg->count++;
 				RewindLBS(lbs);
+				repos_name = ValueToString(GetItemLongName(args,"repos_name"),dbg->coding);
+				LBS_EmitString(dbg->checkData,repos_name);
+				LBS_EmitString(dbg->checkData,":");
 				break;
 			  default:
 				break;
@@ -460,7 +468,7 @@ SetBatchEnv(
 	DBG_Struct		*dbg,
 	ValueStruct		*args)
 {
-	char *name, *comment, *extra, *groupname, *repos_name;
+	char *name, *comment, *extra, *groupname;
 
 	name = ValueToString(GetItemLongName(args,"name"),dbg->coding);
 	setenv("MON_BATCH_NAME", name, 1);
@@ -470,8 +478,6 @@ SetBatchEnv(
 	setenv("MON_BATCH_EXTRA", extra, 1);
 	groupname = ValueToString(GetItemLongName(args,"groupname"),dbg->coding);
 	setenv("MON_BATCH_GROUPNAME", groupname, 1);
-	repos_name = ValueToString(GetItemLongName(args,"repos_name"),dbg->coding);
-	setenv("GINBEE_CUSTOM_BATCH_REPOS_NAME", repos_name, 1);
 }
 
 static	ValueStruct	*
@@ -593,6 +599,7 @@ _EXCOMMAND(
 	int		ix;
 	int		rc;
 	char *uuid;
+	char *repos_name;
 
 ENTER_FUNC;
 	SetBatchEnv(dbg, args);
@@ -600,6 +607,8 @@ ENTER_FUNC;
 	uuid_generate(u);
 	uuid_unparse(u, uuid);
 	setenv("MON_BATCH_ID", uuid, 1);
+	repos_name = ValueToString(GetItemLongName(args,"repos_name"),dbg->coding);
+	setenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES", repos_name, 1);
 
 	if		(  rec->type  !=  RECORD_DB  ) {
 		ctrl->rc = MCP_BAD_ARG;
