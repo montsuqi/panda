@@ -49,25 +49,11 @@
 #include	"debug.h"
 
 static int conf_idx;
+static int Rpc_id = 0;
+static char *Session_id = NULL;
+static char *Rpc_uri = NULL;
+static char *Rest_uri = NULL;
 
-static void
-_LoadConfig()
-{
-	RPCID(Session)     =        gl_config_get_int   (conf_idx,"rpc_id");
-	SESSIONID(Session) = (char*)gl_config_get_string(conf_idx,"session_id");
-	RPCURI(Session)    = (char*)gl_config_get_string(conf_idx,"app_rpc_endpoint_uri");
-	RESTURI(Session)   = (char*)gl_config_get_string(conf_idx,"app_rest_api_uri_root");
-}
-
-static void
-_UpdateConfig()
-{
-	gl_config_set_int   (conf_idx,"rpc_id"               ,(int)RPCID(Session));
-	gl_config_set_string(conf_idx,"session_id"           ,SESSIONID(Session));
-	gl_config_set_string(conf_idx,"app_rpc_endpoint_uri" ,RPCURI(Session));
-	gl_config_set_string(conf_idx,"app_rest_api_uri_root",RESTURI(Session));
-	gl_config_save();
-}
 
 static void
 StartSession()
@@ -76,7 +62,6 @@ StartSession()
 
 	InitProtocol();
 	RPC_StartSession();
-	_UpdateConfig();
 
 	obj = json_object_new_object();
 	json_object_object_add(obj,"session_id",json_object_new_string(SESSIONID(Session)));
@@ -91,12 +76,33 @@ StartSession()
 static void
 GetWindow()
 {
-	_LoadConfig();
 	InitProtocol();
 	RPC_GetWindow();
-	_UpdateConfig();
 	printf("%s",json_object_to_json_string(SCREENDATA(Session)));
 	FinalProtocol();
+}
+
+static void
+ListDownloads()
+{
+	InitProtocol();
+	RPC_ListDownloads();
+	printf("%s",json_object_to_json_string(SCREENDATA(Session)));
+	FinalProtocol();
+}
+
+static void
+GetMessage()
+{
+	char *dialog,*popup,*abort;
+
+	InitProtocol();
+	RPC_GetMessage(&dialog,&popup,&abort);
+	printf("%s:%s:%s\n",dialog,popup,abort);
+	FinalProtocol();
+    g_free(dialog);
+    g_free(popup);
+    g_free(abort);
 }
 
 static void
@@ -123,10 +129,8 @@ SendEvent(
 		exit(1);
 	}
 
-	_LoadConfig();
 	InitProtocol();
 	RPC_SendEvent(obj);
-	_UpdateConfig();
 	printf("%s",json_object_to_json_string(SCREENDATA(Session)));
 	FinalProtocol();
 }
@@ -134,14 +138,8 @@ SendEvent(
 static void
 EndSession()
 {
-	_LoadConfig();
 	InitProtocol();
 	RPC_EndSession();
-	RPCID(Session)     = 0;
-	SESSIONID(Session) = "";
-	RPCURI(Session)    = "";
-	RESTURI(Session)   = "";
-	_UpdateConfig();
 	FinalProtocol();
 }
 
@@ -155,12 +153,32 @@ PrintArgError()
 	ListConfig();
 }
 
+static GOptionEntry entries[] =
+{
+	{ "session_id",0,0,G_OPTION_ARG_STRING,&Session_id,
+		"session_id",NULL},
+	{ "rpc_id",0,0,G_OPTION_ARG_INT,&Rpc_id,
+		"rpc_id",NULL},
+	{ "rpc_uri",0,0,G_OPTION_ARG_STRING,&Rpc_uri,
+		"rpc_uri",NULL},
+	{ "rest_uri",0,0,G_OPTION_ARG_STRING,&Rest_uri,
+		"rest_uri",NULL},
+	{ NULL}
+};
+
 extern	int
 main(
 	int argc,
 	char **argv)
 {
+	GOptionContext *ctx;
+
 	setlocale(LC_CTYPE,"ja_JP.UTF-8");
+
+	ctx = g_option_context_new("");
+	g_option_context_add_main_entries(ctx, entries, NULL);
+	g_option_context_parse(ctx,&argc,&argv,NULL);
+
 	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
 	gl_config_init();
 
@@ -170,10 +188,18 @@ main(
 	}
 
 	Session = g_new0(GLSession,1);
-	RPCID(Session) = 0;
 	InitMessage(NULL,NULL);
 
+	RPCID(Session)     = Rpc_id;
+	SESSIONID(Session) = Session_id;
+	RPCURI(Session)    = Rpc_uri;
+	RESTURI(Session)   = Rest_uri;
+
 	conf_idx = GetConfigIndexByDesc(argv[1]);
+	if (conf_idx == -1) {
+		fprintf(stderr,"invalid config name\n");
+		exit(1);
+	}
 	LoadConfig(conf_idx);
 
 	if (!strcmp(argv[2],"start_session")) {
@@ -188,6 +214,10 @@ main(
 		SendEvent(argv[3]);
 	} else if (!strcmp(argv[2],"end_session")) {
 		EndSession();
+	} else if (!strcmp(argv[2],"list_downloads")) {
+		ListDownloads();
+	} else if (!strcmp(argv[2],"get_message")) {
+		GetMessage();
 	} else {
 		PrintArgError();
 		exit(1);
