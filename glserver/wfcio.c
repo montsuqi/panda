@@ -38,6 +38,8 @@
 #include	<sys/wait.h>
 #include	<glib.h>
 #include	<json.h>
+#include	<unistd.h>
+#include	<errno.h>
 
 #include	"const.h"
 #include	"net.h"
@@ -89,5 +91,5 @@ ENTER_FUNC;
 	}
 	return res;
 badio:
-	Error("WFCIO_JSONRPC connection error");
+	Error("WFCIO_JSONRPC connection error:%s",strerror(errno));
 }
