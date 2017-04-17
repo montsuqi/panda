@@ -210,17 +210,13 @@ ThisAskPass()
 		}
 		return;
 	}
-	if (fDialog) {
-		return;
+	if (fSSL) {
+		if (!SaveCertPass) {
+			Pass = ShowAskPassDialog(_("certificate password:"));
+		}
 	} else {
-		if (fSSL) {
-			if (!SaveCertPass) {
-				Pass = ShowAskPassDialog(_("certificate password:"));
-			}
-		} else {
-			if (!SavePass) {
-				Pass = ShowAskPassDialog(_("password:"));
-			}
+		if (!SavePass) {
+			Pass = ShowAskPassDialog(_("password:"));
 		}
 	}
 	if (Pass == NULL) {
