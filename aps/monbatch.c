@@ -445,7 +445,7 @@ exec_shell(
 	result = json_object_new_array();
 	json_object_object_add(cmd_results,"command",result);
 
-	if ((repos_names = getenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES")) == NULL) {
+	if ((repos_names = StrDup(getenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES"))) == NULL) {
 		repos_names = "";
 	}
 
@@ -457,6 +457,11 @@ exec_shell(
 		}
 		repos_name = strtok_r(repos_names, ":", &repos_p);
 		repos_names = NULL;
+		if (repos_name) {
+			setenv("GINBEE_CUSTOM_BATCH_REPOS_NAME", repos_name, 1);
+		} else {
+			setenv("GINBEE_CUSTOM_BATCH_REPOS_NAME", "", 1);
+		}
 		child_exit_flag = FALSE;
 		child = json_object_new_object();
 		timestamp(starttime, sizeof(starttime));
