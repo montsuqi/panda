@@ -448,15 +448,27 @@ exec_shell(
 	if ((repos_names = StrDup(getenv("GINBEE_CUSTOM_BATCH_REPOS_NAMES"))) == NULL) {
 		repos_names = "";
 	}
-
+	repos_name = NULL;
 	for ( i=1; i<argc; i++ ) {
 		if (pipe(std_io) == -1 ){
 			error = strerror(errno);
 			rc = -1;
 			break;
 		}
-		repos_name = strtok_r(repos_names, ":", &repos_p);
-		repos_names = NULL;
+		if ( repos_name == NULL ) {
+			/* first */
+			repos_name = repos_names;
+		} else {
+			/* after the second time */
+			repos_name = repos_p;
+		}
+		if ( repos_name != NULL ) {
+			repos_p = strchr(repos_name, ':');
+			if (repos_p != NULL ) {
+				*repos_p = '\0';
+				repos_p ++;
+			}
+		}
 		if (repos_name) {
 			setenv("GINBEE_CUSTOM_BATCH_REPOS_NAME", repos_name, 1);
 		} else {
@@ -579,7 +591,6 @@ main(
 	if (uuid_parse(batch_id, uu) == -1) {
 		Error("MON_BATCH_ID is invalid");
 	}
-
 	dbg = GetDBG_monsys();
 	pgid = getpgrp();
 	batch = get_batch_info(batch_id, pgid);
