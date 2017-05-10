@@ -69,6 +69,7 @@ DB_OBJECTS			=		\
 	Shell.la				\
 	System.la				\
 	NativeBLOB.la			\
+	MONBLOB.la				\
 	XMLIO.la				\
 	XMLIO2.la				\
 	MSGIO.la				\
@@ -120,6 +121,16 @@ NativeBLOB_la_SOURCES	=		\
 	sysdata.c	sysdata.h		\
 	NativeBLOB.c
 NativeBLOB_la_LIBADD	=		\
+	$(top_builddir)/libs/libpanda.la \
+	$(top_builddir)/dblib/libpandadb.la
+
+MONBLOB_la_LDFLAGS	=		\
+	-avoid-version				\
+	-module						\
+	-export-dynamic
+MONBLOB_la_SOURCES	=		\
+	MONBLOB.c
+MONBLOB_la_LIBADD	=		\
 	$(top_builddir)/libs/libpanda.la \
 	$(top_builddir)/dblib/libpandadb.la
 

@@ -41,6 +41,7 @@ aps/aps
 aps/dbstub
 aps/monbatch
 aps/monblob
+aps/monblobapi
 cobol/ENUM-VALUE
 cobol/MCPMAIN.CBL
 dbstuff/dblogger

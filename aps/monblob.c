@@ -281,6 +281,7 @@ file_export(
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (!ret) {
+		fprintf(stderr,"ERROR: [%s] is not registered\n", id);
 		return NULL;
 	}
 	if (export_file == NULL) {

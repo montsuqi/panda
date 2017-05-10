@@ -56,6 +56,7 @@
 #include	"glserver.h"
 #include	"term.h"
 #include	"http.h"
+#include	"blobapi.h"
 #include	"blobreq.h"
 #include	"sysdataio.h"
 #include	"wfcio.h"
@@ -70,30 +71,7 @@
 #define REQUEST_TYPE_BLOB_IMPORT 2
 #define REQUEST_TYPE_BLOB_EXPORT 3
 #define REQUEST_TYPE_API         4
-
-typedef struct {
-	NETFILE			*fp;
-	int 			type;
-	char			host[SIZE_HOST+1];
-	char			*agent;
-	char			*server_host;
-	PacketClass		method;
-	size_t			buf_size;
-	char			*buf;
-	char			*head;
-	char			*arguments;
-	int				body_size;
-	char			*body;
-	GHashTable		*header_hash;
-	char			*user;
-	char			*pass;
-	char			*ld;
-	char			*window;
-	char			*session_id;
-	char			*oid;
-	gboolean		require_auth;
-	int				status;
-} HTTP_REQUEST;
+#define REQUEST_TYPE_BLOB_API    5
 
 HTTP_REQUEST *
 HTTP_Init(
@@ -123,6 +101,32 @@ HTTP_Init(
 	req->oid = 0;
 	req->require_auth = FALSE;
 	return req;
+}
+
+HTTP_RESPONSE *
+ResponseInit(void)
+{
+	HTTP_RESPONSE *res;
+
+	res = New(HTTP_RESPONSE);
+	res->body = NULL;
+	res->body_size = 0;
+	res->filename = NULL;
+	res->status = HTTP_SERVICE_UNAVAILABLE;
+	res->content_type = "application/octet-stream";
+	return res;
+}
+
+void
+ResponseFree(HTTP_RESPONSE *res)
+{
+	if (res == NULL) {
+		return;
+	}
+	if (res->body != NULL){
+		xfree(res->body);
+	}
+	xfree(res);
 }
 
 #define HTTP_CODE2REASON(x,y) case x: return y; break;
@@ -205,7 +209,7 @@ SendResponse(
 	time_t t = time(NULL);
 
 	sprintf(buf, "HTTP/1.1 %d %s\r\n",status,GetReasonPhrase(status));
-	Send(req->fp,buf,strlen(buf)); 
+	Send(req->fp,buf,strlen(buf));
 	if (fDebug) {
 		Warning("%s",buf);
 	}
@@ -215,9 +219,9 @@ SendResponse(
 	if (strftime(date, sizeof(date),
 			"%a, %d %b %Y %H:%M:%S GMT", cur_p) != 0) {
 		sprintf(buf, "Date: %s\r\n", date);
-		Send(req->fp, buf, strlen(buf)); 
+		Send(req->fp, buf, strlen(buf));
 	}
-	
+
 	sprintf(buf, "Server: glserver/%s\r\n", VERSION);
 	Send(req->fp, buf, strlen(buf));
 
@@ -256,7 +260,7 @@ SendResponse(
 	}
 	Flush(req->fp);
 }
-	
+
 int
 TryRecv(
 	HTTP_REQUEST *req)
@@ -267,10 +271,10 @@ TryRecv(
 		SendResponse(req,HTTP_REQUEST_ENTITY_TOO_LARGE,NULL,0,NULL);
 		Error("over max request size :%d", MAX_REQ_SIZE);
 	}
-	size = RecvAtOnce(req->fp, 
-		req->buf + req->buf_size , 
+	size = RecvAtOnce(req->fp,
+		req->buf + req->buf_size ,
 		MAX_REQ_SIZE - req->buf_size);
-	ON_IO_ERROR(req->fp,badio);	
+	ON_IO_ERROR(req->fp,badio);
 	if (size >= 0) {
 		req->buf_size += size;
 		req->buf[req->buf_size] = '\0';
@@ -332,6 +336,23 @@ ParseReqLine(HTTP_REQUEST *req)
 	if (g_regex_match_simple("^post\\s+/rpc/*\\s",line,G_REGEX_CASELESS,0)) {
 		req->type = REQUEST_TYPE_JSONRPC;
 		req->method = HTTP_POST;
+		free(line);
+		return;
+	}
+
+	/* New blob api */
+	re = g_regex_new("^(get|post)\\s+/blobapi/([a-zA-Z0-9-]+)\\s",G_REGEX_CASELESS,0,NULL);
+	if (g_regex_match(re,line,0,&match)) {
+		if (*line == 'g' || *line == 'G') {
+			req->method = HTTP_GET;
+		} else {
+			req->method = HTTP_POST;
+		}
+		req->session_id = g_match_info_fetch(match,2);
+		req->type = REQUEST_TYPE_BLOB_API;
+		req->require_auth = TRUE;
+		g_match_info_free(match);
+		g_regex_unref(re);
 		free(line);
 		return;
 	}
@@ -756,6 +777,37 @@ BLOBExportHandler(
 	return TRUE;
 }
 
+static gboolean
+BLOBAPIHandler(
+	HTTP_REQUEST *req)
+{
+	HTTP_RESPONSE *res;
+	char disposition[4096];
+
+	res = ResponseInit();
+	GetBlobAPI(req, res);
+
+	if (res->status == HTTP_SERVICE_UNAVAILABLE) {
+		SendResponse(req,HTTP_SERVICE_UNAVAILABLE,NULL,0,NULL);
+	}else
+	if (res->body == NULL || res->body_size == 0) {
+		SendResponse(req,HTTP_NOT_FOUND,NULL,0,NULL);
+	}else
+	if (res->filename == NULL) {
+		SendResponse(req,HTTP_OK,res->body,res->body_size,
+					 "Content-Type",res->content_type,
+					 NULL);
+	} else {
+		snprintf(disposition, sizeof(disposition), "attachment; filename=\"%s\"",res->filename);
+		SendResponse(req,HTTP_OK,res->body,res->body_size,
+					 "Content-Type",res->content_type,
+					 "Content-Disposition", disposition,
+					 NULL);
+	}
+	ResponseFree(res);
+	return TRUE;
+}
+
 static	json_object*
 MakeJSONResponseTemplate(
 	json_object *obj)
@@ -1115,6 +1167,8 @@ _HTTP_Method(
 		return BLOBImportHandler(req);
 	case REQUEST_TYPE_BLOB_EXPORT:
 		return BLOBExportHandler(req);
+	case REQUEST_TYPE_BLOB_API:
+		return BLOBAPIHandler(req);
 	}
 	Error("do not reach");
 }
@@ -1164,7 +1218,7 @@ PrepareNextRequest(
 		req->buf_size = 0;
 		req->head = req->buf;
 		memset(req->buf , 0, MAX_REQ_SIZE);
-		ON_IO_ERROR(req->fp,badio);	
+		ON_IO_ERROR(req->fp,badio);
 	}
 	return TRUE;
 badio:
@@ -1178,13 +1232,13 @@ HTTP_Method(
 	HTTP_REQUEST *req;
 	struct sigaction sa;
 
-	memset(&sa, 0, sizeof(struct sigaction));  
+	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = timeout;
 	sa.sa_flags |= SA_RESTART;
 	sigemptyset (&sa.sa_mask);
 	if(sigaction(SIGALRM, &sa, NULL) != 0) {
 		Error("sigaction(2) failure");
-	} 
+	}
 
 	req = HTTP_Init(fpComm);
 	while (_HTTP_Method(req)) {

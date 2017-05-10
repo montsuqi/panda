@@ -87,6 +87,39 @@
 #define HTTP_BANDWIDTH_LIMIT_EXCEEDED 509
 #define HTTP_NOT_EXTENDED 510
 
+typedef struct {
+	NETFILE			*fp;
+	int 			type;
+	char			host[SIZE_HOST+1];
+	char			*agent;
+	char			*server_host;
+	PacketClass		method;
+	size_t			buf_size;
+	char			*buf;
+	char			*head;
+	char			*arguments;
+	int				body_size;
+	char			*body;
+	GHashTable		*header_hash;
+	char			*user;
+	char			*pass;
+	char			*ld;
+	char			*window;
+	char			*session_id;
+	char			*oid;
+	gboolean		require_auth;
+	int				status;
+} HTTP_REQUEST;
+
+
+typedef struct {
+	int				body_size;
+	char			*body;
+	char			*content_type;
+	char			*filename;
+	int				status;
+} HTTP_RESPONSE;
+
 void HTTP_Method(NETFILE *fpComm);
 
 #endif
