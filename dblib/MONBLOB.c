@@ -69,6 +69,7 @@ SendMONBLOBValue(
 	fp = SocketToNet(fd);
 	buf = xmalloc(JSON_SizeValue(NULL,val));
 	JSON_PackValue(NULL,buf,val);
+	printf("json:%s\n",buf);
 	SendString(fp, buf);
 	xfree(buf);
 	close(_fd);
@@ -181,7 +182,8 @@ _ImportBLOB(
 {
 	ValueStruct	*ret;
 	ValueStruct	*val;
-	char *id;
+	char *id = NULL;
+	char *filename = NULL;
 	pid_t	pid;
 	char tempdir[PATH_MAX];
 	char tempsocket[PATH_MAX];
@@ -191,7 +193,10 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		id = ValueToString(val,dbg->coding);
 	}
-
+	if ((val = GetItemLongName(args, "filename")) != NULL) {
+		filename = ValueToString(val,dbg->coding);
+	}
+	printf("blobimport filename:%s, id:%s\n",filename, id);
 	snprintf(tempdir, PATH_MAX, "/tmp/blobapi_XXXXXX");
 	if (!mkdtemp(tempdir)){
 		Error("mkdtemp: %s", strerror(errno));
@@ -203,7 +208,7 @@ ENTER_FUNC;
 	}
 	if (pid == 0){
 		/* child */
-		if (execl(cmd,MONBLOB,"-import", id,"-socket", tempsocket, NULL) < 0) {
+		if (execl(cmd,MONBLOB,"-importid", id,"-import", filename, "-socket", tempsocket, NULL) < 0) {
 			Error("execl: %s:%s", strerror(errno), cmd);
 		}
 	}

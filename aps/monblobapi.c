@@ -202,6 +202,7 @@ file_to_bytea(
 		,   bsize
 		,	left;
 
+
 	if		(  stat(filename,&stbuf) != 0  ) {
 		fprintf(stderr,"%s: %s\n",  filename, strerror(errno));
 		return NULL;
@@ -236,7 +237,7 @@ file_import(
 	DBG_Struct	*dbg,
 	char *id,
 	char *filename,
-	char *socket)
+	NETFILE *fp)
 {
 	char	*sql, *sql_p;
 	int lifetype;
@@ -246,12 +247,10 @@ file_import(
 	LargeByteString	*lbs;
 	char	importtime[50];
 	uuid_t	u;
-	NETFILE *fp;
 	char *recv;
 	char *regfilename;
 	json_object *json_res;
 
-	fp = ConnectBlobAPI(socket);
 	recv = RecvStringNew(fp);
 	json_res = json_tokener_parse(recv);
 	xfree(recv);
@@ -271,18 +270,17 @@ file_import(
 			return NULL;
 		}
 	} else {
-		id = xmalloc(SIZE_TERM+1);
-		uuid_generate(u);
-		uuid_unparse(u, id);
-		sql = xmalloc(sql_len);
-		snprintf(sql, sql_len, "INSERT INTO monblobapi (id, status) VALUES('%s', '%d');", id , 503);
-		ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-		xfree(sql);
+		if (id == NULL) {
+			id = xmalloc(SIZE_TERM+1);
+			uuid_generate(u);
+			uuid_unparse(u, id);
+			sql = xmalloc(sql_len);
+			snprintf(sql, sql_len, "INSERT INTO monblobapi (id, status) VALUES('%s', '%d');", id , 503);
+			ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+			xfree(sql);
+		}
 	}
 	SendString(fp, id);
-	DisconnectBlobAPI(fp);
-
-
 	if ((lbs = file_to_bytea(dbg, filename)) == NULL){
 		return NULL;
 	}
@@ -390,9 +388,14 @@ blob_import(
 	char *filename,
 	char *socket)
 {
+	NETFILE *fp;
+
+	fp = ConnectBlobAPI(socket);
+
 	TransactionStart(dbg);
-	id = file_import(dbg, id, filename, socket);
+	id = file_import(dbg, id, filename, fp);
 	TransactionEnd(dbg);
+	DisconnectBlobAPI(fp);
 
 	return id;
 }
@@ -420,7 +423,7 @@ main(
 	struct stat sb;
 	DBG_Struct	*dbg;
 	int i;
-
+	printf("monblobapi start\n");
 	SetDefault();
 	GetOption(option,argc,argv,NULL);
 	InitSystem();
@@ -449,7 +452,7 @@ main(
 		exit(1);
 	}
 	monblobapi_setup(dbg);
-
+	printf("start ImportID:%s, ImportFile:%s\n", ImportID, ImportFile);
 	if (ImportFile) {
 		blob_import(dbg, ImportID, ImportFile, Socket);
 	} else {
