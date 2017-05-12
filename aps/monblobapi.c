@@ -423,7 +423,6 @@ main(
 	struct stat sb;
 	DBG_Struct	*dbg;
 	int i;
-	printf("monblobapi start\n");
 	SetDefault();
 	GetOption(option,argc,argv,NULL);
 	InitSystem();
@@ -452,7 +451,6 @@ main(
 		exit(1);
 	}
 	monblobapi_setup(dbg);
-	printf("start ImportID:%s, ImportFile:%s\n", ImportID, ImportFile);
 	if (ImportFile) {
 		blob_import(dbg, ImportID, ImportFile, Socket);
 	} else {

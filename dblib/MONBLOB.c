@@ -69,7 +69,6 @@ SendMONBLOBValue(
 	fp = SocketToNet(fd);
 	buf = xmalloc(JSON_SizeValue(NULL,val));
 	JSON_PackValue(NULL,buf,val);
-	printf("json:%s\n",buf);
 	SendString(fp, buf);
 	xfree(buf);
 	close(_fd);
@@ -196,7 +195,6 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "filename")) != NULL) {
 		filename = ValueToString(val,dbg->coding);
 	}
-	printf("blobimport filename:%s, id:%s\n",filename, id);
 	snprintf(tempdir, PATH_MAX, "/tmp/blobapi_XXXXXX");
 	if (!mkdtemp(tempdir)){
 		Error("mkdtemp: %s", strerror(errno));
