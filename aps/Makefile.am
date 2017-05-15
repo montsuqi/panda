@@ -18,7 +18,7 @@
 
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = monbatch monblob
+bin_PROGRAMS = monbatch monblob monblobapi
 sbin_PROGRAMS = aps dbstub
 pkglib_LTLIBRARIES = MONFUNC.la $(HANDLER_OBJECTS)
 
@@ -36,6 +36,14 @@ monblob_DEPENDENCIES	=					\
 	$(top_builddir)/defaults.h			\
 	$(top_builddir)/libs/libpanda.la
 monblob_LDFLAGS	=			\
+	-export-dynamic
+
+monblobapi_SOURCES = \
+	monblobapi.c
+monblobapi_DEPENDENCIES	=					\
+	$(top_builddir)/defaults.h			\
+	$(top_builddir)/libs/libpanda.la
+monblobapi_LDFLAGS	=			\
 	-export-dynamic
 
 libpandadbincludedir = $(pkgincludedir)
