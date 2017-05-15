@@ -211,7 +211,7 @@ ENTER_FUNC;
 		}
 	}
 	/* parent */
-	SendMONBLOBValue(val, tempsocket);
+	SendMONBLOBValue(args, tempsocket);
 	rmdir(tempdir);
 LEAVE_FUNC;
 	return	(ret);

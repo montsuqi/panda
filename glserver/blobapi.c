@@ -73,12 +73,12 @@ BlobToResponse(
 		res->status = HTTP_OK;
 	}
 
-	json_object *json_contenttype;
-	char *contenttype;
-	json_contenttype = json_object_object_get(json_res,"content-type");
-	if (CheckJSONObject(json_contenttype,json_type_string)) {
-		contenttype = (char*)json_object_get_string(json_contenttype);
-		res->content_type = contenttype;
+	json_object *json_content_type;
+	char *content_type;
+	json_content_type = json_object_object_get(json_res,"content-type");
+	if (CheckJSONObject(json_content_type,json_type_string)) {
+		content_type = (char*)json_object_get_string(json_content_type);
+		res->content_type = content_type;
 	}
 
 	json_object *json_filename;

@@ -36,6 +36,7 @@ static	char	*ImportFile;
 static	char	*ImportID;
 static	char	*ExportID;
 static	char	*Socket;
+static	Bool	fSetup;
 
 static	char	*OutputFile;
 static	unsigned int	LifeType;
@@ -43,6 +44,8 @@ static	unsigned int	LifeType;
 static	ARG_TABLE	option[] = {
 	{	"dir",		STRING,		TRUE,	(void*)&Directory,
 		N_("directory file name")						},
+	{	"setup",	BOOLEAN,	FALSE,	(void*)&fSetup,
+		N_("table create")								},
 	{	"socket",	STRING,		TRUE,	(void*)&Socket,
 		"Socket file"									},
 	{	"import",	STRING,		TRUE,	(void*)&ImportFile,
@@ -58,6 +61,7 @@ static	void
 SetDefault(void)
 {
 	Directory = NULL;
+	fSetup = FALSE;
 	ImportFile = NULL;
 	ExportID = NULL;
 	OutputFile = NULL;
@@ -164,7 +168,7 @@ create_monblobapi(
 	p += sprintf(p, "       importtime  timestamp  with time zone,");
 	p += sprintf(p, "       lifetype    int,");
 	p += sprintf(p, "       filename    varchar(4096),");
-	p += sprintf(p, "       contenttype varchar(1024),");
+	p += sprintf(p, "       content_type varchar(1024),");
 	p += sprintf(p, "       status		int,");
 	p += sprintf(p, "       file_data   bytea");
 	p += sprintf(p, ");");
@@ -285,13 +289,13 @@ file_import(
 		return NULL;
 	}
 
-	json_object *json_contenttype;
-	char *contenttype;
-	json_contenttype = json_object_object_get(json_res,"content-type");
-	if (CheckJSONObject(json_contenttype,json_type_string)) {
-		contenttype = (char*)json_object_get_string(json_contenttype);
+	json_object *json_content_type;
+	char *content_type;
+	json_content_type = json_object_object_get(json_res,"content_type");
+	if (CheckJSONObject(json_content_type,json_type_string)) {
+		content_type = (char*)json_object_get_string(json_content_type);
 	} else {
-		contenttype = "application/octet-stream";
+		content_type = "application/octet-stream";
 	}
 
 	json_object *json_filename;
@@ -307,8 +311,8 @@ file_import(
 	sql = xmalloc(LBS_Size(lbs) + sql_len);
 	sql_p = sql;
 	size = snprintf(sql_p, sql_len, \
-					"UPDATE monblobapi SET importtime = '%s', lifetype = '%d', filename = '%s', contenttype = '%s', status= '%d', file_data ='", \
-					importtime, lifetype, regfilename, contenttype, 200);
+					"UPDATE monblobapi SET importtime = '%s', lifetype = '%d', filename = '%s', content_type = '%s', status= '%d', file_data ='", \
+					importtime, lifetype, regfilename, content_type, 200);
 	sql_p = sql_p + size;
 	strncpy(sql_p, LBS_Body(lbs), LBS_Size(lbs));
 	sql_p = sql_p + LBS_Size(lbs) - 1;
@@ -336,7 +340,7 @@ file_export(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT id, filename, contenttype, status, file_data FROM monblobapi WHERE id = '%s'", id);
+			 "SELECT id, filename, content_type, status, file_data FROM monblobapi WHERE id = '%s'", id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -358,20 +362,18 @@ file_export(
 		json_object_object_add(obj,"id",json_object_new_string(id));
 		filename = ValueToString(GetItemLongName(ret,"filename"), dbg->coding);
 		json_object_object_add(obj,"filename",json_object_new_string(filename));
-		char *contenttype;
-		contenttype = ValueToString(GetItemLongName(ret,"contenttype"),dbg->coding);
-		printf("contenttype : %s\n", contenttype);
-		if (contenttype == NULL || strlen(contenttype) == 0 ) {
+		char *content_type;
+		content_type = ValueToString(GetItemLongName(ret,"content_type"),dbg->coding);
+		if (content_type == NULL || strlen(content_type) == 0 ) {
 			json_object_object_add(obj,"content-type",json_object_new_string("application/octet-stream"));
 		} else {
-			json_object_object_add(obj,"content-type",json_object_new_string(contenttype));
+			json_object_object_add(obj,"content-type",json_object_new_string(content_type));
 		}
 		json_object_object_add(obj,"status",json_object_new_int(200));
 		FreeValueStruct(recval);
 	}
 	str = (char*)json_object_to_json_string(obj);
 	fp = ConnectBlobAPI(socket);
-	printf("json:%s\n", str);
 	SendString(fp, str);
 	SendValue(fp, tvalue);
 	Flush(fp);
@@ -415,6 +417,18 @@ blob_export(
 	return filename;
 }
 
+void
+setup_only()
+{
+	DBG_Struct	*dbg;
+	dbg = GetDBG_monsys();
+	dbg->dbt = NewNameHash();
+	if (OpenDB(dbg) != MCP_OK ) {
+		exit(1);
+	}
+	monblobapi_setup(dbg);
+}
+
 extern	int
 main(
 	int		argc,
@@ -426,6 +440,11 @@ main(
 	SetDefault();
 	GetOption(option,argc,argv,NULL);
 	InitSystem();
+
+	if (fSetup) {
+		setup_only();
+		exit(0);
+	}
 	if ((Socket == NULL) || ((ExportID == NULL) && (ImportFile == NULL)) ) {
 		PrintUsage(option,argv[0],NULL);
 		exit(1);
