@@ -45,14 +45,12 @@
 #include	"protocol.h"
 #include	"bd_config.h"
 #include	"const.h"
-#include	"message.h"
-#include	"debug.h"
 
 static int conf_idx;
 static int Rpc_id = 0;
-static char *Session_id = NULL;
-static char *Rpc_uri = NULL;
-static char *Rest_uri = NULL;
+static char *Session_id = "";
+static char *Rpc_uri = "";
+static char *Rest_uri = "";
 
 
 static void
@@ -188,7 +186,6 @@ main(
 	}
 
 	Session = g_new0(GLSession,1);
-	InitMessage(NULL,NULL);
 
 	RPCID(Session)     = Rpc_id;
 	SESSIONID(Session) = Session_id;

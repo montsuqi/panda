@@ -148,7 +148,7 @@ bd_component_set_value(
   gtk_entry_set_text(GTK_ENTRY (self->style),gl_config_get_string(n,"style"));
   gtk_entry_set_text(GTK_ENTRY(self->gtkrc),gl_config_get_string(n,"gtkrc"));
   gtk_font_button_set_font_name(GTK_FONT_BUTTON(self->fontbutton),gl_config_get_string(n,"fontname"));
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->mlog), gl_config_get_boolean(n,"mlog"));
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->debug), gl_config_get_boolean(n,"debug"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->keybuff), gl_config_get_boolean(n,"keybuff"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->timer), gl_config_get_boolean(n,"timer"));
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(self->imkanaoff), gl_config_get_boolean(n,"im_kana_off"));
@@ -213,7 +213,7 @@ bd_component_value_to_config(
   gl_config_set_string(n,"style", gtk_entry_get_text(GTK_ENTRY(self->style)));
   gl_config_set_string(n,"gtkrc", gtk_entry_get_text(GTK_ENTRY(self->gtkrc)));
   gl_config_set_string(n,"fontname", gtk_font_button_get_font_name(GTK_FONT_BUTTON(self->fontbutton)));
-  gl_config_set_boolean(n,"mlog", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->mlog)));
+  gl_config_set_boolean(n,"debug", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->debug)));
   gl_config_set_boolean(n,"keybuff", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->keybuff)));
   gl_config_set_boolean(n,"im_kana_off", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->imkanaoff)));
   gl_config_set_boolean(n,"timer", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(self->timer)));
@@ -461,13 +461,6 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Output Logfile"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  self->mlog = check;
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
 
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
   check = gtk_check_button_new_with_label (_("Enable Keybuffer"));
@@ -513,6 +506,14 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label (_("Debug"));
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->debug = check;
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
+
   // info
   table = gtk_table_new (2, 1, FALSE);
   gtk_container_set_border_width (GTK_CONTAINER (table), 5);
@@ -529,7 +530,7 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
-  label = gtk_label_new ("Copyright (C) 2014 ORCA Project");
+  label = gtk_label_new ("Copyright (C) 2017 ORCA Project");
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
   gtk_container_add (GTK_CONTAINER (alignment), label);
   gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,

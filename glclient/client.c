@@ -38,6 +38,9 @@
 #include	<sys/time.h>
 #include	<sys/wait.h>
 #include	<dirent.h>
+#include	<uuid/uuid.h>
+#include	<time.h>
+
 #include	<gtk/gtk.h>
 
 #define		MAIN
@@ -48,34 +51,26 @@
 #include	"widgetcache.h"
 #include	"desktop.h"
 #include	"bootdialog.h"
-#include	"message.h"
-#include	"debug.h"
 #include	"action.h"
-#include	"dialogs.h"
 #include	"gettext.h"
-
-static void GLMessage(int level, char *file, int line, char *msg);
+#include	"logger.h"
+#include	"utils.h"
+#include	"dialogs.h"
 
 static	void
-MakeDirs(void)
+MakeTempDir(void)
 {
-#if 1
-	gchar *template;
-	gchar *tmpdir;
-	gchar *p;
+	uuid_t u;
+	gchar *dir,buf[64];
 
-	tmpdir = g_strconcat(g_get_home_dir(),"/.glclient/tmp",NULL);
-	MakeDir(tmpdir,0700);
-	template = g_strconcat(tmpdir,"/XXXXXX",NULL);
-	g_free(tmpdir);
-	if ((p = mkdtemp(template)) == NULL) {
-		Error(_("mkdtemp failure"));
-	}
-	TempDir = p; 
-#else
-	/* glib >= 2.26*/
-	TempDir = g_mkdtemp(g_strdup("glclient_XXXXXX"));
-#endif
+	dir = g_strconcat(g_get_home_dir(),"/.glclient/tmp",NULL);
+	MakeDir(dir,0700);
+	uuid_generate(u);
+	uuid_unparse(u,buf);
+	TempDir = g_strconcat(dir,"/",buf,NULL);
+	MakeDir(TempDir,0700);
+	g_free(dir);
+	fprintf(stderr,"tempdir: %s\n",TempDir);
 }
 
 extern	void 
@@ -122,29 +117,12 @@ StopClient ()
 	SaveWidgetCache();
 }
 
-static void 
-GLMessage(int level, char *file, int line, char *msg)
-{
-	switch(level){
-	  case MESSAGE_WARN:
-		__Message(level, file, line, msg);
-		break;
-	  case MESSAGE_ERROR:
-		ShowErrorDialog(msg);
-		break;
-	  default:
-		__Message(level, file, line, msg);
-		break;
-	}
-}
-
 static	void
 InitSystem()
 {
 	char *p;
 	int delay;
 
-	InitMessage("glclient",NULL);
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
@@ -182,7 +160,8 @@ InitSystem()
 		CancelScaleWindow = FALSE;
 	}
 
-	MakeDirs();
+	MakeTempDir();
+	InitLogger();
 	InitDesktop();
 
 	Session = g_new0(GLSession,1);
@@ -192,6 +171,7 @@ InitSystem()
 static	void
 FinalSystem(void)
 {
+	FinalLogger();
 	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
 		rm_r(TempDir);
 	}
@@ -203,7 +183,7 @@ ThisAskPass()
 {
 	if (fPKCS11) {
 		if (!fSavePIN) {
-			PIN = ShowAskPINDialog(_("pin:"));
+			PIN = AskPINDialog(_("pin:"));
 		}
 		if (PIN == NULL) {
 			exit(0);
@@ -212,11 +192,11 @@ ThisAskPass()
 	}
 	if (fSSL) {
 		if (!SaveCertPass) {
-			Pass = ShowAskPassDialog(_("certificate password:"));
+			Pass = AskPassDialog(_("certificate password:"));
 		}
 	} else {
 		if (!SavePass) {
-			Pass = ShowAskPassDialog(_("password:"));
+			Pass = AskPassDialog(_("password:"));
 		}
 	}
 	if (Pass == NULL) {
@@ -271,9 +251,11 @@ main(
 		LoadConfigByDesc(ConfigName);
 	}
 
-	InitStyle();
-	SetMessageFunction(GLMessage);
+	if (fDebug) {
+		SetLogLevel(LOG_DEBUG);
+	}
 
+	InitStyle();
 	ThisAskPass();
 
 	StartClient();

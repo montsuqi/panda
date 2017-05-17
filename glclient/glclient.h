@@ -46,6 +46,7 @@ typedef struct {
 	char			*AuthURI;
 	char			*RPCURI;
 	char			*RESTURI;
+	char			*PUSHURI;
 	char			*ProtocolVersion;
 	char			*AppVersion;
 	char			*title;
@@ -63,6 +64,7 @@ typedef struct {
 #define	AUTHURI(session)		((session)->AuthURI)
 #define RPCURI(session)			((session)->RPCURI)
 #define RESTURI(session)		((session)->RESTURI)
+#define PUSHURI(session)		((session)->PUSHURI)
 #define PROTOVER(session)		((session)->ProtocolVersion)
 #define APPVER(session)			((session)->AppVersion)
 #define	TITLE(session)			((session)->title)
@@ -91,6 +93,10 @@ extern	void		ExitSystem(void);
 extern  void		SetSessionTitle(const char *title);
 extern  void		SetSessionBGColor(const char *color);
 
+GLOBAL	char		*LogFile;
+
+GLOBAL	char		*ConfigName;
+GLOBAL	char		*ConfigName;
 GLOBAL	char		*ConfigName;
 GLOBAL	Bool		DelayDrawWindow;
 GLOBAL	Bool		CancelScaleWindow;
@@ -105,7 +111,7 @@ GLOBAL	char		*Pass;
 GLOBAL	Bool		SavePass;
 GLOBAL	char		*Style; 
 GLOBAL	char		*Gtkrc; 
-GLOBAL	Bool		fMlog;
+GLOBAL	Bool		fDebug;
 GLOBAL	Bool		fKeyBuff;
 GLOBAL	Bool		fIMKanaOff;
 GLOBAL	Bool		fTimer;

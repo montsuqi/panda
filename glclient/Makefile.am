@@ -37,7 +37,8 @@ base_sources =						\
 	styleLex.c		styleLex.h		\
 	styleParser.c	styleParser.h	\
 	notify.c		notify.h		\
-	widgetOPS.c		widgetOPS.h	
+	widgetOPS.c		widgetOPS.h		\
+	logger.c		logger.h
 
 base_dependencies =						\
 	$(top_builddir)/libs/libpanda.la
@@ -83,6 +84,7 @@ cpanda_sources =	\
 	bd_config.c		bd_config.h		\
 	protocol.c		protocol.h		\
 	utils.c			utils.h			\
+	logger.c		logger.h		\
 	cpanda.c
 
 cpanda_SOURCES =		\

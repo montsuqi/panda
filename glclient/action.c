@@ -44,7 +44,6 @@
 #define		ACTION_MAIN
 #include	"bd_config.h"
 #include	"action.h"
-#include	"dialogs.h"
 #include	"styleParser.h"
 #include	"gettext.h"
 #include	"widgetcache.h"
@@ -53,8 +52,8 @@
 #include	"notify.h"
 #include	"download.h"
 #include	"print.h"
-#include	"message.h"
-#include	"debug.h"
+#include	"logger.h"
+#include	"dialogs.h"
 
 /* GdkPixbuf RGBA C-Source image dump 1-byte-run-length-encoded */
 
@@ -278,40 +277,35 @@ RegisterChangedHandler(
 	gpointer data)
 {
   struct changed_hander *p = xmalloc (sizeof (struct changed_hander));
-ENTER_FUNC;
 	p->object = object;
 	p->func = func;
 	p->data = data;
 	p->next = changed_hander_list;
 	p->block_flag = FALSE;
 	changed_hander_list = p;
-LEAVE_FUNC;
 }
 
 extern void
 BlockChangedHandlers(void)
 {
-  struct changed_hander *p;
+	struct changed_hander *p;
 
-ENTER_FUNC;
 	for (p = changed_hander_list; p != NULL; p = p->next) {
 		p->block_flag = TRUE;		 
 		g_signal_handlers_block_by_func (p->object, p->func, p->data);
 	}
-LEAVE_FUNC;
 }
 
 extern void
 UnblockChangedHandlers(void)
 {
-  struct changed_hander *p;
-ENTER_FUNC;
+	struct changed_hander *p;
+
 	for (p = changed_hander_list; p != NULL; p = p->next) {
 		if (p->block_flag) {
 			g_signal_handlers_unblock_by_func (p->object, p->func, p->data);
 		}
 	}
-LEAVE_FUNC;
 }
 
 extern	GtkWidget	*
@@ -319,9 +313,8 @@ GetWindow(
 	GtkWidget	*widget)
 {
 	GtkWidget	*window;
-ENTER_FUNC;
+
 	window = gtk_widget_get_toplevel(widget);
-LEAVE_FUNC;
 	return (window);
 }
 
@@ -330,13 +323,11 @@ GetWindowName(
 	GtkWidget	*widget)
 {
 	static char	wname[SIZE_LONGNAME];
-ENTER_FUNC;
 	/*	This logic is escape code for GTK bug.	*/
 	strcpy(wname,glade_get_widget_long_name(widget));
 	if (strchr(wname,'.')) {
 		*(strchr(wname,'.')) = 0;
 	}
-LEAVE_FUNC;
 	return (wname);
 }
 
@@ -364,7 +355,6 @@ ResetTimers(
 	WindowData *data;
 	GList *l;
 
-ENTER_FUNC;
 	if ((data = GetWindowData(wname)) == NULL) {
 		// FIXME sometimes comes here.
 		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
@@ -374,7 +364,6 @@ ENTER_FUNC;
 		gtk_widget_show(GTK_WIDGET(l->data));
 		gtk_panda_timer_reset (GTK_PANDA_TIMER(l->data));
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -409,7 +398,6 @@ _AddChangedWidget(
 	char		*tail;
 	WindowData	*wdata;
 
-ENTER_FUNC;
 	name = (char *)glade_get_widget_long_name(widget);
 	tail = strchr(name, '.');
 	if (tail == NULL) {
@@ -424,7 +412,6 @@ ENTER_FUNC;
 		}
 	}
 	free(wname);
-LEAVE_FUNC;
 }
 
 extern	void
@@ -440,7 +427,7 @@ extern	void
 ClearKeyBuffer(void)
 {
 	GdkEvent	*event; 
-ENTER_FUNC;
+
 	while( (event = gdk_event_get()) != NULL) {
 		if ( (event->type == GDK_KEY_PRESS ||
 			  event->type == GDK_KEY_RELEASE) ) {
@@ -450,7 +437,6 @@ ENTER_FUNC;
  			gdk_event_free(event); 
 		}
 	}
-LEAVE_FUNC;
 }
 
 extern	void
@@ -510,9 +496,7 @@ CreateWindow(
 	GtkWidget	*window;
 	GtkWidget	*child;
 
-ENTER_FUNC;
 	if (GetWindowData(wname) != NULL) {
-		dbgprintf("%s already in WindowTable", wname);
 		return NULL;
 	}
 	xml = glade_xml_new_from_memory((char*)gladedata,strlen(gladedata),NULL,NULL);
@@ -542,15 +526,12 @@ ENTER_FUNC;
 	gtk_widget_show_all(child);
 	RegisterWidgets(child,wdata);
 	if (IsDialog(window)) {
-		dbgprintf("create dialog:%s\n", wname);
 		gtk_container_add(GTK_CONTAINER(window), child); 
 		wdata->fWindow = FALSE;
 		SetWindowIcon(GTK_WINDOW(window));
 	} else {
-		dbgprintf("create window:%s\n", wname);
 		wdata->fWindow = TRUE;
 	}
-LEAVE_FUNC;
 	return wdata;
 }
 
@@ -560,7 +541,6 @@ SwitchWindow(
 {
 	GtkWidget	*child,*org;
 
-ENTER_FUNC;
 	child = (GtkWidget *)g_object_get_data(G_OBJECT(window), "child");
 	g_return_if_fail(child != NULL);
 
@@ -581,9 +561,6 @@ ENTER_FUNC;
 #else
 	gtk_window_set_resizable(GTK_WINDOW(TopWindow), TRUE);
 #endif
-
-
-LEAVE_FUNC;
 }
 
 extern	void
@@ -596,8 +573,6 @@ CloseWindow(
 	int			i;
 	GList		*wlist;
 
-ENTER_FUNC;
-	dbgprintf("close window:%s\n", wname);
 	if ((data = GetWindowData(wname)) == NULL) {
 		// FIXME sometimes comes here.
 		fprintf(stderr,"%s:%d data %s is NULL\n", __FILE__, __LINE__, wname);
@@ -635,7 +610,6 @@ ENTER_FUNC;
 			}
 		}
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -664,8 +638,6 @@ ShowWindow(
 	GtkWidget	*window;
 	GSList		*list;
 
-ENTER_FUNC;
-	dbgprintf("show window:%s\n", wname);
 	if ((data = GetWindowData(wname)) == NULL) {
 		// FIXME sometimes comes here.
 		g_warning("%s:%d data is NULL for %s\n", __FILE__, __LINE__,wname);
@@ -675,7 +647,6 @@ ENTER_FUNC;
 	g_return_if_fail(window != NULL);
 
 	if (data->fWindow) {
-	dbgmsg("show primari window\n");
 		gtk_widget_show(TopWindow);
 		gtk_widget_grab_focus(TopWindow);
 		if (strcmp(wname, gtk_widget_get_name(TopWindow))) {
@@ -698,7 +669,6 @@ ENTER_FUNC;
 			ReDrawTopWindow();
 		}
 	} else {
-	dbgmsg("show dialog\n");
 		GtkWidget *parent = TopWindow;
 		int i;
 
@@ -724,7 +694,6 @@ ENTER_FUNC;
 			ReDrawTopWindow();
 		}
 	}
-LEAVE_FUNC;
 }
 
 
@@ -734,7 +703,7 @@ ShowBusyCursor(
 {
 	static GdkCursor *busycursor = NULL;
 	GtkWidget *window;
-ENTER_FUNC;
+
 	if (widget == NULL) {
 		return;
 	}
@@ -747,13 +716,11 @@ ENTER_FUNC;
 	gdk_window_set_cursor(window->window,busycursor);
 	gdk_flush ();
 #endif
-LEAVE_FUNC;
 }
 
 extern	void
 HideBusyCursor(GtkWidget *widget)
 {
-ENTER_FUNC;
 	GtkWidget	*window;
 	if (widget == NULL) {
 		return;
@@ -763,7 +730,6 @@ ENTER_FUNC;
 #ifndef LIBGTK_3_0_0
 	gdk_window_set_cursor(window->window,NULL);
 #endif
-LEAVE_FUNC;
 }
 
 static GtkWidget*
@@ -1087,6 +1053,7 @@ UI_Init(int argc,
 	gtk_set_locale();
 #endif
 	glade_init();
+	SetErrorFunc(ErrorDialog);
 }
 
 extern	void
@@ -1163,10 +1130,10 @@ Ping()
 	RPC_GetMessage(&dialog,&popup,&abort);
 	if (strlen(abort)>0) {
 		RPC_EndSession();
-		ShowInfoDialog(abort);
+		InfoDialog(abort);
 		exit(1);
 	} else if (strlen(dialog)>0) {
-		ShowInfoDialog(dialog);
+		InfoDialog(dialog);
 	} else if (strlen(popup)>0) {
 		Notify(_("glclient message notify"),popup,"gtk-dialog-info",0);
 	}
@@ -1371,9 +1338,7 @@ CheckCloseWindow(
 		return;
 	}
 	if (strcmp("new",put_type) && strcmp("current",put_type)) {
-		if (fMlog) {
-			MessageLogPrintf("close window[%s] put_type[%s]\n",wname,put_type);
-		}
+		Debug("close window[%s] put_type[%s]",wname,put_type);
 		CloseWindow(wname);
 	}
 }
@@ -1559,9 +1524,7 @@ UpdateWindow(
 			ShowWindow(wname);
 		}
 		ResetTimers((char*)wname);
-		if (fMlog) {
-			MessageLogPrintf("show window[%s] put_type[%s]\n",wname,put_type);
-		}
+		Debug("show window[%s] put_type[%s]",wname,put_type);
 	}
 }
 
@@ -1572,9 +1535,7 @@ UpdateScreen()
 	const char *f_window,*f_widget;
 	int i;
 
-	if (fMlog) {
-		MessageLog("====");
-	}
+	Debug("====");
 	
 	result = json_object_object_get(SCREENDATA(Session),"result");
 	window_data = json_object_object_get(result,"window_data");
@@ -1592,9 +1553,7 @@ UpdateScreen()
 	}
 	THISWINDOW(Session) = g_strdup(f_window);
 	FOCUSEDWINDOW(Session) = (char*)f_window;
-	if (fMlog) {
-		MessageLogPrintf("focused_window[%s]",f_window);
-	}
+	Debug("focused_window[%s]",f_window);
 
 	child = json_object_object_get(window_data,"focused_widget");
 	if (child == NULL ||is_error(child)) {

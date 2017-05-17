@@ -47,8 +47,7 @@
 #include	"widgetcache.h"
 #include	"utils.h"
 #include	"notify.h"
-#include	"message.h"
-#include	"debug.h"
+#include	"logger.h"
 
 void
 ShowPrintDialog(

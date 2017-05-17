@@ -53,8 +53,7 @@
 #include	"download.h"
 #include	"dialogs.h"
 #include	"notify.h"
-#include	"message.h"
-#include	"debug.h"
+#include	"logger.h"
 
 static	void
 SetState(
@@ -145,7 +144,7 @@ SetPandaPDF(
 {
 	LargeByteString *lbs;
 	json_object *child;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 	child = json_object_object_get(obj,"objectdata");
 	if (CheckJSONObject(child,json_type_string)) {
@@ -158,7 +157,6 @@ ENTER_FUNC;
 			gtk_panda_pdf_set(GTK_PANDA_PDF(widget),0,NULL);
 		}
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -167,14 +165,13 @@ SetPandaTimer(
 	json_object	*obj)
 {
 	json_object *child;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 	child = json_object_object_get(obj,"duration");
 	if (CheckJSONObject(child,json_type_int)) {
 		gtk_panda_timer_set(GTK_PANDA_TIMER(widget),
 			json_object_get_int(child));
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -183,10 +180,8 @@ GetPandaTimer(
 	json_object *tmpl,
 	json_object	*obj)
 {
-ENTER_FUNC;
 	json_object_object_add(obj,"duration",
 		json_object_new_int(GTK_PANDA_TIMER(widget)->duration / 1000));
-LEAVE_FUNC;
 }
 
 static	void
@@ -197,7 +192,7 @@ SetPandaDownload(
 	json_object *child;
 	const char *filename, *desc, *oid;
 	LargeByteString *lbs;
-ENTER_FUNC;
+
 	filename = desc = NULL;
 
 	SetCommon(widget,obj);
@@ -222,7 +217,6 @@ ENTER_FUNC;
 			}
 		}
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -232,7 +226,7 @@ SetNumberEntry(
 {
 	json_object *child;
 	Numeric	num;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	child = json_object_object_get(obj,"editable");
@@ -247,7 +241,6 @@ ENTER_FUNC;
 		gtk_number_entry_set_value(GTK_NUMBER_ENTRY(widget),num);
 		NumericFree(num);
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -258,7 +251,7 @@ GetNumberEntry(
 {
 	Numeric	num;
 	json_object *child;
-ENTER_FUNC;
+
 	child = json_object_object_get(tmpl,"numdata");
 	if (CheckJSONObject(child,json_type_double)) {
 		num = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
@@ -266,7 +259,6 @@ ENTER_FUNC;
 			json_object_new_double(NumericToDouble(num)));
 		NumericFree(num);
 	}
-LEAVE_FUNC;
 }
 
 #define MAX_COMBO_ITEM (256)
@@ -281,7 +273,6 @@ SetPandaCombo(
 	int count,n,i;
 	char *item[MAX_COMBO_ITEM];
 
-ENTER_FUNC;
 	SetCommon(widget,obj);
 	count = 0;
 
@@ -314,7 +305,6 @@ ENTER_FUNC;
 		combo = GTK_PANDA_COMBO(widget);
 		gtk_panda_combo_set_popdown_strings(combo,item);
 	}
-LEAVE_FUNC;
 }
 
 #define MAX_CLIST_COLUMNS (256)
@@ -328,7 +318,7 @@ SetPandaCList(
 	double rowattr;
 	char *rdata[MAX_CLIST_COLUMNS],name[16];
 	json_object *child,*val,*rowobj,*colobj,*boolobj;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 	gtk_widget_hide(widget);
 
@@ -445,7 +435,6 @@ ENTER_FUNC;
 	if (count > 0 && row < count) {
 		gtk_panda_clist_moveto(GTK_PANDA_CLIST(widget),row,0,rowattr,0.0); 
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -456,7 +445,7 @@ GetPandaCList(
 {
 	int i,nrows,visible,row,selected;
 	json_object *child,*array;
-ENTER_FUNC;
+
 	row = 0;
 	visible = 0;
 	nrows = gtk_panda_clist_get_rows(GTK_PANDA_CLIST(widget));
@@ -486,7 +475,6 @@ ENTER_FUNC;
 			json_object_array_add(array,json_object_new_boolean(selected));
 		}
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -495,14 +483,13 @@ SetPandaHTML(
 	json_object	*obj)
 {
 	json_object	*child;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 	child = json_object_object_get(obj,"uri");
 	if (CheckJSONObject(child,json_type_string)) {
 		gtk_panda_html_set_uri(GTK_PANDA_HTML(widget),
 			json_object_get_string(child));
 	}
-LEAVE_FUNC;
 }
 
 static GtkWidget *panda_table = NULL;
@@ -522,7 +509,7 @@ SetPandaTable(
 	char		*fgval[GTK_PANDA_TABLE_MAX_COLS];
 	char		*bgval[GTK_PANDA_TABLE_MAX_COLS];
 	char		name[16];
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	trow = 0;
@@ -610,7 +597,6 @@ ENTER_FUNC;
 	panda_table_rowattr = trowattr;
 
 	_AddChangedWidget(widget);
-LEAVE_FUNC;
 }
 
 void
@@ -647,7 +633,7 @@ GetPandaTable(
 	gchar *tvalue,name[16];
 	json_object *child,*rowdata,*colobj,*cell,*array;
 	GList *list,*l;
-ENTER_FUNC;
+
 	gtk_widget_child_focus(widget,GTK_DIR_TAB_FORWARD);
 	trow = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"changed_row")) + 1;
 	tcolumn = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"changed_column")) + 1;
@@ -724,7 +710,6 @@ ENTER_FUNC;
 			g_free(l->data);
 		}
 	}
-LEAVE_FUNC;
 }
 
 /******************************************************************************/
@@ -738,7 +723,7 @@ SetEntry(
 {
 	json_object *child;
 	char *prev,*next;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	child = json_object_object_get(obj,"editable");
@@ -761,7 +746,6 @@ ENTER_FUNC;
 		&& (gtk_editable_get_position (GTK_EDITABLE(widget)) != 0)) {
 		gtk_editable_set_position (GTK_EDITABLE(widget), 0);
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -772,14 +756,13 @@ GetEntry(
 {
 	json_object *child;
 	char *text;
-ENTER_FUNC;
+
 	text = gtk_editable_get_chars(GTK_EDITABLE(widget),0 , -1);
 	child = json_object_object_get(tmpl,"textdata");
 	if (CheckJSONObject(child,json_type_string)) {
 		json_object_object_add(obj,"textdata",json_object_new_string(text));
 	}
 	g_free(text);
-LEAVE_FUNC;
 }
 
 static	void
@@ -789,7 +772,7 @@ SetLabel(
 {
 	json_object *child;
 	char *text;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	child = json_object_object_get(obj,"textdata");
@@ -801,7 +784,6 @@ ENTER_FUNC;
 			gtk_label_set_text(GTK_LABEL(widget),text);
 		}
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -813,7 +795,7 @@ SetText(
 	GtkTextBuffer *buffer;
 	GtkTextIter iter;
 	json_object *child;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	child = json_object_object_get(obj,"textdata");
@@ -825,7 +807,6 @@ ENTER_FUNC;
 		gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(widget),&iter,
 			0.0,TRUE,0.0,0.0);
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -839,7 +820,7 @@ GetText(
 	GtkTextIter end;
 	json_object *child;
 	char *text;
-ENTER_FUNC;
+
 	child = json_object_object_get(tmpl,"textdata");
 	if (CheckJSONObject(child,json_type_string)) {
 		buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
@@ -849,7 +830,6 @@ ENTER_FUNC;
 		json_object_object_add(obj,"textdata",json_object_new_string(text));
 		g_free(text);
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -858,7 +838,7 @@ SetButton(
 	json_object *obj)
 {
 	json_object *child;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	child = json_object_object_get(obj,"label");
@@ -871,7 +851,6 @@ ENTER_FUNC;
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget),
 			json_object_get_boolean(child));
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -882,14 +861,13 @@ GetButton(
 {
 	gboolean isactive;
 	json_object *child;
-ENTER_FUNC;
+
 	child = json_object_object_get(tmpl,"isactive");
 	if (CheckJSONObject(child,json_type_boolean)) {
 		isactive = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 		json_object_object_add(obj,"isactive",
 			json_object_new_boolean(isactive));
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -899,7 +877,7 @@ SetCalendar(
 {
 	json_object *child;
 	int y,m,d;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 	y = m = d = 0;
 
@@ -922,7 +900,6 @@ ENTER_FUNC;
 		gtk_calendar_select_month(GTK_CALENDAR(widget),m-1,y);
 		gtk_calendar_select_day(GTK_CALENDAR(widget),d);
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -933,7 +910,7 @@ GetCalendar(
 {
 	json_object *child;
 	int y,m,d;
-ENTER_FUNC;
+
 	gtk_calendar_get_date(GTK_CALENDAR(widget),&y,&m,&d);
 	child = json_object_object_get(tmpl,"year");
 	if (CheckJSONObject(child,json_type_int)) {
@@ -952,7 +929,6 @@ ENTER_FUNC;
 		json_object_object_del(obj,"day");
 		json_object_object_add(obj,"day",json_object_new_int(d));
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -961,14 +937,13 @@ SetNotebook(
 	json_object	*obj)
 {
 	json_object *child;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 	child = json_object_object_get(obj,"pageno");
 	if (CheckJSONObject(child,json_type_int)) {
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
 			json_object_get_int(child));
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -979,13 +954,12 @@ GetNotebook(
 {
 	json_object *child;
 	int pageno;
-ENTER_FUNC;
+
 	child = json_object_object_get(tmpl,"pageno");
 	if (CheckJSONObject(child,json_type_int)) {
 		pageno = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"new_pageno"));
 		json_object_object_add(obj,"pageno",json_object_new_int(pageno));
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -995,7 +969,7 @@ SetProgressBar(
 {
 	json_object *child;
 	int i;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 	child = json_object_object_get(obj,"value");
 	if (CheckJSONObject(child,json_type_int)) {
@@ -1006,7 +980,6 @@ ENTER_FUNC;
 		gtk_progress_set_value(GTK_PROGRESS(widget),i);
 #endif
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -1017,7 +990,7 @@ SetWindow(
 	json_object *child;
 	char *summary,*body,*icon;
 	int timeout;
-ENTER_FUNC;
+
 #if 0
 	SetCommon(widget,obj);
 #endif
@@ -1060,7 +1033,6 @@ ENTER_FUNC;
 		body != NULL && strlen(body) > 0) {
 		Notify(summary,body,icon,timeout);
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -1069,14 +1041,13 @@ SetFrame(
 	json_object	*obj)
 {
 	json_object *child;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	child = json_object_object_get(obj,"label");
 	if (CheckJSONObject(child,json_type_string)) {
 		gtk_frame_set_label(GTK_FRAME(widget),json_object_get_string(child));
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -1084,9 +1055,7 @@ SetScrolledWindow(
 	GtkWidget	*widget,
 	json_object	*obj)
 {
-ENTER_FUNC;
 	SetCommon(widget,obj);
-LEAVE_FUNC;
 }
 
 static	void
@@ -1096,7 +1065,7 @@ SetFileChooserButton(
 {
 	GtkFileChooserButton *fcb;
 	gchar *folder,*longname;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
@@ -1108,7 +1077,6 @@ ENTER_FUNC;
 	}
 	gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(fcb),folder);
 	_AddChangedWidget(widget);
-LEAVE_FUNC;
 }
 
 static	void
@@ -1126,7 +1094,7 @@ GetFileChooserButton(
 	char *longname,*oid;
 	LargeByteString *lbs;
 	json_object *child;
-ENTER_FUNC;
+
 	fcb = GTK_FILE_CHOOSER_BUTTON(widget);
 	fname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fcb));
 	if (fname == NULL) {
@@ -1163,7 +1131,6 @@ ENTER_FUNC;
 		g_free(folder);
 	}
 	g_free(oid);
-LEAVE_FUNC;
 }
 
 static	void
@@ -1175,7 +1142,7 @@ SetColorButton(
 	GdkColor color;
 	char *strcolor;
 	json_object *child;
-ENTER_FUNC;
+
 	cb = GTK_COLOR_BUTTON(widget);
 	SetCommon(widget,obj);
 
@@ -1186,7 +1153,6 @@ ENTER_FUNC;
 			gtk_color_button_set_color(cb,&color);
 		}
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -1199,7 +1165,7 @@ GetColorButton(
 	GdkColor color;
 	char strcolor[256];
 	json_object *child;
-ENTER_FUNC;
+
 	cb = GTK_COLOR_BUTTON(widget);
 	gtk_color_button_get_color(cb,&color);
 	sprintf(strcolor,"#%02X%02X%02X",
@@ -1212,7 +1178,6 @@ ENTER_FUNC;
 	if (CheckJSONObject(child,json_type_string)) {
 		json_object_object_add(obj,"color",json_object_new_string(strcolor));
 	}
-LEAVE_FUNC;
 }
 
 static void
@@ -1222,7 +1187,7 @@ SetPixmap(
 {
 	LargeByteString *lbs;
 	json_object *child;
-ENTER_FUNC;
+
 	SetCommon(widget,obj);
 
 	child = json_object_object_get(obj,"objectdata");
@@ -1237,7 +1202,6 @@ ENTER_FUNC;
 			gtk_widget_hide(widget); 
 		}
 	}
-LEAVE_FUNC;
 }
 
 static	void
@@ -1373,7 +1337,7 @@ GetWidgetData(
 	} else if (type == GTK_TYPE_COLOR_BUTTON) {
 		GetColorButton(widget,tmpl,obj);
 	} else {
-		MessageLogPrintf("invalid widget [%s]", gtk_widget_get_name(widget));
+		Warning("invalid widget [%s]", gtk_widget_get_name(widget));
 	}
 #if 0
 	fprintf(stderr,"%s\n",glade_get_widget_long_name(widget));

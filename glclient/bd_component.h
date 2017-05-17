@@ -38,7 +38,7 @@ struct _BDComponent {
   GtkWidget *savepassword;
 // other 
   GtkWidget *othertable;
-  GtkWidget *mlog;
+  GtkWidget *debug;
   GtkWidget *style;
   GtkWidget *gtkrc;
   GtkWidget *fontbutton;
