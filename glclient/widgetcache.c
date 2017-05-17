@@ -40,8 +40,7 @@
 
 #include	"glclient.h"
 #include	"widgetcache.h"
-#include	"message.h"
-#include	"debug.h"
+#include	"logger.h"
 
 static json_object *obj;
 

@@ -30,8 +30,7 @@
 #include "glclient.h"
 #include "gettext.h"
 #include "bd_config.h"
-#include "message.h"
-#include "debug.h"
+#include "logger.h"
 
 static json_object *config_obj = NULL;
 
@@ -376,7 +375,7 @@ LoadConfig (
 	AUTHURI(Session) = g_strdup(gl_config_get_string(n,"authuri"));
 	Style = g_strdup(gl_config_get_string(n,"style"));
 	Gtkrc = g_strdup(gl_config_get_string(n,"gtkrc"));
-	fMlog = gl_config_get_boolean(n,"mlog");
+	fDebug = gl_config_get_boolean(n,"debug");
 	fKeyBuff = gl_config_get_boolean(n,"keybuff");
 	User = g_strdup(gl_config_get_string(n,"user"));
 	fIMKanaOff = gl_config_get_boolean(n,"im_kana_off");

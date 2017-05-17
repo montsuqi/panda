@@ -34,7 +34,7 @@ configure-stamp
 build-indep-stamp
 build-arch-stamp
 test
-m4
+m4/
 Doc/*.aux
 Doc/*.log
 aps/aps
@@ -75,6 +75,7 @@ wfc/moninfo
 wfc/wfc
 wfc/wfccontrol
 po/*.gmo
+po/Makevars.template~
 po/stamp-po
 po/POTFILES
 po/Makevars.template

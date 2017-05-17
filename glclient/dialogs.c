@@ -34,6 +34,7 @@
 #include	"glclient.h"
 #include	"dialogs.h"
 #include	"gettext.h"
+#include	"logger.h"
 
 #ifndef	SIZE_BUFF
 #define	SIZE_BUFF	8192 
@@ -65,7 +66,7 @@ MessageDialog(
 }
 
 void
-ShowInfoDialog(
+InfoDialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -74,12 +75,13 @@ ShowInfoDialog(
 	va_start(va,format);
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
+	Info(buf);
     MessageDialog(GTK_MESSAGE_INFO, buf);
 	g_free(buf);
 }
 
 void
-ShowWarnDialog(
+WarnDialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -88,12 +90,13 @@ ShowWarnDialog(
 	va_start(va,format);
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
+	Warning(buf);
     MessageDialog(GTK_MESSAGE_WARNING, buf);
 	g_free(buf);
 }
 
 void
-ShowErrorDialog(
+ErrorDialog(
 	const char *format,...)
 {
 	gchar *buf;
@@ -103,7 +106,7 @@ ShowErrorDialog(
 	buf = g_strdup_vprintf(format,va);
     va_end(va);
    	MessageDialog(GTK_MESSAGE_ERROR,buf);
-	exit(1);
+	_Error(buf);
 }
 
 void
@@ -126,7 +129,7 @@ askpass_entry_activate(GtkEntry *entry, gpointer user_data)
 }
 
 char*
-ShowAskPassDialog(
+AskPassDialog(
 	const char *prompt)
 {
 	GtkWidget *dialog,*entry;
@@ -162,7 +165,7 @@ ShowAskPassDialog(
 }
 
 char*
-ShowAskPINDialog()
+AskPINDialog()
 {
 	GtkWidget *dialog,*entry,*check,*vbox;
 	gint response;

@@ -55,8 +55,8 @@
 #include "gettext.h"
 #include "const.h"
 #include "bd_config.h"
-#include "message.h"
-#include "debug.h"
+#include "logger.h"
+#include "dialogs.h"
 
 static LargeByteString *readbuf;
 static LargeByteString *writebuf;
@@ -494,6 +494,7 @@ RPC_StartSession()
 	json_object *obj,*params,*child,*result,*meta;
 	gchar *rpcuri,*resturi;
 
+	Info("start_session %s",AUTHURI(Session));
 	params = json_object_new_object();
 	child = json_object_new_object();
 	json_object_object_add(child,"client_version",json_object_new_string(PACKAGE_VERSION));
@@ -525,10 +526,9 @@ RPC_StartSession()
 
 	RPCURI(Session) = g_strdup(rpcuri);
 	RESTURI(Session) = g_strdup(resturi);
-	if (fMlog) {
-		MessageLogPrintf("RPCURI[%s]\n",RPCURI(Session));
-		MessageLogPrintf("RESTURI[%s]\n",RESTURI(Session));
-	}
+	Info("session id: %s",SESSIONID(Session));
+	Info("rpcuri: %s",RPCURI(Session));
+	Info("resturi: %s",RESTURI(Session));
 	json_object_put(obj);
 	if (Ginbee) {
 		UnSetHTTPAuth();
@@ -550,6 +550,7 @@ RPC_EndSession()
 	obj = MakeJSONRPCRequest("end_session",params);
 	obj = JSONRPC(TYPE_APP,obj);
 	json_object_put(obj);
+	Info("end_session");
 }
 
 void
@@ -908,7 +909,6 @@ MakeLogDir(void)
 extern	void
 InitProtocol()
 {
-ENTER_FUNC;
 	THISWINDOW(Session) = NULL;
 	WINDOWTABLE(Session) = NewNameHash();
 	SCREENDATA(Session) = NULL;
@@ -917,7 +917,6 @@ ENTER_FUNC;
 		Logging = TRUE;
 		MakeLogDir();
 	}
-LEAVE_FUNC;
 }
 
 extern	void

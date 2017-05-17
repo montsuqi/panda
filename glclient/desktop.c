@@ -42,8 +42,7 @@
 #include	"glclient.h"
 #include	"desktop.h"
 #include	"gettext.h"
-#include	"message.h"
-#include	"debug.h"
+#include	"logger.h"
 
 static char *
 GetSuffix(char *path)
@@ -93,7 +92,7 @@ InitDesktop(void)
 		}
 		fclose(fp);
 	} else {
-		MessageLog("cannot open applications list");
+		Warning("cannot open applications list");
 	}
 }
 
@@ -136,7 +135,7 @@ Exec(char *command,char *file)
 		}
 		argc++;
 		if (argc >= DESKTOP_MAX_ARGC) {
-			MessageLogPrintf("can't exec [%s]; over argc size",command);
+			Warning("can't exec [%s]; over argc size",command);
 			return;
 		}
 		if (*q == 0) {
@@ -178,7 +177,7 @@ OpenDesktop(char *filename,LargeByteString *binary)
 	snprintf(path,SIZE_LONGNAME,"%s/%s",TempDir, filename);
 	path[SIZE_LONGNAME] = 0;
 	if (!g_file_set_contents(path,LBS_Body(binary),LBS_Size(binary),NULL)) {
-		MessageLogPrintf("could not create teporary file:%s",path);
+		Warning("could not create teporary file:%s",path);
 		return;
 	}
 	template = g_hash_table_lookup(DesktopAppTable, filename);
@@ -191,12 +190,12 @@ OpenDesktop(char *filename,LargeByteString *binary)
 			if ((pid = fork()) == 0) {
 				Exec(template,path);
 			} else if (pid < 0) {
-				MessageLogPrintf("fork failure:%s",strerror(errno));
+				Warning("fork failure:%s",strerror(errno));
 			} else {
 				_exit(0);
 			}
 		} else if (pid < 0) {
-			MessageLogPrintf("fork failure:%s",strerror(errno));
+			Warning("fork failure:%s",strerror(errno));
 		} else {
 			wait(&status);
 		}

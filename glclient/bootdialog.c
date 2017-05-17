@@ -36,8 +36,6 @@
 #include    "bootdialog.h"
 #include	"action.h"
 #include    "dialogs.h"
-#include    "message.h"
-#include    "debug.h"
 
 /*********************************************************************
  * EditDialog

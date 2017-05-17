@@ -41,8 +41,6 @@
 #include	"download.h"
 #include	"widgetcache.h"
 #include	"notify.h"
-#include	"message.h"
-#include	"debug.h"
 
 static void
 show_save_dialog(
