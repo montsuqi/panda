@@ -35,9 +35,11 @@
 #include	<dirent.h>
 #include	<uuid/uuid.h>
 #include	<time.h>
+#include	<libmondai.h>
 
-#include	"glclient.h"
+#define LOGGER_MAIN
 #include	"logger.h"
+
 
 #ifndef	SIZE_LOG
 #define	SIZE_LOG		8192
@@ -46,11 +48,11 @@
 
 static FILE *fp = NULL;
 static int level = LOG_WARN;
-static void (*ErrorFunc)(char *,...);
+static void (*ErrorFunc)(const char *,...);
 
 static void
 rm_old_log(
-	char *dname,
+	const char *dname,
 	unsigned long elapse)
 {
 	DIR *dir;
@@ -110,6 +112,20 @@ InitLogger()
 }
 
 void
+InitLogger_via_FileName(
+	const char *filename)
+{
+	if (fp == NULL) {
+		if ((fp = fopen(filename,"a")) == NULL) {
+			fprintf(stderr,"fopen failure:%s\n",strerror(errno));
+		} 
+	} else {
+		fprintf(stderr,"fp != null, perhaps call InitLogger again?\n");
+	}
+	ErrorFunc = NULL;
+}
+
+void
 FinalLogger()
 {
 	if (fp != NULL) {
@@ -127,14 +143,14 @@ SetLogLevel(
 
 void
 SetErrorFunc(
-	void (*func)(char *,...))
+	void (*func)(const char *,...))
 {
 	ErrorFunc = func;
 }
 
 void
 Error(
-	char *format,
+	const char *format,
 	...)
 {
 	va_list	va;
@@ -151,9 +167,9 @@ Error(
 void
 logger(
 	int _level,
-	char *file,
+	const char *file,
 	int line,
-	char *format,
+	const char *format,
 	...)
 {
 	struct	timeval	tv;

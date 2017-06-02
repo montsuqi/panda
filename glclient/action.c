@@ -1127,9 +1127,9 @@ Ping()
 {
 	char *dialog,*popup,*abort;
 
-	RPC_GetMessage(&dialog,&popup,&abort);
+	RPC_GetMessage(GLP(Session),&dialog,&popup,&abort);
 	if (strlen(abort)>0) {
-		RPC_EndSession();
+		RPC_EndSession(GLP(Session));
 		InfoDialog(abort);
 		exit(1);
 	} else if (strlen(dialog)>0) {
@@ -1155,22 +1155,20 @@ PrintReport(
 	title = "";
 	showdialog = FALSE;
 
-	child = json_object_object_get(obj,"object_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"object_id",&child)) {
 		return;
 	}
 	oid = (char*)json_object_get_string(child);
 
-	child = json_object_object_get(obj,"printer");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"printer",&child)) {
 		printer = (char*)json_object_get_string(child);
 	}
-	child = json_object_object_get(obj,"title");
-	if (CheckJSONObject(child,json_type_string)) {
+
+	if (json_object_object_get_ex(obj,"title",&child)) {
 		title = (char*)json_object_get_string(child);
 	}
-	child = json_object_object_get(obj,"showdialog");
-	if (CheckJSONObject(child,json_type_boolean)) {
+
+	if (json_object_object_get_ex(obj,"showdialog",&child)) {
 		showdialog = json_object_get_boolean(child);
 	}
 	if (getenv("GLCLIENT_PRINTREPORT_SHOWDIALOG")!=NULL) {
@@ -1183,7 +1181,7 @@ PrintReport(
 		showdialog = TRUE;
 	}
 
-	lbs = REST_GetBLOB(oid);
+	lbs = REST_GetBLOB(GLP(Session),oid);
 	if (lbs != NULL) {
 		if (LBS_Size(lbs) > 0) {
 			if (showdialog) {
@@ -1207,25 +1205,23 @@ DownloadFile(
 	filename = "foo.dat";
 	desc = "";
 
-	child = json_object_object_get(obj,"object_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"object_id",&child)) {
 		return;
 	}
 	oid = (char*)json_object_get_string(child);
 
-	child = json_object_object_get(obj,"filename");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"filename",&child)) {
 		filename = (char*)json_object_get_string(child);
 	}
-	child = json_object_object_get(obj,"description");
-	if (CheckJSONObject(child,json_type_string)) {
+
+	if (json_object_object_get_ex(obj,"description",&child)) {
 		desc = (char*)json_object_get_string(child);
 	}
 
 	if (oid == NULL || strlen(oid) <= 0) {
 		return;
 	}
-	lbs = REST_GetBLOB(oid);
+	lbs = REST_GetBLOB(GLP(Session),oid);
 	if (lbs != NULL) {
 		if (LBS_Size(lbs) > 0) {
 			ShowDownloadDialog(NULL,filename,desc,lbs);
@@ -1240,9 +1236,8 @@ ListDownloads()
 	int i;
 	json_object *obj,*item,*result,*type;
 
-	obj = RPC_ListDownloads();
-	result = json_object_object_get(obj,"result");
-	if (!CheckJSONObject(result,json_type_array)) {
+	obj = RPC_ListDownloads(GLP(Session));
+	if (!json_object_object_get_ex(obj,"result",&result)) {
 		Error(_("invalid list_report response"));
 	}
 
@@ -1251,8 +1246,7 @@ ListDownloads()
 		if (!CheckJSONObject(item,json_type_object)) {
 			continue;
 		}
-		type = json_object_object_get(item,"type");
-		if (!CheckJSONObject(type,json_type_string)) {
+		if (!json_object_object_get_ex(item,"type",&type)) {
 			continue;
 		}
 		if (!strcmp(json_object_get_string(type),"report")) {
@@ -1310,7 +1304,10 @@ SendEvent(
 	
 	params = json_object_new_object();
 	json_object_object_add(params,"event_data",event_data);
-	RPC_SendEvent(params);
+	if (SCREENDATA(Session) != NULL) {
+		json_object_put(SCREENDATA(Session));
+	}
+	SCREENDATA(Session) = RPC_SendEvent(GLP(Session),params);
 }
 
 static	void
@@ -1322,14 +1319,12 @@ CheckCloseWindow(
 	const char *put_type;
 	const char *wname;
 
-	child = json_object_object_get(w,"put_type");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(w,"put_type",&child)) {
 		Error("invalid json part:put_type");
 	}
 	put_type = (char*)json_object_get_string(child);
 
-	child = json_object_object_get(w,"window");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(w,"window",&child)) {
 		Error("invalid json part:window");
 	}
 	wname = json_object_get_string(child);
@@ -1451,7 +1446,7 @@ UpdateTemplate(
 		if (CheckJSONObject(obj,json_type_object)) {
 			json_object_object_foreachC(tmpl,iter) {
 				c1 = iter.val;
-				c2 = json_object_object_get(obj,iter.key);
+				json_object_object_get_ex(obj,iter.key,&c2);
 				json_object_object_add(ret,iter.key,UpdateTemplate(c1,c2,level+1));
 			}
 		} else {
@@ -1477,24 +1472,21 @@ UpdateWindow(
 	const char *gladedata;
 	WindowData *wdata;
 
-	child = json_object_object_get(w,"put_type");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(w,"put_type",&child)) {
 		Error("invalid json part:put_type");
 	}
 	put_type = (char*)json_object_get_string(child);
 
-	child = json_object_object_get(w,"window");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(w,"window",&child)) {
 		Error("invalid json part:window");
 	}
 	wname = json_object_get_string(child);
 
 	wdata = GetWindowData(wname);
 	if (wdata == NULL) {
-		obj = RPC_GetScreenDefine(wname);
-		result = json_object_object_get(obj,"result");
-		child = json_object_object_get(result,"screen_define");
-		if (child == NULL ||is_error(child)) {
+		obj = RPC_GetScreenDefine(GLP(Session),wname);
+		json_object_object_get_ex(obj,"result",&result);
+		if (!json_object_object_get_ex(result,"screen_define",&child)) {
 			Error("can't get screen define:%s",wname);
 		}
 		gladedata = json_object_get_string(child);
@@ -1502,8 +1494,7 @@ UpdateWindow(
 		json_object_put(obj);
 	}
 
-	child = json_object_object_get(w,"screen_data");
-	if (CheckJSONObject(child,json_type_object)) {
+	if (json_object_object_get_ex(w,"screen_data",&child)) {
 		if (wdata->tmpl == NULL) {
 			if (json_object_object_length(child) > 0) {
 				wdata->tmpl = CopyJSON(child);
@@ -1537,14 +1528,12 @@ UpdateScreen()
 
 	Debug("====");
 	
-	result = json_object_object_get(SCREENDATA(Session),"result");
-	window_data = json_object_object_get(result,"window_data");
-	if (window_data == NULL ||is_error(window_data)) {
+	json_object_object_get_ex(SCREENDATA(Session),"result",&result);
+	if (!json_object_object_get_ex(result,"window_data",&window_data)) {
 		Error("invalid json part:window_data");
 	}
 
-	child = json_object_object_get(window_data,"focused_window");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(window_data,"focused_window",&child)) {
 		Error("invalid json part:focused_window");
 	}
 	f_window = json_object_get_string(child);
@@ -1555,17 +1544,13 @@ UpdateScreen()
 	FOCUSEDWINDOW(Session) = (char*)f_window;
 	Debug("focused_window[%s]",f_window);
 
-	child = json_object_object_get(window_data,"focused_widget");
-	if (child == NULL ||is_error(child)) {
+	if (!json_object_object_get_ex(window_data,"focused_widget",&child)) {
 		Error("invalid json part:focused_widget");
 	}
 	f_widget = json_object_get_string(child);
 	FOCUSEDWIDGET(Session) = (char*)f_widget;
 
-	windows = json_object_object_get(window_data,"windows");
-	if (windows == NULL ||
-		is_error(windows) ||
-		json_object_get_type(windows) != json_type_array) {
+	if (!json_object_object_get_ex(window_data,"windows",&windows)) {
 		Error("invalid json part:windows");
 	}
 	for(i=0;i<json_object_array_length(windows);i++) {

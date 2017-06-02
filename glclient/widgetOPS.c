@@ -144,11 +144,13 @@ SetPandaPDF(
 {
 	LargeByteString *lbs;
 	json_object *child;
+	const char *oid;
 
 	SetCommon(widget,obj);
 	child = json_object_object_get(obj,"objectdata");
 	if (CheckJSONObject(child,json_type_string)) {
-		lbs = REST_GetBLOB((char*)json_object_get_string(child));
+		oid = (const char*)json_object_get_string(child);
+		lbs = REST_GetBLOB(GLP(Session),oid);
 		if (lbs != NULL) {
 			gtk_panda_pdf_set(GTK_PANDA_PDF(widget),
 				LBS_Size(lbs),LBS_Body(lbs));
@@ -210,7 +212,7 @@ SetPandaDownload(
 	if (CheckJSONObject(child,json_type_string)) {
 		oid = json_object_get_string(child);
 		if (oid != NULL && strlen(oid) > 0 && strcmp(oid,"0")) {
-			lbs = REST_GetBLOB(oid);
+			lbs = REST_GetBLOB(GLP(Session),oid);
 			if (lbs != NULL && LBS_Size(lbs) > 0) {
 				ShowDownloadDialog(widget,(char*)filename,(char*)desc,lbs);
 				FreeLBS(lbs);
@@ -1108,7 +1110,7 @@ GetFileChooserButton(
 	LBS_ReserveSize(lbs,size,FALSE);
 	memcpy(LBS_Body(lbs),contents,size);
 	g_free(contents);
-	oid = REST_PostBLOB(lbs);
+	oid = REST_PostBLOB(GLP(Session),lbs);
 	FreeLBS(lbs);
 
 	child = json_object_object_get(tmpl,"objectdata");
@@ -1187,12 +1189,14 @@ SetPixmap(
 {
 	LargeByteString *lbs;
 	json_object *child;
+	const char *oid;
 
 	SetCommon(widget,obj);
 
 	child = json_object_object_get(obj,"objectdata");
 	if (CheckJSONObject(child,json_type_string)) {
-		lbs = REST_GetBLOB(json_object_get_string(child));
+		oid = (const char*)json_object_get_string(child);
+		lbs = REST_GetBLOB(GLP(Session),oid);
 		if (lbs != NULL && LBS_Size(lbs) > 0) {
 			gtk_widget_show(widget); 
 			gtk_panda_pixmap_set_image(GTK_PANDA_PIXMAP(widget), 

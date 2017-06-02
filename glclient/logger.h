@@ -20,6 +20,15 @@
 #ifndef	_INC_LOGGER_H
 #define	_INC_LOGGER_H
 
+#undef	GLOBAL
+#ifdef	LOGGER_MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+GLOBAL char* LogFile;
+
 enum {
 	LOG_DEBUG = 0,
 	LOG_WARN,
@@ -29,11 +38,12 @@ enum {
 };
 
 extern void InitLogger();
+extern void InitLogger_via_FileName(const char *filename);
 extern void FinalLogger();
-extern void SetErrorFunc(void (*)(char *,...));
+extern void SetErrorFunc(void (*)(const char *,...));
 extern void SetLogLevel(int level);
-extern void logger(int level, char *file, int line, char *format, ...);
-extern void Error(char *format,...);
+extern void logger(int level,const char *file, int line,const char *format, ...);
+extern void Error(const char *format,...);
 
 #define	Debug(...)											\
 	logger(LOG_DEBUG,__FILE__,__LINE__,__VA_ARGS__);

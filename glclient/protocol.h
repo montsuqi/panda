@@ -21,18 +21,53 @@
 #ifndef	_INC_PROTOCOL_H
 #define	_INC_PROTOCOL_H
 
-void 				RPC_GetServerInfo();
-void 				RPC_StartSession();
-json_object* 		RPC_GetScreenDefine(const char*);
-void 				RPC_EndSession();
-void 				RPC_GetWindow();
-void				RPC_SendEvent(json_object *params);
-void				RPC_GetMessage(char**d,char**p,char**a);
-json_object*		RPC_ListDownloads();
-char*				REST_PostBLOB(LargeByteString *);
-LargeByteString*	REST_GetBLOB(const char *);
-gboolean			REST_APIDownload(const char*path,char **f,size_t *s);
-void				InitProtocol();
-void				FinalProtocol();
+#include	<json.h>
+#include	<curl/curl.h>
+#ifdef USE_SSL
+#include	<openssl/engine.h>
+#endif
+#include	<libmondai.h>
+
+typedef struct {
+	CURL			*Curl;
+	char			*AuthURI;
+	char			*RPCURI;
+	char			*RESTURI;
+	int	            RPCID;
+	char			*SessionID;
+	char			*ProtocolVersion;
+	char			*AppVersion;
+	gboolean		fGinbee;
+#ifdef USE_SSL
+	gboolean		fSSL;
+	gboolean		fPKCS11;
+	ENGINE			*Engine;
+#endif
+} GLPctx;
+
+void 				RPC_GetServerInfo(GLPctx *);
+void 				RPC_StartSession(GLPctx *);
+json_object* 		RPC_GetScreenDefine(GLPctx *,const char*);
+void 				RPC_EndSession(GLPctx *);
+json_object* 		RPC_GetWindow(GLPctx *);
+json_object*		RPC_SendEvent(GLPctx *,json_object *params);
+void				RPC_GetMessage(GLPctx * ,char**d,char**p,char**a);
+json_object*		RPC_ListDownloads(GLPctx *);
+char*				REST_PostBLOB(GLPctx *,LargeByteString *);
+LargeByteString*	REST_GetBLOB(GLPctx *,const char *);
+void				GLP_SetRPCURI(GLPctx *,const char *);
+void				GLP_SetRESTURI(GLPctx *,const char *);
+void				GLP_SetSessionID(GLPctx *,const char *);
+void				GLP_SetRPCID(GLPctx *,int);
+char*				GLP_GetRPCURI(GLPctx *);
+char*				GLP_GetRESTURI(GLPctx *);
+char*				GLP_GetSessionID(GLPctx *);
+int					GLP_GetRPCID(GLPctx *);
+GLPctx*				InitProtocol(const char *auth_uri,const char *user,const char *pass);
+#ifdef USE_SSL
+void				GLP_SetSSL(GLPctx*,const char*cert,const char*key,const char*pass,const char*cafile);
+void				GLP_SetSSLPKCS11(GLPctx *,const char *p11lib,const char *pin);
+#endif
+void				FinalProtocol(GLPctx *);
 
 #endif

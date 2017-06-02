@@ -91,8 +91,7 @@ GetWidgetCache(
 {
 	json_object *val;
 
-	val = json_object_object_get(obj,key);
-	if (val == NULL || is_error(val) || !json_object_is_type(val,json_type_string)) {
+	if (!json_object_object_get_ex(obj,key,&val)) {
 		return NULL;
 	} else {
 		return json_object_get_string(val);

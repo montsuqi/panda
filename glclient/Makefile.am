@@ -81,10 +81,9 @@ glclient2_LDADD =			\
 
 cpanda_sources =	\
 	glclient.h						\
-	bd_config.c		bd_config.h		\
 	protocol.c		protocol.h		\
-	utils.c			utils.h			\
 	logger.c		logger.h		\
+	utils.c			utils.h			\
 	cpanda.c
 
 cpanda_SOURCES =		\
@@ -102,5 +101,6 @@ cpanda_LDADD =			\
 	$(base_LDADD)
 
 AM_CPPFLAGS = 					\
-	-DLOCALEDIR=\"$(localedir)\"\
-	-DGLCLIENT_DATADIR=\"$(datadir)/panda-client\"
+	-DLOCALEDIR=\"$(localedir)\" \
+	-DGLCLIENT_DATADIR=\"$(datadir)/panda-client\" \
+	-Wno-deprecated

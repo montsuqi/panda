@@ -31,8 +31,9 @@
 #ifdef USE_SSL
 #include	<openssl/engine.h>
 #endif
+#include	<libmondai.h>
 
-#include	"libmondai.h"
+#include	"protocol.h"
 
 #ifdef	MAIN
 #define	GLOBAL		/*	*/
@@ -43,12 +44,7 @@
 #define DEFAULT_PING_TIMER_PERIOD   (7000) //7sec
 
 typedef struct {
-	char			*AuthURI;
-	char			*RPCURI;
-	char			*RESTURI;
-	char			*PUSHURI;
-	char			*ProtocolVersion;
-	char			*AppVersion;
+	GLPctx 			*glp;
 	char			*title;
 	char			*bgcolor;
 	Bool			IsRecv;
@@ -56,17 +52,12 @@ typedef struct {
 	char			*FocusedWidget;
 	char			*ThisWindow;
 	GHashTable		*WindowTable;
-	unsigned int	RPCID;
-	char			*SessionID;
 	json_object		*ScreenData;
 }	GLSession;
 
-#define	AUTHURI(session)		((session)->AuthURI)
-#define RPCURI(session)			((session)->RPCURI)
-#define RESTURI(session)		((session)->RESTURI)
-#define PUSHURI(session)		((session)->PUSHURI)
-#define PROTOVER(session)		((session)->ProtocolVersion)
-#define APPVER(session)			((session)->AppVersion)
+#define	GLP(session)			((session)->glp)
+#define	SESSIONID(session)		((session)->glp->SessionID)
+#define	GINBEE(session)			((session)->glp->fGinbee)
 #define	TITLE(session)			((session)->title)
 #define	BGCOLOR(session)		((session)->bgcolor)
 #define	ISRECV(session)			((session)->IsRecv)
@@ -74,8 +65,6 @@ typedef struct {
 #define	FOCUSEDWIDGET(session)	((session)->FocusedWidget)
 #define	THISWINDOW(session)		((session)->ThisWindow)
 #define	WINDOWTABLE(session)	((session)->WindowTable)
-#define	RPCID(session)			((session)->RPCID)
-#define	SESSIONID(session)		((session)->SessionID)
 #define	SCREENDATA(session)		((session)->ScreenData)
 
 typedef struct {
@@ -93,19 +82,15 @@ extern	void		ExitSystem(void);
 extern  void		SetSessionTitle(const char *title);
 extern  void		SetSessionBGColor(const char *color);
 
-GLOBAL	char		*LogFile;
-
-GLOBAL	char		*ConfigName;
-GLOBAL	char		*ConfigName;
 GLOBAL	char		*ConfigName;
 GLOBAL	Bool		DelayDrawWindow;
 GLOBAL	Bool		CancelScaleWindow;
-GLOBAL	char		*CurrentApplication;
-GLOBAL	Bool		fV47;
+
 GLOBAL	char		*TempDir;
 GLOBAL	char		*ConfDir;
 GLOBAL	GLSession	*Session;
 
+GLOBAL	char		*AuthURI;
 GLOBAL	char		*User;
 GLOBAL	char		*Pass;
 GLOBAL	Bool		SavePass;
@@ -133,11 +118,5 @@ GLOBAL	Bool		fPKCS11;
 GLOBAL	char		*PKCS11Lib;
 GLOBAL	char		*PIN;
 GLOBAL	Bool		fSavePIN;
-#	ifdef USE_SSL
-GLOBAL	ENGINE		*Engine;
-#	endif
-GLOBAL	CURL		*Curl;
-
-GLOBAL	Bool		Ginbee;
 
 #endif

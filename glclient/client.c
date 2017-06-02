@@ -96,13 +96,26 @@ SetSessionBGColor(
 static gboolean
 StartClient ()
 {
-	InitProtocol();
+	GLP(Session) = InitProtocol(AuthURI,User,Pass);
+#if USE_SSL
+	if (fPKCS11) {
+		GLP_SetSSLPKCS11(GLP(Session),PKCS11Lib,PIN);
+	} else if (fSSL) {
+		GLP_SetSSL(GLP(Session),CertFile,CertKeyFile,CertPass,CAFile);
+	}
+#endif
+	THISWINDOW(Session) = NULL;
+	WINDOWTABLE(Session) = NewNameHash();
+	SCREENDATA(Session) = NULL;
 	LoadWidgetCache();
 	InitTopWindow();
 
-	RPC_GetServerInfo();
-	RPC_StartSession();
-	RPC_GetWindow();
+	RPC_GetServerInfo(GLP(Session));
+	RPC_StartSession(GLP(Session));
+	if (SCREENDATA(Session) != NULL) {
+		json_object_put(SCREENDATA(Session));
+	}
+	SCREENDATA(Session) = RPC_GetWindow(GLP(Session));
 	UpdateScreen();
 	SetPingTimerFunc();
 	UI_Main();
@@ -113,7 +126,7 @@ StartClient ()
 static void
 StopClient ()
 {
-	RPC_EndSession();
+	RPC_EndSession(GLP(Session));
 	SaveWidgetCache();
 }
 
@@ -165,12 +178,12 @@ InitSystem()
 	InitDesktop();
 
 	Session = g_new0(GLSession,1);
-	RPCID(Session) = 0;
 }
 
 static	void
 FinalSystem(void)
 {
+	FinalProtocol(GLP(Session));
 	FinalLogger();
 	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
 		rm_r(TempDir);
