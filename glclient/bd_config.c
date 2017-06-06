@@ -29,6 +29,7 @@
 
 #include "glclient.h"
 #include "gettext.h"
+#define BD_CONFIG_MAIN
 #include "bd_config.h"
 #include "logger.h"
 
@@ -121,6 +122,7 @@ gl_config_init(void)
 	gchar *path,*buf;
 	size_t size;
 
+	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
 	path = g_strdup_printf("%s/config.json",ConfDir);
 	if (!g_file_get_contents(path,&buf,&size,NULL)) {
 		load_default();

@@ -44,6 +44,7 @@
 #include	"const.h"
 #include	"logger.h"
 #include	"protocol.h"
+#include	"tempdir.h"
 
 static char *AUTHURI;
 static char *RPCURI;
@@ -223,6 +224,7 @@ main(
 
 	command = argv[1];
 
+	InitTempDir();
 	ctx = InitProtocol(AUTHURI,USER,PASS);
 	if (RPCURI != NULL) {
 		GLP_SetRPCURI(ctx,RPCURI);

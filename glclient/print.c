@@ -37,24 +37,22 @@
 #include	<gtk/gtk.h>
 #include	<gtkpanda/gtkpanda.h>
 #include	<errno.h>
+#include	<libmondai.h>
 
-#include	"glclient.h"
 #include	"gettext.h"
-#include	"action.h"
-#include	"dialogs.h"
-#include	"desktop.h"
 #include	"print.h"
-#include	"widgetcache.h"
 #include	"utils.h"
 #include	"notify.h"
 #include	"logger.h"
+#include	"tempdir.h"
+
+static char *DataDir = NULL;
 
 void
 ShowPrintDialog(
 	const char		*title,
 	LargeByteString	*lbs)
 {
-	GtkWindow *parent;
 	GtkWidget *dialog;
 	GtkWidget *content;
 	GtkWidget *pandapdf;
@@ -66,15 +64,9 @@ ShowPrintDialog(
 		return;
 	}
 	
-	parent = (GtkWindow *)g_list_nth_data(DialogStack,
-		g_list_length(DialogStack)-1);
-	if (parent == NULL) {
-		parent = GTK_WINDOW(TopWindow);
-	}
-
 	_title = g_strdup_printf(_("client printing - %s"),title);
 
-	dialog = gtk_dialog_new_with_buttons(_("Preview"),parent,
+	dialog = gtk_dialog_new_with_buttons(_("Preview"),NULL,
 		GTK_DIALOG_MODAL,
 		GTK_STOCK_CLOSE,
 		GTK_RESPONSE_NONE,NULL);
@@ -103,10 +95,13 @@ Print(
 	time_t t;
 
 	if (getenv("GLCLIENT_SAVE_PRINT_DATA") != NULL) {
+		if (DataDir == NULL) {
+			DataDir = MakeTempSubDir("print_data");
+		}
 		t = time(NULL);
 		gmtime_r(&t,&cur);
 		strftime(buf,sizeof(buf),"%Y%m%d%H%M%S",&cur);
-		snprintf(path,sizeof(path),"%s/%s_%s_%p.pdf",TempDir,oid,buf,lbs);
+		snprintf(path,sizeof(path),"%s/%s_%s_%p.pdf",DataDir,oid,buf,lbs);
 		Warning(path);
 		g_file_set_contents(path,LBS_Body(lbs),LBS_Size(lbs),NULL);
 	}

@@ -38,6 +38,7 @@ base_sources =						\
 	styleParser.c	styleParser.h	\
 	notify.c		notify.h		\
 	widgetOPS.c		widgetOPS.h		\
+	tempdir.c		tempdir.h		\
 	logger.c		logger.h
 
 base_dependencies =						\
@@ -84,6 +85,7 @@ cpanda_sources =	\
 	protocol.c		protocol.h		\
 	logger.c		logger.h		\
 	utils.c			utils.h			\
+	tempdir.c		tempdir.h		\
 	cpanda.c
 
 cpanda_SOURCES =		\

@@ -36,12 +36,14 @@
 #include	<sys/wait.h>
 #include	<signal.h>
 #include	<errno.h>
+#include	<libmondai.h>
 
 #define		DESKTOP_MAIN
 
-#include	"glclient.h"
-#include	"desktop.h"
 #include	"gettext.h"
+#include	"tempdir.h"
+#include	"bd_config.h"
+#include	"desktop.h"
 #include	"logger.h"
 
 static char *
@@ -174,7 +176,7 @@ OpenDesktop(char *filename,LargeByteString *binary)
 		return;
 	}
 
-	snprintf(path,SIZE_LONGNAME,"%s/%s",TempDir, filename);
+	snprintf(path,SIZE_LONGNAME,"%s/%s",GetTempDir(), filename);
 	path[SIZE_LONGNAME] = 0;
 	if (!g_file_set_contents(path,LBS_Body(binary),LBS_Size(binary),NULL)) {
 		Warning("could not create teporary file:%s",path);

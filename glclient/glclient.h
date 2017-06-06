@@ -87,7 +87,6 @@ GLOBAL	Bool		DelayDrawWindow;
 GLOBAL	Bool		CancelScaleWindow;
 
 GLOBAL	char		*TempDir;
-GLOBAL	char		*ConfDir;
 GLOBAL	GLSession	*Session;
 
 GLOBAL	char		*AuthURI;

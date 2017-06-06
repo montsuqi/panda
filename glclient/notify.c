@@ -36,8 +36,6 @@
 #include	<glib.h>
 #include	<gtk/gtk.h>
 
-#include	"glclient.h"
-#include	"action.h"
 #include	"notify.h"
 
 static int yy = 0;
@@ -76,13 +74,11 @@ Notify(gchar *summary,
 	gtk_window_set_modal(GTK_WINDOW(widget),FALSE);
 	gtk_window_set_focus_on_map(GTK_WINDOW(widget),FALSE);
 	gtk_window_set_accept_focus(GTK_WINDOW(widget),FALSE);
+	gtk_window_set_gravity(GTK_WINDOW(widget), GDK_GRAVITY_NORTH_EAST);
 
-	gtk_window_get_position(GTK_WINDOW(TopWindow),&x,&y);
-	gtk_window_get_size(GTK_WINDOW(TopWindow),&w,&h);
 	if (n == 0) {
-		yy = y;
+		yy = 0;
 	}
-	gtk_window_move(GTK_WINDOW(widget),x+w,yy);
 
 	g_signal_connect(G_OBJECT(widget),"enter-notify-event",G_CALLBACK(cb_enter),NULL);
 
@@ -92,6 +88,7 @@ Notify(gchar *summary,
 	if (timeout < 1) {
 		timeout = 5;
 	}
+	gtk_window_move(GTK_WINDOW(widget),w,y);
 	gtk_timeout_add(timeout*1000,DestroyDialog,widget);
 	n += 1;
 	yy = yy + h;

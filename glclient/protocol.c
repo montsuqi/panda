@@ -31,10 +31,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/time.h>
+#include <fcntl.h>
 #include <ctype.h>
 #include <json.h>
 #include <curl/curl.h>
@@ -57,13 +58,15 @@
 #include "gettext.h"
 #include "const.h"
 #include "logger.h"
+#include "tempdir.h"
 
 static LargeByteString *readbuf;
 static LargeByteString *writebuf;
 static gboolean Logging = FALSE;
 static char *LogDir;
 
-size_t write_data(
+size_t 
+write_data(
 	void *buf,
 	size_t size,
 	size_t nmemb,
@@ -82,7 +85,8 @@ size_t write_data(
 	return buf_size;
 }
 
-size_t read_text_data(
+size_t 
+read_text_data(
 	void *buf,
 	size_t size,
 	size_t nmemb,
@@ -108,7 +112,8 @@ size_t read_text_data(
 	return read_size;
 }
 
-size_t read_binary_data(
+size_t 
+read_binary_data(
 	void *buf,
 	size_t size,
 	size_t nmemb,
@@ -735,10 +740,9 @@ GLP_SetSSLPKCS11(
 	const char *p11lib,
 	const char *pin)
 {
-	uuid_t u;
 	int i,rc,fd;
 	unsigned int nslots,nslot,ncerts;
-	char part[3],*id,*p,*certid,*dir,*cafile,uid[64];
+	char part[3],*id,*p,*certid,*cafile;
 	PKCS11_CTX *p11ctx;
 	PKCS11_SLOT *slots, *slot;
 	PKCS11_CERT *certs,*cert;
@@ -810,17 +814,11 @@ GLP_SetSSLPKCS11(
 		Error("PKCS11_enumerate_certs");
 	}
 	fprintf(stderr,"ncerts:%d\n",ncerts);
-
-	uuid_generate(u);
-	uuid_unparse(u,uid);
-	dir = g_strconcat(g_get_home_dir(),"/.glclient/protocol",NULL);
-	MakeDir(dir,0700);
-	cafile = g_strconcat(dir,"/",uid,NULL);
-	g_free(dir);
+	cafile = g_strconcat(GetTempDir(),"/ca.pem",NULL);
 
 	/* write cacertfile */
-	if ((fd = mkstemp(cafile)) == -1) {
-		Error("mkstemp failure");
+	if ((fd = creat(cafile,0600)) == -1) {
+		Error("creat failure");
 	}
 	out = BIO_new_fd(fd,BIO_CLOSE);
 	for(i=0;i<ncerts;i++) {
@@ -936,29 +934,6 @@ FinalCURL(
 	curl_global_cleanup();
 }
 
-static	void
-MakeLogDir()
-{
-#if 1
-	gchar *template;
-	gchar *tmpdir;
-	gchar *p;
-
-	tmpdir = g_strconcat(g_get_home_dir(),"/.glclient/jsonrpc",NULL);
-	MakeDir(tmpdir,0700);
-	template = g_strconcat(tmpdir,"/XXXXXX",NULL);
-	g_free(tmpdir);
-	if ((p = mkdtemp(template)) == NULL) {
-		Error(_("mkdtemp failure"));
-	}
-	LogDir = p; 
-	printf("LogDir:%s\n",LogDir);
-#else
-	/* glib >= 2.26*/
-	TempDir = g_mkdtemp(g_strdup("glclient_XXXXXX"));
-#endif
-}
-
 extern	GLPctx*
 InitProtocol(
 	const char *authuri,
@@ -981,7 +956,7 @@ InitProtocol(
 	ctx->Curl = InitCURL(user,pass);
 	if (getenv("GLCLIENT_DO_JSONRPC_LOGGING") != NULL) {
 		Logging = TRUE;
-		MakeLogDir();
+		LogDir = MakeTempSubDir("jsonrpc_log");
 	}
 	return ctx;
 }

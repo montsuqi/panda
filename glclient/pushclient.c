@@ -11,8 +11,8 @@
 #include <uuid/uuid.h>
 #include <json.h>
 #include <glib.h>
+#include <libmondai.h>
 
-#include "glclient.h"
 #include "protocol.h"
 #include "logger.h"
 #include "desktop.h"
@@ -27,11 +27,12 @@ static volatile int force_exit;
 /*option*/
 static char *PusherURI;
 static char *RestURI;
-static char *ConfigName;
 static char *SessionID;
+static char *User;
+static char *Pass;
 static char *TempDir;
 static char *LogFile;
-static char *SubscribeID;
+static char *SubID;
 
 static int
 websocket_write_back(
@@ -380,9 +381,9 @@ Execute()
 
 static GOptionEntry entries[] =
 {
-	{ "pusher-uri",'p',0,G_OPTION_ARG_STRING,&PusherURI,
+	{ "pusher",'p',0,G_OPTION_ARG_STRING,&PusherURI,
 		"pusher uri",NULL},
-	{ "rest-uri",'r',0,G_OPTION_ARG_STRING,&RestURI,
+	{ "rest",'r',0,G_OPTION_ARG_STRING,&RestURI,
 		"rest uri root",NULL},
 	{ "config",'c',0,G_OPTION_ARG_STRING,&ConfigName,
 		"config name",NULL},

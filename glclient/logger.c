@@ -39,6 +39,7 @@
 
 #define LOGGER_MAIN
 #include	"logger.h"
+#include	"utils.h"
 
 
 #ifndef	SIZE_LOG
@@ -50,41 +51,6 @@ static FILE *fp = NULL;
 static int level = LOG_WARN;
 static void (*ErrorFunc)(const char *,...);
 
-static void
-rm_old_log(
-	const char *dname,
-	unsigned long elapse)
-{
-	DIR *dir;
-	struct dirent *ent;
-	struct stat st;
-	time_t now;
-	char path[2048];
-
-	if (dname == NULL) {
-		fprintf(stderr,"dname null\n");
-		return;
-	}
-
-	now = time(NULL);
-
-	if ((dir = opendir(dname)) != NULL) {
-		while((ent = readdir(dir)) != NULL) {
-			if (ent->d_name[0] != '.') {
-				snprintf(path,sizeof(path),"%s/%s",dname,ent->d_name);
-				path[sizeof(path)-1] = 0;
-				if (stat(path,&st) == 0) {
-					if ((now - st.st_ctim.tv_sec) > elapse) {
-						fprintf(stderr,"remove %s\n",path);
-						//remove(path);
-					}
-				}
-			}
-		}
-		closedir(dir);
-	}
-}
-
 void
 InitLogger()
 {
@@ -93,11 +59,11 @@ InitLogger()
 	gchar *dir,buf[64];
 
 	dir = g_strconcat(g_get_home_dir(),"/.glclient/log",NULL);
-	MakeDir(dir,0700);
+	mkdir_p(dir,0700);
 	uuid_generate(u);
 	uuid_unparse(u,buf);
 	LogFile = g_strconcat(dir,"/",buf,".log",NULL);
-	rm_old_log(dir,2592000); /* 30days */
+	rm_r_old(dir,2592000); /* 30days */
 	g_free(dir);
 	fprintf(stderr,"LogFile: %s\n",LogFile);
 

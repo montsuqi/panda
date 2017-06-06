@@ -24,6 +24,15 @@
 #include <glib.h>      /* gchar, gboolean */
 #include <sys/types.h> /* mode_t */
 
+#undef	GLOBAL
+#ifdef	BD_CONFIG_MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+GLOBAL char* ConfDir;
+
 /* gconf tool */
 void gl_config_init();
 int gl_config_get_config_nums();

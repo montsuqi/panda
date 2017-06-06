@@ -17,12 +17,18 @@
  * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
-#ifndef	_INC_DOWNLOAD_H
-#define	_INC_DOWNLOAD_H
+#ifndef	_INC_TEMPDIR_H
+#define	_INC_TEMPDIR_H
 
-void ShowDownloadDialog(
-	char *filename, 
-	char *description, 
-	LargeByteString *binary);
+#undef	GLOBAL
+#ifdef	TEMPDIR_MAIN
+#define	GLOBAL		/*	*/
+#else
+#define	GLOBAL		extern
+#endif
+
+extern void InitTempDir();
+extern char *GetTempDir();
+extern char *MakeTempSubDir(const char*name);
 
 #endif

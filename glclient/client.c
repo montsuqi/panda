@@ -55,23 +55,8 @@
 #include	"gettext.h"
 #include	"logger.h"
 #include	"utils.h"
+#include	"tempdir.h"
 #include	"dialogs.h"
-
-static	void
-MakeTempDir(void)
-{
-	uuid_t u;
-	gchar *dir,buf[64];
-
-	dir = g_strconcat(g_get_home_dir(),"/.glclient/tmp",NULL);
-	MakeDir(dir,0700);
-	uuid_generate(u);
-	uuid_unparse(u,buf);
-	TempDir = g_strconcat(dir,"/",buf,NULL);
-	MakeDir(TempDir,0700);
-	g_free(dir);
-	fprintf(stderr,"tempdir: %s\n",TempDir);
-}
 
 extern	void 
 SetSessionTitle(
@@ -107,7 +92,6 @@ StartClient ()
 	THISWINDOW(Session) = NULL;
 	WINDOWTABLE(Session) = NewNameHash();
 	SCREENDATA(Session) = NULL;
-	LoadWidgetCache();
 	InitTopWindow();
 
 	RPC_GetServerInfo(GLP(Session));
@@ -127,7 +111,6 @@ static void
 StopClient ()
 {
 	RPC_EndSession(GLP(Session));
-	SaveWidgetCache();
 }
 
 static	void
@@ -138,8 +121,6 @@ InitSystem()
 
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
-
-	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
 
 	if ((p = getenv("GLCLIENT_PING_TIMER_PERIOD")) != NULL) {
 		PingTimerPeriod = atoi(p) * 1000;
@@ -173,7 +154,7 @@ InitSystem()
 		CancelScaleWindow = FALSE;
 	}
 
-	MakeTempDir();
+	InitTempDir();
 	InitLogger();
 	InitDesktop();
 

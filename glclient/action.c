@@ -1224,7 +1224,7 @@ DownloadFile(
 	lbs = REST_GetBLOB(GLP(Session),oid);
 	if (lbs != NULL) {
 		if (LBS_Size(lbs) > 0) {
-			ShowDownloadDialog(NULL,filename,desc,lbs);
+			ShowDownloadDialog(filename,desc,lbs);
 		}
 		FreeLBS(lbs);
 	}
