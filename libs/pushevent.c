@@ -241,7 +241,7 @@ PushEvent_via_json(
 	obj = json_object_new_object();
 	json_object_object_add(obj,"event",json_object_new_string(event));
 	json_object_object_add(obj,"user",json_object_new_string(user));
-	json_object_object_add(obj,"body",json_object_new_string(event));
+	json_object_object_add(obj,"body",body);
 	now = time(NULL);
 	localtime_r(&now, &tm_now);
 	strftime(str_now,sizeof(str_now),"%FT%T%z",&tm_now);
