@@ -1,38 +1,47 @@
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <string.h>
 #include <signal.h>
-
-#include <syslog.h>
 #include <sys/time.h>
+#include <errno.h>
 #include <unistd.h>
 #include <libwebsockets.h>
 #include <uuid/uuid.h>
 #include <json.h>
 #include <glib.h>
+#include <libgen.h>
 #include <libmondai.h>
 
-#include "protocol.h"
-#include "logger.h"
-#include "desktop.h"
-#include "gettext.h"
-#include "logger.h"
 #include "utils.h"
+#include "logger.h"
 
 #define BUF_SIZE (10*1024)
 
 static volatile int force_exit;
+static struct lws *wsi_pr;
 
-/*option*/
-static char *PusherURI;
-static char *RestURI;
-static char *SessionID;
-static char *User;
-static char *Pass;
-static char *TempDir;
-static char *LogFile;
-static char *SubID;
+/* option*/
+static char     *GLPUSHPRINT;
+static char     *GLPUSHDOWNLOAD;
+
+/* env option*/
+static char     *PusherURI;
+static char     *RESTURI;
+static char     *SessionID;
+static char     *APIUser;
+static char     *APIPass;
+static gboolean fSSL;
+static char     *Cert;
+static char     *CertKey;
+static char     *CertKeyPass;
+static char     *CAFile;
+
+static char     *SubID;
 
 static int
 websocket_write_back(
@@ -63,36 +72,48 @@ websocket_write_back(
 }
 
 static void
+exec_cmd(
+	const char *cmd,
+	char **argv,
+	char **env)
+{
+	pid_t	pid;
+
+	pid = fork();
+	if (pid == 0) {
+		execve(cmd,argv,env);
+	} else if (pid < 0) {
+		Warning("fork error:%s",strerror(errno));
+	} else {
+		Info("%s fork",cmd);
+	}
+}
+
+static void
 print_report(
 	json_object *obj)
 {
 	json_object *child;
 	char *printer,*oid,*title;
+	char *argv[1],*env[5];
 	gboolean showdialog;
-#if 0
-	LargeByteString *lbs;
-#endif
 
-	printer = NULL;
+	printer = "";
 	title = "";
 	showdialog = FALSE;
 
-	child = json_object_object_get(obj,"object_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"object_id",&child)) {
 		return;
 	}
 	oid = (char*)json_object_get_string(child);
 
-	child = json_object_object_get(obj,"printer");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"printer",&child)) {
 		printer = (char*)json_object_get_string(child);
 	}
-	child = json_object_object_get(obj,"title");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"title",&child)) {
 		title = (char*)json_object_get_string(child);
 	}
-	child = json_object_object_get(obj,"showdialog");
-	if (CheckJSONObject(child,json_type_boolean)) {
+	if (json_object_object_get_ex(obj,"showdialog",&child)) {
 		showdialog = json_object_get_boolean(child);
 	}
 	if (getenv("GLCLIENT_PRINTREPORT_SHOWDIALOG")!=NULL) {
@@ -105,21 +126,19 @@ print_report(
 		showdialog = TRUE;
 	}
 
-fprintf(stderr,"\nreport title:%s printer:%s showdialog:%d oid:%s\n",title,printer,(int)showdialog,oid);
+	Info("report title:%s printer:%s showdialog:%d oid:%s",title,printer,(int)showdialog,oid);
 
-#if 0
-	lbs = REST_GetBLOB(oid);
-	if (lbs != NULL) {
-		if (LBS_Size(lbs) > 0) {
-			if (showdialog) {
-				ShowPrintDialog(title,lbs);
-			} else {
-				Print(oid,title,printer,lbs);
-			}
-		}
-		FreeLBS(lbs);
-	}
-#endif
+	argv[0] = NULL;
+	env[0] = g_strdup_printf("GLPUSH_TITLE=%s",title);
+	env[1] = g_strdup_printf("GLPUSH_PRINTER=%s",printer);
+	env[2] = g_strdup_printf("GLPUSH_SHOW_DIALOG=%d",(int)showdialog);
+	env[3] = g_strdup_printf("GLPUSH_OID=%s",oid);
+	env[4] = NULL;
+	exec_cmd(GLPUSHPRINT,argv,env);
+	g_free(env[0]);
+	g_free(env[1]);
+	g_free(env[2]);
+	g_free(env[3]);
 }
 
 static void
@@ -128,25 +147,20 @@ download_file(
 {
 	json_object *child;
 	char *oid,*filename,*desc;
-#if 0
-	LargeByteString *lbs;
-#endif
+	char *argv[1],*env[4];
 
 	filename = "";
 	desc = "";
 
-	child = json_object_object_get(obj,"object_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"object_id",&child)) {
 		return;
 	}
 	oid = (char*)json_object_get_string(child);
 
-	child = json_object_object_get(obj,"filename");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"filename",&child)) {
 		filename = (char*)json_object_get_string(child);
 	}
-	child = json_object_object_get(obj,"description");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"description",&child)) {
 		desc = (char*)json_object_get_string(child);
 	}
 
@@ -154,17 +168,17 @@ download_file(
 		return;
 	}
 
-fprintf(stderr,"\nmisc filename:%s description:%s oid:%s\n",filename,desc,oid);
+	Info("misc filename:%s description:%s oid:%s",filename,desc,oid);
 
-#if 0
-	lbs = REST_GetBLOB(oid);
-	if (lbs != NULL) {
-		if (LBS_Size(lbs) > 0) {
-			ShowDownloadDialog(NULL,filename,desc,lbs);
-		}
-		FreeLBS(lbs);
-	}
-#endif
+	argv[0] = NULL;
+	env[0] = g_strdup_printf("GLPUSH_FILENAME=%s",filename);
+	env[1] = g_strdup_printf("GLPUSH_DESCRIPTION=%s",desc);
+	env[2] = g_strdup_printf("GLPUSH_OID=%s",oid);
+	env[3] = NULL;
+	exec_cmd(GLPUSHDOWNLOAD,argv,env);
+	g_free(env[0]);
+	g_free(env[1]);
+	g_free(env[2]);
 }
 
 static void
@@ -172,12 +186,10 @@ client_data_ready_handler(
 	json_object *obj)
 {
 	json_object *child;
-	char *type;
+	const char *type;
 
-	child = json_object_object_get(obj,"type");
-	if (!CheckJSONObject(child,json_type_string)) {
-		fprintf(stderr,"%s:%d type not found\n",__FILE__,__LINE__);
-		return;
+	if (!json_object_object_get_ex(obj,"type",&child)) {
+		Warning("%s:%d type not found",__FILE__,__LINE__);
 	}
 	type = json_object_get_string(child);
 	if (type != NULL) {
@@ -194,51 +206,45 @@ message_handler(
 	char *in)
 {
 	json_object *obj,*child,*data;
-	char *command,*event;
+	const char *command,*event;
 
 	obj = json_tokener_parse(in);
 	if (!CheckJSONObject(obj,json_type_object)) {
-		fprintf(stderr,"%s:%d invalid json message\n",__FILE__,__LINE__);
+		Warning("%s:%d invalid json message",__FILE__,__LINE__);
 		return;
 	}
-	child = json_object_object_get(obj,"command");
-	if (!CheckJSONObject(child,json_type_string)) {
-		fprintf(stderr,"%s:%d command not found\n",__FILE__,__LINE__);
+	if (!json_object_object_get_ex(obj,"command",&child)) {
+		Warning("%s:%d command not found",__FILE__,__LINE__);
 		goto message_handler_error;
 	}
 	command = json_object_get_string(child);
 	if (command == NULL) {
-		fprintf(stderr,"%s:%d command null\n",__FILE__,__LINE__);
+		Warning("%s:%d command null",__FILE__,__LINE__);
 		goto message_handler_error;
 	}
 	if (!strcmp(command,"subscribed")) {
-	    child = json_object_object_get(obj,"sub.id");
-    	if (!CheckJSONObject(child,json_type_string)) {
-    	    fprintf(stderr,"%s:%d sub.id not found\n",__FILE__,__LINE__);
+	    if (!json_object_object_get_ex(obj,"sub.id",&child)) {
+    	    Warning("%s:%d sub.id not found",__FILE__,__LINE__);
 			goto message_handler_error;
     	}
-		subid = strdup(json_object_get_string(child));
+		SubID = strdup(json_object_get_string(child));
 	} else if (!strcmp(command,"event")) {
-	    data = json_object_object_get(obj,"data");
-    	if (!CheckJSONObject(data,json_type_object)) {
-    	    fprintf(stderr,"%s:%d data not found\n",__FILE__,__LINE__);
+	    if (!json_object_object_get_ex(obj,"data",&data)) {
+    	    Warning("%s:%d data not found",__FILE__,__LINE__);
 			goto message_handler_error;
     	}
 
-	    child = json_object_object_get(data,"event");
-    	if (!CheckJSONObject(child,json_type_string)) {
-    	    fprintf(stderr,"%s:%d event not found\n",__FILE__,__LINE__);
+	    if (!json_object_object_get_ex(data,"event",&child)) {
+    	    Warning("%s:%d event not found",__FILE__,__LINE__);
 			goto message_handler_error;
     	}
 		event = json_object_get_string(child);
 
-	    child = json_object_object_get(data,"body");
-    	if (!CheckJSONObject(child,json_type_object)) {
-    	    fprintf(stderr,"%s:%d body not found\n",__FILE__,__LINE__);
+	    if (!json_object_object_get_ex(data,"body",&child)) {
+    	    Warning("%s:%d body not found",__FILE__,__LINE__);
 			goto message_handler_error;
     	}
 
-fprintf(stderr,"event:%s\n",event);
 		if (!strcmp(event,"client_data_ready")) {
 			client_data_ready_handler(child);
 		}
@@ -256,39 +262,39 @@ callback_push_receive(
 	void *in,
 	size_t len)
 {
-	char buf[BUF_SIZE];
+	char buf[BUF_SIZE],reqid[64];
+	uuid_t u;
+
+	uuid_generate(u);
+	uuid_unparse(u,reqid);
 
 	switch (reason) {
 
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
-		fprintf(stderr,"LWS_CALLBACK_CLIENT_ESTABLISHED\n");
+		Info("LWS_CALLBACK_CLIENT_ESTABLISHED\n");
 		/* subscribe */
 		snprintf(buf,sizeof(buf)-1,"{\"command\":\"subscribe\",\"req.id\":\"%s\",\"event\":\"*\"}",reqid);
 		websocket_write_back(wsi, buf, -1);
 		break;
 
 	case LWS_CALLBACK_CLOSED:
-		fprintf(stderr,"LWS_CALLBACK_CLOSED\n");
+		Info("LWS_CALLBACK_CLOSED");
 		wsi_pr = NULL;
 		break;
 
 	case LWS_CALLBACK_CLIENT_RECEIVE:
 		((char *)in)[len] = '\0';
-		fprintf(stderr,"LWS_CALLBACK_CLIENT_RECEIVE\n");
-		fprintf(stderr,"%s\n", (char *)in);
+		Info("LWS_CALLBACK_CLIENT_RECEIVE");
+		Info("%s", (char *)in);
 		message_handler(in);
 
 		break;
 
 	case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 		if (wsi == wsi_pr) {
-			fprintf(stderr,"LWS_CALLBACK_CLIENT_CONNECTION_ERROR:%s\n",(char*)in);
+			Info("LWS_CALLBACK_CLIENT_CONNECTION_ERROR:%s",(char*)in);
 			wsi_pr = NULL;
 		}
-		break;
-
-	case LWS_CALLBACK_CLIENT_WRITEABLE:
-		fprintf(stderr,"LWS_CALLBACK_CLIENT_WRITEABLE\n");
 		break;
 
 	case LWS_CALLBACK_CLIENT_APPEND_HANDSHAKE_HEADER:
@@ -299,13 +305,11 @@ callback_push_receive(
 			if (len < 100) {
 			    return 1;
 			}
-			if (user == NULL || pass == NULL) {
-				return 0;
-			}
-			userpass = g_strdup_printf("%s:%s",user,pass);
+			userpass = g_strdup_printf("%s:%s",APIUser,APIPass);
 			b64 = g_base64_encode(userpass,strlen(userpass));
 			g_free(userpass);
 			*p += sprintf(*p, "Authorization: Basic %s\x0d\x0a",b64);
+			*p += sprintf(*p, "X-GINBEE-TENANT-ID: 1\x0d\x0a");
 			g_free(b64);
 		}
 		break;
@@ -316,7 +320,6 @@ callback_push_receive(
 
 	return 0;
 }
-
 
 /* list of supported protocols and callbacks */
 static struct lws_protocols protocols[] = {
@@ -350,103 +353,22 @@ ratelimit_connects(
 }
 
 static void
-Init()
-{
-	bindtextdomain(PACKAGE, LOCALEDIR);
-	textdomain(PACKAGE);
-
-	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
-
-	PusherURI  = NULL;
-	RestURI    = NULL;
-	ConfigName = NULL;
-	SessionID  = NULL;
-	TempDir    = NULL;
-	LogFile    = NULL;
-
-	gl_config_init();
-
-	if (PusherURI == NULL || RestURI == NULL || ConfigName == NULL) {
-		fprintf(stderr,"puhser-uri or rest-uri or config-name = null\n");
-		exit(1);
-	}
-	InitLogger_via_FileName(LogFile);
-	InitDesktio();
-}
-
-static void
 Execute()
 {
-}
-
-static GOptionEntry entries[] =
-{
-	{ "pusher",'p',0,G_OPTION_ARG_STRING,&PusherURI,
-		"pusher uri",NULL},
-	{ "rest",'r',0,G_OPTION_ARG_STRING,&RestURI,
-		"rest uri root",NULL},
-	{ "config",'c',0,G_OPTION_ARG_STRING,&ConfigName,
-		"config name",NULL},
-	{ "sessionid",'i',0,G_OPTION_ARG_STRING,&SessionID,
-		"session id",NULL},
-	{ "tempdir",'t',0,G_OPTION_ARG_STRING,&TempDir,
-		"temporary directory",NULL},
-	{ "logfile",'l',0,G_OPTION_ARG_STRING,&LogFile,
-		"logfile name",NULL},
-	{ NULL}
-};
-
-int
-main(
-	int argc,
-	char **argv)
-{
-	GOptionContext *ctx;
-
-	ctx = g_option_context_new("");
-	g_option_context_add_main_entries(ctx, entries, NULL);
-	g_option_context_parse(ctx,&argc,&argv,NULL);
-
-	Init();
-	Execute();
-	return 0;
-}
-
-
-
-	int n = 0, ret = 0 , use_ssl = 0, ietf_version = -1;
+	int ietf_version = -1;
 	unsigned int rl_pr = 0;
 	struct lws_context_creation_info info;
 	struct lws_client_connect_info i;
 	struct lws_context *context;
 	const char *prot, *p;
-	char path[300], uri[256];
-	uuid_t u;
-
-	uuid_generate(u);
-	uuid_unparse(u,reqid);
-
-#if 0
-	snprintf(uri,sizeof(uri)-1,"wss://sms.orca-ng.org:9400/ws");
-	snprintf(uri,sizeof(uri)-1,"wss://pusher-proxy.orca.orcamo.jp:443/ws");
-#endif
-	snprintf(uri,sizeof(uri)-1,"ws://localhost:9400/ws");
-
-#if 0
-	user = NULL;
-	pass = NULL;
-#else
-	user = "user";
-	pass = "pass";
-#endif
+	char path[512];
 
 	memset(&info, 0, sizeof info);
 	memset(&i, 0, sizeof(i));
 
 	i.port = 9400;
-	if (lws_parse_uri((char*)uri, &prot, &i.address, &i.port, &p)) {
-		fprintf(stderr,"lws_parse_uri error\n");
-		exit(1);
+	if (lws_parse_uri(PusherURI, &prot, &i.address, &i.port, &p)) {
+		_Error("lws_parse_uri error");
 	}
 
 	/* add back the leading / on path */
@@ -455,32 +377,25 @@ main(
 	path[sizeof(path) - 1] = '\0';
 	i.path = path;
 
-	if (!strcmp(prot, "http") || !strcmp(prot, "ws")) {
-		use_ssl = 0;
-	}
-	if (!strcmp(prot, "https") || !strcmp(prot, "wss")) {
-		use_ssl = 1;
-	}
-
 	info.port = CONTEXT_PORT_NO_LISTEN;
 	info.protocols = protocols;
 	info.gid = -1;
 	info.uid = -1;
 
-	info.ssl_ca_filepath          = "ca.crt";
-	info.ssl_cert_filepath        = "client.crt";
-	info.ssl_private_key_filepath = "client.pem";
-	info.ssl_private_key_password = "pgrrTA3Y9UHepQGM";
-	info.ssl_private_key_password = "";
+	if (fSSL) {
+		info.ssl_ca_filepath          = CAFile;
+		info.ssl_cert_filepath        = Cert;
+		info.ssl_private_key_filepath = CertKey;
+		info.ssl_private_key_password = CertKeyPass;
+	}
 
 	context = lws_create_context(&info);
 	if (context == NULL) {
-		fprintf(stderr, "Creating libwebsocket context failed\n");
-		return 1;
+		_Error("Creating libwebsocket context failed");
 	}
 
 	i.context = context;
-	i.ssl_connection = use_ssl;
+	i.ssl_connection = fSSL;
 	i.host = i.address;
 	i.origin = i.address;
 	i.ietf_version_or_minus_one = ietf_version;
@@ -489,7 +404,7 @@ main(
 	while (!force_exit) {
 
 		if (!wsi_pr && ratelimit_connects(&rl_pr, 2u)) {
-			lwsl_notice("connecting\n");
+			Info("connecting pusher");
 			i.protocol = protocols[0].name;
 			wsi_pr = lws_client_connect_via_info(&i);
 		}
@@ -497,8 +412,91 @@ main(
 		lws_service(context, 500);
 	}
 
-	fprintf(stderr,"Exiting\n");
+	Info("exit gl-push-client");
 	lws_context_destroy(context);
+}
 
-	return ret;
+static void
+Init()
+{
+	char *LogFile;
+
+	LogFile = getenv("GLPUSH_LOGFILE");
+	if (LogFile != NULL) {
+		InitLogger_via_FileName(LogFile);
+	} else {
+		InitLogger("gl-push-client");
+	}
+}
+
+static GOptionEntry entries[] =
+{
+	{ "gl-push-print",'p',0,G_OPTION_ARG_STRING,&GLPUSHPRINT,
+		"specify glprint command",NULL},
+	{ "gl-push-download",'d',0,G_OPTION_ARG_STRING,&GLPUSHDOWNLOAD,
+		"specify gldownload command",NULL},
+	{ NULL}
+};
+
+int
+main(
+	int argc,
+	char **argv)
+{
+	char *dname;
+	GOptionContext *ctx;
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof(struct sigaction));
+	sa.sa_handler = SIG_IGN;
+	sa.sa_flags |= SA_RESTART;
+	sigemptyset (&sa.sa_mask);
+	if (sigaction(SIGCHLD, &sa, NULL) != 0) {
+		fprintf(stderr,"sigaction(2) failure: %s",strerror(errno));
+	}
+
+	dname = dirname(argv[0]);
+	GLPUSHPRINT    = g_strdup_printf("%s/gl-push-print",dname);
+	GLPUSHDOWNLOAD = g_strdup_printf("%s/gl-push-download",dname);
+
+	ctx = g_option_context_new("");
+	g_option_context_add_main_entries(ctx, entries, NULL);
+	g_option_context_parse(ctx,&argc,&argv,NULL);
+
+	PusherURI = getenv("GLPUSH_PUSHER_URI");
+	if (PusherURI == NULL) {
+		fprintf(stderr,"set env GLPUSH_PUSHER_URI\n");
+		exit(1);
+	}
+	RESTURI = getenv("GLPUSH_REST_URI");
+	if (RESTURI == NULL) {
+		fprintf(stderr,"set env GLPUSH_REST_URI\n");
+		exit(1);
+	}
+	SessionID = getenv("GLPUSH_SESSION_ID");
+	if (SessionID == NULL) {
+		fprintf(stderr,"set env GLSPUSH_SESSION_ID\n");
+		exit(1);
+	}
+	APIUser = getenv("GLPUSH_API_USER");
+	if (APIUser == NULL) {
+		fprintf(stderr,"set env GLPUSH_API_USER\n");
+		exit(1);
+	}
+	APIPass = getenv("GLPUSH_API_PASSWORD");
+	if (APIPass == NULL) {
+		fprintf(stderr,"set env GLPUSH_API_PASSWORD\n");
+		exit(1);
+	}
+
+	fSSL         = FALSE;
+	Cert        = getenv("GLPUSH_CERT");
+	CertKey     = getenv("GLPUSH_CERT_KEY");
+	CertKeyPass = getenv("GLPUSH_CERT_KEY_PASSWORD");
+	CAFile      = getenv("GLPUSH_CA_FILE");
+
+	Init();
+	Execute();
+
+	return 0;
 }

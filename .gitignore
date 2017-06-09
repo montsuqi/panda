@@ -55,6 +55,8 @@ glauth/glauth
 glauth/user
 glclient/cpanda
 glclient/glclient2
+glclient/gl-push-client
+glclient/gl-push-print
 glserver/glserver
 libs/testblob
 libs/testnet

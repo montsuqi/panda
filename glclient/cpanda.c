@@ -65,7 +65,7 @@ static char *CAFILE;
 
 static void
 StartSession(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	json_object *obj;
 
@@ -80,7 +80,7 @@ StartSession(
 
 static void
 GetWindow(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	json_object *obj;
 
@@ -91,7 +91,7 @@ GetWindow(
 
 static void
 ListDownloads(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	json_object *obj;
 
@@ -102,7 +102,7 @@ ListDownloads(
 
 static void
 GetMessage(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	char *dialog,*popup,*abort;
 
@@ -115,7 +115,7 @@ GetMessage(
 
 static void
 SendEvent(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	char *file)
 {
 	json_object *obj,*res;
@@ -145,7 +145,7 @@ SendEvent(
 
 static void
 EndSession(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	RPC_EndSession(ctx);
 }
@@ -195,7 +195,7 @@ main(
 {
 	GOptionContext *goctx;
 	char *command;
-	GLPctx *ctx;
+	GLProtocol *ctx;
 
 	setlocale(LC_CTYPE,"ja_JP.UTF-8");
 

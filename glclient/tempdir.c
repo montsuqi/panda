@@ -61,6 +61,14 @@ InitTempDir()
 	fprintf(stderr,"tempdir: %s\n",TempDir);
 }
 
+void
+InitTempDir_via_Dir(
+	const char *_dir)
+{
+	TempDir = g_strdup(_dir);
+	mkdir_p((char*)_dir,0700);
+}
+
 char *
 GetTempDir()
 {

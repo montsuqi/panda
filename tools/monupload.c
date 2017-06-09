@@ -49,6 +49,7 @@
 #include	"sysdatacom.h"
 #include	"socket.h"
 #include	"blobreq.h"
+#include	"pushevent.h"
 #include	"message.h"
 #include	"debug.h"
 
@@ -81,8 +82,7 @@ ReadMetaFile(
 	if (is_error(obj)) {
 		return NULL;
 	}
-	result = json_object_object_get(obj,"result");
-	if (!CheckJSONObject(result,json_type_array)) {
+	if (!json_object_object_get_ex(obj,"result",&result)) {
 		return NULL;
 	}
 	return obj;
@@ -116,7 +116,7 @@ AddMetaData(
 		result = json_object_new_array();
 		json_object_object_add(obj,"result",result);
 	} else {
-		result = json_object_object_get(obj,"result");
+		json_object_object_get_ex(obj,"result",&result);
 	}
 
 	child = json_object_new_object();
@@ -137,6 +137,11 @@ AddMetaData(
 	}
 	if (Desc != NULL) {
 		json_object_object_add(child,"description",json_object_new_string(Desc));
+	}
+
+	if (getenv("MONUPLOAD_PUSH") != NULL) {
+		PushEvent_via_json("client_data_ready",child);
+		exit(0);
 	}
 
 	json_object_array_add(result,child);

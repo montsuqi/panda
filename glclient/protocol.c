@@ -179,7 +179,7 @@ HeaderPostBLOB(
 
 char *
 REST_PostBLOB(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	LargeByteString *lbs)
 {
 	struct curl_slist *headers = NULL;
@@ -234,7 +234,7 @@ REST_PostBLOB(
 
 LargeByteString*
 REST_GetBLOB(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	const char *oid)
 {
 	char url[SIZE_URL_BUF+1],errbuf[CURL_ERROR_SIZE+1];
@@ -249,6 +249,7 @@ REST_GetBLOB(
 
 	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",ctx->RESTURI,ctx->SessionID,oid);
 	url[sizeof(url)-1] = 0;
+	Debug("REST_GetBLOB:%s",url);
 
 	curl_easy_setopt(ctx->Curl, CURLOPT_URL, url);
 	curl_easy_setopt(ctx->Curl, CURLOPT_POST,0);
@@ -284,7 +285,7 @@ REST_GetBLOB(
 
 static	json_object*
 MakeJSONRPCRequest(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	const char *method,
 	json_object *params)
 {
@@ -301,7 +302,7 @@ MakeJSONRPCRequest(
 
 static	void
 CheckJSONRPCResponse(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	json_object *obj)
 {
 	json_object *obj2,*obj3;
@@ -356,7 +357,7 @@ CheckJSONRPCResponse(
 
 static	json_object*
 JSONRPC(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	int type,
 	json_object *obj)
 {
@@ -459,7 +460,7 @@ JSONRPC(
 
 void
 RPC_GetServerInfo(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child,*result;
 	char *type;
@@ -492,7 +493,7 @@ RPC_GetServerInfo(
 
 void
 RPC_StartSession(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child,*result,*meta;
 	gchar *rpcuri,*resturi;
@@ -538,7 +539,7 @@ RPC_StartSession(
 
 void
 RPC_EndSession(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child;
 
@@ -557,7 +558,7 @@ RPC_EndSession(
 
 json_object *
 RPC_GetWindow(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child;
 
@@ -577,7 +578,7 @@ RPC_GetWindow(
 
 json_object *
 RPC_GetScreenDefine(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	const char*wname)
 {
 	json_object *obj,*params,*child;
@@ -595,7 +596,7 @@ RPC_GetScreenDefine(
 
 json_object *
 RPC_SendEvent(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	json_object *params)
 {
 	json_object *obj,*meta;
@@ -612,7 +613,7 @@ RPC_SendEvent(
 
 void
 RPC_GetMessage(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	char **dialog,
 	char **popup,
 	char **abort)
@@ -647,7 +648,7 @@ RPC_GetMessage(
 
 json_object *
 RPC_ListDownloads(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child;
 
@@ -666,7 +667,7 @@ RPC_ListDownloads(
 
 void 
 GLP_SetRPCURI(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	const char *uri)
 {
 	if (ctx->RPCURI != NULL) {
@@ -677,14 +678,14 @@ GLP_SetRPCURI(
 
 char*
 GLP_GetRPCURI(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	return ctx->RPCURI;
 }
 
 void 
 GLP_SetRESTURI(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	const char *uri)
 {
 	if (ctx->RESTURI != NULL) {
@@ -695,14 +696,14 @@ GLP_SetRESTURI(
 
 char*
 GLP_GetRESTURI(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	return ctx->RESTURI;
 }
 
 void 
 GLP_SetSessionID(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	const char *sid)
 {
 	if (ctx->SessionID != NULL) {
@@ -713,14 +714,21 @@ GLP_SetSessionID(
 
 char*
 GLP_GetSessionID(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	return ctx->SessionID;
 }
 
+gboolean
+GLP_GetfGinbee(
+	GLProtocol *ctx)
+{
+	return ctx->fGinbee;
+}
+
 void 
 GLP_SetRPCID(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	int id)
 {
 	ctx->RPCID = id;
@@ -728,15 +736,68 @@ GLP_SetRPCID(
 
 int
 GLP_GetRPCID(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	return ctx->RPCID;
+}
+
+LargeByteString*
+REST_GetBLOB_via_ENV()
+{
+	GLProtocol *proto;
+	char *RESTURI,*SessionID,*APIUser,*APIPass,*OID;
+	char *Cert,*CertKey,*CertKeyPass,*CAFile;
+	LargeByteString *lbs;
+
+	RESTURI = getenv("GLPUSH_REST_URI");
+	if (RESTURI == NULL) {
+		_Error("set env GLPUSH_REST_URI\n");
+	}
+	SessionID = getenv("GLPUSH_SESSION_ID");
+	if (SessionID == NULL) {
+		_Error("set env GLSPUSH_SESSION_ID\n");
+	}
+	APIUser = getenv("GLPUSH_API_USER");
+	if (APIUser == NULL) {
+		_Error("set env GLPUSH_API_USER\n");
+	}
+	APIPass = getenv("GLPUSH_API_PASSWORD");
+	if (APIPass == NULL) {
+		_Error("set env GLPUSH_API_PASSWORD\n");
+	}
+	Cert        = getenv("GLPUSH_CERT");
+	CertKey     = getenv("GLPUSH_CERT_KEY");
+	CertKeyPass = getenv("GLPUSH_CERT_KEY_PASSWORD");
+	CAFile      = getenv("GLPUSH_CA_FILE");
+
+	OID = getenv("GLPUSH_OID");
+	if (OID == NULL) {
+		_Error("set env GLPUSH_OID\n");
+	}
+
+	proto = InitProtocol("http://localhost",APIUser,APIPass);
+	GLP_SetRESTURI(proto,RESTURI);
+	GLP_SetSessionID(proto,SessionID);
+	if (Cert != NULL && CertKey != NULL && CertKeyPass != NULL && CAFile != NULL) {
+		GLP_SetSSL(proto,Cert,CertKey,CertKeyPass,CAFile);
+	}
+    lbs = REST_GetBLOB(proto,OID);
+	FinalProtocol(proto);
+
+	if (lbs == NULL) {
+		_Error("REST_GetBLOB failure");
+	}
+	if (LBS_Size(lbs) <= 0) {
+		_Error("LBS size 0");
+	}
+
+	return lbs;
 }
 
 #ifdef USE_SSL
 void
 GLP_SetSSLPKCS11(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	const char *p11lib,
 	const char *pin)
 {
@@ -867,7 +928,7 @@ GLP_SetSSLPKCS11(
 
 void
 GLP_SetSSL(
-	GLPctx *ctx,
+	GLProtocol *ctx,
 	const char *cert,
 	const char *key,
 	const char *pass,
@@ -918,7 +979,7 @@ InitCURL(
 
 void
 FinalCURL(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 #ifdef USE_SSL
 	if (ctx->fPKCS11) {
@@ -934,16 +995,16 @@ FinalCURL(
 	curl_global_cleanup();
 }
 
-extern	GLPctx*
+extern	GLProtocol*
 InitProtocol(
 	const char *authuri,
 	const char *user,
 	const char *pass
 )
 {
-	GLPctx *ctx;
+	GLProtocol *ctx;
 
-	ctx = g_new0(GLPctx,1);
+	ctx = g_new0(GLProtocol,1);
 
 	ctx->AuthURI = g_strdup(authuri);
 	ctx->RPCID   = 0;
@@ -963,7 +1024,7 @@ InitProtocol(
 
 extern	void
 FinalProtocol(
-	GLPctx *ctx)
+	GLProtocol *ctx)
 {
 	FinalCURL(ctx);
 }

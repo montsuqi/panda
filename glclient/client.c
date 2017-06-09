@@ -121,6 +121,17 @@ InitSystem()
 
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
+	InitTempDir();
+	InitLogger("glclient2");
+	InitDesktop();
+
+	Session = g_new0(GLSession,1);
+
+	if ((p = getenv("GLCLINET_LOG_LEVEL")) != NULL) {
+		if (!strcasecmp(p,"debug")) {
+			SetLogLevel(GL_LOG_DEBUG);
+		}
+	}
 
 	if ((p = getenv("GLCLIENT_PING_TIMER_PERIOD")) != NULL) {
 		PingTimerPeriod = atoi(p) * 1000;
@@ -153,12 +164,6 @@ InitSystem()
 	} else {
 		CancelScaleWindow = FALSE;
 	}
-
-	InitTempDir();
-	InitLogger();
-	InitDesktop();
-
-	Session = g_new0(GLSession,1);
 }
 
 static	void
@@ -196,6 +201,85 @@ ThisAskPass()
 	if (Pass == NULL) {
 		exit(0);
 	}
+}
+
+extern void
+LoadConfig (
+	int n)
+{
+	if (!gl_config_have_config(n)) {
+		Error("no server setting:%d",n);
+	}
+
+	AuthURI = g_strdup(gl_config_get_string(n,"authuri"));
+	Style = g_strdup(gl_config_get_string(n,"style"));
+	Gtkrc = g_strdup(gl_config_get_string(n,"gtkrc"));
+	fDebug = gl_config_get_boolean(n,"debug");
+	fKeyBuff = gl_config_get_boolean(n,"keybuff");
+	User = g_strdup(gl_config_get_string(n,"user"));
+	fIMKanaOff = gl_config_get_boolean(n,"im_kana_off");
+	SavePass = gl_config_get_boolean(n,"savepassword");
+	if (SavePass) {
+		Pass = g_strdup(gl_config_get_string(n,"password"));
+	} else {
+		Pass = g_strdup("");
+	} 
+
+	fSSL = gl_config_get_boolean(n,"ssl");
+	{
+		gchar *oldauth;
+		GRegex *reg;
+
+		oldauth = AuthURI;
+		reg = g_regex_new("http://",0,0,NULL);
+		AuthURI = g_regex_replace(reg,oldauth,-1,0,"",0,NULL);
+		g_free(oldauth);
+		g_regex_unref(reg);
+
+		oldauth = AuthURI;
+		reg = g_regex_new("https://",0,0,NULL);
+		AuthURI = g_regex_replace(reg,oldauth,-1,0,"",0,NULL);
+		g_free(oldauth);
+		g_regex_unref(reg);
+
+		oldauth = AuthURI;
+		if (fSSL) {
+			AuthURI = g_strdup_printf("https://%s",oldauth);
+		} else {
+			AuthURI = g_strdup_printf("http://%s",oldauth);
+		}
+		g_free(oldauth);
+	}
+	CAFile = g_strdup(gl_config_get_string(n,"cafile"));
+	CertFile = g_strdup(gl_config_get_string(n,"certfile"));
+	CertKeyFile = g_strdup(gl_config_get_string(n,"certkeyfile"));
+	Ciphers = g_strdup(gl_config_get_string(n,"ciphers"));
+	SaveCertPass = gl_config_get_boolean(n,"savecertpassword");
+	if (SaveCertPass) {
+		CertPass = g_strdup(gl_config_get_string(n,"certpassword"));
+	}
+
+	fPKCS11 = gl_config_get_boolean(n,"pkcs11");
+	PKCS11Lib = g_strdup(gl_config_get_string(n,"pkcs11lib"));
+	PIN = g_strdup(gl_config_get_string(n,"pin"));
+	fSavePIN = gl_config_get_boolean(n,"savepin");
+
+	fTimer = gl_config_get_boolean(n,"timer");
+	TimerPeriod = gl_config_get_int(n,"timerperiod");
+	FontName = g_strdup(gl_config_get_string(n,"fontname"));
+}
+
+extern void
+LoadConfigByDesc (
+	const char *desc)
+{
+	int n;
+
+	n = GetConfigIndexByDesc(desc);
+	if (n == -1) {
+		Error("could not found setting:%s",desc);
+	}
+	LoadConfig(n);
 }
 
 static gboolean fListConfig = FALSE;
@@ -246,7 +330,7 @@ main(
 	}
 
 	if (fDebug) {
-		SetLogLevel(LOG_DEBUG);
+		SetLogLevel(GL_LOG_DEBUG);
 	}
 
 	InitStyle();

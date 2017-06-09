@@ -45,6 +45,7 @@
 #include	"libmondai.h"
 #include	"message.h"
 #include	"debug.h"
+#include	"pushevent.h"
 
 static	json_object*
 MakeBodyJSON(
@@ -97,35 +98,6 @@ MakeBodyJSON(
 		return obj;
 	}
 	return NULL;
-}
-
-static	json_object*
-MakeJSON(
-	const char *event,
-	ValueStruct *v)
-{
-	json_object *obj,*body;
-	time_t now;
-	struct tm tm_now;
-	char str_now[128],*user;
-
-	obj = json_object_new_object();
-	json_object_object_add(obj,"event",json_object_new_string(event));
-	user = getenv("MCP_USER");
-	if (user == NULL) {
-		Warning("MCP_USER set __nobody");
-		user = "__nobody";
-	}
-	json_object_object_add(obj,"user",json_object_new_string(user));
-
-	body = MakeBodyJSON(v);
-	json_object_object_add(obj,"body",body);
-
-	now = time(NULL);
-	localtime_r(&now, &tm_now);
-	strftime(str_now,sizeof(str_now),"%FT%T%z",&tm_now);
-	json_object_object_add(obj,"time",json_object_new_string(str_now));
-	return obj;
 }
 
 static	gboolean
@@ -229,14 +201,13 @@ AMQPSend(
 }
 
 gboolean
-PushEvent(
+PushEvent_via_ValueStruct(
 	ValueStruct		*val)
 {
 	ValueStruct *v,*body;
 	json_object *obj;
 	char        *event;
-	gboolean    ret;
-ENTER_FUNC;
+
 	if ((v = GetItemLongName(val,"event"))  ==  NULL) {
 		Warning("invalid argument value: need 'event'");
 		return FALSE;
@@ -246,9 +217,37 @@ ENTER_FUNC;
 		Warning("invalid argument value: need 'body'");
 		return FALSE;
 	}
-	obj = MakeJSON(event,body);
+	obj = MakeBodyJSON(v);
+	return PushEvent_via_json(event,obj);
+}
+
+gboolean
+PushEvent_via_json(
+	const char *event,
+	json_object *body)
+{
+	json_object *obj;
+	gboolean    ret;
+	time_t now;
+	struct tm tm_now;
+	char str_now[128],*user;
+
+	user = getenv("MCP_USER");
+	if (user == NULL) {
+		Warning("MCP_USER set __nobody");
+		user = "__nobody";
+	}
+
+	obj = json_object_new_object();
+	json_object_object_add(obj,"event",json_object_new_string(event));
+	json_object_object_add(obj,"user",json_object_new_string(user));
+	json_object_object_add(obj,"body",json_object_new_string(event));
+	now = time(NULL);
+	localtime_r(&now, &tm_now);
+	strftime(str_now,sizeof(str_now),"%FT%T%z",&tm_now);
+	json_object_object_add(obj,"time",json_object_new_string(str_now));
+
 	ret = AMQPSend(event,(const char*)json_object_to_json_string(obj));
 	json_object_put(obj);
-LEAVE_FUNC;
 	return ret;
 }

@@ -43,31 +43,36 @@ typedef struct {
 	gboolean		fPKCS11;
 	ENGINE			*Engine;
 #endif
-} GLPctx;
+} GLProtocol;
 
-void 				RPC_GetServerInfo(GLPctx *);
-void 				RPC_StartSession(GLPctx *);
-json_object* 		RPC_GetScreenDefine(GLPctx *,const char*);
-void 				RPC_EndSession(GLPctx *);
-json_object* 		RPC_GetWindow(GLPctx *);
-json_object*		RPC_SendEvent(GLPctx *,json_object *params);
-void				RPC_GetMessage(GLPctx * ,char**d,char**p,char**a);
-json_object*		RPC_ListDownloads(GLPctx *);
-char*				REST_PostBLOB(GLPctx *,LargeByteString *);
-LargeByteString*	REST_GetBLOB(GLPctx *,const char *);
-void				GLP_SetRPCURI(GLPctx *,const char *);
-void				GLP_SetRESTURI(GLPctx *,const char *);
-void				GLP_SetSessionID(GLPctx *,const char *);
-void				GLP_SetRPCID(GLPctx *,int);
-char*				GLP_GetRPCURI(GLPctx *);
-char*				GLP_GetRESTURI(GLPctx *);
-char*				GLP_GetSessionID(GLPctx *);
-int					GLP_GetRPCID(GLPctx *);
-GLPctx*				InitProtocol(const char *auth_uri,const char *user,const char *pass);
+void 				RPC_GetServerInfo(GLProtocol *);
+void 				RPC_StartSession(GLProtocol *);
+json_object* 		RPC_GetScreenDefine(GLProtocol *,const char*);
+void 				RPC_EndSession(GLProtocol *);
+json_object* 		RPC_GetWindow(GLProtocol *);
+json_object*		RPC_SendEvent(GLProtocol *,json_object *params);
+void				RPC_GetMessage(GLProtocol * ,char**d,char**p,char**a);
+json_object*		RPC_ListDownloads(GLProtocol *);
+char*				REST_PostBLOB(GLProtocol *,LargeByteString *);
+LargeByteString*	REST_GetBLOB(GLProtocol *,const char *);
+LargeByteString*	REST_GetBLOB_via_ENV();
+
+gboolean			GLP_GetfGinbee(GLProtocol*);
+void				GLP_SetRPCURI(GLProtocol *,const char *);
+char*				GLP_GetRPCURI(GLProtocol *);
+void				GLP_SetRESTURI(GLProtocol *,const char *);
+char*				GLP_GetRESTURI(GLProtocol *);
+void				GLP_SetSessionID(GLProtocol *,const char *);
+char*				GLP_GetSessionID(GLProtocol *);
+void				GLP_SetRPCID(GLProtocol *,int);
+int					GLP_GetRPCID(GLProtocol *);
+
+
+GLProtocol*			InitProtocol(const char *auth_uri,const char *user,const char *pass);
 #ifdef USE_SSL
-void				GLP_SetSSL(GLPctx*,const char*cert,const char*key,const char*pass,const char*cafile);
-void				GLP_SetSSLPKCS11(GLPctx *,const char *p11lib,const char *pin);
+void				GLP_SetSSL(GLProtocol*,const char*cert,const char*key,const char*pass,const char*cafile);
+void				GLP_SetSSLPKCS11(GLProtocol *,const char *p11lib,const char *pin);
 #endif
-void				FinalProtocol(GLPctx *);
+void				FinalProtocol(GLProtocol *);
 
 #endif

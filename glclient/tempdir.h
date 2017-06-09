@@ -28,6 +28,7 @@
 #endif
 
 extern void InitTempDir();
+extern void InitTempDir_via_Dir(const char*);
 extern char *GetTempDir();
 extern char *MakeTempSubDir(const char*name);
 

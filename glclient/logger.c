@@ -28,6 +28,7 @@
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<sys/stat.h>
+#include	<sys/file.h>
 #include	<fcntl.h>
 #include	<unistd.h>
 #include	<sys/time.h>
@@ -37,32 +38,38 @@
 #include	<time.h>
 #include	<libmondai.h>
 
-#define LOGGER_MAIN
 #include	"logger.h"
 #include	"utils.h"
-
 
 #ifndef	SIZE_LOG
 #define	SIZE_LOG		8192
 #endif
 #define SIZE_FORMAT		256
 
+static char *LogFile = NULL;
 static FILE *fp = NULL;
-static int level = LOG_WARN;
+static int level = GL_LOG_WARN;
 static void (*ErrorFunc)(const char *,...);
 
 void
-InitLogger()
+InitLogger(
+	const char *prefix)
 {
-
+	struct tm cur;
+	time_t t;
 	uuid_t u;
-	gchar *dir,buf[64];
+	gchar *dir,_uuid[64],_time[64];
 
 	dir = g_strconcat(g_get_home_dir(),"/.glclient/log",NULL);
 	mkdir_p(dir,0700);
+
+	t = time(NULL);
+	gmtime_r(&t,&cur);
+	strftime(_time,sizeof(_time),"%Y%m%d%H%M%S",&cur);
+
 	uuid_generate(u);
-	uuid_unparse(u,buf);
-	LogFile = g_strconcat(dir,"/",buf,".log",NULL);
+	uuid_unparse(u,_uuid);
+	LogFile = g_strconcat(dir,"/",prefix,"-",_time,"-",_uuid,".log",NULL);
 	rm_r_old(dir,2592000); /* 30days */
 	g_free(dir);
 	fprintf(stderr,"LogFile: %s\n",LogFile);
@@ -89,6 +96,12 @@ InitLogger_via_FileName(
 		fprintf(stderr,"fp != null, perhaps call InitLogger again?\n");
 	}
 	ErrorFunc = NULL;
+}
+
+const char*
+GetLogFile()
+{
+	return LogFile;
 }
 
 void
@@ -148,7 +161,7 @@ logger(
 		vsnprintf(buf, sizeof(buf), format, va);
 		va_end(va);
 		fprintf(stderr,"%s\n",buf);
-		if (_level == LOG_ERROR) {
+		if (_level == GL_LOG_ERROR) {
 			exit(1);
 		}
 		return;
@@ -158,16 +171,16 @@ logger(
 		return;
 	}
 	switch(_level) {
-	case LOG_DEBUG:
+	case GL_LOG_DEBUG:
 		lp = "DEBUG";
 		break;
-	case LOG_WARN:
+	case GL_LOG_WARN:
 		lp = "WARN ";
 		break;
-	case LOG_INFO:
+	case GL_LOG_INFO:
 		lp = "INFO ";
 		break;
-	case LOG_ERROR:
+	case GL_LOG_ERROR:
 		lp = "ERROR";
 		break;
 	default:
@@ -183,9 +196,12 @@ logger(
 	localtime_r((time_t *)&tv.tv_sec, &now);
 	strftime(tbuf,sizeof(tbuf),"%Y-%m-%dT%H:%M:%d%z",&now);
 
+	flock(fileno(fp),LOCK_EX);
 	fprintf(fp,"%s %s %s:%d: %s\n",tbuf,lp,file,line,buf);
+	fflush(fp);
+	flock(fileno(fp),LOCK_UN);
 
-	if (_level == LOG_ERROR) {
+	if (_level == GL_LOG_ERROR) {
 		fclose(fp);
 		exit(1);
 	}

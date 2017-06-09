@@ -153,6 +153,7 @@ if test "x$enable_client" = "xyes"; then
 		gconf-2.0			>= 2.28.1
 		libp11				>= 0.2.8
 	])
+
 	PKG_CHECK_MODULES(LIBGTKCHECK, libglade-panda-2.0 >= 3.0.0,
 	[AC_DEFINE(LIBGTK_3_0_0,1,"")],
 	[
@@ -166,6 +167,11 @@ if test "x$enable_client" = "xyes"; then
 	], [
 		PKG_CHECK_MODULES(CHECK_GTK_VER,gtk+-2.0 >= 2.24.10,
 		[])
+	])
+
+	PKG_CHECK_MODULES(LWS,
+	[
+		libwebsockets	>= 1.7.1
 	])
 fi
 

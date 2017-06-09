@@ -44,7 +44,7 @@
 #define DEFAULT_PING_TIMER_PERIOD   (7000) //7sec
 
 typedef struct {
-	GLPctx 			*glp;
+	GLProtocol 		*protocol;
 	char			*title;
 	char			*bgcolor;
 	Bool			IsRecv;
@@ -55,9 +55,9 @@ typedef struct {
 	json_object		*ScreenData;
 }	GLSession;
 
-#define	GLP(session)			((session)->glp)
-#define	SESSIONID(session)		((session)->glp->SessionID)
-#define	GINBEE(session)			((session)->glp->fGinbee)
+#define	GLP(session)			((session)->protocol)
+#define	SESSIONID(session)		(GLP_GetSessionID(session->protocol))
+#define	GINBEE(session)			(GLP_GetfGinbee(session->protocol))
 #define	TITLE(session)			((session)->title)
 #define	BGCOLOR(session)		((session)->bgcolor)
 #define	ISRECV(session)			((session)->IsRecv)

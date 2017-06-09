@@ -75,7 +75,7 @@ InitDesktop(void)
 
 	DesktopAppTable = NewNameHash();
 	snprintf(fname, sizeof(fname), "%s/%s", 
-		ConfDir, DESKTOP_LIST);
+		gl_config_get_config_dir(), DESKTOP_LIST);
 	fp = fopen(fname, "r");
 	if (fp == NULL) {
 		snprintf(fname, sizeof(fname), "%s/%s", 

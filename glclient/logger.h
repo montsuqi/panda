@@ -27,31 +27,30 @@
 #define	GLOBAL		extern
 #endif
 
-GLOBAL char* LogFile;
-
 enum {
-	LOG_DEBUG = 0,
-	LOG_WARN,
-	LOG_INFO,
-	LOG_ERROR,
-	LOG_LAST
+	GL_LOG_DEBUG = 0,
+	GL_LOG_WARN,
+	GL_LOG_INFO,
+	GL_LOG_ERROR,
+	GL_LOG_LAST
 };
 
-extern void InitLogger();
+extern void InitLogger(const char *prefix);
 extern void InitLogger_via_FileName(const char *filename);
 extern void FinalLogger();
+const char* GetLogFile();
 extern void SetErrorFunc(void (*)(const char *,...));
 extern void SetLogLevel(int level);
 extern void logger(int level,const char *file, int line,const char *format, ...);
 extern void Error(const char *format,...);
 
 #define	Debug(...)											\
-	logger(LOG_DEBUG,__FILE__,__LINE__,__VA_ARGS__);
+	logger(GL_LOG_DEBUG,__FILE__,__LINE__,__VA_ARGS__);
 #define	Warning(...)										\
-	logger(LOG_WARN,__FILE__,__LINE__,__VA_ARGS__);
+	logger(GL_LOG_WARN,__FILE__,__LINE__,__VA_ARGS__);
 #define	Info(...)											\
-	logger(LOG_INFO,__FILE__,__LINE__,__VA_ARGS__);
+	logger(GL_LOG_INFO,__FILE__,__LINE__,__VA_ARGS__);
 #define	_Error(...)											\
-	logger(LOG_ERROR,__FILE__,__LINE__,__VA_ARGS__);
+	logger(GL_LOG_ERROR,__FILE__,__LINE__,__VA_ARGS__);
 
 #endif
