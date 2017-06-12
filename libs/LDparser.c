@@ -102,7 +102,7 @@ ENTER_FUNC;
 		iname = NULL;
 	}
 	wname = buff;
-		
+
 	if (name != NULL) {
 		rec = (RecordStruct *)g_hash_table_lookup(Records,name);
 		if (rec == NULL) {
@@ -149,7 +149,7 @@ ParWindow(
 
 ENTER_FUNC;
 	window = NULL;
-	if		(  GetSymbol  !=  '{'  ) { 
+	if		(  GetSymbol  !=  '{'  ) {
 		ParError("syntax error");
 	} else {
 		while	(  GetName  !=  '}'  ) {
@@ -509,15 +509,15 @@ LD_Parser(
 		,		root;
 
 ENTER_FUNC;
-	dbgmsg(name); 
+	dbgmsg(name);
 	root.next = NULL;
-	if		(  stat(name,&stbuf)  ==  0  ) { 
+	if		(  stat(name,&stbuf)  ==  0  ) {
 		if		(  ( in = PushLexInfo(&root,name,ThisEnv->D_Dir,Reserved) )  !=  NULL  ) {
 			ret = LD_Par(in, parse_type);
 			DropLexInfo(&in);
 			BindHandler(ret);
 		} else {
-			ParErrorPrintf("LD file not found [%s]", name);
+			Warning("LD file not found [%s]", name);
 			ret = NULL;
 		}
 	} else {

@@ -133,7 +133,7 @@ ENTER_FUNC;
 				while	(  ssize  >  0  ) {
 					size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
 					Recv(fp,buff,size);					ON_IO_ERROR(fp,badio);
-					WriteBLOB(blob,obj,buff,size);	
+					WriteBLOB(blob,obj,buff,size);
 					ssize -= size;
 				}
 				xfree(buff);

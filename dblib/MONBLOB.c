@@ -32,6 +32,7 @@
 #include	<ctype.h>
 #include	<glib.h>
 #include	<signal.h>
+#include	<unistd.h>
 
 #include	<uuid/uuid.h>
 
@@ -213,6 +214,7 @@ ENTER_FUNC;
 	/* parent */
 	SendMONBLOBValue(args, tempsocket);
 	rmdir(tempdir);
+	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
 }

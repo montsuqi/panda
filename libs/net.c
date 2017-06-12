@@ -222,10 +222,9 @@ ngetc(
 	NETFILE	*fp)
 {
 	unsigned char	ch;
-	size_t	s;
 	int		ret;
 
-	if		(  ( s = Recv(fp,&ch,1) )  >=  0  ) {
+	if		(  Recv(fp,&ch,1)  >=  0  ) {
 		ret = ch;
 	} else {
 		ret = -1;
@@ -268,8 +267,8 @@ NetSetFD(
 {
 	if		(  fp  !=  NULL  ) {
 		fp->fd = fd;
+		fp->fOK = TRUE;
 	}
-	fp->fOK = TRUE;
 }
 
 /*
@@ -506,7 +505,7 @@ SSL_Close(
 	if (fp->peer_cert)
 		X509_free(fp->peer_cert);
 	SSL_shutdown(fp->net.ssl);
-	SSL_free(fp->net.ssl); 
+	SSL_free(fp->net.ssl);
 	close(fp->fd);
 }
 
@@ -771,10 +770,10 @@ asn1_time_to_time(
 	char work[3];
 	time_t rt;
 	extern time_t timezone;
-	
+
 	memset(work, '\0', sizeof(work));
 	memset(&rtm, 0, sizeof(struct tm));
-	
+
 	memcpy(work, tm->data + 10, 2);
 	rtm.tm_sec = atoi(work);
 	memcpy(work, tm->data + 8, 2);
@@ -789,11 +788,11 @@ asn1_time_to_time(
 	rtm.tm_year = atoi(work);
 	if (rtm.tm_year < 70)
 	rtm.tm_year += 100;
-	
+
 	timezone = 0;
 	rt = mktime(&rtm);
 	tzset();
-	
+
 	return rt;
 }
 
@@ -903,7 +902,7 @@ RemoteVerifyCallBack(
 
 static int
 SSL_CTX_use_certificate_with_check(
-	SSL_CTX *ctx, 
+	SSL_CTX *ctx,
 	X509 *x509)
 {
 	int ret;
@@ -922,8 +921,8 @@ SSL_CTX_use_certificate_with_check(
 
 static int
 SSL_CTX_use_certificate_file_with_check(
-	SSL_CTX *ctx, 
-	char *file, 
+	SSL_CTX *ctx,
+	char *file,
 	int type)
 {
 	FILE *fp;
@@ -961,14 +960,14 @@ IsPKCS12(const char *file)
 	BIO *input;
 	PKCS12 *p12;
 	int err_reason;
-	
+
 	if ((input = BIO_new_file(file, "r")) == NULL){
 		if (d2i_PKCS12_bio(input, &p12) == NULL) return FALSE;
 	}
 	p12 = d2i_PKCS12_bio(input, NULL);
 	BIO_free(input);
 	if (p12 == NULL) return FALSE;
-	
+
 	err_reason = PKCS12_parse(p12, "", &key, &cert, NULL);
 	if (err_reason == PKCS12_R_MAC_VERIFY_FAILURE){
 		ret = FALSE;
@@ -993,7 +992,7 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
 	int err_reason;
 	int count = 0;
 	const char *prompt = ASKPASS_PROMPT;
-	
+
 	/* read PKCS #12 from specified file */
 	if ((input = BIO_new_file(file, "r")) == NULL){
 		if (d2i_PKCS12_bio(input, &p12) == NULL) return FALSE;
@@ -1024,7 +1023,7 @@ LoadPKCS12(SSL_CTX *ctx, const char *file)
 	//OPENSSL_cleanse(passbuf, sizeof(passbuf));
 	memset(passbuf, 0, sizeof(passbuf));
 	PKCS12_free(p12);
-	
+
 	/* set key and cert to SSL_CTX */
 	if (cert && key){
 		if (!SSL_CTX_use_certificate_with_check(ctx, cert)){
@@ -1099,7 +1098,7 @@ MakeSSL_CTX(
 			}
 			else {
 				SSL_CTX_free(ctx);
-				return NULL; 
+				return NULL;
 			}
 		}
 		else {
@@ -1110,7 +1109,7 @@ MakeSSL_CTX(
 				return NULL;
 			}
 			if (key == NULL) key = cert;
-			for (;;){ 
+			for (;;){
 				if (SSL_CTX_use_PrivateKey_file(ctx, key, SSL_FILETYPE_PEM) <= 0){
 					int err_reason;
 					err_reason = ERR_GET_REASON(ERR_peek_error());
@@ -1175,7 +1174,7 @@ InitEnginePKCS11( const char *pkcs11, const char *pin)
 		return NULL;
 	}
 
-	return e; 
+	return e;
 }
 
 #define PKCS11_ASKPIN_PROMPT _("Please input security device PIN:")
@@ -1295,7 +1294,7 @@ LoadEnginePKCS11(SSL_CTX *ctx, ENGINE **e, const char *p11lib, const char *slots
 	/* setup OpenSSL ENGINE */
 	if (!(*e = InitEnginePKCS11(p11lib, pin))){
 		return FALSE;
-	} 
+	}
 	if(!(key = ENGINE_load_private_key(*e, certid, NULL, NULL))) {
 		SSL_Error(_d("ENGINE_load_private_key failure:\n %s\n"), GetSSLErrorString());
 		return FALSE;
@@ -1378,9 +1377,9 @@ InitNET(void)
 	ssl_error_message[0] = '\0';
 	ssl_warning_message[0] = '\0';
 	OpenSSL_add_ssl_algorithms();
-	OpenSSL_add_all_algorithms();	
+	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
-	SSL_load_error_strings();	
+	SSL_load_error_strings();
 #endif
 }
 

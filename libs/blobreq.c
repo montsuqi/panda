@@ -86,7 +86,6 @@ RequestWriteBLOB(
 	size_t	size)
 {
 	size_t	wrote;
-	
 ENTER_FUNC;
 	wrote = 0;
 	RequestBLOB(fp,BLOB_WRITE);			ON_IO_ERROR(fp,badio);
@@ -135,7 +134,7 @@ extern	Bool
 RequestExportBLOB(
 	NETFILE	*fp,
 	MonObjectType	obj,
-	const char		*fname)
+	char		*fname)
 {
 	Bool	rc;
 	char	buff[SIZE_BUFF];
