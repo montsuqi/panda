@@ -496,7 +496,6 @@ RPC_StartSession(
 	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child,*result,*meta;
-	gchar *rpcuri,*resturi;
 
 	Info("start_session %s",ctx->AuthURI);
 	params = json_object_new_object();
@@ -518,19 +517,24 @@ RPC_StartSession(
 	if (!json_object_object_get_ex(result,"app_rpc_endpoint_uri",&child)) {
 		Error(_("no jsonrpc_uri object"));
 	}
-	rpcuri = (char*)json_object_get_string(child);
+	ctx->RPCURI = g_strdup((char*)json_object_get_string(child));
 
 	if (!json_object_object_get_ex(result,"app_rest_api_uri_root",&child)) {
 		Error(_("no rest_uri object"));
 	}
-	resturi = (char*)json_object_get_string(child);
+	ctx->RESTURI = g_strdup((char*)json_object_get_string(child));
 
-	ctx->RPCURI = g_strdup(rpcuri);
-	ctx->RESTURI = g_strdup(resturi);
+	if (json_object_object_get_ex(result,"pusher_uri",&child)) {
+		ctx->PusherURI = g_strdup((char*)json_object_get_string(child));
+	} else {
+		ctx->PusherURI = NULL;
+	}
+
 	fprintf(stderr,"SessionID: %s\n",ctx->SessionID);
-	Info("session id: %s",ctx->SessionID);
-	Info("rpcuri: %s",ctx->RPCURI);
-	Info("resturi: %s",ctx->RESTURI);
+	Info("SessionID: %s",ctx->SessionID);
+	Info("RPCURI   : %s",ctx->RPCURI);
+	Info("RESTURI  : %s",ctx->RESTURI);
+	Info("PusherURI: %s",ctx->PusherURI);
 	json_object_put(obj);
 	if (ctx->fGinbee) {
 		curl_easy_setopt(ctx->Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
