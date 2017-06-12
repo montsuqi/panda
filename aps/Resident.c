@@ -74,8 +74,8 @@ DumpNode(
 {
 #ifdef	DEBUG
 ENTER_FUNC;
-	printf("node = %p\n",node); 
-//	DumpValueStruct(node->mcprec->value); 
+	printf("node = %p\n",node);
+//	DumpValueStruct(node->mcprec->value);
 LEAVE_FUNC;
 #endif
 }
@@ -113,7 +113,7 @@ ENTER_FUNC;
 		strncpy(ctrl.rname,rname,SIZE_NAME);
 		value = NULL;
 		ret = NULL;
-		if		(	(  rname  !=  NULL  ) 
+		if		(	(  rname  !=  NULL  )
 				&&	(  ( rno = (int)(long)g_hash_table_lookup(DB_Table,rname) )  !=  0  ) ) {
 			ctrl.rno = rno - 1;
 			rec = ThisDB[ctrl.rno];
@@ -179,13 +179,13 @@ StartDB(
 {
 ENTER_FUNC;
 	pthread_create(&_DB_Thread,NULL,(void *(*)(void *))ExecuteDB_Server,handler);
-LEAVE_FUNC;	
+LEAVE_FUNC;
 }
 
 static	void
 CancelDB(void)
 {
-ENTER_FUNC;	
+ENTER_FUNC;
 	if		(  pthread_kill(_DB_Thread,0)  ==  0  ) {
 		pthread_cancel(_DB_Thread);
 		pthread_join(_DB_Thread,NULL);
@@ -442,7 +442,7 @@ ENTER_FUNC;
 		handler->loadpath = ExecPath;
 	}
 	signal(SIGPIPE, SignalHandler);
-	if		(  LibPath  ==  NULL  ) { 
+	if		(  LibPath  ==  NULL  ) {
 		ExecPath = getenv("APS_EXEC_PATH");
 	} else {
 		ExecPath = LibPath;

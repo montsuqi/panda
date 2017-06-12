@@ -493,7 +493,7 @@ exec_shell(
 			execve(sh, cmdv, environ);
 		} else if ( pid1 < 0) {
 			error = strerror(errno);
-			rc = -1;
+			rrc = -1;
 			break;
 		}
 		close(std_io[1]);
@@ -503,7 +503,7 @@ exec_shell(
 		wpid = waitpid(pid1, &status, 0);
 		if (wpid < 0) {
 			error = strerror(errno);
-			rc = -1;
+			rrc = -1;
 			break;
 		}
 		if (WIFEXITED(status)) {

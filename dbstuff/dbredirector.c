@@ -1288,7 +1288,7 @@ main(
 	} else {
 		name = "";
 	}
-	snprintf(AppName, sizeof(AppName), "dbredirector-%s",fl->name);
+	snprintf(AppName, sizeof(AppName), "dbredirector-%s",name);
 	InitSystem(name, argv[0]);
 
 	Message("dbredirector start");

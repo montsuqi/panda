@@ -213,6 +213,7 @@ ENTER_FUNC;
 	/* parent */
 	SendMONBLOBValue(args, tempsocket);
 	rmdir(tempdir);
+	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
 }

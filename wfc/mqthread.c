@@ -702,6 +702,7 @@ ENTER_FUNC;
 		Warning("invalid ld[%s]\n",buff);
 		SendPacketClass(fp,APS_NOT);
 		CloseNet(fp);
+		return;
 	}
 	if (ThisEnv->mlevel != MULTI_APS) {
 		ld->nports = 1;

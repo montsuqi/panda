@@ -369,7 +369,7 @@ main(
 
 	dbg = GetDBG_monsys();
 	if (!dbg) {
-		Error("DBG [%s] does not found.", dbg->name);
+		Error("DBG does not found.");
 	}
 	dbg->dbt = 	NewNameHash();
 
