@@ -18,6 +18,8 @@
 #include <libmondai.h>
 
 #include "gettext.h"
+#include "bd_config.h"
+#include "desktop.h"
 #include "notify.h"
 #include "protocol.h"
 #include "download.h"
@@ -62,6 +64,9 @@ main(
 	if (Desc == NULL) {
 		Desc = "";
 	}
+
+	gl_config_init();
+	InitDesktop();
 
 	lbs = REST_GetBLOB_via_ENV();
 	ShowDownloadDialog(Filename,Desc,lbs);
