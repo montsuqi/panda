@@ -27,8 +27,6 @@
 #define	GLOBAL		extern
 #endif
 
-extern void LoadWidgetCache();
-extern void SaveWidgetCache();
 extern void SetWidgetCache(const char *key,const char *value);
 extern const char *GetWidgetCache(const char *key);
 

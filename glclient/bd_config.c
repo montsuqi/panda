@@ -27,11 +27,12 @@
 #include <glib.h>
 #include <json.h>
 
-#include "glclient.h"
 #include "gettext.h"
+#define BD_CONFIG_MAIN
 #include "bd_config.h"
 #include "logger.h"
 
+static char* ConfDir;
 static json_object *config_obj = NULL;
 
 static	gboolean
@@ -107,12 +108,10 @@ load_config(gchar* str)
 	if (!check_json_object(config_obj,json_type_object)) {
 		Error("invalid config json");
     }
-	child = json_object_object_get(config_obj,"list");
-	if (!check_json_object(child,json_type_array)) {
+	if (!json_object_object_get_ex(config_obj,"list",&child)) {
 		Error("invalid config json");
     }
-	child = json_object_object_get(config_obj,"index");
-	if (!check_json_object(child,json_type_int)) {
+	if (!json_object_object_get_ex(config_obj,"index",&child)) {
 		Error("invalid config json");
     }
 }
@@ -123,6 +122,7 @@ gl_config_init(void)
 	gchar *path,*buf;
 	size_t size;
 
+	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
 	path = g_strdup_printf("%s/config.json",ConfDir);
 	if (!g_file_get_contents(path,&buf,&size,NULL)) {
 		load_default();
@@ -138,7 +138,7 @@ gl_config_get_index(void)
 {
 	json_object *index;
 
-	index = json_object_object_get(config_obj,"index");
+	json_object_object_get_ex(config_obj,"index",&index);
 	return json_object_get_int(index);
 }
 
@@ -166,7 +166,7 @@ gl_config_add_server()
 	json_object *list,*server;
 	int l;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	l = json_object_array_length(list);
 	server = new_server(l);
 	json_object_array_add(list,server);
@@ -182,7 +182,7 @@ gl_config_del_server(int i)
 		Warning("MUST NOT delete default server settings");
 		return;
 	}
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	json_object_array_put_idx(list,i,NULL);
 }
 
@@ -191,7 +191,7 @@ gl_config_get_config_nums(void)
 {
 	json_object *list;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	return json_object_array_length(list);
 }
 
@@ -200,7 +200,7 @@ gl_config_have_config(int i)
 {
 	json_object *list,*server;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	server = json_object_array_get_idx(list,i);
 	return check_json_object(server,json_type_object);
 }
@@ -213,10 +213,10 @@ gl_config_save(void)
 	const char *jsonstr;
 	int i,j,index,nindex;
 
-	child = json_object_object_get(config_obj,"index");
+	json_object_object_get_ex(config_obj,"index",&child);
 	index = json_object_get_int(child);
 	nindex = 0;
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	nlist = json_object_new_array();
 	for(i=0,j=0;i<json_object_array_length(list);i++) {
 		child = json_object_array_get_idx(list,i);
@@ -249,7 +249,7 @@ gl_config_set_string(
 {
 	json_object *list,*server;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	server = json_object_array_get_idx(list,i);
 	if (!check_json_object(server,json_type_object)) {
 		return;
@@ -264,13 +264,12 @@ gl_config_get_string(
 {
 	json_object *list,*server,*child;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	server = json_object_array_get_idx(list,i);
 	if (!check_json_object(server,json_type_object)) {
 		return "";
 	}
-	child = json_object_object_get(server,key);
-	if (!check_json_object(child,json_type_string)) {
+	if (!json_object_object_get_ex(server,key,&child)) {
 		return "";
 	}
 	return json_object_get_string(child);
@@ -284,7 +283,7 @@ gl_config_set_int(
 {
 	json_object *list,*server;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	server = json_object_array_get_idx(list,i);
 	if (!check_json_object(server,json_type_object)) {
 		return;
@@ -299,13 +298,12 @@ gl_config_get_int(
 {
 	json_object *list,*server,*child;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	server = json_object_array_get_idx(list,i);
 	if (!check_json_object(server,json_type_object)) {
 		return 0;
 	}
-	child = json_object_object_get(server,key);
-	if (!check_json_object(child,json_type_int)) {
+	if (!json_object_object_get_ex(server,key,&child)) {
 		return 0;
 	}
 	return json_object_get_int(child);
@@ -319,7 +317,7 @@ gl_config_set_boolean(
 {
 	json_object *list,*server;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	server = json_object_array_get_idx(list,i);
 	if (!check_json_object(server,json_type_object)) {
 		return;
@@ -334,18 +332,22 @@ gl_config_get_boolean(
 {
 	json_object *list,*server,*child;
 
-	list = json_object_object_get(config_obj,"list");
+	json_object_object_get_ex(config_obj,"list",&list);
 	server = json_object_array_get_idx(list,i);
 	if (!check_json_object(server,json_type_object)) {
 		return FALSE;
 	}
-	child = json_object_object_get(server,key);
-	if (!check_json_object(child,json_type_boolean)) {
+	if (!json_object_object_get_ex(server,key,&child)) {
 		return FALSE;
 	}
 	return json_object_get_boolean(child);
 }
 
+const char*
+gl_config_get_config_dir()
+{
+	return ConfDir;
+}
 
 extern	void
 ListConfig()
@@ -362,72 +364,6 @@ ListConfig()
 		printf("\tuser:\t\t%s\n",gl_config_get_string(i,"user"));
 		}
 	}
-}
-
-extern void
-LoadConfig (
-	int n)
-{
-	if (!gl_config_have_config(n)) {
-		Error("no server setting:%d",n);
-	}
-
-	AUTHURI(Session) = g_strdup(gl_config_get_string(n,"authuri"));
-	Style = g_strdup(gl_config_get_string(n,"style"));
-	Gtkrc = g_strdup(gl_config_get_string(n,"gtkrc"));
-	fDebug = gl_config_get_boolean(n,"debug");
-	fKeyBuff = gl_config_get_boolean(n,"keybuff");
-	User = g_strdup(gl_config_get_string(n,"user"));
-	fIMKanaOff = gl_config_get_boolean(n,"im_kana_off");
-	SavePass = gl_config_get_boolean(n,"savepassword");
-	if (SavePass) {
-		Pass = g_strdup(gl_config_get_string(n,"password"));
-	} else {
-		Pass = g_strdup("");
-	} 
-
-	fSSL = gl_config_get_boolean(n,"ssl");
-	{
-		gchar *oldauth;
-		GRegex *reg;
-
-		oldauth = AUTHURI(Session);
-		reg = g_regex_new("http://",0,0,NULL);
-		AUTHURI(Session) = g_regex_replace(reg,oldauth,-1,0,"",0,NULL);
-		g_free(oldauth);
-		g_regex_unref(reg);
-
-		oldauth = AUTHURI(Session);
-		reg = g_regex_new("https://",0,0,NULL);
-		AUTHURI(Session) = g_regex_replace(reg,oldauth,-1,0,"",0,NULL);
-		g_free(oldauth);
-		g_regex_unref(reg);
-
-		oldauth = AUTHURI(Session);
-		if (fSSL) {
-			AUTHURI(Session) = g_strdup_printf("https://%s",oldauth);
-		} else {
-			AUTHURI(Session) = g_strdup_printf("http://%s",oldauth);
-		}
-		g_free(oldauth);
-	}
-	CAFile = g_strdup(gl_config_get_string(n,"cafile"));
-	CertFile = g_strdup(gl_config_get_string(n,"certfile"));
-	CertKeyFile = g_strdup(gl_config_get_string(n,"certkeyfile"));
-	Ciphers = g_strdup(gl_config_get_string(n,"ciphers"));
-	SaveCertPass = gl_config_get_boolean(n,"savecertpassword");
-	if (SaveCertPass) {
-		CertPass = g_strdup(gl_config_get_string(n,"certpassword"));
-	}
-
-	fPKCS11 = gl_config_get_boolean(n,"pkcs11");
-	PKCS11Lib = g_strdup(gl_config_get_string(n,"pkcs11lib"));
-	PIN = g_strdup(gl_config_get_string(n,"pin"));
-	fSavePIN = gl_config_get_boolean(n,"savepin");
-
-	fTimer = gl_config_get_boolean(n,"timer");
-	TimerPeriod = gl_config_get_int(n,"timerperiod");
-	FontName = g_strdup(gl_config_get_string(n,"fontname"));
 }
 
 extern int
@@ -450,19 +386,6 @@ GetConfigIndexByDesc (
 		}
 	}
 	return n;
-}
-
-extern void
-LoadConfigByDesc (
-	const char *desc)
-{
-	int n;
-
-	n = GetConfigIndexByDesc(desc);
-	if (n == -1) {
-		Error("could not found setting:%s",desc);
-	}
-	LoadConfig(n);
 }
 
 /*************************************************************

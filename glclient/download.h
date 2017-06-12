@@ -20,10 +20,7 @@
 #ifndef	_INC_DOWNLOAD_H
 #define	_INC_DOWNLOAD_H
 
-#include <gtk/gtk.h>
-
 void ShowDownloadDialog(
-	GtkWidget *widget,
 	char *filename, 
 	char *description, 
 	LargeByteString *binary);

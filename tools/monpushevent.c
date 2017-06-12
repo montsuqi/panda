@@ -85,7 +85,7 @@ MonPushEvent(
     OpenCOBOL_UnPackValue(conv,(unsigned char*)buf,val);
 	g_free(buf);
 
-	if (!PushEvent(val)) {
+	if (!PushEvent_via_ValueStruct(val)) {
 		exit(1);
 	}
 }

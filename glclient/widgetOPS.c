@@ -103,18 +103,15 @@ SetCommon(
 {
 	json_object *child;
 
-	child = json_object_object_get(obj,"state");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"state",&child)) {
 		SetState(widget,json_object_get_int(child));
 	}
 
-	child = json_object_object_get(obj,"style");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"style",&child)) {
 		SetStyle(widget,json_object_get_string(child));
 	}
 
-	child = json_object_object_get(obj,"visible");
-	if (CheckJSONObject(child,json_type_boolean)) {
+	if (json_object_object_get_ex(obj,"visible",&child)) {
 		gtk_widget_set_visible(widget,json_object_get_boolean(child));
 	}
 }
@@ -144,11 +141,12 @@ SetPandaPDF(
 {
 	LargeByteString *lbs;
 	json_object *child;
+	const char *oid;
 
 	SetCommon(widget,obj);
-	child = json_object_object_get(obj,"objectdata");
-	if (CheckJSONObject(child,json_type_string)) {
-		lbs = REST_GetBLOB((char*)json_object_get_string(child));
+	if (json_object_object_get_ex(obj,"objectdata",&child)) {
+		oid = (const char*)json_object_get_string(child);
+		lbs = REST_GetBLOB(GLP(Session),oid);
 		if (lbs != NULL) {
 			gtk_panda_pdf_set(GTK_PANDA_PDF(widget),
 				LBS_Size(lbs),LBS_Body(lbs));
@@ -167,8 +165,7 @@ SetPandaTimer(
 	json_object *child;
 
 	SetCommon(widget,obj);
-	child = json_object_object_get(obj,"duration");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"duration",&child)) {
 		gtk_panda_timer_set(GTK_PANDA_TIMER(widget),
 			json_object_get_int(child));
 	}
@@ -196,23 +193,20 @@ SetPandaDownload(
 	filename = desc = NULL;
 
 	SetCommon(widget,obj);
-	child = json_object_object_get(obj,"filename");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"filename",&child)) {
 		filename = json_object_get_string(child);
 	}
 
-	child = json_object_object_get(obj,"description");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"description",&child)) {
 		desc = json_object_get_string(child);
 	}
 
-	child = json_object_object_get(obj,"objectdata");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"objectdata",&child)) {
 		oid = json_object_get_string(child);
 		if (oid != NULL && strlen(oid) > 0 && strcmp(oid,"0")) {
-			lbs = REST_GetBLOB(oid);
+			lbs = REST_GetBLOB(GLP(Session),oid);
 			if (lbs != NULL && LBS_Size(lbs) > 0) {
-				ShowDownloadDialog(widget,(char*)filename,(char*)desc,lbs);
+				ShowDownloadDialog((char*)filename,(char*)desc,lbs);
 				FreeLBS(lbs);
 			}
 		}
@@ -229,14 +223,12 @@ SetNumberEntry(
 
 	SetCommon(widget,obj);
 
-	child = json_object_object_get(obj,"editable");
-	if (CheckJSONObject(child,json_type_boolean)) {
+	if (json_object_object_get_ex(obj,"editable",&child)) {
 		g_object_set(G_OBJECT(widget),"editable",
 			json_object_get_boolean(child),NULL);
 	}
 
-	child = json_object_object_get(obj,"numdata");
-	if (CheckJSONObject(child,json_type_double)) {
+	if (json_object_object_get_ex(obj,"numdata",&child)) {
 		num = DoubleToNumeric(json_object_get_double(child));
 		gtk_number_entry_set_value(GTK_NUMBER_ENTRY(widget),num);
 		NumericFree(num);
@@ -252,8 +244,7 @@ GetNumberEntry(
 	Numeric	num;
 	json_object *child;
 
-	child = json_object_object_get(tmpl,"numdata");
-	if (CheckJSONObject(child,json_type_double)) {
+	if (json_object_object_get_ex(tmpl,"numdata",&child)) {
 		num = gtk_number_entry_get_value(GTK_NUMBER_ENTRY(widget));
 		json_object_object_add(obj,"numdata",
 			json_object_new_double(NumericToDouble(num)));
@@ -276,13 +267,11 @@ SetPandaCombo(
 	SetCommon(widget,obj);
 	count = 0;
 
-	child = json_object_object_get(obj,"count");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"count",&child)) {
 		count = json_object_get_int(child);
 	}
 
-	child = json_object_object_get(obj,"item");
-	if (CheckJSONObject(child,json_type_array)) {
+	if (json_object_object_get_ex(obj,"item",&child)) {
 		n = json_object_array_length(child);
 		if (count > 0) {
 			n = n > count ? count : n;
@@ -324,21 +313,18 @@ SetPandaCList(
 
 	count = -1;
 
-	child = json_object_object_get(obj,"count");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"count",&child)) {
 		count = json_object_get_int(child);
 	}
 
 	row = 0;
-	child = json_object_object_get(obj,"row");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"row",&child)) {
 		row = json_object_get_int(child);
 		row = row > 1 ? row - 1 : 0;
 	}
 
 	rowattr = 0.0;
-	child = json_object_object_get(obj,"rowattr");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"rowattr",&child)) {
 		switch(json_object_get_int(child)) {
 		case 1: /* DOWN */
 			rowattr = 1.0;
@@ -358,8 +344,7 @@ SetPandaCList(
 		}
 	}
 
-	child = json_object_object_get(obj,"item");
-	if (CheckJSONObject(child,json_type_array)) {
+	if (json_object_object_get_ex(obj,"item",&child)) {
 		n = json_object_array_length(child);
 		if (count < 0 || count > n) {
 			count = n;
@@ -377,8 +362,7 @@ SetPandaCList(
 			}
 			for(j=0;j<m;j++) {
 				sprintf(name,"column%d",j+1);
-				colobj = json_object_object_get(rowobj,name);
-				if (CheckJSONObject(colobj,json_type_string)) {
+				if (json_object_object_get_ex(rowobj,name,&colobj)) {
 					rdata[j] = (char*)json_object_get_string(colobj);
 				} else {
 					rdata[j] = "";
@@ -388,8 +372,7 @@ SetPandaCList(
 		}
 	}
 
-	child = json_object_object_get(obj,"fgcolor");
-	if (CheckJSONObject(child,json_type_array)) {
+	if (json_object_object_get_ex(obj,"fgcolor",&child)) {
 		n = json_object_array_length(child);
 		n = n > count ? count : n;
 		for(i=0;i<n;i++) {
@@ -401,8 +384,7 @@ SetPandaCList(
 		}
 	}
 
-	child = json_object_object_get(obj,"bgcolor");
-	if (CheckJSONObject(child,json_type_array)) {
+	if (json_object_object_get_ex(obj,"bgcolor",&child)) {
 		n = json_object_array_length(child);
 		n = n > count ? count : n;
 		for(i=0;i<n;i++) {
@@ -415,8 +397,7 @@ SetPandaCList(
 	}
 	gtk_widget_show(widget);
 
-	child = json_object_object_get(obj,"selectdata");
-	if (CheckJSONObject(child,json_type_array)) {
+	if (json_object_object_get_ex(obj,"selectdata",&child)) {
 		n = json_object_array_length(child);
 		n = n > count ? count : n;
 		for(i=0;i<n;i++) {
@@ -458,15 +439,13 @@ GetPandaCList(
 	}
 
 	if (visible) {
-		child = json_object_object_get(tmpl,"row");
-		if (CheckJSONObject(child,json_type_int)) {
+		if (json_object_object_get_ex(tmpl,"row",&child)) {
 			json_object_object_add(obj,"row",
 				json_object_new_int(row));
 		}
 	}
 
-	child = json_object_object_get(tmpl,"selectdata");
-	if (CheckJSONObject(child,json_type_array)) {
+	if (json_object_object_get_ex(tmpl,"selectdata",&child)) {
 		nrows = gtk_panda_clist_get_rows(GTK_PANDA_CLIST(widget));
 		array = json_object_new_array();
 		json_object_object_add(obj,"selectdata",array);
@@ -485,8 +464,7 @@ SetPandaHTML(
 	json_object	*child;
 
 	SetCommon(widget,obj);
-	child = json_object_object_get(obj,"uri");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"uri",&child)) {
 		gtk_panda_html_set_uri(GTK_PANDA_HTML(widget),
 			json_object_get_string(child));
 	}
@@ -513,8 +491,7 @@ SetPandaTable(
 	SetCommon(widget,obj);
 
 	trow = 0;
-	child = json_object_object_get(obj,"trow");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"trow",&child)) {
 		trow = json_object_get_int(child);
 		if (trow >= 1) {
 			trow -= 1;
@@ -522,8 +499,7 @@ SetPandaTable(
 	}
 
 	trowattr = 0.0;
-	child = json_object_object_get(obj,"trowattr");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"trowattr",&child)) {
 		switch(json_object_get_int(child)) {
 		case 1: /* DOWN */
 			trowattr = 1.0;
@@ -544,8 +520,7 @@ SetPandaTable(
 	}
 
 	tcolumn = 0;
-	child = json_object_object_get(obj,"tcolumn");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"tcolumn",&child)) {
 		tcolumn = json_object_get_int(child);
 		if (tcolumn >= 1) {
 			tcolumn -= 1;
@@ -554,8 +529,7 @@ SetPandaTable(
 
 	n = gtk_panda_table_get_columns(GTK_PANDA_TABLE(widget));
 
-	child = json_object_object_get(obj,"rowdata");
-	if (CheckJSONObject(child,json_type_array)) {
+	if (json_object_object_get_ex(obj,"rowdata",&child)) {
 		for(i=0;i<json_object_array_length(child);i++) {
 			rowobj = json_object_array_get_idx(child,i);
 			if (!CheckJSONObject(rowobj,json_type_object)) {
@@ -568,20 +542,16 @@ SetPandaTable(
 			}
 			for(j=0;j<n;j++) {
 				sprintf(name,"column%d",j+1);
-				colobj = json_object_object_get(rowobj,name);
-				if (!CheckJSONObject(colobj,json_type_object)) {
+				if (!json_object_object_get_ex(rowobj,name,&colobj)) {
 					continue;
 				}
-				child2 = json_object_object_get(colobj,"celldata");
-				if (CheckJSONObject(child2,json_type_string)) {
+				if (json_object_object_get_ex(colobj,"celldata",&child2)) {
 					rowval[j] = (char*)json_object_get_string(child2);
 				}
-				child2 = json_object_object_get(colobj,"fgcolor");
-				if (CheckJSONObject(child2,json_type_string)) {
+				if (json_object_object_get_ex(colobj,"fgcolor",&child2)) {
 					fgval[j] = (char*)json_object_get_string(child2);
 				}
-				child2 = json_object_object_get(colobj,"bgcolor");
-				if (CheckJSONObject(child2,json_type_string)) {
+				if (json_object_object_get_ex(colobj,"bgcolor",&child2)) {
 					bgval[j] = (char*)json_object_get_string(child2);
 				}
 			}
@@ -642,28 +612,24 @@ GetPandaTable(
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
 	gtk_tree_model_get_iter_first(model,&iter);
 
-	child = json_object_object_get(tmpl,"trow");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(tmpl,"trow",&child)) {
 		json_object_object_add(obj,"trow",
 			json_object_new_int(trow));
 	}
 
-	child = json_object_object_get(tmpl,"tcolumn");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(tmpl,"tcolumn",&child)) {
 		json_object_object_add(obj,"tcolumn",
 			json_object_new_int(tcolumn));
 	}
 
-	child = json_object_object_get(tmpl,"tvalue");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(tmpl,"tvalue",&child)) {
 		json_object_object_add(obj,"tvalue",
 			json_object_new_string(tvalue));
 	}
 
 	list = NULL;
 	n = gtk_panda_table_get_columns(GTK_PANDA_TABLE(widget));
-	child = json_object_object_get(tmpl,"rowdata");
-	if (CheckJSONObject(child,json_type_array)) {
+	if (json_object_object_get_ex(tmpl,"rowdata",&child)) {
 		i = k = 0;
 		do {
 			rowdata = json_object_array_get_idx(child,i);
@@ -673,13 +639,11 @@ GetPandaTable(
 			}
 			for(j=0;j<n;j++) {
 				sprintf(name,"column%d",j+1);
-				colobj = json_object_object_get(rowdata,name);
-				if (!CheckJSONObject(colobj,json_type_object)) {
+				if (!json_object_object_get_ex(rowdata,name,&colobj)) {
 					Warning("%s not found",name);
 					return;
 				}
-				cell = json_object_object_get(colobj,"celldata");
-				if (!CheckJSONObject(cell,json_type_string)) {
+				if (!json_object_object_get_ex(colobj,"celldata",&cell)) {
 					Warning("celldata not found",name);
 					return;
 				}
@@ -726,14 +690,12 @@ SetEntry(
 
 	SetCommon(widget,obj);
 
-	child = json_object_object_get(obj,"editable");
-	if (CheckJSONObject(child,json_type_boolean)) {
+	if (json_object_object_get_ex(obj,"editable",&child)) {
 		g_object_set(G_OBJECT(widget),"editable",
 			json_object_get_boolean(child),NULL);
 	}
 
-	child = json_object_object_get(obj,"textdata");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"textdata",&child)) {
 		prev = gtk_editable_get_chars(GTK_EDITABLE(widget),0 , -1);
 		next = (char*)json_object_get_string(child);
 		if (strcmp(prev,next)) {
@@ -758,8 +720,7 @@ GetEntry(
 	char *text;
 
 	text = gtk_editable_get_chars(GTK_EDITABLE(widget),0 , -1);
-	child = json_object_object_get(tmpl,"textdata");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(tmpl,"textdata",&child)) {
 		json_object_object_add(obj,"textdata",json_object_new_string(text));
 	}
 	g_free(text);
@@ -775,8 +736,7 @@ SetLabel(
 
 	SetCommon(widget,obj);
 
-	child = json_object_object_get(obj,"textdata");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"textdata",&child)) {
 		text = (char*)json_object_get_string(child);
 		if (pango_parse_markup(text,-1,0,NULL,NULL,NULL,NULL)) {
 			gtk_label_set_markup(GTK_LABEL(widget),text);
@@ -798,8 +758,7 @@ SetText(
 
 	SetCommon(widget,obj);
 
-	child = json_object_object_get(obj,"textdata");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"textdata",&child)) {
 		text = (char*)json_object_get_string(child);
 		buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
 		gtk_text_buffer_set_text(buffer,text,strlen(text));
@@ -821,8 +780,7 @@ GetText(
 	json_object *child;
 	char *text;
 
-	child = json_object_object_get(tmpl,"textdata");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(tmpl,"textdata",&child)) {
 		buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
 		gtk_text_buffer_get_start_iter(buffer,&start);
 		gtk_text_buffer_get_end_iter(buffer,&end);
@@ -841,13 +799,11 @@ SetButton(
 
 	SetCommon(widget,obj);
 
-	child = json_object_object_get(obj,"label");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"label",&child)) {
 		SetWidgetLabelRecursive(widget,(char*)json_object_get_string(child));
 	}
 
-	child = json_object_object_get(obj,"isactive");
-	if (CheckJSONObject(child,json_type_boolean)) {
+	if (json_object_object_get_ex(obj,"isactive",&child)) {
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget),
 			json_object_get_boolean(child));
 	}
@@ -862,8 +818,7 @@ GetButton(
 	gboolean isactive;
 	json_object *child;
 
-	child = json_object_object_get(tmpl,"isactive");
-	if (CheckJSONObject(child,json_type_boolean)) {
+	if (json_object_object_get_ex(tmpl,"isactive",&child)) {
 		isactive = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 		json_object_object_add(obj,"isactive",
 			json_object_new_boolean(isactive));
@@ -881,18 +836,15 @@ SetCalendar(
 	SetCommon(widget,obj);
 	y = m = d = 0;
 
-	child = json_object_object_get(obj,"year");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"year",&child)) {
 		y = json_object_get_int(child);
 	}
 
-	child = json_object_object_get(obj,"month");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"month",&child)) {
 		m = json_object_get_int(child);
 	}
 
-	child = json_object_object_get(obj,"day");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"day",&child)) {
 		d = json_object_get_int(child);
 	}
 
@@ -912,20 +864,17 @@ GetCalendar(
 	int y,m,d;
 
 	gtk_calendar_get_date(GTK_CALENDAR(widget),&y,&m,&d);
-	child = json_object_object_get(tmpl,"year");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(tmpl,"year",&child)) {
 		json_object_object_del(obj,"year");
 		json_object_object_add(obj,"year",json_object_new_int(y));
 	}
 
-	child = json_object_object_get(tmpl,"month");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(tmpl,"month",&child)) {
 		json_object_object_del(obj,"month");
 		json_object_object_add(obj,"month",json_object_new_int(m+1));
 	}
 
-	child = json_object_object_get(tmpl,"day");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(tmpl,"day",&child)) {
 		json_object_object_del(obj,"day");
 		json_object_object_add(obj,"day",json_object_new_int(d));
 	}
@@ -939,8 +888,7 @@ SetNotebook(
 	json_object *child;
 
 	SetCommon(widget,obj);
-	child = json_object_object_get(obj,"pageno");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"pageno",&child)) {
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(widget),
 			json_object_get_int(child));
 	}
@@ -955,8 +903,7 @@ GetNotebook(
 	json_object *child;
 	int pageno;
 
-	child = json_object_object_get(tmpl,"pageno");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(tmpl,"pageno",&child)) {
 		pageno = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget),"new_pageno"));
 		json_object_object_add(obj,"pageno",json_object_new_int(pageno));
 	}
@@ -971,8 +918,7 @@ SetProgressBar(
 	int i;
 
 	SetCommon(widget,obj);
-	child = json_object_object_get(obj,"value");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"value",&child)) {
 		i = json_object_get_int(child);
 #ifdef LIBGTK_3_0_0
 		gtk_panda_progress_bar_set_value(GTK_PANDA_PROGRESS_BAR(widget),i);
@@ -994,38 +940,32 @@ SetWindow(
 #if 0
 	SetCommon(widget,obj);
 #endif
-	child = json_object_object_get(obj,"bgcolor");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"bgcolor",&child)) {
 		SetSessionBGColor(json_object_get_string(child));
 	}
 
-	child = json_object_object_get(obj,"title");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"title",&child)) {
 		SetSessionTitle(json_object_get_string(child));
 	}
 	SetTitle(TopWindow);
 
 	summary = NULL;
-	child = json_object_object_get(obj,"popup_summary");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"popup_summary",&child)) {
 		summary = (char*)json_object_get_string(child);
 	}
 
 	body = NULL;
-	child = json_object_object_get(obj,"popup_body");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"popup_body",&child)) {
 		body = (char*)json_object_get_string(child);
 	}
 
 	icon = NULL;
-	child = json_object_object_get(obj,"popup_icon");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"popup_icon",&child)) {
 		icon = (char*)json_object_get_string(child);
 	}
 
 	timeout = 0;
-	child = json_object_object_get(obj,"popup_timeout");
-	if (CheckJSONObject(child,json_type_int)) {
+	if (json_object_object_get_ex(obj,"popup_timeout",&child)) {
 		timeout = json_object_get_int(child);
 	}
 
@@ -1044,8 +984,7 @@ SetFrame(
 
 	SetCommon(widget,obj);
 
-	child = json_object_object_get(obj,"label");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"label",&child)) {
 		gtk_frame_set_label(GTK_FRAME(widget),json_object_get_string(child));
 	}
 }
@@ -1108,17 +1047,15 @@ GetFileChooserButton(
 	LBS_ReserveSize(lbs,size,FALSE);
 	memcpy(LBS_Body(lbs),contents,size);
 	g_free(contents);
-	oid = REST_PostBLOB(lbs);
+	oid = REST_PostBLOB(GLP(Session),lbs);
 	FreeLBS(lbs);
 
-	child = json_object_object_get(tmpl,"objectdata");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(tmpl,"objectdata",&child)) {
 		if (strlen(oid) > 0) {
 		json_object_object_add(obj,"objectdata",json_object_new_string(oid));
 		}
 	}
-	child = json_object_object_get(tmpl,"filename");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(tmpl,"filename",&child)) {
 		basename = g_path_get_basename(fname);
 		json_object_object_add(obj,"filename",json_object_new_string(basename));
 		g_free(basename);
@@ -1146,8 +1083,7 @@ SetColorButton(
 	cb = GTK_COLOR_BUTTON(widget);
 	SetCommon(widget,obj);
 
-	child = json_object_object_get(obj,"color");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"color",&child)) {
 		strcolor = (char*)json_object_get_string(child);
 		if (gdk_color_parse(strcolor,&color)) {
 			gtk_color_button_set_color(cb,&color);
@@ -1174,8 +1110,7 @@ GetColorButton(
 		(guint)(color.blue/256.0)
 		);
 
-	child = json_object_object_get(tmpl,"color");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(tmpl,"color",&child)) {
 		json_object_object_add(obj,"color",json_object_new_string(strcolor));
 	}
 }
@@ -1187,12 +1122,13 @@ SetPixmap(
 {
 	LargeByteString *lbs;
 	json_object *child;
+	const char *oid;
 
 	SetCommon(widget,obj);
 
-	child = json_object_object_get(obj,"objectdata");
-	if (CheckJSONObject(child,json_type_string)) {
-		lbs = REST_GetBLOB(json_object_get_string(child));
+	if (json_object_object_get_ex(obj,"objectdata",&child)) {
+		oid = (const char*)json_object_get_string(child);
+		lbs = REST_GetBLOB(GLP(Session),oid);
 		if (lbs != NULL && LBS_Size(lbs) > 0) {
 			gtk_widget_show(widget); 
 			gtk_panda_pixmap_set_image(GTK_PANDA_PIXMAP(widget), 
@@ -1417,13 +1353,13 @@ MakeScreenData(
 	}
 
 	ret = NULL;
-	result = json_object_object_get(SCREENDATA(Session),"result");
-	window_data = json_object_object_get(result,"window_data");
-	windows = json_object_object_get(window_data,"windows");
+	json_object_object_get_ex(SCREENDATA(Session),"result",&result);
+	json_object_object_get_ex(result,"window_data",&window_data);
+	json_object_object_get_ex(window_data,"windows",&windows);
 	length = json_object_array_length(windows);
 	for(i=0;i<length;i++) {
 		w = json_object_array_get_idx(windows,i);
-		window = json_object_object_get(w,"window");
+		json_object_object_get_ex(w,"window",&window);
 		if (!strcmp(wname,json_object_get_string(window))) {
 			wdata = GetWindowData(wname);
 			widget = GetWidgetByLongName(wname);

@@ -31,13 +31,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <sys/time.h>
+#include <fcntl.h>
 #include <ctype.h>
 #include <json.h>
 #include <curl/curl.h>
+#include <uuid.h>
 #include <errno.h>
 #ifdef USE_SSL
 #include <libp11.h>
@@ -50,22 +52,21 @@
 #include <openssl/pkcs12.h>
 #include <openssl/engine.h>
 #endif
+#include <libmondai.h>
 
-#include "glclient.h"
+#include "protocol.h"
 #include "gettext.h"
 #include "const.h"
-#include "bd_config.h"
 #include "logger.h"
-#include "dialogs.h"
+#include "tempdir.h"
 
 static LargeByteString *readbuf;
 static LargeByteString *writebuf;
 static gboolean Logging = FALSE;
 static char *LogDir;
 
-static void UnSetHTTPAuth();
-
-size_t write_data(
+size_t 
+write_data(
 	void *buf,
 	size_t size,
 	size_t nmemb,
@@ -84,7 +85,8 @@ size_t write_data(
 	return buf_size;
 }
 
-size_t read_text_data(
+size_t 
+read_text_data(
 	void *buf,
 	size_t size,
 	size_t nmemb,
@@ -110,7 +112,8 @@ size_t read_text_data(
 	return read_size;
 }
 
-size_t read_binary_data(
+size_t 
+read_binary_data(
 	void *buf,
 	size_t size,
 	size_t nmemb,
@@ -176,6 +179,7 @@ HeaderPostBLOB(
 
 char *
 REST_PostBLOB(
+	GLProtocol *ctx,
 	LargeByteString *lbs)
 {
 	struct curl_slist *headers = NULL;
@@ -184,8 +188,7 @@ REST_PostBLOB(
 
 	oid = malloc(SIZE_NAME+1);
 	memset(oid,0,SIZE_NAME+1);
-	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/",
-		RESTURI(Session),SESSIONID(Session));
+	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/",ctx->RESTURI,ctx->SessionID);
 	url[sizeof(url)-1] = 0;
 
 	headers = curl_slist_append(headers,"Content-Type: application/octet-stream");
@@ -194,22 +197,22 @@ REST_PostBLOB(
 
 	LBS_SetPos(lbs,0);
 
-	curl_easy_setopt(Curl, CURLOPT_URL, url);
-	curl_easy_setopt(Curl, CURLOPT_POST, 1);
-	curl_easy_setopt(Curl, CURLOPT_READDATA,(void*)lbs);
-	curl_easy_setopt(Curl, CURLOPT_READFUNCTION, read_binary_data);
+	curl_easy_setopt(ctx->Curl, CURLOPT_URL, url);
+	curl_easy_setopt(ctx->Curl, CURLOPT_POST, 1);
+	curl_easy_setopt(ctx->Curl, CURLOPT_READDATA,(void*)lbs);
+	curl_easy_setopt(ctx->Curl, CURLOPT_READFUNCTION, read_binary_data);
 
-	curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, headers);
-	curl_easy_setopt(Curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
-	curl_easy_setopt(Curl, CURLOPT_WRITEHEADER,(void*)oid);
+	curl_easy_setopt(ctx->Curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(ctx->Curl, CURLOPT_HEADERFUNCTION,HeaderPostBLOB);
+	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEHEADER,(void*)oid);
 
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(Curl, CURLOPT_ERRORBUFFER, errbuf);
+	curl_easy_setopt(ctx->Curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (curl_easy_perform(Curl) != CURLE_OK) {
+	if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);
 	}
-	if (curl_easy_getinfo(Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
 			break;
@@ -231,6 +234,7 @@ REST_PostBLOB(
 
 LargeByteString*
 REST_GetBLOB(
+	GLProtocol *ctx,
 	const char *oid)
 {
 	char url[SIZE_URL_BUF+1],errbuf[CURL_ERROR_SIZE+1];
@@ -243,23 +247,24 @@ REST_GetBLOB(
 
 	lbs = NewLBS();
 
-	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",RESTURI(Session),SESSIONID(Session),oid);
+	snprintf(url,sizeof(url)-1,"%ssessions/%s/blob/%s",ctx->RESTURI,ctx->SessionID,oid);
 	url[sizeof(url)-1] = 0;
+	Debug("REST_GetBLOB:%s",url);
 
-	curl_easy_setopt(Curl, CURLOPT_URL, url);
-	curl_easy_setopt(Curl, CURLOPT_POST,0);
-	curl_easy_setopt(Curl, CURLOPT_WRITEDATA,(void*)lbs);
-	curl_easy_setopt(Curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, NULL);
+	curl_easy_setopt(ctx->Curl, CURLOPT_URL, url);
+	curl_easy_setopt(ctx->Curl, CURLOPT_POST,0);
+	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEDATA,(void*)lbs);
+	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEFUNCTION,write_data);
+	curl_easy_setopt(ctx->Curl, CURLOPT_HTTPHEADER, NULL);
 
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(Curl, CURLOPT_ERRORBUFFER, errbuf);
+	curl_easy_setopt(ctx->Curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (curl_easy_perform(Curl) != CURLE_OK) {
+	if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
 		Warning(_("comm error:can not get blob:%s"),oid);
 		return NULL;
 	}
-	if (curl_easy_getinfo(Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
 			break;
@@ -280,6 +285,7 @@ REST_GetBLOB(
 
 static	json_object*
 MakeJSONRPCRequest(
+	GLProtocol *ctx,
 	const char *method,
 	json_object *params)
 {
@@ -287,61 +293,56 @@ MakeJSONRPCRequest(
 
 	obj = json_object_new_object();
 	json_object_object_add(obj,"jsonrpc",json_object_new_string("2.0"));
-	json_object_object_add(obj,"id",json_object_new_int(RPCID(Session)));
+	json_object_object_add(obj,"id",json_object_new_int(ctx->RPCID));
 	json_object_object_add(obj,"method",json_object_new_string(method));
 	json_object_object_add(obj,"params",params);
-	RPCID(Session) += 1;
+	ctx->RPCID++;
 	return obj;
 }
 
 static	void
 CheckJSONRPCResponse(
+	GLProtocol *ctx,
 	json_object *obj)
 {
 	json_object *obj2,*obj3;
 	int code,id;
 	char *message,*jsonstr,*path;
 
-	obj2 = json_object_object_get(obj,"jsonrpc");
-	if (!CheckJSONObject(obj2,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"jsonrpc",&obj2)) {
 		Error(_("invalid jsonrpc"));
 	}
 	if (strcmp("2.0",json_object_get_string(obj2))) {
 		Error(_("invalid jsonrpc version"));
 	}
 
-	obj2 = json_object_object_get(obj,"id");
-	if (!CheckJSONObject(obj2,json_type_int)) {
+	if (!json_object_object_get_ex(obj,"id",&obj2)) {
 		Error(_("invalid jsonrpc id"));
 	}
 	id = json_object_get_int(obj2);
-	if (id != RPCID(Session) - 1) {
+	if (id != ctx->RPCID - 1) {
 		Error(_("invalid jsonrpc id"));
 	}
 
-	obj2 = json_object_object_get(obj,"error");
-	if (CheckJSONObject(obj2,json_type_object)) {
+	if (json_object_object_get_ex(obj,"error",&obj2)) {
 		code = 0;
 		message = NULL;
-		obj3 = json_object_object_get(obj2,"code");
-		if (CheckJSONObject(obj3,json_type_int)) {
+		if (json_object_object_get_ex(obj2,"code",&obj3)) {
 			code = json_object_get_int(obj3);
 		}
-		obj3 = json_object_object_get(obj2,"message");
-		if (CheckJSONObject(obj3,json_type_string)) {
+		if (json_object_object_get_ex(obj2,"message",&obj3)) {
 			message = (char*)json_object_get_string(obj3);
 		}
 		Error(_("jsonrpc error code:%d message:%s"),code,message);
 	}
 
-	obj2 = json_object_object_get(obj,"result");
-	if (obj2 == NULL || is_error(obj2)) {
+	if (!json_object_object_get_ex(obj,"result",&obj2)) {
 		Error(_("no result object"));
 	}
 
 	if (Logging) {
 		jsonstr = (char*)json_object_to_json_string(obj);
-		path = g_strdup_printf("%s/res_%05d.json",LogDir,RPCID(Session));
+		path = g_strdup_printf("%s/res_%05d.json",LogDir,ctx->RPCID-1);
 		if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {
 			Error("could not create %s",path);
 		}
@@ -356,6 +357,7 @@ CheckJSONRPCResponse(
 
 static	json_object*
 JSONRPC(
+	GLProtocol *ctx,
 	int type,
 	json_object *obj)
 {
@@ -367,9 +369,9 @@ JSONRPC(
 	json_object *ret;
 
 	if (type == TYPE_AUTH) {
-		url = AUTHURI(Session);
+		url = ctx->AuthURI;
 	} else {
-		url = RPCURI(Session);
+		url = ctx->RPCURI;
 	}
 	if (readbuf == NULL) {
 		readbuf = NewLBS();
@@ -378,7 +380,7 @@ JSONRPC(
 	jsonsize = strlen(jsonstr);
 
 	if (Logging) {
-		path = g_strdup_printf("%s/req_%05d.json",LogDir,RPCID(Session));
+		path = g_strdup_printf("%s/req_%05d.json",LogDir,ctx->RPCID);
 		if (!g_file_set_contents(path,jsonstr,jsonsize,NULL)) {
 			Error("could not create %s",path);
 		}
@@ -406,21 +408,21 @@ JSONRPC(
 	snprintf(buf,sizeof(buf),"Expect:");
 	headers = curl_slist_append(headers, buf);
 
-	curl_easy_setopt(Curl, CURLOPT_URL, url);
-	curl_easy_setopt(Curl, CURLOPT_POST,1);
-	curl_easy_setopt(Curl, CURLOPT_WRITEDATA,(void*)writebuf);
-	curl_easy_setopt(Curl, CURLOPT_WRITEFUNCTION,write_data);
-	curl_easy_setopt(Curl, CURLOPT_READDATA,(void*)readbuf);
-	curl_easy_setopt(Curl, CURLOPT_READFUNCTION, read_text_data);
-	curl_easy_setopt(Curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(ctx->Curl, CURLOPT_URL, url);
+	curl_easy_setopt(ctx->Curl, CURLOPT_POST,1);
+	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEDATA,(void*)writebuf);
+	curl_easy_setopt(ctx->Curl, CURLOPT_WRITEFUNCTION,write_data);
+	curl_easy_setopt(ctx->Curl, CURLOPT_READDATA,(void*)readbuf);
+	curl_easy_setopt(ctx->Curl, CURLOPT_READFUNCTION, read_text_data);
+	curl_easy_setopt(ctx->Curl, CURLOPT_HTTPHEADER, headers);
 
 	memset(errbuf,0,CURL_ERROR_SIZE+1);
-	curl_easy_setopt(Curl, CURLOPT_ERRORBUFFER, errbuf);
+	curl_easy_setopt(ctx->Curl, CURLOPT_ERRORBUFFER, errbuf);
 
-	if (curl_easy_perform(Curl) != CURLE_OK) {
+	if (curl_easy_perform(ctx->Curl) != CURLE_OK) {
 		Error(_("comm error:%s"),errbuf);
 	}
-	if (curl_easy_getinfo(Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
+	if (curl_easy_getinfo(ctx->Curl,CURLINFO_RESPONSE_CODE,&http_code)==CURLE_OK) {
 		switch (http_code) {
 		case 200:
 			break;
@@ -435,7 +437,7 @@ JSONRPC(
 	} else {
 		Error(_("comm error:%s"),errbuf);
 	}
-	if (curl_easy_getinfo(Curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
+	if (curl_easy_getinfo(ctx->Curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
 		if (strstr(ctype,"json") == NULL) {
 			Error(_("invalid content type:%s"),ctype);
 		}
@@ -449,94 +451,96 @@ JSONRPC(
 	if (is_error(ret)) {
 		Error(_("invalid json"));
 	}
-	CheckJSONRPCResponse(ret);
+	CheckJSONRPCResponse(ctx,ret);
 	return ret;
 }
 
+#define JSONRPC_AUTH(ctx,obj) JSONRPC(ctx,TYPE_AUTH,obj)
+#define JSONRPC_APP(ctx,obj ) JSONRPC(ctx,TYPE_APP ,obj)
+
 void
-RPC_GetServerInfo()
+RPC_GetServerInfo(
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child,*result;
 	char *type;
 
 	params = json_object_new_object();
-	obj = MakeJSONRPCRequest("get_server_info",params);
-	obj = JSONRPC(TYPE_AUTH,obj);
-	result = json_object_object_get(obj,"result");
-	child = json_object_object_get(result,"protocol_version");
-	if (!CheckJSONObject(child,json_type_string)) {
+	obj = MakeJSONRPCRequest(ctx,"get_server_info",params);
+	obj = JSONRPC_AUTH(ctx,obj);
+	json_object_object_get_ex(obj,"result",&result);
+	if (!json_object_object_get_ex(result,"protocol_version",&child)) {
 		Error(_("no protocol_version object"));
 	}
-	PROTOVER(Session) = g_strdup(json_object_get_string(child));
+	ctx->ProtocolVersion = g_strdup(json_object_get_string(child));
 
-	child = json_object_object_get(result,"application_version");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if(!json_object_object_get_ex(result,"application_version",&child)) {
 		Error(_("no application_version object"));
 	}
-	APPVER(Session) = g_strdup(json_object_get_string(child));
+	ctx->AppVersion = g_strdup(json_object_get_string(child));
 
-	child = json_object_object_get(result,"server_type");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if(!json_object_object_get_ex(result,"server_type",&child)) {
 		Error(_("no server_type object"));
 	}
 	type = (char*)json_object_get_string(child);
 	if (!strcmp(type,"ginbee")) {
-		Ginbee = TRUE;
+		ctx->fGinbee = TRUE;
 	} else {
-		Ginbee = FALSE;
+		ctx->fGinbee = FALSE;
 	}
 	json_object_put(obj);
 }
 
 void
-RPC_StartSession()
+RPC_StartSession(
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child,*result,*meta;
 	gchar *rpcuri,*resturi;
 
-	Info("start_session %s",AUTHURI(Session));
+	Info("start_session %s",ctx->AuthURI);
 	params = json_object_new_object();
 	child = json_object_new_object();
 	json_object_object_add(child,"client_version",json_object_new_string(PACKAGE_VERSION));
 	json_object_object_add(params,"meta",child);
-	obj = MakeJSONRPCRequest("start_session",params);
-	obj = JSONRPC(TYPE_AUTH,obj);
-	result = json_object_object_get(obj,"result");
-	meta = json_object_object_get(result,"meta");
-	if (!CheckJSONObject(meta,json_type_object)) {
+	obj = MakeJSONRPCRequest(ctx,"start_session",params);
+	obj = JSONRPC_AUTH(ctx,obj);
+	json_object_object_get_ex(obj,"result",&result);
+	if (!json_object_object_get_ex(result,"meta",&meta)) {
 		Error(_("no meta object"));
 	}
-	child = json_object_object_get(meta,"session_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+
+	if (!json_object_object_get_ex(meta,"session_id",&child)) {
 		Error(_("no session_id object"));
 	}
-	SESSIONID(Session) = g_strdup(json_object_get_string(child));
+	ctx->SessionID = g_strdup(json_object_get_string(child));
 
-	child = json_object_object_get(result,"app_rpc_endpoint_uri");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(result,"app_rpc_endpoint_uri",&child)) {
 		Error(_("no jsonrpc_uri object"));
 	}
 	rpcuri = (char*)json_object_get_string(child);
 
-	child = json_object_object_get(result,"app_rest_api_uri_root");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(result,"app_rest_api_uri_root",&child)) {
 		Error(_("no rest_uri object"));
 	}
 	resturi = (char*)json_object_get_string(child);
 
-	RPCURI(Session) = g_strdup(rpcuri);
-	RESTURI(Session) = g_strdup(resturi);
-	Info("session id: %s",SESSIONID(Session));
-	Info("rpcuri: %s",RPCURI(Session));
-	Info("resturi: %s",RESTURI(Session));
+	ctx->RPCURI = g_strdup(rpcuri);
+	ctx->RESTURI = g_strdup(resturi);
+	fprintf(stderr,"SessionID: %s\n",ctx->SessionID);
+	Info("session id: %s",ctx->SessionID);
+	Info("rpcuri: %s",ctx->RPCURI);
+	Info("resturi: %s",ctx->RESTURI);
 	json_object_put(obj);
-	if (Ginbee) {
-		UnSetHTTPAuth();
+	if (ctx->fGinbee) {
+		curl_easy_setopt(ctx->Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		curl_easy_setopt(ctx->Curl, CURLOPT_USERPWD, NULL);
 	}
 }
 
 void
-RPC_EndSession()
+RPC_EndSession(
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child;
 
@@ -545,16 +549,17 @@ RPC_EndSession()
 	json_object_object_add(child,"client_version",
 		json_object_new_string(PACKAGE_VERSION));
 	json_object_object_add(child,"session_id",
-		json_object_new_string(SESSIONID(Session)));
+		json_object_new_string(ctx->SessionID));
 	json_object_object_add(params,"meta",child);
-	obj = MakeJSONRPCRequest("end_session",params);
-	obj = JSONRPC(TYPE_APP,obj);
+	obj = MakeJSONRPCRequest(ctx,"end_session",params);
+	obj = JSONRPC_APP(ctx,obj);
 	json_object_put(obj);
 	Info("end_session");
 }
 
-void
-RPC_GetWindow()
+json_object *
+RPC_GetWindow(
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child;
 
@@ -563,60 +568,53 @@ RPC_GetWindow()
 	json_object_object_add(child,"client_version",
 		json_object_new_string(PACKAGE_VERSION));
 	json_object_object_add(child,"session_id",
-		json_object_new_string(SESSIONID(Session)));
+		json_object_new_string(ctx->SessionID));
 	json_object_object_add(params,"meta",child);
 
-	obj = MakeJSONRPCRequest("get_window",params);
-	obj = JSONRPC(TYPE_APP,obj);
+	obj = MakeJSONRPCRequest(ctx,"get_window",params);
+	obj = JSONRPC_APP(ctx,obj);
 
-	if (SCREENDATA(Session) != NULL) {
-		json_object_put(SCREENDATA(Session));
-	}
-	SCREENDATA(Session) = obj;
+	return obj;
 }
 
 json_object *
 RPC_GetScreenDefine(
+	GLProtocol *ctx,
 	const char*wname)
 {
 	json_object *obj,*params,*child;
 
 	params = json_object_new_object();
 	child = json_object_new_object();
-	json_object_object_add(child,"client_version",
-		json_object_new_string(PACKAGE_VERSION));
-	json_object_object_add(child,"session_id",
-		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(child,"client_version",json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"session_id",json_object_new_string(ctx->SessionID));
 	json_object_object_add(params,"meta",child);
-	json_object_object_add(params,"window",
-		json_object_new_string(wname));
-	obj = MakeJSONRPCRequest("get_screen_define",params);
-	obj = JSONRPC(TYPE_APP,obj);
+	json_object_object_add(params,"window",json_object_new_string(wname));
+	obj = MakeJSONRPCRequest(ctx,"get_screen_define",params);
+	obj = JSONRPC_APP(ctx,obj);
 	return obj;
 }
 
-void
+json_object *
 RPC_SendEvent(
+	GLProtocol *ctx,
 	json_object *params)
 {
 	json_object *obj,*meta;
 
 	meta = json_object_new_object();
-	json_object_object_add(meta,"client_version",
-		json_object_new_string(VERSION));
-	json_object_object_add(meta,"session_id",
-		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(meta,"client_version",json_object_new_string(VERSION));
+	json_object_object_add(meta,"session_id",json_object_new_string(ctx->SessionID));
 	json_object_object_add(params,"meta",meta);
-	obj = MakeJSONRPCRequest("send_event",params);
-	obj = JSONRPC(TYPE_APP,obj);
-	if (SCREENDATA(Session) != NULL) {
-		json_object_put(SCREENDATA(Session));
-	}
-	SCREENDATA(Session) = obj;
+	obj = MakeJSONRPCRequest(ctx,"send_event",params);
+	obj = JSONRPC_APP(ctx,obj);
+
+	return obj;
 }
 
 void
 RPC_GetMessage(
+	GLProtocol *ctx,
 	char **dialog,
 	char **popup,
 	char **abort)
@@ -625,29 +623,24 @@ RPC_GetMessage(
 
 	params = json_object_new_object();
 	child = json_object_new_object();
-	json_object_object_add(child,"client_version",
-		json_object_new_string(PACKAGE_VERSION));
-	json_object_object_add(child,"session_id",
-		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(child,"client_version",json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"session_id",json_object_new_string(ctx->SessionID));
 	json_object_object_add(params,"meta",child);
-	obj = MakeJSONRPCRequest("get_message",params);
-	obj = JSONRPC(TYPE_APP,obj);
-	result = json_object_object_get(obj,"result");
+	obj = MakeJSONRPCRequest(ctx,"get_message",params);
+	obj = JSONRPC_APP(ctx,obj);
+	json_object_object_get_ex(obj,"result",&result);
 
-	child = json_object_object_get(result,"dialog");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(result,"dialog",&child)) {
 		Error(_("invalid message data:dialog"));
 	}
 	*dialog = g_strdup((char*)json_object_get_string(child));
 
-	child = json_object_object_get(result,"popup");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(result,"popup",&child)) {
 		Error(_("invalid message data:popup"));
 	}
 	*popup = g_strdup((char*)json_object_get_string(child));
 
-	child = json_object_object_get(result,"abort");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(result,"abort",&child)) {
 		Error(_("invalid message data:abort"));
 	}
 	*abort = g_strdup((char*)json_object_get_string(child));
@@ -655,42 +648,193 @@ RPC_GetMessage(
 }
 
 json_object *
-RPC_ListDownloads()
+RPC_ListDownloads(
+	GLProtocol *ctx)
 {
 	json_object *obj,*params,*child;
 
 	params = json_object_new_object();
 	child = json_object_new_object();
-	json_object_object_add(child,"client_version",
-		json_object_new_string(PACKAGE_VERSION));
-	json_object_object_add(child,"session_id",
-		json_object_new_string(SESSIONID(Session)));
+	json_object_object_add(child,"client_version", json_object_new_string(PACKAGE_VERSION));
+	json_object_object_add(child,"session_id", json_object_new_string(ctx->SessionID));
 	json_object_object_add(params,"meta",child);
 
-	obj = MakeJSONRPCRequest("list_downloads",params);
-	obj = JSONRPC(TYPE_APP,obj);
+	obj = MakeJSONRPCRequest(ctx,"list_downloads",params);
+	obj = JSONRPC_APP(ctx,obj);
 
 	return obj;
 }
 
-#ifdef USE_SSL
-static	void
-InitCURLPKCS11()
+
+void 
+GLP_SetRPCURI(
+	GLProtocol *ctx,
+	const char *uri)
 {
-	int i,rc,fd,n;
+	if (ctx->RPCURI != NULL) {
+		g_free(ctx->RPCURI);
+	}
+	ctx->RPCURI = g_strdup(uri);
+}
+
+char*
+GLP_GetRPCURI(
+	GLProtocol *ctx)
+{
+	return ctx->RPCURI;
+}
+
+void 
+GLP_SetRESTURI(
+	GLProtocol *ctx,
+	const char *uri)
+{
+	if (ctx->RESTURI != NULL) {
+		g_free(ctx->RESTURI);
+	}
+	ctx->RESTURI = g_strdup(uri);
+}
+
+char*
+GLP_GetRESTURI(
+	GLProtocol *ctx)
+{
+	return ctx->RESTURI;
+}
+
+void 
+GLP_SetPusherURI(
+	GLProtocol *ctx,
+	const char *uri)
+{
+	if (ctx->PusherURI != NULL) {
+		g_free(ctx->PusherURI);
+	}
+	ctx->PusherURI = g_strdup(uri);
+}
+
+char*
+GLP_GetPusherURI(
+	GLProtocol *ctx)
+{
+	return ctx->PusherURI;
+}
+
+void 
+GLP_SetSessionID(
+	GLProtocol *ctx,
+	const char *sid)
+{
+	if (ctx->SessionID != NULL) {
+		g_free(ctx->SessionID);
+	}
+	ctx->SessionID = g_strdup(sid);
+}
+
+char*
+GLP_GetSessionID(
+	GLProtocol *ctx)
+{
+	return ctx->SessionID;
+}
+
+gboolean
+GLP_GetfGinbee(
+	GLProtocol *ctx)
+{
+	return ctx->fGinbee;
+}
+
+void 
+GLP_SetRPCID(
+	GLProtocol *ctx,
+	int id)
+{
+	ctx->RPCID = id;
+}
+
+int
+GLP_GetRPCID(
+	GLProtocol *ctx)
+{
+	return ctx->RPCID;
+}
+
+LargeByteString*
+REST_GetBLOB_via_ENV()
+{
+	GLProtocol *proto;
+	char *RESTURI,*SessionID,*APIUser,*APIPass,*OID;
+	char *Cert,*CertKey,*CertKeyPass,*CAFile;
+	LargeByteString *lbs;
+
+	RESTURI = getenv("GLPUSH_REST_URI");
+	if (RESTURI == NULL) {
+		_Error("set env GLPUSH_REST_URI\n");
+	}
+	SessionID = getenv("GLPUSH_SESSION_ID");
+	if (SessionID == NULL) {
+		_Error("set env GLSPUSH_SESSION_ID\n");
+	}
+	APIUser = getenv("GLPUSH_API_USER");
+	if (APIUser == NULL) {
+		_Error("set env GLPUSH_API_USER\n");
+	}
+	APIPass = getenv("GLPUSH_API_PASSWORD");
+	if (APIPass == NULL) {
+		_Error("set env GLPUSH_API_PASSWORD\n");
+	}
+	Cert        = getenv("GLPUSH_CERT");
+	CertKey     = getenv("GLPUSH_CERT_KEY");
+	CertKeyPass = getenv("GLPUSH_CERT_KEY_PASSWORD");
+	CAFile      = getenv("GLPUSH_CA_FILE");
+
+	OID = getenv("GLPUSH_OID");
+	if (OID == NULL) {
+		_Error("set env GLPUSH_OID\n");
+	}
+
+	proto = InitProtocol("http://localhost",APIUser,APIPass);
+	GLP_SetRESTURI(proto,RESTURI);
+	GLP_SetSessionID(proto,SessionID);
+	if (Cert != NULL && CertKey != NULL && CertKeyPass != NULL && CAFile != NULL) {
+		GLP_SetSSL(proto,Cert,CertKey,CertKeyPass,CAFile);
+	}
+    lbs = REST_GetBLOB(proto,OID);
+	FinalProtocol(proto);
+
+	if (lbs == NULL) {
+		_Error("REST_GetBLOB failure");
+	}
+	if (LBS_Size(lbs) <= 0) {
+		_Error("LBS size 0");
+	}
+
+	return lbs;
+}
+
+#ifdef USE_SSL
+void
+GLP_SetSSLPKCS11(
+	GLProtocol *ctx,
+	const char *p11lib,
+	const char *pin)
+{
+	int i,rc,fd;
 	unsigned int nslots,nslot,ncerts;
-	char part[3],*id,*p,*cacertfile,*certid;
+	char part[3],*id,*p,*certid,*cafile;
 	PKCS11_CTX *p11ctx;
 	PKCS11_SLOT *slots, *slot;
 	PKCS11_CERT *certs,*cert;
 	BIO *out;
 	size_t size;
 
+
 	nslot = 0;
 	p11ctx = PKCS11_CTX_new();
 
 	/* load pkcs #11 module */
-	rc = PKCS11_CTX_load(p11ctx,PKCS11Lib);
+	rc = PKCS11_CTX_load(p11ctx,p11lib);
 	if (rc) {
 		Error("PKCS11_CTX_load failure");
 	}
@@ -724,20 +868,10 @@ InitCURLPKCS11()
 		Error("PKCS11_open_session failure");
 	}
 
-	n = gl_config_get_index();
-   	gl_config_set_boolean(n,"savepin", FALSE);
-   	gl_config_set_string(n,"pin", "");
-
-	rc = PKCS11_login(slot, 0, PIN);
+	rc = PKCS11_login(slot, 0, pin);
 	if (rc != 0) {
 		Error("PKCS11_login failure");
-	} else {
-		if (fSavePIN) {
-    		gl_config_set_boolean(n,"savepin", TRUE);
-    		gl_config_set_string(n,"pin", PIN);
-		}
 	}
-	gl_config_save();
 
 	id = getenv("GLCLIENT_PKCS11_CERTID");
 	if (id == NULL) {
@@ -760,11 +894,11 @@ InitCURLPKCS11()
 		Error("PKCS11_enumerate_certs");
 	}
 	fprintf(stderr,"ncerts:%d\n",ncerts);
+	cafile = g_strconcat(GetTempDir(),"/ca.pem",NULL);
 
 	/* write cacertfile */
-	cacertfile = g_strdup_printf("%s/glclient_cacerts_XXXXXX",TempDir);
-	if ((fd = mkstemp(cacertfile)) == -1) {
-		Error("mkstemp failure");
+	if ((fd = creat(cafile,0600)) == -1) {
+		Error("creat failure");
 	}
 	out = BIO_new_fd(fd,BIO_CLOSE);
 	for(i=0;i<ncerts;i++) {
@@ -780,56 +914,70 @@ InitCURLPKCS11()
 	/* engine init */
 	ENGINE_load_dynamic();
 	ENGINE_load_builtin_engines();
-	Engine = ENGINE_by_id("dynamic");
-	if (!Engine) {
+	ctx->Engine = ENGINE_by_id("dynamic");
+	if (!ctx->Engine) {
 		Error("ENIGNE_by_id failure");
 	}
-	if (!ENGINE_ctrl_cmd_string(Engine, "SO_PATH", ENGINE_PKCS11_PATH, 0)||
-		!ENGINE_ctrl_cmd_string(Engine, "ID", "pkcs11", 0) ||
-		!ENGINE_ctrl_cmd_string(Engine, "LIST_ADD", "1", 0) ||
-		!ENGINE_ctrl_cmd_string(Engine, "LOAD", NULL, 0) ||
-		!ENGINE_ctrl_cmd_string(Engine, "MODULE_PATH", PKCS11Lib, 0) ||
-		!ENGINE_ctrl_cmd_string(Engine, "PIN", PIN, 0) ) {
+	if (!ENGINE_ctrl_cmd_string(ctx->Engine, "SO_PATH", ENGINE_PKCS11_PATH, 0)||
+		!ENGINE_ctrl_cmd_string(ctx->Engine, "ID", "pkcs11", 0) ||
+		!ENGINE_ctrl_cmd_string(ctx->Engine, "LIST_ADD", "1", 0) ||
+		!ENGINE_ctrl_cmd_string(ctx->Engine, "LOAD", NULL, 0) ||
+		!ENGINE_ctrl_cmd_string(ctx->Engine, "MODULE_PATH", p11lib, 0) ||
+		!ENGINE_ctrl_cmd_string(ctx->Engine, "PIN", pin, 0) ) {
 		Error("ENGINE_ctrl_cmd_string failure");
 	}
-	if (!ENGINE_init(Engine)) {
+	if (!ENGINE_init(ctx->Engine)) {
 		Error("ENGINE_init failure");
 	}
 
-	curl_easy_setopt(Curl,CURLOPT_SSLCERT,certid);
-	curl_easy_setopt(Curl,CURLOPT_SSLKEY,certid);
-	curl_easy_setopt(Curl,CURLOPT_SSLENGINE,"pkcs11");
-	curl_easy_setopt(Curl,CURLOPT_SSLKEYTYPE,"ENG");
-	curl_easy_setopt(Curl,CURLOPT_SSLCERTTYPE,"ENG");
-	curl_easy_setopt(Curl,CURLOPT_SSLENGINE_DEFAULT,1L);
-	curl_easy_setopt(Curl,CURLOPT_CAINFO,cacertfile);
+	curl_easy_setopt(ctx->Curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSL_VERIFYPEER,1);
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSL_VERIFYHOST,2);
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSLCERT,certid);
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSLKEY,certid);
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSLENGINE,"pkcs11");
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSLKEYTYPE,"ENG");
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSLCERTTYPE,"ENG");
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSLENGINE_DEFAULT,1L);
+	curl_easy_setopt(ctx->Curl,CURLOPT_CAINFO,cafile);
 
-	g_free(cacertfile);
+	g_free(cafile);
 	free(certid);
+}
+
+void
+GLP_SetSSL(
+	GLProtocol *ctx,
+	const char *cert,
+	const char *key,
+	const char *pass,
+	const char *cafile)
+{
+	curl_easy_setopt(ctx->Curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSL_VERIFYPEER,1);
+	curl_easy_setopt(ctx->Curl,CURLOPT_SSL_VERIFYHOST,2);
+	if (strlen(cert) > 0 && strlen(key) > 0) {
+		curl_easy_setopt(ctx->Curl,CURLOPT_SSLCERT,cert);
+		curl_easy_setopt(ctx->Curl,CURLOPT_SSLCERTTYPE,"PEM");
+		curl_easy_setopt(ctx->Curl,CURLOPT_SSLKEY,key);
+		curl_easy_setopt(ctx->Curl,CURLOPT_SSLKEYTYPE,"PEM");
+		curl_easy_setopt(ctx->Curl,CURLOPT_SSLKEYPASSWD,pass);
+	}
+	if (cafile == NULL || strlen(cafile) <= 0) {
+		Error("set CAFile option");
+	}
+	curl_easy_setopt(ctx->Curl,CURLOPT_CAINFO,cafile);
 }
 #endif
 
-static	void
-SetHTTPAuth()
+static	CURL*
+InitCURL(
+	const char *user,
+	const char *pass)
 {
+	CURL *Curl;
 	char userpass[1024];
-	
-	memset(userpass,0,sizeof(userpass));
-	snprintf(userpass,sizeof(userpass)-1,"%s:%s",User,Pass);
-	curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
-}
 
-static	void
-UnSetHTTPAuth()
-{
-	curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-	curl_easy_setopt(Curl, CURLOPT_USERPWD, NULL);
-}
-
-static	void
-InitCURL()
-{
 	curl_global_init(CURL_GLOBAL_ALL);
 	Curl = curl_easy_init();
 	if (!Curl) {
@@ -840,87 +988,62 @@ InitCURL()
 		curl_easy_setopt(Curl,CURLOPT_VERBOSE,1);
 	}
 
-#ifdef USE_SSL
-	if (fSSL) {
-		curl_easy_setopt(Curl,CURLOPT_USE_SSL,CURLUSESSL_ALL);
-		curl_easy_setopt(Curl,CURLOPT_SSL_VERIFYPEER,1);
-		curl_easy_setopt(Curl,CURLOPT_SSL_VERIFYHOST,2);
-		if (fPKCS11) {
-			InitCURLPKCS11();
-		} else {
-			if (strlen(CertFile) > 0) {
-				curl_easy_setopt(Curl,CURLOPT_SSLCERT,CertFile);
-				curl_easy_setopt(Curl,CURLOPT_SSLCERTTYPE,"PEM");
-				curl_easy_setopt(Curl,CURLOPT_SSLKEY,CertKeyFile);
-				curl_easy_setopt(Curl,CURLOPT_SSLKEYTYPE,"PEM");
-				curl_easy_setopt(Curl,CURLOPT_SSLKEYPASSWD,CertPass);
-			}
-			if (CAFile == NULL || strlen(CAFile) <= 0) {
-				Error("set CAFile option");
-			}
-			curl_easy_setopt(Curl,CURLOPT_CAINFO,CAFile);
-		}
-	}
-	SetHTTPAuth();
-#else
-	SetHTTPAuth();
-#endif
+	memset(userpass,0,sizeof(userpass));
+	snprintf(userpass,sizeof(userpass)-1,"%s:%s",user,pass);
+	curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+	curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+
+	return Curl;
 }
 
-void FinalCURL()
+void
+FinalCURL(
+	GLProtocol *ctx)
 {
 #ifdef USE_SSL
-	if (fPKCS11) {
-		if (Engine != NULL) {
-			ENGINE_finish(Engine);
+	if (ctx->fPKCS11) {
+		if (ctx->Engine != NULL) {
+			ENGINE_finish(ctx->Engine);
 		}
 		ENGINE_cleanup();
 	}
 #endif
-	if (Curl != NULL) {
-		curl_easy_cleanup(Curl);
+	if (ctx->Curl != NULL) {
+		curl_easy_cleanup(ctx->Curl);
 	}
 	curl_global_cleanup();
 }
 
-static	void
-MakeLogDir(void)
+extern	GLProtocol*
+InitProtocol(
+	const char *authuri,
+	const char *user,
+	const char *pass
+)
 {
-#if 1
-	gchar *template;
-	gchar *tmpdir;
-	gchar *p;
+	GLProtocol *ctx;
 
-	tmpdir = g_strconcat(g_get_home_dir(),"/.glclient/jsonrpc",NULL);
-	MakeDir(tmpdir,0700);
-	template = g_strconcat(tmpdir,"/XXXXXX",NULL);
-	g_free(tmpdir);
-	if ((p = mkdtemp(template)) == NULL) {
-		Error(_("mkdtemp failure"));
-	}
-	LogDir = p; 
-	printf("LogDir:%s\n",LogDir);
-#else
-	/* glib >= 2.26*/
-	TempDir = g_mkdtemp(g_strdup("glclient_XXXXXX"));
+	ctx = g_new0(GLProtocol,1);
+
+	ctx->AuthURI = g_strdup(authuri);
+	ctx->RPCID   = 0;
+	ctx->fGinbee = FALSE;
+#ifdef USE_SSL
+	ctx->fSSL    = FALSE;
+	ctx->fPKCS11 = FALSE;
 #endif
-}
 
-extern	void
-InitProtocol()
-{
-	THISWINDOW(Session) = NULL;
-	WINDOWTABLE(Session) = NewNameHash();
-	SCREENDATA(Session) = NULL;
-	InitCURL();
+	ctx->Curl = InitCURL(user,pass);
 	if (getenv("GLCLIENT_DO_JSONRPC_LOGGING") != NULL) {
 		Logging = TRUE;
-		MakeLogDir();
+		LogDir = MakeTempSubDir("jsonrpc_log");
 	}
+	return ctx;
 }
 
 extern	void
-FinalProtocol()
+FinalProtocol(
+	GLProtocol *ctx)
 {
-	FinalCURL();
+	FinalCURL(ctx);
 }

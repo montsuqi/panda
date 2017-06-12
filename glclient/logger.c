@@ -28,6 +28,7 @@
 #include    <sys/types.h>
 #include    <sys/socket.h>
 #include	<sys/stat.h>
+#include	<sys/file.h>
 #include	<fcntl.h>
 #include	<unistd.h>
 #include	<sys/time.h>
@@ -35,67 +36,41 @@
 #include	<dirent.h>
 #include	<uuid/uuid.h>
 #include	<time.h>
+#include	<libmondai.h>
 
-#include	"glclient.h"
 #include	"logger.h"
+#include	"utils.h"
 
 #ifndef	SIZE_LOG
 #define	SIZE_LOG		8192
 #endif
 #define SIZE_FORMAT		256
 
+static char *LogFile = NULL;
 static FILE *fp = NULL;
-static int level = LOG_WARN;
-static void (*ErrorFunc)(char *,...);
-
-static void
-rm_old_log(
-	char *dname,
-	unsigned long elapse)
-{
-	DIR *dir;
-	struct dirent *ent;
-	struct stat st;
-	time_t now;
-	char path[2048];
-
-	if (dname == NULL) {
-		fprintf(stderr,"dname null\n");
-		return;
-	}
-
-	now = time(NULL);
-
-	if ((dir = opendir(dname)) != NULL) {
-		while((ent = readdir(dir)) != NULL) {
-			if (ent->d_name[0] != '.') {
-				snprintf(path,sizeof(path),"%s/%s",dname,ent->d_name);
-				path[sizeof(path)-1] = 0;
-				if (stat(path,&st) == 0) {
-					if ((now - st.st_ctim.tv_sec) > elapse) {
-						fprintf(stderr,"remove %s\n",path);
-						//remove(path);
-					}
-				}
-			}
-		}
-		closedir(dir);
-	}
-}
+static int level = GL_LOG_WARN;
+static void (*ErrorFunc)(const char *,...);
 
 void
-InitLogger()
+InitLogger(
+	const char *prefix)
 {
-
+	struct tm cur;
+	time_t t;
 	uuid_t u;
-	gchar *dir,buf[64];
+	gchar *dir,_uuid[64],_time[64];
 
 	dir = g_strconcat(g_get_home_dir(),"/.glclient/log",NULL);
-	MakeDir(dir,0700);
+	mkdir_p(dir,0700);
+
+	t = time(NULL);
+	gmtime_r(&t,&cur);
+	strftime(_time,sizeof(_time),"%Y%m%d%H%M%S",&cur);
+
 	uuid_generate(u);
-	uuid_unparse(u,buf);
-	LogFile = g_strconcat(dir,"/",buf,".log",NULL);
-	rm_old_log(dir,2592000); /* 30days */
+	uuid_unparse(u,_uuid);
+	LogFile = g_strconcat(dir,"/",prefix,"-",_time,"-",_uuid,".log",NULL);
+	rm_r_old(dir,2592000); /* 30days */
 	g_free(dir);
 	fprintf(stderr,"LogFile: %s\n",LogFile);
 
@@ -107,6 +82,26 @@ InitLogger()
 		fprintf(stderr,"fp != null, perhaps call InitLogger again?\n");
 	}
 	ErrorFunc = NULL;
+}
+
+void
+InitLogger_via_FileName(
+	const char *filename)
+{
+	if (fp == NULL) {
+		if ((fp = fopen(filename,"a")) == NULL) {
+			fprintf(stderr,"fopen failure:%s\n",strerror(errno));
+		} 
+	} else {
+		fprintf(stderr,"fp != null, perhaps call InitLogger again?\n");
+	}
+	ErrorFunc = NULL;
+}
+
+const char*
+GetLogFile()
+{
+	return LogFile;
 }
 
 void
@@ -127,14 +122,14 @@ SetLogLevel(
 
 void
 SetErrorFunc(
-	void (*func)(char *,...))
+	void (*func)(const char *,...))
 {
 	ErrorFunc = func;
 }
 
 void
 Error(
-	char *format,
+	const char *format,
 	...)
 {
 	va_list	va;
@@ -151,9 +146,9 @@ Error(
 void
 logger(
 	int _level,
-	char *file,
+	const char *file,
 	int line,
-	char *format,
+	const char *format,
 	...)
 {
 	struct	timeval	tv;
@@ -166,7 +161,7 @@ logger(
 		vsnprintf(buf, sizeof(buf), format, va);
 		va_end(va);
 		fprintf(stderr,"%s\n",buf);
-		if (_level == LOG_ERROR) {
+		if (_level == GL_LOG_ERROR) {
 			exit(1);
 		}
 		return;
@@ -176,16 +171,16 @@ logger(
 		return;
 	}
 	switch(_level) {
-	case LOG_DEBUG:
+	case GL_LOG_DEBUG:
 		lp = "DEBUG";
 		break;
-	case LOG_WARN:
+	case GL_LOG_WARN:
 		lp = "WARN ";
 		break;
-	case LOG_INFO:
+	case GL_LOG_INFO:
 		lp = "INFO ";
 		break;
-	case LOG_ERROR:
+	case GL_LOG_ERROR:
 		lp = "ERROR";
 		break;
 	default:
@@ -201,9 +196,13 @@ logger(
 	localtime_r((time_t *)&tv.tv_sec, &now);
 	strftime(tbuf,sizeof(tbuf),"%Y-%m-%dT%H:%M:%d%z",&now);
 
+	flock(fileno(fp),LOCK_EX);
 	fprintf(fp,"%s %s %s:%d: %s\n",tbuf,lp,file,line,buf);
+	fprintf(stderr,"%s %s %s:%d: %s\n",tbuf,lp,file,line,buf);
+	fflush(fp);
+	flock(fileno(fp),LOCK_UN);
 
-	if (_level == LOG_ERROR) {
+	if (_level == GL_LOG_ERROR) {
 		fclose(fp);
 		exit(1);
 	}

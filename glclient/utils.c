@@ -33,6 +33,9 @@
 #include	<unistd.h>
 #include	<fcntl.h>
 #include	<sys/time.h>
+#include	<sys/wait.h>
+#include	<dirent.h>
+#include	<time.h>
 #include	<errno.h>
 
 #include	"utils.h"
@@ -86,4 +89,47 @@ CheckAlreadyFile(
 		}
 	}
 	return (rc);
+}
+
+void
+rm_r_old(
+	const char *name,
+	unsigned int elapsed)
+{
+
+	DIR *dir;
+	struct dirent *ent;
+	struct stat st;
+	time_t now;
+	char path[4096];
+
+	if (name == NULL) {
+		return;
+	}
+
+	now = time(NULL);
+
+	if (stat(name,&st) == 0) {
+		if (S_ISDIR(st.st_mode)) {
+			/* directory */
+			if ((dir = opendir(name)) != NULL) {
+				while((ent = readdir(dir)) != NULL) {
+					if (ent->d_name[0] != '.') {
+						snprintf(path,sizeof(path),"%s/%s",name,ent->d_name);
+						path[sizeof(path)-1] = 0;
+						rm_r_old(path,elapsed);
+					}
+				}
+				closedir(dir);
+				if ((now - st.st_ctim.tv_sec) > elapsed) {
+					remove(name);
+				}
+			}
+		} else {
+			/* file */
+			if ((now - st.st_ctim.tv_sec) > elapsed) {
+				remove(name);
+			}
+		}
+	}
 }

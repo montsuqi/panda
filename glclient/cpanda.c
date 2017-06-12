@@ -41,63 +41,73 @@
 #include	<locale.h>
 
 #define		MAIN
-#include	"glclient.h"
-#include	"protocol.h"
-#include	"bd_config.h"
 #include	"const.h"
+#include	"logger.h"
+#include	"protocol.h"
+#include	"tempdir.h"
 
-static int conf_idx;
-static int Rpc_id = 0;
-static char *Session_id = "";
-static char *Rpc_uri = "";
-static char *Rest_uri = "";
+static char *AUTHURI;
+static char *RPCURI;
+static char *RESTURI;
+static char *SESSIONID;
+static int  RPCID;
+
+static char *USER;
+static char *PASS;
+
+#ifdef USE_SSL
+static char *CERTFILE;
+static char *KEYFILE;
+static char *KEYPASS;
+static char *CAFILE;
+#endif
 
 
 static void
-StartSession()
+StartSession(
+	GLProtocol *ctx)
 {
 	json_object *obj;
 
-	InitProtocol();
-	RPC_StartSession();
-
+	RPC_StartSession(ctx);
 	obj = json_object_new_object();
-	json_object_object_add(obj,"session_id",json_object_new_string(SESSIONID(Session)));
-	json_object_object_add(obj,"app_rpc_endpoint_uri",json_object_new_string(RPCURI(Session)));
-	json_object_object_add(obj,"app_rest_api_uri_root",json_object_new_string(RESTURI(Session)));
+	json_object_object_add(obj,"session_id",json_object_new_string(GLP_GetSessionID(ctx)));
+	json_object_object_add(obj,"app_rpc_endpoint_uri",json_object_new_string(GLP_GetRPCURI(ctx)));
+	json_object_object_add(obj,"app_rest_api_uri_root",json_object_new_string(GLP_GetRESTURI(ctx)));
 	printf("%s",json_object_to_json_string(obj));
 	json_object_put(obj);
-
-	FinalProtocol();
 }
 
 static void
-GetWindow()
+GetWindow(
+	GLProtocol *ctx)
 {
-	InitProtocol();
-	RPC_GetWindow();
-	printf("%s",json_object_to_json_string(SCREENDATA(Session)));
-	FinalProtocol();
+	json_object *obj;
+
+	obj = RPC_GetWindow(ctx);
+	printf("%s",json_object_to_json_string(obj));
+	json_object_put(obj);
 }
 
 static void
-ListDownloads()
+ListDownloads(
+	GLProtocol *ctx)
 {
-	InitProtocol();
-	RPC_ListDownloads();
-	printf("%s",json_object_to_json_string(SCREENDATA(Session)));
-	FinalProtocol();
+	json_object *obj;
+
+	obj = RPC_ListDownloads(ctx);
+	printf("%s",json_object_to_json_string(obj));
+	json_object_put(obj);
 }
 
 static void
-GetMessage()
+GetMessage(
+	GLProtocol *ctx)
 {
 	char *dialog,*popup,*abort;
 
-	InitProtocol();
-	RPC_GetMessage(&dialog,&popup,&abort);
+	RPC_GetMessage(ctx,&dialog,&popup,&abort);
 	printf("%s:%s:%s\n",dialog,popup,abort);
-	FinalProtocol();
     g_free(dialog);
     g_free(popup);
     g_free(abort);
@@ -105,12 +115,12 @@ GetMessage()
 
 static void
 SendEvent(
+	GLProtocol *ctx,
 	char *file)
 {
-	json_object *obj;
+	json_object *obj,*res;
 	gchar *buf,*jsonstr;
 	gsize size;
-
 
 	if(!g_file_get_contents(file,&buf,&size,NULL)) {
 		fprintf(stderr,"cant read %s\n",file);
@@ -127,40 +137,54 @@ SendEvent(
 		exit(1);
 	}
 
-	InitProtocol();
-	RPC_SendEvent(obj);
-	printf("%s",json_object_to_json_string(SCREENDATA(Session)));
-	FinalProtocol();
+	res = RPC_SendEvent(ctx,obj);
+	printf("%s",json_object_to_json_string(res));
+	json_object_put(obj);
+	json_object_put(res);
 }
 
 static void
-EndSession()
+EndSession(
+	GLProtocol *ctx)
 {
-	InitProtocol();
-	RPC_EndSession();
-	FinalProtocol();
+	RPC_EndSession(ctx);
 }
 
 static void
 PrintArgError()
 {
 	fprintf(stderr,
-		"$ cpanda <config_name> <command> [param.json]\n"
+		"$ cpanda [options] <command> [param.json]\n"
 		"<command>: start_session | get_window | send_event | end_session\n\n"
 	);
-	ListConfig();
 }
 
 static GOptionEntry entries[] =
 {
-	{ "session_id",0,0,G_OPTION_ARG_STRING,&Session_id,
-		"session_id",NULL},
-	{ "rpc_id",0,0,G_OPTION_ARG_INT,&Rpc_id,
-		"rpc_id",NULL},
-	{ "rpc_uri",0,0,G_OPTION_ARG_STRING,&Rpc_uri,
-		"rpc_uri",NULL},
-	{ "rest_uri",0,0,G_OPTION_ARG_STRING,&Rest_uri,
-		"rest_uri",NULL},
+	{ "authuri",0,0,G_OPTION_ARG_STRING,&AUTHURI,
+		"authuri",NULL},
+	{ "rpcuri",0,0,G_OPTION_ARG_STRING,&RPCURI,
+		"rpcuri",NULL},
+	{ "resturi",0,0,G_OPTION_ARG_STRING,&RESTURI,
+		"resturi",NULL},
+	{ "seesionid",0,0,G_OPTION_ARG_STRING,&SESSIONID,
+		"sessionid",NULL},
+	{ "rpcid",0,0,G_OPTION_ARG_INT,&RPCID,
+		"rpcid",NULL},
+	{ "user",0,0,G_OPTION_ARG_STRING,&USER,
+		"user",NULL},
+	{ "pass",0,0,G_OPTION_ARG_STRING,&PASS,
+		"pass",NULL},
+#ifdef USE_SSL
+	{ "certfile",0,0,G_OPTION_ARG_STRING,&CERTFILE,
+		"certfile",NULL},
+	{ "keyfile",0,0,G_OPTION_ARG_STRING,&KEYFILE,
+		"keyfile",NULL},
+	{ "keypass",0,0,G_OPTION_ARG_STRING,&KEYPASS,
+		"keypass",NULL},
+	{ "cafile",0,0,G_OPTION_ARG_STRING,&CAFILE,
+		"cafile",NULL},
+#endif
 	{ NULL}
 };
 
@@ -169,55 +193,77 @@ main(
 	int argc,
 	char **argv)
 {
-	GOptionContext *ctx;
+	GOptionContext *goctx;
+	char *command;
+	GLProtocol *ctx;
 
 	setlocale(LC_CTYPE,"ja_JP.UTF-8");
 
-	ctx = g_option_context_new("");
-	g_option_context_add_main_entries(ctx, entries, NULL);
-	g_option_context_parse(ctx,&argc,&argv,NULL);
+	AUTHURI   = NULL;
+	RPCURI    = NULL;
+	RESTURI   = NULL;
+	SESSIONID = NULL;
+	RPCID     = 0;
+	USER      = NULL;
+	PASS      = NULL;
+#ifdef USE_SSL
+	CERTFILE  = NULL;
+	KEYFILE   = NULL;
+	KEYPASS   = NULL;
+	CAFILE    = NULL;
+#endif
 
-	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
-	gl_config_init();
+	goctx = g_option_context_new("");
+	g_option_context_add_main_entries(goctx, entries, NULL);
+	g_option_context_parse(goctx,&argc,&argv,NULL);
 
-	if (argc < 3) {
+	if (argc < 2) {
 		PrintArgError();
 		exit(1);
 	}
 
-	Session = g_new0(GLSession,1);
+	command = argv[1];
 
-	RPCID(Session)     = Rpc_id;
-	SESSIONID(Session) = Session_id;
-	RPCURI(Session)    = Rpc_uri;
-	RESTURI(Session)   = Rest_uri;
-
-	conf_idx = GetConfigIndexByDesc(argv[1]);
-	if (conf_idx == -1) {
-		fprintf(stderr,"invalid config name\n");
-		exit(1);
+	InitTempDir();
+	ctx = InitProtocol(AUTHURI,USER,PASS);
+	if (RPCURI != NULL) {
+		GLP_SetRPCURI(ctx,RPCURI);
 	}
-	LoadConfig(conf_idx);
+	if (RESTURI != NULL) {
+		GLP_SetRESTURI(ctx,RESTURI);
+	}
+	if (SESSIONID != NULL) {
+		GLP_SetSessionID(ctx,SESSIONID);
+	}
+	if (RPCID != 0) {
+		GLP_SetRPCID(ctx,RPCID);
+	}
+#ifdef USE_SSL
+	if (CERTFILE != NULL && KEYFILE != NULL && KEYPASS != NULL && CAFILE != NULL) {
+		GLP_SetSSL(ctx,CERTFILE,KEYFILE,KEYPASS,CAFILE);
+	}
+#endif
 
-	if (!strcmp(argv[2],"start_session")) {
-		StartSession();
-	} else if (!strcmp(argv[2],"get_window")) {
-		GetWindow();
-	} else if (!strcmp(argv[2],"send_event")) {
-		if (argc < 4) {
+	if (!strcmp(command,"start_session")) {
+		StartSession(ctx);
+	} else if (!strcmp(command,"get_window")) {
+		GetWindow(ctx);
+	} else if (!strcmp(command,"send_event")) {
+		if (argc < 3) {
 			fprintf(stderr,"start_session need param.json\n");
 			exit(1);
 		}
-		SendEvent(argv[3]);
-	} else if (!strcmp(argv[2],"end_session")) {
-		EndSession();
-	} else if (!strcmp(argv[2],"list_downloads")) {
-		ListDownloads();
-	} else if (!strcmp(argv[2],"get_message")) {
-		GetMessage();
+		SendEvent(ctx,argv[2]);
+	} else if (!strcmp(command,"end_session")) {
+		EndSession(ctx);
+	} else if (!strcmp(command,"list_downloads")) {
+		ListDownloads(ctx);
+	} else if (!strcmp(command,"get_message")) {
+		GetMessage(ctx);
 	} else {
 		PrintArgError();
 		exit(1);
 	}
+	FinalProtocol(ctx);
 	return 0;
 }

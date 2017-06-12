@@ -121,7 +121,7 @@ ENTER_FUNC;
 		ctrl->rc = MCP_BAD_ARG;
 		return NULL;
 	}
-	if (PushEvent(args)) {
+	if (PushEvent_via_ValueStruct(args)) {
 		ctrl->rc = MCP_OK;
 	} else {
 		ctrl->rc = MCP_BAD_OTHER;

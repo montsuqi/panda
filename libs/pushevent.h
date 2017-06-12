@@ -20,7 +20,8 @@
 #ifndef	_INC_PUSHEVENT_H
 #define	_INC_PUSHEVENT_H
 
-gboolean PushEvent(ValueStruct *val);
+gboolean PushEvent_via_ValueStruct(ValueStruct *val);
+gboolean PushEvent_via_json(const char *event,json_object*);
 
 #undef	GLOBAL
 #ifdef	_MONAPI
