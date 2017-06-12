@@ -32,6 +32,7 @@
 #include	<ctype.h>
 #include	<glib.h>
 #include	<signal.h>
+#include	<unistd.h>
 
 #include	<uuid/uuid.h>
 

@@ -222,10 +222,9 @@ ngetc(
 	NETFILE	*fp)
 {
 	unsigned char	ch;
-	size_t	s;
 	int		ret;
 
-	if		(  ( s = Recv(fp,&ch,1) )  >=  0  ) {
+	if		(  Recv(fp,&ch,1)  >=  0  ) {
 		ret = ch;
 	} else {
 		ret = -1;

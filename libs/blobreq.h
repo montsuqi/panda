@@ -28,7 +28,7 @@
 extern	MonObjectType	RequestNewBLOB(NETFILE *fp, int mode);
 extern	size_t			RequestWriteBLOB(NETFILE *fp, MonObjectType obj, unsigned char *buff, size_t size);
 extern	size_t			RequestReadBLOB(NETFILE *fp, MonObjectType obj, unsigned char **buff, size_t *size);
-extern	Bool			RequestExportBLOB(NETFILE *fp, MonObjectType obj, const char *fname);
+extern	Bool			RequestExportBLOB(NETFILE *fp, MonObjectType obj, char *fname);
 extern	void			RequestExportBLOBMem(NETFILE *fp,MonObjectType obj,char **,size_t*);
 extern	MonObjectType	RequestImportBLOB(NETFILE *fp, const char *fname);
 extern	MonObjectType	RequestImportBLOBMem(NETFILE *fp,char *,size_t);

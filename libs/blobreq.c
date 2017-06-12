@@ -134,7 +134,7 @@ extern	Bool
 RequestExportBLOB(
 	NETFILE	*fp,
 	MonObjectType	obj,
-	const char		*fname)
+	char		*fname)
 {
 	Bool	rc;
 	char	buff[SIZE_BUFF];
