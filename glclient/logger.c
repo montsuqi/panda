@@ -198,6 +198,7 @@ logger(
 
 	flock(fileno(fp),LOCK_EX);
 	fprintf(fp,"%s %s %s:%d: %s\n",tbuf,lp,file,line,buf);
+	fprintf(stderr,"%s %s %s:%d: %s\n",tbuf,lp,file,line,buf);
 	fflush(fp);
 	flock(fileno(fp),LOCK_UN);
 

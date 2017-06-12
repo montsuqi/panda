@@ -86,7 +86,6 @@ GLOBAL	char		*ConfigName;
 GLOBAL	Bool		DelayDrawWindow;
 GLOBAL	Bool		CancelScaleWindow;
 
-GLOBAL	char		*TempDir;
 GLOBAL	GLSession	*Session;
 
 GLOBAL	char		*AuthURI;
@@ -117,5 +116,9 @@ GLOBAL	Bool		fPKCS11;
 GLOBAL	char		*PKCS11Lib;
 GLOBAL	char		*PIN;
 GLOBAL	Bool		fSavePIN;
+
+GLOBAL	Bool		UsePushClient;
+GLOBAL	pid_t		PushClientPID;
+GLOBAL	char		*PushClientCMD;
 
 #endif

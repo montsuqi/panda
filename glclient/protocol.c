@@ -527,6 +527,7 @@ RPC_StartSession(
 
 	ctx->RPCURI = g_strdup(rpcuri);
 	ctx->RESTURI = g_strdup(resturi);
+	fprintf(stderr,"SessionID: %s\n",ctx->SessionID);
 	Info("session id: %s",ctx->SessionID);
 	Info("rpcuri: %s",ctx->RPCURI);
 	Info("resturi: %s",ctx->RESTURI);
@@ -699,6 +700,24 @@ GLP_GetRESTURI(
 	GLProtocol *ctx)
 {
 	return ctx->RESTURI;
+}
+
+void 
+GLP_SetPusherURI(
+	GLProtocol *ctx,
+	const char *uri)
+{
+	if (ctx->PusherURI != NULL) {
+		g_free(ctx->PusherURI);
+	}
+	ctx->PusherURI = g_strdup(uri);
+}
+
+char*
+GLP_GetPusherURI(
+	GLProtocol *ctx)
+{
+	return ctx->PusherURI;
 }
 
 void 

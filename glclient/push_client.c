@@ -73,15 +73,13 @@ websocket_write_back(
 
 static void
 exec_cmd(
-	const char *cmd,
-	char **argv,
-	char **env)
+	const char *cmd)
 {
 	pid_t	pid;
 
 	pid = fork();
 	if (pid == 0) {
-		execve(cmd,argv,env);
+		execl(cmd,cmd,NULL);
 	} else if (pid < 0) {
 		Warning("fork error:%s",strerror(errno));
 	} else {
@@ -95,7 +93,6 @@ print_report(
 {
 	json_object *child;
 	char *printer,*oid,*title;
-	char *argv[1],*env[5];
 	gboolean showdialog;
 
 	printer = "";
@@ -128,17 +125,15 @@ print_report(
 
 	Info("report title:%s printer:%s showdialog:%d oid:%s",title,printer,(int)showdialog,oid);
 
-	argv[0] = NULL;
-	env[0] = g_strdup_printf("GLPUSH_TITLE=%s",title);
-	env[1] = g_strdup_printf("GLPUSH_PRINTER=%s",printer);
-	env[2] = g_strdup_printf("GLPUSH_SHOW_DIALOG=%d",(int)showdialog);
-	env[3] = g_strdup_printf("GLPUSH_OID=%s",oid);
-	env[4] = NULL;
-	exec_cmd(GLPUSHPRINT,argv,env);
-	g_free(env[0]);
-	g_free(env[1]);
-	g_free(env[2]);
-	g_free(env[3]);
+	setenv("GLPUSH_TITLE",title,1);
+	setenv("GLPUSH_PRINTER",printer,1);
+	if (showdialog) {
+	setenv("GLPUSH_SHOW_DIALOG","T",1);
+	} else {
+	setenv("GLPUSH_SHOW_DIALOG","F",1);
+	}
+	setenv("GLPUSH_OID",oid,1);
+	exec_cmd(GLPUSHPRINT);
 }
 
 static void
@@ -147,7 +142,6 @@ download_file(
 {
 	json_object *child;
 	char *oid,*filename,*desc;
-	char *argv[1],*env[4];
 
 	filename = "";
 	desc = "";
@@ -170,15 +164,10 @@ download_file(
 
 	Info("misc filename:%s description:%s oid:%s",filename,desc,oid);
 
-	argv[0] = NULL;
-	env[0] = g_strdup_printf("GLPUSH_FILENAME=%s",filename);
-	env[1] = g_strdup_printf("GLPUSH_DESCRIPTION=%s",desc);
-	env[2] = g_strdup_printf("GLPUSH_OID=%s",oid);
-	env[3] = NULL;
-	exec_cmd(GLPUSHDOWNLOAD,argv,env);
-	g_free(env[0]);
-	g_free(env[1]);
-	g_free(env[2]);
+	setenv("GLPUSH_FILENAME",filename,1);
+	setenv("GLPUSH_DESCRIPTION",desc,1);
+	setenv("GLPUSH_OID",oid,1);
+	exec_cmd(GLPUSHDOWNLOAD);
 }
 
 static void
@@ -404,7 +393,6 @@ Execute()
 	while (!force_exit) {
 
 		if (!wsi_pr && ratelimit_connects(&rl_pr, 2u)) {
-			Info("connecting pusher");
 			i.protocol = protocols[0].name;
 			wsi_pr = lws_client_connect_via_info(&i);
 		}
@@ -414,19 +402,6 @@ Execute()
 
 	Info("exit gl-push-client");
 	lws_context_destroy(context);
-}
-
-static void
-Init()
-{
-	char *LogFile;
-
-	LogFile = getenv("GLPUSH_LOGFILE");
-	if (LogFile != NULL) {
-		InitLogger_via_FileName(LogFile);
-	} else {
-		InitLogger("gl-push-client");
-	}
 }
 
 static GOptionEntry entries[] =
@@ -443,7 +418,7 @@ main(
 	int argc,
 	char **argv)
 {
-	char *dname;
+	char *dname,*log;
 	GOptionContext *ctx;
 	struct sigaction sa;
 
@@ -463,31 +438,37 @@ main(
 	g_option_context_add_main_entries(ctx, entries, NULL);
 	g_option_context_parse(ctx,&argc,&argv,NULL);
 
+	log = getenv("GLPUSH_LOGFILE");
+	if (log != NULL) {
+		InitLogger_via_FileName(log);
+	} else {
+		InitLogger("gl-push-client");
+	}
+
 	PusherURI = getenv("GLPUSH_PUSHER_URI");
 	if (PusherURI == NULL) {
-		fprintf(stderr,"set env GLPUSH_PUSHER_URI\n");
-		exit(1);
+		_Error("set env GLPUSH_PUSHER_URI");
 	}
 	RESTURI = getenv("GLPUSH_REST_URI");
 	if (RESTURI == NULL) {
-		fprintf(stderr,"set env GLPUSH_REST_URI\n");
-		exit(1);
+		_Error("set env GLPUSH_REST_URI");
 	}
 	SessionID = getenv("GLPUSH_SESSION_ID");
 	if (SessionID == NULL) {
-		fprintf(stderr,"set env GLSPUSH_SESSION_ID\n");
-		exit(1);
+		_Error("set env GLSPUSH_SESSION_ID");
 	}
 	APIUser = getenv("GLPUSH_API_USER");
 	if (APIUser == NULL) {
-		fprintf(stderr,"set env GLPUSH_API_USER\n");
-		exit(1);
+		_Error("set env GLPUSH_API_USER");
 	}
 	APIPass = getenv("GLPUSH_API_PASSWORD");
 	if (APIPass == NULL) {
-		fprintf(stderr,"set env GLPUSH_API_PASSWORD\n");
-		exit(1);
+		_Error("set env GLPUSH_API_PASSWORD");
 	}
+
+	Info("GLPUSH_PUSHER_URI:%s",PusherURI);
+	Info("GLPUSH_REST_URI:%s",RESTURI);
+	Info("GLPUSH_SESSION_ID:%s",SessionID);
 
 	fSSL         = FALSE;
 	Cert        = getenv("GLPUSH_CERT");
@@ -495,7 +476,6 @@ main(
 	CertKeyPass = getenv("GLPUSH_CERT_KEY_PASSWORD");
 	CAFile      = getenv("GLPUSH_CA_FILE");
 
-	Init();
 	Execute();
 
 	return 0;

@@ -73,6 +73,7 @@ ShowPrintDialog(
 	gtk_window_set_title(GTK_WINDOW(dialog),_title);
 	gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
 	gtk_widget_set_size_request(pandapdf,800,600);
+	gtk_widget_set_size_request(dialog,800,600);
 	content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
 	gtk_container_add(GTK_CONTAINER(content),pandapdf);
 	gtk_widget_show_all(dialog);

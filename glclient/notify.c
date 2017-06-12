@@ -67,14 +67,14 @@ Notify(gchar *summary,
 	gint timeout)
 {
 	GtkWidget *widget;
-	int x,y,w,h;
+	GdkScreen *scr;
+	int w,h;
 
 	widget = gtk_message_dialog_new(NULL,GTK_DIALOG_MODAL,GTK_MESSAGE_OTHER,GTK_BUTTONS_NONE,"%s\n\n%s",summary,body);
 	gtk_window_set_decorated(GTK_WINDOW(widget),FALSE);
 	gtk_window_set_modal(GTK_WINDOW(widget),FALSE);
 	gtk_window_set_focus_on_map(GTK_WINDOW(widget),FALSE);
 	gtk_window_set_accept_focus(GTK_WINDOW(widget),FALSE);
-	gtk_window_set_gravity(GTK_WINDOW(widget), GDK_GRAVITY_NORTH_EAST);
 
 	if (n == 0) {
 		yy = 0;
@@ -82,13 +82,14 @@ Notify(gchar *summary,
 
 	g_signal_connect(G_OBJECT(widget),"enter-notify-event",G_CALLBACK(cb_enter),NULL);
 
-	gtk_widget_show(widget);
-	gtk_window_get_position(GTK_WINDOW(widget),&x,&y);
+	scr = gtk_window_get_screen(GTK_WINDOW(widget));
+
 	gtk_window_get_size(GTK_WINDOW(widget),&w,&h);
+	gtk_window_move(GTK_WINDOW(widget),gdk_screen_get_width(scr) - w,yy);
+	gtk_widget_show(widget);
 	if (timeout < 1) {
 		timeout = 5;
 	}
-	gtk_window_move(GTK_WINDOW(widget),w,y);
 	gtk_timeout_add(timeout*1000,DestroyDialog,widget);
 	n += 1;
 	yy = yy + h;

@@ -40,6 +40,7 @@
 #include	<dirent.h>
 #include	<uuid/uuid.h>
 #include	<time.h>
+#include	<libgen.h>
 
 #include	<gtk/gtk.h>
 
@@ -78,8 +79,67 @@ SetSessionBGColor(
 	BGCOLOR(Session) = StrDup(bgcolor);
 }
 
+static void
+StartPushClient()
+{
+	pid_t pid;
+	char *pusher;
+
+	if (GLP_GetfGinbee(GLP(Session)) || getenv("GLCLIENT_USE_PUSH_CLIENT") != NULL) {
+	} else {
+		UsePushClient = FALSE;
+		return;
+	}
+	pusher = getenv("GLPUSH_PUSHER_URI");
+	if (pusher == NULL) {
+		pusher = GLP_GetPusherURI(GLP(Session));
+	}
+	if (pusher == NULL) {
+		pusher = "";
+	}
+	setenv("GLPUSH_PUSHER_URI"   ,pusher,1);
+	setenv("GLPUSH_REST_URI"     ,GLP_GetRESTURI(GLP(Session)),1);
+	setenv("GLPUSH_SESSION_ID"   ,GLP_GetSessionID(GLP(Session)),1);
+	setenv("GLPUSH_API_USER"     ,User,1);
+	setenv("GLPUSH_API_PASSWORD" ,Pass,1);
+
+	setenv("GLPUSH_LOGFILE" ,GetLogFile(),1);
+	setenv("GLPUSH_TEMPDIR" ,GetTempDir(),1);
+
+	if (fSSL) {
+		setenv("GLPUSH_CERT"              ,CertFile,1);
+		setenv("GLPUSH_CERT_KEY"          ,CertKeyFile,1);
+		setenv("GLPUSH_CERT_KEY_PASSWORD" ,CertPass,1);
+		setenv("GLPUSH_CA_FILE"           ,CAFile,1);
+	}
+
+	pid = fork();
+	if (pid == 0) {
+		execl(PushClientCMD,PushClientCMD,NULL);
+	} else if (pid < 0) {
+		Warning("fork error:%s",strerror(errno));
+	} else {
+		Info("%s(%d) fork",PushClientCMD,(int)pid);
+		PushClientPID = pid;
+		UsePushClient = TRUE;
+	}
+}
+
+static void
+StopPushClient()
+{
+	if (!UsePushClient) {
+		return ;
+	}
+	if (kill(PushClientPID,SIGINT) == 0) {
+		Info("%s(%d) kill",PushClientCMD,(int)PushClientPID);
+	} else {
+		Info("kill error:%s",strerror(errno));
+	}
+}
+
 static gboolean
-StartClient ()
+StartClient()
 {
 	GLP(Session) = InitProtocol(AuthURI,User,Pass);
 #if USE_SSL
@@ -99,6 +159,7 @@ StartClient ()
 	if (SCREENDATA(Session) != NULL) {
 		json_object_put(SCREENDATA(Session));
 	}
+	StartPushClient();
 	SCREENDATA(Session) = RPC_GetWindow(GLP(Session));
 	UpdateScreen();
 	SetPingTimerFunc();
@@ -171,8 +232,9 @@ FinalSystem(void)
 {
 	FinalProtocol(GLP(Session));
 	FinalLogger();
+	StopPushClient();
 	if (!getenv("GLCLIENT_DONT_CLEAN_TEMP")) {
-		rm_r(TempDir);
+		rm_r(GetTempDir());
 	}
 }
 
@@ -180,23 +242,22 @@ FinalSystem(void)
 static	void
 ThisAskPass()
 {
-	if (fPKCS11) {
-		if (!fSavePIN) {
-			PIN = AskPINDialog(_("pin:"));
-		}
-		if (PIN == NULL) {
-			exit(0);
-		}
-		return;
-	}
 	if (fSSL) {
-		if (!SaveCertPass) {
-			Pass = AskPassDialog(_("certificate password:"));
+		if (fPKCS11) {
+			if (!fSavePIN) {
+				PIN = AskPINDialog(_("pin:"));
+			}
+			if (PIN == NULL) {
+				exit(0);
+			}
+		} else {
+			if (!SaveCertPass) {
+				CertPass = AskPassDialog(_("certificate password:"));
+			}
 		}
-	} else {
-		if (!SavePass) {
-			Pass = AskPassDialog(_("password:"));
-		}
+	}
+	if (!SavePass) {
+		Pass = AskPassDialog(_("password:"));
 	}
 	if (Pass == NULL) {
 		exit(0);
@@ -299,6 +360,7 @@ main(
 {
 	GOptionContext *ctx;
 	struct sigaction sa;
+	char *dname;
 
 	memset(&sa, 0, sizeof(struct sigaction));
 	sa.sa_handler = SIG_DFL;
@@ -310,6 +372,9 @@ main(
 	ctx = g_option_context_new("");
 	g_option_context_add_main_entries(ctx, entries, NULL);
 	g_option_context_parse(ctx,&argc,&argv,NULL);
+
+	dname = dirname(argv[0]);
+	PushClientCMD = g_strdup_printf("%s/gl-push-client",dname);
 
 	InitSystem();
 	gl_config_init();

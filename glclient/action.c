@@ -1266,7 +1266,9 @@ PingTimerFunc(
 	if (ISRECV(Session)) {
 		return 1;
 	}
-	ListDownloads();
+	if (!UsePushClient) {
+		ListDownloads();
+	}
 	Ping();
 	return 1;
 }

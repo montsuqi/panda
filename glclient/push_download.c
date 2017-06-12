@@ -19,9 +19,8 @@
 
 #include "gettext.h"
 #include "notify.h"
-#include "bd_config.h"
 #include "protocol.h"
-#include "print.h"
+#include "download.h"
 #include "tempdir.h"
 #include "logger.h"
 #include "utils.h"
@@ -31,10 +30,8 @@ main(
 	int argc,
 	char **argv)
 {
-	char *LogFile,*TempDir,*ConfigNum;
-	char *Title,*Printer,*ShowDialog,*oid;
-	int n;
-	gboolean show;
+	char *LogFile,*TempDir;
+	char *Filename,*Desc;
 	LargeByteString *lbs;
 
 	gtk_init(&argc,&argv);
@@ -44,12 +41,6 @@ main(
 	bindtextdomain(PACKAGE, LOCALEDIR);
 	textdomain(PACKAGE);
 
-	ConfigNum = getenv("GLPUSH_CONFIG_NUMBER");
-	if (ConfigNum == NULL) {
-		n = 0;
-	} else {
-		n = atoi(ConfigNum);
-	}
 	LogFile = getenv("GLPUSH_LOGFILE");
 	if (LogFile == NULL) {
 		InitLogger("glprint");
@@ -63,31 +54,17 @@ main(
 		InitTempDir_via_Dir(TempDir);
 	}
 
-	Title      = getenv("GLPUSH_TITLE");
-	if (Title == NULL) {
-		Title = "";
+	Filename = getenv("GLPUSH_FILENAME");
+	if (Filename == NULL) {
+		Filename = "";
 	}
-	Printer    = getenv("GLPUSH_PRINTER");
-	ShowDialog = getenv("GLPUSH_SHOW_DIALOG");
-	if (ShowDialog != NULL && !strcmp("T",ShowDialog)) {
-		show = FALSE;
-	} else {
-		show = TRUE;
+	Desc = getenv("GLPUSH_DESCRIPTION");
+	if (Desc == NULL) {
+		Desc = "";
 	}
-	if (Printer == NULL || strlen(Printer) <=0 ) {
-		show = TRUE;
-	}
-	oid = getenv("GLPUSH_OID");
-
-	gl_config_init();
 
 	lbs = REST_GetBLOB_via_ENV();
-
-	if (show) {
-		ShowPrintDialog(Title,lbs);
-	} else {
-		Print(oid,Title,Printer,lbs);
-	}
+	ShowDownloadDialog(Filename,Desc,lbs);
 	FreeLBS(lbs);
 	return 0;
 }

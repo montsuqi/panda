@@ -33,6 +33,7 @@ typedef struct {
 	char			*AuthURI;
 	char			*RPCURI;
 	char			*RESTURI;
+	char			*PusherURI;
 	int	            RPCID;
 	char			*SessionID;
 	char			*ProtocolVersion;
@@ -62,6 +63,8 @@ void				GLP_SetRPCURI(GLProtocol *,const char *);
 char*				GLP_GetRPCURI(GLProtocol *);
 void				GLP_SetRESTURI(GLProtocol *,const char *);
 char*				GLP_GetRESTURI(GLProtocol *);
+void				GLP_SetPusherURI(GLProtocol *,const char *);
+char*				GLP_GetPusherURI(GLProtocol *);
 void				GLP_SetSessionID(GLProtocol *,const char *);
 char*				GLP_GetSessionID(GLProtocol *);
 void				GLP_SetRPCID(GLProtocol *,int);

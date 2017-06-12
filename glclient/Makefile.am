@@ -16,11 +16,12 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 # 02111-1307, USA
 
-bin_PROGRAMS = 		\
-	glclient2		\
-	cpanda			\
-	gl-push-client	\
-	gl-push-print
+bin_PROGRAMS = 			\
+	glclient2			\
+	cpanda				\
+	gl-push-client		\
+	gl-push-print		\
+	gl-push-download 
 
 base_sources =						\
 	client.c		glclient.h		\
@@ -131,11 +132,10 @@ gl_push_client_LDADD =		\
 	$(base_LDADD)
 
 #################################################
-# glprint
+# gl-push-print
 #################################################
 
 gl_push_print_sources =	\
-	desktop.c		desktop.h		\
 	protocol.c		protocol.h		\
 	widgetcache.c	widgetcache.h	\
 	print.c			print.h			\
@@ -157,6 +157,36 @@ gl_push_print_CFLAGS =		\
 	$(GLCLIENT_CFLAGS)
 
 gl_push_print_LDADD =		\
+	$(GLCLIENT_LIBS)		\
+	$(base_LDADD)
+
+#################################################
+# gl-push-download
+#################################################
+
+gl_push_download_sources =	\
+	desktop.c		desktop.h		\
+	protocol.c		protocol.h		\
+	widgetcache.c	widgetcache.h	\
+	download.c		download.h		\
+	bd_config.c		bd_config.h		\
+	notify.c		notify.h		\
+	utils.c			utils.h			\
+	logger.c		logger.h		\
+	tempdir.c		tempdir.h		\
+	push_download.c
+
+gl_push_download_SOURCES =		\
+	$(gl_push_download_sources)
+
+gl_push_download_DEPENDENCIES =	\
+	$(base_dependencies)
+
+gl_push_download_CFLAGS =		\
+	$(base_CFLAGS)			\
+	$(GLCLIENT_CFLAGS)
+
+gl_push_download_LDADD =		\
 	$(GLCLIENT_LIBS)		\
 	$(base_LDADD)
 
