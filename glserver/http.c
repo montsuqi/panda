@@ -385,7 +385,7 @@ ParseReqLine(HTTP_REQUEST *req)
 	g_regex_unref(re);
 
 	/*api*/
-	re = g_regex_new("^(get|post)\\s+(/rest)?/([a-zA-Z0-9]+)/([a-zA-Z0-9]+)(/*|\\?(\\S+))\\s",G_REGEX_CASELESS,0,NULL);
+	re = g_regex_new("^(get|post)\\s+(/rest)?/([a-zA-Z0-9-_]+)/([a-zA-Z0-9-_]+)(/*|\\?(\\S+))\\s",G_REGEX_CASELESS,0,NULL);
 	if (g_regex_match(re,line,0,&match)) {
 		if (*line == 'g' || *line == 'G') {
 			req->method = HTTP_GET;
@@ -535,7 +535,7 @@ ParseReqAuth(HTTP_REQUEST *req)
 		return;
 	}
 
-	re = g_regex_new("^(\\w+):(.*)",0,0,NULL);
+	re = g_regex_new("^([\\w-]+):(.*)",0,0,NULL);
 	if (g_regex_match(re,userpass,0,&match)) {
 		req->user = g_match_info_fetch(match,1);
 		req->pass = g_match_info_fetch(match,2);
@@ -666,35 +666,29 @@ APISendResponse(
 		SendResponse(req,500,NULL,0,NULL);
 		return;
 	}
-	json_result = json_object_object_get(obj,"result");
-	if (!CheckJSONObject(json_result,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"result",&json_result)) {
 		Warning("panda_api response json result is invalid");
 		SendResponse(req,500,NULL,0,NULL);
 		return;
 	}
 
 	status = 200;
-	json_status = json_object_object_get(json_result,"http_status");
-	if (CheckJSONObject(json_status,json_type_int)) {
+	if (json_object_object_get_ex(json_result,"http_status",&json_status)) {
 		status = json_object_get_int(json_status);
 	}
-	json_status = json_object_object_get(json_result,"httpstatus");
-	if (CheckJSONObject(json_status,json_type_int)) {
+	if (json_object_object_get_ex(json_result,"httpstatus",&json_status)) {
 		status = json_object_get_int(json_status);
 	}
 
 	ctype = "";
-	json_ctype = json_object_object_get(json_result,"content_type");
-	if (CheckJSONObject(json_ctype,json_type_string)) {
+	if (json_object_object_get_ex(json_result,"content_type",&json_ctype)) {
 		ctype = (const char*)json_object_get_string(json_ctype);
 	}
-	json_ctype = json_object_object_get(json_result,"contenttype");
-	if (CheckJSONObject(json_ctype,json_type_string)) {
+	if (json_object_object_get_ex(json_result,"contenttype",&json_ctype)) {
 		ctype = (const char*)json_object_get_string(json_ctype);
 	}
 	mon = 0;
-	json_body = json_object_object_get(json_result,"body");
-	if (CheckJSONObject(json_body,json_type_string)) {
+	if (json_object_object_get_ex(json_result,"body",&json_body)) {
 		mon = (MonObjectType)atoll(json_object_get_string(json_body));
 	}
 
@@ -816,7 +810,7 @@ MakeJSONResponseTemplate(
 
 	res = json_object_new_object();
 	json_object_object_add(res,"jsonrpc",json_object_new_string("2.0"));
-	child = json_object_object_get(obj,"id");
+	json_object_object_get_ex(obj,"id",&child);
 	json_object_object_add(res,"id",json_object_new_int(json_object_get_int(child)));
 
 	return res;
@@ -873,8 +867,8 @@ GetScreenDefine(
 	json_object *params,*child,*result,*res,*error;
 	char *scrdef,*window;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	child = json_object_object_get(params,"window");
+	json_object_object_get_ex(obj,"params",&params);
+	json_object_object_get_ex(params,"window",&child);
 	if (CheckJSONObject(child,json_type_string)) {
 		window = (char*)json_object_get_string(child);
 	} else {
@@ -905,12 +899,11 @@ GetMessage(
 	json_object *params,*meta,*child,*result,*res,*error;
 	char *session_id,*popup,*dialog,*abort;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	meta = json_object_object_get(params,"meta");
+	json_object_object_get_ex(obj,"params",&params);
+	json_object_object_get_ex(params,"meta",&meta);
 	session_id = NULL;
 	if (CheckJSONObject(meta,json_type_object)) {
-		child = json_object_object_get(meta,"session_id");
-		if (CheckJSONObject(child,json_type_string)) {
+		if (json_object_object_get_ex(meta,"session_id",&child)) {
 			session_id = (char*)json_object_get_string(child);
 		}
 	}
@@ -952,8 +945,7 @@ JSONRPCHandler(
 		json_object_put(obj);
 		return FALSE;
 	}
-	child = json_object_object_get(obj,"jsonrpc");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"jsonrpc",&child)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
 		json_object_put(obj);
@@ -965,23 +957,20 @@ JSONRPCHandler(
 		json_object_put(obj);
 		return FALSE;
 	}
-	child = json_object_object_get(obj,"id");
-	if (!CheckJSONObject(child,json_type_int)) {
+	if (!json_object_object_get_ex(obj,"id",&child)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
 		json_object_put(obj);
 		return FALSE;
 	}
-	child = json_object_object_get(obj,"method");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"method",&child)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
 		json_object_put(obj);
 		return FALSE;
 	}
 	method = (char*)json_object_get_string(child);
-	params = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(params,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("invalid json");
 		SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
 		json_object_put(obj);
@@ -1006,8 +995,7 @@ JSONRPCHandler(
 		SendResponse(req,200,resjson,strlen(resjson),"Content-Type","application/json",NULL);
 		json_object_put(res);
 	} else {
-		meta = json_object_object_get(params,"meta");
-		if (!CheckJSONObject(meta,json_type_object)) {
+		if (!json_object_object_get_ex(params,"meta",&meta)) {
 			SendResponse(req,HTTP_BAD_REQUEST,NULL,0,NULL);
 			json_object_put(obj);
 			return FALSE;
@@ -1082,12 +1070,10 @@ AuthAPI(
 	if (!CheckJSONObject(res,json_type_object)) {
 		Error("panda_api response json is invalid");
 	}
-	result = json_object_object_get(res,"result");
-	if (!CheckJSONObject(result,json_type_object)) {
+	if (!json_object_object_get_ex(res,"result",&result)) {
 		Error("panda_api response json result is invalid");
 	}
-	http_status = json_object_object_get(result,"http_status");
-	if (!CheckJSONObject(http_status,json_type_int)) {
+	if (!json_object_object_get_ex(result,"http_status",&http_status)) {
 		Error("panda_api response json http_status is invalid");
 	}
 	status = json_object_get_int(http_status);
@@ -1121,8 +1107,7 @@ CheckJSONRPCMethod(
 	reqjson = StrnDup(req->body,req->body_size);
 	obj = json_tokener_parse(reqjson);
 	xfree(reqjson);
-	child = json_object_object_get(obj,"method");
-	if (CheckJSONObject(child,json_type_string)) {
+	if (json_object_object_get_ex(obj,"method",&child)) {
 		method = (char*)json_object_get_string(child);
 		if (!strcmp(method,"start_session")) {
 			req->require_auth = TRUE;

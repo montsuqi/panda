@@ -75,23 +75,20 @@ BlobToResponse(
 
 	json_object *json_content_type;
 	char *content_type;
-	json_content_type = json_object_object_get(json_res,"content-type");
-	if (CheckJSONObject(json_content_type,json_type_string)) {
+	if (json_object_object_get_ex(json_res,"content-type",&json_content_type)) {
 		content_type = (char*)json_object_get_string(json_content_type);
 		res->content_type = content_type;
 	}
 
 	json_object *json_filename;
 	char *filename;
-	json_filename = json_object_object_get(json_res,"filename");
-	if (CheckJSONObject(json_filename,json_type_string)) {
+	if (json_object_object_get_ex(json_res,"filename",&json_filename)) {
 		filename = (char*)json_object_get_string(json_filename);
 		res->filename = filename;
 	}
 
 	json_object *json_status;
-	json_status = json_object_object_get(json_res,"status");
-	if (CheckJSONObject(json_status,json_type_int)) {
+	if (json_object_object_get_ex(json_res,"status",&json_status)) {
 		res->status = json_object_get_int(json_status);
 	}
 
