@@ -337,7 +337,7 @@ MakeJSONResponseTemplate(
 
 	res = json_object_new_object();
 	json_object_object_add(res,"jsonrpc",json_object_new_string("2.0"));
-	child = json_object_object_get(obj,"id");
+	json_object_object_get_ex(obj,"id",&child);
 	json_object_object_add(res,"id",json_object_new_int(json_object_get_int(child)));
 
 	return res;
@@ -386,20 +386,17 @@ RPC_StartSession(
 	int sesnum;
 	gchar *prefix,*rpcuri,*resturi;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(params,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("request have not params");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	meta = json_object_object_get(params,"meta");
-	if (!CheckJSONObject(meta,json_type_object)) {
+	if (!json_object_object_get_ex(params,"meta",&meta)) {
 		Warning("request have not meta");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	child = json_object_object_get(meta,"client_version");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"client_version",&child)) {
 		Warning("request have not client_version");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -409,8 +406,7 @@ ENTER_FUNC;
 		JSONRPC_Error(term,obj,-20001,"Invalid Client Version");
 		return;
 	}
-	child = json_object_object_get(meta,"server_url_prefix");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"server_url_prefix",&child)) {
 		Warning("request have not client_version");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -430,8 +426,7 @@ ENTER_FUNC;
 	uuid_generate(u);
 	uuid_unparse(u,data->hdr->uuid);
 
-	child = json_object_object_get(meta,"user");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"user",&child)) {
 		Warning("request have not user");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -439,8 +434,7 @@ ENTER_FUNC;
 	memset(data->hdr->user,0,SIZE_USER+1);
 	strncpy(data->hdr->user,(char*)json_object_get_string(child),SIZE_USER);
 
-	child = json_object_object_get(meta,"host");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"host",&child)) {
 		Warning("request have not host");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -448,8 +442,7 @@ ENTER_FUNC;
 	memset(data->hdr->host,0,SIZE_HOST+1);
 	strncpy(data->hdr->host,json_object_get_string(child),SIZE_HOST);
 
-	child = json_object_object_get(meta,"agent");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"agent",&child)) {
 		Warning("request have not agent");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -495,20 +488,17 @@ RPC_EndSession(
 	LD_Node		*ld;
 	const char *session_id;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(params,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("request have not params");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	meta = json_object_object_get(params,"meta");
-	if (!CheckJSONObject(meta,json_type_object)) {
+	if (!json_object_object_get_ex(params,"meta",&meta)) {
 		Warning("request have not meta");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	child = json_object_object_get(meta,"session_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"session_id",&child)) {
 		Warning("request have not session_id");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -664,20 +654,17 @@ RPC_GetWindow(
 	const char *session_id;
 	int i;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(params,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("request have not params");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	meta = json_object_object_get(params,"meta");
-	if (!CheckJSONObject(meta,json_type_object)) {
+	if (!json_object_object_get_ex(params,"meta",&meta)) {
 		Warning("request have not meta");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	child = json_object_object_get(meta,"session_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"session_id",&child)) {
 		Warning("request have not session_id");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -759,20 +746,17 @@ RPC_SendEvent(
 	int i;
 ENTER_FUNC;
 
-	params = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(params,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("request have not params");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	meta = json_object_object_get(params,"meta");
-	if (!CheckJSONObject(meta,json_type_object)) {
+	if (!json_object_object_get_ex(params,"meta",&meta)) {
 		Warning("request have not meta");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	child = json_object_object_get(meta,"session_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"session_id",&child)) {
 		Warning("request have not session_id");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -794,38 +778,33 @@ ENTER_FUNC;
 	data->term = term;
 
 	// readterminal
-	event_data = json_object_object_get(params,"event_data");
-	if (!CheckJSONObject(event_data,json_type_object)) {
+	if (!json_object_object_get_ex(params,"event_data",&event_data)) {
 		Warning("request have not event_data");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	child = json_object_object_get(event_data,"window");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(event_data,"window",&child)) {
 		Warning("request have not event_data->window");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
 	window = json_object_get_string(child);
 
-	child = json_object_object_get(event_data,"widget");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(event_data,"widget",&child)) {
 		Warning("request have not event_data->widget");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
 	widget = json_object_get_string(child);
 
-	child = json_object_object_get(event_data,"event");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(event_data,"event",&child)) {
 		Warning("request have not event_data->event");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
 	event = json_object_get_string(child);
 
-	child = json_object_object_get(event_data,"screen_data");
-	if (!CheckJSONObject(child,json_type_object)) {
+	if (!json_object_object_get_ex(event_data,"screen_data",&child)) {
 		Warning("request have not event_data->screen_data");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -909,44 +888,38 @@ RPC_PandaAPI(
 	char *buf;
 	size_t size;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(params,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("request have not params");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	meta = json_object_object_get(params,"meta");
-	if (!CheckJSONObject(meta,json_type_object)) {
+	if (!json_object_object_get_ex(params,"meta",&meta)) {
 		Warning("request have not meta");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	child = json_object_object_get(meta,"user");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"user",&child)) {
 		Warning("request have not user");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
 	user = json_object_get_string(child);
 
-	child = json_object_object_get(meta,"host");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"host",&child)) {
 		Warning("request have not host");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
 	host = json_object_get_string(child);
 
-	child = json_object_object_get(meta,"ld");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"ld",&child)) {
 		Warning("request have not ld");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
 	ld = json_object_get_string(child);
 
-	child = json_object_object_get(meta,"window");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"window",&child)) {
 		Warning("request have not window");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -1006,8 +979,7 @@ ReadDownloadMetaFile(
 		buf2 = strndup(buf,size);
 		obj = json_tokener_parse(buf2);
 		if (!is_error(obj)) {
-			result = json_object_object_get(obj,"result");
-			if (CheckJSONObject(result,json_type_array)) {
+			if (json_object_object_get_ex(obj,"result",&result)) {
 				json_object_get(result);
 			} else {
 				result = json_object_new_array();
@@ -1075,20 +1047,17 @@ RPC_ListDownloads(
 	SessionData *data;
 	const char *session_id;
 ENTER_FUNC;
-	params = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(params,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&params)) {
 		Warning("request have not params");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	meta = json_object_object_get(params,"meta");
-	if (!CheckJSONObject(meta,json_type_object)) {
+	if (!json_object_object_get_ex(params,"meta",&meta)) {
 		Warning("request have not meta");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
 	}
-	child = json_object_object_get(meta,"session_id");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(meta,"session_id",&child)) {
 		Warning("request have not session_id");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		return;
@@ -1124,8 +1093,7 @@ ENTER_FUNC;
 		JSONRPC_Error(term,NULL,-32700,"Parse Error");
 		return;
 	}
-	child = json_object_object_get(obj,"jsonrpc");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"jsonrpc",&child)) {
 		Warning("jsonrpc invalid reqeust");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		json_object_put(obj);
@@ -1137,22 +1105,19 @@ ENTER_FUNC;
 		json_object_put(obj);
 		return;
 	}
-	child = json_object_object_get(obj,"id");
-	if (!CheckJSONObject(child,json_type_int)) {
+	if (!json_object_object_get_ex(obj,"id",&child)) {
 		Warning("jsonrpc invalid reqeust");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		json_object_put(obj);
 		return;
 	}
-	child = json_object_object_get(obj,"params");
-	if (!CheckJSONObject(child,json_type_object)) {
+	if (!json_object_object_get_ex(obj,"params",&child)) {
 		Warning("jsonrpc invalid reqeust");
 		JSONRPC_Error(term,obj,-32600,"Invalid Request");
 		json_object_put(obj);
 		return;
 	}
-	child = json_object_object_get(obj,"method");
-	if (!CheckJSONObject(child,json_type_string)) {
+	if (!json_object_object_get_ex(obj,"method",&child)) {
 		Warning("jsonrpc method not found");
 		JSONRPC_Error(term,obj,-32601,"Method not found");
 		json_object_put(obj);
