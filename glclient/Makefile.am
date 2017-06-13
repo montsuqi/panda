@@ -20,8 +20,7 @@ bin_PROGRAMS = 			\
 	glclient2			\
 	cpanda				\
 	gl-push-client		\
-	gl-push-print		\
-	gl-push-download 
+	gl-push-action
 
 base_sources =						\
 	client.c		glclient.h		\
@@ -132,61 +131,33 @@ gl_push_client_LDADD =		\
 	$(base_LDADD)
 
 #################################################
-# gl-push-print
+# gl-push-action
 #################################################
 
-gl_push_print_sources =	\
-	protocol.c		protocol.h		\
-	widgetcache.c	widgetcache.h	\
-	print.c			print.h			\
-	bd_config.c		bd_config.h		\
-	notify.c		notify.h		\
-	utils.c			utils.h			\
-	logger.c		logger.h		\
-	tempdir.c		tempdir.h		\
-	push_print.c
-
-gl_push_print_SOURCES =		\
-	$(gl_push_print_sources)
-
-gl_push_print_DEPENDENCIES =	\
-	$(base_dependencies)
-
-gl_push_print_CFLAGS =		\
-	$(base_CFLAGS)			\
-	$(GLCLIENT_CFLAGS)
-
-gl_push_print_LDADD =		\
-	$(GLCLIENT_LIBS)		\
-	$(base_LDADD)
-
-#################################################
-# gl-push-download
-#################################################
-
-gl_push_download_sources =	\
+gl_push_action_sources =	\
 	desktop.c		desktop.h		\
 	protocol.c		protocol.h		\
 	widgetcache.c	widgetcache.h	\
 	download.c		download.h		\
 	bd_config.c		bd_config.h		\
+	print.c			print.h			\
 	notify.c		notify.h		\
 	utils.c			utils.h			\
 	logger.c		logger.h		\
 	tempdir.c		tempdir.h		\
-	push_download.c
+	push_action.c
 
-gl_push_download_SOURCES =		\
-	$(gl_push_download_sources)
+gl_push_action_SOURCES =		\
+	$(gl_push_action_sources)
 
-gl_push_download_DEPENDENCIES =	\
+gl_push_action_DEPENDENCIES =	\
 	$(base_dependencies)
 
-gl_push_download_CFLAGS =		\
+gl_push_action_CFLAGS =		\
 	$(base_CFLAGS)			\
 	$(GLCLIENT_CFLAGS)
 
-gl_push_download_LDADD =		\
+gl_push_action_LDADD =		\
 	$(GLCLIENT_LIBS)		\
 	$(base_LDADD)
 

@@ -26,8 +26,7 @@ static volatile int force_exit;
 static struct lws *wsi_pr;
 
 /* option*/
-static char     *GLPUSHPRINT;
-static char     *GLPUSHDOWNLOAD;
+static char     *GLPushAction;
 
 /* env option*/
 static char     *PusherURI;
@@ -133,7 +132,8 @@ print_report(
 	setenv("GLPUSH_SHOW_DIALOG","F",1);
 	}
 	setenv("GLPUSH_OID",oid,1);
-	exec_cmd(GLPUSHPRINT);
+	setenv("GLPUSH_ACTION","print",1);
+	exec_cmd(GLPushAction);
 }
 
 static void
@@ -167,7 +167,8 @@ download_file(
 	setenv("GLPUSH_FILENAME",filename,1);
 	setenv("GLPUSH_DESCRIPTION",desc,1);
 	setenv("GLPUSH_OID",oid,1);
-	exec_cmd(GLPUSHDOWNLOAD);
+	setenv("GLPUSH_ACTION","download",1);
+	exec_cmd(GLPushAction);
 }
 
 static void
@@ -406,10 +407,8 @@ Execute()
 
 static GOptionEntry entries[] =
 {
-	{ "gl-push-print",'p',0,G_OPTION_ARG_STRING,&GLPUSHPRINT,
-		"specify glprint command",NULL},
-	{ "gl-push-download",'d',0,G_OPTION_ARG_STRING,&GLPUSHDOWNLOAD,
-		"specify gldownload command",NULL},
+	{ "gl-push-action",'a',0,G_OPTION_ARG_STRING,&GLPushAction,
+		"specify gl-push-action command",NULL},
 	{ NULL}
 };
 
@@ -431,8 +430,7 @@ main(
 	}
 
 	dname = dirname(argv[0]);
-	GLPUSHPRINT    = g_strdup_printf("%s/gl-push-print",dname);
-	GLPUSHDOWNLOAD = g_strdup_printf("%s/gl-push-download",dname);
+	GLPushAction    = g_strdup_printf("%s/gl-push-action",dname);
 
 	ctx = g_option_context_new("");
 	g_option_context_add_main_entries(ctx, entries, NULL);

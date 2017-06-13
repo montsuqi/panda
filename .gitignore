@@ -58,6 +58,7 @@ glclient/glclient2
 glclient/gl-push-client
 glclient/gl-push-print
 glclient/gl-push-download
+glclient/gl-push-action
 glserver/glserver
 libs/testblob
 libs/testnet
