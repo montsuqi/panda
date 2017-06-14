@@ -58,6 +58,7 @@ show_save_dialog(
 		NULL);
 	gtk_file_chooser_set_do_overwrite_confirmation(
 		GTK_FILE_CHOOSER (dialog), TRUE);
+	gtk_window_set_keep_above(GTK_WINDOW(dialog),TRUE);
 
 	dirname = GetWidgetCache(LAST_DIR_KEY);
 	if (dirname != NULL) {
@@ -153,6 +154,7 @@ ShowDownloadDialog(
 			"File Name: %s\n"
 			"Size: %s"),filename,hbytes);
 	}
+	gtk_window_set_keep_above(GTK_WINDOW(dialog),TRUE);
 
 	info = g_new0(FileInfo,1);
 	info->dialog = dialog;
