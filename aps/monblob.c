@@ -21,6 +21,7 @@
 #include	"dbgroup.h"
 #include	"dbutils.h"
 #include	"monsys.h"
+#include	"bytea.h"
 #include	"option.h"
 #include	"enum.h"
 #include	"gettext.h"
@@ -62,6 +63,7 @@ SetDefault(void)
 	ExportID = NULL;
 	OutputFile = NULL;
 	LifeType = 0;
+	fTimer = TRUE;
 }
 
 static	void
@@ -114,75 +116,6 @@ monblob_setup(
 	return (rc == MCP_OK);
 }
 
-extern LargeByteString	*
-escape_bytea(
-	DBG_Struct	*dbg,
-	unsigned char *src,
-	size_t len)
-{
-	ValueStruct	*value, *ret, *recval, *retval;
-	DBCOMM_CTRL		*ctrl = NULL;
-	RecordStruct	*rec = NULL;
-	LargeByteString	*lbs = NULL;
-
-	value = NewValue(GL_TYPE_BINARY);
-	SetValueBinary(value, src, len);
-
-	recval = NewValue(GL_TYPE_RECORD);
-	ValueAddRecordItem(recval, "dbescapebytea", value);
-
-	retval = ExecDBESCAPEBYTEA(dbg, ctrl, rec, recval);
-	if ( (ret = GetItemLongName(retval,"dbescapebytea")) != NULL) {
-		lbs = LBS_Duplicate(ValueToLBS(ret, NULL));
-	}
-	FreeValueStruct(recval);
-	FreeValueStruct(retval);
-	return lbs;
-}
-
-extern LargeByteString	*
-file_to_bytea(
-	DBG_Struct	*dbg,
-	char	*filename)
-{
-	struct	stat	stbuf;
-	unsigned char	buff[SIZE_BUFF];
-	unsigned char	*src, *src_p;
-	LargeByteString	*lbs = NULL;
-	FILE	*fp;
-	size_t	fsize
-		,   bsize
-		,	left;
-
-	if		(  stat(filename,&stbuf) != 0  ) {
-		fprintf(stderr,"%s: %s\n",  filename, strerror(errno));
-		return NULL;
-	}
-	fsize = stbuf.st_size;
-	src = (unsigned char *)xmalloc(fsize);
-	src_p = src;
-
-	fp = fopen(filename,"rb");
-	left = fsize;
-	do {
-		if		(  left  >  SIZE_BUFF  ) {
-			bsize = SIZE_BUFF;
-		} else {
-			bsize = left;
-		}
-		bsize = fread(buff,1,bsize,fp);
-		memcpy(src_p, buff, bsize);
-		src_p = src_p + bsize;
-		if		(  bsize  >  0  ) {
-			left -= bsize;
-		}
-	}	while	(  left  >  0  );
-	fclose(fp);
-	lbs = escape_bytea(dbg, src, fsize);
-	xfree(src);
-	return lbs;
-}
-
 static char *
 file_import(
 	DBG_Struct	*dbg,
@@ -190,36 +123,39 @@ file_import(
 	unsigned int lifetype)
 {
 	char	*sql, *sql_p;
+	char	*bytea;
 	static	char *id;
 	uuid_t	u;
-	size_t 	size;
+	size_t 	size, bytea_len;
 	size_t	sql_len = SIZE_SQL;
-	LargeByteString	*lbs;
+	ValueStruct *value;
 	char	importtime[50];
 
 	id = xmalloc(SIZE_TERM+1);
 	uuid_generate(u);
 	uuid_unparse(u, id);
 
-	if ((lbs = file_to_bytea(dbg, filename)) == NULL){
+	if ((value = file_to_bytea(dbg, filename)) == NULL){
 		return NULL;
 	}
+	bytea = ValueToString(value,NULL);
+	bytea_len = strlen(bytea);
 	if (lifetype > 2) {
 		lifetype = 2;
 	}
 	timestamp(importtime, sizeof(importtime));
-	sql = xmalloc(LBS_Size(lbs) + sql_len);
+	sql = xmalloc(bytea_len + sql_len);
 	sql_p = sql;
 	size = snprintf(sql_p, sql_len, \
 		   "INSERT INTO monblob \
                         (id, importtime, lifetype, filename, file_data) \
                  VALUES ('%s', '%s', %d, '%s', '",id, importtime, lifetype, filename);
 	sql_p = sql_p + size;
-	strncpy(sql_p, LBS_Body(lbs), LBS_Size(lbs));
-	sql_p = sql_p + LBS_Size(lbs) - 1;
+	strncpy(sql_p, bytea, bytea_len);
+	sql_p = sql_p + bytea_len;
 	snprintf(sql_p, sql_len, "');");
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-	FreeLBS(lbs);
+	FreeValueStruct(value);
 	xfree(sql);
 	return id;
 }
@@ -240,7 +176,7 @@ blob_import(
 }
 
 static char *
-bytea_to_file(
+value_to_file(
 	char *filename,
 	ValueStruct	*value)
 {
@@ -272,8 +208,7 @@ file_export(
 	static char	*filename;
 	char	*sql;
 	size_t	sql_len = SIZE_SQL;
-	ValueStruct	*ret, *value;
-	ValueStruct	*recval, *retval, *tvalue;
+	ValueStruct	*ret, *value, *retval;
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
@@ -288,14 +223,10 @@ file_export(
 		export_file = StrDup(ValueToString(GetItemLongName(ret,"filename"),dbg->coding));
 	}
 	value = GetItemLongName(ret,"file_data");
-	recval = NewValue(GL_TYPE_RECORD);
-	ValueAddRecordItem(recval, "dbunescapebytea", DuplicateValue(value,TRUE));
-	retval = ExecDBUNESCAPEBYTEA(dbg, NULL, NULL, recval);
-	tvalue = GetItemLongName(retval,"dbunescapebytea");
-	filename = bytea_to_file(export_file, tvalue);
-	FreeValueStruct(ret);
-	FreeValueStruct(recval);
+	retval = unescape_bytea(dbg, value);
+	filename = value_to_file(export_file, retval);
 	FreeValueStruct(retval);
+
 	return filename;
 }
 

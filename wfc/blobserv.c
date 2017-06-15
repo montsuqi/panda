@@ -37,10 +37,25 @@
 #include	"libmondai.h"
 #include	"net.h"
 #include	"comm.h"
+#include	"enum.h"
 #include	"sysdatacom.h"
 #include	"blob.h"
 #include	"blobserv.h"
+#include	"dbgroup.h"
+#include	"dbutils.h"
+#include	"monsys.h"
 #include	"debug.h"
+
+extern	void
+InitServeBLOB()
+{
+	DBG_Struct	*dbg;
+	dbg = GetDBG_monsys();
+	dbg->dbt = NewNameHash();
+	if (OpenDB(dbg) != MCP_OK ) {
+		exit(1);
+	}
+}
 
 extern	void
 ServeBLOB(

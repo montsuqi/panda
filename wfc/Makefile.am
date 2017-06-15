@@ -32,6 +32,7 @@ AM_CPPFLAGS 			= 		\
 
 LDADD 			=						\
 	-lm									\
+	$(top_builddir)/dblib/libpandadb.la  \
 	$(top_builddir)/libs/libpanda.la	\
 	$(P11_LIBS)							\
 	$(SSL_LIBS)							\
@@ -52,7 +53,7 @@ wfc_SOURCES	=							\
 	blobserv.c		blobserv.h			\
 	sysdbserv.c		sysdbserv.h			\
 	termthread.c	termthread.h		\
-	sessionctrl.c	sessionctrl.h	
+	sessionctrl.c	sessionctrl.h
 
 wfccontrol_LDFLAGS	=			\
 	-export-dynamic

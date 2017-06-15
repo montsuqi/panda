@@ -108,12 +108,13 @@ ENTER_FUNC;
 	pthread_create(&thr,NULL,(void *(*)(void *))SysDataThread,(void *)fp);
 	pthread_detach(thr);
 LEAVE_FUNC;
-	return	(thr); 
+	return	(thr);
 }
 
 extern	void
 InitSysData(void)
 {
 ENTER_FUNC;
+	InitServeBLOB();
 LEAVE_FUNC;
 }
