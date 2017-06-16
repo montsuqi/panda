@@ -15,7 +15,6 @@
 #include	<time.h>
 #include	<errno.h>
 
-#include	<uuid/uuid.h>
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
@@ -116,61 +115,40 @@ monblob_setup(
 	return (rc == MCP_OK);
 }
 
-static char *
-file_import(
-	DBG_Struct	*dbg,
-	char *filename,
-	unsigned int lifetype)
-{
-	char	*sql, *sql_p;
-	char	*bytea;
-	static	char *id;
-	uuid_t	u;
-	size_t 	size, bytea_len;
-	size_t	sql_len = SIZE_SQL;
-	ValueStruct *value;
-	char	importtime[50];
-
-	id = xmalloc(SIZE_TERM+1);
-	uuid_generate(u);
-	uuid_unparse(u, id);
-
-	if ((value = file_to_bytea(dbg, filename)) == NULL){
-		return NULL;
-	}
-	bytea = ValueToString(value,NULL);
-	bytea_len = strlen(bytea);
-	if (lifetype > 2) {
-		lifetype = 2;
-	}
-	timestamp(importtime, sizeof(importtime));
-	sql = xmalloc(bytea_len + sql_len);
-	sql_p = sql;
-	size = snprintf(sql_p, sql_len, \
-		   "INSERT INTO monblob \
-                        (id, importtime, lifetype, filename, file_data) \
-                 VALUES ('%s', '%s', %d, '%s', '",id, importtime, lifetype, filename);
-	sql_p = sql_p + size;
-	strncpy(sql_p, bytea, bytea_len);
-	sql_p = sql_p + bytea_len;
-	snprintf(sql_p, sql_len, "');");
-	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-	FreeValueStruct(value);
-	xfree(sql);
-	return id;
-}
-
 static	char *
 blob_import(
 	DBG_Struct	*dbg,
 	char *filename,
 	unsigned int lifetype)
 {
-	char *id;
+	monblob_struct *blob;
+	char *id = NULL;
+	ValueStruct *value;
 
-	TransactionStart(dbg);
-	id = file_import(dbg, filename, lifetype);
-	TransactionEnd(dbg);
+	blob = New(monblob_struct);
+	blob->id = new_blobid();
+	blob->filename = filename;
+	blob->lifetype = lifetype;
+	if (blob->lifetype > 2) {
+		blob->lifetype = 2;
+	}
+	timestamp(blob->importtime, sizeof(blob->importtime));
+
+	if ((value = file_to_bytea(dbg, blob->filename)) == NULL){
+		return NULL;
+	}
+	blob->bytea = ValueToString(value,NULL);
+	blob->bytea_len = strlen(blob->bytea);
+
+	monblob_insert(dbg, blob);
+
+	if (blob->id) {
+		id = StrDup(blob->id);
+	}
+
+	FreeValueStruct(value);
+	xfree(blob->id);
+	xfree(blob);
 
 	return id;
 }
@@ -215,6 +193,7 @@ file_export(
 			 "SELECT filename, file_data FROM monblob WHERE id = '%s'", id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
+
 	if (!ret) {
 		fprintf(stderr,"ERROR: [%s] is not registered\n", id);
 		return NULL;
@@ -225,6 +204,7 @@ file_export(
 	value = GetItemLongName(ret,"file_data");
 	retval = unescape_bytea(dbg, value);
 	filename = value_to_file(export_file, retval);
+
 	FreeValueStruct(retval);
 
 	return filename;
@@ -358,6 +338,7 @@ main(
 			exit(1);
 		}
 		printf("%s\n", id);
+		xfree(id);
 	} else if (ExportID) {
 		filename = blob_export(dbg, ExportID, OutputFile);
 		if ( !filename ) {

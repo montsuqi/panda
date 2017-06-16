@@ -260,15 +260,7 @@ ExecDBOP(
 	int			usage)
 {
 	int		rc;
-	long	start
-		,	end, time;
-
-	start = GetNowTime();
 	rc = dbg->func->primitive->exec(dbg,sql,fRed, usage);
-	end = GetNowTime();
-	time = (end - start);
-	TimerPrintf(start,end, "ExecOP\n");
-LEAVE_FUNC;
 	return	(rc);
 }
 

@@ -23,6 +23,19 @@
 #include	"option.h"
 #include	"enum.h"
 #include	"comm.h"
+#include	"bytea.h"
+
+extern char *
+new_blobid()
+{
+	uuid_t	u;
+	static	char *id;
+
+	id = xmalloc(SIZE_TERM+1);
+	uuid_generate(u);
+	uuid_unparse(u, id);
+	return id;
+}
 
 extern ValueStruct *
 escape_bytea(
@@ -105,3 +118,30 @@ file_to_bytea(
 	return value;
 }
 
+extern Bool
+monblob_insert(
+	DBG_Struct	*dbg,
+	monblob_struct *blob)
+{
+	char	*sql, *sql_p;
+	size_t 	size;
+	size_t	sql_len = SIZE_SQL;
+	int rc;
+
+	sql = xmalloc(blob->bytea_len + sql_len);
+	sql_p = sql;
+	size = snprintf(sql_p, sql_len, \
+		   "INSERT INTO monblob \
+                        (id, importtime, lifetype, filename, file_data) \
+                 VALUES ('%s', '%s', %d, '%s', '", blob->id, blob->importtime, blob->lifetype, blob->filename);
+	sql_p = sql_p + size;
+	strncpy(sql_p, blob->bytea, blob->bytea_len);
+	sql_p = sql_p + blob->bytea_len;
+	snprintf(sql_p, sql_len, "');");
+	TransactionStart(dbg);
+	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	TransactionEnd(dbg);
+	xfree(sql);
+
+	return (rc == MCP_OK);
+}

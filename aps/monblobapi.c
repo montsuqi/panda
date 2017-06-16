@@ -15,8 +15,6 @@
 #include	<time.h>
 #include	<errno.h>
 
-#include	<uuid/uuid.h>
-
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
@@ -182,7 +180,6 @@ file_import(
 	ValueStruct	*ret;
 	ValueStruct *value;
 	char	importtime[50];
-	uuid_t	u;
 	char *recv;
 	char *regfilename;
 	char *content_type;
@@ -208,9 +205,7 @@ file_import(
 		}
 	} else {
 		if (id == NULL) {
-			id = xmalloc(SIZE_TERM+1);
-			uuid_generate(u);
-			uuid_unparse(u, id);
+			id = new_blobid();
 			sql = xmalloc(sql_len);
 			snprintf(sql, sql_len, "INSERT INTO monblobapi (id, status) VALUES('%s', '%d');", id , 503);
 			ExecDBOP(dbg, sql, FALSE, DB_UPDATE);

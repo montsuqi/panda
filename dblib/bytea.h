@@ -20,8 +20,21 @@
 #ifndef	_BYTEA_H
 #define	_BYTEA_H
 
+#include	"dblib.h"
+
+typedef struct _monblob_struct {
+	char *id;
+	char *filename;
+	unsigned int lifetype;
+	char importtime[50];
+	char *bytea;
+	size_t 	bytea_len;
+} monblob_struct;
+
+extern char *new_blobid(void);
 extern ValueStruct *escape_bytea(DBG_Struct *dbg, unsigned char *src, size_t len);
 extern ValueStruct *unescape_bytea(DBG_Struct *dbg, ValueStruct *value);
 extern ValueStruct *file_to_bytea(	DBG_Struct *dbg, char *filename);
+extern Bool monblob_insert(DBG_Struct	*dbg, monblob_struct *blob);
 
 #endif

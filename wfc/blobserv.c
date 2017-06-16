@@ -22,6 +22,7 @@
 #define	TRACE
 */
 
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -42,14 +43,61 @@
 #include	"blob.h"
 #include	"blobserv.h"
 #include	"dbgroup.h"
+#include	"bytea.h"
 #include	"dbutils.h"
 #include	"monsys.h"
 #include	"debug.h"
 
+static DBG_Struct	*dbg;
+
+static	void
+blob_import(
+	MonObjectType	obj,
+	unsigned char	*buff,
+	size_t			size)
+{
+	monblob_struct *monblob;
+	ValueStruct *value = NULL;
+	char	longname[SIZE_LONGNAME+1];
+
+	monblob = New(monblob_struct);
+	monblob->id = new_blobid();
+	snprintf(longname,SIZE_LONGNAME,"blob-%d",(int)obj);
+	monblob->filename = StrDup(longname);
+	monblob->lifetype = 0;
+	timestamp(monblob->importtime, sizeof(monblob->importtime));
+
+	value = escape_bytea(dbg, buff, size);
+	monblob->bytea = ValueToString(value,NULL);
+	monblob->bytea_len = strlen(monblob->bytea);
+	monblob_insert(dbg, monblob);
+}
+
+static	ValueStruct *
+blob_export(
+	MonObjectType	obj)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+	ValueStruct	*ret, *retval;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "SELECT file_data FROM monblob WHERE filename = 'blob-%d'", (int)obj);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+
+	if (!ret) {
+		fprintf(stderr,"ERROR: [%d] is not registered\n", (int)obj);
+		return NULL;
+	}
+	retval = unescape_bytea(dbg, GetItemLongName(ret,"file_data"));
+	return retval;
+}
+
 extern	void
 InitServeBLOB()
 {
-	DBG_Struct	*dbg;
 	dbg = GetDBG_monsys();
 	dbg->dbt = NewNameHash();
 	if (OpenDB(dbg) != MCP_OK ) {
@@ -67,6 +115,7 @@ ServeBLOB(
 	size_t			size;
 	ssize_t			ssize;
 	unsigned char	*buff;
+	ValueStruct *value;
 
 ENTER_FUNC;
 	LockWrite(blob);
@@ -122,14 +171,10 @@ ENTER_FUNC;
 		obj = RecvObject(fp);		ON_IO_ERROR(fp,badio);
 		if		(  ( ssize = OpenBLOB(blob,obj,BLOB_OPEN_READ) )  >=  0  ) {
 			SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
-			SendLength(fp,ssize);					ON_IO_ERROR(fp,badio);
-			while	(  ssize  >  0  ) {
-				size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
-				buff = ReadBLOB(blob,obj,&size);	ON_IO_ERROR(fp,badio);
-				Send(fp,buff,size);					ON_IO_ERROR(fp,badio);
-				xfree(buff);
-				ssize -= size;
-			}
+			value = blob_export(obj);
+			SendLength(fp,ValueByteLength(value));		ON_IO_ERROR(fp,badio);
+			Send(fp, ValueByte(value),ValueByteLength(value));
+			FreeValueStruct(value);
 			CloseBLOB(blob,obj);
 			DestroyBLOB(blob,obj);
 		} else {
@@ -144,13 +189,9 @@ ENTER_FUNC;
 			SendObject(fp,obj);						ON_IO_ERROR(fp,badio);
 			ssize = RecvLength(fp);					ON_IO_ERROR(fp,badio);
 			if (ssize > 0) {
-				buff = xmalloc((  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize);
-				while	(  ssize  >  0  ) {
-					size = (  ssize  >  SIZE_BUFF  ) ? SIZE_BUFF : ssize;
-					Recv(fp,buff,size);					ON_IO_ERROR(fp,badio);
-					WriteBLOB(blob,obj,buff,size);
-					ssize -= size;
-				}
+				buff = xmalloc(ssize);
+				Recv(fp,buff,ssize);					ON_IO_ERROR(fp,badio);
+				blob_import(obj, buff, ssize);
 				xfree(buff);
 			}
 			CloseBLOB(blob,obj);
