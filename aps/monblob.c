@@ -93,6 +93,7 @@ create_monblob(
 	p += sprintf(p, "       importtime  timestamp  with time zone,");
 	p += sprintf(p, "       lifetype    int,");
 	p += sprintf(p, "       filename    varchar(4096),");
+	p += sprintf(p, "       size        int,");
 	p += sprintf(p, "       file_data   bytea");
 	p += sprintf(p, ");");
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
@@ -123,7 +124,7 @@ blob_import(
 {
 	monblob_struct *blob;
 	char *id = NULL;
-	ValueStruct *value;
+	ValueStruct *value = NULL;
 
 	blob = New(monblob_struct);
 	blob->id = new_blobid();
@@ -133,8 +134,8 @@ blob_import(
 		blob->lifetype = 2;
 	}
 	timestamp(blob->importtime, sizeof(blob->importtime));
-
-	if ((value = file_to_bytea(dbg, blob->filename)) == NULL){
+	blob->size = file_to_bytea(dbg, blob->filename, &value);
+	if (value == NULL){
 		return NULL;
 	}
 	blob->bytea = ValueToString(value,NULL);

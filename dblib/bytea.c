@@ -75,15 +75,15 @@ unescape_bytea(
 }
 
 
-extern ValueStruct *
+extern int
 file_to_bytea(
 	DBG_Struct	*dbg,
-	char	*filename)
+	char	*filename,
+	ValueStruct **value)
 {
 	struct	stat	stbuf;
 	unsigned char	buff[SIZE_BUFF];
 	unsigned char	*src, *src_p;
-	ValueStruct *value = NULL;
 	FILE	*fp;
 	size_t	fsize
 		,   bsize
@@ -91,7 +91,7 @@ file_to_bytea(
 
 	if		(  stat(filename,&stbuf) != 0  ) {
 		fprintf(stderr,"%s: %s\n",  filename, strerror(errno));
-		return NULL;
+		return 0;
 	}
 	fsize = stbuf.st_size;
 	src = (unsigned char *)xmalloc(fsize);
@@ -113,9 +113,26 @@ file_to_bytea(
 		}
 	}	while	(  left  >  0  );
 	fclose(fp);
-	value = escape_bytea(dbg, src, fsize);
+	*value = escape_bytea(dbg, src, fsize);
 	xfree(src);
-	return value;
+	return (int )fsize;
+}
+
+static size_t
+monblob_query(
+	DBG_Struct	*dbg,
+	monblob_struct *blob,
+	char *query)
+{
+	size_t 	size;
+	char *filename;
+
+	filename = Escape_monsys(dbg, blob->filename);
+	size = snprintf(query, SIZE_SQL, \
+		   "INSERT INTO %s (id, importtime, lifetype, filename, size, file_data) VALUES ('%s', '%s', %d, '%s', '%d', '", \
+					MONBLOB, blob->id, blob->importtime, blob->lifetype, filename, blob->size);
+	xfree(filename);
+	return size;
 }
 
 extern Bool
@@ -124,17 +141,12 @@ monblob_insert(
 	monblob_struct *blob)
 {
 	char	*sql, *sql_p;
-	size_t 	size;
 	size_t	sql_len = SIZE_SQL;
 	int rc;
 
 	sql = xmalloc(blob->bytea_len + sql_len);
 	sql_p = sql;
-	size = snprintf(sql_p, sql_len, \
-		   "INSERT INTO monblob \
-                        (id, importtime, lifetype, filename, file_data) \
-                 VALUES ('%s', '%s', %d, '%s', '", blob->id, blob->importtime, blob->lifetype, blob->filename);
-	sql_p = sql_p + size;
+	sql_p = sql_p + monblob_query(dbg, blob, sql_p);
 	strncpy(sql_p, blob->bytea, blob->bytea_len);
 	sql_p = sql_p + blob->bytea_len;
 	snprintf(sql_p, sql_len, "');");

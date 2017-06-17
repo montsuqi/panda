@@ -178,7 +178,7 @@ file_import(
 	size_t 	size, bytea_len;;
 	size_t	sql_len = SIZE_SQL;
 	ValueStruct	*ret;
-	ValueStruct *value;
+	ValueStruct *value = NULL;
 	char	importtime[50];
 	char *recv;
 	char *regfilename;
@@ -213,7 +213,8 @@ file_import(
 		}
 	}
 	SendString(fp, id);
-	if ((value = file_to_bytea(dbg, filename)) == NULL){
+	size = file_to_bytea(dbg, filename, &value);
+	if (value == NULL){
 		return NULL;
 	}
 	bytea = ValueToString(value,NULL);
