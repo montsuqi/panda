@@ -61,7 +61,7 @@ SetDefault(void)
 	ImportFile = NULL;
 	ExportID = NULL;
 	OutputFile = NULL;
-	LifeType = 0;
+	LifeType = 1;
 	fTimer = TRUE;
 }
 
@@ -80,42 +80,6 @@ InitSystem(void)
 	}
 }
 
-static         Bool
-create_monblob(
-        DBG_Struct      *dbg)
-{
-	Bool rc;
-	char *sql, *p;
-	sql = (char *)xmalloc(SIZE_BUFF);
-	p = sql;
-	p += sprintf(p, "CREATE TABLE monblob (");
-	p += sprintf(p, "       id        varchar(37)  primary key,");
-	p += sprintf(p, "       importtime  timestamp  with time zone,");
-	p += sprintf(p, "       lifetype    int,");
-	p += sprintf(p, "       filename    varchar(4096),");
-	p += sprintf(p, "       size        int,");
-	p += sprintf(p, "       file_data   bytea");
-	p += sprintf(p, ");");
-	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
-	xfree(sql);
-	return rc;
-}
-
-extern Bool
-monblob_setup(
-	DBG_Struct	*dbg)
-{
-	Bool	exist;
-	int 	rc;
-	TransactionStart(dbg);
-	exist = table_exist(dbg, "monblob");
-	if ( !exist ) {
-		create_monblob(dbg);
-	}
-	rc = TransactionEnd(dbg);
-	return (rc == MCP_OK);
-}
-
 static	char *
 blob_import(
 	DBG_Struct	*dbg,
@@ -126,8 +90,7 @@ blob_import(
 	char *id = NULL;
 	ValueStruct *value = NULL;
 
-	blob = New(monblob_struct);
-	blob->id = new_blobid();
+	blob = NewMonblob_struct();
 	blob->filename = filename;
 	blob->lifetype = lifetype;
 	if (blob->lifetype > 2) {

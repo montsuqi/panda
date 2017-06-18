@@ -128,43 +128,6 @@ DisconnectBlobAPI(NETFILE *fp)
 	}
 }
 
-static         Bool
-create_monblobapi(
-        DBG_Struct      *dbg)
-{
-	Bool rc;
-	char *sql, *p;
-	sql = (char *)xmalloc(SIZE_BUFF);
-	p = sql;
-	p += sprintf(p, "CREATE TABLE monblobapi (");
-	p += sprintf(p, "       id        varchar(37)  primary key,");
-	p += sprintf(p, "       importtime  timestamp  with time zone,");
-	p += sprintf(p, "       lifetype    int,");
-	p += sprintf(p, "       filename    varchar(4096),");
-	p += sprintf(p, "       content_type varchar(1024),");
-	p += sprintf(p, "       status		int,");
-	p += sprintf(p, "       file_data   bytea");
-	p += sprintf(p, ");");
-	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
-	xfree(sql);
-	return rc;
-}
-
-extern Bool
-monblobapi_setup(
-	DBG_Struct	*dbg)
-{
-	Bool	exist;
-	int 	rc;
-	TransactionStart(dbg);
-	exist = table_exist(dbg, "monblobapi");
-	if ( !exist ) {
-		create_monblobapi(dbg);
-	}
-	rc = TransactionEnd(dbg);
-	return (rc == MCP_OK);
-}
-
 static char *
 file_import(
 	DBG_Struct	*dbg,
@@ -350,7 +313,7 @@ setup_only()
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
-	monblobapi_setup(dbg);
+	monblob_setup(dbg);
 }
 
 extern	int
@@ -393,7 +356,7 @@ main(
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
-	monblobapi_setup(dbg);
+	monblob_setup(dbg);
 	if (ImportFile) {
 		blob_import(dbg, ImportID, ImportFile, Socket);
 	} else {

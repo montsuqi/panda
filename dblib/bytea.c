@@ -25,6 +25,133 @@
 #include	"comm.h"
 #include	"bytea.h"
 
+char *columns[][2] = {\
+	{"id", "varchar(37)"},
+	{"importtime", "timestamp with time zone"},
+	{"lifetype", "int"},
+	{"filename", "varchar(4096)"},
+	{"size", "int"},
+	{"content_type", "varchar(1024)"},
+	{"status", "int"},
+	{"file_data", "bytea"},
+	{NULL, NULL}
+};
+
+static char *
+get_columns(
+		DBG_Struct      *dbg,
+		char *table_name)
+{
+	char *sql;
+	ValueStruct	*retval = NULL;
+	char *columns = NULL;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT array_to_string(array_agg(column_name::text),',') AS columns FROM pg_tables JOIN information_schema.columns on pg_tables.tablename = columns.table_name  WHERE table_name = '%s';", table_name);
+	retval = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	if (ValueType(retval) == GL_TYPE_RECORD) {
+		columns = StrDup(ValueToString(ValueRecordItem(retval,0), dbg->coding));
+	}
+	FreeValueStruct(retval);
+	xfree(sql);
+	return columns;
+}
+
+static Bool
+migration_monblob(
+        DBG_Struct      *dbg)
+{
+	Bool rc;
+	char *sql, *p;
+	char *table_name;
+	char *columns;
+
+	table_name = (char *)xmalloc(SIZE_BUFF);
+	sprintf(table_name, "%s__bak", MONBLOB);
+	columns = get_columns(dbg, table_name);
+	if (columns == NULL) {
+		return FALSE;
+	}
+	sql = (char *)xmalloc(SIZE_BUFF);
+	p = sql;
+	p += sprintf(p, "INSERT INTO %s (%s) SELECT %s FROM %s;", MONBLOB, columns, columns, table_name);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	xfree(sql);
+	xfree(columns);
+	xfree(table_name);
+	return (rc == MCP_OK);
+}
+
+static Bool
+create_monblob(
+        DBG_Struct      *dbg)
+{
+	Bool rc;
+	char *sql, *p;
+	int i;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	p = sql;
+	p += sprintf(p, "CREATE TABLE %s (", MONBLOB);
+	for (i = 0; columns[i][0] != NULL; i++) {
+		if (i == 0) {
+			p += sprintf(p, "%s %s primary key",columns[i][0],columns[i][1]);
+		} else {
+			p += sprintf(p, ", ");
+			p += sprintf(p, "%s %s",columns[i][0],columns[i][1]);
+		}
+	}
+	p += sprintf(p, ");");
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	xfree(sql);
+	return (rc == MCP_OK);
+}
+
+static Bool
+recreate_monblob(
+        DBG_Struct      *dbg)
+{
+	int rc;
+	char	sql[SIZE_SQL+1];
+
+	if ( table_exist(dbg, "monblob__bak") == TRUE) {
+		sprintf(sql, "DROP TABLE %s__bak;", MONBLOB);
+		if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
+			return FALSE;
+		}
+	}
+	sprintf(sql, "ALTER TABLE %s RENAME TO %s__bak;", MONBLOB, MONBLOB);
+	if (ExecDBOP(dbg, sql, TRUE, DB_UPDATE) != MCP_OK) {
+		return FALSE;
+	}
+	if (!create_monblob(dbg)) {
+		return FALSE;
+	}
+	if (!migration_monblob(dbg)) {
+		return FALSE;
+	}
+	sprintf(sql, "DROP TABLE %s__bak;", MONBLOB);
+	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	return (rc == MCP_OK);
+}
+
+extern Bool
+monblob_setup(
+	DBG_Struct	*dbg)
+{
+	int 	rc;
+
+	TransactionStart(dbg);
+	if ( table_exist(dbg, MONBLOB) != TRUE) {
+		create_monblob(dbg);
+	}
+	if ( column_exist(dbg, MONBLOB, "status") != TRUE ) {
+		recreate_monblob(dbg);
+	}
+	rc = TransactionEnd(dbg);
+	return (rc == MCP_OK);
+}
+
 extern char *
 new_blobid()
 {
@@ -35,6 +162,20 @@ new_blobid()
 	uuid_generate(u);
 	uuid_unparse(u, id);
 	return id;
+}
+
+extern monblob_struct *
+NewMonblob_struct()
+{
+	monblob_struct *monblob;
+	monblob = New(monblob_struct);
+	monblob->id = new_blobid();
+	monblob->lifetype = 0;
+	monblob->filename = "";
+	monblob->size = 0;
+	monblob->bytea = NULL;
+	monblob->bytea_len = 0;
+	return monblob;
 }
 
 extern ValueStruct *

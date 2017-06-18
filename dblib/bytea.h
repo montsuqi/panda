@@ -25,15 +25,17 @@
 
 typedef struct _monblob_struct {
 	char *id;
-	char *filename;
-	unsigned int lifetype;
 	char importtime[50];
+	unsigned int lifetype;
+	char *filename;
 	int size;
 	char *bytea;
 	size_t 	bytea_len;
 } monblob_struct;
 
+extern Bool monblob_setup(DBG_Struct *dbg);
 extern char *new_blobid(void);
+extern monblob_struct *NewMonblob_struct(void);
 extern ValueStruct *escape_bytea(DBG_Struct *dbg, unsigned char *src, size_t len);
 extern ValueStruct *unescape_bytea(DBG_Struct *dbg, ValueStruct *value);
 extern int file_to_bytea(DBG_Struct *dbg, char *filename, ValueStruct **value);

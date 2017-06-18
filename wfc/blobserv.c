@@ -60,13 +60,11 @@ blob_import(
 	ValueStruct *value = NULL;
 	char	longname[SIZE_LONGNAME+1];
 
-	monblob = New(monblob_struct);
-	monblob->id = new_blobid();
+	monblob = NewMonblob_struct();
 	snprintf(longname,SIZE_LONGNAME,"blob-%d",(int)obj);
 	monblob->filename = StrDup(longname);
-	monblob->lifetype = 0;
+	monblob->size = size;
 	timestamp(monblob->importtime, sizeof(monblob->importtime));
-
 	value = escape_bytea(dbg, buff, size);
 	monblob->bytea = ValueToString(value,NULL);
 	monblob->bytea_len = strlen(monblob->bytea);
