@@ -158,7 +158,7 @@ file_import(
 		id = (char*)json_object_get_string(json_id);
 		sql = (char *)xmalloc(sql_len);
 		snprintf(sql, sql_len,
-				 "SELECT id FROM monblobapi WHERE id = '%s'", id);
+				 "SELECT id FROM %s WHERE id = '%s'", MONBLOB, id);
 		ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 		xfree(sql);
 		if (!ret) {
@@ -170,7 +170,7 @@ file_import(
 		if (id == NULL) {
 			id = new_blobid();
 			sql = xmalloc(sql_len);
-			snprintf(sql, sql_len, "INSERT INTO monblobapi (id, status) VALUES('%s', '%d');", id , 503);
+			snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, id , 503);
 			ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 			xfree(sql);
 		}
@@ -204,8 +204,8 @@ file_import(
 	sql = xmalloc(bytea_len + sql_len);
 	sql_p = sql;
 	size = snprintf(sql_p, sql_len, \
-					"UPDATE monblobapi SET importtime = '%s', lifetype = '%d', filename = '%s', content_type = '%s', status= '%d', file_data ='", \
-					importtime, lifetype, regfilename, content_type, 200);
+					"UPDATE %sSET importtime = '%s', lifetype = '%d', filename = '%s', content_type = '%s', status= '%d', file_data ='", \
+					MONBLOB, importtime, lifetype, regfilename, content_type, 200);
 	sql_p = sql_p + size;
 	strncpy(sql_p, bytea, bytea_len);
 	sql_p = sql_p + bytea_len;
@@ -233,7 +233,7 @@ file_export(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT id, filename, content_type, status, file_data FROM monblobapi WHERE id = '%s'", id);
+			 "SELECT id, filename, content_type, status, file_data FROM %s WHERE id = '%s'", MONBLOB, id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -280,7 +280,6 @@ blob_import(
 	NETFILE *fp;
 
 	fp = ConnectBlobAPI(socket);
-
 	TransactionStart(dbg);
 	id = file_import(dbg, id, filename, fp);
 	TransactionEnd(dbg);

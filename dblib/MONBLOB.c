@@ -43,12 +43,13 @@
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"monsys.h"
+#include	"bytea.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"redirect.h"
 #include	"debug.h"
 
-#define 	MONBLOB	"monblobapi"
+#define 	MONBLOBCMD	"monblobapi"
 
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
@@ -160,7 +161,7 @@ ENTER_FUNC;
 	uuid_unparse(u, id);
 	mondbg = GetDBG_monsys();
 	sql = xmalloc(sql_len);
-	snprintf(sql, sql_len, "INSERT INTO monblobapi (id, status) VALUES('%s', '%d');", id , 503);
+	snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, id , 503);
 	ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -201,13 +202,13 @@ ENTER_FUNC;
 		Error("mkdtemp: %s", strerror(errno));
 	}
 	snprintf(tempsocket, PATH_MAX, "%s/%s", tempdir, "blobapi");
-	cmd = BIN_DIR "/" MONBLOB;
+	cmd = BIN_DIR "/" MONBLOBCMD;
 	if ( ( pid = fork() ) <0 ) {
 		Error("fork: %s", strerror(errno));
 	}
 	if (pid == 0){
 		/* child */
-		if (execl(cmd,MONBLOB,"-importid", id,"-import", filename, "-socket", tempsocket, NULL) < 0) {
+		if (execl(cmd,MONBLOBCMD,"-importid", id,"-import", filename, "-socket", tempsocket, NULL) < 0) {
 			Error("execl: %s:%s", strerror(errno), cmd);
 		}
 	}

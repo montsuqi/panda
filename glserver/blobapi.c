@@ -37,7 +37,7 @@
 #include	"message.h"
 #include	"debug.h"
 
-#define 	MONBLOB	"monblobapi"
+#define 	MONBLOBCMD	"monblobapi"
 
 static HTTP_RESPONSE *
 BlobToResponse(
@@ -114,13 +114,13 @@ GetBlobAPI(
 		Error("mkdtemp: %s", strerror(errno));
 	}
 	snprintf(tempsocket, PATH_MAX, "%s/%s", tempdir, "blobapi");
-	cmd = BIN_DIR "/" MONBLOB;
+	cmd = BIN_DIR "/" MONBLOBCMD;
 	if ( ( pid = fork() ) <0 ) {
 		Error("fork: %s", strerror(errno));
 	}
 	if (pid == 0){
 		/* child */
-		if (execl(cmd,MONBLOB,"-export", req->session_id,"-socket", tempsocket, NULL) < 0) {
+		if (execl(cmd,MONBLOBCMD,"-export", req->session_id,"-socket", tempsocket, NULL) < 0) {
 			Error("execl: %s:%s", strerror(errno), cmd);
 		}
 	}
