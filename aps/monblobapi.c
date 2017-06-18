@@ -168,7 +168,7 @@ file_import(
 		}
 	} else {
 		if (id == NULL) {
-			id = new_blobid();
+			id = new_id();
 			sql = xmalloc(sql_len);
 			snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, id , 503);
 			ExecDBOP(dbg, sql, FALSE, DB_UPDATE);

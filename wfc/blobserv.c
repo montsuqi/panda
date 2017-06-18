@@ -22,7 +22,6 @@
 #define	TRACE
 */
 
-
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -48,6 +47,8 @@
 #include	"monsys.h"
 #include	"debug.h"
 
+#define BLOBEXPIRE 2
+
 static DBG_Struct	*dbg;
 
 static	void
@@ -61,6 +62,7 @@ blob_import(
 	char	longname[SIZE_LONGNAME+1];
 
 	monblob = NewMonblob_struct();
+	monblob->blobid = (int)obj;
 	snprintf(longname,SIZE_LONGNAME,"blob-%d",(int)obj);
 	monblob->filename = StrDup(longname);
 	monblob->size = size;
@@ -81,7 +83,7 @@ blob_export(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT file_data FROM monblob WHERE filename = 'blob-%d'", (int)obj);
+			 "SELECT file_data FROM monblob WHERE blobid = %d AND now() < importtime + CAST('%d days' AS INTERVAL);", (int)obj, BLOBEXPIRE);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 

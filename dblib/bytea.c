@@ -27,6 +27,7 @@
 
 char *columns[][2] = {\
 	{"id", "varchar(37)"},
+	{"blobid", "int"},
 	{"importtime", "timestamp with time zone"},
 	{"lifetype", "int"},
 	{"filename", "varchar(4096)"},
@@ -145,7 +146,7 @@ monblob_setup(
 	if ( table_exist(dbg, MONBLOB) != TRUE) {
 		create_monblob(dbg);
 	}
-	if ( column_exist(dbg, MONBLOB, "status") != TRUE ) {
+	if ( column_exist(dbg, MONBLOB, "blobid") != TRUE ) {
 		recreate_monblob(dbg);
 	}
 	rc = TransactionEnd(dbg);
@@ -153,7 +154,7 @@ monblob_setup(
 }
 
 extern char *
-new_blobid()
+new_id()
 {
 	uuid_t	u;
 	static	char *id;
@@ -169,7 +170,8 @@ NewMonblob_struct()
 {
 	monblob_struct *monblob;
 	monblob = New(monblob_struct);
-	monblob->id = new_blobid();
+	monblob->id = new_id();
+	monblob->blobid = 0;
 	monblob->lifetype = 0;
 	monblob->filename = "";
 	monblob->size = 0;
@@ -270,8 +272,8 @@ monblob_query(
 
 	filename = Escape_monsys(dbg, blob->filename);
 	size = snprintf(query, SIZE_SQL, \
-		   "INSERT INTO %s (id, importtime, lifetype, filename, size, file_data) VALUES ('%s', '%s', %d, '%s', '%d', '", \
-					MONBLOB, blob->id, blob->importtime, blob->lifetype, filename, blob->size);
+		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, file_data) VALUES ('%s', '%d', '%s', %d, '%s', '%d', '", \
+					MONBLOB, blob->id, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size);
 	xfree(filename);
 	return size;
 }
