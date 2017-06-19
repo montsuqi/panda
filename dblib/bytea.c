@@ -26,6 +26,7 @@
 #include	"bytea.h"
 
 #define DEFAULTSTATUS 403
+#define DEFAULTCONTENT "application/octet-stream"
 
 char *columns[][2] = {\
 	{"id", "varchar(37)"},
@@ -205,9 +206,26 @@ NewMonblob_struct(
 	monblob->lifetype = 0;
 	monblob->filename = "";
 	monblob->size = 0;
+	monblob->content_type = StrDup(DEFAULTCONTENT);
 	monblob->bytea = NULL;
 	monblob->bytea_len = 0;
 	return monblob;
+}
+
+void
+FreeMonblob_struct(
+	monblob_struct *monblob)
+{
+	if (!monblob){
+		return;
+	}
+	if (monblob->id) {
+		xfree(monblob->id);
+	}
+	if (monblob->content_type) {
+		xfree(monblob->content_type);
+	}
+	xfree(monblob);
 }
 
 extern ValueStruct *
@@ -295,33 +313,38 @@ monblob_import(
 	DBG_Struct	*dbg,
 	char *id,
 	char *filename,
+	char *content_type,
 	unsigned int lifetype)
 {
-	monblob_struct *blob;
+	monblob_struct *monblob;
 	ValueStruct *value = NULL;
 
-	blob = NewMonblob_struct(id);
-	blob->filename = filename;
-	blob->lifetype = lifetype;
-	if (blob->lifetype > 2) {
-		blob->lifetype = 2;
+	monblob = NewMonblob_struct(id);
+	monblob->filename = filename;
+	monblob->lifetype = lifetype;
+	if (monblob->lifetype > 2) {
+		monblob->lifetype = 2;
 	}
-	timestamp(blob->importtime, sizeof(blob->importtime));
-	blob->size = file_to_bytea(dbg, blob->filename, &value);
+	timestamp(monblob->importtime, sizeof(monblob->importtime));
+	if (content_type == NULL) {
+		monblob->content_type = StrDup(DEFAULTCONTENT);
+	} else {
+		monblob->content_type = StrDup(content_type);
+	}
+	monblob->size = file_to_bytea(dbg, monblob->filename, &value);
 	if (value == NULL){
 		return NULL;
 	}
-	blob->bytea = ValueToString(value,NULL);
-	blob->bytea_len = strlen(blob->bytea);
-	monblob_insert(dbg, blob, monblob_idcheck(dbg, blob->id));
+	monblob->bytea = ValueToString(value,NULL);
+	monblob->bytea_len = strlen(monblob->bytea);
+	monblob_insert(dbg, monblob, monblob_idcheck(dbg, monblob->id));
 
-	if (blob->id) {
-		id = StrDup(blob->id);
+	if (monblob->id) {
+		id = StrDup(monblob->id);
 	}
 
 	FreeValueStruct(value);
-	xfree(blob->id);
-	xfree(blob);
+	FreeMonblob_struct(monblob);
 
 	return id;
 }
@@ -337,8 +360,10 @@ insert_query(
 
 	filename = Escape_monsys(dbg, blob->filename);
 	size = snprintf(query, SIZE_SQL, \
-		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, status, file_data) VALUES ('%s', '%d', '%s', %d, '%s', '%d', '%d', '", \
-					MONBLOB, blob->id, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size, DEFAULTSTATUS );
+		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, status, content_type, file_data) "\
+					"VALUES ('%s', '%d', '%s', %d, '%s', %d, '%s', %d, '", \
+					MONBLOB, blob->id, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size,
+					blob->content_type, DEFAULTSTATUS );
 	xfree(filename);
 	return size;
 }
@@ -354,8 +379,8 @@ update_query(
 
 	filename = Escape_monsys(dbg, blob->filename);
 	size = snprintf(query, SIZE_SQL, \
-		   "UPDATE %s SET blobid = '%d', importtime = '%s', lifetype = %d, filename = '%s', size = %d, status = %d, file_data = '", \
-					MONBLOB, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size, DEFAULTSTATUS );
+		   "UPDATE %s SET blobid = '%d', importtime = '%s', lifetype = %d, filename = '%s', size = %d,  content_type = '%s', status = %d, file_data = '", \
+					MONBLOB, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size, blob->content_type, DEFAULTSTATUS );
 	xfree(filename);
 	return size;
 }
@@ -363,24 +388,24 @@ update_query(
 extern Bool
 monblob_insert(
 	DBG_Struct	*dbg,
-	monblob_struct *blob,
+	monblob_struct *monblob,
 	Bool update)
 {
 	char	*sql, *sql_p;
 	size_t	sql_len = SIZE_SQL;
 	int rc;
 
-	sql = xmalloc(blob->bytea_len + sql_len);
+	sql = xmalloc(monblob->bytea_len + sql_len);
 	sql_p = sql;
 	if (update) {
-		sql_p = sql_p + update_query(dbg, blob, sql_p);
+		sql_p = sql_p + update_query(dbg, monblob, sql_p);
 	} else {
-		sql_p = sql_p + insert_query(dbg, blob, sql_p);
+		sql_p = sql_p + insert_query(dbg, monblob, sql_p);
 	}
-	strncpy(sql_p, blob->bytea, blob->bytea_len);
-	sql_p = sql_p + blob->bytea_len;
+	strncpy(sql_p, monblob->bytea, monblob->bytea_len);
+	sql_p = sql_p + monblob->bytea_len;
 	if (update) {
-		snprintf(sql_p, sql_len, "' WHERE id='%s';", blob->id);
+		snprintf(sql_p, sql_len, "' WHERE id='%s';", monblob->id);
 	} else {
 		snprintf(sql_p, sql_len, "');");
 	}

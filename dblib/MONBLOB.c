@@ -55,33 +55,6 @@
 
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
-#if 0
-static void
-SendMONBLOBValue(
-	ValueStruct	*val,
-	char *tempsocket)
-{
-	Port	*port;
-	int		fd, _fd;
-	NETFILE	*fp;
-	char *buf;
-
-	port = ParPortName(tempsocket);
-	_fd =InitServerPort(port,1);
-	if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
-		Error("INET Domain Accept");
-	}
-	fp = SocketToNet(fd);
-	buf = xmalloc(JSON_SizeValue(NULL,val));
-	JSON_PackValue(NULL,buf,val);
-	SendString(fp, buf);
-	xfree(buf);
-	close(_fd);
-	CloseNet(fp);
-	CleanUNIX_Socket(port);
-}
-#endif
-
 static	ValueStruct	*
 _NewBLOB(
 	DBG_Struct		*dbg,
@@ -105,8 +78,7 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		SetValueString(val, monblob->id, dbg->coding);
 	}
-	xfree(monblob->id);
-	xfree(monblob);
+	FreeMonblob_struct(monblob);
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
@@ -124,6 +96,7 @@ _ImportBLOB(
 	DBG_Struct		*mondbg;
 	char *id = NULL;
 	char *filename = NULL;
+	char *content_type = NULL;
 
 ENTER_FUNC;
 	mondbg = GetDBG_monsys();
@@ -133,10 +106,14 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "filename")) != NULL) {
 		filename = ValueToString(val,dbg->coding);
 	}
-	id = monblob_import(mondbg, id, filename, 1);
+	if ((val = GetItemLongName(args, "content_type")) != NULL) {
+		content_type = ValueToString(val,dbg->coding);
+	}
+	id = monblob_import(mondbg, id, filename, content_type, 1);
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		SetValueString(val, id, dbg->coding);
 	}
+	xfree(id);
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
