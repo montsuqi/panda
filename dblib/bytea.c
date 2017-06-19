@@ -253,17 +253,10 @@ unescape_bytea(
 	DBG_Struct	*dbg,
 	ValueStruct	*value)
 {
-	ValueStruct	*recval, *tmpval, *retval;
-
-	recval = NewValue(GL_TYPE_RECORD);
-	ValueAddRecordItem(recval, "dbunescapebytea", value);
-	tmpval = ExecDBUNESCAPEBYTEA(dbg, NULL, NULL, recval);
-	retval = DuplicateValue(GetItemLongName(tmpval,"dbunescapebytea"),TRUE);
-	FreeValueStruct(tmpval);
-	FreeValueStruct(recval);
+	ValueStruct *retval;
+	retval = ExecDBUNESCAPEBYTEA(dbg, NULL, NULL, value);
 	return retval;
 }
-
 
 extern int
 file_to_bytea(
@@ -360,7 +353,7 @@ insert_query(
 
 	filename = Escape_monsys(dbg, blob->filename);
 	size = snprintf(query, SIZE_SQL, \
-		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, status, content_type, file_data) "\
+		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, content_type, status, file_data) "\
 					"VALUES ('%s', '%d', '%s', %d, '%s', %d, '%s', %d, '", \
 					MONBLOB, blob->id, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size,
 					blob->content_type, DEFAULTSTATUS );
@@ -409,9 +402,59 @@ monblob_insert(
 	} else {
 		snprintf(sql_p, sql_len, "');");
 	}
-	printf("SQL:%s\n", sql);
 	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
 	return (rc == MCP_OK);
 }
+
+extern char *
+value_to_file(
+	char *filename,
+	ValueStruct	*value)
+{
+	FILE	*fp;
+	size_t	size;
+
+	if ((fp = fopen(filename,"wb")) == NULL ) {
+		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
+		return NULL;
+	}
+	size = fwrite(ValueByte(value),ValueByteLength(value),1,fp);
+	if ( size < 1) {
+		fprintf(stderr,"write error: %s\n",  filename);
+		return NULL;
+	}
+	if (fclose(fp) != 0) {
+		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
+		return NULL;
+	}
+	return filename;
+}
+
+extern	char *
+monblob_export(
+	DBG_Struct *dbg,
+	char *id,
+	char *filename)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+	ValueStruct	*value, *ret, *retval;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "SELECT file_data FROM monblob WHERE id = '%s'", id);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (!ret) {
+		fprintf(stderr,"[%s] is not registered\n", id);
+		return NULL;
+	}
+	value = GetItemLongName(ret, "file_data");
+	retval = unescape_bytea(dbg, value);
+	filename = value_to_file(filename, retval);
+	FreeValueStruct(ret);
+	return filename;
+}
+

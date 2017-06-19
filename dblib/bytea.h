@@ -41,8 +41,10 @@ extern monblob_struct *NewMonblob_struct(char *id);
 extern void FreeMonblob_struct(monblob_struct *monblob);
 extern ValueStruct *escape_bytea(DBG_Struct *dbg, unsigned char *src, size_t len);
 extern ValueStruct *unescape_bytea(DBG_Struct *dbg, ValueStruct *value);
-extern	char *monblob_import(DBG_Struct *dbg, char *id, char *filename, char *content_type, unsigned int lifetype);
-extern int file_to_bytea(DBG_Struct *dbg, char *filename, ValueStruct **value);
 extern Bool monblob_insert(DBG_Struct	*dbg, monblob_struct *monblob, Bool update);
+extern int file_to_bytea(DBG_Struct *dbg, char *filename, ValueStruct **value);
+extern	char *monblob_import(DBG_Struct *dbg, char *id, char *filename, char *content_type, unsigned int lifetype);
+extern char *value_to_file(char *filename, ValueStruct *value);
+extern char *monblob_export(DBG_Struct *dbg, char *id, char *filename);
 
 #endif

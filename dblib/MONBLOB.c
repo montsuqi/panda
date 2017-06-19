@@ -51,8 +51,6 @@
 #include	"redirect.h"
 #include	"debug.h"
 
-#define 	MONBLOBCMD	"monblobapi"
-
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
 static	ValueStruct	*
@@ -113,7 +111,41 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		SetValueString(val, id, dbg->coding);
 	}
-	xfree(id);
+	if (id){
+		xfree(id);
+	}
+	ret = DuplicateValue(args,TRUE);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_ExportBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*ret;
+	ValueStruct	*val;
+	DBG_Struct		*mondbg;
+	char *id = NULL;
+	char *filename = NULL;
+
+ENTER_FUNC;
+	mondbg = GetDBG_monsys();
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		id = ValueToString(val,dbg->coding);
+	}
+	if ((val = GetItemLongName(args, "filename")) != NULL) {
+		filename = ValueToString(val,dbg->coding);
+	}
+
+	monblob_export(mondbg, id, filename);
+
+	if ((val = GetItemLongName(args, "filename")) != NULL) {
+		SetValueString(val, filename, dbg->coding);
+	}
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
@@ -158,6 +190,7 @@ static	DB_OPS	Operations[] = {
 	/*	table operations	*/
 	{	"MONBLOBNEW",		_NewBLOB		},
 	{	"MONBLOBIMPORT",	_ImportBLOB		},
+	{	"MONBLOBEXPORT",	_ExportBLOB		},
 
 	{	NULL,			NULL }
 };

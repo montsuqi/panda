@@ -80,30 +80,6 @@ InitSystem(void)
 	}
 }
 
-static char *
-value_to_file(
-	char *filename,
-	ValueStruct	*value)
-{
-	FILE	*fp;
-	size_t	size;
-
-	if ((fp = fopen(filename,"wb")) == NULL ) {
-		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
-		return NULL;
-	}
-	size = fwrite(ValueByte(value),ValueByteLength(value),1,fp);
-	if ( size < 1) {
-		fprintf(stderr,"write error: %s\n",  filename);
-		return NULL;
-	}
-	if (fclose(fp) != 0) {
-		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
-		return NULL;
-	}
-	return filename;
-}
-
 static	char *
 blob_export(
 	DBG_Struct	*dbg,
@@ -111,27 +87,8 @@ blob_export(
 	char *export_file)
 {
 	static char	*filename;
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
-	ValueStruct	*ret, *value, *retval;
 
-	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "SELECT filename, file_data FROM monblob WHERE id = '%s'", id);
-	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-	xfree(sql);
-
-	if (!ret) {
-		fprintf(stderr,"ERROR: [%s] is not registered\n", id);
-		return NULL;
-	}
-	if (export_file == NULL) {
-		export_file = StrDup(ValueToString(GetItemLongName(ret,"filename"),dbg->coding));
-	}
-	value = GetItemLongName(ret,"file_data");
-	retval = unescape_bytea(dbg, value);
-	filename = value_to_file(export_file, retval);
-	FreeValueStruct(retval);
+	filename = monblob_export(dbg, id, export_file);
 
 	return filename;
 }
