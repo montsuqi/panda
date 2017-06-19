@@ -95,6 +95,20 @@ blob_export(
 	return retval;
 }
 
+static void
+blob_delete(
+	MonObjectType	obj)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "DELETE FROM monblob WHERE blobid = %d AND now() < importtime + CAST('%d days' AS INTERVAL);", (int)obj, BLOBEXPIRE);
+	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+}
+
 extern	void
 InitServeBLOB()
 {
@@ -142,7 +156,7 @@ BLOBWRITE(
 			ON_IO_ERROR(fp,badio);
 			buff = xmalloc(size);
 			Recv(fp,buff,size);			ON_IO_ERROR(fp,badio);
-			size = WriteBLOB(blob,obj,buff,size);
+			blob_import(obj, buff, size);
 			CloseBLOB(blob,obj);
 			xfree(buff);
 			SendLength(fp,size);	ON_IO_ERROR(fp,badio);
@@ -160,20 +174,22 @@ BLOBREAD(
 	BLOB_State	*blob)
 {
 	MonObjectType	obj;
-	size_t			size;
-	unsigned char	*buff;
+	ValueStruct *value;
 
 	dbgmsg("BLOB_READ");
 	obj = RecvObject(fp);		ON_IO_ERROR(fp,badio);
 	if		(  OpenBLOB(blob,obj,BLOB_OPEN_READ)  >=  0  ) {
 		SendPacketClass(fp,BLOB_OK);		ON_IO_ERROR(fp,badio);
-		buff = ReadBLOB(blob,obj,&size);
+		value = blob_export(obj);
 		CloseBLOB(blob,obj);
+
 		DestroyBLOB(blob,obj);
-		SendLength(fp,size);				ON_IO_ERROR(fp,badio);
-		Send(fp,buff,size);					ON_IO_ERROR(fp,badio);
+		blob_delete(obj);
+
+		SendLength(fp,ValueByteLength(value));		ON_IO_ERROR(fp,badio);
+		Send(fp, ValueByte(value),ValueByteLength(value));
+		FreeValueStruct(value);
 		Flush(fp);
-		xfree(buff);
 	} else {
 		SendPacketClass(fp,BLOB_NOT);		ON_IO_ERROR(fp,badio);
 	}
@@ -197,6 +213,8 @@ BLOBEXPORT(
 		SendLength(fp,ValueByteLength(value));		ON_IO_ERROR(fp,badio);
 		Send(fp, ValueByte(value),ValueByteLength(value));
 		FreeValueStruct(value);
+
+		blob_delete(obj);
 		CloseBLOB(blob,obj);
 		DestroyBLOB(blob,obj);
 	} else {
