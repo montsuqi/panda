@@ -61,7 +61,7 @@ blob_import(
 	ValueStruct *value = NULL;
 	char	longname[SIZE_LONGNAME+1];
 
-	monblob = NewMonblob_struct();
+	monblob = NewMonblob_struct(NULL);
 	monblob->blobid = (int)obj;
 	snprintf(longname,SIZE_LONGNAME,"blob-%d",(int)obj);
 	monblob->filename = StrDup(longname);
@@ -70,7 +70,7 @@ blob_import(
 	value = escape_bytea(dbg, buff, size);
 	monblob->bytea = ValueToString(value,NULL);
 	monblob->bytea_len = strlen(monblob->bytea);
-	monblob_insert(dbg, monblob);
+	monblob_insert(dbg, monblob, FALSE);
 }
 
 static	ValueStruct *

@@ -36,10 +36,11 @@ typedef struct _monblob_struct {
 
 extern Bool monblob_setup(DBG_Struct *dbg);
 extern char *new_id(void);
-extern monblob_struct *NewMonblob_struct(void);
+extern monblob_struct *NewMonblob_struct(char *id);
 extern ValueStruct *escape_bytea(DBG_Struct *dbg, unsigned char *src, size_t len);
 extern ValueStruct *unescape_bytea(DBG_Struct *dbg, ValueStruct *value);
+extern	char *monblob_import(DBG_Struct *dbg, char *id, char *filename, unsigned int lifetype);
 extern int file_to_bytea(DBG_Struct *dbg, char *filename, ValueStruct **value);
-extern Bool monblob_insert(DBG_Struct	*dbg, monblob_struct *blob);
+extern Bool monblob_insert(DBG_Struct	*dbg, monblob_struct *blob, Bool update);
 
 #endif

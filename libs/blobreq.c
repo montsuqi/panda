@@ -111,7 +111,7 @@ RequestReadBLOB(
 {
 	unsigned char 	*buff;
 	size_t	red;
-	
+
 ENTER_FUNC;
 	red = 0;
 	*ret = NULL;

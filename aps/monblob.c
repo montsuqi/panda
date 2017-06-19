@@ -80,43 +80,6 @@ InitSystem(void)
 	}
 }
 
-static	char *
-blob_import(
-	DBG_Struct	*dbg,
-	char *filename,
-	unsigned int lifetype)
-{
-	monblob_struct *blob;
-	char *id = NULL;
-	ValueStruct *value = NULL;
-
-	blob = NewMonblob_struct();
-	blob->filename = filename;
-	blob->lifetype = lifetype;
-	if (blob->lifetype > 2) {
-		blob->lifetype = 2;
-	}
-	timestamp(blob->importtime, sizeof(blob->importtime));
-	blob->size = file_to_bytea(dbg, blob->filename, &value);
-	if (value == NULL){
-		return NULL;
-	}
-	blob->bytea = ValueToString(value,NULL);
-	blob->bytea_len = strlen(blob->bytea);
-
-	monblob_insert(dbg, blob);
-
-	if (blob->id) {
-		id = StrDup(blob->id);
-	}
-
-	FreeValueStruct(value);
-	xfree(blob->id);
-	xfree(blob);
-
-	return id;
-}
-
 static char *
 value_to_file(
 	char *filename,
@@ -141,8 +104,8 @@ value_to_file(
 	return filename;
 }
 
-static char *
-file_export(
+static	char *
+blob_export(
 	DBG_Struct	*dbg,
 	char *id,
 	char *export_file)
@@ -168,23 +131,7 @@ file_export(
 	value = GetItemLongName(ret,"file_data");
 	retval = unescape_bytea(dbg, value);
 	filename = value_to_file(export_file, retval);
-
 	FreeValueStruct(retval);
-
-	return filename;
-}
-
-static	char *
-blob_export(
-	DBG_Struct	*dbg,
-	char *id,
-	char *export_file)
-{
-	char *filename;
-
-	TransactionStart(dbg);
-	filename = file_export(dbg, id, export_file);
-	TransactionEnd(dbg);
 
 	return filename;
 }
@@ -297,14 +244,18 @@ main(
 	if (List) {
 		blob_list(dbg);
 	} else if (ImportFile) {
-		id = blob_import(dbg, ImportFile, LifeType);
+		TransactionStart(dbg);
+		id = monblob_import(dbg, NULL, ImportFile, LifeType);
+		TransactionEnd(dbg);
 		if ( !id ){
 			exit(1);
 		}
 		printf("%s\n", id);
 		xfree(id);
 	} else if (ExportID) {
+		TransactionStart(dbg);
 		filename = blob_export(dbg, ExportID, OutputFile);
+		TransactionEnd(dbg);
 		if ( !filename ) {
 			exit(1);
 		}

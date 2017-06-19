@@ -25,6 +25,8 @@
 #include	"comm.h"
 #include	"bytea.h"
 
+#define DEFAULTSTATUS 403
+
 char *columns[][2] = {\
 	{"id", "varchar(37)"},
 	{"blobid", "int"},
@@ -153,6 +155,28 @@ monblob_setup(
 	return (rc == MCP_OK);
 }
 
+static Bool
+monblob_idcheck(
+	DBG_Struct	*dbg,
+	char *id)
+{
+	Bool rc;
+	char *sql;
+	ValueStruct *ret;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT 1 FROM %s WHERE id='%s';", MONBLOB, id);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	if (ret) {
+		rc = TRUE;
+		FreeValueStruct(ret);
+	} else {
+		rc = FALSE;
+	}
+	return rc;
+
+}
+
 extern char *
 new_id()
 {
@@ -166,11 +190,17 @@ new_id()
 }
 
 extern monblob_struct *
-NewMonblob_struct()
+NewMonblob_struct(
+	char *id)
 {
 	monblob_struct *monblob;
+
 	monblob = New(monblob_struct);
-	monblob->id = new_id();
+	if (id == NULL) {
+		monblob->id = new_id();
+	} else {
+		monblob->id = StrDup(id);
+	}
 	monblob->blobid = 0;
 	monblob->lifetype = 0;
 	monblob->filename = "";
@@ -193,7 +223,6 @@ escape_bytea(
 
 	recval = NewValue(GL_TYPE_RECORD);
 	ValueAddRecordItem(recval, "dbescapebytea", value);
-
 	tmpval = ExecDBESCAPEBYTEA(dbg, NULL, NULL, recval);
 	retval = DuplicateValue(GetItemLongName(tmpval,"dbescapebytea"),TRUE);
 	FreeValueStruct(tmpval);
@@ -261,8 +290,44 @@ file_to_bytea(
 	return (int )fsize;
 }
 
+extern	char *
+monblob_import(
+	DBG_Struct	*dbg,
+	char *id,
+	char *filename,
+	unsigned int lifetype)
+{
+	monblob_struct *blob;
+	ValueStruct *value = NULL;
+
+	blob = NewMonblob_struct(id);
+	blob->filename = filename;
+	blob->lifetype = lifetype;
+	if (blob->lifetype > 2) {
+		blob->lifetype = 2;
+	}
+	timestamp(blob->importtime, sizeof(blob->importtime));
+	blob->size = file_to_bytea(dbg, blob->filename, &value);
+	if (value == NULL){
+		return NULL;
+	}
+	blob->bytea = ValueToString(value,NULL);
+	blob->bytea_len = strlen(blob->bytea);
+	monblob_insert(dbg, blob, monblob_idcheck(dbg, blob->id));
+
+	if (blob->id) {
+		id = StrDup(blob->id);
+	}
+
+	FreeValueStruct(value);
+	xfree(blob->id);
+	xfree(blob);
+
+	return id;
+}
+
 static size_t
-monblob_query(
+insert_query(
 	DBG_Struct	*dbg,
 	monblob_struct *blob,
 	char *query)
@@ -272,8 +337,25 @@ monblob_query(
 
 	filename = Escape_monsys(dbg, blob->filename);
 	size = snprintf(query, SIZE_SQL, \
-		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, file_data) VALUES ('%s', '%d', '%s', %d, '%s', '%d', '", \
-					MONBLOB, blob->id, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size);
+		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, status, file_data) VALUES ('%s', '%d', '%s', %d, '%s', '%d', '%d', '", \
+					MONBLOB, blob->id, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size, DEFAULTSTATUS );
+	xfree(filename);
+	return size;
+}
+
+static size_t
+update_query(
+	DBG_Struct	*dbg,
+	monblob_struct *blob,
+	char *query)
+{
+	size_t 	size;
+	char *filename;
+
+	filename = Escape_monsys(dbg, blob->filename);
+	size = snprintf(query, SIZE_SQL, \
+		   "UPDATE %s SET blobid = '%d', importtime = '%s', lifetype = %d, filename = '%s', size = %d, status = %d, file_data = '", \
+					MONBLOB, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size, DEFAULTSTATUS );
 	xfree(filename);
 	return size;
 }
@@ -281,7 +363,8 @@ monblob_query(
 extern Bool
 monblob_insert(
 	DBG_Struct	*dbg,
-	monblob_struct *blob)
+	monblob_struct *blob,
+	Bool update)
 {
 	char	*sql, *sql_p;
 	size_t	sql_len = SIZE_SQL;
@@ -289,13 +372,20 @@ monblob_insert(
 
 	sql = xmalloc(blob->bytea_len + sql_len);
 	sql_p = sql;
-	sql_p = sql_p + monblob_query(dbg, blob, sql_p);
+	if (update) {
+		sql_p = sql_p + update_query(dbg, blob, sql_p);
+	} else {
+		sql_p = sql_p + insert_query(dbg, blob, sql_p);
+	}
 	strncpy(sql_p, blob->bytea, blob->bytea_len);
 	sql_p = sql_p + blob->bytea_len;
-	snprintf(sql_p, sql_len, "');");
-	TransactionStart(dbg);
+	if (update) {
+		snprintf(sql_p, sql_len, "' WHERE id='%s';", blob->id);
+	} else {
+		snprintf(sql_p, sql_len, "');");
+	}
+	printf("SQL:%s\n", sql);
 	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-	TransactionEnd(dbg);
 	xfree(sql);
 
 	return (rc == MCP_OK);

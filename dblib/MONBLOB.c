@@ -44,6 +44,8 @@
 #include	"dbgroup.h"
 #include	"monsys.h"
 #include	"bytea.h"
+#include	"blobreq.h"
+#include	"sysdata.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"redirect.h"
@@ -53,6 +55,7 @@
 
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
 
+#if 0
 static void
 SendMONBLOBValue(
 	ValueStruct	*val,
@@ -77,70 +80,7 @@ SendMONBLOBValue(
 	CloseNet(fp);
 	CleanUNIX_Socket(port);
 }
-
-static	ValueStruct	*
-_DBOPEN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = xmalloc((SIZE_ARG)*sizeof(char *));
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
-_DBDISCONNECT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
-		xfree(dbg->process[PROCESS_UPDATE].conn);
-		CloseDB_RedirectPort(dbg);
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
-		if		(  ctrl  !=  NULL  ) {
-			ctrl->rc = MCP_OK;
-		}
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-extern	ValueStruct	*
-_DBSTART(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	BeginDB_Redirect(dbg);
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-extern	ValueStruct	*
-_DBCOMMIT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	CheckDB_Redirect(dbg);
-	CommitDB_Redirect(dbg);
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
+#endif
 
 static	ValueStruct	*
 _NewBLOB(
@@ -150,25 +90,23 @@ _NewBLOB(
 	ValueStruct		*args)
 {
 	ValueStruct	*ret, *val;
-	uuid_t	u;
-	char *id;
 	char *sql;
 	size_t	sql_len = SIZE_SQL;
 	DBG_Struct		*mondbg;
+	monblob_struct *monblob;
 ENTER_FUNC;
-	id = xmalloc(SIZE_TERM+1);
-	uuid_generate(u);
-	uuid_unparse(u, id);
+	monblob = NewMonblob_struct(NULL);
 	mondbg = GetDBG_monsys();
 	sql = xmalloc(sql_len);
-	snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, id , 503);
+	snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, monblob->id , 503);
 	ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
 	if ((val = GetItemLongName(args, "id")) != NULL) {
-		SetValueString(val, id, dbg->coding);
+		SetValueString(val, monblob->id, dbg->coding);
 	}
-	xfree(id);
+	xfree(monblob->id);
+	xfree(monblob);
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
@@ -183,38 +121,22 @@ _ImportBLOB(
 {
 	ValueStruct	*ret;
 	ValueStruct	*val;
+	DBG_Struct		*mondbg;
 	char *id = NULL;
 	char *filename = NULL;
-	pid_t	pid;
-	char tempdir[PATH_MAX];
-	char tempsocket[PATH_MAX];
-	char *cmd;
 
 ENTER_FUNC;
+	mondbg = GetDBG_monsys();
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		id = ValueToString(val,dbg->coding);
 	}
 	if ((val = GetItemLongName(args, "filename")) != NULL) {
 		filename = ValueToString(val,dbg->coding);
 	}
-	snprintf(tempdir, PATH_MAX, "/tmp/blobapi_XXXXXX");
-	if (!mkdtemp(tempdir)){
-		Error("mkdtemp: %s", strerror(errno));
+	id = monblob_import(mondbg, id, filename, 1);
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		SetValueString(val, id, dbg->coding);
 	}
-	snprintf(tempsocket, PATH_MAX, "%s/%s", tempdir, "blobapi");
-	cmd = BIN_DIR "/" MONBLOBCMD;
-	if ( ( pid = fork() ) <0 ) {
-		Error("fork: %s", strerror(errno));
-	}
-	if (pid == 0){
-		/* child */
-		if (execl(cmd,MONBLOBCMD,"-importid", id,"-import", filename, "-socket", tempsocket, NULL) < 0) {
-			Error("execl: %s:%s", strerror(errno), cmd);
-		}
-	}
-	/* parent */
-	SendMONBLOBValue(args, tempsocket);
-	rmdir(tempdir);
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
@@ -252,10 +174,10 @@ LEAVE_FUNC;
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
 	/*	table operations	*/
 	{	"MONBLOBNEW",		_NewBLOB		},
 	{	"MONBLOBIMPORT",	_ImportBLOB		},
