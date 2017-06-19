@@ -234,17 +234,12 @@ escape_bytea(
 	unsigned char *src,
 	size_t len)
 {
-	ValueStruct	*value, *recval, *retval, *tmpval;
+	ValueStruct	*value, *retval;
 
 	value = NewValue(GL_TYPE_BINARY);
 	SetValueBinary(value, src, len);
+	retval = ExecDBESCAPEBYTEA(dbg, NULL, NULL, value);
 
-	recval = NewValue(GL_TYPE_RECORD);
-	ValueAddRecordItem(recval, "dbescapebytea", value);
-	tmpval = ExecDBESCAPEBYTEA(dbg, NULL, NULL, recval);
-	retval = DuplicateValue(GetItemLongName(tmpval,"dbescapebytea"),TRUE);
-	FreeValueStruct(tmpval);
-	FreeValueStruct(recval);
 	return retval;
 }
 

@@ -2009,19 +2009,27 @@ _DBESCAPEBYTEA(
 	ValueStruct	*ret, *bytea;
 	ValueStruct	*val;
 ENTER_FUNC;
-	ret = NewValue(GL_TYPE_RECORD);
-	if ( (val = GetItemLongName(args,"dbescapebytea")) == NULL) {
-		Warning("dbescapebytea is not found.");
-		ValueAddRecordItem(ret, "dbescapebytea", val);
-		return ret;
+	if (ValueType(args) == GL_TYPE_RECORD) {
+		if ( (val = GetItemLongName(args,"dbescapebytea")) == NULL) {
+			Warning("dbescapebytea is not found.");
+			return args;
+		}
+		ret = NewValue(GL_TYPE_RECORD);
+		lbs = NewLBS();
+		EscapeBytea(dbg, lbs, ValueByte(val), ValueByteLength(val));
+		LBS_EmitEnd(lbs);
+		bytea = NewValue(GL_TYPE_TEXT);
+		SetValueString(bytea, LBS_Body(lbs), dbg->coding);
+		ValueAddRecordItem(ret, "dbescapebytea", bytea);
+		FreeLBS(lbs);
+	} else {
+		lbs = NewLBS();
+		EscapeBytea(dbg, lbs, ValueByte(args), ValueByteLength(args));
+		LBS_EmitEnd(lbs);
+		ret = NewValue(GL_TYPE_TEXT);
+		SetValueString(ret, LBS_Body(lbs), dbg->coding);
+		FreeLBS(lbs);
 	}
-	lbs = NewLBS();
-	EscapeBytea(dbg, lbs, ValueByte(val), ValueByteLength(val));
-	LBS_EmitEnd(lbs);
-	bytea = NewValue(GL_TYPE_TEXT);
-	SetValueString(bytea, LBS_Body(lbs), dbg->coding);
-	ValueAddRecordItem(ret, "dbescapebytea", bytea);
-	FreeLBS(lbs);
 LEAVE_FUNC;
 	return ret;
 }
