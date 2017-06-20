@@ -93,6 +93,8 @@ _ImportBLOB(
 	ValueStruct	*val;
 	DBG_Struct		*mondbg;
 	char *id = NULL;
+	char *rid = NULL;
+	int	persist = 0;
 	char *filename = NULL;
 	char *content_type = NULL;
 
@@ -101,18 +103,19 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		id = ValueToString(val,dbg->coding);
 	}
+	if ((val = GetItemLongName(args, "persist")) != NULL) {
+		persist = ValueToInteger(val);
+	}
 	if ((val = GetItemLongName(args, "filename")) != NULL) {
 		filename = ValueToString(val,dbg->coding);
 	}
 	if ((val = GetItemLongName(args, "content_type")) != NULL) {
 		content_type = ValueToString(val,dbg->coding);
 	}
-	id = monblob_import(mondbg, id, filename, content_type, 1);
-	if ((val = GetItemLongName(args, "id")) != NULL) {
-		SetValueString(val, id, dbg->coding);
-	}
-	if (id){
-		xfree(id);
+	rid = monblob_import(mondbg, id, persist, filename, content_type, 1);
+	if ((rid != NULL) && (val = GetItemLongName(args, "id")) != NULL) {
+		SetValueString(val, rid, dbg->coding);
+		xfree(rid);
 	}
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
@@ -146,6 +149,37 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "filename")) != NULL) {
 		SetValueString(val, filename, dbg->coding);
 	}
+	ret = DuplicateValue(args,TRUE);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_PersistBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*ret;
+	ValueStruct	*val;
+	DBG_Struct		*mondbg;
+	char *id = NULL;
+	char *filename = NULL;
+	char *content_type = NULL;
+
+ENTER_FUNC;
+	mondbg = GetDBG_monsys();
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		id = ValueToString(val,dbg->coding);
+	}
+	if ((val = GetItemLongName(args, "filename")) != NULL) {
+		filename = ValueToString(val,dbg->coding);
+	}
+	if ((val = GetItemLongName(args, "content_type")) != NULL) {
+		content_type = ValueToString(val,dbg->coding);
+	}
+	monblob_persist(mondbg, id, filename, content_type, 1);
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
@@ -256,9 +290,9 @@ static	DB_OPS	Operations[] = {
 	{	"MONBLOBNEW",		_NewBLOB		},
 	{	"MONBLOBIMPORT",	_ImportBLOB		},
 	{	"MONBLOBEXPORT",	_ExportBLOB		},
+	{	"MONBLOBPERSIST",	_PersistBLOB	},
 	{	"MONBLOBGETID",		_GETID		},
 	{	"MONBLOBDESTROY",	_DestroyBLOB	},
-
 	{	NULL,			NULL }
 };
 

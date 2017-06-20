@@ -185,7 +185,7 @@ main(
 		blob_list(dbg);
 	} else if (ImportFile) {
 		TransactionStart(dbg);
-		id = monblob_import(dbg, NULL, ImportFile, NULL, LifeType);
+		id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
 		TransactionEnd(dbg);
 		if ( !id ){
 			exit(1);

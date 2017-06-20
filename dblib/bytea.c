@@ -300,6 +300,7 @@ extern	char *
 monblob_import(
 	DBG_Struct	*dbg,
 	char *id,
+	int persist,
 	char *filename,
 	char *content_type,
 	unsigned int lifetype)
@@ -310,6 +311,14 @@ monblob_import(
 	monblob = NewMonblob_struct(id);
 	monblob->filename = filename;
 	monblob->lifetype = lifetype;
+	if (persist > 0 ) {
+		monblob->status = 200;
+		if (monblob->lifetype == 0) {
+			monblob->lifetype = 1;
+		}
+	} else {
+		monblob->status = DEFAULTSTATUS;
+	}
 	if (monblob->lifetype > 2) {
 		monblob->lifetype = 2;
 	}
@@ -326,11 +335,9 @@ monblob_import(
 	monblob->bytea = ValueToString(value,NULL);
 	monblob->bytea_len = strlen(monblob->bytea);
 	monblob_insert(dbg, monblob, monblob_idcheck(dbg, monblob->id));
-
 	if (monblob->id) {
 		id = StrDup(monblob->id);
 	}
-
 	FreeValueStruct(value);
 	FreeMonblob_struct(monblob);
 
@@ -351,7 +358,7 @@ insert_query(
 		   "INSERT INTO %s (id, blobid, importtime, lifetype, filename, size, content_type, status, file_data) "\
 					"VALUES ('%s', '%d', '%s', %d, '%s', %d, '%s', %d, '", \
 					MONBLOB, blob->id, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size,
-					blob->content_type, DEFAULTSTATUS );
+					blob->content_type, blob->status );
 	xfree(filename);
 	return size;
 }
@@ -368,7 +375,7 @@ update_query(
 	filename = Escape_monsys(dbg, blob->filename);
 	size = snprintf(query, SIZE_SQL, \
 		   "UPDATE %s SET blobid = '%d', importtime = '%s', lifetype = %d, filename = '%s', size = %d,  content_type = '%s', status = %d, file_data = '", \
-					MONBLOB, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size, blob->content_type, DEFAULTSTATUS );
+					MONBLOB, blob->blobid, blob->importtime, blob->lifetype, filename, blob->size, blob->content_type, blob->status );
 	xfree(filename);
 	return size;
 }
@@ -451,6 +458,50 @@ monblob_export(
 	filename = value_to_file(filename, retval);
 	FreeValueStruct(ret);
 	return filename;
+}
+
+static void
+monblob_update(
+	DBG_Struct	*dbg,
+	monblob_struct *monblob)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+	sql = xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "UPDATE %s SET lifetype = %d, filename = '%s', content_type = '%s', status = %d WHERE id = '%s'", MONBLOB, monblob->lifetype, monblob->filename, monblob->content_type, monblob->status, monblob->id);
+	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+}
+
+extern	void
+monblob_persist(
+	DBG_Struct	*dbg,
+	char *id,
+	char *filename,
+	char *content_type,
+	unsigned int lifetype)
+{
+	monblob_struct *monblob;
+
+	monblob = NewMonblob_struct(id);
+	monblob->filename = filename;
+	monblob->lifetype = lifetype;
+	if (monblob->lifetype == 0) {
+		monblob->lifetype = 1;
+	}
+	if (monblob->lifetype > 2) {
+		monblob->lifetype = 2;
+	}
+	if (content_type == NULL) {
+		monblob->content_type = StrDup(DEFAULTCONTENT);
+	} else {
+		monblob->content_type = StrDup(content_type);
+	}
+	monblob->status = 200;
+	monblob_update(dbg, monblob);
+	FreeMonblob_struct(monblob);
+	return;
 }
 
 extern	void

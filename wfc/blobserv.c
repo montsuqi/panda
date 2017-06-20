@@ -104,7 +104,7 @@ blob_delete(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "DELETE FROM monblob WHERE blobid = %d AND now() < importtime + CAST('%d days' AS INTERVAL);", (int)obj, BLOBEXPIRE);
+			 "DELETE FROM monblob WHERE blobid = %d AND lifetype = 0 AND now() < importtime + CAST('%d days' AS INTERVAL);", (int)obj, BLOBEXPIRE);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 }

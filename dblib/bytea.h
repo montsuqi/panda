@@ -31,6 +31,7 @@ typedef struct _monblob_struct {
 	unsigned int lifetype;
 	char *filename;
 	int size;
+	int status;
 	char *content_type;
 	char *bytea;
 	size_t 	bytea_len;
@@ -44,9 +45,10 @@ extern ValueStruct *escape_bytea(DBG_Struct *dbg, unsigned char *src, size_t len
 extern ValueStruct *unescape_bytea(DBG_Struct *dbg, ValueStruct *value);
 extern Bool monblob_insert(DBG_Struct	*dbg, monblob_struct *monblob, Bool update);
 extern int file_to_bytea(DBG_Struct *dbg, char *filename, ValueStruct **value);
-extern	char *monblob_import(DBG_Struct *dbg, char *id, char *filename, char *content_type, unsigned int lifetype);
+extern	char *monblob_import(DBG_Struct *dbg, char *id, int persist, char *filename, char *content_type, unsigned int lifetype);
 extern char *value_to_file(char *filename, ValueStruct *value);
 extern char *monblob_export(DBG_Struct *dbg, char *id, char *filename);
+extern	void monblob_persist(DBG_Struct *dbg, char *id,  char *filename, char *content_type, unsigned int lifetype);
 extern	char *monblob_getid(DBG_Struct *dbg, int blobid);
 extern	void monblob_delete(DBG_Struct	*dbg, char *id);
 
