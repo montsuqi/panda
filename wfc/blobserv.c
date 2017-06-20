@@ -66,6 +66,7 @@ blob_import(
 	snprintf(longname,SIZE_LONGNAME,"blob-%d",(int)obj);
 	monblob->filename = StrDup(longname);
 	monblob->size = size;
+	monblob->status = 403;
 	timestamp(monblob->importtime, sizeof(monblob->importtime));
 	value = escape_bytea(dbg, buff, size);
 	monblob->bytea = ValueToString(value,NULL);

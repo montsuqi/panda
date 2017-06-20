@@ -205,6 +205,7 @@ NewMonblob_struct(
 	monblob->blobid = 0;
 	monblob->lifetype = 0;
 	monblob->filename = "";
+	monblob->status = DEFAULTSTATUS;
 	monblob->size = 0;
 	monblob->content_type = StrDup(DEFAULTCONTENT);
 	monblob->bytea = NULL;
@@ -446,7 +447,7 @@ monblob_export(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT file_data FROM monblob WHERE id = '%s'", id);
+			 "SELECT file_data FROM %s WHERE id = '%s'", MONBLOB, id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 	if (!ret) {
@@ -465,11 +466,20 @@ monblob_update(
 	DBG_Struct	*dbg,
 	monblob_struct *monblob)
 {
-	char	*sql;
+	char	*sql, *sql_p;
 	size_t	sql_len = SIZE_SQL;
 	sql = xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "UPDATE %s SET lifetype = %d, filename = '%s', content_type = '%s', status = %d WHERE id = '%s'", MONBLOB, monblob->lifetype, monblob->filename, monblob->content_type, monblob->status, monblob->id);
+	sql_p = sql;
+	sql_p += snprintf(sql_p, sql_len, "UPDATE %s SET lifetype = %d, ", MONBLOB, monblob->lifetype);
+	if ((monblob->filename != NULL) && (strlen(monblob->filename) > 0 )){
+		sql_p += snprintf(sql_p, sql_len, "filename = '%s', ",  monblob->filename);
+	}
+	if ((monblob->content_type != NULL) && (strlen(monblob->content_type) > 0 )){
+		sql_p += snprintf(sql_p, sql_len, "content_type = '%s', ", monblob->content_type);
+	}
+	sql_p += snprintf(sql_p, sql_len, "status = %d", monblob->status);
+	sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", monblob->id);
+	printf("SQL:%s\n", sql);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 }
@@ -485,7 +495,7 @@ monblob_persist(
 	monblob_struct *monblob;
 
 	monblob = NewMonblob_struct(id);
-	monblob->filename = filename;
+	monblob->filename = StrDup(filename);
 	monblob->lifetype = lifetype;
 	if (monblob->lifetype == 0) {
 		monblob->lifetype = 1;
@@ -493,11 +503,7 @@ monblob_persist(
 	if (monblob->lifetype > 2) {
 		monblob->lifetype = 2;
 	}
-	if (content_type == NULL) {
-		monblob->content_type = StrDup(DEFAULTCONTENT);
-	} else {
-		monblob->content_type = StrDup(content_type);
-	}
+	monblob->content_type = StrDup(content_type);
 	monblob->status = 200;
 	monblob_update(dbg, monblob);
 	FreeMonblob_struct(monblob);
@@ -514,7 +520,7 @@ monblob_delete(
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "DELETE FROM monblob WHERE id = '%s'", id);
+			 "DELETE FROM %s WHERE id = '%s'", MONBLOB, id);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 }
