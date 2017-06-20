@@ -151,6 +151,71 @@ LEAVE_FUNC;
 	return	(ret);
 }
 
+static	ValueStruct	*
+_GETID(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	int			rc;
+	ValueStruct	*obj, *val;
+	ValueStruct	*ret;
+	DBG_Struct		*mondbg;
+	int blobid;
+	char *id = NULL;
+
+ENTER_FUNC;
+	mondbg = GetDBG_monsys();
+	ret = NULL;
+	if (rec->type != RECORD_DB) {
+		rc = MCP_BAD_ARG;
+	} else {
+		if ((obj = GetItemLongName(args,"blobid")) != NULL) {
+			blobid = (int)ValueObjectId(obj);
+			if ((id = monblob_getid(mondbg, blobid)) != NULL) {
+				val = GetItemLongName(args,"id");
+				SetValueStringWithLength(val, id, strlen(id), NULL);
+				xfree(id);
+				ret = DuplicateValue(args,TRUE);
+				rc = MCP_OK;
+			} else {
+				rc = MCP_EOF;
+			}
+		} else {
+			rc = MCP_BAD_ARG;
+		}
+	}
+	if (ctrl != NULL) {
+		ctrl->rc = rc;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_DestroyBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct 	*mondbg;
+	ValueStruct	*ret;
+	ValueStruct	*val;
+	char *id;
+
+ENTER_FUNC;
+	mondbg = GetDBG_monsys();
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		id = ValueToString(val,dbg->coding);
+		monblob_delete(mondbg, id);
+	}
+	ret = NULL;
+LEAVE_FUNC;
+	return	(ret);
+}
+
 static	int
 _EXEC(
 	DBG_Struct	*dbg,
@@ -191,6 +256,8 @@ static	DB_OPS	Operations[] = {
 	{	"MONBLOBNEW",		_NewBLOB		},
 	{	"MONBLOBIMPORT",	_ImportBLOB		},
 	{	"MONBLOBEXPORT",	_ExportBLOB		},
+	{	"MONBLOBGETID",		_GETID		},
+	{	"MONBLOBDESTROY",	_DestroyBLOB	},
 
 	{	NULL,			NULL }
 };

@@ -22,6 +22,7 @@
 
 #include	"dblib.h"
 #define 	MONBLOB	"monblob"
+#define 	BLOBEXPIRE 2
 
 typedef struct _monblob_struct {
 	char *id;
@@ -46,5 +47,7 @@ extern int file_to_bytea(DBG_Struct *dbg, char *filename, ValueStruct **value);
 extern	char *monblob_import(DBG_Struct *dbg, char *id, char *filename, char *content_type, unsigned int lifetype);
 extern char *value_to_file(char *filename, ValueStruct *value);
 extern char *monblob_export(DBG_Struct *dbg, char *id, char *filename);
+extern	char *monblob_getid(DBG_Struct *dbg, int blobid);
+extern	void monblob_delete(DBG_Struct	*dbg, char *id);
 
 #endif

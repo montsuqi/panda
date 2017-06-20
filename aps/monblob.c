@@ -152,23 +152,6 @@ blob_list(
 	TransactionEnd(dbg);
 }
 
-static	void
-blob_delete(
-	DBG_Struct	*dbg,
-	char *id)
-{
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
-
-	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "DELETE FROM monblob WHERE id = '%s'", id);
-	TransactionStart(dbg);
-	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-	TransactionEnd(dbg);
-	xfree(sql);
-}
-
 extern	int
 main(
 	int		argc,
@@ -218,7 +201,7 @@ main(
 		}
 		printf("export: %s\n", filename);
 	} else if (DeleteID){
-		blob_delete(dbg, DeleteID);
+		monblob_delete(dbg, DeleteID);
 	}
 	CloseDB(dbg);
 

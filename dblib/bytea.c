@@ -453,3 +453,44 @@ monblob_export(
 	return filename;
 }
 
+extern	void
+monblob_delete(
+	DBG_Struct	*dbg,
+	char *id)
+{
+	char	*sql;
+	size_t	sql_len = SIZE_SQL;
+
+	sql = (char *)xmalloc(sql_len);
+	snprintf(sql, sql_len,
+			 "DELETE FROM monblob WHERE id = '%s'", id);
+	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+}
+
+
+extern	char *
+monblob_getid(
+	DBG_Struct *dbg,
+	int blobid)
+{
+	char *sql;
+	ValueStruct	*ret, *val;
+	char *id = NULL;
+
+	if (blobid == 0){
+		return NULL;
+	}
+	sql = (char *)xmalloc(SIZE_BUFF);
+	sprintf(sql, "SELECT id FROM %s WHERE blobid = %d AND now() < importtime + CAST('%d days' AS INTERVAL);", MONBLOB, blobid, BLOBEXPIRE);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
+	if (ret) {
+		val = GetItemLongName(ret,"id");
+		id = StrDup(ValueToString(val,dbg->coding));
+		FreeValueStruct(ret);
+	} else {
+		fprintf(stderr,"[%s] is not registered\n", id);
+	}
+	return id;
+}
