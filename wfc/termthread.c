@@ -560,6 +560,7 @@ MakeEventResponse(
 {
 	json_object *result,*res,*window_data,*windows,*w,*child;
 	RecordStruct *rec;
+	ValueStruct *val;
 	LargeByteString *scrdata;
 	char *buf,*wname;
 	const char *puttype;
@@ -606,29 +607,21 @@ MakeEventResponse(
 				json_object_new_object());
 		} else {
 			rec = GetWindow(data->w.s[i].window);
-			NativeUnPackValue(NULL,LBS_Body(scrdata),rec->value);
+			val = DuplicateValue(rec->value,FALSE);
+			NativeUnPackValue(NULL,LBS_Body(scrdata),val);
 			if ((g_hash_table_lookup(data->window_table,data->w.s[i].window)) == NULL) {
 				wname = g_strdup(data->w.s[i].window);
 				g_hash_table_insert(data->window_table,wname,wname);
-				buf = xmalloc(JSON_SizeValue(NULL,rec->value));
-				JSON_PackValue(NULL,buf,rec->value);
-				child = json_tokener_parse(buf);
-				if (child == NULL || is_error(child)) {
-					Warning("JSON_PackValue Error");
-					MakeErrorLog(buf);
-				}
-				xfree(buf);
-
-			} else {
-				buf = xmalloc(JSON_SizeValueOmmit(NULL,rec->value));
-				JSON_PackValueOmmit(NULL,buf,rec->value);
-				child = json_tokener_parse(buf);
-				if (child == NULL || is_error(child)) {
-					Warning("JSON_PackValueOmmit Error see /tmp/wfc_error.json");
-					MakeErrorLog(buf);
-				}
-				xfree(buf);
 			}
+			buf = xmalloc(JSON_SizeValue(NULL,val));
+			JSON_PackValue(NULL,buf,val);
+			child = json_tokener_parse(buf);
+			if (child == NULL || is_error(child)) {
+				Warning("JSON_PackValue Error");
+				MakeErrorLog(buf);
+			}
+			xfree(buf);
+			FreeValueStruct(val);
 
 			if (child == NULL || is_error(child)) {
 				json_object_object_add(w,"screen_data",json_object_new_object());
