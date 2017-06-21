@@ -92,3 +92,4 @@ depcomp
 install-sh
 missing
 tools/recdefgen
+.gdb_history

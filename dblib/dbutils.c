@@ -63,7 +63,8 @@ column_exist(
 	p = sql;
 	p += sprintf(p, "SELECT 1");
 	p += sprintf(p, " FROM pg_tables JOIN information_schema.columns on pg_tables.tablename = columns.table_name ");
-	p += sprintf(p, " WHERE table_name = '%s' AND column_name = '%s';", table_name, column_name);
+	p += sprintf(p, " WHERE table_name = '%s' AND column_name = '%s'", table_name, column_name);
+	sprintf(p, ";");
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	if (ret) {
 		rc = TRUE;

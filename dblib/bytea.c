@@ -105,8 +105,16 @@ create_monblob(
 			p += sprintf(p, "%s %s",columns[i][0],columns[i][1]);
 		}
 	}
-	p += sprintf(p, ");");
+	sprintf(p, ");");
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc == MCP_OK) {
+		sprintf(sql, "CREATE INDEX %s_blobid ON %s (blobid);",MONBLOB, MONBLOB);
+		rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	}
+	if (rc == MCP_OK) {
+		sprintf(sql, "CREATE INDEX %s_importime ON %s (importtime);",MONBLOB, MONBLOB);
+		rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	}
 	xfree(sql);
 	return (rc == MCP_OK);
 }
@@ -394,17 +402,18 @@ monblob_insert(
 	sql = xmalloc(monblob->bytea_len + sql_len);
 	sql_p = sql;
 	if (update) {
-		sql_p = sql_p + update_query(dbg, monblob, sql_p);
+		sql_p += update_query(dbg, monblob, sql_p);
 	} else {
-		sql_p = sql_p + insert_query(dbg, monblob, sql_p);
+		sql_p += insert_query(dbg, monblob, sql_p);
 	}
 	strncpy(sql_p, monblob->bytea, monblob->bytea_len);
-	sql_p = sql_p + monblob->bytea_len;
+	sql_p += monblob->bytea_len;
 	if (update) {
-		snprintf(sql_p, sql_len, "' WHERE id='%s';", monblob->id);
+		sql_p += snprintf(sql_p, sql_len, "' WHERE id='%s'", monblob->id);
 	} else {
-		snprintf(sql_p, sql_len, "');");
+		sql_p += snprintf(sql_p, sql_len, "')");
 	}
+	snprintf(sql_p, sql_len, ";");
 	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -477,9 +486,9 @@ monblob_update(
 	if ((monblob->content_type != NULL) && (strlen(monblob->content_type) > 0 )){
 		sql_p += snprintf(sql_p, sql_len, "content_type = '%s', ", monblob->content_type);
 	}
-	sql_p += snprintf(sql_p, sql_len, "status = %d", monblob->status);
+	sql_p += snprintf(sql_p, sql_len, "status = %d ", monblob->status);
 	sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", monblob->id);
-	printf("SQL:%s\n", sql);
+	snprintf(sql_p, sql_len, ";");
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 }

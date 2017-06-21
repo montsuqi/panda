@@ -1179,7 +1179,7 @@ _PQexec(
 	PGresult	*res;
 
 ENTER_FUNC;
-	dbgprintf("%s;",sql);
+	dbgprintf("%s",sql);
 	res = PQexecParams(PGCONN(dbg,usage),sql,0,NULL,NULL,NULL,NULL,0);
 	if ( res != NULL) {
 		if		(	(  fRed                  )
