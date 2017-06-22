@@ -318,13 +318,13 @@ unregistdb(
 	size_t sql_len = SIZE_SQL;
 
 	timestamp(endtime, sizeof(endtime));
-	child = json_object_object_get(cmd_results,"rc");
+	json_object_object_get_ex(cmd_results,"rc", &child);
 	if (CheckJSONObject(child,json_type_int)) {
 		rc = json_object_get_int(child);
 	} else {
 		rc = 999;
 	}
-	child = json_object_object_get(cmd_results,"result_message");
+	json_object_object_get_ex(cmd_results,"result_message", &child);
 	if (CheckJSONObject(child,json_type_string)) {
 		message = (char *)json_object_get_string(child);
 	} else {

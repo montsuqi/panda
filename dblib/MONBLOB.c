@@ -43,103 +43,15 @@
 #include	"wfcdata.h"
 #include	"dbgroup.h"
 #include	"monsys.h"
+#include	"bytea.h"
+#include	"blobreq.h"
+#include	"sysdata.h"
 #include	"comm.h"
 #include	"comms.h"
 #include	"redirect.h"
 #include	"debug.h"
 
-#define 	MONBLOB	"monblobapi"
-
 #define	NBCONN(dbg)		(NETFILE *)((dbg)->process[PROCESS_UPDATE].conn)
-
-static void
-SendMONBLOBValue(
-	ValueStruct	*val,
-	char *tempsocket)
-{
-	Port	*port;
-	int		fd, _fd;
-	NETFILE	*fp;
-	char *buf;
-
-	port = ParPortName(tempsocket);
-	_fd =InitServerPort(port,1);
-	if		(  ( fd = accept(_fd,0,0) )  <  0  )	{
-		Error("INET Domain Accept");
-	}
-	fp = SocketToNet(fd);
-	buf = xmalloc(JSON_SizeValue(NULL,val));
-	JSON_PackValue(NULL,buf,val);
-	SendString(fp, buf);
-	xfree(buf);
-	close(_fd);
-	CloseNet(fp);
-	CleanUNIX_Socket(port);
-}
-
-static	ValueStruct	*
-_DBOPEN(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	OpenDB_RedirectPort(dbg);
-	dbg->process[PROCESS_UPDATE].conn = xmalloc((SIZE_ARG)*sizeof(char *));
-	dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_CONNECT;
-	dbg->process[PROCESS_READONLY].dbstatus = DB_STATUS_NOCONNECT;
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-static	ValueStruct	*
-_DBDISCONNECT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	if		(  dbg->process[PROCESS_UPDATE].dbstatus == DB_STATUS_CONNECT ) {
-		xfree(dbg->process[PROCESS_UPDATE].conn);
-		CloseDB_RedirectPort(dbg);
-		dbg->process[PROCESS_UPDATE].dbstatus = DB_STATUS_DISCONNECT;
-		if		(  ctrl  !=  NULL  ) {
-			ctrl->rc = MCP_OK;
-		}
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-extern	ValueStruct	*
-_DBSTART(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	BeginDB_Redirect(dbg);
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
-
-extern	ValueStruct	*
-_DBCOMMIT(
-	DBG_Struct	*dbg,
-	DBCOMM_CTRL	*ctrl)
-{
-ENTER_FUNC;
-	CheckDB_Redirect(dbg);
-	CommitDB_Redirect(dbg);
-	if		(  ctrl  !=  NULL  ) {
-		ctrl->rc = MCP_OK;
-	}
-LEAVE_FUNC;
-	return	(NULL);
-}
 
 static	ValueStruct	*
 _NewBLOB(
@@ -149,25 +61,22 @@ _NewBLOB(
 	ValueStruct		*args)
 {
 	ValueStruct	*ret, *val;
-	uuid_t	u;
-	char *id;
 	char *sql;
 	size_t	sql_len = SIZE_SQL;
 	DBG_Struct		*mondbg;
+	monblob_struct *monblob;
 ENTER_FUNC;
-	id = xmalloc(SIZE_TERM+1);
-	uuid_generate(u);
-	uuid_unparse(u, id);
+	monblob = NewMonblob_struct(NULL);
 	mondbg = GetDBG_monsys();
 	sql = xmalloc(sql_len);
-	snprintf(sql, sql_len, "INSERT INTO monblobapi (id, status) VALUES('%s', '%d');", id , 503);
+	snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, monblob->id , 503);
 	ExecDBOP(mondbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
 	if ((val = GetItemLongName(args, "id")) != NULL) {
-		SetValueString(val, id, dbg->coding);
+		SetValueString(val, monblob->id, dbg->coding);
 	}
-	xfree(id);
+	FreeMonblob_struct(monblob);
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);
@@ -182,39 +91,161 @@ _ImportBLOB(
 {
 	ValueStruct	*ret;
 	ValueStruct	*val;
+	DBG_Struct		*mondbg;
 	char *id = NULL;
+	char *rid = NULL;
+	int	persist = 0;
 	char *filename = NULL;
-	pid_t	pid;
-	char tempdir[PATH_MAX];
-	char tempsocket[PATH_MAX];
-	char *cmd;
+	char *content_type = NULL;
 
 ENTER_FUNC;
+	mondbg = GetDBG_monsys();
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		id = ValueToString(val,dbg->coding);
+	}
+	if ((val = GetItemLongName(args, "persist")) != NULL) {
+		persist = ValueToInteger(val);
+	}
+	if ((val = GetItemLongName(args, "filename")) != NULL) {
+		filename = ValueToString(val,dbg->coding);
+	}
+	if ((val = GetItemLongName(args, "content_type")) != NULL) {
+		content_type = ValueToString(val,dbg->coding);
+	}
+	rid = monblob_import(mondbg, id, persist, filename, content_type, 1);
+	if ((rid != NULL) && (val = GetItemLongName(args, "id")) != NULL) {
+		SetValueString(val, rid, dbg->coding);
+		xfree(rid);
+	}
+	ret = DuplicateValue(args,TRUE);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_ExportBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*ret;
+	ValueStruct	*val;
+	DBG_Struct		*mondbg;
+	char *id = NULL;
+	char *filename = NULL;
+
+ENTER_FUNC;
+	mondbg = GetDBG_monsys();
 	if ((val = GetItemLongName(args, "id")) != NULL) {
 		id = ValueToString(val,dbg->coding);
 	}
 	if ((val = GetItemLongName(args, "filename")) != NULL) {
 		filename = ValueToString(val,dbg->coding);
 	}
-	snprintf(tempdir, PATH_MAX, "/tmp/blobapi_XXXXXX");
-	if (!mkdtemp(tempdir)){
-		Error("mkdtemp: %s", strerror(errno));
+
+	monblob_export(mondbg, id, filename);
+
+	if ((val = GetItemLongName(args, "filename")) != NULL) {
+		SetValueString(val, filename, dbg->coding);
 	}
-	snprintf(tempsocket, PATH_MAX, "%s/%s", tempdir, "blobapi");
-	cmd = BIN_DIR "/" MONBLOB;
-	if ( ( pid = fork() ) <0 ) {
-		Error("fork: %s", strerror(errno));
+	ret = DuplicateValue(args,TRUE);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_PersistBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	ValueStruct	*ret;
+	ValueStruct	*val;
+	DBG_Struct		*mondbg;
+	char *id = NULL;
+	char *filename = NULL;
+	char *content_type = NULL;
+
+ENTER_FUNC;
+	mondbg = GetDBG_monsys();
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		id = ValueToString(val,dbg->coding);
 	}
-	if (pid == 0){
-		/* child */
-		if (execl(cmd,MONBLOB,"-importid", id,"-import", filename, "-socket", tempsocket, NULL) < 0) {
-			Error("execl: %s:%s", strerror(errno), cmd);
+	if ((val = GetItemLongName(args, "filename")) != NULL) {
+		filename = ValueToString(val,dbg->coding);
+	}
+	if ((val = GetItemLongName(args, "content_type")) != NULL) {
+		content_type = ValueToString(val,dbg->coding);
+	}
+	monblob_persist(mondbg, id, filename, content_type, 1);
+	ret = DuplicateValue(args,TRUE);
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_GETID(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	int			rc;
+	ValueStruct	*obj, *val;
+	ValueStruct	*ret;
+	DBG_Struct		*mondbg;
+	int blobid;
+	char *id = NULL;
+
+ENTER_FUNC;
+	mondbg = GetDBG_monsys();
+	ret = NULL;
+	if (rec->type != RECORD_DB) {
+		rc = MCP_BAD_ARG;
+	} else {
+		if ((obj = GetItemLongName(args,"blobid")) != NULL) {
+			blobid = (int)ValueObjectId(obj);
+			if ((id = monblob_getid(mondbg, blobid)) != NULL) {
+				val = GetItemLongName(args,"id");
+				SetValueStringWithLength(val, id, strlen(id), NULL);
+				xfree(id);
+				ret = DuplicateValue(args,TRUE);
+				rc = MCP_OK;
+			} else {
+				rc = MCP_EOF;
+			}
+		} else {
+			rc = MCP_BAD_ARG;
 		}
 	}
-	/* parent */
-	SendMONBLOBValue(args, tempsocket);
-	rmdir(tempdir);
-	ret = DuplicateValue(args,TRUE);
+	if (ctrl != NULL) {
+		ctrl->rc = rc;
+	}
+LEAVE_FUNC;
+	return	(ret);
+}
+
+static	ValueStruct	*
+_DestroyBLOB(
+	DBG_Struct		*dbg,
+	DBCOMM_CTRL		*ctrl,
+	RecordStruct	*rec,
+	ValueStruct		*args)
+{
+	DBG_Struct 	*mondbg;
+	ValueStruct	*ret;
+	ValueStruct	*val;
+	char *id;
+
+ENTER_FUNC;
+	mondbg = GetDBG_monsys();
+	if ((val = GetItemLongName(args, "id")) != NULL) {
+		id = ValueToString(val,dbg->coding);
+		monblob_delete(mondbg, id);
+	}
+	ret = NULL;
 LEAVE_FUNC;
 	return	(ret);
 }
@@ -251,14 +282,17 @@ LEAVE_FUNC;
 
 static	DB_OPS	Operations[] = {
 	/*	DB operations		*/
-	{	"DBOPEN",		(DB_FUNC)_DBOPEN },
-	{	"DBDISCONNECT",	(DB_FUNC)_DBDISCONNECT	},
-	{	"DBSTART",		(DB_FUNC)_DBSTART },
-	{	"DBCOMMIT",		(DB_FUNC)_DBCOMMIT },
+	{	"DBOPEN",		(DB_FUNC)SYSDATA_DBOPEN },
+	{	"DBDISCONNECT",	(DB_FUNC)SYSDATA_DBDISCONNECT	},
+	{	"DBSTART",		(DB_FUNC)SYSDATA_DBSTART },
+	{	"DBCOMMIT",		(DB_FUNC)SYSDATA_DBCOMMIT },
 	/*	table operations	*/
 	{	"MONBLOBNEW",		_NewBLOB		},
 	{	"MONBLOBIMPORT",	_ImportBLOB		},
-
+	{	"MONBLOBEXPORT",	_ExportBLOB		},
+	{	"MONBLOBPERSIST",	_PersistBLOB	},
+	{	"MONBLOBGETID",		_GETID		},
+	{	"MONBLOBDESTROY",	_DestroyBLOB	},
 	{	NULL,			NULL }
 };
 

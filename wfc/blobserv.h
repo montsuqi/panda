@@ -24,6 +24,7 @@
 #include	"net.h"
 #include	"blob.h"
 
+extern	void	InitServeBLOB();
 extern	void	ServeBLOB(NETFILE *fp, BLOB_State *state);
 
 #undef	GLOBAL

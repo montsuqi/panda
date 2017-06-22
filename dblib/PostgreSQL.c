@@ -127,17 +127,19 @@ EscapeBytea(
 
 }
 
-static void
+static ValueStruct	*
 UnEscapeBytea(
-	ValueStruct	*val,
 	unsigned char *from)
 {
+	ValueStruct	*bin;
 	unsigned char *bintext;
 	size_t to_length;
 
+	bin = NewValue(GL_TYPE_BINARY);
 	bintext = PQunescapeBytea(from, &to_length);
-	SetValueBinary(val, bintext, to_length);
+	SetValueBinary(bin, bintext, to_length);
 	PQfreemem(bintext);
+	return bin;
 }
 
 static void
@@ -2007,19 +2009,27 @@ _DBESCAPEBYTEA(
 	ValueStruct	*ret, *bytea;
 	ValueStruct	*val;
 ENTER_FUNC;
-	ret = NewValue(GL_TYPE_RECORD);
-	if ( (val = GetItemLongName(args,"dbescapebytea")) == NULL) {
-		Warning("dbescapebytea is not found.");
-		ValueAddRecordItem(ret, "dbescapebytea", val);
-		return ret;
+	if (ValueType(args) == GL_TYPE_RECORD) {
+		if ( (val = GetItemLongName(args,"dbescapebytea")) == NULL) {
+			Warning("dbescapebytea is not found.");
+			return args;
+		}
+		ret = NewValue(GL_TYPE_RECORD);
+		lbs = NewLBS();
+		EscapeBytea(dbg, lbs, ValueByte(val), ValueByteLength(val));
+		LBS_EmitEnd(lbs);
+		bytea = NewValue(GL_TYPE_TEXT);
+		SetValueString(bytea, LBS_Body(lbs), dbg->coding);
+		ValueAddRecordItem(ret, "dbescapebytea", bytea);
+		FreeLBS(lbs);
+	} else {
+		lbs = NewLBS();
+		EscapeBytea(dbg, lbs, ValueByte(args), ValueByteLength(args));
+		LBS_EmitEnd(lbs);
+		ret = NewValue(GL_TYPE_TEXT);
+		SetValueString(ret, LBS_Body(lbs), dbg->coding);
+		FreeLBS(lbs);
 	}
-	lbs = NewLBS();
-	EscapeBytea(dbg, lbs, ValueByte(val), ValueByteLength(val));
-	LBS_EmitEnd(lbs);
-	bytea = NewValue(GL_TYPE_TEXT);
-	SetValueString(bytea, LBS_Body(lbs), dbg->coding);
-	ValueAddRecordItem(ret, "dbescapebytea", bytea);
-	FreeLBS(lbs);
 LEAVE_FUNC;
 	return ret;
 }
@@ -2031,20 +2041,21 @@ _DBUNESCAPEBYTEA(
 	RecordStruct	*rec,
 	ValueStruct		*args)
 {
-	ValueStruct	*ret, *bin;
-	ValueStruct	*val;
+	ValueStruct	*bin, *val, *ret;
 ENTER_FUNC;
-	ret = NewValue(GL_TYPE_RECORD);
-	if ( (val = GetItemLongName(args,"dbunescapebytea")) == NULL) {
-		Warning("dbunescapebytea is not found.");
-		ValueAddRecordItem(ret, "dbunescapebytea", val);
-		return ret;
+	if (ValueType(args) == GL_TYPE_RECORD) {
+		if ( (val = GetItemLongName(args,"dbunescapebytea")) == NULL) {
+			Warning("dbunescapebytea is not found.");
+			return args;
+		}
+		bin = UnEscapeBytea(ValueStringPointer(val));
+		ValueAddRecordItem(args, "dbunescapebytea", bin);
+		ret = args;
+	} else {
+		ret = UnEscapeBytea(ValueStringPointer(args));
 	}
-	bin = NewValue(GL_TYPE_BINARY);
-	UnEscapeBytea(bin, ValueStringPointer(val));
-	ValueAddRecordItem(ret, "dbunescapebytea", bin);
 LEAVE_FUNC;
-	return	(ret);
+	return ret;
 }
 
 static	ValueStruct	*

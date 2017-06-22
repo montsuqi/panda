@@ -135,9 +135,9 @@ ENTER_FUNC;
 		rc = MCP_BAD_ARG;
 	} else {
 		if (((obj = GetItemLongName(args,"object")) != NULL)
-				&&	((f = GetItemLongName(args,"file")) != NULL)) {
+			&&	((f = GetItemLongName(args,"file")) != NULL)) {
 			ValueObjectId(obj) = RequestImportBLOB(NBCONN(dbg),
-				ValueToString(f,NULL));
+												   ValueToString(f,NULL));
 			if (ValueObjectId(obj) != GL_OBJ_NULL) {
                 ValueIsNonNil(obj);
 				ret = DuplicateValue(args,TRUE);

@@ -15,12 +15,12 @@
 #include	<time.h>
 #include	<errno.h>
 
-#include	<uuid/uuid.h>
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
 #include	"dbutils.h"
 #include	"monsys.h"
+#include	"bytea.h"
 #include	"option.h"
 #include	"enum.h"
 #include	"gettext.h"
@@ -61,7 +61,8 @@ SetDefault(void)
 	ImportFile = NULL;
 	ExportID = NULL;
 	OutputFile = NULL;
-	LifeType = 0;
+	LifeType = 1;
+	fTimer = TRUE;
 }
 
 static	void
@@ -79,237 +80,15 @@ InitSystem(void)
 	}
 }
 
-static         Bool
-create_monblob(
-        DBG_Struct      *dbg)
-{
-	Bool rc;
-	char *sql, *p;
-	sql = (char *)xmalloc(SIZE_BUFF);
-	p = sql;
-	p += sprintf(p, "CREATE TABLE monblob (");
-	p += sprintf(p, "       id        varchar(37)  primary key,");
-	p += sprintf(p, "       importtime  timestamp  with time zone,");
-	p += sprintf(p, "       lifetype    int,");
-	p += sprintf(p, "       filename    varchar(4096),");
-	p += sprintf(p, "       file_data   bytea");
-	p += sprintf(p, ");");
-	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
-	xfree(sql);
-	return rc;
-}
-
-extern Bool
-monblob_setup(
-	DBG_Struct	*dbg)
-{
-	Bool	exist;
-	int 	rc;
-	TransactionStart(dbg);
-	exist = table_exist(dbg, "monblob");
-	if ( !exist ) {
-		create_monblob(dbg);
-	}
-	rc = TransactionEnd(dbg);
-	return (rc == MCP_OK);
-}
-
-extern LargeByteString	*
-escape_bytea(
-	DBG_Struct	*dbg,
-	unsigned char *src,
-	size_t len)
-{
-	ValueStruct	*value, *ret, *recval, *retval;
-	DBCOMM_CTRL		*ctrl = NULL;
-	RecordStruct	*rec = NULL;
-	LargeByteString	*lbs = NULL;
-
-	value = NewValue(GL_TYPE_BINARY);
-	SetValueBinary(value, src, len);
-
-	recval = NewValue(GL_TYPE_RECORD);
-	ValueAddRecordItem(recval, "dbescapebytea", value);
-
-	retval = ExecDBESCAPEBYTEA(dbg, ctrl, rec, recval);
-	if ( (ret = GetItemLongName(retval,"dbescapebytea")) != NULL) {
-		lbs = LBS_Duplicate(ValueToLBS(ret, NULL));
-	}
-	FreeValueStruct(recval);
-	FreeValueStruct(retval);
-	return lbs;
-}
-
-extern LargeByteString	*
-file_to_bytea(
-	DBG_Struct	*dbg,
-	char	*filename)
-{
-	struct	stat	stbuf;
-	unsigned char	buff[SIZE_BUFF];
-	unsigned char	*src, *src_p;
-	LargeByteString	*lbs = NULL;
-	FILE	*fp;
-	size_t	fsize
-		,   bsize
-		,	left;
-
-	if		(  stat(filename,&stbuf) != 0  ) {
-		fprintf(stderr,"%s: %s\n",  filename, strerror(errno));
-		return NULL;
-	}
-	fsize = stbuf.st_size;
-	src = (unsigned char *)xmalloc(fsize);
-	src_p = src;
-
-	fp = fopen(filename,"rb");
-	left = fsize;
-	do {
-		if		(  left  >  SIZE_BUFF  ) {
-			bsize = SIZE_BUFF;
-		} else {
-			bsize = left;
-		}
-		bsize = fread(buff,1,bsize,fp);
-		memcpy(src_p, buff, bsize);
-		src_p = src_p + bsize;
-		if		(  bsize  >  0  ) {
-			left -= bsize;
-		}
-	}	while	(  left  >  0  );
-	fclose(fp);
-	lbs = escape_bytea(dbg, src, fsize);
-	xfree(src);
-	return lbs;
-}
-
-static char *
-file_import(
-	DBG_Struct	*dbg,
-	char *filename,
-	unsigned int lifetype)
-{
-	char	*sql, *sql_p;
-	static	char *id;
-	uuid_t	u;
-	size_t 	size;
-	size_t	sql_len = SIZE_SQL;
-	LargeByteString	*lbs;
-	char	importtime[50];
-
-	id = xmalloc(SIZE_TERM+1);
-	uuid_generate(u);
-	uuid_unparse(u, id);
-
-	if ((lbs = file_to_bytea(dbg, filename)) == NULL){
-		return NULL;
-	}
-	if (lifetype > 2) {
-		lifetype = 2;
-	}
-	timestamp(importtime, sizeof(importtime));
-	sql = xmalloc(LBS_Size(lbs) + sql_len);
-	sql_p = sql;
-	size = snprintf(sql_p, sql_len, \
-		   "INSERT INTO monblob \
-                        (id, importtime, lifetype, filename, file_data) \
-                 VALUES ('%s', '%s', %d, '%s', '",id, importtime, lifetype, filename);
-	sql_p = sql_p + size;
-	strncpy(sql_p, LBS_Body(lbs), LBS_Size(lbs));
-	sql_p = sql_p + LBS_Size(lbs) - 1;
-	snprintf(sql_p, sql_len, "');");
-	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-	FreeLBS(lbs);
-	xfree(sql);
-	return id;
-}
-
-static	char *
-blob_import(
-	DBG_Struct	*dbg,
-	char *filename,
-	unsigned int lifetype)
-{
-	char *id;
-
-	TransactionStart(dbg);
-	id = file_import(dbg, filename, lifetype);
-	TransactionEnd(dbg);
-
-	return id;
-}
-
-static char *
-bytea_to_file(
-	char *filename,
-	ValueStruct	*value)
-{
-	FILE	*fp;
-	size_t	size;
-
-	if ((fp = fopen(filename,"wb")) == NULL ) {
-		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
-		return NULL;
-	}
-	size = fwrite(ValueByte(value),ValueByteLength(value),1,fp);
-	if ( size < 1) {
-		fprintf(stderr,"write error: %s\n",  filename);
-		return NULL;
-	}
-	if (fclose(fp) != 0) {
-		fprintf(stderr,"%s: %s\n", strerror(errno), filename);
-		return NULL;
-	}
-	return filename;
-}
-
-static char *
-file_export(
-	DBG_Struct	*dbg,
-	char *id,
-	char *export_file)
-{
-	static char	*filename;
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
-	ValueStruct	*ret, *value;
-	ValueStruct	*recval, *retval, *tvalue;
-
-	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "SELECT filename, file_data FROM monblob WHERE id = '%s'", id);
-	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
-	xfree(sql);
-	if (!ret) {
-		fprintf(stderr,"ERROR: [%s] is not registered\n", id);
-		return NULL;
-	}
-	if (export_file == NULL) {
-		export_file = StrDup(ValueToString(GetItemLongName(ret,"filename"),dbg->coding));
-	}
-	value = GetItemLongName(ret,"file_data");
-	recval = NewValue(GL_TYPE_RECORD);
-	ValueAddRecordItem(recval, "dbunescapebytea", DuplicateValue(value,TRUE));
-	retval = ExecDBUNESCAPEBYTEA(dbg, NULL, NULL, recval);
-	tvalue = GetItemLongName(retval,"dbunescapebytea");
-	filename = bytea_to_file(export_file, tvalue);
-	FreeValueStruct(ret);
-	FreeValueStruct(recval);
-	FreeValueStruct(retval);
-	return filename;
-}
-
 static	char *
 blob_export(
 	DBG_Struct	*dbg,
 	char *id,
 	char *export_file)
 {
-	char *filename;
+	static char	*filename;
 
-	TransactionStart(dbg);
-	filename = file_export(dbg, id, export_file);
-	TransactionEnd(dbg);
+	filename = monblob_export(dbg, id, export_file);
 
 	return filename;
 }
@@ -373,23 +152,6 @@ blob_list(
 	TransactionEnd(dbg);
 }
 
-static	void
-blob_delete(
-	DBG_Struct	*dbg,
-	char *id)
-{
-	char	*sql;
-	size_t	sql_len = SIZE_SQL;
-
-	sql = (char *)xmalloc(sql_len);
-	snprintf(sql, sql_len,
-			 "DELETE FROM monblob WHERE id = '%s'", id);
-	TransactionStart(dbg);
-	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-	TransactionEnd(dbg);
-	xfree(sql);
-}
-
 extern	int
 main(
 	int		argc,
@@ -422,19 +184,24 @@ main(
 	if (List) {
 		blob_list(dbg);
 	} else if (ImportFile) {
-		id = blob_import(dbg, ImportFile, LifeType);
+		TransactionStart(dbg);
+		id = monblob_import(dbg, NULL, 1, ImportFile, NULL, LifeType);
+		TransactionEnd(dbg);
 		if ( !id ){
 			exit(1);
 		}
 		printf("%s\n", id);
+		xfree(id);
 	} else if (ExportID) {
+		TransactionStart(dbg);
 		filename = blob_export(dbg, ExportID, OutputFile);
+		TransactionEnd(dbg);
 		if ( !filename ) {
 			exit(1);
 		}
 		printf("export: %s\n", filename);
 	} else if (DeleteID){
-		blob_delete(dbg, DeleteID);
+		monblob_delete(dbg, DeleteID);
 	}
 	CloseDB(dbg);
 

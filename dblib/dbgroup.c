@@ -272,7 +272,6 @@ ExecRedirectDBOP(
 	int			usage)
 {
 	int		rc;
-
 	rc = dbg->func->primitive->exec(dbg,sql,fRed, usage);
 	return	(rc);
 }

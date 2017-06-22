@@ -15,13 +15,12 @@
 #include	<time.h>
 #include	<errno.h>
 
-#include	<uuid/uuid.h>
-
 #include	"libmondai.h"
 #include	"directory.h"
 #include	"dbgroup.h"
 #include	"dbutils.h"
 #include	"monsys.h"
+#include	"bytea.h"
 #include	"option.h"
 #include	"enum.h"
 #include	"comm.h"
@@ -83,32 +82,6 @@ InitSystem(void)
 	}
 }
 
-extern LargeByteString	*
-escape_bytea(
-	DBG_Struct	*dbg,
-	unsigned char *src,
-	size_t len)
-{
-	ValueStruct	*value, *ret, *recval, *retval;
-	DBCOMM_CTRL		*ctrl = NULL;
-	RecordStruct	*rec = NULL;
-	LargeByteString	*lbs = NULL;
-
-	value = NewValue(GL_TYPE_BINARY);
-	SetValueBinary(value, src, len);
-
-	recval = NewValue(GL_TYPE_RECORD);
-	ValueAddRecordItem(recval, "dbescapebytea", value);
-
-	retval = ExecDBESCAPEBYTEA(dbg, ctrl, rec, recval);
-	if ( (ret = GetItemLongName(retval,"dbescapebytea")) != NULL) {
-		lbs = LBS_Duplicate(ValueToLBS(ret, NULL));
-	}
-	FreeValueStruct(recval);
-	FreeValueStruct(retval);
-	return lbs;
-}
-
 static int
 SendValue(
 	NETFILE *fp,
@@ -155,87 +128,6 @@ DisconnectBlobAPI(NETFILE *fp)
 	}
 }
 
-static         Bool
-create_monblobapi(
-        DBG_Struct      *dbg)
-{
-	Bool rc;
-	char *sql, *p;
-	sql = (char *)xmalloc(SIZE_BUFF);
-	p = sql;
-	p += sprintf(p, "CREATE TABLE monblobapi (");
-	p += sprintf(p, "       id        varchar(37)  primary key,");
-	p += sprintf(p, "       importtime  timestamp  with time zone,");
-	p += sprintf(p, "       lifetype    int,");
-	p += sprintf(p, "       filename    varchar(4096),");
-	p += sprintf(p, "       content_type varchar(1024),");
-	p += sprintf(p, "       status		int,");
-	p += sprintf(p, "       file_data   bytea");
-	p += sprintf(p, ");");
-	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
-	xfree(sql);
-	return rc;
-}
-
-extern Bool
-monblobapi_setup(
-	DBG_Struct	*dbg)
-{
-	Bool	exist;
-	int 	rc;
-	TransactionStart(dbg);
-	exist = table_exist(dbg, "monblobapi");
-	if ( !exist ) {
-		create_monblobapi(dbg);
-	}
-	rc = TransactionEnd(dbg);
-	return (rc == MCP_OK);
-}
-
-extern LargeByteString	*
-file_to_bytea(
-	DBG_Struct	*dbg,
-	char	*filename)
-{
-	struct	stat	stbuf;
-	unsigned char	buff[SIZE_BUFF];
-	unsigned char	*src, *src_p;
-	LargeByteString	*lbs = NULL;
-	FILE	*fp;
-	size_t	fsize
-		,   bsize
-		,	left;
-
-
-	if		(  stat(filename,&stbuf) != 0  ) {
-		fprintf(stderr,"%s: %s\n",  filename, strerror(errno));
-		return NULL;
-	}
-	fsize = stbuf.st_size;
-	src = (unsigned char *)xmalloc(fsize);
-	src_p = src;
-
-	fp = fopen(filename,"rb");
-	left = fsize;
-	do {
-		if		(  left  >  SIZE_BUFF  ) {
-			bsize = SIZE_BUFF;
-		} else {
-			bsize = left;
-		}
-		bsize = fread(buff,1,bsize,fp);
-		memcpy(src_p, buff, bsize);
-		src_p = src_p + bsize;
-		if		(  bsize  >  0  ) {
-			left -= bsize;
-		}
-	}	while	(  left  >  0  );
-	fclose(fp);
-	lbs = escape_bytea(dbg, src, fsize);
-	xfree(src);
-	return lbs;
-}
-
 static char *
 file_import(
 	DBG_Struct	*dbg,
@@ -244,15 +136,16 @@ file_import(
 	NETFILE *fp)
 {
 	char	*sql, *sql_p;
+	char	*bytea;
 	int lifetype;
-	size_t 	size;
+	size_t 	size, bytea_len;;
 	size_t	sql_len = SIZE_SQL;
 	ValueStruct	*ret;
-	LargeByteString	*lbs;
+	ValueStruct *value = NULL;
 	char	importtime[50];
-	uuid_t	u;
 	char *recv;
 	char *regfilename;
+	char *content_type;
 	json_object *json_res;
 
 	recv = RecvStringNew(fp);
@@ -260,12 +153,12 @@ file_import(
 	xfree(recv);
 
 	json_object *json_id;
-	json_id = json_object_object_get(json_res,"id");
+	json_object_object_get_ex(json_res,"id", &json_id);
 	if (CheckJSONObject(json_id,json_type_string)) {
 		id = (char*)json_object_get_string(json_id);
 		sql = (char *)xmalloc(sql_len);
 		snprintf(sql, sql_len,
-				 "SELECT id FROM monblobapi WHERE id = '%s'", id);
+				 "SELECT id FROM %s WHERE id = '%s'", MONBLOB, id);
 		ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 		xfree(sql);
 		if (!ret) {
@@ -275,23 +168,23 @@ file_import(
 		}
 	} else {
 		if (id == NULL) {
-			id = xmalloc(SIZE_TERM+1);
-			uuid_generate(u);
-			uuid_unparse(u, id);
+			id = new_id();
 			sql = xmalloc(sql_len);
-			snprintf(sql, sql_len, "INSERT INTO monblobapi (id, status) VALUES('%s', '%d');", id , 503);
+			snprintf(sql, sql_len, "INSERT INTO %s (id, status) VALUES('%s', '%d');", MONBLOB, id , 503);
 			ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 			xfree(sql);
 		}
 	}
 	SendString(fp, id);
-	if ((lbs = file_to_bytea(dbg, filename)) == NULL){
+	size = file_to_bytea(dbg, filename, &value);
+	if (value == NULL){
 		return NULL;
 	}
+	bytea = ValueToString(value,NULL);
+	bytea_len = strlen(bytea);
 
 	json_object *json_content_type;
-	char *content_type;
-	json_content_type = json_object_object_get(json_res,"content_type");
+	json_object_object_get_ex(json_res,"content_type", &json_content_type);
 	if (CheckJSONObject(json_content_type,json_type_string)) {
 		content_type = (char*)json_object_get_string(json_content_type);
 	} else {
@@ -299,7 +192,7 @@ file_import(
 	}
 
 	json_object *json_filename;
-	json_filename = json_object_object_get(json_res,"filename");
+	json_object_object_get_ex(json_res,"filename", &json_filename);
 	if (CheckJSONObject(json_filename,json_type_string)) {
 		regfilename = (char*)json_object_get_string(json_filename);
 	} else {
@@ -308,17 +201,17 @@ file_import(
 
 	lifetype = 2;
 	timestamp(importtime, sizeof(importtime));
-	sql = xmalloc(LBS_Size(lbs) + sql_len);
+	sql = xmalloc(bytea_len + sql_len);
 	sql_p = sql;
 	size = snprintf(sql_p, sql_len, \
-					"UPDATE monblobapi SET importtime = '%s', lifetype = '%d', filename = '%s', content_type = '%s', status= '%d', file_data ='", \
-					importtime, lifetype, regfilename, content_type, 200);
+					"UPDATE %sSET importtime = '%s', lifetype = '%d', filename = '%s', content_type = '%s', status= '%d', file_data ='", \
+					MONBLOB, importtime, lifetype, regfilename, content_type, 200);
 	sql_p = sql_p + size;
-	strncpy(sql_p, LBS_Body(lbs), LBS_Size(lbs));
-	sql_p = sql_p + LBS_Size(lbs) - 1;
+	strncpy(sql_p, bytea, bytea_len);
+	sql_p = sql_p + bytea_len;
 	snprintf(sql_p, sql_len, "' WHERE id='%s';", id);
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
-	FreeLBS(lbs);
+	FreeValueStruct(value);
 	xfree(sql);
 	return id;
 }
@@ -336,11 +229,11 @@ file_export(
 	json_object *obj;
 	NETFILE *fp;
 	ValueStruct	*ret, *value;
-	ValueStruct	*recval, *retval, *tvalue;
+	ValueStruct	*retval;
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
-			 "SELECT id, filename, content_type, status, file_data FROM monblobapi WHERE id = '%s'", id);
+			 "SELECT id, filename, content_type, status, file_data FROM %s WHERE id = '%s'", MONBLOB, id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -348,15 +241,10 @@ file_export(
 	if (!ret) {
 		fprintf(stderr,"[%s] is not registered\n", id);
 		json_object_object_add(obj,"status",json_object_new_int(404));
-		tvalue = NULL;
 		retval = NULL;
 	} else {
 		value = GetItemLongName(ret,"file_data");
-		recval = NewValue(GL_TYPE_RECORD);
-		ValueAddRecordItem(recval, "dbunescapebytea", DuplicateValue(value,TRUE));
-		retval = ExecDBUNESCAPEBYTEA(dbg, NULL, NULL, recval);
-		tvalue = GetItemLongName(retval,"dbunescapebytea");
-
+		retval = unescape_bytea(dbg, value);
 		char *id;
 		id = ValueToString(GetItemLongName(ret,"id"),dbg->coding);
 		json_object_object_add(obj,"id",json_object_new_string(id));
@@ -370,16 +258,15 @@ file_export(
 			json_object_object_add(obj,"content-type",json_object_new_string(content_type));
 		}
 		json_object_object_add(obj,"status",json_object_new_int(200));
-		FreeValueStruct(recval);
 	}
 	str = (char*)json_object_to_json_string(obj);
 	fp = ConnectBlobAPI(socket);
 	SendString(fp, str);
-	SendValue(fp, tvalue);
+	SendValue(fp, retval);
+	FreeValueStruct(retval);
 	Flush(fp);
 	DisconnectBlobAPI(fp);
 	FreeValueStruct(ret);
-	FreeValueStruct(retval);
 	return filename;
 }
 
@@ -393,7 +280,6 @@ blob_import(
 	NETFILE *fp;
 
 	fp = ConnectBlobAPI(socket);
-
 	TransactionStart(dbg);
 	id = file_import(dbg, id, filename, fp);
 	TransactionEnd(dbg);
@@ -426,7 +312,7 @@ setup_only()
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
-	monblobapi_setup(dbg);
+	monblob_setup(dbg);
 }
 
 extern	int
@@ -469,7 +355,7 @@ main(
 	if (OpenDB(dbg) != MCP_OK ) {
 		exit(1);
 	}
-	monblobapi_setup(dbg);
+	monblob_setup(dbg);
 	if (ImportFile) {
 		blob_import(dbg, ImportID, ImportFile, Socket);
 	} else {

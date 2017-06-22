@@ -49,6 +49,31 @@ table_exist(
 	return rc;
 }
 
+extern Bool
+column_exist(
+	DBG_Struct	*dbg,
+	char *table_name,
+	char *column_name)
+{
+	Bool rc;
+	char *sql, *p;
+	ValueStruct *ret;
+
+	sql = (char *)xmalloc(SIZE_BUFF);
+	p = sql;
+	p += sprintf(p, "SELECT 1");
+	p += sprintf(p, " FROM pg_tables JOIN information_schema.columns on pg_tables.tablename = columns.table_name ");
+	p += sprintf(p, " WHERE table_name = '%s' AND column_name = '%s';", table_name, column_name);
+	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	if (ret) {
+		rc = TRUE;
+		FreeValueStruct(ret);
+	} else {
+		rc = FALSE;
+	}
+	return rc;
+}
+
 extern void
 timestamp(
 	char *daytime,
