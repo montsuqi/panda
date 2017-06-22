@@ -4,6 +4,7 @@
 #include	<stdio.h>
 #include	<stdlib.h>
 #include	<string.h>
+#include	<libgen.h>
 #include	<unistd.h>
 #include	<sys/wait.h>
 #include	<sys/types.h>
@@ -66,7 +67,7 @@ migration_monblob(
         DBG_Struct      *dbg)
 {
 	Bool rc;
-	char *sql, *p;
+	char *sql;
 	char *table_name;
 	char *columns;
 
@@ -77,8 +78,7 @@ migration_monblob(
 		return FALSE;
 	}
 	sql = (char *)xmalloc(SIZE_BUFF);
-	p = sql;
-	p += sprintf(p, "INSERT INTO %s (%s) SELECT %s FROM %s;", MONBLOB, columns, columns, table_name);
+	sprintf(sql, "INSERT INTO %s (%s) SELECT %s FROM %s;", MONBLOB, columns, columns, table_name);
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
 	xfree(sql);
 	xfree(columns);
@@ -105,8 +105,16 @@ create_monblob(
 			p += sprintf(p, "%s %s",columns[i][0],columns[i][1]);
 		}
 	}
-	p += sprintf(p, ");");
+	sprintf(p, ");");
 	rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	if (rc == MCP_OK) {
+		sprintf(sql, "CREATE INDEX %s_blobid ON %s (blobid);",MONBLOB, MONBLOB);
+		rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	}
+	if (rc == MCP_OK) {
+		sprintf(sql, "CREATE INDEX %s_importime ON %s (importtime);",MONBLOB, MONBLOB);
+		rc = ExecDBOP(dbg, sql, TRUE, DB_UPDATE);
+	}
 	xfree(sql);
 	return (rc == MCP_OK);
 }
@@ -168,6 +176,7 @@ monblob_idcheck(
 	sql = (char *)xmalloc(SIZE_BUFF);
 	sprintf(sql, "SELECT 1 FROM %s WHERE id='%s';", MONBLOB, id);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
 	if (ret) {
 		rc = TRUE;
 		FreeValueStruct(ret);
@@ -223,6 +232,9 @@ FreeMonblob_struct(
 	if (monblob->id) {
 		xfree(monblob->id);
 	}
+	if (monblob->filename) {
+		xfree(monblob->filename);
+	}
 	if (monblob->content_type) {
 		xfree(monblob->content_type);
 	}
@@ -240,6 +252,7 @@ escape_bytea(
 	value = NewValue(GL_TYPE_BINARY);
 	SetValueBinary(value, src, len);
 	retval = ExecDBESCAPEBYTEA(dbg, NULL, NULL, value);
+	FreeValueStruct(value);
 
 	return retval;
 }
@@ -269,7 +282,11 @@ file_to_bytea(
 		,	left;
 
 	if		(  stat(filename,&stbuf) != 0  ) {
-		fprintf(stderr,"%s: %s\n",  filename, strerror(errno));
+		fprintf(stderr,"%s: %s\n", filename, strerror(errno));
+		return 0;
+	}
+	if (S_ISDIR(stbuf.st_mode)) {
+		fprintf(stderr,"%s: Is adirectory\n", filename);
 		return 0;
 	}
 	fsize = stbuf.st_size;
@@ -310,7 +327,7 @@ monblob_import(
 	ValueStruct *value = NULL;
 
 	monblob = NewMonblob_struct(id);
-	monblob->filename = filename;
+	monblob->filename = StrDup(basename(filename));
 	monblob->lifetype = lifetype;
 	if (persist > 0 ) {
 		monblob->status = 200;
@@ -324,13 +341,13 @@ monblob_import(
 		monblob->lifetype = 2;
 	}
 	timestamp(monblob->importtime, sizeof(monblob->importtime));
-	if (content_type == NULL) {
-		monblob->content_type = StrDup(DEFAULTCONTENT);
-	} else {
+	if (content_type != NULL) {
+		xfree(monblob->content_type);
 		monblob->content_type = StrDup(content_type);
 	}
-	monblob->size = file_to_bytea(dbg, monblob->filename, &value);
+	monblob->size = file_to_bytea(dbg, filename, &value);
 	if (value == NULL){
+		FreeMonblob_struct(monblob);
 		return NULL;
 	}
 	monblob->bytea = ValueToString(value,NULL);
@@ -394,17 +411,18 @@ monblob_insert(
 	sql = xmalloc(monblob->bytea_len + sql_len);
 	sql_p = sql;
 	if (update) {
-		sql_p = sql_p + update_query(dbg, monblob, sql_p);
+		sql_p += update_query(dbg, monblob, sql_p);
 	} else {
-		sql_p = sql_p + insert_query(dbg, monblob, sql_p);
+		sql_p += insert_query(dbg, monblob, sql_p);
 	}
 	strncpy(sql_p, monblob->bytea, monblob->bytea_len);
-	sql_p = sql_p + monblob->bytea_len;
+	sql_p += monblob->bytea_len;
 	if (update) {
-		snprintf(sql_p, sql_len, "' WHERE id='%s';", monblob->id);
+		sql_p += snprintf(sql_p, sql_len, "' WHERE id='%s'", monblob->id);
 	} else {
-		snprintf(sql_p, sql_len, "');");
+		sql_p += snprintf(sql_p, sql_len, "')");
 	}
+	snprintf(sql_p, sql_len, ";");
 	rc = ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 
@@ -444,6 +462,12 @@ monblob_export(
 	char	*sql;
 	size_t	sql_len = SIZE_SQL;
 	ValueStruct	*value, *ret, *retval;
+	uuid_t u;
+
+	if (uuid_parse(id, u) < 0) {
+		fprintf(stderr,"[%s] is invalid\n", id);
+		return NULL;
+	}
 
 	sql = (char *)xmalloc(sql_len);
 	snprintf(sql, sql_len,
@@ -457,6 +481,7 @@ monblob_export(
 	value = GetItemLongName(ret, "file_data");
 	retval = unescape_bytea(dbg, value);
 	filename = value_to_file(filename, retval);
+	FreeValueStruct(retval);
 	FreeValueStruct(ret);
 	return filename;
 }
@@ -477,9 +502,9 @@ monblob_update(
 	if ((monblob->content_type != NULL) && (strlen(monblob->content_type) > 0 )){
 		sql_p += snprintf(sql_p, sql_len, "content_type = '%s', ", monblob->content_type);
 	}
-	sql_p += snprintf(sql_p, sql_len, "status = %d", monblob->status);
+	sql_p += snprintf(sql_p, sql_len, "status = %d ", monblob->status);
 	sql_p += snprintf(sql_p, sql_len, "WHERE id = '%s'", monblob->id);
-	printf("SQL:%s\n", sql);
+	snprintf(sql_p, sql_len, ";");
 	ExecDBOP(dbg, sql, FALSE, DB_UPDATE);
 	xfree(sql);
 }

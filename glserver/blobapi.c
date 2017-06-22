@@ -90,7 +90,6 @@ BlobToResponse(
 	json_object *json_status;
 	if (json_object_object_get_ex(json_res,"status",&json_status)) {
 		res->status = json_object_get_int(json_status);
-		printf("%d\n", res->status);
 	}
 
 badio:
@@ -126,7 +125,7 @@ GetBlobAPI(
 		}
 	}
 	/* parent */
-	res = BlobToResponse(req, res, tempsocket);
+	BlobToResponse(req, res, tempsocket);
 
 	rmdir(tempdir);
 	return;

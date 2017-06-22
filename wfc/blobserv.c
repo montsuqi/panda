@@ -233,8 +233,8 @@ BLOBIMPORT(
 	MonObjectType	obj;
 	ssize_t			ssize;
 	unsigned char	*buff;
+
 	dbgmsg("BLOB_IMPORT");
-	obj = GL_OBJ_NULL;
 	if		(  ( obj = NewBLOB(blob,BLOB_OPEN_WRITE) )  !=  GL_OBJ_NULL  ) {
 		SendPacketClass(fp,BLOB_OK);			ON_IO_ERROR(fp,badio);
 		SendObject(fp,obj);						ON_IO_ERROR(fp,badio);

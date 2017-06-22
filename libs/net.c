@@ -199,10 +199,10 @@ Recv(
 			}
 		}
 		UnLockNet(fp);
+		fp->fSent = FALSE;
 	} else {
 		ret = -1;
 	}
-	fp->fSent = FALSE;
 	return	(ret);
 }
 

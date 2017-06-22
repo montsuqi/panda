@@ -138,6 +138,7 @@ file_import(
 	char	*sql, *sql_p;
 	char	*bytea;
 	int lifetype;
+	int filesize;
 	size_t 	size, bytea_len;;
 	size_t	sql_len = SIZE_SQL;
 	ValueStruct	*ret;
@@ -176,7 +177,7 @@ file_import(
 		}
 	}
 	SendString(fp, id);
-	size = file_to_bytea(dbg, filename, &value);
+	filesize = file_to_bytea(dbg, filename, &value);
 	if (value == NULL){
 		return NULL;
 	}
@@ -204,8 +205,8 @@ file_import(
 	sql = xmalloc(bytea_len + sql_len);
 	sql_p = sql;
 	size = snprintf(sql_p, sql_len, \
-					"UPDATE %sSET importtime = '%s', lifetype = '%d', filename = '%s', content_type = '%s', status= '%d', file_data ='", \
-					MONBLOB, importtime, lifetype, regfilename, content_type, 200);
+					"UPDATE %s SET importtime = '%s', lifetype = '%d', filename = '%s', size = %d, content_type = '%s', status= '%d', file_data ='", \
+					MONBLOB, importtime, lifetype, regfilename, filesize, content_type, 200);
 	sql_p = sql_p + size;
 	strncpy(sql_p, bytea, bytea_len);
 	sql_p = sql_p + bytea_len;
