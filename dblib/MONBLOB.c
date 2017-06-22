@@ -143,9 +143,7 @@ ENTER_FUNC;
 	if ((val = GetItemLongName(args, "filename")) != NULL) {
 		filename = ValueToString(val,dbg->coding);
 	}
-
 	monblob_export(mondbg, id, filename);
-
 	ret = DuplicateValue(args,TRUE);
 LEAVE_FUNC;
 	return	(ret);

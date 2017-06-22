@@ -361,6 +361,7 @@ MakeInsert(
     printf(");\n");
 }
 
+#if 0
 static	void
 PutName(void)
 {
@@ -373,7 +374,6 @@ PutName(void)
 	}
 	printf("%s",rname[level-1]);
 }
-
 
 static	void
 PutItemNames(
@@ -425,6 +425,7 @@ PutItemNames(
 		break;
 	}
 }
+#endif
 
 static	ARG_TABLE	option[] = {
 	{	"create",	BOOLEAN,	TRUE,	(void*)&fCreate,

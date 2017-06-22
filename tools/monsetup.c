@@ -41,6 +41,7 @@
 #include	"dbgroup.h"
 #include	"dbutils.h"
 #include	"monsys.h"
+#include	"bytea.h"
 #include	"gettext.h"
 #include	"option.h"
 #include	"enum.h"
@@ -324,6 +325,9 @@ monsysdb_setup(
 	}
 	if (rc) {
 		rc = delete_monbatch_log(dbg, DelDays);
+	}
+	if (rc) {
+		rc = monblob_setup(dbg);
 	}
 	if (CloseDB(dbg) != MCP_OK ) {
 		return FALSE;

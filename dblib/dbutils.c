@@ -35,11 +35,13 @@ table_exist(
 	char *table_name)
 {
 	ValueStruct *ret;
-	char	sql[SIZE_SQL+1];
+	char *sql;
+	sql = (char *)xmalloc(SIZE_SQL);
 	Bool 	rc;
 
 	snprintf(sql, SIZE_SQL, "SELECT 1 FROM  pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = '%s' AND c.relkind = 'r';", table_name);
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
 	if (ret) {
 		rc = TRUE;
 		FreeValueStruct(ret);
@@ -59,13 +61,14 @@ column_exist(
 	char *sql, *p;
 	ValueStruct *ret;
 
-	sql = (char *)xmalloc(SIZE_BUFF);
+	sql = (char *)xmalloc(SIZE_SQL);
 	p = sql;
 	p += sprintf(p, "SELECT 1");
 	p += sprintf(p, " FROM pg_tables JOIN information_schema.columns on pg_tables.tablename = columns.table_name ");
 	p += sprintf(p, " WHERE table_name = '%s' AND column_name = '%s'", table_name, column_name);
 	sprintf(p, ";");
 	ret = ExecDBQuery(dbg, sql, FALSE, DB_UPDATE);
+	xfree(sql);
 	if (ret) {
 		rc = TRUE;
 		FreeValueStruct(ret);

@@ -125,7 +125,7 @@ GetBlobAPI(
 		}
 	}
 	/* parent */
-	res = BlobToResponse(req, res, tempsocket);
+	BlobToResponse(req, res, tempsocket);
 
 	rmdir(tempdir);
 	return;
