@@ -213,7 +213,7 @@ NewMonblob_struct(
 	}
 	monblob->blobid = 0;
 	monblob->lifetype = 0;
-	monblob->filename = "";
+	monblob->filename = NULL;
 	monblob->status = DEFAULTSTATUS;
 	monblob->size = 0;
 	monblob->content_type = StrDup(DEFAULTCONTENT);
