@@ -996,6 +996,7 @@ InitCURL(
 	snprintf(userpass,sizeof(userpass)-1,"%s:%s",user,pass);
 	curl_easy_setopt(Curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
 	curl_easy_setopt(Curl, CURLOPT_USERPWD, userpass);
+	curl_easy_setopt(Curl, CURLOPT_NOPROXY, "*");
 
 	return Curl;
 }
