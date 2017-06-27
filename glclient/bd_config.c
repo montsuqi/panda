@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <sys/file.h>
 #include <glib.h>
 #include <json.h>
 
@@ -31,8 +33,10 @@
 #define BD_CONFIG_MAIN
 #include "bd_config.h"
 #include "logger.h"
+#include "utils.h"
 
-static char* ConfDir;
+static char        *ConfDir    = NULL;
+static char        *ConfFile   = NULL;
 static json_object *config_obj = NULL;
 
 static	gboolean
@@ -119,18 +123,20 @@ load_config(gchar* str)
 void
 gl_config_init(void) 
 {
-	gchar *path,*buf;
+	gchar *buf;
 	size_t size;
 
 	ConfDir =  g_strconcat(g_get_home_dir(), "/.glclient", NULL);
-	path = g_strdup_printf("%s/config.json",ConfDir);
-	if (!g_file_get_contents(path,&buf,&size,NULL)) {
-		load_default();
-	} else {
+	ConfFile = g_strdup_printf("%s/config.json",ConfDir);
+
+	gl_lock();
+	if (g_file_get_contents(ConfFile,&buf,&size,NULL)) {
 		load_config(buf);
 		g_free(buf);
+	} else {
+		load_default();
 	}
-	g_free(path);
+	gl_unlock();
 }
 
 int
@@ -209,7 +215,6 @@ void
 gl_config_save(void)
 {
 	json_object *list,*nlist,*child;
-	gchar *path;
 	const char *jsonstr;
 	int i,j,index,nindex;
 
@@ -234,11 +239,11 @@ gl_config_save(void)
 	json_object_object_add(config_obj,"index",json_object_new_int(nindex));
 
 	jsonstr = json_object_to_json_string(config_obj);
-	path = g_strdup_printf("%s/config.json",ConfDir);
-	if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {
-		Error("could not create %s",path);
+	gl_lock();
+	if (!g_file_set_contents(ConfFile,jsonstr,strlen(jsonstr),NULL)) {
+		Error("could not create %s",ConfFile);
 	}
-	g_free(path);
+	gl_unlock();
 }
 
 void

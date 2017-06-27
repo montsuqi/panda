@@ -32,5 +32,7 @@
 void get_human_bytes(size_t size, char *str);
 gboolean CheckAlreadyFile(char *filename);
 void rm_r_old(const char *dir,unsigned int elaps);
+void gl_lock();
+void gl_unlock();
 
 #endif

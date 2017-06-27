@@ -40,6 +40,7 @@
 #define		WIDGETCACHE
 
 #include	"widgetcache.h"
+#include	"utils.h"
 #include	"logger.h"
 
 static json_object *obj = NULL;
@@ -56,6 +57,7 @@ LoadWidgetCache(void)
 	gchar *path,*buf;
 	size_t size;
 
+	gl_lock();
 	path = get_path();
 	if (!g_file_get_contents(path,&buf,&size,NULL)) {
 		obj = json_object_new_object();
@@ -66,6 +68,7 @@ LoadWidgetCache(void)
 			obj = json_object_new_object();
 		}
 	}
+	gl_unlock();
 	g_free(path);
 }
 
@@ -77,9 +80,11 @@ SaveWidgetCache(void)
 
 	jsonstr = json_object_to_json_string(obj);
 	path = get_path();
+	gl_lock();
 	if (!g_file_set_contents(path,jsonstr,strlen(jsonstr),NULL)) {
 		Error("could not create %s",path);
 	}
+	gl_unlock();
 	g_free(path);
 }
 

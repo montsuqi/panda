@@ -28,7 +28,9 @@
 
 #include	<stdio.h>
 #include	<stdlib.h>
+#include	<string.h>
 #include	<sys/types.h>
+#include	<sys/file.h>
 #include	<sys/stat.h>
 #include	<unistd.h>
 #include	<fcntl.h>
@@ -39,6 +41,31 @@
 #include	<errno.h>
 
 #include	"utils.h"
+
+static char *LockFile = NULL;
+static int   LockFD   = -1;
+
+void gl_lock()
+{
+	if (LockFile == NULL) {
+		LockFile = g_strconcat(g_get_home_dir(), "/.glclient/.lock", NULL);
+		LockFD = open(LockFile,O_CREAT|O_WRONLY|O_TRUNC,644);
+		if (LockFD == -1) {
+			fprintf(stderr,"open failure:%s\n",strerror(errno));
+			exit(1);
+		}
+	}
+	if (LockFile != NULL && LockFD != -1) {
+		flock(LockFD,LOCK_EX);
+	}
+}
+
+void gl_unlock()
+{
+	if (LockFile != NULL && LockFD != -1) {
+		flock(LockFD,LOCK_UN);
+	}
+}
 
 void
 get_human_bytes(size_t size, char *str)
