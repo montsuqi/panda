@@ -86,6 +86,7 @@ StartPushClient()
 	char *pusher;
 
 	if (GLP_GetfGinbee(GLP(Session)) || getenv("GLCLIENT_USE_PUSH_CLIENT") != NULL) {
+		UsePushClient = TRUE;
 	} else {
 		UsePushClient = FALSE;
 		return;
@@ -94,8 +95,9 @@ StartPushClient()
 	if (pusher == NULL) {
 		pusher = GLP_GetPusherURI(GLP(Session));
 	}
-	if (pusher == NULL) {
-		pusher = "";
+	if (pusher == NULL || strlen(pusher) <= 0 ) {
+		UsePushClient = FALSE;
+		return;
 	}
 	setenv("GLPUSH_PUSHER_URI"   ,pusher,1);
 	setenv("GLPUSH_REST_URI"     ,GLP_GetRESTURI(GLP(Session)),1);

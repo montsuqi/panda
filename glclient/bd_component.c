@@ -461,6 +461,13 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
+  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
+  check = gtk_check_button_new_with_label (_("Debug"));
+  gtk_container_add (GTK_CONTAINER (alignment), check);
+  self->debug = check;
+  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
+                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  ypos++;
 
   alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
   check = gtk_check_button_new_with_label (_("Enable Keybuffer"));
@@ -506,13 +513,6 @@ bd_component_new()
                     GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
   ypos++;
 
-  alignment = gtk_alignment_new (0.5, 0.5, 0, 1);
-  check = gtk_check_button_new_with_label (_("Debug"));
-  gtk_container_add (GTK_CONTAINER (alignment), check);
-  self->debug = check;
-  gtk_table_attach (GTK_TABLE (table), alignment, 0, 2, ypos, ypos + 1,
-                    GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
-  ypos++;
 
   // info
   table = gtk_table_new (2, 1, FALSE);
