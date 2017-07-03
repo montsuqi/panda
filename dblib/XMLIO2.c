@@ -508,7 +508,7 @@ _ReadXML_JSON(
 		val = GetRecordItem(ret,iter.key);
 		if (val != NULL) {
 			SetValueString(rname,iter.key,NULL);
-			JSON_UnPackValueOmmit(NULL,(unsigned char*)json_object_to_json_string(iter.val),val);
+			JSON_UnPackValue(NULL,(unsigned char*)json_object_to_json_string(iter.val),val);
 		}
 		break;
 	}
@@ -642,9 +642,9 @@ _WriteXML_JSON(
 		Warning("RequestNewBLOB failure");
 		return MCP_BAD_OTHER;
 	}
-	size = JSON_SizeValueOmmit(NULL,val);
+	size = JSON_SizeValueOmmitString(NULL,val);
 	buff = g_malloc(size);
-	JSON_PackValueOmmit(NULL,buff,val);
+	JSON_PackValueOmmitString(NULL,buff,val);
 
 	jobj = json_tokener_parse(buff);
 	g_free(buff);

@@ -364,7 +364,7 @@ _ReadMSG_JSON(
 	jsonstr = g_malloc0(size+1);
 	memcpy(jsonstr,buff,size);
 	val = GetRecordItem(ret,"data");
-	s = JSON_UnPackValueOmmit(NULL,jsonstr,val);
+	s = JSON_UnPackValue(NULL,jsonstr,val);
 	g_free(jsonstr);
 
 	if (s == 0) {
@@ -517,9 +517,9 @@ _WriteMSG_JSON(
 		Warning("RequestNewBLOB failure");
 		return MCP_BAD_OTHER;
 	}
-	size = JSON_SizeValueOmmit(NULL,val);
+	size = JSON_SizeValueOmmitString(NULL,val);
 	buff = g_malloc(size);
-	JSON_PackValueOmmit(NULL,buff,val);
+	JSON_PackValueOmmitString(NULL,buff,val);
 	wrote = RequestWriteBLOB(NBCONN(dbg),oid,buff,size);
 
 	if (wrote == size) {
