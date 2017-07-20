@@ -263,7 +263,12 @@ callback_push_receive(
 	case LWS_CALLBACK_CLIENT_ESTABLISHED:
 		Info("LWS_CALLBACK_CLIENT_ESTABLISHED\n");
 		/* subscribe */
-		snprintf(buf,sizeof(buf)-1,"{\"command\":\"subscribe\",\"req.id\":\"%s\",\"event\":\"*\"}",reqid);
+		snprintf(buf,sizeof(buf)-1,"{"
+			"\"command\"    : \"subscribe\","
+			"\"req.id\"     : \"%s\","
+			"\"event\"      : \"*\","
+			"\"session_id\" : \"%s\""
+		"}",reqid,SessionID);
 		websocket_write_back(wsi, buf, -1);
 		break;
 
