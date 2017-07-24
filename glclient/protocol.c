@@ -438,7 +438,7 @@ JSONRPC(
 		Error(_("comm error:%s"),errbuf);
 	}
 	if (curl_easy_getinfo(ctx->Curl,CURLINFO_CONTENT_TYPE,&ctype) == CURLE_OK) {
-		if (strstr(ctype,"json") == NULL) {
+		if (ctype == NULL || !g_regex_match_simple("json",ctype,G_REGEX_CASELESS,0)) {
 			Error(_("invalid content type:%s"),ctype);
 		}
 	} else {
