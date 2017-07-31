@@ -43,7 +43,7 @@ _Print()
 		n = atoi(ConfigNum);
 	}
 
-	Title      = getenv("GLPUSH_TITLE");
+	Title = getenv("GLPUSH_TITLE");
 	if (Title == NULL) {
 		Title = "";
 	}
@@ -51,11 +51,11 @@ _Print()
 	Printer    = getenv("GLPUSH_PRINTER");
 	ShowDialog = getenv("GLPUSH_SHOW_DIALOG");
 	if (ShowDialog != NULL && !strcmp("T",ShowDialog)) {
-		show = FALSE;
-	} else {
 		show = TRUE;
+	} else {
+		show = FALSE;
 	}
-	if (Printer == NULL || strlen(Printer) <=0 ) {
+	if (Printer == NULL || strlen(Printer) <= 0 ) {
 		show = TRUE;
 	}
 	oid = getenv("GLPUSH_OID");

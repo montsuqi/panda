@@ -473,11 +473,11 @@ main(
 	Info("GLPUSH_REST_URI:%s",RESTURI);
 	Info("GLPUSH_SESSION_ID:%s",SessionID);
 
-	fSSL         = FALSE;
 	Cert        = getenv("GLPUSH_CERT");
 	CertKey     = getenv("GLPUSH_CERT_KEY");
 	CertKeyPass = getenv("GLPUSH_CERT_KEY_PASSWORD");
 	CAFile      = getenv("GLPUSH_CA_FILE");
+	fSSL        = Cert != NULL;
 
 	Execute();
 

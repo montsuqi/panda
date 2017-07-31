@@ -85,12 +85,6 @@ StartPushClient()
 	pid_t pid;
 	char *pusher;
 
-	if (GLP_GetfGinbee(GLP(Session)) || getenv("GLCLIENT_USE_PUSH_CLIENT") != NULL) {
-		UsePushClient = TRUE;
-	} else {
-		UsePushClient = FALSE;
-		return;
-	}
 	pusher = getenv("GLPUSH_PUSHER_URI");
 	if (pusher == NULL) {
 		pusher = GLP_GetPusherURI(GLP(Session));
